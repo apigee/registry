@@ -46,7 +46,7 @@ func (s *server) DeleteProduct(ctx context.Context, request *rpc.DeleteProductRe
 		return nil, err
 	}
 	k := &datastore.Key{Kind: productEntityName, Name: request.GetName()}
-	// TODO: delete all the children of this product
+	// TODO: delete children
 	err = client.Delete(ctx, k)
 	return &empty.Empty{}, err
 }
