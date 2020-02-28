@@ -87,7 +87,7 @@ func (s *server) ListProducts(ctx context.Context, req *rpc.ListProductsRequest)
 	return responses, nil
 }
 
-func (s *server) UpdateProduct(ctx context.Context, request *rpc.CreateProductRequest) (*rpc.Product, error) {
+func (s *server) UpdateProduct(ctx context.Context, request *rpc.UpdateProductRequest) (*rpc.Product, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, err
