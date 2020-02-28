@@ -1,0 +1,523 @@
+syntax = "proto3";
+
+package google.cloud.apigee.flame.v1alpha1;
+
+import "flame_models.proto";
+import "google/api/annotations.proto";
+import "google/api/client.proto";
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/field_mask.proto";
+
+
+option java_package = "com.google.cloud.apigee.flame.v1alpha1";
+option java_multiple_files = true;
+option java_outer_classname = "FlameServiceProto";
+option go_package = "apigov.dev/flame/rpc;rpc";
+
+// The Flame API provides structures and relationships for
+// Full Lifecycle API Management. It enables API platform
+// teams to build rich models of their API ecosystems and
+// provide information and oversight to API producers and
+// consumers in their organizations.
+service Flame {
+  option (google.api.default_host) = "localhost:9999";
+
+  // ListProducts returns matching products.
+  rpc ListProducts(ListProductsRequest) returns (ListProductsResponse) {
+    option (google.api.http) = {
+      get: "/v1alpha1/{parent=projects/*}/products"
+    };
+    option (google.api.method_signature) = "parent";
+  }
+
+  // GetProduct returns a specified product.
+  rpc GetProduct(GetProductRequest) returns (Product) {
+    option (google.api.http) = {
+      get: "/v1alpha1/{name=projects/*/products/*}"
+    };
+    option (google.api.method_signature) = "name";
+  }
+
+  // CreateProduct creates a specified product.
+  rpc CreateProduct(CreateProductRequest) returns (Product) {
+    option (google.api.http) = {
+      post: "/v1alpha1/{parent=projects/*}/products"
+      body: "product"
+    };
+    option (google.api.method_signature) = "parent,product";
+  }
+
+  // UpdateProduct can be used to modify a specified product.
+  rpc UpdateProduct(UpdateProductRequest) returns (Product) {
+    option (google.api.http) = {
+      patch: "/v1alpha1/{product.name=projects/*/products/*}"
+      body: "product"
+    };
+    option (google.api.method_signature) = "product,update_mask";
+  }
+
+  // DeleteProduct removes a specified product and all of the resources that it
+  // owns.
+  rpc DeleteProduct(DeleteProductRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/v1alpha1/{name=projects/*/products/*}"
+    };
+    option (google.api.method_signature) = "name";
+  }
+
+  // ListVersions returns matching versions.
+  rpc ListVersions(ListVersionsRequest) returns (ListVersionsResponse) {
+    option (google.api.http) = {
+      get: "/v1alpha1/{parent=projects/*/products/*}/versions"
+    };
+    option (google.api.method_signature) = "parent";
+  }
+
+  // GetVersion returns a specified version.
+  rpc GetVersion(GetVersionRequest) returns (Version) {
+    option (google.api.http) = {
+      get: "/v1alpha1/{name=projects/*/products/*/versions/*}"
+    };
+    option (google.api.method_signature) = "name";
+  }
+
+  // CreateVersion creates a specified version.
+  rpc CreateVersion(CreateVersionRequest) returns (Version) {
+    option (google.api.http) = {
+      post: "/v1alpha1/{parent=projects/*/products/*}/versions"
+      body: "version"
+    };
+    option (google.api.method_signature) = "parent,version";
+  }
+
+  // UpdateVersion can be used to modify a specified version.
+  rpc UpdateVersion(UpdateVersionRequest) returns (Version) {
+    option (google.api.http) = {
+      patch: "/v1alpha1/{version.name=projects/*/products/*/versions/*}"
+      body: "version"
+    };
+    option (google.api.method_signature) = "version,update_mask";
+  }
+
+  // DeleteVersion removes a specified version and all of the resources that it
+  // owns.
+  rpc DeleteVersion(DeleteVersionRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/v1alpha1/{name=projects/*/products/*/versions/*}"
+    };
+    option (google.api.method_signature) = "name";
+  }
+
+  // ListSpecs returns matching specs.
+  rpc ListSpecs(ListSpecsRequest) returns (ListSpecsResponse) {
+    option (google.api.http) = {
+      get: "/v1alpha1/{parent=projects/*/products/*/versions/*}/specs"
+    };
+    option (google.api.method_signature) = "parent";
+  }
+
+  // GetSpec returns a specified spec.
+  rpc GetSpec(GetSpecRequest) returns (Spec) {
+    option (google.api.http) = {
+      get: "/v1alpha1/{name=projects/*/products/*/versions/*/specs/*}"
+    };
+    option (google.api.method_signature) = "name";
+  }
+
+  // CreateSpec creates a specified spec.
+  rpc CreateSpec(CreateSpecRequest) returns (Spec) {
+    option (google.api.http) = {
+      post: "/v1alpha1/{parent=projects/*/products/*/versions/*}/specs"
+      body: "spec"
+    };
+    option (google.api.method_signature) = "parent,spec";
+  }
+
+  // UpdateSpec can be used to modify a specified spec.
+  rpc UpdateSpec(UpdateSpecRequest) returns (Spec) {
+    option (google.api.http) = {
+      patch: "/v1alpha1/{spec.name=projects/*/products/*/versions/*/specs/*}"
+      body: "spec"
+    };
+    option (google.api.method_signature) = "spec,update_mask";
+  }
+
+  // DeleteSpec removes a specified spec and all of the resources that it owns.
+  rpc DeleteSpec(DeleteSpecRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/v1alpha1/{name=projects/*/products/*/versions/*/specs/*}"
+    };
+    option (google.api.method_signature) = "name";
+  }
+
+  // ListFiles returns matching files.
+  rpc ListFiles(ListFilesRequest) returns (ListFilesResponse) {
+    option (google.api.http) = {
+      get: "/v1alpha1/{parent=projects/*/products/*/versions/*/specs/*}/files"
+    };
+    option (google.api.method_signature) = "parent";
+  }
+
+  // GetFile returns a specified file.
+  rpc GetFile(GetFileRequest) returns (File) {
+    option (google.api.http) = {
+      get: "/v1alpha1/{name=projects/*/products/*/versions/*/specs/*/files/*}"
+    };
+    option (google.api.method_signature) = "name";
+  }
+
+  // CreateFile creates a specified file.
+  rpc CreateFile(CreateFileRequest) returns (File) {
+    option (google.api.http) = {
+      post: "/v1alpha1/{parent=projects/*/products/*/versions/*/specs/*}/files"
+      body: "file"
+    };
+    option (google.api.method_signature) = "parent,file";
+  }
+
+  // UpdateFile can be used to modify a specified file.
+  rpc UpdateFile(UpdateFileRequest) returns (File) {
+    option (google.api.http) = {
+      patch: "/v1alpha1/{file.name=projects/*/products/*/versions/*/specs/*/files/*}"
+      body: "file"
+    };
+    option (google.api.method_signature) = "file,update_mask";
+  }
+
+  // DeleteFile removes a specified file and all of the resources that it owns.
+  rpc DeleteFile(DeleteFileRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/v1alpha1/{name=projects/*/products/*/versions/*/specs/*/files/*}"
+    };
+    option (google.api.method_signature) = "name";
+  }
+}
+
+// Request message for ListProducts.
+message ListProductsRequest {
+  // The parent, which owns this collection of products.
+  // Format: projects/*
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      child_type: "flame.googleapis.com/Product"
+    }
+  ];
+  // The maximum number of products to return.
+  // The service may return fewer than this value.
+  // If unspecified, at most 50 values will be returned.
+  // The maximum is 1000; values above 1000 will be coerced to 1000.
+  int32 page_size = 2;
+
+  // A page token, received from a previous `ListProducts` call.
+  // Provide this to retrieve the subsequent page.
+  //
+  // When paginating, all other parameters provided to `ListProducts` must match
+  // the call that provided the page token.
+  string page_token = 3;
+}
+
+// Response message for ListProducts.
+message ListProductsResponse {
+  // The products from the specified publisher.
+  repeated Product products = 1;
+
+  // A token, which can be sent as `page_token` to retrieve the next page.
+  // If this field is omitted, there are no subsequent pages.
+  string next_page_token = 2;
+}
+
+// Request message for GetProduct.
+message GetProductRequest {
+  // The name of the product to retrieve.
+  // Format: projects/*/products/*
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = { type: "flame.googleapis.com/Product" }
+  ];
+}
+
+// Request message for CreateProduct.
+message CreateProductRequest {
+  // The parent, which owns this collection of products.
+  // Format: projects/*
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      child_type: "flame.googleapis.com/Product"
+    }
+  ];
+  // The product to create.
+  Product product = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+// Request message for UpdateProduct.
+message UpdateProductRequest {
+  // The product to update.
+  //
+  // The `name` field is used to identify the product to update.
+  // Format: projects/*/products/*
+  Product product = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // The list of fields to be updated.
+  google.protobuf.FieldMask update_mask = 2;
+}
+
+// Request message for DeleteProduct.
+message DeleteProductRequest {
+  // The name of the product to delete.
+  // Format: projects/*/products/*
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = { type: "flame.googleapis.com/Product" }
+  ];
+}
+
+// Request message for ListVersions.
+message ListVersionsRequest {
+  // The parent, which owns this collection of versions.
+  // Format: projects/*/products/*
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      child_type: "flame.googleapis.com/Version"
+    }
+  ];
+  // The maximum number of versions to return.
+  // The service may return fewer than this value.
+  // If unspecified, at most 50 values will be returned.
+  // The maximum is 1000; values above 1000 will be coerced to 1000.
+  int32 page_size = 2;
+
+  // A page token, received from a previous `ListVersions` call.
+  // Provide this to retrieve the subsequent page.
+  //
+  // When paginating, all other parameters provided to `ListVersions` must match
+  // the call that provided the page token.
+  string page_token = 3;
+}
+
+// Response message for ListVersions.
+message ListVersionsResponse {
+  // The versions from the specified publisher.
+  repeated Version versions = 1;
+
+  // A token, which can be sent as `page_token` to retrieve the next page.
+  // If this field is omitted, there are no subsequent pages.
+  string next_page_token = 2;
+}
+
+// Request message for GetVersion.
+message GetVersionRequest {
+  // The name of the version to retrieve.
+  // Format: projects/*/products/*/versions/*
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = { type: "flame.googleapis.com/Version" }
+  ];
+}
+
+// Request message for CreateVersion.
+message CreateVersionRequest {
+  // The parent, which owns this collection of versions.
+  // Format: projects/*/products/*
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      child_type: "flame.googleapis.com/Version"
+    }
+  ];
+  // The version to create.
+  Version version = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+// Request message for UpdateVersion.
+message UpdateVersionRequest {
+  // The version to update.
+  //
+  // The `name` field is used to identify the version to update.
+  // Format: projects/*/products/*/versions/*
+  Version version = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // The list of fields to be updated.
+  google.protobuf.FieldMask update_mask = 2;
+}
+
+// Request message for DeleteVersion.
+message DeleteVersionRequest {
+  // The name of the version to delete.
+  // Format: projects/*/products/*/versions/*
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = { type: "flame.googleapis.com/Version" }
+  ];
+}
+
+// Request message for ListSpecs.
+message ListSpecsRequest {
+  // The parent, which owns this collection of specs.
+  // Format: projects/*/products/*/versions/*
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      child_type: "flame.googleapis.com/Spec"
+    }
+  ];
+  // The maximum number of specs to return.
+  // The service may return fewer than this value.
+  // If unspecified, at most 50 values will be returned.
+  // The maximum is 1000; values above 1000 will be coerced to 1000.
+  int32 page_size = 2;
+
+  // A page token, received from a previous `ListSpecs` call.
+  // Provide this to retrieve the subsequent page.
+  //
+  // When paginating, all other parameters provided to `ListSpecs` must match
+  // the call that provided the page token.
+  string page_token = 3;
+}
+
+// Response message for ListSpecs.
+message ListSpecsResponse {
+  // The specs from the specified publisher.
+  repeated Spec specs = 1;
+
+  // A token, which can be sent as `page_token` to retrieve the next page.
+  // If this field is omitted, there are no subsequent pages.
+  string next_page_token = 2;
+}
+
+// Request message for GetSpec.
+message GetSpecRequest {
+  // The name of the spec to retrieve.
+  // Format: projects/*/products/*/versions/*/specs/*
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = { type: "flame.googleapis.com/Spec" }
+  ];
+}
+
+// Request message for CreateSpec.
+message CreateSpecRequest {
+  // The parent, which owns this collection of specs.
+  // Format: projects/*/products/*/versions/*
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      child_type: "flame.googleapis.com/Spec"
+    }
+  ];
+  // The spec to create.
+  Spec spec = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+// Request message for UpdateSpec.
+message UpdateSpecRequest {
+  // The spec to update.
+  //
+  // The `name` field is used to identify the spec to update.
+  // Format: projects/*/products/*/versions/*/specs/*
+  Spec spec = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // The list of fields to be updated.
+  google.protobuf.FieldMask update_mask = 2;
+}
+
+// Request message for DeleteSpec.
+message DeleteSpecRequest {
+  // The name of the spec to delete.
+  // Format: projects/*/products/*/versions/*/specs/*
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = { type: "flame.googleapis.com/Spec" }
+  ];
+}
+
+// Request message for ListFiles.
+message ListFilesRequest {
+  // The parent, which owns this collection of files.
+  // Format: projects/*/products/*/versions/*/specs/*
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      child_type: "flame.googleapis.com/File"
+    }
+  ];
+  // The maximum number of files to return.
+  // The service may return fewer than this value.
+  // If unspecified, at most 50 values will be returned.
+  // The maximum is 1000; values above 1000 will be coerced to 1000.
+  int32 page_size = 2;
+
+  // A page token, received from a previous `ListFiles` call.
+  // Provide this to retrieve the subsequent page.
+  //
+  // When paginating, all other parameters provided to `ListFiles` must match
+  // the call that provided the page token.
+  string page_token = 3;
+
+  // The level of detail to return (defaults to BASIC).
+  FileView view = 4;
+}
+
+// Response message for ListFiles.
+message ListFilesResponse {
+  // The files from the specified publisher.
+  repeated File files = 1;
+
+  // A token, which can be sent as `page_token` to retrieve the next page.
+  // If this field is omitted, there are no subsequent pages.
+  string next_page_token = 2;
+}
+
+// Request message for GetFile.
+message GetFileRequest {
+  // The name of the file to retrieve.
+  // Format: projects/*/products/*/versions/*/specs/*/files/*
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = { type: "flame.googleapis.com/File" }
+  ];
+
+  // The level of detail to return (defaults to BASIC).
+  FileView view = 2;
+}
+
+// Request message for CreateFile.
+message CreateFileRequest {
+  // The parent, which owns this collection of files.
+  // Format: projects/*/products/*/versions/*/specs/*
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      child_type: "flame.googleapis.com/File"
+    }
+  ];
+  // The file to create.
+  File file = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+// Request message for UpdateFile.
+message UpdateFileRequest {
+  // The file to update.
+  //
+  // The `name` field is used to identify the file to update.
+  // Format: projects/*/products/*/versions/*/specs/*/files/*
+  File file = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // The list of fields to be updated.
+  google.protobuf.FieldMask update_mask = 2;
+}
+
+// Request message for DeleteFile.
+message DeleteFileRequest {
+  // The name of the file to delete.
+  // Format: projects/*/products/*/versions/*/specs/*/files/*
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = { type: "flame.googleapis.com/File" }
+  ];
+}
+

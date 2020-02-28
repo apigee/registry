@@ -1,0 +1,164 @@
+syntax = "proto3";
+
+package google.cloud.apigee.flame.v1alpha1;
+
+import "google/api/resource.proto";
+import "google/protobuf/timestamp.proto";
+
+option java_package = "com.google.cloud.apigee.flame.v1alpha1";
+option java_multiple_files = true;
+option java_outer_classname = "FlameModelsProto";
+option go_package = "apigov.dev/flame/rpc;rpc";
+
+// A Product is a top-level description of an API product.
+// Products are produced by producers and are commitments to provide services.
+message Product {
+  option (google.api.resource) = {
+    type: "flame.googleapis.com/Product"
+    pattern: "projects/{project}/products/{product}"
+  };
+
+  // Resource name.
+  string name = 1;
+
+  // Human-meaningful name.
+  string display_name = 2;
+
+  // A detailed description.
+  string description = 3;
+
+  // Creation timestamp.
+  google.protobuf.Timestamp create_time = 4;
+
+  // Last update timestamp.
+  google.protobuf.Timestamp update_time = 5;
+
+  // A user-definable description of the availability of this service.
+  // Format: free-form, but we expect single words that describe availability,
+  // e.g. "NONE", "TESTING", "PREVIEW", "GENERAL", "DEPRECATED", "SHUTDOWN".
+  string availability = 6;
+
+  // The recommended version of the API.
+  // Format: apis/{api}/versions/{version}
+  string recommended_version = 7 [
+    (google.api.resource_reference) = { type: "flame.googleapis.com/Version" }
+  ];
+}
+
+// A Version describes a particular version of an API product.
+// Versions are what consumers actually use.
+message Version {
+  option (google.api.resource) = {
+    type: "flame.googleapis.com/Version"
+    pattern: "projects/{project}/products/{product}/versions/{version}"
+  };
+
+  // Resource name.
+  string name = 1;
+
+  // Human-meaningful name.
+  string display_name = 2;
+
+  // A detailed description.
+  string description = 3;
+
+  // Creation timestamp.
+  google.protobuf.Timestamp create_time = 4;
+
+  // Last update timestamp.
+  google.protobuf.Timestamp update_time = 5;
+
+  // A user-definable description of the lifecycle phase of this API version.
+  // Format: free-form, but we expect single words that describe API maturity,
+  // e.g. "CONCEPT", "DESIGN", "DEVELOPMENT", "STAGING", "PRODUCTION",
+  // "DEPRECATED", "RETIRED".
+  string state = 6;
+}
+
+// A Spec describes a version of an API product in a structured way.
+// Specs provide formal descriptions that consumers can use to use a version.
+message Spec {
+  option (google.api.resource) = {
+    type: "flame.googleapis.com/Spec"
+    pattern: "projects/{project}/products/{product}/versions/{version}/specs/{spec}"
+  };
+
+  // Resource name.
+  string name = 1;
+
+  // Human-meaningful name.
+  string display_name = 2;
+
+  // A detailed description.
+  string description = 3;
+
+  // Creation timestamp.
+  google.protobuf.Timestamp create_time = 4;
+
+  // Last update timestamp.
+  google.protobuf.Timestamp update_time = 5;
+
+  // A format descriptor for this spec.
+  // Possible values include "proto3", "OpenAPI-2.0", "OpenAPI-3.0".
+  // This is free-form but we expect that it will eventually be quite structured
+  // with an "API Description Format" part and possible "API Style" parts,
+  // e.g. "OpenAPI-3.0+Google" for OpenAPI v3 with (hypothetical) Google style
+  // constraints.
+  string style = 6;
+}
+
+// A file is a reference to an arbitrary container of data used to hold API
+// specifications.
+message File {
+  option (google.api.resource) = {
+    type: "flame.googleapis.com/File"
+    pattern: "projects/{project}/products/{product}/versions/{version}/specs/{spec}/files/{file}"
+  };
+
+  // Resource name.
+  string name = 1;
+
+  // Human-meaningful name.
+  string display_name = 2;
+
+  // A detailed description.
+  string description = 3;
+
+  // Creation timestamp.
+  google.protobuf.Timestamp create_time = 4;
+
+  // Last update timestamp.
+  google.protobuf.Timestamp update_time = 5;
+
+  // A possibly-hierarchical name used to refer to the file from other files.
+  string filename = 6;
+
+  // The size of the file in bytes.
+  int32 size_bytes = 7;
+
+  // A hash of the file's contents
+  string hash = 8;
+
+  // The original source URI of the file (if one exists).
+  // This is an external location that can be used for reference purposes
+  // but which may not be authoritative since this external resource may
+  // change after the file is retrieved.
+  string source_uri = 9;
+
+  // The contents of the file. Returned only when the FULL view is requested.
+  bytes contents = 10;
+}
+
+// Views of Files.
+enum FileView {
+  // The default / unset value.
+  // The API will default to the BASIC view.
+  FILE_VIEW_UNSPECIFIED = 0;
+
+  // Include everything but the file contents.
+  BASIC = 1;
+
+  // Include everything.
+  FULL = 2;
+}
+
