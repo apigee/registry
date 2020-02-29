@@ -1,8 +1,8 @@
 #!/bin/sh
 
 # First get some dependencies.
-go get -u google.golang.org/grpc
-go get -u github.com/golang/protobuf/protoc-gen-go
+#go get -u google.golang.org/grpc
+#go get -u github.com/golang/protobuf/protoc-gen-go
 
 export ANNOTATIONS="third_party/api-common-protos"
 
@@ -32,3 +32,11 @@ protoc --proto_path=./proto --proto_path=${ANNOTATIONS} \
   	--go_cli_out cmd/cli \
   	--go_cli_opt "root=flame" \
   	--go_cli_opt "gapic=apigov.dev/flame/gapic"
+
+# generate descriptor set for envoy proxy
+protoc --proto_path=./proto --proto_path=${ANNOTATIONS} \
+	proto/flame_models.proto \
+	proto/flame_service.proto \
+	--include_imports \
+        --include_source_info \
+        --descriptor_set_out=envoy/proto.pb
