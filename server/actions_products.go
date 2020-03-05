@@ -21,11 +21,18 @@ func (s *server) CreateProduct(ctx context.Context, request *rpc.CreateProductRe
 	if err != nil {
 		return nil, err
 	}
-	product, err := models.NewProductFromMessage(request.Product)
+	product, err := models.NewProductFromParentAndProductID(request.Parent, request.GetProductId())
 	if err != nil {
 		return nil, err
 	}
 	k := &datastore.Key{Kind: productEntityName, Name: product.ResourceName()}
+	// fail if product already exists
+	var existingProduct models.Product
+	err = client.Get(ctx, k, &existingProduct)
+	if err == nil {
+		return nil, status.Error(codes.AlreadyExists, product.ResourceName()+" already exists")
+	}
+
 	product.CreateTime = time.Now()
 	product.UpdateTime = product.CreateTime
 	k, err = client.Put(ctx, k, product)

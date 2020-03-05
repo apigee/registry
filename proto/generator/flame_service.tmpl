@@ -2,7 +2,7 @@
 
 package google.cloud.apigee.flame.v1alpha1;
 
-import "edge/governance/proto/flame_models.proto";
+import "flame_models.proto";
 import "google/api/annotations.proto";
 import "google/api/client.proto";
 import "google/api/field_behavior.proto";
@@ -13,6 +13,7 @@ import "google/protobuf/field_mask.proto";
 option java_package = "com.google.cloud.apigee.flame.v1alpha1";
 option java_multiple_files = true;
 option java_outer_classname = "FlameServiceProto";
+option go_package = "apigov.dev/flame/rpc;rpc";
 
 // The Flame API provides structures and relationships for
 // Full Lifecycle API Management. It enables API platform
@@ -20,6 +21,7 @@ option java_outer_classname = "FlameServiceProto";
 // provide information and oversight to API producers and
 // consumers in their organizations.
 service Flame {
+  option (google.api.default_host) = "flame.googleapis.com";
 {{range .Entities}}{{template "rpcs" .}}{{end}}
 }
 {{range .Entities}}{{template "messages" .}}{{end}}
@@ -56,8 +58,8 @@ service Flame {
       post: "{{collection_path .ParentName .PluralName}}"
       body: "{{lower .Name}}"
     };{{if not .ParentName}}
-    option (google.api.method_signature) = "{{lower .Name}}";{{else}}
-    option (google.api.method_signature) = "parent,{{lower .Name}}";{{end}}
+    option (google.api.method_signature) = "{{lower .Name}},{{lower .Name}}_id";{{else}}
+    option (google.api.method_signature) = "parent,{{lower .Name}},{{lower .Name}}_id";{{end}}
   }
 
   // Update{{.Name}} can be used to modify a specified {{lower_comment .Name}}.
@@ -143,6 +145,12 @@ message Create{{.Name}}Request {
   ];
 {{end}}  // The {{lower_comment .Name}} to create.
   {{.Name}} {{lower .Name}} = 2 [(google.api.field_behavior) = REQUIRED];
+  // The ID to use for the {{lower .Name}}, which will become the final component of
+  // the {{lower .Name}}'s resource name.
+  //
+  // This value should be 4-63 characters, and valid characters
+  // are /[a-z][0-9]-/.
+  string {{lower .Name}}_id = 3;
 }
 
 // Request message for Update{{.Name}}.

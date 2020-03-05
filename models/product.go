@@ -24,6 +24,18 @@ type Product struct {
 	RecommendedVersion string    // Recommended API version.
 }
 
+func NewProductFromParentAndProductID(parent string, productID string) (*Product, error) {
+	product := &Product{}
+	r := regexp.MustCompile("^/projects/" + nameRegex + "$")
+	m := r.FindAllStringSubmatch(parent, -1)
+	if m == nil {
+		return nil, errors.New("invalid product name")
+	}
+	product.ProjectID = m[0][1]
+	product.ProductID = productID
+	return product, nil
+}
+
 // NewProductFromResourceName parses resource names and returns an initialized product.
 func NewProductFromResourceName(name string) (*Product, error) {
 	product := &Product{}

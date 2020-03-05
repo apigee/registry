@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package google.cloud.apigee.flame.v1alpha1;
 
-import "edge/governance/proto/flame_models.proto";
+import "flame_models.proto";
 import "google/api/annotations.proto";
 import "google/api/client.proto";
 import "google/api/field_behavior.proto";
@@ -13,6 +13,7 @@ import "google/protobuf/field_mask.proto";
 option java_package = "com.google.cloud.apigee.flame.v1alpha1";
 option java_multiple_files = true;
 option java_outer_classname = "FlameServiceProto";
+option go_package = "apigov.dev/flame/rpc;rpc";
 
 // The Flame API provides structures and relationships for
 // Full Lifecycle API Management. It enables API platform
@@ -20,6 +21,7 @@ option java_outer_classname = "FlameServiceProto";
 // provide information and oversight to API producers and
 // consumers in their organizations.
 service Flame {
+  option (google.api.default_host) = "flame.googleapis.com";
 
   // ListProducts returns matching products.
   rpc ListProducts(ListProductsRequest) returns (ListProductsResponse) {
@@ -43,7 +45,7 @@ service Flame {
       post : "/v1alpha1/{parent=projects/*}/products"
       body : "product"
     };
-    option (google.api.method_signature) = "parent,product";
+    option (google.api.method_signature) = "parent,product,product_id";
   }
 
   // UpdateProduct can be used to modify a specified product.
@@ -86,7 +88,7 @@ service Flame {
       post : "/v1alpha1/{parent=projects/*/products/*}/versions"
       body : "version"
     };
-    option (google.api.method_signature) = "parent,version";
+    option (google.api.method_signature) = "parent,version,version_id";
   }
 
   // UpdateVersion can be used to modify a specified version.
@@ -129,7 +131,7 @@ service Flame {
       post : "/v1alpha1/{parent=projects/*/products/*/versions/*}/specs"
       body : "spec"
     };
-    option (google.api.method_signature) = "parent,spec";
+    option (google.api.method_signature) = "parent,spec,spec_id";
   }
 
   // UpdateSpec can be used to modify a specified spec.
@@ -171,7 +173,7 @@ service Flame {
       post : "/v1alpha1/{parent=projects/*/products/*/versions/*/specs/*}/files"
       body : "file"
     };
-    option (google.api.method_signature) = "parent,file";
+    option (google.api.method_signature) = "parent,file,file_id";
   }
 
   // UpdateFile can be used to modify a specified file.
@@ -250,6 +252,12 @@ message CreateProductRequest {
   ];
   // The product to create.
   Product product = 2 [ (google.api.field_behavior) = REQUIRED ];
+  // The ID to use for the product, which will become the final component of
+  // the product's resource name.
+  //
+  // This value should be 4-63 characters, and valid characters
+  // are /[a-z][0-9]-/.
+  string product_id = 3;
 }
 
 // Request message for UpdateProduct.
@@ -330,6 +338,12 @@ message CreateVersionRequest {
   ];
   // The version to create.
   Version version = 2 [ (google.api.field_behavior) = REQUIRED ];
+  // The ID to use for the version, which will become the final component of
+  // the version's resource name.
+  //
+  // This value should be 4-63 characters, and valid characters
+  // are /[a-z][0-9]-/.
+  string version_id = 3;
 }
 
 // Request message for UpdateVersion.
@@ -406,6 +420,12 @@ message CreateSpecRequest {
   ];
   // The spec to create.
   Spec spec = 2 [ (google.api.field_behavior) = REQUIRED ];
+  // The ID to use for the spec, which will become the final component of
+  // the spec's resource name.
+  //
+  // This value should be 4-63 characters, and valid characters
+  // are /[a-z][0-9]-/.
+  string spec_id = 3;
 }
 
 // Request message for UpdateSpec.
@@ -488,6 +508,12 @@ message CreateFileRequest {
   ];
   // The file to create.
   File file = 2 [ (google.api.field_behavior) = REQUIRED ];
+  // The ID to use for the file, which will become the final component of
+  // the file's resource name.
+  //
+  // This value should be 4-63 characters, and valid characters
+  // are /[a-z][0-9]-/.
+  string file_id = 3;
 }
 
 // Request message for UpdateFile.
