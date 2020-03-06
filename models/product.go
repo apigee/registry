@@ -24,6 +24,7 @@ type Product struct {
 	RecommendedVersion string    // Recommended API version.
 }
 
+// NewProductFromResourceName parses a parent name and returns an initialized product.
 func NewProductFromParentAndProductID(parent string, productID string) (*Product, error) {
 	product := &Product{}
 	r := regexp.MustCompile("^/projects/" + nameRegex + "$")

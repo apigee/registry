@@ -30,7 +30,7 @@ protoc --proto_path=./proto --proto_path=${ANNOTATIONS} \
 	proto/flame_models.proto \
 	proto/flame_service.proto \
   	--go_cli_out cmd/cli \
-  	--go_cli_opt "root=flame" \
+  	--go_cli_opt "root=cli" \
   	--go_cli_opt "gapic=apigov.dev/flame/gapic"
 
 # generate descriptor set for envoy proxy
