@@ -25,10 +25,43 @@ type Spec struct {
 	Style       string    // Specification format.
 }
 
+// ParseParentVersion ...
+func ParseParentVersion(parent string) ([]string, error) {
+	r := regexp.MustCompile("^projects/" + nameRegex +
+		"/products/" + nameRegex +
+		"/versions/" + nameRegex +
+		"$")
+	m := r.FindAllStringSubmatch(parent, -1)
+	if m == nil {
+		return nil, fmt.Errorf("invalid version '%s'", parent)
+	}
+	return m[0], nil
+}
+
+// NewSpecFromParentAndSpecID returns an initialized spec for a specified parent and specID.
+func NewSpecFromParentAndSpecID(parent string, specID string) (*Spec, error) {
+	r := regexp.MustCompile("^projects/" + nameRegex +
+		"/products/" + nameRegex +
+		"/versions/" + nameRegex + "$")
+	m := r.FindAllStringSubmatch(parent, -1)
+	if m == nil {
+		return nil, fmt.Errorf("invalid parent '%s'", parent)
+	}
+	if specID == "" {
+		return nil, fmt.Errorf("invalid id '%s'", specID)
+	}
+	spec := &Spec{}
+	spec.ProjectID = m[0][1]
+	spec.ProductID = m[0][2]
+	spec.VersionID = m[0][3]
+	spec.SpecID = specID
+	return spec, nil
+}
+
 // NewSpecFromResourceName parses resource names and returns an initialized spec.
 func NewSpecFromResourceName(name string) (*Spec, error) {
 	spec := &Spec{}
-	r := regexp.MustCompile("^/projects/" + nameRegex + "/products/" + nameRegex + "/versions/" + nameRegex + "/specs/" + nameRegex + "$")
+	r := regexp.MustCompile("^projects/" + nameRegex + "/products/" + nameRegex + "/versions/" + nameRegex + "/specs/" + nameRegex + "$")
 	m := r.FindAllStringSubmatch(name, -1)
 	if m == nil {
 		return nil, errors.New("invalid spec name")
@@ -55,7 +88,7 @@ func NewSpecFromMessage(message *rpc.Spec) (*Spec, error) {
 
 // ResourceName generates the resource name of a spec.
 func (spec *Spec) ResourceName() string {
-	return fmt.Sprintf("/projects/%s/products/%s/versions/%s/specs/%s", spec.ProjectID, spec.ProductID, spec.VersionID, spec.SpecID)
+	return fmt.Sprintf("projects/%s/products/%s/versions/%s/specs/%s", spec.ProjectID, spec.ProductID, spec.VersionID, spec.SpecID)
 }
 
 // Message returns a message representing a spec.

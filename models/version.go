@@ -24,10 +24,39 @@ type Version struct {
 	State       string    // Lifecycle stage.
 }
 
+// ParseParentProduct ...
+func ParseParentProduct(parent string) ([]string, error) {
+	r := regexp.MustCompile("^projects/" + nameRegex +
+		"/products/" + nameRegex +
+		"$")
+	m := r.FindAllStringSubmatch(parent, -1)
+	if m == nil {
+		return nil, fmt.Errorf("invalid parent '%s'", parent)
+	}
+	return m[0], nil
+}
+
+// NewVersionFromParentAndVersionID returns an initialized product for a specified parent and productID.
+func NewVersionFromParentAndVersionID(parent string, versionID string) (*Version, error) {
+	r := regexp.MustCompile("^projects/" + nameRegex + "/products/" + nameRegex + "$")
+	m := r.FindAllStringSubmatch(parent, -1)
+	if m == nil {
+		return nil, fmt.Errorf("invalid product '%s'", parent)
+	}
+	if versionID == "" {
+		return nil, fmt.Errorf("invalid id '%s'", versionID)
+	}
+	version := &Version{}
+	version.ProjectID = m[0][1]
+	version.ProductID = m[0][2]
+	version.VersionID = versionID
+	return version, nil
+}
+
 // NewVersionFromResourceName parses resource names and returns an initialized version.
 func NewVersionFromResourceName(name string) (*Version, error) {
 	version := &Version{}
-	r := regexp.MustCompile("^/projects/" + nameRegex + "/products/" + nameRegex + "/versions/" + nameRegex + "$")
+	r := regexp.MustCompile("^projects/" + nameRegex + "/products/" + nameRegex + "/versions/" + nameRegex + "$")
 	m := r.FindAllStringSubmatch(name, -1)
 	if m == nil {
 		return nil, errors.New("invalid version name")
@@ -53,7 +82,7 @@ func NewVersionFromMessage(message *rpc.Version) (*Version, error) {
 
 // ResourceName generates the resource name of a version.
 func (version *Version) ResourceName() string {
-	return fmt.Sprintf("/projects/%s/products/%s/versions/%s", version.ProjectID, version.ProductID, version.VersionID)
+	return fmt.Sprintf("projects/%s/products/%s/versions/%s", version.ProjectID, version.ProductID, version.VersionID)
 }
 
 // Message returns a message representing a version.
@@ -71,6 +100,9 @@ func (version *Version) Message() (message *rpc.Version, err error) {
 
 // Update modifies a version using the contents of a message.
 func (version *Version) Update(message *rpc.Version) error {
+	version.DisplayName = message.GetDisplayName()
+	version.Description = message.GetDescription()
+	version.State = message.GetState()
 	version.UpdateTime = version.CreateTime
 	return nil
 }

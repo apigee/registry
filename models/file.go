@@ -30,10 +30,46 @@ type File struct {
 	Contents    []byte    // The contents of the file.
 }
 
+// ParseParentSpec ...
+func ParseParentSpec(parent string) ([]string, error) {
+	r := regexp.MustCompile("^projects/" + nameRegex +
+		"/products/" + nameRegex +
+		"/versions/" + nameRegex +
+		"/specs/" + nameRegex +
+		"$")
+	m := r.FindAllStringSubmatch(parent, -1)
+	if m == nil {
+		return nil, fmt.Errorf("invalid spec '%s'", parent)
+	}
+	return m[0], nil
+}
+
+// NewFileFromParentAndFileID returns an initialized file for a specified parent and fileID.
+func NewFileFromParentAndFileID(parent string, fileID string) (*File, error) {
+	r := regexp.MustCompile("^projects/" + nameRegex +
+		"/products/" + nameRegex +
+		"/versions/" + nameRegex +
+		"/specs/" + nameRegex + "$")
+	m := r.FindAllStringSubmatch(parent, -1)
+	if m == nil {
+		return nil, fmt.Errorf("invalid parent '%s'", parent)
+	}
+	if fileID == "" {
+		return nil, fmt.Errorf("invalid id '%s'", fileID)
+	}
+	file := &File{}
+	file.ProjectID = m[0][1]
+	file.ProductID = m[0][2]
+	file.VersionID = m[0][3]
+	file.SpecID = m[0][4]
+	file.FileID = fileID
+	return file, nil
+}
+
 // NewFileFromResourceName parses resource names and returns an initialized file.
 func NewFileFromResourceName(name string) (*File, error) {
 	file := &File{}
-	r := regexp.MustCompile("^/projects/" + nameRegex + "/products/" + nameRegex + "/versions/" + nameRegex + "/specs/" + nameRegex + "/files/" + nameRegex + "$")
+	r := regexp.MustCompile("^projects/" + nameRegex + "/products/" + nameRegex + "/versions/" + nameRegex + "/specs/" + nameRegex + "/files/" + nameRegex + "$")
 	m := r.FindAllStringSubmatch(name, -1)
 	if m == nil {
 		return nil, errors.New("invalid file name")
@@ -61,7 +97,7 @@ func NewFileFromMessage(message *rpc.File) (*File, error) {
 
 // ResourceName generates the resource name of a file.
 func (file *File) ResourceName() string {
-	return fmt.Sprintf("/projects/%s/products/%s/versions/%s/specs/%s/files/%s", file.ProjectID, file.ProductID, file.VersionID, file.SpecID, file.FileID)
+	return fmt.Sprintf("projects/%s/products/%s/versions/%s/specs/%s/files/%s", file.ProjectID, file.ProductID, file.VersionID, file.SpecID, file.FileID)
 }
 
 // Message returns a message representing a file.

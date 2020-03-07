@@ -3,7 +3,6 @@
 package models
 
 import (
-	"errors"
 	"fmt"
 	"regexp"
 	"time"
@@ -24,14 +23,27 @@ type Product struct {
 	RecommendedVersion string    // Recommended API version.
 }
 
-// NewProductFromResourceName parses a parent name and returns an initialized product.
-func NewProductFromParentAndProductID(parent string, productID string) (*Product, error) {
-	product := &Product{}
-	r := regexp.MustCompile("^/projects/" + nameRegex + "$")
+// ParseParentProject ...
+func ParseParentProject(parent string) ([]string, error) {
+	r := regexp.MustCompile("^projects/" + nameRegex + "$")
 	m := r.FindAllStringSubmatch(parent, -1)
 	if m == nil {
-		return nil, errors.New("invalid product name")
+		return nil, fmt.Errorf("invalid project '%s'", parent)
 	}
+	return m[0], nil
+}
+
+// NewProductFromParentAndProductID returns an initialized product for a specified parent and productID.
+func NewProductFromParentAndProductID(parent string, productID string) (*Product, error) {
+	r := regexp.MustCompile("^projects/" + nameRegex + "$")
+	m := r.FindAllStringSubmatch(parent, -1)
+	if m == nil {
+		return nil, fmt.Errorf("invalid parent '%s'", parent)
+	}
+	if productID == "" {
+		return nil, fmt.Errorf("invalid id '%s'", productID)
+	}
+	product := &Product{}
 	product.ProjectID = m[0][1]
 	product.ProductID = productID
 	return product, nil
@@ -40,32 +52,19 @@ func NewProductFromParentAndProductID(parent string, productID string) (*Product
 // NewProductFromResourceName parses resource names and returns an initialized product.
 func NewProductFromResourceName(name string) (*Product, error) {
 	product := &Product{}
-	r := regexp.MustCompile("^/projects/" + nameRegex + "/products/" + nameRegex + "$")
+	r := regexp.MustCompile("^projects/" + nameRegex + "/products/" + nameRegex + "$")
 	m := r.FindAllStringSubmatch(name, -1)
 	if m == nil {
-		return nil, errors.New("invalid product name")
+		return nil, fmt.Errorf("invalid product name (%s)", name)
 	}
 	product.ProjectID = m[0][1]
 	product.ProductID = m[0][2]
 	return product, nil
 }
 
-// NewProductFromMessage returns an initialized product from a message.
-func NewProductFromMessage(message *rpc.Product) (*Product, error) {
-	product, err := NewProductFromResourceName(message.GetName())
-	if err != nil {
-		return nil, err
-	}
-	product.DisplayName = message.GetDisplayName()
-	product.Description = message.GetDescription()
-	product.Availability = message.GetAvailability()
-	product.RecommendedVersion = message.GetRecommendedVersion()
-	return product, nil
-}
-
 // ResourceName generates the resource name of a product.
 func (product *Product) ResourceName() string {
-	return fmt.Sprintf("/projects/%s/products/%s", product.ProjectID, product.ProductID)
+	return fmt.Sprintf("projects/%s/products/%s", product.ProjectID, product.ProductID)
 }
 
 // Message returns a message representing a product.
@@ -83,6 +82,10 @@ func (product *Product) Message() (message *rpc.Product, err error) {
 
 // Update modifies a product using the contents of a message.
 func (product *Product) Update(message *rpc.Product) error {
+	product.DisplayName = message.GetDisplayName()
+	product.Description = message.GetDescription()
+	product.Availability = message.GetAvailability()
+	product.RecommendedVersion = message.GetRecommendedVersion()
 	product.UpdateTime = product.CreateTime
 	return nil
 }

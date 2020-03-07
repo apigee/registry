@@ -4,8 +4,10 @@ go 1.13
 
 require (
 	cloud.google.com/go v0.38.0
+	github.com/docopt/docopt-go v0.0.0-20180111231733-ee0de3bc6815
 	github.com/golang/protobuf v1.3.4
 	github.com/googleapis/gax-go/v2 v2.0.5
+	github.com/googleapis/gnostic v0.4.1
 	github.com/spf13/cobra v0.0.6
 	github.com/spf13/viper v1.6.2
 	golang.org/x/net v0.0.0-20200226121028-0de0cce0169b // indirect

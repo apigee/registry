@@ -4,12 +4,12 @@ package server
 
 import (
 	"context"
-	"time"
 
 	"apigov.dev/flame/models"
 	rpc "apigov.dev/flame/rpc"
 	"cloud.google.com/go/datastore"
 	"github.com/golang/protobuf/ptypes/empty"
+	"google.golang.org/api/iterator"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -21,13 +21,20 @@ func (s *server) CreateVersion(ctx context.Context, request *rpc.CreateVersionRe
 	if err != nil {
 		return nil, err
 	}
-	version, err := models.NewVersionFromMessage(request.Version)
+	defer client.Close()
+	version, err := models.NewVersionFromParentAndVersionID(request.GetParent(), request.GetVersionId())
 	if err != nil {
 		return nil, err
 	}
 	k := &datastore.Key{Kind: versionEntityName, Name: version.ResourceName()}
-	version.CreateTime = time.Now()
-	version.UpdateTime = version.CreateTime
+	// fail if version already exists
+	var existingVersion models.Version
+	err = client.Get(ctx, k, &existingVersion)
+	if err == nil {
+		return nil, status.Error(codes.AlreadyExists, version.ResourceName()+" already exists")
+	}
+	err = version.Update(request.GetVersion())
+	version.CreateTime = version.UpdateTime
 	k, err = client.Put(ctx, k, version)
 	if err != nil {
 		return nil, err
@@ -40,6 +47,7 @@ func (s *server) DeleteVersion(ctx context.Context, request *rpc.DeleteVersionRe
 	if err != nil {
 		return nil, err
 	}
+	defer client.Close()
 	// validate name
 	_, err = models.NewVersionFromResourceName(request.GetName())
 	if err != nil {
@@ -56,14 +64,17 @@ func (s *server) GetVersion(ctx context.Context, request *rpc.GetVersionRequest)
 	if err != nil {
 		return nil, err
 	}
+	defer client.Close()
 	version, err := models.NewVersionFromResourceName(request.GetName())
 	if err != nil {
 		return nil, err
 	}
 	k := &datastore.Key{Kind: versionEntityName, Name: version.ResourceName()}
-	err = client.Get(ctx, k, &version)
-	if err != nil {
+	err = client.Get(ctx, k, version)
+	if err == datastore.ErrNoSuchEntity {
 		return nil, status.Error(codes.NotFound, "not found")
+	} else if err != nil {
+		return nil, internalError(err)
 	}
 	return version.Message()
 }
@@ -73,16 +84,37 @@ func (s *server) ListVersions(ctx context.Context, req *rpc.ListVersionsRequest)
 	if err != nil {
 		return nil, err
 	}
+	defer client.Close()
 	q := datastore.NewQuery(versionEntityName)
-	var versions []*models.Version
-	_, err = client.GetAll(ctx, q, &versions)
+	q = queryApplyPageSize(q, req.GetPageSize())
+	q, err = queryApplyCursor(q, req.GetPageToken())
+	if err != nil {
+		return nil, internalError(err)
+	}
+	m, err := models.ParseParentProduct(req.GetParent())
+	if err != nil {
+		return nil, invalidArgumentError(err)
+	}
+	q = q.Filter("ProjectID =", m[1])
+	q = q.Filter("ProductID =", m[2])
 	var versionMessages []*rpc.Version
-	for _, version := range versions {
+	var version models.Version
+	it := client.Run(ctx, q.Distinct())
+	_, err = it.Next(&version)
+	for err == nil {
 		versionMessage, _ := version.Message()
 		versionMessages = append(versionMessages, versionMessage)
+		_, err = it.Next(&version)
+	}
+	if err != iterator.Done {
+		return nil, internalError(err)
 	}
 	responses := &rpc.ListVersionsResponse{
 		Versions: versionMessages,
+	}
+	responses.NextPageToken, err = iteratorGetCursor(it, len(versionMessages))
+	if err != nil {
+		return nil, internalError(err)
 	}
 	return responses, nil
 }
@@ -92,6 +124,7 @@ func (s *server) UpdateVersion(ctx context.Context, request *rpc.UpdateVersionRe
 	if err != nil {
 		return nil, err
 	}
+	defer client.Close()
 	version, err := models.NewVersionFromResourceName(request.GetVersion().GetName())
 	if err != nil {
 		return nil, err

@@ -4,12 +4,12 @@ package server
 
 import (
 	"context"
-	"time"
 
 	"apigov.dev/flame/models"
 	rpc "apigov.dev/flame/rpc"
 	"cloud.google.com/go/datastore"
 	"github.com/golang/protobuf/ptypes/empty"
+	"google.golang.org/api/iterator"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -21,13 +21,19 @@ func (s *server) CreateFile(ctx context.Context, request *rpc.CreateFileRequest)
 	if err != nil {
 		return nil, err
 	}
-	file, err := models.NewFileFromMessage(request.File)
+	defer client.Close()
+	file, err := models.NewFileFromParentAndFileID(request.GetParent(), request.GetFileId())
 	if err != nil {
 		return nil, err
 	}
 	k := &datastore.Key{Kind: fileEntityName, Name: file.ResourceName()}
-	file.CreateTime = time.Now()
-	file.UpdateTime = file.CreateTime
+	// fail if file already exists
+	var existingFile models.File
+	err = client.Get(ctx, k, &existingFile)
+	if err == nil {
+		return nil, status.Error(codes.AlreadyExists, file.ResourceName()+" already exists")
+	}
+	file.CreateTime = file.UpdateTime
 	k, err = client.Put(ctx, k, file)
 	if err != nil {
 		return nil, err
@@ -40,6 +46,7 @@ func (s *server) DeleteFile(ctx context.Context, request *rpc.DeleteFileRequest)
 	if err != nil {
 		return nil, err
 	}
+	defer client.Close()
 	// validate name
 	_, err = models.NewFileFromResourceName(request.GetName())
 	if err != nil {
@@ -56,14 +63,17 @@ func (s *server) GetFile(ctx context.Context, request *rpc.GetFileRequest) (*rpc
 	if err != nil {
 		return nil, err
 	}
+	defer client.Close()
 	file, err := models.NewFileFromResourceName(request.GetName())
 	if err != nil {
 		return nil, err
 	}
 	k := &datastore.Key{Kind: fileEntityName, Name: file.ResourceName()}
-	err = client.Get(ctx, k, &file)
-	if err != nil {
+	err = client.Get(ctx, k, file)
+	if err == datastore.ErrNoSuchEntity {
 		return nil, status.Error(codes.NotFound, "not found")
+	} else if err != nil {
+		return nil, internalError(err)
 	}
 	return file.Message()
 }
@@ -73,16 +83,39 @@ func (s *server) ListFiles(ctx context.Context, req *rpc.ListFilesRequest) (*rpc
 	if err != nil {
 		return nil, err
 	}
+	defer client.Close()
 	q := datastore.NewQuery(fileEntityName)
-	var files []*models.File
-	_, err = client.GetAll(ctx, q, &files)
+	q = queryApplyPageSize(q, req.GetPageSize())
+	q, err = queryApplyCursor(q, req.GetPageToken())
+	if err != nil {
+		return nil, internalError(err)
+	}
+	m, err := models.ParseParentSpec(req.GetParent())
+	if err != nil {
+		return nil, invalidArgumentError(err)
+	}
+	q = q.Filter("ProjectID =", m[1])
+	q = q.Filter("ProductID =", m[2])
+	q = q.Filter("VersionID =", m[3])
+	q = q.Filter("SpecID =", m[4])
 	var fileMessages []*rpc.File
-	for _, file := range files {
+	var file models.File
+	it := client.Run(ctx, q.Distinct())
+	_, err = it.Next(&file)
+	for err == nil {
 		fileMessage, _ := file.Message()
 		fileMessages = append(fileMessages, fileMessage)
+		_, err = it.Next(&file)
+	}
+	if err != iterator.Done {
+		return nil, internalError(err)
 	}
 	responses := &rpc.ListFilesResponse{
 		Files: fileMessages,
+	}
+	responses.NextPageToken, err = iteratorGetCursor(it, len(fileMessages))
+	if err != nil {
+		return nil, internalError(err)
 	}
 	return responses, nil
 }
@@ -92,6 +125,7 @@ func (s *server) UpdateFile(ctx context.Context, request *rpc.UpdateFileRequest)
 	if err != nil {
 		return nil, err
 	}
+	defer client.Close()
 	file, err := models.NewFileFromResourceName(request.GetFile().GetName())
 	if err != nil {
 		return nil, err
