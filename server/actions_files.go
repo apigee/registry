@@ -34,6 +34,7 @@ func (s *server) CreateFile(ctx context.Context, request *rpc.CreateFileRequest)
 		return nil, status.Error(codes.AlreadyExists, file.ResourceName()+" already exists")
 	}
 	file.CreateTime = file.UpdateTime
+	err = file.Update(request.GetFile())
 	k, err = client.Put(ctx, k, file)
 	if err != nil {
 		return nil, err

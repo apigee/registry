@@ -106,6 +106,7 @@ func (spec *Spec) Message() (message *rpc.Spec, err error) {
 
 // Update modifies a spec using the contents of a message.
 func (spec *Spec) Update(message *rpc.Spec) error {
+	spec.Style = message.GetStyle()
 	spec.UpdateTime = spec.CreateTime
 	return nil
 }

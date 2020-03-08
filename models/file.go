@@ -27,7 +27,7 @@ type File struct {
 	SizeInBytes int32     // Size of the file.
 	Hash        string    // A hash of the file.
 	SourceURI   string    // The original source URI of the file.
-	Contents    []byte    // The contents of the file.
+	Contents    []byte    `datastore:",noindex"` // The contents of the file.
 }
 
 // ParseParentSpec ...
@@ -108,6 +108,7 @@ func (file *File) Message() (message *rpc.File, err error) {
 	message.Description = file.Description
 	message.CreateTime, err = ptypes.TimestampProto(file.CreateTime)
 	message.UpdateTime, err = ptypes.TimestampProto(file.UpdateTime)
+	message.Contents = file.Contents
 	//message.Availability = file.Availability
 	//message.RecommendedVersion = file.RecommendedVersion
 	return message, err
@@ -115,6 +116,7 @@ func (file *File) Message() (message *rpc.File, err error) {
 
 // Update modifies a file using the contents of a message.
 func (file *File) Update(message *rpc.File) error {
+	file.Contents = message.GetContents()
 	file.UpdateTime = file.CreateTime
 	return nil
 }

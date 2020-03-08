@@ -37,8 +37,8 @@ func main() {
 Usage:
 	disco help
 	disco list [--raw]
-	disco get [<api>] [<version>] [--raw] [--openapi2] [--openapi3] [--features] [--schemas] [--all]
-	disco <file> [--openapi2] [--openapi3] [--features] [--schemas]
+	disco get [<api>] [<version>] [--upload] [--raw] [--openapi2] [--openapi3] [--features] [--schemas] [--all]
+	disco <file> [--upload] [--openapi2] [--openapi3] [--features] [--schemas]
 	`
 	arguments, err := docopt.Parse(usage, nil, false, "Disco 1.0", false)
 	if err != nil {
@@ -194,6 +194,52 @@ func handleExportArgumentsForBytes(arguments map[string]interface{}, bytes []byt
 	document, err := discovery.ParseDocument(bytes)
 	if err != nil {
 		return true, err
+	}
+	if arguments["--upload"].(bool) {
+		log.Printf("uploading")
+		initFlame()
+		api := document
+		ctx := context.TODO()
+		// does the spec exist? if not, create it
+		{
+			request := &rpcpb.GetSpecRequest{}
+			request.Name = "projects/google/products/" + api.Name +
+				"/versions/" + api.Version +
+				"/specs/discovery"
+			response, err := FlameClient.GetSpec(ctx, request)
+			log.Printf("response %+v\nerr %+v", response, err)
+			if err != nil { // TODO only do this for NotFound errors
+				request := &rpcpb.CreateSpecRequest{}
+				request.Parent = "projects/google/products/" + api.Name +
+					"/versions/" + api.Version
+				request.SpecId = "discovery"
+				request.Spec = &rpcpb.Spec{}
+				request.Spec.Style = "discovery"
+				response, err := FlameClient.CreateSpec(ctx, request)
+				log.Printf("response %+v\nerr %+v", response, err)
+			}
+		}
+		// does the file exist? if not, create it
+		{
+			request := &rpcpb.GetFileRequest{}
+			request.Name = "projects/google/products/" + api.Name +
+				"/versions/" + api.Version +
+				"/specs/discovery" +
+				"/files/0"
+			response, err := FlameClient.GetFile(ctx, request)
+			log.Printf("response %+v\nerr %+v", response, err)
+			if err != nil { // TODO only do this for NotFound errors
+				request := &rpcpb.CreateFileRequest{}
+				request.Parent = "projects/google/products/" + api.Name +
+					"/versions/" + api.Version + "/specs/discovery"
+				request.FileId = "0"
+				request.File = &rpcpb.File{}
+				request.File.Contents = bytes
+				response, err := FlameClient.CreateFile(ctx, request)
+				log.Printf("response %+v\nerr %+v", response, err)
+			}
+		}
+		handled = true
 	}
 	if arguments["--raw"].(bool) {
 		// Write the Discovery document as a JSON file.
