@@ -121,6 +121,7 @@ Usage:
 		}
 		if arguments["--all"].(bool) {
 			if !arguments["--raw"].(bool) &&
+				!arguments["--upload"].(bool) &&
 				!arguments["--openapi2"].(bool) &&
 				!arguments["--openapi3"].(bool) &&
 				!arguments["--features"].(bool) &&
@@ -200,6 +201,38 @@ func handleExportArgumentsForBytes(arguments map[string]interface{}, bytes []byt
 		initFlame()
 		api := document
 		ctx := context.TODO()
+		// does the API exist? if not, create it
+		{
+			request := &rpcpb.GetProductRequest{}
+			request.Name = "projects/google/products/" + api.Name
+			response, err := FlameClient.GetProduct(ctx, request)
+			log.Printf("response %+v\nerr %+v", response, err)
+			if err != nil { // TODO only do this for NotFound errors
+				request := &rpcpb.CreateProductRequest{}
+				request.Parent = "projects/google"
+				request.ProductId = api.Name
+				request.Product = &rpcpb.Product{}
+				request.Product.DisplayName = api.Title
+				request.Product.Description = api.Description
+				response, err := FlameClient.CreateProduct(ctx, request)
+				log.Printf("response %+v\nerr %+v", response, err)
+			}
+		}
+		// does the version exist? if not create it
+		{
+			request := &rpcpb.GetVersionRequest{}
+			request.Name = "projects/google/products/" + api.Name + "/versions/" + api.Version
+			response, err := FlameClient.GetVersion(ctx, request)
+			log.Printf("response %+v\nerr %+v", response, err)
+			if err != nil {
+				request := &rpcpb.CreateVersionRequest{}
+				request.Parent = "projects/google/products/" + api.Name
+				request.VersionId = api.Version
+				request.Version = &rpcpb.Version{}
+				response, err := FlameClient.CreateVersion(ctx, request)
+				log.Printf("response %+v\nerr %+v", response, err)
+			}
+		}
 		// does the spec exist? if not, create it
 		{
 			request := &rpcpb.GetSpecRequest{}

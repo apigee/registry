@@ -7,7 +7,7 @@ require (
 	github.com/docopt/docopt-go v0.0.0-20180111231733-ee0de3bc6815
 	github.com/golang/protobuf v1.3.4
 	github.com/googleapis/gax-go/v2 v2.0.5
-	github.com/googleapis/gnostic v0.4.1
+	github.com/googleapis/gnostic v0.1.1-0.20200308034506-2af3d8e5d92a
 	github.com/spf13/cobra v0.0.6
 	github.com/spf13/viper v1.6.2
 	golang.org/x/net v0.0.0-20200226121028-0de0cce0169b // indirect
@@ -17,3 +17,5 @@ require (
 	google.golang.org/genproto v0.0.0-20200228133532-8c2c7df3a383
 	google.golang.org/grpc v1.27.1
 )
+
+replace github.com/googleapis/gnostic v0.1.1-0.20200308034506-2af3d8e5d92a => github.com/timburks/gnostic v0.1.1-0.20200308034506-2af3d8e5d92a

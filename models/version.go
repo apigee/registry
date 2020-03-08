@@ -43,8 +43,8 @@ func NewVersionFromParentAndVersionID(parent string, versionID string) (*Version
 	if m == nil {
 		return nil, fmt.Errorf("invalid product '%s'", parent)
 	}
-	if versionID == "" {
-		return nil, fmt.Errorf("invalid id '%s'", versionID)
+	if err := validateID(versionID); err != nil {
+		return nil, err
 	}
 	version := &Version{}
 	version.ProjectID = m[0][1]

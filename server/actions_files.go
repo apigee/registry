@@ -39,7 +39,7 @@ func (s *server) CreateFile(ctx context.Context, request *rpc.CreateFileRequest)
 	if err != nil {
 		return nil, err
 	}
-	return file.Message()
+	return file.Message(rpc.FileView_FULL)
 }
 
 func (s *server) DeleteFile(ctx context.Context, request *rpc.DeleteFileRequest) (*empty.Empty, error) {
@@ -76,7 +76,7 @@ func (s *server) GetFile(ctx context.Context, request *rpc.GetFileRequest) (*rpc
 	} else if err != nil {
 		return nil, internalError(err)
 	}
-	return file.Message()
+	return file.Message(request.GetView())
 }
 
 func (s *server) ListFiles(ctx context.Context, req *rpc.ListFilesRequest) (*rpc.ListFilesResponse, error) {
@@ -104,7 +104,7 @@ func (s *server) ListFiles(ctx context.Context, req *rpc.ListFilesRequest) (*rpc
 	it := client.Run(ctx, q.Distinct())
 	_, err = it.Next(&file)
 	for err == nil {
-		fileMessage, _ := file.Message()
+		fileMessage, _ := file.Message(req.GetView())
 		fileMessages = append(fileMessages, fileMessage)
 		_, err = it.Next(&file)
 	}
@@ -144,5 +144,5 @@ func (s *server) UpdateFile(ctx context.Context, request *rpc.UpdateFileRequest)
 	if err != nil {
 		return nil, err
 	}
-	return file.Message()
+	return file.Message(rpc.FileView_FULL)
 }

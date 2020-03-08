@@ -54,8 +54,8 @@ func NewFileFromParentAndFileID(parent string, fileID string) (*File, error) {
 	if m == nil {
 		return nil, fmt.Errorf("invalid parent '%s'", parent)
 	}
-	if fileID == "" {
-		return nil, fmt.Errorf("invalid id '%s'", fileID)
+	if err := validateID(fileID); err != nil {
+		return nil, err
 	}
 	file := &File{}
 	file.ProjectID = m[0][1]
@@ -97,20 +97,21 @@ func NewFileFromMessage(message *rpc.File) (*File, error) {
 
 // ResourceName generates the resource name of a file.
 func (file *File) ResourceName() string {
-	return fmt.Sprintf("projects/%s/products/%s/versions/%s/specs/%s/files/%s", file.ProjectID, file.ProductID, file.VersionID, file.SpecID, file.FileID)
+	return fmt.Sprintf("projects/%s/products/%s/versions/%s/specs/%s/files/%s",
+		file.ProjectID, file.ProductID, file.VersionID, file.SpecID, file.FileID)
 }
 
 // Message returns a message representing a file.
-func (file *File) Message() (message *rpc.File, err error) {
+func (file *File) Message(view rpc.FileView) (message *rpc.File, err error) {
 	message = &rpc.File{}
 	message.Name = file.ResourceName()
 	message.DisplayName = file.DisplayName
 	message.Description = file.Description
 	message.CreateTime, err = ptypes.TimestampProto(file.CreateTime)
 	message.UpdateTime, err = ptypes.TimestampProto(file.UpdateTime)
-	message.Contents = file.Contents
-	//message.Availability = file.Availability
-	//message.RecommendedVersion = file.RecommendedVersion
+	if view == rpc.FileView_FULL {
+		message.Contents = file.Contents
+	}
 	return message, err
 }
 

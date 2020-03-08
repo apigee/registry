@@ -40,8 +40,8 @@ func NewProductFromParentAndProductID(parent string, productID string) (*Product
 	if m == nil {
 		return nil, fmt.Errorf("invalid parent '%s'", parent)
 	}
-	if productID == "" {
-		return nil, fmt.Errorf("invalid id '%s'", productID)
+	if err := validateID(productID); err != nil {
+		return nil, err
 	}
 	product := &Product{}
 	product.ProjectID = m[0][1]

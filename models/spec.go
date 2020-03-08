@@ -47,8 +47,8 @@ func NewSpecFromParentAndSpecID(parent string, specID string) (*Spec, error) {
 	if m == nil {
 		return nil, fmt.Errorf("invalid parent '%s'", parent)
 	}
-	if specID == "" {
-		return nil, fmt.Errorf("invalid id '%s'", specID)
+	if err := validateID(specID); err != nil {
+		return nil, err
 	}
 	spec := &Spec{}
 	spec.ProjectID = m[0][1]
