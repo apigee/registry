@@ -14,12 +14,16 @@
 
 package main
 
-import "apigov.dev/flame/server"
+import (
+	"os"
 
-const (
-	port = ":9999"
+	"apigov.dev/flame/server"
 )
 
 func main() {
-	server.RunServer(port)
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	server.RunServer(":" + port)
 }

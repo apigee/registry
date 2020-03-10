@@ -16,25 +16,33 @@ package main
 
 import (
 	"context"
-	"flag"
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	rpc "apigov.dev/flame/rpc"
 	"google.golang.org/grpc"
-)
-
-var (
-	serverAddr = flag.String("server_addr", "127.0.0.1:9999", "The server address in the format of host:port")
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/metadata"
 )
 
 func main() {
-	flag.Parse()
 
+	systemRoots, err := x509.SystemCertPool()
+	if err != nil {
+		log.Fatal("failed to load system root CA cert pool")
+	}
+	creds := credentials.NewTLS(&tls.Config{
+		RootCAs: systemRoots,
+	})
 	var opts []grpc.DialOption
-	opts = append(opts, grpc.WithInsecure())
-	conn, err := grpc.Dial(*serverAddr, opts...)
+	opts = append(opts, grpc.WithTransportCredentials(creds))
+
+	address := os.Getenv("CLI_FLAME_ADDRESS")
+	conn, err := grpc.Dial(address, opts...)
 	if err != nil {
 		log.Fatalf("fail to dial: %v", err)
 	}
@@ -42,13 +50,18 @@ func main() {
 
 	client := rpc.NewFlameClient(conn)
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	token := os.Getenv("CLI_FLAME_TOKEN")
+	ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+token)
 
 	req := &rpc.ListProductsRequest{}
+	req.Parent = "projects/google"
 	res, err := client.ListProducts(ctx, req)
 	if res != nil {
 		fmt.Println("The names of your products:")
 		for _, product := range res.Products {
 			fmt.Println(product.Name)
 		}
+	} else {
+		log.Printf("Error %+v", err)
 	}
 }

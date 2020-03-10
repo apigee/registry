@@ -28,6 +28,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/googleapis/gnostic/conversions"
 	discovery "github.com/googleapis/gnostic/discovery"
+	"golang.org/x/oauth2"
 	"google.golang.org/api/option"
 	"google.golang.org/grpc"
 )
@@ -201,6 +202,7 @@ func handleExportArgumentsForBytes(arguments map[string]interface{}, bytes []byt
 		initFlame()
 		api := document
 		ctx := context.TODO()
+
 		// does the API exist? if not, create it
 		{
 			request := &rpcpb.GetProductRequest{}
@@ -371,19 +373,36 @@ func checkSchema(schemaName string, schema *discovery.Schema, depth int) {
 var FlameClient *gapic.FlameClient
 
 func initFlame() error {
+	var err error
 	var opts []option.ClientOption
 
-	address := "localhost:9999"
+	address := os.Getenv("CLI_FLAME_ADDRESS")
 	if address != "" {
 		opts = append(opts, option.WithEndpoint(address))
 	}
-	conn, err := grpc.Dial(address, grpc.WithInsecure())
-	if err != nil {
-		return err
-	}
-	opts = append(opts, option.WithGRPCConn(conn))
 
+	insecure := false
+	if insecure {
+		if address == "" {
+			return fmt.Errorf("Missing address to use with insecure connection")
+		}
+
+		conn, err := grpc.Dial(address, grpc.WithInsecure())
+		if err != nil {
+			return err
+		}
+		opts = append(opts, option.WithGRPCConn(conn))
+	}
+
+	if token := os.Getenv("CLI_FLAME_TOKEN"); token != "" {
+		opts = append(opts, option.WithTokenSource(oauth2.StaticTokenSource(
+			&oauth2.Token{
+				AccessToken: token,
+				TokenType:   "Bearer",
+			})))
+	}
 	ctx := context.TODO()
 	FlameClient, err = gapic.NewFlameClient(ctx, opts...)
+
 	return err
 }
