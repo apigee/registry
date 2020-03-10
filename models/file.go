@@ -3,6 +3,7 @@
 package models
 
 import (
+	"crypto/sha1"
 	"errors"
 	"fmt"
 	"regexp"
@@ -90,8 +91,6 @@ func NewFileFromMessage(message *rpc.File) (*File, error) {
 	}
 	file.DisplayName = message.GetDisplayName()
 	file.Description = message.GetDescription()
-	//file.Availability = message.GetAvailability()
-	//file.RecommendedVersion = message.GetRecommendedVersion()
 	return file, nil
 }
 
@@ -107,6 +106,8 @@ func (file *File) Message(view rpc.FileView) (message *rpc.File, err error) {
 	message.Name = file.ResourceName()
 	message.DisplayName = file.DisplayName
 	message.Description = file.Description
+	message.SizeBytes = file.SizeInBytes
+	message.Hash = file.Hash
 	message.CreateTime, err = ptypes.TimestampProto(file.CreateTime)
 	message.UpdateTime, err = ptypes.TimestampProto(file.UpdateTime)
 	if view == rpc.FileView_FULL {
@@ -117,7 +118,13 @@ func (file *File) Message(view rpc.FileView) (message *rpc.File, err error) {
 
 // Update modifies a file using the contents of a message.
 func (file *File) Update(message *rpc.File) error {
-	file.Contents = message.GetContents()
+	contents := message.GetContents()
+	file.Contents = contents
+	file.SizeInBytes = int32(len(contents))
+	h := sha1.New()
+	h.Write(contents)
+	bs := h.Sum(nil)
+	file.Hash = fmt.Sprintf("%x", bs)
 	file.UpdateTime = file.CreateTime
 	return nil
 }
