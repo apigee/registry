@@ -1,7 +1,7 @@
 all:	
 	cd third_party; sh ./SETUP.sh
-	./COMPILE.sh
-	go install ./cmd/...
+	./COMPILE-PROTOS.sh
+	go install ./...
 
 test:
 	go test -v ./tests/...
