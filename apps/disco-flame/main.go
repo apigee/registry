@@ -36,10 +36,10 @@ import (
 func main() {
 	usage := `
 Usage:
-	disco help
-	disco list [--raw]
-	disco get [<api>] [<version>] [--upload] [--raw] [--openapi2] [--openapi3] [--features] [--schemas] [--all]
-	disco <file> [--upload] [--openapi2] [--openapi3] [--features] [--schemas]
+	disco-flame help
+	disco-flame list [--raw]
+	disco-flame get [<api>] [<version>] [--upload] [--raw] [--openapi2] [--openapi3] [--features] [--schemas] [--all]
+	disco-flame <file> [--upload] [--openapi2] [--openapi3] [--features] [--schemas]
 	`
 	arguments, err := docopt.Parse(usage, nil, false, "Disco 1.0", false)
 	if err != nil {
@@ -68,47 +68,9 @@ Usage:
 			if err != nil {
 				log.Fatalf("%+v", err)
 			}
-
-			initFlame()
-
 			// List the APIs.
 			for _, api := range listResponse.APIs {
 				fmt.Printf("%s %s\n", api.Name, api.Version)
-
-				ctx := context.TODO()
-
-				// does the API exist? if not, create it
-				{
-					request := &rpcpb.GetProductRequest{}
-					request.Name = "projects/google/products/" + api.Name
-					response, err := FlameClient.GetProduct(ctx, request)
-					log.Printf("response %+v\nerr %+v", response, err)
-					if err != nil { // TODO only do this for NotFound errors
-						request := &rpcpb.CreateProductRequest{}
-						request.Parent = "projects/google"
-						request.ProductId = api.Name
-						request.Product = &rpcpb.Product{}
-						request.Product.DisplayName = api.Title
-						request.Product.Description = api.Description
-						response, err := FlameClient.CreateProduct(ctx, request)
-						log.Printf("response %+v\nerr %+v", response, err)
-					}
-				}
-				// does the version exist? if not create it
-				{
-					request := &rpcpb.GetVersionRequest{}
-					request.Name = "projects/google/products/" + api.Name + "/versions/" + api.Version
-					response, err := FlameClient.GetVersion(ctx, request)
-					log.Printf("response %+v\nerr %+v", response, err)
-					if err != nil {
-						request := &rpcpb.CreateVersionRequest{}
-						request.Parent = "projects/google/products/" + api.Name
-						request.VersionId = api.Version
-						request.Version = &rpcpb.Version{}
-						response, err := FlameClient.CreateVersion(ctx, request)
-						log.Printf("response %+v\nerr %+v", response, err)
-					}
-				}
 			}
 		}
 	}
@@ -198,7 +160,6 @@ func handleExportArgumentsForBytes(arguments map[string]interface{}, bytes []byt
 		return true, err
 	}
 	if arguments["--upload"].(bool) {
-		log.Printf("uploading")
 		initFlame()
 		api := document
 		ctx := context.TODO()
