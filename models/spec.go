@@ -61,8 +61,7 @@ func NewSpecFromParentAndSpecID(parent string, specID string) (*Spec, error) {
 // NewSpecFromResourceName parses resource names and returns an initialized spec.
 func NewSpecFromResourceName(name string) (*Spec, error) {
 	spec := &Spec{}
-	r := regexp.MustCompile("^projects/" + nameRegex + "/products/" + nameRegex + "/versions/" + nameRegex + "/specs/" + nameRegex + "$")
-	m := r.FindAllStringSubmatch(name, -1)
+	m := SpecRegexp().FindAllStringSubmatch(name, -1)
 	if m == nil {
 		return nil, errors.New("invalid spec name")
 	}

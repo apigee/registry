@@ -52,8 +52,7 @@ func NewProductFromParentAndProductID(parent string, productID string) (*Product
 // NewProductFromResourceName parses resource names and returns an initialized product.
 func NewProductFromResourceName(name string) (*Product, error) {
 	product := &Product{}
-	r := regexp.MustCompile("^projects/" + nameRegex + "/products/" + nameRegex + "$")
-	m := r.FindAllStringSubmatch(name, -1)
+	m := ProductRegexp().FindAllStringSubmatch(name, -1)
 	if m == nil {
 		return nil, fmt.Errorf("invalid product name (%s)", name)
 	}

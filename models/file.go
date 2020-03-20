@@ -70,8 +70,7 @@ func NewFileFromParentAndFileID(parent string, fileID string) (*File, error) {
 // NewFileFromResourceName parses resource names and returns an initialized file.
 func NewFileFromResourceName(name string) (*File, error) {
 	file := &File{}
-	r := regexp.MustCompile("^projects/" + nameRegex + "/products/" + nameRegex + "/versions/" + nameRegex + "/specs/" + nameRegex + "/files/" + nameRegex + "$")
-	m := r.FindAllStringSubmatch(name, -1)
+	m := FileRegexp().FindAllStringSubmatch(name, -1)
 	if m == nil {
 		return nil, errors.New("invalid file name")
 	}

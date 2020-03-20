@@ -56,8 +56,7 @@ func NewVersionFromParentAndVersionID(parent string, versionID string) (*Version
 // NewVersionFromResourceName parses resource names and returns an initialized version.
 func NewVersionFromResourceName(name string) (*Version, error) {
 	version := &Version{}
-	r := regexp.MustCompile("^projects/" + nameRegex + "/products/" + nameRegex + "/versions/" + nameRegex + "$")
-	m := r.FindAllStringSubmatch(name, -1)
+	m := VersionRegexp().FindAllStringSubmatch(name, -1)
 	if m == nil {
 		return nil, errors.New("invalid version name")
 	}

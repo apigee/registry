@@ -8,6 +8,7 @@ require (
 	github.com/golang/protobuf v1.3.4
 	github.com/googleapis/gax-go/v2 v2.0.5
 	github.com/googleapis/gnostic v0.1.1-0.20200308034506-2af3d8e5d92a
+	github.com/mitchellh/go-homedir v1.1.0
 	github.com/spf13/cobra v0.0.6
 	github.com/spf13/viper v1.6.2
 	golang.org/x/net v0.0.0-20200301022130-244492dfa37a // indirect
