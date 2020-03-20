@@ -3,6 +3,8 @@
 echo "Updating tool dependencies."
 go get -u google.golang.org/grpc
 go get -u github.com/golang/protobuf/protoc-gen-go
+go get -u github.com/googleapis/gapic-generator-go/cmd/protoc-gen-go_gapic
+go get -u github.com/googleapis/gapic-generator-go/cmd/protoc-gen-go_cli
 
 echo "Clearing any previously-generated directories."
 rm -rf rpc gapic cmd/cli
