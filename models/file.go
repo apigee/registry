@@ -55,7 +55,7 @@ func NewFileFromParentAndFileID(parent string, fileID string) (*File, error) {
 	if m == nil {
 		return nil, fmt.Errorf("invalid parent '%s'", parent)
 	}
-	if err := validateID(fileID); err != nil {
+	if err := validateFileID(fileID); err != nil {
 		return nil, err
 	}
 	file := &File{}

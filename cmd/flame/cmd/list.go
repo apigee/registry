@@ -120,7 +120,7 @@ to quickly create a Cobra application.`,
 			}
 			ctx := context.TODO()
 			request := &rpc.GetVersionRequest{
-				Name: "projects/" + m[0][1] + "/products/" + m[0][2],
+				Name: "projects/" + m[0][1] + "/products/" + m[0][2] + "/versions/" + m[0][3],
 			}
 			product, err := client.GetVersion(ctx, request)
 			fmt.Printf("%+v\n", product)
@@ -131,19 +131,21 @@ to quickly create a Cobra application.`,
 			}
 			ctx := context.TODO()
 			request := &rpc.GetSpecRequest{
-				Name: "projects/" + m[0][1] + "/products/" + m[0][2],
+				Name: "projects/" + m[0][1] + "/products/" + m[0][2] + "/versions/" + m[0][3] + "/specs/" + m[0][4],
 			}
 			product, err := client.GetSpec(ctx, request)
 			fmt.Printf("%+v\n", product)
 		} else if m := models.FileRegexp().FindAllStringSubmatch(name, -1); m != nil {
+			fmt.Printf("FILE\n")
 			client, err := connection.NewClient()
 			if err != nil {
 				log.Fatalf("%s", err.Error())
 			}
 			ctx := context.TODO()
 			request := &rpc.GetFileRequest{
-				Name: "projects/" + m[0][1] + "/products/" + m[0][2],
+				Name: "projects/" + m[0][1] + "/products/" + m[0][2] + "/versions/" + m[0][3] + "/specs/" + m[0][4] + "/files/" + m[0][5],
 			}
+			log.Printf("request %+v", request)
 			product, err := client.GetFile(ctx, request)
 			fmt.Printf("%+v\n", product)
 		}

@@ -7,8 +7,19 @@ import (
 
 const nameRegex = "([a-zA-Z0-9-_\\.]+)"
 
+const fileNameRegex = "([a-zA-Z0-9-_\\.\\/]+)"
+
 func validateID(id string) error {
 	r := regexp.MustCompile("^" + nameRegex + "$")
+	m := r.FindAllStringSubmatch(id, -1)
+	if m == nil {
+		return fmt.Errorf("invalid id '%s'", id)
+	}
+	return nil
+}
+
+func validateFileID(id string) error {
+	r := regexp.MustCompile("^" + fileNameRegex + "$")
 	m := r.FindAllStringSubmatch(id, -1)
 	if m == nil {
 		return fmt.Errorf("invalid id '%s'", id)
@@ -53,5 +64,5 @@ func FilesRegexp() *regexp.Regexp {
 
 // FileRegexp returns a regular expression that matches a file resource name.
 func FileRegexp() *regexp.Regexp {
-	return regexp.MustCompile("^projects/" + nameRegex + "/products/" + nameRegex + "/versions/" + nameRegex + "/specs/" + nameRegex + "/files/" + nameRegex + "$")
+	return regexp.MustCompile("^projects/" + nameRegex + "/products/" + nameRegex + "/versions/" + nameRegex + "/specs/" + nameRegex + "/files/" + fileNameRegex + "$")
 }

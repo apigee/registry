@@ -12,9 +12,9 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/spf13/cobra v0.0.6
 	github.com/spf13/viper v1.6.2
-	golang.org/x/net v0.0.0-20200319234117-63522dbf7eec // indirect
+	golang.org/x/net v0.0.0-20200320220750-118fecf932d8 // indirect
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
-	golang.org/x/sys v0.0.0-20200317113312-5766fd39f98d // indirect
+	golang.org/x/sys v0.0.0-20200320181252-af34d8274f85 // indirect
 	google.golang.org/api v0.19.0
 	google.golang.org/genproto v0.0.0-20200319113533-08878b785e9c
 	google.golang.org/grpc v1.28.0
