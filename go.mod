@@ -5,18 +5,25 @@ go 1.13
 require (
 	cloud.google.com/go v0.38.0
 	github.com/docopt/docopt-go v0.0.0-20180111231733-ee0de3bc6815
+	github.com/golang-commonmark/html v0.0.0-20180910111043-7d7c804e1d46 // indirect
+	github.com/golang-commonmark/linkify v0.0.0-20180910111149-f05efb453a0e // indirect
+	github.com/golang-commonmark/markdown v0.0.0-20180910011815-a8f139058164 // indirect
+	github.com/golang-commonmark/mdurl v0.0.0-20180910110917-8d018c6567d6 // indirect
+	github.com/golang-commonmark/puny v0.0.0-20180910110745-050be392d8b8 // indirect
 	github.com/golang/protobuf v1.3.5
-	github.com/googleapis/gapic-generator-go v0.12.0 // indirect
+	github.com/googleapis/gapic-generator-go v0.12.5 // indirect
 	github.com/googleapis/gax-go/v2 v2.0.5
 	github.com/googleapis/gnostic v0.1.1-0.20200308034506-2af3d8e5d92a
 	github.com/mitchellh/go-homedir v1.1.0
+	github.com/opennota/wd v0.0.0-20180911144301-b446539ab1e7 // indirect
 	github.com/spf13/cobra v0.0.6
 	github.com/spf13/viper v1.6.2
-	golang.org/x/net v0.0.0-20200320220750-118fecf932d8 // indirect
+	gitlab.com/golang-commonmark/linkify v0.0.0-20200225224916-64bca66f6ad3 // indirect
+	golang.org/x/net v0.0.0-20200324143707-d3edc9973b7e // indirect
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
-	golang.org/x/sys v0.0.0-20200320181252-af34d8274f85 // indirect
+	golang.org/x/sys v0.0.0-20200331124033-c3d80250170d // indirect
 	google.golang.org/api v0.19.0
-	google.golang.org/genproto v0.0.0-20200319113533-08878b785e9c
+	google.golang.org/genproto v0.0.0-20200403120447-c50568487044
 	google.golang.org/grpc v1.28.0
 )
 

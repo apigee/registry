@@ -1,0 +1,31 @@
+# The configuration schema is defined by the service.proto file.
+# https://github.com/googleapis/googleapis/blob/master/google/api/service.proto
+
+type: google.api.Service
+config_version: 3
+name: flame-endpoint-ozfrf5bp4a-uw.a.run.app
+title: Full Lifecycle API Management
+apis:
+  - name: google.cloud.apigee.flame.v1alpha1.Flame
+usage:
+  rules:
+  - selector: google.cloud.apigee.flame.v1alpha1.Flame.ListProducts
+    allow_unregistered_calls: true
+  - selector: google.cloud.apigee.flame.v1alpha1.Flame.GetProduct
+    allow_unregistered_calls: true
+  - selector: google.cloud.apigee.flame.v1alpha1.Flame.ListVersions
+    allow_unregistered_calls: true
+  - selector: google.cloud.apigee.flame.v1alpha1.Flame.GetVersion
+    allow_unregistered_calls: true
+  - selector: google.cloud.apigee.flame.v1alpha1.Flame.ListSpecs
+    allow_unregistered_calls: true
+  - selector: google.cloud.apigee.flame.v1alpha1.Flame.GetSpec
+    allow_unregistered_calls: true
+  - selector: google.cloud.apigee.flame.v1alpha1.Flame.ListFiles
+    allow_unregistered_calls: true
+  - selector: google.cloud.apigee.flame.v1alpha1.Flame.GetFile
+    allow_unregistered_calls: true
+backend:
+  rules:
+    - selector: "*"
+      address: grpcs://flame-ozfrf5bp4a-uw.a.run.app
