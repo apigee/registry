@@ -11,12 +11,7 @@ backend:
   rules:
     - selector: "*"
       address: grpcs://flame-backend-yr4odda7na-uw.a.run.app
-authentication:
-  providers:
-  - id: google_service_account
-    issuer: flamedemo@flamedemo.iam.gserviceaccount.com
-    jwks_uri: https://www.googleapis.com/robot/v1/metadata/x509/flamedemo@flamedemo.iam.gserviceaccount.com
+usage:
   rules:
-  - selector: "*"
-    requirements:
-      - provider_id: google_service_account
+    - selector: "*"
+      allow_unregistered_calls: true

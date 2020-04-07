@@ -20,8 +20,8 @@ func NewClient() (*gapic.FlameClient, error) {
 		opts = append(opts, option.WithEndpoint(address))
 	}
 
-	insecure := false
-	if insecure {
+	insecure := os.Getenv("CLI_FLAME_INSECURE")
+	if insecure != "" {
 		if address == "" {
 			return nil, fmt.Errorf("Missing address to use with insecure connection")
 		}

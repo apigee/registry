@@ -10,7 +10,7 @@ clean:
 	rm -rf cmd/cli gapic rpc third_party/api-common-protos envoy/proto.pb
 
 build:
-	gcloud builds submit --tag gcr.io/${FLAME_PROJECT_IDENTIFIER}/flame
+	gcloud builds submit --tag gcr.io/${FLAME_PROJECT_IDENTIFIER}/flame-backend
 
-run:
-	gcloud run deploy --image gcr.io/${FLAME_PROJECT_IDENTIFIER}/flame --platform managed
+deploy:
+	gcloud run deploy --image gcr.io/${FLAME_PROJECT_IDENTIFIER}/flame-backend --platform managed

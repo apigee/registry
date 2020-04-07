@@ -1,5 +1,7 @@
 #!/bin/sh
-
+#
+# Download dependencies needed to build the flame tools.
+#
 if [ ! -d "api-common-protos" ]
 then
   git clone https://github.com/googleapis/api-common-protos

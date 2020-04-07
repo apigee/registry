@@ -2,7 +2,6 @@ syntax = "proto3";
 
 package google.cloud.apigee.flame.v1alpha1;
 
-import "google/api/resource.proto";
 import "google/protobuf/timestamp.proto";
 
 option java_package = "com.google.cloud.apigee.flame.v1alpha1";
@@ -13,10 +12,6 @@ option go_package = "apigov.dev/flame/rpc;rpc";
 // A Product is a top-level description of an API product.
 // Products are produced by producers and are commitments to provide services.
 message Product {
-  option (google.api.resource) = {
-    type: "flame.googleapis.com/Product"
-    pattern: "projects/{project}/products/{product}"
-  };
 
   // Resource name.
   string name = 1;
@@ -46,10 +41,6 @@ message Product {
 // A Version describes a particular version of an API product.
 // Versions are what consumers actually use.
 message Version {
-  option (google.api.resource) = {
-    type: "flame.googleapis.com/Version"
-    pattern: "projects/{project}/products/{product}/versions/{version}"
-  };
 
   // Resource name.
   string name = 1;
@@ -76,11 +67,7 @@ message Version {
 // A Spec describes a version of an API product in a structured way.
 // Specs provide formal descriptions that consumers can use to use a version.
 message Spec {
-  option (google.api.resource) = {
-    type: "flame.googleapis.com/Spec"
-    pattern: "projects/{project}/products/{product}/versions/{version}/specs/{spec}"
-  };
-
+ 
   // Resource name.
   string name = 1;
 
@@ -108,11 +95,7 @@ message Spec {
 // A file is a reference to an arbitrary container of data used to hold API
 // specifications.
 message File {
-  option (google.api.resource) = {
-    type: "flame.googleapis.com/File"
-    pattern: "projects/{project}/products/{product}/versions/{version}/specs/{spec}/files/{file}"
-  };
-
+ 
   // Resource name.
   string name = 1;
 

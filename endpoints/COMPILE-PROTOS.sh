@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/bin/bash
 
-export ANNOTATIONS="../third_party/api-common-protos"
+export ANNOTATIONS="/tmp"
 
 echo "Generating descriptor set for Endpoints."
 protoc --proto_path=./proto --proto_path=${ANNOTATIONS} \

@@ -55,4 +55,4 @@ static_resources:
                       # If you're running an older version of Docker, please use "docker.for.mac.localhost" instead.
                       # Reference: https://docs.docker.com/docker-for-mac/release-notes/#docker-community-edition-18030-ce-mac59-2018-03-26
                       address: localhost
-                      port_value: 9999
+                      port_value: 8080

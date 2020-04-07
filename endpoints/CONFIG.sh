@@ -1,11 +1,11 @@
-#!/bin/sh
+#!/bin/bash
 
-ESP_PROJECT_ID=your-project-identifier
+ESP_PROJECT_ID=flamedemo
 
-ESP_PROJECT_NUMBER=95394197461
+ESP_PROJECT_NUMBER=288595337390
 
-CLOUD_RUN_SERVICE_NAME=flame-endpoint
+CLOUD_RUN_SERVICE_NAME=flame
 
-CLOUD_RUN_HOSTNAME="flame-endpoint-ozfrf5bp4a-uw.a.run.app"
+CLOUD_RUN_HOSTNAME="flame-yr4odda7na-uw.a.run.app"
 
-CONFIG_ID="2020-04-03r293"
+CONFIG_ID="2020-04-07r4"

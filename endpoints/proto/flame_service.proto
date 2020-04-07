@@ -4,9 +4,6 @@ package google.cloud.apigee.flame.v1alpha1;
 
 import "flame_models.proto";
 import "google/api/annotations.proto";
-import "google/api/client.proto";
-import "google/api/field_behavior.proto";
-//import "google/api/resource.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/field_mask.proto";
 
@@ -21,14 +18,12 @@ option go_package = "apigov.dev/flame/rpc;rpc";
 // provide information and oversight to API producers and
 // consumers in their organizations.
 service Flame {
-  option (google.api.default_host) = "flame.googleapis.com";
 
   // ListProducts returns matching products.
   rpc ListProducts(ListProductsRequest) returns (ListProductsResponse) {
     option (google.api.http) = {
       get : "/v1alpha1/{parent=projects/*}/products"
     };
-    option (google.api.method_signature) = "parent";
   }
 
   // GetProduct returns a specified product.
@@ -36,7 +31,6 @@ service Flame {
     option (google.api.http) = {
       get : "/v1alpha1/{name=projects/*/products/*}"
     };
-    option (google.api.method_signature) = "name";
   }
 
   // CreateProduct creates a specified product.
@@ -45,7 +39,6 @@ service Flame {
       post : "/v1alpha1/{parent=projects/*}/products"
       body : "product"
     };
-    option (google.api.method_signature) = "parent,product,product_id";
   }
 
   // UpdateProduct can be used to modify a specified product.
@@ -54,7 +47,6 @@ service Flame {
       patch : "/v1alpha1/{product.name=projects/*/products/*}"
       body : "product"
     };
-    option (google.api.method_signature) = "product,update_mask";
   }
 
   // DeleteProduct removes a specified product and all of the resources that it
@@ -63,7 +55,6 @@ service Flame {
     option (google.api.http) = {
       delete : "/v1alpha1/{name=projects/*/products/*}"
     };
-    option (google.api.method_signature) = "name";
   }
 
   // ListVersions returns matching versions.
@@ -71,7 +62,6 @@ service Flame {
     option (google.api.http) = {
       get : "/v1alpha1/{parent=projects/*/products/*}/versions"
     };
-    option (google.api.method_signature) = "parent";
   }
 
   // GetVersion returns a specified version.
@@ -79,7 +69,6 @@ service Flame {
     option (google.api.http) = {
       get : "/v1alpha1/{name=projects/*/products/*/versions/*}"
     };
-    option (google.api.method_signature) = "name";
   }
 
   // CreateVersion creates a specified version.
@@ -88,7 +77,6 @@ service Flame {
       post : "/v1alpha1/{parent=projects/*/products/*}/versions"
       body : "version"
     };
-    option (google.api.method_signature) = "parent,version,version_id";
   }
 
   // UpdateVersion can be used to modify a specified version.
@@ -97,7 +85,6 @@ service Flame {
       patch : "/v1alpha1/{version.name=projects/*/products/*/versions/*}"
       body : "version"
     };
-    option (google.api.method_signature) = "version,update_mask";
   }
 
   // DeleteVersion removes a specified version and all of the resources that it
@@ -106,7 +93,6 @@ service Flame {
     option (google.api.http) = {
       delete : "/v1alpha1/{name=projects/*/products/*/versions/*}"
     };
-    option (google.api.method_signature) = "name";
   }
 
   // ListSpecs returns matching specs.
@@ -114,7 +100,6 @@ service Flame {
     option (google.api.http) = {
       get : "/v1alpha1/{parent=projects/*/products/*/versions/*}/specs"
     };
-    option (google.api.method_signature) = "parent";
   }
 
   // GetSpec returns a specified spec.
@@ -122,7 +107,6 @@ service Flame {
     option (google.api.http) = {
       get : "/v1alpha1/{name=projects/*/products/*/versions/*/specs/*}"
     };
-    option (google.api.method_signature) = "name";
   }
 
   // CreateSpec creates a specified spec.
@@ -131,7 +115,6 @@ service Flame {
       post : "/v1alpha1/{parent=projects/*/products/*/versions/*}/specs"
       body : "spec"
     };
-    option (google.api.method_signature) = "parent,spec,spec_id";
   }
 
   // UpdateSpec can be used to modify a specified spec.
@@ -140,7 +123,6 @@ service Flame {
       patch : "/v1alpha1/{spec.name=projects/*/products/*/versions/*/specs/*}"
       body : "spec"
     };
-    option (google.api.method_signature) = "spec,update_mask";
   }
 
   // DeleteSpec removes a specified spec and all of the resources that it owns.
@@ -148,7 +130,6 @@ service Flame {
     option (google.api.http) = {
       delete : "/v1alpha1/{name=projects/*/products/*/versions/*/specs/*}"
     };
-    option (google.api.method_signature) = "name";
   }
 
   // ListFiles returns matching files.
@@ -156,7 +137,6 @@ service Flame {
     option (google.api.http) = {
       get : "/v1alpha1/{parent=projects/*/products/*/versions/*/specs/*}/files"
     };
-    option (google.api.method_signature) = "parent";
   }
 
   // GetFile returns a specified file.
@@ -164,7 +144,6 @@ service Flame {
     option (google.api.http) = {
       get : "/v1alpha1/{name=projects/*/products/*/versions/*/specs/*/files/*}"
     };
-    option (google.api.method_signature) = "name";
   }
 
   // CreateFile creates a specified file.
@@ -173,7 +152,6 @@ service Flame {
       post : "/v1alpha1/{parent=projects/*/products/*/versions/*/specs/*}/files"
       body : "file"
     };
-    option (google.api.method_signature) = "parent,file,file_id";
   }
 
   // UpdateFile can be used to modify a specified file.
@@ -183,7 +161,6 @@ service Flame {
               "files/*}"
       body : "file"
     };
-    option (google.api.method_signature) = "file,update_mask";
   }
 
   // DeleteFile removes a specified file and all of the resources that it owns.
@@ -192,7 +169,6 @@ service Flame {
       delete : "/v1alpha1/{name=projects/*/products/*/versions/*/specs/*/files/"
                "*}"
     };
-    option (google.api.method_signature) = "name";
   }
 }
 
@@ -200,9 +176,7 @@ service Flame {
 message ListProductsRequest {
   // The parent, which owns this collection of products.
   // Format: projects/*
-  string parent = 1 [
-    (google.api.field_behavior) = REQUIRED
-  ];
+  string parent = 1;
   // The maximum number of products to return.
   // The service may return fewer than this value.
   // If unspecified, at most 50 values will be returned.
@@ -231,20 +205,16 @@ message ListProductsResponse {
 message GetProductRequest {
   // The name of the product to retrieve.
   // Format: projects/*/products/*
-  string name = 1 [
-    (google.api.field_behavior) = REQUIRED
-  ];
+  string name = 1;
 }
 
 // Request message for CreateProduct.
 message CreateProductRequest {
   // The parent, which owns this collection of products.
   // Format: projects/*
-  string parent = 1 [
-    (google.api.field_behavior) = REQUIRED
-  ];
+  string parent = 1;
   // The product to create.
-  Product product = 2 [ (google.api.field_behavior) = REQUIRED ];
+  Product product = 2;
   // The ID to use for the product, which will become the final component of
   // the product's resource name.
   //
@@ -259,7 +229,7 @@ message UpdateProductRequest {
   //
   // The `name` field is used to identify the product to update.
   // Format: projects/*/products/*
-  Product product = 1 [ (google.api.field_behavior) = REQUIRED ];
+  Product product = 1;
 
   // The list of fields to be updated.
   google.protobuf.FieldMask update_mask = 2;
@@ -269,18 +239,14 @@ message UpdateProductRequest {
 message DeleteProductRequest {
   // The name of the product to delete.
   // Format: projects/*/products/*
-  string name = 1 [
-    (google.api.field_behavior) = REQUIRED
-  ];
+  string name = 1;
 }
 
 // Request message for ListVersions.
 message ListVersionsRequest {
   // The parent, which owns this collection of versions.
   // Format: projects/*/products/*
-  string parent = 1 [
-    (google.api.field_behavior) = REQUIRED
-  ];
+  string parent = 1;
   // The maximum number of versions to return.
   // The service may return fewer than this value.
   // If unspecified, at most 50 values will be returned.
@@ -309,20 +275,16 @@ message ListVersionsResponse {
 message GetVersionRequest {
   // The name of the version to retrieve.
   // Format: projects/*/products/*/versions/*
-  string name = 1 [
-    (google.api.field_behavior) = REQUIRED
-  ];
+  string name = 1;
 }
 
 // Request message for CreateVersion.
 message CreateVersionRequest {
   // The parent, which owns this collection of versions.
   // Format: projects/*/products/*
-  string parent = 1 [
-    (google.api.field_behavior) = REQUIRED
-  ];
+  string parent = 1;
   // The version to create.
-  Version version = 2 [ (google.api.field_behavior) = REQUIRED ];
+  Version version = 2;
   // The ID to use for the version, which will become the final component of
   // the version's resource name.
   //
@@ -337,7 +299,7 @@ message UpdateVersionRequest {
   //
   // The `name` field is used to identify the version to update.
   // Format: projects/*/products/*/versions/*
-  Version version = 1 [ (google.api.field_behavior) = REQUIRED ];
+  Version version = 1;
 
   // The list of fields to be updated.
   google.protobuf.FieldMask update_mask = 2;
@@ -347,18 +309,14 @@ message UpdateVersionRequest {
 message DeleteVersionRequest {
   // The name of the version to delete.
   // Format: projects/*/products/*/versions/*
-  string name = 1 [
-    (google.api.field_behavior) = REQUIRED
-  ];
+  string name = 1;
 }
 
 // Request message for ListSpecs.
 message ListSpecsRequest {
   // The parent, which owns this collection of specs.
   // Format: projects/*/products/*/versions/*
-  string parent = 1 [
-    (google.api.field_behavior) = REQUIRED
-  ];
+  string parent = 1;
   // The maximum number of specs to return.
   // The service may return fewer than this value.
   // If unspecified, at most 50 values will be returned.
@@ -387,20 +345,16 @@ message ListSpecsResponse {
 message GetSpecRequest {
   // The name of the spec to retrieve.
   // Format: projects/*/products/*/versions/*/specs/*
-  string name = 1 [
-    (google.api.field_behavior) = REQUIRED
-  ];
+  string name = 1;
 }
 
 // Request message for CreateSpec.
 message CreateSpecRequest {
   // The parent, which owns this collection of specs.
   // Format: projects/*/products/*/versions/*
-  string parent = 1 [
-    (google.api.field_behavior) = REQUIRED
-  ];
+  string parent = 1;
   // The spec to create.
-  Spec spec = 2 [ (google.api.field_behavior) = REQUIRED ];
+  Spec spec = 2;
   // The ID to use for the spec, which will become the final component of
   // the spec's resource name.
   //
@@ -415,7 +369,7 @@ message UpdateSpecRequest {
   //
   // The `name` field is used to identify the spec to update.
   // Format: projects/*/products/*/versions/*/specs/*
-  Spec spec = 1 [ (google.api.field_behavior) = REQUIRED ];
+  Spec spec = 1;
 
   // The list of fields to be updated.
   google.protobuf.FieldMask update_mask = 2;
@@ -425,18 +379,14 @@ message UpdateSpecRequest {
 message DeleteSpecRequest {
   // The name of the spec to delete.
   // Format: projects/*/products/*/versions/*/specs/*
-  string name = 1 [
-    (google.api.field_behavior) = REQUIRED
-  ];
+  string name = 1;
 }
 
 // Request message for ListFiles.
 message ListFilesRequest {
   // The parent, which owns this collection of files.
   // Format: projects/*/products/*/versions/*/specs/*
-  string parent = 1 [
-    (google.api.field_behavior) = REQUIRED
-  ];
+  string parent = 1;
   // The maximum number of files to return.
   // The service may return fewer than this value.
   // If unspecified, at most 50 values will be returned.
@@ -468,9 +418,7 @@ message ListFilesResponse {
 message GetFileRequest {
   // The name of the file to retrieve.
   // Format: projects/*/products/*/versions/*/specs/*/files/*
-  string name = 1 [
-    (google.api.field_behavior) = REQUIRED
-  ];
+  string name = 1;
 
   // The level of detail to return (defaults to BASIC).
   FileView view = 2;
@@ -480,11 +428,9 @@ message GetFileRequest {
 message CreateFileRequest {
   // The parent, which owns this collection of files.
   // Format: projects/*/products/*/versions/*/specs/*
-  string parent = 1 [
-    (google.api.field_behavior) = REQUIRED
-  ];
+  string parent = 1;
   // The file to create.
-  File file = 2 [ (google.api.field_behavior) = REQUIRED ];
+  File file = 2;
   // The ID to use for the file, which will become the final component of
   // the file's resource name.
   //
@@ -499,7 +445,7 @@ message UpdateFileRequest {
   //
   // The `name` field is used to identify the file to update.
   // Format: projects/*/products/*/versions/*/specs/*/files/*
-  File file = 1 [ (google.api.field_behavior) = REQUIRED ];
+  File file = 1;
 
   // The list of fields to be updated.
   google.protobuf.FieldMask update_mask = 2;
@@ -509,7 +455,5 @@ message UpdateFileRequest {
 message DeleteFileRequest {
   // The name of the file to delete.
   // Format: projects/*/products/*/versions/*/specs/*/files/*
-  string name = 1 [
-    (google.api.field_behavior) = REQUIRED
-  ];
+  string name = 1;
 }

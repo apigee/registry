@@ -1,4 +1,8 @@
 #!/bin/sh
+#
+# Compile .proto files into the files needed to build the flame server and
+# command-line tools.
+#
 
 echo "Updating tool dependencies."
 go get -u google.golang.org/grpc
