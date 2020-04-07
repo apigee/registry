@@ -5,8 +5,11 @@ import (
 	"regexp"
 )
 
+// We might extend this to all characters that do not require escaping.
+// See "Resource ID Segments" in https://aip.dev/122.
 const nameRegex = "([a-zA-Z0-9-_\\.]+)"
 
+// File names include all of the above characters plus forward slashes.
 const fileNameRegex = "([a-zA-Z0-9-_\\.\\/]+)"
 
 func validateID(id string) error {
