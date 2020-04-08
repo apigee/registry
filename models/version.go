@@ -3,14 +3,19 @@
 package models
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"regexp"
 	"time"
 
 	rpc "apigov.dev/flame/rpc"
+	"cloud.google.com/go/datastore"
 	ptypes "github.com/golang/protobuf/ptypes"
 )
+
+// VersionEntityName is used to represent versions in the datastore.
+const VersionEntityName = "Version"
 
 // Version ...
 type Version struct {
@@ -103,5 +108,21 @@ func (version *Version) Update(message *rpc.Version) error {
 	version.Description = message.GetDescription()
 	version.State = message.GetState()
 	version.UpdateTime = version.CreateTime
+	return nil
+}
+
+// DeleteChildren deletes all the children of a version.
+func (version *Version) DeleteChildren(ctx context.Context, client *datastore.Client) error {
+	for _, entityName := range []string{FileEntityName, SpecEntityName} {
+		q := datastore.NewQuery(entityName)
+		q = q.KeysOnly()
+		q = q.Filter("ProjectID =", version.ProjectID)
+		q = q.Filter("ProductID =", version.ProductID)
+		q = q.Filter("VersionID =", version.VersionID)
+		err := deleteAllMatches(ctx, client, q)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }

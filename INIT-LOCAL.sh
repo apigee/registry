@@ -7,7 +7,7 @@
 
 # GOOGLE_APPLICATION_CREDENTIALS should identify a file containing credentials
 # for a service account that has the Cloud Datastore API enabled.
-export GOOGLE_APPLICATION_CREDENTIALS=$HOME/.credentials/flamedemo.json
+export GOOGLE_APPLICATION_CREDENTIALS=$HOME/.credentials/your-project-identifier.json
 
 ### CLIENT CONFIGURATION
 

@@ -35,6 +35,8 @@ func main() {
 	var err error
 
 	flameClient, err = client.NewClient()
+	completions := make(chan int)
+	processes := 0
 
 	err = filepath.Walk(directory,
 		func(path string, info os.FileInfo, err error) error {
@@ -42,37 +44,43 @@ func main() {
 				return err
 			}
 			if strings.HasSuffix(path, "swagger.yaml") {
-				return handleSpec(path, "oas2")
+				processes++
+				go func() {
+					handleSpec(path, "oas2")
+					completions <- 1
+				}()
 			}
 			if strings.HasSuffix(path, "openapi.yaml") {
-				return handleSpec(path, "oas3")
+				processes++
+				go func() {
+					handleSpec(path, "oas3")
+					completions <- 1
+				}()
 			}
 			return nil
 		})
 	if err != nil {
 		log.Println(err)
 	}
+	for i := 0; i < processes; i++ {
+		<-completions
+		fmt.Printf("COMPLETE: %d\n", i+1)
+	}
 }
 
 func handleSpec(path string, format string) error {
 	name := strings.TrimPrefix(path, directory)
-
 	parts := strings.Split(name, "/")
-
 	spec := parts[len(parts)-1]
 	version := parts[len(parts)-2]
 	product := strings.Join(parts[0:len(parts)-2], "-")
-
 	fmt.Printf("product:%+v version:%+v spec:%+v \n", product, version, spec)
-
 	uploadSpec(product, version, format, path)
 	return nil
 }
 
 func uploadSpec(product, version, spec, path string) error {
-
 	ctx := context.TODO()
-
 	// does the API exist? if not, create it
 	{
 		request := &rpcpb.GetProductRequest{}

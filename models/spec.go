@@ -3,14 +3,19 @@
 package models
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"regexp"
 	"time"
 
 	rpc "apigov.dev/flame/rpc"
+	"cloud.google.com/go/datastore"
 	ptypes "github.com/golang/protobuf/ptypes"
 )
+
+// SpecEntityName is used to represent specs in the datastore.
+const SpecEntityName = "Spec"
 
 // Spec ...
 type Spec struct {
@@ -107,5 +112,22 @@ func (spec *Spec) Message() (message *rpc.Spec, err error) {
 func (spec *Spec) Update(message *rpc.Spec) error {
 	spec.Style = message.GetStyle()
 	spec.UpdateTime = spec.CreateTime
+	return nil
+}
+
+// DeleteChildren deletes all the children of a spec.
+func (spec *Spec) DeleteChildren(ctx context.Context, client *datastore.Client) error {
+	for _, entityName := range []string{FileEntityName} {
+		q := datastore.NewQuery(entityName)
+		q = q.KeysOnly()
+		q = q.Filter("ProjectID =", spec.ProjectID)
+		q = q.Filter("ProductID =", spec.ProductID)
+		q = q.Filter("VersionID =", spec.VersionID)
+		q = q.Filter("SpecID =", spec.SpecID)
+		err := deleteAllMatches(ctx, client, q)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }

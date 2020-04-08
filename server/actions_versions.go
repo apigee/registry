@@ -48,13 +48,14 @@ func (s *server) DeleteVersion(ctx context.Context, request *rpc.DeleteVersionRe
 		return nil, err
 	}
 	defer client.Close()
-	// validate name
-	_, err = models.NewVersionFromResourceName(request.GetName())
+	// Validate name and create dummy version (we just need the ID fields).
+	version, err := models.NewVersionFromResourceName(request.GetName())
 	if err != nil {
-		return nil, err
+		return nil, invalidArgumentError(err)
 	}
+	// Delete children first and then delete the version.
+	version.DeleteChildren(ctx, client)
 	k := &datastore.Key{Kind: versionEntityName, Name: request.GetName()}
-	// TODO: delete children
 	err = client.Delete(ctx, k)
 	return &empty.Empty{}, err
 }

@@ -3,14 +3,14 @@
 
 type: google.api.Service
 config_version: 3
-name: flame-yr4odda7na-uw.a.run.app
+name: flame-ozfrf5bp4a-uc.a.run.app
 title: Full Lifecycle API Management
 apis:
   - name: google.cloud.apigee.flame.v1alpha1.Flame
 backend:
   rules:
     - selector: "*"
-      address: grpcs://flame-backend-yr4odda7na-uw.a.run.app
+      address: grpcs://flame-backend-ozfrf5bp4a-uc.a.run.app
 usage:
   rules:
     - selector: "*"

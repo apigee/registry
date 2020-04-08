@@ -3,13 +3,18 @@
 package models
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"time"
 
 	rpc "apigov.dev/flame/rpc"
+	"cloud.google.com/go/datastore"
 	ptypes "github.com/golang/protobuf/ptypes"
 )
+
+// ProductEntityName is used to represent products in the datastore.
+const ProductEntityName = "Product"
 
 // Product ...
 type Product struct {
@@ -86,5 +91,20 @@ func (product *Product) Update(message *rpc.Product) error {
 	product.Availability = message.GetAvailability()
 	product.RecommendedVersion = message.GetRecommendedVersion()
 	product.UpdateTime = product.CreateTime
+	return nil
+}
+
+// DeleteChildren deletes all the children of a product.
+func (product *Product) DeleteChildren(ctx context.Context, client *datastore.Client) error {
+	for _, entityName := range []string{FileEntityName, SpecEntityName, VersionEntityName} {
+		q := datastore.NewQuery(entityName)
+		q = q.KeysOnly()
+		q = q.Filter("ProjectID =", product.ProjectID)
+		q = q.Filter("ProductID =", product.ProductID)
+		err := deleteAllMatches(ctx, client, q)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }

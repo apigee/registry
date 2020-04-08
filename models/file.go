@@ -13,6 +13,9 @@ import (
 	ptypes "github.com/golang/protobuf/ptypes"
 )
 
+// FileEntityName is used to represent files in the datastore.
+const FileEntityName = "File"
+
 // File ...
 type File struct {
 	ProjectID   string    // Uniquely identifies a project.

@@ -48,13 +48,14 @@ func (s *server) DeleteProduct(ctx context.Context, request *rpc.DeleteProductRe
 		return nil, internalError(err)
 	}
 	defer client.Close()
-	// validate name
-	_, err = models.NewProductFromResourceName(request.GetName())
+	// Validate name and create dummy product (we just need the ID fields).
+	product, err := models.NewProductFromResourceName(request.GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
+	// Delete children first and then delete the product.
+	product.DeleteChildren(ctx, client)
 	k := &datastore.Key{Kind: productEntityName, Name: request.GetName()}
-	// TODO: delete children
 	err = client.Delete(ctx, k)
 	return &empty.Empty{}, internalError(err)
 }

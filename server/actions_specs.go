@@ -48,13 +48,14 @@ func (s *server) DeleteSpec(ctx context.Context, request *rpc.DeleteSpecRequest)
 		return nil, err
 	}
 	defer client.Close()
-	// validate name
-	_, err = models.NewSpecFromResourceName(request.GetName())
+	// Validate name and create dummy spec (we just need the ID fields).
+	spec, err := models.NewSpecFromResourceName(request.GetName())
 	if err != nil {
-		return nil, err
+		return nil, invalidArgumentError(err)
 	}
+	// Delete children first and then delete the spec.
+	spec.DeleteChildren(ctx, client)
 	k := &datastore.Key{Kind: specEntityName, Name: request.GetName()}
-	// TODO: delete children
 	err = client.Delete(ctx, k)
 	return &empty.Empty{}, err
 }

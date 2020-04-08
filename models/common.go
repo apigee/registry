@@ -1,8 +1,12 @@
 package models
 
 import (
+	"context"
 	"fmt"
 	"regexp"
+
+	"cloud.google.com/go/datastore"
+	"google.golang.org/api/iterator"
 )
 
 // We might extend this to all characters that do not require escaping.
@@ -68,4 +72,18 @@ func FilesRegexp() *regexp.Regexp {
 // FileRegexp returns a regular expression that matches a file resource name.
 func FileRegexp() *regexp.Regexp {
 	return regexp.MustCompile("^projects/" + nameRegex + "/products/" + nameRegex + "/versions/" + nameRegex + "/specs/" + nameRegex + "/files/" + fileNameRegex + "$")
+}
+
+func deleteAllMatches(ctx context.Context, client *datastore.Client, q *datastore.Query) error {
+	it := client.Run(ctx, q.Distinct())
+	key, err := it.Next(nil)
+	keys := make([]*datastore.Key, 0)
+	for err == nil {
+		keys = append(keys, key)
+		key, err = it.Next(nil)
+	}
+	if err != iterator.Done {
+		return err
+	}
+	return client.DeleteMulti(ctx, keys)
 }
