@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2019 Google LLC
+# Copyright 2020 Google LLC
 
 # This script will download the service config and build it into
 # serverless docker image to be used for Cloud Run.

@@ -1,4 +1,4 @@
-// Copyright 2020 Google Inc. All Rights Reserved.
+// Copyright 2020 Google LLC. All Rights Reserved.
 
 package server
 
