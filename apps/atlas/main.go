@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
 	"fmt"
 	"io/ioutil"
@@ -95,7 +97,8 @@ func uploadSpec(product, version, spec, path string) error {
 			if err == nil {
 				log.Printf("created %s", response.Name)
 			} else {
-				log.Printf("failed to create %+v: %s", response, err.Error())
+				log.Printf("failed to create %s/products/%s: %s",
+					request.Parent, request.ProductId, err.Error())
 			}
 		}
 	}
@@ -113,7 +116,8 @@ func uploadSpec(product, version, spec, path string) error {
 			if err == nil {
 				log.Printf("created %s", response.Name)
 			} else {
-				log.Printf("failed to create %+v: %s", response, err.Error())
+				log.Printf("failed to create %s/versions/%s: %s",
+					request.Parent, request.VersionId, err.Error())
 			}
 		}
 	}
@@ -135,14 +139,27 @@ func uploadSpec(product, version, spec, path string) error {
 			if err == nil {
 				log.Printf("created %s", response.Name)
 			} else {
-				log.Printf("failed to create %+v: %s", response, err.Error())
+				log.Printf("failed to create %s/specs/%s: %s",
+					request.Parent, request.SpecId, err.Error())
 			}
 		}
 	}
 	// does the file exist? if not, create it
 	{
 		filename := filepath.Base(path)
-		bytes, err := ioutil.ReadFile(path)
+		fileBytes, err := ioutil.ReadFile(path)
+
+		// gzip the bytes
+		var buf bytes.Buffer
+		zw, _ := gzip.NewWriterLevel(&buf, gzip.BestCompression)
+		_, err = zw.Write(fileBytes)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if err := zw.Close(); err != nil {
+			log.Fatal(err)
+		}
+
 		request := &rpcpb.GetFileRequest{}
 		request.Name = "projects/atlas/products/" + product +
 			"/versions/" + version +
@@ -155,12 +172,14 @@ func uploadSpec(product, version, spec, path string) error {
 				"/versions/" + version + "/specs/" + spec
 			request.FileId = filename
 			request.File = &rpcpb.File{}
-			request.File.Contents = bytes
+			request.File.Contents = buf.Bytes()
 			response, err := flameClient.CreateFile(ctx, request)
 			if err == nil {
 				log.Printf("created %s", response.Name)
 			} else {
-				log.Printf("failed to create %+v: %s", response, err.Error())
+				details := fmt.Sprintf("contents-length: %d", len(request.File.Contents))
+				log.Printf("failed to create %s/files/%s: %s [%s]",
+					request.Parent, request.FileId, err.Error(), details)
 			}
 		}
 	}

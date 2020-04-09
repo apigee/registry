@@ -15,23 +15,28 @@
 package main
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"strings"
+	"sync"
 
+	"apigov.dev/flame/client"
 	"apigov.dev/flame/gapic"
 	rpcpb "apigov.dev/flame/rpc"
 	"github.com/docopt/docopt-go"
 	"github.com/golang/protobuf/proto"
 	"github.com/googleapis/gnostic/conversions"
 	discovery "github.com/googleapis/gnostic/discovery"
-	"golang.org/x/oauth2"
-	"google.golang.org/api/option"
-	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
+
+var flameClient *gapic.FlameClient
 
 func main() {
 	usage := `
@@ -51,6 +56,10 @@ Usage:
 		fmt.Println("\nRead and process Google's Discovery Format for APIs.")
 		fmt.Println(usage)
 		fmt.Println("To learn more about Discovery Format, visit https://developers.google.com/discovery/\n")
+	}
+
+	if arguments["--upload"].(bool) {
+		flameClient, err = client.NewClient()
 	}
 
 	// List APIs.
@@ -91,20 +100,31 @@ Usage:
 				!arguments["--schemas"].(bool) {
 				log.Fatalf("Please specify an output option.")
 			}
+			completions := make(chan int)
+			processes := 0
 			for _, api := range listResponse.APIs {
 				log.Printf("%s/%s", api.Name, api.Version)
-				// Fetch the discovery description of the API.
-				bytes, err := discovery.FetchDocumentBytes(api.DiscoveryRestURL)
-				if err != nil {
-					log.Printf("%+v", err)
+				if api.Name == "apigee" {
 					continue
 				}
-				// Export any requested formats.
-				_, err = handleExportArgumentsForBytes(arguments, bytes)
-				if err != nil {
-					log.Printf("%+v", err)
-					continue
-				}
+				processes++
+				go func(discoveryRestURL string) {
+					// Fetch the discovery description of the API.
+					bytes, err := discovery.FetchDocumentBytes(discoveryRestURL)
+					if err != nil {
+						log.Printf("%+v", err)
+					} else {
+						// Export any requested formats.
+						_, err = handleExportArgumentsForBytes(arguments, bytes)
+						if err != nil {
+							log.Printf("%+v", err)
+						}
+					}
+					completions <- 1
+				}(api.DiscoveryRestURL)
+			}
+			for i := 0; i < processes; i++ {
+				<-completions
 			}
 		} else {
 			// Find the matching API
@@ -153,14 +173,28 @@ Usage:
 	}
 }
 
-func handleExportArgumentsForBytes(arguments map[string]interface{}, bytes []byte) (handled bool, err error) {
+func notFound(err error) bool {
+	if err == nil {
+		return false
+	}
+	st, ok := status.FromError(err)
+	if !ok {
+		return false
+	}
+	return st.Code() == codes.NotFound
+}
+
+var mutex sync.Mutex
+
+func handleExportArgumentsForBytes(arguments map[string]interface{}, fileBytes []byte) (handled bool, err error) {
 	// Unpack the discovery document.
-	document, err := discovery.ParseDocument(bytes)
+	mutex.Lock()
+	document, err := discovery.ParseDocument(fileBytes)
+	mutex.Unlock()
 	if err != nil {
 		return true, err
 	}
 	if arguments["--upload"].(bool) {
-		initFlame()
 		api := document
 		ctx := context.TODO()
 
@@ -168,32 +202,40 @@ func handleExportArgumentsForBytes(arguments map[string]interface{}, bytes []byt
 		{
 			request := &rpcpb.GetProductRequest{}
 			request.Name = "projects/google/products/" + api.Name
-			response, err := FlameClient.GetProduct(ctx, request)
-			log.Printf("response %+v\nerr %+v", response, err)
-			if err != nil { // TODO only do this for NotFound errors
+			_, err := flameClient.GetProduct(ctx, request)
+			if notFound(err) {
 				request := &rpcpb.CreateProductRequest{}
 				request.Parent = "projects/google"
 				request.ProductId = api.Name
 				request.Product = &rpcpb.Product{}
 				request.Product.DisplayName = api.Title
 				request.Product.Description = api.Description
-				response, err := FlameClient.CreateProduct(ctx, request)
-				log.Printf("response %+v\nerr %+v", response, err)
+				response, err := flameClient.CreateProduct(ctx, request)
+				if err == nil {
+					log.Printf("created %s", response.Name)
+				} else {
+					log.Printf("failed to create %s/products/%s: %s",
+						request.Parent, request.ProductId, err.Error())
+				}
 			}
 		}
 		// does the version exist? if not create it
 		{
 			request := &rpcpb.GetVersionRequest{}
 			request.Name = "projects/google/products/" + api.Name + "/versions/" + api.Version
-			response, err := FlameClient.GetVersion(ctx, request)
-			log.Printf("response %+v\nerr %+v", response, err)
-			if err != nil {
+			_, err := flameClient.GetVersion(ctx, request)
+			if notFound(err) {
 				request := &rpcpb.CreateVersionRequest{}
 				request.Parent = "projects/google/products/" + api.Name
 				request.VersionId = api.Version
 				request.Version = &rpcpb.Version{}
-				response, err := FlameClient.CreateVersion(ctx, request)
-				log.Printf("response %+v\nerr %+v", response, err)
+				response, err := flameClient.CreateVersion(ctx, request)
+				if err == nil {
+					log.Printf("created %s", response.Name)
+				} else {
+					log.Printf("failed to create %s/versions/%s: %s",
+						request.Parent, request.VersionId, err.Error())
+				}
 			}
 		}
 		// does the spec exist? if not, create it
@@ -202,17 +244,21 @@ func handleExportArgumentsForBytes(arguments map[string]interface{}, bytes []byt
 			request.Name = "projects/google/products/" + api.Name +
 				"/versions/" + api.Version +
 				"/specs/discovery"
-			response, err := FlameClient.GetSpec(ctx, request)
-			log.Printf("response %+v\nerr %+v", response, err)
-			if err != nil { // TODO only do this for NotFound errors
+			_, err := flameClient.GetSpec(ctx, request)
+			if notFound(err) {
 				request := &rpcpb.CreateSpecRequest{}
 				request.Parent = "projects/google/products/" + api.Name +
 					"/versions/" + api.Version
 				request.SpecId = "discovery"
 				request.Spec = &rpcpb.Spec{}
 				request.Spec.Style = "discovery"
-				response, err := FlameClient.CreateSpec(ctx, request)
-				log.Printf("response %+v\nerr %+v", response, err)
+				response, err := flameClient.CreateSpec(ctx, request)
+				if err == nil {
+					log.Printf("created %s", response.Name)
+				} else {
+					log.Printf("failed to create %s/specs/%s: %s",
+						request.Parent, request.SpecId, err.Error())
+				}
 			}
 		}
 		// does the file exist? if not, create it
@@ -222,17 +268,33 @@ func handleExportArgumentsForBytes(arguments map[string]interface{}, bytes []byt
 				"/versions/" + api.Version +
 				"/specs/discovery" +
 				"/files/0"
-			response, err := FlameClient.GetFile(ctx, request)
-			log.Printf("response %+v\nerr %+v", response, err)
-			if err != nil { // TODO only do this for NotFound errors
+			_, err := flameClient.GetFile(ctx, request)
+			if notFound(err) {
+
+				// gzip the bytes
+				var buf bytes.Buffer
+				zw, _ := gzip.NewWriterLevel(&buf, gzip.BestCompression)
+				_, err = zw.Write(fileBytes)
+				if err != nil {
+					log.Fatal(err)
+				}
+				if err := zw.Close(); err != nil {
+					log.Fatal(err)
+				}
+
 				request := &rpcpb.CreateFileRequest{}
 				request.Parent = "projects/google/products/" + api.Name +
 					"/versions/" + api.Version + "/specs/discovery"
 				request.FileId = "0"
 				request.File = &rpcpb.File{}
-				request.File.Contents = bytes
-				response, err := FlameClient.CreateFile(ctx, request)
-				log.Printf("response %+v\nerr %+v", response, err)
+				request.File.Contents = buf.Bytes()
+				response, err := flameClient.CreateFile(ctx, request)
+				if err == nil {
+					log.Printf("created %s", response.Name)
+				} else {
+					log.Printf("failed to create %s/files/%s: %s",
+						request.Parent, request.FileId, err.Error())
+				}
 			}
 		}
 		handled = true
@@ -240,7 +302,7 @@ func handleExportArgumentsForBytes(arguments map[string]interface{}, bytes []byt
 	if arguments["--raw"].(bool) {
 		// Write the Discovery document as a JSON file.
 		filename := "disco-" + document.Name + "-" + document.Version + ".json"
-		ioutil.WriteFile(filename, bytes, 0644)
+		ioutil.WriteFile(filename, fileBytes, 0644)
 		handled = true
 	}
 	if arguments["--features"].(bool) {
@@ -262,12 +324,12 @@ func handleExportArgumentsForBytes(arguments map[string]interface{}, bytes []byt
 		if err != nil {
 			return handled, err
 		}
-		bytes, err = proto.Marshal(openAPIDocument)
+		fileBytes, err = proto.Marshal(openAPIDocument)
 		if err != nil {
 			return handled, err
 		}
 		filename := "openapi3-" + document.Name + "-" + document.Version + ".pb"
-		err = ioutil.WriteFile(filename, bytes, 0644)
+		err = ioutil.WriteFile(filename, fileBytes, 0644)
 		if err != nil {
 			return handled, err
 		}
@@ -279,12 +341,12 @@ func handleExportArgumentsForBytes(arguments map[string]interface{}, bytes []byt
 		if err != nil {
 			return handled, err
 		}
-		bytes, err = proto.Marshal(openAPIDocument)
+		fileBytes, err = proto.Marshal(openAPIDocument)
 		if err != nil {
 			return handled, err
 		}
 		filename := "openapi2-" + document.Name + "-" + document.Version + ".pb"
-		err = ioutil.WriteFile(filename, bytes, 0644)
+		err = ioutil.WriteFile(filename, fileBytes, 0644)
 		if err != nil {
 			return handled, err
 		}
@@ -328,42 +390,4 @@ func checkSchema(schemaName string, schema *discovery.Schema, depth int) {
 		log.Printf("ADDITIONAL PROPERTIES %s", schemaName)
 		checkSchema(schemaName+"/*", schema.AdditionalProperties, depth+1)
 	}
-}
-
-// FlameClient ...
-var FlameClient *gapic.FlameClient
-
-func initFlame() error {
-	var err error
-	var opts []option.ClientOption
-
-	address := os.Getenv("CLI_FLAME_ADDRESS")
-	if address != "" {
-		opts = append(opts, option.WithEndpoint(address))
-	}
-
-	insecure := os.Getenv("CLI_FLAME_INSECURE")
-	if insecure != "" {
-		if address == "" {
-			return fmt.Errorf("Missing address to use with insecure connection")
-		}
-
-		conn, err := grpc.Dial(address, grpc.WithInsecure())
-		if err != nil {
-			return err
-		}
-		opts = append(opts, option.WithGRPCConn(conn))
-	}
-
-	if token := os.Getenv("CLI_FLAME_TOKEN"); token != "" {
-		opts = append(opts, option.WithTokenSource(oauth2.StaticTokenSource(
-			&oauth2.Token{
-				AccessToken: token,
-				TokenType:   "Bearer",
-			})))
-	}
-	ctx := context.TODO()
-	FlameClient, err = gapic.NewFlameClient(ctx, opts...)
-
-	return err
 }
