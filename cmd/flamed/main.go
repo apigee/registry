@@ -15,6 +15,7 @@
 package main
 
 import (
+	"log"
 	"os"
 
 	"apigov.dev/flame/server"
@@ -25,5 +26,8 @@ func main() {
 	if port == "" {
 		port = "8080"
 	}
-	server.RunServer(":" + port)
+	err := server.RunServer(":" + port)
+	if err != nil {
+		log.Fatalf("error: %s", err.Error())
+	}
 }

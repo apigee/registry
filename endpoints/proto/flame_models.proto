@@ -143,3 +143,29 @@ enum FileView {
   FULL = 2;
 }
 
+// Properties of resources.
+message Property {
+  // Resource name.
+  string name = 1;
+
+  // Subject resource name.
+  string subject = 2;
+
+  // Relation name.
+  string relation = 3;
+
+  // Creation timestamp.
+  google.protobuf.Timestamp create_time = 4;
+
+  // Last update timestamp.
+  google.protobuf.Timestamp update_time = 5;
+
+  // Property value.
+  oneof value {
+    string string_value = 6;
+    int64 int64_value = 7;
+    double double_value = 8;
+    bool bool_value = 9;
+    bytes bytes_value = 10;
+  }
+}

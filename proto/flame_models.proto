@@ -14,8 +14,8 @@ option go_package = "apigov.dev/flame/rpc;rpc";
 // Products are produced by producers and are commitments to provide services.
 message Product {
   option (google.api.resource) = {
-    type: "flame.googleapis.com/Product"
-    pattern: "projects/{project}/products/{product}"
+    type : "flame.googleapis.com/Product"
+    pattern : "projects/{project}/products/{product}"
   };
 
   // Resource name.
@@ -41,7 +41,7 @@ message Product {
   // The recommended version of the API.
   // Format: apis/{api}/versions/{version}
   string recommended_version = 7 [
-    (google.api.resource_reference) = { type: "flame.googleapis.com/Version" }
+    (google.api.resource_reference) = {type : "flame.googleapis.com/Version"}
   ];
 }
 
@@ -49,8 +49,8 @@ message Product {
 // Versions are what consumers actually use.
 message Version {
   option (google.api.resource) = {
-    type: "flame.googleapis.com/Version"
-    pattern: "projects/{project}/products/{product}/versions/{version}"
+    type : "flame.googleapis.com/Version"
+    pattern : "projects/{project}/products/{product}/versions/{version}"
   };
 
   // Resource name.
@@ -79,8 +79,9 @@ message Version {
 // Specs provide formal descriptions that consumers can use to use a version.
 message Spec {
   option (google.api.resource) = {
-    type: "flame.googleapis.com/Spec"
-    pattern: "projects/{project}/products/{product}/versions/{version}/specs/{spec}"
+    type : "flame.googleapis.com/Spec"
+    pattern : "projects/{project}/products/{product}/versions/{version}/specs/"
+              "{spec}"
   };
 
   // Resource name.
@@ -111,8 +112,9 @@ message Spec {
 // specifications.
 message File {
   option (google.api.resource) = {
-    type: "flame.googleapis.com/File"
-    pattern: "projects/{project}/products/{product}/versions/{version}/specs/{spec}/files/{file}"
+    type : "flame.googleapis.com/File"
+    pattern : "projects/{project}/products/{product}/versions/{version}/specs/"
+              "{spec}/files/{file}"
   };
 
   // Resource name.
@@ -162,3 +164,29 @@ enum FileView {
   FULL = 2;
 }
 
+// Properties of resources.
+message Property {
+  // Resource name.
+  string name = 1;
+
+  // Subject resource name.
+  string subject = 2;
+
+  // Relation name.
+  string relation = 3;
+
+  // Creation timestamp.
+  google.protobuf.Timestamp create_time = 4;
+
+  // Last update timestamp.
+  google.protobuf.Timestamp update_time = 5;
+
+  // Property value.
+  oneof value {
+    string string_value = 6;
+    int64 int64_value = 7;
+    double double_value = 8;
+    bool bool_value = 9;
+    bytes bytes_value = 10;
+  }
+}

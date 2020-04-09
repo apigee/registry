@@ -11,7 +11,8 @@ require (
 	github.com/golang-commonmark/mdurl v0.0.0-20180910110917-8d018c6567d6 // indirect
 	github.com/golang-commonmark/puny v0.0.0-20180910110745-050be392d8b8 // indirect
 	github.com/golang/protobuf v1.3.5
-	github.com/googleapis/gapic-generator-go v0.12.5 // indirect
+	github.com/google/uuid v1.1.1
+	github.com/googleapis/gapic-generator-go v0.13.1 // indirect
 	github.com/googleapis/gax-go/v2 v2.0.5
 	github.com/googleapis/gnostic v0.1.1-0.20200308034506-2af3d8e5d92a
 	github.com/mitchellh/go-homedir v1.1.0
@@ -21,10 +22,10 @@ require (
 	gitlab.com/golang-commonmark/linkify v0.0.0-20200225224916-64bca66f6ad3 // indirect
 	golang.org/x/net v0.0.0-20200324143707-d3edc9973b7e // indirect
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
-	golang.org/x/sys v0.0.0-20200331124033-c3d80250170d // indirect
+	golang.org/x/sys v0.0.0-20200409092240-59c9f1ba88fa // indirect
 	google.golang.org/api v0.19.0
-	google.golang.org/genproto v0.0.0-20200403120447-c50568487044
-	google.golang.org/grpc v1.28.0
+	google.golang.org/genproto v0.0.0-20200409111301-baae70f3302d
+	google.golang.org/grpc v1.28.1
 )
 
 replace github.com/googleapis/gnostic v0.1.1-0.20200308034506-2af3d8e5d92a => github.com/timburks/gnostic v0.1.1-0.20200308034506-2af3d8e5d92a
