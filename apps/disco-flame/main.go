@@ -267,7 +267,7 @@ func handleExportArgumentsForBytes(arguments map[string]interface{}, fileBytes [
 			request.Name = "projects/google/products/" + api.Name +
 				"/versions/" + api.Version +
 				"/specs/discovery" +
-				"/files/0"
+				"/files/discovery.json"
 			_, err := flameClient.GetFile(ctx, request)
 			if notFound(err) {
 
@@ -285,7 +285,7 @@ func handleExportArgumentsForBytes(arguments map[string]interface{}, fileBytes [
 				request := &rpcpb.CreateFileRequest{}
 				request.Parent = "projects/google/products/" + api.Name +
 					"/versions/" + api.Version + "/specs/discovery"
-				request.FileId = "0"
+				request.FileId = "discovery.json"
 				request.File = &rpcpb.File{}
 				request.File.Contents = buf.Bytes()
 				response, err := flameClient.CreateFile(ctx, request)

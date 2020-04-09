@@ -96,9 +96,15 @@ func (s *server) ListFiles(ctx context.Context, req *rpc.ListFilesRequest) (*rpc
 		return nil, invalidArgumentError(err)
 	}
 	q = q.Filter("ProjectID =", m[1])
-	q = q.Filter("ProductID =", m[2])
-	q = q.Filter("VersionID =", m[3])
-	q = q.Filter("SpecID =", m[4])
+	if m[2] != "-" {
+		q = q.Filter("ProductID =", m[2])
+	}
+	if m[3] != "-" {
+		q = q.Filter("VersionID =", m[3])
+	}
+	if m[4] != "-" {
+		q = q.Filter("SpecID =", m[4])
+	}
 	var fileMessages []*rpc.File
 	var file models.File
 	it := client.Run(ctx, q.Distinct())

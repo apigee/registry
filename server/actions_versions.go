@@ -97,7 +97,9 @@ func (s *server) ListVersions(ctx context.Context, req *rpc.ListVersionsRequest)
 		return nil, invalidArgumentError(err)
 	}
 	q = q.Filter("ProjectID =", m[1])
-	q = q.Filter("ProductID =", m[2])
+	if m[2] != "-" {
+		q = q.Filter("ProductID =", m[2])
+	}
 	var versionMessages []*rpc.Version
 	var version models.Version
 	it := client.Run(ctx, q.Distinct())

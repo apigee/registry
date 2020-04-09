@@ -1,17 +1,17 @@
-# FLAME Reference Implementation
+# Flame Reference Implementation
 
-This directory contains a reference implementation of the FLAME (Full Lifecycle
+This directory contains a reference implementation of the Flame (Full Lifecycle
 API Management) API.
 
-## The FLAME API
+## The Flame API
 
-The FLAME API allows teams to upload and share machine-readable descriptions of
+The Flame API allows teams to upload and share machine-readable descriptions of
 APIs that are in use and in development. These descriptions include API
-specifications in standard formats for use by tools like linters, browsers,
-documentation generators, test runners, API proxies, and client and service
-generators. The API itself can be seen as a machine-readable enterprise API
-catalog that can be used to build online directories, portals, and workflow
-managers.
+specifications in standard formats like OpenAPI and Protocol Buffers. These
+specifications can be used by tools like linters, browsers, documentation
+generators, test runners, proxies, and API client and server generators. The
+API itself can be seen as a machine-readable enterprise API catalog that can be
+used to back online directories, portals, and workflow managers.
 
 The API is formally described by the files in the [proto](proto) directory.
 
@@ -22,25 +22,28 @@ This reference implementation is written in Go. It stores data using the
 deployed in a container using [Google Cloud Run](https://cloud.google.com/run).
 
 It is implemented as a [gRPC](https://grpc.io) service and follows the Google
-API Design Guidelines at [aip.dev](https://aip.dev).
-
-The gRPC service supports [gRPC HTTP/JSON transcoding](https://aip.dev/127),
-which allows gRPC service to be automatically published as a JSON REST API
-using a proxy. Configuration for Envoy is included.
-
-The gRPC service is configured to support
+API Design Guidelines at [aip.dev](https://aip.dev). The gRPC service supports
+[gRPC HTTP/JSON transcoding](https://aip.dev/127), which allows it to be
+automatically published as a JSON REST API using a proxy. Configuration for the
+Envoy proxy is included. The service is also configured to support
 [generated API clients (GAPICS)](https://googleapis.github.io/gapic-generators/)
 and a Go GAPIC library is generated as part of the build process using
-[gapic-generator-go](https://github.com/googleapis/gapic-generator-go).
-
-The build process also creates a command-line interface that is automatically
-generated from the API description using the
+[gapic-generator-go](https://github.com/googleapis/gapic-generator-go). A
+sample Go GAPIC-based client is in [cmd/client](cmd/client). [cmd/cli](cmd/cli)
+contains a command-line interface that is automatically generated from the API
+description using the
 [protoc-gen-go_cli](https://github.com/googleapis/gapic-generator-go/tree/master/cmd/protoc-gen-go_cli)
 tool in [gapic-generator-go](https://github.com/googleapis/gapic-generator-go).
+Along with this automatically-generated CLI, the [cmd/flame](cmd/flame)
+directory contains a hand-written command-line tool that supports common API
+management tasks.
 
-A sample application in the `apps/disco-flame` directory shows a sample use of
-the API to build an online catalog of API descriptions obtained from the
+A sample application in [apps/disco-flame](apps/disco-flame) shows a sample use
+of the API to build an online catalog of API descriptions obtained from the
 [Google API Discovery Service](https://developers.google.com/discovery).
+Another sample, [apps/atlas](apps/atlas) uploads a directory of OpenAPI
+specifications from any directory in the same style as
+[github.com/APIs-guru/openapi-directory/APIs](https://github.com/APIs-guru/openapi-directory/tree/master/APIs).
 
 ## Build Instructions
 
@@ -63,28 +66,29 @@ the `COMPILE-PROTOS.sh` script for details). These include:
 
 - **`rpc`** containing generated Protocol Buffer support code (in Go).
 - **`gapic`** containing the Go GAPIC (generated API client) library.
-- **`cmd/cli`** containing the generated command-line interface.
+- **`cmd/cli`** containing a generated command-line interface.
 
 ## Enabling the Google Cloud Datastore API
 
 The API service uses the Google Cloud Datastore API. This must be enabled for a
 Google Cloud project associated with the API and appropriate credentials must
-be available. One way to run the API locally is to create and download
-[Service Account](https://cloud.google.com/compute/docs/access/service-accounts)
-credentials, save them to a local file, and then point to this file with the
-`GOOGLE_APPLICATION_CREDENTIALS` enviroment variable. (Note that when the API
-server is run with Google Cloud Run, credentials are automatically provided by
-the environment).
+be available. One way to get credentials is to use
+[Application Default Credentials](https://cloud.google.com/docs/authentication/production).
+To get set up, just run `gcloud auth application-default login` and sign in.
+Then make sure that your project id is set to the project that is enabled to
+use the Google Cloud Datastore API. (Note that you only need to do this when
+you are running the server locally. When the API server is run with Google
+Cloud Run, credentials are automatically provided by the environment.)
 
 Please note: this is equivalent to running Cloud Firestore in Datastore mode.
-Create your service account with the "Datastore Owner" or "Datastore User"
-role.
 
 ## Running the API Locally
 
-The INIT-LOCAL.sh script will setup your environment for the Flame API server
-(`flamed`) and for the clients to call your local instance. Start the server by
-running `flamed`.
+Running `source AUTH-LOCAL.sh` will configure your environment for the Flame
+API server (`flamed`) and for the clients to call your local instance. Start
+the server by running `flamed`.
+
+## Proxying a Local Service with Envoy
 
 The `flamed` server provides a gRPC service only. For a transcoded HTTP/JSON
 interface, run the [envoy](https://www.envoyproxy.io) proxy locally using the
@@ -98,7 +102,7 @@ sudo envoy -c envoy.yaml
 
 Here `sudo` is needed because `envoy` is configured to run on port 80.
 
-## Deploying on Google Cloud Run
+## Deploying with Google Cloud Run
 
 This API is designed to be easily deployed on
 [Google Cloud Run](https://cloud.google.com/run). To support this, the Makefile
@@ -112,14 +116,13 @@ Requirements:
   command, which is part of the
   [Google Cloud SDK](https://cloud.google.com/sdk).
 
-- The `FLAME_PROJECT_IDENTIFIER` environment variable must be set to the Google
-  Cloud project id where the API service is to be hosted.
+- If not already done, `gcloud auth login` gets user credentials for subsequent
+  `gcloud` operations and `gcloud config set project PROJECT_ID` can be used to
+  set your project ID to the one where you plan to host your servce.
 
-If not already done, `gcloud auth login` gets user credentials for subsequent
-`gcloud` operations.
-
-If not already done, `gcloud config set project PROJECT_ID` can be used to set
-your project ID, which should match \$FLAME_PROJECT_IDENTIFIER.
+- The Makefile gets your project ID from the `FLAME_PROJECT_IDENTIFIER`
+  environment variable. It can be set automatically by running
+  `source AUTH-CLOUDRUN.sh`.
 
 `make build` uses [Google Cloud Build](https://cloud.google.com/cloud-build) to
 build a container containing the API server. The container is then stored in
@@ -128,65 +131,31 @@ build a container containing the API server. The container is then stored in
 `make run` deploys that container on
 [Google Cloud Run](https://cloud.google.com/run).
 
-## Securing the API
-
 When deploying to Cloud Run for the first time, you will be asked a few
 questions, including this one:
 
 `Allow unauthenticated invocations to [flame] (y/N)?`
 
 If you answer "y", you will be able to make calls without authentication. This
-is the easiest way to test the API, but it's also not too difficult to secure
-the API and authenticate using a service account with a [Google Cloud IAM]()
-role. To do this, choose "N" when you deploy, then go the the APIs Credentials
-page in the Google Cloud Console and create a service account. When you reach
-the "Service account permisions" screen, add the `Cloud Run Invoker` role to
-your new service account. Then use the "Create Key" button to create and
-download a private key in the JSON format.
-
-You can use this private key with the `gcloud` command to obtain authorization
-tokens to send with your API calls. To do that, you need to "activate" your
-account credentials with `gcloud`. You can do that with a command like the
-following, in which you substitute the email address associated with your
-service account and the path to your downloaded private key:
-
-```
-gcloud auth activate-service-account flame-client@your-project-identifier.iam.gserviceaccount.com --key-file ~/Downloads/your-project-identifier-e48bd9f1c60a.json
-```
-
-Then you can use `gcloud auth print-identity-token` to get an auth token for
-your service account. This requires an `--audiences` parameter that is the
-address of your Cloud Run-hosted service. Here's how you can get that:
-
-```
-export AUDIENCES=$(gcloud beta run services describe flame --platform managed --format="value(status.address.url)")
-```
-
-Next, use `gcloud auth print-identity-token` to get your auth token.
-
-```
-export CLI_FLAME_TOKEN=`gcloud auth print-identity-token flame-client@your-project-identifier.iam.gserviceaccount.com --audiences="$AUDIENCES"
-```
-
-To use the CLI, it's also helpful to set the `CLI_FLAME_ADDRESS` environment
-variable. Do that with the hostname associated with your service and be sure to
-add port 443 since Cloud Run hosted services use SSL. Here's an example (your
-service address will be different):
-
-```
-export CLI_FLAME_ADDRESS=flame-ozfrf5cr5b-uw.a.run.app:443
-```
+is the easiest way to test the API, but it's not necessary - running
+`source AUTH-CLOUDRUN.sh` configures your environment so that the Flame CLI and
+other tools will authenticate with your user ID.
 
 Now you can call the API with your generated CLI.
 
-`cli flame list-products --parent projects/my-project-id --page_size 10`
+`cli flame list-products --parent projects/demo --page_size 10`
 
-Note here that `my-project-id` is arbitrary and for use within your FLAME API
+Note here that `demo` is an arbitrary project ID for use within your Flame API
 calls only. It is unrelated to the Google Cloud project ID that you use for
 Cloud Run and Cloud Datastore.
 
 Auth tokens are short-lived. When your token expires, your calls will return a
 message like this:
 `rpc error: code = Unauthenticated desc = Unauthorized: HTTP status code 401`.
-To generate a new token, rerun `gcloud auth print-identity-token` as shown
-above.
+To generate a new token, rerun `source AUTH-CLOUDRUN.sh`.
+
+## Proxying a Cloud Run-based Service with Google Cloud Endpoints
+
+For HTTP/JSON transcoding and other API management features, see the
+[endpoints](endpoints) directory for instructions and scripts for configuring a
+Google Cloud Endpoints frontend for your Cloud Run-based service.

@@ -97,8 +97,12 @@ func (s *server) ListSpecs(ctx context.Context, req *rpc.ListSpecsRequest) (*rpc
 		return nil, invalidArgumentError(err)
 	}
 	q = q.Filter("ProjectID =", m[1])
-	q = q.Filter("ProductID =", m[2])
-	q = q.Filter("VersionID =", m[3])
+	if m[2] != "-" {
+		q = q.Filter("ProductID =", m[2])
+	}
+	if m[3] != "-" {
+		q = q.Filter("VersionID =", m[3])
+	}
 	var specMessages []*rpc.Spec
 	var spec models.Spec
 	it := client.Run(ctx, q.Distinct())
