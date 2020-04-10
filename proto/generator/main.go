@@ -79,14 +79,7 @@ func main() {
 				PluralName:   "Specs",
 				ParentName:   "projects/*/products/*/versions/*",
 				ResourceName: "projects/*/products/*/versions/*/specs/*",
-				ViewEnumName: "",
-			},
-			{
-				Name:         "File",
-				PluralName:   "Files",
-				ParentName:   "projects/*/products/*/versions/*/specs/*",
-				ResourceName: "projects/*/products/*/versions/*/specs/*/files/*",
-				ViewEnumName: "FileView",
+				ViewEnumName: "SpecView",
 			},
 			{
 				Name:         "Property",

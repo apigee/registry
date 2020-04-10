@@ -243,34 +243,9 @@ func handleExportArgumentsForBytes(arguments map[string]interface{}, fileBytes [
 			request := &rpcpb.GetSpecRequest{}
 			request.Name = "projects/google/products/" + api.Name +
 				"/versions/" + api.Version +
-				"/specs/discovery"
+				"/specs/discovery.json"
 			_, err := flameClient.GetSpec(ctx, request)
 			if notFound(err) {
-				request := &rpcpb.CreateSpecRequest{}
-				request.Parent = "projects/google/products/" + api.Name +
-					"/versions/" + api.Version
-				request.SpecId = "discovery"
-				request.Spec = &rpcpb.Spec{}
-				request.Spec.Style = "discovery"
-				response, err := flameClient.CreateSpec(ctx, request)
-				if err == nil {
-					log.Printf("created %s", response.Name)
-				} else {
-					log.Printf("failed to create %s/specs/%s: %s",
-						request.Parent, request.SpecId, err.Error())
-				}
-			}
-		}
-		// does the file exist? if not, create it
-		{
-			request := &rpcpb.GetFileRequest{}
-			request.Name = "projects/google/products/" + api.Name +
-				"/versions/" + api.Version +
-				"/specs/discovery" +
-				"/files/discovery.json"
-			_, err := flameClient.GetFile(ctx, request)
-			if notFound(err) {
-
 				// gzip the bytes
 				var buf bytes.Buffer
 				zw, _ := gzip.NewWriterLevel(&buf, gzip.BestCompression)
@@ -282,18 +257,19 @@ func handleExportArgumentsForBytes(arguments map[string]interface{}, fileBytes [
 					log.Fatal(err)
 				}
 
-				request := &rpcpb.CreateFileRequest{}
+				request := &rpcpb.CreateSpecRequest{}
 				request.Parent = "projects/google/products/" + api.Name +
-					"/versions/" + api.Version + "/specs/discovery"
-				request.FileId = "discovery.json"
-				request.File = &rpcpb.File{}
-				request.File.Contents = buf.Bytes()
-				response, err := flameClient.CreateFile(ctx, request)
+					"/versions/" + api.Version
+				request.SpecId = "discovery.json"
+				request.Spec = &rpcpb.Spec{}
+				request.Spec.Style = "discovery"
+				request.Spec.Contents = buf.Bytes()
+				response, err := flameClient.CreateSpec(ctx, request)
 				if err == nil {
 					log.Printf("created %s", response.Name)
 				} else {
-					log.Printf("failed to create %s/files/%s: %s",
-						request.Parent, request.FileId, err.Error())
+					log.Printf("failed to create %s/specs/%s: %s",
+						request.Parent, request.SpecId, err.Error())
 				}
 			}
 		}

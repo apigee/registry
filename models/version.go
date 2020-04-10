@@ -17,6 +17,16 @@ import (
 // VersionEntityName is used to represent versions in the datastore.
 const VersionEntityName = "Version"
 
+// VersionsRegexp returns a regular expression that matches a collection of versions.
+func VersionsRegexp() *regexp.Regexp {
+	return regexp.MustCompile("^projects/" + nameRegex + "/products/" + nameRegex + "/versions$")
+}
+
+// VersionRegexp returns a regular expression that matches a version resource name.
+func VersionRegexp() *regexp.Regexp {
+	return regexp.MustCompile("^projects/" + nameRegex + "/products/" + nameRegex + "/versions/" + nameRegex + "$")
+}
+
 // Version ...
 type Version struct {
 	ProjectID   string    // Uniquely identifies a project.
@@ -113,7 +123,7 @@ func (version *Version) Update(message *rpc.Version) error {
 
 // DeleteChildren deletes all the children of a version.
 func (version *Version) DeleteChildren(ctx context.Context, client *datastore.Client) error {
-	for _, entityName := range []string{FileEntityName, SpecEntityName} {
+	for _, entityName := range []string{SpecEntityName} {
 		q := datastore.NewQuery(entityName)
 		q = q.KeysOnly()
 		q = q.Filter("ProjectID =", version.ProjectID)

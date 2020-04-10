@@ -3,19 +3,28 @@
 package models
 
 import (
-	"context"
+	"crypto/sha1"
 	"errors"
 	"fmt"
 	"regexp"
 	"time"
 
 	rpc "apigov.dev/flame/rpc"
-	"cloud.google.com/go/datastore"
 	ptypes "github.com/golang/protobuf/ptypes"
 )
 
 // SpecEntityName is used to represent specs in the datastore.
 const SpecEntityName = "Spec"
+
+// SpecsRegexp returns a regular expression that matches a collection of specs.
+func SpecsRegexp() *regexp.Regexp {
+	return regexp.MustCompile("^projects/" + nameRegex + "/products/" + nameRegex + "/versions/" + nameRegex + "/specs$")
+}
+
+// SpecRegexp returns a regular expression that matches a spec resource name.
+func SpecRegexp() *regexp.Regexp {
+	return regexp.MustCompile("^projects/" + nameRegex + "/products/" + nameRegex + "/versions/" + nameRegex + "/specs/" + pathNameRegex + "$")
+}
 
 // Spec ...
 type Spec struct {
@@ -23,11 +32,15 @@ type Spec struct {
 	ProductID   string    // Uniquely identifies a product within a project.
 	VersionID   string    // Uniquely identifies a version within a product.
 	SpecID      string    // Uniquely identifies a spec within a version.
-	DisplayName string    // A human-friendly name.
 	Description string    // A detailed description.
 	CreateTime  time.Time // Creation time.
 	UpdateTime  time.Time // Time of last change.
 	Style       string    // Specification format.
+	FileName    string    // Name of spec file.
+	SizeInBytes int32     // Size of the spec file.
+	Hash        string    // A hash of the spec file.
+	SourceURI   string    // The original source URI of the spec file.
+	Contents    []byte    `datastore:",noindex"` // The contents of the spec file.
 }
 
 // ParseParentVersion ...
@@ -52,7 +65,7 @@ func NewSpecFromParentAndSpecID(parent string, specID string) (*Spec, error) {
 	if m == nil {
 		return nil, fmt.Errorf("invalid parent '%s'", parent)
 	}
-	if err := validateID(specID); err != nil {
+	if err := validatePathID(specID); err != nil {
 		return nil, err
 	}
 	spec := &Spec{}
@@ -83,10 +96,8 @@ func NewSpecFromMessage(message *rpc.Spec) (*Spec, error) {
 	if err != nil {
 		return nil, err
 	}
-	spec.DisplayName = message.GetDisplayName()
 	spec.Description = message.GetDescription()
-	//spec.Availability = message.GetAvailability()
-	//spec.RecommendedVersion = message.GetRecommendedVersion()
+	spec.FileName = message.GetFilename()
 	return spec, nil
 }
 
@@ -96,38 +107,36 @@ func (spec *Spec) ResourceName() string {
 }
 
 // Message returns a message representing a spec.
-func (spec *Spec) Message() (message *rpc.Spec, err error) {
+func (spec *Spec) Message(view rpc.SpecView) (message *rpc.Spec, err error) {
 	message = &rpc.Spec{}
 	message.Name = spec.ResourceName()
-	message.DisplayName = spec.DisplayName
+	message.Filename = spec.FileName
 	message.Description = spec.Description
+	if view == rpc.SpecView_FULL {
+		message.Contents = spec.Contents
+	}
+	message.Hash = spec.Hash
+	message.SizeBytes = spec.SizeInBytes
+	message.Style = spec.Style
+	message.SourceUri = spec.SourceURI
 	message.CreateTime, err = ptypes.TimestampProto(spec.CreateTime)
 	message.UpdateTime, err = ptypes.TimestampProto(spec.UpdateTime)
-	//message.Availability = spec.Availability
-	//message.RecommendedVersion = spec.RecommendedVersion
 	return message, err
 }
 
 // Update modifies a spec using the contents of a message.
 func (spec *Spec) Update(message *rpc.Spec) error {
+	contents := message.GetContents()
+	spec.FileName = message.Filename
+	spec.Description = message.Description
+	spec.Contents = contents
+	h := sha1.New()
+	h.Write(contents)
+	bs := h.Sum(nil)
+	spec.Hash = fmt.Sprintf("%x", bs)
+	spec.SizeInBytes = int32(len(contents))
 	spec.Style = message.GetStyle()
+	spec.SourceURI = message.GetSourceUri()
 	spec.UpdateTime = spec.CreateTime
-	return nil
-}
-
-// DeleteChildren deletes all the children of a spec.
-func (spec *Spec) DeleteChildren(ctx context.Context, client *datastore.Client) error {
-	for _, entityName := range []string{FileEntityName} {
-		q := datastore.NewQuery(entityName)
-		q = q.KeysOnly()
-		q = q.Filter("ProjectID =", spec.ProjectID)
-		q = q.Filter("ProductID =", spec.ProductID)
-		q = q.Filter("VersionID =", spec.VersionID)
-		q = q.Filter("SpecID =", spec.SpecID)
-		err := deleteAllMatches(ctx, client, q)
-		if err != nil {
-			return err
-		}
-	}
 	return nil
 }

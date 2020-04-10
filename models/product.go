@@ -16,6 +16,16 @@ import (
 // ProductEntityName is used to represent products in the datastore.
 const ProductEntityName = "Product"
 
+// ProductsRegexp returns a regular expression that matches collection of products.
+func ProductsRegexp() *regexp.Regexp {
+	return regexp.MustCompile("^projects/" + nameRegex + "/products$")
+}
+
+// ProductRegexp returns a regular expression that matches a product resource name.
+func ProductRegexp() *regexp.Regexp {
+	return regexp.MustCompile("^projects/" + nameRegex + "/products/" + nameRegex + "$")
+}
+
 // Product ...
 type Product struct {
 	ProjectID          string    // Uniquely identifies a project.
@@ -96,7 +106,7 @@ func (product *Product) Update(message *rpc.Product) error {
 
 // DeleteChildren deletes all the children of a product.
 func (product *Product) DeleteChildren(ctx context.Context, client *datastore.Client) error {
-	for _, entityName := range []string{FileEntityName, SpecEntityName, VersionEntityName} {
+	for _, entityName := range []string{SpecEntityName, VersionEntityName} {
 		q := datastore.NewQuery(entityName)
 		q = q.KeysOnly()
 		q = q.Filter("ProjectID =", product.ProjectID)

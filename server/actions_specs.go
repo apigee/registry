@@ -39,7 +39,7 @@ func (s *server) CreateSpec(ctx context.Context, request *rpc.CreateSpecRequest)
 	if err != nil {
 		return nil, err
 	}
-	return spec.Message()
+	return spec.Message(rpc.SpecView_BASIC)
 }
 
 func (s *server) DeleteSpec(ctx context.Context, request *rpc.DeleteSpecRequest) (*empty.Empty, error) {
@@ -49,12 +49,11 @@ func (s *server) DeleteSpec(ctx context.Context, request *rpc.DeleteSpecRequest)
 	}
 	defer client.Close()
 	// Validate name and create dummy spec (we just need the ID fields).
-	spec, err := models.NewSpecFromResourceName(request.GetName())
+	_, err = models.NewSpecFromResourceName(request.GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	// Delete children first and then delete the spec.
-	spec.DeleteChildren(ctx, client)
+	// Delete the spec.
 	k := &datastore.Key{Kind: specEntityName, Name: request.GetName()}
 	err = client.Delete(ctx, k)
 	return &empty.Empty{}, err
@@ -77,7 +76,7 @@ func (s *server) GetSpec(ctx context.Context, request *rpc.GetSpecRequest) (*rpc
 	} else if err != nil {
 		return nil, internalError(err)
 	}
-	return spec.Message()
+	return spec.Message(request.GetView())
 }
 
 func (s *server) ListSpecs(ctx context.Context, req *rpc.ListSpecsRequest) (*rpc.ListSpecsResponse, error) {
@@ -108,7 +107,7 @@ func (s *server) ListSpecs(ctx context.Context, req *rpc.ListSpecsRequest) (*rpc
 	it := client.Run(ctx, q.Distinct())
 	_, err = it.Next(&spec)
 	for err == nil {
-		specMessage, _ := spec.Message()
+		specMessage, _ := spec.Message(req.GetView())
 		specMessages = append(specMessages, specMessage)
 		_, err = it.Next(&spec)
 	}
@@ -148,5 +147,5 @@ func (s *server) UpdateSpec(ctx context.Context, request *rpc.UpdateSpecRequest)
 	if err != nil {
 		return nil, err
 	}
-	return spec.Message()
+	return spec.Message(rpc.SpecView_BASIC)
 }

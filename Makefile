@@ -13,4 +13,4 @@ build:
 	gcloud builds submit --tag gcr.io/${FLAME_PROJECT_IDENTIFIER}/flame-backend
 
 deploy:
-	gcloud run deploy --image gcr.io/${FLAME_PROJECT_IDENTIFIER}/flame-backend --platform managed
+	gcloud run deploy flame-backend --image gcr.io/${FLAME_PROJECT_IDENTIFIER}/flame-backend --platform managed

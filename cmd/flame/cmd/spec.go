@@ -21,11 +21,11 @@ var specCmd = &cobra.Command{
 	Long:  "Upload files of an API spec.",
 	Run: func(cmd *cobra.Command, args []string) {
 		flagset := cmd.LocalFlags()
-		spec, err := flagset.GetString("spec")
+		version, err := flagset.GetString("version")
 		if err != nil {
 			log.Fatalf("%s", err.Error())
 		}
-		fmt.Printf("spec called with args %+v and spec %s\n", args, spec)
+		fmt.Printf("spec called with args %+v and version %s\n", args, version)
 
 		client, err := connection.NewClient()
 		if err != nil {
@@ -45,10 +45,10 @@ var specCmd = &cobra.Command{
 					switch mode := fi.Mode(); {
 					case mode.IsDir():
 						fmt.Printf("upload directory %s\n", match)
-						uploadDirectory(match, client, spec)
+						uploadDirectory(match, client, version)
 					case mode.IsRegular():
 						fmt.Printf("upload file %s\n", match)
-						uploadFile(match, client, spec)
+						uploadSpecFile(match, client, version)
 					}
 				} else {
 					log.Printf("%+v", err)
@@ -58,7 +58,7 @@ var specCmd = &cobra.Command{
 	},
 }
 
-func uploadDirectory(dirname string, client *gapic.FlameClient, spec string) error {
+func uploadDirectory(dirname string, client *gapic.FlameClient, version string) error {
 	return filepath.Walk(dirname,
 		func(path string, info os.FileInfo, err error) error {
 			log.Printf("%+s", path)
@@ -66,31 +66,39 @@ func uploadDirectory(dirname string, client *gapic.FlameClient, spec string) err
 				return err
 			}
 			if !info.IsDir() {
-				uploadFile(path, client, spec)
+				uploadSpecFile(path, client, version)
 			}
 			return nil
 		})
 }
 
-func uploadFile(filename string, client *gapic.FlameClient, spec string) {
-	// does the file exist? if not, create it
-	request := &rpcpb.GetFileRequest{}
-	request.Name = spec + "/files/" + filename
+func uploadSpecFile(filename string, client *gapic.FlameClient, version string) {
+	// does the spec file exist? if not, create it
+	request := &rpcpb.GetSpecRequest{}
+	request.Name = version + "/specs/" + filename
 	ctx := context.TODO()
-	response, err := client.GetFile(ctx, request)
+	response, err := client.GetSpec(ctx, request)
 	log.Printf("response %+v\nerr %+v", response, err)
 	if err != nil { // TODO only do this for NotFound errors
 		bytes, err := ioutil.ReadFile(filename)
 		if err != nil {
 			log.Printf("err %+v", err)
 		} else {
-			request := &rpcpb.CreateFileRequest{}
-			request.Parent = spec
-			request.FileId = filename
-			request.File = &rpcpb.File{}
-			request.File.Filename = filename
-			request.File.Contents = bytes
-			response, err := client.CreateFile(ctx, request)
+			request := &rpcpb.CreateSpecRequest{}
+			request.Parent = version
+			request.SpecId = filename
+			request.Spec = &rpcpb.Spec{}
+			request.Spec.Filename = filename
+			request.Spec.Contents = bytes
+			switch filename {
+			case "swagger.yaml":
+				request.Spec.Style = "openapi-v2"
+			case "openapi.yaml":
+				request.Spec.Style = "openapi-v3"
+			default:
+				request.Spec.Style = "proto"
+			}
+			response, err := client.CreateSpec(ctx, request)
 			log.Printf("response %+v\nerr %+v", response, err)
 		}
 	}
@@ -98,5 +106,5 @@ func uploadFile(filename string, client *gapic.FlameClient, spec string) {
 
 func init() {
 	uploadCmd.AddCommand(specCmd)
-	specCmd.Flags().String("spec", "", "Resource name of spec to upload")
+	specCmd.Flags().String("version", "", "Resource name of version for uploaded spec")
 }

@@ -83,25 +83,6 @@ to quickly create a Cobra application.`,
 				}
 				fmt.Println(spec.Name)
 			}
-		} else if m := models.FilesRegexp().FindAllStringSubmatch(name, -1); m != nil {
-			client, err := connection.NewClient()
-			if err != nil {
-				log.Fatalf("%s", err.Error())
-			}
-			ctx := context.TODO()
-			request := &rpc.ListFilesRequest{
-				Parent: "projects/" + m[0][1] + "/products/" + m[0][2] + "/versions/" + m[0][3] + "/specs/" + m[0][4],
-			}
-			it := client.ListFiles(ctx, request)
-			for {
-				file, err := it.Next()
-				if err == iterator.Done {
-					break
-				} else if err != nil {
-					log.Fatalf("%s", err.Error())
-				}
-				fmt.Println(file.Name)
-			}
 		} else if m := models.PropertiesRegexp().FindAllStringSubmatch(name, -1); m != nil {
 			client, err := connection.NewClient()
 			if err != nil {
@@ -154,19 +135,6 @@ to quickly create a Cobra application.`,
 			}
 			spec, err := client.GetSpec(ctx, request)
 			fmt.Printf("%+v\n", spec)
-		} else if m := models.FileRegexp().FindAllStringSubmatch(name, -1); m != nil {
-			fmt.Printf("FILE\n")
-			client, err := connection.NewClient()
-			if err != nil {
-				log.Fatalf("%s", err.Error())
-			}
-			ctx := context.TODO()
-			request := &rpc.GetFileRequest{
-				Name: "projects/" + m[0][1] + "/products/" + m[0][2] + "/versions/" + m[0][3] + "/specs/" + m[0][4] + "/files/" + m[0][5],
-			}
-			log.Printf("request %+v", request)
-			file, err := client.GetFile(ctx, request)
-			fmt.Printf("%+v\n", file)
 		} else if m := models.PropertyRegexp().FindAllStringSubmatch(name, -1); m != nil {
 			fmt.Printf("FILE\n")
 			client, err := connection.NewClient()

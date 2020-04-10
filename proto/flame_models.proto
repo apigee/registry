@@ -77,6 +77,8 @@ message Version {
 
 // A Spec describes a version of an API product in a structured way.
 // Specs provide formal descriptions that consumers can use to use a version.
+// When specs consist of multiple files, each is a separate spec resource with
+// its own name and a common value for the format property.
 message Spec {
   option (google.api.resource) = {
     type : "flame.googleapis.com/Spec"
@@ -87,8 +89,8 @@ message Spec {
   // Resource name.
   string name = 1;
 
-  // Human-meaningful name.
-  string display_name = 2;
+  // A possibly-hierarchical name used to refer to the file from other files.
+  string filename = 2;
 
   // A detailed description.
   string description = 3;
@@ -99,63 +101,35 @@ message Spec {
   // Last update timestamp.
   google.protobuf.Timestamp update_time = 5;
 
-  // A format descriptor for this spec.
+  // A style (format) descriptor for this spec.
   // Possible values include "proto3", "OpenAPI-2.0", "OpenAPI-3.0".
   // This is free-form but we expect that it will eventually be quite structured
   // with an "API Description Format" part and possible "API Style" parts,
   // e.g. "OpenAPI-3.0+Google" for OpenAPI v3 with (hypothetical) Google style
   // constraints.
   string style = 6;
-}
 
-// A file is a reference to an arbitrary container of data used to hold API
-// specifications.
-message File {
-  option (google.api.resource) = {
-    type : "flame.googleapis.com/File"
-    pattern : "projects/{project}/products/{product}/versions/{version}/specs/"
-              "{spec}/files/{file}"
-  };
-
-  // Resource name.
-  string name = 1;
-
-  // Human-meaningful name.
-  string display_name = 2;
-
-  // A detailed description.
-  string description = 3;
-
-  // Creation timestamp.
-  google.protobuf.Timestamp create_time = 4;
-
-  // Last update timestamp.
-  google.protobuf.Timestamp update_time = 5;
-
-  // A possibly-hierarchical name used to refer to the file from other files.
-  string filename = 6;
-
-  // The size of the file in bytes.
+  // The size of the spec file in bytes.
   int32 size_bytes = 7;
 
-  // A hash of the file's contents
+  // A hash of the spec file's contents
   string hash = 8;
 
-  // The original source URI of the file (if one exists).
+  // The original source URI of the spec file (if one exists).
   // This is an external location that can be used for reference purposes
   // but which may not be authoritative since this external resource may
   // change after the file is retrieved.
   string source_uri = 9;
 
-  // The contents of the file. Returned only when the FULL view is requested.
+  // The contents of the spec file. Returned only when the FULL view is requested.
   bytes contents = 10;
 }
 
-// Views of Files.
-enum FileView {
+// Views of Specs.
+enum SpecView {
   // The default / unset value.
   // The API will default to the BASIC view.
-  FILE_VIEW_UNSPECIFIED = 0;
+  SPEC_VIEW_UNSPECIFIED = 0;
 
   // Include everything but the file contents.
   BASIC = 1;

@@ -48,14 +48,14 @@ func main() {
 			if strings.HasSuffix(path, "swagger.yaml") {
 				processes++
 				go func() {
-					handleSpec(path, "oas2")
+					handleSpec(path, "openapi-v2")
 					completions <- 1
 				}()
 			}
 			if strings.HasSuffix(path, "openapi.yaml") {
 				processes++
 				go func() {
-					handleSpec(path, "oas3")
+					handleSpec(path, "openapi-v3")
 					completions <- 1
 				}()
 			}
@@ -70,18 +70,18 @@ func main() {
 	}
 }
 
-func handleSpec(path string, format string) error {
+func handleSpec(path string, style string) error {
 	name := strings.TrimPrefix(path, directory)
 	parts := strings.Split(name, "/")
 	spec := parts[len(parts)-1]
 	version := parts[len(parts)-2]
 	product := strings.Join(parts[0:len(parts)-2], "-")
 	fmt.Printf("product:%+v version:%+v spec:%+v \n", product, version, spec)
-	uploadSpec(product, version, format, path)
+	uploadSpec(product, version, style, path)
 	return nil
 }
 
-func uploadSpec(product, version, spec, path string) error {
+func uploadSpec(product, version, style, path string) error {
 	ctx := context.TODO()
 	// does the API exist? if not, create it
 	{
@@ -123,63 +123,41 @@ func uploadSpec(product, version, spec, path string) error {
 	}
 	// does the spec exist? if not, create it
 	{
+		filename := filepath.Base(path)
+
 		request := &rpcpb.GetSpecRequest{}
 		request.Name = "projects/atlas/products/" + product +
 			"/versions/" + version +
-			"/specs/" + spec
+			"/specs/" + filename
 		_, err := flameClient.GetSpec(ctx, request)
 		if notFound(err) {
+			fileBytes, err := ioutil.ReadFile(path)
+			// gzip the bytes
+			var buf bytes.Buffer
+			zw, _ := gzip.NewWriterLevel(&buf, gzip.BestCompression)
+			_, err = zw.Write(fileBytes)
+			if err != nil {
+				log.Fatal(err)
+			}
+			if err := zw.Close(); err != nil {
+				log.Fatal(err)
+			}
+
 			request := &rpcpb.CreateSpecRequest{}
 			request.Parent = "projects/atlas/products/" + product +
 				"/versions/" + version
-			request.SpecId = spec
+			request.SpecId = filename
 			request.Spec = &rpcpb.Spec{}
-			request.Spec.Style = spec
+			request.Spec.Style = style
+			request.Spec.Filename = filename
+			request.Spec.Contents = buf.Bytes()
 			response, err := flameClient.CreateSpec(ctx, request)
 			if err == nil {
 				log.Printf("created %s", response.Name)
 			} else {
-				log.Printf("failed to create %s/specs/%s: %s",
-					request.Parent, request.SpecId, err.Error())
-			}
-		}
-	}
-	// does the file exist? if not, create it
-	{
-		filename := filepath.Base(path)
-		fileBytes, err := ioutil.ReadFile(path)
-
-		// gzip the bytes
-		var buf bytes.Buffer
-		zw, _ := gzip.NewWriterLevel(&buf, gzip.BestCompression)
-		_, err = zw.Write(fileBytes)
-		if err != nil {
-			log.Fatal(err)
-		}
-		if err := zw.Close(); err != nil {
-			log.Fatal(err)
-		}
-
-		request := &rpcpb.GetFileRequest{}
-		request.Name = "projects/atlas/products/" + product +
-			"/versions/" + version +
-			"/specs/" + spec +
-			"/files/" + filename
-		_, err = flameClient.GetFile(ctx, request)
-		if notFound(err) {
-			request := &rpcpb.CreateFileRequest{}
-			request.Parent = "projects/atlas/products/" + product +
-				"/versions/" + version + "/specs/" + spec
-			request.FileId = filename
-			request.File = &rpcpb.File{}
-			request.File.Contents = buf.Bytes()
-			response, err := flameClient.CreateFile(ctx, request)
-			if err == nil {
-				log.Printf("created %s", response.Name)
-			} else {
-				details := fmt.Sprintf("contents-length: %d", len(request.File.Contents))
-				log.Printf("failed to create %s/files/%s: %s [%s]",
-					request.Parent, request.FileId, err.Error(), details)
+				details := fmt.Sprintf("contents-length: %d", len(request.Spec.Contents))
+				log.Printf("failed to create %s/specs/%s: %s [%s]",
+					request.Parent, request.SpecId, err.Error(), details)
 			}
 		}
 	}
