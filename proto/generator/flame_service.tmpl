@@ -102,10 +102,13 @@ message List{{.PluralName}}Request {
   //
   // When paginating, all other parameters provided to `List{{.PluralName}}` must match
   // the call that provided the page token.
-  string page_token = 3;{{if .ViewEnumName}}
+  string page_token = 3;
+
+  // An optional expression that can be used to filter the list.
+  string filter = 4;{{if .ViewEnumName}}
 
   // The level of detail to return (defaults to BASIC).
-  {{.ViewEnumName}} view = 4;{{end}}
+  {{.ViewEnumName}} view = 5;{{end}}
 }
 
 // Response message for List{{.PluralName}}.

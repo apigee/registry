@@ -22,151 +22,153 @@ service Flame {
   // ListProducts returns matching products.
   rpc ListProducts(ListProductsRequest) returns (ListProductsResponse) {
     option (google.api.http) = {
-      get: "/v1alpha1/{parent=projects/*}/products"
+      get : "/v1alpha1/{parent=projects/*}/products"
     };
   }
 
   // GetProduct returns a specified product.
   rpc GetProduct(GetProductRequest) returns (Product) {
     option (google.api.http) = {
-      get: "/v1alpha1/{name=projects/*/products/*}"
+      get : "/v1alpha1/{name=projects/*/products/*}"
     };
   }
 
   // CreateProduct creates a specified product.
   rpc CreateProduct(CreateProductRequest) returns (Product) {
     option (google.api.http) = {
-      post: "/v1alpha1/{parent=projects/*}/products"
-      body: "product"
+      post : "/v1alpha1/{parent=projects/*}/products"
+      body : "product"
     };
   }
 
   // UpdateProduct can be used to modify a specified product.
   rpc UpdateProduct(UpdateProductRequest) returns (Product) {
     option (google.api.http) = {
-      patch: "/v1alpha1/{product.name=projects/*/products/*}"
-      body: "product"
+      patch : "/v1alpha1/{product.name=projects/*/products/*}"
+      body : "product"
     };
   }
 
-  // DeleteProduct removes a specified product and all of the resources that it owns.
+  // DeleteProduct removes a specified product and all of the resources that it
+  // owns.
   rpc DeleteProduct(DeleteProductRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      delete: "/v1alpha1/{name=projects/*/products/*}"
+      delete : "/v1alpha1/{name=projects/*/products/*}"
     };
   }
 
   // ListVersions returns matching versions.
   rpc ListVersions(ListVersionsRequest) returns (ListVersionsResponse) {
     option (google.api.http) = {
-      get: "/v1alpha1/{parent=projects/*/products/*}/versions"
+      get : "/v1alpha1/{parent=projects/*/products/*}/versions"
     };
   }
 
   // GetVersion returns a specified version.
   rpc GetVersion(GetVersionRequest) returns (Version) {
     option (google.api.http) = {
-      get: "/v1alpha1/{name=projects/*/products/*/versions/*}"
+      get : "/v1alpha1/{name=projects/*/products/*/versions/*}"
     };
   }
 
   // CreateVersion creates a specified version.
   rpc CreateVersion(CreateVersionRequest) returns (Version) {
     option (google.api.http) = {
-      post: "/v1alpha1/{parent=projects/*/products/*}/versions"
-      body: "version"
+      post : "/v1alpha1/{parent=projects/*/products/*}/versions"
+      body : "version"
     };
   }
 
   // UpdateVersion can be used to modify a specified version.
   rpc UpdateVersion(UpdateVersionRequest) returns (Version) {
     option (google.api.http) = {
-      patch: "/v1alpha1/{version.name=projects/*/products/*/versions/*}"
-      body: "version"
+      patch : "/v1alpha1/{version.name=projects/*/products/*/versions/*}"
+      body : "version"
     };
   }
 
-  // DeleteVersion removes a specified version and all of the resources that it owns.
+  // DeleteVersion removes a specified version and all of the resources that it
+  // owns.
   rpc DeleteVersion(DeleteVersionRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      delete: "/v1alpha1/{name=projects/*/products/*/versions/*}"
+      delete : "/v1alpha1/{name=projects/*/products/*/versions/*}"
     };
   }
 
   // ListSpecs returns matching specs.
   rpc ListSpecs(ListSpecsRequest) returns (ListSpecsResponse) {
     option (google.api.http) = {
-      get: "/v1alpha1/{parent=projects/*/products/*/versions/*}/specs"
+      get : "/v1alpha1/{parent=projects/*/products/*/versions/*}/specs"
     };
   }
 
   // GetSpec returns a specified spec.
   rpc GetSpec(GetSpecRequest) returns (Spec) {
     option (google.api.http) = {
-      get: "/v1alpha1/{name=projects/*/products/*/versions/*/specs/*}"
+      get : "/v1alpha1/{name=projects/*/products/*/versions/*/specs/*}"
     };
   }
 
   // CreateSpec creates a specified spec.
   rpc CreateSpec(CreateSpecRequest) returns (Spec) {
     option (google.api.http) = {
-      post: "/v1alpha1/{parent=projects/*/products/*/versions/*}/specs"
-      body: "spec"
+      post : "/v1alpha1/{parent=projects/*/products/*/versions/*}/specs"
+      body : "spec"
     };
   }
 
   // UpdateSpec can be used to modify a specified spec.
   rpc UpdateSpec(UpdateSpecRequest) returns (Spec) {
     option (google.api.http) = {
-      patch: "/v1alpha1/{spec.name=projects/*/products/*/versions/*/specs/*}"
-      body: "spec"
+      patch : "/v1alpha1/{spec.name=projects/*/products/*/versions/*/specs/*}"
+      body : "spec"
     };
   }
 
   // DeleteSpec removes a specified spec and all of the resources that it owns.
   rpc DeleteSpec(DeleteSpecRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      delete: "/v1alpha1/{name=projects/*/products/*/versions/*/specs/*}"
+      delete : "/v1alpha1/{name=projects/*/products/*/versions/*/specs/*}"
     };
   }
 
   // ListProperties returns matching properties.
   rpc ListProperties(ListPropertiesRequest) returns (ListPropertiesResponse) {
     option (google.api.http) = {
-      get: "/v1alpha1/{parent=projects/*}/properties"
+      get : "/v1alpha1/{parent=projects/*}/properties"
     };
   }
 
   // GetProperty returns a specified property.
   rpc GetProperty(GetPropertyRequest) returns (Property) {
     option (google.api.http) = {
-      get: "/v1alpha1/{name=projects/*/properties/*}"
+      get : "/v1alpha1/{name=projects/*/properties/*}"
     };
   }
 
   // CreateProperty creates a specified property.
   rpc CreateProperty(CreatePropertyRequest) returns (Property) {
     option (google.api.http) = {
-      post: "/v1alpha1/{parent=projects/*}/properties"
-      body: "property"
+      post : "/v1alpha1/{parent=projects/*}/properties"
+      body : "property"
     };
   }
 
   // UpdateProperty can be used to modify a specified property.
   rpc UpdateProperty(UpdatePropertyRequest) returns (Property) {
     option (google.api.http) = {
-      patch: "/v1alpha1/{property.name=projects/*/properties/*}"
-      body: "property"
+      patch : "/v1alpha1/{property.name=projects/*/properties/*}"
+      body : "property"
     };
   }
 
-  // DeleteProperty removes a specified property and all of the resources that it owns.
+  // DeleteProperty removes a specified property and all of the resources that
+  // it owns.
   rpc DeleteProperty(DeletePropertyRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      delete: "/v1alpha1/{name=projects/*/properties/*}"
+      delete : "/v1alpha1/{name=projects/*/properties/*}"
     };
   }
-
 }
 
 // Request message for ListProducts.
@@ -187,6 +189,9 @@ message ListProductsRequest {
   // When paginating, all other parameters provided to `ListProducts` must match
   // the call that provided the page token.
   string page_token = 3;
+
+  // An optional expression that can be used to filter the list.
+  string filter = 4;
 }
 
 // Response message for ListProducts.
@@ -256,6 +261,9 @@ message ListVersionsRequest {
   // When paginating, all other parameters provided to `ListVersions` must match
   // the call that provided the page token.
   string page_token = 3;
+
+  // An optional expression that can be used to filter the list.
+  string filter = 4;
 }
 
 // Response message for ListVersions.
@@ -328,8 +336,11 @@ message ListSpecsRequest {
   // the call that provided the page token.
   string page_token = 3;
 
+  // An optional expression that can be used to filter the list.
+  string filter = 4;
+
   // The level of detail to return (defaults to BASIC).
-  SpecView view = 4;
+  SpecView view = 5;
 }
 
 // Response message for ListSpecs.
@@ -403,9 +414,12 @@ message ListPropertiesRequest {
   // A page token, received from a previous `ListProperties` call.
   // Provide this to retrieve the subsequent page.
   //
-  // When paginating, all other parameters provided to `ListProperties` must match
-  // the call that provided the page token.
+  // When paginating, all other parameters provided to `ListProperties` must
+  // match the call that provided the page token.
   string page_token = 3;
+
+  // An optional expression that can be used to filter the list.
+  string filter = 4;
 }
 
 // Response message for ListProperties.
@@ -459,4 +473,3 @@ message DeletePropertyRequest {
   // Format: projects/*/properties/*
   string name = 1;
 }
-
