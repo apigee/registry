@@ -9,6 +9,8 @@ import (
 	rpc "apigov.dev/flame/rpc"
 	"cloud.google.com/go/datastore"
 	"github.com/golang/protobuf/ptypes/empty"
+	"github.com/google/cel-go/cel"
+	"github.com/google/cel-go/checker/decls"
 	"google.golang.org/api/iterator"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -102,13 +104,45 @@ func (s *server) ListSpecs(ctx context.Context, req *rpc.ListSpecsRequest) (*rpc
 	if m[3] != "-" {
 		q = q.Filter("VersionID =", m[3])
 	}
+
+	var prg cel.Program
+	filter := req.GetFilter()
+	if filter != "" {
+		d := cel.Declarations(decls.NewIdent("style", decls.String, nil))
+		env, err := cel.NewEnv(d)
+		if err != nil {
+			return nil, invalidArgumentError(err)
+		}
+		ast, iss := env.Compile(filter)
+		// Check iss for compilation errors.
+		if iss.Err() != nil {
+			return nil, invalidArgumentError(iss.Err())
+		}
+		prg, err = env.Program(ast)
+		if err != nil {
+			return nil, invalidArgumentError(err)
+		}
+	}
+
 	var specMessages []*rpc.Spec
 	var spec models.Spec
 	it := client.Run(ctx, q.Distinct())
 	_, err = it.Next(&spec)
 	for err == nil {
 		specMessage, _ := spec.Message(req.GetView())
-		specMessages = append(specMessages, specMessage)
+		if prg != nil {
+			out, _, err := prg.Eval(map[string]interface{}{
+				"style": specMessage.GetStyle(),
+			})
+			if err != nil {
+				return nil, invalidArgumentError(err)
+			}
+			if out.Value().(bool) {
+				specMessages = append(specMessages, specMessage)
+			}
+		} else {
+			specMessages = append(specMessages, specMessage)
+		}
 		_, err = it.Next(&spec)
 	}
 	if err != iterator.Done {

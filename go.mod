@@ -11,6 +11,7 @@ require (
 	github.com/golang-commonmark/mdurl v0.0.0-20180910110917-8d018c6567d6 // indirect
 	github.com/golang-commonmark/puny v0.0.0-20180910110745-050be392d8b8 // indirect
 	github.com/golang/protobuf v1.4.0
+	github.com/google/cel-go v0.4.1
 	github.com/google/uuid v1.1.1
 	github.com/googleapis/gapic-generator-go v0.13.2 // indirect
 	github.com/googleapis/gax-go/v2 v2.0.5
