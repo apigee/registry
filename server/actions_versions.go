@@ -14,8 +14,6 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-const versionEntityName = "Version"
-
 func (s *server) CreateVersion(ctx context.Context, request *rpc.CreateVersionRequest) (*rpc.Version, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
@@ -26,7 +24,7 @@ func (s *server) CreateVersion(ctx context.Context, request *rpc.CreateVersionRe
 	if err != nil {
 		return nil, err
 	}
-	k := &datastore.Key{Kind: versionEntityName, Name: version.ResourceName()}
+	k := &datastore.Key{Kind: models.VersionEntityName, Name: version.ResourceName()}
 	// fail if version already exists
 	var existingVersion models.Version
 	err = client.Get(ctx, k, &existingVersion)
@@ -55,7 +53,7 @@ func (s *server) DeleteVersion(ctx context.Context, request *rpc.DeleteVersionRe
 	}
 	// Delete children first and then delete the version.
 	version.DeleteChildren(ctx, client)
-	k := &datastore.Key{Kind: versionEntityName, Name: request.GetName()}
+	k := &datastore.Key{Kind: models.VersionEntityName, Name: request.GetName()}
 	err = client.Delete(ctx, k)
 	return &empty.Empty{}, err
 }
@@ -70,7 +68,7 @@ func (s *server) GetVersion(ctx context.Context, request *rpc.GetVersionRequest)
 	if err != nil {
 		return nil, err
 	}
-	k := &datastore.Key{Kind: versionEntityName, Name: version.ResourceName()}
+	k := &datastore.Key{Kind: models.VersionEntityName, Name: version.ResourceName()}
 	err = client.Get(ctx, k, version)
 	if err == datastore.ErrNoSuchEntity {
 		return nil, status.Error(codes.NotFound, "not found")
@@ -86,7 +84,7 @@ func (s *server) ListVersions(ctx context.Context, req *rpc.ListVersionsRequest)
 		return nil, err
 	}
 	defer client.Close()
-	q := datastore.NewQuery(versionEntityName)
+	q := datastore.NewQuery(models.VersionEntityName)
 	q = queryApplyPageSize(q, req.GetPageSize())
 	q, err = queryApplyCursor(q, req.GetPageToken())
 	if err != nil {
@@ -132,7 +130,7 @@ func (s *server) UpdateVersion(ctx context.Context, request *rpc.UpdateVersionRe
 	if err != nil {
 		return nil, err
 	}
-	k := &datastore.Key{Kind: versionEntityName, Name: version.ResourceName()}
+	k := &datastore.Key{Kind: models.VersionEntityName, Name: version.ResourceName()}
 	err = client.Get(ctx, k, &version)
 	if err != nil {
 		return nil, status.Error(codes.NotFound, "not found")

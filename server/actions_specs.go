@@ -16,8 +16,6 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-const specEntityName = "Spec"
-
 func (s *server) CreateSpec(ctx context.Context, request *rpc.CreateSpecRequest) (*rpc.Spec, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
@@ -28,7 +26,7 @@ func (s *server) CreateSpec(ctx context.Context, request *rpc.CreateSpecRequest)
 	if err != nil {
 		return nil, err
 	}
-	k := &datastore.Key{Kind: specEntityName, Name: spec.ResourceName()}
+	k := &datastore.Key{Kind: models.SpecEntityName, Name: spec.ResourceName()}
 	// fail if spec already exists
 	var existingSpec models.Spec
 	err = client.Get(ctx, k, &existingSpec)
@@ -56,7 +54,7 @@ func (s *server) DeleteSpec(ctx context.Context, request *rpc.DeleteSpecRequest)
 		return nil, invalidArgumentError(err)
 	}
 	// Delete the spec.
-	k := &datastore.Key{Kind: specEntityName, Name: request.GetName()}
+	k := &datastore.Key{Kind: models.SpecEntityName, Name: request.GetName()}
 	err = client.Delete(ctx, k)
 	return &empty.Empty{}, err
 }
@@ -71,7 +69,7 @@ func (s *server) GetSpec(ctx context.Context, request *rpc.GetSpecRequest) (*rpc
 	if err != nil {
 		return nil, err
 	}
-	k := &datastore.Key{Kind: specEntityName, Name: spec.ResourceName()}
+	k := &datastore.Key{Kind: models.SpecEntityName, Name: spec.ResourceName()}
 	err = client.Get(ctx, k, spec)
 	if err == datastore.ErrNoSuchEntity {
 		return nil, status.Error(codes.NotFound, "not found")
@@ -87,7 +85,7 @@ func (s *server) ListSpecs(ctx context.Context, req *rpc.ListSpecsRequest) (*rpc
 		return nil, err
 	}
 	defer client.Close()
-	q := datastore.NewQuery(specEntityName)
+	q := datastore.NewQuery(models.SpecEntityName)
 	q = queryApplyPageSize(q, req.GetPageSize())
 	q, err = queryApplyCursor(q, req.GetPageToken())
 	if err != nil {
@@ -168,7 +166,7 @@ func (s *server) UpdateSpec(ctx context.Context, request *rpc.UpdateSpecRequest)
 	if err != nil {
 		return nil, err
 	}
-	k := &datastore.Key{Kind: specEntityName, Name: spec.ResourceName()}
+	k := &datastore.Key{Kind: models.SpecEntityName, Name: spec.ResourceName()}
 	err = client.Get(ctx, k, &spec)
 	if err != nil {
 		return nil, status.Error(codes.NotFound, "not found")

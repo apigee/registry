@@ -14,8 +14,6 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-const productEntityName = "Product"
-
 func (s *server) CreateProduct(ctx context.Context, request *rpc.CreateProductRequest) (*rpc.Product, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
@@ -26,7 +24,7 @@ func (s *server) CreateProduct(ctx context.Context, request *rpc.CreateProductRe
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	k := &datastore.Key{Kind: productEntityName, Name: product.ResourceName()}
+	k := &datastore.Key{Kind: models.ProductEntityName, Name: product.ResourceName()}
 	// fail if product already exists
 	var existingProduct models.Product
 	err = client.Get(ctx, k, &existingProduct)
@@ -55,7 +53,7 @@ func (s *server) DeleteProduct(ctx context.Context, request *rpc.DeleteProductRe
 	}
 	// Delete children first and then delete the product.
 	product.DeleteChildren(ctx, client)
-	k := &datastore.Key{Kind: productEntityName, Name: request.GetName()}
+	k := &datastore.Key{Kind: models.ProductEntityName, Name: request.GetName()}
 	err = client.Delete(ctx, k)
 	return &empty.Empty{}, internalError(err)
 }
@@ -70,7 +68,7 @@ func (s *server) GetProduct(ctx context.Context, request *rpc.GetProductRequest)
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	k := &datastore.Key{Kind: productEntityName, Name: product.ResourceName()}
+	k := &datastore.Key{Kind: models.ProductEntityName, Name: product.ResourceName()}
 	err = client.Get(ctx, k, product)
 	if err == datastore.ErrNoSuchEntity {
 		return nil, status.Error(codes.NotFound, "not found")
@@ -86,7 +84,7 @@ func (s *server) ListProducts(ctx context.Context, req *rpc.ListProductsRequest)
 		return nil, internalError(err)
 	}
 	defer client.Close()
-	q := datastore.NewQuery(productEntityName)
+	q := datastore.NewQuery(models.ProductEntityName)
 	q = queryApplyPageSize(q, req.GetPageSize())
 	q, err = queryApplyCursor(q, req.GetPageToken())
 	if err != nil {
@@ -129,7 +127,7 @@ func (s *server) UpdateProduct(ctx context.Context, request *rpc.UpdateProductRe
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	k := &datastore.Key{Kind: productEntityName, Name: product.ResourceName()}
+	k := &datastore.Key{Kind: models.ProductEntityName, Name: product.ResourceName()}
 	err = client.Get(ctx, k, &product)
 	if err != nil {
 		return nil, status.Error(codes.NotFound, "not found")

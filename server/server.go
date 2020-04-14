@@ -24,14 +24,13 @@ import (
 //
 type server struct {
 	rpc.UnimplementedFlameServer
-}
 
-var credentials *google.Credentials
-var projectID string
+	projectID string
+}
 
 // newDataStoreClient creates a new data storage connection.
 func (s *server) newDataStoreClient(ctx context.Context) (*datastore.Client, error) {
-	client, err := datastore.NewClient(ctx, projectID)
+	client, err := datastore.NewClient(ctx, s.projectID)
 	if err != nil {
 		return nil, err
 	}
@@ -45,12 +44,11 @@ func newRandomID() string {
 // RunServer ...
 func RunServer(port string) error {
 	ctx := context.TODO()
-	var err error
-	credentials, err = google.FindDefaultCredentials(ctx)
+	credentials, err := google.FindDefaultCredentials(ctx)
 	if err != nil {
 		return fmt.Errorf("error: %v", err)
 	}
-	projectID = credentials.ProjectID
+	projectID := credentials.ProjectID
 	if projectID == "" {
 		projectID = os.Getenv("FLAME_PROJECT_IDENTIFIER")
 	}
@@ -65,7 +63,7 @@ func RunServer(port string) error {
 	s := grpc.NewServer()
 	reflection.Register(s)
 	fmt.Printf("\nServer listening on port %v \n", port)
-	rpc.RegisterFlameServer(s, &server{})
+	rpc.RegisterFlameServer(s, &server{projectID: projectID})
 	if err := s.Serve(lis); err != nil {
 		return fmt.Errorf("failed to serve: %v", err)
 	}
