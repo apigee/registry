@@ -17,19 +17,17 @@ import (
 	"google.golang.org/grpc/reflection"
 )
 
-//
-// The server type implements a Flame server.
+// FlameServer implements a Flame server.
 // Entities are stored using the Cloud Datastore API.
 // https://cloud.google.com/datastore/
-//
-type server struct {
+type FlameServer struct {
 	rpc.UnimplementedFlameServer
 
 	projectID string
 }
 
 // newDataStoreClient creates a new data storage connection.
-func (s *server) newDataStoreClient(ctx context.Context) (*datastore.Client, error) {
+func (s *FlameServer) newDataStoreClient(ctx context.Context) (*datastore.Client, error) {
 	client, err := datastore.NewClient(ctx, s.projectID)
 	if err != nil {
 		return nil, err
@@ -63,7 +61,7 @@ func RunServer(port string) error {
 	s := grpc.NewServer()
 	reflection.Register(s)
 	fmt.Printf("\nServer listening on port %v \n", port)
-	rpc.RegisterFlameServer(s, &server{projectID: projectID})
+	rpc.RegisterFlameServer(s, &FlameServer{projectID: projectID})
 	if err := s.Serve(lis); err != nil {
 		return fmt.Errorf("failed to serve: %v", err)
 	}

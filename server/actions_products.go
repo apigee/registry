@@ -14,7 +14,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (s *server) CreateProduct(ctx context.Context, request *rpc.CreateProductRequest) (*rpc.Product, error) {
+func (s *FlameServer) CreateProduct(ctx context.Context, request *rpc.CreateProductRequest) (*rpc.Product, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
@@ -40,7 +40,7 @@ func (s *server) CreateProduct(ctx context.Context, request *rpc.CreateProductRe
 	return product.Message()
 }
 
-func (s *server) DeleteProduct(ctx context.Context, request *rpc.DeleteProductRequest) (*empty.Empty, error) {
+func (s *FlameServer) DeleteProduct(ctx context.Context, request *rpc.DeleteProductRequest) (*empty.Empty, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
@@ -58,7 +58,7 @@ func (s *server) DeleteProduct(ctx context.Context, request *rpc.DeleteProductRe
 	return &empty.Empty{}, internalError(err)
 }
 
-func (s *server) GetProduct(ctx context.Context, request *rpc.GetProductRequest) (*rpc.Product, error) {
+func (s *FlameServer) GetProduct(ctx context.Context, request *rpc.GetProductRequest) (*rpc.Product, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
@@ -78,7 +78,7 @@ func (s *server) GetProduct(ctx context.Context, request *rpc.GetProductRequest)
 	return product.Message()
 }
 
-func (s *server) ListProducts(ctx context.Context, req *rpc.ListProductsRequest) (*rpc.ListProductsResponse, error) {
+func (s *FlameServer) ListProducts(ctx context.Context, req *rpc.ListProductsRequest) (*rpc.ListProductsResponse, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
@@ -117,7 +117,7 @@ func (s *server) ListProducts(ctx context.Context, req *rpc.ListProductsRequest)
 	return responses, nil
 }
 
-func (s *server) UpdateProduct(ctx context.Context, request *rpc.UpdateProductRequest) (*rpc.Product, error) {
+func (s *FlameServer) UpdateProduct(ctx context.Context, request *rpc.UpdateProductRequest) (*rpc.Product, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, internalError(err)

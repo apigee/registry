@@ -16,7 +16,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (s *server) CreateSpec(ctx context.Context, request *rpc.CreateSpecRequest) (*rpc.Spec, error) {
+func (s *FlameServer) CreateSpec(ctx context.Context, request *rpc.CreateSpecRequest) (*rpc.Spec, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, err
@@ -42,7 +42,7 @@ func (s *server) CreateSpec(ctx context.Context, request *rpc.CreateSpecRequest)
 	return spec.Message(rpc.SpecView_BASIC)
 }
 
-func (s *server) DeleteSpec(ctx context.Context, request *rpc.DeleteSpecRequest) (*empty.Empty, error) {
+func (s *FlameServer) DeleteSpec(ctx context.Context, request *rpc.DeleteSpecRequest) (*empty.Empty, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, err
@@ -59,7 +59,7 @@ func (s *server) DeleteSpec(ctx context.Context, request *rpc.DeleteSpecRequest)
 	return &empty.Empty{}, err
 }
 
-func (s *server) GetSpec(ctx context.Context, request *rpc.GetSpecRequest) (*rpc.Spec, error) {
+func (s *FlameServer) GetSpec(ctx context.Context, request *rpc.GetSpecRequest) (*rpc.Spec, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, err
@@ -79,7 +79,7 @@ func (s *server) GetSpec(ctx context.Context, request *rpc.GetSpecRequest) (*rpc
 	return spec.Message(request.GetView())
 }
 
-func (s *server) ListSpecs(ctx context.Context, req *rpc.ListSpecsRequest) (*rpc.ListSpecsResponse, error) {
+func (s *FlameServer) ListSpecs(ctx context.Context, req *rpc.ListSpecsRequest) (*rpc.ListSpecsResponse, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, err
@@ -156,7 +156,7 @@ func (s *server) ListSpecs(ctx context.Context, req *rpc.ListSpecsRequest) (*rpc
 	return responses, nil
 }
 
-func (s *server) UpdateSpec(ctx context.Context, request *rpc.UpdateSpecRequest) (*rpc.Spec, error) {
+func (s *FlameServer) UpdateSpec(ctx context.Context, request *rpc.UpdateSpecRequest) (*rpc.Spec, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, err

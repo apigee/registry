@@ -14,7 +14,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (s *server) CreateVersion(ctx context.Context, request *rpc.CreateVersionRequest) (*rpc.Version, error) {
+func (s *FlameServer) CreateVersion(ctx context.Context, request *rpc.CreateVersionRequest) (*rpc.Version, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, err
@@ -40,7 +40,7 @@ func (s *server) CreateVersion(ctx context.Context, request *rpc.CreateVersionRe
 	return version.Message()
 }
 
-func (s *server) DeleteVersion(ctx context.Context, request *rpc.DeleteVersionRequest) (*empty.Empty, error) {
+func (s *FlameServer) DeleteVersion(ctx context.Context, request *rpc.DeleteVersionRequest) (*empty.Empty, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, err
@@ -58,7 +58,7 @@ func (s *server) DeleteVersion(ctx context.Context, request *rpc.DeleteVersionRe
 	return &empty.Empty{}, err
 }
 
-func (s *server) GetVersion(ctx context.Context, request *rpc.GetVersionRequest) (*rpc.Version, error) {
+func (s *FlameServer) GetVersion(ctx context.Context, request *rpc.GetVersionRequest) (*rpc.Version, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, err
@@ -78,7 +78,7 @@ func (s *server) GetVersion(ctx context.Context, request *rpc.GetVersionRequest)
 	return version.Message()
 }
 
-func (s *server) ListVersions(ctx context.Context, req *rpc.ListVersionsRequest) (*rpc.ListVersionsResponse, error) {
+func (s *FlameServer) ListVersions(ctx context.Context, req *rpc.ListVersionsRequest) (*rpc.ListVersionsResponse, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, err
@@ -120,7 +120,7 @@ func (s *server) ListVersions(ctx context.Context, req *rpc.ListVersionsRequest)
 	return responses, nil
 }
 
-func (s *server) UpdateVersion(ctx context.Context, request *rpc.UpdateVersionRequest) (*rpc.Version, error) {
+func (s *FlameServer) UpdateVersion(ctx context.Context, request *rpc.UpdateVersionRequest) (*rpc.Version, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, err

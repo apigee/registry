@@ -14,7 +14,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (s *server) CreateProperty(ctx context.Context, request *rpc.CreatePropertyRequest) (*rpc.Property, error) {
+func (s *FlameServer) CreateProperty(ctx context.Context, request *rpc.CreatePropertyRequest) (*rpc.Property, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
@@ -44,7 +44,7 @@ func (s *server) CreateProperty(ctx context.Context, request *rpc.CreateProperty
 	return property.Message()
 }
 
-func (s *server) DeleteProperty(ctx context.Context, request *rpc.DeletePropertyRequest) (*empty.Empty, error) {
+func (s *FlameServer) DeleteProperty(ctx context.Context, request *rpc.DeletePropertyRequest) (*empty.Empty, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
@@ -61,7 +61,7 @@ func (s *server) DeleteProperty(ctx context.Context, request *rpc.DeleteProperty
 	return &empty.Empty{}, internalError(err)
 }
 
-func (s *server) GetProperty(ctx context.Context, request *rpc.GetPropertyRequest) (*rpc.Property, error) {
+func (s *FlameServer) GetProperty(ctx context.Context, request *rpc.GetPropertyRequest) (*rpc.Property, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
@@ -81,7 +81,7 @@ func (s *server) GetProperty(ctx context.Context, request *rpc.GetPropertyReques
 	return property.Message()
 }
 
-func (s *server) ListProperties(ctx context.Context, req *rpc.ListPropertiesRequest) (*rpc.ListPropertiesResponse, error) {
+func (s *FlameServer) ListProperties(ctx context.Context, req *rpc.ListPropertiesRequest) (*rpc.ListPropertiesResponse, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
@@ -120,7 +120,7 @@ func (s *server) ListProperties(ctx context.Context, req *rpc.ListPropertiesRequ
 	return responses, nil
 }
 
-func (s *server) UpdateProperty(ctx context.Context, request *rpc.UpdatePropertyRequest) (*rpc.Property, error) {
+func (s *FlameServer) UpdateProperty(ctx context.Context, request *rpc.UpdatePropertyRequest) (*rpc.Property, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
