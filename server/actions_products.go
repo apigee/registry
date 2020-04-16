@@ -94,15 +94,35 @@ func (s *FlameServer) ListProducts(ctx context.Context, req *rpc.ListProductsReq
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	q = q.Filter("ProjectID =", m[1])
+	if m[1] != "-" {
+		q = q.Filter("ProjectID =", m[1])
+	}
+	prg, err := createFilterOperator(req.GetFilter(),
+		[]filterArg{
+			{"product_id", filterArgTypeString},
+			{"availability", filterArgTypeString},
+		})
+	if err != nil {
+		return nil, internalError(err)
+	}
 	var productMessages []*rpc.Product
 	var product models.Product
 	it := client.Run(ctx, q.Distinct())
-	_, err = it.Next(&product)
-	for err == nil {
+	for _, err = it.Next(&product); err == nil; _, err = it.Next(&product) {
+		if prg != nil {
+			out, _, err := prg.Eval(map[string]interface{}{
+				"product_id":   product.ProductID,
+				"availability": product.Availability,
+			})
+			if err != nil {
+				return nil, invalidArgumentError(err)
+			}
+			if !out.Value().(bool) {
+				continue
+			}
+		}
 		productMessage, _ := product.Message()
 		productMessages = append(productMessages, productMessage)
-		_, err = it.Next(&product)
 	}
 	if err != iterator.Done {
 		return nil, internalError(err)

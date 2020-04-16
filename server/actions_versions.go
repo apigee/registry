@@ -94,18 +94,38 @@ func (s *FlameServer) ListVersions(ctx context.Context, req *rpc.ListVersionsReq
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	q = q.Filter("ProjectID =", m[1])
+	if m[1] != "-" {
+		q = q.Filter("ProjectID =", m[1])
+	}
 	if m[2] != "-" {
 		q = q.Filter("ProductID =", m[2])
+	}
+	prg, err := createFilterOperator(req.GetFilter(),
+		[]filterArg{
+			{"version_id", filterArgTypeString},
+			{"state", filterArgTypeString},
+		})
+	if err != nil {
+		return nil, internalError(err)
 	}
 	var versionMessages []*rpc.Version
 	var version models.Version
 	it := client.Run(ctx, q.Distinct())
-	_, err = it.Next(&version)
-	for err == nil {
+	for _, err = it.Next(&version); err == nil; _, err = it.Next(&version) {
+		if prg != nil {
+			out, _, err := prg.Eval(map[string]interface{}{
+				"version_id": version.VersionID,
+				"state":      version.State,
+			})
+			if err != nil {
+				return nil, invalidArgumentError(err)
+			}
+			if !out.Value().(bool) {
+				continue
+			}
+		}
 		versionMessage, _ := version.Message()
 		versionMessages = append(versionMessages, versionMessage)
-		_, err = it.Next(&version)
 	}
 	if err != iterator.Done {
 		return nil, internalError(err)

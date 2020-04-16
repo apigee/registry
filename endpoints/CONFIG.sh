@@ -8,4 +8,4 @@ CLOUD_RUN_SERVICE_NAME=flame
 
 CLOUD_RUN_HOSTNAME="flame-4lynqeotzq-uw.a.run.app"
 
-CONFIG_ID="2020-04-10r0"
+CONFIG_ID="2020-04-14r0"

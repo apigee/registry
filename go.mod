@@ -13,7 +13,7 @@ require (
 	github.com/golang/protobuf v1.4.0
 	github.com/google/cel-go v0.4.1
 	github.com/google/uuid v1.1.1
-	github.com/googleapis/gapic-generator-go v0.13.2 // indirect
+	github.com/googleapis/gapic-generator-go v0.13.3 // indirect
 	github.com/googleapis/gax-go/v2 v2.0.5
 	github.com/googleapis/gnostic v0.1.1-0.20200308034506-2af3d8e5d92a
 	github.com/mitchellh/go-homedir v1.1.0

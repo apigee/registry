@@ -33,7 +33,7 @@ var listCmd = &cobra.Command{
 		} else if m := models.VersionsRegexp().FindAllStringSubmatch(name, -1); m != nil {
 			err = listVersions(ctx, client, m[0])
 		} else if m := models.SpecsRegexp().FindAllStringSubmatch(name, -1); m != nil {
-			err = listVersions(ctx, client, m[0])
+			err = listSpecs(ctx, client, m[0])
 		} else if m := models.PropertiesRegexp().FindAllStringSubmatch(name, -1); m != nil {
 			err = listProperties(ctx, client, m[0])
 		} else if m := models.ProductRegexp().FindAllStringSubmatch(name, -1); m != nil {
@@ -88,6 +88,13 @@ func listProducts(ctx context.Context,
 	request := &rpc.ListProductsRequest{
 		Parent: "projects/" + segments[1],
 	}
+	filter := ""
+	if len(segments) == 4 {
+		filter = "product_id == '" + segments[3] + "'"
+	}
+	if filter != "" {
+		request.Filter = filter
+	}
 	it := client.ListProducts(ctx, request)
 	for {
 		product, err := it.Next()
@@ -107,6 +114,13 @@ func listVersions(ctx context.Context,
 	request := &rpc.ListVersionsRequest{
 		Parent: "projects/" + segments[1] + "/products/" + segments[2],
 	}
+	filter := ""
+	if len(segments) == 4 {
+		filter = "version_id == '" + segments[3] + "'"
+	}
+	if filter != "" {
+		request.Filter = filter
+	}
 	it := client.ListVersions(ctx, request)
 	for {
 		version, err := it.Next()
@@ -125,6 +139,13 @@ func listSpecs(ctx context.Context,
 	segments []string) error {
 	request := &rpc.ListSpecsRequest{
 		Parent: "projects/" + segments[1] + "/products/" + segments[2] + "/versions/" + segments[3],
+	}
+	filter := ""
+	if len(segments) == 5 {
+		filter = "spec_id == '" + segments[4] + "'"
+	}
+	if filter != "" {
+		request.Filter = filter
 	}
 	it := client.ListSpecs(ctx, request)
 	for {
