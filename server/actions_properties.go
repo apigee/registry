@@ -97,16 +97,36 @@ func (s *FlameServer) ListProperties(ctx context.Context, req *rpc.ListPropertie
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	q = q.Filter("ProjectID =", m[1])
+	if m[1] != "-" {
+		q = q.Filter("ProjectID =", m[1])
+	}
+	prg, err := createFilterOperator(req.GetFilter(),
+		[]filterArg{
+			{"property_id", filterArgTypeString},
+			{"subject", filterArgTypeString},
+			{"relation", filterArgTypeString},
+		})
 	var propertyMessages []*rpc.Property
 	var property models.Property
 	it := client.Run(ctx, q.Distinct())
-	_, err = it.Next(&property)
-	for err == nil {
+	for _, err = it.Next(&property); err == nil; _, err = it.Next(&property) {
+		if prg != nil {
+			out, _, err := prg.Eval(map[string]interface{}{
+				"spec_id":  property.PropertyID,
+				"subject":  property.Subject,
+				"relation": property.Relation,
+			})
+			if err != nil {
+				return nil, invalidArgumentError(err)
+			}
+			if !out.Value().(bool) {
+				continue
+			}
+		}
 		propertyMessage, _ := property.Message()
 		propertyMessages = append(propertyMessages, propertyMessage)
-		_, err = it.Next(&property)
 	}
+
 	if err != iterator.Done {
 		return nil, internalError(err)
 	}
