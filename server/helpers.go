@@ -2,14 +2,18 @@ package server
 
 import "cloud.google.com/go/datastore"
 
-func queryApplyPageSize(q *datastore.Query, pageSize int32) *datastore.Query {
+func boundPageSize(pageSize int32) int {
 	if pageSize > 1000 {
-		return q.Limit(1000)
+		return 1000
 	}
 	if pageSize <= 0 {
-		return q.Limit(50)
+		return 50
 	}
-	return q.Limit(int(pageSize))
+	return int(pageSize)
+}
+
+func queryApplyPageSize(q *datastore.Query, pageSize int32) *datastore.Query {
+	return q.Limit(boundPageSize(pageSize))
 }
 
 func queryApplyCursor(q *datastore.Query, cursorStr string) (*datastore.Query, error) {

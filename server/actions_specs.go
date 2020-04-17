@@ -4,6 +4,7 @@ package server
 
 import (
 	"context"
+	"log"
 
 	"apigov.dev/flame/models"
 	rpc "apigov.dev/flame/rpc"
@@ -84,7 +85,6 @@ func (s *FlameServer) ListSpecs(ctx context.Context, req *rpc.ListSpecsRequest) 
 	}
 	defer client.Close()
 	q := datastore.NewQuery(models.SpecEntityName)
-	q = queryApplyPageSize(q, req.GetPageSize())
 	q, err = queryApplyCursor(q, req.GetPageToken())
 	if err != nil {
 		return nil, internalError(err)
@@ -113,7 +113,9 @@ func (s *FlameServer) ListSpecs(ctx context.Context, req *rpc.ListSpecsRequest) 
 	var specMessages []*rpc.Spec
 	var spec models.Spec
 	it := client.Run(ctx, q.Distinct())
-	for _, err = it.Next(&spec); err == nil; _, err = it.Next(&spec) {
+	pageSize := boundPageSize(req.GetPageSize())
+	for i, err := it.Next(&spec); err == nil; _, err = it.Next(&spec) {
+		log.Printf("%d", i)
 		if prg != nil {
 			out, _, err := prg.Eval(map[string]interface{}{
 				"spec_id": spec.SpecID,
@@ -128,8 +130,11 @@ func (s *FlameServer) ListSpecs(ctx context.Context, req *rpc.ListSpecsRequest) 
 		}
 		specMessage, _ := spec.Message(req.GetView())
 		specMessages = append(specMessages, specMessage)
+		if len(specMessages) == pageSize {
+			break
+		}
 	}
-	if err != iterator.Done {
+	if err != nil && err != iterator.Done {
 		return nil, internalError(err)
 	}
 	responses := &rpc.ListSpecsResponse{

@@ -88,7 +88,6 @@ func (s *FlameServer) ListProperties(ctx context.Context, req *rpc.ListPropertie
 	}
 	defer client.Close()
 	q := datastore.NewQuery(models.PropertyEntityName)
-	q = queryApplyPageSize(q, req.GetPageSize())
 	q, err = queryApplyCursor(q, req.GetPageToken())
 	if err != nil {
 		return nil, internalError(err)
@@ -109,6 +108,7 @@ func (s *FlameServer) ListProperties(ctx context.Context, req *rpc.ListPropertie
 	var propertyMessages []*rpc.Property
 	var property models.Property
 	it := client.Run(ctx, q.Distinct())
+	pageSize := boundPageSize(req.GetPageSize())
 	for _, err = it.Next(&property); err == nil; _, err = it.Next(&property) {
 		if prg != nil {
 			out, _, err := prg.Eval(map[string]interface{}{
@@ -125,9 +125,11 @@ func (s *FlameServer) ListProperties(ctx context.Context, req *rpc.ListPropertie
 		}
 		propertyMessage, _ := property.Message()
 		propertyMessages = append(propertyMessages, propertyMessage)
+		if len(propertyMessages) == pageSize {
+			break
+		}
 	}
-
-	if err != iterator.Done {
+	if err != nil && err != iterator.Done {
 		return nil, internalError(err)
 	}
 	responses := &rpc.ListPropertiesResponse{

@@ -4,6 +4,7 @@ package server
 
 import (
 	"context"
+	"log"
 
 	"apigov.dev/flame/models"
 	rpc "apigov.dev/flame/rpc"
@@ -85,7 +86,6 @@ func (s *FlameServer) ListProducts(ctx context.Context, req *rpc.ListProductsReq
 	}
 	defer client.Close()
 	q := datastore.NewQuery(models.ProductEntityName)
-	q = queryApplyPageSize(q, req.GetPageSize())
 	q, err = queryApplyCursor(q, req.GetPageToken())
 	if err != nil {
 		return nil, internalError(err)
@@ -97,6 +97,7 @@ func (s *FlameServer) ListProducts(ctx context.Context, req *rpc.ListProductsReq
 	if m[1] != "-" {
 		q = q.Filter("ProjectID =", m[1])
 	}
+	log.Printf("query = %+v", q)
 	prg, err := createFilterOperator(req.GetFilter(),
 		[]filterArg{
 			{"product_id", filterArgTypeString},
@@ -108,6 +109,7 @@ func (s *FlameServer) ListProducts(ctx context.Context, req *rpc.ListProductsReq
 	var productMessages []*rpc.Product
 	var product models.Product
 	it := client.Run(ctx, q.Distinct())
+	pageSize := boundPageSize(req.GetPageSize())
 	for _, err = it.Next(&product); err == nil; _, err = it.Next(&product) {
 		if prg != nil {
 			out, _, err := prg.Eval(map[string]interface{}{
@@ -123,8 +125,11 @@ func (s *FlameServer) ListProducts(ctx context.Context, req *rpc.ListProductsReq
 		}
 		productMessage, _ := product.Message()
 		productMessages = append(productMessages, productMessage)
+		if len(productMessages) == pageSize {
+			break
+		}
 	}
-	if err != iterator.Done {
+	if err != nil && err != iterator.Done {
 		return nil, internalError(err)
 	}
 	responses := &rpc.ListProductsResponse{
