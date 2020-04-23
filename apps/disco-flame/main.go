@@ -23,7 +23,6 @@ import (
 	"log"
 	"os"
 	"strings"
-	"sync"
 
 	"apigov.dev/flame/client"
 	"apigov.dev/flame/gapic"
@@ -184,13 +183,9 @@ func notFound(err error) bool {
 	return st.Code() == codes.NotFound
 }
 
-var mutex sync.Mutex
-
 func handleExportArgumentsForBytes(arguments map[string]interface{}, fileBytes []byte) (handled bool, err error) {
 	// Unpack the discovery document.
-	mutex.Lock()
 	document, err := discovery.ParseDocument(fileBytes)
-	mutex.Unlock()
 	if err != nil {
 		return true, err
 	}
@@ -262,7 +257,7 @@ func handleExportArgumentsForBytes(arguments map[string]interface{}, fileBytes [
 					"/versions/" + api.Version
 				request.SpecId = "discovery.json"
 				request.Spec = &rpcpb.Spec{}
-				request.Spec.Style = "discovery"
+				request.Spec.Style = "discovery+gzip"
 				request.Spec.Contents = buf.Bytes()
 				response, err := flameClient.CreateSpec(ctx, request)
 				if err == nil {

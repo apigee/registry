@@ -153,7 +153,7 @@ func (s *FlameServer) UpdateProduct(ctx context.Context, request *rpc.UpdateProd
 		return nil, invalidArgumentError(err)
 	}
 	k := &datastore.Key{Kind: models.ProductEntityName, Name: product.ResourceName()}
-	err = client.Get(ctx, k, &product)
+	err = client.Get(ctx, k, product)
 	if err != nil {
 		return nil, status.Error(codes.NotFound, "not found")
 	}

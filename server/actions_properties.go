@@ -4,6 +4,7 @@ package server
 
 import (
 	"context"
+	"log"
 
 	"apigov.dev/flame/models"
 	rpc "apigov.dev/flame/rpc"
@@ -99,6 +100,13 @@ func (s *FlameServer) ListProperties(ctx context.Context, req *rpc.ListPropertie
 	if m[1] != "-" {
 		q = q.Filter("ProjectID =", m[1])
 	}
+	if req.Subject != "" {
+		q = q.Filter("Subject =", req.Subject)
+	}
+	if req.Relation != "" {
+		q = q.Filter("Relation =", req.Relation)
+	}
+
 	prg, err := createFilterOperator(req.GetFilter(),
 		[]filterArg{
 			{"property_id", filterArgTypeString},
@@ -107,6 +115,8 @@ func (s *FlameServer) ListProperties(ctx context.Context, req *rpc.ListPropertie
 		})
 	var propertyMessages []*rpc.Property
 	var property models.Property
+	log.Printf("REQUEST %+v", req)
+	log.Printf("QUERY %+v", q)
 	it := client.Run(ctx, q.Distinct())
 	pageSize := boundPageSize(req.GetPageSize())
 	for _, err = it.Next(&property); err == nil; _, err = it.Next(&property) {
@@ -153,7 +163,7 @@ func (s *FlameServer) UpdateProperty(ctx context.Context, request *rpc.UpdatePro
 		return nil, invalidArgumentError(err)
 	}
 	k := &datastore.Key{Kind: models.PropertyEntityName, Name: property.ResourceName()}
-	err = client.Get(ctx, k, &property)
+	err = client.Get(ctx, k, property)
 	if err != nil {
 		return nil, status.Error(codes.NotFound, "not found")
 	}

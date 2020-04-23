@@ -157,7 +157,7 @@ func (s *FlameServer) UpdateVersion(ctx context.Context, request *rpc.UpdateVers
 		return nil, err
 	}
 	k := &datastore.Key{Kind: models.VersionEntityName, Name: version.ResourceName()}
-	err = client.Get(ctx, k, &version)
+	err = client.Get(ctx, k, version)
 	if err != nil {
 		return nil, status.Error(codes.NotFound, "not found")
 	}

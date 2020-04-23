@@ -489,6 +489,12 @@ message ListPropertiesRequest {
 
   // An optional expression that can be used to filter the list.
   string filter = 4;
+
+  // Optional subject that can be used to filter the list. 
+  string subject = 5;
+
+  // Optional relation that can be used to filter the list. 
+  string relation = 6;
 }
 
 // Response message for ListProperties.

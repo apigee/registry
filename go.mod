@@ -5,6 +5,7 @@ go 1.13
 require (
 	cloud.google.com/go v0.38.0
 	github.com/docopt/docopt-go v0.0.0-20180111231733-ee0de3bc6815
+	github.com/gogo/protobuf v1.2.1
 	github.com/golang-commonmark/html v0.0.0-20180910111043-7d7c804e1d46 // indirect
 	github.com/golang-commonmark/linkify v0.0.0-20180910111149-f05efb453a0e // indirect
 	github.com/golang-commonmark/markdown v0.0.0-20180910011815-a8f139058164 // indirect
@@ -18,16 +19,16 @@ require (
 	github.com/googleapis/gnostic v0.1.1-0.20200308034506-2af3d8e5d92a
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/opennota/wd v0.0.0-20180911144301-b446539ab1e7 // indirect
-	github.com/spf13/cobra v0.0.6
+	github.com/spf13/cobra v1.0.0
 	github.com/spf13/viper v1.6.2
 	gitlab.com/golang-commonmark/linkify v0.0.0-20200225224916-64bca66f6ad3 // indirect
-	golang.org/x/net v0.0.0-20200324143707-d3edc9973b7e // indirect
+	golang.org/x/net v0.0.0-20200324143707-d3edc9973b7e
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
-	golang.org/x/sys v0.0.0-20200413165638-669c56c373c4 // indirect
+	golang.org/x/sys v0.0.0-20200420163511-1957bb5e6d1f // indirect
 	google.golang.org/api v0.19.0
-	google.golang.org/genproto v0.0.0-20200416231807-8751e049a2a0
-	google.golang.org/grpc v1.28.1
+	google.golang.org/genproto v0.0.0-20200420144010-e5e8543f8aeb
+	google.golang.org/grpc v1.29.0
 	google.golang.org/protobuf v1.21.0
 )
 
-replace github.com/googleapis/gnostic v0.1.1-0.20200308034506-2af3d8e5d92a => github.com/timburks/gnostic v0.1.1-0.20200308034506-2af3d8e5d92a
+replace github.com/googleapis/gnostic v0.1.1-0.20200308034506-2af3d8e5d92a => github.com/timburks/gnostic v0.1.1-0.20200421230527-75785ff40b44

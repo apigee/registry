@@ -158,7 +158,7 @@ func (s *FlameServer) UpdateSpec(ctx context.Context, request *rpc.UpdateSpecReq
 		return nil, err
 	}
 	k := &datastore.Key{Kind: models.SpecEntityName, Name: spec.ResourceName()}
-	err = client.Get(ctx, k, &spec)
+	err = client.Get(ctx, k, spec)
 	if err != nil {
 		return nil, status.Error(codes.NotFound, "not found")
 	}

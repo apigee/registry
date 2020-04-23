@@ -33,7 +33,10 @@ var listCmd = &cobra.Command{
 		} else if m := models.VersionsRegexp().FindAllStringSubmatch(name, -1); m != nil {
 			err = listVersions(ctx, client, m[0])
 		} else if m := models.SpecsRegexp().FindAllStringSubmatch(name, -1); m != nil {
-			err = listSpecs(ctx, client, m[0])
+			err = listSpecs(ctx, client, m[0], func(spec *rpc.Spec) error {
+				fmt.Println(spec.Name)
+				return nil
+			})
 		} else if m := models.PropertiesRegexp().FindAllStringSubmatch(name, -1); m != nil {
 			err = listProperties(ctx, client, m[0])
 		} else if m := models.ProductRegexp().FindAllStringSubmatch(name, -1); m != nil {
@@ -53,9 +56,12 @@ var listCmd = &cobra.Command{
 		} else if m := models.SpecRegexp().FindAllStringSubmatch(name, -1); m != nil {
 			segments := m[0]
 			if sliceContainsString(segments, "-") {
-				err = listSpecs(ctx, client, segments)
+				err = listSpecs(ctx, client, segments, func(spec *rpc.Spec) error {
+					fmt.Println(spec.Name)
+					return nil
+				})
 			} else {
-				err = getSpec(ctx, client, segments)
+				_, err = getSpec(ctx, client, segments)
 			}
 		} else if m := models.PropertyRegexp().FindAllStringSubmatch(name, -1); m != nil {
 			segments := m[0]
@@ -134,9 +140,12 @@ func listVersions(ctx context.Context,
 	return nil
 }
 
+type specHandler func(*rpc.Spec) error
+
 func listSpecs(ctx context.Context,
 	client *gapic.FlameClient,
-	segments []string) error {
+	segments []string,
+	handler specHandler) error {
 	request := &rpc.ListSpecsRequest{
 		Parent: "projects/" + segments[1] + "/products/" + segments[2] + "/versions/" + segments[3],
 	}
@@ -155,7 +164,7 @@ func listSpecs(ctx context.Context,
 		} else if err != nil {
 			return err
 		}
-		fmt.Println(spec.Name)
+		handler(spec)
 	}
 	return nil
 }
@@ -209,16 +218,16 @@ func getVersion(ctx context.Context,
 
 func getSpec(ctx context.Context,
 	client *gapic.FlameClient,
-	segments []string) error {
+	segments []string) (*rpc.Spec, error) {
 	request := &rpc.GetSpecRequest{
 		Name: "projects/" + segments[1] + "/products/" + segments[2] + "/versions/" + segments[3] + "/specs/" + segments[4],
 	}
 	spec, err := client.GetSpec(ctx, request)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	fmt.Printf("%+v\n", spec)
-	return nil
+	return spec, nil
 }
 
 func getProperty(ctx context.Context,

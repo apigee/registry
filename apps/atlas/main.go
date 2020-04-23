@@ -48,14 +48,14 @@ func main() {
 			if strings.HasSuffix(path, "swagger.yaml") {
 				processes++
 				go func() {
-					handleSpec(path, "openapi-v2")
+					handleSpec(path, "openapi/v2")
 					completions <- 1
 				}()
 			}
 			if strings.HasSuffix(path, "openapi.yaml") {
 				processes++
 				go func() {
-					handleSpec(path, "openapi-v3")
+					handleSpec(path, "openapi/v3")
 					completions <- 1
 				}()
 			}
@@ -148,7 +148,7 @@ func uploadSpec(product, version, style, path string) error {
 				"/versions/" + version
 			request.SpecId = filename
 			request.Spec = &rpcpb.Spec{}
-			request.Spec.Style = style
+			request.Spec.Style = style + "+gzip"
 			request.Spec.Filename = filename
 			request.Spec.Contents = buf.Bytes()
 			response, err := flameClient.CreateSpec(ctx, request)
