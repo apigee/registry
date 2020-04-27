@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"sort"
 	"strings"
 
 	"apigov.dev/flame/cmd/flame/connection"
@@ -31,10 +32,10 @@ var exportCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		log.Printf("Updating sheet.")
-		checkerResults := make([]CheckerResult, 0)
-		ssc.updateWithCheckerResults(checkerResults)
-		log.Printf("Done.")
+		//log.Printf("Updating sheet.")
+		//checkerResults := make([]CheckerResult, 0)
+		//ssc.updateWithCheckerResults(checkerResults)
+		//log.Printf("Done.")
 
 		client, err := connection.NewClient()
 		if err != nil {
@@ -53,7 +54,7 @@ var exportCmd = &cobra.Command{
 		if m := models.ProjectRegexp().FindAllStringSubmatch(name, -1); m != nil {
 			// find all matching properties for a project
 			segments := m[0]
-			err = exportNamedProperty(ctx, client, segments[1], "", property)
+			err = ssc.exportNamedProperty(ctx, client, segments[1], "", property)
 			if err != nil {
 				log.Fatalf("%s", err.Error())
 			}
@@ -202,15 +203,15 @@ func (ssc *StatusSheetConnection) updateWithCheckerResults(checkerResults []Chec
 	ssc.updateRows(fmt.Sprintf("Summary!A2:B%d", 1+len(summary)), summary)
 }
 
-var rows map[string]int64
+var values map[string]int64
 
-func exportNamedProperty(ctx context.Context, client *gapic.FlameClient, projectID string, subject string, relation string) error {
+func (ssc *StatusSheetConnection) exportNamedProperty(ctx context.Context, client *gapic.FlameClient, projectID string, subject string, relation string) error {
 	request := &rpc.ListPropertiesRequest{
 		Parent:   "projects/" + projectID,
 		Subject:  subject,
 		Relation: relation,
 	}
-	rows = make(map[string]int64, 0)
+	values = make(map[string]int64, 0)
 	it := client.ListProperties(ctx, request)
 	for {
 		property, err := it.Next()
@@ -219,8 +220,27 @@ func exportNamedProperty(ctx context.Context, client *gapic.FlameClient, project
 		} else if err != nil {
 			return err
 		}
-		rows[property.Subject] = property.GetInt64Value()
+		values[property.Subject] = property.GetInt64Value()
 	}
-	log.Printf("%+v", rows)
+	keys := make([]string, 0, len(values))
+	for k := range values {
+		keys = append(keys, k)
+	}
+	summary := make([][]interface{}, 0)
+	sort.Strings(keys)
+	for _, k := range keys {
+		log.Printf("%s: %d", k, values[k])
+
+		row := make([]interface{}, 0)
+		row = append(row, k)
+		row = append(row, values[k])
+		summary = append(summary, row)
+	}
+	// reset headings
+	ssc.updateRows("Summary!A1:B1",
+		[]([]interface{}){[]interface{}{"Spec", "Operation Count"}},
+	)
+	ssc.updateRows(fmt.Sprintf("Summary!A2:B%d", 1+len(summary)), summary)
+
 	return nil
 }

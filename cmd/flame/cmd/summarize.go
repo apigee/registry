@@ -19,6 +19,7 @@ import (
 	rpc "apigov.dev/flame/rpc"
 	"github.com/googleapis/gnostic/compiler"
 	openapi_v2 "github.com/googleapis/gnostic/openapiv2"
+	openapi_v3 "github.com/googleapis/gnostic/openapiv3"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -84,12 +85,26 @@ func resourceNameOfSpec(segments []string) string {
 	return ""
 }
 
+func getBytesForSpec(spec *rpc.Spec) ([]byte, error) {
+	var data []byte
+	if strings.Contains(spec.GetStyle(), "+gzip") {
+		gr, err := gzip.NewReader(bytes.NewBuffer(spec.GetContents()))
+		defer gr.Close()
+		data, err = ioutil.ReadAll(gr)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		data = spec.GetContents()
+	}
+	return data, nil
+}
+
 func summarizeSpec(ctx context.Context,
 	client *gapic.FlameClient,
 	segments []string) error {
 
 	name := resourceNameOfSpec(segments[1:])
-
 	request := &rpc.GetSpecRequest{
 		Name: name,
 		View: rpc.SpecView_FULL,
@@ -100,16 +115,9 @@ func summarizeSpec(ctx context.Context,
 	}
 
 	if strings.HasPrefix(spec.GetStyle(), "openapi/v2") {
-		var data []byte
-		if strings.Contains(spec.GetStyle(), "+gzip") {
-			gr, err := gzip.NewReader(bytes.NewBuffer(spec.GetContents()))
-			defer gr.Close()
-			data, err = ioutil.ReadAll(gr)
-			if err != nil {
-				return err
-			}
-		} else {
-			data = spec.GetContents()
+		data, err := getBytesForSpec(spec)
+		if err != nil {
+			return nil
 		}
 		info, err := compiler.ReadInfoFromBytes(spec.GetName(), data)
 		if err != nil {
@@ -127,8 +135,8 @@ func summarizeSpec(ctx context.Context,
 		fmt.Printf("%+v\n", string(bytes))
 
 		projectID := segments[1]
-
 		property := &rpc.Property{}
+
 		property.Subject = spec.GetName()
 		property.Relation = "summary"
 		property.Value = &rpc.Property_StringValue{StringValue: string(bytes)}
@@ -153,6 +161,26 @@ func summarizeSpec(ctx context.Context,
 		if err != nil {
 			return err
 		}
+	}
+	if strings.HasPrefix(spec.GetStyle(), "openapi/v3") {
+		data, err := getBytesForSpec(spec)
+		if err != nil {
+			return nil
+		}
+		info, err := compiler.ReadInfoFromBytes(spec.GetName(), data)
+		if err != nil {
+			return err
+		}
+		document, err := openapi_v3.NewDocument(info, compiler.NewContextWithExtensions("$root", nil, nil))
+		if err != nil {
+			return err
+		}
+		summary := summarizeOpenAPIv3Document(document)
+		bytes, err := json.MarshalIndent(summary, "", "  ")
+		if err != nil {
+			return err
+		}
+		fmt.Printf("%+v\n", string(bytes))
 	}
 	return nil
 }
@@ -194,33 +222,33 @@ func setProperty(ctx context.Context, client *gapic.FlameClient, projectID strin
 
 // Summary ...
 type Summary struct {
-	Title            string
-	Description      string
-	Version          string
-	SchemaCount      int
-	PathCount        int
-	GetCount         int
-	PostCount        int
-	PutCount         int
-	DeleteCount      int
-	TagCount         int
-	VendorExtensions []string
+	Title       string
+	Description string
+	Version     string
+	SchemaCount int
+	PathCount   int
+	GetCount    int
+	PostCount   int
+	PutCount    int
+	DeleteCount int
+	TagCount    int
+	Extensions  []string
 }
 
 // NewSummary ...
 func NewSummary() *Summary {
 	s := &Summary{}
-	s.VendorExtensions = make([]string, 0)
+	s.Extensions = make([]string, 0)
 	return s
 }
 
-func (s *Summary) addVendorExtension(name string) {
-	for _, n := range s.VendorExtensions {
+func (s *Summary) addExtension(name string) {
+	for _, n := range s.Extensions {
 		if n == name {
 			return
 		}
 	}
-	s.VendorExtensions = append(s.VendorExtensions, name)
+	s.Extensions = append(s.Extensions, name)
 }
 
 func truncateString(str string, num int) string {
@@ -293,7 +321,75 @@ func summarizeSchema(summary *Summary, schema *openapi_v2.Schema) {
 func summarizeVendorExtension(summary *Summary, vendorExtension []*openapi_v2.NamedAny) {
 	if len(vendorExtension) > 0 {
 		for _, v := range vendorExtension {
-			summary.addVendorExtension(v.Name)
+			summary.addExtension(v.Name)
 		}
 	}
+}
+
+func summarizeOpenAPIv3Document(document *openapi_v3.Document) *Summary {
+	summary := NewSummary()
+
+	if document.Info != nil {
+		summary.Title = document.Info.Title
+		summary.Description = truncateString(document.Info.Description, 240)
+		summary.Version = document.Info.Version
+	}
+
+	if document.Components != nil && document.Components.Schemas != nil {
+		for _, pair := range document.Components.Schemas.AdditionalProperties {
+			summarizeOpenAPIv3Schema(summary, pair.Value)
+		}
+	}
+
+	for _, pair := range document.Paths.Path {
+		summary.PathCount++
+		v := pair.Value
+		if v.Get != nil {
+			summary.GetCount++
+			summarizeOpenAPIv3Operation(summary, v.Get)
+		}
+		if v.Post != nil {
+			summary.PostCount++
+			summarizeOpenAPIv3Operation(summary, v.Post)
+		}
+		if v.Put != nil {
+			summary.PutCount++
+			summarizeOpenAPIv3Operation(summary, v.Put)
+		}
+		if v.Delete != nil {
+			summary.DeleteCount++
+			summarizeOpenAPIv3Operation(summary, v.Delete)
+		}
+	}
+	for _, tag := range document.Tags {
+		summary.TagCount++
+		summarizeOpenAPIv3VendorExtension(summary, tag.SpecificationExtension)
+	}
+	return summary
+}
+
+func summarizeOpenAPIv3Schema(summary *Summary, schemaOrReference *openapi_v3.SchemaOrReference) {
+	summary.SchemaCount++
+	schema := schemaOrReference.GetSchema()
+	if schema != nil && schema.Properties != nil {
+		for _, pair := range schema.Properties.AdditionalProperties {
+			summarizeOpenAPIv3Schema(summary, pair.Value)
+		}
+	}
+	if schema != nil {
+		summarizeOpenAPIv3VendorExtension(summary, schema.SpecificationExtension)
+	}
+}
+
+func summarizeOpenAPIv3VendorExtension(summary *Summary, vendorExtension []*openapi_v3.NamedAny) {
+	if len(vendorExtension) > 0 {
+		for _, v := range vendorExtension {
+			summary.addExtension(v.Name)
+		}
+	}
+}
+
+func summarizeOpenAPIv3Operation(summary *Summary, operation *openapi_v3.Operation) {
+	summarizeOpenAPIv3VendorExtension(summary, operation.Responses.SpecificationExtension)
+	summarizeOpenAPIv3VendorExtension(summary, operation.SpecificationExtension)
 }
