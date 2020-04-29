@@ -4,7 +4,6 @@ package server
 
 import (
 	"context"
-	"log"
 
 	"apigov.dev/flame/models"
 	rpc "apigov.dev/flame/rpc"
@@ -97,7 +96,6 @@ func (s *FlameServer) ListProducts(ctx context.Context, req *rpc.ListProductsReq
 	if m[1] != "-" {
 		q = q.Filter("ProjectID =", m[1])
 	}
-	log.Printf("query = %+v", q)
 	prg, err := createFilterOperator(req.GetFilter(),
 		[]filterArg{
 			{"product_id", filterArgTypeString},
