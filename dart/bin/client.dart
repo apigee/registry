@@ -4,8 +4,8 @@ import 'dart:io';
 
 import 'package:args/args.dart';
 import 'package:grpc/grpc.dart';
-import 'package:flame/src/generated/flame_service.pb.dart';
-import 'package:flame/src/generated/flame_service.pbgrpc.dart';
+import 'package:flame/generated/flame_service.pb.dart';
+import 'package:flame/generated/flame_service.pbgrpc.dart';
 
 Future<Null> main(List<String> args) async {
   if (args.length == 0) {
@@ -32,10 +32,9 @@ Future<Null> main(List<String> args) async {
   }
 
   final channel = new ClientChannel('localhost',
-      port: 8080,
+      port: 9999,
       options: const ChannelOptions(
           credentials: const ChannelCredentials.insecure()));
-
   final channelCompleter = Completer<void>();
   ProcessSignal.sigint.watch().listen((_) async {
     print("sigint begin");

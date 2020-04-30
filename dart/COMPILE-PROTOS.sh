@@ -9,4 +9,4 @@ protoc --proto_path=../proto --proto_path=${ANNOTATIONS} \
 	/usr/include/google/protobuf/timestamp.proto \
 	/usr/include/google/protobuf/field_mask.proto \
 	/usr/include/google/protobuf/empty.proto \
-	--dart_out=grpc:lib/src/generated
+	--dart_out=grpc:lib/generated
