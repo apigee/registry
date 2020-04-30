@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_pagewise/flutter_pagewise.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'dart:async';
+import 'dart:io';
+
+import 'package:grpc/grpc.dart';
+import 'package:catalog/generated/flame_models.pb.dart';
+import 'package:catalog/generated/flame_service.pb.dart';
+import 'package:catalog/generated/flame_service.pbgrpc.dart';
 
 void main() {
   runApp(MyApp());
@@ -111,8 +116,9 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 
+// https://pub.dev/packages/flutter_pagewise
 class PagewiseListViewExample extends StatelessWidget {
-  static const int PAGE_SIZE = 10;
+  static const int PAGE_SIZE = 50;
 
   @override
   Widget build(BuildContext context) {
@@ -120,10 +126,10 @@ class PagewiseListViewExample extends StatelessWidget {
         pageSize: PAGE_SIZE,
         itemBuilder: this._itemBuilder,
         pageFuture: (pageIndex) =>
-            BackendService.getPosts(pageIndex * PAGE_SIZE, PAGE_SIZE));
+            BackendService.getProducts(pageIndex * PAGE_SIZE, PAGE_SIZE));
   }
 
-  Widget _itemBuilder(context, PostModel entry, _) {
+  Widget _itemBuilder(context, Product entry, _) {
     return Column(
       children: <Widget>[
         ListTile(
@@ -131,8 +137,8 @@ class PagewiseListViewExample extends StatelessWidget {
             Icons.person,
             color: Colors.brown[200],
           ),
-          title: Text(entry.title),
-          subtitle: Text(entry.body),
+          title: Text(entry.name),
+          subtitle: Text(entry.description),
         ),
         Divider()
       ],
@@ -140,52 +146,40 @@ class PagewiseListViewExample extends StatelessWidget {
   }
 }
 
+Map<int, String> tokens;
+
 class BackendService {
-  static Future<List<PostModel>> getPosts(offset, limit) async {
-    final responseBody = (await http.get(
-            'http://jsonplaceholder.typicode.com/posts?_start=$offset&_limit=$limit'))
-        .body;
+  static FlameClient getClient() {
+    final channel = new ClientChannel('localhost',
+        port: 8080,
+        options: const ChannelOptions(
+            credentials: const ChannelCredentials.insecure()));
 
-    // The response body is an array of items
-    return PostModel.fromJsonList(json.decode(responseBody));
+    final channelCompleter = Completer<void>();
+    ProcessSignal.sigint.watch().listen((_) async {
+      print("sigint begin");
+      await channel.terminate();
+      channelCompleter.complete();
+      print("sigint end");
+    });
+    return FlameClient(channel);
   }
 
-  static Future<List<ImageModel>> getImages(offset, limit) async {
-    final responseBody = (await http.get(
-            'http://jsonplaceholder.typicode.com/photos?_start=$offset&_limit=$limit'))
-        .body;
+  static Future<List<Product>> getProducts(offset, limit) async {
+    if (offset == 0) {
+      tokens = Map();
+    }
 
-    // The response body is an array of items.
-    return ImageModel.fromJsonList(json.decode(responseBody));
-  }
-}
-
-class PostModel {
-  String title;
-  String body;
-
-  PostModel.fromJson(obj) {
-    this.title = obj['title'];
-    this.body = obj['body'];
-  }
-
-  static List<PostModel> fromJsonList(jsonList) {
-    return jsonList.map<PostModel>((obj) => PostModel.fromJson(obj)).toList();
-  }
-}
-
-class ImageModel {
-  String title;
-  String id;
-  String thumbnailUrl;
-
-  ImageModel.fromJson(obj) {
-    this.title = obj['title'];
-    this.id = obj['id'].toString();
-    this.thumbnailUrl = obj['thumbnailUrl'];
-  }
-
-  static List<ImageModel> fromJsonList(jsonList) {
-    return jsonList.map<ImageModel>((obj) => ImageModel.fromJson(obj)).toList();
+    final client = getClient();
+    final request = ListProductsRequest();
+    request.parent = "projects/google";
+    request.pageSize = limit;
+    final token = tokens[offset];
+    if (token != null) {
+      request.pageToken = token;
+    }
+    final response = await client.listProducts(request);
+    tokens[offset + limit] = response.nextPageToken;
+    return response.products;
   }
 }
