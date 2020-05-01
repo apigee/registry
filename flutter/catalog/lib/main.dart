@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_pagewise/flutter_pagewise.dart';
 import 'dart:async';
 
-import 'package:grpc/grpc.dart';
+import 'grpc_client.dart';
 import 'package:catalog/generated/flame_models.pb.dart';
 import 'package:catalog/generated/flame_service.pb.dart';
 import 'package:catalog/generated/flame_service.pbgrpc.dart';
@@ -68,8 +68,7 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         title: Text(widget.title),
       ),
-      body: Center(
-          child: Scrollbar(child:PagewiseListViewExample())),
+      body: Center(child: Scrollbar(child: PagewiseListViewExample())),
     );
   }
 }
@@ -107,19 +106,7 @@ class PagewiseListViewExample extends StatelessWidget {
 Map<int, String> tokens; // until we find a better way
 
 class BackendService {
-  static FlameClient getClient() {
-    final channel = new ClientChannel('localhost',
-        port: 8080,
-        options: const ChannelOptions(
-            credentials: const ChannelCredentials.insecure()));
-
-  //  final channelCompleter = Completer<void>();
-  //  ProcessSignal.sigint.watch().listen((_) async {
-  //    await channel.terminate();
-  //    channelCompleter.complete();
-  //  });
-    return FlameClient(channel);
-  }
+  static FlameClient getClient() => FlameClient(createClientChannel());
 
   static Future<List<Product>> getProducts(offset, limit) async {
     if (offset == 0) {
@@ -134,8 +121,13 @@ class BackendService {
     if (token != null) {
       request.pageToken = token;
     }
-    final response = await client.listProducts(request);
-    tokens[offset + limit] = response.nextPageToken;
-    return response.products;
+    try {
+      final response = await client.listProducts(request);
+      tokens[offset + limit] = response.nextPageToken;
+      return response.products;
+    } catch (err) {
+      print('Caught error: $err');
+      return null;
+    }
   }
 }
