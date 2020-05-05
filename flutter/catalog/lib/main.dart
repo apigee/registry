@@ -8,92 +8,161 @@ import 'package:catalog/generated/flame_service.pb.dart';
 import 'package:catalog/generated/flame_service.pbgrpc.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(Application());
 }
 
-class MyApp extends StatelessWidget {
+class Application extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flame Demo',
+      title: 'API Products',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
-        primarySwatch: Colors.orange,
-        // This makes the visual density adapt to the platform that you run
-        // the app on. For desktop platforms, the controls will be smaller and
-        // closer together (more dense) than on mobile platforms.
-        visualDensity: VisualDensity.adaptivePlatformDensity,
+        // Define the default brightness and colors.
+        brightness: Brightness.light,
+        primaryColor: Colors.orange[800],
+        accentColor: Colors.pink[600],
+
+        // Define the default font family.
+        fontFamily: 'Roboto',
+
+        // Define the default TextTheme. Use this to specify the default
+        // text styling for headlines, titles, bodies of text, and more.
+        textTheme: TextTheme(
+          headline5: TextStyle(fontSize: 72.0, fontWeight: FontWeight.bold),
+          headline6: TextStyle(fontSize: 32.0, fontWeight: FontWeight.bold),
+          bodyText2: TextStyle(fontSize: 14.0),
+        ),
       ),
-      home: MyHomePage(title: 'Flame Demo'),
+      home: MainScreen(title: 'API Products'),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key, this.title}) : super(key: key);
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
+class MainScreen extends StatelessWidget {
   final String title;
+  MainScreen({Key key, this.title}) : super(key: key);
 
-  @override
-  _MyHomePageState createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        title: Text("API Hub"),
+        actions: <Widget>[
+          ProductSearchBox(),
+          IconButton(
+            icon: const Icon(Icons.question_answer),
+            tooltip: 'Help',
+            onPressed: () {
+              _showHelp(context);
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings),
+            tooltip: 'Settings',
+            onPressed: () {},
+          ),
+          // TextBox(),
+          IconButton(
+            icon: const Icon(Icons.power_settings_new),
+            tooltip: 'Log out',
+            onPressed: () {},
+          ),
+        ],
       ),
-      body: Center(child: Scrollbar(child: PagewiseListViewExample())),
+      body: Center(
+        child: ProductList(),
+      ),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: const <Widget>[
+            ListTile(
+              leading: Icon(Icons.home),
+              title: Text('API Hub'),
+            ),
+            Divider(),
+            ListTile(
+              leading: Icon(Icons.list),
+              title: Text('Browse APIs'),
+            ),
+            ListTile(
+              leading: Icon(Icons.person),
+              title: Text('My APIs'),
+            ),
+            ListTile(
+              leading: Icon(Icons.bookmark),
+              title: Text('Saved APIs'),
+            ),
+            Divider(),
+            ListTile(
+              leading: Icon(Icons.school),
+              title: Text('API Design Process'),
+            ),
+            ListTile(
+              leading: Icon(Icons.school),
+              title: Text('API Style Guide'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showHelp(context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: new Text("Help!"),
+          content: new Text("I need some body."),
+          actions: <Widget>[
+            new FlatButton(
+              child: new Text("Close"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }
 
-// https://pub.dev/packages/flutter_pagewise
-class PagewiseListViewExample extends StatelessWidget {
-  static const int PAGE_SIZE = 50;
+
+const int pageSize = 50;
+PagewiseLoadController<Product> pageLoadController;
+
+class ProductList extends StatelessWidget {
+
+  ProductList() {
+    pageLoadController = PagewiseLoadController<Product>(
+        pageSize: pageSize, pageFuture: BackendService.getPage);
+  }
 
   @override
   Widget build(BuildContext context) {
-    return PagewiseListView(
-        pageSize: PAGE_SIZE,
+    return Scrollbar(
+      child: PagewiseListView<Product>(
         itemBuilder: this._itemBuilder,
-        pageFuture: (pageIndex) =>
-            BackendService.getProducts(pageIndex * PAGE_SIZE, PAGE_SIZE));
+        pageLoadController: pageLoadController,
+      ),
+    );
   }
 
   Widget _itemBuilder(context, Product entry, _) {
     return Column(
       children: <Widget>[
         ListTile(
-          leading: Icon(
-            Icons.person,
-            color: Colors.brown[200],
-          ),
+          leading: GestureDetector(
+              child: Icon(
+                Icons.bookmark_border,
+                color: Colors.black,
+              ),
+              onTap: () {
+                print("save this API");
+              }),
           title: Text(entry.name),
           subtitle: Text(entry.description),
         ),
@@ -103,20 +172,63 @@ class PagewiseListViewExample extends StatelessWidget {
   }
 }
 
-Map<int, String> tokens; // until we find a better way
+class ProductSearchBox extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 300,
+      margin: EdgeInsets.fromLTRB(
+        0,
+        8,
+        0,
+        8,
+      ),
+      alignment: Alignment.centerLeft,
+      color: Colors.white,
+      child: TextField(
+        decoration: InputDecoration(
+            prefixIcon: Icon(Icons.search, color: Colors.black),
+            border: InputBorder.none,
+            hintText: 'Search all APIs'),
+        onSubmitted: (s) {
+          if (s == "") {
+            BackendService.filter = "";
+          } else {
+            BackendService.filter = "product_id.contains('$s')";
+          }
+          pageLoadController.reset();
+        },
+      ),
+    );
+  }
+}
 
 class BackendService {
   static FlameClient getClient() => FlameClient(createClientChannel());
 
-  static Future<List<Product>> getProducts(offset, limit) async {
+  static String filter;
+  static Map<int, String> tokens;
+
+  static Future<List<Product>> getPage(int pageIndex) {
+    return BackendService._getProducts(
+        parent: "projects/atlas",
+        offset: pageIndex * pageSize,
+        limit: pageSize);
+  }
+
+  static Future<List<Product>> _getProducts(
+      {parent: String, offset: int, limit: int}) async {
     if (offset == 0) {
       tokens = Map();
     }
-
+    print("getProducts " + (filter ?? ""));
     final client = getClient();
     final request = ListProductsRequest();
-    request.parent = "projects/google";
+    request.parent = parent;
     request.pageSize = limit;
+    if (filter != null) {
+      request.filter = filter;
+    }
     final token = tokens[offset];
     if (token != null) {
       request.pageToken = token;
