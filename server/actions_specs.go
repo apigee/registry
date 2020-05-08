@@ -80,10 +80,12 @@ func (s *FlameServer) GetSpec(ctx context.Context, request *rpc.GetSpecRequest) 
 
 func (s *FlameServer) ListSpecs(ctx context.Context, req *rpc.ListSpecsRequest) (*rpc.ListSpecsResponse, error) {
 	client, err := s.newDataStoreClient(ctx)
+	log.Printf("%+v", err)
 	if err != nil {
 		return nil, err
 	}
 	defer client.Close()
+	log.Printf("List Specs %+v", req)
 	q := datastore.NewQuery(models.SpecEntityName)
 	q, err = queryApplyCursor(q, req.GetPageToken())
 	if err != nil {
@@ -115,7 +117,7 @@ func (s *FlameServer) ListSpecs(ctx context.Context, req *rpc.ListSpecsRequest) 
 	it := client.Run(ctx, q.Distinct())
 	pageSize := boundPageSize(req.GetPageSize())
 	for i, err := it.Next(&spec); err == nil; _, err = it.Next(&spec) {
-		log.Printf("%d", i)
+		log.Printf("query result %+v", i)
 		if prg != nil {
 			out, _, err := prg.Eval(map[string]interface{}{
 				"spec_id": spec.SpecID,

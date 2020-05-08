@@ -4,7 +4,6 @@ package server
 
 import (
 	"context"
-	"log"
 
 	"apigov.dev/flame/models"
 	rpc "apigov.dev/flame/rpc"
@@ -85,7 +84,6 @@ func (s *FlameServer) ListVersions(ctx context.Context, req *rpc.ListVersionsReq
 		return nil, err
 	}
 	defer client.Close()
-	log.Printf("list versions")
 	q := datastore.NewQuery(models.VersionEntityName)
 	q, err = queryApplyCursor(q, req.GetPageToken())
 	if err != nil {
@@ -111,7 +109,6 @@ func (s *FlameServer) ListVersions(ctx context.Context, req *rpc.ListVersionsReq
 	}
 	var versionMessages []*rpc.Version
 	var version models.Version
-	log.Printf("running %+v", q)
 	it := client.Run(ctx, q.Distinct())
 	pageSize := boundPageSize(req.GetPageSize())
 	for _, err = it.Next(&version); err == nil; _, err = it.Next(&version) {

@@ -75,14 +75,15 @@ func handleSpec(path string, style string) error {
 	parts := strings.Split(name, "/")
 	spec := parts[len(parts)-1]
 	version := parts[len(parts)-2]
-	product := strings.Join(parts[0:len(parts)-2], "-")
+	product := strings.Join(parts[0:len(parts)-2], "/")
 	fmt.Printf("product:%+v version:%+v spec:%+v \n", product, version, spec)
 	uploadSpec(product, version, style, path)
 	return nil
 }
 
-func uploadSpec(product, version, style, path string) error {
+func uploadSpec(productName, version, style, path string) error {
 	ctx := context.TODO()
+	product := strings.Replace(productName, "/", "-", -1)
 	// does the API exist? if not, create it
 	{
 		request := &rpcpb.GetProductRequest{}
@@ -93,6 +94,7 @@ func uploadSpec(product, version, style, path string) error {
 			request.Parent = "projects/atlas"
 			request.ProductId = product
 			request.Product = &rpcpb.Product{}
+			request.Product.DisplayName = productName
 			response, err := flameClient.CreateProduct(ctx, request)
 			if err == nil {
 				log.Printf("created %s", response.Name)

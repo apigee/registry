@@ -4,6 +4,7 @@ package server
 
 import (
 	"context"
+	"log"
 
 	"apigov.dev/flame/models"
 	rpc "apigov.dev/flame/rpc"
@@ -83,6 +84,8 @@ func (s *FlameServer) ListProducts(ctx context.Context, req *rpc.ListProductsReq
 	if err != nil {
 		return nil, internalError(err)
 	}
+	log.Printf("List Products %+v", req)
+
 	defer client.Close()
 	q := datastore.NewQuery(models.ProductEntityName)
 	q, err = queryApplyCursor(q, req.GetPageToken())
