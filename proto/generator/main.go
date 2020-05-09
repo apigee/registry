@@ -61,6 +61,13 @@ func main() {
 	service := Service{
 		Entities: []Entity{
 			{
+				Name:         "Project",
+				PluralName:   "Projects",
+				ParentName:   "",
+				ResourceName: "projects/*",
+				ViewEnumName: "",
+			},
+			{
 				Name:         "Product",
 				PluralName:   "Products",
 				ParentName:   "projects/*",

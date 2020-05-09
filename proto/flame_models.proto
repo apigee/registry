@@ -10,6 +10,31 @@ option java_multiple_files = true;
 option java_outer_classname = "FlameModelsProto";
 option go_package = "apigov.dev/flame/rpc;rpc";
 
+// A Project is a top-level description of a collection of APIs.
+// Typically there would be one project for an entire organization.
+message Project {
+  option (google.api.resource) = {
+    type : "flame.googleapis.com/Project"
+    pattern : "projects/{project}"
+  };
+
+  // Resource name.
+  string name = 1;
+
+  // Human-meaningful name.
+  string display_name = 2;
+
+  // A detailed description.
+  string description = 3;
+
+  // Creation timestamp.
+  google.protobuf.Timestamp create_time = 4;
+
+  // Last update timestamp.
+  google.protobuf.Timestamp update_time = 5;
+
+}
+
 // A Product is a top-level description of an API product.
 // Products are produced by producers and are commitments to provide services.
 message Product {

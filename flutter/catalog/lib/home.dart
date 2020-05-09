@@ -4,9 +4,9 @@ import 'package:catalog/generated/flame_models.pb.dart';
 import 'drawer.dart';
 import 'service.dart';
 
-class ProductListScreen extends StatelessWidget {
+class ProjectListScreen extends StatelessWidget {
   final String title;
-  ProductListScreen({Key key, this.title}) : super(key: key);
+  ProjectListScreen({Key key, this.title}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -14,7 +14,7 @@ class ProductListScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text("API Hub"),
         actions: <Widget>[
-          ProductSearchBox(),
+          ProjectSearchBox(),
           IconButton(
             icon: const Icon(Icons.question_answer),
             tooltip: 'Help',
@@ -38,7 +38,7 @@ class ProductListScreen extends StatelessWidget {
         ],
       ),
       body: Center(
-        child: ProductList(),
+        child: ProjectList(),
       ),
       drawer: drawer(),
     );
@@ -65,56 +65,47 @@ class ProductListScreen extends StatelessWidget {
   }
 }
 
-String routeNameForProductDetail(Product product) {
-  final name = "/" + product.name.split("/").sublist(1).join("/");
+String routeNameForProjectDetail(Project project) {
+  final name = "/" + project.name.split("/").sublist(1).join("/") + "/products";
   print("pushing " + name);
   return name;
 }
 
 const int pageSize = 50;
-PagewiseLoadController<Product> pageLoadController;
+PagewiseLoadController<Project> pageLoadController;
 
-class ProductList extends StatelessWidget {
-  ProductList() {
-    pageLoadController = PagewiseLoadController<Product>(
-        pageSize: pageSize, pageFuture: BackendService.getProductsPage);
+class ProjectList extends StatelessWidget {
+  ProjectList() {
+    pageLoadController = PagewiseLoadController<Project>(
+        pageSize: pageSize, pageFuture: ProjectService.getProjectsPage);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scrollbar(
-      child: PagewiseListView<Product>(
+      child: PagewiseListView<Project>(
         itemBuilder: this._itemBuilder,
         pageLoadController: pageLoadController,
       ),
     );
   }
 
-  Widget _itemBuilder(context, Product entry, _) {
+  Widget _itemBuilder(context, Project entry, _) {
     return Column(
       children: <Widget>[
         GestureDetector(
           onTap: () async {
             Navigator.pushNamed(
               context,
-              routeNameForProductDetail(entry),
+              routeNameForProjectDetail(entry),
               arguments: entry,
             );
           },
           child: ListTile(
-            leading: GestureDetector(
-                child: Icon(
-                  Icons.bookmark_border,
-                  color: Colors.black,
-                ),
-                onTap: () async {
-                  print("save this API");
-                }),
             title: Text(
-              entry.displayName,
+              entry.name,
               style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
             ),
-            subtitle: Text("Spec available, unverified."),
           ),
         ),
         Divider(thickness: 2)
@@ -123,7 +114,7 @@ class ProductList extends StatelessWidget {
   }
 }
 
-class ProductSearchBox extends StatelessWidget {
+class ProjectSearchBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -140,12 +131,12 @@ class ProductSearchBox extends StatelessWidget {
         decoration: InputDecoration(
             prefixIcon: Icon(Icons.search, color: Colors.black),
             border: InputBorder.none,
-            hintText: 'Search all APIs'),
+            hintText: 'Search Projects'),
         onSubmitted: (s) {
           if (s == "") {
-            BackendService.filter = "";
+            ProjectService.filter = "";
           } else {
-            BackendService.filter = "product_id.contains('$s')";
+            ProjectService.filter = "project_id.contains('$s')";
           }
           pageLoadController.reset();
         },
