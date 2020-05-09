@@ -6,10 +6,12 @@ import 'service.dart';
 
 class ProductListScreen extends StatelessWidget {
   final String title;
-  ProductListScreen({Key key, this.title}) : super(key: key);
+  final String projectID;
+  ProductListScreen({Key key, this.title, this.projectID}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    BackendService.projectID = projectID; // HACK
     return Scaffold(
       appBar: AppBar(
         title: Text("API Hub"),
@@ -140,7 +142,7 @@ class ProductSearchBox extends StatelessWidget {
         decoration: InputDecoration(
             prefixIcon: Icon(Icons.search, color: Colors.black),
             border: InputBorder.none,
-            hintText: 'Search all APIs'),
+            hintText: 'Search API products'),
         onSubmitted: (s) {
           if (s == "") {
             BackendService.filter = "";

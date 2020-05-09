@@ -94,7 +94,7 @@ MaterialPageRoute productsPage(RouteSettings settings) {
   return MaterialPageRoute(
     settings: settings,
     builder: (context) {
-      return ProductListScreen(title: 'Products');
+      return ProductListScreen(title: 'Products', projectID: "google");
     },
   );
 }

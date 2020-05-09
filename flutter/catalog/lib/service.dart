@@ -12,10 +12,11 @@ class BackendService {
 
   static String filter;
   static Map<int, String> tokens;
+  static String projectID;
 
   static Future<List<Product>> getProductsPage(int pageIndex) {
     return BackendService._getProducts(
-        parent: "projects/atlas",
+        parent: "projects/" + projectID,
         offset: pageIndex * pageSize,
         limit: pageSize);
   }
