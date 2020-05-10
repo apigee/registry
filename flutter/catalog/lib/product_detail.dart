@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:catalog/generated/flame_models.pb.dart';
-import 'package:catalog/product_list.dart';
 import 'package:catalog/generated/flame_models.pb.dart';
 import 'service.dart';
 
@@ -24,7 +23,7 @@ class _ProductDetailWidgetState extends State<ProductDetailWidget> {
     if (product == null) {
       // we need to fetch the product from the API
       final productFuture =
-          BackendService.getProduct("projects/atlas" + widget.name);
+          BackendService.getProduct("projects" + widget.name);
       productFuture.then((product) {
         setState(() {
           this.product = product;

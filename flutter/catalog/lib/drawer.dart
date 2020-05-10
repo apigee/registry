@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-Drawer drawer() {
+Drawer drawer(context) {
   return Drawer(
     child: ListView(
       padding: EdgeInsets.zero,
@@ -9,6 +9,7 @@ Drawer drawer() {
         ListTile(
           leading: Icon(Icons.home),
           title: Text('API Hub'),
+          onTap: () => Navigator.popUntil(context, ModalRoute.withName('/')),
         ),
         Divider(thickness: 2),
         ListTile(

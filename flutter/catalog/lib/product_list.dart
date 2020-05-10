@@ -12,6 +12,7 @@ class ProductListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     BackendService.projectID = projectID; // HACK
+    print("setting project ID to " + projectID);
     return Scaffold(
       appBar: AppBar(
         title: Text("API Hub"),
@@ -42,7 +43,7 @@ class ProductListScreen extends StatelessWidget {
       body: Center(
         child: ProductList(),
       ),
-      drawer: drawer(),
+      drawer: drawer(context),
     );
   }
 

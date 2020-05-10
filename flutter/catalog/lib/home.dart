@@ -40,7 +40,7 @@ class ProjectListScreen extends StatelessWidget {
       body: Center(
         child: ProjectList(),
       ),
-      drawer: drawer(),
+      drawer: drawer(context),
     );
   }
 
@@ -66,7 +66,7 @@ class ProjectListScreen extends StatelessWidget {
 }
 
 String routeNameForProjectDetail(Project project) {
-  final name = "/" + project.name.split("/").sublist(1).join("/") + "/products";
+  final name = "/" + project.name.split("/").sublist(1).join("/");
   print("pushing " + name);
   return name;
 }

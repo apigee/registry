@@ -2,6 +2,7 @@ import 'package:catalog/product_detail.dart';
 import 'package:flutter/material.dart';
 import 'package:catalog/generated/flame_models.pb.dart';
 
+import 'project_detail.dart';
 import 'product_list.dart';
 import 'home.dart';
 
@@ -72,7 +73,7 @@ MaterialPageRoute homePage(RouteSettings settings) {
   return MaterialPageRoute(
     settings: settings,
     builder: (context) {
-     return ProjectListScreen();
+      return ProjectListScreen();
     },
   );
 }
@@ -90,11 +91,20 @@ MaterialPageRoute settingsPage(RouteSettings settings) {
   );
 }
 
+MaterialPageRoute projectPage(RouteSettings settings) {
+  return MaterialPageRoute(
+      settings: settings,
+      builder: (context) {
+        return ProjectDetailWidget(settings.arguments, settings.name);
+      });
+}
+
 MaterialPageRoute productsPage(RouteSettings settings) {
   return MaterialPageRoute(
     settings: settings,
     builder: (context) {
-      return ProductListScreen(title: 'Products', projectID: "google");
+      final projectID = settings.name.split("/")[1];
+      return ProductListScreen(title: 'Products', projectID: projectID);
     },
   );
 }
@@ -122,17 +132,3 @@ MaterialPageRoute notFoundPage(RouteSettings settings) {
       });
 }
 
-MaterialPageRoute projectPage(RouteSettings settings) {
-  return MaterialPageRoute(
-      settings: settings,
-      builder: (context) {
-        return Scaffold(
-          appBar: AppBar(
-            title: const Text("project"),
-          ),
-          body: Center(
-            child: Text("Project"),
-          ),
-        );
-      });
-}
