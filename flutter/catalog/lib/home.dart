@@ -12,7 +12,7 @@ class ProjectListScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("API Hub"),
+        title: Text("Hub"),
         actions: <Widget>[
           ProjectSearchBox(),
           IconButton(
@@ -75,13 +75,13 @@ const int pageSize = 50;
 PagewiseLoadController<Project> pageLoadController;
 
 class ProjectList extends StatelessWidget {
-  ProjectList() {
-    pageLoadController = PagewiseLoadController<Project>(
-        pageSize: pageSize, pageFuture: ProjectService.getProjectsPage);
-  }
+  ProjectList();
 
   @override
   Widget build(BuildContext context) {
+   pageLoadController = PagewiseLoadController<Project>(
+        pageSize: pageSize,
+        pageFuture: (pageIndex) => ProjectService.getProjectsPage(context, pageIndex));
     return Scrollbar(
       child: PagewiseListView<Project>(
         itemBuilder: this._itemBuilder,

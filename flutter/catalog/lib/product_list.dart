@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_pagewise/flutter_pagewise.dart';
 import 'package:catalog/generated/flame_models.pb.dart';
-import 'drawer.dart';
 import 'service.dart';
 
 class ProductListScreen extends StatelessWidget {
@@ -12,10 +11,11 @@ class ProductListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     BackendService.projectID = projectID; // HACK
+
     print("setting project ID to " + projectID);
     return Scaffold(
       appBar: AppBar(
-        title: Text("API Hub"),
+        title: Text("Hub"),
         actions: <Widget>[
           ProductSearchBox(),
           IconButton(
@@ -43,7 +43,6 @@ class ProductListScreen extends StatelessWidget {
       body: Center(
         child: ProductList(),
       ),
-      drawer: drawer(context),
     );
   }
 
@@ -78,13 +77,14 @@ const int pageSize = 50;
 PagewiseLoadController<Product> pageLoadController;
 
 class ProductList extends StatelessWidget {
-  ProductList() {
-    pageLoadController = PagewiseLoadController<Product>(
-        pageSize: pageSize, pageFuture: BackendService.getProductsPage);
-  }
+  ProductList();
 
   @override
   Widget build(BuildContext context) {
+    pageLoadController = PagewiseLoadController<Product>(
+        pageSize: pageSize,
+        pageFuture: (pageIndex) =>
+            BackendService.getProductsPage(context, pageIndex));
     return Scrollbar(
       child: PagewiseListView<Product>(
         itemBuilder: this._itemBuilder,

@@ -1,6 +1,5 @@
 import 'package:catalog/product_detail.dart';
 import 'package:flutter/material.dart';
-import 'package:catalog/generated/flame_models.pb.dart';
 
 import 'project_detail.dart';
 import 'product_list.dart';

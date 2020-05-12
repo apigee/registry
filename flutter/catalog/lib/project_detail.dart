@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:catalog/generated/flame_models.pb.dart';
 import 'service.dart';
+import 'drawer.dart';
 
 class ProjectDetailWidget extends StatefulWidget {
   Project project;
@@ -36,8 +37,13 @@ class _ProjectDetailWidgetState extends State<ProjectDetailWidget> {
       });
       return Scaffold(
         appBar: AppBar(
-          title: Text(
-            "API Details",
+          title: Row(
+            children: [
+              Text("left"),
+              Text(
+                "My API Details",
+              ),
+            ],
           ),
         ),
         body: Text("loading..."),
@@ -46,10 +52,33 @@ class _ProjectDetailWidgetState extends State<ProjectDetailWidget> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          "API Details",
+        title: Row(
+          children: [
+            IconButton(
+              icon: const Icon(Icons.arrow_back_ios),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+            ),
+            Text(
+              "My API Details",
+            ),
+          ],
+        ),
+        leading: Builder(
+          builder: (BuildContext context) {
+            return IconButton(
+              icon: const Icon(Icons.menu),
+              onPressed: () {
+                Scaffold.of(context).openDrawer();
+              },
+              tooltip: MaterialLocalizations.of(context).openAppDrawerTooltip,
+            );
+          },
         ),
       ),
+      drawer: drawer(context),
       body: Scrollbar(
         child: Container(
           decoration: BoxDecoration(

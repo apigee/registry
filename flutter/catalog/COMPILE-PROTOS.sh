@@ -3,7 +3,7 @@
 
 # This should point to the .proto files distributed with protoc.
 export PROTO_PROTOS="$HOME/local/include"
-export PROTO_PROTOS="/usr/include"
+#export PROTO_PROTOS="/usr/include"
 
 # This is a local directory containing .proto files used by many APIs.
 export ANNOTATIONS="../../third_party/api-common-protos"
