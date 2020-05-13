@@ -40,20 +40,6 @@ class _ProductDetailWidgetState extends State<ProductDetailWidget> {
       );
     }
 
-    var gridView = GridView.count(
-        primary: false,
-        padding: const EdgeInsets.all(20),
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 10,
-        crossAxisCount: 2,
-        children: <Widget>[
-          mycard(context),
-          mycard(context),
-          mycard(context),
-          mycard(context),
-          mycard(context)
-        ]);
-
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -161,9 +147,12 @@ class _ProductDetailWidgetState extends State<ProductDetailWidget> {
                 ],
               ),
               mycard(context),
-              ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: 800, maxHeight: 400),
-                  child: gridView),
+              Row(children: [mycard(context), mycard(context)]),
+              Row(children: [
+                mycard(context),
+                mycard(context),
+                mycard(context)
+              ]),
             ],
           ),
         ),
@@ -172,29 +161,31 @@ class _ProductDetailWidgetState extends State<ProductDetailWidget> {
   }
 }
 
-Card mycard(BuildContext context) {
-  return Card(
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget>[
-        const ListTile(
-          leading: Icon(Icons.album),
-          title: Text('The Enchanted Nightingale'),
-          subtitle: Text('Music by Julie Gable. Lyrics by Sidney Stein.'),
-        ),
-        ButtonBar(
-          children: <Widget>[
-            FlatButton(
-              child: const Text('BUY TICKETS'),
-              onPressed: () {/* ... */},
-            ),
-            FlatButton(
-              child: const Text('LISTEN'),
-              onPressed: () {/* ... */},
-            ),
-          ],
-        ),
-      ],
+Expanded mycard(BuildContext context) {
+  return Expanded(
+    child: Card(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          const ListTile(
+            leading: Icon(Icons.album),
+            title: Text('The Enchanted Nightingale'),
+            subtitle: Text('Music by Julie Gable. Lyrics by Sidney Stein.'),
+          ),
+          ButtonBar(
+            children: <Widget>[
+              FlatButton(
+                child: const Text('BUY TICKETS'),
+                onPressed: () {/* ... */},
+              ),
+              FlatButton(
+                child: const Text('LISTEN'),
+                onPressed: () {/* ... */},
+              ),
+            ],
+          ),
+        ],
+      ),
     ),
   );
 }
