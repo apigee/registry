@@ -10,12 +10,12 @@ class ProductListScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    BackendService.projectID = projectID; // HACK
+    ProductService.projectID = projectID; // HACK
 
     print("setting project ID to " + projectID);
     return Scaffold(
       appBar: AppBar(
-        title: Text("Hub"),
+        title: Text("API Hub: Products"),
         actions: <Widget>[
           ProductSearchBox(),
           IconButton(
@@ -84,7 +84,7 @@ class ProductList extends StatelessWidget {
     pageLoadController = PagewiseLoadController<Product>(
         pageSize: pageSize,
         pageFuture: (pageIndex) =>
-            BackendService.getProductsPage(context, pageIndex));
+            ProductService.getProductsPage(context, pageIndex));
     return Scrollbar(
       child: PagewiseListView<Product>(
         itemBuilder: this._itemBuilder,
@@ -146,9 +146,9 @@ class ProductSearchBox extends StatelessWidget {
             hintText: 'Search API products'),
         onSubmitted: (s) {
           if (s == "") {
-            BackendService.filter = "";
+            ProductService.filter = "";
           } else {
-            BackendService.filter = "product_id.contains('$s')";
+            ProductService.filter = "product_id.contains('$s')";
           }
           pageLoadController.reset();
         },

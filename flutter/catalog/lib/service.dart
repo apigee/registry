@@ -8,7 +8,7 @@ import 'alerts.dart';
 
 const int pageSize = 50;
 
-class BackendService {
+class ProductService {
   static FlameClient getClient() => FlameClient(createClientChannel());
 
   static String filter;
@@ -17,7 +17,7 @@ class BackendService {
 
   static Future<List<Product>> getProductsPage(
       BuildContext context, int pageIndex) {
-    return BackendService._getProducts(context,
+    return ProductService._getProducts(context,
         parent: "projects/" + projectID,
         offset: pageIndex * pageSize,
         limit: pageSize);
@@ -41,7 +41,8 @@ class BackendService {
       request.pageToken = token;
     }
     try {
-      final response = await client.listProducts(request, options: callOptions());
+      final response =
+          await client.listProducts(request, options: callOptions());
       tokens[offset + limit] = response.nextPageToken;
       return response.products;
     } catch (err) {
@@ -93,8 +94,8 @@ class ProjectService {
       request.pageToken = token;
     }
     try {
-  
-      final response = await client.listProjects(request, options: callOptions());
+      final response =
+          await client.listProjects(request, options: callOptions());
       tokens[offset + limit] = response.nextPageToken;
       return response.projects;
     } catch (err) {
@@ -110,6 +111,26 @@ class ProjectService {
     request.name = name;
     try {
       return client.getProject(request, options: callOptions());
+    } catch (err) {
+      print('Caught error: $err');
+      return null;
+    }
+  }
+}
+
+class PropertiesService {
+  static FlameClient getClient() => FlameClient(createClientChannel());
+
+  static Future<ListPropertiesResponse> listProperties(String parent,
+      {subject: String}) {
+    final client = getClient();
+    final request = ListPropertiesRequest();
+    request.parent = parent;
+    if (subject != null) {
+      request.subject = subject;
+    }
+    try {
+      return client.listProperties(request, options: callOptions());
     } catch (err) {
       print('Caught error: $err');
       return null;

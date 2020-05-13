@@ -4,8 +4,8 @@ import 'service.dart';
 import 'drawer.dart';
 
 class ProjectDetailWidget extends StatefulWidget {
-  Project project;
-  String name;
+  final Project project;
+  final String name;
 
   ProjectDetailWidget(this.project, this.name);
   @override
@@ -21,14 +21,28 @@ String routeNameForProjectDetailProducts(Project project) {
 
 class _ProjectDetailWidgetState extends State<ProjectDetailWidget> {
   Project project;
+  List<Property> properties;
 
   _ProjectDetailWidgetState(this.project);
 
+  String subtitlePropertyText() {
+    if (properties == null) {
+      return "";
+    }
+    for (var property in properties) {
+      if (property.relation == "subtitle") {
+        return property.stringValue;
+      }
+    }
+    return "";
+  }
+
   @override
   Widget build(BuildContext context) {
+    final projectName = "projects" + widget.name;
     if (project == null) {
       // we need to fetch the project from the API
-      final projectFuture = ProjectService.getProject("projects" + widget.name);
+      final projectFuture = ProjectService.getProject(projectName);
       projectFuture.then((project) {
         setState(() {
           this.project = project;
@@ -41,13 +55,25 @@ class _ProjectDetailWidgetState extends State<ProjectDetailWidget> {
             children: [
               Text("left"),
               Text(
-                "My API Details",
+                "API Hub",
               ),
             ],
           ),
         ),
         body: Text("loading..."),
       );
+    }
+
+    if (properties == null) {
+      // fetch the properties
+      final propertiesFuture =
+          PropertiesService.listProperties(projectName, subject: projectName);
+      propertiesFuture.then((properties) {
+        setState(() {
+          this.properties = properties.properties;
+        });
+        print(properties);
+      });
     }
 
     return Scaffold(
@@ -62,7 +88,7 @@ class _ProjectDetailWidgetState extends State<ProjectDetailWidget> {
               tooltip: MaterialLocalizations.of(context).backButtonTooltip,
             ),
             Text(
-              "My API Details",
+              "API Hub",
             ),
           ],
         ),
@@ -88,28 +114,41 @@ class _ProjectDetailWidgetState extends State<ProjectDetailWidget> {
           padding: EdgeInsets.fromLTRB(0, 0, 0, 0),
           child: Column(
             children: [
-              Row(
-                children: [
-                  Icon(Icons.bookmark_border),
-                  Text(
-                    project.name,
-                    style: Theme.of(context).textTheme.headline6,
-                  ),
-                ],
+              Card(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    ListTile(
+                      leading: Icon(Icons.list),
+                      title: Text(project.name,
+                          style: Theme.of(context).textTheme.headline6),
+                      subtitle: Text(subtitlePropertyText()),
+                    ),
+                    ButtonBar(
+                      children: <Widget>[
+                        FlatButton(
+                          child: const Text('API PRODUCTS'),
+                          onPressed: () {
+                            Navigator.pushNamed(
+                              context,
+                              routeNameForProjectDetailProducts(project),
+                              arguments: project,
+                            );
+                          },
+                        ),
+                        FlatButton(
+                          child: const Text('APPLICATIONS'),
+                          onPressed: () {/* ... */},
+                        ),
+                        FlatButton(
+                          child: const Text('TEAMS'),
+                          onPressed: () {/* ... */},
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-              Row(
-                children: [
-                  GestureDetector(
-                      onTap: () async {
-                        Navigator.pushNamed(
-                          context,
-                          routeNameForProjectDetailProducts(project),
-                          arguments: project,
-                        );
-                      },
-                      child: Text("API Products")),
-                ],
-              )
             ],
           ),
         ),

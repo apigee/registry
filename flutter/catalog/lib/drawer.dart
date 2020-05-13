@@ -8,7 +8,7 @@ Drawer drawer(context) {
       children: <Widget>[
         ListTile(
           leading: Icon(Icons.home),
-          title: Text('Hub'),
+          title: Text('API Hub'),
           onTap: () => Navigator.popUntil(context, ModalRoute.withName('/')),
         ),
         Divider(thickness: 2),

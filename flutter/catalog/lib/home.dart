@@ -12,7 +12,7 @@ class ProjectListScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Hub"),
+        title: Text("API Hub"),
         actions: <Widget>[
           ProjectSearchBox(),
           IconButton(

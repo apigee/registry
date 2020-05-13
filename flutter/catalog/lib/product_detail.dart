@@ -3,8 +3,8 @@ import 'package:catalog/generated/flame_models.pb.dart';
 import 'service.dart';
 
 class ProductDetailWidget extends StatefulWidget {
-  Product product;
-  String name;
+  final Product product;
+  final String name;
 
   ProductDetailWidget(this.product, this.name);
   @override
@@ -14,15 +14,16 @@ class ProductDetailWidget extends StatefulWidget {
 
 class _ProductDetailWidgetState extends State<ProductDetailWidget> {
   Product product;
+  List<Property> properties;
 
   _ProductDetailWidgetState(this.product);
 
   @override
   Widget build(BuildContext context) {
+    final productName = "projects" + widget.name;
     if (product == null) {
       // we need to fetch the product from the API
-      final productFuture =
-          BackendService.getProduct("projects" + widget.name);
+      final productFuture = ProductService.getProduct(productName);
       productFuture.then((product) {
         setState(() {
           this.product = product;
@@ -32,23 +33,37 @@ class _ProductDetailWidgetState extends State<ProductDetailWidget> {
       return Scaffold(
         appBar: AppBar(
           title: Text(
-            "API Details",
+            "API Hub",
           ),
         ),
         body: Text("loading..."),
       );
     }
 
+    var gridView = GridView.count(
+        primary: false,
+        padding: const EdgeInsets.all(20),
+        crossAxisSpacing: 10,
+        mainAxisSpacing: 10,
+        crossAxisCount: 2,
+        children: <Widget>[
+          mycard(context),
+          mycard(context),
+          mycard(context),
+          mycard(context),
+          mycard(context)
+        ]);
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          "API Details",
+          "API Hub",
         ),
       ),
       body: Scrollbar(
         child: Container(
           decoration: BoxDecoration(
-              //color:Colors.yellow,
+              // color: Colors.grey,
               ),
           margin: EdgeInsets.fromLTRB(40, 20, 40, 0),
           padding: EdgeInsets.fromLTRB(0, 0, 0, 0),
@@ -63,7 +78,7 @@ class _ProductDetailWidgetState extends State<ProductDetailWidget> {
                   ),
                   Text(
                     " 1.9.1 ",
-                    style: Theme.of(context).textTheme.headline6,
+                    style: Theme.of(context).textTheme.headline4,
                   ),
                   FlatButton(
                     shape: RoundedRectangleBorder(
@@ -73,15 +88,19 @@ class _ProductDetailWidgetState extends State<ProductDetailWidget> {
                     color: Colors.white,
                     padding: EdgeInsets.fromLTRB(0, 0, 0, 0),
                     onPressed: () {},
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
+                    child: Column(
                       children: [
-                        Icon(Icons.library_books),
-                        Text(
-                          "Reference",
-                          style: TextStyle(
-                            fontSize: 12.0,
-                          ),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.library_books),
+                            Text(
+                              "Reference",
+                              style: TextStyle(
+                                fontSize: 12.0,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -110,10 +129,72 @@ class _ProductDetailWidgetState extends State<ProductDetailWidget> {
                 ),
               ),
               */
+
+              Wrap(
+                spacing: 8.0, // gap between adjacent chips
+                runSpacing: 4.0, // gap between lines
+                children: <Widget>[
+                  Chip(
+                    avatar: CircleAvatar(
+                        backgroundColor: Colors.blue.shade900,
+                        child: Text('AH')),
+                    label: Text('Hamilton'),
+                  ),
+                  Chip(
+                    avatar: CircleAvatar(
+                        backgroundColor: Colors.blue.shade900,
+                        child: Text('ML')),
+                    label: Text('Lafayette'),
+                  ),
+                  Chip(
+                    avatar: CircleAvatar(
+                        backgroundColor: Colors.blue.shade900,
+                        child: Text('HM')),
+                    label: Text('Mulligan'),
+                  ),
+                  Chip(
+                    avatar: CircleAvatar(
+                        backgroundColor: Colors.blue.shade900,
+                        child: Text('JL')),
+                    label: Text('Laurens'),
+                  ),
+                ],
+              ),
+              mycard(context),
+              ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: 800, maxHeight: 400),
+                  child: gridView),
             ],
           ),
         ),
       ),
     );
   }
+}
+
+Card mycard(BuildContext context) {
+  return Card(
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        const ListTile(
+          leading: Icon(Icons.album),
+          title: Text('The Enchanted Nightingale'),
+          subtitle: Text('Music by Julie Gable. Lyrics by Sidney Stein.'),
+        ),
+        ButtonBar(
+          children: <Widget>[
+            FlatButton(
+              child: const Text('BUY TICKETS'),
+              onPressed: () {/* ... */},
+            ),
+            FlatButton(
+              child: const Text('LISTEN'),
+              onPressed: () {/* ... */},
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
 }
