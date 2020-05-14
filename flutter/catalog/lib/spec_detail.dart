@@ -57,8 +57,8 @@ class _SpecDetailWidgetState extends State<SpecDetailWidget> {
                 children: [
                   Icon(Icons.bookmark_border),
                   Text(
-                    spec.name,
-                    style: Theme.of(context).textTheme.headline4,
+                    spec.name.split("/").last,
+                    style: Theme.of(context).textTheme.headline5,
                   ),
                 ],
               ),

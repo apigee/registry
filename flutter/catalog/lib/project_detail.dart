@@ -125,7 +125,7 @@ class _ProjectDetailWidgetState extends State<ProjectDetailWidget> {
                     children: <Widget>[
                       ListTile(
                         title: Text(project.name.split("/").last,
-                            style: Theme.of(context).textTheme.headline1),
+                            style: Theme.of(context).textTheme.headline2),
                         subtitle: Text(subtitlePropertyText()),
                       ),
                       ButtonBar(

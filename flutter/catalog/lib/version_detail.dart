@@ -85,7 +85,7 @@ Expanded versionCard(BuildContext context, Version version) {
           ListTile(
             leading: Icon(Icons.album),
             title: Text(version.name,
-                style: Theme.of(context).textTheme.headline4),
+                style: Theme.of(context).textTheme.headline5),
             subtitle: Text("$version"),
           ),
           ButtonBar(

@@ -87,7 +87,7 @@ Expanded productCard(BuildContext context, Product product) {
           ListTile(
             leading: Icon(Icons.album),
             title: Text(product.displayName,
-                style: Theme.of(context).textTheme.headline3),
+                style: Theme.of(context).textTheme.headline5),
             subtitle: Text(product.description),
           ),
           ButtonBar(
@@ -123,7 +123,7 @@ Expanded productInfoCard(BuildContext context, Product product) {
           ListTile(
             leading: Icon(Icons.album),
             title: Text("More Info",
-                style: Theme.of(context).textTheme.headline5),
+                style: Theme.of(context).textTheme.headline6),
             subtitle: Text("$product"),
           ),
           ButtonBar(
