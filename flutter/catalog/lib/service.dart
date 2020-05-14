@@ -8,6 +8,59 @@ import 'alerts.dart';
 
 const int pageSize = 50;
 
+class ProjectService {
+  static FlameClient getClient() => FlameClient(createClientChannel());
+
+  static String filter;
+  static Map<int, String> tokens;
+
+  static Future<List<Project>> getProjectsPage(
+      BuildContext context, int pageIndex) {
+    return ProjectService._getProjects(context,
+        offset: pageIndex * pageSize, limit: pageSize);
+  }
+
+  static Future<List<Project>> _getProjects(BuildContext context,
+      {offset: int, limit: int}) async {
+    if (offset == 0) {
+      tokens = Map();
+    }
+    print("getProjects " + (filter ?? ""));
+    final client = getClient();
+    final request = ListProjectsRequest();
+    request.pageSize = limit;
+    if (filter != null) {
+      request.filter = filter;
+    }
+    final token = tokens[offset];
+    if (token != null) {
+      request.pageToken = token;
+    }
+    try {
+      final response =
+          await client.listProjects(request, options: callOptions());
+      tokens[offset + limit] = response.nextPageToken;
+      return response.projects;
+    } catch (err) {
+      print('Caught error: $err');
+      showErrorAlert(context, "$err");
+      return null;
+    }
+  }
+
+  static Future<Project> getProject(String name) {
+    final client = getClient();
+    final request = GetProjectRequest();
+    request.name = name;
+    try {
+      return client.getProject(request, options: callOptions());
+    } catch (err) {
+      print('Caught error: $err');
+      return null;
+    }
+  }
+}
+
 class ProductService {
   static FlameClient getClient() => FlameClient(createClientChannel());
 
@@ -65,26 +118,30 @@ class ProductService {
   }
 }
 
-class ProjectService {
+class VersionService {
   static FlameClient getClient() => FlameClient(createClientChannel());
 
   static String filter;
   static Map<int, String> tokens;
+  static String productID;
 
-  static Future<List<Project>> getProjectsPage(
+  static Future<List<Version>> getVersionsPage(
       BuildContext context, int pageIndex) {
-    return ProjectService._getProjects(context,
-        offset: pageIndex * pageSize, limit: pageSize);
+    return VersionService._getVersions(context,
+        parent: "projects/" + productID,
+        offset: pageIndex * pageSize,
+        limit: pageSize);
   }
 
-  static Future<List<Project>> _getProjects(BuildContext context,
-      {offset: int, limit: int}) async {
+  static Future<List<Version>> _getVersions(BuildContext context,
+      {parent: String, offset: int, limit: int}) async {
     if (offset == 0) {
       tokens = Map();
     }
-    print("getProjects " + (filter ?? ""));
+    print("getVersions " + (filter ?? ""));
     final client = getClient();
-    final request = ListProjectsRequest();
+    final request = ListVersionsRequest();
+    request.parent = parent;
     request.pageSize = limit;
     if (filter != null) {
       request.filter = filter;
@@ -95,9 +152,9 @@ class ProjectService {
     }
     try {
       final response =
-          await client.listProjects(request, options: callOptions());
+          await client.listVersions(request, options: callOptions());
       tokens[offset + limit] = response.nextPageToken;
-      return response.projects;
+      return response.versions;
     } catch (err) {
       print('Caught error: $err');
       showErrorAlert(context, "$err");
@@ -105,12 +162,67 @@ class ProjectService {
     }
   }
 
-  static Future<Project> getProject(String name) {
+  static Future<Version> getVersion(String name) {
     final client = getClient();
-    final request = GetProjectRequest();
+    final request = GetVersionRequest();
     request.name = name;
     try {
-      return client.getProject(request, options: callOptions());
+      return client.getVersion(request, options: callOptions());
+    } catch (err) {
+      print('Caught error: $err');
+      return null;
+    }
+  }
+}
+
+class SpecService {
+  static FlameClient getClient() => FlameClient(createClientChannel());
+
+  static String filter;
+  static Map<int, String> tokens;
+  static String versionID;
+
+  static Future<List<Spec>> getSpecsPage(BuildContext context, int pageIndex) {
+    return SpecService._getSpecs(context,
+        parent: "projects/" + versionID,
+        offset: pageIndex * pageSize,
+        limit: pageSize);
+  }
+
+  static Future<List<Spec>> _getSpecs(BuildContext context,
+      {parent: String, offset: int, limit: int}) async {
+    if (offset == 0) {
+      tokens = Map();
+    }
+    print("getSpecs " + (filter ?? ""));
+    final client = getClient();
+    final request = ListSpecsRequest();
+    request.parent = parent;
+    request.pageSize = limit;
+    if (filter != null) {
+      request.filter = filter;
+    }
+    final token = tokens[offset];
+    if (token != null) {
+      request.pageToken = token;
+    }
+    try {
+      final response = await client.listSpecs(request, options: callOptions());
+      tokens[offset + limit] = response.nextPageToken;
+      return response.specs;
+    } catch (err) {
+      print('Caught error: $err');
+      showErrorAlert(context, "$err");
+      return null;
+    }
+  }
+
+  static Future<Spec> getSpec(String name) {
+    final client = getClient();
+    final request = GetSpecRequest();
+    request.name = name;
+    try {
+      return client.getSpec(request, options: callOptions());
     } catch (err) {
       print('Caught error: $err');
       return null;

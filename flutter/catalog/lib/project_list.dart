@@ -1,23 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_pagewise/flutter_pagewise.dart';
 import 'package:catalog/generated/flame_models.pb.dart';
+import 'drawer.dart';
 import 'service.dart';
 
-class ProductListScreen extends StatelessWidget {
+class ProjectListScreen extends StatelessWidget {
   final String title;
-  final String projectID;
-  ProductListScreen({Key key, this.title, this.projectID}) : super(key: key);
+  ProjectListScreen({Key key, this.title}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    ProductService.projectID = projectID; // HACK
-
-    print("setting project ID to " + projectID);
     return Scaffold(
       appBar: AppBar(
         title: Text("API Hub"),
         actions: <Widget>[
-          ProductSearchBox(),
+          ProjectSearchBox(),
           IconButton(
             icon: const Icon(Icons.question_answer),
             tooltip: 'Help',
@@ -41,8 +38,9 @@ class ProductListScreen extends StatelessWidget {
         ],
       ),
       body: Center(
-        child: ProductList(),
+        child: ProjectList(),
       ),
+      drawer: drawer(context),
     );
   }
 
@@ -67,57 +65,47 @@ class ProductListScreen extends StatelessWidget {
   }
 }
 
-String routeNameForProductDetail(Product product) {
-  final name = "/" + product.name.split("/").sublist(1).join("/");
+String routeNameForProjectDetail(Project project) {
+  final name = "/" + project.name.split("/").sublist(1).join("/");
   print("pushing " + name);
   return name;
 }
 
 const int pageSize = 50;
-PagewiseLoadController<Product> pageLoadController;
+PagewiseLoadController<Project> pageLoadController;
 
-class ProductList extends StatelessWidget {
-  ProductList();
+class ProjectList extends StatelessWidget {
+  ProjectList();
 
   @override
   Widget build(BuildContext context) {
-    pageLoadController = PagewiseLoadController<Product>(
+   pageLoadController = PagewiseLoadController<Project>(
         pageSize: pageSize,
-        pageFuture: (pageIndex) =>
-            ProductService.getProductsPage(context, pageIndex));
+        pageFuture: (pageIndex) => ProjectService.getProjectsPage(context, pageIndex));
     return Scrollbar(
-      child: PagewiseListView<Product>(
+      child: PagewiseListView<Project>(
         itemBuilder: this._itemBuilder,
         pageLoadController: pageLoadController,
       ),
     );
   }
 
-  Widget _itemBuilder(context, Product entry, _) {
+  Widget _itemBuilder(context, Project entry, _) {
     return Column(
       children: <Widget>[
         GestureDetector(
           onTap: () async {
             Navigator.pushNamed(
               context,
-              routeNameForProductDetail(entry),
+              routeNameForProjectDetail(entry),
               arguments: entry,
             );
           },
           child: ListTile(
-            leading: GestureDetector(
-                child: Icon(
-                  Icons.bookmark_border,
-                  color: Colors.black,
-                ),
-                onTap: () async {
-                  print("save this API");
-                }),
             title: Text(
-              entry.displayName,
+              entry.name.split("/").last,
               style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
             ),
-            subtitle: Text(entry.description),
           ),
         ),
         Divider(thickness: 2)
@@ -126,7 +114,7 @@ class ProductList extends StatelessWidget {
   }
 }
 
-class ProductSearchBox extends StatelessWidget {
+class ProjectSearchBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -143,12 +131,12 @@ class ProductSearchBox extends StatelessWidget {
         decoration: InputDecoration(
             prefixIcon: Icon(Icons.search, color: Colors.black),
             border: InputBorder.none,
-            hintText: 'Search API products'),
+            hintText: 'Search Projects'),
         onSubmitted: (s) {
           if (s == "") {
-            ProductService.filter = "";
+            ProjectService.filter = "";
           } else {
-            ProductService.filter = "product_id.contains('$s')";
+            ProjectService.filter = "project_id.contains('$s')";
           }
           pageLoadController.reset();
         },

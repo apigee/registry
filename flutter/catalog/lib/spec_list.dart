@@ -3,21 +3,21 @@ import 'package:flutter_pagewise/flutter_pagewise.dart';
 import 'package:catalog/generated/flame_models.pb.dart';
 import 'service.dart';
 
-class ProductListScreen extends StatelessWidget {
+class SpecListScreen extends StatelessWidget {
   final String title;
-  final String projectID;
-  ProductListScreen({Key key, this.title, this.projectID}) : super(key: key);
+  final String versionID;
+  SpecListScreen({Key key, this.title, this.versionID}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    ProductService.projectID = projectID; // HACK
+    SpecService.versionID = versionID; // HACK
 
-    print("setting project ID to " + projectID);
+    print("setting project ID to " + versionID);
     return Scaffold(
       appBar: AppBar(
         title: Text("API Hub"),
         actions: <Widget>[
-          ProductSearchBox(),
+          SpecSearchBox(),
           IconButton(
             icon: const Icon(Icons.question_answer),
             tooltip: 'Help',
@@ -41,7 +41,7 @@ class ProductListScreen extends StatelessWidget {
         ],
       ),
       body: Center(
-        child: ProductList(),
+        child: SpecList(),
       ),
     );
   }
@@ -67,40 +67,40 @@ class ProductListScreen extends StatelessWidget {
   }
 }
 
-String routeNameForProductDetail(Product product) {
-  final name = "/" + product.name.split("/").sublist(1).join("/");
+String routeNameForSpecDetail(Spec spec) {
+  final name = "/" + spec.name.split("/").sublist(1).join("/");
   print("pushing " + name);
   return name;
 }
 
 const int pageSize = 50;
-PagewiseLoadController<Product> pageLoadController;
+PagewiseLoadController<Spec> pageLoadController;
 
-class ProductList extends StatelessWidget {
-  ProductList();
+class SpecList extends StatelessWidget {
+  SpecList();
 
   @override
   Widget build(BuildContext context) {
-    pageLoadController = PagewiseLoadController<Product>(
+    pageLoadController = PagewiseLoadController<Spec>(
         pageSize: pageSize,
         pageFuture: (pageIndex) =>
-            ProductService.getProductsPage(context, pageIndex));
+            SpecService.getSpecsPage(context, pageIndex));
     return Scrollbar(
-      child: PagewiseListView<Product>(
+      child: PagewiseListView<Spec>(
         itemBuilder: this._itemBuilder,
         pageLoadController: pageLoadController,
       ),
     );
   }
 
-  Widget _itemBuilder(context, Product entry, _) {
+  Widget _itemBuilder(context, Spec entry, _) {
     return Column(
       children: <Widget>[
         GestureDetector(
           onTap: () async {
             Navigator.pushNamed(
               context,
-              routeNameForProductDetail(entry),
+              routeNameForSpecDetail(entry),
               arguments: entry,
             );
           },
@@ -114,10 +114,10 @@ class ProductList extends StatelessWidget {
                   print("save this API");
                 }),
             title: Text(
-              entry.displayName,
+              entry.name,
               style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
             ),
-            subtitle: Text(entry.description),
+            subtitle: Text("$entry"),
           ),
         ),
         Divider(thickness: 2)
@@ -126,7 +126,7 @@ class ProductList extends StatelessWidget {
   }
 }
 
-class ProductSearchBox extends StatelessWidget {
+class SpecSearchBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -143,12 +143,12 @@ class ProductSearchBox extends StatelessWidget {
         decoration: InputDecoration(
             prefixIcon: Icon(Icons.search, color: Colors.black),
             border: InputBorder.none,
-            hintText: 'Search API products'),
+            hintText: 'Search API specs'),
         onSubmitted: (s) {
           if (s == "") {
-            ProductService.filter = "";
+            SpecService.filter = "";
           } else {
-            ProductService.filter = "product_id.contains('$s')";
+            SpecService.filter = "spec_id.contains('$s')";
           }
           pageLoadController.reset();
         },

@@ -105,51 +105,56 @@ class _ProjectDetailWidgetState extends State<ProjectDetailWidget> {
         ),
       ),
       drawer: drawer(context),
-      body: Scrollbar(
-        child: Container(
-          decoration: BoxDecoration(
-              //color:Colors.yellow,
-              ),
-          margin: EdgeInsets.fromLTRB(40, 20, 40, 0),
-          padding: EdgeInsets.fromLTRB(0, 0, 0, 0),
-          child: Column(
-            children: [
-              Card(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    ListTile(
-                      leading: Icon(Icons.list),
-                      title: Text(project.name,
-                          style: Theme.of(context).textTheme.headline6),
-                      subtitle: Text(subtitlePropertyText()),
-                    ),
-                    ButtonBar(
-                      children: <Widget>[
-                        FlatButton(
-                          child: const Text('API PRODUCTS'),
-                          onPressed: () {
-                            Navigator.pushNamed(
-                              context,
-                              routeNameForProjectDetailProducts(project),
-                              arguments: project,
-                            );
-                          },
-                        ),
-                        FlatButton(
-                          child: const Text('APPLICATIONS'),
-                          onPressed: () {/* ... */},
-                        ),
-                        FlatButton(
-                          child: const Text('TEAMS'),
-                          onPressed: () {/* ... */},
-                        ),
-                      ],
-                    ),
-                  ],
+      body: SingleChildScrollView(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: 10,
+            maxHeight: 800,
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+                //color:Colors.yellow,
                 ),
-              ),
-            ],
+            margin: EdgeInsets.fromLTRB(40, 20, 40, 0),
+            padding: EdgeInsets.fromLTRB(0, 0, 0, 0),
+            child: Column(
+              children: [
+                Card(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      ListTile(
+                        title: Text(project.name.split("/").last,
+                            style: Theme.of(context).textTheme.headline1),
+                        subtitle: Text(subtitlePropertyText()),
+                      ),
+                      ButtonBar(
+                        children: <Widget>[
+                          FlatButton(
+                            child: const Text('API PRODUCTS'),
+                            onPressed: () {
+                              Navigator.pushNamed(
+                                context,
+                                routeNameForProjectDetailProducts(project),
+                                arguments: project,
+                              );
+                            },
+                          ),
+                          FlatButton(
+                            child: const Text('APPLICATIONS'),
+                            onPressed: () {/* ... */},
+                          ),
+                          FlatButton(
+                            child: const Text('TEAMS'),
+                            onPressed: () {/* ... */},
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

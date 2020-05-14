@@ -12,6 +12,12 @@ class ProductDetailWidget extends StatefulWidget {
       _ProductDetailWidgetState(this.product);
 }
 
+String routeNameForProductDetailVersions(Product product) {
+  final name = "/" + product.name.split("/").sublist(1).join("/") + "/versions";
+  print("pushing " + name);
+  return name;
+}
+
 class _ProductDetailWidgetState extends State<ProductDetailWidget> {
   Product product;
   List<Property> properties;
@@ -46,112 +52,23 @@ class _ProductDetailWidgetState extends State<ProductDetailWidget> {
           "API Hub",
         ),
       ),
-      body: Scrollbar(
-        child: Container(
-          decoration: BoxDecoration(
-              // color: Colors.grey,
-              ),
-          margin: EdgeInsets.fromLTRB(40, 20, 40, 0),
-          padding: EdgeInsets.fromLTRB(0, 0, 0, 0),
+      body: SingleChildScrollView(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: 200,
+            maxHeight: 800,
+          ),
           child: Column(
             children: [
-              Row(
-                children: [
-                  Icon(Icons.bookmark_border),
-                  Text(
-                    product.displayName,
-                    style: Theme.of(context).textTheme.headline6,
-                  ),
-                  Text(
-                    " 1.9.1 ",
-                    style: Theme.of(context).textTheme.headline4,
-                  ),
-                  FlatButton(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(4.0),
-                      side: BorderSide(),
-                    ),
-                    color: Colors.white,
-                    padding: EdgeInsets.fromLTRB(0, 0, 0, 0),
-                    onPressed: () {},
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.library_books),
-                            Text(
-                              "Reference",
-                              style: TextStyle(
-                                fontSize: 12.0,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              /*
-              DefaultTabController(
-                length: 3,
-                child: Column(
-                  children: [
-                    TabBar(
-                      tabs: [
-                        Tab(text: "About"),
-                        Tab(text: "Support"),
-                        Tab(text: "Metrics"),
-                        //Tab(text: "Upcoming v2.0 (Review)"),
-                      ],
-                    ),
-                    TabBarView(children: [
-                      Text("1"),
-                      Text("2"),
-                      Text("3"),
-                    ],),
-                  ],
-                ),
-              ),
-              */
-
-              Wrap(
-                spacing: 8.0, // gap between adjacent chips
-                runSpacing: 4.0, // gap between lines
-                children: <Widget>[
-                  Chip(
-                    avatar: CircleAvatar(
-                        backgroundColor: Colors.blue.shade900,
-                        child: Text('AH')),
-                    label: Text('Hamilton'),
-                  ),
-                  Chip(
-                    avatar: CircleAvatar(
-                        backgroundColor: Colors.blue.shade900,
-                        child: Text('ML')),
-                    label: Text('Lafayette'),
-                  ),
-                  Chip(
-                    avatar: CircleAvatar(
-                        backgroundColor: Colors.blue.shade900,
-                        child: Text('HM')),
-                    label: Text('Mulligan'),
-                  ),
-                  Chip(
-                    avatar: CircleAvatar(
-                        backgroundColor: Colors.blue.shade900,
-                        child: Text('JL')),
-                    label: Text('Laurens'),
-                  ),
-                ],
-              ),
-              mycard(context),
-              Row(children: [mycard(context), mycard(context)]),
+              Row(children: [productCard(context, product)]),
               Row(children: [
-                mycard(context),
-                mycard(context),
-                mycard(context)
+                productInfoCard(context, product),
+                productInfoCard(context, product)
+              ]),
+              Row(children: [
+                productInfoCard(context, product),
+                productInfoCard(context, product),
+                productInfoCard(context, product)
               ]),
             ],
           ),
@@ -161,25 +78,58 @@ class _ProductDetailWidgetState extends State<ProductDetailWidget> {
   }
 }
 
-Expanded mycard(BuildContext context) {
+Expanded productCard(BuildContext context, Product product) {
   return Expanded(
     child: Card(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          const ListTile(
+          ListTile(
             leading: Icon(Icons.album),
-            title: Text('The Enchanted Nightingale'),
-            subtitle: Text('Music by Julie Gable. Lyrics by Sidney Stein.'),
+            title: Text(product.displayName,
+                style: Theme.of(context).textTheme.headline3),
+            subtitle: Text(product.description),
           ),
           ButtonBar(
             children: <Widget>[
               FlatButton(
-                child: const Text('BUY TICKETS'),
-                onPressed: () {/* ... */},
+                child: const Text('VERSIONS'),
+                onPressed: () {
+                  Navigator.pushNamed(
+                    context,
+                    routeNameForProductDetailVersions(product),
+                    arguments: product,
+                  );
+                },
               ),
               FlatButton(
-                child: const Text('LISTEN'),
+                child: const Text('MORE'),
+                onPressed: () {/* ... */},
+              ),
+            ],
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+Expanded productInfoCard(BuildContext context, Product product) {
+  return Expanded(
+    child: Card(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          ListTile(
+            leading: Icon(Icons.album),
+            title: Text("More Info",
+                style: Theme.of(context).textTheme.headline5),
+            subtitle: Text("$product"),
+          ),
+          ButtonBar(
+            children: <Widget>[             
+              FlatButton(
+                child: const Text('MORE'),
                 onPressed: () {/* ... */},
               ),
             ],
