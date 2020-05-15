@@ -60,8 +60,13 @@ class _VersionDetailWidgetState extends State<VersionDetailWidget> {
         ),
       ),
       body: SingleChildScrollView(
-        child: Expanded(
-          child: versionCard(context, version),
+        child: Center(
+          child: Column(
+            children: [
+              Row(children: [versionCard(context, version)]),
+              
+            ],
+          ),
         ),
       ),
     );

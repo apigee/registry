@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 Drawer drawer(context) {
   return Drawer(
     child: ListView(
+      physics: NeverScrollableScrollPhysics(),
       padding: EdgeInsets.zero,
       children: <Widget>[
         ListTile(
@@ -15,14 +16,17 @@ Drawer drawer(context) {
         ListTile(
           leading: Icon(Icons.list),
           title: Text('Browse APIs'),
+          onTap: () {},
         ),
         ListTile(
           leading: Icon(Icons.person),
           title: Text('My APIs'),
+          onTap: () {},
         ),
         ListTile(
           leading: Icon(Icons.bookmark),
           title: Text('Saved APIs'),
+          onTap: () {},
         ),
         Center(
           child: Wrap(
@@ -33,7 +37,7 @@ Drawer drawer(context) {
                   side: BorderSide(),
                 ),
                 color: Colors.white,
-                padding: EdgeInsets.fromLTRB(20, 0, 25, 0),
+                // padding: EdgeInsets.fromLTRB(20, 0, 25, 0),
                 onPressed: () {},
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -55,6 +59,7 @@ Drawer drawer(context) {
         ListTile(
           leading: Icon(Icons.school),
           title: Text('API Design Process'),
+          onTap: () {},
         ),
         ListTile(
           leading: Icon(Icons.school),

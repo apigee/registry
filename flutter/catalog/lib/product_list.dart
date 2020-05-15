@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_pagewise/flutter_pagewise.dart';
 import 'package:catalog/generated/flame_models.pb.dart';
 import 'service.dart';
+import 'drawer.dart';
 
 class ProductListScreen extends StatelessWidget {
   final String title;
@@ -13,36 +14,47 @@ class ProductListScreen extends StatelessWidget {
     ProductService.projectID = projectID; // HACK
 
     print("setting project ID to " + projectID);
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("API Hub"),
-        actions: <Widget>[
-          ProductSearchBox(),
-          IconButton(
-            icon: const Icon(Icons.question_answer),
-            tooltip: 'Help',
-            onPressed: () {
-              _showHelp(context);
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.settings),
-            tooltip: 'Settings',
-            onPressed: () {
-              Navigator.pushNamed(context, '/settings');
-            },
-          ),
-          // TextBox(),
-          IconButton(
-            icon: const Icon(Icons.power_settings_new),
-            tooltip: 'Log out',
-            onPressed: () {},
+    return Center(
+      child: Row(
+        children: [
+          drawer(context),
+          VerticalDivider(width: 5),
+          Expanded(
+            child: Scaffold(
+              appBar: buildAppBar(context),
+              body: ProductList(),
+            ),
           ),
         ],
       ),
-      body: Center(
-        child: ProductList(),
-      ),
+    );
+  }
+
+  AppBar buildAppBar(BuildContext context) {
+    return AppBar(
+      actions: <Widget>[
+        ProductSearchBox(),
+        IconButton(
+          icon: const Icon(Icons.question_answer),
+          tooltip: 'Help',
+          onPressed: () {
+            _showHelp(context);
+          },
+        ),
+        IconButton(
+          icon: const Icon(Icons.settings),
+          tooltip: 'Settings',
+          onPressed: () {
+            Navigator.pushNamed(context, '/settings');
+          },
+        ),
+        // TextBox(),
+        IconButton(
+          icon: const Icon(Icons.power_settings_new),
+          tooltip: 'Log out',
+          onPressed: () {},
+        ),
+      ],
     );
   }
 
@@ -143,7 +155,7 @@ class ProductSearchBox extends StatelessWidget {
         decoration: InputDecoration(
             prefixIcon: Icon(Icons.search, color: Colors.black),
             border: InputBorder.none,
-            hintText: 'Search API products'),
+            hintText: 'Search APIs'),
         onSubmitted: (s) {
           if (s == "") {
             ProductService.filter = "";

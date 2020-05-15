@@ -53,7 +53,7 @@ class _ProductDetailWidgetState extends State<ProductDetailWidget> {
         ),
       ),
       body: SingleChildScrollView(
-        child: Expanded(
+        child: Center(
           child: Column(
             children: [
               Row(children: [productCard(context, product)]),

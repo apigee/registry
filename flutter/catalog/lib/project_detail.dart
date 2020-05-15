@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:catalog/generated/flame_models.pb.dart';
 import 'service.dart';
-import 'drawer.dart';
 
 class ProjectDetailWidget extends StatefulWidget {
   final Project project;
@@ -26,6 +25,9 @@ class _ProjectDetailWidgetState extends State<ProjectDetailWidget> {
   _ProjectDetailWidgetState(this.project);
 
   String subtitlePropertyText() {
+    if (project.description != null) {
+      return project.description;
+    }
     if (properties == null) {
       return "";
     }
@@ -51,13 +53,8 @@ class _ProjectDetailWidgetState extends State<ProjectDetailWidget> {
       });
       return Scaffold(
         appBar: AppBar(
-          title: Row(
-            children: [
-              Text("left"),
-              Text(
-                "API Hub",
-              ),
-            ],
+          title: Text(
+            "API Hub",
           ),
         ),
         body: Text("loading..."),
@@ -78,35 +75,11 @@ class _ProjectDetailWidgetState extends State<ProjectDetailWidget> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          children: [
-            IconButton(
-              icon: const Icon(Icons.arrow_back_ios),
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-            ),
-            Text(
-              "API Hub",
-            ),
-          ],
-        ),
-        leading: Builder(
-          builder: (BuildContext context) {
-            return IconButton(
-              icon: const Icon(Icons.menu),
-              onPressed: () {
-                Scaffold.of(context).openDrawer();
-              },
-              tooltip: MaterialLocalizations.of(context).openAppDrawerTooltip,
-            );
-          },
-        ),
+        title: Text("API Hub"),
+       
       ),
-      drawer: drawer(context),
       body: SingleChildScrollView(
-        child: Expanded(
+        child: Center(
           child: Container(
             decoration: BoxDecoration(
                 //color:Colors.yellow,
@@ -120,14 +93,15 @@ class _ProjectDetailWidgetState extends State<ProjectDetailWidget> {
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
                       ListTile(
-                        title: Text(project.name.split("/").last,
+                        title: Text(project.displayName,
                             style: Theme.of(context).textTheme.headline2),
                         subtitle: Text(subtitlePropertyText()),
                       ),
                       ButtonBar(
                         children: <Widget>[
                           FlatButton(
-                            child: const Text('API PRODUCTS'),
+                            child: const Text('APIS', semanticsLabel: "APIs BUTTON"),
+                            
                             onPressed: () {
                               Navigator.pushNamed(
                                 context,

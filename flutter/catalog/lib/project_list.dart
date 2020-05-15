@@ -40,7 +40,6 @@ class ProjectListScreen extends StatelessWidget {
       body: Center(
         child: ProjectList(),
       ),
-      drawer: drawer(context),
     );
   }
 
@@ -103,9 +102,10 @@ class ProjectList extends StatelessWidget {
           },
           child: ListTile(
             title: Text(
-              entry.name.split("/").last,
+              entry.displayName,
               style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
             ),
+            subtitle: Text(entry.description),
           ),
         ),
         Divider(thickness: 2)

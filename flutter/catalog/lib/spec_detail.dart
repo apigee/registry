@@ -45,7 +45,9 @@ class _SpecDetailWidgetState extends State<SpecDetailWidget> {
         ),
       ),
       body: SingleChildScrollView(
-        child: specCard(context, spec),
+        child: Column(children: [
+          Row(children: [specCard(context, spec)])
+        ]),
       ),
     );
   }
@@ -59,13 +61,12 @@ Expanded specCard(BuildContext context, Spec spec) {
         children: <Widget>[
           ListTile(
             leading: Icon(Icons.album),
-            title: Text(spec.name,
-                style: Theme.of(context).textTheme.headline5),
+            title:
+                Text(spec.name, style: Theme.of(context).textTheme.headline5),
             subtitle: Text("$spec"),
           ),
           ButtonBar(
             children: <Widget>[
-             
               FlatButton(
                 child: const Text('MORE'),
                 onPressed: () {/* ... */},
