@@ -53,11 +53,7 @@ class _ProductDetailWidgetState extends State<ProductDetailWidget> {
         ),
       ),
       body: SingleChildScrollView(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            minHeight: 200,
-            maxHeight: 800,
-          ),
+        child: Expanded(
           child: Column(
             children: [
               Row(children: [productCard(context, product)]),

@@ -8,8 +8,7 @@ class SpecDetailWidget extends StatefulWidget {
 
   SpecDetailWidget(this.spec, this.name);
   @override
-  _SpecDetailWidgetState createState() =>
-      _SpecDetailWidgetState(this.spec);
+  _SpecDetailWidgetState createState() => _SpecDetailWidgetState(this.spec);
 }
 
 class _SpecDetailWidgetState extends State<SpecDetailWidget> {
@@ -46,27 +45,35 @@ class _SpecDetailWidgetState extends State<SpecDetailWidget> {
         ),
       ),
       body: SingleChildScrollView(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            minHeight: 200,
-            maxHeight: 800,
-          ),
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.bookmark_border),
-                  Text(
-                    spec.name.split("/").last,
-                    style: Theme.of(context).textTheme.headline5,
-                  ),
-                ],
-              ),
-              Text("$spec"),
-            ],
-          ),
-        ),
+        child: specCard(context, spec),
       ),
     );
   }
+}
+
+Expanded specCard(BuildContext context, Spec spec) {
+  return Expanded(
+    child: Card(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          ListTile(
+            leading: Icon(Icons.album),
+            title: Text(spec.name,
+                style: Theme.of(context).textTheme.headline5),
+            subtitle: Text("$spec"),
+          ),
+          ButtonBar(
+            children: <Widget>[
+             
+              FlatButton(
+                child: const Text('MORE'),
+                onPressed: () {/* ... */},
+              ),
+            ],
+          ),
+        ],
+      ),
+    ),
+  );
 }

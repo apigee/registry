@@ -106,11 +106,7 @@ class _ProjectDetailWidgetState extends State<ProjectDetailWidget> {
       ),
       drawer: drawer(context),
       body: SingleChildScrollView(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            minHeight: 10,
-            maxHeight: 800,
-          ),
+        child: Expanded(
           child: Container(
             decoration: BoxDecoration(
                 //color:Colors.yellow,

@@ -60,16 +60,8 @@ class _VersionDetailWidgetState extends State<VersionDetailWidget> {
         ),
       ),
       body: SingleChildScrollView(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            minHeight: 200,
-            maxHeight: 800,
-          ),
-          child: Column(
-            children: [
-              versionCard(context, version),
-            ],
-          ),
+        child: Expanded(
+          child: versionCard(context, version),
         ),
       ),
     );
