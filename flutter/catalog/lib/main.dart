@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+
 import 'theme.dart';
 import 'routes.dart';
+import 'signin.dart';
 
-void main() {
+void main() async {
+  await attemptToSignIn();
   runApp(Application());
 }
 

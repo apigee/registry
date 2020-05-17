@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_pagewise/flutter_pagewise.dart';
 import 'package:catalog/generated/flame_models.pb.dart';
-import 'drawer.dart';
 import 'service.dart';
 
 class ProjectListScreen extends StatelessWidget {
@@ -33,7 +32,9 @@ class ProjectListScreen extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.power_settings_new),
             tooltip: 'Log out',
-            onPressed: () {},
+            onPressed: () {
+              Navigator.popUntil(context, ModalRoute.withName('/'));
+            },
           ),
         ],
       ),
@@ -78,9 +79,10 @@ class ProjectList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-   pageLoadController = PagewiseLoadController<Project>(
+    pageLoadController = PagewiseLoadController<Project>(
         pageSize: pageSize,
-        pageFuture: (pageIndex) => ProjectService.getProjectsPage(context, pageIndex));
+        pageFuture: (pageIndex) =>
+            ProjectService.getProjectsPage(context, pageIndex));
     return Scrollbar(
       child: PagewiseListView<Project>(
         itemBuilder: this._itemBuilder,

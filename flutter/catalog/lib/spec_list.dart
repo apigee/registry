@@ -36,7 +36,9 @@ class SpecListScreen extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.power_settings_new),
             tooltip: 'Log out',
-            onPressed: () {},
+            onPressed: () {
+              Navigator.popUntil(context, ModalRoute.withName('/'));
+            },
           ),
         ],
       ),

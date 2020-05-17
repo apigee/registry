@@ -10,12 +10,16 @@ import 'version_list.dart';
 import 'version_detail.dart';
 import 'spec_list.dart';
 import 'spec_detail.dart';
+import 'signin.dart';
 
 const nameRegex = r"([a-zA-Z0-9-_\.]+)";
 
 MaterialPageRoute generateRoute(RouteSettings settings) {
+  if ((settings.name == "/") || (currentUser == null) || (currentUserIsAuthorized == false)) {
+    return signInPage(settings);
+  }
   // handle exact string patterns first.
-  if (settings.name == "/") {
+  if (settings.name == "/projects") {
     return homePage(settings);
   }
   if (settings.name == "/settings") {
@@ -78,6 +82,15 @@ MaterialPageRoute generateRoute(RouteSettings settings) {
   }
   // if nothing matches, display a "not found" page.
   return notFoundPage(settings);
+}
+
+MaterialPageRoute signInPage(RouteSettings settings) {
+  return MaterialPageRoute(
+    settings: settings,
+    builder: (context) {
+      return SignInScreen();
+    },
+  );
 }
 
 MaterialPageRoute homePage(RouteSettings settings) {
