@@ -17,14 +17,16 @@ COPY . ./
 # Build the binary.
 RUN CGO_ENABLED=0 GOOS=linux go build -mod=readonly -v -o flamed ./cmd/flamed
 
-# Use the official Alpine image for a lean production container.
-# https://hub.docker.com/_/alpine
-# https://docs.docker.com/develop/develop-images/multistage-build/#use-multi-stage-builds
-FROM alpine:3
-RUN apk add --no-cache ca-certificates
+# Use an Envoy release image to get envoy in the image.
+# This is the last version that supports allow_origin in CorsPolicy
+# https://www.envoyproxy.io/docs/envoy/latest/version_history/v1.12.0
+FROM envoyproxy/envoy:v1.11.2
+
+COPY container/envoy.yaml /etc/envoy/envoy.yaml
+COPY container/RUN.sh /RUN.sh
 
 # Copy the binary to the production image from the builder stage.
 COPY --from=builder /app/flamed /flamed
 
 # Run the web service on container startup.
-CMD ["/flamed"]
+CMD ["/RUN.sh"]

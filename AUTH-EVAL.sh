@@ -15,11 +15,12 @@ export FLAME_PROJECT_IDENTIFIER=$(gcloud config list --format 'value(core.projec
 
 ### CLIENT CONFIGURATION
 
-export CLI_FLAME_ADDRESS=flame-backend-yr4odda7na-uw.a.run.app:443
+# This points to the eval server.
+export CLI_FLAME_ADDRESS=flame-backend-3rqz64w4vq-uw.a.run.app:443
 
-# Test calls use TLS.
+# eval calls use TLS.
 unset CLI_FLAME_INSECURE
 
-# Test calls don't need authentication.
+# eval calls don't need authentication.
 unset CLI_FLAME_TOKEN
 unset CLI_FLAME_API_KEY

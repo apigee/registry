@@ -2,7 +2,7 @@ import 'package:grpc/grpc_web.dart' show GrpcWebClientChannel;
 import 'package:grpc/grpc.dart' as grpc;
 
 // web app needs an openly-available test server
-String url = "https://flame-backend-yr4odda7na-uw.a.run.app";
+String url = "https://flame-backend-3rqz64w4vq-uw.a.run.app";
 String token;
 
 GrpcWebClientChannel createClientChannel() =>
