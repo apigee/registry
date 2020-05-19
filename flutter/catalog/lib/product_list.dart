@@ -3,6 +3,8 @@ import 'package:flutter_pagewise/flutter_pagewise.dart';
 import 'package:catalog/generated/flame_models.pb.dart';
 import 'service.dart';
 import 'drawer.dart';
+import 'adaptive.dart';
+import 'help.dart';
 
 class ProductListScreen extends StatelessWidget {
   final String title;
@@ -13,32 +15,42 @@ class ProductListScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     ProductService.projectID = projectID; // HACK
 
-    print("setting project ID to " + projectID);
-    return Center(
-      child: Row(
-        children: [
-          drawer(context),
-          VerticalDivider(width: 5),
-          Expanded(
-            child: Scaffold(
-              appBar: buildAppBar(context),
-              body: ProductList(),
+    final isDesktop = isDisplayDesktop(context);
+
+    if (isDesktop) {
+      return Center(
+        child: Row(
+          children: [
+            drawer(context),
+            VerticalDivider(width: 5),
+            Expanded(
+              child: Scaffold(
+                appBar: buildAppBar(context, isDesktop),
+                body: ProductList(),
+              ),
             ),
-          ),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
+    } else {
+      return Scaffold(
+        appBar: buildAppBar(context, isDesktop),
+        body: ProductList(),
+        drawer: drawer(context),
+      );
+    }
   }
 
-  AppBar buildAppBar(BuildContext context) {
+  AppBar buildAppBar(BuildContext context, bool isDesktop) {
     return AppBar(
+      automaticallyImplyLeading: !isDesktop,
       actions: <Widget>[
         ProductSearchBox(),
         IconButton(
           icon: const Icon(Icons.question_answer),
           tooltip: 'Help',
           onPressed: () {
-            _showHelp(context);
+            showHelp(context);
           },
         ),
         IconButton(
@@ -48,7 +60,6 @@ class ProductListScreen extends StatelessWidget {
             Navigator.pushNamed(context, '/settings');
           },
         ),
-        // TextBox(),
         IconButton(
           icon: const Icon(Icons.power_settings_new),
           tooltip: 'Log out',
@@ -57,26 +68,6 @@ class ProductListScreen extends StatelessWidget {
           },
         ),
       ],
-    );
-  }
-
-  void _showHelp(context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: new Text("Help!"),
-          content: new Text("I need some body."),
-          actions: <Widget>[
-            new FlatButton(
-              child: new Text("Close"),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
     );
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_pagewise/flutter_pagewise.dart';
 import 'package:catalog/generated/flame_models.pb.dart';
 import 'service.dart';
+import 'help.dart';
 
 class SpecListScreen extends StatelessWidget {
   final String title;
@@ -22,7 +23,7 @@ class SpecListScreen extends StatelessWidget {
             icon: const Icon(Icons.question_answer),
             tooltip: 'Help',
             onPressed: () {
-              _showHelp(context);
+              showHelp(context);
             },
           ),
           IconButton(
@@ -45,26 +46,6 @@ class SpecListScreen extends StatelessWidget {
       body: Center(
         child: SpecList(),
       ),
-    );
-  }
-
-  void _showHelp(context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: new Text("Help!"),
-          content: new Text("I need some body."),
-          actions: <Widget>[
-            new FlatButton(
-              child: new Text("Close"),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
     );
   }
 }
