@@ -115,6 +115,7 @@ func summarizeSpec(ctx context.Context,
 		return err
 	}
 
+	log.Printf("summarizing %s", spec.Name)
 	if strings.HasPrefix(spec.GetStyle(), "openapi/v2") {
 		data, err := getBytesForSpec(spec)
 		if err != nil {
@@ -137,6 +138,8 @@ func summarizeSpec(ctx context.Context,
 		complexitySummary := &rpc.ComplexitySummary{}
 		complexitySummary.SpecNames = []string{spec.GetName()}
 		complexitySummary.SchemaCount = summary.SchemaCount
+		complexitySummary.SchemaPropertyCount = summary.SchemaPropertyCount
+		complexitySummary.PathCount = summary.PathCount
 		complexitySummary.GetCount = summary.GetCount
 		complexitySummary.PostCount = summary.PostCount
 		complexitySummary.PutCount = summary.PutCount
@@ -175,6 +178,8 @@ func summarizeSpec(ctx context.Context,
 		complexitySummary := &rpc.ComplexitySummary{}
 		complexitySummary.SpecNames = []string{spec.GetName()}
 		complexitySummary.SchemaCount = summary.SchemaCount
+		complexitySummary.SchemaPropertyCount = summary.SchemaPropertyCount
+		complexitySummary.PathCount = summary.PathCount
 		complexitySummary.GetCount = summary.GetCount
 		complexitySummary.PostCount = summary.PostCount
 		complexitySummary.PutCount = summary.PutCount
@@ -231,17 +236,18 @@ func setProperty(ctx context.Context, client *gapic.FlameClient, projectID strin
 
 // Summary ...
 type Summary struct {
-	Title       string
-	Description string
-	Version     string
-	SchemaCount int32
-	PathCount   int32
-	GetCount    int32
-	PostCount   int32
-	PutCount    int32
-	DeleteCount int32
-	TagCount    int32
-	Extensions  []string
+	Title               string
+	Description         string
+	Version             string
+	SchemaCount         int32
+	SchemaPropertyCount int32
+	PathCount           int32
+	GetCount            int32
+	PostCount           int32
+	PutCount            int32
+	DeleteCount         int32
+	TagCount            int32
+	Extensions          []string
 }
 
 // NewSummary ...
@@ -321,6 +327,7 @@ func summarizeSchema(summary *Summary, schema *openapi_v2.Schema) {
 	summary.SchemaCount++
 	if schema.Properties != nil {
 		for _, pair := range schema.Properties.AdditionalProperties {
+			summary.SchemaPropertyCount++
 			summarizeSchema(summary, pair.Value)
 		}
 	}
@@ -382,6 +389,7 @@ func summarizeOpenAPIv3Schema(summary *Summary, schemaOrReference *openapi_v3.Sc
 	schema := schemaOrReference.GetSchema()
 	if schema != nil && schema.Properties != nil {
 		for _, pair := range schema.Properties.AdditionalProperties {
+			summary.SchemaPropertyCount++
 			summarizeOpenAPIv3Schema(summary, pair.Value)
 		}
 	}
