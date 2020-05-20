@@ -9,6 +9,7 @@ import (
 
 	rpc "apigov.dev/flame/rpc"
 	ptypes "github.com/golang/protobuf/ptypes"
+	any "github.com/golang/protobuf/ptypes/any"
 )
 
 // PropertyEntityName is used to represent properties in the datastore.
@@ -24,14 +25,22 @@ func PropertyRegexp() *regexp.Regexp {
 	return regexp.MustCompile("^projects/" + nameRegex + "/properties/" + nameRegex + "$")
 }
 
+// ValueType is an enum representing the types of values stored in properties.
 type ValueType int
 
 const (
+	// StringType indicates that the stored property is a string.
 	StringType ValueType = iota
+	// Int64Type indicates that the stored property is an integer.
 	Int64Type
+	// DoubleType indicates that the stored property is a double
 	DoubleType
+	// BoolType indicates that the stored property is a boolean.
 	BoolType
+	// BytesType indicates that the stored property is a range of bytes.
 	BytesType
+	// AnyType indicates that the stored property is a protobuf "Any" type.
+	AnyType
 )
 
 // Property ...
@@ -48,6 +57,14 @@ type Property struct {
 	DoubleValue float64   // Property value (if double).
 	BoolValue   bool      // Property value (if bool).
 	BytesValue  []byte    `datastore:",noindex"` // Property value (if bytes).
+}
+
+// messageValue returns an Any object corresponding to the stored value (assuming one exists).
+func (property *Property) messageValue() *any.Any {
+	return &any.Any{
+		TypeUrl: property.StringValue,
+		Value:   property.BytesValue,
+	}
 }
 
 // NewPropertyFromParentAndPropertyID returns an initialized property for a specified parent and propertyID.
@@ -103,6 +120,8 @@ func (property *Property) Message() (message *rpc.Property, err error) {
 		message.Value = &rpc.Property_BoolValue{BoolValue: property.BoolValue}
 	case BytesType:
 		message.Value = &rpc.Property_BytesValue{BytesValue: property.BytesValue}
+	case AnyType:
+		message.Value = &rpc.Property_MessageValue{MessageValue: property.messageValue()}
 	}
 	return message, err
 }
@@ -129,6 +148,10 @@ func (property *Property) Update(message *rpc.Property) error {
 	case *rpc.Property_BytesValue:
 		property.ValueType = BytesType
 		property.BytesValue = message.GetBytesValue()
+	case *rpc.Property_MessageValue:
+		property.ValueType = AnyType
+		property.StringValue = message.GetMessageValue().GetTypeUrl()
+		property.BytesValue = message.GetMessageValue().GetValue()
 	default:
 	}
 	return nil

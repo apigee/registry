@@ -6,7 +6,6 @@ import (
 	"context"
 	"crypto/sha1"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -17,12 +16,14 @@ import (
 	"apigov.dev/flame/gapic"
 	"apigov.dev/flame/models"
 	rpc "apigov.dev/flame/rpc"
+	"github.com/golang/protobuf/ptypes/any"
 	"github.com/googleapis/gnostic/compiler"
 	openapi_v2 "github.com/googleapis/gnostic/openapiv2"
 	openapi_v3 "github.com/googleapis/gnostic/openapiv3"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 )
 
 // summarizeCmd represents the summarize command
@@ -128,39 +129,29 @@ func summarizeSpec(ctx context.Context,
 			return err
 		}
 		summary := summarizeOpenAPIv2Document(document)
-		bytes, err := json.MarshalIndent(summary, "", "  ")
-		if err != nil {
-			return err
-		}
-		fmt.Printf("%+v\n", string(bytes))
 
 		projectID := segments[1]
 		property := &rpc.Property{}
-
 		property.Subject = spec.GetName()
 		property.Relation = "summary"
-		property.Value = &rpc.Property_StringValue{StringValue: string(bytes)}
+		complexitySummary := &rpc.ComplexitySummary{}
+		complexitySummary.SpecNames = []string{spec.GetName()}
+		complexitySummary.SchemaCount = summary.SchemaCount
+		complexitySummary.GetCount = summary.GetCount
+		complexitySummary.PostCount = summary.PostCount
+		complexitySummary.PutCount = summary.PutCount
+		complexitySummary.DeleteCount = summary.DeleteCount
+		messageData, err := proto.Marshal(complexitySummary)
+		anyValue := &any.Any{
+			TypeUrl: "ComplexitySummary",
+			Value:   messageData,
+		}
+		property.Value = &rpc.Property_MessageValue{MessageValue: anyValue}
 		err = setProperty(ctx, client, projectID, property)
 		if err != nil {
 			return err
 		}
 
-		property.Subject = spec.GetName()
-		property.Relation = "operationCount"
-		operationCount := summary.GetCount + summary.PostCount + summary.PutCount + summary.DeleteCount
-		property.Value = &rpc.Property_Int64Value{Int64Value: int64(operationCount)}
-		err = setProperty(ctx, client, projectID, property)
-		if err != nil {
-			return err
-		}
-
-		property.Subject = spec.GetName()
-		property.Relation = "schemaCount"
-		property.Value = &rpc.Property_Int64Value{Int64Value: int64(summary.SchemaCount)}
-		err = setProperty(ctx, client, projectID, property)
-		if err != nil {
-			return err
-		}
 	}
 	if strings.HasPrefix(spec.GetStyle(), "openapi/v3") {
 		data, err := getBytesForSpec(spec)
@@ -176,11 +167,29 @@ func summarizeSpec(ctx context.Context,
 			return err
 		}
 		summary := summarizeOpenAPIv3Document(document)
-		bytes, err := json.MarshalIndent(summary, "", "  ")
+
+		projectID := segments[1]
+		property := &rpc.Property{}
+		property.Subject = spec.GetName()
+		property.Relation = "summary"
+		complexitySummary := &rpc.ComplexitySummary{}
+		complexitySummary.SpecNames = []string{spec.GetName()}
+		complexitySummary.SchemaCount = summary.SchemaCount
+		complexitySummary.GetCount = summary.GetCount
+		complexitySummary.PostCount = summary.PostCount
+		complexitySummary.PutCount = summary.PutCount
+		complexitySummary.DeleteCount = summary.DeleteCount
+		messageData, err := proto.Marshal(complexitySummary)
+		anyValue := &any.Any{
+			TypeUrl: "ComplexitySummary",
+			Value:   messageData,
+		}
+		property.Value = &rpc.Property_MessageValue{MessageValue: anyValue}
+		err = setProperty(ctx, client, projectID, property)
 		if err != nil {
 			return err
 		}
-		fmt.Printf("%+v\n", string(bytes))
+
 	}
 	return nil
 }
@@ -225,13 +234,13 @@ type Summary struct {
 	Title       string
 	Description string
 	Version     string
-	SchemaCount int
-	PathCount   int
-	GetCount    int
-	PostCount   int
-	PutCount    int
-	DeleteCount int
-	TagCount    int
+	SchemaCount int32
+	PathCount   int32
+	GetCount    int32
+	PostCount   int32
+	PutCount    int32
+	DeleteCount int32
+	TagCount    int32
 	Extensions  []string
 }
 

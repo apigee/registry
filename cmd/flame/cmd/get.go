@@ -11,6 +11,7 @@ import (
 	rpc "apigov.dev/flame/rpc"
 	"github.com/spf13/cobra"
 	"google.golang.org/api/iterator"
+	"google.golang.org/protobuf/proto"
 )
 
 // getCmd represents the get command
@@ -82,11 +83,43 @@ func getNamedProperty(ctx context.Context, client *gapic.FlameClient, projectID 
 		} else if err != nil {
 			return err
 		}
-		fmt.Printf("%s %s %+v\n", property.Subject, property.Relation, property.Value)
+		print_property(property)
 	}
 	return nil
 }
 
 func init() {
 	rootCmd.AddCommand(getCmd)
+}
+
+func print_property(property *rpc.Property) {
+	fmt.Printf("%s %s %+v\n", property.Subject, property.Relation, property.Value)
+	switch v := property.Value.(type) {
+	case *rpc.Property_StringValue:
+		fmt.Printf("%s", v.StringValue)
+	case *rpc.Property_Int64Value:
+		fmt.Printf("%d", v.Int64Value)
+	case *rpc.Property_DoubleValue:
+		fmt.Printf("%f", v.DoubleValue)
+	case *rpc.Property_BoolValue:
+		fmt.Printf("%t", v.BoolValue)
+	case *rpc.Property_BytesValue:
+		fmt.Printf("%+v", v.BytesValue)
+	case *rpc.Property_MessageValue:
+		messageType := v.MessageValue.TypeUrl
+		if messageType == "ComplexitySummary" {
+			var msg rpc.ComplexitySummary
+			err := proto.Unmarshal(v.MessageValue.Value, &msg)
+			if err != nil {
+				fmt.Printf("%+v", err)
+			} else {
+				fmt.Printf("%+v", &msg)
+			}
+		} else {
+			fmt.Printf("%+v", v.MessageValue)
+		}
+	default:
+
+	}
+	fmt.Printf("\n")
 }

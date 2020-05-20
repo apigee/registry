@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package google.cloud.apigee.flame.v1alpha1;
+
+import "google/protobuf/timestamp.proto";
+
+option java_package = "com.google.cloud.apigee.flame.v1alpha1";
+option java_multiple_files = true;
+option java_outer_classname = "FlamePropertiesProto";
+option go_package = "apigov.dev/flame/rpc;rpc";
+
+// A complexity summary includes metrics on the complexity of an API.
+message ComplexitySummary {
+  // API Spec(s) used to compute this summary.
+  repeated string spec_names = 1;
+
+  // Operation statistics.
+  int32 path_count = 2;
+  int32 get_count = 3;
+  int32 post_count = 4;
+  int32 put_count = 5;
+  int32 delete_count = 6;
+
+  // Model statistics.
+  int32 schema_count = 7;
+  int32 schema_property_count = 8;
+
+  // Creation timestamp.
+  google.protobuf.Timestamp create_time = 9;
+}
+
+// A Version summary contains a precalculated list of API versions.
+message VersionSummary {
+  repeated string version_names = 1;
+
+  // Creation timestamp.
+  google.protobuf.Timestamp create_time = 2;
+}

@@ -242,6 +242,7 @@ func getProperty(ctx context.Context,
 		log.Printf("%+s", err.Error())
 	}
 	fmt.Printf("%+v\n", property)
+	print_property(property)
 	return nil
 }
 
