@@ -5,8 +5,8 @@ package server
 import (
 	"context"
 
-	"apigov.dev/flame/models"
-	rpc "apigov.dev/flame/rpc"
+	"apigov.dev/registry/models"
+	rpc "apigov.dev/registry/rpc"
 	"cloud.google.com/go/datastore"
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/api/iterator"
@@ -14,7 +14,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (s *FlameServer) CreateVersion(ctx context.Context, request *rpc.CreateVersionRequest) (*rpc.Version, error) {
+func (s *RegistryServer) CreateVersion(ctx context.Context, request *rpc.CreateVersionRequest) (*rpc.Version, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, err
@@ -40,7 +40,7 @@ func (s *FlameServer) CreateVersion(ctx context.Context, request *rpc.CreateVers
 	return version.Message()
 }
 
-func (s *FlameServer) DeleteVersion(ctx context.Context, request *rpc.DeleteVersionRequest) (*empty.Empty, error) {
+func (s *RegistryServer) DeleteVersion(ctx context.Context, request *rpc.DeleteVersionRequest) (*empty.Empty, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, err
@@ -58,7 +58,7 @@ func (s *FlameServer) DeleteVersion(ctx context.Context, request *rpc.DeleteVers
 	return &empty.Empty{}, err
 }
 
-func (s *FlameServer) GetVersion(ctx context.Context, request *rpc.GetVersionRequest) (*rpc.Version, error) {
+func (s *RegistryServer) GetVersion(ctx context.Context, request *rpc.GetVersionRequest) (*rpc.Version, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, err
@@ -78,7 +78,7 @@ func (s *FlameServer) GetVersion(ctx context.Context, request *rpc.GetVersionReq
 	return version.Message()
 }
 
-func (s *FlameServer) ListVersions(ctx context.Context, req *rpc.ListVersionsRequest) (*rpc.ListVersionsResponse, error) {
+func (s *RegistryServer) ListVersions(ctx context.Context, req *rpc.ListVersionsRequest) (*rpc.ListVersionsResponse, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, err
@@ -143,7 +143,7 @@ func (s *FlameServer) ListVersions(ctx context.Context, req *rpc.ListVersionsReq
 	return responses, nil
 }
 
-func (s *FlameServer) UpdateVersion(ctx context.Context, request *rpc.UpdateVersionRequest) (*rpc.Version, error) {
+func (s *RegistryServer) UpdateVersion(ctx context.Context, request *rpc.UpdateVersionRequest) (*rpc.Version, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, err

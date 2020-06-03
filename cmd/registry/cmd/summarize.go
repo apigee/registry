@@ -12,10 +12,10 @@ import (
 	"log"
 	"strings"
 
-	"apigov.dev/flame/cmd/flame/connection"
-	"apigov.dev/flame/gapic"
-	"apigov.dev/flame/models"
-	rpc "apigov.dev/flame/rpc"
+	"apigov.dev/registry/cmd/registry/connection"
+	"apigov.dev/registry/gapic"
+	"apigov.dev/registry/models"
+	rpc "apigov.dev/registry/rpc"
 	"github.com/golang/protobuf/ptypes/any"
 	"github.com/googleapis/gnostic/compiler"
 	openapi_v2 "github.com/googleapis/gnostic/openapiv2"
@@ -102,7 +102,7 @@ func getBytesForSpec(spec *rpc.Spec) ([]byte, error) {
 }
 
 func summarizeSpec(ctx context.Context,
-	client *gapic.FlameClient,
+	client *gapic.RegistryClient,
 	segments []string) error {
 
 	name := resourceNameOfSpec(segments[1:])
@@ -205,7 +205,7 @@ func hash(name string) string {
 	return base64.RawURLEncoding.EncodeToString(h.Sum(nil))
 }
 
-func setProperty(ctx context.Context, client *gapic.FlameClient, projectID string, property *rpc.Property) error {
+func setProperty(ctx context.Context, client *gapic.RegistryClient, projectID string, property *rpc.Property) error {
 	propertyID := hash(property.Subject + "/" + property.Relation)
 	property.Name = "projects/" + projectID + "/properties/" + propertyID
 

@@ -6,8 +6,8 @@ import (
 	"context"
 	"log"
 
-	"apigov.dev/flame/models"
-	rpc "apigov.dev/flame/rpc"
+	"apigov.dev/registry/models"
+	rpc "apigov.dev/registry/rpc"
 	"cloud.google.com/go/datastore"
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/api/iterator"
@@ -15,7 +15,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (s *FlameServer) CreateSpec(ctx context.Context, request *rpc.CreateSpecRequest) (*rpc.Spec, error) {
+func (s *RegistryServer) CreateSpec(ctx context.Context, request *rpc.CreateSpecRequest) (*rpc.Spec, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, err
@@ -41,7 +41,7 @@ func (s *FlameServer) CreateSpec(ctx context.Context, request *rpc.CreateSpecReq
 	return spec.Message(rpc.SpecView_BASIC)
 }
 
-func (s *FlameServer) DeleteSpec(ctx context.Context, request *rpc.DeleteSpecRequest) (*empty.Empty, error) {
+func (s *RegistryServer) DeleteSpec(ctx context.Context, request *rpc.DeleteSpecRequest) (*empty.Empty, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, err
@@ -58,7 +58,7 @@ func (s *FlameServer) DeleteSpec(ctx context.Context, request *rpc.DeleteSpecReq
 	return &empty.Empty{}, err
 }
 
-func (s *FlameServer) GetSpec(ctx context.Context, request *rpc.GetSpecRequest) (*rpc.Spec, error) {
+func (s *RegistryServer) GetSpec(ctx context.Context, request *rpc.GetSpecRequest) (*rpc.Spec, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, err
@@ -78,7 +78,7 @@ func (s *FlameServer) GetSpec(ctx context.Context, request *rpc.GetSpecRequest) 
 	return spec.Message(request.GetView())
 }
 
-func (s *FlameServer) ListSpecs(ctx context.Context, req *rpc.ListSpecsRequest) (*rpc.ListSpecsResponse, error) {
+func (s *RegistryServer) ListSpecs(ctx context.Context, req *rpc.ListSpecsRequest) (*rpc.ListSpecsResponse, error) {
 	client, err := s.newDataStoreClient(ctx)
 	log.Printf("%+v", err)
 	if err != nil {
@@ -149,7 +149,7 @@ func (s *FlameServer) ListSpecs(ctx context.Context, req *rpc.ListSpecsRequest) 
 	return responses, nil
 }
 
-func (s *FlameServer) UpdateSpec(ctx context.Context, request *rpc.UpdateSpecRequest) (*rpc.Spec, error) {
+func (s *RegistryServer) UpdateSpec(ctx context.Context, request *rpc.UpdateSpecRequest) (*rpc.Spec, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, err

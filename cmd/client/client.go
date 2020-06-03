@@ -23,7 +23,7 @@ import (
 	"os"
 	"time"
 
-	rpc "apigov.dev/flame/rpc"
+	rpc "apigov.dev/registry/rpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
@@ -41,16 +41,16 @@ func main() {
 	var opts []grpc.DialOption
 	opts = append(opts, grpc.WithTransportCredentials(creds))
 
-	address := os.Getenv("CLI_FLAME_ADDRESS")
+	address := os.Getenv("CLI_REGISTRY_ADDRESS")
 	conn, err := grpc.Dial(address, opts...)
 	if err != nil {
 		log.Fatalf("fail to dial: %v", err)
 	}
 	defer conn.Close()
 
-	client := rpc.NewFlameClient(conn)
+	client := rpc.NewRegistryClient(conn)
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	token := os.Getenv("CLI_FLAME_TOKEN")
+	token := os.Getenv("CLI_REGISTRY_TOKEN")
 	ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+token)
 
 	req := &rpc.ListProductsRequest{}

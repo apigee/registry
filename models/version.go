@@ -9,7 +9,7 @@ import (
 	"regexp"
 	"time"
 
-	rpc "apigov.dev/flame/rpc"
+	rpc "apigov.dev/registry/rpc"
 	"cloud.google.com/go/datastore"
 	ptypes "github.com/golang/protobuf/ptypes"
 )

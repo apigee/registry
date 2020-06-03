@@ -1,17 +1,17 @@
-# Flame Reference Implementation
+# API Registry Reference Implementation
 
-This directory contains a reference implementation of the Flame (Full Lifecycle
-API Management) API.
+This directory contains a reference implementation of the API Registry API.
 
-## The Flame API
+## The API Registry API
 
-The Flame API allows teams to upload and share machine-readable descriptions of
-APIs that are in use and in development. These descriptions include API
-specifications in standard formats like OpenAPI and Protocol Buffers. These
-specifications can be used by tools like linters, browsers, documentation
-generators, test runners, proxies, and API client and server generators. The
-API itself can be seen as a machine-readable enterprise API catalog that can be
-used to back online directories, portals, and workflow managers.
+The API Registry API allows teams to upload and share machine-readable
+descriptions of APIs that are in use and in development. These descriptions
+include API specifications in standard formats like OpenAPI and Protocol
+Buffers. These specifications can be used by tools like linters, browsers,
+documentation generators, test runners, proxies, and API client and server
+generators. The API itself can be seen as a machine-readable enterprise API
+catalog that can be used to back online directories, portals, and workflow
+managers.
 
 The API is formally described by the files in the [proto](proto) directory.
 
@@ -34,12 +34,13 @@ contains a command-line interface that is automatically generated from the API
 description using the
 [protoc-gen-go_cli](https://github.com/googleapis/gapic-generator-go/tree/master/cmd/protoc-gen-go_cli)
 tool in [gapic-generator-go](https://github.com/googleapis/gapic-generator-go).
-Along with this automatically-generated CLI, the [cmd/flame](cmd/flame)
+Along with this automatically-generated CLI, the [cmd/registry](cmd/registry)
 directory contains a hand-written command-line tool that supports common API
 management tasks.
 
-A sample application in [apps/disco-flame](apps/disco-flame) shows a sample use
-of the API to build an online catalog of API descriptions obtained from the
+A sample application in [apps/disco-registry](apps/disco-registry) shows a
+sample use of the API to build an online catalog of API descriptions obtained
+from the
 [Google API Discovery Service](https://developers.google.com/discovery).
 Another sample, [apps/atlas](apps/atlas) uploads a directory of OpenAPI
 specifications from any directory in the same style as
@@ -84,13 +85,13 @@ Please note: this is equivalent to running Cloud Firestore in Datastore mode.
 
 ## Running the API Locally
 
-Running `source AUTH-LOCAL.sh` will configure your environment for the Flame
-API server (`flamed`) and for the clients to call your local instance. Start
-the server by running `flamed`.
+Running `source AUTH-LOCAL.sh` will configure your environment for the Registry
+API server (`registry-server`) and for the clients to call your local instance.
+Start the server by running `registry-server`.
 
 ## Proxying a Local Service with Envoy
 
-The `flamed` server provides a gRPC service only. For a transcoded HTTP/JSON
+The `registry` server provides a gRPC service only. For a transcoded HTTP/JSON
 interface, run the [envoy](https://www.envoyproxy.io) proxy locally using the
 configuration in the [envoy](envoy) directory. With a local installation of
 `envoy`, this can be done by running the following inside the [envoy](envoy)
@@ -120,7 +121,7 @@ Requirements:
   `gcloud` operations and `gcloud config set project PROJECT_ID` can be used to
   set your project ID to the one where you plan to host your servce.
 
-- The Makefile gets your project ID from the `FLAME_PROJECT_IDENTIFIER`
+- The Makefile gets your project ID from the `REGISTRY_PROJECT_IDENTIFIER`
   environment variable. It can be set automatically by running
   `source AUTH-CLOUDRUN.sh`.
 
@@ -134,19 +135,19 @@ build a container containing the API server. The container is then stored in
 When deploying to Cloud Run for the first time, you will be asked a few
 questions, including this one:
 
-`Allow unauthenticated invocations to [flame] (y/N)?`
+`Allow unauthenticated invocations to [registry] (y/N)?`
 
 If you answer "y", you will be able to make calls without authentication. This
 is the easiest way to test the API, but it's not necessary - running
-`source AUTH-CLOUDRUN.sh` configures your environment so that the Flame CLI and
-other tools will authenticate with your user ID.
+`source AUTH-CLOUDRUN.sh` configures your environment so that the Registry CLI
+and other tools will authenticate with your user ID.
 
 Now you can call the API with your generated CLI.
 
-`cli flame list-products --parent projects/demo --page_size 10`
+`cli registry list-products --parent projects/demo --page_size 10`
 
-Note here that `demo` is an arbitrary project ID for use within your Flame API
-calls only. It is unrelated to the Google Cloud project ID that you use for
+Note here that `demo` is an arbitrary project ID for use within your Registry
+API calls only. It is unrelated to the Google Cloud project ID that you use for
 Cloud Run and Cloud Datastore.
 
 Auth tokens are short-lived. When your token expires, your calls will return a

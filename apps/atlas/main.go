@@ -11,16 +11,16 @@ import (
 	"path/filepath"
 	"strings"
 
-	"apigov.dev/flame/client"
-	"apigov.dev/flame/gapic"
-	rpcpb "apigov.dev/flame/rpc"
+	"apigov.dev/registry/client"
+	"apigov.dev/registry/gapic"
+	rpcpb "apigov.dev/registry/rpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
 const directory = "."
 
-var flameClient *gapic.FlameClient
+var registryClient *gapic.RegistryClient
 
 func notFound(err error) bool {
 	if err == nil {
@@ -36,7 +36,7 @@ func notFound(err error) bool {
 func main() {
 	var err error
 
-	flameClient, err = client.NewClient()
+	registryClient, err = client.NewClient()
 	completions := make(chan int)
 	processes := 0
 
@@ -88,14 +88,14 @@ func uploadSpec(productName, version, style, path string) error {
 	{
 		request := &rpcpb.GetProductRequest{}
 		request.Name = "projects/atlas/products/" + product
-		_, err := flameClient.GetProduct(ctx, request)
+		_, err := registryClient.GetProduct(ctx, request)
 		if notFound(err) {
 			request := &rpcpb.CreateProductRequest{}
 			request.Parent = "projects/atlas"
 			request.ProductId = product
 			request.Product = &rpcpb.Product{}
 			request.Product.DisplayName = productName
-			response, err := flameClient.CreateProduct(ctx, request)
+			response, err := registryClient.CreateProduct(ctx, request)
 			if err == nil {
 				log.Printf("created %s", response.Name)
 			} else {
@@ -108,13 +108,13 @@ func uploadSpec(productName, version, style, path string) error {
 	{
 		request := &rpcpb.GetVersionRequest{}
 		request.Name = "projects/atlas/products/" + product + "/versions/" + version
-		_, err := flameClient.GetVersion(ctx, request)
+		_, err := registryClient.GetVersion(ctx, request)
 		if notFound(err) {
 			request := &rpcpb.CreateVersionRequest{}
 			request.Parent = "projects/atlas/products/" + product
 			request.VersionId = version
 			request.Version = &rpcpb.Version{}
-			response, err := flameClient.CreateVersion(ctx, request)
+			response, err := registryClient.CreateVersion(ctx, request)
 			if err == nil {
 				log.Printf("created %s", response.Name)
 			} else {
@@ -131,7 +131,7 @@ func uploadSpec(productName, version, style, path string) error {
 		request.Name = "projects/atlas/products/" + product +
 			"/versions/" + version +
 			"/specs/" + filename
-		_, err := flameClient.GetSpec(ctx, request)
+		_, err := registryClient.GetSpec(ctx, request)
 		if notFound(err) {
 			fileBytes, err := ioutil.ReadFile(path)
 			// gzip the bytes
@@ -153,7 +153,7 @@ func uploadSpec(productName, version, style, path string) error {
 			request.Spec.Style = style + "+gzip"
 			request.Spec.Filename = filename
 			request.Spec.Contents = buf.Bytes()
-			response, err := flameClient.CreateSpec(ctx, request)
+			response, err := registryClient.CreateSpec(ctx, request)
 			if err == nil {
 				log.Printf("created %s", response.Name)
 			} else {

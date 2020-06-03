@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"log"
 
-	"apigov.dev/flame/cmd/flame/connection"
-	"apigov.dev/flame/gapic"
-	"apigov.dev/flame/models"
-	rpc "apigov.dev/flame/rpc"
+	"apigov.dev/registry/cmd/registry/connection"
+	"apigov.dev/registry/gapic"
+	"apigov.dev/registry/models"
+	rpc "apigov.dev/registry/rpc"
 	"github.com/spf13/cobra"
 	"google.golang.org/api/iterator"
 	"google.golang.org/protobuf/proto"
@@ -69,7 +69,7 @@ var getCmd = &cobra.Command{
 	},
 }
 
-func getNamedProperty(ctx context.Context, client *gapic.FlameClient, projectID string, subject string, relation string) error {
+func getNamedProperty(ctx context.Context, client *gapic.RegistryClient, projectID string, subject string, relation string) error {
 	request := &rpc.ListPropertiesRequest{
 		Parent:   "projects/" + projectID,
 		Subject:  subject,

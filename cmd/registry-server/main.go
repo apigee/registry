@@ -18,7 +18,7 @@ import (
 	"log"
 	"os"
 
-	"apigov.dev/flame/server"
+	"apigov.dev/registry/server"
 )
 
 func main() {

@@ -17,4 +17,4 @@ samples, guidance on mobile development, and a full API reference.
 
 ## To test the web app
 
-```flutter run -d web --web-hostname localhost --web-port 8888```
+`flutter run -d web --web-hostname localhost --web-port 8888`

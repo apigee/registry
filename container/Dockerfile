@@ -15,7 +15,7 @@ RUN go mod download
 COPY . ./
 
 # Build the binary.
-RUN CGO_ENABLED=0 GOOS=linux go build -mod=readonly -v -o flamed ./cmd/flamed
+RUN CGO_ENABLED=0 GOOS=linux go build -mod=readonly -v -o registry-server ./cmd/registry-server
 
 # Use an Envoy release image to get envoy in the image.
 # This is the last version that supports allow_origin in CorsPolicy
@@ -26,7 +26,7 @@ COPY container/envoy.yaml /etc/envoy/envoy.yaml
 COPY container/RUN.sh /RUN.sh
 
 # Copy the binary to the production image from the builder stage.
-COPY --from=builder /app/flamed /flamed
+COPY --from=builder /app/registry-server /registry-server
 
 # Run the web service on container startup.
 CMD ["/RUN.sh"]

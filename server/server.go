@@ -9,7 +9,7 @@ import (
 	"os"
 	"strings"
 
-	rpc "apigov.dev/flame/rpc"
+	rpc "apigov.dev/registry/rpc"
 	"cloud.google.com/go/datastore"
 	"github.com/google/uuid"
 	"golang.org/x/oauth2/google"
@@ -17,17 +17,17 @@ import (
 	"google.golang.org/grpc/reflection"
 )
 
-// FlameServer implements a Flame server.
+// RegistryServer implements a Registry server.
 // Entities are stored using the Cloud Datastore API.
 // https://cloud.google.com/datastore/
-type FlameServer struct {
-	rpc.UnimplementedFlameServer
+type RegistryServer struct {
+	rpc.UnimplementedRegistryServer
 
 	projectID string
 }
 
 // newDataStoreClient creates a new data storage connection.
-func (s *FlameServer) newDataStoreClient(ctx context.Context) (*datastore.Client, error) {
+func (s *RegistryServer) newDataStoreClient(ctx context.Context) (*datastore.Client, error) {
 	client, err := datastore.NewClient(ctx, s.projectID)
 	if err != nil {
 		return nil, err
@@ -48,7 +48,7 @@ func RunServer(port string) error {
 	}
 	projectID := credentials.ProjectID
 	if projectID == "" {
-		projectID = os.Getenv("FLAME_PROJECT_IDENTIFIER")
+		projectID = os.Getenv("REGISTRY_PROJECT_IDENTIFIER")
 	}
 	if projectID == "" {
 		return fmt.Errorf("unable to determine project ID")
@@ -61,7 +61,7 @@ func RunServer(port string) error {
 	s := grpc.NewServer()
 	reflection.Register(s)
 	fmt.Printf("\nServer listening on port %v \n", port)
-	rpc.RegisterFlameServer(s, &FlameServer{projectID: projectID})
+	rpc.RegisterRegistryServer(s, &RegistryServer{projectID: projectID})
 	if err := s.Serve(lis); err != nil {
 		return fmt.Errorf("failed to serve: %v", err)
 	}

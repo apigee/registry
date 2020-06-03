@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"time"
 
-	rpc "apigov.dev/flame/rpc"
+	rpc "apigov.dev/registry/rpc"
 	ptypes "github.com/golang/protobuf/ptypes"
 	any "github.com/golang/protobuf/ptypes/any"
 )

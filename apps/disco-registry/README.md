@@ -39,8 +39,8 @@ details.
 Two environment variables are used to identify and to authenticate with the
 FLAME service.
 
-- `CLI_FLAME_ADDRESS` is the address of the service, including a port number.
-- `CLI_FLAME_TOKEN` is the authorization token of a service account that is
+- `CLI_REGISTRY_ADDRESS` is the address of the service, including a port number.
+- `CLI_REGISTRY_TOKEN` is the authorization token of a service account that is
   able to call the API.
 
 These environment variables are the same ones used to configure the FLAME CLI.

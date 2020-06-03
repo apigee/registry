@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Compile .proto files into the files needed to build the flame server and
+# Compile .proto files into the files needed to build the registry server and
 # command-line tools.
 #
 
@@ -18,31 +18,31 @@ export ANNOTATIONS="third_party/api-common-protos"
 
 echo "Generating proto support code."
 protoc --proto_path=./proto --proto_path=${ANNOTATIONS} \
-	proto/flame_models.proto \
-	proto/flame_properties.proto \
-	proto/flame_service.proto \
+	proto/registry_models.proto \
+	proto/registry_properties.proto \
+	proto/registry_service.proto \
 	--go_out=plugins=grpc:rpc
 
 # fix the location of proto output files
-mv rpc/apigov.dev/flame/rpc/* rpc
+mv rpc/apigov.dev/registry/rpc/* rpc
 rm -rf rpc/apigov.dev
 
 echo "Generating GAPIC library."
 protoc --proto_path=./proto --proto_path=${ANNOTATIONS} \
-	proto/flame_models.proto \
-	proto/flame_properties.proto \
-	proto/flame_service.proto \
+	proto/registry_models.proto \
+	proto/registry_properties.proto \
+	proto/registry_service.proto \
 	--go_gapic_out gapic \
 	--go_gapic_opt "go-gapic-package=.;gapic"
 
 echo "Generating GAPIC-based CLI."
 protoc --proto_path=./proto --proto_path=${ANNOTATIONS} \
-	proto/flame_models.proto \
-	proto/flame_properties.proto \
-	proto/flame_service.proto \
+	proto/registry_models.proto \
+	proto/registry_properties.proto \
+	proto/registry_service.proto \
   	--go_cli_out cmd/cli \
   	--go_cli_opt "root=cli" \
-  	--go_cli_opt "gapic=apigov.dev/flame/gapic"
+  	--go_cli_opt "gapic=apigov.dev/registry/gapic"
 
 # fix a problem in a couple of generated CLI files
 sed -i -e 's/anypb.Property_MessageValue/rpcpb.Property_MessageValue/g' \
@@ -51,9 +51,9 @@ sed -i -e 's/anypb.Property_MessageValue/rpcpb.Property_MessageValue/g' \
 
 echo "Generating descriptor set for envoy."
 protoc --proto_path=./proto --proto_path=${ANNOTATIONS} \
-	proto/flame_models.proto \
-	proto/flame_properties.proto \
-	proto/flame_service.proto \
+	proto/registry_models.proto \
+	proto/registry_properties.proto \
+	proto/registry_service.proto \
 	--include_imports \
         --include_source_info \
         --descriptor_set_out=envoy/proto.pb

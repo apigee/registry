@@ -6,8 +6,8 @@ import (
 	"context"
 	"log"
 
-	"apigov.dev/flame/models"
-	rpc "apigov.dev/flame/rpc"
+	"apigov.dev/registry/models"
+	rpc "apigov.dev/registry/rpc"
 	"cloud.google.com/go/datastore"
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/api/iterator"
@@ -15,7 +15,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (s *FlameServer) CreateProperty(ctx context.Context, request *rpc.CreatePropertyRequest) (*rpc.Property, error) {
+func (s *RegistryServer) CreateProperty(ctx context.Context, request *rpc.CreatePropertyRequest) (*rpc.Property, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
@@ -45,7 +45,7 @@ func (s *FlameServer) CreateProperty(ctx context.Context, request *rpc.CreatePro
 	return property.Message()
 }
 
-func (s *FlameServer) DeleteProperty(ctx context.Context, request *rpc.DeletePropertyRequest) (*empty.Empty, error) {
+func (s *RegistryServer) DeleteProperty(ctx context.Context, request *rpc.DeletePropertyRequest) (*empty.Empty, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
@@ -62,7 +62,7 @@ func (s *FlameServer) DeleteProperty(ctx context.Context, request *rpc.DeletePro
 	return &empty.Empty{}, internalError(err)
 }
 
-func (s *FlameServer) GetProperty(ctx context.Context, request *rpc.GetPropertyRequest) (*rpc.Property, error) {
+func (s *RegistryServer) GetProperty(ctx context.Context, request *rpc.GetPropertyRequest) (*rpc.Property, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
@@ -82,7 +82,7 @@ func (s *FlameServer) GetProperty(ctx context.Context, request *rpc.GetPropertyR
 	return property.Message()
 }
 
-func (s *FlameServer) ListProperties(ctx context.Context, req *rpc.ListPropertiesRequest) (*rpc.ListPropertiesResponse, error) {
+func (s *RegistryServer) ListProperties(ctx context.Context, req *rpc.ListPropertiesRequest) (*rpc.ListPropertiesResponse, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
@@ -152,7 +152,7 @@ func (s *FlameServer) ListProperties(ctx context.Context, req *rpc.ListPropertie
 	return responses, nil
 }
 
-func (s *FlameServer) UpdateProperty(ctx context.Context, request *rpc.UpdatePropertyRequest) (*rpc.Property, error) {
+func (s *RegistryServer) UpdateProperty(ctx context.Context, request *rpc.UpdatePropertyRequest) (*rpc.Property, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, internalError(err)

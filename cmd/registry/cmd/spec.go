@@ -8,9 +8,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"apigov.dev/flame/cmd/flame/connection"
-	"apigov.dev/flame/gapic"
-	rpcpb "apigov.dev/flame/rpc"
+	"apigov.dev/registry/cmd/registry/connection"
+	"apigov.dev/registry/gapic"
+	rpcpb "apigov.dev/registry/rpc"
 	"github.com/spf13/cobra"
 )
 
@@ -58,7 +58,7 @@ var specCmd = &cobra.Command{
 	},
 }
 
-func uploadDirectory(dirname string, client *gapic.FlameClient, version string) error {
+func uploadDirectory(dirname string, client *gapic.RegistryClient, version string) error {
 	return filepath.Walk(dirname,
 		func(path string, info os.FileInfo, err error) error {
 			log.Printf("%+s", path)
@@ -72,7 +72,7 @@ func uploadDirectory(dirname string, client *gapic.FlameClient, version string) 
 		})
 }
 
-func uploadSpecFile(filename string, client *gapic.FlameClient, version string) {
+func uploadSpecFile(filename string, client *gapic.RegistryClient, version string) {
 	// does the spec file exist? if not, create it
 	request := &rpcpb.GetSpecRequest{}
 	request.Name = version + "/specs/" + filename

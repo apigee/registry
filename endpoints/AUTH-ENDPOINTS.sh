@@ -9,12 +9,12 @@
 ### CLIENT CONFIGURATION
 
 # Calls to the Cloud Endpoints service are secure.
-unset CLI_FLAME_INSECURE
+unset CLI_REGISTRY_INSECURE
 
 # Get the service address from the gcloud tool.
-export CLI_FLAME_AUDIENCES=$(gcloud run services describe flame --platform managed --format="value(status.address.url)")
-export CLI_FLAME_ADDRESS=${CLI_FLAME_AUDIENCES#https://}:443
+export CLI_REGISTRY_AUDIENCES=$(gcloud run services describe flame --platform managed --format="value(status.address.url)")
+export CLI_REGISTRY_ADDRESS=${CLI_REGISTRY_AUDIENCES#https://}:443
 
 # The auth token is generated for the gcloud logged-in user.
-export CLI_FLAME_CLIENT_EMAIL=$(gcloud config list account --format "value(core.account)")
-export CLI_FLAME_TOKEN=$(gcloud auth print-identity-token ${CLI_FLAME_CLIENT_EMAIL})
+export CLI_REGISTRY_CLIENT_EMAIL=$(gcloud config list account --format "value(core.account)")
+export CLI_REGISTRY_TOKEN=$(gcloud auth print-identity-token ${CLI_REGISTRY_CLIENT_EMAIL})

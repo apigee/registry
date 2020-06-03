@@ -6,8 +6,8 @@ import (
 	"context"
 	"log"
 
-	"apigov.dev/flame/models"
-	rpc "apigov.dev/flame/rpc"
+	"apigov.dev/registry/models"
+	rpc "apigov.dev/registry/rpc"
 	"cloud.google.com/go/datastore"
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/api/iterator"
@@ -15,7 +15,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (s *FlameServer) CreateProject(ctx context.Context, request *rpc.CreateProjectRequest) (*rpc.Project, error) {
+func (s *RegistryServer) CreateProject(ctx context.Context, request *rpc.CreateProjectRequest) (*rpc.Project, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
@@ -41,7 +41,7 @@ func (s *FlameServer) CreateProject(ctx context.Context, request *rpc.CreateProj
 	return project.Message()
 }
 
-func (s *FlameServer) DeleteProject(ctx context.Context, request *rpc.DeleteProjectRequest) (*empty.Empty, error) {
+func (s *RegistryServer) DeleteProject(ctx context.Context, request *rpc.DeleteProjectRequest) (*empty.Empty, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
@@ -59,7 +59,7 @@ func (s *FlameServer) DeleteProject(ctx context.Context, request *rpc.DeleteProj
 	return &empty.Empty{}, internalError(err)
 }
 
-func (s *FlameServer) GetProject(ctx context.Context, request *rpc.GetProjectRequest) (*rpc.Project, error) {
+func (s *RegistryServer) GetProject(ctx context.Context, request *rpc.GetProjectRequest) (*rpc.Project, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
@@ -79,7 +79,7 @@ func (s *FlameServer) GetProject(ctx context.Context, request *rpc.GetProjectReq
 	return project.Message()
 }
 
-func (s *FlameServer) ListProjects(ctx context.Context, req *rpc.ListProjectsRequest) (*rpc.ListProjectsResponse, error) {
+func (s *RegistryServer) ListProjects(ctx context.Context, req *rpc.ListProjectsRequest) (*rpc.ListProjectsResponse, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
@@ -135,7 +135,7 @@ func (s *FlameServer) ListProjects(ctx context.Context, req *rpc.ListProjectsReq
 	return responses, nil
 }
 
-func (s *FlameServer) UpdateProject(ctx context.Context, request *rpc.UpdateProjectRequest) (*rpc.Project, error) {
+func (s *RegistryServer) UpdateProject(ctx context.Context, request *rpc.UpdateProjectRequest) (*rpc.Project, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, internalError(err)

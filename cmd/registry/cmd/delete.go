@@ -20,9 +20,9 @@ import (
 	"fmt"
 	"log"
 
-	"apigov.dev/flame/cmd/flame/connection"
-	"apigov.dev/flame/models"
-	rpc "apigov.dev/flame/rpc"
+	"apigov.dev/registry/cmd/registry/connection"
+	"apigov.dev/registry/models"
+	rpc "apigov.dev/registry/rpc"
 	"github.com/spf13/cobra"
 	"google.golang.org/api/iterator"
 )

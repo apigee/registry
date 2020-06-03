@@ -1,4 +1,4 @@
-// Generates flame_service.proto
+// Generates registry_service.proto
 package main
 
 import (
@@ -9,7 +9,7 @@ import (
 	"text/template"
 )
 
-const filename = "flame_service.proto"
+const filename = "registry_service.proto"
 const version = "v1alpha1"
 
 func check(e error) {
@@ -55,7 +55,7 @@ func main() {
 		"resource_path_for_update": func(entityName, resourceName string) string {
 			return "/" + version + "/{" + strings.ToLower(entityName) + ".name=" + resourceName + "}"
 		},
-	}).ParseFiles("flame_service.tmpl")
+	}).ParseFiles("registry_service.tmpl")
 	check(err)
 
 	service := Service{

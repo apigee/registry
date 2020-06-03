@@ -10,9 +10,9 @@ clean:
 	rm -rf cmd/cli gapic rpc third_party/api-common-protos envoy/proto.pb
 
 build:
-	if [ "${FLAME_PROJECT_IDENTIFIER}" == "" ]; then echo "Error! FLAME_PROJECT_IDENTIFIER must be set"; exit -1; fi
-	gcloud builds submit --tag gcr.io/${FLAME_PROJECT_IDENTIFIER}/flame-backend
+	if [ "${REGISTRY_PROJECT_IDENTIFIER}" == "" ]; then echo "Error! REGISTRY_PROJECT_IDENTIFIER must be set"; exit -1; fi
+	gcloud builds submit --tag gcr.io/${REGISTRY_PROJECT_IDENTIFIER}/registry-backend
 
 deploy:
-	if [ "${FLAME_PROJECT_IDENTIFIER}" == "" ]; then echo "Error! FLAME_PROJECT_IDENTIFIER must be set"; exit -1; fi
-	gcloud run deploy flame-backend --image gcr.io/${FLAME_PROJECT_IDENTIFIER}/flame-backend --platform managed
+	if [ "${REGISTRY_PROJECT_IDENTIFIER}" == "" ]; then echo "Error! REGISTRY_PROJECT_IDENTIFIER must be set"; exit -1; fi
+	gcloud run deploy registry-backend --image gcr.io/${REGISTRY_PROJECT_IDENTIFIER}/registry-backend --platform managed

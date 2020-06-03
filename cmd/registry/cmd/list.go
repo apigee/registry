@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"log"
 
-	"apigov.dev/flame/cmd/flame/connection"
-	"apigov.dev/flame/gapic"
-	"apigov.dev/flame/models"
-	rpc "apigov.dev/flame/rpc"
+	"apigov.dev/registry/cmd/registry/connection"
+	"apigov.dev/registry/gapic"
+	"apigov.dev/registry/models"
+	rpc "apigov.dev/registry/rpc"
 	"github.com/spf13/cobra"
 	"google.golang.org/api/iterator"
 	"google.golang.org/grpc/status"
@@ -89,7 +89,7 @@ func init() {
 }
 
 func listProducts(ctx context.Context,
-	client *gapic.FlameClient,
+	client *gapic.RegistryClient,
 	segments []string) error {
 	request := &rpc.ListProductsRequest{
 		Parent: "projects/" + segments[1],
@@ -115,7 +115,7 @@ func listProducts(ctx context.Context,
 }
 
 func listVersions(ctx context.Context,
-	client *gapic.FlameClient,
+	client *gapic.RegistryClient,
 	segments []string) error {
 	request := &rpc.ListVersionsRequest{
 		Parent: "projects/" + segments[1] + "/products/" + segments[2],
@@ -143,7 +143,7 @@ func listVersions(ctx context.Context,
 type specHandler func(*rpc.Spec) error
 
 func listSpecs(ctx context.Context,
-	client *gapic.FlameClient,
+	client *gapic.RegistryClient,
 	segments []string,
 	handler specHandler) error {
 	request := &rpc.ListSpecsRequest{
@@ -170,7 +170,7 @@ func listSpecs(ctx context.Context,
 }
 
 func listProperties(ctx context.Context,
-	client *gapic.FlameClient,
+	client *gapic.RegistryClient,
 	segments []string) error {
 	request := &rpc.ListPropertiesRequest{
 		Parent: "projects/" + segments[1],
@@ -189,7 +189,7 @@ func listProperties(ctx context.Context,
 }
 
 func getProduct(ctx context.Context,
-	client *gapic.FlameClient,
+	client *gapic.RegistryClient,
 	segments []string) error {
 	request := &rpc.GetProductRequest{
 		Name: "projects/" + segments[1] + "/products/" + segments[2],
@@ -203,7 +203,7 @@ func getProduct(ctx context.Context,
 }
 
 func getVersion(ctx context.Context,
-	client *gapic.FlameClient,
+	client *gapic.RegistryClient,
 	segments []string) error {
 	request := &rpc.GetVersionRequest{
 		Name: "projects/" + segments[1] + "/products/" + segments[2] + "/versions/" + segments[3],
@@ -217,7 +217,7 @@ func getVersion(ctx context.Context,
 }
 
 func getSpec(ctx context.Context,
-	client *gapic.FlameClient,
+	client *gapic.RegistryClient,
 	segments []string) (*rpc.Spec, error) {
 	request := &rpc.GetSpecRequest{
 		Name: "projects/" + segments[1] + "/products/" + segments[2] + "/versions/" + segments[3] + "/specs/" + segments[4],
@@ -231,7 +231,7 @@ func getSpec(ctx context.Context,
 }
 
 func getProperty(ctx context.Context,
-	client *gapic.FlameClient,
+	client *gapic.RegistryClient,
 	segments []string) error {
 	request := &rpc.GetPropertyRequest{
 		Name: "projects/" + segments[1] + "/properties/" + segments[2],

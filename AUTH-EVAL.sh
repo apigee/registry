@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Configure an environment to run flame clients with a local server.
+# Configure an environment to run registry clients with a local server.
 #
 
 ### SERVER CONFIGURATION
@@ -11,16 +11,16 @@
 #gcloud auth application-default login
 
 # This assumes that the current gcloud project is the one where data is stored.
-export FLAME_PROJECT_IDENTIFIER=$(gcloud config list --format 'value(core.project)')
+export REGISTRY_PROJECT_IDENTIFIER=$(gcloud config list --format 'value(core.project)')
 
 ### CLIENT CONFIGURATION
 
 # This points to the eval server.
-export CLI_FLAME_ADDRESS=flame-backend-3rqz64w4vq-uw.a.run.app:443
+export CLI_REGISTRY_ADDRESS=flame-backend-3rqz64w4vq-uw.a.run.app:443
 
 # eval calls use TLS.
-unset CLI_FLAME_INSECURE
+unset CLI_REGISTRY_INSECURE
 
 # eval calls don't need authentication.
-unset CLI_FLAME_TOKEN
-unset CLI_FLAME_API_KEY
+unset CLI_REGISTRY_TOKEN
+unset CLI_REGISTRY_API_KEY

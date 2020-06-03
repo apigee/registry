@@ -7,10 +7,10 @@ import (
 	"sort"
 	"strings"
 
-	"apigov.dev/flame/cmd/flame/connection"
-	"apigov.dev/flame/gapic"
-	"apigov.dev/flame/models"
-	rpc "apigov.dev/flame/rpc"
+	"apigov.dev/registry/cmd/registry/connection"
+	"apigov.dev/registry/gapic"
+	"apigov.dev/registry/models"
+	rpc "apigov.dev/registry/rpc"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
@@ -78,7 +78,7 @@ func init() {
 
 const SHEETID = "13nx5d6pvb1qZWcFKR8oQTREmLVwoV1ILC8CsWnD7erQ"
 
-const SERVICE_ACCOUNT_CREDENTIALS = "/home/tim/.credentials/flamedemo.json"
+const SERVICE_ACCOUNT_CREDENTIALS = "/home/tim/.credentials/registrydemo.json"
 
 type CheckerResult struct {
 	api      string
@@ -205,7 +205,7 @@ func (ssc *StatusSheetConnection) updateWithCheckerResults(checkerResults []Chec
 
 var values map[string]int64
 
-func (ssc *StatusSheetConnection) exportNamedProperty(ctx context.Context, client *gapic.FlameClient, projectID string, subject string, relation string) error {
+func (ssc *StatusSheetConnection) exportNamedProperty(ctx context.Context, client *gapic.RegistryClient, projectID string, subject string, relation string) error {
 	request := &rpc.ListPropertiesRequest{
 		Parent:   "projects/" + projectID,
 		Subject:  subject,

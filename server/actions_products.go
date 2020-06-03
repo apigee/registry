@@ -6,8 +6,8 @@ import (
 	"context"
 	"log"
 
-	"apigov.dev/flame/models"
-	rpc "apigov.dev/flame/rpc"
+	"apigov.dev/registry/models"
+	rpc "apigov.dev/registry/rpc"
 	"cloud.google.com/go/datastore"
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/api/iterator"
@@ -15,7 +15,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (s *FlameServer) CreateProduct(ctx context.Context, request *rpc.CreateProductRequest) (*rpc.Product, error) {
+func (s *RegistryServer) CreateProduct(ctx context.Context, request *rpc.CreateProductRequest) (*rpc.Product, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
@@ -41,7 +41,7 @@ func (s *FlameServer) CreateProduct(ctx context.Context, request *rpc.CreateProd
 	return product.Message()
 }
 
-func (s *FlameServer) DeleteProduct(ctx context.Context, request *rpc.DeleteProductRequest) (*empty.Empty, error) {
+func (s *RegistryServer) DeleteProduct(ctx context.Context, request *rpc.DeleteProductRequest) (*empty.Empty, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
@@ -59,7 +59,7 @@ func (s *FlameServer) DeleteProduct(ctx context.Context, request *rpc.DeleteProd
 	return &empty.Empty{}, internalError(err)
 }
 
-func (s *FlameServer) GetProduct(ctx context.Context, request *rpc.GetProductRequest) (*rpc.Product, error) {
+func (s *RegistryServer) GetProduct(ctx context.Context, request *rpc.GetProductRequest) (*rpc.Product, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
@@ -79,7 +79,7 @@ func (s *FlameServer) GetProduct(ctx context.Context, request *rpc.GetProductReq
 	return product.Message()
 }
 
-func (s *FlameServer) ListProducts(ctx context.Context, req *rpc.ListProductsRequest) (*rpc.ListProductsResponse, error) {
+func (s *RegistryServer) ListProducts(ctx context.Context, req *rpc.ListProductsRequest) (*rpc.ListProductsResponse, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
@@ -143,7 +143,7 @@ func (s *FlameServer) ListProducts(ctx context.Context, req *rpc.ListProductsReq
 	return responses, nil
 }
 
-func (s *FlameServer) UpdateProduct(ctx context.Context, request *rpc.UpdateProductRequest) (*rpc.Product, error) {
+func (s *RegistryServer) UpdateProduct(ctx context.Context, request *rpc.UpdateProductRequest) (*rpc.Product, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, internalError(err)

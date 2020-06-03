@@ -24,9 +24,9 @@ import (
 	"os"
 	"strings"
 
-	"apigov.dev/flame/client"
-	"apigov.dev/flame/gapic"
-	rpcpb "apigov.dev/flame/rpc"
+	"apigov.dev/registry/client"
+	"apigov.dev/registry/gapic"
+	rpcpb "apigov.dev/registry/rpc"
 	"github.com/docopt/docopt-go"
 	"github.com/golang/protobuf/proto"
 	"github.com/googleapis/gnostic/conversions"
@@ -35,15 +35,15 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-var flameClient *gapic.FlameClient
+var registryClient *gapic.RegistryClient
 
 func main() {
 	usage := `
 Usage:
-	disco-flame help
-	disco-flame list [--raw]
-	disco-flame get [<api>] [<version>] [--upload] [--raw] [--openapi2] [--openapi3] [--features] [--schemas] [--all]
-	disco-flame <file> [--upload] [--openapi2] [--openapi3] [--features] [--schemas]
+	disco-registry help
+	disco-registry list [--raw]
+	disco-registry get [<api>] [<version>] [--upload] [--raw] [--openapi2] [--openapi3] [--features] [--schemas] [--all]
+	disco-registry <file> [--upload] [--openapi2] [--openapi3] [--features] [--schemas]
 	`
 	arguments, err := docopt.Parse(usage, nil, false, "Disco 1.0", false)
 	if err != nil {
@@ -58,7 +58,7 @@ Usage:
 	}
 
 	if arguments["--upload"].(bool) {
-		flameClient, err = client.NewClient()
+		registryClient, err = client.NewClient()
 	}
 
 	// List APIs.
@@ -197,7 +197,7 @@ func handleExportArgumentsForBytes(arguments map[string]interface{}, fileBytes [
 		{
 			request := &rpcpb.GetProductRequest{}
 			request.Name = "projects/google/products/" + api.Name
-			_, err := flameClient.GetProduct(ctx, request)
+			_, err := registryClient.GetProduct(ctx, request)
 			if notFound(err) {
 				request := &rpcpb.CreateProductRequest{}
 				request.Parent = "projects/google"
@@ -205,7 +205,7 @@ func handleExportArgumentsForBytes(arguments map[string]interface{}, fileBytes [
 				request.Product = &rpcpb.Product{}
 				request.Product.DisplayName = api.Title
 				request.Product.Description = api.Description
-				response, err := flameClient.CreateProduct(ctx, request)
+				response, err := registryClient.CreateProduct(ctx, request)
 				if err == nil {
 					log.Printf("created %s", response.Name)
 				} else {
@@ -218,13 +218,13 @@ func handleExportArgumentsForBytes(arguments map[string]interface{}, fileBytes [
 		{
 			request := &rpcpb.GetVersionRequest{}
 			request.Name = "projects/google/products/" + api.Name + "/versions/" + api.Version
-			_, err := flameClient.GetVersion(ctx, request)
+			_, err := registryClient.GetVersion(ctx, request)
 			if notFound(err) {
 				request := &rpcpb.CreateVersionRequest{}
 				request.Parent = "projects/google/products/" + api.Name
 				request.VersionId = api.Version
 				request.Version = &rpcpb.Version{}
-				response, err := flameClient.CreateVersion(ctx, request)
+				response, err := registryClient.CreateVersion(ctx, request)
 				if err == nil {
 					log.Printf("created %s", response.Name)
 				} else {
@@ -239,7 +239,7 @@ func handleExportArgumentsForBytes(arguments map[string]interface{}, fileBytes [
 			request.Name = "projects/google/products/" + api.Name +
 				"/versions/" + api.Version +
 				"/specs/discovery.json"
-			_, err := flameClient.GetSpec(ctx, request)
+			_, err := registryClient.GetSpec(ctx, request)
 			if notFound(err) {
 				// gzip the bytes
 				var buf bytes.Buffer
@@ -259,7 +259,7 @@ func handleExportArgumentsForBytes(arguments map[string]interface{}, fileBytes [
 				request.Spec = &rpcpb.Spec{}
 				request.Spec.Style = "discovery+gzip"
 				request.Spec.Contents = buf.Bytes()
-				response, err := flameClient.CreateSpec(ctx, request)
+				response, err := registryClient.CreateSpec(ctx, request)
 				if err == nil {
 					log.Printf("created %s", response.Name)
 				} else {

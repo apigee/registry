@@ -1,21 +1,21 @@
 syntax = "proto3";
 
-package google.cloud.apigee.flame.v1alpha1;
+package google.cloud.apigee.registry.v1alpha1;
 
 import "google/api/resource.proto";
 import "google/protobuf/any.proto";
 import "google/protobuf/timestamp.proto";
 
-option java_package = "com.google.cloud.apigee.flame.v1alpha1";
+option java_package = "com.google.cloud.apigee.registry.v1alpha1";
 option java_multiple_files = true;
-option java_outer_classname = "FlameModelsProto";
-option go_package = "apigov.dev/flame/rpc;rpc";
+option java_outer_classname = "RegistryModelsProto";
+option go_package = "apigov.dev/registry/rpc;rpc";
 
 // A Project is a top-level description of a collection of APIs.
 // Typically there would be one project for an entire organization.
 message Project {
   option (google.api.resource) = {
-    type : "flame.googleapis.com/Project"
+    type : "registry.googleapis.com/Project"
     pattern : "projects/{project}"
   };
 
@@ -40,7 +40,7 @@ message Project {
 // Products are produced by producers and are commitments to provide services.
 message Product {
   option (google.api.resource) = {
-    type : "flame.googleapis.com/Product"
+    type : "registry.googleapis.com/Product"
     pattern : "projects/{project}/products/{product}"
   };
 
@@ -67,7 +67,7 @@ message Product {
   // The recommended version of the API.
   // Format: apis/{api}/versions/{version}
   string recommended_version = 7 [
-    (google.api.resource_reference) = {type : "flame.googleapis.com/Version"}
+    (google.api.resource_reference) = {type : "registry.googleapis.com/Version"}
   ];
 }
 
@@ -75,7 +75,7 @@ message Product {
 // Versions are what consumers actually use.
 message Version {
   option (google.api.resource) = {
-    type : "flame.googleapis.com/Version"
+    type : "registry.googleapis.com/Version"
     pattern : "projects/{project}/products/{product}/versions/{version}"
   };
 
@@ -107,7 +107,7 @@ message Version {
 // its own name and a common value for the format property.
 message Spec {
   option (google.api.resource) = {
-    type : "flame.googleapis.com/Spec"
+    type : "registry.googleapis.com/Spec"
     pattern : "projects/{project}/products/{product}/versions/{version}/specs/"
               "{spec}"
   };
