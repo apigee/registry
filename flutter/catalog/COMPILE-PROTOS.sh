@@ -15,7 +15,7 @@ protoc --proto_path=../../proto --proto_path=${ANNOTATIONS} \
    	${PROTO_PROTOS}/google/protobuf/timestamp.proto \
         ${PROTO_PROTOS}/google/protobuf/field_mask.proto \
         ${PROTO_PROTOS}/google/protobuf/empty.proto \
-	../../proto/flame_models.proto \
-	../../proto/flame_properties.proto \
-	../../proto/flame_service.proto \
+	../../proto/registry_models.proto \
+	../../proto/registry_properties.proto \
+	../../proto/registry_service.proto \
 	--dart_out=grpc:lib/generated

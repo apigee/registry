@@ -1,15 +1,15 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'grpc_client.dart';
-import 'package:catalog/generated/flame_models.pb.dart';
-import 'package:catalog/generated/flame_service.pb.dart';
-import 'package:catalog/generated/flame_service.pbgrpc.dart';
+import 'package:catalog/generated/registry_models.pb.dart';
+import 'package:catalog/generated/registry_service.pb.dart';
+import 'package:catalog/generated/registry_service.pbgrpc.dart';
 import 'alerts.dart';
 
 const int pageSize = 50;
 
 class ProjectService {
-  static FlameClient getClient() => FlameClient(createClientChannel());
+  static RegistryClient getClient() => RegistryClient(createClientChannel());
 
   static String filter;
   static Map<int, String> tokens;
@@ -62,7 +62,7 @@ class ProjectService {
 }
 
 class ProductService {
-  static FlameClient getClient() => FlameClient(createClientChannel());
+  static RegistryClient getClient() => RegistryClient(createClientChannel());
 
   static String filter;
   static Map<int, String> tokens;
@@ -119,7 +119,7 @@ class ProductService {
 }
 
 class VersionService {
-  static FlameClient getClient() => FlameClient(createClientChannel());
+  static RegistryClient getClient() => RegistryClient(createClientChannel());
 
   static String filter;
   static Map<int, String> tokens;
@@ -176,7 +176,7 @@ class VersionService {
 }
 
 class SpecService {
-  static FlameClient getClient() => FlameClient(createClientChannel());
+  static RegistryClient getClient() => RegistryClient(createClientChannel());
 
   static String filter;
   static Map<int, String> tokens;
@@ -221,6 +221,8 @@ class SpecService {
     final client = getClient();
     final request = GetSpecRequest();
     request.name = name;
+    request.view = SpecView.FULL;
+    print("requesting $request");
     try {
       return client.getSpec(request, options: callOptions());
     } catch (err) {
@@ -231,7 +233,7 @@ class SpecService {
 }
 
 class PropertiesService {
-  static FlameClient getClient() => FlameClient(createClientChannel());
+  static RegistryClient getClient() => RegistryClient(createClientChannel());
 
   static Future<ListPropertiesResponse> listProperties(String parent,
       {subject: String}) {

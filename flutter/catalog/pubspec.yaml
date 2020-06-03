@@ -31,7 +31,8 @@ dependencies:
   protobuf: ^1.0.1
   url_launcher: ^5.4.5
   google_sign_in: ^4.1.0
-    
+  archive: ^2.0.13
+  
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:catalog/generated/flame_models.pb.dart';
+import 'package:catalog/generated/registry_models.pb.dart';
 import 'service.dart';
 
 class ProductDetailWidget extends StatefulWidget {

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_pagewise/flutter_pagewise.dart';
-import 'package:catalog/generated/flame_models.pb.dart';
+import 'package:catalog/generated/registry_models.pb.dart';
 import 'service.dart';
 import 'help.dart';
 
