@@ -1,8 +1,8 @@
-{{define "flame_service.proto"}}syntax = "proto3";
+{{define "registry_service.proto"}}syntax = "proto3";
 
-package google.cloud.apigee.flame.v1alpha1;
+package google.cloud.apigee.registry.v1alpha1;
 
-import "flame_models.proto";
+import "registry_models.proto";
 import "google/api/annotations.proto";
 import "google/api/client.proto";
 import "google/api/field_behavior.proto";
@@ -10,18 +10,18 @@ import "google/api/resource.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/field_mask.proto";
 
-option java_package = "com.google.cloud.apigee.flame.v1alpha1";
+option java_package = "com.google.cloud.apigee.registry.v1alpha1";
 option java_multiple_files = true;
-option java_outer_classname = "FlameServiceProto";
-option go_package = "apigov.dev/flame/rpc;rpc";
+option java_outer_classname = "RegistryServiceProto";
+option go_package = "apigov.dev/registry/rpc;rpc";
 
-// The Flame API provides structures and relationships for
+// The Registry API provides structures and relationships for
 // Full Lifecycle API Management. It enables API platform
 // teams to build rich models of their API ecosystems and
 // provide information and oversight to API producers and
 // consumers in their organizations.
-service Flame {
-  option (google.api.default_host) = "flame.googleapis.com";
+service Registry {
+  option (google.api.default_host) = "registry.googleapis.com";
 {{range .Entities}}{{template "rpcs" .}}{{end}}
 }
 {{range .Entities}}{{template "messages" .}}{{end}}
@@ -34,7 +34,7 @@ service Flame {
   //     aip.dev/not-precedent: the organization is the implicit parent. --){{end}}
   rpc List{{.PluralName}}(List{{.PluralName}}Request) returns (List{{.PluralName}}Response) {
     option (google.api.http) = {
-      get: "{{collection_path .ParentName .PluralName}}"
+      get : "{{collection_path .ParentName .PluralName}}"
     };{{if .ParentName}}
     option (google.api.method_signature) = "parent";{{end}}
   }
@@ -42,7 +42,7 @@ service Flame {
   // Get{{.Name}} returns a specified {{lower_comment .Name}}.
   rpc Get{{.Name}}(Get{{.Name}}Request) returns ({{.Name}}) {
     option (google.api.http) = {
-      get: "{{resource_path .ResourceName}}"
+      get : "{{resource_path .ResourceName}}"
     };
     option (google.api.method_signature) = "name";
   }
@@ -55,8 +55,8 @@ service Flame {
   //     aip.dev/not-precedent: {{.Name}} has an implicit parent. --){{end}}
   rpc Create{{.Name}}(Create{{.Name}}Request) returns ({{.Name}}) {
     option (google.api.http) = {
-      post: "{{collection_path .ParentName .PluralName}}"
-      body: "{{lower .Name}}"
+      post : "{{collection_path .ParentName .PluralName}}"
+      body : "{{lower .Name}}"
     };{{if not .ParentName}}
     option (google.api.method_signature) = "{{lower .Name}},{{lower .Name}}_id";{{else}}
     option (google.api.method_signature) = "parent,{{lower .Name}},{{lower .Name}}_id";{{end}}
@@ -65,16 +65,17 @@ service Flame {
   // Update{{.Name}} can be used to modify a specified {{lower_comment .Name}}.
   rpc Update{{.Name}}(Update{{.Name}}Request) returns ({{.Name}}) {
     option (google.api.http) = {
-      patch: "{{resource_path_for_update .Name .ResourceName}}"
-      body: "{{lower .Name}}"
+      patch : "{{resource_path_for_update .Name .ResourceName}}"
+      body : "{{lower .Name}}"
     };
     option (google.api.method_signature) = "{{lower .Name}},update_mask";
   }
 
-  // Delete{{.Name}} removes a specified {{lower_comment .Name}} and all of the resources that it owns.
+  // Delete{{.Name}} removes a specified {{lower_comment .Name}} and all of the resources that it
+  // owns.
   rpc Delete{{.Name}}(Delete{{.Name}}Request) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      delete: "{{resource_path .ResourceName}}"
+      delete : "{{resource_path .ResourceName}}"
     };
     option (google.api.method_signature) = "name";
   }
@@ -89,7 +90,7 @@ message List{{.PluralName}}Request {
   // Format: {{.ParentName}}
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = { child_type: "flame.googleapis.com/{{.Name}}" }
+    (google.api.resource_reference) = {child_type: "registry.googleapis.com/{{.Name}}"}
   ];
 {{end}}  // The maximum number of {{lower_comment .PluralName}} to return.
   // The service may return fewer than this value.
@@ -108,7 +109,8 @@ message List{{.PluralName}}Request {
   string filter = 4;{{if .ViewEnumName}}
 
   // The level of detail to return (defaults to BASIC).
-  {{.ViewEnumName}} view = 5;{{end}}
+  {{.ViewEnumName}} view = 5;{{end}}{{if .ExtraRequestFields}}
+{{.ExtraRequestFields}}{{end}}
 }
 
 // Response message for List{{.PluralName}}.
@@ -128,7 +130,7 @@ message Get{{.Name}}Request {
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
-      type: "flame.googleapis.com/{{.Name}}"
+      type: "registry.googleapis.com/{{.Name}}"
     }
   ];{{if .ViewEnumName}}
 
@@ -144,10 +146,10 @@ message Create{{.Name}}Request {
   // Format: {{.ParentName}}
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = { child_type: "flame.googleapis.com/{{.Name}}" }
+    (google.api.resource_reference) = {child_type: "registry.googleapis.com/{{.Name}}"}
   ];
 {{end}}  // The {{lower_comment .Name}} to create.
-  {{.Name}} {{lower .Name}} = 2 [(google.api.field_behavior) = REQUIRED];
+  {{.Name}} {{lower .Name}} = 2 [ (google.api.field_behavior) = REQUIRED ];
   // The ID to use for the {{lower .Name}}, which will become the final component of
   // the {{lower .Name}}'s resource name.
   //
@@ -162,7 +164,7 @@ message Update{{.Name}}Request {
   //
   // The `name` field is used to identify the {{lower_comment .Name}} to update.
   // Format: {{.ResourceName}}
-  {{.Name}} {{lower .Name}} = 1 [(google.api.field_behavior) = REQUIRED];
+  {{.Name}} {{lower .Name}} = 1 [ (google.api.field_behavior) = REQUIRED ];
 
   // The list of fields to be updated.
   google.protobuf.FieldMask update_mask = 2;
@@ -174,7 +176,7 @@ message Delete{{.Name}}Request {
   // Format: {{.ResourceName}}
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = { type: "flame.googleapis.com/{{.Name}}" }
+    (google.api.resource_reference) = {type : "registry.googleapis.com/{{.Name}}"}
   ];
 }
 {{end}}

@@ -193,7 +193,8 @@ service Registry {
     option (google.api.method_signature) = "spec,update_mask";
   }
 
-  // DeleteSpec removes a specified spec and all of the resources that it owns.
+  // DeleteSpec removes a specified spec and all of the resources that it
+  // owns.
   rpc DeleteSpec(DeleteSpecRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
       delete : "/v1alpha1/{name=projects/*/products/*/versions/*/specs/*}"
@@ -235,14 +236,15 @@ service Registry {
     option (google.api.method_signature) = "property,update_mask";
   }
 
-  // DeleteProperty removes a specified property and all of the resources that
-  // it owns.
+  // DeleteProperty removes a specified property and all of the resources that it
+  // owns.
   rpc DeleteProperty(DeletePropertyRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
       delete : "/v1alpha1/{name=projects/*/properties/*}"
     };
     option (google.api.method_signature) = "name";
   }
+
 }
 
 // Request message for ListProjects.
@@ -282,7 +284,9 @@ message GetProjectRequest {
   // Format: projects/*
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type : "registry.googleapis.com/Project"}
+    (google.api.resource_reference) = {
+      type: "registry.googleapis.com/Project"
+    }
   ];
 }
 
@@ -328,9 +332,7 @@ message ListProductsRequest {
   // Format: projects/*
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {
-      child_type : "registry.googleapis.com/Product"
-    }
+    (google.api.resource_reference) = {child_type: "registry.googleapis.com/Product"}
   ];
   // The maximum number of products to return.
   // The service may return fewer than this value.
@@ -365,7 +367,9 @@ message GetProductRequest {
   // Format: projects/*/products/*
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type : "registry.googleapis.com/Product"}
+    (google.api.resource_reference) = {
+      type: "registry.googleapis.com/Product"
+    }
   ];
 }
 
@@ -375,9 +379,7 @@ message CreateProductRequest {
   // Format: projects/*
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {
-      child_type : "registry.googleapis.com/Product"
-    }
+    (google.api.resource_reference) = {child_type: "registry.googleapis.com/Product"}
   ];
   // The product to create.
   Product product = 2 [ (google.api.field_behavior) = REQUIRED ];
@@ -417,9 +419,7 @@ message ListVersionsRequest {
   // Format: projects/*/products/*
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {
-      child_type : "registry.googleapis.com/Version"
-    }
+    (google.api.resource_reference) = {child_type: "registry.googleapis.com/Version"}
   ];
   // The maximum number of versions to return.
   // The service may return fewer than this value.
@@ -454,7 +454,9 @@ message GetVersionRequest {
   // Format: projects/*/products/*/versions/*
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type : "registry.googleapis.com/Version"}
+    (google.api.resource_reference) = {
+      type: "registry.googleapis.com/Version"
+    }
   ];
 }
 
@@ -464,9 +466,7 @@ message CreateVersionRequest {
   // Format: projects/*/products/*
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {
-      child_type : "registry.googleapis.com/Version"
-    }
+    (google.api.resource_reference) = {child_type: "registry.googleapis.com/Version"}
   ];
   // The version to create.
   Version version = 2 [ (google.api.field_behavior) = REQUIRED ];
@@ -506,7 +506,7 @@ message ListSpecsRequest {
   // Format: projects/*/products/*/versions/*
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {child_type : "registry.googleapis.com/Spec"}
+    (google.api.resource_reference) = {child_type: "registry.googleapis.com/Spec"}
   ];
   // The maximum number of specs to return.
   // The service may return fewer than this value.
@@ -544,7 +544,9 @@ message GetSpecRequest {
   // Format: projects/*/products/*/versions/*/specs/*
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type : "registry.googleapis.com/Spec"}
+    (google.api.resource_reference) = {
+      type: "registry.googleapis.com/Spec"
+    }
   ];
 
   // The level of detail to return (defaults to BASIC).
@@ -557,7 +559,7 @@ message CreateSpecRequest {
   // Format: projects/*/products/*/versions/*
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {child_type : "registry.googleapis.com/Spec"}
+    (google.api.resource_reference) = {child_type: "registry.googleapis.com/Spec"}
   ];
   // The spec to create.
   Spec spec = 2 [ (google.api.field_behavior) = REQUIRED ];
@@ -597,9 +599,7 @@ message ListPropertiesRequest {
   // Format: projects/*
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {
-      child_type : "registry.googleapis.com/Property"
-    }
+    (google.api.resource_reference) = {child_type: "registry.googleapis.com/Property"}
   ];
   // The maximum number of properties to return.
   // The service may return fewer than this value.
@@ -610,18 +610,19 @@ message ListPropertiesRequest {
   // A page token, received from a previous `ListProperties` call.
   // Provide this to retrieve the subsequent page.
   //
-  // When paginating, all other parameters provided to `ListProperties` must
-  // match the call that provided the page token.
+  // When paginating, all other parameters provided to `ListProperties` must match
+  // the call that provided the page token.
   string page_token = 3;
 
   // An optional expression that can be used to filter the list.
   string filter = 4;
 
-  // Optional subject that can be used to filter the list. 
+  // Optional subject that can be used to filter the list.
   string subject = 5;
 
-  // Optional relation that can be used to filter the list. 
+  // Optional relation that can be used to filter the list.
   string relation = 6;
+
 }
 
 // Response message for ListProperties.
@@ -640,7 +641,9 @@ message GetPropertyRequest {
   // Format: projects/*/properties/*
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type : "registry.googleapis.com/Property"}
+    (google.api.resource_reference) = {
+      type: "registry.googleapis.com/Property"
+    }
   ];
 }
 
@@ -650,9 +653,7 @@ message CreatePropertyRequest {
   // Format: projects/*
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {
-      child_type : "registry.googleapis.com/Property"
-    }
+    (google.api.resource_reference) = {child_type: "registry.googleapis.com/Property"}
   ];
   // The property to create.
   Property property = 2 [ (google.api.field_behavior) = REQUIRED ];
@@ -685,3 +686,4 @@ message DeletePropertyRequest {
     (google.api.resource_reference) = {type : "registry.googleapis.com/Property"}
   ];
 }
+

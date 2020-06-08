@@ -20,11 +20,12 @@ func check(e error) {
 
 // Entity is an entity in a CRUD API service.
 type Entity struct {
-	Name         string
-	PluralName   string
-	ParentName   string
-	ResourceName string
-	ViewEnumName string
+	Name               string
+	PluralName         string
+	ParentName         string
+	ResourceName       string
+	ViewEnumName       string
+	ExtraRequestFields string
 }
 
 // Service is a top-level description of a CRUD API service.
@@ -61,38 +62,49 @@ func main() {
 	service := Service{
 		Entities: []Entity{
 			{
-				Name:         "Project",
-				PluralName:   "Projects",
-				ParentName:   "",
-				ResourceName: "projects/*",
-				ViewEnumName: "",
+				Name:               "Project",
+				PluralName:         "Projects",
+				ParentName:         "",
+				ResourceName:       "projects/*",
+				ViewEnumName:       "",
+				ExtraRequestFields: "",
 			},
 			{
-				Name:         "Product",
-				PluralName:   "Products",
-				ParentName:   "projects/*",
-				ResourceName: "projects/*/products/*",
-				ViewEnumName: "",
+				Name:               "Product",
+				PluralName:         "Products",
+				ParentName:         "projects/*",
+				ResourceName:       "projects/*/products/*",
+				ViewEnumName:       "",
+				ExtraRequestFields: "",
 			},
 			{
-				Name:         "Version",
-				PluralName:   "Versions",
-				ParentName:   "projects/*/products/*",
-				ResourceName: "projects/*/products/*/versions/*",
-				ViewEnumName: "",
+				Name:               "Version",
+				PluralName:         "Versions",
+				ParentName:         "projects/*/products/*",
+				ResourceName:       "projects/*/products/*/versions/*",
+				ViewEnumName:       "",
+				ExtraRequestFields: "",
 			},
 			{
-				Name:         "Spec",
-				PluralName:   "Specs",
-				ParentName:   "projects/*/products/*/versions/*",
-				ResourceName: "projects/*/products/*/versions/*/specs/*",
-				ViewEnumName: "SpecView",
+				Name:               "Spec",
+				PluralName:         "Specs",
+				ParentName:         "projects/*/products/*/versions/*",
+				ResourceName:       "projects/*/products/*/versions/*/specs/*",
+				ViewEnumName:       "SpecView",
+				ExtraRequestFields: "",
 			},
 			{
 				Name:         "Property",
 				PluralName:   "Properties",
 				ParentName:   "projects/*",
 				ResourceName: "projects/*/properties/*",
+				ExtraRequestFields: `
+  // Optional subject that can be used to filter the list.
+  string subject = 5;
+
+  // Optional relation that can be used to filter the list.
+  string relation = 6;
+`,
 			},
 		},
 	}
