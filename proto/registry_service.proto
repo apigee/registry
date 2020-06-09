@@ -245,6 +245,49 @@ service Registry {
     option (google.api.method_signature) = "name";
   }
 
+  // ListTags returns matching tags.
+  rpc ListTags(ListTagsRequest) returns (ListTagsResponse) {
+    option (google.api.http) = {
+      get : "/v1alpha1/{parent=projects/*}/tags"
+    };
+    option (google.api.method_signature) = "parent";
+  }
+
+  // GetTag returns a specified tag.
+  rpc GetTag(GetTagRequest) returns (Tag) {
+    option (google.api.http) = {
+      get : "/v1alpha1/{name=projects/*/tags/*}"
+    };
+    option (google.api.method_signature) = "name";
+  }
+
+  // CreateTag creates a specified tag.
+  rpc CreateTag(CreateTagRequest) returns (Tag) {
+    option (google.api.http) = {
+      post : "/v1alpha1/{parent=projects/*}/tags"
+      body : "tag"
+    };
+    option (google.api.method_signature) = "parent,tag,tag_id";
+  }
+
+  // UpdateTag can be used to modify a specified tag.
+  rpc UpdateTag(UpdateTagRequest) returns (Tag) {
+    option (google.api.http) = {
+      patch : "/v1alpha1/{tag.name=projects/*/tags/*}"
+      body : "tag"
+    };
+    option (google.api.method_signature) = "tag,update_mask";
+  }
+
+  // DeleteTag removes a specified tag and all of the resources that it
+  // owns.
+  rpc DeleteTag(DeleteTagRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete : "/v1alpha1/{name=projects/*/tags/*}"
+    };
+    option (google.api.method_signature) = "name";
+  }
+
 }
 
 // Request message for ListProjects.
@@ -616,13 +659,6 @@ message ListPropertiesRequest {
 
   // An optional expression that can be used to filter the list.
   string filter = 4;
-
-  // Optional subject that can be used to filter the list.
-  string subject = 5;
-
-  // Optional relation that can be used to filter the list.
-  string relation = 6;
-
 }
 
 // Response message for ListProperties.
@@ -684,6 +720,93 @@ message DeletePropertyRequest {
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {type : "registry.googleapis.com/Property"}
+  ];
+}
+
+// Request message for ListTags.
+message ListTagsRequest {
+  // The parent, which owns this collection of tags.
+  // Format: projects/*
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {child_type: "registry.googleapis.com/Tag"}
+  ];
+  // The maximum number of tags to return.
+  // The service may return fewer than this value.
+  // If unspecified, at most 50 values will be returned.
+  // The maximum is 1000; values above 1000 will be coerced to 1000.
+  int32 page_size = 2;
+
+  // A page token, received from a previous `ListTags` call.
+  // Provide this to retrieve the subsequent page.
+  //
+  // When paginating, all other parameters provided to `ListTags` must match
+  // the call that provided the page token.
+  string page_token = 3;
+
+  // An optional expression that can be used to filter the list.
+  string filter = 4;
+}
+
+// Response message for ListTags.
+message ListTagsResponse {
+  // The tags from the specified publisher.
+  repeated Tag tags = 1;
+
+  // A token, which can be sent as `page_token` to retrieve the next page.
+  // If this field is omitted, there are no subsequent pages.
+  string next_page_token = 2;
+}
+
+// Request message for GetTag.
+message GetTagRequest {
+  // The name of the tag to retrieve.
+  // Format: projects/*/tags/*
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      type: "registry.googleapis.com/Tag"
+    }
+  ];
+}
+
+// Request message for CreateTag.
+message CreateTagRequest {
+  // The parent, which owns this collection of tags.
+  // Format: projects/*
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {child_type: "registry.googleapis.com/Tag"}
+  ];
+  // The tag to create.
+  Tag tag = 2 [ (google.api.field_behavior) = REQUIRED ];
+  // The ID to use for the tag, which will become the final component of
+  // the tag's resource name.
+  //
+  // This value should be 4-63 characters, and valid characters
+  // are /[a-z][0-9]-/.
+  string tag_id = 3;
+}
+
+// Request message for UpdateTag.
+message UpdateTagRequest {
+  // The tag to update.
+  //
+  // The `name` field is used to identify the tag to update.
+  // Format: projects/*/tags/*
+  Tag tag = 1 [ (google.api.field_behavior) = REQUIRED ];
+
+  // The list of fields to be updated.
+  google.protobuf.FieldMask update_mask = 2;
+}
+
+// Request message for DeleteTag.
+message DeleteTagRequest {
+  // The name of the tag to delete.
+  // Format: projects/*/tags/*
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type : "registry.googleapis.com/Tag"}
   ];
 }
 

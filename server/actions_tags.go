@@ -15,82 +15,82 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (s *RegistryServer) CreateProperty(ctx context.Context, request *rpc.CreatePropertyRequest) (*rpc.Property, error) {
+func (s *RegistryServer) CreateTag(ctx context.Context, request *rpc.CreateTagRequest) (*rpc.Tag, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
 	}
 	defer client.Close()
-	property, err := models.NewPropertyFromParentAndPropertyID(request.GetParent(), request.GetPropertyId())
+	tag, err := models.NewTagFromParentAndTagID(request.GetParent(), request.GetTagId())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	err = property.Update(request.GetProperty())
-	k := &datastore.Key{Kind: models.PropertyEntityName, Name: property.ResourceName()}
-	// fail if property already exists
-	var existingProperty models.Property
-	err = client.Get(ctx, k, &existingProperty)
+	err = tag.Update(request.GetTag())
+	k := &datastore.Key{Kind: models.TagEntityName, Name: tag.ResourceName()}
+	// fail if tag already exists
+	var existingTag models.Tag
+	err = client.Get(ctx, k, &existingTag)
 	if err == nil {
-		return nil, status.Error(codes.AlreadyExists, property.ResourceName()+" already exists")
+		return nil, status.Error(codes.AlreadyExists, tag.ResourceName()+" already exists")
 	}
-	property.CreateTime = property.UpdateTime
-	k, err = client.Put(ctx, k, property)
+	tag.CreateTime = tag.UpdateTime
+	k, err = client.Put(ctx, k, tag)
 	if err != nil {
 		return nil, internalError(err)
 	}
-	return property.Message()
+	return tag.Message()
 }
 
-func (s *RegistryServer) DeleteProperty(ctx context.Context, request *rpc.DeletePropertyRequest) (*empty.Empty, error) {
+func (s *RegistryServer) DeleteTag(ctx context.Context, request *rpc.DeleteTagRequest) (*empty.Empty, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
 	}
 	defer client.Close()
-	// Validate name and create dummy property (we just need the ID fields).
-	_, err = models.NewPropertyFromResourceName(request.GetName())
+	// Validate name and create dummy tag (we just need the ID fields).
+	_, err = models.NewTagFromResourceName(request.GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	// Delete the property.
-	k := &datastore.Key{Kind: models.PropertyEntityName, Name: request.GetName()}
+	// Delete the tag.
+	k := &datastore.Key{Kind: models.TagEntityName, Name: request.GetName()}
 	err = client.Delete(ctx, k)
 	return &empty.Empty{}, internalError(err)
 }
 
-func (s *RegistryServer) GetProperty(ctx context.Context, request *rpc.GetPropertyRequest) (*rpc.Property, error) {
+func (s *RegistryServer) GetTag(ctx context.Context, request *rpc.GetTagRequest) (*rpc.Tag, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
 	}
 	defer client.Close()
-	property, err := models.NewPropertyFromResourceName(request.GetName())
+	tag, err := models.NewTagFromResourceName(request.GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	log.Printf("looking for %s", property.ResourceName())
-	k := &datastore.Key{Kind: models.PropertyEntityName, Name: property.ResourceName()}
-	err = client.Get(ctx, k, property)
+	log.Printf("looking for %s", tag.ResourceName())
+	k := &datastore.Key{Kind: models.TagEntityName, Name: tag.ResourceName()}
+	err = client.Get(ctx, k, tag)
 	if err == datastore.ErrNoSuchEntity {
 		return nil, status.Error(codes.NotFound, "not found")
 	} else if err != nil {
 		return nil, internalError(err)
 	}
-	return property.Message()
+	return tag.Message()
 }
 
-func (s *RegistryServer) ListProperties(ctx context.Context, req *rpc.ListPropertiesRequest) (*rpc.ListPropertiesResponse, error) {
+func (s *RegistryServer) ListTags(ctx context.Context, req *rpc.ListTagsRequest) (*rpc.ListTagsResponse, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
 	}
 	defer client.Close()
-	q := datastore.NewQuery(models.PropertyEntityName)
+	q := datastore.NewQuery(models.TagEntityName)
 	q, err = queryApplyCursor(q, req.GetPageToken())
 	if err != nil {
 		return nil, internalError(err)
 	}
-	p, err := models.NewPropertyFromParentAndPropertyID(req.GetParent(), "-")
+	p, err := models.NewTagFromParentAndTagID(req.GetParent(), "-")
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
@@ -108,19 +108,19 @@ func (s *RegistryServer) ListProperties(ctx context.Context, req *rpc.ListProper
 	}
 	prg, err := createFilterOperator(req.GetFilter(),
 		[]filterArg{
-			{"property_id", filterArgTypeString},
+			{"tag_id", filterArgTypeString},
 		})
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	var propertyMessages []*rpc.Property
-	var property models.Property
+	var tagMessages []*rpc.Tag
+	var tag models.Tag
 	it := client.Run(ctx, q.Distinct())
 	pageSize := boundPageSize(req.GetPageSize())
-	for _, err = it.Next(&property); err == nil; _, err = it.Next(&property) {
+	for _, err = it.Next(&tag); err == nil; _, err = it.Next(&tag) {
 		if prg != nil {
 			out, _, err := prg.Eval(map[string]interface{}{
-				"property_id": property.PropertyID,
+				"tag_id": tag.TagID,
 			})
 			if err != nil {
 				return nil, invalidArgumentError(err)
@@ -129,47 +129,47 @@ func (s *RegistryServer) ListProperties(ctx context.Context, req *rpc.ListProper
 				continue
 			}
 		}
-		propertyMessage, _ := property.Message()
-		propertyMessages = append(propertyMessages, propertyMessage)
-		if len(propertyMessages) == pageSize {
+		tagMessage, _ := tag.Message()
+		tagMessages = append(tagMessages, tagMessage)
+		if len(tagMessages) == pageSize {
 			break
 		}
 	}
 	if err != nil && err != iterator.Done {
 		return nil, internalError(err)
 	}
-	responses := &rpc.ListPropertiesResponse{
-		Properties: propertyMessages,
+	responses := &rpc.ListTagsResponse{
+		Tags: tagMessages,
 	}
-	responses.NextPageToken, err = iteratorGetCursor(it, len(propertyMessages))
+	responses.NextPageToken, err = iteratorGetCursor(it, len(tagMessages))
 	if err != nil {
 		return nil, internalError(err)
 	}
 	return responses, nil
 }
 
-func (s *RegistryServer) UpdateProperty(ctx context.Context, request *rpc.UpdatePropertyRequest) (*rpc.Property, error) {
+func (s *RegistryServer) UpdateTag(ctx context.Context, request *rpc.UpdateTagRequest) (*rpc.Tag, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
 	}
 	defer client.Close()
-	property, err := models.NewPropertyFromResourceName(request.GetProperty().GetName())
+	tag, err := models.NewTagFromResourceName(request.GetTag().GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	k := &datastore.Key{Kind: models.PropertyEntityName, Name: request.GetProperty().GetName()}
-	err = client.Get(ctx, k, property)
+	k := &datastore.Key{Kind: models.TagEntityName, Name: request.GetTag().GetName()}
+	err = client.Get(ctx, k, tag)
 	if err != nil {
 		return nil, status.Error(codes.NotFound, "not found")
 	}
-	err = property.Update(request.GetProperty())
+	err = tag.Update(request.GetTag())
 	if err != nil {
 		return nil, internalError(err)
 	}
-	k, err = client.Put(ctx, k, property)
+	k, err = client.Put(ctx, k, tag)
 	if err != nil {
 		return nil, internalError(err)
 	}
-	return property.Message()
+	return tag.Message()
 }

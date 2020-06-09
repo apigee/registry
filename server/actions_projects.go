@@ -4,7 +4,6 @@ package server
 
 import (
 	"context"
-	"log"
 
 	"apigov.dev/registry/models"
 	rpc "apigov.dev/registry/rpc"
@@ -84,8 +83,6 @@ func (s *RegistryServer) ListProjects(ctx context.Context, req *rpc.ListProjects
 	if err != nil {
 		return nil, internalError(err)
 	}
-	log.Printf("List Projects %+v", req)
-
 	defer client.Close()
 	q := datastore.NewQuery(models.ProjectEntityName)
 	q, err = queryApplyCursor(q, req.GetPageToken())

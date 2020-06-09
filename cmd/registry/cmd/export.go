@@ -207,9 +207,8 @@ var values map[string]int64
 
 func (ssc *StatusSheetConnection) exportNamedProperty(ctx context.Context, client *gapic.RegistryClient, projectID string, subject string, relation string) error {
 	request := &rpc.ListPropertiesRequest{
-		Parent:   "projects/" + projectID,
-		Subject:  subject,
-		Relation: relation,
+		Parent: subject,
+		Filter: fmt.Sprintf("property_id = \"%s\"", relation),
 	}
 	values = make(map[string]int64, 0)
 	it := client.ListProperties(ctx, request)

@@ -13,20 +13,8 @@ import (
 // See "Resource ID Segments" in https://aip.dev/122.
 const nameRegex = "([a-zA-Z0-9-_\\.]+)"
 
-// Path names include all of the above characters plus forward slashes.
-const pathNameRegex = "([a-zA-Z0-9-_\\.\\/]+)"
-
 func validateID(id string) error {
 	r := regexp.MustCompile("^" + nameRegex + "$")
-	m := r.FindAllStringSubmatch(id, -1)
-	if m == nil {
-		return fmt.Errorf("invalid id '%s'", id)
-	}
-	return nil
-}
-
-func validatePathID(id string) error {
-	r := regexp.MustCompile("^" + pathNameRegex + "$")
 	m := r.FindAllStringSubmatch(id, -1)
 	if m == nil {
 		return fmt.Errorf("invalid id '%s'", id)

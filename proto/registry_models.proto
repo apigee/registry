@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package google.cloud.apigee.registry.v1alpha1;
 
+import "google/api/field_behavior.proto";
 import "google/api/resource.proto";
 import "google/protobuf/any.proto";
 import "google/protobuf/timestamp.proto";
@@ -164,22 +165,22 @@ enum SpecView {
   FULL = 2;
 }
 
-// Properties of resources.
+// Properties of resources. Relations are unique (single-value) per resource.
 message Property {
   // Resource name.
   string name = 1;
 
   // Subject resource name.
-  string subject = 2;
+  string subject = 2 [ (google.api.field_behavior) = OUTPUT_ONLY ];
 
   // Relation name.
-  string relation = 3;
+  string relation = 3 [ (google.api.field_behavior) = OUTPUT_ONLY ];
 
   // Creation timestamp.
-  google.protobuf.Timestamp create_time = 4;
+  google.protobuf.Timestamp create_time = 4 [ (google.api.field_behavior) = OUTPUT_ONLY ];
 
   // Last update timestamp.
-  google.protobuf.Timestamp update_time = 5;
+  google.protobuf.Timestamp update_time = 5 [ (google.api.field_behavior) = OUTPUT_ONLY ];
 
   // Property value.
   oneof value {
@@ -190,4 +191,22 @@ message Property {
     bytes bytes_value = 10;
     google.protobuf.Any message_value = 11;
   }
+}
+
+// Tags on resources. Tags are similar to properties but in a separate namespace and without values.
+message Tag {
+  // Resource name.
+  string name = 1;
+
+  // Subject resource name.
+  string subject = 2 [ (google.api.field_behavior) = OUTPUT_ONLY ];
+
+  // Tag name.
+  string tag = 3 [ (google.api.field_behavior) = OUTPUT_ONLY ];
+
+  // Creation timestamp.
+  google.protobuf.Timestamp create_time = 4 [ (google.api.field_behavior) = OUTPUT_ONLY ];
+
+  // Last update timestamp.
+  google.protobuf.Timestamp update_time = 5 [ (google.api.field_behavior) = OUTPUT_ONLY ];
 }

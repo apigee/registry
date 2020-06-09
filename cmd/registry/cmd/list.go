@@ -28,7 +28,9 @@ var listCmd = &cobra.Command{
 		ctx := context.TODO()
 
 		name := args[0]
-		if m := models.ProductsRegexp().FindAllStringSubmatch(name, -1); m != nil {
+		if m := models.ProjectsRegexp().FindAllStringSubmatch(name, -1); m != nil {
+			err = listProjects(ctx, client, m[0])
+		} else if m := models.ProductsRegexp().FindAllStringSubmatch(name, -1); m != nil {
 			err = listProducts(ctx, client, m[0])
 		} else if m := models.VersionsRegexp().FindAllStringSubmatch(name, -1); m != nil {
 			err = listVersions(ctx, client, m[0])
@@ -39,6 +41,14 @@ var listCmd = &cobra.Command{
 			})
 		} else if m := models.PropertiesRegexp().FindAllStringSubmatch(name, -1); m != nil {
 			err = listProperties(ctx, client, m[0])
+
+		} else if m := models.ProjectRegexp().FindAllStringSubmatch(name, -1); m != nil {
+			segments := m[0]
+			if sliceContainsString(segments, "-") {
+				err = listProjects(ctx, client, segments)
+			} else {
+				err = getProject(ctx, client, segments)
+			}
 		} else if m := models.ProductRegexp().FindAllStringSubmatch(name, -1); m != nil {
 			segments := m[0]
 			if sliceContainsString(segments, "-") {
@@ -86,6 +96,23 @@ var listCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(listCmd)
+}
+
+func listProjects(ctx context.Context,
+	client *gapic.RegistryClient,
+	segments []string) error {
+	request := &rpc.ListProjectsRequest{}
+	it := client.ListProjects(ctx, request)
+	for {
+		project, err := it.Next()
+		if err == iterator.Done {
+			break
+		} else if err != nil {
+			return err
+		}
+		fmt.Println(project.Name)
+	}
+	return nil
 }
 
 func listProducts(ctx context.Context,
@@ -185,6 +212,20 @@ func listProperties(ctx context.Context,
 		}
 		fmt.Println(property.Name)
 	}
+	return nil
+}
+
+func getProject(ctx context.Context,
+	client *gapic.RegistryClient,
+	segments []string) error {
+	request := &rpc.GetProjectRequest{
+		Name: "projects/" + segments[1],
+	}
+	project, err := client.GetProject(ctx, request)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("%+v\n", project)
 	return nil
 }
 

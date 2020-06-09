@@ -85,7 +85,6 @@ func (s *RegistryServer) ListSpecs(ctx context.Context, req *rpc.ListSpecsReques
 		return nil, err
 	}
 	defer client.Close()
-	log.Printf("List Specs %+v", req)
 	q := datastore.NewQuery(models.SpecEntityName)
 	q, err = queryApplyCursor(q, req.GetPageToken())
 	if err != nil {

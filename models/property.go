@@ -5,6 +5,7 @@ package models
 import (
 	"fmt"
 	"regexp"
+	"strings"
 	"time"
 
 	rpc "apigov.dev/registry/rpc"
@@ -25,12 +26,12 @@ func PropertyRegexp() *regexp.Regexp {
 	return regexp.MustCompile("^projects/" + nameRegex + "/properties/" + nameRegex + "$")
 }
 
-// ValueType is an enum representing the types of values stored in properties.
-type ValueType int
+// PropertyValueType is an enum representing the types of values stored in properties.
+type PropertyValueType int
 
 const (
 	// StringType indicates that the stored property is a string.
-	StringType ValueType = iota
+	StringType PropertyValueType = iota
 	// Int64Type indicates that the stored property is an integer.
 	Int64Type
 	// DoubleType indicates that the stored property is a double
@@ -45,59 +46,123 @@ const (
 
 // Property ...
 type Property struct {
-	ProjectID   string    // Uniquely identifies a project.
-	PropertyID  string    // Uniquely identifies a property within a project.
-	CreateTime  time.Time // Creation time.
-	UpdateTime  time.Time // Time of last change.
-	Subject     string    // Subject of the property.
-	Relation    string    // Relation of the property.
-	ValueType   ValueType // Type of the property value.
-	StringValue string    // Property value (if string).
-	Int64Value  int64     // Property value (if int64).
-	DoubleValue float64   // Property value (if double).
-	BoolValue   bool      // Property value (if bool).
-	BytesValue  []byte    `datastore:",noindex"` // Property value (if bytes).
+	ProjectID   string            // Project associated with property (required).
+	ProductID   string            // Product associated with property (if appropriate).
+	VersionID   string            // Version associated with property (if appropriate).
+	SpecID      string            // Spec associated with property (if appropriate).
+	PropertyID  string            // Property identifier (required).
+	CreateTime  time.Time         // Creation time.
+	UpdateTime  time.Time         // Time of last change.
+	Subject     string            // Subject of the property.
+	Relation    string            // Relation of the property.
+	ValueType   PropertyValueType // Type of the property value.
+	StringValue string            // Property value (if string).
+	Int64Value  int64             // Property value (if int64).
+	DoubleValue float64           // Property value (if double).
+	BoolValue   bool              // Property value (if bool).
+	BytesValue  []byte            `datastore:",noindex"` // Property value (if bytes).
 }
 
 // messageValue returns an Any object corresponding to the stored value (assuming one exists).
 func (property *Property) messageValue() *any.Any {
-	return &any.Any{
-		TypeUrl: property.StringValue,
-		Value:   property.BytesValue,
+	if property.ValueType == AnyType {
+		return &any.Any{
+			TypeUrl: property.StringValue,
+			Value:   property.BytesValue,
+		}
 	}
+	return nil
 }
 
 // NewPropertyFromParentAndPropertyID returns an initialized property for a specified parent and propertyID.
 func NewPropertyFromParentAndPropertyID(parent string, propertyID string) (*Property, error) {
-	r := regexp.MustCompile("^projects/" + nameRegex + "$")
-	m := r.FindAllStringSubmatch(parent, -1)
-	if m == nil {
-		return nil, fmt.Errorf("invalid parent '%s'", parent)
-	}
+	// Return an error if the propertyID is invalid.
 	if err := validateID(propertyID); err != nil {
 		return nil, err
 	}
-	property := &Property{}
-	property.ProjectID = m[0][1]
-	property.PropertyID = propertyID
-	return property, nil
+	// Match regular expressions to identify the parent of this property.
+	var m [][]string
+	// Is the parent a project?
+	m = ProjectRegexp().FindAllStringSubmatch(parent, -1)
+	if m != nil {
+		return &Property{
+			ProjectID:  m[0][1],
+			PropertyID: propertyID,
+			Subject:    parent,
+			Relation:   propertyID,
+		}, nil
+	}
+	// Is the parent a product?
+	m = ProductRegexp().FindAllStringSubmatch(parent, -1)
+	if m != nil {
+		return &Property{
+			ProjectID:  m[0][1],
+			ProductID:  m[0][2],
+			PropertyID: propertyID,
+			Subject:    parent,
+			Relation:   propertyID,
+		}, nil
+	}
+	// Is the parent a version?
+	m = VersionRegexp().FindAllStringSubmatch(parent, -1)
+	if m != nil {
+		return &Property{
+			ProjectID:  m[0][1],
+			ProductID:  m[0][2],
+			VersionID:  m[0][3],
+			PropertyID: propertyID,
+			Subject:    parent,
+			Relation:   propertyID,
+		}, nil
+	}
+	// Is the parent a spec?
+	m = SpecRegexp().FindAllStringSubmatch(parent, -1)
+	if m != nil {
+		return &Property{
+			ProjectID:  m[0][1],
+			ProductID:  m[0][2],
+			VersionID:  m[0][3],
+			SpecID:     m[0][4],
+			PropertyID: propertyID,
+			Subject:    parent,
+			Relation:   propertyID,
+		}, nil
+	}
+	// Return an error for an unrecognized parent.
+	return nil, fmt.Errorf("invalid parent '%s'", parent)
 }
 
 // NewPropertyFromResourceName parses resource names and returns an initialized property.
 func NewPropertyFromResourceName(name string) (*Property, error) {
-	property := &Property{}
-	m := PropertyRegexp().FindAllStringSubmatch(name, -1)
-	if m == nil {
-		return nil, fmt.Errorf("invalid property name (%s)", name)
+	// split name into parts
+	parts := strings.Split(name, "/")
+	if parts[len(parts)-2] != "properties" {
+		return nil, fmt.Errorf("invalid property name '%s'", name)
 	}
-	property.ProjectID = m[0][1]
-	property.PropertyID = m[0][2]
-	return property, nil
+	// build property from parent and propertyID
+	parent := strings.Join(parts[0:len(parts)-2], "/")
+	propertyID := parts[len(parts)-1]
+	return NewPropertyFromParentAndPropertyID(parent, propertyID)
 }
 
 // ResourceName generates the resource name of a property.
 func (property *Property) ResourceName() string {
-	return fmt.Sprintf("projects/%s/properties/%s", property.ProjectID, property.PropertyID)
+	switch {
+	case property.SpecID != "":
+		return fmt.Sprintf("projects/%s/products/%s/versions/%s/specs/%s/properties/%s",
+			property.ProjectID, property.ProductID, property.VersionID, property.SpecID, property.PropertyID)
+	case property.VersionID != "":
+		return fmt.Sprintf("projects/%s/products/%s/versions/properties/%s",
+			property.ProjectID, property.ProductID, property.VersionID, property.PropertyID)
+	case property.ProductID != "":
+		return fmt.Sprintf("projects/%s/products/%s/properties/%s",
+			property.ProjectID, property.ProductID, property.PropertyID)
+	case property.ProjectID != "":
+		return fmt.Sprintf("projects/%s/properties/%s",
+			property.ProjectID, property.PropertyID)
+	default:
+		return "UNKNOWN"
+	}
 }
 
 // Message returns a message representing a property.
@@ -108,7 +173,6 @@ func (property *Property) Message() (message *rpc.Property, err error) {
 	message.Relation = property.Relation
 	message.CreateTime, err = ptypes.TimestampProto(property.CreateTime)
 	message.UpdateTime, err = ptypes.TimestampProto(property.UpdateTime)
-	// TODO values
 	switch property.ValueType {
 	case StringType:
 		message.Value = &rpc.Property_StringValue{StringValue: property.StringValue}
@@ -131,7 +195,6 @@ func (property *Property) Update(message *rpc.Property) error {
 	property.Subject = message.GetSubject()
 	property.Relation = message.GetRelation()
 	property.UpdateTime = property.CreateTime
-	// TODO values
 	switch message.GetValue().(type) {
 	case *rpc.Property_StringValue:
 		property.ValueType = StringType

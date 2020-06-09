@@ -23,7 +23,7 @@ func SpecsRegexp() *regexp.Regexp {
 
 // SpecRegexp returns a regular expression that matches a spec resource name.
 func SpecRegexp() *regexp.Regexp {
-	return regexp.MustCompile("^projects/" + nameRegex + "/products/" + nameRegex + "/versions/" + nameRegex + "/specs/" + pathNameRegex + "$")
+	return regexp.MustCompile("^projects/" + nameRegex + "/products/" + nameRegex + "/versions/" + nameRegex + "/specs/" + nameRegex + "$")
 }
 
 // Spec ...
@@ -65,7 +65,7 @@ func NewSpecFromParentAndSpecID(parent string, specID string) (*Spec, error) {
 	if m == nil {
 		return nil, fmt.Errorf("invalid parent '%s'", parent)
 	}
-	if err := validatePathID(specID); err != nil {
+	if err := validateID(specID); err != nil {
 		return nil, err
 	}
 	spec := &Spec{}

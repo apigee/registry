@@ -94,17 +94,18 @@ func main() {
 				ExtraRequestFields: "",
 			},
 			{
-				Name:         "Property",
-				PluralName:   "Properties",
-				ParentName:   "projects/*",
-				ResourceName: "projects/*/properties/*",
-				ExtraRequestFields: `
-  // Optional subject that can be used to filter the list.
-  string subject = 5;
-
-  // Optional relation that can be used to filter the list.
-  string relation = 6;
-`,
+				Name:               "Property",
+				PluralName:         "Properties",
+				ParentName:         "projects/*",
+				ResourceName:       "projects/*/properties/*",
+				ExtraRequestFields: "",
+			},
+			{
+				Name:               "Tag",
+				PluralName:         "Tags",
+				ParentName:         "projects/*",
+				ResourceName:       "projects/*/tags/*",
+				ExtraRequestFields: "",
 			},
 		},
 	}

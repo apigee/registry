@@ -71,9 +71,8 @@ var getCmd = &cobra.Command{
 
 func getNamedProperty(ctx context.Context, client *gapic.RegistryClient, projectID string, subject string, relation string) error {
 	request := &rpc.ListPropertiesRequest{
-		Parent:   "projects/" + projectID,
-		Subject:  subject,
-		Relation: relation,
+		Parent: subject,
+		Filter: fmt.Sprintf("property_id = \"%s\"", relation),
 	}
 	it := client.ListProperties(ctx, request)
 	for {

@@ -4,10 +4,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
-	"crypto/sha1"
-	"encoding/base64"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"log"
 	"strings"
@@ -199,20 +196,10 @@ func summarizeSpec(ctx context.Context,
 	return nil
 }
 
-func hash(name string) string {
-	h := sha1.New()
-	io.WriteString(h, name)
-	return base64.RawURLEncoding.EncodeToString(h.Sum(nil))
-}
-
 func setProperty(ctx context.Context, client *gapic.RegistryClient, projectID string, property *rpc.Property) error {
-	propertyID := hash(property.Subject + "/" + property.Relation)
-	property.Name = "projects/" + projectID + "/properties/" + propertyID
-
 	request := &rpc.CreatePropertyRequest{}
 	request.Property = property
-	request.Parent = "projects/" + projectID
-	request.PropertyId = propertyID
+	request.Parent = property.GetSubject()
 	newProperty, err := client.CreateProperty(ctx, request)
 	if err != nil {
 		code := status.Code(err)
