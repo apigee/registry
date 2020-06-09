@@ -54,7 +54,6 @@ type Property struct {
 	CreateTime  time.Time         // Creation time.
 	UpdateTime  time.Time         // Time of last change.
 	Subject     string            // Subject of the property.
-	Relation    string            // Relation of the property.
 	ValueType   PropertyValueType // Type of the property value.
 	StringValue string            // Property value (if string).
 	Int64Value  int64             // Property value (if int64).
@@ -89,7 +88,6 @@ func NewPropertyFromParentAndPropertyID(parent string, propertyID string) (*Prop
 			ProjectID:  m[0][1],
 			PropertyID: propertyID,
 			Subject:    parent,
-			Relation:   propertyID,
 		}, nil
 	}
 	// Is the parent a product?
@@ -100,7 +98,6 @@ func NewPropertyFromParentAndPropertyID(parent string, propertyID string) (*Prop
 			ProductID:  m[0][2],
 			PropertyID: propertyID,
 			Subject:    parent,
-			Relation:   propertyID,
 		}, nil
 	}
 	// Is the parent a version?
@@ -112,7 +109,6 @@ func NewPropertyFromParentAndPropertyID(parent string, propertyID string) (*Prop
 			VersionID:  m[0][3],
 			PropertyID: propertyID,
 			Subject:    parent,
-			Relation:   propertyID,
 		}, nil
 	}
 	// Is the parent a spec?
@@ -125,7 +121,6 @@ func NewPropertyFromParentAndPropertyID(parent string, propertyID string) (*Prop
 			SpecID:     m[0][4],
 			PropertyID: propertyID,
 			Subject:    parent,
-			Relation:   propertyID,
 		}, nil
 	}
 	// Return an error for an unrecognized parent.
@@ -170,7 +165,7 @@ func (property *Property) Message() (message *rpc.Property, err error) {
 	message = &rpc.Property{}
 	message.Name = property.ResourceName()
 	message.Subject = property.Subject
-	message.Relation = property.Relation
+	message.Relation = property.PropertyID
 	message.CreateTime, err = ptypes.TimestampProto(property.CreateTime)
 	message.UpdateTime, err = ptypes.TimestampProto(property.UpdateTime)
 	switch property.ValueType {
@@ -193,7 +188,6 @@ func (property *Property) Message() (message *rpc.Property, err error) {
 // Update modifies a property using the contents of a message.
 func (property *Property) Update(message *rpc.Property) error {
 	property.Subject = message.GetSubject()
-	property.Relation = message.GetRelation()
 	property.UpdateTime = property.CreateTime
 	switch message.GetValue().(type) {
 	case *rpc.Property_StringValue:

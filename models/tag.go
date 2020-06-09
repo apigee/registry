@@ -35,7 +35,6 @@ type Tag struct {
 	CreateTime time.Time // Creation time.
 	UpdateTime time.Time // Time of last change.
 	Subject    string    // Subject of the tag.
-	Tag        string    // Name of the tag.
 }
 
 // NewTagFromParentAndTagID returns an initialized tag for a specified parent and tagID.
@@ -53,7 +52,6 @@ func NewTagFromParentAndTagID(parent string, tagID string) (*Tag, error) {
 			ProjectID: m[0][1],
 			TagID:     tagID,
 			Subject:   parent,
-			Tag:       tagID,
 		}, nil
 	}
 	// Is the parent a product?
@@ -64,7 +62,6 @@ func NewTagFromParentAndTagID(parent string, tagID string) (*Tag, error) {
 			ProductID: m[0][2],
 			TagID:     tagID,
 			Subject:   parent,
-			Tag:       tagID,
 		}, nil
 	}
 	// Is the parent a version?
@@ -76,7 +73,6 @@ func NewTagFromParentAndTagID(parent string, tagID string) (*Tag, error) {
 			VersionID: m[0][3],
 			TagID:     tagID,
 			Subject:   parent,
-			Tag:       tagID,
 		}, nil
 	}
 	// Is the parent a spec?
@@ -89,7 +85,6 @@ func NewTagFromParentAndTagID(parent string, tagID string) (*Tag, error) {
 			SpecID:    m[0][4],
 			TagID:     tagID,
 			Subject:   parent,
-			Tag:       tagID,
 		}, nil
 	}
 	// Return an error for an unrecognized parent.
@@ -134,7 +129,6 @@ func (tag *Tag) Message() (message *rpc.Tag, err error) {
 	message = &rpc.Tag{}
 	message.Name = tag.ResourceName()
 	message.Subject = tag.Subject
-	message.Tag = tag.TagID
 	message.CreateTime, err = ptypes.TimestampProto(tag.CreateTime)
 	message.UpdateTime, err = ptypes.TimestampProto(tag.UpdateTime)
 	return message, err
@@ -143,7 +137,6 @@ func (tag *Tag) Message() (message *rpc.Tag, err error) {
 // Update modifies a tag using the contents of a message.
 func (tag *Tag) Update(message *rpc.Tag) error {
 	tag.Subject = message.GetSubject()
-	tag.Tag = message.GetTag()
 	tag.UpdateTime = tag.CreateTime
 	return nil
 }
