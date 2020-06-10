@@ -15,82 +15,82 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (s *RegistryServer) CreateTag(ctx context.Context, request *rpc.CreateTagRequest) (*rpc.Tag, error) {
+func (s *RegistryServer) CreateLabel(ctx context.Context, request *rpc.CreateLabelRequest) (*rpc.Label, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
 	}
 	defer client.Close()
-	tag, err := models.NewTagFromParentAndTagID(request.GetParent(), request.GetTagId())
+	label, err := models.NewLabelFromParentAndLabelID(request.GetParent(), request.GetLabelId())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	err = tag.Update(request.GetTag())
-	k := &datastore.Key{Kind: models.TagEntityName, Name: tag.ResourceName()}
-	// fail if tag already exists
-	var existingTag models.Tag
-	err = client.Get(ctx, k, &existingTag)
+	err = label.Update(request.GetLabel())
+	k := &datastore.Key{Kind: models.LabelEntityName, Name: label.ResourceName()}
+	// fail if label already exists
+	var existingLabel models.Label
+	err = client.Get(ctx, k, &existingLabel)
 	if err == nil {
-		return nil, status.Error(codes.AlreadyExists, tag.ResourceName()+" already exists")
+		return nil, status.Error(codes.AlreadyExists, label.ResourceName()+" already exists")
 	}
-	tag.CreateTime = tag.UpdateTime
-	k, err = client.Put(ctx, k, tag)
+	label.CreateTime = label.UpdateTime
+	k, err = client.Put(ctx, k, label)
 	if err != nil {
 		return nil, internalError(err)
 	}
-	return tag.Message()
+	return label.Message()
 }
 
-func (s *RegistryServer) DeleteTag(ctx context.Context, request *rpc.DeleteTagRequest) (*empty.Empty, error) {
+func (s *RegistryServer) DeleteLabel(ctx context.Context, request *rpc.DeleteLabelRequest) (*empty.Empty, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
 	}
 	defer client.Close()
-	// Validate name and create dummy tag (we just need the ID fields).
-	_, err = models.NewTagFromResourceName(request.GetName())
+	// Validate name and create dummy label (we just need the ID fields).
+	_, err = models.NewLabelFromResourceName(request.GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	// Delete the tag.
-	k := &datastore.Key{Kind: models.TagEntityName, Name: request.GetName()}
+	// Delete the label.
+	k := &datastore.Key{Kind: models.LabelEntityName, Name: request.GetName()}
 	err = client.Delete(ctx, k)
 	return &empty.Empty{}, internalError(err)
 }
 
-func (s *RegistryServer) GetTag(ctx context.Context, request *rpc.GetTagRequest) (*rpc.Tag, error) {
+func (s *RegistryServer) GetLabel(ctx context.Context, request *rpc.GetLabelRequest) (*rpc.Label, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
 	}
 	defer client.Close()
-	tag, err := models.NewTagFromResourceName(request.GetName())
+	label, err := models.NewLabelFromResourceName(request.GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	log.Printf("looking for %s", tag.ResourceName())
-	k := &datastore.Key{Kind: models.TagEntityName, Name: tag.ResourceName()}
-	err = client.Get(ctx, k, tag)
+	log.Printf("looking for %s", label.ResourceName())
+	k := &datastore.Key{Kind: models.LabelEntityName, Name: label.ResourceName()}
+	err = client.Get(ctx, k, label)
 	if err == datastore.ErrNoSuchEntity {
 		return nil, status.Error(codes.NotFound, "not found")
 	} else if err != nil {
 		return nil, internalError(err)
 	}
-	return tag.Message()
+	return label.Message()
 }
 
-func (s *RegistryServer) ListTags(ctx context.Context, req *rpc.ListTagsRequest) (*rpc.ListTagsResponse, error) {
+func (s *RegistryServer) ListLabels(ctx context.Context, req *rpc.ListLabelsRequest) (*rpc.ListLabelsResponse, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
 	}
 	defer client.Close()
-	q := datastore.NewQuery(models.TagEntityName)
+	q := datastore.NewQuery(models.LabelEntityName)
 	q, err = queryApplyCursor(q, req.GetPageToken())
 	if err != nil {
 		return nil, internalError(err)
 	}
-	p, err := models.NewTagFromParentAndTagID(req.GetParent(), "-")
+	p, err := models.NewLabelFromParentAndLabelID(req.GetParent(), "-")
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
@@ -108,19 +108,19 @@ func (s *RegistryServer) ListTags(ctx context.Context, req *rpc.ListTagsRequest)
 	}
 	prg, err := createFilterOperator(req.GetFilter(),
 		[]filterArg{
-			{"tag_id", filterArgTypeString},
+			{"label_id", filterArgTypeString},
 		})
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	var tagMessages []*rpc.Tag
-	var tag models.Tag
+	var labelMessages []*rpc.Label
+	var label models.Label
 	it := client.Run(ctx, q.Distinct())
 	pageSize := boundPageSize(req.GetPageSize())
-	for _, err = it.Next(&tag); err == nil; _, err = it.Next(&tag) {
+	for _, err = it.Next(&label); err == nil; _, err = it.Next(&label) {
 		if prg != nil {
 			out, _, err := prg.Eval(map[string]interface{}{
-				"tag_id": tag.TagID,
+				"label_id": label.LabelID,
 			})
 			if err != nil {
 				return nil, invalidArgumentError(err)
@@ -129,47 +129,47 @@ func (s *RegistryServer) ListTags(ctx context.Context, req *rpc.ListTagsRequest)
 				continue
 			}
 		}
-		tagMessage, _ := tag.Message()
-		tagMessages = append(tagMessages, tagMessage)
-		if len(tagMessages) == pageSize {
+		labelMessage, _ := label.Message()
+		labelMessages = append(labelMessages, labelMessage)
+		if len(labelMessages) == pageSize {
 			break
 		}
 	}
 	if err != nil && err != iterator.Done {
 		return nil, internalError(err)
 	}
-	responses := &rpc.ListTagsResponse{
-		Tags: tagMessages,
+	responses := &rpc.ListLabelsResponse{
+		Labels: labelMessages,
 	}
-	responses.NextPageToken, err = iteratorGetCursor(it, len(tagMessages))
+	responses.NextPageToken, err = iteratorGetCursor(it, len(labelMessages))
 	if err != nil {
 		return nil, internalError(err)
 	}
 	return responses, nil
 }
 
-func (s *RegistryServer) UpdateTag(ctx context.Context, request *rpc.UpdateTagRequest) (*rpc.Tag, error) {
+func (s *RegistryServer) UpdateLabel(ctx context.Context, request *rpc.UpdateLabelRequest) (*rpc.Label, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
 	}
 	defer client.Close()
-	tag, err := models.NewTagFromResourceName(request.GetTag().GetName())
+	label, err := models.NewLabelFromResourceName(request.GetLabel().GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	k := &datastore.Key{Kind: models.TagEntityName, Name: request.GetTag().GetName()}
-	err = client.Get(ctx, k, tag)
+	k := &datastore.Key{Kind: models.LabelEntityName, Name: request.GetLabel().GetName()}
+	err = client.Get(ctx, k, label)
 	if err != nil {
 		return nil, status.Error(codes.NotFound, "not found")
 	}
-	err = tag.Update(request.GetTag())
+	err = label.Update(request.GetLabel())
 	if err != nil {
 		return nil, internalError(err)
 	}
-	k, err = client.Put(ctx, k, tag)
+	k, err = client.Put(ctx, k, label)
 	if err != nil {
 		return nil, internalError(err)
 	}
-	return tag.Message()
+	return label.Message()
 }

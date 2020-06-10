@@ -101,10 +101,10 @@ func main() {
 				ExtraRequestFields: "",
 			},
 			{
-				Name:               "Tag",
-				PluralName:         "Tags",
+				Name:               "Label",
+				PluralName:         "Labels",
 				ParentName:         "projects/*",
-				ResourceName:       "projects/*/tags/*",
+				ResourceName:       "projects/*/labels/*",
 				ExtraRequestFields: "",
 			},
 		},

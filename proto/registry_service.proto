@@ -245,45 +245,45 @@ service Registry {
     option (google.api.method_signature) = "name";
   }
 
-  // ListTags returns matching tags.
-  rpc ListTags(ListTagsRequest) returns (ListTagsResponse) {
+  // ListLabels returns matching labels.
+  rpc ListLabels(ListLabelsRequest) returns (ListLabelsResponse) {
     option (google.api.http) = {
-      get : "/v1alpha1/{parent=projects/*}/tags"
+      get : "/v1alpha1/{parent=projects/*}/labels"
     };
     option (google.api.method_signature) = "parent";
   }
 
-  // GetTag returns a specified tag.
-  rpc GetTag(GetTagRequest) returns (Tag) {
+  // GetLabel returns a specified label.
+  rpc GetLabel(GetLabelRequest) returns (Label) {
     option (google.api.http) = {
-      get : "/v1alpha1/{name=projects/*/tags/*}"
+      get : "/v1alpha1/{name=projects/*/labels/*}"
     };
     option (google.api.method_signature) = "name";
   }
 
-  // CreateTag creates a specified tag.
-  rpc CreateTag(CreateTagRequest) returns (Tag) {
+  // CreateLabel creates a specified label.
+  rpc CreateLabel(CreateLabelRequest) returns (Label) {
     option (google.api.http) = {
-      post : "/v1alpha1/{parent=projects/*}/tags"
-      body : "tag"
+      post : "/v1alpha1/{parent=projects/*}/labels"
+      body : "label"
     };
-    option (google.api.method_signature) = "parent,tag,tag_id";
+    option (google.api.method_signature) = "parent,label,label_id";
   }
 
-  // UpdateTag can be used to modify a specified tag.
-  rpc UpdateTag(UpdateTagRequest) returns (Tag) {
+  // UpdateLabel can be used to modify a specified label.
+  rpc UpdateLabel(UpdateLabelRequest) returns (Label) {
     option (google.api.http) = {
-      patch : "/v1alpha1/{tag.name=projects/*/tags/*}"
-      body : "tag"
+      patch : "/v1alpha1/{label.name=projects/*/labels/*}"
+      body : "label"
     };
-    option (google.api.method_signature) = "tag,update_mask";
+    option (google.api.method_signature) = "label,update_mask";
   }
 
-  // DeleteTag removes a specified tag and all of the resources that it
+  // DeleteLabel removes a specified label and all of the resources that it
   // owns.
-  rpc DeleteTag(DeleteTagRequest) returns (google.protobuf.Empty) {
+  rpc DeleteLabel(DeleteLabelRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      delete : "/v1alpha1/{name=projects/*/tags/*}"
+      delete : "/v1alpha1/{name=projects/*/labels/*}"
     };
     option (google.api.method_signature) = "name";
   }
@@ -723,24 +723,24 @@ message DeletePropertyRequest {
   ];
 }
 
-// Request message for ListTags.
-message ListTagsRequest {
-  // The parent, which owns this collection of tags.
+// Request message for ListLabels.
+message ListLabelsRequest {
+  // The parent, which owns this collection of labels.
   // Format: projects/*
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {child_type: "registry.googleapis.com/Tag"}
+    (google.api.resource_reference) = {child_type: "registry.googleapis.com/Label"}
   ];
-  // The maximum number of tags to return.
+  // The maximum number of labels to return.
   // The service may return fewer than this value.
   // If unspecified, at most 50 values will be returned.
   // The maximum is 1000; values above 1000 will be coerced to 1000.
   int32 page_size = 2;
 
-  // A page token, received from a previous `ListTags` call.
+  // A page token, received from a previous `ListLabels` call.
   // Provide this to retrieve the subsequent page.
   //
-  // When paginating, all other parameters provided to `ListTags` must match
+  // When paginating, all other parameters provided to `ListLabels` must match
   // the call that provided the page token.
   string page_token = 3;
 
@@ -748,65 +748,65 @@ message ListTagsRequest {
   string filter = 4;
 }
 
-// Response message for ListTags.
-message ListTagsResponse {
-  // The tags from the specified publisher.
-  repeated Tag tags = 1;
+// Response message for ListLabels.
+message ListLabelsResponse {
+  // The labels from the specified publisher.
+  repeated Label labels = 1;
 
   // A token, which can be sent as `page_token` to retrieve the next page.
   // If this field is omitted, there are no subsequent pages.
   string next_page_token = 2;
 }
 
-// Request message for GetTag.
-message GetTagRequest {
-  // The name of the tag to retrieve.
-  // Format: projects/*/tags/*
+// Request message for GetLabel.
+message GetLabelRequest {
+  // The name of the label to retrieve.
+  // Format: projects/*/labels/*
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
-      type: "registry.googleapis.com/Tag"
+      type: "registry.googleapis.com/Label"
     }
   ];
 }
 
-// Request message for CreateTag.
-message CreateTagRequest {
-  // The parent, which owns this collection of tags.
+// Request message for CreateLabel.
+message CreateLabelRequest {
+  // The parent, which owns this collection of labels.
   // Format: projects/*
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {child_type: "registry.googleapis.com/Tag"}
+    (google.api.resource_reference) = {child_type: "registry.googleapis.com/Label"}
   ];
-  // The tag to create.
-  Tag tag = 2 [ (google.api.field_behavior) = REQUIRED ];
-  // The ID to use for the tag, which will become the final component of
-  // the tag's resource name.
+  // The label to create.
+  Label label = 2 [ (google.api.field_behavior) = REQUIRED ];
+  // The ID to use for the label, which will become the final component of
+  // the label's resource name.
   //
   // This value should be 4-63 characters, and valid characters
   // are /[a-z][0-9]-/.
-  string tag_id = 3;
+  string label_id = 3;
 }
 
-// Request message for UpdateTag.
-message UpdateTagRequest {
-  // The tag to update.
+// Request message for UpdateLabel.
+message UpdateLabelRequest {
+  // The label to update.
   //
-  // The `name` field is used to identify the tag to update.
-  // Format: projects/*/tags/*
-  Tag tag = 1 [ (google.api.field_behavior) = REQUIRED ];
+  // The `name` field is used to identify the label to update.
+  // Format: projects/*/labels/*
+  Label label = 1 [ (google.api.field_behavior) = REQUIRED ];
 
   // The list of fields to be updated.
   google.protobuf.FieldMask update_mask = 2;
 }
 
-// Request message for DeleteTag.
-message DeleteTagRequest {
-  // The name of the tag to delete.
-  // Format: projects/*/tags/*
+// Request message for DeleteLabel.
+message DeleteLabelRequest {
+  // The name of the label to delete.
+  // Format: projects/*/labels/*
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type : "registry.googleapis.com/Tag"}
+    (google.api.resource_reference) = {type : "registry.googleapis.com/Label"}
   ];
 }
 

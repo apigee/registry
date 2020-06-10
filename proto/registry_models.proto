@@ -193,16 +193,16 @@ message Property {
   }
 }
 
-// Tags on resources. Tags are similar to properties but in a separate namespace and without values.
-message Tag {
+// Labels on resources. Labels are similar to properties but in a separate namespace and without values.
+message Label {
   // Resource name.
   string name = 1;
 
   // Subject resource name.
   string subject = 2 [ (google.api.field_behavior) = OUTPUT_ONLY ];
 
-  // Tag name.
-  string tag = 3 [ (google.api.field_behavior) = OUTPUT_ONLY ];
+  // Label name.
+  string label = 3 [ (google.api.field_behavior) = OUTPUT_ONLY ];
 
   // Creation timestamp.
   google.protobuf.Timestamp create_time = 4 [ (google.api.field_behavior) = OUTPUT_ONLY ];
