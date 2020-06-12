@@ -39,6 +39,8 @@ var deleteCmd = &cobra.Command{
 			deleteAllProductsInProject(m[0][1])
 		} else if m := models.PropertiesRegexp().FindAllStringSubmatch(name, -1); m != nil {
 			deleteAllPropertiesInProject(m[0][1])
+		} else if m := models.LabelsRegexp().FindAllStringSubmatch(name, -1); m != nil {
+			deleteAllLabelsInProject(m[0][1])
 		}
 	},
 }
@@ -114,6 +116,44 @@ func deleteAllPropertiesInProject(projectID string) {
 			request := &rpc.DeletePropertyRequest{}
 			request.Name = name
 			err = client.DeleteProperty(ctx, request)
+			completions <- 1
+		}(name)
+	}
+	for i := 0; i < count; i++ {
+		<-completions
+		fmt.Printf("COMPLETE: %d\n", i+1)
+	}
+}
+
+func deleteAllLabelsInProject(projectID string) {
+	client, err := connection.NewClient()
+	if err != nil {
+		log.Fatalf("%s", err.Error())
+	}
+	ctx := context.TODO()
+	request := &rpc.ListLabelsRequest{
+		Parent: "projects/" + projectID,
+	}
+	log.Printf("%+v", request)
+	it := client.ListLabels(ctx, request)
+	names := make([]string, 0)
+	for {
+		property, err := it.Next()
+		if err == iterator.Done {
+			break
+		} else if err != nil {
+			log.Fatalf("%s", err.Error())
+		}
+		names = append(names, property.Name)
+	}
+	log.Printf("%+v", names)
+	count := len(names)
+	completions := make(chan int)
+	for _, name := range names {
+		go func(name string) {
+			request := &rpc.DeleteLabelRequest{}
+			request.Name = name
+			err = client.DeleteLabel(ctx, request)
 			completions <- 1
 		}(name)
 	}
