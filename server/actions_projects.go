@@ -92,7 +92,8 @@ func (s *RegistryServer) ListProjects(ctx context.Context, req *rpc.ListProjects
 	prg, err := createFilterOperator(req.GetFilter(),
 		[]filterArg{
 			{"project_id", filterArgTypeString},
-			{"availability", filterArgTypeString},
+			{"display_name", filterArgTypeString},
+			{"description", filterArgTypeString},
 		})
 	if err != nil {
 		return nil, internalError(err)
@@ -104,7 +105,9 @@ func (s *RegistryServer) ListProjects(ctx context.Context, req *rpc.ListProjects
 	for _, err = it.Next(&project); err == nil; _, err = it.Next(&project) {
 		if prg != nil {
 			out, _, err := prg.Eval(map[string]interface{}{
-				"project_id": project.ProjectID,
+				"project_id":   project.ProjectID,
+				"display_name": project.DisplayName,
+				"description":  project.Description,
 			})
 			if err != nil {
 				return nil, invalidArgumentError(err)

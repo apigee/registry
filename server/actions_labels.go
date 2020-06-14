@@ -108,6 +108,10 @@ func (s *RegistryServer) ListLabels(ctx context.Context, req *rpc.ListLabelsRequ
 	}
 	prg, err := createFilterOperator(req.GetFilter(),
 		[]filterArg{
+			{"project_id", filterArgTypeString},
+			{"product_id", filterArgTypeString},
+			{"version_id", filterArgTypeString},
+			{"spec_id", filterArgTypeString},
 			{"label_id", filterArgTypeString},
 		})
 	if err != nil {
@@ -120,7 +124,11 @@ func (s *RegistryServer) ListLabels(ctx context.Context, req *rpc.ListLabelsRequ
 	for _, err = it.Next(&label); err == nil; _, err = it.Next(&label) {
 		if prg != nil {
 			out, _, err := prg.Eval(map[string]interface{}{
-				"label_id": label.LabelID,
+				"project_id": label.ProjectID,
+				"product_id": label.ProductID,
+				"version_id": label.VersionID,
+				"spec_id":    label.SpecID,
+				"label_id":   label.LabelID,
 			})
 			if err != nil {
 				return nil, invalidArgumentError(err)

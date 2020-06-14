@@ -105,7 +105,12 @@ func (s *RegistryServer) ListSpecs(ctx context.Context, req *rpc.ListSpecsReques
 	}
 	prg, err := createFilterOperator(req.GetFilter(),
 		[]filterArg{
+			{"project_id", filterArgTypeString},
+			{"product_id", filterArgTypeString},
+			{"version_id", filterArgTypeString},
 			{"spec_id", filterArgTypeString},
+			{"filename", filterArgTypeString},
+			{"description", filterArgTypeString},
 			{"style", filterArgTypeString},
 		})
 	if err != nil {
@@ -119,8 +124,13 @@ func (s *RegistryServer) ListSpecs(ctx context.Context, req *rpc.ListSpecsReques
 		log.Printf("query result %+v", i)
 		if prg != nil {
 			out, _, err := prg.Eval(map[string]interface{}{
-				"spec_id": spec.SpecID,
-				"style":   spec.Style,
+				"project_id":  spec.ProjectID,
+				"product_id":  spec.ProductID,
+				"version_id":  spec.VersionID,
+				"spec_id":     spec.SpecID,
+				"filename":    spec.FileName,
+				"description": spec.Description,
+				"style":       spec.Style,
 			})
 			if err != nil {
 				return nil, invalidArgumentError(err)

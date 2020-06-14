@@ -19,6 +19,7 @@ import (
 )
 
 const directory = "."
+const project = "atlas"
 
 var registryClient *gapic.RegistryClient
 
@@ -40,19 +41,20 @@ func main() {
 	completions := make(chan int)
 	processes := 0
 
+	// walk a directory hierarchy, uploading every API spec that matches a set of expected file names.
 	err = filepath.Walk(directory,
 		func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				return err
 			}
-			if strings.HasSuffix(path, "swagger.yaml") {
+			if strings.HasSuffix(path, "swagger.yaml") || strings.HasSuffix(path, "swagger.json") {
 				processes++
 				go func() {
 					handleSpec(path, "openapi/v2")
 					completions <- 1
 				}()
 			}
-			if strings.HasSuffix(path, "openapi.yaml") {
+			if strings.HasSuffix(path, "openapi.yaml") || strings.HasSuffix(path, "openapi.yaml") {
 				processes++
 				go func() {
 					handleSpec(path, "openapi/v3")
@@ -71,12 +73,14 @@ func main() {
 }
 
 func handleSpec(path string, style string) error {
+	// Compute the API name from the path to the spec file.
 	name := strings.TrimPrefix(path, directory)
 	parts := strings.Split(name, "/")
 	spec := parts[len(parts)-1]
 	version := parts[len(parts)-2]
 	product := strings.Join(parts[0:len(parts)-2], "/")
 	fmt.Printf("product:%+v version:%+v spec:%+v \n", product, version, spec)
+	// Upload the spec for the specified product, version, and style
 	uploadSpec(product, version, style, path)
 	return nil
 }
@@ -84,14 +88,14 @@ func handleSpec(path string, style string) error {
 func uploadSpec(productName, version, style, path string) error {
 	ctx := context.TODO()
 	product := strings.Replace(productName, "/", "-", -1)
-	// does the API exist? if not, create it
+	// If the API product does not exist, create it.
 	{
 		request := &rpcpb.GetProductRequest{}
-		request.Name = "projects/atlas/products/" + product
+		request.Name = "projects/" + project + "/products/" + product
 		_, err := registryClient.GetProduct(ctx, request)
 		if notFound(err) {
 			request := &rpcpb.CreateProductRequest{}
-			request.Parent = "projects/atlas"
+			request.Parent = "projects/" + project
 			request.ProductId = product
 			request.Product = &rpcpb.Product{}
 			request.Product.DisplayName = productName
@@ -104,14 +108,14 @@ func uploadSpec(productName, version, style, path string) error {
 			}
 		}
 	}
-	// does the version exist? if not create it
+	// If the API version does not exist, create it.
 	{
 		request := &rpcpb.GetVersionRequest{}
-		request.Name = "projects/atlas/products/" + product + "/versions/" + version
+		request.Name = "projects/" + project + "/products/" + product + "/versions/" + version
 		_, err := registryClient.GetVersion(ctx, request)
 		if notFound(err) {
 			request := &rpcpb.CreateVersionRequest{}
-			request.Parent = "projects/atlas/products/" + product
+			request.Parent = "projects/" + project + "/products/" + product
 			request.VersionId = version
 			request.Version = &rpcpb.Version{}
 			response, err := registryClient.CreateVersion(ctx, request)
@@ -123,18 +127,19 @@ func uploadSpec(productName, version, style, path string) error {
 			}
 		}
 	}
-	// does the spec exist? if not, create it
+	// If the API spec does not exist, create it.
 	{
 		filename := filepath.Base(path)
 
 		request := &rpcpb.GetSpecRequest{}
-		request.Name = "projects/atlas/products/" + product +
+		request.Name = "projects/" + project + "/products/" + product +
 			"/versions/" + version +
 			"/specs/" + filename
 		_, err := registryClient.GetSpec(ctx, request)
 		if notFound(err) {
 			fileBytes, err := ioutil.ReadFile(path)
-			// gzip the bytes
+
+			// gzip the spec before uploading it
 			var buf bytes.Buffer
 			zw, _ := gzip.NewWriterLevel(&buf, gzip.BestCompression)
 			_, err = zw.Write(fileBytes)
@@ -146,7 +151,7 @@ func uploadSpec(productName, version, style, path string) error {
 			}
 
 			request := &rpcpb.CreateSpecRequest{}
-			request.Parent = "projects/atlas/products/" + product +
+			request.Parent = "projects/" + project + "/products/" + product +
 				"/versions/" + version
 			request.SpecId = filename
 			request.Spec = &rpcpb.Spec{}

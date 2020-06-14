@@ -18,12 +18,27 @@ const PropertyEntityName = "Property"
 
 // PropertiesRegexp returns a regular expression that matches collection of properties.
 func PropertiesRegexp() *regexp.Regexp {
-	return regexp.MustCompile("^projects/" + nameRegex + "/properties$")
+	return regexp.MustCompile(
+		"^projects/" + nameRegex +
+			"(/products/" + nameRegex +
+			"(/versions/" + nameRegex +
+			"(/specs/" + nameRegex +
+			")?" +
+			")?" +
+			")?" +
+			"/properties$")
 }
 
 // PropertyRegexp returns a regular expression that matches a property resource name.
 func PropertyRegexp() *regexp.Regexp {
-	return regexp.MustCompile("^projects/" + nameRegex + "/properties/" + nameRegex + "$")
+	return regexp.MustCompile("^projects/" + nameRegex +
+		"(/products/" + nameRegex +
+		"(/versions/" + nameRegex +
+		"(/specs/" + nameRegex +
+		")?" +
+		")?" +
+		")?" +
+		"/properties/" + nameRegex + "$")
 }
 
 // PropertyValueType is an enum representing the types of values stored in properties.

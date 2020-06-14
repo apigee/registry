@@ -108,6 +108,10 @@ func (s *RegistryServer) ListProperties(ctx context.Context, req *rpc.ListProper
 	}
 	prg, err := createFilterOperator(req.GetFilter(),
 		[]filterArg{
+			{"project_id", filterArgTypeString},
+			{"product_id", filterArgTypeString},
+			{"version_id", filterArgTypeString},
+			{"spec_id", filterArgTypeString},
 			{"property_id", filterArgTypeString},
 		})
 	if err != nil {
@@ -120,6 +124,10 @@ func (s *RegistryServer) ListProperties(ctx context.Context, req *rpc.ListProper
 	for _, err = it.Next(&property); err == nil; _, err = it.Next(&property) {
 		if prg != nil {
 			out, _, err := prg.Eval(map[string]interface{}{
+				"project_id":  property.ProjectID,
+				"product_id":  property.ProductID,
+				"version_id":  property.VersionID,
+				"spec_id":     property.SpecID,
 				"property_id": property.PropertyID,
 			})
 			if err != nil {

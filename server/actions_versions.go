@@ -101,7 +101,11 @@ func (s *RegistryServer) ListVersions(ctx context.Context, req *rpc.ListVersions
 	}
 	prg, err := createFilterOperator(req.GetFilter(),
 		[]filterArg{
+			{"project_id", filterArgTypeString},
+			{"product_id", filterArgTypeString},
 			{"version_id", filterArgTypeString},
+			{"display_name", filterArgTypeString},
+			{"description", filterArgTypeString},
 			{"state", filterArgTypeString},
 		})
 	if err != nil {
@@ -114,8 +118,12 @@ func (s *RegistryServer) ListVersions(ctx context.Context, req *rpc.ListVersions
 	for _, err = it.Next(&version); err == nil; _, err = it.Next(&version) {
 		if prg != nil {
 			out, _, err := prg.Eval(map[string]interface{}{
-				"version_id": version.VersionID,
-				"state":      version.State,
+				"project_id":   version.ProjectID,
+				"product_id":   version.ProductID,
+				"version_id":   version.VersionID,
+				"display_name": version.DisplayName,
+				"description":  version.Description,
+				"state":        version.State,
 			})
 			if err != nil {
 				return nil, invalidArgumentError(err)

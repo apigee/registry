@@ -46,15 +46,14 @@ var getCmd = &cobra.Command{
 			// find all matching properties for matching specs
 			segments := m[0]
 			if sliceContainsString(segments, "-") {
-				err = listSpecs(ctx, client, segments, func(spec *rpc.Spec) error {
-					err = getNamedProperty(ctx, client, segments[1], spec.GetName(), property)
-					return err
+				err = listSpecs(ctx, client, segments, func(spec *rpc.Spec) {
+					getNamedProperty(ctx, client, segments[1], spec.GetName(), property)
 				})
 				if err != nil {
 					log.Fatalf("%s", err.Error())
 				}
 			} else {
-				spec, err := getSpec(ctx, client, segments)
+				spec, err := getSpec(ctx, client, segments, func(s *rpc.Spec) {})
 				if err != nil {
 					log.Fatalf("%s", err.Error())
 				}

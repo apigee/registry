@@ -17,12 +17,27 @@ const LabelEntityName = "Label"
 
 // LabelsRegexp returns a regular expression that matches collection of labels.
 func LabelsRegexp() *regexp.Regexp {
-	return regexp.MustCompile("^projects/" + nameRegex + "/labels$")
+	return regexp.MustCompile(
+		"^projects/" + nameRegex +
+			"(/products/" + nameRegex +
+			"(/versions/" + nameRegex +
+			"(/specs/" + nameRegex +
+			")?" +
+			")?" +
+			")?" +
+			"/labels$")
 }
 
 // LabelRegexp returns a regular expression that matches a Label resource name.
 func LabelRegexp() *regexp.Regexp {
-	return regexp.MustCompile("^projects/" + nameRegex + "/labels/" + nameRegex + "$")
+	return regexp.MustCompile("^projects/" + nameRegex +
+		"(/products/" + nameRegex +
+		"(/versions/" + nameRegex +
+		"(/specs/" + nameRegex +
+		")?" +
+		")?" +
+		")?" +
+		"/labels/" + nameRegex + "$")
 }
 
 // Label ...

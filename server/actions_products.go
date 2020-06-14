@@ -99,6 +99,8 @@ func (s *RegistryServer) ListProducts(ctx context.Context, req *rpc.ListProducts
 	prg, err := createFilterOperator(req.GetFilter(),
 		[]filterArg{
 			{"product_id", filterArgTypeString},
+			{"display_name", filterArgTypeString},
+			{"description", filterArgTypeString},
 			{"availability", filterArgTypeString},
 		})
 	if err != nil {
@@ -112,6 +114,8 @@ func (s *RegistryServer) ListProducts(ctx context.Context, req *rpc.ListProducts
 		if prg != nil {
 			out, _, err := prg.Eval(map[string]interface{}{
 				"product_id":   product.ProductID,
+				"display_name": product.DisplayName,
+				"description":  product.Description,
 				"availability": product.Availability,
 			})
 			if err != nil {
