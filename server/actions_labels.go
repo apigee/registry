@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// CreateLabel handles the corresponding API request.
 func (s *RegistryServer) CreateLabel(ctx context.Context, request *rpc.CreateLabelRequest) (*rpc.Label, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
@@ -41,6 +42,7 @@ func (s *RegistryServer) CreateLabel(ctx context.Context, request *rpc.CreateLab
 	return label.Message()
 }
 
+// DeleteLabel handles the corresponding API request.
 func (s *RegistryServer) DeleteLabel(ctx context.Context, request *rpc.DeleteLabelRequest) (*empty.Empty, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
@@ -58,6 +60,7 @@ func (s *RegistryServer) DeleteLabel(ctx context.Context, request *rpc.DeleteLab
 	return &empty.Empty{}, internalError(err)
 }
 
+// GetLabel handles the corresponding API request.
 func (s *RegistryServer) GetLabel(ctx context.Context, request *rpc.GetLabelRequest) (*rpc.Label, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
@@ -79,6 +82,7 @@ func (s *RegistryServer) GetLabel(ctx context.Context, request *rpc.GetLabelRequ
 	return label.Message()
 }
 
+// ListLabels handles the corresponding API request.
 func (s *RegistryServer) ListLabels(ctx context.Context, req *rpc.ListLabelsRequest) (*rpc.ListLabelsResponse, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
@@ -94,16 +98,16 @@ func (s *RegistryServer) ListLabels(ctx context.Context, req *rpc.ListLabelsRequ
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	if p.ProjectID != "-" && p.ProjectID != "-" {
+	if p.ProjectID != "-" {
 		q = q.Filter("ProjectID =", p.ProjectID)
 	}
-	if p.ProductID != "-" && p.ProductID != "-" {
+	if p.ProductID != "-" {
 		q = q.Filter("ProductID =", p.ProductID)
 	}
-	if p.VersionID != "-" && p.VersionID != "-" {
+	if p.VersionID != "-" {
 		q = q.Filter("VersionID =", p.VersionID)
 	}
-	if p.SpecID != "-" && p.SpecID != "-" {
+	if p.SpecID != "-" {
 		q = q.Filter("SpecID =", p.SpecID)
 	}
 	prg, err := createFilterOperator(req.GetFilter(),
@@ -122,6 +126,19 @@ func (s *RegistryServer) ListLabels(ctx context.Context, req *rpc.ListLabelsRequ
 	it := client.Run(ctx, q.Distinct())
 	pageSize := boundPageSize(req.GetPageSize())
 	for _, err = it.Next(&label); err == nil; _, err = it.Next(&label) {
+		// don't allow wildcarded-names to be empty
+		if p.SpecID == "-" && label.SpecID == "" {
+			continue
+		}
+		if p.VersionID == "-" && label.VersionID == "" {
+			continue
+		}
+		if p.ProductID == "-" && label.ProductID == "" {
+			continue
+		}
+		if p.ProjectID == "-" && label.ProjectID == "" {
+			continue
+		}
 		if prg != nil {
 			out, _, err := prg.Eval(map[string]interface{}{
 				"project_id": label.ProjectID,
@@ -156,6 +173,7 @@ func (s *RegistryServer) ListLabels(ctx context.Context, req *rpc.ListLabelsRequ
 	return responses, nil
 }
 
+// UpdateLabel handles the corresponding API request.
 func (s *RegistryServer) UpdateLabel(ctx context.Context, request *rpc.UpdateLabelRequest) (*rpc.Label, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {

@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// CreateProduct handles the corresponding API request.
 func (s *RegistryServer) CreateProduct(ctx context.Context, request *rpc.CreateProductRequest) (*rpc.Product, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
@@ -40,6 +41,7 @@ func (s *RegistryServer) CreateProduct(ctx context.Context, request *rpc.CreateP
 	return product.Message()
 }
 
+// DeleteProduct handles the corresponding API request.
 func (s *RegistryServer) DeleteProduct(ctx context.Context, request *rpc.DeleteProductRequest) (*empty.Empty, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
@@ -58,6 +60,7 @@ func (s *RegistryServer) DeleteProduct(ctx context.Context, request *rpc.DeleteP
 	return &empty.Empty{}, internalError(err)
 }
 
+// GetProduct handles the corresponding API request.
 func (s *RegistryServer) GetProduct(ctx context.Context, request *rpc.GetProductRequest) (*rpc.Product, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
@@ -78,6 +81,7 @@ func (s *RegistryServer) GetProduct(ctx context.Context, request *rpc.GetProduct
 	return product.Message()
 }
 
+// ListProducts handles the corresponding API request.
 func (s *RegistryServer) ListProducts(ctx context.Context, req *rpc.ListProductsRequest) (*rpc.ListProductsResponse, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
@@ -144,6 +148,7 @@ func (s *RegistryServer) ListProducts(ctx context.Context, req *rpc.ListProducts
 	return responses, nil
 }
 
+// UpdateProduct handles the corresponding API request.
 func (s *RegistryServer) UpdateProduct(ctx context.Context, request *rpc.UpdateProductRequest) (*rpc.Product, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {

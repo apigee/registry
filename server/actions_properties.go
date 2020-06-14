@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// CreateProperty handles the corresponding API request.
 func (s *RegistryServer) CreateProperty(ctx context.Context, request *rpc.CreatePropertyRequest) (*rpc.Property, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
@@ -41,6 +42,7 @@ func (s *RegistryServer) CreateProperty(ctx context.Context, request *rpc.Create
 	return property.Message()
 }
 
+// DeleteProperty handles the corresponding API request.
 func (s *RegistryServer) DeleteProperty(ctx context.Context, request *rpc.DeletePropertyRequest) (*empty.Empty, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
@@ -58,6 +60,7 @@ func (s *RegistryServer) DeleteProperty(ctx context.Context, request *rpc.Delete
 	return &empty.Empty{}, internalError(err)
 }
 
+// GetProperty handles the corresponding API request.
 func (s *RegistryServer) GetProperty(ctx context.Context, request *rpc.GetPropertyRequest) (*rpc.Property, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
@@ -79,6 +82,7 @@ func (s *RegistryServer) GetProperty(ctx context.Context, request *rpc.GetProper
 	return property.Message()
 }
 
+// ListProperties handles the corresponding API request.
 func (s *RegistryServer) ListProperties(ctx context.Context, req *rpc.ListPropertiesRequest) (*rpc.ListPropertiesResponse, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
@@ -94,16 +98,16 @@ func (s *RegistryServer) ListProperties(ctx context.Context, req *rpc.ListProper
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	if p.ProjectID != "-" && p.ProjectID != "-" {
+	if p.ProjectID != "-" {
 		q = q.Filter("ProjectID =", p.ProjectID)
 	}
-	if p.ProductID != "-" && p.ProductID != "-" {
+	if p.ProductID != "-" {
 		q = q.Filter("ProductID =", p.ProductID)
 	}
-	if p.VersionID != "-" && p.VersionID != "-" {
+	if p.VersionID != "-" {
 		q = q.Filter("VersionID =", p.VersionID)
 	}
-	if p.SpecID != "-" && p.SpecID != "-" {
+	if p.SpecID != "-" {
 		q = q.Filter("SpecID =", p.SpecID)
 	}
 	prg, err := createFilterOperator(req.GetFilter(),
@@ -122,6 +126,19 @@ func (s *RegistryServer) ListProperties(ctx context.Context, req *rpc.ListProper
 	it := client.Run(ctx, q.Distinct())
 	pageSize := boundPageSize(req.GetPageSize())
 	for _, err = it.Next(&property); err == nil; _, err = it.Next(&property) {
+		// don't allow wildcarded-names to be empty
+		if p.SpecID == "-" && property.SpecID == "" {
+			continue
+		}
+		if p.VersionID == "-" && property.VersionID == "" {
+			continue
+		}
+		if p.ProductID == "-" && property.ProductID == "" {
+			continue
+		}
+		if p.ProjectID == "-" && property.ProjectID == "" {
+			continue
+		}
 		if prg != nil {
 			out, _, err := prg.Eval(map[string]interface{}{
 				"project_id":  property.ProjectID,
@@ -156,6 +173,7 @@ func (s *RegistryServer) ListProperties(ctx context.Context, req *rpc.ListProper
 	return responses, nil
 }
 
+// UpdateProperty handles the corresponding API request.
 func (s *RegistryServer) UpdateProperty(ctx context.Context, request *rpc.UpdatePropertyRequest) (*rpc.Property, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {

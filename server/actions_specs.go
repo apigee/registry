@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// CreateSpec handles the corresponding API request.
 func (s *RegistryServer) CreateSpec(ctx context.Context, request *rpc.CreateSpecRequest) (*rpc.Spec, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
@@ -41,6 +42,7 @@ func (s *RegistryServer) CreateSpec(ctx context.Context, request *rpc.CreateSpec
 	return spec.Message(rpc.SpecView_BASIC)
 }
 
+// DeleteSpec handles the corresponding API request.
 func (s *RegistryServer) DeleteSpec(ctx context.Context, request *rpc.DeleteSpecRequest) (*empty.Empty, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
@@ -58,6 +60,7 @@ func (s *RegistryServer) DeleteSpec(ctx context.Context, request *rpc.DeleteSpec
 	return &empty.Empty{}, err
 }
 
+// GetSpec handles the corresponding API request.
 func (s *RegistryServer) GetSpec(ctx context.Context, request *rpc.GetSpecRequest) (*rpc.Spec, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
@@ -78,6 +81,7 @@ func (s *RegistryServer) GetSpec(ctx context.Context, request *rpc.GetSpecReques
 	return spec.Message(request.GetView())
 }
 
+// ListSpecs handles the corresponding API request.
 func (s *RegistryServer) ListSpecs(ctx context.Context, req *rpc.ListSpecsRequest) (*rpc.ListSpecsResponse, error) {
 	client, err := s.newDataStoreClient(ctx)
 	log.Printf("%+v", err)
@@ -158,6 +162,7 @@ func (s *RegistryServer) ListSpecs(ctx context.Context, req *rpc.ListSpecsReques
 	return responses, nil
 }
 
+// UpdateSpec handles the corresponding API request.
 func (s *RegistryServer) UpdateSpec(ctx context.Context, request *rpc.UpdateSpecRequest) (*rpc.Spec, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {

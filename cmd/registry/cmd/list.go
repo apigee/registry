@@ -245,10 +245,23 @@ func listProperties(ctx context.Context,
 	client *gapic.RegistryClient,
 	segments []string,
 	handler propertyHandler) error {
+	parent := "projects/" + segments[1]
+	if segments[3] != "" {
+		parent += "/products/" + segments[3]
+		if segments[5] != "" {
+			parent += "/versions/" + segments[5]
+			if segments[7] != "" {
+				parent += "/specs/" + segments[7]
+			}
+		}
+	}
 	request := &rpc.ListPropertiesRequest{
-		Parent: "projects/" + segments[1],
+		Parent: parent,
 	}
 	filter := filterFlag
+	if len(segments) == 9 && segments[8] != "-" {
+		filter = "property_id == '" + segments[8] + "'"
+	}
 	if filter != "" {
 		request.Filter = filter
 	}
@@ -269,10 +282,23 @@ func listLabels(ctx context.Context,
 	client *gapic.RegistryClient,
 	segments []string,
 	handler labelHandler) error {
+	parent := "projects/" + segments[1]
+	if segments[3] != "" {
+		parent += "/products/" + segments[3]
+		if segments[5] != "" {
+			parent += "/versions/" + segments[5]
+			if segments[7] != "" {
+				parent += "/specs/" + segments[7]
+			}
+		}
+	}
 	request := &rpc.ListLabelsRequest{
-		Parent: "projects/" + segments[1],
+		Parent: parent,
 	}
 	filter := filterFlag
+	if len(segments) == 9 && segments[8] != "-" {
+		filter = "label_id == '" + segments[8] + "'"
+	}
 	if filter != "" {
 		request.Filter = filter
 	}

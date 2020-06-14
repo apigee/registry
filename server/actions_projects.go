@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// CreateProject handles the corresponding API request.
 func (s *RegistryServer) CreateProject(ctx context.Context, request *rpc.CreateProjectRequest) (*rpc.Project, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
@@ -40,6 +41,7 @@ func (s *RegistryServer) CreateProject(ctx context.Context, request *rpc.CreateP
 	return project.Message()
 }
 
+// DeleteProject handles the corresponding API request.
 func (s *RegistryServer) DeleteProject(ctx context.Context, request *rpc.DeleteProjectRequest) (*empty.Empty, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
@@ -58,6 +60,7 @@ func (s *RegistryServer) DeleteProject(ctx context.Context, request *rpc.DeleteP
 	return &empty.Empty{}, internalError(err)
 }
 
+// GetProject handles the corresponding API request.
 func (s *RegistryServer) GetProject(ctx context.Context, request *rpc.GetProjectRequest) (*rpc.Project, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
@@ -78,6 +81,7 @@ func (s *RegistryServer) GetProject(ctx context.Context, request *rpc.GetProject
 	return project.Message()
 }
 
+// ListProjects handles the corresponding API request.
 func (s *RegistryServer) ListProjects(ctx context.Context, req *rpc.ListProjectsRequest) (*rpc.ListProjectsResponse, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
@@ -135,6 +139,7 @@ func (s *RegistryServer) ListProjects(ctx context.Context, req *rpc.ListProjects
 	return responses, nil
 }
 
+// UpdateProject handles the corresponding API request.
 func (s *RegistryServer) UpdateProject(ctx context.Context, request *rpc.UpdateProjectRequest) (*rpc.Project, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {

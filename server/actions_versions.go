@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// CreateVersion handles the corresponding API request.
 func (s *RegistryServer) CreateVersion(ctx context.Context, request *rpc.CreateVersionRequest) (*rpc.Version, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
@@ -40,6 +41,7 @@ func (s *RegistryServer) CreateVersion(ctx context.Context, request *rpc.CreateV
 	return version.Message()
 }
 
+// DeleteVersion handles the corresponding API request.
 func (s *RegistryServer) DeleteVersion(ctx context.Context, request *rpc.DeleteVersionRequest) (*empty.Empty, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
@@ -58,6 +60,7 @@ func (s *RegistryServer) DeleteVersion(ctx context.Context, request *rpc.DeleteV
 	return &empty.Empty{}, err
 }
 
+// GetVersion handles the corresponding API request.
 func (s *RegistryServer) GetVersion(ctx context.Context, request *rpc.GetVersionRequest) (*rpc.Version, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
@@ -78,6 +81,7 @@ func (s *RegistryServer) GetVersion(ctx context.Context, request *rpc.GetVersion
 	return version.Message()
 }
 
+// ListVersions handles the corresponding API request.
 func (s *RegistryServer) ListVersions(ctx context.Context, req *rpc.ListVersionsRequest) (*rpc.ListVersionsResponse, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
@@ -151,6 +155,7 @@ func (s *RegistryServer) ListVersions(ctx context.Context, req *rpc.ListVersions
 	return responses, nil
 }
 
+// UpdateVersion handles the corresponding API request.
 func (s *RegistryServer) UpdateVersion(ctx context.Context, request *rpc.UpdateVersionRequest) (*rpc.Version, error) {
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
