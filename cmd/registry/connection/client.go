@@ -11,6 +11,9 @@ import (
 	"google.golang.org/grpc"
 )
 
+// Client is a RegistryClient created by this package.
+type Client = *gapic.RegistryClient
+
 // NewClient ...
 func NewClient() (*gapic.RegistryClient, error) {
 	var opts []option.ClientOption

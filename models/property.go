@@ -146,7 +146,7 @@ func NewPropertyFromParentAndPropertyID(parent string, propertyID string) (*Prop
 func NewPropertyFromResourceName(name string) (*Property, error) {
 	// split name into parts
 	parts := strings.Split(name, "/")
-	if parts[len(parts)-2] != "properties" {
+	if len(parts) < 2 || parts[len(parts)-2] != "properties" {
 		return nil, fmt.Errorf("invalid property name '%s'", name)
 	}
 	// build property from parent and propertyID

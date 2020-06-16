@@ -379,15 +379,15 @@ func getProperty(ctx context.Context,
 	client *gapic.RegistryClient,
 	segments []string,
 	handler propertyHandler) error {
+	log.Printf("%+v", segments)
 	request := &rpc.GetPropertyRequest{
-		Name: "projects/" + segments[1] + "/properties/" + segments[2],
+		Name: "projects/" + segments[1] + "/products/" + segments[3] + "/versions/" + segments[5] + "/specs/" + segments[7] + "/properties/" + segments[8],
 	}
 	log.Printf("request %+v", request)
 	property, err := client.GetProperty(ctx, request)
 	if err != nil {
 		log.Printf("%+s", err.Error())
 	}
-	handler(property)
 	fmt.Printf("%+v\n", property)
 	print_property(property)
 	return nil

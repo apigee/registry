@@ -4,7 +4,6 @@ package server
 
 import (
 	"context"
-	"log"
 
 	"apigov.dev/registry/models"
 	rpc "apigov.dev/registry/rpc"
@@ -84,7 +83,6 @@ func (s *RegistryServer) GetSpec(ctx context.Context, request *rpc.GetSpecReques
 // ListSpecs handles the corresponding API request.
 func (s *RegistryServer) ListSpecs(ctx context.Context, req *rpc.ListSpecsRequest) (*rpc.ListSpecsResponse, error) {
 	client, err := s.newDataStoreClient(ctx)
-	log.Printf("%+v", err)
 	if err != nil {
 		return nil, err
 	}
@@ -124,8 +122,7 @@ func (s *RegistryServer) ListSpecs(ctx context.Context, req *rpc.ListSpecsReques
 	var spec models.Spec
 	it := client.Run(ctx, q.Distinct())
 	pageSize := boundPageSize(req.GetPageSize())
-	for i, err := it.Next(&spec); err == nil; _, err = it.Next(&spec) {
-		log.Printf("query result %+v", i)
+	for _, err := it.Next(&spec); err == nil; _, err = it.Next(&spec) {
 		if prg != nil {
 			out, _, err := prg.Eval(map[string]interface{}{
 				"project_id":  spec.ProjectID,

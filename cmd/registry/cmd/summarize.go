@@ -197,7 +197,9 @@ func summarizeSpec(ctx context.Context,
 func setProperty(ctx context.Context, client *gapic.RegistryClient, projectID string, property *rpc.Property) error {
 	request := &rpc.CreatePropertyRequest{}
 	request.Property = property
+	request.PropertyId = property.GetRelation()
 	request.Parent = property.GetSubject()
+	log.Printf("%+v", request)
 	newProperty, err := client.CreateProperty(ctx, request)
 	if err != nil {
 		code := status.Code(err)

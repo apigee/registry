@@ -106,6 +106,11 @@ func (spec *Spec) ResourceName() string {
 	return fmt.Sprintf("projects/%s/products/%s/versions/%s/specs/%s", spec.ProjectID, spec.ProductID, spec.VersionID, spec.SpecID)
 }
 
+// ParentResourceName generates the resource name of a spec's parent.
+func (spec *Spec) ParentResourceName() string {
+	return fmt.Sprintf("projects/%s/products/%s/versions/%s", spec.ProjectID, spec.ProductID, spec.VersionID)
+}
+
 // Message returns a message representing a spec.
 func (spec *Spec) Message(view rpc.SpecView) (message *rpc.Spec, err error) {
 	message = &rpc.Spec{}
