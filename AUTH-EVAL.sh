@@ -16,7 +16,7 @@ export REGISTRY_PROJECT_IDENTIFIER=$(gcloud config list --format 'value(core.pro
 ### CLIENT CONFIGURATION
 
 # This points to the eval server.
-export CLI_REGISTRY_ADDRESS=flame-backend-3rqz64w4vq-uw.a.run.app:443
+export CLI_REGISTRY_ADDRESS=registry-backend-3rqz64w4vq-uw.a.run.app:443
 
 # eval calls use TLS.
 unset CLI_REGISTRY_INSECURE
