@@ -87,7 +87,7 @@ class _SpecDetailWidgetState extends State<SpecDetailWidget> {
             Row(children: [
               summaryCard(context, spec, properties),
             ]),
-          Row(children:[Text(body)]),
+          Row(children: [Text(body != null ? body : "")]),
         ]),
       ),
     );

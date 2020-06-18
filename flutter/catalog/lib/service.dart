@@ -239,11 +239,8 @@ class PropertiesService {
       {subject: String}) {
     final client = getClient();
     final request = ListPropertiesRequest();
-    request.parent = parent;
-    if (subject != null) {
-      request.subject = subject;
-    }
-    try {
+    request.parent = subject;
+     try {
       return client.listProperties(request, options: callOptions());
     } catch (err) {
       print('Caught error: $err');
