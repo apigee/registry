@@ -4,7 +4,9 @@ all:
 	go install ./...
 
 test:
-	go test -v ./tests/...
+	go clean -testcache
+	# test everything except the gapic generated code
+	go test `go list ./... | grep -v gapic`
 
 clean:
 	rm -rf cmd/cli gapic rpc third_party/api-common-protos envoy/proto.pb

@@ -3,7 +3,7 @@ package main
 import (
 	"testing"
 
-	"apigov.dev/flame/models"
+	"apigov.dev/registry/models"
 )
 
 func TestProductResourceNames(t *testing.T) {
@@ -101,38 +101,6 @@ func TestSpecResourceNames(t *testing.T) {
 		_, err := models.NewSpecFromResourceName(name)
 		if err == nil {
 			t.Errorf("'%s' is an invalid spec name but is considered valid.", name)
-		}
-	}
-}
-func TestFileResourceNames(t *testing.T) {
-	// Verify that valid names are accepted.
-	for _, name := range []string{
-		"projects/123/products/abc/versions/123/specs/abc/files/123",
-		"projects/1-2_3/products/abc/versions/123/specs/abc/files/123",
-	} {
-		p, err := models.NewFileFromResourceName(name)
-		if err != nil {
-			t.Errorf("'%s' is a valid file name but is considered invalid.", name)
-		}
-		if p != nil {
-			resourceName := p.ResourceName()
-			if resourceName != name {
-				t.Errorf("'%s' failed to round-trip: new name was %s.",
-					name, resourceName)
-			}
-		}
-	}
-	// verify that invalid names are rejected.
-	for _, name := range []string{
-		"invalid",
-		"projects//products/123",
-		"projects/123/products/",
-		"projects/123/invalid/123",
-		"projects/123/products/ 123",
-	} {
-		_, err := models.NewFileFromResourceName(name)
-		if err == nil {
-			t.Errorf("'%s' is an invalid file name but is considered valid.", name)
 		}
 	}
 }
