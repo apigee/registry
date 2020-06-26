@@ -126,7 +126,7 @@ func (label *Label) ResourceName() string {
 		return fmt.Sprintf("projects/%s/products/%s/versions/%s/specs/%s/labels/%s",
 			label.ProjectID, label.ProductID, label.VersionID, label.SpecID, label.LabelID)
 	case label.VersionID != "":
-		return fmt.Sprintf("projects/%s/products/%s/versions/labels/%s",
+		return fmt.Sprintf("projects/%s/products/%s/versions/%s/labels/%s",
 			label.ProjectID, label.ProductID, label.VersionID, label.LabelID)
 	case label.ProductID != "":
 		return fmt.Sprintf("projects/%s/products/%s/labels/%s",

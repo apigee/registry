@@ -162,7 +162,7 @@ func (property *Property) ResourceName() string {
 		return fmt.Sprintf("projects/%s/products/%s/versions/%s/specs/%s/properties/%s",
 			property.ProjectID, property.ProductID, property.VersionID, property.SpecID, property.PropertyID)
 	case property.VersionID != "":
-		return fmt.Sprintf("projects/%s/products/%s/versions/properties/%s",
+		return fmt.Sprintf("projects/%s/products/%s/versions/%s/properties/%s",
 			property.ProjectID, property.ProductID, property.VersionID, property.PropertyID)
 	case property.ProductID != "":
 		return fmt.Sprintf("projects/%s/products/%s/properties/%s",
