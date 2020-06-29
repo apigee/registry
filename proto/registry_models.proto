@@ -150,6 +150,17 @@ message Spec {
 
   // The contents of the spec file. Returned only when the FULL view is requested.
   bytes contents = 10;
+
+  // The revision ID of the spec.
+  // A new revision is committed whenever the spec is changed in any way.
+  // The format is a 40-character hexadecimal string.
+  string revision_id = 11 [
+    (google.api.field_behavior) = IMMUTABLE,
+    (google.api.field_behavior) = OUTPUT_ONLY];
+
+  // The timestamp that the revision was created.
+  google.protobuf.Timestamp revision_create_time = 12
+    [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Views of Specs.

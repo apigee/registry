@@ -23,7 +23,11 @@ func SpecsRegexp() *regexp.Regexp {
 
 // SpecRegexp returns a regular expression that matches a spec resource name.
 func SpecRegexp() *regexp.Regexp {
-	return regexp.MustCompile("^projects/" + nameRegex + "/products/" + nameRegex + "/versions/" + nameRegex + "/specs/" + nameRegex + "$")
+	return regexp.MustCompile("^projects/" + nameRegex +
+		"/products/" + nameRegex +
+		"/versions/" + nameRegex +
+		"/specs/" + nameRegex +
+		revisionRegex + "$")
 }
 
 // Spec ...
@@ -32,6 +36,7 @@ type Spec struct {
 	ProductID   string    // Uniquely identifies a product within a project.
 	VersionID   string    // Uniquely identifies a version within a product.
 	SpecID      string    // Uniquely identifies a spec within a version.
+	RevisionID  string    // Uniquely identifies a revision of a spec.
 	Description string    // A detailed description.
 	CreateTime  time.Time // Creation time.
 	UpdateTime  time.Time // Time of last change.
@@ -103,7 +108,14 @@ func NewSpecFromMessage(message *rpc.Spec) (*Spec, error) {
 
 // ResourceName generates the resource name of a spec.
 func (spec *Spec) ResourceName() string {
-	return fmt.Sprintf("projects/%s/products/%s/versions/%s/specs/%s", spec.ProjectID, spec.ProductID, spec.VersionID, spec.SpecID)
+	return fmt.Sprintf("projects/%s/products/%s/versions/%s/specs/%s",
+		spec.ProjectID, spec.ProductID, spec.VersionID, spec.SpecID)
+}
+
+// ResourceNameWithRevision generates the resource name of a spec which includes the revision id.
+func (spec *Spec) ResourceNameWithRevision() string {
+	return fmt.Sprintf("projects/%s/products/%s/versions/%s/specs/%s@%s",
+		spec.ProjectID, spec.ProductID, spec.VersionID, spec.SpecID, spec.RevisionID)
 }
 
 // ParentResourceName generates the resource name of a spec's parent.
@@ -126,6 +138,7 @@ func (spec *Spec) Message(view rpc.SpecView) (message *rpc.Spec, err error) {
 	message.SourceUri = spec.SourceURI
 	message.CreateTime, err = ptypes.TimestampProto(spec.CreateTime)
 	message.UpdateTime, err = ptypes.TimestampProto(spec.UpdateTime)
+	message.RevisionId = spec.RevisionID
 	return message, err
 }
 
@@ -139,6 +152,7 @@ func (spec *Spec) Update(message *rpc.Spec) error {
 	h.Write(contents)
 	bs := h.Sum(nil)
 	spec.Hash = fmt.Sprintf("%x", bs)
+	spec.RevisionID = spec.Hash
 	spec.SizeInBytes = int32(len(contents))
 	spec.Style = message.GetStyle()
 	spec.SourceURI = message.GetSourceUri()

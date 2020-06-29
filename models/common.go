@@ -13,6 +13,11 @@ import (
 // See "Resource ID Segments" in https://aip.dev/122.
 const nameRegex = "([a-zA-Z0-9-_\\.]+)"
 
+// Generated revision names are lowercase hex strings, but we also
+// allow user-specified revision tags which can be mixed-case strings
+// containing dashes.
+const revisionRegex = "(@[a-zA-z0-9-]+)?"
+
 func validateID(id string) error {
 	r := regexp.MustCompile("^" + nameRegex + "$")
 	m := r.FindAllStringSubmatch(id, -1)
