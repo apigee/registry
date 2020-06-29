@@ -163,21 +163,16 @@ message Spec {
     [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
-// Views of Specs.
-enum SpecView {
-  // The default / unset value.
-  // The API will default to the BASIC view.
-  SPEC_VIEW_UNSPECIFIED = 0;
-
-  // Include everything but the file contents.
-  BASIC = 1;
-
-  // Include everything.
-  FULL = 2;
-}
-
 // Properties of resources. Relations are unique (single-value) per resource.
 message Property {
+  option (google.api.resource) = {
+    type : "registry.googleapis.com/Property"
+    pattern : "projects/{project}/properties/{property}"
+    pattern : "projects/{project}/products/{product}/properties/{property}"
+    pattern : "projects/{project}/products/{product}/versions/{version}/properties/{property}"
+    pattern : "projects/{project}/products/{product}/versions/{version}/specs/{spec}/properties/{property}"
+  };
+
   // Resource name.
   string name = 1;
 
@@ -195,17 +190,39 @@ message Property {
 
   // Property value.
   oneof value {
+
+    // String value of property.
     string string_value = 6;
+    
+    // Integer value of property.
     int64 int64_value = 7;
+
+    // Double value of property.
     double double_value = 8;
+
+    // Boolean value of property.
     bool bool_value = 9;
+
+    // Bytes value of property.
     bytes bytes_value = 10;
+
+    // Message vlue of property.
+    // (-- api-linter: core::0146::any=disabled
+    //     aip.dev/not-precedent: Allow users to specify any message type. --)
     google.protobuf.Any message_value = 11;
   }
 }
 
 // Labels on resources. Labels are similar to properties but in a separate namespace and without values.
 message Label {
+  option (google.api.resource) = {
+    type : "registry.googleapis.com/Label"
+    pattern : "projects/{project}/labels/{label}"
+    pattern : "projects/{project}/products/{product}/labels/{label}"
+    pattern : "projects/{project}/products/{product}/versions/{version}/labels/{label}"
+    pattern : "projects/{project}/products/{product}/versions/{version}/specs/{spec}/labels/{label}"
+  };
+
   // Resource name.
   string name = 1;
 
@@ -220,4 +237,17 @@ message Label {
 
   // Last update timestamp.
   google.protobuf.Timestamp update_time = 5 [ (google.api.field_behavior) = OUTPUT_ONLY ];
+}
+
+// Views of Specs.
+enum SpecView {
+  // The default / unset value.
+  // The API will default to the BASIC view.
+  SPEC_VIEW_UNSPECIFIED = 0;
+
+  // Include everything but the file contents.
+  BASIC = 1;
+
+  // Include everything.
+  FULL = 2;
 }

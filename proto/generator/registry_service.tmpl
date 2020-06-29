@@ -16,10 +16,7 @@ option java_outer_classname = "RegistryServiceProto";
 option go_package = "apigov.dev/registry/rpc;rpc";
 
 // The Registry API provides structures and relationships for
-// Full Lifecycle API Management. It enables API platform
-// teams to build rich models of their API ecosystems and
-// provide information and oversight to API producers and
-// consumers in their organizations.
+// API Governance and Lifecycle Management.
 service Registry {
   option (google.api.default_host) = "registry.googleapis.com";
 {{range .Entities}}{{template "rpcs" .}}{{end}}
@@ -105,7 +102,7 @@ message List{{.PluralName}}Request {
   // the call that provided the page token.
   string page_token = 3;
 
-  // An optional expression that can be used to filter the list.
+  // An expression that can be used to filter the list.
   string filter = 4;{{if .ViewEnumName}}
 
   // The level of detail to return (defaults to BASIC).

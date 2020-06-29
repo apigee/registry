@@ -304,7 +304,7 @@ message ListProjectsRequest {
   // the call that provided the page token.
   string page_token = 3;
 
-  // An optional expression that can be used to filter the list.
+  // An expression that can be used to filter the list.
   string filter = 4;
 }
 
@@ -387,7 +387,7 @@ message ListProductsRequest {
   // the call that provided the page token.
   string page_token = 3;
 
-  // An optional expression that can be used to filter the list.
+  // An expression that can be used to filter the list.
   string filter = 4;
 }
 
@@ -474,7 +474,7 @@ message ListVersionsRequest {
   // the call that provided the page token.
   string page_token = 3;
 
-  // An optional expression that can be used to filter the list.
+  // An expression that can be used to filter the list.
   string filter = 4;
 }
 
@@ -561,7 +561,7 @@ message ListSpecsRequest {
   // the call that provided the page token.
   string page_token = 3;
 
-  // An optional expression that can be used to filter the list.
+  // An expression that can be used to filter the list.
   string filter = 4;
 
   // The level of detail to return (defaults to BASIC).
@@ -654,7 +654,7 @@ message ListPropertiesRequest {
   // the call that provided the page token.
   string page_token = 3;
 
-  // An optional expression that can be used to filter the list.
+  // An expression that can be used to filter the list.
   string filter = 4;
 }
 
@@ -741,7 +741,7 @@ message ListLabelsRequest {
   // the call that provided the page token.
   string page_token = 3;
 
-  // An optional expression that can be used to filter the list.
+  // An expression that can be used to filter the list.
   string filter = 4;
 }
 
