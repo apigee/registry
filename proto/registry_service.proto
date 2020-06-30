@@ -15,8 +15,7 @@ option java_multiple_files = true;
 option java_outer_classname = "RegistryServiceProto";
 option go_package = "apigov.dev/registry/rpc;rpc";
 
-// The Registry API provides structures and relationships for
-// API Governance and Lifecycle Management.
+// The Registry service allows teams to manage descriptions of APIs.
 service Registry {
   option (google.api.default_host) = "registry.googleapis.com";
 

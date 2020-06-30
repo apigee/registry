@@ -188,6 +188,54 @@ func (s *RegistryServer) UpdateSpec(ctx context.Context, request *rpc.UpdateSpec
 	return spec.Message(rpc.SpecView_BASIC, false)
 }
 
+// ListSpecRevisions handles the corresponding API request.
+func (s *RegistryServer) ListSpecRevisions(ctx context.Context, req *rpc.ListSpecRevisionsRequest) (*rpc.ListSpecRevisionsResponse, error) {
+	client, err := s.newDataStoreClient(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer client.Close()
+	targetSpec, err := models.NewSpecFromResourceName(req.GetName())
+	if err != nil {
+		return nil, err
+	}
+	q := datastore.NewQuery(models.SpecEntityName)
+	q, err = queryApplyCursor(q, req.GetPageToken())
+	if err != nil {
+		return nil, internalError(err)
+	}
+	q = q.Filter("ProjectID =", targetSpec.ProjectID)
+	q = q.Filter("ProductID =", targetSpec.ProductID)
+	q = q.Filter("VersionID =", targetSpec.VersionID)
+	q = q.Filter("SpecID =", targetSpec.SpecID)
+	q = q.Order("-CreateTime")
+
+	var specMessages []*rpc.Spec
+	var spec models.Spec
+	log.Printf("%+v", q)
+	it := client.Run(ctx, q.Distinct())
+	pageSize := boundPageSize(req.GetPageSize())
+	for _, err := it.Next(&spec); err == nil; _, err = it.Next(&spec) {
+		specMessage, _ := spec.Message(rpc.SpecView_BASIC, true)
+		specMessages = append(specMessages, specMessage)
+		log.Printf("%+v", specMessage)
+		if len(specMessages) == pageSize {
+			break
+		}
+	}
+	if err != nil && err != iterator.Done {
+		return nil, internalError(err)
+	}
+	responses := &rpc.ListSpecRevisionsResponse{
+		Specs: specMessages,
+	}
+	responses.NextPageToken, err = iteratorGetCursor(it, len(specMessages))
+	if err != nil {
+		return nil, internalError(err)
+	}
+	return responses, nil
+}
+
 // fetchSpec gets the stored model of a Spec.
 func fetchSpec(
 	ctx context.Context,

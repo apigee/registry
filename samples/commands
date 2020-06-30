@@ -47,8 +47,51 @@ apg registry update-spec \
 	--spec.name projects/sample/products/petstore/versions/1.0.0/specs/openapi.yaml \
 	--spec.contents `encode-spec < petstore/1.0.0/openapi.yaml@r1`
 
+echo update the spec to new contents
+apg registry update-spec \
+	--spec.name projects/sample/products/petstore/versions/1.0.0/specs/openapi.yaml \
+	--spec.contents `encode-spec < petstore/1.0.0/openapi.yaml@r2`
+
+echo update the spec to new contents
+apg registry update-spec \
+	--spec.name projects/sample/products/petstore/versions/1.0.0/specs/openapi.yaml \
+	--spec.contents `encode-spec < petstore/1.0.0/openapi.yaml@r3`
+
 echo get the spec
 apg registry get-spec \
     --name projects/sample/products/petstore/versions/1.0.0/specs/openapi.yaml \
     --view full \
     --json
+
+echo list spec revisions
+apg registry list-spec-revisions \
+    --name projects/sample/products/petstore/versions/1.0.0/specs/openapi.yaml \
+    --json
+
+echo list just the revision names
+apg registry list-spec-revisions \
+    --name projects/sample/products/petstore/versions/1.0.0/specs/openapi.yaml \
+    --json | \
+    jq '.specs[].name' -r 
+
+echo get the latest revision
+apg registry list-spec-revisions \
+    --name projects/sample/products/petstore/versions/1.0.0/specs/openapi.yaml \
+    --json | \
+    jq '.specs[0].name' -r 
+
+echo get the oldest revision 
+apg registry list-spec-revisions \
+    --name projects/sample/products/petstore/versions/1.0.0/specs/openapi.yaml \
+    --json | \
+    jq '.specs[-1].name' -r 
+
+echo TODO: delete a spec revision
+
+echo TODO: revert a spec revision
+
+echo TODO: tag a spec revision
+
+echo TODO: get a spec by its tag
+
+
