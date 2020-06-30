@@ -1,0 +1,5 @@
+#!/bin/sh
+# 
+# encodes an API spec for upload
+#
+gzip --stdout | xxd -p | tr -d '\n'

@@ -54,7 +54,10 @@ func (s *RegistryServer) DeleteProject(ctx context.Context, request *rpc.DeleteP
 		return nil, invalidArgumentError(err)
 	}
 	// Delete children first and then delete the project.
-	project.DeleteChildren(ctx, client)
+	err = project.DeleteChildren(ctx, client)
+	if err != nil {
+		return &empty.Empty{}, internalError(err)
+	}
 	k := &datastore.Key{Kind: models.ProjectEntityName, Name: request.GetName()}
 	err = client.Delete(ctx, k)
 	return &empty.Empty{}, internalError(err)

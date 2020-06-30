@@ -12,8 +12,8 @@ go get -u github.com/googleapis/gapic-generator-go/cmd/protoc-gen-go_cli
 go get -u github.com/googleapis/api-linter/cmd/api-linter
 
 echo "Clearing any previously-generated directories."
-rm -rf rpc gapic cmd/cli
-mkdir -p rpc gapic cmd/cli
+rm -rf rpc gapic cmd/apg
+mkdir -p rpc gapic cmd/apg
 
 export ANNOTATIONS="third_party/api-common-protos"
 
@@ -46,14 +46,14 @@ protoc --proto_path=./proto --proto_path=${ANNOTATIONS} \
 	proto/registry_models.proto \
 	proto/registry_properties.proto \
 	proto/registry_service.proto \
-  	--go_cli_out cmd/cli \
-  	--go_cli_opt "root=cli" \
+  	--go_cli_out cmd/apg \
+  	--go_cli_opt "root=apg" \
   	--go_cli_opt "gapic=apigov.dev/registry/gapic"
 
 # fix a problem in a couple of generated CLI files
 sed -i -e 's/anypb.Property_MessageValue/rpcpb.Property_MessageValue/g' \
-	cmd/cli/create-property.go \
-	cmd/cli/update-property.go
+	cmd/apg/create-property.go \
+	cmd/apg/update-property.go
 
 echo "Generating descriptor set for envoy."
 protoc --proto_path=./proto --proto_path=${ANNOTATIONS} \

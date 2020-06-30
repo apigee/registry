@@ -30,11 +30,12 @@ message Project {
   string description = 3;
 
   // Creation timestamp.
-  google.protobuf.Timestamp create_time = 4;
+  google.protobuf.Timestamp create_time = 4
+    [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Last update timestamp.
-  google.protobuf.Timestamp update_time = 5;
-
+  google.protobuf.Timestamp update_time = 5
+    [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // A Product is a top-level description of an API product.
@@ -55,10 +56,12 @@ message Product {
   string description = 3;
 
   // Creation timestamp.
-  google.protobuf.Timestamp create_time = 4;
+  google.protobuf.Timestamp create_time = 4
+    [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Last update timestamp.
-  google.protobuf.Timestamp update_time = 5;
+  google.protobuf.Timestamp update_time = 5
+    [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // A user-definable description of the availability of this service.
   // Format: free-form, but we expect single words that describe availability,
@@ -90,10 +93,12 @@ message Version {
   string description = 3;
 
   // Creation timestamp.
-  google.protobuf.Timestamp create_time = 4;
+  google.protobuf.Timestamp create_time = 4
+    [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Last update timestamp.
-  google.protobuf.Timestamp update_time = 5;
+  google.protobuf.Timestamp update_time = 5
+    [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // A user-definable description of the lifecycle phase of this API version.
   // Format: free-form, but we expect single words that describe API maturity,
@@ -123,10 +128,12 @@ message Spec {
   string description = 3;
 
   // Creation timestamp.
-  google.protobuf.Timestamp create_time = 4;
+  google.protobuf.Timestamp create_time = 4
+    [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Last update timestamp.
-  google.protobuf.Timestamp update_time = 5;
+  google.protobuf.Timestamp update_time = 5
+    [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // A style (format) descriptor for this spec.
   // Possible values include "proto3", "OpenAPI-2.0", "OpenAPI-3.0".
@@ -137,10 +144,12 @@ message Spec {
   string style = 6;
 
   // The size of the spec file in bytes.
-  int32 size_bytes = 7;
+  int32 size_bytes = 7  
+    [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // A hash of the spec file's contents
-  string hash = 8;
+  string hash = 8
+    [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // The original source URI of the spec file (if one exists).
   // This is an external location that can be used for reference purposes
@@ -153,7 +162,7 @@ message Spec {
 
   // The revision ID of the spec.
   // A new revision is committed whenever the spec is changed in any way.
-  // The format is a 40-character hexadecimal string.
+  // The format is an 8-character hexadecimal string.
   string revision_id = 11 [
     (google.api.field_behavior) = IMMUTABLE,
     (google.api.field_behavior) = OUTPUT_ONLY];
@@ -163,7 +172,7 @@ message Spec {
     [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
-// Properties of resources. Relations are unique (single-value) per resource.
+// Properties of resources. Properties are unique (single-value) per resource.
 message Property {
   option (google.api.resource) = {
     type : "registry.googleapis.com/Property"
@@ -177,16 +186,20 @@ message Property {
   string name = 1;
 
   // Subject resource name.
-  string subject = 2 [ (google.api.field_behavior) = OUTPUT_ONLY ];
+  string subject = 2
+    [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Relation name.
-  string relation = 3 [ (google.api.field_behavior) = OUTPUT_ONLY ];
+  string relation = 3
+    [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Creation timestamp.
-  google.protobuf.Timestamp create_time = 4 [ (google.api.field_behavior) = OUTPUT_ONLY ];
+  google.protobuf.Timestamp create_time = 4
+    [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Last update timestamp.
-  google.protobuf.Timestamp update_time = 5 [ (google.api.field_behavior) = OUTPUT_ONLY ];
+  google.protobuf.Timestamp update_time = 5
+    [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Property value.
   oneof value {
@@ -206,14 +219,14 @@ message Property {
     // Bytes value of property.
     bytes bytes_value = 10;
 
-    // Message vlue of property.
+    // Message value of property.
     // (-- api-linter: core::0146::any=disabled
     //     aip.dev/not-precedent: Allow users to specify any message type. --)
     google.protobuf.Any message_value = 11;
   }
 }
 
-// Labels on resources. Labels are similar to properties but in a separate namespace and without values.
+// Labels on resources. Labels are similar to properties but are in a separate namespace and without values.
 message Label {
   option (google.api.resource) = {
     type : "registry.googleapis.com/Label"
@@ -227,16 +240,20 @@ message Label {
   string name = 1;
 
   // Subject resource name.
-  string subject = 2 [ (google.api.field_behavior) = OUTPUT_ONLY ];
+  string subject = 2
+    [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Label name.
-  string label = 3 [ (google.api.field_behavior) = OUTPUT_ONLY ];
+  string label = 3
+    [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Creation timestamp.
-  google.protobuf.Timestamp create_time = 4 [ (google.api.field_behavior) = OUTPUT_ONLY ];
+  google.protobuf.Timestamp create_time = 4
+    [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Last update timestamp.
-  google.protobuf.Timestamp update_time = 5 [ (google.api.field_behavior) = OUTPUT_ONLY ];
+  google.protobuf.Timestamp update_time = 5
+    [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Views of Specs.

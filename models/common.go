@@ -3,6 +3,7 @@ package models
 import (
 	"context"
 	"fmt"
+	"log"
 	"regexp"
 
 	"cloud.google.com/go/datastore"
@@ -34,9 +35,21 @@ func deleteAllMatches(ctx context.Context, client *datastore.Client, q *datastor
 	for err == nil {
 		keys = append(keys, key)
 		key, err = it.Next(nil)
+		if len(keys) == 500 {
+			log.Printf("Deleting %d %s", len(keys), keys[0].Kind)
+			err = client.DeleteMulti(ctx, keys)
+			if err != nil {
+				return err
+			}
+			keys = make([]*datastore.Key, 0)
+		}
 	}
 	if err != iterator.Done {
 		return err
 	}
-	return client.DeleteMulti(ctx, keys)
+	if len(keys) > 0 {
+		log.Printf("Deleting %d %s", len(keys), keys[0].Kind)
+		return client.DeleteMulti(ctx, keys)
+	}
+	return nil
 }

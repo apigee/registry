@@ -100,7 +100,7 @@ func (product *Product) Update(message *rpc.Product) error {
 	product.Description = message.GetDescription()
 	product.Availability = message.GetAvailability()
 	product.RecommendedVersion = message.GetRecommendedVersion()
-	product.UpdateTime = product.CreateTime
+	product.UpdateTime = time.Now()
 	return nil
 }
 

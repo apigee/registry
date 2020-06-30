@@ -1,0 +1,54 @@
+
+echo delete everything associated with a project
+apg registry delete-project --name projects/sample
+
+echo create a project in the registry
+apg registry create-project --project_id sample
+
+echo add a product to the registry
+apg registry create-product --parent projects/sample --product_id petstore
+
+echo add a version to the registry
+apg registry create-version --parent projects/sample/products/petstore --version_id 1.0.0
+
+echo add a spec to the registry
+apg registry create-spec \
+    --parent projects/sample/products/petstore/versions/1.0.0 \
+    --spec_id openapi.yaml \
+    --spec.contents `encode-spec < petstore/1.0.0/openapi.yaml@r0`
+
+echo get a spec
+apg registry get-spec \
+    --name projects/sample/products/petstore/versions/1.0.0/specs/openapi.yaml \
+    --view full \
+    --json
+
+echo get the spec contents
+apg registry get-spec \
+    --name projects/sample/products/petstore/versions/1.0.0/specs/openapi.yaml \
+    --view full --json | \
+    jq '.contents' -r | \
+    base64 --decode | \
+    gunzip
+
+echo update a spec attribute
+apg registry update-spec \
+	--spec.name projects/sample/products/petstore/versions/1.0.0/specs/openapi.yaml \
+	--spec.style "openapiv3+gz"
+
+echo get the spec
+apg registry get-spec \
+    --name projects/sample/products/petstore/versions/1.0.0/specs/openapi.yaml \
+    --view full \
+    --json
+
+echo update the spec to new contents
+apg registry update-spec \
+	--spec.name projects/sample/products/petstore/versions/1.0.0/specs/openapi.yaml \
+	--spec.contents `encode-spec < petstore/1.0.0/openapi.yaml@r1`
+
+echo get the spec
+apg registry get-spec \
+    --name projects/sample/products/petstore/versions/1.0.0/specs/openapi.yaml \
+    --view full \
+    --json

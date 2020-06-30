@@ -117,7 +117,7 @@ func (version *Version) Update(message *rpc.Version) error {
 	version.DisplayName = message.GetDisplayName()
 	version.Description = message.GetDescription()
 	version.State = message.GetState()
-	version.UpdateTime = version.CreateTime
+	version.UpdateTime = time.Now()
 	return nil
 }
 

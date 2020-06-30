@@ -1,3 +1,6 @@
+lite:
+	go install ./...
+
 all:	
 	cd third_party; sh ./SETUP.sh
 	./COMPILE-PROTOS.sh

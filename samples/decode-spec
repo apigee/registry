@@ -1,0 +1,3 @@
+#!/bin/sh
+
+xxd -r -p | gunzip

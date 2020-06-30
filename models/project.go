@@ -76,13 +76,20 @@ func (project *Project) Message() (message *rpc.Project, err error) {
 func (project *Project) Update(message *rpc.Project) error {
 	project.DisplayName = message.GetDisplayName()
 	project.Description = message.GetDescription()
-	project.UpdateTime = project.CreateTime
+	project.UpdateTime = time.Now()
 	return nil
 }
 
 // DeleteChildren deletes all the children of a project.
 func (project *Project) DeleteChildren(ctx context.Context, client *datastore.Client) error {
-	for _, entityName := range []string{SpecEntityName, VersionEntityName, ProductEntityName, PropertyEntityName} {
+	entityNames := []string{
+		LabelEntityName,
+		PropertyEntityName,
+		SpecEntityName,
+		VersionEntityName,
+		ProductEntityName,
+	}
+	for _, entityName := range entityNames {
 		q := datastore.NewQuery(entityName)
 		q = q.KeysOnly()
 		q = q.Filter("ProjectID =", project.ProjectID)

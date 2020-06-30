@@ -203,7 +203,7 @@ func (property *Property) Message() (message *rpc.Property, err error) {
 // Update modifies a property using the contents of a message.
 func (property *Property) Update(message *rpc.Property) error {
 	property.Subject = message.GetSubject()
-	property.UpdateTime = property.CreateTime
+	property.UpdateTime = time.Now()
 	switch message.GetValue().(type) {
 	case *rpc.Property_StringValue:
 		property.ValueType = StringType

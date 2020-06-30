@@ -93,6 +93,13 @@ Cloud Run, credentials are automatically provided by the environment.)
 Please note: this project's Datastore usage is equivalent to
 [running Cloud Firestore in Datastore mode](https://cloud.google.com/datastore/docs).
 
+The reference API requires indexes in its Datastore instance. To create them,
+use the `gcloud` command in the root of this repository:
+
+```
+gcloud datastore indexes create index.yaml 
+```
+
 ## Running the API Locally
 
 Running `source AUTH-LOCAL.sh` will configure your environment for the Registry

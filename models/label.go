@@ -152,6 +152,6 @@ func (label *Label) Message() (message *rpc.Label, err error) {
 // Update modifies a label using the contents of a message.
 func (label *Label) Update(message *rpc.Label) error {
 	label.Subject = message.GetSubject()
-	label.UpdateTime = label.CreateTime
+	label.UpdateTime = time.Now()
 	return nil
 }

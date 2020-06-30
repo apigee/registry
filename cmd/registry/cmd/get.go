@@ -35,7 +35,14 @@ var getCmd = &cobra.Command{
 			property = args[1]
 		}
 
-		if m := models.ProjectRegexp().FindAllStringSubmatch(name, -1); m != nil {
+		// first look for the main resource types
+
+		if m := models.SpecRegexp().FindAllStringSubmatch(name, -1); m != nil {
+			log.Printf(" get a spec")
+
+			_, err = getSpec(ctx, client, m[0], printSpecDetail)
+
+		} else if m := models.ProjectRegexp().FindAllStringSubmatch(name, -1); m != nil {
 			// find all matching properties for a project
 			segments := m[0]
 			err = getNamedProperty(ctx, client, segments[1], "", property)
@@ -81,7 +88,7 @@ func getNamedProperty(ctx context.Context, client *gapic.RegistryClient, project
 		} else if err != nil {
 			return err
 		}
-		print_property(property)
+		printProperty(property)
 	}
 	return nil
 }
@@ -90,7 +97,7 @@ func init() {
 	rootCmd.AddCommand(getCmd)
 }
 
-func print_property(property *rpc.Property) {
+func printPropertyDetail(property *rpc.Property) {
 	fmt.Printf("%s %s %+v\n", property.Subject, property.Relation, property.Value)
 	switch v := property.Value.(type) {
 	case *rpc.Property_StringValue:
@@ -120,4 +127,9 @@ func print_property(property *rpc.Property) {
 
 	}
 	fmt.Printf("\n")
+}
+
+func printSpecDetail(spec *rpc.Spec) {
+	fmt.Println(spec.Name)
+	fmt.Printf("%+v\n", spec)
 }

@@ -16,11 +16,11 @@ export REGISTRY_PROJECT_IDENTIFIER=$(gcloud config list --format 'value(core.pro
 ### CLIENT CONFIGURATION
 
 # This points to the eval server.
-export CLI_REGISTRY_ADDRESS=registry-backend-3rqz64w4vq-uw.a.run.app:443
+export APG_REGISTRY_ADDRESS=registry-backend-3rqz64w4vq-uw.a.run.app:443
 
 # eval calls use TLS.
-unset CLI_REGISTRY_INSECURE
+unset APG_REGISTRY_INSECURE
 
 # eval calls don't need authentication.
-unset CLI_REGISTRY_TOKEN
-unset CLI_REGISTRY_API_KEY
+unset APG_REGISTRY_TOKEN
+unset APG_REGISTRY_API_KEY

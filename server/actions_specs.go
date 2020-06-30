@@ -4,6 +4,8 @@ package server
 
 import (
 	"context"
+	"errors"
+	"log"
 
 	"apigov.dev/registry/models"
 	rpc "apigov.dev/registry/rpc"
@@ -25,20 +27,27 @@ func (s *RegistryServer) CreateSpec(ctx context.Context, request *rpc.CreateSpec
 	if err != nil {
 		return nil, err
 	}
-	k := &datastore.Key{Kind: models.SpecEntityName, Name: spec.ResourceName()}
 	// fail if spec already exists
+	q := datastore.NewQuery(models.SpecEntityName)
+	q = q.Filter("ProjectID =", spec.ProjectID)
+	q = q.Filter("ProductID =", spec.ProductID)
+	q = q.Filter("VersionID =", spec.VersionID)
+	q = q.Filter("SpecID =", spec.SpecID)
+	it := client.Run(ctx, q.Distinct())
 	var existingSpec models.Spec
-	err = client.Get(ctx, k, &existingSpec)
-	if err == nil {
+	existingKey, err := it.Next(&existingSpec)
+	if existingKey != nil {
 		return nil, status.Error(codes.AlreadyExists, spec.ResourceName()+" already exists")
 	}
+	// save the spec under its full resource@revision name
 	err = spec.Update(request.GetSpec())
 	spec.CreateTime = spec.UpdateTime
+	k := &datastore.Key{Kind: models.SpecEntityName, Name: spec.ResourceNameWithRevision()}
 	k, err = client.Put(ctx, k, spec)
 	if err != nil {
 		return nil, err
 	}
-	return spec.Message(rpc.SpecView_BASIC)
+	return spec.Message(rpc.SpecView_BASIC, false)
 }
 
 // DeleteSpec handles the corresponding API request.
@@ -66,18 +75,12 @@ func (s *RegistryServer) GetSpec(ctx context.Context, request *rpc.GetSpecReques
 		return nil, err
 	}
 	defer client.Close()
-	spec, err := models.NewSpecFromResourceName(request.GetName())
+	spec, userSpecifiedRevision, err := fetchSpec(ctx, client, request.GetName())
 	if err != nil {
 		return nil, err
+		// return nil, status.Error(codes.NotFound, "not found")
 	}
-	k := &datastore.Key{Kind: models.SpecEntityName, Name: spec.ResourceName()}
-	err = client.Get(ctx, k, spec)
-	if err == datastore.ErrNoSuchEntity {
-		return nil, status.Error(codes.NotFound, "not found")
-	} else if err != nil {
-		return nil, internalError(err)
-	}
-	return spec.Message(request.GetView())
+	return spec.Message(request.GetView(), userSpecifiedRevision)
 }
 
 // ListSpecs handles the corresponding API request.
@@ -140,7 +143,7 @@ func (s *RegistryServer) ListSpecs(ctx context.Context, req *rpc.ListSpecsReques
 				continue
 			}
 		}
-		specMessage, _ := spec.Message(req.GetView())
+		specMessage, _ := spec.Message(req.GetView(), false)
 		specMessages = append(specMessages, specMessage)
 		if len(specMessages) == pageSize {
 			break
@@ -166,22 +169,60 @@ func (s *RegistryServer) UpdateSpec(ctx context.Context, request *rpc.UpdateSpec
 		return nil, err
 	}
 	defer client.Close()
-	spec, err := models.NewSpecFromResourceName(request.GetSpec().GetName())
+	spec, userSpecifiedRevision, err := fetchSpec(ctx, client, request.GetSpec().GetName())
 	if err != nil {
 		return nil, err
 	}
-	k := &datastore.Key{Kind: models.SpecEntityName, Name: spec.ResourceName()}
-	err = client.Get(ctx, k, spec)
-	if err != nil {
-		return nil, status.Error(codes.NotFound, "not found")
+	if userSpecifiedRevision {
+		return nil, invalidArgumentError(errors.New("updates to specific revisions are unsupported"))
 	}
 	err = spec.Update(request.GetSpec())
 	if err != nil {
 		return nil, err
 	}
+	k := &datastore.Key{Kind: models.SpecEntityName, Name: spec.ResourceNameWithRevision()}
 	k, err = client.Put(ctx, k, spec)
 	if err != nil {
 		return nil, err
 	}
-	return spec.Message(rpc.SpecView_BASIC)
+	return spec.Message(rpc.SpecView_BASIC, false)
+}
+
+// fetchSpec gets the stored model of a Spec.
+func fetchSpec(
+	ctx context.Context,
+	client *datastore.Client,
+	name string,
+) (*models.Spec, bool, error) {
+	spec, err := models.NewSpecFromResourceName(name)
+	if err != nil {
+		return nil, false, err
+	}
+	// if there's no revision, get the spec with the most recent revision
+	if spec.RevisionID == "" {
+		q := datastore.NewQuery(models.SpecEntityName)
+		q = q.Filter("ProjectID =", spec.ProjectID)
+		q = q.Filter("ProductID =", spec.ProductID)
+		q = q.Filter("VersionID =", spec.VersionID)
+		q = q.Filter("SpecID =", spec.SpecID)
+		q = q.Order("-CreateTime")
+		log.Printf("query %+v", q)
+		it := client.Run(ctx, q.Distinct())
+		_, err = it.Next(spec)
+		if err != nil {
+			return nil, false, err
+		}
+		return spec, false, nil
+	}
+	// if the revision reference is a tag, resolve the tag
+	// ... todo ...
+	// if we know the revision, get the spec by revision
+	k := &datastore.Key{Kind: models.SpecEntityName, Name: spec.ResourceNameWithRevision()}
+	err = client.Get(ctx, k, spec)
+	if err == datastore.ErrNoSuchEntity {
+		return nil, true, status.Error(codes.NotFound, "not found")
+	} else if err != nil {
+		return nil, true, internalError(err)
+	}
+	return spec, true, nil
 }

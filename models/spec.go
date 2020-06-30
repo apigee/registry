@@ -7,10 +7,12 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"strings"
 	"time"
 
 	rpc "apigov.dev/registry/rpc"
 	ptypes "github.com/golang/protobuf/ptypes"
+	"github.com/google/uuid"
 )
 
 // SpecEntityName is used to represent specs in the datastore.
@@ -92,6 +94,9 @@ func NewSpecFromResourceName(name string) (*Spec, error) {
 	spec.ProductID = m[0][2]
 	spec.VersionID = m[0][3]
 	spec.SpecID = m[0][4]
+	if strings.HasPrefix(m[0][5], "@") {
+		spec.RevisionID = m[0][5][1:]
+	}
 	return spec, nil
 }
 
@@ -124,9 +129,13 @@ func (spec *Spec) ParentResourceName() string {
 }
 
 // Message returns a message representing a spec.
-func (spec *Spec) Message(view rpc.SpecView) (message *rpc.Spec, err error) {
+func (spec *Spec) Message(view rpc.SpecView, fullname bool) (message *rpc.Spec, err error) {
 	message = &rpc.Spec{}
-	message.Name = spec.ResourceName()
+	if fullname {
+		message.Name = spec.ResourceNameWithRevision()
+	} else {
+		message.Name = spec.ResourceName()
+	}
 	message.Filename = spec.FileName
 	message.Description = spec.Description
 	if view == rpc.SpecView_FULL {
@@ -144,18 +153,52 @@ func (spec *Spec) Message(view rpc.SpecView) (message *rpc.Spec, err error) {
 
 // Update modifies a spec using the contents of a message.
 func (spec *Spec) Update(message *rpc.Spec) error {
+	now := time.Now()
+
+	filename := message.GetFilename()
+	if filename != "" {
+		spec.FileName = filename
+	}
+
+	description := message.GetDescription()
+	if description != "" {
+		spec.Description = description
+	}
+
 	contents := message.GetContents()
-	spec.FileName = message.Filename
-	spec.Description = message.Description
-	spec.Contents = contents
-	h := sha1.New()
-	h.Write(contents)
-	bs := h.Sum(nil)
-	spec.Hash = fmt.Sprintf("%x", bs)
-	spec.RevisionID = spec.Hash
-	spec.SizeInBytes = int32(len(contents))
-	spec.Style = message.GetStyle()
-	spec.SourceURI = message.GetSourceUri()
-	spec.UpdateTime = spec.CreateTime
+	if contents != nil {
+		spec.Contents = contents
+		hash := hashForBytes(contents)
+		if spec.Hash != hash {
+			spec.Hash = hash
+			spec.RevisionID = newRevisionID()
+			spec.CreateTime = now
+		}
+		spec.SizeInBytes = int32(len(contents))
+	}
+
+	style := message.GetStyle()
+	if style != "" {
+		spec.Style = style
+	}
+
+	sourceURI := message.GetSourceUri()
+	if sourceURI != "" {
+		spec.SourceURI = sourceURI
+	}
+
+	spec.UpdateTime = now
 	return nil
+}
+
+func newRevisionID() string {
+	s := uuid.New().String()
+	return s[len(s)-8:]
+}
+
+func hashForBytes(b []byte) string {
+	h := sha1.New()
+	h.Write(b)
+	bs := h.Sum(nil)
+	return fmt.Sprintf("%x", bs)
 }
