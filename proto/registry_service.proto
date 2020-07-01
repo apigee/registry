@@ -213,6 +213,14 @@ service Registry {
       get: "/v1alpha1/{name=projects/*/products/*/versions/*/specs/*}:listRevisions"
     };
   }
+
+  // ListSpecRevisionTags lists all revision tags defined for a spec.
+  rpc ListSpecRevisionTags(ListSpecRevisionTagsRequest)
+      returns (ListSpecRevisionTagsResponse) {
+    option (google.api.http) = {
+      get: "/v1alpha1/{name=projects/*/products/*/versions/*/specs/*}:listRevisionTags"
+    };
+  }
   
   // RollbackSpec sets the current revision to a specified prio revision.
   // Note that this recreates a new revision ID.
@@ -882,6 +890,38 @@ message ListSpecRevisionsResponse {
   // If this field is omitted, there are no subsequent pages.
   string next_page_token = 2;
 }
+
+// Request message for ListSpecRevisionTags.
+// (-- api-linter: core::0132::request-parent-required=disabled
+//     aip.dev/not-precedent: Listing revision tags does not require a parent. --)
+// (-- api-linter: core::0132::request-unknown-fields=disabled
+//     aip.dev/not-precedent: Listing revision tags requires nonstandard fields. --)
+message ListSpecRevisionTagsRequest {
+  // The name of the spec to list revision tags for.
+  string name = 1;
+
+  // The maximum number of revision tags to return per page.
+  int32 page_size = 2;
+
+  // The page token, received from a previous ListSpecRevisionTags call.
+  // Provide this to retrieve the subsequent page.
+  string page_token = 3;
+}
+
+// Response message for ListSpecRevisionTagsResponse.
+// (-- api-linter: core::0132::response-unknown-fields=disabled
+//     aip.dev/not-precedent: Listing revision tags requires nonstandard fields. --)
+message ListSpecRevisionTagsResponse {
+  // The revisions of the spec.
+  repeated SpecRevisionTag tags = 1;
+
+  // A token that can be sent as `page_token` to retrieve the next page.
+  // If this field is omitted, there are no subsequent pages.
+  string next_page_token = 2;
+}
+
+
+
 
 // Request message for RollbackSpec.
 message RollbackSpecRequest {

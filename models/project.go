@@ -86,6 +86,7 @@ func (project *Project) DeleteChildren(ctx context.Context, client *datastore.Cl
 		LabelEntityName,
 		PropertyEntityName,
 		SpecEntityName,
+		SpecRevisionTagEntityName,
 		VersionEntityName,
 		ProductEntityName,
 	}

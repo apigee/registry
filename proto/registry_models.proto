@@ -172,6 +172,20 @@ message Spec {
     [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
+// SpecRevisionTags represent tags used to mark spec revisions.
+message SpecRevisionTag {
+  option (google.api.resource) = {
+    type : "registry.googleapis.com/SpecRevisionTag"
+    pattern : "projects/{project}/products/{product}/versions/{version}/specs/{spec}/tags/{tag}"
+  };
+
+  // The resource name of the tag.
+  string name = 1;
+
+  // The resource name at which the tag points.
+  string value = 2;
+}
+
 // Properties of resources. Properties are unique (single-value) per resource.
 message Property {
   option (google.api.resource) = {

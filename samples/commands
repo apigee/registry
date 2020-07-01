@@ -86,12 +86,59 @@ apg registry list-spec-revisions \
     --json | \
     jq '.specs[-1].name' -r 
 
-echo TODO: delete a spec revision
+ORIGINAL=`apg registry list-spec-revisions \
+    --name projects/sample/products/petstore/versions/1.0.0/specs/openapi.yaml \
+    --json | \
+    jq '.specs[-1].name' -r`
 
-echo TODO: revert a spec revision
+ORIGINAL_HASH=`apg registry list-spec-revisions \
+    --name projects/sample/products/petstore/versions/1.0.0/specs/openapi.yaml \
+    --json | \
+    jq '.specs[-1].hash' -r`
 
-echo TODO: tag a spec revision
+echo tag a spec revision
+apg registry tag-spec-revision --name $ORIGINAL --tag og
 
-echo TODO: get a spec by its tag
+echo get a spec by its tag
+apg registry get-spec \
+    --name projects/sample/products/petstore/versions/1.0.0/specs/openapi.yaml@og \
+    --view basic \
+    --json
 
+echo print current hash
+apg registry get-spec \
+    --name projects/sample/products/petstore/versions/1.0.0/specs/openapi.yaml \
+    --json | \
+    jq '.hash' -r
 
+echo rollback a spec revision
+apg registry rollback-spec --name $ORIGINAL
+
+echo print current hash after rollback
+apg registry get-spec \
+    --name projects/sample/products/petstore/versions/1.0.0/specs/openapi.yaml \
+    --json | \
+    jq '.hash' -r
+
+echo print original hash
+echo $ORIGINAL_HASH
+
+echo delete a spec revision
+apg registry delete-spec-revision --name $ORIGINAL
+
+ORIGINAL2=`apg registry list-spec-revisions \
+    --name projects/sample/products/petstore/versions/1.0.0/specs/openapi.yaml \
+    --json | \
+    jq '.specs[-1].name' -r`
+
+echo $ORIGINAL2 should not be $ORIGINAL
+
+echo list revision tags
+apg registry list-spec-revision-tags \
+    --name projects/sample/products/petstore/versions/1.0.0/specs/openapi.yaml \
+    --json
+
+echo list specs should only return the most current revision of each spec
+apg registry list-specs \
+    --parent projects/sample/products/petstore/versions/1.0.0 \
+    --json

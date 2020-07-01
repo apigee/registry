@@ -18,6 +18,9 @@ import (
 // SpecEntityName is used to represent specs in the datastore.
 const SpecEntityName = "Spec"
 
+// SpecRevisionTagEntityName is used to represent tags in the datastore.
+const SpecRevisionTagEntityName = "SpecRevisionTag"
+
 // SpecsRegexp returns a regular expression that matches a collection of specs.
 func SpecsRegexp() *regexp.Regexp {
 	return regexp.MustCompile("^projects/" + nameRegex + "/products/" + nameRegex + "/versions/" + nameRegex + "/specs$")
@@ -48,6 +51,7 @@ type Spec struct {
 	Hash        string    // A hash of the spec file.
 	SourceURI   string    // The original source URI of the spec file.
 	Contents    []byte    `datastore:",noindex"` // The contents of the spec file.
+	IsCurrent   bool      // True for the current revision of the spec.
 }
 
 // ParseParentVersion ...
@@ -123,16 +127,22 @@ func (spec *Spec) ResourceNameWithRevision() string {
 		spec.ProjectID, spec.ProductID, spec.VersionID, spec.SpecID, spec.RevisionID)
 }
 
+// ResourceNameWithSpecifiedRevision generates the resource name of a spec which includes the revision id.
+func (spec *Spec) ResourceNameWithSpecifiedRevision(revision string) string {
+	return fmt.Sprintf("projects/%s/products/%s/versions/%s/specs/%s@%s",
+		spec.ProjectID, spec.ProductID, spec.VersionID, spec.SpecID, revision)
+}
+
 // ParentResourceName generates the resource name of a spec's parent.
 func (spec *Spec) ParentResourceName() string {
 	return fmt.Sprintf("projects/%s/products/%s/versions/%s", spec.ProjectID, spec.ProductID, spec.VersionID)
 }
 
 // Message returns a message representing a spec.
-func (spec *Spec) Message(view rpc.SpecView, fullname bool) (message *rpc.Spec, err error) {
+func (spec *Spec) Message(view rpc.SpecView, revision string) (message *rpc.Spec, err error) {
 	message = &rpc.Spec{}
-	if fullname {
-		message.Name = spec.ResourceNameWithRevision()
+	if revision != "" {
+		message.Name = spec.ResourceNameWithSpecifiedRevision(revision)
 	} else {
 		message.Name = spec.ResourceName()
 	}
@@ -191,6 +201,14 @@ func (spec *Spec) Update(message *rpc.Spec) error {
 	return nil
 }
 
+// BumpRevision updates the revision id for a spec and makes no other changes.
+func (spec *Spec) BumpRevision() error {
+	spec.RevisionID = newRevisionID()
+	spec.CreateTime = time.Now()
+	spec.UpdateTime = time.Now()
+	return nil
+}
+
 func newRevisionID() string {
 	s := uuid.New().String()
 	return s[len(s)-8:]
@@ -201,4 +219,36 @@ func hashForBytes(b []byte) string {
 	h.Write(b)
 	bs := h.Sum(nil)
 	return fmt.Sprintf("%x", bs)
+}
+
+// SpecRevisionTag ...
+type SpecRevisionTag struct {
+	ProjectID  string    // Uniquely identifies a project.
+	ProductID  string    // Uniquely identifies a product within a project.
+	VersionID  string    // Uniquely identifies a version within a product.
+	SpecID     string    // Uniquely identifies a spec within a version.
+	RevisionID string    // Uniquely identifies a revision of a spec.
+	Tag        string    // The tag to use for the revision.
+	CreateTime time.Time // Creation time.
+	UpdateTime time.Time // Time of last change.
+}
+
+// ResourceNameWithTag generates a resource name which includes the tag.
+func (tag *SpecRevisionTag) ResourceNameWithTag() string {
+	return fmt.Sprintf("projects/%s/products/%s/versions/%s/specs/%s@%s",
+		tag.ProjectID, tag.ProductID, tag.VersionID, tag.SpecID, tag.Tag)
+}
+
+// ResourceNameWithRevision generates a resource name which includes the revision id.
+func (tag *SpecRevisionTag) ResourceNameWithRevision() string {
+	return fmt.Sprintf("projects/%s/products/%s/versions/%s/specs/%s@%s",
+		tag.ProjectID, tag.ProductID, tag.VersionID, tag.SpecID, tag.RevisionID)
+}
+
+// Message returns a message representing a spec.
+func (tag *SpecRevisionTag) Message() (message *rpc.SpecRevisionTag, err error) {
+	message = &rpc.SpecRevisionTag{}
+	message.Name = tag.ResourceNameWithTag()
+	message.Value = tag.ResourceNameWithRevision()
+	return message, nil
 }
