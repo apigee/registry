@@ -94,7 +94,7 @@ func (project *Project) DeleteChildren(ctx context.Context, client *datastore.Cl
 		q := datastore.NewQuery(entityName)
 		q = q.KeysOnly()
 		q = q.Filter("ProjectID =", project.ProjectID)
-		err := deleteAllMatches(ctx, client, q)
+		err := DeleteAllMatches(ctx, client, q)
 		if err != nil {
 			return err
 		}

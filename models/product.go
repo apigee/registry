@@ -111,7 +111,7 @@ func (product *Product) DeleteChildren(ctx context.Context, client *datastore.Cl
 		q = q.KeysOnly()
 		q = q.Filter("ProjectID =", product.ProjectID)
 		q = q.Filter("ProductID =", product.ProductID)
-		err := deleteAllMatches(ctx, client, q)
+		err := DeleteAllMatches(ctx, client, q)
 		if err != nil {
 			return err
 		}

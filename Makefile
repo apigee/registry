@@ -21,3 +21,10 @@ build:
 deploy:
 	if [ "${REGISTRY_PROJECT_IDENTIFIER}" == "" ]; then echo "Error! REGISTRY_PROJECT_IDENTIFIER must be set"; exit -1; fi
 	gcloud run deploy registry-backend --image gcr.io/${REGISTRY_PROJECT_IDENTIFIER}/registry-backend --platform managed
+
+index:
+	gcloud datastore indexes create index.yaml
+
+index-cleanup:
+	gcloud datastore indexes cleanup index.yaml
+

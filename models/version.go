@@ -129,7 +129,7 @@ func (version *Version) DeleteChildren(ctx context.Context, client *datastore.Cl
 		q = q.Filter("ProjectID =", version.ProjectID)
 		q = q.Filter("ProductID =", version.ProductID)
 		q = q.Filter("VersionID =", version.VersionID)
-		err := deleteAllMatches(ctx, client, q)
+		err := DeleteAllMatches(ctx, client, q)
 		if err != nil {
 			return err
 		}

@@ -37,6 +37,7 @@ func SpecRegexp() *regexp.Regexp {
 
 // Spec ...
 type Spec struct {
+	IsCurrent   bool      // True for the current revision of the spec.
 	ProjectID   string    // Uniquely identifies a project.
 	ProductID   string    // Uniquely identifies a product within a project.
 	VersionID   string    // Uniquely identifies a version within a product.
@@ -45,13 +46,12 @@ type Spec struct {
 	Description string    // A detailed description.
 	CreateTime  time.Time // Creation time.
 	UpdateTime  time.Time // Time of last change.
-	Style       string    // Specification format.
+	Style       string    // Spec format.
+	SizeInBytes int32     // Size of the spec.
+	Hash        string    // A hash of the spec.
 	FileName    string    // Name of spec file.
-	SizeInBytes int32     // Size of the spec file.
-	Hash        string    // A hash of the spec file.
-	SourceURI   string    // The original source URI of the spec file.
-	Contents    []byte    `datastore:",noindex"` // The contents of the spec file.
-	IsCurrent   bool      // True for the current revision of the spec.
+	SourceURI   string    // The original source URI of the spec.
+	Contents    []byte    `datastore:",noindex"` // The contents of the spec.
 }
 
 // ParseParentVersion ...

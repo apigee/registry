@@ -4,7 +4,6 @@ package server
 
 import (
 	"context"
-	"log"
 
 	"apigov.dev/registry/models"
 	rpc "apigov.dev/registry/rpc"
@@ -71,7 +70,6 @@ func (s *RegistryServer) GetProperty(ctx context.Context, request *rpc.GetProper
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	log.Printf("looking for %s", property.ResourceName())
 	k := &datastore.Key{Kind: models.PropertyEntityName, Name: property.ResourceName()}
 	err = client.Get(ctx, k, property)
 	if err == datastore.ErrNoSuchEntity {

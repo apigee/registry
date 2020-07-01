@@ -28,7 +28,17 @@ func validateID(id string) error {
 	return nil
 }
 
-func deleteAllMatches(ctx context.Context, client *datastore.Client, q *datastore.Query) error {
+func validateRevision(s string) error {
+	r := regexp.MustCompile("^" + revisionRegex + "$")
+	m := r.FindAllStringSubmatch(s, -1)
+	if m == nil {
+		return fmt.Errorf("invalid revision '%s'", s)
+	}
+	return nil
+}
+
+// DeleteAllMatches deletes all entities matching a query.
+func DeleteAllMatches(ctx context.Context, client *datastore.Client, q *datastore.Query) error {
 	it := client.Run(ctx, q.Distinct())
 	key, err := it.Next(nil)
 	keys := make([]*datastore.Key, 0)
@@ -36,7 +46,7 @@ func deleteAllMatches(ctx context.Context, client *datastore.Client, q *datastor
 		keys = append(keys, key)
 		key, err = it.Next(nil)
 		if len(keys) == 500 {
-			log.Printf("Deleting %d %s", len(keys), keys[0].Kind)
+			log.Printf("Deleting %d %s entities", len(keys), keys[0].Kind)
 			err = client.DeleteMulti(ctx, keys)
 			if err != nil {
 				return err
@@ -48,7 +58,7 @@ func deleteAllMatches(ctx context.Context, client *datastore.Client, q *datastor
 		return err
 	}
 	if len(keys) > 0 {
-		log.Printf("Deleting %d %s", len(keys), keys[0].Kind)
+		log.Printf("Deleting %d %s entities", len(keys), keys[0].Kind)
 		return client.DeleteMulti(ctx, keys)
 	}
 	return nil
