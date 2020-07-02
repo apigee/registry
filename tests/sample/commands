@@ -34,7 +34,7 @@ apg registry get-spec \
 echo update a spec attribute
 apg registry update-spec \
 	--spec.name projects/sample/products/petstore/versions/1.0.0/specs/openapi.yaml \
-	--spec.style "openapiv3+gz"
+	--spec.style "openapi/v3+gzip"
 
 echo get the spec
 apg registry get-spec \

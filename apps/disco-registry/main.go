@@ -58,7 +58,8 @@ Usage:
 	}
 
 	if arguments["--upload"].(bool) {
-		registryClient, err = client.NewClient()
+		ctx := context.Background()
+		registryClient, err = client.NewClient(ctx)
 	}
 
 	// List APIs.

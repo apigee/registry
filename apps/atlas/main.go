@@ -37,7 +37,8 @@ func notFound(err error) bool {
 func main() {
 	var err error
 
-	registryClient, err = client.NewClient()
+	ctx := context.Background()
+	registryClient, err = client.NewClient(ctx)
 	completions := make(chan int)
 	processes := 0
 
