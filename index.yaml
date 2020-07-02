@@ -1,0 +1,20 @@
+indexes:
+
+- kind: Spec
+  properties:
+  - name: ProductID
+  - name: ProjectID
+  - name: SpecID
+  - name: VersionID
+  - name: CreateTime
+    direction: desc
+
+- kind: Spec
+  properties:
+  - name: ProductID
+  - name: ProjectID
+  - name: SpecID
+  - name: VersionID
+  - name: IsCurrent
+  - name: CreateTime
+    direction: desc
