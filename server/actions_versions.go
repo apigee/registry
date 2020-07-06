@@ -38,6 +38,7 @@ func (s *RegistryServer) CreateVersion(ctx context.Context, request *rpc.CreateV
 	if err != nil {
 		return nil, err
 	}
+	s.notify(rpc.Notification_CREATED, version.ResourceName())
 	return version.Message()
 }
 
@@ -57,6 +58,7 @@ func (s *RegistryServer) DeleteVersion(ctx context.Context, request *rpc.DeleteV
 	version.DeleteChildren(ctx, client)
 	k := &datastore.Key{Kind: models.VersionEntityName, Name: request.GetName()}
 	err = client.Delete(ctx, k)
+	s.notify(rpc.Notification_DELETED, request.GetName())
 	return &empty.Empty{}, err
 }
 
@@ -179,5 +181,6 @@ func (s *RegistryServer) UpdateVersion(ctx context.Context, request *rpc.UpdateV
 	if err != nil {
 		return nil, err
 	}
+	s.notify(rpc.Notification_UPDATED, version.ResourceName())
 	return version.Message()
 }

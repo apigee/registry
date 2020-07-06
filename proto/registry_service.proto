@@ -19,6 +19,13 @@ option go_package = "apigov.dev/registry/rpc;rpc";
 service Registry {
   option (google.api.default_host) = "registry.googleapis.com";
 
+  // GetStatus returns the status of the service.
+  rpc GetStatus(protobuf.Empty) returns (Status) {
+    option (google.api.http) = {
+      get : "/v1alpha1/status"
+    };
+  }
+
   // ListProjects returns matching projects.
   // (-- api-linter: standard-methods=disabled --)
   // (-- api-linter: core::0132::method-signature=disabled
@@ -330,6 +337,12 @@ service Registry {
     option (google.api.method_signature) = "name";
   }
 
+}
+
+// Response message for GetStatus.
+message Status {
+  // A string describing the status.
+  string message = 1;
 }
 
 // Request message for ListProjects.

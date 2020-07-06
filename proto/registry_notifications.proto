@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package google.cloud.apigee.registry.v1alpha1;
+
+import "google/protobuf/timestamp.proto";
+
+option java_package = "com.google.cloud.apigee.registry.v1alpha1";
+option java_multiple_files = true;
+option java_outer_classname = "RegistryNotificationsProto";
+option go_package = "apigov.dev/registry/rpc;rpc";
+
+// Notifications are sent to subscribers who follow registry activity.
+message Notification {
+
+  // Types of changes that can be made to the registry.
+  enum Change {
+    // The default / unset value.
+    CHANGE_UNSPECIFIED = 0;
+
+    // A resource was created.
+    CREATED = 1;
+
+    // A resource was updated.
+    UPDATED = 2;
+
+    // A resource was deleted.
+    DELETED = 3;
+  }
+
+  // The type of change made to the registry.
+  Change change = 1;
+
+  // The resource affected by the change.
+  string resource = 2;
+
+  // The time of the event.
+  google.protobuf.Timestamp change_time = 3;
+
+}

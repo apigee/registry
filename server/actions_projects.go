@@ -38,6 +38,7 @@ func (s *RegistryServer) CreateProject(ctx context.Context, request *rpc.CreateP
 	if err != nil {
 		return nil, internalError(err)
 	}
+	s.notify(rpc.Notification_CREATED, project.ResourceName())
 	return project.Message()
 }
 
@@ -60,6 +61,7 @@ func (s *RegistryServer) DeleteProject(ctx context.Context, request *rpc.DeleteP
 	}
 	k := &datastore.Key{Kind: models.ProjectEntityName, Name: request.GetName()}
 	err = client.Delete(ctx, k)
+	s.notify(rpc.Notification_DELETED, request.GetName())
 	return &empty.Empty{}, internalError(err)
 }
 

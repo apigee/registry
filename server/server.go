@@ -7,11 +7,9 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"strings"
 
 	rpc "apigov.dev/registry/rpc"
 	"cloud.google.com/go/datastore"
-	"github.com/google/uuid"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -33,10 +31,6 @@ func (s *RegistryServer) newDataStoreClient(ctx context.Context) (*datastore.Cli
 		return nil, err
 	}
 	return client, nil
-}
-
-func newRandomID() string {
-	return strings.Replace(uuid.New().String(), "-", "", -1)
 }
 
 // RunServer ...

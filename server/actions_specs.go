@@ -50,7 +50,9 @@ func (s *RegistryServer) CreateSpec(ctx context.Context, request *rpc.CreateSpec
 	if err != nil {
 		return nil, err
 	}
-	return spec.Message(rpc.SpecView_BASIC, "")
+	response, nil := spec.Message(rpc.SpecView_BASIC, "")
+	s.notify(rpc.Notification_CREATED, spec.ResourceNameWithRevision())
+	return response, nil
 }
 
 // DeleteSpec handles the corresponding API request.
@@ -75,6 +77,7 @@ func (s *RegistryServer) DeleteSpec(ctx context.Context, request *rpc.DeleteSpec
 	q = q.Filter("VersionID =", spec.VersionID)
 	q = q.Filter("SpecID =", spec.SpecID)
 	err = models.DeleteAllMatches(ctx, client, q)
+	s.notify(rpc.Notification_DELETED, request.GetName())
 	return &empty.Empty{}, err
 }
 
@@ -209,6 +212,7 @@ func (s *RegistryServer) UpdateSpec(ctx context.Context, request *rpc.UpdateSpec
 	if err != nil {
 		return nil, err
 	}
+	s.notify(rpc.Notification_UPDATED, spec.ResourceNameWithRevision())
 	return spec.Message(rpc.SpecView_BASIC, "")
 }
 

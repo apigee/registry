@@ -39,6 +39,7 @@ func (s *RegistryServer) CreateLabel(ctx context.Context, request *rpc.CreateLab
 	if err != nil {
 		return nil, internalError(err)
 	}
+	s.notify(rpc.Notification_CREATED, label.ResourceName())
 	return label.Message()
 }
 
@@ -57,6 +58,7 @@ func (s *RegistryServer) DeleteLabel(ctx context.Context, request *rpc.DeleteLab
 	// Delete the label.
 	k := &datastore.Key{Kind: models.LabelEntityName, Name: request.GetName()}
 	err = client.Delete(ctx, k)
+	s.notify(rpc.Notification_DELETED, request.GetName())
 	return &empty.Empty{}, internalError(err)
 }
 
@@ -197,5 +199,6 @@ func (s *RegistryServer) UpdateLabel(ctx context.Context, request *rpc.UpdateLab
 	if err != nil {
 		return nil, internalError(err)
 	}
+	s.notify(rpc.Notification_UPDATED, label.ResourceName())
 	return label.Message()
 }

@@ -38,6 +38,7 @@ func (s *RegistryServer) CreateProduct(ctx context.Context, request *rpc.CreateP
 	if err != nil {
 		return nil, internalError(err)
 	}
+	s.notify(rpc.Notification_CREATED, product.ResourceName())
 	return product.Message()
 }
 
@@ -57,6 +58,7 @@ func (s *RegistryServer) DeleteProduct(ctx context.Context, request *rpc.DeleteP
 	product.DeleteChildren(ctx, client)
 	k := &datastore.Key{Kind: models.ProductEntityName, Name: request.GetName()}
 	err = client.Delete(ctx, k)
+	s.notify(rpc.Notification_DELETED, request.GetName())
 	return &empty.Empty{}, internalError(err)
 }
 
@@ -172,5 +174,6 @@ func (s *RegistryServer) UpdateProduct(ctx context.Context, request *rpc.UpdateP
 	if err != nil {
 		return nil, internalError(err)
 	}
+	s.notify(rpc.Notification_UPDATED, product.ResourceName())
 	return product.Message()
 }

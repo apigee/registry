@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Compile .proto files into the files needed to build the registry server and
 # command-line tools.
@@ -15,18 +15,24 @@ echo "Clearing any previously-generated directories."
 rm -rf rpc gapic cmd/apg
 mkdir -p rpc gapic cmd/apg
 
-export ANNOTATIONS="third_party/api-common-protos"
+ANNOTATIONS="third_party/api-common-protos"
+
+PROTOS=( \
+	proto/registry_models.proto \
+	proto/registry_service.proto \
+	proto/registry_properties.proto \
+	proto/registry_notifications.proto \
+)
 
 echo "Running the API linter."
-api-linter -I ./proto -I ${ANNOTATIONS} proto/registry_models.proto
-api-linter -I ./proto -I ${ANNOTATIONS} proto/registry_service.proto
-api-linter -I ./proto -I ${ANNOTATIONS} proto/registry_properties.proto
+for p in ${PROTOS[@]}; do
+  echo "api-linter $p"
+  api-linter -I ./proto -I ${ANNOTATIONS} $p
+done
 
 echo "Generating proto support code."
 protoc --proto_path=./proto --proto_path=${ANNOTATIONS} \
-	proto/registry_models.proto \
-	proto/registry_properties.proto \
-	proto/registry_service.proto \
+	${PROTOS[*]} \
 	--go_out=plugins=grpc:rpc
 
 # fix the location of proto output files
@@ -35,17 +41,13 @@ rm -rf rpc/apigov.dev
 
 echo "Generating GAPIC library."
 protoc --proto_path=./proto --proto_path=${ANNOTATIONS} \
-	proto/registry_models.proto \
-	proto/registry_properties.proto \
-	proto/registry_service.proto \
+	${PROTOS[*]} \
 	--go_gapic_out gapic \
 	--go_gapic_opt "go-gapic-package=.;gapic"
 
 echo "Generating GAPIC-based CLI."
 protoc --proto_path=./proto --proto_path=${ANNOTATIONS} \
-	proto/registry_models.proto \
-	proto/registry_properties.proto \
-	proto/registry_service.proto \
+	${PROTOS[*]} \
   	--go_cli_out cmd/apg \
   	--go_cli_opt "root=apg" \
   	--go_cli_opt "gapic=apigov.dev/registry/gapic"
@@ -57,9 +59,7 @@ sed -i -e 's/anypb.Property_MessageValue/rpcpb.Property_MessageValue/g' \
 
 echo "Generating descriptor set for envoy."
 protoc --proto_path=./proto --proto_path=${ANNOTATIONS} \
-	proto/registry_models.proto \
-	proto/registry_properties.proto \
-	proto/registry_service.proto \
+	${PROTOS[*]} \
 	--include_imports \
         --include_source_info \
         --descriptor_set_out=envoy/proto.pb

@@ -15,7 +15,7 @@ RUN go mod download
 COPY . ./
 
 # Build the binary.
-RUN CGO_ENABLED=0 GOOS=linux go build -mod=readonly -v -o registry-server ./cmd/registry-server
+RUN CGO_ENABLED=0 GOOS=linux go build -v -o registry-server ./cmd/registry-server
 
 # Use an Envoy release image to get envoy in the image.
 # This is the last version that supports allow_origin in CorsPolicy

@@ -38,6 +38,7 @@ func (s *RegistryServer) CreateProperty(ctx context.Context, request *rpc.Create
 	if err != nil {
 		return nil, internalError(err)
 	}
+	s.notify(rpc.Notification_CREATED, property.ResourceName())
 	return property.Message()
 }
 
@@ -56,6 +57,7 @@ func (s *RegistryServer) DeleteProperty(ctx context.Context, request *rpc.Delete
 	// Delete the property.
 	k := &datastore.Key{Kind: models.PropertyEntityName, Name: request.GetName()}
 	err = client.Delete(ctx, k)
+	s.notify(rpc.Notification_DELETED, request.GetName())
 	return &empty.Empty{}, internalError(err)
 }
 
@@ -195,5 +197,6 @@ func (s *RegistryServer) UpdateProperty(ctx context.Context, request *rpc.Update
 	if err != nil {
 		return nil, internalError(err)
 	}
+	s.notify(rpc.Notification_UPDATED, property.ResourceName())
 	return property.Message()
 }

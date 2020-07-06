@@ -5,6 +5,7 @@ go 1.13
 require (
 	cloud.google.com/go v0.56.0
 	cloud.google.com/go/datastore v1.1.0
+	cloud.google.com/go/pubsub v1.2.0
 	git.apache.org/thrift.git v0.12.0 // indirect
 	github.com/antlr/antlr4 v0.0.0-20200503195918-621b933c7a7f // indirect
 	github.com/coreos/bbolt v1.3.2 // indirect
@@ -25,7 +26,7 @@ require (
 	github.com/golang/protobuf v1.4.2
 	github.com/google/cel-go v0.4.2
 	github.com/google/uuid v1.1.1
-	github.com/googleapis/api-linter v1.0.1 // indirect
+	github.com/googleapis/api-linter v1.1.0 // indirect
 	github.com/googleapis/gapic-generator-go v0.14.3 // indirect
 	github.com/googleapis/gax-go v2.0.2+incompatible // indirect
 	github.com/googleapis/gax-go/v2 v2.0.5
@@ -63,11 +64,9 @@ require (
 	golang.org/x/text v0.3.3 // indirect
 	google.golang.org/api v0.23.0
 	google.golang.org/appengine v1.6.6 // indirect
-	google.golang.org/genproto v0.0.0-20200701001935-0939c5918c31
+	google.golang.org/genproto v0.0.0-20200702021140-07506425bd67
 	google.golang.org/grpc v1.30.0
 	google.golang.org/protobuf v1.25.0
 	gopkg.in/ini.v1 v1.51.0 // indirect
 	gopkg.in/resty.v1 v1.12.0 // indirect
 )
-
-replace github.com/googleapis/gnostic v0.1.1-0.20200308034506-2af3d8e5d92a => github.com/timburks/gnostic v0.1.1-0.20200425042358-59d21fa642c5
