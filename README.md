@@ -4,15 +4,16 @@ This directory contains a reference implementation of the Registry API.
 
 ## The Registry API
 
-The Registry API allows teams to upload and share machine-readable descriptions
-of APIs that are in use and in development. These descriptions include API
-specifications in standard formats like OpenAPI and Protocol Buffers. These
-specifications can be used by tools like linters, browsers, documentation
-generators, test runners, proxies, and API client and server generators. The
-API itself can be seen as a machine-readable enterprise API catalog that can be
-used to back online directories, portals, and workflow managers.
+The Registry API allows teams to upload and share machine-readable
+descriptions of APIs that are in use and in development. These descriptions
+include API specifications in standard formats like OpenAPI and Protocol
+Buffers. These specifications can be used by tools like linters, browsers,
+documentation generators, test runners, proxies, and API client and server
+generators. The API itself can be seen as a machine-readable enterprise API
+catalog that can be used to back online directories, portals, and workflow
+managers.
 
-The API Registry API is formally described by the files in the [proto](proto)
+The Registry API is formally described by the files in the [proto](proto)
 directory.
 
 ## This Implementation
@@ -74,11 +75,11 @@ the `COMPILE-PROTOS.sh` script for details). These include:
 
 - **`rpc`** containing generated Protocol Buffer support code (in Go).
 - **`gapic`** containing the Go GAPIC (generated API client) library.
-- **`cmd/cli`** containing a generated command-line interface.
+- **`cmd/apg`** containing a generated command-line interface.
 
 ## Enabling the Google Cloud Datastore API
 
-The reference API implementation uses the
+The reference implementation uses the
 [Google Cloud Datastore API](https://cloud.google.com/datastore). This must be
 enabled for a Google Cloud project and appropriate credentials must be
 available. One way to get credentials is to use
@@ -92,11 +93,11 @@ Cloud Run, credentials are automatically provided by the environment.)
 Please note: this project's Datastore usage is equivalent to
 [running Cloud Firestore in Datastore mode](https://cloud.google.com/datastore/docs).
 
-The reference API requires indexes in its Datastore instance. To create them,
+The reference implementation requires indexes in its Datastore instance. To create them,
 use the `gcloud` command in the root of this repository:
 
 ```
-gcloud datastore indexes create index.yaml
+gcloud datastore indexes create index.yaml 
 ```
 
 ## Running the API Locally
