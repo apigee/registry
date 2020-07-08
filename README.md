@@ -1,17 +1,16 @@
-# API Registry Reference Implementation
+# Registry API Reference Implementation
 
-This directory contains a reference implementation of the API Registry API.
+This directory contains a reference implementation of the Registry API.
 
-## The API Registry API
+## The Registry API
 
-The API Registry API allows teams to upload and share machine-readable
-descriptions of APIs that are in use and in development. These descriptions
-include API specifications in standard formats like OpenAPI and Protocol
-Buffers. These specifications can be used by tools like linters, browsers,
-documentation generators, test runners, proxies, and API client and server
-generators. The API itself can be seen as a machine-readable enterprise API
-catalog that can be used to back online directories, portals, and workflow
-managers.
+The Registry API allows teams to upload and share machine-readable descriptions
+of APIs that are in use and in development. These descriptions include API
+specifications in standard formats like OpenAPI and Protocol Buffers. These
+specifications can be used by tools like linters, browsers, documentation
+generators, test runners, proxies, and API client and server generators. The
+API itself can be seen as a machine-readable enterprise API catalog that can be
+used to back online directories, portals, and workflow managers.
 
 The API Registry API is formally described by the files in the [proto](proto)
 directory.
@@ -97,7 +96,7 @@ The reference API requires indexes in its Datastore instance. To create them,
 use the `gcloud` command in the root of this repository:
 
 ```
-gcloud datastore indexes create index.yaml 
+gcloud datastore indexes create index.yaml
 ```
 
 ## Running the API Locally
