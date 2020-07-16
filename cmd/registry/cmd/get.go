@@ -9,6 +9,7 @@ import (
 	"apigov.dev/registry/gapic"
 	"apigov.dev/registry/models"
 	rpc "apigov.dev/registry/rpc"
+	metrics "github.com/googleapis/gnostic/metrics"
 	"github.com/spf13/cobra"
 	"google.golang.org/api/iterator"
 	"google.golang.org/protobuf/proto"
@@ -112,8 +113,8 @@ func printPropertyDetail(property *rpc.Property) {
 		fmt.Printf("%+v", v.BytesValue)
 	case *rpc.Property_MessageValue:
 		messageType := v.MessageValue.TypeUrl
-		if messageType == "ComplexitySummary" {
-			var msg rpc.ComplexitySummary
+		if messageType == "Complexity" {
+			var msg metrics.Complexity
 			err := proto.Unmarshal(v.MessageValue.Value, &msg)
 			if err != nil {
 				fmt.Printf("%+v", err)

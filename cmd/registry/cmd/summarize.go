@@ -15,6 +15,7 @@ import (
 	rpc "apigov.dev/registry/rpc"
 	"github.com/golang/protobuf/ptypes/any"
 	"github.com/googleapis/gnostic/compiler"
+	metrics "github.com/googleapis/gnostic/metrics"
 	openapi_v2 "github.com/googleapis/gnostic/openapiv2"
 	openapi_v3 "github.com/googleapis/gnostic/openapiv3"
 	"github.com/spf13/cobra"
@@ -129,9 +130,8 @@ func summarizeSpec(ctx context.Context,
 		projectID := segments[1]
 		property := &rpc.Property{}
 		property.Subject = spec.GetName()
-		property.Relation = "summary"
-		complexitySummary := &rpc.ComplexitySummary{}
-		complexitySummary.SpecNames = []string{spec.GetName()}
+		property.Relation = "complexity"
+		complexitySummary := &metrics.Complexity{}
 		complexitySummary.SchemaCount = summary.SchemaCount
 		complexitySummary.SchemaPropertyCount = summary.SchemaPropertyCount
 		complexitySummary.PathCount = summary.PathCount
@@ -141,7 +141,7 @@ func summarizeSpec(ctx context.Context,
 		complexitySummary.DeleteCount = summary.DeleteCount
 		messageData, err := proto.Marshal(complexitySummary)
 		anyValue := &any.Any{
-			TypeUrl: "ComplexitySummary",
+			TypeUrl: "gnostic.metrics.Complexity",
 			Value:   messageData,
 		}
 		property.Value = &rpc.Property_MessageValue{MessageValue: anyValue}
@@ -170,8 +170,7 @@ func summarizeSpec(ctx context.Context,
 		property := &rpc.Property{}
 		property.Subject = spec.GetName()
 		property.Relation = "summary"
-		complexitySummary := &rpc.ComplexitySummary{}
-		complexitySummary.SpecNames = []string{spec.GetName()}
+		complexitySummary := &metrics.Complexity{}
 		complexitySummary.SchemaCount = summary.SchemaCount
 		complexitySummary.SchemaPropertyCount = summary.SchemaPropertyCount
 		complexitySummary.PathCount = summary.PathCount

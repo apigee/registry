@@ -20,7 +20,6 @@ ANNOTATIONS="third_party/api-common-protos"
 PROTOS=( \
 	proto/registry_models.proto \
 	proto/registry_service.proto \
-	proto/registry_properties.proto \
 	proto/registry_notifications.proto \
 )
 
