@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'authorizations.dart';
+import 'application.dart';
 
 GoogleSignInAccount currentUser;
 bool currentUserIsAuthorized = false;
@@ -76,7 +77,7 @@ class SignInScreenState extends State<SignInScreen> {
             ],
           ),
           Container(height: 30),
-          Text("API Hub is an early-stage prototype."),
+          Text(applicationName + " is an early-stage prototype."),
           Container(height: 10),
           Text("For information, contact govlife-team@google.com."),
           Container(height: 10),
@@ -96,7 +97,7 @@ class SignInScreenState extends State<SignInScreen> {
       return Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
-          Text("API Hub", style: Theme.of(context).textTheme.headline2),
+          Text(applicationName, style: Theme.of(context).textTheme.headline2),
           RaisedButton(
             child: const Text('SIGN IN WITH GOOGLE'),
             onPressed: _handleSignIn,

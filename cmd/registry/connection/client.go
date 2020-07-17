@@ -18,12 +18,12 @@ type Client = *gapic.RegistryClient
 func NewClient() (*gapic.RegistryClient, error) {
 	var opts []option.ClientOption
 
-	address := os.Getenv("CLI_REGISTRY_ADDRESS")
+	address := os.Getenv("APG_REGISTRY_ADDRESS")
 	if address != "" {
 		opts = append(opts, option.WithEndpoint(address))
 	}
 
-	insecure := os.Getenv("CLI_REGISTRY_INSECURE")
+	insecure := os.Getenv("APG_REGISTRY_INSECURE")
 	if insecure != "" {
 		if address == "" {
 			return nil, fmt.Errorf("Missing address to use with insecure connection")
@@ -35,7 +35,7 @@ func NewClient() (*gapic.RegistryClient, error) {
 		opts = append(opts, option.WithGRPCConn(conn))
 	}
 
-	if token := os.Getenv("CLI_REGISTRY_TOKEN"); token != "" {
+	if token := os.Getenv("APG_REGISTRY_TOKEN"); token != "" {
 		opts = append(opts, option.WithTokenSource(oauth2.StaticTokenSource(
 			&oauth2.Token{
 				AccessToken: token,

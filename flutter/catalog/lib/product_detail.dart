@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:catalog/generated/registry_models.pb.dart';
 import 'service.dart';
+import 'application.dart';
 
 class ProductDetailWidget extends StatefulWidget {
   final Product product;
@@ -39,7 +40,7 @@ class _ProductDetailWidgetState extends State<ProductDetailWidget> {
       return Scaffold(
         appBar: AppBar(
           title: Text(
-            "API Hub",
+            applicationName,
           ),
         ),
         body: Text("loading..."),
@@ -49,7 +50,7 @@ class _ProductDetailWidgetState extends State<ProductDetailWidget> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          "API Hub",
+          applicationName,
         ),
       ),
       body: SingleChildScrollView(

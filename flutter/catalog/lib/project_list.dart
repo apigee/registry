@@ -3,6 +3,8 @@ import 'package:flutter_pagewise/flutter_pagewise.dart';
 import 'package:catalog/generated/registry_models.pb.dart';
 import 'service.dart';
 import 'help.dart';
+import 'projects.dart';
+import 'application.dart';
 
 class ProjectListScreen extends StatelessWidget {
   final String title;
@@ -12,7 +14,7 @@ class ProjectListScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("API Hub"),
+        title: Text(applicationName),
         actions: <Widget>[
           ProjectSearchBox(),
           IconButton(
@@ -46,12 +48,6 @@ class ProjectListScreen extends StatelessWidget {
   }
 }
 
-String routeNameForProjectDetail(Project project) {
-  final name = "/" + project.name.split("/").sublist(1).join("/");
-  print("pushing " + name);
-  return name;
-}
-
 const int pageSize = 50;
 PagewiseLoadController<Project> pageLoadController;
 
@@ -79,13 +75,13 @@ class ProjectList extends StatelessWidget {
           onTap: () async {
             Navigator.pushNamed(
               context,
-              routeNameForProjectDetail(entry),
+              entry.routeNameForProjectDetail(),
               arguments: entry,
             );
           },
           child: ListTile(
             title: Text(
-              entry.displayName,
+              entry.nameForDisplay(),
               style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
             ),
             subtitle: Text(entry.description),

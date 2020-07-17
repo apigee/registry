@@ -1,21 +1,28 @@
 #!/bin/bash
 
+# This is a directroy containing the registry protos.
+export REGISTRY_PROTOS="../../proto"
 
-# This should point to the .proto files distributed with protoc.
+# This points to the .proto files distributed with protoc.
 export PROTO_PROTOS="$HOME/local/include"
-#export PROTO_PROTOS="/usr/include"
 
-# This is a local directory containing .proto files used by many APIs.
-export ANNOTATIONS="../../third_party/api-common-protos"
+# This is a third_party directory containing .proto files used by many APIs.
+export ANNOTATION_PROTOS="../../third_party/api-common-protos"
+
+# This is a third_party directory containing message protos used to store API metrics.
+export METRICS_PROTOS="../../third_party/gnostic/metrics"
 
 echo "Generating dart support code."
-protoc --proto_path=../../proto --proto_path=${ANNOTATIONS} \
+protoc \
+	--proto_path=${REGISTRY_PROTOS} \
+	--proto_path=${ANNOTATION_PROTOS} \
 	--proto_path=${PROTO_PROTOS} \
-   	${PROTO_PROTOS}/google/protobuf/any.proto \
-   	${PROTO_PROTOS}/google/protobuf/timestamp.proto \
-        ${PROTO_PROTOS}/google/protobuf/field_mask.proto \
-        ${PROTO_PROTOS}/google/protobuf/empty.proto \
-	../../proto/registry_models.proto \
-	../../proto/registry_properties.proto \
-	../../proto/registry_service.proto \
+	--proto_path=${METRICS_PROTOS} \
+	${PROTO_PROTOS}/google/protobuf/any.proto \
+	${PROTO_PROTOS}/google/protobuf/timestamp.proto \
+	${PROTO_PROTOS}/google/protobuf/field_mask.proto \
+	${PROTO_PROTOS}/google/protobuf/empty.proto \
+	${REGISTRY_PROTOS}/registry_models.proto \
+	${REGISTRY_PROTOS}/registry_service.proto \
+	${METRICS_PROTOS}/complexity.proto \
 	--dart_out=grpc:lib/generated

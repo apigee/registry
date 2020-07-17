@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:catalog/generated/registry_models.pb.dart';
 import 'service.dart';
+import 'application.dart';
 
 extension StringSplitting on String {
   String last(int n) {
@@ -47,7 +48,7 @@ class _VersionDetailWidgetState extends State<VersionDetailWidget> {
       return Scaffold(
         appBar: AppBar(
           title: Text(
-            "API Hub",
+            applicationName,
           ),
         ),
         body: Text("loading..."),
@@ -56,7 +57,7 @@ class _VersionDetailWidgetState extends State<VersionDetailWidget> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          "API Hub",
+          applicationName,
         ),
       ),
       body: SingleChildScrollView(

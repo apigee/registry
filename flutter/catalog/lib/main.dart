@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'application.dart';
 import 'theme.dart';
 import 'routes.dart';
 import 'signin.dart';
@@ -14,7 +15,7 @@ class Application extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'API Hub',
+      title: applicationName,
       theme: appTheme(),
       initialRoute: "/",
       onGenerateRoute: generateRoute,

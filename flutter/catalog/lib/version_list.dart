@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_pagewise/flutter_pagewise.dart';
 import 'package:catalog/generated/registry_models.pb.dart';
 import 'service.dart';
+import 'application.dart';
 
 class VersionListScreen extends StatelessWidget {
   final String title;
@@ -15,7 +16,7 @@ class VersionListScreen extends StatelessWidget {
     print("setting project ID to " + productID);
     return Scaffold(
       appBar: AppBar(
-        title: Text("API Hub"),
+        title: Text(applicationName),
         actions: <Widget>[
           VersionSearchBox(),
         ],

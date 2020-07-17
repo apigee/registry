@@ -3,7 +3,8 @@ import 'package:catalog/generated/registry_models.pb.dart';
 import 'service.dart';
 import 'dart:convert';
 import 'package:archive/archive.dart';
-import 'package:catalog/generated/registry_properties.pb.dart';
+import 'package:catalog/generated/complexity.pb.dart';
+import 'application.dart';
 
 class SpecDetailWidget extends StatefulWidget {
   final Spec spec;
@@ -46,7 +47,7 @@ class _SpecDetailWidgetState extends State<SpecDetailWidget> {
       return Scaffold(
         appBar: AppBar(
           title: Text(
-            "API Hub",
+            applicationName,
           ),
         ),
         body: Text("loading..."),
@@ -67,7 +68,7 @@ class _SpecDetailWidgetState extends State<SpecDetailWidget> {
       return Scaffold(
         appBar: AppBar(
           title: Text(
-            "API Hub",
+            applicationName,
           ),
         ),
         body: Text("loading..."),
@@ -77,7 +78,7 @@ class _SpecDetailWidgetState extends State<SpecDetailWidget> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          "API Hub",
+          applicationName,
         ),
       ),
       body: SingleChildScrollView(
@@ -163,10 +164,10 @@ TableRow row(BuildContext context, String label, String value) {
 
 Expanded summaryCard(
     BuildContext context, Spec spec, List<Property> properties) {
-  final summary = propertyWithName(properties, "summary");
-  ComplexitySummary complexitySummary =
-      new ComplexitySummary.fromBuffer(summary.messageValue.value);
-  print("$complexitySummary");
+  final summary = propertyWithName(properties, "complexity");
+  Complexity complexitySummary =
+      new Complexity.fromBuffer(summary.messageValue.value);
+  print("$summary");
   return Expanded(
     child: Card(
       child: Column(
@@ -206,7 +207,6 @@ Expanded summaryCard(
               Expanded(child: SizedBox()),
             ],
           ),
-          Text("(" + complexitySummary.specNames[0] + ")"),
         ],
       ),
     ),

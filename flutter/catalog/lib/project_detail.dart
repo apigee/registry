@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:catalog/generated/registry_models.pb.dart';
 import 'service.dart';
+import 'application.dart';
+import 'projects.dart';
 
 class ProjectDetailWidget extends StatefulWidget {
   final Project project;
@@ -54,7 +56,7 @@ class _ProjectDetailWidgetState extends State<ProjectDetailWidget> {
       return Scaffold(
         appBar: AppBar(
           title: Text(
-            "API Hub",
+            applicationName,
           ),
         ),
         body: Text("loading..."),
@@ -75,7 +77,7 @@ class _ProjectDetailWidgetState extends State<ProjectDetailWidget> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text("API Hub"),
+        title: Text(applicationName),
        
       ),
       body: SingleChildScrollView(
@@ -93,7 +95,7 @@ class _ProjectDetailWidgetState extends State<ProjectDetailWidget> {
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
                       ListTile(
-                        title: Text(project.displayName,
+                        title: Text(project.nameForDisplay(),
                             style: Theme.of(context).textTheme.headline2),
                         subtitle: Text(subtitlePropertyText()),
                       ),
