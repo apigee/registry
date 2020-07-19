@@ -1,5 +1,3 @@
-
-
 final authorizedUsers = [
   "marshg@google.com",
   "timburks@google.com",

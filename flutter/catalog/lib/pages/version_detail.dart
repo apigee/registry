@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:catalog/generated/registry_models.pb.dart';
-import 'service.dart';
-import 'application.dart';
+import '../service/service.dart';
+import '../application.dart';
 
 extension StringSplitting on String {
   String last(int n) {
@@ -65,7 +65,6 @@ class _VersionDetailWidgetState extends State<VersionDetailWidget> {
           child: Column(
             children: [
               Row(children: [versionCard(context, version)]),
-              
             ],
           ),
         ),

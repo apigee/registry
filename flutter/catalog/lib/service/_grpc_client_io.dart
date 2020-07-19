@@ -5,9 +5,9 @@ String token; // auth token
 
 grpc.ClientChannel createClientChannel() {
   Map<String, String> env = Platform.environment;
-  token = env['CLI_REGISTRY_TOKEN'];
-  final insecure = env['CLI_REGISTRY_INSECURE'];
-  final address = env['CLI_REGISTRY_ADDRESS'];
+  token = env['APG_REGISTRY_TOKEN'];
+  final insecure = env['APG_REGISTRY_INSECURE'];
+  final address = env['APG_REGISTRY_ADDRESS'];
   final parts = address.split(":");
   final host = parts[0];
   final port = int.parse(parts[1]);

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:catalog/generated/registry_models.pb.dart';
-import 'service.dart';
-import 'application.dart';
-import 'projects.dart';
+import '../service/service.dart';
+import '../application.dart';
+import '../models/projects.dart';
 
 class ProjectDetailWidget extends StatefulWidget {
   final Project project;
@@ -78,7 +78,6 @@ class _ProjectDetailWidgetState extends State<ProjectDetailWidget> {
     return Scaffold(
       appBar: AppBar(
         title: Text(applicationName),
-       
       ),
       body: SingleChildScrollView(
         child: Center(
@@ -102,8 +101,8 @@ class _ProjectDetailWidgetState extends State<ProjectDetailWidget> {
                       ButtonBar(
                         children: <Widget>[
                           FlatButton(
-                            child: const Text('APIS', semanticsLabel: "APIs BUTTON"),
-                            
+                            child: const Text('APIS',
+                                semanticsLabel: "APIs BUTTON"),
                             onPressed: () {
                               Navigator.pushNamed(
                                 context,
@@ -111,14 +110,6 @@ class _ProjectDetailWidgetState extends State<ProjectDetailWidget> {
                                 arguments: project,
                               );
                             },
-                          ),
-                          FlatButton(
-                            child: const Text('APPLICATIONS'),
-                            onPressed: () {/* ... */},
-                          ),
-                          FlatButton(
-                            child: const Text('TEAMS'),
-                            onPressed: () {/* ... */},
                           ),
                         ],
                       ),

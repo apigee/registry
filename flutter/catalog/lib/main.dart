@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 import 'application.dart';
-import 'theme.dart';
 import 'routes.dart';
-import 'signin.dart';
+import 'helpers/theme.dart';
+import 'pages/signin.dart';
 
 void main() async {
   await attemptToSignIn();

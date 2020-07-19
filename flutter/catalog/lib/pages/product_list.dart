@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_pagewise/flutter_pagewise.dart';
 import 'package:catalog/generated/registry_models.pb.dart';
-import 'service.dart';
-import 'drawer.dart';
-import 'adaptive.dart';
-import 'help.dart';
+import '../service/service.dart';
+import '../components/drawer.dart';
+import '../helpers/adaptive.dart';
+import '../components/help.dart';
 
 class ProductListScreen extends StatelessWidget {
   final String title;

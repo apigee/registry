@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'authorizations.dart';
-import 'application.dart';
+import '../authorizations.dart';
+import '../application.dart';
 
 GoogleSignInAccount currentUser;
 bool currentUserIsAuthorized = false;

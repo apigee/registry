@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:catalog/generated/registry_models.pb.dart';
-import 'service.dart';
-import 'application.dart';
+import '../service/service.dart';
+import '../application.dart';
 
 class ProductDetailWidget extends StatefulWidget {
   final Product product;
@@ -119,12 +119,12 @@ Expanded productInfoCard(BuildContext context, Product product) {
         children: <Widget>[
           ListTile(
             leading: Icon(Icons.album),
-            title: Text("More Info",
-                style: Theme.of(context).textTheme.headline6),
+            title:
+                Text("More Info", style: Theme.of(context).textTheme.headline6),
             subtitle: Text("$product"),
           ),
           ButtonBar(
-            children: <Widget>[             
+            children: <Widget>[
               FlatButton(
                 child: const Text('MORE'),
                 onPressed: () {/* ... */},

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:catalog/generated/registry_models.pb.dart';
-import 'service.dart';
+import '../service/service.dart';
 import 'dart:convert';
 import 'package:archive/archive.dart';
 import 'package:catalog/generated/complexity.pb.dart';
-import 'application.dart';
+import '../application.dart';
 
 class SpecDetailWidget extends StatefulWidget {
   final Spec spec;

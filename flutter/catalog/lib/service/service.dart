@@ -4,7 +4,7 @@ import 'grpc_client.dart';
 import 'package:catalog/generated/registry_models.pb.dart';
 import 'package:catalog/generated/registry_service.pb.dart';
 import 'package:catalog/generated/registry_service.pbgrpc.dart';
-import 'alerts.dart';
+import '../components/alerts.dart';
 
 const int pageSize = 50;
 
@@ -240,7 +240,7 @@ class PropertiesService {
     final client = getClient();
     final request = ListPropertiesRequest();
     request.parent = subject;
-     try {
+    try {
       return client.listProperties(request, options: callOptions());
     } catch (err) {
       print('Caught error: $err');

@@ -1,26 +1,36 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
-import 'extensions.dart';
+import 'helpers/extensions.dart';
 
-import 'project_list.dart';
-import 'project_detail.dart';
-import 'product_list.dart';
-import 'product_detail.dart';
-import 'version_list.dart';
-import 'version_detail.dart';
-import 'spec_list.dart';
-import 'spec_detail.dart';
-import 'signin.dart';
+import 'pages/project_list.dart';
+import 'pages/project_detail.dart';
+import 'pages/product_list.dart';
+import 'pages/product_detail.dart';
+import 'pages/version_list.dart';
+import 'pages/version_detail.dart';
+import 'pages/spec_list.dart';
+import 'pages/spec_detail.dart';
+import 'pages/signin.dart';
+import 'pages/home.dart';
 
 const nameRegex = r"([a-zA-Z0-9-_\.]+)";
 
 MaterialPageRoute generateRoute(RouteSettings settings) {
-  if ((settings.name == "/") || (currentUser == null) || (currentUserIsAuthorized == false)) {
-    return signInPage(settings);
+  if (kIsWeb) {
+    if ((settings.name == "/") ||
+        (currentUser == null) ||
+        (currentUserIsAuthorized == false)) {
+      return signInPage(settings);
+    }
+  } else {
+    if (settings.name == "/") {
+      return homePage(settings);
+    }
   }
   // handle exact string patterns first.
   if (settings.name == "/projects") {
-    return homePage(settings);
+    return projectListPage(settings);
   }
   if (settings.name == "/settings") {
     return settingsPage(settings);
@@ -94,6 +104,15 @@ MaterialPageRoute signInPage(RouteSettings settings) {
 }
 
 MaterialPageRoute homePage(RouteSettings settings) {
+  return MaterialPageRoute(
+    settings: settings,
+    builder: (context) {
+      return HomeScreen();
+    },
+  );
+}
+
+MaterialPageRoute projectListPage(RouteSettings settings) {
   return MaterialPageRoute(
     settings: settings,
     builder: (context) {
@@ -188,7 +207,7 @@ MaterialPageRoute notFoundPage(RouteSettings settings) {
             title: const Text('NOT FOUND'),
           ),
           body: Center(
-            child: Text("404"),
+            child: Text("You were sent to a page that doesn't exist."),
           ),
         );
       });

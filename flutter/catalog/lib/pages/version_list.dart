@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_pagewise/flutter_pagewise.dart';
 import 'package:catalog/generated/registry_models.pb.dart';
-import 'service.dart';
-import 'application.dart';
+import '../service/service.dart';
+import '../application.dart';
 
 class VersionListScreen extends StatelessWidget {
   final String title;
