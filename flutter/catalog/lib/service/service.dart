@@ -207,6 +207,7 @@ class SpecService {
       request.pageToken = token;
     }
     try {
+      print('$request');
       final response = await client.listSpecs(request, options: callOptions());
       tokens[offset + limit] = response.nextPageToken;
       return response.specs;

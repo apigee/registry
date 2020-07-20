@@ -473,7 +473,7 @@ func fetchMostRecentNonCurrentRevisionOfSpec(
 	spec := &models.Spec{}
 	k, err := it.Next(spec)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, status.Error(codes.NotFound, "not found")
 	}
 	return k, spec, nil
 }
@@ -499,7 +499,7 @@ func fetchCurrentRevisionOfSpec(
 	spec := &models.Spec{}
 	k, err := it.Next(spec)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, status.Error(codes.NotFound, "not found")
 	}
 	return k, spec, nil
 }

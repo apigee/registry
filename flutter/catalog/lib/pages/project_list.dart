@@ -3,7 +3,7 @@ import 'package:flutter_pagewise/flutter_pagewise.dart';
 import 'package:catalog/generated/registry_models.pb.dart';
 import '../service/service.dart';
 import '../components/help.dart';
-import '../models/projects.dart';
+import '../models/project.dart';
 import '../application.dart';
 
 class ProjectListScreen extends StatelessWidget {

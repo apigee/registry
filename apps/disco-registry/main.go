@@ -105,7 +105,7 @@ Usage:
 			for _, api := range listResponse.APIs {
 				log.Printf("%s/%s", api.Name, api.Version)
 				if api.Name == "apigee" {
-					continue
+					//continue
 				}
 				processes++
 				go func(discoveryRestURL string) {
@@ -267,6 +267,10 @@ func handleExportArgumentsForBytes(arguments map[string]interface{}, fileBytes [
 					log.Printf("failed to create %s/specs/%s: %s",
 						request.Parent, request.SpecId, err.Error())
 				}
+			} else if err != nil {
+				log.Printf("%s", err.Error())
+			} else {
+				log.Printf("already exists %s", request.Name)
 			}
 		}
 		handled = true

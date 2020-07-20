@@ -4,6 +4,7 @@ import 'package:catalog/generated/registry_models.pb.dart';
 import '../service/service.dart';
 import '../components/help.dart';
 import '../application.dart';
+import '../models/spec.dart';
 
 class SpecListScreen extends StatelessWidget {
   final String title;
@@ -51,12 +52,6 @@ class SpecListScreen extends StatelessWidget {
   }
 }
 
-String routeNameForSpecDetail(Spec spec) {
-  final name = "/" + spec.name.split("/").sublist(1).join("/");
-  print("pushing " + name);
-  return name;
-}
-
 const int pageSize = 50;
 PagewiseLoadController<Spec> pageLoadController;
 
@@ -84,7 +79,7 @@ class SpecList extends StatelessWidget {
           onTap: () async {
             Navigator.pushNamed(
               context,
-              routeNameForSpecDetail(entry),
+              entry.routeNameForSpecDetail(),
               arguments: entry,
             );
           },
@@ -98,7 +93,7 @@ class SpecList extends StatelessWidget {
                   print("save this API");
                 }),
             title: Text(
-              entry.name,
+              entry.nameForDisplay(),
               style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
             ),
             subtitle: Text("$entry"),

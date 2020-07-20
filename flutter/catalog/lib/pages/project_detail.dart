@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:catalog/generated/registry_models.pb.dart';
 import '../service/service.dart';
 import '../application.dart';
-import '../models/projects.dart';
+import '../models/project.dart';
 
 class ProjectDetailWidget extends StatefulWidget {
   final Project project;
