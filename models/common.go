@@ -10,6 +10,8 @@ import (
 	"google.golang.org/api/iterator"
 )
 
+const verbose = false
+
 // We might extend this to all characters that do not require escaping.
 // See "Resource ID Segments" in https://aip.dev/122.
 const nameRegex = "([a-zA-Z0-9-_\\.]+)"
@@ -46,7 +48,9 @@ func DeleteAllMatches(ctx context.Context, client *datastore.Client, q *datastor
 		keys = append(keys, key)
 		key, err = it.Next(nil)
 		if len(keys) == 500 {
-			log.Printf("Deleting %d %s entities", len(keys), keys[0].Kind)
+			if verbose {
+				log.Printf("Deleting %d %s entities", len(keys), keys[0].Kind)
+			}
 			err = client.DeleteMulti(ctx, keys)
 			if err != nil {
 				return err
@@ -58,7 +62,9 @@ func DeleteAllMatches(ctx context.Context, client *datastore.Client, q *datastor
 		return err
 	}
 	if len(keys) > 0 {
-		log.Printf("Deleting %d %s entities", len(keys), keys[0].Kind)
+		if verbose {
+			log.Printf("Deleting %d %s entities", len(keys), keys[0].Kind)
+		}
 		return client.DeleteMulti(ctx, keys)
 	}
 	return nil

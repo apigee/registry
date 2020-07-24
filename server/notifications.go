@@ -13,6 +13,8 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+const verbose = false
+
 const topicName = "changes"
 
 func (s *RegistryServer) notify(change rpc.Notification_Change, resource string) error {
@@ -56,7 +58,9 @@ func (s *RegistryServer) notify(change rpc.Notification_Change, resource string)
 		if err != nil {
 			return err
 		}
-		log.Printf("Published a message with a message ID: %s", id)
+		if verbose {
+			log.Printf("Published a message with a message ID: %s", id)
+		}
 	}
 	return nil
 }

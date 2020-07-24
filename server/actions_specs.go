@@ -267,19 +267,16 @@ func (s *RegistryServer) DeleteSpecRevision(ctx context.Context, request *rpc.De
 	if err != nil {
 		return nil, err
 	}
-	defer client.Close()
-	// Validate name and create dummy spec (we just need the ID fields).
-	_, err = models.NewSpecFromResourceName(request.GetName())
-	if err != nil {
-		return nil, invalidArgumentError(err)
-	}
 	// Delete the spec revision.
 	// First, get the revision to delete.
-	k := &datastore.Key{Kind: models.SpecEntityName, Name: request.GetName()}
-	var revisionToDelete models.Spec
-	client.Get(ctx, k, &revisionToDelete)
+	defer client.Close()
+	spec, _, err := fetchSpec(ctx, client, request.GetName())
+	if err != nil {
+		return nil, err
+	}
+	k := &datastore.Key{Kind: models.SpecEntityName, Name: spec.ResourceNameWithRevision()}
 	// If the one we will delete is the current revision, we need to designate a new current revision.
-	if revisionToDelete.IsCurrent {
+	if spec.IsCurrent {
 		// get the most recent non-current revision and make it current
 		newKey, newCurrentRevision, err := fetchMostRecentNonCurrentRevisionOfSpec(ctx, client, request.GetName())
 		if err != nil {
@@ -291,6 +288,7 @@ func (s *RegistryServer) DeleteSpecRevision(ctx context.Context, request *rpc.De
 		}
 	}
 	err = client.Delete(ctx, k)
+	s.notify(rpc.Notification_DELETED, spec.ResourceNameWithRevision())
 	return &empty.Empty{}, err
 }
 
@@ -325,6 +323,8 @@ func (s *RegistryServer) TagSpecRevision(ctx context.Context, request *rpc.TagSp
 	}
 	k := &datastore.Key{Kind: models.SpecRevisionTagEntityName, Name: tag.ResourceNameWithTag()}
 	k, err = client.Put(ctx, k, tag)
+	// send a notification that the tagged spec has been updated
+	s.notify(rpc.Notification_UPDATED, spec.ResourceNameWithSpecifiedRevision(request.GetTag()))
 	// return the spec using the tag for its name
 	return spec.Message(rpc.SpecView_BASIC, request.GetTag())
 }
@@ -380,8 +380,10 @@ func (s *RegistryServer) RollbackSpec(ctx context.Context, request *rpc.Rollback
 		return nil, err
 	}
 	defer client.Close()
-	spec, userSpecifiedRevision, err := fetchSpec(ctx, client, request.GetName())
+	specNameWithRevision := request.GetName() + "@" + request.GetRevisionId()
+	spec, userSpecifiedRevision, err := fetchSpec(ctx, client, specNameWithRevision)
 	if err != nil {
+		// TODO: this should return NotFound if the revision was not found.
 		return nil, err
 	}
 	if userSpecifiedRevision == "" {
@@ -401,6 +403,8 @@ func (s *RegistryServer) RollbackSpec(ctx context.Context, request *rpc.Rollback
 	spec.IsCurrent = true
 	k := &datastore.Key{Kind: models.SpecEntityName, Name: spec.ResourceNameWithRevision()}
 	k, err = client.Put(ctx, k, spec)
+	// Send a notification of the new revision.
+	s.notify(rpc.Notification_UPDATED, spec.ResourceNameWithRevision())
 	return spec.Message(rpc.SpecView_BASIC, spec.RevisionID)
 }
 

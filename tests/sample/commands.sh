@@ -1,3 +1,4 @@
+#!/bin/bash
 
 echo delete everything associated with a project
 apg registry delete-project --name projects/sample
@@ -112,7 +113,7 @@ apg registry get-spec \
     jq '.hash' -r
 
 echo rollback a spec revision
-apg registry rollback-spec --name $ORIGINAL
+apg registry rollback-spec --name projects/sample/products/petstore/versions/1.0.0/specs/openapi.yaml --revision_id og
 
 echo print current hash after rollback
 apg registry get-spec \
@@ -142,3 +143,12 @@ echo list specs should only return the most current revision of each spec
 apg registry list-specs \
     --parent projects/sample/products/petstore/versions/1.0.0 \
     --json
+
+echo delete the spec
+apg registry delete-spec  --name projects/sample/products/petstore/versions/1.0.0/specs/openapi.yaml
+
+echo list spec-revisions should return nothing now
+apg registry list-spec-revisions \
+    --name projects/sample/products/petstore/versions/1.0.0/specs/openapi.yaml \
+    --json
+

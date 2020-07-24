@@ -229,8 +229,8 @@ service Registry {
     };
   }
   
-  // RollbackSpec sets the current revision to a specified prio revision.
-  // Note that this recreates a new revision ID.
+  // RollbackSpec sets the current revision to a specified prior revision.
+  // Note that this creates a new revision ID.
   rpc RollbackSpec(RollbackSpecRequest) returns (Spec) {
     option (google.api.http) = {
       post: "/v1alpha1/{name=projects/*/products/*/versions/*/specs/*}:rollback"
@@ -953,7 +953,7 @@ message DeleteSpecRevisionRequest {
   // The name of the spec revision to be deleted,
   // with a revision ID explicitly included.
   //
-  // Example: publishers/123/specs/les-miserables@c7cfa2a8
+  // Example: projects/sample/products/petstore/versions/1.0.0/specs/openapi.yaml@c7cfa2a8
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {type : "registry.googleapis.com/Spec"}
