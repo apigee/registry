@@ -71,7 +71,46 @@ func hashForBytes(b []byte) string {
 	return fmt.Sprintf("%x", bs)
 }
 
+func listAllSpecs(ctx context.Context, registryClient *client.Client) []*rpc.Spec {
+	specs := make([]*rpc.Spec, 0)
+	req := &rpc.ListSpecsRequest{
+		Parent: "projects/sample/products/-/versions/-",
+	}
+	it := registryClient.ListSpecs(ctx, req)
+	for {
+		spec, err := it.Next()
+		if err == nil {
+			specs = append(specs, spec)
+		} else {
+			break
+		}
+	}
+	return specs
+}
+
+func listAllSpecRevisionIDs(ctx context.Context, registryClient *client.Client) []string {
+	revisionIDs := make([]string, 0)
+	req := &rpc.ListSpecRevisionsRequest{
+		Name: "projects/sample/products/petstore/versions/1.0.0/specs/openapi.yaml",
+	}
+	it := registryClient.ListSpecRevisions(ctx, req)
+	for {
+		spec, err := it.Next()
+		if err == nil {
+			revisionIDs = append(revisionIDs, spec.RevisionId)
+		} else {
+			break
+		}
+	}
+	return revisionIDs
+}
+
 func TestDemo(t *testing.T) {
+	var revisionIDs []string      // holds revision ids from queries
+	var specs []*rpc.Spec         // holds specs from queries
+	var originalRevisionID string // revision id of first revision
+	var originalHash string       // hash of first revision
+
 	// Create a registry client.
 	ctx := context.Background()
 	registryClient, err := client.NewClient(ctx)
@@ -183,31 +222,17 @@ func TestDemo(t *testing.T) {
 		check(t, "error updating spec %s", err)
 	}
 	// List the spec revisions.
-	revisions := make([]string, 0)
 	{
-		req := &rpc.ListSpecRevisionsRequest{
-			Name: "projects/sample/products/petstore/versions/1.0.0/specs/openapi.yaml",
-		}
-		it := registryClient.ListSpecRevisions(ctx, req)
-		for {
-			spec, err := it.Next()
-			if err == nil {
-				revisions = append(revisions, spec.RevisionId)
-			} else {
-				break
-			}
-		}
-		if len(revisions) != 4 {
-			t.Errorf("Incorrect revision count: %d", len(revisions))
+		revisionIDs = listAllSpecRevisionIDs(ctx, registryClient)
+		if len(revisionIDs) != 4 {
+			t.Errorf("Incorrect revision count: %d", len(revisionIDs))
 		}
 	}
 	// Check the hash of the original revision.
-	var original string
-	var originalHash string
-	if len(revisions) > 0 {
-		original = revisions[len(revisions)-1]
+	if len(revisionIDs) > 0 {
+		originalRevisionID = revisionIDs[len(revisionIDs)-1]
 		req := &rpc.GetSpecRequest{
-			Name: "projects/sample/products/petstore/versions/1.0.0/specs/openapi.yaml" + "@" + original,
+			Name: "projects/sample/products/petstore/versions/1.0.0/specs/openapi.yaml" + "@" + originalRevisionID,
 		}
 		spec, err := registryClient.GetSpec(ctx, req)
 		check(t, "error getting spec %s", err)
@@ -221,20 +246,8 @@ func TestDemo(t *testing.T) {
 		}
 	}
 	// List specs; there should be only one.
-	specs := make([]*rpc.Spec, 0)
 	{
-		req := &rpc.ListSpecsRequest{
-			Parent: "projects/sample/products/-/versions/-",
-		}
-		it := registryClient.ListSpecs(ctx, req)
-		for {
-			spec, err := it.Next()
-			if err == nil {
-				specs = append(specs, spec)
-			} else {
-				break
-			}
-		}
+		specs = listAllSpecs(ctx, registryClient)
 		if len(specs) != 1 {
 			t.Errorf("Incorrect spec count: %d", len(specs))
 		}
@@ -242,7 +255,7 @@ func TestDemo(t *testing.T) {
 	// tag a spec revision
 	{
 		req := &rpc.TagSpecRevisionRequest{
-			Name: "projects/sample/products/petstore/versions/1.0.0/specs/openapi.yaml" + "@" + original,
+			Name: "projects/sample/products/petstore/versions/1.0.0/specs/openapi.yaml" + "@" + originalRevisionID,
 			Tag:  "og",
 		}
 		taggedSpec, err := registryClient.TagSpecRevision(ctx, req)
@@ -258,11 +271,11 @@ func TestDemo(t *testing.T) {
 	{
 		req := &rpc.TagSpecRevisionRequest{
 			Name: "projects/sample/products/petstore/versions/1.0.0/specs/openapi.yaml@og",
-			Tag:  "original",
+			Tag:  "first",
 		}
 		taggedSpec, err := registryClient.TagSpecRevision(ctx, req)
 		check(t, "error tagging spec", err)
-		if taggedSpec.Name != "projects/sample/products/petstore/versions/1.0.0/specs/openapi.yaml@original" {
+		if taggedSpec.Name != "projects/sample/products/petstore/versions/1.0.0/specs/openapi.yaml@first" {
 			t.Errorf("Incorrect name of tagged spec: %s", taggedSpec.Name)
 		}
 		if taggedSpec.Hash != originalHash {
@@ -272,7 +285,7 @@ func TestDemo(t *testing.T) {
 	// get a spec by its tag
 	{
 		req := &rpc.GetSpecRequest{
-			Name: "projects/sample/products/petstore/versions/1.0.0/specs/openapi.yaml@original",
+			Name: "projects/sample/products/petstore/versions/1.0.0/specs/openapi.yaml@first",
 		}
 		spec, err := registryClient.GetSpec(ctx, req)
 		check(t, "error getting spec %s", err)
@@ -293,41 +306,17 @@ func TestDemo(t *testing.T) {
 		}
 	}
 	// List specs; there should be only one.
-	specs = make([]*rpc.Spec, 0)
 	{
-		req := &rpc.ListSpecsRequest{
-			Parent: "projects/sample/products/-/versions/-",
-		}
-		it := registryClient.ListSpecs(ctx, req)
-		for {
-			spec, err := it.Next()
-			if err == nil {
-				specs = append(specs, spec)
-			} else {
-				break
-			}
-		}
+		specs = listAllSpecs(ctx, registryClient)
 		if len(specs) != 1 {
 			t.Errorf("Incorrect spec count: %d", len(specs))
 		}
 	}
 	// list spec revisions, there should now be five
-	revisions = make([]string, 0)
 	{
-		req := &rpc.ListSpecRevisionsRequest{
-			Name: "projects/sample/products/petstore/versions/1.0.0/specs/openapi.yaml",
-		}
-		it := registryClient.ListSpecRevisions(ctx, req)
-		for {
-			spec, err := it.Next()
-			if err == nil {
-				revisions = append(revisions, spec.RevisionId)
-			} else {
-				break
-			}
-		}
-		if len(revisions) != 5 {
-			t.Errorf("Incorrect revision count: %d", len(revisions))
+		revisionIDs = listAllSpecRevisionIDs(ctx, registryClient)
+		if len(revisionIDs) != 5 {
+			t.Errorf("Incorrect revision count: %d", len(revisionIDs))
 		}
 	}
 	// delete a spec revision
@@ -339,41 +328,17 @@ func TestDemo(t *testing.T) {
 		check(t, "error deleting spec revision %s", err)
 	}
 	// list specs, there should be only one
-	specs = make([]*rpc.Spec, 0)
 	{
-		req := &rpc.ListSpecsRequest{
-			Parent: "projects/sample/products/-/versions/-",
-		}
-		it := registryClient.ListSpecs(ctx, req)
-		for {
-			spec, err := it.Next()
-			if err == nil {
-				specs = append(specs, spec)
-			} else {
-				break
-			}
-		}
+		specs = listAllSpecs(ctx, registryClient)
 		if len(specs) != 1 {
 			t.Errorf("Incorrect spec count: %d", len(specs))
 		}
 	}
 	// list spec revisions, there should be four
-	revisions = make([]string, 0)
 	{
-		req := &rpc.ListSpecRevisionsRequest{
-			Name: "projects/sample/products/petstore/versions/1.0.0/specs/openapi.yaml",
-		}
-		it := registryClient.ListSpecRevisions(ctx, req)
-		for {
-			spec, err := it.Next()
-			if err == nil {
-				revisions = append(revisions, spec.RevisionId)
-			} else {
-				break
-			}
-		}
-		if len(revisions) != 4 {
-			t.Errorf("Incorrect revision count: %d", len(revisions))
+		revisionIDs = listAllSpecRevisionIDs(ctx, registryClient)
+		if len(revisionIDs) != 4 {
+			t.Errorf("Incorrect revision count: %d", len(revisionIDs))
 		}
 	}
 	// delete the spec
@@ -385,22 +350,10 @@ func TestDemo(t *testing.T) {
 		check(t, "error deleting spec %s", err)
 	}
 	// list spec revisions, there should be none
-	revisions = make([]string, 0)
 	{
-		req := &rpc.ListSpecRevisionsRequest{
-			Name: "projects/sample/products/petstore/versions/1.0.0/specs/openapi.yaml",
-		}
-		it := registryClient.ListSpecRevisions(ctx, req)
-		for {
-			spec, err := it.Next()
-			if err == nil {
-				revisions = append(revisions, spec.RevisionId)
-			} else {
-				break
-			}
-		}
-		if len(revisions) != 0 {
-			t.Errorf("Incorrect revision count: %d", len(revisions))
+		revisionIDs = listAllSpecRevisionIDs(ctx, registryClient)
+		if len(revisionIDs) != 0 {
+			t.Errorf("Incorrect revision count: %d", len(revisionIDs))
 		}
 	}
 }
