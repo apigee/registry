@@ -1,3 +1,5 @@
+# This Dockerfile builds an image that runs the registry-server with no proxy.
+
 # Use the official Golang image to create a build artifact.
 # This is based on Debian and sets the GOPATH to /go.
 # https://hub.docker.com/_/golang

@@ -12,7 +12,7 @@ test:
 	go test -v `go list ./... | grep -v gapic`
 
 clean:
-	rm -rf cmd/cli gapic rpc third_party/api-common-protos envoy/proto.pb
+	rm -rf cmd/apg gapic rpc third_party/api-common-protos third_party/gnostic envoy/proto.pb
 
 build:
 ifndef REGISTRY_PROJECT_IDENTIFIER

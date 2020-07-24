@@ -1,7 +1,7 @@
-const {ListProductsRequest, ListProductsResponse} = require('./flame_service_pb.js');
-const {FlameClient} = require('./flame_service_grpc_web_pb.js');
+const {ListProductsRequest, ListProductsResponse} = require('./registry_service_pb.js');
+const {RegistryClient} = require('./registry_service_grpc_web_pb.js');
 
-var client = new FlameClient('http://localhost:9999');
+var client = new RegistryClient('http://localhost:9999');
 
 var request = new ListProductsRequest();
 request.setParent('projects/google');

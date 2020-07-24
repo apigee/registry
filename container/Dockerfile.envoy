@@ -1,3 +1,6 @@
+# This Dockerfile builds an image that runs the registry-server behind an
+# included Envoy proxy.
+
 # Use the official Golang image to create a build artifact.
 # This is based on Debian and sets the GOPATH to /go.
 # https://hub.docker.com/_/golang
@@ -15,7 +18,7 @@ RUN go mod download
 COPY . ./
 
 # Build the binary.
-RUN CGO_ENABLED=0 GOOS=linux go build -mod=readonly -v -o registry-server ./cmd/registry-server
+RUN CGO_ENABLED=0 GOOS=linux go build -v -o registry-server ./cmd/registry-server
 
 # Use an Envoy release image to get envoy in the image.
 # This is the last version that supports allow_origin in CorsPolicy
@@ -23,10 +26,10 @@ RUN CGO_ENABLED=0 GOOS=linux go build -mod=readonly -v -o registry-server ./cmd/
 FROM envoyproxy/envoy:v1.11.2
 
 COPY container/envoy.yaml /etc/envoy/envoy.yaml
-COPY container/RUN.sh /RUN.sh
+COPY container/RUN-WITH-ENVOY.sh /RUN-WITH-ENVOY.sh
 
 # Copy the binary to the production image from the builder stage.
 COPY --from=builder /app/registry-server /registry-server
 
 # Run the web service on container startup.
-CMD ["/RUN.sh"]
+CMD ["/RUN-WITH-ENVOY.sh"]
