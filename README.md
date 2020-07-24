@@ -143,10 +143,10 @@ Requirements:
   `source AUTH-CLOUDRUN.sh`.
 
 `make build` uses [Google Cloud Build](https://cloud.google.com/cloud-build) to
-build a container containing the API server. The container is then stored in
+build a container containing the API server. The container is stored in
 [Google Container Registry](https://cloud.google.com/container-registry).
 
-`make run` deploys that container on
+`make deploy` deploys that container on
 [Google Cloud Run](https://cloud.google.com/run).
 
 When deploying to Cloud Run for the first time, you will be asked a few
@@ -166,6 +166,10 @@ Now you can call the API with your generated CLI.
 Note here that `demo` is an arbitrary project ID for use within your Registry
 API calls only. It is unrelated to the Google Cloud project ID that you use for
 Cloud Run and Cloud Datastore.
+
+You can also verify your installation by running `make test`. This will run
+tests against the same service that your CLI is configured to use via the
+environment variables set by the `AUTH-*.sh` scripts.
 
 Auth tokens are short-lived. When your token expires, your calls will return a
 message like this:
