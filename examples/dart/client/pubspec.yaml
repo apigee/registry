@@ -1,5 +1,5 @@
-name: flame
-description: Dart gRPC sample client and server.
+name: client
+description: Dart gRPC sample client.
 homepage: https://github.com/dart-lang/grpc-dart
 
 environment:
@@ -10,7 +10,6 @@ dependencies:
   async: '>=1.13.3 <3.0.0'
   grpc: ^2.1.3
   protobuf: ^1.0.1
-  html:
 
 dev_dependencies:
   test: ^1.3.0

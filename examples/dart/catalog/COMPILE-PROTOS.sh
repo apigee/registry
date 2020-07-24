@@ -1,16 +1,16 @@
 #!/bin/bash
 
 # This is a directroy containing the registry protos.
-export REGISTRY_PROTOS="../../proto"
+export REGISTRY_PROTOS="../../../proto"
 
 # This points to the .proto files distributed with protoc.
 export PROTO_PROTOS="$HOME/local/include"
 
 # This is a third_party directory containing .proto files used by many APIs.
-export ANNOTATION_PROTOS="../../third_party/api-common-protos"
+export ANNOTATION_PROTOS="../../../third_party/api-common-protos"
 
 # This is a third_party directory containing message protos used to store API metrics.
-export METRICS_PROTOS="../../third_party/gnostic/metrics"
+export METRICS_PROTOS="../../../third_party/gnostic/metrics"
 
 echo "Generating dart support code."
 protoc \

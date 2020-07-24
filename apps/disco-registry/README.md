@@ -20,8 +20,8 @@ prints the raw results of the Discovery List APIs call.
 
 Gets the specified API and version from the Google Discovery API. `<version>`
 can be omitted if it is unique. The `--upload` option uploades the raw
-Discovery Format description to a Registry service. The `--raw` option saves the
-raw Discovery Format description. The `--openapi2` option rewrites the API
+Discovery Format description to a Registry service. The `--raw` option saves
+the raw Discovery Format description. The `--openapi2` option rewrites the API
 description in OpenAPI v2. The `--openapi3` option rewrites the API description
 in OpenAPI v3. The `--features` option displays the contents of the `features`
 sections of discovery documents. The `--schemas` option displays information

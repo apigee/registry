@@ -30,7 +30,8 @@ import (
 )
 
 func main() {
-
+	// This makes a raw gRPC connection.
+	// see the client package for a simpler way to get a Go client.
 	systemRoots, err := x509.SystemCertPool()
 	if err != nil {
 		log.Fatal("failed to load system root CA cert pool")
@@ -40,7 +41,6 @@ func main() {
 	})
 	var opts []grpc.DialOption
 	opts = append(opts, grpc.WithTransportCredentials(creds))
-
 	address := os.Getenv("APG_REGISTRY_ADDRESS")
 	conn, err := grpc.Dial(address, opts...)
 	if err != nil {
@@ -48,13 +48,18 @@ func main() {
 	}
 	defer conn.Close()
 
+	// Create a Registry API client from the connection.
 	client := rpc.NewRegistryClient(conn)
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+
+	// Configure the context to use an auth token from the environment.
 	token := os.Getenv("APG_REGISTRY_TOKEN")
 	ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+token)
 
-	req := &rpc.ListProductsRequest{}
-	req.Parent = "projects/google"
+	// Make a sample gRPC API call.
+	req := &rpc.ListProductsRequest{
+		Parent: "projects/-",
+	}
 	res, err := client.ListProducts(ctx, req)
 	if res != nil {
 		fmt.Println("The names of your products:")
