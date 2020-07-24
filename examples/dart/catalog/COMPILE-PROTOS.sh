@@ -12,7 +12,7 @@ export ANNOTATION_PROTOS="../../../third_party/api-common-protos"
 # This is a third_party directory containing message protos used to store API metrics.
 export METRICS_PROTOS="../../../third_party/gnostic/metrics"
 
-echo "Generating dart support code."
+echo "Generating Dart support code."
 protoc \
 	--proto_path=${REGISTRY_PROTOS} \
 	--proto_path=${ANNOTATION_PROTOS} \
