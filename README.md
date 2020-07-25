@@ -109,9 +109,9 @@ Start the server by running `registry-server`.
 
 `registry-server` provides a gRPC service only. For a transcoded HTTP/JSON
 interface, run the [envoy](https://www.envoyproxy.io) proxy locally using the
-configuration in the [distributions/envoy](distributions/envoy) directory. With
+configuration in the [deployments/envoy](deployments/envoy) directory. With
 a local installation of `envoy`, this can be done by running the following
-inside the [distributions/envoy](distributions/envoy) directory.
+inside the [deployments/envoy](deployments/envoy) directory.
 
 ```
 sudo envoy -c envoy.yaml
@@ -178,5 +178,5 @@ To generate a new token, rerun `source AUTH-CLOUDRUN.sh`.
 ## Proxying a Cloud Run-based Service with Google Cloud Endpoints
 
 For HTTP/JSON transcoding and other API management features, see the
-[endpoints](endpoints) directory for instructions and scripts for configuring a
+[deployments/endpoints](deployments/endpoints) directory for instructions and scripts for configuring a
 Google Cloud Endpoints frontend for your Cloud Run-based service.
