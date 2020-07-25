@@ -36,9 +36,9 @@ The reference API is also configured to support
 [generated API clients (GAPICS)](https://googleapis.github.io/gapic-generators/)
 and a Go GAPIC library is generated as part of the build process using
 [gapic-generator-go](https://github.com/googleapis/gapic-generator-go). A
-sample Go GAPIC-based client is in [cmd/client](cmd/client). [cmd/cli](cmd/cli)
-contains a command-line interface that is automatically generated from the API
-description using the
+sample Go-based client is in [examples/go/client](examples/go/client).
+[cmd/apg](cmd/apg) contains a command-line interface that is automatically
+generated from the API description using the
 [protoc-gen-go_cli](https://github.com/googleapis/gapic-generator-go/tree/master/cmd/protoc-gen-go_cli)
 tool in [gapic-generator-go](https://github.com/googleapis/gapic-generator-go).
 Along with this automatically-generated CLI, the [cmd/registry](cmd/registry)
