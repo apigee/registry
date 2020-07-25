@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"apigov.dev/registry/cmd/registry/connection"
+	"apigov.dev/registry/connection"
 	"apigov.dev/registry/gapic"
 	"apigov.dev/registry/models"
 	rpc "apigov.dev/registry/rpc"
@@ -21,12 +21,12 @@ var getCmd = &cobra.Command{
 	Short: "Get property values.",
 	Long:  `Get property values.`,
 	Run: func(cmd *cobra.Command, args []string) {
+		ctx := context.TODO()
 
-		client, err := connection.NewClient()
+		client, err := connection.NewClient(ctx)
 		if err != nil {
 			log.Fatalf("%s", err.Error())
 		}
-		ctx := context.TODO()
 
 		var name, property string
 		if len(args) > 0 {

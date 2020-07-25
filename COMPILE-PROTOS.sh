@@ -11,7 +11,7 @@ go get -u github.com/googleapis/gapic-generator-go/cmd/protoc-gen-go_gapic
 go get -u github.com/googleapis/gapic-generator-go/cmd/protoc-gen-go_cli
 go get -u github.com/googleapis/api-linter/cmd/api-linter
 
-echo "Clearing any previously-generated directories."
+echo "Clearing any previously-generated files."
 rm -rf rpc gapic cmd/apg/*.go
 mkdir -p rpc gapic cmd/apg
 

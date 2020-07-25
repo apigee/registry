@@ -24,8 +24,7 @@ import (
 	"os"
 	"strings"
 
-	"apigov.dev/registry/client"
-	"apigov.dev/registry/gapic"
+	"apigov.dev/registry/connection"
 	rpcpb "apigov.dev/registry/rpc"
 	"github.com/docopt/docopt-go"
 	"github.com/golang/protobuf/proto"
@@ -35,7 +34,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-var registryClient *gapic.RegistryClient
+var registryClient connection.Client
 
 func main() {
 	usage := `
@@ -59,7 +58,7 @@ Usage:
 
 	if arguments["--upload"].(bool) {
 		ctx := context.Background()
-		registryClient, err = client.NewClient(ctx)
+		registryClient, err = connection.NewClient(ctx)
 	}
 
 	// List APIs.

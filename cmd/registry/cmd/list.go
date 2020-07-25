@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"apigov.dev/registry/cmd/registry/connection"
+	"apigov.dev/registry/connection"
 	"apigov.dev/registry/gapic"
 	"apigov.dev/registry/models"
 	rpc "apigov.dev/registry/rpc"
@@ -52,11 +52,11 @@ var listCmd = &cobra.Command{
 	Long:  "List resources in the API model.",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		client, err := connection.NewClient()
+		ctx := context.TODO()
+		client, err := connection.NewClient(ctx)
 		if err != nil {
 			log.Fatalf("%s", err.Error())
 		}
-		ctx := context.TODO()
 
 		name := args[0]
 		if m := models.ProjectsRegexp().FindAllStringSubmatch(name, -1); m != nil {

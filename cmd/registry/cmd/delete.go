@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"log"
 
-	"apigov.dev/registry/cmd/registry/connection"
+	"apigov.dev/registry/connection"
 	"apigov.dev/registry/models"
 	rpc "apigov.dev/registry/rpc"
 	"github.com/spf13/cobra"
@@ -50,11 +50,11 @@ func init() {
 }
 
 func deleteAllProductsInProject(projectID string) {
-	client, err := connection.NewClient()
+	ctx := context.TODO()
+	client, err := connection.NewClient(ctx)
 	if err != nil {
 		log.Fatalf("%s", err.Error())
 	}
-	ctx := context.TODO()
 	request := &rpc.ListProductsRequest{
 		Parent: "projects/" + projectID,
 	}
@@ -88,11 +88,11 @@ func deleteAllProductsInProject(projectID string) {
 }
 
 func deleteAllPropertiesInProject(projectID string) {
-	client, err := connection.NewClient()
+	ctx := context.TODO()
+	client, err := connection.NewClient(ctx)
 	if err != nil {
 		log.Fatalf("%s", err.Error())
 	}
-	ctx := context.TODO()
 	request := &rpc.ListPropertiesRequest{
 		Parent: "projects/" + projectID,
 	}
@@ -126,11 +126,11 @@ func deleteAllPropertiesInProject(projectID string) {
 }
 
 func deleteAllLabelsInProject(projectID string) {
-	client, err := connection.NewClient()
+	ctx := context.TODO()
+	client, err := connection.NewClient(ctx)
 	if err != nil {
 		log.Fatalf("%s", err.Error())
 	}
-	ctx := context.TODO()
 	request := &rpc.ListLabelsRequest{
 		Parent: "projects/" + projectID,
 	}

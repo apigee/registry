@@ -8,7 +8,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"apigov.dev/registry/cmd/registry/connection"
+	"apigov.dev/registry/connection"
 	"apigov.dev/registry/gapic"
 	rpcpb "apigov.dev/registry/rpc"
 	"github.com/spf13/cobra"
@@ -20,6 +20,7 @@ var specCmd = &cobra.Command{
 	Short: "Upload files of an API spec.",
 	Long:  "Upload files of an API spec.",
 	Run: func(cmd *cobra.Command, args []string) {
+		ctx := context.TODO()
 		flagset := cmd.LocalFlags()
 		version, err := flagset.GetString("version")
 		if err != nil {
@@ -27,7 +28,7 @@ var specCmd = &cobra.Command{
 		}
 		fmt.Printf("spec called with args %+v and version %s\n", args, version)
 
-		client, err := connection.NewClient()
+		client, err := connection.NewClient(ctx)
 		if err != nil {
 			log.Fatalf("%s", err.Error())
 		}

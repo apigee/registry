@@ -1,4 +1,4 @@
-package client
+package connection
 
 import (
 	"context"
@@ -12,10 +12,10 @@ import (
 )
 
 // Client is a client of the Registry API
-type Client = gapic.RegistryClient
+type Client = *gapic.RegistryClient
 
 // NewClient creates a new GAPIC client using environment variable settings.
-func NewClient(ctx context.Context) (*gapic.RegistryClient, error) {
+func NewClient(ctx context.Context) (Client, error) {
 	var opts []option.ClientOption
 
 	address := os.Getenv("APG_REGISTRY_ADDRESS")

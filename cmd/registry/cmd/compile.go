@@ -7,7 +7,7 @@ import (
 	"log"
 	"strings"
 
-	"apigov.dev/registry/cmd/registry/connection"
+	"apigov.dev/registry/connection"
 	"apigov.dev/registry/gapic"
 	"apigov.dev/registry/models"
 	rpc "apigov.dev/registry/rpc"
@@ -25,14 +25,14 @@ var compileCmd = &cobra.Command{
 	Short: "Generate a compiled representation of an API spec",
 	Long:  `Generate a compiled representation of an API spec.`,
 	Run: func(cmd *cobra.Command, args []string) {
+		ctx := context.TODO()
 		if len(args) < 1 {
 			return
 		}
-		client, err := connection.NewClient()
+		client, err := connection.NewClient(ctx)
 		if err != nil {
 			log.Fatalf("%s", err.Error())
 		}
-		ctx := context.TODO()
 		name := args[0]
 		if m := models.SpecRegexp().FindAllStringSubmatch(name, -1); m != nil {
 			err := compileSpec(ctx, client, m[0])

@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	"apigov.dev/registry/cmd/registry/connection"
+	"apigov.dev/registry/connection"
 	"apigov.dev/registry/gapic"
 	"apigov.dev/registry/models"
 	rpc "apigov.dev/registry/rpc"
@@ -25,6 +25,8 @@ var exportCmd = &cobra.Command{
 	Short: "Export properties to a Google sheet",
 	Long:  `Export properties to a Google sheet`,
 	Run: func(cmd *cobra.Command, args []string) {
+		ctx := context.TODO()
+
 		log.Printf("Export called.")
 
 		ssc, err := NewStatusSheetConnection(SHEETID)
@@ -37,11 +39,10 @@ var exportCmd = &cobra.Command{
 		//ssc.updateWithCheckerResults(checkerResults)
 		//log.Printf("Done.")
 
-		client, err := connection.NewClient()
+		client, err := connection.NewClient(ctx)
 		if err != nil {
 			log.Fatalf("%s", err.Error())
 		}
-		ctx := context.TODO()
 
 		var name, property string
 		if len(args) > 0 {

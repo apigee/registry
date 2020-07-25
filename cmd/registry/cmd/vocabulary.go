@@ -6,7 +6,7 @@ import (
 	"log"
 	"strings"
 
-	"apigov.dev/registry/cmd/registry/connection"
+	"apigov.dev/registry/connection"
 	"apigov.dev/registry/gapic"
 	"apigov.dev/registry/models"
 	rpc "apigov.dev/registry/rpc"
@@ -24,12 +24,12 @@ var vocabularyCmd = &cobra.Command{
 	Short: "Generate a summary of an API spec",
 	Long:  `Generate a summary of an API spec.`,
 	Run: func(cmd *cobra.Command, args []string) {
+		ctx := context.TODO()
 		log.Printf("vocabulary called %+v", args)
-		client, err := connection.NewClient()
+		client, err := connection.NewClient(ctx)
 		if err != nil {
 			log.Fatalf("%s", err.Error())
 		}
-		ctx := context.TODO()
 		name := args[0]
 		if m := models.SpecRegexp().FindAllStringSubmatch(name, -1); m != nil {
 			segments := m[0]

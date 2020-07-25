@@ -11,8 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"apigov.dev/registry/client"
-	"apigov.dev/registry/gapic"
+	"apigov.dev/registry/connection"
 	rpcpb "apigov.dev/registry/rpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -21,7 +20,7 @@ import (
 const directory = "."
 const project = "atlas"
 
-var registryClient *gapic.RegistryClient
+var registryClient connection.Client
 
 func notFound(err error) bool {
 	if err == nil {
@@ -38,7 +37,7 @@ func main() {
 	var err error
 
 	ctx := context.Background()
-	registryClient, err = client.NewClient(ctx)
+	registryClient, err = connection.NewClient(ctx)
 	completions := make(chan int)
 	processes := 0
 
