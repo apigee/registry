@@ -4,41 +4,16 @@ package models
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
 	"time"
 
 	rpc "apigov.dev/registry/rpc"
+	"apigov.dev/registry/server/names"
 	ptypes "github.com/golang/protobuf/ptypes"
 )
 
 // LabelEntityName is used to represent labels in the datastore.
 const LabelEntityName = "Label"
-
-// LabelsRegexp returns a regular expression that matches collection of labels.
-func LabelsRegexp() *regexp.Regexp {
-	return regexp.MustCompile(
-		"^projects/" + nameRegex +
-			"(/products/" + nameRegex +
-			"(/versions/" + nameRegex +
-			"(/specs/" + nameRegex +
-			")?" +
-			")?" +
-			")?" +
-			"/labels$")
-}
-
-// LabelRegexp returns a regular expression that matches a Label resource name.
-func LabelRegexp() *regexp.Regexp {
-	return regexp.MustCompile("^projects/" + nameRegex +
-		"(/products/" + nameRegex +
-		"(/versions/" + nameRegex +
-		"(/specs/" + nameRegex +
-		")?" +
-		")?" +
-		")?" +
-		"/labels/" + nameRegex + "$")
-}
 
 // Label ...
 type Label struct {
@@ -55,13 +30,13 @@ type Label struct {
 // NewLabelFromParentAndLabelID returns an initialized label for a specified parent and labelID.
 func NewLabelFromParentAndLabelID(parent string, labelID string) (*Label, error) {
 	// Return an error if the labelID is invalid.
-	if err := validateID(labelID); err != nil {
+	if err := names.ValidateID(labelID); err != nil {
 		return nil, err
 	}
 	// Match regular expressions to identify the parent of this label.
 	var m [][]string
 	// Is the parent a project?
-	m = ProjectRegexp().FindAllStringSubmatch(parent, -1)
+	m = names.ProjectRegexp().FindAllStringSubmatch(parent, -1)
 	if m != nil {
 		return &Label{
 			ProjectID: m[0][1],
@@ -70,7 +45,7 @@ func NewLabelFromParentAndLabelID(parent string, labelID string) (*Label, error)
 		}, nil
 	}
 	// Is the parent a product?
-	m = ProductRegexp().FindAllStringSubmatch(parent, -1)
+	m = names.ProductRegexp().FindAllStringSubmatch(parent, -1)
 	if m != nil {
 		return &Label{
 			ProjectID: m[0][1],
@@ -80,7 +55,7 @@ func NewLabelFromParentAndLabelID(parent string, labelID string) (*Label, error)
 		}, nil
 	}
 	// Is the parent a version?
-	m = VersionRegexp().FindAllStringSubmatch(parent, -1)
+	m = names.VersionRegexp().FindAllStringSubmatch(parent, -1)
 	if m != nil {
 		return &Label{
 			ProjectID: m[0][1],
@@ -91,7 +66,7 @@ func NewLabelFromParentAndLabelID(parent string, labelID string) (*Label, error)
 		}, nil
 	}
 	// Is the parent a spec?
-	m = SpecRegexp().FindAllStringSubmatch(parent, -1)
+	m = names.SpecRegexp().FindAllStringSubmatch(parent, -1)
 	if m != nil {
 		return &Label{
 			ProjectID: m[0][1],

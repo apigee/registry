@@ -8,8 +8,8 @@ import (
 
 	"apigov.dev/registry/connection"
 	"apigov.dev/registry/gapic"
-	"apigov.dev/registry/server/models"
 	rpc "apigov.dev/registry/rpc"
+	"apigov.dev/registry/server/names"
 	"github.com/golang/protobuf/ptypes/any"
 	"github.com/googleapis/gnostic/compiler"
 	openapi_v2 "github.com/googleapis/gnostic/openapiv2"
@@ -31,7 +31,7 @@ var vocabularyCmd = &cobra.Command{
 			log.Fatalf("%s", err.Error())
 		}
 		name := args[0]
-		if m := models.SpecRegexp().FindAllStringSubmatch(name, -1); m != nil {
+		if m := names.SpecRegexp().FindAllStringSubmatch(name, -1); m != nil {
 			segments := m[0]
 			if sliceContainsString(segments, "-") {
 				// iterate through a collection of specs and vocabulary each
@@ -39,7 +39,7 @@ var vocabularyCmd = &cobra.Command{
 				processes := 0
 				err = listSpecs(ctx, client, segments, func(spec *rpc.Spec) {
 					fmt.Println(spec.Name)
-					m := models.SpecRegexp().FindAllStringSubmatch(spec.Name, -1)
+					m := names.SpecRegexp().FindAllStringSubmatch(spec.Name, -1)
 					if m != nil {
 						processes++
 						go func() {

@@ -10,22 +10,13 @@ import (
 	"time"
 
 	rpc "apigov.dev/registry/rpc"
+	"apigov.dev/registry/server/names"
 	"cloud.google.com/go/datastore"
 	ptypes "github.com/golang/protobuf/ptypes"
 )
 
 // VersionEntityName is used to represent versions in the datastore.
 const VersionEntityName = "Version"
-
-// VersionsRegexp returns a regular expression that matches a collection of versions.
-func VersionsRegexp() *regexp.Regexp {
-	return regexp.MustCompile("^projects/" + nameRegex + "/products/" + nameRegex + "/versions$")
-}
-
-// VersionRegexp returns a regular expression that matches a version resource name.
-func VersionRegexp() *regexp.Regexp {
-	return regexp.MustCompile("^projects/" + nameRegex + "/products/" + nameRegex + "/versions/" + nameRegex + "$")
-}
 
 // Version ...
 type Version struct {
@@ -41,8 +32,8 @@ type Version struct {
 
 // ParseParentProduct ...
 func ParseParentProduct(parent string) ([]string, error) {
-	r := regexp.MustCompile("^projects/" + nameRegex +
-		"/products/" + nameRegex +
+	r := regexp.MustCompile("^projects/" + names.NameRegex +
+		"/products/" + names.NameRegex +
 		"$")
 	m := r.FindAllStringSubmatch(parent, -1)
 	if m == nil {
@@ -53,12 +44,12 @@ func ParseParentProduct(parent string) ([]string, error) {
 
 // NewVersionFromParentAndVersionID returns an initialized product for a specified parent and productID.
 func NewVersionFromParentAndVersionID(parent string, versionID string) (*Version, error) {
-	r := regexp.MustCompile("^projects/" + nameRegex + "/products/" + nameRegex + "$")
+	r := regexp.MustCompile("^projects/" + names.NameRegex + "/products/" + names.NameRegex + "$")
 	m := r.FindAllStringSubmatch(parent, -1)
 	if m == nil {
 		return nil, fmt.Errorf("invalid product '%s'", parent)
 	}
-	if err := validateID(versionID); err != nil {
+	if err := names.ValidateID(versionID); err != nil {
 		return nil, err
 	}
 	version := &Version{}
@@ -71,7 +62,7 @@ func NewVersionFromParentAndVersionID(parent string, versionID string) (*Version
 // NewVersionFromResourceName parses resource names and returns an initialized version.
 func NewVersionFromResourceName(name string) (*Version, error) {
 	version := &Version{}
-	m := VersionRegexp().FindAllStringSubmatch(name, -1)
+	m := names.VersionRegexp().FindAllStringSubmatch(name, -1)
 	if m == nil {
 		return nil, errors.New("invalid version name")
 	}

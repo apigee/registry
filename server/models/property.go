@@ -4,42 +4,17 @@ package models
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
 	"time"
 
 	rpc "apigov.dev/registry/rpc"
+	"apigov.dev/registry/server/names"
 	ptypes "github.com/golang/protobuf/ptypes"
 	any "github.com/golang/protobuf/ptypes/any"
 )
 
 // PropertyEntityName is used to represent properties in the datastore.
 const PropertyEntityName = "Property"
-
-// PropertiesRegexp returns a regular expression that matches collection of properties.
-func PropertiesRegexp() *regexp.Regexp {
-	return regexp.MustCompile(
-		"^projects/" + nameRegex +
-			"(/products/" + nameRegex +
-			"(/versions/" + nameRegex +
-			"(/specs/" + nameRegex +
-			")?" +
-			")?" +
-			")?" +
-			"/properties$")
-}
-
-// PropertyRegexp returns a regular expression that matches a property resource name.
-func PropertyRegexp() *regexp.Regexp {
-	return regexp.MustCompile("^projects/" + nameRegex +
-		"(/products/" + nameRegex +
-		"(/versions/" + nameRegex +
-		"(/specs/" + nameRegex +
-		")?" +
-		")?" +
-		")?" +
-		"/properties/" + nameRegex + "$")
-}
 
 // PropertyValueType is an enum representing the types of values stored in properties.
 type PropertyValueType int
@@ -91,13 +66,13 @@ func (property *Property) messageValue() *any.Any {
 // NewPropertyFromParentAndPropertyID returns an initialized property for a specified parent and propertyID.
 func NewPropertyFromParentAndPropertyID(parent string, propertyID string) (*Property, error) {
 	// Return an error if the propertyID is invalid.
-	if err := validateID(propertyID); err != nil {
+	if err := names.ValidateID(propertyID); err != nil {
 		return nil, err
 	}
 	// Match regular expressions to identify the parent of this property.
 	var m [][]string
 	// Is the parent a project?
-	m = ProjectRegexp().FindAllStringSubmatch(parent, -1)
+	m = names.ProjectRegexp().FindAllStringSubmatch(parent, -1)
 	if m != nil {
 		return &Property{
 			ProjectID:  m[0][1],
@@ -106,7 +81,7 @@ func NewPropertyFromParentAndPropertyID(parent string, propertyID string) (*Prop
 		}, nil
 	}
 	// Is the parent a product?
-	m = ProductRegexp().FindAllStringSubmatch(parent, -1)
+	m = names.ProductRegexp().FindAllStringSubmatch(parent, -1)
 	if m != nil {
 		return &Property{
 			ProjectID:  m[0][1],
@@ -116,7 +91,7 @@ func NewPropertyFromParentAndPropertyID(parent string, propertyID string) (*Prop
 		}, nil
 	}
 	// Is the parent a version?
-	m = VersionRegexp().FindAllStringSubmatch(parent, -1)
+	m = names.VersionRegexp().FindAllStringSubmatch(parent, -1)
 	if m != nil {
 		return &Property{
 			ProjectID:  m[0][1],
@@ -127,7 +102,7 @@ func NewPropertyFromParentAndPropertyID(parent string, propertyID string) (*Prop
 		}, nil
 	}
 	// Is the parent a spec?
-	m = SpecRegexp().FindAllStringSubmatch(parent, -1)
+	m = names.SpecRegexp().FindAllStringSubmatch(parent, -1)
 	if m != nil {
 		return &Property{
 			ProjectID:  m[0][1],

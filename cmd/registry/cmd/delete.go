@@ -21,8 +21,8 @@ import (
 	"log"
 
 	"apigov.dev/registry/connection"
-	"apigov.dev/registry/server/models"
 	rpc "apigov.dev/registry/rpc"
+	"apigov.dev/registry/server/names"
 	"github.com/spf13/cobra"
 	"google.golang.org/api/iterator"
 )
@@ -35,11 +35,11 @@ var deleteCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Printf("delete called with %+v\n", args)
 		name := args[0]
-		if m := models.ProductsRegexp().FindAllStringSubmatch(name, -1); m != nil {
+		if m := names.ProductsRegexp().FindAllStringSubmatch(name, -1); m != nil {
 			deleteAllProductsInProject(m[0][1])
-		} else if m := models.PropertiesRegexp().FindAllStringSubmatch(name, -1); m != nil {
+		} else if m := names.PropertiesRegexp().FindAllStringSubmatch(name, -1); m != nil {
 			deleteAllPropertiesInProject(m[0][1])
-		} else if m := models.LabelsRegexp().FindAllStringSubmatch(name, -1); m != nil {
+		} else if m := names.LabelsRegexp().FindAllStringSubmatch(name, -1); m != nil {
 			deleteAllLabelsInProject(m[0][1])
 		}
 	},

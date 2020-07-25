@@ -11,6 +11,7 @@ import (
 	"time"
 
 	rpc "apigov.dev/registry/rpc"
+	"apigov.dev/registry/server/names"
 	ptypes "github.com/golang/protobuf/ptypes"
 	"github.com/google/uuid"
 )
@@ -20,20 +21,6 @@ const SpecEntityName = "Spec"
 
 // SpecRevisionTagEntityName is used to represent tags in the datastore.
 const SpecRevisionTagEntityName = "SpecRevisionTag"
-
-// SpecsRegexp returns a regular expression that matches a collection of specs.
-func SpecsRegexp() *regexp.Regexp {
-	return regexp.MustCompile("^projects/" + nameRegex + "/products/" + nameRegex + "/versions/" + nameRegex + "/specs$")
-}
-
-// SpecRegexp returns a regular expression that matches a spec resource name.
-func SpecRegexp() *regexp.Regexp {
-	return regexp.MustCompile("^projects/" + nameRegex +
-		"/products/" + nameRegex +
-		"/versions/" + nameRegex +
-		"/specs/" + nameRegex +
-		revisionRegex + "$")
-}
 
 // Spec ...
 type Spec struct {
@@ -54,29 +41,16 @@ type Spec struct {
 	Contents    []byte    `datastore:",noindex"` // The contents of the spec.
 }
 
-// ParseParentVersion ...
-func ParseParentVersion(parent string) ([]string, error) {
-	r := regexp.MustCompile("^projects/" + nameRegex +
-		"/products/" + nameRegex +
-		"/versions/" + nameRegex +
-		"$")
-	m := r.FindAllStringSubmatch(parent, -1)
-	if m == nil {
-		return nil, fmt.Errorf("invalid version '%s'", parent)
-	}
-	return m[0], nil
-}
-
 // NewSpecFromParentAndSpecID returns an initialized spec for a specified parent and specID.
 func NewSpecFromParentAndSpecID(parent string, specID string) (*Spec, error) {
-	r := regexp.MustCompile("^projects/" + nameRegex +
-		"/products/" + nameRegex +
-		"/versions/" + nameRegex + "$")
+	r := regexp.MustCompile("^projects/" + names.NameRegex +
+		"/products/" + names.NameRegex +
+		"/versions/" + names.NameRegex + "$")
 	m := r.FindAllStringSubmatch(parent, -1)
 	if m == nil {
 		return nil, fmt.Errorf("invalid parent '%s'", parent)
 	}
-	if err := validateID(specID); err != nil {
+	if err := names.ValidateID(specID); err != nil {
 		return nil, err
 	}
 	spec := &Spec{}
@@ -90,7 +64,7 @@ func NewSpecFromParentAndSpecID(parent string, specID string) (*Spec, error) {
 // NewSpecFromResourceName parses resource names and returns an initialized spec.
 func NewSpecFromResourceName(name string) (*Spec, error) {
 	spec := &Spec{}
-	m := SpecRegexp().FindAllStringSubmatch(name, -1)
+	m := names.SpecRegexp().FindAllStringSubmatch(name, -1)
 	if m == nil {
 		return nil, errors.New("invalid spec name")
 	}

@@ -5,26 +5,16 @@ package models
 import (
 	"context"
 	"fmt"
-	"regexp"
 	"time"
 
 	rpc "apigov.dev/registry/rpc"
+	"apigov.dev/registry/server/names"
 	"cloud.google.com/go/datastore"
 	ptypes "github.com/golang/protobuf/ptypes"
 )
 
 // ProjectEntityName is used to represent projrcts in the datastore.
 const ProjectEntityName = "Project"
-
-// ProjectsRegexp returns a regular expression that matches collection of projects.
-func ProjectsRegexp() *regexp.Regexp {
-	return regexp.MustCompile("^projects$")
-}
-
-// ProjectRegexp returns a regular expression that matches a project resource name.
-func ProjectRegexp() *regexp.Regexp {
-	return regexp.MustCompile("^projects/" + nameRegex + "$")
-}
 
 // Project ...
 type Project struct {
@@ -37,7 +27,7 @@ type Project struct {
 
 // NewProjectFromProjectID returns an initialized project for a specified projectID.
 func NewProjectFromProjectID(projectID string) (*Project, error) {
-	if err := validateID(projectID); err != nil {
+	if err := names.ValidateID(projectID); err != nil {
 		return nil, err
 	}
 	project := &Project{}
@@ -48,7 +38,7 @@ func NewProjectFromProjectID(projectID string) (*Project, error) {
 // NewProjectFromResourceName parses resource names and returns an initialized project.
 func NewProjectFromResourceName(name string) (*Project, error) {
 	project := &Project{}
-	m := ProjectRegexp().FindAllStringSubmatch(name, -1)
+	m := names.ProjectRegexp().FindAllStringSubmatch(name, -1)
 	if m == nil {
 		return nil, fmt.Errorf("invalid project name (%s)", name)
 	}

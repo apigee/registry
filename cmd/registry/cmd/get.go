@@ -7,8 +7,8 @@ import (
 
 	"apigov.dev/registry/connection"
 	"apigov.dev/registry/gapic"
-	"apigov.dev/registry/server/models"
 	rpc "apigov.dev/registry/rpc"
+	"apigov.dev/registry/server/names"
 	metrics "github.com/googleapis/gnostic/metrics"
 	"github.com/spf13/cobra"
 	"google.golang.org/api/iterator"
@@ -38,19 +38,19 @@ var getCmd = &cobra.Command{
 
 		// first look for the main resource types
 
-		if m := models.SpecRegexp().FindAllStringSubmatch(name, -1); m != nil {
+		if m := names.SpecRegexp().FindAllStringSubmatch(name, -1); m != nil {
 			log.Printf(" get a spec")
 
 			_, err = getSpec(ctx, client, m[0], printSpecDetail)
 
-		} else if m := models.ProjectRegexp().FindAllStringSubmatch(name, -1); m != nil {
+		} else if m := names.ProjectRegexp().FindAllStringSubmatch(name, -1); m != nil {
 			// find all matching properties for a project
 			segments := m[0]
 			err = getNamedProperty(ctx, client, segments[1], "", property)
 			if err != nil {
 				log.Fatalf("%s", err.Error())
 			}
-		} else if m := models.SpecRegexp().FindAllStringSubmatch(name, -1); m != nil {
+		} else if m := names.SpecRegexp().FindAllStringSubmatch(name, -1); m != nil {
 			// find all matching properties for matching specs
 			segments := m[0]
 			if sliceContainsString(segments, "-") {

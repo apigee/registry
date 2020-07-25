@@ -9,22 +9,13 @@ import (
 	"time"
 
 	rpc "apigov.dev/registry/rpc"
+	"apigov.dev/registry/server/names"
 	"cloud.google.com/go/datastore"
 	ptypes "github.com/golang/protobuf/ptypes"
 )
 
 // ProductEntityName is used to represent products in the datastore.
 const ProductEntityName = "Product"
-
-// ProductsRegexp returns a regular expression that matches collection of products.
-func ProductsRegexp() *regexp.Regexp {
-	return regexp.MustCompile("^projects/" + nameRegex + "/products$")
-}
-
-// ProductRegexp returns a regular expression that matches a product resource name.
-func ProductRegexp() *regexp.Regexp {
-	return regexp.MustCompile("^projects/" + nameRegex + "/products/" + nameRegex + "$")
-}
 
 // Product ...
 type Product struct {
@@ -38,24 +29,14 @@ type Product struct {
 	RecommendedVersion string    // Recommended API version.
 }
 
-// ParseParentProject ...
-func ParseParentProject(parent string) ([]string, error) {
-	r := regexp.MustCompile("^projects/" + nameRegex + "$")
-	m := r.FindAllStringSubmatch(parent, -1)
-	if m == nil {
-		return nil, fmt.Errorf("invalid project '%s'", parent)
-	}
-	return m[0], nil
-}
-
 // NewProductFromParentAndProductID returns an initialized product for a specified parent and productID.
 func NewProductFromParentAndProductID(parent string, productID string) (*Product, error) {
-	r := regexp.MustCompile("^projects/" + nameRegex + "$")
+	r := regexp.MustCompile("^projects/" + names.NameRegex + "$")
 	m := r.FindAllStringSubmatch(parent, -1)
 	if m == nil {
 		return nil, fmt.Errorf("invalid parent '%s'", parent)
 	}
-	if err := validateID(productID); err != nil {
+	if err := names.ValidateID(productID); err != nil {
 		return nil, err
 	}
 	product := &Product{}
@@ -67,7 +48,7 @@ func NewProductFromParentAndProductID(parent string, productID string) (*Product
 // NewProductFromResourceName parses resource names and returns an initialized product.
 func NewProductFromResourceName(name string) (*Product, error) {
 	product := &Product{}
-	m := ProductRegexp().FindAllStringSubmatch(name, -1)
+	m := names.ProductRegexp().FindAllStringSubmatch(name, -1)
 	if m == nil {
 		return nil, fmt.Errorf("invalid product name (%s)", name)
 	}

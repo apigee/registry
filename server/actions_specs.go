@@ -8,8 +8,9 @@ import (
 	"log"
 	"time"
 
-	"apigov.dev/registry/server/models"
 	rpc "apigov.dev/registry/rpc"
+	"apigov.dev/registry/server/models"
+	"apigov.dev/registry/server/names"
 	"cloud.google.com/go/datastore"
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/api/iterator"
@@ -107,7 +108,7 @@ func (s *RegistryServer) ListSpecs(ctx context.Context, req *rpc.ListSpecsReques
 	if err != nil {
 		return nil, internalError(err)
 	}
-	m, err := models.ParseParentVersion(req.GetParent())
+	m, err := names.ParseParentVersion(req.GetParent())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}

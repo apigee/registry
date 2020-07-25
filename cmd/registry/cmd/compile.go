@@ -11,7 +11,7 @@ import (
 	"apigov.dev/registry/gapic"
 	rpc "apigov.dev/registry/rpc"
 	rpcpb "apigov.dev/registry/rpc"
-	"apigov.dev/registry/server/models"
+	"apigov.dev/registry/server/names"
 	"github.com/googleapis/gnostic/compiler"
 	openapi_v2 "github.com/googleapis/gnostic/openapiv2"
 	openapi_v3 "github.com/googleapis/gnostic/openapiv3"
@@ -34,7 +34,7 @@ var compileCmd = &cobra.Command{
 			log.Fatalf("%s", err.Error())
 		}
 		name := args[0]
-		if m := models.SpecRegexp().FindAllStringSubmatch(name, -1); m != nil {
+		if m := names.SpecRegexp().FindAllStringSubmatch(name, -1); m != nil {
 			err := compileSpec(ctx, client, m[0])
 			if err != nil {
 				log.Printf("%s", err.Error())

@@ -5,8 +5,9 @@ package server
 import (
 	"context"
 
-	"apigov.dev/registry/server/models"
 	rpc "apigov.dev/registry/rpc"
+	"apigov.dev/registry/server/models"
+	"apigov.dev/registry/server/names"
 	"cloud.google.com/go/datastore"
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/api/iterator"
@@ -95,7 +96,7 @@ func (s *RegistryServer) ListVersions(ctx context.Context, req *rpc.ListVersions
 	if err != nil {
 		return nil, internalError(err)
 	}
-	m, err := models.ParseParentProduct(req.GetParent())
+	m, err := names.ParseParentProduct(req.GetParent())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}

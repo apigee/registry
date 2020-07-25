@@ -9,8 +9,8 @@ import (
 
 	"apigov.dev/registry/connection"
 	"apigov.dev/registry/gapic"
-	"apigov.dev/registry/server/models"
 	rpc "apigov.dev/registry/rpc"
+	"apigov.dev/registry/server/names"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
@@ -52,7 +52,7 @@ var exportCmd = &cobra.Command{
 			property = args[1]
 		}
 
-		if m := models.ProjectRegexp().FindAllStringSubmatch(name, -1); m != nil {
+		if m := names.ProjectRegexp().FindAllStringSubmatch(name, -1); m != nil {
 			// find all matching properties for a project
 			segments := m[0]
 			err = ssc.exportNamedProperty(ctx, client, segments[1], "", property)
