@@ -187,6 +187,17 @@ func notFound(err error) bool {
 	return st.Code() == codes.NotFound
 }
 
+func alreadyExists(err error) bool {
+	if err == nil {
+		return false
+	}
+	st, ok := status.FromError(err)
+	if !ok {
+		return false
+	}
+	return st.Code() == codes.AlreadyExists
+}
+
 func handleExportArgumentsForBytes(arguments map[string]interface{}, fileBytes []byte) (handled bool, err error) {
 	// Unpack the discovery document.
 	document, err := discovery.ParseDocument(fileBytes)
@@ -212,6 +223,8 @@ func handleExportArgumentsForBytes(arguments map[string]interface{}, fileBytes [
 				response, err := registryClient.CreateProduct(ctx, request)
 				if err == nil {
 					log.Printf("created %s", response.Name)
+				} else if alreadyExists(err) {
+					log.Printf("already exists %s/products/%s", request.Parent, request.ProductId)
 				} else {
 					log.Printf("failed to create %s/products/%s: %s",
 						request.Parent, request.ProductId, err.Error())
@@ -231,6 +244,8 @@ func handleExportArgumentsForBytes(arguments map[string]interface{}, fileBytes [
 				response, err := registryClient.CreateVersion(ctx, request)
 				if err == nil {
 					log.Printf("created %s", response.Name)
+				} else if alreadyExists(err) {
+					log.Printf("already exists %s/versions/%s", request.Parent, request.VersionId)
 				} else {
 					log.Printf("failed to create %s/versions/%s: %s",
 						request.Parent, request.VersionId, err.Error())
@@ -266,6 +281,8 @@ func handleExportArgumentsForBytes(arguments map[string]interface{}, fileBytes [
 				response, err := registryClient.CreateSpec(ctx, request)
 				if err == nil {
 					log.Printf("created %s", response.Name)
+				} else if alreadyExists(err) {
+					log.Printf("already exists %s/specs/%s", request.Parent, request.SpecId)
 				} else {
 					log.Printf("failed to create %s/specs/%s: %s",
 						request.Parent, request.SpecId, err.Error())
