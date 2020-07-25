@@ -14,27 +14,30 @@ used to back online directories, portals, and workflow managers.
 
 The Registry API is formally described by the Protocol Buffer source files in
 [google/cloud/apigee/registry/v1alpha1](google/cloud/apigee/registry/v1alpha1).
+It closely follows the Google API Design Guidelines at
+[aip.dev](https://aip.dev) and presents a developer experience similar to a
+production Google API.
 
 ## This Implementation
 
-This reference implementation is written in Go. It stores data using the
+This reference implementation is a [gRPC](https://grpc.io) service written in
+Go. It stores data using the
 [Google Cloud Datastore API](https://cloud.google.com/datastore) and can be
 deployed in a container using [Google Cloud Run](https://cloud.google.com/run).
 
-The reference implementation is a [gRPC](https://grpc.io) service that follows
-the Google API Design Guidelines at [aip.dev](https://aip.dev). This gRPC
-service supports [gRPC HTTP/JSON transcoding](https://aip.dev/127), which
-allows it to be automatically published as a JSON REST API using a proxy, and
+The service is annotated to support
+[gRPC HTTP/JSON transcoding](https://aip.dev/127), which allows it to be
+automatically published as a JSON REST API using a proxy. Proxies also enable
 [gRPC web](https://github.com/grpc/grpc-web), which allows gRPC calls to be
-directly made from browser-based applications. Both gRPC HTTP/JSON transcoding
-and gRPC web are enabled with proxies, and a configuration for the
+directly made from browser-based applications. A configuration for the
 [Envoy](https://www.envoyproxy.io/) proxy is included along with scripts to
 build and deploy the service and a proxy in a single container on Google Cloud
 Run.
 
 The reference API is also configured to support
-[generated API clients (GAPICS)](https://googleapis.github.io/gapic-generators/)
-and a Go GAPIC library is generated as part of the build process using
+[generated API clients (GAPICS)](https://googleapis.github.io/gapic-generators/),
+which allow idiomatic API usage from a variety of languages. A Go GAPIC library
+is generated as part of the build process using
 [gapic-generator-go](https://github.com/googleapis/gapic-generator-go). A
 sample Go-based client is in [examples/go/client](examples/go/client).
 [cmd/apg](cmd/apg) contains a command-line interface that is automatically
@@ -42,16 +45,17 @@ generated from the API description using the
 [protoc-gen-go_cli](https://github.com/googleapis/gapic-generator-go/tree/master/cmd/protoc-gen-go_cli)
 tool in [gapic-generator-go](https://github.com/googleapis/gapic-generator-go).
 Along with this automatically-generated CLI, the [cmd/registry](cmd/registry)
-directory contains a hand-written command-line tool that supports additional
-API management tasks.
+directory contains a hand-written command-line tool that uses the Go GAPIC
+library to support additional API management tasks.
 
 A sample application in [apps/disco-registry](apps/disco-registry) shows a
-sample use of the API to build an online catalog of API descriptions obtained
-from the
-[Google API Discovery Service](https://developers.google.com/discovery).
+sample use of the API to build a collection of API descriptions obtained from
+the [Google API Discovery Service](https://developers.google.com/discovery).
 Another sample, [apps/atlas](apps/atlas) uploads a directory of OpenAPI
 specifications from a directory in the same style as
 [github.com/APIs-guru/openapi-directory/APIs](https://github.com/APIs-guru/openapi-directory/tree/master/APIs).
+
+The Registry API server itself is `registry-server`.
 
 ## Build Instructions
 
@@ -81,12 +85,12 @@ the `COMPILE-PROTOS.sh` script for details). These include:
 The reference implementation uses the
 [Google Cloud Datastore API](https://cloud.google.com/datastore). This must be
 enabled for a Google Cloud project and appropriate credentials must be
-available. One way to get credentials is to use
+available to `registry-server`. One way to get credentials is to use
 [Application Default Credentials](https://cloud.google.com/docs/authentication/production).
 To get set up, just run `gcloud auth application-default login` and sign in.
 Then make sure that your project id is set to the project that is enabled to
 use the Google Cloud Datastore API. (Note that you only need to do this when
-you are running the server locally. When the API server is run with Google
+you are running the server locally. When `registry-server` is run with Google
 Cloud Run, credentials are automatically provided by the environment.)
 
 Please note: this project's Datastore usage is equivalent to
@@ -151,7 +155,7 @@ build a container containing the API server. The container is stored in
 When deploying to Cloud Run for the first time, you will be asked a few
 questions, including this one:
 
-`Allow unauthenticated invocations to [registry] (y/N)?`
+`Allow unauthenticated invocations to [registry-backend] (y/N)?`
 
 If you answer "y", you will be able to make calls without authentication. This
 is the easiest way to test the API, but it's not necessary - running
