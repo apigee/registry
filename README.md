@@ -100,7 +100,7 @@ The reference implementation requires indexes in its Datastore instance. To
 create them, use the `gcloud` command in the root of this repository:
 
 ```
-gcloud datastore indexes create index.yaml
+gcloud datastore indexes create server/datastore/index.yaml
 ```
 
 ## Running the API Locally
