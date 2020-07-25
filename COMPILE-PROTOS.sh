@@ -18,9 +18,9 @@ mkdir -p rpc gapic cmd/apg
 ANNOTATIONS="third_party/api-common-protos"
 
 PROTOS=( \
-	proto/registry_models.proto \
-	proto/registry_service.proto \
-	proto/registry_notifications.proto \
+	google/cloud/apigee/registry/v1alpha1/registry_models.proto \
+	google/cloud/apigee/registry/v1alpha1/registry_service.proto \
+	google/cloud/apigee/registry/v1alpha1/registry_notifications.proto \
 )
 
 echo "Running the API linter."
@@ -30,7 +30,7 @@ for p in ${PROTOS[@]}; do
 done
 
 echo "Generating proto support code."
-protoc --proto_path=./proto --proto_path=${ANNOTATIONS} \
+protoc --proto_path=. --proto_path=${ANNOTATIONS} \
 	${PROTOS[*]} \
 	--go_out=plugins=grpc:rpc
 
@@ -39,7 +39,7 @@ mv rpc/apigov.dev/registry/rpc/* rpc
 rm -rf rpc/apigov.dev
 
 echo "Generating GAPIC library."
-protoc --proto_path=./proto --proto_path=${ANNOTATIONS} \
+protoc --proto_path=. --proto_path=${ANNOTATIONS} \
 	${PROTOS[*]} \
 	--go_gapic_out gapic \
 	--go_gapic_opt "go-gapic-package=apigov.dev/registry/gapic;gapic"
@@ -49,7 +49,7 @@ mv gapic/apigov.dev/registry/gapic/* gapic
 rm -rf gapic/apigov.dev
 
 echo "Generating GAPIC-based CLI."
-protoc --proto_path=./proto --proto_path=${ANNOTATIONS} \
+protoc --proto_path=. --proto_path=${ANNOTATIONS} \
 	${PROTOS[*]} \
   	--go_cli_out cmd/apg \
   	--go_cli_opt "root=apg" \
@@ -61,8 +61,8 @@ sed -i -e 's/anypb.Property_MessageValue/rpcpb.Property_MessageValue/g' \
 	cmd/apg/update-property.go
 
 echo "Generating descriptor set for envoy."
-protoc --proto_path=./proto --proto_path=${ANNOTATIONS} \
+protoc --proto_path=. --proto_path=${ANNOTATIONS} \
 	${PROTOS[*]} \
 	--include_imports \
-        --include_source_info \
-        --descriptor_set_out=deployments/envoy/proto.pb
+    --include_source_info \
+    --descriptor_set_out=deployments/envoy/proto.pb

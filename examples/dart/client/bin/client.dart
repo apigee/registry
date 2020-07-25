@@ -18,8 +18,8 @@ import 'dart:io';
 
 import 'package:args/args.dart';
 import 'package:grpc/grpc.dart';
-import 'package:client/generated/registry_service.pb.dart';
-import 'package:client/generated/registry_service.pbgrpc.dart';
+import 'package:client/generated/google/cloud/apigee/registry/v1alpha1/registry_service.pb.dart';
+import 'package:client/generated/google/cloud/apigee/registry/v1alpha1/registry_service.pbgrpc.dart';
 
 Future<Null> main(List<String> args) async {
   // Create a gRPC channel to a local Registry server.

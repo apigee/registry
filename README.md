@@ -12,8 +12,8 @@ generators, test runners, proxies, and API client and server generators. The
 API itself can be seen as a machine-readable enterprise API catalog that can be
 used to back online directories, portals, and workflow managers.
 
-The Registry API is formally described by the files in the [proto](proto)
-directory.
+The Registry API is formally described by the Protocol Buffer source files in
+[google/cloud/apigee/registry/v1alpha1](google/cloud/apigee/registry/v1alpha1).
 
 ## This Implementation
 
@@ -109,9 +109,9 @@ Start the server by running `registry-server`.
 
 `registry-server` provides a gRPC service only. For a transcoded HTTP/JSON
 interface, run the [envoy](https://www.envoyproxy.io) proxy locally using the
-configuration in the [deployments/envoy](deployments/envoy) directory. With
-a local installation of `envoy`, this can be done by running the following
-inside the [deployments/envoy](deployments/envoy) directory.
+configuration in the [deployments/envoy](deployments/envoy) directory. With a
+local installation of `envoy`, this can be done by running the following inside
+the [deployments/envoy](deployments/envoy) directory.
 
 ```
 sudo envoy -c envoy.yaml
@@ -178,5 +178,6 @@ To generate a new token, rerun `source AUTH-CLOUDRUN.sh`.
 ## Proxying a Cloud Run-based Service with Google Cloud Endpoints
 
 For HTTP/JSON transcoding and other API management features, see the
-[deployments/endpoints](deployments/endpoints) directory for instructions and scripts for configuring a
-Google Cloud Endpoints frontend for your Cloud Run-based service.
+[deployments/endpoints](deployments/endpoints) directory for instructions and
+scripts for configuring a Google Cloud Endpoints frontend for your Cloud
+Run-based service.

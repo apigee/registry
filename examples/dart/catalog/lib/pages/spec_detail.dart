@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
-import 'package:catalog/generated/registry_models.pb.dart';
-import '../service/service.dart';
 import 'dart:convert';
 import 'package:archive/archive.dart';
-import 'package:catalog/generated/complexity.pb.dart';
+import 'package:flutter/material.dart';
+import 'package:catalog/generated/google/cloud/apigee/registry/v1alpha1/registry_models.pb.dart';
+import 'package:catalog/generated/third_party/gnostic/metrics/complexity.pb.dart';
+import '../service/service.dart';
 import '../application.dart';
 
 class SpecDetailWidget extends StatefulWidget {

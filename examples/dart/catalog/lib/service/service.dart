@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'grpc_client.dart';
-import 'package:catalog/generated/registry_models.pb.dart';
-import 'package:catalog/generated/registry_service.pb.dart';
-import 'package:catalog/generated/registry_service.pbgrpc.dart';
+import 'package:catalog/generated/google/cloud/apigee/registry/v1alpha1/registry_models.pb.dart';
+import 'package:catalog/generated/google/cloud/apigee/registry/v1alpha1/registry_service.pb.dart';
+import 'package:catalog/generated/google/cloud/apigee/registry/v1alpha1/registry_service.pbgrpc.dart';
 import '../components/alerts.dart';
 
 const int pageSize = 50;

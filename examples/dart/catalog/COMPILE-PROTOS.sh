@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # This is a directroy containing the registry protos.
-export REGISTRY_PROTOS="../../../proto"
+export REGISTRY_PROTOS="google/cloud/apigee/registry/v1alpha1"
 
 # This points to the .proto files distributed with protoc.
 export PROTO_PROTOS="$HOME/local/include"
@@ -12,12 +12,13 @@ export ANNOTATION_PROTOS="../../../third_party/api-common-protos"
 # This is a third_party directory containing message protos used to store API metrics.
 export METRICS_PROTOS="../../../third_party/gnostic/metrics"
 
+mkdir -p lib/generated 
+
 echo "Generating Dart support code."
 protoc \
-	--proto_path=${REGISTRY_PROTOS} \
+	--proto_path=../../.. \
 	--proto_path=${ANNOTATION_PROTOS} \
 	--proto_path=${PROTO_PROTOS} \
-	--proto_path=${METRICS_PROTOS} \
 	${PROTO_PROTOS}/google/protobuf/any.proto \
 	${PROTO_PROTOS}/google/protobuf/timestamp.proto \
 	${PROTO_PROTOS}/google/protobuf/field_mask.proto \

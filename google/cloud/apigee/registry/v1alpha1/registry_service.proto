@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package google.cloud.apigee.registry.v1alpha1;
 
-import "registry_models.proto";
+import "google/cloud/apigee/registry/v1alpha1/registry_models.proto";
 import "google/api/annotations.proto";
 import "google/api/client.proto";
 import "google/api/field_behavior.proto";

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_pagewise/flutter_pagewise.dart';
-import 'package:catalog/generated/registry_models.pb.dart';
+import 'package:catalog/generated/google/cloud/apigee/registry/v1alpha1/registry_models.pb.dart';
 import '../service/service.dart';
 import '../components/drawer.dart';
 import '../helpers/adaptive.dart';
