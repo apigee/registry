@@ -25,7 +25,7 @@ static_resources:
               routes:
               - match: { prefix: "/" }
                 route:
-                  cluster: flamed
+                  cluster: registryd
                   max_grpc_timeout: 0s
               cors:
                 allow_origin: ["*"]
@@ -38,7 +38,7 @@ static_resources:
           - name: envoy.cors
           - name: envoy.router
   clusters:
-  - name: flamed
+  - name: registryd
     connect_timeout: 0.25s
     type: logical_dns
     http2_protocol_options: {}

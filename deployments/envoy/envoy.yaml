@@ -23,7 +23,7 @@ static_resources:
                       routes:
                         # NOTE: by default, matching happens based on the gRPC route, and not on the incoming request path.
                         # Reference: https://www.envoyproxy.io/docs/envoy/latest/configuration/http_filters/grpc_json_transcoder_filter#route-configs-for-transcoded-requests
-                        - match: { prefix: "/google.cloud.apigee.flame.v1alpha1.Flame" }
+                        - match: { prefix: "/google.cloud.apigee.registry.v1alpha1.Registry" }
                           route: { cluster: grpc, timeout: { seconds: 60 } }
                       cors:
                         allow_origin: ["*"]
@@ -35,7 +35,7 @@ static_resources:
                   - name: envoy.grpc_json_transcoder
                     config:
                       proto_descriptor: "proto.pb"
-                      services: ["google.cloud.apigee.flame.v1alpha1.Flame"]
+                      services: ["google.cloud.apigee.registry.v1alpha1.Registry"]
                       print_options:
                         add_whitespace: true
                         always_print_primitive_fields: true
