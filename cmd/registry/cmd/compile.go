@@ -9,9 +9,9 @@ import (
 
 	"apigov.dev/registry/connection"
 	"apigov.dev/registry/gapic"
-	"apigov.dev/registry/models"
 	rpc "apigov.dev/registry/rpc"
 	rpcpb "apigov.dev/registry/rpc"
+	"apigov.dev/registry/server/models"
 	"github.com/googleapis/gnostic/compiler"
 	openapi_v2 "github.com/googleapis/gnostic/openapiv2"
 	openapi_v3 "github.com/googleapis/gnostic/openapiv3"

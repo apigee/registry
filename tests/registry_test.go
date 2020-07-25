@@ -23,7 +23,7 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"apigov.dev/registry/client"
+	"apigov.dev/registry/connection"
 	"apigov.dev/registry/rpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -71,7 +71,7 @@ func hashForBytes(b []byte) string {
 	return fmt.Sprintf("%x", bs)
 }
 
-func listAllSpecs(ctx context.Context, registryClient *client.Client) []*rpc.Spec {
+func listAllSpecs(ctx context.Context, registryClient connection.Client) []*rpc.Spec {
 	specs := make([]*rpc.Spec, 0)
 	req := &rpc.ListSpecsRequest{
 		Parent: "projects/sample/products/-/versions/-",
@@ -88,7 +88,7 @@ func listAllSpecs(ctx context.Context, registryClient *client.Client) []*rpc.Spe
 	return specs
 }
 
-func listAllSpecRevisionIDs(ctx context.Context, registryClient *client.Client) []string {
+func listAllSpecRevisionIDs(ctx context.Context, registryClient connection.Client) []string {
 	revisionIDs := make([]string, 0)
 	req := &rpc.ListSpecRevisionsRequest{
 		Name: "projects/sample/products/petstore/versions/1.0.0/specs/openapi.yaml",
@@ -113,7 +113,7 @@ func TestDemo(t *testing.T) {
 
 	// Create a registry client.
 	ctx := context.Background()
-	registryClient, err := client.NewClient(ctx)
+	registryClient, err := connection.NewClient(ctx)
 	if err != nil {
 		t.Logf("Failed to create client: %+v", err)
 		t.FailNow()

@@ -6,7 +6,7 @@ import (
 	"context"
 	"log"
 
-	"apigov.dev/registry/models"
+	"apigov.dev/registry/server/models"
 	rpc "apigov.dev/registry/rpc"
 	"cloud.google.com/go/datastore"
 	"github.com/golang/protobuf/ptypes/empty"

@@ -11,7 +11,7 @@ import (
 
 	"apigov.dev/registry/connection"
 	"apigov.dev/registry/gapic"
-	"apigov.dev/registry/models"
+	"apigov.dev/registry/server/models"
 	rpc "apigov.dev/registry/rpc"
 	"github.com/golang/protobuf/ptypes/any"
 	"github.com/googleapis/gnostic/compiler"
