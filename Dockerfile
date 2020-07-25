@@ -1,1 +1,1 @@
-container/Dockerfile.envoy
+deployments/container/Dockerfile.envoy

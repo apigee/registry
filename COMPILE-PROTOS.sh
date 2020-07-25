@@ -61,4 +61,4 @@ protoc --proto_path=./proto --proto_path=${ANNOTATIONS} \
 	${PROTOS[*]} \
 	--include_imports \
         --include_source_info \
-        --descriptor_set_out=envoy/proto.pb
+        --descriptor_set_out=deployments/envoy/proto.pb

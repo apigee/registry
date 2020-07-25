@@ -109,9 +109,9 @@ Start the server by running `registry-server`.
 
 `registry-server` provides a gRPC service only. For a transcoded HTTP/JSON
 interface, run the [envoy](https://www.envoyproxy.io) proxy locally using the
-configuration in the [envoy](envoy) directory. With a local installation of
-`envoy`, this can be done by running the following inside the [envoy](envoy)
-directory.
+configuration in the [distributions/envoy](distributions/envoy) directory. With
+a local installation of `envoy`, this can be done by running the following
+inside the [distributions/envoy](distributions/envoy) directory.
 
 ```
 sudo envoy -c envoy.yaml
