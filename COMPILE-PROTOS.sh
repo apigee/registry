@@ -12,7 +12,7 @@ go get -u github.com/googleapis/gapic-generator-go/cmd/protoc-gen-go_cli
 go get -u github.com/googleapis/api-linter/cmd/api-linter
 
 echo "Clearing any previously-generated directories."
-rm -rf rpc gapic cmd/apg
+rm -rf rpc gapic cmd/apg/*.go
 mkdir -p rpc gapic cmd/apg
 
 ANNOTATIONS="third_party/api-common-protos"
@@ -42,7 +42,11 @@ echo "Generating GAPIC library."
 protoc --proto_path=./proto --proto_path=${ANNOTATIONS} \
 	${PROTOS[*]} \
 	--go_gapic_out gapic \
-	--go_gapic_opt "go-gapic-package=.;gapic"
+	--go_gapic_opt "go-gapic-package=apigov.dev/registry/gapic;gapic"
+
+# fix the location of gapic output files
+mv gapic/apigov.dev/registry/gapic/* gapic
+rm -rf gapic/apigov.dev
 
 echo "Generating GAPIC-based CLI."
 protoc --proto_path=./proto --proto_path=${ANNOTATIONS} \

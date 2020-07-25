@@ -8,8 +8,7 @@ all:
 
 test:
 	go clean -testcache
-	# test everything except the gapic generated code
-	go test -v `go list ./... | grep -v gapic`
+	go test -v ./...
 
 clean:
 	rm -rf cmd/apg gapic rpc third_party/api-common-protos third_party/gnostic envoy/proto.pb
