@@ -21,14 +21,12 @@ func NewClient(ctx context.Context) (Client, error) {
 	address := os.Getenv("APG_REGISTRY_ADDRESS")
 	if address != "" {
 		opts = append(opts, option.WithEndpoint(address))
+	} else {
+		return nil, fmt.Errorf("rpc error: APG_REGISTRY_ADDRESS must be set")
 	}
 
 	insecure := os.Getenv("APG_REGISTRY_INSECURE")
 	if insecure != "" {
-		if address == "" {
-			return nil, fmt.Errorf("Missing address to use with insecure connection")
-		}
-
 		conn, err := grpc.Dial(address, grpc.WithInsecure())
 		if err != nil {
 			return nil, err

@@ -59,6 +59,10 @@ Usage:
 	if arguments["--upload"].(bool) {
 		ctx := context.Background()
 		registryClient, err = connection.NewClient(ctx)
+		if err != nil {
+			fmt.Printf("%s\n", err.Error())
+			os.Exit(-1)
+		}
 	}
 
 	// List APIs.

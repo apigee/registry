@@ -38,6 +38,10 @@ func main() {
 
 	ctx := context.Background()
 	registryClient, err = connection.NewClient(ctx)
+	if err != nil {
+		fmt.Printf("%s\n", err.Error())
+		os.Exit(-1)
+	}
 	completions := make(chan int)
 	processes := 0
 
@@ -50,14 +54,20 @@ func main() {
 			if strings.HasSuffix(path, "swagger.yaml") || strings.HasSuffix(path, "swagger.json") {
 				processes++
 				go func() {
-					handleSpec(path, "openapi/v2")
+					err := handleSpec(path, "openapi/v2")
+					if err != nil {
+						fmt.Printf("%s\n", err.Error())
+					}
 					completions <- 1
 				}()
 			}
 			if strings.HasSuffix(path, "openapi.yaml") || strings.HasSuffix(path, "openapi.yaml") {
 				processes++
 				go func() {
-					handleSpec(path, "openapi/v3")
+					err := handleSpec(path, "openapi/v3")
+					if err != nil {
+						fmt.Printf("%s\n", err.Error())
+					}
 					completions <- 1
 				}()
 			}
@@ -81,8 +91,7 @@ func handleSpec(path string, style string) error {
 	product := strings.Join(parts[0:len(parts)-2], "/")
 	fmt.Printf("product:%+v version:%+v spec:%+v \n", product, version, spec)
 	// Upload the spec for the specified product, version, and style
-	uploadSpec(product, version, style, path)
-	return nil
+	return uploadSpec(product, version, style, path)
 }
 
 func uploadSpec(productName, version, style, path string) error {
@@ -106,6 +115,8 @@ func uploadSpec(productName, version, style, path string) error {
 				log.Printf("failed to create %s/products/%s: %s",
 					request.Parent, request.ProductId, err.Error())
 			}
+		} else if err != nil {
+			return err
 		}
 	}
 	// If the API version does not exist, create it.
@@ -125,6 +136,8 @@ func uploadSpec(productName, version, style, path string) error {
 				log.Printf("failed to create %s/versions/%s: %s",
 					request.Parent, request.VersionId, err.Error())
 			}
+		} else if err != nil {
+			return err
 		}
 	}
 	// If the API spec does not exist, create it.
@@ -166,6 +179,8 @@ func uploadSpec(productName, version, style, path string) error {
 				log.Printf("failed to create %s/specs/%s: %s [%s]",
 					request.Parent, request.SpecId, err.Error(), details)
 			}
+		} else if err != nil {
+			return err
 		}
 	}
 	return nil
