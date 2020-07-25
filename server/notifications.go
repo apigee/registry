@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	rpc "apigov.dev/registry/rpc"
+	"apigov.dev/registry/rpc"
 	"cloud.google.com/go/pubsub"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/ptypes"

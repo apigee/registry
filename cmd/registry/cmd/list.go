@@ -7,7 +7,7 @@ import (
 
 	"apigov.dev/registry/connection"
 	"apigov.dev/registry/gapic"
-	rpc "apigov.dev/registry/rpc"
+	"apigov.dev/registry/rpc"
 	"apigov.dev/registry/server/names"
 	"github.com/spf13/cobra"
 	"google.golang.org/api/iterator"

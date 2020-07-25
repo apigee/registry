@@ -21,7 +21,7 @@ import (
 	"log"
 
 	"apigov.dev/registry/connection"
-	rpc "apigov.dev/registry/rpc"
+	"apigov.dev/registry/rpc"
 	"apigov.dev/registry/server/names"
 	"github.com/spf13/cobra"
 	"google.golang.org/api/iterator"

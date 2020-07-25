@@ -5,7 +5,7 @@ package server
 import (
 	"context"
 
-	rpc "apigov.dev/registry/rpc"
+	"apigov.dev/registry/rpc"
 	"apigov.dev/registry/server/models"
 	"apigov.dev/registry/server/names"
 	"cloud.google.com/go/datastore"

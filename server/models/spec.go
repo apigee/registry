@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	rpc "apigov.dev/registry/rpc"
+	"apigov.dev/registry/rpc"
 	"apigov.dev/registry/server/names"
 	ptypes "github.com/golang/protobuf/ptypes"
 	"github.com/google/uuid"

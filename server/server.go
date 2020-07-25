@@ -8,7 +8,7 @@ import (
 	"net"
 	"os"
 
-	rpc "apigov.dev/registry/rpc"
+	"apigov.dev/registry/rpc"
 	"cloud.google.com/go/datastore"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/grpc"
