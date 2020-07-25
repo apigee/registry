@@ -1,4 +1,4 @@
-// Copyright 2017 Google Inc. All Rights Reserved.
+// Copyright 2020 Google LLC. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -105,7 +105,7 @@ func listAllSpecRevisionIDs(ctx context.Context, registryClient connection.Clien
 	return revisionIDs
 }
 
-func TestDemo(t *testing.T) {
+func TestSample(t *testing.T) {
 	var revisionIDs []string      // holds revision ids from queries
 	var specs []*rpc.Spec         // holds specs from queries
 	var originalRevisionID string // revision id of first revision
