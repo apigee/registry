@@ -11,6 +11,7 @@ import (
 
 const filename = "registry_service.proto"
 const version = "v1alpha1"
+const service = "google.cloud.apigee.registry"
 
 func check(e error) {
 	if e != nil {
@@ -31,6 +32,8 @@ type Entity struct {
 
 // Service is a top-level description of a CRUD API service.
 type Service struct {
+	Service  string
+	Version  string
 	Entities []Entity
 }
 
@@ -57,10 +60,15 @@ func main() {
 		"resource_path_for_update": func(entityName, resourceName string) string {
 			return "/" + version + "/{" + strings.ToLower(entityName) + ".name=" + resourceName + "}"
 		},
+		"path_for_service": func(service string) string {
+			return strings.Replace(service, ".", "/", -1)
+		},
 	}).ParseFiles("registry_service.tmpl")
 	check(err)
 
 	service := Service{
+		Service: service,
+		Version: version,
 		Entities: []Entity{
 			{
 				Name:               "Project",
