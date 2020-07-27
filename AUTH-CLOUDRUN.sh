@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Configure an environment to run registry clients with a Cloud Run-based server.
+# Configure an environment to run Registry clients with a Cloud Run-based server.
 #
 # The following assumes you have run `gcloud auth login` and that the current
 # gcloud project is the one with your Cloud Run instance.
