@@ -2,7 +2,7 @@
 
 package google.cloud.apigee.registry.v1alpha1;
 
-import "registry_models.proto";
+import "google/cloud/apigee/registry/v1alpha1/registry_models.proto";
 import "google/api/annotations.proto";
 import "google/api/client.proto";
 import "google/api/field_behavior.proto";
@@ -15,14 +15,25 @@ option java_multiple_files = true;
 option java_outer_classname = "RegistryServiceProto";
 option go_package = "apigov.dev/registry/rpc;rpc";
 
-// The Registry API provides structures and relationships for
-// API Governance and Lifecycle Management.
+// The Registry service allows teams to manage descriptions of APIs.
 service Registry {
   option (google.api.default_host) = "registry.googleapis.com";
+
+  // GetStatus returns the status of the service.
+  rpc GetStatus(protobuf.Empty) returns (Status) {
+    option (google.api.http) = {
+      get : "/v1alpha1/status"
+    };
+  }
 {{range .Entities}}{{template "rpcs" .}}{{end}}
 }
-{{range .Entities}}{{template "messages" .}}{{end}}
-{{end}}
+
+// Response message for GetStatus.
+message Status {
+  // A string describing the status.
+  string message = 1;
+}
+{{range .Entities}}{{template "messages" .}}{{end}}{{end}}
 
 {{define "rpcs"}}
   // List{{.PluralName}} returns matching {{lower_comment .PluralName}}.{{if not .ParentName}}
@@ -76,7 +87,53 @@ service Registry {
     };
     option (google.api.method_signature) = "name";
   }
-{{end}}
+{{if .HasRevisions}}
+  // TagSpecRevision adds a tag to a specified revision of a spec.
+  rpc TagSpecRevision(TagSpecRevisionRequest) returns (Spec) {
+    option (google.api.http) = {
+      post: "/v1alpha1/{name=projects/*/products/*/versions/*/specs/*}:tagRevision"
+      body: "*"
+    };
+  }
+  
+  // ListSpecRevisions lists all revisions of a spec.
+  rpc ListSpecRevisions(ListSpecRevisionsRequest)
+      returns (ListSpecRevisionsResponse) {
+    option (google.api.http) = {
+      get: "/v1alpha1/{name=projects/*/products/*/versions/*/specs/*}:listRevisions"
+    };
+  }
+
+  // ListSpecRevisionTags lists all revision tags defined for a spec.
+  rpc ListSpecRevisionTags(ListSpecRevisionTagsRequest)
+      returns (ListSpecRevisionTagsResponse) {
+    option (google.api.http) = {
+      get: "/v1alpha1/{name=projects/*/products/*/versions/*/specs/*}:listRevisionTags"
+    };
+  }
+  
+  // RollbackSpec sets the current revision to a specified prior revision.
+  // Note that this creates a new revision ID.
+  rpc RollbackSpec(RollbackSpecRequest) returns (Spec) {
+    option (google.api.http) = {
+      post: "/v1alpha1/{name=projects/*/products/*/versions/*/specs/*}:rollback"
+      body: "*"
+    };
+  }
+  
+  // DeleteSpecRevision deletes a revision of a spec.
+  // (-- api-linter: core::0136::http-method=disabled
+  //     aip.dev/not-precedent: Deleting revisions requires the 'delete' method. --)
+  // (-- api-linter: core::0135::http-uri-name=disabled
+  //     aip.dev/not-precedent: The linter is missing the 'name' in the URI. --)
+  rpc DeleteSpecRevision(DeleteSpecRevisionRequest)
+      returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/v1alpha1/{name=projects/*/products/*/versions/*/specs/*}:deleteRevision"
+    };
+    option (google.api.method_signature) = "name";
+  }
+{{end}}{{end}}
 
 {{define "messages"}}
 // Request message for List{{.PluralName}}.{{if not .ParentName}}
@@ -175,5 +232,97 @@ message Delete{{.Name}}Request {
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {type : "registry.googleapis.com/{{.Name}}"}
   ];
+}{{if .HasRevisions}}
+
+// Request message for TagSpecRevision.
+message TagSpecRevisionRequest {
+  // The name of the spec to be tagged, including the revision ID.
+  string name = 1;
+
+  // The tag to apply.
+  // The tag should be at most 40 characters, and match `[a-z][a-z0-9-]{3,39}`.
+  string tag = 2;
 }
+
+// Request message for ListSpecRevisions.
+// (-- api-linter: core::0132::request-parent-required=disabled
+//     aip.dev/not-precedent: Listing revisions does not require a parent. --)
+// (-- api-linter: core::0132::request-unknown-fields=disabled
+//     aip.dev/not-precedent: Listing revisions requires nonstandard fields. --)
+message ListSpecRevisionsRequest {
+  // The name of the spec to list revisions for.
+  string name = 1;
+
+  // The maximum number of revisions to return per page.
+  int32 page_size = 2;
+
+  // The page token, received from a previous ListSpecRevisions call.
+  // Provide this to retrieve the subsequent page.
+  string page_token = 3;
+}
+
+// Response message for ListSpecRevisionsResponse.
+// (-- api-linter: core::0132::response-unknown-fields=disabled
+//     aip.dev/not-precedent: Listing revisions requires nonstandard fields. --)
+message ListSpecRevisionsResponse {
+  // The revisions of the spec.
+  repeated Spec specs = 1;
+
+  // A token that can be sent as `page_token` to retrieve the next page.
+  // If this field is omitted, there are no subsequent pages.
+  string next_page_token = 2;
+}
+
+// Request message for ListSpecRevisionTags.
+// (-- api-linter: core::0132::request-parent-required=disabled
+//     aip.dev/not-precedent: Listing revision tags does not require a parent. --)
+// (-- api-linter: core::0132::request-unknown-fields=disabled
+//     aip.dev/not-precedent: Listing revision tags requires nonstandard fields. --)
+message ListSpecRevisionTagsRequest {
+  // The name of the spec to list revision tags for.
+  string name = 1;
+
+  // The maximum number of revision tags to return per page.
+  int32 page_size = 2;
+
+  // The page token, received from a previous ListSpecRevisionTags call.
+  // Provide this to retrieve the subsequent page.
+  string page_token = 3;
+}
+
+// Response message for ListSpecRevisionTagsResponse.
+// (-- api-linter: core::0132::response-unknown-fields=disabled
+//     aip.dev/not-precedent: Listing revision tags requires nonstandard fields. --)
+message ListSpecRevisionTagsResponse {
+  // The revisions of the spec.
+  repeated SpecRevisionTag tags = 1;
+
+  // A token that can be sent as `page_token` to retrieve the next page.
+  // If this field is omitted, there are no subsequent pages.
+  string next_page_token = 2;
+}
+
+// Request message for RollbackSpec.
+message RollbackSpecRequest {
+  // The spec being rolled back.
+  string name = 1;
+
+  // The revision ID to roll back to.
+  // It must be a revision of the same spec.
+  //
+  //   Example: c7cfa2a8
+  string revision_id = 2;
+}
+
+// Request message for DeleteSpecRevision.
+message DeleteSpecRevisionRequest {
+  // The name of the spec revision to be deleted,
+  // with a revision ID explicitly included.
+  //
+  // Example: projects/sample/products/petstore/versions/1.0.0/specs/openapi.yaml@c7cfa2a8
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type : "registry.googleapis.com/Spec"}
+  ];
+}{{end}}
 {{end}}

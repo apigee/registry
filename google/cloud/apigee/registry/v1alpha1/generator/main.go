@@ -26,6 +26,7 @@ type Entity struct {
 	ResourceName       string
 	ViewEnumName       string
 	ExtraRequestFields string
+	HasRevisions       bool
 }
 
 // Service is a top-level description of a CRUD API service.
@@ -68,6 +69,7 @@ func main() {
 				ResourceName:       "projects/*",
 				ViewEnumName:       "",
 				ExtraRequestFields: "",
+				HasRevisions:       false,
 			},
 			{
 				Name:               "Product",
@@ -76,6 +78,7 @@ func main() {
 				ResourceName:       "projects/*/products/*",
 				ViewEnumName:       "",
 				ExtraRequestFields: "",
+				HasRevisions:       false,
 			},
 			{
 				Name:               "Version",
@@ -84,6 +87,7 @@ func main() {
 				ResourceName:       "projects/*/products/*/versions/*",
 				ViewEnumName:       "",
 				ExtraRequestFields: "",
+				HasRevisions:       false,
 			},
 			{
 				Name:               "Spec",
@@ -92,6 +96,7 @@ func main() {
 				ResourceName:       "projects/*/products/*/versions/*/specs/*",
 				ViewEnumName:       "SpecView",
 				ExtraRequestFields: "",
+				HasRevisions:       true,
 			},
 			{
 				Name:               "Property",
@@ -99,6 +104,7 @@ func main() {
 				ParentName:         "projects/*",
 				ResourceName:       "projects/*/properties/*",
 				ExtraRequestFields: "",
+				HasRevisions:       false,
 			},
 			{
 				Name:               "Label",
@@ -106,6 +112,7 @@ func main() {
 				ParentName:         "projects/*",
 				ResourceName:       "projects/*/labels/*",
 				ExtraRequestFields: "",
+				HasRevisions:       false,
 			},
 		},
 	}
