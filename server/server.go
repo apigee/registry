@@ -5,11 +5,15 @@ package server
 import (
 	"context"
 	"fmt"
+	"log"
 	"net"
+	"net/http"
 	"os"
 
 	"apigov.dev/registry/rpc"
 	"cloud.google.com/go/datastore"
+	"github.com/improbable-eng/grpc-web/go/grpcweb"
+	"github.com/soheilhy/cmux"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -39,7 +43,7 @@ func (s *RegistryServer) getDataStoreClient(ctx context.Context) (*datastore.Cli
 }
 
 // if we had one client per handler, this would close the client.
-func (r *RegistryServer) releaseDataStoreClient(client *datastore.Client) {
+func (s *RegistryServer) releaseDataStoreClient(client *datastore.Client) {
 }
 
 func getProjectID() (string, error) {
@@ -66,14 +70,41 @@ func RunServer(port string) error {
 		return err
 	}
 	// Construct registry server.
-	server := grpc.NewServer()
-	reflection.Register(server)
-	rpc.RegisterRegistryServer(server, &RegistryServer{projectID: projectID})
+	grpcServer := grpc.NewServer()
+	reflection.Register(grpcServer)
+	rpc.RegisterRegistryServer(grpcServer, &RegistryServer{projectID: projectID})
 	// Create a listener and use it to run the server.
 	listener, err := net.Listen("tcp", port)
 	if err != nil {
 		return fmt.Errorf("failed to listen: %v", err)
 	}
 	fmt.Printf("\nServer listening on port %v \n", port)
-	return server.Serve(listener)
+	// Use a cmux to route incoming requests by protocol.
+	m := cmux.New(listener)
+	// Match gRPC requests and serve them in a goroutine.
+	grpcListener := m.Match(cmux.HTTP2())
+	go grpcServer.Serve(grpcListener)
+	// Match HTTP1 requests (including gRPC-Web) and serve them in a goroutine.
+	httpListener := m.Match(cmux.HTTP1Fast())
+	httpServer := &http.Server{
+		Handler: &httpHandler{grpcWebServer: grpcweb.WrapServer(grpcServer)},
+	}
+	go httpServer.Serve(httpListener)
+	// Run the mux server.
+	return m.Serve()
+}
+
+type httpHandler struct {
+	grpcWebServer *grpcweb.WrappedGrpcServer
+}
+
+func (h *httpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// handle gRPC Web requests
+	if h.grpcWebServer.IsGrpcWebRequest(r) {
+		h.grpcWebServer.ServeHTTP(w, r)
+		return
+	}
+	// handle any other requests
+	log.Printf("%+v", r)
+	http.NotFound(w, r)
 }

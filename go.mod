@@ -33,6 +33,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.0.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
+	github.com/improbable-eng/grpc-web v0.12.0
 	github.com/jonboulle/clockwork v0.1.0 // indirect
 	github.com/ktr0731/grpc-web-go-client v0.2.7
 	github.com/magiconair/properties v1.8.1 // indirect
@@ -42,6 +43,7 @@ require (
 	github.com/prometheus/client_golang v0.9.3 // indirect
 	github.com/rogpeppe/fastuuid v0.0.0-20150106093220-6724a57986af // indirect
 	github.com/smartystreets/goconvey v1.6.4 // indirect
+	github.com/soheilhy/cmux v0.1.4
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/viper v1.4.0
 	github.com/subosito/gotenv v1.2.0 // indirect
