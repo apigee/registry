@@ -4,7 +4,6 @@ package models
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"regexp"
 	"time"
@@ -64,7 +63,7 @@ func NewVersionFromResourceName(name string) (*Version, error) {
 	version := &Version{}
 	m := names.VersionRegexp().FindAllStringSubmatch(name, -1)
 	if m == nil {
-		return nil, errors.New("invalid version name")
+		return nil, fmt.Errorf("invalid version name (%s)", name)
 	}
 	version.ProjectID = m[0][1]
 	version.ProductID = m[0][2]

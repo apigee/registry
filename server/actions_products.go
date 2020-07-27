@@ -17,11 +17,11 @@ import (
 
 // CreateProduct handles the corresponding API request.
 func (s *RegistryServer) CreateProduct(ctx context.Context, request *rpc.CreateProductRequest) (*rpc.Product, error) {
-	client, err := s.newDataStoreClient(ctx)
+	client, err := s.getDataStoreClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
 	}
-	defer client.Close()
+	s.releaseDataStoreClient(client)
 	product, err := models.NewProductFromParentAndProductID(request.GetParent(), request.GetProductId())
 	if err != nil {
 		return nil, invalidArgumentError(err)
@@ -45,11 +45,11 @@ func (s *RegistryServer) CreateProduct(ctx context.Context, request *rpc.CreateP
 
 // DeleteProduct handles the corresponding API request.
 func (s *RegistryServer) DeleteProduct(ctx context.Context, request *rpc.DeleteProductRequest) (*empty.Empty, error) {
-	client, err := s.newDataStoreClient(ctx)
+	client, err := s.getDataStoreClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
 	}
-	defer client.Close()
+	s.releaseDataStoreClient(client)
 	// Validate name and create dummy product (we just need the ID fields).
 	product, err := models.NewProductFromResourceName(request.GetName())
 	if err != nil {
@@ -65,11 +65,11 @@ func (s *RegistryServer) DeleteProduct(ctx context.Context, request *rpc.DeleteP
 
 // GetProduct handles the corresponding API request.
 func (s *RegistryServer) GetProduct(ctx context.Context, request *rpc.GetProductRequest) (*rpc.Product, error) {
-	client, err := s.newDataStoreClient(ctx)
+	client, err := s.getDataStoreClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
 	}
-	defer client.Close()
+	s.releaseDataStoreClient(client)
 	product, err := models.NewProductFromResourceName(request.GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
@@ -86,11 +86,11 @@ func (s *RegistryServer) GetProduct(ctx context.Context, request *rpc.GetProduct
 
 // ListProducts handles the corresponding API request.
 func (s *RegistryServer) ListProducts(ctx context.Context, req *rpc.ListProductsRequest) (*rpc.ListProductsResponse, error) {
-	client, err := s.newDataStoreClient(ctx)
+	client, err := s.getDataStoreClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
 	}
-	defer client.Close()
+	s.releaseDataStoreClient(client)
 	q := datastore.NewQuery(models.ProductEntityName)
 	q, err = queryApplyCursor(q, req.GetPageToken())
 	if err != nil {
@@ -153,11 +153,11 @@ func (s *RegistryServer) ListProducts(ctx context.Context, req *rpc.ListProducts
 
 // UpdateProduct handles the corresponding API request.
 func (s *RegistryServer) UpdateProduct(ctx context.Context, request *rpc.UpdateProductRequest) (*rpc.Product, error) {
-	client, err := s.newDataStoreClient(ctx)
+	client, err := s.getDataStoreClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
 	}
-	defer client.Close()
+	s.releaseDataStoreClient(client)
 	product, err := models.NewProductFromResourceName(request.GetProduct().GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)

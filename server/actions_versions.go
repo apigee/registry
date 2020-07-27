@@ -17,11 +17,11 @@ import (
 
 // CreateVersion handles the corresponding API request.
 func (s *RegistryServer) CreateVersion(ctx context.Context, request *rpc.CreateVersionRequest) (*rpc.Version, error) {
-	client, err := s.newDataStoreClient(ctx)
+	client, err := s.getDataStoreClient(ctx)
 	if err != nil {
 		return nil, err
 	}
-	defer client.Close()
+	s.releaseDataStoreClient(client)
 	version, err := models.NewVersionFromParentAndVersionID(request.GetParent(), request.GetVersionId())
 	if err != nil {
 		return nil, err
@@ -45,11 +45,11 @@ func (s *RegistryServer) CreateVersion(ctx context.Context, request *rpc.CreateV
 
 // DeleteVersion handles the corresponding API request.
 func (s *RegistryServer) DeleteVersion(ctx context.Context, request *rpc.DeleteVersionRequest) (*empty.Empty, error) {
-	client, err := s.newDataStoreClient(ctx)
+	client, err := s.getDataStoreClient(ctx)
 	if err != nil {
 		return nil, err
 	}
-	defer client.Close()
+	s.releaseDataStoreClient(client)
 	// Validate name and create dummy version (we just need the ID fields).
 	version, err := models.NewVersionFromResourceName(request.GetName())
 	if err != nil {
@@ -65,11 +65,11 @@ func (s *RegistryServer) DeleteVersion(ctx context.Context, request *rpc.DeleteV
 
 // GetVersion handles the corresponding API request.
 func (s *RegistryServer) GetVersion(ctx context.Context, request *rpc.GetVersionRequest) (*rpc.Version, error) {
-	client, err := s.newDataStoreClient(ctx)
+	client, err := s.getDataStoreClient(ctx)
 	if err != nil {
 		return nil, err
 	}
-	defer client.Close()
+	s.releaseDataStoreClient(client)
 	version, err := models.NewVersionFromResourceName(request.GetName())
 	if err != nil {
 		return nil, err
@@ -86,11 +86,11 @@ func (s *RegistryServer) GetVersion(ctx context.Context, request *rpc.GetVersion
 
 // ListVersions handles the corresponding API request.
 func (s *RegistryServer) ListVersions(ctx context.Context, req *rpc.ListVersionsRequest) (*rpc.ListVersionsResponse, error) {
-	client, err := s.newDataStoreClient(ctx)
+	client, err := s.getDataStoreClient(ctx)
 	if err != nil {
 		return nil, err
 	}
-	defer client.Close()
+	s.releaseDataStoreClient(client)
 	q := datastore.NewQuery(models.VersionEntityName)
 	q, err = queryApplyCursor(q, req.GetPageToken())
 	if err != nil {
@@ -160,11 +160,11 @@ func (s *RegistryServer) ListVersions(ctx context.Context, req *rpc.ListVersions
 
 // UpdateVersion handles the corresponding API request.
 func (s *RegistryServer) UpdateVersion(ctx context.Context, request *rpc.UpdateVersionRequest) (*rpc.Version, error) {
-	client, err := s.newDataStoreClient(ctx)
+	client, err := s.getDataStoreClient(ctx)
 	if err != nil {
 		return nil, err
 	}
-	defer client.Close()
+	s.releaseDataStoreClient(client)
 	version, err := models.NewVersionFromResourceName(request.GetVersion().GetName())
 	if err != nil {
 		return nil, err

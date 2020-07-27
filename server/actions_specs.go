@@ -20,11 +20,11 @@ import (
 
 // CreateSpec handles the corresponding API request.
 func (s *RegistryServer) CreateSpec(ctx context.Context, request *rpc.CreateSpecRequest) (*rpc.Spec, error) {
-	client, err := s.newDataStoreClient(ctx)
+	client, err := s.getDataStoreClient(ctx)
 	if err != nil {
 		return nil, err
 	}
-	defer client.Close()
+	s.releaseDataStoreClient(client)
 	spec, err := models.NewSpecFromParentAndSpecID(request.GetParent(), request.GetSpecId())
 	if err != nil {
 		return nil, err
@@ -58,11 +58,11 @@ func (s *RegistryServer) CreateSpec(ctx context.Context, request *rpc.CreateSpec
 
 // DeleteSpec handles the corresponding API request.
 func (s *RegistryServer) DeleteSpec(ctx context.Context, request *rpc.DeleteSpecRequest) (*empty.Empty, error) {
-	client, err := s.newDataStoreClient(ctx)
+	client, err := s.getDataStoreClient(ctx)
 	if err != nil {
 		return nil, err
 	}
-	defer client.Close()
+	s.releaseDataStoreClient(client)
 	// Validate name and create dummy spec (we just need the ID fields).
 	spec, err := models.NewSpecFromResourceName(request.GetName())
 	if err != nil {
@@ -84,11 +84,11 @@ func (s *RegistryServer) DeleteSpec(ctx context.Context, request *rpc.DeleteSpec
 
 // GetSpec handles the corresponding API request.
 func (s *RegistryServer) GetSpec(ctx context.Context, request *rpc.GetSpecRequest) (*rpc.Spec, error) {
-	client, err := s.newDataStoreClient(ctx)
+	client, err := s.getDataStoreClient(ctx)
 	if err != nil {
 		return nil, err
 	}
-	defer client.Close()
+	s.releaseDataStoreClient(client)
 	spec, userSpecifiedRevision, err := fetchSpec(ctx, client, request.GetName())
 	if err != nil {
 		return nil, err
@@ -98,11 +98,11 @@ func (s *RegistryServer) GetSpec(ctx context.Context, request *rpc.GetSpecReques
 
 // ListSpecs handles the corresponding API request.
 func (s *RegistryServer) ListSpecs(ctx context.Context, req *rpc.ListSpecsRequest) (*rpc.ListSpecsResponse, error) {
-	client, err := s.newDataStoreClient(ctx)
+	client, err := s.getDataStoreClient(ctx)
 	if err != nil {
 		return nil, err
 	}
-	defer client.Close()
+	s.releaseDataStoreClient(client)
 	q := datastore.NewQuery(models.SpecEntityName)
 	q, err = queryApplyCursor(q, req.GetPageToken())
 	if err != nil {
@@ -178,11 +178,11 @@ func (s *RegistryServer) ListSpecs(ctx context.Context, req *rpc.ListSpecsReques
 
 // UpdateSpec handles the corresponding API request.
 func (s *RegistryServer) UpdateSpec(ctx context.Context, request *rpc.UpdateSpecRequest) (*rpc.Spec, error) {
-	client, err := s.newDataStoreClient(ctx)
+	client, err := s.getDataStoreClient(ctx)
 	if err != nil {
 		return nil, err
 	}
-	defer client.Close()
+	s.releaseDataStoreClient(client)
 	spec, userSpecifiedRevision, err := fetchSpec(ctx, client, request.GetSpec().GetName())
 	if err != nil {
 		return nil, err
@@ -219,11 +219,11 @@ func (s *RegistryServer) UpdateSpec(ctx context.Context, request *rpc.UpdateSpec
 
 // ListSpecRevisions handles the corresponding API request.
 func (s *RegistryServer) ListSpecRevisions(ctx context.Context, req *rpc.ListSpecRevisionsRequest) (*rpc.ListSpecRevisionsResponse, error) {
-	client, err := s.newDataStoreClient(ctx)
+	client, err := s.getDataStoreClient(ctx)
 	if err != nil {
 		return nil, err
 	}
-	defer client.Close()
+	s.releaseDataStoreClient(client)
 	targetSpec, err := models.NewSpecFromResourceName(req.GetName())
 	if err != nil {
 		return nil, err
@@ -264,13 +264,13 @@ func (s *RegistryServer) ListSpecRevisions(ctx context.Context, req *rpc.ListSpe
 
 // DeleteSpecRevision handles the corresponding API request.
 func (s *RegistryServer) DeleteSpecRevision(ctx context.Context, request *rpc.DeleteSpecRevisionRequest) (*empty.Empty, error) {
-	client, err := s.newDataStoreClient(ctx)
+	client, err := s.getDataStoreClient(ctx)
 	if err != nil {
 		return nil, err
 	}
+	s.releaseDataStoreClient(client)
 	// Delete the spec revision.
 	// First, get the revision to delete.
-	defer client.Close()
 	spec, _, err := fetchSpec(ctx, client, request.GetName())
 	if err != nil {
 		return nil, err
@@ -295,11 +295,11 @@ func (s *RegistryServer) DeleteSpecRevision(ctx context.Context, request *rpc.De
 
 // TagSpecRevision handles the corresponding API request.
 func (s *RegistryServer) TagSpecRevision(ctx context.Context, request *rpc.TagSpecRevisionRequest) (*rpc.Spec, error) {
-	client, err := s.newDataStoreClient(ctx)
+	client, err := s.getDataStoreClient(ctx)
 	if err != nil {
 		return nil, err
 	}
-	defer client.Close()
+	s.releaseDataStoreClient(client)
 	spec, userSpecifiedRevision, err := fetchSpec(ctx, client, request.GetName())
 	if err != nil {
 		return nil, err
@@ -332,11 +332,11 @@ func (s *RegistryServer) TagSpecRevision(ctx context.Context, request *rpc.TagSp
 
 // ListSpecRevisionTags handles the corresponding API request.
 func (s *RegistryServer) ListSpecRevisionTags(ctx context.Context, req *rpc.ListSpecRevisionTagsRequest) (*rpc.ListSpecRevisionTagsResponse, error) {
-	client, err := s.newDataStoreClient(ctx)
+	client, err := s.getDataStoreClient(ctx)
 	if err != nil {
 		return nil, err
 	}
-	defer client.Close()
+	s.releaseDataStoreClient(client)
 	targetSpec, err := models.NewSpecFromResourceName(req.GetName())
 	if err != nil {
 		return nil, err
@@ -376,11 +376,11 @@ func (s *RegistryServer) ListSpecRevisionTags(ctx context.Context, req *rpc.List
 
 // RollbackSpec handles the corresponding API request.
 func (s *RegistryServer) RollbackSpec(ctx context.Context, request *rpc.RollbackSpecRequest) (*rpc.Spec, error) {
-	client, err := s.newDataStoreClient(ctx)
+	client, err := s.getDataStoreClient(ctx)
 	if err != nil {
 		return nil, err
 	}
-	defer client.Close()
+	s.releaseDataStoreClient(client)
 	specNameWithRevision := request.GetName() + "@" + request.GetRevisionId()
 	spec, userSpecifiedRevision, err := fetchSpec(ctx, client, specNameWithRevision)
 	if err != nil {

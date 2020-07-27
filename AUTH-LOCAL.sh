@@ -17,6 +17,7 @@ export REGISTRY_PROJECT_IDENTIFIER=$(gcloud config list --format 'value(core.pro
 
 # Be sure that the port setting below is correct. 8080 is the default.
 export APG_REGISTRY_ADDRESS=localhost:8080
+export APG_REGISTRY_AUDIENCES=http://localhost:8080
 
 # Local calls don't use TLS.
 export APG_REGISTRY_INSECURE=1

@@ -21,43 +21,59 @@ import (
 type RegistryServer struct {
 	rpc.UnimplementedRegistryServer
 
-	projectID string
+	projectID     string
+	storageClient *datastore.Client
 }
 
-// newDataStoreClient creates a new data storage connection.
-func (s *RegistryServer) newDataStoreClient(ctx context.Context) (*datastore.Client, error) {
+// getDataStoreClient returns a shared data storage connection.
+func (s *RegistryServer) getDataStoreClient(ctx context.Context) (*datastore.Client, error) {
+	if s.storageClient != nil {
+		return s.storageClient, nil
+	}
 	client, err := datastore.NewClient(ctx, s.projectID)
 	if err != nil {
 		return nil, err
 	}
+	s.storageClient = client
 	return client, nil
 }
 
-// RunServer ...
-func RunServer(port string) error {
+// if we had one client per handler, this would close the client.
+func (r *RegistryServer) releaseDataStoreClient(client *datastore.Client) {
+}
+
+func getProjectID() (string, error) {
 	ctx := context.TODO()
 	credentials, err := google.FindDefaultCredentials(ctx)
 	if err != nil {
-		return fmt.Errorf("error: %v", err)
+		return "", fmt.Errorf("error: %v", err)
 	}
 	projectID := credentials.ProjectID
 	if projectID == "" {
 		projectID = os.Getenv("REGISTRY_PROJECT_IDENTIFIER")
 	}
 	if projectID == "" {
-		return fmt.Errorf("unable to determine project ID")
+		return "", fmt.Errorf("unable to determine project ID")
 	}
+	return projectID, nil
+}
 
-	lis, err := net.Listen("tcp", port)
+// RunServer runs the Registry server on a specified port
+func RunServer(port string) error {
+	// Get project ID to use in registry server.
+	projectID, err := getProjectID()
+	if err != nil {
+		return err
+	}
+	// Construct registry server.
+	server := grpc.NewServer()
+	reflection.Register(server)
+	rpc.RegisterRegistryServer(server, &RegistryServer{projectID: projectID})
+	// Create a listener and use it to run the server.
+	listener, err := net.Listen("tcp", port)
 	if err != nil {
 		return fmt.Errorf("failed to listen: %v", err)
 	}
-	s := grpc.NewServer()
-	reflection.Register(s)
 	fmt.Printf("\nServer listening on port %v \n", port)
-	rpc.RegisterRegistryServer(s, &RegistryServer{projectID: projectID})
-	if err := s.Serve(lis); err != nil {
-		return fmt.Errorf("failed to serve: %v", err)
-	}
-	return nil
+	return server.Serve(listener)
 }

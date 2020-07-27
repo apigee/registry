@@ -16,11 +16,11 @@ import (
 
 // CreateProperty handles the corresponding API request.
 func (s *RegistryServer) CreateProperty(ctx context.Context, request *rpc.CreatePropertyRequest) (*rpc.Property, error) {
-	client, err := s.newDataStoreClient(ctx)
+	client, err := s.getDataStoreClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
 	}
-	defer client.Close()
+	s.releaseDataStoreClient(client)
 	property, err := models.NewPropertyFromParentAndPropertyID(request.GetParent(), request.GetPropertyId())
 	if err != nil {
 		return nil, invalidArgumentError(err)
@@ -44,11 +44,11 @@ func (s *RegistryServer) CreateProperty(ctx context.Context, request *rpc.Create
 
 // DeleteProperty handles the corresponding API request.
 func (s *RegistryServer) DeleteProperty(ctx context.Context, request *rpc.DeletePropertyRequest) (*empty.Empty, error) {
-	client, err := s.newDataStoreClient(ctx)
+	client, err := s.getDataStoreClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
 	}
-	defer client.Close()
+	s.releaseDataStoreClient(client)
 	// Validate name and create dummy property (we just need the ID fields).
 	_, err = models.NewPropertyFromResourceName(request.GetName())
 	if err != nil {
@@ -63,11 +63,11 @@ func (s *RegistryServer) DeleteProperty(ctx context.Context, request *rpc.Delete
 
 // GetProperty handles the corresponding API request.
 func (s *RegistryServer) GetProperty(ctx context.Context, request *rpc.GetPropertyRequest) (*rpc.Property, error) {
-	client, err := s.newDataStoreClient(ctx)
+	client, err := s.getDataStoreClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
 	}
-	defer client.Close()
+	s.releaseDataStoreClient(client)
 	property, err := models.NewPropertyFromResourceName(request.GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
@@ -84,11 +84,11 @@ func (s *RegistryServer) GetProperty(ctx context.Context, request *rpc.GetProper
 
 // ListProperties handles the corresponding API request.
 func (s *RegistryServer) ListProperties(ctx context.Context, req *rpc.ListPropertiesRequest) (*rpc.ListPropertiesResponse, error) {
-	client, err := s.newDataStoreClient(ctx)
+	client, err := s.getDataStoreClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
 	}
-	defer client.Close()
+	s.releaseDataStoreClient(client)
 	q := datastore.NewQuery(models.PropertyEntityName)
 	q, err = queryApplyCursor(q, req.GetPageToken())
 	if err != nil {
@@ -175,11 +175,11 @@ func (s *RegistryServer) ListProperties(ctx context.Context, req *rpc.ListProper
 
 // UpdateProperty handles the corresponding API request.
 func (s *RegistryServer) UpdateProperty(ctx context.Context, request *rpc.UpdatePropertyRequest) (*rpc.Property, error) {
-	client, err := s.newDataStoreClient(ctx)
+	client, err := s.getDataStoreClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
 	}
-	defer client.Close()
+	s.releaseDataStoreClient(client)
 	property, err := models.NewPropertyFromResourceName(request.GetProperty().GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
