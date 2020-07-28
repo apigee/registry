@@ -5,8 +5,8 @@ package server
 import (
 	"context"
 
-	"apigov.dev/registry/rpc"
-	"apigov.dev/registry/server/models"
+	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/server/models"
 	"cloud.google.com/go/datastore"
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/api/iterator"

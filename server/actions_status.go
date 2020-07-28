@@ -3,7 +3,7 @@ package server
 import (
 	"context"
 
-	"apigov.dev/registry/rpc"
+	"github.com/apigee/registry/rpc"
 	emptypb "github.com/golang/protobuf/ptypes/empty"
 )
 

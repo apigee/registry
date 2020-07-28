@@ -18,7 +18,7 @@ import (
 	"log"
 	"os"
 
-	"apigov.dev/registry/server"
+	"github.com/apigee/registry/server"
 )
 
 func main() {

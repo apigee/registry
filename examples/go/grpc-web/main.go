@@ -23,7 +23,7 @@ import (
 	"net/http"
 	"os"
 
-	"apigov.dev/registry/rpc"
+	"github.com/apigee/registry/rpc"
 	"github.com/golang/protobuf/proto"
 	statuspb "google.golang.org/genproto/googleapis/rpc/status"
 	"google.golang.org/grpc/status"

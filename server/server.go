@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"os"
 
-	"apigov.dev/registry/rpc"
+	"github.com/apigee/registry/rpc"
 	"cloud.google.com/go/datastore"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/soheilhy/cmux"

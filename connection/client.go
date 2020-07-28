@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"apigov.dev/registry/gapic"
+	"github.com/apigee/registry/gapic"
 	"golang.org/x/oauth2"
 	"google.golang.org/api/option"
 	"google.golang.org/grpc"

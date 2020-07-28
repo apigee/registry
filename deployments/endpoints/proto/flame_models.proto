@@ -7,7 +7,7 @@ import "google/protobuf/timestamp.proto";
 option java_package = "com.google.cloud.apigee.flame.v1alpha1";
 option java_multiple_files = true;
 option java_outer_classname = "FlameModelsProto";
-option go_package = "apigov.dev/flame/rpc;rpc";
+option go_package = "github.com/apigee/registry/rpc;rpc";
 
 // A Product is a top-level description of an API product.
 // Products are produced by producers and are commitments to provide services.

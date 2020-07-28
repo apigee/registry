@@ -13,7 +13,7 @@ import "google/protobuf/field_mask.proto";
 option java_package = "com.google.cloud.apigee.registry.v1alpha1";
 option java_multiple_files = true;
 option java_outer_classname = "RegistryServiceProto";
-option go_package = "apigov.dev/registry/rpc;rpc";
+option go_package = "github.com/apigee/registry/rpc;rpc";
 
 // The Registry service allows teams to manage descriptions of APIs.
 service Registry {

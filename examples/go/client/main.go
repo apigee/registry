@@ -23,7 +23,7 @@ import (
 	"os"
 	"time"
 
-	"apigov.dev/registry/rpc"
+	"github.com/apigee/registry/rpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"

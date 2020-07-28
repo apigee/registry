@@ -35,25 +35,25 @@ protoc --proto_path=. --proto_path=${ANNOTATIONS} \
 	--go_out=plugins=grpc:rpc
 
 # fix the location of proto output files
-mv rpc/apigov.dev/registry/rpc/* rpc
-rm -rf rpc/apigov.dev
+mv rpc/github.com/apigee/registry/rpc/* rpc
+rm -rf rpc/github.com
 
 echo "Generating GAPIC library."
 protoc --proto_path=. --proto_path=${ANNOTATIONS} \
 	${PROTOS[*]} \
 	--go_gapic_out gapic \
-	--go_gapic_opt "go-gapic-package=apigov.dev/registry/gapic;gapic"
+	--go_gapic_opt "go-gapic-package=github.com/apigee/registry/gapic;gapic"
 
 # fix the location of gapic output files
-mv gapic/apigov.dev/registry/gapic/* gapic
-rm -rf gapic/apigov.dev
+mv gapic/github.com/apigee/registry/gapic/* gapic
+rm -rf gapic/github.com
 
 echo "Generating GAPIC-based CLI."
 protoc --proto_path=. --proto_path=${ANNOTATIONS} \
 	${PROTOS[*]} \
   	--go_cli_out cmd/apg \
   	--go_cli_opt "root=apg" \
-  	--go_cli_opt "gapic=apigov.dev/registry/gapic"
+  	--go_cli_opt "gapic=github.com/apigee/registry/gapic"
 
 # fix a problem in a couple of generated CLI files
 sed -i -e 's/anypb.Property_MessageValue/rpcpb.Property_MessageValue/g' \

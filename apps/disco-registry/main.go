@@ -24,8 +24,8 @@ import (
 	"os"
 	"strings"
 
-	"apigov.dev/registry/connection"
-	rpcpb "apigov.dev/registry/rpc"
+	"github.com/apigee/registry/connection"
+	rpcpb "github.com/apigee/registry/rpc"
 	"github.com/docopt/docopt-go"
 	"github.com/golang/protobuf/proto"
 	"github.com/googleapis/gnostic/conversions"

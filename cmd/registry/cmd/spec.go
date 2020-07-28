@@ -8,9 +8,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"apigov.dev/registry/connection"
-	"apigov.dev/registry/gapic"
-	rpcpb "apigov.dev/registry/rpc"
+	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/gapic"
+	rpcpb "github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
 )
 

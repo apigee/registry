@@ -15,7 +15,7 @@ limitations under the License.
 */
 package main
 
-import "apigov.dev/registry/cmd/registry/cmd"
+import "github.com/apigee/registry/cmd/registry/cmd"
 
 func main() {
 	cmd.Execute()

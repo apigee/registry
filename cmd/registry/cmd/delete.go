@@ -20,9 +20,9 @@ import (
 	"fmt"
 	"log"
 
-	"apigov.dev/registry/connection"
-	"apigov.dev/registry/rpc"
-	"apigov.dev/registry/server/names"
+	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/server/names"
 	"github.com/spf13/cobra"
 	"google.golang.org/api/iterator"
 )

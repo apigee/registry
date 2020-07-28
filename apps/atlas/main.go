@@ -11,8 +11,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"apigov.dev/registry/connection"
-	rpcpb "apigov.dev/registry/rpc"
+	"github.com/apigee/registry/connection"
+	rpcpb "github.com/apigee/registry/rpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

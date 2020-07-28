@@ -23,8 +23,8 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"apigov.dev/registry/connection"
-	"apigov.dev/registry/rpc"
+	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/rpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

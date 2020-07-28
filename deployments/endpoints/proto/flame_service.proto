@@ -10,7 +10,7 @@ import "google/protobuf/field_mask.proto";
 option java_package = "com.google.cloud.apigee.flame.v1alpha1";
 option java_multiple_files = true;
 option java_outer_classname = "FlameServiceProto";
-option go_package = "apigov.dev/flame/rpc;rpc";
+option go_package = "github.com/apigee/registry/rpc;rpc";
 
 // The Flame API provides structures and relationships for
 // Full Lifecycle API Management. It enables API platform
