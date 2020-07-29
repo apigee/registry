@@ -22,7 +22,7 @@ import (
 func LabelsRegexp() *regexp.Regexp {
 	return regexp.MustCompile(
 		"^projects/" + NameRegex +
-			"(/products/" + NameRegex +
+			"(/apis/" + NameRegex +
 			"(/versions/" + NameRegex +
 			"(/specs/" + NameRegex +
 			")?" +
@@ -34,7 +34,7 @@ func LabelsRegexp() *regexp.Regexp {
 // LabelRegexp returns a regular expression that matches a Label resource name.
 func LabelRegexp() *regexp.Regexp {
 	return regexp.MustCompile("^projects/" + NameRegex +
-		"(/products/" + NameRegex +
+		"(/apis/" + NameRegex +
 		"(/versions/" + NameRegex +
 		"(/specs/" + NameRegex +
 		")?" +

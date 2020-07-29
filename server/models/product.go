@@ -20,19 +20,19 @@ import (
 	"regexp"
 	"time"
 
+	"cloud.google.com/go/datastore"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
-	"cloud.google.com/go/datastore"
 	ptypes "github.com/golang/protobuf/ptypes"
 )
 
-// ProductEntityName is used to represent products in the datastore.
-const ProductEntityName = "Product"
+// ApiEntityName is used to represent apis in the datastore.
+const ApiEntityName = "Api"
 
-// Product ...
-type Product struct {
+// Api ...
+type Api struct {
 	ProjectID          string    // Uniquely identifies a project.
-	ProductID          string    // Uniquely identifies a product within a project.
+	ApiID              string    // Uniquely identifies a api within a project.
 	DisplayName        string    // A human-friendly name.
 	Description        string    // A detailed description.
 	CreateTime         time.Time // Creation time.
@@ -41,69 +41,69 @@ type Product struct {
 	RecommendedVersion string    // Recommended API version.
 }
 
-// NewProductFromParentAndProductID returns an initialized product for a specified parent and productID.
-func NewProductFromParentAndProductID(parent string, productID string) (*Product, error) {
+// NewApiFromParentAndApiID returns an initialized api for a specified parent and apiID.
+func NewApiFromParentAndApiID(parent string, apiID string) (*Api, error) {
 	r := regexp.MustCompile("^projects/" + names.NameRegex + "$")
 	m := r.FindAllStringSubmatch(parent, -1)
 	if m == nil {
 		return nil, fmt.Errorf("invalid parent '%s'", parent)
 	}
-	if err := names.ValidateID(productID); err != nil {
+	if err := names.ValidateID(apiID); err != nil {
 		return nil, err
 	}
-	product := &Product{}
-	product.ProjectID = m[0][1]
-	product.ProductID = productID
-	return product, nil
+	api := &Api{}
+	api.ProjectID = m[0][1]
+	api.ApiID = apiID
+	return api, nil
 }
 
-// NewProductFromResourceName parses resource names and returns an initialized product.
-func NewProductFromResourceName(name string) (*Product, error) {
-	product := &Product{}
-	m := names.ProductRegexp().FindAllStringSubmatch(name, -1)
+// NewApiFromResourceName parses resource names and returns an initialized api.
+func NewApiFromResourceName(name string) (*Api, error) {
+	api := &Api{}
+	m := names.ApiRegexp().FindAllStringSubmatch(name, -1)
 	if m == nil {
-		return nil, fmt.Errorf("invalid product name (%s)", name)
+		return nil, fmt.Errorf("invalid api name (%s)", name)
 	}
-	product.ProjectID = m[0][1]
-	product.ProductID = m[0][2]
-	return product, nil
+	api.ProjectID = m[0][1]
+	api.ApiID = m[0][2]
+	return api, nil
 }
 
-// ResourceName generates the resource name of a product.
-func (product *Product) ResourceName() string {
-	return fmt.Sprintf("projects/%s/products/%s", product.ProjectID, product.ProductID)
+// ResourceName generates the resource name of a api.
+func (api *Api) ResourceName() string {
+	return fmt.Sprintf("projects/%s/apis/%s", api.ProjectID, api.ApiID)
 }
 
-// Message returns a message representing a product.
-func (product *Product) Message() (message *rpc.Product, err error) {
-	message = &rpc.Product{}
-	message.Name = product.ResourceName()
-	message.DisplayName = product.DisplayName
-	message.Description = product.Description
-	message.CreateTime, err = ptypes.TimestampProto(product.CreateTime)
-	message.UpdateTime, err = ptypes.TimestampProto(product.UpdateTime)
-	message.Availability = product.Availability
-	message.RecommendedVersion = product.RecommendedVersion
+// Message returns a message representing a api.
+func (api *Api) Message() (message *rpc.Api, err error) {
+	message = &rpc.Api{}
+	message.Name = api.ResourceName()
+	message.DisplayName = api.DisplayName
+	message.Description = api.Description
+	message.CreateTime, err = ptypes.TimestampProto(api.CreateTime)
+	message.UpdateTime, err = ptypes.TimestampProto(api.UpdateTime)
+	message.Availability = api.Availability
+	message.RecommendedVersion = api.RecommendedVersion
 	return message, err
 }
 
-// Update modifies a product using the contents of a message.
-func (product *Product) Update(message *rpc.Product) error {
-	product.DisplayName = message.GetDisplayName()
-	product.Description = message.GetDescription()
-	product.Availability = message.GetAvailability()
-	product.RecommendedVersion = message.GetRecommendedVersion()
-	product.UpdateTime = time.Now()
+// Update modifies a api using the contents of a message.
+func (api *Api) Update(message *rpc.Api) error {
+	api.DisplayName = message.GetDisplayName()
+	api.Description = message.GetDescription()
+	api.Availability = message.GetAvailability()
+	api.RecommendedVersion = message.GetRecommendedVersion()
+	api.UpdateTime = time.Now()
 	return nil
 }
 
-// DeleteChildren deletes all the children of a product.
-func (product *Product) DeleteChildren(ctx context.Context, client *datastore.Client) error {
+// DeleteChildren deletes all the children of a api.
+func (api *Api) DeleteChildren(ctx context.Context, client *datastore.Client) error {
 	for _, entityName := range []string{SpecEntityName, VersionEntityName} {
 		q := datastore.NewQuery(entityName)
 		q = q.KeysOnly()
-		q = q.Filter("ProjectID =", product.ProjectID)
-		q = q.Filter("ProductID =", product.ProductID)
+		q = q.Filter("ProjectID =", api.ProjectID)
+		q = q.Filter("ApiID =", api.ApiID)
 		err := DeleteAllMatches(ctx, client, q)
 		if err != nil {
 			return err

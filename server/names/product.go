@@ -19,14 +19,14 @@ import (
 	"regexp"
 )
 
-// ProductsRegexp returns a regular expression that matches collection of products.
-func ProductsRegexp() *regexp.Regexp {
-	return regexp.MustCompile("^projects/" + NameRegex + "/products$")
+// ApisRegexp returns a regular expression that matches collection of apis.
+func ApisRegexp() *regexp.Regexp {
+	return regexp.MustCompile("^projects/" + NameRegex + "/apis$")
 }
 
-// ProductRegexp returns a regular expression that matches a product resource name.
-func ProductRegexp() *regexp.Regexp {
-	return regexp.MustCompile("^projects/" + NameRegex + "/products/" + NameRegex + "$")
+// ApiRegexp returns a regular expression that matches a api resource name.
+func ApiRegexp() *regexp.Regexp {
+	return regexp.MustCompile("^projects/" + NameRegex + "/apis/" + NameRegex + "$")
 }
 
 // ParseParentProject ...

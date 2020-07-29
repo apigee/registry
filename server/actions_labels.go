@@ -18,9 +18,9 @@ import (
 	"context"
 	"log"
 
+	"cloud.google.com/go/datastore"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/models"
-	"cloud.google.com/go/datastore"
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/api/iterator"
 	"google.golang.org/grpc/codes"
@@ -115,8 +115,8 @@ func (s *RegistryServer) ListLabels(ctx context.Context, req *rpc.ListLabelsRequ
 	if p.ProjectID != "-" {
 		q = q.Filter("ProjectID =", p.ProjectID)
 	}
-	if p.ProductID != "-" {
-		q = q.Filter("ProductID =", p.ProductID)
+	if p.ApiID != "-" {
+		q = q.Filter("ApiID =", p.ApiID)
 	}
 	if p.VersionID != "-" {
 		q = q.Filter("VersionID =", p.VersionID)
@@ -127,7 +127,7 @@ func (s *RegistryServer) ListLabels(ctx context.Context, req *rpc.ListLabelsRequ
 	prg, err := createFilterOperator(req.GetFilter(),
 		[]filterArg{
 			{"project_id", filterArgTypeString},
-			{"product_id", filterArgTypeString},
+			{"api_id", filterArgTypeString},
 			{"version_id", filterArgTypeString},
 			{"spec_id", filterArgTypeString},
 			{"label_id", filterArgTypeString},
@@ -147,7 +147,7 @@ func (s *RegistryServer) ListLabels(ctx context.Context, req *rpc.ListLabelsRequ
 		if p.VersionID == "-" && label.VersionID == "" {
 			continue
 		}
-		if p.ProductID == "-" && label.ProductID == "" {
+		if p.ApiID == "-" && label.ApiID == "" {
 			continue
 		}
 		if p.ProjectID == "-" && label.ProjectID == "" {
@@ -156,7 +156,7 @@ func (s *RegistryServer) ListLabels(ctx context.Context, req *rpc.ListLabelsRequ
 		if prg != nil {
 			out, _, err := prg.Eval(map[string]interface{}{
 				"project_id": label.ProjectID,
-				"product_id": label.ProductID,
+				"api_id":     label.ApiID,
 				"version_id": label.VersionID,
 				"spec_id":    label.SpecID,
 				"label_id":   label.LabelID,

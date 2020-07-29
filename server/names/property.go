@@ -22,7 +22,7 @@ import (
 func PropertiesRegexp() *regexp.Regexp {
 	return regexp.MustCompile(
 		"^projects/" + NameRegex +
-			"(/products/" + NameRegex +
+			"(/apis/" + NameRegex +
 			"(/versions/" + NameRegex +
 			"(/specs/" + NameRegex +
 			")?" +
@@ -34,7 +34,7 @@ func PropertiesRegexp() *regexp.Regexp {
 // PropertyRegexp returns a regular expression that matches a property resource name.
 func PropertyRegexp() *regexp.Regexp {
 	return regexp.MustCompile("^projects/" + NameRegex +
-		"(/products/" + NameRegex +
+		"(/apis/" + NameRegex +
 		"(/versions/" + NameRegex +
 		"(/specs/" + NameRegex +
 		")?" +

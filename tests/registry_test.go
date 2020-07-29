@@ -74,7 +74,7 @@ func hashForBytes(b []byte) string {
 func listAllSpecs(ctx context.Context, registryClient connection.Client) []*rpc.Spec {
 	specs := make([]*rpc.Spec, 0)
 	req := &rpc.ListSpecsRequest{
-		Parent: "projects/sample/products/-/versions/-",
+		Parent: "projects/sample/apis/-/versions/-",
 	}
 	it := registryClient.ListSpecs(ctx, req)
 	for {
@@ -91,7 +91,7 @@ func listAllSpecs(ctx context.Context, registryClient connection.Client) []*rpc.
 func listAllSpecRevisionIDs(ctx context.Context, registryClient connection.Client) []string {
 	revisionIDs := make([]string, 0)
 	req := &rpc.ListSpecRevisionsRequest{
-		Name: "projects/sample/products/petstore/versions/1.0.0/specs/openapi.yaml",
+		Name: "projects/sample/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 	}
 	it := registryClient.ListSpecRevisions(ctx, req)
 	for {
@@ -171,19 +171,19 @@ func TestSample(t *testing.T) {
 			t.Errorf("Invalid project name: %s", project.Name)
 		}
 	}
-	// Create the petstore product.
+	// Create the petstore api.
 	{
-		req := &rpc.CreateProductRequest{
-			Parent:    "projects/sample",
-			ProductId: "petstore",
+		req := &rpc.CreateApiRequest{
+			Parent: "projects/sample",
+			ApiId:  "petstore",
 		}
-		_, err := registryClient.CreateProduct(ctx, req)
-		check(t, "error creating product %s", err)
+		_, err := registryClient.CreateApi(ctx, req)
+		check(t, "error creating api %s", err)
 	}
 	// Create the petstore 1.0.0 version.
 	{
 		req := &rpc.CreateVersionRequest{
-			Parent:    "projects/sample/products/petstore",
+			Parent:    "projects/sample/apis/petstore",
 			VersionId: "1.0.0",
 		}
 		_, err := registryClient.CreateVersion(ctx, req)
@@ -194,7 +194,7 @@ func TestSample(t *testing.T) {
 		buf, err := readAndGZipFile("sample/petstore/1.0.0/openapi.yaml@r0")
 		check(t, "error reading spec", err)
 		req := &rpc.CreateSpecRequest{
-			Parent: "projects/sample/products/petstore/versions/1.0.0",
+			Parent: "projects/sample/apis/petstore/versions/1.0.0",
 			SpecId: "openapi.yaml",
 			Spec: &rpc.Spec{
 				Style:    "openapi/v3+gzip",
@@ -214,7 +214,7 @@ func TestSample(t *testing.T) {
 		check(t, "error reading spec", err)
 		req := &rpc.UpdateSpecRequest{
 			Spec: &rpc.Spec{
-				Name:     "projects/sample/products/petstore/versions/1.0.0/specs/openapi.yaml",
+				Name:     "projects/sample/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 				Contents: buf.Bytes(),
 			},
 		}
@@ -232,7 +232,7 @@ func TestSample(t *testing.T) {
 	if len(revisionIDs) > 0 {
 		originalRevisionID = revisionIDs[len(revisionIDs)-1]
 		req := &rpc.GetSpecRequest{
-			Name: "projects/sample/products/petstore/versions/1.0.0/specs/openapi.yaml" + "@" + originalRevisionID,
+			Name: "projects/sample/apis/petstore/versions/1.0.0/specs/openapi.yaml" + "@" + originalRevisionID,
 		}
 		spec, err := registryClient.GetSpec(ctx, req)
 		check(t, "error getting spec %s", err)
@@ -255,12 +255,12 @@ func TestSample(t *testing.T) {
 	// tag a spec revision
 	{
 		req := &rpc.TagSpecRevisionRequest{
-			Name: "projects/sample/products/petstore/versions/1.0.0/specs/openapi.yaml" + "@" + originalRevisionID,
+			Name: "projects/sample/apis/petstore/versions/1.0.0/specs/openapi.yaml" + "@" + originalRevisionID,
 			Tag:  "og",
 		}
 		taggedSpec, err := registryClient.TagSpecRevision(ctx, req)
 		check(t, "error tagging spec", err)
-		if taggedSpec.Name != "projects/sample/products/petstore/versions/1.0.0/specs/openapi.yaml@og" {
+		if taggedSpec.Name != "projects/sample/apis/petstore/versions/1.0.0/specs/openapi.yaml@og" {
 			t.Errorf("Incorrect name of tagged spec: %s", taggedSpec.Name)
 		}
 		if taggedSpec.Hash != originalHash {
@@ -270,12 +270,12 @@ func TestSample(t *testing.T) {
 	// tag the tagged revision
 	{
 		req := &rpc.TagSpecRevisionRequest{
-			Name: "projects/sample/products/petstore/versions/1.0.0/specs/openapi.yaml@og",
+			Name: "projects/sample/apis/petstore/versions/1.0.0/specs/openapi.yaml@og",
 			Tag:  "first",
 		}
 		taggedSpec, err := registryClient.TagSpecRevision(ctx, req)
 		check(t, "error tagging spec", err)
-		if taggedSpec.Name != "projects/sample/products/petstore/versions/1.0.0/specs/openapi.yaml@first" {
+		if taggedSpec.Name != "projects/sample/apis/petstore/versions/1.0.0/specs/openapi.yaml@first" {
 			t.Errorf("Incorrect name of tagged spec: %s", taggedSpec.Name)
 		}
 		if taggedSpec.Hash != originalHash {
@@ -285,7 +285,7 @@ func TestSample(t *testing.T) {
 	// get a spec by its tag
 	{
 		req := &rpc.GetSpecRequest{
-			Name: "projects/sample/products/petstore/versions/1.0.0/specs/openapi.yaml@first",
+			Name: "projects/sample/apis/petstore/versions/1.0.0/specs/openapi.yaml@first",
 		}
 		spec, err := registryClient.GetSpec(ctx, req)
 		check(t, "error getting spec %s", err)
@@ -296,7 +296,7 @@ func TestSample(t *testing.T) {
 	// rollback a spec revision (this creates a new revision that's a copy)
 	{
 		req := &rpc.RollbackSpecRequest{
-			Name:       "projects/sample/products/petstore/versions/1.0.0/specs/openapi.yaml",
+			Name:       "projects/sample/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 			RevisionId: "og",
 		}
 		spec, err := registryClient.RollbackSpec(ctx, req)
@@ -322,7 +322,7 @@ func TestSample(t *testing.T) {
 	// delete a spec revision
 	{
 		req := &rpc.DeleteSpecRevisionRequest{
-			Name: "projects/sample/products/petstore/versions/1.0.0/specs/openapi.yaml@og",
+			Name: "projects/sample/apis/petstore/versions/1.0.0/specs/openapi.yaml@og",
 		}
 		err := registryClient.DeleteSpecRevision(ctx, req)
 		check(t, "error deleting spec revision %s", err)
@@ -344,7 +344,7 @@ func TestSample(t *testing.T) {
 	// delete the spec
 	{
 		req := &rpc.DeleteSpecRequest{
-			Name: "projects/sample/products/petstore/versions/1.0.0/specs/openapi.yaml",
+			Name: "projects/sample/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 		}
 		err := registryClient.DeleteSpec(ctx, req)
 		check(t, "error deleting spec %s", err)

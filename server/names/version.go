@@ -21,18 +21,18 @@ import (
 
 // VersionsRegexp returns a regular expression that matches a collection of versions.
 func VersionsRegexp() *regexp.Regexp {
-	return regexp.MustCompile("^projects/" + NameRegex + "/products/" + NameRegex + "/versions$")
+	return regexp.MustCompile("^projects/" + NameRegex + "/apis/" + NameRegex + "/versions$")
 }
 
 // VersionRegexp returns a regular expression that matches a version resource name.
 func VersionRegexp() *regexp.Regexp {
-	return regexp.MustCompile("^projects/" + NameRegex + "/products/" + NameRegex + "/versions/" + NameRegex + "$")
+	return regexp.MustCompile("^projects/" + NameRegex + "/apis/" + NameRegex + "/versions/" + NameRegex + "$")
 }
 
-// ParseParentProduct ...
-func ParseParentProduct(parent string) ([]string, error) {
+// ParseParentApi ...
+func ParseParentApi(parent string) ([]string, error) {
 	r := regexp.MustCompile("^projects/" + NameRegex +
-		"/products/" + NameRegex +
+		"/apis/" + NameRegex +
 		"$")
 	m := r.FindAllStringSubmatch(parent, -1)
 	if m == nil {

@@ -34,8 +34,8 @@ var deleteCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Printf("delete called with %+v\n", args)
 		name := args[0]
-		if m := names.ProductsRegexp().FindAllStringSubmatch(name, -1); m != nil {
-			deleteAllProductsInProject(m[0][1])
+		if m := names.ApisRegexp().FindAllStringSubmatch(name, -1); m != nil {
+			deleteAllApisInProject(m[0][1])
 		} else if m := names.PropertiesRegexp().FindAllStringSubmatch(name, -1); m != nil {
 			deleteAllPropertiesInProject(m[0][1])
 		} else if m := names.LabelsRegexp().FindAllStringSubmatch(name, -1); m != nil {
@@ -48,35 +48,35 @@ func init() {
 	rootCmd.AddCommand(deleteCmd)
 }
 
-func deleteAllProductsInProject(projectID string) {
+func deleteAllApisInProject(projectID string) {
 	ctx := context.TODO()
 	client, err := connection.NewClient(ctx)
 	if err != nil {
 		log.Fatalf("%s", err.Error())
 	}
-	request := &rpc.ListProductsRequest{
+	request := &rpc.ListApisRequest{
 		Parent: "projects/" + projectID,
 	}
 	log.Printf("%+v", request)
-	it := client.ListProducts(ctx, request)
+	it := client.ListApis(ctx, request)
 	names := make([]string, 0)
 	for {
-		product, err := it.Next()
+		api, err := it.Next()
 		if err == iterator.Done {
 			break
 		} else if err != nil {
 			log.Fatalf("%s", err.Error())
 		}
-		names = append(names, product.Name)
+		names = append(names, api.Name)
 	}
 	log.Printf("%+v", names)
 	count := len(names)
 	completions := make(chan int)
 	for _, name := range names {
 		go func(name string) {
-			request := &rpc.DeleteProductRequest{}
+			request := &rpc.DeleteApiRequest{}
 			request.Name = name
-			err = client.DeleteProduct(ctx, request)
+			err = client.DeleteApi(ctx, request)
 			completions <- 1
 		}(name)
 	}

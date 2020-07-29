@@ -319,7 +319,7 @@ message Delete{{.Name}}RevisionRequest {
   // The name of the {{lower .Name}} revision to be deleted,
   // with a revision ID explicitly included.
   //
-  // Example: projects/sample/products/petstore/versions/1.0.0/{{lower .Name}}s/openapi.yaml@c7cfa2a8
+  // Example: projects/sample/apis/petstore/versions/1.0.0/{{lower .Name}}s/openapi.yaml@c7cfa2a8
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {type : "registry.googleapis.com/{{.Name}}"}

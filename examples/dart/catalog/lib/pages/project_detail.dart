@@ -28,8 +28,8 @@ class ProjectDetailWidget extends StatefulWidget {
       _ProjectDetailWidgetState(this.project);
 }
 
-String routeNameForProjectDetailProducts(Project project) {
-  final name = "/" + project.name.split("/").sublist(1).join("/") + "/products";
+String routeNameForProjectDetailApis(Project project) {
+  final name = "/" + project.name.split("/").sublist(1).join("/") + "/apis";
   print("pushing " + name);
   return name;
 }
@@ -120,7 +120,7 @@ class _ProjectDetailWidgetState extends State<ProjectDetailWidget> {
                             onPressed: () {
                               Navigator.pushNamed(
                                 context,
-                                routeNameForProjectDetailProducts(project),
+                                routeNameForProjectDetailApis(project),
                                 arguments: project,
                               );
                             },

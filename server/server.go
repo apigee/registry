@@ -22,8 +22,8 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/apigee/registry/rpc"
 	"cloud.google.com/go/datastore"
+	"github.com/apigee/registry/rpc"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/soheilhy/cmux"
 	"golang.org/x/oauth2/google"

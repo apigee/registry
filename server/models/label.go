@@ -30,7 +30,7 @@ const LabelEntityName = "Label"
 // Label ...
 type Label struct {
 	ProjectID  string    // Project associated with label (required).
-	ProductID  string    // Product associated with label (if appropriate).
+	ApiID      string    // Api associated with label (if appropriate).
 	VersionID  string    // Version associated with label (if appropriate).
 	SpecID     string    // Spec associated with label (if appropriate).
 	LabelID    string    // Label identifier (required).
@@ -56,12 +56,12 @@ func NewLabelFromParentAndLabelID(parent string, labelID string) (*Label, error)
 			Subject:   parent,
 		}, nil
 	}
-	// Is the parent a product?
-	m = names.ProductRegexp().FindAllStringSubmatch(parent, -1)
+	// Is the parent a api?
+	m = names.ApiRegexp().FindAllStringSubmatch(parent, -1)
 	if m != nil {
 		return &Label{
 			ProjectID: m[0][1],
-			ProductID: m[0][2],
+			ApiID:     m[0][2],
 			LabelID:   labelID,
 			Subject:   parent,
 		}, nil
@@ -71,7 +71,7 @@ func NewLabelFromParentAndLabelID(parent string, labelID string) (*Label, error)
 	if m != nil {
 		return &Label{
 			ProjectID: m[0][1],
-			ProductID: m[0][2],
+			ApiID:     m[0][2],
 			VersionID: m[0][3],
 			LabelID:   labelID,
 			Subject:   parent,
@@ -82,7 +82,7 @@ func NewLabelFromParentAndLabelID(parent string, labelID string) (*Label, error)
 	if m != nil {
 		return &Label{
 			ProjectID: m[0][1],
-			ProductID: m[0][2],
+			ApiID:     m[0][2],
 			VersionID: m[0][3],
 			SpecID:    m[0][4],
 			LabelID:   labelID,
@@ -110,14 +110,14 @@ func NewLabelFromResourceName(name string) (*Label, error) {
 func (label *Label) ResourceName() string {
 	switch {
 	case label.SpecID != "":
-		return fmt.Sprintf("projects/%s/products/%s/versions/%s/specs/%s/labels/%s",
-			label.ProjectID, label.ProductID, label.VersionID, label.SpecID, label.LabelID)
+		return fmt.Sprintf("projects/%s/apis/%s/versions/%s/specs/%s/labels/%s",
+			label.ProjectID, label.ApiID, label.VersionID, label.SpecID, label.LabelID)
 	case label.VersionID != "":
-		return fmt.Sprintf("projects/%s/products/%s/versions/%s/labels/%s",
-			label.ProjectID, label.ProductID, label.VersionID, label.LabelID)
-	case label.ProductID != "":
-		return fmt.Sprintf("projects/%s/products/%s/labels/%s",
-			label.ProjectID, label.ProductID, label.LabelID)
+		return fmt.Sprintf("projects/%s/apis/%s/versions/%s/labels/%s",
+			label.ProjectID, label.ApiID, label.VersionID, label.LabelID)
+	case label.ApiID != "":
+		return fmt.Sprintf("projects/%s/apis/%s/labels/%s",
+			label.ProjectID, label.ApiID, label.LabelID)
 	case label.ProjectID != "":
 		return fmt.Sprintf("projects/%s/labels/%s",
 			label.ProjectID, label.LabelID)

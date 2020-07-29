@@ -17,39 +17,38 @@ import 'package:catalog/generated/google/cloud/apigee/registry/v1alpha1/registry
 import '../service/service.dart';
 import '../application.dart';
 
-class ProductDetailWidget extends StatefulWidget {
-  final Product product;
+class ApiDetailWidget extends StatefulWidget {
+  final Api api;
   final String name;
 
-  ProductDetailWidget(this.product, this.name);
+  ApiDetailWidget(this.api, this.name);
   @override
-  _ProductDetailWidgetState createState() =>
-      _ProductDetailWidgetState(this.product);
+  _ApiDetailWidgetState createState() => _ApiDetailWidgetState(this.api);
 }
 
-String routeNameForProductDetailVersions(Product product) {
-  final name = "/" + product.name.split("/").sublist(1).join("/") + "/versions";
+String routeNameForApiDetailVersions(Api api) {
+  final name = "/" + api.name.split("/").sublist(1).join("/") + "/versions";
   print("pushing " + name);
   return name;
 }
 
-class _ProductDetailWidgetState extends State<ProductDetailWidget> {
-  Product product;
+class _ApiDetailWidgetState extends State<ApiDetailWidget> {
+  Api api;
   List<Property> properties;
 
-  _ProductDetailWidgetState(this.product);
+  _ApiDetailWidgetState(this.api);
 
   @override
   Widget build(BuildContext context) {
-    final productName = "projects" + widget.name;
-    if (product == null) {
-      // we need to fetch the product from the API
-      final productFuture = ProductService.getProduct(productName);
-      productFuture.then((product) {
+    final apiName = "projects" + widget.name;
+    if (api == null) {
+      // we need to fetch the api from the API
+      final apiFuture = ApiService.getApi(apiName);
+      apiFuture.then((api) {
         setState(() {
-          this.product = product;
+          this.api = api;
         });
-        print(product);
+        print(api);
       });
       return Scaffold(
         appBar: AppBar(
@@ -71,15 +70,15 @@ class _ProductDetailWidgetState extends State<ProductDetailWidget> {
         child: Center(
           child: Column(
             children: [
-              Row(children: [productCard(context, product)]),
+              Row(children: [apiCard(context, api)]),
               Row(children: [
-                productInfoCard(context, product),
-                productInfoCard(context, product)
+                apiInfoCard(context, api),
+                apiInfoCard(context, api)
               ]),
               Row(children: [
-                productInfoCard(context, product),
-                productInfoCard(context, product),
-                productInfoCard(context, product)
+                apiInfoCard(context, api),
+                apiInfoCard(context, api),
+                apiInfoCard(context, api)
               ]),
             ],
           ),
@@ -89,7 +88,7 @@ class _ProductDetailWidgetState extends State<ProductDetailWidget> {
   }
 }
 
-Expanded productCard(BuildContext context, Product product) {
+Expanded apiCard(BuildContext context, Api api) {
   return Expanded(
     child: Card(
       child: Column(
@@ -97,9 +96,9 @@ Expanded productCard(BuildContext context, Product product) {
         children: <Widget>[
           ListTile(
             leading: Icon(Icons.album),
-            title: Text(product.displayName,
+            title: Text(api.displayName,
                 style: Theme.of(context).textTheme.headline5),
-            subtitle: Text(product.description),
+            subtitle: Text(api.description),
           ),
           ButtonBar(
             children: <Widget>[
@@ -108,8 +107,8 @@ Expanded productCard(BuildContext context, Product product) {
                 onPressed: () {
                   Navigator.pushNamed(
                     context,
-                    routeNameForProductDetailVersions(product),
-                    arguments: product,
+                    routeNameForApiDetailVersions(api),
+                    arguments: api,
                   );
                 },
               ),
@@ -125,7 +124,7 @@ Expanded productCard(BuildContext context, Product product) {
   );
 }
 
-Expanded productInfoCard(BuildContext context, Product product) {
+Expanded apiInfoCard(BuildContext context, Api api) {
   return Expanded(
     child: Card(
       child: Column(
@@ -135,7 +134,7 @@ Expanded productInfoCard(BuildContext context, Product product) {
             leading: Icon(Icons.album),
             title:
                 Text("More Info", style: Theme.of(context).textTheme.headline6),
-            subtitle: Text("$product"),
+            subtitle: Text("$api"),
           ),
           ButtonBar(
             children: <Widget>[

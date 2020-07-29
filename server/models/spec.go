@@ -38,8 +38,8 @@ const SpecRevisionTagEntityName = "SpecRevisionTag"
 type Spec struct {
 	IsCurrent   bool      // True for the current revision of the spec.
 	ProjectID   string    // Uniquely identifies a project.
-	ProductID   string    // Uniquely identifies a product within a project.
-	VersionID   string    // Uniquely identifies a version within a product.
+	ApiID       string    // Uniquely identifies a api within a project.
+	VersionID   string    // Uniquely identifies a version within a api.
 	SpecID      string    // Uniquely identifies a spec within a version.
 	RevisionID  string    // Uniquely identifies a revision of a spec.
 	Description string    // A detailed description.
@@ -56,7 +56,7 @@ type Spec struct {
 // NewSpecFromParentAndSpecID returns an initialized spec for a specified parent and specID.
 func NewSpecFromParentAndSpecID(parent string, specID string) (*Spec, error) {
 	r := regexp.MustCompile("^projects/" + names.NameRegex +
-		"/products/" + names.NameRegex +
+		"/apis/" + names.NameRegex +
 		"/versions/" + names.NameRegex + "$")
 	m := r.FindAllStringSubmatch(parent, -1)
 	if m == nil {
@@ -67,7 +67,7 @@ func NewSpecFromParentAndSpecID(parent string, specID string) (*Spec, error) {
 	}
 	spec := &Spec{}
 	spec.ProjectID = m[0][1]
-	spec.ProductID = m[0][2]
+	spec.ApiID = m[0][2]
 	spec.VersionID = m[0][3]
 	spec.SpecID = specID
 	return spec, nil
@@ -81,7 +81,7 @@ func NewSpecFromResourceName(name string) (*Spec, error) {
 		return nil, errors.New("invalid spec name")
 	}
 	spec.ProjectID = m[0][1]
-	spec.ProductID = m[0][2]
+	spec.ApiID = m[0][2]
 	spec.VersionID = m[0][3]
 	spec.SpecID = m[0][4]
 	if strings.HasPrefix(m[0][5], "@") {
@@ -103,25 +103,25 @@ func NewSpecFromMessage(message *rpc.Spec) (*Spec, error) {
 
 // ResourceName generates the resource name of a spec.
 func (spec *Spec) ResourceName() string {
-	return fmt.Sprintf("projects/%s/products/%s/versions/%s/specs/%s",
-		spec.ProjectID, spec.ProductID, spec.VersionID, spec.SpecID)
+	return fmt.Sprintf("projects/%s/apis/%s/versions/%s/specs/%s",
+		spec.ProjectID, spec.ApiID, spec.VersionID, spec.SpecID)
 }
 
 // ResourceNameWithRevision generates the resource name of a spec which includes the revision id.
 func (spec *Spec) ResourceNameWithRevision() string {
-	return fmt.Sprintf("projects/%s/products/%s/versions/%s/specs/%s@%s",
-		spec.ProjectID, spec.ProductID, spec.VersionID, spec.SpecID, spec.RevisionID)
+	return fmt.Sprintf("projects/%s/apis/%s/versions/%s/specs/%s@%s",
+		spec.ProjectID, spec.ApiID, spec.VersionID, spec.SpecID, spec.RevisionID)
 }
 
 // ResourceNameWithSpecifiedRevision generates the resource name of a spec which includes the revision id.
 func (spec *Spec) ResourceNameWithSpecifiedRevision(revision string) string {
-	return fmt.Sprintf("projects/%s/products/%s/versions/%s/specs/%s@%s",
-		spec.ProjectID, spec.ProductID, spec.VersionID, spec.SpecID, revision)
+	return fmt.Sprintf("projects/%s/apis/%s/versions/%s/specs/%s@%s",
+		spec.ProjectID, spec.ApiID, spec.VersionID, spec.SpecID, revision)
 }
 
 // ParentResourceName generates the resource name of a spec's parent.
 func (spec *Spec) ParentResourceName() string {
-	return fmt.Sprintf("projects/%s/products/%s/versions/%s", spec.ProjectID, spec.ProductID, spec.VersionID)
+	return fmt.Sprintf("projects/%s/apis/%s/versions/%s", spec.ProjectID, spec.ApiID, spec.VersionID)
 }
 
 // Message returns a message representing a spec.
@@ -210,8 +210,8 @@ func hashForBytes(b []byte) string {
 // SpecRevisionTag ...
 type SpecRevisionTag struct {
 	ProjectID  string    // Uniquely identifies a project.
-	ProductID  string    // Uniquely identifies a product within a project.
-	VersionID  string    // Uniquely identifies a version within a product.
+	ApiID      string    // Uniquely identifies a api within a project.
+	VersionID  string    // Uniquely identifies a version within a api.
 	SpecID     string    // Uniquely identifies a spec within a version.
 	RevisionID string    // Uniquely identifies a revision of a spec.
 	Tag        string    // The tag to use for the revision.
@@ -221,14 +221,14 @@ type SpecRevisionTag struct {
 
 // ResourceNameWithTag generates a resource name which includes the tag.
 func (tag *SpecRevisionTag) ResourceNameWithTag() string {
-	return fmt.Sprintf("projects/%s/products/%s/versions/%s/specs/%s@%s",
-		tag.ProjectID, tag.ProductID, tag.VersionID, tag.SpecID, tag.Tag)
+	return fmt.Sprintf("projects/%s/apis/%s/versions/%s/specs/%s@%s",
+		tag.ProjectID, tag.ApiID, tag.VersionID, tag.SpecID, tag.Tag)
 }
 
 // ResourceNameWithRevision generates a resource name which includes the revision id.
 func (tag *SpecRevisionTag) ResourceNameWithRevision() string {
-	return fmt.Sprintf("projects/%s/products/%s/versions/%s/specs/%s@%s",
-		tag.ProjectID, tag.ProductID, tag.VersionID, tag.SpecID, tag.RevisionID)
+	return fmt.Sprintf("projects/%s/apis/%s/versions/%s/specs/%s@%s",
+		tag.ProjectID, tag.ApiID, tag.VersionID, tag.SpecID, tag.RevisionID)
 }
 
 // Message returns a message representing a spec.

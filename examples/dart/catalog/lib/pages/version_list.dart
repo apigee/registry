@@ -20,14 +20,14 @@ import '../application.dart';
 
 class VersionListScreen extends StatelessWidget {
   final String title;
-  final String productID;
-  VersionListScreen({Key key, this.title, this.productID}) : super(key: key);
+  final String apiID;
+  VersionListScreen({Key key, this.title, this.apiID}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    VersionService.productID = productID; // HACK
+    VersionService.apiID = apiID; // HACK
 
-    print("setting project ID to " + productID);
+    print("setting project ID to " + apiID);
     return Scaffold(
       appBar: AppBar(
         title: Text(applicationName),
@@ -42,8 +42,8 @@ class VersionListScreen extends StatelessWidget {
   }
 }
 
-String routeNameForVersionDetail(Version product) {
-  final name = "/" + product.name.split("/").sublist(1).join("/");
+String routeNameForVersionDetail(Version api) {
+  final name = "/" + api.name.split("/").sublist(1).join("/");
   print("pushing " + name);
   return name;
 }

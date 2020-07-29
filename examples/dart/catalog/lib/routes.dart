@@ -19,8 +19,8 @@ import 'helpers/extensions.dart';
 
 import 'pages/project_list.dart';
 import 'pages/project_detail.dart';
-import 'pages/product_list.dart';
-import 'pages/product_detail.dart';
+import 'pages/api_list.dart';
+import 'pages/api_detail.dart';
 import 'pages/version_list.dart';
 import 'pages/version_detail.dart';
 import 'pages/spec_list.dart';
@@ -52,7 +52,7 @@ MaterialPageRoute generateRoute(RouteSettings settings) {
   // handle regex patterns next, watch for possible ordering sensitivities
   final specDetail = RegExp(r"^/" +
       nameRegex +
-      r"/products/" +
+      r"/apis/" +
       nameRegex +
       r"/versions/" +
       nameRegex +
@@ -64,7 +64,7 @@ MaterialPageRoute generateRoute(RouteSettings settings) {
   }
   final specList = RegExp(r"^/" +
       nameRegex +
-      r"/products/" +
+      r"/apis/" +
       nameRegex +
       r"/versions/" +
       nameRegex +
@@ -76,7 +76,7 @@ MaterialPageRoute generateRoute(RouteSettings settings) {
   }
   final versionDetail = RegExp(r"^/" +
       nameRegex +
-      r"/products/" +
+      r"/apis/" +
       nameRegex +
       r"/versions/" +
       nameRegex +
@@ -84,21 +84,20 @@ MaterialPageRoute generateRoute(RouteSettings settings) {
   if (versionDetail.hasMatch(settings.name)) {
     return versionPage(settings);
   }
-  final versionList = RegExp(
-      r"^/" + nameRegex + r"/products/" + nameRegex + r"/versions" + r"$");
+  final versionList =
+      RegExp(r"^/" + nameRegex + r"/apis/" + nameRegex + r"/versions" + r"$");
   if (versionList.hasMatch(settings.name)) {
     print("version list page matched");
     return versionsPage(settings);
   }
 
-  final productDetail =
-      RegExp(r"^/" + nameRegex + r"/products/" + nameRegex + r"$");
-  if (productDetail.hasMatch(settings.name)) {
-    return productPage(settings);
+  final apiDetail = RegExp(r"^/" + nameRegex + r"/apis/" + nameRegex + r"$");
+  if (apiDetail.hasMatch(settings.name)) {
+    return apiPage(settings);
   }
-  final productList = RegExp(r"^/" + nameRegex + r"/products" + r"$");
-  if (productList.hasMatch(settings.name)) {
-    return productsPage(settings);
+  final apiList = RegExp(r"^/" + nameRegex + r"/apis" + r"$");
+  if (apiList.hasMatch(settings.name)) {
+    return apisPage(settings);
   }
   final project = RegExp(r"^/" + nameRegex + r"$");
   if (project.hasMatch(settings.name)) {
@@ -156,21 +155,21 @@ MaterialPageRoute projectPage(RouteSettings settings) {
       });
 }
 
-MaterialPageRoute productsPage(RouteSettings settings) {
+MaterialPageRoute apisPage(RouteSettings settings) {
   return MaterialPageRoute(
     settings: settings,
     builder: (context) {
       final projectID = settings.name.split("/")[1];
-      return ProductListScreen(title: 'Products', projectID: projectID);
+      return ApiListScreen(title: 'Apis', projectID: projectID);
     },
   );
 }
 
-MaterialPageRoute productPage(RouteSettings settings) {
+MaterialPageRoute apiPage(RouteSettings settings) {
   return MaterialPageRoute(
       settings: settings,
       builder: (context) {
-        return ProductDetailWidget(settings.arguments, settings.name);
+        return ApiDetailWidget(settings.arguments, settings.name);
       });
 }
 
@@ -178,9 +177,9 @@ MaterialPageRoute versionsPage(RouteSettings settings) {
   return MaterialPageRoute(
     settings: settings,
     builder: (context) {
-      final productID = settings.name.allButLast("/");
-      print("productID = $productID");
-      return VersionListScreen(title: 'Versions', productID: productID);
+      final apiID = settings.name.allButLast("/");
+      print("apiID = $apiID");
+      return VersionListScreen(title: 'Versions', apiID: apiID);
     },
   );
 }

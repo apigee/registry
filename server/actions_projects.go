@@ -17,9 +17,9 @@ package server
 import (
 	"context"
 
+	"cloud.google.com/go/datastore"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/models"
-	"cloud.google.com/go/datastore"
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/api/iterator"
 	"google.golang.org/grpc/codes"

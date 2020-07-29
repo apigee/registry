@@ -164,7 +164,7 @@ and other tools will authenticate with your user ID.
 
 Now you can call the API with your generated CLI.
 
-`apg registry list-products --parent projects/demo --page_size 10`
+`apg registry list-apis --parent projects/demo --page_size 10`
 
 Note here that `demo` is an arbitrary project ID for use within your Registry
 API calls only. It is unrelated to the Google Cloud project ID that you use for

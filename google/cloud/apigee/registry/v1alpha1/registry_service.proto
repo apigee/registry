@@ -76,45 +76,45 @@ service Registry {
     option (google.api.method_signature) = "name";
   }
 
-  // ListProducts returns matching products.
-  rpc ListProducts(ListProductsRequest) returns (ListProductsResponse) {
+  // ListApis returns matching apis.
+  rpc ListApis(ListApisRequest) returns (ListApisResponse) {
     option (google.api.http) = {
-      get : "/v1alpha1/{parent=projects/*}/products"
+      get : "/v1alpha1/{parent=projects/*}/apis"
     };
     option (google.api.method_signature) = "parent";
   }
 
-  // GetProduct returns a specified product.
-  rpc GetProduct(GetProductRequest) returns (Product) {
+  // GetApi returns a specified api.
+  rpc GetApi(GetApiRequest) returns (Api) {
     option (google.api.http) = {
-      get : "/v1alpha1/{name=projects/*/products/*}"
+      get : "/v1alpha1/{name=projects/*/apis/*}"
     };
     option (google.api.method_signature) = "name";
   }
 
-  // CreateProduct creates a specified product.
-  rpc CreateProduct(CreateProductRequest) returns (Product) {
+  // CreateApi creates a specified api.
+  rpc CreateApi(CreateApiRequest) returns (Api) {
     option (google.api.http) = {
-      post : "/v1alpha1/{parent=projects/*}/products"
-      body : "product"
+      post : "/v1alpha1/{parent=projects/*}/apis"
+      body : "api"
     };
-    option (google.api.method_signature) = "parent,product,product_id";
+    option (google.api.method_signature) = "parent,api,api_id";
   }
 
-  // UpdateProduct can be used to modify a specified product.
-  rpc UpdateProduct(UpdateProductRequest) returns (Product) {
+  // UpdateApi can be used to modify a specified api.
+  rpc UpdateApi(UpdateApiRequest) returns (Api) {
     option (google.api.http) = {
-      patch : "/v1alpha1/{product.name=projects/*/products/*}"
-      body : "product"
+      patch : "/v1alpha1/{api.name=projects/*/apis/*}"
+      body : "api"
     };
-    option (google.api.method_signature) = "product,update_mask";
+    option (google.api.method_signature) = "api,update_mask";
   }
 
-  // DeleteProduct removes a specified product and all of the resources that it
+  // DeleteApi removes a specified api and all of the resources that it
   // owns.
-  rpc DeleteProduct(DeleteProductRequest) returns (google.protobuf.Empty) {
+  rpc DeleteApi(DeleteApiRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      delete : "/v1alpha1/{name=projects/*/products/*}"
+      delete : "/v1alpha1/{name=projects/*/apis/*}"
     };
     option (google.api.method_signature) = "name";
   }
@@ -122,7 +122,7 @@ service Registry {
   // ListVersions returns matching versions.
   rpc ListVersions(ListVersionsRequest) returns (ListVersionsResponse) {
     option (google.api.http) = {
-      get : "/v1alpha1/{parent=projects/*/products/*}/versions"
+      get : "/v1alpha1/{parent=projects/*/apis/*}/versions"
     };
     option (google.api.method_signature) = "parent";
   }
@@ -130,7 +130,7 @@ service Registry {
   // GetVersion returns a specified version.
   rpc GetVersion(GetVersionRequest) returns (Version) {
     option (google.api.http) = {
-      get : "/v1alpha1/{name=projects/*/products/*/versions/*}"
+      get : "/v1alpha1/{name=projects/*/apis/*/versions/*}"
     };
     option (google.api.method_signature) = "name";
   }
@@ -138,7 +138,7 @@ service Registry {
   // CreateVersion creates a specified version.
   rpc CreateVersion(CreateVersionRequest) returns (Version) {
     option (google.api.http) = {
-      post : "/v1alpha1/{parent=projects/*/products/*}/versions"
+      post : "/v1alpha1/{parent=projects/*/apis/*}/versions"
       body : "version"
     };
     option (google.api.method_signature) = "parent,version,version_id";
@@ -147,7 +147,7 @@ service Registry {
   // UpdateVersion can be used to modify a specified version.
   rpc UpdateVersion(UpdateVersionRequest) returns (Version) {
     option (google.api.http) = {
-      patch : "/v1alpha1/{version.name=projects/*/products/*/versions/*}"
+      patch : "/v1alpha1/{version.name=projects/*/apis/*/versions/*}"
       body : "version"
     };
     option (google.api.method_signature) = "version,update_mask";
@@ -157,7 +157,7 @@ service Registry {
   // owns.
   rpc DeleteVersion(DeleteVersionRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      delete : "/v1alpha1/{name=projects/*/products/*/versions/*}"
+      delete : "/v1alpha1/{name=projects/*/apis/*/versions/*}"
     };
     option (google.api.method_signature) = "name";
   }
@@ -165,7 +165,7 @@ service Registry {
   // ListSpecs returns matching specs.
   rpc ListSpecs(ListSpecsRequest) returns (ListSpecsResponse) {
     option (google.api.http) = {
-      get : "/v1alpha1/{parent=projects/*/products/*/versions/*}/specs"
+      get : "/v1alpha1/{parent=projects/*/apis/*/versions/*}/specs"
     };
     option (google.api.method_signature) = "parent";
   }
@@ -173,7 +173,7 @@ service Registry {
   // GetSpec returns a specified spec.
   rpc GetSpec(GetSpecRequest) returns (Spec) {
     option (google.api.http) = {
-      get : "/v1alpha1/{name=projects/*/products/*/versions/*/specs/*}"
+      get : "/v1alpha1/{name=projects/*/apis/*/versions/*/specs/*}"
     };
     option (google.api.method_signature) = "name";
   }
@@ -181,7 +181,7 @@ service Registry {
   // CreateSpec creates a specified spec.
   rpc CreateSpec(CreateSpecRequest) returns (Spec) {
     option (google.api.http) = {
-      post : "/v1alpha1/{parent=projects/*/products/*/versions/*}/specs"
+      post : "/v1alpha1/{parent=projects/*/apis/*/versions/*}/specs"
       body : "spec"
     };
     option (google.api.method_signature) = "parent,spec,spec_id";
@@ -190,7 +190,7 @@ service Registry {
   // UpdateSpec can be used to modify a specified spec.
   rpc UpdateSpec(UpdateSpecRequest) returns (Spec) {
     option (google.api.http) = {
-      patch : "/v1alpha1/{spec.name=projects/*/products/*/versions/*/specs/*}"
+      patch : "/v1alpha1/{spec.name=projects/*/apis/*/versions/*/specs/*}"
       body : "spec"
     };
     option (google.api.method_signature) = "spec,update_mask";
@@ -200,7 +200,7 @@ service Registry {
   // owns.
   rpc DeleteSpec(DeleteSpecRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      delete : "/v1alpha1/{name=projects/*/products/*/versions/*/specs/*}"
+      delete : "/v1alpha1/{name=projects/*/apis/*/versions/*/specs/*}"
     };
     option (google.api.method_signature) = "name";
   }
@@ -208,7 +208,7 @@ service Registry {
   // TagSpecRevision adds a tag to a specified revision of a spec.
   rpc TagSpecRevision(TagSpecRevisionRequest) returns (Spec) {
     option (google.api.http) = {
-      post: "/v1alpha1/{name=projects/*/products/*/versions/*/specs/*}:tagRevision"
+      post: "/v1alpha1/{name=projects/*/apis/*/versions/*/specs/*}:tagRevision"
       body: "*"
     };
   }
@@ -217,7 +217,7 @@ service Registry {
   rpc ListSpecRevisions(ListSpecRevisionsRequest)
       returns (ListSpecRevisionsResponse) {
     option (google.api.http) = {
-      get: "/v1alpha1/{name=projects/*/products/*/versions/*/specs/*}:listRevisions"
+      get: "/v1alpha1/{name=projects/*/apis/*/versions/*/specs/*}:listRevisions"
     };
   }
 
@@ -225,7 +225,7 @@ service Registry {
   rpc ListSpecRevisionTags(ListSpecRevisionTagsRequest)
       returns (ListSpecRevisionTagsResponse) {
     option (google.api.http) = {
-      get: "/v1alpha1/{name=projects/*/products/*/versions/*/specs/*}:listRevisionTags"
+      get: "/v1alpha1/{name=projects/*/apis/*/versions/*/specs/*}:listRevisionTags"
     };
   }
   
@@ -233,7 +233,7 @@ service Registry {
   // Note that this creates a new revision ID.
   rpc RollbackSpec(RollbackSpecRequest) returns (Spec) {
     option (google.api.http) = {
-      post: "/v1alpha1/{name=projects/*/products/*/versions/*/specs/*}:rollback"
+      post: "/v1alpha1/{name=projects/*/apis/*/versions/*/specs/*}:rollback"
       body: "*"
     };
   }
@@ -246,7 +246,7 @@ service Registry {
   rpc DeleteSpecRevision(DeleteSpecRevisionRequest)
       returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      delete: "/v1alpha1/{name=projects/*/products/*/versions/*/specs/*}:deleteRevision"
+      delete: "/v1alpha1/{name=projects/*/apis/*/versions/*/specs/*}:deleteRevision"
     };
     option (google.api.method_signature) = "name";
   }
@@ -424,24 +424,24 @@ message DeleteProjectRequest {
   ];
 }
 
-// Request message for ListProducts.
-message ListProductsRequest {
-  // The parent, which owns this collection of products.
+// Request message for ListApis.
+message ListApisRequest {
+  // The parent, which owns this collection of apis.
   // Format: projects/*
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {child_type: "registry.googleapis.com/Product"}
+    (google.api.resource_reference) = {child_type: "registry.googleapis.com/Api"}
   ];
-  // The maximum number of products to return.
+  // The maximum number of apis to return.
   // The service may return fewer than this value.
   // If unspecified, at most 50 values will be returned.
   // The maximum is 1000; values above 1000 will be coerced to 1000.
   int32 page_size = 2;
 
-  // A page token, received from a previous `ListProducts` call.
+  // A page token, received from a previous `ListApis` call.
   // Provide this to retrieve the subsequent page.
   //
-  // When paginating, all other parameters provided to `ListProducts` must match
+  // When paginating, all other parameters provided to `ListApis` must match
   // the call that provided the page token.
   string page_token = 3;
 
@@ -449,72 +449,72 @@ message ListProductsRequest {
   string filter = 4;
 }
 
-// Response message for ListProducts.
-message ListProductsResponse {
-  // The products from the specified publisher.
-  repeated Product products = 1;
+// Response message for ListApis.
+message ListApisResponse {
+  // The apis from the specified publisher.
+  repeated Api apis = 1;
 
   // A token, which can be sent as `page_token` to retrieve the next page.
   // If this field is omitted, there are no subsequent pages.
   string next_page_token = 2;
 }
 
-// Request message for GetProduct.
-message GetProductRequest {
-  // The name of the product to retrieve.
-  // Format: projects/*/products/*
+// Request message for GetApi.
+message GetApiRequest {
+  // The name of the api to retrieve.
+  // Format: projects/*/apis/*
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
-      type: "registry.googleapis.com/Product"
+      type: "registry.googleapis.com/Api"
     }
   ];
 }
 
-// Request message for CreateProduct.
-message CreateProductRequest {
-  // The parent, which owns this collection of products.
+// Request message for CreateApi.
+message CreateApiRequest {
+  // The parent, which owns this collection of apis.
   // Format: projects/*
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {child_type: "registry.googleapis.com/Product"}
+    (google.api.resource_reference) = {child_type: "registry.googleapis.com/Api"}
   ];
-  // The product to create.
-  Product product = 2 [ (google.api.field_behavior) = REQUIRED ];
-  // The ID to use for the product, which will become the final component of
-  // the product's resource name.
+  // The api to create.
+  Api api = 2 [ (google.api.field_behavior) = REQUIRED ];
+  // The ID to use for the api, which will become the final component of
+  // the api's resource name.
   //
   // This value should be 4-63 characters, and valid characters
   // are /[a-z][0-9]-/.
-  string product_id = 3;
+  string api_id = 3;
 }
 
-// Request message for UpdateProduct.
-message UpdateProductRequest {
-  // The product to update.
+// Request message for UpdateApi.
+message UpdateApiRequest {
+  // The api to update.
   //
-  // The `name` field is used to identify the product to update.
-  // Format: projects/*/products/*
-  Product product = 1 [ (google.api.field_behavior) = REQUIRED ];
+  // The `name` field is used to identify the api to update.
+  // Format: projects/*/apis/*
+  Api api = 1 [ (google.api.field_behavior) = REQUIRED ];
 
   // The list of fields to be updated.
   google.protobuf.FieldMask update_mask = 2;
 }
 
-// Request message for DeleteProduct.
-message DeleteProductRequest {
-  // The name of the product to delete.
-  // Format: projects/*/products/*
+// Request message for DeleteApi.
+message DeleteApiRequest {
+  // The name of the api to delete.
+  // Format: projects/*/apis/*
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type : "registry.googleapis.com/Product"}
+    (google.api.resource_reference) = {type : "registry.googleapis.com/Api"}
   ];
 }
 
 // Request message for ListVersions.
 message ListVersionsRequest {
   // The parent, which owns this collection of versions.
-  // Format: projects/*/products/*
+  // Format: projects/*/apis/*
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {child_type: "registry.googleapis.com/Version"}
@@ -549,7 +549,7 @@ message ListVersionsResponse {
 // Request message for GetVersion.
 message GetVersionRequest {
   // The name of the version to retrieve.
-  // Format: projects/*/products/*/versions/*
+  // Format: projects/*/apis/*/versions/*
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
@@ -561,7 +561,7 @@ message GetVersionRequest {
 // Request message for CreateVersion.
 message CreateVersionRequest {
   // The parent, which owns this collection of versions.
-  // Format: projects/*/products/*
+  // Format: projects/*/apis/*
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {child_type: "registry.googleapis.com/Version"}
@@ -581,7 +581,7 @@ message UpdateVersionRequest {
   // The version to update.
   //
   // The `name` field is used to identify the version to update.
-  // Format: projects/*/products/*/versions/*
+  // Format: projects/*/apis/*/versions/*
   Version version = 1 [ (google.api.field_behavior) = REQUIRED ];
 
   // The list of fields to be updated.
@@ -591,7 +591,7 @@ message UpdateVersionRequest {
 // Request message for DeleteVersion.
 message DeleteVersionRequest {
   // The name of the version to delete.
-  // Format: projects/*/products/*/versions/*
+  // Format: projects/*/apis/*/versions/*
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {type : "registry.googleapis.com/Version"}
@@ -601,7 +601,7 @@ message DeleteVersionRequest {
 // Request message for ListSpecs.
 message ListSpecsRequest {
   // The parent, which owns this collection of specs.
-  // Format: projects/*/products/*/versions/*
+  // Format: projects/*/apis/*/versions/*
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {child_type: "registry.googleapis.com/Spec"}
@@ -639,7 +639,7 @@ message ListSpecsResponse {
 // Request message for GetSpec.
 message GetSpecRequest {
   // The name of the spec to retrieve.
-  // Format: projects/*/products/*/versions/*/specs/*
+  // Format: projects/*/apis/*/versions/*/specs/*
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
@@ -654,7 +654,7 @@ message GetSpecRequest {
 // Request message for CreateSpec.
 message CreateSpecRequest {
   // The parent, which owns this collection of specs.
-  // Format: projects/*/products/*/versions/*
+  // Format: projects/*/apis/*/versions/*
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {child_type: "registry.googleapis.com/Spec"}
@@ -674,7 +674,7 @@ message UpdateSpecRequest {
   // The spec to update.
   //
   // The `name` field is used to identify the spec to update.
-  // Format: projects/*/products/*/versions/*/specs/*
+  // Format: projects/*/apis/*/versions/*/specs/*
   Spec spec = 1 [ (google.api.field_behavior) = REQUIRED ];
 
   // The list of fields to be updated.
@@ -684,7 +684,7 @@ message UpdateSpecRequest {
 // Request message for DeleteSpec.
 message DeleteSpecRequest {
   // The name of the spec to delete.
-  // Format: projects/*/products/*/versions/*/specs/*
+  // Format: projects/*/apis/*/versions/*/specs/*
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {type : "registry.googleapis.com/Spec"}
@@ -776,7 +776,7 @@ message DeleteSpecRevisionRequest {
   // The name of the spec revision to be deleted,
   // with a revision ID explicitly included.
   //
-  // Example: projects/sample/products/petstore/versions/1.0.0/specs/openapi.yaml@c7cfa2a8
+  // Example: projects/sample/apis/petstore/versions/1.0.0/specs/openapi.yaml@c7cfa2a8
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {type : "registry.googleapis.com/Spec"}

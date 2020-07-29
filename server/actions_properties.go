@@ -17,9 +17,9 @@ package server
 import (
 	"context"
 
+	"cloud.google.com/go/datastore"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/models"
-	"cloud.google.com/go/datastore"
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/api/iterator"
 	"google.golang.org/grpc/codes"
@@ -113,8 +113,8 @@ func (s *RegistryServer) ListProperties(ctx context.Context, req *rpc.ListProper
 	if p.ProjectID != "-" {
 		q = q.Filter("ProjectID =", p.ProjectID)
 	}
-	if p.ProductID != "-" {
-		q = q.Filter("ProductID =", p.ProductID)
+	if p.ApiID != "-" {
+		q = q.Filter("ApiID =", p.ApiID)
 	}
 	if p.VersionID != "-" {
 		q = q.Filter("VersionID =", p.VersionID)
@@ -125,7 +125,7 @@ func (s *RegistryServer) ListProperties(ctx context.Context, req *rpc.ListProper
 	prg, err := createFilterOperator(req.GetFilter(),
 		[]filterArg{
 			{"project_id", filterArgTypeString},
-			{"product_id", filterArgTypeString},
+			{"api_id", filterArgTypeString},
 			{"version_id", filterArgTypeString},
 			{"spec_id", filterArgTypeString},
 			{"property_id", filterArgTypeString},
@@ -145,7 +145,7 @@ func (s *RegistryServer) ListProperties(ctx context.Context, req *rpc.ListProper
 		if p.VersionID == "-" && property.VersionID == "" {
 			continue
 		}
-		if p.ProductID == "-" && property.ProductID == "" {
+		if p.ApiID == "-" && property.ApiID == "" {
 			continue
 		}
 		if p.ProjectID == "-" && property.ProjectID == "" {
@@ -154,7 +154,7 @@ func (s *RegistryServer) ListProperties(ctx context.Context, req *rpc.ListProper
 		if prg != nil {
 			out, _, err := prg.Eval(map[string]interface{}{
 				"project_id":  property.ProjectID,
-				"product_id":  property.ProductID,
+				"api_id":      property.ApiID,
 				"version_id":  property.VersionID,
 				"spec_id":     property.SpecID,
 				"property_id": property.PropertyID,

@@ -113,34 +113,34 @@ func handleSpec(path string, style string) error {
 	parts := strings.Split(name, "/")
 	spec := parts[len(parts)-1]
 	version := parts[len(parts)-2]
-	product := strings.Join(parts[0:len(parts)-2], "/")
-	fmt.Printf("product:%+v version:%+v spec:%+v \n", product, version, spec)
-	// Upload the spec for the specified product, version, and style
-	return uploadSpec(product, version, style, path)
+	api := strings.Join(parts[0:len(parts)-2], "/")
+	fmt.Printf("api:%+v version:%+v spec:%+v \n", api, version, spec)
+	// Upload the spec for the specified api, version, and style
+	return uploadSpec(api, version, style, path)
 }
 
-func uploadSpec(productName, version, style, path string) error {
+func uploadSpec(apiName, version, style, path string) error {
 	ctx := context.TODO()
-	product := strings.Replace(productName, "/", "-", -1)
-	// If the API product does not exist, create it.
+	api := strings.Replace(apiName, "/", "-", -1)
+	// If the API does not exist, create it.
 	{
-		request := &rpcpb.GetProductRequest{}
-		request.Name = "projects/" + project + "/products/" + product
-		_, err := registryClient.GetProduct(ctx, request)
+		request := &rpcpb.GetApiRequest{}
+		request.Name = "projects/" + project + "/apis/" + api
+		_, err := registryClient.GetApi(ctx, request)
 		if notFound(err) {
-			request := &rpcpb.CreateProductRequest{}
+			request := &rpcpb.CreateApiRequest{}
 			request.Parent = "projects/" + project
-			request.ProductId = product
-			request.Product = &rpcpb.Product{}
-			request.Product.DisplayName = productName
-			response, err := registryClient.CreateProduct(ctx, request)
+			request.ApiId = api
+			request.Api = &rpcpb.Api{}
+			request.Api.DisplayName = apiName
+			response, err := registryClient.CreateApi(ctx, request)
 			if err == nil {
 				log.Printf("created %s", response.Name)
 			} else if alreadyExists(err) {
-				log.Printf("already exists %s/products/%s", request.Parent, request.ProductId)
+				log.Printf("already exists %s/apis/%s", request.Parent, request.ApiId)
 			} else {
-				log.Printf("failed to create %s/products/%s: %s",
-					request.Parent, request.ProductId, err.Error())
+				log.Printf("failed to create %s/apis/%s: %s",
+					request.Parent, request.ApiId, err.Error())
 			}
 		} else if err != nil {
 			return err
@@ -149,11 +149,11 @@ func uploadSpec(productName, version, style, path string) error {
 	// If the API version does not exist, create it.
 	{
 		request := &rpcpb.GetVersionRequest{}
-		request.Name = "projects/" + project + "/products/" + product + "/versions/" + version
+		request.Name = "projects/" + project + "/apis/" + api + "/versions/" + version
 		_, err := registryClient.GetVersion(ctx, request)
 		if notFound(err) {
 			request := &rpcpb.CreateVersionRequest{}
-			request.Parent = "projects/" + project + "/products/" + product
+			request.Parent = "projects/" + project + "/apis/" + api
 			request.VersionId = version
 			request.Version = &rpcpb.Version{}
 			response, err := registryClient.CreateVersion(ctx, request)
@@ -174,7 +174,7 @@ func uploadSpec(productName, version, style, path string) error {
 		filename := filepath.Base(path)
 
 		request := &rpcpb.GetSpecRequest{}
-		request.Name = "projects/" + project + "/products/" + product +
+		request.Name = "projects/" + project + "/apis/" + api +
 			"/versions/" + version +
 			"/specs/" + filename
 		_, err := registryClient.GetSpec(ctx, request)
@@ -193,7 +193,7 @@ func uploadSpec(productName, version, style, path string) error {
 			}
 
 			request := &rpcpb.CreateSpecRequest{}
-			request.Parent = "projects/" + project + "/products/" + product +
+			request.Parent = "projects/" + project + "/apis/" + api +
 				"/versions/" + version
 			request.SpecId = filename
 			request.Spec = &rpcpb.Spec{}

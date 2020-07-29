@@ -49,7 +49,7 @@ const (
 // Property ...
 type Property struct {
 	ProjectID   string            // Project associated with property (required).
-	ProductID   string            // Product associated with property (if appropriate).
+	ApiID       string            // Api associated with property (if appropriate).
 	VersionID   string            // Version associated with property (if appropriate).
 	SpecID      string            // Spec associated with property (if appropriate).
 	PropertyID  string            // Property identifier (required).
@@ -92,12 +92,12 @@ func NewPropertyFromParentAndPropertyID(parent string, propertyID string) (*Prop
 			Subject:    parent,
 		}, nil
 	}
-	// Is the parent a product?
-	m = names.ProductRegexp().FindAllStringSubmatch(parent, -1)
+	// Is the parent a api?
+	m = names.ApiRegexp().FindAllStringSubmatch(parent, -1)
 	if m != nil {
 		return &Property{
 			ProjectID:  m[0][1],
-			ProductID:  m[0][2],
+			ApiID:      m[0][2],
 			PropertyID: propertyID,
 			Subject:    parent,
 		}, nil
@@ -107,7 +107,7 @@ func NewPropertyFromParentAndPropertyID(parent string, propertyID string) (*Prop
 	if m != nil {
 		return &Property{
 			ProjectID:  m[0][1],
-			ProductID:  m[0][2],
+			ApiID:      m[0][2],
 			VersionID:  m[0][3],
 			PropertyID: propertyID,
 			Subject:    parent,
@@ -118,7 +118,7 @@ func NewPropertyFromParentAndPropertyID(parent string, propertyID string) (*Prop
 	if m != nil {
 		return &Property{
 			ProjectID:  m[0][1],
-			ProductID:  m[0][2],
+			ApiID:      m[0][2],
 			VersionID:  m[0][3],
 			SpecID:     m[0][4],
 			PropertyID: propertyID,
@@ -146,14 +146,14 @@ func NewPropertyFromResourceName(name string) (*Property, error) {
 func (property *Property) ResourceName() string {
 	switch {
 	case property.SpecID != "":
-		return fmt.Sprintf("projects/%s/products/%s/versions/%s/specs/%s/properties/%s",
-			property.ProjectID, property.ProductID, property.VersionID, property.SpecID, property.PropertyID)
+		return fmt.Sprintf("projects/%s/apis/%s/versions/%s/specs/%s/properties/%s",
+			property.ProjectID, property.ApiID, property.VersionID, property.SpecID, property.PropertyID)
 	case property.VersionID != "":
-		return fmt.Sprintf("projects/%s/products/%s/versions/%s/properties/%s",
-			property.ProjectID, property.ProductID, property.VersionID, property.PropertyID)
-	case property.ProductID != "":
-		return fmt.Sprintf("projects/%s/products/%s/properties/%s",
-			property.ProjectID, property.ProductID, property.PropertyID)
+		return fmt.Sprintf("projects/%s/apis/%s/versions/%s/properties/%s",
+			property.ProjectID, property.ApiID, property.VersionID, property.PropertyID)
+	case property.ApiID != "":
+		return fmt.Sprintf("projects/%s/apis/%s/properties/%s",
+			property.ProjectID, property.ApiID, property.PropertyID)
 	case property.ProjectID != "":
 		return fmt.Sprintf("projects/%s/properties/%s",
 			property.ProjectID, property.PropertyID)

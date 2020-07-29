@@ -9,9 +9,9 @@ option java_multiple_files = true;
 option java_outer_classname = "FlameModelsProto";
 option go_package = "github.com/apigee/registry/rpc;rpc";
 
-// A Product is a top-level description of an API product.
-// Products are produced by producers and are commitments to provide services.
-message Product {
+// An Api is a top-level description of an API.
+// Apis are produced by producers and are commitments to provide services.
+message Api {
   // Resource name.
   string name = 1;
 
@@ -37,7 +37,7 @@ message Product {
   string recommended_version = 7;
 }
 
-// A Version describes a particular version of an API product.
+// A Version describes a particular version of an API.
 // Versions are what consumers actually use.
 message Version {
   // Resource name.
@@ -62,7 +62,7 @@ message Version {
   string state = 6;
 }
 
-// A Spec describes a version of an API product in a structured way.
+// A Spec describes a version of an API in a structured way.
 // Specs provide formal descriptions that consumers can use to use a version.
 // When specs consist of multiple files, each is a separate spec resource with
 // its own name and a common value for the format property.

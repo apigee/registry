@@ -19,8 +19,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/apigee/registry/rpc"
 	"cloud.google.com/go/pubsub"
+	"github.com/apigee/registry/rpc"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/ptypes"
 	"google.golang.org/grpc/codes"

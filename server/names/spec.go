@@ -21,13 +21,13 @@ import (
 
 // SpecsRegexp returns a regular expression that matches a collection of specs.
 func SpecsRegexp() *regexp.Regexp {
-	return regexp.MustCompile("^projects/" + NameRegex + "/products/" + NameRegex + "/versions/" + NameRegex + "/specs$")
+	return regexp.MustCompile("^projects/" + NameRegex + "/apis/" + NameRegex + "/versions/" + NameRegex + "/specs$")
 }
 
 // SpecRegexp returns a regular expression that matches a spec resource name.
 func SpecRegexp() *regexp.Regexp {
 	return regexp.MustCompile("^projects/" + NameRegex +
-		"/products/" + NameRegex +
+		"/apis/" + NameRegex +
 		"/versions/" + NameRegex +
 		"/specs/" + NameRegex +
 		RevisionRegex + "$")
@@ -36,7 +36,7 @@ func SpecRegexp() *regexp.Regexp {
 // ParseParentVersion ...
 func ParseParentVersion(parent string) ([]string, error) {
 	r := regexp.MustCompile("^projects/" + NameRegex +
-		"/products/" + NameRegex +
+		"/apis/" + NameRegex +
 		"/versions/" + NameRegex +
 		"$")
 	m := r.FindAllStringSubmatch(parent, -1)

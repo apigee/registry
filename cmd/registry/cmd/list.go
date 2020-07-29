@@ -29,7 +29,7 @@ import (
 )
 
 type projectHandler func(*rpc.Project)
-type productHandler func(*rpc.Product)
+type apiHandler func(*rpc.Api)
 type versionHandler func(*rpc.Version)
 type specHandler func(*rpc.Spec)
 type propertyHandler func(*rpc.Property)
@@ -39,8 +39,8 @@ func printProject(project *rpc.Project) {
 	fmt.Println(project.Name)
 }
 
-func printProduct(product *rpc.Product) {
-	fmt.Println(product.Name)
+func printApi(api *rpc.Api) {
+	fmt.Println(api.Name)
 }
 
 func printVersion(version *rpc.Version) {
@@ -75,8 +75,8 @@ var listCmd = &cobra.Command{
 		name := args[0]
 		if m := names.ProjectsRegexp().FindAllStringSubmatch(name, -1); m != nil {
 			err = listProjects(ctx, client, m[0], printProject)
-		} else if m := names.ProductsRegexp().FindAllStringSubmatch(name, -1); m != nil {
-			err = listProducts(ctx, client, m[0], printProduct)
+		} else if m := names.ApisRegexp().FindAllStringSubmatch(name, -1); m != nil {
+			err = listApis(ctx, client, m[0], printApi)
 		} else if m := names.VersionsRegexp().FindAllStringSubmatch(name, -1); m != nil {
 			err = listVersions(ctx, client, m[0], printVersion)
 		} else if m := names.SpecsRegexp().FindAllStringSubmatch(name, -1); m != nil {
@@ -93,12 +93,12 @@ var listCmd = &cobra.Command{
 			} else {
 				err = getProject(ctx, client, segments, printProject)
 			}
-		} else if m := names.ProductRegexp().FindAllStringSubmatch(name, -1); m != nil {
+		} else if m := names.ApiRegexp().FindAllStringSubmatch(name, -1); m != nil {
 			segments := m[0]
 			if sliceContainsString(segments, "-") {
-				err = listProducts(ctx, client, segments, printProduct)
+				err = listApis(ctx, client, segments, printApi)
 			} else {
-				err = getProduct(ctx, client, segments, printProduct)
+				err = getApi(ctx, client, segments, printApi)
 			}
 		} else if m := names.VersionRegexp().FindAllStringSubmatch(name, -1); m != nil {
 			segments := m[0]
@@ -174,29 +174,29 @@ func listProjects(ctx context.Context,
 	return nil
 }
 
-func listProducts(ctx context.Context,
+func listApis(ctx context.Context,
 	client *gapic.RegistryClient,
 	segments []string,
-	handler productHandler) error {
-	request := &rpc.ListProductsRequest{
+	handler apiHandler) error {
+	request := &rpc.ListApisRequest{
 		Parent: "projects/" + segments[1],
 	}
 	filter := filterFlag
 	if len(segments) == 3 && segments[2] != "-" {
-		filter = "product_id == '" + segments[2] + "'"
+		filter = "api_id == '" + segments[2] + "'"
 	}
 	if filter != "" {
 		request.Filter = filter
 	}
-	it := client.ListProducts(ctx, request)
+	it := client.ListApis(ctx, request)
 	for {
-		product, err := it.Next()
+		api, err := it.Next()
 		if err == iterator.Done {
 			break
 		} else if err != nil {
 			return err
 		}
-		handler(product)
+		handler(api)
 	}
 	return nil
 }
@@ -206,7 +206,7 @@ func listVersions(ctx context.Context,
 	segments []string,
 	handler versionHandler) error {
 	request := &rpc.ListVersionsRequest{
-		Parent: "projects/" + segments[1] + "/products/" + segments[2],
+		Parent: "projects/" + segments[1] + "/apis/" + segments[2],
 	}
 	filter := filterFlag
 	if len(segments) == 4 && segments[3] != "-" {
@@ -233,7 +233,7 @@ func listSpecs(ctx context.Context,
 	segments []string,
 	handler specHandler) error {
 	request := &rpc.ListSpecsRequest{
-		Parent: "projects/" + segments[1] + "/products/" + segments[2] + "/versions/" + segments[3],
+		Parent: "projects/" + segments[1] + "/apis/" + segments[2] + "/versions/" + segments[3],
 	}
 	filter := filterFlag
 	if len(segments) == 5 && segments[4] != "-" {
@@ -261,7 +261,7 @@ func listProperties(ctx context.Context,
 	handler propertyHandler) error {
 	parent := "projects/" + segments[1]
 	if segments[3] != "" {
-		parent += "/products/" + segments[3]
+		parent += "/apis/" + segments[3]
 		if segments[5] != "" {
 			parent += "/versions/" + segments[5]
 			if segments[7] != "" {
@@ -298,7 +298,7 @@ func listLabels(ctx context.Context,
 	handler labelHandler) error {
 	parent := "projects/" + segments[1]
 	if segments[3] != "" {
-		parent += "/products/" + segments[3]
+		parent += "/apis/" + segments[3]
 		if segments[5] != "" {
 			parent += "/versions/" + segments[5]
 			if segments[7] != "" {
@@ -344,18 +344,18 @@ func getProject(ctx context.Context,
 	return nil
 }
 
-func getProduct(ctx context.Context,
+func getApi(ctx context.Context,
 	client *gapic.RegistryClient,
 	segments []string,
-	handler productHandler) error {
-	request := &rpc.GetProductRequest{
-		Name: "projects/" + segments[1] + "/products/" + segments[2],
+	handler apiHandler) error {
+	request := &rpc.GetApiRequest{
+		Name: "projects/" + segments[1] + "/apis/" + segments[2],
 	}
-	product, err := client.GetProduct(ctx, request)
+	api, err := client.GetApi(ctx, request)
 	if err != nil {
 		return err
 	}
-	handler(product)
+	handler(api)
 	return nil
 }
 
@@ -364,7 +364,7 @@ func getVersion(ctx context.Context,
 	segments []string,
 	handler versionHandler) error {
 	request := &rpc.GetVersionRequest{
-		Name: "projects/" + segments[1] + "/products/" + segments[2] + "/versions/" + segments[3],
+		Name: "projects/" + segments[1] + "/apis/" + segments[2] + "/versions/" + segments[3],
 	}
 	version, err := client.GetVersion(ctx, request)
 	if err != nil {
@@ -379,7 +379,7 @@ func getSpec(ctx context.Context,
 	segments []string,
 	handler specHandler) (*rpc.Spec, error) {
 	request := &rpc.GetSpecRequest{
-		Name: "projects/" + segments[1] + "/products/" + segments[2] + "/versions/" + segments[3] + "/specs/" + segments[4],
+		Name: "projects/" + segments[1] + "/apis/" + segments[2] + "/versions/" + segments[3] + "/specs/" + segments[4],
 	}
 	spec, err := client.GetSpec(ctx, request)
 	if err != nil {
@@ -395,7 +395,7 @@ func getProperty(ctx context.Context,
 	handler propertyHandler) error {
 	log.Printf("%+v", segments)
 	request := &rpc.GetPropertyRequest{
-		Name: "projects/" + segments[1] + "/products/" + segments[3] + "/versions/" + segments[5] + "/specs/" + segments[7] + "/properties/" + segments[8],
+		Name: "projects/" + segments[1] + "/apis/" + segments[3] + "/versions/" + segments[5] + "/specs/" + segments[7] + "/properties/" + segments[8],
 	}
 	log.Printf("request %+v", request)
 	property, err := client.GetProperty(ctx, request)

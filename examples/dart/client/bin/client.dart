@@ -41,12 +41,12 @@ Future<Null> main(List<String> args) async {
   final stub = new RegistryClient(channel);
   // Make a sample API request.
   try {
-    final request = ListProductsRequest();
+    final request = ListApisRequest();
     request.parent = "projects/google";
     while (true) {
-      final response = await stub.listProducts(request);
-      response.products.forEach((product) => print(product.name));
-      if (response.products.length == 0) {
+      final response = await stub.listApis(request);
+      response.apis.forEach((api) => print(api.name));
+      if (response.apis.length == 0) {
         break;
       }
       request.pageToken = response.nextPageToken;

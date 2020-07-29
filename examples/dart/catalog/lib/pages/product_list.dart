@@ -20,14 +20,14 @@ import '../components/drawer.dart';
 import '../helpers/adaptive.dart';
 import '../components/help.dart';
 
-class ProductListScreen extends StatelessWidget {
+class ApiListScreen extends StatelessWidget {
   final String title;
   final String projectID;
-  ProductListScreen({Key key, this.title, this.projectID}) : super(key: key);
+  ApiListScreen({Key key, this.title, this.projectID}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    ProductService.projectID = projectID; // HACK
+    ApiService.projectID = projectID; // HACK
 
     final isDesktop = isDisplayDesktop(context);
 
@@ -40,7 +40,7 @@ class ProductListScreen extends StatelessWidget {
             Expanded(
               child: Scaffold(
                 appBar: buildAppBar(context, isDesktop),
-                body: ProductList(),
+                body: ApiList(),
               ),
             ),
           ],
@@ -49,7 +49,7 @@ class ProductListScreen extends StatelessWidget {
     } else {
       return Scaffold(
         appBar: buildAppBar(context, isDesktop),
-        body: ProductList(),
+        body: ApiList(),
         drawer: drawer(context),
       );
     }
@@ -59,7 +59,7 @@ class ProductListScreen extends StatelessWidget {
     return AppBar(
       automaticallyImplyLeading: !isDesktop,
       actions: <Widget>[
-        ProductSearchBox(),
+        ApiSearchBox(),
         IconButton(
           icon: const Icon(Icons.question_answer),
           tooltip: 'Help',
@@ -86,40 +86,39 @@ class ProductListScreen extends StatelessWidget {
   }
 }
 
-String routeNameForProductDetail(Product product) {
-  final name = "/" + product.name.split("/").sublist(1).join("/");
+String routeNameForApiDetail(Api api) {
+  final name = "/" + api.name.split("/").sublist(1).join("/");
   print("pushing " + name);
   return name;
 }
 
 const int pageSize = 50;
-PagewiseLoadController<Product> pageLoadController;
+PagewiseLoadController<Api> pageLoadController;
 
-class ProductList extends StatelessWidget {
-  ProductList();
+class ApiList extends StatelessWidget {
+  ApiList();
 
   @override
   Widget build(BuildContext context) {
-    pageLoadController = PagewiseLoadController<Product>(
+    pageLoadController = PagewiseLoadController<Api>(
         pageSize: pageSize,
-        pageFuture: (pageIndex) =>
-            ProductService.getProductsPage(context, pageIndex));
+        pageFuture: (pageIndex) => ApiService.getApisPage(context, pageIndex));
     return Scrollbar(
-      child: PagewiseListView<Product>(
+      child: PagewiseListView<Api>(
         itemBuilder: this._itemBuilder,
         pageLoadController: pageLoadController,
       ),
     );
   }
 
-  Widget _itemBuilder(context, Product entry, _) {
+  Widget _itemBuilder(context, Api entry, _) {
     return Column(
       children: <Widget>[
         GestureDetector(
           onTap: () async {
             Navigator.pushNamed(
               context,
-              routeNameForProductDetail(entry),
+              routeNameForApiDetail(entry),
               arguments: entry,
             );
           },
@@ -145,7 +144,7 @@ class ProductList extends StatelessWidget {
   }
 }
 
-class ProductSearchBox extends StatelessWidget {
+class ApiSearchBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -165,9 +164,9 @@ class ProductSearchBox extends StatelessWidget {
             hintText: 'Search APIs'),
         onSubmitted: (s) {
           if (s == "") {
-            ProductService.filter = "";
+            ApiService.filter = "";
           } else {
-            ProductService.filter = "product_id.contains('$s')";
+            ApiService.filter = "api_id.contains('$s')";
           }
           pageLoadController.reset();
         },

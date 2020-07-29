@@ -2,7 +2,7 @@ indexes:
 
 - kind: Spec
   properties:
-  - name: ProductID
+  - name: ApiID
   - name: ProjectID
   - name: SpecID
   - name: VersionID
@@ -11,7 +11,7 @@ indexes:
 
 - kind: Spec
   properties:
-  - name: ProductID
+  - name: ApiID
   - name: ProjectID
   - name: SpecID
   - name: VersionID

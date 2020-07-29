@@ -17,10 +17,10 @@ package server
 import (
 	"context"
 
+	"cloud.google.com/go/datastore"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/models"
 	"github.com/apigee/registry/server/names"
-	"cloud.google.com/go/datastore"
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/api/iterator"
 	"google.golang.org/grpc/codes"
@@ -108,7 +108,7 @@ func (s *RegistryServer) ListVersions(ctx context.Context, req *rpc.ListVersions
 	if err != nil {
 		return nil, internalError(err)
 	}
-	m, err := names.ParseParentProduct(req.GetParent())
+	m, err := names.ParseParentApi(req.GetParent())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
@@ -116,12 +116,12 @@ func (s *RegistryServer) ListVersions(ctx context.Context, req *rpc.ListVersions
 		q = q.Filter("ProjectID =", m[1])
 	}
 	if m[2] != "-" {
-		q = q.Filter("ProductID =", m[2])
+		q = q.Filter("ApiID =", m[2])
 	}
 	prg, err := createFilterOperator(req.GetFilter(),
 		[]filterArg{
 			{"project_id", filterArgTypeString},
-			{"product_id", filterArgTypeString},
+			{"api_id", filterArgTypeString},
 			{"version_id", filterArgTypeString},
 			{"display_name", filterArgTypeString},
 			{"description", filterArgTypeString},
@@ -138,7 +138,7 @@ func (s *RegistryServer) ListVersions(ctx context.Context, req *rpc.ListVersions
 		if prg != nil {
 			out, _, err := prg.Eval(map[string]interface{}{
 				"project_id":   version.ProjectID,
-				"product_id":   version.ProductID,
+				"api_id":       version.ApiID,
 				"version_id":   version.VersionID,
 				"display_name": version.DisplayName,
 				"description":  version.Description,

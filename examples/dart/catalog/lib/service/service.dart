@@ -75,29 +75,28 @@ class ProjectService {
   }
 }
 
-class ProductService {
+class ApiService {
   static RegistryClient getClient() => RegistryClient(createClientChannel());
 
   static String filter;
   static Map<int, String> tokens;
   static String projectID;
 
-  static Future<List<Product>> getProductsPage(
-      BuildContext context, int pageIndex) {
-    return ProductService._getProducts(context,
+  static Future<List<Api>> getApisPage(BuildContext context, int pageIndex) {
+    return ApiService._getApis(context,
         parent: "projects/" + projectID,
         offset: pageIndex * pageSize,
         limit: pageSize);
   }
 
-  static Future<List<Product>> _getProducts(BuildContext context,
+  static Future<List<Api>> _getApis(BuildContext context,
       {parent: String, offset: int, limit: int}) async {
     if (offset == 0) {
       tokens = Map();
     }
-    print("getProducts " + (filter ?? ""));
+    print("getApis " + (filter ?? ""));
     final client = getClient();
-    final request = ListProductsRequest();
+    final request = ListApisRequest();
     request.parent = parent;
     request.pageSize = limit;
     if (filter != null) {
@@ -108,10 +107,9 @@ class ProductService {
       request.pageToken = token;
     }
     try {
-      final response =
-          await client.listProducts(request, options: callOptions());
+      final response = await client.listApis(request, options: callOptions());
       tokens[offset + limit] = response.nextPageToken;
-      return response.products;
+      return response.apis;
     } catch (err) {
       print('Caught error: $err');
       showErrorAlert(context, "$err");
@@ -119,12 +117,12 @@ class ProductService {
     }
   }
 
-  static Future<Product> getProduct(String name) {
+  static Future<Api> getApi(String name) {
     final client = getClient();
-    final request = GetProductRequest();
+    final request = GetApiRequest();
     request.name = name;
     try {
-      return client.getProduct(request, options: callOptions());
+      return client.getApi(request, options: callOptions());
     } catch (err) {
       print('Caught error: $err');
       return null;
@@ -137,12 +135,12 @@ class VersionService {
 
   static String filter;
   static Map<int, String> tokens;
-  static String productID;
+  static String apiID;
 
   static Future<List<Version>> getVersionsPage(
       BuildContext context, int pageIndex) {
     return VersionService._getVersions(context,
-        parent: "projects/" + productID,
+        parent: "projects/" + apiID,
         offset: pageIndex * pageSize,
         limit: pageSize);
   }

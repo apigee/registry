@@ -20,9 +20,9 @@ import (
 	"regexp"
 	"time"
 
+	"cloud.google.com/go/datastore"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
-	"cloud.google.com/go/datastore"
 	ptypes "github.com/golang/protobuf/ptypes"
 )
 
@@ -32,8 +32,8 @@ const VersionEntityName = "Version"
 // Version ...
 type Version struct {
 	ProjectID   string    // Uniquely identifies a project.
-	ProductID   string    // Uniquely identifies a product within a project.
-	VersionID   string    // Uniquely identifies a version wihtin a product.
+	ApiID       string    // Uniquely identifies a api within a project.
+	VersionID   string    // Uniquely identifies a version wihtin a api.
 	DisplayName string    // A human-friendly name.
 	Description string    // A detailed description.
 	CreateTime  time.Time // Creation time.
@@ -41,10 +41,10 @@ type Version struct {
 	State       string    // Lifecycle stage.
 }
 
-// ParseParentProduct ...
-func ParseParentProduct(parent string) ([]string, error) {
+// ParseParentApi ...
+func ParseParentApi(parent string) ([]string, error) {
 	r := regexp.MustCompile("^projects/" + names.NameRegex +
-		"/products/" + names.NameRegex +
+		"/apis/" + names.NameRegex +
 		"$")
 	m := r.FindAllStringSubmatch(parent, -1)
 	if m == nil {
@@ -53,19 +53,19 @@ func ParseParentProduct(parent string) ([]string, error) {
 	return m[0], nil
 }
 
-// NewVersionFromParentAndVersionID returns an initialized product for a specified parent and productID.
+// NewVersionFromParentAndVersionID returns an initialized api for a specified parent and apiID.
 func NewVersionFromParentAndVersionID(parent string, versionID string) (*Version, error) {
-	r := regexp.MustCompile("^projects/" + names.NameRegex + "/products/" + names.NameRegex + "$")
+	r := regexp.MustCompile("^projects/" + names.NameRegex + "/apis/" + names.NameRegex + "$")
 	m := r.FindAllStringSubmatch(parent, -1)
 	if m == nil {
-		return nil, fmt.Errorf("invalid product '%s'", parent)
+		return nil, fmt.Errorf("invalid api '%s'", parent)
 	}
 	if err := names.ValidateID(versionID); err != nil {
 		return nil, err
 	}
 	version := &Version{}
 	version.ProjectID = m[0][1]
-	version.ProductID = m[0][2]
+	version.ApiID = m[0][2]
 	version.VersionID = versionID
 	return version, nil
 }
@@ -78,7 +78,7 @@ func NewVersionFromResourceName(name string) (*Version, error) {
 		return nil, fmt.Errorf("invalid version name (%s)", name)
 	}
 	version.ProjectID = m[0][1]
-	version.ProductID = m[0][2]
+	version.ApiID = m[0][2]
 	version.VersionID = m[0][3]
 	return version, nil
 }
@@ -98,7 +98,7 @@ func NewVersionFromMessage(message *rpc.Version) (*Version, error) {
 
 // ResourceName generates the resource name of a version.
 func (version *Version) ResourceName() string {
-	return fmt.Sprintf("projects/%s/products/%s/versions/%s", version.ProjectID, version.ProductID, version.VersionID)
+	return fmt.Sprintf("projects/%s/apis/%s/versions/%s", version.ProjectID, version.ApiID, version.VersionID)
 }
 
 // Message returns a message representing a version.
@@ -129,7 +129,7 @@ func (version *Version) DeleteChildren(ctx context.Context, client *datastore.Cl
 		q := datastore.NewQuery(entityName)
 		q = q.KeysOnly()
 		q = q.Filter("ProjectID =", version.ProjectID)
-		q = q.Filter("ProductID =", version.ProductID)
+		q = q.Filter("ApiID =", version.ApiID)
 		q = q.Filter("VersionID =", version.VersionID)
 		err := DeleteAllMatches(ctx, client, q)
 		if err != nil {

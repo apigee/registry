@@ -19,9 +19,9 @@ import (
 	"fmt"
 	"time"
 
+	"cloud.google.com/go/datastore"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
-	"cloud.google.com/go/datastore"
 	ptypes "github.com/golang/protobuf/ptypes"
 )
 
@@ -90,7 +90,7 @@ func (project *Project) DeleteChildren(ctx context.Context, client *datastore.Cl
 		SpecEntityName,
 		SpecRevisionTagEntityName,
 		VersionEntityName,
-		ProductEntityName,
+		ApiEntityName,
 	}
 	for _, entityName := range entityNames {
 		q := datastore.NewQuery(entityName)

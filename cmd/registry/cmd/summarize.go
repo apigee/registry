@@ -89,7 +89,7 @@ func init() {
 func resourceNameOfSpec(segments []string) string {
 	if len(segments) == 4 {
 		return "projects/" + segments[0] +
-			"/products/" + segments[1] +
+			"/apis/" + segments[1] +
 			"/versions/" + segments[2] +
 			"/specs/" + segments[3]
 	}

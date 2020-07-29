@@ -20,10 +20,10 @@ import (
 	"log"
 	"time"
 
+	"cloud.google.com/go/datastore"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/models"
 	"github.com/apigee/registry/server/names"
-	"cloud.google.com/go/datastore"
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/api/iterator"
 	"google.golang.org/grpc/codes"
@@ -44,7 +44,7 @@ func (s *RegistryServer) CreateSpec(ctx context.Context, request *rpc.CreateSpec
 	// fail if spec already exists
 	q := datastore.NewQuery(models.SpecEntityName)
 	q = q.Filter("ProjectID =", spec.ProjectID)
-	q = q.Filter("ProductID =", spec.ProductID)
+	q = q.Filter("ApiID =", spec.ApiID)
 	q = q.Filter("VersionID =", spec.VersionID)
 	q = q.Filter("SpecID =", spec.SpecID)
 	it := client.Run(ctx, q.Distinct())
@@ -86,7 +86,7 @@ func (s *RegistryServer) DeleteSpec(ctx context.Context, request *rpc.DeleteSpec
 	// Delete all revisions of the spec.
 	q := datastore.NewQuery(models.SpecEntityName)
 	q = q.Filter("ProjectID =", spec.ProjectID)
-	q = q.Filter("ProductID =", spec.ProductID)
+	q = q.Filter("ApiID =", spec.ApiID)
 	q = q.Filter("VersionID =", spec.VersionID)
 	q = q.Filter("SpecID =", spec.SpecID)
 	err = models.DeleteAllMatches(ctx, client, q)
@@ -128,7 +128,7 @@ func (s *RegistryServer) ListSpecs(ctx context.Context, req *rpc.ListSpecsReques
 		q = q.Filter("ProjectID =", m[1])
 	}
 	if m[2] != "-" {
-		q = q.Filter("ProductID =", m[2])
+		q = q.Filter("ApiID =", m[2])
 	}
 	if m[3] != "-" {
 		q = q.Filter("VersionID =", m[3])
@@ -137,7 +137,7 @@ func (s *RegistryServer) ListSpecs(ctx context.Context, req *rpc.ListSpecsReques
 	prg, err := createFilterOperator(req.GetFilter(),
 		[]filterArg{
 			{"project_id", filterArgTypeString},
-			{"product_id", filterArgTypeString},
+			{"api_id", filterArgTypeString},
 			{"version_id", filterArgTypeString},
 			{"spec_id", filterArgTypeString},
 			{"filename", filterArgTypeString},
@@ -155,7 +155,7 @@ func (s *RegistryServer) ListSpecs(ctx context.Context, req *rpc.ListSpecsReques
 		if prg != nil {
 			out, _, err := prg.Eval(map[string]interface{}{
 				"project_id":  spec.ProjectID,
-				"product_id":  spec.ProductID,
+				"api_id":      spec.ApiID,
 				"version_id":  spec.VersionID,
 				"spec_id":     spec.SpecID,
 				"filename":    spec.FileName,
@@ -246,13 +246,13 @@ func (s *RegistryServer) ListSpecRevisions(ctx context.Context, req *rpc.ListSpe
 		return nil, internalError(err)
 	}
 	q = q.Filter("ProjectID =", targetSpec.ProjectID)
-	q = q.Filter("ProductID =", targetSpec.ProductID)
+	q = q.Filter("ApiID =", targetSpec.ApiID)
 	q = q.Filter("VersionID =", targetSpec.VersionID)
 	q = q.Filter("SpecID =", targetSpec.SpecID)
 	q = q.Order("-CreateTime")
 	var specMessages []*rpc.Spec
 	var spec models.Spec
-	it := client.Run(ctx, q.Distinct())
+	it := client.Run(ctx, q)
 	pageSize := boundPageSize(req.GetPageSize())
 	for _, err := it.Next(&spec); err == nil; _, err = it.Next(&spec) {
 		specMessage, _ := spec.Message(rpc.SpecView_BASIC, spec.RevisionID)
@@ -326,7 +326,7 @@ func (s *RegistryServer) TagSpecRevision(ctx context.Context, request *rpc.TagSp
 	now := time.Now()
 	tag := &models.SpecRevisionTag{
 		ProjectID:  spec.ProjectID,
-		ProductID:  spec.ProductID,
+		ApiID:      spec.ApiID,
 		VersionID:  spec.VersionID,
 		SpecID:     spec.SpecID,
 		RevisionID: spec.RevisionID,
@@ -359,7 +359,7 @@ func (s *RegistryServer) ListSpecRevisionTags(ctx context.Context, req *rpc.List
 		return nil, internalError(err)
 	}
 	q = q.Filter("ProjectID =", targetSpec.ProjectID)
-	q = q.Filter("ProductID =", targetSpec.ProductID)
+	q = q.Filter("ApiID =", targetSpec.ApiID)
 	q = q.Filter("VersionID =", targetSpec.VersionID)
 	q = q.Filter("SpecID =", targetSpec.SpecID)
 	var tagMessages []*rpc.SpecRevisionTag
@@ -481,7 +481,7 @@ func fetchMostRecentNonCurrentRevisionOfSpec(
 	// note that we ignore any specified RevisionID
 	q := datastore.NewQuery(models.SpecEntityName)
 	q = q.Filter("ProjectID =", pattern.ProjectID)
-	q = q.Filter("ProductID =", pattern.ProductID)
+	q = q.Filter("ApiID =", pattern.ApiID)
 	q = q.Filter("VersionID =", pattern.VersionID)
 	q = q.Filter("SpecID =", pattern.SpecID)
 	q = q.Filter("IsCurrent =", false)
@@ -508,7 +508,7 @@ func fetchCurrentRevisionOfSpec(
 	// note that we ignore any specified RevisionID
 	q := datastore.NewQuery(models.SpecEntityName)
 	q = q.Filter("ProjectID =", pattern.ProjectID)
-	q = q.Filter("ProductID =", pattern.ProductID)
+	q = q.Filter("ApiID =", pattern.ApiID)
 	q = q.Filter("VersionID =", pattern.VersionID)
 	q = q.Filter("SpecID =", pattern.SpecID)
 	q = q.Filter("IsCurrent =", true)

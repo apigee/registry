@@ -17,93 +17,93 @@ package server
 import (
 	"context"
 
+	"cloud.google.com/go/datastore"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/models"
 	"github.com/apigee/registry/server/names"
-	"cloud.google.com/go/datastore"
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/api/iterator"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
-// CreateProduct handles the corresponding API request.
-func (s *RegistryServer) CreateProduct(ctx context.Context, request *rpc.CreateProductRequest) (*rpc.Product, error) {
+// CreateApi handles the corresponding API request.
+func (s *RegistryServer) CreateApi(ctx context.Context, request *rpc.CreateApiRequest) (*rpc.Api, error) {
 	client, err := s.getDataStoreClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
 	}
 	s.releaseDataStoreClient(client)
-	product, err := models.NewProductFromParentAndProductID(request.GetParent(), request.GetProductId())
+	api, err := models.NewApiFromParentAndApiID(request.GetParent(), request.GetApiId())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	k := &datastore.Key{Kind: models.ProductEntityName, Name: product.ResourceName()}
-	// fail if product already exists
-	var existingProduct models.Product
-	err = client.Get(ctx, k, &existingProduct)
+	k := &datastore.Key{Kind: models.ApiEntityName, Name: api.ResourceName()}
+	// fail if api already exists
+	var existingApi models.Api
+	err = client.Get(ctx, k, &existingApi)
 	if err == nil {
-		return nil, status.Error(codes.AlreadyExists, product.ResourceName()+" already exists")
+		return nil, status.Error(codes.AlreadyExists, api.ResourceName()+" already exists")
 	}
-	err = product.Update(request.GetProduct())
-	product.CreateTime = product.UpdateTime
-	k, err = client.Put(ctx, k, product)
+	err = api.Update(request.GetApi())
+	api.CreateTime = api.UpdateTime
+	k, err = client.Put(ctx, k, api)
 	if err != nil {
 		return nil, internalError(err)
 	}
-	s.notify(rpc.Notification_CREATED, product.ResourceName())
-	return product.Message()
+	s.notify(rpc.Notification_CREATED, api.ResourceName())
+	return api.Message()
 }
 
-// DeleteProduct handles the corresponding API request.
-func (s *RegistryServer) DeleteProduct(ctx context.Context, request *rpc.DeleteProductRequest) (*empty.Empty, error) {
+// DeleteApi handles the corresponding API request.
+func (s *RegistryServer) DeleteApi(ctx context.Context, request *rpc.DeleteApiRequest) (*empty.Empty, error) {
 	client, err := s.getDataStoreClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
 	}
 	s.releaseDataStoreClient(client)
-	// Validate name and create dummy product (we just need the ID fields).
-	product, err := models.NewProductFromResourceName(request.GetName())
+	// Validate name and create dummy api (we just need the ID fields).
+	api, err := models.NewApiFromResourceName(request.GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	// Delete children first and then delete the product.
-	product.DeleteChildren(ctx, client)
-	k := &datastore.Key{Kind: models.ProductEntityName, Name: request.GetName()}
+	// Delete children first and then delete the api.
+	api.DeleteChildren(ctx, client)
+	k := &datastore.Key{Kind: models.ApiEntityName, Name: request.GetName()}
 	err = client.Delete(ctx, k)
 	s.notify(rpc.Notification_DELETED, request.GetName())
 	return &empty.Empty{}, internalError(err)
 }
 
-// GetProduct handles the corresponding API request.
-func (s *RegistryServer) GetProduct(ctx context.Context, request *rpc.GetProductRequest) (*rpc.Product, error) {
+// GetApi handles the corresponding API request.
+func (s *RegistryServer) GetApi(ctx context.Context, request *rpc.GetApiRequest) (*rpc.Api, error) {
 	client, err := s.getDataStoreClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
 	}
 	s.releaseDataStoreClient(client)
-	product, err := models.NewProductFromResourceName(request.GetName())
+	api, err := models.NewApiFromResourceName(request.GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	k := &datastore.Key{Kind: models.ProductEntityName, Name: product.ResourceName()}
-	err = client.Get(ctx, k, product)
+	k := &datastore.Key{Kind: models.ApiEntityName, Name: api.ResourceName()}
+	err = client.Get(ctx, k, api)
 	if err == datastore.ErrNoSuchEntity {
 		return nil, status.Error(codes.NotFound, "not found")
 	} else if err != nil {
 		return nil, internalError(err)
 	}
-	return product.Message()
+	return api.Message()
 }
 
-// ListProducts handles the corresponding API request.
-func (s *RegistryServer) ListProducts(ctx context.Context, req *rpc.ListProductsRequest) (*rpc.ListProductsResponse, error) {
+// ListApis handles the corresponding API request.
+func (s *RegistryServer) ListApis(ctx context.Context, req *rpc.ListApisRequest) (*rpc.ListApisResponse, error) {
 	client, err := s.getDataStoreClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
 	}
 	s.releaseDataStoreClient(client)
-	q := datastore.NewQuery(models.ProductEntityName)
+	q := datastore.NewQuery(models.ApiEntityName)
 	q, err = queryApplyCursor(q, req.GetPageToken())
 	if err != nil {
 		return nil, internalError(err)
@@ -117,7 +117,7 @@ func (s *RegistryServer) ListProducts(ctx context.Context, req *rpc.ListProducts
 	}
 	prg, err := createFilterOperator(req.GetFilter(),
 		[]filterArg{
-			{"product_id", filterArgTypeString},
+			{"api_id", filterArgTypeString},
 			{"display_name", filterArgTypeString},
 			{"description", filterArgTypeString},
 			{"availability", filterArgTypeString},
@@ -125,17 +125,17 @@ func (s *RegistryServer) ListProducts(ctx context.Context, req *rpc.ListProducts
 	if err != nil {
 		return nil, internalError(err)
 	}
-	var productMessages []*rpc.Product
-	var product models.Product
+	var apiMessages []*rpc.Api
+	var api models.Api
 	it := client.Run(ctx, q.Distinct())
 	pageSize := boundPageSize(req.GetPageSize())
-	for _, err = it.Next(&product); err == nil; _, err = it.Next(&product) {
+	for _, err = it.Next(&api); err == nil; _, err = it.Next(&api) {
 		if prg != nil {
 			out, _, err := prg.Eval(map[string]interface{}{
-				"product_id":   product.ProductID,
-				"display_name": product.DisplayName,
-				"description":  product.Description,
-				"availability": product.Availability,
+				"api_id":       api.ApiID,
+				"display_name": api.DisplayName,
+				"description":  api.Description,
+				"availability": api.Availability,
 			})
 			if err != nil {
 				return nil, invalidArgumentError(err)
@@ -144,49 +144,49 @@ func (s *RegistryServer) ListProducts(ctx context.Context, req *rpc.ListProducts
 				continue
 			}
 		}
-		productMessage, _ := product.Message()
-		productMessages = append(productMessages, productMessage)
-		if len(productMessages) == pageSize {
+		apiMessage, _ := api.Message()
+		apiMessages = append(apiMessages, apiMessage)
+		if len(apiMessages) == pageSize {
 			break
 		}
 	}
 	if err != nil && err != iterator.Done {
 		return nil, internalError(err)
 	}
-	responses := &rpc.ListProductsResponse{
-		Products: productMessages,
+	responses := &rpc.ListApisResponse{
+		Apis: apiMessages,
 	}
-	responses.NextPageToken, err = iteratorGetCursor(it, len(productMessages))
+	responses.NextPageToken, err = iteratorGetCursor(it, len(apiMessages))
 	if err != nil {
 		return nil, internalError(err)
 	}
 	return responses, nil
 }
 
-// UpdateProduct handles the corresponding API request.
-func (s *RegistryServer) UpdateProduct(ctx context.Context, request *rpc.UpdateProductRequest) (*rpc.Product, error) {
+// UpdateApi handles the corresponding API request.
+func (s *RegistryServer) UpdateApi(ctx context.Context, request *rpc.UpdateApiRequest) (*rpc.Api, error) {
 	client, err := s.getDataStoreClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
 	}
 	s.releaseDataStoreClient(client)
-	product, err := models.NewProductFromResourceName(request.GetProduct().GetName())
+	api, err := models.NewApiFromResourceName(request.GetApi().GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	k := &datastore.Key{Kind: models.ProductEntityName, Name: product.ResourceName()}
-	err = client.Get(ctx, k, product)
+	k := &datastore.Key{Kind: models.ApiEntityName, Name: api.ResourceName()}
+	err = client.Get(ctx, k, api)
 	if err != nil {
 		return nil, status.Error(codes.NotFound, "not found")
 	}
-	err = product.Update(request.GetProduct())
+	err = api.Update(request.GetApi())
 	if err != nil {
 		return nil, internalError(err)
 	}
-	k, err = client.Put(ctx, k, product)
+	k, err = client.Put(ctx, k, api)
 	if err != nil {
 		return nil, internalError(err)
 	}
-	s.notify(rpc.Notification_UPDATED, product.ResourceName())
-	return product.Message()
+	s.notify(rpc.Notification_UPDATED, api.ResourceName())
+	return api.Message()
 }

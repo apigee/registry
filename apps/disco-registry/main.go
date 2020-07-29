@@ -210,35 +210,35 @@ func handleExportArgumentsForBytes(arguments map[string]interface{}, fileBytes [
 
 		// does the API exist? if not, create it
 		{
-			request := &rpcpb.GetProductRequest{}
-			request.Name = "projects/google/products/" + api.Name
-			_, err := registryClient.GetProduct(ctx, request)
+			request := &rpcpb.GetApiRequest{}
+			request.Name = "projects/google/apis/" + api.Name
+			_, err := registryClient.GetApi(ctx, request)
 			if notFound(err) {
-				request := &rpcpb.CreateProductRequest{}
+				request := &rpcpb.CreateApiRequest{}
 				request.Parent = "projects/google"
-				request.ProductId = api.Name
-				request.Product = &rpcpb.Product{}
-				request.Product.DisplayName = api.Title
-				request.Product.Description = api.Description
-				response, err := registryClient.CreateProduct(ctx, request)
+				request.ApiId = api.Name
+				request.Api = &rpcpb.Api{}
+				request.Api.DisplayName = api.Title
+				request.Api.Description = api.Description
+				response, err := registryClient.CreateApi(ctx, request)
 				if err == nil {
 					log.Printf("created %s", response.Name)
 				} else if alreadyExists(err) {
-					log.Printf("already exists %s/products/%s", request.Parent, request.ProductId)
+					log.Printf("already exists %s/apis/%s", request.Parent, request.ApiId)
 				} else {
-					log.Printf("failed to create %s/products/%s: %s",
-						request.Parent, request.ProductId, err.Error())
+					log.Printf("failed to create %s/apis/%s: %s",
+						request.Parent, request.ApiId, err.Error())
 				}
 			}
 		}
 		// does the version exist? if not create it
 		{
 			request := &rpcpb.GetVersionRequest{}
-			request.Name = "projects/google/products/" + api.Name + "/versions/" + api.Version
+			request.Name = "projects/google/apis/" + api.Name + "/versions/" + api.Version
 			_, err := registryClient.GetVersion(ctx, request)
 			if notFound(err) {
 				request := &rpcpb.CreateVersionRequest{}
-				request.Parent = "projects/google/products/" + api.Name
+				request.Parent = "projects/google/apis/" + api.Name
 				request.VersionId = api.Version
 				request.Version = &rpcpb.Version{}
 				response, err := registryClient.CreateVersion(ctx, request)
@@ -255,7 +255,7 @@ func handleExportArgumentsForBytes(arguments map[string]interface{}, fileBytes [
 		// does the spec exist? if not, create it
 		{
 			request := &rpcpb.GetSpecRequest{}
-			request.Name = "projects/google/products/" + api.Name +
+			request.Name = "projects/google/apis/" + api.Name +
 				"/versions/" + api.Version +
 				"/specs/discovery.json"
 			_, err := registryClient.GetSpec(ctx, request)
@@ -272,7 +272,7 @@ func handleExportArgumentsForBytes(arguments map[string]interface{}, fileBytes [
 				}
 
 				request := &rpcpb.CreateSpecRequest{}
-				request.Parent = "projects/google/products/" + api.Name +
+				request.Parent = "projects/google/apis/" + api.Name +
 					"/versions/" + api.Version
 				request.SpecId = "discovery.json"
 				request.Spec = &rpcpb.Spec{}

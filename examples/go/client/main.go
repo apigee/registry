@@ -57,14 +57,14 @@ func main() {
 	ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+token)
 
 	// Make a sample gRPC API call.
-	req := &rpc.ListProductsRequest{
+	req := &rpc.ListApisRequest{
 		Parent: "projects/-",
 	}
-	res, err := client.ListProducts(ctx, req)
+	res, err := client.ListApis(ctx, req)
 	if res != nil {
-		fmt.Println("The names of your products:")
-		for _, product := range res.Products {
-			fmt.Println(product.Name)
+		fmt.Println("The names of your apis:")
+		for _, api := range res.Apis {
+			fmt.Println(api.Name)
 		}
 	} else {
 		log.Printf("Error %+v", err)
