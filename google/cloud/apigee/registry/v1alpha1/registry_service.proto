@@ -3,6 +3,7 @@ syntax = "proto3";
 package google.cloud.apigee.registry.v1alpha1;
 
 import "google/cloud/apigee/registry/v1alpha1/registry_models.proto";
+
 import "google/api/annotations.proto";
 import "google/api/client.proto";
 import "google/api/field_behavior.proto";
@@ -76,7 +77,7 @@ service Registry {
     option (google.api.method_signature) = "name";
   }
 
-  // ListApis returns matching apis.
+  // ListApis returns matching APIs.
   rpc ListApis(ListApisRequest) returns (ListApisResponse) {
     option (google.api.http) = {
       get : "/v1alpha1/{parent=projects/*}/apis"
@@ -84,7 +85,7 @@ service Registry {
     option (google.api.method_signature) = "parent";
   }
 
-  // GetApi returns a specified api.
+  // GetApi returns a specified API.
   rpc GetApi(GetApiRequest) returns (Api) {
     option (google.api.http) = {
       get : "/v1alpha1/{name=projects/*/apis/*}"
@@ -92,7 +93,7 @@ service Registry {
     option (google.api.method_signature) = "name";
   }
 
-  // CreateApi creates a specified api.
+  // CreateApi creates a specified API.
   rpc CreateApi(CreateApiRequest) returns (Api) {
     option (google.api.http) = {
       post : "/v1alpha1/{parent=projects/*}/apis"
@@ -101,7 +102,7 @@ service Registry {
     option (google.api.method_signature) = "parent,api,api_id";
   }
 
-  // UpdateApi can be used to modify a specified api.
+  // UpdateApi can be used to modify a specified API.
   rpc UpdateApi(UpdateApiRequest) returns (Api) {
     option (google.api.http) = {
       patch : "/v1alpha1/{api.name=projects/*/apis/*}"
@@ -110,7 +111,7 @@ service Registry {
     option (google.api.method_signature) = "api,update_mask";
   }
 
-  // DeleteApi removes a specified api and all of the resources that it
+  // DeleteApi removes a specified API and all of the resources that it
   // owns.
   rpc DeleteApi(DeleteApiRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
@@ -426,13 +427,13 @@ message DeleteProjectRequest {
 
 // Request message for ListApis.
 message ListApisRequest {
-  // The parent, which owns this collection of apis.
+  // The parent, which owns this collection of APIs.
   // Format: projects/*
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {child_type: "registry.googleapis.com/Api"}
   ];
-  // The maximum number of apis to return.
+  // The maximum number of APIs to return.
   // The service may return fewer than this value.
   // If unspecified, at most 50 values will be returned.
   // The maximum is 1000; values above 1000 will be coerced to 1000.
@@ -451,7 +452,7 @@ message ListApisRequest {
 
 // Response message for ListApis.
 message ListApisResponse {
-  // The apis from the specified publisher.
+  // The APIs from the specified publisher.
   repeated Api apis = 1;
 
   // A token, which can be sent as `page_token` to retrieve the next page.
@@ -461,7 +462,7 @@ message ListApisResponse {
 
 // Request message for GetApi.
 message GetApiRequest {
-  // The name of the api to retrieve.
+  // The name of the API to retrieve.
   // Format: projects/*/apis/*
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
@@ -473,13 +474,13 @@ message GetApiRequest {
 
 // Request message for CreateApi.
 message CreateApiRequest {
-  // The parent, which owns this collection of apis.
+  // The parent, which owns this collection of APIs.
   // Format: projects/*
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {child_type: "registry.googleapis.com/Api"}
   ];
-  // The api to create.
+  // The API to create.
   Api api = 2 [ (google.api.field_behavior) = REQUIRED ];
   // The ID to use for the api, which will become the final component of
   // the api's resource name.
@@ -491,9 +492,9 @@ message CreateApiRequest {
 
 // Request message for UpdateApi.
 message UpdateApiRequest {
-  // The api to update.
+  // The API to update.
   //
-  // The `name` field is used to identify the api to update.
+  // The `name` field is used to identify the API to update.
   // Format: projects/*/apis/*
   Api api = 1 [ (google.api.field_behavior) = REQUIRED ];
 
@@ -503,7 +504,7 @@ message UpdateApiRequest {
 
 // Request message for DeleteApi.
 message DeleteApiRequest {
-  // The name of the api to delete.
+  // The name of the API to delete.
   // Format: projects/*/apis/*
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
