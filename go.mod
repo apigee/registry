@@ -47,8 +47,9 @@ require (
 	golang.org/x/text v0.3.3 // indirect
 	google.golang.org/api v0.23.0
 	google.golang.org/appengine v1.6.6 // indirect
-	google.golang.org/genproto v0.0.0-20200729003335-053ba62fc06f
-	google.golang.org/grpc v1.30.0
+	google.golang.org/genproto v0.0.0-20200731012542-8145dea6a485
+	google.golang.org/grpc v1.31.0
+	google.golang.org/grpc/examples v0.0.0-20200731180010-8bec2f5d898f // indirect
 	google.golang.org/protobuf v1.25.0
 	gopkg.in/ini.v1 v1.51.0 // indirect
 )
