@@ -65,6 +65,20 @@ func (corpus *Corpus) BuildIndex() {
 	})
 }
 
+// RemoveRequestAndResponseSchemas removes these from the flat schema list.
+func (corpus *Corpus) RemoveRequestAndResponseSchemas() {
+	filteredSchemas := make([]*Schema, 0)
+	for _, schema := range corpus.Schemas {
+		if strings.HasSuffix(schema.SchemaName, "Request") ||
+			strings.HasSuffix(schema.SchemaName, "Response") {
+			// skip it
+		} else {
+			filteredSchemas = append(filteredSchemas, schema)
+		}
+	}
+	corpus.Schemas = filteredSchemas
+}
+
 // ExportSchemas writes an index of Schemas as a CSV
 func (corpus *Corpus) ExportSchemas() error {
 	f, err := os.Create("schemas.csv")

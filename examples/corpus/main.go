@@ -15,6 +15,7 @@ func main() {
 		os.Exit(-1)
 	}
 	c.BuildIndex()
+	c.RemoveRequestAndResponseSchemas()
 	c.ExportOperations()
 	c.ExportSchemas()
 	c.ExportFields()
