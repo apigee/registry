@@ -225,7 +225,7 @@ func TestDemo(t *testing.T) {
 	{
 		revisionIDs = listAllSpecRevisionIDs(ctx, registryClient)
 		if len(revisionIDs) != 4 {
-			t.Errorf("Incorrect revision count: %d", len(revisionIDs))
+			t.Errorf("Incorrect revision count: %d (if this is zero, be sure that all indexes are built)", len(revisionIDs))
 		}
 	}
 	// Check the hash of the original revision.
