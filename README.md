@@ -48,10 +48,10 @@ Along with this automatically-generated CLI, the [cmd/registry](cmd/registry)
 directory contains a hand-written command-line tool that uses the Go GAPIC
 library to support additional API management tasks.
 
-A sample application in [apps/disco-registry](apps/disco-registry) shows a
+An example in [examples/disco-registry](examples/disco-registry) shows a
 sample use of the API to build a collection of API descriptions obtained from
 the [Google API Discovery Service](https://developers.google.com/discovery).
-Another sample, [apps/atlas](apps/atlas) uploads a directory of OpenAPI
+Another example, [examples/atlas](examples/atlas) uploads a directory of OpenAPI
 specifications from a directory in the same style as
 [github.com/APIs-guru/openapi-directory/APIs](https://github.com/APIs-guru/openapi-directory/tree/master/APIs).
 
