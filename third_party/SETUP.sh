@@ -10,9 +10,3 @@ else
   echo "Using previous download of third_party/api-common-protos."
 fi
 
-if [ ! -d "gnostic" ]
-then
-  git clone https://github.com/googleapis/gnostic
-else
-  echo "Using previous download of third_party/gnostic."
-fi

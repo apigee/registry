@@ -4,6 +4,7 @@ lite:
 all:	
 	cd third_party; sh ./SETUP.sh
 	./COMPILE-PROTOS.sh
+	cd examples/corpus; ./COMPILE-PROTOS.sh
 	go install ./...
 
 test:
