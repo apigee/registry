@@ -236,6 +236,7 @@ func linesForOption(opt *parser.Option) []string {
 	body := opt.Constant
 	body = strings.TrimPrefix(body, "{")
 	body = strings.TrimSuffix(body, "}")
+	body = strings.ReplaceAll(body, ",", "\n")
 	return strings.Split(body, "\n")
 }
 
@@ -291,8 +292,8 @@ func trimQuotes(s string) string {
 
 // FlattenPaths removes assignments and parameters from operation paths
 func (corpus *Corpus) FlattenPaths() {
-	r1 := regexp.MustCompile("{.*=(.*)}")
-	r2 := regexp.MustCompile("{.*}")
+	r1 := regexp.MustCompile("{[^{}=]+=([^{}=]+)}")
+	r2 := regexp.MustCompile("{[^{}].*}")
 	for _, op := range corpus.Operations {
 		p := op.Path
 		p = strings.ReplaceAll(p, "{$api_version}", "v*")

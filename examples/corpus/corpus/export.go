@@ -104,10 +104,6 @@ func (ssc *statusSheetConnection) updateRows(cellRange string, values [][]interf
 }
 
 func (ssc *statusSheetConnection) updateWithCorpus(corpus *Corpus) error {
-	// get current sheet contents
-	contents, _ := ssc.fetchSheet("operations!A:E")
-	log.Printf("%+v", contents)
-
 	// update operations
 	ssc.updateRows("operations!A1:E1",
 		[]([]interface{}){[]interface{}{"rpc", "service", "verb", "path", "file"}},
