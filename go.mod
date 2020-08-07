@@ -37,6 +37,7 @@ require (
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/viper v1.4.0
 	github.com/subosito/gotenv v1.2.0 // indirect
+	github.com/yoheimuta/go-protoparser/v4 v4.2.0
 	gitlab.com/golang-commonmark/linkify v0.0.0-20200225224916-64bca66f6ad3 // indirect
 	golang.org/x/exp v0.0.0-20200331195152-e8c3332aa8e5 // indirect
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381
