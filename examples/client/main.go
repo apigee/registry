@@ -32,15 +32,20 @@ import (
 func main() {
 	// This makes a raw gRPC connection.
 	// see the client package for a simpler way to get a Go client.
-	systemRoots, err := x509.SystemCertPool()
-	if err != nil {
-		log.Fatal("failed to load system root CA cert pool")
-	}
-	creds := credentials.NewTLS(&tls.Config{
-		RootCAs: systemRoots,
-	})
 	var opts []grpc.DialOption
-	opts = append(opts, grpc.WithTransportCredentials(creds))
+	insecure := os.Getenv("APG_REGISTRY_INSECURE")
+	if insecure != "" {
+		opts = append(opts, grpc.WithInsecure())
+	} else {
+		systemRoots, err := x509.SystemCertPool()
+		if err != nil {
+			log.Fatal("failed to load system root CA cert pool")
+		}
+		creds := credentials.NewTLS(&tls.Config{
+			RootCAs: systemRoots,
+		})
+		opts = append(opts, grpc.WithTransportCredentials(creds))
+	}
 	address := os.Getenv("APG_REGISTRY_ADDRESS")
 	conn, err := grpc.Dial(address, opts...)
 	if err != nil {

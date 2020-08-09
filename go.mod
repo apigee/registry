@@ -10,7 +10,9 @@ require (
 	github.com/antlr/antlr4 v0.0.0-20200503195918-621b933c7a7f // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.0 // indirect
 	github.com/docopt/docopt-go v0.0.0-20180111231733-ee0de3bc6815
-	github.com/gogo/protobuf v1.3.0
+	github.com/envoyproxy/go-control-plane v0.9.4
+	github.com/gogo/googleapis v1.4.0
+	github.com/gogo/protobuf v1.3.1
 	github.com/golang-commonmark/html v0.0.0-20180910111043-7d7c804e1d46 // indirect
 	github.com/golang-commonmark/linkify v0.0.0-20180910111149-f05efb453a0e // indirect
 	github.com/golang-commonmark/markdown v0.0.0-20180910011815-a8f139058164 // indirect
@@ -43,11 +45,11 @@ require (
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
 	golang.org/x/sync v0.0.0-20200317015054-43a5402ce75a
-	golang.org/x/sys v0.0.0-20200806125547-5acd03effb82 // indirect
+	golang.org/x/sys v0.0.0-20200808120158-1030fc2bf1d9 // indirect
 	golang.org/x/text v0.3.3 // indirect
 	google.golang.org/api v0.23.0
 	google.golang.org/appengine v1.6.6 // indirect
-	google.golang.org/genproto v0.0.0-20200806141610-86f49bd18e98
+	google.golang.org/genproto v0.0.0-20200808173500-a06252235341
 	google.golang.org/grpc v1.31.0
 	google.golang.org/grpc/examples v0.0.0-20200731180010-8bec2f5d898f // indirect
 	google.golang.org/protobuf v1.25.0

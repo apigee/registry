@@ -25,6 +25,12 @@ static_resources:
                         # Reference: https://www.envoyproxy.io/docs/envoy/latest/configuration/http_filters/grpc_json_transcoder_filter#route-configs-for-transcoded-requests
                         - match: { prefix: "/google.cloud.apigee.registry.v1alpha1.Registry" }
                           route: { cluster: grpc, timeout: { seconds: 60 } }
+
+                          per_filter_config:
+                            envoy.ext_authz:
+                              check_settings:
+                                context_extensions:
+                                  x-forwarded-host: original-host-as-context
                       cors:
                         allow_origin: ["*"]
                         allow_methods: GET, PUT, DELETE, POST, OPTIONS
@@ -43,8 +49,13 @@ static_resources:
                         preserve_proto_field_names: false
                   - name: envoy.grpc_web
                   - name: envoy.cors
+                  - name: envoy.ext_authz
+                    config:
+                      grpc_service:
+                        envoy_grpc:
+                          cluster_name: ext-authz
+                        timeout: 0.5s
                   - name: envoy.router
-
   clusters:
     - name: grpc
       connect_timeout: 1.25s
@@ -59,8 +70,31 @@ static_resources:
               - endpoint:
                   address:
                     socket_address:
-                      # WARNING: "docker.for.mac.localhost" has been deprecated from Docker v18.03.0.
-                      # If you're running an older version of Docker, please use "docker.for.mac.localhost" instead.
-                      # Reference: https://docs.docker.com/docker-for-mac/release-notes/#docker-community-edition-18030-ce-mac59-2018-03-26
                       address: localhost
                       port_value: 8080
+    - name: ext-authz
+      type: static
+      http2_protocol_options: {}
+      load_assignment:
+        cluster_name: ext-authz
+        endpoints:
+        - lb_endpoints:
+          - endpoint:
+              address:
+                socket_address:
+                  address: 127.0.0.1
+                  port_value: 50051
+      common_lb_config:
+        healthy_panic_threshold:
+          value: 50.0
+      health_checks:
+        - timeout: 1s
+          interval: 60s
+          interval_jitter: 1s
+          no_traffic_interval: 60s
+          unhealthy_threshold: 1
+          healthy_threshold: 3
+          grpc_health_check:
+            service_name: "envoy.service.auth.v2alpha.Authorization"
+            authority: "server.domain.com"
+      connect_timeout: 0.25s

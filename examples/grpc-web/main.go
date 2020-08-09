@@ -17,8 +17,8 @@ package main
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -31,24 +31,19 @@ import (
 
 func check(err error) {
 	if err != nil {
-		log.Printf("%+v", err)
+		log.Printf("ERROR %+v", err)
 		os.Exit(-1)
 	}
 }
 
 // Do ...
-func Do(service, method string, req, res proto.Message) error {
-	server := os.Getenv("APG_REGISTRY_AUDIENCES")
-	if server == "" {
-		err := fmt.Errorf("APG_REGISTRY_AUDIENCES is unset")
-		return err
-	}
+func Do(server, service, method string, req, res proto.Message) error {
 	reqBytes, err := proto.Marshal(req)
 	if err != nil {
 		return err
 	}
 	buf := new(bytes.Buffer)
-	buf.WriteByte(0x0)
+	buf.WriteByte(0x0) // compressed-flag, message is uncompresseed
 	err = binary.Write(buf, binary.BigEndian, int32(len(reqBytes)))
 	if err != nil {
 		return err
@@ -59,17 +54,40 @@ func Do(service, method string, req, res proto.Message) error {
 	if err != nil {
 		return err
 	}
+	request.Header.Set("authorization", "Bearer foo")
 	request.Header.Set("content-type", "application/grpc-web+proto")
 	response, err := http.DefaultClient.Do(request)
 	if err != nil {
 		return err
 	}
-	resBody, err := ioutil.ReadAll(response.Body)
+	if response.StatusCode != 200 {
+		return fmt.Errorf("non-ok response %d", response.StatusCode)
+	}
+	ss := response.Header["Grpc-Status"]
+	if len(ss) > 0 {
+		return fmt.Errorf("call completed with gRPC status %s", ss[0])
+	}
+	var compression int8
+	err = binary.Read(response.Body, binary.BigEndian, &compression)
 	if err != nil {
 		return err
 	}
-	payloadLength := resBody[4]
-	payloadBody := resBody[5 : 5+payloadLength]
+	if compression != 0 {
+		return errors.New("unsupported compressed response")
+	}
+	var payloadLength int32
+	err = binary.Read(response.Body, binary.BigEndian, &payloadLength)
+	if err != nil {
+		return err
+	}
+	payloadBody := make([]byte, payloadLength)
+	c, err := response.Body.Read(payloadBody)
+	if err != nil {
+		return err
+	}
+	if c != int(payloadLength) {
+		return fmt.Errorf("error reading payload, expected %d bytes, got %d", payloadLength, c)
+	}
 	if response.StatusCode != http.StatusOK {
 		stpb := &statuspb.Status{}
 		err := proto.Unmarshal(payloadBody, stpb)
@@ -77,7 +95,7 @@ func Do(service, method string, req, res proto.Message) error {
 			return err
 		}
 		st := status.FromProto(stpb)
-		log.Printf("%+v", st.Err())
+		log.Printf("status %+v", st.Err())
 	}
 	err = proto.Unmarshal(payloadBody, res)
 	if err != nil {
@@ -87,12 +105,16 @@ func Do(service, method string, req, res proto.Message) error {
 }
 
 func main() {
+	server := os.Getenv("APG_REGISTRY_AUDIENCES")
+	if server == "" {
+		check(fmt.Errorf("APG_REGISTRY_AUDIENCES is unset"))
+	}
 	// Make a sample API call with gRPC Web.
 	req := &rpc.ListProjectsRequest{
-		PageSize: 50,
+		PageSize: 4,
 	}
 	res := &rpc.ListProjectsResponse{}
-	err := Do("google.cloud.apigee.registry.v1alpha1.Registry", "ListProjects", req, res)
+	err := Do(server, "google.cloud.apigee.registry.v1alpha1.Registry", "ListProjects", req, res)
 	check(err)
-	log.Printf("%+v", res)
+	log.Printf("response: %+v", res)
 }
