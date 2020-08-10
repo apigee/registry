@@ -34,6 +34,12 @@ static_resources:
                 http_filters:
                   - name: envoy.grpc_web
                   - name: envoy.cors
+                  - name: envoy.ext_authz
+                    config:
+                      grpc_service:
+                        envoy_grpc:
+                          cluster_name: ext-authz
+                        timeout: 0.5s
                   - name: envoy.router
 
   clusters:
@@ -50,8 +56,31 @@ static_resources:
               - endpoint:
                   address:
                     socket_address:
-                      # WARNING: "docker.for.mac.localhost" has been deprecated from Docker v18.03.0.
-                      # If you're running an older version of Docker, please use "docker.for.mac.localhost" instead.
-                      # Reference: https://docs.docker.com/docker-for-mac/release-notes/#docker-community-edition-18030-ce-mac59-2018-03-26
-                      address: localhost
+                      address: 127.0.0.1
                       port_value: 8081
+    - name: ext-authz
+      type: static
+      http2_protocol_options: {}
+      load_assignment:
+        cluster_name: ext-authz
+        endpoints:
+        - lb_endpoints:
+          - endpoint:
+              address:
+                socket_address:
+                  address: 127.0.0.1
+                  port_value: 50051
+      common_lb_config:
+        healthy_panic_threshold:
+          value: 50.0
+      health_checks:
+        - timeout: 1s
+          interval: 600s
+          interval_jitter: 1s
+          no_traffic_interval: 600s
+          unhealthy_threshold: 1
+          healthy_threshold: 3
+          grpc_health_check:
+            service_name: "envoy.service.auth.v2alpha.Authorization"
+            authority: "server.domain.com"
+      connect_timeout: 0.25s

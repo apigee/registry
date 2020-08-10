@@ -25,7 +25,6 @@ static_resources:
                         # Reference: https://www.envoyproxy.io/docs/envoy/latest/configuration/http_filters/grpc_json_transcoder_filter#route-configs-for-transcoded-requests
                         - match: { prefix: "/google.cloud.apigee.registry.v1alpha1.Registry" }
                           route: { cluster: grpc, timeout: { seconds: 60 } }
-
                           per_filter_config:
                             envoy.ext_authz:
                               check_settings:

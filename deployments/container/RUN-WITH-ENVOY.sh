@@ -4,6 +4,9 @@
 # background before running envoy.
 #
 
+# run the authz server on its default port.
+/authz-server &
+
 # run the registry server on a fixed port.
 PORT=8081 /registry-server &
 

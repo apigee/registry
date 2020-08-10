@@ -54,7 +54,8 @@ func Do(server, service, method string, req, res proto.Message) error {
 	if err != nil {
 		return err
 	}
-	request.Header.Set("authorization", "Bearer foo")
+	token := os.Getenv("APG_REGISTRY_TOKEN")
+	request.Header.Set("authorization", "Bearer "+token)
 	request.Header.Set("content-type", "application/grpc-web+proto")
 	response, err := http.DefaultClient.Do(request)
 	if err != nil {

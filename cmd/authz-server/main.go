@@ -15,6 +15,7 @@
 package main
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -84,20 +85,44 @@ func (a *authorizationServer) Check(ctx context.Context, req *auth.CheckRequest)
 		// there's no auth header, so the request is uncredentialed.
 		return denyUncredentialedRequest(), nil
 	}
+	parts := strings.Split(authHeader, "Bearer ")
+	if len(parts) != 2 {
+		return denyMalformedCredentials(), nil
+	}
+	credential := parts[1]
 
-	user, err := getUser(authHeader)
-	if err != nil || user == nil {
-		// we can't find a user for the auth header, so the user is unauthenticated.
-		return denyUnauthenticatedUser(), nil
+	if isJWTToken(credential) {
+		// try to verify an identity token
+		token, err := getVerifiedToken(credential)
+		if err == nil && token != nil {
+			if isWriter(token.Email) || isReadOnlyMethod(req.Attributes.Request.Http.Headers[":path"]) {
+				// the user is authorized so we allow the call.
+				return allowAuthorizedUser(token.Email), nil
+			}
+			// we have a user, but they aren't authorized to do this.
+			return denyUnauthorizedUser(), nil
+		}
+		if err != nil {
+			log.Printf("%s", err.Error())
+		}
+	} else {
+		// try to verify an access token
+		user, err := getUser(credential)
+		if err == nil && user != nil {
+			if isWriter(user.Email) || isReadOnlyMethod(req.Attributes.Request.Http.Headers[":path"]) {
+				// the user is authorized so we allow the call.
+				return allowAuthorizedUser(user.Email), nil
+			}
+			// we have a user, but they aren't authorized to do this.
+			return denyUnauthorizedUser(), nil
+		}
+		if err != nil {
+			log.Printf("%s", err.Error())
+		}
 	}
 
-	if user.isWriter() || isReadOnlyMethod(req.Attributes.Request.Http.Headers[":path"]) {
-		// the user is authorized so we allow the call.
-		return allowAuthorizedUser(user.Email), nil
-	}
-
-	// we have a user, but they aren't authorized to do this.
-	return denyUnauthorizedUser(), nil
+	// we can't find a user for the auth header, so the user is unauthenticated.
+	return denyUnauthenticatedUser(), nil
 }
 
 // isReadOnlyMethod recognizes Get and List operations as immutable.
@@ -110,7 +135,40 @@ func isReadOnlyMethod(path string) bool {
 	return false
 }
 
-// GoogleUser holds information a Google user.
+// TODO: read this from a yaml file
+var writers = []string{"timburks@google.com", "timburks@gmail.com"}
+
+// isWriter returns true if a user is allowed to make mutable operations.
+func isWriter(email string) bool {
+	for _, writer := range writers {
+		if email == writer {
+			return true
+		}
+	}
+	return false
+}
+
+type JWTToken struct {
+	Alg string `json:"alg"`
+	Typ string `json:"typ"`
+}
+
+func isJWTToken(credential string) bool {
+	parts := strings.Split(credential, ".")
+	if len(parts) != 3 {
+		return false
+	}
+	header := parts[0]
+	v, err := base64.RawURLEncoding.DecodeString(header)
+	if err != nil {
+		return false
+	}
+	var jwt JWTToken
+	json.Unmarshal(v, &jwt)
+	return jwt.Typ == "JWT"
+}
+
+// GoogleUser holds information about a Google user.
 type GoogleUser struct {
 	ID            string `json:"id"`
 	Email         string `json:"email"`
@@ -118,29 +176,17 @@ type GoogleUser struct {
 	PictureURL    string `json:"picture"`
 }
 
-// TODO: read this from a yaml file
-var writers = []string{"timburks@google.com", "timburks@gmail.com"}
-
-// isWriter returns true if a user is allowed to make mutable operations.
-func (g *GoogleUser) isWriter() bool {
-	for _, writer := range writers {
-		if g.Email == writer {
-			return true
-		}
-	}
-	return false
-}
-
 // in-memory cache of users
 var users map[string]*GoogleUser
 
-func getUser(authHeader string) (*GoogleUser, error) {
+func getUser(credential string) (*GoogleUser, error) {
 	if users == nil {
 		users = make(map[string]*GoogleUser)
 	}
 	// first check the cache
-	cachedUser := users[authHeader]
+	cachedUser := users[credential]
 	if cachedUser != nil {
+		log.Printf("cached user: %+v for %s", cachedUser, credential)
 		return cachedUser, nil
 	}
 	// otherwise, call the Google userinfo API
@@ -148,13 +194,13 @@ func getUser(authHeader string) (*GoogleUser, error) {
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Add("Authorization", authHeader)
+	req.Header.Add("Authorization", "Bearer "+credential)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
 	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("Unexpected response from auth server: %d", resp.StatusCode)
+		return nil, fmt.Errorf("Unsuccessful response from userinfo service: %d", resp.StatusCode)
 	}
 	b, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -165,8 +211,57 @@ func getUser(authHeader string) (*GoogleUser, error) {
 	if err != nil {
 		return nil, err
 	}
-	users[authHeader] = user
+	users[credential] = user
+	log.Printf("verified user: %+v for %s", user, credential)
 	return user, nil
+}
+
+// GoogleToken holds information about a Google identity token (a JWT).
+type GoogleToken struct {
+	Email         string `json:"email"`
+	EmailVerified string `json:"email_verified"`
+}
+
+// in-memory cache of tokens
+var tokens map[string]*GoogleToken
+
+func getVerifiedToken(credential string) (*GoogleToken, error) {
+	if tokens == nil {
+		tokens = make(map[string]*GoogleToken)
+	}
+	// first check the cache
+	cachedToken := tokens[credential]
+	if cachedToken != nil {
+		log.Printf("cached token: %+v for %s", cachedToken, credential)
+		return cachedToken, nil
+	}
+	// otherwise, call the Google tokeninfo API
+	req, err := http.NewRequest("GET", "https://oauth2.googleapis.com/tokeninfo", nil)
+	if err != nil {
+		return nil, err
+	}
+	q := req.URL.Query()
+	q.Add("id_token", credential)
+	req.URL.RawQuery = q.Encode()
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("Unsuccessful response from tokeninfo service: %d", resp.StatusCode)
+	}
+	b, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	token := &GoogleToken{}
+	err = json.Unmarshal(b, token)
+	if err != nil {
+		return nil, err
+	}
+	tokens[credential] = token
+	log.Printf("verified token: %+v for %s", token, credential)
+	return token, nil
 }
 
 func allowAuthorizedUser(username string) *auth.CheckResponse {
@@ -232,6 +327,22 @@ func denyUncredentialedRequest() *auth.CheckResponse {
 					Code: envoy_type.StatusCode_Unauthorized,
 				},
 				Body: "Authorization is missing",
+			},
+		},
+	}
+}
+
+func denyMalformedCredentials() *auth.CheckResponse {
+	return &auth.CheckResponse{
+		Status: &rpcstatus.Status{
+			Code: int32(rpc.UNAUTHENTICATED),
+		},
+		HttpResponse: &auth.CheckResponse_DeniedResponse{
+			DeniedResponse: &auth.DeniedHttpResponse{
+				Status: &envoy_type.HttpStatus{
+					Code: envoy_type.StatusCode_Unauthorized,
+				},
+				Body: "Authorization header is malformed",
 			},
 		},
 	}

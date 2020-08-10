@@ -20,6 +20,9 @@ COPY . ./
 # Build the binary.
 RUN CGO_ENABLED=0 GOOS=linux go build -v -o registry-server ./cmd/registry-server
 
+# Build the authz-server
+RUN CGO_ENABLED=0 GOOS=linux go build -v -o authz-server ./cmd/authz-server
+
 # Use an Envoy release image to get envoy in the image.
 # This is the last version that supports allow_origin in CorsPolicy
 # https://www.envoyproxy.io/docs/envoy/latest/version_history/v1.12.0
@@ -28,8 +31,11 @@ FROM envoyproxy/envoy:v1.11.2
 COPY deployments/container/envoy.yaml /etc/envoy/envoy.yaml
 COPY deployments/container/RUN-WITH-ENVOY.sh /RUN-WITH-ENVOY.sh
 
-# Copy the binary to the production image from the builder stage.
+# Copy the registry-server binary to the production image from the builder stage.
 COPY --from=builder /app/registry-server /registry-server
+
+# Copy the authz-server binary to the production image from the builder stage.
+COPY --from=builder /app/authz-server /authz-server
 
 # Run the web service on container startup.
 CMD ["/RUN-WITH-ENVOY.sh"]
