@@ -1,5 +1,6 @@
-cmd/apg
-gapic
-rpc
+cmd/apg/*.go
+gapic/*.go
+rpc/*.go
+*.pb.go
 
 proto.pb
