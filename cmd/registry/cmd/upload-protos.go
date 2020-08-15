@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package cmd
 
 import (
 	"archive/zip"
@@ -29,38 +29,47 @@ import (
 
 	"github.com/apigee/registry/connection"
 	rpcpb "github.com/apigee/registry/rpc"
+	"github.com/spf13/cobra"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
-const directory = "."
-const project = "googleapis"
-
-var registryClient connection.Client
-
-func notFound(err error) bool {
-	if err == nil {
-		return false
-	}
-	st, ok := status.FromError(err)
-	if !ok {
-		return false
-	}
-	return st.Code() == codes.NotFound
+func init() {
+	uploadCmd.AddCommand(uploadProtosCmd)
+	uploadProtosCmd.Flags().String("project_id", "", "Project id.")
 }
 
-func alreadyExists(err error) bool {
-	if err == nil {
-		return false
-	}
-	st, ok := status.FromError(err)
-	if !ok {
-		return false
-	}
-	return st.Code() == codes.AlreadyExists
+// uploadProtosCmd represents the upload protos command
+var uploadProtosCmd = &cobra.Command{
+	Use:   "protos",
+	Short: "Upload directories of proto files describing APIs.",
+	Long:  "Upload directories of proto files describing APIs.",
+	Run: func(cmd *cobra.Command, args []string) {
+		var err error
+		ctx := context.TODO()
+		flagset := cmd.LocalFlags()
+		projectID, err = flagset.GetString("project_id")
+		if err != nil {
+			log.Fatalf("%s", err.Error())
+		}
+		fmt.Printf("protos called with args %+v and project_id %s\n", args, projectID)
+
+		client, err := connection.NewClient(ctx)
+		if err != nil {
+			log.Fatalf("%s", err.Error())
+		}
+		if client == nil {
+			log.Fatalf("that's bad")
+		}
+
+		for _, arg := range args {
+			log.Printf("%+v", arg)
+			scanDirectory(arg)
+		}
+	},
 }
 
-func main() {
+func scanDirectory(directory string) {
 	var err error
 
 	ctx := context.Background()
@@ -92,7 +101,7 @@ func main() {
 			processes++
 
 			go func() {
-				err := handleSpec(p)
+				err := handleSpec(p, directory)
 				if err != nil {
 					fmt.Printf("%s\n", err.Error())
 				}
@@ -109,9 +118,35 @@ func main() {
 	}
 }
 
-func handleSpec(path string) error {
+var projectID string
+
+var registryClient connection.Client
+
+func notFound(err error) bool {
+	if err == nil {
+		return false
+	}
+	st, ok := status.FromError(err)
+	if !ok {
+		return false
+	}
+	return st.Code() == codes.NotFound
+}
+
+func alreadyExists(err error) bool {
+	if err == nil {
+		return false
+	}
+	st, ok := status.FromError(err)
+	if !ok {
+		return false
+	}
+	return st.Code() == codes.AlreadyExists
+}
+
+func handleSpec(path, directory string) error {
 	// Compute the API name from the path to the spec file.
-	name := strings.TrimPrefix(path, directory)
+	name := strings.TrimPrefix(path, directory+"/")
 	parts := strings.Split(name, "/")
 	version := parts[len(parts)-1]
 	api := strings.Join(parts[0:len(parts)-1], "-")
@@ -126,12 +161,12 @@ func uploadSpec(apiName, version, style, path string) error {
 	// If the API does not exist, create it.
 	{
 		request := &rpcpb.GetApiRequest{
-			Name: "projects/" + project + "/apis/" + api,
+			Name: "projects/" + projectID + "/apis/" + api,
 		}
 		_, err := registryClient.GetApi(ctx, request)
 		if notFound(err) {
 			request := &rpcpb.CreateApiRequest{
-				Parent: "projects/" + project,
+				Parent: "projects/" + projectID,
 				ApiId:  api,
 				Api: &rpcpb.Api{
 					DisplayName: apiName,
@@ -153,12 +188,12 @@ func uploadSpec(apiName, version, style, path string) error {
 	// If the API version does not exist, create it.
 	{
 		request := &rpcpb.GetVersionRequest{
-			Name: "projects/" + project + "/apis/" + api + "/versions/" + version,
+			Name: "projects/" + projectID + "/apis/" + api + "/versions/" + version,
 		}
 		_, err := registryClient.GetVersion(ctx, request)
 		if notFound(err) {
 			request := &rpcpb.CreateVersionRequest{
-				Parent:    "projects/" + project + "/apis/" + api,
+				Parent:    "projects/" + projectID + "/apis/" + api,
 				VersionId: version,
 				Version:   &rpcpb.Version{},
 			}
@@ -179,7 +214,7 @@ func uploadSpec(apiName, version, style, path string) error {
 	{
 		filename := "protos.zip"
 		request := &rpcpb.GetSpecRequest{
-			Name: "projects/" + project + "/apis/" + api +
+			Name: "projects/" + projectID + "/apis/" + api +
 				"/versions/" + version +
 				"/specs/" + filename,
 		}
@@ -192,7 +227,7 @@ func uploadSpec(apiName, version, style, path string) error {
 				return err
 			}
 			request := &rpcpb.CreateSpecRequest{
-				Parent: "projects/" + project + "/apis/" + api + "/versions/" + version,
+				Parent: "projects/" + projectID + "/apis/" + api + "/versions/" + version,
 				SpecId: filename,
 				Spec: &rpcpb.Spec{
 					Style:    "proto+zip",
