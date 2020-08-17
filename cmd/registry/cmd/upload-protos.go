@@ -146,16 +146,17 @@ func alreadyExists(err error) bool {
 
 func handleSpec(path, directory string) error {
 	// Compute the API name from the path to the spec file.
-	name := strings.TrimPrefix(path, directory+"/")
+	prefix := directory + "/"
+	name := strings.TrimPrefix(path, prefix)
 	parts := strings.Split(name, "/")
 	version := parts[len(parts)-1]
 	api := strings.Join(parts[0:len(parts)-1], "-")
 	fmt.Printf("api:%+v version:%+v\n", api, version)
 	// Upload the spec for the specified api and version
-	return uploadSpec(api, version, "protos.zip", path)
+	return uploadSpec(api, version, "protos.zip", path, prefix)
 }
 
-func uploadSpec(apiName, version, style, path string) error {
+func uploadSpec(apiName, version, style, path, prefix string) error {
 	ctx := context.TODO()
 	api := strings.Replace(apiName, "/", "-", -1)
 	// If the API does not exist, create it.
@@ -222,7 +223,7 @@ func uploadSpec(apiName, version, style, path string) error {
 		if notFound(err) {
 			// build a zip archive with the contents of the path
 			// https://golangcode.com/create-zip-files-in-go/
-			buf, err := zipArchiveOfPath(path)
+			buf, err := zipArchiveOfPath(path, prefix)
 			if err != nil {
 				return err
 			}
@@ -253,7 +254,7 @@ func uploadSpec(apiName, version, style, path string) error {
 	return nil
 }
 
-func zipArchiveOfPath(path string) (buf bytes.Buffer, err error) {
+func zipArchiveOfPath(path, prefix string) (buf bytes.Buffer, err error) {
 	zipWriter := zip.NewWriter(&buf)
 	defer zipWriter.Close()
 
@@ -266,7 +267,7 @@ func zipArchiveOfPath(path string) (buf bytes.Buffer, err error) {
 			if info.IsDir() {
 				return nil
 			}
-			if err = addFileToZip(zipWriter, p); err != nil {
+			if err = addFileToZip(zipWriter, p, prefix); err != nil {
 				log.Printf("error adding file %s", err.Error())
 				return err
 			}
@@ -275,7 +276,7 @@ func zipArchiveOfPath(path string) (buf bytes.Buffer, err error) {
 	return buf, nil
 }
 
-func addFileToZip(zipWriter *zip.Writer, filename string) error {
+func addFileToZip(zipWriter *zip.Writer, filename, prefix string) error {
 	log.Printf("AddFileToZip(%s)", filename)
 	fileToZip, err := os.Open(filename)
 	if err != nil {
@@ -296,7 +297,8 @@ func addFileToZip(zipWriter *zip.Writer, filename string) error {
 
 	// Using FileInfoHeader() above only uses the basename of the file. If we want
 	// to preserve the folder structure we can overwrite this with the full path.
-	header.Name = filename
+	name := strings.TrimPrefix(filename, prefix)
+	header.Name = name
 
 	// Change to deflate to gain better compression
 	// see http://golang.org/pkg/archive/zip/#pkg-constants
