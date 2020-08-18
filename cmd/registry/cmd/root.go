@@ -29,8 +29,8 @@ var cfgFile string
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "registry",
-	Short: "A simple and eclectic utility for working with the API Registry.",
-	Long:  "The registry tool provides features for managing and manipulating API descriptions stored in the API Registry.",
+	Short: "A simple and eclectic utility for working with the Registry.",
+	Long:  "The registry tool provides features for managing and manipulating API descriptions stored in the Registry.",
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.

@@ -36,8 +36,8 @@ import (
 // exportCmd represents the export command
 var exportCmd = &cobra.Command{
 	Use:   "export",
-	Short: "Export properties to a Google sheet",
-	Long:  `Export properties to a Google sheet`,
+	Short: "Export properties to a Google sheet.",
+	Long:  `Export properties to a Google sheet.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.TODO()
 

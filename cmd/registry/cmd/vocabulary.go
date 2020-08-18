@@ -35,8 +35,8 @@ import (
 // vocabularyCmd represents the vocabulary command
 var vocabularyCmd = &cobra.Command{
 	Use:   "vocabulary",
-	Short: "Generate a summary of an API spec",
-	Long:  `Generate a summary of an API spec.`,
+	Short: "Compute the vocabulary of an API spec.",
+	Long:  `Compute the vocabulary of an API spec.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.TODO()
 		log.Printf("vocabulary called %+v", args)

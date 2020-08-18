@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/gapic"
@@ -26,14 +27,15 @@ import (
 	metrics "github.com/googleapis/gnostic/metrics"
 	"github.com/spf13/cobra"
 	"google.golang.org/api/iterator"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
 
 // getCmd represents the get command
 var getCmd = &cobra.Command{
 	Use:   "get",
-	Short: "Get property values.",
-	Long:  `Get property values.`,
+	Short: "Get entity values.",
+	Long:  `Get entity values.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.TODO()
 
@@ -42,50 +44,21 @@ var getCmd = &cobra.Command{
 			log.Fatalf("%s", err.Error())
 		}
 
-		var name, property string
+		var name string
 		if len(args) > 0 {
 			name = args[0]
 		}
-		if len(args) > 1 {
-			property = args[1]
-		}
 
-		// first look for the main resource types
-
-		if m := names.SpecRegexp().FindAllStringSubmatch(name, -1); m != nil {
-			log.Printf(" get a spec")
-
-			_, err = getSpec(ctx, client, m[0], printSpecDetail)
-
-		} else if m := names.ProjectRegexp().FindAllStringSubmatch(name, -1); m != nil {
-			// find all matching properties for a project
-			segments := m[0]
-			err = getNamedProperty(ctx, client, segments[1], "", property)
-			if err != nil {
-				log.Fatalf("%s", err.Error())
-			}
+		if m := names.ProjectRegexp().FindAllStringSubmatch(name, -1); m != nil {
+			_, err = getProject(ctx, client, m[0], printProjectDetail)
+		} else if m := names.ApiRegexp().FindAllStringSubmatch(name, -1); m != nil {
+			_, err = getApi(ctx, client, m[0], printApiDetail)
+		} else if m := names.VersionRegexp().FindAllStringSubmatch(name, -1); m != nil {
+			_, err = getVersion(ctx, client, m[0], printVersionDetail)
 		} else if m := names.SpecRegexp().FindAllStringSubmatch(name, -1); m != nil {
-			// find all matching properties for matching specs
-			segments := m[0]
-			if sliceContainsString(segments, "-") {
-				err = listSpecs(ctx, client, segments, func(spec *rpc.Spec) {
-					getNamedProperty(ctx, client, segments[1], spec.GetName(), property)
-				})
-				if err != nil {
-					log.Fatalf("%s", err.Error())
-				}
-			} else {
-				spec, err := getSpec(ctx, client, segments, func(s *rpc.Spec) {})
-				if err != nil {
-					log.Fatalf("%s", err.Error())
-				}
-				err = getNamedProperty(ctx, client, segments[1], spec.GetName(), property)
-				if err != nil {
-					log.Fatalf("%s", err.Error())
-				}
-			}
+			_, err = getSpec(ctx, client, m[0], getContents, printSpecDetail)
 		} else {
-			log.Printf("Unable to process %+v", args)
+			log.Printf("Unsupported entity %+v", args)
 		}
 	},
 }
@@ -108,8 +81,11 @@ func getNamedProperty(ctx context.Context, client *gapic.RegistryClient, project
 	return nil
 }
 
+var getContents bool
+
 func init() {
 	rootCmd.AddCommand(getCmd)
+	getCmd.Flags().BoolVar(&getContents, "contents", false, "Get item contents (if applicable).")
 }
 
 func printPropertyDetail(property *rpc.Property) {
@@ -144,7 +120,26 @@ func printPropertyDetail(property *rpc.Property) {
 	fmt.Printf("\n")
 }
 
-func printSpecDetail(spec *rpc.Spec) {
-	fmt.Println(spec.Name)
-	fmt.Printf("%+v\n", spec)
+func printProjectDetail(message *rpc.Project) {
+	printMessage(message)
+}
+
+func printApiDetail(message *rpc.Api) {
+	printMessage(message)
+}
+
+func printMessage(message proto.Message) {
+	fmt.Println(protojson.Format(message))
+}
+
+func printVersionDetail(message *rpc.Version) {
+	printMessage(message)
+}
+
+func printSpecDetail(message *rpc.Spec) {
+	if getContents {
+		os.Stdout.Write(message.GetContents())
+	} else {
+		printMessage(message)
+	}
 }

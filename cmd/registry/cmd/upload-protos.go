@@ -42,8 +42,8 @@ func init() {
 // uploadProtosCmd represents the upload protos command
 var uploadProtosCmd = &cobra.Command{
 	Use:   "protos",
-	Short: "Upload directories of proto files describing APIs.",
-	Long:  "Upload directories of proto files describing APIs.",
+	Short: "Upload Protocol Buffer descriptions of APIs.",
+	Long:  "Upload Protocol Buffer descriptions of APIs.",
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
 		ctx := context.TODO()
@@ -64,12 +64,12 @@ var uploadProtosCmd = &cobra.Command{
 
 		for _, arg := range args {
 			log.Printf("%+v", arg)
-			scanDirectory(arg)
+			scanDirectoryForProtos(arg)
 		}
 	},
 }
 
-func scanDirectory(directory string) {
+func scanDirectoryForProtos(directory string) {
 	var err error
 
 	ctx := context.Background()
@@ -101,7 +101,7 @@ func scanDirectory(directory string) {
 			processes++
 
 			go func() {
-				err := handleSpec(p, directory)
+				err := handleProtoSpec(p, directory)
 				if err != nil {
 					fmt.Printf("%s\n", err.Error())
 				}
@@ -144,7 +144,7 @@ func alreadyExists(err error) bool {
 	return st.Code() == codes.AlreadyExists
 }
 
-func handleSpec(path, directory string) error {
+func handleProtoSpec(path, directory string) error {
 	// Compute the API name from the path to the spec file.
 	prefix := directory + "/"
 	name := strings.TrimPrefix(path, prefix)
@@ -153,10 +153,10 @@ func handleSpec(path, directory string) error {
 	api := strings.Join(parts[0:len(parts)-1], "-")
 	fmt.Printf("api:%+v version:%+v\n", api, version)
 	// Upload the spec for the specified api and version
-	return uploadSpec(api, version, "protos.zip", path, prefix)
+	return uploadProtoSpec(api, version, "protos.zip", path, prefix)
 }
 
-func uploadSpec(apiName, version, style, path, prefix string) error {
+func uploadProtoSpec(apiName, version, style, path, prefix string) error {
 	ctx := context.TODO()
 	api := strings.Replace(apiName, "/", "-", -1)
 	// If the API does not exist, create it.
@@ -265,6 +265,10 @@ func zipArchiveOfPath(path, prefix string) (buf bytes.Buffer, err error) {
 			}
 			fmt.Printf("<-- %s (%t)\n", p, !info.IsDir())
 			if info.IsDir() {
+				return nil
+			}
+			// only upload proto files
+			if !strings.HasSuffix(p, ".proto") {
 				return nil
 			}
 			if err = addFileToZip(zipWriter, p, prefix); err != nil {

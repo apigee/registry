@@ -41,8 +41,8 @@ import (
 // summarizeCmd represents the summarize command
 var summarizeCmd = &cobra.Command{
 	Use:   "summarize",
-	Short: "Generate a summary of an API spec",
-	Long:  `Generate a summary of an API spec.`,
+	Short: "Compute a summary of an API spec.",
+	Long:  `Compute a summary of an API spec.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.TODO()
 		log.Printf("summarize called %+v", args)

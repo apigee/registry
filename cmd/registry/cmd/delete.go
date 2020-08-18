@@ -29,8 +29,8 @@ import (
 // deleteCmd represents the delete command
 var deleteCmd = &cobra.Command{
 	Use:   "delete",
-	Short: "Deletes matching entities and their children.",
-	Long:  "Deletes matching entities and their children.",
+	Short: "Delete matching entities and their children.",
+	Long:  "Delete matching entities and their children.",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Printf("delete called with %+v\n", args)
 		name := args[0]
@@ -40,6 +40,8 @@ var deleteCmd = &cobra.Command{
 			deleteAllPropertiesInProject(m[0][1])
 		} else if m := names.LabelsRegexp().FindAllStringSubmatch(name, -1); m != nil {
 			deleteAllLabelsInProject(m[0][1])
+		} else {
+			fmt.Printf("Unsupported resource name. See the 'apg registry delete-' subcommands for alternatives.\n")
 		}
 	},
 }

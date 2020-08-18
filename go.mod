@@ -8,6 +8,7 @@ require (
 	cloud.google.com/go/pubsub v1.2.0
 	git.apache.org/thrift.git v0.12.0 // indirect
 	github.com/antlr/antlr4 v0.0.0-20200503195918-621b933c7a7f // indirect
+	github.com/bmatcuk/doublestar v1.3.2 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.0 // indirect
 	github.com/docopt/docopt-go v0.0.0-20180111231733-ee0de3bc6815
 	github.com/envoyproxy/go-control-plane v0.9.4
@@ -45,7 +46,7 @@ require (
 	golang.org/x/net v0.0.0-20200813134508-3edf25e44fcc
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
 	golang.org/x/sync v0.0.0-20200317015054-43a5402ce75a
-	golang.org/x/sys v0.0.0-20200814200057-3d37ad5750ed // indirect
+	golang.org/x/sys v0.0.0-20200817155316-9781c653f443 // indirect
 	golang.org/x/text v0.3.3 // indirect
 	google.golang.org/api v0.23.0
 	google.golang.org/appengine v1.6.6 // indirect

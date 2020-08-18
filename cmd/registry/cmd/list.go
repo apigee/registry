@@ -62,8 +62,8 @@ func printLabel(label *rpc.Label) {
 // listCmd represents the list command
 var listCmd = &cobra.Command{
 	Use:   "list",
-	Short: "List resources in the API model.",
-	Long:  "List resources in the API model.",
+	Short: "List resources in the Registry.",
+	Long:  "List resources in the Registry.",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.TODO()
@@ -91,28 +91,28 @@ var listCmd = &cobra.Command{
 			if sliceContainsString(segments, "-") {
 				err = listProjects(ctx, client, segments, printProject)
 			} else {
-				err = getProject(ctx, client, segments, printProject)
+				_, err = getProject(ctx, client, segments, printProject)
 			}
 		} else if m := names.ApiRegexp().FindAllStringSubmatch(name, -1); m != nil {
 			segments := m[0]
 			if sliceContainsString(segments, "-") {
 				err = listApis(ctx, client, segments, printApi)
 			} else {
-				err = getApi(ctx, client, segments, printApi)
+				_, err = getApi(ctx, client, segments, printApi)
 			}
 		} else if m := names.VersionRegexp().FindAllStringSubmatch(name, -1); m != nil {
 			segments := m[0]
 			if sliceContainsString(segments, "-") {
 				err = listVersions(ctx, client, segments, printVersion)
 			} else {
-				err = getVersion(ctx, client, segments, printVersion)
+				_, err = getVersion(ctx, client, segments, printVersion)
 			}
 		} else if m := names.SpecRegexp().FindAllStringSubmatch(name, -1); m != nil {
 			segments := m[0]
 			if sliceContainsString(segments, "-") {
 				err = listSpecs(ctx, client, segments, printSpec)
 			} else {
-				_, err = getSpec(ctx, client, segments, printSpec)
+				_, err = getSpec(ctx, client, segments, false, printSpec)
 			}
 		} else if m := names.PropertyRegexp().FindAllStringSubmatch(name, -1); m != nil {
 			segments := m[0]
@@ -332,54 +332,62 @@ func listLabels(ctx context.Context,
 func getProject(ctx context.Context,
 	client *gapic.RegistryClient,
 	segments []string,
-	handler projectHandler) error {
+	handler projectHandler) (*rpc.Project, error) {
 	request := &rpc.GetProjectRequest{
 		Name: "projects/" + segments[1],
 	}
 	project, err := client.GetProject(ctx, request)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	fmt.Printf("%+v\n", project)
-	return nil
+	return nil, nil
 }
 
 func getApi(ctx context.Context,
 	client *gapic.RegistryClient,
 	segments []string,
-	handler apiHandler) error {
+	handler apiHandler) (*rpc.Api, error) {
 	request := &rpc.GetApiRequest{
 		Name: "projects/" + segments[1] + "/apis/" + segments[2],
 	}
 	api, err := client.GetApi(ctx, request)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	handler(api)
-	return nil
+	return nil, nil
 }
 
 func getVersion(ctx context.Context,
 	client *gapic.RegistryClient,
 	segments []string,
-	handler versionHandler) error {
+	handler versionHandler) (*rpc.Version, error) {
 	request := &rpc.GetVersionRequest{
 		Name: "projects/" + segments[1] + "/apis/" + segments[2] + "/versions/" + segments[3],
 	}
 	version, err := client.GetVersion(ctx, request)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	handler(version)
-	return nil
+	return nil, nil
 }
 
 func getSpec(ctx context.Context,
 	client *gapic.RegistryClient,
 	segments []string,
+	getContents bool,
 	handler specHandler) (*rpc.Spec, error) {
+
+	view := rpc.SpecView_BASIC
+	if getContents {
+		view = rpc.SpecView_FULL
+	}
+
 	request := &rpc.GetSpecRequest{
 		Name: "projects/" + segments[1] + "/apis/" + segments[2] + "/versions/" + segments[3] + "/specs/" + segments[4],
+		View: view,
 	}
 	spec, err := client.GetSpec(ctx, request)
 	if err != nil {

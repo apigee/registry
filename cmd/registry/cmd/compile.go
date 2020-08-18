@@ -36,7 +36,7 @@ import (
 // compileCmd represents the compile command
 var compileCmd = &cobra.Command{
 	Use:   "compile",
-	Short: "Generate a compiled representation of an API spec",
+	Short: "Generate a compiled representation of an API spec.",
 	Long:  `Generate a compiled representation of an API spec.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.TODO()
