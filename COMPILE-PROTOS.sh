@@ -26,7 +26,7 @@ PROTOS=( \
 echo "Running the API linter."
 for p in ${PROTOS[@]}; do
   echo "api-linter $p"
-  api-linter -I ./proto -I ${ANNOTATIONS} $p
+  api-linter -I ${ANNOTATIONS} $p
 done
 
 echo "Generating proto support code."

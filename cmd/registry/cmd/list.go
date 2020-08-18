@@ -39,7 +39,7 @@ func printProject(project *rpc.Project) {
 	fmt.Println(project.Name)
 }
 
-func printApi(api *rpc.Api) {
+func printAPI(api *rpc.Api) {
 	fmt.Println(api.Name)
 }
 
@@ -76,7 +76,7 @@ var listCmd = &cobra.Command{
 		if m := names.ProjectsRegexp().FindAllStringSubmatch(name, -1); m != nil {
 			err = listProjects(ctx, client, m[0], printProject)
 		} else if m := names.ApisRegexp().FindAllStringSubmatch(name, -1); m != nil {
-			err = listApis(ctx, client, m[0], printApi)
+			err = listAPIs(ctx, client, m[0], printAPI)
 		} else if m := names.VersionsRegexp().FindAllStringSubmatch(name, -1); m != nil {
 			err = listVersions(ctx, client, m[0], printVersion)
 		} else if m := names.SpecsRegexp().FindAllStringSubmatch(name, -1); m != nil {
@@ -96,9 +96,9 @@ var listCmd = &cobra.Command{
 		} else if m := names.ApiRegexp().FindAllStringSubmatch(name, -1); m != nil {
 			segments := m[0]
 			if sliceContainsString(segments, "-") {
-				err = listApis(ctx, client, segments, printApi)
+				err = listAPIs(ctx, client, segments, printAPI)
 			} else {
-				_, err = getApi(ctx, client, segments, printApi)
+				_, err = getAPI(ctx, client, segments, printAPI)
 			}
 		} else if m := names.VersionRegexp().FindAllStringSubmatch(name, -1); m != nil {
 			segments := m[0]
@@ -174,7 +174,7 @@ func listProjects(ctx context.Context,
 	return nil
 }
 
-func listApis(ctx context.Context,
+func listAPIs(ctx context.Context,
 	client *gapic.RegistryClient,
 	segments []string,
 	handler apiHandler) error {
@@ -344,7 +344,7 @@ func getProject(ctx context.Context,
 	return nil, nil
 }
 
-func getApi(ctx context.Context,
+func getAPI(ctx context.Context,
 	client *gapic.RegistryClient,
 	segments []string,
 	handler apiHandler) (*rpc.Api, error) {

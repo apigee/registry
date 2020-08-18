@@ -52,7 +52,7 @@ var getCmd = &cobra.Command{
 		if m := names.ProjectRegexp().FindAllStringSubmatch(name, -1); m != nil {
 			_, err = getProject(ctx, client, m[0], printProjectDetail)
 		} else if m := names.ApiRegexp().FindAllStringSubmatch(name, -1); m != nil {
-			_, err = getApi(ctx, client, m[0], printApiDetail)
+			_, err = getAPI(ctx, client, m[0], printAPIDetail)
 		} else if m := names.VersionRegexp().FindAllStringSubmatch(name, -1); m != nil {
 			_, err = getVersion(ctx, client, m[0], printVersionDetail)
 		} else if m := names.SpecRegexp().FindAllStringSubmatch(name, -1); m != nil {
@@ -124,7 +124,7 @@ func printProjectDetail(message *rpc.Project) {
 	printMessage(message)
 }
 
-func printApiDetail(message *rpc.Api) {
+func printAPIDetail(message *rpc.Api) {
 	printMessage(message)
 }
 
