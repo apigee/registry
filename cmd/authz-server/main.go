@@ -25,6 +25,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"golang.org/x/net/context"
@@ -85,11 +86,12 @@ func (a *authorizationServer) Check(ctx context.Context, req *auth.CheckRequest)
 		// there's no auth header, so the request is uncredentialed.
 		return denyUncredentialedRequest(), nil
 	}
-	parts := strings.Split(authHeader, "Bearer ")
-	if len(parts) != 2 {
+	re := regexp.MustCompile("^[bB]earer[ ]+(.*)$")
+	m := re.FindStringSubmatch(authHeader)
+	if m == nil {
 		return denyMalformedCredentials(), nil
 	}
-	credential := parts[1]
+	credential := m[1]
 
 	if isJWTToken(credential) {
 		// try to verify an identity token
@@ -248,7 +250,8 @@ func getVerifiedToken(credential string) (*GoogleToken, error) {
 		return nil, err
 	}
 	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("Unsuccessful response from tokeninfo service: %d", resp.StatusCode)
+		return nil, fmt.Errorf("Unsuccessful response from tokeninfo service: %d (%s)",
+			resp.StatusCode, resp.Status)
 	}
 	b, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
