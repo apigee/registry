@@ -139,7 +139,7 @@ func main() {
 		},
 	}
 
-	f, err := os.Create("../" + filename)
+	f, err := os.Create(filename)
 	check(err)
 	defer f.Close()
 	w := bufio.NewWriter(f)
