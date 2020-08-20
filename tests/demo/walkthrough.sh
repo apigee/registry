@@ -7,10 +7,17 @@ echo create a project in the registry
 apg registry create-project --project_id demo
 
 echo add a api to the registry
-apg registry create-api --parent projects/demo --api_id petstore
+apg registry create-api \
+    --parent projects/demo \
+    --api_id petstore \
+    --api.availability GENERAL \
+    --api.recommended_version "1.0.0"
 
 echo add a version to the registry
-apg registry create-version --parent projects/demo/apis/petstore --version_id 1.0.0
+apg registry create-version \
+    --parent projects/demo/apis/petstore \
+    --version_id 1.0.0 \
+    --version.state "PRODUCTION"
 
 echo add a spec to the registry
 apg registry create-spec \
@@ -144,11 +151,36 @@ apg registry list-specs \
     --parent projects/demo/apis/petstore/versions/1.0.0 \
     --json
 
-echo delete the spec
-apg registry delete-spec  --name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml
+echo add some labels
+apg registry create-label \
+    --parent projects/demo/apis/petstore \
+    --label_id pets
+apg registry create-label \
+    --parent projects/demo/apis/petstore \
+    --label_id retail
+apg registry create-label \
+    --parent projects/demo/apis/petstore \
+    --label_id stock
+apg registry create-label \
+    --parent projects/demo/apis/petstore/versions/1.0.0 \
+    --label_id published
 
-echo list spec-revisions should return nothing now
-apg registry list-spec-revisions \
-    --name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml \
-    --json
+echo set some properties
+apg registry create-property \
+    --parent projects/demo/apis/petstore \
+    --property_id source \
+    --property.value string_value \
+    --property.value.string_value "https://github.com/OAI/OpenAPI-Specification"
+apg registry create-property \
+    --parent projects/demo/apis/petstore/versions/1.0.0 \
+    --property_id score \
+    --property.value int64_value \
+    --property.value.int64_value 100
+apg registry create-property \
+    --parent projects/demo/apis/petstore/versions/1.0.0 \
+    --property_id boys \
+    --property.value string_value \
+    --property.value.string_value "Neil Tennant, Chris Lowe"
+
+registry export projects/demo
 

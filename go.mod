@@ -23,7 +23,7 @@ require (
 	github.com/golang/protobuf v1.4.2
 	github.com/google/cel-go v0.4.2
 	github.com/google/uuid v1.1.1
-	github.com/googleapis/api-linter v1.1.4 // indirect
+	github.com/googleapis/api-linter v1.1.5 // indirect
 	github.com/googleapis/gapic-generator-go v0.14.4 // indirect
 	github.com/googleapis/gax-go v2.0.2+incompatible // indirect
 	github.com/googleapis/gax-go/v2 v2.0.5
@@ -46,7 +46,7 @@ require (
 	golang.org/x/net v0.0.0-20200813134508-3edf25e44fcc
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
 	golang.org/x/sync v0.0.0-20200317015054-43a5402ce75a
-	golang.org/x/sys v0.0.0-20200819035508-9a32b3aa38f5 // indirect
+	golang.org/x/sys v0.0.0-20200819171115-d785dc25833f // indirect
 	golang.org/x/text v0.3.3 // indirect
 	google.golang.org/api v0.23.0
 	google.golang.org/appengine v1.6.6 // indirect
@@ -55,4 +55,5 @@ require (
 	google.golang.org/grpc/examples v0.0.0-20200731180010-8bec2f5d898f // indirect
 	google.golang.org/protobuf v1.25.0
 	gopkg.in/ini.v1 v1.51.0 // indirect
+	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776
 )

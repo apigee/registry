@@ -91,8 +91,7 @@ func NewVersionFromMessage(message *rpc.Version) (*Version, error) {
 	}
 	version.DisplayName = message.GetDisplayName()
 	version.Description = message.GetDescription()
-	//version.Availability = message.GetAvailability()
-	//version.RecommendedVersion = message.GetRecommendedVersion()
+	version.State = message.GetState()
 	return version, nil
 }
 
@@ -109,8 +108,7 @@ func (version *Version) Message() (message *rpc.Version, err error) {
 	message.Description = version.Description
 	message.CreateTime, err = ptypes.TimestampProto(version.CreateTime)
 	message.UpdateTime, err = ptypes.TimestampProto(version.UpdateTime)
-	//message.Availability = version.Availability
-	//message.RecommendedVersion = version.RecommendedVersion
+	message.State = version.State
 	return message, err
 }
 

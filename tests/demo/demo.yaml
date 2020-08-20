@@ -1,0 +1,58 @@
+apis:
+    petstore:
+        createTime: "2020-08-20T22:40:02.098207Z"
+        availability: GENERAL
+        recommended_version: 1.0.0
+        versions:
+            1.0.0:
+                createTime: "2020-08-20T22:40:03.277004Z"
+                state: ""
+                specs:
+                    openapi.yaml:
+                        style: openapi/v3+gzip
+                        hash: 4616508556dbbb7b0a0efd306b3ff4cad54dacf0
+                        size: 683
+                        createTime: "2020-08-20T22:40:18.954636Z"
+                        revisionId: 2f251892
+                    openapi.yaml@2f251892:
+                        style: openapi/v3+gzip
+                        hash: 4616508556dbbb7b0a0efd306b3ff4cad54dacf0
+                        size: 683
+                        createTime: "2020-08-20T22:40:18.954636Z"
+                        revisionId: 2f251892
+                    openapi.yaml@8fbf334d:
+                        style: openapi/v3+gzip
+                        hash: a3ffddc090ac9853c294b5ee0963a348878eb0a6
+                        size: 707
+                        createTime: "2020-08-20T22:40:13.300189Z"
+                        revisionId: 8fbf334d
+                    openapi.yaml@9edf958a:
+                        style: openapi/v3+gzip
+                        hash: 22c1668c5c5df1a03077cedc2ff1983268540891
+                        size: 701
+                        createTime: "2020-08-20T22:40:12.142759Z"
+                        revisionId: 9edf958a
+                    openapi.yaml@5524b3af:
+                        style: openapi/v3+gzip
+                        hash: 87b6a3040bff65432efec594d9c3137f84fafa14
+                        size: 685
+                        createTime: "2020-08-20T22:40:10.720552Z"
+                        revisionId: 5524b3af
+                labels:
+                    - published
+                properties:
+                    boys:
+                        value: Neil Tennant, Chris Lowe
+                        createTime: "2020-08-20T22:40:28.927812Z"
+                    score:
+                        value: 100
+                        createTime: "2020-08-20T22:40:28.130486Z"
+        labels:
+            - pets
+            - retail
+            - stock
+        properties:
+            source:
+                value: https://github.com/OAI/OpenAPI-Specification
+                createTime: "2020-08-20T22:40:27.302042Z"
+
