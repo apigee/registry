@@ -51,7 +51,8 @@ var (
 )
 
 const (
-	address string = ":50051"
+	address   string = ":50051"
+	trustJWTs bool   = true // if true, JWT claims are accepted without signature verification.
 )
 
 // healthServer implements the gRPC health check service.
@@ -94,6 +95,13 @@ func (a *authorizationServer) Check(ctx context.Context, req *auth.CheckRequest)
 	credential := m[1]
 
 	if isJWTToken(credential) {
+		if trustJWTs {
+			// get the user email from the token
+			email := getJWTTokenEmail(credential)
+			if email != "" {
+				return allowAuthorizedUser(email), nil
+			}
+		}
 		// try to verify an identity token
 		token, err := getVerifiedToken(credential)
 		if err == nil && token != nil {
@@ -150,7 +158,7 @@ func isWriter(email string) bool {
 	return false
 }
 
-type JWTToken struct {
+type jwtTokenHeader struct {
 	Alg string `json:"alg"`
 	Typ string `json:"typ"`
 }
@@ -165,9 +173,29 @@ func isJWTToken(credential string) bool {
 	if err != nil {
 		return false
 	}
-	var jwt JWTToken
-	json.Unmarshal(v, &jwt)
-	return jwt.Typ == "JWT"
+	var tokenHeader jwtTokenHeader
+	json.Unmarshal(v, &tokenHeader)
+	return tokenHeader.Typ == "JWT"
+}
+
+type jwtTokenPayload struct {
+	Email string `json:"email"`
+}
+
+func getJWTTokenEmail(credential string) string {
+	parts := strings.Split(credential, ".")
+	if len(parts) != 3 {
+		return ""
+	}
+	payload := parts[1]
+	v, err := base64.RawURLEncoding.DecodeString(payload)
+	if err != nil {
+		return ""
+	}
+	log.Printf("token payload %+v\n", string(v))
+	var tokenPayload jwtTokenPayload
+	json.Unmarshal(v, &tokenPayload)
+	return tokenPayload.Email
 }
 
 // GoogleUser holds information about a Google user.
@@ -202,8 +230,14 @@ func getUser(credential string) (*GoogleUser, error) {
 		return nil, err
 	}
 	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("Unsuccessful response from userinfo service: %d", resp.StatusCode)
+		b, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return nil, err
+		}
+		return nil, fmt.Errorf("Unsuccessful response from userinfo service: %d (%s): %s",
+			resp.StatusCode, resp.Status, string(b))
 	}
+
 	b, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
@@ -250,8 +284,12 @@ func getVerifiedToken(credential string) (*GoogleToken, error) {
 		return nil, err
 	}
 	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("Unsuccessful response from tokeninfo service: %d (%s)",
-			resp.StatusCode, resp.Status)
+		b, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return nil, err
+		}
+		return nil, fmt.Errorf("Unsuccessful response from tokeninfo service: %d (%s): %s",
+			resp.StatusCode, resp.Status, string(b))
 	}
 	b, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
