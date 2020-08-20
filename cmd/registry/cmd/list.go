@@ -340,8 +340,10 @@ func getProject(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("%+v\n", project)
-	return nil, nil
+	if handler != nil {
+		handler(project)
+	}
+	return project, nil
 }
 
 func getAPI(ctx context.Context,
@@ -355,8 +357,10 @@ func getAPI(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	handler(api)
-	return nil, nil
+	if handler != nil {
+		handler(api)
+	}
+	return api, nil
 }
 
 func getVersion(ctx context.Context,
@@ -370,8 +374,10 @@ func getVersion(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	handler(version)
-	return nil, nil
+	if handler != nil {
+		handler(version)
+	}
+	return version, nil
 }
 
 func getSpec(ctx context.Context,
@@ -393,7 +399,9 @@ func getSpec(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	handler(spec)
+	if handler != nil {
+		handler(spec)
+	}
 	return spec, nil
 }
 

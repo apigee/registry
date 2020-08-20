@@ -128,10 +128,6 @@ func printAPIDetail(message *rpc.Api) {
 	printMessage(message)
 }
 
-func printMessage(message proto.Message) {
-	fmt.Println(protojson.Format(message))
-}
-
 func printVersionDetail(message *rpc.Version) {
 	printMessage(message)
 }
@@ -142,4 +138,8 @@ func printSpecDetail(message *rpc.Spec) {
 	} else {
 		printMessage(message)
 	}
+}
+
+func printMessage(message proto.Message) {
+	fmt.Println(protojson.Format(message))
 }

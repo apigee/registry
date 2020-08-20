@@ -16,245 +16,175 @@ package cmd
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
-	"sort"
-	"strings"
+	"os"
+	"path"
 
 	"github.com/apigee/registry/connection"
-	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
-	"google.golang.org/api/iterator"
-	"google.golang.org/api/sheets/v4"
+	"gopkg.in/yaml.v3"
 )
-
-// exportCmd represents the export command
-var exportCmd = &cobra.Command{
-	Use:   "export",
-	Short: "Export properties to a Google sheet.",
-	Long:  `Export properties to a Google sheet.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		ctx := context.TODO()
-
-		log.Printf("Export called.")
-
-		ssc, err := NewStatusSheetConnection(SHEETID)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		//log.Printf("Updating sheet.")
-		//checkerResults := make([]CheckerResult, 0)
-		//ssc.updateWithCheckerResults(checkerResults)
-		//log.Printf("Done.")
-
-		client, err := connection.NewClient(ctx)
-		if err != nil {
-			log.Fatalf("%s", err.Error())
-		}
-
-		var name, property string
-		if len(args) > 0 {
-			name = args[0]
-		}
-		if len(args) > 1 {
-			property = args[1]
-		}
-
-		if m := names.ProjectRegexp().FindAllStringSubmatch(name, -1); m != nil {
-			// find all matching properties for a project
-			segments := m[0]
-			err = ssc.exportNamedProperty(ctx, client, segments[1], "", property)
-			if err != nil {
-				log.Fatalf("%s", err.Error())
-			}
-		}
-
-	},
-}
 
 func init() {
 	rootCmd.AddCommand(exportCmd)
 }
 
-// BEFORE RUNNING:
-// ---------------
-// 1. If not already done, enable the Google Sheets API
-//    and check the quota for your project at
-//    https://console.developers.google.com/apis/api/sheets
-// 2. Install and update the Go dependencies by running `go get -u` in the
-//    project directory.
-// 3. Set the SHEETID to the spreadsheet you wish to update.
-
-const SHEETID = "13nx5d6pvb1qZWcFKR8oQTREmLVwoV1ILC8CsWnD7erQ"
-
-const SERVICE_ACCOUNT_CREDENTIALS = "/home/tim/.credentials/registrydemo.json"
-
-type CheckerResult struct {
-	api      string
-	command  string
-	messages []string
-}
-
-type StatusSheetConnection struct {
-	spreadsheetId string
-	sheetsService *sheets.Service
-}
-
-func NewStatusSheetConnection(id string) (*StatusSheetConnection, error) {
-	ssc := &StatusSheetConnection{spreadsheetId: id}
-	ctx := context.Background()
-
-	// read credentials for a service account that has access to the sheet
-	jsonData, err := ioutil.ReadFile(SERVICE_ACCOUNT_CREDENTIALS)
-	credentials, err := google.CredentialsFromJSON(ctx, jsonData, sheets.DriveScope, sheets.DriveFileScope, sheets.SpreadsheetsScope)
-	client := oauth2.NewClient(ctx, credentials.TokenSource)
+func check(err error) {
 	if err != nil {
-		return nil, err
-	}
-	ssc.sheetsService, err = sheets.New(client)
-	if err != nil {
-		return nil, err
-	}
-	return ssc, err
-}
-
-func (ssc *StatusSheetConnection) fetch() (*sheets.ValueRange, error) {
-	ctx := context.Background()
-	return ssc.sheetsService.Spreadsheets.Values.Get(
-		ssc.spreadsheetId,
-		"Summary!A:A").
-		ValueRenderOption("FORMATTED_VALUE").
-		DateTimeRenderOption("SERIAL_NUMBER").
-		MajorDimension("ROWS").
-		Context(ctx).
-		Do()
-}
-
-func (ssc *StatusSheetConnection) updateRows(cellRange string, values [][]interface{}) {
-	ctx := context.Background()
-	valueRange := &sheets.ValueRange{
-		Range:          cellRange,
-		MajorDimension: "ROWS",
-		Values:         values,
-	}
-	_, err := ssc.sheetsService.Spreadsheets.Values.Update(
-		ssc.spreadsheetId, valueRange.Range, valueRange).
-		ValueInputOption("RAW").
-		Context(ctx).
-		Do()
-	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("%s", err.Error())
 	}
 }
 
-func matching(checkerResults []CheckerResult, api string) *CheckerResult {
-	for _, checkerResult := range checkerResults {
-		if checkerResult.api == api {
-			return &checkerResult
+// exportCmd represents the export command
+var exportCmd = &cobra.Command{
+	Use:   "export",
+	Short: "Export a subtree of the Registry.",
+	Long:  `Export a subtree of the Registry.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		ctx := context.TODO()
+		client, err := connection.NewClient(ctx)
+		if err != nil {
+			log.Fatalf("%s", err.Error())
 		}
-	}
-	return nil
-}
 
-func rowForResult(checkerResult *CheckerResult, withDetails bool) []interface{} {
-	row := make([]interface{}, 0)
-	row = append(row, (*checkerResult).api)
-	if withDetails {
-		row = append(row, (*checkerResult).command)
-		row = append(row, strings.Join((*checkerResult).messages, "\n"))
-	} else {
-		row = append(row, len((*checkerResult).messages))
-	}
-	return row
-}
-
-func (ssc *StatusSheetConnection) updateWithCheckerResults(checkerResults []CheckerResult) {
-	// reset headings
-	ssc.updateRows("Summary!A1:B1",
-		[]([]interface{}){[]interface{}{"Spec", "Operation Count"}},
-	)
-
-	// get current sheet contents
-	contents, _ := ssc.fetch()
-
-	// prepare update
-	summary := make([][]interface{}, 0)
-	seen := make(map[string]bool, 0)
-
-	// for each API in the sheet...
-	for i, v := range contents.Values {
-		if i == 0 {
-			continue // skip header
+		var name string
+		if len(args) > 0 {
+			name = args[0]
 		}
-		// get the analysis results
-		if len(v) > 0 {
-			api := v[0].(string)
-			checkerResult := matching(checkerResults, api)
-			if checkerResult != nil {
-				// if we have it, add it to the table
-				summary = append(summary, rowForResult(checkerResult, false))
-			} else {
-				// if we don't have it, mark the api as unknown
-				summary = append(summary, []interface{}{api, "unknown"})
-			}
-			seen[api] = true
+
+		if m := names.ProjectRegexp().FindAllStringSubmatch(name, -1); m != nil {
+			_, err := getProject(ctx, client, m[0], func(message *rpc.Project) {
+				docMapContent := nodeSlice()
+				apisMapContent := nodeSlice()
+				err = listAPIs(ctx, client, m[0], func(message *rpc.Api) {
+					m := names.ApiRegexp().FindAllStringSubmatch(message.Name, -1)
+					apiMapContent := nodeSlice()
+					versionsMapContent := nodeSlice()
+					err = listVersions(ctx, client, m[0], func(message *rpc.Version) {
+						m := names.VersionRegexp().FindAllStringSubmatch(message.Name, -1)
+						versionMapContent := nodeSlice()
+						specsMapContent := nodeSlice()
+						err = listSpecs(ctx, client, m[0], func(message *rpc.Spec) {
+							specMapContent := nodeSlice()
+							specMapContent = appendPair(specMapContent, "style", nodeForString(message.Style))
+							specMapContent = appendPair(specMapContent, "hash", nodeForString(message.Hash))
+							specMapContent = appendPair(specMapContent, "size", nodeForInt64(int64(message.SizeBytes)))
+							specMapContent = appendPair(specMapContent, "revisionId", nodeForString(message.RevisionId))
+							specsMapContent = appendPair(specsMapContent, path.Base(message.Name), nodeForMapping(specMapContent))
+						})
+						check(err)
+						versionMapContent = appendPair(versionMapContent, "specs", nodeForMapping(specsMapContent))
+						versionsMapContent = appendPair(versionsMapContent, path.Base(message.Name), nodeForMapping(versionMapContent))
+					})
+					check(err)
+					apiMapContent = appendPair(apiMapContent, "versions", nodeForMapping(versionsMapContent))
+					apisMapContent = appendPair(apisMapContent, path.Base(message.Name), nodeForMapping(apiMapContent))
+				})
+				check(err)
+				docMapContent = appendPair(docMapContent, "apis", nodeForMapping(apisMapContent))
+				// add list of labels
+				// add list of properties
+				// create the top-level document
+				doc := &yaml.Node{
+					Kind: yaml.DocumentNode,
+					Content: []*yaml.Node{
+						nodeForMapping(docMapContent),
+					},
+				}
+				// write the doc as yaml
+				b, err := yaml.Marshal(doc)
+				if err != nil {
+					log.Fatalf("%s", err)
+				}
+				fmt.Println(string(b))
+			})
+			check(err)
+		} else if m := names.ApiRegexp().FindAllStringSubmatch(name, -1); m != nil {
+			_, err = getAPI(ctx, client, m[0], exportAPI)
+		} else if m := names.VersionRegexp().FindAllStringSubmatch(name, -1); m != nil {
+			_, err = getVersion(ctx, client, m[0], exportVersion)
+		} else if m := names.SpecRegexp().FindAllStringSubmatch(name, -1); m != nil {
+			_, err = getSpec(ctx, client, m[0], false, exportSpec)
 		} else {
-			// mark any weird table rows
-			summary = append(summary, []interface{}{"unknown", "unknown"})
+			log.Fatalf("Unsupported entity %+s", name)
 		}
-	}
-	// now go back through the checker results and add any that weren't in the table
-	for _, checkerResult := range checkerResults {
-		if !seen[checkerResult.api] {
-			summary = append(summary, rowForResult(&checkerResult, false))
-		}
-	}
-	ssc.updateRows(fmt.Sprintf("Summary!A2:B%d", 1+len(summary)), summary)
+	},
 }
 
-var values map[string]int64
+func exportAPI(message *rpc.Api) {
+	printMessage(message)
+}
 
-func (ssc *StatusSheetConnection) exportNamedProperty(ctx context.Context, client *gapic.RegistryClient, projectID string, subject string, relation string) error {
-	request := &rpc.ListPropertiesRequest{
-		Parent: subject,
-		Filter: fmt.Sprintf("property_id = \"%s\"", relation),
-	}
-	values = make(map[string]int64, 0)
-	it := client.ListProperties(ctx, request)
-	for {
-		property, err := it.Next()
-		if err == iterator.Done {
-			break
-		} else if err != nil {
-			return err
-		}
-		values[property.Subject] = property.GetInt64Value()
-	}
-	keys := make([]string, 0, len(values))
-	for k := range values {
-		keys = append(keys, k)
-	}
-	summary := make([][]interface{}, 0)
-	sort.Strings(keys)
-	for _, k := range keys {
-		log.Printf("%s: %d", k, values[k])
+func exportVersion(message *rpc.Version) {
+	printMessage(message)
+}
 
-		row := make([]interface{}, 0)
-		row = append(row, k)
-		row = append(row, values[k])
-		summary = append(summary, row)
+func exportSpec(message *rpc.Spec) {
+	if getContents {
+		os.Stdout.Write(message.GetContents())
+	} else {
+		printMessage(message)
 	}
-	// reset headings
-	ssc.updateRows("Summary!A1:B1",
-		[]([]interface{}){[]interface{}{"Spec", "Operation Count"}},
-	)
-	ssc.updateRows(fmt.Sprintf("Summary!A2:B%d", 1+len(summary)), summary)
+}
 
-	return nil
+func nodeForMapping(content []*yaml.Node) *yaml.Node {
+	if content == nil {
+		content = make([]*yaml.Node, 0)
+	}
+	return &yaml.Node{
+		Kind:    yaml.MappingNode,
+		Content: content,
+	}
+}
+
+func nodeForSequence(content []*yaml.Node) *yaml.Node {
+	return &yaml.Node{
+		Kind:    yaml.SequenceNode,
+		Content: content,
+	}
+}
+
+func nodeForString(value string) *yaml.Node {
+	return &yaml.Node{
+		Kind:  yaml.ScalarNode,
+		Tag:   "!!str",
+		Value: value,
+	}
+}
+
+func nodeForBoolean(value bool) *yaml.Node {
+	return &yaml.Node{
+		Kind:  yaml.ScalarNode,
+		Tag:   "!!bool",
+		Value: fmt.Sprintf("%t", value),
+	}
+}
+
+func nodeForInt64(value int64) *yaml.Node {
+	return &yaml.Node{
+		Kind:  yaml.ScalarNode,
+		Tag:   "!!int",
+		Value: fmt.Sprintf("%d", value),
+	}
+}
+
+func nodeForFloat64(value float64) *yaml.Node {
+	return &yaml.Node{
+		Kind:  yaml.ScalarNode,
+		Tag:   "!!float",
+		Value: fmt.Sprintf("%f", value),
+	}
+}
+
+func appendPair(nodes []*yaml.Node, name string, value *yaml.Node) []*yaml.Node {
+	nodes = append(nodes, nodeForString(name))
+	nodes = append(nodes, value)
+	return nodes
+}
+
+func nodeSlice() []*yaml.Node {
+	return make([]*yaml.Node, 0)
 }
