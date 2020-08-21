@@ -1,52 +1,52 @@
 apis:
     petstore:
-        createTime: "2020-08-20T23:46:34.643001Z"
+        createTime: "2020-08-21T21:55:11.292136Z"
         availability: GENERAL
         recommended_version: 1.0.0
         versions:
             1.0.0:
-                createTime: "2020-08-20T23:46:35.319779Z"
+                createTime: "2020-08-21T21:55:11.960009Z"
                 state: PRODUCTION
                 specs:
                     openapi.yaml:
                         style: openapi/v3+gzip
-                        hash: 42e1ed45797e34996ce2c82113c7f2d9ab891e69
-                        size: 683
-                        createTime: "2020-08-20T23:46:49.89441Z"
-                        revisionId: 6ae3e9bb
-                    openapi.yaml@6ae3e9bb:
+                        hash: ee0af8f4e54119daf557061ec44aea56c2ee8a77
+                        size: 682
+                        createTime: "2020-08-21T21:55:27.874007Z"
+                        revisionId: 2e4aaaa3
+                    openapi.yaml@2e4aaaa3:
                         style: openapi/v3+gzip
-                        hash: 42e1ed45797e34996ce2c82113c7f2d9ab891e69
-                        size: 683
-                        createTime: "2020-08-20T23:46:49.89441Z"
-                        revisionId: 6ae3e9bb
-                    openapi.yaml@0c1c9eec:
+                        hash: ee0af8f4e54119daf557061ec44aea56c2ee8a77
+                        size: 682
+                        createTime: "2020-08-21T21:55:27.874007Z"
+                        revisionId: 2e4aaaa3
+                    openapi.yaml@3ee20739:
                         style: openapi/v3+gzip
-                        hash: 23654a1e9fbab7f6227ffdcfaa8b8896e410a333
-                        size: 707
-                        createTime: "2020-08-20T23:46:46.482531Z"
-                        revisionId: 0c1c9eec
-                    openapi.yaml@048dca29:
+                        hash: 41bdd4255af11e1ad30168430336c55f06561d4f
+                        size: 706
+                        createTime: "2020-08-21T21:55:15.984092Z"
+                        revisionId: 3ee20739
+                    openapi.yaml@e8dea538:
                         style: openapi/v3+gzip
-                        hash: b15397778fa8f483fdcde8da1c80d60260ac6651
-                        size: 701
-                        createTime: "2020-08-20T23:46:45.648765Z"
-                        revisionId: 048dca29
-                    openapi.yaml@6da3c8f0:
+                        hash: 9ebc57b204f85156bf283fe0949cfd75b5233803
+                        size: 697
+                        createTime: "2020-08-21T21:55:15.247672Z"
+                        revisionId: e8dea538
+                    openapi.yaml@aa0d3975:
                         style: openapi/v3+gzip
-                        hash: ab449831cfc1e96e1ac4daea1e922c97e18b7b27
-                        size: 685
-                        createTime: "2020-08-20T23:46:43.210859Z"
-                        revisionId: 6da3c8f0
+                        hash: f61470904d82cff5f0c3bf7917c6e00b4dffce7c
+                        size: 682
+                        createTime: "2020-08-21T21:55:14.596303Z"
+                        revisionId: aa0d3975
                 labels:
                     - published
                 properties:
                     boys:
                         value: Neil Tennant, Chris Lowe
-                        createTime: "2020-08-20T23:46:55.003716Z"
+                        createTime: "2020-08-21T21:55:33.548719Z"
                     score:
                         value: 100
-                        createTime: "2020-08-20T23:46:54.589478Z"
+                        createTime: "2020-08-21T21:55:32.984317Z"
         labels:
             - pets
             - retail
@@ -54,5 +54,5 @@ apis:
         properties:
             source:
                 value: https://github.com/OAI/OpenAPI-Specification
-                createTime: "2020-08-20T23:46:53.984056Z"
+                createTime: "2020-08-21T21:55:32.4257Z"
 

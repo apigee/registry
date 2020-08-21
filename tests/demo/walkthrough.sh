@@ -49,8 +49,7 @@ apg registry get-spec \
     --name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml \
     --view full --json | \
     jq '.contents' -r | \
-    base64 --decode | \
-    gunzip
+    decode-spec
 
 echo
 echo Update an attribute of the spec.
@@ -238,4 +237,5 @@ apg registry create-property \
 
 echo
 echo Export a YAML summary of the demo project.
-registry export projects/demo
+registry export projects/demo > demo.yaml
+cat demo.yaml
