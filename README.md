@@ -105,7 +105,7 @@ gcloud datastore indexes create server/datastore/index.yaml
 
 ## Running the API Locally
 
-Running `source AUTH-LOCAL.sh` will configure your environment for the Registry
+Running `source auth/LOCAL.sh` will configure your environment for the Registry
 API server (`registry-server`) and for the clients to call your local instance.
 Start the server by running `registry-server`.
 
@@ -143,7 +143,7 @@ Requirements:
 
 - The Makefile gets your project ID from the `REGISTRY_PROJECT_IDENTIFIER`
   environment variable. It can be set automatically by running
-  `source AUTH-CLOUDRUN.sh`.
+  `source auth/CLOUDRUN.sh`.
 
 `make build` uses [Google Cloud Build](https://cloud.google.com/cloud-build) to
 build a container containing the API server. The container is stored in
@@ -159,7 +159,7 @@ questions, including this one:
 
 If you answer "y", you will be able to make calls without authentication. This
 is the easiest way to test the API, but it's not necessary - running
-`source AUTH-CLOUDRUN.sh` configures your environment so that the Registry CLI
+`source auth/CLOUDRUN.sh` configures your environment so that the Registry CLI
 and other tools will authenticate with your user ID.
 
 Now you can call the API with your generated CLI.
@@ -172,12 +172,12 @@ Cloud Run and Cloud Datastore.
 
 You can also verify your installation by running `make test`. This will run
 tests against the same service that your CLI is configured to use via the
-environment variables set by the `AUTH-*.sh` scripts.
+environment variables set by the `auth/*.sh` scripts.
 
 Auth tokens are short-lived. When your token expires, your calls will return a
 message like this:
 `rpc error: code = Unauthenticated desc = Unauthorized: HTTP status code 401`.
-To generate a new token, rerun `source AUTH-CLOUDRUN.sh`.
+To generate a new token, rerun `source auth/CLOUDRUN.sh`.
 
 ## Proxying a Cloud Run-based Service with Google Cloud Endpoints
 
