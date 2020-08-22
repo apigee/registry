@@ -135,9 +135,14 @@ func (a *authorizationServer) Check(ctx context.Context, req *auth.CheckRequest)
 }
 
 func allowOrDenyUser(email string, req *auth.CheckRequest) (*auth.CheckResponse, error) {
-	if isWriter(email) || isReadOnlyMethod(req.Attributes.Request.Http.Headers[":path"]) {
-		// the user is authorized so we allow the call.
-		return allowAuthorizedUser(email), nil
+	if isReadOnlyMethod(req.Attributes.Request.Http.Headers[":path"]) {
+		if isReader(email) {
+			return allowAuthorizedUser(email), nil
+		}
+	} else {
+		if isWriter(email) {
+			return allowAuthorizedUser(email), nil
+		}
 	}
 	// we have a user, but they aren't authorized to do this.
 	return denyUnauthorizedUser(), nil

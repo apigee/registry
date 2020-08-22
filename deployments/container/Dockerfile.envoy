@@ -30,6 +30,7 @@ FROM envoyproxy/envoy:v1.11.2
 
 COPY deployments/container/envoy.yaml /etc/envoy/envoy.yaml
 COPY deployments/container/RUN-WITH-ENVOY.sh /RUN-WITH-ENVOY.sh
+COPY deployments/envoy/proto.pb /proto.pb
 
 # Copy the registry-server binary to the production image from the builder stage.
 COPY --from=builder /app/registry-server /registry-server

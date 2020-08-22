@@ -60,7 +60,7 @@ sed -i -e 's/anypb.Property_MessageValue/rpcpb.Property_MessageValue/g' \
 	cmd/apg/create-property.go \
 	cmd/apg/update-property.go
 
-echo "Generating descriptor set for envoy."
+echo "Generating descriptor set for Envoy gRPC-JSON Transcoding."
 protoc --proto_path=. --proto_path=${ANNOTATIONS} \
 	${PROTOS[*]} \
 	--include_imports \
