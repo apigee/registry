@@ -21,10 +21,8 @@ static_resources:
                     - name: local_service
                       domains: ["*"]
                       routes:
-                        # NOTE: by default, matching happens based on the gRPC route, and not on the incoming request path.
-                        # Reference: https://www.envoyproxy.io/docs/envoy/latest/configuration/http_filters/grpc_json_transcoder_filter#route-configs-for-transcoded-requests
                         - match: { prefix: "/google.cloud.apigee.registry.v1alpha1.Registry" }
-                          route: { cluster: grpc, timeout: { seconds: 60 } }
+                          route: { cluster: registry-server, timeout: { seconds: 60 } }
                           per_filter_config:
                             envoy.ext_authz:
                               check_settings:
@@ -52,18 +50,18 @@ static_resources:
                     config:
                       grpc_service:
                         envoy_grpc:
-                          cluster_name: ext-authz
+                          cluster_name: authz-server
                         timeout: 0.5s
                   - name: envoy.router
   clusters:
-    - name: grpc
+    - name: registry-server
       connect_timeout: 1.25s
       type: logical_dns
       lb_policy: round_robin
       dns_lookup_family: V4_ONLY
       http2_protocol_options: {}
       load_assignment:
-        cluster_name: grpc
+        cluster_name: registry-server
         endpoints:
           - lb_endpoints:
               - endpoint:
@@ -71,11 +69,11 @@ static_resources:
                     socket_address:
                       address: localhost
                       port_value: 8080
-    - name: ext-authz
+    - name: authz-server
       type: static
       http2_protocol_options: {}
       load_assignment:
-        cluster_name: ext-authz
+        cluster_name: authz-server
         endpoints:
         - lb_endpoints:
           - endpoint:
