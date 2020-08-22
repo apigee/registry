@@ -55,5 +55,6 @@ require (
 	google.golang.org/grpc/examples v0.0.0-20200731180010-8bec2f5d898f // indirect
 	google.golang.org/protobuf v1.25.0
 	gopkg.in/ini.v1 v1.51.0 // indirect
+	gopkg.in/yaml.v2 v2.3.0
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776
 )

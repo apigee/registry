@@ -19,6 +19,9 @@ passes a Google access or identity token as a Bearer token.
 In either case, verified tokens are cached in-memory for the lifetime of the
 `authz-server` process.
 
-Read-only access is allowed for all authenticated users, and write access is
-allowed for users on a hard-coded list of approved users (set this before
-deploying).
+Access is configured with the `authz.yaml` file. If `trustJWTs` is true, email
+addresses in JWT tokens are trusted without verification (only enable this in
+environments where tokens are already verified). The `readers` and `writers`
+arrays contain glob patterns that, if matched against user emails, allow read
+and write access, respectively. "Read" methods correspond to RPCs with names
+that begin with "Get" and "List".

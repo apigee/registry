@@ -1,0 +1,5 @@
+trustJWTs: true
+readers:
+  - "*"
+writers: 
+  - "*"

@@ -16,6 +16,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -26,6 +27,9 @@ import (
 )
 
 func main() {
+	writePtr := flag.Bool("write", false, "make a write request")
+	flag.Parse()
+
 	// Make a raw gRPC connection to a local authz-server.
 	address := "localhost:50051"
 	opts := []grpc.DialOption{grpc.WithInsecure()}
@@ -44,6 +48,13 @@ func main() {
 	// Put the auth token in the headers that get sent with the CheckRequest.
 	headers := make(map[string]string, 0)
 	headers["authorization"] = "Bearer " + token
+
+	// Make a read or write request, depending on the command-line flag.
+	if *writePtr {
+		headers[":path"] = "/CreateSomething"
+	} else {
+		headers[":path"] = "/GetSomething"
+	}
 
 	// Build the CheckRequest.
 	req := &auth.CheckRequest{

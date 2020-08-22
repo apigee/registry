@@ -36,6 +36,7 @@ COPY --from=builder /app/registry-server /registry-server
 
 # Copy the authz-server binary to the production image from the builder stage.
 COPY --from=builder /app/authz-server /authz-server
+COPY cmd/authz-server/authz.yaml /authz.yaml
 
 # Run the web service on container startup.
 CMD ["/RUN-WITH-ENVOY.sh"]

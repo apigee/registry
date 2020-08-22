@@ -30,6 +30,7 @@ import (
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+	"gopkg.in/yaml.v2"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/health"
@@ -50,9 +51,17 @@ var (
 	hs       *health.Server
 )
 
+// AuthzConfig configures the authz filter.
+type AuthzConfig struct {
+	TrustJWTs bool     `yaml:"trustJWTs"`
+	Readers   []string `yaml:"readers"`
+	Writers   []string `yaml:"writers"`
+}
+
+var config AuthzConfig
+
 const (
-	address   string = ":50051"
-	trustJWTs bool   = true // if true, JWT claims are accepted without signature verification.
+	address string = ":50051"
 )
 
 // healthServer implements the gRPC health check service.
@@ -95,44 +104,43 @@ func (a *authorizationServer) Check(ctx context.Context, req *auth.CheckRequest)
 	credential := m[1]
 
 	if isJWTToken(credential) {
-		if trustJWTs {
+		if config.TrustJWTs {
 			// get the user email from the token
 			email := getJWTTokenEmail(credential)
 			if email != "" {
-				return allowAuthorizedUser(email), nil
+				return allowOrDenyUser(email, req)
 			}
 		}
 		// try to verify an identity token
 		token, err := getVerifiedToken(credential)
-		if err == nil && token != nil {
-			if isWriter(token.Email) || isReadOnlyMethod(req.Attributes.Request.Http.Headers[":path"]) {
-				// the user is authorized so we allow the call.
-				return allowAuthorizedUser(token.Email), nil
-			}
-			// we have a user, but they aren't authorized to do this.
-			return denyUnauthorizedUser(), nil
-		}
 		if err != nil {
-			log.Printf("%s", err.Error())
+			return nil, err
+		}
+		if err == nil && token != nil {
+			return allowOrDenyUser(token.Email, req)
 		}
 	} else {
 		// try to verify an access token
 		user, err := getUser(credential)
-		if err == nil && user != nil {
-			if isWriter(user.Email) || isReadOnlyMethod(req.Attributes.Request.Http.Headers[":path"]) {
-				// the user is authorized so we allow the call.
-				return allowAuthorizedUser(user.Email), nil
-			}
-			// we have a user, but they aren't authorized to do this.
-			return denyUnauthorizedUser(), nil
-		}
 		if err != nil {
-			log.Printf("%s", err.Error())
+			return nil, err
+		}
+		if err == nil && user != nil {
+			return allowOrDenyUser(user.Email, req)
 		}
 	}
 
 	// we can't find a user for the auth header, so the user is unauthenticated.
 	return denyUnauthenticatedUser(), nil
+}
+
+func allowOrDenyUser(email string, req *auth.CheckRequest) (*auth.CheckResponse, error) {
+	if isWriter(email) || isReadOnlyMethod(req.Attributes.Request.Http.Headers[":path"]) {
+		// the user is authorized so we allow the call.
+		return allowAuthorizedUser(email), nil
+	}
+	// we have a user, but they aren't authorized to do this.
+	return denyUnauthorizedUser(), nil
 }
 
 // isReadOnlyMethod recognizes Get and List operations as immutable.
@@ -145,13 +153,22 @@ func isReadOnlyMethod(path string) bool {
 	return false
 }
 
-// TODO: read this from a yaml file
-var writers = []string{"timburks@google.com", "timburks@gmail.com"}
+// isReader returns true if a user is allowed to make immutable operations.
+func isReader(email string) bool {
+	for _, reader := range config.Readers {
+		m, err := filepath.Match(reader, email)
+		if m && err == nil {
+			return true
+		}
+	}
+	return false
+}
 
 // isWriter returns true if a user is allowed to make mutable operations.
 func isWriter(email string) bool {
-	for _, writer := range writers {
-		if email == writer {
+	for _, writer := range config.Writers {
+		m, err := filepath.Match(writer, email)
+		if m && err == nil {
 			return true
 		}
 	}
@@ -391,6 +408,16 @@ func denyMalformedCredentials() *auth.CheckResponse {
 
 func main() {
 	flag.Parse()
+
+	b, err := ioutil.ReadFile("authz.yaml")
+	if err != nil {
+		log.Fatalf("%s", err.Error())
+	}
+	err = yaml.Unmarshal(b, &config)
+	if err != nil {
+		log.Fatalf("%s", err.Error())
+	}
+	log.Printf("config: %+v", config)
 
 	if *grpcport == "" {
 		fmt.Fprintln(os.Stderr, "missing -grpcport flag (:50051)")
