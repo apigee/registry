@@ -24,7 +24,7 @@ import (
 	ptypes "github.com/golang/protobuf/ptypes"
 )
 
-// LabelEntityName is used to represent labels in the datastore.
+// LabelEntityName is used to represent labels in storage.
 const LabelEntityName = "Label"
 
 // Label ...

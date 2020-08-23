@@ -12,14 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package server
+package datastore
 
-func boundPageSize(pageSize int32) int {
-	if pageSize > 1000 {
-		return 1000
-	}
-	if pageSize <= 0 {
-		return 50
-	}
-	return int(pageSize)
+import (
+	"cloud.google.com/go/datastore"
+)
+
+// Key represents a key in a storage provider
+type Key = datastore.Key
+
+// NewKey creates a new storage key.
+func (c *Client) NewKey(kind, name string) *Key {
+	return &datastore.Key{Kind: kind, Name: name}
 }

@@ -17,7 +17,6 @@ package server
 import (
 	"context"
 
-	"cloud.google.com/go/datastore"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/models"
 	"github.com/golang/protobuf/ptypes/empty"
@@ -28,16 +27,16 @@ import (
 
 // CreateProject handles the corresponding API request.
 func (s *RegistryServer) CreateProject(ctx context.Context, request *rpc.CreateProjectRequest) (*rpc.Project, error) {
-	client, err := s.getDataStoreClient(ctx)
+	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
 	}
-	s.releaseDataStoreClient(client)
+	s.releaseStorageClient(client)
 	project, err := models.NewProjectFromProjectID(request.GetProjectId())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	k := &datastore.Key{Kind: models.ProjectEntityName, Name: project.ResourceName()}
+	k := client.NewKey(models.ProjectEntityName, project.ResourceName())
 	// fail if project already exists
 	var existingProject models.Project
 	err = client.Get(ctx, k, &existingProject)
@@ -56,22 +55,22 @@ func (s *RegistryServer) CreateProject(ctx context.Context, request *rpc.CreateP
 
 // DeleteProject handles the corresponding API request.
 func (s *RegistryServer) DeleteProject(ctx context.Context, request *rpc.DeleteProjectRequest) (*empty.Empty, error) {
-	client, err := s.getDataStoreClient(ctx)
+	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
 	}
-	s.releaseDataStoreClient(client)
+	s.releaseStorageClient(client)
 	// Validate name and create dummy project (we just need the ID fields).
 	project, err := models.NewProjectFromResourceName(request.GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
 	// Delete children first and then delete the project.
-	err = project.DeleteChildren(ctx, client)
+	err = client.DeleteChildrenOfProject(ctx, project)
 	if err != nil {
 		return &empty.Empty{}, internalError(err)
 	}
-	k := &datastore.Key{Kind: models.ProjectEntityName, Name: request.GetName()}
+	k := client.NewKey(models.ProjectEntityName, request.GetName())
 	err = client.Delete(ctx, k)
 	s.notify(rpc.Notification_DELETED, request.GetName())
 	return &empty.Empty{}, internalError(err)
@@ -79,18 +78,18 @@ func (s *RegistryServer) DeleteProject(ctx context.Context, request *rpc.DeleteP
 
 // GetProject handles the corresponding API request.
 func (s *RegistryServer) GetProject(ctx context.Context, request *rpc.GetProjectRequest) (*rpc.Project, error) {
-	client, err := s.getDataStoreClient(ctx)
+	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
 	}
-	s.releaseDataStoreClient(client)
+	s.releaseStorageClient(client)
 	project, err := models.NewProjectFromResourceName(request.GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	k := &datastore.Key{Kind: models.ProjectEntityName, Name: project.ResourceName()}
+	k := client.NewKey(models.ProjectEntityName, project.ResourceName())
 	err = client.Get(ctx, k, project)
-	if err == datastore.ErrNoSuchEntity {
+	if err == client.ErrNotFound() {
 		return nil, status.Error(codes.NotFound, "not found")
 	} else if err != nil {
 		return nil, internalError(err)
@@ -100,13 +99,13 @@ func (s *RegistryServer) GetProject(ctx context.Context, request *rpc.GetProject
 
 // ListProjects handles the corresponding API request.
 func (s *RegistryServer) ListProjects(ctx context.Context, req *rpc.ListProjectsRequest) (*rpc.ListProjectsResponse, error) {
-	client, err := s.getDataStoreClient(ctx)
+	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
 	}
-	s.releaseDataStoreClient(client)
-	q := datastore.NewQuery(models.ProjectEntityName)
-	q, err = queryApplyCursor(q, req.GetPageToken())
+	s.releaseStorageClient(client)
+	q := client.NewQuery(models.ProjectEntityName)
+	q, err = client.QueryApplyCursor(q, req.GetPageToken())
 	if err != nil {
 		return nil, internalError(err)
 	}
@@ -149,7 +148,7 @@ func (s *RegistryServer) ListProjects(ctx context.Context, req *rpc.ListProjects
 	responses := &rpc.ListProjectsResponse{
 		Projects: projectMessages,
 	}
-	responses.NextPageToken, err = iteratorGetCursor(it, len(projectMessages))
+	responses.NextPageToken, err = client.IteratorGetCursor(it, len(projectMessages))
 	if err != nil {
 		return nil, internalError(err)
 	}
@@ -158,16 +157,16 @@ func (s *RegistryServer) ListProjects(ctx context.Context, req *rpc.ListProjects
 
 // UpdateProject handles the corresponding API request.
 func (s *RegistryServer) UpdateProject(ctx context.Context, request *rpc.UpdateProjectRequest) (*rpc.Project, error) {
-	client, err := s.getDataStoreClient(ctx)
+	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
 	}
-	s.releaseDataStoreClient(client)
+	s.releaseStorageClient(client)
 	project, err := models.NewProjectFromResourceName(request.GetProject().GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	k := &datastore.Key{Kind: models.ProjectEntityName, Name: project.ResourceName()}
+	k := client.NewKey(models.ProjectEntityName, project.ResourceName())
 	err = client.Get(ctx, k, project)
 	if err != nil {
 		return nil, status.Error(codes.NotFound, "not found")

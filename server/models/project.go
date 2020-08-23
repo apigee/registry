@@ -15,17 +15,15 @@
 package models
 
 import (
-	"context"
 	"fmt"
 	"time"
 
-	"cloud.google.com/go/datastore"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
 	ptypes "github.com/golang/protobuf/ptypes"
 )
 
-// ProjectEntityName is used to represent projrcts in the datastore.
+// ProjectEntityName is used to represent projrcts in storage.
 const ProjectEntityName = "Project"
 
 // Project ...
@@ -79,27 +77,5 @@ func (project *Project) Update(message *rpc.Project) error {
 	project.DisplayName = message.GetDisplayName()
 	project.Description = message.GetDescription()
 	project.UpdateTime = time.Now()
-	return nil
-}
-
-// DeleteChildren deletes all the children of a project.
-func (project *Project) DeleteChildren(ctx context.Context, client *datastore.Client) error {
-	entityNames := []string{
-		LabelEntityName,
-		PropertyEntityName,
-		SpecEntityName,
-		SpecRevisionTagEntityName,
-		VersionEntityName,
-		ApiEntityName,
-	}
-	for _, entityName := range entityNames {
-		q := datastore.NewQuery(entityName)
-		q = q.KeysOnly()
-		q = q.Filter("ProjectID =", project.ProjectID)
-		err := DeleteAllMatches(ctx, client, q)
-		if err != nil {
-			return err
-		}
-	}
 	return nil
 }

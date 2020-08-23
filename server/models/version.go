@@ -15,18 +15,16 @@
 package models
 
 import (
-	"context"
 	"fmt"
 	"regexp"
 	"time"
 
-	"cloud.google.com/go/datastore"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
 	ptypes "github.com/golang/protobuf/ptypes"
 )
 
-// VersionEntityName is used to represent versions in the datastore.
+// VersionEntityName is used to represent versions in storage.
 const VersionEntityName = "Version"
 
 // Version ...
@@ -118,21 +116,5 @@ func (version *Version) Update(message *rpc.Version) error {
 	version.Description = message.GetDescription()
 	version.State = message.GetState()
 	version.UpdateTime = time.Now()
-	return nil
-}
-
-// DeleteChildren deletes all the children of a version.
-func (version *Version) DeleteChildren(ctx context.Context, client *datastore.Client) error {
-	for _, entityName := range []string{SpecEntityName} {
-		q := datastore.NewQuery(entityName)
-		q = q.KeysOnly()
-		q = q.Filter("ProjectID =", version.ProjectID)
-		q = q.Filter("ApiID =", version.ApiID)
-		q = q.Filter("VersionID =", version.VersionID)
-		err := DeleteAllMatches(ctx, client, q)
-		if err != nil {
-			return err
-		}
-	}
 	return nil
 }

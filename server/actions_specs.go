@@ -20,8 +20,8 @@ import (
 	"log"
 	"time"
 
-	"cloud.google.com/go/datastore"
 	"github.com/apigee/registry/rpc"
+	storage "github.com/apigee/registry/server/datastore"
 	"github.com/apigee/registry/server/models"
 	"github.com/apigee/registry/server/names"
 	"github.com/golang/protobuf/ptypes/empty"
@@ -32,17 +32,17 @@ import (
 
 // CreateSpec handles the corresponding API request.
 func (s *RegistryServer) CreateSpec(ctx context.Context, request *rpc.CreateSpecRequest) (*rpc.Spec, error) {
-	client, err := s.getDataStoreClient(ctx)
+	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, err
 	}
-	s.releaseDataStoreClient(client)
+	s.releaseStorageClient(client)
 	spec, err := models.NewSpecFromParentAndSpecID(request.GetParent(), request.GetSpecId())
 	if err != nil {
 		return nil, err
 	}
 	// fail if spec already exists
-	q := datastore.NewQuery(models.SpecEntityName)
+	q := client.NewQuery(models.SpecEntityName)
 	q = q.Filter("ProjectID =", spec.ProjectID)
 	q = q.Filter("ApiID =", spec.ApiID)
 	q = q.Filter("VersionID =", spec.VersionID)
@@ -58,7 +58,7 @@ func (s *RegistryServer) CreateSpec(ctx context.Context, request *rpc.CreateSpec
 	spec.CreateTime = spec.UpdateTime
 	// the first revision of the spec that we save is also the current one
 	spec.IsCurrent = true
-	k := &datastore.Key{Kind: models.SpecEntityName, Name: spec.ResourceNameWithRevision()}
+	k := client.NewKey(models.SpecEntityName, spec.ResourceNameWithRevision())
 	k, err = client.Put(ctx, k, spec)
 	if err != nil {
 		return nil, err
@@ -70,11 +70,11 @@ func (s *RegistryServer) CreateSpec(ctx context.Context, request *rpc.CreateSpec
 
 // DeleteSpec handles the corresponding API request.
 func (s *RegistryServer) DeleteSpec(ctx context.Context, request *rpc.DeleteSpecRequest) (*empty.Empty, error) {
-	client, err := s.getDataStoreClient(ctx)
+	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, err
 	}
-	s.releaseDataStoreClient(client)
+	s.releaseStorageClient(client)
 	// Validate name and create dummy spec (we just need the ID fields).
 	spec, err := models.NewSpecFromResourceName(request.GetName())
 	if err != nil {
@@ -84,23 +84,23 @@ func (s *RegistryServer) DeleteSpec(ctx context.Context, request *rpc.DeleteSpec
 		return nil, invalidArgumentError(errors.New("specific revisions should be deleted with DeleteSpecRevision"))
 	}
 	// Delete all revisions of the spec.
-	q := datastore.NewQuery(models.SpecEntityName)
+	q := client.NewQuery(models.SpecEntityName)
 	q = q.Filter("ProjectID =", spec.ProjectID)
 	q = q.Filter("ApiID =", spec.ApiID)
 	q = q.Filter("VersionID =", spec.VersionID)
 	q = q.Filter("SpecID =", spec.SpecID)
-	err = models.DeleteAllMatches(ctx, client, q)
+	err = client.DeleteAllMatches(ctx, q)
 	s.notify(rpc.Notification_DELETED, request.GetName())
 	return &empty.Empty{}, err
 }
 
 // GetSpec handles the corresponding API request.
 func (s *RegistryServer) GetSpec(ctx context.Context, request *rpc.GetSpecRequest) (*rpc.Spec, error) {
-	client, err := s.getDataStoreClient(ctx)
+	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, err
 	}
-	s.releaseDataStoreClient(client)
+	s.releaseStorageClient(client)
 	spec, userSpecifiedRevision, err := fetchSpec(ctx, client, request.GetName())
 	if err != nil {
 		return nil, err
@@ -110,13 +110,13 @@ func (s *RegistryServer) GetSpec(ctx context.Context, request *rpc.GetSpecReques
 
 // ListSpecs handles the corresponding API request.
 func (s *RegistryServer) ListSpecs(ctx context.Context, req *rpc.ListSpecsRequest) (*rpc.ListSpecsResponse, error) {
-	client, err := s.getDataStoreClient(ctx)
+	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, err
 	}
-	s.releaseDataStoreClient(client)
-	q := datastore.NewQuery(models.SpecEntityName)
-	q, err = queryApplyCursor(q, req.GetPageToken())
+	s.releaseStorageClient(client)
+	q := client.NewQuery(models.SpecEntityName)
+	q, err = client.QueryApplyCursor(q, req.GetPageToken())
 	if err != nil {
 		return nil, internalError(err)
 	}
@@ -181,7 +181,7 @@ func (s *RegistryServer) ListSpecs(ctx context.Context, req *rpc.ListSpecsReques
 	responses := &rpc.ListSpecsResponse{
 		Specs: specMessages,
 	}
-	responses.NextPageToken, err = iteratorGetCursor(it, len(specMessages))
+	responses.NextPageToken, err = client.IteratorGetCursor(it, len(specMessages))
 	if err != nil {
 		return nil, internalError(err)
 	}
@@ -190,11 +190,11 @@ func (s *RegistryServer) ListSpecs(ctx context.Context, req *rpc.ListSpecsReques
 
 // UpdateSpec handles the corresponding API request.
 func (s *RegistryServer) UpdateSpec(ctx context.Context, request *rpc.UpdateSpecRequest) (*rpc.Spec, error) {
-	client, err := s.getDataStoreClient(ctx)
+	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, err
 	}
-	s.releaseDataStoreClient(client)
+	s.releaseStorageClient(client)
 	spec, userSpecifiedRevision, err := fetchSpec(ctx, client, request.GetSpec().GetName())
 	if err != nil {
 		return nil, err
@@ -210,7 +210,7 @@ func (s *RegistryServer) UpdateSpec(ctx context.Context, request *rpc.UpdateSpec
 	newRevisionID := spec.RevisionID
 	// if the revision changed, get the previously-current revision and mark it as non-current
 	if oldRevisionID != newRevisionID {
-		k := &datastore.Key{Kind: models.SpecEntityName, Name: spec.ResourceNameWithSpecifiedRevision(oldRevisionID)}
+		k := client.NewKey(models.SpecEntityName, spec.ResourceNameWithSpecifiedRevision(oldRevisionID))
 		var currentRevision models.Spec
 		client.Get(ctx, k, &currentRevision)
 		currentRevision.IsCurrent = false
@@ -220,7 +220,7 @@ func (s *RegistryServer) UpdateSpec(ctx context.Context, request *rpc.UpdateSpec
 		}
 		spec.IsCurrent = true
 	}
-	k := &datastore.Key{Kind: models.SpecEntityName, Name: spec.ResourceNameWithRevision()}
+	k := client.NewKey(models.SpecEntityName, spec.ResourceNameWithRevision())
 	k, err = client.Put(ctx, k, spec)
 	if err != nil {
 		return nil, err
@@ -231,17 +231,17 @@ func (s *RegistryServer) UpdateSpec(ctx context.Context, request *rpc.UpdateSpec
 
 // ListSpecRevisions handles the corresponding API request.
 func (s *RegistryServer) ListSpecRevisions(ctx context.Context, req *rpc.ListSpecRevisionsRequest) (*rpc.ListSpecRevisionsResponse, error) {
-	client, err := s.getDataStoreClient(ctx)
+	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, err
 	}
-	s.releaseDataStoreClient(client)
+	s.releaseStorageClient(client)
 	targetSpec, err := models.NewSpecFromResourceName(req.GetName())
 	if err != nil {
 		return nil, err
 	}
-	q := datastore.NewQuery(models.SpecEntityName)
-	q, err = queryApplyCursor(q, req.GetPageToken())
+	q := client.NewQuery(models.SpecEntityName)
+	q, err = client.QueryApplyCursor(q, req.GetPageToken())
 	if err != nil {
 		return nil, internalError(err)
 	}
@@ -267,7 +267,7 @@ func (s *RegistryServer) ListSpecRevisions(ctx context.Context, req *rpc.ListSpe
 	responses := &rpc.ListSpecRevisionsResponse{
 		Specs: specMessages,
 	}
-	responses.NextPageToken, err = iteratorGetCursor(it, len(specMessages))
+	responses.NextPageToken, err = client.IteratorGetCursor(it, len(specMessages))
 	if err != nil {
 		return nil, internalError(err)
 	}
@@ -276,18 +276,18 @@ func (s *RegistryServer) ListSpecRevisions(ctx context.Context, req *rpc.ListSpe
 
 // DeleteSpecRevision handles the corresponding API request.
 func (s *RegistryServer) DeleteSpecRevision(ctx context.Context, request *rpc.DeleteSpecRevisionRequest) (*empty.Empty, error) {
-	client, err := s.getDataStoreClient(ctx)
+	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, err
 	}
-	s.releaseDataStoreClient(client)
+	s.releaseStorageClient(client)
 	// Delete the spec revision.
 	// First, get the revision to delete.
 	spec, _, err := fetchSpec(ctx, client, request.GetName())
 	if err != nil {
 		return nil, err
 	}
-	k := &datastore.Key{Kind: models.SpecEntityName, Name: spec.ResourceNameWithRevision()}
+	k := client.NewKey(models.SpecEntityName, spec.ResourceNameWithRevision())
 	// If the one we will delete is the current revision, we need to designate a new current revision.
 	if spec.IsCurrent {
 		// get the most recent non-current revision and make it current
@@ -307,11 +307,11 @@ func (s *RegistryServer) DeleteSpecRevision(ctx context.Context, request *rpc.De
 
 // TagSpecRevision handles the corresponding API request.
 func (s *RegistryServer) TagSpecRevision(ctx context.Context, request *rpc.TagSpecRevisionRequest) (*rpc.Spec, error) {
-	client, err := s.getDataStoreClient(ctx)
+	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, err
 	}
-	s.releaseDataStoreClient(client)
+	s.releaseStorageClient(client)
 	spec, userSpecifiedRevision, err := fetchSpec(ctx, client, request.GetName())
 	if err != nil {
 		return nil, err
@@ -334,7 +334,7 @@ func (s *RegistryServer) TagSpecRevision(ctx context.Context, request *rpc.TagSp
 		CreateTime: now,
 		UpdateTime: now,
 	}
-	k := &datastore.Key{Kind: models.SpecRevisionTagEntityName, Name: tag.ResourceNameWithTag()}
+	k := client.NewKey(models.SpecRevisionTagEntityName, tag.ResourceNameWithTag())
 	k, err = client.Put(ctx, k, tag)
 	// send a notification that the tagged spec has been updated
 	s.notify(rpc.Notification_UPDATED, spec.ResourceNameWithSpecifiedRevision(request.GetTag()))
@@ -344,17 +344,17 @@ func (s *RegistryServer) TagSpecRevision(ctx context.Context, request *rpc.TagSp
 
 // ListSpecRevisionTags handles the corresponding API request.
 func (s *RegistryServer) ListSpecRevisionTags(ctx context.Context, req *rpc.ListSpecRevisionTagsRequest) (*rpc.ListSpecRevisionTagsResponse, error) {
-	client, err := s.getDataStoreClient(ctx)
+	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, err
 	}
-	s.releaseDataStoreClient(client)
+	s.releaseStorageClient(client)
 	targetSpec, err := models.NewSpecFromResourceName(req.GetName())
 	if err != nil {
 		return nil, err
 	}
-	q := datastore.NewQuery(models.SpecRevisionTagEntityName)
-	q, err = queryApplyCursor(q, req.GetPageToken())
+	q := client.NewQuery(models.SpecRevisionTagEntityName)
+	q, err = client.QueryApplyCursor(q, req.GetPageToken())
 	if err != nil {
 		return nil, internalError(err)
 	}
@@ -379,7 +379,7 @@ func (s *RegistryServer) ListSpecRevisionTags(ctx context.Context, req *rpc.List
 	responses := &rpc.ListSpecRevisionTagsResponse{
 		Tags: tagMessages,
 	}
-	responses.NextPageToken, err = iteratorGetCursor(it, len(tagMessages))
+	responses.NextPageToken, err = client.IteratorGetCursor(it, len(tagMessages))
 	if err != nil {
 		return nil, internalError(err)
 	}
@@ -388,11 +388,11 @@ func (s *RegistryServer) ListSpecRevisionTags(ctx context.Context, req *rpc.List
 
 // RollbackSpec handles the corresponding API request.
 func (s *RegistryServer) RollbackSpec(ctx context.Context, request *rpc.RollbackSpecRequest) (*rpc.Spec, error) {
-	client, err := s.getDataStoreClient(ctx)
+	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, err
 	}
-	s.releaseDataStoreClient(client)
+	s.releaseStorageClient(client)
 	specNameWithRevision := request.GetName() + "@" + request.GetRevisionId()
 	spec, userSpecifiedRevision, err := fetchSpec(ctx, client, specNameWithRevision)
 	if err != nil {
@@ -414,7 +414,7 @@ func (s *RegistryServer) RollbackSpec(ctx context.Context, request *rpc.Rollback
 	// Make the selected revision the current revision by giving it a new RevisionID and saving it
 	spec.BumpRevision()
 	spec.IsCurrent = true
-	k := &datastore.Key{Kind: models.SpecEntityName, Name: spec.ResourceNameWithRevision()}
+	k := client.NewKey(models.SpecEntityName, spec.ResourceNameWithRevision())
 	k, err = client.Put(ctx, k, spec)
 	// Send a notification of the new revision.
 	s.notify(rpc.Notification_UPDATED, spec.ResourceNameWithRevision())
@@ -424,7 +424,7 @@ func (s *RegistryServer) RollbackSpec(ctx context.Context, request *rpc.Rollback
 // fetchSpec gets the stored model of a Spec.
 func fetchSpec(
 	ctx context.Context,
-	client *datastore.Client,
+	client *storage.Client,
 	name string,
 ) (*models.Spec, string, error) {
 	spec, err := models.NewSpecFromResourceName(name)
@@ -444,9 +444,9 @@ func fetchSpec(
 	var resourceName string
 	var revisionName string
 	var specRevisionTag models.SpecRevisionTag
-	k0 := &datastore.Key{Kind: models.SpecRevisionTagEntityName, Name: spec.ResourceNameWithRevision()}
+	k0 := client.NewKey(models.SpecRevisionTagEntityName, spec.ResourceNameWithRevision())
 	err = client.Get(ctx, k0, &specRevisionTag)
-	if err == datastore.ErrNoSuchEntity {
+	if err == client.ErrNotFound() {
 		// if there is no tag, just use the provided revision
 		resourceName = spec.ResourceNameWithRevision()
 		revisionName = spec.RevisionID
@@ -458,9 +458,9 @@ func fetchSpec(
 		revisionName = specRevisionTag.Tag
 	}
 	// now that we know the revision, use it get the spec
-	k := &datastore.Key{Kind: models.SpecEntityName, Name: resourceName}
+	k := client.NewKey(models.SpecEntityName, resourceName)
 	err = client.Get(ctx, k, spec)
-	if err == datastore.ErrNoSuchEntity {
+	if err == client.ErrNotFound() {
 		return nil, revisionName, status.Error(codes.NotFound, "not found")
 	} else if err != nil {
 		return nil, revisionName, internalError(err)
@@ -471,15 +471,15 @@ func fetchSpec(
 // fetchMostRecentNonCurrentRevisionOfSpec gets the most recent revision that's not current.
 func fetchMostRecentNonCurrentRevisionOfSpec(
 	ctx context.Context,
-	client *datastore.Client,
+	client *storage.Client,
 	name string,
-) (*datastore.Key, *models.Spec, error) {
+) (*storage.Key, *models.Spec, error) {
 	pattern, err := models.NewSpecFromResourceName(name)
 	if err != nil {
 		return nil, nil, err
 	}
 	// note that we ignore any specified RevisionID
-	q := datastore.NewQuery(models.SpecEntityName)
+	q := client.NewQuery(models.SpecEntityName)
 	q = q.Filter("ProjectID =", pattern.ProjectID)
 	q = q.Filter("ApiID =", pattern.ApiID)
 	q = q.Filter("VersionID =", pattern.VersionID)
@@ -498,15 +498,15 @@ func fetchMostRecentNonCurrentRevisionOfSpec(
 // fetchCurrentRevisionOfSpec gets the current revision.
 func fetchCurrentRevisionOfSpec(
 	ctx context.Context,
-	client *datastore.Client,
+	client *storage.Client,
 	name string,
-) (*datastore.Key, *models.Spec, error) {
+) (*storage.Key, *models.Spec, error) {
 	pattern, err := models.NewSpecFromResourceName(name)
 	if err != nil {
 		return nil, nil, err
 	}
 	// note that we ignore any specified RevisionID
-	q := datastore.NewQuery(models.SpecEntityName)
+	q := client.NewQuery(models.SpecEntityName)
 	q = q.Filter("ProjectID =", pattern.ProjectID)
 	q = q.Filter("ApiID =", pattern.ApiID)
 	q = q.Filter("VersionID =", pattern.VersionID)

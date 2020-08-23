@@ -28,10 +28,10 @@ import (
 	"github.com/google/uuid"
 )
 
-// SpecEntityName is used to represent specs in the datastore.
+// SpecEntityName is used to represent specs in storage.
 const SpecEntityName = "Spec"
 
-// SpecRevisionTagEntityName is used to represent tags in the datastore.
+// SpecRevisionTagEntityName is used to represent tags in storage.
 const SpecRevisionTagEntityName = "SpecRevisionTag"
 
 // Spec ...

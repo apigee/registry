@@ -18,7 +18,6 @@ import (
 	"context"
 	"log"
 
-	"cloud.google.com/go/datastore"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/models"
 	"github.com/golang/protobuf/ptypes/empty"
@@ -29,17 +28,17 @@ import (
 
 // CreateLabel handles the corresponding API request.
 func (s *RegistryServer) CreateLabel(ctx context.Context, request *rpc.CreateLabelRequest) (*rpc.Label, error) {
-	client, err := s.getDataStoreClient(ctx)
+	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
 	}
-	s.releaseDataStoreClient(client)
+	s.releaseStorageClient(client)
 	label, err := models.NewLabelFromParentAndLabelID(request.GetParent(), request.GetLabelId())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
 	err = label.Update(request.GetLabel())
-	k := &datastore.Key{Kind: models.LabelEntityName, Name: label.ResourceName()}
+	k := client.NewKey(models.LabelEntityName, label.ResourceName())
 	// fail if label already exists
 	var existingLabel models.Label
 	err = client.Get(ctx, k, &existingLabel)
@@ -57,18 +56,18 @@ func (s *RegistryServer) CreateLabel(ctx context.Context, request *rpc.CreateLab
 
 // DeleteLabel handles the corresponding API request.
 func (s *RegistryServer) DeleteLabel(ctx context.Context, request *rpc.DeleteLabelRequest) (*empty.Empty, error) {
-	client, err := s.getDataStoreClient(ctx)
+	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
 	}
-	s.releaseDataStoreClient(client)
+	s.releaseStorageClient(client)
 	// Validate name and create dummy label (we just need the ID fields).
 	_, err = models.NewLabelFromResourceName(request.GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
 	// Delete the label.
-	k := &datastore.Key{Kind: models.LabelEntityName, Name: request.GetName()}
+	k := client.NewKey(models.LabelEntityName, request.GetName())
 	err = client.Delete(ctx, k)
 	s.notify(rpc.Notification_DELETED, request.GetName())
 	return &empty.Empty{}, internalError(err)
@@ -76,19 +75,19 @@ func (s *RegistryServer) DeleteLabel(ctx context.Context, request *rpc.DeleteLab
 
 // GetLabel handles the corresponding API request.
 func (s *RegistryServer) GetLabel(ctx context.Context, request *rpc.GetLabelRequest) (*rpc.Label, error) {
-	client, err := s.getDataStoreClient(ctx)
+	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
 	}
-	s.releaseDataStoreClient(client)
+	s.releaseStorageClient(client)
 	label, err := models.NewLabelFromResourceName(request.GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
 	log.Printf("looking for %s", label.ResourceName())
-	k := &datastore.Key{Kind: models.LabelEntityName, Name: label.ResourceName()}
+	k := client.NewKey(models.LabelEntityName, label.ResourceName())
 	err = client.Get(ctx, k, label)
-	if err == datastore.ErrNoSuchEntity {
+	if err == client.ErrNotFound() {
 		return nil, status.Error(codes.NotFound, "not found")
 	} else if err != nil {
 		return nil, internalError(err)
@@ -98,13 +97,13 @@ func (s *RegistryServer) GetLabel(ctx context.Context, request *rpc.GetLabelRequ
 
 // ListLabels handles the corresponding API request.
 func (s *RegistryServer) ListLabels(ctx context.Context, req *rpc.ListLabelsRequest) (*rpc.ListLabelsResponse, error) {
-	client, err := s.getDataStoreClient(ctx)
+	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
 	}
-	s.releaseDataStoreClient(client)
-	q := datastore.NewQuery(models.LabelEntityName)
-	q, err = queryApplyCursor(q, req.GetPageToken())
+	s.releaseStorageClient(client)
+	q := client.NewQuery(models.LabelEntityName)
+	q, err = client.QueryApplyCursor(q, req.GetPageToken())
 	if err != nil {
 		return nil, internalError(err)
 	}
@@ -180,7 +179,7 @@ func (s *RegistryServer) ListLabels(ctx context.Context, req *rpc.ListLabelsRequ
 	responses := &rpc.ListLabelsResponse{
 		Labels: labelMessages,
 	}
-	responses.NextPageToken, err = iteratorGetCursor(it, len(labelMessages))
+	responses.NextPageToken, err = client.IteratorGetCursor(it, len(labelMessages))
 	if err != nil {
 		return nil, internalError(err)
 	}
@@ -189,16 +188,16 @@ func (s *RegistryServer) ListLabels(ctx context.Context, req *rpc.ListLabelsRequ
 
 // UpdateLabel handles the corresponding API request.
 func (s *RegistryServer) UpdateLabel(ctx context.Context, request *rpc.UpdateLabelRequest) (*rpc.Label, error) {
-	client, err := s.getDataStoreClient(ctx)
+	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
 	}
-	s.releaseDataStoreClient(client)
+	s.releaseStorageClient(client)
 	label, err := models.NewLabelFromResourceName(request.GetLabel().GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	k := &datastore.Key{Kind: models.LabelEntityName, Name: request.GetLabel().GetName()}
+	k := client.NewKey(models.LabelEntityName, request.GetLabel().GetName())
 	err = client.Get(ctx, k, label)
 	if err != nil {
 		return nil, status.Error(codes.NotFound, "not found")

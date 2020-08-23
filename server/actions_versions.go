@@ -17,7 +17,6 @@ package server
 import (
 	"context"
 
-	"cloud.google.com/go/datastore"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/models"
 	"github.com/apigee/registry/server/names"
@@ -29,16 +28,16 @@ import (
 
 // CreateVersion handles the corresponding API request.
 func (s *RegistryServer) CreateVersion(ctx context.Context, request *rpc.CreateVersionRequest) (*rpc.Version, error) {
-	client, err := s.getDataStoreClient(ctx)
+	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, err
 	}
-	s.releaseDataStoreClient(client)
+	s.releaseStorageClient(client)
 	version, err := models.NewVersionFromParentAndVersionID(request.GetParent(), request.GetVersionId())
 	if err != nil {
 		return nil, err
 	}
-	k := &datastore.Key{Kind: models.VersionEntityName, Name: version.ResourceName()}
+	k := client.NewKey(models.VersionEntityName, version.ResourceName())
 	// fail if version already exists
 	var existingVersion models.Version
 	err = client.Get(ctx, k, &existingVersion)
@@ -57,19 +56,19 @@ func (s *RegistryServer) CreateVersion(ctx context.Context, request *rpc.CreateV
 
 // DeleteVersion handles the corresponding API request.
 func (s *RegistryServer) DeleteVersion(ctx context.Context, request *rpc.DeleteVersionRequest) (*empty.Empty, error) {
-	client, err := s.getDataStoreClient(ctx)
+	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, err
 	}
-	s.releaseDataStoreClient(client)
+	s.releaseStorageClient(client)
 	// Validate name and create dummy version (we just need the ID fields).
 	version, err := models.NewVersionFromResourceName(request.GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
 	// Delete children first and then delete the version.
-	version.DeleteChildren(ctx, client)
-	k := &datastore.Key{Kind: models.VersionEntityName, Name: request.GetName()}
+	client.DeleteChildrenOfVersion(ctx, version)
+	k := client.NewKey(models.VersionEntityName, request.GetName())
 	err = client.Delete(ctx, k)
 	s.notify(rpc.Notification_DELETED, request.GetName())
 	return &empty.Empty{}, err
@@ -77,18 +76,18 @@ func (s *RegistryServer) DeleteVersion(ctx context.Context, request *rpc.DeleteV
 
 // GetVersion handles the corresponding API request.
 func (s *RegistryServer) GetVersion(ctx context.Context, request *rpc.GetVersionRequest) (*rpc.Version, error) {
-	client, err := s.getDataStoreClient(ctx)
+	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, err
 	}
-	s.releaseDataStoreClient(client)
+	s.releaseStorageClient(client)
 	version, err := models.NewVersionFromResourceName(request.GetName())
 	if err != nil {
 		return nil, err
 	}
-	k := &datastore.Key{Kind: models.VersionEntityName, Name: version.ResourceName()}
+	k := client.NewKey(models.VersionEntityName, version.ResourceName())
 	err = client.Get(ctx, k, version)
-	if err == datastore.ErrNoSuchEntity {
+	if err == client.ErrNotFound() {
 		return nil, status.Error(codes.NotFound, "not found")
 	} else if err != nil {
 		return nil, internalError(err)
@@ -98,13 +97,13 @@ func (s *RegistryServer) GetVersion(ctx context.Context, request *rpc.GetVersion
 
 // ListVersions handles the corresponding API request.
 func (s *RegistryServer) ListVersions(ctx context.Context, req *rpc.ListVersionsRequest) (*rpc.ListVersionsResponse, error) {
-	client, err := s.getDataStoreClient(ctx)
+	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, err
 	}
-	s.releaseDataStoreClient(client)
-	q := datastore.NewQuery(models.VersionEntityName)
-	q, err = queryApplyCursor(q, req.GetPageToken())
+	s.releaseStorageClient(client)
+	q := client.NewQuery(models.VersionEntityName)
+	q, err = client.QueryApplyCursor(q, req.GetPageToken())
 	if err != nil {
 		return nil, internalError(err)
 	}
@@ -163,7 +162,7 @@ func (s *RegistryServer) ListVersions(ctx context.Context, req *rpc.ListVersions
 	responses := &rpc.ListVersionsResponse{
 		Versions: versionMessages,
 	}
-	responses.NextPageToken, err = iteratorGetCursor(it, len(versionMessages))
+	responses.NextPageToken, err = client.IteratorGetCursor(it, len(versionMessages))
 	if err != nil {
 		return nil, internalError(err)
 	}
@@ -172,16 +171,16 @@ func (s *RegistryServer) ListVersions(ctx context.Context, req *rpc.ListVersions
 
 // UpdateVersion handles the corresponding API request.
 func (s *RegistryServer) UpdateVersion(ctx context.Context, request *rpc.UpdateVersionRequest) (*rpc.Version, error) {
-	client, err := s.getDataStoreClient(ctx)
+	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, err
 	}
-	s.releaseDataStoreClient(client)
+	s.releaseStorageClient(client)
 	version, err := models.NewVersionFromResourceName(request.GetVersion().GetName())
 	if err != nil {
 		return nil, err
 	}
-	k := &datastore.Key{Kind: models.VersionEntityName, Name: version.ResourceName()}
+	k := client.NewKey(models.VersionEntityName, version.ResourceName())
 	err = client.Get(ctx, k, version)
 	if err != nil {
 		return nil, status.Error(codes.NotFound, "not found")

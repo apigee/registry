@@ -17,7 +17,6 @@ package server
 import (
 	"context"
 
-	"cloud.google.com/go/datastore"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/models"
 	"github.com/apigee/registry/server/names"
@@ -29,16 +28,16 @@ import (
 
 // CreateApi handles the corresponding API request.
 func (s *RegistryServer) CreateApi(ctx context.Context, request *rpc.CreateApiRequest) (*rpc.Api, error) {
-	client, err := s.getDataStoreClient(ctx)
+	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
 	}
-	s.releaseDataStoreClient(client)
+	s.releaseStorageClient(client)
 	api, err := models.NewApiFromParentAndApiID(request.GetParent(), request.GetApiId())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	k := &datastore.Key{Kind: models.ApiEntityName, Name: api.ResourceName()}
+	k := client.NewKey(models.ApiEntityName, api.ResourceName())
 	// fail if api already exists
 	var existingApi models.Api
 	err = client.Get(ctx, k, &existingApi)
@@ -57,19 +56,19 @@ func (s *RegistryServer) CreateApi(ctx context.Context, request *rpc.CreateApiRe
 
 // DeleteApi handles the corresponding API request.
 func (s *RegistryServer) DeleteApi(ctx context.Context, request *rpc.DeleteApiRequest) (*empty.Empty, error) {
-	client, err := s.getDataStoreClient(ctx)
+	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
 	}
-	s.releaseDataStoreClient(client)
+	s.releaseStorageClient(client)
 	// Validate name and create dummy api (we just need the ID fields).
 	api, err := models.NewApiFromResourceName(request.GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
 	// Delete children first and then delete the api.
-	api.DeleteChildren(ctx, client)
-	k := &datastore.Key{Kind: models.ApiEntityName, Name: request.GetName()}
+	client.DeleteChildrenOfApi(ctx, api)
+	k := client.NewKey(models.ApiEntityName, request.GetName())
 	err = client.Delete(ctx, k)
 	s.notify(rpc.Notification_DELETED, request.GetName())
 	return &empty.Empty{}, internalError(err)
@@ -77,18 +76,18 @@ func (s *RegistryServer) DeleteApi(ctx context.Context, request *rpc.DeleteApiRe
 
 // GetApi handles the corresponding API request.
 func (s *RegistryServer) GetApi(ctx context.Context, request *rpc.GetApiRequest) (*rpc.Api, error) {
-	client, err := s.getDataStoreClient(ctx)
+	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
 	}
-	s.releaseDataStoreClient(client)
+	s.releaseStorageClient(client)
 	api, err := models.NewApiFromResourceName(request.GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	k := &datastore.Key{Kind: models.ApiEntityName, Name: api.ResourceName()}
+	k := client.NewKey(models.ApiEntityName, api.ResourceName())
 	err = client.Get(ctx, k, api)
-	if err == datastore.ErrNoSuchEntity {
+	if err == client.ErrNotFound() {
 		return nil, status.Error(codes.NotFound, "not found")
 	} else if err != nil {
 		return nil, internalError(err)
@@ -98,13 +97,13 @@ func (s *RegistryServer) GetApi(ctx context.Context, request *rpc.GetApiRequest)
 
 // ListApis handles the corresponding API request.
 func (s *RegistryServer) ListApis(ctx context.Context, req *rpc.ListApisRequest) (*rpc.ListApisResponse, error) {
-	client, err := s.getDataStoreClient(ctx)
+	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
 	}
-	s.releaseDataStoreClient(client)
-	q := datastore.NewQuery(models.ApiEntityName)
-	q, err = queryApplyCursor(q, req.GetPageToken())
+	s.releaseStorageClient(client)
+	q := client.NewQuery(models.ApiEntityName)
+	q, err = client.QueryApplyCursor(q, req.GetPageToken())
 	if err != nil {
 		return nil, internalError(err)
 	}
@@ -156,7 +155,7 @@ func (s *RegistryServer) ListApis(ctx context.Context, req *rpc.ListApisRequest)
 	responses := &rpc.ListApisResponse{
 		Apis: apiMessages,
 	}
-	responses.NextPageToken, err = iteratorGetCursor(it, len(apiMessages))
+	responses.NextPageToken, err = client.IteratorGetCursor(it, len(apiMessages))
 	if err != nil {
 		return nil, internalError(err)
 	}
@@ -165,16 +164,16 @@ func (s *RegistryServer) ListApis(ctx context.Context, req *rpc.ListApisRequest)
 
 // UpdateApi handles the corresponding API request.
 func (s *RegistryServer) UpdateApi(ctx context.Context, request *rpc.UpdateApiRequest) (*rpc.Api, error) {
-	client, err := s.getDataStoreClient(ctx)
+	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
 	}
-	s.releaseDataStoreClient(client)
+	s.releaseStorageClient(client)
 	api, err := models.NewApiFromResourceName(request.GetApi().GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	k := &datastore.Key{Kind: models.ApiEntityName, Name: api.ResourceName()}
+	k := client.NewKey(models.ApiEntityName, api.ResourceName())
 	err = client.Get(ctx, k, api)
 	if err != nil {
 		return nil, status.Error(codes.NotFound, "not found")

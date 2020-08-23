@@ -25,7 +25,7 @@ import (
 	any "github.com/golang/protobuf/ptypes/any"
 )
 
-// PropertyEntityName is used to represent properties in the datastore.
+// PropertyEntityName is used to represent properties in storage.
 const PropertyEntityName = "Property"
 
 // PropertyValueType is an enum representing the types of values stored in properties.

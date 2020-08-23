@@ -15,18 +15,16 @@
 package models
 
 import (
-	"context"
 	"fmt"
 	"regexp"
 	"time"
 
-	"cloud.google.com/go/datastore"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
 	ptypes "github.com/golang/protobuf/ptypes"
 )
 
-// ApiEntityName is used to represent apis in the datastore.
+// ApiEntityName is used to represent apis in storage.
 const ApiEntityName = "Api"
 
 // Api ...
@@ -94,20 +92,5 @@ func (api *Api) Update(message *rpc.Api) error {
 	api.Availability = message.GetAvailability()
 	api.RecommendedVersion = message.GetRecommendedVersion()
 	api.UpdateTime = time.Now()
-	return nil
-}
-
-// DeleteChildren deletes all the children of a api.
-func (api *Api) DeleteChildren(ctx context.Context, client *datastore.Client) error {
-	for _, entityName := range []string{SpecEntityName, VersionEntityName} {
-		q := datastore.NewQuery(entityName)
-		q = q.KeysOnly()
-		q = q.Filter("ProjectID =", api.ProjectID)
-		q = q.Filter("ApiID =", api.ApiID)
-		err := DeleteAllMatches(ctx, client, q)
-		if err != nil {
-			return err
-		}
-	}
 	return nil
 }

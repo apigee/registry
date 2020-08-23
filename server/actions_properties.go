@@ -17,7 +17,6 @@ package server
 import (
 	"context"
 
-	"cloud.google.com/go/datastore"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/models"
 	"github.com/golang/protobuf/ptypes/empty"
@@ -28,17 +27,17 @@ import (
 
 // CreateProperty handles the corresponding API request.
 func (s *RegistryServer) CreateProperty(ctx context.Context, request *rpc.CreatePropertyRequest) (*rpc.Property, error) {
-	client, err := s.getDataStoreClient(ctx)
+	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
 	}
-	s.releaseDataStoreClient(client)
+	s.releaseStorageClient(client)
 	property, err := models.NewPropertyFromParentAndPropertyID(request.GetParent(), request.GetPropertyId())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
 	err = property.Update(request.GetProperty())
-	k := &datastore.Key{Kind: models.PropertyEntityName, Name: property.ResourceName()}
+	k := client.NewKey(models.PropertyEntityName, property.ResourceName())
 	// fail if property already exists
 	var existingProperty models.Property
 	err = client.Get(ctx, k, &existingProperty)
@@ -56,18 +55,18 @@ func (s *RegistryServer) CreateProperty(ctx context.Context, request *rpc.Create
 
 // DeleteProperty handles the corresponding API request.
 func (s *RegistryServer) DeleteProperty(ctx context.Context, request *rpc.DeletePropertyRequest) (*empty.Empty, error) {
-	client, err := s.getDataStoreClient(ctx)
+	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
 	}
-	s.releaseDataStoreClient(client)
+	s.releaseStorageClient(client)
 	// Validate name and create dummy property (we just need the ID fields).
 	_, err = models.NewPropertyFromResourceName(request.GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
 	// Delete the property.
-	k := &datastore.Key{Kind: models.PropertyEntityName, Name: request.GetName()}
+	k := client.NewKey(models.PropertyEntityName, request.GetName())
 	err = client.Delete(ctx, k)
 	s.notify(rpc.Notification_DELETED, request.GetName())
 	return &empty.Empty{}, internalError(err)
@@ -75,18 +74,18 @@ func (s *RegistryServer) DeleteProperty(ctx context.Context, request *rpc.Delete
 
 // GetProperty handles the corresponding API request.
 func (s *RegistryServer) GetProperty(ctx context.Context, request *rpc.GetPropertyRequest) (*rpc.Property, error) {
-	client, err := s.getDataStoreClient(ctx)
+	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
 	}
-	s.releaseDataStoreClient(client)
+	s.releaseStorageClient(client)
 	property, err := models.NewPropertyFromResourceName(request.GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	k := &datastore.Key{Kind: models.PropertyEntityName, Name: property.ResourceName()}
+	k := client.NewKey(models.PropertyEntityName, property.ResourceName())
 	err = client.Get(ctx, k, property)
-	if err == datastore.ErrNoSuchEntity {
+	if err == client.ErrNotFound() {
 		return nil, status.Error(codes.NotFound, "not found")
 	} else if err != nil {
 		return nil, internalError(err)
@@ -96,13 +95,13 @@ func (s *RegistryServer) GetProperty(ctx context.Context, request *rpc.GetProper
 
 // ListProperties handles the corresponding API request.
 func (s *RegistryServer) ListProperties(ctx context.Context, req *rpc.ListPropertiesRequest) (*rpc.ListPropertiesResponse, error) {
-	client, err := s.getDataStoreClient(ctx)
+	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
 	}
-	s.releaseDataStoreClient(client)
-	q := datastore.NewQuery(models.PropertyEntityName)
-	q, err = queryApplyCursor(q, req.GetPageToken())
+	s.releaseStorageClient(client)
+	q := client.NewQuery(models.PropertyEntityName)
+	q, err = client.QueryApplyCursor(q, req.GetPageToken())
 	if err != nil {
 		return nil, internalError(err)
 	}
@@ -178,7 +177,7 @@ func (s *RegistryServer) ListProperties(ctx context.Context, req *rpc.ListProper
 	responses := &rpc.ListPropertiesResponse{
 		Properties: propertyMessages,
 	}
-	responses.NextPageToken, err = iteratorGetCursor(it, len(propertyMessages))
+	responses.NextPageToken, err = client.IteratorGetCursor(it, len(propertyMessages))
 	if err != nil {
 		return nil, internalError(err)
 	}
@@ -187,16 +186,16 @@ func (s *RegistryServer) ListProperties(ctx context.Context, req *rpc.ListProper
 
 // UpdateProperty handles the corresponding API request.
 func (s *RegistryServer) UpdateProperty(ctx context.Context, request *rpc.UpdatePropertyRequest) (*rpc.Property, error) {
-	client, err := s.getDataStoreClient(ctx)
+	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, internalError(err)
 	}
-	s.releaseDataStoreClient(client)
+	s.releaseStorageClient(client)
 	property, err := models.NewPropertyFromResourceName(request.GetProperty().GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	k := &datastore.Key{Kind: models.PropertyEntityName, Name: request.GetProperty().GetName()}
+	k := client.NewKey(models.PropertyEntityName, request.GetProperty().GetName())
 	err = client.Get(ctx, k, property)
 	if err != nil {
 		return nil, status.Error(codes.NotFound, "not found")
