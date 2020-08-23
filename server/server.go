@@ -33,7 +33,8 @@ import (
 
 // RegistryServer implements a Registry server.
 type RegistryServer struct {
-	rpc.UnimplementedRegistryServer
+	// Uncomment the following line when adding new methods.
+	// rpc.UnimplementedRegistryServer
 
 	projectID string
 }
