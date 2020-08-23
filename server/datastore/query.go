@@ -24,12 +24,12 @@ import (
 type Query = datastore.Query
 
 // NewQuery creates a new query.
-func (client *Client) NewQuery(kind string) *Query {
+func (c *Client) NewQuery(kind string) *Query {
 	return datastore.NewQuery(kind)
 }
 
 // QueryApplyCursor applies a cursor to a query so that results will start at the cursor.
-func (client *Client) QueryApplyCursor(q *Query, cursorStr string) (*Query, error) {
+func (c *Client) QueryApplyCursor(q *Query, cursorStr string) (*Query, error) {
 	if cursorStr != "" {
 		cursor, err := datastore.DecodeCursor(cursorStr)
 		if err != nil {

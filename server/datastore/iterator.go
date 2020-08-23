@@ -6,7 +6,7 @@ import "cloud.google.com/go/datastore"
 type Iterator = datastore.Iterator
 
 // IteratorGetCursor gets the cursor for the next page of results.
-func (client *Client) IteratorGetCursor(it *Iterator, l int) (string, error) {
+func (c *Client) IteratorGetCursor(it *Iterator, l int) (string, error) {
 	if l > 0 {
 		nextCursor, err := it.Cursor()
 		if err != nil {

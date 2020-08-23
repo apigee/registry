@@ -43,26 +43,26 @@ func NewClient(ctx context.Context, projectID string) (*Client, error) {
 }
 
 // ErrNotFound is returned when an entity is not found.
-func (client *Client) ErrNotFound() error {
+func (c *Client) ErrNotFound() error {
 	return datastore.ErrNoSuchEntity
 }
 
 // Get gets an entity using the storage client.
-func (client *Client) Get(ctx context.Context, k *Key, v interface{}) error {
-	return client.client.Get(ctx, k, v)
+func (c *Client) Get(ctx context.Context, k *Key, v interface{}) error {
+	return c.client.Get(ctx, k, v)
 }
 
 // Put puts an entity using the storage client.
-func (client *Client) Put(ctx context.Context, k *Key, v interface{}) (*Key, error) {
-	return client.client.Put(ctx, k, v)
+func (c *Client) Put(ctx context.Context, k *Key, v interface{}) (*Key, error) {
+	return c.client.Put(ctx, k, v)
 }
 
 // Delete deletes an entity using the storage client.
-func (client *Client) Delete(ctx context.Context, k *Key) error {
-	return client.client.Delete(ctx, k)
+func (c *Client) Delete(ctx context.Context, k *Key) error {
+	return c.client.Delete(ctx, k)
 }
 
 // Run runs a query using the storage client, returning an iterator.
-func (client *Client) Run(ctx context.Context, q *Query) *Iterator {
-	return client.client.Run(ctx, q)
+func (c *Client) Run(ctx context.Context, q *Query) *Iterator {
+	return c.client.Run(ctx, q)
 }

@@ -26,8 +26,8 @@ import (
 const verbose = false
 
 // DeleteAllMatches deletes all entities matching a specified query.
-func (client *Client) DeleteAllMatches(ctx context.Context, q *Query) error {
-	it := client.Run(ctx, q.Distinct())
+func (c *Client) DeleteAllMatches(ctx context.Context, q *Query) error {
+	it := c.Run(ctx, q.Distinct())
 	key, err := it.Next(nil)
 	keys := make([]*datastore.Key, 0)
 	for err == nil {
@@ -37,7 +37,7 @@ func (client *Client) DeleteAllMatches(ctx context.Context, q *Query) error {
 			if verbose {
 				log.Printf("Deleting %d %s entities", len(keys), keys[0].Kind)
 			}
-			err = client.client.DeleteMulti(ctx, keys)
+			err = c.client.DeleteMulti(ctx, keys)
 			if err != nil {
 				return err
 			}
@@ -51,13 +51,13 @@ func (client *Client) DeleteAllMatches(ctx context.Context, q *Query) error {
 		if verbose {
 			log.Printf("Deleting %d %s entities", len(keys), keys[0].Kind)
 		}
-		return client.client.DeleteMulti(ctx, keys)
+		return c.client.DeleteMulti(ctx, keys)
 	}
 	return nil
 }
 
 // DeleteChildrenOfProject deletes all the children of a project.
-func (client *Client) DeleteChildrenOfProject(ctx context.Context, project *models.Project) error {
+func (c *Client) DeleteChildrenOfProject(ctx context.Context, project *models.Project) error {
 	entityNames := []string{
 		models.LabelEntityName,
 		models.PropertyEntityName,
@@ -70,7 +70,7 @@ func (client *Client) DeleteChildrenOfProject(ctx context.Context, project *mode
 		q := datastore.NewQuery(entityName)
 		q = q.KeysOnly()
 		q = q.Filter("ProjectID =", project.ProjectID)
-		err := client.DeleteAllMatches(ctx, q)
+		err := c.DeleteAllMatches(ctx, q)
 		if err != nil {
 			return err
 		}
@@ -79,13 +79,13 @@ func (client *Client) DeleteChildrenOfProject(ctx context.Context, project *mode
 }
 
 // DeleteChildrenOfApi deletes all the children of a api.
-func (client *Client) DeleteChildrenOfApi(ctx context.Context, api *models.Api) error {
+func (c *Client) DeleteChildrenOfApi(ctx context.Context, api *models.Api) error {
 	for _, entityName := range []string{models.SpecEntityName, models.VersionEntityName} {
 		q := datastore.NewQuery(entityName)
 		q = q.KeysOnly()
 		q = q.Filter("ProjectID =", api.ProjectID)
 		q = q.Filter("ApiID =", api.ApiID)
-		err := client.DeleteAllMatches(ctx, q)
+		err := c.DeleteAllMatches(ctx, q)
 		if err != nil {
 			return err
 		}
@@ -94,14 +94,14 @@ func (client *Client) DeleteChildrenOfApi(ctx context.Context, api *models.Api) 
 }
 
 // DeleteChildrenOfVersion deletes all the children of a version.
-func (client *Client) DeleteChildrenOfVersion(ctx context.Context, version *models.Version) error {
+func (c *Client) DeleteChildrenOfVersion(ctx context.Context, version *models.Version) error {
 	for _, entityName := range []string{models.SpecEntityName} {
 		q := datastore.NewQuery(entityName)
 		q = q.KeysOnly()
 		q = q.Filter("ProjectID =", version.ProjectID)
 		q = q.Filter("ApiID =", version.ApiID)
 		q = q.Filter("VersionID =", version.VersionID)
-		err := client.DeleteAllMatches(ctx, q)
+		err := c.DeleteAllMatches(ctx, q)
 		if err != nil {
 			return err
 		}
