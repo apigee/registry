@@ -36,7 +36,7 @@ func (s *RegistryServer) CreateSpec(ctx context.Context, request *rpc.CreateSpec
 	if err != nil {
 		return nil, err
 	}
-	s.releaseStorageClient(client)
+	defer s.releaseStorageClient(client)
 	spec, err := models.NewSpecFromParentAndSpecID(request.GetParent(), request.GetSpecId())
 	if err != nil {
 		return nil, err
@@ -74,7 +74,7 @@ func (s *RegistryServer) DeleteSpec(ctx context.Context, request *rpc.DeleteSpec
 	if err != nil {
 		return nil, err
 	}
-	s.releaseStorageClient(client)
+	defer s.releaseStorageClient(client)
 	// Validate name and create dummy spec (we just need the ID fields).
 	spec, err := models.NewSpecFromResourceName(request.GetName())
 	if err != nil {
@@ -100,7 +100,7 @@ func (s *RegistryServer) GetSpec(ctx context.Context, request *rpc.GetSpecReques
 	if err != nil {
 		return nil, err
 	}
-	s.releaseStorageClient(client)
+	defer s.releaseStorageClient(client)
 	spec, userSpecifiedRevision, err := fetchSpec(ctx, client, request.GetName())
 	if err != nil {
 		return nil, err
@@ -114,7 +114,7 @@ func (s *RegistryServer) ListSpecs(ctx context.Context, req *rpc.ListSpecsReques
 	if err != nil {
 		return nil, err
 	}
-	s.releaseStorageClient(client)
+	defer s.releaseStorageClient(client)
 	q := client.NewQuery(models.SpecEntityName)
 	q, err = client.QueryApplyCursor(q, req.GetPageToken())
 	if err != nil {
@@ -194,7 +194,7 @@ func (s *RegistryServer) UpdateSpec(ctx context.Context, request *rpc.UpdateSpec
 	if err != nil {
 		return nil, err
 	}
-	s.releaseStorageClient(client)
+	defer s.releaseStorageClient(client)
 	spec, userSpecifiedRevision, err := fetchSpec(ctx, client, request.GetSpec().GetName())
 	if err != nil {
 		return nil, err
@@ -235,7 +235,7 @@ func (s *RegistryServer) ListSpecRevisions(ctx context.Context, req *rpc.ListSpe
 	if err != nil {
 		return nil, err
 	}
-	s.releaseStorageClient(client)
+	defer s.releaseStorageClient(client)
 	targetSpec, err := models.NewSpecFromResourceName(req.GetName())
 	if err != nil {
 		return nil, err
@@ -280,7 +280,7 @@ func (s *RegistryServer) DeleteSpecRevision(ctx context.Context, request *rpc.De
 	if err != nil {
 		return nil, err
 	}
-	s.releaseStorageClient(client)
+	defer s.releaseStorageClient(client)
 	// Delete the spec revision.
 	// First, get the revision to delete.
 	spec, _, err := fetchSpec(ctx, client, request.GetName())
@@ -311,7 +311,7 @@ func (s *RegistryServer) TagSpecRevision(ctx context.Context, request *rpc.TagSp
 	if err != nil {
 		return nil, err
 	}
-	s.releaseStorageClient(client)
+	defer s.releaseStorageClient(client)
 	spec, userSpecifiedRevision, err := fetchSpec(ctx, client, request.GetName())
 	if err != nil {
 		return nil, err
@@ -348,7 +348,7 @@ func (s *RegistryServer) ListSpecRevisionTags(ctx context.Context, req *rpc.List
 	if err != nil {
 		return nil, err
 	}
-	s.releaseStorageClient(client)
+	defer s.releaseStorageClient(client)
 	targetSpec, err := models.NewSpecFromResourceName(req.GetName())
 	if err != nil {
 		return nil, err
@@ -392,7 +392,7 @@ func (s *RegistryServer) RollbackSpec(ctx context.Context, request *rpc.Rollback
 	if err != nil {
 		return nil, err
 	}
-	s.releaseStorageClient(client)
+	defer s.releaseStorageClient(client)
 	specNameWithRevision := request.GetName() + "@" + request.GetRevisionId()
 	spec, userSpecifiedRevision, err := fetchSpec(ctx, client, specNameWithRevision)
 	if err != nil {

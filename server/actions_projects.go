@@ -31,7 +31,7 @@ func (s *RegistryServer) CreateProject(ctx context.Context, request *rpc.CreateP
 	if err != nil {
 		return nil, internalError(err)
 	}
-	s.releaseStorageClient(client)
+	defer s.releaseStorageClient(client)
 	project, err := models.NewProjectFromProjectID(request.GetProjectId())
 	if err != nil {
 		return nil, invalidArgumentError(err)
@@ -59,7 +59,7 @@ func (s *RegistryServer) DeleteProject(ctx context.Context, request *rpc.DeleteP
 	if err != nil {
 		return nil, internalError(err)
 	}
-	s.releaseStorageClient(client)
+	defer s.releaseStorageClient(client)
 	// Validate name and create dummy project (we just need the ID fields).
 	project, err := models.NewProjectFromResourceName(request.GetName())
 	if err != nil {
@@ -82,7 +82,7 @@ func (s *RegistryServer) GetProject(ctx context.Context, request *rpc.GetProject
 	if err != nil {
 		return nil, internalError(err)
 	}
-	s.releaseStorageClient(client)
+	defer s.releaseStorageClient(client)
 	project, err := models.NewProjectFromResourceName(request.GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
@@ -103,7 +103,7 @@ func (s *RegistryServer) ListProjects(ctx context.Context, req *rpc.ListProjects
 	if err != nil {
 		return nil, internalError(err)
 	}
-	s.releaseStorageClient(client)
+	defer s.releaseStorageClient(client)
 	q := client.NewQuery(models.ProjectEntityName)
 	q, err = client.QueryApplyCursor(q, req.GetPageToken())
 	if err != nil {
@@ -161,7 +161,7 @@ func (s *RegistryServer) UpdateProject(ctx context.Context, request *rpc.UpdateP
 	if err != nil {
 		return nil, internalError(err)
 	}
-	s.releaseStorageClient(client)
+	defer s.releaseStorageClient(client)
 	project, err := models.NewProjectFromResourceName(request.GetProject().GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)

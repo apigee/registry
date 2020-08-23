@@ -32,7 +32,7 @@ func (s *RegistryServer) CreateLabel(ctx context.Context, request *rpc.CreateLab
 	if err != nil {
 		return nil, internalError(err)
 	}
-	s.releaseStorageClient(client)
+	defer s.releaseStorageClient(client)
 	label, err := models.NewLabelFromParentAndLabelID(request.GetParent(), request.GetLabelId())
 	if err != nil {
 		return nil, invalidArgumentError(err)
@@ -60,7 +60,7 @@ func (s *RegistryServer) DeleteLabel(ctx context.Context, request *rpc.DeleteLab
 	if err != nil {
 		return nil, internalError(err)
 	}
-	s.releaseStorageClient(client)
+	defer s.releaseStorageClient(client)
 	// Validate name and create dummy label (we just need the ID fields).
 	_, err = models.NewLabelFromResourceName(request.GetName())
 	if err != nil {
@@ -79,7 +79,7 @@ func (s *RegistryServer) GetLabel(ctx context.Context, request *rpc.GetLabelRequ
 	if err != nil {
 		return nil, internalError(err)
 	}
-	s.releaseStorageClient(client)
+	defer s.releaseStorageClient(client)
 	label, err := models.NewLabelFromResourceName(request.GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
@@ -101,7 +101,7 @@ func (s *RegistryServer) ListLabels(ctx context.Context, req *rpc.ListLabelsRequ
 	if err != nil {
 		return nil, internalError(err)
 	}
-	s.releaseStorageClient(client)
+	defer s.releaseStorageClient(client)
 	q := client.NewQuery(models.LabelEntityName)
 	q, err = client.QueryApplyCursor(q, req.GetPageToken())
 	if err != nil {
@@ -192,7 +192,7 @@ func (s *RegistryServer) UpdateLabel(ctx context.Context, request *rpc.UpdateLab
 	if err != nil {
 		return nil, internalError(err)
 	}
-	s.releaseStorageClient(client)
+	defer s.releaseStorageClient(client)
 	label, err := models.NewLabelFromResourceName(request.GetLabel().GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)

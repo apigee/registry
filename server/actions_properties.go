@@ -31,7 +31,7 @@ func (s *RegistryServer) CreateProperty(ctx context.Context, request *rpc.Create
 	if err != nil {
 		return nil, internalError(err)
 	}
-	s.releaseStorageClient(client)
+	defer s.releaseStorageClient(client)
 	property, err := models.NewPropertyFromParentAndPropertyID(request.GetParent(), request.GetPropertyId())
 	if err != nil {
 		return nil, invalidArgumentError(err)
@@ -59,7 +59,7 @@ func (s *RegistryServer) DeleteProperty(ctx context.Context, request *rpc.Delete
 	if err != nil {
 		return nil, internalError(err)
 	}
-	s.releaseStorageClient(client)
+	defer s.releaseStorageClient(client)
 	// Validate name and create dummy property (we just need the ID fields).
 	_, err = models.NewPropertyFromResourceName(request.GetName())
 	if err != nil {
@@ -78,7 +78,7 @@ func (s *RegistryServer) GetProperty(ctx context.Context, request *rpc.GetProper
 	if err != nil {
 		return nil, internalError(err)
 	}
-	s.releaseStorageClient(client)
+	defer s.releaseStorageClient(client)
 	property, err := models.NewPropertyFromResourceName(request.GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
@@ -99,7 +99,7 @@ func (s *RegistryServer) ListProperties(ctx context.Context, req *rpc.ListProper
 	if err != nil {
 		return nil, internalError(err)
 	}
-	s.releaseStorageClient(client)
+	defer s.releaseStorageClient(client)
 	q := client.NewQuery(models.PropertyEntityName)
 	q, err = client.QueryApplyCursor(q, req.GetPageToken())
 	if err != nil {
@@ -190,7 +190,7 @@ func (s *RegistryServer) UpdateProperty(ctx context.Context, request *rpc.Update
 	if err != nil {
 		return nil, internalError(err)
 	}
-	s.releaseStorageClient(client)
+	defer s.releaseStorageClient(client)
 	property, err := models.NewPropertyFromResourceName(request.GetProperty().GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)

@@ -32,7 +32,7 @@ func (s *RegistryServer) CreateVersion(ctx context.Context, request *rpc.CreateV
 	if err != nil {
 		return nil, err
 	}
-	s.releaseStorageClient(client)
+	defer s.releaseStorageClient(client)
 	version, err := models.NewVersionFromParentAndVersionID(request.GetParent(), request.GetVersionId())
 	if err != nil {
 		return nil, err
@@ -60,7 +60,7 @@ func (s *RegistryServer) DeleteVersion(ctx context.Context, request *rpc.DeleteV
 	if err != nil {
 		return nil, err
 	}
-	s.releaseStorageClient(client)
+	defer s.releaseStorageClient(client)
 	// Validate name and create dummy version (we just need the ID fields).
 	version, err := models.NewVersionFromResourceName(request.GetName())
 	if err != nil {
@@ -80,7 +80,7 @@ func (s *RegistryServer) GetVersion(ctx context.Context, request *rpc.GetVersion
 	if err != nil {
 		return nil, err
 	}
-	s.releaseStorageClient(client)
+	defer s.releaseStorageClient(client)
 	version, err := models.NewVersionFromResourceName(request.GetName())
 	if err != nil {
 		return nil, err
@@ -101,7 +101,7 @@ func (s *RegistryServer) ListVersions(ctx context.Context, req *rpc.ListVersions
 	if err != nil {
 		return nil, err
 	}
-	s.releaseStorageClient(client)
+	defer s.releaseStorageClient(client)
 	q := client.NewQuery(models.VersionEntityName)
 	q, err = client.QueryApplyCursor(q, req.GetPageToken())
 	if err != nil {
@@ -175,7 +175,7 @@ func (s *RegistryServer) UpdateVersion(ctx context.Context, request *rpc.UpdateV
 	if err != nil {
 		return nil, err
 	}
-	s.releaseStorageClient(client)
+	defer s.releaseStorageClient(client)
 	version, err := models.NewVersionFromResourceName(request.GetVersion().GetName())
 	if err != nil {
 		return nil, err

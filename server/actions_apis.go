@@ -32,7 +32,7 @@ func (s *RegistryServer) CreateApi(ctx context.Context, request *rpc.CreateApiRe
 	if err != nil {
 		return nil, internalError(err)
 	}
-	s.releaseStorageClient(client)
+	defer s.releaseStorageClient(client)
 	api, err := models.NewApiFromParentAndApiID(request.GetParent(), request.GetApiId())
 	if err != nil {
 		return nil, invalidArgumentError(err)
@@ -60,7 +60,7 @@ func (s *RegistryServer) DeleteApi(ctx context.Context, request *rpc.DeleteApiRe
 	if err != nil {
 		return nil, internalError(err)
 	}
-	s.releaseStorageClient(client)
+	defer s.releaseStorageClient(client)
 	// Validate name and create dummy api (we just need the ID fields).
 	api, err := models.NewApiFromResourceName(request.GetName())
 	if err != nil {
@@ -80,7 +80,7 @@ func (s *RegistryServer) GetApi(ctx context.Context, request *rpc.GetApiRequest)
 	if err != nil {
 		return nil, internalError(err)
 	}
-	s.releaseStorageClient(client)
+	defer s.releaseStorageClient(client)
 	api, err := models.NewApiFromResourceName(request.GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
@@ -101,7 +101,7 @@ func (s *RegistryServer) ListApis(ctx context.Context, req *rpc.ListApisRequest)
 	if err != nil {
 		return nil, internalError(err)
 	}
-	s.releaseStorageClient(client)
+	defer s.releaseStorageClient(client)
 	q := client.NewQuery(models.ApiEntityName)
 	q, err = client.QueryApplyCursor(q, req.GetPageToken())
 	if err != nil {
@@ -168,7 +168,7 @@ func (s *RegistryServer) UpdateApi(ctx context.Context, request *rpc.UpdateApiRe
 	if err != nil {
 		return nil, internalError(err)
 	}
-	s.releaseStorageClient(client)
+	defer s.releaseStorageClient(client)
 	api, err := models.NewApiFromResourceName(request.GetApi().GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
