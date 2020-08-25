@@ -23,3 +23,6 @@ export APG_REGISTRY_ADDRESS=${APG_REGISTRY_AUDIENCES#https://}:443
 # The auth token is generated for the gcloud logged-in user.
 export APG_REGISTRY_CLIENT_EMAIL=$(gcloud config list account --format "value(core.account)")
 export APG_REGISTRY_TOKEN=$(gcloud auth print-identity-token ${APG_REGISTRY_CLIENT_EMAIL})
+
+# Calls don't use an API key.
+unset APG_REGISTRY_API_KEY
