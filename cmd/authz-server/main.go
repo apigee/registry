@@ -86,10 +86,6 @@ func (a *authorizationServer) Check(ctx context.Context, req *auth.CheckRequest)
 	if err == nil {
 		log.Println("Inbound Headers: " + string(b))
 	}
-	ct, err := json.MarshalIndent(req.Attributes.ContextExtensions, "", "  ")
-	if err == nil {
-		log.Println("Context Extensions: " + string(ct))
-	}
 
 	authHeader, ok := req.Attributes.Request.Http.Headers["authorization"]
 	if !ok {

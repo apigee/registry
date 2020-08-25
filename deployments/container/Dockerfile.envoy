@@ -28,8 +28,8 @@ RUN CGO_ENABLED=0 GOOS=linux go build -v -o authz-server ./cmd/authz-server
 # https://www.envoyproxy.io/docs/envoy/latest/version_history/v1.12.0
 FROM envoyproxy/envoy:v1.11.2
 
-COPY deployments/container/envoy.yaml /etc/envoy/envoy.yaml
 COPY deployments/container/RUN-WITH-ENVOY.sh /RUN-WITH-ENVOY.sh
+COPY deployments/envoy/envoy.yaml /etc/envoy/envoy.yaml
 COPY deployments/envoy/proto.pb /proto.pb
 
 # Copy the registry-server binary to the production image from the builder stage.

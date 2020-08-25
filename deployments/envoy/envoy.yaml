@@ -23,11 +23,6 @@ static_resources:
                       routes:
                         - match: { prefix: "/google.cloud.apigee.registry.v1alpha1.Registry" }
                           route: { cluster: registry-server, timeout: { seconds: 60 } }
-                          per_filter_config:
-                            envoy.ext_authz:
-                              check_settings:
-                                context_extensions:
-                                  x-forwarded-host: original-host-as-context
                       cors:
                         allow_origin: ["*"]
                         allow_methods: GET, PUT, DELETE, POST, OPTIONS
@@ -67,7 +62,7 @@ static_resources:
               - endpoint:
                   address:
                     socket_address:
-                      address: localhost
+                      address: 127.0.0.1
                       port_value: 8080
     - name: authz-server
       type: static
@@ -86,9 +81,9 @@ static_resources:
           value: 50.0
       health_checks:
         - timeout: 1s
-          interval: 60s
+          interval: 600s
           interval_jitter: 1s
-          no_traffic_interval: 60s
+          no_traffic_interval: 600s
           unhealthy_threshold: 1
           healthy_threshold: 3
           grpc_health_check:
