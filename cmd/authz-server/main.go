@@ -27,6 +27,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"sync"
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -46,9 +47,9 @@ import (
 )
 
 var (
-	grpcport = flag.String("grpcport", ":50051", "grpcport")
-	conn     *grpc.ClientConn
-	hs       *health.Server
+	port = flag.String("port", ":50051", "port")
+	conn *grpc.ClientConn
+	hs   *health.Server
 )
 
 // AuthzConfig configures the authz filter.
@@ -59,10 +60,6 @@ type AuthzConfig struct {
 }
 
 var config AuthzConfig
-
-const (
-	address string = ":50051"
-)
 
 // healthServer implements the gRPC health check service.
 type healthServer struct{}
@@ -85,10 +82,6 @@ func (a *authorizationServer) Check(ctx context.Context, req *auth.CheckRequest)
 	b, err := json.MarshalIndent(req.Attributes.Request.Http.Headers, "", "  ")
 	if err == nil {
 		log.Println("Inbound Headers: " + string(b))
-	}
-	ct, err := json.MarshalIndent(req.Attributes.ContextExtensions, "", "  ")
-	if err == nil {
-		log.Println("Context Extensions: " + string(ct))
 	}
 
 	authHeader, ok := req.Attributes.Request.Http.Headers["authorization"]
@@ -230,13 +223,16 @@ type GoogleUser struct {
 
 // in-memory cache of users
 var users map[string]*GoogleUser
+var mutex sync.Mutex
 
 func getUser(credential string) (*GoogleUser, error) {
+	mutex.Lock()
 	if users == nil {
 		users = make(map[string]*GoogleUser)
 	}
 	// first check the cache
 	cachedUser := users[credential]
+	mutex.Unlock()
 	if cachedUser != nil {
 		log.Printf("cached user: %+v for %s", cachedUser, credential)
 		return cachedUser, nil
@@ -269,7 +265,9 @@ func getUser(credential string) (*GoogleUser, error) {
 	if err != nil {
 		return nil, err
 	}
+	mutex.Lock()
 	users[credential] = user
+	mutex.Unlock()
 	log.Printf("verified user: %+v for %s", user, credential)
 	return user, nil
 }
@@ -424,13 +422,13 @@ func main() {
 	}
 	log.Printf("config: %+v", config)
 
-	if *grpcport == "" {
-		fmt.Fprintln(os.Stderr, "missing -grpcport flag (:50051)")
+	if *port == "" {
+		fmt.Fprintln(os.Stderr, "missing -port flag (:50051)")
 		flag.Usage()
 		os.Exit(2)
 	}
 
-	lis, err := net.Listen("tcp", *grpcport)
+	lis, err := net.Listen("tcp", *port)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
@@ -440,6 +438,6 @@ func main() {
 	auth.RegisterAuthorizationServer(s, &authorizationServer{})
 	healthpb.RegisterHealthServer(s, &healthServer{})
 
-	log.Printf("Starting gRPC Server at %s", *grpcport)
+	log.Printf("Starting gRPC Server at %s", *port)
 	s.Serve(lis)
 }

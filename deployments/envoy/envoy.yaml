@@ -23,11 +23,6 @@ static_resources:
                       routes:
                         - match: { prefix: "/google.cloud.apigee.registry.v1alpha1.Registry" }
                           route: { cluster: registry-server, timeout: { seconds: 60 } }
-                          per_filter_config:
-                            envoy.ext_authz:
-                              check_settings:
-                                context_extensions:
-                                  x-forwarded-host: original-host-as-context
                       cors:
                         allow_origin: ["*"]
                         allow_methods: GET, PUT, DELETE, POST, OPTIONS
@@ -35,6 +30,13 @@ static_resources:
                         max_age: "1728000"
                         expose_headers: custom-header-1,grpc-status,grpc-message   
                 http_filters:
+                  - name: envoy.ext_authz
+                    config:
+                      grpc_service:
+                        envoy_grpc:
+                          cluster_name: authz-server
+                        timeout: 0.5s
+                  - name: envoy.cors
                   - name: envoy.grpc_json_transcoder
                     config:
                       proto_descriptor: "proto.pb"
@@ -45,13 +47,6 @@ static_resources:
                         always_print_enums_as_ints: false
                         preserve_proto_field_names: false
                   - name: envoy.grpc_web
-                  - name: envoy.cors
-                  - name: envoy.ext_authz
-                    config:
-                      grpc_service:
-                        envoy_grpc:
-                          cluster_name: authz-server
-                        timeout: 0.5s
                   - name: envoy.router
   clusters:
     - name: registry-server
@@ -67,7 +62,7 @@ static_resources:
               - endpoint:
                   address:
                     socket_address:
-                      address: localhost
+                      address: 127.0.0.1
                       port_value: 8080
     - name: authz-server
       type: static
@@ -86,9 +81,9 @@ static_resources:
           value: 50.0
       health_checks:
         - timeout: 1s
-          interval: 60s
+          interval: 600s
           interval_jitter: 1s
-          no_traffic_interval: 60s
+          no_traffic_interval: 600s
           unhealthy_threshold: 1
           healthy_threshold: 3
           grpc_health_check:
