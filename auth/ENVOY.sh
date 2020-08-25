@@ -26,5 +26,6 @@ export APG_REGISTRY_INSECURE=1
 # The auth token is generated for the gcloud logged-in user.
 export APG_REGISTRY_CLIENT_EMAIL=$(gcloud config list account --format "value(core.account)")
 export APG_REGISTRY_TOKEN=$(gcloud auth print-identity-token ${APG_REGISTRY_CLIENT_EMAIL})
-unset APG_REGISTRY_API_KEY
 
+# Calls don't use an API key.
+unset APG_REGISTRY_API_KEY
