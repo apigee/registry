@@ -35,6 +35,13 @@ static_resources:
                         max_age: "1728000"
                         expose_headers: custom-header-1,grpc-status,grpc-message   
                 http_filters:
+                  - name: envoy.ext_authz
+                    config:
+                      grpc_service:
+                        envoy_grpc:
+                          cluster_name: authz-server
+                        timeout: 0.5s
+                  - name: envoy.cors
                   - name: envoy.grpc_json_transcoder
                     config:
                       proto_descriptor: "proto.pb"
@@ -45,13 +52,6 @@ static_resources:
                         always_print_enums_as_ints: false
                         preserve_proto_field_names: false
                   - name: envoy.grpc_web
-                  - name: envoy.cors
-                  - name: envoy.ext_authz
-                    config:
-                      grpc_service:
-                        envoy_grpc:
-                          cluster_name: authz-server
-                        timeout: 0.5s
                   - name: envoy.router
   clusters:
     - name: registry-server
