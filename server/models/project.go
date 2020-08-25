@@ -21,6 +21,7 @@ import (
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
 	ptypes "github.com/golang/protobuf/ptypes"
+	"github.com/jinzhu/gorm"
 )
 
 // ProjectEntityName is used to represent projrcts in storage.
@@ -28,6 +29,8 @@ const ProjectEntityName = "Project"
 
 // Project ...
 type Project struct {
+	gorm.Model
+	Key         string    `datastore:"-", gorm:"PRIMARY_KEY"`
 	ProjectID   string    // Uniquely identifies a project.
 	DisplayName string    // A human-friendly name.
 	Description string    // A detailed description.

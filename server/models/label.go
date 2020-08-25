@@ -29,6 +29,7 @@ const LabelEntityName = "Label"
 
 // Label ...
 type Label struct {
+	Key        string    `datastore:"-", gorm:"PRIMARY_KEY"`
 	ProjectID  string    // Project associated with label (required).
 	ApiID      string    // Api associated with label (if appropriate).
 	VersionID  string    // Version associated with label (if appropriate).
