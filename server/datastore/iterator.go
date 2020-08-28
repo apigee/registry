@@ -18,18 +18,6 @@ func (it *Iterator) Next(v interface{}) (storage.Key, error) {
 	return &Key{key: key}, err
 }
 
-// IteratorGetCursor gets the cursor for the next page of results.
-func (c *Client) IteratorGetCursor(it storage.Iterator, l int) (string, error) {
-	if l > 0 {
-		nextCursor, err := it.(*Iterator).iterator.Cursor()
-		if err != nil {
-			return "", internalError(err)
-		}
-		return nextCursor.String(), nil
-	}
-	return "", nil
-}
-
 // GetCursor gets the cursor for the next page of results.
 func (it *Iterator) GetCursor(l int) (string, error) {
 	if l > 0 {

@@ -4,9 +4,10 @@ import (
 	"context"
 
 	"github.com/apigee/registry/server/models"
+	"github.com/apigee/registry/server/storage"
 )
 
-func (c *Client) DeleteAllMatches(ctx context.Context, q *Query) error {
+func (c *Client) DeleteAllMatches(ctx context.Context, q storage.Query) error {
 	return nil
 }
 

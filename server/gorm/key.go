@@ -14,6 +14,8 @@
 
 package gorm
 
+import "github.com/apigee/registry/server/storage"
+
 // Key represents a key in a storage provider
 type Key struct {
 	Kind string
@@ -21,6 +23,6 @@ type Key struct {
 }
 
 // NewKey creates a new storage key.
-func (c *Client) NewKey(kind, name string) *Key {
+func (c *Client) NewKey(kind, name string) storage.Key {
 	return &Key{Kind: kind, Name: name}
 }

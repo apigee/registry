@@ -17,10 +17,11 @@ package gorm
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/apigee/registry/server/models"
+	"github.com/apigee/registry/server/storage"
 	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
 
 // Client represents a connection to a storage provider.
@@ -31,12 +32,12 @@ type Client struct {
 }
 
 // NewClient creates a new database session.
-func NewClient() *Client {
+func NewClient(ctx context.Context, projectID string) (*Client, error) {
 	db, err := gorm.Open("postgres", "host=localhost port=5432 user=registry dbname=registry password=iloveapis")
 	if err != nil {
 		panic(err)
 	}
-	return &Client{db: db}
+	return &Client{db: db}, nil
 }
 
 func (c *Client) reset() {
@@ -58,38 +59,37 @@ func (c *Client) IsNotFound(err error) bool {
 }
 
 // Get gets an entity using the storage client.
-func (c *Client) Get(ctx context.Context, k *Key, v interface{}) error {
-	err := c.db.Where("key = ?", k.Name).First(v).Error
+func (c *Client) Get(ctx context.Context, k storage.Key, v interface{}) error {
+	err := c.db.Where("key = ?", k.(*Key).Name).First(v).Error
 	return err
 }
 
 // Put puts an entity using the storage client.
-func (c *Client) Put(ctx context.Context, k *Key, v interface{}) (*Key, error) {
+func (c *Client) Put(ctx context.Context, k storage.Key, v interface{}) (storage.Key, error) {
 	switch r := v.(type) {
 	case *models.Project:
-		r.Key = k.Name
+		r.Key = k.(*Key).Name
 	}
-	log.Printf("calling CREATE")
-	if c.db.Model(v).Where("key = ?", k.Name).Updates(v).RowsAffected == 0 {
+	if c.db.Model(v).Where("key = ?", k.(*Key).Name).Updates(v).RowsAffected == 0 {
 		c.db.Create(v)
 	}
 	return k, nil
 }
 
 // Delete deletes an entity using the storage client.
-func (c *Client) Delete(ctx context.Context, k *Key) error {
+func (c *Client) Delete(ctx context.Context, k storage.Key) error {
 	var v interface{}
-	switch k.Kind {
-	case "project":
-		v = &models.Project{Key: k.Name}
+	switch k.(*Key).Kind {
+	case "Project":
+		v = &models.Project{Key: k.(*Key).Name}
 	default:
-		return fmt.Errorf("invalid key type: %s", k.Kind)
+		return fmt.Errorf("invalid key type: %s", k.(*Key).Kind)
 	}
 	c.db.Delete(v)
 	return nil
 }
 
 // Run runs a query using the storage client, returning an iterator.
-func (c *Client) Run(ctx context.Context, q *Query) *Iterator {
+func (c *Client) Run(ctx context.Context, q storage.Query) storage.Iterator {
 	return nil
 }

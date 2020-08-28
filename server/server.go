@@ -23,8 +23,9 @@ import (
 	"os"
 
 	"github.com/apigee/registry/rpc"
-	datastore "github.com/apigee/registry/server/datastore"
-	storage "github.com/apigee/registry/server/storage"
+	"github.com/apigee/registry/server/datastore"
+	"github.com/apigee/registry/server/gorm"
+	"github.com/apigee/registry/server/storage"
 
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/soheilhy/cmux"
@@ -42,7 +43,11 @@ type RegistryServer struct {
 }
 
 func (s *RegistryServer) getStorageClient(ctx context.Context) (storage.Client, error) {
-	return datastore.NewClient(ctx, s.projectID)
+	// in the future, this will be a runtime setting
+	if true {
+		return datastore.NewClient(ctx, s.projectID)
+	}
+	return gorm.NewClient(ctx, s.projectID)
 }
 
 // if we had one client per handler, this would close the client.

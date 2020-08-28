@@ -15,6 +15,7 @@
 package gorm
 
 import (
+	"github.com/apigee/registry/server/storage"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -23,12 +24,12 @@ import (
 type Query struct{}
 
 // NewQuery creates a new query.
-func (c *Client) NewQuery(kind string) *Query {
+func (c *Client) NewQuery(kind string) storage.Query {
 	return &Query{}
 }
 
 // QueryApplyCursor applies a cursor to a query so that results will start at the cursor.
-func (c *Client) QueryApplyCursor(q *Query, cursorStr string) (*Query, error) {
+func (c *Client) QueryApplyCursor(q *Query, cursorStr string) (storage.Query, error) {
 	return q, nil
 }
 
@@ -42,14 +43,18 @@ func internalError(err error) error {
 }
 
 // Add a filter to a query.
-func (q *Query) Filter(name string, value interface{}) *Query {
+func (q *Query) Filter(name string, value interface{}) storage.Query {
 	return q
 }
 
-func (q *Query) Distinct() *Query {
+func (q *Query) Distinct() storage.Query {
 	return q
 }
 
-func (q *Query) Order(value string) *Query {
+func (q *Query) Order(value string) storage.Query {
 	return q
+}
+
+func (q *Query) ApplyCursor(cursorStr string) (storage.Query, error) {
+	return q, nil
 }
