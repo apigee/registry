@@ -23,7 +23,9 @@ import (
 	"os"
 
 	"github.com/apigee/registry/rpc"
-	storage "github.com/apigee/registry/server/datastore"
+	datastore "github.com/apigee/registry/server/datastore"
+	storage "github.com/apigee/registry/server/storage"
+
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/soheilhy/cmux"
 	"golang.org/x/oauth2/google"
@@ -39,12 +41,12 @@ type RegistryServer struct {
 	projectID string
 }
 
-func (s *RegistryServer) getStorageClient(ctx context.Context) (*storage.Client, error) {
-	return storage.NewClient(ctx, s.projectID)
+func (s *RegistryServer) getStorageClient(ctx context.Context) (storage.Client, error) {
+	return datastore.NewClient(ctx, s.projectID)
 }
 
 // if we had one client per handler, this would close the client.
-func (s *RegistryServer) releaseStorageClient(client *storage.Client) {
+func (s *RegistryServer) releaseStorageClient(client storage.Client) {
 }
 
 func getProjectID() (string, error) {

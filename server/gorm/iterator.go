@@ -14,13 +14,15 @@
 
 package gorm
 
-// Key represents a key in a storage provider
-type Key struct {
-	Kind string
-	Name string
+// Iterator can be used to iterate through results of a query.
+type Iterator struct {
 }
 
-// NewKey creates a new storage key.
-func (c *Client) NewKey(kind, name string) *Key {
-	return &Key{Kind: kind, Name: name}
+// IteratorGetCursor gets the cursor for the next page of results.
+func (c *Client) IteratorGetCursor(it *Iterator, l int) (string, error) {
+	return "", nil
+}
+
+func (it *Iterator) Next(v interface{}) (*Key, error) {
+	return nil, nil
 }

@@ -87,7 +87,7 @@ func (s *RegistryServer) GetVersion(ctx context.Context, request *rpc.GetVersion
 	}
 	k := client.NewKey(models.VersionEntityName, version.ResourceName())
 	err = client.Get(ctx, k, version)
-	if err == client.ErrNotFound() {
+	if client.IsNotFound(err) {
 		return nil, status.Error(codes.NotFound, "not found")
 	} else if err != nil {
 		return nil, internalError(err)

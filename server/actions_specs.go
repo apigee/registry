@@ -21,9 +21,9 @@ import (
 	"time"
 
 	"github.com/apigee/registry/rpc"
-	storage "github.com/apigee/registry/server/datastore"
 	"github.com/apigee/registry/server/models"
 	"github.com/apigee/registry/server/names"
+	storage "github.com/apigee/registry/server/storage"
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/api/iterator"
 	"google.golang.org/grpc/codes"
@@ -424,7 +424,7 @@ func (s *RegistryServer) RollbackSpec(ctx context.Context, request *rpc.Rollback
 // fetchSpec gets the stored model of a Spec.
 func fetchSpec(
 	ctx context.Context,
-	client *storage.Client,
+	client storage.Client,
 	name string,
 ) (*models.Spec, string, error) {
 	spec, err := models.NewSpecFromResourceName(name)
@@ -446,7 +446,7 @@ func fetchSpec(
 	var specRevisionTag models.SpecRevisionTag
 	k0 := client.NewKey(models.SpecRevisionTagEntityName, spec.ResourceNameWithRevision())
 	err = client.Get(ctx, k0, &specRevisionTag)
-	if err == client.ErrNotFound() {
+	if client.IsNotFound(err) {
 		// if there is no tag, just use the provided revision
 		resourceName = spec.ResourceNameWithRevision()
 		revisionName = spec.RevisionID
@@ -460,7 +460,7 @@ func fetchSpec(
 	// now that we know the revision, use it get the spec
 	k := client.NewKey(models.SpecEntityName, resourceName)
 	err = client.Get(ctx, k, spec)
-	if err == client.ErrNotFound() {
+	if client.IsNotFound(err) {
 		return nil, revisionName, status.Error(codes.NotFound, "not found")
 	} else if err != nil {
 		return nil, revisionName, internalError(err)
@@ -471,9 +471,9 @@ func fetchSpec(
 // fetchMostRecentNonCurrentRevisionOfSpec gets the most recent revision that's not current.
 func fetchMostRecentNonCurrentRevisionOfSpec(
 	ctx context.Context,
-	client *storage.Client,
+	client storage.Client,
 	name string,
-) (*storage.Key, *models.Spec, error) {
+) (storage.Key, *models.Spec, error) {
 	pattern, err := models.NewSpecFromResourceName(name)
 	if err != nil {
 		return nil, nil, err
@@ -498,9 +498,9 @@ func fetchMostRecentNonCurrentRevisionOfSpec(
 // fetchCurrentRevisionOfSpec gets the current revision.
 func fetchCurrentRevisionOfSpec(
 	ctx context.Context,
-	client *storage.Client,
+	client storage.Client,
 	name string,
-) (*storage.Key, *models.Spec, error) {
+) (storage.Key, *models.Spec, error) {
 	pattern, err := models.NewSpecFromResourceName(name)
 	if err != nil {
 		return nil, nil, err

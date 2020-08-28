@@ -85,7 +85,7 @@ func (s *RegistryServer) GetProperty(ctx context.Context, request *rpc.GetProper
 	}
 	k := client.NewKey(models.PropertyEntityName, property.ResourceName())
 	err = client.Get(ctx, k, property)
-	if err == client.ErrNotFound() {
+	if client.IsNotFound(err) {
 		return nil, status.Error(codes.NotFound, "not found")
 	} else if err != nil {
 		return nil, internalError(err)

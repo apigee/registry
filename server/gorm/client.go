@@ -16,8 +16,10 @@ package gorm
 
 import (
 	"context"
-	"errors"
+	"fmt"
+	"log"
 
+	"github.com/apigee/registry/server/models"
 	"github.com/jinzhu/gorm"
 )
 
@@ -37,18 +39,57 @@ func NewClient() *Client {
 	return &Client{db: db}
 }
 
+func (c *Client) reset() {
+	project := &models.Project{}
+	c.db.DropTable(&project)
+	if c.db.HasTable(&project) == false {
+		c.db.CreateTable(&project)
+	}
+}
+
 // Close closes a database session.
 func (c *Client) Close() {
 	c.db.Close()
 }
 
-// ErrNotFound is returned when an entity is not found.
-func (c *Client) ErrNotFound() error {
-	return errors.New("Not Found")
+// IsNotFound returns true if an error is due to an entity not being found.
+func (c *Client) IsNotFound(err error) bool {
+	return gorm.IsRecordNotFoundError(err)
 }
 
 // Get gets an entity using the storage client.
 func (c *Client) Get(ctx context.Context, k *Key, v interface{}) error {
-	c.db.Where("key = ?", *k).First(v)
+	err := c.db.Where("key = ?", k.Name).First(v).Error
+	return err
+}
+
+// Put puts an entity using the storage client.
+func (c *Client) Put(ctx context.Context, k *Key, v interface{}) (*Key, error) {
+	switch r := v.(type) {
+	case *models.Project:
+		r.Key = k.Name
+	}
+	log.Printf("calling CREATE")
+	if c.db.Model(v).Where("key = ?", k.Name).Updates(v).RowsAffected == 0 {
+		c.db.Create(v)
+	}
+	return k, nil
+}
+
+// Delete deletes an entity using the storage client.
+func (c *Client) Delete(ctx context.Context, k *Key) error {
+	var v interface{}
+	switch k.Kind {
+	case "project":
+		v = &models.Project{Key: k.Name}
+	default:
+		return fmt.Errorf("invalid key type: %s", k.Kind)
+	}
+	c.db.Delete(v)
+	return nil
+}
+
+// Run runs a query using the storage client, returning an iterator.
+func (c *Client) Run(ctx context.Context, q *Query) *Iterator {
 	return nil
 }

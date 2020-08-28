@@ -16,12 +16,15 @@ package datastore
 
 import (
 	"cloud.google.com/go/datastore"
+	"github.com/apigee/registry/server/storage"
 )
 
 // Key represents a key in a storage provider
-type Key = datastore.Key
+type Key struct {
+	key *datastore.Key
+}
 
 // NewKey creates a new storage key.
-func (c *Client) NewKey(kind, name string) *Key {
-	return &datastore.Key{Kind: kind, Name: name}
+func (c *Client) NewKey(kind, name string) storage.Key {
+	return &Key{key: &datastore.Key{Kind: kind, Name: name}}
 }

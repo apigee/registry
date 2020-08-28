@@ -89,7 +89,7 @@ func (s *RegistryServer) GetProject(ctx context.Context, request *rpc.GetProject
 	}
 	k := client.NewKey(models.ProjectEntityName, project.ResourceName())
 	err = client.Get(ctx, k, project)
-	if err == client.ErrNotFound() {
+	if client.IsNotFound(err) {
 		return nil, status.Error(codes.NotFound, "not found")
 	} else if err != nil {
 		return nil, internalError(err)

@@ -87,7 +87,7 @@ func (s *RegistryServer) GetApi(ctx context.Context, request *rpc.GetApiRequest)
 	}
 	k := client.NewKey(models.ApiEntityName, api.ResourceName())
 	err = client.Get(ctx, k, api)
-	if err == client.ErrNotFound() {
+	if client.IsNotFound(err) {
 		return nil, status.Error(codes.NotFound, "not found")
 	} else if err != nil {
 		return nil, internalError(err)

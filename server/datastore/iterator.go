@@ -1,14 +1,27 @@
 package datastore
 
-import "cloud.google.com/go/datastore"
+import (
+	"cloud.google.com/go/datastore"
+	"github.com/apigee/registry/server/storage"
+)
 
 // Iterator can be used to iterate through results of a query.
-type Iterator = datastore.Iterator
+type Iterator struct {
+	iterator *datastore.Iterator
+}
+
+func (it *Iterator) Next(v interface{}) (storage.Key, error) {
+	key, err := it.iterator.Next(v)
+	if key == nil {
+		return nil, err
+	}
+	return &Key{key: key}, err
+}
 
 // IteratorGetCursor gets the cursor for the next page of results.
-func (c *Client) IteratorGetCursor(it *Iterator, l int) (string, error) {
+func (c *Client) IteratorGetCursor(it storage.Iterator, l int) (string, error) {
 	if l > 0 {
-		nextCursor, err := it.Cursor()
+		nextCursor, err := it.(*Iterator).iterator.Cursor()
 		if err != nil {
 			return "", internalError(err)
 		}

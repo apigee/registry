@@ -87,7 +87,7 @@ func (s *RegistryServer) GetLabel(ctx context.Context, request *rpc.GetLabelRequ
 	log.Printf("looking for %s", label.ResourceName())
 	k := client.NewKey(models.LabelEntityName, label.ResourceName())
 	err = client.Get(ctx, k, label)
-	if err == client.ErrNotFound() {
+	if client.IsNotFound(err) {
 		return nil, status.Error(codes.NotFound, "not found")
 	} else if err != nil {
 		return nil, internalError(err)

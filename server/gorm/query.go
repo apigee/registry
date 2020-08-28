@@ -12,47 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package datastore
+package gorm
 
 import (
-	"cloud.google.com/go/datastore"
-	"github.com/apigee/registry/server/storage"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
 // Query represents a query in a storage provider
-type Query struct {
-	query *datastore.Query
-}
+type Query struct{}
 
 // NewQuery creates a new query.
-func (c *Client) NewQuery(kind string) storage.Query {
-	return &Query{query: datastore.NewQuery(kind)}
-}
-
-func (q *Query) Filter(filter string, value interface{}) storage.Query {
-	return &Query{query: q.query.Filter(filter, value)}
-}
-
-func (q *Query) Distinct() storage.Query {
-	return &Query{query: q.query.Distinct()}
-
-}
-
-func (q *Query) Order(order string) storage.Query {
-	return &Query{query: q.query.Order(order)}
+func (c *Client) NewQuery(kind string) *Query {
+	return &Query{}
 }
 
 // QueryApplyCursor applies a cursor to a query so that results will start at the cursor.
-func (c *Client) QueryApplyCursor(q storage.Query, cursorStr string) (storage.Query, error) {
-	if cursorStr != "" {
-		cursor, err := datastore.DecodeCursor(cursorStr)
-		if err != nil {
-			return nil, internalError(err)
-		}
-		q = &Query{query: q.(*Query).query.Start(cursor)}
-	}
+func (c *Client) QueryApplyCursor(q *Query, cursorStr string) (*Query, error) {
 	return q, nil
 }
 
@@ -63,4 +39,17 @@ func internalError(err error) error {
 	}
 	// TODO: selectively mask error details depending on caller privileges
 	return status.Error(codes.Internal, err.Error())
+}
+
+// Add a filter to a query.
+func (q *Query) Filter(name string, value interface{}) *Query {
+	return q
+}
+
+func (q *Query) Distinct() *Query {
+	return q
+}
+
+func (q *Query) Order(value string) *Query {
+	return q
 }

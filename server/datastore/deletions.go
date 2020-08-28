@@ -20,14 +20,15 @@ import (
 
 	"cloud.google.com/go/datastore"
 	"github.com/apigee/registry/server/models"
+	"github.com/apigee/registry/server/storage"
 	"google.golang.org/api/iterator"
 )
 
-const verbose = false
+const verbose = true
 
 // DeleteAllMatches deletes all entities matching a specified query.
-func (c *Client) DeleteAllMatches(ctx context.Context, q *Query) error {
-	it := c.Run(ctx, q.Distinct())
+func (c *Client) DeleteAllMatches(ctx context.Context, q storage.Query) error {
+	it := c.client.Run(ctx, q.(*Query).query.Distinct())
 	key, err := it.Next(nil)
 	keys := make([]*datastore.Key, 0)
 	for err == nil {
@@ -70,7 +71,7 @@ func (c *Client) DeleteChildrenOfProject(ctx context.Context, project *models.Pr
 		q := datastore.NewQuery(entityName)
 		q = q.KeysOnly()
 		q = q.Filter("ProjectID =", project.ProjectID)
-		err := c.DeleteAllMatches(ctx, q)
+		err := c.DeleteAllMatches(ctx, &Query{query: q})
 		if err != nil {
 			return err
 		}
@@ -85,7 +86,7 @@ func (c *Client) DeleteChildrenOfApi(ctx context.Context, api *models.Api) error
 		q = q.KeysOnly()
 		q = q.Filter("ProjectID =", api.ProjectID)
 		q = q.Filter("ApiID =", api.ApiID)
-		err := c.DeleteAllMatches(ctx, q)
+		err := c.DeleteAllMatches(ctx, &Query{query: q})
 		if err != nil {
 			return err
 		}
@@ -101,7 +102,7 @@ func (c *Client) DeleteChildrenOfVersion(ctx context.Context, version *models.Ve
 		q = q.Filter("ProjectID =", version.ProjectID)
 		q = q.Filter("ApiID =", version.ApiID)
 		q = q.Filter("VersionID =", version.VersionID)
-		err := c.DeleteAllMatches(ctx, q)
+		err := c.DeleteAllMatches(ctx, &Query{query: q})
 		if err != nil {
 			return err
 		}
