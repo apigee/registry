@@ -10,6 +10,7 @@ type Iterator struct {
 	iterator *datastore.Iterator
 }
 
+// Next gets the next item in the query results.
 func (it *Iterator) Next(v interface{}) (storage.Key, error) {
 	key, err := it.iterator.Next(v)
 	if key == nil {

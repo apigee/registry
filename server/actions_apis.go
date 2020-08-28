@@ -126,7 +126,7 @@ func (s *RegistryServer) ListApis(ctx context.Context, req *rpc.ListApisRequest)
 	}
 	var apiMessages []*rpc.Api
 	var api models.Api
-	it := client.Run(ctx, q.Distinct())
+	it := client.Run(ctx, q)
 	pageSize := boundPageSize(req.GetPageSize())
 	for _, err = it.Next(&api); err == nil; _, err = it.Next(&api) {
 		if prg != nil {

@@ -131,7 +131,7 @@ func (s *RegistryServer) ListVersions(ctx context.Context, req *rpc.ListVersions
 	}
 	var versionMessages []*rpc.Version
 	var version models.Version
-	it := client.Run(ctx, q.Distinct())
+	it := client.Run(ctx, q)
 	pageSize := boundPageSize(req.GetPageSize())
 	for _, err = it.Next(&version); err == nil; _, err = it.Next(&version) {
 		if prg != nil {

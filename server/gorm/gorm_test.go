@@ -16,6 +16,7 @@ package gorm
 
 import (
 	"context"
+	"log"
 	"testing"
 	"time"
 
@@ -26,7 +27,7 @@ import (
 func TestCRUD(t *testing.T) {
 	ctx := context.TODO()
 
-	c := NewClient()
+	c, _ := NewClient(ctx, "demo")
 	defer c.Close()
 	// delete and recreate database tables
 	c.reset()
@@ -39,7 +40,7 @@ func TestCRUD(t *testing.T) {
 		CreateTime:  now,
 		UpdateTime:  now,
 	}
-	k := c.NewKey("project", "projects/demo")
+	k := c.NewKey("Project", "projects/demo")
 
 	// Create a project.
 	_, err := c.Put(ctx, k, project)
@@ -71,7 +72,10 @@ func TestCRUD(t *testing.T) {
 	}
 
 	// Delete the project.
-	c.Delete(ctx, k)
+	err = c.Delete(ctx, k)
+	if err != nil {
+		t.Errorf(err.Error())
+	}
 
 	// Verify the deletion.
 	var project2 models.Project
@@ -79,6 +83,7 @@ func TestCRUD(t *testing.T) {
 	if !c.IsNotFound(err) {
 		t.Errorf("Project deletion failed")
 	}
+	log.Printf("%+v", project2)
 
 	c.Close()
 }

@@ -47,7 +47,7 @@ func (s *RegistryServer) CreateSpec(ctx context.Context, request *rpc.CreateSpec
 	q = q.Filter("ApiID =", spec.ApiID)
 	q = q.Filter("VersionID =", spec.VersionID)
 	q = q.Filter("SpecID =", spec.SpecID)
-	it := client.Run(ctx, q.Distinct())
+	it := client.Run(ctx, q)
 	var existingSpec models.Spec
 	existingKey, err := it.Next(&existingSpec)
 	if existingKey != nil {
@@ -149,7 +149,7 @@ func (s *RegistryServer) ListSpecs(ctx context.Context, req *rpc.ListSpecsReques
 	}
 	var specMessages []*rpc.Spec
 	var spec models.Spec
-	it := client.Run(ctx, q.Distinct())
+	it := client.Run(ctx, q)
 	pageSize := boundPageSize(req.GetPageSize())
 	for _, err := it.Next(&spec); err == nil; _, err = it.Next(&spec) {
 		if prg != nil {
@@ -364,7 +364,7 @@ func (s *RegistryServer) ListSpecRevisionTags(ctx context.Context, req *rpc.List
 	q = q.Filter("SpecID =", targetSpec.SpecID)
 	var tagMessages []*rpc.SpecRevisionTag
 	tag := models.SpecRevisionTag{}
-	it := client.Run(ctx, q.Distinct())
+	it := client.Run(ctx, q)
 	pageSize := boundPageSize(req.GetPageSize())
 	for _, err := it.Next(&tag); err == nil; _, err = it.Next(&tag) {
 		tagMessage, _ := tag.Message()
@@ -486,7 +486,7 @@ func fetchMostRecentNonCurrentRevisionOfSpec(
 	q = q.Filter("SpecID =", pattern.SpecID)
 	q = q.Filter("IsCurrent =", false)
 	q = q.Order("-CreateTime")
-	it := client.Run(ctx, q.Distinct())
+	it := client.Run(ctx, q)
 	spec := &models.Spec{}
 	k, err := it.Next(spec)
 	if err != nil {
@@ -512,7 +512,7 @@ func fetchCurrentRevisionOfSpec(
 	q = q.Filter("VersionID =", pattern.VersionID)
 	q = q.Filter("SpecID =", pattern.SpecID)
 	q = q.Filter("IsCurrent =", true)
-	it := client.Run(ctx, q.Distinct())
+	it := client.Run(ctx, q)
 	spec := &models.Spec{}
 	k, err := it.Next(spec)
 	if err != nil {

@@ -43,7 +43,6 @@ type Key interface{}
 
 type Query interface {
 	Filter(filter string, value interface{}) Query
-	Distinct() Query
 	Order(order string) Query
 	ApplyCursor(cursorStr string) (Query, error)
 }

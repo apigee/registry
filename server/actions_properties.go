@@ -134,7 +134,7 @@ func (s *RegistryServer) ListProperties(ctx context.Context, req *rpc.ListProper
 	}
 	var propertyMessages []*rpc.Property
 	var property models.Property
-	it := client.Run(ctx, q.Distinct())
+	it := client.Run(ctx, q)
 	pageSize := boundPageSize(req.GetPageSize())
 	for _, err = it.Next(&property); err == nil; _, err = it.Next(&property) {
 		// don't allow wildcarded-names to be empty

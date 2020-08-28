@@ -16,7 +16,6 @@ package datastore
 
 import (
 	"context"
-	"log"
 
 	"cloud.google.com/go/datastore"
 	"github.com/apigee/registry/server/storage"
@@ -46,8 +45,6 @@ func NewClient(ctx context.Context, projectID string) (*Client, error) {
 
 // IsNotFound returns true if an error is due to an entity not being found.
 func (c *Client) IsNotFound(err error) bool {
-	log.Printf("IS NOT FOUND? %+v %+v", err, datastore.ErrNoSuchEntity)
-
 	return err == datastore.ErrNoSuchEntity
 }
 
@@ -58,8 +55,6 @@ func (c *Client) Get(ctx context.Context, k storage.Key, v interface{}) error {
 
 // Put puts an entity using the storage client.
 func (c *Client) Put(ctx context.Context, k storage.Key, v interface{}) (storage.Key, error) {
-	log.Printf("key %+v", k)
-	log.Printf("putting %+v", v)
 	key, err := c.client.Put(ctx, k.(*Key).key, v)
 	return &Key{key: key}, err
 }
@@ -71,5 +66,5 @@ func (c *Client) Delete(ctx context.Context, k storage.Key) error {
 
 // Run runs a query using the storage client, returning an iterator.
 func (c *Client) Run(ctx context.Context, q storage.Query) storage.Iterator {
-	return &Iterator{iterator: c.client.Run(ctx, q.(*Query).query)}
+	return &Iterator{iterator: c.client.Run(ctx, q.(*Query).query.Distinct())}
 }

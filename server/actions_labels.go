@@ -136,7 +136,7 @@ func (s *RegistryServer) ListLabels(ctx context.Context, req *rpc.ListLabelsRequ
 	}
 	var labelMessages []*rpc.Label
 	var label models.Label
-	it := client.Run(ctx, q.Distinct())
+	it := client.Run(ctx, q)
 	pageSize := boundPageSize(req.GetPageSize())
 	for _, err = it.Next(&label); err == nil; _, err = it.Next(&label) {
 		// don't allow wildcarded-names to be empty

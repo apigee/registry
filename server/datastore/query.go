@@ -31,15 +31,12 @@ func (c *Client) NewQuery(kind string) storage.Query {
 	return &Query{query: datastore.NewQuery(kind)}
 }
 
+// Filter adds a filter to a query.
 func (q *Query) Filter(filter string, value interface{}) storage.Query {
 	return &Query{query: q.query.Filter(filter, value)}
 }
 
-func (q *Query) Distinct() storage.Query {
-	return &Query{query: q.query.Distinct()}
-
-}
-
+// Order causes the results of a query to be sorted.
 func (q *Query) Order(order string) storage.Query {
 	return &Query{query: q.query.Order(order)}
 }

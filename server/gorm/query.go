@@ -47,10 +47,6 @@ func (q *Query) Filter(name string, value interface{}) storage.Query {
 	return q
 }
 
-func (q *Query) Distinct() storage.Query {
-	return q
-}
-
 func (q *Query) Order(value string) storage.Query {
 	return q
 }

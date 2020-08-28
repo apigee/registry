@@ -85,8 +85,8 @@ func (c *Client) Delete(ctx context.Context, k storage.Key) error {
 	default:
 		return fmt.Errorf("invalid key type: %s", k.(*Key).Kind)
 	}
-	c.db.Delete(v)
-	return nil
+	b := c.db.Delete(v)
+	return b.Error
 }
 
 // Run runs a query using the storage client, returning an iterator.

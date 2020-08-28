@@ -120,7 +120,7 @@ func (s *RegistryServer) ListProjects(ctx context.Context, req *rpc.ListProjects
 	}
 	var projectMessages []*rpc.Project
 	var project models.Project
-	it := client.Run(ctx, q.Distinct())
+	it := client.Run(ctx, q)
 	pageSize := boundPageSize(req.GetPageSize())
 	for _, err = it.Next(&project); err == nil; _, err = it.Next(&project) {
 		if prg != nil {
