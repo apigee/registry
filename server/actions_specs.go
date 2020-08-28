@@ -116,7 +116,7 @@ func (s *RegistryServer) ListSpecs(ctx context.Context, req *rpc.ListSpecsReques
 	}
 	defer s.releaseStorageClient(client)
 	q := client.NewQuery(models.SpecEntityName)
-	q, err = client.QueryApplyCursor(q, req.GetPageToken())
+	q, err = q.ApplyCursor(req.GetPageToken())
 	if err != nil {
 		return nil, internalError(err)
 	}
@@ -181,7 +181,7 @@ func (s *RegistryServer) ListSpecs(ctx context.Context, req *rpc.ListSpecsReques
 	responses := &rpc.ListSpecsResponse{
 		Specs: specMessages,
 	}
-	responses.NextPageToken, err = client.IteratorGetCursor(it, len(specMessages))
+	responses.NextPageToken, err = it.GetCursor(len(specMessages))
 	if err != nil {
 		return nil, internalError(err)
 	}
@@ -241,7 +241,7 @@ func (s *RegistryServer) ListSpecRevisions(ctx context.Context, req *rpc.ListSpe
 		return nil, err
 	}
 	q := client.NewQuery(models.SpecEntityName)
-	q, err = client.QueryApplyCursor(q, req.GetPageToken())
+	q, err = q.ApplyCursor(req.GetPageToken())
 	if err != nil {
 		return nil, internalError(err)
 	}
@@ -267,7 +267,7 @@ func (s *RegistryServer) ListSpecRevisions(ctx context.Context, req *rpc.ListSpe
 	responses := &rpc.ListSpecRevisionsResponse{
 		Specs: specMessages,
 	}
-	responses.NextPageToken, err = client.IteratorGetCursor(it, len(specMessages))
+	responses.NextPageToken, err = it.GetCursor(len(specMessages))
 	if err != nil {
 		return nil, internalError(err)
 	}
@@ -354,7 +354,7 @@ func (s *RegistryServer) ListSpecRevisionTags(ctx context.Context, req *rpc.List
 		return nil, err
 	}
 	q := client.NewQuery(models.SpecRevisionTagEntityName)
-	q, err = client.QueryApplyCursor(q, req.GetPageToken())
+	q, err = q.ApplyCursor(req.GetPageToken())
 	if err != nil {
 		return nil, internalError(err)
 	}
@@ -379,7 +379,7 @@ func (s *RegistryServer) ListSpecRevisionTags(ctx context.Context, req *rpc.List
 	responses := &rpc.ListSpecRevisionTagsResponse{
 		Tags: tagMessages,
 	}
-	responses.NextPageToken, err = client.IteratorGetCursor(it, len(tagMessages))
+	responses.NextPageToken, err = it.GetCursor(len(tagMessages))
 	if err != nil {
 		return nil, internalError(err)
 	}

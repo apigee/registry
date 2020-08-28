@@ -103,7 +103,7 @@ func (s *RegistryServer) ListLabels(ctx context.Context, req *rpc.ListLabelsRequ
 	}
 	defer s.releaseStorageClient(client)
 	q := client.NewQuery(models.LabelEntityName)
-	q, err = client.QueryApplyCursor(q, req.GetPageToken())
+	q, err = q.ApplyCursor(req.GetPageToken())
 	if err != nil {
 		return nil, internalError(err)
 	}
@@ -179,7 +179,7 @@ func (s *RegistryServer) ListLabels(ctx context.Context, req *rpc.ListLabelsRequ
 	responses := &rpc.ListLabelsResponse{
 		Labels: labelMessages,
 	}
-	responses.NextPageToken, err = client.IteratorGetCursor(it, len(labelMessages))
+	responses.NextPageToken, err = it.GetCursor(len(labelMessages))
 	if err != nil {
 		return nil, internalError(err)
 	}

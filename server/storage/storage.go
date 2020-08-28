@@ -23,16 +23,15 @@ import (
 )
 
 type Client interface {
-	NewKey(kind, name string) Key
 	Get(ctx context.Context, k Key, v interface{}) error
 	Put(ctx context.Context, k Key, v interface{}) (Key, error)
 	Delete(ctx context.Context, k Key) error
 	Run(ctx context.Context, q Query) Iterator
 
 	IsNotFound(err error) bool
+
+	NewKey(kind, name string) Key
 	NewQuery(query string) Query
-	QueryApplyCursor(q Query, cursorStr string) (Query, error)
-	IteratorGetCursor(it Iterator, l int) (string, error)
 
 	DeleteAllMatches(ctx context.Context, q Query) error
 	DeleteChildrenOfProject(ctx context.Context, project *models.Project) error
@@ -46,8 +45,10 @@ type Query interface {
 	Filter(filter string, value interface{}) Query
 	Distinct() Query
 	Order(order string) Query
+	ApplyCursor(cursorStr string) (Query, error)
 }
 
 type Iterator interface {
 	Next(interface{}) (Key, error)
+	GetCursor(l int) (string, error)
 }

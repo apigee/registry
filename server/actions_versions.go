@@ -103,7 +103,7 @@ func (s *RegistryServer) ListVersions(ctx context.Context, req *rpc.ListVersions
 	}
 	defer s.releaseStorageClient(client)
 	q := client.NewQuery(models.VersionEntityName)
-	q, err = client.QueryApplyCursor(q, req.GetPageToken())
+	q, err = q.ApplyCursor(req.GetPageToken())
 	if err != nil {
 		return nil, internalError(err)
 	}
@@ -162,7 +162,7 @@ func (s *RegistryServer) ListVersions(ctx context.Context, req *rpc.ListVersions
 	responses := &rpc.ListVersionsResponse{
 		Versions: versionMessages,
 	}
-	responses.NextPageToken, err = client.IteratorGetCursor(it, len(versionMessages))
+	responses.NextPageToken, err = it.GetCursor(len(versionMessages))
 	if err != nil {
 		return nil, internalError(err)
 	}

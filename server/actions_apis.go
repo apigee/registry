@@ -103,7 +103,7 @@ func (s *RegistryServer) ListApis(ctx context.Context, req *rpc.ListApisRequest)
 	}
 	defer s.releaseStorageClient(client)
 	q := client.NewQuery(models.ApiEntityName)
-	q, err = client.QueryApplyCursor(q, req.GetPageToken())
+	q, err = q.ApplyCursor(req.GetPageToken())
 	if err != nil {
 		return nil, internalError(err)
 	}
@@ -155,7 +155,7 @@ func (s *RegistryServer) ListApis(ctx context.Context, req *rpc.ListApisRequest)
 	responses := &rpc.ListApisResponse{
 		Apis: apiMessages,
 	}
-	responses.NextPageToken, err = client.IteratorGetCursor(it, len(apiMessages))
+	responses.NextPageToken, err = it.GetCursor(len(apiMessages))
 	if err != nil {
 		return nil, internalError(err)
 	}

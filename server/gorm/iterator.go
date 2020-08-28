@@ -18,11 +18,12 @@ package gorm
 type Iterator struct {
 }
 
-// IteratorGetCursor gets the cursor for the next page of results.
-func (c *Client) IteratorGetCursor(it *Iterator, l int) (string, error) {
+// GetCursor gets the cursor for the next page of results.
+func (it *Iterator) GetCursor(l int) (string, error) {
 	return "", nil
 }
 
+// Next gets the next value from the iterator.
 func (it *Iterator) Next(v interface{}) (*Key, error) {
 	return nil, nil
 }

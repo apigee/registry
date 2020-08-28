@@ -105,7 +105,7 @@ func (s *RegistryServer) ListProjects(ctx context.Context, req *rpc.ListProjects
 	}
 	defer s.releaseStorageClient(client)
 	q := client.NewQuery(models.ProjectEntityName)
-	q, err = client.QueryApplyCursor(q, req.GetPageToken())
+	q, err = q.ApplyCursor(req.GetPageToken())
 	if err != nil {
 		return nil, internalError(err)
 	}
@@ -148,7 +148,7 @@ func (s *RegistryServer) ListProjects(ctx context.Context, req *rpc.ListProjects
 	responses := &rpc.ListProjectsResponse{
 		Projects: projectMessages,
 	}
-	responses.NextPageToken, err = client.IteratorGetCursor(it, len(projectMessages))
+	responses.NextPageToken, err = it.GetCursor(len(projectMessages))
 	if err != nil {
 		return nil, internalError(err)
 	}

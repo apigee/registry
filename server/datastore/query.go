@@ -44,14 +44,14 @@ func (q *Query) Order(order string) storage.Query {
 	return &Query{query: q.query.Order(order)}
 }
 
-// QueryApplyCursor applies a cursor to a query so that results will start at the cursor.
-func (c *Client) QueryApplyCursor(q storage.Query, cursorStr string) (storage.Query, error) {
+// ApplyCursor applies a cursor to a query so that results will start at the cursor.
+func (q *Query) ApplyCursor(cursorStr string) (storage.Query, error) {
 	if cursorStr != "" {
 		cursor, err := datastore.DecodeCursor(cursorStr)
 		if err != nil {
 			return nil, internalError(err)
 		}
-		q = &Query{query: q.(*Query).query.Start(cursor)}
+		q = &Query{query: q.query.Start(cursor)}
 	}
 	return q, nil
 }

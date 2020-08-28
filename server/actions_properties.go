@@ -101,7 +101,7 @@ func (s *RegistryServer) ListProperties(ctx context.Context, req *rpc.ListProper
 	}
 	defer s.releaseStorageClient(client)
 	q := client.NewQuery(models.PropertyEntityName)
-	q, err = client.QueryApplyCursor(q, req.GetPageToken())
+	q, err = q.ApplyCursor(req.GetPageToken())
 	if err != nil {
 		return nil, internalError(err)
 	}
@@ -177,7 +177,7 @@ func (s *RegistryServer) ListProperties(ctx context.Context, req *rpc.ListProper
 	responses := &rpc.ListPropertiesResponse{
 		Properties: propertyMessages,
 	}
-	responses.NextPageToken, err = client.IteratorGetCursor(it, len(propertyMessages))
+	responses.NextPageToken, err = it.GetCursor(len(propertyMessages))
 	if err != nil {
 		return nil, internalError(err)
 	}
