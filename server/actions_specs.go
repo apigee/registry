@@ -55,11 +55,24 @@ func (s *RegistryServer) CreateSpec(ctx context.Context, request *rpc.CreateSpec
 	}
 	// save the spec under its full resource@revision name
 	err = spec.Update(request.GetSpec())
+	if err != nil {
+		return nil, err
+	}
 	spec.CreateTime = spec.UpdateTime
 	// the first revision of the spec that we save is also the current one
 	spec.IsCurrent = true
 	k := client.NewKey(models.SpecEntityName, spec.ResourceNameWithRevision())
 	k, err = client.Put(ctx, k, spec)
+	if err != nil {
+		return nil, err
+	}
+	// save a blob with the spec contents
+	blob := models.NewBlob(
+		spec,
+		request.GetSpec().GetContents())
+	_, err = client.Put(ctx,
+		client.NewKey(models.BlobEntityName, blob.Name),
+		blob)
 	if err != nil {
 		return nil, err
 	}
@@ -222,6 +235,16 @@ func (s *RegistryServer) UpdateSpec(ctx context.Context, request *rpc.UpdateSpec
 	}
 	k := client.NewKey(models.SpecEntityName, spec.ResourceNameWithRevision())
 	k, err = client.Put(ctx, k, spec)
+	if err != nil {
+		return nil, err
+	}
+	// save a blob with the spec contents
+	blob := models.NewBlob(
+		spec,
+		request.GetSpec().GetContents())
+	_, err = client.Put(ctx,
+		client.NewKey(models.BlobEntityName, blob.Name),
+		blob)
 	if err != nil {
 		return nil, err
 	}
