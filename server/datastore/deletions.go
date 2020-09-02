@@ -62,6 +62,7 @@ func (c *Client) DeleteChildrenOfProject(ctx context.Context, project *models.Pr
 	entityNames := []string{
 		models.LabelEntityName,
 		models.PropertyEntityName,
+		models.BlobEntityName,
 		models.SpecEntityName,
 		models.SpecRevisionTagEntityName,
 		models.VersionEntityName,
@@ -81,7 +82,11 @@ func (c *Client) DeleteChildrenOfProject(ctx context.Context, project *models.Pr
 
 // DeleteChildrenOfApi deletes all the children of a api.
 func (c *Client) DeleteChildrenOfApi(ctx context.Context, api *models.Api) error {
-	for _, entityName := range []string{models.SpecEntityName, models.VersionEntityName} {
+	for _, entityName := range []string{
+		models.BlobEntityName,
+		models.SpecEntityName,
+		models.VersionEntityName,
+	} {
 		q := datastore.NewQuery(entityName)
 		q = q.KeysOnly()
 		q = q.Filter("ProjectID =", api.ProjectID)
@@ -96,7 +101,10 @@ func (c *Client) DeleteChildrenOfApi(ctx context.Context, api *models.Api) error
 
 // DeleteChildrenOfVersion deletes all the children of a version.
 func (c *Client) DeleteChildrenOfVersion(ctx context.Context, version *models.Version) error {
-	for _, entityName := range []string{models.SpecEntityName} {
+	for _, entityName := range []string{
+		models.BlobEntityName,
+		models.SpecEntityName,
+	} {
 		q := datastore.NewQuery(entityName)
 		q = q.KeysOnly()
 		q = q.Filter("ProjectID =", version.ProjectID)

@@ -15,6 +15,8 @@
 package datastore
 
 import (
+	"fmt"
+
 	"cloud.google.com/go/datastore"
 	"github.com/apigee/registry/server/storage"
 )
@@ -27,4 +29,8 @@ type Key struct {
 // NewKey creates a new storage key.
 func (c *Client) NewKey(kind, name string) storage.Key {
 	return &Key{key: &datastore.Key{Kind: kind, Name: name}}
+}
+
+func (k *Key) String() string {
+	return fmt.Sprintf("%+v", k.key)
 }

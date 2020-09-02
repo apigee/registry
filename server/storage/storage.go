@@ -39,7 +39,9 @@ type Client interface {
 	DeleteChildrenOfVersion(ctx context.Context, version *models.Version) error
 }
 
-type Key interface{}
+type Key interface {
+	String() string
+}
 
 type Query interface {
 	Filter(filter string, value interface{}) Query

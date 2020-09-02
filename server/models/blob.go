@@ -40,10 +40,16 @@ func NewBlob(spec *Spec, contents []byte) *Blob {
 	name := spec.ResourceNameWithRevision()
 	now := time.Now()
 	return &Blob{
-		Name:       name,
-		Hash:       spec.Hash,
-		Contents:   contents,
-		CreateTime: now,
-		UpdateTime: now,
+		ProjectID:   spec.ProjectID,
+		ApiID:       spec.ApiID,
+		VersionID:   spec.VersionID,
+		SpecID:      spec.SpecID,
+		RevisionID:  spec.RevisionID,
+		Name:        name,
+		Hash:        spec.Hash,
+		SizeInBytes: int32(len(contents)),
+		Contents:    contents,
+		CreateTime:  now,
+		UpdateTime:  now,
 	}
 }

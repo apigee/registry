@@ -26,3 +26,7 @@ type Key struct {
 func (c *Client) NewKey(kind, name string) storage.Key {
 	return &Key{Kind: kind, Name: name}
 }
+
+func (k *Key) String() string {
+	return k.Kind + ":" + k.Name
+}

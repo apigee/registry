@@ -62,18 +62,23 @@ func (s *RegistryServer) CreateSpec(ctx context.Context, request *rpc.CreateSpec
 	// the first revision of the spec that we save is also the current one
 	spec.IsCurrent = true
 	k := client.NewKey(models.SpecEntityName, spec.ResourceNameWithRevision())
+	log.Printf("saving spec %+v", k.String())
 	k, err = client.Put(ctx, k, spec)
 	if err != nil {
+		log.Printf("save spec error %+v", err)
 		return nil, err
 	}
 	// save a blob with the spec contents
 	blob := models.NewBlob(
 		spec,
 		request.GetSpec().GetContents())
+	k2 := client.NewKey(models.BlobEntityName, blob.Name)
+	log.Printf("saving blob %+v", k2.String())
 	_, err = client.Put(ctx,
-		client.NewKey(models.BlobEntityName, blob.Name),
+		k2,
 		blob)
 	if err != nil {
+		log.Printf("save blob error %+v", err)
 		return nil, err
 	}
 	response, nil := spec.Message(rpc.SpecView_BASIC, "")
