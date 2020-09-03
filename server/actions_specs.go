@@ -81,7 +81,7 @@ func (s *RegistryServer) CreateSpec(ctx context.Context, request *rpc.CreateSpec
 		log.Printf("save blob error %+v", err)
 		return nil, err
 	}
-	response, nil := spec.Message(rpc.SpecView_BASIC, "")
+	response, nil := spec.Message(nil, "")
 	s.notify(rpc.Notification_CREATED, spec.ResourceNameWithRevision())
 	return response, nil
 }
@@ -108,6 +108,13 @@ func (s *RegistryServer) DeleteSpec(ctx context.Context, request *rpc.DeleteSpec
 	q = q.Filter("VersionID =", spec.VersionID)
 	q = q.Filter("SpecID =", spec.SpecID)
 	err = client.DeleteAllMatches(ctx, q)
+	// Delete all blobs associated with the spec.
+	q = client.NewQuery(models.BlobEntityName)
+	q = q.Filter("ProjectID =", spec.ProjectID)
+	q = q.Filter("ApiID =", spec.ApiID)
+	q = q.Filter("VersionID =", spec.VersionID)
+	q = q.Filter("SpecID =", spec.SpecID)
+	err = client.DeleteAllMatches(ctx, q)
 	s.notify(rpc.Notification_DELETED, request.GetName())
 	return &empty.Empty{}, err
 }
@@ -123,7 +130,11 @@ func (s *RegistryServer) GetSpec(ctx context.Context, request *rpc.GetSpecReques
 	if err != nil {
 		return nil, err
 	}
-	return spec.Message(request.GetView(), userSpecifiedRevision)
+	var blob *models.Blob
+	if request.GetView() == rpc.SpecView_FULL {
+		blob, _ = fetchBlobForSpec(ctx, client, spec)
+	}
+	return spec.Message(blob, userSpecifiedRevision)
 }
 
 // ListSpecs handles the corresponding API request.
@@ -187,7 +198,11 @@ func (s *RegistryServer) ListSpecs(ctx context.Context, req *rpc.ListSpecsReques
 				continue
 			}
 		}
-		specMessage, _ := spec.Message(req.GetView(), "")
+		var blob *models.Blob
+		if req.GetView() == rpc.SpecView_FULL {
+			blob, _ = fetchBlobForSpec(ctx, client, &spec)
+		}
+		specMessage, _ := spec.Message(blob, "")
 		specMessages = append(specMessages, specMessage)
 		if len(specMessages) == pageSize {
 			break
@@ -234,6 +249,7 @@ func (s *RegistryServer) UpdateSpec(ctx context.Context, request *rpc.UpdateSpec
 		currentRevision.IsCurrent = false
 		_, err = client.Put(ctx, k, &currentRevision)
 		if err != nil {
+			log.Printf("error marking non-current revision: %+v", err)
 			return nil, err
 		}
 		spec.IsCurrent = true
@@ -243,18 +259,20 @@ func (s *RegistryServer) UpdateSpec(ctx context.Context, request *rpc.UpdateSpec
 	if err != nil {
 		return nil, err
 	}
-	// save a blob with the spec contents
-	blob := models.NewBlob(
-		spec,
-		request.GetSpec().GetContents())
-	_, err = client.Put(ctx,
-		client.NewKey(models.BlobEntityName, blob.Name),
-		blob)
-	if err != nil {
-		return nil, err
+	// save a blob with the spec contents (but only if the contents were updated)
+	if request.GetSpec().GetContents() != nil {
+		blob := models.NewBlob(
+			spec,
+			request.GetSpec().GetContents())
+		_, err = client.Put(ctx,
+			client.NewKey(models.BlobEntityName, spec.ResourceNameWithRevision()),
+			blob)
+		if err != nil {
+			return nil, err
+		}
 	}
 	s.notify(rpc.Notification_UPDATED, spec.ResourceNameWithRevision())
-	return spec.Message(rpc.SpecView_BASIC, "")
+	return spec.Message(nil, "")
 }
 
 // ListSpecRevisions handles the corresponding API request.
@@ -283,7 +301,7 @@ func (s *RegistryServer) ListSpecRevisions(ctx context.Context, req *rpc.ListSpe
 	it := client.Run(ctx, q)
 	pageSize := boundPageSize(req.GetPageSize())
 	for _, err := it.Next(&spec); err == nil; _, err = it.Next(&spec) {
-		specMessage, _ := spec.Message(rpc.SpecView_BASIC, spec.RevisionID)
+		specMessage, _ := spec.Message(nil, spec.RevisionID)
 		specMessages = append(specMessages, specMessage)
 		if len(specMessages) == pageSize {
 			break
@@ -329,6 +347,9 @@ func (s *RegistryServer) DeleteSpecRevision(ctx context.Context, request *rpc.De
 		}
 	}
 	err = client.Delete(ctx, k)
+	// Delete the blob associated with the spec
+	k2 := client.NewKey(models.BlobEntityName, spec.ResourceNameWithRevision())
+	err = client.Delete(ctx, k2)
 	s.notify(rpc.Notification_DELETED, spec.ResourceNameWithRevision())
 	return &empty.Empty{}, err
 }
@@ -367,7 +388,7 @@ func (s *RegistryServer) TagSpecRevision(ctx context.Context, request *rpc.TagSp
 	// send a notification that the tagged spec has been updated
 	s.notify(rpc.Notification_UPDATED, spec.ResourceNameWithSpecifiedRevision(request.GetTag()))
 	// return the spec using the tag for its name
-	return spec.Message(rpc.SpecView_BASIC, request.GetTag())
+	return spec.Message(nil, request.GetTag())
 }
 
 // ListSpecRevisionTags handles the corresponding API request.
@@ -440,13 +461,26 @@ func (s *RegistryServer) RollbackSpec(ctx context.Context, request *rpc.Rollback
 		}
 	}
 	// Make the selected revision the current revision by giving it a new RevisionID and saving it
+	k2 := client.NewKey(models.BlobEntityName, spec.ResourceNameWithRevision())
+	var blob models.Blob
+	log.Printf("Getting %s", k2.String())
+	err = client.Get(ctx, k2, &blob)
+	if err != nil {
+		log.Printf("failed to get blob %+v", err)
+		return nil, err
+	}
 	spec.BumpRevision()
 	spec.IsCurrent = true
 	k := client.NewKey(models.SpecEntityName, spec.ResourceNameWithRevision())
 	k, err = client.Put(ctx, k, spec)
+	// Resave the blob for the current revision with the new RevisionID
+	k3 := client.NewKey(models.BlobEntityName, spec.ResourceNameWithRevision())
+
+	blob.RevisionID = spec.RevisionID
+	_, _ = client.Put(ctx, k3, &blob)
 	// Send a notification of the new revision.
 	s.notify(rpc.Notification_UPDATED, spec.ResourceNameWithRevision())
-	return spec.Message(rpc.SpecView_BASIC, spec.RevisionID)
+	return spec.Message(nil, spec.RevisionID)
 }
 
 // fetchSpec gets the stored model of a Spec.
@@ -547,4 +581,14 @@ func fetchCurrentRevisionOfSpec(
 		return nil, nil, status.Error(codes.NotFound, "not found")
 	}
 	return k, spec, nil
+}
+
+func fetchBlobForSpec(
+	ctx context.Context,
+	client storage.Client,
+	spec *models.Spec) (*models.Blob, error) {
+	var blob models.Blob
+	k := client.NewKey(models.BlobEntityName, spec.ResourceNameWithRevision())
+	err := client.Get(ctx, k, &blob)
+	return &blob, err
 }

@@ -126,7 +126,7 @@ func (spec *Spec) ParentResourceName() string {
 }
 
 // Message returns a message representing a spec.
-func (spec *Spec) Message(view rpc.SpecView, revision string) (message *rpc.Spec, err error) {
+func (spec *Spec) Message(blob *Blob, revision string) (message *rpc.Spec, err error) {
 	message = &rpc.Spec{}
 	if revision != "" {
 		message.Name = spec.ResourceNameWithSpecifiedRevision(revision)
@@ -135,8 +135,8 @@ func (spec *Spec) Message(view rpc.SpecView, revision string) (message *rpc.Spec
 	}
 	message.Filename = spec.FileName
 	message.Description = spec.Description
-	if view == rpc.SpecView_FULL {
-		message.Contents = spec.Contents
+	if blob != nil {
+		message.Contents = blob.Contents
 	}
 	message.Hash = spec.Hash
 	message.SizeBytes = spec.SizeInBytes
