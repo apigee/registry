@@ -40,8 +40,8 @@ func (s *RegistryServer) CreateLabel(ctx context.Context, request *rpc.CreateLab
 	err = label.Update(request.GetLabel())
 	k := client.NewKey(models.LabelEntityName, label.ResourceName())
 	// fail if label already exists
-	var existingLabel models.Label
-	err = client.Get(ctx, k, &existingLabel)
+	existingLabel := &models.Label{}
+	err = client.Get(ctx, k, existingLabel)
 	if err == nil {
 		return nil, status.Error(codes.AlreadyExists, label.ResourceName()+" already exists")
 	}

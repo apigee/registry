@@ -62,7 +62,6 @@ func (s *RegistryServer) CreateSpec(ctx context.Context, request *rpc.CreateSpec
 	// the first revision of the spec that we save is also the current one
 	spec.IsCurrent = true
 	k := client.NewKey(models.SpecEntityName, spec.ResourceNameWithRevision())
-	log.Printf("saving spec %+v", k.String())
 	k, err = client.Put(ctx, k, spec)
 	if err != nil {
 		log.Printf("save spec error %+v", err)
@@ -72,8 +71,7 @@ func (s *RegistryServer) CreateSpec(ctx context.Context, request *rpc.CreateSpec
 	blob := models.NewBlob(
 		spec,
 		request.GetSpec().GetContents())
-	k2 := client.NewKey(models.BlobEntityName, blob.Name)
-	log.Printf("saving blob %+v", k2.String())
+	k2 := client.NewKey(models.BlobEntityName, spec.ResourceNameWithRevision())
 	_, err = client.Put(ctx,
 		k2,
 		blob)
@@ -244,10 +242,10 @@ func (s *RegistryServer) UpdateSpec(ctx context.Context, request *rpc.UpdateSpec
 	// if the revision changed, get the previously-current revision and mark it as non-current
 	if oldRevisionID != newRevisionID {
 		k := client.NewKey(models.SpecEntityName, spec.ResourceNameWithSpecifiedRevision(oldRevisionID))
-		var currentRevision models.Spec
-		client.Get(ctx, k, &currentRevision)
+		currentRevision := &models.Spec{}
+		client.Get(ctx, k, currentRevision)
 		currentRevision.IsCurrent = false
-		_, err = client.Put(ctx, k, &currentRevision)
+		_, err = client.Put(ctx, k, currentRevision)
 		if err != nil {
 			log.Printf("error marking non-current revision: %+v", err)
 			return nil, err
@@ -461,23 +459,26 @@ func (s *RegistryServer) RollbackSpec(ctx context.Context, request *rpc.Rollback
 		}
 	}
 	// Make the selected revision the current revision by giving it a new RevisionID and saving it
-	k2 := client.NewKey(models.BlobEntityName, spec.ResourceNameWithRevision())
-	var blob models.Blob
-	log.Printf("Getting %s", k2.String())
-	err = client.Get(ctx, k2, &blob)
+	oldBlobKey := client.NewKey(models.BlobEntityName, spec.ResourceNameWithRevision())
+	blob := &models.Blob{}
+	err = client.Get(ctx, oldBlobKey, blob)
 	if err != nil {
-		log.Printf("failed to get blob %+v", err)
 		return nil, err
 	}
 	spec.BumpRevision()
 	spec.IsCurrent = true
-	k := client.NewKey(models.SpecEntityName, spec.ResourceNameWithRevision())
-	k, err = client.Put(ctx, k, spec)
+	newSpecKey := client.NewKey(models.SpecEntityName, spec.ResourceNameWithRevision())
+	_, err = client.Put(ctx, newSpecKey, spec)
+	if err != nil {
+		return nil, err
+	}
 	// Resave the blob for the current revision with the new RevisionID
-	k3 := client.NewKey(models.BlobEntityName, spec.ResourceNameWithRevision())
-
+	newBlobKey := client.NewKey(models.BlobEntityName, spec.ResourceNameWithRevision())
 	blob.RevisionID = spec.RevisionID
-	_, _ = client.Put(ctx, k3, &blob)
+	_, err = client.Put(ctx, newBlobKey, blob)
+	if err != nil {
+		return nil, err
+	}
 	// Send a notification of the new revision.
 	s.notify(rpc.Notification_UPDATED, spec.ResourceNameWithRevision())
 	return spec.Message(nil, spec.RevisionID)
@@ -505,9 +506,9 @@ func fetchSpec(
 	// if the revision reference is a tag, resolve the tag
 	var resourceName string
 	var revisionName string
-	var specRevisionTag models.SpecRevisionTag
+	specRevisionTag := &models.SpecRevisionTag{}
 	k0 := client.NewKey(models.SpecRevisionTagEntityName, spec.ResourceNameWithRevision())
-	err = client.Get(ctx, k0, &specRevisionTag)
+	err = client.Get(ctx, k0, specRevisionTag)
 	if client.IsNotFound(err) {
 		// if there is no tag, just use the provided revision
 		resourceName = spec.ResourceNameWithRevision()
@@ -583,12 +584,13 @@ func fetchCurrentRevisionOfSpec(
 	return k, spec, nil
 }
 
+// fetchBlobForSpec gets the blob containing the spec contents.
 func fetchBlobForSpec(
 	ctx context.Context,
 	client storage.Client,
 	spec *models.Spec) (*models.Blob, error) {
-	var blob models.Blob
+	blob := &models.Blob{}
 	k := client.NewKey(models.BlobEntityName, spec.ResourceNameWithRevision())
-	err := client.Get(ctx, k, &blob)
-	return &blob, err
+	err := client.Get(ctx, k, blob)
+	return blob, err
 }

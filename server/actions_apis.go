@@ -39,8 +39,8 @@ func (s *RegistryServer) CreateApi(ctx context.Context, request *rpc.CreateApiRe
 	}
 	k := client.NewKey(models.ApiEntityName, api.ResourceName())
 	// fail if api already exists
-	var existingApi models.Api
-	err = client.Get(ctx, k, &existingApi)
+	existingApi := &models.Api{}
+	err = client.Get(ctx, k, existingApi)
 	if err == nil {
 		return nil, status.Error(codes.AlreadyExists, api.ResourceName()+" already exists")
 	}

@@ -39,7 +39,7 @@ type Spec struct {
 	Key         string    `datastore:"-", gorm:"PRIMARY_KEY"`
 	IsCurrent   bool      // True for the current revision of the spec.
 	ProjectID   string    // Uniquely identifies a project.
-	ApiID       string    // Uniquely identifies a api within a project.
+	ApiID       string    // Uniquely identifies an api within a project.
 	VersionID   string    // Uniquely identifies a version within a api.
 	SpecID      string    // Uniquely identifies a spec within a version.
 	RevisionID  string    // Uniquely identifies a revision of a spec.
@@ -51,7 +51,6 @@ type Spec struct {
 	Hash        string    // A hash of the spec.
 	FileName    string    // Name of spec file.
 	SourceURI   string    // The original source URI of the spec.
-	Contents    []byte    `datastore:",noindex"` // The contents of the spec.
 }
 
 // NewSpecFromParentAndSpecID returns an initialized spec for a specified parent and specID.
@@ -164,7 +163,8 @@ func (spec *Spec) Update(message *rpc.Spec) error {
 
 	contents := message.GetContents()
 	if contents != nil {
-		spec.Contents = contents
+		// Save some properties of the spec contents.
+		// The bytes of the contents are stored in a Blob.
 		hash := hashForBytes(contents)
 		if spec.Hash != hash {
 			spec.Hash = hash
@@ -211,7 +211,7 @@ func hashForBytes(b []byte) string {
 // SpecRevisionTag ...
 type SpecRevisionTag struct {
 	ProjectID  string    // Uniquely identifies a project.
-	ApiID      string    // Uniquely identifies a api within a project.
+	ApiID      string    // Uniquely identifies an api within a project.
 	VersionID  string    // Uniquely identifies a version within a api.
 	SpecID     string    // Uniquely identifies a spec within a version.
 	RevisionID string    // Uniquely identifies a revision of a spec.

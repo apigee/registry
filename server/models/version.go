@@ -31,7 +31,7 @@ const VersionEntityName = "Version"
 type Version struct {
 	Key         string    `datastore:"-", gorm:"PRIMARY_KEY"`
 	ProjectID   string    // Uniquely identifies a project.
-	ApiID       string    // Uniquely identifies a api within a project.
+	ApiID       string    // Uniquely identifies an api within a project.
 	VersionID   string    // Uniquely identifies a version wihtin a api.
 	DisplayName string    // A human-friendly name.
 	Description string    // A detailed description.

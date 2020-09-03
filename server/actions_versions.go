@@ -39,8 +39,8 @@ func (s *RegistryServer) CreateVersion(ctx context.Context, request *rpc.CreateV
 	}
 	k := client.NewKey(models.VersionEntityName, version.ResourceName())
 	// fail if version already exists
-	var existingVersion models.Version
-	err = client.Get(ctx, k, &existingVersion)
+	existingVersion := &models.Version{}
+	err = client.Get(ctx, k, existingVersion)
 	if err == nil {
 		return nil, status.Error(codes.AlreadyExists, version.ResourceName()+" already exists")
 	}

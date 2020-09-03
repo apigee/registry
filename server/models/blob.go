@@ -23,11 +23,10 @@ const BlobEntityName = "Blob"
 type Blob struct {
 	Key         string    `datastore:"-", gorm:"PRIMARY_KEY"`
 	ProjectID   string    // Uniquely identifies a project.
-	ApiID       string    // Uniquely identifies a api within a project.
+	ApiID       string    // Uniquely identifies an api within a project.
 	VersionID   string    // Uniquely identifies a version within a api.
 	SpecID      string    // Uniquely identifies a spec within a version.
 	RevisionID  string    // Uniquely identifies a revision of a spec.
-	Name        string    // The name of the resource that owns the blob.
 	Hash        string    // Hash of the blob contents.
 	SizeInBytes int32     // Size of the blob contents.
 	Contents    []byte    `datastore:",noindex"` // The contents of the blob.
@@ -37,7 +36,6 @@ type Blob struct {
 
 // NewBlob creates a new Blob object.
 func NewBlob(spec *Spec, contents []byte) *Blob {
-	name := spec.ResourceNameWithRevision()
 	now := time.Now()
 	return &Blob{
 		ProjectID:   spec.ProjectID,
@@ -45,9 +43,8 @@ func NewBlob(spec *Spec, contents []byte) *Blob {
 		VersionID:   spec.VersionID,
 		SpecID:      spec.SpecID,
 		RevisionID:  spec.RevisionID,
-		Name:        name,
 		Hash:        spec.Hash,
-		SizeInBytes: int32(len(contents)),
+		SizeInBytes: spec.SizeInBytes,
 		Contents:    contents,
 		CreateTime:  now,
 		UpdateTime:  now,

@@ -39,8 +39,8 @@ func (s *RegistryServer) CreateProperty(ctx context.Context, request *rpc.Create
 	err = property.Update(request.GetProperty())
 	k := client.NewKey(models.PropertyEntityName, property.ResourceName())
 	// fail if property already exists
-	var existingProperty models.Property
-	err = client.Get(ctx, k, &existingProperty)
+	existingProperty := &models.Property{}
+	err = client.Get(ctx, k, existingProperty)
 	if err == nil {
 		return nil, status.Error(codes.AlreadyExists, property.ResourceName()+" already exists")
 	}

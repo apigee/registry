@@ -38,8 +38,8 @@ func (s *RegistryServer) CreateProject(ctx context.Context, request *rpc.CreateP
 	}
 	k := client.NewKey(models.ProjectEntityName, project.ResourceName())
 	// fail if project already exists
-	var existingProject models.Project
-	err = client.Get(ctx, k, &existingProject)
+	existingProject := &models.Project{}
+	err = client.Get(ctx, k, existingProject)
 	if err == nil {
 		return nil, status.Error(codes.AlreadyExists, project.ResourceName()+" already exists")
 	}

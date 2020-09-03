@@ -31,7 +31,7 @@ const ApiEntityName = "Api"
 type Api struct {
 	Key                string    `datastore:"-", gorm:"PRIMARY_KEY"`
 	ProjectID          string    // Uniquely identifies a project.
-	ApiID              string    // Uniquely identifies a api within a project.
+	ApiID              string    // Uniquely identifies an api within a project.
 	DisplayName        string    // A human-friendly name.
 	Description        string    // A detailed description.
 	CreateTime         time.Time // Creation time.
