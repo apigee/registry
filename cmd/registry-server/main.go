@@ -15,18 +15,37 @@
 package main
 
 import (
+	"flag"
+	"io/ioutil"
 	"log"
 	"os"
 
 	"github.com/apigee/registry/server"
+	"gopkg.in/yaml.v3"
 )
 
+var config server.Config
+
 func main() {
+	configFlag := flag.String("c", "", "specify a configuration file")
+	flag.Parse()
+	if *configFlag != "" {
+		b, err := ioutil.ReadFile(*configFlag)
+		if err != nil {
+			log.Fatalf("%s", err.Error())
+		}
+		err = yaml.Unmarshal(b, &config)
+		if err != nil {
+			log.Fatalf("%s", err.Error())
+		}
+	}
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
-	err := server.RunServer(":" + port)
+
+	err := server.RunServer(":"+port, &config)
 	if err != nil {
 		log.Fatalf("error: %s", err.Error())
 	}

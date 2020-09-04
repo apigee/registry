@@ -1,0 +1,2 @@
+database: sqlite3
+dbconfig: "/tmp/registry.db"

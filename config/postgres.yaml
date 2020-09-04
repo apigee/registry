@@ -1,0 +1,2 @@
+database: postgres
+dbconfig: "host=localhost port=5432 user=registry dbname=registry password=iloveapis"

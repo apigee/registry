@@ -34,6 +34,12 @@ import (
 	"google.golang.org/grpc/reflection"
 )
 
+// Config configures the registry server.
+type Config struct {
+	Database string `yaml:"database"`
+	DBConfig string `yaml:"dbconfig"`
+}
+
 // RegistryServer implements a Registry server.
 type RegistryServer struct {
 	// Uncomment the following line when adding new methods.
@@ -79,7 +85,7 @@ func getProjectID() (string, error) {
 }
 
 // RunServer runs the Registry server on a specified port
-func RunServer(port string) error {
+func RunServer(port string, config *Config) error {
 	// Get project ID to use in registry server.
 	projectID, err := getProjectID()
 	if err != nil {
@@ -88,13 +94,13 @@ func RunServer(port string) error {
 	// Construct registry server.
 	grpcServer := grpc.NewServer()
 	reflection.Register(grpcServer)
-
-	var r *RegistryServer
-
-	r = &RegistryServer{projectID: projectID}
-	//r = &RegistryServer{projectID: projectID, gormDB: "postgres", gormConfig: "host=localhost port=5432 user=registry dbname=registry password=iloveapis"}
-	//r = &RegistryServer{projectID: projectID, gormDB: "sqlite3", gormConfig: "/tmp/registry.db"}
-
+	if config == nil {
+		config = &Config{}
+	}
+	r := &RegistryServer{projectID: projectID,
+		gormDB:     config.Database,
+		gormConfig: config.DBConfig,
+	}
 	rpc.RegisterRegistryServer(grpcServer, r)
 	// Create a listener and use it to run the server.
 	listener, err := net.Listen("tcp", port)
