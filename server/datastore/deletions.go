@@ -24,7 +24,7 @@ import (
 	"google.golang.org/api/iterator"
 )
 
-const verbose = true
+const verbose = false
 
 // DeleteAllMatches deletes all entities matching a specified query.
 func (c *Client) DeleteAllMatches(ctx context.Context, q storage.Query) error {

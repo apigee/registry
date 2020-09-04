@@ -23,6 +23,8 @@ import (
 )
 
 type Client interface {
+	Close()
+
 	Get(ctx context.Context, k Key, v interface{}) error
 	Put(ctx context.Context, k Key, v interface{}) (Key, error)
 	Delete(ctx context.Context, k Key) error
@@ -45,6 +47,7 @@ type Key interface {
 
 type Query interface {
 	Filter(filter string, value interface{}) Query
+	Require(name string, value interface{}) Query
 	Order(order string) Query
 	ApplyCursor(cursorStr string) (Query, error)
 }

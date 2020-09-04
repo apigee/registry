@@ -16,18 +16,16 @@ package gorm
 
 import (
 	"context"
-	"log"
 	"testing"
 	"time"
 
 	"github.com/apigee/registry/server/models"
-	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
 
 func TestCRUD(t *testing.T) {
 	ctx := context.TODO()
 
-	c, _ := NewClient(ctx, "demo")
+	c, _ := NewClient(ctx, "sqlite3", "/tmp/testing.db")
 	defer c.Close()
 	// delete and recreate database tables
 	c.reset()
@@ -83,7 +81,7 @@ func TestCRUD(t *testing.T) {
 	if !c.IsNotFound(err) {
 		t.Errorf("Project deletion failed")
 	}
-	log.Printf("%+v", project2)
+	//log.Printf("%+v", project2)
 
 	c.Close()
 }

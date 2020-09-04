@@ -15,6 +15,6 @@ indexes:
   - name: ProjectID
   - name: SpecID
   - name: VersionID
-  - name: IsCurrent
+  - name: Currency
   - name: CreateTime
     direction: desc

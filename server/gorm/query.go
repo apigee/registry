@@ -15,22 +15,34 @@
 package gorm
 
 import (
+	"log"
+
 	"github.com/apigee/registry/server/storage"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
-// Query represents a query in a storage provider
-type Query struct{}
+// Query represents a query in a storage provider.
+type Query struct {
+	Kind         string
+	Cursor       string
+	Limit        int
+	Requirements []*Requirement
+}
+
+// Requirement adds an equality filter to a query.
+type Requirement struct {
+	Name  string
+	Value interface{}
+}
 
 // NewQuery creates a new query.
 func (c *Client) NewQuery(kind string) storage.Query {
-	return &Query{}
-}
-
-// QueryApplyCursor applies a cursor to a query so that results will start at the cursor.
-func (c *Client) QueryApplyCursor(q *Query, cursorStr string) (storage.Query, error) {
-	return q, nil
+	return &Query{
+		Kind:   kind,
+		Cursor: "",
+		Limit:  50,
+	}
 }
 
 // internalError ...
@@ -42,15 +54,35 @@ func internalError(err error) error {
 	return status.Error(codes.Internal, err.Error())
 }
 
-// Add a filter to a query.
+// Filter adds a general filter to a query.
 func (q *Query) Filter(name string, value interface{}) storage.Query {
+	log.Printf("Unsupported filter %s %+v", name, value)
+	return q
+}
+
+// Require adds a filter to a query that requires a field to have a specified value.
+func (q *Query) Require(name string, value interface{}) storage.Query {
+	switch name {
+	case "ProjectID":
+		name = "project_id"
+	case "ApiID":
+		name = "api_id"
+	case "VersionID":
+		name = "version_id"
+	case "SpecID":
+		name = "spec_id"
+	}
+	q.Requirements = append(q.Requirements, &Requirement{Name: name, Value: value})
 	return q
 }
 
 func (q *Query) Order(value string) storage.Query {
+	// ordering is ignored
 	return q
 }
 
+// ApplyCursor configures a query to start from a specified cursor.
 func (q *Query) ApplyCursor(cursorStr string) (storage.Query, error) {
+	q.Cursor = cursorStr
 	return q, nil
 }

@@ -110,16 +110,16 @@ func (s *RegistryServer) ListProperties(ctx context.Context, req *rpc.ListProper
 		return nil, invalidArgumentError(err)
 	}
 	if p.ProjectID != "-" {
-		q = q.Filter("ProjectID =", p.ProjectID)
+		q = q.Require("ProjectID", p.ProjectID)
 	}
 	if p.ApiID != "-" {
-		q = q.Filter("ApiID =", p.ApiID)
+		q = q.Require("ApiID", p.ApiID)
 	}
 	if p.VersionID != "-" {
-		q = q.Filter("VersionID =", p.VersionID)
+		q = q.Require("VersionID", p.VersionID)
 	}
 	if p.SpecID != "-" {
-		q = q.Filter("SpecID =", p.SpecID)
+		q = q.Require("SpecID", p.SpecID)
 	}
 	prg, err := createFilterOperator(req.GetFilter(),
 		[]filterArg{

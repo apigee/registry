@@ -15,6 +15,8 @@
 package datastore
 
 import (
+	"fmt"
+
 	"cloud.google.com/go/datastore"
 	"github.com/apigee/registry/server/storage"
 	"google.golang.org/grpc/codes"
@@ -34,6 +36,11 @@ func (c *Client) NewQuery(kind string) storage.Query {
 // Filter adds a filter to a query.
 func (q *Query) Filter(filter string, value interface{}) storage.Query {
 	return &Query{query: q.query.Filter(filter, value)}
+}
+
+// Require adds a filter to a query that requires a field to have a specific value.
+func (q *Query) Require(name string, value interface{}) storage.Query {
+	return &Query{query: q.query.Filter(fmt.Sprintf("%s =", name), value)}
 }
 
 // Order causes the results of a query to be sorted.

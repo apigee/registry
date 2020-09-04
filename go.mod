@@ -48,11 +48,11 @@ require (
 	golang.org/x/net v0.0.0-20200822124328-c89045814202
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
 	golang.org/x/sync v0.0.0-20200317015054-43a5402ce75a
-	golang.org/x/sys v0.0.0-20200826173525-f9321e4c35a6 // indirect
+	golang.org/x/sys v0.0.0-20200831180312-196b9ba8737a // indirect
 	golang.org/x/text v0.3.3 // indirect
 	google.golang.org/api v0.23.0
 	google.golang.org/appengine v1.6.6 // indirect
-	google.golang.org/genproto v0.0.0-20200828030656-73b5761be4c5
+	google.golang.org/genproto v0.0.0-20200901141002-b3bf27a9dbd1
 	google.golang.org/grpc v1.31.1
 	google.golang.org/grpc/examples v0.0.0-20200731180010-8bec2f5d898f // indirect
 	google.golang.org/protobuf v1.25.0

@@ -43,6 +43,11 @@ func NewClient(ctx context.Context, projectID string) (*Client, error) {
 	return globalClient, nil
 }
 
+// Close closes the database connection.
+func (c *Client) Close() {
+	// Do nothing because we maintain a single global connection.
+}
+
 // IsNotFound returns true if an error is due to an entity not being found.
 func (c *Client) IsNotFound(err error) bool {
 	return err == datastore.ErrNoSuchEntity

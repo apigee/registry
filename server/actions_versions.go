@@ -112,10 +112,10 @@ func (s *RegistryServer) ListVersions(ctx context.Context, req *rpc.ListVersions
 		return nil, invalidArgumentError(err)
 	}
 	if m[1] != "-" {
-		q = q.Filter("ProjectID =", m[1])
+		q = q.Require("ProjectID", m[1])
 	}
 	if m[2] != "-" {
-		q = q.Filter("ApiID =", m[2])
+		q = q.Require("ApiID", m[2])
 	}
 	prg, err := createFilterOperator(req.GetFilter(),
 		[]filterArg{

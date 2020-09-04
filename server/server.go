@@ -40,18 +40,26 @@ type RegistryServer struct {
 	// rpc.UnimplementedRegistryServer
 
 	projectID string
+
+	gormDB     string
+	gormConfig string
+
+	weTrustTheSort bool
 }
 
 func (s *RegistryServer) getStorageClient(ctx context.Context) (storage.Client, error) {
-	// in the future, this will be a runtime setting
-	if true {
+	if s.gormDB != "" {
+		s.weTrustTheSort = false
+		return gorm.NewClient(ctx, s.gormDB, s.gormConfig)
+	} else {
+		s.weTrustTheSort = true
 		return datastore.NewClient(ctx, s.projectID)
 	}
-	return gorm.NewClient(ctx, s.projectID)
 }
 
 // if we had one client per handler, this would close the client.
 func (s *RegistryServer) releaseStorageClient(client storage.Client) {
+	client.Close()
 }
 
 func getProjectID() (string, error) {
@@ -80,7 +88,14 @@ func RunServer(port string) error {
 	// Construct registry server.
 	grpcServer := grpc.NewServer()
 	reflection.Register(grpcServer)
-	rpc.RegisterRegistryServer(grpcServer, &RegistryServer{projectID: projectID})
+
+	var r *RegistryServer
+
+	r = &RegistryServer{projectID: projectID}
+	//r = &RegistryServer{projectID: projectID, gormDB: "postgres", gormConfig: "host=localhost port=5432 user=registry dbname=registry password=iloveapis"}
+	//r = &RegistryServer{projectID: projectID, gormDB: "sqlite3", gormConfig: "/tmp/registry.db"}
+
+	rpc.RegisterRegistryServer(grpcServer, r)
 	// Create a listener and use it to run the server.
 	listener, err := net.Listen("tcp", port)
 	if err != nil {

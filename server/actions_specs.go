@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"log"
+	"sort"
 	"time"
 
 	"github.com/apigee/registry/rpc"
@@ -43,10 +44,10 @@ func (s *RegistryServer) CreateSpec(ctx context.Context, request *rpc.CreateSpec
 	}
 	// fail if spec already exists
 	q := client.NewQuery(models.SpecEntityName)
-	q = q.Filter("ProjectID =", spec.ProjectID)
-	q = q.Filter("ApiID =", spec.ApiID)
-	q = q.Filter("VersionID =", spec.VersionID)
-	q = q.Filter("SpecID =", spec.SpecID)
+	q = q.Require("ProjectID", spec.ProjectID)
+	q = q.Require("ApiID", spec.ApiID)
+	q = q.Require("VersionID", spec.VersionID)
+	q = q.Require("SpecID", spec.SpecID)
 	it := client.Run(ctx, q)
 	var existingSpec models.Spec
 	existingKey, err := it.Next(&existingSpec)
@@ -60,7 +61,7 @@ func (s *RegistryServer) CreateSpec(ctx context.Context, request *rpc.CreateSpec
 	}
 	spec.CreateTime = spec.UpdateTime
 	// the first revision of the spec that we save is also the current one
-	spec.IsCurrent = true
+	spec.Currency = models.IsCurrent
 	k := client.NewKey(models.SpecEntityName, spec.ResourceNameWithRevision())
 	k, err = client.Put(ctx, k, spec)
 	if err != nil {
@@ -101,17 +102,17 @@ func (s *RegistryServer) DeleteSpec(ctx context.Context, request *rpc.DeleteSpec
 	}
 	// Delete all revisions of the spec.
 	q := client.NewQuery(models.SpecEntityName)
-	q = q.Filter("ProjectID =", spec.ProjectID)
-	q = q.Filter("ApiID =", spec.ApiID)
-	q = q.Filter("VersionID =", spec.VersionID)
-	q = q.Filter("SpecID =", spec.SpecID)
+	q = q.Require("ProjectID", spec.ProjectID)
+	q = q.Require("ApiID", spec.ApiID)
+	q = q.Require("VersionID", spec.VersionID)
+	q = q.Require("SpecID", spec.SpecID)
 	err = client.DeleteAllMatches(ctx, q)
 	// Delete all blobs associated with the spec.
 	q = client.NewQuery(models.BlobEntityName)
-	q = q.Filter("ProjectID =", spec.ProjectID)
-	q = q.Filter("ApiID =", spec.ApiID)
-	q = q.Filter("VersionID =", spec.VersionID)
-	q = q.Filter("SpecID =", spec.SpecID)
+	q = q.Require("ProjectID", spec.ProjectID)
+	q = q.Require("ApiID", spec.ApiID)
+	q = q.Require("VersionID", spec.VersionID)
+	q = q.Require("SpecID", spec.SpecID)
 	err = client.DeleteAllMatches(ctx, q)
 	s.notify(rpc.Notification_DELETED, request.GetName())
 	return &empty.Empty{}, err
@@ -152,15 +153,15 @@ func (s *RegistryServer) ListSpecs(ctx context.Context, req *rpc.ListSpecsReques
 		return nil, invalidArgumentError(err)
 	}
 	if m[1] != "-" {
-		q = q.Filter("ProjectID =", m[1])
+		q = q.Require("ProjectID", m[1])
 	}
 	if m[2] != "-" {
-		q = q.Filter("ApiID =", m[2])
+		q = q.Require("ApiID", m[2])
 	}
 	if m[3] != "-" {
-		q = q.Filter("VersionID =", m[3])
+		q = q.Require("VersionID", m[3])
 	}
-	q = q.Filter("IsCurrent =", true)
+	q = q.Require("Currency", models.IsCurrent)
 	prg, err := createFilterOperator(req.GetFilter(),
 		[]filterArg{
 			{"project_id", filterArgTypeString},
@@ -244,15 +245,15 @@ func (s *RegistryServer) UpdateSpec(ctx context.Context, request *rpc.UpdateSpec
 		k := client.NewKey(models.SpecEntityName, spec.ResourceNameWithSpecifiedRevision(oldRevisionID))
 		currentRevision := &models.Spec{}
 		client.Get(ctx, k, currentRevision)
-		currentRevision.IsCurrent = false
+		currentRevision.Currency = models.NotCurrent
 		_, err = client.Put(ctx, k, currentRevision)
 		if err != nil {
-			log.Printf("error marking non-current revision: %+v", err)
 			return nil, err
 		}
-		spec.IsCurrent = true
+		spec.Currency = models.IsCurrent
 	}
 	k := client.NewKey(models.SpecEntityName, spec.ResourceNameWithRevision())
+	spec.Key = spec.ResourceNameWithRevision()
 	k, err = client.Put(ctx, k, spec)
 	if err != nil {
 		return nil, err
@@ -289,32 +290,57 @@ func (s *RegistryServer) ListSpecRevisions(ctx context.Context, req *rpc.ListSpe
 	if err != nil {
 		return nil, internalError(err)
 	}
-	q = q.Filter("ProjectID =", targetSpec.ProjectID)
-	q = q.Filter("ApiID =", targetSpec.ApiID)
-	q = q.Filter("VersionID =", targetSpec.VersionID)
-	q = q.Filter("SpecID =", targetSpec.SpecID)
+	q = q.Require("ProjectID", targetSpec.ProjectID)
+	q = q.Require("ApiID", targetSpec.ApiID)
+	q = q.Require("VersionID", targetSpec.VersionID)
+	q = q.Require("SpecID", targetSpec.SpecID)
 	q = q.Order("-CreateTime")
+
 	var specMessages []*rpc.Spec
-	var spec models.Spec
-	it := client.Run(ctx, q)
-	pageSize := boundPageSize(req.GetPageSize())
-	for _, err := it.Next(&spec); err == nil; _, err = it.Next(&spec) {
-		specMessage, _ := spec.Message(nil, spec.RevisionID)
-		specMessages = append(specMessages, specMessage)
-		if len(specMessages) == pageSize {
-			break
+	responses := &rpc.ListSpecRevisionsResponse{}
+	if s.weTrustTheSort {
+		var spec models.Spec
+		it := client.Run(ctx, q)
+		pageSize := boundPageSize(req.GetPageSize())
+		for _, err := it.Next(&spec); err == nil; _, err = it.Next(&spec) {
+			specMessage, _ := spec.Message(nil, spec.RevisionID)
+			specMessages = append(specMessages, specMessage)
+			if len(specMessages) == pageSize {
+				break
+			}
 		}
+		if err != nil && err != iterator.Done {
+			return nil, internalError(err)
+		}
+		responses.NextPageToken, err = it.GetCursor(len(specMessages))
+		if err != nil {
+			return nil, internalError(err)
+		}
+	} else {
+		specs := make([]*models.Spec, 0)
+		it := client.Run(ctx, q)
+		for {
+			spec := &models.Spec{}
+			_, err := it.Next(spec)
+			if err != nil {
+				break
+			}
+			specs = append(specs, spec)
+		}
+		if err != nil && err != iterator.Done {
+			return nil, internalError(err)
+		}
+		sort.Slice(specs, func(i, j int) bool {
+			return specs[i].CreateTime.After(specs[j].CreateTime)
+		})
+		for _, spec := range specs {
+			specMessage, _ := spec.Message(nil, spec.RevisionID)
+			specMessages = append(specMessages, specMessage)
+		}
+		responses.NextPageToken = ""
+		err = nil
 	}
-	if err != nil && err != iterator.Done {
-		return nil, internalError(err)
-	}
-	responses := &rpc.ListSpecRevisionsResponse{
-		Specs: specMessages,
-	}
-	responses.NextPageToken, err = it.GetCursor(len(specMessages))
-	if err != nil {
-		return nil, internalError(err)
-	}
+	responses.Specs = specMessages
 	return responses, nil
 }
 
@@ -333,14 +359,14 @@ func (s *RegistryServer) DeleteSpecRevision(ctx context.Context, request *rpc.De
 	}
 	k := client.NewKey(models.SpecEntityName, spec.ResourceNameWithRevision())
 	// If the one we will delete is the current revision, we need to designate a new current revision.
-	if spec.IsCurrent {
+	if spec.Currency == models.IsCurrent {
 		// get the most recent non-current revision and make it current
-		newKey, newCurrentRevision, err := fetchMostRecentNonCurrentRevisionOfSpec(ctx, client, request.GetName())
+		newKey, newCurrentRevision, err := s.fetchMostRecentNonCurrentRevisionOfSpec(ctx, client, request.GetName())
 		if err != nil {
 			log.Printf("error %+v", err)
 		}
 		if err == nil && newCurrentRevision != nil {
-			newCurrentRevision.IsCurrent = true
+			newCurrentRevision.Currency = models.IsCurrent
 			client.Put(ctx, newKey, newCurrentRevision)
 		}
 	}
@@ -405,10 +431,10 @@ func (s *RegistryServer) ListSpecRevisionTags(ctx context.Context, req *rpc.List
 	if err != nil {
 		return nil, internalError(err)
 	}
-	q = q.Filter("ProjectID =", targetSpec.ProjectID)
-	q = q.Filter("ApiID =", targetSpec.ApiID)
-	q = q.Filter("VersionID =", targetSpec.VersionID)
-	q = q.Filter("SpecID =", targetSpec.SpecID)
+	q = q.Require("ProjectID", targetSpec.ProjectID)
+	q = q.Require("ApiID", targetSpec.ApiID)
+	q = q.Require("VersionID", targetSpec.VersionID)
+	q = q.Require("SpecID", targetSpec.SpecID)
 	var tagMessages []*rpc.SpecRevisionTag
 	tag := models.SpecRevisionTag{}
 	it := client.Run(ctx, q)
@@ -452,9 +478,10 @@ func (s *RegistryServer) RollbackSpec(ctx context.Context, request *rpc.Rollback
 	// The previous current revision needs to be marked non-current.
 	oldKey, oldCurrent, err := fetchCurrentRevisionOfSpec(ctx, client, request.GetName())
 	if err == nil && oldCurrent != nil {
-		oldCurrent.IsCurrent = false
+		oldCurrent.Currency = models.NotCurrent
 		_, err = client.Put(ctx, oldKey, oldCurrent)
 		if err != nil {
+			log.Printf("oops %+v", err)
 			return nil, err
 		}
 	}
@@ -466,7 +493,7 @@ func (s *RegistryServer) RollbackSpec(ctx context.Context, request *rpc.Rollback
 		return nil, err
 	}
 	spec.BumpRevision()
-	spec.IsCurrent = true
+	spec.Currency = models.IsCurrent
 	newSpecKey := client.NewKey(models.SpecEntityName, spec.ResourceNameWithRevision())
 	_, err = client.Put(ctx, newSpecKey, spec)
 	if err != nil {
@@ -532,7 +559,7 @@ func fetchSpec(
 }
 
 // fetchMostRecentNonCurrentRevisionOfSpec gets the most recent revision that's not current.
-func fetchMostRecentNonCurrentRevisionOfSpec(
+func (s *RegistryServer) fetchMostRecentNonCurrentRevisionOfSpec(
 	ctx context.Context,
 	client storage.Client,
 	name string,
@@ -543,19 +570,37 @@ func fetchMostRecentNonCurrentRevisionOfSpec(
 	}
 	// note that we ignore any specified RevisionID
 	q := client.NewQuery(models.SpecEntityName)
-	q = q.Filter("ProjectID =", pattern.ProjectID)
-	q = q.Filter("ApiID =", pattern.ApiID)
-	q = q.Filter("VersionID =", pattern.VersionID)
-	q = q.Filter("SpecID =", pattern.SpecID)
-	q = q.Filter("IsCurrent =", false)
+	q = q.Require("ProjectID", pattern.ProjectID)
+	q = q.Require("ApiID", pattern.ApiID)
+	q = q.Require("VersionID", pattern.VersionID)
+	q = q.Require("SpecID", pattern.SpecID)
+	q = q.Require("Currency", models.NotCurrent)
 	q = q.Order("-CreateTime")
 	it := client.Run(ctx, q)
-	spec := &models.Spec{}
-	k, err := it.Next(spec)
-	if err != nil {
-		return nil, nil, status.Error(codes.NotFound, "not found")
+
+	if s.weTrustTheSort {
+		spec := &models.Spec{}
+		k, err := it.Next(spec)
+		if err != nil {
+			return nil, nil, status.Error(codes.NotFound, "not found")
+		}
+		return k, spec, nil
+	} else {
+		specs := make([]*models.Spec, 0)
+		for {
+			spec := &models.Spec{}
+			_, err := it.Next(spec)
+			if err != nil {
+				break
+			}
+			specs = append(specs, spec)
+		}
+		sort.Slice(specs, func(i, j int) bool {
+			return specs[i].CreateTime.After(specs[j].CreateTime)
+		})
+		k := client.NewKey("Spec", specs[0].Key)
+		return k, specs[0], nil
 	}
-	return k, spec, nil
 }
 
 // fetchCurrentRevisionOfSpec gets the current revision.
@@ -570,11 +615,11 @@ func fetchCurrentRevisionOfSpec(
 	}
 	// note that we ignore any specified RevisionID
 	q := client.NewQuery(models.SpecEntityName)
-	q = q.Filter("ProjectID =", pattern.ProjectID)
-	q = q.Filter("ApiID =", pattern.ApiID)
-	q = q.Filter("VersionID =", pattern.VersionID)
-	q = q.Filter("SpecID =", pattern.SpecID)
-	q = q.Filter("IsCurrent =", true)
+	q = q.Require("ProjectID", pattern.ProjectID)
+	q = q.Require("ApiID", pattern.ApiID)
+	q = q.Require("VersionID", pattern.VersionID)
+	q = q.Require("SpecID", pattern.SpecID)
+	q = q.Require("Currency", models.IsCurrent)
 	it := client.Run(ctx, q)
 	spec := &models.Spec{}
 	k, err := it.Next(spec)

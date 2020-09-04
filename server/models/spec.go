@@ -34,10 +34,19 @@ const SpecEntityName = "Spec"
 // SpecRevisionTagEntityName is used to represent tags in storage.
 const SpecRevisionTagEntityName = "SpecRevisionTag"
 
+// This was originally a boolean but gorm does not correctly update booleans from structs.
+// https://stackoverflow.com/questions/56653423/gorm-doesnt-update-boolean-field-to-false
+const (
+	// NotCurrent indicates that a revision is NOT the current revision of a spec
+	NotCurrent = 1
+	// IsCurrent indicates that a revision is the current revision of a spec
+	IsCurrent = 2
+)
+
 // Spec ...
 type Spec struct {
 	Key         string    `datastore:"-", gorm:"PRIMARY_KEY"`
-	IsCurrent   bool      // True for the current revision of the spec.
+	Currency    int32     // IsCurrent for the current revision of the spec.
 	ProjectID   string    // Uniquely identifies a project.
 	ApiID       string    // Uniquely identifies an api within a project.
 	VersionID   string    // Uniquely identifies a version within a api.
@@ -210,6 +219,7 @@ func hashForBytes(b []byte) string {
 
 // SpecRevisionTag ...
 type SpecRevisionTag struct {
+	Key        string    `datastore:"-", gorm:"PRIMARY_KEY"`
 	ProjectID  string    // Uniquely identifies a project.
 	ApiID      string    // Uniquely identifies an api within a project.
 	VersionID  string    // Uniquely identifies a version within a api.
