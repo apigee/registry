@@ -38,6 +38,7 @@ import (
 type Config struct {
 	Database string `yaml:"database"`
 	DBConfig string `yaml:"dbconfig"`
+	Notify   bool   `yaml:"notify"`
 }
 
 // RegistryServer implements a Registry server.
@@ -47,8 +48,9 @@ type RegistryServer struct {
 
 	projectID string
 
-	gormDB     string
-	gormConfig string
+	gormDB              string
+	gormConfig          string
+	enableNotifications bool
 
 	weTrustTheSort bool
 }
@@ -92,14 +94,26 @@ func RunServer(port string, config *Config) error {
 		return err
 	}
 	// Construct registry server.
-	grpcServer := grpc.NewServer()
+
+	loggingHandler := func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+		log.Printf(">> %s", info.FullMethod)
+		resp, err := handler(ctx, req)
+		if err != nil {
+			log.Printf("!! %s failed: %s", info.FullMethod, err)
+		}
+		return resp, err
+	}
+
+	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(loggingHandler))
+
 	reflection.Register(grpcServer)
 	if config == nil {
 		config = &Config{}
 	}
 	r := &RegistryServer{projectID: projectID,
-		gormDB:     config.Database,
-		gormConfig: config.DBConfig,
+		gormDB:              config.Database,
+		gormConfig:          config.DBConfig,
+		enableNotifications: config.Notify,
 	}
 	rpc.RegisterRegistryServer(grpcServer, r)
 	// Create a listener and use it to run the server.

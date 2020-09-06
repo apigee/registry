@@ -15,18 +15,30 @@
 package gorm
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"log"
+	"runtime"
+	"strconv"
+	"time"
 
 	"github.com/apigee/registry/server/models"
 	"github.com/apigee/registry/server/storage"
-	"github.com/jinzhu/gorm"
-
-	// encapsulate these dependencies
-	_ "github.com/jinzhu/gorm/dialects/postgres"
-	_ "github.com/jinzhu/gorm/dialects/sqlite"
+	"gorm.io/driver/postgres"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
+
+func getGID() uint64 {
+	b := make([]byte, 64)
+	b = b[:runtime.Stack(b, false)]
+	b = bytes.TrimPrefix(b, []byte("goroutine "))
+	b = b[:bytes.IndexByte(b, ' ')]
+	n, _ := strconv.ParseUint(string(b), 10, 64)
+	return n
+}
 
 // Client represents a connection to a storage provider.
 // In this module, entities are stored using the Cloud Datastore API.
@@ -35,27 +47,76 @@ type Client struct {
 	db *gorm.DB
 }
 
-// NewClient creates a new database session.
-func NewClient(ctx context.Context, gormDB, gormConfig string) (*Client, error) {
-	db, err := gorm.Open(gormDB, gormConfig)
-	if err != nil {
-		panic(err)
+var globalClient *Client
+
+func config() *gorm.Config {
+	return &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Silent), // https://gorm.io/docs/logger.html
 	}
-	return (&Client{db: db}).ensure(), nil
+}
+
+var clientCount int
+var clientTotal int
+
+// NewClient creates a new database session.
+func NewClient(ctx context.Context, gormDBName, gormConfig string) (*Client, error) {
+	//if globalClient != nil {
+	//return globalClient, nil
+	//}
+
+	clientCount++
+	clientTotal++
+	log.Printf("CREATING CLIENT (%d/%d %d)", clientCount, clientTotal, getGID())
+	switch gormDBName {
+	case "sqlite3":
+		db, err := gorm.Open(sqlite.Open(gormConfig), config())
+		if err != nil {
+			return nil, err
+		}
+		sqlDB, _ := db.DB()
+		sqlDB.SetMaxIdleConns(10)
+		sqlDB.SetMaxOpenConns(10)
+		sqlDB.SetConnMaxLifetime(time.Minute)
+		globalClient = (&Client{db: db}).ensure()
+		return globalClient, nil
+	case "postgres":
+		db, err := gorm.Open(postgres.Open(gormConfig), config())
+		if err != nil {
+			return nil, err
+		}
+		sqlDB, _ := db.DB()
+		sqlDB.SetMaxIdleConns(2)
+		sqlDB.SetMaxOpenConns(2)
+		sqlDB.SetConnMaxLifetime(time.Minute)
+		globalClient = (&Client{db: db}).ensure()
+		return globalClient, nil
+	default:
+		return nil, fmt.Errorf("Unsupported database %s", gormDBName)
+	}
+}
+
+// Close closes a database session.
+func (c *Client) Close() {
+	log.Printf("CLOSING (%d) %d", clientCount, getGID())
+	clientCount--
+	sqlDB, _ := c.db.DB()
+	//s := sqlDB.Stats()
+	//log.Printf("%+v", s)
+	sqlDB.Close()
 }
 
 func (c *Client) resetTable(v interface{}) {
-	if c.db.HasTable(v) == true {
-		c.db.DropTable(v)
+	if c.db.Migrator().HasTable(v) == true {
+		c.db.Migrator().DropTable(v)
 	}
-	if c.db.HasTable(v) == false {
-		c.db.CreateTable(v)
+	if c.db.Migrator().HasTable(v) == false {
+		c.db.Migrator().CreateTable(v)
 	}
 }
 
 func (c *Client) ensureTable(v interface{}) {
-	if c.db.HasTable(v) == false {
-		c.db.CreateTable(v)
+	if c.db.Migrator().HasTable(v) == false {
+		c.db.Migrator().CreateTable(v)
 	}
 }
 
@@ -82,20 +143,14 @@ func (c *Client) ensure() *Client {
 	return c
 }
 
-// Close closes a database session.
-func (c *Client) Close() {
-	c.db.Close()
-}
-
 // IsNotFound returns true if an error is due to an entity not being found.
 func (c *Client) IsNotFound(err error) bool {
-	return gorm.IsRecordNotFoundError(err)
+	return err == gorm.ErrRecordNotFound
 }
 
 // Get gets an entity using the storage client.
 func (c *Client) Get(ctx context.Context, k storage.Key, v interface{}) error {
-	err := c.db.Where("key = ?", k.(*Key).Name).First(v).Error
-	return err
+	return c.db.Where("key = ?", k.(*Key).Name).First(v).Error
 }
 
 // Put puts an entity using the storage client.
@@ -120,7 +175,10 @@ func (c *Client) Put(ctx context.Context, k storage.Key, v interface{}) (storage
 	}
 	rowsAffected := c.db.Model(v).Where("key = ?", k.(*Key).Name).Updates(v).RowsAffected
 	if rowsAffected == 0 {
-		c.db.Create(v)
+		err := c.db.Create(v).Error
+		if err != nil {
+			log.Printf("CREATE ERROR %s", err.Error())
+		}
 	}
 	return k, nil
 }
@@ -131,10 +189,20 @@ func (c *Client) Delete(ctx context.Context, k storage.Key) error {
 	switch k.(*Key).Kind {
 	case "Project":
 		err = c.db.Delete(&models.Project{}, "key = ?", k.(*Key).Name).Error
-	case "Blob":
-		err = c.db.Delete(&models.Blob{}, "key = ?", k.(*Key).Name).Error
+	case "Api":
+		err = c.db.Delete(&models.Api{}, "key = ?", k.(*Key).Name).Error
+	case "Version":
+		err = c.db.Delete(&models.Version{}, "key = ?", k.(*Key).Name).Error
 	case "Spec":
 		err = c.db.Delete(&models.Spec{}, "key = ?", k.(*Key).Name).Error
+	case "SpecRevisionTag":
+		err = c.db.Delete(&models.SpecRevisionTag{}, "key = ?", k.(*Key).Name).Error
+	case "Blob":
+		err = c.db.Delete(&models.Blob{}, "key = ?", k.(*Key).Name).Error
+	case "Property":
+		err = c.db.Delete(&models.Property{}, "key = ?", k.(*Key).Name).Error
+	case "Label":
+		err = c.db.Delete(&models.Label{}, "key = ?", k.(*Key).Name).Error
 	default:
 		return fmt.Errorf("invalid key type (fix in client.go): %s", k.(*Key).Kind)
 	}

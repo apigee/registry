@@ -31,12 +31,18 @@ const verbose = false
 
 const topicName = "changes"
 
+var notificationTotal int
+
 func (s *RegistryServer) notify(change rpc.Notification_Change, resource string) error {
+	if !s.enableNotifications {
+		return nil
+	}
 	ctx := context.Background()
 	client, err := pubsub.NewClient(ctx, s.projectID)
 	if err != nil {
 		return err
 	}
+	defer client.Close()
 	// Ensure that topic exists.
 	{
 		_, err := client.CreateTopic(context.Background(), topicName)
@@ -61,7 +67,8 @@ func (s *RegistryServer) notify(change rpc.Notification_Change, resource string)
 		return err
 	}
 	// Send the notification.
-	log.Printf("sending %+s", m)
+	notificationTotal++
+	log.Printf("^^ [%03d] %+s", notificationTotal, m)
 	var results []*pubsub.PublishResult
 	r := topic.Publish(ctx, &pubsub.Message{
 		Data: []byte(m),

@@ -31,7 +31,6 @@ require (
 	github.com/googleapis/gnostic v0.5.1
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/improbable-eng/grpc-web v0.12.0
-	github.com/jinzhu/gorm v1.9.16
 	github.com/ktr0731/grpc-web-go-client v0.2.7
 	github.com/magiconair/properties v1.8.1 // indirect
 	github.com/mattn/go-runewidth v0.0.9 // indirect
@@ -59,5 +58,7 @@ require (
 	gopkg.in/ini.v1 v1.51.0 // indirect
 	gopkg.in/yaml.v2 v2.3.0
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776
-	gorm.io/gorm v0.2.37
+	gorm.io/driver/postgres v1.0.0
+	gorm.io/driver/sqlite v1.1.1
+	gorm.io/gorm v1.9.19
 )

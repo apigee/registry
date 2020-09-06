@@ -16,6 +16,8 @@ package gorm
 
 import (
 	"context"
+	"fmt"
+	"log"
 	"testing"
 	"time"
 
@@ -82,6 +84,51 @@ func TestCRUD(t *testing.T) {
 		t.Errorf("Project deletion failed")
 	}
 	//log.Printf("%+v", project2)
+}
 
+func TestLoad(t *testing.T) {
+
+	ctx := context.TODO()
+
+	c, _ := NewClient(ctx, "sqlite3", "/tmp/testing.db")
+	c.reset()
 	c.Close()
+
+	var err error
+	for i := 0; i < 9999; i++ {
+		{
+			done := make(chan bool, 1)
+			go func(done chan bool) {
+				c, err = NewClient(ctx, "sqlite3", "/tmp/testing.db")
+				if err != nil {
+					t.Fatalf("Unable to create client: %+v", err)
+				}
+				now := time.Now()
+				apiID := fmt.Sprintf("api-%04d", i)
+				log.Printf("%s", apiID)
+				api := &models.Api{
+					ProjectID:   "demo",
+					ApiID:       apiID,
+					Description: "Demonstration API",
+					CreateTime:  now,
+					UpdateTime:  now,
+				}
+				k := c.NewKey(models.ApiEntityName, api.ResourceName())
+				// fail if api already exists
+				existingApi := &models.Api{}
+				err := c.Get(ctx, k, existingApi)
+				if err == nil {
+					t.Errorf(err.Error())
+				}
+				_, err = c.Put(ctx, k, api)
+				if err != nil {
+					t.Errorf(err.Error())
+				}
+				c.Close()
+
+				done <- true
+			}(done)
+			<-done
+		}
+	}
 }
