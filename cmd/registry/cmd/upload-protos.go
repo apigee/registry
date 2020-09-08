@@ -64,7 +64,7 @@ var uploadProtosCmd = &cobra.Command{
 	},
 }
 
-func scanDirectoryForProtos(ctx context.Context, registryClient connection.Client, projectID, directory string) {
+func scanDirectoryForProtos(ctx context.Context, client connection.Client, projectID, directory string) {
 	var err error
 
 	r := regexp.MustCompile("v.*[1-9]+.*")
@@ -92,11 +92,11 @@ func scanDirectoryForProtos(ctx context.Context, registryClient connection.Clien
 			}
 			// we need to upload this API spec
 			jobQueue <- &uploadProtoRunnable{
-				ctx:            ctx,
-				registryClient: registryClient,
-				projectID:      projectID,
-				path:           p,
-				directory:      directory,
+				ctx:       ctx,
+				client:    client,
+				projectID: projectID,
+				path:      p,
+				directory: directory,
 			}
 			return nil
 		})
@@ -130,116 +130,132 @@ func alreadyExists(err error) bool {
 }
 
 type uploadProtoRunnable struct {
-	ctx            context.Context
-	registryClient connection.Client
-	projectID      string
-	path           string
-	directory      string
+	ctx       context.Context
+	client    connection.Client
+	projectID string
+	path      string
+	directory string
+	apiID     string // computed at runtime
+	versionID string // computed at runtime
+	specID    string // computed at runtime
 }
 
 func (job *uploadProtoRunnable) run() error {
+	var err error
 	// Compute the API name from the path to the spec file.
 	prefix := job.directory + "/"
 	name := strings.TrimPrefix(job.path, prefix)
 	parts := strings.Split(name, "/")
-	apiID := strings.Join(parts[0:len(parts)-1], "-")
-	apiID = strings.Replace(apiID, "/", "-", -1)
-	versionID := parts[len(parts)-1]
-	projectID := job.projectID
-	ctx := job.ctx
-	registryClient := job.registryClient
-	log.Printf("apis/%s/versions/%s\n", apiID, versionID)
+	job.apiID = strings.Join(parts[0:len(parts)-1], "-")
+	job.apiID = strings.Replace(job.apiID, "/", "-", -1)
+	job.versionID = parts[len(parts)-1]
+	log.Printf("apis/%s/versions/%s\n", job.apiID, job.versionID)
 	// If the API does not exist, create it.
-	{
-		request := &rpcpb.GetApiRequest{
-			Name: "projects/" + projectID + "/apis/" + apiID,
-		}
-		_, err := registryClient.GetApi(ctx, request)
-		if notFound(err) {
-			request := &rpcpb.CreateApiRequest{
-				Parent: "projects/" + projectID,
-				ApiId:  apiID,
-				Api: &rpcpb.Api{
-					DisplayName: apiID,
-				},
-			}
-			response, err := registryClient.CreateApi(ctx, request)
-			if err == nil {
-				log.Printf("created %s", response.Name)
-			} else if alreadyExists(err) {
-				log.Printf("already exists %s/apis/%s", request.Parent, request.ApiId)
-			} else {
-				log.Printf("failed to create %s/apis/%s: %s",
-					request.Parent, request.ApiId, err.Error())
-			}
-		} else if err != nil {
-			return err
-		}
+	err = job.createAPI()
+	if err != nil {
+		return err
 	}
 	// If the API version does not exist, create it.
-	{
-		request := &rpcpb.GetVersionRequest{
-			Name: "projects/" + projectID + "/apis/" + apiID + "/versions/" + versionID,
-		}
-		_, err := registryClient.GetVersion(ctx, request)
-		if notFound(err) {
-			request := &rpcpb.CreateVersionRequest{
-				Parent:    "projects/" + projectID + "/apis/" + apiID,
-				VersionId: versionID,
-				Version:   &rpcpb.Version{},
-			}
-			response, err := registryClient.CreateVersion(ctx, request)
-			if err == nil {
-				log.Printf("created %s", response.Name)
-			} else if alreadyExists(err) {
-				log.Printf("already exists %s/versions/%s", request.Parent, request.VersionId)
-			} else {
-				log.Printf("failed to create %s/versions/%s: %s",
-					request.Parent, request.VersionId, err.Error())
-			}
-		} else if err != nil {
-			return err
-		}
+	err = job.createVersion()
+	if err != nil {
+		return err
 	}
 	// If the API spec does not exist, create it.
-	{
-		filename := "protos.zip"
-		request := &rpcpb.GetSpecRequest{
-			Name: "projects/" + projectID + "/apis/" + apiID +
-				"/versions/" + versionID +
-				"/specs/" + filename,
-		}
-		_, err := registryClient.GetSpec(ctx, request)
-		if notFound(err) {
-			// build a zip archive with the contents of the path
-			// https://golangcode.com/create-zip-files-in-go/
-			buf, err := zipArchiveOfPath(job.path, prefix)
-			if err != nil {
-				return err
-			}
-			request := &rpcpb.CreateSpecRequest{
-				Parent: "projects/" + projectID + "/apis/" + apiID + "/versions/" + versionID,
-				SpecId: filename,
-				Spec: &rpcpb.Spec{
-					Style:    "proto+zip",
-					Filename: "protos.zip",
-					Contents: buf.Bytes(),
-				},
-			}
-			response, err := registryClient.CreateSpec(ctx, request)
-			if err == nil {
-				log.Printf("created %s", response.Name)
-			} else if alreadyExists(err) {
-				log.Printf("already exists %s/specs/%s", request.Parent, request.SpecId)
-			} else {
-				details := fmt.Sprintf("contents-length: %d", len(request.Spec.Contents))
-				log.Printf("failed to create %s/specs/%s: %s [%s]",
-					request.Parent, request.SpecId, err.Error(), details)
-			}
+	return job.createSpec()
+}
 
-		} else if err != nil {
+func (job *uploadProtoRunnable) createAPI() error {
+	request := &rpcpb.GetApiRequest{
+		Name: "projects/" + job.projectID + "/apis/" + job.apiID,
+	}
+	_, err := job.client.GetApi(job.ctx, request)
+	if notFound(err) {
+		request := &rpcpb.CreateApiRequest{
+			Parent: "projects/" + job.projectID,
+			ApiId:  job.apiID,
+			Api: &rpcpb.Api{
+				DisplayName: job.apiID,
+			},
+		}
+		response, err := job.client.CreateApi(job.ctx, request)
+		if err == nil {
+			log.Printf("created %s", response.Name)
+		} else if alreadyExists(err) {
+			log.Printf("already exists %s/apis/%s", request.Parent, request.ApiId)
+		} else {
+			log.Printf("failed to create %s/apis/%s: %s",
+				request.Parent, request.ApiId, err.Error())
+		}
+	} else if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (job *uploadProtoRunnable) createVersion() error {
+	request := &rpcpb.GetVersionRequest{
+		Name: "projects/" + job.projectID + "/apis/" + job.apiID + "/versions/" + job.versionID,
+	}
+	_, err := job.client.GetVersion(job.ctx, request)
+	if notFound(err) {
+		request := &rpcpb.CreateVersionRequest{
+			Parent:    "projects/" + job.projectID + "/apis/" + job.apiID,
+			VersionId: job.versionID,
+			Version:   &rpcpb.Version{},
+		}
+		response, err := job.client.CreateVersion(job.ctx, request)
+		if err == nil {
+			log.Printf("created %s", response.Name)
+		} else if alreadyExists(err) {
+			log.Printf("already exists %s/versions/%s", request.Parent, request.VersionId)
+		} else {
+			log.Printf("failed to create %s/versions/%s: %s",
+				request.Parent, request.VersionId, err.Error())
+		}
+	} else if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (job *uploadProtoRunnable) createSpec() error {
+	filename := "protos.zip"
+	request := &rpcpb.GetSpecRequest{
+		Name: "projects/" + job.projectID + "/apis/" + job.apiID +
+			"/versions/" + job.versionID +
+			"/specs/" + filename,
+	}
+	_, err := job.client.GetSpec(job.ctx, request)
+	if notFound(err) {
+		prefix := job.directory + "/"
+		// build a zip archive with the contents of the path
+		// https://golangcode.com/create-zip-files-in-go/
+		buf, err := zipArchiveOfPath(job.path, prefix)
+		if err != nil {
 			return err
 		}
+		request := &rpcpb.CreateSpecRequest{
+			Parent: "projects/" + job.projectID + "/apis/" + job.apiID + "/versions/" + job.versionID,
+			SpecId: filename,
+			Spec: &rpcpb.Spec{
+				Style:    "proto+zip",
+				Filename: "protos.zip",
+				Contents: buf.Bytes(),
+			},
+		}
+		response, err := job.client.CreateSpec(job.ctx, request)
+		if err == nil {
+			log.Printf("created %s", response.Name)
+		} else if alreadyExists(err) {
+			log.Printf("already exists %s/specs/%s", request.Parent, request.SpecId)
+		} else {
+			details := fmt.Sprintf("contents-length: %d", len(request.Spec.Contents))
+			log.Printf("failed to create %s/specs/%s: %s [%s]",
+				request.Parent, request.SpecId, err.Error(), details)
+		}
+
+	} else if err != nil {
+		return err
 	}
 	return nil
 }

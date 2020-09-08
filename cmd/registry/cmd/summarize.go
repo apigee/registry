@@ -83,6 +83,15 @@ var summarizeCmd = &cobra.Command{
 	},
 }
 
+type summarizeOpenAPIRunnable struct {
+	Path      string
+	Directory string
+}
+
+func (job *summarizeOpenAPIRunnable) run() error {
+	return nil
+}
+
 func init() {
 	rootCmd.AddCommand(summarizeCmd)
 }
