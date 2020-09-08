@@ -18,7 +18,6 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"strings"
@@ -28,7 +27,6 @@ import (
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
 	"github.com/golang/protobuf/ptypes/any"
-	"github.com/googleapis/gnostic/compiler"
 	metrics "github.com/googleapis/gnostic/metrics"
 	openapi_v2 "github.com/googleapis/gnostic/openapiv2"
 	openapi_v3 "github.com/googleapis/gnostic/openapiv3"
@@ -41,8 +39,8 @@ import (
 // summarizeCmd represents the summarize command
 var summarizeCmd = &cobra.Command{
 	Use:   "summarize",
-	Short: "Compute a summary of an API spec.",
-	Long:  `Compute a summary of an API spec.`,
+	Short: "Summarize API specs.",
+	Long:  `Summarize API specs.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.TODO()
 		log.Printf("summarize called %+v", args)
@@ -50,46 +48,45 @@ var summarizeCmd = &cobra.Command{
 		if err != nil {
 			log.Fatalf("%s", err.Error())
 		}
+
+		jobQueue := make(chan Runnable, 1024)
+
+		workerCount := 64
+		for i := 0; i < workerCount; i++ {
+			wg.Add(1)
+			go worker(ctx, jobQueue)
+		}
+
 		name := args[0]
 		if m := names.SpecRegexp().FindAllStringSubmatch(name, -1); m != nil {
 			segments := m[0]
-			if sliceContainsString(segments, "-") {
-				// iterate through a collection of specs and summarize each
-				completions := make(chan int)
-				processes := 0
-				err = listSpecs(ctx, client, segments, func(spec *rpc.Spec) {
-					fmt.Println("summarize " + spec.Name)
-					m := names.SpecRegexp().FindAllStringSubmatch(spec.Name, -1)
-					if m != nil {
-						processes++
-						go func() {
-							fmt.Printf("summarizing " + strings.Join(m[0], "/") + "\n")
-							summarizeSpec(ctx, client, m[0])
-							completions <- 1
-						}()
+			// iterate through a collection of specs and summarize each
+			err = listSpecs(ctx, client, segments, func(spec *rpc.Spec) {
+				m := names.SpecRegexp().FindAllStringSubmatch(spec.Name, -1)
+				if m != nil {
+					jobQueue <- &summarizeOpenAPIRunnable{
+						ctx:       ctx,
+						client:    client,
+						specName:  spec.Name,
+						projectID: segments[1],
 					}
-				})
-				for i := 0; i < processes; i++ {
-					<-completions
 				}
-
-			} else {
-				err := summarizeSpec(ctx, client, segments)
-				if err != nil {
-					log.Printf("%s", err.Error())
-				}
-			}
+			})
+			close(jobQueue)
+			wg.Wait()
 		}
 	},
 }
 
 type summarizeOpenAPIRunnable struct {
-	Path      string
-	Directory string
+	ctx       context.Context
+	client    connection.Client
+	projectID string
+	specName  string
 }
 
 func (job *summarizeOpenAPIRunnable) run() error {
-	return nil
+	return summarizeSpec(job.ctx, job.client, job.specName, job.projectID)
 }
 
 func init() {
@@ -123,9 +120,11 @@ func getBytesForSpec(spec *rpc.Spec) ([]byte, error) {
 
 func summarizeSpec(ctx context.Context,
 	client *gapic.RegistryClient,
-	segments []string) error {
+	specName string,
+	projectID string) error {
 
-	name := resourceNameOfSpec(segments[1:])
+	name := specName
+
 	request := &rpc.GetSpecRequest{
 		Name: name,
 		View: rpc.SpecView_FULL,
@@ -141,20 +140,16 @@ func summarizeSpec(ctx context.Context,
 		if err != nil {
 			return nil
 		}
-		info, err := compiler.ReadInfoFromBytes(spec.GetName(), data)
-		if err != nil {
-			return err
-		}
-		document, err := openapi_v2.NewDocument(info, compiler.NewContextWithExtensions("$root", nil, nil))
+		document, err := openapi_v2.ParseDocument(data)
 		if err != nil {
 			return err
 		}
 		summary := summarizeOpenAPIv2Document(document)
 
-		projectID := segments[1]
 		property := &rpc.Property{}
 		property.Subject = spec.GetName()
-		property.Relation = "complexity"
+		property.Relation = "summary"
+		property.Name = property.Subject + "/properties/" + property.Relation
 		complexitySummary := &metrics.Complexity{}
 		complexitySummary.SchemaCount = summary.SchemaCount
 		complexitySummary.SchemaPropertyCount = summary.SchemaPropertyCount
@@ -180,20 +175,16 @@ func summarizeSpec(ctx context.Context,
 		if err != nil {
 			return nil
 		}
-		info, err := compiler.ReadInfoFromBytes(spec.GetName(), data)
-		if err != nil {
-			return err
-		}
-		document, err := openapi_v3.NewDocument(info, compiler.NewContextWithExtensions("$root", nil, nil))
+		document, err := openapi_v3.ParseDocument(data)
 		if err != nil {
 			return err
 		}
 		summary := summarizeOpenAPIv3Document(document)
 
-		projectID := segments[1]
 		property := &rpc.Property{}
 		property.Subject = spec.GetName()
 		property.Relation = "summary"
+		property.Name = property.Subject + "/properties/" + property.Relation
 		complexitySummary := &metrics.Complexity{}
 		complexitySummary.SchemaCount = summary.SchemaCount
 		complexitySummary.SchemaPropertyCount = summary.SchemaPropertyCount
@@ -204,7 +195,7 @@ func summarizeSpec(ctx context.Context,
 		complexitySummary.DeleteCount = summary.DeleteCount
 		messageData, err := proto.Marshal(complexitySummary)
 		anyValue := &any.Any{
-			TypeUrl: "ComplexitySummary",
+			TypeUrl: "gnostic.metrics.Complexity",
 			Value:   messageData,
 		}
 		property.Value = &rpc.Property_MessageValue{MessageValue: anyValue}
@@ -222,26 +213,18 @@ func setProperty(ctx context.Context, client *gapic.RegistryClient, projectID st
 	request.Property = property
 	request.PropertyId = property.GetRelation()
 	request.Parent = property.GetSubject()
-	log.Printf("%+v", request)
-	newProperty, err := client.CreateProperty(ctx, request)
-	if err != nil {
-		code := status.Code(err)
-		if code == codes.AlreadyExists {
-			fmt.Printf("already exists\n")
-			request := &rpc.UpdatePropertyRequest{}
-			request.Property = property
-			updatedProperty, err := client.UpdateProperty(ctx, request)
-			if err != nil {
-				return err
-			}
-			fmt.Printf("updated %+v\n", updatedProperty)
-		} else {
-			return err
-		}
-	} else {
-		fmt.Printf("created %+v\n", newProperty)
+	_, err := client.CreateProperty(ctx, request)
+	if err == nil {
+		return nil
 	}
-	return nil
+	code := status.Code(err)
+	if code == codes.AlreadyExists {
+		request := &rpc.UpdatePropertyRequest{}
+		request.Property = property
+		_, err := client.UpdateProperty(ctx, request)
+		return err
+	}
+	return err
 }
 
 // Summary ...

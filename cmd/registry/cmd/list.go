@@ -119,14 +119,14 @@ var listCmd = &cobra.Command{
 			if sliceContainsString(segments, "-") {
 				err = listProperties(ctx, client, segments, printProperty)
 			} else {
-				err = getProperty(ctx, client, segments, printProperty)
+				_, err = getProperty(ctx, client, segments, printProperty)
 			}
 		} else if m := names.LabelRegexp().FindAllStringSubmatch(name, -1); m != nil {
 			segments := m[0]
 			if sliceContainsString(segments, "-") {
 				err = listLabels(ctx, client, segments, printLabel)
 			} else {
-				err = getLabel(ctx, client, segments, printLabel)
+				_, err = getLabel(ctx, client, segments, printLabel)
 			}
 		} else {
 			fmt.Printf("unsupported argument(s): %+v\n", args)
@@ -468,12 +468,10 @@ func getSpec(ctx context.Context,
 	segments []string,
 	getContents bool,
 	handler specHandler) (*rpc.Spec, error) {
-
 	view := rpc.SpecView_BASIC
 	if getContents {
 		view = rpc.SpecView_FULL
 	}
-
 	request := &rpc.GetSpecRequest{
 		Name: "projects/" + segments[1] + "/apis/" + segments[2] + "/versions/" + segments[3] + "/specs/" + segments[4],
 		View: view,
@@ -491,35 +489,36 @@ func getSpec(ctx context.Context,
 func getProperty(ctx context.Context,
 	client *gapic.RegistryClient,
 	segments []string,
-	handler propertyHandler) error {
-	log.Printf("%+v", segments)
+	handler propertyHandler) (*rpc.Property, error) {
 	request := &rpc.GetPropertyRequest{
+		// TODO: fix for properties on other resources (besides specs)
 		Name: "projects/" + segments[1] + "/apis/" + segments[3] + "/versions/" + segments[5] + "/specs/" + segments[7] + "/properties/" + segments[8],
 	}
-	log.Printf("request %+v", request)
 	property, err := client.GetProperty(ctx, request)
 	if err != nil {
 		log.Printf("%+s", err.Error())
 	}
-	fmt.Printf("%+v\n", property)
 	printPropertyDetail(property)
-	return nil
+	return property, nil
 }
 
 func getLabel(ctx context.Context,
 	client *gapic.RegistryClient,
 	segments []string,
-	handler labelHandler) error {
+	handler labelHandler) (*rpc.Label, error) {
 	request := &rpc.GetLabelRequest{
+		// TODO: fix for labels on other resources (besides projects)
 		Name: "projects/" + segments[1] + "/labels/" + segments[2],
 	}
-	log.Printf("request %+v", request)
 	label, err := client.GetLabel(ctx, request)
 	if err != nil {
 		log.Printf("%+s", err.Error())
 	}
 	fmt.Printf("%+v\n", label)
-	return nil
+	if handler != nil {
+		handler(label)
+	}
+	return label, nil
 }
 
 func sliceContainsString(slice []string, target string) bool {

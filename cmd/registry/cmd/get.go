@@ -57,6 +57,8 @@ var getCmd = &cobra.Command{
 			_, err = getVersion(ctx, client, m[0], printVersionDetail)
 		} else if m := names.SpecRegexp().FindAllStringSubmatch(name, -1); m != nil {
 			_, err = getSpec(ctx, client, m[0], getContents, printSpecDetail)
+		} else if m := names.PropertyRegexp().FindAllStringSubmatch(name, -1); m != nil {
+			_, err = getProperty(ctx, client, m[0], printPropertyDetail)
 		} else {
 			log.Printf("Unsupported entity %+v", args)
 		}
@@ -89,7 +91,6 @@ func init() {
 }
 
 func printPropertyDetail(property *rpc.Property) {
-	fmt.Printf("%s %s %+v\n", property.Subject, property.Relation, property.Value)
 	switch v := property.Value.(type) {
 	case *rpc.Property_StringValue:
 		fmt.Printf("%s", v.StringValue)
@@ -102,20 +103,14 @@ func printPropertyDetail(property *rpc.Property) {
 	case *rpc.Property_BytesValue:
 		fmt.Printf("%+v", v.BytesValue)
 	case *rpc.Property_MessageValue:
-		messageType := v.MessageValue.TypeUrl
-		if messageType == "Complexity" {
-			var msg metrics.Complexity
-			err := proto.Unmarshal(v.MessageValue.Value, &msg)
-			if err != nil {
-				fmt.Printf("%+v", err)
-			} else {
-				fmt.Printf("%+v", &msg)
-			}
-		} else {
+		switch v.MessageValue.TypeUrl {
+		case "gnostic.metrics.Complexity":
+			unmarshalAndPrint(v.MessageValue.Value, &metrics.Complexity{})
+		default:
 			fmt.Printf("%+v", v.MessageValue)
 		}
 	default:
-
+		fmt.Printf("Unsupported property type: %s %s %+v\n", property.Subject, property.Relation, property.Value)
 	}
 	fmt.Printf("\n")
 }
@@ -142,4 +137,13 @@ func printSpecDetail(message *rpc.Spec) {
 
 func printMessage(message proto.Message) {
 	fmt.Println(protojson.Format(message))
+}
+
+func unmarshalAndPrint(value []byte, message proto.Message) {
+	err := proto.Unmarshal(value, message)
+	if err != nil {
+		fmt.Printf("%+v", err)
+	} else {
+		printMessage(message)
+	}
 }
