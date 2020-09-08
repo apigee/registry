@@ -30,7 +30,7 @@ import (
 func (s *RegistryServer) CreateApi(ctx context.Context, request *rpc.CreateApiRequest) (*rpc.Api, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
-		return nil, internalError(err)
+		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
 	api, err := models.NewApiFromParentAndApiID(request.GetParent(), request.GetApiId())
@@ -58,7 +58,7 @@ func (s *RegistryServer) CreateApi(ctx context.Context, request *rpc.CreateApiRe
 func (s *RegistryServer) DeleteApi(ctx context.Context, request *rpc.DeleteApiRequest) (*empty.Empty, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
-		return nil, internalError(err)
+		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
 	// Validate name and create dummy api (we just need the ID fields).
@@ -78,7 +78,7 @@ func (s *RegistryServer) DeleteApi(ctx context.Context, request *rpc.DeleteApiRe
 func (s *RegistryServer) GetApi(ctx context.Context, request *rpc.GetApiRequest) (*rpc.Api, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
-		return nil, internalError(err)
+		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
 	api, err := models.NewApiFromResourceName(request.GetName())
@@ -99,7 +99,7 @@ func (s *RegistryServer) GetApi(ctx context.Context, request *rpc.GetApiRequest)
 func (s *RegistryServer) ListApis(ctx context.Context, req *rpc.ListApisRequest) (*rpc.ListApisResponse, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
-		return nil, internalError(err)
+		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
 	q := client.NewQuery(models.ApiEntityName)
@@ -166,7 +166,7 @@ func (s *RegistryServer) ListApis(ctx context.Context, req *rpc.ListApisRequest)
 func (s *RegistryServer) UpdateApi(ctx context.Context, request *rpc.UpdateApiRequest) (*rpc.Api, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
-		return nil, internalError(err)
+		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
 	api, err := models.NewApiFromResourceName(request.GetApi().GetName())

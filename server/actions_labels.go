@@ -30,7 +30,7 @@ import (
 func (s *RegistryServer) CreateLabel(ctx context.Context, request *rpc.CreateLabelRequest) (*rpc.Label, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
-		return nil, internalError(err)
+		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
 	label, err := models.NewLabelFromParentAndLabelID(request.GetParent(), request.GetLabelId())
@@ -58,7 +58,7 @@ func (s *RegistryServer) CreateLabel(ctx context.Context, request *rpc.CreateLab
 func (s *RegistryServer) DeleteLabel(ctx context.Context, request *rpc.DeleteLabelRequest) (*empty.Empty, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
-		return nil, internalError(err)
+		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
 	// Validate name and create dummy label (we just need the ID fields).
@@ -77,7 +77,7 @@ func (s *RegistryServer) DeleteLabel(ctx context.Context, request *rpc.DeleteLab
 func (s *RegistryServer) GetLabel(ctx context.Context, request *rpc.GetLabelRequest) (*rpc.Label, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
-		return nil, internalError(err)
+		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
 	label, err := models.NewLabelFromResourceName(request.GetName())
@@ -99,7 +99,7 @@ func (s *RegistryServer) GetLabel(ctx context.Context, request *rpc.GetLabelRequ
 func (s *RegistryServer) ListLabels(ctx context.Context, req *rpc.ListLabelsRequest) (*rpc.ListLabelsResponse, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
-		return nil, internalError(err)
+		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
 	q := client.NewQuery(models.LabelEntityName)
@@ -190,7 +190,7 @@ func (s *RegistryServer) ListLabels(ctx context.Context, req *rpc.ListLabelsRequ
 func (s *RegistryServer) UpdateLabel(ctx context.Context, request *rpc.UpdateLabelRequest) (*rpc.Label, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
-		return nil, internalError(err)
+		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
 	label, err := models.NewLabelFromResourceName(request.GetLabel().GetName())

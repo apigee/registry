@@ -21,7 +21,7 @@ import (
 	"log"
 	"runtime"
 	"strconv"
-	"time"
+	"sync"
 
 	"github.com/apigee/registry/server/models"
 	"github.com/apigee/registry/server/storage"
@@ -47,7 +47,20 @@ type Client struct {
 	db *gorm.DB
 }
 
-var globalClient *Client
+var mutex sync.Mutex
+var disableMutex bool
+
+func mylock() {
+	if !disableMutex {
+		mutex.Lock()
+	}
+}
+
+func myunlock() {
+	if !disableMutex {
+		mutex.Unlock()
+	}
+}
 
 func config() *gorm.Config {
 	return &gorm.Config{
@@ -58,54 +71,68 @@ func config() *gorm.Config {
 var clientCount int
 var clientTotal int
 
+var openErrorCount int
+
 // NewClient creates a new database session.
 func NewClient(ctx context.Context, gormDBName, gormConfig string) (*Client, error) {
-	//if globalClient != nil {
-	//return globalClient, nil
-	//}
-
+	mylock()
 	clientCount++
 	clientTotal++
-	log.Printf("CREATING CLIENT (%d/%d %d)", clientCount, clientTotal, getGID())
+	//log.Printf("CREATING CLIENT (%d/%d %d)", clientCount, clientTotal, getGID())
 	switch gormDBName {
 	case "sqlite3":
 		db, err := gorm.Open(sqlite.Open(gormConfig), config())
 		if err != nil {
+			openErrorCount++
+			log.Printf("OPEN ERROR %d", openErrorCount)
+			(&Client{db: db}).close()
+			myunlock()
 			return nil, err
 		}
-		sqlDB, _ := db.DB()
-		sqlDB.SetMaxIdleConns(10)
-		sqlDB.SetMaxOpenConns(10)
-		sqlDB.SetConnMaxLifetime(time.Minute)
-		globalClient = (&Client{db: db}).ensure()
-		return globalClient, nil
+		myunlock()
+		// empirically, it does not seem safe to disable the mutex for sqlite3,
+		// which might make sense since sqlite database access is in-process.
+		//disableMutex = true
+		c := (&Client{db: db}).ensure()
+		return c, nil
 	case "postgres":
 		db, err := gorm.Open(postgres.Open(gormConfig), config())
 		if err != nil {
+			openErrorCount++
+			log.Printf("OPEN ERROR %d", openErrorCount)
+			(&Client{db: db}).close()
+			myunlock()
 			return nil, err
 		}
-		sqlDB, _ := db.DB()
-		sqlDB.SetMaxIdleConns(2)
-		sqlDB.SetMaxOpenConns(2)
-		sqlDB.SetConnMaxLifetime(time.Minute)
-		globalClient = (&Client{db: db}).ensure()
-		return globalClient, nil
+		myunlock()
+		// postgres runs in a separate process and seems to have no problems
+		// with concurrent access and modifications.
+		disableMutex = true
+		c := (&Client{db: db}).ensure()
+		return c, nil
 	default:
+		myunlock()
 		return nil, fmt.Errorf("Unsupported database %s", gormDBName)
 	}
 }
 
 // Close closes a database session.
 func (c *Client) Close() {
-	log.Printf("CLOSING (%d) %d", clientCount, getGID())
+	mylock()
+	defer myunlock()
+	c.close()
+}
+
+func (c *Client) close() {
+	// log.Printf("CLOSING (%d) %d", clientCount, getGID())
 	clientCount--
 	sqlDB, _ := c.db.DB()
-	//s := sqlDB.Stats()
-	//log.Printf("%+v", s)
 	sqlDB.Close()
 }
 
 func (c *Client) resetTable(v interface{}) {
+	mylock()
+	defer myunlock()
 	if c.db.Migrator().HasTable(v) == true {
 		c.db.Migrator().DropTable(v)
 	}
@@ -115,6 +142,8 @@ func (c *Client) resetTable(v interface{}) {
 }
 
 func (c *Client) ensureTable(v interface{}) {
+	mylock()
+	defer myunlock()
 	if c.db.Migrator().HasTable(v) == false {
 		c.db.Migrator().CreateTable(v)
 	}
@@ -148,13 +177,22 @@ func (c *Client) IsNotFound(err error) bool {
 	return err == gorm.ErrRecordNotFound
 }
 
+// NotFoundError is the error returned when an entity is not found.
+func (c *Client) NotFoundError() error {
+	return gorm.ErrRecordNotFound
+}
+
 // Get gets an entity using the storage client.
 func (c *Client) Get(ctx context.Context, k storage.Key, v interface{}) error {
+	mylock()
+	defer myunlock()
 	return c.db.Where("key = ?", k.(*Key).Name).First(v).Error
 }
 
 // Put puts an entity using the storage client.
 func (c *Client) Put(ctx context.Context, k storage.Key, v interface{}) (storage.Key, error) {
+	mylock()
+	defer myunlock()
 	switch r := v.(type) {
 	case *models.Project:
 		r.Key = k.(*Key).Name
@@ -185,6 +223,8 @@ func (c *Client) Put(ctx context.Context, k storage.Key, v interface{}) (storage
 
 // Delete deletes an entity using the storage client.
 func (c *Client) Delete(ctx context.Context, k storage.Key) error {
+	mylock()
+	defer myunlock()
 	var err error
 	switch k.(*Key).Kind {
 	case "Project":
@@ -214,6 +254,8 @@ func (c *Client) Delete(ctx context.Context, k storage.Key) error {
 
 // Run runs a query using the storage client, returning an iterator.
 func (c *Client) Run(ctx context.Context, q storage.Query) storage.Iterator {
+	mylock()
+	defer myunlock()
 	limit := q.(*Query).Limit
 	cursor := q.(*Query).Cursor
 
@@ -221,6 +263,7 @@ func (c *Client) Run(ctx context.Context, q storage.Query) storage.Iterator {
 	for _, r := range q.(*Query).Requirements {
 		op = op.Where(r.Name+" = ?", r.Value)
 	}
+	op = op.Order("key")
 
 	switch q.(*Query).Kind {
 	case "Project":

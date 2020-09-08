@@ -35,12 +35,12 @@ import (
 func (s *RegistryServer) CreateSpec(ctx context.Context, request *rpc.CreateSpecRequest) (*rpc.Spec, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
-		return nil, err
+		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
 	spec, err := models.NewSpecFromParentAndSpecID(request.GetParent(), request.GetSpecId())
 	if err != nil {
-		return nil, err
+		return nil, internalError(err)
 	}
 	// fail if spec already exists
 	q := client.NewQuery(models.SpecEntityName)
@@ -57,7 +57,7 @@ func (s *RegistryServer) CreateSpec(ctx context.Context, request *rpc.CreateSpec
 	// save the spec under its full resource@revision name
 	err = spec.Update(request.GetSpec())
 	if err != nil {
-		return nil, err
+		return nil, internalError(err)
 	}
 	spec.CreateTime = spec.UpdateTime
 	// the first revision of the spec that we save is also the current one
@@ -66,7 +66,7 @@ func (s *RegistryServer) CreateSpec(ctx context.Context, request *rpc.CreateSpec
 	k, err = client.Put(ctx, k, spec)
 	if err != nil {
 		log.Printf("save spec error %+v", err)
-		return nil, err
+		return nil, internalError(err)
 	}
 	// save a blob with the spec contents
 	blob := models.NewBlob(
@@ -78,7 +78,7 @@ func (s *RegistryServer) CreateSpec(ctx context.Context, request *rpc.CreateSpec
 		blob)
 	if err != nil {
 		log.Printf("save blob error %+v", err)
-		return nil, err
+		return nil, internalError(err)
 	}
 	response, nil := spec.Message(nil, "")
 	s.notify(rpc.Notification_CREATED, spec.ResourceNameWithRevision())
@@ -89,7 +89,7 @@ func (s *RegistryServer) CreateSpec(ctx context.Context, request *rpc.CreateSpec
 func (s *RegistryServer) DeleteSpec(ctx context.Context, request *rpc.DeleteSpecRequest) (*empty.Empty, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
-		return nil, err
+		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
 	// Validate name and create dummy spec (we just need the ID fields).
@@ -122,12 +122,15 @@ func (s *RegistryServer) DeleteSpec(ctx context.Context, request *rpc.DeleteSpec
 func (s *RegistryServer) GetSpec(ctx context.Context, request *rpc.GetSpecRequest) (*rpc.Spec, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
-		return nil, err
+		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
 	spec, userSpecifiedRevision, err := fetchSpec(ctx, client, request.GetName())
 	if err != nil {
-		return nil, err
+		if client.IsNotFound(err) {
+			return nil, notFoundError(err)
+		}
+		return nil, internalError(err)
 	}
 	var blob *models.Blob
 	if request.GetView() == rpc.SpecView_FULL {
@@ -140,7 +143,7 @@ func (s *RegistryServer) GetSpec(ctx context.Context, request *rpc.GetSpecReques
 func (s *RegistryServer) ListSpecs(ctx context.Context, req *rpc.ListSpecsRequest) (*rpc.ListSpecsResponse, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
-		return nil, err
+		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
 	q := client.NewQuery(models.SpecEntityName)
@@ -224,12 +227,12 @@ func (s *RegistryServer) ListSpecs(ctx context.Context, req *rpc.ListSpecsReques
 func (s *RegistryServer) UpdateSpec(ctx context.Context, request *rpc.UpdateSpecRequest) (*rpc.Spec, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
-		return nil, err
+		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
 	spec, userSpecifiedRevision, err := fetchSpec(ctx, client, request.GetSpec().GetName())
 	if err != nil {
-		return nil, err
+		return nil, internalError(err)
 	}
 	if userSpecifiedRevision != "" {
 		return nil, invalidArgumentError(errors.New("updates to specific revisions are unsupported"))
@@ -237,7 +240,7 @@ func (s *RegistryServer) UpdateSpec(ctx context.Context, request *rpc.UpdateSpec
 	oldRevisionID := spec.RevisionID
 	err = spec.Update(request.GetSpec())
 	if err != nil {
-		return nil, err
+		return nil, internalError(err)
 	}
 	newRevisionID := spec.RevisionID
 	// if the revision changed, get the previously-current revision and mark it as non-current
@@ -248,7 +251,7 @@ func (s *RegistryServer) UpdateSpec(ctx context.Context, request *rpc.UpdateSpec
 		currentRevision.Currency = models.NotCurrent
 		_, err = client.Put(ctx, k, currentRevision)
 		if err != nil {
-			return nil, err
+			return nil, internalError(err)
 		}
 		spec.Currency = models.IsCurrent
 	}
@@ -256,7 +259,7 @@ func (s *RegistryServer) UpdateSpec(ctx context.Context, request *rpc.UpdateSpec
 	spec.Key = spec.ResourceNameWithRevision()
 	k, err = client.Put(ctx, k, spec)
 	if err != nil {
-		return nil, err
+		return nil, internalError(err)
 	}
 	// save a blob with the spec contents (but only if the contents were updated)
 	if request.GetSpec().GetContents() != nil {
@@ -267,7 +270,7 @@ func (s *RegistryServer) UpdateSpec(ctx context.Context, request *rpc.UpdateSpec
 			client.NewKey(models.BlobEntityName, spec.ResourceNameWithRevision()),
 			blob)
 		if err != nil {
-			return nil, err
+			return nil, internalError(err)
 		}
 	}
 	s.notify(rpc.Notification_UPDATED, spec.ResourceNameWithRevision())
@@ -278,12 +281,12 @@ func (s *RegistryServer) UpdateSpec(ctx context.Context, request *rpc.UpdateSpec
 func (s *RegistryServer) ListSpecRevisions(ctx context.Context, req *rpc.ListSpecRevisionsRequest) (*rpc.ListSpecRevisionsResponse, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
-		return nil, err
+		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
 	targetSpec, err := models.NewSpecFromResourceName(req.GetName())
 	if err != nil {
-		return nil, err
+		return nil, internalError(err)
 	}
 	q := client.NewQuery(models.SpecEntityName)
 	q, err = q.ApplyCursor(req.GetPageToken())
@@ -348,14 +351,14 @@ func (s *RegistryServer) ListSpecRevisions(ctx context.Context, req *rpc.ListSpe
 func (s *RegistryServer) DeleteSpecRevision(ctx context.Context, request *rpc.DeleteSpecRevisionRequest) (*empty.Empty, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
-		return nil, err
+		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
 	// Delete the spec revision.
 	// First, get the revision to delete.
 	spec, _, err := fetchSpec(ctx, client, request.GetName())
 	if err != nil {
-		return nil, err
+		return nil, internalError(err)
 	}
 	k := client.NewKey(models.SpecEntityName, spec.ResourceNameWithRevision())
 	// If the one we will delete is the current revision, we need to designate a new current revision.
@@ -382,12 +385,12 @@ func (s *RegistryServer) DeleteSpecRevision(ctx context.Context, request *rpc.De
 func (s *RegistryServer) TagSpecRevision(ctx context.Context, request *rpc.TagSpecRevisionRequest) (*rpc.Spec, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
-		return nil, err
+		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
 	spec, userSpecifiedRevision, err := fetchSpec(ctx, client, request.GetName())
 	if err != nil {
-		return nil, err
+		return nil, internalError(err)
 	}
 	if userSpecifiedRevision == "" {
 		log.Printf("we might not want to support tagging specs with unspecified revisions")
@@ -419,12 +422,12 @@ func (s *RegistryServer) TagSpecRevision(ctx context.Context, request *rpc.TagSp
 func (s *RegistryServer) ListSpecRevisionTags(ctx context.Context, req *rpc.ListSpecRevisionTagsRequest) (*rpc.ListSpecRevisionTagsResponse, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
-		return nil, err
+		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
 	targetSpec, err := models.NewSpecFromResourceName(req.GetName())
 	if err != nil {
-		return nil, err
+		return nil, internalError(err)
 	}
 	q := client.NewQuery(models.SpecRevisionTagEntityName)
 	q, err = q.ApplyCursor(req.GetPageToken())
@@ -463,14 +466,14 @@ func (s *RegistryServer) ListSpecRevisionTags(ctx context.Context, req *rpc.List
 func (s *RegistryServer) RollbackSpec(ctx context.Context, request *rpc.RollbackSpecRequest) (*rpc.Spec, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
-		return nil, err
+		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
 	specNameWithRevision := request.GetName() + "@" + request.GetRevisionId()
 	spec, userSpecifiedRevision, err := fetchSpec(ctx, client, specNameWithRevision)
 	if err != nil {
 		// TODO: this should return NotFound if the revision was not found.
-		return nil, err
+		return nil, notFoundError(err)
 	}
 	if userSpecifiedRevision == "" {
 		return nil, invalidArgumentError(errors.New("rollbacks require a specified revision"))
@@ -482,7 +485,7 @@ func (s *RegistryServer) RollbackSpec(ctx context.Context, request *rpc.Rollback
 		_, err = client.Put(ctx, oldKey, oldCurrent)
 		if err != nil {
 			log.Printf("oops %+v", err)
-			return nil, err
+			return nil, internalError(err)
 		}
 	}
 	// Make the selected revision the current revision by giving it a new RevisionID and saving it
@@ -490,21 +493,21 @@ func (s *RegistryServer) RollbackSpec(ctx context.Context, request *rpc.Rollback
 	blob := &models.Blob{}
 	err = client.Get(ctx, oldBlobKey, blob)
 	if err != nil {
-		return nil, err
+		return nil, internalError(err)
 	}
 	spec.BumpRevision()
 	spec.Currency = models.IsCurrent
 	newSpecKey := client.NewKey(models.SpecEntityName, spec.ResourceNameWithRevision())
 	_, err = client.Put(ctx, newSpecKey, spec)
 	if err != nil {
-		return nil, err
+		return nil, internalError(err)
 	}
 	// Resave the blob for the current revision with the new RevisionID
 	newBlobKey := client.NewKey(models.BlobEntityName, spec.ResourceNameWithRevision())
 	blob.RevisionID = spec.RevisionID
 	_, err = client.Put(ctx, newBlobKey, blob)
 	if err != nil {
-		return nil, err
+		return nil, internalError(err)
 	}
 	// Send a notification of the new revision.
 	s.notify(rpc.Notification_UPDATED, spec.ResourceNameWithRevision())
@@ -541,7 +544,7 @@ func fetchSpec(
 		resourceName = spec.ResourceNameWithRevision()
 		revisionName = spec.RevisionID
 	} else if err != nil {
-		return nil, "", internalError(err)
+		return nil, "", err
 	} else {
 		// if there is a tag, use the revision that the tag references
 		resourceName = specRevisionTag.ResourceNameWithRevision()
@@ -551,9 +554,9 @@ func fetchSpec(
 	k := client.NewKey(models.SpecEntityName, resourceName)
 	err = client.Get(ctx, k, spec)
 	if client.IsNotFound(err) {
-		return nil, revisionName, status.Error(codes.NotFound, "not found")
+		return nil, revisionName, err
 	} else if err != nil {
-		return nil, revisionName, internalError(err)
+		return nil, revisionName, err
 	}
 	return spec, revisionName, nil
 }
@@ -582,7 +585,7 @@ func (s *RegistryServer) fetchMostRecentNonCurrentRevisionOfSpec(
 		spec := &models.Spec{}
 		k, err := it.Next(spec)
 		if err != nil {
-			return nil, nil, status.Error(codes.NotFound, "not found")
+			return nil, nil, client.NotFoundError()
 		}
 		return k, spec, nil
 	} else {
@@ -624,7 +627,7 @@ func fetchCurrentRevisionOfSpec(
 	spec := &models.Spec{}
 	k, err := it.Next(spec)
 	if err != nil {
-		return nil, nil, status.Error(codes.NotFound, "not found")
+		return nil, nil, client.NotFoundError()
 	}
 	return k, spec, nil
 }

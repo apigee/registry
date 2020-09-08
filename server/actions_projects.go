@@ -29,7 +29,7 @@ import (
 func (s *RegistryServer) CreateProject(ctx context.Context, request *rpc.CreateProjectRequest) (*rpc.Project, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
-		return nil, internalError(err)
+		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
 	project, err := models.NewProjectFromProjectID(request.GetProjectId())
@@ -57,7 +57,7 @@ func (s *RegistryServer) CreateProject(ctx context.Context, request *rpc.CreateP
 func (s *RegistryServer) DeleteProject(ctx context.Context, request *rpc.DeleteProjectRequest) (*empty.Empty, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
-		return nil, internalError(err)
+		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
 	// Validate name and create dummy project (we just need the ID fields).
@@ -80,7 +80,7 @@ func (s *RegistryServer) DeleteProject(ctx context.Context, request *rpc.DeleteP
 func (s *RegistryServer) GetProject(ctx context.Context, request *rpc.GetProjectRequest) (*rpc.Project, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
-		return nil, internalError(err)
+		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
 	project, err := models.NewProjectFromResourceName(request.GetName())
@@ -101,7 +101,7 @@ func (s *RegistryServer) GetProject(ctx context.Context, request *rpc.GetProject
 func (s *RegistryServer) ListProjects(ctx context.Context, req *rpc.ListProjectsRequest) (*rpc.ListProjectsResponse, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
-		return nil, internalError(err)
+		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
 	q := client.NewQuery(models.ProjectEntityName)
@@ -159,7 +159,7 @@ func (s *RegistryServer) ListProjects(ctx context.Context, req *rpc.ListProjects
 func (s *RegistryServer) UpdateProject(ctx context.Context, request *rpc.UpdateProjectRequest) (*rpc.Project, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
-		return nil, internalError(err)
+		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
 	project, err := models.NewProjectFromResourceName(request.GetProject().GetName())

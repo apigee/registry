@@ -48,7 +48,7 @@ const (
 
 // Property ...
 type Property struct {
-	Key         string            `datastore:"-", gorm:"PRIMARY_KEY"`
+	Key         string            `datastore:"-", gorm:"primaryKey"`
 	ProjectID   string            // Project associated with property (required).
 	ApiID       string            // Api associated with property (if appropriate).
 	VersionID   string            // Version associated with property (if appropriate).

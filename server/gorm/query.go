@@ -56,7 +56,7 @@ func internalError(err error) error {
 
 // Filter adds a general filter to a query.
 func (q *Query) Filter(name string, value interface{}) storage.Query {
-	log.Printf("Unsupported filter %s %+v", name, value)
+	log.Fatalf("Unsupported filter %s %+v", name, value)
 	return q
 }
 
@@ -71,6 +71,10 @@ func (q *Query) Require(name string, value interface{}) storage.Query {
 		name = "version_id"
 	case "SpecID":
 		name = "spec_id"
+	case "Currency":
+		name = "currency"
+	default:
+		log.Fatalf("UNEXPECTED REQUIRE TYPE: %s", name)
 	}
 	q.Requirements = append(q.Requirements, &Requirement{Name: name, Value: value})
 	return q

@@ -1,0 +1,42 @@
+{
+    "methodConfig": [
+      {
+        "name": [
+          {
+            "service": "google.cloud.apigee.registry.v1alpha1.Registry",
+            "method": "GetApi"
+          },
+          {
+            "service": "google.cloud.apigee.registry.v1alpha1.Registry",
+            "method": "CreateApi"
+          },
+          {
+            "service": "google.cloud.apigee.registry.v1alpha1.Registry",
+            "method": "GetVersion"
+          },
+          {
+            "service": "google.cloud.apigee.registry.v1alpha1.Registry",
+            "method": "CreateVersion"
+          },
+          {
+            "service": "google.cloud.apigee.registry.v1alpha1.Registry",
+            "method": "GetSpec"
+          },
+          {
+            "service": "google.cloud.apigee.registry.v1alpha1.Registry",
+            "method": "CreateSpec"
+          }
+        ],
+        "timeout": "600s",
+        "retryPolicy": {
+          "initialBackoff": "0.200s",
+          "maxBackoff": "60s",
+          "backoffMultiplier": 1.3,
+          "retryableStatusCodes": [
+            "UNKNOWN",
+            "UNAVAILABLE"
+          ]
+        }
+      }     
+    ]     
+  }

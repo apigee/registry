@@ -46,42 +46,36 @@ var uploadProtosCmd = &cobra.Command{
 	Long:  "Upload Protocol Buffer descriptions of APIs.",
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
-		ctx := context.TODO()
 		flagset := cmd.LocalFlags()
-		projectID, err = flagset.GetString("project_id")
+		projectID, err := flagset.GetString("project_id")
 		if err != nil {
 			log.Fatalf("%s", err.Error())
 		}
-		fmt.Printf("protos called with args %+v and project_id %s\n", args, projectID)
-
+		fmt.Printf("upload protos called with args %+v and project_id %s\n", args, projectID)
+		ctx := context.TODO()
 		client, err := connection.NewClient(ctx)
 		if err != nil {
 			log.Fatalf("%s", err.Error())
 		}
-		if client == nil {
-			log.Fatalf("that's bad")
-		}
-
+		ensureProjectExists(ctx, client, projectID)
 		for _, arg := range args {
-			log.Printf("%+v", arg)
-			scanDirectoryForProtos(arg)
+			scanDirectoryForProtos(ctx, client, projectID, arg)
 		}
 	},
 }
 
-func scanDirectoryForProtos(directory string) {
+func scanDirectoryForProtos(ctx context.Context, registryClient connection.Client, projectID, directory string) {
 	var err error
 
-	ctx := context.Background()
-	registryClient, err = connection.NewClient(ctx)
-	if err != nil {
-		fmt.Printf("%s\n", err.Error())
-		os.Exit(-1)
-	}
-	completions := make(chan int)
-	processes := 0
-
 	r := regexp.MustCompile("v.*[1-9]+.*")
+
+	jobQueue := make(chan Runnable, 1024)
+
+	workerCount := 32
+	for i := 0; i < workerCount; i++ {
+		wg.Add(1)
+		go worker(ctx, jobQueue)
+	}
 
 	// walk a directory hierarchy, uploading every API spec that matches a set of expected file names.
 	err = filepath.Walk(directory,
@@ -96,31 +90,22 @@ func scanDirectoryForProtos(directory string) {
 			if !r.MatchString(b) {
 				return nil
 			}
-
 			// we need to upload this API spec
-			processes++
-
-			go func() {
-				err := handleProtoSpec(p, directory)
-				if err != nil {
-					fmt.Printf("%s\n", err.Error())
-				}
-				completions <- 1
-			}()
+			jobQueue <- &uploadProtoRunnable{
+				ctx:            ctx,
+				registryClient: registryClient,
+				projectID:      projectID,
+				path:           p,
+				directory:      directory,
+			}
 			return nil
 		})
 	if err != nil {
 		log.Println(err)
 	}
-	for i := 0; i < processes; i++ {
-		<-completions
-		fmt.Printf("COMPLETE: %d\n", i+1)
-	}
+	close(jobQueue)
+	wg.Wait()
 }
-
-var projectID string
-
-var registryClient connection.Client
 
 func notFound(err error) bool {
 	if err == nil {
@@ -144,33 +129,38 @@ func alreadyExists(err error) bool {
 	return st.Code() == codes.AlreadyExists
 }
 
-func handleProtoSpec(path, directory string) error {
-	// Compute the API name from the path to the spec file.
-	prefix := directory + "/"
-	name := strings.TrimPrefix(path, prefix)
-	parts := strings.Split(name, "/")
-	version := parts[len(parts)-1]
-	api := strings.Join(parts[0:len(parts)-1], "-")
-	fmt.Printf("api:%+v version:%+v\n", api, version)
-	// Upload the spec for the specified api and version
-	return uploadProtoSpec(api, version, "protos.zip", path, prefix)
+type uploadProtoRunnable struct {
+	ctx            context.Context
+	registryClient connection.Client
+	projectID      string
+	path           string
+	directory      string
 }
 
-func uploadProtoSpec(apiName, version, style, path, prefix string) error {
-	ctx := context.TODO()
-	api := strings.Replace(apiName, "/", "-", -1)
+func (job *uploadProtoRunnable) run() error {
+	// Compute the API name from the path to the spec file.
+	prefix := job.directory + "/"
+	name := strings.TrimPrefix(job.path, prefix)
+	parts := strings.Split(name, "/")
+	apiID := strings.Join(parts[0:len(parts)-1], "-")
+	apiID = strings.Replace(apiID, "/", "-", -1)
+	versionID := parts[len(parts)-1]
+	projectID := job.projectID
+	ctx := job.ctx
+	registryClient := job.registryClient
+	log.Printf("apis/%s/versions/%s\n", apiID, versionID)
 	// If the API does not exist, create it.
 	{
 		request := &rpcpb.GetApiRequest{
-			Name: "projects/" + projectID + "/apis/" + api,
+			Name: "projects/" + projectID + "/apis/" + apiID,
 		}
 		_, err := registryClient.GetApi(ctx, request)
 		if notFound(err) {
 			request := &rpcpb.CreateApiRequest{
 				Parent: "projects/" + projectID,
-				ApiId:  api,
+				ApiId:  apiID,
 				Api: &rpcpb.Api{
-					DisplayName: apiName,
+					DisplayName: apiID,
 				},
 			}
 			response, err := registryClient.CreateApi(ctx, request)
@@ -189,13 +179,13 @@ func uploadProtoSpec(apiName, version, style, path, prefix string) error {
 	// If the API version does not exist, create it.
 	{
 		request := &rpcpb.GetVersionRequest{
-			Name: "projects/" + projectID + "/apis/" + api + "/versions/" + version,
+			Name: "projects/" + projectID + "/apis/" + apiID + "/versions/" + versionID,
 		}
 		_, err := registryClient.GetVersion(ctx, request)
 		if notFound(err) {
 			request := &rpcpb.CreateVersionRequest{
-				Parent:    "projects/" + projectID + "/apis/" + api,
-				VersionId: version,
+				Parent:    "projects/" + projectID + "/apis/" + apiID,
+				VersionId: versionID,
 				Version:   &rpcpb.Version{},
 			}
 			response, err := registryClient.CreateVersion(ctx, request)
@@ -215,20 +205,20 @@ func uploadProtoSpec(apiName, version, style, path, prefix string) error {
 	{
 		filename := "protos.zip"
 		request := &rpcpb.GetSpecRequest{
-			Name: "projects/" + projectID + "/apis/" + api +
-				"/versions/" + version +
+			Name: "projects/" + projectID + "/apis/" + apiID +
+				"/versions/" + versionID +
 				"/specs/" + filename,
 		}
 		_, err := registryClient.GetSpec(ctx, request)
 		if notFound(err) {
 			// build a zip archive with the contents of the path
 			// https://golangcode.com/create-zip-files-in-go/
-			buf, err := zipArchiveOfPath(path, prefix)
+			buf, err := zipArchiveOfPath(job.path, prefix)
 			if err != nil {
 				return err
 			}
 			request := &rpcpb.CreateSpecRequest{
-				Parent: "projects/" + projectID + "/apis/" + api + "/versions/" + version,
+				Parent: "projects/" + projectID + "/apis/" + apiID + "/versions/" + versionID,
 				SpecId: filename,
 				Spec: &rpcpb.Spec{
 					Style:    "proto+zip",
@@ -263,7 +253,6 @@ func zipArchiveOfPath(path, prefix string) (buf bytes.Buffer, err error) {
 			if err != nil {
 				return err
 			}
-			fmt.Printf("<-- %s (%t)\n", p, !info.IsDir())
 			if info.IsDir() {
 				return nil
 			}
@@ -281,7 +270,6 @@ func zipArchiveOfPath(path, prefix string) (buf bytes.Buffer, err error) {
 }
 
 func addFileToZip(zipWriter *zip.Writer, filename, prefix string) error {
-	log.Printf("AddFileToZip(%s)", filename)
 	fileToZip, err := os.Open(filename)
 	if err != nil {
 		return err

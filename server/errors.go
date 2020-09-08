@@ -34,3 +34,17 @@ func invalidArgumentError(err error) error {
 	}
 	return status.Error(codes.InvalidArgument, err.Error())
 }
+
+func unavailableError(err error) error {
+	if err == nil {
+		return nil
+	}
+	return status.Error(codes.Unavailable, err.Error())
+}
+
+func notFoundError(err error) error {
+	if err == nil {
+		return nil
+	}
+	return status.Error(codes.NotFound, err.Error())
+}

@@ -28,7 +28,7 @@ const ProjectEntityName = "Project"
 
 // Project ...
 type Project struct {
-	Key         string    `datastore:"-", gorm:"PRIMARY_KEY"`
+	Key         string    `datastore:"-", gorm:"primaryKey"`
 	ProjectID   string    // Uniquely identifies a project.
 	DisplayName string    // A human-friendly name.
 	Description string    // A detailed description.

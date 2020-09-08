@@ -53,6 +53,11 @@ func (c *Client) IsNotFound(err error) bool {
 	return err == datastore.ErrNoSuchEntity
 }
 
+// NotFoundError is the error returned when an entity is not found.
+func (c *Client) NotFoundError() error {
+	return datastore.ErrNoSuchEntity
+}
+
 // Get gets an entity using the storage client.
 func (c *Client) Get(ctx context.Context, k storage.Key, v interface{}) error {
 	return c.client.Get(ctx, k.(*Key).key, v)

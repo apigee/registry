@@ -45,7 +45,7 @@ const (
 
 // Spec ...
 type Spec struct {
-	Key         string    `datastore:"-", gorm:"PRIMARY_KEY"`
+	Key         string    `datastore:"-", gorm:"primaryKey"`
 	Currency    int32     // IsCurrent for the current revision of the spec.
 	ProjectID   string    // Uniquely identifies a project.
 	ApiID       string    // Uniquely identifies an api within a project.
@@ -219,7 +219,7 @@ func hashForBytes(b []byte) string {
 
 // SpecRevisionTag ...
 type SpecRevisionTag struct {
-	Key        string    `datastore:"-", gorm:"PRIMARY_KEY"`
+	Key        string    `datastore:"-", gorm:"primaryKey"`
 	ProjectID  string    // Uniquely identifies a project.
 	ApiID      string    // Uniquely identifies an api within a project.
 	VersionID  string    // Uniquely identifies a version within a api.

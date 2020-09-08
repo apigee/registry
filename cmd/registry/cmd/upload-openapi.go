@@ -43,84 +43,110 @@ var uploadOpenAPICmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
 		flagset := cmd.LocalFlags()
-		projectID, err = flagset.GetString("project_id")
+		projectID, err := flagset.GetString("project_id")
 		if err != nil {
 			log.Fatalf("%s", err.Error())
 		}
 		fmt.Printf("openapi called with args %+v and project_id %s\n", args, projectID)
 
+		ctx := context.TODO()
+		client, err := connection.NewClient(ctx)
+		if err != nil {
+			log.Fatalf("%s", err.Error())
+		}
+		if client == nil {
+			log.Fatalf("that's bad")
+		}
+		ensureProjectExists(ctx, client, projectID)
+
 		for _, arg := range args {
 			log.Printf("%+v", arg)
-			scanDirectoryForOpenAPI(arg)
+			scanDirectoryForOpenAPI(projectID, arg)
 		}
 	},
 }
 
-func scanDirectoryForOpenAPI(directory string) {
+func scanDirectoryForOpenAPI(projectID, directory string) {
 	ctx := context.TODO()
 
-	var err error
-	registryClient, err = connection.NewClient(ctx)
+	registryClient, err := connection.NewClient(ctx)
 	if err != nil {
 		fmt.Printf("%s\n", err.Error())
 		os.Exit(-1)
 	}
-	completions := make(chan int)
-	processes := 0
+
+	jobQueue := make(chan Runnable, 1024)
+
+	workerCount := 32
+	for i := 0; i < workerCount; i++ {
+		wg.Add(1)
+		go worker(ctx, jobQueue)
+	}
 
 	// walk a directory hierarchy, uploading every API spec that matches a set of expected file names.
 	err = filepath.Walk(directory,
 		func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				return err
-			}
-			if strings.HasSuffix(path, "swagger.yaml") || strings.HasSuffix(path, "swagger.json") {
-				processes++
-				go func() {
-					err := handleOpenAPISpec(path, directory, "openapi/v2")
-					if err != nil {
-						fmt.Printf("%s\n", err.Error())
-					}
-					completions <- 1
-				}()
-			}
-			if strings.HasSuffix(path, "openapi.yaml") || strings.HasSuffix(path, "openapi.json") {
-				processes++
-				go func() {
-					err := handleOpenAPISpec(path, directory, "openapi/v3")
-					if err != nil {
-						fmt.Printf("%s\n", err.Error())
-					}
-					completions <- 1
-				}()
+			} else if strings.HasSuffix(path, "swagger.yaml") || strings.HasSuffix(path, "swagger.json") {
+				jobQueue <- &uploadOpenAPIRunnable{
+					registryClient: registryClient,
+					projectID:      projectID,
+					path:           path,
+					directory:      directory,
+					style:          "openapi/v2",
+				}
+			} else if strings.HasSuffix(path, "openapi.yaml") || strings.HasSuffix(path, "openapi.json") {
+				jobQueue <- &uploadOpenAPIRunnable{
+					registryClient: registryClient,
+					projectID:      projectID,
+					path:           path,
+					directory:      directory,
+					style:          "openapi/v3",
+				}
 			}
 			return nil
 		})
 	if err != nil {
 		log.Println(err)
 	}
-	for i := 0; i < processes; i++ {
-		<-completions
-		fmt.Printf("COMPLETE: %d\n", i+1)
-	}
-
+	close(jobQueue)
+	wg.Wait()
 }
 
-func handleOpenAPISpec(path, directory, style string) error {
+type uploadOpenAPIRunnable struct {
+	registryClient connection.Client
+	projectID      string
+	path           string
+	directory      string
+	style          string
+}
+
+func sanitize(name string) string {
+	name = strings.Replace(name, " ", "-", -1)
+	name = strings.Replace(name, ":", "-", -1)
+	name = strings.Replace(name, "_", "-", -1)
+	return name
+}
+
+func (job *uploadOpenAPIRunnable) run() error {
 	// Compute the API name from the path to the spec file.
-	name := strings.TrimPrefix(path, directory+"/")
+	name := strings.TrimPrefix(job.path, job.directory+"/")
 	parts := strings.Split(name, "/")
-	spec := parts[len(parts)-1]
-	version := parts[len(parts)-2]
-	api := strings.Join(parts[0:len(parts)-2], "-")
-	fmt.Printf("apis/%s/versions/%s/specs/%s\n", api, version, spec)
+	if len(parts) < 3 {
+		return fmt.Errorf("Invalid API path: %s", name)
+	}
+	spec := sanitize(parts[len(parts)-1])
+	version := sanitize(parts[len(parts)-2])
+	api := sanitize(strings.Join(parts[0:len(parts)-2], "-"))
+	log.Printf("apis/%s/versions/%s/specs/%s\n", api, version, spec)
 	// Upload the spec for the specified api and version
-	return uploadOpenAPISpec(api, version, style, path)
-}
-
-func uploadOpenAPISpec(apiName, version, style, path string) error {
+	style := job.style
+	path := job.path
 	ctx := context.TODO()
-	api := strings.Replace(apiName, "/", "-", -1)
+	projectID := job.projectID
+	registryClient := job.registryClient
+	api = strings.Replace(api, "/", "-", -1)
 	// If the API does not exist, create it.
 	{
 		request := &rpcpb.GetApiRequest{}
@@ -131,7 +157,7 @@ func uploadOpenAPISpec(apiName, version, style, path string) error {
 			request.Parent = "projects/" + projectID
 			request.ApiId = api
 			request.Api = &rpcpb.Api{}
-			request.Api.DisplayName = apiName
+			request.Api.DisplayName = api
 			response, err := registryClient.CreateApi(ctx, request)
 			if err == nil {
 				log.Printf("created %s", response.Name)
@@ -155,6 +181,7 @@ func uploadOpenAPISpec(apiName, version, style, path string) error {
 			request.Parent = "projects/" + projectID + "/apis/" + api
 			request.VersionId = version
 			request.Version = &rpcpb.Version{}
+
 			response, err := registryClient.CreateVersion(ctx, request)
 			if err == nil {
 				log.Printf("created %s", response.Name)

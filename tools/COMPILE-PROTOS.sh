@@ -42,7 +42,8 @@ echo "Generating GAPIC library."
 protoc --proto_path=. --proto_path=${ANNOTATIONS} \
 	${PROTOS[*]} \
 	--go_gapic_out gapic \
-	--go_gapic_opt "go-gapic-package=github.com/apigee/registry/gapic;gapic"
+	--go_gapic_opt="go-gapic-package=github.com/apigee/registry/gapic;gapic" \
+	--go_gapic_opt="grpc-service-config=grpc_service_config.json"
 
 # fix the location of gapic output files
 mv gapic/github.com/apigee/registry/gapic/* gapic

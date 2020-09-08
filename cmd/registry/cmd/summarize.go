@@ -58,11 +58,12 @@ var summarizeCmd = &cobra.Command{
 				completions := make(chan int)
 				processes := 0
 				err = listSpecs(ctx, client, segments, func(spec *rpc.Spec) {
-					fmt.Println(spec.Name)
+					fmt.Println("summarize " + spec.Name)
 					m := names.SpecRegexp().FindAllStringSubmatch(spec.Name, -1)
 					if m != nil {
 						processes++
 						go func() {
+							fmt.Printf("summarizing " + strings.Join(m[0], "/") + "\n")
 							summarizeSpec(ctx, client, m[0])
 							completions <- 1
 						}()

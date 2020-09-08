@@ -15,6 +15,12 @@
 package cmd
 
 import (
+	"context"
+	"log"
+	"sync"
+
+	"github.com/apigee/registry/gapic"
+	rpcpb "github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
 )
 
@@ -27,4 +33,36 @@ var uploadCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(uploadCmd)
+}
+
+func ensureProjectExists(ctx context.Context, client *gapic.RegistryClient, projectID string) {
+	// if the project doesn't exist, create it
+	req := &rpcpb.GetProjectRequest{Name: "projects/" + projectID}
+	_, err := client.GetProject(ctx, req)
+	if notFound(err) {
+		req := &rpcpb.CreateProjectRequest{
+			ProjectId: projectID,
+		}
+		_, err := client.CreateProject(ctx, req)
+		if err != nil {
+			log.Fatalf("%s", err.Error())
+		}
+	}
+}
+
+// Runnable is a generic interface for a runnable operation
+type Runnable interface {
+	run() error
+}
+
+var wg sync.WaitGroup
+
+func worker(ctx context.Context, jobChan <-chan Runnable) {
+	defer wg.Done()
+	for job := range jobChan {
+		err := job.run()
+		if err != nil {
+			log.Printf("ERROR %s for job %+v", err.Error(), job)
+		}
+	}
 }

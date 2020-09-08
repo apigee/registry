@@ -30,12 +30,12 @@ import (
 func (s *RegistryServer) CreateVersion(ctx context.Context, request *rpc.CreateVersionRequest) (*rpc.Version, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
-		return nil, err
+		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
 	version, err := models.NewVersionFromParentAndVersionID(request.GetParent(), request.GetVersionId())
 	if err != nil {
-		return nil, err
+		return nil, invalidArgumentError(err)
 	}
 	k := client.NewKey(models.VersionEntityName, version.ResourceName())
 	// fail if version already exists
@@ -48,7 +48,7 @@ func (s *RegistryServer) CreateVersion(ctx context.Context, request *rpc.CreateV
 	version.CreateTime = version.UpdateTime
 	k, err = client.Put(ctx, k, version)
 	if err != nil {
-		return nil, err
+		return nil, internalError(err)
 	}
 	s.notify(rpc.Notification_CREATED, version.ResourceName())
 	return version.Message()
@@ -58,7 +58,7 @@ func (s *RegistryServer) CreateVersion(ctx context.Context, request *rpc.CreateV
 func (s *RegistryServer) DeleteVersion(ctx context.Context, request *rpc.DeleteVersionRequest) (*empty.Empty, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
-		return nil, err
+		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
 	// Validate name and create dummy version (we just need the ID fields).
@@ -78,12 +78,12 @@ func (s *RegistryServer) DeleteVersion(ctx context.Context, request *rpc.DeleteV
 func (s *RegistryServer) GetVersion(ctx context.Context, request *rpc.GetVersionRequest) (*rpc.Version, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
-		return nil, err
+		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
 	version, err := models.NewVersionFromResourceName(request.GetName())
 	if err != nil {
-		return nil, err
+		return nil, invalidArgumentError(err)
 	}
 	k := client.NewKey(models.VersionEntityName, version.ResourceName())
 	err = client.Get(ctx, k, version)
@@ -99,7 +99,7 @@ func (s *RegistryServer) GetVersion(ctx context.Context, request *rpc.GetVersion
 func (s *RegistryServer) ListVersions(ctx context.Context, req *rpc.ListVersionsRequest) (*rpc.ListVersionsResponse, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
-		return nil, err
+		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
 	q := client.NewQuery(models.VersionEntityName)
@@ -173,12 +173,12 @@ func (s *RegistryServer) ListVersions(ctx context.Context, req *rpc.ListVersions
 func (s *RegistryServer) UpdateVersion(ctx context.Context, request *rpc.UpdateVersionRequest) (*rpc.Version, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
-		return nil, err
+		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
 	version, err := models.NewVersionFromResourceName(request.GetVersion().GetName())
 	if err != nil {
-		return nil, err
+		return nil, invalidArgumentError(err)
 	}
 	k := client.NewKey(models.VersionEntityName, version.ResourceName())
 	err = client.Get(ctx, k, version)
@@ -187,11 +187,11 @@ func (s *RegistryServer) UpdateVersion(ctx context.Context, request *rpc.UpdateV
 	}
 	err = version.Update(request.GetVersion())
 	if err != nil {
-		return nil, err
+		return nil, internalError(err)
 	}
 	k, err = client.Put(ctx, k, version)
 	if err != nil {
-		return nil, err
+		return nil, internalError(err)
 	}
 	s.notify(rpc.Notification_UPDATED, version.ResourceName())
 	return version.Message()

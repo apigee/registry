@@ -29,7 +29,7 @@ import (
 func (s *RegistryServer) CreateProperty(ctx context.Context, request *rpc.CreatePropertyRequest) (*rpc.Property, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
-		return nil, internalError(err)
+		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
 	property, err := models.NewPropertyFromParentAndPropertyID(request.GetParent(), request.GetPropertyId())
@@ -57,7 +57,7 @@ func (s *RegistryServer) CreateProperty(ctx context.Context, request *rpc.Create
 func (s *RegistryServer) DeleteProperty(ctx context.Context, request *rpc.DeletePropertyRequest) (*empty.Empty, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
-		return nil, internalError(err)
+		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
 	// Validate name and create dummy property (we just need the ID fields).
@@ -76,7 +76,7 @@ func (s *RegistryServer) DeleteProperty(ctx context.Context, request *rpc.Delete
 func (s *RegistryServer) GetProperty(ctx context.Context, request *rpc.GetPropertyRequest) (*rpc.Property, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
-		return nil, internalError(err)
+		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
 	property, err := models.NewPropertyFromResourceName(request.GetName())
@@ -97,7 +97,7 @@ func (s *RegistryServer) GetProperty(ctx context.Context, request *rpc.GetProper
 func (s *RegistryServer) ListProperties(ctx context.Context, req *rpc.ListPropertiesRequest) (*rpc.ListPropertiesResponse, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
-		return nil, internalError(err)
+		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
 	q := client.NewQuery(models.PropertyEntityName)
@@ -188,7 +188,7 @@ func (s *RegistryServer) ListProperties(ctx context.Context, req *rpc.ListProper
 func (s *RegistryServer) UpdateProperty(ctx context.Context, request *rpc.UpdatePropertyRequest) (*rpc.Property, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
-		return nil, internalError(err)
+		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
 	property, err := models.NewPropertyFromResourceName(request.GetProperty().GetName())

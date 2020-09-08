@@ -21,6 +21,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"sync"
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/datastore"
@@ -86,6 +87,9 @@ func getProjectID() (string, error) {
 	return projectID, nil
 }
 
+var serverMutex sync.Mutex
+var serverSerialization bool
+
 // RunServer runs the Registry server on a specified port
 func RunServer(port string, config *Config) error {
 	// Get project ID to use in registry server.
@@ -94,12 +98,15 @@ func RunServer(port string, config *Config) error {
 		return err
 	}
 	// Construct registry server.
-
 	loggingHandler := func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+		if serverSerialization {
+			serverMutex.Lock()
+			defer serverMutex.Unlock()
+		}
 		log.Printf(">> %s", info.FullMethod)
 		resp, err := handler(ctx, req)
 		if err != nil {
-			log.Printf("!! %s failed: %s", info.FullMethod, err)
+			log.Printf("?? %s failed: %s", info.FullMethod, err)
 		}
 		return resp, err
 	}

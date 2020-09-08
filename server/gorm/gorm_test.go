@@ -95,7 +95,7 @@ func TestLoad(t *testing.T) {
 	c.Close()
 
 	var err error
-	for i := 0; i < 9999; i++ {
+	for i := 0; i < 99; i++ {
 		{
 			done := make(chan bool, 1)
 			go func(done chan bool) {
