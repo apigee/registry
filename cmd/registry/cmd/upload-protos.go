@@ -27,6 +27,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/apigee/registry/cmd/registry/tools"
 	"github.com/apigee/registry/connection"
 	rpcpb "github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
@@ -69,12 +70,12 @@ func scanDirectoryForProtos(ctx context.Context, client connection.Client, proje
 
 	r := regexp.MustCompile("v.*[1-9]+.*")
 
-	jobQueue := make(chan Runnable, 1024)
+	jobQueue := make(chan tools.Runnable, 1024)
 
 	workerCount := 32
 	for i := 0; i < workerCount; i++ {
-		wg.Add(1)
-		go worker(ctx, jobQueue)
+		tools.WaitGroup().Add(1)
+		go tools.Worker(ctx, jobQueue)
 	}
 
 	// walk a directory hierarchy, uploading every API spec that matches a set of expected file names.
@@ -104,7 +105,7 @@ func scanDirectoryForProtos(ctx context.Context, client connection.Client, proje
 		log.Println(err)
 	}
 	close(jobQueue)
-	wg.Wait()
+	tools.WaitGroup().Wait()
 }
 
 func notFound(err error) bool {
@@ -140,7 +141,7 @@ type uploadProtoRunnable struct {
 	specID    string // computed at runtime
 }
 
-func (job *uploadProtoRunnable) run() error {
+func (job *uploadProtoRunnable) Run() error {
 	var err error
 	// Compute the API name from the path to the spec file.
 	prefix := job.directory + "/"

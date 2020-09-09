@@ -62,6 +62,9 @@ var getCmd = &cobra.Command{
 		} else {
 			log.Printf("Unsupported entity %+v", args)
 		}
+		if err != nil {
+			log.Printf("%s", err.Error())
+		}
 	},
 }
 

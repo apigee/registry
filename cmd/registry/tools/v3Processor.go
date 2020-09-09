@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cmd
+package tools
 
 import (
 	"sort"
@@ -104,7 +104,7 @@ func processResponsesV3(components *openapi_v3.Components, schemas map[string]in
 	}
 }
 
-func processDocumentV3(document *openapi_v3.Document) *metrics.Vocabulary {
+func ProcessDocumentV3(document *openapi_v3.Document) *metrics.Vocabulary {
 	schemas := make(map[string]int)
 	operationID := make(map[string]int)
 	parameters := make(map[string]int)

@@ -21,6 +21,7 @@ import (
 	"log"
 	"strings"
 
+	"github.com/apigee/registry/cmd/registry/tools"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/rpc"
@@ -71,7 +72,7 @@ func compileSpec(ctx context.Context,
 	client *gapic.RegistryClient,
 	segments []string) error {
 
-	name := resourceNameOfSpec(segments[1:])
+	name := tools.ResourceNameOfSpec(segments[1:])
 	request := &rpc.GetSpecRequest{
 		Name: name,
 		View: rpc.SpecView_FULL,
@@ -82,7 +83,7 @@ func compileSpec(ctx context.Context,
 	}
 
 	if strings.HasPrefix(spec.GetStyle(), "openapi/v2") {
-		data, err := getBytesForSpec(spec)
+		data, err := tools.GetBytesForSpec(spec)
 		if err != nil {
 			return nil
 		}
@@ -100,7 +101,7 @@ func compileSpec(ctx context.Context,
 		}
 	}
 	if strings.HasPrefix(spec.GetStyle(), "openapi/v3") {
-		data, err := getBytesForSpec(spec)
+		data, err := tools.GetBytesForSpec(spec)
 		if err != nil {
 			return nil
 		}

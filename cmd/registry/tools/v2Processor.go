@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cmd
+package tools
 
 import (
 	metrics "github.com/googleapis/gnostic/metrics"
@@ -59,7 +59,7 @@ func processSchemaV2(schema *openapi_v2.Schema, properties map[string]int) {
 	}
 }
 
-func processDocumentV2(document *openapi_v2.Document) *metrics.Vocabulary {
+func ProcessDocumentV2(document *openapi_v2.Document) *metrics.Vocabulary {
 	schemas := make(map[string]int)
 	operationID := make(map[string]int)
 	parameters := make(map[string]int)

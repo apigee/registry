@@ -496,9 +496,11 @@ func getProperty(ctx context.Context,
 	}
 	property, err := client.GetProperty(ctx, request)
 	if err != nil {
-		log.Printf("%+s", err.Error())
+		return nil, err
 	}
-	printPropertyDetail(property)
+	if handler != nil {
+		handler(property)
+	}
 	return property, nil
 }
 
@@ -512,9 +514,8 @@ func getLabel(ctx context.Context,
 	}
 	label, err := client.GetLabel(ctx, request)
 	if err != nil {
-		log.Printf("%+s", err.Error())
+		return nil, err
 	}
-	fmt.Printf("%+v\n", label)
 	if handler != nil {
 		handler(label)
 	}

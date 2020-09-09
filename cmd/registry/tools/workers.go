@@ -12,27 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cmd
+package tools
 
 import (
-	"fmt"
-	"os"
-
-	"github.com/spf13/cobra"
+	"context"
+	"log"
+	"sync"
 )
 
-// rootCmd represents the base command when called without any subcommands
-var rootCmd = &cobra.Command{
-	Use:   "registry",
-	Short: "A simple and eclectic utility for working with the Registry.",
-	Long:  "The registry tool provides features for managing and manipulating API descriptions stored in the Registry.",
+// Runnable is a generic interface for a runnable operation
+type Runnable interface {
+	Run() error
 }
 
-// Execute adds all child commands to the root command and sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the rootCmd.
-func Execute() {
-	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+var wg sync.WaitGroup
+
+func WaitGroup() *sync.WaitGroup {
+	return &wg
+}
+
+func Worker(ctx context.Context, jobChan <-chan Runnable) {
+	defer wg.Done()
+	for job := range jobChan {
+		err := job.Run()
+		if err != nil {
+			log.Printf("ERROR %s", err.Error())
+		}
 	}
 }

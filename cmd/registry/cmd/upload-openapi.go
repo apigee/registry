@@ -25,6 +25,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/apigee/registry/cmd/registry/tools"
 	"github.com/apigee/registry/connection"
 	rpcpb "github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
@@ -75,12 +76,12 @@ func scanDirectoryForOpenAPI(projectID, directory string) {
 		os.Exit(-1)
 	}
 
-	jobQueue := make(chan Runnable, 1024)
+	jobQueue := make(chan tools.Runnable, 1024)
 
 	workerCount := 32
 	for i := 0; i < workerCount; i++ {
-		wg.Add(1)
-		go worker(ctx, jobQueue)
+		tools.WaitGroup().Add(1)
+		go tools.Worker(ctx, jobQueue)
 	}
 
 	// walk a directory hierarchy, uploading every API spec that matches a set of expected file names.
@@ -113,7 +114,7 @@ func scanDirectoryForOpenAPI(projectID, directory string) {
 		log.Println(err)
 	}
 	close(jobQueue)
-	wg.Wait()
+	tools.WaitGroup().Wait()
 }
 
 type uploadOpenAPIRunnable struct {
@@ -135,7 +136,7 @@ func sanitize(name string) string {
 	return name
 }
 
-func (job *uploadOpenAPIRunnable) run() error {
+func (job *uploadOpenAPIRunnable) Run() error {
 	var err error
 	// Compute the API name from the path to the spec file.
 	name := strings.TrimPrefix(job.path, job.directory+"/")

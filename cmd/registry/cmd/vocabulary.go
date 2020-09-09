@@ -20,6 +20,7 @@ import (
 	"log"
 	"strings"
 
+	"github.com/apigee/registry/cmd/registry/tools"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/rpc"
@@ -84,7 +85,7 @@ func vocabularySpec(ctx context.Context,
 	client *gapic.RegistryClient,
 	segments []string) error {
 
-	name := resourceNameOfSpec(segments[1:])
+	name := tools.ResourceNameOfSpec(segments[1:])
 	request := &rpc.GetSpecRequest{
 		Name: name,
 		View: rpc.SpecView_FULL,
@@ -96,7 +97,7 @@ func vocabularySpec(ctx context.Context,
 
 	log.Printf("computing vocabulary of %s", spec.Name)
 	if strings.HasPrefix(spec.GetStyle(), "openapi/v2") {
-		data, err := getBytesForSpec(spec)
+		data, err := tools.GetBytesForSpec(spec)
 		if err != nil {
 			return nil
 		}
@@ -110,7 +111,7 @@ func vocabularySpec(ctx context.Context,
 		}
 		log.Printf("%+v", document)
 
-		vocabulary := processDocumentV2(document)
+		vocabulary := tools.ProcessDocumentV2(document)
 		log.Printf("%+v", vocabulary)
 
 		projectID := segments[1]
@@ -123,14 +124,14 @@ func vocabularySpec(ctx context.Context,
 			Value:   messageData,
 		}
 		property.Value = &rpc.Property_MessageValue{MessageValue: anyValue}
-		err = setProperty(ctx, client, projectID, property)
+		err = tools.SetProperty(ctx, client, projectID, property)
 		if err != nil {
 			return err
 		}
 
 	}
 	if strings.HasPrefix(spec.GetStyle(), "openapi/v3") {
-		data, err := getBytesForSpec(spec)
+		data, err := tools.GetBytesForSpec(spec)
 		if err != nil {
 			return nil
 		}
@@ -142,7 +143,7 @@ func vocabularySpec(ctx context.Context,
 		if err != nil {
 			return err
 		}
-		vocabulary := processDocumentV3(document)
+		vocabulary := tools.ProcessDocumentV3(document)
 
 		projectID := segments[1]
 
@@ -156,7 +157,7 @@ func vocabularySpec(ctx context.Context,
 			Value:   messageData,
 		}
 		property.Value = &rpc.Property_MessageValue{MessageValue: anyValue}
-		err = setProperty(ctx, client, projectID, property)
+		err = tools.SetProperty(ctx, client, projectID, property)
 		if err != nil {
 			return err
 		}

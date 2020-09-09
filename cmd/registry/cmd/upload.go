@@ -17,7 +17,6 @@ package cmd
 import (
 	"context"
 	"log"
-	"sync"
 
 	"github.com/apigee/registry/gapic"
 	rpcpb "github.com/apigee/registry/rpc"
@@ -46,23 +45,6 @@ func ensureProjectExists(ctx context.Context, client *gapic.RegistryClient, proj
 		_, err := client.CreateProject(ctx, req)
 		if err != nil {
 			log.Fatalf("%s", err.Error())
-		}
-	}
-}
-
-// Runnable is a generic interface for a runnable operation
-type Runnable interface {
-	run() error
-}
-
-var wg sync.WaitGroup
-
-func worker(ctx context.Context, jobChan <-chan Runnable) {
-	defer wg.Done()
-	for job := range jobChan {
-		err := job.run()
-		if err != nil {
-			log.Printf("ERROR %s for job %+v", err.Error(), job)
 		}
 	}
 }
