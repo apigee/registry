@@ -58,16 +58,16 @@ var getCmd = &cobra.Command{
 			name = args[0]
 		}
 
-		if m := names.ProjectRegexp().FindAllStringSubmatch(name, -1); m != nil {
-			_, err = getProject(ctx, client, m[0], printProjectDetail)
-		} else if m := names.ApiRegexp().FindAllStringSubmatch(name, -1); m != nil {
-			_, err = getAPI(ctx, client, m[0], printAPIDetail)
-		} else if m := names.VersionRegexp().FindAllStringSubmatch(name, -1); m != nil {
-			_, err = getVersion(ctx, client, m[0], printVersionDetail)
-		} else if m := names.SpecRegexp().FindAllStringSubmatch(name, -1); m != nil {
-			_, err = getSpec(ctx, client, m[0], getContents, printSpecDetail)
-		} else if m := names.PropertyRegexp().FindAllStringSubmatch(name, -1); m != nil {
-			_, err = getProperty(ctx, client, m[0], printPropertyDetail)
+		if m := names.ProjectRegexp().FindStringSubmatch(name); m != nil {
+			_, err = getProject(ctx, client, m, printProjectDetail)
+		} else if m := names.ApiRegexp().FindStringSubmatch(name); m != nil {
+			_, err = getAPI(ctx, client, m, printAPIDetail)
+		} else if m := names.VersionRegexp().FindStringSubmatch(name); m != nil {
+			_, err = getVersion(ctx, client, m, printVersionDetail)
+		} else if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
+			_, err = getSpec(ctx, client, m, getContents, printSpecDetail)
+		} else if m := names.PropertyRegexp().FindStringSubmatch(name); m != nil {
+			_, err = getProperty(ctx, client, m, printPropertyDetail)
 		} else {
 			log.Printf("Unsupported entity %+v", args)
 		}

@@ -38,12 +38,12 @@ var deleteCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Printf("delete called with %+v\n", args)
 		name := args[0]
-		if m := names.ApisRegexp().FindAllStringSubmatch(name, -1); m != nil {
-			deleteAllApisInProject(m[0][1])
-		} else if m := names.PropertiesRegexp().FindAllStringSubmatch(name, -1); m != nil {
-			deleteAllPropertiesInProject(m[0][1])
-		} else if m := names.LabelsRegexp().FindAllStringSubmatch(name, -1); m != nil {
-			deleteAllLabelsInProject(m[0][1])
+		if m := names.ApisRegexp().FindStringSubmatch(name); m != nil {
+			deleteAllApisInProject(m[1])
+		} else if m := names.PropertiesRegexp().FindStringSubmatch(name); m != nil {
+			deleteAllPropertiesInProject(m[1])
+		} else if m := names.LabelsRegexp().FindStringSubmatch(name); m != nil {
+			deleteAllLabelsInProject(m[1])
 		} else {
 			fmt.Printf("Unsupported resource name. See the 'apg registry delete-' subcommands for alternatives.\n")
 		}

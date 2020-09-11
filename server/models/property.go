@@ -83,45 +83,45 @@ func NewPropertyFromParentAndPropertyID(parent string, propertyID string) (*Prop
 		return nil, err
 	}
 	// Match regular expressions to identify the parent of this property.
-	var m [][]string
+	var m []string
 	// Is the parent a project?
-	m = names.ProjectRegexp().FindAllStringSubmatch(parent, -1)
+	m = names.ProjectRegexp().FindStringSubmatch(parent)
 	if m != nil {
 		return &Property{
-			ProjectID:  m[0][1],
+			ProjectID:  m[1],
 			PropertyID: propertyID,
 			Subject:    parent,
 		}, nil
 	}
 	// Is the parent a api?
-	m = names.ApiRegexp().FindAllStringSubmatch(parent, -1)
+	m = names.ApiRegexp().FindStringSubmatch(parent)
 	if m != nil {
 		return &Property{
-			ProjectID:  m[0][1],
-			ApiID:      m[0][2],
+			ProjectID:  m[1],
+			ApiID:      m[2],
 			PropertyID: propertyID,
 			Subject:    parent,
 		}, nil
 	}
 	// Is the parent a version?
-	m = names.VersionRegexp().FindAllStringSubmatch(parent, -1)
+	m = names.VersionRegexp().FindStringSubmatch(parent)
 	if m != nil {
 		return &Property{
-			ProjectID:  m[0][1],
-			ApiID:      m[0][2],
-			VersionID:  m[0][3],
+			ProjectID:  m[1],
+			ApiID:      m[2],
+			VersionID:  m[3],
 			PropertyID: propertyID,
 			Subject:    parent,
 		}, nil
 	}
 	// Is the parent a spec?
-	m = names.SpecRegexp().FindAllStringSubmatch(parent, -1)
+	m = names.SpecRegexp().FindStringSubmatch(parent)
 	if m != nil {
 		return &Property{
-			ProjectID:  m[0][1],
-			ApiID:      m[0][2],
-			VersionID:  m[0][3],
-			SpecID:     m[0][4],
+			ProjectID:  m[1],
+			ApiID:      m[2],
+			VersionID:  m[3],
+			SpecID:     m[4],
 			PropertyID: propertyID,
 			Subject:    parent,
 		}, nil

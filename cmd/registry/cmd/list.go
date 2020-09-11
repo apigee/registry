@@ -49,56 +49,56 @@ var listCmd = &cobra.Command{
 		}
 
 		name := args[0]
-		if m := names.ProjectsRegexp().FindAllStringSubmatch(name, -1); m != nil {
-			err = listProjects(ctx, client, m[0], printProject)
-		} else if m := names.ApisRegexp().FindAllStringSubmatch(name, -1); m != nil {
-			err = listAPIs(ctx, client, m[0], printAPI)
-		} else if m := names.VersionsRegexp().FindAllStringSubmatch(name, -1); m != nil {
-			err = listVersions(ctx, client, m[0], printVersion)
-		} else if m := names.SpecsRegexp().FindAllStringSubmatch(name, -1); m != nil {
-			err = listSpecs(ctx, client, m[0], printSpec)
-		} else if m := names.PropertiesRegexp().FindAllStringSubmatch(name, -1); m != nil {
-			err = listProperties(ctx, client, m[0], printProperty)
-		} else if m := names.LabelsRegexp().FindAllStringSubmatch(name, -1); m != nil {
-			err = listLabels(ctx, client, m[0], printLabel)
+		if m := names.ProjectsRegexp().FindStringSubmatch(name); m != nil {
+			err = listProjects(ctx, client, m, printProject)
+		} else if m := names.ApisRegexp().FindStringSubmatch(name); m != nil {
+			err = listAPIs(ctx, client, m, printAPI)
+		} else if m := names.VersionsRegexp().FindStringSubmatch(name); m != nil {
+			err = listVersions(ctx, client, m, printVersion)
+		} else if m := names.SpecsRegexp().FindStringSubmatch(name); m != nil {
+			err = listSpecs(ctx, client, m, printSpec)
+		} else if m := names.PropertiesRegexp().FindStringSubmatch(name); m != nil {
+			err = listProperties(ctx, client, m, printProperty)
+		} else if m := names.LabelsRegexp().FindStringSubmatch(name); m != nil {
+			err = listLabels(ctx, client, m, printLabel)
 
-		} else if m := names.ProjectRegexp().FindAllStringSubmatch(name, -1); m != nil {
-			segments := m[0]
+		} else if m := names.ProjectRegexp().FindStringSubmatch(name); m != nil {
+			segments := m
 			if sliceContainsString(segments, "-") {
 				err = listProjects(ctx, client, segments, printProject)
 			} else {
 				_, err = getProject(ctx, client, segments, printProject)
 			}
-		} else if m := names.ApiRegexp().FindAllStringSubmatch(name, -1); m != nil {
-			segments := m[0]
+		} else if m := names.ApiRegexp().FindStringSubmatch(name); m != nil {
+			segments := m
 			if sliceContainsString(segments, "-") {
 				err = listAPIs(ctx, client, segments, printAPI)
 			} else {
 				_, err = getAPI(ctx, client, segments, printAPI)
 			}
-		} else if m := names.VersionRegexp().FindAllStringSubmatch(name, -1); m != nil {
-			segments := m[0]
+		} else if m := names.VersionRegexp().FindStringSubmatch(name); m != nil {
+			segments := m
 			if sliceContainsString(segments, "-") {
 				err = listVersions(ctx, client, segments, printVersion)
 			} else {
 				_, err = getVersion(ctx, client, segments, printVersion)
 			}
-		} else if m := names.SpecRegexp().FindAllStringSubmatch(name, -1); m != nil {
-			segments := m[0]
+		} else if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
+			segments := m
 			if sliceContainsString(segments, "-") {
 				err = listSpecs(ctx, client, segments, printSpec)
 			} else {
 				_, err = getSpec(ctx, client, segments, false, printSpec)
 			}
-		} else if m := names.PropertyRegexp().FindAllStringSubmatch(name, -1); m != nil {
-			segments := m[0]
+		} else if m := names.PropertyRegexp().FindStringSubmatch(name); m != nil {
+			segments := m
 			if sliceContainsString(segments, "-") {
 				err = listProperties(ctx, client, segments, printProperty)
 			} else {
 				_, err = getProperty(ctx, client, segments, printProperty)
 			}
-		} else if m := names.LabelRegexp().FindAllStringSubmatch(name, -1); m != nil {
-			segments := m[0]
+		} else if m := names.LabelRegexp().FindStringSubmatch(name); m != nil {
+			segments := m
 			if sliceContainsString(segments, "-") {
 				err = listLabels(ctx, client, segments, printLabel)
 			} else {

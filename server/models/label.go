@@ -47,45 +47,45 @@ func NewLabelFromParentAndLabelID(parent string, labelID string) (*Label, error)
 		return nil, err
 	}
 	// Match regular expressions to identify the parent of this label.
-	var m [][]string
+	var m []string
 	// Is the parent a project?
-	m = names.ProjectRegexp().FindAllStringSubmatch(parent, -1)
+	m = names.ProjectRegexp().FindStringSubmatch(parent)
 	if m != nil {
 		return &Label{
-			ProjectID: m[0][1],
+			ProjectID: m[1],
 			LabelID:   labelID,
 			Subject:   parent,
 		}, nil
 	}
-	// Is the parent a api?
-	m = names.ApiRegexp().FindAllStringSubmatch(parent, -1)
+	// Is the parent an api?
+	m = names.ApiRegexp().FindStringSubmatch(parent)
 	if m != nil {
 		return &Label{
-			ProjectID: m[0][1],
-			ApiID:     m[0][2],
+			ProjectID: m[1],
+			ApiID:     m[2],
 			LabelID:   labelID,
 			Subject:   parent,
 		}, nil
 	}
 	// Is the parent a version?
-	m = names.VersionRegexp().FindAllStringSubmatch(parent, -1)
+	m = names.VersionRegexp().FindStringSubmatch(parent)
 	if m != nil {
 		return &Label{
-			ProjectID: m[0][1],
-			ApiID:     m[0][2],
-			VersionID: m[0][3],
+			ProjectID: m[1],
+			ApiID:     m[2],
+			VersionID: m[3],
 			LabelID:   labelID,
 			Subject:   parent,
 		}, nil
 	}
 	// Is the parent a spec?
-	m = names.SpecRegexp().FindAllStringSubmatch(parent, -1)
+	m = names.SpecRegexp().FindStringSubmatch(parent)
 	if m != nil {
 		return &Label{
-			ProjectID: m[0][1],
-			ApiID:     m[0][2],
-			VersionID: m[0][3],
-			SpecID:    m[0][4],
+			ProjectID: m[1],
+			ApiID:     m[2],
+			VersionID: m[3],
+			SpecID:    m[4],
 			LabelID:   labelID,
 			Subject:   parent,
 		}, nil

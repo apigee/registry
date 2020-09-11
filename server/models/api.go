@@ -43,7 +43,7 @@ type Api struct {
 // NewApiFromParentAndApiID returns an initialized api for a specified parent and apiID.
 func NewApiFromParentAndApiID(parent string, apiID string) (*Api, error) {
 	r := regexp.MustCompile("^projects/" + names.NameRegex + "$")
-	m := r.FindAllStringSubmatch(parent, -1)
+	m := r.FindStringSubmatch(parent)
 	if m == nil {
 		return nil, fmt.Errorf("invalid parent '%s'", parent)
 	}
@@ -51,7 +51,7 @@ func NewApiFromParentAndApiID(parent string, apiID string) (*Api, error) {
 		return nil, err
 	}
 	api := &Api{}
-	api.ProjectID = m[0][1]
+	api.ProjectID = m[1]
 	api.ApiID = apiID
 	return api, nil
 }
@@ -59,12 +59,12 @@ func NewApiFromParentAndApiID(parent string, apiID string) (*Api, error) {
 // NewApiFromResourceName parses resource names and returns an initialized api.
 func NewApiFromResourceName(name string) (*Api, error) {
 	api := &Api{}
-	m := names.ApiRegexp().FindAllStringSubmatch(name, -1)
+	m := names.ApiRegexp().FindStringSubmatch(name)
 	if m == nil {
 		return nil, fmt.Errorf("invalid api name (%s)", name)
 	}
-	api.ProjectID = m[0][1]
-	api.ApiID = m[0][2]
+	api.ProjectID = m[1]
+	api.ApiID = m[2]
 	return api, nil
 }
 

@@ -30,7 +30,7 @@ const RevisionRegex = "(@[a-zA-z0-9-]+)?"
 
 func ValidateID(id string) error {
 	r := regexp.MustCompile("^" + NameRegex + "$")
-	m := r.FindAllStringSubmatch(id, -1)
+	m := r.FindStringSubmatch(id)
 	if m == nil {
 		return fmt.Errorf("invalid id '%s'", id)
 	}
@@ -39,7 +39,7 @@ func ValidateID(id string) error {
 
 func ValidateRevision(s string) error {
 	r := regexp.MustCompile("^" + RevisionRegex + "$")
-	m := r.FindAllStringSubmatch(s, -1)
+	m := r.FindStringSubmatch(s)
 	if m == nil {
 		return fmt.Errorf("invalid revision '%s'", s)
 	}

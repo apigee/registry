@@ -196,14 +196,14 @@ func TestResourceNames(t *testing.T) {
 		}
 		for _, g := range groups {
 			for _, path := range g.pass {
-				m := g.regexp.FindAllStringSubmatch(path, -1)
+				m := g.regexp.FindStringSubmatch(path)
 				if m == nil {
 					t.Logf("failed to match %s: %s", g.name, path)
 					t.Fail()
 				}
 			}
 			for _, path := range g.fail {
-				m := g.regexp.FindAllStringSubmatch(path, -1)
+				m := g.regexp.FindStringSubmatch(path)
 				if m != nil {
 					t.Logf("false match %s: %s", g.name, path)
 					t.Fail()

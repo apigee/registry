@@ -49,11 +49,11 @@ func NewProjectFromProjectID(projectID string) (*Project, error) {
 // NewProjectFromResourceName parses resource names and returns an initialized project.
 func NewProjectFromResourceName(name string) (*Project, error) {
 	project := &Project{}
-	m := names.ProjectRegexp().FindAllStringSubmatch(name, -1)
+	m := names.ProjectRegexp().FindStringSubmatch(name)
 	if m == nil {
 		return nil, fmt.Errorf("invalid project name (%s)", name)
 	}
-	project.ProjectID = m[0][1]
+	project.ProjectID = m[1]
 	return project, nil
 }
 

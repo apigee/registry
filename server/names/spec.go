@@ -39,9 +39,9 @@ func ParseParentVersion(parent string) ([]string, error) {
 		"/apis/" + NameRegex +
 		"/versions/" + NameRegex +
 		"$")
-	m := r.FindAllStringSubmatch(parent, -1)
+	m := r.FindStringSubmatch(parent)
 	if m == nil {
 		return nil, fmt.Errorf("invalid version '%s'", parent)
 	}
-	return m[0], nil
+	return m, nil
 }

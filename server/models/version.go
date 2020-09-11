@@ -45,17 +45,17 @@ func ParseParentApi(parent string) ([]string, error) {
 	r := regexp.MustCompile("^projects/" + names.NameRegex +
 		"/apis/" + names.NameRegex +
 		"$")
-	m := r.FindAllStringSubmatch(parent, -1)
+	m := r.FindStringSubmatch(parent)
 	if m == nil {
 		return nil, fmt.Errorf("invalid parent '%s'", parent)
 	}
-	return m[0], nil
+	return m, nil
 }
 
 // NewVersionFromParentAndVersionID returns an initialized api for a specified parent and apiID.
 func NewVersionFromParentAndVersionID(parent string, versionID string) (*Version, error) {
 	r := regexp.MustCompile("^projects/" + names.NameRegex + "/apis/" + names.NameRegex + "$")
-	m := r.FindAllStringSubmatch(parent, -1)
+	m := r.FindStringSubmatch(parent)
 	if m == nil {
 		return nil, fmt.Errorf("invalid api '%s'", parent)
 	}
@@ -63,8 +63,8 @@ func NewVersionFromParentAndVersionID(parent string, versionID string) (*Version
 		return nil, err
 	}
 	version := &Version{}
-	version.ProjectID = m[0][1]
-	version.ApiID = m[0][2]
+	version.ProjectID = m[1]
+	version.ApiID = m[2]
 	version.VersionID = versionID
 	return version, nil
 }
@@ -72,13 +72,13 @@ func NewVersionFromParentAndVersionID(parent string, versionID string) (*Version
 // NewVersionFromResourceName parses resource names and returns an initialized version.
 func NewVersionFromResourceName(name string) (*Version, error) {
 	version := &Version{}
-	m := names.VersionRegexp().FindAllStringSubmatch(name, -1)
+	m := names.VersionRegexp().FindStringSubmatch(name)
 	if m == nil {
 		return nil, fmt.Errorf("invalid version name (%s)", name)
 	}
-	version.ProjectID = m[0][1]
-	version.ApiID = m[0][2]
-	version.VersionID = m[0][3]
+	version.ProjectID = m[1]
+	version.ApiID = m[2]
+	version.VersionID = m[3]
 	return version, nil
 }
 

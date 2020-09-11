@@ -67,7 +67,7 @@ func NewSpecFromParentAndSpecID(parent string, specID string) (*Spec, error) {
 	r := regexp.MustCompile("^projects/" + names.NameRegex +
 		"/apis/" + names.NameRegex +
 		"/versions/" + names.NameRegex + "$")
-	m := r.FindAllStringSubmatch(parent, -1)
+	m := r.FindStringSubmatch(parent)
 	if m == nil {
 		return nil, fmt.Errorf("invalid parent '%s'", parent)
 	}
@@ -75,9 +75,9 @@ func NewSpecFromParentAndSpecID(parent string, specID string) (*Spec, error) {
 		return nil, err
 	}
 	spec := &Spec{}
-	spec.ProjectID = m[0][1]
-	spec.ApiID = m[0][2]
-	spec.VersionID = m[0][3]
+	spec.ProjectID = m[1]
+	spec.ApiID = m[2]
+	spec.VersionID = m[3]
 	spec.SpecID = specID
 	return spec, nil
 }
@@ -85,16 +85,16 @@ func NewSpecFromParentAndSpecID(parent string, specID string) (*Spec, error) {
 // NewSpecFromResourceName parses resource names and returns an initialized spec.
 func NewSpecFromResourceName(name string) (*Spec, error) {
 	spec := &Spec{}
-	m := names.SpecRegexp().FindAllStringSubmatch(name, -1)
+	m := names.SpecRegexp().FindStringSubmatch(name)
 	if m == nil {
 		return nil, errors.New("invalid spec name")
 	}
-	spec.ProjectID = m[0][1]
-	spec.ApiID = m[0][2]
-	spec.VersionID = m[0][3]
-	spec.SpecID = m[0][4]
-	if strings.HasPrefix(m[0][5], "@") {
-		spec.RevisionID = m[0][5][1:]
+	spec.ProjectID = m[1]
+	spec.ApiID = m[2]
+	spec.VersionID = m[3]
+	spec.SpecID = m[4]
+	if strings.HasPrefix(m[5], "@") {
+		spec.RevisionID = m[5][1:]
 	}
 	return spec, nil
 }

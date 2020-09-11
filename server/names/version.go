@@ -34,9 +34,9 @@ func ParseParentApi(parent string) ([]string, error) {
 	r := regexp.MustCompile("^projects/" + NameRegex +
 		"/apis/" + NameRegex +
 		"$")
-	m := r.FindAllStringSubmatch(parent, -1)
+	m := r.FindStringSubmatch(parent)
 	if m == nil {
 		return nil, fmt.Errorf("invalid parent '%s'", parent)
 	}
-	return m[0], nil
+	return m, nil
 }
