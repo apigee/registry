@@ -56,7 +56,7 @@ var computeDescriptorCmd = &cobra.Command{
 		// Generate tasks.
 		name := args[0]
 		if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
-			err = listSpecs(ctx, client, m, func(spec *rpc.Spec) {
+			err = tools.ListSpecs(ctx, client, m, "", func(spec *rpc.Spec) {
 				taskQueue <- &computeDescriptorTask{
 					ctx:      ctx,
 					client:   client,

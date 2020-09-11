@@ -59,7 +59,7 @@ var computeVocabularyCmd = &cobra.Command{
 		name := args[0]
 		if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
 			// Iterate through a collection of specs and summarize each.
-			err = listSpecs(ctx, client, m, func(spec *rpc.Spec) {
+			err = tools.ListSpecs(ctx, client, m, "", func(spec *rpc.Spec) {
 				taskQueue <- &computeVocabularyTask{
 					ctx:      ctx,
 					client:   client,

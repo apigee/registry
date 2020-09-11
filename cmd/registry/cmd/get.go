@@ -16,21 +16,12 @@ package cmd
 
 import (
 	"context"
-	"fmt"
 	"log"
-	"os"
 
+	"github.com/apigee/registry/cmd/registry/tools"
 	"github.com/apigee/registry/connection"
-	"github.com/apigee/registry/gapic"
-	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
-	metrics "github.com/googleapis/gnostic/metrics"
-	openapiv2 "github.com/googleapis/gnostic/openapiv2"
-	openapiv3 "github.com/googleapis/gnostic/openapiv3"
 	"github.com/spf13/cobra"
-	"google.golang.org/api/iterator"
-	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/proto"
 )
 
 var getContents bool
@@ -59,15 +50,21 @@ var getCmd = &cobra.Command{
 		}
 
 		if m := names.ProjectRegexp().FindStringSubmatch(name); m != nil {
-			_, err = getProject(ctx, client, m, printProjectDetail)
+			_, err = tools.GetProject(ctx, client, m, tools.PrintProjectDetail)
 		} else if m := names.ApiRegexp().FindStringSubmatch(name); m != nil {
-			_, err = getAPI(ctx, client, m, printAPIDetail)
+			_, err = tools.GetAPI(ctx, client, m, tools.PrintAPIDetail)
 		} else if m := names.VersionRegexp().FindStringSubmatch(name); m != nil {
-			_, err = getVersion(ctx, client, m, printVersionDetail)
+			_, err = tools.GetVersion(ctx, client, m, tools.PrintVersionDetail)
 		} else if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
-			_, err = getSpec(ctx, client, m, getContents, printSpecDetail)
+			if getContents {
+				_, err = tools.GetSpec(ctx, client, m, getContents, tools.PrintSpecContents)
+			} else {
+				_, err = tools.GetSpec(ctx, client, m, getContents, tools.PrintSpecDetail)
+			}
 		} else if m := names.PropertyRegexp().FindStringSubmatch(name); m != nil {
-			_, err = getProperty(ctx, client, m, printPropertyDetail)
+			_, err = tools.GetProperty(ctx, client, m, tools.PrintPropertyDetail)
+		} else if m := names.LabelRegexp().FindStringSubmatch(name); m != nil {
+			_, err = tools.GetLabel(ctx, client, m, tools.PrintLabelDetail)
 		} else {
 			log.Printf("Unsupported entity %+v", args)
 		}
@@ -75,86 +72,4 @@ var getCmd = &cobra.Command{
 			log.Printf("%s", err.Error())
 		}
 	},
-}
-
-func getNamedProperty(ctx context.Context, client *gapic.RegistryClient, projectID string, subject string, relation string) error {
-	request := &rpc.ListPropertiesRequest{
-		Parent: subject,
-		Filter: fmt.Sprintf("property_id = \"%s\"", relation),
-	}
-	it := client.ListProperties(ctx, request)
-	for {
-		property, err := it.Next()
-		if err == iterator.Done {
-			break
-		} else if err != nil {
-			return err
-		}
-		printProperty(property)
-	}
-	return nil
-}
-
-func printPropertyDetail(property *rpc.Property) {
-	switch v := property.Value.(type) {
-	case *rpc.Property_StringValue:
-		fmt.Printf("%s", v.StringValue)
-	case *rpc.Property_Int64Value:
-		fmt.Printf("%d", v.Int64Value)
-	case *rpc.Property_DoubleValue:
-		fmt.Printf("%f", v.DoubleValue)
-	case *rpc.Property_BoolValue:
-		fmt.Printf("%t", v.BoolValue)
-	case *rpc.Property_BytesValue:
-		fmt.Printf("%+v", v.BytesValue)
-	case *rpc.Property_MessageValue:
-		switch v.MessageValue.TypeUrl {
-		case "gnostic.metrics.Complexity":
-			unmarshalAndPrint(v.MessageValue.Value, &metrics.Complexity{})
-		case "gnostic.metrics.Vocabulary":
-			unmarshalAndPrint(v.MessageValue.Value, &metrics.Vocabulary{})
-		case "gnostic.openapiv2.Document":
-			unmarshalAndPrint(v.MessageValue.Value, &openapiv2.Document{})
-		case "gnostic.openapiv3.Document":
-			unmarshalAndPrint(v.MessageValue.Value, &openapiv3.Document{})
-		default:
-			fmt.Printf("%+v", v.MessageValue)
-		}
-	default:
-		fmt.Printf("Unsupported property type: %s %s %+v\n", property.Subject, property.Relation, property.Value)
-	}
-	fmt.Printf("\n")
-}
-
-func printProjectDetail(message *rpc.Project) {
-	printMessage(message)
-}
-
-func printAPIDetail(message *rpc.Api) {
-	printMessage(message)
-}
-
-func printVersionDetail(message *rpc.Version) {
-	printMessage(message)
-}
-
-func printSpecDetail(message *rpc.Spec) {
-	if getContents {
-		os.Stdout.Write(message.GetContents())
-	} else {
-		printMessage(message)
-	}
-}
-
-func printMessage(message proto.Message) {
-	fmt.Println(protojson.Format(message))
-}
-
-func unmarshalAndPrint(value []byte, message proto.Message) {
-	err := proto.Unmarshal(value, message)
-	if err != nil {
-		fmt.Printf("%+v", err)
-	} else {
-		printMessage(message)
-	}
 }

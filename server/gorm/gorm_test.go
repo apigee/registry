@@ -17,7 +17,6 @@ package gorm
 import (
 	"context"
 	"fmt"
-	"log"
 	"testing"
 	"time"
 
@@ -105,7 +104,6 @@ func TestLoad(t *testing.T) {
 				}
 				now := time.Now()
 				apiID := fmt.Sprintf("api-%04d", i)
-				log.Printf("%s", apiID)
 				api := &models.Api{
 					ProjectID:   "demo",
 					ApiID:       apiID,
@@ -115,8 +113,8 @@ func TestLoad(t *testing.T) {
 				}
 				k := c.NewKey(models.ApiEntityName, api.ResourceName())
 				// fail if api already exists
-				existingApi := &models.Api{}
-				err := c.Get(ctx, k, existingApi)
+				existing := &models.Api{}
+				err := c.Get(ctx, k, existing)
 				if err == nil {
 					t.Errorf(err.Error())
 				}
