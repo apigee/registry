@@ -25,6 +25,8 @@ import (
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
 	metrics "github.com/googleapis/gnostic/metrics"
+	openapiv2 "github.com/googleapis/gnostic/openapiv2"
+	openapiv3 "github.com/googleapis/gnostic/openapiv3"
 	"github.com/spf13/cobra"
 	"google.golang.org/api/iterator"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -111,6 +113,10 @@ func printPropertyDetail(property *rpc.Property) {
 			unmarshalAndPrint(v.MessageValue.Value, &metrics.Complexity{})
 		case "gnostic.metrics.Vocabulary":
 			unmarshalAndPrint(v.MessageValue.Value, &metrics.Vocabulary{})
+		case "gnostic.openapiv2.Document":
+			unmarshalAndPrint(v.MessageValue.Value, &openapiv2.Document{})
+		case "gnostic.openapiv3.Document":
+			unmarshalAndPrint(v.MessageValue.Value, &openapiv3.Document{})
 		default:
 			fmt.Printf("%+v", v.MessageValue)
 		}

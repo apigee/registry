@@ -24,6 +24,9 @@ import (
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
+	"github.com/golang/protobuf/ptypes/any"
+	metrics "github.com/googleapis/gnostic/metrics"
+	vocab "github.com/googleapis/gnostic/metrics/vocabulary"
 	openapi_v2 "github.com/googleapis/gnostic/openapiv2"
 	openapi_v3 "github.com/googleapis/gnostic/openapiv3"
 	"github.com/spf13/cobra"
@@ -31,92 +34,97 @@ import (
 )
 
 func init() {
-	rootCmd.AddCommand(compileCmd)
+	computeCmd.AddCommand(computeVocabularyCmd)
 }
 
-// compileCmd represents the compile command
-var compileCmd = &cobra.Command{
-	Use:   "compile",
-	Short: "Compile API specs.",
-	Long:  `Compile API specs.`,
+var computeVocabularyCmd = &cobra.Command{
+	Use:   "vocabulary",
+	Short: "Compute the vocabulary of API specs.",
+	Long:  `Compute the vocabulary of API specs.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.TODO()
-		log.Printf("compile called %+v", args)
+		log.Printf("compute vocabulary called %+v", args)
 		client, err := connection.NewClient(ctx)
 		if err != nil {
 			log.Fatalf("%s", err.Error())
 		}
-		// Initialize job queue.
-		jobQueue := make(chan tools.Runnable, 1024)
+		// Initialize task queue.
+		taskQueue := make(chan tools.Task, 1024)
 		workerCount := 64
 		for i := 0; i < workerCount; i++ {
 			tools.WaitGroup().Add(1)
-			go tools.Worker(ctx, jobQueue)
+			go tools.Worker(ctx, taskQueue)
 		}
-		// Generate jobs.
+		// Generate tasks.
 		name := args[0]
 		if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
+			// Iterate through a collection of specs and summarize each.
 			err = listSpecs(ctx, client, m, func(spec *rpc.Spec) {
-				jobQueue <- &compileSpecRunnable{
+				taskQueue <- &computeVocabularyTask{
 					ctx:      ctx,
 					client:   client,
 					specName: spec.Name,
 				}
 			})
-			close(jobQueue)
+			close(taskQueue)
 			tools.WaitGroup().Wait()
 		}
 	},
 }
 
-type compileSpecRunnable struct {
+type computeVocabularyTask struct {
 	ctx      context.Context
 	client   connection.Client
 	specName string
 }
 
-func (job *compileSpecRunnable) Run() error {
+func (task *computeVocabularyTask) Run() error {
 	request := &rpc.GetSpecRequest{
-		Name: job.specName,
+		Name: task.specName,
 		View: rpc.SpecView_FULL,
 	}
-	spec, err := job.client.GetSpec(job.ctx, request)
+	spec, err := task.client.GetSpec(task.ctx, request)
 	if err != nil {
 		return err
 	}
-	name := spec.GetName()
-	log.Printf("compiling %s", name)
-	parent, specID := tools.ParentAndIdOfResourceNamed(name)
-	var newSpecID string
-	if strings.HasSuffix(specID, ".pb") {
-		return nil // spec is already compiled
-	} else if strings.HasSuffix(specID, ".yaml") {
-		newSpecID = strings.Replace(specID, ".yaml", ".pb", 1)
-	} else if strings.HasSuffix(specID, ".json") {
-		newSpecID = strings.Replace(specID, ".json", ".pb", 1)
-	} else {
-		newSpecID = specID + ".pb"
-	}
+	log.Printf("extracting vocabulary of %s", spec.Name)
 	data, err := tools.GetBytesForSpec(spec)
 	if err != nil {
 		return nil
 	}
-	var document proto.Message
+	var vocabulary *metrics.Vocabulary
 	if strings.HasPrefix(spec.GetStyle(), "openapi/v2") {
-		document, err = openapi_v2.ParseDocument(data)
+		document, err := openapi_v2.ParseDocument(data)
+		if err != nil {
+			return fmt.Errorf("invalid OpenAPI: %s", spec.Name)
+		}
+		vocabulary = vocab.NewVocabularyFromOpenAPIv2(document)
 	} else if strings.HasPrefix(spec.GetStyle(), "openapi/v3") {
-		document, err = openapi_v3.ParseDocument(data)
+		document, err := openapi_v3.ParseDocument(data)
+		if err != nil {
+			return fmt.Errorf("invalid OpenAPI: %s", spec.Name)
+		}
+		vocabulary = vocab.NewVocabularyFromOpenAPIv3(document)
 	} else {
-		return fmt.Errorf("we don't know how to compile %s", spec.Name)
+		return fmt.Errorf("we don't know how to summarize %s", spec.Name)
 	}
+	subject := spec.GetName()
+	relation := "vocabulary"
+	messageData, err := proto.Marshal(vocabulary)
+	property := &rpc.Property{
+		Subject:  subject,
+		Relation: relation,
+		Name:     subject + "/properties/" + relation,
+		Value: &rpc.Property_MessageValue{
+			MessageValue: &any.Any{
+				TypeUrl: "gnostic.metrics.Vocabulary",
+				Value:   messageData,
+			},
+		},
+	}
+	err = tools.SetProperty(task.ctx, task.client, property)
 	if err != nil {
-		return fmt.Errorf("invalid OpenAPI: %s", spec.Name)
+		return err
 	}
-	return tools.UploadBytesForSpec(
-		job.ctx,
-		job.client,
-		parent,
-		newSpecID,
-		spec.GetStyle(),
-		document)
+	return nil
 }

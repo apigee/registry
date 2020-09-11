@@ -33,84 +33,83 @@ import (
 )
 
 func init() {
-	rootCmd.AddCommand(summarizeCmd)
+	computeCmd.AddCommand(computeComplexityCmd)
 }
 
-// summarizeCmd represents the summarize command
-var summarizeCmd = &cobra.Command{
-	Use:   "summarize",
-	Short: "Summarize API specs.",
-	Long:  `Summarize API specs.`,
+var computeComplexityCmd = &cobra.Command{
+	Use:   "complexity",
+	Short: "Compute the complexity of API specs.",
+	Long:  `Compute the complexity of API specs.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.TODO()
-		log.Printf("summarize called %+v", args)
+		log.Printf("compute complexity called %+v", args)
 		client, err := connection.NewClient(ctx)
 		if err != nil {
 			log.Fatalf("%s", err.Error())
 		}
-		// Initialize job queue.
-		jobQueue := make(chan tools.Runnable, 1024)
+		// Initialize task queue.
+		taskQueue := make(chan tools.Task, 1024)
 		workerCount := 64
 		for i := 0; i < workerCount; i++ {
 			tools.WaitGroup().Add(1)
-			go tools.Worker(ctx, jobQueue)
+			go tools.Worker(ctx, taskQueue)
 		}
-		// Generate jobs.
+		// Generate tasks.
 		name := args[0]
 		if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
 			// Iterate through a collection of specs and summarize each.
 			err = listSpecs(ctx, client, m, func(spec *rpc.Spec) {
-				jobQueue <- &summarizeOpenAPIRunnable{
+				taskQueue <- &computeComplexityTask{
 					ctx:      ctx,
 					client:   client,
 					specName: spec.Name,
 				}
 			})
-			close(jobQueue)
+			close(taskQueue)
 			tools.WaitGroup().Wait()
 		}
 	},
 }
 
-type summarizeOpenAPIRunnable struct {
+type computeComplexityTask struct {
 	ctx      context.Context
 	client   connection.Client
 	specName string
 }
 
-func (job *summarizeOpenAPIRunnable) Run() error {
+func (task *computeComplexityTask) Run() error {
 	request := &rpc.GetSpecRequest{
-		Name: job.specName,
+		Name: task.specName,
 		View: rpc.SpecView_FULL,
 	}
-	spec, err := job.client.GetSpec(job.ctx, request)
+	spec, err := task.client.GetSpec(task.ctx, request)
 	if err != nil {
 		return err
 	}
-	log.Printf("summarizing %s", spec.Name)
+	log.Printf("computing complexity of %s", spec.Name)
 	data, err := tools.GetBytesForSpec(spec)
 	if err != nil {
 		return nil
 	}
-	var summary *metrics.Complexity
+	var complexity *metrics.Complexity
 	if strings.HasPrefix(spec.GetStyle(), "openapi/v2") {
 		document, err := openapi_v2.ParseDocument(data)
 		if err != nil {
 			return fmt.Errorf("invalid OpenAPI: %s", spec.Name)
 		}
-		summary = tools.SummarizeOpenAPIv2Document(document)
+		complexity = tools.SummarizeOpenAPIv2Document(document)
 	} else if strings.HasPrefix(spec.GetStyle(), "openapi/v3") {
 		document, err := openapi_v3.ParseDocument(data)
 		if err != nil {
 			return fmt.Errorf("invalid OpenAPI: %s", spec.Name)
 		}
-		summary = tools.SummarizeOpenAPIv3Document(document)
+		complexity = tools.SummarizeOpenAPIv3Document(document)
 	} else {
 		return fmt.Errorf("we don't know how to summarize %s", spec.Name)
 	}
 	subject := spec.GetName()
-	relation := "summary"
-	messageData, err := proto.Marshal(summary)
+	relation := "complexity"
+	messageData, err := proto.Marshal(complexity)
 	property := &rpc.Property{
 		Subject:  subject,
 		Relation: relation,
@@ -122,7 +121,7 @@ func (job *summarizeOpenAPIRunnable) Run() error {
 			},
 		},
 	}
-	err = tools.SetProperty(job.ctx, job.client, property)
+	err = tools.SetProperty(task.ctx, task.client, property)
 	if err != nil {
 		return err
 	}

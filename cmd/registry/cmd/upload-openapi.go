@@ -76,12 +76,12 @@ func scanDirectoryForOpenAPI(projectID, directory string) {
 		os.Exit(-1)
 	}
 
-	jobQueue := make(chan tools.Runnable, 1024)
+	taskQueue := make(chan tools.Task, 1024)
 
 	workerCount := 32
 	for i := 0; i < workerCount; i++ {
 		tools.WaitGroup().Add(1)
-		go tools.Worker(ctx, jobQueue)
+		go tools.Worker(ctx, taskQueue)
 	}
 
 	// walk a directory hierarchy, uploading every API spec that matches a set of expected file names.
@@ -90,7 +90,7 @@ func scanDirectoryForOpenAPI(projectID, directory string) {
 			if err != nil {
 				return err
 			} else if strings.HasSuffix(path, "swagger.yaml") || strings.HasSuffix(path, "swagger.json") {
-				jobQueue <- &uploadOpenAPIRunnable{
+				taskQueue <- &uploadOpenAPITask{
 					ctx:       ctx,
 					client:    client,
 					projectID: projectID,
@@ -99,7 +99,7 @@ func scanDirectoryForOpenAPI(projectID, directory string) {
 					style:     "openapi/v2",
 				}
 			} else if strings.HasSuffix(path, "openapi.yaml") || strings.HasSuffix(path, "openapi.json") {
-				jobQueue <- &uploadOpenAPIRunnable{
+				taskQueue <- &uploadOpenAPITask{
 					ctx:       ctx,
 					client:    client,
 					projectID: projectID,
@@ -113,11 +113,11 @@ func scanDirectoryForOpenAPI(projectID, directory string) {
 	if err != nil {
 		log.Println(err)
 	}
-	close(jobQueue)
+	close(taskQueue)
 	tools.WaitGroup().Wait()
 }
 
-type uploadOpenAPIRunnable struct {
+type uploadOpenAPITask struct {
 	ctx       context.Context
 	client    connection.Client
 	path      string
@@ -136,44 +136,44 @@ func sanitize(name string) string {
 	return name
 }
 
-func (job *uploadOpenAPIRunnable) Run() error {
+func (task *uploadOpenAPITask) Run() error {
 	var err error
 	// Compute the API name from the path to the spec file.
-	name := strings.TrimPrefix(job.path, job.directory+"/")
+	name := strings.TrimPrefix(task.path, task.directory+"/")
 	parts := strings.Split(name, "/")
 	if len(parts) < 3 {
 		return fmt.Errorf("Invalid API path: %s", name)
 	}
-	job.apiID = sanitize(strings.Join(parts[0:len(parts)-2], "-"))
-	job.apiID = strings.Replace(job.apiID, "/", "-", -1)
-	job.versionID = sanitize(parts[len(parts)-2])
-	job.specID = sanitize(parts[len(parts)-1])
-	log.Printf("apis/%s/versions/%s/specs/%s", job.apiID, job.versionID, job.specID)
+	task.apiID = sanitize(strings.Join(parts[0:len(parts)-2], "-"))
+	task.apiID = strings.Replace(task.apiID, "/", "-", -1)
+	task.versionID = sanitize(parts[len(parts)-2])
+	task.specID = sanitize(parts[len(parts)-1])
+	log.Printf("apis/%s/versions/%s/specs/%s", task.apiID, task.versionID, task.specID)
 	// If the API does not exist, create it.
-	err = job.createAPI()
+	err = task.createAPI()
 	if err != nil {
 		return err
 	}
 	// If the API version does not exist, create it.
-	err = job.createVersion()
+	err = task.createVersion()
 	if err != nil {
 		return err
 	}
 	// If the API spec does not exist, create it.
-	return job.createSpec()
+	return task.createSpec()
 }
 
-func (job *uploadOpenAPIRunnable) createAPI() error {
+func (task *uploadOpenAPITask) createAPI() error {
 	request := &rpcpb.GetApiRequest{}
-	request.Name = "projects/" + job.projectID + "/apis/" + job.apiID
-	_, err := job.client.GetApi(job.ctx, request)
+	request.Name = "projects/" + task.projectID + "/apis/" + task.apiID
+	_, err := task.client.GetApi(task.ctx, request)
 	if notFound(err) {
 		request := &rpcpb.CreateApiRequest{}
-		request.Parent = "projects/" + job.projectID
-		request.ApiId = job.apiID
+		request.Parent = "projects/" + task.projectID
+		request.ApiId = task.apiID
 		request.Api = &rpcpb.Api{}
-		request.Api.DisplayName = job.apiID
-		response, err := job.client.CreateApi(job.ctx, request)
+		request.Api.DisplayName = task.apiID
+		response, err := task.client.CreateApi(task.ctx, request)
 		if err == nil {
 			log.Printf("created %s", response.Name)
 		} else if alreadyExists(err) {
@@ -188,16 +188,16 @@ func (job *uploadOpenAPIRunnable) createAPI() error {
 	return nil
 }
 
-func (job *uploadOpenAPIRunnable) createVersion() error {
+func (task *uploadOpenAPITask) createVersion() error {
 	request := &rpcpb.GetVersionRequest{}
-	request.Name = "projects/" + job.projectID + "/apis/" + job.apiID + "/versions/" + job.versionID
-	_, err := job.client.GetVersion(job.ctx, request)
+	request.Name = "projects/" + task.projectID + "/apis/" + task.apiID + "/versions/" + task.versionID
+	_, err := task.client.GetVersion(task.ctx, request)
 	if notFound(err) {
 		request := &rpcpb.CreateVersionRequest{}
-		request.Parent = "projects/" + job.projectID + "/apis/" + job.apiID
-		request.VersionId = job.versionID
+		request.Parent = "projects/" + task.projectID + "/apis/" + task.apiID
+		request.VersionId = task.versionID
 		request.Version = &rpcpb.Version{}
-		response, err := job.client.CreateVersion(job.ctx, request)
+		response, err := task.client.CreateVersion(task.ctx, request)
 		if err == nil {
 			log.Printf("created %s", response.Name)
 		} else if alreadyExists(err) {
@@ -212,16 +212,16 @@ func (job *uploadOpenAPIRunnable) createVersion() error {
 	return nil
 }
 
-func (job *uploadOpenAPIRunnable) createSpec() error {
-	filename := filepath.Base(job.path)
+func (task *uploadOpenAPITask) createSpec() error {
+	filename := filepath.Base(task.path)
 
 	request := &rpcpb.GetSpecRequest{}
-	request.Name = "projects/" + job.projectID + "/apis/" + job.apiID +
-		"/versions/" + job.versionID +
+	request.Name = "projects/" + task.projectID + "/apis/" + task.apiID +
+		"/versions/" + task.versionID +
 		"/specs/" + filename
-	_, err := job.client.GetSpec(job.ctx, request)
+	_, err := task.client.GetSpec(task.ctx, request)
 	if notFound(err) {
-		fileBytes, err := ioutil.ReadFile(job.path)
+		fileBytes, err := ioutil.ReadFile(task.path)
 		// gzip the spec before uploading it
 		var buf bytes.Buffer
 		zw, _ := gzip.NewWriterLevel(&buf, gzip.BestCompression)
@@ -233,14 +233,14 @@ func (job *uploadOpenAPIRunnable) createSpec() error {
 			log.Fatal(err)
 		}
 		request := &rpcpb.CreateSpecRequest{}
-		request.Parent = "projects/" + job.projectID + "/apis/" + job.apiID +
-			"/versions/" + job.versionID
+		request.Parent = "projects/" + task.projectID + "/apis/" + task.apiID +
+			"/versions/" + task.versionID
 		request.SpecId = filename
 		request.Spec = &rpcpb.Spec{}
-		request.Spec.Style = job.style + "+gzip"
+		request.Spec.Style = task.style + "+gzip"
 		request.Spec.Filename = filename
 		request.Spec.Contents = buf.Bytes()
-		response, err := job.client.CreateSpec(job.ctx, request)
+		response, err := task.client.CreateSpec(task.ctx, request)
 		if err == nil {
 			log.Printf("created %s", response.Name)
 		} else if alreadyExists(err) {

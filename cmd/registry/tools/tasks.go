@@ -20,8 +20,8 @@ import (
 	"sync"
 )
 
-// Runnable is a generic interface for a runnable operation
-type Runnable interface {
+// Task is a generic interface for a runnable operation
+type Task interface {
 	Run() error
 }
 
@@ -31,10 +31,10 @@ func WaitGroup() *sync.WaitGroup {
 	return &wg
 }
 
-func Worker(ctx context.Context, jobChan <-chan Runnable) {
+func Worker(ctx context.Context, taskChan <-chan Task) {
 	defer wg.Done()
-	for job := range jobChan {
-		err := job.Run()
+	for task := range taskChan {
+		err := task.Run()
 		if err != nil {
 			log.Printf("ERROR %s", err.Error())
 		}
