@@ -22,22 +22,26 @@ import (
 
 	"github.com/apigee/registry/cmd/registry/tools"
 	"github.com/apigee/registry/connection"
-	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
 	"github.com/golang/protobuf/ptypes/any"
-	"github.com/googleapis/gnostic/compiler"
+	metrics "github.com/googleapis/gnostic/metrics"
+	vocab "github.com/googleapis/gnostic/metrics/vocabulary"
 	openapi_v2 "github.com/googleapis/gnostic/openapiv2"
 	openapi_v3 "github.com/googleapis/gnostic/openapiv3"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/proto"
 )
 
+func init() {
+	rootCmd.AddCommand(vocabularyCmd)
+}
+
 // vocabularyCmd represents the vocabulary command
 var vocabularyCmd = &cobra.Command{
 	Use:   "vocabulary",
-	Short: "Compute the vocabulary of an API spec.",
-	Long:  `Compute the vocabulary of an API spec.`,
+	Short: "Compute vocabularies of API specs.",
+	Long:  `Compute vocabularies of API specs.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.TODO()
 		log.Printf("vocabulary called %+v", args)
@@ -45,123 +49,83 @@ var vocabularyCmd = &cobra.Command{
 		if err != nil {
 			log.Fatalf("%s", err.Error())
 		}
+		// Initialize job queue.
+		jobQueue := make(chan tools.Runnable, 1024)
+		workerCount := 64
+		for i := 0; i < workerCount; i++ {
+			tools.WaitGroup().Add(1)
+			go tools.Worker(ctx, jobQueue)
+		}
+		// Generate jobs.
 		name := args[0]
-		if m := names.SpecRegexp().FindAllStringSubmatch(name, -1); m != nil {
-			segments := m[0]
-			if sliceContainsString(segments, "-") {
-				// iterate through a collection of specs and vocabulary each
-				completions := make(chan int)
-				processes := 0
-				err = listSpecs(ctx, client, segments, func(spec *rpc.Spec) {
-					fmt.Println(spec.Name)
-					m := names.SpecRegexp().FindAllStringSubmatch(spec.Name, -1)
-					if m != nil {
-						processes++
-						go func() {
-							vocabularySpec(ctx, client, m[0])
-							completions <- 1
-						}()
-					}
-				})
-				for i := 0; i < processes; i++ {
-					<-completions
+		if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
+			// Iterate through a collection of specs and summarize each.
+			err = listSpecs(ctx, client, m, func(spec *rpc.Spec) {
+				jobQueue <- &vocabularyRunnable{
+					ctx:      ctx,
+					client:   client,
+					specName: spec.Name,
 				}
-
-			} else {
-				err := vocabularySpec(ctx, client, segments)
-				if err != nil {
-					log.Printf("%s", err.Error())
-				}
-			}
+			})
+			close(jobQueue)
+			tools.WaitGroup().Wait()
 		}
 	},
 }
 
-func init() {
-	rootCmd.AddCommand(vocabularyCmd)
+type vocabularyRunnable struct {
+	ctx      context.Context
+	client   connection.Client
+	specName string
 }
 
-func vocabularySpec(ctx context.Context,
-	client *gapic.RegistryClient,
-	segments []string) error {
-
-	name := tools.ResourceNameOfSpec(segments[1:])
+func (job *vocabularyRunnable) Run() error {
 	request := &rpc.GetSpecRequest{
-		Name: name,
+		Name: job.specName,
 		View: rpc.SpecView_FULL,
 	}
-	spec, err := client.GetSpec(ctx, request)
+	spec, err := job.client.GetSpec(job.ctx, request)
 	if err != nil {
 		return err
 	}
-
-	log.Printf("computing vocabulary of %s", spec.Name)
-	if strings.HasPrefix(spec.GetStyle(), "openapi/v2") {
-		data, err := tools.GetBytesForSpec(spec)
-		if err != nil {
-			return nil
-		}
-		info, err := compiler.ReadInfoFromBytes(spec.GetName(), data)
-		if err != nil {
-			return err
-		}
-		document, err := openapi_v2.NewDocument(info, compiler.NewContextWithExtensions("$root", nil, nil))
-		if err != nil {
-			return err
-		}
-		log.Printf("%+v", document)
-
-		vocabulary := tools.ProcessDocumentV2(document)
-		log.Printf("%+v", vocabulary)
-
-		projectID := segments[1]
-		property := &rpc.Property{}
-		property.Subject = spec.GetName()
-		property.Relation = "vocabulary"
-		messageData, err := proto.Marshal(vocabulary)
-		anyValue := &any.Any{
-			TypeUrl: "Vocabulary",
-			Value:   messageData,
-		}
-		property.Value = &rpc.Property_MessageValue{MessageValue: anyValue}
-		err = tools.SetProperty(ctx, client, projectID, property)
-		if err != nil {
-			return err
-		}
-
+	log.Printf("extracting vocabulary of %s", spec.Name)
+	data, err := tools.GetBytesForSpec(spec)
+	if err != nil {
+		return nil
 	}
-	if strings.HasPrefix(spec.GetStyle(), "openapi/v3") {
-		data, err := tools.GetBytesForSpec(spec)
+	var vocabulary *metrics.Vocabulary
+	if strings.HasPrefix(spec.GetStyle(), "openapi/v2") {
+		document, err := openapi_v2.ParseDocument(data)
 		if err != nil {
-			return nil
+			return fmt.Errorf("invalid OpenAPI: %s", spec.Name)
 		}
-		info, err := compiler.ReadInfoFromBytes(spec.GetName(), data)
+		vocabulary = vocab.NewVocabularyFromOpenAPIv2(document)
+	} else if strings.HasPrefix(spec.GetStyle(), "openapi/v3") {
+		document, err := openapi_v3.ParseDocument(data)
 		if err != nil {
-			return err
+			return fmt.Errorf("invalid OpenAPI: %s", spec.Name)
 		}
-		document, err := openapi_v3.NewDocument(info, compiler.NewContextWithExtensions("$root", nil, nil))
-		if err != nil {
-			return err
-		}
-		vocabulary := tools.ProcessDocumentV3(document)
-
-		projectID := segments[1]
-
-		log.Printf("%s", projectID)
-		property := &rpc.Property{}
-		property.Subject = spec.GetName()
-		property.Relation = "vocabulary"
-		messageData, err := proto.Marshal(vocabulary)
-		anyValue := &any.Any{
-			TypeUrl: "Vocabulary",
-			Value:   messageData,
-		}
-		property.Value = &rpc.Property_MessageValue{MessageValue: anyValue}
-		err = tools.SetProperty(ctx, client, projectID, property)
-		if err != nil {
-			return err
-		}
-
+		vocabulary = vocab.NewVocabularyFromOpenAPIv3(document)
+	} else {
+		return fmt.Errorf("we don't know how to summarize %s", spec.Name)
+	}
+	subject := spec.GetName()
+	relation := "vocabulary"
+	messageData, err := proto.Marshal(vocabulary)
+	property := &rpc.Property{
+		Subject:  subject,
+		Relation: relation,
+		Name:     subject + "/properties/" + relation,
+		Value: &rpc.Property_MessageValue{
+			MessageValue: &any.Any{
+				TypeUrl: "gnostic.metrics.Vocabulary",
+				Value:   messageData,
+			},
+		},
+	}
+	err = tools.SetProperty(job.ctx, job.client, property)
+	if err != nil {
+		return err
 	}
 	return nil
 }

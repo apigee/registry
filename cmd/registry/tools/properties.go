@@ -25,7 +25,6 @@ import (
 
 func SetProperty(ctx context.Context,
 	client *gapic.RegistryClient,
-	projectID string,
 	property *rpc.Property) error {
 	request := &rpc.CreatePropertyRequest{}
 	request.Property = property

@@ -32,6 +32,10 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+func init() {
+	rootCmd.AddCommand(summarizeCmd)
+}
+
 // summarizeCmd represents the summarize command
 var summarizeCmd = &cobra.Command{
 	Use:   "summarize",
@@ -53,18 +57,13 @@ var summarizeCmd = &cobra.Command{
 		}
 		// Generate jobs.
 		name := args[0]
-		if m := names.SpecRegexp().FindAllStringSubmatch(name, -1); m != nil {
-			segments := m[0]
+		if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
 			// Iterate through a collection of specs and summarize each.
-			err = listSpecs(ctx, client, segments, func(spec *rpc.Spec) {
-				m := names.SpecRegexp().FindAllStringSubmatch(spec.Name, -1)
-				if m != nil {
-					jobQueue <- &summarizeOpenAPIRunnable{
-						ctx:       ctx,
-						client:    client,
-						specName:  spec.Name,
-						projectID: segments[1],
-					}
+			err = listSpecs(ctx, client, m, func(spec *rpc.Spec) {
+				jobQueue <- &summarizeOpenAPIRunnable{
+					ctx:      ctx,
+					client:   client,
+					specName: spec.Name,
 				}
 			})
 			close(jobQueue)
@@ -73,155 +72,59 @@ var summarizeCmd = &cobra.Command{
 	},
 }
 
-func init() {
-	rootCmd.AddCommand(summarizeCmd)
-}
-
 type summarizeOpenAPIRunnable struct {
-	ctx       context.Context
-	client    connection.Client
-	projectID string
-	specName  string
+	ctx      context.Context
+	client   connection.Client
+	specName string
 }
 
 func (job *summarizeOpenAPIRunnable) Run() error {
-	ctx := job.ctx
-	client := job.client
-	specName := job.specName
-	projectID := job.projectID
-	name := specName
-
 	request := &rpc.GetSpecRequest{
-		Name: name,
+		Name: job.specName,
 		View: rpc.SpecView_FULL,
 	}
-	spec, err := client.GetSpec(ctx, request)
+	spec, err := job.client.GetSpec(job.ctx, request)
 	if err != nil {
 		return err
 	}
 	log.Printf("summarizing %s", spec.Name)
+	data, err := tools.GetBytesForSpec(spec)
+	if err != nil {
+		return nil
+	}
+	var summary *metrics.Complexity
 	if strings.HasPrefix(spec.GetStyle(), "openapi/v2") {
-		data, err := tools.GetBytesForSpec(spec)
-		if err != nil {
-			return nil
-		}
 		document, err := openapi_v2.ParseDocument(data)
 		if err != nil {
 			return fmt.Errorf("invalid OpenAPI: %s", spec.Name)
 		}
-		summary := summarizeOpenAPIv2Document(document)
-		property := &rpc.Property{}
-		property.Subject = spec.GetName()
-		property.Relation = "summary"
-		property.Name = property.Subject + "/properties/" + property.Relation
-		messageData, err := proto.Marshal(summary)
-		anyValue := &any.Any{
-			TypeUrl: "gnostic.metrics.Complexity",
-			Value:   messageData,
-		}
-		property.Value = &rpc.Property_MessageValue{MessageValue: anyValue}
-		err = tools.SetProperty(ctx, client, projectID, property)
-		if err != nil {
-			return err
-		}
-	}
-	if strings.HasPrefix(spec.GetStyle(), "openapi/v3") {
-		data, err := tools.GetBytesForSpec(spec)
-		if err != nil {
-			return nil
-		}
+		summary = tools.SummarizeOpenAPIv2Document(document)
+	} else if strings.HasPrefix(spec.GetStyle(), "openapi/v3") {
 		document, err := openapi_v3.ParseDocument(data)
 		if err != nil {
 			return fmt.Errorf("invalid OpenAPI: %s", spec.Name)
 		}
-		summary := summarizeOpenAPIv3Document(document)
-		property := &rpc.Property{}
-		property.Subject = spec.GetName()
-		property.Relation = "summary"
-		property.Name = property.Subject + "/properties/" + property.Relation
-		messageData, err := proto.Marshal(summary)
-		anyValue := &any.Any{
-			TypeUrl: "gnostic.metrics.Complexity",
-			Value:   messageData,
-		}
-		property.Value = &rpc.Property_MessageValue{MessageValue: anyValue}
-		err = tools.SetProperty(ctx, client, projectID, property)
-		if err != nil {
-			return err
-		}
+		summary = tools.SummarizeOpenAPIv3Document(document)
+	} else {
+		return fmt.Errorf("we don't know how to summarize %s", spec.Name)
+	}
+	subject := spec.GetName()
+	relation := "summary"
+	messageData, err := proto.Marshal(summary)
+	property := &rpc.Property{
+		Subject:  subject,
+		Relation: relation,
+		Name:     subject + "/properties/" + relation,
+		Value: &rpc.Property_MessageValue{
+			MessageValue: &any.Any{
+				TypeUrl: "gnostic.metrics.Complexity",
+				Value:   messageData,
+			},
+		},
+	}
+	err = tools.SetProperty(job.ctx, job.client, property)
+	if err != nil {
+		return err
 	}
 	return nil
-}
-
-func summarizeOpenAPIv2Document(document *openapi_v2.Document) *metrics.Complexity {
-	summary := &metrics.Complexity{}
-	if document.Definitions != nil && document.Definitions.AdditionalProperties != nil {
-		for _, pair := range document.Definitions.AdditionalProperties {
-			summarizeOpenAPIv2Schema(summary, pair.Value)
-		}
-	}
-	for _, pair := range document.Paths.Path {
-		summary.PathCount++
-		v := pair.Value
-		if v.Get != nil {
-			summary.GetCount++
-		}
-		if v.Post != nil {
-			summary.PostCount++
-		}
-		if v.Put != nil {
-			summary.PutCount++
-		}
-		if v.Delete != nil {
-			summary.DeleteCount++
-		}
-	}
-	return summary
-}
-
-func summarizeOpenAPIv2Schema(summary *metrics.Complexity, schema *openapi_v2.Schema) {
-	summary.SchemaCount++
-	if schema.Properties != nil {
-		for _, pair := range schema.Properties.AdditionalProperties {
-			summary.SchemaPropertyCount++
-			summarizeOpenAPIv2Schema(summary, pair.Value)
-		}
-	}
-}
-
-func summarizeOpenAPIv3Document(document *openapi_v3.Document) *metrics.Complexity {
-	summary := &metrics.Complexity{}
-	if document.Components != nil && document.Components.Schemas != nil {
-		for _, pair := range document.Components.Schemas.AdditionalProperties {
-			summarizeOpenAPIv3Schema(summary, pair.Value)
-		}
-	}
-	for _, pair := range document.Paths.Path {
-		summary.PathCount++
-		v := pair.Value
-		if v.Get != nil {
-			summary.GetCount++
-		}
-		if v.Post != nil {
-			summary.PostCount++
-		}
-		if v.Put != nil {
-			summary.PutCount++
-		}
-		if v.Delete != nil {
-			summary.DeleteCount++
-		}
-	}
-	return summary
-}
-
-func summarizeOpenAPIv3Schema(summary *metrics.Complexity, schemaOrReference *openapi_v3.SchemaOrReference) {
-	summary.SchemaCount++
-	schema := schemaOrReference.GetSchema()
-	if schema != nil && schema.Properties != nil {
-		for _, pair := range schema.Properties.AdditionalProperties {
-			summary.SchemaPropertyCount++
-			summarizeOpenAPIv3Schema(summary, pair.Value)
-		}
-	}
 }

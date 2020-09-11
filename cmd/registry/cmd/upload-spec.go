@@ -28,6 +28,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
+func init() {
+	uploadCmd.AddCommand(specCmd)
+	specCmd.Flags().String("version", "", "Resource name of version for uploaded spec")
+}
+
 // specCmd represents the spec command
 var specCmd = &cobra.Command{
 	Use:   "spec",
@@ -117,9 +122,4 @@ func uploadSpecFile(filename string, client *gapic.RegistryClient, version strin
 			log.Printf("response %+v\nerr %+v", response, err)
 		}
 	}
-}
-
-func init() {
-	uploadCmd.AddCommand(specCmd)
-	specCmd.Flags().String("version", "", "Resource name of version for uploaded spec")
 }

@@ -26,6 +26,10 @@ import (
 	"google.golang.org/api/iterator"
 )
 
+func init() {
+	rootCmd.AddCommand(deleteCmd)
+}
+
 // deleteCmd represents the delete command
 var deleteCmd = &cobra.Command{
 	Use:   "delete",
@@ -44,10 +48,6 @@ var deleteCmd = &cobra.Command{
 			fmt.Printf("Unsupported resource name. See the 'apg registry delete-' subcommands for alternatives.\n")
 		}
 	},
-}
-
-func init() {
-	rootCmd.AddCommand(deleteCmd)
 }
 
 func deleteAllApisInProject(projectID string) {

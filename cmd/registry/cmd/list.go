@@ -28,35 +28,11 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-type projectHandler func(*rpc.Project)
-type apiHandler func(*rpc.Api)
-type versionHandler func(*rpc.Version)
-type specHandler func(*rpc.Spec)
-type propertyHandler func(*rpc.Property)
-type labelHandler func(*rpc.Label)
+var filterFlag string
 
-func printProject(project *rpc.Project) {
-	fmt.Println(project.Name)
-}
-
-func printAPI(api *rpc.Api) {
-	fmt.Println(api.Name)
-}
-
-func printVersion(version *rpc.Version) {
-	fmt.Println(version.Name)
-}
-
-func printSpec(spec *rpc.Spec) {
-	fmt.Println(spec.Name)
-}
-
-func printProperty(property *rpc.Property) {
-	fmt.Println(property.Name)
-}
-
-func printLabel(label *rpc.Label) {
-	fmt.Println(label.Name)
+func init() {
+	rootCmd.AddCommand(listCmd)
+	listCmd.Flags().StringVar(&filterFlag, "filter", "", "Filter option to send with list calls")
 }
 
 // listCmd represents the list command
@@ -142,11 +118,35 @@ var listCmd = &cobra.Command{
 	},
 }
 
-var filterFlag string
+type projectHandler func(*rpc.Project)
+type apiHandler func(*rpc.Api)
+type versionHandler func(*rpc.Version)
+type specHandler func(*rpc.Spec)
+type propertyHandler func(*rpc.Property)
+type labelHandler func(*rpc.Label)
 
-func init() {
-	rootCmd.AddCommand(listCmd)
-	listCmd.Flags().StringVar(&filterFlag, "filter", "", "Filter option to send with list calls")
+func printProject(project *rpc.Project) {
+	fmt.Println(project.Name)
+}
+
+func printAPI(api *rpc.Api) {
+	fmt.Println(api.Name)
+}
+
+func printVersion(version *rpc.Version) {
+	fmt.Println(version.Name)
+}
+
+func printSpec(spec *rpc.Spec) {
+	fmt.Println(spec.Name)
+}
+
+func printProperty(property *rpc.Property) {
+	fmt.Println(property.Name)
+}
+
+func printLabel(label *rpc.Label) {
+	fmt.Println(label.Name)
 }
 
 func listProjects(ctx context.Context,
@@ -236,7 +236,7 @@ func listSpecs(ctx context.Context,
 		Parent: "projects/" + segments[1] + "/apis/" + segments[2] + "/versions/" + segments[3],
 	}
 	filter := filterFlag
-	if len(segments) == 5 && segments[4] != "-" {
+	if len(segments) > 4 && segments[4] != "-" {
 		filter = "spec_id == '" + segments[4] + "'"
 	}
 	if filter != "" {

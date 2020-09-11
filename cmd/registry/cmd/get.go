@@ -31,6 +31,13 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+var getContents bool
+
+func init() {
+	rootCmd.AddCommand(getCmd)
+	getCmd.Flags().BoolVar(&getContents, "contents", false, "Get item contents (if applicable).")
+}
+
 // getCmd represents the get command
 var getCmd = &cobra.Command{
 	Use:   "get",
@@ -86,13 +93,6 @@ func getNamedProperty(ctx context.Context, client *gapic.RegistryClient, project
 	return nil
 }
 
-var getContents bool
-
-func init() {
-	rootCmd.AddCommand(getCmd)
-	getCmd.Flags().BoolVar(&getContents, "contents", false, "Get item contents (if applicable).")
-}
-
 func printPropertyDetail(property *rpc.Property) {
 	switch v := property.Value.(type) {
 	case *rpc.Property_StringValue:
@@ -109,6 +109,8 @@ func printPropertyDetail(property *rpc.Property) {
 		switch v.MessageValue.TypeUrl {
 		case "gnostic.metrics.Complexity":
 			unmarshalAndPrint(v.MessageValue.Value, &metrics.Complexity{})
+		case "gnostic.metrics.Vocabulary":
+			unmarshalAndPrint(v.MessageValue.Value, &metrics.Vocabulary{})
 		default:
 			fmt.Printf("%+v", v.MessageValue)
 		}

@@ -23,15 +23,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
+func init() {
+	rootCmd.AddCommand(uploadCmd)
+}
+
 // uploadCmd represents the upload command
 var uploadCmd = &cobra.Command{
 	Use:   "upload",
 	Short: "Upload API specifications.",
 	Long:  `Upload API specifications.`,
-}
-
-func init() {
-	rootCmd.AddCommand(uploadCmd)
 }
 
 func ensureProjectExists(ctx context.Context, client *gapic.RegistryClient, projectID string) {

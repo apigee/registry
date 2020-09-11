@@ -17,10 +17,15 @@ package tools
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"io/ioutil"
+	"log"
 	"strings"
 
+	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
+	rpcpb "github.com/apigee/registry/rpc"
+	"google.golang.org/protobuf/proto"
 )
 
 func ResourceNameOfSpec(segments []string) string {
@@ -46,4 +51,36 @@ func GetBytesForSpec(spec *rpc.Spec) ([]byte, error) {
 		data = spec.GetContents()
 	}
 	return data, nil
+}
+
+func UploadBytesForSpec(ctx context.Context, client connection.Client, parent string, specID string, style string, document proto.Message) error {
+	// gzip the spec before uploading it
+	messageData, err := proto.Marshal(document)
+	var buf bytes.Buffer
+	zw, _ := gzip.NewWriterLevel(&buf, gzip.BestCompression)
+	_, err = zw.Write(messageData)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err := zw.Close(); err != nil {
+		log.Fatal(err)
+	}
+	spec := &rpcpb.Spec{}
+	spec.Style = style
+	spec.Contents = buf.Bytes()
+
+	request := &rpc.CreateSpecRequest{}
+	request.Parent = parent
+	request.SpecId = specID
+	request.Spec = spec
+	_, err = client.CreateSpec(ctx, request)
+	if err != nil {
+		// if this fails, we should try calling UpdateSpec
+		spec.Name = parent + "/specs/" + specID
+		request := &rpc.UpdateSpecRequest{}
+		request.Spec = spec
+		_, err = client.UpdateSpec(ctx, request)
+		return err
+	}
+	return nil
 }
