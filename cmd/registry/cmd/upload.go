@@ -15,11 +15,6 @@
 package cmd
 
 import (
-	"context"
-	"log"
-
-	"github.com/apigee/registry/gapic"
-	rpcpb "github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
 )
 
@@ -32,19 +27,4 @@ var uploadCmd = &cobra.Command{
 	Use:   "upload",
 	Short: "Upload API specifications.",
 	Long:  `Upload API specifications.`,
-}
-
-func ensureProjectExists(ctx context.Context, client *gapic.RegistryClient, projectID string) {
-	// if the project doesn't exist, create it
-	req := &rpcpb.GetProjectRequest{Name: "projects/" + projectID}
-	_, err := client.GetProject(ctx, req)
-	if notFound(err) {
-		req := &rpcpb.CreateProjectRequest{
-			ProjectId: projectID,
-		}
-		_, err := client.CreateProject(ctx, req)
-		if err != nil {
-			log.Fatalf("%s", err.Error())
-		}
-	}
 }

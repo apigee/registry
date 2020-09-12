@@ -43,7 +43,6 @@ var computeVocabularyCmd = &cobra.Command{
 	Long:  `Compute the vocabulary of API specs.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.TODO()
-		log.Printf("compute vocabulary called %+v", args)
 		client, err := connection.NewClient(ctx)
 		if err != nil {
 			log.Fatalf("%s", err.Error())
@@ -59,7 +58,7 @@ var computeVocabularyCmd = &cobra.Command{
 		name := args[0]
 		if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
 			// Iterate through a collection of specs and summarize each.
-			err = tools.ListSpecs(ctx, client, m, "", func(spec *rpc.Spec) {
+			err = tools.ListSpecs(ctx, client, m, computeFilter, func(spec *rpc.Spec) {
 				taskQueue <- &computeVocabularyTask{
 					ctx:      ctx,
 					client:   client,
@@ -87,7 +86,7 @@ func (task *computeVocabularyTask) Run() error {
 	if err != nil {
 		return err
 	}
-	log.Printf("extracting vocabulary of %s", spec.Name)
+	log.Printf("computing vocabulary of %s", spec.Name)
 	data, err := tools.GetBytesForSpec(spec)
 	if err != nil {
 		return nil

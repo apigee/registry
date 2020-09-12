@@ -42,7 +42,6 @@ var computeComplexityCmd = &cobra.Command{
 	Long:  `Compute the complexity of API specs.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.TODO()
-		log.Printf("compute complexity called %+v", args)
 		client, err := connection.NewClient(ctx)
 		if err != nil {
 			log.Fatalf("%s", err.Error())
@@ -58,7 +57,7 @@ var computeComplexityCmd = &cobra.Command{
 		name := args[0]
 		if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
 			// Iterate through a collection of specs and summarize each.
-			err = tools.ListSpecs(ctx, client, m, "", func(spec *rpc.Spec) {
+			err = tools.ListSpecs(ctx, client, m, computeFilter, func(spec *rpc.Spec) {
 				taskQueue <- &computeComplexityTask{
 					ctx:      ctx,
 					client:   client,

@@ -26,11 +26,11 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-var filterFlag string
+var listFilter string
 
 func init() {
 	rootCmd.AddCommand(listCmd)
-	listCmd.Flags().StringVar(&filterFlag, "filter", "", "Filter option to send with list calls")
+	listCmd.Flags().StringVar(&listFilter, "filter", "", "Filter option to send with list calls")
 }
 
 // listCmd represents the list command
@@ -45,7 +45,7 @@ var listCmd = &cobra.Command{
 		if err != nil {
 			log.Fatalf("%s", err.Error())
 		}
-		err = matchAndHandle(ctx, client, args[0])
+		err = matchAndHandleListCmd(ctx, client, args[0])
 		if err != nil {
 			st, ok := status.FromError(err)
 			if !ok {
@@ -57,7 +57,7 @@ var listCmd = &cobra.Command{
 	},
 }
 
-func matchAndHandle(
+func matchAndHandleListCmd(
 	ctx context.Context,
 	client connection.Client,
 	name string,
@@ -65,32 +65,32 @@ func matchAndHandle(
 
 	// First try to match collection names.
 	if m := names.ProjectsRegexp().FindStringSubmatch(name); m != nil {
-		return tools.ListProjects(ctx, client, m, filterFlag, tools.PrintProject)
+		return tools.ListProjects(ctx, client, m, listFilter, tools.PrintProject)
 	} else if m := names.ApisRegexp().FindStringSubmatch(name); m != nil {
-		return tools.ListAPIs(ctx, client, m, filterFlag, tools.PrintAPI)
+		return tools.ListAPIs(ctx, client, m, listFilter, tools.PrintAPI)
 	} else if m := names.VersionsRegexp().FindStringSubmatch(name); m != nil {
-		return tools.ListVersions(ctx, client, m, filterFlag, tools.PrintVersion)
+		return tools.ListVersions(ctx, client, m, listFilter, tools.PrintVersion)
 	} else if m := names.SpecsRegexp().FindStringSubmatch(name); m != nil {
-		return tools.ListSpecs(ctx, client, m, filterFlag, tools.PrintSpec)
+		return tools.ListSpecs(ctx, client, m, listFilter, tools.PrintSpec)
 	} else if m := names.PropertiesRegexp().FindStringSubmatch(name); m != nil {
-		return tools.ListProperties(ctx, client, m, filterFlag, tools.PrintProperty)
+		return tools.ListProperties(ctx, client, m, listFilter, tools.PrintProperty)
 	} else if m := names.LabelsRegexp().FindStringSubmatch(name); m != nil {
-		return tools.ListLabels(ctx, client, m, filterFlag, tools.PrintLabel)
+		return tools.ListLabels(ctx, client, m, listFilter, tools.PrintLabel)
 	}
 
 	// Then try to match resource names.
 	if m := names.ProjectRegexp().FindStringSubmatch(name); m != nil {
-		return tools.ListProjects(ctx, client, m, filterFlag, tools.PrintProject)
+		return tools.ListProjects(ctx, client, m, listFilter, tools.PrintProject)
 	} else if m := names.ApiRegexp().FindStringSubmatch(name); m != nil {
-		return tools.ListAPIs(ctx, client, m, filterFlag, tools.PrintAPI)
+		return tools.ListAPIs(ctx, client, m, listFilter, tools.PrintAPI)
 	} else if m := names.VersionRegexp().FindStringSubmatch(name); m != nil {
-		return tools.ListVersions(ctx, client, m, filterFlag, tools.PrintVersion)
+		return tools.ListVersions(ctx, client, m, listFilter, tools.PrintVersion)
 	} else if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
-		return tools.ListSpecs(ctx, client, m, filterFlag, tools.PrintSpec)
+		return tools.ListSpecs(ctx, client, m, listFilter, tools.PrintSpec)
 	} else if m := names.PropertyRegexp().FindStringSubmatch(name); m != nil {
-		return tools.ListProperties(ctx, client, m, filterFlag, tools.PrintProperty)
+		return tools.ListProperties(ctx, client, m, listFilter, tools.PrintProperty)
 	} else if m := names.LabelRegexp().FindStringSubmatch(name); m != nil {
-		return tools.ListLabels(ctx, client, m, filterFlag, tools.PrintLabel)
+		return tools.ListLabels(ctx, client, m, listFilter, tools.PrintLabel)
 	}
 
 	// If nothing matched, return an error.

@@ -12,22 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cmd
+package tools
 
 import (
-	"github.com/spf13/cobra"
+	"context"
+	"log"
+
+	"github.com/apigee/registry/gapic"
+	rpcpb "github.com/apigee/registry/rpc"
 )
 
-var computeFilter string
-
-func init() {
-	rootCmd.AddCommand(computeCmd)
-	computeCmd.PersistentFlags().StringVar(&computeFilter, "filter", "", "filter compute arguments")
-}
-
-// computeCmd represents the compute command
-var computeCmd = &cobra.Command{
-	Use:   "compute",
-	Short: "compute properties of API specifications.",
-	Long:  `compute properties of API specifications.`,
+func EnsureProjectExists(ctx context.Context, client *gapic.RegistryClient, projectID string) {
+	// if the project doesn't exist, create it
+	req := &rpcpb.GetProjectRequest{Name: "projects/" + projectID}
+	_, err := client.GetProject(ctx, req)
+	if NotFound(err) {
+		req := &rpcpb.CreateProjectRequest{
+			ProjectId: projectID,
+		}
+		_, err := client.CreateProject(ctx, req)
+		if err != nil {
+			log.Fatalf("%s", err.Error())
+		}
+	}
 }

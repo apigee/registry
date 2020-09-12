@@ -58,7 +58,7 @@ var uploadOpenAPICmd = &cobra.Command{
 		if client == nil {
 			log.Fatalf("that's bad")
 		}
-		ensureProjectExists(ctx, client, projectID)
+		tools.EnsureProjectExists(ctx, client, projectID)
 
 		for _, arg := range args {
 			log.Printf("%+v", arg)
@@ -167,7 +167,7 @@ func (task *uploadOpenAPITask) createAPI() error {
 	request := &rpcpb.GetApiRequest{}
 	request.Name = "projects/" + task.projectID + "/apis/" + task.apiID
 	_, err := task.client.GetApi(task.ctx, request)
-	if notFound(err) {
+	if tools.NotFound(err) {
 		request := &rpcpb.CreateApiRequest{}
 		request.Parent = "projects/" + task.projectID
 		request.ApiId = task.apiID
@@ -176,7 +176,7 @@ func (task *uploadOpenAPITask) createAPI() error {
 		response, err := task.client.CreateApi(task.ctx, request)
 		if err == nil {
 			log.Printf("created %s", response.Name)
-		} else if alreadyExists(err) {
+		} else if tools.AlreadyExists(err) {
 			log.Printf("already exists %s/apis/%s", request.Parent, request.ApiId)
 		} else {
 			log.Printf("failed to create %s/apis/%s: %s",
@@ -192,7 +192,7 @@ func (task *uploadOpenAPITask) createVersion() error {
 	request := &rpcpb.GetVersionRequest{}
 	request.Name = "projects/" + task.projectID + "/apis/" + task.apiID + "/versions/" + task.versionID
 	_, err := task.client.GetVersion(task.ctx, request)
-	if notFound(err) {
+	if tools.NotFound(err) {
 		request := &rpcpb.CreateVersionRequest{}
 		request.Parent = "projects/" + task.projectID + "/apis/" + task.apiID
 		request.VersionId = task.versionID
@@ -200,7 +200,7 @@ func (task *uploadOpenAPITask) createVersion() error {
 		response, err := task.client.CreateVersion(task.ctx, request)
 		if err == nil {
 			log.Printf("created %s", response.Name)
-		} else if alreadyExists(err) {
+		} else if tools.AlreadyExists(err) {
 			log.Printf("already exists %s/versions/%s", request.Parent, request.VersionId)
 		} else {
 			log.Printf("failed to create %s/versions/%s: %s",
@@ -220,7 +220,7 @@ func (task *uploadOpenAPITask) createSpec() error {
 		"/versions/" + task.versionID +
 		"/specs/" + filename
 	_, err := task.client.GetSpec(task.ctx, request)
-	if notFound(err) {
+	if tools.NotFound(err) {
 		fileBytes, err := ioutil.ReadFile(task.path)
 		// gzip the spec before uploading it
 		var buf bytes.Buffer
@@ -243,7 +243,7 @@ func (task *uploadOpenAPITask) createSpec() error {
 		response, err := task.client.CreateSpec(task.ctx, request)
 		if err == nil {
 			log.Printf("created %s", response.Name)
-		} else if alreadyExists(err) {
+		} else if tools.AlreadyExists(err) {
 			log.Printf("already exists %s/specs/%s", request.Parent, request.SpecId)
 		} else {
 			details := fmt.Sprintf("contents-length: %d", len(request.Spec.Contents))

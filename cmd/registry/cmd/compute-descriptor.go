@@ -41,7 +41,6 @@ var computeDescriptorCmd = &cobra.Command{
 	Long:  `Compute the descriptor of API specs.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.TODO()
-		log.Printf("compute descriptor called %+v", args)
 		client, err := connection.NewClient(ctx)
 		if err != nil {
 			log.Fatalf("%s", err.Error())
@@ -56,7 +55,7 @@ var computeDescriptorCmd = &cobra.Command{
 		// Generate tasks.
 		name := args[0]
 		if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
-			err = tools.ListSpecs(ctx, client, m, "", func(spec *rpc.Spec) {
+			err = tools.ListSpecs(ctx, client, m, computeFilter, func(spec *rpc.Spec) {
 				taskQueue <- &computeDescriptorTask{
 					ctx:      ctx,
 					client:   client,

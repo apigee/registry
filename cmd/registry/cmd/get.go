@@ -34,8 +34,8 @@ func init() {
 // getCmd represents the get command
 var getCmd = &cobra.Command{
 	Use:   "get",
-	Short: "Get entity values.",
-	Long:  `Get entity values.`,
+	Short: "Get resource values.",
+	Long:  `Get resource values.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.TODO()
 

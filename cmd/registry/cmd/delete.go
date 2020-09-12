@@ -19,15 +19,20 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/apigee/registry/cmd/registry/tools"
 	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
 	"github.com/spf13/cobra"
-	"google.golang.org/api/iterator"
+	"google.golang.org/grpc/status"
 )
+
+var deleteFilter string
 
 func init() {
 	rootCmd.AddCommand(deleteCmd)
+	deleteCmd.Flags().StringVar(&deleteFilter, "filter", "", "Filter resources to delete")
 }
 
 // deleteCmd represents the delete command
@@ -36,130 +41,157 @@ var deleteCmd = &cobra.Command{
 	Short: "Delete matching entities and their children.",
 	Long:  "Delete matching entities and their children.",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("delete called with %+v\n", args)
-		name := args[0]
-		if m := names.ApisRegexp().FindStringSubmatch(name); m != nil {
-			deleteAllApisInProject(m[1])
-		} else if m := names.PropertiesRegexp().FindStringSubmatch(name); m != nil {
-			deleteAllPropertiesInProject(m[1])
-		} else if m := names.LabelsRegexp().FindStringSubmatch(name); m != nil {
-			deleteAllLabelsInProject(m[1])
-		} else {
-			fmt.Printf("Unsupported resource name. See the 'apg registry delete-' subcommands for alternatives.\n")
+		ctx := context.TODO()
+		client, err := connection.NewClient(ctx)
+		if err != nil {
+			log.Fatalf("%s", err.Error())
 		}
+
+		// Initialize task queue.
+		taskQueue := make(chan tools.Task, 1024)
+		workerCount := 64
+		for i := 0; i < workerCount; i++ {
+			tools.WaitGroup().Add(1)
+			go tools.Worker(ctx, taskQueue)
+		}
+
+		err = matchAndHandleDeleteCmd(ctx, client, taskQueue, args[0])
+		if err != nil {
+			st, ok := status.FromError(err)
+			if !ok {
+				log.Fatalf("%s", err.Error())
+			} else {
+				log.Fatalf("%s", st.Message())
+			}
+		}
+
+		close(taskQueue)
+		tools.WaitGroup().Wait()
 	},
 }
 
-func deleteAllApisInProject(projectID string) {
-	ctx := context.TODO()
-	client, err := connection.NewClient(ctx)
-	if err != nil {
-		log.Fatalf("%s", err.Error())
-	}
-	request := &rpc.ListApisRequest{
-		Parent: "projects/" + projectID,
-	}
-	log.Printf("%+v", request)
-	it := client.ListApis(ctx, request)
-	names := make([]string, 0)
-	for {
-		api, err := it.Next()
-		if err == iterator.Done {
-			break
-		} else if err != nil {
-			log.Fatalf("%s", err.Error())
-		}
-		names = append(names, api.Name)
-	}
-	log.Printf("%+v", names)
-	count := len(names)
-	completions := make(chan int)
-	for _, name := range names {
-		go func(name string) {
-			request := &rpc.DeleteApiRequest{}
-			request.Name = name
-			err = client.DeleteApi(ctx, request)
-			completions <- 1
-		}(name)
-	}
-	for i := 0; i < count; i++ {
-		<-completions
-		fmt.Printf("COMPLETE: %d\n", i+1)
+type deleteTask struct {
+	ctx          context.Context
+	client       connection.Client
+	resourceName string
+	resourceKind string
+}
+
+func (task *deleteTask) Run() error {
+	log.Printf("deleting %s %s", task.resourceKind, task.resourceName)
+	switch task.resourceKind {
+	case "api":
+		return task.client.DeleteApi(task.ctx, &rpc.DeleteApiRequest{Name: task.resourceName})
+	case "version":
+		return task.client.DeleteVersion(task.ctx, &rpc.DeleteVersionRequest{Name: task.resourceName})
+	case "spec":
+		return task.client.DeleteSpec(task.ctx, &rpc.DeleteSpecRequest{Name: task.resourceName})
+	case "property":
+		return task.client.DeleteProperty(task.ctx, &rpc.DeletePropertyRequest{Name: task.resourceName})
+	case "label":
+		return task.client.DeleteLabel(task.ctx, &rpc.DeleteLabelRequest{Name: task.resourceName})
+	default:
+		return nil
 	}
 }
 
-func deleteAllPropertiesInProject(projectID string) {
-	ctx := context.TODO()
-	client, err := connection.NewClient(ctx)
-	if err != nil {
-		log.Fatalf("%s", err.Error())
-	}
-	request := &rpc.ListPropertiesRequest{
-		Parent: "projects/" + projectID,
-	}
-	log.Printf("%+v", request)
-	it := client.ListProperties(ctx, request)
-	names := make([]string, 0)
-	for {
-		property, err := it.Next()
-		if err == iterator.Done {
-			break
-		} else if err != nil {
-			log.Fatalf("%s", err.Error())
-		}
-		names = append(names, property.Name)
-	}
-	log.Printf("%+v", names)
-	count := len(names)
-	completions := make(chan int)
-	for _, name := range names {
-		go func(name string) {
-			request := &rpc.DeletePropertyRequest{}
-			request.Name = name
-			err = client.DeleteProperty(ctx, request)
-			completions <- 1
-		}(name)
-	}
-	for i := 0; i < count; i++ {
-		<-completions
-		fmt.Printf("COMPLETE: %d\n", i+1)
+func matchAndHandleDeleteCmd(
+	ctx context.Context,
+	client connection.Client,
+	taskQueue chan tools.Task,
+	name string,
+) error {
+	if m := names.ApiRegexp().FindStringSubmatch(name); m != nil {
+		return deleteAPIs(ctx, client, m, deleteFilter, taskQueue)
+	} else if m := names.VersionRegexp().FindStringSubmatch(name); m != nil {
+		return deleteVersions(ctx, client, m, deleteFilter, taskQueue)
+	} else if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
+		return deleteSpecs(ctx, client, m, deleteFilter, taskQueue)
+	} else if m := names.PropertyRegexp().FindStringSubmatch(name); m != nil {
+		return deleteProperties(ctx, client, m, deleteFilter, taskQueue)
+	} else if m := names.LabelRegexp().FindStringSubmatch(name); m != nil {
+		return deleteLabels(ctx, client, m, deleteFilter, taskQueue)
+	} else {
+		return fmt.Errorf("unsupported resource name: see the 'apg registry delete-' subcommands for alternatives")
 	}
 }
 
-func deleteAllLabelsInProject(projectID string) {
-	ctx := context.TODO()
-	client, err := connection.NewClient(ctx)
-	if err != nil {
-		log.Fatalf("%s", err.Error())
-	}
-	request := &rpc.ListLabelsRequest{
-		Parent: "projects/" + projectID,
-	}
-	log.Printf("%+v", request)
-	it := client.ListLabels(ctx, request)
-	names := make([]string, 0)
-	for {
-		property, err := it.Next()
-		if err == iterator.Done {
-			break
-		} else if err != nil {
-			log.Fatalf("%s", err.Error())
+func deleteAPIs(
+	ctx context.Context,
+	client *gapic.RegistryClient,
+	segments []string,
+	filterFlag string,
+	taskQueue chan tools.Task) error {
+	return tools.ListAPIs(ctx, client, segments, filterFlag, func(api *rpc.Api) {
+		taskQueue <- &deleteTask{
+			ctx:          ctx,
+			client:       client,
+			resourceName: api.Name,
+			resourceKind: "api",
 		}
-		names = append(names, property.Name)
-	}
-	log.Printf("%+v", names)
-	count := len(names)
-	completions := make(chan int)
-	for _, name := range names {
-		go func(name string) {
-			request := &rpc.DeleteLabelRequest{}
-			request.Name = name
-			err = client.DeleteLabel(ctx, request)
-			completions <- 1
-		}(name)
-	}
-	for i := 0; i < count; i++ {
-		<-completions
-		fmt.Printf("COMPLETE: %d\n", i+1)
-	}
+	})
+}
+
+func deleteVersions(
+	ctx context.Context,
+	client *gapic.RegistryClient,
+	segments []string,
+	filterFlag string,
+	taskQueue chan tools.Task) error {
+	return tools.ListVersions(ctx, client, segments, filterFlag, func(version *rpc.Version) {
+		taskQueue <- &deleteTask{
+			ctx:          ctx,
+			client:       client,
+			resourceName: version.Name,
+			resourceKind: "version",
+		}
+	})
+}
+
+func deleteSpecs(
+	ctx context.Context,
+	client *gapic.RegistryClient,
+	segments []string,
+	filterFlag string,
+	taskQueue chan tools.Task) error {
+	return tools.ListSpecs(ctx, client, segments, filterFlag, func(spec *rpc.Spec) {
+		taskQueue <- &deleteTask{
+			ctx:          ctx,
+			client:       client,
+			resourceName: spec.Name,
+			resourceKind: "spec",
+		}
+	})
+}
+
+func deleteProperties(
+	ctx context.Context,
+	client *gapic.RegistryClient,
+	segments []string,
+	filterFlag string,
+	taskQueue chan tools.Task) error {
+	return tools.ListProperties(ctx, client, segments, filterFlag, func(property *rpc.Property) {
+		taskQueue <- &deleteTask{
+			ctx:          ctx,
+			client:       client,
+			resourceName: property.Name,
+			resourceKind: "property",
+		}
+	})
+}
+
+func deleteLabels(
+	ctx context.Context,
+	client *gapic.RegistryClient,
+	segments []string,
+	filterFlag string,
+	taskQueue chan tools.Task) error {
+	return tools.ListLabels(ctx, client, segments, filterFlag, func(label *rpc.Label) {
+		taskQueue <- &deleteTask{
+			ctx:          ctx,
+			client:       client,
+			resourceName: label.Name,
+			resourceKind: "label",
+		}
+	})
 }
