@@ -20,7 +20,7 @@ import (
 	"path"
 	"time"
 
-	"github.com/apigee/registry/cmd/registry/tools"
+	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/rpc"
@@ -58,22 +58,22 @@ var exportCmd = &cobra.Command{
 		}
 
 		if m := names.ProjectRegexp().FindStringSubmatch(name); m != nil {
-			_, err := tools.GetProject(ctx, client, m, func(message *rpc.Project) {
+			_, err := core.GetProject(ctx, client, m, func(message *rpc.Project) {
 				printDocAsYaml(docForMapping(exportProject(ctx, client, message)))
 			})
 			check(err)
 		} else if m := names.ApiRegexp().FindStringSubmatch(name); m != nil {
-			_, err = tools.GetAPI(ctx, client, m, func(message *rpc.Api) {
+			_, err = core.GetAPI(ctx, client, m, func(message *rpc.Api) {
 				printDocAsYaml(docForMapping(exportAPI(ctx, client, message)))
 			})
 			check(err)
 		} else if m := names.VersionRegexp().FindStringSubmatch(name); m != nil {
-			_, err = tools.GetVersion(ctx, client, m, func(message *rpc.Version) {
+			_, err = core.GetVersion(ctx, client, m, func(message *rpc.Version) {
 				printDocAsYaml(docForMapping(exportVersion(ctx, client, message)))
 			})
 			check(err)
 		} else if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
-			_, err = tools.GetSpec(ctx, client, m, false, func(message *rpc.Spec) {
+			_, err = core.GetSpec(ctx, client, m, false, func(message *rpc.Spec) {
 				printDocAsYaml(docForMapping(exportSpec(ctx, client, message)))
 			})
 			check(err)
@@ -87,7 +87,7 @@ func exportProject(ctx context.Context, client *gapic.RegistryClient, message *r
 	m := names.ProjectRegexp().FindStringSubmatch(message.Name)
 	projectMapContent := nodeSlice()
 	apisMapContent := nodeSlice()
-	err := tools.ListAPIs(ctx, client, m, "", func(message *rpc.Api) {
+	err := core.ListAPIs(ctx, client, m, "", func(message *rpc.Api) {
 		apiMapContent := exportAPI(ctx, client, message)
 		apisMapContent = appendPair(apisMapContent, path.Base(message.Name), nodeForMapping(apiMapContent))
 	})
@@ -103,14 +103,14 @@ func exportAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.A
 	apiMapContent = appendPair(apiMapContent, "availability", nodeForString(message.Availability))
 	apiMapContent = appendPair(apiMapContent, "recommended_version", nodeForString(message.RecommendedVersion))
 	versionsMapContent := nodeSlice()
-	err := tools.ListVersions(ctx, client, m, "", func(message *rpc.Version) {
+	err := core.ListVersions(ctx, client, m, "", func(message *rpc.Version) {
 		versionMapContent := exportVersion(ctx, client, message)
 		versionsMapContent = appendPair(versionsMapContent, path.Base(message.Name), nodeForMapping(versionMapContent))
 	})
 	check(err)
 	apiMapContent = appendPair(apiMapContent, "versions", nodeForMapping(versionsMapContent))
 	labelsArrayContent := nodeSlice()
-	err = tools.ListLabelsForParent(ctx, client, m, func(message *rpc.Label) {
+	err = core.ListLabelsForParent(ctx, client, m, func(message *rpc.Label) {
 		labelsArrayContent = append(labelsArrayContent, nodeForString(path.Base(message.Name)))
 	})
 	check(err)
@@ -118,7 +118,7 @@ func exportAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.A
 		apiMapContent = appendPair(apiMapContent, "labels", nodeForSequence(labelsArrayContent))
 	}
 	propertiesMapContent := nodeSlice()
-	err = tools.ListPropertiesForParent(ctx, client, m, func(message *rpc.Property) {
+	err = core.ListPropertiesForParent(ctx, client, m, func(message *rpc.Property) {
 		propertiesMapContent = appendPair(propertiesMapContent,
 			path.Base(message.Name),
 			nodeForMapping(exportProperty(ctx, client, message)))
@@ -135,11 +135,11 @@ func exportVersion(ctx context.Context, client *gapic.RegistryClient, message *r
 	versionMapContent = appendPair(versionMapContent, "createTime", nodeForTime(message.CreateTime.AsTime()))
 	versionMapContent = appendPair(versionMapContent, "state", nodeForString(message.State))
 	specsMapContent := nodeSlice()
-	err := tools.ListSpecs(ctx, client, m, "", func(message *rpc.Spec) {
+	err := core.ListSpecs(ctx, client, m, "", func(message *rpc.Spec) {
 		specMapContent := exportSpec(ctx, client, message)
 		specsMapContent = appendPair(specsMapContent, path.Base(message.Name), nodeForMapping(specMapContent))
 		m := names.SpecRegexp().FindStringSubmatch(message.Name)
-		err := tools.ListSpecRevisions(ctx, client, m, "", func(message *rpc.Spec) {
+		err := core.ListSpecRevisions(ctx, client, m, "", func(message *rpc.Spec) {
 			specMapContent := exportSpec(ctx, client, message)
 			specsMapContent = appendPair(specsMapContent, path.Base(message.Name), nodeForMapping(specMapContent))
 		})
@@ -148,14 +148,14 @@ func exportVersion(ctx context.Context, client *gapic.RegistryClient, message *r
 	check(err)
 	versionMapContent = appendPair(versionMapContent, "specs", nodeForMapping(specsMapContent))
 	labelsArrayContent := nodeSlice()
-	err = tools.ListLabelsForParent(ctx, client, m, func(message *rpc.Label) {
+	err = core.ListLabelsForParent(ctx, client, m, func(message *rpc.Label) {
 		labelsArrayContent = append(labelsArrayContent, nodeForString(path.Base(message.Name)))
 	})
 	if len(labelsArrayContent) > 0 {
 		versionMapContent = appendPair(versionMapContent, "labels", nodeForSequence(labelsArrayContent))
 	}
 	propertiesMapContent := nodeSlice()
-	err = tools.ListPropertiesForParent(ctx, client, m, func(message *rpc.Property) {
+	err = core.ListPropertiesForParent(ctx, client, m, func(message *rpc.Property) {
 		propertiesMapContent = appendPair(propertiesMapContent,
 			path.Base(message.Name),
 			nodeForMapping(exportProperty(ctx, client, message)))

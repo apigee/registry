@@ -27,7 +27,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/apigee/registry/cmd/registry/tools"
+	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	rpcpb "github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
@@ -56,7 +56,7 @@ var uploadProtosCmd = &cobra.Command{
 		if err != nil {
 			log.Fatalf("%s", err.Error())
 		}
-		tools.EnsureProjectExists(ctx, client, projectID)
+		core.EnsureProjectExists(ctx, client, projectID)
 		for _, arg := range args {
 			scanDirectoryForProtos(ctx, client, projectID, arg)
 		}
@@ -68,12 +68,12 @@ func scanDirectoryForProtos(ctx context.Context, client connection.Client, proje
 
 	r := regexp.MustCompile("v.*[1-9]+.*")
 
-	taskQueue := make(chan tools.Task, 1024)
+	taskQueue := make(chan core.Task, 1024)
 
 	workerCount := 32
 	for i := 0; i < workerCount; i++ {
-		tools.WaitGroup().Add(1)
-		go tools.Worker(ctx, taskQueue)
+		core.WaitGroup().Add(1)
+		go core.Worker(ctx, taskQueue)
 	}
 
 	// walk a directory hierarchy, uploading every API spec that matches a set of expected file names.
@@ -103,7 +103,7 @@ func scanDirectoryForProtos(ctx context.Context, client connection.Client, proje
 		log.Println(err)
 	}
 	close(taskQueue)
-	tools.WaitGroup().Wait()
+	core.WaitGroup().Wait()
 }
 
 type uploadProtoTask struct {
@@ -146,7 +146,7 @@ func (task *uploadProtoTask) createAPI() error {
 		Name: "projects/" + task.projectID + "/apis/" + task.apiID,
 	}
 	_, err := task.client.GetApi(task.ctx, request)
-	if tools.NotFound(err) {
+	if core.NotFound(err) {
 		request := &rpcpb.CreateApiRequest{
 			Parent: "projects/" + task.projectID,
 			ApiId:  task.apiID,
@@ -157,7 +157,7 @@ func (task *uploadProtoTask) createAPI() error {
 		response, err := task.client.CreateApi(task.ctx, request)
 		if err == nil {
 			log.Printf("created %s", response.Name)
-		} else if tools.AlreadyExists(err) {
+		} else if core.AlreadyExists(err) {
 			log.Printf("already exists %s/apis/%s", request.Parent, request.ApiId)
 		} else {
 			log.Printf("failed to create %s/apis/%s: %s",
@@ -174,7 +174,7 @@ func (task *uploadProtoTask) createVersion() error {
 		Name: "projects/" + task.projectID + "/apis/" + task.apiID + "/versions/" + task.versionID,
 	}
 	_, err := task.client.GetVersion(task.ctx, request)
-	if tools.NotFound(err) {
+	if core.NotFound(err) {
 		request := &rpcpb.CreateVersionRequest{
 			Parent:    "projects/" + task.projectID + "/apis/" + task.apiID,
 			VersionId: task.versionID,
@@ -183,7 +183,7 @@ func (task *uploadProtoTask) createVersion() error {
 		response, err := task.client.CreateVersion(task.ctx, request)
 		if err == nil {
 			log.Printf("created %s", response.Name)
-		} else if tools.AlreadyExists(err) {
+		} else if core.AlreadyExists(err) {
 			log.Printf("already exists %s/versions/%s", request.Parent, request.VersionId)
 		} else {
 			log.Printf("failed to create %s/versions/%s: %s",
@@ -203,7 +203,7 @@ func (task *uploadProtoTask) createSpec() error {
 			"/specs/" + filename,
 	}
 	_, err := task.client.GetSpec(task.ctx, request)
-	if tools.NotFound(err) {
+	if core.NotFound(err) {
 		prefix := task.directory + "/"
 		// build a zip archive with the contents of the path
 		// https://golangcode.com/create-zip-files-in-go/
@@ -223,7 +223,7 @@ func (task *uploadProtoTask) createSpec() error {
 		response, err := task.client.CreateSpec(task.ctx, request)
 		if err == nil {
 			log.Printf("created %s", response.Name)
-		} else if tools.AlreadyExists(err) {
+		} else if core.AlreadyExists(err) {
 			log.Printf("already exists %s/specs/%s", request.Parent, request.SpecId)
 		} else {
 			details := fmt.Sprintf("contents-length: %d", len(request.Spec.Contents))

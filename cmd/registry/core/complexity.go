@@ -1,4 +1,4 @@
-package tools
+package core
 
 import (
 	metrics "github.com/googleapis/gnostic/metrics"

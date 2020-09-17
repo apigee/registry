@@ -21,7 +21,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/apigee/registry/cmd/registry/tools"
+	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
@@ -57,16 +57,16 @@ var indexCmd = &cobra.Command{
 			log.Fatalf("%s", err.Error())
 		}
 		// Initialize task queue.
-		taskQueue := make(chan tools.Task, 1024)
+		taskQueue := make(chan core.Task, 1024)
 		workerCount := 64
 		for i := 0; i < workerCount; i++ {
-			tools.WaitGroup().Add(1)
-			go tools.Worker(ctx, taskQueue)
+			core.WaitGroup().Add(1)
+			go core.Worker(ctx, taskQueue)
 		}
 		// Generate tasks.
 		name := args[0]
 		if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
-			err = tools.ListSpecs(ctx, client, m, indexFilter, func(spec *rpc.Spec) {
+			err = core.ListSpecs(ctx, client, m, indexFilter, func(spec *rpc.Spec) {
 				taskQueue <- &indexSpecTask{
 					ctx:      ctx,
 					client:   client,
@@ -74,7 +74,7 @@ var indexCmd = &cobra.Command{
 				}
 			})
 			close(taskQueue)
-			tools.WaitGroup().Wait()
+			core.WaitGroup().Wait()
 		} else {
 			log.Fatalf("We don't know how to index %s", name)
 		}
@@ -97,7 +97,7 @@ func (task *indexSpecTask) Run() error {
 		return err
 	}
 	name := spec.GetName()
-	data, err := tools.GetBytesForSpec(spec)
+	data, err := core.GetBytesForSpec(spec)
 	if err != nil {
 		return nil
 	}

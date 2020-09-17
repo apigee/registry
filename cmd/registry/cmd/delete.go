@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/apigee/registry/cmd/registry/tools"
+	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/rpc"
@@ -48,11 +48,11 @@ var deleteCmd = &cobra.Command{
 		}
 
 		// Initialize task queue.
-		taskQueue := make(chan tools.Task, 1024)
+		taskQueue := make(chan core.Task, 1024)
 		workerCount := 64
 		for i := 0; i < workerCount; i++ {
-			tools.WaitGroup().Add(1)
-			go tools.Worker(ctx, taskQueue)
+			core.WaitGroup().Add(1)
+			go core.Worker(ctx, taskQueue)
 		}
 
 		err = matchAndHandleDeleteCmd(ctx, client, taskQueue, args[0])
@@ -66,7 +66,7 @@ var deleteCmd = &cobra.Command{
 		}
 
 		close(taskQueue)
-		tools.WaitGroup().Wait()
+		core.WaitGroup().Wait()
 	},
 }
 
@@ -98,7 +98,7 @@ func (task *deleteTask) Run() error {
 func matchAndHandleDeleteCmd(
 	ctx context.Context,
 	client connection.Client,
-	taskQueue chan tools.Task,
+	taskQueue chan core.Task,
 	name string,
 ) error {
 	if m := names.ApiRegexp().FindStringSubmatch(name); m != nil {
@@ -121,8 +121,8 @@ func deleteAPIs(
 	client *gapic.RegistryClient,
 	segments []string,
 	filterFlag string,
-	taskQueue chan tools.Task) error {
-	return tools.ListAPIs(ctx, client, segments, filterFlag, func(api *rpc.Api) {
+	taskQueue chan core.Task) error {
+	return core.ListAPIs(ctx, client, segments, filterFlag, func(api *rpc.Api) {
 		taskQueue <- &deleteTask{
 			ctx:          ctx,
 			client:       client,
@@ -137,8 +137,8 @@ func deleteVersions(
 	client *gapic.RegistryClient,
 	segments []string,
 	filterFlag string,
-	taskQueue chan tools.Task) error {
-	return tools.ListVersions(ctx, client, segments, filterFlag, func(version *rpc.Version) {
+	taskQueue chan core.Task) error {
+	return core.ListVersions(ctx, client, segments, filterFlag, func(version *rpc.Version) {
 		taskQueue <- &deleteTask{
 			ctx:          ctx,
 			client:       client,
@@ -153,8 +153,8 @@ func deleteSpecs(
 	client *gapic.RegistryClient,
 	segments []string,
 	filterFlag string,
-	taskQueue chan tools.Task) error {
-	return tools.ListSpecs(ctx, client, segments, filterFlag, func(spec *rpc.Spec) {
+	taskQueue chan core.Task) error {
+	return core.ListSpecs(ctx, client, segments, filterFlag, func(spec *rpc.Spec) {
 		taskQueue <- &deleteTask{
 			ctx:          ctx,
 			client:       client,
@@ -169,8 +169,8 @@ func deleteProperties(
 	client *gapic.RegistryClient,
 	segments []string,
 	filterFlag string,
-	taskQueue chan tools.Task) error {
-	return tools.ListProperties(ctx, client, segments, filterFlag, func(property *rpc.Property) {
+	taskQueue chan core.Task) error {
+	return core.ListProperties(ctx, client, segments, filterFlag, func(property *rpc.Property) {
 		taskQueue <- &deleteTask{
 			ctx:          ctx,
 			client:       client,
@@ -185,8 +185,8 @@ func deleteLabels(
 	client *gapic.RegistryClient,
 	segments []string,
 	filterFlag string,
-	taskQueue chan tools.Task) error {
-	return tools.ListLabels(ctx, client, segments, filterFlag, func(label *rpc.Label) {
+	taskQueue chan core.Task) error {
+	return core.ListLabels(ctx, client, segments, filterFlag, func(label *rpc.Label) {
 		taskQueue <- &deleteTask{
 			ctx:          ctx,
 			client:       client,

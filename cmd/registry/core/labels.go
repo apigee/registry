@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package tools
+package core
 
 import (
 	"context"
@@ -23,24 +23,23 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func SetProperty(ctx context.Context,
+func SetLabel(ctx context.Context,
 	client *gapic.RegistryClient,
-	property *rpc.Property) error {
-	request := &rpc.CreatePropertyRequest{}
-	request.Property = property
-	request.PropertyId = property.GetRelation()
-	request.Parent = property.GetSubject()
-	// First try setting a new property value.
-	_, err := client.CreateProperty(ctx, request)
+	label *rpc.Label) error {
+	request := &rpc.CreateLabelRequest{}
+	request.LabelId = label.GetLabel()
+	request.Parent = label.GetSubject()
+	// First try setting a new label value.
+	_, err := client.CreateLabel(ctx, request)
 	if err == nil {
 		return nil
 	}
-	// If that failed because the property already exists, update it.
+	// If that failed because the label already exists, update it.
 	code := status.Code(err)
 	if code == codes.AlreadyExists {
-		request := &rpc.UpdatePropertyRequest{}
-		request.Property = property
-		_, err := client.UpdateProperty(ctx, request)
+		request := &rpc.UpdateLabelRequest{}
+		request.Label = label
+		_, err := client.UpdateLabel(ctx, request)
 		return err
 	}
 	return err

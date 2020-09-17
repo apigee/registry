@@ -20,7 +20,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/apigee/registry/cmd/registry/tools"
+	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
@@ -47,17 +47,17 @@ var computeComplexityCmd = &cobra.Command{
 			log.Fatalf("%s", err.Error())
 		}
 		// Initialize task queue.
-		taskQueue := make(chan tools.Task, 1024)
+		taskQueue := make(chan core.Task, 1024)
 		workerCount := 64
 		for i := 0; i < workerCount; i++ {
-			tools.WaitGroup().Add(1)
-			go tools.Worker(ctx, taskQueue)
+			core.WaitGroup().Add(1)
+			go core.Worker(ctx, taskQueue)
 		}
 		// Generate tasks.
 		name := args[0]
 		if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
 			// Iterate through a collection of specs and summarize each.
-			err = tools.ListSpecs(ctx, client, m, computeFilter, func(spec *rpc.Spec) {
+			err = core.ListSpecs(ctx, client, m, computeFilter, func(spec *rpc.Spec) {
 				taskQueue <- &computeComplexityTask{
 					ctx:      ctx,
 					client:   client,
@@ -65,7 +65,7 @@ var computeComplexityCmd = &cobra.Command{
 				}
 			})
 			close(taskQueue)
-			tools.WaitGroup().Wait()
+			core.WaitGroup().Wait()
 		}
 	},
 }
@@ -86,7 +86,7 @@ func (task *computeComplexityTask) Run() error {
 		return err
 	}
 	log.Printf("computing complexity of %s", spec.Name)
-	data, err := tools.GetBytesForSpec(spec)
+	data, err := core.GetBytesForSpec(spec)
 	if err != nil {
 		return nil
 	}
@@ -96,13 +96,13 @@ func (task *computeComplexityTask) Run() error {
 		if err != nil {
 			return fmt.Errorf("invalid OpenAPI: %s", spec.Name)
 		}
-		complexity = tools.SummarizeOpenAPIv2Document(document)
+		complexity = core.SummarizeOpenAPIv2Document(document)
 	} else if strings.HasPrefix(spec.GetStyle(), "openapi/v3") {
 		document, err := openapi_v3.ParseDocument(data)
 		if err != nil {
 			return fmt.Errorf("invalid OpenAPI: %s", spec.Name)
 		}
-		complexity = tools.SummarizeOpenAPIv3Document(document)
+		complexity = core.SummarizeOpenAPIv3Document(document)
 	} else {
 		return fmt.Errorf("we don't know how to summarize %s", spec.Name)
 	}
@@ -120,7 +120,7 @@ func (task *computeComplexityTask) Run() error {
 			},
 		},
 	}
-	err = tools.SetProperty(task.ctx, task.client, property)
+	err = core.SetProperty(task.ctx, task.client, property)
 	if err != nil {
 		return err
 	}

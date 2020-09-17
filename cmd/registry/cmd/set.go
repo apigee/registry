@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/apigee/registry/cmd/registry/tools"
+	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/rpc"
@@ -50,11 +50,11 @@ var setCmd = &cobra.Command{
 		}
 
 		// Initialize task queue.
-		taskQueue := make(chan tools.Task, 1024)
+		taskQueue := make(chan core.Task, 1024)
 		workerCount := 64
 		for i := 0; i < workerCount; i++ {
-			tools.WaitGroup().Add(1)
-			go tools.Worker(ctx, taskQueue)
+			core.WaitGroup().Add(1)
+			go core.Worker(ctx, taskQueue)
 		}
 
 		err = matchAndHandleSetCmd(ctx, client, taskQueue, args[0])
@@ -68,7 +68,7 @@ var setCmd = &cobra.Command{
 		}
 
 		close(taskQueue)
-		tools.WaitGroup().Wait()
+		core.WaitGroup().Wait()
 	},
 }
 
@@ -82,7 +82,7 @@ type setTask struct {
 func (task *setTask) Run() error {
 	if setLabelID != "" {
 		log.Printf("setting %s/labels/%s", task.resourceName, setLabelID)
-		return tools.SetLabel(task.ctx, task.client, &rpc.Label{
+		return core.SetLabel(task.ctx, task.client, &rpc.Label{
 			Subject: task.resourceName,
 			Label:   setLabelID,
 		})
@@ -93,7 +93,7 @@ func (task *setTask) Run() error {
 func matchAndHandleSetCmd(
 	ctx context.Context,
 	client connection.Client,
-	taskQueue chan tools.Task,
+	taskQueue chan core.Task,
 	name string,
 ) error {
 	if m := names.ProjectRegexp().FindStringSubmatch(name); m != nil {
@@ -114,8 +114,8 @@ func setProjects(
 	client *gapic.RegistryClient,
 	segments []string,
 	filterFlag string,
-	taskQueue chan tools.Task) error {
-	return tools.ListProjects(ctx, client, segments, filterFlag, func(project *rpc.Project) {
+	taskQueue chan core.Task) error {
+	return core.ListProjects(ctx, client, segments, filterFlag, func(project *rpc.Project) {
 		taskQueue <- &setTask{
 			ctx:          ctx,
 			client:       client,
@@ -130,8 +130,8 @@ func setAPIs(
 	client *gapic.RegistryClient,
 	segments []string,
 	filterFlag string,
-	taskQueue chan tools.Task) error {
-	return tools.ListAPIs(ctx, client, segments, filterFlag, func(api *rpc.Api) {
+	taskQueue chan core.Task) error {
+	return core.ListAPIs(ctx, client, segments, filterFlag, func(api *rpc.Api) {
 		taskQueue <- &setTask{
 			ctx:          ctx,
 			client:       client,
@@ -146,8 +146,8 @@ func setVersions(
 	client *gapic.RegistryClient,
 	segments []string,
 	filterFlag string,
-	taskQueue chan tools.Task) error {
-	return tools.ListVersions(ctx, client, segments, filterFlag, func(version *rpc.Version) {
+	taskQueue chan core.Task) error {
+	return core.ListVersions(ctx, client, segments, filterFlag, func(version *rpc.Version) {
 		taskQueue <- &setTask{
 			ctx:          ctx,
 			client:       client,
@@ -162,8 +162,8 @@ func setSpecs(
 	client *gapic.RegistryClient,
 	segments []string,
 	filterFlag string,
-	taskQueue chan tools.Task) error {
-	return tools.ListSpecs(ctx, client, segments, filterFlag, func(spec *rpc.Spec) {
+	taskQueue chan core.Task) error {
+	return core.ListSpecs(ctx, client, segments, filterFlag, func(spec *rpc.Spec) {
 		taskQueue <- &setTask{
 			ctx:          ctx,
 			client:       client,

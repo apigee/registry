@@ -18,7 +18,7 @@ import (
 	"context"
 	"log"
 
-	"github.com/apigee/registry/cmd/registry/tools"
+	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/server/names"
 	"github.com/spf13/cobra"
@@ -50,21 +50,21 @@ var getCmd = &cobra.Command{
 		}
 
 		if m := names.ProjectRegexp().FindStringSubmatch(name); m != nil {
-			_, err = tools.GetProject(ctx, client, m, tools.PrintProjectDetail)
+			_, err = core.GetProject(ctx, client, m, core.PrintProjectDetail)
 		} else if m := names.ApiRegexp().FindStringSubmatch(name); m != nil {
-			_, err = tools.GetAPI(ctx, client, m, tools.PrintAPIDetail)
+			_, err = core.GetAPI(ctx, client, m, core.PrintAPIDetail)
 		} else if m := names.VersionRegexp().FindStringSubmatch(name); m != nil {
-			_, err = tools.GetVersion(ctx, client, m, tools.PrintVersionDetail)
+			_, err = core.GetVersion(ctx, client, m, core.PrintVersionDetail)
 		} else if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
 			if getContents {
-				_, err = tools.GetSpec(ctx, client, m, getContents, tools.PrintSpecContents)
+				_, err = core.GetSpec(ctx, client, m, getContents, core.PrintSpecContents)
 			} else {
-				_, err = tools.GetSpec(ctx, client, m, getContents, tools.PrintSpecDetail)
+				_, err = core.GetSpec(ctx, client, m, getContents, core.PrintSpecDetail)
 			}
 		} else if m := names.PropertyRegexp().FindStringSubmatch(name); m != nil {
-			_, err = tools.GetProperty(ctx, client, m, tools.PrintPropertyDetail)
+			_, err = core.GetProperty(ctx, client, m, core.PrintPropertyDetail)
 		} else if m := names.LabelRegexp().FindStringSubmatch(name); m != nil {
-			_, err = tools.GetLabel(ctx, client, m, tools.PrintLabelDetail)
+			_, err = core.GetLabel(ctx, client, m, core.PrintLabelDetail)
 		} else {
 			log.Printf("Unsupported entity %+v", args)
 		}

@@ -1,4 +1,4 @@
-package tools
+package core
 
 import (
 	"github.com/apigee/registry/rpc"

@@ -20,7 +20,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/apigee/registry/cmd/registry/tools"
+	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
@@ -48,17 +48,17 @@ var computeVocabularyCmd = &cobra.Command{
 			log.Fatalf("%s", err.Error())
 		}
 		// Initialize task queue.
-		taskQueue := make(chan tools.Task, 1024)
+		taskQueue := make(chan core.Task, 1024)
 		workerCount := 64
 		for i := 0; i < workerCount; i++ {
-			tools.WaitGroup().Add(1)
-			go tools.Worker(ctx, taskQueue)
+			core.WaitGroup().Add(1)
+			go core.Worker(ctx, taskQueue)
 		}
 		// Generate tasks.
 		name := args[0]
 		if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
 			// Iterate through a collection of specs and summarize each.
-			err = tools.ListSpecs(ctx, client, m, computeFilter, func(spec *rpc.Spec) {
+			err = core.ListSpecs(ctx, client, m, computeFilter, func(spec *rpc.Spec) {
 				taskQueue <- &computeVocabularyTask{
 					ctx:      ctx,
 					client:   client,
@@ -66,7 +66,7 @@ var computeVocabularyCmd = &cobra.Command{
 				}
 			})
 			close(taskQueue)
-			tools.WaitGroup().Wait()
+			core.WaitGroup().Wait()
 		}
 	},
 }
@@ -87,7 +87,7 @@ func (task *computeVocabularyTask) Run() error {
 		return err
 	}
 	log.Printf("computing vocabulary of %s", spec.Name)
-	data, err := tools.GetBytesForSpec(spec)
+	data, err := core.GetBytesForSpec(spec)
 	if err != nil {
 		return nil
 	}
@@ -121,7 +121,7 @@ func (task *computeVocabularyTask) Run() error {
 			},
 		},
 	}
-	err = tools.SetProperty(task.ctx, task.client, property)
+	err = core.SetProperty(task.ctx, task.client, property)
 	if err != nil {
 		return err
 	}

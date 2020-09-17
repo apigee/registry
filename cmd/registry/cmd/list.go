@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/apigee/registry/cmd/registry/tools"
+	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/server/names"
 	"github.com/spf13/cobra"
@@ -65,32 +65,32 @@ func matchAndHandleListCmd(
 
 	// First try to match collection names.
 	if m := names.ProjectsRegexp().FindStringSubmatch(name); m != nil {
-		return tools.ListProjects(ctx, client, m, listFilter, tools.PrintProject)
+		return core.ListProjects(ctx, client, m, listFilter, core.PrintProject)
 	} else if m := names.ApisRegexp().FindStringSubmatch(name); m != nil {
-		return tools.ListAPIs(ctx, client, m, listFilter, tools.PrintAPI)
+		return core.ListAPIs(ctx, client, m, listFilter, core.PrintAPI)
 	} else if m := names.VersionsRegexp().FindStringSubmatch(name); m != nil {
-		return tools.ListVersions(ctx, client, m, listFilter, tools.PrintVersion)
+		return core.ListVersions(ctx, client, m, listFilter, core.PrintVersion)
 	} else if m := names.SpecsRegexp().FindStringSubmatch(name); m != nil {
-		return tools.ListSpecs(ctx, client, m, listFilter, tools.PrintSpec)
+		return core.ListSpecs(ctx, client, m, listFilter, core.PrintSpec)
 	} else if m := names.PropertiesRegexp().FindStringSubmatch(name); m != nil {
-		return tools.ListProperties(ctx, client, m, listFilter, tools.PrintProperty)
+		return core.ListProperties(ctx, client, m, listFilter, core.PrintProperty)
 	} else if m := names.LabelsRegexp().FindStringSubmatch(name); m != nil {
-		return tools.ListLabels(ctx, client, m, listFilter, tools.PrintLabel)
+		return core.ListLabels(ctx, client, m, listFilter, core.PrintLabel)
 	}
 
 	// Then try to match resource names.
 	if m := names.ProjectRegexp().FindStringSubmatch(name); m != nil {
-		return tools.ListProjects(ctx, client, m, listFilter, tools.PrintProject)
+		return core.ListProjects(ctx, client, m, listFilter, core.PrintProject)
 	} else if m := names.ApiRegexp().FindStringSubmatch(name); m != nil {
-		return tools.ListAPIs(ctx, client, m, listFilter, tools.PrintAPI)
+		return core.ListAPIs(ctx, client, m, listFilter, core.PrintAPI)
 	} else if m := names.VersionRegexp().FindStringSubmatch(name); m != nil {
-		return tools.ListVersions(ctx, client, m, listFilter, tools.PrintVersion)
+		return core.ListVersions(ctx, client, m, listFilter, core.PrintVersion)
 	} else if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
-		return tools.ListSpecs(ctx, client, m, listFilter, tools.PrintSpec)
+		return core.ListSpecs(ctx, client, m, listFilter, core.PrintSpec)
 	} else if m := names.PropertyRegexp().FindStringSubmatch(name); m != nil {
-		return tools.ListProperties(ctx, client, m, listFilter, tools.PrintProperty)
+		return core.ListProperties(ctx, client, m, listFilter, core.PrintProperty)
 	} else if m := names.LabelRegexp().FindStringSubmatch(name); m != nil {
-		return tools.ListLabels(ctx, client, m, listFilter, tools.PrintLabel)
+		return core.ListLabels(ctx, client, m, listFilter, core.PrintLabel)
 	}
 
 	// If nothing matched, return an error.

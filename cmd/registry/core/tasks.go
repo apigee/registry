@@ -12,27 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package tools
+package core
 
 import (
 	"context"
 	"log"
-
-	"github.com/apigee/registry/gapic"
-	rpcpb "github.com/apigee/registry/rpc"
+	"sync"
 )
 
-func EnsureProjectExists(ctx context.Context, client *gapic.RegistryClient, projectID string) {
-	// if the project doesn't exist, create it
-	req := &rpcpb.GetProjectRequest{Name: "projects/" + projectID}
-	_, err := client.GetProject(ctx, req)
-	if NotFound(err) {
-		req := &rpcpb.CreateProjectRequest{
-			ProjectId: projectID,
-		}
-		_, err := client.CreateProject(ctx, req)
+// Task is a generic interface for a runnable operation
+type Task interface {
+	Run() error
+}
+
+var wg sync.WaitGroup
+
+func WaitGroup() *sync.WaitGroup {
+	return &wg
+}
+
+func Worker(ctx context.Context, taskChan <-chan Task) {
+	defer wg.Done()
+	for task := range taskChan {
+		err := task.Run()
 		if err != nil {
-			log.Fatalf("%s", err.Error())
+			log.Printf("ERROR %s", err.Error())
 		}
 	}
 }
