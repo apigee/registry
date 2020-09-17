@@ -86,9 +86,8 @@ func (task *setTask) Run() error {
 			Subject: task.resourceName,
 			Label:   setLabelID,
 		})
-	} else {
-		return nil
 	}
+	return nil
 }
 
 func matchAndHandleSetCmd(
@@ -106,7 +105,7 @@ func matchAndHandleSetCmd(
 	} else if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
 		return setSpecs(ctx, client, m, setFilter, taskQueue)
 	} else {
-		return fmt.Errorf("unsupported resource name.")
+		return fmt.Errorf("unsupported resource name %s", name)
 	}
 }
 

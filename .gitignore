@@ -2,5 +2,6 @@ cmd/apg/*.go
 gapic/*.go
 rpc/*.go
 *.pb.go
+*.bleve
 
 proto.pb

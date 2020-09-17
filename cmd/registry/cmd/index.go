@@ -19,26 +19,37 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"sync"
 
 	"github.com/apigee/registry/cmd/registry/tools"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
-	"github.com/golang/protobuf/ptypes/any"
+	"github.com/blevesearch/bleve"
 	openapi_v2 "github.com/googleapis/gnostic/openapiv2"
 	openapi_v3 "github.com/googleapis/gnostic/openapiv3"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/proto"
 )
 
+const (
+	indexDir = "registry.bleve"
+)
+
+var indexFilter string
+var indexMutex sync.Mutex
+
 func init() {
-	computeCmd.AddCommand(computeDescriptorCmd)
+	rootCmd.AddCommand(indexCmd)
+	indexCmd.Flags().StringVar(&indexFilter, "filter", "", "Filter option to send with index calls")
 }
 
-var computeDescriptorCmd = &cobra.Command{
-	Use:   "descriptor",
-	Short: "Compute the descriptor of API specs.",
-	Long:  `Compute the descriptor of API specs.`,
+// indexCmd represents the index command
+var indexCmd = &cobra.Command{
+	Use:   "index",
+	Short: "Build a local index of specs in the Registry.",
+	Long:  "Build a local index of specs in the Registry.",
+	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.TODO()
 		client, err := connection.NewClient(ctx)
@@ -55,8 +66,8 @@ var computeDescriptorCmd = &cobra.Command{
 		// Generate tasks.
 		name := args[0]
 		if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
-			err = tools.ListSpecs(ctx, client, m, computeFilter, func(spec *rpc.Spec) {
-				taskQueue <- &computeDescriptorTask{
+			err = tools.ListSpecs(ctx, client, m, indexFilter, func(spec *rpc.Spec) {
+				taskQueue <- &indexSpecTask{
 					ctx:      ctx,
 					client:   client,
 					specName: spec.Name,
@@ -64,17 +75,19 @@ var computeDescriptorCmd = &cobra.Command{
 			})
 			close(taskQueue)
 			tools.WaitGroup().Wait()
+		} else {
+			log.Fatalf("We don't know how to index %s", name)
 		}
 	},
 }
 
-type computeDescriptorTask struct {
+type indexSpecTask struct {
 	ctx      context.Context
 	client   connection.Client
 	specName string
 }
 
-func (task *computeDescriptorTask) Run() error {
+func (task *indexSpecTask) Run() error {
 	request := &rpc.GetSpecRequest{
 		Name: task.specName,
 		View: rpc.SpecView_FULL,
@@ -84,44 +97,52 @@ func (task *computeDescriptorTask) Run() error {
 		return err
 	}
 	name := spec.GetName()
-	log.Printf("computing descriptor %s", name)
 	data, err := tools.GetBytesForSpec(spec)
 	if err != nil {
 		return nil
 	}
-	subject := spec.GetName()
-	relation := "descriptor"
-	var typeURL string
-	var document proto.Message
+	var message proto.Message
 	if strings.HasPrefix(spec.GetStyle(), "openapi/v2") {
-		typeURL = "gnostic.openapiv2.Document"
-		document, err = openapi_v2.ParseDocument(data)
+		document, err := openapi_v2.ParseDocument(data)
 		if err != nil {
-			return err
+			return fmt.Errorf("errors parsing %s", name)
 		}
+		// remove some fields to simplify the search index
+		document.Paths = nil
+		document.Definitions = nil
+		document.Responses = nil
+		document.Parameters = nil
+		document.Security = nil
+		document.SecurityDefinitions = nil
+		message = document
 	} else if strings.HasPrefix(spec.GetStyle(), "openapi/v3") {
-		typeURL = "gnostic.openapiv3.Document"
-		document, err = openapi_v3.ParseDocument(data)
+		document, err := openapi_v3.ParseDocument(data)
 		if err != nil {
-			return err
+			return fmt.Errorf("errors parsing %s", name)
 		}
+		// remove some fields to simplify the search index
+		document.Paths = nil
+		document.Components = nil
+		document.Security = nil
+		message = document
 	} else {
 		return fmt.Errorf("unable to generate descriptor for style %s", spec.GetStyle())
 	}
-	messageData, err := proto.Marshal(document)
+
+	// The bleve index requires serialized updates.
+	indexMutex.Lock()
+	defer indexMutex.Unlock()
+	// Open the index, creating a new one if necessary.
+	index, err := bleve.Open(indexDir)
 	if err != nil {
-		return err
+		mapping := bleve.NewIndexMapping()
+		index, err = bleve.New(indexDir, mapping)
+		if err != nil {
+			return err
+		}
 	}
-	property := &rpc.Property{
-		Subject:  subject,
-		Relation: relation,
-		Name:     subject + "/properties/" + relation,
-		Value: &rpc.Property_MessageValue{
-			MessageValue: &any.Any{
-				TypeUrl: typeURL,
-				Value:   messageData,
-			},
-		},
-	}
-	return tools.SetProperty(task.ctx, task.client, property)
+	defer index.Close()
+	// Index the spec.
+	log.Printf("indexing %s", task.specName)
+	return index.Index(task.specName, message)
 }

@@ -9,6 +9,7 @@ require (
 	cloud.google.com/go/storage v1.6.0
 	git.apache.org/thrift.git v0.12.0 // indirect
 	github.com/antlr/antlr4 v0.0.0-20200503195918-621b933c7a7f // indirect
+	github.com/blevesearch/bleve v1.0.10
 	github.com/bmatcuk/doublestar v1.3.2 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.0 // indirect
 	github.com/docopt/docopt-go v0.0.0-20180111231733-ee0de3bc6815
