@@ -21,9 +21,11 @@ production Google API.
 ## This Implementation
 
 This reference implementation is a [gRPC](https://grpc.io) service written in
-Go. It stores data using the
-[Google Cloud Datastore API](https://cloud.google.com/datastore) and can be
-deployed in a container using [Google Cloud Run](https://cloud.google.com/run).
+Go. It can be deployed in a container using
+[Google Cloud Run](https://cloud.google.com/run). It stores data using the
+[Google Cloud Datastore API](https://cloud.google.com/datastore) Alternate
+storage backends can also be specified with a configuration file. Currently
+SQLite and PostgreSQL are supported (see [config](config) for details).
 
 The service is annotated to support
 [gRPC HTTP/JSON transcoding](https://aip.dev/127), which allows it to be
@@ -74,7 +76,8 @@ that build and deploy the API on
 ## Generated Components
 
 Several directories of generated code are created during the build process (see
-the `COMPILE-PROTOS.sh` script for details). These include:
+the [COMPILE-PROTOS.sh](tools/COMPILE-PROTOS.sh) script for details). These
+include:
 
 - **`rpc`** containing generated Protocol Buffer support code (in Go).
 - **`gapic`** containing the Go GAPIC (generated API client) library.
