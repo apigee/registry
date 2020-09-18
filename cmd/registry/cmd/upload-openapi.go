@@ -55,9 +55,6 @@ var uploadOpenAPICmd = &cobra.Command{
 		if err != nil {
 			log.Fatalf("%s", err.Error())
 		}
-		if client == nil {
-			log.Fatalf("that's bad")
-		}
 		core.EnsureProjectExists(ctx, client, projectID)
 
 		for _, arg := range args {

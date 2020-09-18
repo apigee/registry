@@ -54,9 +54,6 @@ var uploadDiscoveryCmd = &cobra.Command{
 		if err != nil {
 			log.Fatalf("%s", err.Error())
 		}
-		if client == nil {
-			log.Fatalf("that's bad")
-		}
 		taskQueue := make(chan core.Task, 1024)
 
 		workerCount := 64
