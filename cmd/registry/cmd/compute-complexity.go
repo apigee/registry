@@ -40,6 +40,7 @@ var computeComplexityCmd = &cobra.Command{
 	Use:   "complexity",
 	Short: "Compute the complexity of API specs.",
 	Long:  `Compute the complexity of API specs.`,
+	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.TODO()
 		client, err := connection.NewClient(ctx)

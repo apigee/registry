@@ -41,6 +41,7 @@ var uploadOpenAPICmd = &cobra.Command{
 	Use:   "openapi",
 	Short: "Upload OpenAPI descriptions of APIs.",
 	Long:  "Upload OpenAPI descriptions of APIs.",
+	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
 		flagset := cmd.LocalFlags()

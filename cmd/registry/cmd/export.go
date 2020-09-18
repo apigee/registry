@@ -45,6 +45,7 @@ var exportCmd = &cobra.Command{
 	Use:   "export",
 	Short: "Export a subtree of the registry.",
 	Long:  `Export a subtree of the registry.`,
+	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.TODO()
 		client, err := connection.NewClient(ctx)

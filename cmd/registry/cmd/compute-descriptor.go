@@ -25,6 +25,7 @@ import (
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
 	"github.com/golang/protobuf/ptypes/any"
+	discovery_v1 "github.com/googleapis/gnostic/discovery"
 	openapi_v2 "github.com/googleapis/gnostic/openapiv2"
 	openapi_v3 "github.com/googleapis/gnostic/openapiv3"
 	"github.com/spf13/cobra"
@@ -39,6 +40,7 @@ var computeDescriptorCmd = &cobra.Command{
 	Use:   "descriptor",
 	Short: "Compute the descriptor of API specs.",
 	Long:  `Compute the descriptor of API specs.`,
+	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.TODO()
 		client, err := connection.NewClient(ctx)
@@ -102,6 +104,12 @@ func (task *computeDescriptorTask) Run() error {
 	} else if strings.HasPrefix(spec.GetStyle(), "openapi/v3") {
 		typeURL = "gnostic.openapiv3.Document"
 		document, err = openapi_v3.ParseDocument(data)
+		if err != nil {
+			return err
+		}
+	} else if strings.HasPrefix(spec.GetStyle(), "discovery") {
+		typeURL = "gnostic.discoveryv1.Document"
+		document, err = discovery_v1.ParseDocument(data)
 		if err != nil {
 			return err
 		}

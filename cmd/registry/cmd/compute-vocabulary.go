@@ -41,6 +41,7 @@ var computeVocabularyCmd = &cobra.Command{
 	Use:   "vocabulary",
 	Short: "Compute the vocabulary of API specs.",
 	Long:  `Compute the vocabulary of API specs.`,
+	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.TODO()
 		client, err := connection.NewClient(ctx)

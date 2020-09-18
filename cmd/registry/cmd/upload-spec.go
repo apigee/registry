@@ -38,6 +38,7 @@ var specCmd = &cobra.Command{
 	Use:   "spec",
 	Short: "Upload files of an API spec.",
 	Long:  "Upload files of an API spec.",
+	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.TODO()
 		flagset := cmd.LocalFlags()

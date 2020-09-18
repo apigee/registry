@@ -40,6 +40,7 @@ var deleteCmd = &cobra.Command{
 	Use:   "delete",
 	Short: "Delete matching entities and their children.",
 	Long:  "Delete matching entities and their children.",
+	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.TODO()
 		client, err := connection.NewClient(ctx)
