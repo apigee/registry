@@ -31,7 +31,7 @@ import (
 
 func main() {
 	// This makes a raw gRPC connection.
-	// see the client package for a simpler way to get a Go client.
+	// see the connection package for a simpler way to get a Go client.
 	var opts []grpc.DialOption
 	insecure := os.Getenv("APG_REGISTRY_INSECURE")
 	if insecure != "" {
