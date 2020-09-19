@@ -4,7 +4,11 @@
 # Use the official Golang image to create a build artifact.
 # This is based on Debian and sets the GOPATH to /go.
 # https://hub.docker.com/_/golang
-FROM golang:1.13 as builder
+FROM golang:1.15 as builder
+RUN apt-get update
+RUN apt-get install unzip
+RUN curl -L https://github.com/protocolbuffers/protobuf/releases/download/v3.13.0/protoc-3.13.0-linux-x86_64.zip > /tmp/protoc.zip
+RUN unzip /tmp/protoc.zip -d /usr/local
 
 # Create and change to the app directory.
 WORKDIR /app
@@ -17,10 +21,13 @@ RUN go mod download
 # Copy local code to the container image.
 COPY . ./
 
-# Build the binary.
+# Compile protos.
+RUN make protos
+
+# Build registry-server.
 RUN CGO_ENABLED=0 GOOS=linux go build -v -o registry-server ./cmd/registry-server
 
-# Build the authz-server
+# Build authz-server.
 RUN CGO_ENABLED=0 GOOS=linux go build -v -o authz-server ./cmd/authz-server
 
 # Use an Envoy release image to get envoy in the image.

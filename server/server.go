@@ -46,14 +46,11 @@ type Config struct {
 type RegistryServer struct {
 	// Uncomment the following line when adding new methods.
 	// rpc.UnimplementedRegistryServer
-
-	projectID string
-
-	gormDB              string
-	gormConfig          string
-	enableNotifications bool
-
-	weTrustTheSort bool
+	gormDB              string // configured
+	gormConfig          string // configured
+	enableNotifications bool   // configured
+	projectID           string // computed
+	weTrustTheSort      bool   // computed
 }
 
 func (s *RegistryServer) getStorageClient(ctx context.Context) (storage.Client, error) {
@@ -62,7 +59,11 @@ func (s *RegistryServer) getStorageClient(ctx context.Context) (storage.Client, 
 		return gorm.NewClient(ctx, s.gormDB, s.gormConfig)
 	} else {
 		s.weTrustTheSort = true
-		return datastore.NewClient(ctx, s.projectID)
+		projectID, err := s.getProjectID()
+		if err != nil {
+			return nil, err
+		}
+		return datastore.NewClient(ctx, projectID)
 	}
 }
 
@@ -71,20 +72,23 @@ func (s *RegistryServer) releaseStorageClient(client storage.Client) {
 	client.Close()
 }
 
-func getProjectID() (string, error) {
+func (s *RegistryServer) getProjectID() (string, error) {
+	if s.projectID != "" {
+		return s.projectID, nil
+	}
 	ctx := context.TODO()
 	credentials, err := google.FindDefaultCredentials(ctx)
 	if err != nil {
 		return "", fmt.Errorf("error: %v", err)
 	}
-	projectID := credentials.ProjectID
-	if projectID == "" {
-		projectID = os.Getenv("REGISTRY_PROJECT_IDENTIFIER")
+	s.projectID = credentials.ProjectID
+	if s.projectID == "" {
+		s.projectID = os.Getenv("REGISTRY_PROJECT_IDENTIFIER")
 	}
-	if projectID == "" {
+	if s.projectID == "" {
 		return "", fmt.Errorf("unable to determine project ID")
 	}
-	return projectID, nil
+	return s.projectID, nil
 }
 
 var serverMutex sync.Mutex
@@ -92,11 +96,6 @@ var serverSerialization bool
 
 // RunServer runs the Registry server on a specified port
 func RunServer(port string, config *Config) error {
-	// Get project ID to use in registry server.
-	projectID, err := getProjectID()
-	if err != nil {
-		return err
-	}
 	// Construct registry server.
 	loggingHandler := func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		if serverSerialization {
@@ -117,7 +116,7 @@ func RunServer(port string, config *Config) error {
 	if config == nil {
 		config = &Config{}
 	}
-	r := &RegistryServer{projectID: projectID,
+	r := &RegistryServer{
 		gormDB:              config.Database,
 		gormConfig:          config.DBConfig,
 		enableNotifications: config.Notify,

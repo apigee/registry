@@ -1,11 +1,13 @@
 lite:
 	go install ./...
 
-all:	
-	cd third_party; sh ./SETUP.sh
-	./tools/COMPILE-PROTOS.sh
+all:	protos
 	cd examples/corpus; ./COMPILE-PROTOS.sh
 	go install ./...
+
+protos:
+	cd third_party; sh ./SETUP.sh
+	./tools/COMPILE-PROTOS.sh
 
 test:
 	go clean -testcache

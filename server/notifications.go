@@ -37,8 +37,12 @@ func (s *RegistryServer) notify(change rpc.Notification_Change, resource string)
 	if !s.enableNotifications {
 		return nil
 	}
+	projectID, err := s.getProjectID()
+	if err != nil {
+		return err
+	}
 	ctx := context.Background()
-	client, err := pubsub.NewClient(ctx, s.projectID)
+	client, err := pubsub.NewClient(ctx, projectID)
 	if err != nil {
 		return err
 	}
