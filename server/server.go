@@ -46,18 +46,16 @@ type Config struct {
 type RegistryServer struct {
 	// Uncomment the following line when adding new methods.
 	// rpc.UnimplementedRegistryServer
-	gormDB              string // configured
-	gormConfig          string // configured
+	database            string // configured
+	dbConfig            string // configured
 	enableNotifications bool   // configured
 	projectID           string // computed
 	weTrustTheSort      bool   // computed
 }
 
 func (s *RegistryServer) getStorageClient(ctx context.Context) (storage.Client, error) {
-	if s.gormDB != "" {
-		s.weTrustTheSort = false
-		return gorm.NewClient(ctx, s.gormDB, s.gormConfig)
-	} else {
+	// Cloud Datastore is the default.
+	if s.database == "" || s.database == "datastore" {
 		s.weTrustTheSort = true
 		projectID, err := s.getProjectID()
 		if err != nil {
@@ -65,6 +63,9 @@ func (s *RegistryServer) getStorageClient(ctx context.Context) (storage.Client, 
 		}
 		return datastore.NewClient(ctx, projectID)
 	}
+	// If we're not using Cloud Datastore, attempt to connect to a database using gorm.
+	s.weTrustTheSort = false
+	return gorm.NewClient(ctx, s.database, s.dbConfig)
 }
 
 // if we had one client per handler, this would close the client.
@@ -117,8 +118,8 @@ func RunServer(port string, config *Config) error {
 		config = &Config{}
 	}
 	r := &RegistryServer{
-		gormDB:              config.Database,
-		gormConfig:          config.DBConfig,
+		database:            config.Database,
+		dbConfig:            config.DBConfig,
 		enableNotifications: config.Notify,
 	}
 	rpc.RegisterRegistryServer(grpcServer, r)

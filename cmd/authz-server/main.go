@@ -23,7 +23,6 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -47,9 +46,10 @@ import (
 )
 
 var (
-	port = flag.String("port", ":50051", "port")
-	conn *grpc.ClientConn
-	hs   *health.Server
+	portFlag   = flag.String("p", ":50051", "port")
+	configFlag = flag.String("c", "", "configuration file")
+	conn       *grpc.ClientConn
+	hs         *health.Server
 )
 
 // AuthzConfig configures the authz filter.
@@ -412,23 +412,23 @@ func denyMalformedCredentials() *auth.CheckResponse {
 func main() {
 	flag.Parse()
 
-	b, err := ioutil.ReadFile("authz.yaml")
-	if err != nil {
-		log.Fatalf("%s", err.Error())
+	if *configFlag != "" {
+		b, err := ioutil.ReadFile(*configFlag)
+		if err != nil {
+			log.Fatalf("%s", err.Error())
+		}
+		err = yaml.Unmarshal(b, &config)
+		if err != nil {
+			log.Fatalf("%s", err.Error())
+		}
+	} else {
+		config.TrustJWTs = true
+		config.Readers = []string{"*"}
+		config.Writers = []string{"*"}
 	}
-	err = yaml.Unmarshal(b, &config)
-	if err != nil {
-		log.Fatalf("%s", err.Error())
-	}
-	log.Printf("config: %+v", config)
+	log.Printf("%+v", config)
 
-	if *port == "" {
-		fmt.Fprintln(os.Stderr, "missing -port flag (:50051)")
-		flag.Usage()
-		os.Exit(2)
-	}
-
-	lis, err := net.Listen("tcp", *port)
+	lis, err := net.Listen("tcp", *portFlag)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
@@ -438,6 +438,6 @@ func main() {
 	auth.RegisterAuthorizationServer(s, &authorizationServer{})
 	healthpb.RegisterHealthServer(s, &healthServer{})
 
-	log.Printf("Starting gRPC Server at %s", *port)
+	log.Printf("Starting gRPC Server at %s", *portFlag)
 	s.Serve(lis)
 }

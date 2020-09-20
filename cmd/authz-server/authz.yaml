@@ -1,4 +1,4 @@
-trustJWTs: true
+trustJWTs: false
 readers:
   - "*"
 writers: 

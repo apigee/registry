@@ -5,11 +5,11 @@
 #
 
 # run the authz server on its default port.
-/authz-server &
+/authz-server -c authz.yaml &
 
 # run the registry server on a fixed port.
 REGISTRY_SERVER_PORT=8081
-PORT=$REGISTRY_SERVER_PORT /registry-server &
+PORT=$REGISTRY_SERVER_PORT /registry-server -c registry.yaml &
 
 # update envoy.yaml to look for the registry-server on the port we just set.
 sed -i "s/8080/${REGISTRY_SERVER_PORT}/g" /etc/envoy/envoy.yaml
