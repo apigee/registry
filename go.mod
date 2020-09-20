@@ -30,7 +30,7 @@ require (
 	github.com/googleapis/gapic-generator-go v0.15.1 // indirect
 	github.com/googleapis/gax-go v2.0.2+incompatible // indirect
 	github.com/googleapis/gax-go/v2 v2.0.5
-	github.com/googleapis/gnostic v0.5.2-0.20200911050533-b262eedca185
+	github.com/googleapis/gnostic v0.5.2-0.20200920051700-dea02580e6d6
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/improbable-eng/grpc-web v0.12.0
 	github.com/ktr0731/grpc-web-go-client v0.2.7

@@ -25,6 +25,7 @@ import (
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
 	"github.com/golang/protobuf/ptypes/any"
+	discovery "github.com/googleapis/gnostic/discovery"
 	metrics "github.com/googleapis/gnostic/metrics"
 	vocab "github.com/googleapis/gnostic/metrics/vocabulary"
 	openapi_v2 "github.com/googleapis/gnostic/openapiv2"
@@ -105,6 +106,13 @@ func (task *computeVocabularyTask) Run() error {
 			return fmt.Errorf("invalid OpenAPI: %s", spec.Name)
 		}
 		vocabulary = vocab.NewVocabularyFromOpenAPIv3(document)
+	} else if strings.HasPrefix(spec.GetStyle(), "discovery") {
+		document, err := discovery.ParseDocument(data)
+		if err != nil {
+			return fmt.Errorf("invalid Discovery: %s", spec.Name)
+		}
+		vocabulary = vocab.NewVocabularyFromDiscovery(document)
+
 	} else {
 		return fmt.Errorf("we don't know how to summarize %s", spec.Name)
 	}
