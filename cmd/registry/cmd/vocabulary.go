@@ -44,30 +44,30 @@ var vocabularyCmd = &cobra.Command{
 }
 
 func collectInputs(ctx context.Context, client connection.Client, args []string, filter string) []*metrics.Vocabulary {
-	name := args[0]
 	inputs := make([]*metrics.Vocabulary, 0)
-	if m := names.PropertyRegexp().FindStringSubmatch(name); m != nil {
-		// Iterate through a collection of properties and summarize each.
-		err := core.ListProperties(ctx, client, m, filter, func(property *rpc.Property) {
-			switch v := property.GetValue().(type) {
-			case *rpc.Property_MessageValue:
-				if v.MessageValue.TypeUrl == "gnostic.metrics.Vocabulary" {
-					vocab := &metrics.Vocabulary{}
-					err := proto.Unmarshal(v.MessageValue.Value, vocab)
-					if err != nil {
-						log.Printf("%+v", err)
+	for _, name := range args {
+		if m := names.PropertyRegexp().FindStringSubmatch(name); m != nil {
+			err := core.ListProperties(ctx, client, m, filter, func(property *rpc.Property) {
+				switch v := property.GetValue().(type) {
+				case *rpc.Property_MessageValue:
+					if v.MessageValue.TypeUrl == "gnostic.metrics.Vocabulary" {
+						vocab := &metrics.Vocabulary{}
+						err := proto.Unmarshal(v.MessageValue.Value, vocab)
+						if err != nil {
+							log.Printf("%+v", err)
+						} else {
+							inputs = append(inputs, vocab)
+						}
 					} else {
-						inputs = append(inputs, vocab)
+						log.Printf("skipping, not a vocabulary: %s\n", property.Name)
 					}
-				} else {
-					log.Printf("not a vocabulary %s\n", property.Name)
+				default:
+					log.Printf("skipping, not a vocabulary: %s\n", property.Name)
 				}
-			default:
-				log.Printf("not a vocabulary %s\n", property.Name)
+			})
+			if err != nil {
+				log.Fatalf("%s", err.Error())
 			}
-		})
-		if err != nil {
-			log.Fatalf("%s", err.Error())
 		}
 	}
 	return inputs

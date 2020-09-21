@@ -25,15 +25,15 @@ import (
 )
 
 func init() {
-	vocabularyCmd.AddCommand(vocabularyIntersectionCmd)
-	vocabularyIntersectionCmd.Flags().String("output", "", "property to store output.")
+	vocabularyCmd.AddCommand(vocabularyDifferenceCmd)
+	vocabularyDifferenceCmd.Flags().String("output", "", "property to store output.")
 }
 
-// vocabularyIntersectionCmd represents the vocabulary intersection command
-var vocabularyIntersectionCmd = &cobra.Command{
-	Use:   "intersection",
-	Short: "Compute the intersection of specified API vocabularies.",
-	Long:  "Compute the intersection of specified API vocabularies.",
+// vocabularyDifferenceCmd represents the vocabulary difference command
+var vocabularyDifferenceCmd = &cobra.Command{
+	Use:   "difference",
+	Short: "Compute the difference of specified API vocabularies.",
+	Long:  "Compute the difference of specified API vocabularies. Each of the second and following specified vocabularies is subtracted from the first.",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
@@ -48,7 +48,7 @@ var vocabularyIntersectionCmd = &cobra.Command{
 			log.Fatalf("%s", err.Error())
 		}
 		inputs := collectInputs(ctx, client, args, vocabularyFilter)
-		output := vocabulary.Intersection(inputs)
+		output := vocabulary.Difference(inputs)
 		if outputPropertyName != "" {
 			setVocabularyToProperty(ctx, client, output, outputPropertyName)
 		} else {

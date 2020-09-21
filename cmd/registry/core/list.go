@@ -2,7 +2,6 @@ package core
 
 import (
 	"context"
-	"log"
 
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/rpc"
@@ -171,7 +170,6 @@ func ListProperties(ctx context.Context,
 	if filter != "" {
 		request.Filter = filter
 	}
-	log.Printf("REQUEST %+v\n\n\n", request)
 	it := client.ListProperties(ctx, request)
 	for {
 		property, err := it.Next()

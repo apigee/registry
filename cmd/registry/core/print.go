@@ -17,7 +17,7 @@ func PrintProject(project *rpc.Project) {
 }
 
 func PrintProjectDetail(message *rpc.Project) {
-	printMessage(message)
+	PrintMessage(message)
 }
 
 func PrintAPI(api *rpc.Api) {
@@ -25,7 +25,7 @@ func PrintAPI(api *rpc.Api) {
 }
 
 func PrintAPIDetail(message *rpc.Api) {
-	printMessage(message)
+	PrintMessage(message)
 }
 
 func PrintVersion(version *rpc.Version) {
@@ -33,7 +33,7 @@ func PrintVersion(version *rpc.Version) {
 }
 
 func PrintVersionDetail(message *rpc.Version) {
-	printMessage(message)
+	PrintMessage(message)
 }
 
 func PrintSpec(spec *rpc.Spec) {
@@ -41,7 +41,7 @@ func PrintSpec(spec *rpc.Spec) {
 }
 
 func PrintSpecDetail(message *rpc.Spec) {
-	printMessage(message)
+	PrintMessage(message)
 }
 
 func PrintSpecContents(message *rpc.Spec) {
@@ -88,10 +88,10 @@ func PrintLabel(label *rpc.Label) {
 }
 
 func PrintLabelDetail(label *rpc.Label) {
-	printMessage(label)
+	PrintMessage(label)
 }
 
-func printMessage(message proto.Message) {
+func PrintMessage(message proto.Message) {
 	fmt.Println(protojson.Format(message))
 }
 
@@ -100,6 +100,6 @@ func unmarshalAndPrint(value []byte, message proto.Message) {
 	if err != nil {
 		fmt.Printf("%+v", err)
 	} else {
-		printMessage(message)
+		PrintMessage(message)
 	}
 }

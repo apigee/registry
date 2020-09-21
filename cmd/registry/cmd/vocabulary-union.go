@@ -18,6 +18,7 @@ import (
 	"context"
 	"log"
 
+	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/googleapis/gnostic/metrics/vocabulary"
 	"github.com/spf13/cobra"
@@ -41,9 +42,6 @@ var vocabularyUnionCmd = &cobra.Command{
 		if err != nil {
 			log.Fatalf("%s", err.Error())
 		}
-		if outputPropertyName == "" {
-			log.Fatalf("please specify a property to store the output")
-		}
 		ctx := context.TODO()
 		client, err := connection.NewClient(ctx)
 		if err != nil {
@@ -51,6 +49,10 @@ var vocabularyUnionCmd = &cobra.Command{
 		}
 		inputs := collectInputs(ctx, client, args, vocabularyFilter)
 		output := vocabulary.Union(inputs)
-		setVocabularyToProperty(ctx, client, output, outputPropertyName)
+		if outputPropertyName != "" {
+			setVocabularyToProperty(ctx, client, output, outputPropertyName)
+		} else {
+			core.PrintMessage(output)
+		}
 	},
 }
