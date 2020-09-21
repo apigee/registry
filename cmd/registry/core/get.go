@@ -85,10 +85,18 @@ func GetProperty(ctx context.Context,
 	client *gapic.RegistryClient,
 	segments []string,
 	handler PropertyHandler) (*rpc.Property, error) {
-	request := &rpc.GetPropertyRequest{
-		// TODO: fix for properties on other resources (besides specs)
-		Name: "projects/" + segments[1] + "/apis/" + segments[3] + "/versions/" + segments[5] + "/specs/" + segments[7] + "/properties/" + segments[8],
+	request := &rpc.GetPropertyRequest{}
+	if segments[3] == "" {
+		request.Name = "projects/" + segments[1]
+	} else if segments[5] == "" {
+		request.Name = "projects/" + segments[1] + "/apis/" + segments[3]
+	} else if segments[7] == "" {
+		request.Name = "projects/" + segments[1] + "/apis/" + segments[3] + "/versions/" + segments[5]
+	} else {
+		request.Name = "projects/" + segments[1] + "/apis/" + segments[3] + "/versions/" + segments[5] + "/specs/" + segments[7]
 	}
+	request.Name += "/properties/" + segments[8]
+
 	property, err := client.GetProperty(ctx, request)
 	if err != nil {
 		return nil, err

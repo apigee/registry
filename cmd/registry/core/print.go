@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/apigee/registry/rpc"
-	//"github.com/gogo/protobuf/proto"
 	metrics "github.com/googleapis/gnostic/metrics"
 	openapiv2 "github.com/googleapis/gnostic/openapiv2"
 	openapiv3 "github.com/googleapis/gnostic/openapiv3"
