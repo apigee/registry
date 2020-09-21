@@ -10,7 +10,7 @@ static_resources:
         socket_address: { address: 0.0.0.0, port_value: 9999 }
       filter_chains:
         - filters:
-            - name: envoy.http_connection_manager
+            - name: envoy.filters.network.http_connection_manager
               typed_config:
                 "@type": type.googleapis.com/envoy.config.filter.network.http_connection_manager.v2.HttpConnectionManager
                 stat_prefix: grpc_json
@@ -21,7 +21,7 @@ static_resources:
                     - name: local_service
                       domains: ["*"]
                       routes:
-                        - match: { prefix: "/google.cloud.apigee.registry.v1alpha1.Registry" }
+                        - match: { prefix: "/" }
                           route: { cluster: registry-server, timeout: { seconds: 60 } }
                       cors:
                         allow_origin_string_match:
@@ -29,17 +29,19 @@ static_resources:
                         allow_methods: GET, PUT, DELETE, POST, OPTIONS
                         allow_headers: authorization, keep-alive,user-agent,cache-control,content-type,content-transfer-encoding,custom-header-1,x-accept-content-transfer-encoding,x-accept-response-streaming,x-user-agent,x-grpc-web,grpc-timeout
                         max_age: "1728000"
-                        expose_headers: custom-header-1,grpc-status,grpc-message   
+                        expose_headers: grpc-status,grpc-message
                 http_filters:
-                  - name: envoy.ext_authz
-                    config:
+                  - name: envoy.filters.http.cors
+                  - name: envoy.filters.http.ext_authz
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.ext_authz.v3.ExtAuthz
                       grpc_service:
                         envoy_grpc:
                           cluster_name: authz-server
                         timeout: 0.5s
-                  - name: envoy.cors
-                  - name: envoy.grpc_json_transcoder
-                    config:
+                  - name: envoy.filters.http.grpc_json_transcoder
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_json_transcoder.v3.GrpcJsonTranscoder
                       proto_descriptor: "proto.pb"
                       services: ["google.cloud.apigee.registry.v1alpha1.Registry"]
                       print_options:
@@ -47,8 +49,8 @@ static_resources:
                         always_print_primitive_fields: true
                         always_print_enums_as_ints: false
                         preserve_proto_field_names: false
-                  - name: envoy.grpc_web
-                  - name: envoy.router
+                  - name: envoy.filters.http.grpc_web
+                  - name: envoy.filters.http.router
   clusters:
     - name: registry-server
       connect_timeout: 1.25s
@@ -91,3 +93,10 @@ static_resources:
             service_name: "envoy.service.auth.v2alpha.Authorization"
             authority: "server.domain.com"
       connect_timeout: 0.25s
+
+layered_runtime:
+  layers:
+    - name: static_layer_0
+      static_layer:
+        overload:
+          global_downstream_max_connections: 50000
