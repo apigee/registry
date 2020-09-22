@@ -26,7 +26,7 @@ import (
 
 func init() {
 	vocabularyCmd.AddCommand(vocabularyUnionCmd)
-	vocabularyUnionCmd.Flags().String("output", "", "property to store output.")
+	vocabularyUnionCmd.Flags().String("output", "", "name of property to store output.")
 }
 
 // vocabularyUnionCmd represents the vocabulary union command

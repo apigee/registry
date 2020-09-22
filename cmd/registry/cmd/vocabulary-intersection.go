@@ -26,7 +26,7 @@ import (
 
 func init() {
 	vocabularyCmd.AddCommand(vocabularyIntersectionCmd)
-	vocabularyIntersectionCmd.Flags().String("output", "", "property to store output.")
+	vocabularyIntersectionCmd.Flags().String("output", "", "name of property to store output.")
 }
 
 // vocabularyIntersectionCmd represents the vocabulary intersection command

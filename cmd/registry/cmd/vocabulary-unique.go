@@ -17,6 +17,8 @@ package cmd
 import (
 	"context"
 	"log"
+	"path/filepath"
+	"strings"
 
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
@@ -25,32 +27,38 @@ import (
 )
 
 func init() {
-	vocabularyCmd.AddCommand(vocabularyDifferenceCmd)
-	vocabularyDifferenceCmd.Flags().String("output", "", "name of property to store output.")
+	vocabularyCmd.AddCommand(vocabularyUniqueCmd)
+	vocabularyUniqueCmd.Flags().String("output_id", "", "id of property to store output.")
 }
 
-// vocabularyDifferenceCmd represents the vocabulary difference command
-var vocabularyDifferenceCmd = &cobra.Command{
-	Use:   "difference",
-	Short: "Compute the difference of specified API vocabularies.",
-	Long:  "Compute the difference of specified API vocabularies. Each of the second and following specified vocabularies is subtracted from the first.",
+// vocabularyUniqueCmd represents the vocabulary unique command
+var vocabularyUniqueCmd = &cobra.Command{
+	Use:   "unique",
+	Short: "Compute the unique subsets of each member of specified vocabularies.",
+	Long:  "Compute the unique subsets of each member of specified vocabularies.",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
 		flagset := cmd.LocalFlags()
-		outputPropertyName, err := flagset.GetString("output")
+		outputPropertyID, err := flagset.GetString("output_id")
 		if err != nil {
 			log.Fatalf("%s", err.Error())
+		}
+		if strings.Contains(outputPropertyID, "/") {
+			log.Fatal("output_id must specify a property id (final segment only) and not a full name.")
 		}
 		ctx := context.TODO()
 		client, err := connection.NewClient(ctx)
 		if err != nil {
 			log.Fatalf("%s", err.Error())
 		}
-		_, inputs := collectInputs(ctx, client, args, vocabularyFilter)
-		output := vocabulary.Difference(inputs)
-		if outputPropertyName != "" {
-			setVocabularyToProperty(ctx, client, output, outputPropertyName)
+		names, inputs := collectInputs(ctx, client, args, vocabularyFilter)
+		output := vocabulary.FilterCommon(inputs)
+		if outputPropertyID != "" {
+			for i, unique := range output.Vocabularies {
+				outputPropertyName := filepath.Dir(names[i]) + "/" + outputPropertyID
+				setVocabularyToProperty(ctx, client, unique, outputPropertyName)
+			}
 		} else {
 			core.PrintMessage(output)
 		}
