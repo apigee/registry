@@ -28,7 +28,7 @@ import (
 
 func init() {
 	vocabularyCmd.AddCommand(vocabularyUniqueCmd)
-	vocabularyUniqueCmd.Flags().String("output_id", "", "id of property to store output.")
+	vocabularyUniqueCmd.Flags().String("output_id", "vocabulary-unique", "id of property to store output.")
 }
 
 // vocabularyUniqueCmd represents the vocabulary unique command
