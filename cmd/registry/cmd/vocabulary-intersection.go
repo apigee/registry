@@ -47,7 +47,7 @@ var vocabularyIntersectionCmd = &cobra.Command{
 		if err != nil {
 			log.Fatalf("%s", err.Error())
 		}
-		_, inputs := collectInputs(ctx, client, args, vocabularyFilter)
+		_, inputs := collectInputVocabularies(ctx, client, args, vocabularyFilter)
 		output := vocabulary.Intersection(inputs)
 		if outputPropertyName != "" {
 			setVocabularyToProperty(ctx, client, output, outputPropertyName)

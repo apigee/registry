@@ -12,50 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cmd
+package core
 
 import (
-	"context"
 	"fmt"
 	"log"
 
-	"github.com/apigee/registry/cmd/registry/core"
-	"github.com/apigee/registry/connection"
 	metrics "github.com/googleapis/gnostic/metrics"
-	"github.com/spf13/cobra"
 )
 
-func init() {
-	vocabularyCmd.AddCommand(vocabularyExportCmd)
-}
-
-// vocabularyExportCmd represents the vocabulary export command
-var vocabularyExportCmd = &cobra.Command{
-	Use:   "export",
-	Short: "Export a specified API vocabulary.",
-	Long:  "Export a specified API vocabulary.",
-	Args:  cobra.MinimumNArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		var err error
-		ctx := context.TODO()
-		client, err := connection.NewClient(ctx)
-		if err != nil {
-			log.Fatalf("%s", err.Error())
-		}
-		names, inputs := collectInputs(ctx, client, args, vocabularyFilter)
-		if len(names) == 1 {
-			err = exportVocabularyToSheet(names[0], inputs[0])
-			if err != nil {
-				log.Fatalf("%s", err.Error())
-			}
-		} else {
-			log.Fatalf("%d vocabularies matched. Please specify exactly one for export.", len(names))
-		}
-	},
-}
-
-func exportVocabularyToSheet(name string, vocabulary *metrics.Vocabulary) error {
-	sheetsClient, err := core.NewSheetsClient("")
+func ExportVocabularyToSheet(name string, vocabulary *metrics.Vocabulary) error {
+	sheetsClient, err := NewSheetsClient("")
 	if err != nil {
 		return err
 	}

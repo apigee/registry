@@ -17,6 +17,7 @@ package cmd
 import (
 	"context"
 	"log"
+	"path/filepath"
 
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
@@ -25,32 +26,33 @@ import (
 )
 
 func init() {
-	vocabularyCmd.AddCommand(vocabularyUnionCmd)
-	vocabularyUnionCmd.Flags().String("output", "", "name of property to store output.")
+	vocabularyCmd.AddCommand(vocabularyVersionsCmd)
+	vocabularyVersionsCmd.Flags().String("output_id", "", "id of property to store output.")
 }
 
-// vocabularyUnionCmd represents the vocabulary union command
-var vocabularyUnionCmd = &cobra.Command{
-	Use:   "union",
-	Short: "Compute the union of specified API vocabularies.",
-	Long:  "Compute the union of specified API vocabularies.",
+// vocabularyVersionsCmd represents the vocabulary versions command
+var vocabularyVersionsCmd = &cobra.Command{
+	Use:   "versions",
+	Short: "Compute the differences in API vocabularies associated with successive API versions.",
+	Long:  "Compute the differences in API vocabularies associated with successive API versions.",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
-		flagset := cmd.LocalFlags()
-		outputPropertyName, err := flagset.GetString("output")
-		if err != nil {
-			log.Fatalf("%s", err.Error())
-		}
 		ctx := context.TODO()
 		client, err := connection.NewClient(ctx)
 		if err != nil {
 			log.Fatalf("%s", err.Error())
 		}
-		_, inputs := collectInputVocabularies(ctx, client, args, vocabularyFilter)
-		output := vocabulary.Union(inputs)
-		if outputPropertyName != "" {
-			setVocabularyToProperty(ctx, client, output, outputPropertyName)
+		names, inputs := collectInputVocabularies(ctx, client, args, vocabularyFilter)
+		output := vocabulary.Version(inputs, names, "api")
+		if true {
+			for _, version := range output.Versions {
+				log.Printf("%s\n", version.Name)
+				newTermsPropertyName := filepath.Dir(version.Name) + "/" + "vocabulary-new"
+				setVocabularyToProperty(ctx, client, version.NewTerms, newTermsPropertyName)
+				deletedTermsPropertyName := filepath.Dir(version.Name) + "/" + "vocabulary-deleted"
+				setVocabularyToProperty(ctx, client, version.DeletedTerms, deletedTermsPropertyName)
+			}
 		} else {
 			core.PrintMessage(output)
 		}

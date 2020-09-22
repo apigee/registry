@@ -43,7 +43,7 @@ var vocabularyCmd = &cobra.Command{
 	Long:  `Analyze API vocabularies.`,
 }
 
-func collectInputs(ctx context.Context, client connection.Client, args []string, filter string) ([]string, []*metrics.Vocabulary) {
+func collectInputVocabularies(ctx context.Context, client connection.Client, args []string, filter string) ([]string, []*metrics.Vocabulary) {
 	inputNames := make([]string, 0)
 	inputs := make([]*metrics.Vocabulary, 0)
 	for _, name := range args {

@@ -52,7 +52,7 @@ var vocabularyUniqueCmd = &cobra.Command{
 		if err != nil {
 			log.Fatalf("%s", err.Error())
 		}
-		names, inputs := collectInputs(ctx, client, args, vocabularyFilter)
+		names, inputs := collectInputVocabularies(ctx, client, args, vocabularyFilter)
 		output := vocabulary.FilterCommon(inputs)
 		if outputPropertyID != "" {
 			for i, unique := range output.Vocabularies {
