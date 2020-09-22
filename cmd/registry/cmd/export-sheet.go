@@ -18,6 +18,8 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"path/filepath"
+	"strings"
 
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
@@ -60,8 +62,43 @@ var exportSheetCmd = &cobra.Command{
 			} else {
 				log.Fatalf("%d properties matched. Please specify exactly one for export.", len(inputs))
 			}
+		} else if typeURL == "gnostic.metrics.Complexity" {
+			name := "Complexity"
+			sheetsClient, err := core.NewSheetsClient("")
+			if err != nil {
+				log.Fatalf("%s", err.Error())
+			}
+			sheet, err := sheetsClient.CreateSheet(name, []string{"Complexity"})
+			if err != nil {
+				log.Fatalf("%s", err.Error())
+			}
+			rows := make([][]interface{}, 0)
+			rows = append(rows, rowForLabeledComplexity("api", "version", nil))
+			for _, input := range inputs {
+				complexity, err := getComplexity(input)
+				if err != nil {
+					log.Fatalf("%s", err.Error())
+				}
+				parts := strings.Split(input.Name, "/") // use to get api_id [3] and version_id [5]
+				rows = append(rows, rowForLabeledComplexity(parts[3], parts[5], complexity))
+			}
+			_, err = sheetsClient.Update(fmt.Sprintf("Complexity"), rows)
+			if err != nil {
+				log.Fatalf("%s", err.Error())
+			}
+			log.Printf("exported to %+v\n", sheet.SpreadsheetUrl)
+		} else {
+			log.Fatalf("Unknown message type: %s", typeURL)
 		}
 	},
+}
+
+func versionNameOfPropertyName(propertyName string) string {
+	n := propertyName
+	for i := 0; i < 4; i++ {
+		n = filepath.Dir(n)
+	}
+	return n
 }
 
 func collectInputProperties(ctx context.Context, client connection.Client, args []string, filter string) ([]string, []*rpc.Property) {
@@ -102,9 +139,45 @@ func getVocabulary(property *rpc.Property) (*metrics.Vocabulary, error) {
 				return vocab, nil
 			}
 		} else {
-			return nil, fmt.Errorf("not a vocabulary: %s\n", property.Name)
+			return nil, fmt.Errorf("not a vocabulary: %s", property.Name)
 		}
 	default:
-		return nil, fmt.Errorf("not a vocabulary: %s\n", property.Name)
+		return nil, fmt.Errorf("not a vocabulary: %s", property.Name)
 	}
+}
+
+func getComplexity(property *rpc.Property) (*metrics.Complexity, error) {
+	switch v := property.GetValue().(type) {
+	case *rpc.Property_MessageValue:
+		if v.MessageValue.TypeUrl == "gnostic.metrics.Complexity" {
+			value := &metrics.Complexity{}
+			err := proto.Unmarshal(v.MessageValue.Value, value)
+			if err != nil {
+				return nil, err
+			} else {
+				return value, nil
+			}
+		} else {
+			return nil, fmt.Errorf("not a complexity: %s", property.Name)
+		}
+	default:
+		return nil, fmt.Errorf("not a complexity: %s", property.Name)
+	}
+}
+
+func rowForLabeledComplexity(api, version string, c *metrics.Complexity) []interface{} {
+	if c == nil {
+		return []interface{}{
+			"api",
+			"version",
+			"schemas",
+			"schema properties",
+			"paths",
+			"gets",
+			"posts",
+			"puts",
+			"deletes",
+		}
+	}
+	return []interface{}{api, version, c.SchemaCount, c.SchemaPropertyCount, c.PathCount, c.GetCount, c.PostCount, c.PutCount, c.DeleteCount}
 }
