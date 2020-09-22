@@ -47,7 +47,7 @@ var vocabularyUnionCmd = &cobra.Command{
 		if err != nil {
 			log.Fatalf("%s", err.Error())
 		}
-		inputs := collectInputs(ctx, client, args, vocabularyFilter)
+		_, inputs := collectInputs(ctx, client, args, vocabularyFilter)
 		output := vocabulary.Union(inputs)
 		if outputPropertyName != "" {
 			setVocabularyToProperty(ctx, client, output, outputPropertyName)

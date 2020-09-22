@@ -43,7 +43,8 @@ var vocabularyCmd = &cobra.Command{
 	Long:  `Analyze API vocabularies.`,
 }
 
-func collectInputs(ctx context.Context, client connection.Client, args []string, filter string) []*metrics.Vocabulary {
+func collectInputs(ctx context.Context, client connection.Client, args []string, filter string) ([]string, []*metrics.Vocabulary) {
+	inputNames := make([]string, 0)
 	inputs := make([]*metrics.Vocabulary, 0)
 	for _, name := range args {
 		if m := names.PropertyRegexp().FindStringSubmatch(name); m != nil {
@@ -56,6 +57,7 @@ func collectInputs(ctx context.Context, client connection.Client, args []string,
 						if err != nil {
 							log.Printf("%+v", err)
 						} else {
+							inputNames = append(inputNames, property.Name)
 							inputs = append(inputs, vocab)
 						}
 					} else {
@@ -70,7 +72,7 @@ func collectInputs(ctx context.Context, client connection.Client, args []string,
 			}
 		}
 	}
-	return inputs
+	return inputNames, inputs
 }
 
 func setVocabularyToProperty(ctx context.Context, client connection.Client, output *metrics.Vocabulary, outputPropertyName string) {
