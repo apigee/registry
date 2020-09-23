@@ -41,7 +41,7 @@ The reference API is also configured to support
 which allow idiomatic API usage from a variety of languages. A Go GAPIC library
 is generated as part of the build process using
 [gapic-generator-go](https://github.com/googleapis/gapic-generator-go). A
-sample Go-based client is in [examples/go/client](examples/go/client).
+sample Go-based client is in [examples/grpc-client](examples/grpc-client).
 [cmd/apg](cmd/apg) contains a command-line interface that is automatically
 generated from the API description using the
 [protoc-gen-go_cli](https://github.com/googleapis/gapic-generator-go/tree/master/cmd/protoc-gen-go_cli)
@@ -114,12 +114,10 @@ local installation of `envoy`, this can be done by running the following inside
 the [deployments/envoy](deployments/envoy) directory.
 
 ```
-sudo envoy -c envoy.yaml
+envoy -c envoy.yaml
 ```
 
-Here `sudo` is needed because `envoy` is configured to run on port 80.
-
-## Deploying with Google Cloud Run
+## Running the API with Google Cloud Run
 
 This API is designed to be easily deployed on
 [Google Cloud Run](https://cloud.google.com/run). To support this, the Makefile
