@@ -174,10 +174,3 @@ Auth tokens are short-lived. When your token expires, your calls will return a
 message like this:
 `rpc error: code = Unauthenticated desc = Unauthorized: HTTP status code 401`.
 To generate a new token, rerun `source auth/CLOUDRUN.sh`.
-
-## Proxying a Cloud Run-based Service with Google Cloud Endpoints
-
-For HTTP/JSON transcoding and other API management features, see the
-[deployments/endpoints](deployments/endpoints) directory for instructions and
-scripts for configuring a Google Cloud Endpoints frontend for your Cloud
-Run-based service.
