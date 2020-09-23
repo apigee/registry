@@ -87,6 +87,11 @@ func SummarizeDiscoveryDocument(document *discovery.Document) *metrics.Complexit
 			summarizeDiscoverySchema(summary, pair.Value)
 		}
 	}
+	if document.Resources != nil {
+		for _, pair := range document.Resources.AdditionalProperties {
+			summarizeDiscoveryResource(summary, pair.Value)
+		}
+	}
 	if document.Methods != nil {
 		for _, pair := range document.Methods.AdditionalProperties {
 			summary.PathCount++
@@ -112,6 +117,30 @@ func summarizeDiscoverySchema(summary *metrics.Complexity, schema *discovery.Sch
 		for _, pair := range schema.Properties.AdditionalProperties {
 			summary.SchemaPropertyCount++
 			summarizeDiscoverySchema(summary, pair.Value)
+		}
+	}
+}
+
+func summarizeDiscoveryResource(summary *metrics.Complexity, resource *discovery.Resource) {
+	if resource.Resources != nil {
+		for _, pair := range resource.Resources.AdditionalProperties {
+			summarizeDiscoveryResource(summary, pair.Value)
+		}
+	}
+	if resource.Methods != nil {
+		for _, pair := range resource.Methods.AdditionalProperties {
+			summary.PathCount++
+			v := pair.Value
+			switch v.HttpMethod {
+			case "GET":
+				summary.GetCount++
+			case "POST":
+				summary.PostCount++
+			case "PUT":
+				summary.PutCount++
+			case "DELETE":
+				summary.DeleteCount++
+			}
 		}
 	}
 }
