@@ -89,3 +89,56 @@ func (sc *SheetsClient) Update(cellRange string, values [][]interface{}) (*sheet
 		Context(ctx).
 		Do()
 }
+
+// FormatHeaderRow freezes and bolds the top row of the configured sheet.
+func (sc *SheetsClient) FormatHeaderRow(sheetId int64) (*sheets.BatchUpdateSpreadsheetResponse, error) {
+	formatRequest := &sheets.Request{
+		RepeatCell: &sheets.RepeatCellRequest{
+			Range: &sheets.GridRange{
+				SheetId:       sheetId,
+				StartRowIndex: 0,
+				EndRowIndex:   1,
+			},
+			Cell: &sheets.CellData{
+				UserEnteredFormat: &sheets.CellFormat{
+					BackgroundColor: &sheets.Color{
+						Red:   0.9,
+						Green: 0.9,
+						Blue:  0.9,
+					},
+					HorizontalAlignment: "CENTER",
+					TextFormat: &sheets.TextFormat{
+						ForegroundColor: &sheets.Color{
+							Red:   0,
+							Green: 0,
+							Blue:  0,
+						},
+						FontSize: 10,
+						Bold:     false,
+					},
+					WrapStrategy: "WRAP",
+				},
+			},
+			Fields: "userEnteredFormat(backgroundColor,textFormat,horizontalAlignment,wrapStrategy)",
+		},
+	}
+	freezeRequest := &sheets.Request{
+		UpdateSheetProperties: &sheets.UpdateSheetPropertiesRequest{
+			Properties: &sheets.SheetProperties{
+				GridProperties: &sheets.GridProperties{
+					FrozenRowCount: 1,
+				},
+				SheetId: sheetId,
+			},
+			Fields: "gridProperties.frozenRowCount",
+		},
+	}
+	request := &sheets.BatchUpdateSpreadsheetRequest{
+		Requests: []*sheets.Request{
+			formatRequest,
+			freezeRequest,
+		},
+	}
+	ctx := context.Background()
+	return sc.service.Spreadsheets.BatchUpdate(sc.sheetID, request).Context(ctx).Do()
+}

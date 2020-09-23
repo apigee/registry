@@ -30,8 +30,17 @@ func ExportVocabularyToSheet(name string, vocabulary *metrics.Vocabulary) error 
 	if err != nil {
 		return err
 	}
+	log.Printf("SHEET %+v\n", sheet)
+	for i, s := range sheet.Sheets {
+		log.Printf("SHEET[%d] %+v\n", i, s.Properties)
+
+		r, err := sheetsClient.FormatHeaderRow(s.Properties.SheetId)
+		log.Printf("%+v %+v", r, err)
+
+	}
 	{
 		rows := make([][]interface{}, 0)
+		rows = append(rows, rowForLabeledWordCount("", nil))
 		for _, wc := range vocabulary.Schemas {
 			rows = append(rows, rowForLabeledWordCount("schema", wc))
 		}
@@ -52,6 +61,7 @@ func ExportVocabularyToSheet(name string, vocabulary *metrics.Vocabulary) error 
 	// create update function as a closure to simplify multiple uses (below)
 	updateSheet := func(title string, pairs []*metrics.WordCount) error {
 		rows := make([][]interface{}, 0)
+		rows = append(rows, rowForWordCount(nil))
 		for _, wc := range pairs {
 			rows = append(rows, rowForWordCount(wc))
 		}
@@ -67,9 +77,15 @@ func ExportVocabularyToSheet(name string, vocabulary *metrics.Vocabulary) error 
 }
 
 func rowForLabeledWordCount(kind string, wc *metrics.WordCount) []interface{} {
+	if wc == nil {
+		return []interface{}{"kind", "word", "count"}
+	}
 	return []interface{}{kind, wc.Word, wc.Count}
 }
 
 func rowForWordCount(wc *metrics.WordCount) []interface{} {
+	if wc == nil {
+		return []interface{}{"word", "count"}
+	}
 	return []interface{}{wc.Word, wc.Count}
 }

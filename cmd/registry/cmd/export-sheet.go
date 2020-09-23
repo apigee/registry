@@ -72,6 +72,10 @@ var exportSheetCmd = &cobra.Command{
 			if err != nil {
 				log.Fatalf("%s", err.Error())
 			}
+			_, err = sheetsClient.FormatHeaderRow(sheet.Sheets[0].Properties.SheetId)
+			if err != nil {
+				log.Fatalf("%s", err.Error())
+			}
 			rows := make([][]interface{}, 0)
 			rows = append(rows, rowForLabeledComplexity("api", "version", nil))
 			for _, input := range inputs {
@@ -86,6 +90,7 @@ var exportSheetCmd = &cobra.Command{
 			if err != nil {
 				log.Fatalf("%s", err.Error())
 			}
+
 			log.Printf("exported to %+v\n", sheet.SpreadsheetUrl)
 		} else {
 			log.Fatalf("Unknown message type: %s", typeURL)

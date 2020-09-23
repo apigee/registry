@@ -25,6 +25,7 @@ import (
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
 	"github.com/golang/protobuf/ptypes/any"
+	discovery "github.com/googleapis/gnostic/discovery"
 	metrics "github.com/googleapis/gnostic/metrics"
 	openapi_v2 "github.com/googleapis/gnostic/openapiv2"
 	openapi_v3 "github.com/googleapis/gnostic/openapiv3"
@@ -104,6 +105,12 @@ func (task *computeComplexityTask) Run() error {
 			return fmt.Errorf("invalid OpenAPI: %s", spec.Name)
 		}
 		complexity = core.SummarizeOpenAPIv3Document(document)
+	} else if strings.HasPrefix(spec.GetStyle(), "discovery") {
+		document, err := discovery.ParseDocument(data)
+		if err != nil {
+			return fmt.Errorf("invalid Discovery: %s", spec.Name)
+		}
+		complexity = core.SummarizeDiscoveryDocument(document)
 	} else {
 		return fmt.Errorf("we don't know how to summarize %s", spec.Name)
 	}
