@@ -30,13 +30,11 @@ func ExportVocabularyToSheet(name string, vocabulary *metrics.Vocabulary) error 
 	if err != nil {
 		return err
 	}
-	log.Printf("SHEET %+v\n", sheet)
-	for i, s := range sheet.Sheets {
-		log.Printf("SHEET[%d] %+v\n", i, s.Properties)
-
-		r, err := sheetsClient.FormatHeaderRow(s.Properties.SheetId)
-		log.Printf("%+v %+v", r, err)
-
+	for _, s := range sheet.Sheets {
+		_, err := sheetsClient.FormatHeaderRow(s.Properties.SheetId)
+		if err != nil {
+			return err
+		}
 	}
 	{
 		rows := make([][]interface{}, 0)

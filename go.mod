@@ -15,7 +15,6 @@ require (
 	github.com/blevesearch/bleve v1.0.10
 	github.com/bmatcuk/doublestar v1.3.2 // indirect
 	github.com/cncf/udpa/go v0.0.0-20200909154343-1f710aca26a9 // indirect
-	github.com/cpuguy83/go-md2man/v2 v2.0.0 // indirect
 	github.com/docopt/docopt-go v0.0.0-20180111231733-ee0de3bc6815
 	github.com/envoyproxy/go-control-plane v0.9.6
 	github.com/envoyproxy/protoc-gen-validate v0.4.1 // indirect
@@ -47,14 +46,12 @@ require (
 	github.com/mitchellh/mapstructure v1.3.3 // indirect
 	github.com/opennota/wd v0.0.0-20180911144301-b446539ab1e7 // indirect
 	github.com/pelletier/go-toml v1.8.1 // indirect
-	github.com/smartystreets/goconvey v1.6.4 // indirect
 	github.com/soheilhy/cmux v0.1.4
 	github.com/spf13/afero v1.4.0 // indirect
 	github.com/spf13/cast v1.3.1 // indirect
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/viper v1.7.1
-	github.com/subosito/gotenv v1.2.0 // indirect
 	github.com/tinylib/msgp v1.1.2 // indirect
 	github.com/willf/bitset v1.1.11 // indirect
 	github.com/yoheimuta/go-protoparser/v4 v4.2.0
@@ -65,10 +62,8 @@ require (
 	golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43
 	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
 	golang.org/x/sys v0.0.0-20200923182605-d9f96fdee20d // indirect
-	golang.org/x/text v0.3.3 // indirect
 	golang.org/x/tools v0.0.0-20200918232735-d647fc253266 // indirect
 	google.golang.org/api v0.32.0
-	google.golang.org/appengine v1.6.6 // indirect
 	google.golang.org/genproto v0.0.0-20200924141100-a14c0a98937d
 	google.golang.org/grpc v1.32.0
 	google.golang.org/grpc/examples v0.0.0-20200731180010-8bec2f5d898f // indirect

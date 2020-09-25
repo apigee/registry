@@ -77,7 +77,7 @@ var exportSheetCmd = &cobra.Command{
 				log.Fatalf("%s", err.Error())
 			}
 			rows := make([][]interface{}, 0)
-			rows = append(rows, rowForLabeledComplexity("api", "version", nil))
+			rows = append(rows, rowForLabeledComplexity("", "", nil))
 			for _, input := range inputs {
 				complexity, err := getComplexity(input)
 				if err != nil {
