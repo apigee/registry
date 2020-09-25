@@ -15,11 +15,8 @@
 package cmd
 
 import (
-	"archive/zip"
-	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"log"
 	"os"
 	"path"
@@ -208,7 +205,7 @@ func (task *uploadProtoTask) createSpec() error {
 		prefix := task.directory + "/"
 		// build a zip archive with the contents of the path
 		// https://golangcode.com/create-zip-files-in-go/
-		buf, err := zipArchiveOfPath(task.path, prefix)
+		buf, err := core.ZipArchiveOfPath(task.path, prefix)
 		if err != nil {
 			return err
 		}
@@ -236,64 +233,4 @@ func (task *uploadProtoTask) createSpec() error {
 		return err
 	}
 	return nil
-}
-
-func zipArchiveOfPath(path, prefix string) (buf bytes.Buffer, err error) {
-	zipWriter := zip.NewWriter(&buf)
-	defer zipWriter.Close()
-
-	err = filepath.Walk(path,
-		func(p string, info os.FileInfo, err error) error {
-			if err != nil {
-				return err
-			}
-			if info.IsDir() {
-				return nil
-			}
-			// only upload proto files
-			if !strings.HasSuffix(p, ".proto") {
-				return nil
-			}
-			if err = addFileToZip(zipWriter, p, prefix); err != nil {
-				log.Printf("error adding file %s", err.Error())
-				return err
-			}
-			return nil
-		})
-	return buf, nil
-}
-
-func addFileToZip(zipWriter *zip.Writer, filename, prefix string) error {
-	fileToZip, err := os.Open(filename)
-	if err != nil {
-		return err
-	}
-	defer fileToZip.Close()
-
-	// Get the file information
-	info, err := fileToZip.Stat()
-	if err != nil {
-		return err
-	}
-
-	header, err := zip.FileInfoHeader(info)
-	if err != nil {
-		return err
-	}
-
-	// Using FileInfoHeader() above only uses the basename of the file. If we want
-	// to preserve the folder structure we can overwrite this with the full path.
-	name := strings.TrimPrefix(filename, prefix)
-	header.Name = name
-
-	// Change to deflate to gain better compression
-	// see http://golang.org/pkg/archive/zip/#pkg-constants
-	header.Method = zip.Deflate
-
-	writer, err := zipWriter.CreateHeader(header)
-	if err != nil {
-		return err
-	}
-	_, err = io.Copy(writer, fileToZip)
-	return err
 }

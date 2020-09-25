@@ -89,30 +89,42 @@ func (task *computeVocabularyTask) Run() error {
 		return err
 	}
 	log.Printf("computing vocabulary of %s", spec.Name)
-	data, err := core.GetBytesForSpec(spec)
-	if err != nil {
-		return nil
-	}
 	var vocabulary *metrics.Vocabulary
 	if strings.HasPrefix(spec.GetStyle(), "openapi/v2") {
+		data, err := core.GetBytesForSpec(spec)
+		if err != nil {
+			return nil
+		}
 		document, err := openapi_v2.ParseDocument(data)
 		if err != nil {
 			return fmt.Errorf("invalid OpenAPI: %s", spec.Name)
 		}
 		vocabulary = vocab.NewVocabularyFromOpenAPIv2(document)
 	} else if strings.HasPrefix(spec.GetStyle(), "openapi/v3") {
+		data, err := core.GetBytesForSpec(spec)
+		if err != nil {
+			return nil
+		}
 		document, err := openapi_v3.ParseDocument(data)
 		if err != nil {
 			return fmt.Errorf("invalid OpenAPI: %s", spec.Name)
 		}
 		vocabulary = vocab.NewVocabularyFromOpenAPIv3(document)
 	} else if strings.HasPrefix(spec.GetStyle(), "discovery") {
+		data, err := core.GetBytesForSpec(spec)
+		if err != nil {
+			return nil
+		}
 		document, err := discovery.ParseDocument(data)
 		if err != nil {
 			return fmt.Errorf("invalid Discovery: %s", spec.Name)
 		}
 		vocabulary = vocab.NewVocabularyFromDiscovery(document)
-
+	} else if spec.GetStyle() == "proto+zip" {
+		vocabulary, err = core.NewVocabularyFromZippedProtos(spec.GetContents())
+		if err != nil {
+			return fmt.Errorf("error processing protos: %s", spec.Name)
+		}
 	} else {
 		return fmt.Errorf("we don't know how to summarize %s", spec.Name)
 	}
