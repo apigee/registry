@@ -49,17 +49,13 @@ var uploadOpenAPICmd = &cobra.Command{
 		if err != nil {
 			log.Fatalf("%s", err.Error())
 		}
-		fmt.Printf("openapi called with args %+v and project_id %s\n", args, projectID)
-
 		ctx := context.TODO()
 		client, err := connection.NewClient(ctx)
 		if err != nil {
 			log.Fatalf("%s", err.Error())
 		}
 		core.EnsureProjectExists(ctx, client, projectID)
-
 		for _, arg := range args {
-			log.Printf("%+v", arg)
 			scanDirectoryForOpenAPI(projectID, arg)
 		}
 	},
@@ -76,7 +72,7 @@ func scanDirectoryForOpenAPI(projectID, directory string) {
 
 	taskQueue := make(chan core.Task, 1024)
 
-	workerCount := 32
+	workerCount := 64
 	for i := 0; i < workerCount; i++ {
 		core.WaitGroup().Add(1)
 		go core.Worker(ctx, taskQueue)
@@ -146,7 +142,7 @@ func (task *uploadOpenAPITask) Run() error {
 	task.apiID = strings.Replace(task.apiID, "/", "-", -1)
 	task.versionID = sanitize(parts[len(parts)-2])
 	task.specID = sanitize(parts[len(parts)-1])
-	log.Printf("apis/%s/versions/%s/specs/%s", task.apiID, task.versionID, task.specID)
+	log.Printf("^^ apis/%s/versions/%s/specs/%s", task.apiID, task.versionID, task.specID)
 	// If the API does not exist, create it.
 	err = task.createAPI()
 	if err != nil {
@@ -175,9 +171,9 @@ func (task *uploadOpenAPITask) createAPI() error {
 		if err == nil {
 			log.Printf("created %s", response.Name)
 		} else if core.AlreadyExists(err) {
-			log.Printf("already exists %s/apis/%s", request.Parent, request.ApiId)
+			log.Printf("found %s/apis/%s", request.Parent, request.ApiId)
 		} else {
-			log.Printf("failed to create %s/apis/%s: %s",
+			log.Printf("error %s/apis/%s: %s",
 				request.Parent, request.ApiId, err.Error())
 		}
 	} else if err != nil {
@@ -199,9 +195,9 @@ func (task *uploadOpenAPITask) createVersion() error {
 		if err == nil {
 			log.Printf("created %s", response.Name)
 		} else if core.AlreadyExists(err) {
-			log.Printf("already exists %s/versions/%s", request.Parent, request.VersionId)
+			log.Printf("found %s/versions/%s", request.Parent, request.VersionId)
 		} else {
-			log.Printf("failed to create %s/versions/%s: %s",
+			log.Printf("error %s/versions/%s: %s",
 				request.Parent, request.VersionId, err.Error())
 		}
 	} else if err != nil {
@@ -242,10 +238,10 @@ func (task *uploadOpenAPITask) createSpec() error {
 		if err == nil {
 			log.Printf("created %s", response.Name)
 		} else if core.AlreadyExists(err) {
-			log.Printf("already exists %s/specs/%s", request.Parent, request.SpecId)
+			log.Printf("found %s/specs/%s", request.Parent, request.SpecId)
 		} else {
 			details := fmt.Sprintf("contents-length: %d", len(request.Spec.Contents))
-			log.Printf("failed to create %s/specs/%s: %s [%s]",
+			log.Printf("error %s/specs/%s: %s [%s]",
 				request.Parent, request.SpecId, err.Error(), details)
 		}
 	} else if err != nil {

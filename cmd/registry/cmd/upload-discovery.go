@@ -45,7 +45,6 @@ var uploadDiscoveryCmd = &cobra.Command{
 		if err != nil {
 			log.Fatalf("%s", err.Error())
 		}
-		fmt.Printf("discovery called with args %+v and project_id %s\n", args, projectID)
 		if projectID == "" {
 			log.Fatalf("Please specify a project_id")
 		}
@@ -70,7 +69,6 @@ var uploadDiscoveryCmd = &cobra.Command{
 		}
 		// Create an upload job for each API.
 		for _, api := range listResponse.APIs {
-			log.Printf("%s/%s", api.Name, api.Version)
 			taskQueue <- &uploadDiscoveryTask{
 				ctx:       ctx,
 				client:    client,
@@ -105,7 +103,7 @@ func (task *uploadDiscoveryTask) Run() error {
 	if err != nil {
 		return err
 	}
-	log.Printf("checking apis/%s/versions/%s/specs/%s", task.apiID, task.versionID, task.specID)
+	log.Printf("^^ apis/%s/versions/%s/specs/%s", task.apiID, task.versionID, task.specID)
 	// If the API does not exist, create it.
 	err = task.createAPI()
 	if err != nil {
@@ -134,9 +132,9 @@ func (task *uploadDiscoveryTask) createAPI() error {
 		if err == nil {
 			log.Printf("created %s", response.Name)
 		} else if core.AlreadyExists(err) {
-			log.Printf("already exists %s/apis/%s", request.Parent, request.ApiId)
+			log.Printf("found %s/apis/%s", request.Parent, request.ApiId)
 		} else {
-			log.Printf("failed to create %s/apis/%s: %s",
+			log.Printf("error %s/apis/%s: %s",
 				request.Parent, request.ApiId, err.Error())
 		}
 	} else if err != nil {
@@ -158,9 +156,9 @@ func (task *uploadDiscoveryTask) createVersion() error {
 		if err == nil {
 			log.Printf("created %s", response.Name)
 		} else if core.AlreadyExists(err) {
-			log.Printf("already exists %s/versions/%s", request.Parent, request.VersionId)
+			log.Printf("found %s/versions/%s", request.Parent, request.VersionId)
 		} else {
-			log.Printf("failed to create %s/versions/%s: %s",
+			log.Printf("error %s/versions/%s: %s",
 				request.Parent, request.VersionId, err.Error())
 		}
 	} else if err != nil {
@@ -198,10 +196,10 @@ func (task *uploadDiscoveryTask) createSpec() error {
 		if err == nil {
 			log.Printf("created %s", response.Name)
 		} else if core.AlreadyExists(err) {
-			log.Printf("already exists %s/specs/%s", request.Parent, request.SpecId)
+			log.Printf("found %s/specs/%s", request.Parent, request.SpecId)
 		} else {
 			details := fmt.Sprintf("contents-length: %d", len(request.Spec.Contents))
-			log.Printf("failed to create %s/specs/%s: %s [%s]",
+			log.Printf("error %s/specs/%s: %s [%s]",
 				request.Parent, request.SpecId, err.Error(), details)
 		}
 	} else if err != nil {

@@ -86,13 +86,13 @@ func (task *computeDescriptorTask) Run() error {
 		return err
 	}
 	name := spec.GetName()
-	log.Printf("computing descriptor %s", name)
+	relation := "descriptor"
+	log.Printf("computing %s/properties/%s", name, relation)
 	data, err := core.GetBytesForSpec(spec)
 	if err != nil {
 		return nil
 	}
 	subject := spec.GetName()
-	relation := "descriptor"
 	var typeURL string
 	var document proto.Message
 	if strings.HasPrefix(spec.GetStyle(), "openapi/v2") {

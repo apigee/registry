@@ -426,7 +426,6 @@ func main() {
 		config.Readers = []string{"*"}
 		config.Writers = []string{"*"}
 	}
-	log.Printf("%+v", config)
 
 	lis, err := net.Listen("tcp", *portFlag)
 	if err != nil {
@@ -438,6 +437,6 @@ func main() {
 	auth.RegisterAuthorizationServer(s, &authorizationServer{})
 	healthpb.RegisterHealthServer(s, &healthServer{})
 
-	log.Printf("Starting gRPC Server at %s", *portFlag)
+	log.Printf("authz-server listing on %s", *portFlag)
 	s.Serve(lis)
 }

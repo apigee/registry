@@ -88,7 +88,8 @@ func (task *computeVocabularyTask) Run() error {
 	if err != nil {
 		return err
 	}
-	log.Printf("computing vocabulary of %s", spec.Name)
+	relation := "vocabulary"
+	log.Printf("computing %s/properties/%s", spec.Name, relation)
 	var vocabulary *metrics.Vocabulary
 	if strings.HasPrefix(spec.GetStyle(), "openapi/v2") {
 		data, err := core.GetBytesForSpec(spec)
@@ -129,7 +130,6 @@ func (task *computeVocabularyTask) Run() error {
 		return fmt.Errorf("we don't know how to summarize %s", spec.Name)
 	}
 	subject := spec.GetName()
-	relation := "vocabulary"
 	messageData, err := proto.Marshal(vocabulary)
 	property := &rpc.Property{
 		Subject:  subject,

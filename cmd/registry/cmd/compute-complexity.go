@@ -87,7 +87,8 @@ func (task *computeComplexityTask) Run() error {
 	if err != nil {
 		return err
 	}
-	log.Printf("computing complexity of %s", spec.Name)
+	relation := "complexity"
+	log.Printf("computing %s/properties/%s", spec.Name, relation)
 	data, err := core.GetBytesForSpec(spec)
 	if err != nil {
 		return nil
@@ -115,7 +116,6 @@ func (task *computeComplexityTask) Run() error {
 		return fmt.Errorf("we don't know how to summarize %s", spec.Name)
 	}
 	subject := spec.GetName()
-	relation := "complexity"
 	messageData, err := proto.Marshal(complexity)
 	property := &rpc.Property{
 		Subject:  subject,

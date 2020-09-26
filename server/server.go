@@ -21,6 +21,8 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"path/filepath"
+	"strings"
 	"sync"
 
 	"github.com/apigee/registry/rpc"
@@ -32,7 +34,9 @@ import (
 	"github.com/soheilhy/cmux"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/reflection"
+	"google.golang.org/grpc/status"
 )
 
 // Config configures the registry server.
@@ -40,17 +44,54 @@ type Config struct {
 	Database string `yaml:"database"`
 	DBConfig string `yaml:"dbconfig"`
 	Notify   bool   `yaml:"notify"`
+	Log      string `yaml:"log"`
 }
+
+const (
+	loggingFatal = iota
+	loggingError = iota
+	loggingWarn  = iota
+	loggingInfo  = iota
+	loggingDebug = iota
+)
 
 // RegistryServer implements a Registry server.
 type RegistryServer struct {
 	// Uncomment the following line when adding new methods.
 	// rpc.UnimplementedRegistryServer
+
 	database            string // configured
 	dbConfig            string // configured
 	enableNotifications bool   // configured
-	projectID           string // computed
-	weTrustTheSort      bool   // computed
+	logging             string // configured
+
+	projectID      string // computed
+	weTrustTheSort bool   // computed
+	loggingLevel   int    // computed
+}
+
+func newRegistryServer(config *Config) *RegistryServer {
+	s := &RegistryServer{}
+	if config != nil {
+		s.database = config.Database
+		s.dbConfig = config.DBConfig
+		s.enableNotifications = config.Notify
+		switch strings.ToUpper(config.Log) {
+		case "FATAL":
+			s.loggingLevel = loggingFatal
+		case "ERRORS":
+			s.loggingLevel = loggingError
+		case "WARNINGS":
+			s.loggingLevel = loggingWarn
+		case "INFO":
+			s.loggingLevel = loggingInfo
+		case "DEBUG":
+			s.loggingLevel = loggingDebug
+		default:
+			s.loggingLevel = loggingFatal
+		}
+	}
+	return s
 }
 
 func (s *RegistryServer) getStorageClient(ctx context.Context) (storage.Client, error) {
@@ -97,38 +138,41 @@ var serverSerialization bool
 
 // RunServer runs the Registry server on a specified port
 func RunServer(port string, config *Config) error {
-	// Construct registry server.
+	// Construct Registry API server (request handler).
+	r := newRegistryServer(config)
+	// Construct gRPC server.
 	loggingHandler := func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		if serverSerialization {
 			serverMutex.Lock()
 			defer serverMutex.Unlock()
 		}
-		log.Printf(">> %s", info.FullMethod)
+		method := filepath.Base(info.FullMethod)
+		if r.loggingLevel >= loggingInfo {
+			log.Printf(">> %s", method)
+		}
 		resp, err := handler(ctx, req)
 		if err != nil {
-			log.Printf("?? %s failed: %s", info.FullMethod, err)
+			if isNotFound(err) { // only log "not found" at DEBUG and higher
+				if r.loggingLevel >= loggingDebug {
+					log.Printf("[%s] %s", method, err.Error())
+				}
+			} else { // log all other problems at ERROR and higher
+				if r.loggingLevel >= loggingError {
+					log.Printf("[%s] %s", method, err.Error())
+				}
+			}
 		}
 		return resp, err
 	}
-
 	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(loggingHandler))
-
 	reflection.Register(grpcServer)
-	if config == nil {
-		config = &Config{}
-	}
-	r := &RegistryServer{
-		database:            config.Database,
-		dbConfig:            config.DBConfig,
-		enableNotifications: config.Notify,
-	}
 	rpc.RegisterRegistryServer(grpcServer, r)
 	// Create a listener and use it to run the server.
 	listener, err := net.Listen("tcp", port)
 	if err != nil {
 		return fmt.Errorf("failed to listen: %v", err)
 	}
-	fmt.Printf("\nServer listening on port %v \n", port)
+	log.Printf("registry-server listening on %s", port)
 	// Use a cmux to route incoming requests by protocol.
 	m := cmux.New(listener)
 	// Match gRPC requests and serve them in a goroutine.
@@ -157,4 +201,15 @@ func (h *httpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// handle any other requests
 	log.Printf("%+v", r)
 	http.NotFound(w, r)
+}
+
+func isNotFound(err error) bool {
+	if err == nil {
+		return false
+	}
+	st, ok := status.FromError(err)
+	if !ok {
+		return false
+	}
+	return st.Code() == codes.NotFound
 }

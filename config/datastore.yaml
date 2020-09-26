@@ -1,2 +1,3 @@
 database: datastore
 dbconfig: 
+log: error
