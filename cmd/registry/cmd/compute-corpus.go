@@ -18,29 +18,24 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"strings"
 
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
 	"github.com/golang/protobuf/ptypes/any"
-	discovery "github.com/googleapis/gnostic/discovery"
-	metrics "github.com/googleapis/gnostic/metrics"
-	openapi_v2 "github.com/googleapis/gnostic/openapiv2"
-	openapi_v3 "github.com/googleapis/gnostic/openapiv3"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/proto"
 )
 
 func init() {
-	computeCmd.AddCommand(computeComplexityCmd)
+	computeCmd.AddCommand(computeCorpusCmd)
 }
 
-var computeComplexityCmd = &cobra.Command{
-	Use:   "complexity",
-	Short: "Compute the complexity of API specs.",
-	Long:  `Compute the complexity of API specs.`,
+var computeCorpusCmd = &cobra.Command{
+	Use:   "corpus",
+	Short: "Compute the corpus of API specs.",
+	Long:  `Compute the corpus of API specs.`,
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.TODO()
@@ -60,7 +55,7 @@ var computeComplexityCmd = &cobra.Command{
 		if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
 			// Iterate through a collection of specs and summarize each.
 			err = core.ListSpecs(ctx, client, m, computeFilter, func(spec *rpc.Spec) {
-				taskQueue <- &computeComplexityTask{
+				taskQueue <- &computeCorpusTask{
 					ctx:      ctx,
 					client:   client,
 					specName: spec.Name,
@@ -72,13 +67,13 @@ var computeComplexityCmd = &cobra.Command{
 	},
 }
 
-type computeComplexityTask struct {
+type computeCorpusTask struct {
 	ctx      context.Context
 	client   connection.Client
 	specName string
 }
 
-func (task *computeComplexityTask) Run() error {
+func (task *computeCorpusTask) Run() error {
 	request := &rpc.GetSpecRequest{
 		Name: task.specName,
 		View: rpc.SpecView_FULL,
@@ -87,56 +82,26 @@ func (task *computeComplexityTask) Run() error {
 	if err != nil {
 		return err
 	}
-	relation := "complexity"
+	relation := "corpus"
 	log.Printf("computing %s/properties/%s", spec.Name, relation)
-	var complexity *metrics.Complexity
-	if strings.HasPrefix(spec.GetStyle(), "openapi/v2") {
-		data, err := core.GetBytesForSpec(spec)
-		if err != nil {
-			return nil
-		}
-		document, err := openapi_v2.ParseDocument(data)
-		if err != nil {
-			return fmt.Errorf("invalid OpenAPI: %s", spec.Name)
-		}
-		complexity = core.SummarizeOpenAPIv2Document(document)
-	} else if strings.HasPrefix(spec.GetStyle(), "openapi/v3") {
-		data, err := core.GetBytesForSpec(spec)
-		if err != nil {
-			return nil
-		}
-		document, err := openapi_v3.ParseDocument(data)
-		if err != nil {
-			return fmt.Errorf("invalid OpenAPI: %s", spec.Name)
-		}
-		complexity = core.SummarizeOpenAPIv3Document(document)
-	} else if strings.HasPrefix(spec.GetStyle(), "discovery") {
-		data, err := core.GetBytesForSpec(spec)
-		if err != nil {
-			return nil
-		}
-		document, err := discovery.ParseDocument(data)
-		if err != nil {
-			return fmt.Errorf("invalid Discovery: %s", spec.Name)
-		}
-		complexity = core.SummarizeDiscoveryDocument(document)
-	} else if spec.GetStyle() == "proto+zip" {
-		complexity, err = core.NewComplexityFromZippedProtos(spec.GetContents())
+	var corpus *rpc.Corpus
+	if spec.GetStyle() == "proto+zip" {
+		corpus, err = core.NewCorpusFromZippedProtos(spec.GetContents())
 		if err != nil {
 			return fmt.Errorf("error processing protos: %s", spec.Name)
 		}
 	} else {
-		return fmt.Errorf("we don't know how to summarize %s", spec.Name)
+		return fmt.Errorf("we don't know how to compute the corpus of %s", spec.Name)
 	}
 	subject := spec.GetName()
-	messageData, err := proto.Marshal(complexity)
+	messageData, err := proto.Marshal(corpus)
 	property := &rpc.Property{
 		Subject:  subject,
 		Relation: relation,
 		Name:     subject + "/properties/" + relation,
 		Value: &rpc.Property_MessageValue{
 			MessageValue: &any.Any{
-				TypeUrl: "gnostic.metrics.Complexity",
+				TypeUrl: "google.cloud.apigee.registry.v1alpha1.Corpus",
 				Value:   messageData,
 			},
 		},

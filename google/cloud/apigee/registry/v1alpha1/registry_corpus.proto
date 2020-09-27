@@ -1,0 +1,62 @@
+// Copyright 2020 Google LLC. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//    http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package google.cloud.apigee.registry.v1alpha1;
+
+option java_package = "com.google.cloud.apigee.registry.v1alpha1";
+option java_multiple_files = true;
+option java_outer_classname = "RegistryMetricsProto";
+option go_package = "github.com/apigee/registry/rpc;rpc";
+
+message Operation {
+  string operation_name = 1;
+  string service_name = 2;
+  string verb = 3;
+  string path = 4;
+  // index fields
+  string file_name = 5;
+}
+
+message Schema {
+  string schema_name = 1;
+  string resource_name = 2;
+  string resource_type = 3;
+  repeated Field fields = 4;
+  // index fields
+  string file_name = 5;
+}
+
+message Field {
+  string field_name = 1;
+  // index fields
+  string schema_name = 2;
+  string file_name = 3;
+}
+
+message File {
+  string file_name = 1;
+  repeated Operation operations = 2;
+  repeated Schema schemas = 3;
+}
+
+message Corpus {
+  string corpus_name = 1;
+  repeated File files = 2;
+  // index fields
+  repeated Field fields = 3;
+  repeated Schema schemas = 4;
+  repeated Operation operations = 5;
+}

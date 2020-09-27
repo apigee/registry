@@ -84,6 +84,8 @@ func PrintPropertyDetail(property *rpc.Property) {
 			unmarshalAndPrint(v.MessageValue.Value, &metrics.Complexity{})
 		case "gnostic.metrics.Vocabulary":
 			unmarshalAndPrint(v.MessageValue.Value, &metrics.Vocabulary{})
+		case "google.cloud.apigee.registry.v1alpha1.Corpus":
+			unmarshalAndPrint(v.MessageValue.Value, &rpc.Corpus{})
 		case "gnostic.openapiv2.Document":
 			unmarshalAndPrint(v.MessageValue.Value, &openapiv2.Document{})
 		case "gnostic.openapiv3.Document":

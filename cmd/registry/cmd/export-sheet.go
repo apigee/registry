@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"log"
 	"path/filepath"
-	"strings"
 
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
@@ -53,45 +52,25 @@ var exportSheetCmd = &cobra.Command{
 		}
 		typeURL := messageTypeURL(inputs[0])
 		if typeURL == "gnostic.metrics.Vocabulary" {
-			if len(inputs) == 1 {
-				vocabulary, err := getVocabulary(inputs[0])
-				if err != nil {
-					log.Fatalf("%s", err.Error())
-				}
-				err = core.ExportVocabularyToSheet(inputs[0].Name, vocabulary)
-			} else {
+			if len(inputs) != 1 {
 				log.Fatalf("%d properties matched. Please specify exactly one for export.", len(inputs))
 			}
+			vocabulary, err := getVocabulary(inputs[0])
+			if err != nil {
+				log.Fatalf("%s", err.Error())
+			}
+			err = core.ExportVocabularyToSheet(inputs[0].Name, vocabulary)
 		} else if typeURL == "gnostic.metrics.Complexity" {
-			name := "Complexity"
-			sheetsClient, err := core.NewSheetsClient("")
+			err = core.ExportComplexityToSheet("Complexity", inputs)
+		} else if typeURL == "google.cloud.apigee.registry.v1alpha1.Corpus" {
+			if len(inputs) != 1 {
+				log.Fatalf("%d properties matched. Please specify exactly one for export.", len(inputs))
+			}
+			corpus, err := getCorpus(inputs[0])
 			if err != nil {
 				log.Fatalf("%s", err.Error())
 			}
-			sheet, err := sheetsClient.CreateSheet(name, []string{"Complexity"})
-			if err != nil {
-				log.Fatalf("%s", err.Error())
-			}
-			_, err = sheetsClient.FormatHeaderRow(sheet.Sheets[0].Properties.SheetId)
-			if err != nil {
-				log.Fatalf("%s", err.Error())
-			}
-			rows := make([][]interface{}, 0)
-			rows = append(rows, rowForLabeledComplexity("", "", nil))
-			for _, input := range inputs {
-				complexity, err := getComplexity(input)
-				if err != nil {
-					log.Fatalf("%s", err.Error())
-				}
-				parts := strings.Split(input.Name, "/") // use to get api_id [3] and version_id [5]
-				rows = append(rows, rowForLabeledComplexity(parts[3], parts[5], complexity))
-			}
-			_, err = sheetsClient.Update(fmt.Sprintf("Complexity"), rows)
-			if err != nil {
-				log.Fatalf("%s", err.Error())
-			}
-
-			log.Printf("exported to %+v\n", sheet.SpreadsheetUrl)
+			err = core.ExportCorpusToSheet(inputs[0].Name, corpus)
 		} else {
 			log.Fatalf("Unknown message type: %s", typeURL)
 		}
@@ -138,51 +117,20 @@ func getVocabulary(property *rpc.Property) (*metrics.Vocabulary, error) {
 		if v.MessageValue.TypeUrl == "gnostic.metrics.Vocabulary" {
 			vocab := &metrics.Vocabulary{}
 			err := proto.Unmarshal(v.MessageValue.Value, vocab)
-			if err != nil {
-				return nil, err
-			} else {
-				return vocab, nil
-			}
-		} else {
-			return nil, fmt.Errorf("not a vocabulary: %s", property.Name)
+			return vocab, err
 		}
-	default:
-		return nil, fmt.Errorf("not a vocabulary: %s", property.Name)
 	}
+	return nil, fmt.Errorf("not a vocabulary: %s", property.Name)
 }
 
-func getComplexity(property *rpc.Property) (*metrics.Complexity, error) {
+func getCorpus(property *rpc.Property) (*rpc.Corpus, error) {
 	switch v := property.GetValue().(type) {
 	case *rpc.Property_MessageValue:
-		if v.MessageValue.TypeUrl == "gnostic.metrics.Complexity" {
-			value := &metrics.Complexity{}
-			err := proto.Unmarshal(v.MessageValue.Value, value)
-			if err != nil {
-				return nil, err
-			} else {
-				return value, nil
-			}
-		} else {
-			return nil, fmt.Errorf("not a complexity: %s", property.Name)
-		}
-	default:
-		return nil, fmt.Errorf("not a complexity: %s", property.Name)
-	}
-}
-
-func rowForLabeledComplexity(api, version string, c *metrics.Complexity) []interface{} {
-	if c == nil {
-		return []interface{}{
-			"api",
-			"version",
-			"schemas",
-			"schema properties",
-			"paths",
-			"gets",
-			"posts",
-			"puts",
-			"deletes",
+		if v.MessageValue.TypeUrl == "google.cloud.apigee.registry.v1alpha1.Corpus" {
+			corpus := &rpc.Corpus{}
+			err := proto.Unmarshal(v.MessageValue.Value, corpus)
+			return corpus, err
 		}
 	}
-	return []interface{}{api, version, c.SchemaCount, c.SchemaPropertyCount, c.PathCount, c.GetCount, c.PostCount, c.PutCount, c.DeleteCount}
+	return nil, fmt.Errorf("not a corpus: %s", property.Name)
 }
