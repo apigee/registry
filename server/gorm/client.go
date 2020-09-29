@@ -211,13 +211,17 @@ func (c *Client) Put(ctx context.Context, k storage.Key, v interface{}) (storage
 	case *models.Label:
 		r.Key = k.(*Key).Name
 	}
-	rowsAffected := c.db.Model(v).Where("key = ?", k.(*Key).Name).Updates(v).RowsAffected
-	if rowsAffected == 0 {
-		err := c.db.Create(v).Error
-		if err != nil {
-			log.Printf("CREATE ERROR %s", err.Error())
-		}
-	}
+	c.db.Transaction(
+		func(tx *gorm.DB) error {
+			rowsAffected := tx.Model(v).Where("key = ?", k.(*Key).Name).Updates(v).RowsAffected
+			if rowsAffected == 0 {
+				err := tx.Create(v).Error
+				if err != nil {
+					log.Printf("CREATE ERROR %s", err.Error())
+				}
+			}
+			return nil
+		})
 	return k, nil
 }
 
