@@ -29,13 +29,13 @@ import (
 )
 
 func init() {
-	computeCmd.AddCommand(computeCorpusCmd)
+	computeCmd.AddCommand(computeIndexCmd)
 }
 
-var computeCorpusCmd = &cobra.Command{
-	Use:   "corpus",
-	Short: "Compute the corpus of API specs.",
-	Long:  `Compute the corpus of API specs.`,
+var computeIndexCmd = &cobra.Command{
+	Use:   "index",
+	Short: "Compute the index of API specs.",
+	Long:  `Compute the index of API specs.`,
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.TODO()
@@ -55,7 +55,7 @@ var computeCorpusCmd = &cobra.Command{
 		if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
 			// Iterate through a collection of specs and summarize each.
 			err = core.ListSpecs(ctx, client, m, computeFilter, func(spec *rpc.Spec) {
-				taskQueue <- &computeCorpusTask{
+				taskQueue <- &computeIndexTask{
 					ctx:      ctx,
 					client:   client,
 					specName: spec.Name,
@@ -67,13 +67,13 @@ var computeCorpusCmd = &cobra.Command{
 	},
 }
 
-type computeCorpusTask struct {
+type computeIndexTask struct {
 	ctx      context.Context
 	client   connection.Client
 	specName string
 }
 
-func (task *computeCorpusTask) Run() error {
+func (task *computeIndexTask) Run() error {
 	request := &rpc.GetSpecRequest{
 		Name: task.specName,
 		View: rpc.SpecView_FULL,
@@ -82,26 +82,26 @@ func (task *computeCorpusTask) Run() error {
 	if err != nil {
 		return err
 	}
-	relation := "corpus"
+	relation := "index"
 	log.Printf("computing %s/properties/%s", spec.Name, relation)
-	var corpus *rpc.Corpus
+	var index *rpc.Index
 	if spec.GetStyle() == "proto+zip" {
-		corpus, err = core.NewCorpusFromZippedProtos(spec.GetContents())
+		index, err = core.NewIndexFromZippedProtos(spec.GetContents())
 		if err != nil {
 			return fmt.Errorf("error processing protos: %s", spec.Name)
 		}
 	} else {
-		return fmt.Errorf("we don't know how to compute the corpus of %s", spec.Name)
+		return fmt.Errorf("we don't know how to compute the index of %s", spec.Name)
 	}
 	subject := spec.GetName()
-	messageData, err := proto.Marshal(corpus)
+	messageData, err := proto.Marshal(index)
 	property := &rpc.Property{
 		Subject:  subject,
 		Relation: relation,
 		Name:     subject + "/properties/" + relation,
 		Value: &rpc.Property_MessageValue{
 			MessageValue: &any.Any{
-				TypeUrl: "google.cloud.apigee.registry.v1alpha1.Corpus",
+				TypeUrl: "google.cloud.apigee.registry.v1alpha1.Index",
 				Value:   messageData,
 			},
 		},

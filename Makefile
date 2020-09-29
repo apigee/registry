@@ -2,7 +2,6 @@ lite:
 	go install ./...
 
 all:	protos
-	cd examples/corpus; ./COMPILE-PROTOS.sh
 	go install ./...
 
 protos:

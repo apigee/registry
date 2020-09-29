@@ -18,7 +18,7 @@ package google.cloud.apigee.registry.v1alpha1;
 
 option java_package = "com.google.cloud.apigee.registry.v1alpha1";
 option java_multiple_files = true;
-option java_outer_classname = "RegistryMetricsProto";
+option java_outer_classname = "RegistryIndexProto";
 option go_package = "github.com/apigee/registry/rpc;rpc";
 
 message Operation {
@@ -52,8 +52,8 @@ message File {
   repeated Schema schemas = 3;
 }
 
-message Corpus {
-  string corpus_name = 1;
+message Index {
+  string index_name = 1;
   repeated File files = 2;
   // index fields
   repeated Field fields = 3;

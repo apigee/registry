@@ -31,7 +31,7 @@ import (
 	"github.com/yoheimuta/go-protoparser/v4/parser"
 )
 
-func NewCorpusFromZippedProtos(b []byte) (*rpc.Corpus, error) {
+func NewIndexFromZippedProtos(b []byte) (*rpc.Index, error) {
 	// create a tmp directory
 	dname, err := ioutil.TempDir("", "registry-protos-")
 	if err != nil {
@@ -45,7 +45,7 @@ func NewCorpusFromZippedProtos(b []byte) (*rpc.Corpus, error) {
 		return nil, err
 	}
 	// process the directory
-	c, err := corpusForRoot(dname)
+	c, err := indexForRoot(dname)
 	if err != nil {
 		return nil, err
 	}
@@ -55,8 +55,8 @@ func NewCorpusFromZippedProtos(b []byte) (*rpc.Corpus, error) {
 	return c, nil
 }
 
-func corpusForRoot(root string) (*rpc.Corpus, error) {
-	s := &rpc.Corpus{}
+func indexForRoot(root string) (*rpc.Index, error) {
+	s := &rpc.Index{}
 	err := filepath.Walk(root,
 		func(path string, info os.FileInfo, err error) error {
 			if err != nil {
@@ -180,10 +180,10 @@ func trimQuotes(s string) string {
 }
 
 // FlattenPaths removes assignments and parameters from operation paths
-func FlattenPaths(corpus *rpc.Corpus) {
+func FlattenPaths(index *rpc.Index) {
 	r1 := regexp.MustCompile("{[^{}=]+=([^{}=]+)}")
 	r2 := regexp.MustCompile("{[^{}].*}")
-	for _, op := range corpus.Operations {
+	for _, op := range index.Operations {
 		p := op.Path
 		p = strings.ReplaceAll(p, "{$api_version}", "v*")
 		p = r1.ReplaceAllString(p, "$1")
@@ -193,47 +193,47 @@ func FlattenPaths(corpus *rpc.Corpus) {
 }
 
 // BuildIndex adds flat arrays of fields, schemas, and operations.
-func BuildIndex(corpus *rpc.Corpus) {
-	corpus.Fields = make([]*rpc.Field, 0)
-	corpus.Schemas = make([]*rpc.Schema, 0)
-	corpus.Operations = make([]*rpc.Operation, 0)
-	for _, file := range corpus.Files {
+func BuildIndex(index *rpc.Index) {
+	index.Fields = make([]*rpc.Field, 0)
+	index.Schemas = make([]*rpc.Schema, 0)
+	index.Operations = make([]*rpc.Operation, 0)
+	for _, file := range index.Files {
 		for _, op := range file.Operations {
 			opCopy := &rpc.Operation{}
 			*opCopy = *op
 			opCopy.FileName = file.FileName
-			corpus.Operations = append(corpus.Operations, opCopy)
+			index.Operations = append(index.Operations, opCopy)
 		}
 		for _, schema := range file.Schemas {
 			schemaCopy := &rpc.Schema{}
 			*schemaCopy = *schema
 			schemaCopy.Fields = nil
 			schemaCopy.FileName = file.FileName
-			corpus.Schemas = append(corpus.Schemas, schemaCopy)
+			index.Schemas = append(index.Schemas, schemaCopy)
 			for _, field := range schema.Fields {
 				fieldCopy := &rpc.Field{}
 				*fieldCopy = *field
 				fieldCopy.FileName = file.FileName
 				fieldCopy.SchemaName = schema.SchemaName
-				corpus.Fields = append(corpus.Fields, fieldCopy)
+				index.Fields = append(index.Fields, fieldCopy)
 			}
 		}
 	}
-	sort.Slice(corpus.Fields, func(i, j int) bool {
-		return corpus.Fields[i].FieldName < corpus.Fields[j].FieldName
+	sort.Slice(index.Fields, func(i, j int) bool {
+		return index.Fields[i].FieldName < index.Fields[j].FieldName
 	})
-	sort.Slice(corpus.Schemas, func(i, j int) bool {
-		return corpus.Schemas[i].SchemaName < corpus.Schemas[j].SchemaName
+	sort.Slice(index.Schemas, func(i, j int) bool {
+		return index.Schemas[i].SchemaName < index.Schemas[j].SchemaName
 	})
-	sort.Slice(corpus.Operations, func(i, j int) bool {
-		return corpus.Operations[i].OperationName < corpus.Operations[j].OperationName
+	sort.Slice(index.Operations, func(i, j int) bool {
+		return index.Operations[i].OperationName < index.Operations[j].OperationName
 	})
 }
 
 // RemoveRequestAndResponseSchemas removes these from the flat schema list.
-func RemoveRequestAndResponseSchemas(corpus *rpc.Corpus) {
+func RemoveRequestAndResponseSchemas(index *rpc.Index) {
 	filteredSchemas := make([]*rpc.Schema, 0)
-	for _, schema := range corpus.Schemas {
+	for _, schema := range index.Schemas {
 		if strings.HasSuffix(schema.SchemaName, "Request") ||
 			strings.HasSuffix(schema.SchemaName, "Response") {
 			// skip it
@@ -241,18 +241,18 @@ func RemoveRequestAndResponseSchemas(corpus *rpc.Corpus) {
 			filteredSchemas = append(filteredSchemas, schema)
 		}
 	}
-	corpus.Schemas = filteredSchemas
+	index.Schemas = filteredSchemas
 }
 
 // ExportSchemas writes an index of Schemas as a CSV
-func ExportSchemas(corpus *rpc.Corpus) error {
+func ExportSchemas(index *rpc.Index) error {
 	f, err := os.Create("schemas.csv")
 	if err != nil {
 		return err
 	}
 	defer f.Close()
 	w := bufio.NewWriter(f)
-	for _, schema := range corpus.Schemas {
+	for _, schema := range index.Schemas {
 		fmt.Fprintf(w, "%s,%s,%s,%s\n",
 			schema.SchemaName, schema.ResourceName, schema.ResourceType, schema.FileName)
 	}
@@ -261,14 +261,14 @@ func ExportSchemas(corpus *rpc.Corpus) error {
 }
 
 // ExportOperations writes an index of Operations as a CSV
-func ExportOperations(corpus *rpc.Corpus) error {
+func ExportOperations(index *rpc.Index) error {
 	f, err := os.Create("operations.csv")
 	if err != nil {
 		return err
 	}
 	defer f.Close()
 	w := bufio.NewWriter(f)
-	for _, op := range corpus.Operations {
+	for _, op := range index.Operations {
 		fmt.Fprintf(w, "%s,%s,%s,%s,%s\n",
 			op.OperationName, op.ServiceName, op.Verb, op.Path, op.FileName)
 	}
@@ -277,14 +277,14 @@ func ExportOperations(corpus *rpc.Corpus) error {
 }
 
 // ExportFields writes an index of Fields as a CSV
-func ExportFields(corpus *rpc.Corpus) error {
+func ExportFields(index *rpc.Index) error {
 	f, err := os.Create("fields.csv")
 	if err != nil {
 		return err
 	}
 	defer f.Close()
 	w := bufio.NewWriter(f)
-	for _, field := range corpus.Fields {
+	for _, field := range index.Fields {
 		fmt.Fprintf(w, "%s,%s,%s\n",
 			field.FieldName, field.SchemaName, field.FileName)
 	}
@@ -292,9 +292,9 @@ func ExportFields(corpus *rpc.Corpus) error {
 	return nil
 }
 
-// ExportAsJSON writes a corpus as a JSON file
-func ExportAsJSON(corpus *rpc.Corpus) error {
-	f, err := os.Create("corpus.json")
+// ExportAsJSON writes a index as a JSON file
+func ExportAsJSON(index *rpc.Index) error {
+	f, err := os.Create("index.json")
 	if err != nil {
 		return err
 	}
@@ -303,7 +303,7 @@ func ExportAsJSON(corpus *rpc.Corpus) error {
 	m := &jsonpb.Marshaler{
 		Indent: "  ",
 	}
-	err = m.Marshal(w, corpus)
+	err = m.Marshal(w, index)
 	w.Flush()
 	return err
 }

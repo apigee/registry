@@ -20,7 +20,7 @@ import (
 	"github.com/apigee/registry/rpc"
 )
 
-func ExportCorpusToSheet(name string, corpus *rpc.Corpus) error {
+func ExportIndexToSheet(name string, index *rpc.Index) error {
 	sheetsClient, err := NewSheetsClient("")
 	if err != nil {
 		log.Fatalf("%s", err.Error())
@@ -38,7 +38,7 @@ func ExportCorpusToSheet(name string, corpus *rpc.Corpus) error {
 	{
 		rows := make([][]interface{}, 0)
 		rows = append(rows, rowForOperation(nil))
-		for _, op := range corpus.Operations {
+		for _, op := range index.Operations {
 			rows = append(rows, rowForOperation(op))
 		}
 		_, err = sheetsClient.Update("Operations", rows)
@@ -46,7 +46,7 @@ func ExportCorpusToSheet(name string, corpus *rpc.Corpus) error {
 	{
 		rows := make([][]interface{}, 0)
 		rows = append(rows, rowForSchema(nil))
-		for _, op := range corpus.Schemas {
+		for _, op := range index.Schemas {
 			rows = append(rows, rowForSchema(op))
 		}
 		_, err = sheetsClient.Update("Schemas", rows)
@@ -54,7 +54,7 @@ func ExportCorpusToSheet(name string, corpus *rpc.Corpus) error {
 	{
 		rows := make([][]interface{}, 0)
 		rows = append(rows, rowForField(nil))
-		for _, op := range corpus.Fields {
+		for _, op := range index.Fields {
 			rows = append(rows, rowForField(op))
 		}
 		_, err = sheetsClient.Update("Fields", rows)

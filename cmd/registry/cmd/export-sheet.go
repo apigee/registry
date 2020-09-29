@@ -62,15 +62,15 @@ var exportSheetCmd = &cobra.Command{
 			err = core.ExportVocabularyToSheet(inputs[0].Name, vocabulary)
 		} else if typeURL == "gnostic.metrics.Complexity" {
 			err = core.ExportComplexityToSheet("Complexity", inputs)
-		} else if typeURL == "google.cloud.apigee.registry.v1alpha1.Corpus" {
+		} else if typeURL == "google.cloud.apigee.registry.v1alpha1.Index" {
 			if len(inputs) != 1 {
 				log.Fatalf("%d properties matched. Please specify exactly one for export.", len(inputs))
 			}
-			corpus, err := getCorpus(inputs[0])
+			index, err := getIndex(inputs[0])
 			if err != nil {
 				log.Fatalf("%s", err.Error())
 			}
-			err = core.ExportCorpusToSheet(inputs[0].Name, corpus)
+			err = core.ExportIndexToSheet(inputs[0].Name, index)
 		} else {
 			log.Fatalf("Unknown message type: %s", typeURL)
 		}
@@ -123,14 +123,14 @@ func getVocabulary(property *rpc.Property) (*metrics.Vocabulary, error) {
 	return nil, fmt.Errorf("not a vocabulary: %s", property.Name)
 }
 
-func getCorpus(property *rpc.Property) (*rpc.Corpus, error) {
+func getIndex(property *rpc.Property) (*rpc.Index, error) {
 	switch v := property.GetValue().(type) {
 	case *rpc.Property_MessageValue:
-		if v.MessageValue.TypeUrl == "google.cloud.apigee.registry.v1alpha1.Corpus" {
-			corpus := &rpc.Corpus{}
-			err := proto.Unmarshal(v.MessageValue.Value, corpus)
-			return corpus, err
+		if v.MessageValue.TypeUrl == "google.cloud.apigee.registry.v1alpha1.Index" {
+			index := &rpc.Index{}
+			err := proto.Unmarshal(v.MessageValue.Value, index)
+			return index, err
 		}
 	}
-	return nil, fmt.Errorf("not a corpus: %s", property.Name)
+	return nil, fmt.Errorf("not a index: %s", property.Name)
 }
