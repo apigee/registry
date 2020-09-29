@@ -15,134 +15,105 @@
 package cmd
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
-	"fmt"
 	"log"
 	"strings"
-	"sync"
 
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
-	"github.com/blevesearch/bleve"
-	openapi_v2 "github.com/googleapis/gnostic/openapiv2"
-	openapi_v3 "github.com/googleapis/gnostic/openapiv3"
+	"github.com/golang/protobuf/ptypes/any"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/proto"
 )
 
-const (
-	indexDir = "registry.bleve"
-)
-
 var indexFilter string
-var indexMutex sync.Mutex
 
 func init() {
 	rootCmd.AddCommand(indexCmd)
-	indexCmd.Flags().StringVar(&indexFilter, "filter", "", "Filter option to send with index calls")
+	indexCmd.PersistentFlags().StringVar(&indexFilter, "filter", "", "filter index arguments")
 }
 
 // indexCmd represents the index command
 var indexCmd = &cobra.Command{
 	Use:   "index",
-	Short: "Build a local index of specs in the Registry.",
-	Long:  "Build a local index of specs in the Registry.",
-	Args:  cobra.MinimumNArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		ctx := context.TODO()
-		client, err := connection.NewClient(ctx)
-		if err != nil {
-			log.Fatalf("%s", err.Error())
-		}
-		// Initialize task queue.
-		taskQueue := make(chan core.Task, 1024)
-		workerCount := 64
-		for i := 0; i < workerCount; i++ {
-			core.WaitGroup().Add(1)
-			go core.Worker(ctx, taskQueue)
-		}
-		// Generate tasks.
-		name := args[0]
-		if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
-			err = core.ListSpecs(ctx, client, m, indexFilter, func(spec *rpc.Spec) {
-				taskQueue <- &indexSpecTask{
-					ctx:      ctx,
-					client:   client,
-					specName: spec.Name,
+	Short: "Operations on API indexes.",
+	Long:  `Operations on API indexes.`,
+}
+
+func collectInputIndexes(ctx context.Context, client connection.Client, args []string, filter string) ([]string, []*rpc.Index) {
+	inputNames := make([]string, 0)
+	inputs := make([]*rpc.Index, 0)
+	for _, name := range args {
+		if m := names.PropertyRegexp().FindStringSubmatch(name); m != nil {
+			err := core.ListProperties(ctx, client, m, filter, func(property *rpc.Property) {
+				switch v := property.GetValue().(type) {
+				case *rpc.Property_MessageValue:
+					if v.MessageValue.TypeUrl == "google.cloud.apigee.registry.v1alpha1.Index" {
+						vocab := &rpc.Index{}
+						err := proto.Unmarshal(v.MessageValue.Value, vocab)
+						if err != nil {
+							log.Printf("%+v", err)
+						} else {
+							inputNames = append(inputNames, property.Name)
+							inputs = append(inputs, vocab)
+						}
+					} else {
+						log.Printf("skipping, not an index: %s\n", property.Name)
+					}
+				default:
+					log.Printf("skipping, not an index: %s\n", property.Name)
 				}
 			})
-			close(taskQueue)
-			core.WaitGroup().Wait()
-		} else {
-			log.Fatalf("We don't know how to index %s", name)
+			if err != nil {
+				log.Fatalf("%s", err.Error())
+			}
 		}
-	},
+	}
+	return inputNames, inputs
 }
 
-type indexSpecTask struct {
-	ctx      context.Context
-	client   connection.Client
-	specName string
+func setIndexToProperty(ctx context.Context, client connection.Client, output *rpc.Index, outputPropertyName string) {
+	parts := strings.Split(outputPropertyName, "/properties/")
+	subject := parts[0]
+	relation := parts[1]
+	messageData, err := proto.Marshal(output)
+	if err != nil {
+		log.Fatalf("%s", err.Error())
+	}
+	messageData, err = gzippedBytes(messageData)
+	if err != nil {
+		log.Fatalf("%s", err.Error())
+	}
+	property := &rpc.Property{
+		Subject:  subject,
+		Relation: relation,
+		Name:     subject + "/properties/" + relation,
+		Value: &rpc.Property_MessageValue{
+			MessageValue: &any.Any{
+				TypeUrl: "google.cloud.apigee.registry.v1alpha1.Index",
+				Value:   messageData,
+			},
+		},
+	}
+	err = core.SetProperty(ctx, client, property)
+	if err != nil {
+		log.Fatalf("%s", err.Error())
+	}
 }
 
-func (task *indexSpecTask) Run() error {
-	request := &rpc.GetSpecRequest{
-		Name: task.specName,
-		View: rpc.SpecView_FULL,
-	}
-	spec, err := task.client.GetSpec(task.ctx, request)
+func gzippedBytes(fileBytes []byte) ([]byte, error) {
+	var buf bytes.Buffer
+	zw, _ := gzip.NewWriterLevel(&buf, gzip.BestCompression)
+	_, err := zw.Write(fileBytes)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	name := spec.GetName()
-	data, err := core.GetBytesForSpec(spec)
-	if err != nil {
-		return nil
+	if err := zw.Close(); err != nil {
+		return nil, err
 	}
-	var message proto.Message
-	if strings.HasPrefix(spec.GetStyle(), "openapi/v2") {
-		document, err := openapi_v2.ParseDocument(data)
-		if err != nil {
-			return fmt.Errorf("errors parsing %s", name)
-		}
-		// remove some fields to simplify the search index
-		document.Paths = nil
-		document.Definitions = nil
-		document.Responses = nil
-		document.Parameters = nil
-		document.Security = nil
-		document.SecurityDefinitions = nil
-		message = document
-	} else if strings.HasPrefix(spec.GetStyle(), "openapi/v3") {
-		document, err := openapi_v3.ParseDocument(data)
-		if err != nil {
-			return fmt.Errorf("errors parsing %s", name)
-		}
-		// remove some fields to simplify the search index
-		document.Paths = nil
-		document.Components = nil
-		document.Security = nil
-		message = document
-	} else {
-		return fmt.Errorf("unable to generate descriptor for style %s", spec.GetStyle())
-	}
-
-	// The bleve index requires serialized updates.
-	indexMutex.Lock()
-	defer indexMutex.Unlock()
-	// Open the index, creating a new one if necessary.
-	index, err := bleve.Open(indexDir)
-	if err != nil {
-		mapping := bleve.NewIndexMapping()
-		index, err = bleve.New(indexDir, mapping)
-		if err != nil {
-			return err
-		}
-	}
-	defer index.Close()
-	// Index the spec.
-	log.Printf("indexing %s", task.specName)
-	return index.Index(task.specName, message)
+	return buf.Bytes(), nil
 }

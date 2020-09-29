@@ -39,8 +39,8 @@ func init() {
 // vocabularyCmd represents the vocabulary command
 var vocabularyCmd = &cobra.Command{
 	Use:   "vocabulary",
-	Short: "Analyze API vocabularies.",
-	Long:  `Analyze API vocabularies.`,
+	Short: "Operations on API vocabularies.",
+	Long:  `Operations on API vocabularies.`,
 }
 
 func collectInputVocabularies(ctx context.Context, client connection.Client, args []string, filter string) ([]string, []*metrics.Vocabulary) {

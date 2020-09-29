@@ -15,8 +15,11 @@
 package cmd
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"path/filepath"
 
@@ -129,6 +132,14 @@ func getIndex(property *rpc.Property) (*rpc.Index, error) {
 		if v.MessageValue.TypeUrl == "google.cloud.apigee.registry.v1alpha1.Index" {
 			index := &rpc.Index{}
 			err := proto.Unmarshal(v.MessageValue.Value, index)
+			if err != nil {
+				// try unzipping and unmarshaling
+				buf := bytes.NewBuffer(v.MessageValue.Value)
+				zr, _ := gzip.NewReader(buf)
+				var value []byte
+				value, err = ioutil.ReadAll(zr)
+				err = proto.Unmarshal(value, index)
+			}
 			return index, err
 		}
 	}

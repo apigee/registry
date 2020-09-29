@@ -49,6 +49,9 @@ var uploadOpenAPICmd = &cobra.Command{
 		if err != nil {
 			log.Fatalf("%s", err.Error())
 		}
+		if projectID == "" {
+			log.Fatalf("Please specify a project_id")
+		}
 		ctx := context.TODO()
 		client, err := connection.NewClient(ctx)
 		if err != nil {
