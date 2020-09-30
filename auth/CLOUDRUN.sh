@@ -22,6 +22,10 @@
 # gcloud project is the one with your Cloud Run instance.
 #
 
+if ! [ -x "$(command -v gcloud)" ]; then
+  echo 'ERROR: This script requires the gcloud command. Please install it to continue.' >&2; return
+fi
+
 ### SERVER CONFIGURATION
 
 # This is used in the Makefile to build and publish your server image.

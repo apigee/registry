@@ -19,6 +19,10 @@
 # Configure an environment to run Registry clients with a local server through a local Envoy proxy.
 #
 
+if ! [ -x "$(command -v gcloud)" ]; then
+  echo 'ERROR: This script requires the gcloud command. Please install it to continue.' >&2; return
+fi
+
 ### SERVER CONFIGURATION
 
 # These steps are needed to enable local calls to the Cloud Datastore API.
