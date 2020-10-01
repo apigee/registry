@@ -36,7 +36,7 @@ func NewVocabularyFromZippedProtos(b []byte) (*metrics.Vocabulary, error) {
 	// whenever we finish, delete the tmp directory
 	defer os.RemoveAll(dname)
 	// unzip the protos to the temp directory
-	_, err = Unzip(b, dname)
+	_, err = UnzipArchiveToPath(b, dname)
 	if err != nil {
 		return nil, err
 	}

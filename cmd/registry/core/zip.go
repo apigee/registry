@@ -25,56 +25,44 @@ import (
 	"strings"
 )
 
-// Unzip will decompress a zip archive, moving all files and folders
-// within the zip file (parameter 1) to an output directory (parameter 2).
-func Unzip(b []byte, dest string) ([]string, error) {
-
+// UnzipArchiveToPath will decompress a zip archive, writing all files and folders
+// within the zip archive (parameter 1) to an output directory (parameter 2).
+// Based on an example published at https://golangcode.com/unzip-files-in-go/
+func UnzipArchiveToPath(b []byte, dest string) ([]string, error) {
 	var filenames []string
-
 	r, err := zip.NewReader(bytes.NewReader(b), int64(len(b)))
 	if err != nil {
 		return filenames, err
 	}
-
 	for _, f := range r.File {
-
 		// Store filename/path for returning and using later on
 		fpath := filepath.Join(dest, f.Name)
-
 		// Check for ZipSlip. More Info: http://bit.ly/2MsjAWE
 		if !strings.HasPrefix(fpath, filepath.Clean(dest)+string(os.PathSeparator)) {
 			return filenames, fmt.Errorf("%s: illegal file path", fpath)
 		}
-
 		filenames = append(filenames, fpath)
-
 		if f.FileInfo().IsDir() {
 			// Make Folder
 			os.MkdirAll(fpath, os.ModePerm)
 			continue
 		}
-
 		// Make File
 		if err = os.MkdirAll(filepath.Dir(fpath), os.ModePerm); err != nil {
 			return filenames, err
 		}
-
 		outFile, err := os.OpenFile(fpath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
 		if err != nil {
 			return filenames, err
 		}
-
 		rc, err := f.Open()
 		if err != nil {
 			return filenames, err
 		}
-
 		_, err = io.Copy(outFile, rc)
-
 		// Close the file without defer to close before next iteration of loop
 		outFile.Close()
 		rc.Close()
-
 		if err != nil {
 			return filenames, err
 		}
@@ -82,6 +70,9 @@ func Unzip(b []byte, dest string) ([]string, error) {
 	return filenames, nil
 }
 
+// ZipArchiveOfPath reads the contents of a path into a zip archive.
+// The specified prefix is stripped from file names in the archive.
+// Based on an example published at https://golangcode.com/create-zip-files-in-go/
 func ZipArchiveOfPath(path, prefix string) (buf bytes.Buffer, err error) {
 	zipWriter := zip.NewWriter(&buf)
 	defer zipWriter.Close()
@@ -113,27 +104,22 @@ func addFileToZip(zipWriter *zip.Writer, filename, prefix string) error {
 		return err
 	}
 	defer fileToZip.Close()
-
 	// Get the file information
 	info, err := fileToZip.Stat()
 	if err != nil {
 		return err
 	}
-
 	header, err := zip.FileInfoHeader(info)
 	if err != nil {
 		return err
 	}
-
 	// Using FileInfoHeader() above only uses the basename of the file. If we want
 	// to preserve the folder structure we can overwrite this with the full path.
 	name := strings.TrimPrefix(filename, prefix)
 	header.Name = name
-
-	// Change to deflate to gain better compression
+	// Set to Deflate to gain better compression
 	// see http://golang.org/pkg/archive/zip/#pkg-constants
 	header.Method = zip.Deflate
-
 	writer, err := zipWriter.CreateHeader(header)
 	if err != nil {
 		return err
