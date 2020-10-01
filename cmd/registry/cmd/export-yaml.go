@@ -35,11 +35,9 @@ func check(err error) {
 	}
 }
 
-// exportYAMLCmd represents the export yaml command
 var exportYAMLCmd = &cobra.Command{
 	Use:   "yaml",
-	Short: "Export a subtree of the registry.",
-	Long:  `Export a subtree of the registry.`,
+	Short: "Export a subtree of the registry to a YAML file",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.TODO()

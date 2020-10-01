@@ -37,11 +37,9 @@ func init() {
 	setCmd.Flags().StringVar(&setLabelID, "label_id", "", "Label to set on selected resources")
 }
 
-// setCmd represents the set command
 var setCmd = &cobra.Command{
 	Use:   "set",
-	Short: "set labels and properties on matching entities.",
-	Long:  "set labels and properties on matching entities.",
+	Short: "Set labels and properties on resources in the API Registry",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.TODO()

@@ -34,8 +34,7 @@ func init() {
 
 var computeIndexCmd = &cobra.Command{
 	Use:   "index",
-	Short: "Compute an index of API specs.",
-	Long:  `Compute an index of API specs.`,
+	Short: "Compute indexes of API specs",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.TODO()

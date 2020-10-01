@@ -15,11 +15,8 @@
 package cmd
 
 import (
-	"bytes"
-	"compress/gzip"
 	"context"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"path/filepath"
 
@@ -36,11 +33,9 @@ func init() {
 	exportCmd.AddCommand(exportSheetCmd)
 }
 
-// exportSheetCmd represents the export sheet command
 var exportSheetCmd = &cobra.Command{
 	Use:   "sheet",
-	Short: "Export a specified property to a Google sheet.",
-	Long:  "Export a specified property to a Google sheet.",
+	Short: "Export a specified property to a Google sheet",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
@@ -134,10 +129,10 @@ func getIndex(property *rpc.Property) (*rpc.Index, error) {
 			err := proto.Unmarshal(v.MessageValue.Value, index)
 			if err != nil {
 				// try unzipping and unmarshaling
-				buf := bytes.NewBuffer(v.MessageValue.Value)
-				zr, _ := gzip.NewReader(buf)
-				var value []byte
-				value, err = ioutil.ReadAll(zr)
+				value, err := core.GUnzippedBytes(v.MessageValue.Value)
+				if err != nil {
+					return nil, err
+				}
 				err = proto.Unmarshal(value, index)
 			}
 			return index, err

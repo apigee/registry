@@ -31,11 +31,9 @@ func init() {
 	getCmd.Flags().BoolVar(&getContents, "contents", false, "Get item contents (if applicable).")
 }
 
-// getCmd represents the get command
 var getCmd = &cobra.Command{
 	Use:   "get",
-	Short: "Get resource values.",
-	Long:  `Get resource values.`,
+	Short: "Get resources from the API Registry",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.TODO()

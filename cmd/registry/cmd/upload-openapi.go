@@ -15,8 +15,6 @@
 package cmd
 
 import (
-	"bytes"
-	"compress/gzip"
 	"context"
 	"fmt"
 	"io/ioutil"
@@ -36,11 +34,9 @@ func init() {
 	uploadOpenAPICmd.Flags().String("project_id", "", "Project id.")
 }
 
-// uploadOpenAPICmd represents the upload protos command
 var uploadOpenAPICmd = &cobra.Command{
 	Use:   "openapi",
-	Short: "Upload OpenAPI descriptions of APIs.",
-	Long:  "Upload OpenAPI descriptions of APIs.",
+	Short: "Upload OpenAPI descriptions of APIs",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
@@ -219,16 +215,7 @@ func (task *uploadOpenAPITask) createSpec() error {
 	_, err := task.client.GetSpec(task.ctx, request)
 	if core.NotFound(err) {
 		fileBytes, err := ioutil.ReadFile(task.path)
-		// gzip the spec before uploading it
-		var buf bytes.Buffer
-		zw, _ := gzip.NewWriterLevel(&buf, gzip.BestCompression)
-		_, err = zw.Write(fileBytes)
-		if err != nil {
-			log.Fatal(err)
-		}
-		if err := zw.Close(); err != nil {
-			log.Fatal(err)
-		}
+		gzippedBytes, err := core.GZippedBytes(fileBytes)
 		request := &rpcpb.CreateSpecRequest{}
 		request.Parent = "projects/" + task.projectID + "/apis/" + task.apiID +
 			"/versions/" + task.versionID
@@ -236,7 +223,7 @@ func (task *uploadOpenAPITask) createSpec() error {
 		request.Spec = &rpcpb.Spec{}
 		request.Spec.Style = task.style + "+gzip"
 		request.Spec.Filename = filename
-		request.Spec.Contents = buf.Bytes()
+		request.Spec.Contents = gzippedBytes
 		response, err := task.client.CreateSpec(task.ctx, request)
 		if err == nil {
 			log.Printf("created %s", response.Name)

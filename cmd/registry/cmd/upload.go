@@ -22,9 +22,7 @@ func init() {
 	rootCmd.AddCommand(uploadCmd)
 }
 
-// uploadCmd represents the upload command
 var uploadCmd = &cobra.Command{
 	Use:   "upload",
-	Short: "Upload API specifications.",
-	Long:  `Upload API specifications.`,
+	Short: "Upload information to the API Registry",
 }

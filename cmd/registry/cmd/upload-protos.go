@@ -35,11 +35,9 @@ func init() {
 	uploadProtosCmd.Flags().String("project_id", "", "Project id.")
 }
 
-// uploadProtosCmd represents the upload protos command
 var uploadProtosCmd = &cobra.Command{
 	Use:   "protos",
-	Short: "Upload Protocol Buffer descriptions of APIs.",
-	Long:  "Upload Protocol Buffer descriptions of APIs.",
+	Short: "Upload Protocol Buffer descriptions of APIs",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error

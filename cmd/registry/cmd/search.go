@@ -28,11 +28,9 @@ func init() {
 	rootCmd.AddCommand(searchCmd)
 }
 
-// searchCmd represents the search command
 var searchCmd = &cobra.Command{
 	Use:   "search",
-	Short: "Search a local index of specs in the Registry.",
-	Long:  "Search a local index of specs in the Registry.",
+	Short: "Search a local index of specs in the API Registry (experimental)",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 

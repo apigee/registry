@@ -15,8 +15,6 @@
 package cmd
 
 import (
-	"bytes"
-	"compress/gzip"
 	"context"
 	"log"
 	"strings"
@@ -37,11 +35,9 @@ func init() {
 	indexCmd.PersistentFlags().StringVar(&indexFilter, "filter", "", "filter index arguments")
 }
 
-// indexCmd represents the index command
 var indexCmd = &cobra.Command{
 	Use:   "index",
-	Short: "Operations on API indexes.",
-	Long:  `Operations on API indexes.`,
+	Short: "Operate on API indexes in the API Registry",
 }
 
 func collectInputIndexes(ctx context.Context, client connection.Client, args []string, filter string) ([]string, []*rpc.Index) {
@@ -84,7 +80,7 @@ func setIndexToProperty(ctx context.Context, client connection.Client, output *r
 	if err != nil {
 		log.Fatalf("%s", err.Error())
 	}
-	messageData, err = gzippedBytes(messageData)
+	messageData, err = core.GZippedBytes(messageData)
 	if err != nil {
 		log.Fatalf("%s", err.Error())
 	}
@@ -103,17 +99,4 @@ func setIndexToProperty(ctx context.Context, client connection.Client, output *r
 	if err != nil {
 		log.Fatalf("%s", err.Error())
 	}
-}
-
-func gzippedBytes(fileBytes []byte) ([]byte, error) {
-	var buf bytes.Buffer
-	zw, _ := gzip.NewWriterLevel(&buf, gzip.BestCompression)
-	_, err := zw.Write(fileBytes)
-	if err != nil {
-		return nil, err
-	}
-	if err := zw.Close(); err != nil {
-		return nil, err
-	}
-	return buf.Bytes(), nil
 }

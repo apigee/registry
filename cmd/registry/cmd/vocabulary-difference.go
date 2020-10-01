@@ -26,14 +26,12 @@ import (
 
 func init() {
 	vocabularyCmd.AddCommand(vocabularyDifferenceCmd)
-	vocabularyDifferenceCmd.Flags().String("output", "", "name of property to store output.")
+	vocabularyDifferenceCmd.Flags().String("output", "", "name of property where output should be stored")
 }
 
-// vocabularyDifferenceCmd represents the vocabulary difference command
 var vocabularyDifferenceCmd = &cobra.Command{
 	Use:   "difference",
-	Short: "Compute the difference of specified API vocabularies.",
-	Long:  "Compute the difference of specified API vocabularies. Each of the second and following specified vocabularies is subtracted from the first.",
+	Short: "Compute the difference of specified API vocabularies",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error

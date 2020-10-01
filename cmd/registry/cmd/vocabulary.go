@@ -36,11 +36,9 @@ func init() {
 	vocabularyCmd.PersistentFlags().StringVar(&vocabularyFilter, "filter", "", "filter vocabulary arguments")
 }
 
-// vocabularyCmd represents the vocabulary command
 var vocabularyCmd = &cobra.Command{
 	Use:   "vocabulary",
-	Short: "Operations on API vocabularies.",
-	Long:  `Operations on API vocabularies.`,
+	Short: "Operate on API vocabularies in the API Registry",
 }
 
 func collectInputVocabularies(ctx context.Context, client connection.Client, args []string, filter string) ([]string, []*metrics.Vocabulary) {

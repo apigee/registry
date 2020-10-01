@@ -40,15 +40,13 @@ var bleveFilter string
 var bleveMutex sync.Mutex
 
 func init() {
-	rootCmd.AddCommand(bleveCmd)
-	bleveCmd.Flags().StringVar(&bleveFilter, "filter", "", "Filter option to send with calls")
+	computeCmd.AddCommand(computeBleveCmd)
+	computeBleveCmd.Flags().StringVar(&bleveFilter, "filter", "", "Filter option to send with calls")
 }
 
-// indexCmd represents the index command
-var bleveCmd = &cobra.Command{
-	Use:   "bleve",
-	Short: "Build a local bleve index of specs in the Registry.",
-	Long:  "Build a local bleve index of specs in the Registry.",
+var computeBleveCmd = &cobra.Command{
+	Use:   "search-index",
+	Short: "Compute a local search index of specs (experimental)",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.TODO()

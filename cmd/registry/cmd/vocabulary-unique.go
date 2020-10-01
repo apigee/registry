@@ -31,11 +31,9 @@ func init() {
 	vocabularyUniqueCmd.Flags().String("output_id", "vocabulary-unique", "id of property to store output.")
 }
 
-// vocabularyUniqueCmd represents the vocabulary unique command
 var vocabularyUniqueCmd = &cobra.Command{
 	Use:   "unique",
-	Short: "Compute the unique subsets of each member of specified vocabularies.",
-	Long:  "Compute the unique subsets of each member of specified vocabularies.",
+	Short: "Compute the unique subsets of each member of specified vocabularies",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error

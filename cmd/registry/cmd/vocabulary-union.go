@@ -26,14 +26,12 @@ import (
 
 func init() {
 	vocabularyCmd.AddCommand(vocabularyUnionCmd)
-	vocabularyUnionCmd.Flags().String("output", "", "name of property to store output.")
+	vocabularyUnionCmd.Flags().String("output", "", "name of property where output should be stored")
 }
 
-// vocabularyUnionCmd represents the vocabulary union command
 var vocabularyUnionCmd = &cobra.Command{
 	Use:   "union",
-	Short: "Compute the union of specified API vocabularies.",
-	Long:  "Compute the union of specified API vocabularies.",
+	Short: "Compute the union of specified API vocabularies",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error

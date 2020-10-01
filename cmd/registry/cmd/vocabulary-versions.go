@@ -27,14 +27,11 @@ import (
 
 func init() {
 	vocabularyCmd.AddCommand(vocabularyVersionsCmd)
-	vocabularyVersionsCmd.Flags().String("output_id", "", "id of property to store output.")
 }
 
-// vocabularyVersionsCmd represents the vocabulary versions command
 var vocabularyVersionsCmd = &cobra.Command{
 	Use:   "versions",
-	Short: "Compute the differences in API vocabularies associated with successive API versions.",
-	Long:  "Compute the differences in API vocabularies associated with successive API versions.",
+	Short: "Compute the differences in API vocabularies associated with successive API versions",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error

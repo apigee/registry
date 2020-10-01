@@ -12,25 +12,34 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cmd
+package core
 
 import (
-	"fmt"
-	"os"
-
-	"github.com/spf13/cobra"
+	"bytes"
+	"compress/gzip"
+	"io/ioutil"
 )
 
-var rootCmd = &cobra.Command{
-	Use:   "registry",
-	Short: "A simple and eclectic utility for working with the API Registry",
+// GZippedBytes compresses a slice of bytes.
+func GZippedBytes(input []byte) ([]byte, error) {
+	var buf bytes.Buffer
+	zw, _ := gzip.NewWriterLevel(&buf, gzip.BestCompression)
+	_, err := zw.Write(input)
+	if err != nil {
+		return nil, err
+	}
+	if err := zw.Close(); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
 }
 
-// Execute adds all child commands to the root command and sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the rootCmd.
-func Execute() {
-	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+// GUnzippedBytes uncompresses a slice of bytes.
+func GUnzippedBytes(input []byte) ([]byte, error) {
+	buf := bytes.NewBuffer(input)
+	zr, err := gzip.NewReader(buf)
+	if err != nil {
+		return nil, err
 	}
+	return ioutil.ReadAll(zr)
 }

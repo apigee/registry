@@ -15,8 +15,6 @@
 package cmd
 
 import (
-	"bytes"
-	"compress/gzip"
 	"context"
 	"fmt"
 	"log"
@@ -33,11 +31,9 @@ func init() {
 	uploadDiscoveryCmd.Flags().String("project_id", "", "Project id.")
 }
 
-// uploadDiscoveryCmd represents the upload discovery command
 var uploadDiscoveryCmd = &cobra.Command{
 	Use:   "discovery",
-	Short: "Upload API Discovery documents from the Google API Discovery service.",
-	Long:  "Upload API Discovery documents from the Google API Discovery service.",
+	Short: "Upload API Discovery documents from the Google API Discovery service",
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
 		flagset := cmd.LocalFlags()
@@ -175,23 +171,15 @@ func (task *uploadDiscoveryTask) createSpec() error {
 	_, err := task.client.GetSpec(task.ctx, request)
 	if core.NotFound(err) {
 		fileBytes := task.fileBytes
-		// gzip the spec before uploading it
-		var buf bytes.Buffer
-		zw, _ := gzip.NewWriterLevel(&buf, gzip.BestCompression)
-		_, err = zw.Write(fileBytes)
-		if err != nil {
-			return err
-		}
-		if err := zw.Close(); err != nil {
-			return err
-		}
+		// compress the spec before uploading it
+		gzippedBytes, err := core.GZippedBytes(fileBytes)
 		request := &rpcpb.CreateSpecRequest{}
 		request.Parent = "projects/" + task.projectID + "/apis/" + task.apiID +
 			"/versions/" + task.versionID
 		request.SpecId = task.specID
 		request.Spec = &rpcpb.Spec{}
 		request.Spec.Style = "discovery" + "+gzip"
-		request.Spec.Contents = buf.Bytes()
+		request.Spec.Contents = gzippedBytes
 		response, err := task.client.CreateSpec(task.ctx, request)
 		if err == nil {
 			log.Printf("created %s", response.Name)

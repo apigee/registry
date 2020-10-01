@@ -38,8 +38,7 @@ func init() {
 
 var computeDescriptorCmd = &cobra.Command{
 	Use:   "descriptor",
-	Short: "Compute the descriptor of API specs.",
-	Long:  `Compute the descriptor of API specs.`,
+	Short: "Compute descriptors of API specs",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.TODO()

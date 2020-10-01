@@ -25,9 +25,7 @@ func init() {
 	computeCmd.PersistentFlags().StringVar(&computeFilter, "filter", "", "filter compute arguments")
 }
 
-// computeCmd represents the compute command
 var computeCmd = &cobra.Command{
 	Use:   "compute",
-	Short: "compute properties of API specifications.",
-	Long:  `compute properties of API specifications.`,
+	Short: "Compute properties of resources in the API Registry",
 }

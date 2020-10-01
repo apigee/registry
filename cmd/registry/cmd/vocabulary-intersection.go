@@ -26,14 +26,12 @@ import (
 
 func init() {
 	vocabularyCmd.AddCommand(vocabularyIntersectionCmd)
-	vocabularyIntersectionCmd.Flags().String("output", "", "name of property to store output.")
+	vocabularyIntersectionCmd.Flags().String("output", "", "name of property where output should be stored")
 }
 
-// vocabularyIntersectionCmd represents the vocabulary intersection command
 var vocabularyIntersectionCmd = &cobra.Command{
 	Use:   "intersection",
-	Short: "Compute the intersection of specified API vocabularies.",
-	Long:  "Compute the intersection of specified API vocabularies.",
+	Short: "Compute the intersection of specified API vocabularies",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error

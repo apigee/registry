@@ -18,7 +18,6 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
-	"io/ioutil"
 	"log"
 	"strings"
 
@@ -39,18 +38,11 @@ func ResourceNameOfSpec(segments []string) string {
 }
 
 func GetBytesForSpec(spec *rpc.Spec) ([]byte, error) {
-	var data []byte
 	if strings.Contains(spec.GetStyle(), "+gzip") {
-		gr, err := gzip.NewReader(bytes.NewBuffer(spec.GetContents()))
-		defer gr.Close()
-		data, err = ioutil.ReadAll(gr)
-		if err != nil {
-			return nil, err
-		}
+		return GUnzippedBytes(spec.GetContents())
 	} else {
-		data = spec.GetContents()
+		return spec.GetContents(), nil
 	}
-	return data, nil
 }
 
 func UploadBytesForSpec(ctx context.Context, client connection.Client, parent string, specID string, style string, document proto.Message) error {

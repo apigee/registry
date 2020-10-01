@@ -33,11 +33,9 @@ func init() {
 	listCmd.Flags().StringVar(&listFilter, "filter", "", "Filter option to send with list calls")
 }
 
-// listCmd represents the list command
 var listCmd = &cobra.Command{
 	Use:   "list",
-	Short: "List resources in the Registry.",
-	Long:  "List resources in the Registry.",
+	Short: "List resources in the API Registry",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.TODO()

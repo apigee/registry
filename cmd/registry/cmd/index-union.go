@@ -25,14 +25,12 @@ import (
 
 func init() {
 	indexCmd.AddCommand(indexUnionCmd)
-	indexUnionCmd.Flags().String("output", "", "name of property to store output.")
+	indexUnionCmd.Flags().String("output", "", "name of property where output should be stored")
 }
 
-// indexUnionCmd represents the index union command
 var indexUnionCmd = &cobra.Command{
 	Use:   "union",
-	Short: "Compute the union of specified API indexes.",
-	Long:  "Compute the union of specified API indexes.",
+	Short: "Compute the union of specified API indexes",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error

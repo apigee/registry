@@ -25,9 +25,7 @@ func init() {
 	exportCmd.PersistentFlags().StringVar(&exportFilter, "filter", "", "filter export arguments")
 }
 
-// exportCmd represents the export command
 var exportCmd = &cobra.Command{
 	Use:   "export",
-	Short: "Export information from the registry.",
-	Long:  `Export information from the registry.`,
+	Short: "Export resources from the API Registry",
 }
