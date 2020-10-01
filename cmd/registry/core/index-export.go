@@ -68,11 +68,11 @@ func rowForOperation(op *rpc.Operation) []interface{} {
 		return []interface{}{"rpc", "service", "verb", "path", "file"}
 	}
 	row := make([]interface{}, 0)
-	row = append(row, op.OperationName)
-	row = append(row, op.ServiceName)
+	row = append(row, op.Name)
+	row = append(row, op.Service)
 	row = append(row, op.Verb)
 	row = append(row, op.Path)
-	row = append(row, op.FileName)
+	row = append(row, op.File)
 	return row
 }
 
@@ -81,10 +81,10 @@ func rowForSchema(s *rpc.Schema) []interface{} {
 		return []interface{}{"message", "resource name", "type", "file"}
 	}
 	row := make([]interface{}, 0)
-	row = append(row, s.SchemaName)
-	row = append(row, s.ResourceName)
-	row = append(row, s.ResourceType)
-	row = append(row, s.FileName)
+	row = append(row, s.Name)
+	row = append(row, s.Resource)
+	row = append(row, s.Type)
+	row = append(row, s.File)
 	return row
 }
 
@@ -93,8 +93,8 @@ func rowForField(f *rpc.Field) []interface{} {
 		return []interface{}{"field", "message", "file"}
 	}
 	row := make([]interface{}, 0)
-	row = append(row, f.FieldName)
-	row = append(row, f.SchemaName)
-	row = append(row, f.FileName)
+	row = append(row, f.Name)
+	row = append(row, f.Schema)
+	row = append(row, f.File)
 	return row
 }

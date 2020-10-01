@@ -21,42 +21,74 @@ option java_multiple_files = true;
 option java_outer_classname = "RegistryIndexProto";
 option go_package = "github.com/apigee/registry/rpc;rpc";
 
+// An Operation represents an operation in an API.
+// (-- api-linter: core::0123::resource-annotation=disabled
+//     aip.dev/not-precedent: This message is not currently used in an API. --)
 message Operation {
-  string operation_name = 1;
-  string service_name = 2;
+  // The name of the operation.
+  string name = 1;
+  // The name of the service.
+  string service = 2;
+  // The HTTP verb of the operation.
   string verb = 3;
+  // The HTTP path of the operation.
   string path = 4;
-  // index fields
-  string file_name = 5;
+  // The file containing the operation.
+  string file = 5;
 }
 
+// A Schema represents an API message structure.
+// (-- api-linter: core::0123::resource-annotation=disabled
+//     aip.dev/not-precedent: This message is not currently used in an API. --)
 message Schema {
-  string schema_name = 1;
-  string resource_name = 2;
-  string resource_type = 3;
+  // The name of the schema.
+  string name = 1;
+  // The resource name of the schema.
+  string resource = 2;
+  // The resource type of the schema.
+  string type = 3;
+  // The fields of the schema.
   repeated Field fields = 4;
-  // index fields
-  string file_name = 5;
+  // The file containing the schema.
+  string file = 5;
 }
 
+// A Field represents a field in a schema.
+// (-- api-linter: core::0123::resource-annotation=disabled
+//     aip.dev/not-precedent: This message is not currently used in an API. --)
 message Field {
-  string field_name = 1;
-  // index fields
-  string schema_name = 2;
-  string file_name = 3;
+  // The name of the field.
+  string name = 1;
+  // The schema containing the field.
+  string schema = 2;
+  // The file containing the field.
+  string file = 3;
 }
 
+// A File represents a source file of an API description.
+// (-- api-linter: core::0123::resource-annotation=disabled
+//     aip.dev/not-precedent: This message is not currently used in an API. --)
 message File {
-  string file_name = 1;
+  // The name of the file.
+  string name = 1;
+  // The operations in the file.
   repeated Operation operations = 2;
+  // The schemas in the file.
   repeated Schema schemas = 3;
 }
 
+// An Index lists fields, schemas, and operations with their associated files.
+// (-- api-linter: core::0123::resource-annotation=disabled
+//     aip.dev/not-precedent: This message is not currently used in an API. --)
 message Index {
-  string index_name = 1;
+  // The name of the index.
+  string name = 1;
+  // The files in the index.
   repeated File files = 2;
-  // index fields
+  // The fields in the index (a flat list).
   repeated Field fields = 3;
+  // The schemas in the index (a flat list).
   repeated Schema schemas = 4;
+  // The operations in the index (a flat list).
   repeated Operation operations = 5;
 }

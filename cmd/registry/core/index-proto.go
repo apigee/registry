@@ -94,7 +94,7 @@ func fileForProto(filename, root string) (*rpc.File, error) {
 		return nil, err
 	}
 	f := &rpc.File{}
-	f.FileName = strings.TrimPrefix(filename, root)
+	f.Name = strings.TrimPrefix(filename, root)
 	for _, m := range v.ProtoBody.Messages {
 		f.Schemas = append(f.Schemas, schemaForMessage(m))
 	}
@@ -109,10 +109,10 @@ func fileForProto(filename, root string) (*rpc.File, error) {
 
 func schemaForMessage(m *unordered.Message) *rpc.Schema {
 	s := &rpc.Schema{}
-	s.SchemaName = m.MessageName
+	s.Name = m.MessageName
 	for _, f := range m.MessageBody.Fields {
 		field := &rpc.Field{}
-		field.FieldName = f.FieldName
+		field.Name = f.FieldName
 		s.Fields = append(s.Fields, field)
 	}
 	for _, opt := range m.MessageBody.Options {
@@ -137,10 +137,10 @@ func processOptionForSchema(s *rpc.Schema, opt *parser.Option) {
 			if len(pair) == 2 {
 				name := pair[0]
 				if name == "type" {
-					s.ResourceType = trimQuotes(pair[1])
+					s.Type = trimQuotes(pair[1])
 				}
 				if name == "pattern" {
-					s.ResourceName = trimQuotes(pair[1])
+					s.Name = trimQuotes(pair[1])
 				}
 			}
 		}
@@ -149,8 +149,8 @@ func processOptionForSchema(s *rpc.Schema, opt *parser.Option) {
 
 func operationForRPC(myrpc *parser.RPC, serviceName string) *rpc.Operation {
 	op := &rpc.Operation{}
-	op.OperationName = myrpc.RPCName
-	op.ServiceName = serviceName
+	op.Name = myrpc.RPCName
+	op.Service = serviceName
 	for _, opt := range myrpc.Options {
 		processOptionForOperation(op, opt)
 	}
@@ -201,32 +201,32 @@ func BuildIndex(index *rpc.Index) {
 		for _, op := range file.Operations {
 			opCopy := &rpc.Operation{}
 			*opCopy = *op
-			opCopy.FileName = file.FileName
+			opCopy.File = file.Name
 			index.Operations = append(index.Operations, opCopy)
 		}
 		for _, schema := range file.Schemas {
 			schemaCopy := &rpc.Schema{}
 			*schemaCopy = *schema
 			schemaCopy.Fields = nil
-			schemaCopy.FileName = file.FileName
+			schemaCopy.File = file.Name
 			index.Schemas = append(index.Schemas, schemaCopy)
 			for _, field := range schema.Fields {
 				fieldCopy := &rpc.Field{}
 				*fieldCopy = *field
-				fieldCopy.FileName = file.FileName
-				fieldCopy.SchemaName = schema.SchemaName
+				fieldCopy.File = file.Name
+				fieldCopy.Schema = schema.Name
 				index.Fields = append(index.Fields, fieldCopy)
 			}
 		}
 	}
 	sort.Slice(index.Fields, func(i, j int) bool {
-		return index.Fields[i].FieldName < index.Fields[j].FieldName
+		return index.Fields[i].Name < index.Fields[j].Name
 	})
 	sort.Slice(index.Schemas, func(i, j int) bool {
-		return index.Schemas[i].SchemaName < index.Schemas[j].SchemaName
+		return index.Schemas[i].Name < index.Schemas[j].Name
 	})
 	sort.Slice(index.Operations, func(i, j int) bool {
-		return index.Operations[i].OperationName < index.Operations[j].OperationName
+		return index.Operations[i].Name < index.Operations[j].Name
 	})
 }
 
@@ -234,8 +234,8 @@ func BuildIndex(index *rpc.Index) {
 func RemoveRequestAndResponseSchemas(index *rpc.Index) {
 	filteredSchemas := make([]*rpc.Schema, 0)
 	for _, schema := range index.Schemas {
-		if strings.HasSuffix(schema.SchemaName, "Request") ||
-			strings.HasSuffix(schema.SchemaName, "Response") {
+		if strings.HasSuffix(schema.Name, "Request") ||
+			strings.HasSuffix(schema.Name, "Response") {
 			// skip it
 		} else {
 			filteredSchemas = append(filteredSchemas, schema)
@@ -254,7 +254,7 @@ func ExportSchemas(index *rpc.Index) error {
 	w := bufio.NewWriter(f)
 	for _, schema := range index.Schemas {
 		fmt.Fprintf(w, "%s,%s,%s,%s\n",
-			schema.SchemaName, schema.ResourceName, schema.ResourceType, schema.FileName)
+			schema.Name, schema.Resource, schema.Type, schema.File)
 	}
 	w.Flush()
 	return nil
@@ -270,7 +270,7 @@ func ExportOperations(index *rpc.Index) error {
 	w := bufio.NewWriter(f)
 	for _, op := range index.Operations {
 		fmt.Fprintf(w, "%s,%s,%s,%s,%s\n",
-			op.OperationName, op.ServiceName, op.Verb, op.Path, op.FileName)
+			op.Name, op.Service, op.Verb, op.Path, op.File)
 	}
 	w.Flush()
 	return nil
@@ -286,7 +286,7 @@ func ExportFields(index *rpc.Index) error {
 	w := bufio.NewWriter(f)
 	for _, field := range index.Fields {
 		fmt.Fprintf(w, "%s,%s,%s\n",
-			field.FieldName, field.SchemaName, field.FileName)
+			field.Name, field.Schema, field.File)
 	}
 	w.Flush()
 	return nil
