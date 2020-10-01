@@ -6,17 +6,22 @@ This repository contains a reference implementation of the Registry API.
 
 The Registry API allows teams to upload and share machine-readable descriptions
 of APIs that are in use and in development. These descriptions include API
-specifications in standard formats like OpenAPI and Protocol Buffers. These API
-specifications can be used by tools like linters, browsers, documentation
-generators, test runners, proxies, and API client and server generators. The
-Registry API itself can be seen as a machine-readable enterprise API catalog
-designed to back online directories, portals, and workflow managers.
+specifications in standard formats like [OpenAPI](https://www.openapis.org/),
+the
+[Google API Discovery Service Format](https://developers.google.com/discovery),
+and the
+[Protocol Buffers Language](https://developers.google.com/protocol-buffers).
+These API specifications can be used by tools like linters, browsers,
+documentation generators, test runners, proxies, and API client and server
+generators. The Registry API itself can be seen as a machine-readable
+enterprise API catalog designed to back online directories, portals, and
+workflow managers.
 
 The Registry API is formally described by the Protocol Buffer source files in
 [google/cloud/apigee/registry/v1alpha1](google/cloud/apigee/registry/v1alpha1).
 It closely follows the Google API Design Guidelines at
-[aip.dev](https://aip.dev) and presents a developer experience similar to a
-production Google API.
+[aip.dev](https://aip.dev) and presents a developer experience consistent with
+production Google APIs.
 
 ## This Implementation
 
@@ -24,7 +29,7 @@ This reference implementation is a [gRPC](https://grpc.io) service written in
 Go. It can be run locally or deployed in a container using services including
 [Google Cloud Run](https://cloud.google.com/run). It stores data using the
 [Google Cloud Datastore API](https://cloud.google.com/datastore) or a
-configurable relational backend that currently supports
+configurable relational interface layer that currently supports
 [PostgreSQL](https://www.postgresql.org/) and [SQLite](https://www.sqlite.org/)
 (see [config](config) for details).
 
@@ -69,8 +74,8 @@ The following tools are needed to build this software:
 
 This repository contains a Makefile that downloads all other dependencies and
 builds this software (`make all`). With dependencies downloaded, subsequent
-builds can be made with `go install ./...`. The Makefile also includes targets
-that build and deploy the API on
+builds can be made with `go install ./...` or `make lite`. The Makefile also
+includes targets that build and deploy the API on
 [Google Cloud Run](https://cloud.google.com/run) (see below).
 
 ## Generated Components
@@ -118,7 +123,7 @@ Notes:
 
 - You only need to get credentials when you are running the server locally.
   When `registry-server` is run with Google Cloud Run, credentials are
-  automatically provided by the environment.)
+  automatically provided by the environment.
 - When enabling the Datastore API, you might be asked to select a storage mode.
   This project's Datastore API usage is equivalent to
   [running Cloud Firestore in Datastore mode](https://cloud.google.com/datastore/docs).
@@ -126,14 +131,14 @@ Notes:
   create these indexes, use the `gcloud` command in the root of this
   repository: `gcloud datastore indexes create server/datastore/index.yaml`
 
-## Running the API Locally
+## Running the Registry API server locally
 
 ### Running the Registry API server
 
 Running `source auth/LOCAL.sh` will configure your environment for the Registry
-API server (`registry-server`) and for the clients to call your local instance.
-Start the server by running `registry-server`. (Recall that by default, this
-uses the Cloud Datastore API, a remote service).
+API server (`registry-server`) and the included clients to call your local
+instance. Start the server by running `registry-server`. (Recall that by
+default, this uses the Cloud Datastore API, a remote service).
 
 ### Optional: Proxying a local service with Envoy
 
@@ -155,7 +160,7 @@ following:
 
 `authz-server -c cmd/authz-server/authz.yaml`
 
-## Running the API with Google Cloud Run
+## Running the Registry API server with Google Cloud Run
 
 The Registry API server is designed to be easily deployed on
 [Google Cloud Run](https://cloud.google.com/run). To support this, the
