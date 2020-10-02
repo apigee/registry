@@ -30,13 +30,13 @@ import (
 )
 
 func init() {
-	uploadCmd.AddCommand(uploadOpenAPICmd)
-	uploadOpenAPICmd.Flags().String("project_id", "", "Project id.")
+	uploadBulkCmd.AddCommand(uploadBulkOpenAPICmd)
+	uploadBulkOpenAPICmd.Flags().String("project_id", "", "Project id.")
 }
 
-var uploadOpenAPICmd = &cobra.Command{
+var uploadBulkOpenAPICmd = &cobra.Command{
 	Use:   "openapi",
-	Short: "Upload OpenAPI descriptions of APIs",
+	Short: "Bulk-upload OpenAPI descriptions of APIs",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error

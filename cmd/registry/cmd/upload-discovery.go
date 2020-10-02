@@ -27,13 +27,13 @@ import (
 )
 
 func init() {
-	uploadCmd.AddCommand(uploadDiscoveryCmd)
-	uploadDiscoveryCmd.Flags().String("project_id", "", "Project id.")
+	uploadBulkCmd.AddCommand(uploadBulkDiscoveryCmd)
+	uploadBulkDiscoveryCmd.Flags().String("project_id", "", "Project id.")
 }
 
-var uploadDiscoveryCmd = &cobra.Command{
+var uploadBulkDiscoveryCmd = &cobra.Command{
 	Use:   "discovery",
-	Short: "Upload API Discovery documents from the Google API Discovery service",
+	Short: "Bulk-upload API Discovery documents from the Google API Discovery service",
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
 		flagset := cmd.LocalFlags()

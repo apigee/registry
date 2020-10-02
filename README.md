@@ -216,12 +216,12 @@ message like this:
 `rpc error: code = Unauthenticated desc = Unauthorized: HTTP status code 401`.
 To generate a new token, rerun `source auth/CLOUDRUN.sh`.
 
-## LICENSE
+## License
 
 This software is licensed under the Apache License, Version 2.0. See
 [LICENSE](LICENSE) for the full license text.
 
-## CONTRIBUTING
+## Contributing
 
 Please see [CONTRIBUTING](CONTRIBUTING.md) for notes on how to contribute to
 this project.

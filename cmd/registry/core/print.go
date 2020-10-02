@@ -17,6 +17,7 @@ package core
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/apigee/registry/rpc"
 	metrics "github.com/googleapis/gnostic/metrics"
@@ -59,7 +60,11 @@ func PrintSpecDetail(message *rpc.Spec) {
 }
 
 func PrintSpecContents(message *rpc.Spec) {
-	os.Stdout.Write(message.GetContents())
+	contents := message.GetContents()
+	if strings.HasSuffix(message.GetStyle(), "+gzip") {
+		contents, _ = GUnzippedBytes(contents)
+	}
+	os.Stdout.Write(contents)
 }
 
 func PrintProperty(property *rpc.Property) {

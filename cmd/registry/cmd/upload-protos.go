@@ -31,13 +31,13 @@ import (
 )
 
 func init() {
-	uploadCmd.AddCommand(uploadProtosCmd)
-	uploadProtosCmd.Flags().String("project_id", "", "Project id.")
+	uploadBulkCmd.AddCommand(uploadBulkProtosCmd)
+	uploadBulkProtosCmd.Flags().String("project_id", "", "Project id.")
 }
 
-var uploadProtosCmd = &cobra.Command{
+var uploadBulkProtosCmd = &cobra.Command{
 	Use:   "protos",
-	Short: "Upload Protocol Buffer descriptions of APIs",
+	Short: "Bulk-upload Protocol Buffer descriptions of APIs",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
