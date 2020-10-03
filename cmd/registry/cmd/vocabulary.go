@@ -94,3 +94,25 @@ func setVocabularyToProperty(ctx context.Context, client connection.Client, outp
 		log.Fatalf("%s", err.Error())
 	}
 }
+
+func setVersionHistoryToProperty(ctx context.Context, client connection.Client, output *metrics.VersionHistory, outputPropertyName string) {
+	parts := strings.Split(outputPropertyName, "/properties/")
+	subject := parts[0]
+	relation := parts[1]
+	messageData, err := proto.Marshal(output)
+	property := &rpc.Property{
+		Subject:  subject,
+		Relation: relation,
+		Name:     subject + "/properties/" + relation,
+		Value: &rpc.Property_MessageValue{
+			MessageValue: &any.Any{
+				TypeUrl: "gnostic.metrics.VersionHistory",
+				Value:   messageData,
+			},
+		},
+	}
+	err = core.SetProperty(ctx, client, property)
+	if err != nil {
+		log.Fatalf("%s", err.Error())
+	}
+}

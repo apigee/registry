@@ -37,7 +37,7 @@ func init() {
 
 var specCmd = &cobra.Command{
 	Use:   "spec",
-	Short: "Upload files of an API spec",
+	Short: "Upload an API spec",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.TODO()

@@ -24,5 +24,5 @@ func init() {
 
 var uploadBulkCmd = &cobra.Command{
 	Use:   "bulk",
-	Short: "Bulk-upload specs to the API Registry",
+	Short: "Bulk-upload API specs of selected styles",
 }

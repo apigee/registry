@@ -44,7 +44,7 @@ var exportSheetCmd = &cobra.Command{
 		if err != nil {
 			log.Fatalf("%s", err.Error())
 		}
-		_, inputs := collectInputProperties(ctx, client, args, exportFilter)
+		inputNames, inputs := collectInputProperties(ctx, client, args, exportFilter)
 		if len(inputs) == 0 {
 			return
 		}
@@ -58,6 +58,12 @@ var exportSheetCmd = &cobra.Command{
 				log.Fatalf("%s", err.Error())
 			}
 			err = core.ExportVocabularyToSheet(inputs[0].Name, vocabulary)
+		} else if typeURL == "gnostic.metrics.VersionHistory" {
+			if len(inputs) != 1 {
+				log.Fatalf("please specify exactly one version history to export")
+				return
+			}
+			err = core.ExportVersionHistoryToSheet(inputNames[0], inputs[0])
 		} else if typeURL == "gnostic.metrics.Complexity" {
 			err = core.ExportComplexityToSheet("Complexity", inputs)
 		} else if typeURL == "google.cloud.apigee.registry.v1alpha1.Index" {

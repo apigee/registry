@@ -17,7 +17,7 @@ package cmd
 import (
 	"context"
 	"log"
-	"path/filepath"
+	"strings"
 
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
@@ -27,6 +27,7 @@ import (
 
 func init() {
 	vocabularyCmd.AddCommand(vocabularyVersionsCmd)
+	vocabularyVersionsCmd.Flags().String("output", "", "name of property where output should be stored")
 }
 
 var vocabularyVersionsCmd = &cobra.Command{
@@ -35,21 +36,22 @@ var vocabularyVersionsCmd = &cobra.Command{
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
+		flagset := cmd.LocalFlags()
+		outputPropertyName, err := flagset.GetString("output")
 		ctx := context.TODO()
 		client, err := connection.NewClient(ctx)
 		if err != nil {
 			log.Fatalf("%s", err.Error())
 		}
 		names, inputs := collectInputVocabularies(ctx, client, args, vocabularyFilter)
-		output := vocabulary.Version(inputs, names, "api")
-		if true {
-			for _, version := range output.Versions {
-				log.Printf("%s\n", version.Name)
-				newTermsPropertyName := filepath.Dir(version.Name) + "/" + "vocabulary-new"
-				setVocabularyToProperty(ctx, client, version.NewTerms, newTermsPropertyName)
-				deletedTermsPropertyName := filepath.Dir(version.Name) + "/" + "vocabulary-deleted"
-				setVocabularyToProperty(ctx, client, version.DeletedTerms, deletedTermsPropertyName)
-			}
+
+		parts := strings.Split(names[0], "/")
+		parts = parts[0:4]
+		parent := strings.Join(parts, "/")
+
+		output := vocabulary.Version(inputs, names, parent)
+		if outputPropertyName != "" {
+			setVersionHistoryToProperty(ctx, client, output, outputPropertyName)
 		} else {
 			core.PrintMessage(output)
 		}

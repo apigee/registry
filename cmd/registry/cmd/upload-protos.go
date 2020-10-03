@@ -37,7 +37,7 @@ func init() {
 
 var uploadBulkProtosCmd = &cobra.Command{
 	Use:   "protos",
-	Short: "Bulk-upload Protocol Buffer descriptions of APIs",
+	Short: "Bulk-upload Protocol Buffer descriptions from a directory of specs",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error

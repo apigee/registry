@@ -36,7 +36,7 @@ func init() {
 
 var uploadBulkOpenAPICmd = &cobra.Command{
 	Use:   "openapi",
-	Short: "Bulk-upload OpenAPI descriptions of APIs",
+	Short: "Bulk-upload OpenAPI descriptions from a directory of specs",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
