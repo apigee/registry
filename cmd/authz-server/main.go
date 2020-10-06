@@ -78,7 +78,16 @@ type authorizationServer struct{}
 // Check implements the check operation in the Envoy authz service.
 func (a *authorizationServer) Check(ctx context.Context, req *auth.CheckRequest) (*auth.CheckResponse, error) {
 	log.Println(">>> Authorization called check()")
+	response, err := a.check(ctx, req)
+	if err == nil {
+		log.Printf(">>> Authorization response %+v", response)
+	} else {
+		log.Printf(">>> Authorization error %s", err.Error())
+	}
+	return response, err
+}
 
+func (a *authorizationServer) check(ctx context.Context, req *auth.CheckRequest) (*auth.CheckResponse, error) {
 	b, err := json.MarshalIndent(req.Attributes.Request.Http.Headers, "", "  ")
 	if err == nil {
 		log.Println("Inbound Headers: " + string(b))
@@ -96,13 +105,18 @@ func (a *authorizationServer) Check(ctx context.Context, req *auth.CheckRequest)
 	}
 	credential := m[1]
 
-	if isJWTToken(credential) {
+	isJWT, signature := isJWTToken(credential)
+	if isJWT {
 		if config.TrustJWTs {
 			// get the user email from the token
 			email := getJWTTokenEmail(credential)
 			if email != "" {
 				return allowOrDenyUser(email, req)
 			}
+		}
+		// log a modified signature (this will cause verification to fail)
+		if signature == "SIGNATURE_REMOVED_BY_GOOGLE" {
+			log.Printf("Token has altered signature: %s", signature)
 		}
 		// try to verify an identity token
 		token, err := getVerifiedToken(credential)
@@ -178,19 +192,21 @@ type jwtTokenHeader struct {
 	Typ string `json:"typ"`
 }
 
-func isJWTToken(credential string) bool {
+func isJWTToken(credential string) (bool, string) {
 	parts := strings.Split(credential, ".")
 	if len(parts) != 3 {
-		return false
+		return false, ""
 	}
 	header := parts[0]
 	v, err := base64.RawURLEncoding.DecodeString(header)
 	if err != nil {
-		return false
+		return false, ""
 	}
 	var tokenHeader jwtTokenHeader
 	json.Unmarshal(v, &tokenHeader)
-	return tokenHeader.Typ == "JWT"
+	valid := tokenHeader.Typ == "JWT"
+	signature := parts[2]
+	return valid, signature
 }
 
 type jwtTokenPayload struct {
