@@ -12,20 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cmd
+package main
 
 import (
-	"github.com/spf13/cobra"
+	"bufio"
+	"fmt"
+	"log"
+	"os"
+	"path/filepath"
 )
 
-var countFilter string
+// This filters a list of resource names, returning only the base component of each.
+func main() {
+	scanner := bufio.NewScanner(os.Stdin)
+	for scanner.Scan() {
+		fmt.Println(filepath.Base(scanner.Text()))
+	}
 
-func init() {
-	rootCmd.AddCommand(countCmd)
-	countCmd.PersistentFlags().StringVar(&countFilter, "filter", "", "filter count arguments")
-}
-
-var countCmd = &cobra.Command{
-	Use:   "count",
-	Short: "Count quantities in the API Registry",
+	if err := scanner.Err(); err != nil {
+		log.Println(err)
+	}
 }

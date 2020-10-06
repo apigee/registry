@@ -48,6 +48,14 @@ var exportSheetCmd = &cobra.Command{
 		if len(inputs) == 0 {
 			return
 		}
+		if isInt64Property(inputs[0]) {
+			title := "properties/" + inputs[0].GetRelation()
+			err = core.ExportInt64ToSheet(title, inputs)
+			if err != nil {
+				log.Fatalf("%s", err.Error())
+			}
+			return
+		}
 		typeURL := messageTypeURL(inputs[0])
 		if typeURL == "gnostic.metrics.Vocabulary" {
 			if len(inputs) != 1 {
@@ -104,6 +112,15 @@ func collectInputProperties(ctx context.Context, client connection.Client, args 
 		}
 	}
 	return inputNames, inputs
+}
+
+func isInt64Property(property *rpc.Property) bool {
+	switch property.GetValue().(type) {
+	case *rpc.Property_Int64Value:
+		return true
+	default:
+		return false
+	}
 }
 
 func messageTypeURL(property *rpc.Property) string {

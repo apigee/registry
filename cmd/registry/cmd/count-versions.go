@@ -41,28 +41,66 @@ var countVersionsCmd = &cobra.Command{
 		if err != nil {
 			log.Fatalf("%s", err.Error())
 		}
-
+		// Initialize task queue.
+		taskQueue := make(chan core.Task, 1024)
+		workerCount := 64
+		for i := 0; i < workerCount; i++ {
+			core.WaitGroup().Add(1)
+			go core.Worker(ctx, taskQueue)
+		}
+		// Generate tasks.
 		name := args[0]
 		if m := names.ApiRegexp().FindStringSubmatch(name); m != nil {
-			err := core.ListAPIs(ctx, client, m, countFilter, func(api *rpc.Api) {
-				count := 0
-				request := &rpc.ListVersionsRequest{
-					Parent: api.Name,
+			// Iterate through a collection of APIs and count the number of versions of each.
+			err = core.ListAPIs(ctx, client, m, countFilter, func(api *rpc.Api) {
+				taskQueue <- &countVersionsTask{
+					ctx:     ctx,
+					client:  client,
+					apiName: api.Name,
 				}
-				it := client.ListVersions(ctx, request)
-				for {
-					_, err := it.Next()
-					if err == iterator.Done {
-						break
-					} else if err == nil {
-						count++
-					}
-				}
-				log.Printf("%d\t%s", count, api.Name)
 			})
-			if err != nil {
-				log.Fatalf("%s", err.Error())
-			}
+			close(taskQueue)
+			core.WaitGroup().Wait()
 		}
 	},
+}
+
+type countVersionsTask struct {
+	ctx     context.Context
+	client  connection.Client
+	apiName string
+}
+
+func (task *countVersionsTask) Run() error {
+	count := 0
+	request := &rpc.ListVersionsRequest{
+		Parent: task.apiName,
+	}
+	it := task.client.ListVersions(task.ctx, request)
+	for {
+		_, err := it.Next()
+		if err == iterator.Done {
+			break
+		} else if err == nil {
+			count++
+		} else {
+			return err
+		}
+	}
+	log.Printf("%d\t%s", count, task.apiName)
+	subject := task.apiName
+	relation := "versionCount"
+	property := &rpc.Property{
+		Subject:  subject,
+		Relation: relation,
+		Name:     subject + "/properties/" + relation,
+		Value: &rpc.Property_Int64Value{
+			Int64Value: int64(count),
+		},
+	}
+	err := core.SetProperty(task.ctx, task.client, property)
+	if err != nil {
+		return err
+	}
+	return nil
 }
