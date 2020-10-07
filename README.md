@@ -199,13 +199,30 @@ is the easiest way to test the API, but it's not necessary - running
 `source auth/CLOUDRUN.sh` configures your environment so that the Registry CLI
 and other tools will authenticate using your user ID.
 
+Important note: If you answer "N" to the above question, Cloud Run will require
+an auth token for all requests to the server. `source auth/CLOUDRUN.sh` adds
+this token to your environment, but there two possible pitfalls:
+
+1. CORS requests will fail if your backend requires authentication
+   ([details](https://groups.google.com/g/gce-discussion/c/WQUxKhZORjo)).
+2. Cloud Run removes signatures from accepted JWT tokens, replacing them with
+   "SIGNATURE_REMOVED_BY_GOOGLE"
+   ([details](https://cloud.google.com/run/docs/troubleshooting#signature-removed)).
+   If your deployment includes the Envoy proxy and
+   [authz-server](cmd/authz-server), then the authz-server configuration will
+   need to be updated to trust the JWT tokens that are passed through, since
+   they've already been verified and further checking is impossible. You can do
+   that by setting `trustJWTs: true` in
+   [authz.yaml](cmd/authz-server/authz.yaml).
+
+If you initially answer "N" and change your mind, you can enable
+unauthenticated calls by going to the Permissions view in the Cloud Run console
+and adding the "Cloud Run Invoker" role to the special username "allUsers".
+(Changes take a few seconds to propagate.)
+
 Now you can call the API with your generated CLI.
 
-`apg registry list-apis --parent projects/demo --page_size 10`
-
-Note here that `demo` is an arbitrary project ID for use within your Registry
-API calls only. It is unrelated to the Google Cloud project ID that you use for
-Cloud Run and Cloud Datastore.
+`apg registry get-status`
 
 You can also verify your installation by running `make test`. This will run
 tests against the same service that your CLI is configured to use via the
