@@ -185,7 +185,9 @@ func (property *Property) Message(blob *Blob) (message *rpc.Property, err error)
 	case BoolType:
 		message.Value = &rpc.Property_BoolValue{BoolValue: property.BoolValue}
 	case BytesType:
-		message.Value = &rpc.Property_BytesValue{BytesValue: blob.Contents}
+		if blob != nil {
+			message.Value = &rpc.Property_BytesValue{BytesValue: blob.Contents}
+		}
 	case AnyType:
 		message.Value = &rpc.Property_MessageValue{MessageValue: property.messageValue(blob)}
 	}

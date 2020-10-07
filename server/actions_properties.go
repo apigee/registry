@@ -69,7 +69,7 @@ func (s *RegistryServer) CreateProperty(ctx context.Context, request *rpc.Create
 	}
 
 	s.notify(rpc.Notification_CREATED, property.ResourceName())
-	return property.Message(nil)
+	return property.Message(blob)
 }
 
 // DeleteProperty handles the corresponding API request.

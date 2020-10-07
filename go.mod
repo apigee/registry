@@ -31,7 +31,7 @@ require (
 	github.com/golang/protobuf v1.4.2
 	github.com/google/cel-go v0.5.1
 	github.com/google/uuid v1.1.2
-	github.com/googleapis/api-linter v1.4.0 // indirect
+	github.com/googleapis/api-linter v1.5.0 // indirect
 	github.com/googleapis/gapic-generator-go v0.15.1 // indirect
 	github.com/googleapis/gax-go v2.0.2+incompatible // indirect
 	github.com/googleapis/gax-go/v2 v2.0.5
