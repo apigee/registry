@@ -25,7 +25,6 @@ import (
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc/status"
 )
 
 var setFilter string
@@ -58,12 +57,7 @@ var setCmd = &cobra.Command{
 
 		err = matchAndHandleSetCmd(ctx, client, taskQueue, args[0])
 		if err != nil {
-			st, ok := status.FromError(err)
-			if !ok {
-				log.Fatalf("%s", err.Error())
-			} else {
-				log.Fatalf("%s", st.Message())
-			}
+			log.Fatalf("%s", err.Error())
 		}
 
 		close(taskQueue)

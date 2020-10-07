@@ -23,7 +23,6 @@ import (
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/server/names"
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc/status"
 )
 
 var listFilter string
@@ -45,12 +44,7 @@ var listCmd = &cobra.Command{
 		}
 		err = matchAndHandleListCmd(ctx, client, args[0])
 		if err != nil {
-			st, ok := status.FromError(err)
-			if !ok {
-				log.Fatalf("%s", err.Error())
-			} else {
-				log.Fatalf("%s", st.Message())
-			}
+			log.Fatalf("%s", err.Error())
 		}
 	},
 }
