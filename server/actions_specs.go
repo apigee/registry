@@ -69,7 +69,7 @@ func (s *RegistryServer) CreateSpec(ctx context.Context, request *rpc.CreateSpec
 		return nil, internalError(err)
 	}
 	// save a blob with the spec contents
-	blob := models.NewBlob(
+	blob := models.NewBlobForSpec(
 		spec,
 		request.GetSpec().GetContents())
 	k2 := client.NewKey(models.BlobEntityName, spec.ResourceNameWithRevision())
@@ -263,7 +263,7 @@ func (s *RegistryServer) UpdateSpec(ctx context.Context, request *rpc.UpdateSpec
 	}
 	// save a blob with the spec contents (but only if the contents were updated)
 	if request.GetSpec().GetContents() != nil {
-		blob := models.NewBlob(
+		blob := models.NewBlobForSpec(
 			spec,
 			request.GetSpec().GetContents())
 		_, err = client.Put(ctx,

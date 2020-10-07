@@ -53,6 +53,7 @@ type Property struct {
 	ApiID       string            // Api associated with property (if appropriate).
 	VersionID   string            // Version associated with property (if appropriate).
 	SpecID      string            // Spec associated with property (if appropriate).
+	RevisionID  string            // Spec revision id (if appropriate).
 	PropertyID  string            // Property identifier (required).
 	CreateTime  time.Time         // Creation time.
 	UpdateTime  time.Time         // Time of last change.
@@ -62,15 +63,18 @@ type Property struct {
 	Int64Value  int64             // Property value (if int64).
 	DoubleValue float64           // Property value (if double).
 	BoolValue   bool              // Property value (if bool).
-	BytesValue  []byte            `datastore:",noindex"` // Property value (if bytes).
 }
 
 // messageValue returns an Any object corresponding to the stored value (assuming one exists).
-func (property *Property) messageValue() *any.Any {
+func (property *Property) messageValue(blob *Blob) *any.Any {
 	if property.ValueType == AnyType {
+		var contents []byte
+		if blob != nil {
+			contents = blob.Contents
+		}
 		return &any.Any{
 			TypeUrl: property.StringValue,
-			Value:   property.BytesValue,
+			Value:   contents,
 		}
 	}
 	return nil
@@ -164,7 +168,7 @@ func (property *Property) ResourceName() string {
 }
 
 // Message returns a message representing a property.
-func (property *Property) Message() (message *rpc.Property, err error) {
+func (property *Property) Message(blob *Blob) (message *rpc.Property, err error) {
 	message = &rpc.Property{}
 	message.Name = property.ResourceName()
 	message.Subject = property.Subject
@@ -181,15 +185,15 @@ func (property *Property) Message() (message *rpc.Property, err error) {
 	case BoolType:
 		message.Value = &rpc.Property_BoolValue{BoolValue: property.BoolValue}
 	case BytesType:
-		message.Value = &rpc.Property_BytesValue{BytesValue: property.BytesValue}
+		message.Value = &rpc.Property_BytesValue{BytesValue: blob.Contents}
 	case AnyType:
-		message.Value = &rpc.Property_MessageValue{MessageValue: property.messageValue()}
+		message.Value = &rpc.Property_MessageValue{MessageValue: property.messageValue(blob)}
 	}
 	return message, err
 }
 
 // Update modifies a property using the contents of a message.
-func (property *Property) Update(message *rpc.Property) error {
+func (property *Property) Update(message *rpc.Property, blob *Blob) error {
 	property.Subject = message.GetSubject()
 	property.UpdateTime = time.Now()
 	switch message.GetValue().(type) {
@@ -207,11 +211,11 @@ func (property *Property) Update(message *rpc.Property) error {
 		property.BoolValue = message.GetBoolValue()
 	case *rpc.Property_BytesValue:
 		property.ValueType = BytesType
-		property.BytesValue = message.GetBytesValue()
+		blob.Contents = message.GetBytesValue()
 	case *rpc.Property_MessageValue:
 		property.ValueType = AnyType
 		property.StringValue = message.GetMessageValue().GetTypeUrl()
-		property.BytesValue = message.GetMessageValue().GetValue()
+		blob.Contents = message.GetMessageValue().GetValue()
 	default:
 	}
 	return nil
