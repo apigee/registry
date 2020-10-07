@@ -78,7 +78,7 @@ type computeDescriptorTask struct {
 func (task *computeDescriptorTask) Run() error {
 	request := &rpc.GetSpecRequest{
 		Name: task.specName,
-		View: rpc.SpecView_FULL,
+		View: rpc.View_FULL,
 	}
 	spec, err := task.client.GetSpec(task.ctx, request)
 	if err != nil {

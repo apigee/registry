@@ -160,6 +160,7 @@ func ListProperties(ctx context.Context,
 	client *gapic.RegistryClient,
 	segments []string,
 	filterFlag string,
+	getContents bool,
 	handler PropertyHandler) error {
 	parent := "projects/" + segments[1]
 	if segments[3] != "" {
@@ -173,6 +174,10 @@ func ListProperties(ctx context.Context,
 	}
 	request := &rpc.ListPropertiesRequest{
 		Parent: parent,
+		View:   rpc.View_BASIC,
+	}
+	if getContents {
+		request.View = rpc.View_FULL
 	}
 	filter := filterFlag
 	if len(segments) == 9 && segments[8] != "-" {
@@ -213,6 +218,7 @@ func ListPropertiesForParent(ctx context.Context,
 	}
 	request := &rpc.ListPropertiesRequest{
 		Parent: parent,
+		View:   rpc.View_BASIC,
 	}
 	it := client.ListProperties(ctx, request)
 	for {

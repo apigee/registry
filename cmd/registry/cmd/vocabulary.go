@@ -46,7 +46,7 @@ func collectInputVocabularies(ctx context.Context, client connection.Client, arg
 	inputs := make([]*metrics.Vocabulary, 0)
 	for _, name := range args {
 		if m := names.PropertyRegexp().FindStringSubmatch(name); m != nil {
-			err := core.ListProperties(ctx, client, m, filter, func(property *rpc.Property) {
+			err := core.ListProperties(ctx, client, m, filter, true, func(property *rpc.Property) {
 				switch v := property.GetValue().(type) {
 				case *rpc.Property_MessageValue:
 					if v.MessageValue.TypeUrl == "gnostic.metrics.Vocabulary" {

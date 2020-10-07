@@ -284,11 +284,11 @@ message Label {
     [(google.api.field_behavior) = OUTPUT_ONLY];
 }
 
-// Views of Specs.
-enum SpecView {
+// Views of Specs and Properties.
+enum View {
   // The default / unset value.
   // The API will default to the BASIC view.
-  SPEC_VIEW_UNSPECIFIED = 0;
+  VIEW_UNSPECIFIED = 0;
 
   // Include everything but the file contents.
   BASIC = 1;

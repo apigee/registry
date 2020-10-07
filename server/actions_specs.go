@@ -133,7 +133,7 @@ func (s *RegistryServer) GetSpec(ctx context.Context, request *rpc.GetSpecReques
 		return nil, internalError(err)
 	}
 	var blob *models.Blob
-	if request.GetView() == rpc.SpecView_FULL {
+	if request.GetView() == rpc.View_FULL {
 		blob, _ = fetchBlobForSpec(ctx, client, spec)
 	}
 	return spec.Message(blob, userSpecifiedRevision)
@@ -201,7 +201,7 @@ func (s *RegistryServer) ListSpecs(ctx context.Context, req *rpc.ListSpecsReques
 			}
 		}
 		var blob *models.Blob
-		if req.GetView() == rpc.SpecView_FULL {
+		if req.GetView() == rpc.View_FULL {
 			blob, _ = fetchBlobForSpec(ctx, client, &spec)
 		}
 		specMessage, _ := spec.Message(blob, "")

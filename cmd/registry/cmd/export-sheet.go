@@ -102,7 +102,7 @@ func collectInputProperties(ctx context.Context, client connection.Client, args 
 	inputs := make([]*rpc.Property, 0)
 	for _, name := range args {
 		if m := names.PropertyRegexp().FindStringSubmatch(name); m != nil {
-			err := core.ListProperties(ctx, client, m, filter, func(property *rpc.Property) {
+			err := core.ListProperties(ctx, client, m, filter, true, func(property *rpc.Property) {
 				inputNames = append(inputNames, property.Name)
 				inputs = append(inputs, property)
 			})

@@ -65,7 +65,7 @@ func matchAndHandleListCmd(
 	} else if m := names.SpecsRegexp().FindStringSubmatch(name); m != nil {
 		return core.ListSpecs(ctx, client, m, listFilter, core.PrintSpec)
 	} else if m := names.PropertiesRegexp().FindStringSubmatch(name); m != nil {
-		return core.ListProperties(ctx, client, m, listFilter, core.PrintProperty)
+		return core.ListProperties(ctx, client, m, listFilter, false, core.PrintProperty)
 	} else if m := names.LabelsRegexp().FindStringSubmatch(name); m != nil {
 		return core.ListLabels(ctx, client, m, listFilter, core.PrintLabel)
 	}
@@ -80,7 +80,7 @@ func matchAndHandleListCmd(
 	} else if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
 		return core.ListSpecs(ctx, client, m, listFilter, core.PrintSpec)
 	} else if m := names.PropertyRegexp().FindStringSubmatch(name); m != nil {
-		return core.ListProperties(ctx, client, m, listFilter, core.PrintProperty)
+		return core.ListProperties(ctx, client, m, listFilter, false, core.PrintProperty)
 	} else if m := names.LabelRegexp().FindStringSubmatch(name); m != nil {
 		return core.ListLabels(ctx, client, m, listFilter, core.PrintLabel)
 	}

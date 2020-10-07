@@ -77,9 +77,9 @@ func GetSpec(ctx context.Context,
 	segments []string,
 	getContents bool,
 	handler SpecHandler) (*rpc.Spec, error) {
-	view := rpc.SpecView_BASIC
+	view := rpc.View_BASIC
 	if getContents {
-		view = rpc.SpecView_FULL
+		view = rpc.View_FULL
 	}
 	request := &rpc.GetSpecRequest{
 		Name: "projects/" + segments[1] + "/apis/" + segments[2] + "/versions/" + segments[3] + "/specs/" + segments[4],
@@ -98,8 +98,13 @@ func GetSpec(ctx context.Context,
 func GetProperty(ctx context.Context,
 	client *gapic.RegistryClient,
 	segments []string,
+	getContents bool,
 	handler PropertyHandler) (*rpc.Property, error) {
-	request := &rpc.GetPropertyRequest{}
+	view := rpc.View_BASIC
+	if getContents {
+		view = rpc.View_FULL
+	}
+	request := &rpc.GetPropertyRequest{View: view}
 	if segments[3] == "" {
 		request.Name = "projects/" + segments[1]
 	} else if segments[5] == "" {

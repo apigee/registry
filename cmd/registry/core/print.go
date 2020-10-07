@@ -106,6 +106,10 @@ func PrintPropertyDetail(property *rpc.Property) {
 	fmt.Printf("\n")
 }
 
+func PrintPropertyContents(message *rpc.Property) {
+	PrintPropertyDetail(message)
+}
+
 func PrintLabel(label *rpc.Label) {
 	fmt.Println(label.Name)
 }

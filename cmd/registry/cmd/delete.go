@@ -163,7 +163,7 @@ func deleteProperties(
 	segments []string,
 	filterFlag string,
 	taskQueue chan core.Task) error {
-	return core.ListProperties(ctx, client, segments, filterFlag, func(property *rpc.Property) {
+	return core.ListProperties(ctx, client, segments, filterFlag, false, func(property *rpc.Property) {
 		taskQueue <- &deleteTask{
 			ctx:          ctx,
 			client:       client,

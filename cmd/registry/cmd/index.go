@@ -45,7 +45,7 @@ func collectInputIndexes(ctx context.Context, client connection.Client, args []s
 	inputs := make([]*rpc.Index, 0)
 	for _, name := range args {
 		if m := names.PropertyRegexp().FindStringSubmatch(name); m != nil {
-			err := core.ListProperties(ctx, client, m, filter, func(property *rpc.Property) {
+			err := core.ListProperties(ctx, client, m, filter, true, func(property *rpc.Property) {
 				switch v := property.GetValue().(type) {
 				case *rpc.Property_MessageValue:
 					if v.MessageValue.TypeUrl == "google.cloud.apigee.registry.v1alpha1.Index" {

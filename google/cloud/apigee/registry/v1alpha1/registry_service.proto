@@ -638,7 +638,7 @@ message ListSpecsRequest {
   string filter = 4;
 
   // The level of detail to return (defaults to BASIC).
-  SpecView view = 5;
+  View view = 5;
 }
 
 // Response message for ListSpecs.
@@ -663,7 +663,7 @@ message GetSpecRequest {
   ];
 
   // The level of detail to return (defaults to BASIC).
-  SpecView view = 2;
+  View view = 2;
 }
 
 // Request message for CreateSpec.
@@ -821,6 +821,9 @@ message ListPropertiesRequest {
 
   // An expression that can be used to filter the list.
   string filter = 4;
+
+  // The level of detail to return (defaults to BASIC).
+  View view = 5;
 }
 
 // Response message for ListProperties.
@@ -843,6 +846,9 @@ message GetPropertyRequest {
       type: "registry.googleapis.com/Property"
     }
   ];
+
+  // The level of detail to return (defaults to BASIC).
+  View view = 2;
 }
 
 // Request message for CreateProperty.
