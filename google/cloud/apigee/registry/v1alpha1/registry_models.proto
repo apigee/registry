@@ -87,6 +87,9 @@ message Api {
   string recommended_version = 7 [
     (google.api.resource_reference) = {type : "registry.googleapis.com/Version"}
   ];
+
+  // The owner of the the API.
+  string owner = 8;
 }
 
 // A Version describes a particular version of an API.

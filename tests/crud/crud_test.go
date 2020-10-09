@@ -84,6 +84,10 @@ func TestCRUD(t *testing.T) {
 	{
 		req := &rpc.CreateProjectRequest{
 			ProjectId: "test",
+			Project: &rpc.Project{
+				DisplayName: "Test",
+				Description: "A test catalog",
+			},
 		}
 		project, err := registryClient.CreateProject(ctx, req)
 		check(t, "error creating project %s", err)
@@ -96,6 +100,12 @@ func TestCRUD(t *testing.T) {
 		req := &rpc.CreateApiRequest{
 			Parent: "projects/test",
 			ApiId:  "sample",
+			Api: &rpc.Api{
+				DisplayName:  "Sample",
+				Description:  "A sample API",
+				Availability: "GENERAL",
+				Owner:        "Acme APIs",
+			},
 		}
 		_, err := registryClient.CreateApi(ctx, req)
 		check(t, "error creating api %s", err)

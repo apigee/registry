@@ -131,6 +131,10 @@ func TestDemo(t *testing.T) {
 	{
 		req := &rpc.CreateProjectRequest{
 			ProjectId: "demo",
+			Project: &rpc.Project{
+				DisplayName: "Demo",
+				Description: "A demo catalog",
+			},
 		}
 		project, err := registryClient.CreateProject(ctx, req)
 		check(t, "error creating project %s", err)

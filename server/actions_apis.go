@@ -135,6 +135,7 @@ func (s *RegistryServer) ListApis(ctx context.Context, req *rpc.ListApisRequest)
 				"display_name": api.DisplayName,
 				"description":  api.Description,
 				"availability": api.Availability,
+				"owner":        api.Owner,
 			})
 			if err != nil {
 				return nil, invalidArgumentError(err)
