@@ -118,6 +118,7 @@ type uploadOpenAPITask struct {
 	style     string
 	projectID string
 	apiID     string // computed at runtime
+	apiOwner  string // computed at runtime
 	versionID string // computed at runtime
 	specID    string // computed at runtime
 }
@@ -139,6 +140,7 @@ func (task *uploadOpenAPITask) Run() error {
 	}
 	task.apiID = sanitize(strings.Join(parts[0:len(parts)-2], "-"))
 	task.apiID = strings.Replace(task.apiID, "/", "-", -1)
+	task.apiOwner = parts[0]
 	task.versionID = sanitize(parts[len(parts)-2])
 	task.specID = sanitize(parts[len(parts)-1])
 	log.Printf("^^ apis/%s/versions/%s/specs/%s", task.apiID, task.versionID, task.specID)
@@ -166,6 +168,7 @@ func (task *uploadOpenAPITask) createAPI() error {
 		request.ApiId = task.apiID
 		request.Api = &rpcpb.Api{}
 		request.Api.DisplayName = task.apiID
+		request.Api.Owner = task.apiOwner
 		response, err := task.client.CreateApi(task.ctx, request)
 		if err == nil {
 			log.Printf("created %s", response.Name)

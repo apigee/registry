@@ -62,6 +62,9 @@ var computeTitlesCmd = &cobra.Command{
 					apiName: api.Name,
 				}
 			})
+			if err != nil {
+				log.Printf("%s", err.Error())
+			}
 			close(taskQueue)
 			core.WaitGroup().Wait()
 		}
@@ -92,37 +95,47 @@ func (task *computeTitlesTask) Run() error {
 		return nil
 	}
 	var title string
+	var description string
 	if strings.HasPrefix(spec.GetStyle(), "openapi/v2") {
 		data, err := core.GetBytesForSpec(spec)
 		if err != nil {
 			return nil
 		}
 		document, err := openapi_v2.ParseDocument(data)
-		if err != nil {
-			return fmt.Errorf("invalid OpenAPI: %s", spec.Name)
+		if document == nil && err != nil {
+			return fmt.Errorf("invalid OpenAPI v2: %s", spec.Name)
 		}
-		title = document.Info.Title
+		if document.Info != nil {
+			title = document.Info.Title
+			description = document.Info.Description
+		}
 	} else if strings.HasPrefix(spec.GetStyle(), "openapi/v3") {
 		data, err := core.GetBytesForSpec(spec)
 		if err != nil {
 			return nil
 		}
 		document, err := openapi_v3.ParseDocument(data)
-		if err != nil {
-			return fmt.Errorf("invalid OpenAPI: %s", spec.Name)
+		if document == nil && err != nil {
+			return fmt.Errorf("invalid OpenAPI v3: %s", spec.Name)
 		}
-		title = document.Info.Title
+		if document.Info != nil {
+			title = document.Info.Title
+			description = document.Info.Description
+		}
 	} else {
 		return fmt.Errorf("we don't know how to compute the title of %s", task.apiName)
 	}
-	log.Printf("%s TITLE %s", task.apiName, title)
+	if len(description) > 256 {
+		description = description[0:256]
+	}
 	request := &rpc.UpdateApiRequest{
 		Api: &rpc.Api{
 			Name:        task.apiName,
 			DisplayName: title,
+			Description: description,
 		},
 		UpdateMask: &field_mask.FieldMask{
-			Paths: []string{"display_name"},
+			Paths: []string{"display_name", "description"},
 		},
 	}
 	_, err = task.client.UpdateApi(task.ctx, request)

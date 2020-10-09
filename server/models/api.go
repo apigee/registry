@@ -22,6 +22,7 @@ import (
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
 	ptypes "github.com/golang/protobuf/ptypes"
+	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
 // ApiEntityName is used to represent apis in storage.
@@ -89,12 +90,29 @@ func (api *Api) Message() (message *rpc.Api, err error) {
 }
 
 // Update modifies a api using the contents of a message.
-func (api *Api) Update(message *rpc.Api) error {
-	api.DisplayName = message.GetDisplayName()
-	api.Description = message.GetDescription()
-	api.Availability = message.GetAvailability()
-	api.RecommendedVersion = message.GetRecommendedVersion()
-	api.Owner = message.GetOwner()
+func (api *Api) Update(message *rpc.Api, mask *fieldmaskpb.FieldMask) error {
+	if mask != nil {
+		for _, field := range mask.Paths {
+			switch field {
+			case "display_name":
+				api.DisplayName = message.GetDisplayName()
+			case "description":
+				api.Description = message.GetDescription()
+			case "availability":
+				api.Availability = message.GetAvailability()
+			case "recommended_version":
+				api.RecommendedVersion = message.GetRecommendedVersion()
+			case "owner":
+				api.Owner = message.GetOwner()
+			}
+		}
+	} else {
+		api.DisplayName = message.GetDisplayName()
+		api.Description = message.GetDescription()
+		api.Availability = message.GetAvailability()
+		api.RecommendedVersion = message.GetRecommendedVersion()
+		api.Owner = message.GetOwner()
+	}
 	api.UpdateTime = time.Now()
 	return nil
 }

@@ -44,7 +44,7 @@ func (s *RegistryServer) CreateApi(ctx context.Context, request *rpc.CreateApiRe
 	if err == nil {
 		return nil, status.Error(codes.AlreadyExists, api.ResourceName()+" already exists")
 	}
-	err = api.Update(request.GetApi())
+	err = api.Update(request.GetApi(), nil)
 	api.CreateTime = api.UpdateTime
 	k, err = client.Put(ctx, k, api)
 	if err != nil {
@@ -179,7 +179,7 @@ func (s *RegistryServer) UpdateApi(ctx context.Context, request *rpc.UpdateApiRe
 	if err != nil {
 		return nil, status.Error(codes.NotFound, "not found")
 	}
-	err = api.Update(request.GetApi())
+	err = api.Update(request.GetApi(), request.GetUpdateMask())
 	if err != nil {
 		return nil, internalError(err)
 	}

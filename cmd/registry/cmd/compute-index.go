@@ -60,6 +60,9 @@ var computeIndexCmd = &cobra.Command{
 					specName: spec.Name,
 				}
 			})
+			if err != nil {
+				log.Printf("%s", err.Error())
+			}
 			close(taskQueue)
 			core.WaitGroup().Wait()
 		}

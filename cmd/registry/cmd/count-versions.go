@@ -59,6 +59,9 @@ var countVersionsCmd = &cobra.Command{
 					apiName: api.Name,
 				}
 			})
+			if err != nil {
+				log.Fatalf("%s", err.Error())
+			}
 			close(taskQueue)
 			core.WaitGroup().Wait()
 		}

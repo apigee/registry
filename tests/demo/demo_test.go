@@ -180,6 +180,12 @@ func TestDemo(t *testing.T) {
 		req := &rpc.CreateApiRequest{
 			Parent: "projects/demo",
 			ApiId:  "petstore",
+			Api: &rpc.Api{
+				DisplayName:  "Swagger Petstore",
+				Description:  "A sample API",
+				Availability: "GENERAL",
+				Owner:        "The OpenAPI Initiative",
+			},
 		}
 		_, err := registryClient.CreateApi(ctx, req)
 		check(t, "error creating api %s", err)
