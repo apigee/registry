@@ -31,12 +31,12 @@ import (
 )
 
 func init() {
-	computeCmd.AddCommand(computeTitlesCmd)
+	computeCmd.AddCommand(computeDetailsCmd)
 }
 
-var computeTitlesCmd = &cobra.Command{
-	Use:   "titles",
-	Short: "Compute titles of APIs from information in their specs.",
+var computeDetailsCmd = &cobra.Command{
+	Use:   "details",
+	Short: "Compute details about APIs from information in their specs.",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.TODO()
@@ -56,7 +56,7 @@ var computeTitlesCmd = &cobra.Command{
 		if m := names.ApiRegexp().FindStringSubmatch(name); m != nil {
 			// Iterate through a collection of specs and summarize each.
 			err = core.ListAPIs(ctx, client, m, computeFilter, func(api *rpc.Api) {
-				taskQueue <- &computeTitlesTask{
+				taskQueue <- &computeDetailsTask{
 					ctx:     ctx,
 					client:  client,
 					apiName: api.Name,
@@ -71,17 +71,17 @@ var computeTitlesCmd = &cobra.Command{
 	},
 }
 
-type computeTitlesTask struct {
+type computeDetailsTask struct {
 	ctx     context.Context
 	client  connection.Client
 	apiName string
 }
 
-func (task *computeTitlesTask) Name() string {
-	return "compute titles " + task.apiName
+func (task *computeDetailsTask) Name() string {
+	return "compute details " + task.apiName
 }
 
-func (task *computeTitlesTask) Run() error {
+func (task *computeDetailsTask) Run() error {
 	m := names.SpecRegexp().FindStringSubmatch(task.apiName + "/versions/-/specs/-")
 	specs := make([]*rpc.Spec, 0)
 	core.ListSpecs(task.ctx, task.client, m, "", func(spec *rpc.Spec) {
