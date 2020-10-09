@@ -70,6 +70,10 @@ type deleteTask struct {
 	resourceKind string
 }
 
+func (task *deleteTask) Name() string {
+	return "delete " + task.resourceName
+}
+
 func (task *deleteTask) Run() error {
 	log.Printf("deleting %s %s", task.resourceKind, task.resourceName)
 	switch task.resourceKind {

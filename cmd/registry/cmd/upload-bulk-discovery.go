@@ -92,6 +92,10 @@ type uploadDiscoveryTask struct {
 	document  *discovery.Document
 }
 
+func (task *uploadDiscoveryTask) Name() string {
+	return "upload discovery " + task.path
+}
+
 func (task *uploadDiscoveryTask) Run() error {
 	var err error
 	// Fetch the discovery description of the API.

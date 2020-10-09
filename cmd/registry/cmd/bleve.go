@@ -88,6 +88,10 @@ type indexSpecTask struct {
 	specName string
 }
 
+func (task *indexSpecTask) Name() string {
+	return "index " + task.specName
+}
+
 func (task *indexSpecTask) Run() error {
 	request := &rpc.GetSpecRequest{
 		Name: task.specName,

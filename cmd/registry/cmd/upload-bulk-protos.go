@@ -115,6 +115,10 @@ type uploadProtoTask struct {
 	specID    string // computed at runtime
 }
 
+func (task *uploadProtoTask) Name() string {
+	return "upload proto " + task.path
+}
+
 func (task *uploadProtoTask) Run() error {
 	var err error
 	// Compute the API name from the path to the spec file.

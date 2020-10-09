@@ -74,6 +74,10 @@ type countVersionsTask struct {
 	apiName string
 }
 
+func (task *countVersionsTask) Name() string {
+	return "count versions " + task.apiName
+}
+
 func (task *countVersionsTask) Run() error {
 	count := 0
 	request := &rpc.ListVersionsRequest{

@@ -76,3 +76,5 @@ require (
 	gorm.io/gorm v1.20.1
 	honnef.co/go/tools v0.0.1-2020.1.5 // indirect
 )
+
+replace github.com/googleapis/gnostic => github.com/timburks/gnostic v0.1.1-0.20201009223722-b17335308dab

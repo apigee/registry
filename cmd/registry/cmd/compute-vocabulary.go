@@ -67,7 +67,7 @@ var computeVocabularyCmd = &cobra.Command{
 				}
 			})
 			if err != nil {
-				log.Printf("%s", err.Error())
+				log.Fatalf("%s", err.Error())
 			}
 			close(taskQueue)
 			core.WaitGroup().Wait()
@@ -79,6 +79,10 @@ type computeVocabularyTask struct {
 	ctx      context.Context
 	client   connection.Client
 	specName string
+}
+
+func (task *computeVocabularyTask) Name() string {
+	return "compute vocabulary " + task.specName
 }
 
 func (task *computeVocabularyTask) Run() error {

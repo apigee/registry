@@ -63,7 +63,7 @@ var computeTitlesCmd = &cobra.Command{
 				}
 			})
 			if err != nil {
-				log.Printf("%s", err.Error())
+				log.Fatalf("%s", err.Error())
 			}
 			close(taskQueue)
 			core.WaitGroup().Wait()
@@ -75,6 +75,10 @@ type computeTitlesTask struct {
 	ctx     context.Context
 	client  connection.Client
 	apiName string
+}
+
+func (task *computeTitlesTask) Name() string {
+	return "compute titles " + task.apiName
 }
 
 func (task *computeTitlesTask) Run() error {

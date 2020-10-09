@@ -66,7 +66,7 @@ var computeComplexityCmd = &cobra.Command{
 				}
 			})
 			if err != nil {
-				log.Printf("%s", err.Error())
+				log.Fatalf("%s", err.Error())
 			}
 			close(taskQueue)
 			core.WaitGroup().Wait()
@@ -78,6 +78,10 @@ type computeComplexityTask struct {
 	ctx      context.Context
 	client   connection.Client
 	specName string
+}
+
+func (task *computeComplexityTask) Name() string {
+	return "compute complexity " + task.specName
 }
 
 func (task *computeComplexityTask) Run() error {

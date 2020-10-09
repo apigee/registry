@@ -64,7 +64,7 @@ var computeDescriptorCmd = &cobra.Command{
 				}
 			})
 			if err != nil {
-				log.Printf("%s", err.Error())
+				log.Fatalf("%s", err.Error())
 			}
 			close(taskQueue)
 			core.WaitGroup().Wait()
@@ -76,6 +76,10 @@ type computeDescriptorTask struct {
 	ctx      context.Context
 	client   connection.Client
 	specName string
+}
+
+func (task *computeDescriptorTask) Name() string {
+	return "compute descriptor " + task.specName
 }
 
 func (task *computeDescriptorTask) Run() error {
@@ -122,13 +126,17 @@ func (task *computeDescriptorTask) Run() error {
 	if err != nil {
 		return err
 	}
+	messageData, err = core.GZippedBytes(messageData)
+	if err != nil {
+		return err
+	}
 	property := &rpc.Property{
 		Subject:  subject,
 		Relation: relation,
 		Name:     subject + "/properties/" + relation,
 		Value: &rpc.Property_MessageValue{
 			MessageValue: &any.Any{
-				TypeUrl: typeURL,
+				TypeUrl: typeURL + "+gz",
 				Value:   messageData,
 			},
 		},

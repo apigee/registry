@@ -123,6 +123,10 @@ type uploadOpenAPITask struct {
 	specID    string // computed at runtime
 }
 
+func (task *uploadOpenAPITask) Name() string {
+	return "upload openapi " + task.path
+}
+
 func sanitize(name string) string {
 	name = strings.Replace(name, " ", "-", -1)
 	name = strings.Replace(name, ":", "-", -1)

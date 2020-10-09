@@ -61,7 +61,7 @@ var computeIndexCmd = &cobra.Command{
 				}
 			})
 			if err != nil {
-				log.Printf("%s", err.Error())
+				log.Fatalf("%s", err.Error())
 			}
 			close(taskQueue)
 			core.WaitGroup().Wait()
@@ -73,6 +73,10 @@ type computeIndexTask struct {
 	ctx      context.Context
 	client   connection.Client
 	specName string
+}
+
+func (task *computeIndexTask) Name() string {
+	return "compute index " + task.specName
 }
 
 func (task *computeIndexTask) Run() error {

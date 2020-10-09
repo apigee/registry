@@ -72,6 +72,10 @@ type setTask struct {
 	resourceKind string
 }
 
+func (task *setTask) Name() string {
+	return "set " + task.resourceKind + " " + task.resourceName
+}
+
 func (task *setTask) Run() error {
 	if setLabelID != "" {
 		log.Printf("setting %s/labels/%s", task.resourceName, setLabelID)
