@@ -121,7 +121,7 @@ func TestCRUD(t *testing.T) {
 	}
 	// Upload the sample 1.0.0 OpenAPI spec.
 	{
-		buf, err := readAndGZipFile("openapi.yaml")
+		buf, err := readAndGZipFile("openapi.yaml@r0")
 		check(t, "error reading spec", err)
 		req := &rpc.CreateSpecRequest{
 			Parent: "projects/test/apis/sample/versions/1.0.0",
