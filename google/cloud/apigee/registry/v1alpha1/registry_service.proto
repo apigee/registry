@@ -876,9 +876,6 @@ message UpdatePropertyRequest {
   // The `name` field is used to identify the property to update.
   // Format: projects/*/properties/*
   Property property = 1 [ (google.api.field_behavior) = REQUIRED ];
-
-  // The list of fields to be updated.
-  google.protobuf.FieldMask update_mask = 2;
 }
 
 // Request message for DeleteProperty.
@@ -963,9 +960,6 @@ message UpdateLabelRequest {
   // The `name` field is used to identify the label to update.
   // Format: projects/*/labels/*
   Label label = 1 [ (google.api.field_behavior) = REQUIRED ];
-
-  // The list of fields to be updated.
-  google.protobuf.FieldMask update_mask = 2;
 }
 
 // Request message for DeleteLabel.

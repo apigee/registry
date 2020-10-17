@@ -234,10 +234,10 @@ message Update{{.Name}}Request {
   // The `name` field is used to identify the {{lower_comment .Name}} to update.
   // Format: {{.ResourceName}}
   {{.Name}} {{lower .Name}} = 1 [ (google.api.field_behavior) = REQUIRED ];
-
+{{if .HasFieldMasks}}
   // The list of fields to be updated.
   google.protobuf.FieldMask update_mask = 2;
-}
+{{end}}}
 
 // Request message for Delete{{.Name}}.
 message Delete{{.Name}}Request {
