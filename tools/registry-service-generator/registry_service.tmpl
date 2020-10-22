@@ -84,16 +84,16 @@ message Status {
     option (google.api.method_signature) = "{{lower .Name}},{{lower .Name}}_id";{{else}}
     option (google.api.method_signature) = "parent,{{lower .Name}},{{lower .Name}}_id";{{end}}
   }
-
+{{if .HasUpdate}}
   // Update{{.Name}} can be used to modify a specified {{lower_comment .Name}}.
   rpc Update{{.Name}}(Update{{.Name}}Request) returns ({{.Name}}) {
     option (google.api.http) = {
       patch : "{{resource_path_for_update .Name .ResourceName}}"
       body : "{{lower .Name}}"
     };
-    option (google.api.method_signature) = "{{lower .Name}},update_mask";
+    option (google.api.method_signature) = "{{lower .Name}}{{if .HasFieldMasks}},update_mask{{end}}";
   }
-
+{{end}}
   // Delete{{.Name}} removes a specified {{lower_comment .Name}} and all of the resources that it
   // owns.
   rpc Delete{{.Name}}(Delete{{.Name}}Request) returns (google.protobuf.Empty) {
@@ -226,7 +226,7 @@ message Create{{.Name}}Request {
   // are /[a-z][0-9]-/.
   string {{lower .Name}}_id = 3;
 }
-
+{{if.HasUpdate}}
 // Request message for Update{{.Name}}.
 message Update{{.Name}}Request {
   // The {{lower_comment .Name}} to update.
@@ -238,7 +238,7 @@ message Update{{.Name}}Request {
   // The list of fields to be updated.
   google.protobuf.FieldMask update_mask = 2;
 {{end}}}
-
+{{end}}
 // Request message for Delete{{.Name}}.
 message Delete{{.Name}}Request {
   // The name of the {{lower_comment .Name}} to delete.

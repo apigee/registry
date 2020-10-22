@@ -34,13 +34,10 @@ func SetLabel(ctx context.Context,
 	if err == nil {
 		return nil
 	}
-	// If that failed because the label already exists, update it.
+	// If that failed because the label already exists, that's ok.
 	code := status.Code(err)
 	if code == codes.AlreadyExists {
-		request := &rpc.UpdateLabelRequest{}
-		request.Label = label
-		_, err := client.UpdateLabel(ctx, request)
-		return err
+		return nil
 	}
 	return err
 }

@@ -297,7 +297,7 @@ service Registry {
       patch : "/v1alpha1/{property.name=projects/*/properties/*}"
       body : "property"
     };
-    option (google.api.method_signature) = "property,update_mask";
+    option (google.api.method_signature) = "property";
   }
 
   // DeleteProperty removes a specified property and all of the resources that it
@@ -332,15 +332,6 @@ service Registry {
       body : "label"
     };
     option (google.api.method_signature) = "parent,label,label_id";
-  }
-
-  // UpdateLabel can be used to modify a specified label.
-  rpc UpdateLabel(UpdateLabelRequest) returns (Label) {
-    option (google.api.http) = {
-      patch : "/v1alpha1/{label.name=projects/*/labels/*}"
-      body : "label"
-    };
-    option (google.api.method_signature) = "label,update_mask";
   }
 
   // DeleteLabel removes a specified label and all of the resources that it
@@ -951,15 +942,6 @@ message CreateLabelRequest {
   // This value should be 4-63 characters, and valid characters
   // are /[a-z][0-9]-/.
   string label_id = 3;
-}
-
-// Request message for UpdateLabel.
-message UpdateLabelRequest {
-  // The label to update.
-  //
-  // The `name` field is used to identify the label to update.
-  // Format: projects/*/labels/*
-  Label label = 1 [ (google.api.field_behavior) = REQUIRED ];
 }
 
 // Request message for DeleteLabel.

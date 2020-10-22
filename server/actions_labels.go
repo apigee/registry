@@ -185,31 +185,3 @@ func (s *RegistryServer) ListLabels(ctx context.Context, req *rpc.ListLabelsRequ
 	}
 	return responses, nil
 }
-
-// UpdateLabel handles the corresponding API request.
-func (s *RegistryServer) UpdateLabel(ctx context.Context, request *rpc.UpdateLabelRequest) (*rpc.Label, error) {
-	client, err := s.getStorageClient(ctx)
-	if err != nil {
-		return nil, unavailableError(err)
-	}
-	defer s.releaseStorageClient(client)
-	label, err := models.NewLabelFromResourceName(request.GetLabel().GetName())
-	if err != nil {
-		return nil, invalidArgumentError(err)
-	}
-	k := client.NewKey(models.LabelEntityName, request.GetLabel().GetName())
-	err = client.Get(ctx, k, label)
-	if err != nil {
-		return nil, status.Error(codes.NotFound, "not found")
-	}
-	err = label.Update(request.GetLabel())
-	if err != nil {
-		return nil, internalError(err)
-	}
-	k, err = client.Put(ctx, k, label)
-	if err != nil {
-		return nil, internalError(err)
-	}
-	s.notify(rpc.Notification_UPDATED, label.ResourceName())
-	return label.Message()
-}
