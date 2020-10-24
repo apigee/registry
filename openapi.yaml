@@ -261,6 +261,315 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Api'
+    /v1alpha1/projects/{project}/apis/{api}/labels:
+        get:
+            summary: ListLabels returns matching labels.
+            operationId: Registry_ListLabels_1
+            parameters:
+                - name: project
+                  in: path
+                  description: The project id.
+                  required: true
+                  schema:
+                    type: string
+                - name: api
+                  in: path
+                  description: The api id.
+                  required: true
+                  schema:
+                    type: string
+                - name: page_size
+                  in: query
+                  description: The maximum number of labels to return. The service may return fewer than this value. If unspecified, at most 50 values will be returned. The maximum is 1000; values above 1000 will be coerced to 1000.
+                  schema:
+                    type: string
+                - name: page_token
+                  in: query
+                  description: A page token, received from a previous `ListLabels` call. Provide this to retrieve the subsequent page. When paginating, all other parameters provided to `ListLabels` must match the call that provided the page token.
+                  schema:
+                    type: string
+                - name: filter
+                  in: query
+                  description: An expression that can be used to filter the list.
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ListLabelsResponse'
+        post:
+            summary: CreateLabel creates a specified label.
+            operationId: Registry_CreateLabel_1
+            parameters:
+                - name: project
+                  in: path
+                  description: The project id.
+                  required: true
+                  schema:
+                    type: string
+                - name: api
+                  in: path
+                  description: The api id.
+                  required: true
+                  schema:
+                    type: string
+                - name: label_id
+                  in: query
+                  description: The ID to use for the label, which will become the final component of the label's resource name. This value should be 4-63 characters, and valid characters are /[a-z][0-9]-/.
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/Label'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Label'
+    /v1alpha1/projects/{project}/apis/{api}/labels/{label}:
+        get:
+            summary: GetLabel returns a specified label.
+            operationId: Registry_GetLabel_1
+            parameters:
+                - name: project
+                  in: path
+                  description: The project id.
+                  required: true
+                  schema:
+                    type: string
+                - name: api
+                  in: path
+                  description: The api id.
+                  required: true
+                  schema:
+                    type: string
+                - name: label
+                  in: path
+                  description: The label id.
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Label'
+        delete:
+            summary: DeleteLabel removes a specified label and all of the resources that it owns.
+            operationId: Registry_DeleteLabel_1
+            parameters:
+                - name: project
+                  in: path
+                  description: The project id.
+                  required: true
+                  schema:
+                    type: string
+                - name: api
+                  in: path
+                  description: The api id.
+                  required: true
+                  schema:
+                    type: string
+                - name: label
+                  in: path
+                  description: The label id.
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Empty'
+    /v1alpha1/projects/{project}/apis/{api}/properties:
+        get:
+            summary: ListProperties returns matching properties.
+            operationId: Registry_ListProperties_1
+            parameters:
+                - name: project
+                  in: path
+                  description: The project id.
+                  required: true
+                  schema:
+                    type: string
+                - name: api
+                  in: path
+                  description: The api id.
+                  required: true
+                  schema:
+                    type: string
+                - name: page_size
+                  in: query
+                  description: The maximum number of properties to return. The service may return fewer than this value. If unspecified, at most 50 values will be returned. The maximum is 1000; values above 1000 will be coerced to 1000.
+                  schema:
+                    type: string
+                - name: page_token
+                  in: query
+                  description: A page token, received from a previous `ListProperties` call. Provide this to retrieve the subsequent page. When paginating, all other parameters provided to `ListProperties` must match the call that provided the page token.
+                  schema:
+                    type: string
+                - name: filter
+                  in: query
+                  description: An expression that can be used to filter the list.
+                  schema:
+                    type: string
+                - name: view
+                  in: query
+                  description: The level of detail to return (defaults to BASIC).
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ListPropertiesResponse'
+        post:
+            summary: CreateProperty creates a specified property.
+            operationId: Registry_CreateProperty_1
+            parameters:
+                - name: project
+                  in: path
+                  description: The project id.
+                  required: true
+                  schema:
+                    type: string
+                - name: api
+                  in: path
+                  description: The api id.
+                  required: true
+                  schema:
+                    type: string
+                - name: property_id
+                  in: query
+                  description: The ID to use for the property, which will become the final component of the property's resource name. This value should be 4-63 characters, and valid characters are /[a-z][0-9]-/.
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/Property'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Property'
+    /v1alpha1/projects/{project}/apis/{api}/properties/{property}:
+        get:
+            summary: GetProperty returns a specified property.
+            operationId: Registry_GetProperty_1
+            parameters:
+                - name: project
+                  in: path
+                  description: The project id.
+                  required: true
+                  schema:
+                    type: string
+                - name: api
+                  in: path
+                  description: The api id.
+                  required: true
+                  schema:
+                    type: string
+                - name: property
+                  in: path
+                  description: The property id.
+                  required: true
+                  schema:
+                    type: string
+                - name: view
+                  in: query
+                  description: The level of detail to return (defaults to BASIC).
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Property'
+        delete:
+            summary: DeleteProperty removes a specified property and all of the resources that it owns.
+            operationId: Registry_DeleteProperty_1
+            parameters:
+                - name: project
+                  in: path
+                  description: The project id.
+                  required: true
+                  schema:
+                    type: string
+                - name: api
+                  in: path
+                  description: The api id.
+                  required: true
+                  schema:
+                    type: string
+                - name: property
+                  in: path
+                  description: The property id.
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Empty'
+        patch:
+            summary: UpdateProperty can be used to modify a specified property.
+            operationId: Registry_UpdateProperty_1
+            parameters:
+                - name: project
+                  in: path
+                  description: The project id.
+                  required: true
+                  schema:
+                    type: string
+                - name: api
+                  in: path
+                  description: The api id.
+                  required: true
+                  schema:
+                    type: string
+                - name: property
+                  in: path
+                  description: The property id.
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/Property'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Property'
     /v1alpha1/projects/{project}/apis/{api}/versions:
         get:
             summary: ListVersions returns matching versions.
@@ -433,6 +742,369 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Version'
+    /v1alpha1/projects/{project}/apis/{api}/versions/{version}/labels:
+        get:
+            summary: ListLabels returns matching labels.
+            operationId: Registry_ListLabels_2
+            parameters:
+                - name: project
+                  in: path
+                  description: The project id.
+                  required: true
+                  schema:
+                    type: string
+                - name: api
+                  in: path
+                  description: The api id.
+                  required: true
+                  schema:
+                    type: string
+                - name: version
+                  in: path
+                  description: The version id.
+                  required: true
+                  schema:
+                    type: string
+                - name: page_size
+                  in: query
+                  description: The maximum number of labels to return. The service may return fewer than this value. If unspecified, at most 50 values will be returned. The maximum is 1000; values above 1000 will be coerced to 1000.
+                  schema:
+                    type: string
+                - name: page_token
+                  in: query
+                  description: A page token, received from a previous `ListLabels` call. Provide this to retrieve the subsequent page. When paginating, all other parameters provided to `ListLabels` must match the call that provided the page token.
+                  schema:
+                    type: string
+                - name: filter
+                  in: query
+                  description: An expression that can be used to filter the list.
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ListLabelsResponse'
+        post:
+            summary: CreateLabel creates a specified label.
+            operationId: Registry_CreateLabel_2
+            parameters:
+                - name: project
+                  in: path
+                  description: The project id.
+                  required: true
+                  schema:
+                    type: string
+                - name: api
+                  in: path
+                  description: The api id.
+                  required: true
+                  schema:
+                    type: string
+                - name: version
+                  in: path
+                  description: The version id.
+                  required: true
+                  schema:
+                    type: string
+                - name: label_id
+                  in: query
+                  description: The ID to use for the label, which will become the final component of the label's resource name. This value should be 4-63 characters, and valid characters are /[a-z][0-9]-/.
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/Label'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Label'
+    /v1alpha1/projects/{project}/apis/{api}/versions/{version}/labels/{label}:
+        get:
+            summary: GetLabel returns a specified label.
+            operationId: Registry_GetLabel_2
+            parameters:
+                - name: project
+                  in: path
+                  description: The project id.
+                  required: true
+                  schema:
+                    type: string
+                - name: api
+                  in: path
+                  description: The api id.
+                  required: true
+                  schema:
+                    type: string
+                - name: version
+                  in: path
+                  description: The version id.
+                  required: true
+                  schema:
+                    type: string
+                - name: label
+                  in: path
+                  description: The label id.
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Label'
+        delete:
+            summary: DeleteLabel removes a specified label and all of the resources that it owns.
+            operationId: Registry_DeleteLabel_2
+            parameters:
+                - name: project
+                  in: path
+                  description: The project id.
+                  required: true
+                  schema:
+                    type: string
+                - name: api
+                  in: path
+                  description: The api id.
+                  required: true
+                  schema:
+                    type: string
+                - name: version
+                  in: path
+                  description: The version id.
+                  required: true
+                  schema:
+                    type: string
+                - name: label
+                  in: path
+                  description: The label id.
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Empty'
+    /v1alpha1/projects/{project}/apis/{api}/versions/{version}/properties:
+        get:
+            summary: ListProperties returns matching properties.
+            operationId: Registry_ListProperties_2
+            parameters:
+                - name: project
+                  in: path
+                  description: The project id.
+                  required: true
+                  schema:
+                    type: string
+                - name: api
+                  in: path
+                  description: The api id.
+                  required: true
+                  schema:
+                    type: string
+                - name: version
+                  in: path
+                  description: The version id.
+                  required: true
+                  schema:
+                    type: string
+                - name: page_size
+                  in: query
+                  description: The maximum number of properties to return. The service may return fewer than this value. If unspecified, at most 50 values will be returned. The maximum is 1000; values above 1000 will be coerced to 1000.
+                  schema:
+                    type: string
+                - name: page_token
+                  in: query
+                  description: A page token, received from a previous `ListProperties` call. Provide this to retrieve the subsequent page. When paginating, all other parameters provided to `ListProperties` must match the call that provided the page token.
+                  schema:
+                    type: string
+                - name: filter
+                  in: query
+                  description: An expression that can be used to filter the list.
+                  schema:
+                    type: string
+                - name: view
+                  in: query
+                  description: The level of detail to return (defaults to BASIC).
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ListPropertiesResponse'
+        post:
+            summary: CreateProperty creates a specified property.
+            operationId: Registry_CreateProperty_2
+            parameters:
+                - name: project
+                  in: path
+                  description: The project id.
+                  required: true
+                  schema:
+                    type: string
+                - name: api
+                  in: path
+                  description: The api id.
+                  required: true
+                  schema:
+                    type: string
+                - name: version
+                  in: path
+                  description: The version id.
+                  required: true
+                  schema:
+                    type: string
+                - name: property_id
+                  in: query
+                  description: The ID to use for the property, which will become the final component of the property's resource name. This value should be 4-63 characters, and valid characters are /[a-z][0-9]-/.
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/Property'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Property'
+    /v1alpha1/projects/{project}/apis/{api}/versions/{version}/properties/{property}:
+        get:
+            summary: GetProperty returns a specified property.
+            operationId: Registry_GetProperty_2
+            parameters:
+                - name: project
+                  in: path
+                  description: The project id.
+                  required: true
+                  schema:
+                    type: string
+                - name: api
+                  in: path
+                  description: The api id.
+                  required: true
+                  schema:
+                    type: string
+                - name: version
+                  in: path
+                  description: The version id.
+                  required: true
+                  schema:
+                    type: string
+                - name: property
+                  in: path
+                  description: The property id.
+                  required: true
+                  schema:
+                    type: string
+                - name: view
+                  in: query
+                  description: The level of detail to return (defaults to BASIC).
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Property'
+        delete:
+            summary: DeleteProperty removes a specified property and all of the resources that it owns.
+            operationId: Registry_DeleteProperty_2
+            parameters:
+                - name: project
+                  in: path
+                  description: The project id.
+                  required: true
+                  schema:
+                    type: string
+                - name: api
+                  in: path
+                  description: The api id.
+                  required: true
+                  schema:
+                    type: string
+                - name: version
+                  in: path
+                  description: The version id.
+                  required: true
+                  schema:
+                    type: string
+                - name: property
+                  in: path
+                  description: The property id.
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Empty'
+        patch:
+            summary: UpdateProperty can be used to modify a specified property.
+            operationId: Registry_UpdateProperty_2
+            parameters:
+                - name: project
+                  in: path
+                  description: The project id.
+                  required: true
+                  schema:
+                    type: string
+                - name: api
+                  in: path
+                  description: The api id.
+                  required: true
+                  schema:
+                    type: string
+                - name: version
+                  in: path
+                  description: The version id.
+                  required: true
+                  schema:
+                    type: string
+                - name: property
+                  in: path
+                  description: The property id.
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/Property'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Property'
     /v1alpha1/projects/{project}/apis/{api}/versions/{version}/specs:
         get:
             summary: ListSpecs returns matching specs.
@@ -645,6 +1317,423 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Spec'
+    /v1alpha1/projects/{project}/apis/{api}/versions/{version}/specs/{spec}/labels:
+        get:
+            summary: ListLabels returns matching labels.
+            operationId: Registry_ListLabels_3
+            parameters:
+                - name: project
+                  in: path
+                  description: The project id.
+                  required: true
+                  schema:
+                    type: string
+                - name: api
+                  in: path
+                  description: The api id.
+                  required: true
+                  schema:
+                    type: string
+                - name: version
+                  in: path
+                  description: The version id.
+                  required: true
+                  schema:
+                    type: string
+                - name: spec
+                  in: path
+                  description: The spec id.
+                  required: true
+                  schema:
+                    type: string
+                - name: page_size
+                  in: query
+                  description: The maximum number of labels to return. The service may return fewer than this value. If unspecified, at most 50 values will be returned. The maximum is 1000; values above 1000 will be coerced to 1000.
+                  schema:
+                    type: string
+                - name: page_token
+                  in: query
+                  description: A page token, received from a previous `ListLabels` call. Provide this to retrieve the subsequent page. When paginating, all other parameters provided to `ListLabels` must match the call that provided the page token.
+                  schema:
+                    type: string
+                - name: filter
+                  in: query
+                  description: An expression that can be used to filter the list.
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ListLabelsResponse'
+        post:
+            summary: CreateLabel creates a specified label.
+            operationId: Registry_CreateLabel_3
+            parameters:
+                - name: project
+                  in: path
+                  description: The project id.
+                  required: true
+                  schema:
+                    type: string
+                - name: api
+                  in: path
+                  description: The api id.
+                  required: true
+                  schema:
+                    type: string
+                - name: version
+                  in: path
+                  description: The version id.
+                  required: true
+                  schema:
+                    type: string
+                - name: spec
+                  in: path
+                  description: The spec id.
+                  required: true
+                  schema:
+                    type: string
+                - name: label_id
+                  in: query
+                  description: The ID to use for the label, which will become the final component of the label's resource name. This value should be 4-63 characters, and valid characters are /[a-z][0-9]-/.
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/Label'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Label'
+    /v1alpha1/projects/{project}/apis/{api}/versions/{version}/specs/{spec}/labels/{label}:
+        get:
+            summary: GetLabel returns a specified label.
+            operationId: Registry_GetLabel_3
+            parameters:
+                - name: project
+                  in: path
+                  description: The project id.
+                  required: true
+                  schema:
+                    type: string
+                - name: api
+                  in: path
+                  description: The api id.
+                  required: true
+                  schema:
+                    type: string
+                - name: version
+                  in: path
+                  description: The version id.
+                  required: true
+                  schema:
+                    type: string
+                - name: spec
+                  in: path
+                  description: The spec id.
+                  required: true
+                  schema:
+                    type: string
+                - name: label
+                  in: path
+                  description: The label id.
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Label'
+        delete:
+            summary: DeleteLabel removes a specified label and all of the resources that it owns.
+            operationId: Registry_DeleteLabel_3
+            parameters:
+                - name: project
+                  in: path
+                  description: The project id.
+                  required: true
+                  schema:
+                    type: string
+                - name: api
+                  in: path
+                  description: The api id.
+                  required: true
+                  schema:
+                    type: string
+                - name: version
+                  in: path
+                  description: The version id.
+                  required: true
+                  schema:
+                    type: string
+                - name: spec
+                  in: path
+                  description: The spec id.
+                  required: true
+                  schema:
+                    type: string
+                - name: label
+                  in: path
+                  description: The label id.
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Empty'
+    /v1alpha1/projects/{project}/apis/{api}/versions/{version}/specs/{spec}/properties:
+        get:
+            summary: ListProperties returns matching properties.
+            operationId: Registry_ListProperties_3
+            parameters:
+                - name: project
+                  in: path
+                  description: The project id.
+                  required: true
+                  schema:
+                    type: string
+                - name: api
+                  in: path
+                  description: The api id.
+                  required: true
+                  schema:
+                    type: string
+                - name: version
+                  in: path
+                  description: The version id.
+                  required: true
+                  schema:
+                    type: string
+                - name: spec
+                  in: path
+                  description: The spec id.
+                  required: true
+                  schema:
+                    type: string
+                - name: page_size
+                  in: query
+                  description: The maximum number of properties to return. The service may return fewer than this value. If unspecified, at most 50 values will be returned. The maximum is 1000; values above 1000 will be coerced to 1000.
+                  schema:
+                    type: string
+                - name: page_token
+                  in: query
+                  description: A page token, received from a previous `ListProperties` call. Provide this to retrieve the subsequent page. When paginating, all other parameters provided to `ListProperties` must match the call that provided the page token.
+                  schema:
+                    type: string
+                - name: filter
+                  in: query
+                  description: An expression that can be used to filter the list.
+                  schema:
+                    type: string
+                - name: view
+                  in: query
+                  description: The level of detail to return (defaults to BASIC).
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ListPropertiesResponse'
+        post:
+            summary: CreateProperty creates a specified property.
+            operationId: Registry_CreateProperty_3
+            parameters:
+                - name: project
+                  in: path
+                  description: The project id.
+                  required: true
+                  schema:
+                    type: string
+                - name: api
+                  in: path
+                  description: The api id.
+                  required: true
+                  schema:
+                    type: string
+                - name: version
+                  in: path
+                  description: The version id.
+                  required: true
+                  schema:
+                    type: string
+                - name: spec
+                  in: path
+                  description: The spec id.
+                  required: true
+                  schema:
+                    type: string
+                - name: property_id
+                  in: query
+                  description: The ID to use for the property, which will become the final component of the property's resource name. This value should be 4-63 characters, and valid characters are /[a-z][0-9]-/.
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/Property'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Property'
+    /v1alpha1/projects/{project}/apis/{api}/versions/{version}/specs/{spec}/properties/{property}:
+        get:
+            summary: GetProperty returns a specified property.
+            operationId: Registry_GetProperty_3
+            parameters:
+                - name: project
+                  in: path
+                  description: The project id.
+                  required: true
+                  schema:
+                    type: string
+                - name: api
+                  in: path
+                  description: The api id.
+                  required: true
+                  schema:
+                    type: string
+                - name: version
+                  in: path
+                  description: The version id.
+                  required: true
+                  schema:
+                    type: string
+                - name: spec
+                  in: path
+                  description: The spec id.
+                  required: true
+                  schema:
+                    type: string
+                - name: property
+                  in: path
+                  description: The property id.
+                  required: true
+                  schema:
+                    type: string
+                - name: view
+                  in: query
+                  description: The level of detail to return (defaults to BASIC).
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Property'
+        delete:
+            summary: DeleteProperty removes a specified property and all of the resources that it owns.
+            operationId: Registry_DeleteProperty_3
+            parameters:
+                - name: project
+                  in: path
+                  description: The project id.
+                  required: true
+                  schema:
+                    type: string
+                - name: api
+                  in: path
+                  description: The api id.
+                  required: true
+                  schema:
+                    type: string
+                - name: version
+                  in: path
+                  description: The version id.
+                  required: true
+                  schema:
+                    type: string
+                - name: spec
+                  in: path
+                  description: The spec id.
+                  required: true
+                  schema:
+                    type: string
+                - name: property
+                  in: path
+                  description: The property id.
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Empty'
+        patch:
+            summary: UpdateProperty can be used to modify a specified property.
+            operationId: Registry_UpdateProperty_3
+            parameters:
+                - name: project
+                  in: path
+                  description: The project id.
+                  required: true
+                  schema:
+                    type: string
+                - name: api
+                  in: path
+                  description: The api id.
+                  required: true
+                  schema:
+                    type: string
+                - name: version
+                  in: path
+                  description: The version id.
+                  required: true
+                  schema:
+                    type: string
+                - name: spec
+                  in: path
+                  description: The spec id.
+                  required: true
+                  schema:
+                    type: string
+                - name: property
+                  in: path
+                  description: The property id.
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/Property'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Property'
     /v1alpha1/projects/{project}/apis/{api}/versions/{version}/specs/{spec}:deleteRevision:
         delete:
             summary: DeleteSpecRevision deletes a revision of a spec.

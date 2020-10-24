@@ -270,6 +270,15 @@ service Registry {
   rpc ListProperties(ListPropertiesRequest) returns (ListPropertiesResponse) {
     option (google.api.http) = {
       get : "/v1alpha1/{parent=projects/*}/properties"
+      additional_bindings: {
+        get: "/v1alpha1/{parent=projects/*/apis/*}/properties"
+      }
+      additional_bindings: {
+        get: "/v1alpha1/{parent=projects/*/apis/*/versions/*}/properties"
+      }
+      additional_bindings: {
+        get: "/v1alpha1/{parent=projects/*/apis/*/versions/*/specs/*}/properties"
+      }
     };
     option (google.api.method_signature) = "parent";
   }
@@ -278,6 +287,15 @@ service Registry {
   rpc GetProperty(GetPropertyRequest) returns (Property) {
     option (google.api.http) = {
       get : "/v1alpha1/{name=projects/*/properties/*}"
+      additional_bindings: {
+        get: "/v1alpha1/{name=projects/*/apis/*/properties/*}"
+      }
+      additional_bindings: {
+        get: "/v1alpha1/{name=projects/*/apis/*/versions/*/properties/*}"
+      }
+      additional_bindings: {
+        get: "/v1alpha1/{name=projects/*/apis/*/versions/*/specs/*/properties/*}"
+      }
     };
     option (google.api.method_signature) = "name";
   }
@@ -287,6 +305,18 @@ service Registry {
     option (google.api.http) = {
       post : "/v1alpha1/{parent=projects/*}/properties"
       body : "property"
+      additional_bindings: {
+        post: "/v1alpha1/{parent=projects/*/apis/*}/properties"
+        body: "property"
+      }
+      additional_bindings: {
+        post: "/v1alpha1/{parent=projects/*/apis/*/versions/*}/properties"
+        body: "property"
+      }
+      additional_bindings: {
+        post: "/v1alpha1/{parent=projects/*/apis/*/versions/*/specs/*}/properties"
+        body: "property"
+      }
     };
     option (google.api.method_signature) = "parent,property,property_id";
   }
@@ -296,6 +326,18 @@ service Registry {
     option (google.api.http) = {
       patch : "/v1alpha1/{property.name=projects/*/properties/*}"
       body : "property"
+      additional_bindings: {
+        patch: "/v1alpha1/{property.name=projects/*/apis/*/properties/*}"
+        body: "property"
+      }
+      additional_bindings: {
+        patch: "/v1alpha1/{property.name=projects/*/apis/*/versions/*/properties/*}"
+        body: "property"
+      }
+      additional_bindings: {
+        patch: "/v1alpha1/{property.name=projects/*/apis/*/versions/*/specs/*/properties/*}"
+        body: "property"
+      }
     };
     option (google.api.method_signature) = "property";
   }
@@ -305,6 +347,15 @@ service Registry {
   rpc DeleteProperty(DeletePropertyRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
       delete : "/v1alpha1/{name=projects/*/properties/*}"
+      additional_bindings: {
+        delete: "/v1alpha1/{name=projects/*/apis/*/properties/*}"
+      }
+      additional_bindings: {
+        delete: "/v1alpha1/{name=projects/*/apis/*/versions/*/properties/*}"
+      }
+      additional_bindings: {
+        delete: "/v1alpha1/{name=projects/*/apis/*/versions/*/specs/*/properties/*}"
+      }
     };
     option (google.api.method_signature) = "name";
   }
@@ -313,6 +364,15 @@ service Registry {
   rpc ListLabels(ListLabelsRequest) returns (ListLabelsResponse) {
     option (google.api.http) = {
       get : "/v1alpha1/{parent=projects/*}/labels"
+      additional_bindings: {
+        get: "/v1alpha1/{parent=projects/*/apis/*}/labels"
+      }
+      additional_bindings: {
+        get: "/v1alpha1/{parent=projects/*/apis/*/versions/*}/labels"
+      }
+      additional_bindings: {
+        get: "/v1alpha1/{parent=projects/*/apis/*/versions/*/specs/*}/labels"
+      }
     };
     option (google.api.method_signature) = "parent";
   }
@@ -321,6 +381,15 @@ service Registry {
   rpc GetLabel(GetLabelRequest) returns (Label) {
     option (google.api.http) = {
       get : "/v1alpha1/{name=projects/*/labels/*}"
+      additional_bindings: {
+        get: "/v1alpha1/{name=projects/*/apis/*/labels/*}"
+      }
+      additional_bindings: {
+        get: "/v1alpha1/{name=projects/*/apis/*/versions/*/labels/*}"
+      }
+      additional_bindings: {
+        get: "/v1alpha1/{name=projects/*/apis/*/versions/*/specs/*/labels/*}"
+      }
     };
     option (google.api.method_signature) = "name";
   }
@@ -330,6 +399,18 @@ service Registry {
     option (google.api.http) = {
       post : "/v1alpha1/{parent=projects/*}/labels"
       body : "label"
+      additional_bindings: {
+        post: "/v1alpha1/{parent=projects/*/apis/*}/labels"
+        body: "label"
+      }
+      additional_bindings: {
+        post: "/v1alpha1/{parent=projects/*/apis/*/versions/*}/labels"
+        body: "label"
+      }
+      additional_bindings: {
+        post: "/v1alpha1/{parent=projects/*/apis/*/versions/*/specs/*}/labels"
+        body: "label"
+      }
     };
     option (google.api.method_signature) = "parent,label,label_id";
   }
@@ -339,6 +420,15 @@ service Registry {
   rpc DeleteLabel(DeleteLabelRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
       delete : "/v1alpha1/{name=projects/*/labels/*}"
+      additional_bindings: {
+        delete: "/v1alpha1/{name=projects/*/apis/*/labels/*}"
+      }
+      additional_bindings: {
+        delete: "/v1alpha1/{name=projects/*/apis/*/versions/*/labels/*}"
+      }
+      additional_bindings: {
+        delete: "/v1alpha1/{name=projects/*/apis/*/versions/*/specs/*/labels/*}"
+      }
     };
     option (google.api.method_signature) = "name";
   }
