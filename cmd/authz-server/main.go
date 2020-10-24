@@ -57,6 +57,8 @@ type AuthzConfig struct {
 	TrustJWTs bool     `yaml:"trustJWTs"`
 	Readers   []string `yaml:"readers"`
 	Writers   []string `yaml:"writers"`
+	// hard-coded tokens and corresponding user ids (for testing only)
+	Tokens map[string]string `yaml:"tokens"`
 }
 
 var config AuthzConfig
@@ -104,6 +106,11 @@ func (a *authorizationServer) check(ctx context.Context, req *auth.CheckRequest)
 		return denyMalformedCredentials(), nil
 	}
 	credential := m[1]
+
+	userid, ok := config.Tokens[credential]
+	if ok {
+		return allowOrDenyUser(userid, req)
+	}
 
 	isJWT, signature := isJWTToken(credential)
 	if isJWT {
