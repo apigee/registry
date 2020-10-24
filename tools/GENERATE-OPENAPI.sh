@@ -20,6 +20,9 @@
 # command-line tools.
 #
 
+# uncomment to update dependency
+# go get -u github.com/googleapis/gnostic/apps/protoc-gen-openapi
+
 ANNOTATIONS="third_party/api-common-protos"
 
 PROTOS=( \
