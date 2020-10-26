@@ -37,7 +37,7 @@ service Registry {
   // GetStatus returns the status of the service.
   rpc GetStatus(protobuf.Empty) returns (Status) {
     option (google.api.http) = {
-      get : "/{{.Version}}/status"
+      get: "/{{.Version}}/status"
     };
   }
 {{range .Entities}}{{template "rpcs" .}}{{end}}
@@ -57,7 +57,7 @@ message Status {
   //     aip.dev/not-precedent: the organization is the implicit parent. --){{end}}
   rpc List{{.PluralName}}(List{{.PluralName}}Request) returns (List{{.PluralName}}Response) {
     option (google.api.http) = {
-      get : "{{collection_path (first .ParentNames) .PluralName}}"{{range (rest .ParentNames)}}
+      get: "{{collection_path (first .ParentNames) .PluralName}}"{{range (rest .ParentNames)}}
       additional_bindings: {
         get: "{{collection_path . $.PluralName}}"
       }{{end}}
@@ -68,7 +68,7 @@ message Status {
   // Get{{.Name}} returns a specified {{lower_comment .Name}}.
   rpc Get{{.Name}}(Get{{.Name}}Request) returns ({{.Name}}) {
     option (google.api.http) = {
-      get : "{{resource_path (first .ParentNames) .ChildName}}"{{range (rest .ParentNames)}}
+      get: "{{resource_path (first .ParentNames) .ChildName}}"{{range (rest .ParentNames)}}
       additional_bindings: {
         get: "{{resource_path . $.ChildName}}"
       }{{end}}
@@ -84,8 +84,8 @@ message Status {
   //     aip.dev/not-precedent: {{.Name}} has an implicit parent. --){{end}}
   rpc Create{{.Name}}(Create{{.Name}}Request) returns ({{.Name}}) {
     option (google.api.http) = {
-      post : "{{collection_path (first .ParentNames) .PluralName}}"
-      body : "{{lower .Name}}"{{range (rest .ParentNames)}}
+      post: "{{collection_path (first .ParentNames) .PluralName}}"
+      body: "{{lower .Name}}"{{range (rest .ParentNames)}}
       additional_bindings: {
         post: "{{collection_path . $.PluralName}}"
         body: "{{lower $.Name}}"
@@ -98,8 +98,8 @@ message Status {
   // Update{{.Name}} can be used to modify a specified {{lower_comment .Name}}.
   rpc Update{{.Name}}(Update{{.Name}}Request) returns ({{.Name}}) {
     option (google.api.http) = {
-      patch : "{{resource_path_for_update .Name (first .ParentNames) .ChildName}}"
-      body : "{{lower .Name}}"{{range (rest .ParentNames)}}
+      patch: "{{resource_path_for_update .Name (first .ParentNames) .ChildName}}"
+      body: "{{lower .Name}}"{{range (rest .ParentNames)}}
       additional_bindings: {
         patch: "{{resource_path_for_update $.Name . $.ChildName}}"
         body: "{{lower $.Name}}"
@@ -112,7 +112,7 @@ message Status {
   // owns.
   rpc Delete{{.Name}}(Delete{{.Name}}Request) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      delete : "{{resource_path (first .ParentNames) .ChildName}}"{{range (rest .ParentNames)}}
+      delete: "{{resource_path (first .ParentNames) .ChildName}}"{{range (rest .ParentNames)}}
       additional_bindings: {
         delete: "{{resource_path . $.ChildName}}"
       }{{end}}
@@ -262,7 +262,7 @@ message Delete{{.Name}}Request {
   // Format: {{resource_name (first .ParentNames) .ChildName}}
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type : "registry.googleapis.com/{{.Name}}"}
+    (google.api.resource_reference) = {type: "registry.googleapis.com/{{.Name}}"}
   ];
 }{{if .HasRevisions}}
 
@@ -354,7 +354,7 @@ message Delete{{.Name}}RevisionRequest {
   // Example: projects/sample/apis/petstore/versions/1.0.0/{{lower .Name}}s/openapi.yaml@c7cfa2a8
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type : "registry.googleapis.com/{{.Name}}"}
+    (google.api.resource_reference) = {type: "registry.googleapis.com/{{.Name}}"}
   ];
 }{{end}}
 {{end}}

@@ -30,8 +30,8 @@ option go_package = "github.com/apigee/registry/rpc;rpc";
 // Typically there would be one project for an entire organization.
 message Project {
   option (google.api.resource) = {
-    type : "registry.googleapis.com/Project"
-    pattern : "projects/{project}"
+    type: "registry.googleapis.com/Project"
+    pattern: "projects/{project}"
   };
 
   // Resource name.
@@ -57,8 +57,8 @@ message Project {
 // Apis are produced by producers and are commitments to provide services.
 message Api {
   option (google.api.resource) = {
-    type : "registry.googleapis.com/Api"
-    pattern : "projects/{project}/apis/{api}"
+    type: "registry.googleapis.com/Api"
+    pattern: "projects/{project}/apis/{api}"
   };
 
   // Resource name.
@@ -87,7 +87,7 @@ message Api {
   // The recommended version of the API.
   // Format: apis/{api}/versions/{version}
   string recommended_version = 7 [
-    (google.api.resource_reference) = {type : "registry.googleapis.com/Version"}
+    (google.api.resource_reference) = {type: "registry.googleapis.com/Version"}
   ];
 
   // The owner of the the API.
@@ -98,8 +98,8 @@ message Api {
 // Versions are what consumers actually use.
 message Version {
   option (google.api.resource) = {
-    type : "registry.googleapis.com/Version"
-    pattern : "projects/{project}/apis/{api}/versions/{version}"
+    type: "registry.googleapis.com/Version"
+    pattern: "projects/{project}/apis/{api}/versions/{version}"
   };
 
   // Resource name.
@@ -133,8 +133,8 @@ message Version {
 // its own name and a common value for the format property.
 message Spec {
   option (google.api.resource) = {
-    type : "registry.googleapis.com/Spec"
-    pattern : "projects/{project}/apis/{api}/versions/{version}/specs/"
+    type: "registry.googleapis.com/Spec"
+    pattern: "projects/{project}/apis/{api}/versions/{version}/specs/"
               "{spec}"
   };
 
@@ -196,8 +196,8 @@ message Spec {
 // SpecRevisionTags represent tags used to mark spec revisions.
 message SpecRevisionTag {
   option (google.api.resource) = {
-    type : "registry.googleapis.com/SpecRevisionTag"
-    pattern : "projects/{project}/apis/{api}/versions/{version}/specs/{spec}/tags/{tag}"
+    type: "registry.googleapis.com/SpecRevisionTag"
+    pattern: "projects/{project}/apis/{api}/versions/{version}/specs/{spec}/tags/{tag}"
   };
 
   // The resource name of the tag.
@@ -211,11 +211,11 @@ message SpecRevisionTag {
 // Properties of resources. Properties are unique (single-value) per resource.
 message Property {
   option (google.api.resource) = {
-    type : "registry.googleapis.com/Property"
-    pattern : "projects/{project}/properties/{property}"
-    pattern : "projects/{project}/apis/{api}/properties/{property}"
-    pattern : "projects/{project}/apis/{api}/versions/{version}/properties/{property}"
-    pattern : "projects/{project}/apis/{api}/versions/{version}/specs/{spec}/properties/{property}"
+    type: "registry.googleapis.com/Property"
+    pattern: "projects/{project}/properties/{property}"
+    pattern: "projects/{project}/apis/{api}/properties/{property}"
+    pattern: "projects/{project}/apis/{api}/versions/{version}/properties/{property}"
+    pattern: "projects/{project}/apis/{api}/versions/{version}/specs/{spec}/properties/{property}"
   };
 
   // Resource name.
@@ -266,11 +266,11 @@ message Property {
 // Labels on resources. Labels are similar to properties but are in a separate namespace and without values.
 message Label {
   option (google.api.resource) = {
-    type : "registry.googleapis.com/Label"
-    pattern : "projects/{project}/labels/{label}"
-    pattern : "projects/{project}/apis/{api}/labels/{label}"
-    pattern : "projects/{project}/apis/{api}/versions/{version}/labels/{label}"
-    pattern : "projects/{project}/apis/{api}/versions/{version}/specs/{spec}/labels/{label}"
+    type: "registry.googleapis.com/Label"
+    pattern: "projects/{project}/labels/{label}"
+    pattern: "projects/{project}/apis/{api}/labels/{label}"
+    pattern: "projects/{project}/apis/{api}/versions/{version}/labels/{label}"
+    pattern: "projects/{project}/apis/{api}/versions/{version}/specs/{spec}/labels/{label}"
   };
 
   // Resource name.

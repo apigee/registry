@@ -37,7 +37,7 @@ service Registry {
   // GetStatus returns the status of the service.
   rpc GetStatus(protobuf.Empty) returns (Status) {
     option (google.api.http) = {
-      get : "/v1alpha1/status"
+      get: "/v1alpha1/status"
     };
   }
 
@@ -47,14 +47,14 @@ service Registry {
   //     aip.dev/not-precedent: the organization is the implicit parent. --)
   rpc ListProjects(ListProjectsRequest) returns (ListProjectsResponse) {
     option (google.api.http) = {
-      get : "/v1alpha1/projects"
+      get: "/v1alpha1/projects"
     };
   }
 
   // GetProject returns a specified project.
   rpc GetProject(GetProjectRequest) returns (Project) {
     option (google.api.http) = {
-      get : "/v1alpha1/{name=projects/*}"
+      get: "/v1alpha1/{name=projects/*}"
     };
     option (google.api.method_signature) = "name";
   }
@@ -67,8 +67,8 @@ service Registry {
   //     aip.dev/not-precedent: Project has an implicit parent. --)
   rpc CreateProject(CreateProjectRequest) returns (Project) {
     option (google.api.http) = {
-      post : "/v1alpha1/projects"
-      body : "project"
+      post: "/v1alpha1/projects"
+      body: "project"
     };
     option (google.api.method_signature) = "project,project_id";
   }
@@ -76,8 +76,8 @@ service Registry {
   // UpdateProject can be used to modify a specified project.
   rpc UpdateProject(UpdateProjectRequest) returns (Project) {
     option (google.api.http) = {
-      patch : "/v1alpha1/{project.name=projects/*}"
-      body : "project"
+      patch: "/v1alpha1/{project.name=projects/*}"
+      body: "project"
     };
     option (google.api.method_signature) = "project,update_mask";
   }
@@ -86,7 +86,7 @@ service Registry {
   // owns.
   rpc DeleteProject(DeleteProjectRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      delete : "/v1alpha1/{name=projects/*}"
+      delete: "/v1alpha1/{name=projects/*}"
     };
     option (google.api.method_signature) = "name";
   }
@@ -94,7 +94,7 @@ service Registry {
   // ListApis returns matching APIs.
   rpc ListApis(ListApisRequest) returns (ListApisResponse) {
     option (google.api.http) = {
-      get : "/v1alpha1/{parent=projects/*}/apis"
+      get: "/v1alpha1/{parent=projects/*}/apis"
     };
     option (google.api.method_signature) = "parent";
   }
@@ -102,7 +102,7 @@ service Registry {
   // GetApi returns a specified API.
   rpc GetApi(GetApiRequest) returns (Api) {
     option (google.api.http) = {
-      get : "/v1alpha1/{name=projects/*/apis/*}"
+      get: "/v1alpha1/{name=projects/*/apis/*}"
     };
     option (google.api.method_signature) = "name";
   }
@@ -110,8 +110,8 @@ service Registry {
   // CreateApi creates a specified API.
   rpc CreateApi(CreateApiRequest) returns (Api) {
     option (google.api.http) = {
-      post : "/v1alpha1/{parent=projects/*}/apis"
-      body : "api"
+      post: "/v1alpha1/{parent=projects/*}/apis"
+      body: "api"
     };
     option (google.api.method_signature) = "parent,api,api_id";
   }
@@ -119,8 +119,8 @@ service Registry {
   // UpdateApi can be used to modify a specified API.
   rpc UpdateApi(UpdateApiRequest) returns (Api) {
     option (google.api.http) = {
-      patch : "/v1alpha1/{api.name=projects/*/apis/*}"
-      body : "api"
+      patch: "/v1alpha1/{api.name=projects/*/apis/*}"
+      body: "api"
     };
     option (google.api.method_signature) = "api,update_mask";
   }
@@ -129,7 +129,7 @@ service Registry {
   // owns.
   rpc DeleteApi(DeleteApiRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      delete : "/v1alpha1/{name=projects/*/apis/*}"
+      delete: "/v1alpha1/{name=projects/*/apis/*}"
     };
     option (google.api.method_signature) = "name";
   }
@@ -137,7 +137,7 @@ service Registry {
   // ListVersions returns matching versions.
   rpc ListVersions(ListVersionsRequest) returns (ListVersionsResponse) {
     option (google.api.http) = {
-      get : "/v1alpha1/{parent=projects/*/apis/*}/versions"
+      get: "/v1alpha1/{parent=projects/*/apis/*}/versions"
     };
     option (google.api.method_signature) = "parent";
   }
@@ -145,7 +145,7 @@ service Registry {
   // GetVersion returns a specified version.
   rpc GetVersion(GetVersionRequest) returns (Version) {
     option (google.api.http) = {
-      get : "/v1alpha1/{name=projects/*/apis/*/versions/*}"
+      get: "/v1alpha1/{name=projects/*/apis/*/versions/*}"
     };
     option (google.api.method_signature) = "name";
   }
@@ -153,8 +153,8 @@ service Registry {
   // CreateVersion creates a specified version.
   rpc CreateVersion(CreateVersionRequest) returns (Version) {
     option (google.api.http) = {
-      post : "/v1alpha1/{parent=projects/*/apis/*}/versions"
-      body : "version"
+      post: "/v1alpha1/{parent=projects/*/apis/*}/versions"
+      body: "version"
     };
     option (google.api.method_signature) = "parent,version,version_id";
   }
@@ -162,8 +162,8 @@ service Registry {
   // UpdateVersion can be used to modify a specified version.
   rpc UpdateVersion(UpdateVersionRequest) returns (Version) {
     option (google.api.http) = {
-      patch : "/v1alpha1/{version.name=projects/*/apis/*/versions/*}"
-      body : "version"
+      patch: "/v1alpha1/{version.name=projects/*/apis/*/versions/*}"
+      body: "version"
     };
     option (google.api.method_signature) = "version,update_mask";
   }
@@ -172,7 +172,7 @@ service Registry {
   // owns.
   rpc DeleteVersion(DeleteVersionRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      delete : "/v1alpha1/{name=projects/*/apis/*/versions/*}"
+      delete: "/v1alpha1/{name=projects/*/apis/*/versions/*}"
     };
     option (google.api.method_signature) = "name";
   }
@@ -180,7 +180,7 @@ service Registry {
   // ListSpecs returns matching specs.
   rpc ListSpecs(ListSpecsRequest) returns (ListSpecsResponse) {
     option (google.api.http) = {
-      get : "/v1alpha1/{parent=projects/*/apis/*/versions/*}/specs"
+      get: "/v1alpha1/{parent=projects/*/apis/*/versions/*}/specs"
     };
     option (google.api.method_signature) = "parent";
   }
@@ -188,7 +188,7 @@ service Registry {
   // GetSpec returns a specified spec.
   rpc GetSpec(GetSpecRequest) returns (Spec) {
     option (google.api.http) = {
-      get : "/v1alpha1/{name=projects/*/apis/*/versions/*/specs/*}"
+      get: "/v1alpha1/{name=projects/*/apis/*/versions/*/specs/*}"
     };
     option (google.api.method_signature) = "name";
   }
@@ -196,8 +196,8 @@ service Registry {
   // CreateSpec creates a specified spec.
   rpc CreateSpec(CreateSpecRequest) returns (Spec) {
     option (google.api.http) = {
-      post : "/v1alpha1/{parent=projects/*/apis/*/versions/*}/specs"
-      body : "spec"
+      post: "/v1alpha1/{parent=projects/*/apis/*/versions/*}/specs"
+      body: "spec"
     };
     option (google.api.method_signature) = "parent,spec,spec_id";
   }
@@ -205,8 +205,8 @@ service Registry {
   // UpdateSpec can be used to modify a specified spec.
   rpc UpdateSpec(UpdateSpecRequest) returns (Spec) {
     option (google.api.http) = {
-      patch : "/v1alpha1/{spec.name=projects/*/apis/*/versions/*/specs/*}"
-      body : "spec"
+      patch: "/v1alpha1/{spec.name=projects/*/apis/*/versions/*/specs/*}"
+      body: "spec"
     };
     option (google.api.method_signature) = "spec,update_mask";
   }
@@ -215,7 +215,7 @@ service Registry {
   // owns.
   rpc DeleteSpec(DeleteSpecRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      delete : "/v1alpha1/{name=projects/*/apis/*/versions/*/specs/*}"
+      delete: "/v1alpha1/{name=projects/*/apis/*/versions/*/specs/*}"
     };
     option (google.api.method_signature) = "name";
   }
@@ -269,7 +269,7 @@ service Registry {
   // ListProperties returns matching properties.
   rpc ListProperties(ListPropertiesRequest) returns (ListPropertiesResponse) {
     option (google.api.http) = {
-      get : "/v1alpha1/{parent=projects/*}/properties"
+      get: "/v1alpha1/{parent=projects/*}/properties"
       additional_bindings: {
         get: "/v1alpha1/{parent=projects/*/apis/*}/properties"
       }
@@ -286,7 +286,7 @@ service Registry {
   // GetProperty returns a specified property.
   rpc GetProperty(GetPropertyRequest) returns (Property) {
     option (google.api.http) = {
-      get : "/v1alpha1/{name=projects/*/properties/*}"
+      get: "/v1alpha1/{name=projects/*/properties/*}"
       additional_bindings: {
         get: "/v1alpha1/{name=projects/*/apis/*/properties/*}"
       }
@@ -303,8 +303,8 @@ service Registry {
   // CreateProperty creates a specified property.
   rpc CreateProperty(CreatePropertyRequest) returns (Property) {
     option (google.api.http) = {
-      post : "/v1alpha1/{parent=projects/*}/properties"
-      body : "property"
+      post: "/v1alpha1/{parent=projects/*}/properties"
+      body: "property"
       additional_bindings: {
         post: "/v1alpha1/{parent=projects/*/apis/*}/properties"
         body: "property"
@@ -324,8 +324,8 @@ service Registry {
   // UpdateProperty can be used to modify a specified property.
   rpc UpdateProperty(UpdatePropertyRequest) returns (Property) {
     option (google.api.http) = {
-      patch : "/v1alpha1/{property.name=projects/*/properties/*}"
-      body : "property"
+      patch: "/v1alpha1/{property.name=projects/*/properties/*}"
+      body: "property"
       additional_bindings: {
         patch: "/v1alpha1/{property.name=projects/*/apis/*/properties/*}"
         body: "property"
@@ -346,7 +346,7 @@ service Registry {
   // owns.
   rpc DeleteProperty(DeletePropertyRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      delete : "/v1alpha1/{name=projects/*/properties/*}"
+      delete: "/v1alpha1/{name=projects/*/properties/*}"
       additional_bindings: {
         delete: "/v1alpha1/{name=projects/*/apis/*/properties/*}"
       }
@@ -363,7 +363,7 @@ service Registry {
   // ListLabels returns matching labels.
   rpc ListLabels(ListLabelsRequest) returns (ListLabelsResponse) {
     option (google.api.http) = {
-      get : "/v1alpha1/{parent=projects/*}/labels"
+      get: "/v1alpha1/{parent=projects/*}/labels"
       additional_bindings: {
         get: "/v1alpha1/{parent=projects/*/apis/*}/labels"
       }
@@ -380,7 +380,7 @@ service Registry {
   // GetLabel returns a specified label.
   rpc GetLabel(GetLabelRequest) returns (Label) {
     option (google.api.http) = {
-      get : "/v1alpha1/{name=projects/*/labels/*}"
+      get: "/v1alpha1/{name=projects/*/labels/*}"
       additional_bindings: {
         get: "/v1alpha1/{name=projects/*/apis/*/labels/*}"
       }
@@ -397,8 +397,8 @@ service Registry {
   // CreateLabel creates a specified label.
   rpc CreateLabel(CreateLabelRequest) returns (Label) {
     option (google.api.http) = {
-      post : "/v1alpha1/{parent=projects/*}/labels"
-      body : "label"
+      post: "/v1alpha1/{parent=projects/*}/labels"
+      body: "label"
       additional_bindings: {
         post: "/v1alpha1/{parent=projects/*/apis/*}/labels"
         body: "label"
@@ -419,7 +419,7 @@ service Registry {
   // owns.
   rpc DeleteLabel(DeleteLabelRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      delete : "/v1alpha1/{name=projects/*/labels/*}"
+      delete: "/v1alpha1/{name=projects/*/labels/*}"
       additional_bindings: {
         delete: "/v1alpha1/{name=projects/*/apis/*/labels/*}"
       }
@@ -516,7 +516,7 @@ message DeleteProjectRequest {
   // Format: projects/*
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type : "registry.googleapis.com/Project"}
+    (google.api.resource_reference) = {type: "registry.googleapis.com/Project"}
   ];
 }
 
@@ -603,7 +603,7 @@ message DeleteApiRequest {
   // Format: projects/*/apis/*
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type : "registry.googleapis.com/Api"}
+    (google.api.resource_reference) = {type: "registry.googleapis.com/Api"}
   ];
 }
 
@@ -690,7 +690,7 @@ message DeleteVersionRequest {
   // Format: projects/*/apis/*/versions/*
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type : "registry.googleapis.com/Version"}
+    (google.api.resource_reference) = {type: "registry.googleapis.com/Version"}
   ];
 }
 
@@ -783,7 +783,7 @@ message DeleteSpecRequest {
   // Format: projects/*/apis/*/versions/*/specs/*
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type : "registry.googleapis.com/Spec"}
+    (google.api.resource_reference) = {type: "registry.googleapis.com/Spec"}
   ];
 }
 
@@ -875,7 +875,7 @@ message DeleteSpecRevisionRequest {
   // Example: projects/sample/apis/petstore/versions/1.0.0/specs/openapi.yaml@c7cfa2a8
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type : "registry.googleapis.com/Spec"}
+    (google.api.resource_reference) = {type: "registry.googleapis.com/Spec"}
   ];
 }
 
@@ -965,7 +965,7 @@ message DeletePropertyRequest {
   // Format: projects/*/properties/*
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type : "registry.googleapis.com/Property"}
+    (google.api.resource_reference) = {type: "registry.googleapis.com/Property"}
   ];
 }
 
@@ -1040,6 +1040,6 @@ message DeleteLabelRequest {
   // Format: projects/*/labels/*
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = {type : "registry.googleapis.com/Label"}
+    (google.api.resource_reference) = {type: "registry.googleapis.com/Label"}
   ];
 }
