@@ -24,4 +24,12 @@ addresses in JWT tokens are trusted without verification (only enable this in
 environments where tokens are already verified). The `readers` and `writers`
 arrays contain glob patterns that, if matched against user emails, allow read
 and write access, respectively. "Read" methods correspond to RPCs with names
-that begin with "Get" and "List".
+that begin with "Get" and "List". An optional `tokens` map can be used to map
+specified test tokens to user IDs. For example, the following allows the
+`test@example.com` user ID to be authenticated with the bearer token
+`1234ABCDWXYZ`.
+
+```
+tokens:
+  1234ABCDWXYZ: test@example.com
+```

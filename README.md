@@ -135,8 +135,8 @@ Notes:
 
 ### Running the Registry API server
 
-Running `source auth/LOCAL.sh` will configure your environment for the Registry
-API server (`registry-server`) and the included clients to call your local
+Running `source auth/LOCAL.sh` will configure your environment to run the
+Registry API server locally and for the included clients to call your local
 instance. Start the server by running `registry-server`. (Recall that by
 default, this uses the Cloud Datastore API, a remote service).
 
