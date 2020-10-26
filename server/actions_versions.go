@@ -44,7 +44,7 @@ func (s *RegistryServer) CreateVersion(ctx context.Context, request *rpc.CreateV
 	if err == nil {
 		return nil, status.Error(codes.AlreadyExists, version.ResourceName()+" already exists")
 	}
-	err = version.Update(request.GetVersion())
+	err = version.Update(request.GetVersion(), nil)
 	version.CreateTime = version.UpdateTime
 	k, err = client.Put(ctx, k, version)
 	if err != nil {
@@ -185,7 +185,7 @@ func (s *RegistryServer) UpdateVersion(ctx context.Context, request *rpc.UpdateV
 	if err != nil {
 		return nil, status.Error(codes.NotFound, "not found")
 	}
-	err = version.Update(request.GetVersion())
+	err = version.Update(request.GetVersion(), request.GetUpdateMask())
 	if err != nil {
 		return nil, internalError(err)
 	}

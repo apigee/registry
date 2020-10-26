@@ -26,6 +26,7 @@ import (
 	"github.com/apigee/registry/server/names"
 	ptypes "github.com/golang/protobuf/ptypes"
 	"github.com/google/uuid"
+	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
 // SpecEntityName is used to represent specs in storage.
@@ -157,42 +158,62 @@ func (spec *Spec) Message(blob *Blob, revision string) (message *rpc.Spec, err e
 }
 
 // Update modifies a spec using the contents of a message.
-func (spec *Spec) Update(message *rpc.Spec) error {
+func (spec *Spec) Update(message *rpc.Spec, mask *fieldmaskpb.FieldMask) error {
 	now := time.Now()
-
-	filename := message.GetFilename()
-	if filename != "" {
-		spec.FileName = filename
-	}
-
-	description := message.GetDescription()
-	if description != "" {
-		spec.Description = description
-	}
-
-	contents := message.GetContents()
-	if contents != nil {
-		// Save some properties of the spec contents.
-		// The bytes of the contents are stored in a Blob.
-		hash := hashForBytes(contents)
-		if spec.Hash != hash {
-			spec.Hash = hash
-			spec.RevisionID = newRevisionID()
-			spec.CreateTime = now
+	if mask != nil {
+		for _, field := range mask.Paths {
+			switch field {
+			case "filename":
+				spec.FileName = message.GetFilename()
+			case "description":
+				spec.Description = message.GetDescription()
+			case "contents":
+				contents := message.GetContents()
+				// Save some properties of the spec contents.
+				// The bytes of the contents are stored in a Blob.
+				hash := hashForBytes(contents)
+				if spec.Hash != hash {
+					spec.Hash = hash
+					spec.RevisionID = newRevisionID()
+					spec.CreateTime = now
+				}
+				spec.SizeInBytes = int32(len(contents))
+			case "style":
+				spec.Style = message.GetStyle()
+			case "source_uri":
+				spec.SourceURI = message.GetSourceUri()
+			}
 		}
-		spec.SizeInBytes = int32(len(contents))
+	} else {
+		filename := message.GetFilename()
+		if filename != "" {
+			spec.FileName = filename
+		}
+		description := message.GetDescription()
+		if description != "" {
+			spec.Description = description
+		}
+		contents := message.GetContents()
+		if contents != nil {
+			// Save some properties of the spec contents.
+			// The bytes of the contents are stored in a Blob.
+			hash := hashForBytes(contents)
+			if spec.Hash != hash {
+				spec.Hash = hash
+				spec.RevisionID = newRevisionID()
+				spec.CreateTime = now
+			}
+			spec.SizeInBytes = int32(len(contents))
+		}
+		style := message.GetStyle()
+		if style != "" {
+			spec.Style = style
+		}
+		sourceURI := message.GetSourceUri()
+		if sourceURI != "" {
+			spec.SourceURI = sourceURI
+		}
 	}
-
-	style := message.GetStyle()
-	if style != "" {
-		spec.Style = style
-	}
-
-	sourceURI := message.GetSourceUri()
-	if sourceURI != "" {
-		spec.SourceURI = sourceURI
-	}
-
 	spec.UpdateTime = now
 	return nil
 }

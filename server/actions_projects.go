@@ -43,7 +43,7 @@ func (s *RegistryServer) CreateProject(ctx context.Context, request *rpc.CreateP
 	if err == nil {
 		return nil, status.Error(codes.AlreadyExists, project.ResourceName()+" already exists")
 	}
-	err = project.Update(request.GetProject())
+	err = project.Update(request.GetProject(), nil)
 	project.CreateTime = project.UpdateTime
 	k, err = client.Put(ctx, k, project)
 	if err != nil {
@@ -171,7 +171,7 @@ func (s *RegistryServer) UpdateProject(ctx context.Context, request *rpc.UpdateP
 	if err != nil {
 		return nil, status.Error(codes.NotFound, "not found")
 	}
-	err = project.Update(request.GetProject())
+	err = project.Update(request.GetProject(), request.GetUpdateMask())
 	if err != nil {
 		return nil, internalError(err)
 	}

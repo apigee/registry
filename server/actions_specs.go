@@ -55,7 +55,7 @@ func (s *RegistryServer) CreateSpec(ctx context.Context, request *rpc.CreateSpec
 		return nil, status.Error(codes.AlreadyExists, spec.ResourceName()+" already exists")
 	}
 	// save the spec under its full resource@revision name
-	err = spec.Update(request.GetSpec())
+	err = spec.Update(request.GetSpec(), nil)
 	if err != nil {
 		return nil, internalError(err)
 	}
@@ -238,7 +238,7 @@ func (s *RegistryServer) UpdateSpec(ctx context.Context, request *rpc.UpdateSpec
 		return nil, invalidArgumentError(errors.New("updates to specific revisions are unsupported"))
 	}
 	oldRevisionID := spec.RevisionID
-	err = spec.Update(request.GetSpec())
+	err = spec.Update(request.GetSpec(), request.GetUpdateMask())
 	if err != nil {
 		return nil, internalError(err)
 	}

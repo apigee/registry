@@ -22,6 +22,7 @@ import (
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
 	ptypes "github.com/golang/protobuf/ptypes"
+	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
 // VersionEntityName is used to represent versions in storage.
@@ -112,10 +113,23 @@ func (version *Version) Message() (message *rpc.Version, err error) {
 }
 
 // Update modifies a version using the contents of a message.
-func (version *Version) Update(message *rpc.Version) error {
-	version.DisplayName = message.GetDisplayName()
-	version.Description = message.GetDescription()
-	version.State = message.GetState()
+func (version *Version) Update(message *rpc.Version, mask *fieldmaskpb.FieldMask) error {
+	if mask != nil {
+		for _, field := range mask.Paths {
+			switch field {
+			case "display_name":
+				version.DisplayName = message.GetDisplayName()
+			case "description":
+				version.Description = message.GetDescription()
+			case "state":
+				version.Description = message.GetState()
+			}
+		}
+	} else {
+		version.DisplayName = message.GetDisplayName()
+		version.Description = message.GetDescription()
+		version.State = message.GetState()
+	}
 	version.UpdateTime = time.Now()
 	return nil
 }

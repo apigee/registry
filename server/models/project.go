@@ -21,6 +21,7 @@ import (
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
 	ptypes "github.com/golang/protobuf/ptypes"
+	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
 // ProjectEntityName is used to represent projrcts in storage.
@@ -74,9 +75,20 @@ func (project *Project) Message() (message *rpc.Project, err error) {
 }
 
 // Update modifies a project using the contents of a message.
-func (project *Project) Update(message *rpc.Project) error {
-	project.DisplayName = message.GetDisplayName()
-	project.Description = message.GetDescription()
+func (project *Project) Update(message *rpc.Project, mask *fieldmaskpb.FieldMask) error {
+	if mask != nil {
+		for _, field := range mask.Paths {
+			switch field {
+			case "display_name":
+				project.DisplayName = message.GetDisplayName()
+			case "description":
+				project.Description = message.GetDescription()
+			}
+		}
+	} else {
+		project.DisplayName = message.GetDisplayName()
+		project.Description = message.GetDescription()
+	}
 	project.UpdateTime = time.Now()
 	return nil
 }
