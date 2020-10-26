@@ -51,26 +51,32 @@ message Status {
 {{range .Entities}}{{template "messages" .}}{{end}}{{end}}
 
 {{define "rpcs"}}
-  // List{{.PluralName}} returns matching {{lower_comment .PluralName}}.{{if not .ParentName}}
+  // List{{.PluralName}} returns matching {{lower_comment .PluralName}}.{{if not .ParentNames}}
   // (-- api-linter: standard-methods=disabled --)
   // (-- api-linter: core::0132::method-signature=disabled
   //     aip.dev/not-precedent: the organization is the implicit parent. --){{end}}
   rpc List{{.PluralName}}(List{{.PluralName}}Request) returns (List{{.PluralName}}Response) {
     option (google.api.http) = {
-      get : "{{collection_path .ParentName .PluralName}}"
-    };{{if .ParentName}}
+      get : "{{collection_path (first .ParentNames) .PluralName}}"{{range (rest .ParentNames)}}
+      additional_bindings: {
+        get: "{{collection_path . $.PluralName}}"
+      }{{end}}
+    };{{if .ParentNames}}
     option (google.api.method_signature) = "parent";{{end}}
   }
 
   // Get{{.Name}} returns a specified {{lower_comment .Name}}.
   rpc Get{{.Name}}(Get{{.Name}}Request) returns ({{.Name}}) {
     option (google.api.http) = {
-      get : "{{resource_path .ResourceName}}"
+      get : "{{resource_path (first .ParentNames) .ChildName}}"{{range (rest .ParentNames)}}
+      additional_bindings: {
+        get: "{{resource_path . $.ChildName}}"
+      }{{end}}
     };
     option (google.api.method_signature) = "name";
   }
 
-  // Create{{.Name}} creates a specified {{lower_comment .Name}}.{{if not .ParentName}}
+  // Create{{.Name}} creates a specified {{lower_comment .Name}}.{{if not .ParentNames}}
   // (-- api-linter: standard-methods=disabled --)
   // (-- api-linter: core::0133::http-uri-parent=disabled
   //     aip.dev/not-precedent: {{.Name}} has an implicit parent. --)
@@ -78,9 +84,13 @@ message Status {
   //     aip.dev/not-precedent: {{.Name}} has an implicit parent. --){{end}}
   rpc Create{{.Name}}(Create{{.Name}}Request) returns ({{.Name}}) {
     option (google.api.http) = {
-      post : "{{collection_path .ParentName .PluralName}}"
-      body : "{{lower .Name}}"
-    };{{if not .ParentName}}
+      post : "{{collection_path (first .ParentNames) .PluralName}}"
+      body : "{{lower .Name}}"{{range (rest .ParentNames)}}
+      additional_bindings: {
+        post: "{{collection_path . $.PluralName}}"
+        body: "{{lower $.Name}}"
+      }{{end}}
+    };{{if not .ParentNames}}
     option (google.api.method_signature) = "{{lower .Name}},{{lower .Name}}_id";{{else}}
     option (google.api.method_signature) = "parent,{{lower .Name}},{{lower .Name}}_id";{{end}}
   }
@@ -88,8 +98,12 @@ message Status {
   // Update{{.Name}} can be used to modify a specified {{lower_comment .Name}}.
   rpc Update{{.Name}}(Update{{.Name}}Request) returns ({{.Name}}) {
     option (google.api.http) = {
-      patch : "{{resource_path_for_update .Name .ResourceName}}"
-      body : "{{lower .Name}}"
+      patch : "{{resource_path_for_update .Name (first .ParentNames) .ChildName}}"
+      body : "{{lower .Name}}"{{range (rest .ParentNames)}}
+      additional_bindings: {
+        patch: "{{resource_path_for_update $.Name . $.ChildName}}"
+        body: "{{lower $.Name}}"
+      }{{end}}
     };
     option (google.api.method_signature) = "{{lower .Name}}{{if .HasFieldMasks}},update_mask{{end}}";
   }
@@ -98,7 +112,10 @@ message Status {
   // owns.
   rpc Delete{{.Name}}(Delete{{.Name}}Request) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      delete : "{{resource_path .ResourceName}}"
+      delete : "{{resource_path (first .ParentNames) .ChildName}}"{{range (rest .ParentNames)}}
+      additional_bindings: {
+        delete: "{{resource_path . $.ChildName}}"
+      }{{end}}
     };
     option (google.api.method_signature) = "name";
   }
@@ -106,7 +123,7 @@ message Status {
   // Tag{{.Name}}Revision adds a tag to a specified revision of a {{lower .Name}}.
   rpc Tag{{.Name}}Revision(Tag{{.Name}}RevisionRequest) returns ({{.Name}}) {
     option (google.api.http) = {
-      post: "{{resource_path .ResourceName}}:tagRevision"
+      post: "{{resource_path (first .ParentNames) .ChildName}}:tagRevision"
       body: "*"
     };
   }
@@ -115,7 +132,7 @@ message Status {
   rpc List{{.Name}}Revisions(List{{.Name}}RevisionsRequest)
       returns (List{{.Name}}RevisionsResponse) {
     option (google.api.http) = {
-      get: "{{resource_path .ResourceName}}:listRevisions"
+      get: "{{resource_path (first .ParentNames) .ChildName}}:listRevisions"
     };
   }
 
@@ -123,7 +140,7 @@ message Status {
   rpc List{{.Name}}RevisionTags(List{{.Name}}RevisionTagsRequest)
       returns (List{{.Name}}RevisionTagsResponse) {
     option (google.api.http) = {
-      get: "{{resource_path .ResourceName}}:listRevisionTags"
+      get: "{{resource_path (first .ParentNames) .ChildName}}:listRevisionTags"
     };
   }
   
@@ -131,7 +148,7 @@ message Status {
   // Note that this creates a new revision ID.
   rpc Rollback{{.Name}}(Rollback{{.Name}}Request) returns ({{.Name}}) {
     option (google.api.http) = {
-      post: "{{resource_path .ResourceName}}:rollback"
+      post: "{{resource_path (first .ParentNames) .ChildName}}:rollback"
       body: "*"
     };
   }
@@ -144,19 +161,19 @@ message Status {
   rpc Delete{{.Name}}Revision(Delete{{.Name}}RevisionRequest)
       returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      delete: "{{resource_path .ResourceName}}:deleteRevision"
+      delete: "{{resource_path (first .ParentNames) .ChildName}}:deleteRevision"
     };
     option (google.api.method_signature) = "name";
   }
 {{end}}{{end}}
 
 {{define "messages"}}
-// Request message for List{{.PluralName}}.{{if not .ParentName}}
+// Request message for List{{.PluralName}}.{{if not .ParentNames}}
 // (-- api-linter: core::0132::request-parent-required=disabled
 //     aip.dev/not-precedent: the parent of {{.Name}} is implicit. --){{end}}
 message List{{.PluralName}}Request {
-{{if .ParentName}}  // The parent, which owns this collection of {{lower_comment .PluralName}}.
-  // Format: {{.ParentName}}
+{{if .ParentNames}}  // The parent, which owns this collection of {{lower_comment .PluralName}}.
+  // Format: {{index .ParentNames 0}}
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {child_type: "registry.googleapis.com/{{.Name}}"}
@@ -195,7 +212,7 @@ message List{{.PluralName}}Response {
 // Request message for Get{{.Name}}.
 message Get{{.Name}}Request {
   // The name of the {{lower_comment .Name}} to retrieve.
-  // Format: {{.ResourceName}}
+  // Format: {{resource_name (first .ParentNames) .ChildName}}
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
@@ -207,12 +224,12 @@ message Get{{.Name}}Request {
   {{.ViewEnumName}} view = 2;{{end}}
 }
 
-// Request message for Create{{.Name}}.{{if not .ParentName}}
+// Request message for Create{{.Name}}.{{if not .ParentNames}}
 // (-- api-linter: core::0133::request-parent-required=disabled
 //     aip.dev/not-precedent: the parent of {{.Name}} is implicit. --){{end}}
 message Create{{.Name}}Request {
-{{if .ParentName}}  // The parent, which owns this collection of {{lower_comment .PluralName}}.
-  // Format: {{.ParentName}}
+{{if .ParentNames}}  // The parent, which owns this collection of {{lower_comment .PluralName}}.
+  // Format: {{index .ParentNames 0}}
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {child_type: "registry.googleapis.com/{{.Name}}"}
@@ -232,7 +249,7 @@ message Update{{.Name}}Request {
   // The {{lower_comment .Name}} to update.
   //
   // The `name` field is used to identify the {{lower_comment .Name}} to update.
-  // Format: {{.ResourceName}}
+  // Format: {{resource_name (first .ParentNames) .ChildName}}
   {{.Name}} {{lower .Name}} = 1 [ (google.api.field_behavior) = REQUIRED ];
 {{if .HasFieldMasks}}
   // The list of fields to be updated.
@@ -242,7 +259,7 @@ message Update{{.Name}}Request {
 // Request message for Delete{{.Name}}.
 message Delete{{.Name}}Request {
   // The name of the {{lower_comment .Name}} to delete.
-  // Format: {{.ResourceName}}
+  // Format: {{resource_name (first .ParentNames) .ChildName}}
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {type : "registry.googleapis.com/{{.Name}}"}

@@ -37,8 +37,8 @@ func check(e error) {
 type Entity struct {
 	Name               string
 	PluralName         string
-	ParentName         string
-	ResourceName       string
+	ParentNames        []string
+	ChildName          string
 	ViewEnumName       string
 	ExtraRequestFields string
 	HasRevisions       bool
@@ -53,6 +53,13 @@ type Service struct {
 	Entities []Entity
 }
 
+func resourceName(parentName, childName string) string {
+	if parentName != "" {
+		return parentName + "/" + childName
+	}
+	return childName
+}
+
 func main() {
 	t, err := template.New("").Funcs(template.FuncMap{
 		"lower": func(s string) string {
@@ -64,17 +71,31 @@ func main() {
 			}
 			return strings.ToLower(s)
 		},
+		"first": func(names []string) string {
+			if len(names) > 0 {
+				return names[0]
+			}
+			return ""
+		},
+		"rest": func(names []string) []string {
+			if len(names) > 0 {
+				return names[1:]
+			} else {
+				return nil
+			}
+		},
+		"resource_name": resourceName,
 		"collection_path": func(parentName, pluralEntityName string) string {
 			if parentName == "" {
 				return "/" + version + "/" + strings.ToLower(pluralEntityName)
 			}
 			return "/" + version + "/{parent=" + parentName + "}/" + strings.ToLower(pluralEntityName)
 		},
-		"resource_path": func(resourceName string) string {
-			return "/" + version + "/{name=" + resourceName + "}"
+		"resource_path": func(parentName, childName string) string {
+			return "/" + version + "/{name=" + resourceName(parentName, childName) + "}"
 		},
-		"resource_path_for_update": func(entityName, resourceName string) string {
-			return "/" + version + "/{" + strings.ToLower(entityName) + ".name=" + resourceName + "}"
+		"resource_path_for_update": func(entityName, parentName, childName string) string {
+			return "/" + version + "/{" + strings.ToLower(entityName) + ".name=" + resourceName(parentName, childName) + "}"
 		},
 		"path_for_service": func(service string) string {
 			return strings.Replace(service, ".", "/", -1)
@@ -89,8 +110,8 @@ func main() {
 			{
 				Name:               "Project",
 				PluralName:         "Projects",
-				ParentName:         "",
-				ResourceName:       "projects/*",
+				ParentNames:        []string{},
+				ChildName:          "projects/*",
 				ViewEnumName:       "",
 				ExtraRequestFields: "",
 				HasRevisions:       false,
@@ -100,8 +121,8 @@ func main() {
 			{
 				Name:               "Api",
 				PluralName:         "Apis",
-				ParentName:         "projects/*",
-				ResourceName:       "projects/*/apis/*",
+				ParentNames:        []string{"projects/*"},
+				ChildName:          "apis/*",
 				ViewEnumName:       "",
 				ExtraRequestFields: "",
 				HasRevisions:       false,
@@ -111,8 +132,8 @@ func main() {
 			{
 				Name:               "Version",
 				PluralName:         "Versions",
-				ParentName:         "projects/*/apis/*",
-				ResourceName:       "projects/*/apis/*/versions/*",
+				ParentNames:        []string{"projects/*/apis/*"},
+				ChildName:          "versions/*",
 				ViewEnumName:       "",
 				ExtraRequestFields: "",
 				HasRevisions:       false,
@@ -122,8 +143,8 @@ func main() {
 			{
 				Name:               "Spec",
 				PluralName:         "Specs",
-				ParentName:         "projects/*/apis/*/versions/*",
-				ResourceName:       "projects/*/apis/*/versions/*/specs/*",
+				ParentNames:        []string{"projects/*/apis/*/versions/*"},
+				ChildName:          "specs/*",
 				ViewEnumName:       "View",
 				ExtraRequestFields: "",
 				HasRevisions:       true,
@@ -131,10 +152,15 @@ func main() {
 				HasUpdate:          true,
 			},
 			{
-				Name:               "Property",
-				PluralName:         "Properties",
-				ParentName:         "projects/*",
-				ResourceName:       "projects/*/properties/*",
+				Name:       "Property",
+				PluralName: "Properties",
+				ParentNames: []string{
+					"projects/*",
+					"projects/*/apis/*",
+					"projects/*/apis/*/versions/*",
+					"projects/*/apis/*/versions/*/specs/*",
+				},
+				ChildName:          "properties/*",
 				ViewEnumName:       "View",
 				ExtraRequestFields: "",
 				HasRevisions:       false,
@@ -142,10 +168,15 @@ func main() {
 				HasUpdate:          true,
 			},
 			{
-				Name:               "Label",
-				PluralName:         "Labels",
-				ParentName:         "projects/*",
-				ResourceName:       "projects/*/labels/*",
+				Name:       "Label",
+				PluralName: "Labels",
+				ParentNames: []string{
+					"projects/*",
+					"projects/*/apis/*",
+					"projects/*/apis/*/versions/*",
+					"projects/*/apis/*/versions/*/specs/*",
+				},
+				ChildName:          "labels/*",
 				ViewEnumName:       "",
 				ExtraRequestFields: "",
 				HasRevisions:       false,
