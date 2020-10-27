@@ -21,7 +21,9 @@ The Registry API is formally described by the Protocol Buffer source files in
 [google/cloud/apigee/registry/v1alpha1](google/cloud/apigee/registry/v1alpha1).
 It closely follows the Google API Design Guidelines at
 [aip.dev](https://aip.dev) and presents a developer experience consistent with
-production Google APIs.
+production Google APIs. Following [AIP-181](https://google.aip.dev/181), we
+set its stability level as "alpha", but seek to make this a stable base for
+API governance applications. Please let us know if you plan to build on it.
 
 ## This Implementation
 
