@@ -105,8 +105,9 @@ automatically-generated `apg` client:
 
 `apg registry get-status`
 
-Next run a suite of tests with `make test` and see a corresponding demo of API
-features in [tests/demo/walkthrough.sh](tests/demo/walkthrough.sh).
+Next run a suite of tests with `make test` and see a corresponding walkthrough
+of API features in [tests/demo/walkthrough.sh](tests/demo/walkthrough.sh). For
+more demonstrations, see the [demos](demos) directory.
 
 ## Enabling the Google Cloud Datastore API
 

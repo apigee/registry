@@ -35,8 +35,7 @@ message Project {
   };
 
   // Resource name.
-  string name = 1
-    [(google.api.field_behavior) = OUTPUT_ONLY];
+  string name = 1;
 
   // Human-meaningful name.
   string display_name = 2;
@@ -62,8 +61,7 @@ message Api {
   };
 
   // Resource name.
-  string name = 1
-    [(google.api.field_behavior) = OUTPUT_ONLY];
+  string name = 1;
   
   // Human-meaningful name.
   string display_name = 2;
@@ -103,8 +101,7 @@ message Version {
   };
 
   // Resource name.
-  string name = 1
-    [(google.api.field_behavior) = OUTPUT_ONLY];
+  string name = 1;
 
   // Human-meaningful name.
   string display_name = 2;
@@ -139,8 +136,7 @@ message Spec {
   };
 
   // Resource name.
-  string name = 1
-    [(google.api.field_behavior) = OUTPUT_ONLY];
+  string name = 1;
 
   // A possibly-hierarchical name used to refer to the file from other files.
   string filename = 2;
@@ -219,8 +215,7 @@ message Property {
   };
 
   // Resource name.
-  string name = 1
-    [(google.api.field_behavior) = OUTPUT_ONLY];
+  string name = 1;
 
   // Subject resource name.
   string subject = 2
@@ -274,8 +269,7 @@ message Label {
   };
 
   // Resource name.
-  string name = 1
-    [(google.api.field_behavior) = OUTPUT_ONLY];
+  string name = 1;
 
   // Subject resource name.
   string subject = 2

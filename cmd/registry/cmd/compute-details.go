@@ -63,7 +63,8 @@ var computeDetailsCmd = &cobra.Command{
 				}
 			})
 			if err != nil {
-				log.Fatalf("%s", err.Error())
+				// some errors are OK.
+				log.Printf("%s", err.Error())
 			}
 			close(taskQueue)
 			core.WaitGroup().Wait()
