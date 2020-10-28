@@ -31,6 +31,7 @@ jobs:
         sudo curl -L https://github.com/protocolbuffers/protobuf/releases/download/v3.13.0/protoc-3.13.0-linux-x86_64.zip > /tmp/protoc.zip
         sudo unzip /tmp/protoc.zip -d /usr/local
         sudo chmod +x /usr/local/bin/protoc
+        sudo chmod -R +r /usr/local/include
        
     - name: Build
       run: make all
