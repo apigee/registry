@@ -13,8 +13,8 @@ Specs can be of any format, and spec formats are specified with a `style` field 
 ```
 projects/{project_id}/properties/{property_id}
 projects/{project_id}/apis/{api_id}/properties/{property_id}
-projects/{project_id}/apis/{api_id}/version/{version_id}/properties/{property_id}
-projects/{project_id}/apis/{api_id}/version/{version_id}/specs/{spec_id}/properties/{property_id}
+projects/{project_id}/apis/{api_id}/versions/{version_id}/properties/{property_id}
+projects/{project_id}/apis/{api_id}/versions/{version_id}/specs/{spec_id}/properties/{property_id}
 ```
 
 Resource names for labels are similar:
@@ -22,8 +22,8 @@ Resource names for labels are similar:
 ```
 projects/{project_id}/labels/{label_id}
 projects/{project_id}/apis/{api_id}/labels/{label_id}
-projects/{project_id}/apis/{api_id}/version/{version_id}/labels/{label_id}
-projects/{project_id}/apis/{api_id}/version/{version_id}/specs/{spec_id}/labels/{label_id}
+projects/{project_id}/apis/{api_id}/versions/{version_id}/labels/{label_id}
+projects/{project_id}/apis/{api_id}/versions/{version_id}/specs/{spec_id}/labels/{label_id}
 ```
 
 The Registry API is a [gRPC](https://grpc.io) service that closely follows the guidelines in the Google [API Improvement Proposals](https://aip.dev). This includes following standards for [pagination](https://google.aip.dev/158), [reading across collections](https://google.aip.dev/159), and [filtering](https://google.aip.dev/160) for all collections, optional [partial responses](https://google.aip.dev/157) for Specs and Properties, [resource revisions](https://google.aip.dev/162) for Specs, and support for [generated client libraries](https://google.aip.dev/client-libraries/4210) and [HTTP transcoding](https://aip.dev/127).
