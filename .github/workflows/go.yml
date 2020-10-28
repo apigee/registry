@@ -30,8 +30,10 @@ jobs:
         sudo apt-get install unzip -y
         sudo curl -L https://github.com/protocolbuffers/protobuf/releases/download/v3.13.0/protoc-3.13.0-linux-x86_64.zip > /tmp/protoc.zip
         sudo unzip /tmp/protoc.zip -d /usr/local
+        echo $USER
+        export ME=$USER
         sudo chmod +x /usr/local/bin/protoc
-        sudo chmod -R +r /usr/local/include
+        sudo chown -R $ME /usr/local
        
     - name: Build
       run: make all
