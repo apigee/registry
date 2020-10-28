@@ -1,3 +1,5 @@
+[![Go Actions Status](https://github.com/apigee/registry/workflows/Go/badge.svg)](https://github.com/apigee/registry/actions)
+
 # Registry API Reference Implementation
 
 This repository contains a reference implementation of the Registry API.
