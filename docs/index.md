@@ -4,7 +4,9 @@ We've found that many organizations, including ours, are challenged by the incre
 
 The Registry API presents a simple resource hierarchy for tracking API information. All APIs are tracked in a container called a **Project**. **APIs** contain **Versions**, and Versions contain **Specs**. To support this, we use the following convention for naming resources:
 
-```projects/{project_id}/apis/{api_id}/versions/{version_id}/specs/{spec_id}```
+```
+projects/{project_id}/apis/{api_id}/versions/{version_id}/specs/{spec_id}
+```
 
 Specs can be of any format, and spec formats are specified with a `style` field in the Spec record. Additional metadata is represented by Properties and Labels. **Properties** associate values with any of the main entities (Projects, APIs, Versions, and Specs), and property values can be scalars or structured messages (described with Protocol Buffers). **Labels** can also be associated with any of the main entity types and allow entities to be tagged and filtered. Depending on the entities they are associated with, properties can have any of the following resource names:
 
@@ -14,7 +16,9 @@ projects/{project_id}/apis/{api_id}/properties/{property_id}
 projects/{project_id}/apis/{api_id}/version/{version_id}/properties/{property_id}
 projects/{project_id}/apis/{api_id}/version/{version_id}/specs/{spec_id}/properties/{property_id}
 ```
+
 Resource names for labels are similar:
+
 ```
 projects/{project_id}/labels/{label_id}
 projects/{project_id}/apis/{api_id}/labels/{label_id}
