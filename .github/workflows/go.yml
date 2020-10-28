@@ -26,10 +26,10 @@ jobs:
  
     - name: Get protoc
       run: |
-        apt-get update
-        apt-get install unzip
-        curl -L https://github.com/protocolbuffers/protobuf/releases/download/v3.13.0/protoc-3.13.0-linux-x86_64.zip > /tmp/protoc.zip
-        unzip /tmp/protoc.zip -d /usr/local
+        sudo apt-get update
+        sudo apt-get install unzip -y
+        sudo curl -L https://github.com/protocolbuffers/protobuf/releases/download/v3.13.0/protoc-3.13.0-linux-x86_64.zip > /tmp/protoc.zip
+        sudo unzip /tmp/protoc.zip -d /usr/local
        
     - name: Build
       run: make all
