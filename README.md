@@ -21,9 +21,9 @@ The Registry API is formally described by the Protocol Buffer source files in
 [google/cloud/apigee/registry/v1alpha1](google/cloud/apigee/registry/v1alpha1).
 It closely follows the Google API Design Guidelines at
 [aip.dev](https://aip.dev) and presents a developer experience consistent with
-production Google APIs. Following [AIP-181](https://google.aip.dev/181), we
-set its stability level as "alpha", but seek to make this a stable base for
-API governance applications. Please let us know if you plan to build on it.
+production Google APIs. Following [AIP-181](https://google.aip.dev/181), we set
+its stability level as "alpha", but seek to make this a stable base for API
+lifecycle applications. Please tell us about your experience if you use it.
 
 ## This Implementation
 
@@ -241,7 +241,13 @@ To generate a new token, rerun `source auth/CLOUDRUN.sh`.
 This software is licensed under the Apache License, Version 2.0. See
 [LICENSE](LICENSE) for the full license text.
 
+## Disclaimer
+
+This is not an official Google product. Issues filed on Github are not subject
+to service level agreements (SLAs) and responses should be assumed to be on an
+ad-hoc volunteer basis.
+
 ## Contributing
 
-Please see [CONTRIBUTING](CONTRIBUTING.md) for notes on how to contribute to
-this project.
+Contributions are welcome! Please see [CONTRIBUTING](CONTRIBUTING.md) for notes
+on how to contribute to this project.
