@@ -1,0 +1,3701 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <title>Protocol Documentation</title>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Ubuntu:400,700,400italic"/>
+    <style>
+      body {
+        width: 60em;
+        margin: 1em auto;
+        color: #222;
+        font-family: "Ubuntu", sans-serif;
+        padding-bottom: 4em;
+      }
+
+      h1 {
+        font-weight: normal;
+        border-bottom: 1px solid #aaa;
+        padding-bottom: 0.5ex;
+      }
+
+      h2 {
+        border-bottom: 1px solid #aaa;
+        padding-bottom: 0.5ex;
+        margin: 1.5em 0;
+      }
+
+      h3 {
+        font-weight: normal;
+        border-bottom: 1px solid #aaa;
+        padding-bottom: 0.5ex;
+      }
+
+      a {
+        text-decoration: none;
+        color: #567e25;
+      }
+
+      table {
+        width: 100%;
+        font-size: 80%;
+        border-collapse: collapse;
+      }
+
+      thead {
+        font-weight: 700;
+        background-color: #dcdcdc;
+      }
+
+      tbody tr:nth-child(even) {
+        background-color: #fbfbfb;
+      }
+
+      td {
+        border: 1px solid #ccc;
+        padding: 0.5ex 2ex;
+      }
+
+      td p {
+        text-indent: 1em;
+        margin: 0;
+      }
+
+      td p:nth-child(1) {
+        text-indent: 0;  
+      }
+
+       
+      .field-table td:nth-child(1) {  
+        width: 10em;
+      }
+      .field-table td:nth-child(2) {  
+        width: 10em;
+      }
+      .field-table td:nth-child(3) {  
+        width: 6em;
+      }
+      .field-table td:nth-child(4) {  
+        width: auto;
+      }
+
+       
+      .extension-table td:nth-child(1) {  
+        width: 10em;
+      }
+      .extension-table td:nth-child(2) {  
+        width: 10em;
+      }
+      .extension-table td:nth-child(3) {  
+        width: 10em;
+      }
+      .extension-table td:nth-child(4) {  
+        width: 5em;
+      }
+      .extension-table td:nth-child(5) {  
+        width: auto;
+      }
+
+       
+      .enum-table td:nth-child(1) {  
+        width: 10em;
+      }
+      .enum-table td:nth-child(2) {  
+        width: 10em;
+      }
+      .enum-table td:nth-child(3) {  
+        width: auto;
+      }
+
+       
+      .scalar-value-types-table tr {
+        height: 3em;
+      }
+
+       
+      #toc-container ul {
+        list-style-type: none;
+        padding-left: 1em;
+        line-height: 180%;
+        margin: 0;
+      }
+      #toc > li > a {
+        font-weight: bold;
+      }
+
+       
+      .file-heading {
+        width: 100%;
+        display: table;
+        border-bottom: 1px solid #aaa;
+        margin: 4em 0 1.5em 0;
+      }
+      .file-heading h2 {
+        border: none;
+        display: table-cell;
+      }
+      .file-heading a {
+        text-align: right;
+        display: table-cell;
+      }
+
+       
+      .badge {
+        width: 1.6em;
+        height: 1.6em;
+        display: inline-block;
+
+        line-height: 1.6em;
+        text-align: center;
+        font-weight: bold;
+        font-size: 60%;
+
+        color: #89ba48;
+        background-color: #dff0c8;
+
+        margin: 0.5ex 1em 0.5ex -1em;
+        border: 1px solid #fbfbfb;
+        border-radius: 1ex;
+      }
+    </style>
+
+    
+    <link rel="stylesheet" type="text/css" href="stylesheet.css"/>
+  </head>
+
+  <body>
+
+    <h1 id="title">Protocol Documentation</h1>
+
+    <h2>Table of Contents</h2>
+
+    <div id="toc-container">
+      <ul id="toc">
+        
+          
+          <li>
+            <a href="#google%2fcloud%2fapigee%2fregistry%2fv1alpha1%2fregistry_models.proto">google/cloud/apigee/registry/v1alpha1/registry_models.proto</a>
+            <ul>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.Api"><span class="badge">M</span>Api</a>
+                </li>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.Label"><span class="badge">M</span>Label</a>
+                </li>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.Project"><span class="badge">M</span>Project</a>
+                </li>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.Property"><span class="badge">M</span>Property</a>
+                </li>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.Spec"><span class="badge">M</span>Spec</a>
+                </li>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.SpecRevisionTag"><span class="badge">M</span>SpecRevisionTag</a>
+                </li>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.Version"><span class="badge">M</span>Version</a>
+                </li>
+              
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.View"><span class="badge">E</span>View</a>
+                </li>
+              
+              
+              
+            </ul>
+          </li>
+        
+          
+          <li>
+            <a href="#google%2fcloud%2fapigee%2fregistry%2fv1alpha1%2fregistry_service.proto">google/cloud/apigee/registry/v1alpha1/registry_service.proto</a>
+            <ul>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.CreateApiRequest"><span class="badge">M</span>CreateApiRequest</a>
+                </li>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.CreateLabelRequest"><span class="badge">M</span>CreateLabelRequest</a>
+                </li>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.CreateProjectRequest"><span class="badge">M</span>CreateProjectRequest</a>
+                </li>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.CreatePropertyRequest"><span class="badge">M</span>CreatePropertyRequest</a>
+                </li>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.CreateSpecRequest"><span class="badge">M</span>CreateSpecRequest</a>
+                </li>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.CreateVersionRequest"><span class="badge">M</span>CreateVersionRequest</a>
+                </li>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.DeleteApiRequest"><span class="badge">M</span>DeleteApiRequest</a>
+                </li>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.DeleteLabelRequest"><span class="badge">M</span>DeleteLabelRequest</a>
+                </li>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.DeleteProjectRequest"><span class="badge">M</span>DeleteProjectRequest</a>
+                </li>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.DeletePropertyRequest"><span class="badge">M</span>DeletePropertyRequest</a>
+                </li>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.DeleteSpecRequest"><span class="badge">M</span>DeleteSpecRequest</a>
+                </li>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.DeleteSpecRevisionRequest"><span class="badge">M</span>DeleteSpecRevisionRequest</a>
+                </li>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.DeleteVersionRequest"><span class="badge">M</span>DeleteVersionRequest</a>
+                </li>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.GetApiRequest"><span class="badge">M</span>GetApiRequest</a>
+                </li>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.GetLabelRequest"><span class="badge">M</span>GetLabelRequest</a>
+                </li>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.GetProjectRequest"><span class="badge">M</span>GetProjectRequest</a>
+                </li>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.GetPropertyRequest"><span class="badge">M</span>GetPropertyRequest</a>
+                </li>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.GetSpecRequest"><span class="badge">M</span>GetSpecRequest</a>
+                </li>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.GetVersionRequest"><span class="badge">M</span>GetVersionRequest</a>
+                </li>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.ListApisRequest"><span class="badge">M</span>ListApisRequest</a>
+                </li>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.ListApisResponse"><span class="badge">M</span>ListApisResponse</a>
+                </li>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.ListLabelsRequest"><span class="badge">M</span>ListLabelsRequest</a>
+                </li>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.ListLabelsResponse"><span class="badge">M</span>ListLabelsResponse</a>
+                </li>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.ListProjectsRequest"><span class="badge">M</span>ListProjectsRequest</a>
+                </li>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.ListProjectsResponse"><span class="badge">M</span>ListProjectsResponse</a>
+                </li>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.ListPropertiesRequest"><span class="badge">M</span>ListPropertiesRequest</a>
+                </li>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.ListPropertiesResponse"><span class="badge">M</span>ListPropertiesResponse</a>
+                </li>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.ListSpecRevisionTagsRequest"><span class="badge">M</span>ListSpecRevisionTagsRequest</a>
+                </li>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.ListSpecRevisionTagsResponse"><span class="badge">M</span>ListSpecRevisionTagsResponse</a>
+                </li>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.ListSpecRevisionsRequest"><span class="badge">M</span>ListSpecRevisionsRequest</a>
+                </li>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.ListSpecRevisionsResponse"><span class="badge">M</span>ListSpecRevisionsResponse</a>
+                </li>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.ListSpecsRequest"><span class="badge">M</span>ListSpecsRequest</a>
+                </li>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.ListSpecsResponse"><span class="badge">M</span>ListSpecsResponse</a>
+                </li>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.ListVersionsRequest"><span class="badge">M</span>ListVersionsRequest</a>
+                </li>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.ListVersionsResponse"><span class="badge">M</span>ListVersionsResponse</a>
+                </li>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.RollbackSpecRequest"><span class="badge">M</span>RollbackSpecRequest</a>
+                </li>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.Status"><span class="badge">M</span>Status</a>
+                </li>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.TagSpecRevisionRequest"><span class="badge">M</span>TagSpecRevisionRequest</a>
+                </li>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.UpdateApiRequest"><span class="badge">M</span>UpdateApiRequest</a>
+                </li>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.UpdateProjectRequest"><span class="badge">M</span>UpdateProjectRequest</a>
+                </li>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.UpdatePropertyRequest"><span class="badge">M</span>UpdatePropertyRequest</a>
+                </li>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.UpdateSpecRequest"><span class="badge">M</span>UpdateSpecRequest</a>
+                </li>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.UpdateVersionRequest"><span class="badge">M</span>UpdateVersionRequest</a>
+                </li>
+              
+              
+              
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.Registry"><span class="badge">S</span>Registry</a>
+                </li>
+              
+            </ul>
+          </li>
+        
+          
+          <li>
+            <a href="#google%2fcloud%2fapigee%2fregistry%2fv1alpha1%2fregistry_notifications.proto">google/cloud/apigee/registry/v1alpha1/registry_notifications.proto</a>
+            <ul>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.Notification"><span class="badge">M</span>Notification</a>
+                </li>
+              
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.Notification.Change"><span class="badge">E</span>Notification.Change</a>
+                </li>
+              
+              
+              
+            </ul>
+          </li>
+        
+          
+          <li>
+            <a href="#google%2fcloud%2fapigee%2fregistry%2fv1alpha1%2fregistry_index.proto">google/cloud/apigee/registry/v1alpha1/registry_index.proto</a>
+            <ul>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.Field"><span class="badge">M</span>Field</a>
+                </li>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.File"><span class="badge">M</span>File</a>
+                </li>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.Index"><span class="badge">M</span>Index</a>
+                </li>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.Operation"><span class="badge">M</span>Operation</a>
+                </li>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1alpha1.Schema"><span class="badge">M</span>Schema</a>
+                </li>
+              
+              
+              
+              
+            </ul>
+          </li>
+        
+        <li><a href="#scalar-value-types">Scalar Value Types</a></li>
+      </ul>
+    </div>
+
+    
+      
+      <div class="file-heading">
+        <h2 id="google/cloud/apigee/registry/v1alpha1/registry_models.proto">google/cloud/apigee/registry/v1alpha1/registry_models.proto</h2><a href="#title">Top</a>
+      </div>
+      <p></p>
+
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.Api">Api</h3>
+        <p>An Api is a top-level description of an API. Apis are produced by producers and are commitments to provide services.</p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>name</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>Resource name. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>display_name</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>Human-meaningful name. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>description</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>A detailed description. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>create_time</td>
+                  <td><a href="#google.protobuf.Timestamp">google.protobuf.Timestamp</a></td>
+                  <td></td>
+                  <td><p>Creation timestamp. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>update_time</td>
+                  <td><a href="#google.protobuf.Timestamp">google.protobuf.Timestamp</a></td>
+                  <td></td>
+                  <td><p>Last update timestamp. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>availability</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>A user-definable description of the availability of this service. Format: free-form, but we expect single words that describe availability, e.g. &#34;NONE&#34;, &#34;TESTING&#34;, &#34;PREVIEW&#34;, &#34;GENERAL&#34;, &#34;DEPRECATED&#34;, &#34;SHUTDOWN&#34;. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>recommended_version</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The recommended version of the API. Format: apis/{api}/versions/{version} </p></td>
+                </tr>
+              
+                <tr>
+                  <td>owner</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The owner of the the API. </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.Label">Label</h3>
+        <p>Labels on resources. Labels are similar to properties but are in a separate namespace and without values.</p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>name</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>Resource name. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>subject</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>Subject resource name. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>label</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>Label name. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>create_time</td>
+                  <td><a href="#google.protobuf.Timestamp">google.protobuf.Timestamp</a></td>
+                  <td></td>
+                  <td><p>Creation timestamp. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>update_time</td>
+                  <td><a href="#google.protobuf.Timestamp">google.protobuf.Timestamp</a></td>
+                  <td></td>
+                  <td><p>Last update timestamp. </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.Project">Project</h3>
+        <p>A Project is a top-level description of a collection of APIs. Typically there would be one project for an entire organization.</p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>name</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>Resource name. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>display_name</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>Human-meaningful name. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>description</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>A detailed description. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>create_time</td>
+                  <td><a href="#google.protobuf.Timestamp">google.protobuf.Timestamp</a></td>
+                  <td></td>
+                  <td><p>Creation timestamp. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>update_time</td>
+                  <td><a href="#google.protobuf.Timestamp">google.protobuf.Timestamp</a></td>
+                  <td></td>
+                  <td><p>Last update timestamp. </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.Property">Property</h3>
+        <p>Properties of resources. Properties are unique (single-value) per resource.</p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>name</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>Resource name. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>subject</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>Subject resource name. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>relation</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>Relation name. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>create_time</td>
+                  <td><a href="#google.protobuf.Timestamp">google.protobuf.Timestamp</a></td>
+                  <td></td>
+                  <td><p>Creation timestamp. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>update_time</td>
+                  <td><a href="#google.protobuf.Timestamp">google.protobuf.Timestamp</a></td>
+                  <td></td>
+                  <td><p>Last update timestamp. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>string_value</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>String value of property. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>int64_value</td>
+                  <td><a href="#int64">int64</a></td>
+                  <td></td>
+                  <td><p>Integer value of property. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>double_value</td>
+                  <td><a href="#double">double</a></td>
+                  <td></td>
+                  <td><p>Double value of property. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>bool_value</td>
+                  <td><a href="#bool">bool</a></td>
+                  <td></td>
+                  <td><p>Boolean value of property. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>bytes_value</td>
+                  <td><a href="#bytes">bytes</a></td>
+                  <td></td>
+                  <td><p>Bytes value of property. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>message_value</td>
+                  <td><a href="#google.protobuf.Any">google.protobuf.Any</a></td>
+                  <td></td>
+                  <td><p>Message value of property.  </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.Spec">Spec</h3>
+        <p>A Spec describes a version of an API in a structured way. Specs provide formal descriptions that consumers can use to use a version. When specs consist of multiple files, each is a separate spec resource with its own name and a common value for the format property.</p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>name</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>Resource name. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>filename</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>A possibly-hierarchical name used to refer to the file from other files. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>description</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>A detailed description. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>create_time</td>
+                  <td><a href="#google.protobuf.Timestamp">google.protobuf.Timestamp</a></td>
+                  <td></td>
+                  <td><p>Creation timestamp. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>update_time</td>
+                  <td><a href="#google.protobuf.Timestamp">google.protobuf.Timestamp</a></td>
+                  <td></td>
+                  <td><p>Last update timestamp. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>style</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>A style (format) descriptor for this spec. Possible values include &#34;proto3&#34;, &#34;OpenAPI-2.0&#34;, &#34;OpenAPI-3.0&#34;. This is free-form but we expect that it will eventually be quite structured with an &#34;API Description Format&#34; part and possible &#34;API Style&#34; parts, e.g. &#34;OpenAPI-3.0&#43;Google&#34; for OpenAPI v3 with (hypothetical) Google style constraints. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>size_bytes</td>
+                  <td><a href="#int32">int32</a></td>
+                  <td></td>
+                  <td><p>The size of the spec file in bytes. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>hash</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>A hash of the spec file&#39;s contents </p></td>
+                </tr>
+              
+                <tr>
+                  <td>source_uri</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The original source URI of the spec file (if one exists). This is an external location that can be used for reference purposes but which may not be authoritative since this external resource may change after the file is retrieved. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>contents</td>
+                  <td><a href="#bytes">bytes</a></td>
+                  <td></td>
+                  <td><p>The contents of the spec file. Returned only when the FULL view is requested. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>revision_id</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The revision ID of the spec. A new revision is committed whenever the spec is changed in any way. The format is an 8-character hexadecimal string. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>revision_create_time</td>
+                  <td><a href="#google.protobuf.Timestamp">google.protobuf.Timestamp</a></td>
+                  <td></td>
+                  <td><p>The timestamp that the revision was created. </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.SpecRevisionTag">SpecRevisionTag</h3>
+        <p>SpecRevisionTags represent tags used to mark spec revisions.</p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>name</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The resource name of the tag. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>value</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The resource name at which the tag points. </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.Version">Version</h3>
+        <p>A Version describes a particular version of an API. Versions are what consumers actually use.</p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>name</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>Resource name. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>display_name</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>Human-meaningful name. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>description</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>A detailed description. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>create_time</td>
+                  <td><a href="#google.protobuf.Timestamp">google.protobuf.Timestamp</a></td>
+                  <td></td>
+                  <td><p>Creation timestamp. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>update_time</td>
+                  <td><a href="#google.protobuf.Timestamp">google.protobuf.Timestamp</a></td>
+                  <td></td>
+                  <td><p>Last update timestamp. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>state</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>A user-definable description of the lifecycle phase of this API version. Format: free-form, but we expect single words that describe API maturity, e.g. &#34;CONCEPT&#34;, &#34;DESIGN&#34;, &#34;DEVELOPMENT&#34;, &#34;STAGING&#34;, &#34;PRODUCTION&#34;, &#34;DEPRECATED&#34;, &#34;RETIRED&#34;. </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.View">View</h3>
+        <p>Views of Specs and Properties.</p>
+        <table class="enum-table">
+          <thead>
+            <tr><td>Name</td><td>Number</td><td>Description</td></tr>
+          </thead>
+          <tbody>
+            
+              <tr>
+                <td>VIEW_UNSPECIFIED</td>
+                <td>0</td>
+                <td><p>The default / unset value. The API will default to the BASIC view.</p></td>
+              </tr>
+            
+              <tr>
+                <td>BASIC</td>
+                <td>1</td>
+                <td><p>Include everything but the file contents.</p></td>
+              </tr>
+            
+              <tr>
+                <td>FULL</td>
+                <td>2</td>
+                <td><p>Include everything.</p></td>
+              </tr>
+            
+          </tbody>
+        </table>
+      
+
+      
+
+      
+    
+      
+      <div class="file-heading">
+        <h2 id="google/cloud/apigee/registry/v1alpha1/registry_service.proto">google/cloud/apigee/registry/v1alpha1/registry_service.proto</h2><a href="#title">Top</a>
+      </div>
+      <p></p>
+
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.CreateApiRequest">CreateApiRequest</h3>
+        <p>Request message for CreateApi.</p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>parent</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The parent, which owns this collection of APIs. Format: projects/* </p></td>
+                </tr>
+              
+                <tr>
+                  <td>api</td>
+                  <td><a href="#google.cloud.apigee.registry.v1alpha1.Api">Api</a></td>
+                  <td></td>
+                  <td><p>The API to create. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>api_id</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The ID to use for the api, which will become the final component of the api&#39;s resource name.  This value should be 4-63 characters, and valid characters are /[a-z][0-9]-/. </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.CreateLabelRequest">CreateLabelRequest</h3>
+        <p>Request message for CreateLabel.</p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>parent</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The parent, which owns this collection of labels. Format: projects/* </p></td>
+                </tr>
+              
+                <tr>
+                  <td>label</td>
+                  <td><a href="#google.cloud.apigee.registry.v1alpha1.Label">Label</a></td>
+                  <td></td>
+                  <td><p>The label to create. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>label_id</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The ID to use for the label, which will become the final component of the label&#39;s resource name.  This value should be 4-63 characters, and valid characters are /[a-z][0-9]-/. </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.CreateProjectRequest">CreateProjectRequest</h3>
+        <p>Request message for CreateProject. </p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>project</td>
+                  <td><a href="#google.cloud.apigee.registry.v1alpha1.Project">Project</a></td>
+                  <td></td>
+                  <td><p>The project to create. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>project_id</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The ID to use for the project, which will become the final component of the project&#39;s resource name.  This value should be 4-63 characters, and valid characters are /[a-z][0-9]-/. </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.CreatePropertyRequest">CreatePropertyRequest</h3>
+        <p>Request message for CreateProperty.</p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>parent</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The parent, which owns this collection of properties. Format: projects/* </p></td>
+                </tr>
+              
+                <tr>
+                  <td>property</td>
+                  <td><a href="#google.cloud.apigee.registry.v1alpha1.Property">Property</a></td>
+                  <td></td>
+                  <td><p>The property to create. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>property_id</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The ID to use for the property, which will become the final component of the property&#39;s resource name.  This value should be 4-63 characters, and valid characters are /[a-z][0-9]-/. </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.CreateSpecRequest">CreateSpecRequest</h3>
+        <p>Request message for CreateSpec.</p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>parent</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The parent, which owns this collection of specs. Format: projects/*/apis/*/versions/* </p></td>
+                </tr>
+              
+                <tr>
+                  <td>spec</td>
+                  <td><a href="#google.cloud.apigee.registry.v1alpha1.Spec">Spec</a></td>
+                  <td></td>
+                  <td><p>The spec to create. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>spec_id</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The ID to use for the spec, which will become the final component of the spec&#39;s resource name.  This value should be 4-63 characters, and valid characters are /[a-z][0-9]-/. </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.CreateVersionRequest">CreateVersionRequest</h3>
+        <p>Request message for CreateVersion.</p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>parent</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The parent, which owns this collection of versions. Format: projects/*/apis/* </p></td>
+                </tr>
+              
+                <tr>
+                  <td>version</td>
+                  <td><a href="#google.cloud.apigee.registry.v1alpha1.Version">Version</a></td>
+                  <td></td>
+                  <td><p>The version to create. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>version_id</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The ID to use for the version, which will become the final component of the version&#39;s resource name.  This value should be 4-63 characters, and valid characters are /[a-z][0-9]-/. </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.DeleteApiRequest">DeleteApiRequest</h3>
+        <p>Request message for DeleteApi.</p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>name</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The name of the API to delete. Format: projects/*/apis/* </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.DeleteLabelRequest">DeleteLabelRequest</h3>
+        <p>Request message for DeleteLabel.</p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>name</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The name of the label to delete. Format: projects/*/labels/* </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.DeleteProjectRequest">DeleteProjectRequest</h3>
+        <p>Request message for DeleteProject.</p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>name</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The name of the project to delete. Format: projects/* </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.DeletePropertyRequest">DeletePropertyRequest</h3>
+        <p>Request message for DeleteProperty.</p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>name</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The name of the property to delete. Format: projects/*/properties/* </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.DeleteSpecRequest">DeleteSpecRequest</h3>
+        <p>Request message for DeleteSpec.</p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>name</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The name of the spec to delete. Format: projects/*/apis/*/versions/*/specs/* </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.DeleteSpecRevisionRequest">DeleteSpecRevisionRequest</h3>
+        <p>Request message for DeleteSpecRevision.</p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>name</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The name of the spec revision to be deleted, with a revision ID explicitly included.  Example: projects/sample/apis/petstore/versions/1.0.0/specs/openapi.yaml@c7cfa2a8 </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.DeleteVersionRequest">DeleteVersionRequest</h3>
+        <p>Request message for DeleteVersion.</p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>name</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The name of the version to delete. Format: projects/*/apis/*/versions/* </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.GetApiRequest">GetApiRequest</h3>
+        <p>Request message for GetApi.</p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>name</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The name of the API to retrieve. Format: projects/*/apis/* </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.GetLabelRequest">GetLabelRequest</h3>
+        <p>Request message for GetLabel.</p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>name</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The name of the label to retrieve. Format: projects/*/labels/* </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.GetProjectRequest">GetProjectRequest</h3>
+        <p>Request message for GetProject.</p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>name</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The name of the project to retrieve. Format: projects/* </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.GetPropertyRequest">GetPropertyRequest</h3>
+        <p>Request message for GetProperty.</p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>name</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The name of the property to retrieve. Format: projects/*/properties/* </p></td>
+                </tr>
+              
+                <tr>
+                  <td>view</td>
+                  <td><a href="#google.cloud.apigee.registry.v1alpha1.View">View</a></td>
+                  <td></td>
+                  <td><p>The level of detail to return (defaults to BASIC). </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.GetSpecRequest">GetSpecRequest</h3>
+        <p>Request message for GetSpec.</p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>name</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The name of the spec to retrieve. Format: projects/*/apis/*/versions/*/specs/* </p></td>
+                </tr>
+              
+                <tr>
+                  <td>view</td>
+                  <td><a href="#google.cloud.apigee.registry.v1alpha1.View">View</a></td>
+                  <td></td>
+                  <td><p>The level of detail to return (defaults to BASIC). </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.GetVersionRequest">GetVersionRequest</h3>
+        <p>Request message for GetVersion.</p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>name</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The name of the version to retrieve. Format: projects/*/apis/*/versions/* </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.ListApisRequest">ListApisRequest</h3>
+        <p>Request message for ListApis.</p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>parent</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The parent, which owns this collection of APIs. Format: projects/* </p></td>
+                </tr>
+              
+                <tr>
+                  <td>page_size</td>
+                  <td><a href="#int32">int32</a></td>
+                  <td></td>
+                  <td><p>The maximum number of APIs to return. The service may return fewer than this value. If unspecified, at most 50 values will be returned. The maximum is 1000; values above 1000 will be coerced to 1000. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>page_token</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>A page token, received from a previous `ListApis` call. Provide this to retrieve the subsequent page.  When paginating, all other parameters provided to `ListApis` must match the call that provided the page token. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>filter</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>An expression that can be used to filter the list. </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.ListApisResponse">ListApisResponse</h3>
+        <p>Response message for ListApis.</p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>apis</td>
+                  <td><a href="#google.cloud.apigee.registry.v1alpha1.Api">Api</a></td>
+                  <td>repeated</td>
+                  <td><p>The APIs from the specified publisher. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>next_page_token</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>A token, which can be sent as `page_token` to retrieve the next page. If this field is omitted, there are no subsequent pages. </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.ListLabelsRequest">ListLabelsRequest</h3>
+        <p>Request message for ListLabels.</p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>parent</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The parent, which owns this collection of labels. Format: projects/* </p></td>
+                </tr>
+              
+                <tr>
+                  <td>page_size</td>
+                  <td><a href="#int32">int32</a></td>
+                  <td></td>
+                  <td><p>The maximum number of labels to return. The service may return fewer than this value. If unspecified, at most 50 values will be returned. The maximum is 1000; values above 1000 will be coerced to 1000. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>page_token</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>A page token, received from a previous `ListLabels` call. Provide this to retrieve the subsequent page.  When paginating, all other parameters provided to `ListLabels` must match the call that provided the page token. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>filter</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>An expression that can be used to filter the list. </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.ListLabelsResponse">ListLabelsResponse</h3>
+        <p>Response message for ListLabels.</p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>labels</td>
+                  <td><a href="#google.cloud.apigee.registry.v1alpha1.Label">Label</a></td>
+                  <td>repeated</td>
+                  <td><p>The labels from the specified publisher. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>next_page_token</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>A token, which can be sent as `page_token` to retrieve the next page. If this field is omitted, there are no subsequent pages. </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.ListProjectsRequest">ListProjectsRequest</h3>
+        <p>Request message for ListProjects. </p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>page_size</td>
+                  <td><a href="#int32">int32</a></td>
+                  <td></td>
+                  <td><p>The maximum number of projects to return. The service may return fewer than this value. If unspecified, at most 50 values will be returned. The maximum is 1000; values above 1000 will be coerced to 1000. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>page_token</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>A page token, received from a previous `ListProjects` call. Provide this to retrieve the subsequent page.  When paginating, all other parameters provided to `ListProjects` must match the call that provided the page token. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>filter</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>An expression that can be used to filter the list. </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.ListProjectsResponse">ListProjectsResponse</h3>
+        <p>Response message for ListProjects.</p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>projects</td>
+                  <td><a href="#google.cloud.apigee.registry.v1alpha1.Project">Project</a></td>
+                  <td>repeated</td>
+                  <td><p>The projects from the specified publisher. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>next_page_token</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>A token, which can be sent as `page_token` to retrieve the next page. If this field is omitted, there are no subsequent pages. </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.ListPropertiesRequest">ListPropertiesRequest</h3>
+        <p>Request message for ListProperties.</p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>parent</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The parent, which owns this collection of properties. Format: projects/* </p></td>
+                </tr>
+              
+                <tr>
+                  <td>page_size</td>
+                  <td><a href="#int32">int32</a></td>
+                  <td></td>
+                  <td><p>The maximum number of properties to return. The service may return fewer than this value. If unspecified, at most 50 values will be returned. The maximum is 1000; values above 1000 will be coerced to 1000. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>page_token</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>A page token, received from a previous `ListProperties` call. Provide this to retrieve the subsequent page.  When paginating, all other parameters provided to `ListProperties` must match the call that provided the page token. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>filter</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>An expression that can be used to filter the list. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>view</td>
+                  <td><a href="#google.cloud.apigee.registry.v1alpha1.View">View</a></td>
+                  <td></td>
+                  <td><p>The level of detail to return (defaults to BASIC). </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.ListPropertiesResponse">ListPropertiesResponse</h3>
+        <p>Response message for ListProperties.</p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>properties</td>
+                  <td><a href="#google.cloud.apigee.registry.v1alpha1.Property">Property</a></td>
+                  <td>repeated</td>
+                  <td><p>The properties from the specified publisher. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>next_page_token</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>A token, which can be sent as `page_token` to retrieve the next page. If this field is omitted, there are no subsequent pages. </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.ListSpecRevisionTagsRequest">ListSpecRevisionTagsRequest</h3>
+        <p>Request message for ListSpecRevisionTags. </p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>name</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The name of the spec to list revision tags for. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>page_size</td>
+                  <td><a href="#int32">int32</a></td>
+                  <td></td>
+                  <td><p>The maximum number of revision tags to return per page. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>page_token</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The page token, received from a previous ListSpecRevisionTags call. Provide this to retrieve the subsequent page. </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.ListSpecRevisionTagsResponse">ListSpecRevisionTagsResponse</h3>
+        <p>Response message for ListSpecRevisionTagsResponse. </p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>tags</td>
+                  <td><a href="#google.cloud.apigee.registry.v1alpha1.SpecRevisionTag">SpecRevisionTag</a></td>
+                  <td>repeated</td>
+                  <td><p>The revisions of the spec. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>next_page_token</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>A token that can be sent as `page_token` to retrieve the next page. If this field is omitted, there are no subsequent pages. </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.ListSpecRevisionsRequest">ListSpecRevisionsRequest</h3>
+        <p>Request message for ListSpecRevisions. </p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>name</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The name of the spec to list revisions for. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>page_size</td>
+                  <td><a href="#int32">int32</a></td>
+                  <td></td>
+                  <td><p>The maximum number of revisions to return per page. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>page_token</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The page token, received from a previous ListSpecRevisions call. Provide this to retrieve the subsequent page. </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.ListSpecRevisionsResponse">ListSpecRevisionsResponse</h3>
+        <p>Response message for ListSpecRevisionsResponse. </p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>specs</td>
+                  <td><a href="#google.cloud.apigee.registry.v1alpha1.Spec">Spec</a></td>
+                  <td>repeated</td>
+                  <td><p>The revisions of the spec. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>next_page_token</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>A token that can be sent as `page_token` to retrieve the next page. If this field is omitted, there are no subsequent pages. </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.ListSpecsRequest">ListSpecsRequest</h3>
+        <p>Request message for ListSpecs.</p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>parent</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The parent, which owns this collection of specs. Format: projects/*/apis/*/versions/* </p></td>
+                </tr>
+              
+                <tr>
+                  <td>page_size</td>
+                  <td><a href="#int32">int32</a></td>
+                  <td></td>
+                  <td><p>The maximum number of specs to return. The service may return fewer than this value. If unspecified, at most 50 values will be returned. The maximum is 1000; values above 1000 will be coerced to 1000. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>page_token</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>A page token, received from a previous `ListSpecs` call. Provide this to retrieve the subsequent page.  When paginating, all other parameters provided to `ListSpecs` must match the call that provided the page token. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>filter</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>An expression that can be used to filter the list. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>view</td>
+                  <td><a href="#google.cloud.apigee.registry.v1alpha1.View">View</a></td>
+                  <td></td>
+                  <td><p>The level of detail to return (defaults to BASIC). </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.ListSpecsResponse">ListSpecsResponse</h3>
+        <p>Response message for ListSpecs.</p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>specs</td>
+                  <td><a href="#google.cloud.apigee.registry.v1alpha1.Spec">Spec</a></td>
+                  <td>repeated</td>
+                  <td><p>The specs from the specified publisher. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>next_page_token</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>A token, which can be sent as `page_token` to retrieve the next page. If this field is omitted, there are no subsequent pages. </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.ListVersionsRequest">ListVersionsRequest</h3>
+        <p>Request message for ListVersions.</p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>parent</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The parent, which owns this collection of versions. Format: projects/*/apis/* </p></td>
+                </tr>
+              
+                <tr>
+                  <td>page_size</td>
+                  <td><a href="#int32">int32</a></td>
+                  <td></td>
+                  <td><p>The maximum number of versions to return. The service may return fewer than this value. If unspecified, at most 50 values will be returned. The maximum is 1000; values above 1000 will be coerced to 1000. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>page_token</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>A page token, received from a previous `ListVersions` call. Provide this to retrieve the subsequent page.  When paginating, all other parameters provided to `ListVersions` must match the call that provided the page token. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>filter</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>An expression that can be used to filter the list. </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.ListVersionsResponse">ListVersionsResponse</h3>
+        <p>Response message for ListVersions.</p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>versions</td>
+                  <td><a href="#google.cloud.apigee.registry.v1alpha1.Version">Version</a></td>
+                  <td>repeated</td>
+                  <td><p>The versions from the specified publisher. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>next_page_token</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>A token, which can be sent as `page_token` to retrieve the next page. If this field is omitted, there are no subsequent pages. </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.RollbackSpecRequest">RollbackSpecRequest</h3>
+        <p>Request message for RollbackSpec.</p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>name</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The spec being rolled back. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>revision_id</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The revision ID to roll back to. It must be a revision of the same spec.    Example: c7cfa2a8 </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.Status">Status</h3>
+        <p>Response message for GetStatus.</p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>message</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>A string describing the status. </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.TagSpecRevisionRequest">TagSpecRevisionRequest</h3>
+        <p>Request message for TagSpecRevision.</p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>name</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The name of the spec to be tagged, including the revision ID. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>tag</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The tag to apply. The tag should be at most 40 characters, and match `[a-z][a-z0-9-]{3,39}`. </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.UpdateApiRequest">UpdateApiRequest</h3>
+        <p>Request message for UpdateApi.</p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>api</td>
+                  <td><a href="#google.cloud.apigee.registry.v1alpha1.Api">Api</a></td>
+                  <td></td>
+                  <td><p>The API to update.  The `name` field is used to identify the API to update. Format: projects/*/apis/* </p></td>
+                </tr>
+              
+                <tr>
+                  <td>update_mask</td>
+                  <td><a href="#google.protobuf.FieldMask">google.protobuf.FieldMask</a></td>
+                  <td></td>
+                  <td><p>The list of fields to be updated. </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.UpdateProjectRequest">UpdateProjectRequest</h3>
+        <p>Request message for UpdateProject.</p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>project</td>
+                  <td><a href="#google.cloud.apigee.registry.v1alpha1.Project">Project</a></td>
+                  <td></td>
+                  <td><p>The project to update.  The `name` field is used to identify the project to update. Format: projects/* </p></td>
+                </tr>
+              
+                <tr>
+                  <td>update_mask</td>
+                  <td><a href="#google.protobuf.FieldMask">google.protobuf.FieldMask</a></td>
+                  <td></td>
+                  <td><p>The list of fields to be updated. </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.UpdatePropertyRequest">UpdatePropertyRequest</h3>
+        <p>Request message for UpdateProperty.</p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>property</td>
+                  <td><a href="#google.cloud.apigee.registry.v1alpha1.Property">Property</a></td>
+                  <td></td>
+                  <td><p>The property to update.  The `name` field is used to identify the property to update. Format: projects/*/properties/* </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.UpdateSpecRequest">UpdateSpecRequest</h3>
+        <p>Request message for UpdateSpec.</p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>spec</td>
+                  <td><a href="#google.cloud.apigee.registry.v1alpha1.Spec">Spec</a></td>
+                  <td></td>
+                  <td><p>The spec to update.  The `name` field is used to identify the spec to update. Format: projects/*/apis/*/versions/*/specs/* </p></td>
+                </tr>
+              
+                <tr>
+                  <td>update_mask</td>
+                  <td><a href="#google.protobuf.FieldMask">google.protobuf.FieldMask</a></td>
+                  <td></td>
+                  <td><p>The list of fields to be updated. </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.UpdateVersionRequest">UpdateVersionRequest</h3>
+        <p>Request message for UpdateVersion.</p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>version</td>
+                  <td><a href="#google.cloud.apigee.registry.v1alpha1.Version">Version</a></td>
+                  <td></td>
+                  <td><p>The version to update.  The `name` field is used to identify the version to update. Format: projects/*/apis/*/versions/* </p></td>
+                </tr>
+              
+                <tr>
+                  <td>update_mask</td>
+                  <td><a href="#google.protobuf.FieldMask">google.protobuf.FieldMask</a></td>
+                  <td></td>
+                  <td><p>The list of fields to be updated. </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+
+      
+
+      
+
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.Registry">Registry</h3>
+        <p>The Registry service allows teams to manage descriptions of APIs.</p>
+        <table class="enum-table">
+          <thead>
+            <tr><td>Method Name</td><td>Request Type</td><td>Response Type</td><td>Description</td></tr>
+          </thead>
+          <tbody>
+            
+              <tr>
+                <td>GetStatus</td>
+                <td><a href="#google.protobuf.Empty">.google.protobuf.Empty</a></td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.Status">Status</a></td>
+                <td><p>GetStatus returns the status of the service.</p></td>
+              </tr>
+            
+              <tr>
+                <td>ListProjects</td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.ListProjectsRequest">ListProjectsRequest</a></td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.ListProjectsResponse">ListProjectsResponse</a></td>
+                <td><p>ListProjects returns matching projects. </p></td>
+              </tr>
+            
+              <tr>
+                <td>GetProject</td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.GetProjectRequest">GetProjectRequest</a></td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.Project">Project</a></td>
+                <td><p>GetProject returns a specified project.</p></td>
+              </tr>
+            
+              <tr>
+                <td>CreateProject</td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.CreateProjectRequest">CreateProjectRequest</a></td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.Project">Project</a></td>
+                <td><p>CreateProject creates a specified project. </p></td>
+              </tr>
+            
+              <tr>
+                <td>UpdateProject</td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.UpdateProjectRequest">UpdateProjectRequest</a></td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.Project">Project</a></td>
+                <td><p>UpdateProject can be used to modify a specified project.</p></td>
+              </tr>
+            
+              <tr>
+                <td>DeleteProject</td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.DeleteProjectRequest">DeleteProjectRequest</a></td>
+                <td><a href="#google.protobuf.Empty">.google.protobuf.Empty</a></td>
+                <td><p>DeleteProject removes a specified project and all of the resources that it owns.</p></td>
+              </tr>
+            
+              <tr>
+                <td>ListApis</td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.ListApisRequest">ListApisRequest</a></td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.ListApisResponse">ListApisResponse</a></td>
+                <td><p>ListApis returns matching APIs.</p></td>
+              </tr>
+            
+              <tr>
+                <td>GetApi</td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.GetApiRequest">GetApiRequest</a></td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.Api">Api</a></td>
+                <td><p>GetApi returns a specified API.</p></td>
+              </tr>
+            
+              <tr>
+                <td>CreateApi</td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.CreateApiRequest">CreateApiRequest</a></td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.Api">Api</a></td>
+                <td><p>CreateApi creates a specified API.</p></td>
+              </tr>
+            
+              <tr>
+                <td>UpdateApi</td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.UpdateApiRequest">UpdateApiRequest</a></td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.Api">Api</a></td>
+                <td><p>UpdateApi can be used to modify a specified API.</p></td>
+              </tr>
+            
+              <tr>
+                <td>DeleteApi</td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.DeleteApiRequest">DeleteApiRequest</a></td>
+                <td><a href="#google.protobuf.Empty">.google.protobuf.Empty</a></td>
+                <td><p>DeleteApi removes a specified API and all of the resources that it owns.</p></td>
+              </tr>
+            
+              <tr>
+                <td>ListVersions</td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.ListVersionsRequest">ListVersionsRequest</a></td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.ListVersionsResponse">ListVersionsResponse</a></td>
+                <td><p>ListVersions returns matching versions.</p></td>
+              </tr>
+            
+              <tr>
+                <td>GetVersion</td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.GetVersionRequest">GetVersionRequest</a></td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.Version">Version</a></td>
+                <td><p>GetVersion returns a specified version.</p></td>
+              </tr>
+            
+              <tr>
+                <td>CreateVersion</td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.CreateVersionRequest">CreateVersionRequest</a></td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.Version">Version</a></td>
+                <td><p>CreateVersion creates a specified version.</p></td>
+              </tr>
+            
+              <tr>
+                <td>UpdateVersion</td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.UpdateVersionRequest">UpdateVersionRequest</a></td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.Version">Version</a></td>
+                <td><p>UpdateVersion can be used to modify a specified version.</p></td>
+              </tr>
+            
+              <tr>
+                <td>DeleteVersion</td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.DeleteVersionRequest">DeleteVersionRequest</a></td>
+                <td><a href="#google.protobuf.Empty">.google.protobuf.Empty</a></td>
+                <td><p>DeleteVersion removes a specified version and all of the resources that it owns.</p></td>
+              </tr>
+            
+              <tr>
+                <td>ListSpecs</td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.ListSpecsRequest">ListSpecsRequest</a></td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.ListSpecsResponse">ListSpecsResponse</a></td>
+                <td><p>ListSpecs returns matching specs.</p></td>
+              </tr>
+            
+              <tr>
+                <td>GetSpec</td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.GetSpecRequest">GetSpecRequest</a></td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.Spec">Spec</a></td>
+                <td><p>GetSpec returns a specified spec.</p></td>
+              </tr>
+            
+              <tr>
+                <td>CreateSpec</td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.CreateSpecRequest">CreateSpecRequest</a></td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.Spec">Spec</a></td>
+                <td><p>CreateSpec creates a specified spec.</p></td>
+              </tr>
+            
+              <tr>
+                <td>UpdateSpec</td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.UpdateSpecRequest">UpdateSpecRequest</a></td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.Spec">Spec</a></td>
+                <td><p>UpdateSpec can be used to modify a specified spec.</p></td>
+              </tr>
+            
+              <tr>
+                <td>DeleteSpec</td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.DeleteSpecRequest">DeleteSpecRequest</a></td>
+                <td><a href="#google.protobuf.Empty">.google.protobuf.Empty</a></td>
+                <td><p>DeleteSpec removes a specified spec and all of the resources that it owns.</p></td>
+              </tr>
+            
+              <tr>
+                <td>TagSpecRevision</td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.TagSpecRevisionRequest">TagSpecRevisionRequest</a></td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.Spec">Spec</a></td>
+                <td><p>TagSpecRevision adds a tag to a specified revision of a spec.</p></td>
+              </tr>
+            
+              <tr>
+                <td>ListSpecRevisions</td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.ListSpecRevisionsRequest">ListSpecRevisionsRequest</a></td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.ListSpecRevisionsResponse">ListSpecRevisionsResponse</a></td>
+                <td><p>ListSpecRevisions lists all revisions of a spec.</p></td>
+              </tr>
+            
+              <tr>
+                <td>ListSpecRevisionTags</td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.ListSpecRevisionTagsRequest">ListSpecRevisionTagsRequest</a></td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.ListSpecRevisionTagsResponse">ListSpecRevisionTagsResponse</a></td>
+                <td><p>ListSpecRevisionTags lists all revision tags defined for a spec.</p></td>
+              </tr>
+            
+              <tr>
+                <td>RollbackSpec</td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.RollbackSpecRequest">RollbackSpecRequest</a></td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.Spec">Spec</a></td>
+                <td><p>RollbackSpec sets the current revision to a specified prior revision. Note that this creates a new revision ID.</p></td>
+              </tr>
+            
+              <tr>
+                <td>DeleteSpecRevision</td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.DeleteSpecRevisionRequest">DeleteSpecRevisionRequest</a></td>
+                <td><a href="#google.protobuf.Empty">.google.protobuf.Empty</a></td>
+                <td><p>DeleteSpecRevision deletes a revision of a spec. </p></td>
+              </tr>
+            
+              <tr>
+                <td>ListProperties</td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.ListPropertiesRequest">ListPropertiesRequest</a></td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.ListPropertiesResponse">ListPropertiesResponse</a></td>
+                <td><p>ListProperties returns matching properties.</p></td>
+              </tr>
+            
+              <tr>
+                <td>GetProperty</td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.GetPropertyRequest">GetPropertyRequest</a></td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.Property">Property</a></td>
+                <td><p>GetProperty returns a specified property.</p></td>
+              </tr>
+            
+              <tr>
+                <td>CreateProperty</td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.CreatePropertyRequest">CreatePropertyRequest</a></td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.Property">Property</a></td>
+                <td><p>CreateProperty creates a specified property.</p></td>
+              </tr>
+            
+              <tr>
+                <td>UpdateProperty</td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.UpdatePropertyRequest">UpdatePropertyRequest</a></td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.Property">Property</a></td>
+                <td><p>UpdateProperty can be used to modify a specified property.</p></td>
+              </tr>
+            
+              <tr>
+                <td>DeleteProperty</td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.DeletePropertyRequest">DeletePropertyRequest</a></td>
+                <td><a href="#google.protobuf.Empty">.google.protobuf.Empty</a></td>
+                <td><p>DeleteProperty removes a specified property and all of the resources that it owns.</p></td>
+              </tr>
+            
+              <tr>
+                <td>ListLabels</td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.ListLabelsRequest">ListLabelsRequest</a></td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.ListLabelsResponse">ListLabelsResponse</a></td>
+                <td><p>ListLabels returns matching labels.</p></td>
+              </tr>
+            
+              <tr>
+                <td>GetLabel</td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.GetLabelRequest">GetLabelRequest</a></td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.Label">Label</a></td>
+                <td><p>GetLabel returns a specified label.</p></td>
+              </tr>
+            
+              <tr>
+                <td>CreateLabel</td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.CreateLabelRequest">CreateLabelRequest</a></td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.Label">Label</a></td>
+                <td><p>CreateLabel creates a specified label.</p></td>
+              </tr>
+            
+              <tr>
+                <td>DeleteLabel</td>
+                <td><a href="#google.cloud.apigee.registry.v1alpha1.DeleteLabelRequest">DeleteLabelRequest</a></td>
+                <td><a href="#google.protobuf.Empty">.google.protobuf.Empty</a></td>
+                <td><p>DeleteLabel removes a specified label and all of the resources that it owns.</p></td>
+              </tr>
+            
+          </tbody>
+        </table>
+
+        
+          
+          
+          <h4>Methods with HTTP bindings</h4>
+          <table>
+            <thead>
+              <tr>
+                <td>Method Name</td>
+                <td>Method</td>
+                <td>Pattern</td>
+                <td>Body</td>
+              </tr>
+            </thead>
+            <tbody>
+            
+              
+              
+              <tr>
+                <td>GetStatus</td>
+                <td>GET</td>
+                <td>/v1alpha1/status</td>
+                <td></td>
+              </tr>
+              
+            
+              
+              
+              <tr>
+                <td>ListProjects</td>
+                <td>GET</td>
+                <td>/v1alpha1/projects</td>
+                <td></td>
+              </tr>
+              
+            
+              
+              
+              <tr>
+                <td>GetProject</td>
+                <td>GET</td>
+                <td>/v1alpha1/{name=projects/*}</td>
+                <td></td>
+              </tr>
+              
+            
+              
+              
+              <tr>
+                <td>CreateProject</td>
+                <td>POST</td>
+                <td>/v1alpha1/projects</td>
+                <td>project</td>
+              </tr>
+              
+            
+              
+              
+              <tr>
+                <td>UpdateProject</td>
+                <td>PATCH</td>
+                <td>/v1alpha1/{project.name=projects/*}</td>
+                <td>project</td>
+              </tr>
+              
+            
+              
+              
+              <tr>
+                <td>DeleteProject</td>
+                <td>DELETE</td>
+                <td>/v1alpha1/{name=projects/*}</td>
+                <td></td>
+              </tr>
+              
+            
+              
+              
+              <tr>
+                <td>ListApis</td>
+                <td>GET</td>
+                <td>/v1alpha1/{parent=projects/*}/apis</td>
+                <td></td>
+              </tr>
+              
+            
+              
+              
+              <tr>
+                <td>GetApi</td>
+                <td>GET</td>
+                <td>/v1alpha1/{name=projects/*/apis/*}</td>
+                <td></td>
+              </tr>
+              
+            
+              
+              
+              <tr>
+                <td>CreateApi</td>
+                <td>POST</td>
+                <td>/v1alpha1/{parent=projects/*}/apis</td>
+                <td>api</td>
+              </tr>
+              
+            
+              
+              
+              <tr>
+                <td>UpdateApi</td>
+                <td>PATCH</td>
+                <td>/v1alpha1/{api.name=projects/*/apis/*}</td>
+                <td>api</td>
+              </tr>
+              
+            
+              
+              
+              <tr>
+                <td>DeleteApi</td>
+                <td>DELETE</td>
+                <td>/v1alpha1/{name=projects/*/apis/*}</td>
+                <td></td>
+              </tr>
+              
+            
+              
+              
+              <tr>
+                <td>ListVersions</td>
+                <td>GET</td>
+                <td>/v1alpha1/{parent=projects/*/apis/*}/versions</td>
+                <td></td>
+              </tr>
+              
+            
+              
+              
+              <tr>
+                <td>GetVersion</td>
+                <td>GET</td>
+                <td>/v1alpha1/{name=projects/*/apis/*/versions/*}</td>
+                <td></td>
+              </tr>
+              
+            
+              
+              
+              <tr>
+                <td>CreateVersion</td>
+                <td>POST</td>
+                <td>/v1alpha1/{parent=projects/*/apis/*}/versions</td>
+                <td>version</td>
+              </tr>
+              
+            
+              
+              
+              <tr>
+                <td>UpdateVersion</td>
+                <td>PATCH</td>
+                <td>/v1alpha1/{version.name=projects/*/apis/*/versions/*}</td>
+                <td>version</td>
+              </tr>
+              
+            
+              
+              
+              <tr>
+                <td>DeleteVersion</td>
+                <td>DELETE</td>
+                <td>/v1alpha1/{name=projects/*/apis/*/versions/*}</td>
+                <td></td>
+              </tr>
+              
+            
+              
+              
+              <tr>
+                <td>ListSpecs</td>
+                <td>GET</td>
+                <td>/v1alpha1/{parent=projects/*/apis/*/versions/*}/specs</td>
+                <td></td>
+              </tr>
+              
+            
+              
+              
+              <tr>
+                <td>GetSpec</td>
+                <td>GET</td>
+                <td>/v1alpha1/{name=projects/*/apis/*/versions/*/specs/*}</td>
+                <td></td>
+              </tr>
+              
+            
+              
+              
+              <tr>
+                <td>CreateSpec</td>
+                <td>POST</td>
+                <td>/v1alpha1/{parent=projects/*/apis/*/versions/*}/specs</td>
+                <td>spec</td>
+              </tr>
+              
+            
+              
+              
+              <tr>
+                <td>UpdateSpec</td>
+                <td>PATCH</td>
+                <td>/v1alpha1/{spec.name=projects/*/apis/*/versions/*/specs/*}</td>
+                <td>spec</td>
+              </tr>
+              
+            
+              
+              
+              <tr>
+                <td>DeleteSpec</td>
+                <td>DELETE</td>
+                <td>/v1alpha1/{name=projects/*/apis/*/versions/*/specs/*}</td>
+                <td></td>
+              </tr>
+              
+            
+              
+              
+              <tr>
+                <td>TagSpecRevision</td>
+                <td>POST</td>
+                <td>/v1alpha1/{name=projects/*/apis/*/versions/*/specs/*}:tagRevision</td>
+                <td>*</td>
+              </tr>
+              
+            
+              
+              
+              <tr>
+                <td>ListSpecRevisions</td>
+                <td>GET</td>
+                <td>/v1alpha1/{name=projects/*/apis/*/versions/*/specs/*}:listRevisions</td>
+                <td></td>
+              </tr>
+              
+            
+              
+              
+              <tr>
+                <td>ListSpecRevisionTags</td>
+                <td>GET</td>
+                <td>/v1alpha1/{name=projects/*/apis/*/versions/*/specs/*}:listRevisionTags</td>
+                <td></td>
+              </tr>
+              
+            
+              
+              
+              <tr>
+                <td>RollbackSpec</td>
+                <td>POST</td>
+                <td>/v1alpha1/{name=projects/*/apis/*/versions/*/specs/*}:rollback</td>
+                <td>*</td>
+              </tr>
+              
+            
+              
+              
+              <tr>
+                <td>DeleteSpecRevision</td>
+                <td>DELETE</td>
+                <td>/v1alpha1/{name=projects/*/apis/*/versions/*/specs/*}:deleteRevision</td>
+                <td></td>
+              </tr>
+              
+            
+              
+              
+              <tr>
+                <td>ListProperties</td>
+                <td>GET</td>
+                <td>/v1alpha1/{parent=projects/*}/properties</td>
+                <td></td>
+              </tr>
+              
+              <tr>
+                <td>ListProperties</td>
+                <td>GET</td>
+                <td>/v1alpha1/{parent=projects/*/apis/*}/properties</td>
+                <td></td>
+              </tr>
+              
+              <tr>
+                <td>ListProperties</td>
+                <td>GET</td>
+                <td>/v1alpha1/{parent=projects/*/apis/*/versions/*}/properties</td>
+                <td></td>
+              </tr>
+              
+              <tr>
+                <td>ListProperties</td>
+                <td>GET</td>
+                <td>/v1alpha1/{parent=projects/*/apis/*/versions/*/specs/*}/properties</td>
+                <td></td>
+              </tr>
+              
+            
+              
+              
+              <tr>
+                <td>GetProperty</td>
+                <td>GET</td>
+                <td>/v1alpha1/{name=projects/*/properties/*}</td>
+                <td></td>
+              </tr>
+              
+              <tr>
+                <td>GetProperty</td>
+                <td>GET</td>
+                <td>/v1alpha1/{name=projects/*/apis/*/properties/*}</td>
+                <td></td>
+              </tr>
+              
+              <tr>
+                <td>GetProperty</td>
+                <td>GET</td>
+                <td>/v1alpha1/{name=projects/*/apis/*/versions/*/properties/*}</td>
+                <td></td>
+              </tr>
+              
+              <tr>
+                <td>GetProperty</td>
+                <td>GET</td>
+                <td>/v1alpha1/{name=projects/*/apis/*/versions/*/specs/*/properties/*}</td>
+                <td></td>
+              </tr>
+              
+            
+              
+              
+              <tr>
+                <td>CreateProperty</td>
+                <td>POST</td>
+                <td>/v1alpha1/{parent=projects/*}/properties</td>
+                <td>property</td>
+              </tr>
+              
+              <tr>
+                <td>CreateProperty</td>
+                <td>POST</td>
+                <td>/v1alpha1/{parent=projects/*/apis/*}/properties</td>
+                <td>property</td>
+              </tr>
+              
+              <tr>
+                <td>CreateProperty</td>
+                <td>POST</td>
+                <td>/v1alpha1/{parent=projects/*/apis/*/versions/*}/properties</td>
+                <td>property</td>
+              </tr>
+              
+              <tr>
+                <td>CreateProperty</td>
+                <td>POST</td>
+                <td>/v1alpha1/{parent=projects/*/apis/*/versions/*/specs/*}/properties</td>
+                <td>property</td>
+              </tr>
+              
+            
+              
+              
+              <tr>
+                <td>UpdateProperty</td>
+                <td>PATCH</td>
+                <td>/v1alpha1/{property.name=projects/*/properties/*}</td>
+                <td>property</td>
+              </tr>
+              
+              <tr>
+                <td>UpdateProperty</td>
+                <td>PATCH</td>
+                <td>/v1alpha1/{property.name=projects/*/apis/*/properties/*}</td>
+                <td>property</td>
+              </tr>
+              
+              <tr>
+                <td>UpdateProperty</td>
+                <td>PATCH</td>
+                <td>/v1alpha1/{property.name=projects/*/apis/*/versions/*/properties/*}</td>
+                <td>property</td>
+              </tr>
+              
+              <tr>
+                <td>UpdateProperty</td>
+                <td>PATCH</td>
+                <td>/v1alpha1/{property.name=projects/*/apis/*/versions/*/specs/*/properties/*}</td>
+                <td>property</td>
+              </tr>
+              
+            
+              
+              
+              <tr>
+                <td>DeleteProperty</td>
+                <td>DELETE</td>
+                <td>/v1alpha1/{name=projects/*/properties/*}</td>
+                <td></td>
+              </tr>
+              
+              <tr>
+                <td>DeleteProperty</td>
+                <td>DELETE</td>
+                <td>/v1alpha1/{name=projects/*/apis/*/properties/*}</td>
+                <td></td>
+              </tr>
+              
+              <tr>
+                <td>DeleteProperty</td>
+                <td>DELETE</td>
+                <td>/v1alpha1/{name=projects/*/apis/*/versions/*/properties/*}</td>
+                <td></td>
+              </tr>
+              
+              <tr>
+                <td>DeleteProperty</td>
+                <td>DELETE</td>
+                <td>/v1alpha1/{name=projects/*/apis/*/versions/*/specs/*/properties/*}</td>
+                <td></td>
+              </tr>
+              
+            
+              
+              
+              <tr>
+                <td>ListLabels</td>
+                <td>GET</td>
+                <td>/v1alpha1/{parent=projects/*}/labels</td>
+                <td></td>
+              </tr>
+              
+              <tr>
+                <td>ListLabels</td>
+                <td>GET</td>
+                <td>/v1alpha1/{parent=projects/*/apis/*}/labels</td>
+                <td></td>
+              </tr>
+              
+              <tr>
+                <td>ListLabels</td>
+                <td>GET</td>
+                <td>/v1alpha1/{parent=projects/*/apis/*/versions/*}/labels</td>
+                <td></td>
+              </tr>
+              
+              <tr>
+                <td>ListLabels</td>
+                <td>GET</td>
+                <td>/v1alpha1/{parent=projects/*/apis/*/versions/*/specs/*}/labels</td>
+                <td></td>
+              </tr>
+              
+            
+              
+              
+              <tr>
+                <td>GetLabel</td>
+                <td>GET</td>
+                <td>/v1alpha1/{name=projects/*/labels/*}</td>
+                <td></td>
+              </tr>
+              
+              <tr>
+                <td>GetLabel</td>
+                <td>GET</td>
+                <td>/v1alpha1/{name=projects/*/apis/*/labels/*}</td>
+                <td></td>
+              </tr>
+              
+              <tr>
+                <td>GetLabel</td>
+                <td>GET</td>
+                <td>/v1alpha1/{name=projects/*/apis/*/versions/*/labels/*}</td>
+                <td></td>
+              </tr>
+              
+              <tr>
+                <td>GetLabel</td>
+                <td>GET</td>
+                <td>/v1alpha1/{name=projects/*/apis/*/versions/*/specs/*/labels/*}</td>
+                <td></td>
+              </tr>
+              
+            
+              
+              
+              <tr>
+                <td>CreateLabel</td>
+                <td>POST</td>
+                <td>/v1alpha1/{parent=projects/*}/labels</td>
+                <td>label</td>
+              </tr>
+              
+              <tr>
+                <td>CreateLabel</td>
+                <td>POST</td>
+                <td>/v1alpha1/{parent=projects/*/apis/*}/labels</td>
+                <td>label</td>
+              </tr>
+              
+              <tr>
+                <td>CreateLabel</td>
+                <td>POST</td>
+                <td>/v1alpha1/{parent=projects/*/apis/*/versions/*}/labels</td>
+                <td>label</td>
+              </tr>
+              
+              <tr>
+                <td>CreateLabel</td>
+                <td>POST</td>
+                <td>/v1alpha1/{parent=projects/*/apis/*/versions/*/specs/*}/labels</td>
+                <td>label</td>
+              </tr>
+              
+            
+              
+              
+              <tr>
+                <td>DeleteLabel</td>
+                <td>DELETE</td>
+                <td>/v1alpha1/{name=projects/*/labels/*}</td>
+                <td></td>
+              </tr>
+              
+              <tr>
+                <td>DeleteLabel</td>
+                <td>DELETE</td>
+                <td>/v1alpha1/{name=projects/*/apis/*/labels/*}</td>
+                <td></td>
+              </tr>
+              
+              <tr>
+                <td>DeleteLabel</td>
+                <td>DELETE</td>
+                <td>/v1alpha1/{name=projects/*/apis/*/versions/*/labels/*}</td>
+                <td></td>
+              </tr>
+              
+              <tr>
+                <td>DeleteLabel</td>
+                <td>DELETE</td>
+                <td>/v1alpha1/{name=projects/*/apis/*/versions/*/specs/*/labels/*}</td>
+                <td></td>
+              </tr>
+              
+            
+            </tbody>
+          </table>
+          
+        
+    
+      
+      <div class="file-heading">
+        <h2 id="google/cloud/apigee/registry/v1alpha1/registry_notifications.proto">google/cloud/apigee/registry/v1alpha1/registry_notifications.proto</h2><a href="#title">Top</a>
+      </div>
+      <p></p>
+
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.Notification">Notification</h3>
+        <p>Notifications are sent to subscribers who follow registry activity.</p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>change</td>
+                  <td><a href="#google.cloud.apigee.registry.v1alpha1.Notification.Change">Notification.Change</a></td>
+                  <td></td>
+                  <td><p>The type of change made to the registry. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>resource</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The resource affected by the change. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>change_time</td>
+                  <td><a href="#google.protobuf.Timestamp">google.protobuf.Timestamp</a></td>
+                  <td></td>
+                  <td><p>The time of the event. </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.Notification.Change">Notification.Change</h3>
+        <p>Types of changes that can be made to the registry.</p>
+        <table class="enum-table">
+          <thead>
+            <tr><td>Name</td><td>Number</td><td>Description</td></tr>
+          </thead>
+          <tbody>
+            
+              <tr>
+                <td>CHANGE_UNSPECIFIED</td>
+                <td>0</td>
+                <td><p>The default / unset value.</p></td>
+              </tr>
+            
+              <tr>
+                <td>CREATED</td>
+                <td>1</td>
+                <td><p>A resource was created.</p></td>
+              </tr>
+            
+              <tr>
+                <td>UPDATED</td>
+                <td>2</td>
+                <td><p>A resource was updated.</p></td>
+              </tr>
+            
+              <tr>
+                <td>DELETED</td>
+                <td>3</td>
+                <td><p>A resource was deleted.</p></td>
+              </tr>
+            
+          </tbody>
+        </table>
+      
+
+      
+
+      
+    
+      
+      <div class="file-heading">
+        <h2 id="google/cloud/apigee/registry/v1alpha1/registry_index.proto">google/cloud/apigee/registry/v1alpha1/registry_index.proto</h2><a href="#title">Top</a>
+      </div>
+      <p></p>
+
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.Field">Field</h3>
+        <p>A Field represents a field in a schema. </p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>name</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The name of the field. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>schema</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The schema containing the field. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>file</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The file containing the field. </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.File">File</h3>
+        <p>A File represents a source file of an API description. </p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>name</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The name of the file. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>operations</td>
+                  <td><a href="#google.cloud.apigee.registry.v1alpha1.Operation">Operation</a></td>
+                  <td>repeated</td>
+                  <td><p>The operations in the file. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>schemas</td>
+                  <td><a href="#google.cloud.apigee.registry.v1alpha1.Schema">Schema</a></td>
+                  <td>repeated</td>
+                  <td><p>The schemas in the file. </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.Index">Index</h3>
+        <p>An Index lists fields, schemas, and operations with their associated files. </p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>name</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The name of the index. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>files</td>
+                  <td><a href="#google.cloud.apigee.registry.v1alpha1.File">File</a></td>
+                  <td>repeated</td>
+                  <td><p>The files in the index. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>fields</td>
+                  <td><a href="#google.cloud.apigee.registry.v1alpha1.Field">Field</a></td>
+                  <td>repeated</td>
+                  <td><p>The fields in the index (a flat list). </p></td>
+                </tr>
+              
+                <tr>
+                  <td>schemas</td>
+                  <td><a href="#google.cloud.apigee.registry.v1alpha1.Schema">Schema</a></td>
+                  <td>repeated</td>
+                  <td><p>The schemas in the index (a flat list). </p></td>
+                </tr>
+              
+                <tr>
+                  <td>operations</td>
+                  <td><a href="#google.cloud.apigee.registry.v1alpha1.Operation">Operation</a></td>
+                  <td>repeated</td>
+                  <td><p>The operations in the index (a flat list). </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.Operation">Operation</h3>
+        <p>An Operation represents an operation in an API. </p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>name</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The name of the operation. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>service</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The name of the service. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>verb</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The HTTP verb of the operation. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>path</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The HTTP path of the operation. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>file</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The file containing the operation. </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="google.cloud.apigee.registry.v1alpha1.Schema">Schema</h3>
+        <p>A Schema represents an API message structure. </p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>name</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The name of the schema. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>resource</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The resource name of the schema. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>type</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The resource type of the schema. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>fields</td>
+                  <td><a href="#google.cloud.apigee.registry.v1alpha1.Field">Field</a></td>
+                  <td>repeated</td>
+                  <td><p>The fields of the schema. </p></td>
+                </tr>
+              
+                <tr>
+                  <td>file</td>
+                  <td><a href="#string">string</a></td>
+                  <td></td>
+                  <td><p>The file containing the schema. </p></td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          
+
+        
+      
+
+      
+
+      
+
+      
+    
+
+    <h2 id="scalar-value-types">Scalar Value Types</h2>
+    <table class="scalar-value-types-table">
+      <thead>
+        <tr><td>.proto Type</td><td>Notes</td><td>C++</td><td>Java</td><td>Python</td><td>Go</td><td>C#</td><td>PHP</td><td>Ruby</td></tr>
+      </thead>
+      <tbody>
+        
+          <tr id="double">
+            <td>double</td>
+            <td></td>
+            <td>double</td>
+            <td>double</td>
+            <td>float</td>
+            <td>float64</td>
+            <td>double</td>
+            <td>float</td>
+            <td>Float</td>
+          </tr>
+        
+          <tr id="float">
+            <td>float</td>
+            <td></td>
+            <td>float</td>
+            <td>float</td>
+            <td>float</td>
+            <td>float32</td>
+            <td>float</td>
+            <td>float</td>
+            <td>Float</td>
+          </tr>
+        
+          <tr id="int32">
+            <td>int32</td>
+            <td>Uses variable-length encoding. Inefficient for encoding negative numbers – if your field is likely to have negative values, use sint32 instead.</td>
+            <td>int32</td>
+            <td>int</td>
+            <td>int</td>
+            <td>int32</td>
+            <td>int</td>
+            <td>integer</td>
+            <td>Bignum or Fixnum (as required)</td>
+          </tr>
+        
+          <tr id="int64">
+            <td>int64</td>
+            <td>Uses variable-length encoding. Inefficient for encoding negative numbers – if your field is likely to have negative values, use sint64 instead.</td>
+            <td>int64</td>
+            <td>long</td>
+            <td>int/long</td>
+            <td>int64</td>
+            <td>long</td>
+            <td>integer/string</td>
+            <td>Bignum</td>
+          </tr>
+        
+          <tr id="uint32">
+            <td>uint32</td>
+            <td>Uses variable-length encoding.</td>
+            <td>uint32</td>
+            <td>int</td>
+            <td>int/long</td>
+            <td>uint32</td>
+            <td>uint</td>
+            <td>integer</td>
+            <td>Bignum or Fixnum (as required)</td>
+          </tr>
+        
+          <tr id="uint64">
+            <td>uint64</td>
+            <td>Uses variable-length encoding.</td>
+            <td>uint64</td>
+            <td>long</td>
+            <td>int/long</td>
+            <td>uint64</td>
+            <td>ulong</td>
+            <td>integer/string</td>
+            <td>Bignum or Fixnum (as required)</td>
+          </tr>
+        
+          <tr id="sint32">
+            <td>sint32</td>
+            <td>Uses variable-length encoding. Signed int value. These more efficiently encode negative numbers than regular int32s.</td>
+            <td>int32</td>
+            <td>int</td>
+            <td>int</td>
+            <td>int32</td>
+            <td>int</td>
+            <td>integer</td>
+            <td>Bignum or Fixnum (as required)</td>
+          </tr>
+        
+          <tr id="sint64">
+            <td>sint64</td>
+            <td>Uses variable-length encoding. Signed int value. These more efficiently encode negative numbers than regular int64s.</td>
+            <td>int64</td>
+            <td>long</td>
+            <td>int/long</td>
+            <td>int64</td>
+            <td>long</td>
+            <td>integer/string</td>
+            <td>Bignum</td>
+          </tr>
+        
+          <tr id="fixed32">
+            <td>fixed32</td>
+            <td>Always four bytes. More efficient than uint32 if values are often greater than 2^28.</td>
+            <td>uint32</td>
+            <td>int</td>
+            <td>int</td>
+            <td>uint32</td>
+            <td>uint</td>
+            <td>integer</td>
+            <td>Bignum or Fixnum (as required)</td>
+          </tr>
+        
+          <tr id="fixed64">
+            <td>fixed64</td>
+            <td>Always eight bytes. More efficient than uint64 if values are often greater than 2^56.</td>
+            <td>uint64</td>
+            <td>long</td>
+            <td>int/long</td>
+            <td>uint64</td>
+            <td>ulong</td>
+            <td>integer/string</td>
+            <td>Bignum</td>
+          </tr>
+        
+          <tr id="sfixed32">
+            <td>sfixed32</td>
+            <td>Always four bytes.</td>
+            <td>int32</td>
+            <td>int</td>
+            <td>int</td>
+            <td>int32</td>
+            <td>int</td>
+            <td>integer</td>
+            <td>Bignum or Fixnum (as required)</td>
+          </tr>
+        
+          <tr id="sfixed64">
+            <td>sfixed64</td>
+            <td>Always eight bytes.</td>
+            <td>int64</td>
+            <td>long</td>
+            <td>int/long</td>
+            <td>int64</td>
+            <td>long</td>
+            <td>integer/string</td>
+            <td>Bignum</td>
+          </tr>
+        
+          <tr id="bool">
+            <td>bool</td>
+            <td></td>
+            <td>bool</td>
+            <td>boolean</td>
+            <td>boolean</td>
+            <td>bool</td>
+            <td>bool</td>
+            <td>boolean</td>
+            <td>TrueClass/FalseClass</td>
+          </tr>
+        
+          <tr id="string">
+            <td>string</td>
+            <td>A string must always contain UTF-8 encoded or 7-bit ASCII text.</td>
+            <td>string</td>
+            <td>String</td>
+            <td>str/unicode</td>
+            <td>string</td>
+            <td>string</td>
+            <td>string</td>
+            <td>String (UTF-8)</td>
+          </tr>
+        
+          <tr id="bytes">
+            <td>bytes</td>
+            <td>May contain any arbitrary sequence of bytes.</td>
+            <td>string</td>
+            <td>ByteString</td>
+            <td>str</td>
+            <td>[]byte</td>
+            <td>ByteString</td>
+            <td>string</td>
+            <td>String (ASCII-8BIT)</td>
+          </tr>
+        
+      </tbody>
+    </table>
+  </body>
+</html>
+
