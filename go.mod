@@ -9,9 +9,13 @@ require (
 	cloud.google.com/go/pubsub v1.6.1
 	cloud.google.com/go/storage v1.10.0
 	git.apache.org/thrift.git v0.12.0 // indirect
+	github.com/Masterminds/goutils v1.1.0 // indirect
+	github.com/Masterminds/semver v1.5.0 // indirect
+	github.com/Masterminds/sprig v2.22.0+incompatible // indirect
 	github.com/PuerkitoBio/goquery v1.5.1 // indirect
 	github.com/RoaringBitmap/roaring v0.5.1 // indirect
 	github.com/antlr/antlr4 v0.0.0-20200915201312-e73f72be7355 // indirect
+	github.com/aokoli/goutils v1.1.0 // indirect
 	github.com/blevesearch/bleve v1.0.10
 	github.com/bmatcuk/doublestar v1.3.2 // indirect
 	github.com/cncf/udpa/go v0.0.0-20200909154343-1f710aca26a9 // indirect
@@ -28,15 +32,20 @@ require (
 	github.com/golang-commonmark/mdurl v0.0.0-20180910110917-8d018c6567d6 // indirect
 	github.com/golang-commonmark/puny v0.0.0-20180910110745-050be392d8b8 // indirect
 	github.com/golang/lint v0.0.0-20180702182130-06c8688daad7 // indirect
-	github.com/golang/protobuf v1.4.2
+	github.com/golang/protobuf v1.4.3
 	github.com/google/cel-go v0.5.1
 	github.com/google/uuid v1.1.2
-	github.com/googleapis/api-linter v1.5.0 // indirect
-	github.com/googleapis/gapic-generator-go v0.15.1 // indirect
+	github.com/googleapis/api-linter v1.7.1 // indirect
+	github.com/googleapis/gapic-generator-go v0.15.3 // indirect
+	github.com/googleapis/gapic-showcase v0.12.0 // indirect
 	github.com/googleapis/gax-go v2.0.2+incompatible // indirect
 	github.com/googleapis/gax-go/v2 v2.0.5
 	github.com/googleapis/gnostic v0.5.2-0.20201009164732-349b567acc40
+	github.com/graphql-go/graphql v0.7.9
+	github.com/graphql-go/handler v0.2.3
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
+	github.com/huandu/xstrings v1.3.2 // indirect
+	github.com/imdario/mergo v0.3.11 // indirect
 	github.com/improbable-eng/grpc-web v0.13.0
 	github.com/jackc/pgproto3/v2 v2.0.4 // indirect
 	github.com/ktr0731/grpc-web-go-client v0.2.7
@@ -44,8 +53,11 @@ require (
 	github.com/mattn/go-runewidth v0.0.9 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.3.3 // indirect
+	github.com/mitchellh/reflectwalk v1.0.1 // indirect
+	github.com/mwitkow/go-proto-validators v0.3.2 // indirect
 	github.com/opennota/wd v0.0.0-20180911144301-b446539ab1e7 // indirect
 	github.com/pelletier/go-toml v1.8.1 // indirect
+	github.com/pseudomuto/protoc-gen-doc v1.3.2 // indirect
 	github.com/soheilhy/cmux v0.1.4
 	github.com/spf13/afero v1.4.0 // indirect
 	github.com/spf13/cast v1.3.1 // indirect
@@ -56,16 +68,17 @@ require (
 	github.com/willf/bitset v1.1.11 // indirect
 	github.com/yoheimuta/go-protoparser/v4 v4.2.0
 	gitlab.com/golang-commonmark/linkify v0.0.0-20200225224916-64bca66f6ad3 // indirect
-	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a // indirect
+	golang.org/x/crypto v0.0.0-20201016220609-9e8e0b390897 // indirect
 	golang.org/x/exp v0.0.0-20200331195152-e8c3332aa8e5 // indirect
-	golang.org/x/net v0.0.0-20201009032441-dbdefad45b89
+	golang.org/x/net v0.0.0-20201027133719-8eef5233e2a1
 	golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43
 	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
-	golang.org/x/sys v0.0.0-20201009025420-dfb3f7c4e634 // indirect
+	golang.org/x/sys v0.0.0-20201028215240-c5abc1b1d397 // indirect
+	golang.org/x/text v0.3.4 // indirect
 	golang.org/x/tools v0.0.0-20200918232735-d647fc253266 // indirect
 	google.golang.org/api v0.32.0
-	google.golang.org/genproto v0.0.0-20201009135657-4d944d34d83c
-	google.golang.org/grpc v1.33.0
+	google.golang.org/genproto v0.0.0-20201028140639-c77dae4b0522
+	google.golang.org/grpc v1.33.1
 	google.golang.org/grpc/examples v0.0.0-20200731180010-8bec2f5d898f // indirect
 	google.golang.org/protobuf v1.25.0
 	gopkg.in/ini.v1 v1.61.0 // indirect
