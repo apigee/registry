@@ -174,6 +174,7 @@ func (s *RegistryServer) ListSpecs(ctx context.Context, req *rpc.ListSpecsReques
 			{"filename", filterArgTypeString},
 			{"description", filterArgTypeString},
 			{"style", filterArgTypeString},
+			{"size_bytes", filterArgTypeInt},
 		})
 	if err != nil {
 		return nil, internalError(err)
@@ -192,6 +193,7 @@ func (s *RegistryServer) ListSpecs(ctx context.Context, req *rpc.ListSpecsReques
 				"filename":    spec.FileName,
 				"description": spec.Description,
 				"style":       spec.Style,
+				"size_bytes":  spec.SizeInBytes,
 			})
 			if err != nil {
 				return nil, invalidArgumentError(err)
