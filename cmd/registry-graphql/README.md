@@ -15,7 +15,7 @@ Contents of the `static` directory are manually vendored from
 ## Invocation
 
 Just run the `registry-graphql` program. It currently takes no options and uses
-the APG\_\* environment variables to connect to a Registry API server. Because
+the `APG_*` environment variables to connect to a Registry API server. Because
 it serves static files, it should be run in the same directory as its source
 files.
 
