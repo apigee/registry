@@ -33,3 +33,13 @@ and make queries. For example, to see a list of projects, enter:
   }
 }
 ```
+
+## Schema
+
+[registry.graphql](registry.graphql) is an SDL schema that was produced with
+[prisma-labs/get-graphql-schema](https://github.com/prisma-labs/get-graphql-schema).
+
+```
+$ get-graphql-schema http://localhost:8088/graphql > registry.graphql
+```
+

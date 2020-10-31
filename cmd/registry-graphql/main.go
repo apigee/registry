@@ -295,10 +295,22 @@ var labelType = graphql.NewObject(
 
 // Paging support
 
+// generated page types should be built only once.
+var pageTypeCache map[string]*graphql.Object
+
+// pageType generates a wrapper type that represents a page in a list of objects.
 func pageType(t graphql.Type) *graphql.Object {
-	return graphql.NewObject(
+	if pageTypeCache == nil {
+		pageTypeCache = make(map[string]*graphql.Object)
+	}
+	name := t.Name() + "Page"
+	p, isFound := pageTypeCache[name]
+	if isFound {
+		return p
+	}
+	p = graphql.NewObject(
 		graphql.ObjectConfig{
-			Name: t.Name() + "Page",
+			Name: name,
 			Fields: graphql.Fields{
 				"values": &graphql.Field{
 					Type: graphql.NewList(t),
@@ -309,6 +321,8 @@ func pageType(t graphql.Type) *graphql.Object {
 			},
 		},
 	)
+	pageTypeCache[name] = p
+	return p
 }
 
 // Convert proto objects to GraphQL representations.

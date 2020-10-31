@@ -1,0 +1,93 @@
+type API {
+  description: String
+  display_name: String
+  id: String
+  labels(filter: String, page_token: String, page_size: Int): LabelPage
+  properties(filter: String, page_token: String, page_size: Int): PropertyPage
+  versions(page_token: String, page_size: Int, filter: String): VersionPage
+}
+
+type APIPage {
+  next_page_token: String
+  values: [API]
+}
+
+type Label {
+  id: String
+}
+
+type LabelPage {
+  next_page_token: String
+  values: [Label]
+}
+
+type Project {
+  apis(filter: String, page_token: String, page_size: Int): APIPage
+  description: String
+  display_name: String
+  id: String
+  labels(page_token: String, page_size: Int, filter: String): LabelPage
+  properties(filter: String, page_token: String, page_size: Int): PropertyPage
+}
+
+type ProjectPage {
+  next_page_token: String
+  values: [Project]
+}
+
+type Property {
+  id: String
+}
+
+type PropertyPage {
+  next_page_token: String
+  values: [Property]
+}
+
+type Query {
+  api(id: String!): API
+  apis(page_size: Int, parent: String!, filter: String, page_token: String): APIPage
+  label(id: String!): Label
+  labels(page_size: Int, parent: String!, filter: String, page_token: String): LabelPage
+  project(id: String!): Project
+  projects(filter: String, page_token: String, page_size: Int): ProjectPage
+  properties(parent: String!, filter: String, page_token: String, page_size: Int): PropertyPage
+  property(id: String!): Property
+  spec(id: String!): Spec
+  specs(parent: String!, filter: String, page_token: String, page_size: Int): SpecPage
+  version(id: String!): Version
+  versions(page_token: String, page_size: Int, parent: String!, filter: String): VersionPage
+}
+
+type Spec {
+  description: String
+  display_name: String
+  hash: String
+  id: String
+  labels(page_size: Int, filter: String, page_token: String): LabelPage
+  properties(filter: String, page_token: String, page_size: Int): PropertyPage
+  revision_id: String
+  size_bytes: Int
+  source_uri: String
+  style: String
+}
+
+type SpecPage {
+  next_page_token: String
+  values: [Spec]
+}
+
+type Version {
+  description: String
+  display_name: String
+  id: String
+  labels(filter: String, page_token: String, page_size: Int): LabelPage
+  properties(filter: String, page_token: String, page_size: Int): PropertyPage
+  specs(page_size: Int, filter: String, page_token: String): SpecPage
+}
+
+type VersionPage {
+  next_page_token: String
+  values: [Version]
+}
+
