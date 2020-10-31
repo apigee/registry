@@ -28,8 +28,26 @@ and make queries. For example, to see a list of projects, enter:
 ```
 {
   projects {
-    id
-    display_name
+    values {
+      id
+      display_name
+    }
+  }
+}
+```
+
+## Pagination
+
+List results are paginated. As an example, here is a fully-specified request
+for a page of projects:
+
+```
+{
+  projects (page_size: 2, page_token:"<previously-returned-page-token>") {
+    values {
+      id
+    }
+    next_page_token
   }
 }
 ```
@@ -42,4 +60,3 @@ and make queries. For example, to see a list of projects, enter:
 ```
 $ get-graphql-schema http://localhost:8088/graphql > registry.graphql
 ```
-
