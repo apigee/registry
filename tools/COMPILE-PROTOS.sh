@@ -66,6 +66,14 @@ protoc --proto_path=. --proto_path=${ANNOTATIONS} \
 mv gapic/github.com/apigee/registry/gapic/* gapic
 rm -rf gapic/github.com
 
+# add an accessor for the underlying gRPC client of the GAPIC client
+cat >> gapic/registry_client.go <<END
+
+func (c *RegistryClient) GrpcClient() rpcpb.RegistryClient {
+	return c.registryClient
+}
+END
+
 echo "Generating GAPIC-based CLI."
 protoc --proto_path=. --proto_path=${ANNOTATIONS} \
 	${PROTOS[*]} \

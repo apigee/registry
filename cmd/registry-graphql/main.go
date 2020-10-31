@@ -15,7 +15,6 @@
 package main
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -39,6 +38,12 @@ var argumentsForFilteredCollectionQuery = graphql.FieldConfigArgument{
 	"filter": &graphql.ArgumentConfig{
 		Type: graphql.String,
 	},
+	"page_token": &graphql.ArgumentConfig{
+		Type: graphql.String,
+	},
+	"page_size": &graphql.ArgumentConfig{
+		Type: graphql.Int,
+	},
 }
 
 var argumentsForFilteredParentedCollectionQuery = graphql.FieldConfigArgument{
@@ -47,6 +52,12 @@ var argumentsForFilteredParentedCollectionQuery = graphql.FieldConfigArgument{
 	},
 	"filter": &graphql.ArgumentConfig{
 		Type: graphql.String,
+	},
+	"page_token": &graphql.ArgumentConfig{
+		Type: graphql.String,
+	},
+	"page_size": &graphql.ArgumentConfig{
+		Type: graphql.Int,
 	},
 }
 
@@ -66,7 +77,7 @@ var queryType = graphql.NewObject(
 				Resolve: resolveProjects,
 			},
 			"apis": &graphql.Field{
-				Type:    graphql.NewList(apiType),
+				Type:    apisPageType,
 				Args:    argumentsForFilteredParentedCollectionQuery,
 				Resolve: resolveAPIs,
 			},
@@ -283,6 +294,26 @@ var labelType = graphql.NewObject(
 	},
 )
 
+// Paging support
+
+func buildPageType(name string, t graphql.Type) *graphql.Object {
+	return graphql.NewObject(
+		graphql.ObjectConfig{
+			Name: name,
+			Fields: graphql.Fields{
+				"values": &graphql.Field{
+					Type: graphql.NewList(t),
+				},
+				"next_page_token": &graphql.Field{
+					Type: graphql.String,
+				},
+			},
+		},
+	)
+}
+
+var apisPageType = buildPageType("ApiPage", apiType)
+
 // Convert proto objects to GraphQL representations.
 
 func representationForProject(project *rpc.Project) map[string]interface{} {
@@ -341,7 +372,7 @@ func representationForLabel(label *rpc.Label) map[string]interface{} {
 // Resolvers for GraphQL fields.
 
 func resolveProjects(p graphql.ResolveParams) (interface{}, error) {
-	ctx := context.TODO()
+	ctx := p.Context
 	c, err := connection.NewClient(ctx)
 	if err != nil {
 		return nil, err
@@ -379,7 +410,7 @@ func getParentFromParams(p graphql.ResolveParams) string {
 }
 
 func resolveAPIs(p graphql.ResolveParams) (interface{}, error) {
-	ctx := context.TODO()
+	ctx := p.Context
 	c, err := connection.NewClient(ctx)
 	if err != nil {
 		return nil, err
@@ -391,27 +422,27 @@ func resolveAPIs(p graphql.ResolveParams) (interface{}, error) {
 	if isFound {
 		req.Filter = filter
 	}
-	it := c.ListApis(ctx, req)
-	apis := []map[string]interface{}{}
-	count := 0
-	for {
-		api, err := it.Next()
-		if err == iterator.Done {
-			break
-		} else if err != nil {
-			return nil, err
-		}
-		apis = append(apis, representationForAPI(api))
-		count++
-		if count > 10 {
-			break
-		}
+	pageToken, isFound := p.Args["page_token"].(string)
+	if isFound {
+		req.PageToken = pageToken
 	}
-	return apis, nil
+	pageSize, isFound := p.Args["page_size"].(int)
+	if isFound {
+		req.PageSize = int32(pageSize)
+	}
+	response, err := c.GrpcClient().ListApis(ctx, req)
+	apis := []map[string]interface{}{}
+	for _, api := range response.GetApis() {
+		apis = append(apis, representationForAPI(api))
+	}
+	page := make(map[string]interface{}, 0)
+	page["values"] = apis
+	page["next_page_token"] = response.GetNextPageToken()
+	return page, nil
 }
 
 func resolveVersions(p graphql.ResolveParams) (interface{}, error) {
-	ctx := context.TODO()
+	ctx := p.Context
 	c, err := connection.NewClient(ctx)
 	if err != nil {
 		return nil, err
@@ -438,7 +469,7 @@ func resolveVersions(p graphql.ResolveParams) (interface{}, error) {
 }
 
 func resolveSpecs(p graphql.ResolveParams) (interface{}, error) {
-	ctx := context.TODO()
+	ctx := p.Context
 	c, err := connection.NewClient(ctx)
 	if err != nil {
 		return nil, err
@@ -465,7 +496,7 @@ func resolveSpecs(p graphql.ResolveParams) (interface{}, error) {
 }
 
 func resolveProperties(p graphql.ResolveParams) (interface{}, error) {
-	ctx := context.TODO()
+	ctx := p.Context
 	c, err := connection.NewClient(ctx)
 	if err != nil {
 		return nil, err
@@ -493,7 +524,7 @@ func resolveProperties(p graphql.ResolveParams) (interface{}, error) {
 }
 
 func resolveLabels(p graphql.ResolveParams) (interface{}, error) {
-	ctx := context.TODO()
+	ctx := p.Context
 	c, err := connection.NewClient(ctx)
 	if err != nil {
 		return nil, err
@@ -521,7 +552,7 @@ func resolveLabels(p graphql.ResolveParams) (interface{}, error) {
 }
 
 func resolveProject(p graphql.ResolveParams) (interface{}, error) {
-	ctx := context.TODO()
+	ctx := p.Context
 	c, err := connection.NewClient(ctx)
 	if err != nil {
 		return nil, err
@@ -538,7 +569,7 @@ func resolveProject(p graphql.ResolveParams) (interface{}, error) {
 }
 
 func resolveAPI(p graphql.ResolveParams) (interface{}, error) {
-	ctx := context.TODO()
+	ctx := p.Context
 	c, err := connection.NewClient(ctx)
 	if err != nil {
 		return nil, err
@@ -555,7 +586,7 @@ func resolveAPI(p graphql.ResolveParams) (interface{}, error) {
 }
 
 func resolveVersion(p graphql.ResolveParams) (interface{}, error) {
-	ctx := context.TODO()
+	ctx := p.Context
 	c, err := connection.NewClient(ctx)
 	if err != nil {
 		return nil, err
@@ -572,7 +603,7 @@ func resolveVersion(p graphql.ResolveParams) (interface{}, error) {
 }
 
 func resolveSpec(p graphql.ResolveParams) (interface{}, error) {
-	ctx := context.TODO()
+	ctx := p.Context
 	c, err := connection.NewClient(ctx)
 	if err != nil {
 		return nil, err
@@ -589,7 +620,7 @@ func resolveSpec(p graphql.ResolveParams) (interface{}, error) {
 }
 
 func resolveProperty(p graphql.ResolveParams) (interface{}, error) {
-	ctx := context.TODO()
+	ctx := p.Context
 	c, err := connection.NewClient(ctx)
 	if err != nil {
 		return nil, err
@@ -606,7 +637,7 @@ func resolveProperty(p graphql.ResolveParams) (interface{}, error) {
 }
 
 func resolveLabel(p graphql.ResolveParams) (interface{}, error) {
-	ctx := context.TODO()
+	ctx := p.Context
 	c, err := connection.NewClient(ctx)
 	if err != nil {
 		return nil, err
