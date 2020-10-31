@@ -23,7 +23,6 @@ import (
 	"github.com/apigee/registry/rpc"
 	"github.com/graphql-go/graphql"
 	"github.com/graphql-go/handler"
-	"google.golang.org/api/iterator"
 )
 
 // GraphQL types.
@@ -34,7 +33,7 @@ var schema, _ = graphql.NewSchema(
 	},
 )
 
-var argumentsForFilteredCollectionQuery = graphql.FieldConfigArgument{
+var argumentsForCollectionQuery = graphql.FieldConfigArgument{
 	"filter": &graphql.ArgumentConfig{
 		Type: graphql.String,
 	},
@@ -46,7 +45,7 @@ var argumentsForFilteredCollectionQuery = graphql.FieldConfigArgument{
 	},
 }
 
-var argumentsForFilteredParentedCollectionQuery = graphql.FieldConfigArgument{
+var argumentsForParentedCollectionQuery = graphql.FieldConfigArgument{
 	"parent": &graphql.ArgumentConfig{
 		Type: graphql.NewNonNull(graphql.String),
 	},
@@ -72,34 +71,34 @@ var queryType = graphql.NewObject(
 		Name: "Query",
 		Fields: graphql.Fields{
 			"projects": &graphql.Field{
-				Type:    graphql.NewList(projectType),
-				Args:    argumentsForFilteredCollectionQuery,
+				Type:    pageType(projectType),
+				Args:    argumentsForCollectionQuery,
 				Resolve: resolveProjects,
 			},
 			"apis": &graphql.Field{
-				Type:    apisPageType,
-				Args:    argumentsForFilteredParentedCollectionQuery,
+				Type:    pageType(apiType),
+				Args:    argumentsForParentedCollectionQuery,
 				Resolve: resolveAPIs,
 			},
 			"versions": &graphql.Field{
-				Type:    graphql.NewList(versionType),
-				Args:    argumentsForFilteredParentedCollectionQuery,
+				Type:    pageType(versionType),
+				Args:    argumentsForParentedCollectionQuery,
 				Resolve: resolveVersions,
 			},
 			"specs": &graphql.Field{
-				Type:    graphql.NewList(specType),
-				Args:    argumentsForFilteredParentedCollectionQuery,
+				Type:    pageType(specType),
+				Args:    argumentsForParentedCollectionQuery,
 				Resolve: resolveSpecs,
 			},
 			"properties": &graphql.Field{
-				Type:    graphql.NewList(propertyType),
-				Args:    argumentsForFilteredParentedCollectionQuery,
+				Type:    pageType(propertyType),
+				Args:    argumentsForParentedCollectionQuery,
 				Resolve: resolveProperties,
 			},
 			"labels": &graphql.Field{
-				Type:    graphql.NewList(apiType),
-				Args:    argumentsForFilteredParentedCollectionQuery,
-				Resolve: resolveAPIs,
+				Type:    pageType(labelType),
+				Args:    argumentsForParentedCollectionQuery,
+				Resolve: resolveLabels,
 			},
 			"project": &graphql.Field{
 				Type:    projectType,
@@ -148,18 +147,18 @@ var projectType = graphql.NewObject(
 				Type: graphql.String,
 			},
 			"apis": &graphql.Field{
-				Type:    graphql.NewList(apiType),
-				Args:    argumentsForFilteredCollectionQuery,
+				Type:    pageType(apiType),
+				Args:    argumentsForCollectionQuery,
 				Resolve: resolveAPIs,
 			},
 			"labels": &graphql.Field{
-				Type:    graphql.NewList(labelType),
-				Args:    nil,
+				Type:    pageType(labelType),
+				Args:    argumentsForCollectionQuery,
 				Resolve: resolveLabels,
 			},
 			"properties": &graphql.Field{
-				Type:    graphql.NewList(propertyType),
-				Args:    nil,
+				Type:    pageType(propertyType),
+				Args:    argumentsForCollectionQuery,
 				Resolve: resolveProperties,
 			},
 		},
@@ -180,18 +179,18 @@ var apiType = graphql.NewObject(
 				Type: graphql.String,
 			},
 			"versions": &graphql.Field{
-				Type:    graphql.NewList(versionType),
-				Args:    argumentsForFilteredCollectionQuery,
+				Type:    pageType(versionType),
+				Args:    argumentsForCollectionQuery,
 				Resolve: resolveVersions,
 			},
 			"labels": &graphql.Field{
-				Type:    graphql.NewList(labelType),
-				Args:    nil,
+				Type:    pageType(labelType),
+				Args:    argumentsForCollectionQuery,
 				Resolve: resolveLabels,
 			},
 			"properties": &graphql.Field{
-				Type:    graphql.NewList(propertyType),
-				Args:    nil,
+				Type:    pageType(propertyType),
+				Args:    argumentsForCollectionQuery,
 				Resolve: resolveProperties,
 			},
 		},
@@ -212,18 +211,18 @@ var versionType = graphql.NewObject(
 				Type: graphql.String,
 			},
 			"specs": &graphql.Field{
-				Type:    graphql.NewList(specType),
-				Args:    argumentsForFilteredCollectionQuery,
+				Type:    pageType(specType),
+				Args:    argumentsForCollectionQuery,
 				Resolve: resolveSpecs,
 			},
 			"labels": &graphql.Field{
-				Type:    graphql.NewList(labelType),
-				Args:    nil,
+				Type:    pageType(labelType),
+				Args:    argumentsForCollectionQuery,
 				Resolve: resolveLabels,
 			},
 			"properties": &graphql.Field{
-				Type:    graphql.NewList(propertyType),
-				Args:    nil,
+				Type:    pageType(propertyType),
+				Args:    argumentsForCollectionQuery,
 				Resolve: resolveProperties,
 			},
 		},
@@ -259,13 +258,13 @@ var specType = graphql.NewObject(
 				Type: graphql.String,
 			},
 			"labels": &graphql.Field{
-				Type:    graphql.NewList(labelType),
-				Args:    nil,
+				Type:    pageType(labelType),
+				Args:    argumentsForCollectionQuery,
 				Resolve: resolveLabels,
 			},
 			"properties": &graphql.Field{
-				Type:    graphql.NewList(propertyType),
-				Args:    nil,
+				Type:    pageType(propertyType),
+				Args:    argumentsForCollectionQuery,
 				Resolve: resolveProperties,
 			},
 		},
@@ -296,10 +295,10 @@ var labelType = graphql.NewObject(
 
 // Paging support
 
-func buildPageType(name string, t graphql.Type) *graphql.Object {
+func pageType(t graphql.Type) *graphql.Object {
 	return graphql.NewObject(
 		graphql.ObjectConfig{
-			Name: name,
+			Name: t.Name() + "Page",
 			Fields: graphql.Fields{
 				"values": &graphql.Field{
 					Type: graphql.NewList(t),
@@ -311,8 +310,6 @@ func buildPageType(name string, t graphql.Type) *graphql.Object {
 		},
 	)
 }
-
-var apisPageType = buildPageType("ApiPage", apiType)
 
 // Convert proto objects to GraphQL representations.
 
@@ -369,6 +366,21 @@ func representationForLabel(label *rpc.Label) map[string]interface{} {
 	}
 }
 
+// Helper
+
+func getParentFromParams(p graphql.ResolveParams) string {
+	var parent string
+	id := p.Source.(map[string]interface{})["id"]
+	if id != nil {
+		parent = id.(string)
+	}
+	name, isFound := p.Args["parent"]
+	if isFound {
+		parent = name.(string)
+	}
+	return parent
+}
+
 // Resolvers for GraphQL fields.
 
 func resolveProjects(p graphql.ResolveParams) (interface{}, error) {
@@ -382,31 +394,23 @@ func resolveProjects(p graphql.ResolveParams) (interface{}, error) {
 	if isFound {
 		req.Filter = filter
 	}
-	it := c.ListProjects(ctx, req)
+	pageToken, isFound := p.Args["page_token"].(string)
+	if isFound {
+		req.PageToken = pageToken
+	}
+	pageSize, isFound := p.Args["page_size"].(int)
+	if isFound {
+		req.PageSize = int32(pageSize)
+	}
+	response, err := c.GrpcClient().ListProjects(ctx, req)
 	projects := []map[string]interface{}{}
-	for {
-		project, err := it.Next()
-		if err == iterator.Done {
-			break
-		} else if err != nil {
-			return nil, err
-		}
+	for _, project := range response.GetProjects() {
 		projects = append(projects, representationForProject(project))
 	}
-	return projects, nil
-}
-
-func getParentFromParams(p graphql.ResolveParams) string {
-	var parent string
-	id := p.Source.(map[string]interface{})["id"]
-	if id != nil {
-		parent = id.(string)
-	}
-	name, isFound := p.Args["parent"]
-	if isFound {
-		parent = name.(string)
-	}
-	return parent
+	page := make(map[string]interface{}, 0)
+	page["values"] = projects
+	page["next_page_token"] = response.GetNextPageToken()
+	return page, nil
 }
 
 func resolveAPIs(p graphql.ResolveParams) (interface{}, error) {
@@ -454,18 +458,23 @@ func resolveVersions(p graphql.ResolveParams) (interface{}, error) {
 	if isFound {
 		req.Filter = filter
 	}
-	it := c.ListVersions(ctx, req)
+	pageToken, isFound := p.Args["page_token"].(string)
+	if isFound {
+		req.PageToken = pageToken
+	}
+	pageSize, isFound := p.Args["page_size"].(int)
+	if isFound {
+		req.PageSize = int32(pageSize)
+	}
+	response, err := c.GrpcClient().ListVersions(ctx, req)
 	versions := []map[string]interface{}{}
-	for {
-		version, err := it.Next()
-		if err == iterator.Done {
-			break
-		} else if err != nil {
-			return nil, err
-		}
+	for _, version := range response.GetVersions() {
 		versions = append(versions, representationForVersion(version))
 	}
-	return versions, nil
+	page := make(map[string]interface{}, 0)
+	page["values"] = versions
+	page["next_page_token"] = response.GetNextPageToken()
+	return page, nil
 }
 
 func resolveSpecs(p graphql.ResolveParams) (interface{}, error) {
@@ -481,18 +490,23 @@ func resolveSpecs(p graphql.ResolveParams) (interface{}, error) {
 	if isFound {
 		req.Filter = filter
 	}
-	it := c.ListSpecs(ctx, req)
+	pageToken, isFound := p.Args["page_token"].(string)
+	if isFound {
+		req.PageToken = pageToken
+	}
+	pageSize, isFound := p.Args["page_size"].(int)
+	if isFound {
+		req.PageSize = int32(pageSize)
+	}
+	response, err := c.GrpcClient().ListSpecs(ctx, req)
 	specs := []map[string]interface{}{}
-	for {
-		spec, err := it.Next()
-		if err == iterator.Done {
-			break
-		} else if err != nil {
-			return nil, err
-		}
+	for _, spec := range response.GetSpecs() {
 		specs = append(specs, representationForSpec(spec))
 	}
-	return specs, nil
+	page := make(map[string]interface{}, 0)
+	page["values"] = specs
+	page["next_page_token"] = response.GetNextPageToken()
+	return page, nil
 }
 
 func resolveProperties(p graphql.ResolveParams) (interface{}, error) {
@@ -504,23 +518,23 @@ func resolveProperties(p graphql.ResolveParams) (interface{}, error) {
 	req := &rpc.ListPropertiesRequest{
 		Parent: getParentFromParams(p),
 	}
-	it := c.ListProperties(ctx, req)
-	properties := []map[string]interface{}{}
-	count := 0
-	for {
-		property, err := it.Next()
-		if err == iterator.Done {
-			break
-		} else if err != nil {
-			return nil, err
-		}
-		properties = append(properties, representationForProperty(property))
-		count++
-		if count > 10 {
-			break
-		}
+	pageToken, isFound := p.Args["page_token"].(string)
+	if isFound {
+		req.PageToken = pageToken
 	}
-	return properties, nil
+	pageSize, isFound := p.Args["page_size"].(int)
+	if isFound {
+		req.PageSize = int32(pageSize)
+	}
+	response, err := c.GrpcClient().ListProperties(ctx, req)
+	properties := []map[string]interface{}{}
+	for _, property := range response.GetProperties() {
+		properties = append(properties, representationForProperty(property))
+	}
+	page := make(map[string]interface{}, 0)
+	page["values"] = properties
+	page["next_page_token"] = response.GetNextPageToken()
+	return page, nil
 }
 
 func resolveLabels(p graphql.ResolveParams) (interface{}, error) {
@@ -532,23 +546,23 @@ func resolveLabels(p graphql.ResolveParams) (interface{}, error) {
 	req := &rpc.ListLabelsRequest{
 		Parent: getParentFromParams(p),
 	}
-	it := c.ListLabels(ctx, req)
-	labels := []map[string]interface{}{}
-	count := 0
-	for {
-		label, err := it.Next()
-		if err == iterator.Done {
-			break
-		} else if err != nil {
-			return nil, err
-		}
-		labels = append(labels, representationForLabel(label))
-		count++
-		if count > 10 {
-			break
-		}
+	pageToken, isFound := p.Args["page_token"].(string)
+	if isFound {
+		req.PageToken = pageToken
 	}
-	return labels, nil
+	pageSize, isFound := p.Args["page_size"].(int)
+	if isFound {
+		req.PageSize = int32(pageSize)
+	}
+	response, err := c.GrpcClient().ListLabels(ctx, req)
+	labels := []map[string]interface{}{}
+	for _, label := range response.GetLabels() {
+		labels = append(labels, representationForLabel(label))
+	}
+	page := make(map[string]interface{}, 0)
+	page["values"] = labels
+	page["next_page_token"] = response.GetNextPageToken()
+	return page, nil
 }
 
 func resolveProject(p graphql.ResolveParams) (interface{}, error) {
