@@ -18,9 +18,11 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
+	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/graphql-go/graphql"
 	"github.com/graphql-go/handler"
 )
@@ -161,6 +163,12 @@ var projectType = graphql.NewObject(
 				Args:    argumentsForCollectionQuery,
 				Resolve: resolveProperties,
 			},
+			"created": &graphql.Field{
+				Type: timestampType,
+			},
+			"updated": &graphql.Field{
+				Type: timestampType,
+			},
 		},
 	},
 )
@@ -193,6 +201,12 @@ var apiType = graphql.NewObject(
 				Args:    argumentsForCollectionQuery,
 				Resolve: resolveProperties,
 			},
+			"created": &graphql.Field{
+				Type: timestampType,
+			},
+			"updated": &graphql.Field{
+				Type: timestampType,
+			},
 		},
 	},
 )
@@ -224,6 +238,12 @@ var versionType = graphql.NewObject(
 				Type:    pageType(propertyType),
 				Args:    argumentsForCollectionQuery,
 				Resolve: resolveProperties,
+			},
+			"created": &graphql.Field{
+				Type: timestampType,
+			},
+			"updated": &graphql.Field{
+				Type: timestampType,
 			},
 		},
 	},
@@ -267,6 +287,12 @@ var specType = graphql.NewObject(
 				Args:    argumentsForCollectionQuery,
 				Resolve: resolveProperties,
 			},
+			"created": &graphql.Field{
+				Type: timestampType,
+			},
+			"updated": &graphql.Field{
+				Type: timestampType,
+			},
 		},
 	},
 )
@@ -278,6 +304,12 @@ var propertyType = graphql.NewObject(
 			"id": &graphql.Field{
 				Type: graphql.String,
 			},
+			"created": &graphql.Field{
+				Type: timestampType,
+			},
+			"updated": &graphql.Field{
+				Type: timestampType,
+			},
 		},
 	},
 )
@@ -287,6 +319,29 @@ var labelType = graphql.NewObject(
 		Name: "Label",
 		Fields: graphql.Fields{
 			"id": &graphql.Field{
+				Type: graphql.String,
+			},
+			"created": &graphql.Field{
+				Type: timestampType,
+			},
+			"updated": &graphql.Field{
+				Type: timestampType,
+			},
+		},
+	},
+)
+
+var timestampType = graphql.NewObject(
+	graphql.ObjectConfig{
+		Name: "Timestamp",
+		Fields: graphql.Fields{
+			"seconds": &graphql.Field{
+				Type: graphql.Int,
+			},
+			"nanos": &graphql.Field{
+				Type: graphql.Int,
+			},
+			"rfc3339": &graphql.Field{
 				Type: graphql.String,
 			},
 		},
@@ -332,6 +387,8 @@ func representationForProject(project *rpc.Project) map[string]interface{} {
 		"id":           project.Name,
 		"display_name": project.DisplayName,
 		"description":  project.Description,
+		"created":      representationForTimestamp(project.CreateTime),
+		"updated":      representationForTimestamp(project.UpdateTime),
 	}
 }
 
@@ -343,6 +400,8 @@ func representationForAPI(api *rpc.Api) map[string]interface{} {
 		"availability":        api.Availability,
 		"recommended_version": api.RecommendedVersion,
 		"owner":               api.Owner,
+		"created":             representationForTimestamp(api.CreateTime),
+		"updated":             representationForTimestamp(api.UpdateTime),
 	}
 }
 
@@ -352,6 +411,8 @@ func representationForVersion(version *rpc.Version) map[string]interface{} {
 		"display_name": version.DisplayName,
 		"description":  version.Description,
 		"state":        version.State,
+		"created":      representationForTimestamp(version.CreateTime),
+		"updated":      representationForTimestamp(version.UpdateTime),
 	}
 }
 
@@ -365,18 +426,32 @@ func representationForSpec(spec *rpc.Spec) map[string]interface{} {
 		"hash":        spec.Hash,
 		"source_uri":  spec.SourceUri,
 		"revision_id": spec.RevisionId,
+		"created":     representationForTimestamp(spec.CreateTime),
+		"updated":     representationForTimestamp(spec.UpdateTime),
 	}
 }
 
 func representationForProperty(property *rpc.Property) map[string]interface{} {
 	return map[string]interface{}{
-		"id": property.Name,
+		"id":      property.Name,
+		"created": representationForTimestamp(property.CreateTime),
+		"updated": representationForTimestamp(property.UpdateTime),
 	}
 }
 
 func representationForLabel(label *rpc.Label) map[string]interface{} {
 	return map[string]interface{}{
-		"id": label.Name,
+		"id":      label.Name,
+		"created": representationForTimestamp(label.CreateTime),
+		"updated": representationForTimestamp(label.UpdateTime),
+	}
+}
+
+func representationForTimestamp(timestamp *timestamp.Timestamp) map[string]interface{} {
+	return map[string]interface{}{
+		"seconds": timestamp.Seconds,
+		"nanos":   timestamp.Nanos,
+		"rfc3339": time.Unix(timestamp.Seconds, int64(timestamp.Nanos)).Format(time.RFC3339),
 	}
 }
 
@@ -421,10 +496,10 @@ func resolveProjects(p graphql.ResolveParams) (interface{}, error) {
 	for _, project := range response.GetProjects() {
 		projects = append(projects, representationForProject(project))
 	}
-	page := make(map[string]interface{}, 0)
-	page["values"] = projects
-	page["next_page_token"] = response.GetNextPageToken()
-	return page, nil
+	return map[string]interface{}{
+		"values":          projects,
+		"next_page_token": response.GetNextPageToken(),
+	}, nil
 }
 
 func resolveAPIs(p graphql.ResolveParams) (interface{}, error) {
@@ -447,16 +522,25 @@ func resolveAPIs(p graphql.ResolveParams) (interface{}, error) {
 	pageSize, isFound := p.Args["page_size"].(int)
 	if isFound {
 		req.PageSize = int32(pageSize)
+	} else {
+		pageSize = 50
 	}
-	response, err := c.GrpcClient().ListApis(ctx, req)
 	apis := []map[string]interface{}{}
-	for _, api := range response.GetApis() {
-		apis = append(apis, representationForAPI(api))
+	var response *rpc.ListApisResponse
+	for len(apis) < pageSize {
+		response, err = c.GrpcClient().ListApis(ctx, req)
+		for _, api := range response.GetApis() {
+			apis = append(apis, representationForAPI(api))
+		}
+		req.PageToken = response.GetNextPageToken()
+		if req.PageToken == "" {
+			break
+		}
 	}
-	page := make(map[string]interface{}, 0)
-	page["values"] = apis
-	page["next_page_token"] = response.GetNextPageToken()
-	return page, nil
+	return map[string]interface{}{
+		"values":          apis,
+		"next_page_token": response.GetNextPageToken(),
+	}, nil
 }
 
 func resolveVersions(p graphql.ResolveParams) (interface{}, error) {
@@ -485,10 +569,10 @@ func resolveVersions(p graphql.ResolveParams) (interface{}, error) {
 	for _, version := range response.GetVersions() {
 		versions = append(versions, representationForVersion(version))
 	}
-	page := make(map[string]interface{}, 0)
-	page["values"] = versions
-	page["next_page_token"] = response.GetNextPageToken()
-	return page, nil
+	return map[string]interface{}{
+		"values":          versions,
+		"next_page_token": response.GetNextPageToken(),
+	}, nil
 }
 
 func resolveSpecs(p graphql.ResolveParams) (interface{}, error) {
@@ -517,10 +601,10 @@ func resolveSpecs(p graphql.ResolveParams) (interface{}, error) {
 	for _, spec := range response.GetSpecs() {
 		specs = append(specs, representationForSpec(spec))
 	}
-	page := make(map[string]interface{}, 0)
-	page["values"] = specs
-	page["next_page_token"] = response.GetNextPageToken()
-	return page, nil
+	return map[string]interface{}{
+		"values":          specs,
+		"next_page_token": response.GetNextPageToken(),
+	}, nil
 }
 
 func resolveProperties(p graphql.ResolveParams) (interface{}, error) {
@@ -545,10 +629,10 @@ func resolveProperties(p graphql.ResolveParams) (interface{}, error) {
 	for _, property := range response.GetProperties() {
 		properties = append(properties, representationForProperty(property))
 	}
-	page := make(map[string]interface{}, 0)
-	page["values"] = properties
-	page["next_page_token"] = response.GetNextPageToken()
-	return page, nil
+	return map[string]interface{}{
+		"values":          properties,
+		"next_page_token": response.GetNextPageToken(),
+	}, nil
 }
 
 func resolveLabels(p graphql.ResolveParams) (interface{}, error) {
@@ -573,10 +657,10 @@ func resolveLabels(p graphql.ResolveParams) (interface{}, error) {
 	for _, label := range response.GetLabels() {
 		labels = append(labels, representationForLabel(label))
 	}
-	page := make(map[string]interface{}, 0)
-	page["values"] = labels
-	page["next_page_token"] = response.GetNextPageToken()
-	return page, nil
+	return map[string]interface{}{
+		"values":          labels,
+		"next_page_token": response.GetNextPageToken(),
+	}, nil
 }
 
 func resolveProject(p graphql.ResolveParams) (interface{}, error) {
