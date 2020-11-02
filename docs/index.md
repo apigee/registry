@@ -8,7 +8,7 @@ The Registry API ([protocol documentation](/registry/api.html)) presents a simpl
 projects/{project_id}/apis/{api_id}/versions/{version_id}/specs/{spec_id}
 ```
 
-Specs can be of any format, and spec formats are specified with a `style` field in the Spec record. Additional metadata is represented by Properties and Labels. **Properties** associate values with any of the main entities (Projects, APIs, Versions, and Specs), and property values can be scalars or structured messages (described with Protocol Buffers). **Labels** can also be associated with any of the main entity types and allow entities to be tagged and filtered. Depending on the entities they are associated with, properties can have any of the following resource names:
+Specs can be of any format, and spec formats are specified with a `style` field in the Spec record. Additional metadata is represented by Properties and Labels. **Properties** associate values with any of the main entities (Projects, APIs, Versions, and Specs), and property values can be scalars or structured messages that can optionally be described with Protocol Buffers. **Labels** can also be associated with any of the main entity types and allow entities to be tagged and filtered. Depending on the entities they are associated with, properties can have any of the following resource names:
 
 ```
 projects/{project_id}/properties/{property_id}
