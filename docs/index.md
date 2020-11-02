@@ -2,7 +2,7 @@
 
 We've found that many organizations, including ours, are challenged by the increasing number of APIs that they make and use. The Registry API is an experimental approach to organizing information about APIs. Machine-readable API specs are key, but we also want to track APIs that lack specs, and we also want a way to store and track API-related metadata that doesn't fit well in specs.
 
-The Registry API ([protocol documentation](/registry/api.html)) presents a simple resource hierarchy for tracking API information. All APIs are tracked in a container called a **Project**. **APIs** contain **Versions**, and Versions contain **Specs**. To support this, we use the following convention for naming resources:
+The Registry API ([protocol documentation](/registry/api.html)) presents a simple resource hierarchy for tracking API information. All **APIs** are tracked in a container called a **Project**. APIs contain **Versions**, and Versions contain **Specs**. To support this, we use the following convention for naming resources:
 
 ```
 projects/{project_id}/apis/{api_id}/versions/{version_id}/specs/{spec_id}
