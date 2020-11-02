@@ -15,6 +15,7 @@
 package gorm
 
 import (
+	"encoding/base64"
 	"log"
 
 	"github.com/apigee/registry/server/storage"
@@ -86,7 +87,11 @@ func (q *Query) Order(value string) storage.Query {
 }
 
 // ApplyCursor configures a query to start from a specified cursor.
-func (q *Query) ApplyCursor(cursorStr string) (storage.Query, error) {
-	q.Cursor = cursorStr
+func (q *Query) ApplyCursor(encodedCursor string) (storage.Query, error) {
+	decodedCursor, err := base64.StdEncoding.DecodeString(encodedCursor)
+	if err != nil {
+		return q, err
+	}
+	q.Cursor = string(decodedCursor)
 	return q, nil
 }
