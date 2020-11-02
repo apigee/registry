@@ -1,93 +1,139 @@
 type API {
+  created: Timestamp
   description: String
   display_name: String
   id: String
-  labels(filter: String, page_token: String, page_size: Int): LabelPage
-  properties(filter: String, page_token: String, page_size: Int): PropertyPage
-  versions(page_token: String, page_size: Int, filter: String): VersionPage
+  labels(filter: String, after: String, first: Int): LabelConnection
+  properties(filter: String, after: String, first: Int): PropertyConnection
+  updated: Timestamp
+  versions(first: Int, filter: String, after: String): VersionConnection
 }
 
-type APIPage {
-  next_page_token: String
-  values: [API]
+type APIConnection {
+  edges: [APIEdges]
+  pageInfo: PageInfo
+}
+
+type APIEdges {
+  node: API
 }
 
 type Label {
+  created: Timestamp
   id: String
+  updated: Timestamp
 }
 
-type LabelPage {
-  next_page_token: String
-  values: [Label]
+type LabelConnection {
+  edges: [LabelEdges]
+  pageInfo: PageInfo
+}
+
+type LabelEdges {
+  node: Label
+}
+
+type PageInfo {
+  endCursor: String
 }
 
 type Project {
-  apis(filter: String, page_token: String, page_size: Int): APIPage
+  apis(filter: String, after: String, first: Int): APIConnection
+  created: Timestamp
   description: String
   display_name: String
   id: String
-  labels(page_token: String, page_size: Int, filter: String): LabelPage
-  properties(filter: String, page_token: String, page_size: Int): PropertyPage
+  labels(after: String, first: Int, filter: String): LabelConnection
+  properties(after: String, first: Int, filter: String): PropertyConnection
+  updated: Timestamp
 }
 
-type ProjectPage {
-  next_page_token: String
-  values: [Project]
+type ProjectConnection {
+  edges: [ProjectEdges]
+  pageInfo: PageInfo
+}
+
+type ProjectEdges {
+  node: Project
 }
 
 type Property {
+  created: Timestamp
   id: String
+  updated: Timestamp
 }
 
-type PropertyPage {
-  next_page_token: String
-  values: [Property]
+type PropertyConnection {
+  edges: [PropertyEdges]
+  pageInfo: PageInfo
+}
+
+type PropertyEdges {
+  node: Property
 }
 
 type Query {
   api(id: String!): API
-  apis(page_size: Int, parent: String!, filter: String, page_token: String): APIPage
+  apis(parent: String!, filter: String, after: String, first: Int): APIConnection
   label(id: String!): Label
-  labels(page_size: Int, parent: String!, filter: String, page_token: String): LabelPage
+  labels(parent: String!, filter: String, after: String, first: Int): LabelConnection
   project(id: String!): Project
-  projects(filter: String, page_token: String, page_size: Int): ProjectPage
-  properties(parent: String!, filter: String, page_token: String, page_size: Int): PropertyPage
+  projects(filter: String, after: String, first: Int): ProjectConnection
+  properties(parent: String!, filter: String, after: String, first: Int): PropertyConnection
   property(id: String!): Property
   spec(id: String!): Spec
-  specs(parent: String!, filter: String, page_token: String, page_size: Int): SpecPage
+  specs(after: String, first: Int, parent: String!, filter: String): SpecConnection
   version(id: String!): Version
-  versions(page_token: String, page_size: Int, parent: String!, filter: String): VersionPage
+  versions(first: Int, parent: String!, filter: String, after: String): VersionConnection
 }
 
 type Spec {
+  created: Timestamp
   description: String
   display_name: String
   hash: String
   id: String
-  labels(page_size: Int, filter: String, page_token: String): LabelPage
-  properties(filter: String, page_token: String, page_size: Int): PropertyPage
+  labels(filter: String, after: String, first: Int): LabelConnection
+  properties(filter: String, after: String, first: Int): PropertyConnection
   revision_id: String
   size_bytes: Int
   source_uri: String
   style: String
+  updated: Timestamp
 }
 
-type SpecPage {
-  next_page_token: String
-  values: [Spec]
+type SpecConnection {
+  edges: [SpecEdges]
+  pageInfo: PageInfo
+}
+
+type SpecEdges {
+  node: Spec
+}
+
+type Timestamp {
+  nanos: Int
+  rfc3339: String
+  seconds: Int
 }
 
 type Version {
+  created: Timestamp
   description: String
   display_name: String
   id: String
-  labels(filter: String, page_token: String, page_size: Int): LabelPage
-  properties(filter: String, page_token: String, page_size: Int): PropertyPage
-  specs(page_size: Int, filter: String, page_token: String): SpecPage
+  labels(filter: String, after: String, first: Int): LabelConnection
+  properties(filter: String, after: String, first: Int): PropertyConnection
+  specs(first: Int, filter: String, after: String): SpecConnection
+  updated: Timestamp
 }
 
-type VersionPage {
-  next_page_token: String
-  values: [Version]
+type VersionConnection {
+  edges: [VersionEdges]
+  pageInfo: PageInfo
+}
+
+type VersionEdges {
+  node: Version
 }
 

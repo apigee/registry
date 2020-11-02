@@ -43,11 +43,15 @@ for a page of projects:
 
 ```
 {
-  projects (page_size: 2, page_token:"<previously-returned-page-token>") {
-    values {
-      id
+  projects (first: 2, after:$cursor) {
+    edges {
+      node {
+        id
+      }
     }
-    next_page_token
+    pageInfo {
+      endCursor
+    }
   }
 }
 ```

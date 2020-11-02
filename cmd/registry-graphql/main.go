@@ -39,10 +39,10 @@ var argumentsForCollectionQuery = graphql.FieldConfigArgument{
 	"filter": &graphql.ArgumentConfig{
 		Type: graphql.String,
 	},
-	"page_token": &graphql.ArgumentConfig{
+	"after": &graphql.ArgumentConfig{
 		Type: graphql.String,
 	},
-	"page_size": &graphql.ArgumentConfig{
+	"first": &graphql.ArgumentConfig{
 		Type: graphql.Int,
 	},
 }
@@ -54,10 +54,10 @@ var argumentsForParentedCollectionQuery = graphql.FieldConfigArgument{
 	"filter": &graphql.ArgumentConfig{
 		Type: graphql.String,
 	},
-	"page_token": &graphql.ArgumentConfig{
+	"after": &graphql.ArgumentConfig{
 		Type: graphql.String,
 	},
-	"page_size": &graphql.ArgumentConfig{
+	"first": &graphql.ArgumentConfig{
 		Type: graphql.Int,
 	},
 }
@@ -73,32 +73,32 @@ var queryType = graphql.NewObject(
 		Name: "Query",
 		Fields: graphql.Fields{
 			"projects": &graphql.Field{
-				Type:    pageType(projectType),
+				Type:    connectionType(projectType),
 				Args:    argumentsForCollectionQuery,
 				Resolve: resolveProjects,
 			},
 			"apis": &graphql.Field{
-				Type:    pageType(apiType),
+				Type:    connectionType(apiType),
 				Args:    argumentsForParentedCollectionQuery,
 				Resolve: resolveAPIs,
 			},
 			"versions": &graphql.Field{
-				Type:    pageType(versionType),
+				Type:    connectionType(versionType),
 				Args:    argumentsForParentedCollectionQuery,
 				Resolve: resolveVersions,
 			},
 			"specs": &graphql.Field{
-				Type:    pageType(specType),
+				Type:    connectionType(specType),
 				Args:    argumentsForParentedCollectionQuery,
 				Resolve: resolveSpecs,
 			},
 			"properties": &graphql.Field{
-				Type:    pageType(propertyType),
+				Type:    connectionType(propertyType),
 				Args:    argumentsForParentedCollectionQuery,
 				Resolve: resolveProperties,
 			},
 			"labels": &graphql.Field{
-				Type:    pageType(labelType),
+				Type:    connectionType(labelType),
 				Args:    argumentsForParentedCollectionQuery,
 				Resolve: resolveLabels,
 			},
@@ -149,17 +149,17 @@ var projectType = graphql.NewObject(
 				Type: graphql.String,
 			},
 			"apis": &graphql.Field{
-				Type:    pageType(apiType),
+				Type:    connectionType(apiType),
 				Args:    argumentsForCollectionQuery,
 				Resolve: resolveAPIs,
 			},
 			"labels": &graphql.Field{
-				Type:    pageType(labelType),
+				Type:    connectionType(labelType),
 				Args:    argumentsForCollectionQuery,
 				Resolve: resolveLabels,
 			},
 			"properties": &graphql.Field{
-				Type:    pageType(propertyType),
+				Type:    connectionType(propertyType),
 				Args:    argumentsForCollectionQuery,
 				Resolve: resolveProperties,
 			},
@@ -187,17 +187,17 @@ var apiType = graphql.NewObject(
 				Type: graphql.String,
 			},
 			"versions": &graphql.Field{
-				Type:    pageType(versionType),
+				Type:    connectionType(versionType),
 				Args:    argumentsForCollectionQuery,
 				Resolve: resolveVersions,
 			},
 			"labels": &graphql.Field{
-				Type:    pageType(labelType),
+				Type:    connectionType(labelType),
 				Args:    argumentsForCollectionQuery,
 				Resolve: resolveLabels,
 			},
 			"properties": &graphql.Field{
-				Type:    pageType(propertyType),
+				Type:    connectionType(propertyType),
 				Args:    argumentsForCollectionQuery,
 				Resolve: resolveProperties,
 			},
@@ -225,17 +225,17 @@ var versionType = graphql.NewObject(
 				Type: graphql.String,
 			},
 			"specs": &graphql.Field{
-				Type:    pageType(specType),
+				Type:    connectionType(specType),
 				Args:    argumentsForCollectionQuery,
 				Resolve: resolveSpecs,
 			},
 			"labels": &graphql.Field{
-				Type:    pageType(labelType),
+				Type:    connectionType(labelType),
 				Args:    argumentsForCollectionQuery,
 				Resolve: resolveLabels,
 			},
 			"properties": &graphql.Field{
-				Type:    pageType(propertyType),
+				Type:    connectionType(propertyType),
 				Args:    argumentsForCollectionQuery,
 				Resolve: resolveProperties,
 			},
@@ -278,12 +278,12 @@ var specType = graphql.NewObject(
 				Type: graphql.String,
 			},
 			"labels": &graphql.Field{
-				Type:    pageType(labelType),
+				Type:    connectionType(labelType),
 				Args:    argumentsForCollectionQuery,
 				Resolve: resolveLabels,
 			},
 			"properties": &graphql.Field{
-				Type:    pageType(propertyType),
+				Type:    connectionType(propertyType),
 				Args:    argumentsForCollectionQuery,
 				Resolve: resolveProperties,
 			},
@@ -350,16 +350,27 @@ var timestampType = graphql.NewObject(
 
 // Paging support
 
-// generated page types should be built only once.
-var pageTypeCache map[string]*graphql.Object
+var pageInfoType = graphql.NewObject(
+	graphql.ObjectConfig{
+		Name: "PageInfo",
+		Fields: graphql.Fields{
+			"endCursor": &graphql.Field{
+				Type: graphql.String,
+			},
+		},
+	},
+)
 
-// pageType generates a wrapper type that represents a page in a list of objects.
-func pageType(t graphql.Type) *graphql.Object {
-	if pageTypeCache == nil {
-		pageTypeCache = make(map[string]*graphql.Object)
+// generated page types should be built only once.
+var connectionTypeCache map[string]*graphql.Object
+
+// connectionType generates a wrapper type that represents a page in a list of objects.
+func connectionType(t graphql.Type) *graphql.Object {
+	if connectionTypeCache == nil {
+		connectionTypeCache = make(map[string]*graphql.Object)
 	}
-	name := t.Name() + "Page"
-	p, isFound := pageTypeCache[name]
+	name := t.Name() + "Connection"
+	p, isFound := connectionTypeCache[name]
 	if isFound {
 		return p
 	}
@@ -367,16 +378,27 @@ func pageType(t graphql.Type) *graphql.Object {
 		graphql.ObjectConfig{
 			Name: name,
 			Fields: graphql.Fields{
-				"values": &graphql.Field{
-					Type: graphql.NewList(t),
+				"edges": &graphql.Field{
+					Type: graphql.NewList(
+						graphql.NewObject(
+							graphql.ObjectConfig{
+								Name: t.Name() + "Edges",
+								Fields: graphql.Fields{
+									"node": &graphql.Field{
+										Type: t,
+									},
+								},
+							},
+						),
+					),
 				},
-				"next_page_token": &graphql.Field{
-					Type: graphql.String,
+				"pageInfo": &graphql.Field{
+					Type: pageInfoType,
 				},
 			},
 		},
 	)
-	pageTypeCache[name] = p
+	connectionTypeCache[name] = p
 	return p
 }
 
@@ -455,6 +477,25 @@ func representationForTimestamp(timestamp *timestamp.Timestamp) map[string]inter
 	}
 }
 
+func representationForPageInfo(endCursor string) map[string]interface{} {
+	return map[string]interface{}{
+		"endCursor": endCursor,
+	}
+}
+
+func representationForEdge(node interface{}) map[string]interface{} {
+	return map[string]interface{}{
+		"node": node,
+	}
+}
+
+func connectionForEdgesAndEndCursor(edges []map[string]interface{}, cursor string) map[string]interface{} {
+	return map[string]interface{}{
+		"edges":    edges,
+		"pageInfo": representationForPageInfo(cursor),
+	}
+}
+
 // Helper
 
 func getParentFromParams(p graphql.ResolveParams) string {
@@ -483,23 +524,29 @@ func resolveProjects(p graphql.ResolveParams) (interface{}, error) {
 	if isFound {
 		req.Filter = filter
 	}
-	pageToken, isFound := p.Args["page_token"].(string)
+	pageToken, isFound := p.Args["after"].(string)
 	if isFound {
 		req.PageToken = pageToken
 	}
-	pageSize, isFound := p.Args["page_size"].(int)
+	pageSize, isFound := p.Args["first"].(int)
 	if isFound {
 		req.PageSize = int32(pageSize)
+	} else {
+		pageSize = 50
 	}
-	response, err := c.GrpcClient().ListProjects(ctx, req)
-	projects := []map[string]interface{}{}
-	for _, project := range response.GetProjects() {
-		projects = append(projects, representationForProject(project))
+	var response *rpc.ListProjectsResponse
+	edges := []map[string]interface{}{}
+	for len(edges) < pageSize {
+		response, err = c.GrpcClient().ListProjects(ctx, req)
+		for _, project := range response.GetProjects() {
+			edges = append(edges, representationForEdge(representationForProject(project)))
+		}
+		req.PageToken = response.GetNextPageToken()
+		if req.PageToken == "" {
+			break
+		}
 	}
-	return map[string]interface{}{
-		"values":          projects,
-		"next_page_token": response.GetNextPageToken(),
-	}, nil
+	return connectionForEdgesAndEndCursor(edges, response.GetNextPageToken()), nil
 }
 
 func resolveAPIs(p graphql.ResolveParams) (interface{}, error) {
@@ -515,32 +562,29 @@ func resolveAPIs(p graphql.ResolveParams) (interface{}, error) {
 	if isFound {
 		req.Filter = filter
 	}
-	pageToken, isFound := p.Args["page_token"].(string)
+	pageToken, isFound := p.Args["after"].(string)
 	if isFound {
 		req.PageToken = pageToken
 	}
-	pageSize, isFound := p.Args["page_size"].(int)
+	pageSize, isFound := p.Args["first"].(int)
 	if isFound {
 		req.PageSize = int32(pageSize)
 	} else {
 		pageSize = 50
 	}
-	apis := []map[string]interface{}{}
 	var response *rpc.ListApisResponse
-	for len(apis) < pageSize {
+	edges := []map[string]interface{}{}
+	for len(edges) < pageSize {
 		response, err = c.GrpcClient().ListApis(ctx, req)
 		for _, api := range response.GetApis() {
-			apis = append(apis, representationForAPI(api))
+			edges = append(edges, representationForEdge(representationForAPI(api)))
 		}
 		req.PageToken = response.GetNextPageToken()
 		if req.PageToken == "" {
 			break
 		}
 	}
-	return map[string]interface{}{
-		"values":          apis,
-		"next_page_token": response.GetNextPageToken(),
-	}, nil
+	return connectionForEdgesAndEndCursor(edges, response.GetNextPageToken()), nil
 }
 
 func resolveVersions(p graphql.ResolveParams) (interface{}, error) {
@@ -556,23 +600,29 @@ func resolveVersions(p graphql.ResolveParams) (interface{}, error) {
 	if isFound {
 		req.Filter = filter
 	}
-	pageToken, isFound := p.Args["page_token"].(string)
+	pageToken, isFound := p.Args["after"].(string)
 	if isFound {
 		req.PageToken = pageToken
 	}
-	pageSize, isFound := p.Args["page_size"].(int)
+	pageSize, isFound := p.Args["first"].(int)
 	if isFound {
 		req.PageSize = int32(pageSize)
+	} else {
+		pageSize = 50
 	}
-	response, err := c.GrpcClient().ListVersions(ctx, req)
-	versions := []map[string]interface{}{}
-	for _, version := range response.GetVersions() {
-		versions = append(versions, representationForVersion(version))
+	var response *rpc.ListVersionsResponse
+	edges := []map[string]interface{}{}
+	for len(edges) < pageSize {
+		response, err = c.GrpcClient().ListVersions(ctx, req)
+		for _, version := range response.GetVersions() {
+			edges = append(edges, representationForEdge(representationForVersion(version)))
+		}
+		req.PageToken = response.GetNextPageToken()
+		if req.PageToken == "" {
+			break
+		}
 	}
-	return map[string]interface{}{
-		"values":          versions,
-		"next_page_token": response.GetNextPageToken(),
-	}, nil
+	return connectionForEdgesAndEndCursor(edges, response.GetNextPageToken()), nil
 }
 
 func resolveSpecs(p graphql.ResolveParams) (interface{}, error) {
@@ -588,23 +638,29 @@ func resolveSpecs(p graphql.ResolveParams) (interface{}, error) {
 	if isFound {
 		req.Filter = filter
 	}
-	pageToken, isFound := p.Args["page_token"].(string)
+	pageToken, isFound := p.Args["after"].(string)
 	if isFound {
 		req.PageToken = pageToken
 	}
-	pageSize, isFound := p.Args["page_size"].(int)
+	pageSize, isFound := p.Args["first"].(int)
 	if isFound {
 		req.PageSize = int32(pageSize)
+	} else {
+		pageSize = 50
 	}
-	response, err := c.GrpcClient().ListSpecs(ctx, req)
-	specs := []map[string]interface{}{}
-	for _, spec := range response.GetSpecs() {
-		specs = append(specs, representationForSpec(spec))
+	var response *rpc.ListSpecsResponse
+	edges := []map[string]interface{}{}
+	for len(edges) < pageSize {
+		response, err = c.GrpcClient().ListSpecs(ctx, req)
+		for _, spec := range response.GetSpecs() {
+			edges = append(edges, representationForEdge(representationForSpec(spec)))
+		}
+		req.PageToken = response.GetNextPageToken()
+		if req.PageToken == "" {
+			break
+		}
 	}
-	return map[string]interface{}{
-		"values":          specs,
-		"next_page_token": response.GetNextPageToken(),
-	}, nil
+	return connectionForEdgesAndEndCursor(edges, response.GetNextPageToken()), nil
 }
 
 func resolveProperties(p graphql.ResolveParams) (interface{}, error) {
@@ -616,23 +672,29 @@ func resolveProperties(p graphql.ResolveParams) (interface{}, error) {
 	req := &rpc.ListPropertiesRequest{
 		Parent: getParentFromParams(p),
 	}
-	pageToken, isFound := p.Args["page_token"].(string)
+	pageToken, isFound := p.Args["after"].(string)
 	if isFound {
 		req.PageToken = pageToken
 	}
-	pageSize, isFound := p.Args["page_size"].(int)
+	pageSize, isFound := p.Args["first"].(int)
 	if isFound {
 		req.PageSize = int32(pageSize)
+	} else {
+		pageSize = 50
 	}
-	response, err := c.GrpcClient().ListProperties(ctx, req)
-	properties := []map[string]interface{}{}
-	for _, property := range response.GetProperties() {
-		properties = append(properties, representationForProperty(property))
+	var response *rpc.ListPropertiesResponse
+	edges := []map[string]interface{}{}
+	for len(edges) < pageSize {
+		response, err = c.GrpcClient().ListProperties(ctx, req)
+		for _, property := range response.GetProperties() {
+			edges = append(edges, representationForEdge(representationForProperty(property)))
+		}
+		req.PageToken = response.GetNextPageToken()
+		if req.PageToken == "" {
+			break
+		}
 	}
-	return map[string]interface{}{
-		"values":          properties,
-		"next_page_token": response.GetNextPageToken(),
-	}, nil
+	return connectionForEdgesAndEndCursor(edges, response.GetNextPageToken()), nil
 }
 
 func resolveLabels(p graphql.ResolveParams) (interface{}, error) {
@@ -644,23 +706,29 @@ func resolveLabels(p graphql.ResolveParams) (interface{}, error) {
 	req := &rpc.ListLabelsRequest{
 		Parent: getParentFromParams(p),
 	}
-	pageToken, isFound := p.Args["page_token"].(string)
+	pageToken, isFound := p.Args["after"].(string)
 	if isFound {
 		req.PageToken = pageToken
 	}
-	pageSize, isFound := p.Args["page_size"].(int)
+	pageSize, isFound := p.Args["first"].(int)
 	if isFound {
 		req.PageSize = int32(pageSize)
+	} else {
+		pageSize = 50
 	}
-	response, err := c.GrpcClient().ListLabels(ctx, req)
-	labels := []map[string]interface{}{}
-	for _, label := range response.GetLabels() {
-		labels = append(labels, representationForLabel(label))
+	var response *rpc.ListLabelsResponse
+	edges := []map[string]interface{}{}
+	for len(edges) < pageSize {
+		response, err = c.GrpcClient().ListLabels(ctx, req)
+		for _, label := range response.GetLabels() {
+			edges = append(edges, representationForEdge(representationForLabel(label)))
+		}
+		req.PageToken = response.GetNextPageToken()
+		if req.PageToken == "" {
+			break
+		}
 	}
-	return map[string]interface{}{
-		"values":          labels,
-		"next_page_token": response.GetNextPageToken(),
-	}, nil
+	return connectionForEdgesAndEndCursor(edges, response.GetNextPageToken()), nil
 }
 
 func resolveProject(p graphql.ResolveParams) (interface{}, error) {
