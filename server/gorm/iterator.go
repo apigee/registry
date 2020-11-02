@@ -15,6 +15,7 @@
 package gorm
 
 import (
+	"encoding/base64"
 	"fmt"
 
 	"github.com/apigee/registry/server/models"
@@ -32,7 +33,8 @@ type Iterator struct {
 
 // GetCursor gets the cursor for the next page of results.
 func (it *Iterator) GetCursor(l int) (string, error) {
-	return it.Cursor, nil
+	encodedCursor := base64.StdEncoding.EncodeToString([]byte(it.Cursor))
+	return encodedCursor, nil
 }
 
 // Next gets the next value from the iterator.
