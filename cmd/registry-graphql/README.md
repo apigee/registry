@@ -7,10 +7,10 @@ GraphQL interface.
 
 It uses the [graphql-go](https://github.com/graphql-go/graphql) package.
 
-## Credits
+## Limitations
 
-Contents of the `static` directory are manually vendored from
-[github.com/graphql/graphiql](https://github.com/graphql/graphiql).
+Currently the GraphQL interface is read-only (no mutations) and does not
+provide access to specs or property values.
 
 ## Invocation
 
@@ -23,15 +23,13 @@ files.
 
 After you've started the `registry-graphql` server, visit http://localhost:8088
 to open the GraphiQL browser. Then use standard GraphQL to explore the schema
-and make queries. For example, to see a list of projects, enter:
+and make queries. For example, to lookup a project by name, enter:
 
 ```
 {
-  projects {
-    values {
-      id
-      display_name
-    }
+  project (id: "projects/test") {
+    id
+    display_name
   }
 }
 ```
@@ -64,3 +62,8 @@ for a page of projects:
 ```
 $ get-graphql-schema http://localhost:8088/graphql > registry.graphql
 ```
+
+## Credits
+
+Contents of the `static` directory are manually vendored from
+[github.com/graphql/graphiql](https://github.com/graphql/graphiql).
