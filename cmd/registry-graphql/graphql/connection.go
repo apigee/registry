@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package graphql
+package registry
 
 import (
 	"github.com/graphql-go/graphql"

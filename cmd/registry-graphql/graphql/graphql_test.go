@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package registry
 
 import (
 	"context"
@@ -21,7 +21,6 @@ import (
 	"log"
 	"testing"
 
-	registry "github.com/apigee/registry/cmd/registry-graphql/graphql"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/graphql-go/graphql"
@@ -61,11 +60,11 @@ func TestGraphQL(t *testing.T) {
 	}
 	defer registryClient.Close()
 	// Create sample registry.
-	buildTestProject(ctx, registryClient, t, "test", 20)
+	buildTestProject(ctx, registryClient, t, "test-graphql", 20)
 	// Build query.
 	query := `
  	  query ($cursor: String){
-		project(id: "projects/test") {
+		project(id: "projects/test-graphql") {
 		  id
 		  display_name
 		  apis(first: 5, filter: "api_id.matches('[02468]$')", after: $cursor) {
@@ -81,7 +80,7 @@ func TestGraphQL(t *testing.T) {
 		}
 	  }`
 	params := &graphql.Params{
-		Schema:        registry.Schema,
+		Schema:        Schema,
 		RequestString: query,
 		VariableValues: map[string]interface{}{
 			"cursor": "",
