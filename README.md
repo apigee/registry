@@ -165,6 +165,12 @@ following:
 
 `authz-server -c cmd/authz-server/authz.yaml`
 
+### Optional: Running the registry-graphql proxy
+
+[cmd/registry-graphql](cmd/registry-graphql) contains a simple proxy that
+provides a read-only GraphQL interface to the Registry API. It can be run with
+a local or remote `registry-server`.
+
 ## Running the Registry API server with Google Cloud Run
 
 The Registry API server is designed to be easily deployed on
