@@ -28,7 +28,7 @@ import (
 // VersionEntityName is used to represent versions in storage.
 const VersionEntityName = "Version"
 
-// Version ...
+// Version is the storage-side representation of a version.
 type Version struct {
 	Key         string    `datastore:"-", gorm:"primaryKey"`
 	ProjectID   string    // Uniquely identifies a project.
@@ -41,7 +41,7 @@ type Version struct {
 	State       string    // Lifecycle stage.
 }
 
-// ParseParentApi ...
+// ParseParentApi parses the name of an API that is the parent of a version.
 func ParseParentApi(parent string) ([]string, error) {
 	r := regexp.MustCompile("^projects/" + names.NameRegex +
 		"/apis/" + names.NameRegex +

@@ -19,7 +19,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// internalError ...
+// internalError returns an error that wraps an internal server error.
 func internalError(err error) error {
 	if err == nil {
 		return nil

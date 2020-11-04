@@ -44,7 +44,7 @@ const (
 	IsCurrent = 2
 )
 
-// Spec ...
+// Spec is the storage-side representation of a spec.
 type Spec struct {
 	Key         string    `datastore:"-", gorm:"primaryKey"`
 	Currency    int32     // IsCurrent for the current revision of the spec.
@@ -238,7 +238,7 @@ func hashForBytes(b []byte) string {
 	return fmt.Sprintf("%x", bs)
 }
 
-// SpecRevisionTag ...
+// SpecRevisionTag is the storage-side representation of a spec revision tag.
 type SpecRevisionTag struct {
 	Key        string    `datastore:"-", gorm:"primaryKey"`
 	ProjectID  string    // Uniquely identifies a project.

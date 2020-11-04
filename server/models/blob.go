@@ -19,7 +19,7 @@ import "time"
 // BlobEntityName is used to represent blobs in storage.
 const BlobEntityName = "Blob"
 
-// Blob ...
+// Blob is the storage-side representation of a blob.
 type Blob struct {
 	Key         string    `datastore:"-", gorm:"primaryKey"`
 	ProjectID   string    // Uniquely identifies a project.

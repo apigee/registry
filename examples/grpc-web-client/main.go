@@ -36,7 +36,7 @@ func check(err error) {
 	}
 }
 
-// Do ...
+// Do performs a gRPC Web request.
 func Do(server, service, method string, req, res proto.Message) error {
 	reqBytes, err := proto.Marshal(req)
 	if err != nil {

@@ -29,7 +29,7 @@ func ApiRegexp() *regexp.Regexp {
 	return regexp.MustCompile("^projects/" + NameRegex + "/apis/" + NameRegex + "$")
 }
 
-// ParseParentProject ...
+// ParseParentProject parses the name of a project that is the parent of an API.
 func ParseParentProject(parent string) ([]string, error) {
 	r := regexp.MustCompile("^projects/" + NameRegex + "$")
 	m := r.FindStringSubmatch(parent)
