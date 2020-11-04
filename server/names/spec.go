@@ -33,7 +33,7 @@ func SpecRegexp() *regexp.Regexp {
 		RevisionRegex + "$")
 }
 
-// ParseParentVersion ...
+// ParseParentVersion parses the name of a version that is the parent of a spec.
 func ParseParentVersion(parent string) ([]string, error) {
 	r := regexp.MustCompile("^projects/" + NameRegex +
 		"/apis/" + NameRegex +

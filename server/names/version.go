@@ -29,7 +29,7 @@ func VersionRegexp() *regexp.Regexp {
 	return regexp.MustCompile("^projects/" + NameRegex + "/apis/" + NameRegex + "/versions/" + NameRegex + "$")
 }
 
-// ParseParentApi ...
+// ParseParentApi parses the name of an API that is the parent of a version.
 func ParseParentApi(parent string) ([]string, error) {
 	r := regexp.MustCompile("^projects/" + NameRegex +
 		"/apis/" + NameRegex +

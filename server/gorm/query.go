@@ -46,7 +46,7 @@ func (c *Client) NewQuery(kind string) storage.Query {
 	}
 }
 
-// internalError ...
+// internalError returns an error that wraps an internal server error.
 func internalError(err error) error {
 	if err == nil {
 		return nil

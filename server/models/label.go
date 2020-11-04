@@ -27,7 +27,7 @@ import (
 // LabelEntityName is used to represent labels in storage.
 const LabelEntityName = "Label"
 
-// Label ...
+// Label is the storage-side representation of a label.
 type Label struct {
 	Key        string    `datastore:"-", gorm:"primaryKey"`
 	ProjectID  string    // Project associated with label (required).
