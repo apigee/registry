@@ -58,7 +58,7 @@ func vocabularyForPath(path string) (*metrics.Vocabulary, error) {
 	}, nil
 }
 
-// Vocabulary ...
+// Vocabulary represents the counts of various types of terms in an API.
 type Vocabulary struct {
 	Schemas    map[string]int
 	Operations map[string]int
@@ -66,7 +66,7 @@ type Vocabulary struct {
 	Properties map[string]int
 }
 
-// NewVocabulary ...
+// NewVocabulary creates a new Vocabulary object.
 func NewVocabulary() *Vocabulary {
 	return &Vocabulary{
 		Schemas:    make(map[string]int),

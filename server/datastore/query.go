@@ -60,7 +60,7 @@ func (q *Query) ApplyCursor(cursorStr string) (storage.Query, error) {
 	return q, nil
 }
 
-// internalError ...
+// internalError returns an error that wraps an internal server error.
 func internalError(err error) error {
 	if err == nil {
 		return nil

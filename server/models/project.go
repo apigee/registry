@@ -27,7 +27,7 @@ import (
 // ProjectEntityName is used to represent projrcts in storage.
 const ProjectEntityName = "Project"
 
-// Project ...
+// Project is the storage-side representation of a project.
 type Project struct {
 	Key         string    `datastore:"-", gorm:"primaryKey"`
 	ProjectID   string    // Uniquely identifies a project.

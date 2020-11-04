@@ -46,7 +46,7 @@ const (
 	AnyType
 )
 
-// Property ...
+// Property is the storage-side representation of a property.
 type Property struct {
 	Key         string            `datastore:"-", gorm:"primaryKey"`
 	ProjectID   string            // Project associated with property (required).

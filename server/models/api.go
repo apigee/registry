@@ -28,7 +28,7 @@ import (
 // ApiEntityName is used to represent apis in storage.
 const ApiEntityName = "Api"
 
-// Api ...
+// Api is the storage-side representation of an API.
 type Api struct {
 	Key                string    `datastore:"-", gorm:"primaryKey"`
 	ProjectID          string    // Uniquely identifies a project.
