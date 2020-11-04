@@ -125,5 +125,8 @@ func resolveAPI(p graphql.ResolveParams) (interface{}, error) {
 		Name: name,
 	}
 	api, err := c.GetApi(ctx, req)
+	if err != nil {
+		return nil, err
+	}
 	return representationForAPI(api), err
 }

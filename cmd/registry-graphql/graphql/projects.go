@@ -120,5 +120,8 @@ func resolveProject(p graphql.ResolveParams) (interface{}, error) {
 		Name: name,
 	}
 	api, err := c.GetProject(ctx, req)
+	if err != nil {
+		return nil, err
+	}
 	return representationForProject(api), err
 }

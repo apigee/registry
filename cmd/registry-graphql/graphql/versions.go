@@ -122,5 +122,8 @@ func resolveVersion(p graphql.ResolveParams) (interface{}, error) {
 		Name: name,
 	}
 	version, err := c.GetVersion(ctx, req)
+	if err != nil {
+		return nil, err
+	}
 	return representationForVersion(version), err
 }

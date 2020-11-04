@@ -95,5 +95,8 @@ func resolveLabel(p graphql.ResolveParams) (interface{}, error) {
 		Name: name,
 	}
 	label, err := c.GetLabel(ctx, req)
+	if err != nil {
+		return nil, err
+	}
 	return representationForLabel(label), err
 }

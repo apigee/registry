@@ -95,5 +95,8 @@ func resolveProperty(p graphql.ResolveParams) (interface{}, error) {
 		Name: name,
 	}
 	property, err := c.GetProperty(ctx, req)
+	if err != nil {
+		return nil, err
+	}
 	return representationForProperty(property), err
 }
