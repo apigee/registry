@@ -51,13 +51,10 @@ func NewClient(ctx context.Context) (Client, error) {
 // NewClientWithSettings creates a GAPIC client with specified settings.
 func NewClientWithSettings(ctx context.Context, settings *Settings) (Client, error) {
 	var opts []option.ClientOption
-
-	if settings.Address != "" {
-		opts = append(opts, option.WithEndpoint(settings.Address))
-	} else {
+	if settings.Address == "" {
 		return nil, fmt.Errorf("rpc error: address must be set")
 	}
-
+	opts = append(opts, option.WithEndpoint(settings.Address))
 	if settings.Insecure {
 		conn, err := grpc.Dial(settings.Address, grpc.WithInsecure())
 		if err != nil {
@@ -65,7 +62,6 @@ func NewClientWithSettings(ctx context.Context, settings *Settings) (Client, err
 		}
 		opts = append(opts, option.WithGRPCConn(conn))
 	}
-
 	if settings.Token != "" {
 		opts = append(opts, option.WithTokenSource(oauth2.StaticTokenSource(
 			&oauth2.Token{
