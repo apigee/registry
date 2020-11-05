@@ -52,26 +52,24 @@ func NewClient(ctx context.Context) (Client, error) {
 func NewClientWithSettings(ctx context.Context, settings *Settings) (Client, error) {
 	var opts []option.ClientOption
 
-	address := settings.Address
-	if address != "" {
-		opts = append(opts, option.WithEndpoint(address))
+	if settings.Address != "" {
+		opts = append(opts, option.WithEndpoint(settings.Address))
 	} else {
 		return nil, fmt.Errorf("rpc error: address must be set")
 	}
 
-	insecure := settings.Insecure
-	if insecure {
-		conn, err := grpc.Dial(address, grpc.WithInsecure())
+	if settings.Insecure {
+		conn, err := grpc.Dial(settings.Address, grpc.WithInsecure())
 		if err != nil {
 			return nil, err
 		}
 		opts = append(opts, option.WithGRPCConn(conn))
 	}
 
-	if token := settings.Token; token != "" {
+	if settings.Token != "" {
 		opts = append(opts, option.WithTokenSource(oauth2.StaticTokenSource(
 			&oauth2.Token{
-				AccessToken: token,
+				AccessToken: settings.Token,
 				TokenType:   "Bearer",
 			})))
 	}
