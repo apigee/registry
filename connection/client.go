@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/apigee/registry/gapic"
 	"golang.org/x/oauth2"
@@ -28,19 +29,38 @@ import (
 // Client is a client of the Registry API
 type Client = *gapic.RegistryClient
 
+// Settings configure the client.
+type Settings struct {
+	Address  string // service address
+	Insecure bool   // if true, connect over HTTP
+	Token    string // bearer token
+}
+
 // NewClient creates a new GAPIC client using environment variable settings.
 func NewClient(ctx context.Context) (Client, error) {
+	var settings Settings
+	settings.Address = os.Getenv("APG_REGISTRY_ADDRESS")
+	if settings.Address == "" {
+		return nil, fmt.Errorf("rpc error: APG_REGISTRY_ADDRESS must be set")
+	}
+	settings.Insecure, _ = strconv.ParseBool(os.Getenv("APG_REGISTRY_INSECURE"))
+	settings.Token = os.Getenv("APG_REGISTRY_TOKEN")
+	return NewClientWithSettings(ctx, &settings)
+}
+
+// NewClientWithSettings creates a GAPIC client with specified settings.
+func NewClientWithSettings(ctx context.Context, settings *Settings) (Client, error) {
 	var opts []option.ClientOption
 
-	address := os.Getenv("APG_REGISTRY_ADDRESS")
+	address := settings.Address
 	if address != "" {
 		opts = append(opts, option.WithEndpoint(address))
 	} else {
-		return nil, fmt.Errorf("rpc error: APG_REGISTRY_ADDRESS must be set")
+		return nil, fmt.Errorf("rpc error: address must be set")
 	}
 
-	insecure := os.Getenv("APG_REGISTRY_INSECURE")
-	if insecure != "" {
+	insecure := settings.Insecure
+	if insecure {
 		conn, err := grpc.Dial(address, grpc.WithInsecure())
 		if err != nil {
 			return nil, err
@@ -48,7 +68,7 @@ func NewClient(ctx context.Context) (Client, error) {
 		opts = append(opts, option.WithGRPCConn(conn))
 	}
 
-	if token := os.Getenv("APG_REGISTRY_TOKEN"); token != "" {
+	if token := settings.Token; token != "" {
 		opts = append(opts, option.WithTokenSource(oauth2.StaticTokenSource(
 			&oauth2.Token{
 				AccessToken: token,
