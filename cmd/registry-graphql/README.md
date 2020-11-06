@@ -14,10 +14,9 @@ provide access to spec revisions or property values.
 
 ## Invocation
 
-Just run the `registry-graphql` program. It currently takes no options and uses
-the `APG_*` environment variables to connect to a Registry API server. Because
-it serves static files, it should be run in the same directory as its source
-files.
+Just run the `registry-graphql` program. It uses the `APG_*` environment
+variables to connect to a Registry API server. Because it serves static files,
+it should be run in the same directory as its source files.
 
 If you're building a React or other browser-hosted client application, you
 can use the `-cors-allow-origin` flag to allow CORS requests while you are
