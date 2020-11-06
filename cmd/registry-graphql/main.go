@@ -15,6 +15,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"net/http"
 
@@ -22,13 +23,37 @@ import (
 	"github.com/graphql-go/handler"
 )
 
+var corsAllowOriginFlag *string
+
+type corsProxy struct {
+	h http.Handler
+}
+
+func (p *corsProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if *corsAllowOriginFlag != "" {
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Origin", *corsAllowOriginFlag)
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(""))
+			return
+		}
+	}
+	p.h.ServeHTTP(w, r)
+}
+
 func main() {
+	// allow all CORS requests (not for production use)
+	corsAllowOriginFlag = flag.String("cors-allow-origin", "", "allow all CORS requests from the specified origin")
+	flag.Parse()
+
 	// graphql handler
 	h := handler.New(&handler.Config{
 		Schema: &registry.Schema,
 		Pretty: true,
 	})
-	http.Handle("/graphql", h)
+	http.Handle("/graphql", &corsProxy{h: h})
 
 	// static file server for Graphiql in-browser editor
 	fs := http.FileServer(http.Dir("static"))

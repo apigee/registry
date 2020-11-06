@@ -19,6 +19,15 @@ the `APG_*` environment variables to connect to a Registry API server. Because
 it serves static files, it should be run in the same directory as its source
 files.
 
+If you're building a React or other browser-hosted client application, you
+can use the `-cors-allow-origin` flag to allow CORS requests while you are
+developing your app. This allows you to specify a single allowed origin, which
+can include `*`, which allows all CORS requests. Take care to quote the `*` to
+avoid shell expansion:
+```
+registry-graphql -cors-allow-origin '*'
+```
+
 ## Usage
 
 After you've started the `registry-graphql` server, visit http://localhost:8088
