@@ -91,7 +91,7 @@ func (api *Api) Message() (message *rpc.Api, err error) {
 
 // Update modifies a api using the contents of a message.
 func (api *Api) Update(message *rpc.Api, mask *fieldmaskpb.FieldMask) error {
-	if mask != nil {
+	if activeUpdateMask(mask) {
 		for _, field := range mask.Paths {
 			switch field {
 			case "display_name":

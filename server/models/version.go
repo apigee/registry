@@ -114,7 +114,7 @@ func (version *Version) Message() (message *rpc.Version, err error) {
 
 // Update modifies a version using the contents of a message.
 func (version *Version) Update(message *rpc.Version, mask *fieldmaskpb.FieldMask) error {
-	if mask != nil {
+	if activeUpdateMask(mask) {
 		for _, field := range mask.Paths {
 			switch field {
 			case "display_name":
