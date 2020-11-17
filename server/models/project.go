@@ -76,7 +76,7 @@ func (project *Project) Message() (message *rpc.Project, err error) {
 
 // Update modifies a project using the contents of a message.
 func (project *Project) Update(message *rpc.Project, mask *fieldmaskpb.FieldMask) error {
-	if mask != nil {
+	if activeUpdateMask(mask) {
 		for _, field := range mask.Paths {
 			switch field {
 			case "display_name":

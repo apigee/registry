@@ -160,7 +160,7 @@ func (spec *Spec) Message(blob *Blob, revision string) (message *rpc.Spec, err e
 // Update modifies a spec using the contents of a message.
 func (spec *Spec) Update(message *rpc.Spec, mask *fieldmaskpb.FieldMask) error {
 	now := time.Now()
-	if mask != nil {
+	if activeUpdateMask(mask) {
 		for _, field := range mask.Paths {
 			switch field {
 			case "filename":
