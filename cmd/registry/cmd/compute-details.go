@@ -24,6 +24,7 @@ import (
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
+	discovery_v1 "github.com/googleapis/gnostic/discovery"
 	openapi_v2 "github.com/googleapis/gnostic/openapiv2"
 	openapi_v3 "github.com/googleapis/gnostic/openapiv3"
 	"github.com/spf13/cobra"
@@ -88,7 +89,7 @@ func (task *computeDetailsTask) Run() error {
 	core.ListSpecs(task.ctx, task.client, m, "", func(spec *rpc.Spec) {
 		specs = append(specs, spec)
 	})
-	// use the last (latest) spec
+	// use the last (presumed latest) spec
 	if len(specs) == 0 {
 		return nil
 	}
@@ -101,6 +102,7 @@ func (task *computeDetailsTask) Run() error {
 	}
 	var title string
 	var description string
+	var request *rpc.UpdateApiRequest
 	if strings.HasPrefix(spec.GetStyle(), "openapi/v2") {
 		data, err := core.GetBytesForSpec(spec)
 		if err != nil {
@@ -113,6 +115,19 @@ func (task *computeDetailsTask) Run() error {
 		if document.Info != nil {
 			title = document.Info.Title
 			description = document.Info.Description
+		}
+		if len(description) > 256 {
+			description = description[0:256]
+		}
+		request = &rpc.UpdateApiRequest{
+			Api: &rpc.Api{
+				Name:        task.apiName,
+				DisplayName: title,
+				Description: description,
+			},
+			UpdateMask: &field_mask.FieldMask{
+				Paths: []string{"display_name", "description"},
+			},
 		}
 	} else if strings.HasPrefix(spec.GetStyle(), "openapi/v3") {
 		data, err := core.GetBytesForSpec(spec)
@@ -127,22 +142,81 @@ func (task *computeDetailsTask) Run() error {
 			title = document.Info.Title
 			description = document.Info.Description
 		}
+		if len(description) > 256 {
+			description = description[0:256]
+		}
+		request = &rpc.UpdateApiRequest{
+			Api: &rpc.Api{
+				Name:        task.apiName,
+				DisplayName: title,
+				Description: description,
+			},
+			UpdateMask: &field_mask.FieldMask{
+				Paths: []string{"display_name", "description"},
+			},
+		}
+	} else if strings.HasPrefix(spec.GetStyle(), "discovery") {
+		data, err := core.GetBytesForSpec(spec)
+		if err != nil {
+			return nil
+		}
+		document, err := discovery_v1.ParseDocument(data)
+		if document == nil && err != nil {
+			return fmt.Errorf("invalid Discovery document: %s", spec.Name)
+		}
+		title := document.Title
+		description := document.Description
+		owner := document.OwnerName
+		if len(description) > 256 {
+			description = description[0:256]
+		}
+		request = &rpc.UpdateApiRequest{
+			Api: &rpc.Api{
+				Name:        task.apiName,
+				Owner:       owner,
+				DisplayName: title,
+				Description: description,
+			},
+			UpdateMask: &field_mask.FieldMask{
+				Paths: []string{"owner", "display_name", "description"},
+			},
+		}
+
+	} else if spec.GetStyle() == "proto+zip" {
+		log.Printf("%s", spec.Name)
+		details, err := core.NewDetailsFromZippedProtos(spec.GetContents())
+		if err != nil {
+			return fmt.Errorf("error processing protos: %s", spec.Name)
+		}
+		if details != nil {
+			title := details.Title
+			var description string
+			if len(details.Services) == 0 {
+				description = "0 Services"
+			} else if len(details.Services) == 1 {
+				description = fmt.Sprintf("1 Service: %s", details.Services[0])
+			} else {
+				description = fmt.Sprintf("%d Services: ", len(details.Services)) + strings.Join(details.Services, ", ")
+			}
+			if len(description) > 256 {
+				description = description[0:256] + "..."
+			}
+			request = &rpc.UpdateApiRequest{
+				Api: &rpc.Api{
+					Name:        task.apiName,
+					DisplayName: title,
+					Description: description,
+				},
+				UpdateMask: &field_mask.FieldMask{
+					Paths: []string{"display_name", "description"},
+				},
+			}
+		}
 	} else {
 		return fmt.Errorf("we don't know how to compute the title of %s", task.apiName)
 	}
-	if len(description) > 256 {
-		description = description[0:256]
+	if request != nil {
+		_, err = task.client.UpdateApi(task.ctx, request)
 	}
-	request := &rpc.UpdateApiRequest{
-		Api: &rpc.Api{
-			Name:        task.apiName,
-			DisplayName: title,
-			Description: description,
-		},
-		UpdateMask: &field_mask.FieldMask{
-			Paths: []string{"display_name", "description"},
-		},
-	}
-	_, err = task.client.UpdateApi(task.ctx, request)
 	return err
 }
