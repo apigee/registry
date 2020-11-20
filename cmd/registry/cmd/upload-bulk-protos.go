@@ -153,7 +153,7 @@ func (task *uploadProtoTask) createAPI() error {
 			Parent: "projects/" + task.projectID,
 			ApiId:  task.apiID,
 			Api: &rpcpb.Api{
-				DisplayName: task.apiID,
+				Owner: strings.Replace(task.apiID, "-", "/", -1),
 			},
 		}
 		response, err := task.client.CreateApi(task.ctx, request)

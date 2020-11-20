@@ -85,10 +85,6 @@ func ZipArchiveOfPath(path, prefix string) (buf bytes.Buffer, err error) {
 			if info.IsDir() {
 				return nil
 			}
-			// only upload proto files
-			if !strings.HasSuffix(p, ".proto") {
-				return nil
-			}
 			if err = addFileToZip(zipWriter, p, prefix); err != nil {
 				log.Printf("error adding file %s", err.Error())
 				return err

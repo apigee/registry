@@ -35,7 +35,7 @@ require (
 	github.com/golang/protobuf v1.4.3
 	github.com/google/cel-go v0.5.1
 	github.com/google/uuid v1.1.2
-	github.com/googleapis/api-linter v1.7.1 // indirect
+	github.com/googleapis/api-linter v1.8.0 // indirect
 	github.com/googleapis/gapic-generator-go v0.15.3 // indirect
 	github.com/googleapis/gapic-showcase v0.12.0 // indirect
 	github.com/googleapis/gax-go v2.0.2+incompatible // indirect
@@ -70,14 +70,14 @@ require (
 	gitlab.com/golang-commonmark/linkify v0.0.0-20200225224916-64bca66f6ad3 // indirect
 	golang.org/x/crypto v0.0.0-20201016220609-9e8e0b390897 // indirect
 	golang.org/x/exp v0.0.0-20200331195152-e8c3332aa8e5 // indirect
-	golang.org/x/net v0.0.0-20201027133719-8eef5233e2a1
+	golang.org/x/net v0.0.0-20201031054903-ff519b6c9102
 	golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43
 	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
-	golang.org/x/sys v0.0.0-20201028215240-c5abc1b1d397 // indirect
+	golang.org/x/sys v0.0.0-20201101102859-da207088b7d1 // indirect
 	golang.org/x/text v0.3.4 // indirect
 	golang.org/x/tools v0.0.0-20200918232735-d647fc253266 // indirect
 	google.golang.org/api v0.32.0
-	google.golang.org/genproto v0.0.0-20201028140639-c77dae4b0522
+	google.golang.org/genproto v0.0.0-20201105153401-9d023cd09d72
 	google.golang.org/grpc v1.33.1
 	google.golang.org/grpc/examples v0.0.0-20200731180010-8bec2f5d898f // indirect
 	google.golang.org/protobuf v1.25.0
