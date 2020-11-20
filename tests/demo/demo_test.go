@@ -366,4 +366,12 @@ func TestDemo(t *testing.T) {
 			t.Errorf("Incorrect revision count: %d", len(revisionIDs))
 		}
 	}
+	// Delete the demo project.
+	{
+		req := &rpc.DeleteProjectRequest{
+			Name: "projects/demo",
+		}
+		err = registryClient.DeleteProject(ctx, req)
+		check(t, "Failed to delete demo project: %+v", err)
+	}
 }

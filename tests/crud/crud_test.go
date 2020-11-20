@@ -138,6 +138,14 @@ func TestCRUD(t *testing.T) {
 	testProperties(ctx, registryClient, t, "projects/test/apis/sample")
 	testProperties(ctx, registryClient, t, "projects/test/apis/sample/versions/1.0.0")
 	testProperties(ctx, registryClient, t, "projects/test/apis/sample/versions/1.0.0/specs/openapi.yaml")
+	// Delete the test project.
+	{
+		req := &rpc.DeleteProjectRequest{
+			Name: "projects/test",
+		}
+		err = registryClient.DeleteProject(ctx, req)
+		check(t, "Failed to delete test project: %+v", err)
+	}
 }
 
 // testProperties verifies property operations on a specified entity.
