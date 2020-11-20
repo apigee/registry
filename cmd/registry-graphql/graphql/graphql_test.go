@@ -60,7 +60,8 @@ func TestGraphQL(t *testing.T) {
 	}
 	defer registryClient.Close()
 	// Create sample registry.
-	buildTestProject(ctx, registryClient, t, "test-graphql", 20)
+	projectID := "test-graphql"
+	buildTestProject(ctx, registryClient, t, projectID, 20)
 	// Build query.
 	query := `
  	  query ($cursor: String){
@@ -104,6 +105,8 @@ func TestGraphQL(t *testing.T) {
 	if len(payload.Data.Project.APIs.Edges) != 0 {
 		t.Errorf("Unexpected number of APIs from query 3")
 	}
+	// Delete the test project
+	deleteTestProject(ctx, registryClient, t, projectID)
 }
 
 func evaluateQuery(params *graphql.Params) *Payload {
@@ -180,5 +183,17 @@ func buildTestProject(ctx context.Context, registryClient connection.Client, t *
 		}
 		_, err := registryClient.CreateApi(ctx, req)
 		check(t, "error creating api %s", err)
+	}
+}
+
+func deleteTestProject(ctx context.Context, registryClient connection.Client, t *testing.T, name string) {
+	var err error
+	// Clear the test project.
+	{
+		req := &rpc.DeleteProjectRequest{
+			Name: "projects/" + name,
+		}
+		err = registryClient.DeleteProject(ctx, req)
+		check(t, "Failed to delete test project: %+v", err)
 	}
 }
