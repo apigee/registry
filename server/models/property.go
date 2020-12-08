@@ -196,7 +196,9 @@ func (property *Property) Message(blob *Blob) (message *rpc.Property, err error)
 
 // Update modifies a property using the contents of a message.
 func (property *Property) Update(message *rpc.Property, blob *Blob) error {
-	property.Subject = message.GetSubject()
+	if message.GetSubject() != "" {
+		property.Subject = message.GetSubject()
+	}
 	property.UpdateTime = time.Now()
 	switch message.GetValue().(type) {
 	case *rpc.Property_StringValue:
