@@ -122,7 +122,7 @@ func (version *Version) Update(message *rpc.Version, mask *fieldmaskpb.FieldMask
 			case "description":
 				version.Description = message.GetDescription()
 			case "state":
-				version.Description = message.GetState()
+				version.State = message.GetState()
 			}
 		}
 	} else {
