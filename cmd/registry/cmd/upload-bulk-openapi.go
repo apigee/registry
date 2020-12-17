@@ -32,6 +32,7 @@ import (
 func init() {
 	uploadBulkCmd.AddCommand(uploadBulkOpenAPICmd)
 	uploadBulkOpenAPICmd.Flags().String("project_id", "", "Project id.")
+	uploadBulkOpenAPICmd.Flags().String("base_uri", "", "Base to use for setting source_uri fields of uploaded specs.")
 }
 
 var uploadBulkOpenAPICmd = &cobra.Command{
@@ -48,6 +49,10 @@ var uploadBulkOpenAPICmd = &cobra.Command{
 		if projectID == "" {
 			log.Fatalf("Please specify a project_id")
 		}
+		baseURI, err := flagset.GetString("base_uri")
+		if err != nil {
+			log.Fatalf("%s", err.Error())
+		}
 		ctx := context.TODO()
 		client, err := connection.NewClient(ctx)
 		if err != nil {
@@ -55,12 +60,12 @@ var uploadBulkOpenAPICmd = &cobra.Command{
 		}
 		core.EnsureProjectExists(ctx, client, projectID)
 		for _, arg := range args {
-			scanDirectoryForOpenAPI(projectID, arg)
+			scanDirectoryForOpenAPI(projectID, baseURI, arg)
 		}
 	},
 }
 
-func scanDirectoryForOpenAPI(projectID, directory string) {
+func scanDirectoryForOpenAPI(projectID, baseURI, directory string) {
 	ctx := context.TODO()
 
 	client, err := connection.NewClient(ctx)
@@ -87,6 +92,7 @@ func scanDirectoryForOpenAPI(projectID, directory string) {
 					ctx:       ctx,
 					client:    client,
 					projectID: projectID,
+					baseURI:   baseURI,
 					path:      path,
 					directory: directory,
 					style:     "openapi/v2",
@@ -96,6 +102,7 @@ func scanDirectoryForOpenAPI(projectID, directory string) {
 					ctx:       ctx,
 					client:    client,
 					projectID: projectID,
+					baseURI:   baseURI,
 					path:      path,
 					directory: directory,
 					style:     "openapi/v3",
@@ -113,6 +120,7 @@ func scanDirectoryForOpenAPI(projectID, directory string) {
 type uploadOpenAPITask struct {
 	ctx       context.Context
 	client    connection.Client
+	baseURI   string
 	path      string
 	directory string
 	style     string
@@ -230,6 +238,9 @@ func (task *uploadOpenAPITask) createSpec() error {
 		request.Spec = &rpcpb.Spec{}
 		request.Spec.Style = task.style + "+gzip"
 		request.Spec.Filename = filename
+		if task.baseURI != "" {
+			request.Spec.SourceUri = task.baseURI + "/" + strings.TrimPrefix(task.path, task.directory+"/")
+		}
 		request.Spec.Contents = gzippedBytes
 		response, err := task.client.CreateSpec(task.ctx, request)
 		if err == nil {
