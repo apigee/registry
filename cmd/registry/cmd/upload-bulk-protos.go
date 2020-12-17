@@ -33,6 +33,7 @@ import (
 func init() {
 	uploadBulkCmd.AddCommand(uploadBulkProtosCmd)
 	uploadBulkProtosCmd.Flags().String("project_id", "", "Project id.")
+	uploadBulkProtosCmd.Flags().String("base_uri", "", "Base to use for setting source_uri fields of uploaded specs.")
 }
 
 var uploadBulkProtosCmd = &cobra.Command{
@@ -49,6 +50,10 @@ var uploadBulkProtosCmd = &cobra.Command{
 		if projectID == "" {
 			log.Fatalf("Please specify a project_id")
 		}
+		baseURI, err := flagset.GetString("base_uri")
+		if err != nil {
+			log.Fatalf("%s", err.Error())
+		}
 		ctx := context.TODO()
 		client, err := connection.NewClient(ctx)
 		if err != nil {
@@ -56,12 +61,12 @@ var uploadBulkProtosCmd = &cobra.Command{
 		}
 		core.EnsureProjectExists(ctx, client, projectID)
 		for _, arg := range args {
-			scanDirectoryForProtos(ctx, client, projectID, arg)
+			scanDirectoryForProtos(ctx, client, projectID, baseURI, arg)
 		}
 	},
 }
 
-func scanDirectoryForProtos(ctx context.Context, client connection.Client, projectID, directory string) {
+func scanDirectoryForProtos(ctx context.Context, client connection.Client, projectID, baseURI, directory string) {
 	var err error
 
 	r := regexp.MustCompile("v.*[1-9]+.*")
@@ -91,6 +96,7 @@ func scanDirectoryForProtos(ctx context.Context, client connection.Client, proje
 			taskQueue <- &uploadProtoTask{
 				ctx:       ctx,
 				client:    client,
+				baseURI:   baseURI,
 				projectID: projectID,
 				path:      p,
 				directory: directory,
@@ -107,6 +113,7 @@ func scanDirectoryForProtos(ctx context.Context, client connection.Client, proje
 type uploadProtoTask struct {
 	ctx       context.Context
 	client    connection.Client
+	baseURI   string
 	projectID string
 	path      string
 	directory string
@@ -221,6 +228,9 @@ func (task *uploadProtoTask) createSpec() error {
 				Filename: "protos.zip",
 				Contents: buf.Bytes(),
 			},
+		}
+		if task.baseURI != "" {
+			request.Spec.SourceUri = task.baseURI + "/" + strings.TrimPrefix(task.path, task.directory+"/")
 		}
 		response, err := task.client.CreateSpec(task.ctx, request)
 		if err == nil {

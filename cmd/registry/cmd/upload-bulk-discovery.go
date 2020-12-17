@@ -184,6 +184,8 @@ func (task *uploadDiscoveryTask) createSpec() error {
 		request.Spec = &rpcpb.Spec{}
 		request.Spec.Style = "discovery" + "+gzip"
 		request.Spec.Contents = gzippedBytes
+		request.Spec.SourceUri = task.path
+		request.Spec.Filename = "discovery.json"
 		response, err := task.client.CreateSpec(task.ctx, request)
 		if err == nil {
 			log.Printf("created %s", response.Name)

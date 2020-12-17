@@ -31,10 +31,14 @@
 # First, delete the "protos" project to get a fresh start.
 apg registry delete-project --name projects/protos
 
+# Get the commit hash of the checked-out protos directory
+export COMMIT=`(cd ~/Desktop/googleapis; git rev-parse HEAD)`
+
 # Upload all of the APIs in the googleapis directory at once.
 # This happens in parallel and usually takes less than 10 seconds.
 registry upload bulk protos \
-	--project_id protos ~/Desktop/googleapis
+	--project_id protos ~/Desktop/googleapis \
+	--base_uri https://github.com/googleapis/googleapis/blob/$COMMIT 
 
 # The Atlas project was automatically created. Here we'll use an
 # update-project call to set a few properties of the project.
@@ -42,6 +46,12 @@ apg registry update-project \
 	--project.name "projects/protos" \
 	--project.display_name "Protos" \
 	--project.description "Protocol buffer descriptions of public Google APIs"
+
+# Now compute summary details of all of the APIs in the project. 
+# This will log errors if any of the API specs can't be parsed,
+# but for every spec that is parsed, this will set the display name
+# and description of the corresponding API from the values in the specs.
+registry compute details projects/protos/apis/-
 
 # The `registry upload bulk protos` subcommand automatically generated API ids
 # from the path to the protos in the repo. List the APIs with the following command:

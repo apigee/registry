@@ -30,10 +30,14 @@
 # First, delete the "atlas" project to get a fresh start.
 apg registry delete-project --name projects/atlas
 
+# Get the commit hash of the checked-out OpenAPI directory
+export COMMIT=`(cd ~/Desktop/openapi-directory; git rev-parse HEAD)`
+
 # Upload all of the APIs in the OpenAPI directory at once.
 # This happens in parallel and usually takes around 2 minutes.
 registry upload bulk openapi \
-	--project_id atlas ~/Desktop/openapi-directory/APIs
+	--project_id atlas ~/Desktop/openapi-directory/APIs \
+	--base_uri https://github.com/APIs-guru/openapi-directory/blob/$COMMIT/APIs 
 
 # The Atlas project was automatically created. Here we'll use an
 # update-project call to set a few properties of the project.
