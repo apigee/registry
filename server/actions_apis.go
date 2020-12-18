@@ -116,10 +116,15 @@ func (s *RegistryServer) ListApis(ctx context.Context, req *rpc.ListApisRequest)
 	}
 	prg, err := createFilterOperator(req.GetFilter(),
 		[]filterArg{
+			{"project_id", filterArgTypeString},
 			{"api_id", filterArgTypeString},
 			{"display_name", filterArgTypeString},
 			{"description", filterArgTypeString},
+			{"create_time", filterArgTypeTimestamp},
+			{"update_time", filterArgTypeTimestamp},
 			{"availability", filterArgTypeString},
+			{"recommended_version", filterArgTypeString},
+			{"owner", filterArgTypeString},
 		})
 	if err != nil {
 		return nil, internalError(err)
@@ -131,11 +136,15 @@ func (s *RegistryServer) ListApis(ctx context.Context, req *rpc.ListApisRequest)
 	for _, err = it.Next(&api); err == nil; _, err = it.Next(&api) {
 		if prg != nil {
 			out, _, err := prg.Eval(map[string]interface{}{
-				"api_id":       api.ApiID,
-				"display_name": api.DisplayName,
-				"description":  api.Description,
-				"availability": api.Availability,
-				"owner":        api.Owner,
+				"project_id":          api.ProjectID,
+				"api_id":              api.ApiID,
+				"display_name":        api.DisplayName,
+				"description":         api.Description,
+				"create_time":         api.CreateTime,
+				"update_time":         api.UpdateTime,
+				"availability":        api.Availability,
+				"recommended_version": api.RecommendedVersion,
+				"owner":               api.Owner,
 			})
 			if err != nil {
 				return nil, invalidArgumentError(err)

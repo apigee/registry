@@ -124,6 +124,8 @@ func (s *RegistryServer) ListVersions(ctx context.Context, req *rpc.ListVersions
 			{"version_id", filterArgTypeString},
 			{"display_name", filterArgTypeString},
 			{"description", filterArgTypeString},
+			{"create_time", filterArgTypeTimestamp},
+			{"update_time", filterArgTypeTimestamp},
 			{"state", filterArgTypeString},
 		})
 	if err != nil {
@@ -141,6 +143,8 @@ func (s *RegistryServer) ListVersions(ctx context.Context, req *rpc.ListVersions
 				"version_id":   version.VersionID,
 				"display_name": version.DisplayName,
 				"description":  version.Description,
+				"create_time":  version.CreateTime,
+				"update_time":  version.UpdateTime,
 				"state":        version.State,
 			})
 			if err != nil {
