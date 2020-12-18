@@ -114,6 +114,8 @@ func (s *RegistryServer) ListProjects(ctx context.Context, req *rpc.ListProjects
 			{"project_id", filterArgTypeString},
 			{"display_name", filterArgTypeString},
 			{"description", filterArgTypeString},
+			{"create_time", filterArgTypeTimestamp},
+			{"update_time", filterArgTypeTimestamp},
 		})
 	if err != nil {
 		return nil, internalError(err)
@@ -128,6 +130,8 @@ func (s *RegistryServer) ListProjects(ctx context.Context, req *rpc.ListProjects
 				"project_id":   project.ProjectID,
 				"display_name": project.DisplayName,
 				"description":  project.Description,
+				"create_time":  project.CreateTime,
+				"update_time":  project.UpdateTime,
 			})
 			if err != nil {
 				return nil, invalidArgumentError(err)

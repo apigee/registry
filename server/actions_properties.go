@@ -156,6 +156,8 @@ func (s *RegistryServer) ListProperties(ctx context.Context, req *rpc.ListProper
 			{"version_id", filterArgTypeString},
 			{"spec_id", filterArgTypeString},
 			{"property_id", filterArgTypeString},
+			{"create_time", filterArgTypeTimestamp},
+			{"update_time", filterArgTypeTimestamp},
 		})
 	if err != nil {
 		return nil, invalidArgumentError(err)
@@ -185,6 +187,8 @@ func (s *RegistryServer) ListProperties(ctx context.Context, req *rpc.ListProper
 				"version_id":  property.VersionID,
 				"spec_id":     property.SpecID,
 				"property_id": property.PropertyID,
+				"create_time": property.CreateTime,
+				"update_time": property.UpdateTime,
 			})
 			if err != nil {
 				return nil, invalidArgumentError(err)
