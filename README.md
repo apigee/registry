@@ -97,7 +97,7 @@ include:
 The easiest way to try the Registry API is to run `registry-server` locally
 using the SQLite backend.
 
-`registry-server -c config/sqlite.yml`
+`registry-server -c config/sqlite.yaml`
 
 Next, in a separate terminal, configure your environment to point to this
 server with the following:
