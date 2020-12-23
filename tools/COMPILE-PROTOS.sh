@@ -38,6 +38,7 @@ PROTOS=( \
 	google/cloud/apigee/registry/v1alpha1/registry_service.proto \
 	google/cloud/apigee/registry/v1alpha1/registry_notifications.proto \
 	google/cloud/apigee/registry/v1alpha1/registry_index.proto \
+	google/cloud/apigee/registry/v1alpha1/registry_lint.proto \
 )
 
 echo "Running the API linter."
