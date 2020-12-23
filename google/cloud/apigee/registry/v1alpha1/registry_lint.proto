@@ -1,0 +1,56 @@
+// Copyright 2020 Google LLC. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//    http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package google.cloud.apigee.registry.v1alpha1;
+
+option java_package = "com.google.cloud.apigee.registry.v1alpha1";
+option java_multiple_files = true;
+option java_outer_classname = "RegistryLintProto";
+option go_package = "github.com/apigee/registry/rpc;rpc";
+
+// Lint wraps the result of a linter run.
+// (-- api-linter: core::0123::resource-annotation=disabled
+//     aip.dev/not-precedent: This message is not currently used in an API. --)
+message Lint {
+  // The name of the result.
+  string name = 1;
+
+  // The lint results for each file examined.
+  repeated LintFile files = 2;
+}
+
+message LintFile {
+    string file_path = 1;
+    repeated LintProblem problems = 2;
+}
+
+message LintProblem {
+    string message = 1;
+    string rule_id = 2;
+    string rule_doc_uri = 3;
+    string suggestion = 4;
+    LintLocation location = 5;
+}
+
+message LintLocation {
+    LintPosition start_position = 1;
+    LintPosition end_position = 2;
+}
+
+message LintPosition {
+    int32 line_number = 1;
+    int32 column_number = 2;
+}
