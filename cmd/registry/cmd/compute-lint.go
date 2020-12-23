@@ -104,7 +104,7 @@ func (task *computeLintTask) Run() error {
 			return fmt.Errorf("error processing protos: %s (%s)", spec.Name, err.Error())
 		}
 	} else {
-		return fmt.Errorf("we don't know how to summarize %s", spec.Name)
+		return fmt.Errorf("we don't know how to lint %s", spec.Name)
 	}
 	subject := spec.GetName()
 	messageData, err := proto.Marshal(lint)

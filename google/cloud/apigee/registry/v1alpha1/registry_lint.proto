@@ -21,7 +21,7 @@ option java_multiple_files = true;
 option java_outer_classname = "RegistryLintProto";
 option go_package = "github.com/apigee/registry/rpc;rpc";
 
-// Lint wraps the result of a linter run.
+// Lint wraps the result of a linter run for an API.
 // (-- api-linter: core::0123::resource-annotation=disabled
 //     aip.dev/not-precedent: This message is not currently used in an API. --)
 message Lint {
@@ -32,25 +32,55 @@ message Lint {
   repeated LintFile files = 2;
 }
 
+// LintFile wraps the result of a linter run for a file.
+// (-- api-linter: core::0123::resource-annotation=disabled
+//     aip.dev/not-precedent: This message is not currently used in an API. --)
 message LintFile {
+    // The path of the file linted.
     string file_path = 1;
+
+    // The problems found when the file was linted.
     repeated LintProblem problems = 2;
 }
 
+// LintProblem represents a problem found by a linter.
+// (-- api-linter: core::0123::resource-annotation=disabled
+//     aip.dev/not-precedent: This message is not currently used in an API. --)
 message LintProblem {
+    // A message describing the problem.
     string message = 1;
+
+    // An identifier for a related design rule.
     string rule_id = 2;
+
+    // A link for a related design rule.
     string rule_doc_uri = 3;
+
+    // A suggestion for resolving the problem.
     string suggestion = 4;
+
+    // The location in the file of the problem.
     LintLocation location = 5;
 }
 
+// LintLocation represents a range of text in a file.
+// (-- api-linter: core::0123::resource-annotation=disabled
+//     aip.dev/not-precedent: This message is not currently used in an API. --)
 message LintLocation {
+    // The initial position of a problem.
     LintPosition start_position = 1;
+
+    // The end position of a problem.
     LintPosition end_position = 2;
 }
 
+// LintPosition represents a point in a file.
+// (-- api-linter: core::0123::resource-annotation=disabled
+//     aip.dev/not-precedent: This message is not currently used in an API. --)
 message LintPosition {
+    // A line number in a file.
     int32 line_number = 1;
+
+    // A column number in a file.
     int32 column_number = 2;
 }
