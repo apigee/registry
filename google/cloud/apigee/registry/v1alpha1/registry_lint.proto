@@ -84,3 +84,25 @@ message LintPosition {
     // A column number in a file.
     int32 column_number = 2;
 }
+
+// LintStats summarizes linter results.
+// (-- api-linter: core::0123::resource-annotation=disabled
+//     aip.dev/not-precedent: This message is not currently used in an API. --)
+message LintStats {
+    // Problems found in linting.
+    repeated LintProblemCount problem_counts = 1;
+}
+
+// LintProblemCount represents the number of times a problem was found in linting.
+// (-- api-linter: core::0123::resource-annotation=disabled
+//     aip.dev/not-precedent: This message is not currently used in an API. --)
+message LintProblemCount {
+    // The number of occurrences of the problem.
+    int32 count = 1;
+
+    // An identifier for the related design rule.
+    string rule_id = 2;
+
+    // A link for the related design rule.
+    string rule_doc_uri = 3;
+}
