@@ -16,6 +16,7 @@ package server
 
 import (
 	"context"
+	"strings"
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/models"
@@ -125,15 +126,31 @@ func (s *RegistryServer) ListApis(ctx context.Context, req *rpc.ListApisRequest)
 			{"availability", filterArgTypeString},
 			{"recommended_version", filterArgTypeString},
 			{"owner", filterArgTypeString},
+			{"labels", filterArgTypeStringArray},
 		})
 	if err != nil {
 		return nil, internalError(err)
 	}
+	// If the filter contains the "in labels" string,
+	// include labels associated with each item.
+	hasLabels := strings.Contains(req.GetFilter(), "in labels")
 	var apiMessages []*rpc.Api
 	var api models.Api
 	it := client.Run(ctx, q)
 	pageSize := boundPageSize(req.GetPageSize())
 	for _, err = it.Next(&api); err == nil; _, err = it.Next(&api) {
+		labels := make([]string, 0)
+		if hasLabels {
+			// Proof-of-concept only. This is extremely slow!
+			q2 := client.NewQuery(models.LabelEntityName)
+			q2 = q2.Require("ProjectID", api.ProjectID)
+			q2 = q2.Require("ApiID", api.ApiID)
+			var label models.Label
+			it2 := client.Run(ctx, q2)
+			for _, err = it2.Next(&label); err == nil; _, err = it.Next(&label) {
+				labels = append(labels, label.LabelID)
+			}
+		}
 		if prg != nil {
 			out, _, err := prg.Eval(map[string]interface{}{
 				"project_id":          api.ProjectID,
@@ -145,6 +162,7 @@ func (s *RegistryServer) ListApis(ctx context.Context, req *rpc.ListApisRequest)
 				"availability":        api.Availability,
 				"recommended_version": api.RecommendedVersion,
 				"owner":               api.Owner,
+				"labels":              labels,
 			})
 			if err != nil {
 				return nil, invalidArgumentError(err)

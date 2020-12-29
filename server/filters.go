@@ -25,9 +25,10 @@ import (
 type filterArgType int
 
 const (
-	filterArgTypeString    filterArgType = iota
-	filterArgTypeInt                     = iota
-	filterArgTypeTimestamp               = iota
+	filterArgTypeString      filterArgType = iota
+	filterArgTypeInt                       = iota
+	filterArgTypeTimestamp                 = iota
+	filterArgTypeStringArray               = iota
 )
 
 type filterArg struct {
@@ -48,6 +49,8 @@ func createFilterOperator(filter string, args []filterArg) (cel.Program, error) 
 			dd = append(dd, decls.NewIdent(pair.argName, decls.Int, nil))
 		case filterArgTypeTimestamp:
 			dd = append(dd, decls.NewIdent(pair.argName, decls.Timestamp, nil))
+		case filterArgTypeStringArray:
+			dd = append(dd, decls.NewIdent(pair.argName, decls.NewListType(decls.String), nil))
 		default:
 			log.Fatalf("unknown filter argument type")
 		}
