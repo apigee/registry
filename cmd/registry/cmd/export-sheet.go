@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"log"
 	"path/filepath"
+	"strings"
 
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
@@ -29,8 +30,11 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+var sheetPropertyName string
+
 func init() {
 	exportCmd.AddCommand(exportSheetCmd)
+	exportSheetCmd.PersistentFlags().StringVar(&sheetPropertyName, "as", "", "name of property to hold url of exported sheet")
 }
 
 var exportSheetCmd = &cobra.Command{
@@ -38,6 +42,7 @@ var exportSheetCmd = &cobra.Command{
 	Short: "Export a specified property to a Google sheet",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
+		var path string
 		var err error
 		ctx := context.TODO()
 		client, err := connection.NewClient(ctx)
@@ -50,10 +55,12 @@ var exportSheetCmd = &cobra.Command{
 		}
 		if isInt64Property(inputs[0]) {
 			title := "properties/" + inputs[0].GetRelation()
-			err = core.ExportInt64ToSheet(title, inputs)
+			path, err = core.ExportInt64ToSheet(title, inputs)
 			if err != nil {
 				log.Fatalf("%s", err.Error())
 			}
+			log.Printf("exported int64 %+v to %s", inputs, path)
+			saveSheetPath(ctx, client, path, sheetPropertyName)
 			return
 		}
 		typeURL := messageTypeURL(inputs[0])
@@ -65,15 +72,27 @@ var exportSheetCmd = &cobra.Command{
 			if err != nil {
 				log.Fatalf("%s", err.Error())
 			}
-			err = core.ExportVocabularyToSheet(inputs[0].Name, vocabulary)
+			path, err = core.ExportVocabularyToSheet(inputs[0].Name, vocabulary)
+			log.Printf("exported vocabulary %s to %s", inputs[0].Name, path)
+			if sheetPropertyName == "" {
+				sheetPropertyName = inputs[0].Name + "-sheet"
+			}
+			saveSheetPath(ctx, client, path, sheetPropertyName)
 		} else if typeURL == "gnostic.metrics.VersionHistory" {
 			if len(inputs) != 1 {
 				log.Fatalf("please specify exactly one version history to export")
 				return
 			}
-			err = core.ExportVersionHistoryToSheet(inputNames[0], inputs[0])
+			path, err = core.ExportVersionHistoryToSheet(inputNames[0], inputs[0])
+			log.Printf("exported version history %s to %s", inputs[0].Name, path)
+			if sheetPropertyName == "" {
+				sheetPropertyName = inputs[0].Name + "-sheet"
+			}
+			saveSheetPath(ctx, client, path, sheetPropertyName)
 		} else if typeURL == "gnostic.metrics.Complexity" {
-			err = core.ExportComplexityToSheet("Complexity", inputs)
+			path, err = core.ExportComplexityToSheet("Complexity", inputs)
+			log.Printf("exported complexity %+v to %s", inputs, path)
+			saveSheetPath(ctx, client, path, sheetPropertyName)
 		} else if typeURL == "google.cloud.apigee.registry.v1alpha1.Index" {
 			if len(inputs) != 1 {
 				log.Fatalf("%d properties matched. Please specify exactly one for export.", len(inputs))
@@ -82,7 +101,12 @@ var exportSheetCmd = &cobra.Command{
 			if err != nil {
 				log.Fatalf("%s", err.Error())
 			}
-			err = core.ExportIndexToSheet(inputs[0].Name, index)
+			path, err = core.ExportIndexToSheet(inputs[0].Name, index)
+			log.Printf("exported index %s to %s", inputs[0].Name, path)
+			if sheetPropertyName == "" {
+				sheetPropertyName = inputs[0].Name + "-sheet"
+			}
+			saveSheetPath(ctx, client, path, sheetPropertyName)
 		} else {
 			log.Fatalf("Unknown message type: %s", typeURL)
 		}
@@ -162,4 +186,22 @@ func getIndex(property *rpc.Property) (*rpc.Index, error) {
 		}
 	}
 	return nil, fmt.Errorf("not a index: %s", property.Name)
+}
+
+func saveSheetPath(ctx context.Context, client connection.Client, path string, propertyName string) error {
+	if path == "" {
+		return nil
+	}
+	parts := strings.Split(propertyName, "/")
+	parent := strings.Join(parts[0:len(parts)-2], "/")
+	propertyID := parts[len(parts)-1]
+	req := &rpc.CreatePropertyRequest{
+		Parent:     parent,
+		PropertyId: propertyID,
+		Property: &rpc.Property{
+			Value: &rpc.Property_StringValue{StringValue: path},
+		},
+	}
+	_, err := client.CreateProperty(ctx, req)
+	return err
 }

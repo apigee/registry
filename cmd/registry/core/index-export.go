@@ -20,7 +20,7 @@ import (
 	"github.com/apigee/registry/rpc"
 )
 
-func ExportIndexToSheet(name string, index *rpc.Index) error {
+func ExportIndexToSheet(name string, index *rpc.Index) (string, error) {
 	sheetsClient, err := NewSheetsClient("")
 	if err != nil {
 		log.Fatalf("%s", err.Error())
@@ -59,8 +59,7 @@ func ExportIndexToSheet(name string, index *rpc.Index) error {
 		}
 		_, err = sheetsClient.Update("Fields", rows)
 	}
-	log.Printf("exported to %+v\n", sheet.SpreadsheetUrl)
-	return nil
+	return sheet.SpreadsheetUrl, nil
 }
 
 func rowForOperation(op *rpc.Operation) []interface{} {

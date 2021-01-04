@@ -16,24 +16,23 @@ package core
 
 import (
 	"fmt"
-	"log"
 
 	metrics "github.com/googleapis/gnostic/metrics"
 )
 
-func ExportVocabularyToSheet(name string, vocabulary *metrics.Vocabulary) error {
+func ExportVocabularyToSheet(name string, vocabulary *metrics.Vocabulary) (string, error) {
 	sheetsClient, err := NewSheetsClient("")
 	if err != nil {
-		return err
+		return "", err
 	}
 	sheet, err := sheetsClient.CreateSheet(name, []string{"Everything", "Schemas", "Properties", "Operations", "Parameters"})
 	if err != nil {
-		return err
+		return "", err
 	}
 	for _, s := range sheet.Sheets {
 		_, err := sheetsClient.FormatHeaderRow(s.Properties.SheetId)
 		if err != nil {
-			return err
+			return "", err
 		}
 	}
 	{
@@ -53,7 +52,7 @@ func ExportVocabularyToSheet(name string, vocabulary *metrics.Vocabulary) error 
 		}
 		_, err = sheetsClient.Update(fmt.Sprintf("Everything!A1:C%d", len(rows)), rows)
 		if err != nil {
-			return err
+			return "", err
 		}
 	}
 	// create update function as a closure to simplify multiple uses (below)
@@ -70,8 +69,7 @@ func ExportVocabularyToSheet(name string, vocabulary *metrics.Vocabulary) error 
 	updateSheet("Properties", vocabulary.Properties)
 	updateSheet("Operations", vocabulary.Operations)
 	updateSheet("Parameters", vocabulary.Parameters)
-	log.Printf("exported to %+v\n", sheet.SpreadsheetUrl)
-	return nil
+	return sheet.SpreadsheetUrl, nil
 }
 
 func rowForLabeledWordCount(kind string, wc *metrics.WordCount) []interface{} {

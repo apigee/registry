@@ -24,7 +24,7 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func ExportComplexityToSheet(name string, inputs []*rpc.Property) error {
+func ExportComplexityToSheet(name string, inputs []*rpc.Property) (string, error) {
 	sheetsClient, err := NewSheetsClient("")
 	if err != nil {
 		log.Fatalf("%s", err.Error())
@@ -51,8 +51,7 @@ func ExportComplexityToSheet(name string, inputs []*rpc.Property) error {
 	if err != nil {
 		log.Fatalf("%s", err.Error())
 	}
-	log.Printf("exported to %+v\n", sheet.SpreadsheetUrl)
-	return nil
+	return sheet.SpreadsheetUrl, nil
 }
 
 func getComplexity(property *rpc.Property) (*metrics.Complexity, error) {

@@ -92,7 +92,8 @@ registry get projects/disco/apis/translate/versions/v3/specs/discovery.json/prop
 # The registry tool also supports exporting all of the complexity results to a Google sheet.
 # (The following command expects OAuth client credentials with access to the
 # Google Sheets API to be available locally in ~/.credentials/registry.json)
-registry export sheet projects/disco/apis/-/versions/-/specs/-/properties/complexity
+registry export sheet projects/disco/apis/-/versions/-/specs/-/properties/complexity \
+	--as projects/disco/properties/complexity-sheet
 
 # We can also compute the vocabulary of APIs described with Discovery documents.
 registry compute vocabulary projects/disco/apis/-/versions/-/specs/-

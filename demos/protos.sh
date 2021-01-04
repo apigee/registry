@@ -104,7 +104,8 @@ registry get projects/protos/apis/google-cloud-translate/versions/v3/specs/proto
 # The registry tool also supports exporting all of the complexity results to a Google sheet.
 # (The following command expects OAuth client credentials with access to the
 # Google Sheets API to be available locally in ~/.credentials/registry.json)
-registry export sheet projects/protos/apis/-/versions/-/specs/-/properties/complexity
+registry export sheet projects/protos/apis/-/versions/-/specs/-/properties/complexity \
+	--as projects/protos/properties/complexity-sheet
 
 # We can also compute the vocabulary of proto APIs.
 registry compute vocabulary projects/protos/apis/-/versions/-/specs/-
