@@ -20,7 +20,7 @@ import (
 	"github.com/apigee/registry/rpc"
 )
 
-func ExportInt64ToSheet(name string, properties []*rpc.Property) error {
+func ExportInt64ToSheet(name string, properties []*rpc.Property) (string, error) {
 	sheetsClient, err := NewSheetsClient("")
 	if err != nil {
 		log.Fatalf("%s", err.Error())
@@ -42,8 +42,7 @@ func ExportInt64ToSheet(name string, properties []*rpc.Property) error {
 	if err != nil {
 		log.Fatalf("%s", err.Error())
 	}
-	log.Printf("exported to %+v\n", sheet.SpreadsheetUrl)
-	return nil
+	return sheet.SpreadsheetUrl, nil
 }
 
 func rowForInt64Property(property *rpc.Property) []interface{} {

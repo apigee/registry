@@ -24,7 +24,7 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func ExportVersionHistoryToSheet(name string, property *rpc.Property) error {
+func ExportVersionHistoryToSheet(name string, property *rpc.Property) (string, error) {
 	sheetsClient, err := NewSheetsClient("")
 	if err != nil {
 		log.Fatalf("%s", err.Error())
@@ -62,8 +62,7 @@ func ExportVersionHistoryToSheet(name string, property *rpc.Property) error {
 			log.Fatalf("%s", err.Error())
 		}
 	}
-	log.Printf("exported to %+v\n", sheet.SpreadsheetUrl)
-	return nil
+	return sheet.SpreadsheetUrl, nil
 }
 
 func nameForVersion(version string) string {

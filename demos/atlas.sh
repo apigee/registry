@@ -102,7 +102,8 @@ registry get projects/atlas/apis/wordnik.com/versions/4.0/specs/swagger.yaml/pro
 # It's also possible to export properties to a Google sheet.
 # (The following command expects OAuth client credentials with access to the
 # Google Sheets API to be available locally in ~/.credentials/registry.json)
-registry export sheet projects/atlas/apis/-/versions/-/specs/-/properties/complexity
+registry export sheet projects/atlas/apis/-/versions/-/specs/-/properties/complexity \
+	--as projects/atlas/properties/complexity-sheet
 
 # Another interesting property that can be computed is the "vocabulary" of an API.
 # The following command computes vocabularies of every API spec in the project.
