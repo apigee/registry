@@ -15,28 +15,30 @@
 package core
 
 import (
+	"fmt"
 	"io/ioutil"
-	"log"
+	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 
 	"github.com/apigee/registry/rpc"
 	linter "github.com/googleapis/gnostic/metrics/lint"
-	sourceinfo "github.com/googleapis/gnostic/metrics/sourceinfo"
 	"google.golang.org/protobuf/proto"
+	yaml "gopkg.in/yaml.v3"
 )
 
-// NewLintFromOpenAPIv2 runs the API linter and returns the results.
-func NewLintFromOpenAPIv2(name string, b []byte) (*rpc.Lint, error) {
+// NewLintFromOpenAPI runs the API linter and returns the results.
+func NewLintFromOpenAPI(name string, b []byte) (*rpc.Lint, error) {
 	// create a tmp directory
 	root, err := ioutil.TempDir("", "registry-openapi-")
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("running in %s", root)
+	// log.Printf("running in %s", root)
 	name = filepath.Base(name)
 	// whenever we finish, delete the tmp directory
-	//	defer os.RemoveAll(root)
+	defer os.RemoveAll(root)
 	// write the file to the temp directory
 	spec, err := GUnzippedBytes(b)
 	if err != nil {
@@ -50,7 +52,7 @@ func NewLintFromOpenAPIv2(name string, b []byte) (*rpc.Lint, error) {
 	lint := &rpc.Lint{}
 	lint.Name = name
 	// run the linter on the spec
-	lintFile, err := lintFileForOpenAPIv2(name, root)
+	lintFile, err := lintFileForOpenAPI(name, root)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +60,7 @@ func NewLintFromOpenAPIv2(name string, b []byte) (*rpc.Lint, error) {
 	return lint, err
 }
 
-func lintFileForOpenAPIv2(path string, root string) (*rpc.LintFile, error) {
+func lintFileForOpenAPI(path string, root string) (*rpc.LintFile, error) {
 	cmd := exec.Command("gnostic", path, "--linter-out=.")
 	cmd.Dir = root
 	_, err := cmd.CombinedOutput()
@@ -78,21 +80,68 @@ func lintFileForOpenAPIv2(path string, root string) (*rpc.LintFile, error) {
 		problem := &rpc.LintProblem{}
 		problem.Message = message.Message
 		problem.Suggestion = message.Suggestion
+		keys := message.Keys
+		node, err := FindNode(root+"/"+path, keys)
+		if err == nil {
+			l := int32(node.Line)
+			c := int32(node.Column)
+			problem.Location = &rpc.LintLocation{}
+			problem.Location.StartPosition = &rpc.LintPosition{
+				LineNumber:   l,
+				ColumnNumber: c,
+			}
+			problem.Location.EndPosition = &rpc.LintPosition{
+				LineNumber:   l,
+				ColumnNumber: c + int32(len(node.Value)-1),
+			}
+		}
 		problems = append(problems, problem)
-		keys := message.Keys[0 : len(message.Keys)-1]
-		token := message.Keys[len(message.Keys)-1]
-		log.Printf("%+v", keys)
-		log.Printf("%+v", token)
-		node, err := sourceinfo.FindNode(root+"/"+path, keys, token)
-		log.Printf("%+v %+v", err, node)
-
 	}
 	result := &rpc.LintFile{}
 	result.Problems = problems
 	return result, err
 }
 
-func NewLintFromOpenAPIv3(name string, b []byte) (*rpc.Lint, error) {
-	lint := &rpc.Lint{}
-	return lint, nil
+// findNode recursively iterates through the yaml file using the node feature. The function
+// will continue until the token is found at the max depth. If the token is not found, an
+// empty node is returned.
+func findNode(node *yaml.Node, keyIndex int, maxDepth int, keys []string) (*yaml.Node, error) {
+	if keyIndex > maxDepth {
+		return node, nil
+	}
+	for i := 0; i < len(node.Content); i += 2 {
+		key := node.Content[i]
+		val := node.Content[i+1]
+		if keyIndex+1 == maxDepth && val.Value == keys[maxDepth] {
+			return val, nil
+		}
+		if key.Value == keys[keyIndex] {
+			switch val.Kind {
+			case yaml.SequenceNode:
+				nextKeyIndex, err := strconv.Atoi(keys[keyIndex+1])
+				if err != nil {
+					return nil, err
+				}
+				return findNode(val.Content[nextKeyIndex], keyIndex+2, maxDepth, keys)
+			default:
+				return findNode(val, keyIndex+1, maxDepth, keys)
+			}
+		} else {
+			continue
+		}
+
+	}
+	return &yaml.Node{}, nil
+}
+
+// FindNode returns a node object pointing to the given token in a yaml file. The node contains
+// information such as the string value, line number, bordering commments, etc.
+func FindNode(filename string, keys []string) (*yaml.Node, error) {
+	data, _ := ioutil.ReadFile(filename)
+	var node yaml.Node
+	err := yaml.Unmarshal(data, &node)
+	if err != nil {
+		fmt.Printf("%+v", err)
+	}
+	return findNode(node.Content[0], 0, len(keys)-1, keys)
 }
