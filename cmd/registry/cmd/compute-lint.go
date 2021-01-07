@@ -93,9 +93,15 @@ func (task *computeLintTask) Run() error {
 	log.Printf("computing %s/properties/%s", spec.Name, relation)
 	var lint *rpc.Lint
 	if strings.HasPrefix(spec.GetStyle(), "openapi/v2") {
-		return fmt.Errorf("unsupported OpenAPI v2 document: %s", spec.Name)
+		lint, err = core.NewLintFromOpenAPIv2(spec.Name, spec.GetContents())
+		if err != nil {
+			return fmt.Errorf("error processing protos: %s (%s)", spec.Name, err.Error())
+		}
 	} else if strings.HasPrefix(spec.GetStyle(), "openapi/v3") {
-		return fmt.Errorf("unsupported OpenAPI v3 document: %s", spec.Name)
+		lint, err = core.NewLintFromOpenAPIv3(spec.Name, spec.GetContents())
+		if err != nil {
+			return fmt.Errorf("error processing protos: %s (%s)", spec.Name, err.Error())
+		}
 	} else if strings.HasPrefix(spec.GetStyle(), "discovery") {
 		return fmt.Errorf("unsupported Discovery document: %s", spec.Name)
 	} else if spec.GetStyle() == "proto+zip" {
