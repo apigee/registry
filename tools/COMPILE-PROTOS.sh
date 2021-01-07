@@ -27,6 +27,9 @@ go get -u github.com/googleapis/gapic-generator-go/cmd/protoc-gen-go_gapic
 go get -u github.com/googleapis/gapic-generator-go/cmd/protoc-gen-go_cli
 go get -u github.com/googleapis/api-linter/cmd/api-linter
 
+# add installed dependencies to PATH in case they aren't already
+export PATH=$PATH:$(go env GOBIN):$(go env GOPATH)/bin
+
 echo "Clearing any previously-generated files."
 rm -rf rpc/*.go gapic/*.go cmd/apg/*.go
 mkdir -p rpc gapic cmd/apg
@@ -83,12 +86,13 @@ protoc --proto_path=. --proto_path=${ANNOTATIONS} \
   	--go_cli_opt "gapic=github.com/apigee/registry/gapic"
 
 # fix a problem in a couple of generated CLI files
-sed -i -e 's/anypb.Property_MessageValue/rpcpb.Property_MessageValue/g' \
+sed -i.bk -e 's/anypb.Property_MessageValue/rpcpb.Property_MessageValue/g' \
 	cmd/apg/create-property.go \
 	cmd/apg/update-property.go
-sed -i -e 's/anypbpb.Property_MessageValue/rpcpb.Property_MessageValue/g' \
+sed -i.bk -e 's/anypbpb.Property_MessageValue/rpcpb.Property_MessageValue/g' \
 	cmd/apg/create-property.go \
 	cmd/apg/update-property.go
+rm cmd/apg/create-property.go.bk cmd/apg/update-property.go.bk
 
 echo "Generating descriptor set for Envoy gRPC-JSON Transcoding."
 protoc --proto_path=. --proto_path=${ANNOTATIONS} \
