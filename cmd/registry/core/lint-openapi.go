@@ -15,7 +15,6 @@
 package core
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -75,13 +74,16 @@ func lintFileForOpenAPI(path string, root string) (*rpc.LintFile, error) {
 	if err := proto.Unmarshal(b, output); err != nil {
 		return nil, err
 	}
+
+	nodeFinder, err := newNodeFinder(root + "/" + path)
+
 	problems := make([]*rpc.LintProblem, 0)
 	for _, message := range output.Messages {
 		problem := &rpc.LintProblem{}
 		problem.Message = message.Message
 		problem.Suggestion = message.Suggestion
 		keys := message.Keys
-		node, err := FindNode(root+"/"+path, keys)
+		node, err := nodeFinder.findNode(keys)
 		if err == nil {
 			l := int32(node.Line)
 			c := int32(node.Column)
@@ -100,6 +102,26 @@ func lintFileForOpenAPI(path string, root string) (*rpc.LintFile, error) {
 	result := &rpc.LintFile{}
 	result.Problems = problems
 	return result, err
+}
+
+type nodeFinder struct {
+	node *yaml.Node
+}
+
+func newNodeFinder(filename string) (*nodeFinder, error) {
+	data, _ := ioutil.ReadFile(filename)
+	var node yaml.Node
+	err := yaml.Unmarshal(data, &node)
+	if err == nil {
+		return &nodeFinder{node: &node}, nil
+	}
+	return nil, err
+}
+
+// FindNode returns a node object pointing to the given token in a yaml file. The node contains
+// information such as the string value, line number, bordering commments, etc.
+func (nf *nodeFinder) findNode(keys []string) (*yaml.Node, error) {
+	return findNode(nf.node.Content[0], 0, len(keys)-1, keys)
 }
 
 // findNode recursively iterates through the yaml file using the node feature. The function
@@ -132,16 +154,4 @@ func findNode(node *yaml.Node, keyIndex int, maxDepth int, keys []string) (*yaml
 
 	}
 	return &yaml.Node{}, nil
-}
-
-// FindNode returns a node object pointing to the given token in a yaml file. The node contains
-// information such as the string value, line number, bordering commments, etc.
-func FindNode(filename string, keys []string) (*yaml.Node, error) {
-	data, _ := ioutil.ReadFile(filename)
-	var node yaml.Node
-	err := yaml.Unmarshal(data, &node)
-	if err != nil {
-		fmt.Printf("%+v", err)
-	}
-	return findNode(node.Content[0], 0, len(keys)-1, keys)
 }
