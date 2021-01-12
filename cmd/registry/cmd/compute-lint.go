@@ -45,7 +45,7 @@ var computeLintCmd = &cobra.Command{
 		}
 		// Initialize task queue.
 		taskQueue := make(chan core.Task, 1024)
-		workerCount := 64
+		workerCount := 16
 		for i := 0; i < workerCount; i++ {
 			core.WaitGroup().Add(1)
 			go core.Worker(ctx, taskQueue)
@@ -92,15 +92,10 @@ func (task *computeLintTask) Run() error {
 	relation := "lint"
 	log.Printf("computing %s/properties/%s", spec.Name, relation)
 	var lint *rpc.Lint
-	if strings.HasPrefix(spec.GetStyle(), "openapi/v2") {
+	if strings.HasPrefix(spec.GetStyle(), "openapi") {
 		lint, err = core.NewLintFromOpenAPI(spec.Name, spec.GetContents())
 		if err != nil {
-			return fmt.Errorf("error processing protos: %s (%s)", spec.Name, err.Error())
-		}
-	} else if strings.HasPrefix(spec.GetStyle(), "openapi/v3") {
-		lint, err = core.NewLintFromOpenAPI(spec.Name, spec.GetContents())
-		if err != nil {
-			return fmt.Errorf("error processing protos: %s (%s)", spec.Name, err.Error())
+			return fmt.Errorf("error processing OpenAPI: %s (%s)", spec.Name, err.Error())
 		}
 	} else if strings.HasPrefix(spec.GetStyle(), "discovery") {
 		return fmt.Errorf("unsupported Discovery document: %s", spec.Name)

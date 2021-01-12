@@ -34,7 +34,6 @@ func NewLintFromOpenAPI(name string, b []byte) (*rpc.Lint, error) {
 	if err != nil {
 		return nil, err
 	}
-	// log.Printf("running in %s", root)
 	name = filepath.Base(name)
 	// whenever we finish, delete the tmp directory
 	defer os.RemoveAll(root)
@@ -43,20 +42,20 @@ func NewLintFromOpenAPI(name string, b []byte) (*rpc.Lint, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = ioutil.WriteFile(root+"/"+name, spec, 0644)
+	err = ioutil.WriteFile(filepath.Join(root, name), spec, 0644)
 	if err != nil {
 		return nil, err
 	}
-	// run the linter on the spec
-	lint := &rpc.Lint{}
-	lint.Name = name
 	// run the linter on the spec
 	lintFile, err := lintFileForOpenAPI(name, root)
 	if err != nil {
 		return nil, err
 	}
-	lint.Files = append(lint.Files, lintFile)
-	return lint, err
+	lint := &rpc.Lint{
+		Name:  name,
+		Files: []*rpc.LintFile{lintFile},
+	}
+	return lint, nil
 }
 
 func lintFileForOpenAPI(path string, root string) (*rpc.LintFile, error) {
@@ -66,7 +65,7 @@ func lintFileForOpenAPI(path string, root string) (*rpc.LintFile, error) {
 	if err != nil {
 		return nil, err
 	}
-	b, err := ioutil.ReadFile(root + "/linter.pb")
+	b, err := ioutil.ReadFile(filepath.Join(root, "/linter.pb"))
 	if err != nil {
 		return nil, err
 	}
@@ -74,27 +73,29 @@ func lintFileForOpenAPI(path string, root string) (*rpc.LintFile, error) {
 	if err := proto.Unmarshal(b, output); err != nil {
 		return nil, err
 	}
-
-	nodeFinder, err := newNodeFinder(root + "/" + path)
-
+	nodeFinder, err := newNodeFinder(filepath.Join(root, path))
+	if err != nil {
+		return nil, err
+	}
 	problems := make([]*rpc.LintProblem, 0)
 	for _, message := range output.Messages {
-		problem := &rpc.LintProblem{}
-		problem.Message = message.Message
-		problem.Suggestion = message.Suggestion
-		keys := message.Keys
-		node, err := nodeFinder.findNode(keys)
+		problem := &rpc.LintProblem{
+			Message:    message.Message,
+			Suggestion: message.Suggestion,
+		}
+		node, err := nodeFinder.findNode(message.Keys)
 		if err == nil {
 			l := int32(node.Line)
 			c := int32(node.Column)
-			problem.Location = &rpc.LintLocation{}
-			problem.Location.StartPosition = &rpc.LintPosition{
-				LineNumber:   l,
-				ColumnNumber: c,
-			}
-			problem.Location.EndPosition = &rpc.LintPosition{
-				LineNumber:   l,
-				ColumnNumber: c + int32(len(node.Value)-1),
+			problem.Location = &rpc.LintLocation{
+				StartPosition: &rpc.LintPosition{
+					LineNumber:   l,
+					ColumnNumber: c,
+				},
+				EndPosition: &rpc.LintPosition{
+					LineNumber:   l,
+					ColumnNumber: c + int32(len(node.Value)-1),
+				},
 			}
 		}
 		problems = append(problems, problem)
@@ -111,11 +112,10 @@ type nodeFinder struct {
 func newNodeFinder(filename string) (*nodeFinder, error) {
 	data, _ := ioutil.ReadFile(filename)
 	var node yaml.Node
-	err := yaml.Unmarshal(data, &node)
-	if err == nil {
-		return &nodeFinder{node: &node}, nil
+	if err := yaml.Unmarshal(data, &node); err != nil {
+		return nil, err
 	}
-	return nil, err
+	return &nodeFinder{node: &node}, nil
 }
 
 // FindNode returns a node object pointing to the given token in a yaml file. The node contains
@@ -127,7 +127,7 @@ func (nf *nodeFinder) findNode(keys []string) (*yaml.Node, error) {
 // findNode recursively iterates through the yaml file using the node feature. The function
 // will continue until the token is found at the max depth. If the token is not found, an
 // empty node is returned.
-func findNode(node *yaml.Node, keyIndex int, maxDepth int, keys []string) (*yaml.Node, error) {
+func findNode(node *yaml.Node, keyIndex, maxDepth int, keys []string) (*yaml.Node, error) {
 	if keyIndex > maxDepth {
 		return node, nil
 	}
@@ -148,10 +148,7 @@ func findNode(node *yaml.Node, keyIndex int, maxDepth int, keys []string) (*yaml
 			default:
 				return findNode(val, keyIndex+1, maxDepth, keys)
 			}
-		} else {
-			continue
 		}
-
 	}
 	return &yaml.Node{}, nil
 }
