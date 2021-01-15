@@ -100,9 +100,8 @@ func lintFileForOpenAPI(path string, root string) (*rpc.LintFile, error) {
 		}
 		problems = append(problems, problem)
 	}
-	result := &rpc.LintFile{}
-	result.Problems = problems
-	return result, err
+	result := &rpc.LintFile{Problems: problems}
+	return result, nil
 }
 
 type nodeFinder struct {
