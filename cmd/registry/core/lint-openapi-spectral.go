@@ -59,8 +59,9 @@ func lintFileForOpenAPIWithSpectral(path string, root string) (*rpc.LintFile, er
 	problems := make([]*rpc.LintProblem, 0)
 	for _, result := range lintResults {
 		problem := &rpc.LintProblem{
-			Message: result.Message,
-			RuleId:  result.Code,
+			Message:    result.Message,
+			RuleId:     result.Code,
+			RuleDocUri: "https://meta.stoplight.io/docs/spectral/docs/reference/openapi-rules.md#" + result.Code,
 			Location: &rpc.LintLocation{
 				StartPosition: &rpc.LintPosition{
 					LineNumber:   result.Range.Start.Line + 1,
