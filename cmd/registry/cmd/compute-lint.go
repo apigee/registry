@@ -40,7 +40,7 @@ var computeLintCmd = &cobra.Command{
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		linter, err := cmd.LocalFlags().GetString("linter")
-		if err != nil { // ifnore errors
+		if err != nil { // ignore errors
 			linter = ""
 		}
 		ctx := context.TODO()
