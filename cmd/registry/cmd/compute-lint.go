@@ -31,7 +31,7 @@ import (
 
 func init() {
 	computeCmd.AddCommand(computeLintCmd)
-	computeLintCmd.Flags().String("linter", "", "name of linter to use (api-linter, spectral, gnostic)")
+	computeLintCmd.Flags().String("linter", "", "name of linter to use (aip, spectral, gnostic)")
 }
 
 var computeLintCmd = &cobra.Command{
