@@ -43,23 +43,19 @@ type SpectralLintLocation struct {
 }
 
 func lintFileForOpenAPIWithSpectral(path string, root string) (*rpc.LintFile, error) {
-	cmd := exec.Command("spectral", "lint", path, "--f", "json", "--output", "spectral.json")
+	cmd := exec.Command("spectral", "lint", path, "--f", "json", "--output", "spectral-lint.json")
 	cmd.Dir = root
-	_, err := cmd.CombinedOutput()
-	if err != nil {
-		return nil, err
-	}
-	b, err := ioutil.ReadFile(filepath.Join(root, "/spectral.json"))
+	// ignore errors from Spectral because Spectral returns an error result when APIs have errors.
+	cmd.Run()
+	b, err := ioutil.ReadFile(filepath.Join(root, "/spectral-lint.json"))
 	if err != nil {
 		return nil, err
 	}
 	var lintResults []*SpectralLintResult
-
 	err = json.Unmarshal(b, &lintResults)
 	if err != nil {
 		return nil, err
 	}
-
 	problems := make([]*rpc.LintProblem, 0)
 	for _, result := range lintResults {
 		problem := &rpc.LintProblem{

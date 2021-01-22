@@ -84,7 +84,7 @@ type computeLintTask struct {
 }
 
 func (task *computeLintTask) Name() string {
-	return "compute " + task.linter + " lint" + task.specName
+	return "compute " + task.specName + "/lint-" + task.linter
 }
 
 func (task *computeLintTask) Run() error {
