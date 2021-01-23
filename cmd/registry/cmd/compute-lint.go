@@ -84,7 +84,11 @@ type computeLintTask struct {
 }
 
 func (task *computeLintTask) Name() string {
-	return "compute " + task.specName + "/lint-" + task.linter
+	return fmt.Sprintf("compute %s/lint-%s", task.specName, task.linter)
+}
+
+func lintRelation(linter string) string {
+	return "lint-" + linter
 }
 
 func (task *computeLintTask) Run() error {
@@ -103,7 +107,7 @@ func (task *computeLintTask) Run() error {
 		if task.linter == "" {
 			task.linter = "gnostic"
 		}
-		relation = "lint-" + task.linter
+		relation = lintRelation(task.linter)
 		log.Printf("computing %s/properties/%s", spec.Name, relation)
 		lint, err = core.NewLintFromOpenAPI(spec.Name, spec.GetContents(), task.linter)
 		if err != nil {
@@ -116,7 +120,7 @@ func (task *computeLintTask) Run() error {
 		if task.linter == "" {
 			task.linter = "aip"
 		}
-		relation = "lint-" + task.linter
+		relation = lintRelation(task.linter)
 		log.Printf("computing %s/properties/%s", spec.Name, relation)
 		lint, err = core.NewLintFromZippedProtos(spec.Name, spec.GetContents())
 		if err != nil {

@@ -34,19 +34,20 @@ func init() {
 	computeLintStatsCmd.Flags().String("linter", "", "name of linter associated with these lintstats (aip, spectral, gnostic)")
 }
 
+func lintStatsRelation(linter string) string {
+	return "lintstats-" + linter
+}
+
 var computeLintStatsCmd = &cobra.Command{
 	Use:   "lintstats",
 	Short: "Compute summaries of linter runs",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		linter, err := cmd.LocalFlags().GetString("linter")
-		if err != nil { // ignore errors
-			linter = ""
-		}
-		if linter == "" {
+		if err != nil || linter == "" {
 			log.Fatalf("Please specify a linter with the --linter flag")
 		}
-		linterSuffix := "-" + linter
+
 		ctx := context.TODO()
 		client, err := connection.NewClient(ctx)
 		if err != nil {
@@ -61,7 +62,7 @@ var computeLintStatsCmd = &cobra.Command{
 				fmt.Printf("%s\n", spec.Name)
 				// get the lint results
 				request := rpc.GetPropertyRequest{
-					Name: spec.Name + "/properties/lint" + linterSuffix,
+					Name: spec.Name + "/properties/" + lintRelation(linter),
 					View: rpc.View_FULL,
 				}
 				property, err := client.GetProperty(ctx, &request)
@@ -86,7 +87,7 @@ var computeLintStatsCmd = &cobra.Command{
 				{
 					// store the lintstats property
 					subject := spec.GetName()
-					relation := "lintstats" + linterSuffix
+					relation := lintStatsRelation(linter)
 					messageData, err := proto.Marshal(lintStats)
 					property := &rpc.Property{
 						Subject:  subject,
@@ -116,7 +117,7 @@ var computeLintStatsCmd = &cobra.Command{
 				// Create a top-level list of problem counts for the project
 				problemCounts := make([]*rpc.LintProblemCount, 0)
 				// get the lintstats for each spec in the project
-				pattern := project.Name + "/apis/-/versions/-/specs/-/properties/lintstats" + linterSuffix
+				pattern := project.Name + "/apis/-/versions/-/specs/-/properties/" + lintStatsRelation(linter)
 				if m2 := names.PropertyRegexp().FindStringSubmatch(pattern); m2 != nil {
 					err = core.ListProperties(ctx, client, m2, "", true, func(property *rpc.Property) {
 						log.Printf("%+v", property.Name)
@@ -147,7 +148,7 @@ var computeLintStatsCmd = &cobra.Command{
 				{
 					// store the lintstats property
 					subject := project.GetName()
-					relation := "lintstats" + linterSuffix
+					relation := lintStatsRelation(linter)
 					messageData, err := proto.Marshal(lintstats)
 					property := &rpc.Property{
 						Subject:  subject,
