@@ -31,6 +31,7 @@ import (
 
 func init() {
 	computeCmd.AddCommand(computeLintCmd)
+	computeLintCmd.Flags().String("linter", "", "name of linter to use (aip, spectral, gnostic)")
 }
 
 var computeLintCmd = &cobra.Command{
@@ -38,6 +39,10 @@ var computeLintCmd = &cobra.Command{
 	Short: "Compute lint results for API specs",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
+		linter, err := cmd.LocalFlags().GetString("linter")
+		if err != nil { // ignore errors
+			linter = ""
+		}
 		ctx := context.TODO()
 		client, err := connection.NewClient(ctx)
 		if err != nil {
@@ -59,6 +64,7 @@ var computeLintCmd = &cobra.Command{
 					ctx:      ctx,
 					client:   client,
 					specName: spec.Name,
+					linter:   linter,
 				}
 			})
 			if err != nil {
@@ -74,10 +80,15 @@ type computeLintTask struct {
 	ctx      context.Context
 	client   connection.Client
 	specName string
+	linter   string
 }
 
 func (task *computeLintTask) Name() string {
-	return "compute lint " + task.specName
+	return fmt.Sprintf("compute %s/lint-%s", task.specName, task.linter)
+}
+
+func lintRelation(linter string) string {
+	return "lint-" + linter
 }
 
 func (task *computeLintTask) Run() error {
@@ -89,17 +100,28 @@ func (task *computeLintTask) Run() error {
 	if err != nil {
 		return err
 	}
-	relation := "lint"
-	log.Printf("computing %s/properties/%s", spec.Name, relation)
+	var relation string
 	var lint *rpc.Lint
 	if strings.HasPrefix(spec.GetStyle(), "openapi") {
-		lint, err = core.NewLintFromOpenAPI(spec.Name, spec.GetContents())
+		// the default openapi linter is gnostic
+		if task.linter == "" {
+			task.linter = "gnostic"
+		}
+		relation = lintRelation(task.linter)
+		log.Printf("computing %s/properties/%s", spec.Name, relation)
+		lint, err = core.NewLintFromOpenAPI(spec.Name, spec.GetContents(), task.linter)
 		if err != nil {
 			return fmt.Errorf("error processing OpenAPI: %s (%s)", spec.Name, err.Error())
 		}
 	} else if strings.HasPrefix(spec.GetStyle(), "discovery") {
 		return fmt.Errorf("unsupported Discovery document: %s", spec.Name)
 	} else if spec.GetStyle() == "proto+zip" {
+		// the default proto linter is the aip linter
+		if task.linter == "" {
+			task.linter = "aip"
+		}
+		relation = lintRelation(task.linter)
+		log.Printf("computing %s/properties/%s", spec.Name, relation)
 		lint, err = core.NewLintFromZippedProtos(spec.Name, spec.GetContents())
 		if err != nil {
 			return fmt.Errorf("error processing protos: %s (%s)", spec.Name, err.Error())
