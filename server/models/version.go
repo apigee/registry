@@ -30,7 +30,7 @@ const VersionEntityName = "Version"
 
 // Version is the storage-side representation of a version.
 type Version struct {
-	Key         string    `datastore:"-", gorm:"primaryKey"`
+	Key         string    `datastore:"-" gorm:"primaryKey"`
 	ProjectID   string    // Uniquely identifies a project.
 	ApiID       string    // Uniquely identifies an api within a project.
 	VersionID   string    // Uniquely identifies a version wihtin a api.
