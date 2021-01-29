@@ -29,7 +29,7 @@ const ProjectEntityName = "Project"
 
 // Project is the storage-side representation of a project.
 type Project struct {
-	Key         string    `datastore:"-", gorm:"primaryKey"`
+	Key         string    `datastore:"-" gorm:"primaryKey"`
 	ProjectID   string    // Uniquely identifies a project.
 	DisplayName string    // A human-friendly name.
 	Description string    // A detailed description.
