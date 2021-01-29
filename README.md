@@ -171,6 +171,18 @@ following:
 provides a read-only GraphQL interface to the Registry API. It can be run with
 a local or remote `registry-server`.
 
+### Optional: Connecting to a PostgreSQL database on CloudSQL
+
+[config/cloudsql-postgres.yaml](config/cloudsql-postgres.yaml) contains the
+configuration to connect to a PostgreSQL database hosted on CloudSQL. If you
+don't have an existing PostgreSQL instance, you can follow
+[these instructions](https://cloud.google.com/sql/docs/postgres/quickstart) to
+setup one. Please make sure to update
+[config/cloudsql-postgres.yaml](config/cloudsql-postgres.yaml) with the correct
+host configuration. You can start the server with the following:
+
+`registry-server -c config/cloudsql-postgres.yaml`
+
 ## Running the Registry API server with Google Cloud Run
 
 The Registry API server is designed to be easily deployed on
