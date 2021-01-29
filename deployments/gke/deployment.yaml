@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: registry-backend
+spec:
+  selector:
+    matchLabels:
+      app: registry-backend
+  template:
+    metadata:
+      labels:
+        app: registry-backend
+    spec:
+      containers:
+      - name: registry-backend-gke
+        image: gcr.io/${REGISTRY_PROJECT_IDENTIFIER}/registry-backend:latest
+        imagePullPolicy: Always
+        env:
+        - name: PORT
+          value: "8080"
+        ports:
+        - containerPort: 8080

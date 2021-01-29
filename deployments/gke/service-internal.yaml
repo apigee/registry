@@ -1,0 +1,19 @@
+#  This configuration exposes the Registry backend through an internal load
+#  balancer. With an internal load balancer, you can only access the Registry
+#  service if you're within the same VPC network and GCP region as your GKE
+#  cluster. For more details, please refer to
+#  https://cloud.google.com/kubernetes-engine/docs/how-to/internal-load-balancing.
+apiVersion: v1
+kind: Service
+metadata:
+  name: registry-backend
+  annotations:
+    networking.gke.io/load-balancer-type: "Internal"
+spec:
+  type: LoadBalancer
+  selector:
+    app: registry-backend
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 8080

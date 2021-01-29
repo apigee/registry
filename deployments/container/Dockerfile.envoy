@@ -33,6 +33,8 @@ RUN CGO_ENABLED=0 GOOS=linux go build -v -o authz-server ./cmd/authz-server
 # Use an Envoy release image to get envoy in the image.
 FROM envoyproxy/envoy:v1.14.4
 
+ARG DB_CONFIG=registry
+
 COPY deployments/container/RUN-WITH-ENVOY.sh /RUN-WITH-ENVOY.sh
 COPY deployments/envoy/envoy.yaml /etc/envoy/envoy.yaml
 COPY deployments/envoy/proto.pb /proto.pb
@@ -44,7 +46,7 @@ COPY --from=builder /app/registry-server /registry-server
 COPY --from=builder /app/authz-server /authz-server
 
 # Copy configuration files to the production image.
-COPY config/registry.yaml /registry.yaml
+COPY config/${DB_CONFIG}.yaml /registry.yaml
 COPY cmd/authz-server/authz.yaml /authz.yaml
 
 # Run the web service on container startup.
