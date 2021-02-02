@@ -29,6 +29,7 @@ import (
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+	_ "github.com/GoogleCloudPlatform/cloudsql-proxy/proxy/dialers/postgres"
 )
 
 func getGID() uint64 {
@@ -95,8 +96,11 @@ func NewClient(ctx context.Context, gormDBName, gormConfig string) (*Client, err
 		//disableMutex = true
 		c := (&Client{db: db}).ensure()
 		return c, nil
-	case "postgres":
-		db, err := gorm.Open(postgres.Open(gormConfig), config())
+	case "postgres", "cloudsqlpostgres":
+		db, err := gorm.Open(postgres.New(postgres.Config{
+			DriverName: gormDBName,
+			DSN: gormConfig,
+		}), config())
 		if err != nil {
 			openErrorCount++
 			log.Printf("OPEN ERROR %d", openErrorCount)

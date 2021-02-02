@@ -29,7 +29,7 @@ const LabelEntityName = "Label"
 
 // Label is the storage-side representation of a label.
 type Label struct {
-	Key        string    `datastore:"-", gorm:"primaryKey"`
+	Key        string    `datastore:"-" gorm:"primaryKey"`
 	ProjectID  string    // Project associated with label (required).
 	ApiID      string    // Api associated with label (if appropriate).
 	VersionID  string    // Version associated with label (if appropriate).

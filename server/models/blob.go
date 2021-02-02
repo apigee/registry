@@ -21,7 +21,7 @@ const BlobEntityName = "Blob"
 
 // Blob is the storage-side representation of a blob.
 type Blob struct {
-	Key         string    `datastore:"-", gorm:"primaryKey"`
+	Key         string    `datastore:"-" gorm:"primaryKey"`
 	ProjectID   string    // Uniquely identifies a project.
 	ApiID       string    // Uniquely identifies an api within a project.
 	VersionID   string    // Uniquely identifies a version within a api.
