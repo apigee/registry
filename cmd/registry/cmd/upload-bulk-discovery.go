@@ -18,9 +18,11 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"path/filepath"
 
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/rpc"
 	rpcpb "github.com/apigee/registry/rpc"
 	discovery "github.com/googleapis/gnostic/discovery"
 	"github.com/spf13/cobra"
@@ -39,7 +41,7 @@ var uploadBulkDiscoveryCmd = &cobra.Command{
 		flagset := cmd.LocalFlags()
 		projectID, err := flagset.GetString("project_id")
 		if err != nil {
-			log.Fatalf("%s", err.Error())
+			log.Fatal(err.Error())
 		}
 		if projectID == "" {
 			log.Fatalf("Please specify a project_id")
@@ -47,24 +49,26 @@ var uploadBulkDiscoveryCmd = &cobra.Command{
 		ctx := context.TODO()
 		client, err := connection.NewClient(ctx)
 		if err != nil {
-			log.Fatalf("%s", err.Error())
+			log.Fatal(err.Error())
 		}
-		taskQueue := make(chan core.Task, 1024)
 
-		workerCount := 64
-		for i := 0; i < workerCount; i++ {
+		// create a queue for upload tasks and wait for the workers to finish after filling it.
+		taskQueue := make(chan core.Task, 1024)
+		for i := 0; i < 64; i++ {
 			core.WaitGroup().Add(1)
 			go core.Worker(ctx, taskQueue)
 		}
+		defer core.WaitGroup().Wait()
+		defer close(taskQueue)
 
 		core.EnsureProjectExists(ctx, client, projectID)
-		// Get the list of specs.
-		listResponse, err := discovery.FetchList()
+		discoveryResponse, err := discovery.FetchList()
 		if err != nil {
-			log.Fatalf("%+v", err)
+			log.Fatal(err)
 		}
+
 		// Create an upload job for each API.
-		for _, api := range listResponse.APIs {
+		for _, api := range discoveryResponse.APIs {
 			taskQueue <- &uploadDiscoveryTask{
 				ctx:       ctx,
 				client:    client,
@@ -75,8 +79,6 @@ var uploadBulkDiscoveryCmd = &cobra.Command{
 				specID:    "discovery.json",
 			}
 		}
-		close(taskQueue)
-		core.WaitGroup().Wait()
 	},
 }
 
@@ -85,10 +87,9 @@ type uploadDiscoveryTask struct {
 	client    connection.Client
 	path      string
 	projectID string
-	apiID     string // computed at runtime
-	versionID string // computed at runtime
-	specID    string // computed at runtime
-	fileBytes []byte
+	apiID     string
+	versionID string
+	specID    string
 	document  *discovery.Document
 }
 
@@ -97,21 +98,13 @@ func (task *uploadDiscoveryTask) Name() string {
 }
 
 func (task *uploadDiscoveryTask) Run() error {
-	var err error
-	// Fetch the discovery description of the API.
-	task.fileBytes, err = discovery.FetchDocumentBytes(task.path)
-	if err != nil {
-		return err
-	}
 	log.Printf("^^ apis/%s/versions/%s/specs/%s", task.apiID, task.versionID, task.specID)
 	// If the API does not exist, create it.
-	err = task.createAPI()
-	if err != nil {
+	if err := task.createAPI(); err != nil {
 		return err
 	}
 	// If the API version does not exist, create it.
-	err = task.createVersion()
-	if err != nil {
+	if err := task.createVersion(); err != nil {
 		return err
 	}
 	// If the API spec does not exist, create it.
@@ -119,85 +112,101 @@ func (task *uploadDiscoveryTask) Run() error {
 }
 
 func (task *uploadDiscoveryTask) createAPI() error {
-	request := &rpcpb.GetApiRequest{}
-	request.Name = "projects/" + task.projectID + "/apis/" + task.apiID
-	_, err := task.client.GetApi(task.ctx, request)
-	if core.NotFound(err) {
-		request := &rpcpb.CreateApiRequest{}
-		request.Parent = "projects/" + task.projectID
-		request.ApiId = task.apiID
-		request.Api = &rpcpb.Api{}
-		request.Api.DisplayName = task.apiID
-		response, err := task.client.CreateApi(task.ctx, request)
-		if err == nil {
-			log.Printf("created %s", response.Name)
-		} else if core.AlreadyExists(err) {
-			log.Printf("found %s/apis/%s", request.Parent, request.ApiId)
-		} else {
-			log.Printf("error %s/apis/%s: %s",
-				request.Parent, request.ApiId, err.Error())
-		}
-	} else if err != nil {
-		return err
+	if _, err := task.client.GetApi(task.ctx, &rpcpb.GetApiRequest{
+		Name: task.apiName(),
+	}); !core.NotFound(err) {
+		return err // Returns nil when API is found without error.
 	}
+
+	response, err := task.client.CreateApi(task.ctx, &rpcpb.CreateApiRequest{
+		Parent: task.projectName(),
+		ApiId:  task.apiID,
+		Api: &rpc.Api{
+			DisplayName: task.apiID,
+		},
+	})
+	if err != nil {
+		log.Printf("error %s: %s", task.apiName(), err.Error())
+	} else {
+		log.Printf("created %s", response.Name)
+	}
+
 	return nil
 }
 
 func (task *uploadDiscoveryTask) createVersion() error {
-	request := &rpcpb.GetVersionRequest{}
-	request.Name = "projects/" + task.projectID + "/apis/" + task.apiID + "/versions/" + task.versionID
-	_, err := task.client.GetVersion(task.ctx, request)
-	if core.NotFound(err) {
-		request := &rpcpb.CreateVersionRequest{}
-		request.Parent = "projects/" + task.projectID + "/apis/" + task.apiID
-		request.VersionId = task.versionID
-		request.Version = &rpcpb.Version{}
-		response, err := task.client.CreateVersion(task.ctx, request)
-		if err == nil {
-			log.Printf("created %s", response.Name)
-		} else if core.AlreadyExists(err) {
-			log.Printf("found %s/versions/%s", request.Parent, request.VersionId)
-		} else {
-			log.Printf("error %s/versions/%s: %s",
-				request.Parent, request.VersionId, err.Error())
-		}
-	} else if err != nil {
-		return err
+	if _, err := task.client.GetVersion(task.ctx, &rpcpb.GetVersionRequest{
+		Name: task.versionName(),
+	}); !core.NotFound(err) {
+		return err // Returns nil when version is found without error.
 	}
+
+	response, err := task.client.CreateVersion(task.ctx, &rpcpb.CreateVersionRequest{
+		Parent:    task.apiName(),
+		VersionId: task.versionID,
+		Version:   &rpcpb.Version{},
+	})
+	if err != nil {
+		log.Printf("error %s: %s", task.versionName(), err.Error())
+	} else {
+		log.Printf("created %s", response.Name)
+	}
+
 	return nil
 }
 
 func (task *uploadDiscoveryTask) createSpec() error {
-	request := &rpcpb.GetSpecRequest{}
-	request.Name = "projects/" + task.projectID + "/apis/" + task.apiID +
-		"/versions/" + task.versionID +
-		"/specs/" + task.specID
-	_, err := task.client.GetSpec(task.ctx, request)
-	if core.NotFound(err) {
-		fileBytes := task.fileBytes
-		// compress the spec before uploading it
-		gzippedBytes, err := core.GZippedBytes(fileBytes)
-		request := &rpcpb.CreateSpecRequest{}
-		request.Parent = "projects/" + task.projectID + "/apis/" + task.apiID +
-			"/versions/" + task.versionID
-		request.SpecId = task.specID
-		request.Spec = &rpcpb.Spec{}
-		request.Spec.Style = "discovery" + "+gzip"
-		request.Spec.Contents = gzippedBytes
-		request.Spec.SourceUri = task.path
-		request.Spec.Filename = "discovery.json"
-		response, err := task.client.CreateSpec(task.ctx, request)
-		if err == nil {
-			log.Printf("created %s", response.Name)
-		} else if core.AlreadyExists(err) {
-			log.Printf("found %s/specs/%s", request.Parent, request.SpecId)
-		} else {
-			details := fmt.Sprintf("contents-length: %d", len(request.Spec.Contents))
-			log.Printf("error %s/specs/%s: %s [%s]",
-				request.Parent, request.SpecId, err.Error(), details)
-		}
-	} else if err != nil {
+	contents, err := task.gzipContents()
+	if err != nil {
 		return err
 	}
+
+	if _, err := task.client.GetSpec(task.ctx, &rpcpb.GetSpecRequest{
+		Name: task.specName(),
+	}); !core.NotFound(err) {
+		return err // Returns nil when spec is found without error.
+	}
+
+	response, err := task.client.CreateSpec(task.ctx, &rpcpb.CreateSpecRequest{
+		Parent: task.versionName(),
+		SpecId: task.specID,
+		Spec: &rpcpb.Spec{
+			Style:     "discovery+gzip",
+			Filename:  "discovery.json",
+			Contents:  contents,
+			SourceUri: task.path,
+		},
+	})
+	if err != nil {
+		log.Printf("error %s: %s [contents-length: %d]", task.specName(), err.Error(), len(contents))
+	} else {
+		log.Printf("created %s", response.Name)
+	}
+
 	return nil
+}
+
+func (task *uploadDiscoveryTask) projectName() string {
+	return fmt.Sprintf("projects/%s", task.projectID)
+}
+
+func (task *uploadDiscoveryTask) apiName() string {
+	return fmt.Sprintf("%s/apis/%s", task.projectName(), task.apiID)
+}
+
+func (task *uploadDiscoveryTask) versionName() string {
+	return fmt.Sprintf("%s/versions/%s", task.apiName(), task.versionID)
+}
+
+func (task *uploadDiscoveryTask) specName() string {
+	return fmt.Sprintf("%s/specs/%s", task.versionName(), task.specID)
+}
+
+func (task *uploadDiscoveryTask) gzipContents() ([]byte, error) {
+	bytes, err := discovery.FetchDocumentBytes(task.path)
+	if err != nil {
+		return nil, err
+	}
+
+	return core.GZippedBytes(bytes)
 }
