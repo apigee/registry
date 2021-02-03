@@ -18,7 +18,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"path/filepath"
 
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
@@ -26,6 +25,7 @@ import (
 	rpcpb "github.com/apigee/registry/rpc"
 	discovery "github.com/googleapis/gnostic/discovery"
 	"github.com/spf13/cobra"
+	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
 func init() {
@@ -108,7 +108,11 @@ func (task *uploadDiscoveryTask) Run() error {
 		return err
 	}
 	// If the API spec does not exist, create it.
-	return task.createSpec()
+	if err := task.createSpec(); err != nil {
+		return err
+	}
+	// If the API spec needs a new revision, create it.
+	return task.updateSpec()
 }
 
 func (task *uploadDiscoveryTask) createAPI() error {
@@ -181,6 +185,37 @@ func (task *uploadDiscoveryTask) createSpec() error {
 		log.Printf("error %s: %s [contents-length: %d]", task.specName(), err.Error(), len(contents))
 	} else {
 		log.Printf("created %s", response.Name)
+	}
+
+	return nil
+}
+
+func (task *uploadDiscoveryTask) updateSpec() error {
+	contents, err := task.gzipContents()
+	if err != nil {
+		return err
+	}
+
+	spec, err := task.client.GetSpec(task.ctx, &rpcpb.GetSpecRequest{
+		Name: task.specName(),
+	})
+	if err != nil && !core.NotFound(err) {
+		return err
+	}
+
+	request := &rpcpb.UpdateSpecRequest{
+		Spec: &rpcpb.Spec{
+			Name:     task.specName(),
+			Contents: contents,
+		},
+		UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"contents"}},
+	}
+
+	response, err := task.client.UpdateSpec(task.ctx, request)
+	if err != nil {
+		log.Printf("error %s: %s [contents-length: %d]", request.Spec.Name, err.Error(), len(contents))
+	} else if response.RevisionId != spec.RevisionId {
+		log.Printf("updated %s", response.Name)
 	}
 
 	return nil
