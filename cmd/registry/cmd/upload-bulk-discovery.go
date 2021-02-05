@@ -24,6 +24,7 @@ import (
 	"github.com/apigee/registry/rpc"
 	rpcpb "github.com/apigee/registry/rpc"
 	discovery "github.com/googleapis/gnostic/discovery"
+	"github.com/nsf/jsondiff"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
@@ -191,30 +192,44 @@ func (task *uploadDiscoveryTask) createSpec() error {
 }
 
 func (task *uploadDiscoveryTask) updateSpec() error {
-	contents, err := task.gzipContents()
-	if err != nil {
-		return err
-	}
-
-	spec, err := task.client.GetSpec(task.ctx, &rpcpb.GetSpecRequest{
+	refSpec, err := task.client.GetSpec(task.ctx, &rpcpb.GetSpecRequest{
 		Name: task.specName(),
+		View: rpc.View_FULL,
 	})
 	if err != nil && !core.NotFound(err) {
 		return err
 	}
 
-	request := &rpcpb.UpdateSpecRequest{
-		Spec: &rpcpb.Spec{
-			Name:     task.specName(),
-			Contents: contents,
-		},
-		UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"contents"}},
+	refBytes, err := core.GUnzippedBytes(refSpec.Contents)
+	if err != nil {
+		return err
 	}
 
-	response, err := task.client.UpdateSpec(task.ctx, request)
+	docBytes, err := discovery.FetchDocumentBytes(task.path)
 	if err != nil {
-		log.Printf("error %s: %s [contents-length: %d]", request.Spec.Name, err.Error(), len(contents))
-	} else if response.RevisionId != spec.RevisionId {
+		return err
+	}
+
+	opts := jsondiff.DefaultJSONOptions()
+	if diff, _ := jsondiff.Compare(refBytes, docBytes, &opts); diff == jsondiff.FullMatch {
+		return nil
+	}
+
+	docZipped, err := core.GZippedBytes(docBytes)
+	if err != nil {
+		return err
+	}
+
+	response, err := task.client.UpdateSpec(task.ctx, &rpcpb.UpdateSpecRequest{
+		Spec: &rpcpb.Spec{
+			Name:     task.specName(),
+			Contents: docZipped,
+		},
+		UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"contents"}},
+	})
+	if err != nil {
+		log.Printf("error %s: %s [contents-length: %d]", task.specName(), err.Error(), len(docZipped))
+	} else if response.RevisionId != refSpec.RevisionId {
 		log.Printf("updated %s", response.Name)
 	}
 
