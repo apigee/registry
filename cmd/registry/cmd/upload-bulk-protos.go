@@ -28,6 +28,7 @@ import (
 	"github.com/apigee/registry/connection"
 	rpcpb "github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
+	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
 func init() {
@@ -137,7 +138,8 @@ func (task *uploadProtoTask) Run() error {
 	if err := task.createSpec(); err != nil {
 		return err
 	}
-	return nil
+	// If the API spec needs a new revision, create it.
+	return task.updateSpec()
 }
 
 func (task *uploadProtoTask) populateFields() {
@@ -224,6 +226,37 @@ func (task *uploadProtoTask) createSpec() error {
 		log.Printf("error %s: %s [contents-length: %d]", task.specName(), err.Error(), len(contents))
 	} else {
 		log.Printf("created %s", response.Name)
+	}
+
+	return nil
+}
+
+func (task *uploadProtoTask) updateSpec() error {
+	contents, err := task.zipContents()
+	if err != nil {
+		return err
+	}
+
+	spec, err := task.client.GetSpec(task.ctx, &rpcpb.GetSpecRequest{
+		Name: task.specName(),
+	})
+	if err != nil && !core.NotFound(err) {
+		return err
+	}
+
+	request := &rpcpb.UpdateSpecRequest{
+		Spec: &rpcpb.Spec{
+			Name:     task.specName(),
+			Contents: contents,
+		},
+		UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"contents"}},
+	}
+
+	response, err := task.client.UpdateSpec(task.ctx, request)
+	if err != nil {
+		log.Printf("error %s: %s [contents-length: %d]", request.Spec.Name, err.Error(), len(contents))
+	} else if response.RevisionId != spec.RevisionId {
+		log.Printf("updated %s", response.Name)
 	}
 
 	return nil
