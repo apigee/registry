@@ -1,0 +1,6 @@
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  args: [ 'build', '-t', 'gcr.io/${_REGISTRY_PROJECT_IDENTIFIER}/app-server', '-f', 'cmd/app-server/Dockerfile', '--build-arg', 'registry_endpoint=${_APG_REGISTRY_ADDRESS}', '.' ]
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'gcr.io/${_REGISTRY_PROJECT_IDENTIFIER}/app-server']
+images: ['gcr.io/${_REGISTRY_PROJECT_IDENTIFIER}/app-server']
