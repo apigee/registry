@@ -6,6 +6,7 @@ require (
 	bitbucket.org/creachadair/stringset v0.0.9 // indirect
 	cloud.google.com/go/datastore v1.1.0
 	cloud.google.com/go/pubsub v1.3.1
+	github.com/GoogleCloudPlatform/cloudsql-proxy v1.19.1
 	github.com/blevesearch/bleve v1.0.13
 	github.com/bmatcuk/doublestar/v2 v2.0.4 // indirect
 	github.com/desertbit/timer v0.0.0-20180107155436-c41aec40b27f // indirect
@@ -25,6 +26,7 @@ require (
 	github.com/improbable-eng/grpc-web v0.13.0
 	github.com/jhump/protoreflect v1.8.0 // indirect
 	github.com/mattn/go-runewidth v0.0.9 // indirect
+	github.com/nsf/jsondiff v0.0.0-20200515183724-f29ed568f4ce
 	github.com/rs/cors v1.7.0 // indirect
 	github.com/soheilhy/cmux v0.1.4
 	github.com/spf13/cobra v1.1.1
