@@ -1,0 +1,13 @@
+#  This configuration exposes the Registry backend through an external load balancer.
+apiVersion: v1
+kind: Service
+metadata:
+  name: registry-backend
+spec:
+  type: LoadBalancer
+  selector:
+    app: registry-backend
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 8080

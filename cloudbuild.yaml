@@ -1,0 +1,4 @@
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  args: [ 'build', '--build-arg', 'DB_CONFIG=${_DB_CONFIG}', '-t', 'gcr.io/${_REGISTRY_PROJECT_IDENTIFIER}/registry-backend', '.']
+images: ['gcr.io/${_REGISTRY_PROJECT_IDENTIFIER}/registry-backend']
