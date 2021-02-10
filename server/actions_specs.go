@@ -38,51 +38,64 @@ func (s *RegistryServer) CreateSpec(ctx context.Context, request *rpc.CreateSpec
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
+
 	spec, err := models.NewSpecFromParentAndSpecID(request.GetParent(), request.GetSpecId())
 	if err != nil {
 		return nil, internalError(err)
 	}
-	// fail if spec already exists
+	if err := spec.Update(request.GetSpec(), nil); err != nil {
+		return nil, internalError(err)
+	}
+	spec.CreateTime = spec.UpdateTime
+	spec.Currency = models.IsCurrent
+
 	q := client.NewQuery(models.SpecEntityName)
 	q = q.Require("ProjectID", spec.ProjectID)
 	q = q.Require("ApiID", spec.ApiID)
 	q = q.Require("VersionID", spec.VersionID)
 	q = q.Require("SpecID", spec.SpecID)
 	it := client.Run(ctx, q)
-	var existingSpec models.Spec
-	existingKey, err := it.Next(&existingSpec)
-	if existingKey != nil {
-		return nil, status.Error(codes.AlreadyExists, spec.ResourceName()+" already exists")
+
+	if _, err := it.Next(&models.Spec{}); err == nil {
+		return nil, status.Errorf(codes.AlreadyExists, "spec %q already exists", spec.ResourceName())
 	}
-	// save the spec under its full resource@revision name
-	err = spec.Update(request.GetSpec(), nil)
+
+	if err := saveSpec(ctx, client, spec); err != nil {
+		return nil, internalError(err)
+	}
+
+	if err := saveBlob(ctx, client, spec, request.Spec.GetContents()); err != nil {
+		return nil, internalError(err)
+	}
+
+	response, err := spec.Message(nil, "")
 	if err != nil {
 		return nil, internalError(err)
 	}
-	spec.CreateTime = spec.UpdateTime
-	// the first revision of the spec that we save is also the current one
-	spec.Currency = models.IsCurrent
-	k := client.NewKey(models.SpecEntityName, spec.ResourceNameWithRevision())
-	k, err = client.Put(ctx, k, spec)
-	if err != nil {
-		log.Printf("save spec error %+v", err)
-		return nil, internalError(err)
-	}
-	// save a blob with the spec contents
-	blob := models.NewBlobForSpec(
-		spec,
-		request.GetSpec().GetContents())
-	k2 := client.NewKey(models.BlobEntityName, spec.ResourceNameWithRevision())
-	_, err = client.Put(ctx,
-		k2,
-		blob)
-	if err != nil {
-		log.Printf("save blob error %+v", err)
-		return nil, internalError(err)
-	}
-	response, nil := spec.Message(nil, "")
+
 	s.notify(rpc.Notification_CREATED, spec.ResourceNameWithRevision())
 	return response, nil
+}
+
+func saveSpec(ctx context.Context, client storage.Client, spec *models.Spec) error {
+	k := client.NewKey(models.SpecEntityName, spec.ResourceNameWithRevision())
+	if _, err := client.Put(ctx, k, spec); err != nil {
+		log.Printf("save spec error %+v", err)
+		return err
+	}
+
+	return nil
+}
+
+func saveBlob(ctx context.Context, client storage.Client, spec *models.Spec, contents []byte) error {
+	blob := models.NewBlobForSpec(spec, contents)
+	k := client.NewKey(models.BlobEntityName, spec.ResourceNameWithRevision())
+	if _, err := client.Put(ctx, k, blob); err != nil {
+		log.Printf("save blob error %+v", err)
+		return err
+	}
+
+	return nil
 }
 
 // DeleteSpec handles the corresponding API request.
