@@ -36,74 +36,82 @@ func getAuthToken() (string, error) {
         return idToken, nil
 }
 
-func readPubsubMessage(w http.ResponseWriter, r *http.Request) string {
+func readPubsubMessage(w http.ResponseWriter, r *http.Request) (string, error) {
         var m PubSubMessage
         body, err := ioutil.ReadAll(r.Body)
         if err != nil {
                 log.Printf("ioutil.ReadAll: %v", err)
                 http.Error(w, "Bad Request", http.StatusBadRequest)
-                return ""
+                return "", err
         }
         if err := json.Unmarshal(body, &m); err != nil {
+                log.Printf("%v", body)
                 log.Printf("json.Unmarshal: %v", err)
                 http.Error(w, "Bad Request", http.StatusBadRequest)
-                return ""
+                return "", err
         }
 
         data := string(m.Message.Data)
         log.Printf("%s", data)
-        return data
+        return data, nil
 }
 
 func RequestHandler(w http.ResponseWriter, r *http.Request) {
 
-    data := readPubsubMessage(w, r)
-    if data == "" {
+    data, err := readPubsubMessage(w, r)
+    if err != nil  {
         return
     }
     message := rpc.Notification{}
-    if err := jsonpb.UnmarshalString(data, &message); err != nil {
+    if err = jsonpb.UnmarshalString(data, &message); err != nil {
         log.Printf("json.Unmarshal: %v", err)
         fmt.Fprintf(w, "Wrong message format")
         return
     }
 
-    if message.Change != rpc.Notification_DELETED {
-
-        log.Print("Getting oauth token")
-        idToken, err := getAuthToken()
-        if err != nil {
-            log.Print(err.Error())
-            http.Error(w, err.Error(), http.StatusInternalServerError)
+    switch changeType := message.Change; changeType {
+        case rpc.Notification_CREATED, rpc.Notification_UPDATED:
+            log.Printf("running linter for change type %q", changeType)
+        default:
+            log.Printf("ignoring change type %q for linting", changeType)
+            fmt.Fprintf(w, "Skipped linting for change type %q", changeType)
             return
-        }
-        os.Setenv("APG_REGISTRY_TOKEN", idToken)
-
-        specName := strings.Split(message.Resource, "@")[0]
-        ctx := context.TODO()
-        log.Print("Creating connection...")
-        client, err := connection.NewClient(ctx)
-        if err != nil {
-            log.Print(err.Error())
-            http.Error(w, err.Error(), http.StatusInternalServerError)
-            return
-        }
-        log.Print("Done")
-
-        lint_task := &cmd.ComputeLintTask{
-        Ctx: ctx,
-        Client: client,
-        SpecName: specName,
-        Linter: "",
-        }
-
-        err = lint_task.Run()
-        if err != nil {
-            log.Print(err.Error())
-            fmt.Fprintf(w, "Error computing lint")
-            return
-        }
     }
-    fmt.Fprintf(w, "Done")
+
+    log.Print("Getting oauth token")
+    idToken, err := getAuthToken()
+    if err != nil {
+        log.Print(err.Error())
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+        return
+    }
+    os.Setenv("APG_REGISTRY_TOKEN", idToken)
+
+    specName := strings.Split(message.Resource, "@")[0]
+    ctx := context.TODO()
+    log.Print("Creating connection...")
+    client, err := connection.NewClient(ctx)
+    if err != nil {
+        log.Print(err.Error())
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+        return
+    }
+    log.Print("Done")
+
+    lint_task := &cmd.ComputeLintTask{
+    Ctx: ctx,
+    Client: client,
+    SpecName: specName,
+    Linter: "",
+    }
+
+    err = lint_task.Run()
+    if err != nil {
+        log.Print(err.Error())
+        fmt.Fprintf(w, "Error computing lint")
+        return
+    }
+
+    fmt.Fprintf(w, "Finished computing lint")
     return
 }
