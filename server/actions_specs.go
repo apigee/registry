@@ -43,12 +43,15 @@ func (s *RegistryServer) CreateSpec(ctx context.Context, request *rpc.CreateSpec
 	if err != nil {
 		return nil, internalError(err)
 	}
+
 	if err := spec.Update(request.GetSpec(), nil); err != nil {
 		return nil, internalError(err)
 	}
-	spec.CreateTime = spec.UpdateTime
-	spec.Currency = models.IsCurrent
 
+	return s.createSpec(ctx, client, spec, request.Spec.GetContents())
+}
+
+func (s *RegistryServer) createSpec(ctx context.Context, client storage.Client, spec *models.Spec, contents []byte) (*rpc.Spec, error) {
 	q := client.NewQuery(models.SpecEntityName)
 	q = q.Require("ProjectID", spec.ProjectID)
 	q = q.Require("ApiID", spec.ApiID)
@@ -60,11 +63,13 @@ func (s *RegistryServer) CreateSpec(ctx context.Context, request *rpc.CreateSpec
 		return nil, status.Errorf(codes.AlreadyExists, "spec %q already exists", spec.ResourceName())
 	}
 
+	spec.CreateTime = spec.UpdateTime
+	spec.Currency = models.IsCurrent
 	if err := saveSpec(ctx, client, spec); err != nil {
 		return nil, internalError(err)
 	}
 
-	if err := saveBlob(ctx, client, spec, request.Spec.GetContents()); err != nil {
+	if err := saveBlob(ctx, client, spec, contents); err != nil {
 		return nil, internalError(err)
 	}
 
@@ -251,11 +256,26 @@ func (s *RegistryServer) UpdateSpec(ctx context.Context, request *rpc.UpdateSpec
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
-	spec, userSpecifiedRevision, err := fetchSpec(ctx, client, request.GetSpec().GetName())
-	if err != nil {
-		return nil, internalError(err)
+
+	if request.GetSpec() == nil {
+		return nil, invalidArgumentError(errors.New("spec body is required for updates"))
 	}
-	if userSpecifiedRevision != "" {
+
+	spec, userSpecifiedRevision, err := fetchSpec(ctx, client, request.GetSpec().GetName())
+	if request.GetAllowMissing() && client.IsNotFound(err) {
+		spec, err := models.NewSpecFromResourceName(request.Spec.GetName())
+		if err != nil {
+			return nil, internalError(err)
+		}
+
+		if err := spec.Update(request.GetSpec(), nil); err != nil {
+			return nil, internalError(err)
+		}
+
+		return s.createSpec(ctx, client, spec, request.Spec.GetContents())
+	} else if err != nil {
+		return nil, internalError(err)
+	} else if userSpecifiedRevision != "" {
 		return nil, invalidArgumentError(errors.New("updates to specific revisions are unsupported"))
 	}
 	oldRevisionID := spec.RevisionID
