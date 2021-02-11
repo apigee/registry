@@ -256,6 +256,28 @@ message like this:
 `rpc error: code = Unauthenticated desc = Unauthorized: HTTP status code 401`.
 To generate a new token, rerun `source auth/CLOUDRUN.sh`.
 
+## Running the Registry API server on GKE
+
+The [Makefile](Makefile) contains targets that build a Docker image
+(`make build`) and that deploy it to GKE (`make deploy-gke`).
+
+Requirements:
+
+- Ensure you have [gcloud](https://cloud.google.com/sdk/gcloud) and
+  [kubectl](https://cloud.google.com/kubernetes-engine/docs/quickstart)
+  installed.
+
+- If not already done, `gcloud auth login` gets user credentials for subsequent
+  `gcloud` operations and `gcloud config set project PROJECT_ID` can be used to
+  set your project ID to the one where you plan to host your servce.
+
+- The Makefile gets your project ID from the `REGISTRY_PROJECT_IDENTIFIER`
+  environment variable. This can be set automatically by running
+  `source auth/GKE.sh`.
+
+For detailed steps on how to deploy to GKE, please refer to
+[deployments/gke/README.md](deployments/gke/README.md).
+
 ## License
 
 This software is licensed under the Apache License, Version 2.0. See
