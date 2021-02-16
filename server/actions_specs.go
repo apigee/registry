@@ -69,7 +69,7 @@ func (s *RegistryServer) createSpec(ctx context.Context, client storage.Client, 
 		return nil, internalError(err)
 	}
 
-	if err := saveBlob(ctx, client, spec, contents); err != nil {
+	if err := saveSpecContents(ctx, client, spec, contents); err != nil {
 		return nil, internalError(err)
 	}
 
@@ -92,7 +92,7 @@ func saveSpec(ctx context.Context, client storage.Client, spec *models.Spec) err
 	return nil
 }
 
-func saveBlob(ctx context.Context, client storage.Client, spec *models.Spec, contents []byte) error {
+func saveSpecContents(ctx context.Context, client storage.Client, spec *models.Spec, contents []byte) error {
 	blob := models.NewBlobForSpec(spec, contents)
 	k := client.NewKey(models.BlobEntityName, spec.ResourceNameWithRevision())
 	if _, err := client.Put(ctx, k, blob); err != nil {
