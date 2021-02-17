@@ -24,7 +24,6 @@ import (
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
-	"github.com/golang/protobuf/ptypes/any"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/proto"
 )
@@ -58,26 +57,22 @@ var computeLintStatsCmd = &cobra.Command{
 		name := args[0]
 		if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
 			// Iterate through a collection of specs and evaluate each.
-			err = core.ListSpecs(ctx, client, m, computeFilter, func(spec *rpc.Spec) {
+			err = core.ListSpecs(ctx, client, m, computeFilter, func(spec *rpc.ApiSpec) {
 				fmt.Printf("%s\n", spec.Name)
 				// get the lint results
-				request := rpc.GetPropertyRequest{
-					Name: spec.Name + "/properties/" + lintRelation(linter),
+				request := rpc.GetArtifactRequest{
+					Name: spec.Name + "/artifacts/" + lintRelation(linter),
 					View: rpc.View_FULL,
 				}
-				property, err := client.GetProperty(ctx, &request)
-				if property == nil {
+				artifact, err := client.GetArtifact(ctx, &request)
+				if artifact == nil {
 					return // ignore missing results
 				}
-				wrapper := property.GetMessageValue()
-				if wrapper == nil {
-					return // ignore unexpected property values
-				}
-				if wrapper.TypeUrl != "google.cloud.apigee.registry.v1alpha1.Lint" {
+				if artifact.GetMimeType() != "google.cloud.apigee.registry.v1alpha1.Lint" {
 					return // ignore unexpected message types
 				}
 				lint := &rpc.Lint{}
-				err = proto.Unmarshal(wrapper.Value, lint)
+				err = proto.Unmarshal(artifact.GetContents(), lint)
 				if err != nil {
 					log.Printf("%+v", err)
 					return
@@ -85,22 +80,16 @@ var computeLintStatsCmd = &cobra.Command{
 				// generate the stats from the result by counting problems
 				lintStats := computeLintStats(lint)
 				{
-					// store the lintstats property
+					// store the lintstats artifact
 					subject := spec.GetName()
 					relation := lintStatsRelation(linter)
 					messageData, err := proto.Marshal(lintStats)
-					property := &rpc.Property{
-						Subject:  subject,
-						Relation: relation,
-						Name:     subject + "/properties/" + relation,
-						Value: &rpc.Property_MessageValue{
-							MessageValue: &any.Any{
-								TypeUrl: "google.cloud.apigee.registry.v1alpha1.LintStats",
-								Value:   messageData,
-							},
-						},
+					artifact := &rpc.Artifact{
+						Name:     subject + "/artifacts/" + relation,
+						MimeType: "google.cloud.apigee.registry.v1alpha1.LintStats",
+						Contents: messageData,
 					}
-					err = core.SetProperty(ctx, client, property)
+					err = core.SetArtifact(ctx, client, artifact)
 					if err != nil {
 						log.Printf("%+v", err)
 						return
@@ -117,20 +106,16 @@ var computeLintStatsCmd = &cobra.Command{
 				// Create a top-level list of problem counts for the project
 				problemCounts := make([]*rpc.LintProblemCount, 0)
 				// get the lintstats for each spec in the project
-				pattern := project.Name + "/apis/-/versions/-/specs/-/properties/" + lintStatsRelation(linter)
-				if m2 := names.PropertyRegexp().FindStringSubmatch(pattern); m2 != nil {
-					err = core.ListProperties(ctx, client, m2, "", true, func(property *rpc.Property) {
-						log.Printf("%+v", property.Name)
-						// get the lintstats property value
-						wrapper := property.GetMessageValue()
-						if wrapper == nil {
-							return // ignore unexpected property values
-						}
-						if wrapper.TypeUrl != "google.cloud.apigee.registry.v1alpha1.LintStats" {
+				pattern := project.Name + "/apis/-/versions/-/specs/-/artifacts/" + lintStatsRelation(linter)
+				if m2 := names.ArtifactRegexp().FindStringSubmatch(pattern); m2 != nil {
+					err = core.ListArtifacts(ctx, client, m2, "", true, func(artifact *rpc.Artifact) {
+						log.Printf("%+v", artifact.Name)
+						// get the lintstats artifact value
+						if artifact.GetMimeType() != "google.cloud.apigee.registry.v1alpha1.LintStats" {
 							return // ignore unexpected message types
 						}
 						lintstats := &rpc.LintStats{}
-						err = proto.Unmarshal(wrapper.Value, lintstats)
+						err = proto.Unmarshal(artifact.GetContents(), lintstats)
 						if err != nil {
 							log.Printf("%+v", err)
 							return
@@ -143,25 +128,19 @@ var computeLintStatsCmd = &cobra.Command{
 				sort.Slice(problemCounts, func(i, j int) bool {
 					return problemCounts[i].Count > problemCounts[j].Count
 				})
-				// store the summary in the lintstats property
+				// store the summary in the lintstats artifact
 				lintstats := &rpc.LintStats{ProblemCounts: problemCounts}
 				{
-					// store the lintstats property
+					// store the lintstats artifact
 					subject := project.GetName()
 					relation := lintStatsRelation(linter)
 					messageData, err := proto.Marshal(lintstats)
-					property := &rpc.Property{
-						Subject:  subject,
-						Relation: relation,
-						Name:     subject + "/properties/" + relation,
-						Value: &rpc.Property_MessageValue{
-							MessageValue: &any.Any{
-								TypeUrl: "google.cloud.apigee.registry.v1alpha1.LintStats",
-								Value:   messageData,
-							},
-						},
+					artifact := &rpc.Artifact{
+						Name:     subject + "/artifacts/" + relation,
+						MimeType: "google.cloud.apigee.registry.v1alpha1.LintStats",
+						Contents: messageData,
 					}
-					err = core.SetProperty(ctx, client, property)
+					err = core.SetArtifact(ctx, client, artifact)
 					if err != nil {
 						log.Printf("%+v", err)
 						return

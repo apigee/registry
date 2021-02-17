@@ -39,7 +39,6 @@ type Api struct {
 	UpdateTime         time.Time // Time of last change.
 	Availability       string    // Availability of the API.
 	RecommendedVersion string    // Recommended API version.
-	Owner              string    // The owner of the API.
 }
 
 // NewApiFromParentAndApiID returns an initialized api for a specified parent and apiID.
@@ -85,7 +84,6 @@ func (api *Api) Message() (message *rpc.Api, err error) {
 	message.UpdateTime, err = ptypes.TimestampProto(api.UpdateTime)
 	message.Availability = api.Availability
 	message.RecommendedVersion = api.RecommendedVersion
-	message.Owner = api.Owner
 	return message, err
 }
 
@@ -102,8 +100,6 @@ func (api *Api) Update(message *rpc.Api, mask *fieldmaskpb.FieldMask) error {
 				api.Availability = message.GetAvailability()
 			case "recommended_version":
 				api.RecommendedVersion = message.GetRecommendedVersion()
-			case "owner":
-				api.Owner = message.GetOwner()
 			}
 		}
 	} else {
@@ -111,7 +107,6 @@ func (api *Api) Update(message *rpc.Api, mask *fieldmaskpb.FieldMask) error {
 		api.Description = message.GetDescription()
 		api.Availability = message.GetAvailability()
 		api.RecommendedVersion = message.GetRecommendedVersion()
-		api.Owner = message.GetOwner()
 	}
 	api.UpdateTime = time.Now()
 	return nil

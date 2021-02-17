@@ -141,15 +141,7 @@ func (s *RegistryServer) ListApis(ctx context.Context, req *rpc.ListApisRequest)
 	for _, err = it.Next(&api); err == nil; _, err = it.Next(&api) {
 		labels := make([]string, 0)
 		if hasLabels {
-			// Proof-of-concept only. This is extremely slow!
-			q2 := client.NewQuery(models.LabelEntityName)
-			q2 = q2.Require("ProjectID", api.ProjectID)
-			q2 = q2.Require("ApiID", api.ApiID)
-			var label models.Label
-			it2 := client.Run(ctx, q2)
-			for _, err = it2.Next(&label); err == nil; _, err = it.Next(&label) {
-				labels = append(labels, label.LabelID)
-			}
+			// TODO if needed for label-based filtering
 		}
 		if prg != nil {
 			out, _, err := prg.Eval(map[string]interface{}{
@@ -161,7 +153,6 @@ func (s *RegistryServer) ListApis(ctx context.Context, req *rpc.ListApisRequest)
 				"update_time":         api.UpdateTime,
 				"availability":        api.Availability,
 				"recommended_version": api.RecommendedVersion,
-				"owner":               api.Owner,
 				"labels":              labels,
 			})
 			if err != nil {

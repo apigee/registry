@@ -13,11 +13,26 @@ import "google/protobuf/field_mask.proto";
 option java_package = "com.google.cloud.apigee.registry.v1";
 option java_multiple_files = true;
 option java_outer_classname = "RegistryServiceProto";
-option go_package = "google.golang.org/genproto/googleapis/cloud/apigee/registry/v1;registry";
+option go_package = "github.com/apigee/registry/rpc;rpc";
 
 // The Registry service allows teams to manage descriptions of APIs.
 service Registry {
   option (google.api.default_host) = "registry.googleapis.com";
+
+  // GetStatus returns the status of the service.
+  // GetStatus is for verifying open source deployments only
+  // and is not included in hosted versions of the API.
+  // (-- api-linter: core::0131::request-message-name=disabled
+  //     aip.dev/not-precedent: Not in the official API. --)
+  // (-- api-linter: core::0131::method-signature=disabled
+  //     aip.dev/not-precedent: Not in the official API. --)
+  // (-- api-linter: core::0131::http-uri-name=disabled
+  //     aip.dev/not-precedent: Not in the official API. --)
+  rpc GetStatus(protobuf.Empty) returns (Status) {
+    option (google.api.http) = {
+      get: "/v1/status"
+    };
+  }
 
   // ListProjects returns matching projects.
   // (-- api-linter: standard-methods=disabled --)
@@ -323,6 +338,13 @@ service Registry {
     };
     option (google.api.method_signature) = "name";
   }
+}
+
+// Response message for GetStatus.
+// GetStatus is not included in hosted versions of the API.
+message Status {
+  // A string describing the status.
+  string message = 1;
 }
 
 // Request message for ListProjects.
@@ -703,7 +725,11 @@ message UpdateApiSpecRequest {
   // are set in the request message (fields set to default values are ignored).
   // If a "*" is specified, all fields are updated, including fields that are
   // unspecified/default in the request.
-  google.protobuf.FieldMask update_mask = 2;
+  google.protobuf.FieldMask update_mask = 2;  
+  
+  // If set to true, and the spec is not found, a new spec will be created.
+  // In this situation, `update_mask` is ignored.
+  bool allow_missing = 3;
 }
 
 // Request message for DeleteApiSpec.

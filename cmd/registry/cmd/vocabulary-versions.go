@@ -27,7 +27,7 @@ import (
 
 func init() {
 	vocabularyCmd.AddCommand(vocabularyVersionsCmd)
-	vocabularyVersionsCmd.Flags().String("output", "", "name of property where output should be stored")
+	vocabularyVersionsCmd.Flags().String("output", "", "name of artifact where output should be stored")
 }
 
 var vocabularyVersionsCmd = &cobra.Command{
@@ -37,7 +37,7 @@ var vocabularyVersionsCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
 		flagset := cmd.LocalFlags()
-		outputPropertyName, err := flagset.GetString("output")
+		outputArtifactName, err := flagset.GetString("output")
 		ctx := context.TODO()
 		client, err := connection.NewClient(ctx)
 		if err != nil {
@@ -50,8 +50,8 @@ var vocabularyVersionsCmd = &cobra.Command{
 		parent := strings.Join(parts, "/")
 
 		output := vocabulary.Version(inputs, names, parent)
-		if outputPropertyName != "" {
-			setVersionHistoryToProperty(ctx, client, output, outputPropertyName)
+		if outputArtifactName != "" {
+			setVersionHistoryToArtifact(ctx, client, output, outputArtifactName)
 		} else {
 			core.PrintMessage(output)
 		}

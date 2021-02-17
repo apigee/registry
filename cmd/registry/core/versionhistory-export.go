@@ -24,12 +24,12 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func ExportVersionHistoryToSheet(name string, property *rpc.Property) (string, error) {
+func ExportVersionHistoryToSheet(name string, artifact *rpc.Artifact) (string, error) {
 	sheetsClient, err := NewSheetsClient("")
 	if err != nil {
 		log.Fatalf("%s", err.Error())
 	}
-	versionHistory, err := getVersionHistory(property)
+	versionHistory, err := getVersionHistory(artifact)
 	sheetNames := []string{"Summary"}
 	for _, version := range versionHistory.Versions {
 		versionName := nameForVersion(version.Name)
@@ -70,22 +70,17 @@ func nameForVersion(version string) string {
 	return parts[5]
 }
 
-func getVersionHistory(property *rpc.Property) (*metrics.VersionHistory, error) {
-	switch v := property.GetValue().(type) {
-	case *rpc.Property_MessageValue:
-		if v.MessageValue.TypeUrl == "gnostic.metrics.VersionHistory" {
-			value := &metrics.VersionHistory{}
-			err := proto.Unmarshal(v.MessageValue.Value, value)
-			if err != nil {
-				return nil, err
-			} else {
-				return value, nil
-			}
+func getVersionHistory(artifact *rpc.Artifact) (*metrics.VersionHistory, error) {
+	if artifact.GetMimeType() == "gnostic.metrics.VersionHistory" {
+		value := &metrics.VersionHistory{}
+		err := proto.Unmarshal(artifact.GetContents(), value)
+		if err != nil {
+			return nil, err
 		} else {
-			return nil, fmt.Errorf("not a version history: %s", property.Name)
+			return value, nil
 		}
-	default:
-		return nil, fmt.Errorf("not a version history: %s", property.Name)
+	} else {
+		return nil, fmt.Errorf("not a version history: %s", artifact.Name)
 	}
 }
 
@@ -108,7 +103,7 @@ func rowsForVocabulary(vocabulary *metrics.Vocabulary) [][]interface{} {
 		rows = append(rows, rowForLabeledWordCount("schema", wc))
 	}
 	for _, wc := range vocabulary.Properties {
-		rows = append(rows, rowForLabeledWordCount("property", wc))
+		rows = append(rows, rowForLabeledWordCount("artifact", wc))
 	}
 	for _, wc := range vocabulary.Operations {
 		rows = append(rows, rowForLabeledWordCount("operation", wc))

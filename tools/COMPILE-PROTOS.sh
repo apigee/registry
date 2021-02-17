@@ -37,8 +37,8 @@ mkdir -p rpc gapic cmd/apg
 ANNOTATIONS="third_party/api-common-protos"
 
 PROTOS=( \
-	google/cloud/apigee/registry/v1alpha1/registry_models.proto \
-	google/cloud/apigee/registry/v1alpha1/registry_service.proto \
+	google/cloud/apigee/registry/v1/registry_models.proto \
+	google/cloud/apigee/registry/v1/registry_service.proto \
 	google/cloud/apigee/registry/v1alpha1/registry_notifications.proto \
 	google/cloud/apigee/registry/v1alpha1/registry_index.proto \
 	google/cloud/apigee/registry/v1alpha1/registry_lint.proto \
@@ -84,15 +84,6 @@ protoc --proto_path=. --proto_path=${ANNOTATIONS} \
   	--go_cli_out cmd/apg \
   	--go_cli_opt "root=apg" \
   	--go_cli_opt "gapic=github.com/apigee/registry/gapic"
-
-# fix a problem in a couple of generated CLI files
-sed -i.bk -e 's/anypb.Property_MessageValue/rpcpb.Property_MessageValue/g' \
-	cmd/apg/create-property.go \
-	cmd/apg/update-property.go
-sed -i.bk -e 's/anypbpb.Property_MessageValue/rpcpb.Property_MessageValue/g' \
-	cmd/apg/create-property.go \
-	cmd/apg/update-property.go
-rm cmd/apg/create-property.go.bk cmd/apg/update-property.go.bk
 
 echo "Generating descriptor set for Envoy gRPC-JSON Transcoding."
 protoc --proto_path=. --proto_path=${ANNOTATIONS} \

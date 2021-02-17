@@ -52,15 +52,10 @@ var specType = graphql.NewObject(
 			"revision_id": &graphql.Field{
 				Type: graphql.String,
 			},
-			"labels": &graphql.Field{
-				Type:    connectionType(labelType),
+			"artifacts": &graphql.Field{
+				Type:    connectionType(artifactType),
 				Args:    argumentsForCollectionQuery,
-				Resolve: resolveLabels,
-			},
-			"properties": &graphql.Field{
-				Type:    connectionType(propertyType),
-				Args:    argumentsForCollectionQuery,
-				Resolve: resolveProperties,
+				Resolve: resolveArtifacts,
 			},
 			"created": &graphql.Field{
 				Type: timestampType,
@@ -75,18 +70,18 @@ var specType = graphql.NewObject(
 	},
 )
 
-func representationForSpec(spec *rpc.Spec, view rpc.View) map[string]interface{} {
+func representationForSpec(spec *rpc.ApiSpec, view rpc.View) map[string]interface{} {
 	result := map[string]interface{}{
 		"id":          spec.Name,
 		"filename":    spec.Filename,
 		"description": spec.Description,
-		"style":       spec.Style,
+		"mime_type":   spec.MimeType,
 		"size_bytes":  spec.SizeBytes,
 		"hash":        spec.Hash,
 		"source_uri":  spec.SourceUri,
 		"revision_id": spec.RevisionId,
 		"created":     representationForTimestamp(spec.CreateTime),
-		"updated":     representationForTimestamp(spec.UpdateTime),
+		"updated":     representationForTimestamp(spec.RevisionUpdateTime),
 	}
 	if view == rpc.View_FULL {
 		result["contents"] = base64.StdEncoding.EncodeToString([]byte(spec.Contents))
@@ -105,7 +100,7 @@ func resolveSpecs(p graphql.ResolveParams) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	req := &rpc.ListSpecsRequest{
+	req := &rpc.ListApiSpecsRequest{
 		Parent: getParentFromParams(p),
 		View:   view,
 	}
@@ -123,11 +118,11 @@ func resolveSpecs(p graphql.ResolveParams) (interface{}, error) {
 	} else {
 		pageSize = 50
 	}
-	var response *rpc.ListSpecsResponse
+	var response *rpc.ListApiSpecsResponse
 	edges := []map[string]interface{}{}
 	for len(edges) < pageSize {
-		response, err = c.GrpcClient().ListSpecs(ctx, req)
-		for _, spec := range response.GetSpecs() {
+		response, err = c.GrpcClient().ListApiSpecs(ctx, req)
+		for _, spec := range response.GetApiSpecs() {
 			edges = append(edges, representationForEdge(representationForSpec(spec, view)))
 		}
 		req.PageToken = response.GetNextPageToken()
@@ -175,11 +170,11 @@ func resolveSpec(p graphql.ResolveParams) (interface{}, error) {
 	if !isFound {
 		return nil, errors.New("missing id field")
 	}
-	req := &rpc.GetSpecRequest{
+	req := &rpc.GetApiSpecRequest{
 		Name: name,
 		View: view,
 	}
-	spec, err := c.GetSpec(ctx, req)
+	spec, err := c.GetApiSpec(ctx, req)
 	if err != nil {
 		return nil, err
 	}

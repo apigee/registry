@@ -46,21 +46,22 @@ const (
 
 // Spec is the storage-side representation of a spec.
 type Spec struct {
-	Key         string    `datastore:"-" gorm:"primaryKey"`
-	Currency    int32     // IsCurrent for the current revision of the spec.
-	ProjectID   string    // Uniquely identifies a project.
-	ApiID       string    // Uniquely identifies an api within a project.
-	VersionID   string    // Uniquely identifies a version within a api.
-	SpecID      string    // Uniquely identifies a spec within a version.
-	RevisionID  string    // Uniquely identifies a revision of a spec.
-	Description string    // A detailed description.
-	CreateTime  time.Time // Creation time.
-	UpdateTime  time.Time // Time of last change.
-	Style       string    // Spec format.
-	SizeInBytes int32     // Size of the spec.
-	Hash        string    // A hash of the spec.
-	FileName    string    // Name of spec file.
-	SourceURI   string    // The original source URI of the spec.
+	Key                string    `datastore:"-" gorm:"primaryKey"`
+	Currency           int32     // IsCurrent for the current revision of the spec.
+	ProjectID          string    // Uniquely identifies a project.
+	ApiID              string    // Uniquely identifies an api within a project.
+	VersionID          string    // Uniquely identifies a version within a api.
+	SpecID             string    // Uniquely identifies a spec within a version.
+	RevisionID         string    // Uniquely identifies a revision of a spec.
+	Description        string    // A detailed description.
+	CreateTime         time.Time // Creation time.
+	RevisionCreateTime time.Time // Revision creation time.
+	RevisionUpdateTime time.Time // Time of last change.
+	MimeType           string    // Spec format.
+	SizeInBytes        int32     // Size of the spec.
+	Hash               string    // A hash of the spec.
+	FileName           string    // Name of spec file.
+	SourceURI          string    // The original source URI of the spec.
 }
 
 // NewSpecFromParentAndSpecID returns an initialized spec for a specified parent and specID.
@@ -101,7 +102,7 @@ func NewSpecFromResourceName(name string) (*Spec, error) {
 }
 
 // NewSpecFromMessage returns an initialized spec from a message.
-func NewSpecFromMessage(message *rpc.Spec) (*Spec, error) {
+func NewSpecFromMessage(message *rpc.ApiSpec) (*Spec, error) {
 	spec, err := NewSpecFromResourceName(message.GetName())
 	if err != nil {
 		return nil, err
@@ -135,8 +136,8 @@ func (spec *Spec) ParentResourceName() string {
 }
 
 // Message returns a message representing a spec.
-func (spec *Spec) Message(blob *Blob, revision string) (message *rpc.Spec, err error) {
-	message = &rpc.Spec{}
+func (spec *Spec) Message(blob *Blob, revision string) (message *rpc.ApiSpec, err error) {
+	message = &rpc.ApiSpec{}
 	if revision != "" {
 		message.Name = spec.ResourceNameWithSpecifiedRevision(revision)
 	} else {
@@ -149,16 +150,17 @@ func (spec *Spec) Message(blob *Blob, revision string) (message *rpc.Spec, err e
 	}
 	message.Hash = spec.Hash
 	message.SizeBytes = spec.SizeInBytes
-	message.Style = spec.Style
+	message.MimeType = spec.MimeType
 	message.SourceUri = spec.SourceURI
 	message.CreateTime, err = ptypes.TimestampProto(spec.CreateTime)
-	message.UpdateTime, err = ptypes.TimestampProto(spec.UpdateTime)
+	message.RevisionCreateTime, err = ptypes.TimestampProto(spec.RevisionCreateTime)
+	message.RevisionUpdateTime, err = ptypes.TimestampProto(spec.RevisionUpdateTime)
 	message.RevisionId = spec.RevisionID
 	return message, err
 }
 
 // Update modifies a spec using the contents of a message.
-func (spec *Spec) Update(message *rpc.Spec, mask *fieldmaskpb.FieldMask) error {
+func (spec *Spec) Update(message *rpc.ApiSpec, mask *fieldmaskpb.FieldMask) error {
 	now := time.Now()
 	if activeUpdateMask(mask) {
 		for _, field := range mask.Paths {
@@ -178,8 +180,8 @@ func (spec *Spec) Update(message *rpc.Spec, mask *fieldmaskpb.FieldMask) error {
 					spec.CreateTime = now
 				}
 				spec.SizeInBytes = int32(len(contents))
-			case "style":
-				spec.Style = message.GetStyle()
+			case "mime_type":
+				spec.MimeType = message.GetMimeType()
 			case "source_uri":
 				spec.SourceURI = message.GetSourceUri()
 			}
@@ -205,24 +207,24 @@ func (spec *Spec) Update(message *rpc.Spec, mask *fieldmaskpb.FieldMask) error {
 			}
 			spec.SizeInBytes = int32(len(contents))
 		}
-		style := message.GetStyle()
-		if style != "" {
-			spec.Style = style
+		mimeType := message.GetMimeType()
+		if mimeType != "" {
+			spec.MimeType = mimeType
 		}
 		sourceURI := message.GetSourceUri()
 		if sourceURI != "" {
 			spec.SourceURI = sourceURI
 		}
 	}
-	spec.UpdateTime = now
+	spec.RevisionUpdateTime = now
 	return nil
 }
 
 // BumpRevision updates the revision id for a spec and makes no other changes.
 func (spec *Spec) BumpRevision() error {
 	spec.RevisionID = newRevisionID()
-	spec.CreateTime = time.Now()
-	spec.UpdateTime = time.Now()
+	spec.RevisionCreateTime = time.Now()
+	spec.RevisionUpdateTime = time.Now()
 	return nil
 }
 
@@ -261,12 +263,4 @@ func (tag *SpecRevisionTag) ResourceNameWithTag() string {
 func (tag *SpecRevisionTag) ResourceNameWithRevision() string {
 	return fmt.Sprintf("projects/%s/apis/%s/versions/%s/specs/%s@%s",
 		tag.ProjectID, tag.ApiID, tag.VersionID, tag.SpecID, tag.RevisionID)
-}
-
-// Message returns a message representing a spec.
-func (tag *SpecRevisionTag) Message() (message *rpc.SpecRevisionTag, err error) {
-	message = &rpc.SpecRevisionTag{}
-	message.Name = tag.ResourceNameWithTag()
-	message.Value = tag.ResourceNameWithRevision()
-	return message, nil
 }

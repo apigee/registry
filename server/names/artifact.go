@@ -18,8 +18,8 @@ import (
 	"regexp"
 )
 
-// PropertiesRegexp returns a regular expression that matches collection of properties.
-func PropertiesRegexp() *regexp.Regexp {
+// ArtifactsRegexp returns a regular expression that matches collection of artifacts.
+func ArtifactsRegexp() *regexp.Regexp {
 	return regexp.MustCompile(
 		"^projects/" + NameRegex +
 			"(/apis/" + NameRegex +
@@ -28,11 +28,11 @@ func PropertiesRegexp() *regexp.Regexp {
 			")?" +
 			")?" +
 			")?" +
-			"/properties$")
+			"/artifacts$")
 }
 
-// PropertyRegexp returns a regular expression that matches a property resource name.
-func PropertyRegexp() *regexp.Regexp {
+// ArtifactRegexp returns a regular expression that matches an artifact resource name.
+func ArtifactRegexp() *regexp.Regexp {
 	return regexp.MustCompile("^projects/" + NameRegex +
 		"(/apis/" + NameRegex +
 		"(/versions/" + NameRegex +
@@ -40,5 +40,5 @@ func PropertyRegexp() *regexp.Regexp {
 		")?" +
 		")?" +
 		")?" +
-		"/properties/" + NameRegex + "$")
+		"/artifacts/" + NameRegex + "$")
 }

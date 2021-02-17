@@ -28,7 +28,7 @@ import (
 
 func init() {
 	vocabularyCmd.AddCommand(vocabularyUniqueCmd)
-	vocabularyUniqueCmd.Flags().String("output_id", "vocabulary-unique", "id of property to store output.")
+	vocabularyUniqueCmd.Flags().String("output_id", "vocabulary-unique", "id of artifact to store output.")
 }
 
 var vocabularyUniqueCmd = &cobra.Command{
@@ -38,12 +38,12 @@ var vocabularyUniqueCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
 		flagset := cmd.LocalFlags()
-		outputPropertyID, err := flagset.GetString("output_id")
+		outputArtifactID, err := flagset.GetString("output_id")
 		if err != nil {
 			log.Fatalf("%s", err.Error())
 		}
-		if strings.Contains(outputPropertyID, "/") {
-			log.Fatal("output_id must specify a property id (final segment only) and not a full name.")
+		if strings.Contains(outputArtifactID, "/") {
+			log.Fatal("output_id must specify an artifact id (final segment only) and not a full name.")
 		}
 		ctx := context.TODO()
 		client, err := connection.NewClient(ctx)
@@ -52,10 +52,10 @@ var vocabularyUniqueCmd = &cobra.Command{
 		}
 		names, inputs := collectInputVocabularies(ctx, client, args, vocabularyFilter)
 		output := vocabulary.FilterCommon(inputs)
-		if outputPropertyID != "" {
+		if outputArtifactID != "" {
 			for i, unique := range output.Vocabularies {
-				outputPropertyName := filepath.Dir(names[i]) + "/" + outputPropertyID
-				setVocabularyToProperty(ctx, client, unique, outputPropertyName)
+				outputArtifactName := filepath.Dir(names[i]) + "/" + outputArtifactID
+				setVocabularyToArtifact(ctx, client, unique, outputArtifactName)
 			}
 		} else {
 			core.PrintMessage(output)

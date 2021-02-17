@@ -60,10 +60,8 @@ var getCmd = &cobra.Command{
 			} else {
 				_, err = core.GetSpec(ctx, client, m, getContents, core.PrintSpecDetail)
 			}
-		} else if m := names.PropertyRegexp().FindStringSubmatch(name); m != nil {
-			_, err = core.GetProperty(ctx, client, m, true, core.PrintPropertyDetail)
-		} else if m := names.LabelRegexp().FindStringSubmatch(name); m != nil {
-			_, err = core.GetLabel(ctx, client, m, core.PrintLabelDetail)
+		} else if m := names.ArtifactRegexp().FindStringSubmatch(name); m != nil {
+			_, err = core.GetArtifact(ctx, client, m, true, core.PrintArtifactDetail)
 		} else {
 			log.Printf("Unsupported entity %+v", args)
 		}

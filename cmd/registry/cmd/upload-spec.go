@@ -101,24 +101,24 @@ func uploadSpecDirectory(dirname string, client *gapic.RegistryClient, version s
 		return err
 	}
 	ctx := context.TODO()
-	request := &rpcpb.CreateSpecRequest{
-		Parent: version,
-		SpecId: "protos.zip",
-		Spec: &rpcpb.Spec{
-			Style:    style,
+	request := &rpcpb.CreateApiSpecRequest{
+		Parent:    version,
+		ApiSpecId: "protos.zip",
+		ApiSpec: &rpcpb.ApiSpec{
+			MimeType: style,
 			Filename: "protos.zip",
 			Contents: buf.Bytes(),
 		},
 	}
-	response, err := client.CreateSpec(ctx, request)
+	response, err := client.CreateApiSpec(ctx, request)
 	if err == nil {
 		log.Printf("created %s", response.Name)
 	} else if core.AlreadyExists(err) {
-		log.Printf("found %s/specs/%s", request.Parent, request.SpecId)
+		log.Printf("found %s/specs/%s", request.Parent, request.ApiSpecId)
 	} else {
-		details := fmt.Sprintf("contents-length: %d", len(request.Spec.Contents))
+		details := fmt.Sprintf("contents-length: %d", len(request.ApiSpec.Contents))
 		log.Printf("error %s/specs/%s: %s [%s]",
-			request.Parent, request.SpecId, err.Error(), details)
+			request.Parent, request.ApiSpecId, err.Error(), details)
 	}
 	return nil
 }
@@ -136,23 +136,23 @@ func uploadSpecFile(filename string, client *gapic.RegistryClient, version strin
 	}
 	specID := filepath.Base(filename)
 	// does the spec file exist? if not, create it
-	request := &rpcpb.GetSpecRequest{}
+	request := &rpcpb.GetApiSpecRequest{}
 	request.Name = version + "/specs/" + specID
 	ctx := context.TODO()
-	_, err := client.GetSpec(ctx, request)
+	_, err := client.GetApiSpec(ctx, request)
 	if err != nil { // TODO only do this for NotFound errors
 		bytes, err := ioutil.ReadFile(filename)
 		if err != nil {
 			log.Printf("err %+v", err)
 		} else {
-			request := &rpcpb.CreateSpecRequest{}
+			request := &rpcpb.CreateApiSpecRequest{}
 			request.Parent = version
-			request.SpecId = specID
-			request.Spec = &rpcpb.Spec{}
-			request.Spec.Filename = specID
-			request.Spec.Contents, err = core.GZippedBytes(bytes)
-			request.Spec.Style = style
-			response, err := client.CreateSpec(ctx, request)
+			request.ApiSpecId = specID
+			request.ApiSpec = &rpcpb.ApiSpec{}
+			request.ApiSpec.Filename = specID
+			request.ApiSpec.Contents, err = core.GZippedBytes(bytes)
+			request.ApiSpec.MimeType = style
+			response, err := client.CreateApiSpec(ctx, request)
 			log.Printf("response %+v\nerr %+v", response, err)
 		}
 	}

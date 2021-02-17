@@ -40,15 +40,10 @@ var versionType = graphql.NewObject(
 				Args:    argumentsForCollectionQuery,
 				Resolve: resolveSpecs,
 			},
-			"labels": &graphql.Field{
-				Type:    connectionType(labelType),
+			"artifacts": &graphql.Field{
+				Type:    connectionType(artifactType),
 				Args:    argumentsForCollectionQuery,
-				Resolve: resolveLabels,
-			},
-			"properties": &graphql.Field{
-				Type:    connectionType(propertyType),
-				Args:    argumentsForCollectionQuery,
-				Resolve: resolveProperties,
+				Resolve: resolveArtifacts,
 			},
 			"created": &graphql.Field{
 				Type: timestampType,
@@ -60,7 +55,7 @@ var versionType = graphql.NewObject(
 	},
 )
 
-func representationForVersion(version *rpc.Version) map[string]interface{} {
+func representationForVersion(version *rpc.ApiVersion) map[string]interface{} {
 	return map[string]interface{}{
 		"id":           version.Name,
 		"display_name": version.DisplayName,
@@ -76,7 +71,7 @@ func resolveVersions(p graphql.ResolveParams) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	req := &rpc.ListVersionsRequest{
+	req := &rpc.ListApiVersionsRequest{
 		Parent: getParentFromParams(p),
 	}
 	filter, isFound := p.Args["filter"].(string)
@@ -93,11 +88,11 @@ func resolveVersions(p graphql.ResolveParams) (interface{}, error) {
 	} else {
 		pageSize = 50
 	}
-	var response *rpc.ListVersionsResponse
+	var response *rpc.ListApiVersionsResponse
 	edges := []map[string]interface{}{}
 	for len(edges) < pageSize {
-		response, err = c.GrpcClient().ListVersions(ctx, req)
-		for _, version := range response.GetVersions() {
+		response, err = c.GrpcClient().ListApiVersions(ctx, req)
+		for _, version := range response.GetApiVersions() {
 			edges = append(edges, representationForEdge(representationForVersion(version)))
 		}
 		req.PageToken = response.GetNextPageToken()
@@ -118,10 +113,10 @@ func resolveVersion(p graphql.ResolveParams) (interface{}, error) {
 	if !isFound {
 		return nil, errors.New("missing id field")
 	}
-	req := &rpc.GetVersionRequest{
+	req := &rpc.GetApiVersionRequest{
 		Name: name,
 	}
-	version, err := c.GetVersion(ctx, req)
+	version, err := c.GetApiVersion(ctx, req)
 	if err != nil {
 		return nil, err
 	}

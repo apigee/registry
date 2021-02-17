@@ -140,16 +140,16 @@ func (task *uploadDiscoveryTask) createAPI() error {
 }
 
 func (task *uploadDiscoveryTask) createVersion() error {
-	if _, err := task.client.GetVersion(task.ctx, &rpcpb.GetVersionRequest{
+	if _, err := task.client.GetApiVersion(task.ctx, &rpcpb.GetApiVersionRequest{
 		Name: task.versionName(),
 	}); !core.NotFound(err) {
 		return err // Returns nil when version is found without error.
 	}
 
-	response, err := task.client.CreateVersion(task.ctx, &rpcpb.CreateVersionRequest{
-		Parent:    task.apiName(),
-		VersionId: task.versionID,
-		Version:   &rpcpb.Version{},
+	response, err := task.client.CreateApiVersion(task.ctx, &rpcpb.CreateApiVersionRequest{
+		Parent:       task.apiName(),
+		ApiVersionId: task.versionID,
+		ApiVersion:   &rpcpb.ApiVersion{},
 	})
 	if err != nil {
 		log.Printf("error %s: %s", task.versionName(), err.Error())
@@ -166,17 +166,17 @@ func (task *uploadDiscoveryTask) createSpec() error {
 		return err
 	}
 
-	if _, err := task.client.GetSpec(task.ctx, &rpcpb.GetSpecRequest{
+	if _, err := task.client.GetApiSpec(task.ctx, &rpcpb.GetApiSpecRequest{
 		Name: task.specName(),
 	}); !core.NotFound(err) {
 		return err // Returns nil when spec is found without error.
 	}
 
-	response, err := task.client.CreateSpec(task.ctx, &rpcpb.CreateSpecRequest{
-		Parent: task.versionName(),
-		SpecId: task.specID,
-		Spec: &rpcpb.Spec{
-			Style:     "discovery+gzip",
+	response, err := task.client.CreateApiSpec(task.ctx, &rpcpb.CreateApiSpecRequest{
+		Parent:    task.versionName(),
+		ApiSpecId: task.specID,
+		ApiSpec: &rpcpb.ApiSpec{
+			MimeType:  "discovery+gzip",
 			Filename:  "discovery.json",
 			Contents:  contents,
 			SourceUri: task.path,
@@ -192,7 +192,7 @@ func (task *uploadDiscoveryTask) createSpec() error {
 }
 
 func (task *uploadDiscoveryTask) updateSpec() error {
-	refSpec, err := task.client.GetSpec(task.ctx, &rpcpb.GetSpecRequest{
+	refSpec, err := task.client.GetApiSpec(task.ctx, &rpcpb.GetApiSpecRequest{
 		Name: task.specName(),
 		View: rpc.View_FULL,
 	})
@@ -220,8 +220,8 @@ func (task *uploadDiscoveryTask) updateSpec() error {
 		return err
 	}
 
-	response, err := task.client.UpdateSpec(task.ctx, &rpcpb.UpdateSpecRequest{
-		Spec: &rpcpb.Spec{
+	response, err := task.client.UpdateApiSpec(task.ctx, &rpcpb.UpdateApiSpecRequest{
+		ApiSpec: &rpcpb.ApiSpec{
 			Name:     task.specName(),
 			Contents: docZipped,
 		},

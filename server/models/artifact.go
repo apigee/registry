@@ -45,7 +45,7 @@ const (
 	AnyType
 )
 
-// Artifact is the storage-side representation of a artifact.
+// Artifact is the storage-side representation of an artifact.
 type Artifact struct {
 	Key        string    `datastore:"-" gorm:"primaryKey"`
 	ProjectID  string    // Project associated with artifact (required).
@@ -122,7 +122,7 @@ func NewArtifactFromResourceName(name string) (*Artifact, error) {
 	return NewArtifactFromParentAndArtifactID(parent, artifactID)
 }
 
-// ResourceName generates the resource name of a artifact.
+// ResourceName generates the resource name of an artifact.
 func (artifact *Artifact) ResourceName() string {
 	switch {
 	case artifact.SpecID != "":
@@ -142,18 +142,20 @@ func (artifact *Artifact) ResourceName() string {
 	}
 }
 
-// Message returns a message representing a artifact.
+// Message returns a message representing an artifact.
 func (artifact *Artifact) Message(blob *Blob) (message *rpc.Artifact, err error) {
 	message = &rpc.Artifact{}
 	message.Name = artifact.ResourceName()
 	message.CreateTime, err = ptypes.TimestampProto(artifact.CreateTime)
 	message.UpdateTime, err = ptypes.TimestampProto(artifact.UpdateTime)
 	message.MimeType = artifact.MimeType
-	message.Contents = blob.Contents
+	if blob != nil {
+		message.Contents = blob.Contents
+	}
 	return message, err
 }
 
-// Update modifies a artifact using the contents of a message.
+// Update modifies an artifact using the contents of a message.
 func (artifact *Artifact) Update(message *rpc.Artifact, blob *Blob) error {
 	artifact.UpdateTime = time.Now()
 	artifact.MimeType = message.MimeType

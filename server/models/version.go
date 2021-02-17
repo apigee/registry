@@ -84,7 +84,7 @@ func NewVersionFromResourceName(name string) (*Version, error) {
 }
 
 // NewVersionFromMessage returns an initialized version from a message.
-func NewVersionFromMessage(message *rpc.Version) (*Version, error) {
+func NewVersionFromMessage(message *rpc.ApiVersion) (*Version, error) {
 	version, err := NewVersionFromResourceName(message.GetName())
 	if err != nil {
 		return nil, err
@@ -101,8 +101,8 @@ func (version *Version) ResourceName() string {
 }
 
 // Message returns a message representing a version.
-func (version *Version) Message() (message *rpc.Version, err error) {
-	message = &rpc.Version{}
+func (version *Version) Message() (message *rpc.ApiVersion, err error) {
+	message = &rpc.ApiVersion{}
 	message.Name = version.ResourceName()
 	message.DisplayName = version.DisplayName
 	message.Description = version.Description
@@ -113,7 +113,7 @@ func (version *Version) Message() (message *rpc.Version, err error) {
 }
 
 // Update modifies a version using the contents of a message.
-func (version *Version) Update(message *rpc.Version, mask *fieldmaskpb.FieldMask) error {
+func (version *Version) Update(message *rpc.ApiVersion, mask *fieldmaskpb.FieldMask) error {
 	if activeUpdateMask(mask) {
 		for _, field := range mask.Paths {
 			switch field {

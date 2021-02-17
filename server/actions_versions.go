@@ -26,14 +26,14 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// CreateVersion handles the corresponding API request.
-func (s *RegistryServer) CreateVersion(ctx context.Context, request *rpc.CreateVersionRequest) (*rpc.Version, error) {
+// CreateApiVersion handles the corresponding API request.
+func (s *RegistryServer) CreateApiVersion(ctx context.Context, request *rpc.CreateApiVersionRequest) (*rpc.ApiVersion, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
-	version, err := models.NewVersionFromParentAndVersionID(request.GetParent(), request.GetVersionId())
+	version, err := models.NewVersionFromParentAndVersionID(request.GetParent(), request.GetApiVersionId())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
@@ -44,7 +44,7 @@ func (s *RegistryServer) CreateVersion(ctx context.Context, request *rpc.CreateV
 	if err == nil {
 		return nil, status.Error(codes.AlreadyExists, version.ResourceName()+" already exists")
 	}
-	err = version.Update(request.GetVersion(), nil)
+	err = version.Update(request.GetApiVersion(), nil)
 	version.CreateTime = version.UpdateTime
 	k, err = client.Put(ctx, k, version)
 	if err != nil {
@@ -54,8 +54,8 @@ func (s *RegistryServer) CreateVersion(ctx context.Context, request *rpc.CreateV
 	return version.Message()
 }
 
-// DeleteVersion handles the corresponding API request.
-func (s *RegistryServer) DeleteVersion(ctx context.Context, request *rpc.DeleteVersionRequest) (*empty.Empty, error) {
+// DeleteApiVersion handles the corresponding API request.
+func (s *RegistryServer) DeleteApiVersion(ctx context.Context, request *rpc.DeleteApiVersionRequest) (*empty.Empty, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, unavailableError(err)
@@ -74,8 +74,8 @@ func (s *RegistryServer) DeleteVersion(ctx context.Context, request *rpc.DeleteV
 	return &empty.Empty{}, err
 }
 
-// GetVersion handles the corresponding API request.
-func (s *RegistryServer) GetVersion(ctx context.Context, request *rpc.GetVersionRequest) (*rpc.Version, error) {
+// GetApiVersion handles the corresponding API request.
+func (s *RegistryServer) GetApiVersion(ctx context.Context, request *rpc.GetApiVersionRequest) (*rpc.ApiVersion, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, unavailableError(err)
@@ -95,8 +95,8 @@ func (s *RegistryServer) GetVersion(ctx context.Context, request *rpc.GetVersion
 	return version.Message()
 }
 
-// ListVersions handles the corresponding API request.
-func (s *RegistryServer) ListVersions(ctx context.Context, req *rpc.ListVersionsRequest) (*rpc.ListVersionsResponse, error) {
+// ListApiVersions handles the corresponding API request.
+func (s *RegistryServer) ListApiVersions(ctx context.Context, req *rpc.ListApiVersionsRequest) (*rpc.ListApiVersionsResponse, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, unavailableError(err)
@@ -131,7 +131,7 @@ func (s *RegistryServer) ListVersions(ctx context.Context, req *rpc.ListVersions
 	if err != nil {
 		return nil, internalError(err)
 	}
-	var versionMessages []*rpc.Version
+	var versionMessages []*rpc.ApiVersion
 	var version models.Version
 	it := client.Run(ctx, q)
 	pageSize := boundPageSize(req.GetPageSize())
@@ -163,8 +163,8 @@ func (s *RegistryServer) ListVersions(ctx context.Context, req *rpc.ListVersions
 	if err != nil && err != iterator.Done {
 		return nil, internalError(err)
 	}
-	responses := &rpc.ListVersionsResponse{
-		Versions: versionMessages,
+	responses := &rpc.ListApiVersionsResponse{
+		ApiVersions: versionMessages,
 	}
 	responses.NextPageToken, err = it.GetCursor(len(versionMessages))
 	if err != nil {
@@ -173,14 +173,14 @@ func (s *RegistryServer) ListVersions(ctx context.Context, req *rpc.ListVersions
 	return responses, nil
 }
 
-// UpdateVersion handles the corresponding API request.
-func (s *RegistryServer) UpdateVersion(ctx context.Context, request *rpc.UpdateVersionRequest) (*rpc.Version, error) {
+// UpdateApiVersion handles the corresponding API request.
+func (s *RegistryServer) UpdateApiVersion(ctx context.Context, request *rpc.UpdateApiVersionRequest) (*rpc.ApiVersion, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
-	version, err := models.NewVersionFromResourceName(request.GetVersion().GetName())
+	version, err := models.NewVersionFromResourceName(request.GetApiVersion().GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
@@ -189,7 +189,7 @@ func (s *RegistryServer) UpdateVersion(ctx context.Context, request *rpc.UpdateV
 	if err != nil {
 		return nil, status.Error(codes.NotFound, "not found")
 	}
-	err = version.Update(request.GetVersion(), request.GetUpdateMask())
+	err = version.Update(request.GetApiVersion(), request.GetUpdateMask())
 	if err != nil {
 		return nil, internalError(err)
 	}

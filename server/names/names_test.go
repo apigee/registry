@@ -142,52 +142,26 @@ func TestResourceNames(t *testing.T) {
 				},
 			},
 			group{
-				name:   "properties",
-				regexp: PropertiesRegexp(),
+				name:   "artifacts",
+				regexp: ArtifactsRegexp(),
 				pass: []string{
-					"projects/google/apis/sample/versions/v1/specs/openapi.yaml/properties",
-					"projects/google/apis/sample/versions/v1/properties",
-					"projects/google/apis/sample/properties",
-					"projects/google/properties",
+					"projects/google/apis/sample/versions/v1/specs/openapi.yaml/artifacts",
+					"projects/google/apis/sample/versions/v1/artifacts",
+					"projects/google/apis/sample/artifacts",
+					"projects/google/artifacts",
 				},
 				fail: []string{
 					"-",
 				},
 			},
 			group{
-				name:   "property",
-				regexp: PropertyRegexp(),
+				name:   "artifact",
+				regexp: ArtifactRegexp(),
 				pass: []string{
-					"projects/google/apis/sample/versions/v1/specs/openapi.yaml/properties/test-property",
-					"projects/google/apis/sample/versions/v1/properties/test-property",
-					"projects/google/apis/sample/properties/test-property",
-					"projects/google/properties/test-property",
-				},
-				fail: []string{
-					"-",
-				},
-			},
-			group{
-				name:   "labels",
-				regexp: LabelsRegexp(),
-				pass: []string{
-					"projects/google/apis/sample/versions/v1/specs/openapi.yaml/labels",
-					"projects/google/apis/sample/versions/v1/labels",
-					"projects/google/apis/sample/labels",
-					"projects/google/labels",
-				},
-				fail: []string{
-					"-",
-				},
-			},
-			group{
-				name:   "label",
-				regexp: LabelRegexp(),
-				pass: []string{
-					"projects/google/apis/sample/versions/v1/specs/openapi.yaml/labels/test-label",
-					"projects/google/apis/sample/versions/v1/labels/test-label",
-					"projects/google/apis/sample/labels/test-label",
-					"projects/google/labels/test-label",
+					"projects/google/apis/sample/versions/v1/specs/openapi.yaml/artifacts/test-artifact",
+					"projects/google/apis/sample/versions/v1/artifacts/test-artifact",
+					"projects/google/apis/sample/artifacts/test-artifact",
+					"projects/google/artifacts/test-artifact",
 				},
 				fail: []string{
 					"-",

@@ -38,10 +38,8 @@ func (c *Client) DeleteAllMatches(ctx context.Context, q storage.Query) error {
 		return op.Delete(models.Spec{}).Error
 	case "Blob":
 		return op.Delete(models.Blob{}).Error
-	case "Property":
-		return op.Delete(models.Property{}).Error
-	case "Label":
-		return op.Delete(models.Label{}).Error
+	case "Artifact":
+		return op.Delete(models.Artifact{}).Error
 	case "SpecRevisionTag":
 		return op.Delete(models.SpecRevisionTag{}).Error
 	}
@@ -51,8 +49,7 @@ func (c *Client) DeleteAllMatches(ctx context.Context, q storage.Query) error {
 // DeleteChildrenOfProject deletes all the children of a project.
 func (c *Client) DeleteChildrenOfProject(ctx context.Context, project *models.Project) error {
 	entityNames := []string{
-		models.LabelEntityName,
-		models.PropertyEntityName,
+		models.ArtifactEntityName,
 		models.BlobEntityName,
 		models.SpecEntityName,
 		models.SpecRevisionTagEntityName,

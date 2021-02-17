@@ -26,7 +26,7 @@ import (
 
 func init() {
 	vocabularyCmd.AddCommand(vocabularyIntersectionCmd)
-	vocabularyIntersectionCmd.Flags().String("output", "", "name of property where output should be stored")
+	vocabularyIntersectionCmd.Flags().String("output", "", "name of artifact where output should be stored")
 }
 
 var vocabularyIntersectionCmd = &cobra.Command{
@@ -36,7 +36,7 @@ var vocabularyIntersectionCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
 		flagset := cmd.LocalFlags()
-		outputPropertyName, err := flagset.GetString("output")
+		outputArtifactName, err := flagset.GetString("output")
 		if err != nil {
 			log.Fatalf("%s", err.Error())
 		}
@@ -47,8 +47,8 @@ var vocabularyIntersectionCmd = &cobra.Command{
 		}
 		_, inputs := collectInputVocabularies(ctx, client, args, vocabularyFilter)
 		output := vocabulary.Intersection(inputs)
-		if outputPropertyName != "" {
-			setVocabularyToProperty(ctx, client, output, outputPropertyName)
+		if outputArtifactName != "" {
+			setVocabularyToArtifact(ctx, client, output, outputArtifactName)
 		} else {
 			core.PrintMessage(output)
 		}

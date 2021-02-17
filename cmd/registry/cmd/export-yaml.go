@@ -62,12 +62,12 @@ var exportYAMLCmd = &cobra.Command{
 			})
 			check(err)
 		} else if m := names.VersionRegexp().FindStringSubmatch(name); m != nil {
-			_, err = core.GetVersion(ctx, client, m, func(message *rpc.Version) {
+			_, err = core.GetVersion(ctx, client, m, func(message *rpc.ApiVersion) {
 				core.ExportYAMLForVersion(ctx, client, message)
 			})
 			check(err)
 		} else if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
-			_, err = core.GetSpec(ctx, client, m, false, func(message *rpc.Spec) {
+			_, err = core.GetSpec(ctx, client, m, false, func(message *rpc.ApiSpec) {
 				core.ExportYAMLForSpec(ctx, client, message)
 			})
 			check(err)

@@ -30,16 +30,16 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-var sheetPropertyName string
+var sheetArtifactName string
 
 func init() {
 	exportCmd.AddCommand(exportSheetCmd)
-	exportSheetCmd.PersistentFlags().StringVar(&sheetPropertyName, "as", "", "name of property to hold url of exported sheet")
+	exportSheetCmd.PersistentFlags().StringVar(&sheetArtifactName, "as", "", "name of artifact to hold url of exported sheet")
 }
 
 var exportSheetCmd = &cobra.Command{
 	Use:   "sheet",
-	Short: "Export a specified property to a Google sheet",
+	Short: "Export a specified artifact to a Google sheet",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		var path string
@@ -49,24 +49,24 @@ var exportSheetCmd = &cobra.Command{
 		if err != nil {
 			log.Fatalf("%s", err.Error())
 		}
-		inputNames, inputs := collectInputProperties(ctx, client, args, exportFilter)
+		inputNames, inputs := collectInputArtifacts(ctx, client, args, exportFilter)
 		if len(inputs) == 0 {
 			return
 		}
-		if isInt64Property(inputs[0]) {
-			title := "properties/" + inputs[0].GetRelation()
+		if isInt64Artifact(inputs[0]) {
+			title := "artifacts/" + filepath.Base(inputs[0].GetName())
 			path, err = core.ExportInt64ToSheet(title, inputs)
 			if err != nil {
 				log.Fatalf("%s", err.Error())
 			}
 			log.Printf("exported int64 %+v to %s", inputs, path)
-			saveSheetPath(ctx, client, path, sheetPropertyName)
+			saveSheetPath(ctx, client, path, sheetArtifactName)
 			return
 		}
 		typeURL := messageTypeURL(inputs[0])
 		if typeURL == "gnostic.metrics.Vocabulary" {
 			if len(inputs) != 1 {
-				log.Fatalf("%d properties matched. Please specify exactly one for export.", len(inputs))
+				log.Fatalf("%d artifacts matched. Please specify exactly one for export.", len(inputs))
 			}
 			vocabulary, err := getVocabulary(inputs[0])
 			if err != nil {
@@ -74,10 +74,10 @@ var exportSheetCmd = &cobra.Command{
 			}
 			path, err = core.ExportVocabularyToSheet(inputs[0].Name, vocabulary)
 			log.Printf("exported vocabulary %s to %s", inputs[0].Name, path)
-			if sheetPropertyName == "" {
-				sheetPropertyName = inputs[0].Name + "-sheet"
+			if sheetArtifactName == "" {
+				sheetArtifactName = inputs[0].Name + "-sheet"
 			}
-			saveSheetPath(ctx, client, path, sheetPropertyName)
+			saveSheetPath(ctx, client, path, sheetArtifactName)
 		} else if typeURL == "gnostic.metrics.VersionHistory" {
 			if len(inputs) != 1 {
 				log.Fatalf("please specify exactly one version history to export")
@@ -85,17 +85,17 @@ var exportSheetCmd = &cobra.Command{
 			}
 			path, err = core.ExportVersionHistoryToSheet(inputNames[0], inputs[0])
 			log.Printf("exported version history %s to %s", inputs[0].Name, path)
-			if sheetPropertyName == "" {
-				sheetPropertyName = inputs[0].Name + "-sheet"
+			if sheetArtifactName == "" {
+				sheetArtifactName = inputs[0].Name + "-sheet"
 			}
-			saveSheetPath(ctx, client, path, sheetPropertyName)
+			saveSheetPath(ctx, client, path, sheetArtifactName)
 		} else if typeURL == "gnostic.metrics.Complexity" {
 			path, err = core.ExportComplexityToSheet("Complexity", inputs)
 			log.Printf("exported complexity %+v to %s", inputs, path)
-			saveSheetPath(ctx, client, path, sheetPropertyName)
+			saveSheetPath(ctx, client, path, sheetArtifactName)
 		} else if typeURL == "google.cloud.apigee.registry.v1alpha1.Index" {
 			if len(inputs) != 1 {
-				log.Fatalf("%d properties matched. Please specify exactly one for export.", len(inputs))
+				log.Fatalf("%d artifacts matched. Please specify exactly one for export.", len(inputs))
 			}
 			index, err := getIndex(inputs[0])
 			if err != nil {
@@ -103,32 +103,32 @@ var exportSheetCmd = &cobra.Command{
 			}
 			path, err = core.ExportIndexToSheet(inputs[0].Name, index)
 			log.Printf("exported index %s to %s", inputs[0].Name, path)
-			if sheetPropertyName == "" {
-				sheetPropertyName = inputs[0].Name + "-sheet"
+			if sheetArtifactName == "" {
+				sheetArtifactName = inputs[0].Name + "-sheet"
 			}
-			saveSheetPath(ctx, client, path, sheetPropertyName)
+			saveSheetPath(ctx, client, path, sheetArtifactName)
 		} else {
 			log.Fatalf("Unknown message type: %s", typeURL)
 		}
 	},
 }
 
-func versionNameOfPropertyName(propertyName string) string {
-	n := propertyName
+func versionNameOfArtifactName(artifactName string) string {
+	n := artifactName
 	for i := 0; i < 4; i++ {
 		n = filepath.Dir(n)
 	}
 	return n
 }
 
-func collectInputProperties(ctx context.Context, client connection.Client, args []string, filter string) ([]string, []*rpc.Property) {
+func collectInputArtifacts(ctx context.Context, client connection.Client, args []string, filter string) ([]string, []*rpc.Artifact) {
 	inputNames := make([]string, 0)
-	inputs := make([]*rpc.Property, 0)
+	inputs := make([]*rpc.Artifact, 0)
 	for _, name := range args {
-		if m := names.PropertyRegexp().FindStringSubmatch(name); m != nil {
-			err := core.ListProperties(ctx, client, m, filter, true, func(property *rpc.Property) {
-				inputNames = append(inputNames, property.Name)
-				inputs = append(inputs, property)
+		if m := names.ArtifactRegexp().FindStringSubmatch(name); m != nil {
+			err := core.ListArtifacts(ctx, client, m, filter, true, func(artifact *rpc.Artifact) {
+				inputNames = append(inputNames, artifact.Name)
+				inputs = append(inputs, artifact)
 			})
 			if err != nil {
 				log.Fatalf("%s", err.Error())
@@ -138,70 +138,54 @@ func collectInputProperties(ctx context.Context, client connection.Client, args 
 	return inputNames, inputs
 }
 
-func isInt64Property(property *rpc.Property) bool {
-	switch property.GetValue().(type) {
-	case *rpc.Property_Int64Value:
-		return true
-	default:
-		return false
-	}
+func isInt64Artifact(artifact *rpc.Artifact) bool {
+	return artifact.GetMimeType() == "int64"
 }
 
-func messageTypeURL(property *rpc.Property) string {
-	switch v := property.GetValue().(type) {
-	case *rpc.Property_MessageValue:
-		return v.MessageValue.TypeUrl
-	default:
-		return ""
-	}
+func messageTypeURL(artifact *rpc.Artifact) string {
+	return artifact.GetMimeType()
 }
 
-func getVocabulary(property *rpc.Property) (*metrics.Vocabulary, error) {
-	switch v := property.GetValue().(type) {
-	case *rpc.Property_MessageValue:
-		if v.MessageValue.TypeUrl == "gnostic.metrics.Vocabulary" {
-			vocab := &metrics.Vocabulary{}
-			err := proto.Unmarshal(v.MessageValue.Value, vocab)
-			return vocab, err
-		}
+func getVocabulary(artifact *rpc.Artifact) (*metrics.Vocabulary, error) {
+	if artifact.GetMimeType() == "gnostic.metrics.Vocabulary" {
+		vocab := &metrics.Vocabulary{}
+		err := proto.Unmarshal(artifact.GetContents(), vocab)
+		return vocab, err
 	}
-	return nil, fmt.Errorf("not a vocabulary: %s", property.Name)
+	return nil, fmt.Errorf("not a vocabulary: %s", artifact.Name)
 }
 
-func getIndex(property *rpc.Property) (*rpc.Index, error) {
-	switch v := property.GetValue().(type) {
-	case *rpc.Property_MessageValue:
-		if v.MessageValue.TypeUrl == "google.cloud.apigee.registry.v1alpha1.Index" {
-			index := &rpc.Index{}
-			err := proto.Unmarshal(v.MessageValue.Value, index)
+func getIndex(artifact *rpc.Artifact) (*rpc.Index, error) {
+	if artifact.GetMimeType() == "google.cloud.apigee.registry.v1alpha1.Index" {
+		index := &rpc.Index{}
+		err := proto.Unmarshal(artifact.GetContents(), index)
+		if err != nil {
+			// try unzipping and unmarshaling
+			value, err := core.GUnzippedBytes(artifact.GetContents())
 			if err != nil {
-				// try unzipping and unmarshaling
-				value, err := core.GUnzippedBytes(v.MessageValue.Value)
-				if err != nil {
-					return nil, err
-				}
-				err = proto.Unmarshal(value, index)
+				return nil, err
 			}
-			return index, err
+			err = proto.Unmarshal(value, index)
 		}
+		return index, err
 	}
-	return nil, fmt.Errorf("not a index: %s", property.Name)
+	return nil, fmt.Errorf("not a index: %s", artifact.Name)
 }
 
-func saveSheetPath(ctx context.Context, client connection.Client, path string, propertyName string) error {
+func saveSheetPath(ctx context.Context, client connection.Client, path string, artifactName string) error {
 	if path == "" {
 		return nil
 	}
-	parts := strings.Split(propertyName, "/")
+	parts := strings.Split(artifactName, "/")
 	parent := strings.Join(parts[0:len(parts)-2], "/")
-	propertyID := parts[len(parts)-1]
-	req := &rpc.CreatePropertyRequest{
+	artifactID := parts[len(parts)-1]
+	req := &rpc.CreateArtifactRequest{
 		Parent:     parent,
-		PropertyId: propertyID,
-		Property: &rpc.Property{
-			Value: &rpc.Property_StringValue{StringValue: path},
+		ArtifactId: artifactID,
+		Artifact: &rpc.Artifact{MimeType: "string",
+			Contents: []byte(path),
 		},
 	}
-	_, err := client.CreateProperty(ctx, req)
+	_, err := client.CreateArtifact(ctx, req)
 	return err
 }

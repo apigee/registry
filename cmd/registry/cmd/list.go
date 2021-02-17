@@ -64,10 +64,8 @@ func matchAndHandleListCmd(
 		return core.ListVersions(ctx, client, m, listFilter, core.PrintVersion)
 	} else if m := names.SpecsRegexp().FindStringSubmatch(name); m != nil {
 		return core.ListSpecs(ctx, client, m, listFilter, core.PrintSpec)
-	} else if m := names.PropertiesRegexp().FindStringSubmatch(name); m != nil {
-		return core.ListProperties(ctx, client, m, listFilter, false, core.PrintProperty)
-	} else if m := names.LabelsRegexp().FindStringSubmatch(name); m != nil {
-		return core.ListLabels(ctx, client, m, listFilter, core.PrintLabel)
+	} else if m := names.ArtifactsRegexp().FindStringSubmatch(name); m != nil {
+		return core.ListArtifacts(ctx, client, m, listFilter, false, core.PrintArtifact)
 	}
 
 	// Then try to match resource names.
@@ -79,10 +77,8 @@ func matchAndHandleListCmd(
 		return core.ListVersions(ctx, client, m, listFilter, core.PrintVersion)
 	} else if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
 		return core.ListSpecs(ctx, client, m, listFilter, core.PrintSpec)
-	} else if m := names.PropertyRegexp().FindStringSubmatch(name); m != nil {
-		return core.ListProperties(ctx, client, m, listFilter, false, core.PrintProperty)
-	} else if m := names.LabelRegexp().FindStringSubmatch(name); m != nil {
-		return core.ListLabels(ctx, client, m, listFilter, core.PrintLabel)
+	} else if m := names.ArtifactRegexp().FindStringSubmatch(name); m != nil {
+		return core.ListArtifacts(ctx, client, m, listFilter, false, core.PrintArtifact)
 	}
 
 	// If nothing matched, return an error.

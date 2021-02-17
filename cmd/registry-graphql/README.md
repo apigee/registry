@@ -10,7 +10,7 @@ It uses the [graphql-go](https://github.com/graphql-go/graphql) package.
 ## Limitations
 
 Currently the GraphQL interface is read-only (no mutations) and does not
-provide access to spec revisions or property values.
+provide access to spec revisions or artifact values.
 
 ## Invocation
 

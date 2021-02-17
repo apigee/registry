@@ -40,15 +40,10 @@ var apiType = graphql.NewObject(
 				Args:    argumentsForCollectionQuery,
 				Resolve: resolveVersions,
 			},
-			"labels": &graphql.Field{
-				Type:    connectionType(labelType),
+			"artifacts": &graphql.Field{
+				Type:    connectionType(artifactType),
 				Args:    argumentsForCollectionQuery,
-				Resolve: resolveLabels,
-			},
-			"properties": &graphql.Field{
-				Type:    connectionType(propertyType),
-				Args:    argumentsForCollectionQuery,
-				Resolve: resolveProperties,
+				Resolve: resolveArtifacts,
 			},
 			"created": &graphql.Field{
 				Type: timestampType,
@@ -67,7 +62,6 @@ func representationForAPI(api *rpc.Api) map[string]interface{} {
 		"description":         api.Description,
 		"availability":        api.Availability,
 		"recommended_version": api.RecommendedVersion,
-		"owner":               api.Owner,
 		"created":             representationForTimestamp(api.CreateTime),
 		"updated":             representationForTimestamp(api.UpdateTime),
 	}

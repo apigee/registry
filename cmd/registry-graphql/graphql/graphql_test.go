@@ -178,7 +178,6 @@ func buildTestProject(ctx context.Context, registryClient connection.Client, t *
 				DisplayName:  fmt.Sprintf("API-%03d", i),
 				Description:  "A sample API",
 				Availability: "GENERAL",
-				Owner:        "Acme APIs",
 			},
 		}
 		_, err := registryClient.CreateApi(ctx, req)

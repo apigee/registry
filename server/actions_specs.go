@@ -31,27 +31,27 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// CreateSpec handles the corresponding API request.
-func (s *RegistryServer) CreateSpec(ctx context.Context, request *rpc.CreateSpecRequest) (*rpc.Spec, error) {
+// CreateApiSpec handles the corresponding API request.
+func (s *RegistryServer) CreateApiSpec(ctx context.Context, request *rpc.CreateApiSpecRequest) (*rpc.ApiSpec, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
 
-	spec, err := models.NewSpecFromParentAndSpecID(request.GetParent(), request.GetSpecId())
+	spec, err := models.NewSpecFromParentAndSpecID(request.GetParent(), request.GetApiSpecId())
 	if err != nil {
 		return nil, internalError(err)
 	}
 
-	if err := spec.Update(request.GetSpec(), nil); err != nil {
+	if err := spec.Update(request.GetApiSpec(), nil); err != nil {
 		return nil, internalError(err)
 	}
 
-	return s.createSpec(ctx, client, spec, request.Spec.GetContents())
+	return s.createSpec(ctx, client, spec, request.ApiSpec.GetContents())
 }
 
-func (s *RegistryServer) createSpec(ctx context.Context, client storage.Client, spec *models.Spec, contents []byte) (*rpc.Spec, error) {
+func (s *RegistryServer) createSpec(ctx context.Context, client storage.Client, spec *models.Spec, contents []byte) (*rpc.ApiSpec, error) {
 	q := client.NewQuery(models.SpecEntityName)
 	q = q.Require("ProjectID", spec.ProjectID)
 	q = q.Require("ApiID", spec.ApiID)
@@ -63,7 +63,8 @@ func (s *RegistryServer) createSpec(ctx context.Context, client storage.Client, 
 		return nil, status.Errorf(codes.AlreadyExists, "spec %q already exists", spec.ResourceName())
 	}
 
-	spec.CreateTime = spec.UpdateTime
+	spec.CreateTime = spec.RevisionUpdateTime
+	spec.RevisionCreateTime = spec.RevisionUpdateTime
 	spec.Currency = models.IsCurrent
 	if err := saveSpec(ctx, client, spec); err != nil {
 		return nil, internalError(err)
@@ -103,8 +104,8 @@ func saveSpecContents(ctx context.Context, client storage.Client, spec *models.S
 	return nil
 }
 
-// DeleteSpec handles the corresponding API request.
-func (s *RegistryServer) DeleteSpec(ctx context.Context, request *rpc.DeleteSpecRequest) (*empty.Empty, error) {
+// DeleteApiSpec handles the corresponding API request.
+func (s *RegistryServer) DeleteApiSpec(ctx context.Context, request *rpc.DeleteApiSpecRequest) (*empty.Empty, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, unavailableError(err)
@@ -136,8 +137,8 @@ func (s *RegistryServer) DeleteSpec(ctx context.Context, request *rpc.DeleteSpec
 	return &empty.Empty{}, err
 }
 
-// GetSpec handles the corresponding API request.
-func (s *RegistryServer) GetSpec(ctx context.Context, request *rpc.GetSpecRequest) (*rpc.Spec, error) {
+// GetApiSpec handles the corresponding API request.
+func (s *RegistryServer) GetApiSpec(ctx context.Context, request *rpc.GetApiSpecRequest) (*rpc.ApiSpec, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, unavailableError(err)
@@ -157,8 +158,8 @@ func (s *RegistryServer) GetSpec(ctx context.Context, request *rpc.GetSpecReques
 	return spec.Message(blob, userSpecifiedRevision)
 }
 
-// ListSpecs handles the corresponding API request.
-func (s *RegistryServer) ListSpecs(ctx context.Context, req *rpc.ListSpecsRequest) (*rpc.ListSpecsResponse, error) {
+// ListApiSpecs handles the corresponding API request.
+func (s *RegistryServer) ListApiSpecs(ctx context.Context, req *rpc.ListApiSpecsRequest) (*rpc.ListApiSpecsResponse, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, unavailableError(err)
@@ -200,24 +201,25 @@ func (s *RegistryServer) ListSpecs(ctx context.Context, req *rpc.ListSpecsReques
 	if err != nil {
 		return nil, internalError(err)
 	}
-	var specMessages []*rpc.Spec
+	var specMessages []*rpc.ApiSpec
 	var spec models.Spec
 	it := client.Run(ctx, q)
 	pageSize := boundPageSize(req.GetPageSize())
 	for _, err := it.Next(&spec); err == nil; _, err = it.Next(&spec) {
 		if prg != nil {
 			out, _, err := prg.Eval(map[string]interface{}{
-				"project_id":  spec.ProjectID,
-				"api_id":      spec.ApiID,
-				"version_id":  spec.VersionID,
-				"spec_id":     spec.SpecID,
-				"filename":    spec.FileName,
-				"description": spec.Description,
-				"create_time": spec.CreateTime,
-				"update_time": spec.UpdateTime,
-				"style":       spec.Style,
-				"size_bytes":  spec.SizeInBytes,
-				"source_uri":  spec.SourceURI,
+				"project_id":           spec.ProjectID,
+				"api_id":               spec.ApiID,
+				"version_id":           spec.VersionID,
+				"spec_id":              spec.SpecID,
+				"filename":             spec.FileName,
+				"description":          spec.Description,
+				"create_time":          spec.CreateTime,
+				"revision_create_time": spec.RevisionCreateTime,
+				"revision_update_time": spec.RevisionUpdateTime,
+				"mime_type":            spec.MimeType,
+				"size_bytes":           spec.SizeInBytes,
+				"source_uri":           spec.SourceURI,
 			})
 			if err != nil {
 				return nil, invalidArgumentError(err)
@@ -239,8 +241,8 @@ func (s *RegistryServer) ListSpecs(ctx context.Context, req *rpc.ListSpecsReques
 	if err != nil && err != iterator.Done {
 		return nil, internalError(err)
 	}
-	responses := &rpc.ListSpecsResponse{
-		Specs: specMessages,
+	responses := &rpc.ListApiSpecsResponse{
+		ApiSpecs: specMessages,
 	}
 	responses.NextPageToken, err = it.GetCursor(len(specMessages))
 	if err != nil {
@@ -249,37 +251,37 @@ func (s *RegistryServer) ListSpecs(ctx context.Context, req *rpc.ListSpecsReques
 	return responses, nil
 }
 
-// UpdateSpec handles the corresponding API request.
-func (s *RegistryServer) UpdateSpec(ctx context.Context, request *rpc.UpdateSpecRequest) (*rpc.Spec, error) {
+// UpdateApiSpec handles the corresponding API request.
+func (s *RegistryServer) UpdateApiSpec(ctx context.Context, request *rpc.UpdateApiSpecRequest) (*rpc.ApiSpec, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
 
-	if request.GetSpec() == nil {
+	if request.GetApiSpec() == nil {
 		return nil, invalidArgumentError(errors.New("spec body is required for updates"))
 	}
 
-	spec, userSpecifiedRevision, err := fetchSpec(ctx, client, request.GetSpec().GetName())
+	spec, userSpecifiedRevision, err := fetchSpec(ctx, client, request.GetApiSpec().GetName())
 	if request.GetAllowMissing() && client.IsNotFound(err) {
-		spec, err := models.NewSpecFromResourceName(request.Spec.GetName())
+		spec, err := models.NewSpecFromResourceName(request.ApiSpec.GetName())
 		if err != nil {
 			return nil, internalError(err)
 		}
 
-		if err := spec.Update(request.GetSpec(), nil); err != nil {
+		if err := spec.Update(request.GetApiSpec(), nil); err != nil {
 			return nil, internalError(err)
 		}
 
-		return s.createSpec(ctx, client, spec, request.Spec.GetContents())
+		return s.createSpec(ctx, client, spec, request.ApiSpec.GetContents())
 	} else if err != nil {
 		return nil, internalError(err)
 	} else if userSpecifiedRevision != "" {
 		return nil, invalidArgumentError(errors.New("updates to specific revisions are unsupported"))
 	}
 	oldRevisionID := spec.RevisionID
-	err = spec.Update(request.GetSpec(), request.GetUpdateMask())
+	err = spec.Update(request.GetApiSpec(), request.GetUpdateMask())
 	if err != nil {
 		return nil, internalError(err)
 	}
@@ -303,10 +305,10 @@ func (s *RegistryServer) UpdateSpec(ctx context.Context, request *rpc.UpdateSpec
 		return nil, internalError(err)
 	}
 	// save a blob with the spec contents (but only if the contents were updated)
-	if request.GetSpec().GetContents() != nil {
+	if request.GetApiSpec().GetContents() != nil {
 		blob := models.NewBlobForSpec(
 			spec,
-			request.GetSpec().GetContents())
+			request.GetApiSpec().GetContents())
 		_, err = client.Put(ctx,
 			client.NewKey(models.BlobEntityName, spec.ResourceNameWithRevision()),
 			blob)
@@ -318,8 +320,8 @@ func (s *RegistryServer) UpdateSpec(ctx context.Context, request *rpc.UpdateSpec
 	return spec.Message(nil, "")
 }
 
-// ListSpecRevisions handles the corresponding API request.
-func (s *RegistryServer) ListSpecRevisions(ctx context.Context, req *rpc.ListSpecRevisionsRequest) (*rpc.ListSpecRevisionsResponse, error) {
+// ListApiSpecRevisions handles the corresponding API request.
+func (s *RegistryServer) ListApiSpecRevisions(ctx context.Context, req *rpc.ListApiSpecRevisionsRequest) (*rpc.ListApiSpecRevisionsResponse, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, unavailableError(err)
@@ -340,8 +342,8 @@ func (s *RegistryServer) ListSpecRevisions(ctx context.Context, req *rpc.ListSpe
 	q = q.Require("SpecID", targetSpec.SpecID)
 	q = q.Order("-CreateTime")
 
-	var specMessages []*rpc.Spec
-	responses := &rpc.ListSpecRevisionsResponse{}
+	var specMessages []*rpc.ApiSpec
+	responses := &rpc.ListApiSpecRevisionsResponse{}
 	if s.weTrustTheSort {
 		var spec models.Spec
 		it := client.Run(ctx, q)
@@ -388,8 +390,8 @@ func (s *RegistryServer) ListSpecRevisions(ctx context.Context, req *rpc.ListSpe
 	return responses, nil
 }
 
-// DeleteSpecRevision handles the corresponding API request.
-func (s *RegistryServer) DeleteSpecRevision(ctx context.Context, request *rpc.DeleteSpecRevisionRequest) (*empty.Empty, error) {
+// DeleteApiSpecRevision handles the corresponding API request.
+func (s *RegistryServer) DeleteApiSpecRevision(ctx context.Context, request *rpc.DeleteApiSpecRevisionRequest) (*empty.Empty, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, unavailableError(err)
@@ -422,8 +424,8 @@ func (s *RegistryServer) DeleteSpecRevision(ctx context.Context, request *rpc.De
 	return &empty.Empty{}, err
 }
 
-// TagSpecRevision handles the corresponding API request.
-func (s *RegistryServer) TagSpecRevision(ctx context.Context, request *rpc.TagSpecRevisionRequest) (*rpc.Spec, error) {
+// TagApiSpecRevision handles the corresponding API request.
+func (s *RegistryServer) TagApiSpecRevision(ctx context.Context, request *rpc.TagApiSpecRevisionRequest) (*rpc.ApiSpec, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, unavailableError(err)
@@ -459,52 +461,8 @@ func (s *RegistryServer) TagSpecRevision(ctx context.Context, request *rpc.TagSp
 	return spec.Message(nil, request.GetTag())
 }
 
-// ListSpecRevisionTags handles the corresponding API request.
-func (s *RegistryServer) ListSpecRevisionTags(ctx context.Context, req *rpc.ListSpecRevisionTagsRequest) (*rpc.ListSpecRevisionTagsResponse, error) {
-	client, err := s.getStorageClient(ctx)
-	if err != nil {
-		return nil, unavailableError(err)
-	}
-	defer s.releaseStorageClient(client)
-	targetSpec, err := models.NewSpecFromResourceName(req.GetName())
-	if err != nil {
-		return nil, internalError(err)
-	}
-	q := client.NewQuery(models.SpecRevisionTagEntityName)
-	q, err = q.ApplyCursor(req.GetPageToken())
-	if err != nil {
-		return nil, internalError(err)
-	}
-	q = q.Require("ProjectID", targetSpec.ProjectID)
-	q = q.Require("ApiID", targetSpec.ApiID)
-	q = q.Require("VersionID", targetSpec.VersionID)
-	q = q.Require("SpecID", targetSpec.SpecID)
-	var tagMessages []*rpc.SpecRevisionTag
-	tag := models.SpecRevisionTag{}
-	it := client.Run(ctx, q)
-	pageSize := boundPageSize(req.GetPageSize())
-	for _, err := it.Next(&tag); err == nil; _, err = it.Next(&tag) {
-		tagMessage, _ := tag.Message()
-		tagMessages = append(tagMessages, tagMessage)
-		if len(tagMessages) == pageSize {
-			break
-		}
-	}
-	if err != nil && err != iterator.Done {
-		return nil, internalError(err)
-	}
-	responses := &rpc.ListSpecRevisionTagsResponse{
-		Tags: tagMessages,
-	}
-	responses.NextPageToken, err = it.GetCursor(len(tagMessages))
-	if err != nil {
-		return nil, internalError(err)
-	}
-	return responses, nil
-}
-
-// RollbackSpec handles the corresponding API request.
-func (s *RegistryServer) RollbackSpec(ctx context.Context, request *rpc.RollbackSpecRequest) (*rpc.Spec, error) {
+// RollbackApiSpec handles the corresponding API request.
+func (s *RegistryServer) RollbackApiSpec(ctx context.Context, request *rpc.RollbackApiSpecRequest) (*rpc.ApiSpec, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, unavailableError(err)

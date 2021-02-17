@@ -25,7 +25,6 @@ import (
 	"github.com/apigee/registry/rpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/anypb"
 )
 
 func unavailable(err error) bool {
@@ -104,7 +103,6 @@ func TestCRUD(t *testing.T) {
 				DisplayName:  "Sample",
 				Description:  "A sample API",
 				Availability: "GENERAL",
-				Owner:        "Acme APIs",
 			},
 		}
 		_, err := registryClient.CreateApi(ctx, req)
@@ -112,32 +110,32 @@ func TestCRUD(t *testing.T) {
 	}
 	// Create the sample 1.0.0 version.
 	{
-		req := &rpc.CreateVersionRequest{
-			Parent:    "projects/test/apis/sample",
-			VersionId: "1.0.0",
+		req := &rpc.CreateApiVersionRequest{
+			Parent:       "projects/test/apis/sample",
+			ApiVersionId: "1.0.0",
 		}
-		_, err := registryClient.CreateVersion(ctx, req)
+		_, err := registryClient.CreateApiVersion(ctx, req)
 		check(t, "error creating version %s", err)
 	}
 	// Upload the sample 1.0.0 OpenAPI spec.
 	{
 		buf, err := readAndGZipFile("openapi.yaml@r0")
 		check(t, "error reading spec", err)
-		req := &rpc.CreateSpecRequest{
-			Parent: "projects/test/apis/sample/versions/1.0.0",
-			SpecId: "openapi.yaml",
-			Spec: &rpc.Spec{
-				Style:    "openapi/v3+gzip",
+		req := &rpc.CreateApiSpecRequest{
+			Parent:    "projects/test/apis/sample/versions/1.0.0",
+			ApiSpecId: "openapi.yaml",
+			ApiSpec: &rpc.ApiSpec{
+				MimeType: "openapi/v3+gzip",
 				Contents: buf.Bytes(),
 			},
 		}
-		_, err = registryClient.CreateSpec(ctx, req)
+		_, err = registryClient.CreateApiSpec(ctx, req)
 		check(t, "error creating spec %s", err)
 	}
-	testProperties(ctx, registryClient, t, "projects/test")
-	testProperties(ctx, registryClient, t, "projects/test/apis/sample")
-	testProperties(ctx, registryClient, t, "projects/test/apis/sample/versions/1.0.0")
-	testProperties(ctx, registryClient, t, "projects/test/apis/sample/versions/1.0.0/specs/openapi.yaml")
+	testArtifacts(ctx, registryClient, t, "projects/test")
+	testArtifacts(ctx, registryClient, t, "projects/test/apis/sample")
+	testArtifacts(ctx, registryClient, t, "projects/test/apis/sample/versions/1.0.0")
+	testArtifacts(ctx, registryClient, t, "projects/test/apis/sample/versions/1.0.0/specs/openapi.yaml")
 	// Delete the test project.
 	{
 		req := &rpc.DeleteProjectRequest{
@@ -148,80 +146,35 @@ func TestCRUD(t *testing.T) {
 	}
 }
 
-// testProperties verifies property operations on a specified entity.
-func testProperties(ctx context.Context, registryClient connection.Client, t *testing.T, parent string) {
-	// Set a string property.
-	{
-		req := &rpc.CreatePropertyRequest{
-			Parent:     parent,
-			PropertyId: "string",
-			Property: &rpc.Property{
-				Value: &rpc.Property_StringValue{StringValue: "testing"},
-			},
-		}
-		_, err := registryClient.CreateProperty(ctx, req)
-		check(t, "error creating property %s", err)
-	}
-	// Set an int64 property.
-	{
-		req := &rpc.CreatePropertyRequest{
-			Parent:     parent,
-			PropertyId: "int64",
-			Property: &rpc.Property{
-				Value: &rpc.Property_Int64Value{Int64Value: 123},
-			},
-		}
-		_, err := registryClient.CreateProperty(ctx, req)
-		check(t, "error creating property %s", err)
-	}
-	// Set a double property.
-	{
-		req := &rpc.CreatePropertyRequest{
-			Parent:     parent,
-			PropertyId: "double",
-			Property: &rpc.Property{
-				Value: &rpc.Property_DoubleValue{DoubleValue: 123.456},
-			},
-		}
-		_, err := registryClient.CreateProperty(ctx, req)
-		check(t, "error creating property %s", err)
-	}
-	// Set a boolean property.
-	{
-		req := &rpc.CreatePropertyRequest{
-			Parent:     parent,
-			PropertyId: "bool",
-			Property: &rpc.Property{
-				Value: &rpc.Property_BoolValue{BoolValue: true},
-			},
-		}
-		_, err := registryClient.CreateProperty(ctx, req)
-		check(t, "error creating property %s", err)
-	}
-	// Set a bytes property.
+// testArtifacts verifies artifact operations on a specified entity.
+func testArtifacts(ctx context.Context, registryClient connection.Client, t *testing.T, parent string) {
+
+	// Set a bytes artifact.
 	if true {
-		req := &rpc.CreatePropertyRequest{
+		req := &rpc.CreateArtifactRequest{
 			Parent:     parent,
-			PropertyId: "bytes",
-			Property: &rpc.Property{
-				Value: &rpc.Property_BytesValue{BytesValue: []byte("hello")},
+			ArtifactId: "bytes",
+			Artifact: &rpc.Artifact{
+				MimeType: "bytes",
+				Contents: []byte("hello"),
 			},
 		}
-		_, err := registryClient.CreateProperty(ctx, req)
-		check(t, "error creating property %s", err)
+		_, err := registryClient.CreateArtifact(ctx, req)
+		check(t, "error creating artifact %s", err)
 	}
-	// Set a message property.
+	// Set a message artifact.
 	if true {
-		req := &rpc.CreatePropertyRequest{
+		req := &rpc.CreateArtifactRequest{
 			Parent:     parent,
-			PropertyId: "message",
-			Property: &rpc.Property{
-				Value: &rpc.Property_MessageValue{MessageValue: &anypb.Any{TypeUrl: "echo", Value: []byte{
+			ArtifactId: "message",
+			Artifact: &rpc.Artifact{
+				MimeType: "application/proto schema=echo",
+				Contents: []byte{
 					0x0a, 0x05, 0x68, 0x65, 0x6c, 0x6c, 0x6f,
-				}}},
+				},
 			},
 		}
-		_, err := registryClient.CreateProperty(ctx, req)
-		check(t, "error creating property %s", err)
+		_, err := registryClient.CreateArtifact(ctx, req)
+		check(t, "error creating artifact %s", err)
 	}
 }

@@ -44,12 +44,12 @@ func ExportYAMLForAPI(ctx context.Context, client *gapic.RegistryClient, message
 }
 
 // ExportYAMLForVersion writes a project as a YAML file.
-func ExportYAMLForVersion(ctx context.Context, client *gapic.RegistryClient, message *rpc.Version) {
+func ExportYAMLForVersion(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiVersion) {
 	printDocAsYaml(docForMapping(exportVersion(ctx, client, message)))
 }
 
 // ExportYAMLForSpec writes a project as a YAML file.
-func ExportYAMLForSpec(ctx context.Context, client *gapic.RegistryClient, message *rpc.Spec) {
+func ExportYAMLForSpec(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiSpec) {
 	printDocAsYaml(docForMapping(exportSpec(ctx, client, message)))
 }
 
@@ -73,43 +73,35 @@ func exportAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.A
 	apiMapContent = appendPair(apiMapContent, "availability", nodeForString(message.Availability))
 	apiMapContent = appendPair(apiMapContent, "recommended_version", nodeForString(message.RecommendedVersion))
 	versionsMapContent := nodeSlice()
-	err := ListVersions(ctx, client, m, "", func(message *rpc.Version) {
+	err := ListVersions(ctx, client, m, "", func(message *rpc.ApiVersion) {
 		versionMapContent := exportVersion(ctx, client, message)
 		versionsMapContent = appendPair(versionsMapContent, path.Base(message.Name), nodeForMapping(versionMapContent))
 	})
 	check(err)
 	apiMapContent = appendPair(apiMapContent, "versions", nodeForMapping(versionsMapContent))
-	labelsArrayContent := nodeSlice()
-	err = ListLabelsForParent(ctx, client, m, func(message *rpc.Label) {
-		labelsArrayContent = append(labelsArrayContent, nodeForString(path.Base(message.Name)))
-	})
-	check(err)
-	if len(labelsArrayContent) > 0 {
-		apiMapContent = appendPair(apiMapContent, "labels", nodeForSequence(labelsArrayContent))
-	}
-	propertiesMapContent := nodeSlice()
-	err = ListPropertiesForParent(ctx, client, m, func(message *rpc.Property) {
-		propertiesMapContent = appendPair(propertiesMapContent,
+	artifactsMapContent := nodeSlice()
+	err = ListArtifactsForParent(ctx, client, m, func(message *rpc.Artifact) {
+		artifactsMapContent = appendPair(artifactsMapContent,
 			path.Base(message.Name),
-			nodeForMapping(exportProperty(ctx, client, message)))
+			nodeForMapping(exportArtifact(ctx, client, message)))
 	})
-	if len(propertiesMapContent) > 0 {
-		apiMapContent = appendPair(apiMapContent, "properties", nodeForMapping(propertiesMapContent))
+	if len(artifactsMapContent) > 0 {
+		apiMapContent = appendPair(apiMapContent, "artifacts", nodeForMapping(artifactsMapContent))
 	}
 	return apiMapContent
 }
 
-func exportVersion(ctx context.Context, client *gapic.RegistryClient, message *rpc.Version) []*yaml.Node {
+func exportVersion(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiVersion) []*yaml.Node {
 	m := names.VersionRegexp().FindStringSubmatch(message.Name)
 	versionMapContent := nodeSlice()
 	versionMapContent = appendPair(versionMapContent, "createTime", nodeForTime(message.CreateTime.AsTime()))
 	versionMapContent = appendPair(versionMapContent, "state", nodeForString(message.State))
 	specsMapContent := nodeSlice()
-	err := ListSpecs(ctx, client, m, "", func(message *rpc.Spec) {
+	err := ListSpecs(ctx, client, m, "", func(message *rpc.ApiSpec) {
 		specMapContent := exportSpec(ctx, client, message)
 		specsMapContent = appendPair(specsMapContent, path.Base(message.Name), nodeForMapping(specMapContent))
 		m := names.SpecRegexp().FindStringSubmatch(message.Name)
-		err := ListSpecRevisions(ctx, client, m, "", func(message *rpc.Spec) {
+		err := ListSpecRevisions(ctx, client, m, "", func(message *rpc.ApiSpec) {
 			specMapContent := exportSpec(ctx, client, message)
 			specsMapContent = appendPair(specsMapContent, path.Base(message.Name), nodeForMapping(specMapContent))
 		})
@@ -117,28 +109,21 @@ func exportVersion(ctx context.Context, client *gapic.RegistryClient, message *r
 	})
 	check(err)
 	versionMapContent = appendPair(versionMapContent, "specs", nodeForMapping(specsMapContent))
-	labelsArrayContent := nodeSlice()
-	err = ListLabelsForParent(ctx, client, m, func(message *rpc.Label) {
-		labelsArrayContent = append(labelsArrayContent, nodeForString(path.Base(message.Name)))
-	})
-	if len(labelsArrayContent) > 0 {
-		versionMapContent = appendPair(versionMapContent, "labels", nodeForSequence(labelsArrayContent))
-	}
-	propertiesMapContent := nodeSlice()
-	err = ListPropertiesForParent(ctx, client, m, func(message *rpc.Property) {
-		propertiesMapContent = appendPair(propertiesMapContent,
+	artifactsMapContent := nodeSlice()
+	err = ListArtifactsForParent(ctx, client, m, func(message *rpc.Artifact) {
+		artifactsMapContent = appendPair(artifactsMapContent,
 			path.Base(message.Name),
-			nodeForMapping(exportProperty(ctx, client, message)))
+			nodeForMapping(exportArtifact(ctx, client, message)))
 	})
-	if len(propertiesMapContent) > 0 {
-		versionMapContent = appendPair(versionMapContent, "properties", nodeForMapping(propertiesMapContent))
+	if len(artifactsMapContent) > 0 {
+		versionMapContent = appendPair(versionMapContent, "artifacts", nodeForMapping(artifactsMapContent))
 	}
 	return versionMapContent
 }
 
-func exportSpec(ctx context.Context, client *gapic.RegistryClient, message *rpc.Spec) []*yaml.Node {
+func exportSpec(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiSpec) []*yaml.Node {
 	specMapContent := nodeSlice()
-	specMapContent = appendPair(specMapContent, "style", nodeForString(message.Style))
+	specMapContent = appendPair(specMapContent, "mime_type", nodeForString(message.MimeType))
 	specMapContent = appendPair(specMapContent, "hash", nodeForString(message.Hash))
 	specMapContent = appendPair(specMapContent, "size", nodeForInt64(int64(message.SizeBytes)))
 	specMapContent = appendPair(specMapContent, "createTime", nodeForTime(message.CreateTime.AsTime()))
@@ -146,21 +131,12 @@ func exportSpec(ctx context.Context, client *gapic.RegistryClient, message *rpc.
 	return specMapContent
 }
 
-func exportProperty(ctx context.Context, client *gapic.RegistryClient, message *rpc.Property) []*yaml.Node {
-	propertyMapContent := nodeSlice()
-	switch v := message.Value.(type) {
-	case *rpc.Property_StringValue:
-		propertyMapContent = appendPair(propertyMapContent, "value", nodeForString(
-			v.StringValue))
-	case *rpc.Property_Int64Value:
-		propertyMapContent = appendPair(propertyMapContent, "value", nodeForInt64(
-			v.Int64Value))
-	default:
-		propertyMapContent = appendPair(propertyMapContent, "value", nodeForString(
-			fmt.Sprintf("%+v", message.Value)))
-	}
-	propertyMapContent = appendPair(propertyMapContent, "createTime", nodeForTime(message.CreateTime.AsTime()))
-	return propertyMapContent
+func exportArtifact(ctx context.Context, client *gapic.RegistryClient, message *rpc.Artifact) []*yaml.Node {
+	artifactMapContent := nodeSlice()
+	artifactMapContent = appendPair(artifactMapContent, "mime_type", nodeForString(message.GetMimeType()))
+	artifactMapContent = appendPair(artifactMapContent, "contents", nodeForString(fmt.Sprintf("%+v", message.GetContents())))
+	artifactMapContent = appendPair(artifactMapContent, "createTime", nodeForTime(message.CreateTime.AsTime()))
+	return artifactMapContent
 }
 
 func nodeForMapping(content []*yaml.Node) *yaml.Node {

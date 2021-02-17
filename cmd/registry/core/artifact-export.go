@@ -16,11 +16,12 @@ package core
 
 import (
 	"log"
+	"strconv"
 
 	"github.com/apigee/registry/rpc"
 )
 
-func ExportInt64ToSheet(name string, properties []*rpc.Property) (string, error) {
+func ExportInt64ToSheet(name string, artifacts []*rpc.Artifact) (string, error) {
 	sheetsClient, err := NewSheetsClient("")
 	if err != nil {
 		log.Fatalf("%s", err.Error())
@@ -34,9 +35,9 @@ func ExportInt64ToSheet(name string, properties []*rpc.Property) (string, error)
 		log.Fatalf("%s", err.Error())
 	}
 	rows := make([][]interface{}, 0)
-	rows = append(rows, rowForInt64Property(nil))
-	for _, property := range properties {
-		rows = append(rows, rowForInt64Property(property))
+	rows = append(rows, rowForInt64Artifact(nil))
+	for _, artifact := range artifacts {
+		rows = append(rows, rowForInt64Artifact(artifact))
 	}
 	_, err = sheetsClient.Update("Values", rows)
 	if err != nil {
@@ -45,21 +46,16 @@ func ExportInt64ToSheet(name string, properties []*rpc.Property) (string, error)
 	return sheet.SpreadsheetUrl, nil
 }
 
-func rowForInt64Property(property *rpc.Property) []interface{} {
-	if property == nil {
+func rowForInt64Artifact(artifact *rpc.Artifact) []interface{} {
+	if artifact == nil {
 		return []interface{}{
 			"name",
 			"value",
 		}
 	}
 
-	var value int64
-	switch v := property.GetValue().(type) {
-	case *rpc.Property_Int64Value:
-		value = v.Int64Value
-	default:
-		value = 0
-	}
-	subject := property.GetSubject()
+	contents := artifact.GetContents()
+	value, _ := strconv.ParseInt(string(contents), 10, 64)
+	subject := artifact.GetName()
 	return []interface{}{subject, value}
 }

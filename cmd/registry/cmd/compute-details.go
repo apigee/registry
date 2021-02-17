@@ -85,8 +85,8 @@ func (task *computeDetailsTask) Name() string {
 
 func (task *computeDetailsTask) Run() error {
 	m := names.SpecRegexp().FindStringSubmatch(task.apiName + "/versions/-/specs/-")
-	specs := make([]*rpc.Spec, 0)
-	core.ListSpecs(task.ctx, task.client, m, "", func(spec *rpc.Spec) {
+	specs := make([]*rpc.ApiSpec, 0)
+	core.ListSpecs(task.ctx, task.client, m, "", func(spec *rpc.ApiSpec) {
 		specs = append(specs, spec)
 	})
 	// use the last (presumed latest) spec
@@ -103,7 +103,7 @@ func (task *computeDetailsTask) Run() error {
 	var title string
 	var description string
 	var request *rpc.UpdateApiRequest
-	if strings.HasPrefix(spec.GetStyle(), "openapi/v2") {
+	if strings.HasPrefix(spec.GetMimeType(), "openapi/v2") {
 		data, err := core.GetBytesForSpec(spec)
 		if err != nil {
 			return nil
@@ -129,7 +129,7 @@ func (task *computeDetailsTask) Run() error {
 				Paths: []string{"display_name", "description"},
 			},
 		}
-	} else if strings.HasPrefix(spec.GetStyle(), "openapi/v3") {
+	} else if strings.HasPrefix(spec.GetMimeType(), "openapi/v3") {
 		data, err := core.GetBytesForSpec(spec)
 		if err != nil {
 			return nil
@@ -155,7 +155,7 @@ func (task *computeDetailsTask) Run() error {
 				Paths: []string{"display_name", "description"},
 			},
 		}
-	} else if strings.HasPrefix(spec.GetStyle(), "discovery") {
+	} else if strings.HasPrefix(spec.GetMimeType(), "discovery") {
 		data, err := core.GetBytesForSpec(spec)
 		if err != nil {
 			return nil
@@ -166,14 +166,12 @@ func (task *computeDetailsTask) Run() error {
 		}
 		title := document.Title
 		description := document.Description
-		owner := document.OwnerName
 		if len(description) > 256 {
 			description = description[0:256]
 		}
 		request = &rpc.UpdateApiRequest{
 			Api: &rpc.Api{
 				Name:        task.apiName,
-				Owner:       owner,
 				DisplayName: title,
 				Description: description,
 			},
@@ -182,7 +180,7 @@ func (task *computeDetailsTask) Run() error {
 			},
 		}
 
-	} else if spec.GetStyle() == "proto+zip" {
+	} else if spec.GetMimeType() == "proto+zip" {
 		log.Printf("%s", spec.Name)
 		details, err := core.NewDetailsFromZippedProtos(spec.GetContents())
 		if err != nil {

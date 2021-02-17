@@ -16,6 +16,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	"github.com/apigee/registry/cmd/registry/core"
@@ -80,10 +81,10 @@ func (task *countVersionsTask) Name() string {
 
 func (task *countVersionsTask) Run() error {
 	count := 0
-	request := &rpc.ListVersionsRequest{
+	request := &rpc.ListApiVersionsRequest{
 		Parent: task.apiName,
 	}
-	it := task.client.ListVersions(task.ctx, request)
+	it := task.client.ListApiVersions(task.ctx, request)
 	for {
 		_, err := it.Next()
 		if err == iterator.Done {
@@ -97,15 +98,12 @@ func (task *countVersionsTask) Run() error {
 	log.Printf("%d\t%s", count, task.apiName)
 	subject := task.apiName
 	relation := "versionCount"
-	property := &rpc.Property{
-		Subject:  subject,
-		Relation: relation,
-		Name:     subject + "/properties/" + relation,
-		Value: &rpc.Property_Int64Value{
-			Int64Value: int64(count),
-		},
+	artifact := &rpc.Artifact{
+		Name:     subject + "/artifacts/" + relation,
+		MimeType: "int64",
+		Contents: []byte(fmt.Sprintf("%d", count)),
 	}
-	err := core.SetProperty(task.ctx, task.client, property)
+	err := core.SetArtifact(task.ctx, task.client, artifact)
 	if err != nil {
 		return err
 	}

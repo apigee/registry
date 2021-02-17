@@ -43,79 +43,55 @@ func PrintAPIDetail(message *rpc.Api) {
 	PrintMessage(message)
 }
 
-func PrintVersion(version *rpc.Version) {
+func PrintVersion(version *rpc.ApiVersion) {
 	fmt.Println(version.Name)
 }
 
-func PrintVersionDetail(message *rpc.Version) {
+func PrintVersionDetail(message *rpc.ApiVersion) {
 	PrintMessage(message)
 }
 
-func PrintSpec(spec *rpc.Spec) {
+func PrintSpec(spec *rpc.ApiSpec) {
 	fmt.Println(spec.Name)
 }
 
-func PrintSpecDetail(message *rpc.Spec) {
+func PrintSpecDetail(message *rpc.ApiSpec) {
 	PrintMessage(message)
 }
 
-func PrintSpecContents(message *rpc.Spec) {
+func PrintSpecContents(message *rpc.ApiSpec) {
 	contents := message.GetContents()
-	if strings.HasSuffix(message.GetStyle(), "+gzip") {
+	if strings.HasSuffix(message.GetMimeType(), "+gzip") {
 		contents, _ = GUnzippedBytes(contents)
 	}
 	os.Stdout.Write(contents)
 }
 
-func PrintProperty(property *rpc.Property) {
-	fmt.Println(property.Name)
+func PrintArtifact(artifact *rpc.Artifact) {
+	fmt.Println(artifact.Name)
 }
 
-func PrintPropertyDetail(property *rpc.Property) {
-	switch v := property.Value.(type) {
-	case *rpc.Property_StringValue:
-		fmt.Printf("%s", v.StringValue)
-	case *rpc.Property_Int64Value:
-		fmt.Printf("%d", v.Int64Value)
-	case *rpc.Property_DoubleValue:
-		fmt.Printf("%f", v.DoubleValue)
-	case *rpc.Property_BoolValue:
-		fmt.Printf("%t", v.BoolValue)
-	case *rpc.Property_BytesValue:
-		fmt.Printf("%+v", v.BytesValue)
-	case *rpc.Property_MessageValue:
-		switch v.MessageValue.TypeUrl {
-		case "gnostic.metrics.Complexity":
-			unmarshalAndPrint(v.MessageValue.Value, &metrics.Complexity{})
-		case "gnostic.metrics.Vocabulary":
-			unmarshalAndPrint(v.MessageValue.Value, &metrics.Vocabulary{})
-		case "gnostic.metrics.VersionHistory":
-			unmarshalAndPrint(v.MessageValue.Value, &metrics.VersionHistory{})
-		case "google.cloud.apigee.registry.v1alpha1.Index":
-			unmarshalAndPrint(v.MessageValue.Value, &rpc.Index{})
-		case "gnostic.openapiv2.Document":
-			unmarshalAndPrint(v.MessageValue.Value, &openapiv2.Document{})
-		case "gnostic.openapiv3.Document":
-			unmarshalAndPrint(v.MessageValue.Value, &openapiv3.Document{})
-		default:
-			fmt.Printf("%+v", v.MessageValue)
-		}
+func PrintArtifactDetail(artifact *rpc.Artifact) {
+	switch artifact.GetMimeType() {
+	case "gnostic.metrics.Complexity":
+		unmarshalAndPrint(artifact.GetContents(), &metrics.Complexity{})
+	case "gnostic.metrics.Vocabulary":
+		unmarshalAndPrint(artifact.GetContents(), &metrics.Vocabulary{})
+	case "gnostic.metrics.VersionHistory":
+		unmarshalAndPrint(artifact.GetContents(), &metrics.VersionHistory{})
+	case "google.cloud.apigee.registry.v1alpha1.Index":
+		unmarshalAndPrint(artifact.GetContents(), &rpc.Index{})
+	case "gnostic.openapiv2.Document":
+		unmarshalAndPrint(artifact.GetContents(), &openapiv2.Document{})
+	case "gnostic.openapiv3.Document":
+		unmarshalAndPrint(artifact.GetContents(), &openapiv3.Document{})
 	default:
-		fmt.Printf("Unsupported property type: %s %s %+v\n", property.Subject, property.Relation, property.Value)
+		fmt.Printf("%+v", artifact.GetContents())
 	}
-	fmt.Printf("\n")
 }
 
-func PrintPropertyContents(message *rpc.Property) {
-	PrintPropertyDetail(message)
-}
-
-func PrintLabel(label *rpc.Label) {
-	fmt.Println(label.Name)
-}
-
-func PrintLabelDetail(label *rpc.Label) {
-	PrintMessage(label)
+func PrintArtifactContents(message *rpc.Artifact) {
+	PrintArtifactDetail(message)
 }
 
 func PrintMessage(message proto.Message) {
