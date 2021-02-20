@@ -63,7 +63,7 @@ type Spec struct {
 	FileName           string    // Name of spec file.
 	SourceURI          string    // The original source URI of the spec.
 	Labels             []byte    `datastore:",noindex"` // Serialized labels.
-	Attributes         []byte    `datastore:",noindex"` // Serialized attributes.
+	Annotations        []byte    `datastore:",noindex"` // Serialized annotations.
 }
 
 // NewSpecFromParentAndSpecID returns an initialized spec for a specified parent and specID.
@@ -138,7 +138,7 @@ func (spec *Spec) ParentResourceName() string {
 }
 
 // Message returns a message representing a spec.
-func (spec *Spec) Message(blob *Blob, revision string) (message *rpc.ApiSpec, err error) {
+func (spec *Spec) Message(view rpc.View, blob *Blob, revision string) (message *rpc.ApiSpec, err error) {
 	message = &rpc.ApiSpec{}
 	if revision != "" {
 		message.Name = spec.ResourceNameWithSpecifiedRevision(revision)
@@ -158,6 +158,14 @@ func (spec *Spec) Message(blob *Blob, revision string) (message *rpc.ApiSpec, er
 	message.RevisionCreateTime, err = ptypes.TimestampProto(spec.RevisionCreateTime)
 	message.RevisionUpdateTime, err = ptypes.TimestampProto(spec.RevisionUpdateTime)
 	message.RevisionId = spec.RevisionID
+	if message.Labels, err = mapForBytes(spec.Labels); err != nil {
+		return nil, err
+	}
+	if view == rpc.View_FULL {
+		if message.Annotations, err = mapForBytes(spec.Annotations); err != nil {
+			return nil, err
+		}
+	}
 	return message, err
 }
 
@@ -186,6 +194,16 @@ func (spec *Spec) Update(message *rpc.ApiSpec, mask *fieldmaskpb.FieldMask) erro
 				spec.MimeType = message.GetMimeType()
 			case "source_uri":
 				spec.SourceURI = message.GetSourceUri()
+			case "labels":
+				var err error
+				if spec.Labels, err = bytesForMap(message.GetLabels()); err != nil {
+					return err
+				}
+			case "annotations":
+				var err error
+				if spec.Annotations, err = bytesForMap(message.GetAnnotations()); err != nil {
+					return err
+				}
 			}
 		}
 	} else {
@@ -216,6 +234,13 @@ func (spec *Spec) Update(message *rpc.ApiSpec, mask *fieldmaskpb.FieldMask) erro
 		sourceURI := message.GetSourceUri()
 		if sourceURI != "" {
 			spec.SourceURI = sourceURI
+		}
+		var err error
+		if spec.Labels, err = bytesForMap(message.GetLabels()); err != nil {
+			return err
+		}
+		if spec.Annotations, err = bytesForMap(message.GetAnnotations()); err != nil {
+			return err
 		}
 	}
 	spec.RevisionUpdateTime = now

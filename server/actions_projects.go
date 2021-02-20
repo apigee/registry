@@ -26,13 +26,13 @@ import (
 )
 
 // CreateProject handles the corresponding API request.
-func (s *RegistryServer) CreateProject(ctx context.Context, request *rpc.CreateProjectRequest) (*rpc.Project, error) {
+func (s *RegistryServer) CreateProject(ctx context.Context, req *rpc.CreateProjectRequest) (*rpc.Project, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
-	project, err := models.NewProjectFromProjectID(request.GetProjectId())
+	project, err := models.NewProjectFromProjectID(req.GetProjectId())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
@@ -43,7 +43,7 @@ func (s *RegistryServer) CreateProject(ctx context.Context, request *rpc.CreateP
 	if err == nil {
 		return nil, status.Error(codes.AlreadyExists, project.ResourceName()+" already exists")
 	}
-	err = project.Update(request.GetProject(), nil)
+	err = project.Update(req.GetProject(), nil)
 	project.CreateTime = project.UpdateTime
 	k, err = client.Put(ctx, k, project)
 	if err != nil {
@@ -54,14 +54,14 @@ func (s *RegistryServer) CreateProject(ctx context.Context, request *rpc.CreateP
 }
 
 // DeleteProject handles the corresponding API request.
-func (s *RegistryServer) DeleteProject(ctx context.Context, request *rpc.DeleteProjectRequest) (*empty.Empty, error) {
+func (s *RegistryServer) DeleteProject(ctx context.Context, req *rpc.DeleteProjectRequest) (*empty.Empty, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
 	// Validate name and create dummy project (we just need the ID fields).
-	project, err := models.NewProjectFromResourceName(request.GetName())
+	project, err := models.NewProjectFromResourceName(req.GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
@@ -70,20 +70,20 @@ func (s *RegistryServer) DeleteProject(ctx context.Context, request *rpc.DeleteP
 	if err != nil {
 		return &empty.Empty{}, internalError(err)
 	}
-	k := client.NewKey(models.ProjectEntityName, request.GetName())
+	k := client.NewKey(models.ProjectEntityName, req.GetName())
 	err = client.Delete(ctx, k)
-	s.notify(rpc.Notification_DELETED, request.GetName())
+	s.notify(rpc.Notification_DELETED, req.GetName())
 	return &empty.Empty{}, internalError(err)
 }
 
 // GetProject handles the corresponding API request.
-func (s *RegistryServer) GetProject(ctx context.Context, request *rpc.GetProjectRequest) (*rpc.Project, error) {
+func (s *RegistryServer) GetProject(ctx context.Context, req *rpc.GetProjectRequest) (*rpc.Project, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
-	project, err := models.NewProjectFromResourceName(request.GetName())
+	project, err := models.NewProjectFromResourceName(req.GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
@@ -160,13 +160,13 @@ func (s *RegistryServer) ListProjects(ctx context.Context, req *rpc.ListProjects
 }
 
 // UpdateProject handles the corresponding API request.
-func (s *RegistryServer) UpdateProject(ctx context.Context, request *rpc.UpdateProjectRequest) (*rpc.Project, error) {
+func (s *RegistryServer) UpdateProject(ctx context.Context, req *rpc.UpdateProjectRequest) (*rpc.Project, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
-	project, err := models.NewProjectFromResourceName(request.GetProject().GetName())
+	project, err := models.NewProjectFromResourceName(req.GetProject().GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
@@ -175,7 +175,7 @@ func (s *RegistryServer) UpdateProject(ctx context.Context, request *rpc.UpdateP
 	if err != nil {
 		return nil, status.Error(codes.NotFound, "not found")
 	}
-	err = project.Update(request.GetProject(), request.GetUpdateMask())
+	err = project.Update(req.GetProject(), req.GetUpdateMask())
 	if err != nil {
 		return nil, internalError(err)
 	}

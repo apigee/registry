@@ -28,19 +28,19 @@ import (
 )
 
 // CreateArtifact handles the corresponding API request.
-func (s *RegistryServer) CreateArtifact(ctx context.Context, request *rpc.CreateArtifactRequest) (*rpc.Artifact, error) {
+func (s *RegistryServer) CreateArtifact(ctx context.Context, req *rpc.CreateArtifactRequest) (*rpc.Artifact, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
-	artifact, err := models.NewArtifactFromParentAndArtifactID(request.GetParent(), request.GetArtifactId())
+	artifact, err := models.NewArtifactFromParentAndArtifactID(req.GetParent(), req.GetArtifactId())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
 	// create a blob for the artifact contents
 	blob := models.NewBlobForArtifact(artifact, nil)
-	err = artifact.Update(request.GetArtifact(), blob)
+	err = artifact.Update(req.GetArtifact(), blob)
 	k := client.NewKey(models.ArtifactEntityName, artifact.ResourceName())
 	// fail if artifact already exists
 	existingArtifact := &models.Artifact{}
@@ -69,42 +69,42 @@ func (s *RegistryServer) CreateArtifact(ctx context.Context, request *rpc.Create
 }
 
 // DeleteArtifact handles the corresponding API request.
-func (s *RegistryServer) DeleteArtifact(ctx context.Context, request *rpc.DeleteArtifactRequest) (*empty.Empty, error) {
+func (s *RegistryServer) DeleteArtifact(ctx context.Context, req *rpc.DeleteArtifactRequest) (*empty.Empty, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
 	// Validate name and create dummy artifact (we just need the ID fields).
-	_, err = models.NewArtifactFromResourceName(request.GetName())
+	_, err = models.NewArtifactFromResourceName(req.GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
 	// Delete the artifact.
-	k := client.NewKey(models.ArtifactEntityName, request.GetName())
+	k := client.NewKey(models.ArtifactEntityName, req.GetName())
 	err = client.Delete(ctx, k)
 	// Delete any blob associated with the artifact.
-	k2 := client.NewKey(models.BlobEntityName, request.GetName())
+	k2 := client.NewKey(models.BlobEntityName, req.GetName())
 	err = client.Delete(ctx, k2)
-	s.notify(rpc.Notification_DELETED, request.GetName())
+	s.notify(rpc.Notification_DELETED, req.GetName())
 	return &empty.Empty{}, internalError(err)
 }
 
 // GetArtifact handles the corresponding API request.
-func (s *RegistryServer) GetArtifact(ctx context.Context, request *rpc.GetArtifactRequest) (*rpc.Artifact, error) {
+func (s *RegistryServer) GetArtifact(ctx context.Context, req *rpc.GetArtifactRequest) (*rpc.Artifact, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
-	artifact, err := models.NewArtifactFromResourceName(request.GetName())
+	artifact, err := models.NewArtifactFromResourceName(req.GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
 	k := client.NewKey(models.ArtifactEntityName, artifact.ResourceName())
 	err = client.Get(ctx, k, artifact)
 	var blob *models.Blob
-	if request.GetView() == rpc.View_FULL {
+	if req.GetView() == rpc.View_FULL {
 		blob, _ = fetchBlobForArtifact(ctx, client, artifact)
 	}
 	if client.IsNotFound(err) {
@@ -215,23 +215,23 @@ func (s *RegistryServer) ListArtifacts(ctx context.Context, req *rpc.ListArtifac
 }
 
 // ReplaceArtifact handles the corresponding API request.
-func (s *RegistryServer) ReplaceArtifact(ctx context.Context, request *rpc.ReplaceArtifactRequest) (*rpc.Artifact, error) {
+func (s *RegistryServer) ReplaceArtifact(ctx context.Context, req *rpc.ReplaceArtifactRequest) (*rpc.Artifact, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
-	artifact, err := models.NewArtifactFromResourceName(request.GetArtifact().GetName())
+	artifact, err := models.NewArtifactFromResourceName(req.GetArtifact().GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	k := client.NewKey(models.ArtifactEntityName, request.GetArtifact().GetName())
+	k := client.NewKey(models.ArtifactEntityName, req.GetArtifact().GetName())
 	err = client.Get(ctx, k, artifact)
 	if err != nil {
 		return nil, status.Error(codes.NotFound, "not found")
 	}
 	blob := models.NewBlobForArtifact(artifact, nil)
-	err = artifact.Update(request.GetArtifact(), blob)
+	err = artifact.Update(req.GetArtifact(), blob)
 	if err != nil {
 		return nil, internalError(err)
 	}
