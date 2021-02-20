@@ -39,6 +39,8 @@ type Version struct {
 	CreateTime  time.Time // Creation time.
 	UpdateTime  time.Time // Time of last change.
 	State       string    // Lifecycle stage.
+	Labels      []byte    `datastore:",noindex"` // Serialized labels.
+	Attributes  []byte    `datastore:",noindex"` // Serialized attributes.
 }
 
 // ParseParentApi parses the name of an API that is the parent of a version.

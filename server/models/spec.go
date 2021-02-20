@@ -62,6 +62,8 @@ type Spec struct {
 	Hash               string    // A hash of the spec.
 	FileName           string    // Name of spec file.
 	SourceURI          string    // The original source URI of the spec.
+	Labels             []byte    `datastore:",noindex"` // Serialized labels.
+	Attributes         []byte    `datastore:",noindex"` // Serialized attributes.
 }
 
 // NewSpecFromParentAndSpecID returns an initialized spec for a specified parent and specID.
