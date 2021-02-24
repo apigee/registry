@@ -19,6 +19,7 @@ import (
 	"compress/gzip"
 	"context"
 	"io/ioutil"
+	"reflect"
 	"testing"
 
 	"github.com/apigee/registry/connection"
@@ -94,6 +95,8 @@ func TestCRUD(t *testing.T) {
 			t.Errorf("Invalid project name %s", project.GetName())
 		}
 	}
+	// Create a map to use for labels and annotations.
+	sampleMap := map[string]string{"one": "1", "two": "2", "three": "3"}
 	// Create the sample api.
 	{
 		req := &rpc.CreateApiRequest{
@@ -103,6 +106,8 @@ func TestCRUD(t *testing.T) {
 				DisplayName:  "Sample",
 				Description:  "A sample API",
 				Availability: "GENERAL",
+				Labels:       sampleMap,
+				Annotations:  sampleMap,
 			},
 		}
 		_, err := registryClient.CreateApi(ctx, req)
@@ -113,6 +118,10 @@ func TestCRUD(t *testing.T) {
 		req := &rpc.CreateApiVersionRequest{
 			Parent:       "projects/test/apis/sample",
 			ApiVersionId: "1.0.0",
+			ApiVersion: &rpc.ApiVersion{
+				Labels:      sampleMap,
+				Annotations: sampleMap,
+			},
 		}
 		_, err := registryClient.CreateApiVersion(ctx, req)
 		check(t, "error creating version %s", err)
@@ -125,12 +134,59 @@ func TestCRUD(t *testing.T) {
 			Parent:    "projects/test/apis/sample/versions/1.0.0",
 			ApiSpecId: "openapi.yaml",
 			ApiSpec: &rpc.ApiSpec{
-				MimeType: "openapi/v3+gzip",
-				Contents: buf.Bytes(),
+				MimeType:    "openapi/v3+gzip",
+				Contents:    buf.Bytes(),
+				Labels:      sampleMap,
+				Annotations: sampleMap,
 			},
 		}
 		_, err = registryClient.CreateApiSpec(ctx, req)
 		check(t, "error creating spec %s", err)
+	}
+	// Check the created API.
+	{
+		req := &rpc.GetApiRequest{
+			Name: "projects/test/apis/sample",
+			View: rpc.View_FULL,
+		}
+		api, err := registryClient.GetApi(ctx, req)
+		check(t, "error getting api %s", err)
+		if !reflect.DeepEqual(api.GetLabels(), sampleMap) {
+			t.Errorf("Unexpected api labels %+v", api.GetLabels())
+		}
+		if !reflect.DeepEqual(api.GetAnnotations(), sampleMap) {
+			t.Errorf("Unexpected api annotations %+v", api.GetAnnotations())
+		}
+	}
+	// Check the created version.
+	{
+		req := &rpc.GetApiVersionRequest{
+			Name: "projects/test/apis/sample/versions/1.0.0",
+			View: rpc.View_FULL,
+		}
+		version, err := registryClient.GetApiVersion(ctx, req)
+		check(t, "error getting version %s", err)
+		if !reflect.DeepEqual(version.GetLabels(), sampleMap) {
+			t.Errorf("Unexpected version labels %+v", version.GetLabels())
+		}
+		if !reflect.DeepEqual(version.GetAnnotations(), sampleMap) {
+			t.Errorf("Unexpected version annotations %+v", version.GetAnnotations())
+		}
+	}
+	// Check the created spec.
+	{
+		req := &rpc.GetApiSpecRequest{
+			Name: "projects/test/apis/sample/versions/1.0.0/specs/openapi.yaml",
+			View: rpc.View_FULL,
+		}
+		spec, err := registryClient.GetApiSpec(ctx, req)
+		check(t, "error getting spec %s", err)
+		if !reflect.DeepEqual(spec.GetLabels(), sampleMap) {
+			t.Errorf("Unexpected spec labels %+v", spec.GetLabels())
+		}
+		if !reflect.DeepEqual(spec.GetAnnotations(), sampleMap) {
+			t.Errorf("Unexpected spec annotations %+v", spec.GetAnnotations())
+		}
 	}
 	testArtifacts(ctx, registryClient, t, "projects/test")
 	testArtifacts(ctx, registryClient, t, "projects/test/apis/sample")

@@ -39,6 +39,8 @@ type Version struct {
 	CreateTime  time.Time // Creation time.
 	UpdateTime  time.Time // Time of last change.
 	State       string    // Lifecycle stage.
+	Labels      []byte    `datastore:",noindex"` // Serialized labels.
+	Annotations []byte    `datastore:",noindex"` // Serialized annotations.
 }
 
 // ParseParentApi parses the name of an API that is the parent of a version.
@@ -101,7 +103,7 @@ func (version *Version) ResourceName() string {
 }
 
 // Message returns a message representing a version.
-func (version *Version) Message() (message *rpc.ApiVersion, err error) {
+func (version *Version) Message(view rpc.View) (message *rpc.ApiVersion, err error) {
 	message = &rpc.ApiVersion{}
 	message.Name = version.ResourceName()
 	message.DisplayName = version.DisplayName
@@ -109,6 +111,14 @@ func (version *Version) Message() (message *rpc.ApiVersion, err error) {
 	message.CreateTime, err = ptypes.TimestampProto(version.CreateTime)
 	message.UpdateTime, err = ptypes.TimestampProto(version.UpdateTime)
 	message.State = version.State
+	if message.Labels, err = mapForBytes(version.Labels); err != nil {
+		return nil, err
+	}
+	if view == rpc.View_FULL {
+		if message.Annotations, err = mapForBytes(version.Annotations); err != nil {
+			return nil, err
+		}
+	}
 	return message, err
 }
 
@@ -123,12 +133,29 @@ func (version *Version) Update(message *rpc.ApiVersion, mask *fieldmaskpb.FieldM
 				version.Description = message.GetDescription()
 			case "state":
 				version.State = message.GetState()
+			case "labels":
+				var err error
+				if version.Labels, err = bytesForMap(message.GetLabels()); err != nil {
+					return err
+				}
+			case "annotations":
+				var err error
+				if version.Annotations, err = bytesForMap(message.GetAnnotations()); err != nil {
+					return err
+				}
 			}
 		}
 	} else {
 		version.DisplayName = message.GetDisplayName()
 		version.Description = message.GetDescription()
 		version.State = message.GetState()
+		var err error
+		if version.Labels, err = bytesForMap(message.GetLabels()); err != nil {
+			return err
+		}
+		if version.Annotations, err = bytesForMap(message.GetAnnotations()); err != nil {
+			return err
+		}
 	}
 	version.UpdateTime = time.Now()
 	return nil

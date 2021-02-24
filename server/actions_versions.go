@@ -27,13 +27,13 @@ import (
 )
 
 // CreateApiVersion handles the corresponding API request.
-func (s *RegistryServer) CreateApiVersion(ctx context.Context, request *rpc.CreateApiVersionRequest) (*rpc.ApiVersion, error) {
+func (s *RegistryServer) CreateApiVersion(ctx context.Context, req *rpc.CreateApiVersionRequest) (*rpc.ApiVersion, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
-	version, err := models.NewVersionFromParentAndVersionID(request.GetParent(), request.GetApiVersionId())
+	version, err := models.NewVersionFromParentAndVersionID(req.GetParent(), req.GetApiVersionId())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
@@ -44,44 +44,44 @@ func (s *RegistryServer) CreateApiVersion(ctx context.Context, request *rpc.Crea
 	if err == nil {
 		return nil, status.Error(codes.AlreadyExists, version.ResourceName()+" already exists")
 	}
-	err = version.Update(request.GetApiVersion(), nil)
+	err = version.Update(req.GetApiVersion(), nil)
 	version.CreateTime = version.UpdateTime
 	k, err = client.Put(ctx, k, version)
 	if err != nil {
 		return nil, internalError(err)
 	}
 	s.notify(rpc.Notification_CREATED, version.ResourceName())
-	return version.Message()
+	return version.Message(rpc.View_BASIC)
 }
 
 // DeleteApiVersion handles the corresponding API request.
-func (s *RegistryServer) DeleteApiVersion(ctx context.Context, request *rpc.DeleteApiVersionRequest) (*empty.Empty, error) {
+func (s *RegistryServer) DeleteApiVersion(ctx context.Context, req *rpc.DeleteApiVersionRequest) (*empty.Empty, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
 	// Validate name and create dummy version (we just need the ID fields).
-	version, err := models.NewVersionFromResourceName(request.GetName())
+	version, err := models.NewVersionFromResourceName(req.GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
 	// Delete children first and then delete the version.
 	client.DeleteChildrenOfVersion(ctx, version)
-	k := client.NewKey(models.VersionEntityName, request.GetName())
+	k := client.NewKey(models.VersionEntityName, req.GetName())
 	err = client.Delete(ctx, k)
-	s.notify(rpc.Notification_DELETED, request.GetName())
+	s.notify(rpc.Notification_DELETED, req.GetName())
 	return &empty.Empty{}, err
 }
 
 // GetApiVersion handles the corresponding API request.
-func (s *RegistryServer) GetApiVersion(ctx context.Context, request *rpc.GetApiVersionRequest) (*rpc.ApiVersion, error) {
+func (s *RegistryServer) GetApiVersion(ctx context.Context, req *rpc.GetApiVersionRequest) (*rpc.ApiVersion, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
-	version, err := models.NewVersionFromResourceName(request.GetName())
+	version, err := models.NewVersionFromResourceName(req.GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
@@ -92,7 +92,7 @@ func (s *RegistryServer) GetApiVersion(ctx context.Context, request *rpc.GetApiV
 	} else if err != nil {
 		return nil, internalError(err)
 	}
-	return version.Message()
+	return version.Message(req.GetView())
 }
 
 // ListApiVersions handles the corresponding API request.
@@ -154,7 +154,7 @@ func (s *RegistryServer) ListApiVersions(ctx context.Context, req *rpc.ListApiVe
 				continue
 			}
 		}
-		versionMessage, _ := version.Message()
+		versionMessage, _ := version.Message(req.GetView())
 		versionMessages = append(versionMessages, versionMessage)
 		if len(versionMessages) == pageSize {
 			break
@@ -174,13 +174,13 @@ func (s *RegistryServer) ListApiVersions(ctx context.Context, req *rpc.ListApiVe
 }
 
 // UpdateApiVersion handles the corresponding API request.
-func (s *RegistryServer) UpdateApiVersion(ctx context.Context, request *rpc.UpdateApiVersionRequest) (*rpc.ApiVersion, error) {
+func (s *RegistryServer) UpdateApiVersion(ctx context.Context, req *rpc.UpdateApiVersionRequest) (*rpc.ApiVersion, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
-	version, err := models.NewVersionFromResourceName(request.GetApiVersion().GetName())
+	version, err := models.NewVersionFromResourceName(req.GetApiVersion().GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
@@ -189,7 +189,7 @@ func (s *RegistryServer) UpdateApiVersion(ctx context.Context, request *rpc.Upda
 	if err != nil {
 		return nil, status.Error(codes.NotFound, "not found")
 	}
-	err = version.Update(request.GetApiVersion(), request.GetUpdateMask())
+	err = version.Update(req.GetApiVersion(), req.GetUpdateMask())
 	if err != nil {
 		return nil, internalError(err)
 	}
@@ -198,5 +198,5 @@ func (s *RegistryServer) UpdateApiVersion(ctx context.Context, request *rpc.Upda
 		return nil, internalError(err)
 	}
 	s.notify(rpc.Notification_UPDATED, version.ResourceName())
-	return version.Message()
+	return version.Message(rpc.View_BASIC)
 }

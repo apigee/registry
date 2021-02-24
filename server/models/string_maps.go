@@ -1,4 +1,4 @@
-// Copyright 2020 Google LLC. All Rights Reserved.
+// Copyright 2021 Google LLC. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,19 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package server
+package models
 
 import (
-	"context"
-
 	"github.com/apigee/registry/rpc"
-	emptypb "github.com/golang/protobuf/ptypes/empty"
+	"google.golang.org/protobuf/proto"
 )
 
-// GetStatus handles the corresponding API request.
-func (s *RegistryServer) GetStatus(ctx context.Context, req *emptypb.Empty) (*rpc.Status, error) {
-	status := &rpc.Status{
-		Message: "running",
+func bytesForMap(entries map[string]string) ([]byte, error) {
+	return proto.Marshal(&rpc.SerializableMap{Entries: entries})
+}
+
+func mapForBytes(b []byte) (map[string]string, error) {
+	m := &rpc.SerializableMap{}
+	if err := proto.Unmarshal(b, m); err != nil {
+		return nil, err
 	}
-	return status, nil
+	return m.Entries, nil
 }
