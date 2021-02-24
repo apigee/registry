@@ -22,15 +22,15 @@ import (
 )
 
 func bytesForMap(m map[string]string) ([]byte, error) {
-	pairs := make([]*rpc.OrderedPair, 0)
+	entries := make([]*rpc.OrderedMap_Entry, 0)
 	for k, v := range m {
-		pairs = append(pairs, &rpc.OrderedPair{Name: k, Value: v})
+		entries = append(entries, &rpc.OrderedMap_Entry{Name: k, Value: v})
 	}
-	sort.Slice(pairs,
+	sort.Slice(entries,
 		func(i, j int) bool {
-			return pairs[i].Name < pairs[j].Name
+			return entries[i].Name < entries[j].Name
 		})
-	return proto.Marshal(&rpc.OrderedMap{Pairs: pairs})
+	return proto.Marshal(&rpc.OrderedMap{Entries: entries})
 }
 
 func mapForBytes(b []byte) (map[string]string, error) {
@@ -39,7 +39,7 @@ func mapForBytes(b []byte) (map[string]string, error) {
 		return nil, err
 	}
 	m := make(map[string]string)
-	for _, p := range om.Pairs {
+	for _, p := range om.Entries {
 		m[p.Name] = p.Value
 	}
 	return m, nil

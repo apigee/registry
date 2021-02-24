@@ -21,21 +21,22 @@ option java_multiple_files = true;
 option java_outer_classname = "RegistryInternalProto";
 option go_package = "github.com/apigee/registry/rpc;rpc";
 
-// OrderedPair represents a name-value pair in which both are strings.
-// (-- api-linter: core::0123::resource-annotation=disabled
-//     aip.dev/not-precedent: This message is not currently used in an API. --)
-message OrderedPair {
-  // The name of the pair.
-  string name = 1;
-
-  // The value of the pair.
-  string value = 2;
-}
-
 // OrderedMap represents a map of strings with ordered keys.
 // (-- api-linter: core::0123::resource-annotation=disabled
 //     aip.dev/not-precedent: This message is not currently used in an API. --)
 message OrderedMap {
-  // The pairs in the map.
-  repeated OrderedPair pairs = 1;
+
+  // Entry represents a name-value pair in which both are strings.
+  // (-- api-linter: core::0123::resource-annotation=disabled
+  //     aip.dev/not-precedent: This message is not currently used in an API. --)
+  message Entry {
+    // The name of the entry.
+    string name = 1;
+
+    // The value of the entry.
+    string value = 2;
+  }
+
+  // The entries in the map.
+  repeated Entry entries = 1;
 }
