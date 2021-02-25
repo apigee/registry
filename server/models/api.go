@@ -138,3 +138,8 @@ func (api *Api) Update(message *rpc.Api, mask *fieldmaskpb.FieldMask) error {
 	api.UpdateTime = time.Now()
 	return nil
 }
+
+// LabelsMap returns a map representation of stored labels.
+func (api *Api) LabelsMap() (map[string]string, error) {
+	return mapForBytes(api.Labels)
+}

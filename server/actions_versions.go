@@ -127,6 +127,7 @@ func (s *RegistryServer) ListApiVersions(ctx context.Context, req *rpc.ListApiVe
 			{"create_time", filterArgTypeTimestamp},
 			{"update_time", filterArgTypeTimestamp},
 			{"state", filterArgTypeString},
+			{"labels", filterArgTypeStringMap},
 		})
 	if err != nil {
 		return nil, internalError(err)
@@ -137,7 +138,7 @@ func (s *RegistryServer) ListApiVersions(ctx context.Context, req *rpc.ListApiVe
 	pageSize := boundPageSize(req.GetPageSize())
 	for _, err = it.Next(&version); err == nil; _, err = it.Next(&version) {
 		if prg != nil {
-			out, _, err := prg.Eval(map[string]interface{}{
+			filterInputs := map[string]interface{}{
 				"project_id":   version.ProjectID,
 				"api_id":       version.ApiID,
 				"version_id":   version.VersionID,
@@ -146,7 +147,12 @@ func (s *RegistryServer) ListApiVersions(ctx context.Context, req *rpc.ListApiVe
 				"create_time":  version.CreateTime,
 				"update_time":  version.UpdateTime,
 				"state":        version.State,
-			})
+			}
+			filterInputs["labels"], err = version.LabelsMap()
+			if err != nil {
+				return nil, internalError(err)
+			}
+			out, _, err := prg.Eval(filterInputs)
 			if err != nil {
 				return nil, invalidArgumentError(err)
 			}

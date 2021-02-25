@@ -291,3 +291,8 @@ func (tag *SpecRevisionTag) ResourceNameWithRevision() string {
 	return fmt.Sprintf("projects/%s/apis/%s/versions/%s/specs/%s@%s",
 		tag.ProjectID, tag.ApiID, tag.VersionID, tag.SpecID, tag.RevisionID)
 }
+
+// LabelsMap returns a map representation of stored labels.
+func (spec *Spec) LabelsMap() (map[string]string, error) {
+	return mapForBytes(spec.Labels)
+}

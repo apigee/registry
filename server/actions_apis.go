@@ -16,7 +16,6 @@ package server
 
 import (
 	"context"
-	"strings"
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/models"
@@ -126,25 +125,18 @@ func (s *RegistryServer) ListApis(ctx context.Context, req *rpc.ListApisRequest)
 			{"availability", filterArgTypeString},
 			{"recommended_version", filterArgTypeString},
 			{"owner", filterArgTypeString},
-			{"labels", filterArgTypeStringArray},
+			{"labels", filterArgTypeStringMap},
 		})
 	if err != nil {
 		return nil, internalError(err)
 	}
-	// If the filter contains the "in labels" string,
-	// include labels associated with each item.
-	hasLabels := strings.Contains(req.GetFilter(), "in labels")
 	var apiMessages []*rpc.Api
 	var api models.Api
 	it := client.Run(ctx, q)
 	pageSize := boundPageSize(req.GetPageSize())
 	for _, err = it.Next(&api); err == nil; _, err = it.Next(&api) {
-		labels := make([]string, 0)
-		if hasLabels {
-			// TODO if needed for label-based filtering
-		}
 		if prg != nil {
-			out, _, err := prg.Eval(map[string]interface{}{
+			filterInputs := map[string]interface{}{
 				"project_id":          api.ProjectID,
 				"api_id":              api.ApiID,
 				"display_name":        api.DisplayName,
@@ -153,8 +145,12 @@ func (s *RegistryServer) ListApis(ctx context.Context, req *rpc.ListApisRequest)
 				"update_time":         api.UpdateTime,
 				"availability":        api.Availability,
 				"recommended_version": api.RecommendedVersion,
-				"labels":              labels,
-			})
+			}
+			filterInputs["labels"], err = api.LabelsMap()
+			if err != nil {
+				return nil, internalError(err)
+			}
+			out, _, err := prg.Eval(filterInputs)
 			if err != nil {
 				return nil, invalidArgumentError(err)
 			}

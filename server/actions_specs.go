@@ -197,6 +197,7 @@ func (s *RegistryServer) ListApiSpecs(ctx context.Context, req *rpc.ListApiSpecs
 			{"style", filterArgTypeString},
 			{"size_bytes", filterArgTypeInt},
 			{"source_uri", filterArgTypeString},
+			{"labels", filterArgTypeStringMap},
 		})
 	if err != nil {
 		return nil, internalError(err)
@@ -207,7 +208,7 @@ func (s *RegistryServer) ListApiSpecs(ctx context.Context, req *rpc.ListApiSpecs
 	pageSize := boundPageSize(req.GetPageSize())
 	for _, err := it.Next(&spec); err == nil; _, err = it.Next(&spec) {
 		if prg != nil {
-			out, _, err := prg.Eval(map[string]interface{}{
+			filterInputs := map[string]interface{}{
 				"project_id":           spec.ProjectID,
 				"api_id":               spec.ApiID,
 				"version_id":           spec.VersionID,
@@ -220,7 +221,12 @@ func (s *RegistryServer) ListApiSpecs(ctx context.Context, req *rpc.ListApiSpecs
 				"mime_type":            spec.MimeType,
 				"size_bytes":           spec.SizeInBytes,
 				"source_uri":           spec.SourceURI,
-			})
+			}
+			filterInputs["labels"], err = spec.LabelsMap()
+			if err != nil {
+				return nil, internalError(err)
+			}
+			out, _, err := prg.Eval(filterInputs)
 			if err != nil {
 				return nil, invalidArgumentError(err)
 			}
