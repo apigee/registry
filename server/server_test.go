@@ -15,29 +15,15 @@
 package server
 
 import (
-	"context"
+	"fmt"
 	"testing"
-
-	"github.com/apigee/registry/connection"
-	"github.com/golang/protobuf/ptypes/empty"
 )
 
-func TestServerIsRunning(t *testing.T) {
-	// Create a registry client.
-	ctx := context.Background()
-	registryClient, err := connection.NewClient(ctx)
-	if err != nil {
-		t.Logf("Failed to create client: %+v", err)
-		t.FailNow()
-	}
-	defer registryClient.Close()
-	// Get the server status.
-	response, err := registryClient.GetStatus(ctx, &empty.Empty{})
-	if err != nil {
-		t.Logf("Failed to get status: %+v", err)
-		t.FailNow()
-	}
-	if response.Message != "running" {
-		t.Errorf("Invalid status response: %s", response.Message)
+func defaultTestServer(t *testing.T) *RegistryServer {
+	t.Helper()
+	return &RegistryServer{
+		database:     "sqlite3",
+		dbConfig:     fmt.Sprintf("%s/registry.db", t.TempDir()),
+		loggingLevel: loggingError,
 	}
 }
