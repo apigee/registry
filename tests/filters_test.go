@@ -114,9 +114,9 @@ func TestFilters(t *testing.T) {
 	// test some filters against their expected return counts
 	// see https://github.com/google/cel-spec/blob/master/doc/langdef.md#field-selection for CEL details.
 	pairs := []struct {
-		string // the filter pattern
-		int    // number of expected responses
-		bool   // true if we expect an error
+		filter        string // the filter pattern
+		expectedCount int    // number of expected responses
+		expectError   bool   // true if we expect an error
 	}{
 		{"has(labels.a)", 4, false},
 		{"has(labels.b)", 4, false},
@@ -131,18 +131,18 @@ func TestFilters(t *testing.T) {
 	for i := 0; i < len(pairs); i++ {
 		req := &rpc.ListApisRequest{
 			Parent: "projects/filters",
-			Filter: pairs[i].string,
+			Filter: pairs[i].filter,
 		}
 		it := registryClient.ListApis(ctx, req)
 		count, err := countApis(it)
-		if err != nil && !pairs[i].bool {
-			t.Errorf("Filter %s produced an unexpected error %s", pairs[i].string, err.Error())
+		if err != nil && !pairs[i].expectError {
+			t.Errorf("Filter %s produced an unexpected error %s", pairs[i].filter, err.Error())
 		}
-		if err == nil && pairs[i].bool {
-			t.Errorf("Filter %s was expected to produce an error and did not", pairs[i].string)
+		if err == nil && pairs[i].expectError {
+			t.Errorf("Filter %s was expected to produce an error and did not", pairs[i].filter)
 		}
-		if count != pairs[i].int {
-			t.Errorf("Incorrect count for filter %s: %d, expected %d", pairs[i].string, count, pairs[i].int)
+		if count != pairs[i].expectedCount {
+			t.Errorf("Incorrect count for filter %s: %d, expected %d", pairs[i].filter, count, pairs[i].expectedCount)
 		}
 	}
 	// Delete the test project.

@@ -152,6 +152,9 @@ func (s *RegistryServer) ListApis(ctx context.Context, req *rpc.ListApisRequest)
 			}
 			if hasLabels {
 				filterInputs["labels"], err = api.LabelsMap()
+				if err != nil {
+					return nil, internalError(err)
+				}
 			}
 			out, _, err := prg.Eval(filterInputs)
 			if err != nil {
