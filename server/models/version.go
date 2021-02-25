@@ -160,3 +160,8 @@ func (version *Version) Update(message *rpc.ApiVersion, mask *fieldmaskpb.FieldM
 	version.UpdateTime = time.Now()
 	return nil
 }
+
+// LabelsMap returns a map representation of stored labels.
+func (version *Version) LabelsMap() (map[string]string, error) {
+	return mapForBytes(version.Labels)
+}

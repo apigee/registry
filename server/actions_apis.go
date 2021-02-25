@@ -16,7 +16,6 @@ package server
 
 import (
 	"context"
-	"strings"
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/models"
@@ -131,9 +130,6 @@ func (s *RegistryServer) ListApis(ctx context.Context, req *rpc.ListApisRequest)
 	if err != nil {
 		return nil, internalError(err)
 	}
-	// If the filter contains the "labels" string,
-	// include labels associated with each item.
-	hasLabels := strings.Contains(req.GetFilter(), "labels")
 	var apiMessages []*rpc.Api
 	var api models.Api
 	it := client.Run(ctx, q)
@@ -150,11 +146,9 @@ func (s *RegistryServer) ListApis(ctx context.Context, req *rpc.ListApisRequest)
 				"availability":        api.Availability,
 				"recommended_version": api.RecommendedVersion,
 			}
-			if hasLabels {
-				filterInputs["labels"], err = api.LabelsMap()
-				if err != nil {
-					return nil, internalError(err)
-				}
+			filterInputs["labels"], err = api.LabelsMap()
+			if err != nil {
+				return nil, internalError(err)
 			}
 			out, _, err := prg.Eval(filterInputs)
 			if err != nil {

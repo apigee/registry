@@ -39,6 +39,7 @@ func unavailable(err error) bool {
 }
 
 func check(t *testing.T, message string, err error) {
+	t.Helper()
 	if unavailable(err) {
 		t.Logf("Unable to connect to registry server. Is it running?")
 		t.FailNow()
@@ -49,6 +50,31 @@ func check(t *testing.T, message string, err error) {
 }
 
 func TestFilters(t *testing.T) {
+	// Define test patterns and expected outputs.
+	// These maps will be applied to resources as labels, mapping one-to-one with test resources.
+	testLabels := []map[string]string{
+		{"a": "0", "b": "0", "c": "0"},
+		{"a": "1", "b": "0", "c": "1"},
+		{"a": "0", "b": "1"},
+		{"a": "1", "b": "1"},
+	}
+	// Define test filters with their expected return counts (and error occurrences).
+	// See https://github.com/google/cel-spec/blob/master/doc/langdef.md#field-selection for CEL details.
+	testFilters := []struct {
+		filter        string // the filter pattern
+		expectedCount int    // number of expected responses
+		expectError   bool   // true if we expect an error
+	}{
+		{"has(labels.a)", 4, false},
+		{"has(labels.b)", 4, false},
+		{"has(labels.c)", 2, false},
+		{"labels.a == '1'", 2, false},
+		{"labels.b == '1'", 2, false},
+		// if a field isn't present, the filter fails with an error about the missing field
+		{"labels.c == '1'", 0, true},
+		{"has(labels.c) && labels.c == '1'", 1, false},
+		{"labels.a == '1' && labels.b == '1'", 1, false},
+	}
 	// Create a registry client.
 	ctx := context.Background()
 	registryClient, err := connection.NewClient(ctx)
@@ -80,82 +106,175 @@ func TestFilters(t *testing.T) {
 			t.Errorf("Invalid project name %s", project.GetName())
 		}
 	}
-	// Declare maps to use as labels.
-	labelMaps := []map[string]string{
-		{"a": "0", "b": "0", "c": "0"},
-		{"a": "1", "b": "0", "c": "1"},
-		{"a": "0", "b": "1"},
-		{"a": "1", "b": "1"},
-	}
 	// Create some sample apis.
-	for i := 0; i < len(labelMaps); i++ {
+	apiParent := "projects/filters"
+	for i := 0; i < len(testLabels); i++ {
 		req := &rpc.CreateApiRequest{
-			Parent: "projects/filters",
+			Parent: apiParent,
 			ApiId:  fmt.Sprintf("%d", i),
 			Api: &rpc.Api{
-				Labels: labelMaps[i],
+				Labels: testLabels[i],
 			},
 		}
 		_, err := registryClient.CreateApi(ctx, req)
 		check(t, "error creating api %s", err)
 	}
-	// List all of the APIs.
+	// List all of the apis.
 	{
 		req := &rpc.ListApisRequest{
-			Parent: "projects/filters",
+			Parent: apiParent,
 		}
 		it := registryClient.ListApis(ctx, req)
 		count, err := countApis(it)
 		check(t, "error listing apis %s", err)
-		if count != len(labelMaps) {
-			t.Errorf("Incorrect count %d, expected %d", count, len(labelMaps))
+		if count != len(testLabels) {
+			t.Errorf("Incorrect count %d, expected %d", count, len(testLabels))
 		}
 	}
-	// test some filters against their expected return counts
-	// see https://github.com/google/cel-spec/blob/master/doc/langdef.md#field-selection for CEL details.
-	pairs := []struct {
-		filter        string // the filter pattern
-		expectedCount int    // number of expected responses
-		expectError   bool   // true if we expect an error
-	}{
-		{"has(labels.a)", 4, false},
-		{"has(labels.b)", 4, false},
-		{"has(labels.c)", 2, false},
-		{"labels.a == '1'", 2, false},
-		{"labels.b == '1'", 2, false},
-		// if a field isn't present, the filter fails with an error about the missing field
-		{"labels.c == '1'", 0, true},
-		{"has(labels.c) && labels.c == '1'", 1, false},
-		{"labels.a == '1' && labels.b == '1'", 1, false},
-	}
-	for i := 0; i < len(pairs); i++ {
+	// Test api filters.
+	for i := 0; i < len(testFilters); i++ {
+		testFilter := testFilters[i]
 		req := &rpc.ListApisRequest{
-			Parent: "projects/filters",
-			Filter: pairs[i].filter,
+			Parent: apiParent,
+			Filter: testFilter.filter,
 		}
 		it := registryClient.ListApis(ctx, req)
 		count, err := countApis(it)
-		if err != nil && !pairs[i].expectError {
-			t.Errorf("Filter %s produced an unexpected error %s", pairs[i].filter, err.Error())
+		if err != nil && !testFilter.expectError {
+			t.Errorf("Filter %s produced an unexpected error %s", testFilter.filter, err.Error())
 		}
-		if err == nil && pairs[i].expectError {
-			t.Errorf("Filter %s was expected to produce an error and did not", pairs[i].filter)
+		if err == nil && testFilter.expectError {
+			t.Errorf("Filter %s was expected to produce an error and did not", testFilter.filter)
 		}
-		if count != pairs[i].expectedCount {
-			t.Errorf("Incorrect count for filter %s: %d, expected %d", pairs[i].filter, count, pairs[i].expectedCount)
+		if count != testFilter.expectedCount {
+			t.Errorf("Incorrect count for filter %s: %d, expected %d", testFilter.filter, count, testFilter.expectedCount)
+		}
+	}
+	// Create some sample versions.
+	versionParent := "projects/filters/apis/1"
+	for i := 0; i < len(testLabels); i++ {
+		req := &rpc.CreateApiVersionRequest{
+			Parent:       versionParent,
+			ApiVersionId: fmt.Sprintf("%d", i),
+			ApiVersion: &rpc.ApiVersion{
+				Labels: testLabels[i],
+			},
+		}
+		_, err := registryClient.CreateApiVersion(ctx, req)
+		check(t, "error creating version %s", err)
+	}
+	// List all of the versions.
+	{
+		req := &rpc.ListApiVersionsRequest{
+			Parent: versionParent,
+		}
+		it := registryClient.ListApiVersions(ctx, req)
+		count, err := countApiVersions(it)
+		check(t, "error listing api versions %s", err)
+		if count != len(testLabels) {
+			t.Errorf("Incorrect count %d, expected %d", count, len(testLabels))
+		}
+	}
+	// Test version filters.
+	for i := 0; i < len(testFilters); i++ {
+		testFilter := testFilters[i]
+		req := &rpc.ListApiVersionsRequest{
+			Parent: versionParent,
+			Filter: testFilter.filter,
+		}
+		it := registryClient.ListApiVersions(ctx, req)
+		count, err := countApiVersions(it)
+		if err != nil && !testFilter.expectError {
+			t.Errorf("Filter %s produced an unexpected error %s", testFilter.filter, err.Error())
+		}
+		if err == nil && testFilter.expectError {
+			t.Errorf("Filter %s was expected to produce an error and did not", testFilter.filter)
+		}
+		if count != testFilter.expectedCount {
+			t.Errorf("Incorrect count for filter %s: %d, expected %d", testFilter.filter, count, testFilter.expectedCount)
+		}
+	}
+	// Create some sample specs.
+	specParent := "projects/filters/apis/1/versions/1"
+	for i := 0; i < len(testLabels); i++ {
+		req := &rpc.CreateApiSpecRequest{
+			Parent:    specParent,
+			ApiSpecId: fmt.Sprintf("%d", i),
+			ApiSpec: &rpc.ApiSpec{
+				Labels: testLabels[i],
+			},
+		}
+		_, err := registryClient.CreateApiSpec(ctx, req)
+		check(t, "error creating spec %s", err)
+	}
+	// List all of the specs.
+	{
+		req := &rpc.ListApiSpecsRequest{
+			Parent: specParent,
+		}
+		it := registryClient.ListApiSpecs(ctx, req)
+		count, err := countApiSpecs(it)
+		check(t, "error listing specs %s", err)
+		if count != len(testLabels) {
+			t.Errorf("Incorrect count %d, expected %d", count, len(testLabels))
+		}
+	}
+	// Test spec filters.
+	for i := 0; i < len(testFilters); i++ {
+		testFilter := testFilters[i]
+		req := &rpc.ListApiSpecsRequest{
+			Parent: specParent,
+			Filter: testFilter.filter,
+		}
+		it := registryClient.ListApiSpecs(ctx, req)
+		count, err := countApiSpecs(it)
+		if err != nil && !testFilter.expectError {
+			t.Errorf("Filter %s produced an unexpected error %s", testFilter.filter, err.Error())
+		}
+		if err == nil && testFilter.expectError {
+			t.Errorf("Filter %s was expected to produce an error and did not", testFilter.filter)
+		}
+		if count != testFilter.expectedCount {
+			t.Errorf("Incorrect count for filter %s: %d, expected %d", testFilter.filter, count, testFilter.expectedCount)
 		}
 	}
 	// Delete the test project.
-	if false {
-		req := &rpc.DeleteProjectRequest{
-			Name: "projects/filters",
-		}
-		err = registryClient.DeleteProject(ctx, req)
-		check(t, "Failed to delete filters project: %+v", err)
+	req := &rpc.DeleteProjectRequest{
+		Name: "projects/filters",
 	}
+	err = registryClient.DeleteProject(ctx, req)
+	check(t, "Failed to delete filters project: %+v", err)
 }
 
 func countApis(it *gapic.ApiIterator) (int, error) {
+	count := 0
+	for {
+		_, err := it.Next()
+		if err == iterator.Done {
+			break
+		} else if err != nil {
+			return 0, err
+		}
+		count++
+	}
+	return count, nil
+}
+
+func countApiVersions(it *gapic.ApiVersionIterator) (int, error) {
+	count := 0
+	for {
+		_, err := it.Next()
+		if err == iterator.Done {
+			break
+		} else if err != nil {
+			return 0, err
+		}
+		count++
+	}
+	return count, nil
+}
+
+func countApiSpecs(it *gapic.ApiSpecIterator) (int, error) {
 	count := 0
 	for {
 		_, err := it.Next()
