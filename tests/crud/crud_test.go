@@ -18,6 +18,8 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"crypto/sha256"
+	"fmt"
 	"io/ioutil"
 	"reflect"
 	"testing"
@@ -202,35 +204,47 @@ func TestCRUD(t *testing.T) {
 	}
 }
 
+func hashForBytes(b []byte) string {
+	h := sha256.New()
+	h.Write(b)
+	bs := h.Sum(nil)
+	return fmt.Sprintf("%x", bs)
+}
+
 // testArtifacts verifies artifact operations on a specified entity.
 func testArtifacts(ctx context.Context, registryClient connection.Client, t *testing.T, parent string) {
-
-	// Set a bytes artifact.
-	if true {
+	messageContents := []byte("hello")
+	messageHash := hashForBytes(messageContents)
+	messageLength := int32(len(messageContents))
+	messageType := "text/plain"
+	// Set the artifact.
+	{
 		req := &rpc.CreateArtifactRequest{
 			Parent:     parent,
-			ArtifactId: "bytes",
+			ArtifactId: "sample",
 			Artifact: &rpc.Artifact{
-				MimeType: "bytes",
-				Contents: []byte("hello"),
+				MimeType: messageType,
+				Contents: messageContents,
 			},
 		}
 		_, err := registryClient.CreateArtifact(ctx, req)
 		check(t, "error creating artifact %s", err)
 	}
-	// Set a message artifact.
-	if true {
-		req := &rpc.CreateArtifactRequest{
-			Parent:     parent,
-			ArtifactId: "message",
-			Artifact: &rpc.Artifact{
-				MimeType: "application/proto schema=echo",
-				Contents: []byte{
-					0x0a, 0x05, 0x68, 0x65, 0x6c, 0x6c, 0x6f,
-				},
-			},
+	// Check the artifact.
+	{
+		req := &rpc.GetArtifactRequest{
+			Name: fmt.Sprintf("%s/artifacts/sample", parent),
 		}
-		_, err := registryClient.CreateArtifact(ctx, req)
-		check(t, "error creating artifact %s", err)
+		resp, err := registryClient.GetArtifact(ctx, req)
+		check(t, "error getting artifact %s", err)
+		if resp.GetMimeType() != messageType {
+			t.Errorf("Unexpected mime type %s (expected %s)", resp.GetMimeType(), messageType)
+		}
+		if resp.GetSizeBytes() != messageLength {
+			t.Errorf("Unexpected length %d (expected %d)", resp.GetSizeBytes(), messageLength)
+		}
+		if resp.GetHash() != messageHash {
+			t.Errorf("Unexpected hash value %s (expected %s)", resp.GetHash(), messageHash)
+		}
 	}
 }

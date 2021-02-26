@@ -47,16 +47,18 @@ const (
 
 // Artifact is the storage-side representation of an artifact.
 type Artifact struct {
-	Key        string    `datastore:"-" gorm:"primaryKey"`
-	ProjectID  string    // Project associated with artifact (required).
-	ApiID      string    // Api associated with artifact (if appropriate).
-	VersionID  string    // Version associated with artifact (if appropriate).
-	SpecID     string    // Spec associated with artifact (if appropriate).
-	RevisionID string    // Spec revision id (if appropriate).
-	ArtifactID string    // Artifact identifier (required).
-	CreateTime time.Time // Creation time.
-	UpdateTime time.Time // Time of last change.
-	MimeType   string    // MIME type of artifact.
+	Key         string    `datastore:"-" gorm:"primaryKey"`
+	ProjectID   string    // Project associated with artifact (required).
+	ApiID       string    // Api associated with artifact (if appropriate).
+	VersionID   string    // Version associated with artifact (if appropriate).
+	SpecID      string    // Spec associated with artifact (if appropriate).
+	RevisionID  string    // Spec revision id (if appropriate).
+	ArtifactID  string    // Artifact identifier (required).
+	CreateTime  time.Time // Creation time.
+	UpdateTime  time.Time // Time of last change.
+	MimeType    string    // MIME type of artifact
+	SizeInBytes int32     // Size of the spec.
+	Hash        string    // A hash of the spec.
 }
 
 // NewArtifactFromParentAndArtifactID returns an initialized artifact for a specified parent and artifactID.
@@ -149,6 +151,8 @@ func (artifact *Artifact) Message(blob *Blob) (message *rpc.Artifact, err error)
 	message.CreateTime, err = ptypes.TimestampProto(artifact.CreateTime)
 	message.UpdateTime, err = ptypes.TimestampProto(artifact.UpdateTime)
 	message.MimeType = artifact.MimeType
+	message.SizeBytes = artifact.SizeInBytes
+	message.Hash = artifact.Hash
 	if blob != nil {
 		message.Contents = blob.Contents
 	}
@@ -159,6 +163,8 @@ func (artifact *Artifact) Message(blob *Blob) (message *rpc.Artifact, err error)
 func (artifact *Artifact) Update(message *rpc.Artifact, blob *Blob) error {
 	artifact.UpdateTime = time.Now()
 	artifact.MimeType = message.MimeType
+	artifact.SizeInBytes = int32(len(message.Contents))
+	artifact.Hash = hashForBytes(message.Contents)
 	blob.Contents = message.Contents
 	return nil
 }

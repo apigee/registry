@@ -18,7 +18,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
-	"crypto/sha1"
+	"crypto/sha256"
 	"fmt"
 	"io/ioutil"
 	"testing"
@@ -65,7 +65,7 @@ func readAndGZipFile(filename string) (*bytes.Buffer, error) {
 }
 
 func hashForBytes(b []byte) string {
-	h := sha1.New()
+	h := sha256.New()
 	h.Write(b)
 	bs := h.Sum(nil)
 	return fmt.Sprintf("%x", bs)
