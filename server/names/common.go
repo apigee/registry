@@ -17,6 +17,9 @@ package names
 import (
 	"fmt"
 	"regexp"
+	"strings"
+
+	"github.com/google/uuid"
 )
 
 // We might extend this to all characters that do not require escaping.
@@ -29,11 +32,17 @@ const NameRegex = "([a-zA-Z0-9-_\\.]+)"
 const RevisionRegex = "(@[a-zA-z0-9-]+)?"
 
 func ValidateID(id string) error {
-	r := regexp.MustCompile("^" + NameRegex + "$")
-	m := r.FindStringSubmatch(id)
-	if m == nil {
-		return fmt.Errorf("invalid id '%s'", id)
+	r := regexp.MustCompile("^[a-z0-9][a-z0-9-]{2,61}[a-z0-9]$")
+	if len(id) < 4 || 63 < len(id) {
+		return fmt.Errorf("invalid id %q: must be 4-63 characters in length", id)
+	} else if strings.HasPrefix(id, "-") || strings.HasSuffix(id, "-") {
+		return fmt.Errorf("invalid id %q: must not begin or end with hyphen", id)
+	} else if _, err := uuid.Parse(id); err == nil {
+		return fmt.Errorf("invalid id %q: must not match UUID syntax", id)
+	} else if !r.MatchString(id) {
+		return fmt.Errorf("invalid id %q: must match %q", id, r)
 	}
+
 	return nil
 }
 
