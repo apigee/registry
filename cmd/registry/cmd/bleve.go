@@ -18,7 +18,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"strings"
 	"sync"
 
 	"github.com/apigee/registry/cmd/registry/core"
@@ -107,7 +106,7 @@ func (task *indexSpecTask) Run() error {
 		return nil
 	}
 	var message proto.Message
-	if strings.HasPrefix(spec.GetMimeType(), "openapi/v2") {
+	if core.IsOpenAPIv2(spec.GetMimeType()) {
 		document, err := openapi_v2.ParseDocument(data)
 		if err != nil {
 			return fmt.Errorf("errors parsing %s", name)
@@ -120,7 +119,7 @@ func (task *indexSpecTask) Run() error {
 		document.Security = nil
 		document.SecurityDefinitions = nil
 		message = document
-	} else if strings.HasPrefix(spec.GetMimeType(), "openapi/v3") {
+	} else if core.IsOpenAPIv3(spec.GetMimeType()) {
 		document, err := openapi_v3.ParseDocument(data)
 		if err != nil {
 			return fmt.Errorf("errors parsing %s", name)

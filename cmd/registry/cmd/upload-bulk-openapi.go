@@ -100,10 +100,10 @@ func scanDirectoryForOpenAPI(projectID, baseURI, directory string) {
 
 		switch {
 		case strings.HasSuffix(path, "swagger.yaml"), strings.HasSuffix(path, "swagger.json"):
-			task.style = "openapi/v2"
+			task.version = "2"
 			taskQueue <- task
 		case strings.HasSuffix(path, "openapi.yaml"), strings.HasSuffix(path, "openapi.json"):
-			task.style = "openapi/v3"
+			task.version = "3"
 			taskQueue <- task
 		}
 
@@ -126,7 +126,7 @@ type uploadOpenAPITask struct {
 	baseURI   string
 	path      string
 	directory string
-	style     string
+	version   string
 	projectID string
 	apiID     string // computed at runtime
 	apiOwner  string // computed at runtime
@@ -242,7 +242,7 @@ func (task *uploadOpenAPITask) createSpec() error {
 		Parent:    task.versionName(),
 		ApiSpecId: task.fileName(),
 		ApiSpec: &rpcpb.ApiSpec{
-			MimeType: fmt.Sprintf("%s+gzip", task.style),
+			MimeType: core.OpenAPIMimeType("+gzip", task.version),
 			Filename: task.fileName(),
 			Contents: contents,
 		},

@@ -112,9 +112,9 @@ func (task *computeLintTask) Run() error {
 		if err != nil {
 			return fmt.Errorf("error processing OpenAPI: %s (%s)", spec.Name, err.Error())
 		}
-	} else if strings.HasPrefix(spec.GetMimeType(), "discovery") {
+	} else if core.IsDiscovery(spec.GetMimeType()) {
 		return fmt.Errorf("unsupported Discovery document: %s", spec.Name)
-	} else if spec.GetMimeType() == "proto+zip" {
+	} else if core.IsProto(spec.GetMimeType()) && core.IsZipArchive(spec.GetMimeType()) {
 		// the default proto linter is the aip linter
 		if task.linter == "" {
 			task.linter = "aip"
@@ -132,7 +132,7 @@ func (task *computeLintTask) Run() error {
 	messageData, err := proto.Marshal(lint)
 	artifact := &rpc.Artifact{
 		Name:     subject + "/artifacts/" + relation,
-		MimeType: "google.cloud.apigee.registry.v1alpha1.Lint",
+		MimeType: core.MimeTypeForMessageType("google.cloud.apigee.registry.applications.v1alpha1.Lint"),
 		Contents: messageData,
 	}
 	err = core.SetArtifact(task.ctx, task.client, artifact)

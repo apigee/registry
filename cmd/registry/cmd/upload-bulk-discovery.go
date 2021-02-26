@@ -176,7 +176,7 @@ func (task *uploadDiscoveryTask) createSpec() error {
 		Parent:    task.versionName(),
 		ApiSpecId: task.specID,
 		ApiSpec: &rpcpb.ApiSpec{
-			MimeType:  "discovery+gzip",
+			MimeType:  core.DiscoveryMimeType("+gzip"),
 			Filename:  "discovery.json",
 			Contents:  contents,
 			SourceUri: task.path,

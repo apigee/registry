@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"log"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/apigee/registry/cmd/registry/core"
@@ -63,8 +64,10 @@ var exportSheetCmd = &cobra.Command{
 			saveSheetPath(ctx, client, path, sheetArtifactName)
 			return
 		}
-		typeURL := messageTypeURL(inputs[0])
-		if typeURL == "gnostic.metrics.Vocabulary" {
+		messageType, err := core.MessageTypeForMimeType(inputs[0].GetMimeType())
+		if err != nil {
+			log.Fatalf("Not a message type: %s", inputs[0].GetMimeType())
+		} else if messageType == "gnostic.metrics.Vocabulary" {
 			if len(inputs) != 1 {
 				log.Fatalf("%d artifacts matched. Please specify exactly one for export.", len(inputs))
 			}
@@ -78,7 +81,7 @@ var exportSheetCmd = &cobra.Command{
 				sheetArtifactName = inputs[0].Name + "-sheet"
 			}
 			saveSheetPath(ctx, client, path, sheetArtifactName)
-		} else if typeURL == "gnostic.metrics.VersionHistory" {
+		} else if messageType == "gnostic.metrics.VersionHistory" {
 			if len(inputs) != 1 {
 				log.Fatalf("please specify exactly one version history to export")
 				return
@@ -89,11 +92,11 @@ var exportSheetCmd = &cobra.Command{
 				sheetArtifactName = inputs[0].Name + "-sheet"
 			}
 			saveSheetPath(ctx, client, path, sheetArtifactName)
-		} else if typeURL == "gnostic.metrics.Complexity" {
+		} else if messageType == "gnostic.metrics.Complexity" {
 			path, err = core.ExportComplexityToSheet("Complexity", inputs)
 			log.Printf("exported complexity %+v to %s", inputs, path)
 			saveSheetPath(ctx, client, path, sheetArtifactName)
-		} else if typeURL == "google.cloud.apigee.registry.v1alpha1.Index" {
+		} else if messageType == "google.cloud.apigee.registry.applications.v1alpha1.Index" {
 			if len(inputs) != 1 {
 				log.Fatalf("%d artifacts matched. Please specify exactly one for export.", len(inputs))
 			}
@@ -108,7 +111,7 @@ var exportSheetCmd = &cobra.Command{
 			}
 			saveSheetPath(ctx, client, path, sheetArtifactName)
 		} else {
-			log.Fatalf("Unknown message type: %s", typeURL)
+			log.Fatalf("Unknown message type: %s", messageType)
 		}
 	},
 }
@@ -139,7 +142,11 @@ func collectInputArtifacts(ctx context.Context, client connection.Client, args [
 }
 
 func isInt64Artifact(artifact *rpc.Artifact) bool {
-	return artifact.GetMimeType() == "int64"
+	if artifact.GetMimeType() != "text/plain" {
+		return false
+	}
+	_, err := strconv.ParseInt(string(artifact.GetContents()), 10, 64)
+	return err == nil
 }
 
 func messageTypeURL(artifact *rpc.Artifact) string {
@@ -147,7 +154,8 @@ func messageTypeURL(artifact *rpc.Artifact) string {
 }
 
 func getVocabulary(artifact *rpc.Artifact) (*metrics.Vocabulary, error) {
-	if artifact.GetMimeType() == "gnostic.metrics.Vocabulary" {
+	messageType, err := core.MessageTypeForMimeType(artifact.GetMimeType())
+	if err == nil && messageType == "gnostic.metrics.Vocabulary" {
 		vocab := &metrics.Vocabulary{}
 		err := proto.Unmarshal(artifact.GetContents(), vocab)
 		return vocab, err
@@ -156,7 +164,8 @@ func getVocabulary(artifact *rpc.Artifact) (*metrics.Vocabulary, error) {
 }
 
 func getIndex(artifact *rpc.Artifact) (*rpc.Index, error) {
-	if artifact.GetMimeType() == "google.cloud.apigee.registry.v1alpha1.Index" {
+	messageType, err := core.MessageTypeForMimeType(artifact.GetMimeType())
+	if err == nil && messageType == "google.cloud.apigee.registry.applications.v1alpha1.Index" {
 		index := &rpc.Index{}
 		err := proto.Unmarshal(artifact.GetContents(), index)
 		if err != nil {
@@ -182,7 +191,7 @@ func saveSheetPath(ctx context.Context, client connection.Client, path string, a
 	req := &rpc.CreateArtifactRequest{
 		Parent:     parent,
 		ArtifactId: artifactID,
-		Artifact: &rpc.Artifact{MimeType: "string",
+		Artifact: &rpc.Artifact{MimeType: "text/plain",
 			Contents: []byte(path),
 		},
 	}

@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 
-curl $APG_REGISTRY_AUDIENCES/v1alpha1/status \
+curl $APG_REGISTRY_AUDIENCES/v1/status \
 	-i \
 	-H "Authorization: Bearer $APG_REGISTRY_TOKEN"
 

@@ -21,6 +21,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
@@ -32,7 +33,7 @@ import (
 func init() {
 	uploadCmd.AddCommand(specCmd)
 	specCmd.Flags().String("version", "", "Version for uploaded spec")
-	specCmd.Flags().String("style", "", "Style of spec to upload (openapi/v2+gzip, openapi/v3+gzip, discovery+gzip, proto+zip)")
+	specCmd.Flags().String("style", "", "style of spec to upload (openapi, discovery, proto)")
 }
 
 var specCmd = &cobra.Command{
@@ -90,7 +91,7 @@ var specCmd = &cobra.Command{
 }
 
 func uploadSpecDirectory(dirname string, client *gapic.RegistryClient, version string, style string) error {
-	if style != "proto+zip" {
+	if style != "proto" {
 		return fmt.Errorf("unsupported directory style %s", style)
 	}
 	prefix := dirname + "/"
@@ -106,7 +107,7 @@ func uploadSpecDirectory(dirname string, client *gapic.RegistryClient, version s
 		ApiSpecId: "protos.zip",
 		ApiSpec: &rpcpb.ApiSpec{
 			MimeType: style,
-			Filename: "protos.zip",
+			Filename: core.ProtoMimeType("+zip"),
 			Contents: buf.Bytes(),
 		},
 	}
@@ -124,15 +125,20 @@ func uploadSpecDirectory(dirname string, client *gapic.RegistryClient, version s
 }
 
 func uploadSpecFile(filename string, client *gapic.RegistryClient, version string, style string) error {
+	var mimeType string
 	switch style {
-	case "openapi/v2+gzip":
+	case "openapi":
+		if strings.Contains(filename, "swagger") { // TODO: switch on actual spec contents
+			mimeType = core.OpenAPIMimeType("+gzip", "2")
+		} else {
+			mimeType = core.OpenAPIMimeType("+gzip", "3")
+		}
 		break
-	case "openapi/v3+gzip":
-		break
-	case "discovery+gzip":
+	case "discovery":
+		mimeType = core.DiscoveryMimeType("+gzip")
 		break
 	default:
-		return fmt.Errorf("unsupported directory style %s", style)
+		return fmt.Errorf("unsupported file style %s", style)
 	}
 	specID := filepath.Base(filename)
 	// does the spec file exist? if not, create it
@@ -151,7 +157,7 @@ func uploadSpecFile(filename string, client *gapic.RegistryClient, version strin
 			request.ApiSpec = &rpcpb.ApiSpec{}
 			request.ApiSpec.Filename = specID
 			request.ApiSpec.Contents, err = core.GZippedBytes(bytes)
-			request.ApiSpec.MimeType = style
+			request.ApiSpec.MimeType = mimeType
 			response, err := client.CreateApiSpec(ctx, request)
 			log.Printf("response %+v\nerr %+v", response, err)
 		}

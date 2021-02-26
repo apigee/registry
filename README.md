@@ -20,12 +20,10 @@ enterprise API catalog designed to back online directories, portals, and
 workflow managers.
 
 The Registry API is formally described by the Protocol Buffer source files in
-[google/cloud/apigee/registry/v1alpha1](google/cloud/apigee/registry/v1alpha1).
+[google/cloud/apigee/registry/v1](google/cloud/apigee/registry/v1).
 It closely follows the Google API Design Guidelines at
 [aip.dev](https://aip.dev) and presents a developer experience consistent with
-production Google APIs. Following [AIP-181](https://google.aip.dev/181), we set
-its stability level as "alpha", but seek to make this a stable base for API
-lifecycle applications. Please tell us about your experience if you use it.
+production Google APIs. Please tell us about your experience if you use it.
 
 ## This Implementation
 

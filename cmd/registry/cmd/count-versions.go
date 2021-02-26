@@ -100,7 +100,7 @@ func (task *countVersionsTask) Run() error {
 	relation := "versionCount"
 	artifact := &rpc.Artifact{
 		Name:     subject + "/artifacts/" + relation,
-		MimeType: "int64",
+		MimeType: "text/plain",
 		Contents: []byte(fmt.Sprintf("%d", count)),
 	}
 	err := core.SetArtifact(task.ctx, task.client, artifact)

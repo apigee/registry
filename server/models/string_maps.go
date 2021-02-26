@@ -20,11 +20,11 @@ import (
 )
 
 func bytesForMap(entries map[string]string) ([]byte, error) {
-	return proto.Marshal(&rpc.SerializableMap{Entries: entries})
+	return proto.Marshal(&rpc.Map{Entries: entries})
 }
 
 func mapForBytes(b []byte) (map[string]string, error) {
-	m := &rpc.SerializableMap{}
+	m := &rpc.Map{}
 	if err := proto.Unmarshal(b, m); err != nil {
 		return nil, err
 	}

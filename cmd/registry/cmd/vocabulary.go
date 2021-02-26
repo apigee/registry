@@ -46,7 +46,8 @@ func collectInputVocabularies(ctx context.Context, client connection.Client, arg
 	for _, name := range args {
 		if m := names.ArtifactRegexp().FindStringSubmatch(name); m != nil {
 			err := core.ListArtifacts(ctx, client, m, filter, true, func(artifact *rpc.Artifact) {
-				if artifact.GetMimeType() == "gnostic.metrics.Vocabulary" {
+				messageType, err := core.MessageTypeForMimeType(artifact.GetMimeType())
+				if err == nil && messageType == "gnostic.metrics.Vocabulary" {
 					vocab := &metrics.Vocabulary{}
 					err := proto.Unmarshal(artifact.GetContents(), vocab)
 					if err != nil {
@@ -74,7 +75,7 @@ func setVocabularyToArtifact(ctx context.Context, client connection.Client, outp
 	messageData, err := proto.Marshal(output)
 	artifact := &rpc.Artifact{
 		Name:     subject + "/artifacts/" + relation,
-		MimeType: "gnostic.metrics.Vocabulary",
+		MimeType: core.MimeTypeForMessageType("gnostic.metrics.Vocabulary"),
 		Contents: messageData,
 	}
 	err = core.SetArtifact(ctx, client, artifact)
@@ -90,7 +91,7 @@ func setVersionHistoryToArtifact(ctx context.Context, client connection.Client, 
 	messageData, err := proto.Marshal(output)
 	artifact := &rpc.Artifact{
 		Name:     subject + "/artifacts/" + relation,
-		MimeType: "gnostic.metrics.VersionHistory",
+		MimeType: core.MimeTypeForMessageType("gnostic.metrics.VersionHistory"),
 		Contents: messageData,
 	}
 	err = core.SetArtifact(ctx, client, artifact)

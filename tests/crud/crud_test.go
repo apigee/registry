@@ -136,7 +136,7 @@ func TestCRUD(t *testing.T) {
 			Parent:    "projects/test/apis/sample/versions/1.0.0",
 			ApiSpecId: "openapi.yaml",
 			ApiSpec: &rpc.ApiSpec{
-				MimeType:    "openapi/v3+gzip",
+				MimeType:    "application/x.openapi+gzip; version=3.0.0",
 				Contents:    buf.Bytes(),
 				Labels:      sampleMap,
 				Annotations: sampleMap,
@@ -216,14 +216,14 @@ func testArtifacts(ctx context.Context, registryClient connection.Client, t *tes
 	messageContents := []byte("hello")
 	messageHash := hashForBytes(messageContents)
 	messageLength := int32(len(messageContents))
-	messageType := "text/plain"
+	messageMimeType := "text/plain"
 	// Set the artifact.
 	{
 		req := &rpc.CreateArtifactRequest{
 			Parent:     parent,
 			ArtifactId: "sample",
 			Artifact: &rpc.Artifact{
-				MimeType: messageType,
+				MimeType: messageMimeType,
 				Contents: messageContents,
 			},
 		}
@@ -237,8 +237,8 @@ func testArtifacts(ctx context.Context, registryClient connection.Client, t *tes
 		}
 		resp, err := registryClient.GetArtifact(ctx, req)
 		check(t, "error getting artifact %s", err)
-		if resp.GetMimeType() != messageType {
-			t.Errorf("Unexpected mime type %s (expected %s)", resp.GetMimeType(), messageType)
+		if resp.GetMimeType() != messageMimeType {
+			t.Errorf("Unexpected mime type %s (expected %s)", resp.GetMimeType(), messageMimeType)
 		}
 		if resp.GetSizeBytes() != messageLength {
 			t.Errorf("Unexpected length %d (expected %d)", resp.GetSizeBytes(), messageLength)

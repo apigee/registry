@@ -45,7 +45,8 @@ func collectInputIndexes(ctx context.Context, client connection.Client, args []s
 	for _, name := range args {
 		if m := names.ArtifactRegexp().FindStringSubmatch(name); m != nil {
 			err := core.ListArtifacts(ctx, client, m, filter, true, func(artifact *rpc.Artifact) {
-				if artifact.GetMimeType() == "google.cloud.apigee.registry.v1alpha1.Index" {
+				messageType, err := core.MessageTypeForMimeType(artifact.GetMimeType())
+				if err == nil && messageType == "google.cloud.apigee.registry.applications.v1alpha1.Index" {
 					vocab := &rpc.Index{}
 					err := proto.Unmarshal(artifact.GetContents(), vocab)
 					if err != nil {
@@ -80,7 +81,7 @@ func setIndexToArtifact(ctx context.Context, client connection.Client, output *r
 	}
 	artifact := &rpc.Artifact{
 		Name:     subject + "/artifacts/" + relation,
-		MimeType: "google.cloud.apigee.registry.v1alpha1.Index",
+		MimeType: core.MimeTypeForMessageType("google.cloud.apigee.registry.applications.v1alpha1.Index"),
 		Contents: messageData,
 	}
 	err = core.SetArtifact(ctx, client, artifact)
