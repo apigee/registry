@@ -62,7 +62,7 @@ type Artifact struct {
 // NewArtifactFromParentAndArtifactID returns an initialized artifact for a specified parent and artifactID.
 func NewArtifactFromParentAndArtifactID(parent string, artifactID string) (*Artifact, error) {
 	// Return an error if the artifactID is invalid.
-	if err := names.ValidateID(artifactID); err != nil {
+	if err := names.ValidateCustomID(artifactID); err != nil {
 		return nil, err
 	}
 	// Match regular expressions to identify the parent of this artifact.

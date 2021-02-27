@@ -16,9 +16,7 @@ package models
 
 import (
 	"crypto/sha1"
-	"errors"
 	"fmt"
-	"regexp"
 	"strings"
 	"time"
 
@@ -66,40 +64,41 @@ type Spec struct {
 	Annotations        []byte    `datastore:",noindex"` // Serialized annotations.
 }
 
-// NewSpecFromParentAndSpecID returns an initialized spec for a specified parent and specID.
-func NewSpecFromParentAndSpecID(parent string, specID string) (*Spec, error) {
-	r := regexp.MustCompile("^projects/" + names.NameRegex +
-		"/apis/" + names.NameRegex +
-		"/versions/" + names.NameRegex + "$")
-	m := r.FindStringSubmatch(parent)
-	if m == nil {
-		return nil, fmt.Errorf("invalid parent '%s'", parent)
-	}
-	if err := names.ValidateID(specID); err != nil {
+// NewSpecFromParentAndSpecID returns an initialized spec for a specified parent and ID.
+func NewSpecFromParentAndSpecID(parent string, id string) (*Spec, error) {
+	m, err := names.ParseVersion(parent)
+	if err != nil {
+		return nil, err
+	} else if err := names.ValidateCustomID(id); err != nil {
 		return nil, err
 	}
-	spec := &Spec{}
-	spec.ProjectID = m[1]
-	spec.ApiID = m[2]
-	spec.VersionID = m[3]
-	spec.SpecID = specID
-	return spec, nil
+
+	return &Spec{
+		ProjectID: m[1],
+		ApiID:     m[2],
+		VersionID: m[3],
+		SpecID:    id,
+	}, nil
 }
 
 // NewSpecFromResourceName parses resource names and returns an initialized spec.
 func NewSpecFromResourceName(name string) (*Spec, error) {
-	spec := &Spec{}
-	m := names.SpecRegexp().FindStringSubmatch(name)
-	if m == nil {
-		return nil, errors.New("invalid spec name")
+	m, err := names.ParseSpec(name)
+	if err != nil {
+		return nil, err
 	}
-	spec.ProjectID = m[1]
-	spec.ApiID = m[2]
-	spec.VersionID = m[3]
-	spec.SpecID = m[4]
+
+	spec := &Spec{
+		ProjectID: m[1],
+		ApiID:     m[2],
+		VersionID: m[3],
+		SpecID:    m[4],
+	}
+
 	if strings.HasPrefix(m[5], "@") {
-		spec.RevisionID = m[5][1:]
+		spec.RevisionID = strings.TrimPrefix(m[5], "@")
 	}
+
 	return spec, nil
 }
 

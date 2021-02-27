@@ -37,25 +37,27 @@ type Project struct {
 	UpdateTime  time.Time // Time of last change.
 }
 
-// NewProjectFromProjectID returns an initialized project for a specified projectID.
-func NewProjectFromProjectID(projectID string) (*Project, error) {
-	if err := names.ValidateID(projectID); err != nil {
+// NewProjectFromProjectID returns an initialized project for a specified ID.
+func NewProjectFromProjectID(id string) (*Project, error) {
+	if err := names.ValidateCustomID(id); err != nil {
 		return nil, err
 	}
-	project := &Project{}
-	project.ProjectID = projectID
-	return project, nil
+
+	return &Project{
+		ProjectID: id,
+	}, nil
 }
 
 // NewProjectFromResourceName parses resource names and returns an initialized project.
 func NewProjectFromResourceName(name string) (*Project, error) {
-	project := &Project{}
-	m := names.ProjectRegexp().FindStringSubmatch(name)
-	if m == nil {
-		return nil, fmt.Errorf("invalid project name (%s)", name)
+	m, err := names.ParseProject(name)
+	if err != nil {
+		return nil, err
 	}
-	project.ProjectID = m[1]
-	return project, nil
+
+	return &Project{
+		ProjectID: m[1],
+	}, nil
 }
 
 // ResourceName generates the resource name of a project.

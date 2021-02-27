@@ -107,7 +107,7 @@ func (s *RegistryServer) ListApis(ctx context.Context, req *rpc.ListApisRequest)
 	if err != nil {
 		return nil, internalError(err)
 	}
-	m, err := names.ParseParentProject(req.GetParent())
+	m, err := names.ParseProject(req.GetParent())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}

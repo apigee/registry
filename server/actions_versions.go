@@ -107,7 +107,7 @@ func (s *RegistryServer) ListApiVersions(ctx context.Context, req *rpc.ListApiVe
 	if err != nil {
 		return nil, internalError(err)
 	}
-	m, err := names.ParseParentApi(req.GetParent())
+	m, err := names.ParseApi(req.GetParent())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
