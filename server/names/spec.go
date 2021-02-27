@@ -21,27 +21,20 @@ import (
 
 // SpecsRegexp returns a regular expression that matches a collection of specs.
 func SpecsRegexp() *regexp.Regexp {
-	return regexp.MustCompile("^projects/" + NameRegex + "/apis/" + NameRegex + "/versions/" + NameRegex + "/specs$")
+	return regexp.MustCompile("^projects/" + identifier + "/apis/" + identifier + "/versions/" + identifier + "/specs$")
 }
 
 // SpecRegexp returns a regular expression that matches a spec resource name.
 func SpecRegexp() *regexp.Regexp {
-	return regexp.MustCompile("^projects/" + NameRegex +
-		"/apis/" + NameRegex +
-		"/versions/" + NameRegex +
-		"/specs/" + NameRegex +
-		RevisionRegex + "$")
+	return regexp.MustCompile("^projects/" + identifier + "/apis/" + identifier + "/versions/" + identifier + "/specs/" + identifier + revisionTag + "$")
 }
 
-// ParseParentVersion parses the name of a version that is the parent of a spec.
-func ParseParentVersion(parent string) ([]string, error) {
-	r := regexp.MustCompile("^projects/" + NameRegex +
-		"/apis/" + NameRegex +
-		"/versions/" + NameRegex +
-		"$")
-	m := r.FindStringSubmatch(parent)
+// ParseSpec parses the name of a spec.
+func ParseSpec(name string) ([]string, error) {
+	r := SpecRegexp()
+	m := r.FindStringSubmatch(name)
 	if m == nil {
-		return nil, fmt.Errorf("invalid version '%s'", parent)
+		return nil, fmt.Errorf("invalid spec name %q: must match %q", name, r)
 	}
 	return m, nil
 }

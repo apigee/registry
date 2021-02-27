@@ -21,20 +21,20 @@ import (
 
 // ApisRegexp returns a regular expression that matches collection of apis.
 func ApisRegexp() *regexp.Regexp {
-	return regexp.MustCompile("^projects/" + NameRegex + "/apis$")
+	return regexp.MustCompile("^projects/" + identifier + "/apis$")
 }
 
 // ApiRegexp returns a regular expression that matches a api resource name.
 func ApiRegexp() *regexp.Regexp {
-	return regexp.MustCompile("^projects/" + NameRegex + "/apis/" + NameRegex + "$")
+	return regexp.MustCompile("^projects/" + identifier + "/apis/" + identifier + "$")
 }
 
-// ParseParentProject parses the name of a project that is the parent of an API.
-func ParseParentProject(parent string) ([]string, error) {
-	r := regexp.MustCompile("^projects/" + NameRegex + "$")
-	m := r.FindStringSubmatch(parent)
+// ParseApi parses the name of an Api.
+func ParseApi(name string) ([]string, error) {
+	r := ApiRegexp()
+	m := r.FindStringSubmatch(name)
 	if m == nil {
-		return nil, fmt.Errorf("invalid project '%s'", parent)
+		return nil, fmt.Errorf("invalid api name %q: must match %q", name, r)
 	}
 	return m, nil
 }

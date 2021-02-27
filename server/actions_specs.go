@@ -170,7 +170,7 @@ func (s *RegistryServer) ListApiSpecs(ctx context.Context, req *rpc.ListApiSpecs
 	if err != nil {
 		return nil, internalError(err)
 	}
-	m, err := names.ParseParentVersion(req.GetParent())
+	m, err := names.ParseVersion(req.GetParent())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}

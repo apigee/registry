@@ -15,6 +15,7 @@
 package names
 
 import (
+	"fmt"
 	"regexp"
 )
 
@@ -25,5 +26,15 @@ func ProjectsRegexp() *regexp.Regexp {
 
 // ProjectRegexp returns a regular expression that matches a project resource name.
 func ProjectRegexp() *regexp.Regexp {
-	return regexp.MustCompile("^projects/" + NameRegex + "$")
+	return regexp.MustCompile("^projects/" + identifier + "$")
+}
+
+// ParseProject parses the name of a project.
+func ParseProject(name string) ([]string, error) {
+	r := ProjectRegexp()
+	m := r.FindStringSubmatch(name)
+	if m == nil {
+		return nil, fmt.Errorf("invalid project name %q: must match %q", name, r)
+	}
+	return m, nil
 }
