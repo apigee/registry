@@ -71,7 +71,8 @@ func nameForVersion(version string) string {
 }
 
 func getVersionHistory(artifact *rpc.Artifact) (*metrics.VersionHistory, error) {
-	if artifact.GetMimeType() == "gnostic.metrics.VersionHistory" {
+	messageType, err := MessageTypeForMimeType(artifact.GetMimeType())
+	if err == nil && messageType == "gnostic.metrics.VersionHistory" {
 		value := &metrics.VersionHistory{}
 		err := proto.Unmarshal(artifact.GetContents(), value)
 		if err != nil {

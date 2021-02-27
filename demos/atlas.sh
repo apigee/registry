@@ -94,36 +94,36 @@ registry list projects/atlas/apis/- --filter "description.contains('speech')"
 # This computes simple complexity metrics for every spec in the project.
 registry compute complexity projects/atlas/apis/-/versions/-/specs/-
 
-# The complexity metrics are stored in properties associated with each spec.
-# In this case, the properties were stored in a serialized protocol buffer.
+# The complexity metrics are stored in artifacts associated with each spec.
+# In this case, the artifacts were stored in a serialized protocol buffer.
 # You can get their values with the "get" subcommand.
-registry get projects/atlas/apis/wordnik.com/versions/4.0/specs/swagger.yaml/properties/complexity
+registry get projects/atlas/apis/wordnik.com/versions/4.0/specs/swagger.yaml/artifacts/complexity
 
-# It's also possible to export properties to a Google sheet.
+# It's also possible to export artifacts to a Google sheet.
 # (The following command expects OAuth client credentials with access to the
 # Google Sheets API to be available locally in ~/.credentials/registry.json)
-registry export sheet projects/atlas/apis/-/versions/-/specs/-/properties/complexity \
-	--as projects/atlas/properties/complexity-sheet
+registry export sheet projects/atlas/apis/-/versions/-/specs/-/artifacts/complexity \
+	--as projects/atlas/artifacts/complexity-sheet
 
 # Another interesting property that can be computed is the "vocabulary" of an API.
 # The following command computes vocabularies of every API spec in the project.
 registry compute vocabulary projects/atlas/apis/-/versions/-/specs/-
 
 # Vocabularies are stored in the "vocabulary" property.
-registry get projects/atlas/apis/wordnik.com/versions/4.0/specs/swagger.yaml/properties/vocabulary
+registry get projects/atlas/apis/wordnik.com/versions/4.0/specs/swagger.yaml/artifacts/vocabulary
 
 # The registry command can perform set operations on vocabularies.
 # To find common terms in all Google APIs, use the following:
-registry vocabulary intersection projects/atlas/apis/-/versions/-/specs/-/properties/vocabulary --filter "api_id.startsWith('googleapis')"
+registry vocabulary intersection projects/atlas/apis/-/versions/-/specs/-/artifacts/vocabulary --filter "api_id.startsWith('googleapis')"
 
 # We can also save this to a property.
-registry vocabulary intersection projects/atlas/apis/-/versions/-/specs/-/properties/vocabulary --filter "api_id.startsWith('googleapis')" --output projects/atlas/properties/google-common
+registry vocabulary intersection projects/atlas/apis/-/versions/-/specs/-/artifacts/vocabulary --filter "api_id.startsWith('googleapis')" --output projects/atlas/artifacts/google-common
 
 # We can then read it directly or export it to a Google Sheet.
-registry get projects/atlas/properties/google-common
-registry export sheet projects/atlas/properties/google-common
+registry get projects/atlas/artifacts/google-common
+registry export sheet projects/atlas/artifacts/google-common
 
 # With vocabulary operations we can discover common terms across groups of APIs,
 # track changes across versions, and find unique terms in APIs that we are reviewing.
-# By storing these results and other properties in the Registry, we can build a
+# By storing these results and other artifacts in the Registry, we can build a
 # centralized store of API information that can help manage an API program.

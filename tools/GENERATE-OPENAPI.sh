@@ -21,13 +21,13 @@
 #
 
 # uncomment to update dependency
-# go get -u github.com/googleapis/gnostic/apps/protoc-gen-openapi
+go get -u github.com/googleapis/gnostic/apps/protoc-gen-openapi
 
 ANNOTATIONS="third_party/api-common-protos"
 
 PROTOS=( \
-	google/cloud/apigee/registry/v1alpha1/registry_models.proto \
-	google/cloud/apigee/registry/v1alpha1/registry_service.proto \
+	google/cloud/apigee/registry/v1/registry_models.proto \
+	google/cloud/apigee/registry/v1/registry_service.proto \
 )
 
 echo "Generating OpenAPI."

@@ -90,7 +90,7 @@ func (task *computeIndexTask) Run() error {
 	relation := "index"
 	log.Printf("computing %s/artifacts/%s", spec.Name, relation)
 	var index *rpc.Index
-	if spec.GetMimeType() == "proto+zip" {
+	if core.IsProto(spec.GetMimeType()) && core.IsZipArchive(spec.GetMimeType()) {
 		index, err = core.NewIndexFromZippedProtos(spec.GetContents())
 		if err != nil {
 			return fmt.Errorf("error processing protos: %s", spec.Name)
@@ -102,7 +102,7 @@ func (task *computeIndexTask) Run() error {
 	messageData, err := proto.Marshal(index)
 	artifact := &rpc.Artifact{
 		Name:     subject + "/artifacts/" + relation,
-		MimeType: "google.cloud.apigee.registry.v1alpha1.Index",
+		MimeType: core.MimeTypeForMessageType("google.cloud.apigee.registry.applications.v1alpha1.Index"),
 		Contents: messageData,
 	}
 	err = core.SetArtifact(task.ctx, task.client, artifact)

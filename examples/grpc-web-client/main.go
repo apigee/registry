@@ -115,7 +115,7 @@ func main() {
 		PageSize: 4,
 	}
 	res := &rpc.ListProjectsResponse{}
-	err := Do(server, "google.cloud.apigee.registry.v1alpha1.Registry", "ListProjects", req, res)
+	err := Do(server, "google.cloud.apigee.registry.v1.Registry", "ListProjects", req, res)
 	check(err)
 	log.Printf("response: %+v", res)
 }

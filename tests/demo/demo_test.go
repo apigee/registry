@@ -206,7 +206,7 @@ func TestDemo(t *testing.T) {
 			Parent:    "projects/demo/apis/petstore/versions/1.0.0",
 			ApiSpecId: "openapi.yaml",
 			ApiSpec: &rpc.ApiSpec{
-				MimeType: "openapi/v3+gzip",
+				MimeType: "application/x.openapi+gzip; version=3.0.0",
 				Contents: buf.Bytes(),
 			},
 		}
