@@ -39,6 +39,10 @@ func (s *RegistryServer) CreateApiSpec(ctx context.Context, req *rpc.CreateApiSp
 	}
 	defer s.releaseStorageClient(client)
 
+	if req.GetApiSpecId() == "" {
+		req.ApiSpecId = names.GenerateID()
+	}
+
 	spec, err := models.NewSpecFromParentAndSpecID(req.GetParent(), req.GetApiSpecId())
 	if err != nil {
 		return nil, internalError(err)

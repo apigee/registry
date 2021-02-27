@@ -33,6 +33,11 @@ func (s *RegistryServer) CreateApi(ctx context.Context, req *rpc.CreateApiReques
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
+
+	if req.GetApiId() == "" {
+		req.ApiId = names.GenerateID()
+	}
+
 	api, err := models.NewApiFromParentAndApiID(req.GetParent(), req.GetApiId())
 	if err != nil {
 		return nil, invalidArgumentError(err)

@@ -33,6 +33,11 @@ func (s *RegistryServer) CreateApiVersion(ctx context.Context, req *rpc.CreateAp
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
+
+	if req.GetApiVersionId() == "" {
+		req.ApiVersionId = names.GenerateID()
+	}
+
 	version, err := models.NewVersionFromParentAndVersionID(req.GetParent(), req.GetApiVersionId())
 	if err != nil {
 		return nil, invalidArgumentError(err)

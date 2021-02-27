@@ -19,6 +19,7 @@ import (
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/models"
+	"github.com/apigee/registry/server/names"
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/api/iterator"
 	"google.golang.org/grpc/codes"
@@ -32,6 +33,11 @@ func (s *RegistryServer) CreateProject(ctx context.Context, req *rpc.CreateProje
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
+
+	if req.GetProjectId() == "" {
+		req.ProjectId = names.GenerateID()
+	}
+
 	project, err := models.NewProjectFromProjectID(req.GetProjectId())
 	if err != nil {
 		return nil, invalidArgumentError(err)

@@ -30,6 +30,11 @@ const identifier = "([a-zA-Z0-9-_\\.]+)"
 // The format of a custom revision tag.
 const revisionTag = "(@[a-zA-z0-9-]+)?"
 
+// GenerateID generates a random resource ID.
+func GenerateID() string {
+	return uuid.New().String()[:8]
+}
+
 // ValidateCustomID returns a descriptive validation error if the user provided ID is invalid.
 func ValidateCustomID(id string) error {
 	r := regexp.MustCompile("^[a-z0-9][a-z0-9-]{2,61}[a-z0-9]$")
