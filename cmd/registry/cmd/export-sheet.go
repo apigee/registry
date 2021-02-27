@@ -94,7 +94,7 @@ var exportSheetCmd = &cobra.Command{
 			saveSheetPath(ctx, client, path, sheetArtifactName)
 		} else if messageType == "gnostic.metrics.Complexity" {
 			path, err = core.ExportComplexityToSheet("Complexity", inputs)
-			log.Printf("exported complexity %+v to %s", inputs, path)
+			log.Printf("exported complexity to %s", path)
 			saveSheetPath(ctx, client, path, sheetArtifactName)
 		} else if messageType == "google.cloud.apigee.registry.applications.v1alpha1.Index" {
 			if len(inputs) != 1 {

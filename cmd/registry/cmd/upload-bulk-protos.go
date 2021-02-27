@@ -112,7 +112,6 @@ type uploadProtoTask struct {
 	path      string
 	directory string
 	apiID     string // computed at runtime
-	apiOwner  string // computed at runtime
 	versionID string // computed at runtime
 	specID    string // computed at runtime
 }
@@ -147,7 +146,6 @@ func (task *uploadProtoTask) populateFields() {
 	apiParts := parts[0 : len(parts)-1]
 
 	task.apiID = strings.ReplaceAll(strings.Join(apiParts, "-"), "/", "-")
-	task.apiOwner = strings.ReplaceAll(task.apiID, "-", "/")
 	task.versionID = parts[len(parts)-1]
 	task.specID = task.fileName()
 }

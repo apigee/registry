@@ -124,7 +124,6 @@ func (s *RegistryServer) ListApis(ctx context.Context, req *rpc.ListApisRequest)
 			{"update_time", filterArgTypeTimestamp},
 			{"availability", filterArgTypeString},
 			{"recommended_version", filterArgTypeString},
-			{"owner", filterArgTypeString},
 			{"labels", filterArgTypeStringMap},
 		})
 	if err != nil {
