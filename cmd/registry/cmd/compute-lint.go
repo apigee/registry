@@ -18,7 +18,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"strings"
 
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
@@ -101,7 +100,7 @@ func (task *computeLintTask) Run() error {
 	}
 	var relation string
 	var lint *rpc.Lint
-	if strings.HasPrefix(spec.GetMimeType(), "openapi") {
+	if core.IsOpenAPIv2(spec.GetMimeType()) || core.IsOpenAPIv3(spec.GetMimeType()) {
 		// the default openapi linter is gnostic
 		if task.linter == "" {
 			task.linter = "gnostic"

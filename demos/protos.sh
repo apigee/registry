@@ -136,3 +136,11 @@ registry export sheet projects/protos/artifacts/vocabulary
 # track changes across versions, and find unique terms in APIs that we are reviewing.
 # By storing these results and other artifacts in the Registry, we can build a
 # centralized store of API information that can help manage an API program.
+
+# We can also run analysis tools like linters and store the results in the Registry.
+# Here we run the Google api-linter and compile summary statistics.
+registry compute lint projects/protos/apis/-/versions/-/specs/-
+registry compute lintstats projects/protos/apis/-/versions/-/specs/- --linter aip
+registry compute lintstats projects/protos --linter aip
+
+
