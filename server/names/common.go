@@ -17,6 +17,8 @@ package names
 import (
 	"fmt"
 	"regexp"
+
+	"github.com/google/uuid"
 )
 
 // The format of a resource identifier.
@@ -27,6 +29,12 @@ const identifier = "([a-zA-Z0-9-_\\.]+)"
 // The format of a custom revision tag.
 const revisionTag = "(@[a-zA-z0-9-]+)?"
 
+// GenerateID generates a random resource ID.
+func GenerateID() string {
+	return uuid.New().String()[:8]
+}
+
+// ValidateID returns an error if the provided ID is invalid.
 func ValidateID(id string) error {
 	r := regexp.MustCompile("^" + identifier + "$")
 	m := r.FindStringSubmatch(id)
