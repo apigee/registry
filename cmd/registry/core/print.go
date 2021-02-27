@@ -61,7 +61,7 @@ func PrintSpecDetail(message *rpc.ApiSpec) {
 
 func PrintSpecContents(message *rpc.ApiSpec) {
 	contents := message.GetContents()
-	if strings.HasSuffix(message.GetMimeType(), "+gzip") {
+	if strings.Contains(message.GetMimeType(), "+gzip") {
 		contents, _ = GUnzippedBytes(contents)
 	}
 	os.Stdout.Write(contents)
@@ -72,6 +72,14 @@ func PrintArtifact(artifact *rpc.Artifact) {
 }
 
 func PrintArtifactDetail(artifact *rpc.Artifact) {
+	PrintMessage(artifact)
+}
+
+func PrintArtifactContents(artifact *rpc.Artifact) {
+	if artifact.GetMimeType() == "text/plain" {
+		fmt.Printf("%s\n", string(artifact.GetContents()))
+		return
+	}
 	messageType, err := MessageTypeForMimeType(artifact.GetMimeType())
 	if err != nil {
 		fmt.Println(artifact.Name)
@@ -92,10 +100,6 @@ func PrintArtifactDetail(artifact *rpc.Artifact) {
 	default:
 		fmt.Printf("%+v", artifact.GetContents())
 	}
-}
-
-func PrintArtifactContents(message *rpc.Artifact) {
-	PrintArtifactDetail(message)
 }
 
 func PrintMessage(message proto.Message) {
