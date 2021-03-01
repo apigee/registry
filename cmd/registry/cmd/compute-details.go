@@ -176,7 +176,7 @@ func (task *computeDetailsTask) Run() error {
 				Description: description,
 			},
 			UpdateMask: &field_mask.FieldMask{
-				Paths: []string{"owner", "display_name", "description"},
+				Paths: []string{"display_name", "description"},
 			},
 		}
 

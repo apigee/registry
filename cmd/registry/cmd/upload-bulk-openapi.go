@@ -129,7 +129,6 @@ type uploadOpenAPITask struct {
 	version   string
 	projectID string
 	apiID     string // computed at runtime
-	apiOwner  string // computed at runtime
 	versionID string // computed at runtime
 	specID    string // computed at runtime
 }
@@ -166,8 +165,6 @@ func (task *uploadOpenAPITask) populateFields() error {
 	if len(parts) < 3 {
 		return fmt.Errorf("invalid API path: %s", task.apiPath())
 	}
-
-	task.apiOwner = parts[0]
 
 	apiParts := parts[0 : len(parts)-2]
 	apiPart := strings.ReplaceAll(strings.Join(apiParts, "-"), "/", "-")
