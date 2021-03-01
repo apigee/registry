@@ -117,6 +117,7 @@ func (s *RegistryServer) ListProjects(ctx context.Context, req *rpc.ListProjects
 	}
 	prg, err := createFilterOperator(req.GetFilter(),
 		[]filterArg{
+			{"name", filterArgTypeString},
 			{"project_id", filterArgTypeString},
 			{"display_name", filterArgTypeString},
 			{"description", filterArgTypeString},
@@ -133,6 +134,7 @@ func (s *RegistryServer) ListProjects(ctx context.Context, req *rpc.ListProjects
 	for _, err = it.Next(&project); err == nil; _, err = it.Next(&project) {
 		if prg != nil {
 			out, _, err := prg.Eval(map[string]interface{}{
+				"name":         project.ResourceName(),
 				"project_id":   project.ProjectID,
 				"display_name": project.DisplayName,
 				"description":  project.Description,
