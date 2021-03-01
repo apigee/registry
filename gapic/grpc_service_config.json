@@ -4,9 +4,6 @@
         "name": [
           {
             "service": "google.cloud.apigee.registry.v1.Registry"
-          },
-          {
-            "service": "google.cloud.apigee.registry.v1alpha1.Registry"
           }
         ],
         "timeout": "60s",

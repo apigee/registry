@@ -18,7 +18,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"strings"
 
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
@@ -100,19 +99,19 @@ func (task *computeDescriptorTask) Run() error {
 	subject := spec.GetName()
 	var typeURL string
 	var document proto.Message
-	if strings.HasPrefix(spec.GetMimeType(), "openapi/v2") {
+	if core.IsOpenAPIv2(spec.GetMimeType()) {
 		typeURL = "gnostic.openapiv2.Document"
 		document, err = openapi_v2.ParseDocument(data)
 		if err != nil {
 			return err
 		}
-	} else if strings.HasPrefix(spec.GetMimeType(), "openapi/v3") {
+	} else if core.IsOpenAPIv3(spec.GetMimeType()) {
 		typeURL = "gnostic.openapiv3.Document"
 		document, err = openapi_v3.ParseDocument(data)
 		if err != nil {
 			return err
 		}
-	} else if strings.HasPrefix(spec.GetMimeType(), "discovery") {
+	} else if core.IsDiscovery(spec.GetMimeType()) {
 		typeURL = "gnostic.discoveryv1.Document"
 		document, err = discovery_v1.ParseDocument(data)
 		if err != nil {
@@ -125,13 +124,11 @@ func (task *computeDescriptorTask) Run() error {
 	if err != nil {
 		return err
 	}
-	messageData, err = core.GZippedBytes(messageData)
-	if err != nil {
-		return err
-	}
+	// TODO: consider gzipping descriptors to reduce size;
+	// this will probably require some representation of compression type in the typeURL
 	artifact := &rpc.Artifact{
 		Name:     subject + "/artifacts/" + relation,
-		MimeType: typeURL + "+gz",
+		MimeType: core.MimeTypeForMessageType(typeURL),
 		Contents: messageData,
 	}
 	return core.SetArtifact(task.ctx, task.client, artifact)

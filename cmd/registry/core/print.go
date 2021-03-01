@@ -61,7 +61,7 @@ func PrintSpecDetail(message *rpc.ApiSpec) {
 
 func PrintSpecContents(message *rpc.ApiSpec) {
 	contents := message.GetContents()
-	if strings.HasSuffix(message.GetMimeType(), "+gzip") {
+	if strings.Contains(message.GetMimeType(), "+gzip") {
 		contents, _ = GUnzippedBytes(contents)
 	}
 	os.Stdout.Write(contents)
@@ -72,14 +72,26 @@ func PrintArtifact(artifact *rpc.Artifact) {
 }
 
 func PrintArtifactDetail(artifact *rpc.Artifact) {
-	switch artifact.GetMimeType() {
+	PrintMessage(artifact)
+}
+
+func PrintArtifactContents(artifact *rpc.Artifact) {
+	if artifact.GetMimeType() == "text/plain" {
+		fmt.Printf("%s\n", string(artifact.GetContents()))
+		return
+	}
+	messageType, err := MessageTypeForMimeType(artifact.GetMimeType())
+	if err != nil {
+		fmt.Println(artifact.Name)
+	}
+	switch messageType {
 	case "gnostic.metrics.Complexity":
 		unmarshalAndPrint(artifact.GetContents(), &metrics.Complexity{})
 	case "gnostic.metrics.Vocabulary":
 		unmarshalAndPrint(artifact.GetContents(), &metrics.Vocabulary{})
 	case "gnostic.metrics.VersionHistory":
 		unmarshalAndPrint(artifact.GetContents(), &metrics.VersionHistory{})
-	case "google.cloud.apigee.registry.v1alpha1.Index":
+	case "google.cloud.apigee.registry.applications.v1alpha1.Index":
 		unmarshalAndPrint(artifact.GetContents(), &rpc.Index{})
 	case "gnostic.openapiv2.Document":
 		unmarshalAndPrint(artifact.GetContents(), &openapiv2.Document{})
@@ -88,10 +100,6 @@ func PrintArtifactDetail(artifact *rpc.Artifact) {
 	default:
 		fmt.Printf("%+v", artifact.GetContents())
 	}
-}
-
-func PrintArtifactContents(message *rpc.Artifact) {
-	PrintArtifactDetail(message)
 }
 
 func PrintMessage(message proto.Message) {

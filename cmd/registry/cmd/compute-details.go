@@ -103,7 +103,7 @@ func (task *computeDetailsTask) Run() error {
 	var title string
 	var description string
 	var request *rpc.UpdateApiRequest
-	if strings.HasPrefix(spec.GetMimeType(), "openapi/v2") {
+	if core.IsOpenAPIv2(spec.GetMimeType()) {
 		data, err := core.GetBytesForSpec(spec)
 		if err != nil {
 			return nil
@@ -129,7 +129,7 @@ func (task *computeDetailsTask) Run() error {
 				Paths: []string{"display_name", "description"},
 			},
 		}
-	} else if strings.HasPrefix(spec.GetMimeType(), "openapi/v3") {
+	} else if core.IsOpenAPIv3(spec.GetMimeType()) {
 		data, err := core.GetBytesForSpec(spec)
 		if err != nil {
 			return nil
@@ -155,7 +155,7 @@ func (task *computeDetailsTask) Run() error {
 				Paths: []string{"display_name", "description"},
 			},
 		}
-	} else if strings.HasPrefix(spec.GetMimeType(), "discovery") {
+	} else if core.IsDiscovery(spec.GetMimeType()) {
 		data, err := core.GetBytesForSpec(spec)
 		if err != nil {
 			return nil
@@ -176,11 +176,11 @@ func (task *computeDetailsTask) Run() error {
 				Description: description,
 			},
 			UpdateMask: &field_mask.FieldMask{
-				Paths: []string{"owner", "display_name", "description"},
+				Paths: []string{"display_name", "description"},
 			},
 		}
 
-	} else if spec.GetMimeType() == "proto+zip" {
+	} else if core.IsProto(spec.GetMimeType()) && core.IsZipArchive(spec.GetMimeType()) {
 		log.Printf("%s", spec.Name)
 		details, err := core.NewDetailsFromZippedProtos(spec.GetContents())
 		if err != nil {

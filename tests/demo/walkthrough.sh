@@ -70,7 +70,7 @@ echo
 echo Update an attribute of the spec.
 apg registry update-api-spec \
 	--api_spec.name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml \
-	--api_spec.mime_type "openapi/v3+gzip" \
+	--api_spec.mime_type "application/x.openapi+gzip; version=3" \
     --json
 
 echo
@@ -205,7 +205,7 @@ echo Set some artifacts on entities in the registry.
 apg registry create-artifact \
     --parent projects/demo/apis/petstore \
     --artifact_id source \
-    --artifact.mime_type "string" \
+    --artifact.mime_type "text/plain" \
     --artifact.contents "68747470733a2f2f6769746875622e636f6d2f4f41492f4f70656e4150492d53706563696669636174696f6e0a" \
     --json
 

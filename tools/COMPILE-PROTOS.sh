@@ -37,12 +37,12 @@ mkdir -p rpc gapic cmd/apg
 ANNOTATIONS="third_party/api-common-protos"
 
 PROTOS=( \
+	google/cloud/apigee/registry/applications/v1alpha1/registry_index.proto \
+	google/cloud/apigee/registry/applications/v1alpha1/registry_lint.proto \
+	google/cloud/apigee/registry/internal/v1/registry_map.proto \
 	google/cloud/apigee/registry/v1/registry_models.proto \
+	google/cloud/apigee/registry/v1/registry_notifications.proto \
 	google/cloud/apigee/registry/v1/registry_service.proto \
-	google/cloud/apigee/registry/v1/registry_internal.proto \
-	google/cloud/apigee/registry/v1alpha1/registry_notifications.proto \
-	google/cloud/apigee/registry/v1alpha1/registry_index.proto \
-	google/cloud/apigee/registry/v1alpha1/registry_lint.proto \
 )
 
 echo "Running the API linter."
