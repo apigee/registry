@@ -16,7 +16,8 @@ clean:
 	rm -rf \
 		cmd/apg/*.go gapic/*.go rpc/*.go \
 		third_party/api-common-protos third_party/gnostic \
-		envoy/proto.pb
+		envoy/proto.pb \
+		/tmp/registry.db
 
 build:
 ifndef REGISTRY_PROJECT_IDENTIFIER

@@ -1,6 +1,6 @@
 module github.com/apigee/registry
 
-go 1.13
+go 1.15
 
 require (
 	bitbucket.org/creachadair/stringset v0.0.9 // indirect
@@ -37,7 +37,7 @@ require (
 	gitlab.com/golang-commonmark/linkify v0.0.0-20200225224916-64bca66f6ad3 // indirect
 	golang.org/x/net v0.0.0-20210226172049-e18ecbb05110
 	golang.org/x/oauth2 v0.0.0-20201109201403-9fd604954f58
-	golang.org/x/sys v0.0.0-20210226181700-f36f78243c0c // indirect
+	golang.org/x/sys v0.0.0-20210301091718-77cc2087c03b // indirect
 	golang.org/x/text v0.3.5 // indirect
 	google.golang.org/api v0.36.0
 	google.golang.org/genproto v0.0.0-20210226172003-ab064af71705
