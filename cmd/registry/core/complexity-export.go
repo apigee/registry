@@ -55,7 +55,8 @@ func ExportComplexityToSheet(name string, inputs []*rpc.Artifact) (string, error
 }
 
 func getComplexity(artifact *rpc.Artifact) (*metrics.Complexity, error) {
-	if artifact.GetMimeType() == "gnostic.metrics.Complexity" {
+	messageType, err := MessageTypeForMimeType(artifact.GetMimeType())
+	if err == nil && messageType == "gnostic.metrics.Complexity" {
 		value := &metrics.Complexity{}
 		err := proto.Unmarshal(artifact.GetContents(), value)
 		if err != nil {

@@ -61,7 +61,11 @@ var getCmd = &cobra.Command{
 				_, err = core.GetSpec(ctx, client, m, getContents, core.PrintSpecDetail)
 			}
 		} else if m := names.ArtifactRegexp().FindStringSubmatch(name); m != nil {
-			_, err = core.GetArtifact(ctx, client, m, true, core.PrintArtifactDetail)
+			if getContents {
+				_, err = core.GetArtifact(ctx, client, m, getContents, core.PrintArtifactContents)
+			} else {
+				_, err = core.GetArtifact(ctx, client, m, getContents, core.PrintArtifactDetail)
+			}
 		} else {
 			log.Printf("Unsupported entity %+v", args)
 		}

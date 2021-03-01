@@ -46,5 +46,5 @@ Following steps assume you're in the root directory.
    you configured. Below is a sample curl call to access your GKE deployment:
 
    ```shell script
-   curl $APG_REGISTRY_AUDIENCES/v1alpha1/status -i -H "Authorization: Bearer $APG_REGISTRY_TOKEN"
+   curl $APG_REGISTRY_AUDIENCES/v1/status -i -H "Authorization: Bearer $APG_REGISTRY_TOKEN"
    ```

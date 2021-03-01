@@ -14,17 +14,17 @@
 
 syntax = "proto3";
 
-package google.cloud.apigee.registry.v1;
+package google.cloud.apigee.registry.internal.v1;
 
-option java_package = "com.google.cloud.apigee.registry.v1";
+option java_package = "com.google.cloud.apigee.registry.internal.v1";
 option java_multiple_files = true;
-option java_outer_classname = "RegistryInternalProto";
+option java_outer_classname = "RegistryMapProto";
 option go_package = "github.com/apigee/registry/rpc;rpc";
 
-// SerializableMap represents a map that can be serialized using Protocol Buffers.
+// Map represents a map that can be serialized using Protocol Buffers.
 // (-- api-linter: core::0123::resource-annotation=disabled
 //     aip.dev/not-precedent: This message is not currently used in an API. --)
-message SerializableMap {
+message Map {
 
   // The entries in the map.
   map<string,string> entries = 1;

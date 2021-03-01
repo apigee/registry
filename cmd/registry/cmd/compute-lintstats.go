@@ -68,7 +68,8 @@ var computeLintStatsCmd = &cobra.Command{
 				if artifact == nil {
 					return // ignore missing results
 				}
-				if artifact.GetMimeType() != "google.cloud.apigee.registry.v1alpha1.Lint" {
+				messageType, err := core.MessageTypeForMimeType(artifact.GetMimeType())
+				if err != nil || messageType != "google.cloud.apigee.registry.applications.v1alpha1.Lint" {
 					return // ignore unexpected message types
 				}
 				lint := &rpc.Lint{}
@@ -86,7 +87,7 @@ var computeLintStatsCmd = &cobra.Command{
 					messageData, err := proto.Marshal(lintStats)
 					artifact := &rpc.Artifact{
 						Name:     subject + "/artifacts/" + relation,
-						MimeType: "google.cloud.apigee.registry.v1alpha1.LintStats",
+						MimeType: core.MimeTypeForMessageType("google.cloud.apigee.registry.applications.v1alpha1.LintStats"),
 						Contents: messageData,
 					}
 					err = core.SetArtifact(ctx, client, artifact)
@@ -111,7 +112,8 @@ var computeLintStatsCmd = &cobra.Command{
 					err = core.ListArtifacts(ctx, client, m2, "", true, func(artifact *rpc.Artifact) {
 						log.Printf("%+v", artifact.Name)
 						// get the lintstats artifact value
-						if artifact.GetMimeType() != "google.cloud.apigee.registry.v1alpha1.LintStats" {
+						messageType, err := core.MessageTypeForMimeType(artifact.GetMimeType())
+						if err != nil || messageType != "google.cloud.apigee.registry.applications.v1alpha1.LintStats" {
 							return // ignore unexpected message types
 						}
 						lintstats := &rpc.LintStats{}
@@ -137,7 +139,7 @@ var computeLintStatsCmd = &cobra.Command{
 					messageData, err := proto.Marshal(lintstats)
 					artifact := &rpc.Artifact{
 						Name:     subject + "/artifacts/" + relation,
-						MimeType: "google.cloud.apigee.registry.v1alpha1.LintStats",
+						MimeType: core.MimeTypeForMessageType("google.cloud.apigee.registry.applications.v1alpha1.LintStats"),
 						Contents: messageData,
 					}
 					err = core.SetArtifact(ctx, client, artifact)

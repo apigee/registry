@@ -15,7 +15,7 @@
 package models
 
 import (
-	"crypto/sha1"
+	"crypto/sha256"
 	"fmt"
 	"strings"
 	"time"
@@ -260,7 +260,7 @@ func newRevisionID() string {
 }
 
 func hashForBytes(b []byte) string {
-	h := sha1.New()
+	h := sha256.New()
 	h.Write(b)
 	bs := h.Sum(nil)
 	return fmt.Sprintf("%x", bs)

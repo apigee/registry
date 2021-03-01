@@ -67,15 +67,15 @@ registry list projects/disco/apis/-/versions/-/specs
 registry get projects/disco/apis/translate/versions/v3/specs/discovery.json
 
 # You can also get this with the automatically-generated `apg` command line tool:
-apg registry get-spec --name projects/disco/apis/translate/versions/v3/specs/discovery.json
+apg registry get-api-spec --name projects/disco/apis/translate/versions/v3/specs/discovery.json
 
 # Add the `--json` flag to get this as JSON:
-apg registry get-spec --name projects/disco/apis/translate/versions/v3/specs/discovery.json --json
+apg registry get-api-spec --name projects/disco/apis/translate/versions/v3/specs/discovery.json --json
 
-# You might notice that this doesn't return the actual spec. That's because the get-spec
+# You might notice that this doesn't return the actual spec. That's because the get-api-spec
 # API takes a `view` argument, and its default value ("BASIC") excludes the spec bytes.
 # To get the spec contents, add "--view FULL" to your API call:
-apg registry get-spec --name projects/disco/apis/translate/versions/v3/specs/discovery.json --json --view FULL
+apg registry get-api-spec --name projects/disco/apis/translate/versions/v3/specs/discovery.json --json --view FULL
 
 # An easier way to get the bytes of the spec is to use `registry get` with the `--contents` flag.
 registry get projects/disco/apis/translate/versions/v3/specs/discovery.json --contents
@@ -83,44 +83,44 @@ registry get projects/disco/apis/translate/versions/v3/specs/discovery.json --co
 # The registry tool can compute simple complexity metrics for Discovery documents stored in the Registry.
 registry compute complexity projects/disco/apis/-/versions/-/specs/-
 
-# Complexity results are stored in properties associated with the specs.
-registry list projects/disco/apis/-/versions/-/specs/-/properties/complexity
+# Complexity results are stored in artifacts associated with the specs.
+registry list projects/disco/apis/-/versions/-/specs/-/artifacts/complexity
 
 # We can use the `registry get` subcommand to read individual complexity records.
-registry get projects/disco/apis/translate/versions/v3/specs/discovery.json/properties/complexity
+registry get projects/disco/apis/translate/versions/v3/specs/discovery.json/artifacts/complexity
 
 # The registry tool also supports exporting all of the complexity results to a Google sheet.
 # (The following command expects OAuth client credentials with access to the
 # Google Sheets API to be available locally in ~/.credentials/registry.json)
-registry export sheet projects/disco/apis/-/versions/-/specs/-/properties/complexity \
-	--as projects/disco/properties/complexity-sheet
+registry export sheet projects/disco/apis/-/versions/-/specs/-/artifacts/complexity \
+	--as projects/disco/artifacts/complexity-sheet
 
 # We can also compute the vocabulary of APIs described with Discovery documents.
 registry compute vocabulary projects/disco/apis/-/versions/-/specs/-
 
-# Vocabularies are also stored as properties associated with API specs.
-registry get projects/disco/apis/translate/versions/v3/specs/discovery.json/properties/vocabulary
+# Vocabularies are also stored as artifacts associated with API specs.
+registry get projects/disco/apis/translate/versions/v3/specs/discovery.json/artifacts/vocabulary
 
 # The registry command can perform set operations on vocabularies.
 # To find common terms in all Google speech-related APIs, use the following:
-registry vocabulary intersection projects/disco/apis/-/versions/-/specs/-/properties/vocabulary --filter "api_id.contains('speech')"
+registry vocabulary intersection projects/disco/apis/-/versions/-/specs/-/artifacts/vocabulary --filter "api_id.contains('speech')"
 
 # We can also save this to a property.
-registry vocabulary intersection projects/disco/apis/-/versions/-/specs/-/properties/vocabulary --filter "api_id.contains('speech')" --output projects/disco/properties/speech-common
+registry vocabulary intersection projects/disco/apis/-/versions/-/specs/-/artifacts/vocabulary --filter "api_id.contains('speech')" --output projects/disco/artifacts/speech-common
 
 # We can then read it directly or export it to a Google Sheet.
-registry get projects/disco/properties/speech-common
-registry export sheet projects/disco/properties/speech-common
+registry get projects/disco/artifacts/speech-common
+registry export sheet projects/disco/artifacts/speech-common
 
 # To see a larger vocabulary, let's now compute the union of all the vocabularies in our project.
-registry vocabulary union projects/disco/apis/-/versions/-/specs/-/properties/vocabulary --output projects/disco/properties/vocabulary
+registry vocabulary union projects/disco/apis/-/versions/-/specs/-/artifacts/vocabulary --output projects/disco/artifacts/vocabulary
 
 # We can also export this with `registry get` but it's easier to view this as a sheet:
-registry export sheet projects/disco/properties/vocabulary
+registry export sheet projects/disco/artifacts/vocabulary
 
 # You'll notice that usage counts are included for each term, so we can sort by count
 # and find the most commonly-used terms across all of our APIs.
 # With vocabulary operations we can discover common terms across groups of APIs,
 # track changes across versions, and find unique terms in APIs that we are reviewing.
-# By storing these results and other properties in the Registry, we can build a
+# By storing these results and other artifacts in the Registry, we can build a
 # centralized store of API information that can help manage an API program.
