@@ -39,6 +39,10 @@ func (s *RegistryServer) CreateApiSpec(ctx context.Context, req *rpc.CreateApiSp
 	}
 	defer s.releaseStorageClient(client)
 
+	if req.GetApiSpecId() == "" {
+		req.ApiSpecId = names.GenerateID()
+	}
+
 	spec, err := models.NewSpecFromParentAndSpecID(req.GetParent(), req.GetApiSpecId())
 	if err != nil {
 		return nil, internalError(err)
@@ -170,7 +174,7 @@ func (s *RegistryServer) ListApiSpecs(ctx context.Context, req *rpc.ListApiSpecs
 	if err != nil {
 		return nil, internalError(err)
 	}
-	m, err := names.ParseParentVersion(req.GetParent())
+	m, err := names.ParseVersion(req.GetParent())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}

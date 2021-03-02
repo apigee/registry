@@ -21,10 +21,10 @@ import (
 // ArtifactsRegexp returns a regular expression that matches collection of artifacts.
 func ArtifactsRegexp() *regexp.Regexp {
 	return regexp.MustCompile(
-		"^projects/" + NameRegex +
-			"(/apis/" + NameRegex +
-			"(/versions/" + NameRegex +
-			"(/specs/" + NameRegex +
+		"^projects/" + identifier +
+			"(/apis/" + identifier +
+			"(/versions/" + identifier +
+			"(/specs/" + identifier +
 			")?" +
 			")?" +
 			")?" +
@@ -33,12 +33,12 @@ func ArtifactsRegexp() *regexp.Regexp {
 
 // ArtifactRegexp returns a regular expression that matches an artifact resource name.
 func ArtifactRegexp() *regexp.Regexp {
-	return regexp.MustCompile("^projects/" + NameRegex +
-		"(/apis/" + NameRegex +
-		"(/versions/" + NameRegex +
-		"(/specs/" + NameRegex +
+	return regexp.MustCompile("^projects/" + identifier +
+		"(/apis/" + identifier +
+		"(/versions/" + identifier +
+		"(/specs/" + identifier +
 		")?" +
 		")?" +
 		")?" +
-		"/artifacts/" + NameRegex + "$")
+		"/artifacts/" + identifier + "$")
 }

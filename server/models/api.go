@@ -16,7 +16,6 @@ package models
 
 import (
 	"fmt"
-	"regexp"
 	"time"
 
 	"github.com/apigee/registry/rpc"
@@ -43,32 +42,32 @@ type Api struct {
 	Annotations        []byte    `datastore:",noindex"` // Serialized annotations.
 }
 
-// NewApiFromParentAndApiID returns an initialized api for a specified parent and apiID.
-func NewApiFromParentAndApiID(parent string, apiID string) (*Api, error) {
-	r := regexp.MustCompile("^projects/" + names.NameRegex + "$")
-	m := r.FindStringSubmatch(parent)
-	if m == nil {
-		return nil, fmt.Errorf("invalid parent '%s'", parent)
-	}
-	if err := names.ValidateID(apiID); err != nil {
+// NewApiFromParentAndApiID returns an initialized api for a specified parent and ID.
+func NewApiFromParentAndApiID(parent string, id string) (*Api, error) {
+	m, err := names.ParseProject(parent)
+	if err != nil {
+		return nil, err
+	} else if err := names.ValidateID(id); err != nil {
 		return nil, err
 	}
-	api := &Api{}
-	api.ProjectID = m[1]
-	api.ApiID = apiID
-	return api, nil
+
+	return &Api{
+		ProjectID: m[1],
+		ApiID:     id,
+	}, nil
 }
 
 // NewApiFromResourceName parses resource names and returns an initialized api.
 func NewApiFromResourceName(name string) (*Api, error) {
-	api := &Api{}
-	m := names.ApiRegexp().FindStringSubmatch(name)
-	if m == nil {
-		return nil, fmt.Errorf("invalid api name (%s)", name)
+	m, err := names.ParseApi(name)
+	if err != nil {
+		return nil, err
 	}
-	api.ProjectID = m[1]
-	api.ApiID = m[2]
-	return api, nil
+
+	return &Api{
+		ProjectID: m[1],
+		ApiID:     m[2],
+	}, nil
 }
 
 // ResourceName generates the resource name of a api.
