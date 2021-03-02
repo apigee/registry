@@ -37,8 +37,8 @@ func ResourceNameOfSpec(segments []string) string {
 	return ""
 }
 
-func GetBytesForSpec(spec *rpc.Spec) ([]byte, error) {
-	if strings.Contains(spec.GetStyle(), "+gzip") {
+func GetBytesForSpec(spec *rpc.ApiSpec) ([]byte, error) {
+	if strings.Contains(spec.GetMimeType(), "+gzip") {
 		return GUnzippedBytes(spec.GetContents())
 	} else {
 		return spec.GetContents(), nil
@@ -57,21 +57,21 @@ func UploadBytesForSpec(ctx context.Context, client connection.Client, parent st
 	if err := zw.Close(); err != nil {
 		log.Fatal(err)
 	}
-	spec := &rpcpb.Spec{}
-	spec.Style = style
+	spec := &rpcpb.ApiSpec{}
+	spec.MimeType = style
 	spec.Contents = buf.Bytes()
 
-	request := &rpc.CreateSpecRequest{}
+	request := &rpc.CreateApiSpecRequest{}
 	request.Parent = parent
-	request.SpecId = specID
-	request.Spec = spec
-	_, err = client.CreateSpec(ctx, request)
+	request.ApiSpecId = specID
+	request.ApiSpec = spec
+	_, err = client.CreateApiSpec(ctx, request)
 	if err != nil {
 		// if this fails, we should try calling UpdateSpec
 		spec.Name = parent + "/specs/" + specID
-		request := &rpc.UpdateSpecRequest{}
-		request.Spec = spec
-		_, err = client.UpdateSpec(ctx, request)
+		request := &rpc.UpdateApiSpecRequest{}
+		request.ApiSpec = spec
+		_, err = client.UpdateApiSpec(ctx, request)
 		return err
 	}
 	return nil

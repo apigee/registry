@@ -40,15 +40,10 @@ var projectType = graphql.NewObject(
 				Args:    argumentsForCollectionQuery,
 				Resolve: resolveAPIs,
 			},
-			"labels": &graphql.Field{
-				Type:    connectionType(labelType),
+			"artifacts": &graphql.Field{
+				Type:    connectionType(artifactType),
 				Args:    argumentsForCollectionQuery,
-				Resolve: resolveLabels,
-			},
-			"properties": &graphql.Field{
-				Type:    connectionType(propertyType),
-				Args:    argumentsForCollectionQuery,
-				Resolve: resolveProperties,
+				Resolve: resolveArtifacts,
 			},
 			"created": &graphql.Field{
 				Type: timestampType,

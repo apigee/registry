@@ -16,7 +16,6 @@ package models
 
 import (
 	"fmt"
-	"regexp"
 	"time"
 
 	"github.com/apigee/registry/rpc"
@@ -39,52 +38,42 @@ type Version struct {
 	CreateTime  time.Time // Creation time.
 	UpdateTime  time.Time // Time of last change.
 	State       string    // Lifecycle stage.
+	Labels      []byte    `datastore:",noindex"` // Serialized labels.
+	Annotations []byte    `datastore:",noindex"` // Serialized annotations.
 }
 
-// ParseParentApi parses the name of an API that is the parent of a version.
-func ParseParentApi(parent string) ([]string, error) {
-	r := regexp.MustCompile("^projects/" + names.NameRegex +
-		"/apis/" + names.NameRegex +
-		"$")
-	m := r.FindStringSubmatch(parent)
-	if m == nil {
-		return nil, fmt.Errorf("invalid parent '%s'", parent)
-	}
-	return m, nil
-}
-
-// NewVersionFromParentAndVersionID returns an initialized api for a specified parent and apiID.
-func NewVersionFromParentAndVersionID(parent string, versionID string) (*Version, error) {
-	r := regexp.MustCompile("^projects/" + names.NameRegex + "/apis/" + names.NameRegex + "$")
-	m := r.FindStringSubmatch(parent)
-	if m == nil {
-		return nil, fmt.Errorf("invalid api '%s'", parent)
-	}
-	if err := names.ValidateID(versionID); err != nil {
+// NewVersionFromParentAndVersionID returns an initialized version for a specified parent and ID.
+func NewVersionFromParentAndVersionID(parent string, id string) (*Version, error) {
+	m, err := names.ParseApi(parent)
+	if err != nil {
+		return nil, err
+	} else if err := names.ValidateID(id); err != nil {
 		return nil, err
 	}
-	version := &Version{}
-	version.ProjectID = m[1]
-	version.ApiID = m[2]
-	version.VersionID = versionID
-	return version, nil
+
+	return &Version{
+		ProjectID: m[1],
+		ApiID:     m[2],
+		VersionID: id,
+	}, nil
 }
 
 // NewVersionFromResourceName parses resource names and returns an initialized version.
 func NewVersionFromResourceName(name string) (*Version, error) {
-	version := &Version{}
-	m := names.VersionRegexp().FindStringSubmatch(name)
-	if m == nil {
-		return nil, fmt.Errorf("invalid version name (%s)", name)
+	m, err := names.ParseVersion(name)
+	if err != nil {
+		return nil, err
 	}
-	version.ProjectID = m[1]
-	version.ApiID = m[2]
-	version.VersionID = m[3]
-	return version, nil
+
+	return &Version{
+		ProjectID: m[1],
+		ApiID:     m[2],
+		VersionID: m[3],
+	}, nil
 }
 
 // NewVersionFromMessage returns an initialized version from a message.
-func NewVersionFromMessage(message *rpc.Version) (*Version, error) {
+func NewVersionFromMessage(message *rpc.ApiVersion) (*Version, error) {
 	version, err := NewVersionFromResourceName(message.GetName())
 	if err != nil {
 		return nil, err
@@ -101,19 +90,27 @@ func (version *Version) ResourceName() string {
 }
 
 // Message returns a message representing a version.
-func (version *Version) Message() (message *rpc.Version, err error) {
-	message = &rpc.Version{}
+func (version *Version) Message(view rpc.View) (message *rpc.ApiVersion, err error) {
+	message = &rpc.ApiVersion{}
 	message.Name = version.ResourceName()
 	message.DisplayName = version.DisplayName
 	message.Description = version.Description
 	message.CreateTime, err = ptypes.TimestampProto(version.CreateTime)
 	message.UpdateTime, err = ptypes.TimestampProto(version.UpdateTime)
 	message.State = version.State
+	if message.Labels, err = mapForBytes(version.Labels); err != nil {
+		return nil, err
+	}
+	if view == rpc.View_FULL {
+		if message.Annotations, err = mapForBytes(version.Annotations); err != nil {
+			return nil, err
+		}
+	}
 	return message, err
 }
 
 // Update modifies a version using the contents of a message.
-func (version *Version) Update(message *rpc.Version, mask *fieldmaskpb.FieldMask) error {
+func (version *Version) Update(message *rpc.ApiVersion, mask *fieldmaskpb.FieldMask) error {
 	if activeUpdateMask(mask) {
 		for _, field := range mask.Paths {
 			switch field {
@@ -123,13 +120,35 @@ func (version *Version) Update(message *rpc.Version, mask *fieldmaskpb.FieldMask
 				version.Description = message.GetDescription()
 			case "state":
 				version.State = message.GetState()
+			case "labels":
+				var err error
+				if version.Labels, err = bytesForMap(message.GetLabels()); err != nil {
+					return err
+				}
+			case "annotations":
+				var err error
+				if version.Annotations, err = bytesForMap(message.GetAnnotations()); err != nil {
+					return err
+				}
 			}
 		}
 	} else {
 		version.DisplayName = message.GetDisplayName()
 		version.Description = message.GetDescription()
 		version.State = message.GetState()
+		var err error
+		if version.Labels, err = bytesForMap(message.GetLabels()); err != nil {
+			return err
+		}
+		if version.Annotations, err = bytesForMap(message.GetAnnotations()); err != nil {
+			return err
+		}
 	}
 	version.UpdateTime = time.Now()
 	return nil
+}
+
+// LabelsMap returns a map representation of stored labels.
+func (version *Version) LabelsMap() (map[string]string, error) {
+	return mapForBytes(version.Labels)
 }

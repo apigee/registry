@@ -16,6 +16,7 @@ package core
 
 import (
 	"context"
+	"path"
 
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/rpc"
@@ -23,24 +24,24 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func SetProperty(ctx context.Context,
+func SetArtifact(ctx context.Context,
 	client *gapic.RegistryClient,
-	property *rpc.Property) error {
-	request := &rpc.CreatePropertyRequest{}
-	request.Property = property
-	request.PropertyId = property.GetRelation()
-	request.Parent = property.GetSubject()
-	// First try setting a new property value.
-	_, err := client.CreateProperty(ctx, request)
+	artifact *rpc.Artifact) error {
+	request := &rpc.CreateArtifactRequest{}
+	request.Artifact = artifact
+	request.ArtifactId = path.Base(artifact.GetName())
+	request.Parent = path.Dir(path.Dir(artifact.GetName()))
+	// First try setting a new artifact value.
+	_, err := client.CreateArtifact(ctx, request)
 	if err == nil {
 		return nil
 	}
-	// If that failed because the property already exists, update it.
+	// If that failed because the artifact already exists, replace it.
 	code := status.Code(err)
 	if code == codes.AlreadyExists {
-		request := &rpc.UpdatePropertyRequest{}
-		request.Property = property
-		_, err := client.UpdateProperty(ctx, request)
+		request := &rpc.ReplaceArtifactRequest{}
+		request.Artifact = artifact
+		_, err := client.ReplaceArtifact(ctx, request)
 		return err
 	}
 	return err

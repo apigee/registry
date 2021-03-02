@@ -80,13 +80,11 @@ func (task *deleteTask) Run() error {
 	case "api":
 		return task.client.DeleteApi(task.ctx, &rpc.DeleteApiRequest{Name: task.resourceName})
 	case "version":
-		return task.client.DeleteVersion(task.ctx, &rpc.DeleteVersionRequest{Name: task.resourceName})
+		return task.client.DeleteApiVersion(task.ctx, &rpc.DeleteApiVersionRequest{Name: task.resourceName})
 	case "spec":
-		return task.client.DeleteSpec(task.ctx, &rpc.DeleteSpecRequest{Name: task.resourceName})
-	case "property":
-		return task.client.DeleteProperty(task.ctx, &rpc.DeletePropertyRequest{Name: task.resourceName})
-	case "label":
-		return task.client.DeleteLabel(task.ctx, &rpc.DeleteLabelRequest{Name: task.resourceName})
+		return task.client.DeleteApiSpec(task.ctx, &rpc.DeleteApiSpecRequest{Name: task.resourceName})
+	case "artifact":
+		return task.client.DeleteArtifact(task.ctx, &rpc.DeleteArtifactRequest{Name: task.resourceName})
 	default:
 		return nil
 	}
@@ -104,10 +102,8 @@ func matchAndHandleDeleteCmd(
 		return deleteVersions(ctx, client, m, deleteFilter, taskQueue)
 	} else if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
 		return deleteSpecs(ctx, client, m, deleteFilter, taskQueue)
-	} else if m := names.PropertyRegexp().FindStringSubmatch(name); m != nil {
-		return deleteProperties(ctx, client, m, deleteFilter, taskQueue)
-	} else if m := names.LabelRegexp().FindStringSubmatch(name); m != nil {
-		return deleteLabels(ctx, client, m, deleteFilter, taskQueue)
+	} else if m := names.ArtifactRegexp().FindStringSubmatch(name); m != nil {
+		return deleteArtifacts(ctx, client, m, deleteFilter, taskQueue)
 	} else {
 		return fmt.Errorf("unsupported resource name: see the 'apg registry delete-' subcommands for alternatives")
 	}
@@ -135,7 +131,7 @@ func deleteVersions(
 	segments []string,
 	filterFlag string,
 	taskQueue chan core.Task) error {
-	return core.ListVersions(ctx, client, segments, filterFlag, func(version *rpc.Version) {
+	return core.ListVersions(ctx, client, segments, filterFlag, func(version *rpc.ApiVersion) {
 		taskQueue <- &deleteTask{
 			ctx:          ctx,
 			client:       client,
@@ -151,7 +147,7 @@ func deleteSpecs(
 	segments []string,
 	filterFlag string,
 	taskQueue chan core.Task) error {
-	return core.ListSpecs(ctx, client, segments, filterFlag, func(spec *rpc.Spec) {
+	return core.ListSpecs(ctx, client, segments, filterFlag, func(spec *rpc.ApiSpec) {
 		taskQueue <- &deleteTask{
 			ctx:          ctx,
 			client:       client,
@@ -161,34 +157,18 @@ func deleteSpecs(
 	})
 }
 
-func deleteProperties(
+func deleteArtifacts(
 	ctx context.Context,
 	client *gapic.RegistryClient,
 	segments []string,
 	filterFlag string,
 	taskQueue chan core.Task) error {
-	return core.ListProperties(ctx, client, segments, filterFlag, false, func(property *rpc.Property) {
+	return core.ListArtifacts(ctx, client, segments, filterFlag, false, func(artifact *rpc.Artifact) {
 		taskQueue <- &deleteTask{
 			ctx:          ctx,
 			client:       client,
-			resourceName: property.Name,
-			resourceKind: "property",
-		}
-	})
-}
-
-func deleteLabels(
-	ctx context.Context,
-	client *gapic.RegistryClient,
-	segments []string,
-	filterFlag string,
-	taskQueue chan core.Task) error {
-	return core.ListLabels(ctx, client, segments, filterFlag, func(label *rpc.Label) {
-		taskQueue <- &deleteTask{
-			ctx:          ctx,
-			client:       client,
-			resourceName: label.Name,
-			resourceKind: "label",
+			resourceName: artifact.Name,
+			resourceKind: "artifact",
 		}
 	})
 }

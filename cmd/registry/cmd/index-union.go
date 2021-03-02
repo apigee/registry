@@ -25,7 +25,7 @@ import (
 
 func init() {
 	indexCmd.AddCommand(indexUnionCmd)
-	indexUnionCmd.Flags().String("output", "", "name of property where output should be stored")
+	indexUnionCmd.Flags().String("output", "", "name of artifact where output should be stored")
 }
 
 var indexUnionCmd = &cobra.Command{
@@ -35,7 +35,7 @@ var indexUnionCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
 		flagset := cmd.LocalFlags()
-		outputPropertyName, err := flagset.GetString("output")
+		outputArtifactName, err := flagset.GetString("output")
 		if err != nil {
 			log.Fatalf("%s", err.Error())
 		}
@@ -46,8 +46,8 @@ var indexUnionCmd = &cobra.Command{
 		}
 		_, inputs := collectInputIndexes(ctx, client, args, indexFilter)
 		output := core.IndexUnion(inputs)
-		if outputPropertyName != "" {
-			setIndexToProperty(ctx, client, output, outputPropertyName)
+		if outputArtifactName != "" {
+			setIndexToArtifact(ctx, client, output, outputArtifactName)
 		} else {
 			core.PrintMessage(output)
 		}

@@ -18,13 +18,11 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"strings"
 
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
-	"github.com/golang/protobuf/ptypes/any"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/proto"
 )
@@ -59,7 +57,7 @@ var computeLintCmd = &cobra.Command{
 		name := args[0]
 		if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
 			// Iterate through a collection of specs and evaluate each.
-			err = core.ListSpecs(ctx, client, m, computeFilter, func(spec *rpc.Spec) {
+			err = core.ListSpecs(ctx, client, m, computeFilter, func(spec *rpc.ApiSpec) {
 				taskQueue <- &computeLintTask{
 					ctx:      ctx,
 					client:   client,
@@ -92,36 +90,36 @@ func lintRelation(linter string) string {
 }
 
 func (task *computeLintTask) Run() error {
-	request := &rpc.GetSpecRequest{
+	request := &rpc.GetApiSpecRequest{
 		Name: task.specName,
 		View: rpc.View_FULL,
 	}
-	spec, err := task.client.GetSpec(task.ctx, request)
+	spec, err := task.client.GetApiSpec(task.ctx, request)
 	if err != nil {
 		return err
 	}
 	var relation string
 	var lint *rpc.Lint
-	if strings.HasPrefix(spec.GetStyle(), "openapi") {
+	if core.IsOpenAPIv2(spec.GetMimeType()) || core.IsOpenAPIv3(spec.GetMimeType()) {
 		// the default openapi linter is gnostic
 		if task.linter == "" {
 			task.linter = "gnostic"
 		}
 		relation = lintRelation(task.linter)
-		log.Printf("computing %s/properties/%s", spec.Name, relation)
+		log.Printf("computing %s/artifacts/%s", spec.Name, relation)
 		lint, err = core.NewLintFromOpenAPI(spec.Name, spec.GetContents(), task.linter)
 		if err != nil {
 			return fmt.Errorf("error processing OpenAPI: %s (%s)", spec.Name, err.Error())
 		}
-	} else if strings.HasPrefix(spec.GetStyle(), "discovery") {
+	} else if core.IsDiscovery(spec.GetMimeType()) {
 		return fmt.Errorf("unsupported Discovery document: %s", spec.Name)
-	} else if spec.GetStyle() == "proto+zip" {
+	} else if core.IsProto(spec.GetMimeType()) && core.IsZipArchive(spec.GetMimeType()) {
 		// the default proto linter is the aip linter
 		if task.linter == "" {
 			task.linter = "aip"
 		}
 		relation = lintRelation(task.linter)
-		log.Printf("computing %s/properties/%s", spec.Name, relation)
+		log.Printf("computing %s/artifacts/%s", spec.Name, relation)
 		lint, err = core.NewLintFromZippedProtos(spec.Name, spec.GetContents())
 		if err != nil {
 			return fmt.Errorf("error processing protos: %s (%s)", spec.Name, err.Error())
@@ -131,18 +129,12 @@ func (task *computeLintTask) Run() error {
 	}
 	subject := spec.GetName()
 	messageData, err := proto.Marshal(lint)
-	property := &rpc.Property{
-		Subject:  subject,
-		Relation: relation,
-		Name:     subject + "/properties/" + relation,
-		Value: &rpc.Property_MessageValue{
-			MessageValue: &any.Any{
-				TypeUrl: "google.cloud.apigee.registry.v1alpha1.Lint",
-				Value:   messageData,
-			},
-		},
+	artifact := &rpc.Artifact{
+		Name:     subject + "/artifacts/" + relation,
+		MimeType: core.MimeTypeForMessageType("google.cloud.apigee.registry.applications.v1alpha1.Lint"),
+		Contents: messageData,
 	}
-	err = core.SetProperty(task.ctx, task.client, property)
+	err = core.SetArtifact(task.ctx, task.client, artifact)
 	if err != nil {
 		return err
 	}

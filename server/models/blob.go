@@ -27,7 +27,7 @@ type Blob struct {
 	VersionID   string    // Uniquely identifies a version within a api.
 	SpecID      string    // Uniquely identifies a spec within a version.
 	RevisionID  string    // Uniquely identifies a revision of a spec.
-	PropertyID  string    // Uniquely identifies a property on a resource.
+	ArtifactID  string    // Uniquely identifies an artifact on a resource.
 	Hash        string    // Hash of the blob contents.
 	SizeInBytes int32     // Size of the blob contents.
 	Contents    []byte    `datastore:",noindex"` // The contents of the blob.
@@ -52,16 +52,16 @@ func NewBlobForSpec(spec *Spec, contents []byte) *Blob {
 	}
 }
 
-// NewBlobForProperty creates a new Blob object to store property contents.
-func NewBlobForProperty(property *Property, contents []byte) *Blob {
+// NewBlobForArtifact creates a new Blob object to store artifact contents.
+func NewBlobForArtifact(artifact *Artifact, contents []byte) *Blob {
 	now := time.Now()
 	return &Blob{
-		ProjectID:   property.ProjectID,
-		ApiID:       property.ApiID,
-		VersionID:   property.VersionID,
-		SpecID:      property.SpecID,
-		RevisionID:  property.RevisionID,
-		PropertyID:  property.PropertyID,
+		ProjectID:   artifact.ProjectID,
+		ApiID:       artifact.ApiID,
+		VersionID:   artifact.VersionID,
+		SpecID:      artifact.SpecID,
+		RevisionID:  artifact.RevisionID,
+		ArtifactID:  artifact.ArtifactID,
 		Hash:        hashForBytes(contents),
 		SizeInBytes: int32(len(contents)),
 		Contents:    contents,

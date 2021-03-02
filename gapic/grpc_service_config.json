@@ -3,34 +3,13 @@
       {
         "name": [
           {
-            "service": "google.cloud.apigee.registry.v1alpha1.Registry",
-            "method": "GetApi"
-          },
-          {
-            "service": "google.cloud.apigee.registry.v1alpha1.Registry",
-            "method": "CreateApi"
-          },
-          {
-            "service": "google.cloud.apigee.registry.v1alpha1.Registry",
-            "method": "GetVersion"
-          },
-          {
-            "service": "google.cloud.apigee.registry.v1alpha1.Registry",
-            "method": "CreateVersion"
-          },
-          {
-            "service": "google.cloud.apigee.registry.v1alpha1.Registry",
-            "method": "GetSpec"
-          },
-          {
-            "service": "google.cloud.apigee.registry.v1alpha1.Registry",
-            "method": "CreateSpec"
+            "service": "google.cloud.apigee.registry.v1.Registry"
           }
         ],
-        "timeout": "600s",
+        "timeout": "60s",
         "retryPolicy": {
           "initialBackoff": "0.200s",
-          "maxBackoff": "60s",
+          "maxBackoff": "10s",
           "backoffMultiplier": 1.3,
           "retryableStatusCodes": [
             "UNKNOWN",

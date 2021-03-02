@@ -16,7 +16,6 @@ package models
 
 import (
 	"fmt"
-	"regexp"
 	"time"
 
 	"github.com/apigee/registry/rpc"
@@ -39,35 +38,36 @@ type Api struct {
 	UpdateTime         time.Time // Time of last change.
 	Availability       string    // Availability of the API.
 	RecommendedVersion string    // Recommended API version.
-	Owner              string    // The owner of the API.
+	Labels             []byte    `datastore:",noindex"` // Serialized labels.
+	Annotations        []byte    `datastore:",noindex"` // Serialized annotations.
 }
 
-// NewApiFromParentAndApiID returns an initialized api for a specified parent and apiID.
-func NewApiFromParentAndApiID(parent string, apiID string) (*Api, error) {
-	r := regexp.MustCompile("^projects/" + names.NameRegex + "$")
-	m := r.FindStringSubmatch(parent)
-	if m == nil {
-		return nil, fmt.Errorf("invalid parent '%s'", parent)
-	}
-	if err := names.ValidateID(apiID); err != nil {
+// NewApiFromParentAndApiID returns an initialized api for a specified parent and ID.
+func NewApiFromParentAndApiID(parent string, id string) (*Api, error) {
+	m, err := names.ParseProject(parent)
+	if err != nil {
+		return nil, err
+	} else if err := names.ValidateID(id); err != nil {
 		return nil, err
 	}
-	api := &Api{}
-	api.ProjectID = m[1]
-	api.ApiID = apiID
-	return api, nil
+
+	return &Api{
+		ProjectID: m[1],
+		ApiID:     id,
+	}, nil
 }
 
 // NewApiFromResourceName parses resource names and returns an initialized api.
 func NewApiFromResourceName(name string) (*Api, error) {
-	api := &Api{}
-	m := names.ApiRegexp().FindStringSubmatch(name)
-	if m == nil {
-		return nil, fmt.Errorf("invalid api name (%s)", name)
+	m, err := names.ParseApi(name)
+	if err != nil {
+		return nil, err
 	}
-	api.ProjectID = m[1]
-	api.ApiID = m[2]
-	return api, nil
+
+	return &Api{
+		ProjectID: m[1],
+		ApiID:     m[2],
+	}, nil
 }
 
 // ResourceName generates the resource name of a api.
@@ -75,8 +75,8 @@ func (api *Api) ResourceName() string {
 	return fmt.Sprintf("projects/%s/apis/%s", api.ProjectID, api.ApiID)
 }
 
-// Message returns a message representing a api.
-func (api *Api) Message() (message *rpc.Api, err error) {
+// Message returns a message representing an api.
+func (api *Api) Message(view rpc.View) (message *rpc.Api, err error) {
 	message = &rpc.Api{}
 	message.Name = api.ResourceName()
 	message.DisplayName = api.DisplayName
@@ -85,8 +85,15 @@ func (api *Api) Message() (message *rpc.Api, err error) {
 	message.UpdateTime, err = ptypes.TimestampProto(api.UpdateTime)
 	message.Availability = api.Availability
 	message.RecommendedVersion = api.RecommendedVersion
-	message.Owner = api.Owner
-	return message, err
+	if message.Labels, err = mapForBytes(api.Labels); err != nil {
+		return nil, err
+	}
+	if view == rpc.View_FULL {
+		if message.Annotations, err = mapForBytes(api.Annotations); err != nil {
+			return nil, err
+		}
+	}
+	return message, nil
 }
 
 // Update modifies a api using the contents of a message.
@@ -102,8 +109,16 @@ func (api *Api) Update(message *rpc.Api, mask *fieldmaskpb.FieldMask) error {
 				api.Availability = message.GetAvailability()
 			case "recommended_version":
 				api.RecommendedVersion = message.GetRecommendedVersion()
-			case "owner":
-				api.Owner = message.GetOwner()
+			case "labels":
+				var err error
+				if api.Labels, err = bytesForMap(message.GetLabels()); err != nil {
+					return err
+				}
+			case "annotations":
+				var err error
+				if api.Annotations, err = bytesForMap(message.GetAnnotations()); err != nil {
+					return err
+				}
 			}
 		}
 	} else {
@@ -111,8 +126,19 @@ func (api *Api) Update(message *rpc.Api, mask *fieldmaskpb.FieldMask) error {
 		api.Description = message.GetDescription()
 		api.Availability = message.GetAvailability()
 		api.RecommendedVersion = message.GetRecommendedVersion()
-		api.Owner = message.GetOwner()
+		var err error
+		if api.Labels, err = bytesForMap(message.GetLabels()); err != nil {
+			return err
+		}
+		if api.Annotations, err = bytesForMap(message.GetAnnotations()); err != nil {
+			return err
+		}
 	}
 	api.UpdateTime = time.Now()
 	return nil
+}
+
+// LabelsMap returns a map representation of stored labels.
+func (api *Api) LabelsMap() (map[string]string, error) {
+	return mapForBytes(api.Labels)
 }

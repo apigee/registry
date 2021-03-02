@@ -21,22 +21,20 @@ import (
 
 // VersionsRegexp returns a regular expression that matches a collection of versions.
 func VersionsRegexp() *regexp.Regexp {
-	return regexp.MustCompile("^projects/" + NameRegex + "/apis/" + NameRegex + "/versions$")
+	return regexp.MustCompile("^projects/" + identifier + "/apis/" + identifier + "/versions$")
 }
 
 // VersionRegexp returns a regular expression that matches a version resource name.
 func VersionRegexp() *regexp.Regexp {
-	return regexp.MustCompile("^projects/" + NameRegex + "/apis/" + NameRegex + "/versions/" + NameRegex + "$")
+	return regexp.MustCompile("^projects/" + identifier + "/apis/" + identifier + "/versions/" + identifier + "$")
 }
 
-// ParseParentApi parses the name of an API that is the parent of a version.
-func ParseParentApi(parent string) ([]string, error) {
-	r := regexp.MustCompile("^projects/" + NameRegex +
-		"/apis/" + NameRegex +
-		"$")
-	m := r.FindStringSubmatch(parent)
+// ParseVersion parses the name of a version.
+func ParseVersion(name string) ([]string, error) {
+	r := VersionRegexp()
+	m := r.FindStringSubmatch(name)
 	if m == nil {
-		return nil, fmt.Errorf("invalid parent '%s'", parent)
+		return nil, fmt.Errorf("invalid version name %q: must match %q", name, r)
 	}
 	return m, nil
 }

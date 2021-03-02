@@ -17,31 +17,29 @@ package names
 import (
 	"fmt"
 	"regexp"
+
+	"github.com/google/uuid"
 )
 
-// We might extend this to all characters that do not require escaping.
-// See "Resource ID Segments" in https://aip.dev/122.
-const NameRegex = "([a-zA-Z0-9-_\\.]+)"
+// The format of a resource identifier.
+// This may be extended to include all characters that do not require escaping.
+// See https://aip.dev/122#resource-id-segments.
+const identifier = "([a-zA-Z0-9-_\\.]+)"
 
-// Generated revision names are lowercase hex strings, but we also
-// allow user-specified revision tags which can be mixed-case strings
-// containing dashes.
-const RevisionRegex = "(@[a-zA-z0-9-]+)?"
+// The format of a custom revision tag.
+const revisionTag = "(@[a-zA-z0-9-]+)?"
 
-func ValidateID(id string) error {
-	r := regexp.MustCompile("^" + NameRegex + "$")
-	m := r.FindStringSubmatch(id)
-	if m == nil {
-		return fmt.Errorf("invalid id '%s'", id)
-	}
-	return nil
+// GenerateID generates a random resource ID.
+func GenerateID() string {
+	return uuid.New().String()[:8]
 }
 
-func ValidateRevision(s string) error {
-	r := regexp.MustCompile("^" + RevisionRegex + "$")
-	m := r.FindStringSubmatch(s)
+// ValidateID returns an error if the provided ID is invalid.
+func ValidateID(id string) error {
+	r := regexp.MustCompile("^" + identifier + "$")
+	m := r.FindStringSubmatch(id)
 	if m == nil {
-		return fmt.Errorf("invalid revision '%s'", s)
+		return fmt.Errorf("invalid id %q, must match %q", id, r)
 	}
 	return nil
 }

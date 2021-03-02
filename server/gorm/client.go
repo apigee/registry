@@ -23,13 +23,13 @@ import (
 	"strconv"
 	"sync"
 
+	_ "github.com/GoogleCloudPlatform/cloudsql-proxy/proxy/dialers/postgres"
 	"github.com/apigee/registry/server/models"
 	"github.com/apigee/registry/server/storage"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
-	_ "github.com/GoogleCloudPlatform/cloudsql-proxy/proxy/dialers/postgres"
 )
 
 func getGID() uint64 {
@@ -99,7 +99,7 @@ func NewClient(ctx context.Context, gormDBName, gormConfig string) (*Client, err
 	case "postgres", "cloudsqlpostgres":
 		db, err := gorm.Open(postgres.New(postgres.Config{
 			DriverName: gormDBName,
-			DSN: gormConfig,
+			DSN:        gormConfig,
 		}), config())
 		if err != nil {
 			openErrorCount++
@@ -159,8 +159,7 @@ func (c *Client) reset() {
 	c.resetTable(&models.Version{})
 	c.resetTable(&models.Spec{})
 	c.resetTable(&models.Blob{})
-	c.resetTable(&models.Property{})
-	c.resetTable(&models.Label{})
+	c.resetTable(&models.Artifact{})
 	c.resetTable(&models.SpecRevisionTag{})
 }
 
@@ -170,8 +169,7 @@ func (c *Client) ensure() *Client {
 	c.ensureTable(&models.Version{})
 	c.ensureTable(&models.Spec{})
 	c.ensureTable(&models.Blob{})
-	c.ensureTable(&models.Property{})
-	c.ensureTable(&models.Label{})
+	c.ensureTable(&models.Artifact{})
 	c.ensureTable(&models.SpecRevisionTag{})
 	return c
 }
@@ -210,9 +208,7 @@ func (c *Client) Put(ctx context.Context, k storage.Key, v interface{}) (storage
 		r.Key = k.(*Key).Name
 	case *models.Blob:
 		r.Key = k.(*Key).Name
-	case *models.Property:
-		r.Key = k.(*Key).Name
-	case *models.Label:
+	case *models.Artifact:
 		r.Key = k.(*Key).Name
 	}
 	c.db.Transaction(
@@ -247,10 +243,8 @@ func (c *Client) Delete(ctx context.Context, k storage.Key) error {
 		err = c.db.Delete(&models.SpecRevisionTag{}, "key = ?", k.(*Key).Name).Error
 	case "Blob":
 		err = c.db.Delete(&models.Blob{}, "key = ?", k.(*Key).Name).Error
-	case "Property":
-		err = c.db.Delete(&models.Property{}, "key = ?", k.(*Key).Name).Error
-	case "Label":
-		err = c.db.Delete(&models.Label{}, "key = ?", k.(*Key).Name).Error
+	case "Artifact":
+		err = c.db.Delete(&models.Artifact{}, "key = ?", k.(*Key).Name).Error
 	default:
 		return fmt.Errorf("invalid key type (fix in client.go): %s", k.(*Key).Kind)
 	}
@@ -294,12 +288,8 @@ func (c *Client) Run(ctx context.Context, q storage.Query) storage.Iterator {
 		var v []models.Blob
 		_ = op.Find(&v).Error
 		return &Iterator{Client: c, Values: v, Index: 0}
-	case "Property":
-		var v []models.Property
-		_ = op.Find(&v).Error
-		return &Iterator{Client: c, Values: v, Index: 0}
-	case "Label":
-		var v []models.Label
+	case "Artifact":
+		var v []models.Artifact
 		_ = op.Find(&v).Error
 		return &Iterator{Client: c, Values: v, Index: 0}
 	case "SpecRevisionTag":

@@ -58,11 +58,11 @@ func GetAPI(ctx context.Context,
 func GetVersion(ctx context.Context,
 	client *gapic.RegistryClient,
 	segments []string,
-	handler VersionHandler) (*rpc.Version, error) {
-	request := &rpc.GetVersionRequest{
+	handler VersionHandler) (*rpc.ApiVersion, error) {
+	request := &rpc.GetApiVersionRequest{
 		Name: "projects/" + segments[1] + "/apis/" + segments[2] + "/versions/" + segments[3],
 	}
-	version, err := client.GetVersion(ctx, request)
+	version, err := client.GetApiVersion(ctx, request)
 	if err != nil {
 		return nil, err
 	}
@@ -76,16 +76,16 @@ func GetSpec(ctx context.Context,
 	client *gapic.RegistryClient,
 	segments []string,
 	getContents bool,
-	handler SpecHandler) (*rpc.Spec, error) {
+	handler SpecHandler) (*rpc.ApiSpec, error) {
 	view := rpc.View_BASIC
 	if getContents {
 		view = rpc.View_FULL
 	}
-	request := &rpc.GetSpecRequest{
+	request := &rpc.GetApiSpecRequest{
 		Name: "projects/" + segments[1] + "/apis/" + segments[2] + "/versions/" + segments[3] + "/specs/" + segments[4],
 		View: view,
 	}
-	spec, err := client.GetSpec(ctx, request)
+	spec, err := client.GetApiSpec(ctx, request)
 	if err != nil {
 		return nil, err
 	}
@@ -95,16 +95,16 @@ func GetSpec(ctx context.Context,
 	return spec, nil
 }
 
-func GetProperty(ctx context.Context,
+func GetArtifact(ctx context.Context,
 	client *gapic.RegistryClient,
 	segments []string,
 	getContents bool,
-	handler PropertyHandler) (*rpc.Property, error) {
+	handler ArtifactHandler) (*rpc.Artifact, error) {
 	view := rpc.View_BASIC
 	if getContents {
 		view = rpc.View_FULL
 	}
-	request := &rpc.GetPropertyRequest{View: view}
+	request := &rpc.GetArtifactRequest{View: view}
 	if segments[3] == "" {
 		request.Name = "projects/" + segments[1]
 	} else if segments[5] == "" {
@@ -114,32 +114,14 @@ func GetProperty(ctx context.Context,
 	} else {
 		request.Name = "projects/" + segments[1] + "/apis/" + segments[3] + "/versions/" + segments[5] + "/specs/" + segments[7]
 	}
-	request.Name += "/properties/" + segments[8]
+	request.Name += "/artifacts/" + segments[8]
 
-	property, err := client.GetProperty(ctx, request)
+	artifact, err := client.GetArtifact(ctx, request)
 	if err != nil {
 		return nil, err
 	}
 	if handler != nil {
-		handler(property)
+		handler(artifact)
 	}
-	return property, nil
-}
-
-func GetLabel(ctx context.Context,
-	client *gapic.RegistryClient,
-	segments []string,
-	handler LabelHandler) (*rpc.Label, error) {
-	request := &rpc.GetLabelRequest{
-		// TODO: fix for labels on other resources (besides projects)
-		Name: "projects/" + segments[1] + "/labels/" + segments[2],
-	}
-	label, err := client.GetLabel(ctx, request)
-	if err != nil {
-		return nil, err
-	}
-	if handler != nil {
-		handler(label)
-	}
-	return label, nil
+	return artifact, nil
 }

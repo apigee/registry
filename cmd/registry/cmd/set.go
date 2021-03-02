@@ -38,7 +38,7 @@ func init() {
 
 var setCmd = &cobra.Command{
 	Use:   "set",
-	Short: "Set labels and properties on resources in the API Registry",
+	Short: "Set labels and artifacts on resources in the API Registry",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.TODO()
@@ -78,11 +78,7 @@ func (task *setTask) Name() string {
 
 func (task *setTask) Run() error {
 	if setLabelID != "" {
-		log.Printf("setting %s/labels/%s", task.resourceName, setLabelID)
-		return core.SetLabel(task.ctx, task.client, &rpc.Label{
-			Subject: task.resourceName,
-			Label:   setLabelID,
-		})
+		// todo: set labels
 	}
 	return nil
 }
@@ -144,7 +140,7 @@ func setVersions(
 	segments []string,
 	filterFlag string,
 	taskQueue chan core.Task) error {
-	return core.ListVersions(ctx, client, segments, filterFlag, func(version *rpc.Version) {
+	return core.ListVersions(ctx, client, segments, filterFlag, func(version *rpc.ApiVersion) {
 		taskQueue <- &setTask{
 			ctx:          ctx,
 			client:       client,
@@ -160,7 +156,7 @@ func setSpecs(
 	segments []string,
 	filterFlag string,
 	taskQueue chan core.Task) error {
-	return core.ListSpecs(ctx, client, segments, filterFlag, func(spec *rpc.Spec) {
+	return core.ListSpecs(ctx, client, segments, filterFlag, func(spec *rpc.ApiSpec) {
 		taskQueue <- &setTask{
 			ctx:          ctx,
 			client:       client,

@@ -18,13 +18,11 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"strings"
 
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
-	"github.com/golang/protobuf/ptypes/any"
 	discovery "github.com/googleapis/gnostic/discovery"
 	metrics "github.com/googleapis/gnostic/metrics"
 	vocab "github.com/googleapis/gnostic/metrics/vocabulary"
@@ -59,7 +57,7 @@ var computeVocabularyCmd = &cobra.Command{
 		name := args[0]
 		if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
 			// Iterate through a collection of specs and summarize each.
-			err = core.ListSpecs(ctx, client, m, computeFilter, func(spec *rpc.Spec) {
+			err = core.ListSpecs(ctx, client, m, computeFilter, func(spec *rpc.ApiSpec) {
 				taskQueue <- &computeVocabularyTask{
 					ctx:      ctx,
 					client:   client,
@@ -86,18 +84,18 @@ func (task *computeVocabularyTask) Name() string {
 }
 
 func (task *computeVocabularyTask) Run() error {
-	request := &rpc.GetSpecRequest{
+	request := &rpc.GetApiSpecRequest{
 		Name: task.specName,
 		View: rpc.View_FULL,
 	}
-	spec, err := task.client.GetSpec(task.ctx, request)
+	spec, err := task.client.GetApiSpec(task.ctx, request)
 	if err != nil {
 		return err
 	}
 	relation := "vocabulary"
-	log.Printf("computing %s/properties/%s", spec.Name, relation)
+	log.Printf("computing %s/artifacts/%s", spec.Name, relation)
 	var vocabulary *metrics.Vocabulary
-	if strings.HasPrefix(spec.GetStyle(), "openapi/v2") {
+	if core.IsOpenAPIv2(spec.GetMimeType()) {
 		data, err := core.GetBytesForSpec(spec)
 		if err != nil {
 			return nil
@@ -107,7 +105,7 @@ func (task *computeVocabularyTask) Run() error {
 			return fmt.Errorf("invalid OpenAPI: %s", spec.Name)
 		}
 		vocabulary = vocab.NewVocabularyFromOpenAPIv2(document)
-	} else if strings.HasPrefix(spec.GetStyle(), "openapi/v3") {
+	} else if core.IsOpenAPIv3(spec.GetMimeType()) {
 		data, err := core.GetBytesForSpec(spec)
 		if err != nil {
 			return nil
@@ -117,7 +115,7 @@ func (task *computeVocabularyTask) Run() error {
 			return fmt.Errorf("invalid OpenAPI: %s", spec.Name)
 		}
 		vocabulary = vocab.NewVocabularyFromOpenAPIv3(document)
-	} else if strings.HasPrefix(spec.GetStyle(), "discovery") {
+	} else if core.IsDiscovery(spec.GetMimeType()) {
 		data, err := core.GetBytesForSpec(spec)
 		if err != nil {
 			return nil
@@ -127,7 +125,7 @@ func (task *computeVocabularyTask) Run() error {
 			return fmt.Errorf("invalid Discovery: %s", spec.Name)
 		}
 		vocabulary = vocab.NewVocabularyFromDiscovery(document)
-	} else if spec.GetStyle() == "proto+zip" {
+	} else if core.IsProto(spec.GetMimeType()) && core.IsZipArchive(spec.GetMimeType()) {
 		vocabulary, err = core.NewVocabularyFromZippedProtos(spec.GetContents())
 		if err != nil {
 			return fmt.Errorf("error processing protos: %s", spec.Name)
@@ -137,18 +135,12 @@ func (task *computeVocabularyTask) Run() error {
 	}
 	subject := spec.GetName()
 	messageData, err := proto.Marshal(vocabulary)
-	property := &rpc.Property{
-		Subject:  subject,
-		Relation: relation,
-		Name:     subject + "/properties/" + relation,
-		Value: &rpc.Property_MessageValue{
-			MessageValue: &any.Any{
-				TypeUrl: "gnostic.metrics.Vocabulary",
-				Value:   messageData,
-			},
-		},
+	artifact := &rpc.Artifact{
+		Name:     subject + "/artifacts/" + relation,
+		MimeType: core.MimeTypeForMessageType("gnostic.metrics.Vocabulary"),
+		Contents: messageData,
 	}
-	err = core.SetProperty(task.ctx, task.client, property)
+	err = core.SetArtifact(task.ctx, task.client, artifact)
 	if err != nil {
 		return err
 	}

@@ -18,7 +18,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
-	"crypto/sha1"
+	"crypto/sha256"
 	"fmt"
 	"io/ioutil"
 	"testing"
@@ -65,18 +65,18 @@ func readAndGZipFile(filename string) (*bytes.Buffer, error) {
 }
 
 func hashForBytes(b []byte) string {
-	h := sha1.New()
+	h := sha256.New()
 	h.Write(b)
 	bs := h.Sum(nil)
 	return fmt.Sprintf("%x", bs)
 }
 
-func listAllSpecs(ctx context.Context, registryClient connection.Client) []*rpc.Spec {
-	specs := make([]*rpc.Spec, 0)
-	req := &rpc.ListSpecsRequest{
+func listAllSpecs(ctx context.Context, registryClient connection.Client) []*rpc.ApiSpec {
+	specs := make([]*rpc.ApiSpec, 0)
+	req := &rpc.ListApiSpecsRequest{
 		Parent: "projects/demo/apis/-/versions/-",
 	}
-	it := registryClient.ListSpecs(ctx, req)
+	it := registryClient.ListApiSpecs(ctx, req)
 	for {
 		spec, err := it.Next()
 		if err == nil {
@@ -90,10 +90,10 @@ func listAllSpecs(ctx context.Context, registryClient connection.Client) []*rpc.
 
 func listAllSpecRevisionIDs(ctx context.Context, registryClient connection.Client) []string {
 	revisionIDs := make([]string, 0)
-	req := &rpc.ListSpecRevisionsRequest{
+	req := &rpc.ListApiSpecRevisionsRequest{
 		Name: "projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 	}
-	it := registryClient.ListSpecRevisions(ctx, req)
+	it := registryClient.ListApiSpecRevisions(ctx, req)
 	for {
 		spec, err := it.Next()
 		if err == nil {
@@ -107,7 +107,7 @@ func listAllSpecRevisionIDs(ctx context.Context, registryClient connection.Clien
 
 func TestDemo(t *testing.T) {
 	var revisionIDs []string      // holds revision ids from queries
-	var specs []*rpc.Spec         // holds specs from queries
+	var specs []*rpc.ApiSpec      // holds specs from queries
 	var originalRevisionID string // revision id of first revision
 	var originalHash string       // hash of first revision
 
@@ -125,7 +125,9 @@ func TestDemo(t *testing.T) {
 			Name: "projects/demo",
 		}
 		err = registryClient.DeleteProject(ctx, req)
-		check(t, "Failed to delete demo project: %+v", err)
+		if status.Code(err) != codes.NotFound {
+			check(t, "Failed to delete demo project: %+v", err)
+		}
 	}
 	// Create the demo project.
 	{
@@ -184,7 +186,6 @@ func TestDemo(t *testing.T) {
 				DisplayName:  "Swagger Petstore",
 				Description:  "A sample API",
 				Availability: "GENERAL",
-				Owner:        "The OpenAPI Initiative",
 			},
 		}
 		_, err := registryClient.CreateApi(ctx, req)
@@ -192,26 +193,26 @@ func TestDemo(t *testing.T) {
 	}
 	// Create the petstore 1.0.0 version.
 	{
-		req := &rpc.CreateVersionRequest{
-			Parent:    "projects/demo/apis/petstore",
-			VersionId: "1.0.0",
+		req := &rpc.CreateApiVersionRequest{
+			Parent:       "projects/demo/apis/petstore",
+			ApiVersionId: "1.0.0",
 		}
-		_, err := registryClient.CreateVersion(ctx, req)
+		_, err := registryClient.CreateApiVersion(ctx, req)
 		check(t, "error creating version %s", err)
 	}
 	// Upload the petstore 1.0.0 OpenAPI spec.
 	{
 		buf, err := readAndGZipFile("petstore/1.0.0/openapi.yaml@r0")
 		check(t, "error reading spec", err)
-		req := &rpc.CreateSpecRequest{
-			Parent: "projects/demo/apis/petstore/versions/1.0.0",
-			SpecId: "openapi.yaml",
-			Spec: &rpc.Spec{
-				Style:    "openapi/v3+gzip",
+		req := &rpc.CreateApiSpecRequest{
+			Parent:    "projects/demo/apis/petstore/versions/1.0.0",
+			ApiSpecId: "openapi.yaml",
+			ApiSpec: &rpc.ApiSpec{
+				MimeType: "application/x.openapi+gzip; version=3.0.0",
 				Contents: buf.Bytes(),
 			},
 		}
-		_, err = registryClient.CreateSpec(ctx, req)
+		_, err = registryClient.CreateApiSpec(ctx, req)
 		check(t, "error creating spec %s", err)
 	}
 	// Update the OpenAPI spec three times with different revisions.
@@ -222,13 +223,13 @@ func TestDemo(t *testing.T) {
 	} {
 		buf, err := readAndGZipFile(filename)
 		check(t, "error reading spec", err)
-		req := &rpc.UpdateSpecRequest{
-			Spec: &rpc.Spec{
+		req := &rpc.UpdateApiSpecRequest{
+			ApiSpec: &rpc.ApiSpec{
 				Name:     "projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 				Contents: buf.Bytes(),
 			},
 		}
-		_, err = registryClient.UpdateSpec(ctx, req)
+		_, err = registryClient.UpdateApiSpec(ctx, req)
 		check(t, "error updating spec %s", err)
 	}
 	// List the spec revisions.
@@ -241,10 +242,10 @@ func TestDemo(t *testing.T) {
 	// Check the hash of the original revision.
 	if len(revisionIDs) > 0 {
 		originalRevisionID = revisionIDs[len(revisionIDs)-1]
-		req := &rpc.GetSpecRequest{
+		req := &rpc.GetApiSpecRequest{
 			Name: "projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml" + "@" + originalRevisionID,
 		}
-		spec, err := registryClient.GetSpec(ctx, req)
+		spec, err := registryClient.GetApiSpec(ctx, req)
 		check(t, "error getting spec %s", err)
 		originalHash = spec.Hash
 		// compute the hash of the original file
@@ -264,11 +265,11 @@ func TestDemo(t *testing.T) {
 	}
 	// tag a spec revision
 	{
-		req := &rpc.TagSpecRevisionRequest{
+		req := &rpc.TagApiSpecRevisionRequest{
 			Name: "projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml" + "@" + originalRevisionID,
 			Tag:  "og",
 		}
-		taggedSpec, err := registryClient.TagSpecRevision(ctx, req)
+		taggedSpec, err := registryClient.TagApiSpecRevision(ctx, req)
 		check(t, "error tagging spec", err)
 		if taggedSpec.Name != "projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml@og" {
 			t.Errorf("Incorrect name of tagged spec: %s", taggedSpec.Name)
@@ -279,11 +280,11 @@ func TestDemo(t *testing.T) {
 	}
 	// tag the tagged revision
 	{
-		req := &rpc.TagSpecRevisionRequest{
+		req := &rpc.TagApiSpecRevisionRequest{
 			Name: "projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml@og",
 			Tag:  "first",
 		}
-		taggedSpec, err := registryClient.TagSpecRevision(ctx, req)
+		taggedSpec, err := registryClient.TagApiSpecRevision(ctx, req)
 		check(t, "error tagging spec", err)
 		if taggedSpec.Name != "projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml@first" {
 			t.Errorf("Incorrect name of tagged spec: %s", taggedSpec.Name)
@@ -294,10 +295,10 @@ func TestDemo(t *testing.T) {
 	}
 	// get a spec by its tag
 	{
-		req := &rpc.GetSpecRequest{
+		req := &rpc.GetApiSpecRequest{
 			Name: "projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml@first",
 		}
-		spec, err := registryClient.GetSpec(ctx, req)
+		spec, err := registryClient.GetApiSpec(ctx, req)
 		check(t, "error getting spec %s", err)
 		if spec.Hash != originalHash {
 			t.Errorf("Incorrect hash for spec retrieved by tag: %s", spec.Hash)
@@ -305,11 +306,11 @@ func TestDemo(t *testing.T) {
 	}
 	// rollback a spec revision (this creates a new revision that's a copy)
 	{
-		req := &rpc.RollbackSpecRequest{
+		req := &rpc.RollbackApiSpecRequest{
 			Name:       "projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 			RevisionId: "og",
 		}
-		spec, err := registryClient.RollbackSpec(ctx, req)
+		spec, err := registryClient.RollbackApiSpec(ctx, req)
 		check(t, "error rolling back spec %s", err)
 		if spec.Hash != originalHash {
 			t.Errorf("Incorrect hash for rolled-back spec: %s", spec.Hash)
@@ -331,10 +332,10 @@ func TestDemo(t *testing.T) {
 	}
 	// delete a spec revision
 	{
-		req := &rpc.DeleteSpecRevisionRequest{
+		req := &rpc.DeleteApiSpecRevisionRequest{
 			Name: "projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml@og",
 		}
-		err := registryClient.DeleteSpecRevision(ctx, req)
+		err := registryClient.DeleteApiSpecRevision(ctx, req)
 		check(t, "error deleting spec revision %s", err)
 	}
 	// list specs, there should be only one
@@ -353,10 +354,10 @@ func TestDemo(t *testing.T) {
 	}
 	// delete the spec
 	{
-		req := &rpc.DeleteSpecRequest{
+		req := &rpc.DeleteApiSpecRequest{
 			Name: "projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 		}
-		err := registryClient.DeleteSpec(ctx, req)
+		err := registryClient.DeleteApiSpec(ctx, req)
 		check(t, "error deleting spec %s", err)
 	}
 	// list spec revisions, there should be none

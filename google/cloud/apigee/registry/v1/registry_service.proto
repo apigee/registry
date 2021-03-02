@@ -1,0 +1,938 @@
+// Copyright 2021 Google LLC. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//    http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package google.cloud.apigee.registry.v1;
+
+import "google/api/annotations.proto";
+import "google/api/client.proto";
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "google/cloud/apigee/registry/v1/registry_models.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/field_mask.proto";
+
+option java_package = "com.google.cloud.apigee.registry.v1";
+option java_multiple_files = true;
+option java_outer_classname = "RegistryServiceProto";
+option go_package = "github.com/apigee/registry/rpc;rpc";
+
+// The Registry service allows teams to manage descriptions of APIs.
+service Registry {
+  option (google.api.default_host) = "registry.googleapis.com";
+
+  // GetStatus returns the status of the service.
+  // GetStatus is for verifying open source deployments only
+  // and is not included in hosted versions of the API.
+  // (-- api-linter: core::0131::request-message-name=disabled
+  //     aip.dev/not-precedent: Not in the official API. --)
+  // (-- api-linter: core::0131::method-signature=disabled
+  //     aip.dev/not-precedent: Not in the official API. --)
+  // (-- api-linter: core::0131::http-uri-name=disabled
+  //     aip.dev/not-precedent: Not in the official API. --)
+  rpc GetStatus(protobuf.Empty) returns (Status) {
+    option (google.api.http) = {
+      get: "/v1/status"
+    };
+  }
+
+  // ListProjects returns matching projects.
+  // (-- api-linter: standard-methods=disabled --)
+  // (-- api-linter: core::0132::method-signature=disabled
+  //     aip.dev/not-precedent: projects are top-level resources. --)
+  rpc ListProjects(ListProjectsRequest) returns (ListProjectsResponse) {
+    option (google.api.http) = {
+      get: "/v1/projects"
+    };
+  }
+
+  // GetProject returns a specified project.
+  rpc GetProject(GetProjectRequest) returns (Project) {
+    option (google.api.http) = {
+      get: "/v1/{name=projects/*}"
+    };
+    option (google.api.method_signature) = "name";
+  }
+
+  // CreateProject creates a specified project.
+  // (-- api-linter: standard-methods=disabled --)
+  // (-- api-linter: core::0133::http-uri-parent=disabled
+  //     aip.dev/not-precedent: Project has an implicit parent. --)
+  // (-- api-linter: core::0133::method-signature=disabled
+  //     aip.dev/not-precedent: Project has an implicit parent. --)
+  rpc CreateProject(CreateProjectRequest) returns (Project) {
+    option (google.api.http) = {
+      post: "/v1/projects"
+      body: "project"
+    };
+    option (google.api.method_signature) = "project,project_id";
+  }
+
+  // UpdateProject can be used to modify a specified project.
+  rpc UpdateProject(UpdateProjectRequest) returns (Project) {
+    option (google.api.http) = {
+      patch: "/v1/{project.name=projects/*}"
+      body: "project"
+    };
+    option (google.api.method_signature) = "project,update_mask";
+  }
+
+  // DeleteProject removes a specified project and all of the resources that it
+  // owns.
+  rpc DeleteProject(DeleteProjectRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/v1/{name=projects/*}"
+    };
+    option (google.api.method_signature) = "name";
+  }
+
+  // ListApis returns matching APIs.
+  rpc ListApis(ListApisRequest) returns (ListApisResponse) {
+    option (google.api.http) = {
+      get: "/v1/{parent=projects/*}/apis"
+    };
+    option (google.api.method_signature) = "parent";
+  }
+
+  // GetApi returns a specified API.
+  rpc GetApi(GetApiRequest) returns (Api) {
+    option (google.api.http) = {
+      get: "/v1/{name=projects/*/apis/*}"
+    };
+    option (google.api.method_signature) = "name";
+  }
+
+  // CreateApi creates a specified API.
+  rpc CreateApi(CreateApiRequest) returns (Api) {
+    option (google.api.http) = {
+      post: "/v1/{parent=projects/*}/apis"
+      body: "api"
+    };
+    option (google.api.method_signature) = "parent,api,api_id";
+  }
+
+  // UpdateApi can be used to modify a specified API.
+  rpc UpdateApi(UpdateApiRequest) returns (Api) {
+    option (google.api.http) = {
+      patch: "/v1/{api.name=projects/*/apis/*}"
+      body: "api"
+    };
+    option (google.api.method_signature) = "api,update_mask";
+  }
+
+  // DeleteApi removes a specified API and all of the resources that it
+  // owns.
+  rpc DeleteApi(DeleteApiRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/v1/{name=projects/*/apis/*}"
+    };
+    option (google.api.method_signature) = "name";
+  }
+
+  // ListApiVersions returns matching versions.
+  rpc ListApiVersions(ListApiVersionsRequest)
+      returns (ListApiVersionsResponse) {
+    option (google.api.http) = {
+      get: "/v1/{parent=projects/*/apis/*}/versions"
+    };
+    option (google.api.method_signature) = "parent";
+  }
+
+  // GetApiVersion returns a specified version.
+  rpc GetApiVersion(GetApiVersionRequest) returns (ApiVersion) {
+    option (google.api.http) = {
+      get: "/v1/{name=projects/*/apis/*/versions/*}"
+    };
+    option (google.api.method_signature) = "name";
+  }
+
+  // CreateApiVersion creates a specified version.
+  rpc CreateApiVersion(CreateApiVersionRequest) returns (ApiVersion) {
+    option (google.api.http) = {
+      post: "/v1/{parent=projects/*/apis/*}/versions"
+      body: "api_version"
+    };
+    option (google.api.method_signature) = "parent,api_version,api_version_id";
+  }
+
+  // UpdateApiVersion can be used to modify a specified version.
+  rpc UpdateApiVersion(UpdateApiVersionRequest) returns (ApiVersion) {
+    option (google.api.http) = {
+      patch: "/v1/{api_version.name=projects/*/apis/*/versions/*}"
+      body: "api_version"
+    };
+    option (google.api.method_signature) = "api_version,update_mask";
+  }
+
+  // DeleteApiVersion removes a specified version and all of the resources that
+  // it owns.
+  rpc DeleteApiVersion(DeleteApiVersionRequest)
+      returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/v1/{name=projects/*/apis/*/versions/*}"
+    };
+    option (google.api.method_signature) = "name";
+  }
+
+  // ListApiSpecs returns matching specs.
+  rpc ListApiSpecs(ListApiSpecsRequest) returns (ListApiSpecsResponse) {
+    option (google.api.http) = {
+      get: "/v1/{parent=projects/*/apis/*/versions/*}/specs"
+    };
+    option (google.api.method_signature) = "parent";
+  }
+
+  // GetApiSpec returns a specified spec.
+  rpc GetApiSpec(GetApiSpecRequest) returns (ApiSpec) {
+    option (google.api.http) = {
+      get: "/v1/{name=projects/*/apis/*/versions/*/specs/*}"
+    };
+    option (google.api.method_signature) = "name";
+  }
+
+  // CreateApiSpec creates a specified spec.
+  rpc CreateApiSpec(CreateApiSpecRequest) returns (ApiSpec) {
+    option (google.api.http) = {
+      post: "/v1/{parent=projects/*/apis/*/versions/*}/specs"
+      body: "api_spec"
+    };
+    option (google.api.method_signature) = "parent,api_spec,api_spec_id";
+  }
+
+  // UpdateApiSpec can be used to modify a specified spec.
+  rpc UpdateApiSpec(UpdateApiSpecRequest) returns (ApiSpec) {
+    option (google.api.http) = {
+      patch: "/v1/{api_spec.name=projects/*/apis/*/versions/*/specs/*}"
+      body: "api_spec"
+    };
+    option (google.api.method_signature) = "api_spec,update_mask";
+  }
+
+  // DeleteApiSpec removes a specified spec, all revisions, and all child
+  // resources (e.g. artifacts).
+  rpc DeleteApiSpec(DeleteApiSpecRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/v1/{name=projects/*/apis/*/versions/*/specs/*}"
+    };
+    option (google.api.method_signature) = "name";
+  }
+
+  // TagApiSpecRevision adds a tag to a specified revision of a spec.
+  rpc TagApiSpecRevision(TagApiSpecRevisionRequest) returns (ApiSpec) {
+    option (google.api.http) = {
+      post: "/v1/{name=projects/*/apis/*/versions/*/specs/*}:tagRevision"
+      body: "*"
+    };
+  }
+
+  // ListApiSpecRevisions lists all revisions of a spec.
+  // Revisions are returned in descending order of revision creation time.
+  rpc ListApiSpecRevisions(ListApiSpecRevisionsRequest)
+      returns (ListApiSpecRevisionsResponse) {
+    option (google.api.http) = {
+      get: "/v1/{name=projects/*/apis/*/versions/*/specs/*}:listRevisions"
+    };
+  }
+
+  // RollbackApiSpec sets the current revision to a specified prior revision.
+  // Note that this creates a new revision with a new revision ID.
+  rpc RollbackApiSpec(RollbackApiSpecRequest) returns (ApiSpec) {
+    option (google.api.http) = {
+      post: "/v1/{name=projects/*/apis/*/versions/*/specs/*}:rollback"
+      body: "*"
+    };
+  }
+
+  // DeleteApiSpecRevision deletes a revision of a spec.
+  rpc DeleteApiSpecRevision(DeleteApiSpecRevisionRequest)
+      returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/v1/{name=projects/*/apis/*/versions/*/specs/*}:deleteRevision"
+    };
+    option (google.api.method_signature) = "name";
+  }
+
+  // ListArtifacts returns matching artifacts.
+  rpc ListArtifacts(ListArtifactsRequest) returns (ListArtifactsResponse) {
+    option (google.api.http) = {
+      get: "/v1/{parent=projects/*}/artifacts"
+      additional_bindings: { get: "/v1/{parent=projects/*/apis/*}/artifacts" }
+      additional_bindings: {
+        get: "/v1/{parent=projects/*/apis/*/versions/*}/artifacts"
+      }
+      additional_bindings: {
+        get: "/v1/{parent=projects/*/apis/*/versions/*/specs/*}/artifacts"
+      }
+    };
+    option (google.api.method_signature) = "parent";
+  }
+
+  // GetArtifact returns a specified artifact.
+  rpc GetArtifact(GetArtifactRequest) returns (Artifact) {
+    option (google.api.http) = {
+      get: "/v1/{name=projects/*/artifacts/*}"
+      additional_bindings: { get: "/v1/{name=projects/*/apis/*/artifacts/*}" }
+      additional_bindings: {
+        get: "/v1/{name=projects/*/apis/*/versions/*/artifacts/*}"
+      }
+      additional_bindings: {
+        get: "/v1/{name=projects/*/apis/*/versions/*/specs/*/artifacts/*}"
+      }
+    };
+    option (google.api.method_signature) = "name";
+  }
+
+  // CreateArtifact creates a specified artifact.
+  rpc CreateArtifact(CreateArtifactRequest) returns (Artifact) {
+    option (google.api.http) = {
+      post: "/v1/{parent=projects/*}/artifacts"
+      body: "artifact"
+      additional_bindings: {
+        post: "/v1/{parent=projects/*/apis/*}/artifacts"
+        body: "artifact"
+      }
+      additional_bindings: {
+        post: "/v1/{parent=projects/*/apis/*/versions/*}/artifacts"
+        body: "artifact"
+      }
+      additional_bindings: {
+        post: "/v1/{parent=projects/*/apis/*/versions/*/specs/*}/artifacts"
+        body: "artifact"
+      }
+    };
+    option (google.api.method_signature) = "parent,artifact,artifact_id";
+  }
+
+  // ReplaceArtifact can be used to replace a specified artifact.
+  rpc ReplaceArtifact(ReplaceArtifactRequest) returns (Artifact) {
+    option (google.api.http) = {
+      put: "/v1/{artifact.name=projects/*/artifacts/*}"
+      body: "artifact"
+      additional_bindings: {
+        put: "/v1/{artifact.name=projects/*/apis/*/artifacts/*}"
+        body: "artifact"
+      }
+      additional_bindings: {
+        put: "/v1/{artifact.name=projects/*/apis/*/versions/*/artifacts/*}"
+        body: "artifact"
+      }
+      additional_bindings: {
+        put: "/v1/{artifact.name=projects/*/apis/*/versions/*/specs/*/artifacts/*}"
+        body: "artifact"
+      }
+    };
+    option (google.api.method_signature) = "artifact";
+  }
+
+  // DeleteArtifact removes a specified artifact.
+  rpc DeleteArtifact(DeleteArtifactRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/v1/{name=projects/*/artifacts/*}"
+      additional_bindings: {
+        delete: "/v1/{name=projects/*/apis/*/artifacts/*}"
+      }
+      additional_bindings: {
+        delete: "/v1/{name=projects/*/apis/*/versions/*/artifacts/*}"
+      }
+      additional_bindings: {
+        delete: "/v1/{name=projects/*/apis/*/versions/*/specs/*/artifacts/*}"
+      }
+    };
+    option (google.api.method_signature) = "name";
+  }
+}
+
+// Response message for GetStatus.
+// GetStatus is not included in hosted versions of the API.
+message Status {
+  // A string describing the status.
+  string message = 1;
+}
+
+// Request message for ListProjects.
+// (-- api-linter: core::0132::request-parent-required=disabled
+//     aip.dev/not-precedent: the parent of Project is implicit. --)
+message ListProjectsRequest {
+  // The maximum number of projects to return.
+  // The service may return fewer than this value.
+  // If unspecified, at most 50 values will be returned.
+  // The maximum is 1000; values above 1000 will be coerced to 1000.
+  int32 page_size = 1;
+
+  // A page token, received from a previous `ListProjects` call.
+  // Provide this to retrieve the subsequent page.
+  //
+  // When paginating, all other parameters provided to `ListProjects` must match
+  // the call that provided the page token.
+  string page_token = 2;
+
+  // An expression that can be used to filter the list. Filters use the Common
+  // Expression Language and can refer to all message fields.
+  string filter = 3;
+}
+
+// Response message for ListProjects.
+message ListProjectsResponse {
+  // The projects from the specified publisher.
+  repeated Project projects = 1;
+
+  // A token, which can be sent as `page_token` to retrieve the next page.
+  // If this field is omitted, there are no subsequent pages.
+  string next_page_token = 2;
+}
+
+// Request message for GetProject.
+message GetProjectRequest {
+  // The name of the project to retrieve.
+  // Format: projects/*
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      type: "registry.googleapis.com/Project"
+    }
+  ];
+}
+
+// Request message for CreateProject.
+// (-- api-linter: core::0133::request-parent-required=disabled
+//     aip.dev/not-precedent: the parent of Project is implicit. --)
+message CreateProjectRequest {
+  // The project to create.
+  Project project = 1 [(google.api.field_behavior) = REQUIRED];
+  // The ID to use for the project, which will become the final component of
+  // the project's resource name.
+  //
+  // This value should be 4-63 characters, and valid characters
+  // are /[a-z][0-9]-/.
+  string project_id = 2;
+}
+
+// Request message for UpdateProject.
+message UpdateProjectRequest {
+  // The project to update.
+  //
+  // The `name` field is used to identify the project to update.
+  // Format: projects/*
+  Project project = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // The list of fields to be updated. If omitted, all fields are updated that
+  // are set in the request message (fields set to default values are ignored).
+  // If a "*" is specified, all fields are updated, including fields that are
+  // unspecified/default in the request.
+  google.protobuf.FieldMask update_mask = 2;
+}
+
+// Request message for DeleteProject.
+message DeleteProjectRequest {
+  // The name of the project to delete.
+  // Format: projects/*
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      type: "registry.googleapis.com/Project"
+    }
+  ];
+}
+
+// Request message for ListApis.
+message ListApisRequest {
+  // The parent, which owns this collection of APIs.
+  // Format: projects/*
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      child_type: "registry.googleapis.com/Api"
+    }
+  ];
+  // The maximum number of APIs to return.
+  // The service may return fewer than this value.
+  // If unspecified, at most 50 values will be returned.
+  // The maximum is 1000; values above 1000 will be coerced to 1000.
+  int32 page_size = 2;
+
+  // A page token, received from a previous `ListApis` call.
+  // Provide this to retrieve the subsequent page.
+  //
+  // When paginating, all other parameters provided to `ListApis` must match
+  // the call that provided the page token.
+  string page_token = 3;
+
+  // An expression that can be used to filter the list. Filters use the Common
+  // Expression Language and can refer to all message fields that are included
+  // in the BASIC view.
+  string filter = 4;
+
+  // The level of detail to return (defaults to BASIC).
+  View view = 5;
+}
+
+// Response message for ListApis.
+message ListApisResponse {
+  // The APIs from the specified publisher.
+  repeated Api apis = 1;
+
+  // A token, which can be sent as `page_token` to retrieve the next page.
+  // If this field is omitted, there are no subsequent pages.
+  string next_page_token = 2;
+}
+
+// Request message for GetApi.
+message GetApiRequest {
+  // The name of the API to retrieve.
+  // Format: projects/*/apis/*
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = { type: "registry.googleapis.com/Api" }
+  ];
+
+  // The level of detail to return (defaults to BASIC).
+  View view = 2;
+}
+
+// Request message for CreateApi.
+message CreateApiRequest {
+  // The parent, which owns this collection of APIs.
+  // Format: projects/*
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      child_type: "registry.googleapis.com/Api"
+    }
+  ];
+  // The API to create.
+  Api api = 2 [(google.api.field_behavior) = REQUIRED];
+  // The ID to use for the api, which will become the final component of
+  // the api's resource name.
+  //
+  // This value should be 4-63 characters, and valid characters
+  // are /[a-z][0-9]-/.
+  string api_id = 3;
+}
+
+// Request message for UpdateApi.
+message UpdateApiRequest {
+  // The API to update.
+  //
+  // The `name` field is used to identify the API to update.
+  // Format: projects/*/apis/*
+  Api api = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // The list of fields to be updated. If omitted, all fields are updated that
+  // are set in the request message (fields set to default values are ignored).
+  // If a "*" is specified, all fields are updated, including fields that are
+  // unspecified/default in the request.
+  google.protobuf.FieldMask update_mask = 2;
+}
+
+// Request message for DeleteApi.
+message DeleteApiRequest {
+  // The name of the API to delete.
+  // Format: projects/*/apis/*
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = { type: "registry.googleapis.com/Api" }
+  ];
+}
+
+// Request message for ListApiVersions.
+message ListApiVersionsRequest {
+  // The parent, which owns this collection of versions.
+  // Format: projects/*/apis/*
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      child_type: "registry.googleapis.com/ApiVersion"
+    }
+  ];
+  // The maximum number of versions to return.
+  // The service may return fewer than this value.
+  // If unspecified, at most 50 values will be returned.
+  // The maximum is 1000; values above 1000 will be coerced to 1000.
+  int32 page_size = 2;
+
+  // A page token, received from a previous `ListApiVersions` call.
+  // Provide this to retrieve the subsequent page.
+  //
+  // When paginating, all other parameters provided to `ListApiVersions` must
+  // match the call that provided the page token.
+  string page_token = 3;
+
+  // An expression that can be used to filter the list. Filters use the Common
+  // Expression Language and can refer to all message fields that are included
+  // in the BASIC view.
+  string filter = 4;
+
+  // The level of detail to return (defaults to BASIC).
+  View view = 5;
+}
+
+// Response message for ListApiVersions.
+message ListApiVersionsResponse {
+  // The versions from the specified publisher.
+  repeated ApiVersion api_versions = 1;
+
+  // A token, which can be sent as `page_token` to retrieve the next page.
+  // If this field is omitted, there are no subsequent pages.
+  string next_page_token = 2;
+}
+
+// Request message for GetApiVersion.
+message GetApiVersionRequest {
+  // The name of the version to retrieve.
+  // Format: projects/*/apis/*/versions/*
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      type: "registry.googleapis.com/ApiVersion"
+    }
+  ];
+
+  // The level of detail to return (defaults to BASIC).
+  View view = 2;
+}
+
+// Request message for CreateApiVersion.
+message CreateApiVersionRequest {
+  // The parent, which owns this collection of versions.
+  // Format: projects/*/apis/*
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      child_type: "registry.googleapis.com/ApiVersion"
+    }
+  ];
+  // The version to create.
+  ApiVersion api_version = 2 [(google.api.field_behavior) = REQUIRED];
+  // The ID to use for the version, which will become the final component of
+  // the version's resource name.
+  //
+  // This value should be 4-63 characters, and valid characters
+  // are /[a-z][0-9]-/.
+  string api_version_id = 3;
+}
+
+// Request message for UpdateApiVersion.
+message UpdateApiVersionRequest {
+  // The version to update.
+  //
+  // The `name` field is used to identify the version to update.
+  // Format: projects/*/apis/*/versions/*
+  ApiVersion api_version = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // The list of fields to be updated. If omitted, all fields are updated that
+  // are set in the request message (fields set to default values are ignored).
+  // If a "*" is specified, all fields are updated, including fields that are
+  // unspecified/default in the request.
+  google.protobuf.FieldMask update_mask = 2;
+}
+
+// Request message for DeleteApiVersion.
+message DeleteApiVersionRequest {
+  // The name of the version to delete.
+  // Format: projects/*/apis/*/versions/*
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      type: "registry.googleapis.com/ApiVersion"
+    }
+  ];
+}
+
+// Request message for ListApiSpecs.
+message ListApiSpecsRequest {
+  // The parent, which owns this collection of specs.
+  // Format: projects/*/apis/*/versions/*
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      child_type: "registry.googleapis.com/ApiSpec"
+    }
+  ];
+  // The maximum number of specs to return.
+  // The service may return fewer than this value.
+  // If unspecified, at most 50 values will be returned.
+  // The maximum is 1000; values above 1000 will be coerced to 1000.
+  int32 page_size = 2;
+
+  // A page token, received from a previous `ListApiSpecs` call.
+  // Provide this to retrieve the subsequent page.
+  //
+  // When paginating, all other parameters provided to `ListApiSpecs` must match
+  // the call that provided the page token.
+  string page_token = 3;
+
+  // An expression that can be used to filter the list. Filters use the Common
+  // Expression Language and can refer to all message fields that are included
+  // in the BASIC view.
+  string filter = 4;
+
+  // The level of detail to return (defaults to BASIC).
+  View view = 5;
+}
+
+// Response message for ListApiSpecs.
+message ListApiSpecsResponse {
+  // The specs from the specified publisher.
+  repeated ApiSpec api_specs = 1;
+
+  // A token, which can be sent as `page_token` to retrieve the next page.
+  // If this field is omitted, there are no subsequent pages.
+  string next_page_token = 2;
+}
+
+// Request message for GetApiSpec.
+message GetApiSpecRequest {
+  // The name of the spec to retrieve.
+  // Format: projects/*/apis/*/versions/*/specs/*
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      type: "registry.googleapis.com/ApiSpec"
+    }
+  ];
+
+  // The level of detail to return (defaults to BASIC).
+  View view = 2;
+}
+
+// Request message for CreateApiSpec.
+message CreateApiSpecRequest {
+  // The parent, which owns this collection of specs.
+  // Format: projects/*/apis/*/versions/*
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      child_type: "registry.googleapis.com/ApiSpec"
+    }
+  ];
+  // The spec to create.
+  ApiSpec api_spec = 2 [(google.api.field_behavior) = REQUIRED];
+  // The ID to use for the spec, which will become the final component of
+  // the spec's resource name.
+  //
+  // This value should be 4-63 characters, and valid characters
+  // are /[a-z][0-9]-/.
+  string api_spec_id = 3;
+}
+
+// Request message for UpdateApiSpec.
+message UpdateApiSpecRequest {
+  // The spec to update.
+  //
+  // The `name` field is used to identify the spec to update.
+  // Format: projects/*/apis/*/versions/*/specs/*
+  ApiSpec api_spec = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // The list of fields to be updated. If omitted, all fields are updated that
+  // are set in the request message (fields set to default values are ignored).
+  // If a "*" is specified, all fields are updated, including fields that are
+  // unspecified/default in the request.
+  google.protobuf.FieldMask update_mask = 2;  
+  
+  // If set to true, and the spec is not found, a new spec will be created.
+  // In this situation, `update_mask` is ignored.
+  bool allow_missing = 3;
+}
+
+// Request message for DeleteApiSpec.
+message DeleteApiSpecRequest {
+  // The name of the spec to delete.
+  // Format: projects/*/apis/*/versions/*/specs/*
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      type: "registry.googleapis.com/ApiSpec"
+    }
+  ];
+}
+
+// Request message for TagApiSpecRevision.
+message TagApiSpecRevisionRequest {
+  // The name of the spec to be tagged, including the revision ID.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      type: "registry.googleapis.com/ApiSpec"
+    }
+  ];
+
+  // The tag to apply.
+  // The tag should be at most 40 characters, and match `[a-z][a-z0-9-]{3,39}`.
+  string tag = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+// Request message for ListApiSpecRevisions.
+// (-- api-linter: core::0132::request-parent-required=disabled
+//     aip.dev/not-precedent: Listing revisions does not require a parent. --)
+// (-- api-linter: core::0132::request-unknown-fields=disabled
+//     aip.dev/not-precedent: Listing revisions requires nonstandard fields. --)
+message ListApiSpecRevisionsRequest {
+  // The name of the spec to list revisions for.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      type: "registry.googleapis.com/ApiSpec"
+    }
+  ];
+
+  // The maximum number of revisions to return per page.
+  int32 page_size = 2;
+
+  // The page token, received from a previous ListApiSpecRevisions call.
+  // Provide this to retrieve the subsequent page.
+  string page_token = 3;
+}
+
+// Response message for ListApiSpecRevisionsResponse.
+// (-- api-linter: core::0132::response-unknown-fields=disabled
+//     aip.dev/not-precedent: Listing revisions requires nonstandard fields. --)
+message ListApiSpecRevisionsResponse {
+  // The revisions of the spec.
+  repeated ApiSpec specs = 1;
+
+  // A token that can be sent as `page_token` to retrieve the next page.
+  // If this field is omitted, there are no subsequent pages.
+  string next_page_token = 2;
+}
+
+// Request message for RollbackApiSpec.
+message RollbackApiSpecRequest {
+  // The spec being rolled back.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      type: "registry.googleapis.com/ApiSpec"
+    }
+  ];
+
+  // The revision ID to roll back to.
+  // It must be a revision of the same spec.
+  //
+  //   Example: c7cfa2a8
+  string revision_id = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+// Request message for DeleteApiSpecRevision.
+message DeleteApiSpecRevisionRequest {
+  // The name of the spec revision to be deleted,
+  // with a revision ID explicitly included.
+  //
+  // Example:
+  // projects/sample/apis/petstore/versions/1.0.0/specs/openapi.yaml@c7cfa2a8
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      type: "registry.googleapis.com/ApiSpec"
+    }
+  ];
+}
+
+// Request message for ListArtifacts.
+message ListArtifactsRequest {
+  // The parent, which owns this collection of artifacts.
+  // Format: {parent}
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      child_type: "registry.googleapis.com/Artifact"
+    }
+  ];
+  // The maximum number of artifacts to return.
+  // The service may return fewer than this value.
+  // If unspecified, at most 50 values will be returned.
+  // The maximum is 1000; values above 1000 will be coerced to 1000.
+  int32 page_size = 2;
+
+  // A page token, received from a previous `ListArtifacts` call.
+  // Provide this to retrieve the subsequent page.
+  //
+  // When paginating, all other parameters provided to `ListArtifacts` must
+  // match the call that provided the page token.
+  string page_token = 3;
+
+  // An expression that can be used to filter the list. Filters use the Common
+  // Expression Language and can refer to all message fields that are included
+  // in the BASIC view.
+  string filter = 4;
+
+  // The level of detail to return (defaults to BASIC).
+  View view = 5;
+}
+
+// Response message for ListArtifacts.
+message ListArtifactsResponse {
+  // The artifacts from the specified publisher.
+  repeated Artifact artifacts = 1;
+
+  // A token, which can be sent as `page_token` to retrieve the next page.
+  // If this field is omitted, there are no subsequent pages.
+  string next_page_token = 2;
+}
+
+// Request message for GetArtifact.
+message GetArtifactRequest {
+  // The name of the artifact to retrieve.
+  // Format: {parent}/artifacts/*
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      type: "registry.googleapis.com/Artifact"
+    }
+  ];
+
+  // The level of detail to return (defaults to BASIC).
+  View view = 2;
+}
+
+// Request message for CreateArtifact.
+message CreateArtifactRequest {
+  // The parent, which owns this collection of artifacts.
+  // Format: {parent}
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      child_type: "registry.googleapis.com/Artifact"
+    }
+  ];
+  // The artifact to create.
+  Artifact artifact = 2 [(google.api.field_behavior) = REQUIRED];
+  // The ID to use for the artifact, which will become the final component of
+  // the artifact's resource name.
+  //
+  // This value should be 4-63 characters, and valid characters
+  // are /[a-z][0-9]-/.
+  string artifact_id = 3;
+}
+
+// Request message for ReplaceArtifact.
+message ReplaceArtifactRequest {
+  // The artifact to replace.
+  //
+  // The `name` field is used to identify the artifact to replace.
+  // Format: {parent}/artifacts/*
+  Artifact artifact = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+// Request message for DeleteArtifact.
+message DeleteArtifactRequest {
+  // The name of the artifact to delete.
+  // Format: {parent}/artifacts/*
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      type: "registry.googleapis.com/Artifact"
+    }
+  ];
+}

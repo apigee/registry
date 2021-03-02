@@ -85,22 +85,13 @@ func (it *Iterator) Next(v interface{}) (storage.Key, error) {
 			return it.Client.NewKey("Blob", x.Key), nil
 		}
 		return nil, iterator.Done
-	case *models.Property:
-		values := it.Values.([]models.Property)
+	case *models.Artifact:
+		values := it.Values.([]models.Artifact)
 		if it.Index < len(values) {
 			*x = values[it.Index]
 			it.Cursor = x.Key
 			it.Index++
-			return it.Client.NewKey("Property", x.Key), nil
-		}
-		return nil, iterator.Done
-	case *models.Label:
-		values := it.Values.([]models.Label)
-		if it.Index < len(values) {
-			*x = values[it.Index]
-			it.Cursor = x.Key
-			it.Index++
-			return it.Client.NewKey("Label", x.Key), nil
+			return it.Client.NewKey("Artifact", x.Key), nil
 		}
 		return nil, iterator.Done
 	case *models.SpecRevisionTag:

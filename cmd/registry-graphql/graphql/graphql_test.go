@@ -150,15 +150,7 @@ type API struct {
 }
 
 func buildTestProject(ctx context.Context, registryClient connection.Client, t *testing.T, name string, apiCount int) {
-	var err error
-	// Clear the test project.
-	{
-		req := &rpc.DeleteProjectRequest{
-			Name: "projects/" + name,
-		}
-		err = registryClient.DeleteProject(ctx, req)
-		check(t, "Failed to delete test project: %+v", err)
-	}
+	deleteTestProject(ctx, registryClient, t, name)
 	// Create the test project.
 	req := &rpc.CreateProjectRequest{
 		ProjectId: name,
@@ -178,7 +170,6 @@ func buildTestProject(ctx context.Context, registryClient connection.Client, t *
 				DisplayName:  fmt.Sprintf("API-%03d", i),
 				Description:  "A sample API",
 				Availability: "GENERAL",
-				Owner:        "Acme APIs",
 			},
 		}
 		_, err := registryClient.CreateApi(ctx, req)
@@ -187,13 +178,10 @@ func buildTestProject(ctx context.Context, registryClient connection.Client, t *
 }
 
 func deleteTestProject(ctx context.Context, registryClient connection.Client, t *testing.T, name string) {
-	var err error
-	// Clear the test project.
-	{
-		req := &rpc.DeleteProjectRequest{
-			Name: "projects/" + name,
-		}
-		err = registryClient.DeleteProject(ctx, req)
+	req := &rpc.DeleteProjectRequest{
+		Name: "projects/" + name,
+	}
+	if err := registryClient.DeleteProject(ctx, req); status.Code(err) != codes.NotFound {
 		check(t, "Failed to delete test project: %+v", err)
 	}
 }

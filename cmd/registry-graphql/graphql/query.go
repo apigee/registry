@@ -40,15 +40,10 @@ var queryType = graphql.NewObject(
 				Args:    argumentsForParentedCollectionQuery,
 				Resolve: resolveSpecs,
 			},
-			"properties": &graphql.Field{
-				Type:    connectionType(propertyType),
+			"artifacts": &graphql.Field{
+				Type:    connectionType(artifactType),
 				Args:    argumentsForParentedCollectionQuery,
-				Resolve: resolveProperties,
-			},
-			"labels": &graphql.Field{
-				Type:    connectionType(labelType),
-				Args:    argumentsForParentedCollectionQuery,
-				Resolve: resolveLabels,
+				Resolve: resolveArtifacts,
 			},
 			"project": &graphql.Field{
 				Type:    projectType,
@@ -70,15 +65,10 @@ var queryType = graphql.NewObject(
 				Args:    argumentsForResourceQuery,
 				Resolve: resolveSpec,
 			},
-			"property": &graphql.Field{
-				Type:    propertyType,
+			"artifact": &graphql.Field{
+				Type:    artifactType,
 				Args:    argumentsForResourceQuery,
-				Resolve: resolveProperty,
-			},
-			"label": &graphql.Field{
-				Type:    labelType,
-				Args:    argumentsForResourceQuery,
-				Resolve: resolveLabel,
+				Resolve: resolveArtifact,
 			},
 		},
 	})

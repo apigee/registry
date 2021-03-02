@@ -23,7 +23,6 @@ import (
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
-	"github.com/golang/protobuf/ptypes/any"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/proto"
 )
@@ -44,24 +43,20 @@ func collectInputIndexes(ctx context.Context, client connection.Client, args []s
 	inputNames := make([]string, 0)
 	inputs := make([]*rpc.Index, 0)
 	for _, name := range args {
-		if m := names.PropertyRegexp().FindStringSubmatch(name); m != nil {
-			err := core.ListProperties(ctx, client, m, filter, true, func(property *rpc.Property) {
-				switch v := property.GetValue().(type) {
-				case *rpc.Property_MessageValue:
-					if v.MessageValue.TypeUrl == "google.cloud.apigee.registry.v1alpha1.Index" {
-						vocab := &rpc.Index{}
-						err := proto.Unmarshal(v.MessageValue.Value, vocab)
-						if err != nil {
-							log.Printf("%+v", err)
-						} else {
-							inputNames = append(inputNames, property.Name)
-							inputs = append(inputs, vocab)
-						}
+		if m := names.ArtifactRegexp().FindStringSubmatch(name); m != nil {
+			err := core.ListArtifacts(ctx, client, m, filter, true, func(artifact *rpc.Artifact) {
+				messageType, err := core.MessageTypeForMimeType(artifact.GetMimeType())
+				if err == nil && messageType == "google.cloud.apigee.registry.applications.v1alpha1.Index" {
+					vocab := &rpc.Index{}
+					err := proto.Unmarshal(artifact.GetContents(), vocab)
+					if err != nil {
+						log.Printf("%+v", err)
 					} else {
-						log.Printf("skipping, not an index: %s\n", property.Name)
+						inputNames = append(inputNames, artifact.Name)
+						inputs = append(inputs, vocab)
 					}
-				default:
-					log.Printf("skipping, not an index: %s\n", property.Name)
+				} else {
+					log.Printf("skipping, not an index: %s\n", artifact.Name)
 				}
 			})
 			if err != nil {
@@ -72,8 +67,8 @@ func collectInputIndexes(ctx context.Context, client connection.Client, args []s
 	return inputNames, inputs
 }
 
-func setIndexToProperty(ctx context.Context, client connection.Client, output *rpc.Index, outputPropertyName string) {
-	parts := strings.Split(outputPropertyName, "/properties/")
+func setIndexToArtifact(ctx context.Context, client connection.Client, output *rpc.Index, outputArtifactName string) {
+	parts := strings.Split(outputArtifactName, "/artifacts/")
 	subject := parts[0]
 	relation := parts[1]
 	messageData, err := proto.Marshal(output)
@@ -84,18 +79,12 @@ func setIndexToProperty(ctx context.Context, client connection.Client, output *r
 	if err != nil {
 		log.Fatalf("%s", err.Error())
 	}
-	property := &rpc.Property{
-		Subject:  subject,
-		Relation: relation,
-		Name:     subject + "/properties/" + relation,
-		Value: &rpc.Property_MessageValue{
-			MessageValue: &any.Any{
-				TypeUrl: "google.cloud.apigee.registry.v1alpha1.Index",
-				Value:   messageData,
-			},
-		},
+	artifact := &rpc.Artifact{
+		Name:     subject + "/artifacts/" + relation,
+		MimeType: core.MimeTypeForMessageType("google.cloud.apigee.registry.applications.v1alpha1.Index"),
+		Contents: messageData,
 	}
-	err = core.SetProperty(ctx, client, property)
+	err = core.SetArtifact(ctx, client, artifact)
 	if err != nil {
 		log.Fatalf("%s", err.Error())
 	}

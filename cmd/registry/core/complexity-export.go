@@ -24,7 +24,7 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func ExportComplexityToSheet(name string, inputs []*rpc.Property) (string, error) {
+func ExportComplexityToSheet(name string, inputs []*rpc.Artifact) (string, error) {
 	sheetsClient, err := NewSheetsClient("")
 	if err != nil {
 		log.Fatalf("%s", err.Error())
@@ -54,22 +54,18 @@ func ExportComplexityToSheet(name string, inputs []*rpc.Property) (string, error
 	return sheet.SpreadsheetUrl, nil
 }
 
-func getComplexity(property *rpc.Property) (*metrics.Complexity, error) {
-	switch v := property.GetValue().(type) {
-	case *rpc.Property_MessageValue:
-		if v.MessageValue.TypeUrl == "gnostic.metrics.Complexity" {
-			value := &metrics.Complexity{}
-			err := proto.Unmarshal(v.MessageValue.Value, value)
-			if err != nil {
-				return nil, err
-			} else {
-				return value, nil
-			}
+func getComplexity(artifact *rpc.Artifact) (*metrics.Complexity, error) {
+	messageType, err := MessageTypeForMimeType(artifact.GetMimeType())
+	if err == nil && messageType == "gnostic.metrics.Complexity" {
+		value := &metrics.Complexity{}
+		err := proto.Unmarshal(artifact.GetContents(), value)
+		if err != nil {
+			return nil, err
 		} else {
-			return nil, fmt.Errorf("not a complexity: %s", property.Name)
+			return value, nil
 		}
-	default:
-		return nil, fmt.Errorf("not a complexity: %s", property.Name)
+	} else {
+		return nil, fmt.Errorf("not a complexity: %s", artifact.Name)
 	}
 }
 

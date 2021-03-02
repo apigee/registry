@@ -60,8 +60,7 @@ func (c *Client) DeleteAllMatches(ctx context.Context, q storage.Query) error {
 // DeleteChildrenOfProject deletes all the children of a project.
 func (c *Client) DeleteChildrenOfProject(ctx context.Context, project *models.Project) error {
 	entityNames := []string{
-		models.LabelEntityName,
-		models.PropertyEntityName,
+		models.ArtifactEntityName,
 		models.BlobEntityName,
 		models.SpecEntityName,
 		models.SpecRevisionTagEntityName,

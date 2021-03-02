@@ -18,13 +18,11 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"strings"
 
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
-	"github.com/golang/protobuf/ptypes/any"
 	discovery_v1 "github.com/googleapis/gnostic/discovery"
 	openapi_v2 "github.com/googleapis/gnostic/openapiv2"
 	openapi_v3 "github.com/googleapis/gnostic/openapiv3"
@@ -56,7 +54,7 @@ var computeDescriptorCmd = &cobra.Command{
 		// Generate tasks.
 		name := args[0]
 		if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
-			err = core.ListSpecs(ctx, client, m, computeFilter, func(spec *rpc.Spec) {
+			err = core.ListSpecs(ctx, client, m, computeFilter, func(spec *rpc.ApiSpec) {
 				taskQueue <- &computeDescriptorTask{
 					ctx:      ctx,
 					client:   client,
@@ -83,17 +81,17 @@ func (task *computeDescriptorTask) Name() string {
 }
 
 func (task *computeDescriptorTask) Run() error {
-	request := &rpc.GetSpecRequest{
+	request := &rpc.GetApiSpecRequest{
 		Name: task.specName,
 		View: rpc.View_FULL,
 	}
-	spec, err := task.client.GetSpec(task.ctx, request)
+	spec, err := task.client.GetApiSpec(task.ctx, request)
 	if err != nil {
 		return err
 	}
 	name := spec.GetName()
 	relation := "descriptor"
-	log.Printf("computing %s/properties/%s", name, relation)
+	log.Printf("computing %s/artifacts/%s", name, relation)
 	data, err := core.GetBytesForSpec(spec)
 	if err != nil {
 		return nil
@@ -101,45 +99,37 @@ func (task *computeDescriptorTask) Run() error {
 	subject := spec.GetName()
 	var typeURL string
 	var document proto.Message
-	if strings.HasPrefix(spec.GetStyle(), "openapi/v2") {
+	if core.IsOpenAPIv2(spec.GetMimeType()) {
 		typeURL = "gnostic.openapiv2.Document"
 		document, err = openapi_v2.ParseDocument(data)
 		if err != nil {
 			return err
 		}
-	} else if strings.HasPrefix(spec.GetStyle(), "openapi/v3") {
+	} else if core.IsOpenAPIv3(spec.GetMimeType()) {
 		typeURL = "gnostic.openapiv3.Document"
 		document, err = openapi_v3.ParseDocument(data)
 		if err != nil {
 			return err
 		}
-	} else if strings.HasPrefix(spec.GetStyle(), "discovery") {
+	} else if core.IsDiscovery(spec.GetMimeType()) {
 		typeURL = "gnostic.discoveryv1.Document"
 		document, err = discovery_v1.ParseDocument(data)
 		if err != nil {
 			return err
 		}
 	} else {
-		return fmt.Errorf("unable to generate descriptor for style %s", spec.GetStyle())
+		return fmt.Errorf("unable to generate descriptor for style %s", spec.GetMimeType())
 	}
 	messageData, err := proto.Marshal(document)
 	if err != nil {
 		return err
 	}
-	messageData, err = core.GZippedBytes(messageData)
-	if err != nil {
-		return err
+	// TODO: consider gzipping descriptors to reduce size;
+	// this will probably require some representation of compression type in the typeURL
+	artifact := &rpc.Artifact{
+		Name:     subject + "/artifacts/" + relation,
+		MimeType: core.MimeTypeForMessageType(typeURL),
+		Contents: messageData,
 	}
-	property := &rpc.Property{
-		Subject:  subject,
-		Relation: relation,
-		Name:     subject + "/properties/" + relation,
-		Value: &rpc.Property_MessageValue{
-			MessageValue: &any.Any{
-				TypeUrl: typeURL + "+gz",
-				Value:   messageData,
-			},
-		},
-	}
-	return core.SetProperty(task.ctx, task.client, property)
+	return core.SetArtifact(task.ctx, task.client, artifact)
 }

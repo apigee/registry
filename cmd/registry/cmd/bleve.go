@@ -18,7 +18,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"strings"
 	"sync"
 
 	"github.com/apigee/registry/cmd/registry/core"
@@ -64,7 +63,7 @@ var computeBleveCmd = &cobra.Command{
 		// Generate tasks.
 		name := args[0]
 		if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
-			err = core.ListSpecs(ctx, client, m, bleveFilter, func(spec *rpc.Spec) {
+			err = core.ListSpecs(ctx, client, m, bleveFilter, func(spec *rpc.ApiSpec) {
 				taskQueue <- &indexSpecTask{
 					ctx:      ctx,
 					client:   client,
@@ -93,11 +92,11 @@ func (task *indexSpecTask) Name() string {
 }
 
 func (task *indexSpecTask) Run() error {
-	request := &rpc.GetSpecRequest{
+	request := &rpc.GetApiSpecRequest{
 		Name: task.specName,
 		View: rpc.View_FULL,
 	}
-	spec, err := task.client.GetSpec(task.ctx, request)
+	spec, err := task.client.GetApiSpec(task.ctx, request)
 	if err != nil {
 		return err
 	}
@@ -107,7 +106,7 @@ func (task *indexSpecTask) Run() error {
 		return nil
 	}
 	var message proto.Message
-	if strings.HasPrefix(spec.GetStyle(), "openapi/v2") {
+	if core.IsOpenAPIv2(spec.GetMimeType()) {
 		document, err := openapi_v2.ParseDocument(data)
 		if err != nil {
 			return fmt.Errorf("errors parsing %s", name)
@@ -120,7 +119,7 @@ func (task *indexSpecTask) Run() error {
 		document.Security = nil
 		document.SecurityDefinitions = nil
 		message = document
-	} else if strings.HasPrefix(spec.GetStyle(), "openapi/v3") {
+	} else if core.IsOpenAPIv3(spec.GetMimeType()) {
 		document, err := openapi_v3.ParseDocument(data)
 		if err != nil {
 			return fmt.Errorf("errors parsing %s", name)
@@ -131,7 +130,7 @@ func (task *indexSpecTask) Run() error {
 		document.Security = nil
 		message = document
 	} else {
-		return fmt.Errorf("unable to generate descriptor for style %s", spec.GetStyle())
+		return fmt.Errorf("unable to generate descriptor for style %s", spec.GetMimeType())
 	}
 
 	// The bleve index requires serialized updates.

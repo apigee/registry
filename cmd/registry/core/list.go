@@ -81,7 +81,7 @@ func ListVersions(ctx context.Context,
 	segments []string,
 	filterFlag string,
 	handler VersionHandler) error {
-	request := &rpc.ListVersionsRequest{
+	request := &rpc.ListApiVersionsRequest{
 		Parent: "projects/" + segments[1] + "/apis/" + segments[2],
 	}
 	filter := filterFlag
@@ -91,7 +91,7 @@ func ListVersions(ctx context.Context,
 	if filter != "" {
 		request.Filter = filter
 	}
-	it := client.ListVersions(ctx, request)
+	it := client.ListApiVersions(ctx, request)
 	for {
 		version, err := it.Next()
 		if err == iterator.Done {
@@ -109,7 +109,7 @@ func ListSpecs(ctx context.Context,
 	segments []string,
 	filterFlag string,
 	handler SpecHandler) error {
-	request := &rpc.ListSpecsRequest{
+	request := &rpc.ListApiSpecsRequest{
 		Parent: "projects/" + segments[1] + "/apis/" + segments[2] + "/versions/" + segments[3],
 	}
 	filter := filterFlag
@@ -119,7 +119,7 @@ func ListSpecs(ctx context.Context,
 	if filter != "" {
 		request.Filter = filter
 	}
-	it := client.ListSpecs(ctx, request)
+	it := client.ListApiSpecs(ctx, request)
 	for {
 		spec, err := it.Next()
 		if err == iterator.Done {
@@ -137,13 +137,13 @@ func ListSpecRevisions(ctx context.Context,
 	segments []string,
 	filterFlag string,
 	handler SpecHandler) error {
-	request := &rpc.ListSpecRevisionsRequest{
+	request := &rpc.ListApiSpecRevisionsRequest{
 		Name: "projects/" + segments[1] +
 			"/apis/" + segments[2] +
 			"/versions/" + segments[3] +
 			"/specs/" + segments[4],
 	}
-	it := client.ListSpecRevisions(ctx, request)
+	it := client.ListApiSpecRevisions(ctx, request)
 	for {
 		spec, err := it.Next()
 		if err == iterator.Done {
@@ -156,12 +156,12 @@ func ListSpecRevisions(ctx context.Context,
 	return nil
 }
 
-func ListProperties(ctx context.Context,
+func ListArtifacts(ctx context.Context,
 	client *gapic.RegistryClient,
 	segments []string,
 	filterFlag string,
 	getContents bool,
-	handler PropertyHandler) error {
+	handler ArtifactHandler) error {
 	parent := "projects/" + segments[1]
 	if segments[3] != "" {
 		parent += "/apis/" + segments[3]
@@ -172,7 +172,7 @@ func ListProperties(ctx context.Context,
 			}
 		}
 	}
-	request := &rpc.ListPropertiesRequest{
+	request := &rpc.ListArtifactsRequest{
 		Parent: parent,
 		View:   rpc.View_BASIC,
 	}
@@ -184,28 +184,28 @@ func ListProperties(ctx context.Context,
 		if filter != "" {
 			filter += " && "
 		}
-		filter += "property_id == '" + segments[8] + "'"
+		filter += "artifact_id == '" + segments[8] + "'"
 	}
 	if filter != "" {
 		request.Filter = filter
 	}
-	it := client.ListProperties(ctx, request)
+	it := client.ListArtifacts(ctx, request)
 	for {
-		property, err := it.Next()
+		artifact, err := it.Next()
 		if err == iterator.Done {
 			break
 		} else if err != nil {
 			return err
 		}
-		handler(property)
+		handler(artifact)
 	}
 	return nil
 }
 
-func ListPropertiesForParent(ctx context.Context,
+func ListArtifactsForParent(ctx context.Context,
 	client *gapic.RegistryClient,
 	segments []string,
-	handler PropertyHandler) error {
+	handler ArtifactHandler) error {
 	parent := "projects/" + segments[1]
 	if len(segments) > 2 {
 		parent += "/apis/" + segments[2]
@@ -216,87 +216,19 @@ func ListPropertiesForParent(ctx context.Context,
 			}
 		}
 	}
-	request := &rpc.ListPropertiesRequest{
+	request := &rpc.ListArtifactsRequest{
 		Parent: parent,
 		View:   rpc.View_BASIC,
 	}
-	it := client.ListProperties(ctx, request)
+	it := client.ListArtifacts(ctx, request)
 	for {
-		property, err := it.Next()
+		artifact, err := it.Next()
 		if err == iterator.Done {
 			break
 		} else if err != nil {
 			return err
 		}
-		handler(property)
-	}
-	return nil
-}
-
-func ListLabels(ctx context.Context,
-	client *gapic.RegistryClient,
-	segments []string,
-	filterFlag string,
-	handler LabelHandler) error {
-	parent := "projects/" + segments[1]
-	if segments[3] != "" {
-		parent += "/apis/" + segments[3]
-		if segments[5] != "" {
-			parent += "/versions/" + segments[5]
-			if segments[7] != "" {
-				parent += "/specs/" + segments[7]
-			}
-		}
-	}
-	request := &rpc.ListLabelsRequest{
-		Parent: parent,
-	}
-	filter := filterFlag
-	if len(segments) == 9 && segments[8] != "-" {
-		filter = "label_id == '" + segments[8] + "'"
-	}
-	if filter != "" {
-		request.Filter = filter
-	}
-	it := client.ListLabels(ctx, request)
-	for {
-		label, err := it.Next()
-		if err == iterator.Done {
-			break
-		} else if err != nil {
-			return err
-		}
-		handler(label)
-	}
-	return nil
-}
-
-func ListLabelsForParent(ctx context.Context,
-	client *gapic.RegistryClient,
-	segments []string,
-	handler LabelHandler) error {
-	parent := "projects/" + segments[1]
-	if len(segments) > 2 {
-		parent += "/apis/" + segments[2]
-		if len(segments) > 3 {
-			parent += "/versions/" + segments[3]
-			if len(segments) > 4 {
-				parent += "/specs/" + segments[4]
-			}
-		}
-	}
-	request := &rpc.ListLabelsRequest{
-		Parent: parent,
-	}
-	it := client.ListLabels(ctx, request)
-	for {
-		label, err := it.Next()
-		if err == iterator.Done {
-			break
-		} else if err != nil {
-			return err
-		}
-		handler(label)
+		handler(artifact)
 	}
 	return nil
 }

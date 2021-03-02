@@ -22,9 +22,9 @@ import (
 	"github.com/graphql-go/graphql"
 )
 
-var propertyType = graphql.NewObject(
+var artifactType = graphql.NewObject(
 	graphql.ObjectConfig{
-		Name: "Property",
+		Name: "Artifact",
 		Fields: graphql.Fields{
 			"id": &graphql.Field{
 				Type: graphql.String,
@@ -39,21 +39,21 @@ var propertyType = graphql.NewObject(
 	},
 )
 
-func representationForProperty(property *rpc.Property) map[string]interface{} {
+func representationForArtifact(artifact *rpc.Artifact) map[string]interface{} {
 	return map[string]interface{}{
-		"id":      property.Name,
-		"created": representationForTimestamp(property.CreateTime),
-		"updated": representationForTimestamp(property.UpdateTime),
+		"id":      artifact.Name,
+		"created": representationForTimestamp(artifact.CreateTime),
+		"updated": representationForTimestamp(artifact.UpdateTime),
 	}
 }
 
-func resolveProperties(p graphql.ResolveParams) (interface{}, error) {
+func resolveArtifacts(p graphql.ResolveParams) (interface{}, error) {
 	ctx := p.Context
 	c, err := connection.NewClient(ctx)
 	if err != nil {
 		return nil, err
 	}
-	req := &rpc.ListPropertiesRequest{
+	req := &rpc.ListArtifactsRequest{
 		Parent: getParentFromParams(p),
 	}
 	pageToken, isFound := p.Args["after"].(string)
@@ -66,12 +66,12 @@ func resolveProperties(p graphql.ResolveParams) (interface{}, error) {
 	} else {
 		pageSize = 50
 	}
-	var response *rpc.ListPropertiesResponse
+	var response *rpc.ListArtifactsResponse
 	edges := []map[string]interface{}{}
 	for len(edges) < pageSize {
-		response, err = c.GrpcClient().ListProperties(ctx, req)
-		for _, property := range response.GetProperties() {
-			edges = append(edges, representationForEdge(representationForProperty(property)))
+		response, err = c.GrpcClient().ListArtifacts(ctx, req)
+		for _, artifact := range response.GetArtifacts() {
+			edges = append(edges, representationForEdge(representationForArtifact(artifact)))
 		}
 		req.PageToken = response.GetNextPageToken()
 		if req.PageToken == "" {
@@ -81,7 +81,7 @@ func resolveProperties(p graphql.ResolveParams) (interface{}, error) {
 	return connectionForEdgesAndEndCursor(edges, response.GetNextPageToken()), nil
 }
 
-func resolveProperty(p graphql.ResolveParams) (interface{}, error) {
+func resolveArtifact(p graphql.ResolveParams) (interface{}, error) {
 	ctx := p.Context
 	c, err := connection.NewClient(ctx)
 	if err != nil {
@@ -91,12 +91,12 @@ func resolveProperty(p graphql.ResolveParams) (interface{}, error) {
 	if !isFound {
 		return nil, errors.New("missing id field")
 	}
-	req := &rpc.GetPropertyRequest{
+	req := &rpc.GetArtifactRequest{
 		Name: name,
 	}
-	property, err := c.GetProperty(ctx, req)
+	artifact, err := c.GetArtifact(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	return representationForProperty(property), err
+	return representationForArtifact(artifact), err
 }

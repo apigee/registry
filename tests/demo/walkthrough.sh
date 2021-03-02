@@ -37,30 +37,30 @@ apg registry create-api \
 
 echo
 echo Add a version of the API to the registry.
-apg registry create-version \
+apg registry create-api-version \
     --parent projects/demo/apis/petstore \
-    --version_id 1.0.0 \
-    --version.state "PRODUCTION" \
+    --api_version_id 1.0.0 \
+    --api_version.state "PRODUCTION" \
     --json
 
 echo
 echo Add a spec for the API version that we just added to the registry.
-apg registry create-spec \
+apg registry create-api-spec \
     --parent projects/demo/apis/petstore/versions/1.0.0 \
-    --spec_id openapi.yaml \
-    --spec.contents `registry-encode-spec < petstore/1.0.0/openapi.yaml@r0` \
+    --api_spec_id openapi.yaml \
+    --api_spec.contents `registry-encode-spec < petstore/1.0.0/openapi.yaml@r0` \
     --json
 
 echo
 echo Get the API spec.
-apg registry get-spec \
+apg registry get-api-spec \
     --name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml \
     --view full \
     --json
 
 echo
 echo Get the contents of the API spec.
-apg registry get-spec \
+apg registry get-api-spec \
     --name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml \
     --view full --json | \
     jq '.contents' -r | \
@@ -68,110 +68,110 @@ apg registry get-spec \
 
 echo
 echo Update an attribute of the spec.
-apg registry update-spec \
-	--spec.name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml \
-	--spec.style "openapi/v3+gzip" \
+apg registry update-api-spec \
+	--api_spec.name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml \
+	--api_spec.mime_type "application/x.openapi+gzip; version=3" \
     --json
 
 echo
 echo Get the modifed API spec.
-apg registry get-spec \
+apg registry get-api-spec \
     --name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml \
     --view full \
     --json
 
 echo
 echo Update the spec to new contents.
-apg registry update-spec \
-	--spec.name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml \
-	--spec.contents `registry-encode-spec < petstore/1.0.0/openapi.yaml@r1` \
+apg registry update-api-spec \
+	--api_spec.name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml \
+	--api_spec.contents `registry-encode-spec < petstore/1.0.0/openapi.yaml@r1` \
     --json
 
 echo
 echo Again update the spec to new contents.
-apg registry update-spec \
-	--spec.name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml \
-	--spec.contents `registry-encode-spec < petstore/1.0.0/openapi.yaml@r2` \
+apg registry update-api-spec \
+	--api_spec.name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml \
+	--api_spec.contents `registry-encode-spec < petstore/1.0.0/openapi.yaml@r2` \
     --json
 
 echo
 echo Make a third update of the spec contents.
-apg registry update-spec \
-	--spec.name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml \
-	--spec.contents `registry-encode-spec < petstore/1.0.0/openapi.yaml@r3`
+apg registry update-api-spec \
+	--api_spec.name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml \
+	--api_spec.contents `registry-encode-spec < petstore/1.0.0/openapi.yaml@r3`
 
 echo
 echo Get the API spec.
-apg registry get-spec \
+apg registry get-api-spec \
     --name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml \
     --view full \
     --json
 
 echo
 echo List the revisions of the spec.
-apg registry list-spec-revisions \
+apg registry list-api-spec-revisions \
     --name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml \
     --json
 
 echo
 echo List just the names of the revisions of the spec.
-apg registry list-spec-revisions \
+apg registry list-api-spec-revisions \
     --name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml \
     --json | \
     jq '.specs[].name' -r 
 
 echo
 echo Get the latest revision of the spec.
-apg registry list-spec-revisions \
+apg registry list-api-spec-revisions \
     --name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml \
     --json | \
     jq '.specs[0].name' -r 
 
 echo
 echo Get the oldest revision of the spec.
-apg registry list-spec-revisions \
+apg registry list-api-spec-revisions \
     --name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml \
     --json | \
     jq '.specs[-1].name' -r 
 
-ORIGINAL=`apg registry list-spec-revisions \
+ORIGINAL=`apg registry list-api-spec-revisions \
     --name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml \
     --json | \
     jq '.specs[-1].name' -r`
 
-ORIGINAL_HASH=`apg registry list-spec-revisions \
+ORIGINAL_HASH=`apg registry list-api-spec-revisions \
     --name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml \
     --json | \
     jq '.specs[-1].hash' -r`
 
 echo
 echo Tag a spec revision.
-apg registry tag-spec-revision --name $ORIGINAL --tag og --json
+apg registry tag-api-spec-revision --name $ORIGINAL --tag og --json
 
 echo
 echo Get a spec by its tag.
-apg registry get-spec \
+apg registry get-api-spec \
     --name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml@og \
     --view basic \
     --json
 
 echo
 echo Print the hash of the current spec revision.
-apg registry get-spec \
+apg registry get-api-spec \
     --name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml \
     --json | \
     jq '.hash' -r
 
 echo
 echo Rollback to a prior spec revision.
-apg registry rollback-spec \
+apg registry rollback-api-spec \
     --name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml \
     --revision_id og \
     --json
 
 echo
 echo Print the hash of the current spec revision after the rollback.
-apg registry get-spec \
+apg registry get-api-spec \
     --name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml \
     --json | \
     jq '.hash' -r
@@ -182,9 +182,9 @@ echo $ORIGINAL_HASH
 
 echo
 echo Delete a spec revision.
-apg registry delete-spec-revision --name $ORIGINAL
+apg registry delete-api-spec-revision --name $ORIGINAL
 
-ORIGINAL2=`apg registry list-spec-revisions \
+ORIGINAL2=`apg registry list-api-spec-revisions \
     --name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml \
     --json | \
     jq '.specs[-1].name' -r`
@@ -194,63 +194,22 @@ echo Verify that the spec has changed.
 echo $ORIGINAL2 should not be $ORIGINAL
 
 echo
-echo List the revision tags of a spec.
-apg registry list-spec-revision-tags \
-    --name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml \
-    --json
-
-echo
 echo Verify that when listing specs, we only get the current revision of each spec.
-apg registry list-specs \
+apg registry list-api-specs \
     --parent projects/demo/apis/petstore/versions/1.0.0 \
     --json
 
 echo
-echo Add some labels to entities in the registry.
-apg registry create-label \
+echo Set some artifacts on entities in the registry.
+# the contents below is the hex-encoding of "https://github.com/OAI/OpenAPI-Specification"
+apg registry create-artifact \
     --parent projects/demo/apis/petstore \
-    --label_id pets \
-    --json
-
-apg registry create-label \
-    --parent projects/demo/apis/petstore \
-    --label_id retail \
-    --json
-
-apg registry create-label \
-    --parent projects/demo/apis/petstore \
-    --label_id stock \
-    --json
-
-apg registry create-label \
-    --parent projects/demo/apis/petstore/versions/1.0.0 \
-    --label_id published \
-    --json
-
-echo
-echo Set some properties on entities in the registry.
-apg registry create-property \
-    --parent projects/demo/apis/petstore \
-    --property_id source \
-    --property.value string_value \
-    --property.value.string_value "https://github.com/OAI/OpenAPI-Specification" \
-    --json
-
-apg registry create-property \
-    --parent projects/demo/apis/petstore/versions/1.0.0 \
-    --property_id score \
-    --property.value int64_value \
-    --property.value.int64_value 100 \
-    --json
-
-apg registry create-property \
-    --parent projects/demo/apis/petstore/versions/1.0.0 \
-    --property_id boys \
-    --property.value string_value \
-    --property.value.string_value "Neil Tennant, Chris Lowe" \
+    --artifact_id source \
+    --artifact.mime_type "text/plain" \
+    --artifact.contents "68747470733a2f2f6769746875622e636f6d2f4f41492f4f70656e4150492d53706563696669636174696f6e0a" \
     --json
 
 echo
 echo Export a YAML summary of the demo project.
-registry export projects/demo > demo.yaml
+registry export yaml projects/demo > demo.yaml
 cat demo.yaml

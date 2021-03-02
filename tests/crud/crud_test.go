@@ -18,14 +18,16 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"crypto/sha256"
+	"fmt"
 	"io/ioutil"
+	"reflect"
 	"testing"
 
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/anypb"
 )
 
 func unavailable(err error) bool {
@@ -78,7 +80,9 @@ func TestCRUD(t *testing.T) {
 			Name: "projects/test",
 		}
 		err = registryClient.DeleteProject(ctx, req)
-		check(t, "Failed to delete test project: %+v", err)
+		if status.Code(err) != codes.NotFound {
+			check(t, "Failed to delete test project: %+v", err)
+		}
 	}
 	// Create the test project.
 	{
@@ -95,6 +99,8 @@ func TestCRUD(t *testing.T) {
 			t.Errorf("Invalid project name %s", project.GetName())
 		}
 	}
+	// Create a map to use for labels and annotations.
+	sampleMap := map[string]string{"one": "1", "two": "2", "three": "3"}
 	// Create the sample api.
 	{
 		req := &rpc.CreateApiRequest{
@@ -104,7 +110,8 @@ func TestCRUD(t *testing.T) {
 				DisplayName:  "Sample",
 				Description:  "A sample API",
 				Availability: "GENERAL",
-				Owner:        "Acme APIs",
+				Labels:       sampleMap,
+				Annotations:  sampleMap,
 			},
 		}
 		_, err := registryClient.CreateApi(ctx, req)
@@ -112,32 +119,83 @@ func TestCRUD(t *testing.T) {
 	}
 	// Create the sample 1.0.0 version.
 	{
-		req := &rpc.CreateVersionRequest{
-			Parent:    "projects/test/apis/sample",
-			VersionId: "1.0.0",
+		req := &rpc.CreateApiVersionRequest{
+			Parent:       "projects/test/apis/sample",
+			ApiVersionId: "1.0.0",
+			ApiVersion: &rpc.ApiVersion{
+				Labels:      sampleMap,
+				Annotations: sampleMap,
+			},
 		}
-		_, err := registryClient.CreateVersion(ctx, req)
+		_, err := registryClient.CreateApiVersion(ctx, req)
 		check(t, "error creating version %s", err)
 	}
 	// Upload the sample 1.0.0 OpenAPI spec.
 	{
 		buf, err := readAndGZipFile("openapi.yaml@r0")
 		check(t, "error reading spec", err)
-		req := &rpc.CreateSpecRequest{
-			Parent: "projects/test/apis/sample/versions/1.0.0",
-			SpecId: "openapi.yaml",
-			Spec: &rpc.Spec{
-				Style:    "openapi/v3+gzip",
-				Contents: buf.Bytes(),
+		req := &rpc.CreateApiSpecRequest{
+			Parent:    "projects/test/apis/sample/versions/1.0.0",
+			ApiSpecId: "openapi.yaml",
+			ApiSpec: &rpc.ApiSpec{
+				MimeType:    "application/x.openapi+gzip; version=3.0.0",
+				Contents:    buf.Bytes(),
+				Labels:      sampleMap,
+				Annotations: sampleMap,
 			},
 		}
-		_, err = registryClient.CreateSpec(ctx, req)
+		_, err = registryClient.CreateApiSpec(ctx, req)
 		check(t, "error creating spec %s", err)
 	}
-	testProperties(ctx, registryClient, t, "projects/test")
-	testProperties(ctx, registryClient, t, "projects/test/apis/sample")
-	testProperties(ctx, registryClient, t, "projects/test/apis/sample/versions/1.0.0")
-	testProperties(ctx, registryClient, t, "projects/test/apis/sample/versions/1.0.0/specs/openapi.yaml")
+	// Check the created API.
+	{
+		req := &rpc.GetApiRequest{
+			Name: "projects/test/apis/sample",
+			View: rpc.View_FULL,
+		}
+		api, err := registryClient.GetApi(ctx, req)
+		check(t, "error getting api %s", err)
+		if !reflect.DeepEqual(api.GetLabels(), sampleMap) {
+			t.Errorf("Unexpected api labels %+v", api.GetLabels())
+		}
+		if !reflect.DeepEqual(api.GetAnnotations(), sampleMap) {
+			t.Errorf("Unexpected api annotations %+v", api.GetAnnotations())
+		}
+	}
+	// Check the created version.
+	{
+		req := &rpc.GetApiVersionRequest{
+			Name: "projects/test/apis/sample/versions/1.0.0",
+			View: rpc.View_FULL,
+		}
+		version, err := registryClient.GetApiVersion(ctx, req)
+		check(t, "error getting version %s", err)
+		if !reflect.DeepEqual(version.GetLabels(), sampleMap) {
+			t.Errorf("Unexpected version labels %+v", version.GetLabels())
+		}
+		if !reflect.DeepEqual(version.GetAnnotations(), sampleMap) {
+			t.Errorf("Unexpected version annotations %+v", version.GetAnnotations())
+		}
+	}
+	// Check the created spec.
+	{
+		req := &rpc.GetApiSpecRequest{
+			Name: "projects/test/apis/sample/versions/1.0.0/specs/openapi.yaml",
+			View: rpc.View_FULL,
+		}
+		spec, err := registryClient.GetApiSpec(ctx, req)
+		check(t, "error getting spec %s", err)
+		if !reflect.DeepEqual(spec.GetLabels(), sampleMap) {
+			t.Errorf("Unexpected spec labels %+v", spec.GetLabels())
+		}
+		if !reflect.DeepEqual(spec.GetAnnotations(), sampleMap) {
+			t.Errorf("Unexpected spec annotations %+v", spec.GetAnnotations())
+		}
+	}
+	testArtifacts(ctx, registryClient, t, "projects/test")
+	testArtifacts(ctx, registryClient, t, "projects/test/apis/sample")
+	testArtifacts(ctx, registryClient, t, "projects/test/apis/sample/versions/1.0.0")
+	testArtifacts(ctx, registryClient, t, "projects/test/apis/sample/versions/1.0.0/specs/openapi.yaml")
 	// Delete the test project.
 	{
 		req := &rpc.DeleteProjectRequest{
@@ -148,80 +206,47 @@ func TestCRUD(t *testing.T) {
 	}
 }
 
-// testProperties verifies property operations on a specified entity.
-func testProperties(ctx context.Context, registryClient connection.Client, t *testing.T, parent string) {
-	// Set a string property.
+func hashForBytes(b []byte) string {
+	h := sha256.New()
+	h.Write(b)
+	bs := h.Sum(nil)
+	return fmt.Sprintf("%x", bs)
+}
+
+// testArtifacts verifies artifact operations on a specified entity.
+func testArtifacts(ctx context.Context, registryClient connection.Client, t *testing.T, parent string) {
+	messageContents := []byte("hello")
+	messageHash := hashForBytes(messageContents)
+	messageLength := int32(len(messageContents))
+	messageMimeType := "text/plain"
+	// Set the artifact.
 	{
-		req := &rpc.CreatePropertyRequest{
+		req := &rpc.CreateArtifactRequest{
 			Parent:     parent,
-			PropertyId: "string",
-			Property: &rpc.Property{
-				Value: &rpc.Property_StringValue{StringValue: "testing"},
+			ArtifactId: "sample",
+			Artifact: &rpc.Artifact{
+				MimeType: messageMimeType,
+				Contents: messageContents,
 			},
 		}
-		_, err := registryClient.CreateProperty(ctx, req)
-		check(t, "error creating property %s", err)
+		_, err := registryClient.CreateArtifact(ctx, req)
+		check(t, "error creating artifact %s", err)
 	}
-	// Set an int64 property.
+	// Check the artifact.
 	{
-		req := &rpc.CreatePropertyRequest{
-			Parent:     parent,
-			PropertyId: "int64",
-			Property: &rpc.Property{
-				Value: &rpc.Property_Int64Value{Int64Value: 123},
-			},
+		req := &rpc.GetArtifactRequest{
+			Name: fmt.Sprintf("%s/artifacts/sample", parent),
 		}
-		_, err := registryClient.CreateProperty(ctx, req)
-		check(t, "error creating property %s", err)
-	}
-	// Set a double property.
-	{
-		req := &rpc.CreatePropertyRequest{
-			Parent:     parent,
-			PropertyId: "double",
-			Property: &rpc.Property{
-				Value: &rpc.Property_DoubleValue{DoubleValue: 123.456},
-			},
+		resp, err := registryClient.GetArtifact(ctx, req)
+		check(t, "error getting artifact %s", err)
+		if resp.GetMimeType() != messageMimeType {
+			t.Errorf("Unexpected mime type %s (expected %s)", resp.GetMimeType(), messageMimeType)
 		}
-		_, err := registryClient.CreateProperty(ctx, req)
-		check(t, "error creating property %s", err)
-	}
-	// Set a boolean property.
-	{
-		req := &rpc.CreatePropertyRequest{
-			Parent:     parent,
-			PropertyId: "bool",
-			Property: &rpc.Property{
-				Value: &rpc.Property_BoolValue{BoolValue: true},
-			},
+		if resp.GetSizeBytes() != messageLength {
+			t.Errorf("Unexpected length %d (expected %d)", resp.GetSizeBytes(), messageLength)
 		}
-		_, err := registryClient.CreateProperty(ctx, req)
-		check(t, "error creating property %s", err)
-	}
-	// Set a bytes property.
-	if true {
-		req := &rpc.CreatePropertyRequest{
-			Parent:     parent,
-			PropertyId: "bytes",
-			Property: &rpc.Property{
-				Value: &rpc.Property_BytesValue{BytesValue: []byte("hello")},
-			},
+		if resp.GetHash() != messageHash {
+			t.Errorf("Unexpected hash value %s (expected %s)", resp.GetHash(), messageHash)
 		}
-		_, err := registryClient.CreateProperty(ctx, req)
-		check(t, "error creating property %s", err)
-	}
-	// Set a message property.
-	if true {
-		req := &rpc.CreatePropertyRequest{
-			Parent:     parent,
-			PropertyId: "message",
-			Property: &rpc.Property{
-				Value: &rpc.Property_MessageValue{MessageValue: &anypb.Any{TypeUrl: "echo", Value: []byte{
-					0x0a, 0x05, 0x68, 0x65, 0x6c, 0x6c, 0x6f,
-				}}},
-			},
-		}
-		_, err := registryClient.CreateProperty(ctx, req)
-		check(t, "error creating property %s", err)
 	}
 }

@@ -23,7 +23,6 @@ import (
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
-	"github.com/golang/protobuf/ptypes/any"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/proto"
 )
@@ -53,7 +52,7 @@ var computeIndexCmd = &cobra.Command{
 		name := args[0]
 		if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
 			// Iterate through a collection of specs and summarize each.
-			err = core.ListSpecs(ctx, client, m, computeFilter, func(spec *rpc.Spec) {
+			err = core.ListSpecs(ctx, client, m, computeFilter, func(spec *rpc.ApiSpec) {
 				taskQueue <- &computeIndexTask{
 					ctx:      ctx,
 					client:   client,
@@ -80,18 +79,18 @@ func (task *computeIndexTask) Name() string {
 }
 
 func (task *computeIndexTask) Run() error {
-	request := &rpc.GetSpecRequest{
+	request := &rpc.GetApiSpecRequest{
 		Name: task.specName,
 		View: rpc.View_FULL,
 	}
-	spec, err := task.client.GetSpec(task.ctx, request)
+	spec, err := task.client.GetApiSpec(task.ctx, request)
 	if err != nil {
 		return err
 	}
 	relation := "index"
-	log.Printf("computing %s/properties/%s", spec.Name, relation)
+	log.Printf("computing %s/artifacts/%s", spec.Name, relation)
 	var index *rpc.Index
-	if spec.GetStyle() == "proto+zip" {
+	if core.IsProto(spec.GetMimeType()) && core.IsZipArchive(spec.GetMimeType()) {
 		index, err = core.NewIndexFromZippedProtos(spec.GetContents())
 		if err != nil {
 			return fmt.Errorf("error processing protos: %s", spec.Name)
@@ -101,18 +100,12 @@ func (task *computeIndexTask) Run() error {
 	}
 	subject := spec.GetName()
 	messageData, err := proto.Marshal(index)
-	property := &rpc.Property{
-		Subject:  subject,
-		Relation: relation,
-		Name:     subject + "/properties/" + relation,
-		Value: &rpc.Property_MessageValue{
-			MessageValue: &any.Any{
-				TypeUrl: "google.cloud.apigee.registry.v1alpha1.Index",
-				Value:   messageData,
-			},
-		},
+	artifact := &rpc.Artifact{
+		Name:     subject + "/artifacts/" + relation,
+		MimeType: core.MimeTypeForMessageType("google.cloud.apigee.registry.applications.v1alpha1.Index"),
+		Contents: messageData,
 	}
-	err = core.SetProperty(task.ctx, task.client, property)
+	err = core.SetArtifact(task.ctx, task.client, artifact)
 	if err != nil {
 		return err
 	}

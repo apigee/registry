@@ -23,7 +23,6 @@ import (
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
-	"github.com/golang/protobuf/ptypes/any"
 	metrics "github.com/googleapis/gnostic/metrics"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/proto"
@@ -45,24 +44,20 @@ func collectInputVocabularies(ctx context.Context, client connection.Client, arg
 	inputNames := make([]string, 0)
 	inputs := make([]*metrics.Vocabulary, 0)
 	for _, name := range args {
-		if m := names.PropertyRegexp().FindStringSubmatch(name); m != nil {
-			err := core.ListProperties(ctx, client, m, filter, true, func(property *rpc.Property) {
-				switch v := property.GetValue().(type) {
-				case *rpc.Property_MessageValue:
-					if v.MessageValue.TypeUrl == "gnostic.metrics.Vocabulary" {
-						vocab := &metrics.Vocabulary{}
-						err := proto.Unmarshal(v.MessageValue.Value, vocab)
-						if err != nil {
-							log.Printf("%+v", err)
-						} else {
-							inputNames = append(inputNames, property.Name)
-							inputs = append(inputs, vocab)
-						}
+		if m := names.ArtifactRegexp().FindStringSubmatch(name); m != nil {
+			err := core.ListArtifacts(ctx, client, m, filter, true, func(artifact *rpc.Artifact) {
+				messageType, err := core.MessageTypeForMimeType(artifact.GetMimeType())
+				if err == nil && messageType == "gnostic.metrics.Vocabulary" {
+					vocab := &metrics.Vocabulary{}
+					err := proto.Unmarshal(artifact.GetContents(), vocab)
+					if err != nil {
+						log.Printf("%+v", err)
 					} else {
-						log.Printf("skipping, not a vocabulary: %s\n", property.Name)
+						inputNames = append(inputNames, artifact.Name)
+						inputs = append(inputs, vocab)
 					}
-				default:
-					log.Printf("skipping, not a vocabulary: %s\n", property.Name)
+				} else {
+					log.Printf("skipping, not a vocabulary: %s\n", artifact.Name)
 				}
 			})
 			if err != nil {
@@ -73,45 +68,33 @@ func collectInputVocabularies(ctx context.Context, client connection.Client, arg
 	return inputNames, inputs
 }
 
-func setVocabularyToProperty(ctx context.Context, client connection.Client, output *metrics.Vocabulary, outputPropertyName string) {
-	parts := strings.Split(outputPropertyName, "/properties/")
+func setVocabularyToArtifact(ctx context.Context, client connection.Client, output *metrics.Vocabulary, outputArtifactName string) {
+	parts := strings.Split(outputArtifactName, "/artifacts/")
 	subject := parts[0]
 	relation := parts[1]
 	messageData, err := proto.Marshal(output)
-	property := &rpc.Property{
-		Subject:  subject,
-		Relation: relation,
-		Name:     subject + "/properties/" + relation,
-		Value: &rpc.Property_MessageValue{
-			MessageValue: &any.Any{
-				TypeUrl: "gnostic.metrics.Vocabulary",
-				Value:   messageData,
-			},
-		},
+	artifact := &rpc.Artifact{
+		Name:     subject + "/artifacts/" + relation,
+		MimeType: core.MimeTypeForMessageType("gnostic.metrics.Vocabulary"),
+		Contents: messageData,
 	}
-	err = core.SetProperty(ctx, client, property)
+	err = core.SetArtifact(ctx, client, artifact)
 	if err != nil {
 		log.Fatalf("%s", err.Error())
 	}
 }
 
-func setVersionHistoryToProperty(ctx context.Context, client connection.Client, output *metrics.VersionHistory, outputPropertyName string) {
-	parts := strings.Split(outputPropertyName, "/properties/")
+func setVersionHistoryToArtifact(ctx context.Context, client connection.Client, output *metrics.VersionHistory, outputArtifactName string) {
+	parts := strings.Split(outputArtifactName, "/artifacts/")
 	subject := parts[0]
 	relation := parts[1]
 	messageData, err := proto.Marshal(output)
-	property := &rpc.Property{
-		Subject:  subject,
-		Relation: relation,
-		Name:     subject + "/properties/" + relation,
-		Value: &rpc.Property_MessageValue{
-			MessageValue: &any.Any{
-				TypeUrl: "gnostic.metrics.VersionHistory",
-				Value:   messageData,
-			},
-		},
+	artifact := &rpc.Artifact{
+		Name:     subject + "/artifacts/" + relation,
+		MimeType: core.MimeTypeForMessageType("gnostic.metrics.VersionHistory"),
+		Contents: messageData,
 	}
-	err = core.SetProperty(ctx, client, property)
+	err = core.SetArtifact(ctx, client, artifact)
 	if err != nil {
 		log.Fatalf("%s", err.Error())
 	}
