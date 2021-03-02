@@ -80,7 +80,9 @@ func TestCRUD(t *testing.T) {
 			Name: "projects/test",
 		}
 		err = registryClient.DeleteProject(ctx, req)
-		check(t, "Failed to delete test project: %+v", err)
+		if status.Code(err) != codes.NotFound {
+			check(t, "Failed to delete test project: %+v", err)
+		}
 	}
 	// Create the test project.
 	{

@@ -125,7 +125,9 @@ func TestDemo(t *testing.T) {
 			Name: "projects/demo",
 		}
 		err = registryClient.DeleteProject(ctx, req)
-		check(t, "Failed to delete demo project: %+v", err)
+		if status.Code(err) != codes.NotFound {
+			check(t, "Failed to delete demo project: %+v", err)
+		}
 	}
 	// Create the demo project.
 	{

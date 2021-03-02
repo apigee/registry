@@ -66,20 +66,25 @@ func (s *RegistryServer) DeleteProject(ctx context.Context, req *rpc.DeleteProje
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
-	// Validate name and create dummy project (we just need the ID fields).
+
 	project, err := models.NewProjectFromResourceName(req.GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	// Delete children first and then delete the project.
-	err = client.DeleteChildrenOfProject(ctx, project)
-	if err != nil {
-		return &empty.Empty{}, internalError(err)
+
+	k := client.NewKey(models.ProjectEntityName, project.ResourceName())
+	if err := client.Get(ctx, k, &models.Project{}); client.IsNotFound(err) {
+		return nil, notFoundError(err)
+	} else if err != nil {
+		return nil, internalError(err)
 	}
-	k := client.NewKey(models.ProjectEntityName, req.GetName())
-	err = client.Delete(ctx, k)
+
+	if err := client.DeleteChildrenOfProject(ctx, project); err != nil {
+		return nil, internalError(err)
+	}
+
 	s.notify(rpc.Notification_DELETED, req.GetName())
-	return &empty.Empty{}, internalError(err)
+	return &empty.Empty{}, internalError(client.Delete(ctx, k))
 }
 
 // GetProject handles the corresponding API request.
