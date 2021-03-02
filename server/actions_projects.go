@@ -66,20 +66,25 @@ func (s *RegistryServer) DeleteProject(ctx context.Context, req *rpc.DeleteProje
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
-	// Validate name and create dummy project (we just need the ID fields).
+
 	project, err := models.NewProjectFromResourceName(req.GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	// Delete children first and then delete the project.
-	err = client.DeleteChildrenOfProject(ctx, project)
-	if err != nil {
-		return &empty.Empty{}, internalError(err)
+
+	k := client.NewKey(models.ProjectEntityName, project.ResourceName())
+	if err := client.Get(ctx, k, &models.Project{}); client.IsNotFound(err) {
+		return nil, notFoundError(err)
+	} else if err != nil {
+		return nil, internalError(err)
 	}
-	k := client.NewKey(models.ProjectEntityName, req.GetName())
-	err = client.Delete(ctx, k)
+
+	if err := client.DeleteChildrenOfProject(ctx, project); err != nil {
+		return nil, internalError(err)
+	}
+
 	s.notify(rpc.Notification_DELETED, req.GetName())
-	return &empty.Empty{}, internalError(err)
+	return &empty.Empty{}, internalError(client.Delete(ctx, k))
 }
 
 // GetProject handles the corresponding API request.
@@ -110,13 +115,19 @@ func (s *RegistryServer) ListProjects(ctx context.Context, req *rpc.ListProjects
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
+
+	if req.GetPageSize() < 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid page_size: must not be negative")
+	}
+
 	q := client.NewQuery(models.ProjectEntityName)
 	q, err = q.ApplyCursor(req.GetPageToken())
 	if err != nil {
-		return nil, internalError(err)
+		return nil, invalidArgumentError(err)
 	}
 	prg, err := createFilterOperator(req.GetFilter(),
 		[]filterArg{
+			{"name", filterArgTypeString},
 			{"project_id", filterArgTypeString},
 			{"display_name", filterArgTypeString},
 			{"description", filterArgTypeString},
@@ -124,7 +135,7 @@ func (s *RegistryServer) ListProjects(ctx context.Context, req *rpc.ListProjects
 			{"update_time", filterArgTypeTimestamp},
 		})
 	if err != nil {
-		return nil, internalError(err)
+		return nil, err
 	}
 	var projectMessages []*rpc.Project
 	var project models.Project
@@ -133,6 +144,7 @@ func (s *RegistryServer) ListProjects(ctx context.Context, req *rpc.ListProjects
 	for _, err = it.Next(&project); err == nil; _, err = it.Next(&project) {
 		if prg != nil {
 			out, _, err := prg.Eval(map[string]interface{}{
+				"name":         project.ResourceName(),
 				"project_id":   project.ProjectID,
 				"display_name": project.DisplayName,
 				"description":  project.Description,
@@ -158,10 +170,18 @@ func (s *RegistryServer) ListProjects(ctx context.Context, req *rpc.ListProjects
 	responses := &rpc.ListProjectsResponse{
 		Projects: projectMessages,
 	}
-	responses.NextPageToken, err = it.GetCursor(len(projectMessages))
+
+	nextToken, err := it.GetCursor(len(projectMessages))
 	if err != nil {
 		return nil, internalError(err)
 	}
+
+	if _, err := it.Next(&project); err == nil {
+		responses.NextPageToken = nextToken
+	} else if err != iterator.Done {
+		return nil, internalError(err)
+	}
+
 	return responses, nil
 }
 

@@ -89,7 +89,9 @@ func TestFilters(t *testing.T) {
 			Name: "projects/filters",
 		}
 		err = registryClient.DeleteProject(ctx, req)
-		check(t, "Failed to delete filters project: %+v", err)
+		if status.Code(err) != codes.NotFound {
+			check(t, "Failed to delete filters project: %+v", err)
+		}
 	}
 	// Create the filters project.
 	{
