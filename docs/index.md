@@ -8,24 +8,18 @@ The Registry API ([protocol documentation](/registry/api.html)) presents a simpl
 projects/{project_id}/apis/{api_id}/versions/{version_id}/specs/{spec_id}
 ```
 
-Specs can be of any format, and spec formats are specified with a `style` field in the Spec record. Additional metadata is represented by Properties and Labels. **Properties** associate values with any of the main entities (Projects, APIs, Versions, and Specs), and property values can be scalars or structured messages that can optionally be described with Protocol Buffers. **Labels** can also be associated with any of the main entity types and allow entities to be tagged and filtered. Depending on the entities they are associated with, properties can have any of the following resource names:
+Specs can be of any format, and spec formats are specified with a `mime_type` field in the Spec record. Metadata can be associated with APIs,
+Versions, and Specs using maps of key-value pairs attached to these resources, and larger metadata can be stored in **Artifacts** associated
+with Projects, APIs, Versions, and Specs. Artifacts are binary blobs with associated `mime_type` values that can optionally refer to Protocol
+Buffer message types. Depending on the entities they are associated with, artifacts can have any of the following resource names:
 
 ```
-projects/{project_id}/properties/{property_id}
-projects/{project_id}/apis/{api_id}/properties/{property_id}
-projects/{project_id}/apis/{api_id}/versions/{version_id}/properties/{property_id}
-projects/{project_id}/apis/{api_id}/versions/{version_id}/specs/{spec_id}/properties/{property_id}
+projects/{project_id}/artifacts/{artifact_id}
+projects/{project_id}/apis/{api_id}/artifacts/{artifact_id}
+projects/{project_id}/apis/{api_id}/versions/{version_id}/artifacts/{artifact_id}
+projects/{project_id}/apis/{api_id}/versions/{version_id}/specs/{spec_id}/artifacts/{artifact_id}
 ```
 
-Resource names for labels are similar:
-
-```
-projects/{project_id}/labels/{label_id}
-projects/{project_id}/apis/{api_id}/labels/{label_id}
-projects/{project_id}/apis/{api_id}/versions/{version_id}/labels/{label_id}
-projects/{project_id}/apis/{api_id}/versions/{version_id}/specs/{spec_id}/labels/{label_id}
-```
-
-The Registry API is a [gRPC](https://grpc.io) service that closely follows the guidelines in the Google [API Improvement Proposals](https://aip.dev). This includes following standards for [pagination](https://google.aip.dev/158), [reading across collections](https://google.aip.dev/159), and [filtering](https://google.aip.dev/160) for all collections, optional [partial responses](https://google.aip.dev/157) for Specs and Properties, [resource revisions](https://google.aip.dev/162) for Specs, and support for [generated client libraries](https://google.aip.dev/client-libraries/4210) and [HTTP transcoding](https://aip.dev/127).
+The Registry API is a [gRPC](https://grpc.io) service that closely follows the guidelines in the Google [API Improvement Proposals](https://aip.dev). This includes following standards for [pagination](https://google.aip.dev/158), [reading across collections](https://google.aip.dev/159), and [filtering](https://google.aip.dev/160) for all collections, optional [partial responses](https://google.aip.dev/157), [resource revisions](https://google.aip.dev/162) for Specs, and support for [generated client libraries](https://google.aip.dev/client-libraries/4210) and [HTTP transcoding](https://aip.dev/127).
 
 For more information, see the [README](https://github.com/apigee/registry/blob/main/README.md) at the root of the project and other README files scattered throughout the repository. For questions or concerns, feel free to contact the repo owners directly or to use the [Issues](https://github.com/apigee/registry/issues) area. Thanks for reading! 
