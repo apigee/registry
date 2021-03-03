@@ -5,9 +5,13 @@
 # This is based on Debian and sets the GOPATH to /go.
 # https://hub.docker.com/_/golang
 FROM golang:1.15 as builder
+
+# use aarch_64 for arm64
+ARG ARCH=x86_64
+
 RUN apt-get update
 RUN apt-get install unzip
-RUN curl -L https://github.com/protocolbuffers/protobuf/releases/download/v3.13.0/protoc-3.13.0-linux-x86_64.zip > /tmp/protoc.zip
+RUN curl -L https://github.com/protocolbuffers/protobuf/releases/download/v3.15.1/protoc-3.15.1-linux-$ARCH.zip > /tmp/protoc.zip
 RUN unzip /tmp/protoc.zip -d /usr/local
 
 # Create and change to the app directory.
@@ -31,7 +35,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -v -o registry-server ./cmd/registry-serve
 RUN CGO_ENABLED=0 GOOS=linux go build -v -o authz-server ./cmd/authz-server
 
 # Use an Envoy release image to get envoy in the image.
-FROM envoyproxy/envoy:v1.14.4
+FROM envoyproxy/envoy:v1.16.0
 
 ARG DB_CONFIG=registry
 
@@ -48,6 +52,9 @@ COPY --from=builder /app/authz-server /authz-server
 # Copy configuration files to the production image.
 COPY config/${DB_CONFIG}.yaml /registry.yaml
 COPY cmd/authz-server/authz.yaml /authz.yaml
+
+# Make sure that the CMD (below, which runs as the envoy user) is able to rewrite /etc/envoy/envoy.yaml
+RUN chown -R envoy /etc/envoy
 
 # Run the web service on container startup.
 CMD ["/RUN-WITH-ENVOY.sh"]
