@@ -22,7 +22,7 @@ import (
 
 // OpenAPIMimeType returns a MIME type for an OpenAPI description of an API.
 func OpenAPIMimeType(compression, version string) string {
-	return fmt.Sprintf("application/x.openapi%s; version=%s", compression, version)
+	return fmt.Sprintf("application/x.openapi%s;version=%s", compression, version)
 }
 
 // DiscoveryMimeType returns a MIME type for a Discovery description of an API.
@@ -30,9 +30,9 @@ func DiscoveryMimeType(compression string) string {
 	return fmt.Sprintf("application/x.discovery%s", compression)
 }
 
-// ProtoMimeType returns a MIME type for a Protocol Buffers description of an API.
-func ProtoMimeType(compression string) string {
-	return fmt.Sprintf("application/x.proto%s", compression)
+// ProtobufMimeType returns a MIME type for a Protocol Buffers description of an API.
+func ProtobufMimeType(compression string) string {
+	return fmt.Sprintf("application/x.protobuf%s", compression)
 }
 
 // TODO: tighten these up, possibly using regular expressions.
