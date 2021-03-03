@@ -22,7 +22,7 @@ import (
 
 // OpenAPIMimeType returns a MIME type for an OpenAPI description of an API.
 func OpenAPIMimeType(compression, version string) string {
-	return fmt.Sprintf("application/x.openapi%s; version=%s", compression, version)
+	return fmt.Sprintf("application/x.openapi%s;version=%s", compression, version)
 }
 
 // DiscoveryMimeType returns a MIME type for a Discovery description of an API.
@@ -30,9 +30,9 @@ func DiscoveryMimeType(compression string) string {
 	return fmt.Sprintf("application/x.discovery%s", compression)
 }
 
-// ProtoMimeType returns a MIME type for a Protocol Buffers description of an API.
-func ProtoMimeType(compression string) string {
-	return fmt.Sprintf("application/x.proto%s", compression)
+// ProtobufMimeType returns a MIME type for a Protocol Buffers description of an API.
+func ProtobufMimeType(compression string) string {
+	return fmt.Sprintf("application/x.protobuf%s", compression)
 }
 
 // TODO: tighten these up, possibly using regular expressions.
@@ -71,12 +71,12 @@ func IsZipArchive(mimeType string) bool {
 
 // MimeTypeForMessageType returns a MIME type that represents a Protocol Buffer message type.
 func MimeTypeForMessageType(protoType string) string {
-	return fmt.Sprintf("application/octet-stream; type=%s", protoType)
+	return fmt.Sprintf("application/octet-stream;type=%s", protoType)
 }
 
 // MessageTypeForMimeType returns the Protocol Buffer message type represented by a MIME type.
 func MessageTypeForMimeType(protoType string) (string, error) {
-	re := regexp.MustCompile("^application/octet-stream; type=(.*)$")
+	re := regexp.MustCompile("^application/octet-stream;type=(.*)$")
 	m := re.FindStringSubmatch(protoType)
 	if m == nil || len(m) < 2 || len(m[1]) == 0 {
 		return "", fmt.Errorf("invalid Protocol Buffer type: %s", protoType)

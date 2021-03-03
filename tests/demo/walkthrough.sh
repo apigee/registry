@@ -70,7 +70,7 @@ echo
 echo Update an attribute of the spec.
 apg registry update-api-spec \
 	--api_spec.name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml \
-	--api_spec.mime_type "application/x.openapi+gzip; version=3" \
+	--api_spec.mime_type "application/x.openapi+gzip;version=3" \
     --json
 
 echo

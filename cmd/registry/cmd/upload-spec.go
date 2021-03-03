@@ -107,7 +107,7 @@ func uploadSpecDirectory(dirname string, client *gapic.RegistryClient, version s
 		ApiSpecId: "protos.zip",
 		ApiSpec: &rpcpb.ApiSpec{
 			MimeType: style,
-			Filename: core.ProtoMimeType("+zip"),
+			Filename: core.ProtobufMimeType("+zip"),
 			Contents: buf.Bytes(),
 		},
 	}

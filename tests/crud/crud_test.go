@@ -138,7 +138,7 @@ func TestCRUD(t *testing.T) {
 			Parent:    "projects/test/apis/sample/versions/1.0.0",
 			ApiSpecId: "openapi.yaml",
 			ApiSpec: &rpc.ApiSpec{
-				MimeType:    "application/x.openapi+gzip; version=3.0.0",
+				MimeType:    "application/x.openapi+gzip;version=3.0.0",
 				Contents:    buf.Bytes(),
 				Labels:      sampleMap,
 				Annotations: sampleMap,

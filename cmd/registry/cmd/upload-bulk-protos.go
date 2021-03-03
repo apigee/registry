@@ -208,7 +208,7 @@ func (task *uploadProtoTask) createSpec() error {
 		Parent:    task.versionName(),
 		ApiSpecId: task.fileName(),
 		ApiSpec: &rpcpb.ApiSpec{
-			MimeType: core.ProtoMimeType("+zip"),
+			MimeType: core.ProtobufMimeType("+zip"),
 			Filename: task.fileName(),
 			Contents: contents,
 		},
