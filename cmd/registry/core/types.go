@@ -71,12 +71,12 @@ func IsZipArchive(mimeType string) bool {
 
 // MimeTypeForMessageType returns a MIME type that represents a Protocol Buffer message type.
 func MimeTypeForMessageType(protoType string) string {
-	return fmt.Sprintf("application/octet-stream; type=%s", protoType)
+	return fmt.Sprintf("application/octet-stream;type=%s", protoType)
 }
 
 // MessageTypeForMimeType returns the Protocol Buffer message type represented by a MIME type.
 func MessageTypeForMimeType(protoType string) (string, error) {
-	re := regexp.MustCompile("^application/octet-stream; type=(.*)$")
+	re := regexp.MustCompile("^application/octet-stream;type=(.*)$")
 	m := re.FindStringSubmatch(protoType)
 	if m == nil || len(m) < 2 || len(m[1]) == 0 {
 		return "", fmt.Errorf("invalid Protocol Buffer type: %s", protoType)
