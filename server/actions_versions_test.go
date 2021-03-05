@@ -264,27 +264,27 @@ func TestListApiVersions(t *testing.T) {
 		{
 			desc: "default parameters",
 			seed: []*rpc.ApiVersion{
-				{Name: "projects/p/apis/a/versions/p1"},
-				{Name: "projects/p/apis/a/versions/p2"},
-				{Name: "projects/p/apis/a/versions/p3"},
+				{Name: "projects/p/apis/a/versions/v1"},
+				{Name: "projects/p/apis/a/versions/v2"},
+				{Name: "projects/p/apis/a/versions/v3"},
 			},
 			req: &rpc.ListApiVersionsRequest{
 				Parent: "projects/p/apis/a",
 			},
 			want: &rpc.ListApiVersionsResponse{
 				ApiVersions: []*rpc.ApiVersion{
-					{Name: "projects/p/apis/a/versions/p1"},
-					{Name: "projects/p/apis/a/versions/p2"},
-					{Name: "projects/p/apis/a/versions/p3"},
+					{Name: "projects/p/apis/a/versions/v1"},
+					{Name: "projects/p/apis/a/versions/v2"},
+					{Name: "projects/p/apis/a/versions/v3"},
 				},
 			},
 		},
 		{
 			desc: "custom page size",
 			seed: []*rpc.ApiVersion{
-				{Name: "projects/p/apis/a/versions/p1"},
-				{Name: "projects/p/apis/a/versions/p2"},
-				{Name: "projects/p/apis/a/versions/p3"},
+				{Name: "projects/p/apis/a/versions/v1"},
+				{Name: "projects/p/apis/a/versions/v2"},
+				{Name: "projects/p/apis/a/versions/v3"},
 			},
 			req: &rpc.ListApiVersionsRequest{
 				Parent:   "projects/p/apis/a",
@@ -302,17 +302,17 @@ func TestListApiVersions(t *testing.T) {
 		{
 			desc: "name equality filtering",
 			seed: []*rpc.ApiVersion{
-				{Name: "projects/p/apis/a/versions/p1"},
-				{Name: "projects/p/apis/a/versions/p2"},
-				{Name: "projects/p/apis/a/versions/p3"},
+				{Name: "projects/p/apis/a/versions/v1"},
+				{Name: "projects/p/apis/a/versions/v2"},
+				{Name: "projects/p/apis/a/versions/v3"},
 			},
 			req: &rpc.ListApiVersionsRequest{
 				Parent: "projects/p/apis/a",
-				Filter: "name == 'projects/p/apis/a/versions/p2'",
+				Filter: "name == 'projects/p/apis/a/versions/v2'",
 			},
 			want: &rpc.ListApiVersionsResponse{
 				ApiVersions: []*rpc.ApiVersion{
-					{Name: "projects/p/apis/a/versions/p2"},
+					{Name: "projects/p/apis/a/versions/v2"},
 				},
 			},
 		},
@@ -320,11 +320,11 @@ func TestListApiVersions(t *testing.T) {
 			desc: "description inequality filtering",
 			seed: []*rpc.ApiVersion{
 				{
-					Name:        "projects/p/apis/a/versions/p1",
+					Name:        "projects/p/apis/a/versions/v1",
 					Description: "First ApiVersion",
 				},
-				{Name: "projects/p/apis/a/versions/p2"},
-				{Name: "projects/p/apis/a/versions/p3"},
+				{Name: "projects/p/apis/a/versions/v2"},
+				{Name: "projects/p/apis/a/versions/v3"},
 			},
 			req: &rpc.ListApiVersionsRequest{
 				Parent: "projects/p/apis/a",
@@ -333,7 +333,7 @@ func TestListApiVersions(t *testing.T) {
 			want: &rpc.ListApiVersionsResponse{
 				ApiVersions: []*rpc.ApiVersion{
 					{
-						Name:        "projects/p/apis/a/versions/p1",
+						Name:        "projects/p/apis/a/versions/v1",
 						Description: "First ApiVersion",
 					},
 				},
@@ -418,9 +418,9 @@ func TestListApiVersionsSequence(t *testing.T) {
 	ctx := context.Background()
 	server := defaultTestServer(t)
 	seed := []*rpc.ApiVersion{
-		{Name: "projects/p/apis/a/versions/p1"},
-		{Name: "projects/p/apis/a/versions/p2"},
-		{Name: "projects/p/apis/a/versions/p3"},
+		{Name: "projects/p/apis/a/versions/v1"},
+		{Name: "projects/p/apis/a/versions/v2"},
+		{Name: "projects/p/apis/a/versions/v3"},
 	}
 	seedVersions(ctx, t, server, seed...)
 

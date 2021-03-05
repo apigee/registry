@@ -61,7 +61,7 @@ func (c *Client) DeleteChildrenOfProject(ctx context.Context, project *models.Pr
 		q = q.Require("ProjectID", project.ProjectID)
 		err := c.DeleteAllMatches(ctx, q)
 		if err != nil {
-			//return err
+			return err
 		}
 	}
 	return nil
@@ -79,7 +79,7 @@ func (c *Client) DeleteChildrenOfApi(ctx context.Context, api *models.Api) error
 		q = q.Require("ApiID", api.ApiID)
 		err := c.DeleteAllMatches(ctx, q)
 		if err != nil {
-			//return err
+			return err
 		}
 	}
 	return nil
@@ -97,8 +97,18 @@ func (c *Client) DeleteChildrenOfVersion(ctx context.Context, version *models.Ve
 		q = q.Require("VersionID", version.VersionID)
 		err := c.DeleteAllMatches(ctx, q)
 		if err != nil {
-			//return err
+			return err
 		}
 	}
 	return nil
+}
+
+// DeleteChildrenOfSpec deletes all the children of a spec.
+func (c *Client) DeleteChildrenOfSpec(ctx context.Context, spec *models.Spec) error {
+	q := c.NewQuery(models.BlobEntityName)
+	q = q.Require("ProjectID", spec.ProjectID)
+	q = q.Require("ApiID", spec.ApiID)
+	q = q.Require("VersionID", spec.VersionID)
+	q = q.Require("SpecID", spec.SpecID)
+	return c.DeleteAllMatches(ctx, q)
 }
