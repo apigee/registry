@@ -67,6 +67,7 @@ func (s *RegistryServer) DeleteProject(ctx context.Context, req *rpc.DeleteProje
 	}
 	defer s.releaseStorageClient(client)
 
+	// Validate name and create dummy project (we just need the ID field).
 	project, err := models.NewProjectFromResourceName(req.GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
@@ -83,8 +84,12 @@ func (s *RegistryServer) DeleteProject(ctx context.Context, req *rpc.DeleteProje
 		return nil, internalError(err)
 	}
 
+	if err := client.Delete(ctx, k); err != nil {
+		return nil, internalError(err)
+	}
+
 	s.notify(rpc.Notification_DELETED, req.GetName())
-	return &empty.Empty{}, internalError(client.Delete(ctx, k))
+	return &empty.Empty{}, nil
 }
 
 // GetProject handles the corresponding API request.
@@ -171,14 +176,8 @@ func (s *RegistryServer) ListProjects(ctx context.Context, req *rpc.ListProjects
 		Projects: projectMessages,
 	}
 
-	nextToken, err := it.GetCursor(len(projectMessages))
+	responses.NextPageToken, err = it.GetCursor(len(projectMessages))
 	if err != nil {
-		return nil, internalError(err)
-	}
-
-	if _, err := it.Next(&project); err == nil {
-		responses.NextPageToken = nextToken
-	} else if err != iterator.Done {
 		return nil, internalError(err)
 	}
 

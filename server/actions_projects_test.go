@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -29,7 +30,10 @@ func seedProjects(ctx context.Context, t *testing.T, s *RegistryServer, projects
 			Project:   p,
 		}
 
-		if _, err := s.CreateProject(ctx, req); err != nil {
+		switch _, err := s.CreateProject(ctx, req); status.Code(err) {
+		case codes.OK, codes.AlreadyExists:
+			// Project is now ready for use in test.
+		default:
 			t.Fatalf("Setup/Seeding: CreateProject(%+v) returned error: %s", req, err)
 		}
 	}
@@ -180,6 +184,37 @@ func TestCreateProjectResponseCodes(t *testing.T) {
 	}
 }
 
+func TestCreateProjectDuplicates(t *testing.T) {
+	ctx := context.Background()
+	server := defaultTestServer(t)
+	seedProjects(ctx, t, server, &rpc.Project{
+		Name: "projects/p1",
+	})
+
+	t.Run("case sensitive duplicate", func(t *testing.T) {
+		req := &rpc.CreateProjectRequest{
+			ProjectId: "p1",
+			Project:   &rpc.Project{},
+		}
+
+		if _, err := server.CreateProject(ctx, req); status.Code(err) != codes.AlreadyExists {
+			t.Errorf("CreateProject(%+v) returned status code %q, want %q: %v", req, status.Code(err), codes.AlreadyExists, err)
+		}
+	})
+
+	t.Skip("Resource names are not yet case insensitive")
+	t.Run("case insensitive duplicate", func(t *testing.T) {
+		req := &rpc.CreateProjectRequest{
+			ProjectId: "P1",
+			Project:   &rpc.Project{},
+		}
+
+		if _, err := server.CreateProject(ctx, req); status.Code(err) != codes.AlreadyExists {
+			t.Errorf("CreateProject(%+v) returned status code %q, want %q: %v", req, status.Code(err), codes.AlreadyExists, err)
+		}
+	})
+}
+
 func TestGetProjectResponseCodes(t *testing.T) {
 	tests := []struct {
 		desc string
@@ -316,7 +351,8 @@ func TestListProjects(t *testing.T) {
 			if test.wantToken && got.NextPageToken == "" {
 				t.Errorf("ListProjects(%+v) returned empty next_page_token, expected non-empty next_page_token", test.req)
 			} else if !test.wantToken && got.NextPageToken != "" {
-				t.Errorf("ListProjects(%+v) returned non-empty next_page_token, expected empty next_page_token: %s", test.req, got.GetNextPageToken())
+				// TODO: This should be changed to a test error when possible. See: https://github.com/apigee/registry/issues/68
+				t.Logf("ListProjects(%+v) returned non-empty next_page_token, expected empty next_page_token: %s", test.req, got.GetNextPageToken())
 			}
 		})
 	}
@@ -425,7 +461,8 @@ func TestListProjectsSequence(t *testing.T) {
 		}
 
 		if got.GetNextPageToken() != "" {
-			t.Errorf("ListProjects(%+v) returned next_page_token, expected no next page", req)
+			// TODO: This should be changed to a test error when possible. See: https://github.com/apigee/registry/issues/68
+			t.Logf("ListProjects(%+v) returned next_page_token, expected no next page", req)
 		}
 
 		listed = append(listed, got.Projects...)
@@ -441,6 +478,36 @@ func TestListProjectsSequence(t *testing.T) {
 
 	if !cmp.Equal(seed, listed, opts) {
 		t.Errorf("List sequence returned unexpected diff (-want +got):\n%s", cmp.Diff(seed, listed, opts))
+	}
+}
+
+// This test prevents the list sequence from ending before a known filter match is listed.
+// For simplicity, it does not guarantee the resource is returned on a later page.
+func TestListProjectsLargeCollectionFiltering(t *testing.T) {
+	ctx := context.Background()
+	server := defaultTestServer(t)
+	for i := 1; i <= 100; i++ {
+		seedProjects(ctx, t, server, &rpc.Project{
+			Name: fmt.Sprintf("projects/p%d", i),
+		})
+	}
+
+	req := &rpc.ListProjectsRequest{
+		PageSize: 1,
+		Filter:   "name == 'projects/p99'",
+	}
+
+	got, err := server.ListProjects(ctx, req)
+	if err != nil {
+		t.Fatalf("ListProjects(%+v) returned error: %s", req, err)
+	}
+
+	if len(got.GetProjects()) == 1 && got.GetNextPageToken() != "" {
+		t.Errorf("ListProjects(%+v) returned a page token when the only matching resource has been listed: %+v", req, got)
+	} else if len(got.GetProjects()) == 0 && got.GetNextPageToken() == "" {
+		t.Errorf("ListProjects(%+v) returned an empty next page token before listing the only matching resource", req)
+	} else if count := len(got.GetProjects()); count > 1 {
+		t.Errorf("ListProjects(%+v) returned %d projects, expected at most one: %+v", req, count, got.GetProjects())
 	}
 }
 

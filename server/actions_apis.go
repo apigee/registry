@@ -66,17 +66,30 @@ func (s *RegistryServer) DeleteApi(ctx context.Context, req *rpc.DeleteApiReques
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
+
 	// Validate name and create dummy api (we just need the ID fields).
 	api, err := models.NewApiFromResourceName(req.GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	// Delete children first and then delete the api.
-	client.DeleteChildrenOfApi(ctx, api)
+
 	k := client.NewKey(models.ApiEntityName, req.GetName())
-	err = client.Delete(ctx, k)
+	if err := client.Get(ctx, k, &models.Api{}); client.IsNotFound(err) {
+		return nil, notFoundError(err)
+	} else if err != nil {
+		return nil, internalError(err)
+	}
+
+	if err := client.DeleteChildrenOfApi(ctx, api); err != nil {
+		return nil, internalError(err)
+	}
+
+	if err := client.Delete(ctx, k); err != nil {
+		return nil, internalError(err)
+	}
+
 	s.notify(rpc.Notification_DELETED, req.GetName())
-	return &empty.Empty{}, internalError(err)
+	return &empty.Empty{}, nil
 }
 
 // GetApi handles the corresponding API request.
@@ -107,10 +120,15 @@ func (s *RegistryServer) ListApis(ctx context.Context, req *rpc.ListApisRequest)
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
+
+	if req.GetPageSize() < 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid page_size: must not be negative")
+	}
+
 	q := client.NewQuery(models.ApiEntityName)
 	q, err = q.ApplyCursor(req.GetPageToken())
 	if err != nil {
-		return nil, internalError(err)
+		return nil, invalidArgumentError(err)
 	}
 	m, err := names.ParseProject(req.GetParent())
 	if err != nil {
@@ -121,6 +139,7 @@ func (s *RegistryServer) ListApis(ctx context.Context, req *rpc.ListApisRequest)
 	}
 	prg, err := createFilterOperator(req.GetFilter(),
 		[]filterArg{
+			{"name", filterArgTypeString},
 			{"project_id", filterArgTypeString},
 			{"api_id", filterArgTypeString},
 			{"display_name", filterArgTypeString},
@@ -141,6 +160,7 @@ func (s *RegistryServer) ListApis(ctx context.Context, req *rpc.ListApisRequest)
 	for _, err = it.Next(&api); err == nil; _, err = it.Next(&api) {
 		if prg != nil {
 			filterInputs := map[string]interface{}{
+				"name":                api.ResourceName(),
 				"project_id":          api.ProjectID,
 				"api_id":              api.ApiID,
 				"display_name":        api.DisplayName,
@@ -174,10 +194,12 @@ func (s *RegistryServer) ListApis(ctx context.Context, req *rpc.ListApisRequest)
 	responses := &rpc.ListApisResponse{
 		Apis: apiMessages,
 	}
+
 	responses.NextPageToken, err = it.GetCursor(len(apiMessages))
 	if err != nil {
 		return nil, internalError(err)
 	}
+
 	return responses, nil
 }
 
