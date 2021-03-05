@@ -1,7 +1,11 @@
+# Generated files
 cmd/apg/*.go
 gapic/*.go
 rpc/*.go
 *.pb.go
 *.bleve
+deployments/envoy/proto.pb
 
-proto.pb
+# VSCode
+.vscode/*
+!launch.json
