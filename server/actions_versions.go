@@ -66,17 +66,31 @@ func (s *RegistryServer) DeleteApiVersion(ctx context.Context, req *rpc.DeleteAp
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
+
 	// Validate name and create dummy version (we just need the ID fields).
 	version, err := models.NewVersionFromResourceName(req.GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	// Delete children first and then delete the version.
-	client.DeleteChildrenOfVersion(ctx, version)
+
 	k := client.NewKey(models.VersionEntityName, req.GetName())
-	err = client.Delete(ctx, k)
+	if err := client.Get(ctx, k, &models.Version{}); client.IsNotFound(err) {
+		return nil, notFoundError(err)
+	} else if err != nil {
+		return nil, internalError(err)
+	}
+
+	// Delete children first and then delete the version.
+	if err := client.DeleteChildrenOfVersion(ctx, version); err != nil {
+		return nil, internalError(err)
+	}
+
+	if err := client.Delete(ctx, k); err != nil {
+		return nil, internalError(err)
+	}
+
 	s.notify(rpc.Notification_DELETED, req.GetName())
-	return &empty.Empty{}, err
+	return &empty.Empty{}, nil
 }
 
 // GetApiVersion handles the corresponding API request.
@@ -107,10 +121,15 @@ func (s *RegistryServer) ListApiVersions(ctx context.Context, req *rpc.ListApiVe
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
+
+	if req.GetPageSize() < 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid page_size: must not be negative")
+	}
+
 	q := client.NewQuery(models.VersionEntityName)
 	q, err = q.ApplyCursor(req.GetPageToken())
 	if err != nil {
-		return nil, internalError(err)
+		return nil, invalidArgumentError(err)
 	}
 	m, err := names.ParseApi(req.GetParent())
 	if err != nil {
@@ -124,6 +143,7 @@ func (s *RegistryServer) ListApiVersions(ctx context.Context, req *rpc.ListApiVe
 	}
 	prg, err := createFilterOperator(req.GetFilter(),
 		[]filterArg{
+			{"name", filterArgTypeString},
 			{"project_id", filterArgTypeString},
 			{"api_id", filterArgTypeString},
 			{"version_id", filterArgTypeString},
@@ -144,6 +164,7 @@ func (s *RegistryServer) ListApiVersions(ctx context.Context, req *rpc.ListApiVe
 	for _, err = it.Next(&version); err == nil; _, err = it.Next(&version) {
 		if prg != nil {
 			filterInputs := map[string]interface{}{
+				"name":         version.ResourceName(),
 				"project_id":   version.ProjectID,
 				"api_id":       version.ApiID,
 				"version_id":   version.VersionID,
