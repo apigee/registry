@@ -40,6 +40,7 @@ type Client interface {
 	DeleteChildrenOfProject(ctx context.Context, project *models.Project) error
 	DeleteChildrenOfApi(ctx context.Context, api *models.Api) error
 	DeleteChildrenOfVersion(ctx context.Context, version *models.Version) error
+	DeleteChildrenOfSpec(ctx context.Context, spec *models.Spec) error
 }
 
 type Key interface {
