@@ -30,7 +30,10 @@ func seedProjects(ctx context.Context, t *testing.T, s *RegistryServer, projects
 			Project:   p,
 		}
 
-		if _, err := s.CreateProject(ctx, req); err != nil {
+		switch _, err := s.CreateProject(ctx, req); status.Code(err) {
+		case codes.OK, codes.AlreadyExists:
+			// Project is now ready for use in test.
+		default:
 			t.Fatalf("Setup/Seeding: CreateProject(%+v) returned error: %s", req, err)
 		}
 	}
@@ -179,6 +182,37 @@ func TestCreateProjectResponseCodes(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestCreateProjectDuplicates(t *testing.T) {
+	ctx := context.Background()
+	server := defaultTestServer(t)
+	seedProjects(ctx, t, server, &rpc.Project{
+		Name: "projects/p1",
+	})
+
+	t.Run("case sensitive duplicate", func(t *testing.T) {
+		req := &rpc.CreateProjectRequest{
+			ProjectId: "p1",
+			Project:   &rpc.Project{},
+		}
+
+		if _, err := server.CreateProject(ctx, req); status.Code(err) != codes.AlreadyExists {
+			t.Errorf("CreateProject(%+v) returned status code %q, want %q: %v", req, status.Code(err), codes.AlreadyExists, err)
+		}
+	})
+
+	t.Skip("Resource names are not yet case insensitive")
+	t.Run("case insensitive duplicate", func(t *testing.T) {
+		req := &rpc.CreateProjectRequest{
+			ProjectId: "P1",
+			Project:   &rpc.Project{},
+		}
+
+		if _, err := server.CreateProject(ctx, req); status.Code(err) != codes.AlreadyExists {
+			t.Errorf("CreateProject(%+v) returned status code %q, want %q: %v", req, status.Code(err), codes.AlreadyExists, err)
+		}
+	})
 }
 
 func TestGetProjectResponseCodes(t *testing.T) {
