@@ -116,3 +116,14 @@ func (c *Client) DeleteChildrenOfVersion(ctx context.Context, version *models.Ve
 	}
 	return nil
 }
+
+// DeleteChildrenOfSpec deletes all the children of a spec.
+func (c *Client) DeleteChildrenOfSpec(ctx context.Context, spec *models.Spec) error {
+	q := datastore.NewQuery(models.BlobEntityName)
+	q = q.KeysOnly()
+	q = q.Filter("ProjectID =", spec.ProjectID)
+	q = q.Filter("ApiID =", spec.ApiID)
+	q = q.Filter("VersionID =", spec.VersionID)
+	q = q.Filter("SpecID =", spec.SpecID)
+	return c.DeleteAllMatches(ctx, &Query{query: q})
+}

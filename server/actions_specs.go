@@ -123,20 +123,27 @@ func (s *RegistryServer) DeleteApiSpec(ctx context.Context, req *rpc.DeleteApiSp
 	if spec.RevisionID != "" {
 		return nil, invalidArgumentError(errors.New("specific revisions should be deleted with DeleteSpecRevision"))
 	}
+
+	if _, _, err := fetchSpec(ctx, client, req.GetName()); client.IsNotFound(err) {
+		return nil, notFoundError(err)
+	} else if err != nil {
+		return nil, internalError(err)
+	}
+
+	if err := client.DeleteChildrenOfSpec(ctx, spec); err != nil {
+		return nil, internalError(err)
+	}
+
 	// Delete all revisions of the spec.
 	q := client.NewQuery(models.SpecEntityName)
 	q = q.Require("ProjectID", spec.ProjectID)
 	q = q.Require("ApiID", spec.ApiID)
 	q = q.Require("VersionID", spec.VersionID)
 	q = q.Require("SpecID", spec.SpecID)
-	err = client.DeleteAllMatches(ctx, q)
-	// Delete all blobs associated with the spec.
-	q = client.NewQuery(models.BlobEntityName)
-	q = q.Require("ProjectID", spec.ProjectID)
-	q = q.Require("ApiID", spec.ApiID)
-	q = q.Require("VersionID", spec.VersionID)
-	q = q.Require("SpecID", spec.SpecID)
-	err = client.DeleteAllMatches(ctx, q)
+	if err := client.DeleteAllMatches(ctx, q); err != nil {
+		return nil, internalError(err)
+	}
+
 	s.notify(rpc.Notification_DELETED, req.GetName())
 	return &empty.Empty{}, err
 }
@@ -169,10 +176,15 @@ func (s *RegistryServer) ListApiSpecs(ctx context.Context, req *rpc.ListApiSpecs
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
+
+	if req.GetPageSize() < 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid page_size: must not be negative")
+	}
+
 	q := client.NewQuery(models.SpecEntityName)
 	q, err = q.ApplyCursor(req.GetPageToken())
 	if err != nil {
-		return nil, internalError(err)
+		return nil, invalidArgumentError(err)
 	}
 	m, err := names.ParseVersion(req.GetParent())
 	if err != nil {
@@ -190,6 +202,7 @@ func (s *RegistryServer) ListApiSpecs(ctx context.Context, req *rpc.ListApiSpecs
 	q = q.Require("Currency", models.IsCurrent)
 	prg, err := createFilterOperator(req.GetFilter(),
 		[]filterArg{
+			{"name", filterArgTypeString},
 			{"project_id", filterArgTypeString},
 			{"api_id", filterArgTypeString},
 			{"version_id", filterArgTypeString},
@@ -213,6 +226,7 @@ func (s *RegistryServer) ListApiSpecs(ctx context.Context, req *rpc.ListApiSpecs
 	for _, err := it.Next(&spec); err == nil; _, err = it.Next(&spec) {
 		if prg != nil {
 			filterInputs := map[string]interface{}{
+				"name":                 spec.ResourceName(),
 				"project_id":           spec.ProjectID,
 				"api_id":               spec.ApiID,
 				"version_id":           spec.VersionID,
