@@ -20,10 +20,10 @@ enterprise API catalog designed to back online directories, portals, and
 workflow managers.
 
 The Registry API is formally described by the Protocol Buffer source files in
-[google/cloud/apigee/registry/v1](google/cloud/apigee/registry/v1).
-It closely follows the Google API Design Guidelines at
-[aip.dev](https://aip.dev) and presents a developer experience consistent with
-production Google APIs. Please tell us about your experience if you use it.
+[google/cloud/apigee/registry/v1](google/cloud/apigee/registry/v1). It closely
+follows the Google API Design Guidelines at [aip.dev](https://aip.dev) and
+presents a developer experience consistent with production Google APIs. Please
+tell us about your experience if you use it.
 
 ## This Implementation
 
@@ -275,6 +275,25 @@ Requirements:
 
 For detailed steps on how to deploy to GKE, please refer to
 [deployments/gke/README.md](deployments/gke/README.md).
+
+## Running the Registry API server locally with Docker
+
+The Registry API server container can also be built locally with Docker and run
+on both x64 and arm64 platforms. Arm64 builds require a build flag to specify
+the architecture of the `protoc` tool used during builds. That can be provided
+as follows:
+
+```
+docker build --build-arg "ARCH=aarch_64" -t registry .
+```
+
+The `--build-arg` flag can be omitted from x86 builds. To run the image with
+docker, you'll need to set the `PORT` environment variable in the container.
+Your `docker run` invocation will look like this:
+
+```
+docker run -e PORT=8080 -p 8080:8080 registry:latest
+```
 
 ## License
 
