@@ -25,12 +25,22 @@ with at least the following values for API specification types:
   also be followed by an optional `+gzip` suffix indicating that the API
   description is compressed with gzip encoding.
 
+- `application/x.asyncapi` for [AsyncAPI](https://www.asyncapi.com/)
+  descriptions with an optional `version` parameter that provides the
+  specification version. `application/x.asyncapi` can also be followed by an
+  optional `+gzip` suffix indicating that the API description is compressed
+  with gzip encoding.
+
+- `application/x.graphql` for [GraphQL](https://graphql.org/) descriptions.
+  `application/x.graphql` can be followed by an optional `+gzip` suffix
+  indicating that the API description is compressed with gzip encoding.
+
 - `application/x.discovery` for the
   [Google API Discovery Service Format](https://developers.google.com/discovery).
   This also can be followed by an optional `+gzip` suffix indicating that the
   API description is compressed with gzip encoding.
 
-* `application/x.protobuf` for API descriptions in the
+- `application/x.protobuf` for API descriptions in the
   [Protocol Buffer Language](https://developers.google.com/protocol-buffers).
   Since Protocol Buffer API descriptions are frequently stored in multiple
   files, this is usually followed by a `+zip` suffix indicating that the API
