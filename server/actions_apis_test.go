@@ -637,7 +637,17 @@ func TestUpdateApi(t *testing.T) {
 		want *rpc.Api
 	}{
 		{
-			desc: "default parameters",
+			desc: "populated resource with default parameters",
+			seed: fullApi,
+			req: &rpc.UpdateApiRequest{
+				Api: &rpc.Api{
+					Name: fullApi.Name,
+				},
+			},
+			want: fullApi,
+		},
+		{
+			desc: "implicit mask",
 			seed: &rpc.Api{
 				Name:        "projects/my-project/apis/my-api",
 				DisplayName: "My Api",

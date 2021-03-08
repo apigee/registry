@@ -245,7 +245,7 @@ func (s *RegistryServer) UpdateApi(ctx context.Context, req *rpc.UpdateApiReques
 		return nil, err
 	}
 
-	message, err := api.Message(rpc.View_BASIC)
+	message, err := api.Message(rpc.View_FULL)
 	if err != nil {
 		return nil, internalError(err)
 	}
