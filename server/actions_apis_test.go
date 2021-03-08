@@ -364,6 +364,7 @@ func TestListApis(t *testing.T) {
 				{Name: "projects/my-project/apis/api1"},
 				{Name: "projects/my-project/apis/api2"},
 				{Name: "projects/my-project/apis/api3"},
+				{Name: "projects/other-project/apis/api1"},
 			},
 			req: &rpc.ListApisRequest{
 				Parent: "projects/my-project",
@@ -373,6 +374,26 @@ func TestListApis(t *testing.T) {
 					{Name: "projects/my-project/apis/api1"},
 					{Name: "projects/my-project/apis/api2"},
 					{Name: "projects/my-project/apis/api3"},
+				},
+			},
+		},
+		{
+			desc: "list across multiple projects",
+			seed: []*rpc.Api{
+				{Name: "projects/my-project/apis/api1"},
+				{Name: "projects/my-project/apis/api2"},
+				{Name: "projects/my-project/apis/api3"},
+				{Name: "projects/other-project/apis/api1"},
+			},
+			req: &rpc.ListApisRequest{
+				Parent: "projects/-",
+			},
+			want: &rpc.ListApisResponse{
+				Apis: []*rpc.Api{
+					{Name: "projects/my-project/apis/api1"},
+					{Name: "projects/my-project/apis/api2"},
+					{Name: "projects/my-project/apis/api3"},
+					{Name: "projects/other-project/apis/api1"},
 				},
 			},
 		},
@@ -453,6 +474,9 @@ func TestListApis(t *testing.T) {
 				protocmp.Transform(),
 				protocmp.IgnoreFields(new(rpc.ListApisResponse), "next_page_token"),
 				protocmp.IgnoreFields(new(rpc.Api), "create_time", "update_time"),
+				protocmp.SortRepeated(func(a, b *rpc.Api) bool {
+					return a.GetName() < b.GetName()
+				}),
 				test.extraOpts,
 			}
 
@@ -476,6 +500,13 @@ func TestListApisResponseCodes(t *testing.T) {
 		req  *rpc.ListApisRequest
 		want codes.Code
 	}{
+		{
+			desc: "parent not found",
+			req: &rpc.ListApisRequest{
+				Parent: "projects/my-project",
+			},
+			want: codes.NotFound,
+		},
 		{
 			desc: "negative page size",
 			req: &rpc.ListApisRequest{
