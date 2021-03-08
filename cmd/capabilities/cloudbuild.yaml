@@ -1,0 +1,9 @@
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  args: [ 'build', '-t', 'gcr.io/${_REGISTRY_PROJECT_IDENTIFIER}/registry-worker', '-f', 'cmd/capabilities/worker/Dockerfile.worker', '.' ]
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'gcr.io/${_REGISTRY_PROJECT_IDENTIFIER}/registry-worker']
+- name: 'gcr.io/cloud-builders/docker'
+  args: [ 'build', '-t', 'gcr.io/${_REGISTRY_PROJECT_IDENTIFIER}/registry-dispatcher', '-f', 'cmd/capabilities/dispatcher/Dockerfile.dispatcher', '.' ]
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'gcr.io/${_REGISTRY_PROJECT_IDENTIFIER}/registry-dispatcher']

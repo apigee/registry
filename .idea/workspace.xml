@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="33185233-4e0f-4274-9b77-329886e8ae37" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/cmd/capabilities/DEPLOY-WORKERS.sh" beforeDir="false" afterPath="$PROJECT_DIR$/cmd/capabilities/DEPLOY-WORKERS.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmd/capabilities/worker/service.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/cmd/capabilities/worker/service.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/deployments/gke/DEPLOY-TO-GKE.sh" beforeDir="false" afterPath="$PROJECT_DIR$/deployments/gke/DEPLOY-TO-GKE.sh" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="G3PluginsProjectSettings">
+    <appliedSettings>
+      <entry key="LinkifyInternalShortlinks" value="true" />
+      <entry key="RecognizedNullableAnnotations" value="true" />
+    </appliedSettings>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectId" id="1pMH2n0wFmbOlTFyLhYuSNY4yfJ" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyIntegratedToolsModulesConfigurable" />
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="33185233-4e0f-4274-9b77-329886e8ae37" name="Default Changelist" comment="" />
+      <created>1614985834813</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1614985834813</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="WindowStateProjectService">
+    <state x="484" y="156" key="RollbackChangesDialog" timestamp="1615226497829">
+      <screen x="0" y="0" width="1440" height="900" />
+    </state>
+    <state x="484" y="156" key="RollbackChangesDialog/0.0.1440.900@0.0.1440.900" timestamp="1615226497829" />
+  </component>
+</project>

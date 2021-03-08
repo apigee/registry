@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: registry-dispatcher
+spec:
+  selector:
+    matchLabels:
+      app: registry-dispatcher
+  template:
+    metadata:
+      labels:
+        app: registry-dispatcher
+    spec:
+      containers:
+        - name: dispatcher-container
+          image: gcr.io/${REGISTRY_PROJECT_IDENTIFIER}/registry-dispatcher:latest
+          imagePullPolicy: Always
+          env:
+            - name: WORKER_URL
+              value: $WORKER_URL
+            - name: TASK_QUEUE_ID
+              value: $TASK_QUEUE_ID
+            - name: REGISTRY_PROJECT_IDENTIFIER
+              value: ${REGISTRY_PROJECT_IDENTIFIER}
