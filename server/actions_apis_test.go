@@ -264,6 +264,64 @@ func TestCreateApiDuplicates(t *testing.T) {
 	})
 }
 
+func TestGetApi(t *testing.T) {
+	tests := []struct {
+		desc string
+		seed *rpc.Api
+		req  *rpc.GetApiRequest
+		want *rpc.Api
+	}{
+		{
+			desc: "default view",
+			seed: fullApi,
+			req: &rpc.GetApiRequest{
+				Name: fullApi.Name,
+			},
+			want: basicApi,
+		},
+		{
+			desc: "basic view",
+			seed: fullApi,
+			req: &rpc.GetApiRequest{
+				Name: fullApi.Name,
+				View: rpc.View_BASIC,
+			},
+			want: basicApi,
+		},
+		{
+			desc: "full view",
+			seed: fullApi,
+			req: &rpc.GetApiRequest{
+				Name: fullApi.Name,
+				View: rpc.View_FULL,
+			},
+			want: fullApi,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			ctx := context.Background()
+			server := defaultTestServer(t)
+			seedApis(ctx, t, server, test.seed)
+
+			got, err := server.GetApi(ctx, test.req)
+			if err != nil {
+				t.Fatalf("GetApi(%+v) returned error: %s", test.req, err)
+			}
+
+			opts := cmp.Options{
+				protocmp.Transform(),
+				protocmp.IgnoreFields(new(rpc.Api), "create_time", "update_time"),
+			}
+
+			if !cmp.Equal(test.want, got, opts) {
+				t.Errorf("GetApi(%+v) returned unexpected diff (-want +got):\n%s", test.req, cmp.Diff(test.want, got, opts))
+			}
+		})
+	}
+}
+
 func TestGetApiResponseCodes(t *testing.T) {
 	tests := []struct {
 		desc string
