@@ -15,6 +15,32 @@ import (
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
+var (
+	// Basic version view does not include annotations.
+	basicVersion = &rpc.ApiVersion{
+		Name:        "projects/my-project/apis/my-api/versions/my-version",
+		DisplayName: "My Api",
+		Description: "Api for my versions",
+		State:       "PRODUCTION",
+		Labels: map[string]string{
+			"label-key": "label-value",
+		},
+	}
+	// Full version view includes annotations.
+	fullVersion = &rpc.ApiVersion{
+		Name:        "projects/my-project/apis/my-api/versions/my-version",
+		DisplayName: "My Api",
+		Description: "Api for my versions",
+		State:       "PRODUCTION",
+		Labels: map[string]string{
+			"label-key": "label-value",
+		},
+		Annotations: map[string]string{
+			"annotation-key": "annotation-value",
+		},
+	}
+)
+
 func seedVersions(ctx context.Context, t *testing.T, s *RegistryServer, versions ...*rpc.ApiVersion) {
 	t.Helper()
 
@@ -53,21 +79,15 @@ func TestCreateApiVersion(t *testing.T) {
 		extraOpts cmp.Option
 	}{
 		{
-			desc: "default parameters",
+			desc: "populated resource with default parameters",
 			seed: &rpc.Api{
 				Name: "projects/my-project/apis/my-api",
 			},
 			req: &rpc.CreateApiVersionRequest{
-				Parent: "projects/my-project/apis/my-api",
-				ApiVersion: &rpc.ApiVersion{
-					DisplayName: "My ApiVersion",
-					Description: "ApiVersion for my versions",
-				},
+				Parent:     "projects/my-project/apis/my-api",
+				ApiVersion: fullVersion,
 			},
-			want: &rpc.ApiVersion{
-				DisplayName: "My ApiVersion",
-				Description: "ApiVersion for my versions",
-			},
+			want: basicVersion,
 			// Name field is generated.
 			extraOpts: protocmp.IgnoreFields(new(rpc.ApiVersion), "name"),
 		},
@@ -121,6 +141,7 @@ func TestCreateApiVersion(t *testing.T) {
 			t.Run("GetApiVersion", func(t *testing.T) {
 				req := &rpc.GetApiVersionRequest{
 					Name: created.GetName(),
+					View: rpc.View_BASIC,
 				}
 
 				got, err := server.GetApiVersion(ctx, req)
@@ -145,6 +166,14 @@ func TestCreateApiVersionResponseCodes(t *testing.T) {
 		req  *rpc.CreateApiVersionRequest
 		want codes.Code
 	}{
+		{
+			desc: "parent not found",
+			req: &rpc.CreateApiVersionRequest{
+				Parent:     "projects/my-project/apis/my-api",
+				ApiVersion: fullVersion,
+			},
+			want: codes.NotFound,
+		},
 		{
 			desc: "short custom identifier",
 			req: &rpc.CreateApiVersionRequest{
