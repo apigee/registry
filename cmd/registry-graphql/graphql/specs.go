@@ -37,7 +37,7 @@ var specType = graphql.NewObject(
 			"description": &graphql.Field{
 				Type: graphql.String,
 			},
-			"style": &graphql.Field{
+			"mime_type": &graphql.Field{
 				Type: graphql.String,
 			},
 			"size_bytes": &graphql.Field{
