@@ -1,10 +1,11 @@
-#queue:
-#- name: registry-task-queue
-#  rate: 1/s
-#  retry_parameters:
-#    task_retry_limit: 3
-#    min_backoff_seconds: 1
-#    max_backoff_seconds: 5
+#Symlink to cmd/capabilities/cmd/capabilities/task-queue/registry-task-queue.yaml
+
 queue:
-  - name: my-push-queue
-    rate: 1/s
+  - name: registry-task-queue
+    rate: 50/s
+    bucket_size: 10
+    max_concurrent_requests: 100
+    retry_parameters:
+      task_retry_limit: 3
+      min_backoff_seconds: 1
+      max_backoff_seconds: 5

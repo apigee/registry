@@ -55,5 +55,6 @@ ifndef REGISTRY_PROJECT_IDENTIFIER
 endif
 	gcloud builds submit --config cmd/capabilities/cloudbuild.yaml \
     --substitutions _REGISTRY_PROJECT_IDENTIFIER="${REGISTRY_PROJECT_IDENTIFIER}"
+
 deploy-workers:
 	./cmd/capabilities/DEPLOY-WORKERS.sh

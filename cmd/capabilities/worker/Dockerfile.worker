@@ -6,18 +6,40 @@
 FROM golang:1.15 as builder
 RUN apt-get update
 RUN apt-get install unzip
+RUN curl -L https://github.com/protocolbuffers/protobuf/releases/download/v3.13.0/protoc-3.13.0-linux-x86_64.zip > /tmp/protoc.zip
+RUN unzip /tmp/protoc.zip -d /usr/local
 # Create and change to the app directory.
 WORKDIR /app
+# Retrieve application dependencies.
+# This allows the container build to reuse cached dependencies.
+COPY go.* ./
+RUN go mod download
 # Copy local code to the container image.
 COPY . ./
-# Build app-server.
+# Compile protos.
+RUN make protos
+# Build the worker and registry-tool.
+RUN CGO_ENABLED=0 GOOS=linux go build -v ./cmd/registry
 RUN CGO_ENABLED=0 GOOS=linux go build -v -o worker ./cmd/capabilities/worker/worker.go
 
-# Use the official Alpine image for a lean production container.
-# https://hub.docker.com/_/alpine
+WORKDIR /linter
+RUN git clone https://github.com/google/gnostic
+WORKDIR /linter/gnostic
+RUN go install ./...
+RUN ls /go/bin
+
 # https://docs.docker.com/develop/develop-images/multistage-build/#use-multi-stage-builds
-FROM alpine:3
-RUN apk add --no-cache ca-certificates
+# We are using debian base image here because the api-linter tool build on the builder doesn't work with alpine image.
+FROM debian:latest
+RUN apt-get update
+RUN apt-get install git -y
+RUN apt-get install ca-certificates -y
+# Copy the linter binaries
+COPY --from=builder /go/bin/api-linter /bin/
+COPY --from=builder /go/bin/gnostic* /bin/
 # Copy the binary to the production image from the builder stage.
 COPY --from=builder /app/worker /worker
+# Copy the registry tool binary
+COPY --from=builder /app/registry /bin/
+ENV PATH=$PATH:/bin/
 CMD ["/worker"]

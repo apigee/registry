@@ -4,19 +4,16 @@ package main
 import (
         "log"
         "time"
-//         "net/http"
         "os"
         "context"
         "runtime"
-//         "fmt"
-        "strings"
         "encoding/json"
         "cloud.google.com/go/pubsub"
         "github.com/apigee/registry/rpc"
 	    "github.com/golang/protobuf/jsonpb"
         "google.golang.org/grpc/codes"
         "google.golang.org/grpc/status"
-
+        "github.com/apigee/registry/cmd/capabilities/utils"
         cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
         taskspb "google.golang.org/genproto/googleapis/cloud/tasks/v2"
 )
@@ -85,7 +82,6 @@ func (d *Dispatcher) setUp(ctx context.Context) error {
     // TODO: Make this configurable.
     d.subscription.ReceiveSettings.MaxOutstandingMessages = 10
     d.subscription.ReceiveSettings.NumGoroutines = runtime.NumCPU()
-    // TODO: Create Queue
     return nil
 }
 
@@ -106,12 +102,13 @@ func messageHandler(ctx context.Context, msg *pubsub.Message) {
         msg.Ack()
         return
     }
+    log.Printf("Pulled Message: %s", message)
 
     switch changeType := message.Change; changeType {
         case rpc.Notification_CREATED, rpc.Notification_UPDATED:
-            log.Printf("running linter for change type %q", changeType)
+            log.Printf("running task for change type %q", changeType)
         default:
-            log.Printf("ignoring change type %q for linting", changeType)
+            log.Printf("ignoring change type %q", changeType)
             msg.Ack()
             return
     }
@@ -128,11 +125,6 @@ func messageHandler(ctx context.Context, msg *pubsub.Message) {
     return
 }
 
-type workerRequest struct {
-    resource string
-    command  string
-}
-
 func createQueueTask(ctx context.Context, resource string) error {
     // Create CloudTasks client
     client, err := cloudtasks.NewClient(ctx)
@@ -143,25 +135,31 @@ func createQueueTask(ctx context.Context, resource string) error {
     queuePath := os.Getenv("TASK_QUEUE_ID")
     workerUrl := os.Getenv("WORKER_URL")
 
+    // Build the request body
+    body := utils.WorkerRequest{
+        Resource: resource,
+        Command: "registry compute lint",
+    }
+    jsonBody, err := json.Marshal(body)
+    if err != nil {
+        return err
+    }
+
     req := &taskspb.CreateTaskRequest{
         Parent: queuePath,
         Task: &taskspb.Task{
+            // https://godoc.org/google.golang.org/genproto/googleapis/cloud/tasks/v2#HttpRequest
             MessageType: &taskspb.Task_HttpRequest{
                 HttpRequest: &taskspb.HttpRequest{
-                        Url:        workerUrl,
-                        HttpMethod: taskspb.HttpMethod_POST,
+                    HttpMethod: taskspb.HttpMethod_POST,
+                    Url:        workerUrl,
+                    Headers:    map[string]string{"content-type": "application/json"},
+                    Body:       []byte(jsonBody),
                 },
             },
         },
     }
 
-    wReq := &workerRequest{
-        resource: strings.Split(resource, "@")[0],
-        command: "registry compute lint",
-    }
-    jsonReq, _ := json.Marshal(wReq)
-    req.Task.GetHttpRequest().Body = []byte(jsonReq)
-    log.Print(req)
     createdTask, err := client.CreateTask(ctx, req)
     if err != nil {
             return err

@@ -11,6 +11,7 @@ if [ -z "${registry_ingress_ip}" ]; then
   echo "Please make sure the Registry service is deployed to GKE and exposed externally."; exit 1
 fi
 
+# TODO: Use kubernets DNS
 export APG_REGISTRY_ADDRESS="${registry_ingress_ip}:${registry_service_port}"
 
 project_number=$(gcloud projects describe ${REGISTRY_PROJECT_IDENTIFIER} --format="value(projectNumber)")
@@ -55,16 +56,11 @@ else
 fi
 
 # Create Cloud Tasks Queue
-task_queue=$( gcloud tasks queues describe registry-task-queue || true )
-if [[ $task_queue ]]; then
-  echo "Task Queue already exists."
-else
-  gcloud tasks queues create registry-task-queue
-fi
+gcloud app deploy -q queue.yaml
 
 export TASK_QUEUE_ID=$(gcloud tasks queues describe registry-task-queue --format "value(name)")
 
-# Registry Deployment
+# Registry Dispatcher
 deployment=$( kubectl get deployment registry-dispatcher || true)
 if [[ $deployment ]]; then
     echo "Deleting existing deployment for registry-dispatcher ..."

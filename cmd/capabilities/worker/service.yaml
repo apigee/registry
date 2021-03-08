@@ -5,7 +5,7 @@ metadata:
   annotations:
     networking.gke.io/internal-load-balancer-allow-global-access: "true"
   labels:
-    app: registry-worker
+    app: registry-worker-service
 spec:
   type: LoadBalancer
   selector:

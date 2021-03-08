@@ -40,5 +40,5 @@ export APG_REGISTRY_TOKEN=$(gcloud auth print-identity-token ${APG_REGISTRY_CLIE
 
 # Calls don't use an API key.
 unset APG_REGISTRY_API_KEY
-unset APG_REGISTRY_INSECURE
+export APG_REGISTRY_INSECURE=1
 
