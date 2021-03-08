@@ -603,7 +603,17 @@ func TestUpdateApiVersion(t *testing.T) {
 		want *rpc.ApiVersion
 	}{
 		{
-			desc: "default parameters",
+			desc: "populated resource with default parameters",
+			seed: fullVersion,
+			req: &rpc.UpdateApiVersionRequest{
+				ApiVersion: &rpc.ApiVersion{
+					Name: fullVersion.Name,
+				},
+			},
+			want: fullVersion,
+		},
+		{
+			desc: "implicit mask",
 			seed: &rpc.ApiVersion{
 				Name:        "projects/my-project/apis/my-api/versions/p",
 				DisplayName: "My ApiVersion",
