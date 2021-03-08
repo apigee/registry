@@ -3,7 +3,7 @@
 This directory contains scripts that demonstrate some possible uses of the
 Registry API.
 
-- [atlas.sh](atlas.sh) builds and analyzes a collection of APIs from the
+- [openapi.sh](openapi.sh) builds and analyzes a collection of APIs from the
   [OpenAPI Directory](https://github.com/APIs-guru/openapi-directory), a
   curated collection of OpenAPI descriptions of public APIs.
 - [disco.sh](disco.sh) builds and analyzes a collection of APIs described by
