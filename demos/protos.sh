@@ -40,7 +40,7 @@ registry upload bulk protos \
 	--project_id protos ~/Desktop/googleapis \
 	--base_uri https://github.com/googleapis/googleapis/blob/$COMMIT 
 
-# The Atlas project was automatically created. Here we'll use an
+# The protos project was automatically created. Here we'll use an
 # update-project call to set a few properties of the project.
 apg registry update-project \
 	--project.name "projects/protos" \
