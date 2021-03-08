@@ -1,12 +1,11 @@
 type API {
+  artifacts(after: String, first: Int, filter: String): ArtifactConnection
   created: Timestamp
   description: String
   display_name: String
   id: String
-  labels(filter: String, after: String, first: Int): LabelConnection
-  properties(filter: String, after: String, first: Int): PropertyConnection
   updated: Timestamp
-  versions(first: Int, filter: String, after: String): VersionConnection
+  versions(filter: String, after: String, first: Int): VersionConnection
 }
 
 type APIConnection {
@@ -18,19 +17,19 @@ type APIEdges {
   node: API
 }
 
-type Label {
+type Artifact {
   created: Timestamp
   id: String
   updated: Timestamp
 }
 
-type LabelConnection {
-  edges: [LabelEdges]
+type ArtifactConnection {
+  edges: [ArtifactEdges]
   pageInfo: PageInfo
 }
 
-type LabelEdges {
-  node: Label
+type ArtifactEdges {
+  node: Artifact
 }
 
 type PageInfo {
@@ -39,12 +38,11 @@ type PageInfo {
 
 type Project {
   apis(filter: String, after: String, first: Int): APIConnection
+  artifacts(filter: String, after: String, first: Int): ArtifactConnection
   created: Timestamp
   description: String
   display_name: String
   id: String
-  labels(after: String, first: Int, filter: String): LabelConnection
-  properties(after: String, first: Int, filter: String): PropertyConnection
   updated: Timestamp
 }
 
@@ -57,44 +55,27 @@ type ProjectEdges {
   node: Project
 }
 
-type Property {
-  created: Timestamp
-  id: String
-  updated: Timestamp
-}
-
-type PropertyConnection {
-  edges: [PropertyEdges]
-  pageInfo: PageInfo
-}
-
-type PropertyEdges {
-  node: Property
-}
-
 type Query {
   api(id: String!): API
-  apis(parent: String!, filter: String, after: String, first: Int): APIConnection
-  label(id: String!): Label
-  labels(parent: String!, filter: String, after: String, first: Int): LabelConnection
+  apis(after: String, first: Int, parent: String!, filter: String): APIConnection
+  artifact(id: String!): Artifact
+  artifacts(filter: String, after: String, first: Int, parent: String!): ArtifactConnection
   project(id: String!): Project
   projects(filter: String, after: String, first: Int): ProjectConnection
-  properties(parent: String!, filter: String, after: String, first: Int): PropertyConnection
-  property(id: String!): Property
   spec(id: String!): Spec
-  specs(after: String, first: Int, parent: String!, filter: String): SpecConnection
+  specs(parent: String!, filter: String, after: String, first: Int): SpecConnection
   version(id: String!): Version
-  versions(first: Int, parent: String!, filter: String, after: String): VersionConnection
+  versions(parent: String!, filter: String, after: String, first: Int): VersionConnection
 }
 
 type Spec {
+  artifacts(filter: String, after: String, first: Int): ArtifactConnection
+  contents: String
   created: Timestamp
   description: String
   display_name: String
   hash: String
   id: String
-  labels(filter: String, after: String, first: Int): LabelConnection
-  properties(filter: String, after: String, first: Int): PropertyConnection
   revision_id: String
   size_bytes: Int
   source_uri: String
@@ -118,13 +99,12 @@ type Timestamp {
 }
 
 type Version {
+  artifacts(filter: String, after: String, first: Int): ArtifactConnection
   created: Timestamp
   description: String
   display_name: String
   id: String
-  labels(filter: String, after: String, first: Int): LabelConnection
-  properties(filter: String, after: String, first: Int): PropertyConnection
-  specs(first: Int, filter: String, after: String): SpecConnection
+  specs(after: String, first: Int, filter: String): SpecConnection
   updated: Timestamp
 }
 
