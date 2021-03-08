@@ -16,6 +16,34 @@ import (
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
+var (
+	// Basic API view does not include annotations.
+	basicApi = &rpc.Api{
+		Name:               "projects/my-project/apis/my-api",
+		DisplayName:        "My Api",
+		Description:        "Api for my versions",
+		Availability:       "GENERAL",
+		RecommendedVersion: "v1",
+		Labels: map[string]string{
+			"label-key": "label-value",
+		},
+	}
+	// Full API view includes annotations.
+	fullApi = &rpc.Api{
+		Name:               "projects/my-project/apis/my-api",
+		DisplayName:        "My Api",
+		Description:        "Api for my versions",
+		Availability:       "GENERAL",
+		RecommendedVersion: "v1",
+		Labels: map[string]string{
+			"label-key": "label-value",
+		},
+		Annotations: map[string]string{
+			"annotation-key": "annotation-value",
+		},
+	}
+)
+
 func seedApis(ctx context.Context, t *testing.T, s *RegistryServer, apis ...*rpc.Api) {
 	t.Helper()
 
@@ -54,21 +82,15 @@ func TestCreateApi(t *testing.T) {
 		extraOpts cmp.Option
 	}{
 		{
-			desc: "default parameters",
+			desc: "populated resource with default parameters",
 			seed: &rpc.Project{
 				Name: "projects/my-project",
 			},
 			req: &rpc.CreateApiRequest{
 				Parent: "projects/my-project",
-				Api: &rpc.Api{
-					DisplayName: "My Api",
-					Description: "Api for my versions",
-				},
+				Api:    fullApi,
 			},
-			want: &rpc.Api{
-				DisplayName: "My Api",
-				Description: "Api for my versions",
-			},
+			want: fullApi,
 			// Name field is generated.
 			extraOpts: protocmp.IgnoreFields(new(rpc.Api), "name"),
 		},
@@ -122,6 +144,7 @@ func TestCreateApi(t *testing.T) {
 			t.Run("GetApi", func(t *testing.T) {
 				req := &rpc.GetApiRequest{
 					Name: created.GetName(),
+					View: rpc.View_FULL,
 				}
 
 				got, err := server.GetApi(ctx, req)
@@ -146,6 +169,14 @@ func TestCreateApiResponseCodes(t *testing.T) {
 		req  *rpc.CreateApiRequest
 		want codes.Code
 	}{
+		{
+			desc: "parent not found",
+			req: &rpc.CreateApiRequest{
+				Parent: "projects/my-project",
+				Api:    fullApi,
+			},
+			want: codes.NotFound,
+		},
 		{
 			desc: "short custom identifier",
 			req: &rpc.CreateApiRequest{
