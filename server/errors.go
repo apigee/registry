@@ -48,3 +48,10 @@ func notFoundError(err error) error {
 	}
 	return status.Error(codes.NotFound, err.Error())
 }
+
+func alreadyExistsError(err error) error {
+	if err == nil {
+		return nil
+	}
+	return status.Error(codes.AlreadyExists, err.Error())
+}

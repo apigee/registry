@@ -20,13 +20,13 @@ func seedProjects(ctx context.Context, t *testing.T, s *RegistryServer, projects
 	t.Helper()
 
 	for _, p := range projects {
-		m, err := names.ParseProject(p.Name)
+		name, err := names.ParseProject(p.Name)
 		if err != nil {
 			t.Fatalf("Setup/Seeding: ParseProject(%q) returned error: %s", p.Name, err)
 		}
 
 		req := &rpc.CreateProjectRequest{
-			ProjectId: m[1],
+			ProjectId: name.ProjectID,
 			Project:   p,
 		}
 

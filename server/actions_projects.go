@@ -16,14 +16,14 @@ package server
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/models"
 	"github.com/apigee/registry/server/names"
+	"github.com/apigee/registry/server/storage"
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/api/iterator"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 // CreateProject handles the corresponding API request.
@@ -34,29 +34,35 @@ func (s *RegistryServer) CreateProject(ctx context.Context, req *rpc.CreateProje
 	}
 	defer s.releaseStorageClient(client)
 
-	if req.GetProjectId() == "" {
-		req.ProjectId = names.GenerateID()
+	name := names.Project{}
+	if req.GetProjectId() != "" {
+		name.ProjectID = req.GetProjectId()
+	} else {
+		name.ProjectID = names.GenerateID()
 	}
 
-	project, err := models.NewProjectFromProjectID(req.GetProjectId())
-	if err != nil {
+	if _, err := getProject(ctx, client, name); err == nil {
+		return nil, alreadyExistsError(fmt.Errorf("project %q already exists", name))
+	} else if !isNotFound(err) {
+		return nil, err
+	}
+
+	if err := name.Validate(); err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	k := client.NewKey(models.ProjectEntityName, project.ResourceName())
-	// fail if project already exists
-	existingProject := &models.Project{}
-	err = client.Get(ctx, k, existingProject)
-	if err == nil {
-		return nil, status.Error(codes.AlreadyExists, project.ResourceName()+" already exists")
+
+	project := models.NewProject(name, req.GetProject())
+	if err := saveProject(ctx, client, project); err != nil {
+		return nil, err
 	}
-	err = project.Update(req.GetProject(), nil)
-	project.CreateTime = project.UpdateTime
-	k, err = client.Put(ctx, k, project)
+
+	message, err := project.Message()
 	if err != nil {
 		return nil, internalError(err)
 	}
-	s.notify(rpc.Notification_CREATED, project.ResourceName())
-	return project.Message()
+
+	s.notify(rpc.Notification_CREATED, name.String())
+	return message, nil
 }
 
 // DeleteProject handles the corresponding API request.
@@ -67,28 +73,21 @@ func (s *RegistryServer) DeleteProject(ctx context.Context, req *rpc.DeleteProje
 	}
 	defer s.releaseStorageClient(client)
 
-	// Validate name and create dummy project (we just need the ID field).
-	project, err := models.NewProjectFromResourceName(req.GetName())
+	name, err := names.ParseProject(req.GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
 
-	k := client.NewKey(models.ProjectEntityName, project.ResourceName())
-	if err := client.Get(ctx, k, &models.Project{}); client.IsNotFound(err) {
-		return nil, notFoundError(err)
-	} else if err != nil {
-		return nil, internalError(err)
+	// Deletion should only succeed on projects that currently exist.
+	if _, err := getProject(ctx, client, name); err != nil {
+		return nil, err
 	}
 
-	if err := client.DeleteChildrenOfProject(ctx, project); err != nil {
-		return nil, internalError(err)
+	if err := deleteProject(ctx, client, name); err != nil {
+		return nil, err
 	}
 
-	if err := client.Delete(ctx, k); err != nil {
-		return nil, internalError(err)
-	}
-
-	s.notify(rpc.Notification_DELETED, req.GetName())
+	s.notify(rpc.Notification_DELETED, name.String())
 	return &empty.Empty{}, nil
 }
 
@@ -99,18 +98,23 @@ func (s *RegistryServer) GetProject(ctx context.Context, req *rpc.GetProjectRequ
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
-	project, err := models.NewProjectFromResourceName(req.GetName())
+
+	name, err := names.ParseProject(req.GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	k := client.NewKey(models.ProjectEntityName, project.ResourceName())
-	err = client.Get(ctx, k, project)
-	if client.IsNotFound(err) {
-		return nil, status.Error(codes.NotFound, "not found")
-	} else if err != nil {
+
+	project, err := getProject(ctx, client, name)
+	if err != nil {
+		return nil, err
+	}
+
+	message, err := project.Message()
+	if err != nil {
 		return nil, internalError(err)
 	}
-	return project.Message()
+
+	return message, nil
 }
 
 // ListProjects handles the corresponding API request.
@@ -122,10 +126,10 @@ func (s *RegistryServer) ListProjects(ctx context.Context, req *rpc.ListProjects
 	defer s.releaseStorageClient(client)
 
 	if req.GetPageSize() < 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid page_size: must not be negative")
+		return nil, invalidArgumentError(fmt.Errorf("invalid page_size %q: must not be negative", req.GetPageSize()))
 	}
 
-	q := client.NewQuery(models.ProjectEntityName)
+	q := client.NewQuery(storage.ProjectEntityName)
 	q, err = q.ApplyCursor(req.GetPageToken())
 	if err != nil {
 		return nil, invalidArgumentError(err)
@@ -149,7 +153,7 @@ func (s *RegistryServer) ListProjects(ctx context.Context, req *rpc.ListProjects
 	for _, err = it.Next(&project); err == nil; _, err = it.Next(&project) {
 		if prg != nil {
 			out, _, err := prg.Eval(map[string]interface{}{
-				"name":         project.ResourceName(),
+				"name":         project.Name(),
 				"project_id":   project.ProjectID,
 				"display_name": project.DisplayName,
 				"description":  project.Description,
@@ -191,22 +195,63 @@ func (s *RegistryServer) UpdateProject(ctx context.Context, req *rpc.UpdateProje
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
-	project, err := models.NewProjectFromResourceName(req.GetProject().GetName())
+
+	name, err := names.ParseProject(req.GetProject().GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	k := client.NewKey(models.ProjectEntityName, project.ResourceName())
-	err = client.Get(ctx, k, project)
+
+	project, err := getProject(ctx, client, name)
 	if err != nil {
-		return nil, status.Error(codes.NotFound, "not found")
+		return nil, err
 	}
-	err = project.Update(req.GetProject(), req.GetUpdateMask())
+
+	project.Update(req.GetProject(), req.GetUpdateMask())
+	if err := saveProject(ctx, client, project); err != nil {
+		return nil, err
+	}
+
+	message, err := project.Message()
 	if err != nil {
 		return nil, internalError(err)
 	}
-	k, err = client.Put(ctx, k, project)
-	if err != nil {
+
+	return message, nil
+}
+
+func saveProject(ctx context.Context, client storage.Client, project *models.Project) error {
+	k := client.NewKey(storage.ProjectEntityName, project.Name())
+	if _, err := client.Put(ctx, k, project); err != nil {
+		return internalError(err)
+	}
+
+	return nil
+}
+
+func getProject(ctx context.Context, client storage.Client, name names.Project) (*models.Project, error) {
+	project := &models.Project{
+		ProjectID: name.ProjectID,
+	}
+
+	k := client.NewKey(storage.ProjectEntityName, name.String())
+	if err := client.Get(ctx, k, project); client.IsNotFound(err) {
+		return nil, notFoundError(fmt.Errorf("project %q not found", name))
+	} else if err != nil {
 		return nil, internalError(err)
 	}
-	return project.Message()
+
+	return project, nil
+}
+
+func deleteProject(ctx context.Context, client storage.Client, name names.Project) error {
+	if err := client.DeleteChildrenOfProject(ctx, name); err != nil {
+		return internalError(err)
+	}
+
+	k := client.NewKey(storage.ProjectEntityName, name.String())
+	if err := client.Delete(ctx, k); err != nil {
+		return internalError(err)
+	}
+
+	return nil
 }

@@ -44,7 +44,7 @@ type Api struct {
 
 // NewApiFromParentAndApiID returns an initialized api for a specified parent and ID.
 func NewApiFromParentAndApiID(parent string, id string) (*Api, error) {
-	m, err := names.ParseProject(parent)
+	project, err := names.ParseProject(parent)
 	if err != nil {
 		return nil, err
 	} else if err := names.ValidateID(id); err != nil {
@@ -52,7 +52,7 @@ func NewApiFromParentAndApiID(parent string, id string) (*Api, error) {
 	}
 
 	return &Api{
-		ProjectID: m[1],
+		ProjectID: project.ProjectID,
 		ApiID:     id,
 	}, nil
 }
