@@ -37,7 +37,7 @@ type Project struct {
 func NewProject(name names.Project, body *rpc.Project) *Project {
 	now := time.Now()
 	return &Project{
-		ProjectID:   name.ID,
+		ProjectID:   name.ProjectID,
 		Description: body.GetDescription(),
 		DisplayName: body.GetDisplayName(),
 		CreateTime:  now,
@@ -48,7 +48,7 @@ func NewProject(name names.Project, body *rpc.Project) *Project {
 // Name returns the resource name of the project.
 func (p *Project) Name() string {
 	return names.Project{
-		ID: p.ProjectID,
+		ProjectID: p.ProjectID,
 	}.String()
 }
 

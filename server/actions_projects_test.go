@@ -26,7 +26,7 @@ func seedProjects(ctx context.Context, t *testing.T, s *RegistryServer, projects
 		}
 
 		req := &rpc.CreateProjectRequest{
-			ProjectId: name.ID,
+			ProjectId: name.ProjectID,
 			Project:   p,
 		}
 

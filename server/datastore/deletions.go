@@ -71,7 +71,7 @@ func (c *Client) DeleteChildrenOfProject(ctx context.Context, project names.Proj
 	for _, entityName := range entityNames {
 		q := datastore.NewQuery(entityName)
 		q = q.KeysOnly()
-		q = q.Filter("ProjectID =", project.ID)
+		q = q.Filter("ProjectID =", project.ProjectID)
 		err := c.DeleteAllMatches(ctx, &Query{query: q})
 		if err != nil {
 			return err

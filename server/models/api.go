@@ -52,7 +52,7 @@ func NewApiFromParentAndApiID(parent string, id string) (*Api, error) {
 	}
 
 	return &Api{
-		ProjectID: project.ID,
+		ProjectID: project.ProjectID,
 		ApiID:     id,
 	}, nil
 }

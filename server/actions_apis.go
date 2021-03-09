@@ -134,8 +134,8 @@ func (s *RegistryServer) ListApis(ctx context.Context, req *rpc.ListApisRequest)
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	if name.ID != "-" {
-		q = q.Require("ProjectID", name.ID)
+	if name.ProjectID != "-" {
+		q = q.Require("ProjectID", name.ProjectID)
 	}
 	prg, err := createFilterOperator(req.GetFilter(),
 		[]filterArg{

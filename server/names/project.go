@@ -21,7 +21,7 @@ import (
 
 // Project represents a resource name for a project.
 type Project struct {
-	ID string
+	ProjectID string
 }
 
 // Validate returns an error if the resource name is invalid.
@@ -36,7 +36,7 @@ func (p Project) Validate() error {
 }
 
 func (p Project) String() string {
-	return fmt.Sprintf("projects/%s", p.ID)
+	return fmt.Sprintf("projects/%s", p.ProjectID)
 }
 
 // ProjectsRegexp returns a regular expression that matches collection of projects.
@@ -58,6 +58,6 @@ func ParseProject(name string) (Project, error) {
 
 	m := r.FindStringSubmatch(name)
 	return Project{
-		ID: m[1],
+		ProjectID: m[1],
 	}, nil
 }

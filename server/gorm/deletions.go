@@ -59,7 +59,7 @@ func (c *Client) DeleteChildrenOfProject(ctx context.Context, project names.Proj
 	}
 	for _, entityName := range entityNames {
 		q := c.NewQuery(entityName)
-		q = q.Require("ProjectID", project.ID)
+		q = q.Require("ProjectID", project.ProjectID)
 		err := c.DeleteAllMatches(ctx, q)
 		if err != nil {
 			return err

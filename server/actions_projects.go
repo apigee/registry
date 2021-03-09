@@ -36,9 +36,9 @@ func (s *RegistryServer) CreateProject(ctx context.Context, req *rpc.CreateProje
 
 	name := names.Project{}
 	if req.GetProjectId() != "" {
-		name.ID = req.GetProjectId()
+		name.ProjectID = req.GetProjectId()
 	} else {
-		name.ID = names.GenerateID()
+		name.ProjectID = names.GenerateID()
 	}
 
 	if _, err := getProject(ctx, client, name); err == nil {
@@ -230,7 +230,7 @@ func saveProject(ctx context.Context, client storage.Client, project *models.Pro
 
 func getProject(ctx context.Context, client storage.Client, name names.Project) (*models.Project, error) {
 	project := &models.Project{
-		ProjectID: name.ID,
+		ProjectID: name.ProjectID,
 	}
 
 	k := client.NewKey(storage.ProjectEntityName, name.String())
