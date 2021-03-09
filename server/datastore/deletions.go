@@ -20,6 +20,7 @@ import (
 
 	"cloud.google.com/go/datastore"
 	"github.com/apigee/registry/server/models"
+	"github.com/apigee/registry/server/names"
 	"github.com/apigee/registry/server/storage"
 	"google.golang.org/api/iterator"
 )
@@ -58,7 +59,7 @@ func (c *Client) DeleteAllMatches(ctx context.Context, q storage.Query) error {
 }
 
 // DeleteChildrenOfProject deletes all the children of a project.
-func (c *Client) DeleteChildrenOfProject(ctx context.Context, project *models.Project) error {
+func (c *Client) DeleteChildrenOfProject(ctx context.Context, project names.Project) error {
 	entityNames := []string{
 		models.ArtifactEntityName,
 		models.BlobEntityName,
@@ -70,7 +71,7 @@ func (c *Client) DeleteChildrenOfProject(ctx context.Context, project *models.Pr
 	for _, entityName := range entityNames {
 		q := datastore.NewQuery(entityName)
 		q = q.KeysOnly()
-		q = q.Filter("ProjectID =", project.ProjectID)
+		q = q.Filter("ProjectID =", project.ID)
 		err := c.DeleteAllMatches(ctx, &Query{query: q})
 		if err != nil {
 			return err

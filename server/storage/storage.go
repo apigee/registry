@@ -20,6 +20,12 @@ import (
 	"context"
 
 	"github.com/apigee/registry/server/models"
+	"github.com/apigee/registry/server/names"
+)
+
+const (
+	// ProjectEntityName is the storage entity name for project resources.
+	ProjectEntityName = "Project"
 )
 
 type Client interface {
@@ -37,7 +43,7 @@ type Client interface {
 	NewQuery(query string) Query
 
 	DeleteAllMatches(ctx context.Context, q Query) error
-	DeleteChildrenOfProject(ctx context.Context, project *models.Project) error
+	DeleteChildrenOfProject(ctx context.Context, project names.Project) error
 	DeleteChildrenOfApi(ctx context.Context, api *models.Api) error
 	DeleteChildrenOfVersion(ctx context.Context, version *models.Version) error
 	DeleteChildrenOfSpec(ctx context.Context, spec *models.Spec) error

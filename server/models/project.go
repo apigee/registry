@@ -15,17 +15,13 @@
 package models
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
-	ptypes "github.com/golang/protobuf/ptypes"
+	"github.com/golang/protobuf/ptypes"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
-
-// ProjectEntityName is used to represent projrcts in storage.
-const ProjectEntityName = "Project"
 
 // Project is the storage-side representation of a project.
 type Project struct {
@@ -37,60 +33,60 @@ type Project struct {
 	UpdateTime  time.Time // Time of last change.
 }
 
-// NewProjectFromProjectID returns an initialized project for a specified ID.
-func NewProjectFromProjectID(id string) (*Project, error) {
-	if err := names.ValidateID(id); err != nil {
-		return nil, err
-	}
-
+// NewProject initializes a new resource.
+func NewProject(name names.Project, body *rpc.Project) *Project {
+	now := time.Now()
 	return &Project{
-		ProjectID: id,
-	}, nil
+		ProjectID:   name.ID,
+		Description: body.GetDescription(),
+		DisplayName: body.GetDisplayName(),
+		CreateTime:  now,
+		UpdateTime:  now,
+	}
 }
 
-// NewProjectFromResourceName parses resource names and returns an initialized project.
-func NewProjectFromResourceName(name string) (*Project, error) {
-	m, err := names.ParseProject(name)
+// Name returns the resource name of the project.
+func (p *Project) Name() string {
+	return names.Project{
+		ID: p.ProjectID,
+	}.String()
+}
+
+// Message returns a message representing a project.
+func (p *Project) Message() (message *rpc.Project, err error) {
+	message = &rpc.Project{
+		Name:        p.Name(),
+		DisplayName: p.DisplayName,
+		Description: p.Description,
+	}
+
+	message.CreateTime, err = ptypes.TimestampProto(p.CreateTime)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Project{
-		ProjectID: m[1],
-	}, nil
-}
+	message.UpdateTime, err = ptypes.TimestampProto(p.UpdateTime)
+	if err != nil {
+		return nil, err
+	}
 
-// ResourceName generates the resource name of a project.
-func (project *Project) ResourceName() string {
-	return fmt.Sprintf("projects/%s", project.ProjectID)
-}
-
-// Message returns a message representing a project.
-func (project *Project) Message() (message *rpc.Project, err error) {
-	message = &rpc.Project{}
-	message.Name = project.ResourceName()
-	message.DisplayName = project.DisplayName
-	message.Description = project.Description
-	message.CreateTime, err = ptypes.TimestampProto(project.CreateTime)
-	message.UpdateTime, err = ptypes.TimestampProto(project.UpdateTime)
-	return message, err
+	return message, nil
 }
 
 // Update modifies a project using the contents of a message.
-func (project *Project) Update(message *rpc.Project, mask *fieldmaskpb.FieldMask) error {
+func (p *Project) Update(message *rpc.Project, mask *fieldmaskpb.FieldMask) {
 	if activeUpdateMask(mask) {
 		for _, field := range mask.Paths {
 			switch field {
 			case "display_name":
-				project.DisplayName = message.GetDisplayName()
+				p.DisplayName = message.GetDisplayName()
 			case "description":
-				project.Description = message.GetDescription()
+				p.Description = message.GetDescription()
 			}
 		}
 	} else {
-		project.DisplayName = message.GetDisplayName()
-		project.Description = message.GetDescription()
+		p.DisplayName = message.GetDisplayName()
+		p.Description = message.GetDescription()
 	}
-	project.UpdateTime = time.Now()
-	return nil
+	p.UpdateTime = time.Now()
 }

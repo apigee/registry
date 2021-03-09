@@ -130,12 +130,12 @@ func (s *RegistryServer) ListApis(ctx context.Context, req *rpc.ListApisRequest)
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	m, err := names.ParseProject(req.GetParent())
+	name, err := names.ParseProject(req.GetParent())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	if m[1] != "-" {
-		q = q.Require("ProjectID", m[1])
+	if name.ID != "-" {
+		q = q.Require("ProjectID", name.ID)
 	}
 	prg, err := createFilterOperator(req.GetFilter(),
 		[]filterArg{
