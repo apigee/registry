@@ -55,7 +55,7 @@ func (c *Client) DeleteChildrenOfProject(ctx context.Context, project names.Proj
 		models.SpecEntityName,
 		models.SpecRevisionTagEntityName,
 		models.VersionEntityName,
-		models.ApiEntityName,
+		storage.ApiEntityName,
 	}
 	for _, entityName := range entityNames {
 		q := c.NewQuery(entityName)
@@ -69,7 +69,7 @@ func (c *Client) DeleteChildrenOfProject(ctx context.Context, project names.Proj
 }
 
 // DeleteChildrenOfApi deletes all the children of a api.
-func (c *Client) DeleteChildrenOfApi(ctx context.Context, api *models.Api) error {
+func (c *Client) DeleteChildrenOfApi(ctx context.Context, api names.Api) error {
 	for _, entityName := range []string{
 		models.BlobEntityName,
 		models.SpecEntityName,

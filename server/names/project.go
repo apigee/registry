@@ -35,6 +35,14 @@ func (p Project) Validate() error {
 	return nil
 }
 
+// Api returns an API with the provided ID and this resource as its parent.
+func (p Project) Api(id string) Api {
+	return Api{
+		ProjectID: p.ProjectID,
+		ApiID:     id,
+	}
+}
+
 func (p Project) String() string {
 	return fmt.Sprintf("projects/%s", p.ProjectID)
 }

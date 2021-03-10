@@ -20,12 +20,9 @@ import (
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
-	ptypes "github.com/golang/protobuf/ptypes"
+	"github.com/golang/protobuf/ptypes"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
-
-// ApiEntityName is used to represent apis in storage.
-const ApiEntityName = "Api"
 
 // Api is the storage-side representation of an API.
 type Api struct {
@@ -42,57 +39,70 @@ type Api struct {
 	Annotations        []byte    `datastore:",noindex"` // Serialized annotations.
 }
 
-// NewApiFromParentAndApiID returns an initialized api for a specified parent and ID.
-func NewApiFromParentAndApiID(parent string, id string) (*Api, error) {
-	project, err := names.ParseProject(parent)
-	if err != nil {
-		return nil, err
-	} else if err := names.ValidateID(id); err != nil {
-		return nil, err
+// NewApi initializes a new resource.
+func NewApi(name names.Api, body *rpc.Api) (api *Api, err error) {
+	now := time.Now()
+	api = &Api{
+		ProjectID:          name.ProjectID,
+		ApiID:              name.ApiID,
+		Description:        body.GetDescription(),
+		DisplayName:        body.GetDisplayName(),
+		Availability:       body.GetAvailability(),
+		RecommendedVersion: body.GetRecommendedVersion(),
+		CreateTime:         now,
+		UpdateTime:         now,
 	}
 
-	return &Api{
-		ProjectID: project.ProjectID,
-		ApiID:     id,
-	}, nil
-}
-
-// NewApiFromResourceName parses resource names and returns an initialized api.
-func NewApiFromResourceName(name string) (*Api, error) {
-	m, err := names.ParseApi(name)
+	api.Labels, err = bytesForMap(body.GetLabels())
 	if err != nil {
 		return nil, err
 	}
 
-	return &Api{
-		ProjectID: m[1],
-		ApiID:     m[2],
-	}, nil
+	api.Annotations, err = bytesForMap(body.GetAnnotations())
+	if err != nil {
+		return nil, err
+	}
+
+	return api, nil
 }
 
-// ResourceName generates the resource name of a api.
-func (api *Api) ResourceName() string {
+// Name returns the resource name of the api.
+func (api *Api) Name() string {
 	return fmt.Sprintf("projects/%s/apis/%s", api.ProjectID, api.ApiID)
 }
 
 // Message returns a message representing an api.
 func (api *Api) Message(view rpc.View) (message *rpc.Api, err error) {
-	message = &rpc.Api{}
-	message.Name = api.ResourceName()
-	message.DisplayName = api.DisplayName
-	message.Description = api.Description
+	message = &rpc.Api{
+		Name:               api.Name(),
+		DisplayName:        api.DisplayName,
+		Description:        api.Description,
+		Availability:       api.Availability,
+		RecommendedVersion: api.RecommendedVersion,
+	}
+
 	message.CreateTime, err = ptypes.TimestampProto(api.CreateTime)
-	message.UpdateTime, err = ptypes.TimestampProto(api.UpdateTime)
-	message.Availability = api.Availability
-	message.RecommendedVersion = api.RecommendedVersion
-	if message.Labels, err = mapForBytes(api.Labels); err != nil {
+	if err != nil {
 		return nil, err
 	}
+
+	message.UpdateTime, err = ptypes.TimestampProto(api.UpdateTime)
+	if err != nil {
+		return nil, err
+	}
+
+	message.Labels, err = api.LabelsMap()
+	if err != nil {
+		return nil, err
+	}
+
 	if view == rpc.View_FULL {
-		if message.Annotations, err = mapForBytes(api.Annotations); err != nil {
+		message.Annotations, err = mapForBytes(api.Annotations)
+		if err != nil {
 			return nil, err
 		}
 	}
+
 	return message, nil
 }
 
