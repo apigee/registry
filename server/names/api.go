@@ -19,6 +19,34 @@ import (
 	"regexp"
 )
 
+// Api represents a resource name for an API.
+type Api struct {
+	ProjectID string
+	ApiID     string
+}
+
+// Validate returns an error if the resource name is invalid.
+// For backward compatibility, names should only be validated at creation time.
+func (a Api) Validate() error {
+	r := ApiRegexp()
+	if name := a.String(); !r.MatchString(name) {
+		return fmt.Errorf("invalid API name %q: must match %q", name, r)
+	}
+
+	return nil
+}
+
+// Project returns the name of this resource's parent project.
+func (a Api) Project() Project {
+	return Project{
+		ProjectID: a.ProjectID,
+	}
+}
+
+func (a Api) String() string {
+	return fmt.Sprintf("projects/%s/apis/%s", a.ProjectID, a.ApiID)
+}
+
 // ApisRegexp returns a regular expression that matches collection of apis.
 func ApisRegexp() *regexp.Regexp {
 	return regexp.MustCompile("^projects/" + identifier + "/apis$")
@@ -30,11 +58,15 @@ func ApiRegexp() *regexp.Regexp {
 }
 
 // ParseApi parses the name of an Api.
-func ParseApi(name string) ([]string, error) {
+func ParseApi(name string) (Api, error) {
 	r := ApiRegexp()
-	m := r.FindStringSubmatch(name)
-	if m == nil {
-		return nil, fmt.Errorf("invalid api name %q: must match %q", name, r)
+	if !r.MatchString(name) {
+		return Api{}, fmt.Errorf("invalid API name %q: must match %q", name, r)
 	}
-	return m, nil
+
+	m := r.FindStringSubmatch(name)
+	return Api{
+		ProjectID: m[1],
+		ApiID:     m[2],
+	}, nil
 }

@@ -20,12 +20,9 @@ import (
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
-	ptypes "github.com/golang/protobuf/ptypes"
+	"github.com/golang/protobuf/ptypes"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
-
-// ApiEntityName is used to represent apis in storage.
-const ApiEntityName = "Api"
 
 // Api is the storage-side representation of an API.
 type Api struct {
@@ -42,103 +39,116 @@ type Api struct {
 	Annotations        []byte    `datastore:",noindex"` // Serialized annotations.
 }
 
-// NewApiFromParentAndApiID returns an initialized api for a specified parent and ID.
-func NewApiFromParentAndApiID(parent string, id string) (*Api, error) {
-	project, err := names.ParseProject(parent)
-	if err != nil {
-		return nil, err
-	} else if err := names.ValidateID(id); err != nil {
-		return nil, err
+// NewApi initializes a new resource.
+func NewApi(name names.Api, body *rpc.Api) (api *Api, err error) {
+	now := time.Now()
+	api = &Api{
+		ProjectID:          name.ProjectID,
+		ApiID:              name.ApiID,
+		Description:        body.GetDescription(),
+		DisplayName:        body.GetDisplayName(),
+		Availability:       body.GetAvailability(),
+		RecommendedVersion: body.GetRecommendedVersion(),
+		CreateTime:         now,
+		UpdateTime:         now,
 	}
 
-	return &Api{
-		ProjectID: project.ProjectID,
-		ApiID:     id,
-	}, nil
-}
-
-// NewApiFromResourceName parses resource names and returns an initialized api.
-func NewApiFromResourceName(name string) (*Api, error) {
-	m, err := names.ParseApi(name)
+	api.Labels, err = bytesForMap(body.GetLabels())
 	if err != nil {
 		return nil, err
 	}
 
-	return &Api{
-		ProjectID: m[1],
-		ApiID:     m[2],
-	}, nil
+	api.Annotations, err = bytesForMap(body.GetAnnotations())
+	if err != nil {
+		return nil, err
+	}
+
+	return api, nil
 }
 
 // ResourceName generates the resource name of a api.
-func (api *Api) ResourceName() string {
-	return fmt.Sprintf("projects/%s/apis/%s", api.ProjectID, api.ApiID)
+func (a *Api) ResourceName() string {
+	return fmt.Sprintf("projects/%s/apis/%s", a.ProjectID, a.ApiID)
 }
 
 // Message returns a message representing an api.
-func (api *Api) Message(view rpc.View) (message *rpc.Api, err error) {
-	message = &rpc.Api{}
-	message.Name = api.ResourceName()
-	message.DisplayName = api.DisplayName
-	message.Description = api.Description
-	message.CreateTime, err = ptypes.TimestampProto(api.CreateTime)
-	message.UpdateTime, err = ptypes.TimestampProto(api.UpdateTime)
-	message.Availability = api.Availability
-	message.RecommendedVersion = api.RecommendedVersion
-	if message.Labels, err = mapForBytes(api.Labels); err != nil {
+func (a *Api) Message(view rpc.View) (message *rpc.Api, err error) {
+	message = &rpc.Api{
+		Name:               a.ResourceName(),
+		DisplayName:        a.DisplayName,
+		Description:        a.Description,
+		Availability:       a.Availability,
+		RecommendedVersion: a.RecommendedVersion,
+	}
+
+	message.CreateTime, err = ptypes.TimestampProto(a.CreateTime)
+	if err != nil {
 		return nil, err
 	}
+
+	message.UpdateTime, err = ptypes.TimestampProto(a.UpdateTime)
+	if err != nil {
+		return nil, err
+	}
+
+	message.Labels, err = a.LabelsMap()
+	if err != nil {
+		return nil, err
+	}
+
 	if view == rpc.View_FULL {
-		if message.Annotations, err = mapForBytes(api.Annotations); err != nil {
+		message.Annotations, err = mapForBytes(a.Annotations)
+		if err != nil {
 			return nil, err
 		}
 	}
+
 	return message, nil
 }
 
 // Update modifies a api using the contents of a message.
-func (api *Api) Update(message *rpc.Api, mask *fieldmaskpb.FieldMask) error {
+func (a *Api) Update(message *rpc.Api, mask *fieldmaskpb.FieldMask) error {
 	if activeUpdateMask(mask) {
 		for _, field := range mask.Paths {
 			switch field {
 			case "display_name":
-				api.DisplayName = message.GetDisplayName()
+				a.DisplayName = message.GetDisplayName()
 			case "description":
-				api.Description = message.GetDescription()
+				a.Description = message.GetDescription()
 			case "availability":
-				api.Availability = message.GetAvailability()
+				a.Availability = message.GetAvailability()
 			case "recommended_version":
-				api.RecommendedVersion = message.GetRecommendedVersion()
+				a.RecommendedVersion = message.GetRecommendedVersion()
 			case "labels":
 				var err error
-				if api.Labels, err = bytesForMap(message.GetLabels()); err != nil {
+				if a.Labels, err = bytesForMap(message.GetLabels()); err != nil {
 					return err
 				}
 			case "annotations":
 				var err error
-				if api.Annotations, err = bytesForMap(message.GetAnnotations()); err != nil {
+				if a.Annotations, err = bytesForMap(message.GetAnnotations()); err != nil {
 					return err
 				}
 			}
 		}
 	} else {
-		api.DisplayName = message.GetDisplayName()
-		api.Description = message.GetDescription()
-		api.Availability = message.GetAvailability()
-		api.RecommendedVersion = message.GetRecommendedVersion()
+		a.DisplayName = message.GetDisplayName()
+		a.Description = message.GetDescription()
+		a.Availability = message.GetAvailability()
+		a.RecommendedVersion = message.GetRecommendedVersion()
 		var err error
-		if api.Labels, err = bytesForMap(message.GetLabels()); err != nil {
+		if a.Labels, err = bytesForMap(message.GetLabels()); err != nil {
 			return err
 		}
-		if api.Annotations, err = bytesForMap(message.GetAnnotations()); err != nil {
+		if a.Annotations, err = bytesForMap(message.GetAnnotations()); err != nil {
 			return err
 		}
 	}
-	api.UpdateTime = time.Now()
+	a.UpdateTime = time.Now()
 	return nil
 }
 
 // LabelsMap returns a map representation of stored labels.
-func (api *Api) LabelsMap() (map[string]string, error) {
-	return mapForBytes(api.Labels)
+func (a *Api) LabelsMap() (map[string]string, error) {
+	return mapForBytes(a.Labels)
 }

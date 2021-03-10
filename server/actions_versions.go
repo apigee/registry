@@ -131,15 +131,15 @@ func (s *RegistryServer) ListApiVersions(ctx context.Context, req *rpc.ListApiVe
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	m, err := names.ParseApi(req.GetParent())
+	parent, err := names.ParseApi(req.GetParent())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	if m[1] != "-" {
-		q = q.Require("ProjectID", m[1])
+	if parent.ProjectID != "-" {
+		q = q.Require("ProjectID", parent.ProjectID)
 	}
-	if m[2] != "-" {
-		q = q.Require("ApiID", m[2])
+	if parent.ApiID != "-" {
+		q = q.Require("ApiID", parent.ApiID)
 	}
 	prg, err := createFilterOperator(req.GetFilter(),
 		[]filterArg{

@@ -20,19 +20,19 @@ func seedApis(ctx context.Context, t *testing.T, s *RegistryServer, apis ...*rpc
 	t.Helper()
 
 	for _, api := range apis {
-		m, err := names.ParseApi(api.Name)
+		name, err := names.ParseApi(api.Name)
 		if err != nil {
 			t.Fatalf("Setup/Seeding: ParseApi(%q) returned error: %s", api.Name, err)
 		}
 
-		parent := fmt.Sprintf("projects/%s", m[1])
+		parent := name.Project()
 		seedProjects(ctx, t, s, &rpc.Project{
-			Name: parent,
+			Name: parent.String(),
 		})
 
 		req := &rpc.CreateApiRequest{
-			Parent: parent,
-			ApiId:  m[2],
+			Parent: parent.String(),
+			ApiId:  name.ApiID,
 			Api:    api,
 		}
 
@@ -48,12 +48,16 @@ func seedApis(ctx context.Context, t *testing.T, s *RegistryServer, apis ...*rpc
 func TestCreateApi(t *testing.T) {
 	tests := []struct {
 		desc      string
+		seed      *rpc.Project
 		req       *rpc.CreateApiRequest
 		want      *rpc.Api
 		extraOpts cmp.Option
 	}{
 		{
 			desc: "default parameters",
+			seed: &rpc.Project{
+				Name: "projects/my-project",
+			},
 			req: &rpc.CreateApiRequest{
 				Parent: "projects/my-project",
 				Api: &rpc.Api{
@@ -70,6 +74,9 @@ func TestCreateApi(t *testing.T) {
 		},
 		{
 			desc: "custom identifier",
+			seed: &rpc.Project{
+				Name: "projects/my-project",
+			},
 			req: &rpc.CreateApiRequest{
 				Parent: "projects/my-project",
 				ApiId:  "my-api",
@@ -85,6 +92,7 @@ func TestCreateApi(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
+			seedProjects(ctx, t, server, test.seed)
 
 			created, err := server.CreateApi(ctx, test.req)
 			if err != nil {

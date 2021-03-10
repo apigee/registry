@@ -20,7 +20,7 @@ import (
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
-	ptypes "github.com/golang/protobuf/ptypes"
+	"github.com/golang/protobuf/ptypes"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
@@ -44,7 +44,7 @@ type Version struct {
 
 // NewVersionFromParentAndVersionID returns an initialized version for a specified parent and ID.
 func NewVersionFromParentAndVersionID(parent string, id string) (*Version, error) {
-	m, err := names.ParseApi(parent)
+	api, err := names.ParseApi(parent)
 	if err != nil {
 		return nil, err
 	} else if err := names.ValidateID(id); err != nil {
@@ -52,8 +52,8 @@ func NewVersionFromParentAndVersionID(parent string, id string) (*Version, error
 	}
 
 	return &Version{
-		ProjectID: m[1],
-		ApiID:     m[2],
+		ProjectID: api.ProjectID,
+		ApiID:     api.ApiID,
 		VersionID: id,
 	}, nil
 }
