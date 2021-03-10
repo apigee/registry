@@ -66,38 +66,38 @@ func NewApi(name names.Api, body *rpc.Api) (api *Api, err error) {
 	return api, nil
 }
 
-// ResourceName generates the resource name of a api.
-func (a *Api) ResourceName() string {
-	return fmt.Sprintf("projects/%s/apis/%s", a.ProjectID, a.ApiID)
+// Name returns the resource name of the api.
+func (api *Api) Name() string {
+	return fmt.Sprintf("projects/%s/apis/%s", api.ProjectID, api.ApiID)
 }
 
 // Message returns a message representing an api.
-func (a *Api) Message(view rpc.View) (message *rpc.Api, err error) {
+func (api *Api) Message(view rpc.View) (message *rpc.Api, err error) {
 	message = &rpc.Api{
-		Name:               a.ResourceName(),
-		DisplayName:        a.DisplayName,
-		Description:        a.Description,
-		Availability:       a.Availability,
-		RecommendedVersion: a.RecommendedVersion,
+		Name:               api.Name(),
+		DisplayName:        api.DisplayName,
+		Description:        api.Description,
+		Availability:       api.Availability,
+		RecommendedVersion: api.RecommendedVersion,
 	}
 
-	message.CreateTime, err = ptypes.TimestampProto(a.CreateTime)
+	message.CreateTime, err = ptypes.TimestampProto(api.CreateTime)
 	if err != nil {
 		return nil, err
 	}
 
-	message.UpdateTime, err = ptypes.TimestampProto(a.UpdateTime)
+	message.UpdateTime, err = ptypes.TimestampProto(api.UpdateTime)
 	if err != nil {
 		return nil, err
 	}
 
-	message.Labels, err = a.LabelsMap()
+	message.Labels, err = api.LabelsMap()
 	if err != nil {
 		return nil, err
 	}
 
 	if view == rpc.View_FULL {
-		message.Annotations, err = mapForBytes(a.Annotations)
+		message.Annotations, err = mapForBytes(api.Annotations)
 		if err != nil {
 			return nil, err
 		}
@@ -107,48 +107,48 @@ func (a *Api) Message(view rpc.View) (message *rpc.Api, err error) {
 }
 
 // Update modifies a api using the contents of a message.
-func (a *Api) Update(message *rpc.Api, mask *fieldmaskpb.FieldMask) error {
+func (api *Api) Update(message *rpc.Api, mask *fieldmaskpb.FieldMask) error {
 	if activeUpdateMask(mask) {
 		for _, field := range mask.Paths {
 			switch field {
 			case "display_name":
-				a.DisplayName = message.GetDisplayName()
+				api.DisplayName = message.GetDisplayName()
 			case "description":
-				a.Description = message.GetDescription()
+				api.Description = message.GetDescription()
 			case "availability":
-				a.Availability = message.GetAvailability()
+				api.Availability = message.GetAvailability()
 			case "recommended_version":
-				a.RecommendedVersion = message.GetRecommendedVersion()
+				api.RecommendedVersion = message.GetRecommendedVersion()
 			case "labels":
 				var err error
-				if a.Labels, err = bytesForMap(message.GetLabels()); err != nil {
+				if api.Labels, err = bytesForMap(message.GetLabels()); err != nil {
 					return err
 				}
 			case "annotations":
 				var err error
-				if a.Annotations, err = bytesForMap(message.GetAnnotations()); err != nil {
+				if api.Annotations, err = bytesForMap(message.GetAnnotations()); err != nil {
 					return err
 				}
 			}
 		}
 	} else {
-		a.DisplayName = message.GetDisplayName()
-		a.Description = message.GetDescription()
-		a.Availability = message.GetAvailability()
-		a.RecommendedVersion = message.GetRecommendedVersion()
+		api.DisplayName = message.GetDisplayName()
+		api.Description = message.GetDescription()
+		api.Availability = message.GetAvailability()
+		api.RecommendedVersion = message.GetRecommendedVersion()
 		var err error
-		if a.Labels, err = bytesForMap(message.GetLabels()); err != nil {
+		if api.Labels, err = bytesForMap(message.GetLabels()); err != nil {
 			return err
 		}
-		if a.Annotations, err = bytesForMap(message.GetAnnotations()); err != nil {
+		if api.Annotations, err = bytesForMap(message.GetAnnotations()); err != nil {
 			return err
 		}
 	}
-	a.UpdateTime = time.Now()
+	api.UpdateTime = time.Now()
 	return nil
 }
 
 // LabelsMap returns a map representation of stored labels.
-func (a *Api) LabelsMap() (map[string]string, error) {
-	return mapForBytes(a.Labels)
+func (api *Api) LabelsMap() (map[string]string, error) {
+	return mapForBytes(api.Labels)
 }

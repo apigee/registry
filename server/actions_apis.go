@@ -176,7 +176,7 @@ func (s *RegistryServer) ListApis(ctx context.Context, req *rpc.ListApisRequest)
 	for _, err = it.Next(&api); err == nil; _, err = it.Next(&api) {
 		if prg != nil {
 			filterInputs := map[string]interface{}{
-				"name":                api.ResourceName(),
+				"name":                api.Name(),
 				"project_id":          api.ProjectID,
 				"api_id":              api.ApiID,
 				"display_name":        api.DisplayName,
@@ -255,7 +255,7 @@ func (s *RegistryServer) UpdateApi(ctx context.Context, req *rpc.UpdateApiReques
 }
 
 func saveApi(ctx context.Context, client storage.Client, api *models.Api) error {
-	k := client.NewKey(storage.ApiEntityName, api.ResourceName())
+	k := client.NewKey(storage.ApiEntityName, api.Name())
 	if _, err := client.Put(ctx, k, api); err != nil {
 		return internalError(err)
 	}
