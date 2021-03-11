@@ -22,7 +22,7 @@ import (
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
-	ptypes "github.com/golang/protobuf/ptypes"
+	"github.com/golang/protobuf/ptypes"
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
@@ -66,7 +66,7 @@ type Spec struct {
 
 // NewSpecFromParentAndSpecID returns an initialized spec for a specified parent and ID.
 func NewSpecFromParentAndSpecID(parent string, id string) (*Spec, error) {
-	m, err := names.ParseVersion(parent)
+	version, err := names.ParseVersion(parent)
 	if err != nil {
 		return nil, err
 	} else if err := names.ValidateID(id); err != nil {
@@ -74,9 +74,9 @@ func NewSpecFromParentAndSpecID(parent string, id string) (*Spec, error) {
 	}
 
 	return &Spec{
-		ProjectID: m[1],
-		ApiID:     m[2],
-		VersionID: m[3],
+		ProjectID: version.ProjectID,
+		ApiID:     version.ApiID,
+		VersionID: version.VersionID,
 		SpecID:    id,
 	}, nil
 }
