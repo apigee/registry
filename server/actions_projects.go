@@ -16,7 +16,7 @@ package server
 
 import (
 	"context"
-	"errors"
+	"fmt"
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/models"
@@ -160,11 +160,9 @@ func (s *RegistryServer) ListProjects(ctx context.Context, req *rpc.ListProjects
 			if err != nil {
 				return nil, invalidArgumentError(err)
 			}
-			v, ok := out.Value().(bool)
-			if !ok {
-				return nil, invalidArgumentError(errors.New("expression does not evaluate to a boolean"))
-			}
-			if !v {
+			if v, ok := out.Value().(bool); !ok {
+				return nil, invalidArgumentError(fmt.Errorf("expression does not evaluate to a boolean (instead yielding %T)", out.Value()))
+			} else if !v {
 				continue
 			}
 		}

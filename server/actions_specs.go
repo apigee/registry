@@ -17,6 +17,7 @@ package server
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"sort"
 	"time"
@@ -249,11 +250,9 @@ func (s *RegistryServer) ListApiSpecs(ctx context.Context, req *rpc.ListApiSpecs
 			if err != nil {
 				return nil, invalidArgumentError(err)
 			}
-			v, ok := out.Value().(bool)
-			if !ok {
-				return nil, invalidArgumentError(errors.New("expression does not evaluate to a boolean"))
-			}
-			if !v {
+			if v, ok := out.Value().(bool); !ok {
+				return nil, invalidArgumentError(fmt.Errorf("expression does not evaluate to a boolean (instead yielding %T)", out.Value()))
+			} else if !v {
 				continue
 			}
 		}
