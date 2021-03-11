@@ -16,6 +16,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/models"
@@ -182,7 +183,9 @@ func (s *RegistryServer) ListApiVersions(ctx context.Context, req *rpc.ListApiVe
 			if err != nil {
 				return nil, invalidArgumentError(err)
 			}
-			if !out.Value().(bool) {
+			if v, ok := out.Value().(bool); !ok {
+				return nil, invalidArgumentError(fmt.Errorf("expression does not evaluate to a boolean (instead yielding %T)", out.Value()))
+			} else if !v {
 				continue
 			}
 		}
