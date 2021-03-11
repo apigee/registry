@@ -361,6 +361,7 @@ func TestListApiVersions(t *testing.T) {
 				{Name: "projects/my-project/apis/my-api/versions/v1"},
 				{Name: "projects/my-project/apis/my-api/versions/v2"},
 				{Name: "projects/my-project/apis/my-api/versions/v3"},
+				{Name: "projects/my-project/apis/other-api/versions/v1"},
 			},
 			req: &rpc.ListApiVersionsRequest{
 				Parent: "projects/my-project/apis/my-api",
@@ -370,6 +371,54 @@ func TestListApiVersions(t *testing.T) {
 					{Name: "projects/my-project/apis/my-api/versions/v1"},
 					{Name: "projects/my-project/apis/my-api/versions/v2"},
 					{Name: "projects/my-project/apis/my-api/versions/v3"},
+				},
+			},
+		},
+		{
+			desc: "across multiple apis in a project",
+			seed: []*rpc.ApiVersion{
+				{Name: "projects/my-project/apis/my-api/versions/v1"},
+				{Name: "projects/my-project/apis/other-api/versions/v1"},
+			},
+			req: &rpc.ListApiVersionsRequest{
+				Parent: "projects/my-project/apis/-",
+			},
+			want: &rpc.ListApiVersionsResponse{
+				ApiVersions: []*rpc.ApiVersion{
+					{Name: "projects/my-project/apis/my-api/versions/v1"},
+					{Name: "projects/my-project/apis/other-api/versions/v1"},
+				},
+			},
+		},
+		{
+			desc: "across multiple apis in multiple projects",
+			seed: []*rpc.ApiVersion{
+				{Name: "projects/my-project/apis/my-api/versions/v1"},
+				{Name: "projects/other-project/apis/other-api/versions/v1"},
+			},
+			req: &rpc.ListApiVersionsRequest{
+				Parent: "projects/-/apis/-",
+			},
+			want: &rpc.ListApiVersionsResponse{
+				ApiVersions: []*rpc.ApiVersion{
+					{Name: "projects/my-project/apis/my-api/versions/v1"},
+					{Name: "projects/other-project/apis/other-api/versions/v1"},
+				},
+			},
+		},
+		{
+			desc: "across one api in multiple projects",
+			seed: []*rpc.ApiVersion{
+				{Name: "projects/my-project/apis/my-api/versions/v1"},
+				{Name: "projects/other-project/apis/my-api/versions/v1"},
+			},
+			req: &rpc.ListApiVersionsRequest{
+				Parent: "projects/-/apis/my-api",
+			},
+			want: &rpc.ListApiVersionsResponse{
+				ApiVersions: []*rpc.ApiVersion{
+					{Name: "projects/my-project/apis/my-api/versions/v1"},
+					{Name: "projects/other-project/apis/my-api/versions/v1"},
 				},
 			},
 		},
@@ -450,6 +499,9 @@ func TestListApiVersions(t *testing.T) {
 				protocmp.Transform(),
 				protocmp.IgnoreFields(new(rpc.ListApiVersionsResponse), "next_page_token"),
 				protocmp.IgnoreFields(new(rpc.ApiVersion), "create_time", "update_time"),
+				protocmp.SortRepeated(func(a, b *rpc.ApiVersion) bool {
+					return a.GetName() < b.GetName()
+				}),
 				test.extraOpts,
 			}
 
@@ -473,6 +525,20 @@ func TestListApiVersionsResponseCodes(t *testing.T) {
 		req  *rpc.ListApiVersionsRequest
 		want codes.Code
 	}{
+		{
+			desc: "parent api not found",
+			req: &rpc.ListApiVersionsRequest{
+				Parent: "projects/my-project/apis/my-api",
+			},
+			want: codes.NotFound,
+		},
+		{
+			desc: "parent project not found",
+			req: &rpc.ListApiVersionsRequest{
+				Parent: "projects/my-project/apis/-",
+			},
+			want: codes.NotFound,
+		},
 		{
 			desc: "negative page size",
 			req: &rpc.ListApiVersionsRequest{
