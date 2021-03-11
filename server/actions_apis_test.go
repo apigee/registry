@@ -90,7 +90,7 @@ func TestCreateApi(t *testing.T) {
 				Parent: "projects/my-project",
 				Api:    fullApi,
 			},
-			want: fullApi,
+			want: basicApi,
 			// Name field is generated.
 			extraOpts: protocmp.IgnoreFields(new(rpc.Api), "name"),
 		},
@@ -144,7 +144,7 @@ func TestCreateApi(t *testing.T) {
 			t.Run("GetApi", func(t *testing.T) {
 				req := &rpc.GetApiRequest{
 					Name: created.GetName(),
-					View: rpc.View_FULL,
+					View: rpc.View_BASIC,
 				}
 
 				got, err := server.GetApi(ctx, req)
@@ -675,7 +675,7 @@ func TestUpdateApi(t *testing.T) {
 					Name: fullApi.Name,
 				},
 			},
-			want: fullApi,
+			want: basicApi,
 		},
 		{
 			desc: "implicit mask",
@@ -762,6 +762,7 @@ func TestUpdateApi(t *testing.T) {
 			t.Run("GetApi", func(t *testing.T) {
 				req := &rpc.GetApiRequest{
 					Name: updated.GetName(),
+					View: rpc.View_BASIC,
 				}
 
 				got, err := server.GetApi(ctx, req)

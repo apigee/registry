@@ -68,7 +68,7 @@ func (s *RegistryServer) CreateApi(ctx context.Context, req *rpc.CreateApiReques
 		return nil, err
 	}
 
-	message, err := api.Message(rpc.View_FULL)
+	message, err := api.Message(rpc.View_BASIC)
 	if err != nil {
 		return nil, internalError(err)
 	}
@@ -248,7 +248,7 @@ func (s *RegistryServer) UpdateApi(ctx context.Context, req *rpc.UpdateApiReques
 		return nil, err
 	}
 
-	message, err := api.Message(rpc.View_FULL)
+	message, err := api.Message(rpc.View_BASIC)
 	if err != nil {
 		return nil, internalError(err)
 	}
