@@ -65,7 +65,7 @@ func (c *Client) DeleteChildrenOfProject(ctx context.Context, project names.Proj
 		models.BlobEntityName,
 		models.SpecEntityName,
 		models.SpecRevisionTagEntityName,
-		models.VersionEntityName,
+		storage.VersionEntityName,
 		storage.ApiEntityName,
 	}
 	for _, entityName := range entityNames {
@@ -85,7 +85,7 @@ func (c *Client) DeleteChildrenOfApi(ctx context.Context, api names.Api) error {
 	for _, entityName := range []string{
 		models.BlobEntityName,
 		models.SpecEntityName,
-		models.VersionEntityName,
+		storage.VersionEntityName,
 	} {
 		q := datastore.NewQuery(entityName)
 		q = q.KeysOnly()
@@ -100,7 +100,7 @@ func (c *Client) DeleteChildrenOfApi(ctx context.Context, api names.Api) error {
 }
 
 // DeleteChildrenOfVersion deletes all the children of a version.
-func (c *Client) DeleteChildrenOfVersion(ctx context.Context, version *models.Version) error {
+func (c *Client) DeleteChildrenOfVersion(ctx context.Context, version names.Version) error {
 	for _, entityName := range []string{
 		models.BlobEntityName,
 		models.SpecEntityName,

@@ -43,6 +43,15 @@ func (a Api) Project() Project {
 	}
 }
 
+// Version returns an API version with the provided ID and this resource as its parent.
+func (a Api) Version(id string) Version {
+	return Version{
+		ProjectID: a.ProjectID,
+		ApiID:     a.ApiID,
+		VersionID: id,
+	}
+}
+
 func (a Api) String() string {
 	return fmt.Sprintf("projects/%s/apis/%s", a.ProjectID, a.ApiID)
 }

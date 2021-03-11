@@ -26,8 +26,10 @@ import (
 const (
 	// ProjectEntityName is the storage entity name for project resources.
 	ProjectEntityName = "Project"
-	// ApiEntityName is the storage entity name for project resources.
+	// ApiEntityName is the storage entity name for API resources.
 	ApiEntityName = "Api"
+	// VersionEntityName is the storage entity name for API version resources.
+	VersionEntityName = "Version"
 )
 
 type Client interface {
@@ -47,7 +49,7 @@ type Client interface {
 	DeleteAllMatches(ctx context.Context, q Query) error
 	DeleteChildrenOfProject(ctx context.Context, project names.Project) error
 	DeleteChildrenOfApi(ctx context.Context, api names.Api) error
-	DeleteChildrenOfVersion(ctx context.Context, version *models.Version) error
+	DeleteChildrenOfVersion(ctx context.Context, version names.Version) error
 	DeleteChildrenOfSpec(ctx context.Context, spec *models.Spec) error
 }
 

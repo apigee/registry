@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"testing"
 
@@ -20,19 +19,19 @@ func seedVersions(ctx context.Context, t *testing.T, s *RegistryServer, versions
 	t.Helper()
 
 	for _, version := range versions {
-		m, err := names.ParseVersion(version.Name)
+		name, err := names.ParseVersion(version.Name)
 		if err != nil {
 			t.Fatalf("Setup/Seeding: ParseVersion(%q) returned error: %s", version.Name, err)
 		}
 
-		parent := fmt.Sprintf("projects/%s/apis/%s", m[1], m[2])
+		parent := name.Api()
 		seedApis(ctx, t, s, &rpc.Api{
-			Name: parent,
+			Name: parent.String(),
 		})
 
 		req := &rpc.CreateApiVersionRequest{
-			Parent:       parent,
-			ApiVersionId: m[3],
+			Parent:       parent.String(),
+			ApiVersionId: name.VersionID,
 			ApiVersion:   version,
 		}
 
@@ -48,12 +47,16 @@ func seedVersions(ctx context.Context, t *testing.T, s *RegistryServer, versions
 func TestCreateApiVersion(t *testing.T) {
 	tests := []struct {
 		desc      string
+		seed      *rpc.Api
 		req       *rpc.CreateApiVersionRequest
 		want      *rpc.ApiVersion
 		extraOpts cmp.Option
 	}{
 		{
 			desc: "default parameters",
+			seed: &rpc.Api{
+				Name: "projects/my-project/apis/my-api",
+			},
 			req: &rpc.CreateApiVersionRequest{
 				Parent: "projects/my-project/apis/my-api",
 				ApiVersion: &rpc.ApiVersion{
@@ -70,6 +73,9 @@ func TestCreateApiVersion(t *testing.T) {
 		},
 		{
 			desc: "custom identifier",
+			seed: &rpc.Api{
+				Name: "projects/my-project/apis/my-api",
+			},
 			req: &rpc.CreateApiVersionRequest{
 				Parent:       "projects/my-project/apis/my-api",
 				ApiVersionId: "my-version",
@@ -85,6 +91,7 @@ func TestCreateApiVersion(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
+			seedApis(ctx, t, server, test.seed)
 
 			created, err := server.CreateApiVersion(ctx, test.req)
 			if err != nil {

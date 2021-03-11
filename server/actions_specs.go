@@ -24,7 +24,7 @@ import (
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/models"
 	"github.com/apigee/registry/server/names"
-	storage "github.com/apigee/registry/server/storage"
+	"github.com/apigee/registry/server/storage"
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/api/iterator"
 	"google.golang.org/grpc/codes"
@@ -186,18 +186,18 @@ func (s *RegistryServer) ListApiSpecs(ctx context.Context, req *rpc.ListApiSpecs
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	m, err := names.ParseVersion(req.GetParent())
+	parent, err := names.ParseVersion(req.GetParent())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	if m[1] != "-" {
-		q = q.Require("ProjectID", m[1])
+	if id := parent.ProjectID; id != "-" {
+		q = q.Require("ProjectID", id)
 	}
-	if m[2] != "-" {
-		q = q.Require("ApiID", m[2])
+	if id := parent.ApiID; id != "-" {
+		q = q.Require("ApiID", id)
 	}
-	if m[3] != "-" {
-		q = q.Require("VersionID", m[3])
+	if id := parent.VersionID; id != "-" {
+		q = q.Require("VersionID", id)
 	}
 	q = q.Require("Currency", models.IsCurrent)
 	prg, err := createFilterOperator(req.GetFilter(),
