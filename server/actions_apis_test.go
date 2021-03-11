@@ -16,6 +16,34 @@ import (
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
+var (
+	// Basic API view does not include annotations.
+	basicApi = &rpc.Api{
+		Name:               "projects/my-project/apis/my-api",
+		DisplayName:        "My Api",
+		Description:        "Api for my versions",
+		Availability:       "GENERAL",
+		RecommendedVersion: "v1",
+		Labels: map[string]string{
+			"label-key": "label-value",
+		},
+	}
+	// Full API view includes annotations.
+	fullApi = &rpc.Api{
+		Name:               "projects/my-project/apis/my-api",
+		DisplayName:        "My Api",
+		Description:        "Api for my versions",
+		Availability:       "GENERAL",
+		RecommendedVersion: "v1",
+		Labels: map[string]string{
+			"label-key": "label-value",
+		},
+		Annotations: map[string]string{
+			"annotation-key": "annotation-value",
+		},
+	}
+)
+
 func seedApis(ctx context.Context, t *testing.T, s *RegistryServer, apis ...*rpc.Api) {
 	t.Helper()
 
@@ -54,21 +82,15 @@ func TestCreateApi(t *testing.T) {
 		extraOpts cmp.Option
 	}{
 		{
-			desc: "default parameters",
+			desc: "populated resource with default parameters",
 			seed: &rpc.Project{
 				Name: "projects/my-project",
 			},
 			req: &rpc.CreateApiRequest{
 				Parent: "projects/my-project",
-				Api: &rpc.Api{
-					DisplayName: "My Api",
-					Description: "Api for my versions",
-				},
+				Api:    fullApi,
 			},
-			want: &rpc.Api{
-				DisplayName: "My Api",
-				Description: "Api for my versions",
-			},
+			want: basicApi,
 			// Name field is generated.
 			extraOpts: protocmp.IgnoreFields(new(rpc.Api), "name"),
 		},
@@ -122,6 +144,7 @@ func TestCreateApi(t *testing.T) {
 			t.Run("GetApi", func(t *testing.T) {
 				req := &rpc.GetApiRequest{
 					Name: created.GetName(),
+					View: rpc.View_BASIC,
 				}
 
 				got, err := server.GetApi(ctx, req)
@@ -146,6 +169,14 @@ func TestCreateApiResponseCodes(t *testing.T) {
 		req  *rpc.CreateApiRequest
 		want codes.Code
 	}{
+		{
+			desc: "parent not found",
+			req: &rpc.CreateApiRequest{
+				Parent: "projects/my-project",
+				Api:    fullApi,
+			},
+			want: codes.NotFound,
+		},
 		{
 			desc: "short custom identifier",
 			req: &rpc.CreateApiRequest{
@@ -233,6 +264,64 @@ func TestCreateApiDuplicates(t *testing.T) {
 	})
 }
 
+func TestGetApi(t *testing.T) {
+	tests := []struct {
+		desc string
+		seed *rpc.Api
+		req  *rpc.GetApiRequest
+		want *rpc.Api
+	}{
+		{
+			desc: "default view",
+			seed: fullApi,
+			req: &rpc.GetApiRequest{
+				Name: fullApi.Name,
+			},
+			want: basicApi,
+		},
+		{
+			desc: "basic view",
+			seed: fullApi,
+			req: &rpc.GetApiRequest{
+				Name: fullApi.Name,
+				View: rpc.View_BASIC,
+			},
+			want: basicApi,
+		},
+		{
+			desc: "full view",
+			seed: fullApi,
+			req: &rpc.GetApiRequest{
+				Name: fullApi.Name,
+				View: rpc.View_FULL,
+			},
+			want: fullApi,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			ctx := context.Background()
+			server := defaultTestServer(t)
+			seedApis(ctx, t, server, test.seed)
+
+			got, err := server.GetApi(ctx, test.req)
+			if err != nil {
+				t.Fatalf("GetApi(%+v) returned error: %s", test.req, err)
+			}
+
+			opts := cmp.Options{
+				protocmp.Transform(),
+				protocmp.IgnoreFields(new(rpc.Api), "create_time", "update_time"),
+			}
+
+			if !cmp.Equal(test.want, got, opts) {
+				t.Errorf("GetApi(%+v) returned unexpected diff (-want +got):\n%s", test.req, cmp.Diff(test.want, got, opts))
+			}
+		})
+	}
+}
+
 func TestGetApiResponseCodes(t *testing.T) {
 	tests := []struct {
 		desc string
@@ -275,6 +364,7 @@ func TestListApis(t *testing.T) {
 				{Name: "projects/my-project/apis/api1"},
 				{Name: "projects/my-project/apis/api2"},
 				{Name: "projects/my-project/apis/api3"},
+				{Name: "projects/other-project/apis/api1"},
 			},
 			req: &rpc.ListApisRequest{
 				Parent: "projects/my-project",
@@ -284,6 +374,26 @@ func TestListApis(t *testing.T) {
 					{Name: "projects/my-project/apis/api1"},
 					{Name: "projects/my-project/apis/api2"},
 					{Name: "projects/my-project/apis/api3"},
+				},
+			},
+		},
+		{
+			desc: "list across multiple projects",
+			seed: []*rpc.Api{
+				{Name: "projects/my-project/apis/api1"},
+				{Name: "projects/my-project/apis/api2"},
+				{Name: "projects/my-project/apis/api3"},
+				{Name: "projects/other-project/apis/api1"},
+			},
+			req: &rpc.ListApisRequest{
+				Parent: "projects/-",
+			},
+			want: &rpc.ListApisResponse{
+				Apis: []*rpc.Api{
+					{Name: "projects/my-project/apis/api1"},
+					{Name: "projects/my-project/apis/api2"},
+					{Name: "projects/my-project/apis/api3"},
+					{Name: "projects/other-project/apis/api1"},
 				},
 			},
 		},
@@ -364,6 +474,9 @@ func TestListApis(t *testing.T) {
 				protocmp.Transform(),
 				protocmp.IgnoreFields(new(rpc.ListApisResponse), "next_page_token"),
 				protocmp.IgnoreFields(new(rpc.Api), "create_time", "update_time"),
+				protocmp.SortRepeated(func(a, b *rpc.Api) bool {
+					return a.GetName() < b.GetName()
+				}),
 				test.extraOpts,
 			}
 
@@ -387,6 +500,13 @@ func TestListApisResponseCodes(t *testing.T) {
 		req  *rpc.ListApisRequest
 		want codes.Code
 	}{
+		{
+			desc: "parent not found",
+			req: &rpc.ListApisRequest{
+				Parent: "projects/my-project",
+			},
+			want: codes.NotFound,
+		},
 		{
 			desc: "negative page size",
 			req: &rpc.ListApisRequest{
@@ -548,7 +668,17 @@ func TestUpdateApi(t *testing.T) {
 		want *rpc.Api
 	}{
 		{
-			desc: "default parameters",
+			desc: "populated resource with default parameters",
+			seed: fullApi,
+			req: &rpc.UpdateApiRequest{
+				Api: &rpc.Api{
+					Name: fullApi.Name,
+				},
+			},
+			want: basicApi,
+		},
+		{
+			desc: "implicit mask",
 			seed: &rpc.Api{
 				Name:        "projects/my-project/apis/my-api",
 				DisplayName: "My Api",
@@ -632,6 +762,7 @@ func TestUpdateApi(t *testing.T) {
 			t.Run("GetApi", func(t *testing.T) {
 				req := &rpc.GetApiRequest{
 					Name: updated.GetName(),
+					View: rpc.View_BASIC,
 				}
 
 				got, err := server.GetApi(ctx, req)
