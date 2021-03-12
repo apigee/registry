@@ -160,7 +160,7 @@ func (s *RegistryServer) ListApiVersions(ctx context.Context, req *rpc.ListApiVe
 		if _, err := getApi(ctx, client, parent); err != nil {
 			return nil, err
 		}
-	} else if parent.ProjectID != "-" {
+	} else if parent.ProjectID != "-" && parent.ApiID == "-" {
 		if _, err := getProject(ctx, client, parent.Project()); err != nil {
 			return nil, err
 		}
