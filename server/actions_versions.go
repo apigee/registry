@@ -156,6 +156,15 @@ func (s *RegistryServer) ListApiVersions(ctx context.Context, req *rpc.ListApiVe
 	if parent.ApiID != "-" {
 		q = q.Require("ApiID", parent.ApiID)
 	}
+	if parent.ProjectID != "-" && parent.ApiID != "-" {
+		if _, err := getApi(ctx, client, parent); err != nil {
+			return nil, err
+		}
+	} else if parent.ProjectID != "-" && parent.ApiID == "-" {
+		if _, err := getProject(ctx, client, parent.Project()); err != nil {
+			return nil, err
+		}
+	}
 	prg, err := createFilterOperator(req.GetFilter(),
 		[]filterArg{
 			{"name", filterArgTypeString},
