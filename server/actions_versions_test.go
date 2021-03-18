@@ -304,7 +304,7 @@ func TestGetApiVersion(t *testing.T) {
 
 			got, err := server.GetApiVersion(ctx, test.req)
 			if err != nil {
-				t.Fatalf("GetApi(%+v) returned error: %s", test.req, err)
+				t.Fatalf("GetApiVersion(%+v) returned error: %s", test.req, err)
 			}
 
 			opts := cmp.Options{
@@ -313,7 +313,7 @@ func TestGetApiVersion(t *testing.T) {
 			}
 
 			if !cmp.Equal(test.want, got, opts) {
-				t.Errorf("GetApi(%+v) returned unexpected diff (-want +got):\n%s", test.req, cmp.Diff(test.want, got, opts))
+				t.Errorf("GetApiVersion(%+v) returned unexpected diff (-want +got):\n%s", test.req, cmp.Diff(test.want, got, opts))
 			}
 		})
 	}
@@ -375,7 +375,7 @@ func TestListApiVersions(t *testing.T) {
 			},
 		},
 		{
-			desc: "across multiple apis in a project",
+			desc: "across all apis in a specific project",
 			seed: []*rpc.ApiVersion{
 				{Name: "projects/my-project/apis/my-api/versions/v1"},
 				{Name: "projects/my-project/apis/other-api/versions/v1"},
@@ -391,7 +391,7 @@ func TestListApiVersions(t *testing.T) {
 			},
 		},
 		{
-			desc: "across multiple apis in multiple projects",
+			desc: "across all projects and apis",
 			seed: []*rpc.ApiVersion{
 				{Name: "projects/my-project/apis/my-api/versions/v1"},
 				{Name: "projects/other-project/apis/other-api/versions/v1"},
@@ -407,7 +407,7 @@ func TestListApiVersions(t *testing.T) {
 			},
 		},
 		{
-			desc: "across one api in multiple projects",
+			desc: "in a specific api across all projects",
 			seed: []*rpc.ApiVersion{
 				{Name: "projects/my-project/apis/my-api/versions/v1"},
 				{Name: "projects/other-project/apis/my-api/versions/v1"},
@@ -681,61 +681,61 @@ func TestUpdateApiVersion(t *testing.T) {
 		{
 			desc: "implicit mask",
 			seed: &rpc.ApiVersion{
-				Name:        "projects/my-project/apis/my-api/versions/p",
-				DisplayName: "My ApiVersion",
-				Description: "ApiVersion for my APIs",
+				Name:        "projects/my-project/apis/my-api/versions/v1",
+				DisplayName: "Version One",
+				Description: "My ApiVersion",
 			},
 			req: &rpc.UpdateApiVersionRequest{
 				ApiVersion: &rpc.ApiVersion{
-					Name:        "projects/my-project/apis/my-api/versions/p",
-					DisplayName: "My Updated ApiVersion",
+					Name:        "projects/my-project/apis/my-api/versions/v1",
+					Description: "My Updated ApiVersion",
 				},
 			},
 			want: &rpc.ApiVersion{
-				Name:        "projects/my-project/apis/my-api/versions/p",
-				DisplayName: "My Updated ApiVersion",
-				Description: "ApiVersion for my APIs",
+				Name:        "projects/my-project/apis/my-api/versions/v1",
+				DisplayName: "Version One",
+				Description: "My Updated ApiVersion",
 			},
 		},
 		{
 			desc: "field specific mask",
 			seed: &rpc.ApiVersion{
-				Name:        "projects/my-project/apis/my-api/versions/p",
-				DisplayName: "My ApiVersion",
-				Description: "ApiVersion for my APIs",
+				Name:        "projects/my-project/apis/my-api/versions/v1",
+				DisplayName: "Version One",
+				Description: "My ApiVersion",
 			},
 			req: &rpc.UpdateApiVersionRequest{
 				ApiVersion: &rpc.ApiVersion{
-					Name:        "projects/my-project/apis/my-api/versions/p",
-					DisplayName: "My Updated ApiVersion",
-					Description: "Ignored",
+					Name:        "projects/my-project/apis/my-api/versions/v1",
+					DisplayName: "Ignored",
+					Description: "My Updated ApiVersion",
 				},
-				UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"display_name"}},
+				UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"description"}},
 			},
 			want: &rpc.ApiVersion{
-				Name:        "projects/my-project/apis/my-api/versions/p",
-				DisplayName: "My Updated ApiVersion",
-				Description: "ApiVersion for my APIs",
+				Name:        "projects/my-project/apis/my-api/versions/v1",
+				DisplayName: "Version One",
+				Description: "My Updated ApiVersion",
 			},
 		},
 		{
 			desc: "full replacement wildcard mask",
 			seed: &rpc.ApiVersion{
-				Name:        "projects/my-project/apis/my-api/versions/p",
-				DisplayName: "My ApiVersion",
-				Description: "ApiVersion for my APIs",
+				Name:        "projects/my-project/apis/my-api/versions/v1",
+				DisplayName: "Version One",
+				Description: "My ApiVersion",
 			},
 			req: &rpc.UpdateApiVersionRequest{
 				ApiVersion: &rpc.ApiVersion{
-					Name:        "projects/my-project/apis/my-api/versions/p",
-					DisplayName: "My Updated ApiVersion",
+					Name:        "projects/my-project/apis/my-api/versions/v1",
+					Description: "My Updated ApiVersion",
 				},
 				UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"*"}},
 			},
 			want: &rpc.ApiVersion{
-				Name:        "projects/my-project/apis/my-api/versions/p",
-				DisplayName: "My Updated ApiVersion",
-				Description: "",
+				Name:        "projects/my-project/apis/my-api/versions/v1",
+				DisplayName: "",
+				Description: "My Updated ApiVersion",
 			},
 		},
 	}
@@ -779,7 +779,7 @@ func TestUpdateApiVersion(t *testing.T) {
 	}
 }
 
-func TestUpdateApiVersionsResponseCodes(t *testing.T) {
+func TestUpdateApiVersionResponseCodes(t *testing.T) {
 	t.Skip("Update mask validation is not implemented")
 
 	tests := []struct {
@@ -790,7 +790,7 @@ func TestUpdateApiVersionsResponseCodes(t *testing.T) {
 	}{
 		{
 			desc: "resource not found",
-			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/p"},
+			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
 			req: &rpc.UpdateApiVersionRequest{
 				ApiVersion: &rpc.ApiVersion{
 					Name: "projects/my-project/apis/my-api/versions/doesnt-exist",
@@ -800,7 +800,7 @@ func TestUpdateApiVersionsResponseCodes(t *testing.T) {
 		},
 		{
 			desc: "missing resource name",
-			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/p"},
+			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
 			req: &rpc.UpdateApiVersionRequest{
 				ApiVersion: &rpc.ApiVersion{},
 			},
@@ -808,10 +808,10 @@ func TestUpdateApiVersionsResponseCodes(t *testing.T) {
 		},
 		{
 			desc: "nonexistent field in mask",
-			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/p"},
+			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
 			req: &rpc.UpdateApiVersionRequest{
 				ApiVersion: &rpc.ApiVersion{
-					Name: "projects/my-project/apis/my-api/versions/p",
+					Name: "projects/my-project/apis/my-api/versions/v1",
 				},
 				UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"this field does not exist"}},
 			},
@@ -841,10 +841,10 @@ func TestDeleteApiVersion(t *testing.T) {
 		{
 			desc: "existing version",
 			seed: &rpc.ApiVersion{
-				Name: "projects/my-project/apis/my-api/versions/p",
+				Name: "projects/my-project/apis/my-api/versions/v1",
 			},
 			req: &rpc.DeleteApiVersionRequest{
-				Name: "projects/my-project/apis/my-api/versions/p",
+				Name: "projects/my-project/apis/my-api/versions/v1",
 			},
 		},
 	}

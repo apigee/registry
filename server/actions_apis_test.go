@@ -378,7 +378,7 @@ func TestListApis(t *testing.T) {
 			},
 		},
 		{
-			desc: "list across multiple projects",
+			desc: "across all projects",
 			seed: []*rpc.Api{
 				{Name: "projects/my-project/apis/api1"},
 				{Name: "projects/my-project/apis/api2"},
@@ -779,7 +779,7 @@ func TestUpdateApi(t *testing.T) {
 	}
 }
 
-func TestUpdateApisResponseCodes(t *testing.T) {
+func TestUpdateApiResponseCodes(t *testing.T) {
 	t.Skip("Update mask validation is not implemented")
 
 	tests := []struct {

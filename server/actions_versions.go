@@ -274,18 +274,18 @@ func saveVersion(ctx context.Context, client storage.Client, version *models.Ver
 }
 
 func getVersion(ctx context.Context, client storage.Client, name names.Version) (*models.Version, error) {
-	api := &models.Version{
+	version := &models.Version{
 		VersionID: name.VersionID,
 	}
 
 	k := client.NewKey(storage.VersionEntityName, name.String())
-	if err := client.Get(ctx, k, api); client.IsNotFound(err) {
+	if err := client.Get(ctx, k, version); client.IsNotFound(err) {
 		return nil, notFoundError(fmt.Errorf("api version %q not found", name))
 	} else if err != nil {
 		return nil, internalError(err)
 	}
 
-	return api, nil
+	return version, nil
 }
 
 func deleteVersion(ctx context.Context, client storage.Client, name names.Version) error {
