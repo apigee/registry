@@ -237,6 +237,10 @@ func (s *RegistryServer) UpdateApiVersion(ctx context.Context, req *rpc.UpdateAp
 	}
 	defer s.releaseStorageClient(client)
 
+	if req.GetApiVersion() == nil {
+		return nil, invalidArgumentError(fmt.Errorf("invalid api_version %+v: body must be provided", req.GetApiVersion()))
+	}
+
 	name, err := names.ParseVersion(req.ApiVersion.GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
@@ -260,7 +264,7 @@ func (s *RegistryServer) UpdateApiVersion(ctx context.Context, req *rpc.UpdateAp
 		return nil, internalError(err)
 	}
 
-	s.notify(rpc.Notification_UPDATED, version.Name())
+	s.notify(rpc.Notification_UPDATED, name.String())
 	return message, nil
 }
 
@@ -274,10 +278,7 @@ func saveVersion(ctx context.Context, client storage.Client, version *models.Ver
 }
 
 func getVersion(ctx context.Context, client storage.Client, name names.Version) (*models.Version, error) {
-	version := &models.Version{
-		VersionID: name.VersionID,
-	}
-
+	version := new(models.Version)
 	k := client.NewKey(storage.VersionEntityName, name.String())
 	if err := client.Get(ctx, k, version); client.IsNotFound(err) {
 		return nil, notFoundError(fmt.Errorf("api version %q not found", name))

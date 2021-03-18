@@ -799,6 +799,12 @@ func TestUpdateApiResponseCodes(t *testing.T) {
 			want: codes.NotFound,
 		},
 		{
+			desc: "missing resource body",
+			seed: &rpc.Api{Name: "projects/my-project/apis/my-api"},
+			req:  &rpc.UpdateApiRequest{},
+			want: codes.InvalidArgument,
+		},
+		{
 			desc: "missing resource name",
 			seed: &rpc.Api{Name: "projects/my-project/apis/my-api"},
 			req: &rpc.UpdateApiRequest{

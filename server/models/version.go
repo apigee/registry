@@ -15,7 +15,6 @@
 package models
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/apigee/registry/rpc"
@@ -68,7 +67,11 @@ func NewVersion(name names.Version, body *rpc.ApiVersion) (version *Version, err
 
 // Name returns the resource name of the version.
 func (v *Version) Name() string {
-	return fmt.Sprintf("projects/%s/apis/%s/versions/%s", v.ProjectID, v.ApiID, v.VersionID)
+	return names.Version{
+		ProjectID: v.ProjectID,
+		ApiID:     v.ApiID,
+		VersionID: v.VersionID,
+	}.String()
 }
 
 // Message returns a message representing a version.

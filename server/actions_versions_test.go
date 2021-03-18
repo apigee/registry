@@ -379,6 +379,7 @@ func TestListApiVersions(t *testing.T) {
 			seed: []*rpc.ApiVersion{
 				{Name: "projects/my-project/apis/my-api/versions/v1"},
 				{Name: "projects/my-project/apis/other-api/versions/v1"},
+				{Name: "projects/other-project/apis/my-api/versions/v1"},
 			},
 			req: &rpc.ListApiVersionsRequest{
 				Parent: "projects/my-project/apis/-",
@@ -411,6 +412,7 @@ func TestListApiVersions(t *testing.T) {
 			seed: []*rpc.ApiVersion{
 				{Name: "projects/my-project/apis/my-api/versions/v1"},
 				{Name: "projects/other-project/apis/my-api/versions/v1"},
+				{Name: "projects/my-project/apis/other-api/versions/v1"},
 			},
 			req: &rpc.ListApiVersionsRequest{
 				Parent: "projects/-/apis/my-api",
@@ -797,6 +799,12 @@ func TestUpdateApiVersionResponseCodes(t *testing.T) {
 				},
 			},
 			want: codes.NotFound,
+		},
+		{
+			desc: "missing resource body",
+			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
+			req:  &rpc.UpdateApiVersionRequest{},
+			want: codes.InvalidArgument,
 		},
 		{
 			desc: "missing resource name",
