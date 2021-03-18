@@ -641,6 +641,12 @@ func TestUpdateProjectResponseCodes(t *testing.T) {
 			want: codes.NotFound,
 		},
 		{
+			desc: "missing resource body",
+			seed: &rpc.Project{Name: "projects/my-project"},
+			req:  &rpc.UpdateProjectRequest{},
+			want: codes.InvalidArgument,
+		},
+		{
 			desc: "missing resource name",
 			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.UpdateProjectRequest{

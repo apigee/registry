@@ -15,7 +15,6 @@
 package models
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/apigee/registry/rpc"
@@ -68,7 +67,10 @@ func NewApi(name names.Api, body *rpc.Api) (api *Api, err error) {
 
 // Name returns the resource name of the api.
 func (api *Api) Name() string {
-	return fmt.Sprintf("projects/%s/apis/%s", api.ProjectID, api.ApiID)
+	return names.Api{
+		ProjectID: api.ProjectID,
+		ApiID:     api.ApiID,
+	}.String()
 }
 
 // Message returns a message representing an api.

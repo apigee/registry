@@ -196,6 +196,10 @@ func (s *RegistryServer) UpdateProject(ctx context.Context, req *rpc.UpdateProje
 	}
 	defer s.releaseStorageClient(client)
 
+	if req.GetProject() == nil {
+		return nil, invalidArgumentError(fmt.Errorf("invalid project %+v: body must be provided", req.GetProject()))
+	}
+
 	name, err := names.ParseProject(req.GetProject().GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
@@ -216,6 +220,7 @@ func (s *RegistryServer) UpdateProject(ctx context.Context, req *rpc.UpdateProje
 		return nil, internalError(err)
 	}
 
+	s.notify(rpc.Notification_UPDATED, name.String())
 	return message, nil
 }
 
@@ -229,10 +234,7 @@ func saveProject(ctx context.Context, client storage.Client, project *models.Pro
 }
 
 func getProject(ctx context.Context, client storage.Client, name names.Project) (*models.Project, error) {
-	project := &models.Project{
-		ProjectID: name.ProjectID,
-	}
-
+	project := new(models.Project)
 	k := client.NewKey(storage.ProjectEntityName, name.String())
 	if err := client.Get(ctx, k, project); client.IsNotFound(err) {
 		return nil, notFoundError(fmt.Errorf("project %q not found", name))

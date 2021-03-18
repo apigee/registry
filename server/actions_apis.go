@@ -230,6 +230,10 @@ func (s *RegistryServer) UpdateApi(ctx context.Context, req *rpc.UpdateApiReques
 	}
 	defer s.releaseStorageClient(client)
 
+	if req.GetApi() == nil {
+		return nil, invalidArgumentError(fmt.Errorf("invalid api %v: body must be provided", req.GetApi()))
+	}
+
 	name, err := names.ParseApi(req.Api.GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
@@ -267,10 +271,7 @@ func saveApi(ctx context.Context, client storage.Client, api *models.Api) error 
 }
 
 func getApi(ctx context.Context, client storage.Client, name names.Api) (*models.Api, error) {
-	api := &models.Api{
-		ApiID: name.ApiID,
-	}
-
+	api := new(models.Api)
 	k := client.NewKey(storage.ApiEntityName, name.String())
 	if err := client.Get(ctx, k, api); client.IsNotFound(err) {
 		return nil, notFoundError(fmt.Errorf("api %q not found", name))
