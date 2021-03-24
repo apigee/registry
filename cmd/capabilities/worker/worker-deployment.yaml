@@ -15,22 +15,26 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: registry-backend
+  name: registry-worker
 spec:
   selector:
     matchLabels:
-      app: registry-backend
+      app: registry-worker
   template:
     metadata:
       labels:
-        app: registry-backend
+        app: registry-worker
     spec:
       containers:
-      - name: registry-backend-gke
-        image: gcr.io/${REGISTRY_PROJECT_IDENTIFIER}/registry-backend:latest
-        imagePullPolicy: Always
-        env:
-        - name: PORT
-          value: "8080"
-        ports:
-        - containerPort: 8080
+        - name: worker-container
+          image: gcr.io/${REGISTRY_PROJECT_IDENTIFIER}/registry-worker:latest
+          imagePullPolicy: Always
+          env:
+            - name: PORT
+              value: "8080"
+            - name: APG_REGISTRY_ADDRESS
+              value: $APG_REGISTRY_ADDRESS
+            - name: APG_REGISTRY_INSECURE
+              value: "1"
+          ports:
+            - containerPort: 8080

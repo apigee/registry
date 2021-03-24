@@ -12,25 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: registry-backend
-spec:
-  selector:
-    matchLabels:
-      app: registry-backend
-  template:
-    metadata:
-      labels:
-        app: registry-backend
-    spec:
-      containers:
-      - name: registry-backend-gke
-        image: gcr.io/${REGISTRY_PROJECT_IDENTIFIER}/registry-backend:latest
-        imagePullPolicy: Always
-        env:
-        - name: PORT
-          value: "8080"
-        ports:
-        - containerPort: 8080
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  args: [ 'build', '-t', 'gcr.io/${_REGISTRY_PROJECT_IDENTIFIER}/registry-worker', '-f', 'cmd/capabilities/worker/Dockerfile.worker', '.' ]
+- name: 'gcr.io/cloud-builders/docker'
+  args: [ 'build', '-t', 'gcr.io/${_REGISTRY_PROJECT_IDENTIFIER}/registry-dispatcher', '-f', 'cmd/capabilities/dispatcher/Dockerfile.dispatcher', '.' ]
+images: ['gcr.io/${_REGISTRY_PROJECT_IDENTIFIER}/registry-worker', 'gcr.io/${_REGISTRY_PROJECT_IDENTIFIER}/registry-dispatcher']
