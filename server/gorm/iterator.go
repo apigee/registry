@@ -32,7 +32,7 @@ type Iterator struct {
 }
 
 // GetCursor gets the cursor for the next page of results.
-func (it *Iterator) GetCursor(l int) (string, error) {
+func (it *Iterator) GetCursor(_ int) (string, error) {
 	encodedCursor := base64.StdEncoding.EncodeToString([]byte(it.Cursor))
 	return encodedCursor, nil
 }

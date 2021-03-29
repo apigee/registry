@@ -252,7 +252,7 @@ func (s *RegistryServer) UpdateApiVersion(ctx context.Context, req *rpc.UpdateAp
 	}
 
 	if err := saveVersion(ctx, client, version); err != nil {
-		return nil, internalError(err)
+		return nil, err
 	}
 
 	message, err := version.Message(rpc.View_BASIC)

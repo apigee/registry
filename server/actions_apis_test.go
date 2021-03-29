@@ -566,6 +566,14 @@ func TestListApisSequence(t *testing.T) {
 			t.Fatalf("ListApis(%+v) returned error: %s", req, err)
 		}
 
+		if count := len(got.GetApis()); count != 1 {
+			t.Errorf("ListApis(%+v) returned %d apis, expected exactly one", req, count)
+		}
+
+		if got.GetNextPageToken() == "" {
+			t.Errorf("ListApis(%+v) returned empty next_page_token, expected another page", req)
+		}
+
 		listed = append(listed, got.Apis...)
 		nextToken = got.GetNextPageToken()
 	})
@@ -584,6 +592,14 @@ func TestListApisSequence(t *testing.T) {
 		got, err := server.ListApis(ctx, req)
 		if err != nil {
 			t.Fatalf("ListApis(%+v) returned error: %s", req, err)
+		}
+
+		if count := len(got.GetApis()); count != 1 {
+			t.Errorf("ListApis(%+v) returned %d apis, expected exactly one", req, count)
+		}
+
+		if got.GetNextPageToken() == "" {
+			t.Errorf("ListApis(%+v) returned empty next_page_token, expected another page", req)
 		}
 
 		listed = append(listed, got.Apis...)
@@ -606,6 +622,10 @@ func TestListApisSequence(t *testing.T) {
 			t.Fatalf("ListApis(%+v) returned error: %s", req, err)
 		}
 
+		if count := len(got.GetApis()); count != 1 {
+			t.Errorf("ListApis(%+v) returned %d apis, expected exactly one", req, count)
+		}
+
 		if got.GetNextPageToken() != "" {
 			// TODO: This should be changed to a test error when possible. See: https://github.com/apigee/registry/issues/68
 			t.Logf("ListApis(%+v) returned next_page_token, expected no next page", req)
@@ -613,6 +633,10 @@ func TestListApisSequence(t *testing.T) {
 
 		listed = append(listed, got.Apis...)
 	})
+
+	if t.Failed() {
+		t.Fatal("Cannot test sequence result after failure on final page")
+	}
 
 	opts := cmp.Options{
 		protocmp.Transform(),

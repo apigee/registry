@@ -598,6 +598,14 @@ func TestListApiVersionsSequence(t *testing.T) {
 			t.Fatalf("ListApiVersions(%+v) returned error: %s", req, err)
 		}
 
+		if count := len(got.GetApiVersions()); count != 1 {
+			t.Errorf("ListApiVersions(%+v) returned %d versions, expected exactly one", req, count)
+		}
+
+		if got.GetNextPageToken() == "" {
+			t.Errorf("ListApiVersions(%+v) returned empty next_page_token, expected another page", req)
+		}
+
 		listed = append(listed, got.ApiVersions...)
 		nextToken = got.GetNextPageToken()
 	})
@@ -616,6 +624,14 @@ func TestListApiVersionsSequence(t *testing.T) {
 		got, err := server.ListApiVersions(ctx, req)
 		if err != nil {
 			t.Fatalf("ListApiVersions(%+v) returned error: %s", req, err)
+		}
+
+		if count := len(got.GetApiVersions()); count != 1 {
+			t.Errorf("ListApiVersions(%+v) returned %d versions, expected exactly one", req, count)
+		}
+
+		if got.GetNextPageToken() == "" {
+			t.Errorf("ListApiVersions(%+v) returned empty next_page_token, expected another page", req)
 		}
 
 		listed = append(listed, got.ApiVersions...)
@@ -638,6 +654,10 @@ func TestListApiVersionsSequence(t *testing.T) {
 			t.Fatalf("ListApiVersions(%+v) returned error: %s", req, err)
 		}
 
+		if count := len(got.GetApiVersions()); count != 1 {
+			t.Errorf("ListApiVersions(%+v) returned %d versions, expected exactly one", req, count)
+		}
+
 		if got.GetNextPageToken() != "" {
 			// TODO: This should be changed to a test error when possible. See: https://github.com/apigee/registry/issues/68
 			t.Logf("ListApiVersions(%+v) returned next_page_token, expected no next page", req)
@@ -645,6 +665,10 @@ func TestListApiVersionsSequence(t *testing.T) {
 
 		listed = append(listed, got.ApiVersions...)
 	})
+
+	if t.Failed() {
+		t.Fatal("Cannot test sequence result after failure on final page")
+	}
 
 	opts := cmp.Options{
 		protocmp.Transform(),
