@@ -197,7 +197,6 @@ message ApiSpec {
   // A new revision is committed whenever the spec contents are changed.
   // The format is an 8-character hexadecimal string.
   string revision_id = 4 [
-    (google.api.field_behavior) = IMMUTABLE,
     (google.api.field_behavior) = OUTPUT_ONLY
   ];
 

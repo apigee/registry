@@ -411,7 +411,7 @@ func (s *RegistryServer) ListApiSpecRevisions(ctx context.Context, req *rpc.List
 		responses.NextPageToken = ""
 		err = nil
 	}
-	responses.Specs = specMessages
+	responses.ApiSpecs = specMessages
 	return responses, nil
 }
 
