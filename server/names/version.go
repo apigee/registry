@@ -50,6 +50,16 @@ func (v Version) Api() Api {
 	}
 }
 
+// Spec returns an API spec with the provided ID and this resource as its parent.
+func (v Version) Spec(id string) Spec {
+	return Spec{
+		ProjectID: v.ProjectID,
+		ApiID:     v.ApiID,
+		VersionID: v.VersionID,
+		SpecID:    id,
+	}
+}
+
 func (v Version) String() string {
 	return fmt.Sprintf("projects/%s/apis/%s/versions/%s", v.ProjectID, v.ApiID, v.VersionID)
 }
