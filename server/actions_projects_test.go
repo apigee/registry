@@ -1,3 +1,17 @@
+// Copyright 2020 Google LLC. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//    http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package server
 
 import (
@@ -422,6 +436,14 @@ func TestListProjectsSequence(t *testing.T) {
 			t.Fatalf("ListProjects(%+v) returned error: %s", req, err)
 		}
 
+		if count := len(got.GetProjects()); count != 1 {
+			t.Errorf("ListProjects(%+v) returned %d projects, expected exactly one", req, count)
+		}
+
+		if got.GetNextPageToken() == "" {
+			t.Errorf("ListProjects(%+v) returned empty next_page_token, expected another page", req)
+		}
+
 		listed = append(listed, got.Projects...)
 		nextToken = got.GetNextPageToken()
 	})
@@ -439,6 +461,14 @@ func TestListProjectsSequence(t *testing.T) {
 		got, err := server.ListProjects(ctx, req)
 		if err != nil {
 			t.Fatalf("ListProjects(%+v) returned error: %s", req, err)
+		}
+
+		if count := len(got.GetProjects()); count != 1 {
+			t.Errorf("ListProjects(%+v) returned %d projects, expected exactly one", req, count)
+		}
+
+		if got.GetNextPageToken() == "" {
+			t.Errorf("ListProjects(%+v) returned empty next_page_token, expected another page", req)
 		}
 
 		listed = append(listed, got.Projects...)
@@ -460,6 +490,10 @@ func TestListProjectsSequence(t *testing.T) {
 			t.Fatalf("ListProjects(%+v) returned error: %s", req, err)
 		}
 
+		if count := len(got.GetProjects()); count != 1 {
+			t.Errorf("ListProjects(%+v) returned %d projects, expected exactly one", req, count)
+		}
+
 		if got.GetNextPageToken() != "" {
 			// TODO: This should be changed to a test error when possible. See: https://github.com/apigee/registry/issues/68
 			t.Logf("ListProjects(%+v) returned next_page_token, expected no next page", req)
@@ -467,6 +501,10 @@ func TestListProjectsSequence(t *testing.T) {
 
 		listed = append(listed, got.Projects...)
 	})
+
+	if t.Failed() {
+		t.Fatal("Cannot test sequence result after failure on final page")
+	}
 
 	opts := cmp.Options{
 		protocmp.Transform(),

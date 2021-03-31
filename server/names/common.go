@@ -27,7 +27,7 @@ import (
 const identifier = "([a-zA-Z0-9-_\\.]+)"
 
 // The format of a custom revision tag.
-const revisionTag = "(@[a-zA-z0-9-]+)?"
+const revisionTag = "([a-zA-z0-9-]+)"
 
 // GenerateID generates a random resource ID.
 func GenerateID() string {

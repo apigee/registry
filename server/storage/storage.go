@@ -19,7 +19,6 @@ package storage
 import (
 	"context"
 
-	"github.com/apigee/registry/server/models"
 	"github.com/apigee/registry/server/names"
 )
 
@@ -30,6 +29,10 @@ const (
 	ApiEntityName = "Api"
 	// VersionEntityName is the storage entity name for API version resources.
 	VersionEntityName = "Version"
+	// SpecEntityName is the storage entity name for API spec resources.
+	SpecEntityName = "Spec"
+	// SpecRevisionTagEntityName is the storage entity name for API spec revision tag resources.
+	SpecRevisionTagEntityName = "SpecRevisionTag"
 )
 
 type Client interface {
@@ -46,11 +49,11 @@ type Client interface {
 	NewKey(kind, name string) Key
 	NewQuery(query string) Query
 
-	DeleteAllMatches(ctx context.Context, q Query) error
 	DeleteChildrenOfProject(ctx context.Context, project names.Project) error
 	DeleteChildrenOfApi(ctx context.Context, api names.Api) error
 	DeleteChildrenOfVersion(ctx context.Context, version names.Version) error
-	DeleteChildrenOfSpec(ctx context.Context, spec *models.Spec) error
+	DeleteAllMatches(ctx context.Context, q Query) error
+	DeleteChildrenOfSpec(ctx context.Context, spec names.Spec) error
 }
 
 type Key interface {

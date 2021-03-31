@@ -201,7 +201,7 @@ func TestFilters(t *testing.T) {
 	for i := 0; i < len(testLabels); i++ {
 		req := &rpc.CreateApiSpecRequest{
 			Parent:    specParent,
-			ApiSpecId: fmt.Sprintf("%d", i),
+			ApiSpecId: fmt.Sprintf("000%d", i),
 			ApiSpec: &rpc.ApiSpec{
 				Labels: testLabels[i],
 			},
