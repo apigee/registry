@@ -1,3 +1,17 @@
+// Copyright 2020 Google LLC. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//    http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package server
 
 import (
@@ -20,13 +34,13 @@ func seedProjects(ctx context.Context, t *testing.T, s *RegistryServer, projects
 	t.Helper()
 
 	for _, p := range projects {
-		m, err := names.ParseProject(p.Name)
+		name, err := names.ParseProject(p.Name)
 		if err != nil {
 			t.Fatalf("Setup/Seeding: ParseProject(%q) returned error: %s", p.Name, err)
 		}
 
 		req := &rpc.CreateProjectRequest{
-			ProjectId: m[1],
+			ProjectId: name.ProjectID,
 			Project:   p,
 		}
 
@@ -188,12 +202,12 @@ func TestCreateProjectDuplicates(t *testing.T) {
 	ctx := context.Background()
 	server := defaultTestServer(t)
 	seedProjects(ctx, t, server, &rpc.Project{
-		Name: "projects/p1",
+		Name: "projects/my-project",
 	})
 
 	t.Run("case sensitive duplicate", func(t *testing.T) {
 		req := &rpc.CreateProjectRequest{
-			ProjectId: "p1",
+			ProjectId: "my-project",
 			Project:   &rpc.Project{},
 		}
 
@@ -205,7 +219,7 @@ func TestCreateProjectDuplicates(t *testing.T) {
 	t.Skip("Resource names are not yet case insensitive")
 	t.Run("case insensitive duplicate", func(t *testing.T) {
 		req := &rpc.CreateProjectRequest{
-			ProjectId: "P1",
+			ProjectId: "My-Project",
 			Project:   &rpc.Project{},
 		}
 
@@ -254,25 +268,25 @@ func TestListProjects(t *testing.T) {
 		{
 			desc: "default parameters",
 			seed: []*rpc.Project{
-				{Name: "projects/p1"},
-				{Name: "projects/p2"},
-				{Name: "projects/p3"},
+				{Name: "projects/project1"},
+				{Name: "projects/project2"},
+				{Name: "projects/project3"},
 			},
 			req: &rpc.ListProjectsRequest{},
 			want: &rpc.ListProjectsResponse{
 				Projects: []*rpc.Project{
-					{Name: "projects/p1"},
-					{Name: "projects/p2"},
-					{Name: "projects/p3"},
+					{Name: "projects/project1"},
+					{Name: "projects/project2"},
+					{Name: "projects/project3"},
 				},
 			},
 		},
 		{
 			desc: "custom page size",
 			seed: []*rpc.Project{
-				{Name: "projects/p1"},
-				{Name: "projects/p2"},
-				{Name: "projects/p3"},
+				{Name: "projects/project1"},
+				{Name: "projects/project2"},
+				{Name: "projects/project3"},
 			},
 			req: &rpc.ListProjectsRequest{
 				PageSize: 1,
@@ -289,16 +303,16 @@ func TestListProjects(t *testing.T) {
 		{
 			desc: "name equality filtering",
 			seed: []*rpc.Project{
-				{Name: "projects/p1"},
-				{Name: "projects/p2"},
-				{Name: "projects/p3"},
+				{Name: "projects/project1"},
+				{Name: "projects/project2"},
+				{Name: "projects/project3"},
 			},
 			req: &rpc.ListProjectsRequest{
-				Filter: "name == 'projects/p2'",
+				Filter: "name == 'projects/project2'",
 			},
 			want: &rpc.ListProjectsResponse{
 				Projects: []*rpc.Project{
-					{Name: "projects/p2"},
+					{Name: "projects/project2"},
 				},
 			},
 		},
@@ -306,11 +320,11 @@ func TestListProjects(t *testing.T) {
 			desc: "description inequality filtering",
 			seed: []*rpc.Project{
 				{
-					Name:        "projects/p1",
+					Name:        "projects/project1",
 					Description: "First Project",
 				},
-				{Name: "projects/p2"},
-				{Name: "projects/p3"},
+				{Name: "projects/project2"},
+				{Name: "projects/project3"},
 			},
 			req: &rpc.ListProjectsRequest{
 				Filter: "description != ''",
@@ -318,7 +332,7 @@ func TestListProjects(t *testing.T) {
 			want: &rpc.ListProjectsResponse{
 				Projects: []*rpc.Project{
 					{
-						Name:        "projects/p1",
+						Name:        "projects/project1",
 						Description: "First Project",
 					},
 				},
@@ -403,9 +417,9 @@ func TestListProjectsSequence(t *testing.T) {
 	ctx := context.Background()
 	server := defaultTestServer(t)
 	seed := []*rpc.Project{
-		{Name: "projects/p1"},
-		{Name: "projects/p2"},
-		{Name: "projects/p3"},
+		{Name: "projects/project1"},
+		{Name: "projects/project2"},
+		{Name: "projects/project3"},
 	}
 	seedProjects(ctx, t, server, seed...)
 
@@ -420,6 +434,14 @@ func TestListProjectsSequence(t *testing.T) {
 		got, err := server.ListProjects(ctx, req)
 		if err != nil {
 			t.Fatalf("ListProjects(%+v) returned error: %s", req, err)
+		}
+
+		if count := len(got.GetProjects()); count != 1 {
+			t.Errorf("ListProjects(%+v) returned %d projects, expected exactly one", req, count)
+		}
+
+		if got.GetNextPageToken() == "" {
+			t.Errorf("ListProjects(%+v) returned empty next_page_token, expected another page", req)
 		}
 
 		listed = append(listed, got.Projects...)
@@ -441,6 +463,14 @@ func TestListProjectsSequence(t *testing.T) {
 			t.Fatalf("ListProjects(%+v) returned error: %s", req, err)
 		}
 
+		if count := len(got.GetProjects()); count != 1 {
+			t.Errorf("ListProjects(%+v) returned %d projects, expected exactly one", req, count)
+		}
+
+		if got.GetNextPageToken() == "" {
+			t.Errorf("ListProjects(%+v) returned empty next_page_token, expected another page", req)
+		}
+
 		listed = append(listed, got.Projects...)
 		nextToken = got.GetNextPageToken()
 	})
@@ -460,6 +490,10 @@ func TestListProjectsSequence(t *testing.T) {
 			t.Fatalf("ListProjects(%+v) returned error: %s", req, err)
 		}
 
+		if count := len(got.GetProjects()); count != 1 {
+			t.Errorf("ListProjects(%+v) returned %d projects, expected exactly one", req, count)
+		}
+
 		if got.GetNextPageToken() != "" {
 			// TODO: This should be changed to a test error when possible. See: https://github.com/apigee/registry/issues/68
 			t.Logf("ListProjects(%+v) returned next_page_token, expected no next page", req)
@@ -467,6 +501,10 @@ func TestListProjectsSequence(t *testing.T) {
 
 		listed = append(listed, got.Projects...)
 	})
+
+	if t.Failed() {
+		t.Fatal("Cannot test sequence result after failure on final page")
+	}
 
 	opts := cmp.Options{
 		protocmp.Transform(),
@@ -488,13 +526,13 @@ func TestListProjectsLargeCollectionFiltering(t *testing.T) {
 	server := defaultTestServer(t)
 	for i := 1; i <= 100; i++ {
 		seedProjects(ctx, t, server, &rpc.Project{
-			Name: fmt.Sprintf("projects/p%d", i),
+			Name: fmt.Sprintf("projects/project%d", i),
 		})
 	}
 
 	req := &rpc.ListProjectsRequest{
 		PageSize: 1,
-		Filter:   "name == 'projects/p99'",
+		Filter:   "name == 'projects/project99'",
 	}
 
 	got, err := server.ListProjects(ctx, req)
@@ -523,18 +561,18 @@ func TestUpdateProject(t *testing.T) {
 		{
 			desc: "default parameters",
 			seed: &rpc.Project{
-				Name:        "projects/p",
+				Name:        "projects/my-project",
 				DisplayName: "My Project",
 				Description: "Project for my APIs",
 			},
 			req: &rpc.UpdateProjectRequest{
 				Project: &rpc.Project{
-					Name:        "projects/p",
+					Name:        "projects/my-project",
 					DisplayName: "My Updated Project",
 				},
 			},
 			want: &rpc.Project{
-				Name:        "projects/p",
+				Name:        "projects/my-project",
 				DisplayName: "My Updated Project",
 				Description: "Project for my APIs",
 			},
@@ -542,20 +580,20 @@ func TestUpdateProject(t *testing.T) {
 		{
 			desc: "field specific mask",
 			seed: &rpc.Project{
-				Name:        "projects/p",
+				Name:        "projects/my-project",
 				DisplayName: "My Project",
 				Description: "Project for my APIs",
 			},
 			req: &rpc.UpdateProjectRequest{
 				Project: &rpc.Project{
-					Name:        "projects/p",
+					Name:        "projects/my-project",
 					DisplayName: "My Updated Project",
 					Description: "Ignored",
 				},
 				UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"display_name"}},
 			},
 			want: &rpc.Project{
-				Name:        "projects/p",
+				Name:        "projects/my-project",
 				DisplayName: "My Updated Project",
 				Description: "Project for my APIs",
 			},
@@ -563,19 +601,19 @@ func TestUpdateProject(t *testing.T) {
 		{
 			desc: "full replacement wildcard mask",
 			seed: &rpc.Project{
-				Name:        "projects/p",
+				Name:        "projects/my-project",
 				DisplayName: "My Project",
 				Description: "Project for my APIs",
 			},
 			req: &rpc.UpdateProjectRequest{
 				Project: &rpc.Project{
-					Name:        "projects/p",
+					Name:        "projects/my-project",
 					DisplayName: "My Updated Project",
 				},
 				UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"*"}},
 			},
 			want: &rpc.Project{
-				Name:        "projects/p",
+				Name:        "projects/my-project",
 				DisplayName: "My Updated Project",
 				Description: "",
 			},
@@ -621,7 +659,7 @@ func TestUpdateProject(t *testing.T) {
 	}
 }
 
-func TestUpdateProjectsResponseCodes(t *testing.T) {
+func TestUpdateProjectResponseCodes(t *testing.T) {
 	t.Skip("Update mask validation is not implemented")
 
 	tests := []struct {
@@ -632,7 +670,7 @@ func TestUpdateProjectsResponseCodes(t *testing.T) {
 	}{
 		{
 			desc: "resource not found",
-			seed: &rpc.Project{Name: "projects/p"},
+			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.UpdateProjectRequest{
 				Project: &rpc.Project{
 					Name: "projects/doesnt-exist",
@@ -641,8 +679,14 @@ func TestUpdateProjectsResponseCodes(t *testing.T) {
 			want: codes.NotFound,
 		},
 		{
+			desc: "missing resource body",
+			seed: &rpc.Project{Name: "projects/my-project"},
+			req:  &rpc.UpdateProjectRequest{},
+			want: codes.InvalidArgument,
+		},
+		{
 			desc: "missing resource name",
-			seed: &rpc.Project{Name: "projects/p"},
+			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.UpdateProjectRequest{
 				Project: &rpc.Project{},
 			},
@@ -650,10 +694,10 @@ func TestUpdateProjectsResponseCodes(t *testing.T) {
 		},
 		{
 			desc: "nonexistent field in mask",
-			seed: &rpc.Project{Name: "projects/p"},
+			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.UpdateProjectRequest{
 				Project: &rpc.Project{
-					Name: "projects/p",
+					Name: "projects/my-project",
 				},
 				UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"this field does not exist"}},
 			},
@@ -683,10 +727,10 @@ func TestDeleteProject(t *testing.T) {
 		{
 			desc: "existing project",
 			seed: &rpc.Project{
-				Name: "projects/p",
+				Name: "projects/my-project",
 			},
 			req: &rpc.DeleteProjectRequest{
-				Name: "projects/p",
+				Name: "projects/my-project",
 			},
 		},
 	}

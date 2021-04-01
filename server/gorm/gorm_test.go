@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/apigee/registry/server/models"
+	"github.com/apigee/registry/server/storage"
 )
 
 func TestCRUD(t *testing.T) {
@@ -111,7 +112,7 @@ func TestLoad(t *testing.T) {
 					CreateTime:  now,
 					UpdateTime:  now,
 				}
-				k := c.NewKey(models.ApiEntityName, api.ResourceName())
+				k := c.NewKey(storage.ApiEntityName, api.Name())
 				// fail if api already exists
 				existing := &models.Api{}
 				err := c.Get(ctx, k, existing)

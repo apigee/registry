@@ -21,10 +21,9 @@ import (
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/models"
 	"github.com/apigee/registry/server/names"
+	"github.com/apigee/registry/server/storage"
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/api/iterator"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 // CreateApi handles the corresponding API request.
@@ -35,29 +34,47 @@ func (s *RegistryServer) CreateApi(ctx context.Context, req *rpc.CreateApiReques
 	}
 	defer s.releaseStorageClient(client)
 
-	if req.GetApiId() == "" {
-		req.ApiId = names.GenerateID()
-	}
-
-	api, err := models.NewApiFromParentAndApiID(req.GetParent(), req.GetApiId())
+	parent, err := names.ParseProject(req.GetParent())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	k := client.NewKey(models.ApiEntityName, api.ResourceName())
-	// fail if api already exists
-	existingApi := &models.Api{}
-	err = client.Get(ctx, k, existingApi)
-	if err == nil {
-		return nil, status.Error(codes.AlreadyExists, api.ResourceName()+" already exists")
+
+	// Creation should only succeed when the parent exists.
+	if _, err := getProject(ctx, client, parent); err != nil {
+		return nil, err
 	}
-	err = api.Update(req.GetApi(), nil)
-	api.CreateTime = api.UpdateTime
-	k, err = client.Put(ctx, k, api)
+
+	name := parent.Api(req.GetApiId())
+	if name.ApiID == "" {
+		name.ApiID = names.GenerateID()
+	}
+
+	if _, err := getApi(ctx, client, name); err == nil {
+		return nil, alreadyExistsError(fmt.Errorf("API %q already exists", name))
+	} else if !isNotFound(err) {
+		return nil, err
+	}
+
+	if err := name.Validate(); err != nil {
+		return nil, invalidArgumentError(err)
+	}
+
+	api, err := models.NewApi(name, req.GetApi())
+	if err != nil {
+		return nil, invalidArgumentError(err)
+	}
+
+	if err := saveApi(ctx, client, api); err != nil {
+		return nil, err
+	}
+
+	message, err := api.Message(rpc.View_BASIC)
 	if err != nil {
 		return nil, internalError(err)
 	}
-	s.notify(rpc.Notification_CREATED, api.ResourceName())
-	return api.Message(rpc.View_BASIC)
+
+	s.notify(rpc.Notification_CREATED, name.String())
+	return message, nil
 }
 
 // DeleteApi handles the corresponding API request.
@@ -68,28 +85,21 @@ func (s *RegistryServer) DeleteApi(ctx context.Context, req *rpc.DeleteApiReques
 	}
 	defer s.releaseStorageClient(client)
 
-	// Validate name and create dummy api (we just need the ID fields).
-	api, err := models.NewApiFromResourceName(req.GetName())
+	name, err := names.ParseApi(req.GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
 
-	k := client.NewKey(models.ApiEntityName, req.GetName())
-	if err := client.Get(ctx, k, &models.Api{}); client.IsNotFound(err) {
-		return nil, notFoundError(err)
-	} else if err != nil {
-		return nil, internalError(err)
+	// Deletion should only succeed on APIs that currently exist.
+	if _, err := getApi(ctx, client, name); err != nil {
+		return nil, err
 	}
 
-	if err := client.DeleteChildrenOfApi(ctx, api); err != nil {
-		return nil, internalError(err)
+	if err := deleteApi(ctx, client, name); err != nil {
+		return nil, err
 	}
 
-	if err := client.Delete(ctx, k); err != nil {
-		return nil, internalError(err)
-	}
-
-	s.notify(rpc.Notification_DELETED, req.GetName())
+	s.notify(rpc.Notification_DELETED, name.String())
 	return &empty.Empty{}, nil
 }
 
@@ -100,18 +110,23 @@ func (s *RegistryServer) GetApi(ctx context.Context, req *rpc.GetApiRequest) (*r
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
-	api, err := models.NewApiFromResourceName(req.GetName())
+
+	name, err := names.ParseApi(req.GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	k := client.NewKey(models.ApiEntityName, api.ResourceName())
-	err = client.Get(ctx, k, api)
-	if client.IsNotFound(err) {
-		return nil, status.Error(codes.NotFound, "not found")
-	} else if err != nil {
+
+	api, err := getApi(ctx, client, name)
+	if err != nil {
+		return nil, err
+	}
+
+	message, err := api.Message(req.GetView())
+	if err != nil {
 		return nil, internalError(err)
 	}
-	return api.Message(req.GetView())
+
+	return message, nil
 }
 
 // ListApis handles the corresponding API request.
@@ -123,20 +138,23 @@ func (s *RegistryServer) ListApis(ctx context.Context, req *rpc.ListApisRequest)
 	defer s.releaseStorageClient(client)
 
 	if req.GetPageSize() < 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid page_size: must not be negative")
+		return nil, invalidArgumentError(fmt.Errorf("invalid page_size %q: must not be negative", req.GetPageSize()))
 	}
 
-	q := client.NewQuery(models.ApiEntityName)
+	q := client.NewQuery(storage.ApiEntityName)
 	q, err = q.ApplyCursor(req.GetPageToken())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	m, err := names.ParseProject(req.GetParent())
+	name, err := names.ParseProject(req.GetParent())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	if m[1] != "-" {
-		q = q.Require("ProjectID", m[1])
+	if name.ProjectID != "-" {
+		q = q.Require("ProjectID", name.ProjectID)
+		if _, err := getProject(ctx, client, name); err != nil {
+			return nil, err
+		}
 	}
 	prg, err := createFilterOperator(req.GetFilter(),
 		[]filterArg{
@@ -161,7 +179,7 @@ func (s *RegistryServer) ListApis(ctx context.Context, req *rpc.ListApisRequest)
 	for _, err = it.Next(&api); err == nil; _, err = it.Next(&api) {
 		if prg != nil {
 			filterInputs := map[string]interface{}{
-				"name":                api.ResourceName(),
+				"name":                api.Name(),
 				"project_id":          api.ProjectID,
 				"api_id":              api.ApiID,
 				"display_name":        api.DisplayName,
@@ -178,8 +196,7 @@ func (s *RegistryServer) ListApis(ctx context.Context, req *rpc.ListApisRequest)
 			out, _, err := prg.Eval(filterInputs)
 			if err != nil {
 				return nil, invalidArgumentError(err)
-			}
-			if v, ok := out.Value().(bool); !ok {
+			} else if v, ok := out.Value().(bool); !ok {
 				return nil, invalidArgumentError(fmt.Errorf("expression does not evaluate to a boolean (instead yielding %T)", out.Value()))
 			} else if !v {
 				continue
@@ -213,23 +230,68 @@ func (s *RegistryServer) UpdateApi(ctx context.Context, req *rpc.UpdateApiReques
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
-	api, err := models.NewApiFromResourceName(req.GetApi().GetName())
+
+	if req.GetApi() == nil {
+		return nil, invalidArgumentError(fmt.Errorf("invalid api %v: body must be provided", req.GetApi()))
+	}
+
+	name, err := names.ParseApi(req.Api.GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	k := client.NewKey(models.ApiEntityName, api.ResourceName())
-	err = client.Get(ctx, k, api)
+
+	api, err := getApi(ctx, client, name)
 	if err != nil {
-		return nil, status.Error(codes.NotFound, "not found")
+		return nil, err
 	}
-	err = api.Update(req.GetApi(), req.GetUpdateMask())
+
+	if err := api.Update(req.GetApi(), req.GetUpdateMask()); err != nil {
+		return nil, internalError(err)
+	}
+
+	if err := saveApi(ctx, client, api); err != nil {
+		return nil, err
+	}
+
+	message, err := api.Message(rpc.View_BASIC)
 	if err != nil {
 		return nil, internalError(err)
 	}
-	k, err = client.Put(ctx, k, api)
-	if err != nil {
+
+	s.notify(rpc.Notification_UPDATED, name.String())
+	return message, nil
+}
+
+func saveApi(ctx context.Context, client storage.Client, api *models.Api) error {
+	k := client.NewKey(storage.ApiEntityName, api.Name())
+	if _, err := client.Put(ctx, k, api); err != nil {
+		return internalError(err)
+	}
+
+	return nil
+}
+
+func getApi(ctx context.Context, client storage.Client, name names.Api) (*models.Api, error) {
+	api := new(models.Api)
+	k := client.NewKey(storage.ApiEntityName, name.String())
+	if err := client.Get(ctx, k, api); client.IsNotFound(err) {
+		return nil, notFoundError(fmt.Errorf("api %q not found", name))
+	} else if err != nil {
 		return nil, internalError(err)
 	}
-	s.notify(rpc.Notification_UPDATED, api.ResourceName())
-	return api.Message(rpc.View_BASIC)
+
+	return api, nil
+}
+
+func deleteApi(ctx context.Context, client storage.Client, name names.Api) error {
+	if err := client.DeleteChildrenOfApi(ctx, name); err != nil {
+		return internalError(err)
+	}
+
+	k := client.NewKey(storage.ApiEntityName, name.String())
+	if err := client.Delete(ctx, k); err != nil {
+		return internalError(err)
+	}
+
+	return nil
 }
