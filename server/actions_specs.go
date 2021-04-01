@@ -283,7 +283,9 @@ func (s *RegistryServer) ListApiSpecs(ctx context.Context, req *rpc.ListApiSpecs
 			}
 			if out, _, err := prg.Eval(filterInputs); err != nil {
 				return nil, invalidArgumentError(err)
-			} else if !out.Value().(bool) {
+			} else if v, ok := out.Value().(bool); !ok {
+				return nil, invalidArgumentError(fmt.Errorf("expression does not evaluate to a boolean (instead yielding %T)", out.Value()))
+			} else if !v {
 				continue
 			}
 		}

@@ -162,8 +162,9 @@ func (s *RegistryServer) ListProjects(ctx context.Context, req *rpc.ListProjects
 			})
 			if err != nil {
 				return nil, invalidArgumentError(err)
-			}
-			if !out.Value().(bool) {
+			} else if v, ok := out.Value().(bool); !ok {
+				return nil, invalidArgumentError(fmt.Errorf("expression does not evaluate to a boolean (instead yielding %T)", out.Value()))
+			} else if !v {
 				continue
 			}
 		}

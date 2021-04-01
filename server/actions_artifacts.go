@@ -16,6 +16,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	"github.com/apigee/registry/rpc"
@@ -187,7 +188,9 @@ func (s *RegistryServer) ListArtifacts(ctx context.Context, req *rpc.ListArtifac
 			if err != nil {
 				return nil, invalidArgumentError(err)
 			}
-			if !out.Value().(bool) {
+			if v, ok := out.Value().(bool); !ok {
+				return nil, invalidArgumentError(fmt.Errorf("expression does not evaluate to a boolean (instead yielding %T)", out.Value()))
+			} else if !v {
 				continue
 			}
 		}
