@@ -20,7 +20,7 @@ COPY . ./
 RUN make protos
 # Build the worker and registry-tool.
 RUN CGO_ENABLED=0 GOOS=linux go build -v ./cmd/registry
-RUN CGO_ENABLED=0 GOOS=linux go build -v -o worker ./cmd/capabilities/worker/worker.go
+RUN CGO_ENABLED=0 GOOS=linux go build -v -o worker ./cmd/capabilities/worker-server/main.go
 
 WORKDIR /linter
 RUN git clone https://github.com/google/gnostic
