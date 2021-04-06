@@ -19,6 +19,7 @@ import (
 	"fmt"
 
 	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/server/dao"
 	"github.com/apigee/registry/server/models"
 	"github.com/apigee/registry/server/names"
 	"github.com/apigee/registry/server/storage"
@@ -136,6 +137,7 @@ func (s *RegistryServer) ListApiVersions(ctx context.Context, req *rpc.ListApiVe
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
+	db := dao.NewDAO(client)
 
 	if req.GetPageSize() < 0 {
 		return nil, invalidArgumentError(fmt.Errorf("invalid page_size %q: must not be negative", req.GetPageSize()))
@@ -161,7 +163,7 @@ func (s *RegistryServer) ListApiVersions(ctx context.Context, req *rpc.ListApiVe
 			return nil, err
 		}
 	} else if parent.ProjectID != "-" && parent.ApiID == "-" {
-		if _, err := getProject(ctx, client, parent.Project()); err != nil {
+		if _, err := db.GetProject(ctx, parent.Project()); err != nil {
 			return nil, err
 		}
 	}

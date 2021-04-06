@@ -19,6 +19,7 @@ import (
 	"fmt"
 
 	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/server/dao"
 	"github.com/apigee/registry/server/models"
 	"github.com/apigee/registry/server/names"
 	"github.com/apigee/registry/server/storage"
@@ -33,6 +34,7 @@ func (s *RegistryServer) CreateApi(ctx context.Context, req *rpc.CreateApiReques
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
+	db := dao.NewDAO(client)
 
 	parent, err := names.ParseProject(req.GetParent())
 	if err != nil {
@@ -40,7 +42,7 @@ func (s *RegistryServer) CreateApi(ctx context.Context, req *rpc.CreateApiReques
 	}
 
 	// Creation should only succeed when the parent exists.
-	if _, err := getProject(ctx, client, parent); err != nil {
+	if _, err := db.GetProject(ctx, parent); err != nil {
 		return nil, err
 	}
 
@@ -136,6 +138,7 @@ func (s *RegistryServer) ListApis(ctx context.Context, req *rpc.ListApisRequest)
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
+	db := dao.NewDAO(client)
 
 	if req.GetPageSize() < 0 {
 		return nil, invalidArgumentError(fmt.Errorf("invalid page_size %q: must not be negative", req.GetPageSize()))
@@ -152,7 +155,7 @@ func (s *RegistryServer) ListApis(ctx context.Context, req *rpc.ListApisRequest)
 	}
 	if name.ProjectID != "-" {
 		q = q.Require("ProjectID", name.ProjectID)
-		if _, err := getProject(ctx, client, name); err != nil {
+		if _, err := db.GetProject(ctx, name); err != nil {
 			return nil, err
 		}
 	}

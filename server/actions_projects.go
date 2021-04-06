@@ -19,11 +19,10 @@ import (
 	"fmt"
 
 	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/server/dao"
 	"github.com/apigee/registry/server/models"
 	"github.com/apigee/registry/server/names"
-	"github.com/apigee/registry/server/storage"
 	"github.com/golang/protobuf/ptypes/empty"
-	"google.golang.org/api/iterator"
 )
 
 // CreateProject handles the corresponding API request.
@@ -33,6 +32,7 @@ func (s *RegistryServer) CreateProject(ctx context.Context, req *rpc.CreateProje
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
+	db := dao.NewDAO(client)
 
 	name := names.Project{}
 	if req.GetProjectId() != "" {
@@ -41,7 +41,7 @@ func (s *RegistryServer) CreateProject(ctx context.Context, req *rpc.CreateProje
 		name.ProjectID = names.GenerateID()
 	}
 
-	if _, err := getProject(ctx, client, name); err == nil {
+	if _, err := db.GetProject(ctx, name); err == nil {
 		return nil, alreadyExistsError(fmt.Errorf("project %q already exists", name))
 	} else if !isNotFound(err) {
 		return nil, err
@@ -52,7 +52,7 @@ func (s *RegistryServer) CreateProject(ctx context.Context, req *rpc.CreateProje
 	}
 
 	project := models.NewProject(name, req.GetProject())
-	if err := saveProject(ctx, client, project); err != nil {
+	if err := db.SaveProject(ctx, project); err != nil {
 		return nil, err
 	}
 
@@ -72,6 +72,7 @@ func (s *RegistryServer) DeleteProject(ctx context.Context, req *rpc.DeleteProje
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
+	db := dao.NewDAO(client)
 
 	name, err := names.ParseProject(req.GetName())
 	if err != nil {
@@ -79,11 +80,11 @@ func (s *RegistryServer) DeleteProject(ctx context.Context, req *rpc.DeleteProje
 	}
 
 	// Deletion should only succeed on projects that currently exist.
-	if _, err := getProject(ctx, client, name); err != nil {
+	if _, err := db.GetProject(ctx, name); err != nil {
 		return nil, err
 	}
 
-	if err := deleteProject(ctx, client, name); err != nil {
+	if err := db.DeleteProject(ctx, name); err != nil {
 		return nil, err
 	}
 
@@ -98,13 +99,14 @@ func (s *RegistryServer) GetProject(ctx context.Context, req *rpc.GetProjectRequ
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
+	db := dao.NewDAO(client)
 
 	name, err := names.ParseProject(req.GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
 
-	project, err := getProject(ctx, client, name)
+	project, err := db.GetProject(ctx, name)
 	if err != nil {
 		return nil, err
 	}
@@ -124,69 +126,36 @@ func (s *RegistryServer) ListProjects(ctx context.Context, req *rpc.ListProjects
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
+	db := dao.NewDAO(client)
 
 	if req.GetPageSize() < 0 {
 		return nil, invalidArgumentError(fmt.Errorf("invalid page_size %q: must not be negative", req.GetPageSize()))
+	} else if req.GetPageSize() > 1000 {
+		req.PageSize = 1000
 	}
 
-	q := client.NewQuery(storage.ProjectEntityName)
-	q, err = q.ApplyCursor(req.GetPageToken())
-	if err != nil {
-		return nil, invalidArgumentError(err)
-	}
-	prg, err := createFilterOperator(req.GetFilter(),
-		[]filterArg{
-			{"name", filterArgTypeString},
-			{"project_id", filterArgTypeString},
-			{"display_name", filterArgTypeString},
-			{"description", filterArgTypeString},
-			{"create_time", filterArgTypeTimestamp},
-			{"update_time", filterArgTypeTimestamp},
-		})
+	listing, err := db.ListProjects(ctx, dao.PageOptions{
+		Size:   req.GetPageSize(),
+		Filter: req.GetFilter(),
+		Token:  req.GetPageToken(),
+	})
 	if err != nil {
 		return nil, err
 	}
-	var projectMessages []*rpc.Project
-	var project models.Project
-	it := client.Run(ctx, q)
-	pageSize := boundPageSize(req.GetPageSize())
-	for _, err = it.Next(&project); err == nil; _, err = it.Next(&project) {
-		if prg != nil {
-			out, _, err := prg.Eval(map[string]interface{}{
-				"name":         project.Name(),
-				"project_id":   project.ProjectID,
-				"display_name": project.DisplayName,
-				"description":  project.Description,
-				"create_time":  project.CreateTime,
-				"update_time":  project.UpdateTime,
-			})
-			if err != nil {
-				return nil, invalidArgumentError(err)
-			} else if v, ok := out.Value().(bool); !ok {
-				return nil, invalidArgumentError(fmt.Errorf("expression does not evaluate to a boolean (instead yielding %T)", out.Value()))
-			} else if !v {
-				continue
-			}
-		}
-		projectMessage, _ := project.Message()
-		projectMessages = append(projectMessages, projectMessage)
-		if len(projectMessages) == pageSize {
-			break
-		}
-	}
-	if err != nil && err != iterator.Done {
-		return nil, internalError(err)
-	}
-	responses := &rpc.ListProjectsResponse{
-		Projects: projectMessages,
+
+	response := &rpc.ListProjectsResponse{
+		Projects:      make([]*rpc.Project, len(listing.Projects)),
+		NextPageToken: listing.Token,
 	}
 
-	responses.NextPageToken, err = it.GetCursor(len(projectMessages))
-	if err != nil {
-		return nil, internalError(err)
+	for i, project := range listing.Projects {
+		response.Projects[i], err = project.Message()
+		if err != nil {
+			return nil, internalError(err)
+		}
 	}
 
-	return responses, nil
+	return response, nil
 }
 
 // UpdateProject handles the corresponding API request.
@@ -196,6 +165,7 @@ func (s *RegistryServer) UpdateProject(ctx context.Context, req *rpc.UpdateProje
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
+	db := dao.NewDAO(client)
 
 	if req.GetProject() == nil {
 		return nil, invalidArgumentError(fmt.Errorf("invalid project %+v: body must be provided", req.GetProject()))
@@ -206,13 +176,13 @@ func (s *RegistryServer) UpdateProject(ctx context.Context, req *rpc.UpdateProje
 		return nil, invalidArgumentError(err)
 	}
 
-	project, err := getProject(ctx, client, name)
+	project, err := db.GetProject(ctx, name)
 	if err != nil {
 		return nil, err
 	}
 
 	project.Update(req.GetProject(), req.GetUpdateMask())
-	if err := saveProject(ctx, client, project); err != nil {
+	if err := db.SaveProject(ctx, project); err != nil {
 		return nil, err
 	}
 
@@ -223,38 +193,4 @@ func (s *RegistryServer) UpdateProject(ctx context.Context, req *rpc.UpdateProje
 
 	s.notify(rpc.Notification_UPDATED, name.String())
 	return message, nil
-}
-
-func saveProject(ctx context.Context, client storage.Client, project *models.Project) error {
-	k := client.NewKey(storage.ProjectEntityName, project.Name())
-	if _, err := client.Put(ctx, k, project); err != nil {
-		return internalError(err)
-	}
-
-	return nil
-}
-
-func getProject(ctx context.Context, client storage.Client, name names.Project) (*models.Project, error) {
-	project := new(models.Project)
-	k := client.NewKey(storage.ProjectEntityName, name.String())
-	if err := client.Get(ctx, k, project); client.IsNotFound(err) {
-		return nil, notFoundError(fmt.Errorf("project %q not found", name))
-	} else if err != nil {
-		return nil, internalError(err)
-	}
-
-	return project, nil
-}
-
-func deleteProject(ctx context.Context, client storage.Client, name names.Project) error {
-	if err := client.DeleteChildrenOfProject(ctx, name); err != nil {
-		return internalError(err)
-	}
-
-	k := client.NewKey(storage.ProjectEntityName, name.String())
-	if err := client.Delete(ctx, k); err != nil {
-		return internalError(err)
-	}
-
-	return nil
 }
