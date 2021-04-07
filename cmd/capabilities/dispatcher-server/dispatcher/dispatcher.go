@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package dispatcher
 
 import (
         "log"
@@ -27,30 +27,13 @@ import (
 	    "github.com/golang/protobuf/jsonpb"
         "google.golang.org/grpc/codes"
         "google.golang.org/grpc/status"
-        "github.com/apigee/registry/cmd/capabilities/utils"
+        "github.com/apigee/registry/cmd/capabilities/worker-server/worker"
+        "github.com/apigee/registry/server"
         cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
         taskspb "google.golang.org/genproto/googleapis/cloud/tasks/v2"
 )
 
-const topicName = "changes"
-const subscriptionName = topicName + "-pull-subscriber"
-
-func main() {
-    log.Print("Starting subscriber...")
-    ctx := context.Background()
-
-    // Setup and start the dispatcher server
-    dispatcher := &Dispatcher{}
-    if err := dispatcher.setUp(ctx); err != nil {
-        log.Printf(err.Error())
-        return
-    }
-
-    if err := dispatcher.startServer(ctx); err != nil {
-        log.Printf(err.Error())
-    }
-    return
-}
+const subscriptionName = server.TopicName + "-pull-subscriber"
 
 type Dispatcher struct {
     pubsubClient *pubsub.Client
@@ -65,9 +48,9 @@ func (d *Dispatcher) setUp(ctx context.Context) error {
     }
 
     var topic *pubsub.Topic
-    topic, err = d.pubsubClient.CreateTopic(ctx, topicName)
+    topic, err = d.pubsubClient.CreateTopic(ctx, server.TopicName)
     if status.Code(err) == codes.AlreadyExists {
-        topic = d.pubsubClient.Topic(topicName)
+        topic = d.pubsubClient.Topic(server.TopicName)
     } else if err != nil {
         return err
     }
@@ -90,7 +73,12 @@ func (d *Dispatcher) setUp(ctx context.Context) error {
     return nil
 }
 
-func (d *Dispatcher) startServer(ctx context.Context) error {
+func (d *Dispatcher) StartServer(ctx context.Context) error {
+    // Setup the dispatcher object
+    if err := d.setUp(ctx); err != nil {
+        return err
+    }
+
     err := d.subscription.Receive(ctx, messageHandler)
     if err != nil {
         return err
@@ -155,7 +143,7 @@ func createQueueTask(ctx context.Context, resource string) error {
     workerUrl := os.Getenv("WORKER_URL")
 
     // Build the request body
-    body := utils.WorkerRequest{
+    body := worker.WorkerRequest{
         Resource: resource,
         Command: "registry compute lint",
     }

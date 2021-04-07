@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package worker
 
 import (
         "log"
@@ -22,27 +22,13 @@ import (
         "io/ioutil"
 	    "os/exec"
 	    "strings"
-        "github.com/apigee/registry/cmd/capabilities/utils"
         "encoding/json"
         "cloud.google.com/go/compute/metadata"
 )
 
-func main() {
-    log.Print("starting server...")
-    http.HandleFunc("/", requestHandler)
-
-    // Determine port for HTTP service.
-    port := os.Getenv("PORT")
-    if port == "" {
-            port = "8080"
-            log.Printf("defaulting to port %s", port)
-    }
-
-    // Start HTTP server.
-    log.Printf("listening on port %s", port)
-    if err := http.ListenAndServe(":"+port, nil); err != nil {
-            log.Fatal(err)
-    }
+type WorkerRequest struct {
+    Resource string
+    Command  string
 }
 
 func getAuthToken() (string, error) {
@@ -57,7 +43,7 @@ func getAuthToken() (string, error) {
     return idToken, nil
 }
 
-func requestHandler(w http.ResponseWriter, r *http.Request) {
+func RequestHandler(w http.ResponseWriter, r *http.Request) {
     body, err := ioutil.ReadAll(r.Body)
     if err != nil{
         log.Printf("ioutil.ReadAll: %v", err)
@@ -65,7 +51,7 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    req := utils.WorkerRequest{}
+    req := WorkerRequest{}
     if err = json.Unmarshal(body, &req); err != nil {
        log.Printf("json.Unmarshal: %v", err)
        http.Error(w, err.Error(), http.StatusBadRequest)

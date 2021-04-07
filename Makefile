@@ -53,7 +53,7 @@ build-workers:
 ifndef REGISTRY_PROJECT_IDENTIFIER
 	@echo "Error! REGISTRY_PROJECT_IDENTIFIER must be set."; exit 1
 endif
-	gcloud builds submit --config cmd/capabilities/cloudbuild.yaml \
+	gcloud builds submit --config deployments/capabilities/cloudbuild.yaml \
     --substitutions _REGISTRY_PROJECT_IDENTIFIER="${REGISTRY_PROJECT_IDENTIFIER}"
 
 deploy-workers:
