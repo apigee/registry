@@ -144,6 +144,8 @@ func (s *RegistryServer) ListApis(ctx context.Context, req *rpc.ListApisRequest)
 		return nil, invalidArgumentError(fmt.Errorf("invalid page_size %q: must not be negative", req.GetPageSize()))
 	} else if req.GetPageSize() > 1000 {
 		req.PageSize = 1000
+	} else if req.GetPageSize() == 0 {
+		req.PageSize = 50
 	}
 
 	parent, err := names.ParseProject(req.GetParent())
