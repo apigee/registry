@@ -50,6 +50,7 @@ func (s *RegistryServer) createSpec(ctx context.Context, name names.Spec, body *
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
+	db := dao.NewDAO(client)
 
 	if _, err := getSpec(ctx, client, name); err == nil {
 		return nil, alreadyExistsError(fmt.Errorf("API spec %q already exists", name))
@@ -62,7 +63,7 @@ func (s *RegistryServer) createSpec(ctx context.Context, name names.Spec, body *
 	}
 
 	// Creation should only succeed when the parent exists.
-	if _, err := getVersion(ctx, client, name.Version()); err != nil {
+	if _, err := db.GetVersion(ctx, name.Version()); err != nil {
 		return nil, err
 	}
 
@@ -224,7 +225,7 @@ func (s *RegistryServer) ListApiSpecs(ctx context.Context, req *rpc.ListApiSpecs
 	}
 
 	if parent.ProjectID != "-" && parent.ApiID != "-" && parent.VersionID != "-" {
-		if _, err := getVersion(ctx, client, parent); err != nil {
+		if _, err := db.GetVersion(ctx, parent); err != nil {
 			return nil, err
 		}
 	} else if parent.ProjectID != "-" && parent.ApiID != "-" && parent.VersionID == "-" {
