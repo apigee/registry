@@ -226,7 +226,7 @@ func (s *RegistryServer) ListApiVersions(ctx context.Context, req *rpc.ListApiVe
 	responses := &rpc.ListApiVersionsResponse{
 		ApiVersions: versionMessages,
 	}
-	responses.NextPageToken, err = it.GetCursor(len(versionMessages))
+	responses.NextPageToken, err = it.GetCursor()
 	if err != nil {
 		return nil, internalError(err)
 	}

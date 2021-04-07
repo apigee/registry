@@ -78,7 +78,7 @@ func (s *RegistryServer) ListApiSpecRevisions(ctx context.Context, req *rpc.List
 		return nil, internalError(err)
 	}
 
-	response.NextPageToken, err = it.GetCursor(len(response.GetSpecs()))
+	response.NextPageToken, err = it.GetCursor()
 	if err != nil {
 		return nil, internalError(err)
 	}

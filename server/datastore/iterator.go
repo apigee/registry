@@ -34,13 +34,10 @@ func (it *Iterator) Next(v interface{}) (storage.Key, error) {
 }
 
 // GetCursor gets the cursor for the next page of results.
-func (it *Iterator) GetCursor(l int) (string, error) {
-	if l > 0 {
-		nextCursor, err := it.iterator.Cursor()
-		if err != nil {
-			return "", internalError(err)
-		}
-		return nextCursor.String(), nil
+func (it *Iterator) GetCursor() (string, error) {
+	nextCursor, err := it.iterator.Cursor()
+	if err != nil {
+		return "", internalError(err)
 	}
-	return "", nil
+	return nextCursor.String(), nil
 }

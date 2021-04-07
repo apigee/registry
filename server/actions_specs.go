@@ -326,7 +326,7 @@ func (s *RegistryServer) ListApiSpecs(ctx context.Context, req *rpc.ListApiSpecs
 	responses := &rpc.ListApiSpecsResponse{
 		ApiSpecs: specMessages,
 	}
-	responses.NextPageToken, err = it.GetCursor(len(specMessages))
+	responses.NextPageToken, err = it.GetCursor()
 	if err != nil {
 		return nil, internalError(err)
 	}

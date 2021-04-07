@@ -92,7 +92,7 @@ func (d *DAO) ListApis(ctx context.Context, parent names.Project, opts PageOptio
 		return response, status.Error(codes.Internal, err.Error())
 	}
 
-	response.Token, err = it.GetCursor(len(response.Apis))
+	response.Token, err = it.GetCursor()
 	if err != nil {
 		return response, status.Error(codes.Internal, err.Error())
 	}
