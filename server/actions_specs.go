@@ -228,7 +228,7 @@ func (s *RegistryServer) ListApiSpecs(ctx context.Context, req *rpc.ListApiSpecs
 			return nil, err
 		}
 	} else if parent.ProjectID != "-" && parent.ApiID != "-" && parent.VersionID == "-" {
-		if _, err := getApi(ctx, client, parent.Api()); err != nil {
+		if _, err := db.GetApi(ctx, parent.Api()); err != nil {
 			return nil, err
 		}
 	} else if parent.ProjectID != "-" && parent.ApiID == "-" && parent.VersionID == "-" {

@@ -34,6 +34,7 @@ func (s *RegistryServer) CreateApiVersion(ctx context.Context, req *rpc.CreateAp
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
+	db := dao.NewDAO(client)
 
 	parent, err := names.ParseApi(req.GetParent())
 	if err != nil {
@@ -41,7 +42,7 @@ func (s *RegistryServer) CreateApiVersion(ctx context.Context, req *rpc.CreateAp
 	}
 
 	// Creation should only succeed when the parent exists.
-	if _, err := getApi(ctx, client, parent); err != nil {
+	if _, err := db.GetApi(ctx, parent); err != nil {
 		return nil, err
 	}
 
@@ -159,7 +160,7 @@ func (s *RegistryServer) ListApiVersions(ctx context.Context, req *rpc.ListApiVe
 		q = q.Require("ApiID", parent.ApiID)
 	}
 	if parent.ProjectID != "-" && parent.ApiID != "-" {
-		if _, err := getApi(ctx, client, parent); err != nil {
+		if _, err := db.GetApi(ctx, parent); err != nil {
 			return nil, err
 		}
 	} else if parent.ProjectID != "-" && parent.ApiID == "-" {
