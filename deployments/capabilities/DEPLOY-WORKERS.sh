@@ -43,14 +43,14 @@ gcloud projects add-iam-policy-binding ${REGISTRY_PROJECT_IDENTIFIER} \
 deployment=$( kubectl get deployment registry-worker || true)
 if [[ $deployment ]]; then
     echo "Deleting existing deployment for registry-worker ..."
-    envsubst < cmd/capabilities/worker/worker-deployment.yaml | kubectl apply -f -
+    envsubst < deployments/capabilities/worker/worker-deployment.yaml | kubectl apply -f -
 fi
 
 echo "Creating new deployment for registry-worker"
-envsubst < cmd/capabilities/worker/worker-deployment.yaml | kubectl apply -f -
+envsubst < deployments/capabilities/worker/worker-deployment.yaml | kubectl apply -f -
 
 # Worker service
-kubectl apply -f cmd/capabilities/worker/service.yaml
+kubectl apply -f deployments/capabilities/worker/worker-service.yaml
 echo "Sleeping for registry-worker-service to get provisioned"
 worker_ingress_ip=$(kubectl get service registry-worker-service -o jsonpath="{.status.loadBalancer.ingress[0].ip}")
 while [ ! $worker_ingress_ip ]
@@ -78,8 +78,8 @@ export TASK_QUEUE_ID=$(gcloud tasks queues describe registry-task-queue --format
 deployment=$( kubectl get deployment registry-dispatcher || true)
 if [[ $deployment ]]; then
     echo "Deleting existing deployment for registry-dispatcher ..."
-    envsubst < cmd/capabilities/dispatcher/dispatcher-deployment.yaml | kubectl apply -f -
+    envsubst < deployments/capabilities/dispatcher/dispatcher-deployment.yaml | kubectl apply -f -
 fi
 
-envsubst < cmd/capabilities/dispatcher/dispatcher-deployment.yaml | kubectl apply -f -
+envsubst < deployments/capabilities/dispatcher/dispatcher-deployment.yaml | kubectl apply -f -
 

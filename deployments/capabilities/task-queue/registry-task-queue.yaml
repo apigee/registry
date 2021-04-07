@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#Symlink to cmd/capabilities/cmd/capabilities/task-queue/registry-task-queue.yaml
-
 queue:
   - name: registry-task-queue
     rate: 50/s

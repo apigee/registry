@@ -22,12 +22,12 @@ import (
 	"cloud.google.com/go/pubsub"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"github.com/apigee/registry/server"
 )
 
 func main() {
 	// Publish test messages on the current project.
 	projectID := os.Getenv("REGISTRY_PROJECT_IDENTIFIER")
-	topicName := "changes"
 
 	// Create a pubsub client.
 	ctx := context.Background()
@@ -37,11 +37,11 @@ func main() {
 	}
 
 	// Create the topic (or use it if it already exists).
-	topic, err := client.CreateTopic(context.Background(), topicName)
+	topic, err := client.CreateTopic(context.Background(), server.TopicName)
 	if err != nil {
 		code := status.Code(err)
 		if code == codes.AlreadyExists {
-			topic = client.Topic(topicName)
+			topic = client.Topic(server.TopicName)
 		} else {
 			panic(err)
 		}
