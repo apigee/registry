@@ -258,10 +258,9 @@ func (c *Client) Delete(ctx context.Context, k storage.Key) error {
 func (c *Client) Run(ctx context.Context, q storage.Query) storage.Iterator {
 	mylock()
 	defer myunlock()
-	limit := q.(*Query).Limit
 	cursor := q.(*Query).Cursor
 
-	op := c.db.Limit(limit).Where("key > ?", cursor)
+	op := c.db.Where("key > ?", cursor)
 	for _, r := range q.(*Query).Requirements {
 		op = op.Where(r.Name+" = ?", r.Value)
 	}
