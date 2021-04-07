@@ -4,6 +4,7 @@ go 1.15
 
 require (
 	bitbucket.org/creachadair/stringset v0.0.9 // indirect
+	cloud.google.com/go v0.72.0
 	cloud.google.com/go/datastore v1.1.0
 	cloud.google.com/go/pubsub v1.3.1
 	github.com/GoogleCloudPlatform/cloudsql-proxy v1.19.1
