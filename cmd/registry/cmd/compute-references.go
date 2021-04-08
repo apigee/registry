@@ -23,8 +23,6 @@ import (
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
-	openapi_v2 "github.com/googleapis/gnostic/openapiv2"
-	openapi_v3 "github.com/googleapis/gnostic/openapiv3"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/proto"
 )
@@ -64,9 +62,9 @@ var computeReferencesCmd = &cobra.Command{
 			if err != nil {
 				log.Fatalf("%s", err.Error())
 			}
-			close(taskQueue)
-			core.WaitGroup().Wait()
 		}
+		close(taskQueue)
+		core.WaitGroup().Wait()
 	},
 }
 
@@ -92,44 +90,15 @@ func (task *computeReferencesTask) Run() error {
 	relation := "references"
 	log.Printf("computing %s/properties/%s", spec.Name, relation)
 	var references *rpc.References
-	if core.IsOpenAPIv2(spec.GetMimeType()) {
-		data, err := core.GetBytesForSpec(spec)
-		if err != nil {
-			return nil
-		}
-		document, err := openapi_v2.ParseDocument(data)
-		if err != nil {
-			return fmt.Errorf("invalid OpenAPI: %s", spec.Name)
-		}
-		references, err = core.NewReferencesFromOpenAPIv2(document)
-		if err != nil {
-			return err
-		}
-	} else if core.IsOpenAPIv3(spec.GetMimeType()) {
-		data, err := core.GetBytesForSpec(spec)
-		if err != nil {
-			return nil
-		}
-		document, err := openapi_v3.ParseDocument(data)
-		if err != nil {
-			return fmt.Errorf("invalid OpenAPI: %s", spec.Name)
-		}
-		references, err = core.NewReferencesFromOpenAPIv3(document)
-		if err != nil {
-			return err
-		}
-	} else if core.IsProto(spec.GetMimeType()) && core.IsZipArchive(spec.GetMimeType()) {
-		references, err = core.NewReferencesFromZippedProtos(spec.GetContents())
+	if core.IsProto(spec.MimeType) && core.IsZipArchive(spec.MimeType) {
+		references, err = core.NewReferencesFromZippedProtos(spec.Contents)
 		if err != nil {
 			return fmt.Errorf("error processing protos: %s", spec.Name)
 		}
 	} else {
-		return fmt.Errorf("we don't know how to compute references for %s", spec.Name)
+		return fmt.Errorf("we don't know how to compute references for %s of type %s", spec.Name, spec.MimeType)
 	}
-	if references == nil {
-		return fmt.Errorf("we don't know how to compute references for %s", spec.Name)
-	}
-	subject := spec.GetName()
+	subject := spec.Name
 	messageData, err := proto.Marshal(references)
 	artifact := &rpc.Artifact{
 		Name:     subject + "/artifacts/" + relation,

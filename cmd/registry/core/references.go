@@ -22,23 +22,11 @@ import (
 	"strings"
 
 	"github.com/apigee/registry/rpc"
-	openapi_v2 "github.com/googleapis/gnostic/openapiv2"
-	openapi_v3 "github.com/googleapis/gnostic/openapiv3"
 	protoparser "github.com/yoheimuta/go-protoparser/v4"
 	"github.com/yoheimuta/go-protoparser/v4/parser"
 )
 
-// NewReferencesFromOpenAPIv2 ...
-func NewReferencesFromOpenAPIv2(document *openapi_v2.Document) (*rpc.References, error) {
-	return nil, nil
-}
-
-// NewReferencesFromOpenAPIv3 ...
-func NewReferencesFromOpenAPIv3(document *openapi_v3.Document) (*rpc.References, error) {
-	return nil, nil
-}
-
-// NewReferencesFromZippedProtos ...
+// NewReferencesFromZippedProtos computes references of a Protobuf spec.
 func NewReferencesFromZippedProtos(b []byte) (*rpc.References, error) {
 	// create a tmp directory
 	dname, err := ioutil.TempDir("", "registry-protos-")
@@ -53,16 +41,18 @@ func NewReferencesFromZippedProtos(b []byte) (*rpc.References, error) {
 		return nil, err
 	}
 	// process the directory
-	internals, externals, err := internalsAndExternalsForPath(dname)
-	externals = removeInternalsAndDuplicatesFromExternals(internals, externals)
-	sort.Strings(internals)
-	sort.Strings(externals)
-	return &rpc.References{AvailableReferences: internals, ExternalReferences: externals}, err
+	references, files, err := collectReferencesAndFilesForPath(dname)
+	references = filterFilesAndDuplicatesFromReferences(files, references)
+	sort.Strings(files)
+	sort.Strings(references)
+	return &rpc.References{AvailableReferences: files, ExternalReferences: references}, err
 }
 
-func internalsAndExternalsForPath(root string) ([]string, []string, error) {
-	internals := []string{}
-	externals := []string{}
+// collectReferencesAndFilesForPath builds lists of external references and internal
+// files for a set of files in a directory corresponding to a protobuf API spec.
+func collectReferencesAndFilesForPath(root string) ([]string, []string, error) {
+	references := []string{}
+	files := []string{}
 	err := filepath.Walk(root,
 		func(path string, info os.FileInfo, err error) error {
 			if err != nil {
@@ -70,18 +60,19 @@ func internalsAndExternalsForPath(root string) ([]string, []string, error) {
 			}
 			if strings.HasSuffix(path, ".proto") {
 				name := strings.TrimPrefix(path, root+"/")
-				internals = append(internals, name)
-				externals, err = fillExternalsFromProto(externals, path)
+				files = append(files, name)
+				references, err = collectReferencesForProto(references, path)
 				if err != nil {
 					return err
 				}
 			}
 			return nil
 		})
-	return internals, externals, err
+	return references, files, err
 }
 
-func fillExternalsFromProto(externals []string, filename string) ([]string, error) {
+// collectReferencesForProto fills a slice with references found in the import statements in a proto file.
+func collectReferencesForProto(references []string, filename string) ([]string, error) {
 	reader, err := os.Open(filename)
 	if err != nil {
 		return nil, err
@@ -95,26 +86,26 @@ func fillExternalsFromProto(externals []string, filename string) ([]string, erro
 		protoparser.WithFilename(filepath.Base(filename)),
 	)
 	if err != nil {
-		return externals, err
+		return references, err
 	}
 
 	for _, x := range p.ProtoBody {
-		switch m := x.(type) {
-		case *parser.Import:
-			externals = append(externals, strings.Trim(m.Location, "\""))
-		default:
+		if m, ok := x.(*parser.Import); ok {
+			references = append(references, strings.Trim(m.Location, "\""))
 		}
 	}
-	return externals, nil
+	return references, nil
 }
 
-func removeInternalsAndDuplicatesFromExternals(internals, externals []string) []string {
+// filterFilesAndDuplicatesFromReferences removes internal references
+// (other files in the same spec) and duplicates from the list of externals.
+func filterFilesAndDuplicatesFromReferences(files, references []string) []string {
 	keys := make(map[string]bool)
 	list := []string{}
-	for _, e := range internals {
+	for _, e := range files {
 		keys[e] = true
 	}
-	for _, d := range externals {
+	for _, d := range references {
 		if !keys[d] {
 			keys[d] = true
 			list = append(list, d)
