@@ -25,7 +25,6 @@ import (
 	"github.com/apigee/registry/server/names"
 	"github.com/apigee/registry/server/storage"
 	"github.com/golang/protobuf/ptypes/empty"
-	"google.golang.org/api/iterator"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
@@ -52,7 +51,7 @@ func (s *RegistryServer) createSpec(ctx context.Context, name names.Spec, body *
 	defer s.releaseStorageClient(client)
 	db := dao.NewDAO(client)
 
-	if _, err := getSpec(ctx, client, name); err == nil {
+	if _, err := db.GetSpec(ctx, name); err == nil {
 		return nil, alreadyExistsError(fmt.Errorf("API spec %q already exists", name))
 	} else if !isNotFound(err) {
 		return nil, err
@@ -96,6 +95,7 @@ func (s *RegistryServer) DeleteApiSpec(ctx context.Context, req *rpc.DeleteApiSp
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
+	db := dao.NewDAO(client)
 
 	name, err := names.ParseSpec(req.GetName())
 	if err != nil {
@@ -103,11 +103,11 @@ func (s *RegistryServer) DeleteApiSpec(ctx context.Context, req *rpc.DeleteApiSp
 	}
 
 	// Deletion should only succeed on API specs that currently exist.
-	if _, err := getSpec(ctx, client, name); err != nil {
+	if _, err := db.GetSpec(ctx, name); err != nil {
 		return nil, err
 	}
 
-	if err := deleteSpec(ctx, client, name); err != nil {
+	if err := db.DeleteSpec(ctx, name); err != nil {
 		return nil, err
 	}
 
@@ -132,8 +132,9 @@ func (s *RegistryServer) getApiSpec(ctx context.Context, name names.Spec, view r
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
+	db := dao.NewDAO(client)
 
-	spec, err := getSpec(ctx, client, name)
+	spec, err := db.GetSpec(ctx, name)
 	if err != nil {
 		return nil, err
 	}
@@ -202,99 +203,35 @@ func (s *RegistryServer) ListApiSpecs(ctx context.Context, req *rpc.ListApiSpecs
 	db := dao.NewDAO(client)
 
 	if req.GetPageSize() < 0 {
-		return nil, invalidArgumentError(fmt.Errorf("invalid page_size %d: must not be negative", req.GetPageSize()))
+		return nil, invalidArgumentError(fmt.Errorf("invalid page_size %q: must not be negative", req.GetPageSize()))
+	} else if req.GetPageSize() > 1000 {
+		req.PageSize = 1000
+	} else if req.GetPageSize() == 0 {
+		req.PageSize = 50
 	}
 
-	q := client.NewQuery(storage.SpecEntityName)
-	q, err = q.ApplyCursor(req.GetPageToken())
-	if err != nil {
-		return nil, invalidArgumentError(err)
-	}
 	parent, err := names.ParseVersion(req.GetParent())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	if id := parent.ProjectID; id != "-" {
-		q = q.Require("ProjectID", id)
-	}
-	if id := parent.ApiID; id != "-" {
-		q = q.Require("ApiID", id)
-	}
-	if id := parent.VersionID; id != "-" {
-		q = q.Require("VersionID", id)
-	}
 
-	if parent.ProjectID != "-" && parent.ApiID != "-" && parent.VersionID != "-" {
-		if _, err := db.GetVersion(ctx, parent); err != nil {
-			return nil, err
-		}
-	} else if parent.ProjectID != "-" && parent.ApiID != "-" && parent.VersionID == "-" {
-		if _, err := db.GetApi(ctx, parent.Api()); err != nil {
-			return nil, err
-		}
-	} else if parent.ProjectID != "-" && parent.ApiID == "-" && parent.VersionID == "-" {
-		if _, err := db.GetProject(ctx, parent.Project()); err != nil {
-			return nil, err
-		}
-	}
-
-	q = q.Require("Currency", models.IsCurrent)
-	prg, err := createFilterOperator(req.GetFilter(),
-		[]filterArg{
-			{"name", filterArgTypeString},
-			{"project_id", filterArgTypeString},
-			{"api_id", filterArgTypeString},
-			{"version_id", filterArgTypeString},
-			{"spec_id", filterArgTypeString},
-			{"filename", filterArgTypeString},
-			{"description", filterArgTypeString},
-			{"create_time", filterArgTypeTimestamp},
-			{"revision_create_time", filterArgTypeTimestamp},
-			{"revision_update_time", filterArgTypeTimestamp},
-			{"mime_type", filterArgTypeString},
-			{"size_bytes", filterArgTypeInt},
-			{"source_uri", filterArgTypeString},
-			{"labels", filterArgTypeStringMap},
-		})
+	listing, err := db.ListSpecs(ctx, parent, dao.PageOptions{
+		Size:   req.GetPageSize(),
+		Filter: req.GetFilter(),
+		Token:  req.GetPageToken(),
+	})
 	if err != nil {
-		return nil, internalError(err)
+		return nil, err
 	}
-	var specMessages []*rpc.ApiSpec
-	var spec models.Spec
-	it := client.Run(ctx, q)
-	pageSize := boundPageSize(req.GetPageSize())
-	for _, err := it.Next(&spec); err == nil; _, err = it.Next(&spec) {
-		if prg != nil {
-			filterInputs := map[string]interface{}{
-				"name":                 spec.Name(),
-				"project_id":           spec.ProjectID,
-				"api_id":               spec.ApiID,
-				"version_id":           spec.VersionID,
-				"spec_id":              spec.SpecID,
-				"filename":             spec.FileName,
-				"description":          spec.Description,
-				"create_time":          spec.CreateTime,
-				"revision_create_time": spec.RevisionCreateTime,
-				"revision_update_time": spec.RevisionUpdateTime,
-				"mime_type":            spec.MimeType,
-				"size_bytes":           spec.SizeInBytes,
-				"source_uri":           spec.SourceURI,
-			}
-			filterInputs["labels"], err = spec.LabelsMap()
-			if err != nil {
-				return nil, internalError(err)
-			}
-			if out, _, err := prg.Eval(filterInputs); err != nil {
-				return nil, invalidArgumentError(err)
-			} else if v, ok := out.Value().(bool); !ok {
-				return nil, invalidArgumentError(fmt.Errorf("expression does not evaluate to a boolean (instead yielding %T)", out.Value()))
-			} else if !v {
-				continue
-			}
-		}
 
-		var specMessage *rpc.ApiSpec
-		if req.GetView() == rpc.View_FULL {
+	response := &rpc.ListApiSpecsResponse{
+		ApiSpecs:      make([]*rpc.ApiSpec, len(listing.Specs)),
+		NextPageToken: listing.Token,
+	}
+
+	for i, spec := range listing.Specs {
+		switch req.GetView() {
+		case rpc.View_FULL:
 			name, err := names.ParseSpecRevision(spec.RevisionName())
 			if err != nil {
 				continue
@@ -305,33 +242,21 @@ func (s *RegistryServer) ListApiSpecs(ctx context.Context, req *rpc.ListApiSpecs
 				continue
 			}
 
-			specMessage, err = spec.FullMessage(blob, spec.Name())
+			response.ApiSpecs[i], err = spec.FullMessage(blob, spec.Name())
 			if err != nil {
 				continue
 			}
-		} else {
-			specMessage, err = spec.BasicMessage(spec.Name())
+		case rpc.View_BASIC, rpc.View_VIEW_UNSPECIFIED:
+			response.ApiSpecs[i], err = spec.BasicMessage(spec.Name())
 			if err != nil {
 				continue
 			}
+		default:
+			return nil, invalidArgumentError(fmt.Errorf("unknown view type %v", req.GetView()))
 		}
+	}
 
-		specMessages = append(specMessages, specMessage)
-		if len(specMessages) == pageSize {
-			break
-		}
-	}
-	if err != nil && err != iterator.Done {
-		return nil, internalError(err)
-	}
-	responses := &rpc.ListApiSpecsResponse{
-		ApiSpecs: specMessages,
-	}
-	responses.NextPageToken, err = it.GetCursor()
-	if err != nil {
-		return nil, internalError(err)
-	}
-	return responses, nil
+	return response, nil
 }
 
 // UpdateApiSpec handles the corresponding API request.
@@ -341,6 +266,7 @@ func (s *RegistryServer) UpdateApiSpec(ctx context.Context, req *rpc.UpdateApiSp
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
+	db := dao.NewDAO(client)
 
 	if req.GetApiSpec() == nil {
 		return nil, invalidArgumentError(fmt.Errorf("invalid api_spec %+v: body must be provided", req.GetApiSpec()))
@@ -351,7 +277,7 @@ func (s *RegistryServer) UpdateApiSpec(ctx context.Context, req *rpc.UpdateApiSp
 		return nil, invalidArgumentError(err)
 	}
 
-	spec, err := getSpec(ctx, client, name)
+	spec, err := db.GetSpec(ctx, name)
 	if req.GetAllowMissing() && isNotFound(err) {
 		return s.createSpec(ctx, name, req.GetApiSpec())
 	} else if err != nil {
@@ -425,41 +351,4 @@ func (s *RegistryServer) fetchMostRecentNonCurrentRevisionOfSpec(ctx context.Con
 		k := client.NewKey("Spec", specs[0].Key)
 		return k, specs[0], nil
 	}
-}
-
-func getSpec(ctx context.Context, client storage.Client, name names.Spec) (*models.Spec, error) {
-	q := client.NewQuery(storage.SpecEntityName)
-	q = q.Require("ProjectID", name.ProjectID)
-	q = q.Require("ApiID", name.ApiID)
-	q = q.Require("VersionID", name.VersionID)
-	q = q.Require("SpecID", name.SpecID)
-	q = q.Require("Currency", models.IsCurrent)
-	it := client.Run(ctx, q)
-	spec := &models.Spec{}
-	if _, err := it.Next(spec); err != nil {
-		return nil, notFoundError(err)
-	}
-	return spec, nil
-}
-
-func deleteSpec(ctx context.Context, client storage.Client, name names.Spec) error {
-	if err := client.DeleteChildrenOfSpec(ctx, name); err != nil {
-		return internalError(err)
-	}
-
-	k := client.NewKey(storage.SpecEntityName, name.String())
-	if err := client.Delete(ctx, k); err != nil {
-		return internalError(err)
-	}
-
-	q := client.NewQuery(storage.SpecEntityName)
-	q = q.Require("ProjectID", name.ProjectID)
-	q = q.Require("ApiID", name.ApiID)
-	q = q.Require("VersionID", name.VersionID)
-	q = q.Require("SpecID", name.SpecID)
-	if err := client.DeleteAllMatches(ctx, q); err != nil {
-		return internalError(err)
-	}
-
-	return nil
 }

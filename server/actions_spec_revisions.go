@@ -19,6 +19,7 @@ import (
 	"fmt"
 
 	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/server/dao"
 	"github.com/apigee/registry/server/models"
 	"github.com/apigee/registry/server/names"
 	"github.com/apigee/registry/server/storage"
@@ -184,6 +185,7 @@ func (s *RegistryServer) RollbackApiSpec(ctx context.Context, req *rpc.RollbackA
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
+	db := dao.NewDAO(client)
 
 	if req.GetRevisionId() == "" {
 		return nil, invalidArgumentError(fmt.Errorf("invalid revision ID %q, must not be empty", req.GetRevisionId()))
@@ -194,7 +196,7 @@ func (s *RegistryServer) RollbackApiSpec(ctx context.Context, req *rpc.RollbackA
 		return nil, invalidArgumentError(err)
 	}
 
-	current, err := getSpec(ctx, client, parent)
+	current, err := db.GetSpec(ctx, parent)
 	if err != nil {
 		return nil, err
 	}
