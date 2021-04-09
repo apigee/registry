@@ -28,5 +28,15 @@ indexes:
   - name: ProjectID
   - name: SpecID
   - name: VersionID
+  - name: CreateTime
+  - name: Currency
+    direction: desc
+
+- kind: Spec
+  properties:
+  - name: ApiID
+  - name: ProjectID
+  - name: SpecID
+  - name: VersionID
   - name: RevisionCreateTime
     direction: desc
