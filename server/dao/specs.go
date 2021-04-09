@@ -51,6 +51,7 @@ var specFields = []filtering.Field{
 
 func (d *DAO) ListSpecs(ctx context.Context, parent names.Version, opts PageOptions) (SpecList, error) {
 	q := d.NewQuery(storage.SpecEntityName)
+	q = q.Require("Currency", models.IsCurrent)
 	q, err := q.ApplyCursor(opts.Token)
 	if err != nil {
 		return SpecList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
