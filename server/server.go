@@ -16,6 +16,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net"
@@ -100,6 +101,7 @@ func (s *RegistryServer) getStorageClient(ctx context.Context) (storage.Client, 
 		s.weTrustTheSort = true
 		projectID, err := s.getProjectID()
 		if err != nil {
+			log.Printf("Unable to find project ID: %v", err)
 			return nil, err
 		}
 		return datastore.NewClient(ctx, projectID)
@@ -121,15 +123,19 @@ func (s *RegistryServer) getProjectID() (string, error) {
 	ctx := context.TODO()
 	credentials, err := google.FindDefaultCredentials(ctx)
 	if err != nil {
-		return "", fmt.Errorf("error: %v", err)
+		return "", fmt.Errorf("error finding default credentials: %v", err)
 	}
-	s.projectID = credentials.ProjectID
-	if s.projectID == "" {
-		s.projectID = os.Getenv("REGISTRY_PROJECT_IDENTIFIER")
+
+	if id := credentials.ProjectID; id != "" {
+		s.projectID = id
+		log.Printf("Using project ID %q from default credentials", id)
+	} else if id := os.Getenv("REGISTRY_PROJECT_IDENTIFIER"); id != "" {
+		s.projectID = id
+		log.Printf("Default credentials did not set project ID. Using project ID %q from REGISTRY_PROJECT_IDENTIFIER", id)
+	} else {
+		return "", errors.New("default credentials and REGISTRY_PROJECT_IDENTIFIER did not set project ID")
 	}
-	if s.projectID == "" {
-		return "", fmt.Errorf("unable to determine project ID")
-	}
+
 	return s.projectID, nil
 }
 
