@@ -28,6 +28,5 @@ indexes:
   - name: ProjectID
   - name: SpecID
   - name: VersionID
-  - name: Currency
-  - name: CreateTime
+  - name: RevisionCreateTime
     direction: desc
