@@ -19,14 +19,13 @@ import (
 	"log"
 	"os"
 	"time"
-
+    "github.com/apigee/registry/server"
 	"cloud.google.com/go/pubsub"
 )
 
 func main() {
 	// Listen for changes on the current project.
 	projectID := os.Getenv("REGISTRY_PROJECT_IDENTIFIER")
-	topicName := "changes"
 	subscriptionName := "my-subscription"
 
 	// Create a pubsub client and subscription.
@@ -35,7 +34,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	topic := client.Topic(topicName)
+	topic := client.Topic(server.TopicName)
 	defer topic.Stop()
 	sub, err := client.CreateSubscription(
 		ctx,

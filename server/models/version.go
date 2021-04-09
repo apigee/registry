@@ -15,17 +15,13 @@
 package models
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
-	ptypes "github.com/golang/protobuf/ptypes"
+	"github.com/golang/protobuf/ptypes"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
-
-// VersionEntityName is used to represent versions in storage.
-const VersionEntityName = "Version"
 
 // Version is the storage-side representation of a version.
 type Version struct {
@@ -42,113 +38,116 @@ type Version struct {
 	Annotations []byte    `datastore:",noindex"` // Serialized annotations.
 }
 
-// NewVersionFromParentAndVersionID returns an initialized version for a specified parent and ID.
-func NewVersionFromParentAndVersionID(parent string, id string) (*Version, error) {
-	m, err := names.ParseApi(parent)
-	if err != nil {
-		return nil, err
-	} else if err := names.ValidateID(id); err != nil {
-		return nil, err
+// NewVersion initializes a new resource.
+func NewVersion(name names.Version, body *rpc.ApiVersion) (version *Version, err error) {
+	now := time.Now()
+	version = &Version{
+		ProjectID:   name.ProjectID,
+		ApiID:       name.ApiID,
+		VersionID:   name.VersionID,
+		Description: body.GetDescription(),
+		DisplayName: body.GetDisplayName(),
+		State:       body.GetState(),
+		CreateTime:  now,
+		UpdateTime:  now,
 	}
 
-	return &Version{
-		ProjectID: m[1],
-		ApiID:     m[2],
-		VersionID: id,
-	}, nil
-}
-
-// NewVersionFromResourceName parses resource names and returns an initialized version.
-func NewVersionFromResourceName(name string) (*Version, error) {
-	m, err := names.ParseVersion(name)
+	version.Labels, err = bytesForMap(body.GetLabels())
 	if err != nil {
 		return nil, err
 	}
 
-	return &Version{
-		ProjectID: m[1],
-		ApiID:     m[2],
-		VersionID: m[3],
-	}, nil
-}
-
-// NewVersionFromMessage returns an initialized version from a message.
-func NewVersionFromMessage(message *rpc.ApiVersion) (*Version, error) {
-	version, err := NewVersionFromResourceName(message.GetName())
+	version.Annotations, err = bytesForMap(body.GetAnnotations())
 	if err != nil {
 		return nil, err
 	}
-	version.DisplayName = message.GetDisplayName()
-	version.Description = message.GetDescription()
-	version.State = message.GetState()
+
 	return version, nil
 }
 
-// ResourceName generates the resource name of a version.
-func (version *Version) ResourceName() string {
-	return fmt.Sprintf("projects/%s/apis/%s/versions/%s", version.ProjectID, version.ApiID, version.VersionID)
+// Name returns the resource name of the version.
+func (v *Version) Name() string {
+	return names.Version{
+		ProjectID: v.ProjectID,
+		ApiID:     v.ApiID,
+		VersionID: v.VersionID,
+	}.String()
 }
 
 // Message returns a message representing a version.
-func (version *Version) Message(view rpc.View) (message *rpc.ApiVersion, err error) {
-	message = &rpc.ApiVersion{}
-	message.Name = version.ResourceName()
-	message.DisplayName = version.DisplayName
-	message.Description = version.Description
-	message.CreateTime, err = ptypes.TimestampProto(version.CreateTime)
-	message.UpdateTime, err = ptypes.TimestampProto(version.UpdateTime)
-	message.State = version.State
-	if message.Labels, err = mapForBytes(version.Labels); err != nil {
+func (v *Version) Message(view rpc.View) (message *rpc.ApiVersion, err error) {
+	message = &rpc.ApiVersion{
+		Name:        v.Name(),
+		DisplayName: v.DisplayName,
+		Description: v.Description,
+		State:       v.State,
+	}
+
+	message.CreateTime, err = ptypes.TimestampProto(v.CreateTime)
+	if err != nil {
 		return nil, err
 	}
+
+	message.UpdateTime, err = ptypes.TimestampProto(v.UpdateTime)
+	if err != nil {
+		return nil, err
+	}
+
+	message.Labels, err = v.LabelsMap()
+	if err != nil {
+		return nil, err
+	}
+
 	if view == rpc.View_FULL {
-		if message.Annotations, err = mapForBytes(version.Annotations); err != nil {
+		message.Annotations, err = mapForBytes(v.Annotations)
+		if err != nil {
 			return nil, err
 		}
 	}
+
 	return message, err
 }
 
 // Update modifies a version using the contents of a message.
-func (version *Version) Update(message *rpc.ApiVersion, mask *fieldmaskpb.FieldMask) error {
+func (v *Version) Update(message *rpc.ApiVersion, mask *fieldmaskpb.FieldMask) error {
 	if activeUpdateMask(mask) {
 		for _, field := range mask.Paths {
 			switch field {
 			case "display_name":
-				version.DisplayName = message.GetDisplayName()
+				v.DisplayName = message.GetDisplayName()
 			case "description":
-				version.Description = message.GetDescription()
+				v.Description = message.GetDescription()
 			case "state":
-				version.State = message.GetState()
+				v.State = message.GetState()
 			case "labels":
 				var err error
-				if version.Labels, err = bytesForMap(message.GetLabels()); err != nil {
+				if v.Labels, err = bytesForMap(message.GetLabels()); err != nil {
 					return err
 				}
 			case "annotations":
 				var err error
-				if version.Annotations, err = bytesForMap(message.GetAnnotations()); err != nil {
+				if v.Annotations, err = bytesForMap(message.GetAnnotations()); err != nil {
 					return err
 				}
 			}
 		}
 	} else {
-		version.DisplayName = message.GetDisplayName()
-		version.Description = message.GetDescription()
-		version.State = message.GetState()
+		v.DisplayName = message.GetDisplayName()
+		v.Description = message.GetDescription()
+		v.State = message.GetState()
 		var err error
-		if version.Labels, err = bytesForMap(message.GetLabels()); err != nil {
+		if v.Labels, err = bytesForMap(message.GetLabels()); err != nil {
 			return err
 		}
-		if version.Annotations, err = bytesForMap(message.GetAnnotations()); err != nil {
+		if v.Annotations, err = bytesForMap(message.GetAnnotations()); err != nil {
 			return err
 		}
 	}
-	version.UpdateTime = time.Now()
+	v.UpdateTime = time.Now()
 	return nil
 }
 
 // LabelsMap returns a map representation of stored labels.
-func (version *Version) LabelsMap() (map[string]string, error) {
-	return mapForBytes(version.Labels)
+func (v *Version) LabelsMap() (map[string]string, error) {
+	return mapForBytes(v.Labels)
 }

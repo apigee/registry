@@ -29,7 +29,7 @@ import (
 
 const verbose = false
 
-const topicName = "changes"
+const TopicName = "registry-events"
 
 var notificationTotal int
 
@@ -49,7 +49,7 @@ func (s *RegistryServer) notify(change rpc.Notification_Change, resource string)
 	defer client.Close()
 	// Ensure that topic exists.
 	{
-		_, err := client.CreateTopic(context.Background(), topicName)
+		_, err := client.CreateTopic(context.Background(), TopicName)
 		if err != nil {
 			code := status.Code(err)
 			if code != codes.AlreadyExists {
@@ -58,7 +58,7 @@ func (s *RegistryServer) notify(change rpc.Notification_Change, resource string)
 		}
 	}
 	// Get the topic.
-	topic := client.Topic(topicName)
+	topic := client.Topic(TopicName)
 	defer topic.Stop()
 	// Create the notification
 	n := &rpc.Notification{}

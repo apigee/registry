@@ -16,97 +16,75 @@ package server
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"log"
 	"sort"
-	"time"
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/models"
 	"github.com/apigee/registry/server/names"
-	storage "github.com/apigee/registry/server/storage"
+	"github.com/apigee/registry/server/storage"
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/api/iterator"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
 // CreateApiSpec handles the corresponding API request.
 func (s *RegistryServer) CreateApiSpec(ctx context.Context, req *rpc.CreateApiSpecRequest) (*rpc.ApiSpec, error) {
+	parent, err := names.ParseVersion(req.GetParent())
+	if err != nil {
+		return nil, invalidArgumentError(err)
+	}
+
+	name := parent.Spec(req.GetApiSpecId())
+	if name.SpecID == "" {
+		name.SpecID = names.GenerateID()
+	}
+
+	return s.createSpec(ctx, name, req.GetApiSpec())
+}
+
+func (s *RegistryServer) createSpec(ctx context.Context, name names.Spec, body *rpc.ApiSpec) (*rpc.ApiSpec, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
 
-	if req.GetApiSpecId() == "" {
-		req.ApiSpecId = names.GenerateID()
+	if _, err := getSpec(ctx, client, name); err == nil {
+		return nil, alreadyExistsError(fmt.Errorf("API spec %q already exists", name))
+	} else if !isNotFound(err) {
+		return nil, err
 	}
 
-	spec, err := models.NewSpecFromParentAndSpecID(req.GetParent(), req.GetApiSpecId())
+	if err := name.Validate(); err != nil {
+		return nil, invalidArgumentError(err)
+	}
+
+	// Creation should only succeed when the parent exists.
+	if _, err := getVersion(ctx, client, name.Version()); err != nil {
+		return nil, err
+	}
+
+	spec, err := models.NewSpec(name, body)
+	if err != nil {
+		return nil, invalidArgumentError(err)
+	}
+
+	if err := saveSpecRevision(ctx, client, spec); err != nil {
+		return nil, err
+	}
+
+	if err := saveSpecRevisionContents(ctx, client, spec, body.GetContents()); err != nil {
+		return nil, err
+	}
+
+	message, err := spec.BasicMessage(name.String())
 	if err != nil {
 		return nil, internalError(err)
 	}
 
-	if err := spec.Update(req.GetApiSpec(), nil); err != nil {
-		return nil, internalError(err)
-	}
-
-	return s.createSpec(ctx, client, spec, req.ApiSpec.GetContents())
-}
-
-func (s *RegistryServer) createSpec(ctx context.Context, client storage.Client, spec *models.Spec, contents []byte) (*rpc.ApiSpec, error) {
-	q := client.NewQuery(models.SpecEntityName)
-	q = q.Require("ProjectID", spec.ProjectID)
-	q = q.Require("ApiID", spec.ApiID)
-	q = q.Require("VersionID", spec.VersionID)
-	q = q.Require("SpecID", spec.SpecID)
-	it := client.Run(ctx, q)
-
-	if _, err := it.Next(&models.Spec{}); err == nil {
-		return nil, status.Errorf(codes.AlreadyExists, "spec %q already exists", spec.ResourceName())
-	}
-
-	spec.CreateTime = spec.RevisionUpdateTime
-	spec.RevisionCreateTime = spec.RevisionUpdateTime
-	spec.Currency = models.IsCurrent
-	if err := saveSpec(ctx, client, spec); err != nil {
-		return nil, internalError(err)
-	}
-
-	if err := saveSpecContents(ctx, client, spec, contents); err != nil {
-		return nil, internalError(err)
-	}
-
-	response, err := spec.Message(rpc.View_BASIC, nil, "")
-	if err != nil {
-		return nil, internalError(err)
-	}
-
-	s.notify(rpc.Notification_CREATED, spec.ResourceNameWithRevision())
-	return response, nil
-}
-
-func saveSpec(ctx context.Context, client storage.Client, spec *models.Spec) error {
-	k := client.NewKey(models.SpecEntityName, spec.ResourceNameWithRevision())
-	if _, err := client.Put(ctx, k, spec); err != nil {
-		log.Printf("save spec error %+v", err)
-		return err
-	}
-
-	return nil
-}
-
-func saveSpecContents(ctx context.Context, client storage.Client, spec *models.Spec, contents []byte) error {
-	blob := models.NewBlobForSpec(spec, contents)
-	k := client.NewKey(models.BlobEntityName, spec.ResourceNameWithRevision())
-	if _, err := client.Put(ctx, k, blob); err != nil {
-		log.Printf("save blob error %+v", err)
-		return err
-	}
-
-	return nil
+	s.notify(rpc.Notification_CREATED, spec.RevisionName())
+	return message, nil
 }
 
 // DeleteApiSpec handles the corresponding API request.
@@ -116,58 +94,100 @@ func (s *RegistryServer) DeleteApiSpec(ctx context.Context, req *rpc.DeleteApiSp
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
-	// Validate name and create dummy spec (we just need the ID fields).
-	spec, err := models.NewSpecFromResourceName(req.GetName())
+
+	name, err := names.ParseSpec(req.GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	if spec.RevisionID != "" {
-		return nil, invalidArgumentError(errors.New("specific revisions should be deleted with DeleteSpecRevision"))
+
+	// Deletion should only succeed on API specs that currently exist.
+	if _, err := getSpec(ctx, client, name); err != nil {
+		return nil, err
 	}
 
-	if _, _, err := fetchSpec(ctx, client, req.GetName()); client.IsNotFound(err) {
-		return nil, notFoundError(err)
-	} else if err != nil {
-		return nil, internalError(err)
+	if err := deleteSpec(ctx, client, name); err != nil {
+		return nil, err
 	}
 
-	if err := client.DeleteChildrenOfSpec(ctx, spec); err != nil {
-		return nil, internalError(err)
-	}
-
-	// Delete all revisions of the spec.
-	q := client.NewQuery(models.SpecEntityName)
-	q = q.Require("ProjectID", spec.ProjectID)
-	q = q.Require("ApiID", spec.ApiID)
-	q = q.Require("VersionID", spec.VersionID)
-	q = q.Require("SpecID", spec.SpecID)
-	if err := client.DeleteAllMatches(ctx, q); err != nil {
-		return nil, internalError(err)
-	}
-
-	s.notify(rpc.Notification_DELETED, req.GetName())
-	return &empty.Empty{}, err
+	s.notify(rpc.Notification_DELETED, name.String())
+	return &empty.Empty{}, nil
 }
 
 // GetApiSpec handles the corresponding API request.
 func (s *RegistryServer) GetApiSpec(ctx context.Context, req *rpc.GetApiSpecRequest) (*rpc.ApiSpec, error) {
+	if name, err := names.ParseSpec(req.GetName()); err == nil {
+		return s.getApiSpec(ctx, name, req.GetView())
+	} else if name, err := names.ParseSpecRevision(req.GetName()); err == nil {
+		return s.getApiSpecRevision(ctx, name, req.GetView())
+	}
+
+	return nil, invalidArgumentError(fmt.Errorf("invalid resource name %q, must be an API spec or revision", req.GetName()))
+}
+
+func (s *RegistryServer) getApiSpec(ctx context.Context, name names.Spec, view rpc.View) (*rpc.ApiSpec, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
-	spec, userSpecifiedRevision, err := fetchSpec(ctx, client, req.GetName())
+
+	spec, err := getSpec(ctx, client, name)
 	if err != nil {
-		if client.IsNotFound(err) {
-			return nil, notFoundError(err)
+		return nil, err
+	}
+
+	blob, err := getSpecRevisionContents(ctx, client, name.Revision(spec.RevisionID))
+	if err != nil {
+		return nil, err
+	}
+
+	var message *rpc.ApiSpec
+	if view == rpc.View_FULL {
+		message, err = spec.FullMessage(blob, name.String())
+		if err != nil {
+			return nil, internalError(err)
 		}
-		return nil, internalError(err)
+	} else {
+		message, err = spec.BasicMessage(name.String())
+		if err != nil {
+			return nil, internalError(err)
+		}
 	}
-	var blob *models.Blob
-	if req.GetView() == rpc.View_FULL {
-		blob, _ = fetchBlobForSpec(ctx, client, spec)
+
+	return message, nil
+}
+
+func (s *RegistryServer) getApiSpecRevision(ctx context.Context, name names.SpecRevision, view rpc.View) (*rpc.ApiSpec, error) {
+	client, err := s.getStorageClient(ctx)
+	if err != nil {
+		return nil, unavailableError(err)
 	}
-	return spec.Message(req.GetView(), blob, userSpecifiedRevision)
+	defer s.releaseStorageClient(client)
+
+	revision, err := getSpecRevision(ctx, client, name)
+	if err != nil {
+		return nil, err
+	}
+
+	blob, err := getSpecRevisionContents(ctx, client, name)
+	if err != nil {
+		return nil, err
+	}
+
+	var message *rpc.ApiSpec
+	if view == rpc.View_FULL {
+		message, err = revision.FullMessage(blob, name.String())
+		if err != nil {
+			return nil, internalError(err)
+		}
+	} else {
+		message, err = revision.BasicMessage(name.String())
+		if err != nil {
+			return nil, internalError(err)
+		}
+	}
+
+	return message, nil
 }
 
 // ListApiSpecs handles the corresponding API request.
@@ -179,27 +199,42 @@ func (s *RegistryServer) ListApiSpecs(ctx context.Context, req *rpc.ListApiSpecs
 	defer s.releaseStorageClient(client)
 
 	if req.GetPageSize() < 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid page_size: must not be negative")
+		return nil, invalidArgumentError(fmt.Errorf("invalid page_size %d: must not be negative", req.GetPageSize()))
 	}
 
-	q := client.NewQuery(models.SpecEntityName)
+	q := client.NewQuery(storage.SpecEntityName)
 	q, err = q.ApplyCursor(req.GetPageToken())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	m, err := names.ParseVersion(req.GetParent())
+	parent, err := names.ParseVersion(req.GetParent())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	if m[1] != "-" {
-		q = q.Require("ProjectID", m[1])
+	if id := parent.ProjectID; id != "-" {
+		q = q.Require("ProjectID", id)
 	}
-	if m[2] != "-" {
-		q = q.Require("ApiID", m[2])
+	if id := parent.ApiID; id != "-" {
+		q = q.Require("ApiID", id)
 	}
-	if m[3] != "-" {
-		q = q.Require("VersionID", m[3])
+	if id := parent.VersionID; id != "-" {
+		q = q.Require("VersionID", id)
 	}
+
+	if parent.ProjectID != "-" && parent.ApiID != "-" && parent.VersionID != "-" {
+		if _, err := getVersion(ctx, client, parent); err != nil {
+			return nil, err
+		}
+	} else if parent.ProjectID != "-" && parent.ApiID != "-" && parent.VersionID == "-" {
+		if _, err := getApi(ctx, client, parent.Api()); err != nil {
+			return nil, err
+		}
+	} else if parent.ProjectID != "-" && parent.ApiID == "-" && parent.VersionID == "-" {
+		if _, err := getProject(ctx, client, parent.Project()); err != nil {
+			return nil, err
+		}
+	}
+
 	q = q.Require("Currency", models.IsCurrent)
 	prg, err := createFilterOperator(req.GetFilter(),
 		[]filterArg{
@@ -228,7 +263,7 @@ func (s *RegistryServer) ListApiSpecs(ctx context.Context, req *rpc.ListApiSpecs
 	for _, err := it.Next(&spec); err == nil; _, err = it.Next(&spec) {
 		if prg != nil {
 			filterInputs := map[string]interface{}{
-				"name":                 spec.ResourceName(),
+				"name":                 spec.Name(),
 				"project_id":           spec.ProjectID,
 				"api_id":               spec.ApiID,
 				"version_id":           spec.VersionID,
@@ -246,21 +281,38 @@ func (s *RegistryServer) ListApiSpecs(ctx context.Context, req *rpc.ListApiSpecs
 			if err != nil {
 				return nil, internalError(err)
 			}
-			out, _, err := prg.Eval(filterInputs)
-			if err != nil {
+			if out, _, err := prg.Eval(filterInputs); err != nil {
 				return nil, invalidArgumentError(err)
-			}
-			if v, ok := out.Value().(bool); !ok {
+			} else if v, ok := out.Value().(bool); !ok {
 				return nil, invalidArgumentError(fmt.Errorf("expression does not evaluate to a boolean (instead yielding %T)", out.Value()))
 			} else if !v {
 				continue
 			}
 		}
-		var blob *models.Blob
+
+		var specMessage *rpc.ApiSpec
 		if req.GetView() == rpc.View_FULL {
-			blob, _ = fetchBlobForSpec(ctx, client, &spec)
+			name, err := names.ParseSpecRevision(spec.RevisionName())
+			if err != nil {
+				continue
+			}
+
+			blob, err := getSpecRevisionContents(ctx, client, name)
+			if err != nil {
+				continue
+			}
+
+			specMessage, err = spec.FullMessage(blob, spec.Name())
+			if err != nil {
+				continue
+			}
+		} else {
+			specMessage, err = spec.BasicMessage(spec.Name())
+			if err != nil {
+				continue
+			}
 		}
-		specMessage, _ := spec.Message(req.GetView(), blob, "")
+
 		specMessages = append(specMessages, specMessage)
 		if len(specMessages) == pageSize {
 			break
@@ -288,322 +340,62 @@ func (s *RegistryServer) UpdateApiSpec(ctx context.Context, req *rpc.UpdateApiSp
 	defer s.releaseStorageClient(client)
 
 	if req.GetApiSpec() == nil {
-		return nil, invalidArgumentError(errors.New("spec body is required for updates"))
+		return nil, invalidArgumentError(fmt.Errorf("invalid api_spec %+v: body must be provided", req.GetApiSpec()))
 	}
 
-	spec, userSpecifiedRevision, err := fetchSpec(ctx, client, req.GetApiSpec().GetName())
-	if req.GetAllowMissing() && client.IsNotFound(err) {
-		spec, err := models.NewSpecFromResourceName(req.ApiSpec.GetName())
-		if err != nil {
-			return nil, internalError(err)
-		}
+	name, err := names.ParseSpec(req.ApiSpec.GetName())
+	if err != nil {
+		return nil, invalidArgumentError(err)
+	}
 
-		if err := spec.Update(req.GetApiSpec(), nil); err != nil {
-			return nil, internalError(err)
-		}
-
-		return s.createSpec(ctx, client, spec, req.ApiSpec.GetContents())
+	spec, err := getSpec(ctx, client, name)
+	if req.GetAllowMissing() && isNotFound(err) {
+		return s.createSpec(ctx, name, req.GetApiSpec())
 	} else if err != nil {
-		return nil, internalError(err)
-	} else if userSpecifiedRevision != "" {
-		return nil, invalidArgumentError(errors.New("updates to specific revisions are unsupported"))
+		return nil, err
 	}
-	oldRevisionID := spec.RevisionID
-	err = spec.Update(req.GetApiSpec(), req.GetUpdateMask())
-	if err != nil {
-		return nil, internalError(err)
-	}
-	newRevisionID := spec.RevisionID
-	// if the revision changed, get the previously-current revision and mark it as non-current
-	if oldRevisionID != newRevisionID {
-		k := client.NewKey(models.SpecEntityName, spec.ResourceNameWithSpecifiedRevision(oldRevisionID))
-		currentRevision := &models.Spec{}
-		client.Get(ctx, k, currentRevision)
-		currentRevision.Currency = models.NotCurrent
-		_, err = client.Put(ctx, k, currentRevision)
-		if err != nil {
-			return nil, internalError(err)
-		}
-		spec.Currency = models.IsCurrent
-	}
-	k := client.NewKey(models.SpecEntityName, spec.ResourceNameWithRevision())
-	spec.Key = spec.ResourceNameWithRevision()
-	k, err = client.Put(ctx, k, spec)
-	if err != nil {
-		return nil, internalError(err)
-	}
-	// save a blob with the spec contents (but only if the contents were updated)
-	if req.GetApiSpec().GetContents() != nil {
-		blob := models.NewBlobForSpec(
-			spec,
-			req.GetApiSpec().GetContents())
-		_, err = client.Put(ctx,
-			client.NewKey(models.BlobEntityName, spec.ResourceNameWithRevision()),
-			blob)
-		if err != nil {
-			return nil, internalError(err)
-		}
-	}
-	s.notify(rpc.Notification_UPDATED, spec.ResourceNameWithRevision())
-	return spec.Message(rpc.View_BASIC, nil, "")
-}
 
-// ListApiSpecRevisions handles the corresponding API request.
-func (s *RegistryServer) ListApiSpecRevisions(ctx context.Context, req *rpc.ListApiSpecRevisionsRequest) (*rpc.ListApiSpecRevisionsResponse, error) {
-	client, err := s.getStorageClient(ctx)
-	if err != nil {
-		return nil, unavailableError(err)
+	// Mark the current revision as non-current so the update becomes the only current revision.
+	spec.Currency = models.NotCurrent
+	if err := saveSpecRevision(ctx, client, spec); err != nil {
+		return nil, err
 	}
-	defer s.releaseStorageClient(client)
-	targetSpec, err := models.NewSpecFromResourceName(req.GetName())
-	if err != nil {
-		return nil, internalError(err)
-	}
-	q := client.NewQuery(models.SpecEntityName)
-	q, err = q.ApplyCursor(req.GetPageToken())
-	if err != nil {
-		return nil, internalError(err)
-	}
-	q = q.Require("ProjectID", targetSpec.ProjectID)
-	q = q.Require("ApiID", targetSpec.ApiID)
-	q = q.Require("VersionID", targetSpec.VersionID)
-	q = q.Require("SpecID", targetSpec.SpecID)
-	q = q.Order("-CreateTime")
 
-	var specMessages []*rpc.ApiSpec
-	responses := &rpc.ListApiSpecRevisionsResponse{}
-	if s.weTrustTheSort {
-		var spec models.Spec
-		it := client.Run(ctx, q)
-		pageSize := boundPageSize(req.GetPageSize())
-		for _, err := it.Next(&spec); err == nil; _, err = it.Next(&spec) {
-			specMessage, _ := spec.Message(rpc.View_BASIC, nil, spec.RevisionID)
-			specMessages = append(specMessages, specMessage)
-			if len(specMessages) == pageSize {
-				break
-			}
-		}
-		if err != nil && err != iterator.Done {
-			return nil, internalError(err)
-		}
-		responses.NextPageToken, err = it.GetCursor(len(specMessages))
-		if err != nil {
-			return nil, internalError(err)
-		}
-	} else {
-		specs := make([]*models.Spec, 0)
-		it := client.Run(ctx, q)
-		for {
-			spec := &models.Spec{}
-			_, err := it.Next(spec)
-			if err != nil {
-				break
-			}
-			specs = append(specs, spec)
-		}
-		if err != nil && err != iterator.Done {
-			return nil, internalError(err)
-		}
-		sort.Slice(specs, func(i, j int) bool {
-			return specs[i].CreateTime.After(specs[j].CreateTime)
-		})
-		for _, spec := range specs {
-			specMessage, _ := spec.Message(rpc.View_BASIC, nil, spec.RevisionID)
-			specMessages = append(specMessages, specMessage)
-		}
-		responses.NextPageToken = ""
-		err = nil
+	// Apply the update to the spec - possibly changing the revision ID.
+	if err := spec.Update(req.GetApiSpec(), req.GetUpdateMask()); err != nil {
+		return nil, internalError(err)
 	}
-	responses.Specs = specMessages
-	return responses, nil
-}
 
-// DeleteApiSpecRevision handles the corresponding API request.
-func (s *RegistryServer) DeleteApiSpecRevision(ctx context.Context, req *rpc.DeleteApiSpecRevisionRequest) (*empty.Empty, error) {
-	client, err := s.getStorageClient(ctx)
-	if err != nil {
-		return nil, unavailableError(err)
+	// Save the updated/current spec. This creates a new revision or updates the previous one.
+	if err := saveSpecRevision(ctx, client, spec); err != nil {
+		return nil, err
 	}
-	defer s.releaseStorageClient(client)
-	// Delete the spec revision.
-	// First, get the revision to delete.
-	spec, _, err := fetchSpec(ctx, client, req.GetName())
-	if err != nil {
-		return nil, internalError(err)
-	}
-	k := client.NewKey(models.SpecEntityName, spec.ResourceNameWithRevision())
-	// If the one we will delete is the current revision, we need to designate a new current revision.
-	if spec.Currency == models.IsCurrent {
-		// get the most recent non-current revision and make it current
-		newKey, newCurrentRevision, err := s.fetchMostRecentNonCurrentRevisionOfSpec(ctx, client, req.GetName())
-		if err != nil {
-			log.Printf("error %+v", err)
-		}
-		if err == nil && newCurrentRevision != nil {
-			newCurrentRevision.Currency = models.IsCurrent
-			client.Put(ctx, newKey, newCurrentRevision)
-		}
-	}
-	err = client.Delete(ctx, k)
-	// Delete the blob associated with the spec
-	k2 := client.NewKey(models.BlobEntityName, spec.ResourceNameWithRevision())
-	err = client.Delete(ctx, k2)
-	s.notify(rpc.Notification_DELETED, spec.ResourceNameWithRevision())
-	return &empty.Empty{}, err
-}
 
-// TagApiSpecRevision handles the corresponding API request.
-func (s *RegistryServer) TagApiSpecRevision(ctx context.Context, req *rpc.TagApiSpecRevisionRequest) (*rpc.ApiSpec, error) {
-	client, err := s.getStorageClient(ctx)
-	if err != nil {
-		return nil, unavailableError(err)
-	}
-	defer s.releaseStorageClient(client)
-	spec, userSpecifiedRevision, err := fetchSpec(ctx, client, req.GetName())
-	if err != nil {
-		return nil, internalError(err)
-	}
-	if userSpecifiedRevision == "" {
-		log.Printf("we might not want to support tagging specs with unspecified revisions")
-	}
-	if req.GetTag() == "" {
-		return nil, invalidArgumentError(errors.New("tags cannot be empty"))
-	}
-	// save the tag
-	now := time.Now()
-	tag := &models.SpecRevisionTag{
-		ProjectID:  spec.ProjectID,
-		ApiID:      spec.ApiID,
-		VersionID:  spec.VersionID,
-		SpecID:     spec.SpecID,
-		RevisionID: spec.RevisionID,
-		Tag:        req.GetTag(),
-		CreateTime: now,
-		UpdateTime: now,
-	}
-	k := client.NewKey(models.SpecRevisionTagEntityName, tag.ResourceNameWithTag())
-	k, err = client.Put(ctx, k, tag)
-	// send a notification that the tagged spec has been updated
-	s.notify(rpc.Notification_UPDATED, spec.ResourceNameWithSpecifiedRevision(req.GetTag()))
-	// return the spec using the tag for its name
-	return spec.Message(rpc.View_BASIC, nil, req.GetTag())
-}
-
-// RollbackApiSpec handles the corresponding API request.
-func (s *RegistryServer) RollbackApiSpec(ctx context.Context, req *rpc.RollbackApiSpecRequest) (*rpc.ApiSpec, error) {
-	client, err := s.getStorageClient(ctx)
-	if err != nil {
-		return nil, unavailableError(err)
-	}
-	defer s.releaseStorageClient(client)
-	specNameWithRevision := req.GetName() + "@" + req.GetRevisionId()
-	spec, userSpecifiedRevision, err := fetchSpec(ctx, client, specNameWithRevision)
-	if err != nil {
-		// TODO: this should return NotFound if the revision was not found.
-		return nil, notFoundError(err)
-	}
-	if userSpecifiedRevision == "" {
-		return nil, invalidArgumentError(errors.New("rollbacks require a specified revision"))
-	}
-	// The previous current revision needs to be marked non-current.
-	oldKey, oldCurrent, err := fetchCurrentRevisionOfSpec(ctx, client, req.GetName())
-	if err == nil && oldCurrent != nil {
-		oldCurrent.Currency = models.NotCurrent
-		_, err = client.Put(ctx, oldKey, oldCurrent)
-		if err != nil {
-			log.Printf("oops %+v", err)
-			return nil, internalError(err)
+	// If the spec contents were updated, save a new blob.
+	implicitUpdate := req.GetUpdateMask() == nil && len(req.ApiSpec.GetContents()) > 0
+	explicitUpdate := len(fieldmaskpb.Intersect(req.GetUpdateMask(), &fieldmaskpb.FieldMask{Paths: []string{"contents"}}).GetPaths()) > 0
+	if implicitUpdate || explicitUpdate {
+		if err := saveSpecRevisionContents(ctx, client, spec, req.ApiSpec.GetContents()); err != nil {
+			return nil, err
 		}
 	}
-	// Make the selected revision the current revision by giving it a new RevisionID and saving it
-	oldBlobKey := client.NewKey(models.BlobEntityName, spec.ResourceNameWithRevision())
-	blob := &models.Blob{}
-	err = client.Get(ctx, oldBlobKey, blob)
-	if err != nil {
-		return nil, internalError(err)
-	}
-	spec.BumpRevision()
-	spec.Currency = models.IsCurrent
-	newSpecKey := client.NewKey(models.SpecEntityName, spec.ResourceNameWithRevision())
-	_, err = client.Put(ctx, newSpecKey, spec)
-	if err != nil {
-		return nil, internalError(err)
-	}
-	// Resave the blob for the current revision with the new RevisionID
-	newBlobKey := client.NewKey(models.BlobEntityName, spec.ResourceNameWithRevision())
-	blob.RevisionID = spec.RevisionID
-	_, err = client.Put(ctx, newBlobKey, blob)
-	if err != nil {
-		return nil, internalError(err)
-	}
-	// Send a notification of the new revision.
-	s.notify(rpc.Notification_UPDATED, spec.ResourceNameWithRevision())
-	return spec.Message(rpc.View_BASIC, nil, spec.RevisionID)
-}
 
-// fetchSpec gets the stored model of a Spec.
-func fetchSpec(
-	ctx context.Context,
-	client storage.Client,
-	name string,
-) (*models.Spec, string, error) {
-	spec, err := models.NewSpecFromResourceName(name)
+	message, err := spec.BasicMessage(name.String())
 	if err != nil {
-		return nil, "", err
+		return nil, internalError(err)
 	}
-	// if there's no revision, get the current revision
-	if spec.RevisionID == "" {
-		_, spec, err := fetchCurrentRevisionOfSpec(ctx, client, name)
-		if err != nil {
-			return nil, "", err
-		}
-		return spec, "", nil
-	}
-	// since a revision was specified, get the spec by revision
-	// if the revision reference is a tag, resolve the tag
-	var resourceName string
-	var revisionName string
-	specRevisionTag := &models.SpecRevisionTag{}
-	k0 := client.NewKey(models.SpecRevisionTagEntityName, spec.ResourceNameWithRevision())
-	err = client.Get(ctx, k0, specRevisionTag)
-	if client.IsNotFound(err) {
-		// if there is no tag, just use the provided revision
-		resourceName = spec.ResourceNameWithRevision()
-		revisionName = spec.RevisionID
-	} else if err != nil {
-		return nil, "", err
-	} else {
-		// if there is a tag, use the revision that the tag references
-		resourceName = specRevisionTag.ResourceNameWithRevision()
-		revisionName = specRevisionTag.Tag
-	}
-	// now that we know the revision, use it get the spec
-	k := client.NewKey(models.SpecEntityName, resourceName)
-	err = client.Get(ctx, k, spec)
-	if client.IsNotFound(err) {
-		return nil, revisionName, err
-	} else if err != nil {
-		return nil, revisionName, err
-	}
-	return spec, revisionName, nil
+
+	s.notify(rpc.Notification_UPDATED, spec.RevisionName())
+	return message, nil
 }
 
 // fetchMostRecentNonCurrentRevisionOfSpec gets the most recent revision that's not current.
-func (s *RegistryServer) fetchMostRecentNonCurrentRevisionOfSpec(
-	ctx context.Context,
-	client storage.Client,
-	name string,
-) (storage.Key, *models.Spec, error) {
-	pattern, err := models.NewSpecFromResourceName(name)
-	if err != nil {
-		return nil, nil, err
-	}
-	// note that we ignore any specified RevisionID
-	q := client.NewQuery(models.SpecEntityName)
-	q = q.Require("ProjectID", pattern.ProjectID)
-	q = q.Require("ApiID", pattern.ApiID)
-	q = q.Require("VersionID", pattern.VersionID)
-	q = q.Require("SpecID", pattern.SpecID)
+func (s *RegistryServer) fetchMostRecentNonCurrentRevisionOfSpec(ctx context.Context, client storage.Client, name names.Spec) (storage.Key, *models.Spec, error) {
+	q := client.NewQuery(storage.SpecEntityName)
+	q = q.Require("ProjectID", name.ProjectID)
+	q = q.Require("ApiID", name.ApiID)
+	q = q.Require("VersionID", name.VersionID)
+	q = q.Require("SpecID", name.SpecID)
 	q = q.Require("Currency", models.NotCurrent)
 	q = q.Order("-CreateTime")
 	it := client.Run(ctx, q)
@@ -619,8 +411,7 @@ func (s *RegistryServer) fetchMostRecentNonCurrentRevisionOfSpec(
 		specs := make([]*models.Spec, 0)
 		for {
 			spec := &models.Spec{}
-			_, err := it.Next(spec)
-			if err != nil {
+			if _, err := it.Next(spec); err != nil {
 				break
 			}
 			specs = append(specs, spec)
@@ -633,39 +424,39 @@ func (s *RegistryServer) fetchMostRecentNonCurrentRevisionOfSpec(
 	}
 }
 
-// fetchCurrentRevisionOfSpec gets the current revision.
-func fetchCurrentRevisionOfSpec(
-	ctx context.Context,
-	client storage.Client,
-	name string,
-) (storage.Key, *models.Spec, error) {
-	pattern, err := models.NewSpecFromResourceName(name)
-	if err != nil {
-		return nil, nil, err
-	}
-	// note that we ignore any specified RevisionID
-	q := client.NewQuery(models.SpecEntityName)
-	q = q.Require("ProjectID", pattern.ProjectID)
-	q = q.Require("ApiID", pattern.ApiID)
-	q = q.Require("VersionID", pattern.VersionID)
-	q = q.Require("SpecID", pattern.SpecID)
+func getSpec(ctx context.Context, client storage.Client, name names.Spec) (*models.Spec, error) {
+	q := client.NewQuery(storage.SpecEntityName)
+	q = q.Require("ProjectID", name.ProjectID)
+	q = q.Require("ApiID", name.ApiID)
+	q = q.Require("VersionID", name.VersionID)
+	q = q.Require("SpecID", name.SpecID)
 	q = q.Require("Currency", models.IsCurrent)
 	it := client.Run(ctx, q)
 	spec := &models.Spec{}
-	k, err := it.Next(spec)
-	if err != nil {
-		return nil, nil, client.NotFoundError()
+	if _, err := it.Next(spec); err != nil {
+		return nil, notFoundError(err)
 	}
-	return k, spec, nil
+	return spec, nil
 }
 
-// fetchBlobForSpec gets the blob containing the spec contents.
-func fetchBlobForSpec(
-	ctx context.Context,
-	client storage.Client,
-	spec *models.Spec) (*models.Blob, error) {
-	blob := &models.Blob{}
-	k := client.NewKey(models.BlobEntityName, spec.ResourceNameWithRevision())
-	err := client.Get(ctx, k, blob)
-	return blob, err
+func deleteSpec(ctx context.Context, client storage.Client, name names.Spec) error {
+	if err := client.DeleteChildrenOfSpec(ctx, name); err != nil {
+		return internalError(err)
+	}
+
+	k := client.NewKey(storage.SpecEntityName, name.String())
+	if err := client.Delete(ctx, k); err != nil {
+		return internalError(err)
+	}
+
+	q := client.NewQuery(storage.SpecEntityName)
+	q = q.Require("ProjectID", name.ProjectID)
+	q = q.Require("ApiID", name.ApiID)
+	q = q.Require("VersionID", name.VersionID)
+	q = q.Require("SpecID", name.SpecID)
+	if err := client.DeleteAllMatches(ctx, q); err != nil {
+		return internalError(err)
+	}
+
+	return nil
 }

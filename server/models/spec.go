@@ -17,21 +17,14 @@ package models
 import (
 	"crypto/sha256"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
-	ptypes "github.com/golang/protobuf/ptypes"
+	"github.com/golang/protobuf/ptypes"
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
-
-// SpecEntityName is used to represent specs in storage.
-const SpecEntityName = "Spec"
-
-// SpecRevisionTagEntityName is used to represent tags in storage.
-const SpecRevisionTagEntityName = "SpecRevisionTag"
 
 // This was originally a boolean but gorm does not correctly update booleans from structs.
 // https://stackoverflow.com/questions/56653423/gorm-doesnt-update-boolean-field-to-false
@@ -64,143 +57,165 @@ type Spec struct {
 	Annotations        []byte    `datastore:",noindex"` // Serialized annotations.
 }
 
-// NewSpecFromParentAndSpecID returns an initialized spec for a specified parent and ID.
-func NewSpecFromParentAndSpecID(parent string, id string) (*Spec, error) {
-	m, err := names.ParseVersion(parent)
+// NewSpec initializes a new resource.
+func NewSpec(name names.Spec, body *rpc.ApiSpec) (spec *Spec, err error) {
+	now := time.Now()
+	spec = &Spec{
+		ProjectID:          name.ProjectID,
+		ApiID:              name.ApiID,
+		VersionID:          name.VersionID,
+		SpecID:             name.SpecID,
+		Description:        body.GetDescription(),
+		FileName:           body.GetFilename(),
+		MimeType:           body.GetMimeType(),
+		SourceURI:          body.GetSourceUri(),
+		CreateTime:         now,
+		RevisionCreateTime: now,
+		RevisionUpdateTime: now,
+		Currency:           IsCurrent,
+		RevisionID:         newRevisionID(),
+	}
+
+	spec.Labels, err = bytesForMap(body.GetLabels())
 	if err != nil {
-		return nil, err
-	} else if err := names.ValidateID(id); err != nil {
 		return nil, err
 	}
 
+	spec.Annotations, err = bytesForMap(body.GetAnnotations())
+	if err != nil {
+		return nil, err
+	}
+
+	if body.GetContents() != nil {
+		spec.SizeInBytes = int32(len(body.GetContents()))
+		spec.Hash = hashForBytes(body.GetContents())
+	}
+
+	return spec, nil
+}
+
+// NewRevision returns a new revision based on the spec.
+func (s *Spec) NewRevision() *Spec {
+	now := time.Now()
 	return &Spec{
-		ProjectID: m[1],
-		ApiID:     m[2],
-		VersionID: m[3],
-		SpecID:    id,
-	}, nil
+		ProjectID:          s.ProjectID,
+		ApiID:              s.ApiID,
+		VersionID:          s.VersionID,
+		SpecID:             s.SpecID,
+		Description:        s.Description,
+		FileName:           s.FileName,
+		MimeType:           s.MimeType,
+		SizeInBytes:        s.SizeInBytes,
+		Hash:               s.Hash,
+		SourceURI:          s.SourceURI,
+		CreateTime:         s.CreateTime,
+		RevisionCreateTime: now,
+		RevisionUpdateTime: now,
+		Currency:           IsCurrent,
+		RevisionID:         newRevisionID(),
+	}
 }
 
-// NewSpecFromResourceName parses resource names and returns an initialized spec.
-func NewSpecFromResourceName(name string) (*Spec, error) {
-	m, err := names.ParseSpec(name)
+// Name returns the resource name of the spec.
+func (s *Spec) Name() string {
+	return names.Spec{
+		ProjectID: s.ProjectID,
+		ApiID:     s.ApiID,
+		VersionID: s.VersionID,
+		SpecID:    s.SpecID,
+	}.String()
+}
+
+// RevisionName generates the resource name of the spec revision.
+func (s *Spec) RevisionName() string {
+	return fmt.Sprintf("projects/%s/apis/%s/versions/%s/specs/%s@%s", s.ProjectID, s.ApiID, s.VersionID, s.SpecID, s.RevisionID)
+}
+
+// FullMessage returns the full view of the spec resource as an RPC message.
+func (s *Spec) FullMessage(blob *Blob, name string) (message *rpc.ApiSpec, err error) {
+	message, err = s.BasicMessage(name)
 	if err != nil {
 		return nil, err
 	}
 
-	spec := &Spec{
-		ProjectID: m[1],
-		ApiID:     m[2],
-		VersionID: m[3],
-		SpecID:    m[4],
-	}
-
-	if strings.HasPrefix(m[5], "@") {
-		spec.RevisionID = strings.TrimPrefix(m[5], "@")
-	}
-
-	return spec, nil
-}
-
-// NewSpecFromMessage returns an initialized spec from a message.
-func NewSpecFromMessage(message *rpc.ApiSpec) (*Spec, error) {
-	spec, err := NewSpecFromResourceName(message.GetName())
+	message.Annotations, err = mapForBytes(s.Annotations)
 	if err != nil {
 		return nil, err
 	}
-	spec.Description = message.GetDescription()
-	spec.FileName = message.GetFilename()
-	return spec, nil
+
+	message.Contents = blob.Contents
+	return message, err
 }
 
-// ResourceName generates the resource name of a spec.
-func (spec *Spec) ResourceName() string {
-	return fmt.Sprintf("projects/%s/apis/%s/versions/%s/specs/%s",
-		spec.ProjectID, spec.ApiID, spec.VersionID, spec.SpecID)
-}
-
-// ResourceNameWithRevision generates the resource name of a spec which includes the revision id.
-func (spec *Spec) ResourceNameWithRevision() string {
-	return fmt.Sprintf("projects/%s/apis/%s/versions/%s/specs/%s@%s",
-		spec.ProjectID, spec.ApiID, spec.VersionID, spec.SpecID, spec.RevisionID)
-}
-
-// ResourceNameWithSpecifiedRevision generates the resource name of a spec which includes the revision id.
-func (spec *Spec) ResourceNameWithSpecifiedRevision(revision string) string {
-	return fmt.Sprintf("projects/%s/apis/%s/versions/%s/specs/%s@%s",
-		spec.ProjectID, spec.ApiID, spec.VersionID, spec.SpecID, revision)
-}
-
-// ParentResourceName generates the resource name of a spec's parent.
-func (spec *Spec) ParentResourceName() string {
-	return fmt.Sprintf("projects/%s/apis/%s/versions/%s", spec.ProjectID, spec.ApiID, spec.VersionID)
-}
-
-// Message returns a message representing a spec.
-func (spec *Spec) Message(view rpc.View, blob *Blob, revision string) (message *rpc.ApiSpec, err error) {
-	message = &rpc.ApiSpec{}
-	if revision != "" {
-		message.Name = spec.ResourceNameWithSpecifiedRevision(revision)
-	} else {
-		message.Name = spec.ResourceName()
+// BasicMessage returns the basic view of the spec resource as an RPC message.
+func (s *Spec) BasicMessage(name string) (message *rpc.ApiSpec, err error) {
+	message = &rpc.ApiSpec{
+		Name:        name,
+		Filename:    s.FileName,
+		Description: s.Description,
+		Hash:        s.Hash,
+		SizeBytes:   s.SizeInBytes,
+		MimeType:    s.MimeType,
+		SourceUri:   s.SourceURI,
+		RevisionId:  s.RevisionID,
 	}
-	message.Filename = spec.FileName
-	message.Description = spec.Description
-	if blob != nil {
-		message.Contents = blob.Contents
-	}
-	message.Hash = spec.Hash
-	message.SizeBytes = spec.SizeInBytes
-	message.MimeType = spec.MimeType
-	message.SourceUri = spec.SourceURI
-	message.CreateTime, err = ptypes.TimestampProto(spec.CreateTime)
-	message.RevisionCreateTime, err = ptypes.TimestampProto(spec.RevisionCreateTime)
-	message.RevisionUpdateTime, err = ptypes.TimestampProto(spec.RevisionUpdateTime)
-	message.RevisionId = spec.RevisionID
-	if message.Labels, err = mapForBytes(spec.Labels); err != nil {
+
+	message.CreateTime, err = ptypes.TimestampProto(s.CreateTime)
+	if err != nil {
 		return nil, err
 	}
-	if view == rpc.View_FULL {
-		if message.Annotations, err = mapForBytes(spec.Annotations); err != nil {
-			return nil, err
-		}
+
+	message.RevisionCreateTime, err = ptypes.TimestampProto(s.RevisionCreateTime)
+	if err != nil {
+		return nil, err
 	}
+
+	message.RevisionUpdateTime, err = ptypes.TimestampProto(s.RevisionUpdateTime)
+	if err != nil {
+		return nil, err
+	}
+
+	message.Labels, err = mapForBytes(s.Labels)
+	if err != nil {
+		return nil, err
+	}
+
 	return message, err
 }
 
 // Update modifies a spec using the contents of a message.
-func (spec *Spec) Update(message *rpc.ApiSpec, mask *fieldmaskpb.FieldMask) error {
+func (s *Spec) Update(message *rpc.ApiSpec, mask *fieldmaskpb.FieldMask) error {
 	now := time.Now()
 	if activeUpdateMask(mask) {
 		for _, field := range mask.Paths {
 			switch field {
 			case "filename":
-				spec.FileName = message.GetFilename()
+				s.FileName = message.GetFilename()
 			case "description":
-				spec.Description = message.GetDescription()
+				s.Description = message.GetDescription()
 			case "contents":
 				contents := message.GetContents()
 				// Save some properties of the spec contents.
 				// The bytes of the contents are stored in a Blob.
 				hash := hashForBytes(contents)
-				if spec.Hash != hash {
-					spec.Hash = hash
-					spec.RevisionID = newRevisionID()
-					spec.CreateTime = now
+				if s.Hash != hash {
+					s.Hash = hash
+					s.RevisionID = newRevisionID()
+					s.CreateTime = now
 				}
-				spec.SizeInBytes = int32(len(contents))
+				s.SizeInBytes = int32(len(contents))
 			case "mime_type":
-				spec.MimeType = message.GetMimeType()
+				s.MimeType = message.GetMimeType()
 			case "source_uri":
-				spec.SourceURI = message.GetSourceUri()
+				s.SourceURI = message.GetSourceUri()
 			case "labels":
 				var err error
-				if spec.Labels, err = bytesForMap(message.GetLabels()); err != nil {
+				if s.Labels, err = bytesForMap(message.GetLabels()); err != nil {
 					return err
 				}
 			case "annotations":
 				var err error
-				if spec.Annotations, err = bytesForMap(message.GetAnnotations()); err != nil {
+				if s.Annotations, err = bytesForMap(message.GetAnnotations()); err != nil {
 					return err
 				}
 			}
@@ -208,50 +223,48 @@ func (spec *Spec) Update(message *rpc.ApiSpec, mask *fieldmaskpb.FieldMask) erro
 	} else {
 		filename := message.GetFilename()
 		if filename != "" {
-			spec.FileName = filename
+			s.FileName = filename
 		}
 		description := message.GetDescription()
 		if description != "" {
-			spec.Description = description
+			s.Description = description
 		}
 		contents := message.GetContents()
 		if contents != nil {
 			// Save some properties of the spec contents.
 			// The bytes of the contents are stored in a Blob.
 			hash := hashForBytes(contents)
-			if spec.Hash != hash {
-				spec.Hash = hash
-				spec.RevisionID = newRevisionID()
-				spec.CreateTime = now
+			if s.Hash != hash {
+				s.Hash = hash
+				s.RevisionID = newRevisionID()
+				s.RevisionCreateTime = now
 			}
-			spec.SizeInBytes = int32(len(contents))
+			s.SizeInBytes = int32(len(contents))
 		}
 		mimeType := message.GetMimeType()
 		if mimeType != "" {
-			spec.MimeType = mimeType
+			s.MimeType = mimeType
 		}
 		sourceURI := message.GetSourceUri()
 		if sourceURI != "" {
-			spec.SourceURI = sourceURI
+			s.SourceURI = sourceURI
 		}
 		var err error
-		if spec.Labels, err = bytesForMap(message.GetLabels()); err != nil {
+		if s.Labels, err = bytesForMap(message.GetLabels()); err != nil {
 			return err
 		}
-		if spec.Annotations, err = bytesForMap(message.GetAnnotations()); err != nil {
+		if s.Annotations, err = bytesForMap(message.GetAnnotations()); err != nil {
 			return err
 		}
 	}
-	spec.RevisionUpdateTime = now
+	s.Currency = IsCurrent
+	s.RevisionUpdateTime = now
 	return nil
 }
 
-// BumpRevision updates the revision id for a spec and makes no other changes.
-func (spec *Spec) BumpRevision() error {
-	spec.RevisionID = newRevisionID()
-	spec.RevisionCreateTime = time.Now()
-	spec.RevisionUpdateTime = time.Now()
-	return nil
+// LabelsMap returns a map representation of stored labels.
+func (s *Spec) LabelsMap() (map[string]string, error) {
+	return mapForBytes(s.Labels)
 }
 
 func newRevisionID() string {
@@ -279,19 +292,21 @@ type SpecRevisionTag struct {
 	UpdateTime time.Time // Time of last change.
 }
 
-// ResourceNameWithTag generates a resource name which includes the tag.
-func (tag *SpecRevisionTag) ResourceNameWithTag() string {
-	return fmt.Sprintf("projects/%s/apis/%s/versions/%s/specs/%s@%s",
-		tag.ProjectID, tag.ApiID, tag.VersionID, tag.SpecID, tag.Tag)
+// NewSpecRevisionTag initializes a new revision tag from a given revision name and tag string.
+func NewSpecRevisionTag(name names.SpecRevision, tag string) *SpecRevisionTag {
+	now := time.Now()
+	return &SpecRevisionTag{
+		ProjectID:  name.ProjectID,
+		ApiID:      name.ApiID,
+		VersionID:  name.VersionID,
+		SpecID:     name.SpecID,
+		RevisionID: name.RevisionID,
+		Tag:        tag,
+		CreateTime: now,
+		UpdateTime: now,
+	}
 }
 
-// ResourceNameWithRevision generates a resource name which includes the revision id.
-func (tag *SpecRevisionTag) ResourceNameWithRevision() string {
-	return fmt.Sprintf("projects/%s/apis/%s/versions/%s/specs/%s@%s",
-		tag.ProjectID, tag.ApiID, tag.VersionID, tag.SpecID, tag.RevisionID)
-}
-
-// LabelsMap returns a map representation of stored labels.
-func (spec *Spec) LabelsMap() (map[string]string, error) {
-	return mapForBytes(spec.Labels)
+func (t *SpecRevisionTag) String() string {
+	return fmt.Sprintf("projects/%s/apis/%s/versions/%s/specs/%s@%s", t.ProjectID, t.ApiID, t.VersionID, t.SpecID, t.Tag)
 }

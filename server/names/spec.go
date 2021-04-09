@@ -17,24 +17,106 @@ package names
 import (
 	"fmt"
 	"regexp"
+
+	"github.com/google/uuid"
 )
+
+// Regex patterns for spec-only (without revision) resource names.
+var (
+	// specIdentifier is the regex pattern for spec identifiers that are valid for creation of new spec names.
+	// Pre-existing or system-generated identifiers may not follow this format.
+	specIdentifier = regexp.MustCompile("^[a-z0-9-.]{4,63}$")
+
+	// specRegexp is the regex pattern for spec resource names.
+	// Notably, this differs from SpecRegexp() by not accepting spec revision IDs in the resource name.
+	specRegexp = regexp.MustCompile(fmt.Sprintf("^projects/%s/apis/%s/versions/%s/specs/%s$", identifier, identifier, identifier, identifier))
+)
+
+// Spec represents a resource name for an API spec.
+type Spec struct {
+	ProjectID string
+	ApiID     string
+	VersionID string
+	SpecID    string
+}
+
+// Validate returns an error if the resource name is invalid.
+// For backward compatibility, names should only be validated at creation time.
+func (s Spec) Validate() error {
+	r := SpecRegexp()
+	if name := s.String(); !r.MatchString(name) {
+		return fmt.Errorf("invalid spec name %q: must match %q", name, r)
+	} else if !specIdentifier.MatchString(s.SpecID) {
+		return fmt.Errorf("invalid spec identifier %q: must match %q", s.SpecID, specIdentifier)
+	} else if _, err := uuid.Parse(s.SpecID); err == nil {
+		return fmt.Errorf("invalid spec identifier %q: must not match UUID format", s.SpecID)
+	}
+
+	return nil
+}
+
+// Project returns the parent project for this resource.
+func (s Spec) Project() Project {
+	return Project{
+		ProjectID: s.ProjectID,
+	}
+}
+
+// Api returns the parent API for this resource.
+func (s Spec) Api() Api {
+	return Api{
+		ProjectID: s.ProjectID,
+		ApiID:     s.ApiID,
+	}
+}
+
+// Version returns the parent API version for this resource.
+func (s Spec) Version() Version {
+	return Version{
+		ProjectID: s.ProjectID,
+		ApiID:     s.ApiID,
+		VersionID: s.VersionID,
+	}
+}
+
+// Revision returns an API spec revision with the provided ID and this resource as its parent.
+func (s Spec) Revision(id string) SpecRevision {
+	return SpecRevision{
+		ProjectID:  s.ProjectID,
+		ApiID:      s.ApiID,
+		VersionID:  s.VersionID,
+		SpecID:     s.SpecID,
+		RevisionID: id,
+	}
+}
+
+func (s Spec) String() string {
+	return fmt.Sprintf("projects/%s/apis/%s/versions/%s/specs/%s", s.ProjectID, s.ApiID, s.VersionID, s.SpecID)
+}
 
 // SpecsRegexp returns a regular expression that matches a collection of specs.
 func SpecsRegexp() *regexp.Regexp {
 	return regexp.MustCompile("^projects/" + identifier + "/apis/" + identifier + "/versions/" + identifier + "/specs$")
 }
 
-// SpecRegexp returns a regular expression that matches a spec resource name.
+// SpecRegexp returns a regular expression that matches a spec resource name with an optional revision identifier.
 func SpecRegexp() *regexp.Regexp {
-	return regexp.MustCompile("^projects/" + identifier + "/apis/" + identifier + "/versions/" + identifier + "/specs/" + identifier + revisionTag + "$")
+	return regexp.MustCompile(fmt.Sprintf("^projects/%s/apis/%s/versions/%s/specs/%s(@%s)?$", identifier, identifier, identifier, identifier, revisionTag))
 }
 
 // ParseSpec parses the name of a spec.
-func ParseSpec(name string) ([]string, error) {
-	r := SpecRegexp()
-	m := r.FindStringSubmatch(name)
-	if m == nil {
-		return nil, fmt.Errorf("invalid spec name %q: must match %q", name, r)
+func ParseSpec(name string) (Spec, error) {
+	if !specRegexp.MatchString(name) {
+		return Spec{}, fmt.Errorf("invalid spec name %q: must match %q", name, specRegexp)
 	}
-	return m, nil
+
+	m := specRegexp.FindStringSubmatch(name)
+	spec := Spec{
+		ProjectID: m[1],
+		ApiID:     m[2],
+		VersionID: m[3],
+		SpecID:    m[4],
+	}
+
+	return spec, nil
 }

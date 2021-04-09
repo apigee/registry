@@ -20,6 +20,7 @@ import (
 
 	"cloud.google.com/go/datastore"
 	"github.com/apigee/registry/server/models"
+	"github.com/apigee/registry/server/names"
 	"github.com/apigee/registry/server/storage"
 	"google.golang.org/api/iterator"
 )
@@ -58,14 +59,14 @@ func (c *Client) DeleteAllMatches(ctx context.Context, q storage.Query) error {
 }
 
 // DeleteChildrenOfProject deletes all the children of a project.
-func (c *Client) DeleteChildrenOfProject(ctx context.Context, project *models.Project) error {
+func (c *Client) DeleteChildrenOfProject(ctx context.Context, project names.Project) error {
 	entityNames := []string{
 		models.ArtifactEntityName,
 		models.BlobEntityName,
-		models.SpecEntityName,
-		models.SpecRevisionTagEntityName,
-		models.VersionEntityName,
-		models.ApiEntityName,
+		storage.SpecEntityName,
+		storage.SpecRevisionTagEntityName,
+		storage.VersionEntityName,
+		storage.ApiEntityName,
 	}
 	for _, entityName := range entityNames {
 		q := datastore.NewQuery(entityName)
@@ -80,11 +81,11 @@ func (c *Client) DeleteChildrenOfProject(ctx context.Context, project *models.Pr
 }
 
 // DeleteChildrenOfApi deletes all the children of a api.
-func (c *Client) DeleteChildrenOfApi(ctx context.Context, api *models.Api) error {
+func (c *Client) DeleteChildrenOfApi(ctx context.Context, api names.Api) error {
 	for _, entityName := range []string{
 		models.BlobEntityName,
-		models.SpecEntityName,
-		models.VersionEntityName,
+		storage.SpecEntityName,
+		storage.VersionEntityName,
 	} {
 		q := datastore.NewQuery(entityName)
 		q = q.KeysOnly()
@@ -99,10 +100,10 @@ func (c *Client) DeleteChildrenOfApi(ctx context.Context, api *models.Api) error
 }
 
 // DeleteChildrenOfVersion deletes all the children of a version.
-func (c *Client) DeleteChildrenOfVersion(ctx context.Context, version *models.Version) error {
+func (c *Client) DeleteChildrenOfVersion(ctx context.Context, version names.Version) error {
 	for _, entityName := range []string{
 		models.BlobEntityName,
-		models.SpecEntityName,
+		storage.SpecEntityName,
 	} {
 		q := datastore.NewQuery(entityName)
 		q = q.KeysOnly()
@@ -118,7 +119,7 @@ func (c *Client) DeleteChildrenOfVersion(ctx context.Context, version *models.Ve
 }
 
 // DeleteChildrenOfSpec deletes all the children of a spec.
-func (c *Client) DeleteChildrenOfSpec(ctx context.Context, spec *models.Spec) error {
+func (c *Client) DeleteChildrenOfSpec(ctx context.Context, spec names.Spec) error {
 	q := datastore.NewQuery(models.BlobEntityName)
 	q = q.KeysOnly()
 	q = q.Filter("ProjectID =", spec.ProjectID)
