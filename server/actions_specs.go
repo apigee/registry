@@ -71,11 +71,11 @@ func (s *RegistryServer) createSpec(ctx context.Context, name names.Spec, body *
 		return nil, invalidArgumentError(err)
 	}
 
-	if err := saveSpecRevision(ctx, client, spec); err != nil {
+	if err := db.SaveSpecRevision(ctx, spec); err != nil {
 		return nil, err
 	}
 
-	if err := saveSpecRevisionContents(ctx, client, spec, body.GetContents()); err != nil {
+	if err := db.SaveSpecRevisionContents(ctx, spec, body.GetContents()); err != nil {
 		return nil, err
 	}
 
@@ -139,7 +139,7 @@ func (s *RegistryServer) getApiSpec(ctx context.Context, name names.Spec, view r
 		return nil, err
 	}
 
-	blob, err := getSpecRevisionContents(ctx, client, name.Revision(spec.RevisionID))
+	blob, err := db.GetSpecRevisionContents(ctx, name.Revision(spec.RevisionID))
 	if err != nil {
 		return nil, err
 	}
@@ -166,13 +166,14 @@ func (s *RegistryServer) getApiSpecRevision(ctx context.Context, name names.Spec
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
+	db := dao.NewDAO(client)
 
-	revision, err := getSpecRevision(ctx, client, name)
+	revision, err := db.GetSpecRevision(ctx, name)
 	if err != nil {
 		return nil, err
 	}
 
-	blob, err := getSpecRevisionContents(ctx, client, name)
+	blob, err := db.GetSpecRevisionContents(ctx, name)
 	if err != nil {
 		return nil, err
 	}
@@ -234,22 +235,22 @@ func (s *RegistryServer) ListApiSpecs(ctx context.Context, req *rpc.ListApiSpecs
 		case rpc.View_FULL:
 			name, err := names.ParseSpecRevision(spec.RevisionName())
 			if err != nil {
-				continue
+				return nil, internalError(err)
 			}
 
-			blob, err := getSpecRevisionContents(ctx, client, name)
+			blob, err := db.GetSpecRevisionContents(ctx, name)
 			if err != nil {
-				continue
+				return nil, internalError(err)
 			}
 
 			response.ApiSpecs[i], err = spec.FullMessage(blob, spec.Name())
 			if err != nil {
-				continue
+				return nil, internalError(err)
 			}
 		case rpc.View_BASIC, rpc.View_VIEW_UNSPECIFIED:
 			response.ApiSpecs[i], err = spec.BasicMessage(spec.Name())
 			if err != nil {
-				continue
+				return nil, internalError(err)
 			}
 		default:
 			return nil, invalidArgumentError(fmt.Errorf("unknown view type %v", req.GetView()))
@@ -286,7 +287,7 @@ func (s *RegistryServer) UpdateApiSpec(ctx context.Context, req *rpc.UpdateApiSp
 
 	// Mark the current revision as non-current so the update becomes the only current revision.
 	spec.Currency = models.NotCurrent
-	if err := saveSpecRevision(ctx, client, spec); err != nil {
+	if err := db.SaveSpecRevision(ctx, spec); err != nil {
 		return nil, err
 	}
 
@@ -296,7 +297,7 @@ func (s *RegistryServer) UpdateApiSpec(ctx context.Context, req *rpc.UpdateApiSp
 	}
 
 	// Save the updated/current spec. This creates a new revision or updates the previous one.
-	if err := saveSpecRevision(ctx, client, spec); err != nil {
+	if err := db.SaveSpecRevision(ctx, spec); err != nil {
 		return nil, err
 	}
 
@@ -304,7 +305,7 @@ func (s *RegistryServer) UpdateApiSpec(ctx context.Context, req *rpc.UpdateApiSp
 	implicitUpdate := req.GetUpdateMask() == nil && len(req.ApiSpec.GetContents()) > 0
 	explicitUpdate := len(fieldmaskpb.Intersect(req.GetUpdateMask(), &fieldmaskpb.FieldMask{Paths: []string{"contents"}}).GetPaths()) > 0
 	if implicitUpdate || explicitUpdate {
-		if err := saveSpecRevisionContents(ctx, client, spec, req.ApiSpec.GetContents()); err != nil {
+		if err := db.SaveSpecRevisionContents(ctx, spec, req.ApiSpec.GetContents()); err != nil {
 			return nil, err
 		}
 	}
