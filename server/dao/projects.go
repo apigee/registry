@@ -76,9 +76,11 @@ func (d *DAO) ListProjects(ctx context.Context, opts PageOptions) (ProjectList, 
 		return response, status.Error(codes.Internal, err.Error())
 	}
 
-	response.Token, err = it.GetCursor()
-	if err != nil {
-		return response, status.Error(codes.Internal, err.Error())
+	if err == nil {
+		response.Token, err = it.GetCursor()
+		if err != nil {
+			return response, status.Error(codes.Internal, err.Error())
+		}
 	}
 
 	return response, nil
