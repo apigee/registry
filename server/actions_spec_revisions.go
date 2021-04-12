@@ -56,7 +56,7 @@ func (s *RegistryServer) ListApiSpecRevisions(ctx context.Context, req *rpc.List
 
 	pageSize := boundPageSize(req.GetPageSize())
 	response := &rpc.ListApiSpecRevisionsResponse{
-		Specs: make([]*rpc.ApiSpec, 0, pageSize),
+		ApiSpecs: make([]*rpc.ApiSpec, 0, pageSize),
 	}
 
 	var spec models.Spec
@@ -66,11 +66,11 @@ func (s *RegistryServer) ListApiSpecRevisions(ctx context.Context, req *rpc.List
 		if err != nil {
 			continue
 		}
-		response.Specs = append(response.GetSpecs(), specMessage)
+		response.ApiSpecs = append(response.GetApiSpecs(), specMessage)
 
 		// Exit when page is full and before the iterator moves forward again.
 		// This ensures the cursor is returned in the correct position.
-		if len(response.GetSpecs()) >= pageSize {
+		if len(response.GetApiSpecs()) >= pageSize {
 			break
 		}
 	}
@@ -78,7 +78,7 @@ func (s *RegistryServer) ListApiSpecRevisions(ctx context.Context, req *rpc.List
 		return nil, internalError(err)
 	}
 
-	response.NextPageToken, err = it.GetCursor(len(response.GetSpecs()))
+	response.NextPageToken, err = it.GetCursor(len(response.GetApiSpecs()))
 	if err != nil {
 		return nil, internalError(err)
 	}

@@ -800,7 +800,7 @@ message ListApiSpecRevisionsRequest {
 //     aip.dev/not-precedent: Listing revisions requires nonstandard fields. --)
 message ListApiSpecRevisionsResponse {
   // The revisions of the spec.
-  repeated ApiSpec specs = 1;
+  repeated ApiSpec api_specs = 1;
 
   // A token that can be sent as `page_token` to retrieve the next page.
   // If this field is omitted, there are no subsequent pages.
