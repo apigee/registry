@@ -93,6 +93,8 @@ func PrintArtifactContents(artifact *rpc.Artifact) {
 		unmarshalAndPrint(artifact.GetContents(), &metrics.VersionHistory{})
 	case "google.cloud.apigee.registry.applications.v1alpha1.Index":
 		unmarshalAndPrint(artifact.GetContents(), &rpc.Index{})
+	case "google.cloud.apigee.registry.applications.v1alpha1.References":
+		unmarshalAndPrint(artifact.GetContents(), &rpc.References{})
 	case "gnostic.openapiv2.Document":
 		unmarshalAndPrint(artifact.GetContents(), &openapiv2.Document{})
 	case "gnostic.openapiv3.Document":
