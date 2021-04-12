@@ -203,7 +203,7 @@ func (s *RegistryServer) ListApiSpecs(ctx context.Context, req *rpc.ListApiSpecs
 	db := dao.NewDAO(client)
 
 	if req.GetPageSize() < 0 {
-		return nil, invalidArgumentError(fmt.Errorf("invalid page_size %q: must not be negative", req.GetPageSize()))
+		return nil, invalidArgumentError(fmt.Errorf("invalid page_size %d: must not be negative", req.GetPageSize()))
 	} else if req.GetPageSize() > 1000 {
 		req.PageSize = 1000
 	} else if req.GetPageSize() == 0 {
