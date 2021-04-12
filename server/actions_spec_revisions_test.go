@@ -200,13 +200,22 @@ func TestRollbackApiSpec(t *testing.T) {
 		t.Fatalf("RollbackApiSpec(%+v) returned error: %s", req, err)
 	}
 
-	opts := cmp.Options{
-		protocmp.Transform(),
-		protocmp.IgnoreFields(new(rpc.ApiSpec), "name", "revision_id", "revision_create_time", "revision_update_time"),
+	want := &rpc.ApiSpec{
+		Name:               fmt.Sprintf("%s@%s", firstRevision.GetName(), rollback.GetRevisionId()),
+		Hash:               firstRevision.GetHash(),
+		SizeBytes:          firstRevision.GetSizeBytes(),
+		CreateTime:         firstRevision.GetCreateTime(),
+		RevisionCreateTime: firstRevision.GetRevisionCreateTime(),
+		RevisionUpdateTime: firstRevision.GetRevisionUpdateTime(),
 	}
 
-	if !cmp.Equal(firstRevision, rollback, opts) {
-		t.Errorf("RollbackApiSpec(%+v) returned unexpected diff (-want +got):\n%s", req, cmp.Diff(firstRevision, rollback, opts))
+	opts := cmp.Options{
+		protocmp.Transform(),
+		protocmp.IgnoreFields(new(rpc.ApiSpec), "revision_id", "revision_create_time", "revision_update_time"),
+	}
+
+	if !cmp.Equal(want, rollback, opts) {
+		t.Errorf("RollbackApiSpec(%+v) returned unexpected diff (-want +got):\n%s", req, cmp.Diff(want, rollback, opts))
 	}
 
 	// Rollback should create a new revision, i.e. it should not reuse an existing revision ID.
@@ -214,11 +223,6 @@ func TestRollbackApiSpec(t *testing.T) {
 		t.Fatalf("RollbackApiSpec(%+v) returned unexpected revision_id %q matching first revision, expected new revision ID", req, rollback.GetRevisionId())
 	} else if rollback.GetRevisionId() == secondRevision.GetRevisionId() {
 		t.Fatalf("RollbackApiSpec(%+v) returned unexpected revision_id %q matching second revision, expected new revision ID", req, rollback.GetRevisionId())
-	}
-
-	// Rollback should return a resource revision name, including the revision ID tag.
-	if want := fmt.Sprintf("%s@%s", firstRevision.GetName(), rollback.GetRevisionId()); want != rollback.GetName() {
-		t.Errorf("RollbackApiSpec(%+v) returned unexpected name %q, want %q", req, rollback.GetName(), want)
 	}
 }
 
