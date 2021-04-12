@@ -174,7 +174,7 @@ func (s *RegistryServer) TagApiSpecRevision(ctx context.Context, req *rpc.TagApi
 		return nil, internalError(err)
 	}
 
-	s.notify(rpc.Notification_UPDATED, tag.String())
+	s.notify(rpc.Notification_UPDATED, name.String())
 	return message, nil
 }
 
@@ -236,7 +236,7 @@ func (s *RegistryServer) RollbackApiSpec(ctx context.Context, req *rpc.RollbackA
 		return nil, internalError(err)
 	}
 
-	s.notify(rpc.Notification_UPDATED, rollback.RevisionName())
+	s.notify(rpc.Notification_CREATED, rollback.RevisionName())
 	return message, nil
 }
 
