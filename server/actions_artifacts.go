@@ -21,7 +21,7 @@ import (
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/models"
-	storage "github.com/apigee/registry/server/storage"
+	"github.com/apigee/registry/server/storage"
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/api/iterator"
 	"google.golang.org/grpc/codes"
@@ -42,7 +42,7 @@ func (s *RegistryServer) CreateArtifact(ctx context.Context, req *rpc.CreateArti
 	// create a blob for the artifact contents
 	blob := models.NewBlobForArtifact(artifact, nil)
 	err = artifact.Update(req.GetArtifact(), blob)
-	k := client.NewKey(models.ArtifactEntityName, artifact.ResourceName())
+	k := client.NewKey(storage.ArtifactEntityName, artifact.ResourceName())
 	// fail if artifact already exists
 	existingArtifact := &models.Artifact{}
 	err = client.Get(ctx, k, existingArtifact)
@@ -82,7 +82,7 @@ func (s *RegistryServer) DeleteArtifact(ctx context.Context, req *rpc.DeleteArti
 		return nil, invalidArgumentError(err)
 	}
 	// Delete the artifact.
-	k := client.NewKey(models.ArtifactEntityName, req.GetName())
+	k := client.NewKey(storage.ArtifactEntityName, req.GetName())
 	err = client.Delete(ctx, k)
 	// Delete any blob associated with the artifact.
 	k2 := client.NewKey(models.BlobEntityName, req.GetName())
@@ -102,7 +102,7 @@ func (s *RegistryServer) GetArtifact(ctx context.Context, req *rpc.GetArtifactRe
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	k := client.NewKey(models.ArtifactEntityName, artifact.ResourceName())
+	k := client.NewKey(storage.ArtifactEntityName, artifact.ResourceName())
 	err = client.Get(ctx, k, artifact)
 	var blob *models.Blob
 	if req.GetView() == rpc.View_FULL {
@@ -123,7 +123,7 @@ func (s *RegistryServer) ListArtifacts(ctx context.Context, req *rpc.ListArtifac
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
-	q := client.NewQuery(models.ArtifactEntityName)
+	q := client.NewQuery(storage.ArtifactEntityName)
 	q, err = q.ApplyCursor(req.GetPageToken())
 	if err != nil {
 		return nil, internalError(err)
@@ -228,7 +228,7 @@ func (s *RegistryServer) ReplaceArtifact(ctx context.Context, req *rpc.ReplaceAr
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	k := client.NewKey(models.ArtifactEntityName, req.GetArtifact().GetName())
+	k := client.NewKey(storage.ArtifactEntityName, req.GetArtifact().GetName())
 	err = client.Get(ctx, k, artifact)
 	if err != nil {
 		return nil, status.Error(codes.NotFound, "not found")

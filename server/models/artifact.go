@@ -21,11 +21,8 @@ import (
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
-	ptypes "github.com/golang/protobuf/ptypes"
+	"github.com/golang/protobuf/ptypes"
 )
-
-// ArtifactEntityName is used to represent artifacts in storage.
-const ArtifactEntityName = "Artifact"
 
 // ArtifactValueType is an enum representing the types of values stored in artifacts.
 type ArtifactValueType int
