@@ -346,14 +346,14 @@ func TestListApiSpecRevisions(t *testing.T) {
 			t.Fatalf("ListApiSpecRevisions(%+v) returned error: %s", req, err)
 		}
 
-		if count := len(got.GetSpecs()); count != 1 {
+		if count := len(got.GetApiSpecs()); count != 1 {
 			t.Errorf("ListApiSpecRevisions(%+v) returned %d specs, expected exactly one", req, count)
 		}
 
 		// Check that the most recent revision is returned.
 		want := []*rpc.ApiSpec{secondWant}
-		if !cmp.Equal(want, got.GetSpecs(), opts) {
-			t.Errorf("List sequence returned unexpected diff (-want +got):\n%s", cmp.Diff(want, got.GetSpecs(), opts))
+		if !cmp.Equal(want, got.GetApiSpecs(), opts) {
+			t.Errorf("List sequence returned unexpected diff (-want +got):\n%s", cmp.Diff(want, got.GetApiSpecs(), opts))
 		}
 
 		if got.GetNextPageToken() == "" {
@@ -378,14 +378,14 @@ func TestListApiSpecRevisions(t *testing.T) {
 			t.Fatalf("ListApiSpecRevisions(%+v) returned error: %s", req, err)
 		}
 
-		if count := len(got.GetSpecs()); count != 1 {
+		if count := len(got.GetApiSpecs()); count != 1 {
 			t.Errorf("ListApiSpecRevisions(%+v) returned %d specs, expected exactly one", req, count)
 		}
 
 		// Check that the original revision is returned.
 		want := []*rpc.ApiSpec{firstWant}
-		if !cmp.Equal(want, got.GetSpecs(), opts) {
-			t.Errorf("List sequence returned unexpected diff (-want +got):\n%s", cmp.Diff(want, got.GetSpecs(), opts))
+		if !cmp.Equal(want, got.GetApiSpecs(), opts) {
+			t.Errorf("List sequence returned unexpected diff (-want +got):\n%s", cmp.Diff(want, got.GetApiSpecs(), opts))
 		}
 
 		if got.GetNextPageToken() != "" {

@@ -56,12 +56,12 @@ func (s *RegistryServer) ListApiSpecRevisions(ctx context.Context, req *rpc.List
 	}
 
 	response := &rpc.ListApiSpecRevisionsResponse{
-		Specs:         make([]*rpc.ApiSpec, len(listing.Specs)),
+		ApiSpecs:      make([]*rpc.ApiSpec, len(listing.Specs)),
 		NextPageToken: listing.Token,
 	}
 
 	for i, spec := range listing.Specs {
-		response.Specs[i], err = spec.BasicMessage(spec.Name())
+		response.ApiSpecs[i], err = spec.BasicMessage(spec.Name())
 		if err != nil {
 			return nil, internalError(err)
 		}
