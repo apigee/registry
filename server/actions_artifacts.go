@@ -40,8 +40,8 @@ func (s *RegistryServer) CreateArtifact(ctx context.Context, req *rpc.CreateArti
 		return nil, invalidArgumentError(err)
 	}
 	// create a blob for the artifact contents
-	blob := models.NewBlobForArtifact(artifact, nil)
-	err = artifact.Update(req.GetArtifact(), blob)
+	blob := models.NewBlobForArtifact(artifact, req.Artifact.GetContents())
+	artifact.Update(req.GetArtifact())
 	k := client.NewKey(storage.ArtifactEntityName, artifact.ResourceName())
 	// fail if artifact already exists
 	existingArtifact := &models.Artifact{}
@@ -233,8 +233,8 @@ func (s *RegistryServer) ReplaceArtifact(ctx context.Context, req *rpc.ReplaceAr
 	if err != nil {
 		return nil, status.Error(codes.NotFound, "not found")
 	}
-	blob := models.NewBlobForArtifact(artifact, nil)
-	err = artifact.Update(req.GetArtifact(), blob)
+	blob := models.NewBlobForArtifact(artifact, req.Artifact.GetContents())
+	artifact.Update(req.GetArtifact())
 	if err != nil {
 		return nil, internalError(err)
 	}

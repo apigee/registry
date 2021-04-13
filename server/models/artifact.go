@@ -157,11 +157,9 @@ func (artifact *Artifact) Message(blob *Blob) (message *rpc.Artifact, err error)
 }
 
 // Update modifies an artifact using the contents of a message.
-func (artifact *Artifact) Update(message *rpc.Artifact, blob *Blob) error {
+func (artifact *Artifact) Update(message *rpc.Artifact) {
 	artifact.UpdateTime = time.Now()
 	artifact.MimeType = message.MimeType
 	artifact.SizeInBytes = int32(len(message.Contents))
 	artifact.Hash = hashForBytes(message.Contents)
-	blob.Contents = message.Contents
-	return nil
 }
