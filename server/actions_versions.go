@@ -19,11 +19,10 @@ import (
 	"fmt"
 
 	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/server/dao"
 	"github.com/apigee/registry/server/models"
 	"github.com/apigee/registry/server/names"
-	"github.com/apigee/registry/server/storage"
 	"github.com/golang/protobuf/ptypes/empty"
-	"google.golang.org/api/iterator"
 )
 
 // CreateApiVersion handles the corresponding API request.
@@ -33,6 +32,7 @@ func (s *RegistryServer) CreateApiVersion(ctx context.Context, req *rpc.CreateAp
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
+	db := dao.NewDAO(client)
 
 	parent, err := names.ParseApi(req.GetParent())
 	if err != nil {
@@ -40,7 +40,7 @@ func (s *RegistryServer) CreateApiVersion(ctx context.Context, req *rpc.CreateAp
 	}
 
 	// Creation should only succeed when the parent exists.
-	if _, err := getApi(ctx, client, parent); err != nil {
+	if _, err := db.GetApi(ctx, parent); err != nil {
 		return nil, err
 	}
 
@@ -49,7 +49,7 @@ func (s *RegistryServer) CreateApiVersion(ctx context.Context, req *rpc.CreateAp
 		name.VersionID = names.GenerateID()
 	}
 
-	if _, err := getVersion(ctx, client, name); err == nil {
+	if _, err := db.GetVersion(ctx, name); err == nil {
 		return nil, alreadyExistsError(fmt.Errorf("API version %q already exists", name))
 	} else if !isNotFound(err) {
 		return nil, err
@@ -64,7 +64,7 @@ func (s *RegistryServer) CreateApiVersion(ctx context.Context, req *rpc.CreateAp
 		return nil, invalidArgumentError(err)
 	}
 
-	if err := saveVersion(ctx, client, version); err != nil {
+	if err := db.SaveVersion(ctx, version); err != nil {
 		return nil, err
 	}
 
@@ -84,6 +84,7 @@ func (s *RegistryServer) DeleteApiVersion(ctx context.Context, req *rpc.DeleteAp
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
+	db := dao.NewDAO(client)
 
 	name, err := names.ParseVersion(req.GetName())
 	if err != nil {
@@ -91,11 +92,11 @@ func (s *RegistryServer) DeleteApiVersion(ctx context.Context, req *rpc.DeleteAp
 	}
 
 	// Deletion should only succeed on API versions that currently exist.
-	if _, err := getVersion(ctx, client, name); err != nil {
+	if _, err := db.GetVersion(ctx, name); err != nil {
 		return nil, err
 	}
 
-	if err := deleteVersion(ctx, client, name); err != nil {
+	if err := db.DeleteVersion(ctx, name); err != nil {
 		return nil, err
 	}
 
@@ -110,13 +111,14 @@ func (s *RegistryServer) GetApiVersion(ctx context.Context, req *rpc.GetApiVersi
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
+	db := dao.NewDAO(client)
 
 	name, err := names.ParseVersion(req.GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
 
-	version, err := getVersion(ctx, client, name)
+	version, err := db.GetVersion(ctx, name)
 	if err != nil {
 		return nil, err
 	}
@@ -136,98 +138,43 @@ func (s *RegistryServer) ListApiVersions(ctx context.Context, req *rpc.ListApiVe
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
+	db := dao.NewDAO(client)
 
 	if req.GetPageSize() < 0 {
-		return nil, invalidArgumentError(fmt.Errorf("invalid page_size %q: must not be negative", req.GetPageSize()))
+		return nil, invalidArgumentError(fmt.Errorf("invalid page_size %d: must not be negative", req.GetPageSize()))
+	} else if req.GetPageSize() > 1000 {
+		req.PageSize = 1000
+	} else if req.GetPageSize() == 0 {
+		req.PageSize = 50
 	}
 
-	q := client.NewQuery(storage.VersionEntityName)
-	q, err = q.ApplyCursor(req.GetPageToken())
-	if err != nil {
-		return nil, invalidArgumentError(err)
-	}
 	parent, err := names.ParseApi(req.GetParent())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	if parent.ProjectID != "-" {
-		q = q.Require("ProjectID", parent.ProjectID)
-	}
-	if parent.ApiID != "-" {
-		q = q.Require("ApiID", parent.ApiID)
-	}
-	if parent.ProjectID != "-" && parent.ApiID != "-" {
-		if _, err := getApi(ctx, client, parent); err != nil {
-			return nil, err
-		}
-	} else if parent.ProjectID != "-" && parent.ApiID == "-" {
-		if _, err := getProject(ctx, client, parent.Project()); err != nil {
-			return nil, err
-		}
-	}
-	prg, err := createFilterOperator(req.GetFilter(),
-		[]filterArg{
-			{"name", filterArgTypeString},
-			{"project_id", filterArgTypeString},
-			{"api_id", filterArgTypeString},
-			{"version_id", filterArgTypeString},
-			{"display_name", filterArgTypeString},
-			{"description", filterArgTypeString},
-			{"create_time", filterArgTypeTimestamp},
-			{"update_time", filterArgTypeTimestamp},
-			{"state", filterArgTypeString},
-			{"labels", filterArgTypeStringMap},
-		})
+
+	listing, err := db.ListVersions(ctx, parent, dao.PageOptions{
+		Size:   req.GetPageSize(),
+		Filter: req.GetFilter(),
+		Token:  req.GetPageToken(),
+	})
 	if err != nil {
-		return nil, internalError(err)
+		return nil, err
 	}
-	var versionMessages []*rpc.ApiVersion
-	var version models.Version
-	it := client.Run(ctx, q)
-	pageSize := boundPageSize(req.GetPageSize())
-	for _, err = it.Next(&version); err == nil; _, err = it.Next(&version) {
-		if prg != nil {
-			filterInputs := map[string]interface{}{
-				"name":         version.Name(),
-				"project_id":   version.ProjectID,
-				"api_id":       version.ApiID,
-				"version_id":   version.VersionID,
-				"display_name": version.DisplayName,
-				"description":  version.Description,
-				"create_time":  version.CreateTime,
-				"update_time":  version.UpdateTime,
-				"state":        version.State,
-			}
-			filterInputs["labels"], err = version.LabelsMap()
-			if err != nil {
-				return nil, internalError(err)
-			}
-			out, _, err := prg.Eval(filterInputs)
-			if err != nil {
-				return nil, invalidArgumentError(err)
-			} else if v, ok := out.Value().(bool); !ok {
-				return nil, invalidArgumentError(fmt.Errorf("expression does not evaluate to a boolean (instead yielding %T)", out.Value()))
-			} else if !v {
-				continue
-			}
-		}
-		versionMessage, _ := version.Message(req.GetView())
-		versionMessages = append(versionMessages, versionMessage)
-		if len(versionMessages) == pageSize {
-			break
+
+	response := &rpc.ListApiVersionsResponse{
+		ApiVersions:   make([]*rpc.ApiVersion, len(listing.Versions)),
+		NextPageToken: listing.Token,
+	}
+
+	for i, version := range listing.Versions {
+		response.ApiVersions[i], err = version.Message(req.GetView())
+		if err != nil {
+			return nil, internalError(err)
 		}
 	}
-	if err != nil && err != iterator.Done {
-		return nil, internalError(err)
-	}
-	responses := &rpc.ListApiVersionsResponse{
-		ApiVersions: versionMessages,
-	}
-	responses.NextPageToken, err = it.GetCursor(len(versionMessages))
-	if err != nil {
-		return nil, internalError(err)
-	}
-	return responses, nil
+
+	return response, nil
 }
 
 // UpdateApiVersion handles the corresponding API request.
@@ -237,6 +184,7 @@ func (s *RegistryServer) UpdateApiVersion(ctx context.Context, req *rpc.UpdateAp
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
+	db := dao.NewDAO(client)
 
 	if req.GetApiVersion() == nil {
 		return nil, invalidArgumentError(fmt.Errorf("invalid api_version %+v: body must be provided", req.GetApiVersion()))
@@ -247,7 +195,7 @@ func (s *RegistryServer) UpdateApiVersion(ctx context.Context, req *rpc.UpdateAp
 		return nil, invalidArgumentError(err)
 	}
 
-	version, err := getVersion(ctx, client, name)
+	version, err := db.GetVersion(ctx, name)
 	if err != nil {
 		return nil, err
 	}
@@ -256,7 +204,7 @@ func (s *RegistryServer) UpdateApiVersion(ctx context.Context, req *rpc.UpdateAp
 		return nil, internalError(err)
 	}
 
-	if err := saveVersion(ctx, client, version); err != nil {
+	if err := db.SaveVersion(ctx, version); err != nil {
 		return nil, err
 	}
 
@@ -267,38 +215,4 @@ func (s *RegistryServer) UpdateApiVersion(ctx context.Context, req *rpc.UpdateAp
 
 	s.notify(rpc.Notification_UPDATED, name.String())
 	return message, nil
-}
-
-func saveVersion(ctx context.Context, client storage.Client, version *models.Version) error {
-	k := client.NewKey(storage.VersionEntityName, version.Name())
-	if _, err := client.Put(ctx, k, version); err != nil {
-		return internalError(err)
-	}
-
-	return nil
-}
-
-func getVersion(ctx context.Context, client storage.Client, name names.Version) (*models.Version, error) {
-	version := new(models.Version)
-	k := client.NewKey(storage.VersionEntityName, name.String())
-	if err := client.Get(ctx, k, version); client.IsNotFound(err) {
-		return nil, notFoundError(fmt.Errorf("api version %q not found", name))
-	} else if err != nil {
-		return nil, internalError(err)
-	}
-
-	return version, nil
-}
-
-func deleteVersion(ctx context.Context, client storage.Client, name names.Version) error {
-	if err := client.DeleteChildrenOfVersion(ctx, name); err != nil {
-		return internalError(err)
-	}
-
-	k := client.NewKey(storage.VersionEntityName, name.String())
-	if err := client.Delete(ctx, k); err != nil {
-		return internalError(err)
-	}
-
-	return nil
 }

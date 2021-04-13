@@ -210,7 +210,7 @@ func (s *RegistryServer) ListArtifacts(ctx context.Context, req *rpc.ListArtifac
 	responses := &rpc.ListArtifactsResponse{
 		Artifacts: artifactMessages,
 	}
-	responses.NextPageToken, err = it.GetCursor(len(artifactMessages))
+	responses.NextPageToken, err = it.GetCursor()
 	if err != nil {
 		return nil, internalError(err)
 	}

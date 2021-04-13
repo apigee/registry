@@ -1,0 +1,165 @@
+// Copyright 2020 Google LLC. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//    http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package dao
+
+import (
+	"context"
+
+	"github.com/apigee/registry/server/models"
+	"github.com/apigee/registry/server/names"
+	"github.com/apigee/registry/server/storage"
+	"github.com/apigee/registry/server/storage/filtering"
+	"google.golang.org/api/iterator"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+)
+
+// VersionList contains a page of version resources.
+type VersionList struct {
+	Versions []models.Version
+	Token    string
+}
+
+var versionFields = []filtering.Field{
+	{Name: "name", Type: filtering.String},
+	{Name: "project_id", Type: filtering.String},
+	{Name: "api_id", Type: filtering.String},
+	{Name: "version_id", Type: filtering.String},
+	{Name: "display_name", Type: filtering.String},
+	{Name: "description", Type: filtering.String},
+	{Name: "create_time", Type: filtering.Timestamp},
+	{Name: "update_time", Type: filtering.Timestamp},
+	{Name: "state", Type: filtering.String},
+	{Name: "labels", Type: filtering.StringMap},
+}
+
+func (d *DAO) ListVersions(ctx context.Context, parent names.Api, opts PageOptions) (VersionList, error) {
+	q := d.NewQuery(storage.VersionEntityName)
+	q, err := q.ApplyCursor(opts.Token)
+	if err != nil {
+		return VersionList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
+	}
+
+	if parent.ProjectID != "-" {
+		q = q.Require("ProjectID", parent.ProjectID)
+	}
+	if parent.ApiID != "-" {
+		q = q.Require("ApiID", parent.ApiID)
+	}
+	if parent.ProjectID != "-" && parent.ApiID != "-" {
+		if _, err := d.GetApi(ctx, parent); err != nil {
+			return VersionList{}, err
+		}
+	} else if parent.ProjectID != "-" && parent.ApiID == "-" {
+		if _, err := d.GetProject(ctx, parent.Project()); err != nil {
+			return VersionList{}, err
+		}
+	}
+
+	filter, err := filtering.NewFilter(opts.Filter, versionFields)
+	if err != nil {
+		return VersionList{}, err
+	}
+
+	it := d.Run(ctx, q)
+	response := VersionList{
+		Versions: make([]models.Version, 0, opts.Size),
+	}
+
+	version := new(models.Version)
+	for _, err = it.Next(version); err == nil; _, err = it.Next(version) {
+		versionMap, err := versionMap(*version)
+		if err != nil {
+			return response, status.Error(codes.Internal, err.Error())
+		}
+
+		match, err := filter.Matches(versionMap)
+		if err != nil {
+			return response, err
+		} else if !match {
+			continue
+		}
+
+		response.Versions = append(response.Versions, *version)
+		if len(response.Versions) == int(opts.Size) {
+			break
+		}
+	}
+	if err != nil && err != iterator.Done {
+		return response, status.Error(codes.Internal, err.Error())
+	}
+
+	if err == nil {
+		response.Token, err = it.GetCursor()
+		if err != nil {
+			return response, status.Error(codes.Internal, err.Error())
+		}
+	}
+
+	return response, nil
+}
+
+func versionMap(version models.Version) (map[string]interface{}, error) {
+	labels, err := version.LabelsMap()
+	if err != nil {
+		return nil, err
+	}
+
+	return map[string]interface{}{
+		"name":         version.Name(),
+		"project_id":   version.ProjectID,
+		"version_id":   version.VersionID,
+		"display_name": version.DisplayName,
+		"description":  version.Description,
+		"create_time":  version.CreateTime,
+		"update_time":  version.UpdateTime,
+		"state":        version.State,
+		"labels":       labels,
+	}, nil
+}
+
+func (d *DAO) GetVersion(ctx context.Context, name names.Version) (*models.Version, error) {
+	version := new(models.Version)
+	k := d.NewKey(storage.VersionEntityName, name.String())
+	if err := d.Get(ctx, k, version); d.IsNotFound(err) {
+		return nil, status.Errorf(codes.NotFound, "api version %q not found in database", name)
+	} else if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return version, nil
+}
+
+func (d *DAO) SaveVersion(ctx context.Context, version *models.Version) error {
+	k := d.NewKey(storage.VersionEntityName, version.Name())
+	if _, err := d.Put(ctx, k, version); err != nil {
+		return status.Error(codes.Internal, err.Error())
+	}
+
+	return nil
+}
+
+func (d *DAO) DeleteVersion(ctx context.Context, name names.Version) error {
+	if err := d.DeleteChildrenOfVersion(ctx, name); err != nil {
+		return status.Error(codes.Internal, err.Error())
+	}
+
+	k := d.NewKey(storage.VersionEntityName, name.String())
+	if err := d.Delete(ctx, k); err != nil {
+		return status.Error(codes.Internal, err.Error())
+	}
+
+	return nil
+}
