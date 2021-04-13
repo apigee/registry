@@ -211,6 +211,9 @@ func (s *RegistryServer) ListArtifacts(ctx context.Context, req *rpc.ListArtifac
 		Artifacts: artifactMessages,
 	}
 	responses.NextPageToken, err = it.GetCursor()
+	if responses.NextPageToken == req.PageToken {
+		responses.NextPageToken = ""
+	}
 	if err != nil {
 		return nil, internalError(err)
 	}
