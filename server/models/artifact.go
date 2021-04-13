@@ -153,7 +153,8 @@ func (artifact *Artifact) Message(blob *Blob) (message *rpc.Artifact, err error)
 	if blob != nil {
 		message.Contents = blob.Contents
 	}
-	return message, err
+
+	return message, nil
 }
 
 // Update modifies an artifact using the contents of a message.

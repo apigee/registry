@@ -180,7 +180,7 @@ func (s *Spec) BasicMessage(name string) (message *rpc.ApiSpec, err error) {
 		return nil, err
 	}
 
-	return message, err
+	return message, nil
 }
 
 // Update modifies a spec using the contents of a message.
