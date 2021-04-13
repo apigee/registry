@@ -83,6 +83,7 @@ END
 # patch the generated GAPIC to send Authorization tokens with insecure requests
 # (this allows the registry command line tools to test container builds)
 sed -i.bak 's/return metadata.NewOutgoingContext(ctx, out)/insecure := os.Getenv("APG_REGISTRY_INSECURE")\ntoken := os.Getenv("APG_REGISTRY_TOKEN")\nif insecure == "1" \&\& token != "" \{ \nout["authorization"] = append(out["authorization"], "Bearer "+token) \n\}\nreturn metadata.NewOutgoingContext(ctx, out)/' gapic/doc.go
+rm gapic/doc.go.bak
 gofmt -w gapic/doc.go
 
 echo "Generating GAPIC-based CLI."
