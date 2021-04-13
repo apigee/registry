@@ -252,11 +252,6 @@ func (s *RegistryServer) ReplaceArtifact(ctx context.Context, req *rpc.ReplaceAr
 	return artifact.Message(nil)
 }
 
-// TODO: remove this function
-func contentsForArtifact(artifact *rpc.Artifact) []byte {
-	return artifact.Contents
-}
-
 // fetchBlobForArtifact gets the blob containing the artifact contents.
 func fetchBlobForArtifact(
 	ctx context.Context,

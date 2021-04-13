@@ -24,24 +24,6 @@ import (
 	"github.com/golang/protobuf/ptypes"
 )
 
-// ArtifactValueType is an enum representing the types of values stored in artifacts.
-type ArtifactValueType int
-
-const (
-	// StringType indicates that the stored artifact is a string.
-	StringType ArtifactValueType = iota
-	// Int64Type indicates that the stored artifact is an integer.
-	Int64Type
-	// DoubleType indicates that the stored artifact is a double
-	DoubleType
-	// BoolType indicates that the stored artifact is a boolean.
-	BoolType
-	// BytesType indicates that the stored artifact is a range of bytes.
-	BytesType
-	// AnyType indicates that the stored artifact is a protobuf "Any" type.
-	AnyType
-)
-
 // Artifact is the storage-side representation of an artifact.
 type Artifact struct {
 	Key         string    `datastore:"-" gorm:"primaryKey"`
