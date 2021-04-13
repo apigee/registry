@@ -27,7 +27,6 @@ import (
 type Query struct {
 	Kind         string
 	Cursor       string
-	Limit        int
 	Requirements []*Requirement
 }
 
@@ -40,9 +39,7 @@ type Requirement struct {
 // NewQuery creates a new query.
 func (c *Client) NewQuery(kind string) storage.Query {
 	return &Query{
-		Kind:   kind,
-		Cursor: "",
-		Limit:  50,
+		Kind: kind,
 	}
 }
 

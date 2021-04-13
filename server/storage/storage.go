@@ -69,5 +69,5 @@ type Query interface {
 
 type Iterator interface {
 	Next(interface{}) (Key, error)
-	GetCursor(l int) (string, error)
+	GetCursor() (string, error)
 }
