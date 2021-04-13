@@ -143,13 +143,23 @@ func (artifact *Artifact) ResourceName() string {
 
 // Message returns a message representing an artifact.
 func (artifact *Artifact) Message(blob *Blob) (message *rpc.Artifact, err error) {
-	message = &rpc.Artifact{}
-	message.Name = artifact.ResourceName()
+	message = &rpc.Artifact{
+		Name:      artifact.ResourceName(),
+		MimeType:  artifact.MimeType,
+		SizeBytes: artifact.SizeInBytes,
+		Hash:      artifact.Hash,
+	}
+
 	message.CreateTime, err = ptypes.TimestampProto(artifact.CreateTime)
+	if err != nil {
+		return nil, err
+	}
+
 	message.UpdateTime, err = ptypes.TimestampProto(artifact.UpdateTime)
-	message.MimeType = artifact.MimeType
-	message.SizeBytes = artifact.SizeInBytes
-	message.Hash = artifact.Hash
+	if err != nil {
+		return nil, err
+	}
+
 	if blob != nil {
 		message.Contents = blob.Contents
 	}
