@@ -43,6 +43,16 @@ func (p Project) Api(id string) Api {
 	}
 }
 
+// Artifact returns an artifact with the provided ID and this resource as its parent.
+func (p Project) Artifact(id string) Artifact {
+	return Artifact{
+		name: projectArtifact{
+			ProjectID:  p.ProjectID,
+			ArtifactID: id,
+		},
+	}
+}
+
 func (p Project) String() string {
 	return fmt.Sprintf("projects/%s", p.ProjectID)
 }

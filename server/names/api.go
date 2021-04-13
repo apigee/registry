@@ -52,6 +52,17 @@ func (a Api) Version(id string) Version {
 	}
 }
 
+// Artifact returns an artifact with the provided ID and this resource as its parent.
+func (a Api) Artifact(id string) Artifact {
+	return Artifact{
+		name: apiArtifact{
+			ProjectID:  a.ProjectID,
+			ApiID:      a.ApiID,
+			ArtifactID: id,
+		},
+	}
+}
+
 func (a Api) String() string {
 	return fmt.Sprintf("projects/%s/apis/%s", a.ProjectID, a.ApiID)
 }
