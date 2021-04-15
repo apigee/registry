@@ -144,7 +144,7 @@ func (s *Spec) FullMessage(blob *Blob, name string) (message *rpc.ApiSpec, err e
 	}
 
 	message.Contents = blob.Contents
-	return message, err
+	return message, nil
 }
 
 // BasicMessage returns the basic view of the spec resource as an RPC message.

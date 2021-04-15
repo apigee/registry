@@ -123,8 +123,19 @@ func (artifact *Artifact) Name() string {
 	}
 }
 
-// Message returns a message representing an artifact.
-func (artifact *Artifact) Message(blob *Blob) (message *rpc.Artifact, err error) {
+// FullMessage returns the full view of the artifact resource as an RPC message.
+func (artifact *Artifact) FullMessage(blob *Blob) (message *rpc.Artifact, err error) {
+	message, err = artifact.BasicMessage()
+	if err != nil {
+		return nil, err
+	}
+
+	message.Contents = blob.Contents
+	return message, nil
+}
+
+// BasicMessage returns the basic view of the artifact resource as an RPC message.
+func (artifact *Artifact) BasicMessage() (message *rpc.Artifact, err error) {
 	message = &rpc.Artifact{
 		Name:      artifact.Name(),
 		MimeType:  artifact.MimeType,
@@ -140,10 +151,6 @@ func (artifact *Artifact) Message(blob *Blob) (message *rpc.Artifact, err error)
 	message.UpdateTime, err = ptypes.TimestampProto(artifact.UpdateTime)
 	if err != nil {
 		return nil, err
-	}
-
-	if blob != nil {
-		message.Contents = blob.Contents
 	}
 
 	return message, nil

@@ -66,7 +66,7 @@ func (s *RegistryServer) CreateArtifact(ctx context.Context, req *rpc.CreateArti
 	}
 
 	s.notify(rpc.Notification_CREATED, artifact.Name())
-	return artifact.Message(blob)
+	return artifact.FullMessage(blob)
 }
 
 // DeleteArtifact handles the corresponding API request.
@@ -104,16 +104,31 @@ func (s *RegistryServer) GetArtifact(ctx context.Context, req *rpc.GetArtifactRe
 	}
 	k := client.NewKey(storage.ArtifactEntityName, artifact.Name())
 	err = client.Get(ctx, k, artifact)
-	var blob *models.Blob
-	if req.GetView() == rpc.View_FULL {
-		blob, _ = fetchBlobForArtifact(ctx, client, artifact)
-	}
 	if client.IsNotFound(err) {
 		return nil, status.Error(codes.NotFound, "not found")
 	} else if err != nil {
 		return nil, internalError(err)
 	}
-	return artifact.Message(blob)
+
+	var message *rpc.Artifact
+	if req.GetView() == rpc.View_FULL {
+		blob, err := fetchBlobForArtifact(ctx, client, artifact)
+		if err != nil {
+			return nil, internalError(err)
+		}
+
+		message, err = artifact.FullMessage(blob)
+		if err != nil {
+			return nil, internalError(err)
+		}
+	} else {
+		message, err = artifact.BasicMessage()
+		if err != nil {
+			return nil, internalError(err)
+		}
+	}
+
+	return message, nil
 }
 
 // ListArtifacts handles the corresponding API request.
@@ -194,11 +209,23 @@ func (s *RegistryServer) ListArtifacts(ctx context.Context, req *rpc.ListArtifac
 				continue
 			}
 		}
-		var blob *models.Blob
+		var artifactMessage *rpc.Artifact
 		if req.GetView() == rpc.View_FULL {
-			blob, _ = fetchBlobForArtifact(ctx, client, &artifact)
+			blob, err := fetchBlobForArtifact(ctx, client, &artifact)
+			if err != nil {
+				return nil, internalError(err)
+			}
+
+			artifactMessage, err = artifact.FullMessage(blob)
+			if err != nil {
+				return nil, internalError(err)
+			}
+		} else {
+			artifactMessage, err = artifact.BasicMessage()
+			if err != nil {
+				return nil, internalError(err)
+			}
 		}
-		artifactMessage, _ := artifact.Message(blob)
 		artifactMessages = append(artifactMessages, artifactMessage)
 		if len(artifactMessages) == pageSize {
 			break
@@ -249,7 +276,7 @@ func (s *RegistryServer) ReplaceArtifact(ctx context.Context, req *rpc.ReplaceAr
 			blob)
 	}
 	s.notify(rpc.Notification_UPDATED, artifact.Name())
-	return artifact.Message(nil)
+	return artifact.BasicMessage()
 }
 
 // fetchBlobForArtifact gets the blob containing the artifact contents.
