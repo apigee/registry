@@ -103,8 +103,8 @@ func NewArtifactFromResourceName(name string) (*Artifact, error) {
 	return NewArtifactFromParentAndArtifactID(parent, artifactID)
 }
 
-// ResourceName generates the resource name of an artifact.
-func (artifact *Artifact) ResourceName() string {
+// Name returns the resource name of the artifact.
+func (artifact *Artifact) Name() string {
 	switch {
 	case artifact.SpecID != "":
 		return fmt.Sprintf("projects/%s/apis/%s/versions/%s/specs/%s/artifacts/%s",
@@ -126,7 +126,7 @@ func (artifact *Artifact) ResourceName() string {
 // Message returns a message representing an artifact.
 func (artifact *Artifact) Message(blob *Blob) (message *rpc.Artifact, err error) {
 	message = &rpc.Artifact{
-		Name:      artifact.ResourceName(),
+		Name:      artifact.Name(),
 		MimeType:  artifact.MimeType,
 		SizeBytes: artifact.SizeInBytes,
 		Hash:      artifact.Hash,

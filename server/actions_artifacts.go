@@ -42,12 +42,12 @@ func (s *RegistryServer) CreateArtifact(ctx context.Context, req *rpc.CreateArti
 	// create a blob for the artifact contents
 	blob := models.NewBlobForArtifact(artifact, req.Artifact.GetContents())
 	artifact.Update(req.GetArtifact())
-	k := client.NewKey(storage.ArtifactEntityName, artifact.ResourceName())
+	k := client.NewKey(storage.ArtifactEntityName, artifact.Name())
 	// fail if artifact already exists
 	existingArtifact := &models.Artifact{}
 	err = client.Get(ctx, k, existingArtifact)
 	if err == nil {
-		return nil, status.Error(codes.AlreadyExists, artifact.ResourceName()+" already exists")
+		return nil, status.Error(codes.AlreadyExists, artifact.Name()+" already exists")
 	}
 	artifact.CreateTime = artifact.UpdateTime
 	k, err = client.Put(ctx, k, artifact)
@@ -55,7 +55,7 @@ func (s *RegistryServer) CreateArtifact(ctx context.Context, req *rpc.CreateArti
 		return nil, internalError(err)
 	}
 	if blob != nil {
-		k2 := client.NewKey(models.BlobEntityName, artifact.ResourceName())
+		k2 := client.NewKey(models.BlobEntityName, artifact.Name())
 		_, err = client.Put(ctx,
 			k2,
 			blob)
@@ -65,7 +65,7 @@ func (s *RegistryServer) CreateArtifact(ctx context.Context, req *rpc.CreateArti
 		return nil, internalError(err)
 	}
 
-	s.notify(rpc.Notification_CREATED, artifact.ResourceName())
+	s.notify(rpc.Notification_CREATED, artifact.Name())
 	return artifact.Message(blob)
 }
 
@@ -102,7 +102,7 @@ func (s *RegistryServer) GetArtifact(ctx context.Context, req *rpc.GetArtifactRe
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	k := client.NewKey(storage.ArtifactEntityName, artifact.ResourceName())
+	k := client.NewKey(storage.ArtifactEntityName, artifact.Name())
 	err = client.Get(ctx, k, artifact)
 	var blob *models.Blob
 	if req.GetView() == rpc.View_FULL {
@@ -243,12 +243,12 @@ func (s *RegistryServer) ReplaceArtifact(ctx context.Context, req *rpc.ReplaceAr
 		return nil, internalError(err)
 	}
 	if blob != nil {
-		k2 := client.NewKey(models.BlobEntityName, artifact.ResourceName())
+		k2 := client.NewKey(models.BlobEntityName, artifact.Name())
 		_, err = client.Put(ctx,
 			k2,
 			blob)
 	}
-	s.notify(rpc.Notification_UPDATED, artifact.ResourceName())
+	s.notify(rpc.Notification_UPDATED, artifact.Name())
 	return artifact.Message(nil)
 }
 
@@ -258,7 +258,7 @@ func fetchBlobForArtifact(
 	client storage.Client,
 	artifact *models.Artifact) (*models.Blob, error) {
 	blob := &models.Blob{}
-	k := client.NewKey(models.BlobEntityName, artifact.ResourceName())
+	k := client.NewKey(models.BlobEntityName, artifact.Name())
 	err := client.Get(ctx, k, blob)
 	return blob, err
 }
