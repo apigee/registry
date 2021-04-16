@@ -40,6 +40,28 @@ type Artifact struct {
 	Hash        string    // A hash of the spec.
 }
 
+// NewArtifact initializes a new resource.
+func NewArtifact(name names.Artifact, body *rpc.Artifact) *Artifact {
+	now := time.Now()
+	artifact := &Artifact{
+		ProjectID:  name.ProjectID(),
+		ApiID:      name.ApiID(),
+		VersionID:  name.VersionID(),
+		SpecID:     name.SpecID(),
+		ArtifactID: name.ArtifactID(),
+		CreateTime: now,
+		UpdateTime: now,
+		MimeType:   body.GetMimeType(),
+	}
+
+	if body.GetContents() != nil {
+		artifact.SizeInBytes = int32(len(body.GetContents()))
+		artifact.Hash = hashForBytes(body.GetContents())
+	}
+
+	return artifact
+}
+
 // NewArtifactFromParentAndArtifactID returns an initialized artifact for a specified parent and artifactID.
 func NewArtifactFromParentAndArtifactID(parent string, artifactID string) (*Artifact, error) {
 	// Return an error if the artifactID is invalid.

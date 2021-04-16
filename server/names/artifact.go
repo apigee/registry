@@ -34,6 +34,74 @@ type Artifact struct {
 	}
 }
 
+// ProjectID returns the artifact's project ID, or empty string if it doesn't have one.
+func (a Artifact) ProjectID() string {
+	switch name := a.name.(type) {
+	case projectArtifact:
+		return name.ProjectID
+	case apiArtifact:
+		return name.ProjectID
+	case versionArtifact:
+		return name.ProjectID
+	case specArtifact:
+		return name.ProjectID
+	default:
+		return ""
+	}
+}
+
+// ApiID returns the artifact's API ID, or empty string if it doesn't have one.
+func (a Artifact) ApiID() string {
+	switch name := a.name.(type) {
+	case apiArtifact:
+		return name.ApiID
+	case versionArtifact:
+		return name.ApiID
+	case specArtifact:
+		return name.ApiID
+	default:
+		return ""
+	}
+}
+
+// VersionID returns the artifact's version ID, or empty string if it doesn't have one.
+func (a Artifact) VersionID() string {
+	switch name := a.name.(type) {
+	case versionArtifact:
+		return name.VersionID
+	case specArtifact:
+		return name.VersionID
+	default:
+		return ""
+	}
+}
+
+// SpecID returns the artifact's spec ID, or empty string if it doesn't have one.
+func (a Artifact) SpecID() string {
+	switch name := a.name.(type) {
+	case specArtifact:
+		return name.SpecID
+	default:
+		return ""
+	}
+}
+
+// ArtifactID returns the artifact's ID.
+func (a Artifact) ArtifactID() string {
+	switch name := a.name.(type) {
+	case projectArtifact:
+		return name.ArtifactID
+	case apiArtifact:
+		return name.ArtifactID
+	case versionArtifact:
+		return name.ArtifactID
+	case specArtifact:
+		return name.ArtifactID
+	default:
+		return ""
+	}
+}
+
 // Validate returns an error if the resource name is invalid.
 // For backward compatibility, names should only be validated at creation time.
 func (a Artifact) Validate() error {
