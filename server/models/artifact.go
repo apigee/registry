@@ -31,7 +31,6 @@ type Artifact struct {
 	ApiID       string    // Api associated with artifact (if appropriate).
 	VersionID   string    // Version associated with artifact (if appropriate).
 	SpecID      string    // Spec associated with artifact (if appropriate).
-	RevisionID  string    // Spec revision id (if appropriate).
 	ArtifactID  string    // Artifact identifier (required).
 	CreateTime  time.Time // Creation time.
 	UpdateTime  time.Time // Time of last change.
