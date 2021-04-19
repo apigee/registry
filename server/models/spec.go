@@ -273,6 +273,10 @@ func newRevisionID() string {
 }
 
 func hashForBytes(b []byte) string {
+	if len(b) == 0 {
+		return ""
+	}
+
 	h := sha256.New()
 	h.Write(b)
 	bs := h.Sum(nil)
