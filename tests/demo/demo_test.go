@@ -196,6 +196,7 @@ func TestDemo(t *testing.T) {
 		req := &rpc.CreateApiVersionRequest{
 			Parent:       "projects/demo/apis/petstore",
 			ApiVersionId: "1.0.0",
+			ApiVersion:   &rpc.ApiVersion{},
 		}
 		_, err := registryClient.CreateApiVersion(ctx, req)
 		check(t, "error creating version %s", err)
