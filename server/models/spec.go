@@ -220,7 +220,9 @@ func (s *Spec) Update(message *rpc.ApiSpec, mask *fieldmaskpb.FieldMask) error {
 		if description != "" {
 			s.Description = description
 		}
-		s.updateContents(message.GetContents())
+		if contents := message.GetContents(); contents != nil {
+			s.updateContents(message.GetContents())
+		}
 		mimeType := message.GetMimeType()
 		if mimeType != "" {
 			s.MimeType = mimeType
