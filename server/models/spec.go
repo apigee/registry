@@ -194,16 +194,7 @@ func (s *Spec) Update(message *rpc.ApiSpec, mask *fieldmaskpb.FieldMask) error {
 			case "description":
 				s.Description = message.GetDescription()
 			case "contents":
-				contents := message.GetContents()
-				// Save some properties of the spec contents.
-				// The bytes of the contents are stored in a Blob.
-				hash := hashForBytes(contents)
-				if s.Hash != hash {
-					s.Hash = hash
-					s.RevisionID = newRevisionID()
-					s.CreateTime = now
-				}
-				s.SizeInBytes = int32(len(contents))
+				s.updateContents(message.GetContents())
 			case "mime_type":
 				s.MimeType = message.GetMimeType()
 			case "source_uri":
@@ -229,18 +220,7 @@ func (s *Spec) Update(message *rpc.ApiSpec, mask *fieldmaskpb.FieldMask) error {
 		if description != "" {
 			s.Description = description
 		}
-		contents := message.GetContents()
-		if contents != nil {
-			// Save some properties of the spec contents.
-			// The bytes of the contents are stored in a Blob.
-			hash := hashForBytes(contents)
-			if s.Hash != hash {
-				s.Hash = hash
-				s.RevisionID = newRevisionID()
-				s.RevisionCreateTime = now
-			}
-			s.SizeInBytes = int32(len(contents))
-		}
+		s.updateContents(message.GetContents())
 		mimeType := message.GetMimeType()
 		if mimeType != "" {
 			s.MimeType = mimeType
@@ -260,6 +240,18 @@ func (s *Spec) Update(message *rpc.ApiSpec, mask *fieldmaskpb.FieldMask) error {
 	s.Currency = IsCurrent
 	s.RevisionUpdateTime = now
 	return nil
+}
+
+func (s *Spec) updateContents(contents []byte) {
+	if hash := hashForBytes(contents); hash != s.Hash {
+		s.Hash = hash
+		s.RevisionID = newRevisionID()
+		s.SizeInBytes = int32(len(contents))
+
+		now := time.Now()
+		s.RevisionCreateTime = now
+		s.RevisionUpdateTime = now
+	}
 }
 
 // LabelsMap returns a map representation of stored labels.
