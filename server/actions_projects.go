@@ -34,6 +34,10 @@ func (s *RegistryServer) CreateProject(ctx context.Context, req *rpc.CreateProje
 	defer s.releaseStorageClient(client)
 	db := dao.NewDAO(client)
 
+	if req.GetProject() == nil {
+		return nil, invalidArgumentError(fmt.Errorf("invalid project %+v: body must be provided", req.GetProject()))
+	}
+
 	name := names.Project{}
 	if req.GetProjectId() != "" {
 		name.ProjectID = req.GetProjectId()

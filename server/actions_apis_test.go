@@ -180,6 +180,7 @@ func TestCreateApiResponseCodes(t *testing.T) {
 
 	tests := []struct {
 		desc string
+		seed *rpc.Project
 		req  *rpc.CreateApiRequest
 		want codes.Code
 	}{
@@ -190,6 +191,15 @@ func TestCreateApiResponseCodes(t *testing.T) {
 				Api:    fullApi,
 			},
 			want: codes.NotFound,
+		},
+		{
+			desc: "missing resource body",
+			seed: &rpc.Project{Name: "projects/my-project"},
+			req: &rpc.CreateApiRequest{
+				Parent: "projects/my-project",
+				Api:    nil,
+			},
+			want: codes.InvalidArgument,
 		},
 		{
 			desc: "short custom identifier",

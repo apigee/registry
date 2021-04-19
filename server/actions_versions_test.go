@@ -177,6 +177,7 @@ func TestCreateApiVersionResponseCodes(t *testing.T) {
 
 	tests := []struct {
 		desc string
+		seed *rpc.Api
 		req  *rpc.CreateApiVersionRequest
 		want codes.Code
 	}{
@@ -187,6 +188,15 @@ func TestCreateApiVersionResponseCodes(t *testing.T) {
 				ApiVersion: fullVersion,
 			},
 			want: codes.NotFound,
+		},
+		{
+			desc: "missing resource body",
+			seed: &rpc.Api{Name: "projects/my-project/apis/my-api"},
+			req: &rpc.CreateApiVersionRequest{
+				Parent:     "projects/my-project/apis/my-api",
+				ApiVersion: nil,
+			},
+			want: codes.InvalidArgument,
 		},
 		{
 			desc: "short custom identifier",
@@ -234,6 +244,7 @@ func TestCreateApiVersionResponseCodes(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
+			seedApis(ctx, t, server, test.seed)
 
 			if _, err := server.CreateApiVersion(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("CreateApiVersion(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
