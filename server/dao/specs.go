@@ -138,11 +138,13 @@ func specMap(spec models.Spec) (map[string]interface{}, error) {
 		"spec_id":              spec.SpecID,
 		"filename":             spec.FileName,
 		"description":          spec.Description,
+		"revision_id":          spec.RevisionID,
 		"create_time":          spec.CreateTime,
 		"revision_create_time": spec.RevisionCreateTime,
 		"revision_update_time": spec.RevisionUpdateTime,
 		"mime_type":            spec.MimeType,
 		"size_bytes":           spec.SizeInBytes,
+		"hash":                 spec.Hash,
 		"source_uri":           spec.SourceURI,
 		"labels":               labels,
 	}, nil
