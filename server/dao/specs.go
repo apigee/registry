@@ -43,7 +43,7 @@ var specFields = []filtering.Field{
 	{Name: "create_time", Type: filtering.Timestamp},
 	{Name: "revision_create_time", Type: filtering.Timestamp},
 	{Name: "revision_update_time", Type: filtering.Timestamp},
-	{Name: "mime_type", Type: filtering.Timestamp},
+	{Name: "mime_type", Type: filtering.String},
 	{Name: "size_bytes", Type: filtering.Int},
 	{Name: "source_uri", Type: filtering.String},
 	{Name: "labels", Type: filtering.StringMap},
