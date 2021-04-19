@@ -16,7 +16,6 @@ package models
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/apigee/registry/rpc"
@@ -59,69 +58,6 @@ func NewArtifact(name names.Artifact, body *rpc.Artifact) *Artifact {
 	}
 
 	return artifact
-}
-
-// NewArtifactFromParentAndArtifactID returns an initialized artifact for a specified parent and artifactID.
-func NewArtifactFromParentAndArtifactID(parent string, artifactID string) (*Artifact, error) {
-	// Return an error if the artifactID is invalid.
-	if err := names.ValidateID(artifactID); err != nil {
-		return nil, err
-	}
-	// Match regular expressions to identify the parent of this artifact.
-	var m []string
-	// Is the parent a project?
-	m = names.ProjectRegexp().FindStringSubmatch(parent)
-	if m != nil {
-		return &Artifact{
-			ProjectID:  m[1],
-			ArtifactID: artifactID,
-		}, nil
-	}
-	// Is the parent a api?
-	m = names.ApiRegexp().FindStringSubmatch(parent)
-	if m != nil {
-		return &Artifact{
-			ProjectID:  m[1],
-			ApiID:      m[2],
-			ArtifactID: artifactID,
-		}, nil
-	}
-	// Is the parent a version?
-	m = names.VersionRegexp().FindStringSubmatch(parent)
-	if m != nil {
-		return &Artifact{
-			ProjectID:  m[1],
-			ApiID:      m[2],
-			VersionID:  m[3],
-			ArtifactID: artifactID,
-		}, nil
-	}
-	// Is the parent a spec?
-	m = names.SpecRegexp().FindStringSubmatch(parent)
-	if m != nil {
-		return &Artifact{
-			ProjectID:  m[1],
-			ApiID:      m[2],
-			VersionID:  m[3],
-			SpecID:     m[4],
-			ArtifactID: artifactID,
-		}, nil
-	}
-	// Return an error for an unrecognized parent.
-	return nil, fmt.Errorf("invalid parent '%s'", parent)
-}
-
-// NewArtifactFromResourceName parses resource names and returns an initialized artifact.
-func NewArtifactFromResourceName(name string) (*Artifact, error) {
-	// split name into parts
-	parts := strings.Split(name, "/")
-	if len(parts) < 2 || parts[len(parts)-2] != "artifacts" {
-		return nil, fmt.Errorf("invalid artifact name '%s'", name)
-	}
-	// build artifact from parent and artifactID
-	parent := strings.Join(parts[0:len(parts)-2], "/")
-	artifactID := parts[len(parts)-1]
-	return NewArtifactFromParentAndArtifactID(parent, artifactID)
 }
 
 // Name returns the resource name of the artifact.
@@ -175,12 +111,4 @@ func (artifact *Artifact) BasicMessage() (message *rpc.Artifact, err error) {
 	}
 
 	return message, nil
-}
-
-// Update modifies an artifact using the contents of a message.
-func (artifact *Artifact) Update(message *rpc.Artifact) {
-	artifact.UpdateTime = time.Now()
-	artifact.MimeType = message.MimeType
-	artifact.SizeInBytes = int32(len(message.Contents))
-	artifact.Hash = hashForBytes(message.Contents)
 }
