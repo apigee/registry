@@ -43,7 +43,7 @@ var specFields = []filtering.Field{
 	{Name: "create_time", Type: filtering.Timestamp},
 	{Name: "revision_create_time", Type: filtering.Timestamp},
 	{Name: "revision_update_time", Type: filtering.Timestamp},
-	{Name: "mime_type", Type: filtering.Timestamp},
+	{Name: "mime_type", Type: filtering.String},
 	{Name: "size_bytes", Type: filtering.Int},
 	{Name: "source_uri", Type: filtering.String},
 	{Name: "labels", Type: filtering.StringMap},
@@ -138,11 +138,13 @@ func specMap(spec models.Spec) (map[string]interface{}, error) {
 		"spec_id":              spec.SpecID,
 		"filename":             spec.FileName,
 		"description":          spec.Description,
+		"revision_id":          spec.RevisionID,
 		"create_time":          spec.CreateTime,
 		"revision_create_time": spec.RevisionCreateTime,
 		"revision_update_time": spec.RevisionUpdateTime,
 		"mime_type":            spec.MimeType,
 		"size_bytes":           spec.SizeInBytes,
+		"hash":                 spec.Hash,
 		"source_uri":           spec.SourceURI,
 		"labels":               labels,
 	}, nil
@@ -163,15 +165,6 @@ func (d *DAO) GetSpec(ctx context.Context, name names.Spec) (*models.Spec, error
 	}
 
 	return spec, nil
-}
-
-func (d *DAO) SaveSpec(ctx context.Context, spec *models.Spec) error {
-	k := d.NewKey(storage.SpecEntityName, spec.Name())
-	if _, err := d.Put(ctx, k, spec); err != nil {
-		return status.Error(codes.Internal, err.Error())
-	}
-
-	return nil
 }
 
 func (d *DAO) DeleteSpec(ctx context.Context, name names.Spec) error {

@@ -35,6 +35,10 @@ func (s *RegistryServer) CreateApiSpec(ctx context.Context, req *rpc.CreateApiSp
 		return nil, invalidArgumentError(err)
 	}
 
+	if req.GetApiSpec() == nil {
+		return nil, invalidArgumentError(fmt.Errorf("invalid api_spec %+v: body must be provided", req.GetApiSpec()))
+	}
+
 	name := parent.Spec(req.GetApiSpecId())
 	if name.SpecID == "" {
 		name.SpecID = names.GenerateID()

@@ -144,7 +144,7 @@ func (s *Spec) FullMessage(blob *Blob, name string) (message *rpc.ApiSpec, err e
 	}
 
 	message.Contents = blob.Contents
-	return message, err
+	return message, nil
 }
 
 // BasicMessage returns the basic view of the spec resource as an RPC message.
@@ -180,7 +180,7 @@ func (s *Spec) BasicMessage(name string) (message *rpc.ApiSpec, err error) {
 		return nil, err
 	}
 
-	return message, err
+	return message, nil
 }
 
 // Update modifies a spec using the contents of a message.
@@ -194,16 +194,7 @@ func (s *Spec) Update(message *rpc.ApiSpec, mask *fieldmaskpb.FieldMask) error {
 			case "description":
 				s.Description = message.GetDescription()
 			case "contents":
-				contents := message.GetContents()
-				// Save some properties of the spec contents.
-				// The bytes of the contents are stored in a Blob.
-				hash := hashForBytes(contents)
-				if s.Hash != hash {
-					s.Hash = hash
-					s.RevisionID = newRevisionID()
-					s.CreateTime = now
-				}
-				s.SizeInBytes = int32(len(contents))
+				s.updateContents(message.GetContents())
 			case "mime_type":
 				s.MimeType = message.GetMimeType()
 			case "source_uri":
@@ -229,17 +220,8 @@ func (s *Spec) Update(message *rpc.ApiSpec, mask *fieldmaskpb.FieldMask) error {
 		if description != "" {
 			s.Description = description
 		}
-		contents := message.GetContents()
-		if contents != nil {
-			// Save some properties of the spec contents.
-			// The bytes of the contents are stored in a Blob.
-			hash := hashForBytes(contents)
-			if s.Hash != hash {
-				s.Hash = hash
-				s.RevisionID = newRevisionID()
-				s.RevisionCreateTime = now
-			}
-			s.SizeInBytes = int32(len(contents))
+		if contents := message.GetContents(); contents != nil {
+			s.updateContents(message.GetContents())
 		}
 		mimeType := message.GetMimeType()
 		if mimeType != "" {
@@ -262,6 +244,18 @@ func (s *Spec) Update(message *rpc.ApiSpec, mask *fieldmaskpb.FieldMask) error {
 	return nil
 }
 
+func (s *Spec) updateContents(contents []byte) {
+	if hash := hashForBytes(contents); hash != s.Hash {
+		s.Hash = hash
+		s.RevisionID = newRevisionID()
+		s.SizeInBytes = int32(len(contents))
+
+		now := time.Now()
+		s.RevisionCreateTime = now
+		s.RevisionUpdateTime = now
+	}
+}
+
 // LabelsMap returns a map representation of stored labels.
 func (s *Spec) LabelsMap() (map[string]string, error) {
 	return mapForBytes(s.Labels)
@@ -273,6 +267,10 @@ func newRevisionID() string {
 }
 
 func hashForBytes(b []byte) string {
+	if len(b) == 0 {
+		return ""
+	}
+
 	h := sha256.New()
 	h.Write(b)
 	bs := h.Sum(nil)
