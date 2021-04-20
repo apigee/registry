@@ -167,15 +167,6 @@ func (d *DAO) GetSpec(ctx context.Context, name names.Spec) (*models.Spec, error
 	return spec, nil
 }
 
-func (d *DAO) SaveSpec(ctx context.Context, spec *models.Spec) error {
-	k := d.NewKey(storage.SpecEntityName, spec.Name())
-	if _, err := d.Put(ctx, k, spec); err != nil {
-		return status.Error(codes.Internal, err.Error())
-	}
-
-	return nil
-}
-
 func (d *DAO) DeleteSpec(ctx context.Context, name names.Spec) error {
 	if err := d.DeleteChildrenOfSpec(ctx, name); err != nil {
 		return status.Error(codes.Internal, err.Error())
