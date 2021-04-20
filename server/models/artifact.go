@@ -16,33 +16,11 @@ package models
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
-	ptypes "github.com/golang/protobuf/ptypes"
-)
-
-// ArtifactEntityName is used to represent artifacts in storage.
-const ArtifactEntityName = "Artifact"
-
-// ArtifactValueType is an enum representing the types of values stored in artifacts.
-type ArtifactValueType int
-
-const (
-	// StringType indicates that the stored artifact is a string.
-	StringType ArtifactValueType = iota
-	// Int64Type indicates that the stored artifact is an integer.
-	Int64Type
-	// DoubleType indicates that the stored artifact is a double
-	DoubleType
-	// BoolType indicates that the stored artifact is a boolean.
-	BoolType
-	// BytesType indicates that the stored artifact is a range of bytes.
-	BytesType
-	// AnyType indicates that the stored artifact is a protobuf "Any" type.
-	AnyType
+	"github.com/golang/protobuf/ptypes"
 )
 
 // Artifact is the storage-side representation of an artifact.
@@ -52,7 +30,6 @@ type Artifact struct {
 	ApiID       string    // Api associated with artifact (if appropriate).
 	VersionID   string    // Version associated with artifact (if appropriate).
 	SpecID      string    // Spec associated with artifact (if appropriate).
-	RevisionID  string    // Spec revision id (if appropriate).
 	ArtifactID  string    // Artifact identifier (required).
 	CreateTime  time.Time // Creation time.
 	UpdateTime  time.Time // Time of last change.
@@ -61,71 +38,30 @@ type Artifact struct {
 	Hash        string    // A hash of the spec.
 }
 
-// NewArtifactFromParentAndArtifactID returns an initialized artifact for a specified parent and artifactID.
-func NewArtifactFromParentAndArtifactID(parent string, artifactID string) (*Artifact, error) {
-	// Return an error if the artifactID is invalid.
-	if err := names.ValidateID(artifactID); err != nil {
-		return nil, err
+// NewArtifact initializes a new resource.
+func NewArtifact(name names.Artifact, body *rpc.Artifact) *Artifact {
+	now := time.Now()
+	artifact := &Artifact{
+		ProjectID:  name.ProjectID(),
+		ApiID:      name.ApiID(),
+		VersionID:  name.VersionID(),
+		SpecID:     name.SpecID(),
+		ArtifactID: name.ArtifactID(),
+		CreateTime: now,
+		UpdateTime: now,
+		MimeType:   body.GetMimeType(),
 	}
-	// Match regular expressions to identify the parent of this artifact.
-	var m []string
-	// Is the parent a project?
-	m = names.ProjectRegexp().FindStringSubmatch(parent)
-	if m != nil {
-		return &Artifact{
-			ProjectID:  m[1],
-			ArtifactID: artifactID,
-		}, nil
+
+	if body.GetContents() != nil {
+		artifact.SizeInBytes = int32(len(body.GetContents()))
+		artifact.Hash = hashForBytes(body.GetContents())
 	}
-	// Is the parent a api?
-	m = names.ApiRegexp().FindStringSubmatch(parent)
-	if m != nil {
-		return &Artifact{
-			ProjectID:  m[1],
-			ApiID:      m[2],
-			ArtifactID: artifactID,
-		}, nil
-	}
-	// Is the parent a version?
-	m = names.VersionRegexp().FindStringSubmatch(parent)
-	if m != nil {
-		return &Artifact{
-			ProjectID:  m[1],
-			ApiID:      m[2],
-			VersionID:  m[3],
-			ArtifactID: artifactID,
-		}, nil
-	}
-	// Is the parent a spec?
-	m = names.SpecRegexp().FindStringSubmatch(parent)
-	if m != nil {
-		return &Artifact{
-			ProjectID:  m[1],
-			ApiID:      m[2],
-			VersionID:  m[3],
-			SpecID:     m[4],
-			ArtifactID: artifactID,
-		}, nil
-	}
-	// Return an error for an unrecognized parent.
-	return nil, fmt.Errorf("invalid parent '%s'", parent)
+
+	return artifact
 }
 
-// NewArtifactFromResourceName parses resource names and returns an initialized artifact.
-func NewArtifactFromResourceName(name string) (*Artifact, error) {
-	// split name into parts
-	parts := strings.Split(name, "/")
-	if len(parts) < 2 || parts[len(parts)-2] != "artifacts" {
-		return nil, fmt.Errorf("invalid artifact name '%s'", name)
-	}
-	// build artifact from parent and artifactID
-	parent := strings.Join(parts[0:len(parts)-2], "/")
-	artifactID := parts[len(parts)-1]
-	return NewArtifactFromParentAndArtifactID(parent, artifactID)
-}
-
-// ResourceName generates the resource name of an artifact.
-func (artifact *Artifact) ResourceName() string {
+// Name returns the resource name of the artifact.
+func (artifact *Artifact) Name() string {
 	switch {
 	case artifact.SpecID != "":
 		return fmt.Sprintf("projects/%s/apis/%s/versions/%s/specs/%s/artifacts/%s",
@@ -144,27 +80,35 @@ func (artifact *Artifact) ResourceName() string {
 	}
 }
 
-// Message returns a message representing an artifact.
-func (artifact *Artifact) Message(blob *Blob) (message *rpc.Artifact, err error) {
-	message = &rpc.Artifact{}
-	message.Name = artifact.ResourceName()
-	message.CreateTime, err = ptypes.TimestampProto(artifact.CreateTime)
-	message.UpdateTime, err = ptypes.TimestampProto(artifact.UpdateTime)
-	message.MimeType = artifact.MimeType
-	message.SizeBytes = artifact.SizeInBytes
-	message.Hash = artifact.Hash
-	if blob != nil {
-		message.Contents = blob.Contents
+// FullMessage returns the full view of the artifact resource as an RPC message.
+func (artifact *Artifact) FullMessage(blob *Blob) (message *rpc.Artifact, err error) {
+	message, err = artifact.BasicMessage()
+	if err != nil {
+		return nil, err
 	}
-	return message, err
+
+	message.Contents = blob.Contents
+	return message, nil
 }
 
-// Update modifies an artifact using the contents of a message.
-func (artifact *Artifact) Update(message *rpc.Artifact, blob *Blob) error {
-	artifact.UpdateTime = time.Now()
-	artifact.MimeType = message.MimeType
-	artifact.SizeInBytes = int32(len(message.Contents))
-	artifact.Hash = hashForBytes(message.Contents)
-	blob.Contents = message.Contents
-	return nil
+// BasicMessage returns the basic view of the artifact resource as an RPC message.
+func (artifact *Artifact) BasicMessage() (message *rpc.Artifact, err error) {
+	message = &rpc.Artifact{
+		Name:      artifact.Name(),
+		MimeType:  artifact.MimeType,
+		SizeBytes: artifact.SizeInBytes,
+		Hash:      artifact.Hash,
+	}
+
+	message.CreateTime, err = ptypes.TimestampProto(artifact.CreateTime)
+	if err != nil {
+		return nil, err
+	}
+
+	message.UpdateTime, err = ptypes.TimestampProto(artifact.UpdateTime)
+	if err != nil {
+		return nil, err
+	}
+
+	return message, nil
 }

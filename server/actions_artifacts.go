@@ -17,16 +17,31 @@ package server
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/server/dao"
 	"github.com/apigee/registry/server/models"
-	storage "github.com/apigee/registry/server/storage"
+	"github.com/apigee/registry/server/names"
 	"github.com/golang/protobuf/ptypes/empty"
-	"google.golang.org/api/iterator"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
+
+type artifactParent interface {
+	Artifact(string) names.Artifact
+}
+
+func parseArtifactParent(name string) (artifactParent, error) {
+	if s, err := names.ParseSpec(name); err == nil {
+		return s, nil
+	} else if v, err := names.ParseVersion(name); err == nil {
+		return v, nil
+	} else if a, err := names.ParseApi(name); err == nil {
+		return a, nil
+	} else if p, err := names.ParseProject(name); err == nil {
+		return p, nil
+	}
+
+	return nil, fmt.Errorf("invalid artifact parent %q", name)
+}
 
 // CreateArtifact handles the corresponding API request.
 func (s *RegistryServer) CreateArtifact(ctx context.Context, req *rpc.CreateArtifactRequest) (*rpc.Artifact, error) {
@@ -35,38 +50,64 @@ func (s *RegistryServer) CreateArtifact(ctx context.Context, req *rpc.CreateArti
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
-	artifact, err := models.NewArtifactFromParentAndArtifactID(req.GetParent(), req.GetArtifactId())
+	db := dao.NewDAO(client)
+
+	parent, err := parseArtifactParent(req.GetParent())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	// create a blob for the artifact contents
-	blob := models.NewBlobForArtifact(artifact, nil)
-	err = artifact.Update(req.GetArtifact(), blob)
-	k := client.NewKey(models.ArtifactEntityName, artifact.ResourceName())
-	// fail if artifact already exists
-	existingArtifact := &models.Artifact{}
-	err = client.Get(ctx, k, existingArtifact)
-	if err == nil {
-		return nil, status.Error(codes.AlreadyExists, artifact.ResourceName()+" already exists")
+
+	name := parent.Artifact(names.GenerateID())
+	if req.GetArtifactId() != "" {
+		name = parent.Artifact(req.GetArtifactId())
 	}
-	artifact.CreateTime = artifact.UpdateTime
-	k, err = client.Put(ctx, k, artifact)
+
+	if _, err := db.GetArtifact(ctx, name); err == nil {
+		return nil, alreadyExistsError(fmt.Errorf("artifact %q already exists", name))
+	} else if !isNotFound(err) {
+		return nil, err
+	}
+
+	if err := name.Validate(); err != nil {
+		return nil, invalidArgumentError(err)
+	}
+
+	// Creation should only succeed when the parent exists.
+	switch parent := parent.(type) {
+	case names.Project:
+		if _, err := db.GetProject(ctx, parent); err != nil {
+			return nil, err
+		}
+	case names.Api:
+		if _, err := db.GetApi(ctx, parent); err != nil {
+			return nil, err
+		}
+	case names.Version:
+		if _, err := db.GetVersion(ctx, parent); err != nil {
+			return nil, err
+		}
+	case names.Spec:
+		if _, err := db.GetSpec(ctx, parent); err != nil {
+			return nil, err
+		}
+	}
+
+	artifact := models.NewArtifact(name, req.GetArtifact())
+	if err := db.SaveArtifact(ctx, artifact); err != nil {
+		return nil, err
+	}
+
+	if err := db.SaveArtifactContents(ctx, artifact, req.Artifact.GetContents()); err != nil {
+		return nil, err
+	}
+
+	message, err := artifact.BasicMessage()
 	if err != nil {
-		return nil, internalError(err)
-	}
-	if blob != nil {
-		k2 := client.NewKey(models.BlobEntityName, artifact.ResourceName())
-		_, err = client.Put(ctx,
-			k2,
-			blob)
-	}
-	if err != nil {
-		log.Printf("save blob error %+v", err)
 		return nil, internalError(err)
 	}
 
-	s.notify(rpc.Notification_CREATED, artifact.ResourceName())
-	return artifact.Message(blob)
+	s.notify(rpc.Notification_CREATED, name.String())
+	return message, nil
 }
 
 // DeleteArtifact handles the corresponding API request.
@@ -76,19 +117,24 @@ func (s *RegistryServer) DeleteArtifact(ctx context.Context, req *rpc.DeleteArti
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
-	// Validate name and create dummy artifact (we just need the ID fields).
-	_, err = models.NewArtifactFromResourceName(req.GetName())
+	db := dao.NewDAO(client)
+
+	name, err := names.ParseArtifact(req.GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	// Delete the artifact.
-	k := client.NewKey(models.ArtifactEntityName, req.GetName())
-	err = client.Delete(ctx, k)
-	// Delete any blob associated with the artifact.
-	k2 := client.NewKey(models.BlobEntityName, req.GetName())
-	err = client.Delete(ctx, k2)
-	s.notify(rpc.Notification_DELETED, req.GetName())
-	return &empty.Empty{}, internalError(err)
+
+	// Deletion should only succeed on artifacts that currently exist.
+	if _, err := db.GetArtifact(ctx, name); err != nil {
+		return nil, err
+	}
+
+	if err := db.DeleteArtifact(ctx, name); err != nil {
+		return nil, err
+	}
+
+	s.notify(rpc.Notification_DELETED, name.String())
+	return &empty.Empty{}, nil
 }
 
 // GetArtifact handles the corresponding API request.
@@ -98,22 +144,42 @@ func (s *RegistryServer) GetArtifact(ctx context.Context, req *rpc.GetArtifactRe
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
-	artifact, err := models.NewArtifactFromResourceName(req.GetName())
+	db := dao.NewDAO(client)
+
+	name, err := names.ParseArtifact(req.GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	k := client.NewKey(models.ArtifactEntityName, artifact.ResourceName())
-	err = client.Get(ctx, k, artifact)
-	var blob *models.Blob
-	if req.GetView() == rpc.View_FULL {
-		blob, _ = fetchBlobForArtifact(ctx, client, artifact)
+
+	artifact, err := db.GetArtifact(ctx, name)
+	if err != nil {
+		return nil, err
 	}
-	if client.IsNotFound(err) {
-		return nil, status.Error(codes.NotFound, "not found")
-	} else if err != nil {
-		return nil, internalError(err)
+
+	var message *rpc.Artifact
+	switch req.GetView() {
+	case rpc.View_FULL:
+		blob, err := db.GetArtifactContents(ctx, name)
+		if err != nil {
+			return nil, err
+		}
+
+		message, err = artifact.FullMessage(blob)
+		if err != nil {
+			return nil, internalError(err)
+		}
+
+	case rpc.View_BASIC, rpc.View_VIEW_UNSPECIFIED:
+		message, err = artifact.BasicMessage()
+		if err != nil {
+			return nil, internalError(err)
+		}
+
+	default:
+		return nil, invalidArgumentError(fmt.Errorf("unknown view type %v", req.GetView()))
 	}
-	return artifact.Message(blob)
+
+	return message, nil
 }
 
 // ListArtifacts handles the corresponding API request.
@@ -123,101 +189,87 @@ func (s *RegistryServer) ListArtifacts(ctx context.Context, req *rpc.ListArtifac
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
-	q := client.NewQuery(models.ArtifactEntityName)
-	q, err = q.ApplyCursor(req.GetPageToken())
-	if err != nil {
-		return nil, internalError(err)
+	db := dao.NewDAO(client)
+
+	if req.GetPageSize() < 0 {
+		return nil, invalidArgumentError(fmt.Errorf("invalid page_size %d: must not be negative", req.GetPageSize()))
+	} else if req.GetPageSize() > 1000 {
+		req.PageSize = 1000
+	} else if req.GetPageSize() == 0 {
+		req.PageSize = 50
 	}
-	p, err := models.NewArtifactFromParentAndArtifactID(req.GetParent(), "-")
+
+	parent, err := parseArtifactParent(req.GetParent())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	if p.ProjectID != "-" {
-		q = q.Require("ProjectID", p.ProjectID)
-	}
-	if p.ApiID != "-" {
-		q = q.Require("ApiID", p.ApiID)
-	}
-	if p.VersionID != "-" {
-		q = q.Require("VersionID", p.VersionID)
-	}
-	if p.SpecID != "-" {
-		q = q.Require("SpecID", p.SpecID)
-	}
-	prg, err := createFilterOperator(req.GetFilter(),
-		[]filterArg{
-			{"project_id", filterArgTypeString},
-			{"api_id", filterArgTypeString},
-			{"version_id", filterArgTypeString},
-			{"spec_id", filterArgTypeString},
-			{"artifact_id", filterArgTypeString},
-			{"create_time", filterArgTypeTimestamp},
-			{"update_time", filterArgTypeTimestamp},
+
+	var listing dao.ArtifactList
+	switch parent := parent.(type) {
+	case names.Project:
+		listing, err = db.ListProjectArtifacts(ctx, parent, dao.PageOptions{
+			Size:   req.GetPageSize(),
+			Filter: req.GetFilter(),
+			Token:  req.GetPageToken(),
 		})
-	if err != nil {
-		return nil, invalidArgumentError(err)
+	case names.Api:
+		listing, err = db.ListApiArtifacts(ctx, parent, dao.PageOptions{
+			Size:   req.GetPageSize(),
+			Filter: req.GetFilter(),
+			Token:  req.GetPageToken(),
+		})
+	case names.Version:
+		listing, err = db.ListVersionArtifacts(ctx, parent, dao.PageOptions{
+			Size:   req.GetPageSize(),
+			Filter: req.GetFilter(),
+			Token:  req.GetPageToken(),
+		})
+	case names.Spec:
+		listing, err = db.ListSpecArtifacts(ctx, parent, dao.PageOptions{
+			Size:   req.GetPageSize(),
+			Filter: req.GetFilter(),
+			Token:  req.GetPageToken(),
+		})
 	}
-	var artifactMessages []*rpc.Artifact
-	var artifact models.Artifact
-	it := client.Run(ctx, q)
-	pageSize := boundPageSize(req.GetPageSize())
-	for _, err = it.Next(&artifact); err == nil; _, err = it.Next(&artifact) {
-		// don't allow wildcarded-names to be empty
-		if p.SpecID == "-" && artifact.SpecID == "" {
-			continue
-		}
-		if p.VersionID == "-" && artifact.VersionID == "" {
-			continue
-		}
-		if p.ApiID == "-" && artifact.ApiID == "" {
-			continue
-		}
-		if p.ProjectID == "-" && artifact.ProjectID == "" {
-			continue
-		}
-		if prg != nil {
-			out, _, err := prg.Eval(map[string]interface{}{
-				"project_id":  artifact.ProjectID,
-				"api_id":      artifact.ApiID,
-				"version_id":  artifact.VersionID,
-				"spec_id":     artifact.SpecID,
-				"artifact_id": artifact.ArtifactID,
-				"create_time": artifact.CreateTime,
-				"update_time": artifact.UpdateTime,
-			})
+	if err != nil {
+		return nil, err
+	}
+
+	response := &rpc.ListArtifactsResponse{
+		Artifacts:     make([]*rpc.Artifact, len(listing.Artifacts)),
+		NextPageToken: listing.Token,
+	}
+
+	for i, artifact := range listing.Artifacts {
+		switch req.GetView() {
+		case rpc.View_FULL:
+			name, err := names.ParseArtifact(artifact.Name())
 			if err != nil {
-				return nil, invalidArgumentError(err)
+				return nil, internalError(err)
 			}
-			if v, ok := out.Value().(bool); !ok {
-				return nil, invalidArgumentError(fmt.Errorf("expression does not evaluate to a boolean (instead yielding %T)", out.Value()))
-			} else if !v {
-				continue
+
+			blob, err := db.GetArtifactContents(ctx, name)
+			if err != nil {
+				return nil, internalError(err)
 			}
+
+			response.Artifacts[i], err = artifact.FullMessage(blob)
+			if err != nil {
+				return nil, internalError(err)
+			}
+
+		case rpc.View_BASIC, rpc.View_VIEW_UNSPECIFIED:
+			response.Artifacts[i], err = artifact.BasicMessage()
+			if err != nil {
+				return nil, internalError(err)
+			}
+
+		default:
+			return nil, invalidArgumentError(fmt.Errorf("unknown view type %v", req.GetView()))
 		}
-		var blob *models.Blob
-		if req.GetView() == rpc.View_FULL {
-			blob, _ = fetchBlobForArtifact(ctx, client, &artifact)
-		}
-		artifactMessage, _ := artifact.Message(blob)
-		artifactMessages = append(artifactMessages, artifactMessage)
-		if len(artifactMessages) == pageSize {
-			break
-		}
 	}
-	if err != nil && err != iterator.Done {
-		return nil, internalError(err)
-	}
-	responses := &rpc.ListArtifactsResponse{
-		Artifacts: artifactMessages,
-	}
-	responses.NextPageToken, err = it.GetCursor()
-	if responses.NextPageToken == req.PageToken {
-		responses.NextPageToken = ""
-	}
-	if err != nil {
-		return nil, internalError(err)
-	}
-	return responses, nil
+
+	return response, nil
 }
 
 // ReplaceArtifact handles the corresponding API request.
@@ -227,46 +279,27 @@ func (s *RegistryServer) ReplaceArtifact(ctx context.Context, req *rpc.ReplaceAr
 		return nil, unavailableError(err)
 	}
 	defer s.releaseStorageClient(client)
-	artifact, err := models.NewArtifactFromResourceName(req.GetArtifact().GetName())
+	db := dao.NewDAO(client)
+
+	name, err := names.ParseArtifact(req.Artifact.GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
 	}
-	k := client.NewKey(models.ArtifactEntityName, req.GetArtifact().GetName())
-	err = client.Get(ctx, k, artifact)
-	if err != nil {
-		return nil, status.Error(codes.NotFound, "not found")
+
+	// Replacement should only succeed on artifacts that currently exist.
+	if _, err := db.GetArtifact(ctx, name); err != nil {
+		return nil, err
 	}
-	blob := models.NewBlobForArtifact(artifact, nil)
-	err = artifact.Update(req.GetArtifact(), blob)
-	if err != nil {
+
+	artifact := models.NewArtifact(name, req.GetArtifact())
+	if err := db.SaveArtifact(ctx, artifact); err != nil {
+		return nil, err
+	}
+
+	if err := db.SaveArtifactContents(ctx, artifact, req.Artifact.GetContents()); err != nil {
 		return nil, internalError(err)
 	}
-	k, err = client.Put(ctx, k, artifact)
-	if err != nil {
-		return nil, internalError(err)
-	}
-	if blob != nil {
-		k2 := client.NewKey(models.BlobEntityName, artifact.ResourceName())
-		_, err = client.Put(ctx,
-			k2,
-			blob)
-	}
-	s.notify(rpc.Notification_UPDATED, artifact.ResourceName())
-	return artifact.Message(nil)
-}
 
-// TODO: remove this function
-func contentsForArtifact(artifact *rpc.Artifact) []byte {
-	return artifact.Contents
-}
-
-// fetchBlobForArtifact gets the blob containing the artifact contents.
-func fetchBlobForArtifact(
-	ctx context.Context,
-	client storage.Client,
-	artifact *models.Artifact) (*models.Blob, error) {
-	blob := &models.Blob{}
-	k := client.NewKey(models.BlobEntityName, artifact.ResourceName())
-	err := client.Get(ctx, k, blob)
-	return blob, err
+	s.notify(rpc.Notification_UPDATED, name.String())
+	return artifact.BasicMessage()
 }
