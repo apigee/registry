@@ -22,7 +22,48 @@ import (
 
 	"github.com/apigee/registry/server/models"
 	"github.com/apigee/registry/server/storage"
+	"github.com/google/go-cmp/cmp"
+	"google.golang.org/protobuf/testing/protocmp"
 )
+
+func TestFieldClearing(t *testing.T) {
+	ctx := context.TODO()
+
+	c, err := NewClient(ctx, "sqlite3", "/tmp/testing.db")
+	if err != nil {
+		t.Fatalf("NewClient returned error: %s", err)
+	}
+	defer c.Close()
+	c.reset()
+
+	original := &models.Project{
+		ProjectID:   "my-project",
+		Description: "My Project",
+	}
+
+	k := c.NewKey(storage.ProjectEntityName, original.Name())
+	if _, err := c.Put(ctx, k, original); err != nil {
+		t.Fatalf("Setup: Put(%q, %+v) returned error: %s", k, original, err)
+	}
+
+	update := &models.Project{
+		ProjectID:   original.ProjectID,
+		Description: "",
+	}
+
+	if _, err := c.Put(ctx, k, update); err != nil {
+		t.Fatalf("Put(%q, %+v) returned error: %s", k, update, err)
+	}
+
+	got := new(models.Project)
+	if err := c.Get(ctx, k, got); err != nil {
+		t.Fatalf("Get(%q) returned error: %s", k, err)
+	}
+
+	if !cmp.Equal(got, update, protocmp.Transform()) {
+		t.Errorf("Get(%q) returned unexpected diff (-want +got):\n%s", k, cmp.Diff(update, got, protocmp.Transform()))
+	}
+}
 
 func TestCRUD(t *testing.T) {
 	ctx := context.TODO()
