@@ -60,7 +60,6 @@ func NewBlobForArtifact(artifact *Artifact, contents []byte) *Blob {
 		ApiID:       artifact.ApiID,
 		VersionID:   artifact.VersionID,
 		SpecID:      artifact.SpecID,
-		RevisionID:  artifact.RevisionID,
 		ArtifactID:  artifact.ArtifactID,
 		Hash:        hashForBytes(contents),
 		SizeInBytes: int32(len(contents)),

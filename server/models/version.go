@@ -105,7 +105,7 @@ func (v *Version) Message(view rpc.View) (message *rpc.ApiVersion, err error) {
 		}
 	}
 
-	return message, err
+	return message, nil
 }
 
 // Update modifies a version using the contents of a message.

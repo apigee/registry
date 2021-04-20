@@ -50,6 +50,18 @@ func (v Version) Api() Api {
 	}
 }
 
+// Artifact returns an artifact with the provided ID and this resource as its parent.
+func (v Version) Artifact(id string) Artifact {
+	return Artifact{
+		name: versionArtifact{
+			ProjectID:  v.ProjectID,
+			ApiID:      v.ApiID,
+			VersionID:  v.VersionID,
+			ArtifactID: id,
+		},
+	}
+}
+
 // Spec returns an API spec with the provided ID and this resource as its parent.
 func (v Version) Spec(id string) Spec {
 	return Spec{
