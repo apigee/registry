@@ -144,7 +144,7 @@ func (s *Spec) FullMessage(blob *Blob, name string) (message *rpc.ApiSpec, err e
 	}
 
 	message.Contents = blob.Contents
-	return message, err
+	return message, nil
 }
 
 // BasicMessage returns the basic view of the spec resource as an RPC message.
@@ -180,7 +180,7 @@ func (s *Spec) BasicMessage(name string) (message *rpc.ApiSpec, err error) {
 		return nil, err
 	}
 
-	return message, err
+	return message, nil
 }
 
 // Update modifies a spec using the contents of a message.
@@ -267,6 +267,10 @@ func newRevisionID() string {
 }
 
 func hashForBytes(b []byte) string {
+	if len(b) == 0 {
+		return ""
+	}
+
 	h := sha256.New()
 	h.Write(b)
 	bs := h.Sum(nil)

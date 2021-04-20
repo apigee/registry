@@ -90,6 +90,19 @@ func (s Spec) Revision(id string) SpecRevision {
 	}
 }
 
+// Artifact returns an artifact with the provided ID and this resource as its parent.
+func (s Spec) Artifact(id string) Artifact {
+	return Artifact{
+		name: specArtifact{
+			ProjectID:  s.ProjectID,
+			ApiID:      s.ApiID,
+			VersionID:  s.VersionID,
+			SpecID:     s.SpecID,
+			ArtifactID: id,
+		},
+	}
+}
+
 func (s Spec) String() string {
 	return fmt.Sprintf("projects/%s/apis/%s/versions/%s/specs/%s", s.ProjectID, s.ApiID, s.VersionID, s.SpecID)
 }

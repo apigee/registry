@@ -33,6 +33,8 @@ const (
 	SpecEntityName = "Spec"
 	// SpecRevisionTagEntityName is the storage entity name for API spec revision tag resources.
 	SpecRevisionTagEntityName = "SpecRevisionTag"
+	// ArtifactEntityName is the storage entity name for artifact resources.
+	ArtifactEntityName = "Artifact"
 )
 
 type Client interface {
