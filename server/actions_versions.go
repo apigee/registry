@@ -34,6 +34,10 @@ func (s *RegistryServer) CreateApiVersion(ctx context.Context, req *rpc.CreateAp
 	defer s.releaseStorageClient(client)
 	db := dao.NewDAO(client)
 
+	if req.GetApiVersion() == nil {
+		return nil, invalidArgumentError(fmt.Errorf("invalid api_version %+v: body must be provided", req.GetApiVersion()))
+	}
+
 	parent, err := names.ParseApi(req.GetParent())
 	if err != nil {
 		return nil, invalidArgumentError(err)

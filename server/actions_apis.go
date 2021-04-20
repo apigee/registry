@@ -34,6 +34,10 @@ func (s *RegistryServer) CreateApi(ctx context.Context, req *rpc.CreateApiReques
 	defer s.releaseStorageClient(client)
 	db := dao.NewDAO(client)
 
+	if req.GetApi() == nil {
+		return nil, invalidArgumentError(fmt.Errorf("invalid api %+v: body must be provided", req.GetApi()))
+	}
+
 	parent, err := names.ParseProject(req.GetParent())
 	if err != nil {
 		return nil, invalidArgumentError(err)

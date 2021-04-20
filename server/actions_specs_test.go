@@ -205,6 +205,15 @@ func TestCreateApiSpecResponseCodes(t *testing.T) {
 			want: codes.NotFound,
 		},
 		{
+			desc: "missing resource body",
+			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
+			req: &rpc.CreateApiSpecRequest{
+				Parent:  "projects/my-project/apis/my-api/versions/v1",
+				ApiSpec: nil,
+			},
+			want: codes.InvalidArgument,
+		},
+		{
 			desc: "specific revision",
 			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
 			req: &rpc.CreateApiSpecRequest{
