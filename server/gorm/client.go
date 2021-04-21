@@ -211,6 +211,7 @@ func (c *Client) Put(ctx context.Context, k storage.Key, v interface{}) (storage
 	}
 	c.db.Transaction(
 		func(tx *gorm.DB) error {
+			// Update all fields from model: https://gorm.io/docs/update.html#Update-Selected-Fields
 			rowsAffected := tx.Model(v).Select("*").Where("key = ?", k.(*Key).Name).Updates(v).RowsAffected
 			if rowsAffected == 0 {
 				err := tx.Create(v).Error
