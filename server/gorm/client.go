@@ -79,7 +79,6 @@ func NewClient(ctx context.Context, gormDBName, gormConfig string) (*Client, err
 	mylock()
 	clientCount++
 	clientTotal++
-	//log.Printf("CREATING CLIENT (%d/%d %d)", clientCount, clientTotal, getGID())
 	switch gormDBName {
 	case "sqlite3":
 		db, err := gorm.Open(sqlite.Open(gormConfig), config())
@@ -128,7 +127,6 @@ func (c *Client) Close() {
 }
 
 func (c *Client) close() {
-	// log.Printf("CLOSING (%d) %d", clientCount, getGID())
 	clientCount--
 	sqlDB, _ := c.db.DB()
 	sqlDB.Close()
@@ -213,7 +211,8 @@ func (c *Client) Put(ctx context.Context, k storage.Key, v interface{}) (storage
 	}
 	c.db.Transaction(
 		func(tx *gorm.DB) error {
-			rowsAffected := tx.Model(v).Where("key = ?", k.(*Key).Name).Updates(v).RowsAffected
+			// Update all fields from model: https://gorm.io/docs/update.html#Update-Selected-Fields
+			rowsAffected := tx.Model(v).Select("*").Where("key = ?", k.(*Key).Name).Updates(v).RowsAffected
 			if rowsAffected == 0 {
 				err := tx.Create(v).Error
 				if err != nil {
