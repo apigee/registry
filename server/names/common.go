@@ -17,6 +17,7 @@ package names
 import (
 	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/google/uuid"
 )
@@ -42,4 +43,10 @@ func ValidateID(id string) error {
 		return fmt.Errorf("invalid id %q, must match %q", id, r)
 	}
 	return nil
+}
+
+// Normalize is an idempotent operation for normalizing resource names and identifiers.
+// Identifiers `a` and `b` should be considered equal if and only if normalize(a) == normalize(b).
+func normalize(identifier string) string {
+	return strings.ToLower(identifier)
 }
