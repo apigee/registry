@@ -39,7 +39,7 @@ func (p Project) Validate() error {
 func (p Project) Api(id string) Api {
 	return Api{
 		ProjectID: p.ProjectID,
-		ApiID:     id,
+		ApiID:     normalize(id),
 	}
 }
 
@@ -48,13 +48,13 @@ func (p Project) Artifact(id string) Artifact {
 	return Artifact{
 		name: projectArtifact{
 			ProjectID:  p.ProjectID,
-			ArtifactID: id,
+			ArtifactID: normalize(id),
 		},
 	}
 }
 
 func (p Project) String() string {
-	return fmt.Sprintf("projects/%s", p.ProjectID)
+	return normalize(fmt.Sprintf("projects/%s", p.ProjectID))
 }
 
 // ProjectsRegexp returns a regular expression that matches collection of projects.
@@ -74,7 +74,7 @@ func ParseProject(name string) (Project, error) {
 		return Project{}, fmt.Errorf("invalid project name %q: must match %q", name, r)
 	}
 
-	m := r.FindStringSubmatch(name)
+	m := r.FindStringSubmatch(normalize(name))
 	return Project{
 		ProjectID: m[1],
 	}, nil

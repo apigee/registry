@@ -41,7 +41,7 @@ func (s SpecRevision) Spec() Spec {
 }
 
 func (s SpecRevision) String() string {
-	return fmt.Sprintf("projects/%s/apis/%s/versions/%s/specs/%s@%s", s.ProjectID, s.ApiID, s.VersionID, s.SpecID, s.RevisionID)
+	return normalize(fmt.Sprintf("projects/%s/apis/%s/versions/%s/specs/%s@%s", s.ProjectID, s.ApiID, s.VersionID, s.SpecID, s.RevisionID))
 }
 
 // ParseSpecRevision parses the name of a spec.
@@ -50,7 +50,7 @@ func ParseSpecRevision(name string) (SpecRevision, error) {
 		return SpecRevision{}, fmt.Errorf("invalid spec revision name %q: must match %q", name, specRevisionRegexp)
 	}
 
-	m := specRevisionRegexp.FindStringSubmatch(name)
+	m := specRevisionRegexp.FindStringSubmatch(normalize(name))
 	revision := SpecRevision{
 		ProjectID:  m[1],
 		ApiID:      m[2],

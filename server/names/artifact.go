@@ -109,7 +109,7 @@ func (a Artifact) Validate() error {
 }
 
 func (a Artifact) String() string {
-	return a.name.String()
+	return normalize(a.name.String())
 }
 
 // ParseArtifact parses the name of an artifact.
@@ -146,7 +146,7 @@ func (a projectArtifact) Validate() error {
 }
 
 func (a projectArtifact) String() string {
-	return fmt.Sprintf("projects/%s/artifacts/%s", a.ProjectID, a.ArtifactID)
+	return normalize(fmt.Sprintf("projects/%s/artifacts/%s", a.ProjectID, a.ArtifactID))
 }
 
 func parseProjectArtifact(name string) (projectArtifact, error) {
@@ -154,7 +154,7 @@ func parseProjectArtifact(name string) (projectArtifact, error) {
 		return projectArtifact{}, fmt.Errorf("invalid project artifact name %q: must match %q", name, projectArtifactRegexp)
 	}
 
-	m := projectArtifactRegexp.FindStringSubmatch(name)
+	m := projectArtifactRegexp.FindStringSubmatch(normalize(name))
 	artifact := projectArtifact{
 		ProjectID:  m[1],
 		ArtifactID: m[2],
@@ -178,7 +178,7 @@ func (a apiArtifact) Validate() error {
 }
 
 func (a apiArtifact) String() string {
-	return fmt.Sprintf("projects/%s/apis/%s/artifacts/%s", a.ProjectID, a.ApiID, a.ArtifactID)
+	return normalize(fmt.Sprintf("projects/%s/apis/%s/artifacts/%s", a.ProjectID, a.ApiID, a.ArtifactID))
 }
 
 func parseApiArtifact(name string) (apiArtifact, error) {
@@ -186,7 +186,7 @@ func parseApiArtifact(name string) (apiArtifact, error) {
 		return apiArtifact{}, fmt.Errorf("invalid api artifact name %q: must match %q", name, apiArtifactRegexp)
 	}
 
-	m := apiArtifactRegexp.FindStringSubmatch(name)
+	m := apiArtifactRegexp.FindStringSubmatch(normalize(name))
 	artifact := apiArtifact{
 		ProjectID:  m[1],
 		ApiID:      m[2],
@@ -212,7 +212,7 @@ func (a versionArtifact) Validate() error {
 }
 
 func (a versionArtifact) String() string {
-	return fmt.Sprintf("projects/%s/apis/%s/versions/%s/artifacts/%s", a.ProjectID, a.ApiID, a.VersionID, a.ArtifactID)
+	return normalize(fmt.Sprintf("projects/%s/apis/%s/versions/%s/artifacts/%s", a.ProjectID, a.ApiID, a.VersionID, a.ArtifactID))
 }
 
 func parseVersionArtifact(name string) (versionArtifact, error) {
@@ -220,7 +220,7 @@ func parseVersionArtifact(name string) (versionArtifact, error) {
 		return versionArtifact{}, fmt.Errorf("invalid version artifact name %q: must match %q", name, versionArtifactRegexp)
 	}
 
-	m := versionArtifactRegexp.FindStringSubmatch(name)
+	m := versionArtifactRegexp.FindStringSubmatch(normalize(name))
 	artifact := versionArtifact{
 		ProjectID:  m[1],
 		ApiID:      m[2],
@@ -248,7 +248,7 @@ func (a specArtifact) Validate() error {
 }
 
 func (a specArtifact) String() string {
-	return fmt.Sprintf("projects/%s/apis/%s/versions/%s/specs/%s/artifacts/%s", a.ProjectID, a.ApiID, a.VersionID, a.SpecID, a.ArtifactID)
+	return normalize(fmt.Sprintf("projects/%s/apis/%s/versions/%s/specs/%s/artifacts/%s", a.ProjectID, a.ApiID, a.VersionID, a.SpecID, a.ArtifactID))
 }
 
 func parseSpecArtifact(name string) (specArtifact, error) {
@@ -256,7 +256,7 @@ func parseSpecArtifact(name string) (specArtifact, error) {
 		return specArtifact{}, fmt.Errorf("invalid spec artifact name %q: must match %q", name, specArtifactRegexp)
 	}
 
-	m := specArtifactRegexp.FindStringSubmatch(name)
+	m := specArtifactRegexp.FindStringSubmatch(normalize(name))
 	artifact := specArtifact{
 		ProjectID:  m[1],
 		ApiID:      m[2],

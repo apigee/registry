@@ -57,7 +57,7 @@ func (v Version) Artifact(id string) Artifact {
 			ProjectID:  v.ProjectID,
 			ApiID:      v.ApiID,
 			VersionID:  v.VersionID,
-			ArtifactID: id,
+			ArtifactID: normalize(id),
 		},
 	}
 }
@@ -68,12 +68,12 @@ func (v Version) Spec(id string) Spec {
 		ProjectID: v.ProjectID,
 		ApiID:     v.ApiID,
 		VersionID: v.VersionID,
-		SpecID:    id,
+		SpecID:    normalize(id),
 	}
 }
 
 func (v Version) String() string {
-	return fmt.Sprintf("projects/%s/apis/%s/versions/%s", v.ProjectID, v.ApiID, v.VersionID)
+	return normalize(fmt.Sprintf("projects/%s/apis/%s/versions/%s", v.ProjectID, v.ApiID, v.VersionID))
 }
 
 // VersionsRegexp returns a regular expression that matches a collection of versions.
@@ -93,7 +93,7 @@ func ParseVersion(name string) (Version, error) {
 		return Version{}, fmt.Errorf("invalid version name %q: must match %q", name, r)
 	}
 
-	m := r.FindStringSubmatch(name)
+	m := r.FindStringSubmatch(normalize(name))
 	return Version{
 		ProjectID: m[1],
 		ApiID:     m[2],

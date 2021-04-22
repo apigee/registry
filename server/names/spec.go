@@ -86,7 +86,7 @@ func (s Spec) Revision(id string) SpecRevision {
 		ApiID:      s.ApiID,
 		VersionID:  s.VersionID,
 		SpecID:     s.SpecID,
-		RevisionID: id,
+		RevisionID: normalize(id),
 	}
 }
 
@@ -98,13 +98,13 @@ func (s Spec) Artifact(id string) Artifact {
 			ApiID:      s.ApiID,
 			VersionID:  s.VersionID,
 			SpecID:     s.SpecID,
-			ArtifactID: id,
+			ArtifactID: normalize(id),
 		},
 	}
 }
 
 func (s Spec) String() string {
-	return fmt.Sprintf("projects/%s/apis/%s/versions/%s/specs/%s", s.ProjectID, s.ApiID, s.VersionID, s.SpecID)
+	return normalize(fmt.Sprintf("projects/%s/apis/%s/versions/%s/specs/%s", s.ProjectID, s.ApiID, s.VersionID, s.SpecID))
 }
 
 // SpecsRegexp returns a regular expression that matches a collection of specs.
@@ -123,7 +123,7 @@ func ParseSpec(name string) (Spec, error) {
 		return Spec{}, fmt.Errorf("invalid spec name %q: must match %q", name, specRegexp)
 	}
 
-	m := specRegexp.FindStringSubmatch(name)
+	m := specRegexp.FindStringSubmatch(normalize(name))
 	spec := Spec{
 		ProjectID: m[1],
 		ApiID:     m[2],

@@ -272,7 +272,6 @@ func TestCreateApiVersionDuplicates(t *testing.T) {
 		}
 	})
 
-	t.Skip("Resource names are not yet case insensitive")
 	t.Run("case insensitive duplicate", func(t *testing.T) {
 		req := &rpc.CreateApiVersionRequest{
 			Parent:       "projects/my-project/apis/my-api",

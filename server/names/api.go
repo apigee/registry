@@ -48,7 +48,7 @@ func (a Api) Version(id string) Version {
 	return Version{
 		ProjectID: a.ProjectID,
 		ApiID:     a.ApiID,
-		VersionID: id,
+		VersionID: normalize(id),
 	}
 }
 
@@ -58,13 +58,13 @@ func (a Api) Artifact(id string) Artifact {
 		name: apiArtifact{
 			ProjectID:  a.ProjectID,
 			ApiID:      a.ApiID,
-			ArtifactID: id,
+			ArtifactID: normalize(id),
 		},
 	}
 }
 
 func (a Api) String() string {
-	return fmt.Sprintf("projects/%s/apis/%s", a.ProjectID, a.ApiID)
+	return normalize(fmt.Sprintf("projects/%s/apis/%s", a.ProjectID, a.ApiID))
 }
 
 // ApisRegexp returns a regular expression that matches collection of apis.
@@ -84,7 +84,7 @@ func ParseApi(name string) (Api, error) {
 		return Api{}, fmt.Errorf("invalid API name %q: must match %q", name, r)
 	}
 
-	m := r.FindStringSubmatch(name)
+	m := r.FindStringSubmatch(normalize(name))
 	return Api{
 		ProjectID: m[1],
 		ApiID:     m[2],
