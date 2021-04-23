@@ -38,7 +38,6 @@ const (
 // Spec is the storage-side representation of a spec.
 type Spec struct {
 	Key                string    `gorm:"primaryKey"`
-	Currency           int32     // IsCurrent for the current revision of the spec.
 	ProjectID          string    // Uniquely identifies a project.
 	ApiID              string    // Uniquely identifies an api within a project.
 	VersionID          string    // Uniquely identifies a version within a api.
@@ -72,7 +71,6 @@ func NewSpec(name names.Spec, body *rpc.ApiSpec) (spec *Spec, err error) {
 		CreateTime:         now,
 		RevisionCreateTime: now,
 		RevisionUpdateTime: now,
-		Currency:           IsCurrent,
 		RevisionID:         newRevisionID(),
 	}
 
@@ -111,7 +109,6 @@ func (s *Spec) NewRevision() *Spec {
 		CreateTime:         s.CreateTime,
 		RevisionCreateTime: now,
 		RevisionUpdateTime: now,
-		Currency:           IsCurrent,
 		RevisionID:         newRevisionID(),
 	}
 }
@@ -239,7 +236,6 @@ func (s *Spec) Update(message *rpc.ApiSpec, mask *fieldmaskpb.FieldMask) error {
 			return err
 		}
 	}
-	s.Currency = IsCurrent
 	s.RevisionUpdateTime = now
 	return nil
 }

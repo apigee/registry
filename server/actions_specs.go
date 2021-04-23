@@ -289,12 +289,6 @@ func (s *RegistryServer) UpdateApiSpec(ctx context.Context, req *rpc.UpdateApiSp
 		return nil, err
 	}
 
-	// Mark the current revision as non-current so the update becomes the only current revision.
-	spec.Currency = models.NotCurrent
-	if err := db.SaveSpecRevision(ctx, spec); err != nil {
-		return nil, err
-	}
-
 	// Apply the update to the spec - possibly changing the revision ID.
 	if err := spec.Update(req.GetApiSpec(), req.GetUpdateMask()); err != nil {
 		return nil, internalError(err)
