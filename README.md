@@ -29,9 +29,8 @@ tell us about your experience if you use it.
 
 This reference implementation is a [gRPC](https://grpc.io) service written in
 Go. It can be run locally or deployed in a container using services including
-[Google Cloud Run](https://cloud.google.com/run). It stores data using the
-[Google Cloud Datastore API](https://cloud.google.com/datastore) or a
-configurable relational interface layer that currently supports
+[Google Cloud Run](https://cloud.google.com/run). It stores data using a
+onfigurable relational interface layer that currently supports
 [PostgreSQL](https://www.postgresql.org/) and [SQLite](https://www.sqlite.org/)
 (see [config](config) for details).
 
@@ -111,37 +110,14 @@ Next run a suite of tests with `make test` and see a corresponding walkthrough
 of API features in [tests/demo/walkthrough.sh](tests/demo/walkthrough.sh). For
 more demonstrations, see the [demos](demos) directory.
 
-## Enabling the Google Cloud Datastore API
-
-For deployments, we recommend using the
-[Google Cloud Datastore API](https://cloud.google.com/datastore). This must be
-enabled for a Google Cloud project and appropriate credentials must be
-available to `registry-server`. One way to get credentials is to use
-[Application Default Credentials](https://cloud.google.com/docs/authentication/production).
-To get set up, just run `gcloud auth application-default login` and sign in.
-Then make sure that your project id is set to the project that is enabled to
-use the Google Cloud Datastore API.
-
-Notes:
-
-- You only need to get credentials when you are running the server locally.
-  When `registry-server` is run with Google Cloud Run, credentials are
-  automatically provided by the environment.
-- When enabling the Datastore API, you might be asked to select a storage mode.
-  This project's Datastore API usage is equivalent to
-  [running Cloud Firestore in Datastore mode](https://cloud.google.com/datastore/docs).
-- The reference implementation requires indexes in its Datastore instance. To
-  create these indexes, use the `gcloud` command in the root of this
-  repository: `gcloud datastore indexes create server/datastore/index.yaml`
-
 ## Running the Registry API server locally
 
 ### Running the Registry API server
 
 Running `source auth/LOCAL.sh` will configure your environment to run the
 Registry API server locally and for the included clients to call your local
-instance. Start the server by running `registry-server`. (Recall that by
-default, this uses the Cloud Datastore API, a remote service).
+instance. Start the server by running `registry-server -c config/postgres.yaml`
+or provide a different configuration file for other storage backends.
 
 ### Optional: Proxying a local service with Envoy
 

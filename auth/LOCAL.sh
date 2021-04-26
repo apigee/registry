@@ -24,16 +24,9 @@
 if ! [ -x "$(command -v gcloud)" ]; then
   echo 'WARNING: The gcloud command is not installed.' >&2
   echo '  Without it, we are unable to automatically set REGISTRY_PROJECT_IDENTIFIER.' >&2
-  echo '  As a result, local registry-server processes will be unable to use the Cloud Datastore API.' >&2
 else
-# These steps are needed to enable local calls to the Cloud Datastore API.
-# This is required when the registry-server is run locally.
-
-# Optionally run this to update your application-default credentials.
-#gcloud auth application-default login
-
-# This assumes that the current gcloud project is the one where data is stored.
-export REGISTRY_PROJECT_IDENTIFIER=$(gcloud config list --format 'value(core.project)')
+  # This assumes that the current gcloud project is the one where data is stored.
+  export REGISTRY_PROJECT_IDENTIFIER=$(gcloud config list --format 'value(core.project)')
 fi
 
 ### CLIENT CONFIGURATION

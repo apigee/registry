@@ -38,6 +38,8 @@ func main() {
 		if err != nil {
 			log.Fatalf("%s", err.Error())
 		}
+	} else {
+		log.Fatalf("Config file name must be provided using the -c flag")
 	}
 
 	port := os.Getenv("PORT")

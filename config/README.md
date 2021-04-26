@@ -3,7 +3,7 @@
 This directory contains YAML files that can be used to configure the
 `registry-server` to use alternate storage backends.
 
-If no configuration is specified, the Google Cloud Datastore API is used.
+If no configuration is specified, the PostgreSQL configuration is used.
 
 Configuration files can be specified using the `-c` option.
 
