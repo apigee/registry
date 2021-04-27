@@ -30,7 +30,7 @@ tell us about your experience if you use it.
 This reference implementation is a [gRPC](https://grpc.io) service written in
 Go. It can be run locally or deployed in a container using services including
 [Google Cloud Run](https://cloud.google.com/run). It stores data using a
-onfigurable relational interface layer that currently supports
+configurable relational interface layer that currently supports
 [PostgreSQL](https://www.postgresql.org/) and [SQLite](https://www.sqlite.org/)
 (see [config](config) for details).
 

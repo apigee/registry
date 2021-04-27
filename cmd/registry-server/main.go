@@ -27,19 +27,31 @@ import (
 var config server.Config
 
 func main() {
-	configFlag := flag.String("c", "", "specify a configuration file")
+	configFlag := flag.String("c", "config/registry.yaml", "specify a configuration file")
 	flag.Parse()
-	if *configFlag != "" {
-		b, err := ioutil.ReadFile(*configFlag)
+	if path := *configFlag; path != "" {
+		fi, err := os.Lstat(path)
 		if err != nil {
-			log.Fatalf("%s", err.Error())
+			log.Fatalf("Failed to read file info: %s", err)
 		}
-		err = yaml.Unmarshal(b, &config)
+
+		// Follow symbolic links to a readable config file if applicable.
+		if (fi.Mode() & os.ModeSymlink) != 0 {
+			target, err := os.Readlink(path)
+			if err != nil {
+				log.Fatalf("Failed to read symbolic link %q: %s", path, err)
+			}
+			path = target
+		}
+
+		b, err := ioutil.ReadFile(path)
 		if err != nil {
-			log.Fatalf("%s", err.Error())
+			log.Fatalf("Failed to read file: %s", err)
 		}
-	} else {
-		log.Fatalf("Config file name must be provided using the -c flag")
+
+		if err := yaml.Unmarshal(b, &config); err != nil {
+			log.Fatalf("Failed to unmarshal yaml: %s", err)
+		}
 	}
 
 	port := os.Getenv("PORT")
@@ -49,6 +61,6 @@ func main() {
 
 	err := server.RunServer(":"+port, &config)
 	if err != nil {
-		log.Fatalf("error: %s", err.Error())
+		log.Fatalf("Failed to start server: %s", err.Error())
 	}
 }
