@@ -414,8 +414,8 @@ message CreateProjectRequest {
   // The ID to use for the project, which will become the final component of
   // the project's resource name.
   //
-  // This value should be 4-63 characters, and valid characters
-  // are /[a-z][0-9]-/.
+  // This value should be at most 63 characters, and valid characters
+  // are /[a-z][0-9]-./.
   string project_id = 2;
 }
 
@@ -516,8 +516,8 @@ message CreateApiRequest {
   // The ID to use for the api, which will become the final component of
   // the api's resource name.
   //
-  // This value should be 4-63 characters, and valid characters
-  // are /[a-z][0-9]-/.
+  // This value should be at most 63 characters, and valid characters
+  // are /[a-z][0-9]-./.
   string api_id = 3;
 }
 
@@ -618,8 +618,8 @@ message CreateApiVersionRequest {
   // The ID to use for the version, which will become the final component of
   // the version's resource name.
   //
-  // This value should be 4-63 characters, and valid characters
-  // are /[a-z][0-9]-/.
+  // This value should be at most 63 characters, and valid characters
+  // are /[a-z][0-9]-./.
   string api_version_id = 3;
 }
 
@@ -722,8 +722,8 @@ message CreateApiSpecRequest {
   // The ID to use for the spec, which will become the final component of
   // the spec's resource name.
   //
-  // This value should be 4-63 characters, and valid characters
-  // are /[a-z][0-9]-/.
+  // This value should be at most 63 characters, and valid characters
+  // are /[a-z][0-9]-./.
   string api_spec_id = 3;
 }
 
@@ -769,7 +769,7 @@ message TagApiSpecRevisionRequest {
   ];
 
   // The tag to apply.
-  // The tag should be at most 40 characters, and match `[a-z][a-z0-9-]{3,39}`.
+  // The tag should be at most 40 characters, and match `[a-z0-9-]+`.
   string tag = 2 [(google.api.field_behavior) = REQUIRED];
 }
 
@@ -911,8 +911,8 @@ message CreateArtifactRequest {
   // The ID to use for the artifact, which will become the final component of
   // the artifact's resource name.
   //
-  // This value should be 4-63 characters, and valid characters
-  // are /[a-z][0-9]-/.
+  // This value should be at most 63 characters, and valid characters
+  // are /[a-z][0-9]-./.
   string artifact_id = 3;
 }
 
