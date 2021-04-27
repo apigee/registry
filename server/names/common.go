@@ -17,29 +17,40 @@ package names
 import (
 	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/google/uuid"
 )
 
-// The format of a resource identifier.
-// This may be extended to include all characters that do not require escaping.
-// See https://aip.dev/122#resource-id-segments.
-const identifier = "([a-zA-Z0-9-_\\.]+)"
+const (
+	// The format of a resource identifier.
+	// This may be extended to include all characters that do not require escaping.
+	// See https://aip.dev/122#resource-id-segments.
+	identifier = `([a-z0-9-.]+)`
 
-// The format of a custom revision tag.
-const revisionTag = "([a-zA-z0-9-]+)"
+	// The format of a custom revision tag.
+	revisionTag = `([a-z0-9-]+)`
+)
 
 // GenerateID generates a random resource ID.
 func GenerateID() string {
 	return uuid.New().String()[:8]
 }
 
-// ValidateID returns an error if the provided ID is invalid.
-func ValidateID(id string) error {
+// validateID returns an error if the provided ID is invalid.
+func validateID(id string) error {
 	r := regexp.MustCompile("^" + identifier + "$")
-	m := r.FindStringSubmatch(id)
-	if m == nil {
-		return fmt.Errorf("invalid id %q, must match %q", id, r)
+	if !r.MatchString(id) {
+		return fmt.Errorf("invalid identifier %q: must match %q", id, r)
+	} else if _, err := uuid.Parse(id); err == nil {
+		return fmt.Errorf("invalid identifier %q: must not match UUID format", id)
+	} else if len(id) > 63 {
+		return fmt.Errorf("invalid identifier %q: must be 63 characters or less", id)
+	} else if strings.HasPrefix(id, "-") || strings.HasPrefix(id, ".") {
+		return fmt.Errorf("invalid identifier %q: must begin with a number or letter", id)
+	} else if strings.HasSuffix(id, "-") || strings.HasSuffix(id, ".") {
+		return fmt.Errorf("invalid identifier %q: must end with a number or letter", id)
 	}
+
 	return nil
 }

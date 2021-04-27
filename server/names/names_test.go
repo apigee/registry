@@ -68,7 +68,7 @@ func TestResourceNames(t *testing.T) {
 				"projects/google/apis/sample",
 				"projects/-/apis/-",
 				"projects/123/apis/abc",
-				"projects/1-2_3/apis/abc",
+				"projects/1-2-3/apis/abc",
 			},
 			fail: []string{
 				"-",
@@ -97,7 +97,7 @@ func TestResourceNames(t *testing.T) {
 				"projects/google/apis/sample/versions/v1",
 				"projects/-/apis/-/versions/-",
 				"projects/123/apis/abc/versions/123",
-				"projects/1-2_3/apis/abc/versions/123",
+				"projects/1-2-3/apis/abc/versions/123",
 			},
 			fail: []string{
 				"-",
@@ -123,11 +123,11 @@ func TestResourceNames(t *testing.T) {
 			name:   "spec",
 			regexp: SpecRegexp(),
 			pass: []string{
-				"projects/google/apis/sample/versions/v1/specs/openapi.yaml@1234567890ABCDEFabcdef",
+				"projects/google/apis/sample/versions/v1/specs/openapi.yaml@1234567890abcdef",
 				"projects/google/apis/sample/versions/v1/specs/openapi.yaml",
 				"projects/-/apis/-/versions/-/specs/-",
 				"projects/123/apis/abc/versions/123/specs/abc",
-				"projects/1-2_3/apis/abc/versions/123/specs/abc",
+				"projects/1-2-3/apis/abc/versions/123/specs/abc",
 			},
 			fail: []string{
 				"-",

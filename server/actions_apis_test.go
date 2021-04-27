@@ -176,8 +176,6 @@ func TestCreateApi(t *testing.T) {
 }
 
 func TestCreateApiResponseCodes(t *testing.T) {
-	t.Skip("Validation rules are not implemented")
-
 	tests := []struct {
 		desc string
 		seed *rpc.Project
@@ -186,8 +184,9 @@ func TestCreateApiResponseCodes(t *testing.T) {
 	}{
 		{
 			desc: "parent not found",
+			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.CreateApiRequest{
-				Parent: "projects/my-project",
+				Parent: "projects/other-project",
 				Api:    fullApi,
 			},
 			want: codes.NotFound,
@@ -202,42 +201,52 @@ func TestCreateApiResponseCodes(t *testing.T) {
 			want: codes.InvalidArgument,
 		},
 		{
-			desc: "short custom identifier",
-			req: &rpc.CreateApiRequest{
-				ApiId: "abc",
-				Api:   &rpc.Api{},
-			},
-			want: codes.InvalidArgument,
-		},
-		{
 			desc: "long custom identifier",
+			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.CreateApiRequest{
-				ApiId: "this-identifier-exceeds-the-sixty-three-character-maximum-length",
-				Api:   &rpc.Api{},
+				Parent: "projects/my-project",
+				ApiId:  "this-identifier-exceeds-the-sixty-three-character-maximum-length",
+				Api:    &rpc.Api{},
 			},
 			want: codes.InvalidArgument,
 		},
 		{
 			desc: "custom identifier underscores",
+			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.CreateApiRequest{
-				ApiId: "underscore_identifier",
-				Api:   &rpc.Api{},
+				Parent: "projects/my-project",
+				ApiId:  "underscore_identifier",
+				Api:    &rpc.Api{},
 			},
 			want: codes.InvalidArgument,
 		},
 		{
-			desc: "customer identifier dots",
+			desc: "custom identifier hyphen prefix",
+			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.CreateApiRequest{
-				ApiId: "dot.identifier",
-				Api:   &rpc.Api{},
+				Parent: "projects/my-project",
+				ApiId:  "-identifier",
+				Api:    &rpc.Api{},
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "custom identifier hyphen suffix",
+			seed: &rpc.Project{Name: "projects/my-project"},
+			req: &rpc.CreateApiRequest{
+				Parent: "projects/my-project",
+				ApiId:  "identifier-",
+				Api:    &rpc.Api{},
 			},
 			want: codes.InvalidArgument,
 		},
 		{
 			desc: "customer identifier uuid format",
+			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.CreateApiRequest{
-				ApiId: "072d2288-c685-42d8-9df0-5edbb2a809ea",
-				Api:   &rpc.Api{},
+				Parent: "projects/my-project",
+				ApiId:  "072d2288-c685-42d8-9df0-5edbb2a809ea",
+				Api:    &rpc.Api{},
 			},
 			want: codes.InvalidArgument,
 		},
@@ -247,6 +256,7 @@ func TestCreateApiResponseCodes(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
+			seedProjects(ctx, t, server, test.seed)
 
 			if _, err := server.CreateApi(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("CreateApi(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)

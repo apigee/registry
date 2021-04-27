@@ -34,7 +34,7 @@ func (v Version) Validate() error {
 		return fmt.Errorf("invalid version name %q: must match %q", name, r)
 	}
 
-	return nil
+	return validateID(v.VersionID)
 }
 
 // Project returns the parent project for this resource.
@@ -78,12 +78,12 @@ func (v Version) String() string {
 
 // VersionsRegexp returns a regular expression that matches a collection of versions.
 func VersionsRegexp() *regexp.Regexp {
-	return regexp.MustCompile("^projects/" + identifier + "/apis/" + identifier + "/versions$")
+	return regexp.MustCompile(fmt.Sprintf("^projects/%s/apis/%s/versions$", identifier, identifier))
 }
 
 // VersionRegexp returns a regular expression that matches a version resource name.
 func VersionRegexp() *regexp.Regexp {
-	return regexp.MustCompile("^projects/" + identifier + "/apis/" + identifier + "/versions/" + identifier + "$")
+	return regexp.MustCompile(fmt.Sprintf("^projects/%s/apis/%s/versions/%s$", identifier, identifier, identifier))
 }
 
 // ParseVersion parses the name of a version.

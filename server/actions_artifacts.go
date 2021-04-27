@@ -52,6 +52,10 @@ func (s *RegistryServer) CreateArtifact(ctx context.Context, req *rpc.CreateArti
 	defer s.releaseStorageClient(client)
 	db := dao.NewDAO(client)
 
+	if req.GetArtifact() == nil {
+		return nil, invalidArgumentError(fmt.Errorf("invalid artifact %+v: body must be provided", req.GetArtifact()))
+	}
+
 	parent, err := parseArtifactParent(req.GetParent())
 	if err != nil {
 		return nil, invalidArgumentError(err)
