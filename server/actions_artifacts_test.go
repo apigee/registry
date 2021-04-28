@@ -180,17 +180,77 @@ func TestCreateArtifact(t *testing.T) {
 func TestCreateArtifactResponseCodes(t *testing.T) {
 	tests := []struct {
 		desc string
-		seed *rpc.ApiVersion
+		seed *rpc.Project
 		req  *rpc.CreateArtifactRequest
 		want codes.Code
 	}{
 		{
 			desc: "parent not found",
+			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.CreateArtifactRequest{
-				Parent:   "projects/my-project/apis/my-api/versions/v1",
+				Parent:   "projects/other-project",
 				Artifact: fullArtifact,
 			},
 			want: codes.NotFound,
+		},
+		{
+			desc: "missing resource body",
+			seed: &rpc.Project{Name: "projects/my-project"},
+			req: &rpc.CreateArtifactRequest{
+				Parent:   "projects/my-project",
+				Artifact: nil,
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "long custom identifier",
+			seed: &rpc.Project{Name: "projects/my-project"},
+			req: &rpc.CreateArtifactRequest{
+				Parent:     "projects/my-project",
+				ArtifactId: "this-identifier-exceeds-the-sixty-three-character-maximum-length",
+				Artifact:   &rpc.Artifact{},
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "custom identifier underscores",
+			seed: &rpc.Project{Name: "projects/my-project"},
+			req: &rpc.CreateArtifactRequest{
+				Parent:     "projects/my-project",
+				ArtifactId: "underscore_identifier",
+				Artifact:   &rpc.Artifact{},
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "custom identifier hyphen prefix",
+			seed: &rpc.Project{Name: "projects/my-project"},
+			req: &rpc.CreateArtifactRequest{
+				Parent:     "projects/my-project",
+				ArtifactId: "-identifier",
+				Artifact:   &rpc.Artifact{},
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "custom identifier hyphen suffix",
+			seed: &rpc.Project{Name: "projects/my-project"},
+			req: &rpc.CreateArtifactRequest{
+				Parent:     "projects/my-project",
+				ArtifactId: "identifier-",
+				Artifact:   &rpc.Artifact{},
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "customer identifier uuid format",
+			seed: &rpc.Project{Name: "projects/my-project"},
+			req: &rpc.CreateArtifactRequest{
+				Parent:     "projects/my-project",
+				ArtifactId: "072d2288-c685-42d8-9df0-5edbb2a809ea",
+				Artifact:   &rpc.Artifact{},
+			},
+			want: codes.InvalidArgument,
 		},
 	}
 
@@ -198,6 +258,7 @@ func TestCreateArtifactResponseCodes(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
+			seedProjects(ctx, t, server, test.seed)
 
 			if _, err := server.CreateArtifact(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("CreateArtifact(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)

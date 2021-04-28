@@ -125,6 +125,8 @@ func (s *RegistryServer) TagApiSpecRevision(ctx context.Context, req *rpc.TagApi
 
 	if req.GetTag() == "" {
 		return nil, invalidArgumentError(fmt.Errorf("invalid tag %q, must not be empty", req.GetTag()))
+	} else if len(req.GetTag()) > 40 {
+		return nil, invalidArgumentError(fmt.Errorf("invalid tag %q, must be 40 characters or less", req.GetTag()))
 	}
 
 	// Parse the requested spec revision name, which may include a tag name.
