@@ -18,6 +18,10 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"bytes"
+	"compress/gzip"
+	"io/ioutil"
+	"strings"
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/dao"
@@ -26,6 +30,7 @@ import (
 	"github.com/apigee/registry/server/storage"
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
+	"google.golang.org/genproto/googleapis/api/httpbody"
 )
 
 // CreateApiSpec handles the corresponding API request.
@@ -196,6 +201,46 @@ func (s *RegistryServer) getApiSpecRevision(ctx context.Context, name names.Spec
 	}
 
 	return message, nil
+}
+
+// GUnzippedBytes uncompresses a slice of bytes.
+func GUnzippedBytes(input []byte) ([]byte, error) {
+	buf := bytes.NewBuffer(input)
+	zr, err := gzip.NewReader(buf)
+	if err != nil {
+		return nil, err
+	}
+	return ioutil.ReadAll(zr)
+}
+
+// GetApiSpecContents handles the corresponding API request.
+func (s *RegistryServer) GetApiSpecContents(ctx context.Context, req *rpc.GetApiSpecContentsRequest) (*httpbody.HttpBody, error) {
+	var spec *rpc.ApiSpec
+	var err error
+	if name, err := names.ParseSpec(req.GetName()); err == nil {
+		spec, err = s.getApiSpec(ctx, name, rpc.View_FULL)
+	} else if name, err := names.ParseSpecRevision(req.GetName()); err == nil {
+		spec, err = s.getApiSpecRevision(ctx, name, rpc.View_FULL)
+	}
+	if err != nil {
+		return nil, err
+	}
+	if spec != nil {
+		contents := spec.Contents
+		contentType := spec.MimeType
+		if (strings.HasSuffix(contentType, "+gzip")) {
+			contents, err = GUnzippedBytes(contents)
+			contentType = strings.TrimSuffix(contentType, "+gzip")
+			if err != nil {
+				return nil, err
+			}
+		}
+		return &httpbody.HttpBody{
+			ContentType: contentType,
+			Data: contents,
+		}, nil
+	}
+	return nil, invalidArgumentError(fmt.Errorf("invalid resource name %q, must be an API spec or revision", req.GetName()))
 }
 
 // ListApiSpecs handles the corresponding API request.
