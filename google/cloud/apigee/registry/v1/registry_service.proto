@@ -206,7 +206,7 @@ service Registry {
   // GetApiSpecContents returns the contents of a specified spec.
   rpc GetApiSpecContents(GetApiSpecContentsRequest) returns (google.api.HttpBody) {
     option (google.api.http) = {
-      get: "/v1/{name=projects/*/apis/*/versions/*/specs/*}:getContents"
+      get: "/v1/{name=projects/*/apis/*/versions/*/specs/*}/contents"
     };
   }
 
