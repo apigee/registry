@@ -228,9 +228,9 @@ func (s *RegistryServer) GetApiSpecContents(ctx context.Context, req *rpc.GetApi
 	if spec != nil {
 		contents := spec.Contents
 		contentType := spec.MimeType
-		if (strings.HasSuffix(contentType, "+gzip")) {
+		if (strings.Contains(contentType, "+gzip")) {
 			contents, err = GUnzippedBytes(contents)
-			contentType = strings.TrimSuffix(contentType, "+gzip")
+			contentType = strings.Replace(contentType, "+gzip", "", 1)
 			if err != nil {
 				return nil, err
 			}
