@@ -142,7 +142,7 @@ func (a projectArtifact) Validate() error {
 		return fmt.Errorf("invalid project artifact name %q: must match %q", name, projectArtifactRegexp)
 	}
 
-	return nil
+	return validateID(a.ArtifactID)
 }
 
 func (a projectArtifact) String() string {
@@ -174,7 +174,7 @@ func (a apiArtifact) Validate() error {
 		return fmt.Errorf("invalid api artifact name %q: must match %q", name, apiArtifactRegexp)
 	}
 
-	return nil
+	return validateID(a.ArtifactID)
 }
 
 func (a apiArtifact) String() string {
@@ -208,7 +208,7 @@ func (a versionArtifact) Validate() error {
 		return fmt.Errorf("invalid version artifact name %q: must match %q", name, versionArtifactRegexp)
 	}
 
-	return nil
+	return validateID(a.ArtifactID)
 }
 
 func (a versionArtifact) String() string {
@@ -244,7 +244,7 @@ func (a specArtifact) Validate() error {
 		return fmt.Errorf("invalid spec artifact name %q: must match %q", name, specArtifactRegexp)
 	}
 
-	return nil
+	return validateID(a.ArtifactID)
 }
 
 func (a specArtifact) String() string {
@@ -270,25 +270,10 @@ func parseSpecArtifact(name string) (specArtifact, error) {
 
 // ArtifactsRegexp returns a regular expression that matches collection of artifacts.
 func ArtifactsRegexp() *regexp.Regexp {
-	return regexp.MustCompile(
-		"^projects/" + identifier +
-			"(/apis/" + identifier +
-			"(/versions/" + identifier +
-			"(/specs/" + identifier +
-			")?" +
-			")?" +
-			")?" +
-			"/artifacts$")
+	return regexp.MustCompile(fmt.Sprintf("^projects/%s(/apis/%s(/versions/%s(/specs/%s)?)?)?/artifacts$", identifier, identifier, identifier, identifier))
 }
 
 // ArtifactRegexp returns a regular expression that matches an artifact resource name.
 func ArtifactRegexp() *regexp.Regexp {
-	return regexp.MustCompile("^projects/" + identifier +
-		"(/apis/" + identifier +
-		"(/versions/" + identifier +
-		"(/specs/" + identifier +
-		")?" +
-		")?" +
-		")?" +
-		"/artifacts/" + identifier + "$")
+	return regexp.MustCompile(fmt.Sprintf("^projects/%s(/apis/%s(/versions/%s(/specs/%s)?)?)?/artifacts/%s$", identifier, identifier, identifier, identifier, identifier))
 }

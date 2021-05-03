@@ -33,7 +33,7 @@ func (a Api) Validate() error {
 		return fmt.Errorf("invalid API name %q: must match %q", name, r)
 	}
 
-	return nil
+	return validateID(a.ApiID)
 }
 
 // Project returns the name of this resource's parent project.
@@ -69,12 +69,12 @@ func (a Api) String() string {
 
 // ApisRegexp returns a regular expression that matches collection of apis.
 func ApisRegexp() *regexp.Regexp {
-	return regexp.MustCompile("^projects/" + identifier + "/apis$")
+	return regexp.MustCompile(fmt.Sprintf("^projects/%s/apis$", identifier))
 }
 
 // ApiRegexp returns a regular expression that matches a api resource name.
 func ApiRegexp() *regexp.Regexp {
-	return regexp.MustCompile("^projects/" + identifier + "/apis/" + identifier + "$")
+	return regexp.MustCompile(fmt.Sprintf("^projects/%s/apis/%s$", identifier, identifier))
 }
 
 // ParseApi parses the name of an Api.

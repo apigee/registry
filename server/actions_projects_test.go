@@ -137,18 +137,15 @@ func TestCreateProject(t *testing.T) {
 }
 
 func TestCreateProjectResponseCodes(t *testing.T) {
-	t.Skip("Validation rules are not implemented")
-
 	tests := []struct {
 		desc string
 		req  *rpc.CreateProjectRequest
 		want codes.Code
 	}{
 		{
-			desc: "short custom identifier",
+			desc: "missing resource body",
 			req: &rpc.CreateProjectRequest{
-				ProjectId: "abc",
-				Project:   &rpc.Project{},
+				Project: nil,
 			},
 			want: codes.InvalidArgument,
 		},
@@ -169,10 +166,16 @@ func TestCreateProjectResponseCodes(t *testing.T) {
 			want: codes.InvalidArgument,
 		},
 		{
-			desc: "customer identifier dots",
+			desc: "custom identifier hyphen prefix",
 			req: &rpc.CreateProjectRequest{
-				ProjectId: "dot.identifier",
-				Project:   &rpc.Project{},
+				ProjectId: "-identifier",
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "custom identifier hyphen suffix",
+			req: &rpc.CreateProjectRequest{
+				ProjectId: "identifier-",
 			},
 			want: codes.InvalidArgument,
 		},

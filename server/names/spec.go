@@ -17,20 +17,11 @@ package names
 import (
 	"fmt"
 	"regexp"
-
-	"github.com/google/uuid"
 )
 
-// Regex patterns for spec-only (without revision) resource names.
-var (
-	// specIdentifier is the regex pattern for spec identifiers that are valid for creation of new spec names.
-	// Pre-existing or system-generated identifiers may not follow this format.
-	specIdentifier = regexp.MustCompile("^[a-z0-9-.]{4,63}$")
-
-	// specRegexp is the regex pattern for spec resource names.
-	// Notably, this differs from SpecRegexp() by not accepting spec revision IDs in the resource name.
-	specRegexp = regexp.MustCompile(fmt.Sprintf("^projects/%s/apis/%s/versions/%s/specs/%s$", identifier, identifier, identifier, identifier))
-)
+// specRegexp is the regex pattern for spec resource names.
+// Notably, this differs from SpecRegexp() by not accepting spec revision IDs in the resource name.
+var specRegexp = regexp.MustCompile(fmt.Sprintf("^projects/%s/apis/%s/versions/%s/specs/%s$", identifier, identifier, identifier, identifier))
 
 // Spec represents a resource name for an API spec.
 type Spec struct {
@@ -46,13 +37,9 @@ func (s Spec) Validate() error {
 	r := SpecRegexp()
 	if name := s.String(); !r.MatchString(name) {
 		return fmt.Errorf("invalid spec name %q: must match %q", name, r)
-	} else if !specIdentifier.MatchString(s.SpecID) {
-		return fmt.Errorf("invalid spec identifier %q: must match %q", s.SpecID, specIdentifier)
-	} else if _, err := uuid.Parse(s.SpecID); err == nil {
-		return fmt.Errorf("invalid spec identifier %q: must not match UUID format", s.SpecID)
 	}
 
-	return nil
+	return validateID(s.SpecID)
 }
 
 // Project returns the parent project for this resource.
@@ -109,7 +96,7 @@ func (s Spec) String() string {
 
 // SpecsRegexp returns a regular expression that matches a collection of specs.
 func SpecsRegexp() *regexp.Regexp {
-	return regexp.MustCompile("^projects/" + identifier + "/apis/" + identifier + "/versions/" + identifier + "/specs$")
+	return regexp.MustCompile(fmt.Sprintf("^projects/%s/apis/%s/versions/%s/specs$", identifier, identifier, identifier))
 }
 
 // SpecRegexp returns a regular expression that matches a spec resource name with an optional revision identifier.

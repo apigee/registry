@@ -224,16 +224,6 @@ func TestCreateApiSpecResponseCodes(t *testing.T) {
 			want: codes.InvalidArgument,
 		},
 		{
-			desc: "short custom identifier",
-			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
-			req: &rpc.CreateApiSpecRequest{
-				Parent:    "projects/my-project/apis/my-api/versions/v1",
-				ApiSpecId: "abc",
-				ApiSpec:   &rpc.ApiSpec{},
-			},
-			want: codes.InvalidArgument,
-		},
-		{
 			desc: "long custom identifier",
 			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
 			req: &rpc.CreateApiSpecRequest{
@@ -249,6 +239,26 @@ func TestCreateApiSpecResponseCodes(t *testing.T) {
 			req: &rpc.CreateApiSpecRequest{
 				Parent:    "projects/my-project/apis/my-api/versions/v1",
 				ApiSpecId: "underscore_identifier",
+				ApiSpec:   &rpc.ApiSpec{},
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "custom identifier hyphen prefix",
+			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
+			req: &rpc.CreateApiSpecRequest{
+				Parent:    "projects/my-project/apis/my-api",
+				ApiSpecId: "-identifier",
+				ApiSpec:   &rpc.ApiSpec{},
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "custom identifier hyphen suffix",
+			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
+			req: &rpc.CreateApiSpecRequest{
+				Parent:    "projects/my-project/apis/my-api",
+				ApiSpecId: "identifier-",
 				ApiSpec:   &rpc.ApiSpec{},
 			},
 			want: codes.InvalidArgument,
