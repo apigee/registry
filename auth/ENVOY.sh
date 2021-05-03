@@ -25,7 +25,7 @@ fi
 
 ### SERVER CONFIGURATION
 
-# This assumes that the current gcloud project is the one where data is stored.
+# This assumes that the current gcloud project is the one where the Cloud PubSub API is enabled and intended for use.
 export REGISTRY_PROJECT_IDENTIFIER=$(gcloud config list --format 'value(core.project)')
 
 ### CLIENT CONFIGURATION

@@ -27,7 +27,7 @@ import (
 var config server.Config
 
 func main() {
-	configFlag := flag.String("c", "config/registry.yaml", "specify a configuration file")
+	configFlag := flag.String("c", "", "specify a configuration file")
 	flag.Parse()
 	if path := *configFlag; path != "" {
 		fi, err := os.Lstat(path)
@@ -51,6 +51,12 @@ func main() {
 
 		if err := yaml.Unmarshal(b, &config); err != nil {
 			log.Fatalf("Failed to unmarshal yaml: %s", err)
+		}
+	} else {
+		config = server.Config{
+			Database: "sqlite3",
+			DBConfig: "/tmp/registry.db",
+			Log:      "error",
 		}
 	}
 

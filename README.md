@@ -116,8 +116,9 @@ more demonstrations, see the [demos](demos) directory.
 
 Running `source auth/LOCAL.sh` will configure your environment to run the
 Registry API server locally and for the included clients to call your local
-instance. Start the server by running `registry-server -c config/postgres.yaml`
-or provide a different configuration file for other storage backends.
+instance. Start the server by running `registry-server` or provide a different
+configuration file for other storage backends. By default a SQLite backend will
+be used.
 
 ### Optional: Proxying a local service with Envoy
 
