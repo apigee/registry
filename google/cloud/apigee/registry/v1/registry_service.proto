@@ -204,10 +204,13 @@ service Registry {
   }
 
   // GetApiSpecContents returns the contents of a specified spec.
+  // (-- api-linter: core::0131::response-method-name=disabled
+  //     aip.dev/not-precedent: Responses are arbitrary blobs of data. --)
   rpc GetApiSpecContents(GetApiSpecContentsRequest) returns (google.api.HttpBody) {
     option (google.api.http) = {
-      get: "/v1/{name=projects/*/apis/*/versions/*/specs/*}/contents"
+      get: "/v1/{name=projects/*/apis/*/versions/*/specs/*/contents}"
     };
+    option (google.api.method_signature) = "name";
   }
 
   // CreateApiSpec creates a specified spec.
@@ -718,7 +721,7 @@ message GetApiSpecRequest {
 // Request message for GetApiSpecContents.
 message GetApiSpecContentsRequest {
   // The name of the spec to retrieve.
-  // Format: projects/*/apis/*/versions/*/specs/*
+  // Format: projects/*/apis/*/versions/*/specs/*/contents
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {

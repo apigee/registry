@@ -15,12 +15,12 @@
 package server
 
 import (
-	"context"
-	"fmt"
-	"sort"
 	"bytes"
 	"compress/gzip"
+	"context"
+	"fmt"
 	"io/ioutil"
+	"sort"
 	"strings"
 
 	"github.com/apigee/registry/rpc"
@@ -29,8 +29,8 @@ import (
 	"github.com/apigee/registry/server/names"
 	"github.com/apigee/registry/server/storage"
 	"github.com/golang/protobuf/ptypes/empty"
-	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	"google.golang.org/genproto/googleapis/api/httpbody"
+	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
 // CreateApiSpec handles the corresponding API request.
@@ -225,22 +225,24 @@ func (s *RegistryServer) GetApiSpecContents(ctx context.Context, req *rpc.GetApi
 	if err != nil {
 		return nil, err
 	}
-	if spec != nil {
-		contents := spec.Contents
-		contentType := spec.MimeType
-		if (strings.Contains(contentType, "+gzip")) {
-			contents, err = GUnzippedBytes(contents)
-			contentType = strings.Replace(contentType, "+gzip", "", 1)
-			if err != nil {
-				return nil, err
-			}
+	if spec == nil {
+		return nil, invalidArgumentError(fmt.Errorf("failed to locate %q", req.GetName()))
+	}
+	if strings.Contains(spec.MimeType, "+gzip") {
+		contents, err := GUnzippedBytes(spec.Contents);
+		if err != nil {
+			return nil, err
 		}
 		return &httpbody.HttpBody{
-			ContentType: contentType,
-			Data: contents,
+			ContentType: strings.Replace(spec.MimeType, "+gzip", "", 1),
+			Data:        contents,
+		}, nil
+	} else {
+		return &httpbody.HttpBody{
+			ContentType: spec.MimeType,
+			Data:        spec.Contents,
 		}, nil
 	}
-	return nil, invalidArgumentError(fmt.Errorf("invalid resource name %q, must be an API spec or revision", req.GetName()))
 }
 
 // ListApiSpecs handles the corresponding API request.
