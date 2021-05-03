@@ -215,11 +215,12 @@ func GUnzippedBytes(input []byte) ([]byte, error) {
 
 // GetApiSpecContents handles the corresponding API request.
 func (s *RegistryServer) GetApiSpecContents(ctx context.Context, req *rpc.GetApiSpecContentsRequest) (*httpbody.HttpBody, error) {
+	var specName = strings.TrimSuffix(req.GetName(), "/contents")
 	var spec *rpc.ApiSpec
 	var err error
-	if name, err := names.ParseSpec(req.GetName()); err == nil {
+	if name, err := names.ParseSpec(specName); err == nil {
 		spec, err = s.getApiSpec(ctx, name, rpc.View_FULL)
-	} else if name, err := names.ParseSpecRevision(req.GetName()); err == nil {
+	} else if name, err := names.ParseSpecRevision(specName); err == nil {
 		spec, err = s.getApiSpecRevision(ctx, name, rpc.View_FULL)
 	}
 	if err != nil {
