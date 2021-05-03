@@ -25,7 +25,7 @@ import (
 
 // Artifact is the storage-side representation of an artifact.
 type Artifact struct {
-	Key         string    `datastore:"-" gorm:"primaryKey"`
+	Key         string    `gorm:"primaryKey"`
 	ProjectID   string    // Project associated with artifact (required).
 	ApiID       string    // Api associated with artifact (if appropriate).
 	VersionID   string    // Version associated with artifact (if appropriate).
