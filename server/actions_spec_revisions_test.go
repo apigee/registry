@@ -280,8 +280,6 @@ func TestDeleteApiSpecRevision(t *testing.T) {
 }
 
 func TestListApiSpecRevisions(t *testing.T) {
-	t.Skip("Response is not currently sorted by revision creation time")
-
 	ctx := context.Background()
 	server := defaultTestServer(t)
 	seedVersions(ctx, t, server, &rpc.ApiVersion{
