@@ -37,7 +37,7 @@ const (
 
 // Spec is the storage-side representation of a spec.
 type Spec struct {
-	Key                string    `datastore:"-" gorm:"primaryKey"`
+	Key                string    `gorm:"primaryKey"`
 	Currency           int32     // IsCurrent for the current revision of the spec.
 	ProjectID          string    // Uniquely identifies a project.
 	ApiID              string    // Uniquely identifies an api within a project.
@@ -53,8 +53,8 @@ type Spec struct {
 	Hash               string    // A hash of the spec.
 	FileName           string    // Name of spec file.
 	SourceURI          string    // The original source URI of the spec.
-	Labels             []byte    `datastore:",noindex"` // Serialized labels.
-	Annotations        []byte    `datastore:",noindex"` // Serialized annotations.
+	Labels             []byte    // Serialized labels.
+	Annotations        []byte    // Serialized annotations.
 }
 
 // NewSpec initializes a new resource.
@@ -279,7 +279,7 @@ func hashForBytes(b []byte) string {
 
 // SpecRevisionTag is the storage-side representation of a spec revision tag.
 type SpecRevisionTag struct {
-	Key        string    `datastore:"-" gorm:"primaryKey"`
+	Key        string    `gorm:"primaryKey"`
 	ProjectID  string    // Uniquely identifies a project.
 	ApiID      string    // Uniquely identifies an api within a project.
 	VersionID  string    // Uniquely identifies a version within a api.
