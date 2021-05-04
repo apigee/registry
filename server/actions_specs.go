@@ -15,9 +15,13 @@
 package server
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
 	"fmt"
+	"io/ioutil"
 	"sort"
+	"strings"
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/dao"
@@ -25,6 +29,7 @@ import (
 	"github.com/apigee/registry/server/names"
 	"github.com/apigee/registry/server/storage"
 	"github.com/golang/protobuf/ptypes/empty"
+	"google.golang.org/genproto/googleapis/api/httpbody"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
@@ -196,6 +201,48 @@ func (s *RegistryServer) getApiSpecRevision(ctx context.Context, name names.Spec
 	}
 
 	return message, nil
+}
+
+// GUnzippedBytes uncompresses a slice of bytes.
+func GUnzippedBytes(input []byte) ([]byte, error) {
+	buf := bytes.NewBuffer(input)
+	zr, err := gzip.NewReader(buf)
+	if err != nil {
+		return nil, err
+	}
+	return ioutil.ReadAll(zr)
+}
+
+// GetApiSpecContents handles the corresponding API request.
+func (s *RegistryServer) GetApiSpecContents(ctx context.Context, req *rpc.GetApiSpecContentsRequest) (*httpbody.HttpBody, error) {
+	var specName = strings.TrimSuffix(req.GetName(), "/contents")
+	var spec *rpc.ApiSpec
+	var err error
+	if name, err := names.ParseSpec(specName); err == nil {
+		spec, err = s.getApiSpec(ctx, name, rpc.View_FULL)
+	} else if name, err := names.ParseSpecRevision(specName); err == nil {
+		spec, err = s.getApiSpecRevision(ctx, name, rpc.View_FULL)
+	}
+	if err != nil {
+		return nil, err
+	}
+	if spec == nil {
+		return nil, internalError(fmt.Errorf("failed to locate %q", req.GetName()))
+	}
+	if strings.Contains(spec.MimeType, "+gzip") {
+		contents, err := GUnzippedBytes(spec.Contents);
+		if err != nil {
+			return nil, err
+		}
+		return &httpbody.HttpBody{
+			ContentType: strings.Replace(spec.MimeType, "+gzip", "", 1),
+			Data:        contents,
+		}, nil
+	}
+	return &httpbody.HttpBody{
+		ContentType: spec.MimeType,
+		Data:        spec.Contents,
+	}, nil
 }
 
 // ListApiSpecs handles the corresponding API request.

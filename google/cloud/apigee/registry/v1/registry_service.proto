@@ -19,6 +19,7 @@ package google.cloud.apigee.registry.v1;
 import "google/api/annotations.proto";
 import "google/api/client.proto";
 import "google/api/field_behavior.proto";
+import "google/api/httpbody.proto";
 import "google/api/resource.proto";
 import "google/cloud/apigee/registry/v1/registry_models.proto";
 import "google/protobuf/empty.proto";
@@ -198,6 +199,16 @@ service Registry {
   rpc GetApiSpec(GetApiSpecRequest) returns (ApiSpec) {
     option (google.api.http) = {
       get: "/v1/{name=projects/*/apis/*/versions/*/specs/*}"
+    };
+    option (google.api.method_signature) = "name";
+  }
+
+  // GetApiSpecContents returns the contents of a specified spec.
+  // (-- api-linter: core::0131::response-method-name=disabled
+  //     aip.dev/not-precedent: Responses are arbitrary blobs of data. --)
+  rpc GetApiSpecContents(GetApiSpecContentsRequest) returns (google.api.HttpBody) {
+    option (google.api.http) = {
+      get: "/v1/{name=projects/*/apis/*/versions/*/specs/*/contents}"
     };
     option (google.api.method_signature) = "name";
   }
@@ -705,6 +716,18 @@ message GetApiSpecRequest {
 
   // The level of detail to return (defaults to BASIC).
   View view = 2;
+}
+
+// Request message for GetApiSpecContents.
+message GetApiSpecContentsRequest {
+  // The name of the spec to retrieve.
+  // Format: projects/*/apis/*/versions/*/specs/*/contents
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      type: "registry.googleapis.com/ApiSpec"
+    }
+  ];
 }
 
 // Request message for CreateApiSpec.

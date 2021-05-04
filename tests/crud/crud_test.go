@@ -178,6 +178,7 @@ func TestCRUD(t *testing.T) {
 		}
 	}
 	// Check the created spec.
+	var revision string
 	{
 		req := &rpc.GetApiSpecRequest{
 			Name: "projects/test/apis/sample/versions/1.0.0/specs/openapi.yaml",
@@ -190,6 +191,67 @@ func TestCRUD(t *testing.T) {
 		}
 		if !reflect.DeepEqual(spec.GetAnnotations(), sampleMap) {
 			t.Errorf("Unexpected spec annotations %+v", spec.GetAnnotations())
+		}
+		revision = spec.GetRevisionId()
+	}
+	// Compute some common values for subsequent tests.
+	buf, err := ioutil.ReadFile("openapi.yaml@r0")
+	check(t, "error reading spec", err)
+	expectedHash := hashForBytes(buf)
+	expectedContentType := "application/x.openapi;version=3.0.0"
+	// Check the contents of the created spec.
+	{
+		req := &rpc.GetApiSpecContentsRequest{
+			Name: "projects/test/apis/sample/versions/1.0.0/specs/openapi.yaml/contents",
+		}
+		response, err := registryClient.GetApiSpecContents(ctx, req)
+		check(t, "error getting spec contents %s", err)
+		if response.GetContentType() != expectedContentType {
+			t.Errorf("Unexpected content type %q", response.GetContentType())
+		}
+		contentHash := hashForBytes(response.Data)
+		if contentHash != expectedHash {
+			t.Errorf("Contents failed to match %s != %s", contentHash, expectedHash)
+		}
+	}
+	// Check the contents of the created revision.
+	{
+		req := &rpc.GetApiSpecContentsRequest{
+			Name: "projects/test/apis/sample/versions/1.0.0/specs/openapi.yaml@" + revision + "/contents",
+		}
+		response, err := registryClient.GetApiSpecContents(ctx, req)
+		check(t, "error getting spec contents %s", err)
+		if response.GetContentType() != expectedContentType {
+			t.Errorf("Unexpected content type %q", response.GetContentType())
+		}
+		contentHash := hashForBytes(response.Data)
+		if contentHash != expectedHash {
+			t.Errorf("Contents failed to match %s != %s", contentHash, expectedHash)
+		}
+	}
+	// Tag the revision.
+	revisionTag := "prod"
+	{
+		req := &rpc.TagApiSpecRevisionRequest{
+			Name: "projects/test/apis/sample/versions/1.0.0/specs/openapi.yaml@" + revision,
+			Tag: revisionTag,
+		}
+		_, err := registryClient.TagApiSpecRevision(ctx, req)
+		check(t, "error tagging spec %s", err)
+	}
+	// Check the contents of the tagged revision.
+	{
+		req := &rpc.GetApiSpecContentsRequest{
+			Name: "projects/test/apis/sample/versions/1.0.0/specs/openapi.yaml@" + revisionTag + "/contents",
+		}
+		response, err := registryClient.GetApiSpecContents(ctx, req)
+		check(t, "error getting spec contents %s", err)
+		if response.GetContentType() != expectedContentType {
+			t.Errorf("Unexpected content type %q", response.GetContentType())
+		}
+		contentHash := hashForBytes(response.Data)
+		if contentHash != expectedHash {
+			t.Errorf("Contents failed to match %s != %s", contentHash, expectedHash)
 		}
 	}
 	testArtifacts(ctx, registryClient, t, "projects/test")
