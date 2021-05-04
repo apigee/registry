@@ -43,12 +43,6 @@ else
 	./deployments/gke/DEPLOY-TO-GKE.sh
 endif
 
-index:
-	gcloud datastore indexes create index.yaml
-
-index-cleanup:
-	gcloud datastore indexes cleanup index.yaml
-
 build-workers:
 ifndef REGISTRY_PROJECT_IDENTIFIER
 	@echo "Error! REGISTRY_PROJECT_IDENTIFIER must be set."; exit 1

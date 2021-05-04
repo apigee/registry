@@ -27,7 +27,6 @@ import (
 	"sync"
 
 	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/server/datastore"
 	"github.com/apigee/registry/server/gorm"
 	"github.com/apigee/registry/server/storage"
 
@@ -96,17 +95,6 @@ func newRegistryServer(config *Config) *RegistryServer {
 }
 
 func (s *RegistryServer) getStorageClient(ctx context.Context) (storage.Client, error) {
-	// Cloud Datastore is the default.
-	if s.database == "" || s.database == "datastore" {
-		s.weTrustTheSort = true
-		projectID, err := s.getProjectID()
-		if err != nil {
-			log.Printf("Unable to find project ID: %v", err)
-			return nil, err
-		}
-		return datastore.NewClient(ctx, projectID)
-	}
-	// If we're not using Cloud Datastore, attempt to connect to a database using gorm.
 	s.weTrustTheSort = false
 	return gorm.NewClient(ctx, s.database, s.dbConfig)
 }

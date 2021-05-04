@@ -25,7 +25,7 @@ import (
 
 // Api is the storage-side representation of an API.
 type Api struct {
-	Key                string    `datastore:"-" gorm:"primaryKey"`
+	Key                string    `gorm:"primaryKey"`
 	ProjectID          string    // Uniquely identifies a project.
 	ApiID              string    // Uniquely identifies an api within a project.
 	DisplayName        string    // A human-friendly name.
@@ -34,8 +34,8 @@ type Api struct {
 	UpdateTime         time.Time // Time of last change.
 	Availability       string    // Availability of the API.
 	RecommendedVersion string    // Recommended API version.
-	Labels             []byte    `datastore:",noindex"` // Serialized labels.
-	Annotations        []byte    `datastore:",noindex"` // Serialized annotations.
+	Labels             []byte    // Serialized labels.
+	Annotations        []byte    // Serialized annotations.
 }
 
 // NewApi initializes a new resource.

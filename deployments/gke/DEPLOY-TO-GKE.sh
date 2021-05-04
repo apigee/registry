@@ -36,7 +36,7 @@ if [[ $(gcloud container clusters list --zone=us-central1-a --filter name=regist
   echo "Cluster 'registry-backend' exists. "
 else
   gcloud container clusters create registry-backend --zone us-central1-a \
-  --scopes=datastore,sql-admin,gke-default,pubsub,taskqueue,https://www.googleapis.com/auth/cloud-tasks
+  --scopes=sql-admin,gke-default,pubsub,taskqueue,https://www.googleapis.com/auth/cloud-tasks
 fi
 
 # Authenticates to the cluster.

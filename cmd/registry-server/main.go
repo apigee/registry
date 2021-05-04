@@ -29,14 +29,34 @@ var config server.Config
 func main() {
 	configFlag := flag.String("c", "", "specify a configuration file")
 	flag.Parse()
-	if *configFlag != "" {
-		b, err := ioutil.ReadFile(*configFlag)
+	if path := *configFlag; path != "" {
+		fi, err := os.Lstat(path)
 		if err != nil {
-			log.Fatalf("%s", err.Error())
+			log.Fatalf("Failed to read file info: %s", err)
 		}
-		err = yaml.Unmarshal(b, &config)
+
+		// Follow symbolic links to a readable config file if applicable.
+		if (fi.Mode() & os.ModeSymlink) != 0 {
+			target, err := os.Readlink(path)
+			if err != nil {
+				log.Fatalf("Failed to read symbolic link %q: %s", path, err)
+			}
+			path = target
+		}
+
+		b, err := ioutil.ReadFile(path)
 		if err != nil {
-			log.Fatalf("%s", err.Error())
+			log.Fatalf("Failed to read file: %s", err)
+		}
+
+		if err := yaml.Unmarshal(b, &config); err != nil {
+			log.Fatalf("Failed to unmarshal yaml: %s", err)
+		}
+	} else {
+		config = server.Config{
+			Database: "sqlite3",
+			DBConfig: "/tmp/registry.db",
+			Log:      "error",
 		}
 	}
 
@@ -47,6 +67,6 @@ func main() {
 
 	err := server.RunServer(":"+port, &config)
 	if err != nil {
-		log.Fatalf("error: %s", err.Error())
+		log.Fatalf("Failed to start server: %s", err.Error())
 	}
 }
