@@ -227,7 +227,7 @@ func (s *RegistryServer) GetApiSpecContents(ctx context.Context, req *rpc.GetApi
 		return nil, err
 	}
 	if spec == nil {
-		return nil, invalidArgumentError(fmt.Errorf("failed to locate %q", req.GetName()))
+		return nil, internalError(fmt.Errorf("failed to locate %q", req.GetName()))
 	}
 	if strings.Contains(spec.MimeType, "+gzip") {
 		contents, err := GUnzippedBytes(spec.Contents);
@@ -238,12 +238,11 @@ func (s *RegistryServer) GetApiSpecContents(ctx context.Context, req *rpc.GetApi
 			ContentType: strings.Replace(spec.MimeType, "+gzip", "", 1),
 			Data:        contents,
 		}, nil
-	} else {
-		return &httpbody.HttpBody{
-			ContentType: spec.MimeType,
-			Data:        spec.Contents,
-		}, nil
 	}
+	return &httpbody.HttpBody{
+		ContentType: spec.MimeType,
+		Data:        spec.Contents,
+	}, nil
 }
 
 // ListApiSpecs handles the corresponding API request.
