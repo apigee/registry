@@ -26,11 +26,15 @@ const (
 	// The format of a resource identifier.
 	// This may be extended to include all characters that do not require escaping.
 	// See https://aip.dev/122#resource-id-segments.
-	identifier = `([a-z0-9-.]+)`
+	identifier = `([A-Za-z0-9-.]+)`
 
 	// The format of a custom revision tag.
 	revisionTag = `([a-z0-9-]+)`
 )
+
+// The format of a custom resource identifier.
+// User provided identifiers should be validated according to this format.
+var customIdentifier = regexp.MustCompile(`^[a-z0-9-.]+$`)
 
 // GenerateID generates a random resource ID.
 func GenerateID() string {
@@ -39,9 +43,8 @@ func GenerateID() string {
 
 // validateID returns an error if the provided ID is invalid.
 func validateID(id string) error {
-	r := regexp.MustCompile("^" + identifier + "$")
-	if !r.MatchString(id) {
-		return fmt.Errorf("invalid identifier %q: must match %q", id, r)
+	if !customIdentifier.MatchString(id) {
+		return fmt.Errorf("invalid identifier %q: must match %q", id, customIdentifier)
 	} else if _, err := uuid.Parse(id); err == nil {
 		return fmt.Errorf("invalid identifier %q: must not match UUID format", id)
 	} else if len(id) > 63 {

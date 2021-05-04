@@ -57,7 +57,7 @@ func (v Version) Artifact(id string) Artifact {
 			ProjectID:  v.ProjectID,
 			ApiID:      v.ApiID,
 			VersionID:  v.VersionID,
-			ArtifactID: normalize(id),
+			ArtifactID: id,
 		},
 	}
 }
@@ -68,7 +68,7 @@ func (v Version) Spec(id string) Spec {
 		ProjectID: v.ProjectID,
 		ApiID:     v.ApiID,
 		VersionID: v.VersionID,
-		SpecID:    normalize(id),
+		SpecID:    id,
 	}
 }
 
@@ -93,7 +93,7 @@ func ParseVersion(name string) (Version, error) {
 		return Version{}, fmt.Errorf("invalid version name %q: must match %q", name, r)
 	}
 
-	m := r.FindStringSubmatch(normalize(name))
+	m := r.FindStringSubmatch(name)
 	return Version{
 		ProjectID: m[1],
 		ApiID:     m[2],

@@ -154,7 +154,7 @@ func parseProjectArtifact(name string) (projectArtifact, error) {
 		return projectArtifact{}, fmt.Errorf("invalid project artifact name %q: must match %q", name, projectArtifactRegexp)
 	}
 
-	m := projectArtifactRegexp.FindStringSubmatch(normalize(name))
+	m := projectArtifactRegexp.FindStringSubmatch(name)
 	artifact := projectArtifact{
 		ProjectID:  m[1],
 		ArtifactID: m[2],
@@ -186,7 +186,7 @@ func parseApiArtifact(name string) (apiArtifact, error) {
 		return apiArtifact{}, fmt.Errorf("invalid api artifact name %q: must match %q", name, apiArtifactRegexp)
 	}
 
-	m := apiArtifactRegexp.FindStringSubmatch(normalize(name))
+	m := apiArtifactRegexp.FindStringSubmatch(name)
 	artifact := apiArtifact{
 		ProjectID:  m[1],
 		ApiID:      m[2],
@@ -220,7 +220,7 @@ func parseVersionArtifact(name string) (versionArtifact, error) {
 		return versionArtifact{}, fmt.Errorf("invalid version artifact name %q: must match %q", name, versionArtifactRegexp)
 	}
 
-	m := versionArtifactRegexp.FindStringSubmatch(normalize(name))
+	m := versionArtifactRegexp.FindStringSubmatch(name)
 	artifact := versionArtifact{
 		ProjectID:  m[1],
 		ApiID:      m[2],
@@ -256,7 +256,7 @@ func parseSpecArtifact(name string) (specArtifact, error) {
 		return specArtifact{}, fmt.Errorf("invalid spec artifact name %q: must match %q", name, specArtifactRegexp)
 	}
 
-	m := specArtifactRegexp.FindStringSubmatch(normalize(name))
+	m := specArtifactRegexp.FindStringSubmatch(name)
 	artifact := specArtifact{
 		ProjectID:  m[1],
 		ApiID:      m[2],

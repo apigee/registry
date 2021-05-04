@@ -273,6 +273,16 @@ func TestCreateApiSpecResponseCodes(t *testing.T) {
 			},
 			want: codes.InvalidArgument,
 		},
+		{
+			desc: "customer identifier mixed case",
+			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
+			req: &rpc.CreateApiSpecRequest{
+				Parent:    "projects/my-project/apis/my-api/versions/v1",
+				ApiSpecId: "IDentifier",
+				ApiSpec:   &rpc.ApiSpec{},
+			},
+			want: codes.InvalidArgument,
+		},
 	}
 
 	for _, test := range tests {

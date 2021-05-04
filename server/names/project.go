@@ -39,7 +39,7 @@ func (p Project) Validate() error {
 func (p Project) Api(id string) Api {
 	return Api{
 		ProjectID: p.ProjectID,
-		ApiID:     normalize(id),
+		ApiID:     id,
 	}
 }
 
@@ -48,7 +48,7 @@ func (p Project) Artifact(id string) Artifact {
 	return Artifact{
 		name: projectArtifact{
 			ProjectID:  p.ProjectID,
-			ArtifactID: normalize(id),
+			ArtifactID: id,
 		},
 	}
 }
@@ -74,7 +74,7 @@ func ParseProject(name string) (Project, error) {
 		return Project{}, fmt.Errorf("invalid project name %q: must match %q", name, r)
 	}
 
-	m := r.FindStringSubmatch(normalize(name))
+	m := r.FindStringSubmatch(name)
 	return Project{
 		ProjectID: m[1],
 	}, nil

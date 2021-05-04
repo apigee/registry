@@ -252,6 +252,16 @@ func TestCreateArtifactResponseCodes(t *testing.T) {
 			},
 			want: codes.InvalidArgument,
 		},
+		{
+			desc: "custom identifier mixed case",
+			seed: &rpc.Project{Name: "projects/my-project"},
+			req: &rpc.CreateArtifactRequest{
+				Parent:     "projects/my-project",
+				ArtifactId: "IDentifier",
+				Artifact:   &rpc.Artifact{},
+			},
+			want: codes.InvalidArgument,
+		},
 	}
 
 	for _, test := range tests {

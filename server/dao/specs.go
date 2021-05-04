@@ -151,11 +151,12 @@ func specMap(spec models.Spec) (map[string]interface{}, error) {
 }
 
 func (d *DAO) GetSpec(ctx context.Context, name names.Spec) (*models.Spec, error) {
+	normal := name.Normal()
 	q := d.NewQuery(storage.SpecEntityName)
-	q = q.Require("ProjectID", name.ProjectID)
-	q = q.Require("ApiID", name.ApiID)
-	q = q.Require("VersionID", name.VersionID)
-	q = q.Require("SpecID", name.SpecID)
+	q = q.Require("ProjectID", normal.ProjectID)
+	q = q.Require("ApiID", normal.ApiID)
+	q = q.Require("VersionID", normal.VersionID)
+	q = q.Require("SpecID", normal.SpecID)
 	q = q.Require("Currency", models.IsCurrent)
 
 	it := d.Run(ctx, q)

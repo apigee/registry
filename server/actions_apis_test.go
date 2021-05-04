@@ -250,6 +250,16 @@ func TestCreateApiResponseCodes(t *testing.T) {
 			},
 			want: codes.InvalidArgument,
 		},
+		{
+			desc: "custom identifier mixed case",
+			seed: &rpc.Project{Name: "projects/my-project"},
+			req: &rpc.CreateApiRequest{
+				Parent: "projects/my-project",
+				ApiId:  "IDentifier",
+				Api:    &rpc.Api{},
+			},
+			want: codes.InvalidArgument,
+		},
 	}
 
 	for _, test := range tests {

@@ -187,6 +187,14 @@ func TestCreateProjectResponseCodes(t *testing.T) {
 			},
 			want: codes.InvalidArgument,
 		},
+		{
+			desc: "custom identifier mixed case",
+			req: &rpc.CreateProjectRequest{
+				ProjectId: "IDentifier",
+				Project:   &rpc.Project{},
+			},
+			want: codes.InvalidArgument,
+		},
 	}
 
 	for _, test := range tests {

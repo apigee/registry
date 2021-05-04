@@ -48,7 +48,7 @@ func (a Api) Version(id string) Version {
 	return Version{
 		ProjectID: a.ProjectID,
 		ApiID:     a.ApiID,
-		VersionID: normalize(id),
+		VersionID: id,
 	}
 }
 
@@ -58,7 +58,7 @@ func (a Api) Artifact(id string) Artifact {
 		name: apiArtifact{
 			ProjectID:  a.ProjectID,
 			ApiID:      a.ApiID,
-			ArtifactID: normalize(id),
+			ArtifactID: id,
 		},
 	}
 }
@@ -84,7 +84,7 @@ func ParseApi(name string) (Api, error) {
 		return Api{}, fmt.Errorf("invalid API name %q: must match %q", name, r)
 	}
 
-	m := r.FindStringSubmatch(normalize(name))
+	m := r.FindStringSubmatch(name)
 	return Api{
 		ProjectID: m[1],
 		ApiID:     m[2],

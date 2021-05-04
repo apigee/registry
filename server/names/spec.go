@@ -73,7 +73,7 @@ func (s Spec) Revision(id string) SpecRevision {
 		ApiID:      s.ApiID,
 		VersionID:  s.VersionID,
 		SpecID:     s.SpecID,
-		RevisionID: normalize(id),
+		RevisionID: id,
 	}
 }
 
@@ -85,8 +85,18 @@ func (s Spec) Artifact(id string) Artifact {
 			ApiID:      s.ApiID,
 			VersionID:  s.VersionID,
 			SpecID:     s.SpecID,
-			ArtifactID: normalize(id),
+			ArtifactID: id,
 		},
+	}
+}
+
+// Normal returns the resource name with normalized identifiers.
+func (s Spec) Normal() Spec {
+	return Spec{
+		ProjectID: normalize(s.ProjectID),
+		ApiID:     normalize(s.ApiID),
+		VersionID: normalize(s.VersionID),
+		SpecID:    normalize(s.SpecID),
 	}
 }
 
@@ -110,7 +120,7 @@ func ParseSpec(name string) (Spec, error) {
 		return Spec{}, fmt.Errorf("invalid spec name %q: must match %q", name, specRegexp)
 	}
 
-	m := specRegexp.FindStringSubmatch(normalize(name))
+	m := specRegexp.FindStringSubmatch(name)
 	spec := Spec{
 		ProjectID: m[1],
 		ApiID:     m[2],
