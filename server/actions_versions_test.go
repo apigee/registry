@@ -173,8 +173,6 @@ func TestCreateApiVersion(t *testing.T) {
 }
 
 func TestCreateApiVersionResponseCodes(t *testing.T) {
-	t.Skip("Validation rules are not implemented")
-
 	tests := []struct {
 		desc string
 		seed *rpc.Api
@@ -183,8 +181,9 @@ func TestCreateApiVersionResponseCodes(t *testing.T) {
 	}{
 		{
 			desc: "parent not found",
+			seed: &rpc.Api{Name: "projects/my-project/apis/my-api"},
 			req: &rpc.CreateApiVersionRequest{
-				Parent:     "projects/my-project/apis/my-api",
+				Parent:     "projects/my-project/apis/other-api",
 				ApiVersion: fullVersion,
 			},
 			want: codes.NotFound,
@@ -199,16 +198,10 @@ func TestCreateApiVersionResponseCodes(t *testing.T) {
 			want: codes.InvalidArgument,
 		},
 		{
-			desc: "short custom identifier",
-			req: &rpc.CreateApiVersionRequest{
-				ApiVersionId: "abc",
-				ApiVersion:   &rpc.ApiVersion{},
-			},
-			want: codes.InvalidArgument,
-		},
-		{
 			desc: "long custom identifier",
+			seed: &rpc.Api{Name: "projects/my-project/apis/my-api"},
 			req: &rpc.CreateApiVersionRequest{
+				Parent:       "projects/my-project/apis/my-api",
 				ApiVersionId: "this-identifier-exceeds-the-sixty-three-character-maximum-length",
 				ApiVersion:   &rpc.ApiVersion{},
 			},
@@ -216,23 +209,39 @@ func TestCreateApiVersionResponseCodes(t *testing.T) {
 		},
 		{
 			desc: "custom identifier underscores",
+			seed: &rpc.Api{Name: "projects/my-project/apis/my-api"},
 			req: &rpc.CreateApiVersionRequest{
+				Parent:       "projects/my-project/apis/my-api",
 				ApiVersionId: "underscore_identifier",
 				ApiVersion:   &rpc.ApiVersion{},
 			},
 			want: codes.InvalidArgument,
 		},
 		{
-			desc: "customer identifier dots",
+			desc: "custom identifier hyphen prefix",
+			seed: &rpc.Api{Name: "projects/my-project/apis/my-api"},
 			req: &rpc.CreateApiVersionRequest{
-				ApiVersionId: "dot.identifier",
+				Parent:       "projects/my-project/apis/my-api",
+				ApiVersionId: "-identifier",
+				ApiVersion:   &rpc.ApiVersion{},
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "custom identifier hyphen suffix",
+			seed: &rpc.Api{Name: "projects/my-project/apis/my-api"},
+			req: &rpc.CreateApiVersionRequest{
+				Parent:       "projects/my-project/apis/my-api",
+				ApiVersionId: "identifier-",
 				ApiVersion:   &rpc.ApiVersion{},
 			},
 			want: codes.InvalidArgument,
 		},
 		{
 			desc: "customer identifier uuid format",
+			seed: &rpc.Api{Name: "projects/my-project/apis/my-api"},
 			req: &rpc.CreateApiVersionRequest{
+				Parent:       "projects/my-project/apis/my-api",
 				ApiVersionId: "072d2288-c685-42d8-9df0-5edbb2a809ea",
 				ApiVersion:   &rpc.ApiVersion{},
 			},

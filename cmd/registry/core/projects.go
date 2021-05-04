@@ -29,6 +29,7 @@ func EnsureProjectExists(ctx context.Context, client *gapic.RegistryClient, proj
 	if NotFound(err) {
 		req := &rpcpb.CreateProjectRequest{
 			ProjectId: projectID,
+			Project:   &rpcpb.Project{},
 		}
 		_, err := client.CreateProject(ctx, req)
 		if err != nil {

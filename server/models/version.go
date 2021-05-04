@@ -25,7 +25,7 @@ import (
 
 // Version is the storage-side representation of a version.
 type Version struct {
-	Key         string    `datastore:"-" gorm:"primaryKey"`
+	Key         string    `gorm:"primaryKey"`
 	ProjectID   string    // Uniquely identifies a project.
 	ApiID       string    // Uniquely identifies an api within a project.
 	VersionID   string    // Uniquely identifies a version wihtin a api.
@@ -34,8 +34,8 @@ type Version struct {
 	CreateTime  time.Time // Creation time.
 	UpdateTime  time.Time // Time of last change.
 	State       string    // Lifecycle stage.
-	Labels      []byte    `datastore:",noindex"` // Serialized labels.
-	Annotations []byte    `datastore:",noindex"` // Serialized annotations.
+	Labels      []byte    // Serialized labels.
+	Annotations []byte    // Serialized annotations.
 }
 
 // NewVersion initializes a new resource.

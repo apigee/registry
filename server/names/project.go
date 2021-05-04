@@ -32,7 +32,7 @@ func (p Project) Validate() error {
 		return fmt.Errorf("invalid project name %q: must match %q", name, r)
 	}
 
-	return nil
+	return validateID(p.ProjectID)
 }
 
 // Api returns an API with the provided ID and this resource as its parent.
@@ -64,7 +64,7 @@ func ProjectsRegexp() *regexp.Regexp {
 
 // ProjectRegexp returns a regular expression that matches a project resource name.
 func ProjectRegexp() *regexp.Regexp {
-	return regexp.MustCompile("^projects/" + identifier + "$")
+	return regexp.MustCompile(fmt.Sprintf("^projects/%s$", identifier))
 }
 
 // ParseProject parses the name of a project.

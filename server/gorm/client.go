@@ -42,8 +42,6 @@ func getGID() uint64 {
 }
 
 // Client represents a connection to a storage provider.
-// In this module, entities are stored using the Cloud Datastore API.
-// https://cloud.google.com/datastore/
 type Client struct {
 	db *gorm.DB
 }

@@ -27,8 +27,7 @@ project.
   make deploy-gke
   ```
   **Note:** Make sure when you are deploying the registry application, you have
-  `notify: true` set in the registry config file. This is set in the default
-  config `datastore.yaml`.
+  `notify: true` set in the registry config file.
 
 ## Deploying worker setup:
 
