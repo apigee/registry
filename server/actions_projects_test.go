@@ -244,15 +244,25 @@ func TestCreateProjectDuplicates(t *testing.T) {
 func TestGetProjectResponseCodes(t *testing.T) {
 	tests := []struct {
 		desc string
+		seed *rpc.Project
 		req  *rpc.GetProjectRequest
 		want codes.Code
 	}{
 		{
 			desc: "resource not found",
+			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.GetProjectRequest{
 				Name: "projects/doesnt-exist",
 			},
 			want: codes.NotFound,
+		},
+		{
+			desc: "case insensitive name",
+			seed: &rpc.Project{Name: "projects/my-project"},
+			req: &rpc.GetProjectRequest{
+				Name: "projects/My-Project",
+			},
+			want: codes.OK,
 		},
 	}
 
@@ -260,6 +270,7 @@ func TestGetProjectResponseCodes(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
+			seedProjects(ctx, t, server, test.seed)
 
 			if _, err := server.GetProject(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("GetProject(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
