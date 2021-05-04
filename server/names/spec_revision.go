@@ -50,7 +50,7 @@ func ParseSpecRevision(name string) (SpecRevision, error) {
 		return SpecRevision{}, fmt.Errorf("invalid spec revision name %q: must match %q", name, specRevisionRegexp)
 	}
 
-	m := specRevisionRegexp.FindStringSubmatch(normalize(name))
+	m := specRevisionRegexp.FindStringSubmatch(name)
 	revision := SpecRevision{
 		ProjectID:  m[1],
 		ApiID:      m[2],
