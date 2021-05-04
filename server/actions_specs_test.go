@@ -198,8 +198,9 @@ func TestCreateApiSpecResponseCodes(t *testing.T) {
 	}{
 		{
 			desc: "parent not found",
+			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
 			req: &rpc.CreateApiSpecRequest{
-				Parent:  "projects/my-project/apis/my-api/versions/v1",
+				Parent:  "projects/my-project/apis/my-api/versions/v2",
 				ApiSpec: fullSpec,
 			},
 			want: codes.NotFound,
@@ -289,6 +290,7 @@ func TestCreateApiSpecResponseCodes(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
+			seedVersions(ctx, t, server, test.seed)
 
 			if _, err := server.CreateApiSpec(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("CreateApiSpec(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)

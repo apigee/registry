@@ -169,6 +169,7 @@ func TestCreateProjectResponseCodes(t *testing.T) {
 			desc: "custom identifier hyphen prefix",
 			req: &rpc.CreateProjectRequest{
 				ProjectId: "-identifier",
+				Project:   &rpc.Project{},
 			},
 			want: codes.InvalidArgument,
 		},
@@ -176,6 +177,7 @@ func TestCreateProjectResponseCodes(t *testing.T) {
 			desc: "custom identifier hyphen suffix",
 			req: &rpc.CreateProjectRequest{
 				ProjectId: "identifier-",
+				Project:   &rpc.Project{},
 			},
 			want: codes.InvalidArgument,
 		},
