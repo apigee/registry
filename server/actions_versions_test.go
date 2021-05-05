@@ -247,6 +247,16 @@ func TestCreateApiVersionResponseCodes(t *testing.T) {
 			},
 			want: codes.InvalidArgument,
 		},
+		{
+			desc: "custom identifier mixed case",
+			seed: &rpc.Api{Name: "projects/my-project/apis/my-api"},
+			req: &rpc.CreateApiVersionRequest{
+				Parent:       "projects/my-project/apis/my-api",
+				ApiVersionId: "IDentifier",
+				ApiVersion:   &rpc.ApiVersion{},
+			},
+			want: codes.InvalidArgument,
+		},
 	}
 
 	for _, test := range tests {
@@ -281,7 +291,6 @@ func TestCreateApiVersionDuplicates(t *testing.T) {
 		}
 	})
 
-	t.Skip("Resource names are not yet case insensitive")
 	t.Run("case insensitive duplicate", func(t *testing.T) {
 		req := &rpc.CreateApiVersionRequest{
 			Parent:       "projects/my-project/apis/my-api",
@@ -356,15 +365,25 @@ func TestGetApiVersion(t *testing.T) {
 func TestGetApiVersionResponseCodes(t *testing.T) {
 	tests := []struct {
 		desc string
+		seed *rpc.ApiVersion
 		req  *rpc.GetApiVersionRequest
 		want codes.Code
 	}{
 		{
 			desc: "resource not found",
+			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
 			req: &rpc.GetApiVersionRequest{
 				Name: "projects/my-project/apis/my-api/versions/doesnt-exist",
 			},
 			want: codes.NotFound,
+		},
+		{
+			desc: "case insensitive name",
+			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
+			req: &rpc.GetApiVersionRequest{
+				Name: "projects/my-project/apis/my-api/versions/V1",
+			},
+			want: codes.OK,
 		},
 	}
 
@@ -372,6 +391,7 @@ func TestGetApiVersionResponseCodes(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
+			seedVersions(ctx, t, server, test.seed)
 
 			if _, err := server.GetApiVersion(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("GetApiVersion(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)

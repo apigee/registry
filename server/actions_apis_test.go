@@ -250,6 +250,16 @@ func TestCreateApiResponseCodes(t *testing.T) {
 			},
 			want: codes.InvalidArgument,
 		},
+		{
+			desc: "custom identifier mixed case",
+			seed: &rpc.Project{Name: "projects/my-project"},
+			req: &rpc.CreateApiRequest{
+				Parent: "projects/my-project",
+				ApiId:  "IDentifier",
+				Api:    &rpc.Api{},
+			},
+			want: codes.InvalidArgument,
+		},
 	}
 
 	for _, test := range tests {
@@ -284,7 +294,6 @@ func TestCreateApiDuplicates(t *testing.T) {
 		}
 	})
 
-	t.Skip("Resource names are not yet case insensitive")
 	t.Run("case insensitive duplicate", func(t *testing.T) {
 		req := &rpc.CreateApiRequest{
 			Parent: "projects/my-project",
@@ -359,15 +368,25 @@ func TestGetApi(t *testing.T) {
 func TestGetApiResponseCodes(t *testing.T) {
 	tests := []struct {
 		desc string
+		seed *rpc.Api
 		req  *rpc.GetApiRequest
 		want codes.Code
 	}{
 		{
 			desc: "resource not found",
+			seed: &rpc.Api{Name: "projects/my-project/apis/my-api"},
 			req: &rpc.GetApiRequest{
 				Name: "projects/my-project/apis/doesnt-exist",
 			},
 			want: codes.NotFound,
+		},
+		{
+			desc: "case insensitive name",
+			seed: &rpc.Api{Name: "projects/my-project/apis/my-api"},
+			req: &rpc.GetApiRequest{
+				Name: "projects/my-project/apis/My-Api",
+			},
+			want: codes.OK,
 		},
 	}
 
@@ -375,6 +394,7 @@ func TestGetApiResponseCodes(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
+			seedApis(ctx, t, server, test.seed)
 
 			if _, err := server.GetApi(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("GetApi(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)

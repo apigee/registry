@@ -38,10 +38,8 @@ func (s *RegistryServer) CreateProject(ctx context.Context, req *rpc.CreateProje
 		return nil, invalidArgumentError(fmt.Errorf("invalid project %+v: body must be provided", req.GetProject()))
 	}
 
-	name := names.Project{}
-	if req.GetProjectId() != "" {
-		name.ProjectID = req.GetProjectId()
-	} else {
+	name := names.Project{ProjectID: req.GetProjectId()}
+	if name.ProjectID == "" {
 		name.ProjectID = names.GenerateID()
 	}
 

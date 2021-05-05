@@ -198,8 +198,9 @@ func TestCreateApiSpecResponseCodes(t *testing.T) {
 	}{
 		{
 			desc: "parent not found",
+			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
 			req: &rpc.CreateApiSpecRequest{
-				Parent:  "projects/my-project/apis/my-api/versions/v1",
+				Parent:  "projects/my-project/apis/my-api/versions/v2",
 				ApiSpec: fullSpec,
 			},
 			want: codes.NotFound,
@@ -273,12 +274,23 @@ func TestCreateApiSpecResponseCodes(t *testing.T) {
 			},
 			want: codes.InvalidArgument,
 		},
+		{
+			desc: "customer identifier mixed case",
+			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
+			req: &rpc.CreateApiSpecRequest{
+				Parent:    "projects/my-project/apis/my-api/versions/v1",
+				ApiSpecId: "IDentifier",
+				ApiSpec:   &rpc.ApiSpec{},
+			},
+			want: codes.InvalidArgument,
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
+			seedVersions(ctx, t, server, test.seed)
 
 			if _, err := server.CreateApiSpec(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("CreateApiSpec(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
@@ -306,7 +318,6 @@ func TestCreateApiSpecDuplicates(t *testing.T) {
 		}
 	})
 
-	t.Skip("Resource names are not yet case insensitive")
 	t.Run("case insensitive duplicate", func(t *testing.T) {
 		req := &rpc.CreateApiSpecRequest{
 			Parent:    "projects/my-project/apis/my-api/versions/v1",
@@ -381,15 +392,25 @@ func TestGetApiSpec(t *testing.T) {
 func TestGetApiSpecResponseCodes(t *testing.T) {
 	tests := []struct {
 		desc string
+		seed *rpc.ApiSpec
 		req  *rpc.GetApiSpecRequest
 		want codes.Code
 	}{
 		{
 			desc: "resource not found",
+			seed: &rpc.ApiSpec{Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec"},
 			req: &rpc.GetApiSpecRequest{
 				Name: "projects/my-project/apis/my-api/versions/v1/specs/doesnt-exist",
 			},
 			want: codes.NotFound,
+		},
+		{
+			desc: "case insensitive name",
+			seed: &rpc.ApiSpec{Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec"},
+			req: &rpc.GetApiSpecRequest{
+				Name: "projects/my-project/apis/my-api/versions/v1/specs/My-Spec",
+			},
+			want: codes.OK,
 		},
 	}
 
@@ -397,6 +418,7 @@ func TestGetApiSpecResponseCodes(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
+			seedSpecs(ctx, t, server, test.seed)
 
 			if _, err := server.GetApiSpec(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("GetApiSpec(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
