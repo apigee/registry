@@ -17,12 +17,14 @@ package server
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/dao"
 	"github.com/apigee/registry/server/models"
 	"github.com/apigee/registry/server/names"
 	"github.com/golang/protobuf/ptypes/empty"
+	"google.golang.org/genproto/googleapis/api/httpbody"
 )
 
 type artifactParent interface {
@@ -184,6 +186,36 @@ func (s *RegistryServer) GetArtifact(ctx context.Context, req *rpc.GetArtifactRe
 	}
 
 	return message, nil
+}
+
+// GetArtifactContents handles the corresponding API request.
+func (s *RegistryServer) GetArtifactContents(ctx context.Context, req *rpc.GetArtifactContentsRequest) (*httpbody.HttpBody, error) {
+	client, err := s.getStorageClient(ctx)
+	if err != nil {
+		return nil, unavailableError(err)
+	}
+	defer s.releaseStorageClient(client)
+	db := dao.NewDAO(client)
+
+	name, err := names.ParseArtifact(strings.TrimSuffix(req.GetName(), "/contents"))
+	if err != nil {
+		return nil, invalidArgumentError(err)
+	}
+
+	artifact, err := db.GetArtifact(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+
+	blob, err := db.GetArtifactContents(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+
+	return &httpbody.HttpBody{
+		ContentType: artifact.MimeType,
+		Data:        blob.Contents,
+	}, nil
 }
 
 // ListArtifacts handles the corresponding API request.
