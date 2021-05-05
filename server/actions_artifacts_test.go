@@ -252,6 +252,16 @@ func TestCreateArtifactResponseCodes(t *testing.T) {
 			},
 			want: codes.InvalidArgument,
 		},
+		{
+			desc: "custom identifier mixed case",
+			seed: &rpc.Project{Name: "projects/my-project"},
+			req: &rpc.CreateArtifactRequest{
+				Parent:     "projects/my-project",
+				ArtifactId: "IDentifier",
+				Artifact:   &rpc.Artifact{},
+			},
+			want: codes.InvalidArgument,
+		},
 	}
 
 	for _, test := range tests {
@@ -286,7 +296,6 @@ func TestCreateArtifactDuplicates(t *testing.T) {
 		}
 	})
 
-	t.Skip("Resource names are not yet case insensitive")
 	t.Run("case insensitive duplicate", func(t *testing.T) {
 		req := &rpc.CreateArtifactRequest{
 			Parent:     "projects/my-project/apis/my-api/versions/v1",
@@ -361,15 +370,25 @@ func TestGetArtifact(t *testing.T) {
 func TestGetArtifactResponseCodes(t *testing.T) {
 	tests := []struct {
 		desc string
+		seed *rpc.Artifact
 		req  *rpc.GetArtifactRequest
 		want codes.Code
 	}{
 		{
 			desc: "resource not found",
+			seed: &rpc.Artifact{Name: "projects/my-project/artifacts/my-artifact"},
 			req: &rpc.GetArtifactRequest{
 				Name: "projects/my-project/apis/my-api/versions/v1/artifacts/doesnt-exist",
 			},
 			want: codes.NotFound,
+		},
+		{
+			desc: "case insensitive name",
+			seed: &rpc.Artifact{Name: "projects/my-project/artifacts/my-artifact"},
+			req: &rpc.GetArtifactRequest{
+				Name: "projects/my-project/artifacts/My-Artifact",
+			},
+			want: codes.OK,
 		},
 	}
 
@@ -377,6 +396,7 @@ func TestGetArtifactResponseCodes(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
+			seedArtifacts(ctx, t, server, test.seed)
 
 			if _, err := server.GetArtifact(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("GetArtifact(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)

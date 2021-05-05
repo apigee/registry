@@ -90,8 +90,18 @@ func (s Spec) Artifact(id string) Artifact {
 	}
 }
 
+// Normal returns the resource name with normalized identifiers.
+func (s Spec) Normal() Spec {
+	return Spec{
+		ProjectID: normalize(s.ProjectID),
+		ApiID:     normalize(s.ApiID),
+		VersionID: normalize(s.VersionID),
+		SpecID:    normalize(s.SpecID),
+	}
+}
+
 func (s Spec) String() string {
-	return fmt.Sprintf("projects/%s/apis/%s/versions/%s/specs/%s", s.ProjectID, s.ApiID, s.VersionID, s.SpecID)
+	return normalize(fmt.Sprintf("projects/%s/apis/%s/versions/%s/specs/%s", s.ProjectID, s.ApiID, s.VersionID, s.SpecID))
 }
 
 // SpecsRegexp returns a regular expression that matches a collection of specs.

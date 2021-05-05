@@ -109,7 +109,7 @@ func (a Artifact) Validate() error {
 }
 
 func (a Artifact) String() string {
-	return a.name.String()
+	return normalize(a.name.String())
 }
 
 // ParseArtifact parses the name of an artifact.
@@ -146,7 +146,7 @@ func (a projectArtifact) Validate() error {
 }
 
 func (a projectArtifact) String() string {
-	return fmt.Sprintf("projects/%s/artifacts/%s", a.ProjectID, a.ArtifactID)
+	return normalize(fmt.Sprintf("projects/%s/artifacts/%s", a.ProjectID, a.ArtifactID))
 }
 
 func parseProjectArtifact(name string) (projectArtifact, error) {
@@ -178,7 +178,7 @@ func (a apiArtifact) Validate() error {
 }
 
 func (a apiArtifact) String() string {
-	return fmt.Sprintf("projects/%s/apis/%s/artifacts/%s", a.ProjectID, a.ApiID, a.ArtifactID)
+	return normalize(fmt.Sprintf("projects/%s/apis/%s/artifacts/%s", a.ProjectID, a.ApiID, a.ArtifactID))
 }
 
 func parseApiArtifact(name string) (apiArtifact, error) {
@@ -212,7 +212,7 @@ func (a versionArtifact) Validate() error {
 }
 
 func (a versionArtifact) String() string {
-	return fmt.Sprintf("projects/%s/apis/%s/versions/%s/artifacts/%s", a.ProjectID, a.ApiID, a.VersionID, a.ArtifactID)
+	return normalize(fmt.Sprintf("projects/%s/apis/%s/versions/%s/artifacts/%s", a.ProjectID, a.ApiID, a.VersionID, a.ArtifactID))
 }
 
 func parseVersionArtifact(name string) (versionArtifact, error) {
@@ -248,7 +248,7 @@ func (a specArtifact) Validate() error {
 }
 
 func (a specArtifact) String() string {
-	return fmt.Sprintf("projects/%s/apis/%s/versions/%s/specs/%s/artifacts/%s", a.ProjectID, a.ApiID, a.VersionID, a.SpecID, a.ArtifactID)
+	return normalize(fmt.Sprintf("projects/%s/apis/%s/versions/%s/specs/%s/artifacts/%s", a.ProjectID, a.ApiID, a.VersionID, a.SpecID, a.ArtifactID))
 }
 
 func parseSpecArtifact(name string) (specArtifact, error) {

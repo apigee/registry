@@ -73,7 +73,7 @@ func (v Version) Spec(id string) Spec {
 }
 
 func (v Version) String() string {
-	return fmt.Sprintf("projects/%s/apis/%s/versions/%s", v.ProjectID, v.ApiID, v.VersionID)
+	return normalize(fmt.Sprintf("projects/%s/apis/%s/versions/%s", v.ProjectID, v.ApiID, v.VersionID))
 }
 
 // VersionsRegexp returns a regular expression that matches a collection of versions.

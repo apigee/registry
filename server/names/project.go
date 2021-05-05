@@ -54,7 +54,7 @@ func (p Project) Artifact(id string) Artifact {
 }
 
 func (p Project) String() string {
-	return fmt.Sprintf("projects/%s", p.ProjectID)
+	return normalize(fmt.Sprintf("projects/%s", p.ProjectID))
 }
 
 // ProjectsRegexp returns a regular expression that matches collection of projects.

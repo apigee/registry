@@ -169,6 +169,7 @@ func TestCreateProjectResponseCodes(t *testing.T) {
 			desc: "custom identifier hyphen prefix",
 			req: &rpc.CreateProjectRequest{
 				ProjectId: "-identifier",
+				Project:   &rpc.Project{},
 			},
 			want: codes.InvalidArgument,
 		},
@@ -176,6 +177,7 @@ func TestCreateProjectResponseCodes(t *testing.T) {
 			desc: "custom identifier hyphen suffix",
 			req: &rpc.CreateProjectRequest{
 				ProjectId: "identifier-",
+				Project:   &rpc.Project{},
 			},
 			want: codes.InvalidArgument,
 		},
@@ -183,6 +185,14 @@ func TestCreateProjectResponseCodes(t *testing.T) {
 			desc: "customer identifier uuid format",
 			req: &rpc.CreateProjectRequest{
 				ProjectId: "072d2288-c685-42d8-9df0-5edbb2a809ea",
+				Project:   &rpc.Project{},
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "custom identifier mixed case",
+			req: &rpc.CreateProjectRequest{
+				ProjectId: "IDentifier",
 				Project:   &rpc.Project{},
 			},
 			want: codes.InvalidArgument,
@@ -219,7 +229,6 @@ func TestCreateProjectDuplicates(t *testing.T) {
 		}
 	})
 
-	t.Skip("Resource names are not yet case insensitive")
 	t.Run("case insensitive duplicate", func(t *testing.T) {
 		req := &rpc.CreateProjectRequest{
 			ProjectId: "My-Project",
@@ -235,15 +244,25 @@ func TestCreateProjectDuplicates(t *testing.T) {
 func TestGetProjectResponseCodes(t *testing.T) {
 	tests := []struct {
 		desc string
+		seed *rpc.Project
 		req  *rpc.GetProjectRequest
 		want codes.Code
 	}{
 		{
 			desc: "resource not found",
+			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.GetProjectRequest{
 				Name: "projects/doesnt-exist",
 			},
 			want: codes.NotFound,
+		},
+		{
+			desc: "case insensitive name",
+			seed: &rpc.Project{Name: "projects/my-project"},
+			req: &rpc.GetProjectRequest{
+				Name: "projects/My-Project",
+			},
+			want: codes.OK,
 		},
 	}
 
@@ -251,6 +270,7 @@ func TestGetProjectResponseCodes(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
+			seedProjects(ctx, t, server, test.seed)
 
 			if _, err := server.GetProject(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("GetProject(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)

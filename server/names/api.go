@@ -64,7 +64,7 @@ func (a Api) Artifact(id string) Artifact {
 }
 
 func (a Api) String() string {
-	return fmt.Sprintf("projects/%s/apis/%s", a.ProjectID, a.ApiID)
+	return normalize(fmt.Sprintf("projects/%s/apis/%s", a.ProjectID, a.ApiID))
 }
 
 // ApisRegexp returns a regular expression that matches collection of apis.
