@@ -206,12 +206,14 @@ func TestCRUD(t *testing.T) {
 		}
 		response, err := registryClient.GetApiSpecContents(ctx, req)
 		check(t, "error getting spec contents %s", err)
-		if response.GetContentType() != expectedContentType {
-			t.Errorf("Unexpected content type %q", response.GetContentType())
-		}
-		contentHash := hashForBytes(response.Data)
-		if contentHash != expectedHash {
-			t.Errorf("Contents failed to match %s != %s", contentHash, expectedHash)
+		if err == nil {
+			if response.GetContentType() != expectedContentType {
+				t.Errorf("Unexpected content type %q", response.GetContentType())
+			}
+			contentHash := hashForBytes(response.Data)
+			if contentHash != expectedHash {
+				t.Errorf("Contents failed to match %s != %s", contentHash, expectedHash)
+			}
 		}
 	}
 	// Check the contents of the created revision.
@@ -221,12 +223,14 @@ func TestCRUD(t *testing.T) {
 		}
 		response, err := registryClient.GetApiSpecContents(ctx, req)
 		check(t, "error getting spec contents %s", err)
-		if response.GetContentType() != expectedContentType {
-			t.Errorf("Unexpected content type %q", response.GetContentType())
-		}
-		contentHash := hashForBytes(response.Data)
-		if contentHash != expectedHash {
-			t.Errorf("Contents failed to match %s != %s", contentHash, expectedHash)
+		if err == nil {
+			if response.GetContentType() != expectedContentType {
+				t.Errorf("Unexpected content type %q", response.GetContentType())
+			}
+			contentHash := hashForBytes(response.Data)
+			if contentHash != expectedHash {
+				t.Errorf("Contents failed to match %s != %s", contentHash, expectedHash)
+			}
 		}
 	}
 	// Tag the revision.
@@ -234,7 +238,7 @@ func TestCRUD(t *testing.T) {
 	{
 		req := &rpc.TagApiSpecRevisionRequest{
 			Name: "projects/test/apis/sample/versions/1.0.0/specs/openapi.yaml@" + revision,
-			Tag: revisionTag,
+			Tag:  revisionTag,
 		}
 		_, err := registryClient.TagApiSpecRevision(ctx, req)
 		check(t, "error tagging spec %s", err)
@@ -246,12 +250,14 @@ func TestCRUD(t *testing.T) {
 		}
 		response, err := registryClient.GetApiSpecContents(ctx, req)
 		check(t, "error getting spec contents %s", err)
-		if response.GetContentType() != expectedContentType {
-			t.Errorf("Unexpected content type %q", response.GetContentType())
-		}
-		contentHash := hashForBytes(response.Data)
-		if contentHash != expectedHash {
-			t.Errorf("Contents failed to match %s != %s", contentHash, expectedHash)
+		if err == nil {
+			if response.GetContentType() != expectedContentType {
+				t.Errorf("Unexpected content type %q", response.GetContentType())
+			}
+			contentHash := hashForBytes(response.Data)
+			if contentHash != expectedHash {
+				t.Errorf("Contents failed to match %s != %s", contentHash, expectedHash)
+			}
 		}
 	}
 	testArtifacts(ctx, registryClient, t, "projects/test")
@@ -309,6 +315,22 @@ func testArtifacts(ctx context.Context, registryClient connection.Client, t *tes
 		}
 		if resp.GetHash() != messageHash {
 			t.Errorf("Unexpected hash value %s (expected %s)", resp.GetHash(), messageHash)
+		}
+	}
+	// Check the artifact contents.
+	{
+		req := &rpc.GetArtifactContentsRequest{
+			Name: fmt.Sprintf("%s/artifacts/sample/contents", parent),
+		}
+		resp, err := registryClient.GetArtifactContents(ctx, req)
+		check(t, "error getting artifact contents %s", err)
+		if err == nil {
+			if resp.GetContentType() != messageMimeType {
+				t.Errorf("Unexpected mime type %s (expected %s)", resp.GetContentType(), messageMimeType)
+			}
+			if bytes.Compare(resp.GetData(), messageContents) != 0 {
+				t.Errorf("Unexpected data %s (expected %s)", string(resp.GetData()), string(messageContents))
+			}
 		}
 	}
 }
