@@ -80,6 +80,7 @@ func NewClient(ctx context.Context, gormDBName, gormConfig string) (*Client, err
 	switch gormDBName {
 	case "sqlite3":
 		if (!cgoEnabled) {
+			myunlock()
 			return nil, fmt.Errorf("%s is unavailable. Please recompile with CGO_ENABLED=1 or use a different database.", gormDBName)
 		}
 		db, err := gorm.Open(sqlite.Open(gormConfig), config())
