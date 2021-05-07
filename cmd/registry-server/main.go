@@ -49,17 +49,20 @@ func main() {
 			log.Fatalf("Failed to read file: %s", err)
 		}
 
+		b = []byte(os.ExpandEnv(string(b)))
 		if err := yaml.Unmarshal(b, &config); err != nil {
 			log.Fatalf("Failed to unmarshal yaml: %s", err)
 		}
-	} else {
-		config = server.Config{
-			Database: "sqlite3",
-			DBConfig: "/tmp/registry.db",
-			Log:      "error",
-		}
 	}
-
+	if config.Database == "" {
+		config.Database = "sqlite3"
+	}
+	if config.Database == "sqlite3" && config.DBConfig == "" {
+		config.DBConfig = "/tmp/registry.db"
+	}
+	if config.Log == "" {
+		config.Log = "error"
+	}
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
@@ -67,6 +70,6 @@ func main() {
 
 	err := server.RunServer(":"+port, &config)
 	if err != nil {
-		log.Fatalf("Failed to start server: %s", err.Error())
+		log.Fatalf("Failed to start: %s", err.Error())
 	}
 }
