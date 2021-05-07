@@ -16,6 +16,7 @@ package core
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/rpc"
@@ -77,17 +78,23 @@ func GetSpec(ctx context.Context,
 	segments []string,
 	getContents bool,
 	handler SpecHandler) (*rpc.ApiSpec, error) {
-	view := rpc.View_BASIC
-	if getContents {
-		view = rpc.View_FULL
-	}
 	request := &rpc.GetApiSpecRequest{
 		Name: "projects/" + segments[1] + "/apis/" + segments[2] + "/versions/" + segments[3] + "/specs/" + segments[4],
-		View: view,
 	}
 	spec, err := client.GetApiSpec(ctx, request)
 	if err != nil {
 		return nil, err
+	}
+	if getContents {
+		request := &rpc.GetApiSpecContentsRequest{
+			Name: fmt.Sprintf("%s/contents", spec.GetName()),
+		}
+		contents, err := client.GetApiSpecContents(ctx, request)
+		if err != nil {
+			return nil, err
+		}
+		spec.Contents = contents.GetData()
+		spec.MimeType = contents.GetContentType()
 	}
 	if handler != nil {
 		handler(spec)
@@ -100,11 +107,7 @@ func GetArtifact(ctx context.Context,
 	segments []string,
 	getContents bool,
 	handler ArtifactHandler) (*rpc.Artifact, error) {
-	view := rpc.View_BASIC
-	if getContents {
-		view = rpc.View_FULL
-	}
-	request := &rpc.GetArtifactRequest{View: view}
+	request := &rpc.GetArtifactRequest{}
 	if segments[3] == "" {
 		request.Name = "projects/" + segments[1]
 	} else if segments[5] == "" {
@@ -119,6 +122,17 @@ func GetArtifact(ctx context.Context,
 	artifact, err := client.GetArtifact(ctx, request)
 	if err != nil {
 		return nil, err
+	}
+	if getContents {
+		request := &rpc.GetArtifactContentsRequest{
+			Name: fmt.Sprintf("%s/contents", artifact.GetName()),
+		}
+		contents, err := client.GetArtifactContents(ctx, request)
+		if err != nil {
+			return nil, err
+		}
+		artifact.Contents = contents.GetData()
+		artifact.MimeType = contents.GetContentType()
 	}
 	if handler != nil {
 		handler(artifact)

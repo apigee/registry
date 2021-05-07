@@ -16,6 +16,7 @@ package core
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/rpc"
@@ -174,10 +175,6 @@ func ListArtifacts(ctx context.Context,
 	}
 	request := &rpc.ListArtifactsRequest{
 		Parent: parent,
-		View:   rpc.View_BASIC,
-	}
-	if getContents {
-		request.View = rpc.View_FULL
 	}
 	filter := filterFlag
 	if len(segments) == 9 && segments[8] != "-" {
@@ -196,6 +193,16 @@ func ListArtifacts(ctx context.Context,
 			break
 		} else if err != nil {
 			return err
+		}
+		if getContents {
+			req := &rpc.GetArtifactContentsRequest{
+				Name: fmt.Sprintf("%s/contents", artifact.GetName()),
+			}
+			resp, err := client.GetArtifactContents(ctx, req)
+			if err != nil {
+				return err
+			}
+			artifact.Contents = resp.GetData()
 		}
 		handler(artifact)
 	}
@@ -218,7 +225,6 @@ func ListArtifactsForParent(ctx context.Context,
 	}
 	request := &rpc.ListArtifactsRequest{
 		Parent: parent,
-		View:   rpc.View_BASIC,
 	}
 	it := client.ListArtifacts(ctx, request)
 	for {

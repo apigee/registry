@@ -60,20 +60,19 @@ var computeLintStatsCmd = &cobra.Command{
 			err = core.ListSpecs(ctx, client, m, computeFilter, func(spec *rpc.ApiSpec) {
 				fmt.Printf("%s\n", spec.Name)
 				// get the lint results
-				request := rpc.GetArtifactRequest{
-					Name: spec.Name + "/artifacts/" + lintRelation(linter),
-					View: rpc.View_FULL,
+				request := rpc.GetArtifactContentsRequest{
+					Name: spec.Name + "/artifacts/" + lintRelation(linter) + "/contents",
 				}
-				artifact, err := client.GetArtifact(ctx, &request)
-				if artifact == nil {
+				contents, err := client.GetArtifactContents(ctx, &request)
+				if contents == nil {
 					return // ignore missing results
 				}
-				messageType, err := core.MessageTypeForMimeType(artifact.GetMimeType())
+				messageType, err := core.MessageTypeForMimeType(contents.GetContentType())
 				if err != nil || messageType != "google.cloud.apigee.registry.applications.v1alpha1.Lint" {
 					return // ignore unexpected message types
 				}
 				lint := &rpc.Lint{}
-				err = proto.Unmarshal(artifact.GetContents(), lint)
+				err = proto.Unmarshal(contents.GetData(), lint)
 				if err != nil {
 					log.Printf("%+v", err)
 					return

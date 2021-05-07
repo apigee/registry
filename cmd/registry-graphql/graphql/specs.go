@@ -15,7 +15,6 @@
 package registry
 
 import (
-	"encoding/base64"
 	"errors"
 
 	"github.com/apigee/registry/connection"
@@ -63,14 +62,11 @@ var specType = graphql.NewObject(
 			"updated": &graphql.Field{
 				Type: timestampType,
 			},
-			"contents": &graphql.Field{
-				Type: graphql.String,
-			},
 		},
 	},
 )
 
-func representationForSpec(spec *rpc.ApiSpec, view rpc.View) map[string]interface{} {
+func representationForSpec(spec *rpc.ApiSpec) map[string]interface{} {
 	result := map[string]interface{}{
 		"id":          spec.Name,
 		"filename":    spec.Filename,
@@ -83,18 +79,10 @@ func representationForSpec(spec *rpc.ApiSpec, view rpc.View) map[string]interfac
 		"created":     representationForTimestamp(spec.CreateTime),
 		"updated":     representationForTimestamp(spec.RevisionUpdateTime),
 	}
-	if view == rpc.View_FULL {
-		result["contents"] = base64.StdEncoding.EncodeToString([]byte(spec.Contents))
-	}
 	return result
 }
 
 func resolveSpecs(p graphql.ResolveParams) (interface{}, error) {
-	// use the presence of "specs/edges/node/contents" in the request to determine the view
-	view := rpc.View_BASIC
-	if selectionSetContainsPath(p.Info.Operation.GetSelectionSet(), []string{"specs", "edges", "node", "contents"}) {
-		view = rpc.View_FULL
-	}
 	ctx := p.Context
 	c, err := connection.NewClient(ctx)
 	if err != nil {
@@ -102,7 +90,6 @@ func resolveSpecs(p graphql.ResolveParams) (interface{}, error) {
 	}
 	req := &rpc.ListApiSpecsRequest{
 		Parent: getParentFromParams(p),
-		View:   view,
 	}
 	filter, isFound := p.Args["filter"].(string)
 	if isFound {
@@ -123,7 +110,7 @@ func resolveSpecs(p graphql.ResolveParams) (interface{}, error) {
 	for len(edges) < pageSize {
 		response, err = c.GrpcClient().ListApiSpecs(ctx, req)
 		for _, spec := range response.GetApiSpecs() {
-			edges = append(edges, representationForEdge(representationForSpec(spec, view)))
+			edges = append(edges, representationForEdge(representationForSpec(spec)))
 		}
 		req.PageToken = response.GetNextPageToken()
 		if req.PageToken == "" {
@@ -156,11 +143,6 @@ func selectionSetContainsPath(selectionSet *ast.SelectionSet, path []string) boo
 }
 
 func resolveSpec(p graphql.ResolveParams) (interface{}, error) {
-	// use the presence of "specs/contents" in the request to determine the view
-	view := rpc.View_BASIC
-	if selectionSetContainsPath(p.Info.Operation.GetSelectionSet(), []string{"spec", "contents"}) {
-		view = rpc.View_FULL
-	}
 	ctx := p.Context
 	c, err := connection.NewClient(ctx)
 	if err != nil {
@@ -172,11 +154,10 @@ func resolveSpec(p graphql.ResolveParams) (interface{}, error) {
 	}
 	req := &rpc.GetApiSpecRequest{
 		Name: name,
-		View: view,
 	}
 	spec, err := c.GetApiSpec(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	return representationForSpec(spec, view), err
+	return representationForSpec(spec), err
 }

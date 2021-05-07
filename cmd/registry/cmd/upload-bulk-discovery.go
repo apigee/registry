@@ -194,15 +194,14 @@ func (task *uploadDiscoveryTask) createSpec() error {
 func (task *uploadDiscoveryTask) updateSpec() error {
 	refSpec, err := task.client.GetApiSpec(task.ctx, &rpcpb.GetApiSpecRequest{
 		Name: task.specName(),
-		View: rpc.View_FULL,
 	})
 	if err != nil && !core.NotFound(err) {
 		return err
 	}
 
-	refBytes, err := core.GUnzippedBytes(refSpec.Contents)
+	refBytes, err := core.GetBytesForSpec(task.ctx, task.client, refSpec)
 	if err != nil {
-		return err
+		return nil
 	}
 
 	docBytes, err := discovery.FetchDocumentBytes(task.path)

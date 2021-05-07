@@ -81,7 +81,6 @@ func (task *computeReferencesTask) Name() string {
 func (task *computeReferencesTask) Run() error {
 	request := &rpc.GetApiSpecRequest{
 		Name: task.specName,
-		View: rpc.View_FULL,
 	}
 	spec, err := task.client.GetApiSpec(task.ctx, request)
 	if err != nil {
@@ -91,7 +90,11 @@ func (task *computeReferencesTask) Run() error {
 	log.Printf("computing %s/properties/%s", spec.Name, relation)
 	var references *rpc.References
 	if core.IsProto(spec.MimeType) && core.IsZipArchive(spec.MimeType) {
-		references, err = core.NewReferencesFromZippedProtos(spec.Contents)
+		data, err := core.GetBytesForSpec(task.ctx, task.client, spec)
+		if err != nil {
+			return nil
+		}
+		references, err = core.NewReferencesFromZippedProtos(data)
 		if err != nil {
 			return fmt.Errorf("error processing protos: %s", spec.Name)
 		}
