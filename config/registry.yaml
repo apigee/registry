@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # Select the database backend.
-# Valid values include "sqlite", "postgres", and "cloudsqlpostgres".
+# Valid values include "sqlite3", "postgres", and "cloudsqlpostgres".
 database: ${REGISTRY_DATABASE}
 
 # Provide a configuration string to pass to the database backend.
