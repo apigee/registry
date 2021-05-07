@@ -92,11 +92,14 @@ func lintRelation(linter string) string {
 func (task *computeLintTask) Run() error {
 	request := &rpc.GetApiSpecRequest{
 		Name: task.specName,
-		View: rpc.View_FULL,
 	}
 	spec, err := task.client.GetApiSpec(task.ctx, request)
 	if err != nil {
 		return err
+	}	
+	data, err := core.GetBytesForSpec(task.ctx, task.client, spec)
+	if err != nil {
+		return nil
 	}
 	var relation string
 	var lint *rpc.Lint
@@ -107,7 +110,7 @@ func (task *computeLintTask) Run() error {
 		}
 		relation = lintRelation(task.linter)
 		log.Printf("computing %s/artifacts/%s", spec.Name, relation)
-		lint, err = core.NewLintFromOpenAPI(spec.Name, spec.GetContents(), task.linter)
+		lint, err = core.NewLintFromOpenAPI(spec.Name, data, task.linter)
 		if err != nil {
 			return fmt.Errorf("error processing OpenAPI: %s (%s)", spec.Name, err.Error())
 		}
@@ -120,7 +123,7 @@ func (task *computeLintTask) Run() error {
 		}
 		relation = lintRelation(task.linter)
 		log.Printf("computing %s/artifacts/%s", spec.Name, relation)
-		lint, err = core.NewLintFromZippedProtos(spec.Name, spec.GetContents())
+		lint, err = core.NewLintFromZippedProtos(spec.Name, data)
 		if err != nil {
 			return fmt.Errorf("error processing protos: %s (%s)", spec.Name, err.Error())
 		}

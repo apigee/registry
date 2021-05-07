@@ -83,7 +83,6 @@ func (task *computeDescriptorTask) Name() string {
 func (task *computeDescriptorTask) Run() error {
 	request := &rpc.GetApiSpecRequest{
 		Name: task.specName,
-		View: rpc.View_FULL,
 	}
 	spec, err := task.client.GetApiSpec(task.ctx, request)
 	if err != nil {
@@ -92,7 +91,7 @@ func (task *computeDescriptorTask) Run() error {
 	name := spec.GetName()
 	relation := "descriptor"
 	log.Printf("computing %s/artifacts/%s", name, relation)
-	data, err := core.GetBytesForSpec(spec)
+	data, err := core.GetBytesForSpec(task.ctx, task.client, spec)
 	if err != nil {
 		return nil
 	}

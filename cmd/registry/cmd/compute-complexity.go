@@ -85,7 +85,6 @@ func (task *computeComplexityTask) Name() string {
 func (task *computeComplexityTask) Run() error {
 	request := &rpc.GetApiSpecRequest{
 		Name: task.specName,
-		View: rpc.View_FULL,
 	}
 	spec, err := task.client.GetApiSpec(task.ctx, request)
 	if err != nil {
@@ -95,7 +94,7 @@ func (task *computeComplexityTask) Run() error {
 	log.Printf("computing %s/artifacts/%s", spec.Name, relation)
 	var complexity *metrics.Complexity
 	if core.IsOpenAPIv2(spec.GetMimeType()) {
-		data, err := core.GetBytesForSpec(spec)
+		data, err := core.GetBytesForSpec(task.ctx, task.client, spec)
 		if err != nil {
 			return nil
 		}
@@ -105,7 +104,7 @@ func (task *computeComplexityTask) Run() error {
 		}
 		complexity = core.SummarizeOpenAPIv2Document(document)
 	} else if core.IsOpenAPIv3(spec.GetMimeType()) {
-		data, err := core.GetBytesForSpec(spec)
+		data, err := core.GetBytesForSpec(task.ctx, task.client, spec)
 		if err != nil {
 			return nil
 		}
@@ -115,7 +114,7 @@ func (task *computeComplexityTask) Run() error {
 		}
 		complexity = core.SummarizeOpenAPIv3Document(document)
 	} else if core.IsDiscovery(spec.GetMimeType()) {
-		data, err := core.GetBytesForSpec(spec)
+		data, err := core.GetBytesForSpec(task.ctx, task.client, spec)
 		if err != nil {
 			return nil
 		}
@@ -125,7 +124,11 @@ func (task *computeComplexityTask) Run() error {
 		}
 		complexity = core.SummarizeDiscoveryDocument(document)
 	} else if core.IsProto(spec.GetMimeType()) && core.IsZipArchive(spec.GetMimeType()) {
-		complexity, err = core.NewComplexityFromZippedProtos(spec.GetContents())
+		data, err := core.GetBytesForSpec(task.ctx, task.client, spec)
+		if err != nil {
+			return nil
+		}
+		complexity, err = core.NewComplexityFromZippedProtos(data)
 		if err != nil {
 			return fmt.Errorf("error processing protos: %s", spec.Name)
 		}

@@ -18,8 +18,8 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"fmt"
 	"log"
-	"strings"
 
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
@@ -37,12 +37,13 @@ func ResourceNameOfSpec(segments []string) string {
 	return ""
 }
 
-func GetBytesForSpec(spec *rpc.ApiSpec) ([]byte, error) {
-	if strings.Contains(spec.GetMimeType(), "+gzip") {
-		return GUnzippedBytes(spec.GetContents())
-	} else {
-		return spec.GetContents(), nil
+func GetBytesForSpec(ctx context.Context, client connection.Client, spec *rpc.ApiSpec) ([]byte, error) {
+	request := &rpc.GetApiSpecContentsRequest{Name:fmt.Sprintf("%s/contents", spec.GetName())}
+	contents, err := client.GetApiSpecContents(ctx, request)
+	if err != nil {
+		return nil, err
 	}
+	return contents.Data, nil
 }
 
 func UploadBytesForSpec(ctx context.Context, client connection.Client, parent string, specID string, style string, document proto.Message) error {
