@@ -19,8 +19,6 @@ import (
 	"log"
 
 	"github.com/apigee/registry/server/storage"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 // Query represents a query in a storage provider.
@@ -42,15 +40,6 @@ func (c *Client) NewQuery(kind string) storage.Query {
 	return &Query{
 		Kind: kind,
 	}
-}
-
-// internalError returns an error that wraps an internal server error.
-func internalError(err error) error {
-	if err == nil {
-		return nil
-	}
-	// TODO: selectively mask error details depending on caller privileges
-	return status.Error(codes.Internal, err.Error())
 }
 
 // Filter adds a general filter to a query.
