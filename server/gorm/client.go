@@ -255,13 +255,17 @@ func (c *Client) Delete(ctx context.Context, k storage.Key) error {
 func (c *Client) Run(ctx context.Context, q storage.Query) storage.Iterator {
 	mylock()
 	defer myunlock()
-	cursor := q.(*Query).Cursor
 
-	op := c.db.Where("key > ?", cursor)
+	op := c.db.Where("key > ?", q.(*Query).Cursor)
 	for _, r := range q.(*Query).Requirements {
 		op = op.Where(r.Name+" = ?", r.Value)
 	}
-	op = op.Order("key")
+
+	if order := q.(*Query).Order; order != "" {
+		op = op.Order(order)
+	} else {
+		op = op.Order("key")
+	}
 
 	switch q.(*Query).Kind {
 	case "Project":

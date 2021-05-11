@@ -51,7 +51,7 @@ var specFields = []filtering.Field{
 
 func (d *DAO) ListSpecs(ctx context.Context, parent names.Version, opts PageOptions) (SpecList, error) {
 	q := d.NewQuery(storage.SpecEntityName)
-	q = q.Order("-RevisionCreateTime")
+	q = q.Descending("RevisionCreateTime")
 	q, err := q.ApplyCursor(opts.Token)
 	if err != nil {
 		return SpecList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
@@ -156,7 +156,7 @@ func (d *DAO) GetSpec(ctx context.Context, name names.Spec) (*models.Spec, error
 	q = q.Require("ApiID", name.ApiID)
 	q = q.Require("VersionID", name.VersionID)
 	q = q.Require("SpecID", name.SpecID)
-	q = q.Order("-RevisionCreateTime")
+	q = q.Descending("RevisionCreateTime")
 
 	it := d.Run(ctx, q)
 	spec := &models.Spec{}

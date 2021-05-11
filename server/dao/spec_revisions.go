@@ -31,7 +31,7 @@ func (d *DAO) ListSpecRevisions(ctx context.Context, parent names.Spec, opts Pag
 	q = q.Require("ApiID", parent.ApiID)
 	q = q.Require("VersionID", parent.VersionID)
 	q = q.Require("SpecID", parent.SpecID)
-	q = q.Order("-RevisionCreateTime")
+	q = q.Descending("RevisionCreateTime")
 	q, err := q.ApplyCursor(opts.Token)
 	if err != nil {
 		return SpecList{}, status.Error(codes.Internal, err.Error())

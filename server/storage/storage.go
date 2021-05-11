@@ -65,7 +65,7 @@ type Key interface {
 type Query interface {
 	Filter(filter string, value interface{}) Query
 	Require(name string, value interface{}) Query
-	Order(order string) Query
+	Descending(field string) Query
 	ApplyCursor(cursorStr string) (Query, error)
 }
 

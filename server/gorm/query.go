@@ -27,6 +27,7 @@ import (
 type Query struct {
 	Kind         string
 	Cursor       string
+	Order        string
 	Requirements []*Requirement
 }
 
@@ -78,8 +79,12 @@ func (q *Query) Require(name string, value interface{}) storage.Query {
 	return q
 }
 
-func (q *Query) Order(value string) storage.Query {
-	// ordering is ignored
+func (q *Query) Descending(field string) storage.Query {
+	switch field {
+	case "RevisionCreateTime":
+		q.Order = "revision_create_time desc"
+	}
+
 	return q
 }
 
