@@ -34,7 +34,24 @@ import (
 var (
 	// Example spec contents for an OpenAPI JSON spec.
 	specContents = []byte(`{"openapi": "3.0.0", "info": {"title": "My API", "version": "v1"}, "paths": {}}`)
-	// Full spec view.
+	// Basic spec view does not include file contents.
+	basicSpec = &rpc.ApiSpec{
+		Name:         "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
+		Filename:     "openapi.json",
+		Description:  "My API Spec",
+		MimeType:     "application/x.openapi;version=3.0.0",
+		SizeBytes:    int32(len(specContents)),
+		Hash:         sha256hash(specContents),
+		SourceUri:    "https://www.example.com/openapi.json",
+		RevisionTags: []string{},
+		Labels: map[string]string{
+			"label-key": "label-value",
+		},
+		Annotations: map[string]string{
+			"annotation-key": "annotation-value",
+		},
+	}
+	// Full spec view includes contents.
 	fullSpec = &rpc.ApiSpec{
 		Name:         "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
 		Filename:     "openapi.json",
@@ -44,23 +61,6 @@ var (
 		Hash:         sha256hash(specContents),
 		SourceUri:    "https://www.example.com/openapi.json",
 		Contents:     specContents,
-		RevisionTags: []string{},
-		Labels: map[string]string{
-			"label-key": "label-value",
-		},
-		Annotations: map[string]string{
-			"annotation-key": "annotation-value",
-		},
-	}
-	// Returned specs exclude contents.
-	returnedSpec = &rpc.ApiSpec{
-		Name:         "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
-		Filename:     "openapi.json",
-		Description:  "My API Spec",
-		MimeType:     "application/x.openapi;version=3.0.0",
-		SizeBytes:    int32(len(specContents)),
-		Hash:         sha256hash(specContents),
-		SourceUri:    "https://www.example.com/openapi.json",
 		RevisionTags: []string{},
 		Labels: map[string]string{
 			"label-key": "label-value",
@@ -117,7 +117,7 @@ func TestCreateApiSpec(t *testing.T) {
 				Parent:  "projects/my-project/apis/my-api/versions/v1",
 				ApiSpec: fullSpec,
 			},
-			want: returnedSpec,
+			want: basicSpec,
 			// Name field is generated.
 			extraOpts: protocmp.IgnoreFields(new(rpc.ApiSpec), "name"),
 		},
@@ -346,7 +346,7 @@ func TestGetApiSpec(t *testing.T) {
 			req: &rpc.GetApiSpecRequest{
 				Name: fullSpec.Name,
 			},
-			want: returnedSpec,
+			want: basicSpec,
 		},
 	}
 
@@ -826,7 +826,7 @@ func TestUpdateApiSpec(t *testing.T) {
 					Name: fullSpec.Name,
 				},
 			},
-			want: returnedSpec,
+			want: basicSpec,
 		},
 		{
 			desc: "allow missing updates existing resources",
