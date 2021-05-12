@@ -151,7 +151,6 @@ func TestCRUD(t *testing.T) {
 	{
 		req := &rpc.GetApiRequest{
 			Name: "projects/test/apis/sample",
-			View: rpc.View_FULL,
 		}
 		api, err := registryClient.GetApi(ctx, req)
 		check(t, "error getting api %s", err)
@@ -166,7 +165,6 @@ func TestCRUD(t *testing.T) {
 	{
 		req := &rpc.GetApiVersionRequest{
 			Name: "projects/test/apis/sample/versions/1.0.0",
-			View: rpc.View_FULL,
 		}
 		version, err := registryClient.GetApiVersion(ctx, req)
 		check(t, "error getting version %s", err)
@@ -182,7 +180,6 @@ func TestCRUD(t *testing.T) {
 	{
 		req := &rpc.GetApiSpecRequest{
 			Name: "projects/test/apis/sample/versions/1.0.0/specs/openapi.yaml",
-			View: rpc.View_FULL,
 		}
 		spec, err := registryClient.GetApiSpec(ctx, req)
 		check(t, "error getting spec %s", err)

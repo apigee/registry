@@ -109,8 +109,6 @@ message Api {
   // Annotation keys and values are less restricted than those of labels, but
   // should be generally used for small values of broad interest. Larger, topic-
   // specific metadata should be stored in Artifacts.
-  //
-  // Annotations are returned only when the FULL view is requested.
   map<string, string> annotations = 10;
 }
 
@@ -164,8 +162,6 @@ message ApiVersion {
   // Annotation keys and values are less restricted than those of labels, but
   // should be generally used for small values of broad interest. Larger, topic-
   // specific metadata should be stored in Artifacts.
-  //
-  // Annotations are returned only when the FULL view is requested.
   map<string, string> annotations = 8;
 }
 
@@ -233,9 +229,9 @@ message ApiSpec {
   // change after the spec is retrieved.
   string source_uri = 11;
 
-  // The contents of the spec. Returned only when the FULL view is
-  // requested.
-  bytes contents = 12;
+  // The contents of the spec. Specified when specs are created or updated.
+  // To access the contents of a spec, use GetApiSpecContents.
+  bytes contents = 12 [(google.api.field_behavior) = INPUT_ONLY];
 
   // The revision tags associated with this revision.
   repeated string revision_tags = 13
@@ -260,8 +256,6 @@ message ApiSpec {
   // Annotation keys and values are less restricted than those of labels, but
   // should be generally used for small values of broad interest. Larger, topic-
   // specific metadata should be stored in Artifacts.
-  //
-  // Annotations are returned only when the FULL view is requested.
   map<string, string> annotations = 15;
 }
 
@@ -270,10 +264,9 @@ message ApiSpec {
 // directly on the resource. Since artifacts are stored separately from parent
 // resources, they should generally be used for metadata that is needed
 // infrequently, i.e. not for display in primary views of the resource but
-// perhaps displayed or downloaded upon request. The view field of the
-// ListArtifactsRequest message allows artifacts to be quickly enumerated
-// and checked for presence without downloading their (potentially-large)
-// contents.
+// perhaps displayed or downloaded upon request. The ListArtifacts method
+// allows artifacts to be quickly enumerated and checked for presence without
+// downloading their (potentially-large) contents.
 message Artifact {
   option (google.api.resource) = {
     type: "registry.googleapis.com/Artifact"
@@ -306,20 +299,7 @@ message Artifact {
   // A SHA-256 hash of the artifact's contents
   string hash = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
 
-  // The contents of the artifact. Returned only when the FULL view is
-  // requested.
-  bytes contents = 7;
-}
-
-// Views of Resources.
-enum View {
-  // The default / unset value.
-  // The API will default to the BASIC view.
-  VIEW_UNSPECIFIED = 0;
-
-  // Include everything but the resource annotations and contents.
-  BASIC = 1;
-
-  // Include everything.
-  FULL = 2;
+  // The contents of the artifact. Specified when artifacts are created.
+  // To access the contents of an artifact, use GetArtifactContents.
+  bytes contents = 7 [(google.api.field_behavior) = INPUT_ONLY];
 }

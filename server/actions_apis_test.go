@@ -31,17 +31,6 @@ import (
 )
 
 var (
-	// Basic API view does not include annotations.
-	basicApi = &rpc.Api{
-		Name:               "projects/my-project/apis/my-api",
-		DisplayName:        "My Api",
-		Description:        "Api for my versions",
-		Availability:       "GENERAL",
-		RecommendedVersion: "v1",
-		Labels: map[string]string{
-			"label-key": "label-value",
-		},
-	}
 	// Full API view includes annotations.
 	fullApi = &rpc.Api{
 		Name:               "projects/my-project/apis/my-api",
@@ -104,7 +93,7 @@ func TestCreateApi(t *testing.T) {
 				Parent: "projects/my-project",
 				Api:    fullApi,
 			},
-			want: basicApi,
+			want: fullApi,
 			// Name field is generated.
 			extraOpts: protocmp.IgnoreFields(new(rpc.Api), "name"),
 		},
@@ -158,7 +147,6 @@ func TestCreateApi(t *testing.T) {
 			t.Run("GetApi", func(t *testing.T) {
 				req := &rpc.GetApiRequest{
 					Name: created.GetName(),
-					View: rpc.View_BASIC,
 				}
 
 				got, err := server.GetApi(ctx, req)
@@ -319,24 +307,6 @@ func TestGetApi(t *testing.T) {
 			seed: fullApi,
 			req: &rpc.GetApiRequest{
 				Name: fullApi.Name,
-			},
-			want: basicApi,
-		},
-		{
-			desc: "basic view",
-			seed: fullApi,
-			req: &rpc.GetApiRequest{
-				Name: fullApi.Name,
-				View: rpc.View_BASIC,
-			},
-			want: basicApi,
-		},
-		{
-			desc: "full view",
-			seed: fullApi,
-			req: &rpc.GetApiRequest{
-				Name: fullApi.Name,
-				View: rpc.View_FULL,
 			},
 			want: fullApi,
 		},
@@ -754,7 +724,7 @@ func TestUpdateApi(t *testing.T) {
 					Name: fullApi.Name,
 				},
 			},
-			want: basicApi,
+			want: fullApi,
 		},
 		{
 			desc: "implicit mask",
@@ -841,7 +811,6 @@ func TestUpdateApi(t *testing.T) {
 			t.Run("GetApi", func(t *testing.T) {
 				req := &rpc.GetApiRequest{
 					Name: updated.GetName(),
-					View: rpc.View_BASIC,
 				}
 
 				got, err := server.GetApi(ctx, req)

@@ -500,12 +500,8 @@ message ListApisRequest {
   string page_token = 3;
 
   // An expression that can be used to filter the list. Filters use the Common
-  // Expression Language and can refer to all message fields that are included
-  // in the BASIC view.
+  // Expression Language and can refer to all message fields.
   string filter = 4;
-
-  // The level of detail to return (defaults to BASIC).
-  View view = 5;
 }
 
 // Response message for ListApis.
@@ -526,9 +522,6 @@ message GetApiRequest {
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = { type: "registry.googleapis.com/Api" }
   ];
-
-  // The level of detail to return (defaults to BASIC).
-  View view = 2;
 }
 
 // Request message for CreateApi.
@@ -600,12 +593,8 @@ message ListApiVersionsRequest {
   string page_token = 3;
 
   // An expression that can be used to filter the list. Filters use the Common
-  // Expression Language and can refer to all message fields that are included
-  // in the BASIC view.
+  // Expression Language and can refer to all message fields.
   string filter = 4;
-
-  // The level of detail to return (defaults to BASIC).
-  View view = 5;
 }
 
 // Response message for ListApiVersions.
@@ -628,9 +617,6 @@ message GetApiVersionRequest {
       type: "registry.googleapis.com/ApiVersion"
     }
   ];
-
-  // The level of detail to return (defaults to BASIC).
-  View view = 2;
 }
 
 // Request message for CreateApiVersion.
@@ -704,12 +690,8 @@ message ListApiSpecsRequest {
   string page_token = 3;
 
   // An expression that can be used to filter the list. Filters use the Common
-  // Expression Language and can refer to all message fields that are included
-  // in the BASIC view.
+  // Expression Language and can refer to all message fields.
   string filter = 4;
-
-  // The level of detail to return (defaults to BASIC).
-  View view = 5;
 }
 
 // Response message for ListApiSpecs.
@@ -732,9 +714,6 @@ message GetApiSpecRequest {
       type: "registry.googleapis.com/ApiSpec"
     }
   ];
-
-  // The level of detail to return (defaults to BASIC).
-  View view = 2;
 }
 
 // Request message for GetApiSpecContents.
@@ -905,12 +884,8 @@ message ListArtifactsRequest {
   string page_token = 3;
 
   // An expression that can be used to filter the list. Filters use the Common
-  // Expression Language and can refer to all message fields that are included
-  // in the BASIC view.
+  // Expression Language and can refer to all message fields.
   string filter = 4;
-
-  // The level of detail to return (defaults to BASIC).
-  View view = 5;
 }
 
 // Response message for ListArtifacts.
@@ -933,9 +908,6 @@ message GetArtifactRequest {
       type: "registry.googleapis.com/Artifact"
     }
   ];
-
-  // The level of detail to return (defaults to BASIC).
-  View view = 2;
 }
 
 // Request message for GetArtifactContents.

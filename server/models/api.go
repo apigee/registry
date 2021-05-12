@@ -74,7 +74,7 @@ func (api *Api) Name() string {
 }
 
 // Message returns a message representing an api.
-func (api *Api) Message(view rpc.View) (message *rpc.Api, err error) {
+func (api *Api) Message() (message *rpc.Api, err error) {
 	message = &rpc.Api{
 		Name:               api.Name(),
 		DisplayName:        api.DisplayName,
@@ -98,11 +98,9 @@ func (api *Api) Message(view rpc.View) (message *rpc.Api, err error) {
 		return nil, err
 	}
 
-	if view == rpc.View_FULL {
-		message.Annotations, err = mapForBytes(api.Annotations)
-		if err != nil {
-			return nil, err
-		}
+	message.Annotations, err = mapForBytes(api.Annotations)
+	if err != nil {
+		return nil, err
 	}
 
 	return message, nil

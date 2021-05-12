@@ -80,17 +80,6 @@ func (artifact *Artifact) Name() string {
 	}
 }
 
-// FullMessage returns the full view of the artifact resource as an RPC message.
-func (artifact *Artifact) FullMessage(blob *Blob) (message *rpc.Artifact, err error) {
-	message, err = artifact.BasicMessage()
-	if err != nil {
-		return nil, err
-	}
-
-	message.Contents = blob.Contents
-	return message, nil
-}
-
 // BasicMessage returns the basic view of the artifact resource as an RPC message.
 func (artifact *Artifact) BasicMessage() (message *rpc.Artifact, err error) {
 	message = &rpc.Artifact{
