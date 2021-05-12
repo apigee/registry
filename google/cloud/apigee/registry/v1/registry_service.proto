@@ -690,7 +690,7 @@ message ListApiSpecsRequest {
   string page_token = 3;
 
   // An expression that can be used to filter the list. Filters use the Common
-  // Expression Language and can refer to all message fields.
+  // Expression Language and can refer to all message fields except contents.
   string filter = 4;
 }
 
@@ -884,7 +884,7 @@ message ListArtifactsRequest {
   string page_token = 3;
 
   // An expression that can be used to filter the list. Filters use the Common
-  // Expression Language and can refer to all message fields.
+  // Expression Language and can refer to all message fields except contents.
   string filter = 4;
 }
 
