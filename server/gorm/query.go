@@ -15,7 +15,6 @@
 package gorm
 
 import (
-	"encoding/base64"
 	"log"
 
 	"github.com/apigee/registry/server/storage"
@@ -24,7 +23,7 @@ import (
 // Query represents a query in a storage provider.
 type Query struct {
 	Kind         string
-	Cursor       string
+	Offset       int
 	Order        string
 	Requirements []*Requirement
 }
@@ -40,12 +39,6 @@ func (c *Client) NewQuery(kind string) storage.Query {
 	return &Query{
 		Kind: kind,
 	}
-}
-
-// Filter adds a general filter to a query.
-func (q *Query) Filter(name string, value interface{}) storage.Query {
-	log.Fatalf("Unsupported filter %s %+v", name, value)
-	return q
 }
 
 // Require adds a filter to a query that requires a field to have a specified value.
@@ -77,12 +70,7 @@ func (q *Query) Descending(field string) storage.Query {
 	return q
 }
 
-// ApplyCursor configures a query to start from a specified cursor.
-func (q *Query) ApplyCursor(encodedCursor string) (storage.Query, error) {
-	decodedCursor, err := base64.StdEncoding.DecodeString(encodedCursor)
-	if err != nil {
-		return q, err
-	}
-	q.Cursor = string(decodedCursor)
-	return q, nil
+func (q *Query) ApplyOffset(offset int32) storage.Query {
+	q.Offset = int(offset)
+	return q
 }

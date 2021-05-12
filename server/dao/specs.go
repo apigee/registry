@@ -52,10 +52,19 @@ var specFields = []filtering.Field{
 func (d *DAO) ListSpecs(ctx context.Context, parent names.Version, opts PageOptions) (SpecList, error) {
 	q := d.NewQuery(storage.SpecEntityName)
 	q = q.Descending("RevisionCreateTime")
-	q, err := q.ApplyCursor(opts.Token)
+
+	token, err := decodeToken(opts.Token)
 	if err != nil {
 		return SpecList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
 	}
+
+	if err := token.ValidateFilter(opts.Filter); err != nil {
+		return SpecList{}, status.Errorf(codes.InvalidArgument, "invalid filter %q: %s", opts.Filter, err)
+	} else {
+		token.Filter = opts.Filter
+	}
+
+	q = q.ApplyOffset(token.Offset)
 
 	if id := parent.ProjectID; id != "-" {
 		q = q.Require("ProjectID", id)
@@ -93,6 +102,8 @@ func (d *DAO) ListSpecs(ctx context.Context, parent names.Version, opts PageOpti
 
 	spec := new(models.Spec)
 	for _, err = it.Next(spec); err == nil; _, err = it.Next(spec) {
+		token.Offset++
+
 		specMap, err := specMap(*spec)
 		if err != nil {
 			return response, status.Error(codes.Internal, err.Error())
@@ -115,7 +126,7 @@ func (d *DAO) ListSpecs(ctx context.Context, parent names.Version, opts PageOpti
 	}
 
 	if err == nil {
-		response.Token, err = it.GetCursor()
+		response.Token, err = encodeToken(token)
 		if err != nil {
 			return response, status.Error(codes.Internal, err.Error())
 		}

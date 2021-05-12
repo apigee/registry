@@ -32,10 +32,17 @@ func (d *DAO) ListSpecRevisions(ctx context.Context, parent names.Spec, opts Pag
 	q = q.Require("VersionID", parent.VersionID)
 	q = q.Require("SpecID", parent.SpecID)
 	q = q.Descending("RevisionCreateTime")
-	q, err := q.ApplyCursor(opts.Token)
+
+	token, err := decodeToken(opts.Token)
 	if err != nil {
-		return SpecList{}, status.Error(codes.Internal, err.Error())
+		return SpecList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
 	}
+
+	if err := token.ValidateFilter(opts.Filter); err != nil {
+		return SpecList{}, status.Errorf(codes.InvalidArgument, "invalid filter %q: %s", opts.Filter, err)
+	}
+
+	q = q.ApplyOffset(token.Offset)
 
 	it := d.Run(ctx, q)
 	response := SpecList{
@@ -44,6 +51,8 @@ func (d *DAO) ListSpecRevisions(ctx context.Context, parent names.Spec, opts Pag
 
 	revision := new(models.Spec)
 	for _, err = it.Next(revision); err == nil; _, err = it.Next(revision) {
+		token.Offset++
+
 		response.Specs = append(response.Specs, *revision)
 		if len(response.Specs) == int(opts.Size) {
 			break
@@ -54,7 +63,7 @@ func (d *DAO) ListSpecRevisions(ctx context.Context, parent names.Spec, opts Pag
 	}
 
 	if err == nil {
-		response.Token, err = it.GetCursor()
+		response.Token, err = encodeToken(token)
 		if err != nil {
 			return response, status.Error(codes.Internal, err.Error())
 		}

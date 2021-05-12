@@ -256,7 +256,9 @@ func (c *Client) Run(ctx context.Context, q storage.Query) storage.Iterator {
 	mylock()
 	defer myunlock()
 
-	op := c.db.Where("key > ?", q.(*Query).Cursor)
+	// Filtering is currently implemented by skipping iterator elements that don't match the filter criteria.
+	// If the 1000 returned elements don't fill a page, then another query will need to be ran for more results.
+	op := c.db.Offset(q.(*Query).Offset).Limit(1000)
 	for _, r := range q.(*Query).Requirements {
 		op = op.Where(r.Name+" = ?", r.Value)
 	}

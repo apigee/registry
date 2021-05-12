@@ -63,13 +63,11 @@ type Key interface {
 }
 
 type Query interface {
-	Filter(filter string, value interface{}) Query
 	Require(name string, value interface{}) Query
 	Descending(field string) Query
-	ApplyCursor(cursorStr string) (Query, error)
+	ApplyOffset(int32) Query
 }
 
 type Iterator interface {
 	Next(interface{}) (Key, error)
-	GetCursor() (string, error)
 }
