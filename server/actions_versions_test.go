@@ -30,17 +30,7 @@ import (
 )
 
 var (
-	// Basic version view does not include annotations.
-	basicVersion = &rpc.ApiVersion{
-		Name:        "projects/my-project/apis/my-api/versions/my-version",
-		DisplayName: "My Api",
-		Description: "Api for my versions",
-		State:       "PRODUCTION",
-		Labels: map[string]string{
-			"label-key": "label-value",
-		},
-	}
-	// Full version view includes annotations.
+	// Full version view.
 	fullVersion = &rpc.ApiVersion{
 		Name:        "projects/my-project/apis/my-api/versions/my-version",
 		DisplayName: "My Api",
@@ -101,7 +91,7 @@ func TestCreateApiVersion(t *testing.T) {
 				Parent:     "projects/my-project/apis/my-api",
 				ApiVersion: fullVersion,
 			},
-			want: basicVersion,
+			want: fullVersion,
 			// Name field is generated.
 			extraOpts: protocmp.IgnoreFields(new(rpc.ApiVersion), "name"),
 		},
@@ -155,7 +145,6 @@ func TestCreateApiVersion(t *testing.T) {
 			t.Run("GetApiVersion", func(t *testing.T) {
 				req := &rpc.GetApiVersionRequest{
 					Name: created.GetName(),
-					View: rpc.View_BASIC,
 				}
 
 				got, err := server.GetApiVersion(ctx, req)
@@ -316,24 +305,6 @@ func TestGetApiVersion(t *testing.T) {
 			seed: fullVersion,
 			req: &rpc.GetApiVersionRequest{
 				Name: fullVersion.Name,
-			},
-			want: basicVersion,
-		},
-		{
-			desc: "basic view",
-			seed: fullVersion,
-			req: &rpc.GetApiVersionRequest{
-				Name: fullVersion.Name,
-				View: rpc.View_BASIC,
-			},
-			want: basicVersion,
-		},
-		{
-			desc: "full view",
-			seed: fullVersion,
-			req: &rpc.GetApiVersionRequest{
-				Name: fullVersion.Name,
-				View: rpc.View_FULL,
 			},
 			want: fullVersion,
 		},

@@ -160,7 +160,6 @@ func TestCreateArtifact(t *testing.T) {
 			t.Run("GetArtifact", func(t *testing.T) {
 				req := &rpc.GetArtifactRequest{
 					Name: created.GetName(),
-					View: rpc.View_BASIC,
 				}
 
 				got, err := server.GetArtifact(ctx, req)
@@ -323,24 +322,6 @@ func TestGetArtifact(t *testing.T) {
 				Name: fullArtifact.Name,
 			},
 			want: basicArtifact,
-		},
-		{
-			desc: "basic view",
-			seed: fullArtifact,
-			req: &rpc.GetArtifactRequest{
-				Name: fullArtifact.Name,
-				View: rpc.View_BASIC,
-			},
-			want: basicArtifact,
-		},
-		{
-			desc: "full view",
-			seed: fullArtifact,
-			req: &rpc.GetArtifactRequest{
-				Name: fullArtifact.Name,
-				View: rpc.View_FULL,
-			},
-			want: fullArtifact,
 		},
 	}
 

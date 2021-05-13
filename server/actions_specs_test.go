@@ -34,7 +34,7 @@ import (
 var (
 	// Example spec contents for an OpenAPI JSON spec.
 	specContents = []byte(`{"openapi": "3.0.0", "info": {"title": "My API", "version": "v1"}, "paths": {}}`)
-	// Basic spec view does not include file contents or annotations.
+	// Basic spec view does not include file contents.
 	basicSpec = &rpc.ApiSpec{
 		Name:         "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
 		Filename:     "openapi.json",
@@ -47,8 +47,11 @@ var (
 		Labels: map[string]string{
 			"label-key": "label-value",
 		},
+		Annotations: map[string]string{
+			"annotation-key": "annotation-value",
+		},
 	}
-	// Full spec view includes annotations.
+	// Full spec view includes contents.
 	fullSpec = &rpc.ApiSpec{
 		Name:         "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
 		Filename:     "openapi.json",
@@ -172,7 +175,6 @@ func TestCreateApiSpec(t *testing.T) {
 			t.Run("GetApiSpec", func(t *testing.T) {
 				req := &rpc.GetApiSpecRequest{
 					Name: created.GetName(),
-					View: rpc.View_BASIC,
 				}
 
 				got, err := server.GetApiSpec(ctx, req)
@@ -345,24 +347,6 @@ func TestGetApiSpec(t *testing.T) {
 				Name: fullSpec.Name,
 			},
 			want: basicSpec,
-		},
-		{
-			desc: "basic view",
-			seed: fullSpec,
-			req: &rpc.GetApiSpecRequest{
-				Name: fullSpec.Name,
-				View: rpc.View_BASIC,
-			},
-			want: basicSpec,
-		},
-		{
-			desc: "full view",
-			seed: fullSpec,
-			req: &rpc.GetApiSpecRequest{
-				Name: fullSpec.Name,
-				View: rpc.View_FULL,
-			},
-			want: fullSpec,
 		},
 	}
 
@@ -842,7 +826,7 @@ func TestUpdateApiSpec(t *testing.T) {
 					Name: fullSpec.Name,
 				},
 			},
-			want: fullSpec,
+			want: basicSpec,
 		},
 		{
 			desc: "allow missing updates existing resources",
