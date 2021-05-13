@@ -197,20 +197,19 @@ func (s *RegistryServer) GetApiSpecContents(ctx context.Context, req *rpc.GetApi
 	db := dao.NewDAO(client)
 	var specName = strings.TrimSuffix(req.GetName(), "/contents")
 	var spec *models.Spec
+	var revisionName names.SpecRevision
 	if name, err := names.ParseSpec(specName); err == nil {
 		if spec, err = db.GetSpec(ctx, name); err != nil {
 			return nil, err
 		}
+		revisionName = name.Revision(spec.RevisionID)
 	} else if name, err := names.ParseSpecRevision(specName); err == nil {
 		if spec, err = db.GetSpecRevision(ctx, name); err != nil {
 			return nil, err
 		}
+		revisionName = name
 	} else {
 		return nil, invalidArgumentError(fmt.Errorf("invalid resource name %q, must be an API spec or revision", specName))
-	}
-	revisionName, err := names.ParseSpecRevision(spec.RevisionName())
-	if err != nil {
-		return nil, err
 	}
 	blob, err := db.GetSpecRevisionContents(ctx, revisionName)
 	if err != nil {
