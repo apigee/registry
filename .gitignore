@@ -9,3 +9,7 @@ deployments/envoy/proto.pb
 # VSCode
 .vscode/*
 !launch.json
+
+# IntelliJ
+.idea/
+*.iml
