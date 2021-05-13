@@ -303,3 +303,32 @@ func (c *Client) Run(ctx context.Context, q storage.Query) storage.Iterator {
 		return nil
 	}
 }
+
+func (c *Client) GetRecentSpecRevisions(ctx context.Context, offset int32, projectID, apiID, versionID string) storage.Iterator {
+	mylock()
+	defer myunlock()
+
+	op := c.db.Select("specs.*").
+		Table("specs").
+		Joins("JOIN (?) AS grp ON specs.project_id = grp.project_id AND specs.api_id = grp.api_id AND specs.version_id = grp.version_id AND specs.spec_id = grp.spec_id AND specs.revision_create_time = grp.recent_create_time",
+			c.db.Select("project_id, api_id, version_id, spec_id, MAX(revision_create_time) AS recent_create_time").
+				Table("specs").
+				Group("project_id, api_id, version_id, spec_id")).
+		Order("key").
+		Offset(int(offset)).
+		Limit(1000)
+
+	if projectID != "-" {
+		op = op.Where("specs.project_id = ?", projectID)
+	}
+	if apiID != "-" {
+		op = op.Where("specs.api_id = ?", apiID)
+	}
+	if versionID != "-" {
+		op = op.Where("specs.version_id = ?", versionID)
+	}
+
+	var v []models.Spec
+	_ = op.Scan(&v).Error
+	return &Iterator{Client: c, Values: v, Index: 0}
+}

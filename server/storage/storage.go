@@ -56,6 +56,8 @@ type Client interface {
 	DeleteChildrenOfVersion(ctx context.Context, version names.Version) error
 	DeleteAllMatches(ctx context.Context, q Query) error
 	DeleteChildrenOfSpec(ctx context.Context, spec names.Spec) error
+
+	GetRecentSpecRevisions(ctx context.Context, offset int32, projectID, apiID, versionID string) Iterator
 }
 
 type Key interface {
