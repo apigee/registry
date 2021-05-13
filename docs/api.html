@@ -223,10 +223,6 @@
                 </li>
               
               
-                <li>
-                  <a href="#google.cloud.apigee.registry.v1.View"><span class="badge">E</span>View</a>
-                </li>
-              
               
               
             </ul>
@@ -286,11 +282,19 @@
                 </li>
               
                 <li>
+                  <a href="#google.cloud.apigee.registry.v1.GetApiSpecContentsRequest"><span class="badge">M</span>GetApiSpecContentsRequest</a>
+                </li>
+              
+                <li>
                   <a href="#google.cloud.apigee.registry.v1.GetApiSpecRequest"><span class="badge">M</span>GetApiSpecRequest</a>
                 </li>
               
                 <li>
                   <a href="#google.cloud.apigee.registry.v1.GetApiVersionRequest"><span class="badge">M</span>GetApiVersionRequest</a>
+                </li>
+              
+                <li>
+                  <a href="#google.cloud.apigee.registry.v1.GetArtifactContentsRequest"><span class="badge">M</span>GetArtifactContentsRequest</a>
                 </li>
               
                 <li>
@@ -491,9 +495,7 @@ and cannot be changed. </p></td>
 
 Annotation keys and values are less restricted than those of labels, but
 should be generally used for small values of broad interest. Larger, topic-
-specific metadata should be stored in Artifacts.
-
-Annotations are returned only when the FULL view is requested. </p></td>
+specific metadata should be stored in Artifacts. </p></td>
                 </tr>
               
             </tbody>
@@ -666,8 +668,9 @@ change after the spec is retrieved. </p></td>
                   <td>contents</td>
                   <td><a href="#bytes">bytes</a></td>
                   <td></td>
-                  <td><p>The contents of the spec. Returned only when the FULL view is
-requested. </p></td>
+                  <td><p>The contents of the spec.
+Provided by API callers when specs are created or updated.
+To access the contents of a spec, use GetApiSpecContents. </p></td>
                 </tr>
               
                 <tr>
@@ -703,9 +706,7 @@ and cannot be changed. </p></td>
 
 Annotation keys and values are less restricted than those of labels, but
 should be generally used for small values of broad interest. Larger, topic-
-specific metadata should be stored in Artifacts.
-
-Annotations are returned only when the FULL view is requested. </p></td>
+specific metadata should be stored in Artifacts. </p></td>
                 </tr>
               
             </tbody>
@@ -858,9 +859,7 @@ and cannot be changed. </p></td>
 
 Annotation keys and values are less restricted than those of labels, but
 should be generally used for small values of broad interest. Larger, topic-
-specific metadata should be stored in Artifacts.
-
-Annotations are returned only when the FULL view is requested. </p></td>
+specific metadata should be stored in Artifacts. </p></td>
                 </tr>
               
             </tbody>
@@ -933,7 +932,7 @@ Annotations are returned only when the FULL view is requested. </p></td>
         
       
         <h3 id="google.cloud.apigee.registry.v1.Artifact">Artifact</h3>
-        <p>Artifacts of resources. Artifacts are unique (single-value) per resource</p><p>and are used to store metadata that is too large or numerous to be stored</p><p>directly on the resource. Since artifacts are stored separately from parent</p><p>resources, they should generally be used for metadata that is needed</p><p>infrequently, i.e. not for display in primary views of the resource but</p><p>perhaps displayed or downloaded upon request. The view field of the</p><p>ListArtifactsRequest message allows artifacts to be quickly enumerated</p><p>and checked for presence without downloading their (potentially-large)</p><p>contents.</p>
+        <p>Artifacts of resources. Artifacts are unique (single-value) per resource</p><p>and are used to store metadata that is too large or numerous to be stored</p><p>directly on the resource. Since artifacts are stored separately from parent</p><p>resources, they should generally be used for metadata that is needed</p><p>infrequently, i.e. not for display in primary views of the resource but</p><p>perhaps displayed or downloaded upon request. The ListArtifacts method</p><p>allows artifacts to be quickly enumerated and checked for presence without</p><p>downloading their (potentially-large) contents.</p>
 
         
           <table class="field-table">
@@ -991,8 +990,9 @@ parameter that specifies a schema for the stored information. </p></td>
                   <td>contents</td>
                   <td><a href="#bytes">bytes</a></td>
                   <td></td>
-                  <td><p>The contents of the artifact. Returned only when the FULL view is
-requested. </p></td>
+                  <td><p>The contents of the artifact.
+Provided by API callers when artifacts are created or replaced.
+To access the contents of an artifact, use GetArtifactContents. </p></td>
                 </tr>
               
             </tbody>
@@ -1056,36 +1056,6 @@ requested. </p></td>
       
 
       
-        <h3 id="google.cloud.apigee.registry.v1.View">View</h3>
-        <p>Views of Resources.</p>
-        <table class="enum-table">
-          <thead>
-            <tr><td>Name</td><td>Number</td><td>Description</td></tr>
-          </thead>
-          <tbody>
-            
-              <tr>
-                <td>VIEW_UNSPECIFIED</td>
-                <td>0</td>
-                <td><p>The default / unset value.
-The API will default to the BASIC view.</p></td>
-              </tr>
-            
-              <tr>
-                <td>BASIC</td>
-                <td>1</td>
-                <td><p>Include everything but the resource annotations and contents.</p></td>
-              </tr>
-            
-              <tr>
-                <td>FULL</td>
-                <td>2</td>
-                <td><p>Include everything.</p></td>
-              </tr>
-            
-          </tbody>
-        </table>
-      
 
       
 
@@ -1130,8 +1100,8 @@ Format: projects/* </p></td>
                   <td><p>The ID to use for the api, which will become the final component of
 the api&#39;s resource name.
 
-This value should be 4-63 characters, and valid characters
-are /[a-z][0-9]-/. </p></td>
+This value should be at most 63 characters, and valid characters
+are /[a-z][0-9]-./. </p></td>
                 </tr>
               
             </tbody>
@@ -1173,8 +1143,8 @@ Format: projects/*/apis/*/versions/* </p></td>
                   <td><p>The ID to use for the spec, which will become the final component of
 the spec&#39;s resource name.
 
-This value should be 4-63 characters, and valid characters
-are /[a-z][0-9]-/. </p></td>
+This value should be at most 63 characters, and valid characters
+are /[a-z][0-9]-./. </p></td>
                 </tr>
               
             </tbody>
@@ -1216,8 +1186,8 @@ Format: projects/*/apis/* </p></td>
                   <td><p>The ID to use for the version, which will become the final component of
 the version&#39;s resource name.
 
-This value should be 4-63 characters, and valid characters
-are /[a-z][0-9]-/. </p></td>
+This value should be at most 63 characters, and valid characters
+are /[a-z][0-9]-./. </p></td>
                 </tr>
               
             </tbody>
@@ -1259,8 +1229,8 @@ Format: {parent} </p></td>
                   <td><p>The ID to use for the artifact, which will become the final component of
 the artifact&#39;s resource name.
 
-This value should be 4-63 characters, and valid characters
-are /[a-z][0-9]-/. </p></td>
+This value should be at most 63 characters, and valid characters
+are /[a-z][0-9]-./. </p></td>
                 </tr>
               
             </tbody>
@@ -1294,8 +1264,8 @@ are /[a-z][0-9]-/. </p></td>
                   <td><p>The ID to use for the project, which will become the final component of
 the project&#39;s resource name.
 
-This value should be 4-63 characters, and valid characters
-are /[a-z][0-9]-/. </p></td>
+This value should be at most 63 characters, and valid characters
+are /[a-z][0-9]-./. </p></td>
                 </tr>
               
             </tbody>
@@ -1476,11 +1446,29 @@ Format: projects/* </p></td>
 Format: projects/*/apis/* </p></td>
                 </tr>
               
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="google.cloud.apigee.registry.v1.GetApiSpecContentsRequest">GetApiSpecContentsRequest</h3>
+        <p>Request message for GetApiSpecContents.</p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
                 <tr>
-                  <td>view</td>
-                  <td><a href="#google.cloud.apigee.registry.v1.View">View</a></td>
+                  <td>name</td>
+                  <td><a href="#string">string</a></td>
                   <td></td>
-                  <td><p>The level of detail to return (defaults to BASIC). </p></td>
+                  <td><p>The name of the spec to retrieve.
+Format: projects/*/apis/*/versions/*/specs/*/contents </p></td>
                 </tr>
               
             </tbody>
@@ -1508,13 +1496,6 @@ Format: projects/*/apis/* </p></td>
 Format: projects/*/apis/*/versions/*/specs/* </p></td>
                 </tr>
               
-                <tr>
-                  <td>view</td>
-                  <td><a href="#google.cloud.apigee.registry.v1.View">View</a></td>
-                  <td></td>
-                  <td><p>The level of detail to return (defaults to BASIC). </p></td>
-                </tr>
-              
             </tbody>
           </table>
 
@@ -1540,11 +1521,29 @@ Format: projects/*/apis/*/versions/*/specs/* </p></td>
 Format: projects/*/apis/*/versions/* </p></td>
                 </tr>
               
+            </tbody>
+          </table>
+
+          
+
+        
+      
+        <h3 id="google.cloud.apigee.registry.v1.GetArtifactContentsRequest">GetArtifactContentsRequest</h3>
+        <p>Request message for GetArtifactContents.</p>
+
+        
+          <table class="field-table">
+            <thead>
+              <tr><td>Field</td><td>Type</td><td>Label</td><td>Description</td></tr>
+            </thead>
+            <tbody>
+              
                 <tr>
-                  <td>view</td>
-                  <td><a href="#google.cloud.apigee.registry.v1.View">View</a></td>
+                  <td>name</td>
+                  <td><a href="#string">string</a></td>
                   <td></td>
-                  <td><p>The level of detail to return (defaults to BASIC). </p></td>
+                  <td><p>The name of the artifact to retrieve.
+Format: {parent}/artifacts/*/contents </p></td>
                 </tr>
               
             </tbody>
@@ -1570,13 +1569,6 @@ Format: projects/*/apis/*/versions/* </p></td>
                   <td></td>
                   <td><p>The name of the artifact to retrieve.
 Format: {parent}/artifacts/* </p></td>
-                </tr>
-              
-                <tr>
-                  <td>view</td>
-                  <td><a href="#google.cloud.apigee.registry.v1.View">View</a></td>
-                  <td></td>
-                  <td><p>The level of detail to return (defaults to BASIC). </p></td>
                 </tr>
               
             </tbody>
@@ -1661,7 +1653,7 @@ Provide this to retrieve the subsequent page. </p></td>
             <tbody>
               
                 <tr>
-                  <td>specs</td>
+                  <td>api_specs</td>
                   <td><a href="#google.cloud.apigee.registry.v1.ApiSpec">ApiSpec</a></td>
                   <td>repeated</td>
                   <td><p>The revisions of the spec. </p></td>
@@ -1726,15 +1718,7 @@ the call that provided the page token. </p></td>
                   <td><a href="#string">string</a></td>
                   <td></td>
                   <td><p>An expression that can be used to filter the list. Filters use the Common
-Expression Language and can refer to all message fields that are included
-in the BASIC view. </p></td>
-                </tr>
-              
-                <tr>
-                  <td>view</td>
-                  <td><a href="#google.cloud.apigee.registry.v1.View">View</a></td>
-                  <td></td>
-                  <td><p>The level of detail to return (defaults to BASIC). </p></td>
+Expression Language and can refer to all message fields except contents. </p></td>
                 </tr>
               
             </tbody>
@@ -1820,15 +1804,7 @@ match the call that provided the page token. </p></td>
                   <td><a href="#string">string</a></td>
                   <td></td>
                   <td><p>An expression that can be used to filter the list. Filters use the Common
-Expression Language and can refer to all message fields that are included
-in the BASIC view. </p></td>
-                </tr>
-              
-                <tr>
-                  <td>view</td>
-                  <td><a href="#google.cloud.apigee.registry.v1.View">View</a></td>
-                  <td></td>
-                  <td><p>The level of detail to return (defaults to BASIC). </p></td>
+Expression Language and can refer to all message fields. </p></td>
                 </tr>
               
             </tbody>
@@ -1914,15 +1890,7 @@ the call that provided the page token. </p></td>
                   <td><a href="#string">string</a></td>
                   <td></td>
                   <td><p>An expression that can be used to filter the list. Filters use the Common
-Expression Language and can refer to all message fields that are included
-in the BASIC view. </p></td>
-                </tr>
-              
-                <tr>
-                  <td>view</td>
-                  <td><a href="#google.cloud.apigee.registry.v1.View">View</a></td>
-                  <td></td>
-                  <td><p>The level of detail to return (defaults to BASIC). </p></td>
+Expression Language and can refer to all message fields. </p></td>
                 </tr>
               
             </tbody>
@@ -2008,15 +1976,7 @@ match the call that provided the page token. </p></td>
                   <td><a href="#string">string</a></td>
                   <td></td>
                   <td><p>An expression that can be used to filter the list. Filters use the Common
-Expression Language and can refer to all message fields that are included
-in the BASIC view. </p></td>
-                </tr>
-              
-                <tr>
-                  <td>view</td>
-                  <td><a href="#google.cloud.apigee.registry.v1.View">View</a></td>
-                  <td></td>
-                  <td><p>The level of detail to return (defaults to BASIC). </p></td>
+Expression Language and can refer to all message fields except contents. </p></td>
                 </tr>
               
             </tbody>
@@ -2243,7 +2203,7 @@ It must be a revision of the same spec.
                   <td><a href="#string">string</a></td>
                   <td></td>
                   <td><p>The tag to apply.
-The tag should be at most 40 characters, and match `[a-z][a-z0-9-]{3,39}`. </p></td>
+The tag should be at most 40 characters, and match `[a-z0-9-]&#43;`. </p></td>
                 </tr>
               
             </tbody>
@@ -2569,6 +2529,15 @@ it owns.</p></td>
               </tr>
             
               <tr>
+                <td>GetApiSpecContents</td>
+                <td><a href="#google.cloud.apigee.registry.v1.GetApiSpecContentsRequest">GetApiSpecContentsRequest</a></td>
+                <td><a href="#google.api.HttpBody">.google.api.HttpBody</a></td>
+                <td><p>GetApiSpecContents returns the contents of a specified spec.
+(-- api-linter: core::0131::response-message-name=disabled
+    aip.dev/not-precedent: Responses are arbitrary blobs of data. --)</p></td>
+              </tr>
+            
+              <tr>
                 <td>CreateApiSpec</td>
                 <td><a href="#google.cloud.apigee.registry.v1.CreateApiSpecRequest">CreateApiSpecRequest</a></td>
                 <td><a href="#google.cloud.apigee.registry.v1.ApiSpec">ApiSpec</a></td>
@@ -2632,6 +2601,15 @@ Note that this creates a new revision with a new revision ID.</p></td>
                 <td><a href="#google.cloud.apigee.registry.v1.GetArtifactRequest">GetArtifactRequest</a></td>
                 <td><a href="#google.cloud.apigee.registry.v1.Artifact">Artifact</a></td>
                 <td><p>GetArtifact returns a specified artifact.</p></td>
+              </tr>
+            
+              <tr>
+                <td>GetArtifactContents</td>
+                <td><a href="#google.cloud.apigee.registry.v1.GetArtifactContentsRequest">GetArtifactContentsRequest</a></td>
+                <td><a href="#google.api.HttpBody">.google.api.HttpBody</a></td>
+                <td><p>GetArtifactContents returns the contents of a specified artifact.
+(-- api-linter: core::0131::response-message-name=disabled
+    aip.dev/not-precedent: Responses are arbitrary blobs of data. --)</p></td>
               </tr>
             
               <tr>
@@ -2856,6 +2834,16 @@ Note that this creates a new revision with a new revision ID.</p></td>
               
               
               <tr>
+                <td>GetApiSpecContents</td>
+                <td>GET</td>
+                <td>/v1/{name=projects/*/apis/*/versions/*/specs/*/contents}</td>
+                <td></td>
+              </tr>
+              
+            
+              
+              
+              <tr>
                 <td>CreateApiSpec</td>
                 <td>POST</td>
                 <td>/v1/{parent=projects/*/apis/*/versions/*}/specs</td>
@@ -2981,6 +2969,37 @@ Note that this creates a new revision with a new revision ID.</p></td>
                 <td>GetArtifact</td>
                 <td>GET</td>
                 <td>/v1/{name=projects/*/apis/*/versions/*/specs/*/artifacts/*}</td>
+                <td></td>
+              </tr>
+              
+            
+              
+              
+              <tr>
+                <td>GetArtifactContents</td>
+                <td>GET</td>
+                <td>/v1/{name=projects/*/artifacts/*/contents}</td>
+                <td></td>
+              </tr>
+              
+              <tr>
+                <td>GetArtifactContents</td>
+                <td>GET</td>
+                <td>/v1/{name=projects/*/apis/*/artifacts/*/contents}</td>
+                <td></td>
+              </tr>
+              
+              <tr>
+                <td>GetArtifactContents</td>
+                <td>GET</td>
+                <td>/v1/{name=projects/*/apis/*/versions/*/artifacts/*/contents}</td>
+                <td></td>
+              </tr>
+              
+              <tr>
+                <td>GetArtifactContents</td>
+                <td>GET</td>
+                <td>/v1/{name=projects/*/apis/*/versions/*/specs/*/artifacts/*/contents}</td>
                 <td></td>
               </tr>
               
