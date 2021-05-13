@@ -31,17 +31,6 @@ import (
 )
 
 var (
-	// Basic API view does not include annotations.
-	basicApi = &rpc.Api{
-		Name:               "projects/my-project/apis/my-api",
-		DisplayName:        "My Api",
-		Description:        "Api for my versions",
-		Availability:       "GENERAL",
-		RecommendedVersion: "v1",
-		Labels: map[string]string{
-			"label-key": "label-value",
-		},
-	}
 	// Full API view includes annotations.
 	fullApi = &rpc.Api{
 		Name:               "projects/my-project/apis/my-api",
@@ -104,7 +93,7 @@ func TestCreateApi(t *testing.T) {
 				Parent: "projects/my-project",
 				Api:    fullApi,
 			},
-			want: basicApi,
+			want: fullApi,
 			// Name field is generated.
 			extraOpts: protocmp.IgnoreFields(new(rpc.Api), "name"),
 		},
@@ -158,7 +147,6 @@ func TestCreateApi(t *testing.T) {
 			t.Run("GetApi", func(t *testing.T) {
 				req := &rpc.GetApiRequest{
 					Name: created.GetName(),
-					View: rpc.View_BASIC,
 				}
 
 				got, err := server.GetApi(ctx, req)
@@ -250,6 +238,16 @@ func TestCreateApiResponseCodes(t *testing.T) {
 			},
 			want: codes.InvalidArgument,
 		},
+		{
+			desc: "custom identifier mixed case",
+			seed: &rpc.Project{Name: "projects/my-project"},
+			req: &rpc.CreateApiRequest{
+				Parent: "projects/my-project",
+				ApiId:  "IDentifier",
+				Api:    &rpc.Api{},
+			},
+			want: codes.InvalidArgument,
+		},
 	}
 
 	for _, test := range tests {
@@ -284,7 +282,6 @@ func TestCreateApiDuplicates(t *testing.T) {
 		}
 	})
 
-	t.Skip("Resource names are not yet case insensitive")
 	t.Run("case insensitive duplicate", func(t *testing.T) {
 		req := &rpc.CreateApiRequest{
 			Parent: "projects/my-project",
@@ -310,24 +307,6 @@ func TestGetApi(t *testing.T) {
 			seed: fullApi,
 			req: &rpc.GetApiRequest{
 				Name: fullApi.Name,
-			},
-			want: basicApi,
-		},
-		{
-			desc: "basic view",
-			seed: fullApi,
-			req: &rpc.GetApiRequest{
-				Name: fullApi.Name,
-				View: rpc.View_BASIC,
-			},
-			want: basicApi,
-		},
-		{
-			desc: "full view",
-			seed: fullApi,
-			req: &rpc.GetApiRequest{
-				Name: fullApi.Name,
-				View: rpc.View_FULL,
 			},
 			want: fullApi,
 		},
@@ -359,15 +338,25 @@ func TestGetApi(t *testing.T) {
 func TestGetApiResponseCodes(t *testing.T) {
 	tests := []struct {
 		desc string
+		seed *rpc.Api
 		req  *rpc.GetApiRequest
 		want codes.Code
 	}{
 		{
 			desc: "resource not found",
+			seed: &rpc.Api{Name: "projects/my-project/apis/my-api"},
 			req: &rpc.GetApiRequest{
 				Name: "projects/my-project/apis/doesnt-exist",
 			},
 			want: codes.NotFound,
+		},
+		{
+			desc: "case insensitive name",
+			seed: &rpc.Api{Name: "projects/my-project/apis/my-api"},
+			req: &rpc.GetApiRequest{
+				Name: "projects/my-project/apis/My-Api",
+			},
+			want: codes.OK,
 		},
 	}
 
@@ -375,6 +364,7 @@ func TestGetApiResponseCodes(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
+			seedApis(ctx, t, server, test.seed)
 
 			if _, err := server.GetApi(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("GetApi(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
@@ -734,7 +724,7 @@ func TestUpdateApi(t *testing.T) {
 					Name: fullApi.Name,
 				},
 			},
-			want: basicApi,
+			want: fullApi,
 		},
 		{
 			desc: "implicit mask",
@@ -821,7 +811,6 @@ func TestUpdateApi(t *testing.T) {
 			t.Run("GetApi", func(t *testing.T) {
 				req := &rpc.GetApiRequest{
 					Name: updated.GetName(),
-					View: rpc.View_BASIC,
 				}
 
 				got, err := server.GetApi(ctx, req)

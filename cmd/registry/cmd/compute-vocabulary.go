@@ -86,7 +86,6 @@ func (task *computeVocabularyTask) Name() string {
 func (task *computeVocabularyTask) Run() error {
 	request := &rpc.GetApiSpecRequest{
 		Name: task.specName,
-		View: rpc.View_FULL,
 	}
 	spec, err := task.client.GetApiSpec(task.ctx, request)
 	if err != nil {
@@ -96,7 +95,7 @@ func (task *computeVocabularyTask) Run() error {
 	log.Printf("computing %s/artifacts/%s", spec.Name, relation)
 	var vocabulary *metrics.Vocabulary
 	if core.IsOpenAPIv2(spec.GetMimeType()) {
-		data, err := core.GetBytesForSpec(spec)
+		data, err := core.GetBytesForSpec(task.ctx, task.client, spec)
 		if err != nil {
 			return nil
 		}
@@ -106,7 +105,7 @@ func (task *computeVocabularyTask) Run() error {
 		}
 		vocabulary = vocab.NewVocabularyFromOpenAPIv2(document)
 	} else if core.IsOpenAPIv3(spec.GetMimeType()) {
-		data, err := core.GetBytesForSpec(spec)
+		data, err := core.GetBytesForSpec(task.ctx, task.client, spec)
 		if err != nil {
 			return nil
 		}
@@ -116,7 +115,7 @@ func (task *computeVocabularyTask) Run() error {
 		}
 		vocabulary = vocab.NewVocabularyFromOpenAPIv3(document)
 	} else if core.IsDiscovery(spec.GetMimeType()) {
-		data, err := core.GetBytesForSpec(spec)
+		data, err := core.GetBytesForSpec(task.ctx, task.client, spec)
 		if err != nil {
 			return nil
 		}
@@ -126,7 +125,11 @@ func (task *computeVocabularyTask) Run() error {
 		}
 		vocabulary = vocab.NewVocabularyFromDiscovery(document)
 	} else if core.IsProto(spec.GetMimeType()) && core.IsZipArchive(spec.GetMimeType()) {
-		vocabulary, err = core.NewVocabularyFromZippedProtos(spec.GetContents())
+		data, err := core.GetBytesForSpec(task.ctx, task.client, spec)
+		if err != nil {
+			return nil
+		}
+		vocabulary, err = core.NewVocabularyFromZippedProtos(data)
 		if err != nil {
 			return fmt.Errorf("error processing protos: %s", spec.Name)
 		}

@@ -15,14 +15,19 @@
 package server
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
 	"fmt"
+	"io/ioutil"
+	"strings"
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/dao"
 	"github.com/apigee/registry/server/models"
 	"github.com/apigee/registry/server/names"
 	"github.com/golang/protobuf/ptypes/empty"
+	"google.golang.org/genproto/googleapis/api/httpbody"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
@@ -120,15 +125,15 @@ func (s *RegistryServer) DeleteApiSpec(ctx context.Context, req *rpc.DeleteApiSp
 // GetApiSpec handles the corresponding API request.
 func (s *RegistryServer) GetApiSpec(ctx context.Context, req *rpc.GetApiSpecRequest) (*rpc.ApiSpec, error) {
 	if name, err := names.ParseSpec(req.GetName()); err == nil {
-		return s.getApiSpec(ctx, name, req.GetView())
+		return s.getApiSpec(ctx, name)
 	} else if name, err := names.ParseSpecRevision(req.GetName()); err == nil {
-		return s.getApiSpecRevision(ctx, name, req.GetView())
+		return s.getApiSpecRevision(ctx, name)
 	}
 
 	return nil, invalidArgumentError(fmt.Errorf("invalid resource name %q, must be an API spec or revision", req.GetName()))
 }
 
-func (s *RegistryServer) getApiSpec(ctx context.Context, name names.Spec, view rpc.View) (*rpc.ApiSpec, error) {
+func (s *RegistryServer) getApiSpec(ctx context.Context, name names.Spec) (*rpc.ApiSpec, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, unavailableError(err)
@@ -141,28 +146,15 @@ func (s *RegistryServer) getApiSpec(ctx context.Context, name names.Spec, view r
 		return nil, err
 	}
 
-	blob, err := db.GetSpecRevisionContents(ctx, name.Revision(spec.RevisionID))
+	message, err := spec.BasicMessage(name.String())
 	if err != nil {
-		return nil, err
-	}
-
-	var message *rpc.ApiSpec
-	if view == rpc.View_FULL {
-		message, err = spec.FullMessage(blob, name.String())
-		if err != nil {
-			return nil, internalError(err)
-		}
-	} else {
-		message, err = spec.BasicMessage(name.String())
-		if err != nil {
-			return nil, internalError(err)
-		}
+		return nil, internalError(err)
 	}
 
 	return message, nil
 }
 
-func (s *RegistryServer) getApiSpecRevision(ctx context.Context, name names.SpecRevision, view rpc.View) (*rpc.ApiSpec, error) {
+func (s *RegistryServer) getApiSpecRevision(ctx context.Context, name names.SpecRevision) (*rpc.ApiSpec, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, unavailableError(err)
@@ -175,25 +167,66 @@ func (s *RegistryServer) getApiSpecRevision(ctx context.Context, name names.Spec
 		return nil, err
 	}
 
-	blob, err := db.GetSpecRevisionContents(ctx, name)
+	message, err := revision.BasicMessage(name.String())
 	if err != nil {
-		return nil, err
-	}
-
-	var message *rpc.ApiSpec
-	if view == rpc.View_FULL {
-		message, err = revision.FullMessage(blob, name.String())
-		if err != nil {
-			return nil, internalError(err)
-		}
-	} else {
-		message, err = revision.BasicMessage(name.String())
-		if err != nil {
-			return nil, internalError(err)
-		}
+		return nil, internalError(err)
 	}
 
 	return message, nil
+}
+
+// GUnzippedBytes uncompresses a slice of bytes.
+func GUnzippedBytes(input []byte) ([]byte, error) {
+	buf := bytes.NewBuffer(input)
+	zr, err := gzip.NewReader(buf)
+	if err != nil {
+		return nil, err
+	}
+	return ioutil.ReadAll(zr)
+}
+
+// GetApiSpecContents handles the corresponding API request.
+func (s *RegistryServer) GetApiSpecContents(ctx context.Context, req *rpc.GetApiSpecContentsRequest) (*httpbody.HttpBody, error) {
+	client, err := s.getStorageClient(ctx)
+	if err != nil {
+		return nil, unavailableError(err)
+	}
+	defer s.releaseStorageClient(client)
+	db := dao.NewDAO(client)
+	var specName = strings.TrimSuffix(req.GetName(), "/contents")
+	var spec *models.Spec
+	var revisionName names.SpecRevision
+	if name, err := names.ParseSpec(specName); err == nil {
+		if spec, err = db.GetSpec(ctx, name); err != nil {
+			return nil, err
+		}
+		revisionName = name.Revision(spec.RevisionID)
+	} else if name, err := names.ParseSpecRevision(specName); err == nil {
+		if spec, err = db.GetSpecRevision(ctx, name); err != nil {
+			return nil, err
+		}
+		revisionName = name
+	} else {
+		return nil, invalidArgumentError(fmt.Errorf("invalid resource name %q, must be an API spec or revision", specName))
+	}
+	blob, err := db.GetSpecRevisionContents(ctx, revisionName)
+	if err != nil {
+		return nil, err
+	}
+	if strings.Contains(spec.MimeType, "+gzip") {
+		contents, err := GUnzippedBytes(blob.Contents)
+		if err != nil {
+			return nil, err
+		}
+		return &httpbody.HttpBody{
+			ContentType: strings.Replace(spec.MimeType, "+gzip", "", 1),
+			Data:        contents,
+		}, nil
+	}
+	return &httpbody.HttpBody{
+		ContentType: spec.MimeType,
+		Data:        blob.Contents,
+	}, nil
 }
 
 // ListApiSpecs handles the corresponding API request.
@@ -233,29 +266,9 @@ func (s *RegistryServer) ListApiSpecs(ctx context.Context, req *rpc.ListApiSpecs
 	}
 
 	for i, spec := range listing.Specs {
-		switch req.GetView() {
-		case rpc.View_FULL:
-			name, err := names.ParseSpecRevision(spec.RevisionName())
-			if err != nil {
-				return nil, internalError(err)
-			}
-
-			blob, err := db.GetSpecRevisionContents(ctx, name)
-			if err != nil {
-				return nil, internalError(err)
-			}
-
-			response.ApiSpecs[i], err = spec.FullMessage(blob, spec.Name())
-			if err != nil {
-				return nil, internalError(err)
-			}
-		case rpc.View_BASIC, rpc.View_VIEW_UNSPECIFIED:
-			response.ApiSpecs[i], err = spec.BasicMessage(spec.Name())
-			if err != nil {
-				return nil, internalError(err)
-			}
-		default:
-			return nil, invalidArgumentError(fmt.Errorf("unknown view type %v", req.GetView()))
+		response.ApiSpecs[i], err = spec.BasicMessage(spec.Name())
+		if err != nil {
+			return nil, internalError(err)
 		}
 	}
 

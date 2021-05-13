@@ -17,12 +17,14 @@ package server
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/dao"
 	"github.com/apigee/registry/server/models"
 	"github.com/apigee/registry/server/names"
 	"github.com/golang/protobuf/ptypes/empty"
+	"google.golang.org/genproto/googleapis/api/httpbody"
 )
 
 type artifactParent interface {
@@ -160,30 +162,42 @@ func (s *RegistryServer) GetArtifact(ctx context.Context, req *rpc.GetArtifactRe
 		return nil, err
 	}
 
-	var message *rpc.Artifact
-	switch req.GetView() {
-	case rpc.View_FULL:
-		blob, err := db.GetArtifactContents(ctx, name)
-		if err != nil {
-			return nil, err
-		}
-
-		message, err = artifact.FullMessage(blob)
-		if err != nil {
-			return nil, internalError(err)
-		}
-
-	case rpc.View_BASIC, rpc.View_VIEW_UNSPECIFIED:
-		message, err = artifact.BasicMessage()
-		if err != nil {
-			return nil, internalError(err)
-		}
-
-	default:
-		return nil, invalidArgumentError(fmt.Errorf("unknown view type %v", req.GetView()))
+	message, err := artifact.BasicMessage()
+	if err != nil {
+		return nil, internalError(err)
 	}
 
 	return message, nil
+}
+
+// GetArtifactContents handles the corresponding API request.
+func (s *RegistryServer) GetArtifactContents(ctx context.Context, req *rpc.GetArtifactContentsRequest) (*httpbody.HttpBody, error) {
+	client, err := s.getStorageClient(ctx)
+	if err != nil {
+		return nil, unavailableError(err)
+	}
+	defer s.releaseStorageClient(client)
+	db := dao.NewDAO(client)
+
+	name, err := names.ParseArtifact(strings.TrimSuffix(req.GetName(), "/contents"))
+	if err != nil {
+		return nil, invalidArgumentError(err)
+	}
+
+	artifact, err := db.GetArtifact(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+
+	blob, err := db.GetArtifactContents(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+
+	return &httpbody.HttpBody{
+		ContentType: artifact.MimeType,
+		Data:        blob.Contents,
+	}, nil
 }
 
 // ListArtifacts handles the corresponding API request.
@@ -245,31 +259,9 @@ func (s *RegistryServer) ListArtifacts(ctx context.Context, req *rpc.ListArtifac
 	}
 
 	for i, artifact := range listing.Artifacts {
-		switch req.GetView() {
-		case rpc.View_FULL:
-			name, err := names.ParseArtifact(artifact.Name())
-			if err != nil {
-				return nil, internalError(err)
-			}
-
-			blob, err := db.GetArtifactContents(ctx, name)
-			if err != nil {
-				return nil, internalError(err)
-			}
-
-			response.Artifacts[i], err = artifact.FullMessage(blob)
-			if err != nil {
-				return nil, internalError(err)
-			}
-
-		case rpc.View_BASIC, rpc.View_VIEW_UNSPECIFIED:
-			response.Artifacts[i], err = artifact.BasicMessage()
-			if err != nil {
-				return nil, internalError(err)
-			}
-
-		default:
-			return nil, invalidArgumentError(fmt.Errorf("unknown view type %v", req.GetView()))
+		response.Artifacts[i], err = artifact.BasicMessage()
+		if err != nil {
+			return nil, internalError(err)
 		}
 	}
 

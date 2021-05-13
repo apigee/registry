@@ -119,22 +119,6 @@ func (s *Spec) RevisionName() string {
 	return fmt.Sprintf("projects/%s/apis/%s/versions/%s/specs/%s@%s", s.ProjectID, s.ApiID, s.VersionID, s.SpecID, s.RevisionID)
 }
 
-// FullMessage returns the full view of the spec resource as an RPC message.
-func (s *Spec) FullMessage(blob *Blob, name string) (message *rpc.ApiSpec, err error) {
-	message, err = s.BasicMessage(name)
-	if err != nil {
-		return nil, err
-	}
-
-	message.Annotations, err = mapForBytes(s.Annotations)
-	if err != nil {
-		return nil, err
-	}
-
-	message.Contents = blob.Contents
-	return message, nil
-}
-
 // BasicMessage returns the basic view of the spec resource as an RPC message.
 func (s *Spec) BasicMessage(name string) (message *rpc.ApiSpec, err error) {
 	message = &rpc.ApiSpec{
@@ -164,6 +148,11 @@ func (s *Spec) BasicMessage(name string) (message *rpc.ApiSpec, err error) {
 	}
 
 	message.Labels, err = mapForBytes(s.Labels)
+	if err != nil {
+		return nil, err
+	}
+
+	message.Annotations, err = mapForBytes(s.Annotations)
 	if err != nil {
 		return nil, err
 	}

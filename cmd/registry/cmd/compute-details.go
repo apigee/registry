@@ -104,7 +104,7 @@ func (task *computeDetailsTask) Run() error {
 	var description string
 	var request *rpc.UpdateApiRequest
 	if core.IsOpenAPIv2(spec.GetMimeType()) {
-		data, err := core.GetBytesForSpec(spec)
+		data, err := core.GetBytesForSpec(task.ctx, task.client, spec)
 		if err != nil {
 			return nil
 		}
@@ -130,7 +130,7 @@ func (task *computeDetailsTask) Run() error {
 			},
 		}
 	} else if core.IsOpenAPIv3(spec.GetMimeType()) {
-		data, err := core.GetBytesForSpec(spec)
+		data, err := core.GetBytesForSpec(task.ctx, task.client, spec)
 		if err != nil {
 			return nil
 		}
@@ -156,7 +156,7 @@ func (task *computeDetailsTask) Run() error {
 			},
 		}
 	} else if core.IsDiscovery(spec.GetMimeType()) {
-		data, err := core.GetBytesForSpec(spec)
+		data, err := core.GetBytesForSpec(task.ctx, task.client, spec)
 		if err != nil {
 			return nil
 		}

@@ -41,7 +41,7 @@ func (s SpecRevision) Spec() Spec {
 }
 
 func (s SpecRevision) String() string {
-	return fmt.Sprintf("projects/%s/apis/%s/versions/%s/specs/%s@%s", s.ProjectID, s.ApiID, s.VersionID, s.SpecID, s.RevisionID)
+	return normalize(fmt.Sprintf("projects/%s/apis/%s/versions/%s/specs/%s@%s", s.ProjectID, s.ApiID, s.VersionID, s.SpecID, s.RevisionID))
 }
 
 // ParseSpecRevision parses the name of a spec.

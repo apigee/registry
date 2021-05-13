@@ -72,7 +72,7 @@ func (s *RegistryServer) CreateApiVersion(ctx context.Context, req *rpc.CreateAp
 		return nil, err
 	}
 
-	message, err := version.Message(rpc.View_BASIC)
+	message, err := version.Message()
 	if err != nil {
 		return nil, internalError(err)
 	}
@@ -127,7 +127,7 @@ func (s *RegistryServer) GetApiVersion(ctx context.Context, req *rpc.GetApiVersi
 		return nil, err
 	}
 
-	message, err := version.Message(req.GetView())
+	message, err := version.Message()
 	if err != nil {
 		return nil, internalError(err)
 	}
@@ -172,7 +172,7 @@ func (s *RegistryServer) ListApiVersions(ctx context.Context, req *rpc.ListApiVe
 	}
 
 	for i, version := range listing.Versions {
-		response.ApiVersions[i], err = version.Message(req.GetView())
+		response.ApiVersions[i], err = version.Message()
 		if err != nil {
 			return nil, internalError(err)
 		}
@@ -212,7 +212,7 @@ func (s *RegistryServer) UpdateApiVersion(ctx context.Context, req *rpc.UpdateAp
 		return nil, err
 	}
 
-	message, err := version.Message(rpc.View_BASIC)
+	message, err := version.Message()
 	if err != nil {
 		return nil, internalError(err)
 	}

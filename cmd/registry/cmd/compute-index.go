@@ -81,17 +81,20 @@ func (task *computeIndexTask) Name() string {
 func (task *computeIndexTask) Run() error {
 	request := &rpc.GetApiSpecRequest{
 		Name: task.specName,
-		View: rpc.View_FULL,
 	}
 	spec, err := task.client.GetApiSpec(task.ctx, request)
 	if err != nil {
 		return err
 	}
+	data, err := core.GetBytesForSpec(task.ctx, task.client, spec)
+	if err != nil {
+		return nil
+	}
 	relation := "index"
 	log.Printf("computing %s/artifacts/%s", spec.Name, relation)
 	var index *rpc.Index
 	if core.IsProto(spec.GetMimeType()) && core.IsZipArchive(spec.GetMimeType()) {
-		index, err = core.NewIndexFromZippedProtos(spec.GetContents())
+		index, err = core.NewIndexFromZippedProtos(data)
 		if err != nil {
 			return fmt.Errorf("error processing protos: %s", spec.Name)
 		}

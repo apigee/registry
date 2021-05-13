@@ -19,6 +19,7 @@ package google.cloud.apigee.registry.v1;
 import "google/api/annotations.proto";
 import "google/api/client.proto";
 import "google/api/field_behavior.proto";
+import "google/api/httpbody.proto";
 import "google/api/resource.proto";
 import "google/cloud/apigee/registry/v1/registry_models.proto";
 import "google/protobuf/empty.proto";
@@ -202,6 +203,16 @@ service Registry {
     option (google.api.method_signature) = "name";
   }
 
+  // GetApiSpecContents returns the contents of a specified spec.
+  // (-- api-linter: core::0131::response-message-name=disabled
+  //     aip.dev/not-precedent: Responses are arbitrary blobs of data. --)
+  rpc GetApiSpecContents(GetApiSpecContentsRequest) returns (google.api.HttpBody) {
+    option (google.api.http) = {
+      get: "/v1/{name=projects/*/apis/*/versions/*/specs/*/contents}"
+    };
+    option (google.api.method_signature) = "name";
+  }
+
   // CreateApiSpec creates a specified spec.
   rpc CreateApiSpec(CreateApiSpecRequest) returns (ApiSpec) {
     option (google.api.http) = {
@@ -289,6 +300,25 @@ service Registry {
       }
       additional_bindings: {
         get: "/v1/{name=projects/*/apis/*/versions/*/specs/*/artifacts/*}"
+      }
+    };
+    option (google.api.method_signature) = "name";
+  }
+
+  // GetArtifactContents returns the contents of a specified artifact.
+  // (-- api-linter: core::0131::response-message-name=disabled
+  //     aip.dev/not-precedent: Responses are arbitrary blobs of data. --)
+  rpc GetArtifactContents(GetArtifactContentsRequest) returns (google.api.HttpBody) {
+    option (google.api.http) = {
+      get: "/v1/{name=projects/*/artifacts/*/contents}"
+      additional_bindings: { 
+        get: "/v1/{name=projects/*/apis/*/artifacts/*/contents}" 
+      }
+      additional_bindings: {
+        get: "/v1/{name=projects/*/apis/*/versions/*/artifacts/*/contents}"
+      }
+      additional_bindings: {
+        get: "/v1/{name=projects/*/apis/*/versions/*/specs/*/artifacts/*/contents}"
       }
     };
     option (google.api.method_signature) = "name";
@@ -470,12 +500,8 @@ message ListApisRequest {
   string page_token = 3;
 
   // An expression that can be used to filter the list. Filters use the Common
-  // Expression Language and can refer to all message fields that are included
-  // in the BASIC view.
+  // Expression Language and can refer to all message fields.
   string filter = 4;
-
-  // The level of detail to return (defaults to BASIC).
-  View view = 5;
 }
 
 // Response message for ListApis.
@@ -496,9 +522,6 @@ message GetApiRequest {
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = { type: "registry.googleapis.com/Api" }
   ];
-
-  // The level of detail to return (defaults to BASIC).
-  View view = 2;
 }
 
 // Request message for CreateApi.
@@ -570,12 +593,8 @@ message ListApiVersionsRequest {
   string page_token = 3;
 
   // An expression that can be used to filter the list. Filters use the Common
-  // Expression Language and can refer to all message fields that are included
-  // in the BASIC view.
+  // Expression Language and can refer to all message fields.
   string filter = 4;
-
-  // The level of detail to return (defaults to BASIC).
-  View view = 5;
 }
 
 // Response message for ListApiVersions.
@@ -598,9 +617,6 @@ message GetApiVersionRequest {
       type: "registry.googleapis.com/ApiVersion"
     }
   ];
-
-  // The level of detail to return (defaults to BASIC).
-  View view = 2;
 }
 
 // Request message for CreateApiVersion.
@@ -674,12 +690,8 @@ message ListApiSpecsRequest {
   string page_token = 3;
 
   // An expression that can be used to filter the list. Filters use the Common
-  // Expression Language and can refer to all message fields that are included
-  // in the BASIC view.
+  // Expression Language and can refer to all message fields except contents.
   string filter = 4;
-
-  // The level of detail to return (defaults to BASIC).
-  View view = 5;
 }
 
 // Response message for ListApiSpecs.
@@ -702,9 +714,18 @@ message GetApiSpecRequest {
       type: "registry.googleapis.com/ApiSpec"
     }
   ];
+}
 
-  // The level of detail to return (defaults to BASIC).
-  View view = 2;
+// Request message for GetApiSpecContents.
+message GetApiSpecContentsRequest {
+  // The name of the spec to retrieve.
+  // Format: projects/*/apis/*/versions/*/specs/*/contents
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      type: "registry.googleapis.com/ApiSpec"
+    }
+  ];
 }
 
 // Request message for CreateApiSpec.
@@ -863,12 +884,8 @@ message ListArtifactsRequest {
   string page_token = 3;
 
   // An expression that can be used to filter the list. Filters use the Common
-  // Expression Language and can refer to all message fields that are included
-  // in the BASIC view.
+  // Expression Language and can refer to all message fields except contents.
   string filter = 4;
-
-  // The level of detail to return (defaults to BASIC).
-  View view = 5;
 }
 
 // Response message for ListArtifacts.
@@ -891,9 +908,18 @@ message GetArtifactRequest {
       type: "registry.googleapis.com/Artifact"
     }
   ];
+}
 
-  // The level of detail to return (defaults to BASIC).
-  View view = 2;
+// Request message for GetArtifactContents.
+message GetArtifactContentsRequest {
+  // The name of the artifact to retrieve.
+  // Format: {parent}/artifacts/*/contents
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      type: "registry.googleapis.com/Artifact"
+    }
+  ];
 }
 
 // Request message for CreateArtifact.

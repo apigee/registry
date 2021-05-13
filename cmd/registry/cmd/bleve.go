@@ -94,14 +94,13 @@ func (task *indexSpecTask) Name() string {
 func (task *indexSpecTask) Run() error {
 	request := &rpc.GetApiSpecRequest{
 		Name: task.specName,
-		View: rpc.View_FULL,
 	}
 	spec, err := task.client.GetApiSpec(task.ctx, request)
 	if err != nil {
 		return err
 	}
 	name := spec.GetName()
-	data, err := core.GetBytesForSpec(spec)
+	data, err := core.GetBytesForSpec(task.ctx, task.client, spec)
 	if err != nil {
 		return nil
 	}

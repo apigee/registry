@@ -75,7 +75,7 @@ func (v *Version) Name() string {
 }
 
 // Message returns a message representing a version.
-func (v *Version) Message(view rpc.View) (message *rpc.ApiVersion, err error) {
+func (v *Version) Message() (message *rpc.ApiVersion, err error) {
 	message = &rpc.ApiVersion{
 		Name:        v.Name(),
 		DisplayName: v.DisplayName,
@@ -98,11 +98,9 @@ func (v *Version) Message(view rpc.View) (message *rpc.ApiVersion, err error) {
 		return nil, err
 	}
 
-	if view == rpc.View_FULL {
-		message.Annotations, err = mapForBytes(v.Annotations)
-		if err != nil {
-			return nil, err
-		}
+	message.Annotations, err = mapForBytes(v.Annotations)
+	if err != nil {
+		return nil, err
 	}
 
 	return message, nil
