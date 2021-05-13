@@ -52,8 +52,6 @@ func (q *Query) Require(name string, value interface{}) storage.Query {
 		name = "version_id"
 	case "SpecID":
 		name = "spec_id"
-	case "Currency":
-		name = "currency"
 	default:
 		log.Fatalf("UNEXPECTED REQUIRE TYPE: %s", name)
 	}
