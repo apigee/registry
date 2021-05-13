@@ -229,7 +229,8 @@ message ApiSpec {
   // change after the spec is retrieved.
   string source_uri = 11;
 
-  // The contents of the spec. Specified when specs are created or updated.
+  // The contents of the spec.
+  // Provided by API callers when specs are created or updated.
   // To access the contents of a spec, use GetApiSpecContents.
   bytes contents = 12 [(google.api.field_behavior) = INPUT_ONLY];
 
@@ -299,7 +300,8 @@ message Artifact {
   // A SHA-256 hash of the artifact's contents
   string hash = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
 
-  // The contents of the artifact. Specified when artifacts are created.
+  // The contents of the artifact.
+  // Provided by API callers when artifacts are created or replaced.
   // To access the contents of an artifact, use GetArtifactContents.
   bytes contents = 7 [(google.api.field_behavior) = INPUT_ONLY];
 }
