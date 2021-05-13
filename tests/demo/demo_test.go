@@ -242,27 +242,24 @@ func TestDemo(t *testing.T) {
 			t.Errorf("Incorrect revision count: %d (if this is zero, be sure that all indexes are built)", len(revisionIDs))
 		}
 	}
-	t.Run("ListApiSpecRevisions ordering", func(t *testing.T) {
-		t.Skip("SQLite database used for testing is not currently sorting by revision creation time")
-		if len(revisionIDs) > 0 {
-			req := &rpc.GetApiSpecRequest{
-				Name: "projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml" + "@" + revisionIDs[len(revisionIDs)-1],
-			}
-			spec, err := registryClient.GetApiSpec(ctx, req)
-			check(t, "error getting spec %s", err)
-			// compute the hash of the original file
-			buf, err := readAndGZipFile("petstore/1.0.0/openapi.yaml@r0")
-			check(t, "error reading spec", err)
-			if hash := hashForBytes(buf.Bytes()); spec.GetHash() != hash {
-				t.Errorf("Hash mismatch %s != %s", spec.GetHash(), hash)
-			}
+	if len(revisionIDs) > 0 {
+		req := &rpc.GetApiSpecRequest{
+			Name: "projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml" + "@" + revisionIDs[len(revisionIDs)-1],
 		}
-	})
+		spec, err := registryClient.GetApiSpec(ctx, req)
+		check(t, "error getting spec %s", err)
+		// compute the hash of the original file
+		buf, err := readAndGZipFile("petstore/1.0.0/openapi.yaml@r0")
+		check(t, "error reading spec", err)
+		if hash := hashForBytes(buf.Bytes()); spec.GetHash() != hash {
+			t.Errorf("Hash mismatch %s != %s", spec.GetHash(), hash)
+		}
+	}
 	// List specs; there should be only one.
 	{
 		specs = listAllSpecs(ctx, registryClient)
 		if len(specs) != 1 {
-			t.Errorf("Incorrect spec count: %d", len(specs))
+			t.Errorf("Incorrect spec count %d, expected exactly one:\n%+v", len(specs), specs)
 		}
 	}
 	// tag a spec revision
