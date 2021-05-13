@@ -134,6 +134,10 @@ var serverSerialization bool
 func RunServer(port string, config *Config) error {
 	// Construct Registry API server (request handler).
 	r := newRegistryServer(config)
+	// Check database configuration
+	if err := gorm.Validate(config.Database, config.DBConfig); err != nil {
+		return err
+	}
 	// Construct gRPC server.
 	loggingHandler := func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		if serverSerialization {
