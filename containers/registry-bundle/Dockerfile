@@ -52,8 +52,8 @@ FROM envoyproxy/envoy:v1.16.0
 
 ARG DB_CONFIG=registry
 
-COPY deployments/container/RUN-WITH-ENVOY.sh /RUN-WITH-ENVOY.sh
-COPY deployments/envoy/envoy.yaml /etc/envoy/envoy.yaml
+COPY containers/registry-bundle/RUN.sh /RUN.sh
+COPY containers/registry-bundle/envoy.yaml /etc/envoy/envoy.yaml
 COPY --from=builder /app/deployments/envoy/proto.pb /proto.pb
 
 # Copy the registry-server binary to the production image from the builder stage.
@@ -66,8 +66,8 @@ COPY --from=builder /app/authz-server /authz-server
 COPY config/${DB_CONFIG}.yaml /registry.yaml
 COPY cmd/authz-server/authz.yaml /authz.yaml
 
-# Run as root in the container.
+# Run as root in the container. Needed to use the Envoy release image.
 ENV ENVOY_UID=0
 
 # Run services on container startup.
-CMD ["/RUN-WITH-ENVOY.sh"]
+CMD ["/RUN.sh"]
