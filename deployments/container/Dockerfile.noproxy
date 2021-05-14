@@ -6,11 +6,13 @@
 FROM golang:1.15 as builder
 RUN apt-get update
 RUN apt-get install unzip
-RUN curl -L https://github.com/protocolbuffers/protobuf/releases/download/v3.13.0/protoc-3.13.0-linux-x86_64.zip > /tmp/protoc.zip
-RUN unzip /tmp/protoc.zip -d /usr/local
 
 # Create and change to the app directory.
 WORKDIR /app
+
+# Get protoc
+COPY ./tools/FETCH-PROTOC.sh ./
+RUN ./FETCH-PROTOC.sh
 
 # Retrieve application dependencies.
 # This allows the container build to reuse cached dependencies.
@@ -35,5 +37,8 @@ RUN apk add --no-cache ca-certificates
 # Copy the binary to the production image from the builder stage.
 COPY --from=builder /app/registry-server /registry-server
 
+# Copy the standard registry configuration from the builder image.
+COPY config/registry.yaml /registry.yaml
+
 # Run the web service on container startup.
-CMD ["/registry-server"]
+CMD ["/registry-server", "-c", "registry.yaml"]

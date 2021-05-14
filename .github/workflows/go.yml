@@ -1,5 +1,5 @@
 # Copyright 2021 Google LLC
-#
+
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -41,8 +41,7 @@ jobs:
  
     - name: Get protoc
       run: |
-        sudo curl -L https://github.com/protocolbuffers/protobuf/releases/download/v3.13.0/protoc-3.13.0-linux-x86_64.zip > /tmp/protoc.zip
-        sudo unzip /tmp/protoc.zip -d /usr/local
+        sudo ./tools/FETCH-PROTOC.sh
         sudo chown -R $USER /usr/local
        
     - name: Build
