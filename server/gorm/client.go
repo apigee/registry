@@ -79,7 +79,7 @@ func NewClient(ctx context.Context, gormDBName, gormConfig string) (*Client, err
 	clientTotal++
 	switch gormDBName {
 	case "sqlite3":
-		if (!cgoEnabled) {
+		if !cgoEnabled {
 			myunlock()
 			return nil, fmt.Errorf("%s is unavailable. Please recompile with CGO_ENABLED=1 or use a different database.", gormDBName)
 		}
@@ -260,9 +260,12 @@ func (c *Client) Run(ctx context.Context, q storage.Query) storage.Iterator {
 	mylock()
 	defer myunlock()
 
-	// Filtering is currently implemented by skipping iterator elements that don't match the filter criteria.
-	// If the 1000 returned elements don't fill a page, then another query will need to be ran for more results.
-	op := c.db.Offset(q.(*Query).Offset).Limit(1000)
+	// Filtering is currently implemented by skipping iterator elements that
+	// don't match the filter criteria, and expects to only reach the end of
+	// the iterator if there are no more resources to consider. Previously,
+	// the entire table would be read into memory. This limit should maintain
+	// that behavior until we improve our iterator implementation.
+	op := c.db.Offset(q.(*Query).Offset).Limit(100000)
 	for _, r := range q.(*Query).Requirements {
 		op = op.Where(r.Name+" = ?", r.Value)
 	}
@@ -312,15 +315,25 @@ func (c *Client) GetRecentSpecRevisions(ctx context.Context, offset int32, proje
 	mylock()
 	defer myunlock()
 
+	// Select all columns from `specs` table specifically.
+	// We do not want to select duplicates from the joined subquery result.
 	op := c.db.Select("specs.*").
 		Table("specs").
-		Joins("JOIN (?) AS grp ON specs.project_id = grp.project_id AND specs.api_id = grp.api_id AND specs.version_id = grp.version_id AND specs.spec_id = grp.spec_id AND specs.revision_create_time = grp.recent_create_time",
+		// Join missing columns that couldn't be selected in the subquery.
+		Joins(`JOIN (?) AS grp ON specs.project_id = grp.project_id AND
+			specs.api_id = grp.api_id AND
+			specs.version_id = grp.version_id AND
+			specs.spec_id = grp.spec_id AND
+			specs.revision_create_time = grp.recent_create_time`,
+			// Select spec names and only their most recent revision_create_time
+			// This query cannot select all the columns we want.
+			// See: https://stackoverflow.com/questions/7745609/sql-select-only-rows-with-max-value-on-a-column
 			c.db.Select("project_id, api_id, version_id, spec_id, MAX(revision_create_time) AS recent_create_time").
 				Table("specs").
 				Group("project_id, api_id, version_id, spec_id")).
 		Order("key").
 		Offset(int(offset)).
-		Limit(1000)
+		Limit(100000)
 
 	if projectID != "-" {
 		op = op.Where("specs.project_id = ?", projectID)
