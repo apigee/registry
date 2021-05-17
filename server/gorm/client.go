@@ -72,6 +72,26 @@ var clientTotal int
 
 var openErrorCount int
 
+// Validate checks a database name and config string for validity.
+func Validate(gormDBName, gormConfig string) error {
+	switch gormDBName {
+	case "sqlite3":
+		if !cgoEnabled {
+			return fmt.Errorf("%s is unavailable, please recompile with CGO_ENABLED=1 or configure registry-server to use a different database", gormDBName)
+		}
+	case "postgres":
+		break
+	case "cloudsqlpostgres":
+		break
+	default:
+		return fmt.Errorf("unsupported database (%s)", gormDBName)
+	}
+	if gormConfig == "" {
+		return fmt.Errorf("dbconfig cannot be empty")
+	}
+	return nil
+}
+
 // NewClient creates a new database session.
 func NewClient(ctx context.Context, gormDBName, gormConfig string) (*Client, error) {
 	mylock()
@@ -79,10 +99,6 @@ func NewClient(ctx context.Context, gormDBName, gormConfig string) (*Client, err
 	clientTotal++
 	switch gormDBName {
 	case "sqlite3":
-		if !cgoEnabled {
-			myunlock()
-			return nil, fmt.Errorf("%s is unavailable. Please recompile with CGO_ENABLED=1 or use a different database.", gormDBName)
-		}
 		db, err := gorm.Open(sqlite.Open(gormConfig), config())
 		if err != nil {
 			openErrorCount++
@@ -117,7 +133,7 @@ func NewClient(ctx context.Context, gormDBName, gormConfig string) (*Client, err
 		return c, nil
 	default:
 		myunlock()
-		return nil, fmt.Errorf("Unsupported database %s", gormDBName)
+		return nil, fmt.Errorf("unsupported database %s", gormDBName)
 	}
 }
 
