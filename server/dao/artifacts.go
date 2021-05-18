@@ -47,10 +47,19 @@ var artifactFields = []filtering.Field{
 
 func (d *DAO) ListSpecArtifacts(ctx context.Context, parent names.Spec, opts PageOptions) (ArtifactList, error) {
 	q := d.NewQuery(storage.ArtifactEntityName)
-	q, err := q.ApplyCursor(opts.Token)
+
+	token, err := decodeToken(opts.Token)
 	if err != nil {
 		return ArtifactList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
 	}
+
+	if err := token.ValidateFilter(opts.Filter); err != nil {
+		return ArtifactList{}, status.Errorf(codes.InvalidArgument, "invalid filter %q: %s", opts.Filter, err)
+	} else {
+		token.Filter = opts.Filter
+	}
+
+	q = q.ApplyOffset(token.Offset)
 
 	if id := parent.ProjectID; id != "-" {
 		q = q.Require("ProjectID", id)
@@ -91,10 +100,19 @@ func (d *DAO) ListSpecArtifacts(ctx context.Context, parent names.Spec, opts Pag
 func (d *DAO) ListVersionArtifacts(ctx context.Context, parent names.Version, opts PageOptions) (ArtifactList, error) {
 	q := d.NewQuery(storage.ArtifactEntityName)
 	q = q.Require("SpecID", "")
-	q, err := q.ApplyCursor(opts.Token)
+
+	token, err := decodeToken(opts.Token)
 	if err != nil {
 		return ArtifactList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
 	}
+
+	if err := token.ValidateFilter(opts.Filter); err != nil {
+		return ArtifactList{}, status.Errorf(codes.InvalidArgument, "invalid filter %q: %s", opts.Filter, err)
+	} else {
+		token.Filter = opts.Filter
+	}
+
+	q = q.ApplyOffset(token.Offset)
 
 	if id := parent.ProjectID; id != "-" {
 		q = q.Require("ProjectID", id)
@@ -129,10 +147,19 @@ func (d *DAO) ListApiArtifacts(ctx context.Context, parent names.Api, opts PageO
 	q := d.NewQuery(storage.ArtifactEntityName)
 	q = q.Require("VersionID", "")
 	q = q.Require("SpecID", "")
-	q, err := q.ApplyCursor(opts.Token)
+
+	token, err := decodeToken(opts.Token)
 	if err != nil {
 		return ArtifactList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
 	}
+
+	if err := token.ValidateFilter(opts.Filter); err != nil {
+		return ArtifactList{}, status.Errorf(codes.InvalidArgument, "invalid filter %q: %s", opts.Filter, err)
+	} else {
+		token.Filter = opts.Filter
+	}
+
+	q = q.ApplyOffset(token.Offset)
 
 	if id := parent.ProjectID; id != "-" {
 		q = q.Require("ProjectID", id)
@@ -158,13 +185,22 @@ func (d *DAO) ListApiArtifacts(ctx context.Context, parent names.Api, opts PageO
 
 func (d *DAO) ListProjectArtifacts(ctx context.Context, parent names.Project, opts PageOptions) (ArtifactList, error) {
 	q := d.NewQuery(storage.ArtifactEntityName)
-	q, err := q.ApplyCursor(opts.Token)
 	q = q.Require("ApiID", "")
 	q = q.Require("VersionID", "")
 	q = q.Require("SpecID", "")
+
+	token, err := decodeToken(opts.Token)
 	if err != nil {
 		return ArtifactList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
 	}
+
+	if err := token.ValidateFilter(opts.Filter); err != nil {
+		return ArtifactList{}, status.Errorf(codes.InvalidArgument, "invalid filter %q: %s", opts.Filter, err)
+	} else {
+		token.Filter = opts.Filter
+	}
+
+	q = q.ApplyOffset(token.Offset)
 
 	if id := parent.ProjectID; id != "-" {
 		q = q.Require("ProjectID", id)
@@ -179,6 +215,13 @@ func (d *DAO) ListProjectArtifacts(ctx context.Context, parent names.Project, op
 }
 
 func (d *DAO) listArtifacts(ctx context.Context, it storage.Iterator, opts PageOptions, include func(*models.Artifact) bool) (ArtifactList, error) {
+	token, err := decodeToken(opts.Token)
+	if err != nil {
+		return ArtifactList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
+	} else {
+		token.Filter = opts.Filter
+	}
+
 	filter, err := filtering.NewFilter(opts.Filter, artifactFields)
 	if err != nil {
 		return ArtifactList{}, err
@@ -190,6 +233,8 @@ func (d *DAO) listArtifacts(ctx context.Context, it storage.Iterator, opts PageO
 
 	artifact := new(models.Artifact)
 	for _, err = it.Next(artifact); err == nil; _, err = it.Next(artifact) {
+		token.Offset++
+
 		artifactMap, err := artifactMap(*artifact)
 		if err != nil {
 			return response, status.Error(codes.Internal, err.Error())
@@ -214,7 +259,7 @@ func (d *DAO) listArtifacts(ctx context.Context, it storage.Iterator, opts PageO
 	}
 
 	if err == nil {
-		response.Token, err = it.GetCursor()
+		response.Token, err = encodeToken(token)
 		if err != nil {
 			return response, status.Error(codes.Internal, err.Error())
 		}

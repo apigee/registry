@@ -275,13 +275,22 @@ func (c *Client) Delete(ctx context.Context, k storage.Key) error {
 func (c *Client) Run(ctx context.Context, q storage.Query) storage.Iterator {
 	mylock()
 	defer myunlock()
-	cursor := q.(*Query).Cursor
 
-	op := c.db.Where("key > ?", cursor)
+	// Filtering is currently implemented by skipping iterator elements that
+	// don't match the filter criteria, and expects to only reach the end of
+	// the iterator if there are no more resources to consider. Previously,
+	// the entire table would be read into memory. This limit should maintain
+	// that behavior until we improve our iterator implementation.
+	op := c.db.Offset(q.(*Query).Offset).Limit(100000)
 	for _, r := range q.(*Query).Requirements {
 		op = op.Where(r.Name+" = ?", r.Value)
 	}
-	op = op.Order("key")
+
+	if order := q.(*Query).Order; order != "" {
+		op = op.Order(order)
+	} else {
+		op = op.Order("key")
+	}
 
 	switch q.(*Query).Kind {
 	case "Project":
@@ -316,4 +325,43 @@ func (c *Client) Run(ctx context.Context, q storage.Query) storage.Iterator {
 		log.Printf("Unable to run query for kind %s", q.(*Query).Kind)
 		return nil
 	}
+}
+
+func (c *Client) GetRecentSpecRevisions(ctx context.Context, offset int32, projectID, apiID, versionID string) storage.Iterator {
+	mylock()
+	defer myunlock()
+
+	// Select all columns from `specs` table specifically.
+	// We do not want to select duplicates from the joined subquery result.
+	op := c.db.Select("specs.*").
+		Table("specs").
+		// Join missing columns that couldn't be selected in the subquery.
+		Joins(`JOIN (?) AS grp ON specs.project_id = grp.project_id AND
+			specs.api_id = grp.api_id AND
+			specs.version_id = grp.version_id AND
+			specs.spec_id = grp.spec_id AND
+			specs.revision_create_time = grp.recent_create_time`,
+			// Select spec names and only their most recent revision_create_time
+			// This query cannot select all the columns we want.
+			// See: https://stackoverflow.com/questions/7745609/sql-select-only-rows-with-max-value-on-a-column
+			c.db.Select("project_id, api_id, version_id, spec_id, MAX(revision_create_time) AS recent_create_time").
+				Table("specs").
+				Group("project_id, api_id, version_id, spec_id")).
+		Order("key").
+		Offset(int(offset)).
+		Limit(100000)
+
+	if projectID != "-" {
+		op = op.Where("specs.project_id = ?", projectID)
+	}
+	if apiID != "-" {
+		op = op.Where("specs.api_id = ?", apiID)
+	}
+	if versionID != "-" {
+		op = op.Where("specs.version_id = ?", versionID)
+	}
+
+	var v []models.Spec
+	_ = op.Scan(&v).Error
+	return &Iterator{Client: c, Values: v, Index: 0}
 }
