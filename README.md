@@ -116,9 +116,31 @@ more demonstrations, see the [demos](demos) directory.
 
 Running `source auth/LOCAL.sh` will configure your environment to run the
 Registry API server locally and for the included clients to call your local
-instance. Start the server by running `registry-server` or provide a different
-configuration file for other storage backends. By default a SQLite backend will
-be used.
+instance. Start the server by running `registry-server`. By default a SQLite
+backend will be used (this is equivalent to running
+`registry-server -c config/sqlite.yaml`).
+
+### Optional: Running with a PostgreSQL backend
+
+The `config` directory contains examples of files that can be used to configure
+the `registry-server`. [config/postgres.yaml](config/postgres.yaml) contains a
+sample configuration; you'll likely need to customize this for your own
+`postgresql` instance. Use it with:
+
+`registry-server -c config/postgres.yaml`
+
+### Optional: Running with a PostgreSQL backend on Google CloudSQL
+
+[config/cloudsql-postgres.yaml](config/cloudsql-postgres.yaml) contains the
+configuration to connect to a PostgreSQL database hosted on CloudSQL. If you
+don't have an existing PostgreSQL instance, you can follow
+[these instructions](https://cloud.google.com/sql/docs/postgres/quickstart) to
+setup one. Please make sure to update
+[config/cloudsql-postgres.yaml](config/cloudsql-postgres.yaml) with the correct
+host configuration. As previously noted, you can start the server with the
+following:
+
+`registry-server -c config/cloudsql-postgres.yaml`
 
 ### Optional: Proxying a local service with Envoy
 
@@ -146,17 +168,51 @@ following:
 provides a read-only GraphQL interface to the Registry API. It can be run with
 a local or remote `registry-server`.
 
-### Optional: Connecting to a PostgreSQL database on CloudSQL
+## Running the Registry API server in a container
 
-[config/cloudsql-postgres.yaml](config/cloudsql-postgres.yaml) contains the
-configuration to connect to a PostgreSQL database hosted on CloudSQL. If you
-don't have an existing PostgreSQL instance, you can follow
-[these instructions](https://cloud.google.com/sql/docs/postgres/quickstart) to
-setup one. Please make sure to update
-[config/cloudsql-postgres.yaml](config/cloudsql-postgres.yaml) with the correct
-host configuration. You can start the server with the following:
+The `containers` directory contains Dockerfiles and other configurations to
+allow `registry-server` to be run in containers. Containers can be built that
+run `registry-server` standalone (recommended) or in a bundled container that
+includes `envoy` and a simple authorization server (mainly for running secured
+instances on Cloud Run). x64 and arm64 platforms are currently supported.
 
-`registry-server -c config/cloudsql-postgres.yaml`
+To build a container that runs `registry-server` standalone, use the following:
+
+```
+docker build -f containers/registry-server/Dockerfile -t registry-server .
+```
+
+To run the image with docker, you'll need to set the `PORT` environment
+variable in the container. Your `docker run` invocation will look like this:
+
+```
+docker run -e PORT=8080 -p 8080:8080 registry-server:latest
+```
+
+You'll get an error message similar to this:
+
+```
+2021/05/18 16:33:19 Failed to start: sqlite3 is unavailable, please recompile with CGO_ENABLED=1 or configure registry-server to use a different database
+```
+
+This is because container builds exclude `CGO`, which is required by sqlite3.
+To resolve this, you could rebuild your container with a modified
+`registry.yaml` (this is the default configuration used by the build) or (more
+simply) specify a configuration using the environment variables referenced in
+[config/registry.yaml](config/registry.yaml). Following those, your
+`docker run` invocation might look like this:
+
+```
+docker run -e PORT=8080 \
+  -p 8080:8080 \
+  -e REGISTRY_DATABASE=postgres \
+  -e REGISTRY_DBCONFIG="host=PGHOST port=5432 user=registry dbname=registry password=iloveapis sslmode=disable" \
+  registry-server:latest
+```
+
+Be sure to replace `PGHOST` with the address of your Postgres server and verify
+that your server is configured to accept remote connections (in `postgres.conf`
+and `pg_hba.conf`).
 
 ## Running the Registry API server with Google Cloud Run
 
@@ -253,23 +309,6 @@ Requirements:
 For detailed steps on how to deploy to GKE, please refer to
 [deployments/gke/README.md](deployments/gke/README.md).
 
-## Running the Registry API server locally with Docker
-
-The Registry API server container can also be built locally with Docker and run
-on both x64 and arm64 platforms. Arm64 builds require a build flag to specify
-the architecture of the `protoc` tool used during builds. That can be provided
-as follows:
-
-```
-docker build --build-arg "ARCH=aarch_64" -t registry .
-```
-
-The `--build-arg` flag can be omitted from x86 builds. To run the image with
-docker, you'll need to set the `PORT` environment variable in the container.
-Your `docker run` invocation will look like this:
-
-```
-docker run -e PORT=8080 -p 8080:8080 registry:latest
 ```
 
 ## License
@@ -287,3 +326,4 @@ ad-hoc volunteer basis.
 
 Contributions are welcome! Please see [CONTRIBUTING](CONTRIBUTING.md) for notes
 on how to contribute to this project.
+```
