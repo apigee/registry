@@ -76,7 +76,7 @@ rm -rf gapic/github.com
 cat >> gapic/registry_client.go <<END
 
 func (c *RegistryClient) GrpcClient() rpcpb.RegistryClient {
-	return c.registryClient
+	return c.internalClient.(*registryGRPCClient).registryClient
 }
 END
 
