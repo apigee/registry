@@ -102,7 +102,7 @@ func NewClient(ctx context.Context, gormDBName, gormConfig string) (*Client, err
 		db, err := gorm.Open(sqlite.Open(gormConfig), config())
 		if err != nil {
 			openErrorCount++
-			log.Printf("OPEN ERROR %d", openErrorCount)
+			log.Printf("OPEN ERROR %d %s", openErrorCount, err.Error())
 			(&Client{db: db}).close()
 			myunlock()
 			return nil, err
@@ -120,7 +120,7 @@ func NewClient(ctx context.Context, gormDBName, gormConfig string) (*Client, err
 		}), config())
 		if err != nil {
 			openErrorCount++
-			log.Printf("OPEN ERROR %d", openErrorCount)
+			log.Printf("OPEN ERROR %d %s", openErrorCount, err.Error())
 			(&Client{db: db}).close()
 			myunlock()
 			return nil, err
