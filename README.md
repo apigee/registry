@@ -182,41 +182,42 @@ To build a container that runs `registry-server` standalone, use the following:
 docker build -f containers/registry-server/Dockerfile -t registry-server .
 ```
 
-To run the image with docker, you'll need to set the `PORT` environment
-variable in the container. Your `docker run` invocation will look like this:
+To run the image with docker, you'll need to expose the default port (8080)
+that the server uses in the container. Your `docker run` invocation will look
+like this:
 
 ```
-docker run -e PORT=8080 -p 8080:8080 registry-server:latest
+docker run -p 8080:8080 registry-server:latest
 ```
 
 You'll get an error message similar to this:
 
 ```
-2021/05/18 16:33:19 Failed to start: sqlite3 is unavailable, please recompile with CGO_ENABLED=1 or configure registry-server to use a different database
+Failed to start: sqlite3 is unavailable, please recompile with CGO_ENABLED=1 or configure registry-server to use a different database
 ```
 
-This is because container builds exclude `CGO`, which is required by sqlite3.
-To resolve this, you could rebuild your container with a modified
-`registry.yaml` (this is the default configuration used by the build) or (more
-simply) specify a configuration using the environment variables referenced in
-[config/registry.yaml](config/registry.yaml). Following those, your
-`docker run` invocation might look like this:
+This is because container builds exclude `CGO`, which is required by the
+default database (sqlite3). To resolve this, you could rebuild your container
+with a modified `registry.yaml` (this is the default configuration used by the
+build) or (more simply) specify a configuration using the environment variables
+referenced in [config/registry.yaml](config/registry.yaml). Following those,
+your `docker run` invocation might look like this:
 
 ```
-docker run -e PORT=8080 \
+docker run \
   -p 8080:8080 \
   -e REGISTRY_DATABASE=postgres \
   -e REGISTRY_DBCONFIG="host=PGHOST port=5432 user=registry dbname=registry password=iloveapis sslmode=disable" \
   registry-server:latest
 ```
 
-Be sure to replace `PGHOST` with the address of your Postgres server and verify
-that your server is configured to accept remote connections (in `postgres.conf`
-and `pg_hba.conf`).
+Be sure to replace `PGHOST` with the address of your Postgres server, check all
+the other REGISTRY_DBCONFIG parameters, and verify that your server is
+configured to accept remote connections (in `postgres.conf` and `pg_hba.conf`).
 
 ## Running the Registry API server with Google Cloud Run
 
-The Registry API server is designed to be easily deployed on
+The Registry API server can be deployed on
 [Google Cloud Run](https://cloud.google.com/run). To support this, the
 [Makefile](Makefile) contains targets that build a Docker image and that deploy
 it to Google Cloud Run. Both use the `gcloud` command, which should be
@@ -238,9 +239,16 @@ Requirements:
 
 `make build` uses [Google Cloud Build](https://cloud.google.com/cloud-build) to
 build a container containing the API server. The container is stored in
-[Google Container Registry](https://cloud.google.com/container-registry).
+[Google Container Registry](https://cloud.google.com/container-registry). This
+uses the `Dockerfile` at the top level of the repo, which is a link to
+[containers/registry-server/Dockerfile](containers/registry-server/Dockerfile).
+A second Dockerfile is available in
+[containers/registry-bundle/Dockerfile](containers/registry-bundle/Dockerfile);
+this contains the `registry-server`, `envoy`, and a simple authorization server
+(`authz-server`). To use it, just change the top level link to point to this
+Dockerfile.
 
-`make deploy` deploys that container on
+`make deploy` deploys the built container on
 [Google Cloud Run](https://cloud.google.com/run).
 
 When deploying to Cloud Run for the first time, you will be asked a few
