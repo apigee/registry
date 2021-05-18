@@ -50,21 +50,15 @@ var specFields = []filtering.Field{
 }
 
 func (d *DAO) ListSpecs(ctx context.Context, parent names.Version, opts PageOptions) (SpecList, error) {
-	q := d.NewQuery(storage.SpecEntityName)
-	q = q.Require("Currency", models.IsCurrent)
-	q, err := q.ApplyCursor(opts.Token)
+	token, err := decodeToken(opts.Token)
 	if err != nil {
 		return SpecList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
 	}
 
-	if id := parent.ProjectID; id != "-" {
-		q = q.Require("ProjectID", id)
-	}
-	if id := parent.ApiID; id != "-" {
-		q = q.Require("ApiID", id)
-	}
-	if id := parent.VersionID; id != "-" {
-		q = q.Require("VersionID", id)
+	if err := token.ValidateFilter(opts.Filter); err != nil {
+		return SpecList{}, status.Errorf(codes.InvalidArgument, "invalid filter %q: %s", opts.Filter, err)
+	} else {
+		token.Filter = opts.Filter
 	}
 
 	if parent.ProjectID != "-" && parent.ApiID != "-" && parent.VersionID != "-" {
@@ -86,13 +80,15 @@ func (d *DAO) ListSpecs(ctx context.Context, parent names.Version, opts PageOpti
 		return SpecList{}, err
 	}
 
-	it := d.Run(ctx, q)
+	it := d.GetRecentSpecRevisions(ctx, token.Offset, parent.ProjectID, parent.ApiID, parent.VersionID)
 	response := SpecList{
 		Specs: make([]models.Spec, 0, opts.Size),
 	}
 
 	spec := new(models.Spec)
 	for _, err = it.Next(spec); err == nil; _, err = it.Next(spec) {
+		token.Offset++
+
 		specMap, err := specMap(*spec)
 		if err != nil {
 			return response, status.Error(codes.Internal, err.Error())
@@ -115,7 +111,7 @@ func (d *DAO) ListSpecs(ctx context.Context, parent names.Version, opts PageOpti
 	}
 
 	if err == nil {
-		response.Token, err = it.GetCursor()
+		response.Token, err = encodeToken(token)
 		if err != nil {
 			return response, status.Error(codes.Internal, err.Error())
 		}
@@ -157,7 +153,7 @@ func (d *DAO) GetSpec(ctx context.Context, name names.Spec) (*models.Spec, error
 	q = q.Require("ApiID", normal.ApiID)
 	q = q.Require("VersionID", normal.VersionID)
 	q = q.Require("SpecID", normal.SpecID)
-	q = q.Require("Currency", models.IsCurrent)
+	q = q.Descending("RevisionCreateTime")
 
 	it := d.Run(ctx, q)
 	spec := &models.Spec{}

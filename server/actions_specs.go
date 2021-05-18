@@ -20,14 +20,12 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"sort"
 	"strings"
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/dao"
 	"github.com/apigee/registry/server/models"
 	"github.com/apigee/registry/server/names"
-	"github.com/apigee/registry/server/storage"
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/genproto/googleapis/api/httpbody"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -302,12 +300,6 @@ func (s *RegistryServer) UpdateApiSpec(ctx context.Context, req *rpc.UpdateApiSp
 		return nil, err
 	}
 
-	// Mark the current revision as non-current so the update becomes the only current revision.
-	spec.Currency = models.NotCurrent
-	if err := db.SaveSpecRevision(ctx, spec); err != nil {
-		return nil, err
-	}
-
 	// Apply the update to the spec - possibly changing the revision ID.
 	if err := spec.Update(req.GetApiSpec(), req.GetUpdateMask()); err != nil {
 		return nil, internalError(err)
@@ -334,39 +326,4 @@ func (s *RegistryServer) UpdateApiSpec(ctx context.Context, req *rpc.UpdateApiSp
 
 	s.notify(rpc.Notification_UPDATED, spec.RevisionName())
 	return message, nil
-}
-
-// fetchMostRecentNonCurrentRevisionOfSpec gets the most recent revision that's not current.
-func (s *RegistryServer) fetchMostRecentNonCurrentRevisionOfSpec(ctx context.Context, client storage.Client, name names.Spec) (storage.Key, *models.Spec, error) {
-	q := client.NewQuery(storage.SpecEntityName)
-	q = q.Require("ProjectID", name.ProjectID)
-	q = q.Require("ApiID", name.ApiID)
-	q = q.Require("VersionID", name.VersionID)
-	q = q.Require("SpecID", name.SpecID)
-	q = q.Require("Currency", models.NotCurrent)
-	q = q.Order("-CreateTime")
-	it := client.Run(ctx, q)
-
-	if s.weTrustTheSort {
-		spec := &models.Spec{}
-		k, err := it.Next(spec)
-		if err != nil {
-			return nil, nil, client.NotFoundError()
-		}
-		return k, spec, nil
-	} else {
-		specs := make([]*models.Spec, 0)
-		for {
-			spec := &models.Spec{}
-			if _, err := it.Next(spec); err != nil {
-				break
-			}
-			specs = append(specs, spec)
-		}
-		sort.Slice(specs, func(i, j int) bool {
-			return specs[i].CreateTime.After(specs[j].CreateTime)
-		})
-		k := client.NewKey("Spec", specs[0].Key)
-		return k, specs[0], nil
-	}
 }

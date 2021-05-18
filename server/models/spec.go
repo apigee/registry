@@ -26,19 +26,9 @@ import (
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
-// This was originally a boolean but gorm does not correctly update booleans from structs.
-// https://stackoverflow.com/questions/56653423/gorm-doesnt-update-boolean-field-to-false
-const (
-	// NotCurrent indicates that a revision is NOT the current revision of a spec
-	NotCurrent = 1
-	// IsCurrent indicates that a revision is the current revision of a spec
-	IsCurrent = 2
-)
-
 // Spec is the storage-side representation of a spec.
 type Spec struct {
 	Key                string    `gorm:"primaryKey"`
-	Currency           int32     // IsCurrent for the current revision of the spec.
 	ProjectID          string    // Uniquely identifies a project.
 	ApiID              string    // Uniquely identifies an api within a project.
 	VersionID          string    // Uniquely identifies a version within a api.
@@ -72,7 +62,6 @@ func NewSpec(name names.Spec, body *rpc.ApiSpec) (spec *Spec, err error) {
 		CreateTime:         now,
 		RevisionCreateTime: now,
 		RevisionUpdateTime: now,
-		Currency:           IsCurrent,
 		RevisionID:         newRevisionID(),
 	}
 
@@ -111,7 +100,6 @@ func (s *Spec) NewRevision() *Spec {
 		CreateTime:         s.CreateTime,
 		RevisionCreateTime: now,
 		RevisionUpdateTime: now,
-		Currency:           IsCurrent,
 		RevisionID:         newRevisionID(),
 	}
 }
@@ -228,7 +216,6 @@ func (s *Spec) Update(message *rpc.ApiSpec, mask *fieldmaskpb.FieldMask) error {
 			return err
 		}
 	}
-	s.Currency = IsCurrent
 	s.RevisionUpdateTime = now
 	return nil
 }
