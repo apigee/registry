@@ -56,6 +56,8 @@ type Client interface {
 	DeleteChildrenOfVersion(ctx context.Context, version names.Version) error
 	DeleteAllMatches(ctx context.Context, q Query) error
 	DeleteChildrenOfSpec(ctx context.Context, spec names.Spec) error
+
+	GetRecentSpecRevisions(ctx context.Context, offset int32, projectID, apiID, versionID string) Iterator
 }
 
 type Key interface {
@@ -63,13 +65,11 @@ type Key interface {
 }
 
 type Query interface {
-	Filter(filter string, value interface{}) Query
 	Require(name string, value interface{}) Query
-	Order(order string) Query
-	ApplyCursor(cursorStr string) (Query, error)
+	Descending(field string) Query
+	ApplyOffset(int32) Query
 }
 
 type Iterator interface {
 	Next(interface{}) (Key, error)
-	GetCursor() (string, error)
 }

@@ -47,10 +47,19 @@ var versionFields = []filtering.Field{
 
 func (d *DAO) ListVersions(ctx context.Context, parent names.Api, opts PageOptions) (VersionList, error) {
 	q := d.NewQuery(storage.VersionEntityName)
-	q, err := q.ApplyCursor(opts.Token)
+
+	token, err := decodeToken(opts.Token)
 	if err != nil {
 		return VersionList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
 	}
+
+	if err := token.ValidateFilter(opts.Filter); err != nil {
+		return VersionList{}, status.Errorf(codes.InvalidArgument, "invalid filter %q: %s", opts.Filter, err)
+	} else {
+		token.Filter = opts.Filter
+	}
+
+	q = q.ApplyOffset(token.Offset)
 
 	if parent.ProjectID != "-" {
 		q = q.Require("ProjectID", parent.ProjectID)
@@ -80,6 +89,8 @@ func (d *DAO) ListVersions(ctx context.Context, parent names.Api, opts PageOptio
 
 	version := new(models.Version)
 	for _, err = it.Next(version); err == nil; _, err = it.Next(version) {
+		token.Offset++
+
 		versionMap, err := versionMap(*version)
 		if err != nil {
 			return response, status.Error(codes.Internal, err.Error())
@@ -102,7 +113,7 @@ func (d *DAO) ListVersions(ctx context.Context, parent names.Api, opts PageOptio
 	}
 
 	if err == nil {
-		response.Token, err = it.GetCursor()
+		response.Token, err = encodeToken(token)
 		if err != nil {
 			return response, status.Error(codes.Internal, err.Error())
 		}

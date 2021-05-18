@@ -61,7 +61,7 @@ func (s *RegistryServer) ListApiSpecRevisions(ctx context.Context, req *rpc.List
 	}
 
 	for i, spec := range listing.Specs {
-		response.ApiSpecs[i], err = spec.BasicMessage(spec.Name())
+		response.ApiSpecs[i], err = spec.BasicMessage(spec.RevisionName())
 		if err != nil {
 			return nil, internalError(err)
 		}
@@ -94,16 +94,6 @@ func (s *RegistryServer) DeleteApiSpecRevision(ctx context.Context, req *rpc.Del
 	name, err = names.ParseSpecRevision(revision.RevisionName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
-	}
-
-	// If the one we will delete is the current revision, we need to designate a new current revision.
-	if revision.Currency == models.IsCurrent {
-		// get the most recent non-current revision and make it current
-		newKey, newCurrentRevision, err := s.fetchMostRecentNonCurrentRevisionOfSpec(ctx, client, name.Spec())
-		if err == nil && newCurrentRevision != nil {
-			newCurrentRevision.Currency = models.IsCurrent
-			_, _ = client.Put(ctx, newKey, newCurrentRevision)
-		}
 	}
 
 	if err := db.DeleteSpecRevision(ctx, name); err != nil {
@@ -177,17 +167,6 @@ func (s *RegistryServer) RollbackApiSpec(ctx context.Context, req *rpc.RollbackA
 	parent, err := names.ParseSpec(req.GetName())
 	if err != nil {
 		return nil, invalidArgumentError(err)
-	}
-
-	current, err := db.GetSpec(ctx, parent)
-	if err != nil {
-		return nil, err
-	}
-
-	// Mark the current revision as non-current.
-	current.Currency = models.NotCurrent
-	if err := db.SaveSpecRevision(ctx, current); err != nil {
-		return nil, err
 	}
 
 	// Get the target spec revision to use as a base for the new rollback revision.

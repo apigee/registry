@@ -15,18 +15,16 @@
 package gorm
 
 import (
-	"encoding/base64"
 	"log"
 
 	"github.com/apigee/registry/server/storage"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 // Query represents a query in a storage provider.
 type Query struct {
 	Kind         string
-	Cursor       string
+	Offset       int
+	Order        string
 	Requirements []*Requirement
 }
 
@@ -43,21 +41,6 @@ func (c *Client) NewQuery(kind string) storage.Query {
 	}
 }
 
-// internalError returns an error that wraps an internal server error.
-func internalError(err error) error {
-	if err == nil {
-		return nil
-	}
-	// TODO: selectively mask error details depending on caller privileges
-	return status.Error(codes.Internal, err.Error())
-}
-
-// Filter adds a general filter to a query.
-func (q *Query) Filter(name string, value interface{}) storage.Query {
-	log.Fatalf("Unsupported filter %s %+v", name, value)
-	return q
-}
-
 // Require adds a filter to a query that requires a field to have a specified value.
 func (q *Query) Require(name string, value interface{}) storage.Query {
 	switch name {
@@ -69,8 +52,6 @@ func (q *Query) Require(name string, value interface{}) storage.Query {
 		name = "version_id"
 	case "SpecID":
 		name = "spec_id"
-	case "Currency":
-		name = "currency"
 	default:
 		log.Fatalf("UNEXPECTED REQUIRE TYPE: %s", name)
 	}
@@ -78,17 +59,16 @@ func (q *Query) Require(name string, value interface{}) storage.Query {
 	return q
 }
 
-func (q *Query) Order(value string) storage.Query {
-	// ordering is ignored
+func (q *Query) Descending(field string) storage.Query {
+	switch field {
+	case "RevisionCreateTime":
+		q.Order = "revision_create_time desc"
+	}
+
 	return q
 }
 
-// ApplyCursor configures a query to start from a specified cursor.
-func (q *Query) ApplyCursor(encodedCursor string) (storage.Query, error) {
-	decodedCursor, err := base64.StdEncoding.DecodeString(encodedCursor)
-	if err != nil {
-		return q, err
-	}
-	q.Cursor = string(decodedCursor)
-	return q, nil
+func (q *Query) ApplyOffset(offset int32) storage.Query {
+	q.Offset = int(offset)
+	return q
 }

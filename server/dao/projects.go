@@ -43,10 +43,19 @@ var projectFields = []filtering.Field{
 
 func (d *DAO) ListProjects(ctx context.Context, opts PageOptions) (ProjectList, error) {
 	q := d.NewQuery(storage.ProjectEntityName)
-	q, err := q.ApplyCursor(opts.Token)
+
+	token, err := decodeToken(opts.Token)
 	if err != nil {
 		return ProjectList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
 	}
+
+	if err := token.ValidateFilter(opts.Filter); err != nil {
+		return ProjectList{}, status.Errorf(codes.InvalidArgument, "invalid filter %q: %s", opts.Filter, err)
+	} else {
+		token.Filter = opts.Filter
+	}
+
+	q = q.ApplyOffset(token.Offset)
 
 	filter, err := filtering.NewFilter(opts.Filter, projectFields)
 	if err != nil {
@@ -60,6 +69,8 @@ func (d *DAO) ListProjects(ctx context.Context, opts PageOptions) (ProjectList, 
 
 	project := new(models.Project)
 	for _, err = it.Next(project); err == nil; _, err = it.Next(project) {
+		token.Offset++
+
 		match, err := filter.Matches(projectMap(*project))
 		if err != nil {
 			return response, err
@@ -77,7 +88,7 @@ func (d *DAO) ListProjects(ctx context.Context, opts PageOptions) (ProjectList, 
 	}
 
 	if err == nil {
-		response.Token, err = it.GetCursor()
+		response.Token, err = encodeToken(token)
 		if err != nil {
 			return response, status.Error(codes.Internal, err.Error())
 		}

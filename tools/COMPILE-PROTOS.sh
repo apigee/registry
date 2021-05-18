@@ -82,9 +82,22 @@ END
 
 # patch the generated GAPIC to send Authorization tokens with insecure requests
 # (this allows the registry command line tools to test container builds)
-sed -i.bak 's/return metadata.NewOutgoingContext(ctx, out)/insecure := os.Getenv("APG_REGISTRY_INSECURE")\ntoken := os.Getenv("APG_REGISTRY_TOKEN")\nif insecure == "1" \&\& token != "" \{ \nout["authorization"] = append(out["authorization"], "Bearer "+token) \n\}\nreturn metadata.NewOutgoingContext(ctx, out)/' gapic/doc.go
-rm gapic/doc.go.bak
-gofmt -w gapic/doc.go
+FILE=gapic/doc.go
+PATCH='\
+insecure := os.Getenv("APG_REGISTRY_INSECURE")\
+token := os.Getenv("APG_REGISTRY_TOKEN")\
+if insecure == "1" \&\& token != "" {\
+  out["authorization"] = append(out["authorization"], "Bearer "+token)\
+}\
+return metadata.NewOutgoingContext(ctx, out)\
+' # no ' or / in the patch; escape & and newlines
+sed -i.bak "s/return metadata.NewOutgoingContext(ctx, out)/${PATCH}/" "${FILE}"
+rm "${FILE}.bak"
+gofmt -w "${FILE}"
+if ! grep --quiet APG_REGISTRY_INSECURE "${FILE}"; then
+  echo "Patching GAPIC library failed."
+  exit 1
+fi
 
 echo "Generating GAPIC-based CLI."
 protoc --proto_path=. --proto_path=${ANNOTATIONS} \
