@@ -1,1 +1,1 @@
-containers/registry-bundle/Dockerfile
+containers/registry-server/Dockerfile
