@@ -24,7 +24,7 @@ import (
 )
 
 // NewLintFromOpenAPI runs the API linter and returns the results.
-func NewLintFromOpenAPI(name string, b []byte, linter string) (*rpc.Lint, error) {
+func NewLintFromOpenAPI(name string, spec []byte, linter string) (*rpc.Lint, error) {
 	// create a tmp directory
 	root, err := ioutil.TempDir("", "registry-openapi-")
 	if err != nil {
@@ -34,10 +34,6 @@ func NewLintFromOpenAPI(name string, b []byte, linter string) (*rpc.Lint, error)
 	// whenever we finish, delete the tmp directory
 	defer os.RemoveAll(root)
 	// write the file to the temp directory
-	spec, err := GUnzippedBytes(b)
-	if err != nil {
-		return nil, err
-	}
 	err = ioutil.WriteFile(filepath.Join(root, name), spec, 0644)
 	if err != nil {
 		return nil, err
