@@ -65,9 +65,10 @@ type RegistryServer struct {
 	enableNotifications bool   // configured
 	logging             string // configured
 
-	projectID      string // computed
-	weTrustTheSort bool   // computed
-	loggingLevel   int    // computed
+	projectID       string // computed
+	weTrustTheSort  bool   // computed
+	searchAvailable bool   // computed
+	loggingLevel    int    // computed
 }
 
 func newRegistryServer(config *Config) *RegistryServer {
@@ -76,6 +77,7 @@ func newRegistryServer(config *Config) *RegistryServer {
 		s.database = config.Database
 		s.dbConfig = config.DBConfig
 		s.enableNotifications = config.Notify
+		s.searchAvailable = config.Database == "postgres"
 		switch strings.ToUpper(config.Log) {
 		case "FATAL":
 			s.loggingLevel = loggingFatal

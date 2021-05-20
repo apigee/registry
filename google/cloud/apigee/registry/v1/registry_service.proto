@@ -311,8 +311,8 @@ service Registry {
   rpc GetArtifactContents(GetArtifactContentsRequest) returns (google.api.HttpBody) {
     option (google.api.http) = {
       get: "/v1/{name=projects/*/artifacts/*/contents}"
-      additional_bindings: { 
-        get: "/v1/{name=projects/*/apis/*/artifacts/*/contents}" 
+      additional_bindings: {
+        get: "/v1/{name=projects/*/apis/*/artifacts/*/contents}"
       }
       additional_bindings: {
         get: "/v1/{name=projects/*/apis/*/versions/*/artifacts/*/contents}"
@@ -381,6 +381,15 @@ service Registry {
       }
     };
     option (google.api.method_signature) = "name";
+  }
+
+  // SearchAll does a full text search across all entity types
+  // (-- api-linter: core::0136::http-uri-suffix=disabled
+  //     aip.dev/not-precedent: We need to do this because reasons. --)
+  rpc SearchAll(SearchRequest) returns (SearchResponse) {
+    option (google.api.http) = {
+      get: "/v1/search"
+    };
   }
 }
 
@@ -760,8 +769,8 @@ message UpdateApiSpecRequest {
   // are set in the request message (fields set to default values are ignored).
   // If a "*" is specified, all fields are updated, including fields that are
   // unspecified/default in the request.
-  google.protobuf.FieldMask update_mask = 2;  
-  
+  google.protobuf.FieldMask update_mask = 2;
+
   // If set to true, and the spec is not found, a new spec will be created.
   // In this situation, `update_mask` is ignored.
   bool allow_missing = 3;
@@ -961,4 +970,32 @@ message DeleteArtifactRequest {
       type: "registry.googleapis.com/Artifact"
     }
   ];
+}
+
+// Request message for search
+message SearchRequest {
+  // Search query string
+  string q = 1 [(google.api.field_behavior) = REQUIRED];
+  // Page size
+  int32 page_size = 2;
+  // Page token
+  string page_token = 3;
+}
+
+// Response message for search
+message SearchResponse {
+  // Search results
+  repeated SearchResult results = 1;
+  // Next page token
+  string next_page_token = 2;
+  // Additional message, e.g. if search is not available
+  string message = 3;
+}
+
+// Response message for search
+message SearchResult {
+  // Key of matching entity
+  string key = 1;
+  // Excerpt of matching text
+  string excerpt = 2;
 }

@@ -18,6 +18,7 @@ package storage
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/apigee/registry/server/names"
 )
@@ -43,6 +44,7 @@ type Client interface {
 	Get(ctx context.Context, k Key, v interface{}) error
 	Put(ctx context.Context, k Key, v interface{}) (Key, error)
 	Delete(ctx context.Context, k Key) error
+	Raw(ctx context.Context, target RawRows, sql string, values ...interface{}) error
 	Run(ctx context.Context, q Query) Iterator
 
 	IsNotFound(err error) bool
@@ -72,4 +74,8 @@ type Query interface {
 
 type Iterator interface {
 	Next(interface{}) (Key, error)
+}
+
+type RawRows interface {
+	Append(rows *sql.Rows) error
 }

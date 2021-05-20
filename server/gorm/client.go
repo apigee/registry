@@ -111,7 +111,7 @@ func NewClient(ctx context.Context, gormDBName, gormConfig string) (*Client, err
 		// empirically, it does not seem safe to disable the mutex for sqlite3,
 		// which might make sense since sqlite database access is in-process.
 		//disableMutex = true
-		c := (&Client{db: db}).ensure()
+		c := (&Client{db: db}).ensure(false)
 		return c, nil
 	case "postgres", "cloudsqlpostgres":
 		db, err := gorm.Open(postgres.New(postgres.Config{
@@ -129,7 +129,7 @@ func NewClient(ctx context.Context, gormDBName, gormConfig string) (*Client, err
 		// postgres runs in a separate process and seems to have no problems
 		// with concurrent access and modifications.
 		disableMutex = true
-		c := (&Client{db: db}).ensure()
+		c := (&Client{db: db}).ensure(true)
 		return c, nil
 	default:
 		myunlock()
@@ -169,7 +169,7 @@ func (c *Client) ensureTable(v interface{}) {
 	}
 }
 
-func (c *Client) reset() {
+func (c *Client) reset(searchAvailable bool) {
 	c.resetTable(&models.Project{})
 	c.resetTable(&models.Api{})
 	c.resetTable(&models.Version{})
@@ -177,9 +177,12 @@ func (c *Client) reset() {
 	c.resetTable(&models.Blob{})
 	c.resetTable(&models.Artifact{})
 	c.resetTable(&models.SpecRevisionTag{})
+	if searchAvailable {
+		c.resetTable(&models.Lexeme{})
+	}
 }
 
-func (c *Client) ensure() *Client {
+func (c *Client) ensure(searchAvailable bool) *Client {
 	c.ensureTable(&models.Project{})
 	c.ensureTable(&models.Api{})
 	c.ensureTable(&models.Version{})
@@ -187,6 +190,12 @@ func (c *Client) ensure() *Client {
 	c.ensureTable(&models.Blob{})
 	c.ensureTable(&models.Artifact{})
 	c.ensureTable(&models.SpecRevisionTag{})
+	if searchAvailable {
+		c.ensureTable(&models.Lexeme{})
+		mylock()
+		defer myunlock()
+		c.db.Exec("CREATE INDEX IF NOT EXISTS idx_lexemes_vector ON lexemes USING GIN(vector)")
+	}
 	return c
 }
 
@@ -226,6 +235,8 @@ func (c *Client) Put(ctx context.Context, k storage.Key, v interface{}) (storage
 		r.Key = k.(*Key).Name
 	case *models.Artifact:
 		r.Key = k.(*Key).Name
+	case *models.Lexeme:
+		r.Key = k.String()
 	}
 	c.db.Transaction(
 		func(tx *gorm.DB) error {
@@ -269,6 +280,19 @@ func (c *Client) Delete(ctx context.Context, k storage.Key) error {
 		log.Printf("ignoring error: %+v", err)
 	}
 	return nil
+}
+
+func (c *Client) Raw(ctx context.Context, target storage.RawRows, sql string, values ...interface{}) error {
+	mylock()
+	defer myunlock()
+
+	rows, err := c.db.Raw(sql, values).Rows()
+	if err != nil {
+		return err
+	}
+
+	defer rows.Close()
+	return target.Append(rows)
 }
 
 // Run runs a query using the storage client, returning an iterator.

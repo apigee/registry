@@ -71,6 +71,9 @@ func (s *RegistryServer) CreateApi(ctx context.Context, req *rpc.CreateApiReques
 	if err := db.SaveApi(ctx, api); err != nil {
 		return nil, err
 	}
+	if err := s.updateSearchForAPI(ctx, db, api); err != nil {
+		return nil, err
+	}
 
 	message, err := api.Message()
 	if err != nil {
@@ -211,6 +214,9 @@ func (s *RegistryServer) UpdateApi(ctx context.Context, req *rpc.UpdateApiReques
 	if err := db.SaveApi(ctx, api); err != nil {
 		return nil, err
 	}
+	if err := s.updateSearchForAPI(ctx, db, api); err != nil {
+		return nil, err
+	}
 
 	message, err := api.Message()
 	if err != nil {
@@ -219,4 +225,20 @@ func (s *RegistryServer) UpdateApi(ctx context.Context, req *rpc.UpdateApiReques
 
 	s.notify(rpc.Notification_UPDATED, name.String())
 	return message, nil
+}
+
+func (s *RegistryServer) updateSearchForAPI(ctx context.Context, db dao.DAO, api *models.Api) error {
+	if !s.searchAvailable {
+		return nil
+	}
+
+	// Lexeme.Key is derived from Api.Key assigned during DAO.Put
+	if x := models.NewLexemeForAPI(api); x.IsEmpty() {
+		//TODO delete Lexeme
+	} else {
+		if err := db.SaveLexeme(ctx, x); err != nil {
+			return err
+		}
+	}
+	return nil
 }
