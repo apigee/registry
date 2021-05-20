@@ -21,6 +21,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/apigee/registry/cmd/registry/core"
@@ -113,10 +114,18 @@ func scanDirectoryForOpenAPI(projectID, baseURI, directory string) {
 	}
 }
 
+// sanitize converts a name into a "safe" form for use as an identifier
 func sanitize(name string) string {
+	// identifiers are lower-case
+	name = strings.ToLower(name)
+	// certain characters that are used as separators are replaced with dashes
 	name = strings.Replace(name, " ", "-", -1)
 	name = strings.Replace(name, ":", "-", -1)
 	name = strings.Replace(name, "_", "-", -1)
+	name = strings.Replace(name, "+", "-", -1)
+	// any remaining unsupported characters are removed
+	pattern := regexp.MustCompile("[^a-z0-9-.]")
+	name = pattern.ReplaceAllString(name, "")
 	return name
 }
 
