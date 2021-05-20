@@ -190,7 +190,8 @@ like this:
 docker run -p 8080:8080 registry-server:latest
 ```
 
-You'll get an error message similar to this:
+Since this is using the default configuration, you'll get an error message
+similar to this:
 
 ```
 Failed to start: sqlite3 is unavailable, please recompile with CGO_ENABLED=1 or configure registry-server to use a different database
@@ -199,7 +200,7 @@ Failed to start: sqlite3 is unavailable, please recompile with CGO_ENABLED=1 or 
 This is because container builds exclude `CGO`, which is required by the
 default database (sqlite3). To resolve this, you could rebuild your container
 with a modified `registry.yaml` (this is the default configuration used by the
-build) or (more simply) specify a configuration using the environment variables
+build) or, more simply, specify a configuration using the environment variables
 referenced in [config/registry.yaml](config/registry.yaml). Following those,
 your `docker run` invocation might look like this:
 
@@ -207,13 +208,15 @@ your `docker run` invocation might look like this:
 docker run \
   -p 8080:8080 \
   -e REGISTRY_DATABASE=postgres \
-  -e REGISTRY_DBCONFIG="host=PGHOST port=5432 user=registry dbname=registry password=iloveapis sslmode=disable" \
+  -e REGISTRY_DBCONFIG="host=${PGHOST} port=5432 user=registry dbname=registry password=iloveapis sslmode=disable" \
   registry-server:latest
 ```
 
-Be sure to replace `PGHOST` with the address of your Postgres server, check all
-the other REGISTRY_DBCONFIG parameters, and verify that your server is
-configured to accept remote connections (in `postgres.conf` and `pg_hba.conf`).
+Be sure to replace `${PGHOST}` with the address of your Postgres server (either
+directly or by setting `PGHOST` with another `-e` argument to `docker run`),
+check all the other REGISTRY_DBCONFIG parameters, and verify that your server
+is configured to accept remote connections (in `postgres.conf` and
+`pg_hba.conf`).
 
 ## Running the Registry API server with Google Cloud Run
 
