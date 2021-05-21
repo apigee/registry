@@ -152,7 +152,7 @@ func TestCreateProjectResponseCodes(t *testing.T) {
 		{
 			desc: "long custom identifier",
 			req: &rpc.CreateProjectRequest{
-				ProjectId: "this-identifier-exceeds-the-sixty-three-character-maximum-length",
+				ProjectId: "this-identifier-is-invalid-because-it-exceeds-the-eighty-character-maximum-length",
 				Project:   &rpc.Project{},
 			},
 			want: codes.InvalidArgument,
