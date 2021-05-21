@@ -23,6 +23,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -54,11 +55,11 @@ var (
 
 // AuthzConfig configures the authz filter.
 type AuthzConfig struct {
-	TrustJWTs bool     `yaml:"trustJWTs"`
-	Readers   []string `yaml:"readers"`
-	Writers   []string `yaml:"writers"`
+	TrustJWTs bool     `json:"trustJWTs", yaml:"trustJWTs"`
+	Readers   []string `json:"readers", yaml:"readers"`
+	Writers   []string `json:"writers", yaml:"writers"`
 	// hard-coded tokens and corresponding user ids (for testing only)
-	Tokens map[string]string `yaml:"tokens"`
+	Tokens map[string]string `json:"tokens", yaml:"tokens"`
 }
 
 var config AuthzConfig
@@ -438,17 +439,21 @@ func main() {
 	if *configFlag != "" {
 		b, err := ioutil.ReadFile(*configFlag)
 		if err != nil {
-			log.Fatalf("%s", err.Error())
+			log.Fatalf("Failed to read file: %s", err)
 		}
-		err = yaml.Unmarshal(b, &config)
-		if err != nil {
-			log.Fatalf("%s", err.Error())
+		b = []byte(os.ExpandEnv(string(b)))
+		if err := yaml.Unmarshal(b, &config); err != nil {
+			log.Fatalf("Failed to unmarshal yaml: %s", err)
 		}
 	} else {
-		config.TrustJWTs = true
+		// if no configuration is specified, allow all authenticated users to read and write.
 		config.Readers = []string{"*"}
 		config.Writers = []string{"*"}
 	}
+
+	// marshal and print current configuration for logging
+	configJSON, _ := json.Marshal(config)
+	log.Printf("authz-server %s", configJSON)
 
 	lis, err := net.Listen("tcp", *portFlag)
 	if err != nil {
@@ -460,6 +465,6 @@ func main() {
 	auth.RegisterAuthorizationServer(s, &authorizationServer{})
 	healthpb.RegisterHealthServer(s, &healthServer{})
 
-	log.Printf("authz-server listing on %s", *portFlag)
+	log.Printf("authz-server listening on %s", *portFlag)
 	s.Serve(lis)
 }

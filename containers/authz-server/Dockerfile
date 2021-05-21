@@ -1,13 +1,9 @@
-# This Dockerfile builds an image that runs the registry-server with no proxy.
+# This Dockerfile builds an image that runs the authz-server.
 
 # Use the official Golang image to create a build artifact.
 # This is based on Debian and sets the GOPATH to /go.
 # https://hub.docker.com/_/golang
 FROM golang:1.15 as builder
-RUN apt-get update
-RUN apt-get install unzip
-RUN curl -L https://github.com/protocolbuffers/protobuf/releases/download/v3.13.0/protoc-3.13.0-linux-x86_64.zip > /tmp/protoc.zip
-RUN unzip /tmp/protoc.zip -d /usr/local
 
 # Create and change to the app directory.
 WORKDIR /app
@@ -20,11 +16,8 @@ RUN go mod download
 # Copy local code to the container image.
 COPY . ./
 
-# Compile protos.
-RUN make protos
-
-# Build registry-server.
-RUN CGO_ENABLED=0 GOOS=linux go build -v -o registry-server ./cmd/registry-server
+# Build authz-server.
+RUN CGO_ENABLED=0 GOOS=linux go build -v -o authz-server ./cmd/authz-server
 
 # Use the official Alpine image for a lean production container.
 # https://hub.docker.com/_/alpine
@@ -33,7 +26,10 @@ FROM alpine:3
 RUN apk add --no-cache ca-certificates
 
 # Copy the binary to the production image from the builder stage.
-COPY --from=builder /app/registry-server /registry-server
+COPY --from=builder /app/authz-server /authz-server
 
-# Run the web service on container startup.
-CMD ["/registry-server"]
+# Copy the standard registry configuration from the builder image.
+COPY cmd/authz-server/authz.yaml /authz.yaml
+
+# Run the service on container startup.
+CMD ["/authz-server", "-c", "authz.yaml"]

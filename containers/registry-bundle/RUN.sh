@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 #
 # Copyright 2020 Google LLC. All Rights Reserved.
 #
@@ -20,6 +20,9 @@
 # background before running envoy.
 #
 
+# This causes bash to exit immediately if anything fails.
+set -e
+
 # run the authz server on its default port.
 /authz-server -c authz.yaml &
 
@@ -33,5 +36,8 @@ sed -i "s/8080/${REGISTRY_SERVER_PORT}/g" /etc/envoy/envoy.yaml
 # update envoy.yaml to point to the container-assigned port.
 sed -i "s/9999/${PORT}/g" /etc/envoy/envoy.yaml
 
-# run envoy in the foreground.
-/usr/local/bin/envoy -c /etc/envoy/envoy.yaml
+# run envoy.
+/usr/local/bin/envoy -c /etc/envoy/envoy.yaml &
+
+# wait until any child process exits.
+wait -n

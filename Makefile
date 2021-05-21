@@ -22,10 +22,7 @@ build:
 ifndef REGISTRY_PROJECT_IDENTIFIER
 	@echo "Error! REGISTRY_PROJECT_IDENTIFIER must be set."; exit 1
 endif
-ifndef DB_CONFIG
-	$(eval DB_CONFIG := registry) # default to use config/registry.yaml
-endif
-	gcloud builds submit . --substitutions _REGISTRY_PROJECT_IDENTIFIER="${REGISTRY_PROJECT_IDENTIFIER}",_DB_CONFIG=$(DB_CONFIG)
+	gcloud builds submit . --substitutions _REGISTRY_PROJECT_IDENTIFIER="${REGISTRY_PROJECT_IDENTIFIER}"
 
 deploy:
 ifndef REGISTRY_PROJECT_IDENTIFIER

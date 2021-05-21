@@ -1,1 +1,1 @@
-deployments/container/Dockerfile.envoy
+containers/registry-server/Dockerfile

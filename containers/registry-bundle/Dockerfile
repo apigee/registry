@@ -20,16 +20,15 @@
 # https://hub.docker.com/_/golang
 FROM golang:1.15 as builder
 
-# use aarch_64 for arm64
-ARG ARCH=x86_64
-
 RUN apt-get update
 RUN apt-get install unzip
-RUN curl -L https://github.com/protocolbuffers/protobuf/releases/download/v3.15.1/protoc-3.15.1-linux-$ARCH.zip > /tmp/protoc.zip
-RUN unzip /tmp/protoc.zip -d /usr/local
 
 # Create and change to the app directory.
 WORKDIR /app
+
+# Get protoc
+COPY ./tools/FETCH-PROTOC.sh ./
+RUN ./FETCH-PROTOC.sh
 
 # Retrieve application dependencies.
 # This allows the container build to reuse cached dependencies.
@@ -51,10 +50,8 @@ RUN CGO_ENABLED=0 GOOS=linux go build -v -o authz-server ./cmd/authz-server
 # Use an Envoy release image to get envoy in the image.
 FROM envoyproxy/envoy:v1.16.0
 
-ARG DB_CONFIG=registry
-
-COPY deployments/container/RUN-WITH-ENVOY.sh /RUN-WITH-ENVOY.sh
-COPY deployments/envoy/envoy.yaml /etc/envoy/envoy.yaml
+COPY containers/registry-bundle/RUN.sh /RUN.sh
+COPY containers/registry-bundle/envoy.yaml /etc/envoy/envoy.yaml
 COPY --from=builder /app/deployments/envoy/proto.pb /proto.pb
 
 # Copy the registry-server binary to the production image from the builder stage.
@@ -64,11 +61,11 @@ COPY --from=builder /app/registry-server /registry-server
 COPY --from=builder /app/authz-server /authz-server
 
 # Copy configuration files to the production image.
-COPY config/${DB_CONFIG}.yaml /registry.yaml
+COPY config/registry.yaml /registry.yaml
 COPY cmd/authz-server/authz.yaml /authz.yaml
 
-# Run as root in the container.
+# Run as root in the container. Needed to use the Envoy release image.
 ENV ENVOY_UID=0
 
 # Run services on container startup.
-CMD ["/RUN-WITH-ENVOY.sh"]
+CMD ["/RUN.sh"]
