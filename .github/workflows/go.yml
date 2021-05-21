@@ -41,8 +41,7 @@ jobs:
  
     - name: Get protoc
       run: |
-        sudo curl -L https://github.com/protocolbuffers/protobuf/releases/download/v3.13.0/protoc-3.13.0-linux-x86_64.zip > /tmp/protoc.zip
-        sudo unzip /tmp/protoc.zip -d /usr/local
+        sudo ./tools/FETCH-PROTOC.sh
         sudo chown -R $USER /usr/local
        
     - name: Build
