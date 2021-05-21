@@ -206,7 +206,7 @@ func TestCreateArtifactResponseCodes(t *testing.T) {
 			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.CreateArtifactRequest{
 				Parent:     "projects/my-project",
-				ArtifactId: "this-identifier-exceeds-the-sixty-three-character-maximum-length",
+				ArtifactId: "this-identifier-is-invalid-because-it-exceeds-the-eighty-character-maximum-length",
 				Artifact:   &rpc.Artifact{},
 			},
 			want: codes.InvalidArgument,

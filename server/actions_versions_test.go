@@ -191,7 +191,7 @@ func TestCreateApiVersionResponseCodes(t *testing.T) {
 			seed: &rpc.Api{Name: "projects/my-project/apis/my-api"},
 			req: &rpc.CreateApiVersionRequest{
 				Parent:       "projects/my-project/apis/my-api",
-				ApiVersionId: "this-identifier-exceeds-the-sixty-three-character-maximum-length",
+				ApiVersionId: "this-identifier-is-invalid-because-it-exceeds-the-eighty-character-maximum-length",
 				ApiVersion:   &rpc.ApiVersion{},
 			},
 			want: codes.InvalidArgument,

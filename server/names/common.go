@@ -47,8 +47,8 @@ func validateID(id string) error {
 		return fmt.Errorf("invalid identifier %q: must match %q", id, customIdentifier)
 	} else if _, err := uuid.Parse(id); err == nil {
 		return fmt.Errorf("invalid identifier %q: must not match UUID format", id)
-	} else if len(id) > 63 {
-		return fmt.Errorf("invalid identifier %q: must be 63 characters or less", id)
+	} else if len(id) > 80 {
+		return fmt.Errorf("invalid identifier %q: must be 80 characters or less", id)
 	} else if strings.HasPrefix(id, "-") || strings.HasPrefix(id, ".") {
 		return fmt.Errorf("invalid identifier %q: must begin with a number or letter", id)
 	} else if strings.HasSuffix(id, "-") || strings.HasSuffix(id, ".") {

@@ -193,7 +193,7 @@ func TestCreateApiResponseCodes(t *testing.T) {
 			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.CreateApiRequest{
 				Parent: "projects/my-project",
-				ApiId:  "this-identifier-exceeds-the-sixty-three-character-maximum-length",
+				ApiId:  "this-identifier-is-invalid-because-it-exceeds-the-eighty-character-maximum-length",
 				Api:    &rpc.Api{},
 			},
 			want: codes.InvalidArgument,
