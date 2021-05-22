@@ -12,6 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Optionally allow anonymous users.
+# Valid values are YAML primitives representing true and false.
+# This is assumed false if unspecified.
+# Anonymous users are assigned the id "anonymous" and can be referenced
+# in the readers and writers arrays.
+anonymous: ${AUTHZ_ANONYMOUS}
+
 # Optionally configure the server to trust JWTs.
 # This disables signature verification and should only be used with caution!
 # One situation where it is useful is when running in Google Cloud Run when 

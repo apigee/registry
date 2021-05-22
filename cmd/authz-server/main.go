@@ -55,6 +55,7 @@ var (
 
 // AuthzConfig configures the authz filter.
 type AuthzConfig struct {
+	Anonymous bool     `json:"anonymous", yaml:"anonymous"`
 	TrustJWTs bool     `json:"trustJWTs", yaml:"trustJWTs"`
 	Readers   []string `json:"readers", yaml:"readers"`
 	Writers   []string `json:"writers", yaml:"writers"`
@@ -99,6 +100,9 @@ func (a *authorizationServer) check(ctx context.Context, req *auth.CheckRequest)
 	authHeader, ok := req.Attributes.Request.Http.Headers["authorization"]
 	if !ok {
 		// there's no auth header, so the request is uncredentialed.
+		if config.Anonymous {
+			return allowOrDenyUser("anonymous", req)
+		}
 		return denyUncredentialedRequest(), nil
 	}
 	re := regexp.MustCompile("^[bB]earer[ ]+(.*)$")
@@ -150,7 +154,10 @@ func (a *authorizationServer) check(ctx context.Context, req *auth.CheckRequest)
 }
 
 func allowOrDenyUser(email string, req *auth.CheckRequest) (*auth.CheckResponse, error) {
-	if isReadOnlyMethod(req.Attributes.Request.Http.Headers[":path"]) {
+	if isReadOnlyMethod(
+		req.Attributes.Request.Http.Headers[":path"],
+		req.Attributes.Request.Http.Headers[":method"],
+	) {
 		if isReader(email) {
 			return allowAuthorizedUser(email), nil
 		}
@@ -164,7 +171,12 @@ func allowOrDenyUser(email string, req *auth.CheckRequest) (*auth.CheckResponse,
 }
 
 // isReadOnlyMethod recognizes Get and List operations as immutable.
-func isReadOnlyMethod(path string) bool {
+func isReadOnlyMethod(path, method string) bool {
+	// assume that "GET" is for http requests to read-only methods.
+	if method == "GET" {
+		return true
+	}
+	// for grpc requests, decide based on the method name.
 	methodName := filepath.Base(path)
 	if strings.HasPrefix(methodName, "Get") ||
 		strings.HasPrefix(methodName, "List") {
