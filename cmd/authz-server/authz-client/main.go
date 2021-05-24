@@ -47,7 +47,9 @@ func main() {
 
 	// Put the auth token in the headers that get sent with the CheckRequest.
 	headers := make(map[string]string, 0)
-	headers["authorization"] = "Bearer " + token
+	if token != "" {
+		headers["authorization"] = "Bearer " + token
+	}
 
 	// Make a read or write request, depending on the command-line flag.
 	if *writePtr {
