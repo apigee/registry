@@ -6,7 +6,7 @@
             "service": "google.cloud.apigee.registry.v1.Registry"
           }
         ],
-        "timeout": "60s",
+        "timeout": "10s",
         "retryPolicy": {
           "initialBackoff": "0.200s",
           "maxBackoff": "10s",
