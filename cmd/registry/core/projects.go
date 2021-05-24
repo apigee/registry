@@ -35,5 +35,7 @@ func EnsureProjectExists(ctx context.Context, client *gapic.RegistryClient, proj
 		if err != nil {
 			log.Fatalf("%s", err.Error())
 		}
+	} else if err != nil {
+		log.Fatalf("GetProject returned error during project existence check: %s", err.Error())
 	}
 }
