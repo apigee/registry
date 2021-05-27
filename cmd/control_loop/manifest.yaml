@@ -1,0 +1,34 @@
+
+project: "controller-demo"
+manifest:
+- resource: apis/-/versions/-/specs/-/artifacts/lint-gnostic
+  dependencies:
+  - source: $resource.spec
+    filter: "mime_type.contains('openapi')"
+  action: "compute lint $source0 --linter gnostic"
+- resource: apis/-/versions/-/specs/-/artifacts/lint-aip
+  dependencies:
+  - source: $resource.spec
+    filter: "mime_type.contains('protobuf')"
+  action: "compute lint $source0 --linter aip"
+- resource: apis/-/versions/-/specs/-/artifacts/lintstats-gnostic
+  dependencies:
+  - source: $resource.spec
+    filter: "mime_type.contains('openapi')"
+  action: "compute lintstats $source0 --linter gnostic"
+- resource: apis/-/artifacts/vocabulary
+  dependencies:
+  - source: $resource.api/versions/-/specs/-
+  action: "compute vocabulary $source0.api"
+- resource: apis/-/versions/-/artifacts/vocabulary
+  dependencies:
+  - source: $resource.version/-/specs/-
+  action: "compute vocabulary $source0.version"
+- resource: apis/-/versions/-/specs/-/artifacts/score
+  dependencies:
+  - source: $resource.spec/artifacts/lint-gnostic
+  - source: $resource.spec/artifacts/complexity
+  action: "compute score $source0 $source1" 
+
+
+
