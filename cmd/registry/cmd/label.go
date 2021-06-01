@@ -30,11 +30,14 @@ import (
 )
 
 var labelFilter string
-var labelPairs map[string]string
+var labelOverwrite bool
+var labelsToSet map[string]string
+var labelsToClear []string
 
 func init() {
 	rootCmd.AddCommand(labelCmd)
 	labelCmd.Flags().StringVar(&labelFilter, "filter", "", "Filter selected resources")
+	labelCmd.Flags().BoolVar(&labelOverwrite, "overwrite", false, "Overwrite existing labels")
 }
 
 var labelCmd = &cobra.Command{
@@ -48,7 +51,6 @@ var labelCmd = &cobra.Command{
 			log.Fatalf("%s", err.Error())
 		}
 
-		// Initialize task queue.
 		taskQueue := make(chan core.Task, 1024)
 		workerCount := 64
 		for i := 0; i < workerCount; i++ {
@@ -56,17 +58,20 @@ var labelCmd = &cobra.Command{
 			go core.Worker(ctx, taskQueue)
 		}
 
-		if len(args) > 1 {
-			labelPairs = make(map[string]string)
-			for _, labeling := range args[1:] {
+		labelsToClear = make([]string, 0)
+		labelsToSet = make(map[string]string)
+		for _, labeling := range args[1:] {
+			if len(labeling) > 1 && strings.HasSuffix(labeling, "-") {
+				labelsToClear = append(labelsToClear, labeling[0:len(labeling)-1])
+			} else {
 				pair := strings.Split(labeling, "=")
 				if len(pair) != 2 {
-					log.Fatalf("%q must have the form \"key=value\" (value can be empty)", labeling)
+					log.Fatalf("%q must have the form \"key=value\" (value can be empty) or \"key-\" (to remove the key)", labeling)
 				}
 				if pair[0] == "" {
-					log.Fatalf("%q is invalid because it specifies an empty label", labeling)
+					log.Fatalf("%q is invalid because it specifies an empty key", labeling)
 				}
-				labelPairs[pair[0]] = pair[1]
+				labelsToSet[pair[0]] = pair[1]
 			}
 		}
 
@@ -106,25 +111,29 @@ func (task *labelApiTask) Run() error {
 	if task.api.Labels == nil {
 		task.api.Labels = make(map[string]string)
 	}
-	if len(labelPairs) > 0 {
-		log.Printf("label %s with %v", task.api.Name, labelPairs)
-		for k, v := range labelPairs {
-			if v == "" {
-				delete(task.api.Labels, k)
-			} else {
-				task.api.Labels[k] = v
+	if !labelOverwrite {
+		for k, _ := range labelsToSet {
+			if v, ok := task.api.Labels[k]; ok {
+				return fmt.Errorf("%q already has a value (%s), and --overwrite is false", k, v)
 			}
 		}
-		req := &rpc.UpdateApiRequest{
-			Api: task.api,
-			UpdateMask: &field_mask.FieldMask{
-				Paths: []string{"labels"},
-			},
-		}
-		_, err := task.client.UpdateApi(task.ctx, req)
-		return err
 	}
-	return nil
+	for _, k := range labelsToClear {
+		delete(task.api.Labels, k)
+	}
+	if len(labelsToSet) > 0 {
+		for k, v := range labelsToSet {
+			task.api.Labels[k] = v
+		}
+	}
+	req := &rpc.UpdateApiRequest{
+		Api: task.api,
+		UpdateMask: &field_mask.FieldMask{
+			Paths: []string{"labels"},
+		},
+	}
+	_, err := task.client.UpdateApi(task.ctx, req)
+	return err
 }
 
 func (task *labelVersionTask) Name() string {
@@ -135,25 +144,22 @@ func (task *labelVersionTask) Run() error {
 	if task.version.Labels == nil {
 		task.version.Labels = make(map[string]string)
 	}
-	if len(labelPairs) > 0 {
-		log.Printf("label %s with %v", task.version.Name, labelPairs)
-		for k, v := range labelPairs {
-			if v == "" {
-				delete(task.version.Labels, k)
-			} else {
-				task.version.Labels[k] = v
-			}
-		}
-		req := &rpc.UpdateApiVersionRequest{
-			ApiVersion: task.version,
-			UpdateMask: &field_mask.FieldMask{
-				Paths: []string{"labels"},
-			},
-		}
-		_, err := task.client.UpdateApiVersion(task.ctx, req)
-		return err
+	for _, k := range labelsToClear {
+		delete(task.version.Labels, k)
 	}
-	return nil
+	if len(labelsToSet) > 0 {
+		for k, v := range labelsToSet {
+			task.version.Labels[k] = v
+		}
+	}
+	req := &rpc.UpdateApiVersionRequest{
+		ApiVersion: task.version,
+		UpdateMask: &field_mask.FieldMask{
+			Paths: []string{"labels"},
+		},
+	}
+	_, err := task.client.UpdateApiVersion(task.ctx, req)
+	return err
 }
 
 func (task *labelSpecTask) Name() string {
@@ -164,31 +170,28 @@ func (task *labelSpecTask) Run() error {
 	if task.spec.Labels == nil {
 		task.spec.Labels = make(map[string]string)
 	}
-	if len(labelPairs) > 0 {
-		log.Printf("label %s with %v", task.spec.Name, labelPairs)
-		for k, v := range labelPairs {
-			if v == "" {
-				delete(task.spec.Labels, k)
-			} else {
-				task.spec.Labels[k] = v
-			}
-		}
-		req := &rpc.UpdateApiSpecRequest{
-			ApiSpec: task.spec,
-			UpdateMask: &field_mask.FieldMask{
-				Paths: []string{"labels"},
-			},
-		}
-		_, err := task.client.UpdateApiSpec(task.ctx, req)
-		return err
+	for _, k := range labelsToClear {
+		delete(task.spec.Labels, k)
 	}
-	return nil
+	if len(labelsToSet) > 0 {
+		for k, v := range labelsToSet {
+			task.spec.Labels[k] = v
+		}
+	}
+	req := &rpc.UpdateApiSpecRequest{
+		ApiSpec: task.spec,
+		UpdateMask: &field_mask.FieldMask{
+			Paths: []string{"labels"},
+		},
+	}
+	_, err := task.client.UpdateApiSpec(task.ctx, req)
+	return err
 }
 
 func matchAndHandleLabelCmd(
 	ctx context.Context,
 	client connection.Client,
-	taskQueue chan core.Task,
+	taskQueue chan<- core.Task,
 	name string,
 ) error {
 	// First try to match collection names.
@@ -212,12 +215,11 @@ func matchAndHandleLabelCmd(
 	}
 }
 
-func labelAPIs(
-	ctx context.Context,
+func labelAPIs(ctx context.Context,
 	client *gapic.RegistryClient,
 	segments []string,
 	filterFlag string,
-	taskQueue chan core.Task) error {
+	taskQueue chan<- core.Task) error {
 	return core.ListAPIs(ctx, client, segments, filterFlag, func(api *rpc.Api) {
 		taskQueue <- &labelApiTask{
 			ctx:    ctx,
@@ -232,7 +234,7 @@ func labelVersions(
 	client *gapic.RegistryClient,
 	segments []string,
 	filterFlag string,
-	taskQueue chan core.Task) error {
+	taskQueue chan<- core.Task) error {
 	return core.ListVersions(ctx, client, segments, filterFlag, func(version *rpc.ApiVersion) {
 		taskQueue <- &labelVersionTask{
 			ctx:     ctx,
@@ -247,7 +249,7 @@ func labelSpecs(
 	client *gapic.RegistryClient,
 	segments []string,
 	filterFlag string,
-	taskQueue chan core.Task) error {
+	taskQueue chan<- core.Task) error {
 	return core.ListSpecs(ctx, client, segments, filterFlag, func(spec *rpc.ApiSpec) {
 		taskQueue <- &labelSpecTask{
 			ctx:    ctx,
