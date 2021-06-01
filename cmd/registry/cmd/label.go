@@ -38,9 +38,9 @@ func init() {
 }
 
 var labelCmd = &cobra.Command{
-	Use:   "label",
+	Use:   "label RESOURCE KEY_1=VAL_1 ... KEY_N=VAL_N",
 	Short: "Label resources in the API Registry",
-	Args:  cobra.MinimumNArgs(1),
+	Args:  cobra.MinimumNArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.TODO()
 		client, err := connection.NewClient(ctx)
