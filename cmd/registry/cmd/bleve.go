@@ -87,7 +87,7 @@ type indexSpecTask struct {
 	specName string
 }
 
-func (task *indexSpecTask) Name() string {
+func (task *indexSpecTask) String() string {
 	return "index " + task.specName
 }
 

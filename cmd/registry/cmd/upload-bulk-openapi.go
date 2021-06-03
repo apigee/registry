@@ -142,7 +142,7 @@ type uploadOpenAPITask struct {
 	specID    string // computed at runtime
 }
 
-func (task *uploadOpenAPITask) Name() string {
+func (task *uploadOpenAPITask) String() string {
 	return "upload openapi " + task.path
 }
 

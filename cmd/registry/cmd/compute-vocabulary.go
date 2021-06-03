@@ -79,7 +79,7 @@ type computeVocabularyTask struct {
 	specName string
 }
 
-func (task *computeVocabularyTask) Name() string {
+func (task *computeVocabularyTask) String() string {
 	return "compute vocabulary " + task.specName
 }
 

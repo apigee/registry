@@ -116,7 +116,7 @@ type uploadProtoTask struct {
 	specID    string // computed at runtime
 }
 
-func (task *uploadProtoTask) Name() string {
+func (task *uploadProtoTask) String() string {
 	return "upload proto " + task.path
 }
 

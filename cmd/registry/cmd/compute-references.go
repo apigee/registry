@@ -74,7 +74,7 @@ type computeReferencesTask struct {
 	specName string
 }
 
-func (task *computeReferencesTask) Name() string {
+func (task *computeReferencesTask) String() string {
 	return "compute references " + task.specName
 }
 

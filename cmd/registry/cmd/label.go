@@ -103,7 +103,7 @@ type labelSpecTask struct {
 	spec   *rpc.ApiSpec
 }
 
-func (task *labelApiTask) Name() string {
+func (task *labelApiTask) String() string {
 	return "label " + task.api.Name
 }
 
@@ -134,7 +134,7 @@ func (task *labelApiTask) Run() error {
 	return err
 }
 
-func (task *labelVersionTask) Name() string {
+func (task *labelVersionTask) String() string {
 	return "label " + task.version.Name
 }
 
@@ -158,7 +158,7 @@ func (task *labelVersionTask) Run() error {
 	return err
 }
 
-func (task *labelSpecTask) Name() string {
+func (task *labelSpecTask) String() string {
 	return "label " + task.spec.Name
 }
 

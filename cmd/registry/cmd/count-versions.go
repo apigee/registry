@@ -75,7 +75,7 @@ type countVersionsTask struct {
 	apiName string
 }
 
-func (task *countVersionsTask) Name() string {
+func (task *countVersionsTask) String() string {
 	return "count versions " + task.apiName
 }
 

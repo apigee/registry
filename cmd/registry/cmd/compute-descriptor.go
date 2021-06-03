@@ -76,7 +76,7 @@ type computeDescriptorTask struct {
 	specName string
 }
 
-func (task *computeDescriptorTask) Name() string {
+func (task *computeDescriptorTask) String() string {
 	return "compute descriptor " + task.specName
 }
 
