@@ -28,6 +28,7 @@ func ProcessManifest(manifest *Manifest) ([]string, error) {
 		newActions, err := processManifestEntry(ctx, client, manifest.Project, entry)
 		if err != nil {
 			log.Printf("Skipping entry: %q\nGot error: %s", entry, err.Error())
+
 		}
 		actions = append(actions, newActions...)
 	}
@@ -46,7 +47,8 @@ func processManifestEntry(
 	for _, d := range entry.Dependencies {
 		dMap, err := generateDependencyMap(ctx, client, resourcePattern, d.Source, d.Filter)
 		if err != nil {
-			return nil, err
+			log.Printf("Encountered error during updateResources().\n Error: %s\n Skipping entry %+v", err.Error(), entry)
+			continue
 		}
 		dependencyMaps = append(dependencyMaps, dMap)
 	}
@@ -145,7 +147,7 @@ func updateResources(
 					takeAction = true
 				}
 				visited[group] = true
-				// TODO: Evaluate if append only the group or resource name should be enough 
+				// TODO: Evaluate if append only the group or resource name should be enough
 				args = append(args, (*(*collection).resourceList)[0])
 			} else {
 				// For a given resource, each of it's defined dependency group should be present.

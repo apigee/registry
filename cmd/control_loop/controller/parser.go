@@ -52,7 +52,6 @@ func ExtendSourcePattern(
 	}
 
 	return strings.Replace(sourcePattern, entity, entityVal, 1), nil
-
 }
 
 func ExtractGroup(pattern string, resource resources.Resource) (string, error) {
