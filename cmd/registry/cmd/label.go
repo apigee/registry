@@ -62,7 +62,7 @@ var labelCmd = &cobra.Command{
 		labelsToSet = make(map[string]string)
 		for _, labeling := range args[1:] {
 			if len(labeling) > 1 && strings.HasSuffix(labeling, "-") {
-				labelsToClear = append(labelsToClear, labeling[0:len(labeling)-1])
+				labelsToClear = append(labelsToClear, strings.TrimSuffix(labeling, "-"))
 			} else {
 				pair := strings.Split(labeling, "=")
 				if len(pair) != 2 {
@@ -121,10 +121,8 @@ func (task *labelApiTask) Run() error {
 	for _, k := range labelsToClear {
 		delete(task.api.Labels, k)
 	}
-	if len(labelsToSet) > 0 {
-		for k, v := range labelsToSet {
-			task.api.Labels[k] = v
-		}
+	for k, v := range labelsToSet {
+		task.api.Labels[k] = v
 	}
 	req := &rpc.UpdateApiRequest{
 		Api: task.api,
@@ -147,10 +145,8 @@ func (task *labelVersionTask) Run() error {
 	for _, k := range labelsToClear {
 		delete(task.version.Labels, k)
 	}
-	if len(labelsToSet) > 0 {
-		for k, v := range labelsToSet {
-			task.version.Labels[k] = v
-		}
+	for k, v := range labelsToSet {
+		task.version.Labels[k] = v
 	}
 	req := &rpc.UpdateApiVersionRequest{
 		ApiVersion: task.version,
@@ -173,10 +169,8 @@ func (task *labelSpecTask) Run() error {
 	for _, k := range labelsToClear {
 		delete(task.spec.Labels, k)
 	}
-	if len(labelsToSet) > 0 {
-		for k, v := range labelsToSet {
-			task.spec.Labels[k] = v
-		}
+	for k, v := range labelsToSet {
+		task.spec.Labels[k] = v
 	}
 	req := &rpc.UpdateApiSpecRequest{
 		ApiSpec: task.spec,
