@@ -78,7 +78,7 @@ type computeComplexityTask struct {
 	specName string
 }
 
-func (task *computeComplexityTask) Name() string {
+func (task *computeComplexityTask) String() string {
 	return "compute complexity " + task.specName
 }
 

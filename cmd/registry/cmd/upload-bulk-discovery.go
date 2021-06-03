@@ -94,7 +94,7 @@ type uploadDiscoveryTask struct {
 	document  *discovery.Document
 }
 
-func (task *uploadDiscoveryTask) Name() string {
+func (task *uploadDiscoveryTask) String() string {
 	return "upload discovery " + task.path
 }
 

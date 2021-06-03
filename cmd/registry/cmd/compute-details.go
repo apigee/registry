@@ -79,7 +79,7 @@ type computeDetailsTask struct {
 	apiName string
 }
 
-func (task *computeDetailsTask) Name() string {
+func (task *computeDetailsTask) String() string {
 	return "compute details " + task.apiName
 }
 

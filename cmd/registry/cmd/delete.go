@@ -70,7 +70,7 @@ type deleteTask struct {
 	resourceKind string
 }
 
-func (task *deleteTask) Name() string {
+func (task *deleteTask) String() string {
 	return "delete " + task.resourceName
 }
 

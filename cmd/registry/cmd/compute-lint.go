@@ -81,7 +81,7 @@ type computeLintTask struct {
 	linter   string
 }
 
-func (task *computeLintTask) Name() string {
+func (task *computeLintTask) String() string {
 	return fmt.Sprintf("compute %s/lint-%s", task.specName, task.linter)
 }
 
@@ -96,7 +96,7 @@ func (task *computeLintTask) Run() error {
 	spec, err := task.client.GetApiSpec(task.ctx, request)
 	if err != nil {
 		return err
-	}	
+	}
 	data, err := core.GetBytesForSpec(task.ctx, task.client, spec)
 	if err != nil {
 		return nil

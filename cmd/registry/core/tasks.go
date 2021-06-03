@@ -23,7 +23,7 @@ import (
 // Task is a generic interface for a runnable operation
 type Task interface {
 	Run() error
-	Name() string
+	String() string
 }
 
 var wg sync.WaitGroup
@@ -37,7 +37,7 @@ func Worker(ctx context.Context, taskChan <-chan Task) {
 	for task := range taskChan {
 		err := task.Run()
 		if err != nil {
-			log.Printf("%s: %s", task.Name(), err.Error())
+			log.Printf("%s: %s", task, err)
 		}
 	}
 }

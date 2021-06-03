@@ -74,7 +74,7 @@ type computeIndexTask struct {
 	specName string
 }
 
-func (task *computeIndexTask) Name() string {
+func (task *computeIndexTask) String() string {
 	return "compute index " + task.specName
 }
 
