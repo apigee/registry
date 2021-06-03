@@ -37,7 +37,7 @@ func Worker(ctx context.Context, taskChan <-chan Task) {
 	for task := range taskChan {
 		err := task.Run()
 		if err != nil {
-			log.Printf("%s: %s", task.String(), err.Error())
+			log.Printf("%s: %s", task, err)
 		}
 	}
 }
