@@ -12,7 +12,7 @@ import (
 
 type ResourceCollection struct {
 	maxUpdateTime time.Time
-	resourceList *[]resources.Resource
+	resourceList []resources.Resource
 }
 
 func ProcessManifest(manifest *Manifest) ([]string, error) {
@@ -28,7 +28,6 @@ func ProcessManifest(manifest *Manifest) ([]string, error) {
 		newActions, err := processManifestEntry(ctx, client, manifest.Project, entry)
 		if err != nil {
 			log.Printf("Skipping entry: %q\nGot error: %s", entry, err.Error())
-
 		}
 		actions = append(actions, newActions...)
 	}
@@ -43,7 +42,7 @@ func processManifestEntry(
 	entry ManifestEntry) ([]string, error) {
 	// Generate dependency map
 	resourcePattern := fmt.Sprintf("projects/%s/%s", project, entry.Resource)
-	dependencyMaps := make([]map[string]*ResourceCollection, 0, len(entry.Dependencies))
+	dependencyMaps := make([]map[string]ResourceCollection, 0, len(entry.Dependencies))
 	for _, d := range entry.Dependencies {
 		dMap, err := generateDependencyMap(ctx, client, resourcePattern, d.Source, d.Filter)
 		if err != nil {
@@ -67,9 +66,9 @@ func generateDependencyMap(
 	client connection.Client,
 	resourcePattern,
 	sourcePattern,
-	sourceFilter string) (map[string]*ResourceCollection, error) {
+	sourceFilter string) (map[string]ResourceCollection, error) {
 
-	sourceMap := make(map[string]*ResourceCollection)
+	sourceMap := make(map[string]ResourceCollection)
 
 	// Extend the source pattern if it contains $resource.api like pattern
 	extSourcePattern, err := ExtendSourcePattern(resourcePattern, sourcePattern)
@@ -89,19 +88,18 @@ func generateDependencyMap(
 			return nil, err
 		}
 
-		// Update the map with timestamp
-		sourceTS := source.GetUpdateTimestamp()
-		if collection, ok := sourceMap[group]; !ok {
-			sourceMap[group] = &ResourceCollection {
-				maxUpdateTime: sourceTS,
-				resourceList: &[]resources.Resource{},
+		sourceTime := source.GetUpdateTimestamp()
+		collection, exists := sourceMap[group]
+		if !exists {
+			collection = ResourceCollection{
+				maxUpdateTime: sourceTime,
 			}
-		} else if (*collection).maxUpdateTime.Before(sourceTS) {
-				(*collection).maxUpdateTime = sourceTS
+		} else if collection.maxUpdateTime.Before(sourceTime) {
+			collection.maxUpdateTime = sourceTime
 		}
 
-		temp := (*sourceMap[group]).resourceList
-		(*temp) = append((*temp), source)
+		collection.resourceList = append(collection.resourceList, source)
+		sourceMap[group] = collection
 	}
 
 	return sourceMap, nil
@@ -113,7 +111,7 @@ func updateResources(
 	client connection.Client,
 	resourcePattern string,
  	dependencies []Dependency,
-	dependencyMaps []map[string]*ResourceCollection,
+	dependencyMaps []map[string]ResourceCollection,
 	action string) ([]string, error) {
 
 	visited := make(map[string]bool, 0)
@@ -125,7 +123,6 @@ func updateResources(
 		return nil, err
 	}
 
-	// TODO: Add more error handling in the two loops
 	for _, resource := range resourceList {
 		resourceTime := resource.GetUpdateTimestamp()
 
@@ -142,13 +139,13 @@ func updateResources(
 			}
 
 			if collection, ok := dMap[group]; ok {
-			// Take action if dependency timestamp is later than resource timestamp
-				if (*collection).maxUpdateTime.After(resourceTime) {
+				// Take action if dependency timestamp is later than resource timestamp
+				if collection.maxUpdateTime.After(resourceTime) {
 					takeAction = true
 				}
 				visited[group] = true
 				// TODO: Evaluate if append only the group or resource name should be enough
-				args = append(args, (*(*collection).resourceList)[0])
+				args = append(args, collection.resourceList[0])
 			} else {
 				// For a given resource, each of it's defined dependency group should be present.
 				// If any one of the dependency groups is missing, avoid calculating any action for the resource
@@ -176,7 +173,7 @@ func updateResources(
 				for _, dMap := range dependencyMaps {
 					collection, ok := dMap[key]
 					if ok {
-						args = append(args, (*(*collection).resourceList)[0])
+						args = append(args, collection.resourceList[0])
 					} else {
 						takeAction = false
 						break
