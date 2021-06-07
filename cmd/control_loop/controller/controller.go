@@ -3,11 +3,11 @@ package  controller
 import (
     "github.com/apigee/registry/cmd/control_loop/list"
     "github.com/apigee/registry/cmd/control_loop/resources"
-    "reflect"
     "context"
 	"github.com/apigee/registry/connection"
 	"time"
 	"fmt"
+	"log"
 )
 
 type ResourceCollection struct {
@@ -18,85 +18,92 @@ type ResourceCollection struct {
 func ProcessManifest(manifest *Manifest) ([]string, error) {
 
 	var actions []string
-	for _, entry := range manifest.Entries {
-    	ctx := context.TODO()
-		client, err := connection.NewClient(ctx)
+	ctx := context.TODO()
+	client, err := connection.NewClient(ctx)
+	if err != nil {
+		return nil, err
+	}		
+	for _, entry := range manifest.Entries {		
+	
+		newActions, err := processManifestEntry(ctx, client, manifest.Project, entry)
 		if err != nil {
-			return nil, err
-		}		
-		resourcePattern := fmt.Sprintf("projects/%s/%s", manifest.Project, entry.Resource)
-
-		dependencyMaps := make([]map[string]*ResourceCollection, 0, 0)
-		err = populateDependencyMaps(ctx, client, resourcePattern, entry.Dependencies, &dependencyMaps)
-		if err != nil {
-			return nil, err
+			log.Printf("Skipping entry: %q\nGot error: %s", entry, err.Error())
 		}
-
-		cmds, err := updateResources(ctx, client, resourcePattern, entry.Dependencies, dependencyMaps, entry.Action)
-		if err != nil {
-			return nil, err
-		}
-		if len(cmds) > 0 {
-			actions = append(actions, cmds...)
-		}
+		actions = append(actions, newActions...)
 	}
 
 	return actions, nil
 }
 
-func populateDependencyMaps(
+func processManifestEntry(
 	ctx context.Context,
 	client connection.Client,
-	resourcePattern string,
-	dependencies []Dependency,
-	dependencyMaps *[]map[string]*ResourceCollection) error {
-	for _, d := range dependencies {
-		sourceMap := make(map[string]*ResourceCollection)
-		// Extend the source pattern if it contains $resource.api like pattern
-		sourcePattern, err := ParseSourcePattern(resourcePattern, d.Source)
+	project string,
+	entry ManifestEntry) ([]string, error) {
+	// Generate dependency map
+	resourcePattern := fmt.Sprintf("projects/%s/%s", project, entry.Resource)
+	dependencyMaps := make([]map[string]*ResourceCollection, 0, len(entry.Dependencies))
+	for _, d := range entry.Dependencies {
+		dMap, err := generateDependencyMap(ctx, client, resourcePattern, d.Source, d.Filter)
 		if err != nil {
-			return err
+			return nil, err
 		}
-
-		// Fetch resources using the sourcePattern
-		sourceList, err :=  list.ListResources( ctx, client, sourcePattern, d.Filter)
-		if err != nil {
-			return err
-		}
-
-		// Extract the attribute which will be used
-		// to group the contents of the sourceList into a map
-		groupFuncName := ParseGroupFunc(d.Source)
-		
-		// Build source map
-		for _, source := range sourceList {
-			// Group all the resources in one group by default
-			groupBy := ""
-
-			if len(groupFuncName) > 0 {
-				groupFunc := reflect.ValueOf(source).MethodByName(groupFuncName)
-				groupBy = groupFunc.Call([]reflect.Value{})[0].String()
-			}
-
-			// Update the map with timestamp
-			source_ts := source.GetUpdateTimestamp()
-			if collection, ok := sourceMap[groupBy]; !ok {
-				sourceMap[groupBy] = &ResourceCollection {
-					maxUpdateTime: source_ts,
-					resourceList: &[]resources.Resource{},
-				}
-			} else if (*collection).maxUpdateTime.Before(source_ts) {
-					(*collection).maxUpdateTime = source_ts
-			}
-
-			temp := (*sourceMap[groupBy]).resourceList
-			(*temp) = append((*temp), source)
-		}
-		(*dependencyMaps) = append((*dependencyMaps), sourceMap)
-
+		dependencyMaps = append(dependencyMaps, dMap)
 	}
 
-	return nil
+	// Update target resources
+	cmds, err := updateResources(ctx, client, resourcePattern, entry.Dependencies, dependencyMaps, entry.Action)
+	if err != nil {
+		return nil, err
+	}
+
+	return cmds, nil
+}
+
+func generateDependencyMap(
+	ctx context.Context,
+	client connection.Client,
+	resourcePattern,
+	sourcePattern,
+	sourceFilter string) (map[string]*ResourceCollection, error) {
+
+	sourceMap := make(map[string]*ResourceCollection)
+
+	// Extend the source pattern if it contains $resource.api like pattern
+	extSourcePattern, err := ExtendSourcePattern(resourcePattern, sourcePattern)
+	if err != nil {
+		return nil, err
+	}
+
+	// Fetch resources using the extSourcePattern
+	sourceList, err :=  list.ListResources(ctx, client, extSourcePattern, sourceFilter)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, source := range sourceList {
+		group, err := ExtractGroup(sourcePattern, source)
+		if err != nil {
+			return nil, err
+		}
+
+		// Update the map with timestamp
+		sourceTS := source.GetUpdateTimestamp()
+		if collection, ok := sourceMap[group]; !ok {
+			sourceMap[group] = &ResourceCollection {
+				maxUpdateTime: sourceTS,
+				resourceList: &[]resources.Resource{},
+			}
+		} else if (*collection).maxUpdateTime.Before(sourceTS) {
+				(*collection).maxUpdateTime = sourceTS
+		}
+
+		temp := (*sourceMap[group]).resourceList
+		(*temp) = append((*temp), source)
+	}
+
+	return sourceMap, nil
+
 }
 
 func updateResources(
@@ -118,38 +125,42 @@ func updateResources(
 
 	// TODO: Add more error handling in the two loops
 	for _, resource := range resourceList {
-		r_ts := resource.GetUpdateTimestamp()
+		resourceTime := resource.GetUpdateTimestamp()
+
 		takeAction := false
-		var args []string
+		var args []resources.Resource
 
 		// Evaluate this resource against each dependency source pattern
 		for i, dependency := range dependencies {
 			dMap := dependencyMaps[i]
 			// Get the group to look for in dependencyMap
-			groupFuncName := ParseGroupFunc(dependency.Source)
-			groupBy := ""
-
-			if len(groupFuncName) > 0 {
-				groupFunc := reflect.ValueOf(resource).MethodByName(groupFuncName)
-				groupBy = groupFunc.Call([]reflect.Value{})[0].String()
+			group, err := ExtractGroup(dependency.Source, resource)
+			if err != nil {
+				return nil, fmt.Errorf("Cannot match resource with source. Error: %s", err.Error())
 			}
 
-			if collection, ok := dMap[groupBy]; ok {
+			if collection, ok := dMap[group]; ok {
 			// Take action if dependency timestamp is later than resource timestamp
-				if (*collection).maxUpdateTime.After(r_ts) {
+				if (*collection).maxUpdateTime.After(resourceTime) {
 					takeAction = true
 				}
-				visited[groupBy] = true
-				argVal := DeriveArgsFromResources(i, (*(*collection).resourceList)[0], action)
-				args = append(args, argVal)
+				visited[group] = true
+				// TODO: Evaluate if append only the group or resource name should be enough 
+				args = append(args, (*(*collection).resourceList)[0])
 			} else {
+				// For a given resource, each of it's defined dependency group should be present.
+				// If any one of the dependency groups is missing, avoid calculating any action for the resource
 				takeAction = false
 				break
 			}
 		}
 
 		if takeAction {
-			GenerateCommand(action, args, &cmds)
+			cmd, err := GenerateCommand(action, args)
+				if err != nil {
+					return nil, err
+				}
+				cmds = append(cmds, cmd)
 		}
 	}
 
@@ -158,24 +169,27 @@ func updateResources(
 		dMap0 := dependencyMaps[0]
 		for key := range dMap0 {
 			takeAction := true
-			var args []string
+			var args []resources.Resource
 			if _, ok := visited[key]; !ok {
-				for i, dMap := range dependencyMaps {
+				for _, dMap := range dependencyMaps {
 					collection, ok := dMap[key]
 					if ok {
-						argVal := DeriveArgsFromResources(i, (*(*collection).resourceList)[0], action)
-						args = append(args, argVal)
+						args = append(args, (*(*collection).resourceList)[0])
 					} else {
 						takeAction = false
 						break
 					}
 				}
 			} else {
-				takeAction= false
+				takeAction = false
 			}
 
 			if takeAction {
-				GenerateCommand(action, args, &cmds)
+				cmd, err := GenerateCommand(action, args)
+				if err != nil {
+					return nil, err
+				}
+				cmds = append(cmds, cmd)
 			}
 
 		}

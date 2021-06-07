@@ -6,101 +6,134 @@ import (
 	"errors"
 	"fmt"
 	"github.com/apigee/registry/cmd/control_loop/resources"
-    "reflect"
 )
 
-func ParseSourcePattern(
-	rPattern string,
-	sPattern string) (string, error) {
-	
-	rEntity := extractEntity(sPattern)
-
-	//If there was an attribute present, replace it with the pattern from resource pattern 
-	if len(rEntity) > 0{
-		valEntity, err := extractEntityValFromPattern(rPattern, rEntity)
-		if err != nil {
-			return "", errors.New("Invalid pattern")
-		}
-		extendedSPattern := strings.Replace(
-			sPattern,
-			fmt.Sprintf("$resource.%s", rEntity),
-			valEntity,
-			1)
-		return extendedSPattern, nil
-	}
-
-	// else return the original source pattern 
-	return sPattern, nil
-
-}
-
-func extractEntity(pattern string) string {
-	// Check for $resource.api kind of pattern in the "sourcePattern"
-	// and retrieve the "api" attribute. This attribute will be used 
-	// to fetch the corresponding pattern from the resource.
-	entityRegex := `\$resource\.(api|version|spec|artifact)`
-	re := regexp.MustCompile(entityRegex)
-	entities := re.FindStringSubmatch(pattern)
-	entity := ""
-
-	if len(entities) > 1 {
-		entity = entities[1]
-	}
-
-	return entity
-}
-
-func extractEntityValFromPattern(pattern string, entity string) (string, error) {
-	re := regexp.MustCompile(fmt.Sprintf(`.*/%ss/[^/]*`, entity))
-	entityVal := re.FindString(pattern)
-	if len(entityVal) > 0 {
-		return entityVal, nil
-	}
-	return "", errors.New("Empty entity")
-}
-
-func ParseGroupFunc(pattern string) string {
-	entity := extractEntity(pattern)
-	if len(entity) > 0 {
-		return fmt.Sprintf("Get%s", strings.Title(entity))
-	}
-
-	return ""
-}
-
-func DeriveArgsFromResources(
-	index int,
-	resource resources.Resource,
-	action string) string {
-	entityRegex := fmt.Sprintf(`.*(\$source%d(\.api|\.version|\.spec|\.artifact)?)`, index)
-	re := regexp.MustCompile(entityRegex)
-	match := re.FindStringSubmatch(action)
-
-	// The above func FindStringSubmatch will always return a slice of size 3
+func ExtendSourcePattern(
+	resourcePattern string,
+	sourcePattern string) (string, error) {
+	// Extends the source pattern by replacing references to $resource
 	// Example:
-	// re.FindStringSubmatch("compute lint $source0") = ["compute lint $source0", "$source0", ""]
-	// re.FindStringSubmatch("compute lint $source0.spec") = ["compute lint $source0.spec", "$source0", ".spec"]
+	// resourcePattern: "apis/-/versions/-/specs/-/artifacts/-"
+	// sourcePattern: "$resource.spec"
+	// Returns "apis/-/versions/-/specs/-"
 
-	// if the source is present with an entity. Eg: $source0.api
-	if len(match[2]) > 0 {
-		entityFuncName := fmt.Sprintf("Get%s", strings.Title(match[2][1:]))
-		entityFunc := reflect.ValueOf(resource).MethodByName(entityFuncName)
-		entityVal := entityFunc.Call([]reflect.Value{})[0].String()
-		return entityVal
-	} else if len(match[1]) > 0 { //if only source is present. Eg: $source0
-		return resource.GetName()
+	// resourcePattern: "apis/-/versions/-/specs/-/artifacts/-"
+	// sourcePattern: "$resource.api/versions/-"
+	// Returns "apis/-/versions/-"
+
+
+	if !strings.HasPrefix(sourcePattern, "$resource") {
+		return sourcePattern, nil
 	}
 
-	return ""
+	entityRegex := regexp.MustCompile(`\$resource\.(api|version|spec|artifact)`)
+	matches := entityRegex.FindStringSubmatch(sourcePattern)
+	if len(matches) <= 1 {
+		return "", errors.New(fmt.Sprintf("Invalid source pattern: %s", sourcePattern))
+	} 
+
+	entity, entityType := matches[0], matches[1]
+	entityVal := ""
+	switch entityType {
+	case "api":
+		re := regexp.MustCompile(`.*/apis/[^/]*`)
+		entityVal = re.FindString(resourcePattern)
+	case "version":
+		re := regexp.MustCompile(`.*/versions/[^/]*`)
+		entityVal = re.FindString(resourcePattern)
+	case "spec":
+		re := regexp.MustCompile(`.*/specs/[^/]*`)
+		entityVal = re.FindString(resourcePattern)
+	case "artifact":
+		re := regexp.MustCompile(`.*/artifacts/[^/]*`)
+		entityVal = re.FindString(resourcePattern)
+	default:
+		return "", errors.New(fmt.Sprintf("Invalid source pattern: %s", sourcePattern))
+	}
+
+	return strings.Replace(sourcePattern, entity, entityVal, 1), nil
+
 }
 
-func GenerateCommand(action string, args []string, cmds *[]string) {
-	for i, arg := range args {
-		// Find the pattern to replace with argValue
-		argRegex := regexp.MustCompile(fmt.Sprintf(`\$source%d(\.(api|version|spec|artifact))?`, i))
-		argPattern := argRegex.FindString(action)
-		action = strings.ReplaceAll(action, argPattern, arg) 
+func ExtractGroup(pattern string, resource resources.Resource) (string, error) {
+	// Reads the sourcePattern, finds out group by entity type and returns te group value
+	// Example: 
+	// pattern: $resource.api/versions/-/specs/-
+	// resource: "projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml"
+	// returns "projects/demo/apis/petstore"
+
+	if strings.HasPrefix(pattern, "$resource") {
+		// Example: 
+		// pattern: "$resource.api/versions/-/specs/-"
+		// re.FindStringSubmatch will return:
+		// ["$resource.api", "api"]
+		re := regexp.MustCompile(`\$resource\.(api|version|spec|artifact)`)
+
+		matches := re.FindStringSubmatch(pattern)
+		if len(matches) <= 1 {
+			return "", errors.New(fmt.Sprintf("Invalid pattern: Cannot extract group from pattern %s", pattern))
+		}
+		
+		switch entityType := matches[1]; entityType {
+			case "api":
+				return resource.GetApi(), nil
+			case "version":
+				return resource.GetVersion(), nil
+			case "spec":
+				return resource.GetSpec(), nil
+			case "artifact":
+				return resource.GetArtifact(), nil
+		}
+	}
+	
+	return "default", nil
+	
+}
+
+func GenerateCommand(action string, args []resources.Resource) (string, error) {
+	// Check if there is a reference to $source in the action
+	if !strings.Contains(action, "$source") {
+		return action, nil
 	}
 
-	(*cmds) = append((*cmds), action)
+	for i, resource := range args {
+		// Extract the $source patterns from action
+		re := regexp.MustCompile(fmt.Sprintf(`.*(\$source%d(\.api|\.version|\.spec|\.artifact)?)`, i))
+		// The above func FindStringSubmatch will always return a slice of size 3
+		// Example:
+		// re.FindStringSubmatch("compute lint $source0") = ["compute lint $source0", "$source0", ""]
+		// re.FindStringSubmatch("compute lint $source0.spec") = ["compute lint $source0.spec", "$source0.spec", ".spec"]
+		match := re.FindStringSubmatch(action)
+
+		if len(match) == 3 {
+			entity, entityType := match[1], match[2]
+
+			entityVal := ""
+			if len(entityType) > 0 { // If the reference is present as $source.api
+				switch entityType[1:] {
+				case "api":
+					entityVal = resource.GetApi()
+				case "version":
+					entityVal = resource.GetVersion()
+				case "spec":
+					entityVal = resource.GetSpec()
+				case "artifact":
+					entityVal = resource.GetArtifact()
+				}
+
+				if len(entityVal) == 0 {
+					return "", errors.New(fmt.Sprintf("Error generating command, cannot derive args for action. Invalid action: %s", action))
+				}
+				action = strings.ReplaceAll(action, entity, entityVal)
+			
+			} else if len(entity) > 0 { //if only source is present. Eg: $source0
+				entityVal := resource.GetName()
+				action = strings.ReplaceAll(action, entity, entityVal)
+			}
+		} else {
+			return "", errors.New(fmt.Sprintf("Error generating command, cannot derive args for action. Invalid action: %s", action))
+		}
+	}
+
+	return action, nil
 }
