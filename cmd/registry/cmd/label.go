@@ -29,160 +29,199 @@ import (
 	"google.golang.org/genproto/protobuf/field_mask"
 )
 
-var labelFilter string
-var labelOverwrite bool
-var labelsToSet map[string]string
-var labelsToClear []string
+var commandIsLabel bool
+var keyFilter string
+var keyOverwrite bool
+var keysToSet map[string]string
+var keysToClear []string
 
-func init() {
-	rootCmd.AddCommand(labelCmd)
-	labelCmd.Flags().StringVar(&labelFilter, "filter", "", "Filter selected resources")
-	labelCmd.Flags().BoolVar(&labelOverwrite, "overwrite", false, "Overwrite existing labels")
+// fieldName returns the name of the resource field to be modified.
+func fieldName() string {
+	if commandIsLabel {
+		return "labels"
+	}
+	return "annotations"
 }
 
-var labelCmd = &cobra.Command{
-	Use:   "label RESOURCE KEY_1=VAL_1 ... KEY_N=VAL_N",
-	Short: "Label resources in the API Registry",
-	Args:  cobra.MinimumNArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
-		ctx := context.TODO()
-		client, err := connection.NewClient(ctx)
-		if err != nil {
-			log.Fatalf("%s", err.Error())
-		}
+// fieldName returns the name of the command being handled.
+func commandName() string {
+	if commandIsLabel {
+		return "label"
+	}
+	return "annotate"
+}
 
-		taskQueue := make(chan core.Task, 1024)
-		workerCount := 64
-		for i := 0; i < workerCount; i++ {
-			core.WaitGroup().Add(1)
-			go core.Worker(ctx, taskQueue)
-		}
-
-		labelsToClear = make([]string, 0)
-		labelsToSet = make(map[string]string)
-		for _, labeling := range args[1:] {
-			if len(labeling) > 1 && strings.HasSuffix(labeling, "-") {
-				labelsToClear = append(labelsToClear, strings.TrimSuffix(labeling, "-"))
-			} else {
-				pair := strings.Split(labeling, "=")
-				if len(pair) != 2 {
-					log.Fatalf("%q must have the form \"key=value\" (value can be empty) or \"key-\" (to remove the key)", labeling)
-				}
-				if pair[0] == "" {
-					log.Fatalf("%q is invalid because it specifies an empty key", labeling)
-				}
-				labelsToSet[pair[0]] = pair[1]
+// updateMap updates the map containing the labels or annotations to be modified.
+func updateMap(m map[string]string) (map[string]string, error) {
+	if m == nil {
+		m = make(map[string]string)
+	}
+	if !keyOverwrite {
+		for k, _ := range keysToSet {
+			if v, ok := m[k]; ok {
+				return nil, fmt.Errorf("%q already has a value (%s), and --overwrite is false", k, v)
 			}
 		}
-
-		err = matchAndHandleLabelCmd(ctx, client, taskQueue, args[0])
-		if err != nil {
-			log.Fatalf("%s", err.Error())
-		}
-
-		close(taskQueue)
-		core.WaitGroup().Wait()
-	},
+	}
+	for _, k := range keysToClear {
+		delete(m, k)
+	}
+	for k, v := range keysToSet {
+		m[k] = v
+	}
+	return m, nil
 }
 
-type labelApiTask struct {
+func init() {
+	var labelCmd = labelOrAnnotateCommand(true)
+	rootCmd.AddCommand(labelCmd)
+	labelCmd.Flags().StringVar(&keyFilter, "filter", "", "Filter selected resources")
+	labelCmd.Flags().BoolVar(&keyOverwrite, "overwrite", false, "Overwrite existing labels")
+
+	var annotateCmd = labelOrAnnotateCommand(false)
+	rootCmd.AddCommand(annotateCmd)
+	annotateCmd.Flags().StringVar(&keyFilter, "filter", "", "Filter selected resources")
+	annotateCmd.Flags().BoolVar(&keyOverwrite, "overwrite", false, "Overwrite existing annotations")
+}
+
+func labelOrAnnotateCommand(commandIsLabel bool) *cobra.Command {
+	return &cobra.Command{
+		Use:   fmt.Sprintf("%s RESOURCE KEY_1=VAL_1 ... KEY_N=VAL_N", commandName()),
+		Short: fmt.Sprintf("%s resources in the API Registry", strings.Title(commandName())),
+		Args:  cobra.MinimumNArgs(2),
+		Run: func(cmd *cobra.Command, args []string) {
+			ctx := context.TODO()
+			client, err := connection.NewClient(ctx)
+			if err != nil {
+				log.Fatalf("%s", err.Error())
+			}
+
+			taskQueue := make(chan core.Task, 1024)
+			workerCount := 64
+			for i := 0; i < workerCount; i++ {
+				core.WaitGroup().Add(1)
+				go core.Worker(ctx, taskQueue)
+			}
+
+			keysToClear = make([]string, 0)
+			keysToSet = make(map[string]string)
+			for _, operation := range args[1:] {
+				if len(operation) > 1 && strings.HasSuffix(operation, "-") {
+					keysToClear = append(keysToClear, strings.TrimSuffix(operation, "-"))
+				} else {
+					pair := strings.Split(operation, "=")
+					if len(pair) != 2 {
+						log.Fatalf("%q must have the form \"key=value\" (value can be empty) or \"key-\" (to remove the key)", operation)
+					}
+					if pair[0] == "" {
+						log.Fatalf("%q is invalid because it specifies an empty key", operation)
+					}
+					keysToSet[pair[0]] = pair[1]
+				}
+			}
+
+			err = matchAndHandleLabelOrAnnotateCmd(ctx, client, taskQueue, args[0])
+			if err != nil {
+				log.Fatalf("%s", err.Error())
+			}
+
+			close(taskQueue)
+			core.WaitGroup().Wait()
+		},
+	}
+}
+
+type labelOrAnnotateApiTask struct {
 	ctx    context.Context
 	client connection.Client
 	api    *rpc.Api
 }
 
-type labelVersionTask struct {
+func (task *labelOrAnnotateApiTask) String() string {
+	return commandName() + " " + task.api.Name
+}
+
+func (task *labelOrAnnotateApiTask) Run() error {
+	var err error
+	if commandIsLabel {
+		task.api.Labels, err = updateMap(task.api.Labels)
+	} else {
+		task.api.Annotations, err = updateMap(task.api.Annotations)
+	}
+	if err != nil {
+		return err
+	}
+	_, err = task.client.UpdateApi(task.ctx,
+		&rpc.UpdateApiRequest{
+			Api: task.api,
+			UpdateMask: &field_mask.FieldMask{
+				Paths: []string{fieldName()},
+			},
+		})
+	return err
+}
+
+type labelOrAnnotateVersionTask struct {
 	ctx     context.Context
 	client  connection.Client
 	version *rpc.ApiVersion
 }
 
-type labelSpecTask struct {
+func (task *labelOrAnnotateVersionTask) String() string {
+	return commandName() + " " + task.version.Name
+}
+
+func (task *labelOrAnnotateVersionTask) Run() error {
+	var err error
+	if commandIsLabel {
+		task.version.Labels, err = updateMap(task.version.Labels)
+	} else {
+		task.version.Annotations, err = updateMap(task.version.Annotations)
+	}
+	if err != nil {
+		return err
+	}
+	_, err = task.client.UpdateApiVersion(task.ctx,
+		&rpc.UpdateApiVersionRequest{
+			ApiVersion: task.version,
+			UpdateMask: &field_mask.FieldMask{
+				Paths: []string{fieldName()},
+			},
+		})
+	return err
+}
+
+type labelOrAnnotateSpecTask struct {
 	ctx    context.Context
 	client connection.Client
 	spec   *rpc.ApiSpec
 }
 
-func (task *labelApiTask) String() string {
-	return "label " + task.api.Name
+func (task *labelOrAnnotateSpecTask) String() string {
+	return commandName() + " " + task.spec.Name
 }
 
-func (task *labelApiTask) Run() error {
-	if task.api.Labels == nil {
-		task.api.Labels = make(map[string]string)
+func (task *labelOrAnnotateSpecTask) Run() error {
+	var err error
+	if commandIsLabel {
+		task.spec.Labels, err = updateMap(task.spec.Labels)
+	} else {
+		task.spec.Annotations, err = updateMap(task.spec.Annotations)
 	}
-	if !labelOverwrite {
-		for k, _ := range labelsToSet {
-			if v, ok := task.api.Labels[k]; ok {
-				return fmt.Errorf("%q already has a value (%s), and --overwrite is false", k, v)
-			}
-		}
+	if err != nil {
+		return err
 	}
-	for _, k := range labelsToClear {
-		delete(task.api.Labels, k)
-	}
-	for k, v := range labelsToSet {
-		task.api.Labels[k] = v
-	}
-	req := &rpc.UpdateApiRequest{
-		Api: task.api,
-		UpdateMask: &field_mask.FieldMask{
-			Paths: []string{"labels"},
-		},
-	}
-	_, err := task.client.UpdateApi(task.ctx, req)
+	_, err = task.client.UpdateApiSpec(task.ctx,
+		&rpc.UpdateApiSpecRequest{
+			ApiSpec: task.spec,
+			UpdateMask: &field_mask.FieldMask{
+				Paths: []string{fieldName()},
+			},
+		})
 	return err
 }
 
-func (task *labelVersionTask) String() string {
-	return "label " + task.version.Name
-}
-
-func (task *labelVersionTask) Run() error {
-	if task.version.Labels == nil {
-		task.version.Labels = make(map[string]string)
-	}
-	for _, k := range labelsToClear {
-		delete(task.version.Labels, k)
-	}
-	for k, v := range labelsToSet {
-		task.version.Labels[k] = v
-	}
-	req := &rpc.UpdateApiVersionRequest{
-		ApiVersion: task.version,
-		UpdateMask: &field_mask.FieldMask{
-			Paths: []string{"labels"},
-		},
-	}
-	_, err := task.client.UpdateApiVersion(task.ctx, req)
-	return err
-}
-
-func (task *labelSpecTask) String() string {
-	return "label " + task.spec.Name
-}
-
-func (task *labelSpecTask) Run() error {
-	if task.spec.Labels == nil {
-		task.spec.Labels = make(map[string]string)
-	}
-	for _, k := range labelsToClear {
-		delete(task.spec.Labels, k)
-	}
-	for k, v := range labelsToSet {
-		task.spec.Labels[k] = v
-	}
-	req := &rpc.UpdateApiSpecRequest{
-		ApiSpec: task.spec,
-		UpdateMask: &field_mask.FieldMask{
-			Paths: []string{"labels"},
-		},
-	}
-	_, err := task.client.UpdateApiSpec(task.ctx, req)
-	return err
-}
-
-func matchAndHandleLabelCmd(
+func matchAndHandleLabelOrAnnotateCmd(
 	ctx context.Context,
 	client connection.Client,
 	taskQueue chan<- core.Task,
@@ -190,32 +229,32 @@ func matchAndHandleLabelCmd(
 ) error {
 	// First try to match collection names.
 	if m := names.ApisRegexp().FindStringSubmatch(name); m != nil {
-		return labelAPIs(ctx, client, m, labelFilter, taskQueue)
+		return labelOrAnnotateAPIs(ctx, client, m, keyFilter, taskQueue)
 	} else if m := names.VersionsRegexp().FindStringSubmatch(name); m != nil {
-		return labelVersions(ctx, client, m, labelFilter, taskQueue)
+		return labelOrAnnotateVersions(ctx, client, m, keyFilter, taskQueue)
 	} else if m := names.SpecsRegexp().FindStringSubmatch(name); m != nil {
-		return labelSpecs(ctx, client, m, labelFilter, taskQueue)
+		return labelOrAnnotateSpecs(ctx, client, m, keyFilter, taskQueue)
 	}
 
 	// Then try to match resource names.
 	if m := names.ApiRegexp().FindStringSubmatch(name); m != nil {
-		return labelAPIs(ctx, client, m, labelFilter, taskQueue)
+		return labelOrAnnotateAPIs(ctx, client, m, keyFilter, taskQueue)
 	} else if m := names.VersionRegexp().FindStringSubmatch(name); m != nil {
-		return labelVersions(ctx, client, m, labelFilter, taskQueue)
+		return labelOrAnnotateVersions(ctx, client, m, keyFilter, taskQueue)
 	} else if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
-		return labelSpecs(ctx, client, m, labelFilter, taskQueue)
+		return labelOrAnnotateSpecs(ctx, client, m, keyFilter, taskQueue)
 	} else {
 		return fmt.Errorf("unsupported resource name %s", name)
 	}
 }
 
-func labelAPIs(ctx context.Context,
+func labelOrAnnotateAPIs(ctx context.Context,
 	client *gapic.RegistryClient,
 	segments []string,
 	filterFlag string,
 	taskQueue chan<- core.Task) error {
 	return core.ListAPIs(ctx, client, segments, filterFlag, func(api *rpc.Api) {
-		taskQueue <- &labelApiTask{
+		taskQueue <- &labelOrAnnotateApiTask{
 			ctx:    ctx,
 			client: client,
 			api:    api,
@@ -223,14 +262,14 @@ func labelAPIs(ctx context.Context,
 	})
 }
 
-func labelVersions(
+func labelOrAnnotateVersions(
 	ctx context.Context,
 	client *gapic.RegistryClient,
 	segments []string,
 	filterFlag string,
 	taskQueue chan<- core.Task) error {
 	return core.ListVersions(ctx, client, segments, filterFlag, func(version *rpc.ApiVersion) {
-		taskQueue <- &labelVersionTask{
+		taskQueue <- &labelOrAnnotateVersionTask{
 			ctx:     ctx,
 			client:  client,
 			version: version,
@@ -238,14 +277,14 @@ func labelVersions(
 	})
 }
 
-func labelSpecs(
+func labelOrAnnotateSpecs(
 	ctx context.Context,
 	client *gapic.RegistryClient,
 	segments []string,
 	filterFlag string,
 	taskQueue chan<- core.Task) error {
 	return core.ListSpecs(ctx, client, segments, filterFlag, func(spec *rpc.ApiSpec) {
-		taskQueue <- &labelSpecTask{
+		taskQueue <- &labelOrAnnotateSpecTask{
 			ctx:    ctx,
 			client: client,
 			spec:   spec,
