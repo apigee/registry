@@ -65,8 +65,8 @@ var uploadCsvCmd = &cobra.Command{
 		}
 		core.EnsureProjectExists(ctx, client, projectID)
 
-		taskQueue := make(chan core.Task, 1)
-		for i := 0; i < 1; i++ {
+		taskQueue := make(chan core.Task, 64)
+		for i := 0; i < 64; i++ {
 			core.WaitGroup().Add(1)
 			go core.Worker(ctx, taskQueue)
 		}
