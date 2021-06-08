@@ -194,7 +194,7 @@ func TestUploadCSV(t *testing.T) {
 			}
 
 			it := client.ListApiSpecs(ctx, &rpc.ListApiSpecsRequest{
-				Parent:   "projects/-/apis/-/versions/-",
+				Parent:   fmt.Sprintf("projects/%s/apis/-/versions/-", testProject),
 				PageSize: int32(len(test.want)),
 			})
 
@@ -208,7 +208,7 @@ func TestUploadCSV(t *testing.T) {
 					Name: fmt.Sprintf("%s/contents", spec.GetName()),
 				})
 				if err != nil {
-					t.Fatalf("Failed to read spec contents from server: %s", err)
+					t.Fatalf("GetApiSpecContents(%q) returned error: %s", spec.GetName(), err)
 				}
 
 				spec.Contents = body.GetData()
