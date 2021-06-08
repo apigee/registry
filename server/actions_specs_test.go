@@ -411,6 +411,67 @@ func TestGetApiSpecResponseCodes(t *testing.T) {
 	}
 }
 
+func TestGetApiSpecContents(t *testing.T) {
+	tests := []struct {
+		desc string
+		seed *rpc.ApiSpec
+		req  *rpc.GetApiSpecContentsRequest
+		want codes.Code
+	}{
+		{
+			desc: "resource not found",
+			seed: &rpc.ApiSpec{Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec"},
+			req: &rpc.GetApiSpecContentsRequest{
+				Name: "projects/my-project/apis/my-api/versions/v1/specs/doesnt-exist/contents",
+			},
+			want: codes.NotFound,
+		},
+		{
+			desc: "case insensitive identifiers",
+			seed: &rpc.ApiSpec{Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec"},
+			req: &rpc.GetApiSpecContentsRequest{
+				Name: "projects/My-project/apis/My-api/versions/V1/specs/My-Spec/contents",
+			},
+			want: codes.OK,
+		},
+		{
+			desc: "missing contents suffix in resource name",
+			seed: &rpc.ApiSpec{
+				Name:     "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
+				Contents: []byte{},
+			},
+			req: &rpc.GetApiSpecContentsRequest{
+				Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "gzip mimetype with empty contents",
+			seed: &rpc.ApiSpec{
+				Name:     "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
+				MimeType: "application/x.openapi+gzip;version=3.0.0",
+				Contents: []byte{},
+			},
+			req: &rpc.GetApiSpecContentsRequest{
+				Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec/contents",
+			},
+			want: codes.FailedPrecondition,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			ctx := context.Background()
+			server := defaultTestServer(t)
+			seedSpecs(ctx, t, server, test.seed)
+
+			if _, err := server.GetApiSpecContents(ctx, test.req); status.Code(err) != test.want {
+				t.Errorf("GetApiSpecContents(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
+			}
+		})
+	}
+}
+
 func TestListApiSpecs(t *testing.T) {
 	tests := []struct {
 		desc      string
