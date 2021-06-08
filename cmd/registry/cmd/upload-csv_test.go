@@ -85,22 +85,22 @@ func TestUploadCSV(t *testing.T) {
 			args: []string{fmt.Sprintf("%s/specs.csv", root), "--project_id", testProject},
 			want: []*rpc.ApiSpec{
 				{
-					Name:     "projects/googleapis.com/apis/cloudtasks/versions/v2beta2/specs/openapi.yaml",
+					Name:     fmt.Sprintf("projects/%s/apis/cloudtasks/versions/v2beta2/specs/openapi.yaml", testProject),
 					MimeType: gzipOpenAPIv3,
 					Contents: specContents1,
 				},
 				{
-					Name:     "projects/googleapis.com/apis/cloudtasks/versions/v2/specs/openapi.yaml",
+					Name:     fmt.Sprintf("projects/%s/apis/cloudtasks/versions/v2/specs/openapi.yaml", testProject),
 					MimeType: gzipOpenAPIv3,
 					Contents: specContents2,
 				},
 				{
-					Name:     "projects/googleapis.com/apis/datastore/versions/v1beta1/specs/openapi.yaml",
+					Name:     fmt.Sprintf("projects/%s/apis/datastore/versions/v1beta1/specs/openapi.yaml", testProject),
 					MimeType: gzipOpenAPIv3,
 					Contents: specContents3,
 				},
 				{
-					Name:     "projects/googleapis.com/apis/datastore/versions/v1/specs/openapi.yaml",
+					Name:     fmt.Sprintf("projects/%s/apis/datastore/versions/v1/specs/openapi.yaml", testProject),
 					MimeType: gzipOpenAPIv3,
 					Contents: specContents4,
 				},
@@ -124,7 +124,7 @@ func TestUploadCSV(t *testing.T) {
 			args: []string{fmt.Sprintf("%s/specs.csv", root), "--project_id", testProject},
 			want: []*rpc.ApiSpec{
 				{
-					Name:     "projects/googleapis.com/apis/cloudtasks/versions/v2/specs/openapi.yaml",
+					Name:     fmt.Sprintf("projects/%s/apis/cloudtasks/versions/v2/specs/openapi.yaml", testProject),
 					MimeType: gzipOpenAPIv3,
 					Contents: specContents1,
 				},
