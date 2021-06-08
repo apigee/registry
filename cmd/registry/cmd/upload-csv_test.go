@@ -33,7 +33,7 @@ import (
 
 const (
 	gzipOpenAPIv3 = "application/x.openapi+gzip;version=3.0.0"
-	testProject   = "googleapis.com"
+	testProject   = "csv-demo"
 )
 
 var (
