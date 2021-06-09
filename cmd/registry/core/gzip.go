@@ -34,7 +34,7 @@ func GZippedBytes(input []byte) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-// GUnzippedBytes uncompresses a slice of bytes.
+// GUnzippedBytes decompresses a slice of bytes.
 func GUnzippedBytes(input []byte) ([]byte, error) {
 	buf := bytes.NewBuffer(input)
 	zr, err := gzip.NewReader(buf)

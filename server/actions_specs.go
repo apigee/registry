@@ -84,7 +84,11 @@ func (s *RegistryServer) createSpec(ctx context.Context, name names.Spec, body *
 		return nil, err
 	}
 
-	if err := db.SaveSpecRevisionContents(ctx, spec, body.GetContents()); err != nil {
+	contents := body.GetContents()
+	if err := db.SaveSpecRevisionContents(ctx, spec, contents); err != nil {
+		return nil, err
+	}
+	if err := s.updateSearchForSpec(ctx, db, spec, contents); err != nil {
 		return nil, err
 	}
 
@@ -177,7 +181,7 @@ func (s *RegistryServer) getApiSpecRevision(ctx context.Context, name names.Spec
 	return message, nil
 }
 
-// GUnzippedBytes uncompresses a slice of bytes.
+// GUnzippedBytes decompresses a slice of bytes.
 func GUnzippedBytes(input []byte) ([]byte, error) {
 	buf := bytes.NewBuffer(input)
 	zr, err := gzip.NewReader(buf)
@@ -321,7 +325,11 @@ func (s *RegistryServer) UpdateApiSpec(ctx context.Context, req *rpc.UpdateApiSp
 	implicitUpdate := req.GetUpdateMask() == nil && len(req.ApiSpec.GetContents()) > 0
 	explicitUpdate := len(fieldmaskpb.Intersect(req.GetUpdateMask(), &fieldmaskpb.FieldMask{Paths: []string{"contents"}}).GetPaths()) > 0
 	if implicitUpdate || explicitUpdate {
-		if err := db.SaveSpecRevisionContents(ctx, spec, req.ApiSpec.GetContents()); err != nil {
+		contents := req.ApiSpec.GetContents()
+		if err := db.SaveSpecRevisionContents(ctx, spec, contents); err != nil {
+			return nil, err
+		}
+		if err := s.updateSearchForSpec(ctx, db, spec, contents); err != nil {
 			return nil, err
 		}
 	}
@@ -333,4 +341,24 @@ func (s *RegistryServer) UpdateApiSpec(ctx context.Context, req *rpc.UpdateApiSp
 
 	s.notify(rpc.Notification_UPDATED, spec.RevisionName())
 	return message, nil
+}
+
+func (s *RegistryServer) updateSearchForSpec(ctx context.Context, db dao.DAO, spec *models.Spec, contents []byte) error {
+	if !s.searchAvailable {
+		return nil
+	}
+
+	var err error
+	if strings.Contains(spec.MimeType, "+gzip") {
+		if contents, err = GUnzippedBytes(contents); err != nil {
+			return err
+		}
+	}
+
+	// Lexeme.Key is derived from Spec.Key assigned during DAO.Put
+	lexemes, err := models.NewLexemesForSpec(spec, contents)
+	if err != nil {
+		return err
+	}
+	return db.SaveLexemes(ctx, lexemes)
 }

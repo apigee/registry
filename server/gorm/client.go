@@ -236,7 +236,7 @@ func (c *Client) Put(ctx context.Context, k storage.Key, v interface{}) (storage
 	case *models.Artifact:
 		r.Key = k.(*Key).Name
 	case *models.Lexeme:
-		r.Key = k.String()
+		r.Key = k.(*Key).Name
 	}
 	c.db.Transaction(
 		func(tx *gorm.DB) error {

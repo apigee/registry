@@ -233,12 +233,5 @@ func (s *RegistryServer) updateSearchForAPI(ctx context.Context, db dao.DAO, api
 	}
 
 	// Lexeme.Key is derived from Api.Key assigned during DAO.Put
-	if x := models.NewLexemeForAPI(api); x.IsEmpty() {
-		//TODO delete Lexeme
-	} else {
-		if err := db.SaveLexeme(ctx, x); err != nil {
-			return err
-		}
-	}
-	return nil
+	return db.SaveLexemes(ctx, models.NewLexemesForAPI(api))
 }

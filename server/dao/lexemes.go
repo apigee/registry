@@ -38,8 +38,21 @@ func (s *LexemeRows) Append(rows *sql.Rows) error {
 	return nil
 }
 
+func (d *DAO) SaveLexemes(ctx context.Context, lexemes []*models.Lexeme) error {
+	for _, x := range lexemes {
+		if x.IsEmpty() {
+			//TODO delete Lexeme
+		} else {
+			if err := d.SaveLexeme(ctx, x); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 func (d *DAO) SaveLexeme(ctx context.Context, lexeme *models.Lexeme) error {
-	k := d.NewKey(lexeme.Kind, lexeme.Key)
+	k := d.NewKey(string(lexeme.Field), lexeme.Key)
 	if _, err := d.Put(ctx, k, lexeme); err != nil {
 		return status.Error(codes.Internal, err.Error())
 	}
@@ -58,7 +71,7 @@ FROM (
     vector @@ q
   ORDER BY
     rank DESC
-) AS subquery_because_ts_headline_is_expensive
+) AS subquery_because_ts_headline_is_expensive_and_subquery_needs_a_name
 `
 
 func (d *DAO) ListLexemes(ctx context.Context, query string) (*LexemeRows, error) {

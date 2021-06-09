@@ -17,12 +17,15 @@ package models
 import (
 	"crypto/sha256"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
+	"github.com/apigee/registry/server/storage"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/google/uuid"
+	discovery_v1 "github.com/googleapis/gnostic/discovery"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
@@ -237,6 +240,10 @@ func (s *Spec) LabelsMap() (map[string]string, error) {
 	return mapForBytes(s.Labels)
 }
 
+func (s *Spec) IsDiscovery() bool {
+	return strings.Contains(s.MimeType, "discovery")
+}
+
 func newRevisionID() string {
 	s := uuid.New().String()
 	return s[len(s)-8:]
@@ -283,4 +290,114 @@ func NewSpecRevisionTag(name names.SpecRevision, tag string) *SpecRevisionTag {
 
 func (t *SpecRevisionTag) String() string {
 	return fmt.Sprintf("projects/%s/apis/%s/versions/%s/specs/%s@%s", t.ProjectID, t.ApiID, t.VersionID, t.SpecID, t.Tag)
+}
+
+func NewLexemesForSpec(spec *Spec, contents []byte) ([]*Lexeme, error) {
+	switch {
+	case spec.IsDiscovery():
+		document, err := discovery_v1.ParseDocument(contents)
+		if err != nil {
+			return nil, err
+		}
+		return newLexemesForDiscovery(spec, document)
+	}
+
+	return nil, nil
+}
+
+func newLexemeForSpecField(spec *Spec, f field, w weight, text string) *Lexeme {
+	return (&Lexeme{
+		Key:       fmt.Sprintf("%s#%s", spec.Key, f),
+		Kind:      storage.SpecEntityName,
+		Field:     f,
+		ProjectID: spec.ProjectID,
+		Vector:    TSVector{rawText: text, weight: w},
+	}).escape()
+}
+
+func newLexemeForSpecPath(spec *Spec, f field, w weight, path, text string) *Lexeme {
+	return (&Lexeme{
+		Key:       fmt.Sprintf("%s#%s", spec.Key, path),
+		Kind:      storage.SpecEntityName,
+		Field:     f,
+		ProjectID: spec.ProjectID,
+		Vector:    TSVector{rawText: text, weight: w},
+	}).escape()
+}
+
+func newLexemesForDiscovery(spec *Spec, document *discovery_v1.Document) ([]*Lexeme, error) {
+	list := []*Lexeme{
+		// These fields also copied to Api and indexed there
+		newLexemeForSpecField(spec, fieldDisplayName, weightA, document.GetTitle()),
+		newLexemeForSpecField(spec, fieldDescription, weightC, document.GetDescription()),
+	}
+
+	list = appendAllDiscoveryParameters(list, spec, document.GetParameters())
+	list = appendAllDiscoverySchemas(list, spec, document.GetSchemas())
+	list = appendAllDiscoveryResources(list, "", spec, document.GetResources())
+
+	return list, nil
+}
+
+func appendAllDiscoveryParameters(list []*Lexeme, spec *Spec, params *discovery_v1.Parameters) []*Lexeme {
+	base := "parameters/"
+	for _, m := range params.GetAdditionalProperties() {
+		path := base + m.GetName()
+		description := m.GetValue().GetDescription()
+		list = append(list, newLexemeForSpecPath(spec, fieldParameters, weightD, path, description))
+	}
+	return list
+}
+
+func appendAllDiscoverySchemas(list []*Lexeme, spec *Spec, schemas *discovery_v1.Schemas) []*Lexeme {
+	base := "schemas/"
+	for _, m := range schemas.GetAdditionalProperties() {
+		path := base + m.GetName()
+		s := m.GetValue()
+		description := s.GetDescription()
+		list = append(list, newLexemeForSpecPath(spec, fieldSchemas, weightC, path, description))
+		list = appendAllDiscoverySchemaProperties(list, path + "/", spec, s.GetProperties())
+	}
+	return list
+}
+
+func appendAllDiscoverySchemaProperties(list []*Lexeme, base string, spec *Spec, properties *discovery_v1.Schemas) []*Lexeme {
+	base += "properties/"
+	for _, m := range properties.GetAdditionalProperties() {
+		path := base + m.GetName()
+		p := m.GetValue()
+		description := p.GetDescription()
+		list = append(list, newLexemeForSpecPath(spec, fieldParameters, weightC, path, description))
+
+		path += "/enums/"
+		for i, e := range p.GetEnum() {
+			if i >= len(p.GetEnumDescriptions()) {
+				break
+			}
+
+			description = p.GetEnumDescriptions()[i]
+			list = append(list, newLexemeForSpecPath(spec, fieldParameters, weightC, path + e, description))
+		}
+	}
+	return list
+}
+
+func appendAllDiscoveryResources(list []*Lexeme, base string, spec *Spec, resources *discovery_v1.Resources) []*Lexeme {
+	base += "resources/"
+	for _, r := range resources.GetAdditionalProperties() {
+		path := base + r.GetName() + "/"
+		list = appendAllDiscoveryMethods(list, path, spec, r.GetValue().GetMethods())
+		list = appendAllDiscoveryResources(list, path, spec, r.GetValue().GetResources())
+	}
+	return list
+}
+
+func appendAllDiscoveryMethods(list []*Lexeme, base string, spec *Spec, methods *discovery_v1.Methods) []*Lexeme {
+	base += "methods/"
+	for _, m := range methods.GetAdditionalProperties() {
+		path := base + m.GetName()
+		description := m.GetValue().GetDescription()
+		list = append(list, newLexemeForSpecPath(spec, fieldMethods, weightC, path, description))
+	}
+	return list
 }

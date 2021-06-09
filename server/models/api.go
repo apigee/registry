@@ -15,10 +15,12 @@
 package models
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
+	"github.com/apigee/registry/server/storage"
 	"github.com/golang/protobuf/ptypes"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
@@ -151,4 +153,21 @@ func (api *Api) Update(message *rpc.Api, mask *fieldmaskpb.FieldMask) error {
 // LabelsMap returns a map representation of stored labels.
 func (api *Api) LabelsMap() (map[string]string, error) {
 	return mapForBytes(api.Labels)
+}
+
+func NewLexemesForAPI(api *Api) []*Lexeme {
+	return []*Lexeme {
+		newLexemeForAPIField(api, fieldDisplayName, weightA, api.DisplayName),
+		newLexemeForAPIField(api, fieldDescription, weightC, api.Description),
+	}
+}
+
+func newLexemeForAPIField(api *Api, f field, w weight, text string) *Lexeme {
+	return (&Lexeme{
+		Key:       fmt.Sprintf("%s#%s", api.Key, f),
+		Kind:      storage.ApiEntityName,
+		Field:     f,
+		ProjectID: api.ProjectID,
+		Vector:    TSVector{rawText: text, weight: w},
+	}).escape()
 }

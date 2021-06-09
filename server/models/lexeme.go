@@ -17,10 +17,20 @@ package models
 import (
 	"context"
 	"fmt"
+	"html"
 
-	"github.com/apigee/registry/server/storage"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+)
+
+type field string
+
+const (
+	fieldDisplayName field = "displayname"
+	fieldDescription field = "description"
+	fieldParameters  field = "parameters"
+	fieldMethods     field = "methods"
+	fieldSchemas     field = "schemas"
 )
 
 type weight string
@@ -32,38 +42,53 @@ const (
 	weightD weight = "D"
 )
 
+// Lexeme represents two slightly different states for full text search.
+// To store text for searching, it must be normalized into a vector with
+// the Postgres function ts_vector. The raw text is also stored so that
+// it can be highlighted as search results, as the result of a search
+// query.
 type Lexeme struct {
 	Key       string `gorm:"primaryKey"`
 	Kind      string
+	Field     field
 	ProjectID string
 	Vector    TSVector
 	Raw       string // stores raw text for excerpting; has excerpt from search result
+	escaped   bool
 }
 
-func (x Lexeme) IsEmpty() bool {
+// escape should be called after filling struct to HTML-escape the raw text
+// in the Vector, and also then copies it to Raw.
+func (x *Lexeme) escape() *Lexeme {
+	if x == nil || x.escaped {
+		return x
+	}
+
+	x.Vector.rawText = html.EscapeString(x.Vector.rawText)
+	x.Raw = x.Vector.rawText
+	x.escaped = true
+	return x
+}
+
+// IsEmpty determines whether an update should write or delete the Lexeme.
+func (x *Lexeme) IsEmpty() bool {
 	return x.Vector.rawText == ""
 }
 
-func NewLexemeForAPI(api *Api) *Lexeme {
-	text := api.Description
-	return &Lexeme{
-		Key:       api.Key,
-		Kind:      storage.ApiEntityName,
-		ProjectID: api.ProjectID,
-		Vector:    TSVector{rawText: text, weight: weightB},
-		Raw:       text,
-	}
-}
-
+// TSVector opaquely represents the write-only ts_vector, containing
+// the should-be-escaped text to index and the search weight.
 type TSVector struct {
 	rawText string
 	weight  weight
 }
 
+// GormDataType of TSVector is the Postgres column type "tsvector".
 func (t TSVector) GormDataType() string {
 	return "tsvector"
 }
 
+// GormValue of TSVector returns the Postgres expression to convert
+// search text to a weighted vector.
 func (t TSVector) GormValue(ctx context.Context, db *gorm.DB) clause.Expr {
 	w := t.weight
 	if w == "" {
