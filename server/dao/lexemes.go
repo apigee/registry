@@ -38,10 +38,12 @@ func (s *LexemeRows) Append(rows *sql.Rows) error {
 	return nil
 }
 
-func (d *DAO) SaveLexemes(ctx context.Context, lexemes []*models.Lexeme) error {
+func (d *DAO) UpdateLexemes(ctx context.Context, lexemes []*models.Lexeme) error {
 	for _, x := range lexemes {
 		if x.IsEmpty() {
-			//TODO delete Lexeme
+			if err := d.DeleteLexeme(ctx, x); err != nil {
+				return err
+			}
 		} else {
 			if err := d.SaveLexeme(ctx, x); err != nil {
 				return err
@@ -51,8 +53,16 @@ func (d *DAO) SaveLexemes(ctx context.Context, lexemes []*models.Lexeme) error {
 	return nil
 }
 
+func (d *DAO) DeleteLexeme(ctx context.Context, lexeme *models.Lexeme) error {
+	k := d.NewKey(models.LexemeEntityName, lexeme.Key)
+	if err := d.Delete(ctx, k); err != nil {
+		return status.Error(codes.Internal, err.Error())
+	}
+	return nil
+}
+
 func (d *DAO) SaveLexeme(ctx context.Context, lexeme *models.Lexeme) error {
-	k := d.NewKey(string(lexeme.Field), lexeme.Key)
+	k := d.NewKey(models.LexemeEntityName, lexeme.Key)
 	if _, err := d.Put(ctx, k, lexeme); err != nil {
 		return status.Error(codes.Internal, err.Error())
 	}

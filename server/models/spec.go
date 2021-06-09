@@ -397,7 +397,7 @@ func appendAllDiscoveryMethods(list []*Lexeme, base string, spec *Spec, methods 
 	for _, m := range methods.GetAdditionalProperties() {
 		path := base + m.GetName()
 		description := m.GetValue().GetDescription()
-		list = append(list, newLexemeForSpecPath(spec, fieldMethods, weightC, path, description))
+		list = append(list, newLexemeForSpecPath(spec, fieldMethods, weightB, path, description))
 	}
 	return list
 }

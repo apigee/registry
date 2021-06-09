@@ -23,6 +23,9 @@ import (
 	"gorm.io/gorm/clause"
 )
 
+// LexemeEntityName is used to represent lexemes in storage.
+const LexemeEntityName = "Lexeme"
+
 type field string
 
 const (
@@ -72,7 +75,17 @@ func (x *Lexeme) escape() *Lexeme {
 
 // IsEmpty determines whether an update should write or delete the Lexeme.
 func (x *Lexeme) IsEmpty() bool {
-	return x.Vector.rawText == ""
+	return x == nil || x.Vector.rawText == ""
+}
+
+var vectorDataType = "text"
+
+// EnableLexemeStorage enables the correct Postgres datatype for actual
+// Lexeme storage. If not called, Gorm will create the table with a
+// generic datatype, and the table should stay empty. Generic queries
+// will be called against it, and have no effect.
+func EnableLexemeStorage() {
+	vectorDataType = "tsvector"
 }
 
 // TSVector opaquely represents the write-only ts_vector, containing
@@ -82,9 +95,11 @@ type TSVector struct {
 	weight  weight
 }
 
-// GormDataType of TSVector is the Postgres column type "tsvector".
+// GormDataType of TSVector is the Postgres column type "tsvector",
+// if enabled by calling EnableLexemeStorage. If not, it is "text" for
+// the no-op Lexeme table.
 func (t TSVector) GormDataType() string {
-	return "tsvector"
+	return vectorDataType
 }
 
 // GormValue of TSVector returns the Postgres expression to convert

@@ -233,5 +233,5 @@ func (s *RegistryServer) updateSearchForAPI(ctx context.Context, db dao.DAO, api
 	}
 
 	// Lexeme.Key is derived from Api.Key assigned during DAO.Put
-	return db.SaveLexemes(ctx, models.NewLexemesForAPI(api))
+	return db.UpdateLexemes(ctx, models.NewLexemesForAPI(api))
 }

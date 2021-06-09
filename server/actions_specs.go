@@ -360,5 +360,5 @@ func (s *RegistryServer) updateSearchForSpec(ctx context.Context, db dao.DAO, sp
 	if err != nil {
 		return err
 	}
-	return db.SaveLexemes(ctx, lexemes)
+	return db.UpdateLexemes(ctx, lexemes)
 }

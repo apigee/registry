@@ -169,7 +169,7 @@ func (c *Client) ensureTable(v interface{}) {
 	}
 }
 
-func (c *Client) reset(searchAvailable bool) {
+func (c *Client) reset() {
 	c.resetTable(&models.Project{})
 	c.resetTable(&models.Api{})
 	c.resetTable(&models.Version{})
@@ -177,9 +177,7 @@ func (c *Client) reset(searchAvailable bool) {
 	c.resetTable(&models.Blob{})
 	c.resetTable(&models.Artifact{})
 	c.resetTable(&models.SpecRevisionTag{})
-	if searchAvailable {
-		c.resetTable(&models.Lexeme{})
-	}
+	c.resetTable(&models.Lexeme{})
 }
 
 func (c *Client) ensure(searchAvailable bool) *Client {
@@ -190,8 +188,10 @@ func (c *Client) ensure(searchAvailable bool) *Client {
 	c.ensureTable(&models.Blob{})
 	c.ensureTable(&models.Artifact{})
 	c.ensureTable(&models.SpecRevisionTag{})
+	c.ensureTable(&models.Lexeme{})
+	// Simpler with ORM to always create Lexeme table, even if unused.
+	// But only create index with Postgres, not Sqlite.
 	if searchAvailable {
-		c.ensureTable(&models.Lexeme{})
 		mylock()
 		defer myunlock()
 		c.db.Exec("CREATE INDEX IF NOT EXISTS idx_lexemes_vector ON lexemes USING GIN(vector)")
@@ -273,6 +273,8 @@ func (c *Client) Delete(ctx context.Context, k storage.Key) error {
 		err = c.db.Delete(&models.Blob{}, "key = ?", k.(*Key).Name).Error
 	case "Artifact":
 		err = c.db.Delete(&models.Artifact{}, "key = ?", k.(*Key).Name).Error
+	case "Lexeme":
+		err = c.db.Delete(&models.Lexeme{}, "key = ?", k.(*Key).Name).Error
 	default:
 		return fmt.Errorf("invalid key type (fix in client.go): %s", k.(*Key).Kind)
 	}

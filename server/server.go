@@ -28,6 +28,7 @@ import (
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/gorm"
+	"github.com/apigee/registry/server/models"
 	"github.com/apigee/registry/server/storage"
 
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
@@ -45,6 +46,10 @@ type Config struct {
 	DBConfig string `yaml:"dbconfig"`
 	Notify   bool   `yaml:"notify"`
 	Log      string `yaml:"log"`
+}
+
+func (c *Config) IsSearchAvailable() bool {
+	return c != nil && c.Database == "postgres"
 }
 
 const (
@@ -77,7 +82,10 @@ func newRegistryServer(config *Config) *RegistryServer {
 		s.database = config.Database
 		s.dbConfig = config.DBConfig
 		s.enableNotifications = config.Notify
-		s.searchAvailable = config.Database == "postgres"
+		if config.IsSearchAvailable() {
+			models.EnableLexemeStorage()
+			s.searchAvailable = true
+		}
 		switch strings.ToUpper(config.Log) {
 		case "FATAL":
 			s.loggingLevel = loggingFatal

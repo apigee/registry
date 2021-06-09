@@ -16,6 +16,7 @@ package gorm
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/apigee/registry/server/models"
 	"github.com/apigee/registry/server/names"
@@ -43,6 +44,8 @@ func (c *Client) DeleteAllMatches(ctx context.Context, q storage.Query) error {
 		return op.Delete(models.Artifact{}).Error
 	case "SpecRevisionTag":
 		return op.Delete(models.SpecRevisionTag{}).Error
+	case "Lexeme":
+		return op.Delete(models.Lexeme{}).Error
 	}
 	return nil
 }
@@ -50,6 +53,7 @@ func (c *Client) DeleteAllMatches(ctx context.Context, q storage.Query) error {
 // DeleteChildrenOfProject deletes all the children of a project.
 func (c *Client) DeleteChildrenOfProject(ctx context.Context, project names.Project) error {
 	entityNames := []string{
+		models.LexemeEntityName,
 		storage.ArtifactEntityName,
 		models.BlobEntityName,
 		storage.SpecEntityName,
@@ -70,6 +74,9 @@ func (c *Client) DeleteChildrenOfProject(ctx context.Context, project names.Proj
 
 // DeleteChildrenOfApi deletes all the children of a api.
 func (c *Client) DeleteChildrenOfApi(ctx context.Context, api names.Api) error {
+	if err := c.DeleteLexemesOfParent(ctx, api); err != nil {
+		return err
+	}
 	for _, entityName := range []string{
 		models.BlobEntityName,
 		storage.SpecEntityName,
@@ -88,6 +95,9 @@ func (c *Client) DeleteChildrenOfApi(ctx context.Context, api names.Api) error {
 
 // DeleteChildrenOfVersion deletes all the children of a version.
 func (c *Client) DeleteChildrenOfVersion(ctx context.Context, version names.Version) error {
+	if err := c.DeleteLexemesOfParent(ctx, version); err != nil {
+		return err
+	}
 	for _, entityName := range []string{
 		models.BlobEntityName,
 		storage.SpecEntityName,
@@ -105,10 +115,23 @@ func (c *Client) DeleteChildrenOfVersion(ctx context.Context, version names.Vers
 
 // DeleteChildrenOfSpec deletes all the children of a spec.
 func (c *Client) DeleteChildrenOfSpec(ctx context.Context, spec names.Spec) error {
+	if err := c.DeleteLexemesOfParent(ctx, spec); err != nil {
+		return err
+	}
 	q := c.NewQuery(models.BlobEntityName)
 	q = q.Require("ProjectID", spec.ProjectID)
 	q = q.Require("ApiID", spec.ApiID)
 	q = q.Require("VersionID", spec.VersionID)
 	q = q.Require("SpecID", spec.SpecID)
 	return c.DeleteAllMatches(ctx, q)
+}
+
+func (c *Client) DeleteLexemesOfParent(ctx context.Context, k storage.Key) error {
+	op := c.db.Where("Key like ?", fmt.Sprintf("%s#%%", k.String())) // Delete direct children
+	err := op.Delete(models.Lexeme{}).Error
+	op = c.db.Where("Key like ?", fmt.Sprintf("%s/%%", k.String())) // Other descendants
+	if err := op.Delete(models.Lexeme{}).Error; err != nil {
+		return err
+	}
+	return err
 }
