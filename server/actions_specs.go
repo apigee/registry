@@ -28,6 +28,8 @@ import (
 	"github.com/apigee/registry/server/names"
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/genproto/googleapis/api/httpbody"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
@@ -193,6 +195,11 @@ func (s *RegistryServer) GetApiSpecContents(ctx context.Context, req *rpc.GetApi
 	}
 	defer s.releaseStorageClient(client)
 	db := dao.NewDAO(client)
+
+	if !strings.HasSuffix(req.GetName(), "/contents") {
+		return nil, invalidArgumentError(fmt.Errorf("invalid resource name %q, must include /contents suffix", req.GetName()))
+	}
+
 	var specName = strings.TrimSuffix(req.GetName(), "/contents")
 	var spec *models.Spec
 	var revisionName names.SpecRevision
@@ -216,7 +223,7 @@ func (s *RegistryServer) GetApiSpecContents(ctx context.Context, req *rpc.GetApi
 	if strings.Contains(spec.MimeType, "+gzip") {
 		contents, err := GUnzippedBytes(blob.Contents)
 		if err != nil {
-			return nil, err
+			return nil, status.Errorf(codes.FailedPrecondition, "failed to unzip contents with gzip MIME type: %s", err)
 		}
 		return &httpbody.HttpBody{
 			ContentType: strings.Replace(spec.MimeType, "+gzip", "", 1),
