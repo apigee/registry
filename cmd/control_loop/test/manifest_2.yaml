@@ -1,6 +1,0 @@
-project: "controller-demo"
-manifest:
-- resource: apis/-/artifacts/vocabulary
-  dependencies:
-  - source: $resource.api/versions/-/specs/-
-  action: "compute vocabulary $source0.api"

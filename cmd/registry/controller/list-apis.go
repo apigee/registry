@@ -12,22 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package controller
 
 import (
-        "log"
-        "context"
-        "github.com/apigee/registry/cmd/capabilities/dispatcher-server/dispatcher")
+	"github.com/apigee/registry/rpc"
+)
 
-func main() {
-    log.Print("Starting subscriber...")
-    ctx := context.Background()
-
-    // Setup and start the dispatcher server
-    dispatcher := &dispatcher.Dispatcher{}
-
-    if err := dispatcher.StartServer(ctx); err != nil {
-        log.Printf(err.Error())
-    }
-    return
+func GenerateApiHandler(result *[]Resource) func(*rpc.Api) {
+	return func(api *rpc.Api) {
+		resource := ApiResource{Api: api}
+		(*result) = append((*result), resource)
+	}
 }
+
+
