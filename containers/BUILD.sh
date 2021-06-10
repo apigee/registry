@@ -21,17 +21,18 @@
 # Available platforms will depend on the local installation of Docker.
 
 # ORGANIZATION should be the dockerhub organization that will host the images
-#ORGANIZATION=
+ORGANIZATION=apiregistry
 
 # TARGET selects one of the container groups below and adds a suffix (if set)
-#TARGET=
+TARGET=dev
 
 if [[ $TARGET == "dev" ]]
 then
   # If TARGET is specified as "dev", a minimal set of containers are built.
   # Container names have the suffix "-dev".
   SUFFIX="-$TARGET"
-  CONTAINERS=("registry-server" "authz-server" "registry-tools")
+  #CONTAINERS=("registry-server" "authz-server" "registry-tools")
+  CONTAINERS=("authz-server")
   PLATFORMS="linux/arm64"
 else
   # Otherwise, all containers are built.
