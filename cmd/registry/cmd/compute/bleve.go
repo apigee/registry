@@ -25,10 +25,11 @@ import (
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
 	"github.com/blevesearch/bleve"
-	openapi_v2 "github.com/googleapis/gnostic/openapiv2"
-	openapi_v3 "github.com/googleapis/gnostic/openapiv3"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/proto"
+
+	oas2 "github.com/googleapis/gnostic/openapiv2"
+	oas3 "github.com/googleapis/gnostic/openapiv3"
 )
 
 const (
@@ -105,7 +106,7 @@ func (task *indexSpecTask) Run() error {
 	}
 	var message proto.Message
 	if core.IsOpenAPIv2(spec.GetMimeType()) {
-		document, err := openapi_v2.ParseDocument(data)
+		document, err := oas2.ParseDocument(data)
 		if err != nil {
 			return fmt.Errorf("errors parsing %s", name)
 		}
@@ -118,7 +119,7 @@ func (task *indexSpecTask) Run() error {
 		document.SecurityDefinitions = nil
 		message = document
 	} else if core.IsOpenAPIv3(spec.GetMimeType()) {
-		document, err := openapi_v3.ParseDocument(data)
+		document, err := oas3.ParseDocument(data)
 		if err != nil {
 			return fmt.Errorf("errors parsing %s", name)
 		}

@@ -23,9 +23,10 @@ import (
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
-	metrics "github.com/googleapis/gnostic/metrics"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/proto"
+
+	metrics "github.com/googleapis/gnostic/metrics"
 )
 
 var vocabularyFilter string
@@ -79,13 +80,13 @@ func setVocabularyToArtifact(ctx context.Context, client connection.Client, outp
 	parts := strings.Split(outputArtifactName, "/artifacts/")
 	subject := parts[0]
 	relation := parts[1]
-	messageData, err := proto.Marshal(output)
+	messageData, _ := proto.Marshal(output)
 	artifact := &rpc.Artifact{
 		Name:     subject + "/artifacts/" + relation,
 		MimeType: core.MimeTypeForMessageType("gnostic.metrics.Vocabulary"),
 		Contents: messageData,
 	}
-	err = core.SetArtifact(ctx, client, artifact)
+	err := core.SetArtifact(ctx, client, artifact)
 	if err != nil {
 		log.Fatalf("%s", err.Error())
 	}
@@ -95,13 +96,13 @@ func setVersionHistoryToArtifact(ctx context.Context, client connection.Client, 
 	parts := strings.Split(outputArtifactName, "/artifacts/")
 	subject := parts[0]
 	relation := parts[1]
-	messageData, err := proto.Marshal(output)
+	messageData, _ := proto.Marshal(output)
 	artifact := &rpc.Artifact{
 		Name:     subject + "/artifacts/" + relation,
 		MimeType: core.MimeTypeForMessageType("gnostic.metrics.VersionHistory"),
 		Contents: messageData,
 	}
-	err = core.SetArtifact(ctx, client, artifact)
+	err := core.SetArtifact(ctx, client, artifact)
 	if err != nil {
 		log.Fatalf("%s", err.Error())
 	}

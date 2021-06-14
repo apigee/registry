@@ -113,7 +113,7 @@ func (task *labelApiTask) Run() error {
 		task.api.Labels = make(map[string]string)
 	}
 	if !labelOverwrite {
-		for k, _ := range labelsToSet {
+		for k := range labelsToSet {
 			if v, ok := task.api.Labels[k]; ok {
 				return fmt.Errorf("%q already has a value (%s), and --overwrite is false", k, v)
 			}

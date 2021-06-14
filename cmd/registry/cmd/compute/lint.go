@@ -130,7 +130,7 @@ func (task *computeLintTask) Run() error {
 		return fmt.Errorf("we don't know how to lint %s", spec.Name)
 	}
 	subject := spec.GetName()
-	messageData, err := proto.Marshal(lint)
+	messageData, _ := proto.Marshal(lint)
 	artifact := &rpc.Artifact{
 		Name:     subject + "/artifacts/" + relation,
 		MimeType: core.MimeTypeForMessageType("google.cloud.apigee.registry.applications.v1alpha1.Lint"),

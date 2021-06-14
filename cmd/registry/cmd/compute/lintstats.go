@@ -62,7 +62,7 @@ var computeLintStatsCmd = &cobra.Command{
 				request := rpc.GetArtifactContentsRequest{
 					Name: spec.Name + "/artifacts/" + lintRelation(linter) + "/contents",
 				}
-				contents, err := client.GetArtifactContents(ctx, &request)
+				contents, _ := client.GetArtifactContents(ctx, &request)
 				if contents == nil {
 					return // ignore missing results
 				}
@@ -82,7 +82,7 @@ var computeLintStatsCmd = &cobra.Command{
 					// store the lintstats artifact
 					subject := spec.GetName()
 					relation := lintStatsRelation(linter)
-					messageData, err := proto.Marshal(lintStats)
+					messageData, _ := proto.Marshal(lintStats)
 					artifact := &rpc.Artifact{
 						Name:     subject + "/artifacts/" + relation,
 						MimeType: core.MimeTypeForMessageType("google.cloud.apigee.registry.applications.v1alpha1.LintStats"),
@@ -134,7 +134,7 @@ var computeLintStatsCmd = &cobra.Command{
 					// store the lintstats artifact
 					subject := project.GetName()
 					relation := lintStatsRelation(linter)
-					messageData, err := proto.Marshal(lintstats)
+					messageData, _ := proto.Marshal(lintstats)
 					artifact := &rpc.Artifact{
 						Name:     subject + "/artifacts/" + relation,
 						MimeType: core.MimeTypeForMessageType("google.cloud.apigee.registry.applications.v1alpha1.LintStats"),

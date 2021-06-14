@@ -26,9 +26,10 @@ import (
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
-	metrics "github.com/googleapis/gnostic/metrics"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/proto"
+
+	metrics "github.com/googleapis/gnostic/metrics"
 )
 
 var sheetArtifactName string
@@ -74,7 +75,7 @@ var exportSheetCmd = &cobra.Command{
 			if err != nil {
 				log.Fatalf("%s", err.Error())
 			}
-			path, err = core.ExportVocabularyToSheet(inputs[0].Name, vocabulary)
+			path, _ = core.ExportVocabularyToSheet(inputs[0].Name, vocabulary)
 			log.Printf("exported vocabulary %s to %s", inputs[0].Name, path)
 			if sheetArtifactName == "" {
 				sheetArtifactName = inputs[0].Name + "-sheet"
@@ -85,14 +86,14 @@ var exportSheetCmd = &cobra.Command{
 				log.Fatalf("please specify exactly one version history to export")
 				return
 			}
-			path, err = core.ExportVersionHistoryToSheet(inputNames[0], inputs[0])
+			path, _ = core.ExportVersionHistoryToSheet(inputNames[0], inputs[0])
 			log.Printf("exported version history %s to %s", inputs[0].Name, path)
 			if sheetArtifactName == "" {
 				sheetArtifactName = inputs[0].Name + "-sheet"
 			}
 			saveSheetPath(ctx, client, path, sheetArtifactName)
 		} else if messageType == "gnostic.metrics.Complexity" {
-			path, err = core.ExportComplexityToSheet("Complexity", inputs)
+			path, _ = core.ExportComplexityToSheet("Complexity", inputs)
 			log.Printf("exported complexity to %s", path)
 			saveSheetPath(ctx, client, path, sheetArtifactName)
 		} else if messageType == "google.cloud.apigee.registry.applications.v1alpha1.Index" {
@@ -103,7 +104,7 @@ var exportSheetCmd = &cobra.Command{
 			if err != nil {
 				log.Fatalf("%s", err.Error())
 			}
-			path, err = core.ExportIndexToSheet(inputs[0].Name, index)
+			path, _ = core.ExportIndexToSheet(inputs[0].Name, index)
 			log.Printf("exported index %s to %s", inputs[0].Name, path)
 			if sheetArtifactName == "" {
 				sheetArtifactName = inputs[0].Name + "-sheet"
@@ -113,14 +114,6 @@ var exportSheetCmd = &cobra.Command{
 			log.Fatalf("Unknown message type: %s", messageType)
 		}
 	},
-}
-
-func versionNameOfArtifactName(artifactName string) string {
-	n := artifactName
-	for i := 0; i < 4; i++ {
-		n = filepath.Dir(n)
-	}
-	return n
 }
 
 func collectInputArtifacts(ctx context.Context, client connection.Client, args []string, filter string) ([]string, []*rpc.Artifact) {
@@ -148,10 +141,6 @@ func isInt64Artifact(artifact *rpc.Artifact) bool {
 	return err == nil
 }
 
-func messageTypeURL(artifact *rpc.Artifact) string {
-	return artifact.GetMimeType()
-}
-
 func getVocabulary(artifact *rpc.Artifact) (*metrics.Vocabulary, error) {
 	messageType, err := core.MessageTypeForMimeType(artifact.GetMimeType())
 	if err == nil && messageType == "gnostic.metrics.Vocabulary" {
@@ -173,7 +162,7 @@ func getIndex(artifact *rpc.Artifact) (*rpc.Index, error) {
 			if err != nil {
 				return nil, err
 			}
-			err = proto.Unmarshal(value, index)
+			_ = proto.Unmarshal(value, index)
 		}
 		return index, err
 	}

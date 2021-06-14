@@ -27,7 +27,6 @@ import (
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
-	rpcpb "github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -184,10 +183,10 @@ type uploadSpecTask struct {
 }
 
 func (t uploadSpecTask) Run() error {
-	api, err := t.client.CreateApi(t.ctx, &rpcpb.CreateApiRequest{
+	api, err := t.client.CreateApi(t.ctx, &rpc.CreateApiRequest{
 		Parent: fmt.Sprintf("projects/%s", t.projectID),
 		ApiId:  t.apiID,
-		Api:    &rpcpb.Api{},
+		Api:    &rpc.Api{},
 	})
 
 	switch status.Code(err) {
@@ -201,10 +200,10 @@ func (t uploadSpecTask) Run() error {
 		return fmt.Errorf("failed to ensure API exists: %s", err)
 	}
 
-	version, err := t.client.CreateApiVersion(t.ctx, &rpcpb.CreateApiVersionRequest{
+	version, err := t.client.CreateApiVersion(t.ctx, &rpc.CreateApiVersionRequest{
 		Parent:       api.GetName(),
 		ApiVersionId: t.versionID,
-		ApiVersion:   &rpcpb.ApiVersion{},
+		ApiVersion:   &rpc.ApiVersion{},
 	})
 
 	switch status.Code(err) {
@@ -228,10 +227,10 @@ func (t uploadSpecTask) Run() error {
 		return err
 	}
 
-	spec, err := t.client.CreateApiSpec(t.ctx, &rpcpb.CreateApiSpecRequest{
+	spec, err := t.client.CreateApiSpec(t.ctx, &rpc.CreateApiSpecRequest{
 		Parent:    version.GetName(),
 		ApiSpecId: t.specID,
-		ApiSpec: &rpcpb.ApiSpec{
+		ApiSpec: &rpc.ApiSpec{
 			// TODO: How do we choose a mime type?
 			MimeType: core.OpenAPIMimeType("+gzip", "3.0.0"),
 			Contents: compressed,
