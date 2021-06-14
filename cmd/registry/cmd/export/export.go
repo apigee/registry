@@ -15,10 +15,9 @@
 package export
 
 import (
+	"github.com/apigee/registry/cmd/registry/cmd/export/sheet"
 	"github.com/spf13/cobra"
 )
-
-var exportFilter string
 
 func Command() *cobra.Command {
 	cmd := &cobra.Command{
@@ -26,10 +25,8 @@ func Command() *cobra.Command {
 		Short: "Export resources from the API Registry",
 	}
 
-	cmd.AddCommand(exportSheetCmd)
+	cmd.AddCommand(sheet.Command())
 	cmd.AddCommand(exportYAMLCmd)
 
-	// TODO: Remove the global state.
-	cmd.PersistentFlags().StringVar(&exportFilter, "filter", "", "filter export arguments")
 	return cmd
 }

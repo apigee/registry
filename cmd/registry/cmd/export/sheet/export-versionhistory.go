@@ -12,24 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package core
+package sheet
 
 import (
 	"fmt"
 	"log"
 	"strings"
 
+	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/rpc"
-	metrics "github.com/googleapis/gnostic/metrics"
 	"google.golang.org/protobuf/proto"
+
+	metrics "github.com/googleapis/gnostic/metrics"
 )
 
-func ExportVersionHistoryToSheet(name string, artifact *rpc.Artifact) (string, error) {
-	sheetsClient, err := NewSheetsClient("")
+func exportVersionHistoryToSheet(name string, artifact *rpc.Artifact) (string, error) {
+	sheetsClient, err := core.NewSheetsClient("")
 	if err != nil {
 		log.Fatalf("%s", err.Error())
 	}
-	versionHistory, err := getVersionHistory(artifact)
+	versionHistory, _ := getVersionHistory(artifact)
 	sheetNames := []string{"Summary"}
 	for _, version := range versionHistory.Versions {
 		versionName := nameForVersion(version.Name)
@@ -45,7 +47,7 @@ func ExportVersionHistoryToSheet(name string, artifact *rpc.Artifact) (string, e
 	for _, version := range versionHistory.Versions {
 		rows = append(rows, rowForVersionSummary(version))
 	}
-	_, err = sheetsClient.Update(fmt.Sprintf("Summary"), rows)
+	_, err = sheetsClient.Update("Summary", rows)
 	if err != nil {
 		log.Fatalf("%s", err.Error())
 	}
@@ -71,18 +73,16 @@ func nameForVersion(version string) string {
 }
 
 func getVersionHistory(artifact *rpc.Artifact) (*metrics.VersionHistory, error) {
-	messageType, err := MessageTypeForMimeType(artifact.GetMimeType())
+	messageType, err := core.MessageTypeForMimeType(artifact.GetMimeType())
 	if err == nil && messageType == "gnostic.metrics.VersionHistory" {
 		value := &metrics.VersionHistory{}
 		err := proto.Unmarshal(artifact.GetContents(), value)
 		if err != nil {
 			return nil, err
-		} else {
-			return value, nil
 		}
-	} else {
-		return nil, fmt.Errorf("not a version history: %s", artifact.Name)
+		return value, nil
 	}
+	return nil, fmt.Errorf("not a version history: %s", artifact.Name)
 }
 
 func rowForVersionSummary(v *metrics.Version) []interface{} {

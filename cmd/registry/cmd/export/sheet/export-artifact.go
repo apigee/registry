@@ -12,17 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package core
+package sheet
 
 import (
 	"log"
 	"strconv"
 
+	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/rpc"
 )
 
-func ExportInt64ToSheet(name string, artifacts []*rpc.Artifact) (string, error) {
-	sheetsClient, err := NewSheetsClient("")
+func exportInt64ToSheet(name string, artifacts []*rpc.Artifact) (string, error) {
+	sheetsClient, err := core.NewSheetsClient("")
 	if err != nil {
 		log.Fatalf("%s", err.Error())
 	}

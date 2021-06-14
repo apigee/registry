@@ -12,16 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package core
+package sheet
 
 import (
 	"log"
 
+	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/rpc"
 )
 
-func ExportIndexToSheet(name string, index *rpc.Index) (string, error) {
-	sheetsClient, err := NewSheetsClient("")
+func exportIndexToSheet(name string, index *rpc.Index) (string, error) {
+	sheetsClient, err := core.NewSheetsClient("")
 	if err != nil {
 		log.Fatalf("%s", err.Error())
 	}
@@ -41,7 +42,7 @@ func ExportIndexToSheet(name string, index *rpc.Index) (string, error) {
 		for _, op := range index.Operations {
 			rows = append(rows, rowForOperation(op))
 		}
-		_, err = sheetsClient.Update("Operations", rows)
+		_, _ = sheetsClient.Update("Operations", rows)
 	}
 	{
 		rows := make([][]interface{}, 0)
@@ -49,7 +50,7 @@ func ExportIndexToSheet(name string, index *rpc.Index) (string, error) {
 		for _, op := range index.Schemas {
 			rows = append(rows, rowForSchema(op))
 		}
-		_, err = sheetsClient.Update("Schemas", rows)
+		_, _ = sheetsClient.Update("Schemas", rows)
 	}
 	{
 		rows := make([][]interface{}, 0)
@@ -57,7 +58,7 @@ func ExportIndexToSheet(name string, index *rpc.Index) (string, error) {
 		for _, op := range index.Fields {
 			rows = append(rows, rowForField(op))
 		}
-		_, err = sheetsClient.Update("Fields", rows)
+		_, _ = sheetsClient.Update("Fields", rows)
 	}
 	return sheet.SpreadsheetUrl, nil
 }

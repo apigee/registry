@@ -12,20 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package core
+package sheet
 
 import (
 	"fmt"
 	"log"
 	"strings"
 
+	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/rpc"
-	metrics "github.com/googleapis/gnostic/metrics"
 	"google.golang.org/protobuf/proto"
+
+	metrics "github.com/googleapis/gnostic/metrics"
 )
 
-func ExportComplexityToSheet(name string, inputs []*rpc.Artifact) (string, error) {
-	sheetsClient, err := NewSheetsClient("")
+func exportComplexityToSheet(name string, inputs []*rpc.Artifact) (string, error) {
+	sheetsClient, err := core.NewSheetsClient("")
 	if err != nil {
 		log.Fatalf("%s", err.Error())
 	}
@@ -47,7 +49,7 @@ func ExportComplexityToSheet(name string, inputs []*rpc.Artifact) (string, error
 		parts := strings.Split(input.Name, "/") // use to get api_id [3] and version_id [5]
 		rows = append(rows, rowForLabeledComplexity(parts[3], parts[5], complexity))
 	}
-	_, err = sheetsClient.Update(fmt.Sprintf("Complexity"), rows)
+	_, err = sheetsClient.Update("Complexity", rows)
 	if err != nil {
 		log.Fatalf("%s", err.Error())
 	}
@@ -55,18 +57,16 @@ func ExportComplexityToSheet(name string, inputs []*rpc.Artifact) (string, error
 }
 
 func getComplexity(artifact *rpc.Artifact) (*metrics.Complexity, error) {
-	messageType, err := MessageTypeForMimeType(artifact.GetMimeType())
+	messageType, err := core.MessageTypeForMimeType(artifact.GetMimeType())
 	if err == nil && messageType == "gnostic.metrics.Complexity" {
 		value := &metrics.Complexity{}
 		err := proto.Unmarshal(artifact.GetContents(), value)
 		if err != nil {
 			return nil, err
-		} else {
-			return value, nil
 		}
-	} else {
-		return nil, fmt.Errorf("not a complexity: %s", artifact.Name)
+		return value, nil
 	}
+	return nil, fmt.Errorf("not a complexity: %s", artifact.Name)
 }
 
 func rowForLabeledComplexity(api, version string, c *metrics.Complexity) []interface{} {

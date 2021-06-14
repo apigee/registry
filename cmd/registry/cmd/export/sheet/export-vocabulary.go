@@ -12,16 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package core
+package sheet
 
 import (
 	"fmt"
 
+	"github.com/apigee/registry/cmd/registry/core"
+
 	metrics "github.com/googleapis/gnostic/metrics"
 )
 
-func ExportVocabularyToSheet(name string, vocabulary *metrics.Vocabulary) (string, error) {
-	sheetsClient, err := NewSheetsClient("")
+func exportVocabularyToSheet(name string, vocabulary *metrics.Vocabulary) (string, error) {
+	sheetsClient, err := core.NewSheetsClient("")
 	if err != nil {
 		return "", err
 	}
