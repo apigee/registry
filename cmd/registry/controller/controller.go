@@ -27,14 +27,12 @@ type ResourceCollection struct {
 	resourceList []Resource
 }
 
-func ProcessManifest(manifest *Manifest) ([]string, error) {
+func ProcessManifest(
+	ctx context.Context,
+	client connection.Client,
+	manifest *Manifest) ([]string, error) {
 
-	var actions []string
-	ctx := context.TODO()
-	client, err := connection.NewClient(ctx)
-	if err != nil {
-		return nil, err
-	}		
+	var actions []string		
 	for _, entry := range manifest.Entries {		
 	
 		newActions, err := processManifestEntry(ctx, client, manifest.Project, entry)
