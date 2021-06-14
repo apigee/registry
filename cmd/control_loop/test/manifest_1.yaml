@@ -1,7 +1,0 @@
-project: "controller-demo"
-manifest:
-- resource: apis/-/versions/-/specs/-/artifacts/lint-gnostic
-  dependencies:
-  - source: $resource.spec
-    filter: "mime_type.contains('openapi')"
-  action: "compute lint $source0 --linter gnostic"
