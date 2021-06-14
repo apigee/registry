@@ -16,11 +16,11 @@ package cmd
 
 import (
 	"context"
-	"reflect"
 	"testing"
 
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
+	"github.com/google/go-cmp/cmp"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -101,7 +101,7 @@ func TestAnnotate(t *testing.T) {
 	api, err := registryClient.GetApi(ctx, &rpc.GetApiRequest{
 		Name: apiName,
 	})
-	if !reflect.DeepEqual(api.Annotations, map[string]string{"a": "1", "b": "2"}) {
+	if diff := cmp.Diff(api.Annotations, map[string]string{"a": "1", "b": "2"}); diff != "" {
 		t.Errorf("annotations incorrectly set %+v", api.Annotations)
 	}
 	// Remove one annotation and overwrite the other.
@@ -112,7 +112,7 @@ func TestAnnotate(t *testing.T) {
 	api, err = registryClient.GetApi(ctx, &rpc.GetApiRequest{
 		Name: apiName,
 	})
-	if !reflect.DeepEqual(api.Annotations, map[string]string{"a": "3"}) {
+	if diff := cmp.Diff(api.Annotations, map[string]string{"a": "3"}); diff != "" {
 		t.Errorf("annotations incorrectly set %+v", api.Annotations)
 	}
 	// Changing an annotation without --overwrite should be ignored.
@@ -120,7 +120,7 @@ func TestAnnotate(t *testing.T) {
 	if err = annotateCmd.Execute(); err != nil {
 		t.Fatalf("Execute() with args %v returned error: %s", rootCmd.Args, err)
 	}
-	if !reflect.DeepEqual(api.Annotations, map[string]string{"a": "3"}) {
+	if diff := cmp.Diff(api.Annotations, map[string]string{"a": "3"}); diff != "" {
 		t.Errorf("annotations incorrectly set %+v", api.Annotations)
 	}
 
@@ -132,7 +132,7 @@ func TestAnnotate(t *testing.T) {
 	version, err := registryClient.GetApiVersion(ctx, &rpc.GetApiVersionRequest{
 		Name: versionName,
 	})
-	if !reflect.DeepEqual(version.Annotations, map[string]string{"a": "1", "b": "2"}) {
+	if diff := cmp.Diff(version.Annotations, map[string]string{"a": "1", "b": "2"}); diff != "" {
 		t.Errorf("annotations incorrectly set %+v", version.Annotations)
 	}
 	// Remove one annotation and overwrite the other.
@@ -143,7 +143,7 @@ func TestAnnotate(t *testing.T) {
 	version, err = registryClient.GetApiVersion(ctx, &rpc.GetApiVersionRequest{
 		Name: versionName,
 	})
-	if !reflect.DeepEqual(version.Annotations, map[string]string{"a": "3"}) {
+	if diff := cmp.Diff(version.Annotations, map[string]string{"a": "3"}); diff != "" {
 		t.Errorf("annotations incorrectly set %+v", version.Annotations)
 	}
 	// Changing an annotation without --overwrite should be ignored.
@@ -151,7 +151,7 @@ func TestAnnotate(t *testing.T) {
 	if err = annotateCmd.Execute(); err != nil {
 		t.Fatalf("Execute() with args %v returned error: %s", rootCmd.Args, err)
 	}
-	if !reflect.DeepEqual(version.Annotations, map[string]string{"a": "3"}) {
+	if diff := cmp.Diff(version.Annotations, map[string]string{"a": "3"}); diff != "" {
 		t.Errorf("annotations incorrectly set %+v", version.Annotations)
 	}
 
@@ -163,7 +163,7 @@ func TestAnnotate(t *testing.T) {
 	spec, err := registryClient.GetApiSpec(ctx, &rpc.GetApiSpecRequest{
 		Name: specName,
 	})
-	if !reflect.DeepEqual(spec.Annotations, map[string]string{"a": "1", "b": "2"}) {
+	if diff := cmp.Diff(spec.Annotations, map[string]string{"a": "1", "b": "2"}); diff != "" {
 		t.Errorf("annotations incorrectly set %+v", spec.Annotations)
 	}
 	// Remove one annotation and overwrite the other.
@@ -174,7 +174,7 @@ func TestAnnotate(t *testing.T) {
 	spec, err = registryClient.GetApiSpec(ctx, &rpc.GetApiSpecRequest{
 		Name: specName,
 	})
-	if !reflect.DeepEqual(spec.Annotations, map[string]string{"a": "3"}) {
+	if diff := cmp.Diff(spec.Annotations, map[string]string{"a": "3"}); diff != "" {
 		t.Errorf("annotations incorrectly set %+v", spec.Annotations)
 	}
 	// Changing an annotation without --overwrite should be ignored.
@@ -182,7 +182,7 @@ func TestAnnotate(t *testing.T) {
 	if err = annotateCmd.Execute(); err != nil {
 		t.Fatalf("Execute() with args %v returned error: %s", rootCmd.Args, err)
 	}
-	if !reflect.DeepEqual(spec.Annotations, map[string]string{"a": "3"}) {
+	if diff := cmp.Diff(spec.Annotations, map[string]string{"a": "3"}); diff != "" {
 		t.Errorf("annotations incorrectly set %+v", spec.Annotations)
 	}
 

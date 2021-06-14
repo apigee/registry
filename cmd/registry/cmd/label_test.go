@@ -16,11 +16,11 @@ package cmd
 
 import (
 	"context"
-	"reflect"
 	"testing"
 
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
+	"github.com/google/go-cmp/cmp"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -101,7 +101,7 @@ func TestLabel(t *testing.T) {
 	api, err := registryClient.GetApi(ctx, &rpc.GetApiRequest{
 		Name: apiName,
 	})
-	if !reflect.DeepEqual(api.Labels, map[string]string{"a": "1", "b": "2"}) {
+	if diff := cmp.Diff(api.Labels, map[string]string{"a": "1", "b": "2"}); diff != "" {
 		t.Errorf("labels incorrectly set %+v", api.Labels)
 	}
 	// Remove one label and overwrite the other.
@@ -112,7 +112,7 @@ func TestLabel(t *testing.T) {
 	api, err = registryClient.GetApi(ctx, &rpc.GetApiRequest{
 		Name: apiName,
 	})
-	if !reflect.DeepEqual(api.Labels, map[string]string{"a": "3"}) {
+	if diff := cmp.Diff(api.Labels, map[string]string{"a": "3"}); diff != "" {
 		t.Errorf("labels incorrectly set %+v", api.Labels)
 	}
 	// Changing a label without --overwrite should be ignored.
@@ -120,7 +120,7 @@ func TestLabel(t *testing.T) {
 	if err = labelCmd.Execute(); err != nil {
 		t.Fatalf("Execute() with args %v returned error: %s", rootCmd.Args, err)
 	}
-	if !reflect.DeepEqual(api.Labels, map[string]string{"a": "3"}) {
+	if diff := cmp.Diff(api.Labels, map[string]string{"a": "3"}); diff != "" {
 		t.Errorf("labels incorrectly set %+v", api.Labels)
 	}
 
@@ -132,7 +132,7 @@ func TestLabel(t *testing.T) {
 	version, err := registryClient.GetApiVersion(ctx, &rpc.GetApiVersionRequest{
 		Name: versionName,
 	})
-	if !reflect.DeepEqual(version.Labels, map[string]string{"a": "1", "b": "2"}) {
+	if diff := cmp.Diff(version.Labels, map[string]string{"a": "1", "b": "2"}); diff != "" {
 		t.Errorf("labels incorrectly set %+v", version.Labels)
 	}
 	// Remove one label and overwrite the other.
@@ -143,7 +143,7 @@ func TestLabel(t *testing.T) {
 	version, err = registryClient.GetApiVersion(ctx, &rpc.GetApiVersionRequest{
 		Name: versionName,
 	})
-	if !reflect.DeepEqual(version.Labels, map[string]string{"a": "3"}) {
+	if diff := cmp.Diff(version.Labels, map[string]string{"a": "3"}); diff != "" {
 		t.Errorf("labels incorrectly set %+v", version.Labels)
 	}
 	// Changing a label without --overwrite should be ignored.
@@ -151,7 +151,7 @@ func TestLabel(t *testing.T) {
 	if err = labelCmd.Execute(); err != nil {
 		t.Fatalf("Execute() with args %v returned error: %s", rootCmd.Args, err)
 	}
-	if !reflect.DeepEqual(version.Labels, map[string]string{"a": "3"}) {
+	if diff := cmp.Diff(version.Labels, map[string]string{"a": "3"}); diff != "" {
 		t.Errorf("labels incorrectly set %+v", version.Labels)
 	}
 
@@ -163,7 +163,7 @@ func TestLabel(t *testing.T) {
 	spec, err := registryClient.GetApiSpec(ctx, &rpc.GetApiSpecRequest{
 		Name: specName,
 	})
-	if !reflect.DeepEqual(spec.Labels, map[string]string{"a": "1", "b": "2"}) {
+	if diff := cmp.Diff(spec.Labels, map[string]string{"a": "1", "b": "2"}); diff != "" {
 		t.Errorf("labels incorrectly set %+v", spec.Labels)
 	}
 	// Remove one label and overwrite the other.
@@ -174,7 +174,7 @@ func TestLabel(t *testing.T) {
 	spec, err = registryClient.GetApiSpec(ctx, &rpc.GetApiSpecRequest{
 		Name: specName,
 	})
-	if !reflect.DeepEqual(spec.Labels, map[string]string{"a": "3"}) {
+	if diff := cmp.Diff(spec.Labels, map[string]string{"a": "3"}); diff != "" {
 		t.Errorf("labels incorrectly set %+v", spec.Labels)
 	}
 	// Changing a label without --overwrite should be ignored.
@@ -182,7 +182,7 @@ func TestLabel(t *testing.T) {
 	if err = labelCmd.Execute(); err != nil {
 		t.Fatalf("Execute() with args %v returned error: %s", rootCmd.Args, err)
 	}
-	if !reflect.DeepEqual(spec.Labels, map[string]string{"a": "3"}) {
+	if diff := cmp.Diff(spec.Labels, map[string]string{"a": "3"}); diff != "" {
 		t.Errorf("labels incorrectly set %+v", spec.Labels)
 	}
 
