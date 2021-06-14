@@ -12,19 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package export
 
 import (
-	"fmt"
-	"os"
-
-	"github.com/apigee/registry/cmd/registry/cmd"
+	"github.com/spf13/cobra"
 )
 
-func main() {
-	cmd := cmd.Command()
-	if err := cmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+var exportFilter string
+
+func Command() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "export",
+		Short: "Export resources from the API Registry",
 	}
+
+	cmd.AddCommand(exportSheetCmd)
+	cmd.AddCommand(exportYAMLCmd)
+
+	// TODO: Remove the global state.
+	cmd.PersistentFlags().StringVar(&exportFilter, "filter", "", "filter export arguments")
+	return cmd
 }

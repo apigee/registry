@@ -12,19 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package count
 
 import (
-	"fmt"
-	"os"
-
-	"github.com/apigee/registry/cmd/registry/cmd"
+	"github.com/spf13/cobra"
 )
 
-func main() {
-	cmd := cmd.Command()
-	if err := cmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+var countFilter string
+
+func Command() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "count",
+		Short: "Count quantities in the API Registry",
 	}
+
+	cmd.AddCommand(countVersionsCmd)
+
+	// TODO: Remove the global state.
+	cmd.PersistentFlags().StringVar(&countFilter, "filter", "", "filter count arguments")
+	return cmd
 }

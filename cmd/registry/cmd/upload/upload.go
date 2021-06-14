@@ -12,19 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package upload
 
 import (
-	"fmt"
-	"os"
-
-	"github.com/apigee/registry/cmd/registry/cmd"
+	"github.com/apigee/registry/cmd/registry/cmd/upload/bulk"
+	"github.com/spf13/cobra"
 )
 
-func main() {
-	cmd := cmd.Command()
-	if err := cmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+func Command() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "upload",
+		Short: "Upload information to the API Registry",
 	}
+
+	cmd.AddCommand(bulk.Command())
+	cmd.AddCommand(uploadCsvCmd)
+	cmd.AddCommand(specCmd)
+
+	return cmd
 }
