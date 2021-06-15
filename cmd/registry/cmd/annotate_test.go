@@ -100,15 +100,15 @@ func TestAnnotate(t *testing.T) {
 		args     []string
 		expected map[string]string
 	}{
-		{"add some annotations",
-			[]string{"a=1", "b=2"},
-			map[string]string{"a": "1", "b": "2"}},
-		{"remove one annotation and overwrite the other",
-			[]string{"a=3", "b-", "--overwrite"},
-			map[string]string{"a": "3"}},
-		{"changing an annotation without --overwrite should be ignored",
-			[]string{"a=4"},
-			map[string]string{"a": "3"}},
+		{comment: "add some annotations",
+			args:     []string{"a=1", "b=2"},
+			expected: map[string]string{"a": "1", "b": "2"}},
+		{comment: "remove one annotation and overwrite the other",
+			args:     []string{"a=3", "b-", "--overwrite"},
+			expected: map[string]string{"a": "3"}},
+		{comment: "changing an annotation without --overwrite should be ignored",
+			args:     []string{"a=4"},
+			expected: map[string]string{"a": "3"}},
 	}
 	// test annotations for APIs.
 	for _, tc := range testCases {

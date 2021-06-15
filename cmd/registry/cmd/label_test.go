@@ -99,15 +99,15 @@ func TestLabel(t *testing.T) {
 		args     []string
 		expected map[string]string
 	}{
-		{"add some labels",
-			[]string{"a=1", "b=2"},
-			map[string]string{"a": "1", "b": "2"}},
-		{"remove one label and overwrite the other",
-			[]string{"a=3", "b-", "--overwrite"},
-			map[string]string{"a": "3"}},
-		{"changing a label without --overwrite should be ignored",
-			[]string{"a=4"},
-			map[string]string{"a": "3"}},
+		{comment: "add some labels",
+			args:     []string{"a=1", "b=2"},
+			expected: map[string]string{"a": "1", "b": "2"}},
+		{comment: "remove one label and overwrite the other",
+			args:     []string{"a=3", "b-", "--overwrite"},
+			expected: map[string]string{"a": "3"}},
+		{comment: "changing a label without --overwrite should be ignored",
+			args:     []string{"a=4"},
+			expected: map[string]string{"a": "3"}},
 	}
 	// test labels for APIs.
 	for _, tc := range testCases {
