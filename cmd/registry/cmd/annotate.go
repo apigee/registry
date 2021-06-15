@@ -29,17 +29,17 @@ import (
 	"google.golang.org/genproto/protobuf/field_mask"
 )
 
-const labelFieldName = "labels"
-const labelCommandName = "label"
+const annotateFieldName = "annotations"
+const annotateCommandName = "annotate"
 
 func init() {
-	rootCmd.AddCommand(labelCmd())
+	rootCmd.AddCommand(annotateCmd())
 }
 
-func labelCmd() *cobra.Command {
+func annotateCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   fmt.Sprintf("%s RESOURCE KEY_1=VAL_1 ... KEY_N=VAL_N", labelCommandName),
-		Short: fmt.Sprintf("%s resources in the API Registry", strings.Title(labelCommandName)),
+		Use:   fmt.Sprintf("%s RESOURCE KEY_1=VAL_1 ... KEY_N=VAL_N", annotateCommandName),
+		Short: fmt.Sprintf("%s resources in the API Registry", strings.Title(annotateCommandName)),
 		Args:  cobra.MinimumNArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
 			flagset := cmd.LocalFlags()
@@ -47,8 +47,7 @@ func labelCmd() *cobra.Command {
 			if err != nil {
 				log.Fatalf("Failed to get filter string from flags: %s", err)
 			}
-			overwrite := false
-			overwrite, err = flagset.GetBool("overwrite")
+			overwrite, err := flagset.GetBool("overwrite")
 			if err != nil {
 				log.Fatalf("Failed to get overwrite boolean from flags: %s", err)
 			}
@@ -84,7 +83,7 @@ func labelCmd() *cobra.Command {
 			}
 			labeling := &core.Labeling{Overwrite: overwrite, Set: valuesToSet, Clear: valuesToClear}
 
-			err = matchAndHandleLabelCmd(ctx, client, taskQueue, args[0], filter, labeling)
+			err = matchAndHandleAnnotateCmd(ctx, client, taskQueue, args[0], filter, labeling)
 			if err != nil {
 				log.Fatalf("%s", err.Error())
 			}
@@ -94,11 +93,11 @@ func labelCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().String("filter", "", "Filter selected resources")
-	cmd.Flags().Bool("overwrite", false, "Overwrite existing labels")
+	cmd.Flags().Bool("overwrite", false, "Overwrite existing annotations")
 	return cmd
 }
 
-func matchAndHandleLabelCmd(
+func matchAndHandleAnnotateCmd(
 	ctx context.Context,
 	client connection.Client,
 	taskQueue chan<- core.Task,
@@ -108,33 +107,33 @@ func matchAndHandleLabelCmd(
 ) error {
 	// First try to match collection names.
 	if m := names.ApisRegexp().FindStringSubmatch(name); m != nil {
-		return labelAPIs(ctx, client, m, filter, labeling, taskQueue)
+		return annotateAPIs(ctx, client, m, filter, labeling, taskQueue)
 	} else if m := names.VersionsRegexp().FindStringSubmatch(name); m != nil {
-		return labelVersions(ctx, client, m, filter, labeling, taskQueue)
+		return annotateVersions(ctx, client, m, filter, labeling, taskQueue)
 	} else if m := names.SpecsRegexp().FindStringSubmatch(name); m != nil {
-		return labelSpecs(ctx, client, m, filter, labeling, taskQueue)
+		return annotateSpecs(ctx, client, m, filter, labeling, taskQueue)
 	}
 
 	// Then try to match resource names.
 	if m := names.ApiRegexp().FindStringSubmatch(name); m != nil {
-		return labelAPIs(ctx, client, m, filter, labeling, taskQueue)
+		return annotateAPIs(ctx, client, m, filter, labeling, taskQueue)
 	} else if m := names.VersionRegexp().FindStringSubmatch(name); m != nil {
-		return labelVersions(ctx, client, m, filter, labeling, taskQueue)
+		return annotateVersions(ctx, client, m, filter, labeling, taskQueue)
 	} else if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
-		return labelSpecs(ctx, client, m, filter, labeling, taskQueue)
+		return annotateSpecs(ctx, client, m, filter, labeling, taskQueue)
 	} else {
 		return fmt.Errorf("unsupported resource name %s", name)
 	}
 }
 
-func labelAPIs(ctx context.Context,
+func annotateAPIs(ctx context.Context,
 	client *gapic.RegistryClient,
 	segments []string,
 	filterFlag string,
 	labeling *core.Labeling,
 	taskQueue chan<- core.Task) error {
 	return core.ListAPIs(ctx, client, segments, filterFlag, func(api *rpc.Api) {
-		taskQueue <- &labelApiTask{
+		taskQueue <- &annotateApiTask{
 			ctx:      ctx,
 			client:   client,
 			api:      api,
@@ -143,7 +142,7 @@ func labelAPIs(ctx context.Context,
 	})
 }
 
-func labelVersions(
+func annotateVersions(
 	ctx context.Context,
 	client *gapic.RegistryClient,
 	segments []string,
@@ -151,7 +150,7 @@ func labelVersions(
 	labeling *core.Labeling,
 	taskQueue chan<- core.Task) error {
 	return core.ListVersions(ctx, client, segments, filterFlag, func(version *rpc.ApiVersion) {
-		taskQueue <- &labelVersionTask{
+		taskQueue <- &annotateVersionTask{
 			ctx:      ctx,
 			client:   client,
 			version:  version,
@@ -160,7 +159,7 @@ func labelVersions(
 	})
 }
 
-func labelSpecs(
+func annotateSpecs(
 	ctx context.Context,
 	client *gapic.RegistryClient,
 	segments []string,
@@ -168,7 +167,7 @@ func labelSpecs(
 	labeling *core.Labeling,
 	taskQueue chan<- core.Task) error {
 	return core.ListSpecs(ctx, client, segments, filterFlag, func(spec *rpc.ApiSpec) {
-		taskQueue <- &labelSpecTask{
+		taskQueue <- &annotateSpecTask{
 			ctx:      ctx,
 			client:   client,
 			spec:     spec,
@@ -177,20 +176,20 @@ func labelSpecs(
 	})
 }
 
-type labelApiTask struct {
+type annotateApiTask struct {
 	ctx      context.Context
 	client   connection.Client
 	api      *rpc.Api
 	labeling *core.Labeling
 }
 
-func (task *labelApiTask) String() string {
-	return labelCommandName + " " + task.api.Name
+func (task *annotateApiTask) String() string {
+	return annotateCommandName + " " + task.api.Name
 }
 
-func (task *labelApiTask) Run() error {
+func (task *annotateApiTask) Run() error {
 	var err error
-	task.api.Labels, err = task.labeling.Apply(task.api.Labels)
+	task.api.Annotations, err = task.labeling.Apply(task.api.Annotations)
 	if err != nil {
 		return err
 	}
@@ -198,26 +197,26 @@ func (task *labelApiTask) Run() error {
 		&rpc.UpdateApiRequest{
 			Api: task.api,
 			UpdateMask: &field_mask.FieldMask{
-				Paths: []string{labelFieldName},
+				Paths: []string{annotateFieldName},
 			},
 		})
 	return err
 }
 
-type labelVersionTask struct {
+type annotateVersionTask struct {
 	ctx      context.Context
 	client   connection.Client
 	version  *rpc.ApiVersion
 	labeling *core.Labeling
 }
 
-func (task *labelVersionTask) String() string {
-	return labelCommandName + " " + task.version.Name
+func (task *annotateVersionTask) String() string {
+	return annotateCommandName + " " + task.version.Name
 }
 
-func (task *labelVersionTask) Run() error {
+func (task *annotateVersionTask) Run() error {
 	var err error
-	task.version.Labels, err = task.labeling.Apply(task.version.Labels)
+	task.version.Annotations, err = task.labeling.Apply(task.version.Annotations)
 	if err != nil {
 		return err
 	}
@@ -225,26 +224,26 @@ func (task *labelVersionTask) Run() error {
 		&rpc.UpdateApiVersionRequest{
 			ApiVersion: task.version,
 			UpdateMask: &field_mask.FieldMask{
-				Paths: []string{labelFieldName},
+				Paths: []string{annotateFieldName},
 			},
 		})
 	return err
 }
 
-type labelSpecTask struct {
+type annotateSpecTask struct {
 	ctx      context.Context
 	client   connection.Client
 	spec     *rpc.ApiSpec
 	labeling *core.Labeling
 }
 
-func (task *labelSpecTask) String() string {
-	return labelCommandName + " " + task.spec.Name
+func (task *annotateSpecTask) String() string {
+	return annotateCommandName + " " + task.spec.Name
 }
 
-func (task *labelSpecTask) Run() error {
+func (task *annotateSpecTask) Run() error {
 	var err error
-	task.spec.Labels, err = task.labeling.Apply(task.spec.Labels)
+	task.spec.Annotations, err = task.labeling.Apply(task.spec.Annotations)
 	if err != nil {
 		return err
 	}
@@ -252,7 +251,7 @@ func (task *labelSpecTask) Run() error {
 		&rpc.UpdateApiSpecRequest{
 			ApiSpec: task.spec,
 			UpdateMask: &field_mask.FieldMask{
-				Paths: []string{labelFieldName},
+				Paths: []string{annotateFieldName},
 			},
 		})
 	return err

@@ -21,11 +21,11 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"io/ioutil"
-	"reflect"
 	"testing"
 
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
+	"github.com/google/go-cmp/cmp"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -154,10 +154,10 @@ func TestCRUD(t *testing.T) {
 		}
 		api, err := registryClient.GetApi(ctx, req)
 		check(t, "error getting api %s", err)
-		if !reflect.DeepEqual(api.GetLabels(), sampleMap) {
+		if diff := cmp.Diff(api.GetLabels(), sampleMap); diff != "" {
 			t.Errorf("Unexpected api labels %+v", api.GetLabels())
 		}
-		if !reflect.DeepEqual(api.GetAnnotations(), sampleMap) {
+		if diff := cmp.Diff(api.GetAnnotations(), sampleMap); diff != "" {
 			t.Errorf("Unexpected api annotations %+v", api.GetAnnotations())
 		}
 	}
@@ -168,10 +168,10 @@ func TestCRUD(t *testing.T) {
 		}
 		version, err := registryClient.GetApiVersion(ctx, req)
 		check(t, "error getting version %s", err)
-		if !reflect.DeepEqual(version.GetLabels(), sampleMap) {
+		if diff := cmp.Diff(version.GetLabels(), sampleMap); diff != "" {
 			t.Errorf("Unexpected version labels %+v", version.GetLabels())
 		}
-		if !reflect.DeepEqual(version.GetAnnotations(), sampleMap) {
+		if diff := cmp.Diff(version.GetAnnotations(), sampleMap); diff != "" {
 			t.Errorf("Unexpected version annotations %+v", version.GetAnnotations())
 		}
 	}
@@ -183,10 +183,10 @@ func TestCRUD(t *testing.T) {
 		}
 		spec, err := registryClient.GetApiSpec(ctx, req)
 		check(t, "error getting spec %s", err)
-		if !reflect.DeepEqual(spec.GetLabels(), sampleMap) {
+		if diff := cmp.Diff(spec.GetLabels(), sampleMap); diff != "" {
 			t.Errorf("Unexpected spec labels %+v", spec.GetLabels())
 		}
-		if !reflect.DeepEqual(spec.GetAnnotations(), sampleMap) {
+		if diff := cmp.Diff(spec.GetAnnotations(), sampleMap); diff != "" {
 			t.Errorf("Unexpected spec annotations %+v", spec.GetAnnotations())
 		}
 		revision = spec.GetRevisionId()
