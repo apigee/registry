@@ -37,59 +37,55 @@ var annotateKeysToClear []string
 const annotateFieldName = "annotations"
 const annotateCommandName = "annotate"
 
-var annotateCmd = annotateCommand()
-
 func init() {
 	rootCmd.AddCommand(annotateCmd)
 	annotateCmd.Flags().StringVar(&annotateKeyFilter, "filter", "", "Filter selected resources")
 	annotateCmd.Flags().BoolVar(&annotateKeyOverwrite, "overwrite", false, "Overwrite existing annotations")
 }
 
-func annotateCommand() *cobra.Command {
-	return &cobra.Command{
-		Use:   fmt.Sprintf("%s RESOURCE KEY_1=VAL_1 ... KEY_N=VAL_N", annotateCommandName),
-		Short: fmt.Sprintf("%s resources in the API Registry", strings.Title(annotateCommandName)),
-		Args:  cobra.MinimumNArgs(2),
-		Run: func(cmd *cobra.Command, args []string) {
-			ctx := context.TODO()
-			client, err := connection.NewClient(ctx)
-			if err != nil {
-				log.Fatalf("%s", err.Error())
-			}
+var annotateCmd = &cobra.Command{
+	Use:   fmt.Sprintf("%s RESOURCE KEY_1=VAL_1 ... KEY_N=VAL_N", annotateCommandName),
+	Short: fmt.Sprintf("%s resources in the API Registry", strings.Title(annotateCommandName)),
+	Args:  cobra.MinimumNArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		ctx := context.TODO()
+		client, err := connection.NewClient(ctx)
+		if err != nil {
+			log.Fatalf("%s", err.Error())
+		}
 
-			taskQueue := make(chan core.Task, 1024)
-			workerCount := 64
-			for i := 0; i < workerCount; i++ {
-				core.WaitGroup().Add(1)
-				go core.Worker(ctx, taskQueue)
-			}
+		taskQueue := make(chan core.Task, 1024)
+		workerCount := 64
+		for i := 0; i < workerCount; i++ {
+			core.WaitGroup().Add(1)
+			go core.Worker(ctx, taskQueue)
+		}
 
-			annotateKeysToClear = make([]string, 0)
-			annotateKeysToSet = make(map[string]string)
-			for _, operation := range args[1:] {
-				if len(operation) > 1 && strings.HasSuffix(operation, "-") {
-					annotateKeysToClear = append(annotateKeysToClear, strings.TrimSuffix(operation, "-"))
-				} else {
-					pair := strings.Split(operation, "=")
-					if len(pair) != 2 {
-						log.Fatalf("%q must have the form \"key=value\" (value can be empty) or \"key-\" (to remove the key)", operation)
-					}
-					if pair[0] == "" {
-						log.Fatalf("%q is invalid because it specifies an empty key", operation)
-					}
-					annotateKeysToSet[pair[0]] = pair[1]
+		annotateKeysToClear = make([]string, 0)
+		annotateKeysToSet = make(map[string]string)
+		for _, operation := range args[1:] {
+			if len(operation) > 1 && strings.HasSuffix(operation, "-") {
+				annotateKeysToClear = append(annotateKeysToClear, strings.TrimSuffix(operation, "-"))
+			} else {
+				pair := strings.Split(operation, "=")
+				if len(pair) != 2 {
+					log.Fatalf("%q must have the form \"key=value\" (value can be empty) or \"key-\" (to remove the key)", operation)
 				}
+				if pair[0] == "" {
+					log.Fatalf("%q is invalid because it specifies an empty key", operation)
+				}
+				annotateKeysToSet[pair[0]] = pair[1]
 			}
+		}
 
-			err = matchAndHandleAnnotateCmd(ctx, client, taskQueue, args[0])
-			if err != nil {
-				log.Fatalf("%s", err.Error())
-			}
+		err = matchAndHandleAnnotateCmd(ctx, client, taskQueue, args[0])
+		if err != nil {
+			log.Fatalf("%s", err.Error())
+		}
 
-			close(taskQueue)
-			core.WaitGroup().Wait()
-		},
-	}
+		close(taskQueue)
+		core.WaitGroup().Wait()
+	},
 }
 
 func matchAndHandleAnnotateCmd(

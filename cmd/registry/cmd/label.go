@@ -37,59 +37,55 @@ var labelKeysToClear []string
 const labelFieldName = "labels"
 const labelCommandName = "label"
 
-var labelCmd = labelCommand()
-
 func init() {
 	rootCmd.AddCommand(labelCmd)
 	labelCmd.Flags().StringVar(&labelKeyFilter, "filter", "", "Filter selected resources")
 	labelCmd.Flags().BoolVar(&labelKeyOverwrite, "overwrite", false, "Overwrite existing labels")
 }
 
-func labelCommand() *cobra.Command {
-	return &cobra.Command{
-		Use:   fmt.Sprintf("%s RESOURCE KEY_1=VAL_1 ... KEY_N=VAL_N", labelCommandName),
-		Short: fmt.Sprintf("%s resources in the API Registry", strings.Title(labelCommandName)),
-		Args:  cobra.MinimumNArgs(2),
-		Run: func(cmd *cobra.Command, args []string) {
-			ctx := context.TODO()
-			client, err := connection.NewClient(ctx)
-			if err != nil {
-				log.Fatalf("%s", err.Error())
-			}
+var labelCmd = &cobra.Command{
+	Use:   fmt.Sprintf("%s RESOURCE KEY_1=VAL_1 ... KEY_N=VAL_N", labelCommandName),
+	Short: fmt.Sprintf("%s resources in the API Registry", strings.Title(labelCommandName)),
+	Args:  cobra.MinimumNArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		ctx := context.TODO()
+		client, err := connection.NewClient(ctx)
+		if err != nil {
+			log.Fatalf("%s", err.Error())
+		}
 
-			taskQueue := make(chan core.Task, 1024)
-			workerCount := 64
-			for i := 0; i < workerCount; i++ {
-				core.WaitGroup().Add(1)
-				go core.Worker(ctx, taskQueue)
-			}
+		taskQueue := make(chan core.Task, 1024)
+		workerCount := 64
+		for i := 0; i < workerCount; i++ {
+			core.WaitGroup().Add(1)
+			go core.Worker(ctx, taskQueue)
+		}
 
-			labelKeysToClear = make([]string, 0)
-			labelKeysToSet = make(map[string]string)
-			for _, operation := range args[1:] {
-				if len(operation) > 1 && strings.HasSuffix(operation, "-") {
-					labelKeysToClear = append(labelKeysToClear, strings.TrimSuffix(operation, "-"))
-				} else {
-					pair := strings.Split(operation, "=")
-					if len(pair) != 2 {
-						log.Fatalf("%q must have the form \"key=value\" (value can be empty) or \"key-\" (to remove the key)", operation)
-					}
-					if pair[0] == "" {
-						log.Fatalf("%q is invalid because it specifies an empty key", operation)
-					}
-					labelKeysToSet[pair[0]] = pair[1]
+		labelKeysToClear = make([]string, 0)
+		labelKeysToSet = make(map[string]string)
+		for _, operation := range args[1:] {
+			if len(operation) > 1 && strings.HasSuffix(operation, "-") {
+				labelKeysToClear = append(labelKeysToClear, strings.TrimSuffix(operation, "-"))
+			} else {
+				pair := strings.Split(operation, "=")
+				if len(pair) != 2 {
+					log.Fatalf("%q must have the form \"key=value\" (value can be empty) or \"key-\" (to remove the key)", operation)
 				}
+				if pair[0] == "" {
+					log.Fatalf("%q is invalid because it specifies an empty key", operation)
+				}
+				labelKeysToSet[pair[0]] = pair[1]
 			}
+		}
 
-			err = matchAndHandleLabelCmd(ctx, client, taskQueue, args[0])
-			if err != nil {
-				log.Fatalf("%s", err.Error())
-			}
+		err = matchAndHandleLabelCmd(ctx, client, taskQueue, args[0])
+		if err != nil {
+			log.Fatalf("%s", err.Error())
+		}
 
-			close(taskQueue)
-			core.WaitGroup().Wait()
-		},
-	}
+		close(taskQueue)
+		core.WaitGroup().Wait()
+	},
 }
 
 func matchAndHandleLabelCmd(
