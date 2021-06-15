@@ -33,12 +33,10 @@ const labelFieldName = "labels"
 const labelCommandName = "label"
 
 func init() {
-	labelCmd(rootCmd)
+	rootCmd.AddCommand(labelCmd())
 }
 
-// labelCmd constructs a command handler and adds it to its parent.
-// Call it directly from tests to create handlers to test.
-func labelCmd(parent *cobra.Command) *cobra.Command {
+func labelCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   fmt.Sprintf("%s RESOURCE KEY_1=VAL_1 ... KEY_N=VAL_N", labelCommandName),
 		Short: fmt.Sprintf("%s resources in the API Registry", strings.Title(labelCommandName)),
@@ -97,7 +95,6 @@ func labelCmd(parent *cobra.Command) *cobra.Command {
 	}
 	cmd.Flags().String("filter", "", "Filter selected resources")
 	cmd.Flags().Bool("overwrite", false, "Overwrite existing labels")
-	parent.AddCommand(cmd)
 	return cmd
 }
 

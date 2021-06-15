@@ -19,7 +19,6 @@ import (
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/google/go-cmp/cmp"
-	"github.com/spf13/cobra"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"testing"
@@ -28,14 +27,16 @@ import (
 func TestLabel(t *testing.T) {
 	var err error
 
-	projectId := "label-test"
-	projectName := "projects/" + projectId
-	apiId := "sample"
-	apiName := projectName + "/apis/" + apiId
-	versionId := "1.0.0"
-	versionName := apiName + "/versions/" + versionId
-	specId := "openapi.json"
-	specName := versionName + "/specs/" + specId
+	const (
+		projectID   = "label-test"
+		projectName = "projects/" + projectID
+		apiID       = "sample"
+		apiName     = projectName + "/apis/" + apiID
+		versionID   = "1.0.0"
+		versionName = apiName + "/versions/" + versionID
+		specID      = "openapi.json"
+		specName    = versionName + "/specs/" + specID
+	)
 
 	// Create a registry client.
 	ctx := context.Background()
@@ -53,7 +54,7 @@ func TestLabel(t *testing.T) {
 	}
 	// Create the test project.
 	_, err = registryClient.CreateProject(ctx, &rpc.CreateProjectRequest{
-		ProjectId: projectId,
+		ProjectId: projectID,
 		Project: &rpc.Project{
 			DisplayName: "Test",
 			Description: "A test catalog",
@@ -65,7 +66,7 @@ func TestLabel(t *testing.T) {
 	// Create a sample api.
 	_, err = registryClient.CreateApi(ctx, &rpc.CreateApiRequest{
 		Parent: projectName,
-		ApiId:  apiId,
+		ApiId:  apiID,
 		Api:    &rpc.Api{},
 	})
 	if err != nil {
@@ -74,7 +75,7 @@ func TestLabel(t *testing.T) {
 	// Create a sample version.
 	_, err = registryClient.CreateApiVersion(ctx, &rpc.CreateApiVersionRequest{
 		Parent:       apiName,
-		ApiVersionId: versionId,
+		ApiVersionId: versionID,
 		ApiVersion:   &rpc.ApiVersion{},
 	})
 	if err != nil {
@@ -83,7 +84,7 @@ func TestLabel(t *testing.T) {
 	// Create a sample spec.
 	_, err = registryClient.CreateApiSpec(ctx, &rpc.CreateApiSpecRequest{
 		Parent:    versionName,
-		ApiSpecId: specId,
+		ApiSpecId: specID,
 		ApiSpec: &rpc.ApiSpec{
 			MimeType: "application/x.openapi;version=3.0.0",
 			Contents: []byte(`{"openapi": "3.0.0", "info": {"title": "test", "version": "v1"}, "paths": {}}`),
@@ -110,9 +111,8 @@ func TestLabel(t *testing.T) {
 	}
 	// test labels for APIs.
 	for _, tc := range testCases {
-		cmd := &cobra.Command{}
-		cmd.SetArgs(append([]string{"label", apiName}, tc.args...))
-		labelCmd(cmd)
+		cmd := labelCmd()
+		cmd.SetArgs(append([]string{apiName}, tc.args...))
 		if err := cmd.Execute(); err != nil {
 			t.Fatalf("Execute() with args %+v returned error: %s", tc.args, err)
 		}
@@ -129,9 +129,8 @@ func TestLabel(t *testing.T) {
 	}
 	// test labels for versions.
 	for _, tc := range testCases {
-		cmd := &cobra.Command{}
-		cmd.SetArgs(append([]string{"label", versionName}, tc.args...))
-		labelCmd(cmd)
+		cmd := labelCmd()
+		cmd.SetArgs(append([]string{versionName}, tc.args...))
 		if err := cmd.Execute(); err != nil {
 			t.Fatalf("Execute() with args %+v returned error: %s", tc.args, err)
 		}
@@ -148,9 +147,8 @@ func TestLabel(t *testing.T) {
 	}
 	// test labels for specs.
 	for _, tc := range testCases {
-		cmd := &cobra.Command{}
-		cmd.SetArgs(append([]string{"label", specName}, tc.args...))
-		labelCmd(cmd)
+		cmd := labelCmd()
+		cmd.SetArgs(append([]string{specName}, tc.args...))
 		if err := cmd.Execute(); err != nil {
 			t.Fatalf("Execute() with args %+v returned error: %s", tc.args, err)
 		}

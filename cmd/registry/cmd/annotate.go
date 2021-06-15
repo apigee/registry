@@ -33,12 +33,10 @@ const annotateFieldName = "annotations"
 const annotateCommandName = "annotate"
 
 func init() {
-	annotateCmd(rootCmd)
+	rootCmd.AddCommand(annotateCmd())
 }
 
-// annotateCmd constructs a command handler and adds it to its parent.
-// Call it directly from tests to create handlers to test.
-func annotateCmd(parent *cobra.Command) *cobra.Command {
+func annotateCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   fmt.Sprintf("%s RESOURCE KEY_1=VAL_1 ... KEY_N=VAL_N", annotateCommandName),
 		Short: fmt.Sprintf("%s resources in the API Registry", strings.Title(annotateCommandName)),
@@ -96,7 +94,6 @@ func annotateCmd(parent *cobra.Command) *cobra.Command {
 	}
 	cmd.Flags().String("filter", "", "Filter selected resources")
 	cmd.Flags().Bool("overwrite", false, "Overwrite existing annotations")
-	parent.AddCommand(cmd)
 	return cmd
 }
 
