@@ -24,17 +24,17 @@ require (
 	github.com/golang-commonmark/puny v0.0.0-20180910110745-050be392d8b8 // indirect
 	github.com/golang/protobuf v1.5.2
 	github.com/google/cel-go v0.6.0
-	github.com/google/go-cmp v0.5.5
+	github.com/google/go-cmp v0.5.6
 	github.com/google/uuid v1.1.2
-	github.com/googleapis/api-linter v1.23.0 // indirect
-	github.com/googleapis/gapic-generator-go v0.20.0 // indirect
+	github.com/googleapis/api-linter v1.25.0 // indirect
+	github.com/googleapis/gapic-generator-go v0.20.3 // indirect
 	github.com/googleapis/gax-go/v2 v2.0.5
 	github.com/googleapis/gnostic v0.5.4
 	github.com/graphql-go/graphql v0.7.9
 	github.com/graphql-go/handler v0.2.3
 	github.com/improbable-eng/grpc-web v0.13.0
 	github.com/jmhodges/levigo v1.0.0 // indirect
-	github.com/mattn/go-runewidth v0.0.12 // indirect
+	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/nsf/jsondiff v0.0.0-20200515183724-f29ed568f4ce
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20200410134404-eec4a21b6bb0 // indirect
@@ -46,12 +46,12 @@ require (
 	github.com/tecbot/gorocksdb v0.0.0-20191217155057-f0fad39f321c // indirect
 	github.com/yoheimuta/go-protoparser/v4 v4.2.1
 	gitlab.com/golang-commonmark/linkify v0.0.0-20200225224916-64bca66f6ad3 // indirect
-	golang.org/x/net v0.0.0-20210510120150-4163338589ed
+	golang.org/x/net v0.0.0-20210614182718-04defd469f4e
 	golang.org/x/oauth2 v0.0.0-20201109201403-9fd604954f58
-	golang.org/x/sys v0.0.0-20210514084401-e8d321eab015 // indirect
+	golang.org/x/sys v0.0.0-20210615035016-665e8c7367d1 // indirect
 	google.golang.org/api v0.36.0
-	google.golang.org/genproto v0.0.0-20210518161634-ec7691c0a37d
-	google.golang.org/grpc v1.37.1
+	google.golang.org/genproto v0.0.0-20210614182748-5b3b54cad159
+	google.golang.org/grpc v1.38.0
 	google.golang.org/grpc/examples v0.0.0-20210424002626-9572fd6faeae // indirect
 	google.golang.org/protobuf v1.26.0
 	gopkg.in/yaml.v2 v2.4.0
