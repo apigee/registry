@@ -21,6 +21,7 @@ import (
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/google/go-cmp/cmp"
+	"github.com/spf13/cobra"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -93,97 +94,77 @@ func TestAnnotate(t *testing.T) {
 		t.Fatalf("error creating spec %s", err)
 	}
 
-	// Add some annotations to the test api.
-	rootCmd.SetArgs([]string{"annotate", apiName, "a=1", "b=2"})
-	if err := annotateCmd.Execute(); err != nil {
-		t.Fatalf("Execute() with args %v returned error: %s", rootCmd.Args, err)
+	testCases := []struct {
+		comment  string
+		args     []string
+		expected map[string]string
+	}{
+		{"add some annotations",
+			[]string{"a=1", "b=2"},
+			map[string]string{"a": "1", "b": "2"}},
+		{"remove one annotation and overwrite the other",
+			[]string{"a=3", "b-", "--overwrite"},
+			map[string]string{"a": "3"}},
+		{"changing an annotation without --overwrite should be ignored",
+			[]string{"a=4"},
+			map[string]string{"a": "3"}},
 	}
-	api, err := registryClient.GetApi(ctx, &rpc.GetApiRequest{
-		Name: apiName,
-	})
-	if diff := cmp.Diff(api.Annotations, map[string]string{"a": "1", "b": "2"}); diff != "" {
-		t.Errorf("annotations incorrectly set %+v", api.Annotations)
+	// test annotations for APIs.
+	for _, tc := range testCases {
+		cmd := &cobra.Command{}
+		cmd.SetArgs(append([]string{"annotate", apiName}, tc.args...))
+		annotateCmd(cmd)
+		if err := cmd.Execute(); err != nil {
+			t.Fatalf("Execute() with args %+v returned error: %s", tc.args, err)
+		}
+		api, err := registryClient.GetApi(ctx, &rpc.GetApiRequest{
+			Name: apiName,
+		})
+		if err != nil {
+			t.Errorf("error getting api %s", err)
+		} else {
+			if diff := cmp.Diff(api.Annotations, tc.expected); diff != "" {
+				t.Errorf("annotations were incorrectly set %+v", api.Annotations)
+			}
+		}
 	}
-	// Remove one annotation and overwrite the other.
-	rootCmd.SetArgs([]string{"annotate", apiName, "a=3", "b-", "--overwrite"})
-	if err = annotateCmd.Execute(); err != nil {
-		t.Fatalf("Execute() with args %v returned error: %s", rootCmd.Args, err)
+	// test annotations for versions.
+	for _, tc := range testCases {
+		cmd := &cobra.Command{}
+		cmd.SetArgs(append([]string{"annotate", versionName}, tc.args...))
+		annotateCmd(cmd)
+		if err := cmd.Execute(); err != nil {
+			t.Fatalf("Execute() with args %+v returned error: %s", tc.args, err)
+		}
+		version, err := registryClient.GetApiVersion(ctx, &rpc.GetApiVersionRequest{
+			Name: versionName,
+		})
+		if err != nil {
+			t.Errorf("error getting version %s", err)
+		} else {
+			if diff := cmp.Diff(version.Annotations, tc.expected); diff != "" {
+				t.Errorf("annotations were incorrectly set %+v", version.Annotations)
+			}
+		}
 	}
-	api, err = registryClient.GetApi(ctx, &rpc.GetApiRequest{
-		Name: apiName,
-	})
-	if diff := cmp.Diff(api.Annotations, map[string]string{"a": "3"}); diff != "" {
-		t.Errorf("annotations incorrectly set %+v", api.Annotations)
-	}
-	// Changing an annotation without --overwrite should be ignored.
-	rootCmd.SetArgs([]string{"annotate", apiName, "a=4"})
-	if err = annotateCmd.Execute(); err != nil {
-		t.Fatalf("Execute() with args %v returned error: %s", rootCmd.Args, err)
-	}
-	if diff := cmp.Diff(api.Annotations, map[string]string{"a": "3"}); diff != "" {
-		t.Errorf("annotations incorrectly set %+v", api.Annotations)
-	}
-
-	// Add some annotations to the test version.
-	rootCmd.SetArgs([]string{"annotate", versionName, "a=1", "b=2"})
-	if err := annotateCmd.Execute(); err != nil {
-		t.Fatalf("Execute() with args %v returned error: %s", rootCmd.Args, err)
-	}
-	version, err := registryClient.GetApiVersion(ctx, &rpc.GetApiVersionRequest{
-		Name: versionName,
-	})
-	if diff := cmp.Diff(version.Annotations, map[string]string{"a": "1", "b": "2"}); diff != "" {
-		t.Errorf("annotations incorrectly set %+v", version.Annotations)
-	}
-	// Remove one annotation and overwrite the other.
-	rootCmd.SetArgs([]string{"annotate", versionName, "a=3", "b-", "--overwrite"})
-	if err = annotateCmd.Execute(); err != nil {
-		t.Fatalf("Execute() with args %v returned error: %s", rootCmd.Args, err)
-	}
-	version, err = registryClient.GetApiVersion(ctx, &rpc.GetApiVersionRequest{
-		Name: versionName,
-	})
-	if diff := cmp.Diff(version.Annotations, map[string]string{"a": "3"}); diff != "" {
-		t.Errorf("annotations incorrectly set %+v", version.Annotations)
-	}
-	// Changing an annotation without --overwrite should be ignored.
-	rootCmd.SetArgs([]string{"annotate", versionName, "a=4"})
-	if err = annotateCmd.Execute(); err != nil {
-		t.Fatalf("Execute() with args %v returned error: %s", rootCmd.Args, err)
-	}
-	if diff := cmp.Diff(version.Annotations, map[string]string{"a": "3"}); diff != "" {
-		t.Errorf("annotations incorrectly set %+v", version.Annotations)
-	}
-
-	// Add some annotations to the test spec.
-	rootCmd.SetArgs([]string{"annotate", specName, "a=1", "b=2"})
-	if err := annotateCmd.Execute(); err != nil {
-		t.Fatalf("Execute() with args %v returned error: %s", rootCmd.Args, err)
-	}
-	spec, err := registryClient.GetApiSpec(ctx, &rpc.GetApiSpecRequest{
-		Name: specName,
-	})
-	if diff := cmp.Diff(spec.Annotations, map[string]string{"a": "1", "b": "2"}); diff != "" {
-		t.Errorf("annotations incorrectly set %+v", spec.Annotations)
-	}
-	// Remove one annotation and overwrite the other.
-	rootCmd.SetArgs([]string{"annotate", specName, "a=3", "b-", "--overwrite"})
-	if err = annotateCmd.Execute(); err != nil {
-		t.Fatalf("Execute() with args %v returned error: %s", rootCmd.Args, err)
-	}
-	spec, err = registryClient.GetApiSpec(ctx, &rpc.GetApiSpecRequest{
-		Name: specName,
-	})
-	if diff := cmp.Diff(spec.Annotations, map[string]string{"a": "3"}); diff != "" {
-		t.Errorf("annotations incorrectly set %+v", spec.Annotations)
-	}
-	// Changing an annotation without --overwrite should be ignored.
-	rootCmd.SetArgs([]string{"annotate", specName, "a=4"})
-	if err = annotateCmd.Execute(); err != nil {
-		t.Fatalf("Execute() with args %v returned error: %s", rootCmd.Args, err)
-	}
-	if diff := cmp.Diff(spec.Annotations, map[string]string{"a": "3"}); diff != "" {
-		t.Errorf("annotations incorrectly set %+v", spec.Annotations)
+	// test annotations for specs.
+	for _, tc := range testCases {
+		cmd := &cobra.Command{}
+		cmd.SetArgs(append([]string{"annotate", specName}, tc.args...))
+		annotateCmd(cmd)
+		if err := cmd.Execute(); err != nil {
+			t.Fatalf("Execute() with args %+v returned error: %s", tc.args, err)
+		}
+		spec, err := registryClient.GetApiSpec(ctx, &rpc.GetApiSpecRequest{
+			Name: specName,
+		})
+		if err != nil {
+			t.Errorf("error getting api %s", err)
+		} else {
+			if diff := cmp.Diff(spec.Annotations, tc.expected); diff != "" {
+				t.Errorf("annotations were incorrectly set %+v", spec.Annotations)
+			}
+		}
 	}
 
 	// Delete the test project.

@@ -33,65 +33,71 @@ const annotateFieldName = "annotations"
 const annotateCommandName = "annotate"
 
 func init() {
-	rootCmd.AddCommand(annotateCmd)
-	annotateCmd.Flags().String("filter", "", "Filter selected resources")
-	annotateCmd.Flags().Bool("overwrite", false, "Overwrite existing annotations")
+	annotateCmd(rootCmd)
 }
 
-var annotateCmd = &cobra.Command{
-	Use:   fmt.Sprintf("%s RESOURCE KEY_1=VAL_1 ... KEY_N=VAL_N", annotateCommandName),
-	Short: fmt.Sprintf("%s resources in the API Registry", strings.Title(annotateCommandName)),
-	Args:  cobra.MinimumNArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
-		flagset := cmd.LocalFlags()
-		filter, err := flagset.GetString("filter")
-		if err != nil {
-			log.Fatalf("Failed to get filter string from flags: %s", err)
-		}
-		overwrite, err := flagset.GetBool("overwrite")
-		if err != nil {
-			log.Fatalf("Failed to get overwrite boolean from flags: %s", err)
-		}
-
-		ctx := context.TODO()
-		client, err := connection.NewClient(ctx)
-		if err != nil {
-			log.Fatalf("%s", err.Error())
-		}
-
-		taskQueue := make(chan core.Task, 1024)
-		workerCount := 64
-		for i := 0; i < workerCount; i++ {
-			core.WaitGroup().Add(1)
-			go core.Worker(ctx, taskQueue)
-		}
-
-		valuesToClear := make([]string, 0)
-		valuesToSet := make(map[string]string)
-		for _, operation := range args[1:] {
-			if len(operation) > 1 && strings.HasSuffix(operation, "-") {
-				valuesToClear = append(valuesToClear, strings.TrimSuffix(operation, "-"))
-			} else {
-				pair := strings.Split(operation, "=")
-				if len(pair) != 2 {
-					log.Fatalf("%q must have the form \"key=value\" (value can be empty) or \"key-\" (to remove the key)", operation)
-				}
-				if pair[0] == "" {
-					log.Fatalf("%q is invalid because it specifies an empty key", operation)
-				}
-				valuesToSet[pair[0]] = pair[1]
+// annotateCmd constructs a command handler and adds it to its parent.
+// Call it directly from tests to create handlers to test.
+func annotateCmd(parent *cobra.Command) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   fmt.Sprintf("%s RESOURCE KEY_1=VAL_1 ... KEY_N=VAL_N", annotateCommandName),
+		Short: fmt.Sprintf("%s resources in the API Registry", strings.Title(annotateCommandName)),
+		Args:  cobra.MinimumNArgs(2),
+		Run: func(cmd *cobra.Command, args []string) {
+			flagset := cmd.LocalFlags()
+			filter, err := flagset.GetString("filter")
+			if err != nil {
+				log.Fatalf("Failed to get filter string from flags: %s", err)
 			}
-		}
-		labeling := &core.Labeling{Overwrite: overwrite, Set: valuesToSet, Clear: valuesToClear}
+			overwrite, err := flagset.GetBool("overwrite")
+			if err != nil {
+				log.Fatalf("Failed to get overwrite boolean from flags: %s", err)
+			}
 
-		err = matchAndHandleAnnotateCmd(ctx, client, taskQueue, args[0], filter, labeling)
-		if err != nil {
-			log.Fatalf("%s", err.Error())
-		}
+			ctx := context.TODO()
+			client, err := connection.NewClient(ctx)
+			if err != nil {
+				log.Fatalf("%s", err.Error())
+			}
 
-		close(taskQueue)
-		core.WaitGroup().Wait()
-	},
+			taskQueue := make(chan core.Task, 1024)
+			workerCount := 64
+			for i := 0; i < workerCount; i++ {
+				core.WaitGroup().Add(1)
+				go core.Worker(ctx, taskQueue)
+			}
+
+			valuesToClear := make([]string, 0)
+			valuesToSet := make(map[string]string)
+			for _, operation := range args[1:] {
+				if len(operation) > 1 && strings.HasSuffix(operation, "-") {
+					valuesToClear = append(valuesToClear, strings.TrimSuffix(operation, "-"))
+				} else {
+					pair := strings.Split(operation, "=")
+					if len(pair) != 2 {
+						log.Fatalf("%q must have the form \"key=value\" (value can be empty) or \"key-\" (to remove the key)", operation)
+					}
+					if pair[0] == "" {
+						log.Fatalf("%q is invalid because it specifies an empty key", operation)
+					}
+					valuesToSet[pair[0]] = pair[1]
+				}
+			}
+			labeling := &core.Labeling{Overwrite: overwrite, Set: valuesToSet, Clear: valuesToClear}
+
+			err = matchAndHandleAnnotateCmd(ctx, client, taskQueue, args[0], filter, labeling)
+			if err != nil {
+				log.Fatalf("%s", err.Error())
+			}
+
+			close(taskQueue)
+			core.WaitGroup().Wait()
+		},
+	}
+	cmd.Flags().String("filter", "", "Filter selected resources")
+	cmd.Flags().Bool("overwrite", false, "Overwrite existing annotations")
+	parent.AddCommand(cmd)
+	return cmd
 }
 
 func matchAndHandleAnnotateCmd(
