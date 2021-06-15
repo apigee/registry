@@ -1,3 +1,17 @@
+// Copyright 2021 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package controller
 
 import (
@@ -5,7 +19,6 @@ import (
 	"strings"
 	"errors"
 	"fmt"
-	"github.com/apigee/registry/cmd/control_loop/resources"
 )
 
 func ExtendSourcePattern(
@@ -55,7 +68,7 @@ func ExtendSourcePattern(
 
 }
 
-func ExtractGroup(pattern string, resource resources.Resource) (string, error) {
+func ExtractGroup(pattern string, resource Resource) (string, error) {
 	// Reads the sourcePattern, finds out group by entity type and returns te group value
 	// Example: 
 	// pattern: $resource.api/versions/-/specs/-
@@ -90,7 +103,7 @@ func ExtractGroup(pattern string, resource resources.Resource) (string, error) {
 	
 }
 
-func GenerateCommand(action string, args []resources.Resource) (string, error) {
+func GenerateCommand(action string, args []Resource) (string, error) {
 	// Check if there is a reference to $source in the action
 	if !strings.Contains(action, "$source") {
 		return action, nil

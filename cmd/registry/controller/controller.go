@@ -1,8 +1,20 @@
+// Copyright 2021 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package  controller
 
 import (
-    "github.com/apigee/registry/cmd/control_loop/list"
-    "github.com/apigee/registry/cmd/control_loop/resources"
     "context"
 	"github.com/apigee/registry/connection"
 	"time"
@@ -12,7 +24,7 @@ import (
 
 type ResourceCollection struct {
 	maxUpdateTime time.Time
-	resourceList []resources.Resource
+	resourceList []Resource
 }
 
 func ProcessManifest(manifest *Manifest) ([]string, error) {
@@ -77,7 +89,7 @@ func generateDependencyMap(
 	}
 
 	// Fetch resources using the extSourcePattern
-	sourceList, err :=  list.ListResources(ctx, client, extSourcePattern, sourceFilter)
+	sourceList, err :=  ListResources(ctx, client, extSourcePattern, sourceFilter)
 	if err != nil {
 		return nil, err
 	}
@@ -118,7 +130,7 @@ func updateResources(
 	cmds := make([]string, 0)
 
 
-	resourceList, err := list.ListResources( ctx, client, resourcePattern, "")
+	resourceList, err := ListResources( ctx, client, resourcePattern, "")
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +139,7 @@ func updateResources(
 		resourceTime := resource.GetUpdateTimestamp()
 
 		takeAction := false
-		var args []resources.Resource
+		var args []Resource
 
 		// Evaluate this resource against each dependency source pattern
 		for i, dependency := range dependencies {
@@ -168,7 +180,7 @@ func updateResources(
 		dMap0 := dependencyMaps[0]
 		for key := range dMap0 {
 			takeAction := true
-			var args []resources.Resource
+			var args []Resource
 			if _, ok := visited[key]; !ok {
 				for _, dMap := range dependencyMaps {
 					collection, ok := dMap[key]

@@ -1,3 +1,17 @@
+// Copyright 2021 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package controller
 
 import (
@@ -173,7 +187,7 @@ func TestSingleSpec(t *testing.T) {
 
 	// Test the manifest
 	manifest, err := ReadManifest(
-		"../test/manifest_1.yaml")
+		"test/manifest_1.yaml")
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -215,7 +229,7 @@ func TestMultipleSpecs(t *testing.T) {
 
 	// Test the manifest
 	manifest, err := ReadManifest(
-		"../test/manifest_1.yaml")
+		"test/manifest_1.yaml")
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -263,7 +277,7 @@ func TestPartiallyExistingArtifacts(t *testing.T) {
 	
 	// Test the manifest
 	manifest, err := ReadManifest(
-		"../test/manifest_1.yaml")
+		"test/manifest_1.yaml")
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -312,7 +326,7 @@ func TestOutdatedArtifacts(t *testing.T) {
 
 	// Test the manifest
 	manifest, err := ReadManifest(
-		"../test/manifest_1.yaml")
+		"test/manifest_1.yaml")
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -368,7 +382,7 @@ func TestApiLevelArtifactsCreate(t *testing.T) {
 
 	// Test the manifest
 	manifest, err := ReadManifest(
-		"../test/manifest_2.yaml")
+		"test/manifest_2.yaml")
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -427,7 +441,7 @@ func TestApiLevelArtifactsOutdated(t *testing.T) {
 
 	// Test the manifest
 	manifest, err := ReadManifest(
-		"../test/manifest_2.yaml")
+		"test/manifest_2.yaml")
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -476,7 +490,7 @@ func TestDerivedArtifactsCreate(t *testing.T) {
 
 	// Test the manifest
 	manifest, err := ReadManifest(
-		"../test/manifest_3.yaml")
+		"test/manifest_3.yaml")
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -534,7 +548,7 @@ func TestDerivedArtifactsMissing(t *testing.T) {
 
 	// Test the manifest
 	manifest, err := ReadManifest(
-		"../test/manifest_3.yaml")
+		"test/manifest_3.yaml")
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -595,7 +609,7 @@ func TestDerivedArtifactsOutdated(t *testing.T) {
 
 	// Test the manifest
 	manifest, err := ReadManifest(
-		"../test/manifest_3.yaml")
+		"test/manifest_3.yaml")
 	if err != nil {
 		t.Error(err.Error())
 	}

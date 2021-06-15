@@ -12,22 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package cmd
 
 import (
-        "log"
-        "context"
-        "github.com/apigee/registry/cmd/capabilities/dispatcher-server/dispatcher")
+	"github.com/spf13/cobra"
+)
 
-func main() {
-    log.Print("Starting subscriber...")
-    ctx := context.Background()
+func init() {
+	rootCmd.AddCommand(controllerCmd)
+}
 
-    // Setup and start the dispatcher server
-    dispatcher := &dispatcher.Dispatcher{}
-
-    if err := dispatcher.StartServer(ctx); err != nil {
-        log.Printf(err.Error())
-    }
-    return
+var controllerCmd = &cobra.Command{
+	Use:   "controller",
+	Short: "Manage the state of the registry (experimental)",
 }
