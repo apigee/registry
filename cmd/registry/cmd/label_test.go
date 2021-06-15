@@ -16,13 +16,13 @@ package cmd
 
 import (
 	"context"
-	"testing"
-
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/google/go-cmp/cmp"
+	"github.com/spf13/cobra"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"testing"
 )
 
 func TestLabel(t *testing.T) {
@@ -93,101 +93,81 @@ func TestLabel(t *testing.T) {
 		t.Fatalf("error creating spec %s", err)
 	}
 
-	// Add some labels to the test api.
-	rootCmd.SetArgs([]string{"label", apiName, "a=1", "b=2"})
-	if err := labelCmd.Execute(); err != nil {
-		t.Fatalf("Execute() with args %v returned error: %s", rootCmd.Args, err)
+	testCases := []struct {
+		comment  string
+		args     []string
+		expected map[string]string
+	}{
+		{"add some labels",
+			[]string{"a=1", "b=2"},
+			map[string]string{"a": "1", "b": "2"}},
+		{"remove one label and overwrite the other",
+			[]string{"a=3", "b-", "--overwrite"},
+			map[string]string{"a": "3"}},
+		{"changing a label without --overwrite should be ignored",
+			[]string{"a=4"},
+			map[string]string{"a": "3"}},
 	}
-	api, err := registryClient.GetApi(ctx, &rpc.GetApiRequest{
-		Name: apiName,
-	})
-	if diff := cmp.Diff(api.Labels, map[string]string{"a": "1", "b": "2"}); diff != "" {
-		t.Errorf("labels incorrectly set %+v", api.Labels)
+	// test labels for APIs.
+	for _, tc := range testCases {
+		cmd := &cobra.Command{}
+		cmd.SetArgs(append([]string{"label", apiName}, tc.args...))
+		labelCmd(cmd)
+		if err := cmd.Execute(); err != nil {
+			t.Fatalf("Execute() with args %+v returned error: %s", tc.args, err)
+		}
+		api, err := registryClient.GetApi(ctx, &rpc.GetApiRequest{
+			Name: apiName,
+		})
+		if err != nil {
+			t.Errorf("error getting api %s", err)
+		} else {
+			if diff := cmp.Diff(api.Labels, tc.expected); diff != "" {
+				t.Errorf("labels were incorrectly set %+v", api.Labels)
+			}
+		}
 	}
-	// Remove one label and overwrite the other.
-	rootCmd.SetArgs([]string{"label", apiName, "a=3", "b-", "--overwrite"})
-	if err = labelCmd.Execute(); err != nil {
-		t.Fatalf("Execute() with args %v returned error: %s", rootCmd.Args, err)
+	// test labels for versions.
+	for _, tc := range testCases {
+		cmd := &cobra.Command{}
+		cmd.SetArgs(append([]string{"label", versionName}, tc.args...))
+		labelCmd(cmd)
+		if err := cmd.Execute(); err != nil {
+			t.Fatalf("Execute() with args %+v returned error: %s", tc.args, err)
+		}
+		version, err := registryClient.GetApiVersion(ctx, &rpc.GetApiVersionRequest{
+			Name: versionName,
+		})
+		if err != nil {
+			t.Errorf("error getting version %s", err)
+		} else {
+			if diff := cmp.Diff(version.Labels, tc.expected); diff != "" {
+				t.Errorf("labels were incorrectly set %+v", version.Labels)
+			}
+		}
 	}
-	api, err = registryClient.GetApi(ctx, &rpc.GetApiRequest{
-		Name: apiName,
-	})
-	if diff := cmp.Diff(api.Labels, map[string]string{"a": "3"}); diff != "" {
-		t.Errorf("labels incorrectly set %+v", api.Labels)
-	}
-	// Changing a label without --overwrite should be ignored.
-	rootCmd.SetArgs([]string{"label", apiName, "a=4"})
-	if err = labelCmd.Execute(); err != nil {
-		t.Fatalf("Execute() with args %v returned error: %s", rootCmd.Args, err)
-	}
-	if diff := cmp.Diff(api.Labels, map[string]string{"a": "3"}); diff != "" {
-		t.Errorf("labels incorrectly set %+v", api.Labels)
-	}
-
-	// Add some labels to the test version.
-	rootCmd.SetArgs([]string{"label", versionName, "a=1", "b=2"})
-	if err := labelCmd.Execute(); err != nil {
-		t.Fatalf("Execute() with args %v returned error: %s", rootCmd.Args, err)
-	}
-	version, err := registryClient.GetApiVersion(ctx, &rpc.GetApiVersionRequest{
-		Name: versionName,
-	})
-	if diff := cmp.Diff(version.Labels, map[string]string{"a": "1", "b": "2"}); diff != "" {
-		t.Errorf("labels incorrectly set %+v", version.Labels)
-	}
-	// Remove one label and overwrite the other.
-	rootCmd.SetArgs([]string{"label", versionName, "a=3", "b-", "--overwrite"})
-	if err = labelCmd.Execute(); err != nil {
-		t.Fatalf("Execute() with args %v returned error: %s", rootCmd.Args, err)
-	}
-	version, err = registryClient.GetApiVersion(ctx, &rpc.GetApiVersionRequest{
-		Name: versionName,
-	})
-	if diff := cmp.Diff(version.Labels, map[string]string{"a": "3"}); diff != "" {
-		t.Errorf("labels incorrectly set %+v", version.Labels)
-	}
-	// Changing a label without --overwrite should be ignored.
-	rootCmd.SetArgs([]string{"label", versionName, "a=4"})
-	if err = labelCmd.Execute(); err != nil {
-		t.Fatalf("Execute() with args %v returned error: %s", rootCmd.Args, err)
-	}
-	if diff := cmp.Diff(version.Labels, map[string]string{"a": "3"}); diff != "" {
-		t.Errorf("labels incorrectly set %+v", version.Labels)
-	}
-
-	// Add some labels to the test spec.
-	rootCmd.SetArgs([]string{"label", specName, "a=1", "b=2"})
-	if err := labelCmd.Execute(); err != nil {
-		t.Fatalf("Execute() with args %v returned error: %s", rootCmd.Args, err)
-	}
-	spec, err := registryClient.GetApiSpec(ctx, &rpc.GetApiSpecRequest{
-		Name: specName,
-	})
-	if diff := cmp.Diff(spec.Labels, map[string]string{"a": "1", "b": "2"}); diff != "" {
-		t.Errorf("labels incorrectly set %+v", spec.Labels)
-	}
-	// Remove one label and overwrite the other.
-	rootCmd.SetArgs([]string{"label", specName, "a=3", "b-", "--overwrite"})
-	if err = labelCmd.Execute(); err != nil {
-		t.Fatalf("Execute() with args %v returned error: %s", rootCmd.Args, err)
-	}
-	spec, err = registryClient.GetApiSpec(ctx, &rpc.GetApiSpecRequest{
-		Name: specName,
-	})
-	if diff := cmp.Diff(spec.Labels, map[string]string{"a": "3"}); diff != "" {
-		t.Errorf("labels incorrectly set %+v", spec.Labels)
-	}
-	// Changing a label without --overwrite should be ignored.
-	rootCmd.SetArgs([]string{"label", specName, "a=4"})
-	if err = labelCmd.Execute(); err != nil {
-		t.Fatalf("Execute() with args %v returned error: %s", rootCmd.Args, err)
-	}
-	if diff := cmp.Diff(spec.Labels, map[string]string{"a": "3"}); diff != "" {
-		t.Errorf("labels incorrectly set %+v", spec.Labels)
+	// test labels for specs.
+	for _, tc := range testCases {
+		cmd := &cobra.Command{}
+		cmd.SetArgs(append([]string{"label", specName}, tc.args...))
+		labelCmd(cmd)
+		if err := cmd.Execute(); err != nil {
+			t.Fatalf("Execute() with args %+v returned error: %s", tc.args, err)
+		}
+		spec, err := registryClient.GetApiSpec(ctx, &rpc.GetApiSpecRequest{
+			Name: specName,
+		})
+		if err != nil {
+			t.Errorf("error getting api %s", err)
+		} else {
+			if diff := cmp.Diff(spec.Labels, tc.expected); diff != "" {
+				t.Errorf("labels were incorrectly set %+v", spec.Labels)
+			}
+		}
 	}
 
 	// Delete the test project.
-	{
+	if false {
 		req := &rpc.DeleteProjectRequest{
 			Name: projectName,
 		}
