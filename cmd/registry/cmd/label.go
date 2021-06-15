@@ -29,18 +29,13 @@ import (
 	"google.golang.org/genproto/protobuf/field_mask"
 )
 
-var labelKeyFilter string
-var labelKeyOverwrite bool
-var labelKeysToSet map[string]string
-var labelKeysToClear []string
-
 const labelFieldName = "labels"
 const labelCommandName = "label"
 
 func init() {
 	rootCmd.AddCommand(labelCmd)
-	labelCmd.Flags().StringVar(&labelKeyFilter, "filter", "", "Filter selected resources")
-	labelCmd.Flags().BoolVar(&labelKeyOverwrite, "overwrite", false, "Overwrite existing labels")
+	labelCmd.Flags().String("filter", "", "Filter selected resources")
+	labelCmd.Flags().Bool("overwrite", false, "Overwrite existing labels")
 }
 
 var labelCmd = &cobra.Command{
@@ -48,6 +43,16 @@ var labelCmd = &cobra.Command{
 	Short: fmt.Sprintf("%s resources in the API Registry", strings.Title(labelCommandName)),
 	Args:  cobra.MinimumNArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
+		flagset := cmd.LocalFlags()
+		filter, err := flagset.GetString("filter")
+		if err != nil {
+			log.Fatalf("Failed to get filter string from flags: %s", err)
+		}
+		overwrite, err := flagset.GetBool("overwrite")
+		if err != nil {
+			log.Fatalf("Failed to get overwrite boolean from flags: %s", err)
+		}
+
 		ctx := context.TODO()
 		client, err := connection.NewClient(ctx)
 		if err != nil {
@@ -61,11 +66,11 @@ var labelCmd = &cobra.Command{
 			go core.Worker(ctx, taskQueue)
 		}
 
-		labelKeysToClear = make([]string, 0)
-		labelKeysToSet = make(map[string]string)
+		valuesToClear := make([]string, 0)
+		valuesToSet := make(map[string]string)
 		for _, operation := range args[1:] {
 			if len(operation) > 1 && strings.HasSuffix(operation, "-") {
-				labelKeysToClear = append(labelKeysToClear, strings.TrimSuffix(operation, "-"))
+				valuesToClear = append(valuesToClear, strings.TrimSuffix(operation, "-"))
 			} else {
 				pair := strings.Split(operation, "=")
 				if len(pair) != 2 {
@@ -74,11 +79,12 @@ var labelCmd = &cobra.Command{
 				if pair[0] == "" {
 					log.Fatalf("%q is invalid because it specifies an empty key", operation)
 				}
-				labelKeysToSet[pair[0]] = pair[1]
+				valuesToSet[pair[0]] = pair[1]
 			}
 		}
+		labeling := &core.Labeling{Overwrite: overwrite, Set: valuesToSet, Clear: valuesToClear}
 
-		err = matchAndHandleLabelCmd(ctx, client, taskQueue, args[0])
+		err = matchAndHandleLabelCmd(ctx, client, taskQueue, args[0], filter, labeling)
 		if err != nil {
 			log.Fatalf("%s", err.Error())
 		}
@@ -93,23 +99,25 @@ func matchAndHandleLabelCmd(
 	client connection.Client,
 	taskQueue chan<- core.Task,
 	name string,
+	filter string,
+	labeling *core.Labeling,
 ) error {
 	// First try to match collection names.
 	if m := names.ApisRegexp().FindStringSubmatch(name); m != nil {
-		return labelAPIs(ctx, client, m, labelKeyFilter, taskQueue)
+		return labelAPIs(ctx, client, m, filter, labeling, taskQueue)
 	} else if m := names.VersionsRegexp().FindStringSubmatch(name); m != nil {
-		return labelVersions(ctx, client, m, labelKeyFilter, taskQueue)
+		return labelVersions(ctx, client, m, filter, labeling, taskQueue)
 	} else if m := names.SpecsRegexp().FindStringSubmatch(name); m != nil {
-		return labelSpecs(ctx, client, m, labelKeyFilter, taskQueue)
+		return labelSpecs(ctx, client, m, filter, labeling, taskQueue)
 	}
 
 	// Then try to match resource names.
 	if m := names.ApiRegexp().FindStringSubmatch(name); m != nil {
-		return labelAPIs(ctx, client, m, labelKeyFilter, taskQueue)
+		return labelAPIs(ctx, client, m, filter, labeling, taskQueue)
 	} else if m := names.VersionRegexp().FindStringSubmatch(name); m != nil {
-		return labelVersions(ctx, client, m, labelKeyFilter, taskQueue)
+		return labelVersions(ctx, client, m, filter, labeling, taskQueue)
 	} else if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
-		return labelSpecs(ctx, client, m, labelKeyFilter, taskQueue)
+		return labelSpecs(ctx, client, m, filter, labeling, taskQueue)
 	} else {
 		return fmt.Errorf("unsupported resource name %s", name)
 	}
@@ -119,12 +127,14 @@ func labelAPIs(ctx context.Context,
 	client *gapic.RegistryClient,
 	segments []string,
 	filterFlag string,
+	labeling *core.Labeling,
 	taskQueue chan<- core.Task) error {
 	return core.ListAPIs(ctx, client, segments, filterFlag, func(api *rpc.Api) {
 		taskQueue <- &labelApiTask{
-			ctx:    ctx,
-			client: client,
-			api:    api,
+			ctx:      ctx,
+			client:   client,
+			api:      api,
+			labeling: labeling,
 		}
 	})
 }
@@ -134,12 +144,14 @@ func labelVersions(
 	client *gapic.RegistryClient,
 	segments []string,
 	filterFlag string,
+	labeling *core.Labeling,
 	taskQueue chan<- core.Task) error {
 	return core.ListVersions(ctx, client, segments, filterFlag, func(version *rpc.ApiVersion) {
 		taskQueue <- &labelVersionTask{
-			ctx:     ctx,
-			client:  client,
-			version: version,
+			ctx:      ctx,
+			client:   client,
+			version:  version,
+			labeling: labeling,
 		}
 	})
 }
@@ -149,20 +161,23 @@ func labelSpecs(
 	client *gapic.RegistryClient,
 	segments []string,
 	filterFlag string,
+	labeling *core.Labeling,
 	taskQueue chan<- core.Task) error {
 	return core.ListSpecs(ctx, client, segments, filterFlag, func(spec *rpc.ApiSpec) {
 		taskQueue <- &labelSpecTask{
-			ctx:    ctx,
-			client: client,
-			spec:   spec,
+			ctx:      ctx,
+			client:   client,
+			spec:     spec,
+			labeling: labeling,
 		}
 	})
 }
 
 type labelApiTask struct {
-	ctx    context.Context
-	client connection.Client
-	api    *rpc.Api
+	ctx      context.Context
+	client   connection.Client
+	api      *rpc.Api
+	labeling *core.Labeling
 }
 
 func (task *labelApiTask) String() string {
@@ -171,7 +186,7 @@ func (task *labelApiTask) String() string {
 
 func (task *labelApiTask) Run() error {
 	var err error
-	task.api.Labels, err = core.UpdateMap(task.api.Labels, labelKeyOverwrite, labelKeysToSet, labelKeysToClear)
+	task.api.Labels, err = task.labeling.Apply(task.api.Labels)
 	if err != nil {
 		return err
 	}
@@ -186,9 +201,10 @@ func (task *labelApiTask) Run() error {
 }
 
 type labelVersionTask struct {
-	ctx     context.Context
-	client  connection.Client
-	version *rpc.ApiVersion
+	ctx      context.Context
+	client   connection.Client
+	version  *rpc.ApiVersion
+	labeling *core.Labeling
 }
 
 func (task *labelVersionTask) String() string {
@@ -197,7 +213,7 @@ func (task *labelVersionTask) String() string {
 
 func (task *labelVersionTask) Run() error {
 	var err error
-	task.version.Labels, err = core.UpdateMap(task.version.Labels, labelKeyOverwrite, labelKeysToSet, labelKeysToClear)
+	task.version.Labels, err = task.labeling.Apply(task.version.Labels)
 	if err != nil {
 		return err
 	}
@@ -212,9 +228,10 @@ func (task *labelVersionTask) Run() error {
 }
 
 type labelSpecTask struct {
-	ctx    context.Context
-	client connection.Client
-	spec   *rpc.ApiSpec
+	ctx      context.Context
+	client   connection.Client
+	spec     *rpc.ApiSpec
+	labeling *core.Labeling
 }
 
 func (task *labelSpecTask) String() string {
@@ -223,7 +240,7 @@ func (task *labelSpecTask) String() string {
 
 func (task *labelSpecTask) Run() error {
 	var err error
-	task.spec.Labels, err = core.UpdateMap(task.spec.Labels, labelKeyOverwrite, labelKeysToSet, labelKeysToClear)
+	task.spec.Labels, err = task.labeling.Apply(task.spec.Labels)
 	if err != nil {
 		return err
 	}

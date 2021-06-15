@@ -18,6 +18,36 @@ import (
 	"fmt"
 )
 
+// Labeling represents a user-specified change to a set of labels or annotations.
+// Note that this same structure is used for both labels and annotations.
+type Labeling struct {
+	Overwrite bool
+	Set       map[string]string
+	Clear     []string
+}
+
+// Apply applies a labeling to a map. It returns the modified map
+// because it creates the map if nil is passed in.
+func (l *Labeling) Apply(m map[string]string) (map[string]string, error) {
+	if m == nil {
+		m = make(map[string]string)
+	}
+	if !l.Overwrite {
+		for k, _ := range l.Set {
+			if v, ok := m[k]; ok {
+				return nil, fmt.Errorf("%q already has a value (%s), and --overwrite is false", k, v)
+			}
+		}
+	}
+	for _, k := range l.Clear {
+		delete(m, k)
+	}
+	for k, v := range l.Set {
+		m[k] = v
+	}
+	return m, nil
+}
+
 // UpdateMap updates a map containing labels or annotations to be modified.
 func UpdateMap(m map[string]string,
 	keyOverwrite bool,

@@ -29,18 +29,13 @@ import (
 	"google.golang.org/genproto/protobuf/field_mask"
 )
 
-var annotateKeyFilter string
-var annotateKeyOverwrite bool
-var annotateKeysToSet map[string]string
-var annotateKeysToClear []string
-
 const annotateFieldName = "annotations"
 const annotateCommandName = "annotate"
 
 func init() {
 	rootCmd.AddCommand(annotateCmd)
-	annotateCmd.Flags().StringVar(&annotateKeyFilter, "filter", "", "Filter selected resources")
-	annotateCmd.Flags().BoolVar(&annotateKeyOverwrite, "overwrite", false, "Overwrite existing annotations")
+	annotateCmd.Flags().String("filter", "", "Filter selected resources")
+	annotateCmd.Flags().Bool("overwrite", false, "Overwrite existing annotations")
 }
 
 var annotateCmd = &cobra.Command{
@@ -48,6 +43,16 @@ var annotateCmd = &cobra.Command{
 	Short: fmt.Sprintf("%s resources in the API Registry", strings.Title(annotateCommandName)),
 	Args:  cobra.MinimumNArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
+		flagset := cmd.LocalFlags()
+		filter, err := flagset.GetString("filter")
+		if err != nil {
+			log.Fatalf("Failed to get filter string from flags: %s", err)
+		}
+		overwrite, err := flagset.GetBool("overwrite")
+		if err != nil {
+			log.Fatalf("Failed to get overwrite boolean from flags: %s", err)
+		}
+
 		ctx := context.TODO()
 		client, err := connection.NewClient(ctx)
 		if err != nil {
@@ -61,11 +66,11 @@ var annotateCmd = &cobra.Command{
 			go core.Worker(ctx, taskQueue)
 		}
 
-		annotateKeysToClear = make([]string, 0)
-		annotateKeysToSet = make(map[string]string)
+		valuesToClear := make([]string, 0)
+		valuesToSet := make(map[string]string)
 		for _, operation := range args[1:] {
 			if len(operation) > 1 && strings.HasSuffix(operation, "-") {
-				annotateKeysToClear = append(annotateKeysToClear, strings.TrimSuffix(operation, "-"))
+				valuesToClear = append(valuesToClear, strings.TrimSuffix(operation, "-"))
 			} else {
 				pair := strings.Split(operation, "=")
 				if len(pair) != 2 {
@@ -74,11 +79,12 @@ var annotateCmd = &cobra.Command{
 				if pair[0] == "" {
 					log.Fatalf("%q is invalid because it specifies an empty key", operation)
 				}
-				annotateKeysToSet[pair[0]] = pair[1]
+				valuesToSet[pair[0]] = pair[1]
 			}
 		}
+		labeling := &core.Labeling{Overwrite: overwrite, Set: valuesToSet, Clear: valuesToClear}
 
-		err = matchAndHandleAnnotateCmd(ctx, client, taskQueue, args[0])
+		err = matchAndHandleAnnotateCmd(ctx, client, taskQueue, args[0], filter, labeling)
 		if err != nil {
 			log.Fatalf("%s", err.Error())
 		}
@@ -93,23 +99,25 @@ func matchAndHandleAnnotateCmd(
 	client connection.Client,
 	taskQueue chan<- core.Task,
 	name string,
+	filter string,
+	labeling *core.Labeling,
 ) error {
 	// First try to match collection names.
 	if m := names.ApisRegexp().FindStringSubmatch(name); m != nil {
-		return annotateAPIs(ctx, client, m, annotateKeyFilter, taskQueue)
+		return annotateAPIs(ctx, client, m, filter, labeling, taskQueue)
 	} else if m := names.VersionsRegexp().FindStringSubmatch(name); m != nil {
-		return annotateVersions(ctx, client, m, annotateKeyFilter, taskQueue)
+		return annotateVersions(ctx, client, m, filter, labeling, taskQueue)
 	} else if m := names.SpecsRegexp().FindStringSubmatch(name); m != nil {
-		return annotateSpecs(ctx, client, m, annotateKeyFilter, taskQueue)
+		return annotateSpecs(ctx, client, m, filter, labeling, taskQueue)
 	}
 
 	// Then try to match resource names.
 	if m := names.ApiRegexp().FindStringSubmatch(name); m != nil {
-		return annotateAPIs(ctx, client, m, annotateKeyFilter, taskQueue)
+		return annotateAPIs(ctx, client, m, filter, labeling, taskQueue)
 	} else if m := names.VersionRegexp().FindStringSubmatch(name); m != nil {
-		return annotateVersions(ctx, client, m, annotateKeyFilter, taskQueue)
+		return annotateVersions(ctx, client, m, filter, labeling, taskQueue)
 	} else if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
-		return annotateSpecs(ctx, client, m, annotateKeyFilter, taskQueue)
+		return annotateSpecs(ctx, client, m, filter, labeling, taskQueue)
 	} else {
 		return fmt.Errorf("unsupported resource name %s", name)
 	}
@@ -119,12 +127,14 @@ func annotateAPIs(ctx context.Context,
 	client *gapic.RegistryClient,
 	segments []string,
 	filterFlag string,
+	labeling *core.Labeling,
 	taskQueue chan<- core.Task) error {
 	return core.ListAPIs(ctx, client, segments, filterFlag, func(api *rpc.Api) {
 		taskQueue <- &annotateApiTask{
-			ctx:    ctx,
-			client: client,
-			api:    api,
+			ctx:      ctx,
+			client:   client,
+			api:      api,
+			labeling: labeling,
 		}
 	})
 }
@@ -134,12 +144,14 @@ func annotateVersions(
 	client *gapic.RegistryClient,
 	segments []string,
 	filterFlag string,
+	labeling *core.Labeling,
 	taskQueue chan<- core.Task) error {
 	return core.ListVersions(ctx, client, segments, filterFlag, func(version *rpc.ApiVersion) {
 		taskQueue <- &annotateVersionTask{
-			ctx:     ctx,
-			client:  client,
-			version: version,
+			ctx:      ctx,
+			client:   client,
+			version:  version,
+			labeling: labeling,
 		}
 	})
 }
@@ -149,20 +161,23 @@ func annotateSpecs(
 	client *gapic.RegistryClient,
 	segments []string,
 	filterFlag string,
+	labeling *core.Labeling,
 	taskQueue chan<- core.Task) error {
 	return core.ListSpecs(ctx, client, segments, filterFlag, func(spec *rpc.ApiSpec) {
 		taskQueue <- &annotateSpecTask{
-			ctx:    ctx,
-			client: client,
-			spec:   spec,
+			ctx:      ctx,
+			client:   client,
+			spec:     spec,
+			labeling: labeling,
 		}
 	})
 }
 
 type annotateApiTask struct {
-	ctx    context.Context
-	client connection.Client
-	api    *rpc.Api
+	ctx      context.Context
+	client   connection.Client
+	api      *rpc.Api
+	labeling *core.Labeling
 }
 
 func (task *annotateApiTask) String() string {
@@ -171,7 +186,7 @@ func (task *annotateApiTask) String() string {
 
 func (task *annotateApiTask) Run() error {
 	var err error
-	task.api.Annotations, err = core.UpdateMap(task.api.Annotations, annotateKeyOverwrite, annotateKeysToSet, annotateKeysToClear)
+	task.api.Annotations, err = task.labeling.Apply(task.api.Annotations)
 	if err != nil {
 		return err
 	}
@@ -186,9 +201,10 @@ func (task *annotateApiTask) Run() error {
 }
 
 type annotateVersionTask struct {
-	ctx     context.Context
-	client  connection.Client
-	version *rpc.ApiVersion
+	ctx      context.Context
+	client   connection.Client
+	version  *rpc.ApiVersion
+	labeling *core.Labeling
 }
 
 func (task *annotateVersionTask) String() string {
@@ -197,7 +213,7 @@ func (task *annotateVersionTask) String() string {
 
 func (task *annotateVersionTask) Run() error {
 	var err error
-	task.version.Annotations, err = core.UpdateMap(task.version.Annotations, annotateKeyOverwrite, annotateKeysToSet, annotateKeysToClear)
+	task.version.Annotations, err = task.labeling.Apply(task.version.Annotations)
 	if err != nil {
 		return err
 	}
@@ -212,9 +228,10 @@ func (task *annotateVersionTask) Run() error {
 }
 
 type annotateSpecTask struct {
-	ctx    context.Context
-	client connection.Client
-	spec   *rpc.ApiSpec
+	ctx      context.Context
+	client   connection.Client
+	spec     *rpc.ApiSpec
+	labeling *core.Labeling
 }
 
 func (task *annotateSpecTask) String() string {
@@ -223,7 +240,7 @@ func (task *annotateSpecTask) String() string {
 
 func (task *annotateSpecTask) Run() error {
 	var err error
-	task.spec.Annotations, err = core.UpdateMap(task.spec.Annotations, annotateKeyOverwrite, annotateKeysToSet, annotateKeysToClear)
+	task.spec.Annotations, err = task.labeling.Apply(task.spec.Annotations)
 	if err != nil {
 		return err
 	}
