@@ -27,7 +27,7 @@ func Command() *cobra.Command {
 	}
 
 	cmd.AddCommand(sheet.Command())
-	cmd.AddCommand(yaml.ExportYAMLCmd)
+	cmd.AddCommand(yaml.Command())
 
 	return cmd
 }

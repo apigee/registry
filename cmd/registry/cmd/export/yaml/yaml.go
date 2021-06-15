@@ -25,44 +25,48 @@ import (
 	"golang.org/x/net/context"
 )
 
-var ExportYAMLCmd = &cobra.Command{
-	Use:   "yaml",
-	Short: "Export a subtree of the registry to a YAML file",
-	Args:  cobra.MinimumNArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		ctx := context.TODO()
-		client, err := connection.NewClient(ctx)
-		if err != nil {
-			log.Fatalf("%s", err.Error())
-		}
+func Command() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "yaml",
+		Short: "Export a subtree of the registry to a YAML file",
+		Args:  cobra.MinimumNArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			ctx := context.TODO()
+			client, err := connection.NewClient(ctx)
+			if err != nil {
+				log.Fatalf("%s", err.Error())
+			}
 
-		var name string
-		if len(args) > 0 {
-			name = args[0]
-		}
+			var name string
+			if len(args) > 0 {
+				name = args[0]
+			}
 
-		if m := names.ProjectRegexp().FindStringSubmatch(name); m != nil {
-			_, err := core.GetProject(ctx, client, m, func(message *rpc.Project) {
-				exportYAMLForProject(ctx, client, message)
-			})
-			check(err)
-		} else if m := names.ApiRegexp().FindStringSubmatch(name); m != nil {
-			_, err = core.GetAPI(ctx, client, m, func(message *rpc.Api) {
-				exportYAMLForAPI(ctx, client, message)
-			})
-			check(err)
-		} else if m := names.VersionRegexp().FindStringSubmatch(name); m != nil {
-			_, err = core.GetVersion(ctx, client, m, func(message *rpc.ApiVersion) {
-				exportYAMLForVersion(ctx, client, message)
-			})
-			check(err)
-		} else if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
-			_, err = core.GetSpec(ctx, client, m, false, func(message *rpc.ApiSpec) {
-				exportYAMLForSpec(ctx, client, message)
-			})
-			check(err)
-		} else {
-			log.Fatalf("Unsupported entity %+s", name)
-		}
-	},
+			if m := names.ProjectRegexp().FindStringSubmatch(name); m != nil {
+				_, err := core.GetProject(ctx, client, m, func(message *rpc.Project) {
+					exportYAMLForProject(ctx, client, message)
+				})
+				check(err)
+			} else if m := names.ApiRegexp().FindStringSubmatch(name); m != nil {
+				_, err = core.GetAPI(ctx, client, m, func(message *rpc.Api) {
+					exportYAMLForAPI(ctx, client, message)
+				})
+				check(err)
+			} else if m := names.VersionRegexp().FindStringSubmatch(name); m != nil {
+				_, err = core.GetVersion(ctx, client, m, func(message *rpc.ApiVersion) {
+					exportYAMLForVersion(ctx, client, message)
+				})
+				check(err)
+			} else if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
+				_, err = core.GetSpec(ctx, client, m, false, func(message *rpc.ApiSpec) {
+					exportYAMLForSpec(ctx, client, message)
+				})
+				check(err)
+			} else {
+				log.Fatalf("Unsupported entity %+s", name)
+			}
+		},
+	}
+
+	return cmd
 }
