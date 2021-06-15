@@ -16,6 +16,7 @@ package export
 
 import (
 	"github.com/apigee/registry/cmd/registry/cmd/export/sheet"
+	"github.com/apigee/registry/cmd/registry/cmd/export/yaml"
 	"github.com/spf13/cobra"
 )
 
@@ -26,7 +27,7 @@ func Command() *cobra.Command {
 	}
 
 	cmd.AddCommand(sheet.Command())
-	cmd.AddCommand(exportYAMLCmd)
+	cmd.AddCommand(yaml.ExportYAMLCmd)
 
 	return cmd
 }

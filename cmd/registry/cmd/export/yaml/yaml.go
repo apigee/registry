@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package export
+package yaml
 
 import (
 	"log"
@@ -25,13 +25,7 @@ import (
 	"golang.org/x/net/context"
 )
 
-func check(err error) {
-	if err != nil {
-		log.Fatalf("%s", err.Error())
-	}
-}
-
-var exportYAMLCmd = &cobra.Command{
+var ExportYAMLCmd = &cobra.Command{
 	Use:   "yaml",
 	Short: "Export a subtree of the registry to a YAML file",
 	Args:  cobra.MinimumNArgs(1),
@@ -49,22 +43,22 @@ var exportYAMLCmd = &cobra.Command{
 
 		if m := names.ProjectRegexp().FindStringSubmatch(name); m != nil {
 			_, err := core.GetProject(ctx, client, m, func(message *rpc.Project) {
-				core.ExportYAMLForProject(ctx, client, message)
+				exportYAMLForProject(ctx, client, message)
 			})
 			check(err)
 		} else if m := names.ApiRegexp().FindStringSubmatch(name); m != nil {
 			_, err = core.GetAPI(ctx, client, m, func(message *rpc.Api) {
-				core.ExportYAMLForAPI(ctx, client, message)
+				exportYAMLForAPI(ctx, client, message)
 			})
 			check(err)
 		} else if m := names.VersionRegexp().FindStringSubmatch(name); m != nil {
 			_, err = core.GetVersion(ctx, client, m, func(message *rpc.ApiVersion) {
-				core.ExportYAMLForVersion(ctx, client, message)
+				exportYAMLForVersion(ctx, client, message)
 			})
 			check(err)
 		} else if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
 			_, err = core.GetSpec(ctx, client, m, false, func(message *rpc.ApiSpec) {
-				core.ExportYAMLForSpec(ctx, client, message)
+				exportYAMLForSpec(ctx, client, message)
 			})
 			check(err)
 		} else {

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package core
+package yaml
 
 import (
 	"context"
@@ -21,6 +21,7 @@ import (
 	"path"
 	"time"
 
+	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
@@ -33,23 +34,23 @@ func check(err error) {
 	}
 }
 
-// ExportYAMLForProject writes a project as a YAML file.
-func ExportYAMLForProject(ctx context.Context, client *gapic.RegistryClient, message *rpc.Project) {
+// exportYAMLForProject writes a project as a YAML file.
+func exportYAMLForProject(ctx context.Context, client *gapic.RegistryClient, message *rpc.Project) {
 	printDocAsYaml(docForMapping(exportProject(ctx, client, message)))
 }
 
-// ExportYAMLForAPI writes a project as a YAML file.
-func ExportYAMLForAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api) {
+// exportYAMLForAPI writes a project as a YAML file.
+func exportYAMLForAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api) {
 	printDocAsYaml(docForMapping(exportAPI(ctx, client, message)))
 }
 
-// ExportYAMLForVersion writes a project as a YAML file.
-func ExportYAMLForVersion(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiVersion) {
+// exportYAMLForVersion writes a project as a YAML file.
+func exportYAMLForVersion(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiVersion) {
 	printDocAsYaml(docForMapping(exportVersion(ctx, client, message)))
 }
 
-// ExportYAMLForSpec writes a project as a YAML file.
-func ExportYAMLForSpec(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiSpec) {
+// exportYAMLForSpec writes a project as a YAML file.
+func exportYAMLForSpec(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiSpec) {
 	printDocAsYaml(docForMapping(exportSpec(ctx, client, message)))
 }
 
@@ -57,7 +58,7 @@ func exportProject(ctx context.Context, client *gapic.RegistryClient, message *r
 	m := names.ProjectRegexp().FindStringSubmatch(message.Name)
 	projectMapContent := nodeSlice()
 	apisMapContent := nodeSlice()
-	err := ListAPIs(ctx, client, m, "", func(message *rpc.Api) {
+	err := core.ListAPIs(ctx, client, m, "", func(message *rpc.Api) {
 		apiMapContent := exportAPI(ctx, client, message)
 		apisMapContent = appendPair(apisMapContent, path.Base(message.Name), nodeForMapping(apiMapContent))
 	})
@@ -73,14 +74,14 @@ func exportAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.A
 	apiMapContent = appendPair(apiMapContent, "availability", nodeForString(message.Availability))
 	apiMapContent = appendPair(apiMapContent, "recommended_version", nodeForString(message.RecommendedVersion))
 	versionsMapContent := nodeSlice()
-	err := ListVersions(ctx, client, m, "", func(message *rpc.ApiVersion) {
+	err := core.ListVersions(ctx, client, m, "", func(message *rpc.ApiVersion) {
 		versionMapContent := exportVersion(ctx, client, message)
 		versionsMapContent = appendPair(versionsMapContent, path.Base(message.Name), nodeForMapping(versionMapContent))
 	})
 	check(err)
 	apiMapContent = appendPair(apiMapContent, "versions", nodeForMapping(versionsMapContent))
 	artifactsMapContent := nodeSlice()
-	err = ListArtifactsForParent(ctx, client, m, func(message *rpc.Artifact) {
+	_ = core.ListArtifactsForParent(ctx, client, m, func(message *rpc.Artifact) {
 		artifactsMapContent = appendPair(artifactsMapContent,
 			path.Base(message.Name),
 			nodeForMapping(exportArtifact(ctx, client, message)))
@@ -97,11 +98,11 @@ func exportVersion(ctx context.Context, client *gapic.RegistryClient, message *r
 	versionMapContent = appendPair(versionMapContent, "createTime", nodeForTime(message.CreateTime.AsTime()))
 	versionMapContent = appendPair(versionMapContent, "state", nodeForString(message.State))
 	specsMapContent := nodeSlice()
-	err := ListSpecs(ctx, client, m, "", func(message *rpc.ApiSpec) {
+	err := core.ListSpecs(ctx, client, m, "", func(message *rpc.ApiSpec) {
 		specMapContent := exportSpec(ctx, client, message)
 		specsMapContent = appendPair(specsMapContent, path.Base(message.Name), nodeForMapping(specMapContent))
 		m := names.SpecRegexp().FindStringSubmatch(message.Name)
-		err := ListSpecRevisions(ctx, client, m, "", func(message *rpc.ApiSpec) {
+		err := core.ListSpecRevisions(ctx, client, m, "", func(message *rpc.ApiSpec) {
 			specMapContent := exportSpec(ctx, client, message)
 			specsMapContent = appendPair(specsMapContent, path.Base(message.Name), nodeForMapping(specMapContent))
 		})
@@ -110,7 +111,7 @@ func exportVersion(ctx context.Context, client *gapic.RegistryClient, message *r
 	check(err)
 	versionMapContent = appendPair(versionMapContent, "specs", nodeForMapping(specsMapContent))
 	artifactsMapContent := nodeSlice()
-	err = ListArtifactsForParent(ctx, client, m, func(message *rpc.Artifact) {
+	_ = core.ListArtifactsForParent(ctx, client, m, func(message *rpc.Artifact) {
 		artifactsMapContent = appendPair(artifactsMapContent,
 			path.Base(message.Name),
 			nodeForMapping(exportArtifact(ctx, client, message)))
@@ -149,13 +150,6 @@ func nodeForMapping(content []*yaml.Node) *yaml.Node {
 	}
 }
 
-func nodeForSequence(content []*yaml.Node) *yaml.Node {
-	return &yaml.Node{
-		Kind:    yaml.SequenceNode,
-		Content: content,
-	}
-}
-
 func nodeForString(value string) *yaml.Node {
 	return &yaml.Node{
 		Kind:  yaml.ScalarNode,
@@ -164,27 +158,11 @@ func nodeForString(value string) *yaml.Node {
 	}
 }
 
-func nodeForBoolean(value bool) *yaml.Node {
-	return &yaml.Node{
-		Kind:  yaml.ScalarNode,
-		Tag:   "!!bool",
-		Value: fmt.Sprintf("%t", value),
-	}
-}
-
 func nodeForInt64(value int64) *yaml.Node {
 	return &yaml.Node{
 		Kind:  yaml.ScalarNode,
 		Tag:   "!!int",
 		Value: fmt.Sprintf("%d", value),
-	}
-}
-
-func nodeForFloat64(value float64) *yaml.Node {
-	return &yaml.Node{
-		Kind:  yaml.ScalarNode,
-		Tag:   "!!float",
-		Value: fmt.Sprintf("%f", value),
 	}
 }
 
