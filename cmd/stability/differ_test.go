@@ -29,7 +29,7 @@ components:
 	expected_name_1 = "Test"
 	expected_name_2 = "Test"
 )
-
+//Test Yaml Diff
 func TestDiffYaml(t *testing.T){
 	yamlFile, err := ioutil.ReadFile("test1-3.0.0.yaml")
 	if err != nil {
@@ -72,6 +72,7 @@ func TestDiffYaml(t *testing.T){
 				diff_proto.SpecRevision)
 	}
 }
+//Test Json Diff
 func TestDiffJson(t *testing.T){
 	jsonFile, err := ioutil.ReadFile("test1-3.0.0.json")
 	if err != nil {

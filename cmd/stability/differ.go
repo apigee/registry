@@ -10,11 +10,7 @@ import (
 	"github.com/tufin/oasdiff/diff"
 	"gopkg.in/yaml.v3"
 )
-
-const (
-	fmtYAML = "yaml"
-)
-
+// tuffin/oasdiff options
 type DiffOptions struct{
 	prefix string
 	filter string
@@ -31,7 +27,7 @@ func NewDefaultDiffOptions() DiffOptions{
 	diffOptions.summary = true
 	return diffOptions
 }
-
+//Diff 2 specs with set diff options.
 func (diffOptions *DiffOptions)GetDiff(base []byte, revision []byte) ([]byte, error){
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
@@ -55,8 +51,8 @@ func (diffOptions *DiffOptions)GetDiff(base []byte, revision []byte) ([]byte, er
 		fmt.Printf("diff failed with %v", err)
 		return nil, err
 	}
-
 	var yaml_bytes = getYAML(diffReport)
+	//Convert Yaml Diff to string.
 	stringYamlDiff := string(yaml_bytes)
 	p := &pb.TextDiff{
 		Diff: stringYamlDiff,
@@ -70,11 +66,11 @@ func (diffOptions *DiffOptions)GetDiff(base []byte, revision []byte) ([]byte, er
 	}
 	return data, nil
 }
-
+//Convert Interface to yaml
 func getYAML(output interface{}) ([]byte) {
 	bytes, err := yaml.Marshal(output)
 	if err != nil {
-		fmt.Printf("failed to marshal result as %q with %v", fmtYAML, err)
+		fmt.Printf("failed to marshal result as yaml with %v", err)
 		return bytes
 	}
 	return bytes
