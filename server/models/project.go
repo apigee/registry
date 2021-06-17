@@ -75,18 +75,13 @@ func (p *Project) Message() (message *rpc.Project, err error) {
 
 // Update modifies a project using the contents of a message.
 func (p *Project) Update(message *rpc.Project, mask *fieldmaskpb.FieldMask) {
-	if activeUpdateMask(mask) {
-		for _, field := range mask.Paths {
-			switch field {
-			case "display_name":
-				p.DisplayName = message.GetDisplayName()
-			case "description":
-				p.Description = message.GetDescription()
-			}
-		}
-	} else {
-		p.DisplayName = message.GetDisplayName()
-		p.Description = message.GetDescription()
-	}
 	p.UpdateTime = time.Now()
+	for _, field := range mask.GetPaths() {
+		switch field {
+		case "display_name":
+			p.DisplayName = message.GetDisplayName()
+		case "description":
+			p.Description = message.GetDescription()
+		}
+	}
 }
