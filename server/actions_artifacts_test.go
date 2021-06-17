@@ -760,8 +760,7 @@ func TestListArtifactsSequence(t *testing.T) {
 		}
 
 		if got.GetNextPageToken() != "" {
-			// TODO: This should be changed to a test error when possible. See: https://github.com/apigee/registry/issues/68
-			t.Logf("ListArtifacts(%+v) returned next_page_token, expected no next page", req)
+			t.Errorf("ListArtifacts(%+v) returned next_page_token, expected no next page", req)
 		}
 
 		listed = append(listed, got.Artifacts...)
