@@ -1,0 +1,30 @@
+syntax = "proto3";
+package google.cloud.apigee.registry.applications.v1;
+// [START go_declaration]
+option go_package = "github.com/apigee/registry/rpc;rpc";
+// [END go_declaration]
+
+/* This proto contains the diff of a spec and its revision. Changes that are
+additions fall in the added field. Changes that are Deletions fall in the
+deleted field, and changes that modify values fall in the value_modify map
+field. */
+message Diff {
+  // Change will be displayed in format foo.bar.x
+  repeated string added = 1;
+  // Change will be displayed in format foo.bar.x
+  repeated string deleted = 2;
+
+  message Value_Modification {
+    string From = 1;
+    string To = 2;
+  }
+  // Change will be displayed in format foo.bar.x
+  map <string, value_modification> modification= 3;
+}
+/*
+
+components.schemas.x
+components.schemas.x.x.x.x
+components.schemas.Pet.required.deleted.name
+
+ */
