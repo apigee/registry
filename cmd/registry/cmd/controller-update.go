@@ -18,6 +18,10 @@ import (
 	"log"
 	"github.com/apigee/registry/cmd/registry/controller"
     "github.com/spf13/cobra"
+	"github.com/apigee/registry/cmd/registry/core"
+	"context"
+	"github.com/apigee/registry/connection"
+	"fmt"
 )
 
 func init() {
@@ -41,14 +45,36 @@ var controllerUpdateCmd = &cobra.Command{
 			log.Fatal(err.Error())
 		}
 
-		actions, err := controller.ProcessManifest(manifest)
+		ctx := context.TODO()
+		client, err := connection.NewClient(ctx)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+
+		log.Print("Generating list of actions...")
+		actions, err := controller.ProcessManifest(ctx, client, manifest)
 		if err!=nil {
 			log.Fatal(err.Error())
 		}
 
-		log.Print("Actions:")
-		for i, a := range actions {
-			log.Printf("%d: %s", i, a)
+		log.Printf("Generated %d actions. Starting Execution..." , len(actions))
+
+		taskQueue := make(chan core.Task, 1024)
+		for i := 0; i < 64; i++ {
+			core.WaitGroup().Add(1)
+			go core.Worker(ctx, taskQueue)
 		}
+		defer core.WaitGroup().Wait()
+		defer close(taskQueue)
+
+		// Submit tasks to taskQueue
+		for i, a := range actions {
+			taskQueue <- &controller.ExecCommandTask{
+				Action: a,
+				TaskID: fmt.Sprintf("task%d", i),
+			}
+		}
+
+		return
 	},
 } 
