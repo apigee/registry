@@ -21,20 +21,6 @@ import (
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
-// activeUpdateMask returns true if an update mask should be used to filter fields of a message.
-func activeUpdateMask(mask *fieldmaskpb.FieldMask) bool {
-	if mask == nil {
-		return false
-	}
-	if len(mask.Paths) == 0 {
-		return false
-	}
-	if len(mask.Paths) == 1 && mask.Paths[0] == "*" {
-		return false
-	}
-	return true
-}
-
 // ValidateMask returns an error if and only if the given mask does not follow AIP-134 guidance.
 func ValidateMask(message protoreflect.ProtoMessage, mask *fieldmaskpb.FieldMask) error {
 	// Nil masks are valid for implicit updates.
