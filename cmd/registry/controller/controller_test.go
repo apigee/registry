@@ -65,7 +65,7 @@ func createProject(
 	if err != nil {
 		t.Fatalf("Failed CreateProject(%v): %s", req, err.Error())
 	}
-	if project.GetName() != "projects/" + "controller-demo" {
+	if project.GetName() != "projects/" + "controller-test" {
 		t.Fatalf("Invalid project name %s", project.GetName())
 	}
 }
@@ -85,10 +85,10 @@ func createApi(
 				Availability: "GENERAL",
 			},
 		}
-		_, err := client.CreateApi(ctx, req)
-		if err != nil {
-			t.Fatalf("Failed CreateApi(%v): %s", req, err.Error())
-		}
+	_, err := client.CreateApi(ctx, req)
+	if err != nil {
+		t.Fatalf("Failed CreateApi(%v): %s", req, err.Error())
+	}
 }
 
 func createVersion(
@@ -102,10 +102,10 @@ func createVersion(
 			ApiVersionId: versionID,
 			ApiVersion:   &rpc.ApiVersion{},
 		}
-		_, err := client.CreateApiVersion(ctx, req)
-		if err != nil {
-			t.Fatalf("Failed CreateApiVersion(%v): %s", req, err.Error())
-		}
+	_, err := client.CreateApiVersion(ctx, req)
+	if err != nil {
+		t.Fatalf("Failed CreateApiVersion(%v): %s", req, err.Error())
+	}
 }
 
 func createSpec(
@@ -179,11 +179,11 @@ func TestSingleSpec(t *testing.T) {
 	}
 	defer registryClient.Close()
 	// Setup
-	deleteProject(ctx, registryClient, t, "controller-demo")
-	createProject(ctx, registryClient, t, "controller-demo")
-	createApi(ctx, registryClient, t, "projects/controller-demo", "petstore")
-	createVersion(ctx, registryClient, t, "projects/controller-demo/apis/petstore", "1.0.0")
-	createSpec(ctx, registryClient, t, "projects/controller-demo/apis/petstore/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
+	deleteProject(ctx, registryClient, t, "controller-test")
+	createProject(ctx, registryClient, t, "controller-test")
+	createApi(ctx, registryClient, t, "projects/controller-test", "petstore")
+	createVersion(ctx, registryClient, t, "projects/controller-test/apis/petstore", "1.0.0")
+	createSpec(ctx, registryClient, t, "projects/controller-test/apis/petstore/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
 
 	// Test the manifest
 	manifest, err := ReadManifest(
@@ -192,14 +192,16 @@ func TestSingleSpec(t *testing.T) {
 		t.Error(err.Error())
 	}
 
-	actions, err := ProcessManifest(manifest)
+	actions, err := ProcessManifest(ctx, registryClient, manifest)
 	if err != nil {
 		log.Printf(err.Error())
 	}
-	expectedActions := []string{"compute lint projects/controller-demo/apis/petstore/versions/1.0.0/specs/openapi.yaml --linter gnostic"}
+	expectedActions := []string{"compute lint projects/controller-test/apis/petstore/versions/1.0.0/specs/openapi.yaml --linter gnostic"}
 	if diff := cmp.Diff(expectedActions, actions, sortStrings); diff != "" {
 		t.Errorf("ProcessManifest(%+v) returned unexpected diff (-want +got):\n%s", manifest, diff)
 	}
+
+	deleteProject(ctx, registryClient, t, "controller-test")
 }
 
 func TestMultipleSpecs(t *testing.T) {
@@ -214,18 +216,18 @@ func TestMultipleSpecs(t *testing.T) {
 	}
 	defer registryClient.Close()
 	// Setup
-	deleteProject(ctx, registryClient, t, "controller-demo")
-	createProject(ctx, registryClient, t, "controller-demo")
-	createApi(ctx, registryClient, t, "projects/controller-demo", "petstore")
+	deleteProject(ctx, registryClient, t, "controller-test")
+	createProject(ctx, registryClient, t, "controller-test")
+	createApi(ctx, registryClient, t, "projects/controller-test", "petstore")
 	// Version 1.0.0
-	createVersion(ctx, registryClient, t, "projects/controller-demo/apis/petstore", "1.0.0")
-	createSpec(ctx, registryClient, t, "projects/controller-demo/apis/petstore/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
+	createVersion(ctx, registryClient, t, "projects/controller-test/apis/petstore", "1.0.0")
+	createSpec(ctx, registryClient, t, "projects/controller-test/apis/petstore/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
 	// Version 1.0.1
-	createVersion(ctx, registryClient, t, "projects/controller-demo/apis/petstore", "1.0.1")
-	createSpec(ctx, registryClient, t, "projects/controller-demo/apis/petstore/versions/1.0.1", "openapi.yaml", gzipOpenAPIv3)
+	createVersion(ctx, registryClient, t, "projects/controller-test/apis/petstore", "1.0.1")
+	createSpec(ctx, registryClient, t, "projects/controller-test/apis/petstore/versions/1.0.1", "openapi.yaml", gzipOpenAPIv3)
 	// Version 1.1.0
-	createVersion(ctx, registryClient, t, "projects/controller-demo/apis/petstore", "1.1.0")
-	createSpec(ctx, registryClient, t, "projects/controller-demo/apis/petstore/versions/1.1.0", "openapi.yaml", gzipOpenAPIv3)
+	createVersion(ctx, registryClient, t, "projects/controller-test/apis/petstore", "1.1.0")
+	createSpec(ctx, registryClient, t, "projects/controller-test/apis/petstore/versions/1.1.0", "openapi.yaml", gzipOpenAPIv3)
 
 	// Test the manifest
 	manifest, err := ReadManifest(
@@ -234,17 +236,19 @@ func TestMultipleSpecs(t *testing.T) {
 		t.Error(err.Error())
 	}
 	
-	actions, err := ProcessManifest(manifest)
+	actions, err := ProcessManifest(ctx, registryClient, manifest)
 	if err != nil {
 		log.Printf(err.Error())
 	}
 	expectedActions := []string{
-	"compute lint projects/controller-demo/apis/petstore/versions/1.0.0/specs/openapi.yaml --linter gnostic",
-	"compute lint projects/controller-demo/apis/petstore/versions/1.0.1/specs/openapi.yaml --linter gnostic",
-	"compute lint projects/controller-demo/apis/petstore/versions/1.1.0/specs/openapi.yaml --linter gnostic"}
+	"compute lint projects/controller-test/apis/petstore/versions/1.0.0/specs/openapi.yaml --linter gnostic",
+	"compute lint projects/controller-test/apis/petstore/versions/1.0.1/specs/openapi.yaml --linter gnostic",
+	"compute lint projects/controller-test/apis/petstore/versions/1.1.0/specs/openapi.yaml --linter gnostic"}
 	if diff := cmp.Diff(expectedActions, actions, sortStrings); diff != "" {
 		t.Errorf("ProcessManifest(%+v) returned unexpected diff (-want +got):\n%s", manifest, diff)
 	}
+
+	deleteProject(ctx, registryClient, t, "controller-test")
 }
 
 func TestPartiallyExistingArtifacts(t *testing.T) {
@@ -261,19 +265,19 @@ func TestPartiallyExistingArtifacts(t *testing.T) {
 	defer registryClient.Close()
 
 	// Setup
-	deleteProject(ctx, registryClient, t, "controller-demo")
-	createProject(ctx, registryClient, t, "controller-demo")
-	createApi(ctx, registryClient, t, "projects/controller-demo", "petstore")
+	deleteProject(ctx, registryClient, t, "controller-test")
+	createProject(ctx, registryClient, t, "controller-test")
+	createApi(ctx, registryClient, t, "projects/controller-test", "petstore")
 	// Version 1.0.0
-	createVersion(ctx, registryClient, t, "projects/controller-demo/apis/petstore", "1.0.0")
-	createSpec(ctx, registryClient, t, "projects/controller-demo/apis/petstore/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
+	createVersion(ctx, registryClient, t, "projects/controller-test/apis/petstore", "1.0.0")
+	createSpec(ctx, registryClient, t, "projects/controller-test/apis/petstore/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
 	// Version 1.0.1
-	createVersion(ctx, registryClient, t, "projects/controller-demo/apis/petstore", "1.0.1")
-	createSpec(ctx, registryClient, t, "projects/controller-demo/apis/petstore/versions/1.0.1", "openapi.yaml", gzipOpenAPIv3)
-	createUpdateArtifact(ctx, registryClient, t, "projects/controller-demo/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/lint-gnostic")
+	createVersion(ctx, registryClient, t, "projects/controller-test/apis/petstore", "1.0.1")
+	createSpec(ctx, registryClient, t, "projects/controller-test/apis/petstore/versions/1.0.1", "openapi.yaml", gzipOpenAPIv3)
+	createUpdateArtifact(ctx, registryClient, t, "projects/controller-test/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/lint-gnostic")
 	// Version 1.1.0
-	createVersion(ctx, registryClient, t, "projects/controller-demo/apis/petstore", "1.1.0")
-	createSpec(ctx, registryClient, t, "projects/controller-demo/apis/petstore/versions/1.1.0", "openapi.yaml", gzipOpenAPIv3)
+	createVersion(ctx, registryClient, t, "projects/controller-test/apis/petstore", "1.1.0")
+	createSpec(ctx, registryClient, t, "projects/controller-test/apis/petstore/versions/1.1.0", "openapi.yaml", gzipOpenAPIv3)
 	
 	// Test the manifest
 	manifest, err := ReadManifest(
@@ -282,16 +286,18 @@ func TestPartiallyExistingArtifacts(t *testing.T) {
 		t.Error(err.Error())
 	}
 	
-	actions, err := ProcessManifest(manifest)
+	actions, err := ProcessManifest(ctx, registryClient, manifest)
 	if err != nil {
 		log.Printf(err.Error())
 	}
 	expectedActions := []string{
-	"compute lint projects/controller-demo/apis/petstore/versions/1.0.0/specs/openapi.yaml --linter gnostic",
-	"compute lint projects/controller-demo/apis/petstore/versions/1.1.0/specs/openapi.yaml --linter gnostic"}
+	"compute lint projects/controller-test/apis/petstore/versions/1.0.0/specs/openapi.yaml --linter gnostic",
+	"compute lint projects/controller-test/apis/petstore/versions/1.1.0/specs/openapi.yaml --linter gnostic"}
 	if diff := cmp.Diff(expectedActions, actions, sortStrings); diff != "" {
 		t.Errorf("ProcessManifest(%+v) returned unexpected diff (-want +got):\n%s", manifest, diff)
 	}
+
+	deleteProject(ctx, registryClient, t, "controller-test")
 }
 
 func TestOutdatedArtifacts(t *testing.T) {
@@ -307,22 +313,22 @@ func TestOutdatedArtifacts(t *testing.T) {
 	defer registryClient.Close()
 
 	// Setup
-	deleteProject(ctx, registryClient, t, "controller-demo")
-	createProject(ctx, registryClient, t, "controller-demo")
-	createApi(ctx, registryClient, t, "projects/controller-demo", "petstore")
+	deleteProject(ctx, registryClient, t, "controller-test")
+	createProject(ctx, registryClient, t, "controller-test")
+	createApi(ctx, registryClient, t, "projects/controller-test", "petstore")
 	// Version 1.0.0
-	createVersion(ctx, registryClient, t, "projects/controller-demo/apis/petstore", "1.0.0")
-	createSpec(ctx, registryClient, t, "projects/controller-demo/apis/petstore/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
-	createUpdateArtifact(ctx, registryClient, t, "projects/controller-demo/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic")
+	createVersion(ctx, registryClient, t, "projects/controller-test/apis/petstore", "1.0.0")
+	createSpec(ctx, registryClient, t, "projects/controller-test/apis/petstore/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
+	createUpdateArtifact(ctx, registryClient, t, "projects/controller-test/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic")
 	// Version 1.0.1
-	createVersion(ctx, registryClient, t, "projects/controller-demo/apis/petstore", "1.0.1")
-	createSpec(ctx, registryClient, t, "projects/controller-demo/apis/petstore/versions/1.0.1", "openapi.yaml", gzipOpenAPIv3)
-	createUpdateArtifact(ctx, registryClient, t, "projects/controller-demo/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/lint-gnostic")
+	createVersion(ctx, registryClient, t, "projects/controller-test/apis/petstore", "1.0.1")
+	createSpec(ctx, registryClient, t, "projects/controller-test/apis/petstore/versions/1.0.1", "openapi.yaml", gzipOpenAPIv3)
+	createUpdateArtifact(ctx, registryClient, t, "projects/controller-test/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/lint-gnostic")
 	// Version 1.1.0
-	createVersion(ctx, registryClient, t, "projects/controller-demo/apis/petstore", "1.1.0")
-	createSpec(ctx, registryClient, t, "projects/controller-demo/apis/petstore/versions/1.1.0", "openapi.yaml", gzipOpenAPIv3)
+	createVersion(ctx, registryClient, t, "projects/controller-test/apis/petstore", "1.1.0")
+	createSpec(ctx, registryClient, t, "projects/controller-test/apis/petstore/versions/1.1.0", "openapi.yaml", gzipOpenAPIv3)
 	// Update spec 1.0.1 to make the artifact outdated
-	updateSpec(ctx, registryClient, t, "projects/controller-demo/apis/petstore/versions/1.0.1/specs/openapi.yaml")
+	updateSpec(ctx, registryClient, t, "projects/controller-test/apis/petstore/versions/1.0.1/specs/openapi.yaml")
 
 	// Test the manifest
 	manifest, err := ReadManifest(
@@ -331,16 +337,18 @@ func TestOutdatedArtifacts(t *testing.T) {
 		t.Error(err.Error())
 	}
 	
-	actions, err := ProcessManifest(manifest)
+	actions, err := ProcessManifest(ctx, registryClient, manifest)
 	if err != nil {
 		log.Printf(err.Error())
 	}
 	expectedActions := []string{
-	"compute lint projects/controller-demo/apis/petstore/versions/1.0.1/specs/openapi.yaml --linter gnostic",
-	"compute lint projects/controller-demo/apis/petstore/versions/1.1.0/specs/openapi.yaml --linter gnostic"}
+	"compute lint projects/controller-test/apis/petstore/versions/1.0.1/specs/openapi.yaml --linter gnostic",
+	"compute lint projects/controller-test/apis/petstore/versions/1.1.0/specs/openapi.yaml --linter gnostic"}
 	if diff := cmp.Diff(expectedActions, actions, sortStrings); diff != "" {
 		t.Errorf("ProcessManifest(%+v) returned unexpected diff (-want +got):\n%s", manifest, diff)
 	}
+
+	deleteProject(ctx, registryClient, t, "controller-test")
 }
 
 // Tests for aggregated artifacts at api level and specs as resources
@@ -354,30 +362,30 @@ func TestApiLevelArtifactsCreate(t *testing.T) {
 	defer registryClient.Close()
 
 	// Setup
-	deleteProject(ctx, registryClient, t, "controller-demo")
-	createProject(ctx, registryClient, t, "controller-demo")
-	createApi(ctx, registryClient, t, "projects/controller-demo", "test-api-1")
+	deleteProject(ctx, registryClient, t, "controller-test")
+	createProject(ctx, registryClient, t, "controller-test")
+	createApi(ctx, registryClient, t, "projects/controller-test", "test-api-1")
 	// Version 1.0.0
-	createVersion(ctx, registryClient, t, "projects/controller-demo/apis/test-api-1", "1.0.0")
-	createSpec(ctx, registryClient, t, "projects/controller-demo/apis/test-api-1/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
+	createVersion(ctx, registryClient, t, "projects/controller-test/apis/test-api-1", "1.0.0")
+	createSpec(ctx, registryClient, t, "projects/controller-test/apis/test-api-1/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
 	// Version 1.0.1
-	createVersion(ctx, registryClient, t, "projects/controller-demo/apis/test-api-1", "1.0.1")
-	createSpec(ctx, registryClient, t, "projects/controller-demo/apis/test-api-1/versions/1.0.1", "openapi.yaml", gzipOpenAPIv3)
+	createVersion(ctx, registryClient, t, "projects/controller-test/apis/test-api-1", "1.0.1")
+	createSpec(ctx, registryClient, t, "projects/controller-test/apis/test-api-1/versions/1.0.1", "openapi.yaml", gzipOpenAPIv3)
 	// Version 1.1.0
-	createVersion(ctx, registryClient, t, "projects/controller-demo/apis/test-api-1", "1.1.0")
-	createSpec(ctx, registryClient, t, "projects/controller-demo/apis/test-api-1/versions/1.1.0", "openapi.yaml", gzipOpenAPIv3)
+	createVersion(ctx, registryClient, t, "projects/controller-test/apis/test-api-1", "1.1.0")
+	createSpec(ctx, registryClient, t, "projects/controller-test/apis/test-api-1/versions/1.1.0", "openapi.yaml", gzipOpenAPIv3)
 
 	// Test API 2
-	createApi(ctx, registryClient, t, "projects/controller-demo", "test-api-2")
+	createApi(ctx, registryClient, t, "projects/controller-test", "test-api-2")
 	// Version 1.0.0
-	createVersion(ctx, registryClient, t, "projects/controller-demo/apis/test-api-2", "1.0.0")
-	createSpec(ctx, registryClient, t, "projects/controller-demo/apis/test-api-2/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
+	createVersion(ctx, registryClient, t, "projects/controller-test/apis/test-api-2", "1.0.0")
+	createSpec(ctx, registryClient, t, "projects/controller-test/apis/test-api-2/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
 	// Version 1.0.1
-	createVersion(ctx, registryClient, t, "projects/controller-demo/apis/test-api-2", "1.0.1")
-	createSpec(ctx, registryClient, t, "projects/controller-demo/apis/test-api-2/versions/1.0.1", "openapi.yaml", gzipOpenAPIv3)
+	createVersion(ctx, registryClient, t, "projects/controller-test/apis/test-api-2", "1.0.1")
+	createSpec(ctx, registryClient, t, "projects/controller-test/apis/test-api-2/versions/1.0.1", "openapi.yaml", gzipOpenAPIv3)
 	// Version 1.1.0
-	createVersion(ctx, registryClient, t, "projects/controller-demo/apis/test-api-2", "1.1.0")
-	createSpec(ctx, registryClient, t, "projects/controller-demo/apis/test-api-2/versions/1.1.0", "openapi.yaml", gzipOpenAPIv3)
+	createVersion(ctx, registryClient, t, "projects/controller-test/apis/test-api-2", "1.1.0")
+	createSpec(ctx, registryClient, t, "projects/controller-test/apis/test-api-2/versions/1.1.0", "openapi.yaml", gzipOpenAPIv3)
 
 
 	// Test the manifest
@@ -387,17 +395,18 @@ func TestApiLevelArtifactsCreate(t *testing.T) {
 		t.Error(err.Error())
 	}
 	
-	actions, err := ProcessManifest(manifest)
+	actions, err := ProcessManifest(ctx, registryClient, manifest)
 	if err != nil {
 		log.Printf(err.Error())
 	}
 	expectedActions := []string{
-	"compute vocabulary projects/controller-demo/apis/test-api-1",
-	"compute vocabulary projects/controller-demo/apis/test-api-2"}
+	"compute vocabulary projects/controller-test/apis/test-api-1",
+	"compute vocabulary projects/controller-test/apis/test-api-2"}
 	if diff := cmp.Diff(expectedActions, actions, sortStrings); diff != "" {
 		t.Errorf("ProcessManifest(%+v) returned unexpected diff (-want +got):\n%s", manifest, diff)
 	}
 
+	deleteProject(ctx, registryClient, t, "controller-test")
 }
 
 func TestApiLevelArtifactsOutdated(t *testing.T) {
@@ -410,34 +419,34 @@ func TestApiLevelArtifactsOutdated(t *testing.T) {
 	defer registryClient.Close()
 
 	// Setup
-	deleteProject(ctx, registryClient, t, "controller-demo")
-	createProject(ctx, registryClient, t, "controller-demo")
-	createApi(ctx, registryClient, t, "projects/controller-demo", "test-api-1")
+	deleteProject(ctx, registryClient, t, "controller-test")
+	createProject(ctx, registryClient, t, "controller-test")
+	createApi(ctx, registryClient, t, "projects/controller-test", "test-api-1")
 	// Version 1.0.0
-	createVersion(ctx, registryClient, t, "projects/controller-demo/apis/test-api-1", "1.0.0")
-	createSpec(ctx, registryClient, t, "projects/controller-demo/apis/test-api-1/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
+	createVersion(ctx, registryClient, t, "projects/controller-test/apis/test-api-1", "1.0.0")
+	createSpec(ctx, registryClient, t, "projects/controller-test/apis/test-api-1/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
 	// Version 1.0.1
-	createVersion(ctx, registryClient, t, "projects/controller-demo/apis/test-api-1", "1.0.1")
-	createSpec(ctx, registryClient, t, "projects/controller-demo/apis/test-api-1/versions/1.0.1", "openapi.yaml", gzipOpenAPIv3)
+	createVersion(ctx, registryClient, t, "projects/controller-test/apis/test-api-1", "1.0.1")
+	createSpec(ctx, registryClient, t, "projects/controller-test/apis/test-api-1/versions/1.0.1", "openapi.yaml", gzipOpenAPIv3)
 	// Version 1.1.0
-	createVersion(ctx, registryClient, t, "projects/controller-demo/apis/test-api-1", "1.1.0")
-	createSpec(ctx, registryClient, t, "projects/controller-demo/apis/test-api-1/versions/1.1.0", "openapi.yaml", gzipOpenAPIv3)
-	createUpdateArtifact(ctx, registryClient, t, "projects/controller-demo/apis/test-api-1/artifacts/vocabulary")
+	createVersion(ctx, registryClient, t, "projects/controller-test/apis/test-api-1", "1.1.0")
+	createSpec(ctx, registryClient, t, "projects/controller-test/apis/test-api-1/versions/1.1.0", "openapi.yaml", gzipOpenAPIv3)
+	createUpdateArtifact(ctx, registryClient, t, "projects/controller-test/apis/test-api-1/artifacts/vocabulary")
 
 	// Test API 2
-	createApi(ctx, registryClient, t, "projects/controller-demo", "test-api-2")
+	createApi(ctx, registryClient, t, "projects/controller-test", "test-api-2")
 	// Version 1.0.0
-	createVersion(ctx, registryClient, t, "projects/controller-demo/apis/test-api-2", "1.0.0")
-	createSpec(ctx, registryClient, t, "projects/controller-demo/apis/test-api-2/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
+	createVersion(ctx, registryClient, t, "projects/controller-test/apis/test-api-2", "1.0.0")
+	createSpec(ctx, registryClient, t, "projects/controller-test/apis/test-api-2/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
 	// Version 1.0.1
-	createVersion(ctx, registryClient, t, "projects/controller-demo/apis/test-api-2", "1.0.1")
-	createSpec(ctx, registryClient, t, "projects/controller-demo/apis/test-api-2/versions/1.0.1", "openapi.yaml", gzipOpenAPIv3)
+	createVersion(ctx, registryClient, t, "projects/controller-test/apis/test-api-2", "1.0.1")
+	createSpec(ctx, registryClient, t, "projects/controller-test/apis/test-api-2/versions/1.0.1", "openapi.yaml", gzipOpenAPIv3)
 	// Version 1.1.0
-	createVersion(ctx, registryClient, t, "projects/controller-demo/apis/test-api-2", "1.1.0")
-	createSpec(ctx, registryClient, t, "projects/controller-demo/apis/test-api-2/versions/1.1.0", "openapi.yaml", gzipOpenAPIv3)
-	createUpdateArtifact(ctx, registryClient, t, "projects/controller-demo/apis/test-api-2/artifacts/vocabulary")
+	createVersion(ctx, registryClient, t, "projects/controller-test/apis/test-api-2", "1.1.0")
+	createSpec(ctx, registryClient, t, "projects/controller-test/apis/test-api-2/versions/1.1.0", "openapi.yaml", gzipOpenAPIv3)
+	createUpdateArtifact(ctx, registryClient, t, "projects/controller-test/apis/test-api-2/artifacts/vocabulary")
 	// Update underlying spec to make artifact outdated
-	updateSpec(ctx, registryClient, t, "projects/controller-demo/apis/test-api-2/versions/1.0.1/specs/openapi.yaml")
+	updateSpec(ctx, registryClient, t, "projects/controller-test/apis/test-api-2/versions/1.0.1/specs/openapi.yaml")
 
 	// Test the manifest
 	manifest, err := ReadManifest(
@@ -446,16 +455,17 @@ func TestApiLevelArtifactsOutdated(t *testing.T) {
 		t.Error(err.Error())
 	}
 	
-	actions, err := ProcessManifest(manifest)
+	actions, err := ProcessManifest(ctx, registryClient, manifest)
 	if err != nil {
 		log.Printf(err.Error())
 	}
 	expectedActions := []string{
-	"compute vocabulary projects/controller-demo/apis/test-api-2"}
+	"compute vocabulary projects/controller-test/apis/test-api-2"}
 	if diff := cmp.Diff(expectedActions, actions, sortStrings); diff != "" {
 		t.Errorf("ProcessManifest(%+v) returned unexpected diff (-want +got):\n%s", manifest, diff)
 	}
 
+	deleteProject(ctx, registryClient, t, "controller-test")
 }
 
 // Tests for derived artifacts with artifacts as dependencies
@@ -469,24 +479,24 @@ func TestDerivedArtifactsCreate(t *testing.T) {
 	defer registryClient.Close()
 
 	// Setup
-	deleteProject(ctx, registryClient, t, "controller-demo")
-	createProject(ctx, registryClient, t, "controller-demo")
-	createApi(ctx, registryClient, t, "projects/controller-demo", "petstore")
+	deleteProject(ctx, registryClient, t, "controller-test")
+	createProject(ctx, registryClient, t, "controller-test")
+	createApi(ctx, registryClient, t, "projects/controller-test", "petstore")
 	// Version 1.0.0
-	createVersion(ctx, registryClient, t, "projects/controller-demo/apis/petstore", "1.0.0")
-	createSpec(ctx, registryClient, t, "projects/controller-demo/apis/petstore/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
-	createUpdateArtifact(ctx, registryClient, t, "projects/controller-demo/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic")
-	createUpdateArtifact(ctx, registryClient, t, "projects/controller-demo/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity")
+	createVersion(ctx, registryClient, t, "projects/controller-test/apis/petstore", "1.0.0")
+	createSpec(ctx, registryClient, t, "projects/controller-test/apis/petstore/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
+	createUpdateArtifact(ctx, registryClient, t, "projects/controller-test/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic")
+	createUpdateArtifact(ctx, registryClient, t, "projects/controller-test/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity")
 	// Version 1.0.1
-	createVersion(ctx, registryClient, t, "projects/controller-demo/apis/petstore", "1.0.1")
-	createSpec(ctx, registryClient, t, "projects/controller-demo/apis/petstore/versions/1.0.1", "openapi.yaml", gzipOpenAPIv3)
-	createUpdateArtifact(ctx, registryClient, t, "projects/controller-demo/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/lint-gnostic")
-	createUpdateArtifact(ctx, registryClient, t, "projects/controller-demo/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/complexity")
+	createVersion(ctx, registryClient, t, "projects/controller-test/apis/petstore", "1.0.1")
+	createSpec(ctx, registryClient, t, "projects/controller-test/apis/petstore/versions/1.0.1", "openapi.yaml", gzipOpenAPIv3)
+	createUpdateArtifact(ctx, registryClient, t, "projects/controller-test/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/lint-gnostic")
+	createUpdateArtifact(ctx, registryClient, t, "projects/controller-test/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/complexity")
 	// Version 1.1.0
-	createVersion(ctx, registryClient, t, "projects/controller-demo/apis/petstore", "1.1.0")
-	createSpec(ctx, registryClient, t, "projects/controller-demo/apis/petstore/versions/1.1.0", "openapi.yaml", gzipOpenAPIv3)
-	createUpdateArtifact(ctx, registryClient, t, "projects/controller-demo/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/lint-gnostic")
-	createUpdateArtifact(ctx, registryClient, t, "projects/controller-demo/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/complexity")
+	createVersion(ctx, registryClient, t, "projects/controller-test/apis/petstore", "1.1.0")
+	createSpec(ctx, registryClient, t, "projects/controller-test/apis/petstore/versions/1.1.0", "openapi.yaml", gzipOpenAPIv3)
+	createUpdateArtifact(ctx, registryClient, t, "projects/controller-test/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/lint-gnostic")
+	createUpdateArtifact(ctx, registryClient, t, "projects/controller-test/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/complexity")
 
 	// Test the manifest
 	manifest, err := ReadManifest(
@@ -495,28 +505,29 @@ func TestDerivedArtifactsCreate(t *testing.T) {
 		t.Error(err.Error())
 	}
 	
-	actions, err := ProcessManifest(manifest)
+	actions, err := ProcessManifest(ctx, registryClient, manifest)
 	if err != nil {
 		log.Printf(err.Error())
 	}
 	expectedActions := []string{
 	fmt.Sprintf(
 		"compute score %s %s",
-		"projects/controller-demo/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic",
-		"projects/controller-demo/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity"),
+		"projects/controller-test/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic",
+		"projects/controller-test/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity"),
 	fmt.Sprintf(
 		"compute score %s %s",
-		"projects/controller-demo/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/lint-gnostic",
-		"projects/controller-demo/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/complexity"),
+		"projects/controller-test/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/lint-gnostic",
+		"projects/controller-test/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/complexity"),
 	fmt.Sprintf(
 		"compute score %s %s",
-		"projects/controller-demo/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/lint-gnostic",
-		"projects/controller-demo/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/complexity"),
+		"projects/controller-test/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/lint-gnostic",
+		"projects/controller-test/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/complexity"),
 	}
 	if diff := cmp.Diff(expectedActions, actions, sortStrings); diff != "" {
 		t.Errorf("ProcessManifest(%+v) returned unexpected diff (-want +got):\n%s", manifest, diff)
 	}
 
+	deleteProject(ctx, registryClient, t, "controller-test")
 }
 
 func TestDerivedArtifactsMissing(t *testing.T) {
@@ -529,22 +540,22 @@ func TestDerivedArtifactsMissing(t *testing.T) {
 	defer registryClient.Close()
 
 	// Setup
-	deleteProject(ctx, registryClient, t, "controller-demo")
-	createProject(ctx, registryClient, t, "controller-demo")
-	createApi(ctx, registryClient, t, "projects/controller-demo", "petstore")
+	deleteProject(ctx, registryClient, t, "controller-test")
+	createProject(ctx, registryClient, t, "controller-test")
+	createApi(ctx, registryClient, t, "projects/controller-test", "petstore")
 	// Version 1.0.0
-	createVersion(ctx, registryClient, t, "projects/controller-demo/apis/petstore", "1.0.0")
-	createSpec(ctx, registryClient, t, "projects/controller-demo/apis/petstore/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
-	createUpdateArtifact(ctx, registryClient, t, "projects/controller-demo/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic")
+	createVersion(ctx, registryClient, t, "projects/controller-test/apis/petstore", "1.0.0")
+	createSpec(ctx, registryClient, t, "projects/controller-test/apis/petstore/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
+	createUpdateArtifact(ctx, registryClient, t, "projects/controller-test/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic")
 	// Version 1.0.1
-	createVersion(ctx, registryClient, t, "projects/controller-demo/apis/petstore", "1.0.1")
-	createSpec(ctx, registryClient, t, "projects/controller-demo/apis/petstore/versions/1.0.1", "openapi.yaml", gzipOpenAPIv3)
-	createUpdateArtifact(ctx, registryClient, t, "projects/controller-demo/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/lint-gnostic")
-	createUpdateArtifact(ctx, registryClient, t, "projects/controller-demo/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/complexity")
+	createVersion(ctx, registryClient, t, "projects/controller-test/apis/petstore", "1.0.1")
+	createSpec(ctx, registryClient, t, "projects/controller-test/apis/petstore/versions/1.0.1", "openapi.yaml", gzipOpenAPIv3)
+	createUpdateArtifact(ctx, registryClient, t, "projects/controller-test/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/lint-gnostic")
+	createUpdateArtifact(ctx, registryClient, t, "projects/controller-test/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/complexity")
 	// Version 1.1.0
-	createVersion(ctx, registryClient, t, "projects/controller-demo/apis/petstore", "1.1.0")
-	createSpec(ctx, registryClient, t, "projects/controller-demo/apis/petstore/versions/1.1.0", "openapi.yaml", gzipOpenAPIv3)
-	createUpdateArtifact(ctx, registryClient, t, "projects/controller-demo/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/complexity")
+	createVersion(ctx, registryClient, t, "projects/controller-test/apis/petstore", "1.1.0")
+	createSpec(ctx, registryClient, t, "projects/controller-test/apis/petstore/versions/1.1.0", "openapi.yaml", gzipOpenAPIv3)
+	createUpdateArtifact(ctx, registryClient, t, "projects/controller-test/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/complexity")
 
 	// Test the manifest
 	manifest, err := ReadManifest(
@@ -553,19 +564,21 @@ func TestDerivedArtifactsMissing(t *testing.T) {
 		t.Error(err.Error())
 	}
 	
-	actions, err := ProcessManifest(manifest)
+	actions, err := ProcessManifest(ctx, registryClient, manifest)
 	if err != nil {
 		log.Printf(err.Error())
 	}
 	expectedActions := []string{
 	fmt.Sprintf(
 		"compute score %s %s",
-		"projects/controller-demo/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/lint-gnostic",
-		"projects/controller-demo/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/complexity"),
+		"projects/controller-test/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/lint-gnostic",
+		"projects/controller-test/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/complexity"),
 	}
 	if diff := cmp.Diff(expectedActions, actions, sortStrings); diff != "" {
 		t.Errorf("ProcessManifest(%+v) returned unexpected diff (-want +got):\n%s", manifest, diff)
 	}
+
+	deleteProject(ctx, registryClient, t, "controller-test")
 }
 
 func TestDerivedArtifactsOutdated(t *testing.T) {
@@ -578,34 +591,34 @@ func TestDerivedArtifactsOutdated(t *testing.T) {
 	defer registryClient.Close()
 
 	// Setup
-	deleteProject(ctx, registryClient, t, "controller-demo")
-	createProject(ctx, registryClient, t, "controller-demo")
-	createApi(ctx, registryClient, t, "projects/controller-demo", "petstore")
+	deleteProject(ctx, registryClient, t, "controller-test")
+	createProject(ctx, registryClient, t, "controller-test")
+	createApi(ctx, registryClient, t, "projects/controller-test", "petstore")
 	
 	// Version 1.0.0
-	createVersion(ctx, registryClient, t, "projects/controller-demo/apis/petstore", "1.0.0")
-	createSpec(ctx, registryClient, t, "projects/controller-demo/apis/petstore/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
-	createUpdateArtifact(ctx, registryClient, t, "projects/controller-demo/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic")
-	createUpdateArtifact(ctx, registryClient, t, "projects/controller-demo/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity")
-	createUpdateArtifact(ctx, registryClient, t, "projects/controller-demo/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score")
+	createVersion(ctx, registryClient, t, "projects/controller-test/apis/petstore", "1.0.0")
+	createSpec(ctx, registryClient, t, "projects/controller-test/apis/petstore/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
+	createUpdateArtifact(ctx, registryClient, t, "projects/controller-test/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic")
+	createUpdateArtifact(ctx, registryClient, t, "projects/controller-test/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity")
+	createUpdateArtifact(ctx, registryClient, t, "projects/controller-test/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score")
 	// Version 1.0.1
-	createVersion(ctx, registryClient, t, "projects/controller-demo/apis/petstore", "1.0.1")
-	createSpec(ctx, registryClient, t, "projects/controller-demo/apis/petstore/versions/1.0.1", "openapi.yaml", gzipOpenAPIv3)
-	createUpdateArtifact(ctx, registryClient, t, "projects/controller-demo/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/lint-gnostic")
-	createUpdateArtifact(ctx, registryClient, t, "projects/controller-demo/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/complexity")
-	createUpdateArtifact(ctx, registryClient, t, "projects/controller-demo/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/score")
+	createVersion(ctx, registryClient, t, "projects/controller-test/apis/petstore", "1.0.1")
+	createSpec(ctx, registryClient, t, "projects/controller-test/apis/petstore/versions/1.0.1", "openapi.yaml", gzipOpenAPIv3)
+	createUpdateArtifact(ctx, registryClient, t, "projects/controller-test/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/lint-gnostic")
+	createUpdateArtifact(ctx, registryClient, t, "projects/controller-test/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/complexity")
+	createUpdateArtifact(ctx, registryClient, t, "projects/controller-test/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/score")
 	// Version 1.1.0
-	createVersion(ctx, registryClient, t, "projects/controller-demo/apis/petstore", "1.1.0")
-	createSpec(ctx, registryClient, t, "projects/controller-demo/apis/petstore/versions/1.1.0", "openapi.yaml", gzipOpenAPIv3)
-	createUpdateArtifact(ctx, registryClient, t, "projects/controller-demo/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/lint-gnostic")
-	createUpdateArtifact(ctx, registryClient, t, "projects/controller-demo/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/complexity")
-	createUpdateArtifact(ctx, registryClient, t, "projects/controller-demo/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/score")
+	createVersion(ctx, registryClient, t, "projects/controller-test/apis/petstore", "1.1.0")
+	createSpec(ctx, registryClient, t, "projects/controller-test/apis/petstore/versions/1.1.0", "openapi.yaml", gzipOpenAPIv3)
+	createUpdateArtifact(ctx, registryClient, t, "projects/controller-test/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/lint-gnostic")
+	createUpdateArtifact(ctx, registryClient, t, "projects/controller-test/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/complexity")
+	createUpdateArtifact(ctx, registryClient, t, "projects/controller-test/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/score")
 	
 
 
 	// Make some artifacts outdated from the above setup
-	createUpdateArtifact(ctx, registryClient, t, "projects/controller-demo/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic")
-	createUpdateArtifact(ctx, registryClient, t, "projects/controller-demo/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/complexity")
+	createUpdateArtifact(ctx, registryClient, t, "projects/controller-test/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic")
+	createUpdateArtifact(ctx, registryClient, t, "projects/controller-test/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/complexity")
 
 	// Test the manifest
 	manifest, err := ReadManifest(
@@ -614,24 +627,23 @@ func TestDerivedArtifactsOutdated(t *testing.T) {
 		t.Error(err.Error())
 	}
 	
-	actions, err := ProcessManifest(manifest)
+	actions, err := ProcessManifest(ctx, registryClient, manifest)
 	if err != nil {
 		log.Printf(err.Error())
 	}
 	expectedActions := []string{
 	fmt.Sprintf(
 		"compute score %s %s",
-		"projects/controller-demo/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic",
-		"projects/controller-demo/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity"),
+		"projects/controller-test/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic",
+		"projects/controller-test/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity"),
 	fmt.Sprintf(
 		"compute score %s %s",
-		"projects/controller-demo/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/lint-gnostic",
-		"projects/controller-demo/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/complexity"),
+		"projects/controller-test/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/lint-gnostic",
+		"projects/controller-test/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/complexity"),
 	}
 	if diff := cmp.Diff(expectedActions, actions, sortStrings); diff != "" {
 		t.Errorf("ProcessManifest(%+v) returned unexpected diff (-want +got):\n%s", manifest, diff)
 	}
+
+	deleteProject(ctx, registryClient, t, "controller-test")
 }
-
-
-
