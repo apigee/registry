@@ -99,7 +99,7 @@ func (task *computeLintTask) Run() error {
 	}
 	data, err := core.GetBytesForSpec(task.ctx, task.client, spec)
 	if err != nil {
-		return nil
+		return err
 	}
 	var relation string
 	var lint *rpc.Lint
