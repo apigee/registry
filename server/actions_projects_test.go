@@ -574,8 +574,6 @@ func TestListProjectsLargeCollectionFiltering(t *testing.T) {
 }
 
 func TestUpdateProject(t *testing.T) {
-	t.Skip("Default/empty mask behavior is incorrect and replacement wildcard is not implemented")
-
 	tests := []struct {
 		desc string
 		seed *rpc.Project
@@ -583,7 +581,7 @@ func TestUpdateProject(t *testing.T) {
 		want *rpc.Project
 	}{
 		{
-			desc: "default parameters",
+			desc: "implicit mask",
 			seed: &rpc.Project{
 				Name:        "projects/my-project",
 				DisplayName: "My Project",
@@ -684,8 +682,6 @@ func TestUpdateProject(t *testing.T) {
 }
 
 func TestUpdateProjectResponseCodes(t *testing.T) {
-	t.Skip("Update mask validation is not implemented")
-
 	tests := []struct {
 		desc string
 		seed *rpc.Project

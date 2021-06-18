@@ -192,6 +192,8 @@ func (s *RegistryServer) UpdateApiVersion(ctx context.Context, req *rpc.UpdateAp
 
 	if req.GetApiVersion() == nil {
 		return nil, invalidArgumentError(fmt.Errorf("invalid api_version %+v: body must be provided", req.GetApiVersion()))
+	} else if err := models.ValidateMask(req.GetApiVersion(), req.GetUpdateMask()); err != nil {
+		return nil, invalidArgumentError(fmt.Errorf("invalid update_mask %v: %s", req.GetUpdateMask(), err))
 	}
 
 	name, err := names.ParseVersion(req.ApiVersion.GetName())
@@ -204,7 +206,7 @@ func (s *RegistryServer) UpdateApiVersion(ctx context.Context, req *rpc.UpdateAp
 		return nil, err
 	}
 
-	if err := version.Update(req.GetApiVersion(), req.GetUpdateMask()); err != nil {
+	if err := version.Update(req.GetApiVersion(), models.ExpandMask(req.GetApiVersion(), req.GetUpdateMask())); err != nil {
 		return nil, internalError(err)
 	}
 

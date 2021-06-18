@@ -871,24 +871,12 @@ func TestListApiSpecsSequence(t *testing.T) {
 }
 
 func TestUpdateApiSpec(t *testing.T) {
-	t.Skip("Default/empty mask behavior is incorrect and replacement wildcard is not implemented")
-
 	tests := []struct {
 		desc string
 		seed *rpc.ApiSpec
 		req  *rpc.UpdateApiSpecRequest
 		want *rpc.ApiSpec
 	}{
-		{
-			desc: "populated resource with default parameters",
-			seed: fullSpec,
-			req: &rpc.UpdateApiSpecRequest{
-				ApiSpec: &rpc.ApiSpec{
-					Name: fullSpec.Name,
-				},
-			},
-			want: basicSpec,
-		},
 		{
 			desc: "allow missing updates existing resources",
 			seed: &rpc.ApiSpec{
@@ -928,18 +916,18 @@ func TestUpdateApiSpec(t *testing.T) {
 		{
 			desc: "implicit mask",
 			seed: &rpc.ApiSpec{
-				Name:        "projects/my-project/apis/my-api/versions/v1",
+				Name:        "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
 				Description: "My ApiSpec",
 				Filename:    "openapi.json",
 			},
 			req: &rpc.UpdateApiSpecRequest{
 				ApiSpec: &rpc.ApiSpec{
-					Name:        "projects/my-project/apis/my-api/versions/v1",
+					Name:        "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
 					Description: "My Updated ApiSpec",
 				},
 			},
 			want: &rpc.ApiSpec{
-				Name:        "projects/my-project/apis/my-api/versions/v1",
+				Name:        "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
 				Description: "My Updated ApiSpec",
 				Filename:    "openapi.json",
 			},
@@ -947,20 +935,20 @@ func TestUpdateApiSpec(t *testing.T) {
 		{
 			desc: "field specific mask",
 			seed: &rpc.ApiSpec{
-				Name:        "projects/my-project/apis/my-api/versions/v1",
+				Name:        "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
 				Description: "My ApiSpec",
 				Filename:    "openapi.json",
 			},
 			req: &rpc.UpdateApiSpecRequest{
 				ApiSpec: &rpc.ApiSpec{
-					Name:        "projects/my-project/apis/my-api/versions/v1",
+					Name:        "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
 					Description: "My Updated ApiSpec",
 					Filename:    "Ignored",
 				},
 				UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"description"}},
 			},
 			want: &rpc.ApiSpec{
-				Name:        "projects/my-project/apis/my-api/versions/v1",
+				Name:        "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
 				Description: "My Updated ApiSpec",
 				Filename:    "openapi.json",
 			},
@@ -968,7 +956,7 @@ func TestUpdateApiSpec(t *testing.T) {
 		{
 			desc: "full replacement wildcard mask",
 			seed: &rpc.ApiSpec{
-				Name:        "projects/my-project/apis/my-api/versions/v1",
+				Name:        "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
 				Description: "My ApiSpec",
 				Filename:    "openapi.json",
 			},
@@ -980,7 +968,7 @@ func TestUpdateApiSpec(t *testing.T) {
 				UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"*"}},
 			},
 			want: &rpc.ApiSpec{
-				Name:        "projects/my-project/apis/my-api/versions/v1",
+				Name:        "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
 				Description: "My Updated ApiSpec",
 				Filename:    "",
 			},
@@ -1027,8 +1015,6 @@ func TestUpdateApiSpec(t *testing.T) {
 }
 
 func TestUpdateApiSpecResponseCodes(t *testing.T) {
-	t.Skip("Update mask validation is not implemented")
-
 	tests := []struct {
 		desc string
 		seed *rpc.ApiSpec

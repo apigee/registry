@@ -293,6 +293,8 @@ func (s *RegistryServer) UpdateApiSpec(ctx context.Context, req *rpc.UpdateApiSp
 
 	if req.GetApiSpec() == nil {
 		return nil, invalidArgumentError(fmt.Errorf("invalid api_spec %+v: body must be provided", req.GetApiSpec()))
+	} else if err := models.ValidateMask(req.GetApiSpec(), req.GetUpdateMask()); err != nil {
+		return nil, invalidArgumentError(fmt.Errorf("invalid update_mask %v: %s", req.GetUpdateMask(), err))
 	}
 
 	name, err := names.ParseSpec(req.ApiSpec.GetName())
@@ -308,7 +310,7 @@ func (s *RegistryServer) UpdateApiSpec(ctx context.Context, req *rpc.UpdateApiSp
 	}
 
 	// Apply the update to the spec - possibly changing the revision ID.
-	if err := spec.Update(req.GetApiSpec(), req.GetUpdateMask()); err != nil {
+	if err := spec.Update(req.GetApiSpec(), models.ExpandMask(req.GetApiSpec(), req.GetUpdateMask())); err != nil {
 		return nil, internalError(err)
 	}
 

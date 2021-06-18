@@ -108,40 +108,28 @@ func (v *Version) Message() (message *rpc.ApiVersion, err error) {
 
 // Update modifies a version using the contents of a message.
 func (v *Version) Update(message *rpc.ApiVersion, mask *fieldmaskpb.FieldMask) error {
-	if activeUpdateMask(mask) {
-		for _, field := range mask.Paths {
-			switch field {
-			case "display_name":
-				v.DisplayName = message.GetDisplayName()
-			case "description":
-				v.Description = message.GetDescription()
-			case "state":
-				v.State = message.GetState()
-			case "labels":
-				var err error
-				if v.Labels, err = bytesForMap(message.GetLabels()); err != nil {
-					return err
-				}
-			case "annotations":
-				var err error
-				if v.Annotations, err = bytesForMap(message.GetAnnotations()); err != nil {
-					return err
-				}
+	v.UpdateTime = time.Now()
+	for _, field := range mask.Paths {
+		switch field {
+		case "display_name":
+			v.DisplayName = message.GetDisplayName()
+		case "description":
+			v.Description = message.GetDescription()
+		case "state":
+			v.State = message.GetState()
+		case "labels":
+			var err error
+			if v.Labels, err = bytesForMap(message.GetLabels()); err != nil {
+				return err
+			}
+		case "annotations":
+			var err error
+			if v.Annotations, err = bytesForMap(message.GetAnnotations()); err != nil {
+				return err
 			}
 		}
-	} else {
-		v.DisplayName = message.GetDisplayName()
-		v.Description = message.GetDescription()
-		v.State = message.GetState()
-		var err error
-		if v.Labels, err = bytesForMap(message.GetLabels()); err != nil {
-			return err
-		}
-		if v.Annotations, err = bytesForMap(message.GetAnnotations()); err != nil {
-			return err
-		}
 	}
-	v.UpdateTime = time.Now()
+
 	return nil
 }
 

@@ -708,24 +708,12 @@ func TestListApisLargeCollectionFiltering(t *testing.T) {
 }
 
 func TestUpdateApi(t *testing.T) {
-	t.Skip("Default/empty mask behavior is incorrect and replacement wildcard is not implemented")
-
 	tests := []struct {
 		desc string
 		seed *rpc.Api
 		req  *rpc.UpdateApiRequest
 		want *rpc.Api
 	}{
-		{
-			desc: "populated resource with default parameters",
-			seed: fullApi,
-			req: &rpc.UpdateApiRequest{
-				Api: &rpc.Api{
-					Name: fullApi.Name,
-				},
-			},
-			want: fullApi,
-		},
 		{
 			desc: "implicit mask",
 			seed: &rpc.Api{
@@ -828,8 +816,6 @@ func TestUpdateApi(t *testing.T) {
 }
 
 func TestUpdateApiResponseCodes(t *testing.T) {
-	t.Skip("Update mask validation is not implemented")
-
 	tests := []struct {
 		desc string
 		seed *rpc.Api

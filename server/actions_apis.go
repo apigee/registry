@@ -192,6 +192,8 @@ func (s *RegistryServer) UpdateApi(ctx context.Context, req *rpc.UpdateApiReques
 
 	if req.GetApi() == nil {
 		return nil, invalidArgumentError(fmt.Errorf("invalid api %v: body must be provided", req.GetApi()))
+	} else if err := models.ValidateMask(req.GetApi(), req.GetUpdateMask()); err != nil {
+		return nil, invalidArgumentError(fmt.Errorf("invalid update_mask %v: %s", req.GetUpdateMask(), err))
 	}
 
 	name, err := names.ParseApi(req.Api.GetName())
@@ -204,7 +206,7 @@ func (s *RegistryServer) UpdateApi(ctx context.Context, req *rpc.UpdateApiReques
 		return nil, err
 	}
 
-	if err := api.Update(req.GetApi(), req.GetUpdateMask()); err != nil {
+	if err := api.Update(req.GetApi(), models.ExpandMask(req.GetApi(), req.GetUpdateMask())); err != nil {
 		return nil, internalError(err)
 	}
 

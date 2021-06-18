@@ -162,61 +162,32 @@ func (s *Spec) BasicMessage(name string) (message *rpc.ApiSpec, err error) {
 
 // Update modifies a spec using the contents of a message.
 func (s *Spec) Update(message *rpc.ApiSpec, mask *fieldmaskpb.FieldMask) error {
-	now := time.Now()
-	if activeUpdateMask(mask) {
-		for _, field := range mask.Paths {
-			switch field {
-			case "filename":
-				s.FileName = message.GetFilename()
-			case "description":
-				s.Description = message.GetDescription()
-			case "contents":
-				s.updateContents(message.GetContents())
-			case "mime_type":
-				s.MimeType = message.GetMimeType()
-			case "source_uri":
-				s.SourceURI = message.GetSourceUri()
-			case "labels":
-				var err error
-				if s.Labels, err = bytesForMap(message.GetLabels()); err != nil {
-					return err
-				}
-			case "annotations":
-				var err error
-				if s.Annotations, err = bytesForMap(message.GetAnnotations()); err != nil {
-					return err
-				}
+	s.RevisionUpdateTime = time.Now()
+	for _, field := range mask.Paths {
+		switch field {
+		case "filename":
+			s.FileName = message.GetFilename()
+		case "description":
+			s.Description = message.GetDescription()
+		case "contents":
+			s.updateContents(message.GetContents())
+		case "mime_type":
+			s.MimeType = message.GetMimeType()
+		case "source_uri":
+			s.SourceURI = message.GetSourceUri()
+		case "labels":
+			var err error
+			if s.Labels, err = bytesForMap(message.GetLabels()); err != nil {
+				return err
+			}
+		case "annotations":
+			var err error
+			if s.Annotations, err = bytesForMap(message.GetAnnotations()); err != nil {
+				return err
 			}
 		}
-	} else {
-		filename := message.GetFilename()
-		if filename != "" {
-			s.FileName = filename
-		}
-		description := message.GetDescription()
-		if description != "" {
-			s.Description = description
-		}
-		if contents := message.GetContents(); contents != nil {
-			s.updateContents(message.GetContents())
-		}
-		mimeType := message.GetMimeType()
-		if mimeType != "" {
-			s.MimeType = mimeType
-		}
-		sourceURI := message.GetSourceUri()
-		if sourceURI != "" {
-			s.SourceURI = sourceURI
-		}
-		var err error
-		if s.Labels, err = bytesForMap(message.GetLabels()); err != nil {
-			return err
-		}
-		if s.Annotations, err = bytesForMap(message.GetAnnotations()); err != nil {
-			return err
-		}
 	}
-	s.RevisionUpdateTime = now
+
 	return nil
 }
 

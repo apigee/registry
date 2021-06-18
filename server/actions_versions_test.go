@@ -711,24 +711,12 @@ func TestListApiVersionsSequence(t *testing.T) {
 }
 
 func TestUpdateApiVersion(t *testing.T) {
-	t.Skip("Default/empty mask behavior is incorrect and replacement wildcard is not implemented")
-
 	tests := []struct {
 		desc string
 		seed *rpc.ApiVersion
 		req  *rpc.UpdateApiVersionRequest
 		want *rpc.ApiVersion
 	}{
-		{
-			desc: "populated resource with default parameters",
-			seed: fullVersion,
-			req: &rpc.UpdateApiVersionRequest{
-				ApiVersion: &rpc.ApiVersion{
-					Name: fullVersion.Name,
-				},
-			},
-			want: fullVersion,
-		},
 		{
 			desc: "implicit mask",
 			seed: &rpc.ApiVersion{
@@ -831,8 +819,6 @@ func TestUpdateApiVersion(t *testing.T) {
 }
 
 func TestUpdateApiVersionResponseCodes(t *testing.T) {
-	t.Skip("Update mask validation is not implemented")
-
 	tests := []struct {
 		desc string
 		seed *rpc.ApiVersion

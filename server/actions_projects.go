@@ -173,6 +173,8 @@ func (s *RegistryServer) UpdateProject(ctx context.Context, req *rpc.UpdateProje
 
 	if req.GetProject() == nil {
 		return nil, invalidArgumentError(fmt.Errorf("invalid project %+v: body must be provided", req.GetProject()))
+	} else if err := models.ValidateMask(req.GetProject(), req.GetUpdateMask()); err != nil {
+		return nil, invalidArgumentError(fmt.Errorf("invalid update_mask %v: %s", req.GetUpdateMask(), err))
 	}
 
 	name, err := names.ParseProject(req.GetProject().GetName())
@@ -185,7 +187,7 @@ func (s *RegistryServer) UpdateProject(ctx context.Context, req *rpc.UpdateProje
 		return nil, err
 	}
 
-	project.Update(req.GetProject(), req.GetUpdateMask())
+	project.Update(req.GetProject(), models.ExpandMask(req.GetProject(), req.GetUpdateMask()))
 	if err := db.SaveProject(ctx, project); err != nil {
 		return nil, err
 	}
