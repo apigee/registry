@@ -16,6 +16,7 @@ package dao
 
 import (
 	"context"
+	"log"
 
 	"github.com/apigee/registry/server/models"
 	"github.com/apigee/registry/server/names"
@@ -69,19 +70,18 @@ func (d *DAO) ListProjects(ctx context.Context, opts PageOptions) (ProjectList, 
 
 	project := new(models.Project)
 	for _, err = it.Next(project); err == nil; _, err = it.Next(project) {
-		token.Offset++
-
 		match, err := filter.Matches(projectMap(*project))
 		if err != nil {
 			return response, err
 		} else if !match {
+			token.Offset++
 			continue
+		} else if len(response.Projects) == int(opts.Size) {
+			break
 		}
 
 		response.Projects = append(response.Projects, *project)
-		if len(response.Projects) == int(opts.Size) {
-			break
-		}
+		token.Offset++
 	}
 	if err != nil && err != iterator.Done {
 		return response, status.Error(codes.Internal, err.Error())
@@ -92,6 +92,8 @@ func (d *DAO) ListProjects(ctx context.Context, opts PageOptions) (ProjectList, 
 		if err != nil {
 			return response, status.Error(codes.Internal, err.Error())
 		}
+
+		log.Printf("Set token: %+v", token)
 	}
 
 	return response, nil
