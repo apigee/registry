@@ -548,13 +548,13 @@ func TestListProjectsLargeCollectionFiltering(t *testing.T) {
 	server := defaultTestServer(t)
 	for i := 1; i <= 100; i++ {
 		seedProjects(ctx, t, server, &rpc.Project{
-			Name: fmt.Sprintf("projects/project%d", i),
+			Name: fmt.Sprintf("projects/project%03d", i),
 		})
 	}
 
 	req := &rpc.ListProjectsRequest{
 		PageSize: 1,
-		Filter:   "name == 'projects/project99'",
+		Filter:   "name == 'projects/project099'",
 	}
 
 	got, err := server.ListProjects(ctx, req)
@@ -563,8 +563,7 @@ func TestListProjectsLargeCollectionFiltering(t *testing.T) {
 	}
 
 	if len(got.GetProjects()) == 1 && got.GetNextPageToken() != "" {
-		// TODO: This should be changed to a test error when possible. See: https://github.com/apigee/registry/issues/68
-		t.Logf("ListProjects(%+v) returned a page token when the only matching resource has been listed: %+v", req, got)
+		t.Errorf("ListProjects(%+v) returned a page token when the only matching resource has been listed: %+v", req, got)
 	} else if len(got.GetProjects()) == 0 && got.GetNextPageToken() == "" {
 		t.Errorf("ListProjects(%+v) returned an empty next page token before listing the only matching resource", req)
 	} else if count := len(got.GetProjects()); count > 1 {

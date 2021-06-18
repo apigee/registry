@@ -869,6 +869,37 @@ func TestListApiSpecsSequence(t *testing.T) {
 	}
 }
 
+// This test prevents the list sequence from ending before a known filter match is listed.
+// For simplicity, it does not guarantee the resource is returned on a later page.
+func TestListApiSpecsLargeCollectionFiltering(t *testing.T) {
+	ctx := context.Background()
+	server := defaultTestServer(t)
+	for i := 1; i <= 100; i++ {
+		seedSpecs(ctx, t, server, &rpc.ApiSpec{
+			Name: fmt.Sprintf("projects/my-project/apis/my-api/versions/v1/specs/s%03d", i),
+		})
+	}
+
+	req := &rpc.ListApiSpecsRequest{
+		Parent:   "projects/my-project/apis/my-api/versions/v1",
+		PageSize: 1,
+		Filter:   "name == 'projects/my-project/apis/my-api/versions/v1/specs/s099'",
+	}
+
+	got, err := server.ListApiSpecs(ctx, req)
+	if err != nil {
+		t.Fatalf("ListApiSpecs(%+v) returned error: %s", req, err)
+	}
+
+	if len(got.GetApiSpecs()) == 1 && got.GetNextPageToken() != "" {
+		t.Errorf("ListApiSpecs(%+v) returned a page token when the only matching resource has been listed: %+v", req, got)
+	} else if len(got.GetApiSpecs()) == 0 && got.GetNextPageToken() == "" {
+		t.Errorf("ListApiSpecs(%+v) returned an empty next page token before listing the only matching resource", req)
+	} else if count := len(got.GetApiSpecs()); count > 1 {
+		t.Errorf("ListApiSpecs(%+v) returned %d projects, expected at most one: %+v", req, count, got.GetApiSpecs())
+	}
+}
+
 func TestUpdateApiSpec(t *testing.T) {
 	tests := []struct {
 		desc string

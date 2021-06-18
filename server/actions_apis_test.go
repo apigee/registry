@@ -681,14 +681,14 @@ func TestListApisLargeCollectionFiltering(t *testing.T) {
 	server := defaultTestServer(t)
 	for i := 1; i <= 100; i++ {
 		seedApis(ctx, t, server, &rpc.Api{
-			Name: fmt.Sprintf("projects/my-project/apis/a%d", i),
+			Name: fmt.Sprintf("projects/my-project/apis/a%03d", i),
 		})
 	}
 
 	req := &rpc.ListApisRequest{
 		Parent:   "projects/my-project",
 		PageSize: 1,
-		Filter:   "name == 'projects/my-project/apis/a99'",
+		Filter:   "name == 'projects/my-project/apis/a099'",
 	}
 
 	got, err := server.ListApis(ctx, req)
@@ -697,8 +697,7 @@ func TestListApisLargeCollectionFiltering(t *testing.T) {
 	}
 
 	if len(got.GetApis()) == 1 && got.GetNextPageToken() != "" {
-		// TODO: This should be changed to a test error when possible. See: https://github.com/apigee/registry/issues/68
-		t.Logf("ListApis(%+v) returned a page token when the only matching resource has been listed: %+v", req, got)
+		t.Errorf("ListApis(%+v) returned a page token when the only matching resource has been listed: %+v", req, got)
 	} else if len(got.GetApis()) == 0 && got.GetNextPageToken() == "" {
 		t.Errorf("ListApis(%+v) returned an empty next page token before listing the only matching resource", req)
 	} else if count := len(got.GetApis()); count > 1 {
