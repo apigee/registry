@@ -26,8 +26,7 @@ manifest:
   action: "compute lint $source0 --linter aip"
 - resource: apis/-/versions/-/specs/-/artifacts/lintstats-gnostic
   dependencies:
-  - source: $resource.spec
-    filter: "mime_type.contains('openapi')"
+  - source: $resource.spec/artifacts/lint-gnostic
   action: "compute lintstats $source0 --linter gnostic"
 - resource: apis/-/artifacts/vocabulary
   dependencies:
