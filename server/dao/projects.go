@@ -16,7 +16,6 @@ package dao
 
 import (
 	"context"
-	"log"
 
 	"github.com/apigee/registry/server/models"
 	"github.com/apigee/registry/server/names"
@@ -92,8 +91,6 @@ func (d *DAO) ListProjects(ctx context.Context, opts PageOptions) (ProjectList, 
 		if err != nil {
 			return response, status.Error(codes.Internal, err.Error())
 		}
-
-		log.Printf("Set token: %+v", token)
 	}
 
 	return response, nil
