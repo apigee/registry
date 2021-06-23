@@ -24,7 +24,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/gorm"
@@ -57,8 +56,6 @@ const (
 
 // RegistryServer implements a Registry server.
 type RegistryServer struct {
-	// Uncomment the following line when adding new methods.
-	// rpc.UnimplementedRegistryServer
 
 	database            string // configured
 	dbConfig            string // configured
@@ -66,7 +63,6 @@ type RegistryServer struct {
 	logging             string // configured
 
 	projectID      string // computed
-	weTrustTheSort bool   // computed
 	loggingLevel   int    // computed
 }
 
@@ -95,7 +91,6 @@ func newRegistryServer(config *Config) *RegistryServer {
 }
 
 func (s *RegistryServer) getStorageClient(ctx context.Context) (storage.Client, error) {
-	s.weTrustTheSort = false
 	return gorm.NewClient(ctx, s.database, s.dbConfig)
 }
 
@@ -127,9 +122,6 @@ func (s *RegistryServer) getProjectID() (string, error) {
 	return s.projectID, nil
 }
 
-var serverMutex sync.Mutex
-var serverSerialization bool
-
 // RunServer runs the Registry server on a specified port
 func RunServer(port string, config *Config) error {
 	// Construct Registry API server (request handler).
@@ -140,10 +132,6 @@ func RunServer(port string, config *Config) error {
 	}
 	// Construct gRPC server.
 	loggingHandler := func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-		if serverSerialization {
-			serverMutex.Lock()
-			defer serverMutex.Unlock()
-		}
 		method := filepath.Base(info.FullMethod)
 		if r.loggingLevel >= loggingInfo {
 			log.Printf(">> %s", method)
