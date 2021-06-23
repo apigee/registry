@@ -16,12 +16,9 @@ package server
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"log"
 	"net"
 	"net/http"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -31,7 +28,6 @@ import (
 
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/soheilhy/cmux"
-	"golang.org/x/oauth2/google"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/reflection"
@@ -40,10 +36,11 @@ import (
 
 // Config configures the registry server.
 type Config struct {
-	Database string `yaml:"database"`
-	DBConfig string `yaml:"dbconfig"`
-	Notify   bool   `yaml:"notify"`
-	Log      string `yaml:"log"`
+	Database  string `yaml:"database"`
+	DBConfig  string `yaml:"dbconfig"`
+	Log       string `yaml:"log"`
+	Notify    bool   `yaml:"notify"`
+	ProjectID string `yaml:"project"`
 }
 
 const (
@@ -56,37 +53,41 @@ const (
 
 // RegistryServer implements a Registry server.
 type RegistryServer struct {
-
-	database            string // configured
-	dbConfig            string // configured
-	enableNotifications bool   // configured
-	logging             string // configured
-
-	projectID      string // computed
-	loggingLevel   int    // computed
+	database            string
+	dbConfig            string
+	enableNotifications bool
+	loggingLevel        int
+	projectID           string
 }
 
-func newRegistryServer(config *Config) *RegistryServer {
-	s := &RegistryServer{}
-	if config != nil {
-		s.database = config.Database
-		s.dbConfig = config.DBConfig
-		s.enableNotifications = config.Notify
-		switch strings.ToUpper(config.Log) {
-		case "FATAL":
-			s.loggingLevel = loggingFatal
-		case "ERRORS":
-			s.loggingLevel = loggingError
-		case "WARNINGS":
-			s.loggingLevel = loggingWarn
-		case "INFO":
-			s.loggingLevel = loggingInfo
-		case "DEBUG":
-			s.loggingLevel = loggingDebug
-		default:
-			s.loggingLevel = loggingFatal
-		}
+func newRegistryServer(config Config) *RegistryServer {
+	s := &RegistryServer{
+		database:            config.Database,
+		dbConfig:            config.DBConfig,
+		enableNotifications: config.Notify,
+		projectID:           config.ProjectID,
 	}
+
+	if s.database == "" {
+		s.database = "sqlite3"
+		s.dbConfig = "/tmp/registry.db"
+	}
+
+	switch strings.ToUpper(config.Log) {
+	case "FATAL":
+		s.loggingLevel = loggingFatal
+	case "ERRORS":
+		s.loggingLevel = loggingError
+	case "WARNINGS":
+		s.loggingLevel = loggingWarn
+	case "INFO":
+		s.loggingLevel = loggingInfo
+	case "DEBUG":
+		s.loggingLevel = loggingDebug
+	default:
+		s.loggingLevel = loggingFatal
+	}
+
 	return s
 }
 
@@ -99,35 +100,12 @@ func (s *RegistryServer) releaseStorageClient(client storage.Client) {
 	client.Close()
 }
 
-func (s *RegistryServer) getProjectID() (string, error) {
-	if s.projectID != "" {
-		return s.projectID, nil
-	}
-	ctx := context.TODO()
-	credentials, err := google.FindDefaultCredentials(ctx)
-	if err != nil {
-		return "", fmt.Errorf("error finding default credentials: %v", err)
-	}
-
-	if id := credentials.ProjectID; id != "" {
-		s.projectID = id
-		log.Printf("Using project ID %q from default credentials", id)
-	} else if id := os.Getenv("REGISTRY_PROJECT_IDENTIFIER"); id != "" {
-		s.projectID = id
-		log.Printf("Default credentials did not set project ID. Using project ID %q from REGISTRY_PROJECT_IDENTIFIER", id)
-	} else {
-		return "", errors.New("default credentials and REGISTRY_PROJECT_IDENTIFIER did not set project ID")
-	}
-
-	return s.projectID, nil
-}
-
-// RunServer runs the Registry server on a specified port
-func RunServer(port string, config *Config) error {
+// RunServer runs the Registry server using the provided listener.
+func RunServer(listener net.Listener, config Config) error {
 	// Construct Registry API server (request handler).
 	r := newRegistryServer(config)
 	// Check database configuration
-	if err := gorm.Validate(config.Database, config.DBConfig); err != nil {
+	if err := gorm.Validate(r.database, r.dbConfig); err != nil {
 		return err
 	}
 	// Construct gRPC server.
@@ -153,12 +131,6 @@ func RunServer(port string, config *Config) error {
 	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(loggingHandler))
 	reflection.Register(grpcServer)
 	rpc.RegisterRegistryServer(grpcServer, r)
-	// Create a listener and use it to run the server.
-	listener, err := net.Listen("tcp", port)
-	if err != nil {
-		return fmt.Errorf("failed to listen: %v", err)
-	}
-	log.Printf("registry-server listening on %s", port)
 	// Use a cmux to route incoming requests by protocol.
 	m := cmux.New(listener)
 	// Match gRPC requests and serve them in a goroutine.
