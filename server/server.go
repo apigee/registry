@@ -162,12 +162,5 @@ func (h *httpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func isNotFound(err error) bool {
-	if err == nil {
-		return false
-	}
-	st, ok := status.FromError(err)
-	if !ok {
-		return false
-	}
-	return st.Code() == codes.NotFound
+	return status.Code(err) == codes.NotFound
 }
