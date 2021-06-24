@@ -15,12 +15,15 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net"
 	"os"
+	"os/signal"
 	"strconv"
+	"syscall"
 
 	"github.com/apigee/registry/server"
 	"github.com/spf13/pflag"
@@ -54,11 +57,16 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to create TCP listener: %s", err)
 	}
+	defer listener.Close()
 
+	srv := server.New(config)
+	go srv.Start(context.Background(), listener)
 	log.Printf("Listening on %s", listener.Addr())
-	if err := server.RunServer(listener, config); err != nil {
-		log.Fatalf("Failed to start server: %s", err)
-	}
+
+	// Wait for an interruption signal.
+	done := make(chan os.Signal, 1)
+	signal.Notify(done, os.Interrupt, syscall.SIGTERM)
+	<-done
 }
 
 func parseConfig(config *server.Config, filepath string) error {

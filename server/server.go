@@ -60,7 +60,7 @@ type RegistryServer struct {
 	projectID     string
 }
 
-func newRegistryServer(config Config) *RegistryServer {
+func New(config Config) *RegistryServer {
 	s := &RegistryServer{
 		database:      config.Database,
 		dbConfig:      config.DBConfig,
@@ -100,65 +100,54 @@ func (s *RegistryServer) releaseStorageClient(client storage.Client) {
 	client.Close()
 }
 
-// RunServer runs the Registry server using the provided listener.
-func RunServer(listener net.Listener, config Config) error {
-	// Construct Registry API server (request handler).
-	r := newRegistryServer(config)
-	// Check database configuration
-	if err := gorm.Validate(r.database, r.dbConfig); err != nil {
-		return err
-	}
-	// Construct gRPC server.
-	loggingHandler := func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-		method := filepath.Base(info.FullMethod)
-		if r.loggingLevel >= loggingInfo {
-			log.Printf(">> %s", method)
-		}
-		resp, err := handler(ctx, req)
-		if err != nil {
-			if isNotFound(err) { // only log "not found" at DEBUG and higher
-				if r.loggingLevel >= loggingDebug {
-					log.Printf("[%s] %s", method, err.Error())
+// Start runs the Registry server using the provided listener.
+// It blocks until the context is cancelled.
+func (s *RegistryServer) Start(ctx context.Context, listener net.Listener) {
+	var (
+		mux          = cmux.New(listener)
+		grpcListener = mux.Match(cmux.HTTP2())
+		httpListener = mux.Match(cmux.HTTP1Fast())
+
+		logInterceptor = grpc.UnaryInterceptor(s.logHandler)
+		grpcServer     = grpc.NewServer(logInterceptor)
+		grpcWebServer  = grpcweb.WrapServer(grpcServer)
+
+		httpServer = http.Server{
+			Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if grpcWebServer.IsGrpcWebRequest(r) {
+					grpcWebServer.ServeHTTP(w, r)
+				} else {
+					http.NotFound(w, r)
 				}
-			} else { // log all other problems at ERROR and higher
-				if r.loggingLevel >= loggingError {
-					log.Printf("[%s] %s", method, err.Error())
-				}
-			}
+			}),
 		}
-		return resp, err
-	}
-	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(loggingHandler))
+	)
+
 	reflection.Register(grpcServer)
-	rpc.RegisterRegistryServer(grpcServer, r)
-	// Use a cmux to route incoming requests by protocol.
-	m := cmux.New(listener)
-	// Match gRPC requests and serve them in a goroutine.
-	grpcListener := m.Match(cmux.HTTP2())
+	rpc.RegisterRegistryServer(grpcServer, s)
+
 	go grpcServer.Serve(grpcListener)
-	// Match HTTP1 requests (including gRPC-Web) and serve them in a goroutine.
-	httpListener := m.Match(cmux.HTTP1Fast())
-	httpServer := &http.Server{
-		Handler: &httpHandler{grpcWebServer: grpcweb.WrapServer(grpcServer)},
-	}
 	go httpServer.Serve(httpListener)
-	// Run the mux server.
-	return m.Serve()
+	go mux.Serve()
+
+	// Block until the context is cancelled.
+	<-ctx.Done()
 }
 
-type httpHandler struct {
-	grpcWebServer *grpcweb.WrappedGrpcServer
-}
-
-func (h *httpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// handle gRPC Web requests
-	if h.grpcWebServer.IsGrpcWebRequest(r) {
-		h.grpcWebServer.ServeHTTP(w, r)
-		return
+func (s *RegistryServer) logHandler(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	method := filepath.Base(info.FullMethod)
+	if s.loggingLevel >= loggingInfo {
+		log.Printf(">> %s", method)
 	}
-	// handle any other requests
-	log.Printf("%+v", r)
-	http.NotFound(w, r)
+	resp, err := handler(ctx, req)
+	if isNotFound(err) && s.loggingLevel >= loggingDebug {
+		// Only log "not found" at DEBUG and higher.
+		log.Printf("[%s] %s", method, err.Error())
+	} else if err != nil && s.loggingLevel >= loggingError {
+		// Log all other problems at ERROR and higher.
+		log.Printf("[%s] %s", method, err.Error())
+	}
+	return resp, err
 }
 
 func isNotFound(err error) bool {
