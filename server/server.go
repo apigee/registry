@@ -53,19 +53,19 @@ const (
 
 // RegistryServer implements a Registry server.
 type RegistryServer struct {
-	database            string
-	dbConfig            string
-	enableNotifications bool
-	loggingLevel        int
-	projectID           string
+	database      string
+	dbConfig      string
+	notifyEnabled bool
+	loggingLevel  int
+	projectID     string
 }
 
 func newRegistryServer(config Config) *RegistryServer {
 	s := &RegistryServer{
-		database:            config.Database,
-		dbConfig:            config.DBConfig,
-		enableNotifications: config.Notify,
-		projectID:           config.ProjectID,
+		database:      config.Database,
+		dbConfig:      config.DBConfig,
+		notifyEnabled: config.Notify,
+		projectID:     config.ProjectID,
 	}
 
 	if s.database == "" {

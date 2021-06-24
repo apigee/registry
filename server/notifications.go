@@ -34,7 +34,7 @@ const TopicName = "registry-events"
 var notificationTotal int
 
 func (s *RegistryServer) notify(change rpc.Notification_Change, resource string) error {
-	if !s.enableNotifications || s.projectID == "" {
+	if !s.notifyEnabled || s.projectID == "" {
 		return nil
 	}
 	ctx := context.Background()
