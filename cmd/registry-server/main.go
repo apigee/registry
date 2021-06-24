@@ -105,9 +105,9 @@ func validateConfig(c server.Config) error {
 	}
 
 	switch c.Log {
-	case "fatal", "errors", "warnings", "info", "debug":
+	case "fatal", "error", "warn", "info", "debug":
 	default:
-		return fmt.Errorf("invalid log value %q: must be one of [fatal, errors, warnings, info, debug]", c.Log)
+		return fmt.Errorf("invalid log value %q: must be one of [fatal, error, warn, info, debug]", c.Log)
 	}
 
 	if c.DBConfig == "" {
