@@ -692,8 +692,7 @@ func TestListApiSpecs(t *testing.T) {
 			if test.wantToken && got.NextPageToken == "" {
 				t.Errorf("ListApiSpecs(%+v) returned empty next_page_token, expected non-empty next_page_token", test.req)
 			} else if !test.wantToken && got.NextPageToken != "" {
-				// TODO: This should be changed to a test error when possible. See: https://github.com/apigee/registry/issues/68
-				t.Logf("ListApiSpecs(%+v) returned non-empty next_page_token, expected empty next_page_token: %s", test.req, got.GetNextPageToken())
+				t.Errorf("ListApiSpecs(%+v) returned non-empty next_page_token, expected empty next_page_token: %s", test.req, got.GetNextPageToken())
 			}
 		})
 	}
@@ -846,8 +845,7 @@ func TestListApiSpecsSequence(t *testing.T) {
 		}
 
 		if got.GetNextPageToken() != "" {
-			// TODO: This should be changed to a test error when possible. See: https://github.com/apigee/registry/issues/68
-			t.Logf("ListApiSpecs(%+v) returned next_page_token, expected no next page", req)
+			t.Errorf("ListApiSpecs(%+v) returned next_page_token, expected no next page", req)
 		}
 
 		listed = append(listed, got.ApiSpecs...)
@@ -867,6 +865,37 @@ func TestListApiSpecsSequence(t *testing.T) {
 
 	if !cmp.Equal(seed, listed, opts) {
 		t.Errorf("List sequence returned unexpected diff (-want +got):\n%s", cmp.Diff(seed, listed, opts))
+	}
+}
+
+// This test prevents the list sequence from ending before a known filter match is listed.
+// For simplicity, it does not guarantee the resource is returned on a later page.
+func TestListApiSpecsLargeCollectionFiltering(t *testing.T) {
+	ctx := context.Background()
+	server := defaultTestServer(t)
+	for i := 1; i <= 100; i++ {
+		seedSpecs(ctx, t, server, &rpc.ApiSpec{
+			Name: fmt.Sprintf("projects/my-project/apis/my-api/versions/v1/specs/s%03d", i),
+		})
+	}
+
+	req := &rpc.ListApiSpecsRequest{
+		Parent:   "projects/my-project/apis/my-api/versions/v1",
+		PageSize: 1,
+		Filter:   "name == 'projects/my-project/apis/my-api/versions/v1/specs/s099'",
+	}
+
+	got, err := server.ListApiSpecs(ctx, req)
+	if err != nil {
+		t.Fatalf("ListApiSpecs(%+v) returned error: %s", req, err)
+	}
+
+	if len(got.GetApiSpecs()) == 1 && got.GetNextPageToken() != "" {
+		t.Errorf("ListApiSpecs(%+v) returned a page token when the only matching resource has been listed: %+v", req, got)
+	} else if len(got.GetApiSpecs()) == 0 && got.GetNextPageToken() == "" {
+		t.Errorf("ListApiSpecs(%+v) returned an empty next page token before listing the only matching resource", req)
+	} else if count := len(got.GetApiSpecs()); count > 1 {
+		t.Errorf("ListApiSpecs(%+v) returned %d projects, expected at most one: %+v", req, count, got.GetApiSpecs())
 	}
 }
 

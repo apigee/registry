@@ -16,6 +16,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -539,8 +540,7 @@ func TestListApiVersions(t *testing.T) {
 			if test.wantToken && got.NextPageToken == "" {
 				t.Errorf("ListApiVersions(%+v) returned empty next_page_token, expected non-empty next_page_token", test.req)
 			} else if !test.wantToken && got.NextPageToken != "" {
-				// TODO: This should be changed to a test error when possible. See: https://github.com/apigee/registry/issues/68
-				t.Logf("ListApiVersions(%+v) returned non-empty next_page_token, expected empty next_page_token: %s", test.req, got.GetNextPageToken())
+				t.Errorf("ListApiVersions(%+v) returned non-empty next_page_token, expected empty next_page_token: %s", test.req, got.GetNextPageToken())
 			}
 		})
 	}
@@ -686,8 +686,7 @@ func TestListApiVersionsSequence(t *testing.T) {
 		}
 
 		if got.GetNextPageToken() != "" {
-			// TODO: This should be changed to a test error when possible. See: https://github.com/apigee/registry/issues/68
-			t.Logf("ListApiVersions(%+v) returned next_page_token, expected no next page", req)
+			t.Errorf("ListApiVersions(%+v) returned next_page_token, expected no next page", req)
 		}
 
 		listed = append(listed, got.ApiVersions...)
@@ -707,6 +706,37 @@ func TestListApiVersionsSequence(t *testing.T) {
 
 	if !cmp.Equal(seed, listed, opts) {
 		t.Errorf("List sequence returned unexpected diff (-want +got):\n%s", cmp.Diff(seed, listed, opts))
+	}
+}
+
+// This test prevents the list sequence from ending before a known filter match is listed.
+// For simplicity, it does not guarantee the resource is returned on a later page.
+func TestListApiVersionsLargeCollectionFiltering(t *testing.T) {
+	ctx := context.Background()
+	server := defaultTestServer(t)
+	for i := 1; i <= 100; i++ {
+		seedVersions(ctx, t, server, &rpc.ApiVersion{
+			Name: fmt.Sprintf("projects/my-project/apis/my-api/versions/v%03d", i),
+		})
+	}
+
+	req := &rpc.ListApiVersionsRequest{
+		Parent:   "projects/my-project/apis/my-api",
+		PageSize: 1,
+		Filter:   "name == 'projects/my-project/apis/my-api/versions/v099'",
+	}
+
+	got, err := server.ListApiVersions(ctx, req)
+	if err != nil {
+		t.Fatalf("ListApiVersions(%+v) returned error: %s", req, err)
+	}
+
+	if len(got.GetApiVersions()) == 1 && got.GetNextPageToken() != "" {
+		t.Errorf("ListApiVersions(%+v) returned a page token when the only matching resource has been listed: %+v", req, got)
+	} else if len(got.GetApiVersions()) == 0 && got.GetNextPageToken() == "" {
+		t.Errorf("ListApiVersions(%+v) returned an empty next page token before listing the only matching resource", req)
+	} else if count := len(got.GetApiVersions()); count > 1 {
+		t.Errorf("ListApiVersions(%+v) returned %d projects, expected at most one: %+v", req, count, got.GetApiVersions())
 	}
 }
 

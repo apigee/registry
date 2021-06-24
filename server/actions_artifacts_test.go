@@ -16,6 +16,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -606,8 +607,7 @@ func TestListArtifacts(t *testing.T) {
 			if test.wantToken && got.NextPageToken == "" {
 				t.Errorf("ListArtifacts(%+v) returned empty next_page_token, expected non-empty next_page_token", test.req)
 			} else if !test.wantToken && got.NextPageToken != "" {
-				// TODO: This should be changed to a test error when possible. See: https://github.com/apigee/registry/issues/68
-				t.Logf("ListArtifacts(%+v) returned non-empty next_page_token, expected empty next_page_token: %s", test.req, got.GetNextPageToken())
+				t.Errorf("ListArtifacts(%+v) returned non-empty next_page_token, expected empty next_page_token: %s", test.req, got.GetNextPageToken())
 			}
 		})
 	}
@@ -760,8 +760,7 @@ func TestListArtifactsSequence(t *testing.T) {
 		}
 
 		if got.GetNextPageToken() != "" {
-			// TODO: This should be changed to a test error when possible. See: https://github.com/apigee/registry/issues/68
-			t.Logf("ListArtifacts(%+v) returned next_page_token, expected no next page", req)
+			t.Errorf("ListArtifacts(%+v) returned next_page_token, expected no next page", req)
 		}
 
 		listed = append(listed, got.Artifacts...)
@@ -781,6 +780,37 @@ func TestListArtifactsSequence(t *testing.T) {
 
 	if !cmp.Equal(seed, listed, opts) {
 		t.Errorf("List sequence returned unexpected diff (-want +got):\n%s", cmp.Diff(seed, listed, opts))
+	}
+}
+
+// This test prevents the list sequence from ending before a known filter match is listed.
+// For simplicity, it does not guarantee the resource is returned on a later page.
+func TestListArtifactsLargeCollectionFiltering(t *testing.T) {
+	ctx := context.Background()
+	server := defaultTestServer(t)
+	for i := 1; i <= 100; i++ {
+		seedArtifacts(ctx, t, server, &rpc.Artifact{
+			Name: fmt.Sprintf("projects/my-project/artifacts/a%03d", i),
+		})
+	}
+
+	req := &rpc.ListArtifactsRequest{
+		Parent:   "projects/my-project",
+		PageSize: 1,
+		Filter:   "name == 'projects/my-project/artifacts/a099'",
+	}
+
+	got, err := server.ListArtifacts(ctx, req)
+	if err != nil {
+		t.Fatalf("ListArtifacts(%+v) returned error: %s", req, err)
+	}
+
+	if len(got.GetArtifacts()) == 1 && got.GetNextPageToken() != "" {
+		t.Errorf("ListArtifacts(%+v) returned a page token when the only matching resource has been listed: %+v", req, got)
+	} else if len(got.GetArtifacts()) == 0 && got.GetNextPageToken() == "" {
+		t.Errorf("ListArtifacts(%+v) returned an empty next page token before listing the only matching resource", req)
+	} else if count := len(got.GetArtifacts()); count > 1 {
+		t.Errorf("ListArtifacts(%+v) returned %d projects, expected at most one: %+v", req, count, got.GetArtifacts())
 	}
 }
 
