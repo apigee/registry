@@ -34,6 +34,17 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// LogLevel indicates which types of messages should be logged by the server.
+type LogLevel int
+
+const (
+	loggingFatal LogLevel = iota
+	loggingError LogLevel = iota
+	loggingWarn  LogLevel = iota
+	loggingInfo  LogLevel = iota
+	loggingDebug LogLevel = iota
+)
+
 // Config configures the registry server.
 type Config struct {
 	Database  string `yaml:"database"`
@@ -43,20 +54,12 @@ type Config struct {
 	ProjectID string `yaml:"project"`
 }
 
-const (
-	loggingFatal = iota
-	loggingError = iota
-	loggingWarn  = iota
-	loggingInfo  = iota
-	loggingDebug = iota
-)
-
 // RegistryServer implements a Registry server.
 type RegistryServer struct {
 	database      string
 	dbConfig      string
 	notifyEnabled bool
-	loggingLevel  int
+	loggingLevel  LogLevel
 	projectID     string
 }
 
