@@ -3,7 +3,7 @@ module github.com/apigee/registry
 go 1.15
 
 require (
-	cloud.google.com/go v0.72.0
+	cloud.google.com/go v0.84.0
 	cloud.google.com/go/pubsub v1.3.1
 	github.com/GoogleCloudPlatform/cloudsql-proxy v1.19.1
 	github.com/blevesearch/bleve v1.0.13
@@ -27,7 +27,7 @@ require (
 	github.com/google/go-cmp v0.5.6
 	github.com/google/uuid v1.1.2
 	github.com/googleapis/api-linter v1.25.0 // indirect
-	github.com/googleapis/gapic-generator-go v0.20.3 // indirect
+	github.com/googleapis/gapic-generator-go v0.21.0 // indirect
 	github.com/googleapis/gax-go/v2 v2.0.5
 	github.com/googleapis/gnostic v0.5.4
 	github.com/graphql-go/graphql v0.7.9
@@ -47,10 +47,10 @@ require (
 	github.com/yoheimuta/go-protoparser/v4 v4.2.1
 	gitlab.com/golang-commonmark/linkify v0.0.0-20200225224916-64bca66f6ad3 // indirect
 	golang.org/x/net v0.0.0-20210614182718-04defd469f4e
-	golang.org/x/oauth2 v0.0.0-20201109201403-9fd604954f58
-	golang.org/x/sys v0.0.0-20210615035016-665e8c7367d1 // indirect
-	google.golang.org/api v0.36.0
-	google.golang.org/genproto v0.0.0-20210614182748-5b3b54cad159
+	golang.org/x/oauth2 v0.0.0-20210615190721-d04028783cf1
+	golang.org/x/sys v0.0.0-20210616094352-59db8d763f22 // indirect
+	google.golang.org/api v0.49.0
+	google.golang.org/genproto v0.0.0-20210624195500-8bfb893ecb84
 	google.golang.org/grpc v1.38.0
 	google.golang.org/grpc/examples v0.0.0-20210424002626-9572fd6faeae // indirect
 	google.golang.org/protobuf v1.26.0
