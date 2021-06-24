@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package google.cloud.apigee.registry.applications.v1alpha1;
+
+option java_package = "com.google.cloud.apigee.registry.applications.v1alpha1";
+option java_multiple_files = true;
+option java_outer_classname = "RegistryManifestProto";
+option go_package = "github.com/apigee/registry/rpc;rpc";
+
+// Manifest represents the dependencies of a list of generated resources that are stored
+// in a registry and is used by the controller to keep these resources up-to-date.
+message Manifest {
+  // List of Generated resources.
+  repeated GeneratedResource generated_resources = 1 [
+		(google.api.field_behavior) = REQUIRED
+	];
+}
+
+message GeneratedResource {
+	// Pattern for one particular or a group of api/version/spec/artifact
+	// Format: 
+	// apis/{api}/versions/{version}/specs/{spec}/artifacts/{artifact}
+	// apis/-/versions/-/specs/-/artifacts/-
+	string pattern = 1 [
+		(google.api.field_behavior) = REQUIRED
+	];
+	string filter = 2;
+	repeated Dependency dependencies = 3;
+	// action Can contain references to both the resource and dependencies
+	// Example: "compute complexity $dependency0 $resource"
+	string action = 4 [
+		(google.api.field_behavior) = REQUIRED
+	];
+}
+
+message Dependency {
+	// pattern for one particular or a group of api/version/spec/artifact
+	// pattern in a Dependency can contain references to the original resource
+	// Format: 
+	// $resource.api/versions/-/specs/-
+	// $resource.version/specs/-/artifacts/-
+	string pattern = 1 [
+		(google.api.field_behavior) = REQUIRED
+	];
+	string filter = 2;
+}
+
