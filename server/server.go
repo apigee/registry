@@ -85,7 +85,7 @@ func newRegistryServer(config Config) *RegistryServer {
 	case "DEBUG":
 		s.loggingLevel = loggingDebug
 	default:
-		s.loggingLevel = loggingFatal
+		s.loggingLevel = loggingDebug
 	}
 
 	return s
