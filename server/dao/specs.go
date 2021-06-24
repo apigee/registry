@@ -87,8 +87,6 @@ func (d *DAO) ListSpecs(ctx context.Context, parent names.Version, opts PageOpti
 
 	spec := new(models.Spec)
 	for _, err = it.Next(spec); err == nil; _, err = it.Next(spec) {
-		token.Offset++
-
 		specMap, err := specMap(*spec)
 		if err != nil {
 			return response, status.Error(codes.Internal, err.Error())
@@ -98,13 +96,14 @@ func (d *DAO) ListSpecs(ctx context.Context, parent names.Version, opts PageOpti
 		if err != nil {
 			return response, err
 		} else if !match {
+			token.Offset++
 			continue
+		} else if len(response.Specs) == int(opts.Size) {
+			break
 		}
 
 		response.Specs = append(response.Specs, *spec)
-		if len(response.Specs) == int(opts.Size) {
-			break
-		}
+		token.Offset++
 	}
 	if err != nil && err != iterator.Done {
 		return response, status.Error(codes.Internal, err.Error())
