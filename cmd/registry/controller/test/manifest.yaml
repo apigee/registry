@@ -12,32 +12,32 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-project: "controller-demo"
-manifest:
-- resource: apis/-/versions/-/specs/-/artifacts/lint-gnostic
+name: "test-manifest"
+generated_resources:
+- pattern: apis/-/versions/-/specs/-/artifacts/lint-gnostic
   dependencies:
-  - source: $resource.spec
+  - pattern: $resource.spec
     filter: "mime_type.contains('openapi')"
   action: "compute lint $source0 --linter gnostic"
-- resource: apis/-/versions/-/specs/-/artifacts/lint-aip
+- pattern: apis/-/versions/-/specs/-/artifacts/lint-aip
   dependencies:
-  - source: $resource.spec
+  - pattern: $resource.spec
     filter: "mime_type.contains('protobuf')"
   action: "compute lint $source0 --linter aip"
-- resource: apis/-/versions/-/specs/-/artifacts/lintstats-gnostic
+- pattern: apis/-/versions/-/specs/-/artifacts/lintstats-gnostic
   dependencies:
-  - source: $resource.spec/artifacts/lint-gnostic
+  - pattern: $resource.spec/artifacts/lint-gnostic
   action: "compute lintstats $source0 --linter gnostic"
-- resource: apis/-/artifacts/vocabulary
+- pattern: apis/-/artifacts/vocabulary
   dependencies:
-  - source: $resource.api/versions/-/specs/-
+  - pattern: $resource.api/versions/-/specs/-
   action: "compute vocabulary $source0.api"
-- resource: apis/-/versions/-/artifacts/vocabulary
+- pattern: apis/-/versions/-/artifacts/vocabulary
   dependencies:
-  - source: $resource.version/-/specs/-
+  - pattern: $resource.version/-/specs/-
   action: "compute vocabulary $source0.version"
-- resource: apis/-/versions/-/specs/-/artifacts/score
+- pattern: apis/-/versions/-/specs/-/artifacts/score
   dependencies:
-  - source: $resource.spec/artifacts/lint-gnostic
-  - source: $resource.spec/artifacts/complexity
+  - pattern: $resource.spec/artifacts/lint-gnostic
+  - pattern: $resource.spec/artifacts/complexity
   action: "compute score $source0 $source1" 

@@ -16,6 +16,9 @@ package controller
 
 import (
 	"fmt"
+	"github.com/apigee/registry/rpc"
+	yaml2 "github.com/ghodss/yaml"
+	"google.golang.org/protobuf/encoding/protojson"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 )
@@ -37,7 +40,7 @@ type Manifest struct {
 	Entries []ManifestEntry `yaml:"manifest"`
 }
 
-// TODO: Add validation for pattern values and actions
+// TODO: Remove this function while cleaning up the controller commands
 func ReadManifest(filename string) (*Manifest, error) {
 
 	buf, err := ioutil.ReadFile(filename)
@@ -47,6 +50,25 @@ func ReadManifest(filename string) (*Manifest, error) {
 
 	m := &Manifest{}
 	err = yaml.Unmarshal(buf, m)
+	if err != nil {
+		return nil, fmt.Errorf("in file %q: %v", filename, err)
+	}
+
+	return m, nil
+}
+
+// TODO: Add validation for pattern values and actions
+func ReadManifestProto(filename string) (*rpc.Manifest, error) {
+
+	yamlBytes, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	jsonBytes, err := yaml2.YAMLToJSON(yamlBytes)
+	m := &rpc.Manifest{}
+	err = protojson.Unmarshal(jsonBytes, m)
+
 	if err != nil {
 		return nil, fmt.Errorf("in file %q: %v", filename, err)
 	}
