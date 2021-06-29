@@ -15,11 +15,11 @@
 package controller
 
 import (
+	"fmt"
 	"github.com/apigee/registry/rpc"
 	"github.com/golang/protobuf/ptypes"
-	"time"
 	"regexp"
-	"fmt"
+	"time"
 )
 
 type Resource interface {
@@ -29,12 +29,11 @@ type Resource interface {
 	GetApi() string
 	GetName() string
 	GetUpdateTimestamp() time.Time
-	ExtractResourceGroup (string) string
+	ExtractResourceGroup(string) string
 }
 
 type SpecResource struct {
 	Spec *rpc.ApiSpec
-
 }
 
 func (s SpecResource) GetArtifact() string {
@@ -64,7 +63,7 @@ func (s SpecResource) GetUpdateTimestamp() time.Time {
 	return ts
 }
 
-func (s SpecResource) ExtractResourceGroup (group_id string) string {
+func (s SpecResource) ExtractResourceGroup(group_id string) string {
 	group_v := extractGroup(s.Spec.Name, group_id)
 	return group_v
 }
@@ -98,11 +97,10 @@ func (a ApiResource) GetUpdateTimestamp() time.Time {
 	return ts
 }
 
-func (a ApiResource) ExtractResourceGroup (group_id string) string {
+func (a ApiResource) ExtractResourceGroup(group_id string) string {
 	group_v := extractGroup(a.Api.Name, group_id)
 	return group_v
 }
-
 
 type ArtifactResource struct {
 	Artifact *rpc.Artifact
@@ -136,7 +134,7 @@ func (ar ArtifactResource) GetUpdateTimestamp() time.Time {
 	return ts
 }
 
-func (ar ArtifactResource) ExtractResourceGroup (group_id string) string {
+func (ar ArtifactResource) ExtractResourceGroup(group_id string) string {
 	group_v := extractGroup(ar.Artifact.Name, group_id)
 	return group_v
 }
@@ -146,5 +144,3 @@ func extractGroup(name string, group_name string) string {
 	group := re.FindString(name)
 	return group
 }
-
-

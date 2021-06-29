@@ -15,19 +15,20 @@
 package main
 
 import (
-        "log"
-        "context"
-        "github.com/apigee/registry/cmd/capabilities/dispatcher-server/dispatcher")
+	"context"
+	"github.com/apigee/registry/cmd/capabilities/dispatcher-server/dispatcher"
+	"log"
+)
 
 func main() {
-    log.Print("Starting subscriber...")
-    ctx := context.Background()
+	log.Print("Starting subscriber...")
+	ctx := context.Background()
 
-    // Setup and start the dispatcher server
-    dispatcher := &dispatcher.Dispatcher{}
+	// Setup and start the dispatcher server
+	dispatcher := &dispatcher.Dispatcher{}
 
-    if err := dispatcher.StartServer(ctx); err != nil {
-        log.Printf(err.Error())
-    }
-    return
+	if err := dispatcher.StartServer(ctx); err != nil {
+		log.Printf(err.Error())
+	}
+	return
 }

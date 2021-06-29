@@ -20,9 +20,9 @@ import (
 	"os"
 
 	"cloud.google.com/go/pubsub"
+	"github.com/apigee/registry/server"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"github.com/apigee/registry/server"
 )
 
 func main() {

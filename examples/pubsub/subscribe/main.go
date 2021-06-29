@@ -15,12 +15,12 @@
 package main
 
 import (
+	"cloud.google.com/go/pubsub"
 	"context"
+	"github.com/apigee/registry/server"
 	"log"
 	"os"
 	"time"
-    "github.com/apigee/registry/server"
-	"cloud.google.com/go/pubsub"
 )
 
 func main() {

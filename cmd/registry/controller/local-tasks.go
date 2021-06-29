@@ -15,11 +15,10 @@
 package controller
 
 import (
-	"os/exec"
 	"log"
+	"os/exec"
 	"strings"
 )
-
 
 type ExecCommandTask struct {
 	Action string

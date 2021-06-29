@@ -24,5 +24,3 @@ func GenerateArtifactHandler(result *[]Resource) func(*rpc.Artifact) {
 		(*result) = append((*result), resource)
 	}
 }
-
-

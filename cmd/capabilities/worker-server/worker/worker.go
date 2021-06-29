@@ -15,73 +15,73 @@
 package worker
 
 import (
-        "log"
-        "fmt"
-        "net/http"
-        "os"
-        "io/ioutil"
-	    "os/exec"
-	    "strings"
-        "encoding/json"
-        "cloud.google.com/go/compute/metadata"
+	"cloud.google.com/go/compute/metadata"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"os"
+	"os/exec"
+	"strings"
 )
 
 type WorkerRequest struct {
-    Resource string
-    Command  string
+	Resource string
+	Command  string
 }
 
 func getAuthToken() (string, error) {
-    serviceURL := "http://" + os.Getenv("APG_REGISTRY_ADDRESS")
-    tokenURL := fmt.Sprintf("/instance/service-accounts/default/identity?audience=%s", serviceURL)
-    idToken, err := metadata.Get(tokenURL)
-    if err != nil {
-            log.Printf("metadata.Get: failed to query id_token: %+v", err)
-            return "", err
-    }
+	serviceURL := "http://" + os.Getenv("APG_REGISTRY_ADDRESS")
+	tokenURL := fmt.Sprintf("/instance/service-accounts/default/identity?audience=%s", serviceURL)
+	idToken, err := metadata.Get(tokenURL)
+	if err != nil {
+		log.Printf("metadata.Get: failed to query id_token: %+v", err)
+		return "", err
+	}
 
-    return idToken, nil
+	return idToken, nil
 }
 
 func RequestHandler(w http.ResponseWriter, r *http.Request) {
-    body, err := ioutil.ReadAll(r.Body)
-    if err != nil{
-        log.Printf("ioutil.ReadAll: %v", err)
-        http.Error(w, err.Error(), http.StatusBadRequest)
-        return
-    }
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Printf("ioutil.ReadAll: %v", err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
-    req := WorkerRequest{}
-    if err = json.Unmarshal(body, &req); err != nil {
-       log.Printf("json.Unmarshal: %v", err)
-       http.Error(w, err.Error(), http.StatusBadRequest)
-       return
-    }
+	req := WorkerRequest{}
+	if err = json.Unmarshal(body, &req); err != nil {
+		log.Printf("json.Unmarshal: %v", err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
-    log.Printf("Received Request %s", body)
+	log.Printf("Received Request %s", body)
 
-    log.Print("Getting auth token...")
-    idToken, err := getAuthToken()
-    if err != nil {
-        log.Print(err.Error())
-        http.Error(w, err.Error(), http.StatusInternalServerError)
-        return
-    }
-    os.Setenv("APG_REGISTRY_TOKEN", idToken)
+	log.Print("Getting auth token...")
+	idToken, err := getAuthToken()
+	if err != nil {
+		log.Print(err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	os.Setenv("APG_REGISTRY_TOKEN", idToken)
 
-    split_cmd := strings.Split(req.Command, " ")
-    args := append(split_cmd[1:], req.Resource)
-    cmd := exec.Command(split_cmd[0], args...)
-    var output []byte
-    output, err = cmd.CombinedOutput()
-    log.Print(string(output))
-    if err != nil {
-        log.Printf("Error executing command: %v", err)
-        w.Write([]byte("Execution Completed"))
-        return
-    }
+	split_cmd := strings.Split(req.Command, " ")
+	args := append(split_cmd[1:], req.Resource)
+	cmd := exec.Command(split_cmd[0], args...)
+	var output []byte
+	output, err = cmd.CombinedOutput()
+	log.Print(string(output))
+	if err != nil {
+		log.Printf("Error executing command: %v", err)
+		w.Write([]byte("Execution Completed"))
+		return
+	}
 
-    log.Printf("Execution Completed: \n command: %s \nresource %s", req.Command, req.Resource)
-    w.Write([]byte("Execution Completed"))
-    return
+	log.Printf("Execution Completed: \n command: %s \nresource %s", req.Command, req.Resource)
+	w.Write([]byte("Execution Completed"))
+	return
 }
