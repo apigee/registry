@@ -79,9 +79,9 @@ func New(config Config) *RegistryServer {
 	switch strings.ToUpper(config.Log) {
 	case "FATAL":
 		s.loggingLevel = loggingFatal
-	case "ERRORS":
+	case "ERROR":
 		s.loggingLevel = loggingError
-	case "WARNINGS":
+	case "WARN":
 		s.loggingLevel = loggingWarn
 	case "INFO":
 		s.loggingLevel = loggingInfo
