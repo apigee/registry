@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-project: "controller-test"
-manifest:
-- resource: apis/-/versions/-/specs/-/artifacts/lint-gnostic
+name: "controller-test"
+generated_resources:
+- pattern: apis/-/versions/-/specs/-/artifacts/lint-gnostic
   dependencies:
-  - source: $resource.spec
+  - pattern: $resource.spec
     filter: "mime_type.contains('openapi')"
   action: "compute lint $source0 --linter gnostic"

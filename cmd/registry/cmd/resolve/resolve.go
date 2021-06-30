@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package controller
+package resolve
 
 import (
 	"context"
@@ -25,32 +25,41 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func updateCommand(ctx context.Context) *cobra.Command {
-	return &cobra.Command{
-		Use:   "update FILENAME",
-		Short: "Generate a list of commands to update the registry state (experimental)",
+func Command(ctx context.Context) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "resolve MANIFEST_RESOURCE",
+		Short: "resolve the dependencies and update the registry state (experimental)",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			manifestPath := args[0]
-			if manifestPath == "" {
-				log.Fatal("Please provide manifest_path")
+			manifestName := args[0]
+			if manifestName == "" {
+				log.Fatal("Please provide the manifest resource name")
 			}
 
-			manifest, err := controller.ReadManifest(manifestPath)
-			if err != nil {
-				log.Fatal(err.Error())
-			}
-
-			ctx := context.Background()
 			client, err := connection.NewClient(ctx)
 			if err != nil {
 				log.Fatal(err.Error())
 			}
 
-			log.Print("Generating list of actions...")
-			actions, err := controller.ProcessManifest(ctx, client, manifest)
+			manifest, err := controller.FetchManifest(ctx, client, manifestName)
 			if err != nil {
 				log.Fatal(err.Error())
+			}
+
+			projectID, err := core.ProjectID(manifestName)
+			if err != nil {
+				log.Fatalf("Error while extracting project_id: %s", err.Error())
+			}
+
+			log.Print("Generating the list of actions...")
+			actions, err := controller.ProcessManifest(ctx, client, projectID, manifest)
+			if err != nil {
+				log.Fatal(err.Error())
+			}
+
+			if len(actions) == 0 {
+				log.Printf("No actions needed. The registry is already in a resolved state.")
+				return
 			}
 
 			log.Printf("Generated %d actions. Starting Execution...", len(actions))
@@ -72,4 +81,5 @@ func updateCommand(ctx context.Context) *cobra.Command {
 			}
 		},
 	}
+	return cmd
 }
