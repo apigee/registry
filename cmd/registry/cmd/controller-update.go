@@ -15,13 +15,13 @@
 package cmd
 
 import (
-	"log"
-	"github.com/apigee/registry/cmd/registry/controller"
-    "github.com/spf13/cobra"
-	"github.com/apigee/registry/cmd/registry/core"
 	"context"
-	"github.com/apigee/registry/connection"
 	"fmt"
+	"github.com/apigee/registry/cmd/registry/controller"
+	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/connection"
+	"github.com/spf13/cobra"
+	"log"
 )
 
 func init() {
@@ -41,7 +41,7 @@ var controllerUpdateCmd = &cobra.Command{
 		}
 
 		manifest, err := controller.ReadManifest(manifestPath)
-		if err!=nil {
+		if err != nil {
 			log.Fatal(err.Error())
 		}
 
@@ -53,11 +53,11 @@ var controllerUpdateCmd = &cobra.Command{
 
 		log.Print("Generating list of actions...")
 		actions, err := controller.ProcessManifest(ctx, client, manifest)
-		if err!=nil {
+		if err != nil {
 			log.Fatal(err.Error())
 		}
 
-		log.Printf("Generated %d actions. Starting Execution..." , len(actions))
+		log.Printf("Generated %d actions. Starting Execution...", len(actions))
 
 		taskQueue := make(chan core.Task, 1024)
 		for i := 0; i < 64; i++ {
@@ -77,4 +77,4 @@ var controllerUpdateCmd = &cobra.Command{
 
 		return
 	},
-} 
+}

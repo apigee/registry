@@ -15,20 +15,20 @@
 package cmd
 
 import (
-	"context"
-	"testing"
 	"bytes"
 	"compress/gzip"
+	"context"
 	"io/ioutil"
+	"testing"
 
+	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/server/names"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"github.com/apigee/registry/cmd/registry/core"
-	"github.com/apigee/registry/server/names"
 )
 
 func readAndGZipFile(t *testing.T, filename string) (*bytes.Buffer, error) {
@@ -189,7 +189,6 @@ func TestControllerUpdate(t *testing.T) {
 	if err = controllerUpdateCmd.Execute(); err != nil {
 		t.Fatalf("Execute() with args %v returned error: %s", args, err)
 	}
-
 
 	// List all the artifacts
 	got := make([]string, 0)

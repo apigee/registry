@@ -12,19 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package  controller
+package controller
 
 import (
-    "context"
-	"github.com/apigee/registry/connection"
-	"time"
+	"context"
 	"fmt"
+	"github.com/apigee/registry/connection"
 	"log"
+	"time"
 )
 
 type ResourceCollection struct {
 	maxUpdateTime time.Time
-	resourceList []Resource
+	resourceList  []Resource
 }
 
 func ProcessManifest(
@@ -32,9 +32,9 @@ func ProcessManifest(
 	client connection.Client,
 	manifest *Manifest) ([]string, error) {
 
-	var actions []string		
-	for _, entry := range manifest.Entries {		
-	
+	var actions []string
+	for _, entry := range manifest.Entries {
+
 		newActions, err := processManifestEntry(ctx, client, manifest.Project, entry)
 		if err != nil {
 			log.Printf("Skipping entry: %q\nGot error: %s", entry, err.Error())
@@ -87,7 +87,7 @@ func generateDependencyMap(
 	}
 
 	// Fetch resources using the extSourcePattern
-	sourceList, err :=  ListResources(ctx, client, extSourcePattern, sourceFilter)
+	sourceList, err := ListResources(ctx, client, extSourcePattern, sourceFilter)
 	if err != nil {
 		return nil, err
 	}
@@ -120,15 +120,14 @@ func updateResources(
 	ctx context.Context,
 	client connection.Client,
 	resourcePattern string,
- 	dependencies []Dependency,
+	dependencies []Dependency,
 	dependencyMaps []map[string]ResourceCollection,
 	action string) ([]string, error) {
 
 	visited := make(map[string]bool, 0)
 	cmds := make([]string, 0)
 
-
-	resourceList, err := ListResources( ctx, client, resourcePattern, "")
+	resourceList, err := ListResources(ctx, client, resourcePattern, "")
 	if err != nil {
 		return nil, err
 	}
@@ -166,10 +165,10 @@ func updateResources(
 
 		if takeAction {
 			cmd, err := GenerateCommand(action, args)
-				if err != nil {
-					return nil, err
-				}
-				cmds = append(cmds, cmd)
+			if err != nil {
+				return nil, err
+			}
+			cmds = append(cmds, cmd)
 		}
 	}
 

@@ -24,5 +24,3 @@ func GenerateApiHandler(result *[]Resource) func(*rpc.Api) {
 		(*result) = append((*result), resource)
 	}
 }
-
-
