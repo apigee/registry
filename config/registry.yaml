@@ -21,5 +21,16 @@ database: ${REGISTRY_DATABASE}
 dbconfig: ${REGISTRY_DBCONFIG}
 
 # Set the default logging level.
-# Valid values are "fatal", "errors", "warnings", "info", and "debug".
+# Valid values are "fatal", "error", "warn", "info", and "debug".
 log: ${REGISTRY_LOG}
+
+# Enable event notification publishing to Cloud Pub/Sub.
+#
+# If enabled, a GCP project identifier must be provided in the `project` field
+# or in the Google default application credentials.
+# 
+# Valid values are "true" or "false".
+notify: ${REGISTRY_NOTIFY}
+
+# The GCP project identifier. Required if the `notify` config value is enabled.
+project: ${REGISTRY_PROJECT_IDENTIFIER}
