@@ -36,7 +36,7 @@ var (
 	specContents = []byte(`{"openapi": "3.0.0", "info": {"title": "My API", "version": "v1"}, "paths": {}}`)
 	// Basic spec view does not include file contents.
 	basicSpec = &rpc.ApiSpec{
-		Name:         "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
+		Name:         "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
 		Filename:     "openapi.json",
 		Description:  "My API Spec",
 		MimeType:     "application/x.openapi;version=3.0.0",
@@ -53,7 +53,7 @@ var (
 	}
 	// Full spec view includes contents.
 	fullSpec = &rpc.ApiSpec{
-		Name:         "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
+		Name:         "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
 		Filename:     "openapi.json",
 		Description:  "My API Spec",
 		MimeType:     "application/x.openapi;version=3.0.0",
@@ -112,9 +112,9 @@ func TestCreateApiSpec(t *testing.T) {
 	}{
 		{
 			desc: "populated resource with default parameters",
-			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
+			seed: &rpc.ApiVersion{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
 			req: &rpc.CreateApiSpecRequest{
-				Parent:  "projects/my-project/apis/my-api/versions/v1",
+				Parent:  "projects/my-project/locations/global/apis/my-api/versions/v1",
 				ApiSpec: fullSpec,
 			},
 			want: basicSpec,
@@ -123,14 +123,14 @@ func TestCreateApiSpec(t *testing.T) {
 		},
 		{
 			desc: "custom identifier",
-			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
+			seed: &rpc.ApiVersion{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
 			req: &rpc.CreateApiSpecRequest{
-				Parent:    "projects/my-project/apis/my-api/versions/v1",
+				Parent:    "projects/my-project/locations/global/apis/my-api/versions/v1",
 				ApiSpecId: "my-spec",
 				ApiSpec:   &rpc.ApiSpec{},
 			},
 			want: &rpc.ApiSpec{
-				Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
+				Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
 			},
 		},
 	}
@@ -200,27 +200,27 @@ func TestCreateApiSpecResponseCodes(t *testing.T) {
 	}{
 		{
 			desc: "parent not found",
-			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
+			seed: &rpc.ApiVersion{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
 			req: &rpc.CreateApiSpecRequest{
-				Parent:  "projects/my-project/apis/my-api/versions/v2",
+				Parent:  "projects/my-project/locations/global/apis/my-api/versions/v2",
 				ApiSpec: fullSpec,
 			},
 			want: codes.NotFound,
 		},
 		{
 			desc: "missing resource body",
-			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
+			seed: &rpc.ApiVersion{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
 			req: &rpc.CreateApiSpecRequest{
-				Parent:  "projects/my-project/apis/my-api/versions/v1",
+				Parent:  "projects/my-project/locations/global/apis/my-api/versions/v1",
 				ApiSpec: nil,
 			},
 			want: codes.InvalidArgument,
 		},
 		{
 			desc: "specific revision",
-			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
+			seed: &rpc.ApiVersion{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
 			req: &rpc.CreateApiSpecRequest{
-				Parent:    "projects/my-project/apis/my-api/versions/v1",
+				Parent:    "projects/my-project/locations/global/apis/my-api/versions/v1",
 				ApiSpecId: "my-spec@12345678",
 				ApiSpec:   &rpc.ApiSpec{},
 			},
@@ -228,9 +228,9 @@ func TestCreateApiSpecResponseCodes(t *testing.T) {
 		},
 		{
 			desc: "long custom identifier",
-			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
+			seed: &rpc.ApiVersion{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
 			req: &rpc.CreateApiSpecRequest{
-				Parent:    "projects/my-project/apis/my-api/versions/v1",
+				Parent:    "projects/my-project/locations/global/apis/my-api/versions/v1",
 				ApiSpecId: "this-identifier-is-invalid-because-it-exceeds-the-eighty-character-maximum-length",
 				ApiSpec:   &rpc.ApiSpec{},
 			},
@@ -238,9 +238,9 @@ func TestCreateApiSpecResponseCodes(t *testing.T) {
 		},
 		{
 			desc: "custom identifier underscores",
-			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
+			seed: &rpc.ApiVersion{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
 			req: &rpc.CreateApiSpecRequest{
-				Parent:    "projects/my-project/apis/my-api/versions/v1",
+				Parent:    "projects/my-project/locations/global/apis/my-api/versions/v1",
 				ApiSpecId: "underscore_identifier",
 				ApiSpec:   &rpc.ApiSpec{},
 			},
@@ -248,9 +248,9 @@ func TestCreateApiSpecResponseCodes(t *testing.T) {
 		},
 		{
 			desc: "custom identifier hyphen prefix",
-			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
+			seed: &rpc.ApiVersion{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
 			req: &rpc.CreateApiSpecRequest{
-				Parent:    "projects/my-project/apis/my-api",
+				Parent:    "projects/my-project/locations/global/apis/my-api",
 				ApiSpecId: "-identifier",
 				ApiSpec:   &rpc.ApiSpec{},
 			},
@@ -258,9 +258,9 @@ func TestCreateApiSpecResponseCodes(t *testing.T) {
 		},
 		{
 			desc: "custom identifier hyphen suffix",
-			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
+			seed: &rpc.ApiVersion{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
 			req: &rpc.CreateApiSpecRequest{
-				Parent:    "projects/my-project/apis/my-api",
+				Parent:    "projects/my-project/locations/global/apis/my-api",
 				ApiSpecId: "identifier-",
 				ApiSpec:   &rpc.ApiSpec{},
 			},
@@ -268,9 +268,9 @@ func TestCreateApiSpecResponseCodes(t *testing.T) {
 		},
 		{
 			desc: "customer identifier uuid format",
-			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
+			seed: &rpc.ApiVersion{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
 			req: &rpc.CreateApiSpecRequest{
-				Parent:    "projects/my-project/apis/my-api/versions/v1",
+				Parent:    "projects/my-project/locations/global/apis/my-api/versions/v1",
 				ApiSpecId: "072d2288-c685-42d8-9df0-5edbb2a809ea",
 				ApiSpec:   &rpc.ApiSpec{},
 			},
@@ -278,9 +278,9 @@ func TestCreateApiSpecResponseCodes(t *testing.T) {
 		},
 		{
 			desc: "customer identifier mixed case",
-			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
+			seed: &rpc.ApiVersion{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
 			req: &rpc.CreateApiSpecRequest{
-				Parent:    "projects/my-project/apis/my-api/versions/v1",
+				Parent:    "projects/my-project/locations/global/apis/my-api/versions/v1",
 				ApiSpecId: "IDentifier",
 				ApiSpec:   &rpc.ApiSpec{},
 			},
@@ -305,12 +305,12 @@ func TestCreateApiSpecDuplicates(t *testing.T) {
 	ctx := context.Background()
 	server := defaultTestServer(t)
 	seedSpecs(ctx, t, server, &rpc.ApiSpec{
-		Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
+		Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
 	})
 
 	t.Run("case sensitive duplicate", func(t *testing.T) {
 		req := &rpc.CreateApiSpecRequest{
-			Parent:    "projects/my-project/apis/my-api/versions/v1",
+			Parent:    "projects/my-project/locations/global/apis/my-api/versions/v1",
 			ApiSpecId: "my-spec",
 			ApiSpec:   &rpc.ApiSpec{},
 		}
@@ -322,7 +322,7 @@ func TestCreateApiSpecDuplicates(t *testing.T) {
 
 	t.Run("case insensitive duplicate", func(t *testing.T) {
 		req := &rpc.CreateApiSpecRequest{
-			Parent:    "projects/my-project/apis/my-api/versions/v1",
+			Parent:    "projects/my-project/locations/global/apis/my-api/versions/v1",
 			ApiSpecId: "My-Spec",
 			ApiSpec:   &rpc.ApiSpec{},
 		}
@@ -382,17 +382,17 @@ func TestGetApiSpecResponseCodes(t *testing.T) {
 	}{
 		{
 			desc: "resource not found",
-			seed: &rpc.ApiSpec{Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec"},
+			seed: &rpc.ApiSpec{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
 			req: &rpc.GetApiSpecRequest{
-				Name: "projects/my-project/apis/my-api/versions/v1/specs/doesnt-exist",
+				Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/doesnt-exist",
 			},
 			want: codes.NotFound,
 		},
 		{
 			desc: "case insensitive name",
-			seed: &rpc.ApiSpec{Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec"},
+			seed: &rpc.ApiSpec{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
 			req: &rpc.GetApiSpecRequest{
-				Name: "projects/my-project/apis/my-api/versions/v1/specs/My-Spec",
+				Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/My-Spec",
 			},
 			want: codes.OK,
 		},
@@ -420,40 +420,40 @@ func TestGetApiSpecContents(t *testing.T) {
 	}{
 		{
 			desc: "resource not found",
-			seed: &rpc.ApiSpec{Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec"},
+			seed: &rpc.ApiSpec{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
 			req: &rpc.GetApiSpecContentsRequest{
-				Name: "projects/my-project/apis/my-api/versions/v1/specs/doesnt-exist/contents",
+				Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/doesnt-exist/contents",
 			},
 			want: codes.NotFound,
 		},
 		{
 			desc: "case insensitive identifiers",
-			seed: &rpc.ApiSpec{Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec"},
+			seed: &rpc.ApiSpec{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
 			req: &rpc.GetApiSpecContentsRequest{
-				Name: "projects/My-project/apis/My-api/versions/V1/specs/My-Spec/contents",
+				Name: "projects/My-project/locations/global/apis/My-api/versions/V1/specs/My-Spec/contents",
 			},
 			want: codes.OK,
 		},
 		{
 			desc: "missing contents suffix in resource name",
 			seed: &rpc.ApiSpec{
-				Name:     "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
+				Name:     "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
 				Contents: []byte{},
 			},
 			req: &rpc.GetApiSpecContentsRequest{
-				Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
+				Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
 			},
 			want: codes.InvalidArgument,
 		},
 		{
 			desc: "gzip mimetype with empty contents",
 			seed: &rpc.ApiSpec{
-				Name:     "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
+				Name:     "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
 				MimeType: "application/x.openapi+gzip;version=3.0.0",
 				Contents: []byte{},
 			},
 			req: &rpc.GetApiSpecContentsRequest{
-				Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec/contents",
+				Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec/contents",
 			},
 			want: codes.FailedPrecondition,
 		},
@@ -484,133 +484,133 @@ func TestListApiSpecs(t *testing.T) {
 		{
 			desc: "default parameters",
 			seed: []*rpc.ApiSpec{
-				{Name: "projects/my-project/apis/my-api/versions/v1/specs/spec1"},
-				{Name: "projects/my-project/apis/my-api/versions/v1/specs/spec2"},
-				{Name: "projects/my-project/apis/my-api/versions/v1/specs/spec3"},
-				{Name: "projects/my-project/apis/my-api/versions/v2/specs/spec1"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/spec1"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/spec2"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/spec3"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v2/specs/spec1"},
 			},
 			req: &rpc.ListApiSpecsRequest{
-				Parent: "projects/my-project/apis/my-api/versions/v1",
+				Parent: "projects/my-project/locations/global/apis/my-api/versions/v1",
 			},
 			want: &rpc.ListApiSpecsResponse{
 				ApiSpecs: []*rpc.ApiSpec{
-					{Name: "projects/my-project/apis/my-api/versions/v1/specs/spec1"},
-					{Name: "projects/my-project/apis/my-api/versions/v1/specs/spec2"},
-					{Name: "projects/my-project/apis/my-api/versions/v1/specs/spec3"},
+					{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/spec1"},
+					{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/spec2"},
+					{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/spec3"},
 				},
 			},
 		},
 		{
 			desc: "across all versions in a specific project and api",
 			seed: []*rpc.ApiSpec{
-				{Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec"},
-				{Name: "projects/my-project/apis/my-api/versions/v2/specs/my-spec"},
-				{Name: "projects/other-project/apis/my-api/versions/v1/specs/my-spec"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v2/specs/my-spec"},
+				{Name: "projects/other-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
 			},
 			req: &rpc.ListApiSpecsRequest{
-				Parent: "projects/my-project/apis/my-api/versions/-",
+				Parent: "projects/my-project/locations/global/apis/my-api/versions/-",
 			},
 			want: &rpc.ListApiSpecsResponse{
 				ApiSpecs: []*rpc.ApiSpec{
-					{Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec"},
-					{Name: "projects/my-project/apis/my-api/versions/v2/specs/my-spec"},
+					{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
+					{Name: "projects/my-project/locations/global/apis/my-api/versions/v2/specs/my-spec"},
 				},
 			},
 		},
 		{
 			desc: "across all apis and versions in a specific project",
 			seed: []*rpc.ApiSpec{
-				{Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec"},
-				{Name: "projects/my-project/apis/other-api/versions/v2/specs/my-spec"},
-				{Name: "projects/other-project/apis/my-api/versions/v1/specs/my-spec"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
+				{Name: "projects/my-project/locations/global/apis/other-api/versions/v2/specs/my-spec"},
+				{Name: "projects/other-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
 			},
 			req: &rpc.ListApiSpecsRequest{
-				Parent: "projects/my-project/apis/-/versions/-",
+				Parent: "projects/my-project/locations/global/apis/-/versions/-",
 			},
 			want: &rpc.ListApiSpecsResponse{
 				ApiSpecs: []*rpc.ApiSpec{
-					{Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec"},
-					{Name: "projects/my-project/apis/other-api/versions/v2/specs/my-spec"},
+					{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
+					{Name: "projects/my-project/locations/global/apis/other-api/versions/v2/specs/my-spec"},
 				},
 			},
 		},
 		{
 			desc: "across all projects, apis, and versions",
 			seed: []*rpc.ApiSpec{
-				{Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec"},
-				{Name: "projects/other-project/apis/other-api/versions/v2/specs/my-spec"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
+				{Name: "projects/other-project/locations/global/apis/other-api/versions/v2/specs/my-spec"},
 			},
 			req: &rpc.ListApiSpecsRequest{
-				Parent: "projects/-/apis/-/versions/-",
+				Parent: "projects/-/locations/global/apis/-/versions/-",
 			},
 			want: &rpc.ListApiSpecsResponse{
 				ApiSpecs: []*rpc.ApiSpec{
-					{Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec"},
-					{Name: "projects/other-project/apis/other-api/versions/v2/specs/my-spec"},
+					{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
+					{Name: "projects/other-project/locations/global/apis/other-api/versions/v2/specs/my-spec"},
 				},
 			},
 		},
 		{
 			desc: "in a specific api and version across all projects",
 			seed: []*rpc.ApiSpec{
-				{Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec"},
-				{Name: "projects/other-project/apis/my-api/versions/v1/specs/my-spec"},
-				{Name: "projects/my-project/apis/other-api/versions/v1/specs/my-spec"},
-				{Name: "projects/my-project/apis/my-api/versions/v2/specs/my-spec"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
+				{Name: "projects/other-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
+				{Name: "projects/my-project/locations/global/apis/other-api/versions/v1/specs/my-spec"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v2/specs/my-spec"},
 			},
 			req: &rpc.ListApiSpecsRequest{
-				Parent: "projects/-/apis/my-api/versions/v1",
+				Parent: "projects/-/locations/global/apis/my-api/versions/v1",
 			},
 			want: &rpc.ListApiSpecsResponse{
 				ApiSpecs: []*rpc.ApiSpec{
-					{Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec"},
-					{Name: "projects/other-project/apis/my-api/versions/v1/specs/my-spec"},
+					{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
+					{Name: "projects/other-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
 				},
 			},
 		},
 		{
 			desc: "in a specific version across all projects and apis",
 			seed: []*rpc.ApiSpec{
-				{Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec"},
-				{Name: "projects/other-project/apis/other-api/versions/v1/specs/my-spec"},
-				{Name: "projects/my-project/apis/my-api/versions/v2/specs/my-spec"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
+				{Name: "projects/other-project/locations/global/apis/other-api/versions/v1/specs/my-spec"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v2/specs/my-spec"},
 			},
 			req: &rpc.ListApiSpecsRequest{
-				Parent: "projects/-/apis/-/versions/v1",
+				Parent: "projects/-/locations/global/apis/-/versions/v1",
 			},
 			want: &rpc.ListApiSpecsResponse{
 				ApiSpecs: []*rpc.ApiSpec{
-					{Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec"},
-					{Name: "projects/other-project/apis/other-api/versions/v1/specs/my-spec"},
+					{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
+					{Name: "projects/other-project/locations/global/apis/other-api/versions/v1/specs/my-spec"},
 				},
 			},
 		},
 		{
 			desc: "in all versions of a specific api across all projects",
 			seed: []*rpc.ApiSpec{
-				{Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec"},
-				{Name: "projects/other-project/apis/my-api/versions/v2/specs/my-spec"},
-				{Name: "projects/my-project/apis/other-api/versions/v1/specs/my-spec"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
+				{Name: "projects/other-project/locations/global/apis/my-api/versions/v2/specs/my-spec"},
+				{Name: "projects/my-project/locations/global/apis/other-api/versions/v1/specs/my-spec"},
 			},
 			req: &rpc.ListApiSpecsRequest{
-				Parent: "projects/-/apis/my-api/versions/-",
+				Parent: "projects/-/locations/global/apis/my-api/versions/-",
 			},
 			want: &rpc.ListApiSpecsResponse{
 				ApiSpecs: []*rpc.ApiSpec{
-					{Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec"},
-					{Name: "projects/other-project/apis/my-api/versions/v2/specs/my-spec"},
+					{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
+					{Name: "projects/other-project/locations/global/apis/my-api/versions/v2/specs/my-spec"},
 				},
 			},
 		},
 		{
 			desc: "custom page size",
 			seed: []*rpc.ApiSpec{
-				{Name: "projects/my-project/apis/my-api/versions/v1/specs/spec1"},
-				{Name: "projects/my-project/apis/my-api/versions/v1/specs/spec2"},
-				{Name: "projects/my-project/apis/my-api/versions/v1/specs/spec3"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/spec1"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/spec2"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/spec3"},
 			},
 			req: &rpc.ListApiSpecsRequest{
-				Parent:   "projects/my-project/apis/my-api/versions/v1",
+				Parent:   "projects/my-project/locations/global/apis/my-api/versions/v1",
 				PageSize: 1,
 			},
 			want: &rpc.ListApiSpecsResponse{
@@ -625,17 +625,17 @@ func TestListApiSpecs(t *testing.T) {
 		{
 			desc: "name equality filtering",
 			seed: []*rpc.ApiSpec{
-				{Name: "projects/my-project/apis/my-api/versions/v1/specs/spec1"},
-				{Name: "projects/my-project/apis/my-api/versions/v1/specs/spec2"},
-				{Name: "projects/my-project/apis/my-api/versions/v1/specs/spec3"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/spec1"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/spec2"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/spec3"},
 			},
 			req: &rpc.ListApiSpecsRequest{
-				Parent: "projects/my-project/apis/my-api/versions/v1",
-				Filter: "name == 'projects/my-project/apis/my-api/versions/v1/specs/spec2'",
+				Parent: "projects/my-project/locations/global/apis/my-api/versions/v1",
+				Filter: "name == 'projects/my-project/locations/global/apis/my-api/versions/v1/specs/spec2'",
 			},
 			want: &rpc.ListApiSpecsResponse{
 				ApiSpecs: []*rpc.ApiSpec{
-					{Name: "projects/my-project/apis/my-api/versions/v1/specs/spec2"},
+					{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/spec2"},
 				},
 			},
 		},
@@ -643,20 +643,20 @@ func TestListApiSpecs(t *testing.T) {
 			desc: "description inequality filtering",
 			seed: []*rpc.ApiSpec{
 				{
-					Name:        "projects/my-project/apis/my-api/versions/v1/specs/spec1",
+					Name:        "projects/my-project/locations/global/apis/my-api/versions/v1/specs/spec1",
 					Description: "First ApiSpec",
 				},
-				{Name: "projects/my-project/apis/my-api/versions/v1/specs/spec2"},
-				{Name: "projects/my-project/apis/my-api/versions/v1/specs/spec3"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/spec2"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/spec3"},
 			},
 			req: &rpc.ListApiSpecsRequest{
-				Parent: "projects/my-project/apis/my-api/versions/v1",
+				Parent: "projects/my-project/locations/global/apis/my-api/versions/v1",
 				Filter: "description != ''",
 			},
 			want: &rpc.ListApiSpecsResponse{
 				ApiSpecs: []*rpc.ApiSpec{
 					{
-						Name:        "projects/my-project/apis/my-api/versions/v1/specs/spec1",
+						Name:        "projects/my-project/locations/global/apis/my-api/versions/v1/specs/spec1",
 						Description: "First ApiSpec",
 					},
 				},
@@ -707,21 +707,21 @@ func TestListApiSpecsResponseCodes(t *testing.T) {
 		{
 			desc: "parent version not found",
 			req: &rpc.ListApiSpecsRequest{
-				Parent: "projects/my-project/apis/my-api/versions/v1",
+				Parent: "projects/my-project/locations/global/apis/my-api/versions/v1",
 			},
 			want: codes.NotFound,
 		},
 		{
 			desc: "parent api not found",
 			req: &rpc.ListApiSpecsRequest{
-				Parent: "projects/my-project/apis/my-api/versions/-",
+				Parent: "projects/my-project/locations/global/apis/my-api/versions/-",
 			},
 			want: codes.NotFound,
 		},
 		{
 			desc: "parent project not found",
 			req: &rpc.ListApiSpecsRequest{
-				Parent: "projects/my-project/apis/-/versions/-",
+				Parent: "projects/my-project/locations/global/apis/-/versions/-",
 			},
 			want: codes.NotFound,
 		},
@@ -764,9 +764,9 @@ func TestListApiSpecsSequence(t *testing.T) {
 	ctx := context.Background()
 	server := defaultTestServer(t)
 	seed := []*rpc.ApiSpec{
-		{Name: "projects/my-project/apis/my-api/versions/v1/specs/spec1"},
-		{Name: "projects/my-project/apis/my-api/versions/v1/specs/spec2"},
-		{Name: "projects/my-project/apis/my-api/versions/v1/specs/spec3"},
+		{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/spec1"},
+		{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/spec2"},
+		{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/spec3"},
 	}
 	seedSpecs(ctx, t, server, seed...)
 
@@ -775,7 +775,7 @@ func TestListApiSpecsSequence(t *testing.T) {
 	var nextToken string
 	t.Run("first page", func(t *testing.T) {
 		req := &rpc.ListApiSpecsRequest{
-			Parent:   "projects/my-project/apis/my-api/versions/v1",
+			Parent:   "projects/my-project/locations/global/apis/my-api/versions/v1",
 			PageSize: 1,
 		}
 
@@ -802,7 +802,7 @@ func TestListApiSpecsSequence(t *testing.T) {
 
 	t.Run("intermediate page", func(t *testing.T) {
 		req := &rpc.ListApiSpecsRequest{
-			Parent:    "projects/my-project/apis/my-api/versions/v1",
+			Parent:    "projects/my-project/locations/global/apis/my-api/versions/v1",
 			PageSize:  1,
 			PageToken: nextToken,
 		}
@@ -830,7 +830,7 @@ func TestListApiSpecsSequence(t *testing.T) {
 
 	t.Run("final page", func(t *testing.T) {
 		req := &rpc.ListApiSpecsRequest{
-			Parent:    "projects/my-project/apis/my-api/versions/v1",
+			Parent:    "projects/my-project/locations/global/apis/my-api/versions/v1",
 			PageSize:  1,
 			PageToken: nextToken,
 		}
@@ -875,14 +875,14 @@ func TestListApiSpecsLargeCollectionFiltering(t *testing.T) {
 	server := defaultTestServer(t)
 	for i := 1; i <= 100; i++ {
 		seedSpecs(ctx, t, server, &rpc.ApiSpec{
-			Name: fmt.Sprintf("projects/my-project/apis/my-api/versions/v1/specs/s%03d", i),
+			Name: fmt.Sprintf("projects/my-project/locations/global/apis/my-api/versions/v1/specs/s%03d", i),
 		})
 	}
 
 	req := &rpc.ListApiSpecsRequest{
-		Parent:   "projects/my-project/apis/my-api/versions/v1",
+		Parent:   "projects/my-project/locations/global/apis/my-api/versions/v1",
 		PageSize: 1,
-		Filter:   "name == 'projects/my-project/apis/my-api/versions/v1/specs/s099'",
+		Filter:   "name == 'projects/my-project/locations/global/apis/my-api/versions/v1/specs/s099'",
 	}
 
 	got, err := server.ListApiSpecs(ctx, req)
@@ -909,20 +909,20 @@ func TestUpdateApiSpec(t *testing.T) {
 		{
 			desc: "allow missing updates existing resources",
 			seed: &rpc.ApiSpec{
-				Name:        "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
+				Name:        "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
 				Description: "My ApiSpec",
 				Filename:    "openapi.json",
 			},
 			req: &rpc.UpdateApiSpecRequest{
 				ApiSpec: &rpc.ApiSpec{
-					Name:        "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
+					Name:        "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
 					Description: "My Updated ApiSpec",
 				},
 				UpdateMask:   &fieldmaskpb.FieldMask{Paths: []string{"description"}},
 				AllowMissing: true,
 			},
 			want: &rpc.ApiSpec{
-				Name:        "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
+				Name:        "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
 				Description: "My Updated ApiSpec",
 				Filename:    "openapi.json",
 			},
@@ -930,33 +930,33 @@ func TestUpdateApiSpec(t *testing.T) {
 		{
 			desc: "allow missing creates missing resources",
 			seed: &rpc.ApiSpec{
-				Name: "projects/my-project/apis/my-api/versions/v1/specs/sibling-spec",
+				Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/sibling-spec",
 			},
 			req: &rpc.UpdateApiSpecRequest{
 				ApiSpec: &rpc.ApiSpec{
-					Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
+					Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
 				},
 				AllowMissing: true,
 			},
 			want: &rpc.ApiSpec{
-				Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
+				Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
 			},
 		},
 		{
 			desc: "implicit mask",
 			seed: &rpc.ApiSpec{
-				Name:        "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
+				Name:        "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
 				Description: "My ApiSpec",
 				Filename:    "openapi.json",
 			},
 			req: &rpc.UpdateApiSpecRequest{
 				ApiSpec: &rpc.ApiSpec{
-					Name:        "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
+					Name:        "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
 					Description: "My Updated ApiSpec",
 				},
 			},
 			want: &rpc.ApiSpec{
-				Name:        "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
+				Name:        "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
 				Description: "My Updated ApiSpec",
 				Filename:    "openapi.json",
 			},
@@ -964,20 +964,20 @@ func TestUpdateApiSpec(t *testing.T) {
 		{
 			desc: "field specific mask",
 			seed: &rpc.ApiSpec{
-				Name:        "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
+				Name:        "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
 				Description: "My ApiSpec",
 				Filename:    "openapi.json",
 			},
 			req: &rpc.UpdateApiSpecRequest{
 				ApiSpec: &rpc.ApiSpec{
-					Name:        "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
+					Name:        "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
 					Description: "My Updated ApiSpec",
 					Filename:    "Ignored",
 				},
 				UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"description"}},
 			},
 			want: &rpc.ApiSpec{
-				Name:        "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
+				Name:        "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
 				Description: "My Updated ApiSpec",
 				Filename:    "openapi.json",
 			},
@@ -985,19 +985,19 @@ func TestUpdateApiSpec(t *testing.T) {
 		{
 			desc: "full replacement wildcard mask",
 			seed: &rpc.ApiSpec{
-				Name:        "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
+				Name:        "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
 				Description: "My ApiSpec",
 				Filename:    "openapi.json",
 			},
 			req: &rpc.UpdateApiSpecRequest{
 				ApiSpec: &rpc.ApiSpec{
-					Name:        "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
+					Name:        "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
 					Description: "My Updated ApiSpec",
 				},
 				UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"*"}},
 			},
 			want: &rpc.ApiSpec{
-				Name:        "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
+				Name:        "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
 				Description: "My Updated ApiSpec",
 				Filename:    "",
 			},
@@ -1052,33 +1052,33 @@ func TestUpdateApiSpecResponseCodes(t *testing.T) {
 	}{
 		{
 			desc: "resource not found",
-			seed: &rpc.ApiSpec{Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec"},
+			seed: &rpc.ApiSpec{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
 			req: &rpc.UpdateApiSpecRequest{
 				ApiSpec: &rpc.ApiSpec{
-					Name: "projects/my-project/apis/my-api/versions/v1/specs/doesnt-exist",
+					Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/doesnt-exist",
 				},
 			},
 			want: codes.NotFound,
 		},
 		{
 			desc: "specific revision",
-			seed: &rpc.ApiSpec{Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec"},
+			seed: &rpc.ApiSpec{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
 			req: &rpc.UpdateApiSpecRequest{
 				ApiSpec: &rpc.ApiSpec{
-					Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec@12345678",
+					Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec@12345678",
 				},
 			},
 			want: codes.InvalidArgument,
 		},
 		{
 			desc: "missing resource body",
-			seed: &rpc.ApiSpec{Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec"},
+			seed: &rpc.ApiSpec{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
 			req:  &rpc.UpdateApiSpecRequest{},
 			want: codes.InvalidArgument,
 		},
 		{
 			desc: "missing resource name",
-			seed: &rpc.ApiSpec{Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec"},
+			seed: &rpc.ApiSpec{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
 			req: &rpc.UpdateApiSpecRequest{
 				ApiSpec: &rpc.ApiSpec{},
 			},
@@ -1086,10 +1086,10 @@ func TestUpdateApiSpecResponseCodes(t *testing.T) {
 		},
 		{
 			desc: "nonexistent field in mask",
-			seed: &rpc.ApiSpec{Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec"},
+			seed: &rpc.ApiSpec{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
 			req: &rpc.UpdateApiSpecRequest{
 				ApiSpec: &rpc.ApiSpec{
-					Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
+					Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
 				},
 				UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"this field does not exist"}},
 			},
@@ -1119,10 +1119,10 @@ func TestDeleteApiSpec(t *testing.T) {
 		{
 			desc: "existing version",
 			seed: &rpc.ApiSpec{
-				Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
+				Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
 			},
 			req: &rpc.DeleteApiSpecRequest{
-				Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
+				Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
 			},
 		},
 	}
@@ -1159,14 +1159,14 @@ func TestDeleteApiSpecResponseCodes(t *testing.T) {
 		{
 			desc: "resource not found",
 			req: &rpc.DeleteApiSpecRequest{
-				Name: "projects/my-project/apis/my-api/versions/v1/specs/doesnt-exist",
+				Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/doesnt-exist",
 			},
 			want: codes.NotFound,
 		},
 		{
 			desc: "specific revision",
 			req: &rpc.DeleteApiSpecRequest{
-				Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec@12345678",
+				Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec@12345678",
 			},
 			want: codes.InvalidArgument,
 		},

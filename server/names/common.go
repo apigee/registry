@@ -63,3 +63,7 @@ func validateID(id string) error {
 func normalize(identifier string) string {
 	return strings.ToLower(identifier)
 }
+
+// LocationSegment is included in resource names immediately following the
+// project_id. It can be set to an empty string to omit location.
+var LocationSegment = "/locations/global"
