@@ -17,11 +17,12 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"log"
+
 	"github.com/apigee/registry/cmd/registry/controller"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/spf13/cobra"
-	"log"
 )
 
 func init() {
@@ -45,7 +46,7 @@ var controllerUpdateCmd = &cobra.Command{
 			log.Fatal(err.Error())
 		}
 
-		ctx := context.TODO()
+		ctx := context.Background()
 		client, err := connection.NewClient(ctx)
 		if err != nil {
 			log.Fatal(err.Error())

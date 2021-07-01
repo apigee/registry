@@ -28,8 +28,8 @@ type SheetsClient struct {
 }
 
 // NewSheetsClient creates an authenticated client of the Sheets API.
-func NewSheetsClient(id string) (*SheetsClient, error) {
-	httpClient, err := googleauth.GetAuthenticatedClient()
+func NewSheetsClient(ctx context.Context, id string) (*SheetsClient, error) {
+	httpClient, err := googleauth.GetAuthenticatedClient(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -63,8 +63,7 @@ func (sc *SheetsClient) CreateSheet(title string, sheetTitles []string) (*sheets
 }
 
 // Fetch gets the contents of the configured sheet.
-func (sc *SheetsClient) Fetch(cellRange string) (*sheets.ValueRange, error) {
-	ctx := context.Background()
+func (sc *SheetsClient) Fetch(ctx context.Context, cellRange string) (*sheets.ValueRange, error) {
 	return sc.service.Spreadsheets.Values.Get(
 		sc.sheetID,
 		cellRange).
@@ -76,8 +75,7 @@ func (sc *SheetsClient) Fetch(cellRange string) (*sheets.ValueRange, error) {
 }
 
 // Update updates a range of values in the configured sheet.
-func (sc *SheetsClient) Update(cellRange string, values [][]interface{}) (*sheets.UpdateValuesResponse, error) {
-	ctx := context.Background()
+func (sc *SheetsClient) Update(ctx context.Context, cellRange string, values [][]interface{}) (*sheets.UpdateValuesResponse, error) {
 	valueRange := &sheets.ValueRange{
 		Range:          cellRange,
 		MajorDimension: "ROWS",
@@ -91,7 +89,7 @@ func (sc *SheetsClient) Update(cellRange string, values [][]interface{}) (*sheet
 }
 
 // FormatHeaderRow freezes and bolds the top row of the configured sheet.
-func (sc *SheetsClient) FormatHeaderRow(sheetId int64) (*sheets.BatchUpdateSpreadsheetResponse, error) {
+func (sc *SheetsClient) FormatHeaderRow(ctx context.Context, sheetId int64) (*sheets.BatchUpdateSpreadsheetResponse, error) {
 	formatRequest := &sheets.Request{
 		RepeatCell: &sheets.RepeatCellRequest{
 			Range: &sheets.GridRange{
@@ -139,6 +137,5 @@ func (sc *SheetsClient) FormatHeaderRow(sheetId int64) (*sheets.BatchUpdateSprea
 			freezeRequest,
 		},
 	}
-	ctx := context.Background()
 	return sc.service.Spreadsheets.BatchUpdate(sc.sheetID, request).Context(ctx).Do()
 }

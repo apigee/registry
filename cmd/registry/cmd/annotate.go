@@ -52,7 +52,7 @@ func annotateCmd() *cobra.Command {
 				log.Fatalf("Failed to get overwrite boolean from flags: %s", err)
 			}
 
-			ctx := context.TODO()
+			ctx := context.Background()
 			client, err := connection.NewClient(ctx)
 			if err != nil {
 				log.Fatalf("%s", err.Error())
@@ -134,7 +134,6 @@ func annotateAPIs(ctx context.Context,
 	taskQueue chan<- core.Task) error {
 	return core.ListAPIs(ctx, client, segments, filterFlag, func(api *rpc.Api) {
 		taskQueue <- &annotateApiTask{
-			ctx:      ctx,
 			client:   client,
 			api:      api,
 			labeling: labeling,
@@ -151,7 +150,6 @@ func annotateVersions(
 	taskQueue chan<- core.Task) error {
 	return core.ListVersions(ctx, client, segments, filterFlag, func(version *rpc.ApiVersion) {
 		taskQueue <- &annotateVersionTask{
-			ctx:      ctx,
 			client:   client,
 			version:  version,
 			labeling: labeling,
@@ -168,7 +166,6 @@ func annotateSpecs(
 	taskQueue chan<- core.Task) error {
 	return core.ListSpecs(ctx, client, segments, filterFlag, func(spec *rpc.ApiSpec) {
 		taskQueue <- &annotateSpecTask{
-			ctx:      ctx,
 			client:   client,
 			spec:     spec,
 			labeling: labeling,
@@ -177,7 +174,6 @@ func annotateSpecs(
 }
 
 type annotateApiTask struct {
-	ctx      context.Context
 	client   connection.Client
 	api      *rpc.Api
 	labeling *core.Labeling
@@ -187,13 +183,13 @@ func (task *annotateApiTask) String() string {
 	return annotateCommandName + " " + task.api.Name
 }
 
-func (task *annotateApiTask) Run() error {
+func (task *annotateApiTask) Run(ctx context.Context) error {
 	var err error
 	task.api.Annotations, err = task.labeling.Apply(task.api.Annotations)
 	if err != nil {
 		return err
 	}
-	_, err = task.client.UpdateApi(task.ctx,
+	_, err = task.client.UpdateApi(ctx,
 		&rpc.UpdateApiRequest{
 			Api: task.api,
 			UpdateMask: &field_mask.FieldMask{
@@ -204,7 +200,6 @@ func (task *annotateApiTask) Run() error {
 }
 
 type annotateVersionTask struct {
-	ctx      context.Context
 	client   connection.Client
 	version  *rpc.ApiVersion
 	labeling *core.Labeling
@@ -214,13 +209,13 @@ func (task *annotateVersionTask) String() string {
 	return annotateCommandName + " " + task.version.Name
 }
 
-func (task *annotateVersionTask) Run() error {
+func (task *annotateVersionTask) Run(ctx context.Context) error {
 	var err error
 	task.version.Annotations, err = task.labeling.Apply(task.version.Annotations)
 	if err != nil {
 		return err
 	}
-	_, err = task.client.UpdateApiVersion(task.ctx,
+	_, err = task.client.UpdateApiVersion(ctx,
 		&rpc.UpdateApiVersionRequest{
 			ApiVersion: task.version,
 			UpdateMask: &field_mask.FieldMask{
@@ -231,7 +226,6 @@ func (task *annotateVersionTask) Run() error {
 }
 
 type annotateSpecTask struct {
-	ctx      context.Context
 	client   connection.Client
 	spec     *rpc.ApiSpec
 	labeling *core.Labeling
@@ -241,13 +235,13 @@ func (task *annotateSpecTask) String() string {
 	return annotateCommandName + " " + task.spec.Name
 }
 
-func (task *annotateSpecTask) Run() error {
+func (task *annotateSpecTask) Run(ctx context.Context) error {
 	var err error
 	task.spec.Annotations, err = task.labeling.Apply(task.spec.Annotations)
 	if err != nil {
 		return err
 	}
-	_, err = task.client.UpdateApiSpec(task.ctx,
+	_, err = task.client.UpdateApiSpec(ctx,
 		&rpc.UpdateApiSpecRequest{
 			ApiSpec: task.spec,
 			UpdateMask: &field_mask.FieldMask{

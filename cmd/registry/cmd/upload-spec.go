@@ -41,7 +41,7 @@ var specCmd = &cobra.Command{
 	Short: "Upload an API spec",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		ctx := context.TODO()
+		ctx := context.Background()
 		flagset := cmd.LocalFlags()
 		version, err := flagset.GetString("version")
 		if err != nil {
@@ -74,10 +74,10 @@ var specCmd = &cobra.Command{
 					switch mode := fi.Mode(); {
 					case mode.IsDir():
 						fmt.Printf("upload directory %s\n", match)
-						err = uploadSpecDirectory(match, client, version, style)
+						err = uploadSpecDirectory(ctx, match, client, version, style)
 					case mode.IsRegular():
 						fmt.Printf("upload file %s\n", match)
-						err = uploadSpecFile(match, client, version, style)
+						err = uploadSpecFile(ctx, match, client, version, style)
 					}
 					if err != nil {
 						log.Fatalf("%s", err.Error())
@@ -90,7 +90,7 @@ var specCmd = &cobra.Command{
 	},
 }
 
-func uploadSpecDirectory(dirname string, client *gapic.RegistryClient, version string, style string) error {
+func uploadSpecDirectory(ctx context.Context, dirname string, client *gapic.RegistryClient, version string, style string) error {
 	if style != "proto" {
 		return fmt.Errorf("unsupported directory style %s", style)
 	}
@@ -101,7 +101,6 @@ func uploadSpecDirectory(dirname string, client *gapic.RegistryClient, version s
 	if err != nil {
 		return err
 	}
-	ctx := context.TODO()
 	request := &rpcpb.CreateApiSpecRequest{
 		Parent:    version,
 		ApiSpecId: "protos.zip",
@@ -124,7 +123,7 @@ func uploadSpecDirectory(dirname string, client *gapic.RegistryClient, version s
 	return nil
 }
 
-func uploadSpecFile(filename string, client *gapic.RegistryClient, version string, style string) error {
+func uploadSpecFile(ctx context.Context, filename string, client *gapic.RegistryClient, version string, style string) error {
 	var mimeType string
 	switch style {
 	case "openapi":
@@ -144,7 +143,6 @@ func uploadSpecFile(filename string, client *gapic.RegistryClient, version strin
 	// does the spec file exist? if not, create it
 	request := &rpcpb.GetApiSpecRequest{}
 	request.Name = version + "/specs/" + specID
-	ctx := context.TODO()
 	_, err := client.GetApiSpec(ctx, request)
 	if err != nil { // TODO only do this for NotFound errors
 		bytes, err := ioutil.ReadFile(filename)

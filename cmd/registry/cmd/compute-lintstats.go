@@ -47,7 +47,7 @@ var computeLintStatsCmd = &cobra.Command{
 			log.Fatalf("Please specify a linter with the --linter flag")
 		}
 
-		ctx := context.TODO()
+		ctx := context.Background()
 		client, err := connection.NewClient(ctx)
 		if err != nil {
 			log.Fatalf("%s", err.Error())

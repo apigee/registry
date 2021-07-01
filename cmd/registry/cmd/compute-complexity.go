@@ -40,7 +40,7 @@ var computeComplexityCmd = &cobra.Command{
 	Short: "Compute complexity metrics of API specs",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		ctx := context.TODO()
+		ctx := context.Background()
 		client, err := connection.NewClient(ctx)
 		if err != nil {
 			log.Fatalf("%s", err.Error())
@@ -58,7 +58,6 @@ var computeComplexityCmd = &cobra.Command{
 			// Iterate through a collection of specs and summarize each.
 			err = core.ListSpecs(ctx, client, m, computeFilter, func(spec *rpc.ApiSpec) {
 				taskQueue <- &computeComplexityTask{
-					ctx:      ctx,
 					client:   client,
 					specName: spec.Name,
 				}
@@ -73,7 +72,6 @@ var computeComplexityCmd = &cobra.Command{
 }
 
 type computeComplexityTask struct {
-	ctx      context.Context
 	client   connection.Client
 	specName string
 }
@@ -82,11 +80,11 @@ func (task *computeComplexityTask) String() string {
 	return "compute complexity " + task.specName
 }
 
-func (task *computeComplexityTask) Run() error {
+func (task *computeComplexityTask) Run(ctx context.Context) error {
 	request := &rpc.GetApiSpecRequest{
 		Name: task.specName,
 	}
-	spec, err := task.client.GetApiSpec(task.ctx, request)
+	spec, err := task.client.GetApiSpec(ctx, request)
 	if err != nil {
 		return err
 	}
@@ -94,7 +92,7 @@ func (task *computeComplexityTask) Run() error {
 	log.Printf("computing %s/artifacts/%s", spec.Name, relation)
 	var complexity *metrics.Complexity
 	if core.IsOpenAPIv2(spec.GetMimeType()) {
-		data, err := core.GetBytesForSpec(task.ctx, task.client, spec)
+		data, err := core.GetBytesForSpec(ctx, task.client, spec)
 		if err != nil {
 			return nil
 		}
@@ -104,7 +102,7 @@ func (task *computeComplexityTask) Run() error {
 		}
 		complexity = core.SummarizeOpenAPIv2Document(document)
 	} else if core.IsOpenAPIv3(spec.GetMimeType()) {
-		data, err := core.GetBytesForSpec(task.ctx, task.client, spec)
+		data, err := core.GetBytesForSpec(ctx, task.client, spec)
 		if err != nil {
 			return nil
 		}
@@ -114,7 +112,7 @@ func (task *computeComplexityTask) Run() error {
 		}
 		complexity = core.SummarizeOpenAPIv3Document(document)
 	} else if core.IsDiscovery(spec.GetMimeType()) {
-		data, err := core.GetBytesForSpec(task.ctx, task.client, spec)
+		data, err := core.GetBytesForSpec(ctx, task.client, spec)
 		if err != nil {
 			return nil
 		}
@@ -124,7 +122,7 @@ func (task *computeComplexityTask) Run() error {
 		}
 		complexity = core.SummarizeDiscoveryDocument(document)
 	} else if core.IsProto(spec.GetMimeType()) && core.IsZipArchive(spec.GetMimeType()) {
-		data, err := core.GetBytesForSpec(task.ctx, task.client, spec)
+		data, err := core.GetBytesForSpec(ctx, task.client, spec)
 		if err != nil {
 			return nil
 		}
@@ -142,7 +140,7 @@ func (task *computeComplexityTask) Run() error {
 		MimeType: core.MimeTypeForMessageType("gnostic.metrics.Complexity"),
 		Contents: messageData,
 	}
-	err = core.SetArtifact(task.ctx, task.client, artifact)
+	err = core.SetArtifact(ctx, task.client, artifact)
 	if err != nil {
 		return err
 	}

@@ -53,7 +53,7 @@ func labelCmd() *cobra.Command {
 				log.Fatalf("Failed to get overwrite boolean from flags: %s", err)
 			}
 
-			ctx := context.TODO()
+			ctx := context.Background()
 			client, err := connection.NewClient(ctx)
 			if err != nil {
 				log.Fatalf("%s", err.Error())
@@ -135,7 +135,6 @@ func labelAPIs(ctx context.Context,
 	taskQueue chan<- core.Task) error {
 	return core.ListAPIs(ctx, client, segments, filterFlag, func(api *rpc.Api) {
 		taskQueue <- &labelApiTask{
-			ctx:      ctx,
 			client:   client,
 			api:      api,
 			labeling: labeling,
@@ -152,7 +151,6 @@ func labelVersions(
 	taskQueue chan<- core.Task) error {
 	return core.ListVersions(ctx, client, segments, filterFlag, func(version *rpc.ApiVersion) {
 		taskQueue <- &labelVersionTask{
-			ctx:      ctx,
 			client:   client,
 			version:  version,
 			labeling: labeling,
@@ -169,7 +167,6 @@ func labelSpecs(
 	taskQueue chan<- core.Task) error {
 	return core.ListSpecs(ctx, client, segments, filterFlag, func(spec *rpc.ApiSpec) {
 		taskQueue <- &labelSpecTask{
-			ctx:      ctx,
 			client:   client,
 			spec:     spec,
 			labeling: labeling,
@@ -178,7 +175,6 @@ func labelSpecs(
 }
 
 type labelApiTask struct {
-	ctx      context.Context
 	client   connection.Client
 	api      *rpc.Api
 	labeling *core.Labeling
@@ -188,13 +184,13 @@ func (task *labelApiTask) String() string {
 	return labelCommandName + " " + task.api.Name
 }
 
-func (task *labelApiTask) Run() error {
+func (task *labelApiTask) Run(ctx context.Context) error {
 	var err error
 	task.api.Labels, err = task.labeling.Apply(task.api.Labels)
 	if err != nil {
 		return err
 	}
-	_, err = task.client.UpdateApi(task.ctx,
+	_, err = task.client.UpdateApi(ctx,
 		&rpc.UpdateApiRequest{
 			Api: task.api,
 			UpdateMask: &field_mask.FieldMask{
@@ -205,7 +201,6 @@ func (task *labelApiTask) Run() error {
 }
 
 type labelVersionTask struct {
-	ctx      context.Context
 	client   connection.Client
 	version  *rpc.ApiVersion
 	labeling *core.Labeling
@@ -215,13 +210,13 @@ func (task *labelVersionTask) String() string {
 	return labelCommandName + " " + task.version.Name
 }
 
-func (task *labelVersionTask) Run() error {
+func (task *labelVersionTask) Run(ctx context.Context) error {
 	var err error
 	task.version.Labels, err = task.labeling.Apply(task.version.Labels)
 	if err != nil {
 		return err
 	}
-	_, err = task.client.UpdateApiVersion(task.ctx,
+	_, err = task.client.UpdateApiVersion(ctx,
 		&rpc.UpdateApiVersionRequest{
 			ApiVersion: task.version,
 			UpdateMask: &field_mask.FieldMask{
@@ -232,7 +227,6 @@ func (task *labelVersionTask) Run() error {
 }
 
 type labelSpecTask struct {
-	ctx      context.Context
 	client   connection.Client
 	spec     *rpc.ApiSpec
 	labeling *core.Labeling
@@ -242,13 +236,13 @@ func (task *labelSpecTask) String() string {
 	return labelCommandName + " " + task.spec.Name
 }
 
-func (task *labelSpecTask) Run() error {
+func (task *labelSpecTask) Run(ctx context.Context) error {
 	var err error
 	task.spec.Labels, err = task.labeling.Apply(task.spec.Labels)
 	if err != nil {
 		return err
 	}
-	_, err = task.client.UpdateApiSpec(task.ctx,
+	_, err = task.client.UpdateApiSpec(ctx,
 		&rpc.UpdateApiSpecRequest{
 			ApiSpec: task.spec,
 			UpdateMask: &field_mask.FieldMask{

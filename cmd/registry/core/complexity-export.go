@@ -15,6 +15,7 @@
 package core
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strings"
@@ -24,8 +25,8 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func ExportComplexityToSheet(name string, inputs []*rpc.Artifact) (string, error) {
-	sheetsClient, err := NewSheetsClient("")
+func ExportComplexityToSheet(ctx context.Context, name string, inputs []*rpc.Artifact) (string, error) {
+	sheetsClient, err := NewSheetsClient(ctx, "")
 	if err != nil {
 		log.Fatalf("%s", err.Error())
 	}
@@ -33,7 +34,7 @@ func ExportComplexityToSheet(name string, inputs []*rpc.Artifact) (string, error
 	if err != nil {
 		log.Fatalf("%s", err.Error())
 	}
-	_, err = sheetsClient.FormatHeaderRow(sheet.Sheets[0].Properties.SheetId)
+	_, err = sheetsClient.FormatHeaderRow(ctx, sheet.Sheets[0].Properties.SheetId)
 	if err != nil {
 		log.Fatalf("%s", err.Error())
 	}
@@ -47,7 +48,7 @@ func ExportComplexityToSheet(name string, inputs []*rpc.Artifact) (string, error
 		parts := strings.Split(input.Name, "/") // use to get api_id [3] and version_id [5]
 		rows = append(rows, rowForLabeledComplexity(parts[3], parts[5], complexity))
 	}
-	_, err = sheetsClient.Update(fmt.Sprintf("Complexity"), rows)
+	_, err = sheetsClient.Update(ctx, fmt.Sprintf("Complexity"), rows)
 	if err != nil {
 		log.Fatalf("%s", err.Error())
 	}

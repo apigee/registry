@@ -39,7 +39,7 @@ var deleteCmd = &cobra.Command{
 	Short: "Delete resources from the API Registry",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		ctx := context.TODO()
+		ctx := context.Background()
 		client, err := connection.NewClient(ctx)
 		if err != nil {
 			log.Fatalf("%s", err.Error())
@@ -64,7 +64,6 @@ var deleteCmd = &cobra.Command{
 }
 
 type deleteTask struct {
-	ctx          context.Context
 	client       connection.Client
 	resourceName string
 	resourceKind string
@@ -74,17 +73,17 @@ func (task *deleteTask) String() string {
 	return "delete " + task.resourceName
 }
 
-func (task *deleteTask) Run() error {
+func (task *deleteTask) Run(ctx context.Context) error {
 	log.Printf("deleting %s %s", task.resourceKind, task.resourceName)
 	switch task.resourceKind {
 	case "api":
-		return task.client.DeleteApi(task.ctx, &rpc.DeleteApiRequest{Name: task.resourceName})
+		return task.client.DeleteApi(ctx, &rpc.DeleteApiRequest{Name: task.resourceName})
 	case "version":
-		return task.client.DeleteApiVersion(task.ctx, &rpc.DeleteApiVersionRequest{Name: task.resourceName})
+		return task.client.DeleteApiVersion(ctx, &rpc.DeleteApiVersionRequest{Name: task.resourceName})
 	case "spec":
-		return task.client.DeleteApiSpec(task.ctx, &rpc.DeleteApiSpecRequest{Name: task.resourceName})
+		return task.client.DeleteApiSpec(ctx, &rpc.DeleteApiSpecRequest{Name: task.resourceName})
 	case "artifact":
-		return task.client.DeleteArtifact(task.ctx, &rpc.DeleteArtifactRequest{Name: task.resourceName})
+		return task.client.DeleteArtifact(ctx, &rpc.DeleteArtifactRequest{Name: task.resourceName})
 	default:
 		return nil
 	}
@@ -117,7 +116,6 @@ func deleteAPIs(
 	taskQueue chan core.Task) error {
 	return core.ListAPIs(ctx, client, segments, filterFlag, func(api *rpc.Api) {
 		taskQueue <- &deleteTask{
-			ctx:          ctx,
 			client:       client,
 			resourceName: api.Name,
 			resourceKind: "api",
@@ -133,7 +131,6 @@ func deleteVersions(
 	taskQueue chan core.Task) error {
 	return core.ListVersions(ctx, client, segments, filterFlag, func(version *rpc.ApiVersion) {
 		taskQueue <- &deleteTask{
-			ctx:          ctx,
 			client:       client,
 			resourceName: version.Name,
 			resourceKind: "version",
@@ -149,7 +146,6 @@ func deleteSpecs(
 	taskQueue chan core.Task) error {
 	return core.ListSpecs(ctx, client, segments, filterFlag, func(spec *rpc.ApiSpec) {
 		taskQueue <- &deleteTask{
-			ctx:          ctx,
 			client:       client,
 			resourceName: spec.Name,
 			resourceKind: "spec",
@@ -165,7 +161,6 @@ func deleteArtifacts(
 	taskQueue chan core.Task) error {
 	return core.ListArtifacts(ctx, client, segments, filterFlag, false, func(artifact *rpc.Artifact) {
 		taskQueue <- &deleteTask{
-			ctx:          ctx,
 			client:       client,
 			resourceName: artifact.Name,
 			resourceKind: "artifact",

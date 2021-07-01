@@ -15,13 +15,14 @@
 package core
 
 import (
+	"context"
 	"log"
 
 	"github.com/apigee/registry/rpc"
 )
 
-func ExportIndexToSheet(name string, index *rpc.Index) (string, error) {
-	sheetsClient, err := NewSheetsClient("")
+func ExportIndexToSheet(ctx context.Context, name string, index *rpc.Index) (string, error) {
+	sheetsClient, err := NewSheetsClient(ctx, "")
 	if err != nil {
 		log.Fatalf("%s", err.Error())
 	}
@@ -30,7 +31,7 @@ func ExportIndexToSheet(name string, index *rpc.Index) (string, error) {
 		log.Fatalf("%s", err.Error())
 	}
 	for _, s := range sheet.Sheets {
-		_, err := sheetsClient.FormatHeaderRow(s.Properties.SheetId)
+		_, err := sheetsClient.FormatHeaderRow(ctx, s.Properties.SheetId)
 		if err != nil {
 			log.Fatalf("%s", err.Error())
 		}
@@ -41,7 +42,7 @@ func ExportIndexToSheet(name string, index *rpc.Index) (string, error) {
 		for _, op := range index.Operations {
 			rows = append(rows, rowForOperation(op))
 		}
-		_, err = sheetsClient.Update("Operations", rows)
+		_, err = sheetsClient.Update(ctx, "Operations", rows)
 	}
 	{
 		rows := make([][]interface{}, 0)
@@ -49,7 +50,7 @@ func ExportIndexToSheet(name string, index *rpc.Index) (string, error) {
 		for _, op := range index.Schemas {
 			rows = append(rows, rowForSchema(op))
 		}
-		_, err = sheetsClient.Update("Schemas", rows)
+		_, err = sheetsClient.Update(ctx, "Schemas", rows)
 	}
 	{
 		rows := make([][]interface{}, 0)
@@ -57,7 +58,7 @@ func ExportIndexToSheet(name string, index *rpc.Index) (string, error) {
 		for _, op := range index.Fields {
 			rows = append(rows, rowForField(op))
 		}
-		_, err = sheetsClient.Update("Fields", rows)
+		_, err = sheetsClient.Update(ctx, "Fields", rows)
 	}
 	return sheet.SpreadsheetUrl, nil
 }

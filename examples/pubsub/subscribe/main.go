@@ -15,12 +15,13 @@
 package main
 
 import (
-	"cloud.google.com/go/pubsub"
 	"context"
-	"github.com/apigee/registry/server"
 	"log"
 	"os"
 	"time"
+
+	"cloud.google.com/go/pubsub"
+	"github.com/apigee/registry/server"
 )
 
 func main() {
@@ -69,7 +70,7 @@ func main() {
 
 	// Cancel the subscription and exit.
 	cancel()
-	err = sub.Delete(context.Background())
+	err = sub.Delete(ctx)
 	if err != nil {
 		panic(err)
 	}

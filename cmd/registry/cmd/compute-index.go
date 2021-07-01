@@ -36,7 +36,7 @@ var computeIndexCmd = &cobra.Command{
 	Short: "Compute indexes of API specs",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		ctx := context.TODO()
+		ctx := context.Background()
 		client, err := connection.NewClient(ctx)
 		if err != nil {
 			log.Fatalf("%s", err.Error())
@@ -54,7 +54,6 @@ var computeIndexCmd = &cobra.Command{
 			// Iterate through a collection of specs and summarize each.
 			err = core.ListSpecs(ctx, client, m, computeFilter, func(spec *rpc.ApiSpec) {
 				taskQueue <- &computeIndexTask{
-					ctx:      ctx,
 					client:   client,
 					specName: spec.Name,
 				}
@@ -69,7 +68,6 @@ var computeIndexCmd = &cobra.Command{
 }
 
 type computeIndexTask struct {
-	ctx      context.Context
 	client   connection.Client
 	specName string
 }
@@ -78,15 +76,15 @@ func (task *computeIndexTask) String() string {
 	return "compute index " + task.specName
 }
 
-func (task *computeIndexTask) Run() error {
+func (task *computeIndexTask) Run(ctx context.Context) error {
 	request := &rpc.GetApiSpecRequest{
 		Name: task.specName,
 	}
-	spec, err := task.client.GetApiSpec(task.ctx, request)
+	spec, err := task.client.GetApiSpec(ctx, request)
 	if err != nil {
 		return err
 	}
-	data, err := core.GetBytesForSpec(task.ctx, task.client, spec)
+	data, err := core.GetBytesForSpec(ctx, task.client, spec)
 	if err != nil {
 		return nil
 	}
@@ -108,7 +106,7 @@ func (task *computeIndexTask) Run() error {
 		MimeType: core.MimeTypeForMessageType("google.cloud.apigee.registry.applications.v1alpha1.Index"),
 		Contents: messageData,
 	}
-	err = core.SetArtifact(task.ctx, task.client, artifact)
+	err = core.SetArtifact(ctx, task.client, artifact)
 	if err != nil {
 		return err
 	}

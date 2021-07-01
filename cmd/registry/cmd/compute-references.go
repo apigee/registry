@@ -36,7 +36,7 @@ var computeReferencesCmd = &cobra.Command{
 	Short: "Compute references of API specs",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		ctx := context.TODO()
+		ctx := context.Background()
 		client, err := connection.NewClient(ctx)
 		if err != nil {
 			log.Fatalf("%s", err.Error())
@@ -54,7 +54,6 @@ var computeReferencesCmd = &cobra.Command{
 			// Iterate through a collection of specs and compute references for each
 			err = core.ListSpecs(ctx, client, m, computeFilter, func(spec *rpc.ApiSpec) {
 				taskQueue <- &computeReferencesTask{
-					ctx:      ctx,
 					client:   client,
 					specName: spec.Name,
 				}
@@ -69,7 +68,6 @@ var computeReferencesCmd = &cobra.Command{
 }
 
 type computeReferencesTask struct {
-	ctx      context.Context
 	client   connection.Client
 	specName string
 }
@@ -78,11 +76,11 @@ func (task *computeReferencesTask) String() string {
 	return "compute references " + task.specName
 }
 
-func (task *computeReferencesTask) Run() error {
+func (task *computeReferencesTask) Run(ctx context.Context) error {
 	request := &rpc.GetApiSpecRequest{
 		Name: task.specName,
 	}
-	spec, err := task.client.GetApiSpec(task.ctx, request)
+	spec, err := task.client.GetApiSpec(ctx, request)
 	if err != nil {
 		return err
 	}
@@ -90,7 +88,7 @@ func (task *computeReferencesTask) Run() error {
 	log.Printf("computing %s/properties/%s", spec.Name, relation)
 	var references *rpc.References
 	if core.IsProto(spec.MimeType) && core.IsZipArchive(spec.MimeType) {
-		data, err := core.GetBytesForSpec(task.ctx, task.client, spec)
+		data, err := core.GetBytesForSpec(ctx, task.client, spec)
 		if err != nil {
 			return nil
 		}
@@ -108,7 +106,7 @@ func (task *computeReferencesTask) Run() error {
 		MimeType: core.MimeTypeForMessageType("google.cloud.apigee.registry.applications.v1alpha1.References"),
 		Contents: messageData,
 	}
-	err = core.SetArtifact(task.ctx, task.client, artifact)
+	err = core.SetArtifact(ctx, task.client, artifact)
 	if err != nil {
 		return err
 	}

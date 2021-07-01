@@ -16,13 +16,14 @@ package cmd
 
 import (
 	"context"
+	"log"
+
 	"github.com/apigee/registry/cmd/registry/controller"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/proto"
-	"log"
 )
 
 func init() {
@@ -55,7 +56,7 @@ var uploadManifestCmd = &cobra.Command{
 		}
 		manifestData, err := proto.Marshal(manifest)
 
-		ctx := context.TODO()
+		ctx := context.Background()
 		client, err := connection.NewClient(ctx)
 		if err != nil {
 			log.Fatalf("%s", err.Error())

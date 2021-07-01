@@ -27,7 +27,7 @@ import (
 )
 
 func TestFieldClearing(t *testing.T) {
-	ctx := context.TODO()
+	ctx := context.Background()
 
 	c, err := NewClient(ctx, "sqlite3", "/tmp/testing.db")
 	if err != nil {
@@ -66,7 +66,7 @@ func TestFieldClearing(t *testing.T) {
 }
 
 func TestCRUD(t *testing.T) {
-	ctx := context.TODO()
+	ctx := context.Background()
 
 	c, _ := NewClient(ctx, "sqlite3", "/tmp/testing.db")
 	defer c.Close()
@@ -129,7 +129,7 @@ func TestCRUD(t *testing.T) {
 
 func TestLoad(t *testing.T) {
 
-	ctx := context.TODO()
+	ctx := context.Background()
 
 	c, _ := NewClient(ctx, "sqlite3", "/tmp/testing.db")
 	c.reset()
