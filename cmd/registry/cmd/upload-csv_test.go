@@ -33,7 +33,6 @@ import (
 
 const (
 	gzipOpenAPIv3 = "application/x.openapi+gzip;version=3.0.0"
-	testProject   = "csv-demo"
 )
 
 var (
@@ -44,13 +43,13 @@ var (
 )
 
 func TestUploadCSV(t *testing.T) {
+	const testProject = "csv-demo"
 	root := t.TempDir()
 	tests := []struct {
 		desc  string
 		files []fileseed.File
 		args  []string
 		want  []*rpc.ApiSpec
-		opts  cmp.Option
 	}{
 		{
 			desc: "multiple spec upload",
@@ -141,31 +140,6 @@ func TestUploadCSV(t *testing.T) {
 			args: []string{fmt.Sprintf("%s/specs.csv", root), "--project_id", testProject},
 			want: []*rpc.ApiSpec{},
 		},
-		{
-			desc: "empty ID fields",
-			files: []fileseed.File{
-				{
-					Path:     fmt.Sprintf("%s/openapi.yaml", root),
-					Contents: specContents1,
-				},
-				{
-					Path: fmt.Sprintf("%s/specs.csv", root),
-					Contents: []byte(strings.Join([]string{
-						"api_id,version_id,spec_id,filepath",
-						fmt.Sprintf(",,,%s/openapi.yaml", root),
-					}, "\n")),
-				},
-			},
-			args: []string{fmt.Sprintf("%s/specs.csv", root), "--project_id", testProject},
-			want: []*rpc.ApiSpec{
-				{
-					MimeType: gzipOpenAPIv3,
-					Contents: specContents1,
-				},
-			},
-			// Ignore the name since it's randomly generated.
-			opts: protocmp.IgnoreFields(&rpc.ApiSpec{}, "name"),
-		},
 	}
 
 	for _, test := range tests {
@@ -216,11 +190,10 @@ func TestUploadCSV(t *testing.T) {
 			}
 
 			opts := cmp.Options{
-				test.opts,
 				protocmp.Transform(),
 				// Ignore list ordering. We only want to verify that each spec exists.
 				cmpopts.SortSlices(func(a, b *rpc.ApiSpec) bool { return a.GetName() < b.GetName() }),
-				// Ignore randomly generated fields.
+				// Ignore generated fields.
 				protocmp.IgnoreFields(&rpc.ApiSpec{}, "revision_id", "hash", "size_bytes", "create_time", "revision_create_time", "revision_update_time"),
 			}
 

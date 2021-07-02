@@ -25,6 +25,8 @@ import (
 	"github.com/apigee/registry/rpc"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func TestExportCSV(t *testing.T) {
@@ -35,14 +37,23 @@ func TestExportCSV(t *testing.T) {
 	}
 
 	const (
+		projectID = "export-csv-test-project"
 		apiID     = "my-api"
 		versionID = "v1"
 		specID    = "my-spec"
 	)
 
 	// Setup
+	err = client.DeleteProject(ctx, &rpc.DeleteProjectRequest{
+		Name: "projects/" + projectID,
+	})
+	if err != nil && status.Code(err) != codes.NotFound {
+		t.Fatalf("Setup: Failed to delete test project: %s", err)
+	}
+
 	project, err := client.CreateProject(ctx, &rpc.CreateProjectRequest{
-		Project: &rpc.Project{},
+		ProjectId: projectID,
+		Project:   &rpc.Project{},
 	})
 	if err != nil {
 		t.Fatalf("Setup: Failed to create project: %s", err)
