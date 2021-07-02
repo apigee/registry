@@ -18,7 +18,6 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/apigee/registry/rpc"
@@ -34,41 +33,6 @@ import (
 var (
 	// Example spec contents for an OpenAPI JSON spec.
 	specContents = []byte(`{"openapi": "3.0.0", "info": {"title": "My API", "version": "v1"}, "paths": {}}`)
-	// Basic spec view does not include file contents.
-	basicSpec = &rpc.ApiSpec{
-		Name:         "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
-		Filename:     "openapi.json",
-		Description:  "My API Spec",
-		MimeType:     "application/x.openapi;version=3.0.0",
-		SizeBytes:    int32(len(specContents)),
-		Hash:         sha256hash(specContents),
-		SourceUri:    "https://www.example.com/openapi.json",
-		RevisionTags: []string{},
-		Labels: map[string]string{
-			"label-key": "label-value",
-		},
-		Annotations: map[string]string{
-			"annotation-key": "annotation-value",
-		},
-	}
-	// Full spec view includes contents.
-	fullSpec = &rpc.ApiSpec{
-		Name:         "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
-		Filename:     "openapi.json",
-		Description:  "My API Spec",
-		MimeType:     "application/x.openapi;version=3.0.0",
-		SizeBytes:    int32(len(specContents)),
-		Hash:         sha256hash(specContents),
-		SourceUri:    "https://www.example.com/openapi.json",
-		Contents:     specContents,
-		RevisionTags: []string{},
-		Labels: map[string]string{
-			"label-key": "label-value",
-		},
-		Annotations: map[string]string{
-			"annotation-key": "annotation-value",
-		},
-	}
 )
 
 func sha256hash(bytes []byte) string {
@@ -104,33 +68,46 @@ func seedSpecs(ctx context.Context, t *testing.T, s *RegistryServer, specs ...*r
 
 func TestCreateApiSpec(t *testing.T) {
 	tests := []struct {
-		desc      string
-		seed      *rpc.ApiVersion
-		req       *rpc.CreateApiSpecRequest
-		want      *rpc.ApiSpec
-		extraOpts cmp.Option
+		desc string
+		seed *rpc.ApiVersion
+		req  *rpc.CreateApiSpecRequest
+		want *rpc.ApiSpec
 	}{
 		{
-			desc: "populated resource with default parameters",
-			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
-			req: &rpc.CreateApiSpecRequest{
-				Parent:  "projects/my-project/apis/my-api/versions/v1",
-				ApiSpec: fullSpec,
-			},
-			want: basicSpec,
-			// Name field is generated.
-			extraOpts: protocmp.IgnoreFields(new(rpc.ApiSpec), "name"),
-		},
-		{
-			desc: "custom identifier",
+			desc: "fully populated resource",
 			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
 			req: &rpc.CreateApiSpecRequest{
 				Parent:    "projects/my-project/apis/my-api/versions/v1",
 				ApiSpecId: "my-spec",
-				ApiSpec:   &rpc.ApiSpec{},
+				ApiSpec: &rpc.ApiSpec{
+					Filename:    "openapi.json",
+					Description: "My Description",
+					MimeType:    "application/x.openapi;version=3.0.0",
+					SourceUri:   "https://www.example.com/openapi.json",
+					Contents:    specContents,
+					Labels: map[string]string{
+						"label-key": "label-value",
+					},
+					Annotations: map[string]string{
+						"annotation-key": "annotation-value",
+					},
+				},
 			},
 			want: &rpc.ApiSpec{
-				Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
+				Name:         "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
+				Filename:     "openapi.json",
+				Description:  "My Description",
+				MimeType:     "application/x.openapi;version=3.0.0",
+				SizeBytes:    int32(len(specContents)),
+				Hash:         sha256hash(specContents),
+				SourceUri:    "https://www.example.com/openapi.json",
+				RevisionTags: []string{},
+				Labels: map[string]string{
+					"label-key": "label-value",
+				},
+				Annotations: map[string]string{
+					"annotation-key": "annotation-value",
+				},
 			},
 		},
 	}
@@ -149,15 +126,10 @@ func TestCreateApiSpec(t *testing.T) {
 			opts := cmp.Options{
 				protocmp.Transform(),
 				protocmp.IgnoreFields(new(rpc.ApiSpec), "revision_id", "create_time", "revision_create_time", "revision_update_time"),
-				test.extraOpts,
 			}
 
 			if !cmp.Equal(test.want, created, opts) {
 				t.Errorf("CreateApiSpec(%+v) returned unexpected diff (-want +got):\n%s", test.req, cmp.Diff(test.want, created, opts))
-			}
-
-			if !strings.HasPrefix(created.GetName(), test.req.GetParent()+"/specs/") {
-				t.Errorf("CreateApiSpec(%+v) returned unexpected name %q, expected collection prefix", test.req, created.GetName())
 			}
 
 			if created.RevisionId == "" {
@@ -202,8 +174,9 @@ func TestCreateApiSpecResponseCodes(t *testing.T) {
 			desc: "parent not found",
 			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
 			req: &rpc.CreateApiSpecRequest{
-				Parent:  "projects/my-project/apis/my-api/versions/v2",
-				ApiSpec: fullSpec,
+				Parent:    "projects/my-project/apis/my-api/versions/v2",
+				ApiSpecId: "valid-id",
+				ApiSpec:   &rpc.ApiSpec{},
 			},
 			want: codes.NotFound,
 		},
@@ -211,8 +184,19 @@ func TestCreateApiSpecResponseCodes(t *testing.T) {
 			desc: "missing resource body",
 			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
 			req: &rpc.CreateApiSpecRequest{
-				Parent:  "projects/my-project/apis/my-api/versions/v1",
-				ApiSpec: nil,
+				Parent:    "projects/my-project/apis/my-api/versions/v1",
+				ApiSpecId: "valid-id",
+				ApiSpec:   nil,
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "missing custom identifier",
+			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
+			req: &rpc.CreateApiSpecRequest{
+				Parent:    "projects/my-project/apis/my-api/versions/v1",
+				ApiSpecId: "",
+				ApiSpec:   &rpc.ApiSpec{},
 			},
 			want: codes.InvalidArgument,
 		},

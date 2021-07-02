@@ -39,10 +39,6 @@ func (s *RegistryServer) CreateProject(ctx context.Context, req *rpc.CreateProje
 	}
 
 	name := names.Project{ProjectID: req.GetProjectId()}
-	if name.ProjectID == "" {
-		name.ProjectID = names.GenerateID()
-	}
-
 	if _, err := db.GetProject(ctx, name); err == nil {
 		return nil, alreadyExistsError(fmt.Errorf("project %q already exists", name))
 	} else if !isNotFound(err) {

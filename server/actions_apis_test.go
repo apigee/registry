@@ -17,7 +17,6 @@ package server
 import (
 	"context"
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/apigee/registry/rpc"
@@ -28,23 +27,6 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
-)
-
-var (
-	// Full API view includes annotations.
-	fullApi = &rpc.Api{
-		Name:               "projects/my-project/apis/my-api",
-		DisplayName:        "My Api",
-		Description:        "Api for my versions",
-		Availability:       "GENERAL",
-		RecommendedVersion: "v1",
-		Labels: map[string]string{
-			"label-key": "label-value",
-		},
-		Annotations: map[string]string{
-			"annotation-key": "annotation-value",
-		},
-	}
 )
 
 func seedApis(ctx context.Context, t *testing.T, s *RegistryServer, apis ...*rpc.Api) {
@@ -78,37 +60,44 @@ func seedApis(ctx context.Context, t *testing.T, s *RegistryServer, apis ...*rpc
 
 func TestCreateApi(t *testing.T) {
 	tests := []struct {
-		desc      string
-		seed      *rpc.Project
-		req       *rpc.CreateApiRequest
-		want      *rpc.Api
-		extraOpts cmp.Option
+		desc string
+		seed *rpc.Project
+		req  *rpc.CreateApiRequest
+		want *rpc.Api
 	}{
 		{
-			desc: "populated resource with default parameters",
-			seed: &rpc.Project{
-				Name: "projects/my-project",
-			},
-			req: &rpc.CreateApiRequest{
-				Parent: "projects/my-project",
-				Api:    fullApi,
-			},
-			want: fullApi,
-			// Name field is generated.
-			extraOpts: protocmp.IgnoreFields(new(rpc.Api), "name"),
-		},
-		{
-			desc: "custom identifier",
+			desc: "fully populated resource",
 			seed: &rpc.Project{
 				Name: "projects/my-project",
 			},
 			req: &rpc.CreateApiRequest{
 				Parent: "projects/my-project",
 				ApiId:  "my-api",
-				Api:    &rpc.Api{},
+				Api: &rpc.Api{
+					DisplayName:        "My Display Name",
+					Description:        "My Description",
+					Availability:       "My Availability",
+					RecommendedVersion: "My Version",
+					Labels: map[string]string{
+						"label-key": "label-value",
+					},
+					Annotations: map[string]string{
+						"annotation-key": "annotation-value",
+					},
+				},
 			},
 			want: &rpc.Api{
-				Name: "projects/my-project/apis/my-api",
+				Name:               "projects/my-project/apis/my-api",
+				DisplayName:        "My Display Name",
+				Description:        "My Description",
+				Availability:       "My Availability",
+				RecommendedVersion: "My Version",
+				Labels: map[string]string{
+					"label-key": "label-value",
+				},
+				Annotations: map[string]string{
+					"annotation-key": "annotation-value",
+				},
 			},
 		},
 	}
@@ -127,15 +116,10 @@ func TestCreateApi(t *testing.T) {
 			opts := cmp.Options{
 				protocmp.Transform(),
 				protocmp.IgnoreFields(new(rpc.Api), "create_time", "update_time"),
-				test.extraOpts,
 			}
 
 			if !cmp.Equal(test.want, created, opts) {
 				t.Errorf("CreateApi(%+v) returned unexpected diff (-want +got):\n%s", test.req, cmp.Diff(test.want, created, opts))
-			}
-
-			if !strings.HasPrefix(created.GetName(), test.req.GetParent()+"/apis/") {
-				t.Errorf("CreateApi(%+v) returned unexpected name %q, expected collection prefix", test.req, created.GetName())
 			}
 
 			if created.CreateTime == nil || created.UpdateTime == nil {
@@ -175,7 +159,8 @@ func TestCreateApiResponseCodes(t *testing.T) {
 			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.CreateApiRequest{
 				Parent: "projects/other-project",
-				Api:    fullApi,
+				ApiId:  "valid-id",
+				Api:    &rpc.Api{},
 			},
 			want: codes.NotFound,
 		},
@@ -184,7 +169,18 @@ func TestCreateApiResponseCodes(t *testing.T) {
 			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.CreateApiRequest{
 				Parent: "projects/my-project",
+				ApiId:  "valid-id",
 				Api:    nil,
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "missing custom identifier",
+			seed: &rpc.Project{Name: "projects/my-project"},
+			req: &rpc.CreateApiRequest{
+				Parent: "projects/my-project",
+				ApiId:  "",
+				Api:    &rpc.Api{},
 			},
 			want: codes.InvalidArgument,
 		},

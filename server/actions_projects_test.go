@@ -17,7 +17,6 @@ package server
 import (
 	"context"
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/apigee/registry/rpc"
@@ -55,34 +54,23 @@ func seedProjects(ctx context.Context, t *testing.T, s *RegistryServer, projects
 
 func TestCreateProject(t *testing.T) {
 	tests := []struct {
-		desc      string
-		req       *rpc.CreateProjectRequest
-		want      *rpc.Project
-		extraOpts cmp.Option
+		desc string
+		req  *rpc.CreateProjectRequest
+		want *rpc.Project
 	}{
 		{
-			desc: "default parameters",
+			desc: "fully populated resource",
 			req: &rpc.CreateProjectRequest{
+				ProjectId: "my-project",
 				Project: &rpc.Project{
-					DisplayName: "My Project",
-					Description: "Project for my APIs",
+					DisplayName: "My Display Name",
+					Description: "My Description",
 				},
 			},
 			want: &rpc.Project{
-				DisplayName: "My Project",
-				Description: "Project for my APIs",
-			},
-			// Name field is generated.
-			extraOpts: protocmp.IgnoreFields(new(rpc.Project), "name"),
-		},
-		{
-			desc: "custom identifier",
-			req: &rpc.CreateProjectRequest{
-				ProjectId: "my-project",
-				Project:   &rpc.Project{},
-			},
-			want: &rpc.Project{
-				Name: "projects/my-project",
+				Name:        "projects/my-project",
+				DisplayName: "My Display Name",
+				Description: "My Description",
 			},
 		},
 	}
@@ -100,15 +88,10 @@ func TestCreateProject(t *testing.T) {
 			opts := cmp.Options{
 				protocmp.Transform(),
 				protocmp.IgnoreFields(new(rpc.Project), "create_time", "update_time"),
-				test.extraOpts,
 			}
 
 			if !cmp.Equal(test.want, created, opts) {
 				t.Errorf("CreateProject(%+v) returned unexpected diff (-want +got):\n%s", test.req, cmp.Diff(test.want, created, opts))
-			}
-
-			if !strings.HasPrefix(created.GetName(), "projects/") {
-				t.Errorf("CreateProject(%+v) returned unexpected name %q, expected collection prefix", test.req, created.GetName())
 			}
 
 			if created.CreateTime == nil || created.UpdateTime == nil {
@@ -145,7 +128,16 @@ func TestCreateProjectResponseCodes(t *testing.T) {
 		{
 			desc: "missing resource body",
 			req: &rpc.CreateProjectRequest{
-				Project: nil,
+				ProjectId: "valid-id",
+				Project:   nil,
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "missing custom identifier",
+			req: &rpc.CreateProjectRequest{
+				ProjectId: "",
+				Project:   &rpc.Project{},
 			},
 			want: codes.InvalidArgument,
 		},

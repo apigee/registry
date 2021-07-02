@@ -63,11 +63,7 @@ func (s *RegistryServer) CreateArtifact(ctx context.Context, req *rpc.CreateArti
 		return nil, invalidArgumentError(err)
 	}
 
-	name := parent.Artifact(names.GenerateID())
-	if req.GetArtifactId() != "" {
-		name = parent.Artifact(req.GetArtifactId())
-	}
-
+	name := parent.Artifact(req.GetArtifactId())
 	if _, err := db.GetArtifact(ctx, name); err == nil {
 		return nil, alreadyExistsError(fmt.Errorf("artifact %q already exists", name))
 	} else if !isNotFound(err) {

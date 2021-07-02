@@ -17,7 +17,6 @@ package server
 import (
 	"context"
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/apigee/registry/rpc"
@@ -28,22 +27,6 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
-)
-
-var (
-	// Full version view.
-	fullVersion = &rpc.ApiVersion{
-		Name:        "projects/my-project/apis/my-api/versions/my-version",
-		DisplayName: "My Api",
-		Description: "Api for my versions",
-		State:       "PRODUCTION",
-		Labels: map[string]string{
-			"label-key": "label-value",
-		},
-		Annotations: map[string]string{
-			"annotation-key": "annotation-value",
-		},
-	}
 )
 
 func seedVersions(ctx context.Context, t *testing.T, s *RegistryServer, versions ...*rpc.ApiVersion) {
@@ -77,37 +60,42 @@ func seedVersions(ctx context.Context, t *testing.T, s *RegistryServer, versions
 
 func TestCreateApiVersion(t *testing.T) {
 	tests := []struct {
-		desc      string
-		seed      *rpc.Api
-		req       *rpc.CreateApiVersionRequest
-		want      *rpc.ApiVersion
-		extraOpts cmp.Option
+		desc string
+		seed *rpc.Api
+		req  *rpc.CreateApiVersionRequest
+		want *rpc.ApiVersion
 	}{
 		{
-			desc: "populated resource with default parameters",
-			seed: &rpc.Api{
-				Name: "projects/my-project/apis/my-api",
-			},
-			req: &rpc.CreateApiVersionRequest{
-				Parent:     "projects/my-project/apis/my-api",
-				ApiVersion: fullVersion,
-			},
-			want: fullVersion,
-			// Name field is generated.
-			extraOpts: protocmp.IgnoreFields(new(rpc.ApiVersion), "name"),
-		},
-		{
-			desc: "custom identifier",
+			desc: "fully populated resource",
 			seed: &rpc.Api{
 				Name: "projects/my-project/apis/my-api",
 			},
 			req: &rpc.CreateApiVersionRequest{
 				Parent:       "projects/my-project/apis/my-api",
-				ApiVersionId: "my-version",
-				ApiVersion:   &rpc.ApiVersion{},
+				ApiVersionId: "v1",
+				ApiVersion: &rpc.ApiVersion{
+					DisplayName: "My Display Name",
+					Description: "My Description",
+					State:       "My State",
+					Labels: map[string]string{
+						"label-key": "label-value",
+					},
+					Annotations: map[string]string{
+						"annotation-key": "annotation-value",
+					},
+				},
 			},
 			want: &rpc.ApiVersion{
-				Name: "projects/my-project/apis/my-api/versions/my-version",
+				Name:        "projects/my-project/apis/my-api/versions/v1",
+				DisplayName: "My Display Name",
+				Description: "My Description",
+				State:       "My State",
+				Labels: map[string]string{
+					"label-key": "label-value",
+				},
+				Annotations: map[string]string{
+					"annotation-key": "annotation-value",
+				},
 			},
 		},
 	}
@@ -126,15 +114,10 @@ func TestCreateApiVersion(t *testing.T) {
 			opts := cmp.Options{
 				protocmp.Transform(),
 				protocmp.IgnoreFields(new(rpc.ApiVersion), "create_time", "update_time"),
-				test.extraOpts,
 			}
 
 			if !cmp.Equal(test.want, created, opts) {
 				t.Errorf("CreateApiVersion(%+v) returned unexpected diff (-want +got):\n%s", test.req, cmp.Diff(test.want, created, opts))
-			}
-
-			if !strings.HasPrefix(created.GetName(), test.req.GetParent()+"/versions/") {
-				t.Errorf("CreateApiVersion(%+v) returned unexpected name %q, expected collection prefix", test.req, created.GetName())
 			}
 
 			if created.CreateTime == nil || created.UpdateTime == nil {
@@ -173,8 +156,9 @@ func TestCreateApiVersionResponseCodes(t *testing.T) {
 			desc: "parent not found",
 			seed: &rpc.Api{Name: "projects/my-project/apis/my-api"},
 			req: &rpc.CreateApiVersionRequest{
-				Parent:     "projects/my-project/apis/other-api",
-				ApiVersion: fullVersion,
+				Parent:       "projects/my-project/apis/other-api",
+				ApiVersionId: "valid-id",
+				ApiVersion:   &rpc.ApiVersion{},
 			},
 			want: codes.NotFound,
 		},
@@ -182,8 +166,19 @@ func TestCreateApiVersionResponseCodes(t *testing.T) {
 			desc: "missing resource body",
 			seed: &rpc.Api{Name: "projects/my-project/apis/my-api"},
 			req: &rpc.CreateApiVersionRequest{
-				Parent:     "projects/my-project/apis/my-api",
-				ApiVersion: nil,
+				Parent:       "projects/my-project/apis/my-api",
+				ApiVersionId: "valid-id",
+				ApiVersion:   nil,
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "missing custom identifier",
+			seed: &rpc.Api{Name: "projects/my-project/apis/my-api"},
+			req: &rpc.CreateApiVersionRequest{
+				Parent:       "projects/my-project/apis/my-api",
+				ApiVersionId: "",
+				ApiVersion:   &rpc.ApiVersion{},
 			},
 			want: codes.InvalidArgument,
 		},

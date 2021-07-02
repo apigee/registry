@@ -49,10 +49,6 @@ func (s *RegistryServer) CreateApiVersion(ctx context.Context, req *rpc.CreateAp
 	}
 
 	name := parent.Version(req.GetApiVersionId())
-	if name.VersionID == "" {
-		name.VersionID = names.GenerateID()
-	}
-
 	if _, err := db.GetVersion(ctx, name); err == nil {
 		return nil, alreadyExistsError(fmt.Errorf("API version %q already exists", name))
 	} else if !isNotFound(err) {

@@ -49,10 +49,6 @@ func (s *RegistryServer) CreateApi(ctx context.Context, req *rpc.CreateApiReques
 	}
 
 	name := parent.Api(req.GetApiId())
-	if name.ApiID == "" {
-		name.ApiID = names.GenerateID()
-	}
-
 	if _, err := db.GetApi(ctx, name); err == nil {
 		return nil, alreadyExistsError(fmt.Errorf("API %q already exists", name))
 	} else if !isNotFound(err) {

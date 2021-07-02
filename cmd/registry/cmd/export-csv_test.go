@@ -35,14 +35,23 @@ func TestExportCSV(t *testing.T) {
 	}
 
 	const (
+		projectID = "export-csv-test-project"
 		apiID     = "my-api"
 		versionID = "v1"
 		specID    = "my-spec"
 	)
 
 	// Setup
+	err = client.DeleteProject(ctx, &rpc.DeleteProjectRequest{
+		Name: "projects/" + projectID,
+	})
+	if err != nil {
+		t.Fatalf("Setup: Failed to delete project: %s", err)
+	}
+
 	project, err := client.CreateProject(ctx, &rpc.CreateProjectRequest{
-		Project: &rpc.Project{},
+		ProjectId: projectID,
+		Project:   &rpc.Project{},
 	})
 	if err != nil {
 		t.Fatalf("Setup: Failed to create project: %s", err)

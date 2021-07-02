@@ -32,21 +32,6 @@ import (
 var (
 	// Example artifact contents for a JSON artifact.
 	artifactContents = []byte(`{"contents": "foo"}`)
-	// Basic artifact view does not include contents.
-	basicArtifact = &rpc.Artifact{
-		Name:      "projects/my-project/apis/my-api/versions/v1/artifacts/my-artifact",
-		MimeType:  "application/json",
-		SizeBytes: int32(len(artifactContents)),
-		Hash:      sha256hash(artifactContents),
-	}
-	// Full artifact view includes contents.
-	fullArtifact = &rpc.Artifact{
-		Name:      "projects/my-project/apis/my-api/versions/v1/artifacts/my-artifact",
-		MimeType:  "application/json",
-		SizeBytes: int32(len(artifactContents)),
-		Hash:      sha256hash(artifactContents),
-		Contents:  artifactContents,
-	}
 )
 
 func seedArtifacts(ctx context.Context, t *testing.T, s *RegistryServer, artifacts ...*rpc.Artifact) {
@@ -96,33 +81,29 @@ func seedArtifacts(ctx context.Context, t *testing.T, s *RegistryServer, artifac
 
 func TestCreateArtifact(t *testing.T) {
 	tests := []struct {
-		desc      string
-		seed      *rpc.ApiVersion
-		req       *rpc.CreateArtifactRequest
-		want      *rpc.Artifact
-		extraOpts cmp.Option
+		desc string
+		seed *rpc.Project
+		req  *rpc.CreateArtifactRequest
+		want *rpc.Artifact
 	}{
 		{
-			desc: "populated resource with default parameters",
-			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
+			desc: "fully populated resource",
+			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.CreateArtifactRequest{
-				Parent:   "projects/my-project/apis/my-api/versions/v1",
-				Artifact: fullArtifact,
-			},
-			want: basicArtifact,
-			// Name field is generated.
-			extraOpts: protocmp.IgnoreFields(new(rpc.Artifact), "name"),
-		},
-		{
-			desc: "custom identifier",
-			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
-			req: &rpc.CreateArtifactRequest{
-				Parent:     "projects/my-project/apis/my-api/versions/v1",
+				Parent:     "projects/my-project",
 				ArtifactId: "my-artifact",
-				Artifact:   &rpc.Artifact{},
+				Artifact: &rpc.Artifact{
+					MimeType:  "application/json",
+					SizeBytes: int32(len(artifactContents)),
+					Hash:      sha256hash(artifactContents),
+					Contents:  artifactContents,
+				},
 			},
 			want: &rpc.Artifact{
-				Name: "projects/my-project/apis/my-api/versions/v1/artifacts/my-artifact",
+				Name:      "projects/my-project/artifacts/my-artifact",
+				MimeType:  "application/json",
+				SizeBytes: int32(len(artifactContents)),
+				Hash:      sha256hash(artifactContents),
 			},
 		},
 	}
@@ -131,7 +112,7 @@ func TestCreateArtifact(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedVersions(ctx, t, server, test.seed)
+			seedProjects(ctx, t, server, test.seed)
 
 			created, err := server.CreateArtifact(ctx, test.req)
 			if err != nil {
@@ -141,15 +122,10 @@ func TestCreateArtifact(t *testing.T) {
 			opts := cmp.Options{
 				protocmp.Transform(),
 				protocmp.IgnoreFields(new(rpc.Artifact), "create_time", "update_time"),
-				test.extraOpts,
 			}
 
 			if !cmp.Equal(test.want, created, opts) {
 				t.Errorf("CreateArtifact(%+v) returned unexpected diff (-want +got):\n%s", test.req, cmp.Diff(test.want, created, opts))
-			}
-
-			if !strings.HasPrefix(created.GetName(), test.req.GetParent()+"/artifacts/") {
-				t.Errorf("CreateArtifact(%+v) returned unexpected name %q, expected collection prefix", test.req, created.GetName())
 			}
 
 			if created.CreateTime == nil && created.UpdateTime == nil {
@@ -188,8 +164,9 @@ func TestCreateArtifactResponseCodes(t *testing.T) {
 			desc: "parent not found",
 			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.CreateArtifactRequest{
-				Parent:   "projects/other-project",
-				Artifact: fullArtifact,
+				Parent:     "projects/other-project",
+				ArtifactId: "valid-id",
+				Artifact:   &rpc.Artifact{},
 			},
 			want: codes.NotFound,
 		},
@@ -197,8 +174,19 @@ func TestCreateArtifactResponseCodes(t *testing.T) {
 			desc: "missing resource body",
 			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.CreateArtifactRequest{
-				Parent:   "projects/my-project",
-				Artifact: nil,
+				Parent:     "projects/my-project",
+				ArtifactId: "valid-id",
+				Artifact:   nil,
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "missing custom identifier",
+			seed: &rpc.Project{Name: "projects/my-project"},
+			req: &rpc.CreateArtifactRequest{
+				Parent:     "projects/my-project",
+				ArtifactId: "",
+				Artifact:   &rpc.Artifact{},
 			},
 			want: codes.InvalidArgument,
 		},
