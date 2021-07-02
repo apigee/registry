@@ -40,7 +40,7 @@ var computeDetailsCmd = &cobra.Command{
 	Short: "Compute details about APIs from information in their specs.",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		ctx := context.TODO()
+		ctx := context.Background()
 		client, err := connection.NewClient(ctx)
 		if err != nil {
 			log.Fatalf("%s", err.Error())
@@ -58,7 +58,6 @@ var computeDetailsCmd = &cobra.Command{
 			// Iterate through a collection of specs and summarize each.
 			err = core.ListAPIs(ctx, client, m, computeFilter, func(api *rpc.Api) {
 				taskQueue <- &computeDetailsTask{
-					ctx:     ctx,
 					client:  client,
 					apiName: api.Name,
 				}
@@ -74,7 +73,6 @@ var computeDetailsCmd = &cobra.Command{
 }
 
 type computeDetailsTask struct {
-	ctx     context.Context
 	client  connection.Client
 	apiName string
 }
@@ -83,10 +81,10 @@ func (task *computeDetailsTask) String() string {
 	return "compute details " + task.apiName
 }
 
-func (task *computeDetailsTask) Run() error {
+func (task *computeDetailsTask) Run(ctx context.Context) error {
 	m := names.SpecRegexp().FindStringSubmatch(task.apiName + "/versions/-/specs/-")
 	specs := make([]*rpc.ApiSpec, 0)
-	core.ListSpecs(task.ctx, task.client, m, "", func(spec *rpc.ApiSpec) {
+	core.ListSpecs(ctx, task.client, m, "", func(spec *rpc.ApiSpec) {
 		specs = append(specs, spec)
 	})
 	// use the last (presumed latest) spec
@@ -96,7 +94,7 @@ func (task *computeDetailsTask) Run() error {
 	spec := specs[len(specs)-1]
 	var err error
 	m = names.SpecRegexp().FindStringSubmatch(spec.Name)
-	spec, err = core.GetSpec(task.ctx, task.client, m, true, nil)
+	spec, err = core.GetSpec(ctx, task.client, m, true, nil)
 	if err != nil {
 		return nil
 	}
@@ -104,7 +102,7 @@ func (task *computeDetailsTask) Run() error {
 	var description string
 	var request *rpc.UpdateApiRequest
 	if core.IsOpenAPIv2(spec.GetMimeType()) {
-		data, err := core.GetBytesForSpec(task.ctx, task.client, spec)
+		data, err := core.GetBytesForSpec(ctx, task.client, spec)
 		if err != nil {
 			return nil
 		}
@@ -130,7 +128,7 @@ func (task *computeDetailsTask) Run() error {
 			},
 		}
 	} else if core.IsOpenAPIv3(spec.GetMimeType()) {
-		data, err := core.GetBytesForSpec(task.ctx, task.client, spec)
+		data, err := core.GetBytesForSpec(ctx, task.client, spec)
 		if err != nil {
 			return nil
 		}
@@ -156,7 +154,7 @@ func (task *computeDetailsTask) Run() error {
 			},
 		}
 	} else if core.IsDiscovery(spec.GetMimeType()) {
-		data, err := core.GetBytesForSpec(task.ctx, task.client, spec)
+		data, err := core.GetBytesForSpec(ctx, task.client, spec)
 		if err != nil {
 			return nil
 		}
@@ -214,7 +212,7 @@ func (task *computeDetailsTask) Run() error {
 		return fmt.Errorf("we don't know how to compute the title of %s", task.apiName)
 	}
 	if request != nil {
-		_, err = task.client.UpdateApi(task.ctx, request)
+		_, err = task.client.UpdateApi(ctx, request)
 	}
 	return err
 }

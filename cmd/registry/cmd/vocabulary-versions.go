@@ -38,7 +38,7 @@ var vocabularyVersionsCmd = &cobra.Command{
 		var err error
 		flagset := cmd.LocalFlags()
 		outputArtifactName, err := flagset.GetString("output")
-		ctx := context.TODO()
+		ctx := context.Background()
 		client, err := connection.NewClient(ctx)
 		if err != nil {
 			log.Fatalf("%s", err.Error())

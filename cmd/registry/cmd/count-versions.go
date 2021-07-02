@@ -37,7 +37,7 @@ var countVersionsCmd = &cobra.Command{
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 
-		ctx := context.TODO()
+		ctx := context.Background()
 		client, err := connection.NewClient(ctx)
 		if err != nil {
 			log.Fatalf("%s", err.Error())
@@ -55,7 +55,6 @@ var countVersionsCmd = &cobra.Command{
 			// Iterate through a collection of APIs and count the number of versions of each.
 			err = core.ListAPIs(ctx, client, m, countFilter, func(api *rpc.Api) {
 				taskQueue <- &countVersionsTask{
-					ctx:     ctx,
 					client:  client,
 					apiName: api.Name,
 				}
@@ -70,7 +69,6 @@ var countVersionsCmd = &cobra.Command{
 }
 
 type countVersionsTask struct {
-	ctx     context.Context
 	client  connection.Client
 	apiName string
 }
@@ -79,12 +77,12 @@ func (task *countVersionsTask) String() string {
 	return "count versions " + task.apiName
 }
 
-func (task *countVersionsTask) Run() error {
+func (task *countVersionsTask) Run(ctx context.Context) error {
 	count := 0
 	request := &rpc.ListApiVersionsRequest{
 		Parent: task.apiName,
 	}
-	it := task.client.ListApiVersions(task.ctx, request)
+	it := task.client.ListApiVersions(ctx, request)
 	for {
 		_, err := it.Next()
 		if err == iterator.Done {
@@ -103,7 +101,7 @@ func (task *countVersionsTask) Run() error {
 		MimeType: "text/plain",
 		Contents: []byte(fmt.Sprintf("%d", count)),
 	}
-	err := core.SetArtifact(task.ctx, task.client, artifact)
+	err := core.SetArtifact(ctx, task.client, artifact)
 	if err != nil {
 		return err
 	}

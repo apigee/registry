@@ -45,7 +45,7 @@ var exportSheetCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		var path string
 		var err error
-		ctx := context.TODO()
+		ctx := context.Background()
 		client, err := connection.NewClient(ctx)
 		if err != nil {
 			log.Fatalf("%s", err.Error())
@@ -56,7 +56,7 @@ var exportSheetCmd = &cobra.Command{
 		}
 		if isInt64Artifact(inputs[0]) {
 			title := "artifacts/" + filepath.Base(inputs[0].GetName())
-			path, err = core.ExportInt64ToSheet(title, inputs)
+			path, err = core.ExportInt64ToSheet(ctx, title, inputs)
 			if err != nil {
 				log.Fatalf("%s", err.Error())
 			}
@@ -75,7 +75,7 @@ var exportSheetCmd = &cobra.Command{
 			if err != nil {
 				log.Fatalf("%s", err.Error())
 			}
-			path, err = core.ExportVocabularyToSheet(inputs[0].Name, vocabulary)
+			path, err = core.ExportVocabularyToSheet(ctx, inputs[0].Name, vocabulary)
 			log.Printf("exported vocabulary %s to %s", inputs[0].Name, path)
 			if sheetArtifactName == "" {
 				sheetArtifactName = inputs[0].Name + "-sheet"
@@ -86,14 +86,14 @@ var exportSheetCmd = &cobra.Command{
 				log.Fatalf("please specify exactly one version history to export")
 				return
 			}
-			path, err = core.ExportVersionHistoryToSheet(inputNames[0], inputs[0])
+			path, err = core.ExportVersionHistoryToSheet(ctx, inputNames[0], inputs[0])
 			log.Printf("exported version history %s to %s", inputs[0].Name, path)
 			if sheetArtifactName == "" {
 				sheetArtifactName = inputs[0].Name + "-sheet"
 			}
 			saveSheetPath(ctx, client, path, sheetArtifactName)
 		} else if messageType == "gnostic.metrics.Complexity" {
-			path, err = core.ExportComplexityToSheet("Complexity", inputs)
+			path, err = core.ExportComplexityToSheet(ctx, "Complexity", inputs)
 			log.Printf("exported complexity to %s", path)
 			saveSheetPath(ctx, client, path, sheetArtifactName)
 		} else if messageType == "google.cloud.apigee.registry.applications.v1alpha1.Index" {
@@ -104,7 +104,7 @@ var exportSheetCmd = &cobra.Command{
 			if err != nil {
 				log.Fatalf("%s", err.Error())
 			}
-			path, err = core.ExportIndexToSheet(inputs[0].Name, index)
+			path, err = core.ExportIndexToSheet(ctx, inputs[0].Name, index)
 			log.Printf("exported index %s to %s", inputs[0].Name, path)
 			if sheetArtifactName == "" {
 				sheetArtifactName = inputs[0].Name + "-sheet"

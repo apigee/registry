@@ -41,7 +41,7 @@ var computeVocabularyCmd = &cobra.Command{
 	Short: "Compute vocabularies of API specs",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		ctx := context.TODO()
+		ctx := context.Background()
 		client, err := connection.NewClient(ctx)
 		if err != nil {
 			log.Fatalf("%s", err.Error())
@@ -59,7 +59,6 @@ var computeVocabularyCmd = &cobra.Command{
 			// Iterate through a collection of specs and summarize each.
 			err = core.ListSpecs(ctx, client, m, computeFilter, func(spec *rpc.ApiSpec) {
 				taskQueue <- &computeVocabularyTask{
-					ctx:      ctx,
 					client:   client,
 					specName: spec.Name,
 				}
@@ -74,7 +73,6 @@ var computeVocabularyCmd = &cobra.Command{
 }
 
 type computeVocabularyTask struct {
-	ctx      context.Context
 	client   connection.Client
 	specName string
 }
@@ -83,11 +81,11 @@ func (task *computeVocabularyTask) String() string {
 	return "compute vocabulary " + task.specName
 }
 
-func (task *computeVocabularyTask) Run() error {
+func (task *computeVocabularyTask) Run(ctx context.Context) error {
 	request := &rpc.GetApiSpecRequest{
 		Name: task.specName,
 	}
-	spec, err := task.client.GetApiSpec(task.ctx, request)
+	spec, err := task.client.GetApiSpec(ctx, request)
 	if err != nil {
 		return err
 	}
@@ -95,7 +93,7 @@ func (task *computeVocabularyTask) Run() error {
 	log.Printf("computing %s/artifacts/%s", spec.Name, relation)
 	var vocabulary *metrics.Vocabulary
 	if core.IsOpenAPIv2(spec.GetMimeType()) {
-		data, err := core.GetBytesForSpec(task.ctx, task.client, spec)
+		data, err := core.GetBytesForSpec(ctx, task.client, spec)
 		if err != nil {
 			return nil
 		}
@@ -105,7 +103,7 @@ func (task *computeVocabularyTask) Run() error {
 		}
 		vocabulary = vocab.NewVocabularyFromOpenAPIv2(document)
 	} else if core.IsOpenAPIv3(spec.GetMimeType()) {
-		data, err := core.GetBytesForSpec(task.ctx, task.client, spec)
+		data, err := core.GetBytesForSpec(ctx, task.client, spec)
 		if err != nil {
 			return nil
 		}
@@ -115,7 +113,7 @@ func (task *computeVocabularyTask) Run() error {
 		}
 		vocabulary = vocab.NewVocabularyFromOpenAPIv3(document)
 	} else if core.IsDiscovery(spec.GetMimeType()) {
-		data, err := core.GetBytesForSpec(task.ctx, task.client, spec)
+		data, err := core.GetBytesForSpec(ctx, task.client, spec)
 		if err != nil {
 			return nil
 		}
@@ -125,7 +123,7 @@ func (task *computeVocabularyTask) Run() error {
 		}
 		vocabulary = vocab.NewVocabularyFromDiscovery(document)
 	} else if core.IsProto(spec.GetMimeType()) && core.IsZipArchive(spec.GetMimeType()) {
-		data, err := core.GetBytesForSpec(task.ctx, task.client, spec)
+		data, err := core.GetBytesForSpec(ctx, task.client, spec)
 		if err != nil {
 			return nil
 		}
@@ -143,7 +141,7 @@ func (task *computeVocabularyTask) Run() error {
 		MimeType: core.MimeTypeForMessageType("gnostic.metrics.Vocabulary"),
 		Contents: messageData,
 	}
-	err = core.SetArtifact(task.ctx, task.client, artifact)
+	err = core.SetArtifact(ctx, task.client, artifact)
 	if err != nil {
 		return err
 	}

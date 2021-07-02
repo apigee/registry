@@ -55,7 +55,7 @@ var uploadBulkProtosCmd = &cobra.Command{
 		if err != nil {
 			log.Fatal(err.Error())
 		}
-		ctx := context.TODO()
+		ctx := context.Background()
 		client, err := connection.NewClient(ctx)
 		if err != nil {
 			log.Fatal(err.Error())
@@ -90,7 +90,6 @@ func scanDirectoryForProtos(ctx context.Context, client connection.Client, proje
 		}
 
 		taskQueue <- &uploadProtoTask{
-			ctx:       ctx,
 			client:    client,
 			baseURI:   baseURI,
 			projectID: projectID,
@@ -105,7 +104,6 @@ func scanDirectoryForProtos(ctx context.Context, client connection.Client, proje
 }
 
 type uploadProtoTask struct {
-	ctx       context.Context
 	client    connection.Client
 	baseURI   string
 	projectID string
@@ -120,25 +118,25 @@ func (task *uploadProtoTask) String() string {
 	return "upload proto " + task.path
 }
 
-func (task *uploadProtoTask) Run() error {
+func (task *uploadProtoTask) Run(ctx context.Context) error {
 	// Populate API path fields using the file's path.
 	task.populateFields()
 	log.Printf("^^ apis/%s/versions/%s/specs/%s", task.apiID, task.versionID, task.specID)
 
 	// If the API does not exist, create it.
-	if err := task.createAPI(); err != nil {
+	if err := task.createAPI(ctx); err != nil {
 		return err
 	}
 	// If the API version does not exist, create it.
-	if err := task.createVersion(); err != nil {
+	if err := task.createVersion(ctx); err != nil {
 		return err
 	}
 	// If the API spec does not exist, create it.
-	if err := task.createSpec(); err != nil {
+	if err := task.createSpec(ctx); err != nil {
 		return err
 	}
 	// If the API spec needs a new revision, create it.
-	return task.updateSpec()
+	return task.updateSpec(ctx)
 }
 
 func (task *uploadProtoTask) populateFields() {
@@ -150,14 +148,14 @@ func (task *uploadProtoTask) populateFields() {
 	task.specID = task.fileName()
 }
 
-func (task *uploadProtoTask) createAPI() error {
-	if _, err := task.client.GetApi(task.ctx, &rpcpb.GetApiRequest{
+func (task *uploadProtoTask) createAPI(ctx context.Context) error {
+	if _, err := task.client.GetApi(ctx, &rpcpb.GetApiRequest{
 		Name: task.apiName(),
 	}); !core.NotFound(err) {
 		return err // Returns nil when API is found without error.
 	}
 
-	response, err := task.client.CreateApi(task.ctx, &rpcpb.CreateApiRequest{
+	response, err := task.client.CreateApi(ctx, &rpcpb.CreateApiRequest{
 		Parent: task.projectName(),
 		ApiId:  task.apiID,
 		Api:    &rpcpb.Api{},
@@ -171,14 +169,14 @@ func (task *uploadProtoTask) createAPI() error {
 	return nil
 }
 
-func (task *uploadProtoTask) createVersion() error {
-	if _, err := task.client.GetApiVersion(task.ctx, &rpcpb.GetApiVersionRequest{
+func (task *uploadProtoTask) createVersion(ctx context.Context) error {
+	if _, err := task.client.GetApiVersion(ctx, &rpcpb.GetApiVersionRequest{
 		Name: task.versionName(),
 	}); !core.NotFound(err) {
 		return err // Returns nil when version is found without error.
 	}
 
-	response, err := task.client.CreateApiVersion(task.ctx, &rpcpb.CreateApiVersionRequest{
+	response, err := task.client.CreateApiVersion(ctx, &rpcpb.CreateApiVersionRequest{
 		Parent:       task.apiName(),
 		ApiVersionId: task.versionID,
 		ApiVersion:   &rpcpb.ApiVersion{},
@@ -192,13 +190,13 @@ func (task *uploadProtoTask) createVersion() error {
 	return nil
 }
 
-func (task *uploadProtoTask) createSpec() error {
+func (task *uploadProtoTask) createSpec(ctx context.Context) error {
 	contents, err := task.zipContents()
 	if err != nil {
 		return err
 	}
 
-	if _, err := task.client.GetApiSpec(task.ctx, &rpcpb.GetApiSpecRequest{
+	if _, err := task.client.GetApiSpec(ctx, &rpcpb.GetApiSpecRequest{
 		Name: task.specName(),
 	}); !core.NotFound(err) {
 		return err // Returns nil when spec is found without error.
@@ -217,7 +215,7 @@ func (task *uploadProtoTask) createSpec() error {
 		request.ApiSpec.SourceUri = fmt.Sprintf("%s/%s", task.baseURI, task.apiPath())
 	}
 
-	response, err := task.client.CreateApiSpec(task.ctx, request)
+	response, err := task.client.CreateApiSpec(ctx, request)
 	if err != nil {
 		log.Printf("error %s: %s [contents-length: %d]", task.specName(), err.Error(), len(contents))
 	} else {
@@ -227,13 +225,13 @@ func (task *uploadProtoTask) createSpec() error {
 	return nil
 }
 
-func (task *uploadProtoTask) updateSpec() error {
+func (task *uploadProtoTask) updateSpec(ctx context.Context) error {
 	contents, err := task.zipContents()
 	if err != nil {
 		return err
 	}
 
-	spec, err := task.client.GetApiSpec(task.ctx, &rpcpb.GetApiSpecRequest{
+	spec, err := task.client.GetApiSpec(ctx, &rpcpb.GetApiSpecRequest{
 		Name: task.specName(),
 	})
 	if err != nil && !core.NotFound(err) {
@@ -248,7 +246,7 @@ func (task *uploadProtoTask) updateSpec() error {
 		UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"contents"}},
 	}
 
-	response, err := task.client.UpdateApiSpec(task.ctx, request)
+	response, err := task.client.UpdateApiSpec(ctx, request)
 	if err != nil {
 		log.Printf("error %s: %s [contents-length: %d]", request.ApiSpec.Name, err.Error(), len(contents))
 	} else if response.RevisionId != spec.RevisionId {

@@ -48,7 +48,7 @@ var computeBleveCmd = &cobra.Command{
 	Short: "Compute a local search index of specs (experimental)",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		ctx := context.TODO()
+		ctx := context.Background()
 		client, err := connection.NewClient(ctx)
 		if err != nil {
 			log.Fatalf("%s", err.Error())
@@ -65,7 +65,6 @@ var computeBleveCmd = &cobra.Command{
 		if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
 			err = core.ListSpecs(ctx, client, m, bleveFilter, func(spec *rpc.ApiSpec) {
 				taskQueue <- &indexSpecTask{
-					ctx:      ctx,
 					client:   client,
 					specName: spec.Name,
 				}
@@ -82,7 +81,6 @@ var computeBleveCmd = &cobra.Command{
 }
 
 type indexSpecTask struct {
-	ctx      context.Context
 	client   connection.Client
 	specName string
 }
@@ -91,16 +89,16 @@ func (task *indexSpecTask) String() string {
 	return "index " + task.specName
 }
 
-func (task *indexSpecTask) Run() error {
+func (task *indexSpecTask) Run(ctx context.Context) error {
 	request := &rpc.GetApiSpecRequest{
 		Name: task.specName,
 	}
-	spec, err := task.client.GetApiSpec(task.ctx, request)
+	spec, err := task.client.GetApiSpec(ctx, request)
 	if err != nil {
 		return err
 	}
 	name := spec.GetName()
-	data, err := core.GetBytesForSpec(task.ctx, task.client, spec)
+	data, err := core.GetBytesForSpec(ctx, task.client, spec)
 	if err != nil {
 		return nil
 	}

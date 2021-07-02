@@ -86,7 +86,7 @@ func TestGraphQL(t *testing.T) {
 		VariableValues: map[string]interface{}{
 			"cursor": "",
 		},
-		Context: context.Background(),
+		Context: ctx,
 	}
 	// Run the query.
 	payload := evaluateQuery(params)

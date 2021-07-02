@@ -39,7 +39,7 @@ var computeDescriptorCmd = &cobra.Command{
 	Short: "Compute descriptors of API specs",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		ctx := context.TODO()
+		ctx := context.Background()
 		client, err := connection.NewClient(ctx)
 		if err != nil {
 			log.Fatalf("%s", err.Error())
@@ -56,7 +56,6 @@ var computeDescriptorCmd = &cobra.Command{
 		if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
 			err = core.ListSpecs(ctx, client, m, computeFilter, func(spec *rpc.ApiSpec) {
 				taskQueue <- &computeDescriptorTask{
-					ctx:      ctx,
 					client:   client,
 					specName: spec.Name,
 				}
@@ -71,7 +70,6 @@ var computeDescriptorCmd = &cobra.Command{
 }
 
 type computeDescriptorTask struct {
-	ctx      context.Context
 	client   connection.Client
 	specName string
 }
@@ -80,18 +78,18 @@ func (task *computeDescriptorTask) String() string {
 	return "compute descriptor " + task.specName
 }
 
-func (task *computeDescriptorTask) Run() error {
+func (task *computeDescriptorTask) Run(ctx context.Context) error {
 	request := &rpc.GetApiSpecRequest{
 		Name: task.specName,
 	}
-	spec, err := task.client.GetApiSpec(task.ctx, request)
+	spec, err := task.client.GetApiSpec(ctx, request)
 	if err != nil {
 		return err
 	}
 	name := spec.GetName()
 	relation := "descriptor"
 	log.Printf("computing %s/artifacts/%s", name, relation)
-	data, err := core.GetBytesForSpec(task.ctx, task.client, spec)
+	data, err := core.GetBytesForSpec(ctx, task.client, spec)
 	if err != nil {
 		return nil
 	}
@@ -130,5 +128,5 @@ func (task *computeDescriptorTask) Run() error {
 		MimeType: core.MimeTypeForMessageType(typeURL),
 		Contents: messageData,
 	}
-	return core.SetArtifact(task.ctx, task.client, artifact)
+	return core.SetArtifact(ctx, task.client, artifact)
 }

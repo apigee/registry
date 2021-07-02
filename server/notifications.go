@@ -33,11 +33,10 @@ const TopicName = "registry-events"
 
 var notificationTotal int
 
-func (s *RegistryServer) notify(change rpc.Notification_Change, resource string) error {
+func (s *RegistryServer) notify(ctx context.Context, change rpc.Notification_Change, resource string) error {
 	if !s.notifyEnabled || s.projectID == "" {
 		return nil
 	}
-	ctx := context.Background()
 	client, err := pubsub.NewClient(ctx, s.projectID)
 	if err != nil {
 		return err
@@ -45,7 +44,7 @@ func (s *RegistryServer) notify(change rpc.Notification_Change, resource string)
 	defer client.Close()
 	// Ensure that topic exists.
 	{
-		_, err := client.CreateTopic(context.Background(), TopicName)
+		_, err := client.CreateTopic(ctx, TopicName)
 		if err != nil {
 			code := status.Code(err)
 			if code != codes.AlreadyExists {

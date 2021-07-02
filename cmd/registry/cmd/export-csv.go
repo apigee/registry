@@ -57,7 +57,7 @@ var exportCsvCmd = &cobra.Command{
 			log.Fatalf("Failed to get filter string from flags: %s", err)
 		}
 
-		ctx := context.TODO()
+		ctx := context.Background()
 		client, err := connection.NewClient(ctx)
 		if err != nil {
 			log.Fatalf("Failed to create client: %s", err)

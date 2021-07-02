@@ -36,7 +36,7 @@ var getCmd = &cobra.Command{
 	Short: "Get resources from the API Registry",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		ctx := context.TODO()
+		ctx := context.Background()
 
 		client, err := connection.NewClient(ctx)
 		if err != nil {

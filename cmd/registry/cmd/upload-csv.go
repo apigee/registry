@@ -58,7 +58,7 @@ var uploadCsvCmd = &cobra.Command{
 			log.Fatalf("Invalid delimiter %q: must be exactly one character", delimiter)
 		}
 
-		ctx := context.TODO()
+		ctx := context.Background()
 		client, err := connection.NewClient(ctx)
 		if err != nil {
 			log.Fatalf("Failed to create client: %s", err)
@@ -90,7 +90,6 @@ var uploadCsvCmd = &cobra.Command{
 			}
 
 			taskQueue <- &uploadSpecTask{
-				ctx:       ctx,
 				client:    client,
 				projectID: projectID,
 				apiID:     row.ApiID,
@@ -175,7 +174,6 @@ func (r *uploadCSVReader) buildColumnIndex(header []string) error {
 }
 
 type uploadSpecTask struct {
-	ctx       context.Context
 	client    connection.Client
 	projectID string
 	apiID     string
@@ -184,8 +182,8 @@ type uploadSpecTask struct {
 	filepath  string
 }
 
-func (t uploadSpecTask) Run() error {
-	api, err := t.client.CreateApi(t.ctx, &rpcpb.CreateApiRequest{
+func (t uploadSpecTask) Run(ctx context.Context) error {
+	api, err := t.client.CreateApi(ctx, &rpcpb.CreateApiRequest{
 		Parent: fmt.Sprintf("projects/%s", t.projectID),
 		ApiId:  t.apiID,
 		Api:    &rpcpb.Api{},
@@ -202,7 +200,7 @@ func (t uploadSpecTask) Run() error {
 		return fmt.Errorf("failed to ensure API exists: %s", err)
 	}
 
-	version, err := t.client.CreateApiVersion(t.ctx, &rpcpb.CreateApiVersionRequest{
+	version, err := t.client.CreateApiVersion(ctx, &rpcpb.CreateApiVersionRequest{
 		Parent:       api.GetName(),
 		ApiVersionId: t.versionID,
 		ApiVersion:   &rpcpb.ApiVersion{},
@@ -229,7 +227,7 @@ func (t uploadSpecTask) Run() error {
 		return err
 	}
 
-	spec, err := t.client.CreateApiSpec(t.ctx, &rpcpb.CreateApiSpecRequest{
+	spec, err := t.client.CreateApiSpec(ctx, &rpcpb.CreateApiSpecRequest{
 		Parent:    version.GetName(),
 		ApiSpecId: t.specID,
 		ApiSpec: &rpcpb.ApiSpec{

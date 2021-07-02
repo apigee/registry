@@ -45,7 +45,7 @@ var vocabularyUniqueCmd = &cobra.Command{
 		if strings.Contains(outputArtifactID, "/") {
 			log.Fatal("output_id must specify an artifact id (final segment only) and not a full name.")
 		}
-		ctx := context.TODO()
+		ctx := context.Background()
 		client, err := connection.NewClient(ctx)
 		if err != nil {
 			log.Fatalf("%s", err.Error())

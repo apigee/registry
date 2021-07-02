@@ -15,6 +15,7 @@
 package core
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strings"
@@ -24,8 +25,8 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func ExportVersionHistoryToSheet(name string, artifact *rpc.Artifact) (string, error) {
-	sheetsClient, err := NewSheetsClient("")
+func ExportVersionHistoryToSheet(ctx context.Context, name string, artifact *rpc.Artifact) (string, error) {
+	sheetsClient, err := NewSheetsClient(ctx, "")
 	if err != nil {
 		log.Fatalf("%s", err.Error())
 	}
@@ -45,19 +46,19 @@ func ExportVersionHistoryToSheet(name string, artifact *rpc.Artifact) (string, e
 	for _, version := range versionHistory.Versions {
 		rows = append(rows, rowForVersionSummary(version))
 	}
-	_, err = sheetsClient.Update(fmt.Sprintf("Summary"), rows)
+	_, err = sheetsClient.Update(ctx, fmt.Sprintf("Summary"), rows)
 	if err != nil {
 		log.Fatalf("%s", err.Error())
 	}
 	for _, version := range versionHistory.Versions {
 		versionName := nameForVersion(version.Name)
 		rows := rowsForVocabulary(version.NewTerms)
-		_, err = sheetsClient.Update(fmt.Sprintf(versionName+"-new"), rows)
+		_, err = sheetsClient.Update(ctx, fmt.Sprintf(versionName+"-new"), rows)
 		if err != nil {
 			log.Fatalf("%s", err.Error())
 		}
 		rows = rowsForVocabulary(version.DeletedTerms)
-		_, err = sheetsClient.Update(fmt.Sprintf(versionName+"-deleted"), rows)
+		_, err = sheetsClient.Update(ctx, fmt.Sprintf(versionName+"-deleted"), rows)
 		if err != nil {
 			log.Fatalf("%s", err.Error())
 		}
