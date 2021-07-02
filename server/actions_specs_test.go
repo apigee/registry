@@ -302,35 +302,45 @@ func TestCreateApiSpecResponseCodes(t *testing.T) {
 }
 
 func TestCreateApiSpecDuplicates(t *testing.T) {
-	ctx := context.Background()
-	server := defaultTestServer(t)
-	seedSpecs(ctx, t, server, &rpc.ApiSpec{
-		Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
-	})
+	tests := []struct {
+		desc string
+		seed *rpc.ApiSpec
+		req  *rpc.CreateApiSpecRequest
+		want codes.Code
+	}{
+		{
+			desc: "case sensitive",
+			seed: &rpc.ApiSpec{Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec"},
+			req: &rpc.CreateApiSpecRequest{
+				Parent:    "projects/my-project/apis/my-api/versions/v1",
+				ApiSpecId: "my-spec",
+				ApiSpec:   &rpc.ApiSpec{},
+			},
+			want: codes.AlreadyExists,
+		},
+		{
+			desc: "case insensitive",
+			seed: &rpc.ApiSpec{Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec"},
+			req: &rpc.CreateApiSpecRequest{
+				Parent:    "projects/my-project/apis/my-api/versions/v1",
+				ApiSpecId: "My-Spec",
+				ApiSpec:   &rpc.ApiSpec{},
+			},
+			want: codes.AlreadyExists,
+		},
+	}
 
-	t.Run("case sensitive duplicate", func(t *testing.T) {
-		req := &rpc.CreateApiSpecRequest{
-			Parent:    "projects/my-project/apis/my-api/versions/v1",
-			ApiSpecId: "my-spec",
-			ApiSpec:   &rpc.ApiSpec{},
-		}
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			ctx := context.Background()
+			server := defaultTestServer(t)
+			seedSpecs(ctx, t, server, test.seed)
 
-		if _, err := server.CreateApiSpec(ctx, req); status.Code(err) != codes.AlreadyExists {
-			t.Errorf("CreateApiSpec(%+v) returned status code %q, want %q: %v", req, status.Code(err), codes.AlreadyExists, err)
-		}
-	})
-
-	t.Run("case insensitive duplicate", func(t *testing.T) {
-		req := &rpc.CreateApiSpecRequest{
-			Parent:    "projects/my-project/apis/my-api/versions/v1",
-			ApiSpecId: "My-Spec",
-			ApiSpec:   &rpc.ApiSpec{},
-		}
-
-		if _, err := server.CreateApiSpec(ctx, req); status.Code(err) != codes.AlreadyExists {
-			t.Errorf("CreateApiSpec(%+v) returned status code %q, want %q: %v", req, status.Code(err), codes.AlreadyExists, err)
-		}
-	})
+			if _, err := server.CreateApiSpec(ctx, test.req); status.Code(err) != test.want {
+				t.Errorf("CreateApiSpec(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
+			}
+		})
+	}
 }
 
 func TestGetApiSpec(t *testing.T) {
@@ -341,12 +351,40 @@ func TestGetApiSpec(t *testing.T) {
 		want *rpc.ApiSpec
 	}{
 		{
-			desc: "default view",
-			seed: fullSpec,
-			req: &rpc.GetApiSpecRequest{
-				Name: fullSpec.Name,
+			desc: "fully populated resource",
+			seed: &rpc.ApiSpec{
+				Name:        "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
+				Filename:    "openapi.json",
+				Description: "My API Spec",
+				MimeType:    "application/x.openapi;version=3.0.0",
+				SourceUri:   "https://www.example.com/openapi.json",
+				Contents:    specContents,
+				Labels: map[string]string{
+					"label-key": "label-value",
+				},
+				Annotations: map[string]string{
+					"annotation-key": "annotation-value",
+				},
 			},
-			want: basicSpec,
+			req: &rpc.GetApiSpecRequest{
+				Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
+			},
+			want: &rpc.ApiSpec{
+				Name:         "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
+				Filename:     "openapi.json",
+				Description:  "My API Spec",
+				MimeType:     "application/x.openapi;version=3.0.0",
+				SizeBytes:    int32(len(specContents)),
+				Hash:         sha256hash(specContents),
+				SourceUri:    "https://www.example.com/openapi.json",
+				RevisionTags: []string{},
+				Labels: map[string]string{
+					"label-key": "label-value",
+				},
+				Annotations: map[string]string{
+					"annotation-key": "annotation-value",
+				},
+			},
 		},
 	}
 
@@ -1117,7 +1155,7 @@ func TestDeleteApiSpec(t *testing.T) {
 		req  *rpc.DeleteApiSpecRequest
 	}{
 		{
-			desc: "existing version",
+			desc: "existing resource",
 			seed: &rpc.ApiSpec{
 				Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
 			},

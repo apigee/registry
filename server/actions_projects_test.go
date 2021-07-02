@@ -212,33 +212,91 @@ func TestCreateProjectResponseCodes(t *testing.T) {
 }
 
 func TestCreateProjectDuplicates(t *testing.T) {
-	ctx := context.Background()
-	server := defaultTestServer(t)
-	seedProjects(ctx, t, server, &rpc.Project{
-		Name: "projects/my-project",
-	})
+	tests := []struct {
+		desc string
+		seed *rpc.Project
+		req  *rpc.CreateProjectRequest
+		want codes.Code
+	}{
+		{
+			desc: "case sensitive",
+			seed: &rpc.Project{Name: "projects/my-project"},
+			req: &rpc.CreateProjectRequest{
+				ProjectId: "my-project",
+				Project:   &rpc.Project{},
+			},
+			want: codes.AlreadyExists,
+		},
+		{
+			desc: "case insensitive",
+			seed: &rpc.Project{Name: "projects/my-project"},
+			req: &rpc.CreateProjectRequest{
+				ProjectId: "My-Project",
+				Project:   &rpc.Project{},
+			},
+			want: codes.AlreadyExists,
+		},
+	}
 
-	t.Run("case sensitive duplicate", func(t *testing.T) {
-		req := &rpc.CreateProjectRequest{
-			ProjectId: "my-project",
-			Project:   &rpc.Project{},
-		}
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			ctx := context.Background()
+			server := defaultTestServer(t)
+			seedProjects(ctx, t, server, test.seed)
 
-		if _, err := server.CreateProject(ctx, req); status.Code(err) != codes.AlreadyExists {
-			t.Errorf("CreateProject(%+v) returned status code %q, want %q: %v", req, status.Code(err), codes.AlreadyExists, err)
-		}
-	})
+			if _, err := server.CreateProject(ctx, test.req); status.Code(err) != test.want {
+				t.Errorf("CreateProject(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
+			}
+		})
+	}
+}
 
-	t.Run("case insensitive duplicate", func(t *testing.T) {
-		req := &rpc.CreateProjectRequest{
-			ProjectId: "My-Project",
-			Project:   &rpc.Project{},
-		}
+func TestGetProject(t *testing.T) {
+	tests := []struct {
+		desc string
+		seed *rpc.Project
+		req  *rpc.GetProjectRequest
+		want *rpc.Project
+	}{
+		{
+			desc: "fully populated resource",
+			seed: &rpc.Project{
+				Name:        "projects/my-project",
+				DisplayName: "My Display Name",
+				Description: "My Description",
+			},
+			req: &rpc.GetProjectRequest{
+				Name: "projects/my-project",
+			},
+			want: &rpc.Project{
+				Name:        "projects/my-project",
+				DisplayName: "My Display Name",
+				Description: "My Description",
+			},
+		},
+	}
 
-		if _, err := server.CreateProject(ctx, req); status.Code(err) != codes.AlreadyExists {
-			t.Errorf("CreateProject(%+v) returned status code %q, want %q: %v", req, status.Code(err), codes.AlreadyExists, err)
-		}
-	})
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			ctx := context.Background()
+			server := defaultTestServer(t)
+			seedProjects(ctx, t, server, test.seed)
+
+			got, err := server.GetProject(ctx, test.req)
+			if err != nil {
+				t.Fatalf("GetProject(%+v) returned error: %s", test.req, err)
+			}
+
+			opts := cmp.Options{
+				protocmp.Transform(),
+				protocmp.IgnoreFields(new(rpc.Project), "create_time", "update_time"),
+			}
+
+			if !cmp.Equal(test.want, got, opts) {
+				t.Errorf("GetProject(%+v) returned unexpected diff (-want +got):\n%s", test.req, cmp.Diff(test.want, got, opts))
+			}
+		})
+	}
 }
 
 func TestGetProjectResponseCodes(t *testing.T) {
@@ -742,7 +800,7 @@ func TestDeleteProject(t *testing.T) {
 		req  *rpc.DeleteProjectRequest
 	}{
 		{
-			desc: "existing project",
+			desc: "existing resource",
 			seed: &rpc.Project{
 				Name: "projects/my-project",
 			},

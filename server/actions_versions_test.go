@@ -263,35 +263,45 @@ func TestCreateApiVersionResponseCodes(t *testing.T) {
 }
 
 func TestCreateApiVersionDuplicates(t *testing.T) {
-	ctx := context.Background()
-	server := defaultTestServer(t)
-	seedVersions(ctx, t, server, &rpc.ApiVersion{
-		Name: "projects/my-project/apis/my-api/versions/v1",
-	})
+	tests := []struct {
+		desc string
+		seed *rpc.ApiVersion
+		req  *rpc.CreateApiVersionRequest
+		want codes.Code
+	}{
+		{
+			desc: "case sensitive",
+			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
+			req: &rpc.CreateApiVersionRequest{
+				Parent:       "projects/my-project/apis/my-api",
+				ApiVersionId: "v1",
+				ApiVersion:   &rpc.ApiVersion{},
+			},
+			want: codes.AlreadyExists,
+		},
+		{
+			desc: "case insensitive",
+			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
+			req: &rpc.CreateApiVersionRequest{
+				Parent:       "projects/my-project/apis/my-api",
+				ApiVersionId: "V1",
+				ApiVersion:   &rpc.ApiVersion{},
+			},
+			want: codes.AlreadyExists,
+		},
+	}
 
-	t.Run("case sensitive duplicate", func(t *testing.T) {
-		req := &rpc.CreateApiVersionRequest{
-			Parent:       "projects/my-project/apis/my-api",
-			ApiVersionId: "v1",
-			ApiVersion:   &rpc.ApiVersion{},
-		}
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			ctx := context.Background()
+			server := defaultTestServer(t)
+			seedVersions(ctx, t, server, test.seed)
 
-		if _, err := server.CreateApiVersion(ctx, req); status.Code(err) != codes.AlreadyExists {
-			t.Errorf("CreateApiVersion(%+v) returned status code %q, want %q: %v", req, status.Code(err), codes.AlreadyExists, err)
-		}
-	})
-
-	t.Run("case insensitive duplicate", func(t *testing.T) {
-		req := &rpc.CreateApiVersionRequest{
-			Parent:       "projects/my-project/apis/my-api",
-			ApiVersionId: "V1",
-			ApiVersion:   &rpc.ApiVersion{},
-		}
-
-		if _, err := server.CreateApiVersion(ctx, req); status.Code(err) != codes.AlreadyExists {
-			t.Errorf("CreateApiVersion(%+v) returned status code %q, want %q: %v", req, status.Code(err), codes.AlreadyExists, err)
-		}
-	})
+			if _, err := server.CreateApiVersion(ctx, test.req); status.Code(err) != test.want {
+				t.Errorf("CreateApiVersion(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
+			}
+		})
+	}
 }
 
 func TestGetApiVersion(t *testing.T) {
@@ -302,12 +312,34 @@ func TestGetApiVersion(t *testing.T) {
 		want *rpc.ApiVersion
 	}{
 		{
-			desc: "default view",
-			seed: fullVersion,
-			req: &rpc.GetApiVersionRequest{
-				Name: fullVersion.Name,
+			desc: "fully populated resource",
+			seed: &rpc.ApiVersion{
+				Name:        "projects/my-project/apis/my-api/versions/my-version",
+				DisplayName: "My Display Name",
+				Description: "My Description",
+				State:       "My State",
+				Labels: map[string]string{
+					"label-key": "label-value",
+				},
+				Annotations: map[string]string{
+					"annotation-key": "annotation-value",
+				},
 			},
-			want: fullVersion,
+			req: &rpc.GetApiVersionRequest{
+				Name: "projects/my-project/apis/my-api/versions/my-version",
+			},
+			want: &rpc.ApiVersion{
+				Name:        "projects/my-project/apis/my-api/versions/my-version",
+				DisplayName: "My Display Name",
+				Description: "My Description",
+				State:       "My State",
+				Labels: map[string]string{
+					"label-key": "label-value",
+				},
+				Annotations: map[string]string{
+					"annotation-key": "annotation-value",
+				},
+			},
 		},
 	}
 
@@ -912,7 +944,7 @@ func TestDeleteApiVersion(t *testing.T) {
 		req  *rpc.DeleteApiVersionRequest
 	}{
 		{
-			desc: "existing version",
+			desc: "existing resource",
 			seed: &rpc.ApiVersion{
 				Name: "projects/my-project/apis/my-api/versions/v1",
 			},

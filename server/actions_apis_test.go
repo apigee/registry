@@ -264,35 +264,45 @@ func TestCreateApiResponseCodes(t *testing.T) {
 }
 
 func TestCreateApiDuplicates(t *testing.T) {
-	ctx := context.Background()
-	server := defaultTestServer(t)
-	seedApis(ctx, t, server, &rpc.Api{
-		Name: "projects/my-project/apis/my-api",
-	})
+	tests := []struct {
+		desc string
+		seed *rpc.Api
+		req  *rpc.CreateApiRequest
+		want codes.Code
+	}{
+		{
+			desc: "case sensitive",
+			seed: &rpc.Api{Name: "projects/my-project/apis/my-api"},
+			req: &rpc.CreateApiRequest{
+				Parent: "projects/my-project",
+				ApiId:  "my-api",
+				Api:    &rpc.Api{},
+			},
+			want: codes.AlreadyExists,
+		},
+		{
+			desc: "case insensitive",
+			seed: &rpc.Api{Name: "projects/my-project/apis/my-api"},
+			req: &rpc.CreateApiRequest{
+				Parent: "projects/my-project",
+				ApiId:  "My-Api",
+				Api:    &rpc.Api{},
+			},
+			want: codes.AlreadyExists,
+		},
+	}
 
-	t.Run("case sensitive duplicate", func(t *testing.T) {
-		req := &rpc.CreateApiRequest{
-			Parent: "projects/my-project",
-			ApiId:  "my-api",
-			Api:    &rpc.Api{},
-		}
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			ctx := context.Background()
+			server := defaultTestServer(t)
+			seedApis(ctx, t, server, test.seed)
 
-		if _, err := server.CreateApi(ctx, req); status.Code(err) != codes.AlreadyExists {
-			t.Errorf("CreateApi(%+v) returned status code %q, want %q: %v", req, status.Code(err), codes.AlreadyExists, err)
-		}
-	})
-
-	t.Run("case insensitive duplicate", func(t *testing.T) {
-		req := &rpc.CreateApiRequest{
-			Parent: "projects/my-project",
-			ApiId:  "My-Api",
-			Api:    &rpc.Api{},
-		}
-
-		if _, err := server.CreateApi(ctx, req); status.Code(err) != codes.AlreadyExists {
-			t.Errorf("CreateApi(%+v) returned status code %q, want %q: %v", req, status.Code(err), codes.AlreadyExists, err)
-		}
-	})
+			if _, err := server.CreateApi(ctx, test.req); status.Code(err) != test.want {
+				t.Errorf("CreateApi(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
+			}
+		})
+	}
 }
 
 func TestGetApi(t *testing.T) {
@@ -303,12 +313,36 @@ func TestGetApi(t *testing.T) {
 		want *rpc.Api
 	}{
 		{
-			desc: "default view",
-			seed: fullApi,
-			req: &rpc.GetApiRequest{
-				Name: fullApi.Name,
+			desc: "fully populated resource",
+			seed: &rpc.Api{
+				Name:               "projects/my-project/apis/my-api",
+				DisplayName:        "My Display Name",
+				Description:        "My Description",
+				Availability:       "My Availability",
+				RecommendedVersion: "My Version",
+				Labels: map[string]string{
+					"label-key": "label-value",
+				},
+				Annotations: map[string]string{
+					"annotation-key": "annotation-value",
+				},
 			},
-			want: fullApi,
+			req: &rpc.GetApiRequest{
+				Name: "projects/my-project/apis/my-api",
+			},
+			want: &rpc.Api{
+				Name:               "projects/my-project/apis/my-api",
+				DisplayName:        "My Display Name",
+				Description:        "My Description",
+				Availability:       "My Availability",
+				RecommendedVersion: "My Version",
+				Labels: map[string]string{
+					"label-key": "label-value",
+				},
+				Annotations: map[string]string{
+					"annotation-key": "annotation-value",
+				},
+			},
 		},
 	}
 
@@ -876,7 +910,7 @@ func TestDeleteApi(t *testing.T) {
 		req  *rpc.DeleteApiRequest
 	}{
 		{
-			desc: "existing api",
+			desc: "existing resource",
 			seed: &rpc.Api{
 				Name: "projects/my-project/apis/my-api",
 			},
