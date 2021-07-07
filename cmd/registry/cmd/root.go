@@ -15,22 +15,39 @@
 package cmd
 
 import (
-	"fmt"
-	"os"
-
+	"github.com/apigee/registry/cmd/registry/cmd/annotate"
+	"github.com/apigee/registry/cmd/registry/cmd/compute"
+	"github.com/apigee/registry/cmd/registry/cmd/controller"
+	"github.com/apigee/registry/cmd/registry/cmd/delete"
+	"github.com/apigee/registry/cmd/registry/cmd/export"
+	"github.com/apigee/registry/cmd/registry/cmd/get"
+	"github.com/apigee/registry/cmd/registry/cmd/index"
+	"github.com/apigee/registry/cmd/registry/cmd/label"
+	"github.com/apigee/registry/cmd/registry/cmd/list"
+	"github.com/apigee/registry/cmd/registry/cmd/search"
+	"github.com/apigee/registry/cmd/registry/cmd/upload"
+	"github.com/apigee/registry/cmd/registry/cmd/vocabulary"
 	"github.com/spf13/cobra"
 )
 
-var rootCmd = &cobra.Command{
-	Use:   "registry",
-	Short: "A simple and eclectic utility for working with the API Registry",
-}
-
-// Execute adds all child commands to the root command and sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the rootCmd.
-func Execute() {
-	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+func Command() *cobra.Command {
+	var cmd = &cobra.Command{
+		Use:   "registry",
+		Short: "A simple and eclectic utility for working with the API Registry",
 	}
+
+	cmd.AddCommand(annotate.Command())
+	cmd.AddCommand(compute.Command())
+	cmd.AddCommand(controller.Command())
+	cmd.AddCommand(delete.Command())
+	cmd.AddCommand(export.Command())
+	cmd.AddCommand(get.Command())
+	cmd.AddCommand(index.Command())
+	cmd.AddCommand(label.Command())
+	cmd.AddCommand(list.Command())
+	cmd.AddCommand(search.Command())
+	cmd.AddCommand(upload.Command())
+	cmd.AddCommand(vocabulary.Command())
+
+	return cmd
 }

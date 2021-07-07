@@ -12,19 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package bulk
 
 import (
-	"fmt"
-	"os"
-
-	"github.com/apigee/registry/cmd/registry/cmd"
+	"github.com/spf13/cobra"
 )
 
-func main() {
-	cmd := cmd.Command()
-	if err := cmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+func Command() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "bulk",
+		Short: "Bulk-upload API specs of selected styles",
 	}
+
+	cmd.AddCommand(uploadBulkDiscoveryCmd)
+	cmd.AddCommand(uploadBulkOpenAPICmd)
+	cmd.AddCommand(uploadBulkProtosCmd)
+
+	return cmd
 }
