@@ -32,23 +32,17 @@ import (
 )
 
 func openAPICommand() *cobra.Command {
+	var baseURI string
 	cmd := &cobra.Command{
 		Use:   "openapi",
 		Short: "Bulk-upload OpenAPI descriptions from a directory of specs",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			flagset := cmd.LocalFlags()
-			projectID, err := flagset.GetString("project_id")
+			projectID, err := cmd.Flags().GetString("project_id")
 			if err != nil {
 				log.Fatal(err.Error())
 			}
-			if projectID == "" {
-				log.Fatal("Please specify a project_id")
-			}
-			baseURI, err := flagset.GetString("base_uri")
-			if err != nil {
-				log.Fatal(err.Error())
-			}
+
 			ctx := context.Background()
 			client, err := connection.NewClient(ctx)
 			if err != nil {
@@ -61,8 +55,7 @@ func openAPICommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().String("project_id", "", "Project id.")
-	cmd.Flags().String("base_uri", "", "Base to use for setting source_uri fields of uploaded specs.")
+	cmd.Flags().StringVar(&baseURI, "base_uri", "", "Prefix to use for the source_uri field of each spec upload")
 	return cmd
 }
 

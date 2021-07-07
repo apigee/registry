@@ -33,20 +33,23 @@ import (
 )
 
 func sheetCommand() *cobra.Command {
-	var sheetArtifactName string
+	var (
+		filter   string
+		artifact string
+	)
+
 	cmd := &cobra.Command{
 		Use:   "sheet",
 		Short: "Export a specified artifact to a Google sheet",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			var path string
-			var err error
 			ctx := context.Background()
 			client, err := connection.NewClient(ctx)
 			if err != nil {
 				log.Fatalf("%s", err.Error())
 			}
-			inputNames, inputs := collectInputArtifacts(ctx, client, args, exportFilter)
+			inputNames, inputs := collectInputArtifacts(ctx, client, args, filter)
 			if len(inputs) == 0 {
 				return
 			}
@@ -57,7 +60,7 @@ func sheetCommand() *cobra.Command {
 					log.Fatalf("%s", err.Error())
 				}
 				log.Printf("exported int64 %+v to %s", inputs, path)
-				saveSheetPath(ctx, client, path, sheetArtifactName)
+				saveSheetPath(ctx, client, path, artifact)
 				return
 			}
 			messageType, err := core.MessageTypeForMimeType(inputs[0].GetMimeType())
@@ -73,10 +76,10 @@ func sheetCommand() *cobra.Command {
 				}
 				path, _ = core.ExportVocabularyToSheet(ctx, inputs[0].Name, vocabulary)
 				log.Printf("exported vocabulary %s to %s", inputs[0].Name, path)
-				if sheetArtifactName == "" {
-					sheetArtifactName = inputs[0].Name + "-sheet"
+				if artifact == "" {
+					artifact = inputs[0].Name + "-sheet"
 				}
-				saveSheetPath(ctx, client, path, sheetArtifactName)
+				saveSheetPath(ctx, client, path, artifact)
 			} else if messageType == "gnostic.metrics.VersionHistory" {
 				if len(inputs) != 1 {
 					log.Fatalf("please specify exactly one version history to export")
@@ -84,14 +87,14 @@ func sheetCommand() *cobra.Command {
 				}
 				path, _ = core.ExportVersionHistoryToSheet(ctx, inputNames[0], inputs[0])
 				log.Printf("exported version history %s to %s", inputs[0].Name, path)
-				if sheetArtifactName == "" {
-					sheetArtifactName = inputs[0].Name + "-sheet"
+				if artifact == "" {
+					artifact = inputs[0].Name + "-sheet"
 				}
-				saveSheetPath(ctx, client, path, sheetArtifactName)
+				saveSheetPath(ctx, client, path, artifact)
 			} else if messageType == "gnostic.metrics.Complexity" {
 				path, _ = core.ExportComplexityToSheet(ctx, "Complexity", inputs)
 				log.Printf("exported complexity to %s", path)
-				saveSheetPath(ctx, client, path, sheetArtifactName)
+				saveSheetPath(ctx, client, path, artifact)
 			} else if messageType == "google.cloud.apigee.registry.applications.v1alpha1.Index" {
 				if len(inputs) != 1 {
 					log.Fatalf("%d artifacts matched. Please specify exactly one for export.", len(inputs))
@@ -102,17 +105,18 @@ func sheetCommand() *cobra.Command {
 				}
 				path, _ = core.ExportIndexToSheet(ctx, inputs[0].Name, index)
 				log.Printf("exported index %s to %s", inputs[0].Name, path)
-				if sheetArtifactName == "" {
-					sheetArtifactName = inputs[0].Name + "-sheet"
+				if artifact == "" {
+					artifact = inputs[0].Name + "-sheet"
 				}
-				saveSheetPath(ctx, client, path, sheetArtifactName)
+				saveSheetPath(ctx, client, path, artifact)
 			} else {
 				log.Fatalf("Unknown message type: %s", messageType)
 			}
 		},
 	}
 
-	cmd.PersistentFlags().StringVar(&sheetArtifactName, "as", "", "name of artifact to hold url of exported sheet")
+	cmd.Flags().StringVar(&filter, "filter", "", "Filter selected resources")
+	cmd.Flags().StringVar(&artifact, "as", "", "Artifact ID to use when saving the result sheet URL")
 	return cmd
 }
 

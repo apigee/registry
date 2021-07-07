@@ -31,27 +31,17 @@ import (
 )
 
 func specCommand() *cobra.Command {
+	var (
+		version string
+		style   string
+	)
+
 	cmd := &cobra.Command{
 		Use:   "spec",
 		Short: "Upload an API spec",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := context.Background()
-			flagset := cmd.LocalFlags()
-			version, err := flagset.GetString("version")
-			if err != nil {
-				log.Fatalf("%s", err.Error())
-			}
-			if version == "" {
-				log.Fatalf("Please specify a version")
-			}
-			style, err := flagset.GetString("style")
-			if err != nil {
-				log.Fatalf("%s", err.Error())
-			}
-			if style == "" {
-				log.Fatal("Please specify a style")
-			}
 			client, err := connection.NewClient(ctx)
 			if err != nil {
 				log.Fatalf("%s", err.Error())
@@ -85,8 +75,10 @@ func specCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().String("version", "", "Version for uploaded spec")
-	cmd.Flags().String("style", "", "style of spec to upload (openapi, discovery, proto)")
+	cmd.Flags().StringVar(&version, "version", "", "Version to use as parent for the spec upload")
+	cmd.MarkFlagRequired("version")
+	cmd.Flags().StringVar(&style, "style", "", "Style of spec to upload (openapi|discovery|proto)")
+	cmd.MarkFlagRequired("style")
 	return cmd
 }
 

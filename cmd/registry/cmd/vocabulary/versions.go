@@ -26,34 +26,38 @@ import (
 )
 
 func versionsCommand() *cobra.Command {
+	var output string
 	cmd := &cobra.Command{
 		Use:   "versions",
 		Short: "Compute the differences in API vocabularies associated with successive API versions",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			var err error
-			flagset := cmd.LocalFlags()
-			outputArtifactName, _ := flagset.GetString("output")
+			filter, err := cmd.Flags().GetString("filter")
+			if err != nil {
+				log.Fatalf("Failed to get filter from flags: %s", err)
+			}
+
 			ctx := context.Background()
 			client, err := connection.NewClient(ctx)
 			if err != nil {
 				log.Fatalf("%s", err.Error())
 			}
-			names, inputs := collectInputVocabularies(ctx, client, args, vocabularyFilter)
+			names, inputs := collectInputVocabularies(ctx, client, args, filter)
 
 			parts := strings.Split(names[0], "/")
 			parts = parts[0:4]
 			parent := strings.Join(parts, "/")
 
-			output := vocabulary.Version(inputs, names, parent)
-			if outputArtifactName != "" {
-				setVersionHistoryToArtifact(ctx, client, output, outputArtifactName)
+			history := vocabulary.Version(inputs, names, parent)
+			if output != "" {
+				setVersionHistoryToArtifact(ctx, client, history, output)
 			} else {
-				core.PrintMessage(output)
+				core.PrintMessage(history)
 			}
 		},
 	}
 
-	cmd.Flags().String("output", "", "name of artifact where output should be stored")
+	cmd.Flags().String("output", "", "Artifact name to use when saving the vocabulary artifact")
+	cmd.MarkFlagRequired("output")
 	return cmd
 }

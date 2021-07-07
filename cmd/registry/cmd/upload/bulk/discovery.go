@@ -33,15 +33,11 @@ func discoveryCommand() *cobra.Command {
 		Use:   "discovery",
 		Short: "Bulk-upload API Discovery documents from the Google API Discovery service",
 		Run: func(cmd *cobra.Command, args []string) {
-			var err error
-			flagset := cmd.LocalFlags()
-			projectID, err := flagset.GetString("project_id")
+			projectID, err := cmd.Flags().GetString("project_id")
 			if err != nil {
 				log.Fatal(err.Error())
 			}
-			if projectID == "" {
-				log.Fatalf("Please specify a project_id")
-			}
+
 			ctx := context.Background()
 			client, err := connection.NewClient(ctx)
 			if err != nil {
@@ -77,7 +73,6 @@ func discoveryCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().String("project_id", "", "Project id.")
 	return cmd
 }
 

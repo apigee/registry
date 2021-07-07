@@ -35,12 +35,16 @@ import (
 var bleveMutex sync.Mutex
 
 func searchIndexCommand() *cobra.Command {
-	var bleveFilter string
-	var cmd = &cobra.Command{
+	return &cobra.Command{
 		Use:   "search-index",
 		Short: "Compute a local search index of specs (experimental)",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
+			filter, err := cmd.Flags().GetString("filter")
+			if err != nil {
+				log.Fatalf("Failed to get filter from flags: %s", err)
+			}
+
 			ctx := context.Background()
 			client, err := connection.NewClient(ctx)
 			if err != nil {
@@ -56,7 +60,7 @@ func searchIndexCommand() *cobra.Command {
 			// Generate tasks.
 			name := args[0]
 			if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
-				err = core.ListSpecs(ctx, client, m, bleveFilter, func(spec *rpc.ApiSpec) {
+				err = core.ListSpecs(ctx, client, m, filter, func(spec *rpc.ApiSpec) {
 					taskQueue <- &indexSpecTask{
 						client:   client,
 						specName: spec.Name,
@@ -72,9 +76,6 @@ func searchIndexCommand() *cobra.Command {
 			}
 		},
 	}
-
-	cmd.Flags().StringVar(&bleveFilter, "filter", "", "Filter option to send with calls")
-	return cmd
 }
 
 type indexSpecTask struct {

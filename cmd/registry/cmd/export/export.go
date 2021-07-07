@@ -18,8 +18,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var exportFilter string
-
 func Command() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "export",
@@ -30,7 +28,5 @@ func Command() *cobra.Command {
 	cmd.AddCommand(sheetCommand())
 	cmd.AddCommand(yamlCommand())
 
-	// TODO: Remove the global state.
-	cmd.PersistentFlags().StringVar(&exportFilter, "filter", "", "filter export arguments")
 	return cmd
 }

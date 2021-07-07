@@ -69,7 +69,6 @@ func Command() *cobra.Command {
 		},
 	}
 
-	// TODO: Remove the global state.
-	cmd.Flags().BoolVar(&getContents, "contents", false, "Get item contents (if applicable).")
+	cmd.Flags().BoolVar(&getContents, "contents", false, "Include resource contents if available")
 	return cmd
 }

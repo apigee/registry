@@ -27,23 +27,15 @@ import (
 )
 
 func manifestCommand() *cobra.Command {
+	var projectID string
 	cmd := &cobra.Command{
 		Use:   "manifest FILE_PATH --project_id=value",
 		Short: "Upload a dependency manifest",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			flagset := cmd.LocalFlags()
 			manifestPath := args[0]
 			if manifestPath == "" {
 				log.Fatal("Please provide manifest_path")
-			}
-
-			project, err := flagset.GetString("project_id")
-			if err != nil {
-				log.Fatalf("%s", err.Error())
-			}
-			if project == "" {
-				log.Fatal("Please specify a project")
 			}
 
 			manifest, err := controller.ReadManifestProto(manifestPath)
@@ -59,7 +51,7 @@ func manifestCommand() *cobra.Command {
 			}
 
 			artifact := &rpc.Artifact{
-				Name:     "projects/" + project + "/artifacts/" + manifest.Name,
+				Name:     "projects/" + projectID + "/artifacts/" + manifest.Name,
 				MimeType: core.MimeTypeForMessageType("google.cloud.apigee.registry.applications.v1alpha1.Manifest"),
 				Contents: manifestData,
 			}
@@ -72,6 +64,7 @@ func manifestCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().String("project_id", "", "ProjectID this manifest should be associated with.")
+	cmd.Flags().StringVar(&projectID, "project_id", "", "Project ID to use when saving the result manifest artifact")
+	cmd.MarkFlagRequired("project_id")
 	return cmd
 }

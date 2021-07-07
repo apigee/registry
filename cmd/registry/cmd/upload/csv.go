@@ -33,21 +33,17 @@ import (
 )
 
 func csvCommand() *cobra.Command {
+	var (
+		projectID string
+		delimiter string
+	)
+
 	cmd := &cobra.Command{
 		Use:   "csv file --project_id=value [--delimiter=value]",
 		Short: "Upload API specs from a CSV file",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			flagset := cmd.LocalFlags()
-			projectID, err := flagset.GetString("project_id")
-			if err != nil {
-				log.Fatalf("Failed to get project_id string from flags: %s", err)
-			}
-
-			delimiter, err := flagset.GetString("delimiter")
-			if err != nil {
-				log.Fatalf("Failed to get delimiter string from flags: %s", err)
-			} else if len(delimiter) != 1 {
+			if len(delimiter) != 1 {
 				log.Fatalf("Invalid delimiter %q: must be exactly one character", delimiter)
 			}
 
@@ -94,9 +90,9 @@ func csvCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().String("project_id", "", "Project id.")
+	cmd.Flags().StringVar(&projectID, "project_id", "", "Project ID to use for each upload")
 	cmd.MarkFlagRequired("project_id")
-	cmd.Flags().String("delimiter", ",", "Field delimiter of the CSV file.")
+	cmd.Flags().StringVar(&delimiter, "delimiter", ",", "Field delimiter for the CSV file")
 	return cmd
 }
 

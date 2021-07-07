@@ -37,6 +37,11 @@ func descriptorCommand() *cobra.Command {
 		Short: "Compute descriptors of API specs",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
+			filter, err := cmd.Flags().GetString("filter")
+			if err != nil {
+				log.Fatalf("Failed to get filter from flags: %s", err)
+			}
+
 			ctx := context.Background()
 			client, err := connection.NewClient(ctx)
 			if err != nil {
@@ -52,7 +57,7 @@ func descriptorCommand() *cobra.Command {
 			// Generate tasks.
 			name := args[0]
 			if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
-				err = core.ListSpecs(ctx, client, m, computeFilter, func(spec *rpc.ApiSpec) {
+				err = core.ListSpecs(ctx, client, m, filter, func(spec *rpc.ApiSpec) {
 					taskQueue <- &computeDescriptorTask{
 						client:   client,
 						specName: spec.Name,

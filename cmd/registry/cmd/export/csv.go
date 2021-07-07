@@ -35,7 +35,8 @@ type exportCSVRow struct {
 }
 
 func csvCommand() *cobra.Command {
-	return &cobra.Command{
+	var filter string
+	cmd := &cobra.Command{
 		Use:   "csv [--filter expression] parent ...",
 		Short: "Export API specs to a CSV file",
 		Args: func(cmd *cobra.Command, args []string) error {
@@ -48,11 +49,6 @@ func csvCommand() *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			filter, err := cmd.Flags().GetString("filter")
-			if err != nil {
-				log.Fatalf("Failed to get filter string from flags: %s", err)
-			}
-
 			ctx := context.Background()
 			client, err := connection.NewClient(ctx)
 			if err != nil {
@@ -97,4 +93,7 @@ func csvCommand() *cobra.Command {
 			}
 		},
 	}
+
+	cmd.Flags().StringVar(&filter, "filter", "", "Filter selected resources")
+	return cmd
 }

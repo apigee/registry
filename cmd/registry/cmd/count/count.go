@@ -18,8 +18,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var countFilter string
-
 func Command() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "count",
@@ -28,7 +26,5 @@ func Command() *cobra.Command {
 
 	cmd.AddCommand(versionsCommand())
 
-	// TODO: Remove the global state.
-	cmd.PersistentFlags().StringVar(&countFilter, "filter", "", "filter count arguments")
 	return cmd
 }

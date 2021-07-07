@@ -185,6 +185,7 @@ func TestControllerUpdate(t *testing.T) {
 
 	// Call the controller update command
 	cmd := Command()
+	t.Logf("%+v", cmd.PersistentFlags())
 	args := []string{"update", "../../controller/test/manifest_e2e.yaml"}
 	cmd.SetArgs(args)
 	if err = cmd.Execute(); err != nil {

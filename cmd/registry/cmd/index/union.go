@@ -24,32 +24,37 @@ import (
 )
 
 func unionCommand() *cobra.Command {
+	var (
+		filter string
+		output string
+	)
+
 	cmd := &cobra.Command{
 		Use:   "union",
 		Short: "Compute the union of specified API indexes",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			var err error
-			flagset := cmd.LocalFlags()
-			outputArtifactName, err := flagset.GetString("output")
+			filter, err := cmd.Flags().GetString("filter")
 			if err != nil {
-				log.Fatalf("%s", err.Error())
+				log.Fatalf("Failed to get filter from flags: %s", err)
 			}
+
 			ctx := context.Background()
 			client, err := connection.NewClient(ctx)
 			if err != nil {
 				log.Fatalf("%s", err.Error())
 			}
-			_, inputs := collectInputIndexes(ctx, client, args, indexFilter)
-			output := core.IndexUnion(inputs)
-			if outputArtifactName != "" {
-				setIndexToArtifact(ctx, client, output, outputArtifactName)
+			_, inputs := collectInputIndexes(ctx, client, args, filter)
+			index := core.IndexUnion(inputs)
+			if output != "" {
+				setIndexToArtifact(ctx, client, index, output)
 			} else {
-				core.PrintMessage(output)
+				core.PrintMessage(index)
 			}
 		},
 	}
 
-	cmd.Flags().String("output", "", "name of artifact where output should be stored")
+	cmd.Flags().StringVar(&filter, "filter", "", "Filter selected resources")
+	cmd.Flags().StringVar(&output, "output", "", "Artifact ID to use if saving the result index")
 	return cmd
 }

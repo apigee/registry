@@ -27,8 +27,6 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-var indexFilter string
-
 func Command() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "index",
@@ -37,8 +35,6 @@ func Command() *cobra.Command {
 
 	cmd.AddCommand(unionCommand())
 
-	// TODO: Remove the global state.
-	cmd.PersistentFlags().StringVar(&indexFilter, "filter", "", "filter index arguments")
 	return cmd
 }
 

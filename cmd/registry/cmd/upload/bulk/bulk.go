@@ -28,5 +28,7 @@ func Command() *cobra.Command {
 	cmd.AddCommand(openAPICommand())
 	cmd.AddCommand(protosCommand())
 
+	cmd.PersistentFlags().String("project_id", "", "Project ID to use for each upload")
+	cmd.MarkFlagRequired("project_id")
 	return cmd
 }

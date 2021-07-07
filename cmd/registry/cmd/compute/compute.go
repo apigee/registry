@@ -18,8 +18,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var computeFilter string
-
 func Command() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "compute",
@@ -36,7 +34,7 @@ func Command() *cobra.Command {
 	cmd.AddCommand(searchIndexCommand())
 	cmd.AddCommand(vocabularyCommand())
 
-	// TODO: Remove the global state.
-	cmd.PersistentFlags().StringVar(&computeFilter, "filter", "", "filter compute arguments")
+	cmd.PersistentFlags().String("filter", "", "Filter selected resources")
+	cmd.PersistentFlags().String("something", "", "desc")
 	return cmd
 }

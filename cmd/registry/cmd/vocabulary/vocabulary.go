@@ -29,8 +29,6 @@ import (
 	metrics "github.com/googleapis/gnostic/metrics"
 )
 
-var vocabularyFilter string
-
 func Command() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "vocabulary",
@@ -43,8 +41,7 @@ func Command() *cobra.Command {
 	cmd.AddCommand(uniqueCommand())
 	cmd.AddCommand(versionsCommand())
 
-	// TODO: Remove the global state.
-	cmd.PersistentFlags().StringVar(&vocabularyFilter, "filter", "", "filter vocabulary arguments")
+	cmd.PersistentFlags().String("filter", "", "Filter selected resources")
 	return cmd
 }
 

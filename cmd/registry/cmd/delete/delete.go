@@ -27,9 +27,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var deleteFilter string
-
 func Command() *cobra.Command {
+	var filter string
 	cmd := &cobra.Command{
 		Use:   "delete",
 		Short: "Delete resources from the API Registry",
@@ -49,7 +48,7 @@ func Command() *cobra.Command {
 				go core.Worker(ctx, taskQueue)
 			}
 
-			err = matchAndHandleDeleteCmd(ctx, client, taskQueue, args[0])
+			err = matchAndHandleDeleteCmd(ctx, client, taskQueue, args[0], filter)
 			if err != nil {
 				log.Fatalf("%s", err.Error())
 			}
@@ -59,8 +58,7 @@ func Command() *cobra.Command {
 		},
 	}
 
-	// TODO: Remove the global state.
-	cmd.Flags().StringVar(&deleteFilter, "filter", "", "Filter resources to delete")
+	cmd.Flags().StringVar(&filter, "filter", "", "Filter selected resources")
 	return cmd
 }
 
@@ -95,15 +93,16 @@ func matchAndHandleDeleteCmd(
 	client connection.Client,
 	taskQueue chan core.Task,
 	name string,
+	filter string,
 ) error {
 	if m := names.ApiRegexp().FindStringSubmatch(name); m != nil {
-		return deleteAPIs(ctx, client, m, deleteFilter, taskQueue)
+		return deleteAPIs(ctx, client, m, filter, taskQueue)
 	} else if m := names.VersionRegexp().FindStringSubmatch(name); m != nil {
-		return deleteVersions(ctx, client, m, deleteFilter, taskQueue)
+		return deleteVersions(ctx, client, m, filter, taskQueue)
 	} else if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
-		return deleteSpecs(ctx, client, m, deleteFilter, taskQueue)
+		return deleteSpecs(ctx, client, m, filter, taskQueue)
 	} else if m := names.ArtifactRegexp().FindStringSubmatch(name); m != nil {
-		return deleteArtifacts(ctx, client, m, deleteFilter, taskQueue)
+		return deleteArtifacts(ctx, client, m, filter, taskQueue)
 	} else {
 		return fmt.Errorf("unsupported resource name: see the 'apg registry delete-' subcommands for alternatives")
 	}

@@ -38,6 +38,11 @@ func detailsCommand() *cobra.Command {
 		Short: "Compute details about APIs from information in their specs.",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
+			filter, err := cmd.Flags().GetString("filter")
+			if err != nil {
+				log.Fatalf("Failed to get filter from flags: %s", err)
+			}
+
 			ctx := context.Background()
 			client, err := connection.NewClient(ctx)
 			if err != nil {
@@ -54,7 +59,7 @@ func detailsCommand() *cobra.Command {
 			name := args[0]
 			if m := names.ApiRegexp().FindStringSubmatch(name); m != nil {
 				// Iterate through a collection of specs and summarize each.
-				err = core.ListAPIs(ctx, client, m, computeFilter, func(api *rpc.Api) {
+				err = core.ListAPIs(ctx, client, m, filter, func(api *rpc.Api) {
 					taskQueue <- &computeDetailsTask{
 						client:  client,
 						apiName: api.Name,

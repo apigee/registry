@@ -33,6 +33,11 @@ func indexCommand() *cobra.Command {
 		Short: "Compute indexes of API specs",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
+			filter, err := cmd.Flags().GetString("filter")
+			if err != nil {
+				log.Fatalf("Failed to get filter from flags: %s", err)
+			}
+
 			ctx := context.Background()
 			client, err := connection.NewClient(ctx)
 			if err != nil {
@@ -49,7 +54,7 @@ func indexCommand() *cobra.Command {
 			name := args[0]
 			if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
 				// Iterate through a collection of specs and summarize each.
-				err = core.ListSpecs(ctx, client, m, computeFilter, func(spec *rpc.ApiSpec) {
+				err = core.ListSpecs(ctx, client, m, filter, func(spec *rpc.ApiSpec) {
 					taskQueue <- &computeIndexTask{
 						client:   client,
 						specName: spec.Name,

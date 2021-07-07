@@ -28,15 +28,17 @@ import (
 )
 
 func lintCommand() *cobra.Command {
+	var linter string
 	cmd := &cobra.Command{
 		Use:   "lint",
 		Short: "Compute lint results for API specs",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			linter, err := cmd.LocalFlags().GetString("linter")
-			if err != nil { // ignore errors
-				linter = ""
+			filter, err := cmd.Flags().GetString("filter")
+			if err != nil {
+				log.Fatalf("Failed to get filter from flags: %s", err)
 			}
+
 			ctx := context.Background()
 			client, err := connection.NewClient(ctx)
 			if err != nil {
@@ -53,7 +55,7 @@ func lintCommand() *cobra.Command {
 			name := args[0]
 			if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
 				// Iterate through a collection of specs and evaluate each.
-				err = core.ListSpecs(ctx, client, m, computeFilter, func(spec *rpc.ApiSpec) {
+				err = core.ListSpecs(ctx, client, m, filter, func(spec *rpc.ApiSpec) {
 					taskQueue <- &computeLintTask{
 						client:   client,
 						specName: spec.Name,
@@ -69,7 +71,8 @@ func lintCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().String("linter", "", "name of linter to use (aip, spectral, gnostic)")
+	cmd.Flags().StringVar(&linter, "linter", "", "The linter to use (aip|spectral|gnostic)")
+	cmd.MarkFlagRequired("linter")
 	return cmd
 }
 

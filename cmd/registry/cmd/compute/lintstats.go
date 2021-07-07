@@ -33,14 +33,15 @@ func lintStatsRelation(linter string) string {
 }
 
 func lintStatsCommand() *cobra.Command {
+	var linter string
 	cmd := &cobra.Command{
 		Use:   "lintstats",
 		Short: "Compute summaries of linter runs",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			linter, err := cmd.LocalFlags().GetString("linter")
-			if err != nil || linter == "" {
-				log.Fatalf("Please specify a linter with the --linter flag")
+			filter, err := cmd.Flags().GetString("filter")
+			if err != nil {
+				log.Fatalf("Failed to get filter from flags: %s", err)
 			}
 
 			ctx := context.Background()
@@ -53,7 +54,7 @@ func lintStatsCommand() *cobra.Command {
 			name := args[0]
 			if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
 				// Iterate through a collection of specs and evaluate each.
-				err = core.ListSpecs(ctx, client, m, computeFilter, func(spec *rpc.ApiSpec) {
+				err = core.ListSpecs(ctx, client, m, filter, func(spec *rpc.ApiSpec) {
 					fmt.Printf("%s\n", spec.Name)
 					// get the lint results
 					request := rpc.GetArtifactContentsRequest{
@@ -98,7 +99,7 @@ func lintStatsCommand() *cobra.Command {
 			}
 			if m := names.ProjectRegexp().FindStringSubmatch(name); m != nil {
 				// Iterate through a collection of projects and evaluate each.
-				err = core.ListProjects(ctx, client, m, computeFilter, func(project *rpc.Project) {
+				err = core.ListProjects(ctx, client, m, filter, func(project *rpc.Project) {
 					// Create a top-level list of problem counts for the project
 					problemCounts := make([]*rpc.LintProblemCount, 0)
 					// get the lintstats for each spec in the project
@@ -151,7 +152,8 @@ func lintStatsCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().String("linter", "", "name of linter associated with these lintstats (aip, spectral, gnostic)")
+	cmd.Flags().StringVar(&linter, "linter", "", "The name of the linter whose results will be used to compute stats (aip|spectral|gnostic)")
+	cmd.MarkFlagRequired("linter")
 	return cmd
 }
 

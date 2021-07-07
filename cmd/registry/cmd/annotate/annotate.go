@@ -30,21 +30,16 @@ import (
 )
 
 func Command() *cobra.Command {
+	var (
+		filter    string
+		overwrite bool
+	)
+
 	cmd := &cobra.Command{
 		Use:   "annotate RESOURCE KEY_1=VAL_1 ... KEY_N=VAL_N",
 		Short: "Annotate resources in the API Registry",
 		Args:  cobra.MinimumNArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
-			flagset := cmd.LocalFlags()
-			filter, err := flagset.GetString("filter")
-			if err != nil {
-				log.Fatalf("Failed to get filter string from flags: %s", err)
-			}
-			overwrite, err := flagset.GetBool("overwrite")
-			if err != nil {
-				log.Fatalf("Failed to get overwrite boolean from flags: %s", err)
-			}
-
 			ctx := context.Background()
 			client, err := connection.NewClient(ctx)
 			if err != nil {
@@ -85,8 +80,9 @@ func Command() *cobra.Command {
 			core.WaitGroup().Wait()
 		},
 	}
-	cmd.Flags().String("filter", "", "Filter selected resources")
-	cmd.Flags().Bool("overwrite", false, "Overwrite existing annotations")
+
+	cmd.Flags().StringVar(&filter, "filter", "", "Filter selected resources")
+	cmd.Flags().BoolVar(&overwrite, "overwrite", false, "Overwrite existing annotations")
 	return cmd
 }
 
