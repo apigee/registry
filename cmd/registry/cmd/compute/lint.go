@@ -27,49 +27,50 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func init() {
-	computeLintCmd.Flags().String("linter", "", "name of linter to use (aip, spectral, gnostic)")
-}
-
-var computeLintCmd = &cobra.Command{
-	Use:   "lint",
-	Short: "Compute lint results for API specs",
-	Args:  cobra.MinimumNArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		linter, err := cmd.LocalFlags().GetString("linter")
-		if err != nil { // ignore errors
-			linter = ""
-		}
-		ctx := context.Background()
-		client, err := connection.NewClient(ctx)
-		if err != nil {
-			log.Fatalf("%s", err.Error())
-		}
-		// Initialize task queue.
-		taskQueue := make(chan core.Task, 1024)
-		workerCount := 16
-		for i := 0; i < workerCount; i++ {
-			core.WaitGroup().Add(1)
-			go core.Worker(ctx, taskQueue)
-		}
-		// Generate tasks.
-		name := args[0]
-		if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
-			// Iterate through a collection of specs and evaluate each.
-			err = core.ListSpecs(ctx, client, m, computeFilter, func(spec *rpc.ApiSpec) {
-				taskQueue <- &computeLintTask{
-					client:   client,
-					specName: spec.Name,
-					linter:   linter,
-				}
-			})
+func lintCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "lint",
+		Short: "Compute lint results for API specs",
+		Args:  cobra.MinimumNArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			linter, err := cmd.LocalFlags().GetString("linter")
+			if err != nil { // ignore errors
+				linter = ""
+			}
+			ctx := context.Background()
+			client, err := connection.NewClient(ctx)
 			if err != nil {
 				log.Fatalf("%s", err.Error())
 			}
-			close(taskQueue)
-			core.WaitGroup().Wait()
-		}
-	},
+			// Initialize task queue.
+			taskQueue := make(chan core.Task, 1024)
+			workerCount := 16
+			for i := 0; i < workerCount; i++ {
+				core.WaitGroup().Add(1)
+				go core.Worker(ctx, taskQueue)
+			}
+			// Generate tasks.
+			name := args[0]
+			if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
+				// Iterate through a collection of specs and evaluate each.
+				err = core.ListSpecs(ctx, client, m, computeFilter, func(spec *rpc.ApiSpec) {
+					taskQueue <- &computeLintTask{
+						client:   client,
+						specName: spec.Name,
+						linter:   linter,
+					}
+				})
+				if err != nil {
+					log.Fatalf("%s", err.Error())
+				}
+				close(taskQueue)
+				core.WaitGroup().Wait()
+			}
+		},
+	}
+
+	cmd.Flags().String("linter", "", "name of linter to use (aip, spectral, gnostic)")
+	return cmd
 }
 
 type computeLintTask struct {

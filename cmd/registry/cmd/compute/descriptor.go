@@ -31,39 +31,41 @@ import (
 	oas3 "github.com/googleapis/gnostic/openapiv3"
 )
 
-var computeDescriptorCmd = &cobra.Command{
-	Use:   "descriptor",
-	Short: "Compute descriptors of API specs",
-	Args:  cobra.MinimumNArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		ctx := context.Background()
-		client, err := connection.NewClient(ctx)
-		if err != nil {
-			log.Fatalf("%s", err.Error())
-		}
-		// Initialize task queue.
-		taskQueue := make(chan core.Task, 1024)
-		workerCount := 64
-		for i := 0; i < workerCount; i++ {
-			core.WaitGroup().Add(1)
-			go core.Worker(ctx, taskQueue)
-		}
-		// Generate tasks.
-		name := args[0]
-		if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
-			err = core.ListSpecs(ctx, client, m, computeFilter, func(spec *rpc.ApiSpec) {
-				taskQueue <- &computeDescriptorTask{
-					client:   client,
-					specName: spec.Name,
-				}
-			})
+func descriptorCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "descriptor",
+		Short: "Compute descriptors of API specs",
+		Args:  cobra.MinimumNArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			ctx := context.Background()
+			client, err := connection.NewClient(ctx)
 			if err != nil {
 				log.Fatalf("%s", err.Error())
 			}
-			close(taskQueue)
-			core.WaitGroup().Wait()
-		}
-	},
+			// Initialize task queue.
+			taskQueue := make(chan core.Task, 1024)
+			workerCount := 64
+			for i := 0; i < workerCount; i++ {
+				core.WaitGroup().Add(1)
+				go core.Worker(ctx, taskQueue)
+			}
+			// Generate tasks.
+			name := args[0]
+			if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
+				err = core.ListSpecs(ctx, client, m, computeFilter, func(spec *rpc.ApiSpec) {
+					taskQueue <- &computeDescriptorTask{
+						client:   client,
+						specName: spec.Name,
+					}
+				})
+				if err != nil {
+					log.Fatalf("%s", err.Error())
+				}
+				close(taskQueue)
+				core.WaitGroup().Wait()
+			}
+		},
+	}
 }
 
 type computeDescriptorTask struct {

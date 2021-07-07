@@ -24,32 +24,33 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func init() {
-	vocabularyDifferenceCmd.Flags().String("output", "", "name of artifact where output should be stored")
-}
+func differenceCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "difference",
+		Short: "Compute the difference of specified API vocabularies",
+		Args:  cobra.MinimumNArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			var err error
+			flagset := cmd.LocalFlags()
+			outputArtifactName, err := flagset.GetString("output")
+			if err != nil {
+				log.Fatalf("%s", err.Error())
+			}
+			ctx := context.Background()
+			client, err := connection.NewClient(ctx)
+			if err != nil {
+				log.Fatalf("%s", err.Error())
+			}
+			_, inputs := collectInputVocabularies(ctx, client, args, vocabularyFilter)
+			output := vocabulary.Difference(inputs)
+			if outputArtifactName != "" {
+				setVocabularyToArtifact(ctx, client, output, outputArtifactName)
+			} else {
+				core.PrintMessage(output)
+			}
+		},
+	}
 
-var vocabularyDifferenceCmd = &cobra.Command{
-	Use:   "difference",
-	Short: "Compute the difference of specified API vocabularies",
-	Args:  cobra.MinimumNArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		var err error
-		flagset := cmd.LocalFlags()
-		outputArtifactName, err := flagset.GetString("output")
-		if err != nil {
-			log.Fatalf("%s", err.Error())
-		}
-		ctx := context.Background()
-		client, err := connection.NewClient(ctx)
-		if err != nil {
-			log.Fatalf("%s", err.Error())
-		}
-		_, inputs := collectInputVocabularies(ctx, client, args, vocabularyFilter)
-		output := vocabulary.Difference(inputs)
-		if outputArtifactName != "" {
-			setVocabularyToArtifact(ctx, client, output, outputArtifactName)
-		} else {
-			core.PrintMessage(output)
-		}
-	},
+	cmd.Flags().String("output", "", "name of artifact where output should be stored")
+	return cmd
 }

@@ -27,40 +27,42 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-var computeReferencesCmd = &cobra.Command{
-	Use:   "references",
-	Short: "Compute references of API specs",
-	Args:  cobra.MinimumNArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		ctx := context.Background()
-		client, err := connection.NewClient(ctx)
-		if err != nil {
-			log.Fatalf("%s", err.Error())
-		}
-		// Initialize task queue.
-		taskQueue := make(chan core.Task, 1024)
-		workerCount := 64
-		for i := 0; i < workerCount; i++ {
-			core.WaitGroup().Add(1)
-			go core.Worker(ctx, taskQueue)
-		}
-		// Generate tasks.
-		name := args[0]
-		if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
-			// Iterate through a collection of specs and compute references for each
-			err = core.ListSpecs(ctx, client, m, computeFilter, func(spec *rpc.ApiSpec) {
-				taskQueue <- &computeReferencesTask{
-					client:   client,
-					specName: spec.Name,
-				}
-			})
+func referencesCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "references",
+		Short: "Compute references of API specs",
+		Args:  cobra.MinimumNArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			ctx := context.Background()
+			client, err := connection.NewClient(ctx)
 			if err != nil {
 				log.Fatalf("%s", err.Error())
 			}
-		}
-		close(taskQueue)
-		core.WaitGroup().Wait()
-	},
+			// Initialize task queue.
+			taskQueue := make(chan core.Task, 1024)
+			workerCount := 64
+			for i := 0; i < workerCount; i++ {
+				core.WaitGroup().Add(1)
+				go core.Worker(ctx, taskQueue)
+			}
+			// Generate tasks.
+			name := args[0]
+			if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
+				// Iterate through a collection of specs and compute references for each
+				err = core.ListSpecs(ctx, client, m, computeFilter, func(spec *rpc.ApiSpec) {
+					taskQueue <- &computeReferencesTask{
+						client:   client,
+						specName: spec.Name,
+					}
+				})
+				if err != nil {
+					log.Fatalf("%s", err.Error())
+				}
+			}
+			close(taskQueue)
+			core.WaitGroup().Wait()
+		},
+	}
 }
 
 type computeReferencesTask struct {

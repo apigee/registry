@@ -37,11 +37,11 @@ func Command() *cobra.Command {
 		Short: "Operate on API vocabularies in the API Registry",
 	}
 
-	cmd.AddCommand(vocabularyDifferenceCmd)
-	cmd.AddCommand(vocabularyIntersectionCmd)
-	cmd.AddCommand(vocabularyUnionCmd)
-	cmd.AddCommand(vocabularyUniqueCmd)
-	cmd.AddCommand(vocabularyVersionsCmd)
+	cmd.AddCommand(differenceCommand())
+	cmd.AddCommand(intersectionCommand())
+	cmd.AddCommand(unionCommand())
+	cmd.AddCommand(uniqueCommand())
+	cmd.AddCommand(versionsCommand())
 
 	// TODO: Remove the global state.
 	cmd.PersistentFlags().StringVar(&vocabularyFilter, "filter", "", "filter vocabulary arguments")

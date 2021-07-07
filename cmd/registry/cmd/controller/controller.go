@@ -24,7 +24,7 @@ func Command() *cobra.Command {
 		Short: "Manage the state of the registry (experimental)",
 	}
 
-	cmd.AddCommand(controllerUpdateCmd)
+	cmd.AddCommand(updateCommand())
 
 	return cmd
 }

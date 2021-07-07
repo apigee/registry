@@ -24,9 +24,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var getContents bool
-
 func Command() *cobra.Command {
+	var getContents bool
 	cmd := &cobra.Command{
 		Use:   "get",
 		Short: "Get resources from the API Registry",

@@ -25,51 +25,53 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var controllerUpdateCmd = &cobra.Command{
-	Use:   "update FILENAME",
-	Short: "Generate a list of commands to update the registry state (experimental)",
-	Args:  cobra.MinimumNArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		var err error
+func updateCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "update FILENAME",
+		Short: "Generate a list of commands to update the registry state (experimental)",
+		Args:  cobra.MinimumNArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			var err error
 
-		manifestPath := args[0]
-		if manifestPath == "" {
-			log.Fatal("Please provide manifest_path")
-		}
-
-		manifest, err := controller.ReadManifest(manifestPath)
-		if err != nil {
-			log.Fatal(err.Error())
-		}
-
-		ctx := context.Background()
-		client, err := connection.NewClient(ctx)
-		if err != nil {
-			log.Fatal(err.Error())
-		}
-
-		log.Print("Generating list of actions...")
-		actions, err := controller.ProcessManifest(ctx, client, manifest)
-		if err != nil {
-			log.Fatal(err.Error())
-		}
-
-		log.Printf("Generated %d actions. Starting Execution...", len(actions))
-
-		taskQueue := make(chan core.Task, 1024)
-		for i := 0; i < 64; i++ {
-			core.WaitGroup().Add(1)
-			go core.Worker(ctx, taskQueue)
-		}
-		defer core.WaitGroup().Wait()
-		defer close(taskQueue)
-
-		// Submit tasks to taskQueue
-		for i, a := range actions {
-			taskQueue <- &controller.ExecCommandTask{
-				Action: a,
-				TaskID: fmt.Sprintf("task%d", i),
+			manifestPath := args[0]
+			if manifestPath == "" {
+				log.Fatal("Please provide manifest_path")
 			}
-		}
-	},
+
+			manifest, err := controller.ReadManifest(manifestPath)
+			if err != nil {
+				log.Fatal(err.Error())
+			}
+
+			ctx := context.Background()
+			client, err := connection.NewClient(ctx)
+			if err != nil {
+				log.Fatal(err.Error())
+			}
+
+			log.Print("Generating list of actions...")
+			actions, err := controller.ProcessManifest(ctx, client, manifest)
+			if err != nil {
+				log.Fatal(err.Error())
+			}
+
+			log.Printf("Generated %d actions. Starting Execution...", len(actions))
+
+			taskQueue := make(chan core.Task, 1024)
+			for i := 0; i < 64; i++ {
+				core.WaitGroup().Add(1)
+				go core.Worker(ctx, taskQueue)
+			}
+			defer core.WaitGroup().Wait()
+			defer close(taskQueue)
+
+			// Submit tasks to taskQueue
+			for i, a := range actions {
+				taskQueue <- &controller.ExecCommandTask{
+					Action: a,
+					TaskID: fmt.Sprintf("task%d", i),
+				}
+			}
+		},
+	}
 }

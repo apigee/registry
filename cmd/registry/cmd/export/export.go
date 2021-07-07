@@ -26,9 +26,9 @@ func Command() *cobra.Command {
 		Short: "Export resources from the API Registry",
 	}
 
-	cmd.AddCommand(exportCsvCmd)
-	cmd.AddCommand(exportSheetCmd)
-	cmd.AddCommand(exportYAMLCmd)
+	cmd.AddCommand(csvCommand())
+	cmd.AddCommand(sheetCommand())
+	cmd.AddCommand(yamlCommand())
 
 	// TODO: Remove the global state.
 	cmd.PersistentFlags().StringVar(&exportFilter, "filter", "", "filter export arguments")

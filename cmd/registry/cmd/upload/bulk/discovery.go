@@ -28,56 +28,57 @@ import (
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
-func init() {
-	uploadBulkDiscoveryCmd.Flags().String("project_id", "", "Project id.")
-}
-
-var uploadBulkDiscoveryCmd = &cobra.Command{
-	Use:   "discovery",
-	Short: "Bulk-upload API Discovery documents from the Google API Discovery service",
-	Run: func(cmd *cobra.Command, args []string) {
-		var err error
-		flagset := cmd.LocalFlags()
-		projectID, err := flagset.GetString("project_id")
-		if err != nil {
-			log.Fatal(err.Error())
-		}
-		if projectID == "" {
-			log.Fatalf("Please specify a project_id")
-		}
-		ctx := context.Background()
-		client, err := connection.NewClient(ctx)
-		if err != nil {
-			log.Fatal(err.Error())
-		}
-
-		// create a queue for upload tasks and wait for the workers to finish after filling it.
-		taskQueue := make(chan core.Task, 1024)
-		for i := 0; i < 64; i++ {
-			core.WaitGroup().Add(1)
-			go core.Worker(ctx, taskQueue)
-		}
-		defer core.WaitGroup().Wait()
-		defer close(taskQueue)
-
-		core.EnsureProjectExists(ctx, client, projectID)
-		discoveryResponse, err := discovery.FetchList()
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		// Create an upload job for each API.
-		for _, api := range discoveryResponse.APIs {
-			taskQueue <- &uploadDiscoveryTask{
-				client:    client,
-				path:      api.DiscoveryRestURL,
-				projectID: projectID,
-				apiID:     api.Name,
-				versionID: api.Version,
-				specID:    "discovery.json",
+func discoveryCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "discovery",
+		Short: "Bulk-upload API Discovery documents from the Google API Discovery service",
+		Run: func(cmd *cobra.Command, args []string) {
+			var err error
+			flagset := cmd.LocalFlags()
+			projectID, err := flagset.GetString("project_id")
+			if err != nil {
+				log.Fatal(err.Error())
 			}
-		}
-	},
+			if projectID == "" {
+				log.Fatalf("Please specify a project_id")
+			}
+			ctx := context.Background()
+			client, err := connection.NewClient(ctx)
+			if err != nil {
+				log.Fatal(err.Error())
+			}
+
+			// create a queue for upload tasks and wait for the workers to finish after filling it.
+			taskQueue := make(chan core.Task, 1024)
+			for i := 0; i < 64; i++ {
+				core.WaitGroup().Add(1)
+				go core.Worker(ctx, taskQueue)
+			}
+			defer core.WaitGroup().Wait()
+			defer close(taskQueue)
+
+			core.EnsureProjectExists(ctx, client, projectID)
+			discoveryResponse, err := discovery.FetchList()
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			// Create an upload job for each API.
+			for _, api := range discoveryResponse.APIs {
+				taskQueue <- &uploadDiscoveryTask{
+					client:    client,
+					path:      api.DiscoveryRestURL,
+					projectID: projectID,
+					apiID:     api.Name,
+					versionID: api.Version,
+					specID:    "discovery.json",
+				}
+			}
+		},
+	}
+
+	cmd.Flags().String("project_id", "", "Project id.")
+	return cmd
 }
 
 type uploadDiscoveryTask struct {

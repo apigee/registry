@@ -35,7 +35,7 @@ func Command() *cobra.Command {
 		Short: "Operate on API indexes in the API Registry",
 	}
 
-	cmd.AddCommand(indexUnionCmd)
+	cmd.AddCommand(unionCommand())
 
 	// TODO: Remove the global state.
 	cmd.PersistentFlags().StringVar(&indexFilter, "filter", "", "filter index arguments")

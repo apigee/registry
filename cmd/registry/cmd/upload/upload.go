@@ -26,9 +26,9 @@ func Command() *cobra.Command {
 	}
 
 	cmd.AddCommand(bulk.Command())
-	cmd.AddCommand(uploadCsvCmd)
-	cmd.AddCommand(uploadManifestCmd)
-	cmd.AddCommand(specCmd)
+	cmd.AddCommand(csvCommand())
+	cmd.AddCommand(manifestCommand())
+	cmd.AddCommand(specCommand())
 
 	return cmd
 }

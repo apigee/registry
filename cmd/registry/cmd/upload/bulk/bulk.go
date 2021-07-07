@@ -24,9 +24,9 @@ func Command() *cobra.Command {
 		Short: "Bulk-upload API specs of selected styles",
 	}
 
-	cmd.AddCommand(uploadBulkDiscoveryCmd)
-	cmd.AddCommand(uploadBulkOpenAPICmd)
-	cmd.AddCommand(uploadBulkProtosCmd)
+	cmd.AddCommand(discoveryCommand())
+	cmd.AddCommand(openAPICommand())
+	cmd.AddCommand(protosCommand())
 
 	return cmd
 }

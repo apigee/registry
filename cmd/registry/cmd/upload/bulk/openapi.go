@@ -31,38 +31,39 @@ import (
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
-func init() {
-	uploadBulkOpenAPICmd.Flags().String("project_id", "", "Project id.")
-	uploadBulkOpenAPICmd.Flags().String("base_uri", "", "Base to use for setting source_uri fields of uploaded specs.")
-}
+func openAPICommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "openapi",
+		Short: "Bulk-upload OpenAPI descriptions from a directory of specs",
+		Args:  cobra.MinimumNArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			flagset := cmd.LocalFlags()
+			projectID, err := flagset.GetString("project_id")
+			if err != nil {
+				log.Fatal(err.Error())
+			}
+			if projectID == "" {
+				log.Fatal("Please specify a project_id")
+			}
+			baseURI, err := flagset.GetString("base_uri")
+			if err != nil {
+				log.Fatal(err.Error())
+			}
+			ctx := context.Background()
+			client, err := connection.NewClient(ctx)
+			if err != nil {
+				log.Fatal(err.Error())
+			}
+			core.EnsureProjectExists(ctx, client, projectID)
+			for _, arg := range args {
+				scanDirectoryForOpenAPI(ctx, projectID, baseURI, arg)
+			}
+		},
+	}
 
-var uploadBulkOpenAPICmd = &cobra.Command{
-	Use:   "openapi",
-	Short: "Bulk-upload OpenAPI descriptions from a directory of specs",
-	Args:  cobra.MinimumNArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		flagset := cmd.LocalFlags()
-		projectID, err := flagset.GetString("project_id")
-		if err != nil {
-			log.Fatal(err.Error())
-		}
-		if projectID == "" {
-			log.Fatal("Please specify a project_id")
-		}
-		baseURI, err := flagset.GetString("base_uri")
-		if err != nil {
-			log.Fatal(err.Error())
-		}
-		ctx := context.Background()
-		client, err := connection.NewClient(ctx)
-		if err != nil {
-			log.Fatal(err.Error())
-		}
-		core.EnsureProjectExists(ctx, client, projectID)
-		for _, arg := range args {
-			scanDirectoryForOpenAPI(ctx, projectID, baseURI, arg)
-		}
-	},
+	cmd.Flags().String("project_id", "", "Project id.")
+	cmd.Flags().String("base_uri", "", "Base to use for setting source_uri fields of uploaded specs.")
+	return cmd
 }
 
 func scanDirectoryForOpenAPI(ctx context.Context, projectID, baseURI, directory string) {

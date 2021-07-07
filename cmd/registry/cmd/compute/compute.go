@@ -26,15 +26,15 @@ func Command() *cobra.Command {
 		Short: "Compute properties of resources in the API Registry",
 	}
 
-	cmd.AddCommand(computeBleveCmd)
-	cmd.AddCommand(computeComplexityCmd)
-	cmd.AddCommand(computeDescriptorCmd)
-	cmd.AddCommand(computeDetailsCmd)
-	cmd.AddCommand(computeIndexCmd)
-	cmd.AddCommand(computeLintCmd)
-	cmd.AddCommand(computeLintStatsCmd)
-	cmd.AddCommand(computeReferencesCmd)
-	cmd.AddCommand(computeVocabularyCmd)
+	cmd.AddCommand(complexityCommand())
+	cmd.AddCommand(descriptorCommand())
+	cmd.AddCommand(detailsCommand())
+	cmd.AddCommand(indexCommand())
+	cmd.AddCommand(lintCommand())
+	cmd.AddCommand(lintStatsCommand())
+	cmd.AddCommand(referencesCommand())
+	cmd.AddCommand(searchIndexCommand())
+	cmd.AddCommand(vocabularyCommand())
 
 	// TODO: Remove the global state.
 	cmd.PersistentFlags().StringVar(&computeFilter, "filter", "", "filter compute arguments")

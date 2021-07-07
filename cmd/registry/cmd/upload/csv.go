@@ -32,71 +32,72 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func init() {
-	uploadCsvCmd.Flags().String("project_id", "", "Project id.")
-	uploadCsvCmd.MarkFlagRequired("project_id")
-	uploadCsvCmd.Flags().String("delimiter", ",", "Field delimiter of the CSV file.")
-}
-
-var uploadCsvCmd = &cobra.Command{
-	Use:   "csv file --project_id=value [--delimiter=value]",
-	Short: "Upload API specs from a CSV file",
-	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		flagset := cmd.LocalFlags()
-		projectID, err := flagset.GetString("project_id")
-		if err != nil {
-			log.Fatalf("Failed to get project_id string from flags: %s", err)
-		}
-
-		delimiter, err := flagset.GetString("delimiter")
-		if err != nil {
-			log.Fatalf("Failed to get delimiter string from flags: %s", err)
-		} else if len(delimiter) != 1 {
-			log.Fatalf("Invalid delimiter %q: must be exactly one character", delimiter)
-		}
-
-		ctx := context.Background()
-		client, err := connection.NewClient(ctx)
-		if err != nil {
-			log.Fatalf("Failed to create client: %s", err)
-		}
-		core.EnsureProjectExists(ctx, client, projectID)
-
-		taskQueue := make(chan core.Task, 64)
-		for i := 0; i < 64; i++ {
-			core.WaitGroup().Add(1)
-			go core.Worker(ctx, taskQueue)
-		}
-		defer core.WaitGroup().Wait()
-		defer close(taskQueue)
-
-		file, err := os.Open(args[0])
-		if err != nil {
-			log.Fatalf("Failed to open file: %s", err)
-		}
-		defer file.Close()
-
-		r := uploadCSVReader{
-			Reader:    csv.NewReader(file),
-			Delimiter: rune(delimiter[0]),
-		}
-
-		for row, err := r.Read(); err != io.EOF; row, err = r.Read() {
+func csvCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "csv file --project_id=value [--delimiter=value]",
+		Short: "Upload API specs from a CSV file",
+		Args:  cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			flagset := cmd.LocalFlags()
+			projectID, err := flagset.GetString("project_id")
 			if err != nil {
-				log.Fatalf("Failed to read row from file: %s", err)
+				log.Fatalf("Failed to get project_id string from flags: %s", err)
 			}
 
-			taskQueue <- &uploadSpecTask{
-				client:    client,
-				projectID: projectID,
-				apiID:     row.ApiID,
-				versionID: row.VersionID,
-				specID:    row.SpecID,
-				filepath:  row.Filepath,
+			delimiter, err := flagset.GetString("delimiter")
+			if err != nil {
+				log.Fatalf("Failed to get delimiter string from flags: %s", err)
+			} else if len(delimiter) != 1 {
+				log.Fatalf("Invalid delimiter %q: must be exactly one character", delimiter)
 			}
-		}
-	},
+
+			ctx := context.Background()
+			client, err := connection.NewClient(ctx)
+			if err != nil {
+				log.Fatalf("Failed to create client: %s", err)
+			}
+			core.EnsureProjectExists(ctx, client, projectID)
+
+			taskQueue := make(chan core.Task, 64)
+			for i := 0; i < 64; i++ {
+				core.WaitGroup().Add(1)
+				go core.Worker(ctx, taskQueue)
+			}
+			defer core.WaitGroup().Wait()
+			defer close(taskQueue)
+
+			file, err := os.Open(args[0])
+			if err != nil {
+				log.Fatalf("Failed to open file: %s", err)
+			}
+			defer file.Close()
+
+			r := uploadCSVReader{
+				Reader:    csv.NewReader(file),
+				Delimiter: rune(delimiter[0]),
+			}
+
+			for row, err := r.Read(); err != io.EOF; row, err = r.Read() {
+				if err != nil {
+					log.Fatalf("Failed to read row from file: %s", err)
+				}
+
+				taskQueue <- &uploadSpecTask{
+					client:    client,
+					projectID: projectID,
+					apiID:     row.ApiID,
+					versionID: row.VersionID,
+					specID:    row.SpecID,
+					filepath:  row.Filepath,
+				}
+			}
+		},
+	}
+
+	cmd.Flags().String("project_id", "", "Project id.")
+	cmd.MarkFlagRequired("project_id")
+	cmd.Flags().String("delimiter", ",", "Field delimiter of the CSV file.")
+	return cmd
 }
 
 type uploadCSVReader struct {

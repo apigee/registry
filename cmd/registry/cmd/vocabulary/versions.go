@@ -25,34 +25,35 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func init() {
-	vocabularyVersionsCmd.Flags().String("output", "", "name of artifact where output should be stored")
-}
+func versionsCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "versions",
+		Short: "Compute the differences in API vocabularies associated with successive API versions",
+		Args:  cobra.MinimumNArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			var err error
+			flagset := cmd.LocalFlags()
+			outputArtifactName, _ := flagset.GetString("output")
+			ctx := context.Background()
+			client, err := connection.NewClient(ctx)
+			if err != nil {
+				log.Fatalf("%s", err.Error())
+			}
+			names, inputs := collectInputVocabularies(ctx, client, args, vocabularyFilter)
 
-var vocabularyVersionsCmd = &cobra.Command{
-	Use:   "versions",
-	Short: "Compute the differences in API vocabularies associated with successive API versions",
-	Args:  cobra.MinimumNArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		var err error
-		flagset := cmd.LocalFlags()
-		outputArtifactName, _ := flagset.GetString("output")
-		ctx := context.Background()
-		client, err := connection.NewClient(ctx)
-		if err != nil {
-			log.Fatalf("%s", err.Error())
-		}
-		names, inputs := collectInputVocabularies(ctx, client, args, vocabularyFilter)
+			parts := strings.Split(names[0], "/")
+			parts = parts[0:4]
+			parent := strings.Join(parts, "/")
 
-		parts := strings.Split(names[0], "/")
-		parts = parts[0:4]
-		parent := strings.Join(parts, "/")
+			output := vocabulary.Version(inputs, names, parent)
+			if outputArtifactName != "" {
+				setVersionHistoryToArtifact(ctx, client, output, outputArtifactName)
+			} else {
+				core.PrintMessage(output)
+			}
+		},
+	}
 
-		output := vocabulary.Version(inputs, names, parent)
-		if outputArtifactName != "" {
-			setVersionHistoryToArtifact(ctx, client, output, outputArtifactName)
-		} else {
-			core.PrintMessage(output)
-		}
-	},
+	cmd.Flags().String("output", "", "name of artifact where output should be stored")
+	return cmd
 }

@@ -31,39 +31,40 @@ import (
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
-func init() {
-	uploadBulkProtosCmd.Flags().String("project_id", "", "Project id.")
-	uploadBulkProtosCmd.Flags().String("base_uri", "", "Base to use for setting source_uri fields of uploaded specs.")
-}
+func protosCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "protos",
+		Short: "Bulk-upload Protocol Buffer descriptions from a directory of specs",
+		Args:  cobra.MinimumNArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			var err error
+			flagset := cmd.LocalFlags()
+			projectID, err := flagset.GetString("project_id")
+			if err != nil {
+				log.Fatal(err.Error())
+			}
+			if projectID == "" {
+				log.Fatalf("Please specify a project_id")
+			}
+			baseURI, err := flagset.GetString("base_uri")
+			if err != nil {
+				log.Fatal(err.Error())
+			}
+			ctx := context.Background()
+			client, err := connection.NewClient(ctx)
+			if err != nil {
+				log.Fatal(err.Error())
+			}
+			core.EnsureProjectExists(ctx, client, projectID)
+			for _, arg := range args {
+				scanDirectoryForProtos(ctx, client, projectID, baseURI, arg)
+			}
+		},
+	}
 
-var uploadBulkProtosCmd = &cobra.Command{
-	Use:   "protos",
-	Short: "Bulk-upload Protocol Buffer descriptions from a directory of specs",
-	Args:  cobra.MinimumNArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		var err error
-		flagset := cmd.LocalFlags()
-		projectID, err := flagset.GetString("project_id")
-		if err != nil {
-			log.Fatal(err.Error())
-		}
-		if projectID == "" {
-			log.Fatalf("Please specify a project_id")
-		}
-		baseURI, err := flagset.GetString("base_uri")
-		if err != nil {
-			log.Fatal(err.Error())
-		}
-		ctx := context.Background()
-		client, err := connection.NewClient(ctx)
-		if err != nil {
-			log.Fatal(err.Error())
-		}
-		core.EnsureProjectExists(ctx, client, projectID)
-		for _, arg := range args {
-			scanDirectoryForProtos(ctx, client, projectID, baseURI, arg)
-		}
-	},
+	cmd.Flags().String("project_id", "", "Project id.")
+	cmd.Flags().String("base_uri", "", "Base to use for setting source_uri fields of uploaded specs.")
+	return cmd
 }
 
 func scanDirectoryForProtos(ctx context.Context, client connection.Client, projectID, baseURI, directory string) {

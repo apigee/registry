@@ -26,38 +26,39 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func init() {
-	vocabularyUniqueCmd.Flags().String("output_id", "vocabulary-unique", "id of artifact to store output.")
-}
-
-var vocabularyUniqueCmd = &cobra.Command{
-	Use:   "unique",
-	Short: "Compute the unique subsets of each member of specified vocabularies",
-	Args:  cobra.MinimumNArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		var err error
-		flagset := cmd.LocalFlags()
-		outputArtifactID, err := flagset.GetString("output_id")
-		if err != nil {
-			log.Fatalf("%s", err.Error())
-		}
-		if strings.Contains(outputArtifactID, "/") {
-			log.Fatal("output_id must specify an artifact id (final segment only) and not a full name.")
-		}
-		ctx := context.Background()
-		client, err := connection.NewClient(ctx)
-		if err != nil {
-			log.Fatalf("%s", err.Error())
-		}
-		names, inputs := collectInputVocabularies(ctx, client, args, vocabularyFilter)
-		output := vocabulary.FilterCommon(inputs)
-		if outputArtifactID != "" {
-			for i, unique := range output.Vocabularies {
-				outputArtifactName := filepath.Dir(names[i]) + "/" + outputArtifactID
-				setVocabularyToArtifact(ctx, client, unique, outputArtifactName)
+func uniqueCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "unique",
+		Short: "Compute the unique subsets of each member of specified vocabularies",
+		Args:  cobra.MinimumNArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			var err error
+			flagset := cmd.LocalFlags()
+			outputArtifactID, err := flagset.GetString("output_id")
+			if err != nil {
+				log.Fatalf("%s", err.Error())
 			}
-		} else {
-			core.PrintMessage(output)
-		}
-	},
+			if strings.Contains(outputArtifactID, "/") {
+				log.Fatal("output_id must specify an artifact id (final segment only) and not a full name.")
+			}
+			ctx := context.Background()
+			client, err := connection.NewClient(ctx)
+			if err != nil {
+				log.Fatalf("%s", err.Error())
+			}
+			names, inputs := collectInputVocabularies(ctx, client, args, vocabularyFilter)
+			output := vocabulary.FilterCommon(inputs)
+			if outputArtifactID != "" {
+				for i, unique := range output.Vocabularies {
+					outputArtifactName := filepath.Dir(names[i]) + "/" + outputArtifactID
+					setVocabularyToArtifact(ctx, client, unique, outputArtifactName)
+				}
+			} else {
+				core.PrintMessage(output)
+			}
+		},
+	}
+
+	cmd.Flags().String("output_id", "vocabulary-unique", "id of artifact to store output.")
+	return cmd
 }

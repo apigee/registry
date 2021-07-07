@@ -86,7 +86,7 @@ func TestManifestUpload(t *testing.T) {
 			cmd := Command()
 			args := []string{"manifest", test.filePath, "--project_id", test.project}
 			cmd.SetArgs(args)
-			if err = uploadManifestCmd.Execute(); err != nil {
+			if err = cmd.Execute(); err != nil {
 				t.Fatalf("Execute() with args %v returned error: %s", args, err)
 			}
 

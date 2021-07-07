@@ -32,48 +32,49 @@ import (
 	oas3 "github.com/googleapis/gnostic/openapiv3"
 )
 
-var bleveFilter string
 var bleveMutex sync.Mutex
 
-func init() {
-	computeBleveCmd.Flags().StringVar(&bleveFilter, "filter", "", "Filter option to send with calls")
-}
-
-var computeBleveCmd = &cobra.Command{
-	Use:   "search-index",
-	Short: "Compute a local search index of specs (experimental)",
-	Args:  cobra.MinimumNArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		ctx := context.Background()
-		client, err := connection.NewClient(ctx)
-		if err != nil {
-			log.Fatalf("%s", err.Error())
-		}
-		// Initialize task queue.
-		taskQueue := make(chan core.Task, 1024)
-		workerCount := 64
-		for i := 0; i < workerCount; i++ {
-			core.WaitGroup().Add(1)
-			go core.Worker(ctx, taskQueue)
-		}
-		// Generate tasks.
-		name := args[0]
-		if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
-			err = core.ListSpecs(ctx, client, m, bleveFilter, func(spec *rpc.ApiSpec) {
-				taskQueue <- &indexSpecTask{
-					client:   client,
-					specName: spec.Name,
-				}
-			})
+func searchIndexCommand() *cobra.Command {
+	var bleveFilter string
+	var cmd = &cobra.Command{
+		Use:   "search-index",
+		Short: "Compute a local search index of specs (experimental)",
+		Args:  cobra.MinimumNArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			ctx := context.Background()
+			client, err := connection.NewClient(ctx)
 			if err != nil {
 				log.Fatalf("%s", err.Error())
 			}
-			close(taskQueue)
-			core.WaitGroup().Wait()
-		} else {
-			log.Fatalf("We don't know how to index %s", name)
-		}
-	},
+			// Initialize task queue.
+			taskQueue := make(chan core.Task, 1024)
+			workerCount := 64
+			for i := 0; i < workerCount; i++ {
+				core.WaitGroup().Add(1)
+				go core.Worker(ctx, taskQueue)
+			}
+			// Generate tasks.
+			name := args[0]
+			if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
+				err = core.ListSpecs(ctx, client, m, bleveFilter, func(spec *rpc.ApiSpec) {
+					taskQueue <- &indexSpecTask{
+						client:   client,
+						specName: spec.Name,
+					}
+				})
+				if err != nil {
+					log.Fatalf("%s", err.Error())
+				}
+				close(taskQueue)
+				core.WaitGroup().Wait()
+			} else {
+				log.Fatalf("We don't know how to index %s", name)
+			}
+		},
+	}
+
+	cmd.Flags().StringVar(&bleveFilter, "filter", "", "Filter option to send with calls")
+	return cmd
 }
 
 type indexSpecTask struct {

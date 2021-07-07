@@ -30,63 +30,64 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func init() {
-	specCmd.Flags().String("version", "", "Version for uploaded spec")
-	specCmd.Flags().String("style", "", "style of spec to upload (openapi, discovery, proto)")
-}
-
-var specCmd = &cobra.Command{
-	Use:   "spec",
-	Short: "Upload an API spec",
-	Args:  cobra.MinimumNArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		ctx := context.Background()
-		flagset := cmd.LocalFlags()
-		version, err := flagset.GetString("version")
-		if err != nil {
-			log.Fatalf("%s", err.Error())
-		}
-		if version == "" {
-			log.Fatalf("Please specify a version")
-		}
-		style, err := flagset.GetString("style")
-		if err != nil {
-			log.Fatalf("%s", err.Error())
-		}
-		if style == "" {
-			log.Fatal("Please specify a style")
-		}
-		client, err := connection.NewClient(ctx)
-		if err != nil {
-			log.Fatalf("%s", err.Error())
-		}
-		for _, arg := range args {
-			matches, err := filepath.Glob(arg)
+func specCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "spec",
+		Short: "Upload an API spec",
+		Args:  cobra.MinimumNArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			ctx := context.Background()
+			flagset := cmd.LocalFlags()
+			version, err := flagset.GetString("version")
 			if err != nil {
-				log.Printf("%s\n", err.Error())
+				log.Fatalf("%s", err.Error())
 			}
-			// for each match, upload the file
-			for _, match := range matches {
-				log.Printf("now upload %+v", match)
-				fi, err := os.Stat(match)
-				if err == nil {
-					switch mode := fi.Mode(); {
-					case mode.IsDir():
-						fmt.Printf("upload directory %s\n", match)
-						err = uploadSpecDirectory(ctx, match, client, version, style)
-					case mode.IsRegular():
-						fmt.Printf("upload file %s\n", match)
-						err = uploadSpecFile(ctx, match, client, version, style)
-					}
-					if err != nil {
+			if version == "" {
+				log.Fatalf("Please specify a version")
+			}
+			style, err := flagset.GetString("style")
+			if err != nil {
+				log.Fatalf("%s", err.Error())
+			}
+			if style == "" {
+				log.Fatal("Please specify a style")
+			}
+			client, err := connection.NewClient(ctx)
+			if err != nil {
+				log.Fatalf("%s", err.Error())
+			}
+			for _, arg := range args {
+				matches, err := filepath.Glob(arg)
+				if err != nil {
+					log.Printf("%s\n", err.Error())
+				}
+				// for each match, upload the file
+				for _, match := range matches {
+					log.Printf("now upload %+v", match)
+					fi, err := os.Stat(match)
+					if err == nil {
+						switch mode := fi.Mode(); {
+						case mode.IsDir():
+							fmt.Printf("upload directory %s\n", match)
+							err = uploadSpecDirectory(ctx, match, client, version, style)
+						case mode.IsRegular():
+							fmt.Printf("upload file %s\n", match)
+							err = uploadSpecFile(ctx, match, client, version, style)
+						}
+						if err != nil {
+							log.Fatalf("%s", err.Error())
+						}
+					} else {
 						log.Fatalf("%s", err.Error())
 					}
-				} else {
-					log.Fatalf("%s", err.Error())
 				}
 			}
-		}
-	},
+		},
+	}
+
+	cmd.Flags().String("version", "", "Version for uploaded spec")
+	cmd.Flags().String("style", "", "style of spec to upload (openapi, discovery, proto)")
+	return cmd
 }
 
 func uploadSpecDirectory(ctx context.Context, dirname string, client *gapic.RegistryClient, version string, style string) error {

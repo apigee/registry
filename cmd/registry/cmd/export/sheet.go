@@ -32,88 +32,88 @@ import (
 	metrics "github.com/googleapis/gnostic/metrics"
 )
 
-var sheetArtifactName string
-
-func init() {
-	exportSheetCmd.PersistentFlags().StringVar(&sheetArtifactName, "as", "", "name of artifact to hold url of exported sheet")
-}
-
-var exportSheetCmd = &cobra.Command{
-	Use:   "sheet",
-	Short: "Export a specified artifact to a Google sheet",
-	Args:  cobra.MinimumNArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		var path string
-		var err error
-		ctx := context.Background()
-		client, err := connection.NewClient(ctx)
-		if err != nil {
-			log.Fatalf("%s", err.Error())
-		}
-		inputNames, inputs := collectInputArtifacts(ctx, client, args, exportFilter)
-		if len(inputs) == 0 {
-			return
-		}
-		if isInt64Artifact(inputs[0]) {
-			title := "artifacts/" + filepath.Base(inputs[0].GetName())
-			path, err = core.ExportInt64ToSheet(ctx, title, inputs)
+func sheetCommand() *cobra.Command {
+	var sheetArtifactName string
+	cmd := &cobra.Command{
+		Use:   "sheet",
+		Short: "Export a specified artifact to a Google sheet",
+		Args:  cobra.MinimumNArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			var path string
+			var err error
+			ctx := context.Background()
+			client, err := connection.NewClient(ctx)
 			if err != nil {
 				log.Fatalf("%s", err.Error())
 			}
-			log.Printf("exported int64 %+v to %s", inputs, path)
-			saveSheetPath(ctx, client, path, sheetArtifactName)
-			return
-		}
-		messageType, err := core.MessageTypeForMimeType(inputs[0].GetMimeType())
-		if err != nil {
-			log.Fatalf("Not a message type: %s", inputs[0].GetMimeType())
-		} else if messageType == "gnostic.metrics.Vocabulary" {
-			if len(inputs) != 1 {
-				log.Fatalf("%d artifacts matched. Please specify exactly one for export.", len(inputs))
-			}
-			vocabulary, err := getVocabulary(inputs[0])
-			if err != nil {
-				log.Fatalf("%s", err.Error())
-			}
-			path, _ = core.ExportVocabularyToSheet(ctx, inputs[0].Name, vocabulary)
-			log.Printf("exported vocabulary %s to %s", inputs[0].Name, path)
-			if sheetArtifactName == "" {
-				sheetArtifactName = inputs[0].Name + "-sheet"
-			}
-			saveSheetPath(ctx, client, path, sheetArtifactName)
-		} else if messageType == "gnostic.metrics.VersionHistory" {
-			if len(inputs) != 1 {
-				log.Fatalf("please specify exactly one version history to export")
+			inputNames, inputs := collectInputArtifacts(ctx, client, args, exportFilter)
+			if len(inputs) == 0 {
 				return
 			}
-			path, _ = core.ExportVersionHistoryToSheet(ctx, inputNames[0], inputs[0])
-			log.Printf("exported version history %s to %s", inputs[0].Name, path)
-			if sheetArtifactName == "" {
-				sheetArtifactName = inputs[0].Name + "-sheet"
+			if isInt64Artifact(inputs[0]) {
+				title := "artifacts/" + filepath.Base(inputs[0].GetName())
+				path, err = core.ExportInt64ToSheet(ctx, title, inputs)
+				if err != nil {
+					log.Fatalf("%s", err.Error())
+				}
+				log.Printf("exported int64 %+v to %s", inputs, path)
+				saveSheetPath(ctx, client, path, sheetArtifactName)
+				return
 			}
-			saveSheetPath(ctx, client, path, sheetArtifactName)
-		} else if messageType == "gnostic.metrics.Complexity" {
-			path, _ = core.ExportComplexityToSheet(ctx, "Complexity", inputs)
-			log.Printf("exported complexity to %s", path)
-			saveSheetPath(ctx, client, path, sheetArtifactName)
-		} else if messageType == "google.cloud.apigee.registry.applications.v1alpha1.Index" {
-			if len(inputs) != 1 {
-				log.Fatalf("%d artifacts matched. Please specify exactly one for export.", len(inputs))
-			}
-			index, err := getIndex(inputs[0])
+			messageType, err := core.MessageTypeForMimeType(inputs[0].GetMimeType())
 			if err != nil {
-				log.Fatalf("%s", err.Error())
+				log.Fatalf("Not a message type: %s", inputs[0].GetMimeType())
+			} else if messageType == "gnostic.metrics.Vocabulary" {
+				if len(inputs) != 1 {
+					log.Fatalf("%d artifacts matched. Please specify exactly one for export.", len(inputs))
+				}
+				vocabulary, err := getVocabulary(inputs[0])
+				if err != nil {
+					log.Fatalf("%s", err.Error())
+				}
+				path, _ = core.ExportVocabularyToSheet(ctx, inputs[0].Name, vocabulary)
+				log.Printf("exported vocabulary %s to %s", inputs[0].Name, path)
+				if sheetArtifactName == "" {
+					sheetArtifactName = inputs[0].Name + "-sheet"
+				}
+				saveSheetPath(ctx, client, path, sheetArtifactName)
+			} else if messageType == "gnostic.metrics.VersionHistory" {
+				if len(inputs) != 1 {
+					log.Fatalf("please specify exactly one version history to export")
+					return
+				}
+				path, _ = core.ExportVersionHistoryToSheet(ctx, inputNames[0], inputs[0])
+				log.Printf("exported version history %s to %s", inputs[0].Name, path)
+				if sheetArtifactName == "" {
+					sheetArtifactName = inputs[0].Name + "-sheet"
+				}
+				saveSheetPath(ctx, client, path, sheetArtifactName)
+			} else if messageType == "gnostic.metrics.Complexity" {
+				path, _ = core.ExportComplexityToSheet(ctx, "Complexity", inputs)
+				log.Printf("exported complexity to %s", path)
+				saveSheetPath(ctx, client, path, sheetArtifactName)
+			} else if messageType == "google.cloud.apigee.registry.applications.v1alpha1.Index" {
+				if len(inputs) != 1 {
+					log.Fatalf("%d artifacts matched. Please specify exactly one for export.", len(inputs))
+				}
+				index, err := getIndex(inputs[0])
+				if err != nil {
+					log.Fatalf("%s", err.Error())
+				}
+				path, _ = core.ExportIndexToSheet(ctx, inputs[0].Name, index)
+				log.Printf("exported index %s to %s", inputs[0].Name, path)
+				if sheetArtifactName == "" {
+					sheetArtifactName = inputs[0].Name + "-sheet"
+				}
+				saveSheetPath(ctx, client, path, sheetArtifactName)
+			} else {
+				log.Fatalf("Unknown message type: %s", messageType)
 			}
-			path, _ = core.ExportIndexToSheet(ctx, inputs[0].Name, index)
-			log.Printf("exported index %s to %s", inputs[0].Name, path)
-			if sheetArtifactName == "" {
-				sheetArtifactName = inputs[0].Name + "-sheet"
-			}
-			saveSheetPath(ctx, client, path, sheetArtifactName)
-		} else {
-			log.Fatalf("Unknown message type: %s", messageType)
-		}
-	},
+		},
+	}
+
+	cmd.PersistentFlags().StringVar(&sheetArtifactName, "as", "", "name of artifact to hold url of exported sheet")
+	return cmd
 }
 
 func collectInputArtifacts(ctx context.Context, client connection.Client, args []string, filter string) ([]string, []*rpc.Artifact) {

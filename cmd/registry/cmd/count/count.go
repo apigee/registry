@@ -26,7 +26,7 @@ func Command() *cobra.Command {
 		Short: "Count quantities in the API Registry",
 	}
 
-	cmd.AddCommand(countVersionsCmd)
+	cmd.AddCommand(versionsCommand())
 
 	// TODO: Remove the global state.
 	cmd.PersistentFlags().StringVar(&countFilter, "filter", "", "filter count arguments")

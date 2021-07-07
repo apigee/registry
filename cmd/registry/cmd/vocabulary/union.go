@@ -24,32 +24,33 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func init() {
-	vocabularyUnionCmd.Flags().String("output", "", "name of artifact where output should be stored")
-}
+func unionCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "union",
+		Short: "Compute the union of specified API vocabularies",
+		Args:  cobra.MinimumNArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			var err error
+			flagset := cmd.LocalFlags()
+			outputArtifactName, err := flagset.GetString("output")
+			if err != nil {
+				log.Fatalf("%s", err.Error())
+			}
+			ctx := context.Background()
+			client, err := connection.NewClient(ctx)
+			if err != nil {
+				log.Fatalf("%s", err.Error())
+			}
+			_, inputs := collectInputVocabularies(ctx, client, args, vocabularyFilter)
+			output := vocabulary.Union(inputs)
+			if outputArtifactName != "" {
+				setVocabularyToArtifact(ctx, client, output, outputArtifactName)
+			} else {
+				core.PrintMessage(output)
+			}
+		},
+	}
 
-var vocabularyUnionCmd = &cobra.Command{
-	Use:   "union",
-	Short: "Compute the union of specified API vocabularies",
-	Args:  cobra.MinimumNArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		var err error
-		flagset := cmd.LocalFlags()
-		outputArtifactName, err := flagset.GetString("output")
-		if err != nil {
-			log.Fatalf("%s", err.Error())
-		}
-		ctx := context.Background()
-		client, err := connection.NewClient(ctx)
-		if err != nil {
-			log.Fatalf("%s", err.Error())
-		}
-		_, inputs := collectInputVocabularies(ctx, client, args, vocabularyFilter)
-		output := vocabulary.Union(inputs)
-		if outputArtifactName != "" {
-			setVocabularyToArtifact(ctx, client, output, outputArtifactName)
-		} else {
-			core.PrintMessage(output)
-		}
-	},
+	cmd.Flags().String("output", "", "name of artifact where output should be stored")
+	return cmd
 }
