@@ -23,13 +23,14 @@ import (
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
-	discovery "github.com/googleapis/gnostic/discovery"
-	metrics "github.com/googleapis/gnostic/metrics"
-	vocab "github.com/googleapis/gnostic/metrics/vocabulary"
-	openapi_v2 "github.com/googleapis/gnostic/openapiv2"
-	openapi_v3 "github.com/googleapis/gnostic/openapiv3"
+	"github.com/googleapis/gnostic/metrics/vocabulary"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/proto"
+
+	discovery "github.com/googleapis/gnostic/discovery"
+	metrics "github.com/googleapis/gnostic/metrics"
+	oas2 "github.com/googleapis/gnostic/openapiv2"
+	oas3 "github.com/googleapis/gnostic/openapiv3"
 )
 
 var computeVocabularyCmd = &cobra.Command{
@@ -87,27 +88,27 @@ func (task *computeVocabularyTask) Run(ctx context.Context) error {
 	}
 	relation := "vocabulary"
 	log.Printf("computing %s/artifacts/%s", spec.Name, relation)
-	var vocabulary *metrics.Vocabulary
+	var vocab *metrics.Vocabulary
 	if core.IsOpenAPIv2(spec.GetMimeType()) {
 		data, err := core.GetBytesForSpec(ctx, task.client, spec)
 		if err != nil {
 			return nil
 		}
-		document, err := openapi_v2.ParseDocument(data)
+		document, err := oas2.ParseDocument(data)
 		if err != nil {
 			return fmt.Errorf("invalid OpenAPI: %s", spec.Name)
 		}
-		vocabulary = vocab.NewVocabularyFromOpenAPIv2(document)
+		vocab = vocabulary.NewVocabularyFromOpenAPIv2(document)
 	} else if core.IsOpenAPIv3(spec.GetMimeType()) {
 		data, err := core.GetBytesForSpec(ctx, task.client, spec)
 		if err != nil {
 			return nil
 		}
-		document, err := openapi_v3.ParseDocument(data)
+		document, err := oas3.ParseDocument(data)
 		if err != nil {
 			return fmt.Errorf("invalid OpenAPI: %s", spec.Name)
 		}
-		vocabulary = vocab.NewVocabularyFromOpenAPIv3(document)
+		vocab = vocabulary.NewVocabularyFromOpenAPIv3(document)
 	} else if core.IsDiscovery(spec.GetMimeType()) {
 		data, err := core.GetBytesForSpec(ctx, task.client, spec)
 		if err != nil {
@@ -117,13 +118,13 @@ func (task *computeVocabularyTask) Run(ctx context.Context) error {
 		if err != nil {
 			return fmt.Errorf("invalid Discovery: %s", spec.Name)
 		}
-		vocabulary = vocab.NewVocabularyFromDiscovery(document)
+		vocab = vocabulary.NewVocabularyFromDiscovery(document)
 	} else if core.IsProto(spec.GetMimeType()) && core.IsZipArchive(spec.GetMimeType()) {
 		data, err := core.GetBytesForSpec(ctx, task.client, spec)
 		if err != nil {
 			return nil
 		}
-		vocabulary, err = core.NewVocabularyFromZippedProtos(data)
+		vocab, err = core.NewVocabularyFromZippedProtos(data)
 		if err != nil {
 			return fmt.Errorf("error processing protos: %s", spec.Name)
 		}
@@ -131,7 +132,7 @@ func (task *computeVocabularyTask) Run(ctx context.Context) error {
 		return fmt.Errorf("we don't know how to summarize %s", spec.Name)
 	}
 	subject := spec.GetName()
-	messageData, err := proto.Marshal(vocabulary)
+	messageData, _ := proto.Marshal(vocab)
 	artifact := &rpc.Artifact{
 		Name:     subject + "/artifacts/" + relation,
 		MimeType: core.MimeTypeForMessageType("gnostic.metrics.Vocabulary"),

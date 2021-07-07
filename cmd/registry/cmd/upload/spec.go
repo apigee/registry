@@ -26,7 +26,7 @@ import (
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/gapic"
-	rpcpb "github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
 )
 
@@ -100,10 +100,10 @@ func uploadSpecDirectory(ctx context.Context, dirname string, client *gapic.Regi
 	if err != nil {
 		return err
 	}
-	request := &rpcpb.CreateApiSpecRequest{
+	request := &rpc.CreateApiSpecRequest{
 		Parent:    version,
 		ApiSpecId: "protos.zip",
-		ApiSpec: &rpcpb.ApiSpec{
+		ApiSpec: &rpc.ApiSpec{
 			MimeType: style,
 			Filename: core.ProtobufMimeType("+zip"),
 			Contents: buf.Bytes(),
@@ -131,16 +131,14 @@ func uploadSpecFile(ctx context.Context, filename string, client *gapic.Registry
 		} else {
 			mimeType = core.OpenAPIMimeType("+gzip", "3")
 		}
-		break
 	case "discovery":
 		mimeType = core.DiscoveryMimeType("+gzip")
-		break
 	default:
 		return fmt.Errorf("unsupported file style %s", style)
 	}
 	specID := filepath.Base(filename)
 	// does the spec file exist? if not, create it
-	request := &rpcpb.GetApiSpecRequest{}
+	request := &rpc.GetApiSpecRequest{}
 	request.Name = version + "/specs/" + specID
 	_, err := client.GetApiSpec(ctx, request)
 	if err != nil { // TODO only do this for NotFound errors
@@ -148,12 +146,12 @@ func uploadSpecFile(ctx context.Context, filename string, client *gapic.Registry
 		if err != nil {
 			log.Printf("err %+v", err)
 		} else {
-			request := &rpcpb.CreateApiSpecRequest{}
+			request := &rpc.CreateApiSpecRequest{}
 			request.Parent = version
 			request.ApiSpecId = specID
-			request.ApiSpec = &rpcpb.ApiSpec{}
+			request.ApiSpec = &rpc.ApiSpec{}
 			request.ApiSpec.Filename = specID
-			request.ApiSpec.Contents, err = core.GZippedBytes(bytes)
+			request.ApiSpec.Contents, _ = core.GZippedBytes(bytes)
 			request.ApiSpec.MimeType = mimeType
 			response, err := client.CreateApiSpec(ctx, request)
 			log.Printf("response %+v\nerr %+v", response, err)

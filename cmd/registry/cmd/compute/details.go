@@ -24,11 +24,12 @@ import (
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
-	discovery_v1 "github.com/googleapis/gnostic/discovery"
-	openapi_v2 "github.com/googleapis/gnostic/openapiv2"
-	openapi_v3 "github.com/googleapis/gnostic/openapiv3"
 	"github.com/spf13/cobra"
 	"google.golang.org/genproto/protobuf/field_mask"
+
+	discovery "github.com/googleapis/gnostic/discovery"
+	oas2 "github.com/googleapis/gnostic/openapiv2"
+	oas3 "github.com/googleapis/gnostic/openapiv3"
 )
 
 var computeDetailsCmd = &cobra.Command{
@@ -102,7 +103,7 @@ func (task *computeDetailsTask) Run(ctx context.Context) error {
 		if err != nil {
 			return nil
 		}
-		document, err := openapi_v2.ParseDocument(data)
+		document, err := oas2.ParseDocument(data)
 		if document == nil && err != nil {
 			return fmt.Errorf("invalid OpenAPI v2: %s", spec.Name)
 		}
@@ -128,7 +129,7 @@ func (task *computeDetailsTask) Run(ctx context.Context) error {
 		if err != nil {
 			return nil
 		}
-		document, err := openapi_v3.ParseDocument(data)
+		document, err := oas3.ParseDocument(data)
 		if document == nil && err != nil {
 			return fmt.Errorf("invalid OpenAPI v3: %s", spec.Name)
 		}
@@ -154,7 +155,7 @@ func (task *computeDetailsTask) Run(ctx context.Context) error {
 		if err != nil {
 			return nil
 		}
-		document, err := discovery_v1.ParseDocument(data)
+		document, err := discovery.ParseDocument(data)
 		if document == nil && err != nil {
 			return fmt.Errorf("invalid Discovery document: %s", spec.Name)
 		}

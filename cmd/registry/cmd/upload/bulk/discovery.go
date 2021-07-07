@@ -22,7 +22,6 @@ import (
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
-	rpcpb "github.com/apigee/registry/rpc"
 	discovery "github.com/googleapis/gnostic/discovery"
 	"github.com/nsf/jsondiff"
 	"github.com/spf13/cobra"
@@ -114,13 +113,13 @@ func (task *uploadDiscoveryTask) Run(ctx context.Context) error {
 }
 
 func (task *uploadDiscoveryTask) createAPI(ctx context.Context) error {
-	if _, err := task.client.GetApi(ctx, &rpcpb.GetApiRequest{
+	if _, err := task.client.GetApi(ctx, &rpc.GetApiRequest{
 		Name: task.apiName(),
 	}); !core.NotFound(err) {
 		return err // Returns nil when API is found without error.
 	}
 
-	response, err := task.client.CreateApi(ctx, &rpcpb.CreateApiRequest{
+	response, err := task.client.CreateApi(ctx, &rpc.CreateApiRequest{
 		Parent: task.projectName(),
 		ApiId:  task.apiID,
 		Api: &rpc.Api{
@@ -137,16 +136,16 @@ func (task *uploadDiscoveryTask) createAPI(ctx context.Context) error {
 }
 
 func (task *uploadDiscoveryTask) createVersion(ctx context.Context) error {
-	if _, err := task.client.GetApiVersion(ctx, &rpcpb.GetApiVersionRequest{
+	if _, err := task.client.GetApiVersion(ctx, &rpc.GetApiVersionRequest{
 		Name: task.versionName(),
 	}); !core.NotFound(err) {
 		return err // Returns nil when version is found without error.
 	}
 
-	response, err := task.client.CreateApiVersion(ctx, &rpcpb.CreateApiVersionRequest{
+	response, err := task.client.CreateApiVersion(ctx, &rpc.CreateApiVersionRequest{
 		Parent:       task.apiName(),
 		ApiVersionId: task.versionID,
-		ApiVersion:   &rpcpb.ApiVersion{},
+		ApiVersion:   &rpc.ApiVersion{},
 	})
 	if err != nil {
 		log.Printf("error %s: %s", task.versionName(), err.Error())
@@ -163,16 +162,16 @@ func (task *uploadDiscoveryTask) createSpec(ctx context.Context) error {
 		return err
 	}
 
-	if _, err := task.client.GetApiSpec(ctx, &rpcpb.GetApiSpecRequest{
+	if _, err := task.client.GetApiSpec(ctx, &rpc.GetApiSpecRequest{
 		Name: task.specName(),
 	}); !core.NotFound(err) {
 		return err // Returns nil when spec is found without error.
 	}
 
-	response, err := task.client.CreateApiSpec(ctx, &rpcpb.CreateApiSpecRequest{
+	response, err := task.client.CreateApiSpec(ctx, &rpc.CreateApiSpecRequest{
 		Parent:    task.versionName(),
 		ApiSpecId: task.specID,
-		ApiSpec: &rpcpb.ApiSpec{
+		ApiSpec: &rpc.ApiSpec{
 			MimeType:  core.DiscoveryMimeType("+gzip"),
 			Filename:  "discovery.json",
 			Contents:  contents,
@@ -189,7 +188,7 @@ func (task *uploadDiscoveryTask) createSpec(ctx context.Context) error {
 }
 
 func (task *uploadDiscoveryTask) updateSpec(ctx context.Context) error {
-	refSpec, err := task.client.GetApiSpec(ctx, &rpcpb.GetApiSpecRequest{
+	refSpec, err := task.client.GetApiSpec(ctx, &rpc.GetApiSpecRequest{
 		Name: task.specName(),
 	})
 	if err != nil && !core.NotFound(err) {
@@ -216,8 +215,8 @@ func (task *uploadDiscoveryTask) updateSpec(ctx context.Context) error {
 		return err
 	}
 
-	response, err := task.client.UpdateApiSpec(ctx, &rpcpb.UpdateApiSpecRequest{
-		ApiSpec: &rpcpb.ApiSpec{
+	response, err := task.client.UpdateApiSpec(ctx, &rpc.UpdateApiSpecRequest{
+		ApiSpec: &rpc.ApiSpec{
 			Name:     task.specName(),
 			Contents: docZipped,
 		},

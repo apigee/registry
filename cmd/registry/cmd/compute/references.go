@@ -96,7 +96,7 @@ func (task *computeReferencesTask) Run(ctx context.Context) error {
 		return fmt.Errorf("we don't know how to compute references for %s of type %s", spec.Name, spec.MimeType)
 	}
 	subject := spec.Name
-	messageData, err := proto.Marshal(references)
+	messageData, _ := proto.Marshal(references)
 	artifact := &rpc.Artifact{
 		Name:     subject + "/artifacts/" + relation,
 		MimeType: core.MimeTypeForMessageType("google.cloud.apigee.registry.applications.v1alpha1.References"),

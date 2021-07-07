@@ -96,7 +96,7 @@ func (task *computeIndexTask) Run(ctx context.Context) error {
 		return fmt.Errorf("we don't know how to compute the index of %s", spec.Name)
 	}
 	subject := spec.GetName()
-	messageData, err := proto.Marshal(index)
+	messageData, _ := proto.Marshal(index)
 	artifact := &rpc.Artifact{
 		Name:     subject + "/artifacts/" + relation,
 		MimeType: core.MimeTypeForMessageType("google.cloud.apigee.registry.applications.v1alpha1.Index"),
