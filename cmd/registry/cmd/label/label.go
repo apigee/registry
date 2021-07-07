@@ -29,13 +29,10 @@ import (
 	"google.golang.org/genproto/protobuf/field_mask"
 )
 
-const labelFieldName = "labels"
-const labelCommandName = "label"
-
 func Command() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   fmt.Sprintf("%s RESOURCE KEY_1=VAL_1 ... KEY_N=VAL_N", labelCommandName),
-		Short: fmt.Sprintf("%s resources in the API Registry", strings.Title(labelCommandName)),
+		Use:   "label RESOURCE KEY_1=VAL_1 ... KEY_N=VAL_N",
+		Short: "Label resources in the API Registry",
 		Args:  cobra.MinimumNArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
 			flagset := cmd.LocalFlags()
@@ -178,7 +175,7 @@ type labelApiTask struct {
 }
 
 func (task *labelApiTask) String() string {
-	return labelCommandName + " " + task.api.Name
+	return "label " + task.api.Name
 }
 
 func (task *labelApiTask) Run(ctx context.Context) error {
@@ -191,7 +188,7 @@ func (task *labelApiTask) Run(ctx context.Context) error {
 		&rpc.UpdateApiRequest{
 			Api: task.api,
 			UpdateMask: &field_mask.FieldMask{
-				Paths: []string{labelFieldName},
+				Paths: []string{"labels"},
 			},
 		})
 	return err
@@ -204,7 +201,7 @@ type labelVersionTask struct {
 }
 
 func (task *labelVersionTask) String() string {
-	return labelCommandName + " " + task.version.Name
+	return "label " + task.version.Name
 }
 
 func (task *labelVersionTask) Run(ctx context.Context) error {
@@ -217,7 +214,7 @@ func (task *labelVersionTask) Run(ctx context.Context) error {
 		&rpc.UpdateApiVersionRequest{
 			ApiVersion: task.version,
 			UpdateMask: &field_mask.FieldMask{
-				Paths: []string{labelFieldName},
+				Paths: []string{"labels"},
 			},
 		})
 	return err
@@ -230,7 +227,7 @@ type labelSpecTask struct {
 }
 
 func (task *labelSpecTask) String() string {
-	return labelCommandName + " " + task.spec.Name
+	return "label " + task.spec.Name
 }
 
 func (task *labelSpecTask) Run(ctx context.Context) error {
@@ -243,7 +240,7 @@ func (task *labelSpecTask) Run(ctx context.Context) error {
 		&rpc.UpdateApiSpecRequest{
 			ApiSpec: task.spec,
 			UpdateMask: &field_mask.FieldMask{
-				Paths: []string{labelFieldName},
+				Paths: []string{"labels"},
 			},
 		})
 	return err

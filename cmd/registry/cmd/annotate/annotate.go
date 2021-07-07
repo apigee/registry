@@ -29,13 +29,10 @@ import (
 	"google.golang.org/genproto/protobuf/field_mask"
 )
 
-const annotateFieldName = "annotations"
-const annotateCommandName = "annotate"
-
 func Command() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   fmt.Sprintf("%s RESOURCE KEY_1=VAL_1 ... KEY_N=VAL_N", annotateCommandName),
-		Short: fmt.Sprintf("%s resources in the API Registry", strings.Title(annotateCommandName)),
+		Use:   "annotate RESOURCE KEY_1=VAL_1 ... KEY_N=VAL_N",
+		Short: "Annotate resources in the API Registry",
 		Args:  cobra.MinimumNArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
 			flagset := cmd.LocalFlags()
@@ -176,7 +173,7 @@ type annotateApiTask struct {
 }
 
 func (task *annotateApiTask) String() string {
-	return annotateCommandName + " " + task.api.Name
+	return "annotate " + task.api.Name
 }
 
 func (task *annotateApiTask) Run(ctx context.Context) error {
@@ -189,7 +186,7 @@ func (task *annotateApiTask) Run(ctx context.Context) error {
 		&rpc.UpdateApiRequest{
 			Api: task.api,
 			UpdateMask: &field_mask.FieldMask{
-				Paths: []string{annotateFieldName},
+				Paths: []string{"annotations"},
 			},
 		})
 	return err
@@ -202,7 +199,7 @@ type annotateVersionTask struct {
 }
 
 func (task *annotateVersionTask) String() string {
-	return annotateCommandName + " " + task.version.Name
+	return "annotate " + task.version.Name
 }
 
 func (task *annotateVersionTask) Run(ctx context.Context) error {
@@ -215,7 +212,7 @@ func (task *annotateVersionTask) Run(ctx context.Context) error {
 		&rpc.UpdateApiVersionRequest{
 			ApiVersion: task.version,
 			UpdateMask: &field_mask.FieldMask{
-				Paths: []string{annotateFieldName},
+				Paths: []string{"annotations"},
 			},
 		})
 	return err
@@ -228,7 +225,7 @@ type annotateSpecTask struct {
 }
 
 func (task *annotateSpecTask) String() string {
-	return annotateCommandName + " " + task.spec.Name
+	return "annotate " + task.spec.Name
 }
 
 func (task *annotateSpecTask) Run(ctx context.Context) error {
@@ -241,7 +238,7 @@ func (task *annotateSpecTask) Run(ctx context.Context) error {
 		&rpc.UpdateApiSpecRequest{
 			ApiSpec: task.spec,
 			UpdateMask: &field_mask.FieldMask{
-				Paths: []string{annotateFieldName},
+				Paths: []string{"annotations"},
 			},
 		})
 	return err

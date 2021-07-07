@@ -32,10 +32,6 @@ import (
 	oas3 "github.com/googleapis/gnostic/openapiv3"
 )
 
-const (
-	bleveDir = "registry.bleve"
-)
-
 var bleveFilter string
 var bleveMutex sync.Mutex
 
@@ -134,6 +130,7 @@ func (task *indexSpecTask) Run(ctx context.Context) error {
 	bleveMutex.Lock()
 	defer bleveMutex.Unlock()
 	// Open the index, creating a new one if necessary.
+	const bleveDir = "registry.bleve"
 	index, err := bleve.Open(bleveDir)
 	if err != nil {
 		mapping := bleve.NewIndexMapping()
