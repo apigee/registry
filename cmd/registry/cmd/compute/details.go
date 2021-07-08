@@ -96,9 +96,8 @@ func (task *computeDetailsTask) Run(ctx context.Context) error {
 		return nil
 	}
 	spec := specs[len(specs)-1]
-	var err error
 	m = names.SpecRegexp().FindStringSubmatch(spec.Name)
-	spec, err = core.GetSpec(ctx, task.client, m, true, nil)
+	spec, err := core.GetSpec(ctx, task.client, m, true, nil)
 	if err != nil {
 		return nil
 	}

@@ -26,8 +26,6 @@ import (
 )
 
 func TestAnnotate(t *testing.T) {
-	var err error
-
 	const (
 		projectID   = "annotate-test"
 		projectName = "projects/" + projectID

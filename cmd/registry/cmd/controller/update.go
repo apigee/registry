@@ -31,8 +31,6 @@ func updateCommand() *cobra.Command {
 		Short: "Generate a list of commands to update the registry state (experimental)",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			var err error
-
 			manifestPath := args[0]
 			if manifestPath == "" {
 				log.Fatal("Please provide manifest_path")

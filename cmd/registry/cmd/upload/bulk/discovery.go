@@ -83,7 +83,6 @@ type uploadDiscoveryTask struct {
 	apiID     string
 	versionID string
 	specID    string
-	document  *discovery.Document
 }
 
 func (task *uploadDiscoveryTask) String() string {

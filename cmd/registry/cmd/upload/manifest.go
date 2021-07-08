@@ -42,7 +42,7 @@ func manifestCommand() *cobra.Command {
 			if err != nil {
 				log.Fatal(err.Error())
 			}
-			manifestData, err := proto.Marshal(manifest)
+			manifestData, _ := proto.Marshal(manifest)
 
 			ctx := context.Background()
 			client, err := connection.NewClient(ctx)
@@ -59,8 +59,6 @@ func manifestCommand() *cobra.Command {
 			if err != nil {
 				log.Fatal(err.Error())
 			}
-
-			return
 		},
 	}
 

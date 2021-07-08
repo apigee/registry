@@ -26,8 +26,6 @@ import (
 )
 
 func TestLabel(t *testing.T) {
-	var err error
-
 	const (
 		projectID   = "label-test"
 		projectName = "projects/" + projectID

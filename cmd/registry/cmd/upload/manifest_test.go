@@ -95,9 +95,9 @@ func TestManifestUpload(t *testing.T) {
 			}
 
 			manifest := rpc.Manifest{}
-			body, err := client.GetArtifactContents(ctx, req)
+			body, _ := client.GetArtifactContents(ctx, req)
 			contents := body.GetData()
-			err = proto.Unmarshal(contents, &manifest)
+			_ = proto.Unmarshal(contents, &manifest)
 
 			// Verify the manifest definition is correct
 			opts := cmp.Options{
