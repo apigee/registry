@@ -34,7 +34,7 @@ import (
 
 var bleveMutex sync.Mutex
 
-func searchIndexCommand() *cobra.Command {
+func searchIndexCommand(ctx context.Context) *cobra.Command {
 	return &cobra.Command{
 		Use:   "search-index",
 		Short: "Compute a local search index of specs (experimental)",

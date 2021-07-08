@@ -27,7 +27,7 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func referencesCommand() *cobra.Command {
+func referencesCommand(ctx context.Context) *cobra.Command {
 	return &cobra.Command{
 		Use:   "references",
 		Short: "Compute references of API specs",

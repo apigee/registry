@@ -31,7 +31,7 @@ func check(err error) {
 	}
 }
 
-func yamlCommand() *cobra.Command {
+func yamlCommand(ctx context.Context) *cobra.Command {
 	return &cobra.Command{
 		Use:   "yaml",
 		Short: "Export a subtree of the registry to a YAML file",

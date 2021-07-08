@@ -15,6 +15,7 @@
 package search
 
 import (
+	"context"
 	"fmt"
 	"log"
 
@@ -24,7 +25,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func Command() *cobra.Command {
+func Command(ctx context.Context) *cobra.Command {
 	return &cobra.Command{
 		Use:   "search",
 		Short: "Search a local index of specs in the API Registry (experimental)",

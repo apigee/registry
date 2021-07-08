@@ -24,7 +24,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func unionCommand() *cobra.Command {
+func unionCommand(ctx context.Context) *cobra.Command {
 	var output string
 	cmd := &cobra.Command{
 		Use:   "union",

@@ -33,7 +33,7 @@ import (
 	oas3 "github.com/googleapis/gnostic/openapiv3"
 )
 
-func vocabularyCommand() *cobra.Command {
+func vocabularyCommand(ctx context.Context) *cobra.Command {
 	return &cobra.Command{
 		Use:   "vocabulary",
 		Short: "Compute vocabularies of API specs",

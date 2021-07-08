@@ -31,7 +31,7 @@ import (
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
-func protosCommand() *cobra.Command {
+func protosCommand(ctx context.Context) *cobra.Command {
 	var baseURI string
 	cmd := &cobra.Command{
 		Use:   "protos",

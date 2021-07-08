@@ -24,7 +24,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func differenceCommand() *cobra.Command {
+func differenceCommand(ctx context.Context) *cobra.Command {
 	var output string
 	cmd := &cobra.Command{
 		Use:   "difference",

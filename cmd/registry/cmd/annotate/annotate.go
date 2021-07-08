@@ -29,7 +29,7 @@ import (
 	"google.golang.org/genproto/protobuf/field_mask"
 )
 
-func Command() *cobra.Command {
+func Command(ctx context.Context) *cobra.Command {
 	var (
 		filter    string
 		overwrite bool
@@ -40,7 +40,6 @@ func Command() *cobra.Command {
 		Short: "Annotate resources in the API Registry",
 		Args:  cobra.MinimumNArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
-			ctx := context.Background()
 			client, err := connection.NewClient(ctx)
 			if err != nil {
 				log.Fatalf("%s", err.Error())

@@ -27,7 +27,7 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func indexCommand() *cobra.Command {
+func indexCommand(ctx context.Context) *cobra.Command {
 	return &cobra.Command{
 		Use:   "index",
 		Short: "Compute indexes of API specs",
@@ -38,7 +38,6 @@ func indexCommand() *cobra.Command {
 				log.Fatalf("Failed to get filter from flags: %s", err)
 			}
 
-			ctx := context.Background()
 			client, err := connection.NewClient(ctx)
 			if err != nil {
 				log.Fatalf("%s", err.Error())

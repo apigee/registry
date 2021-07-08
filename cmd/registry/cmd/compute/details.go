@@ -32,7 +32,7 @@ import (
 	oas3 "github.com/googleapis/gnostic/openapiv3"
 )
 
-func detailsCommand() *cobra.Command {
+func detailsCommand(ctx context.Context) *cobra.Command {
 	return &cobra.Command{
 		Use:   "details",
 		Short: "Compute details about APIs from information in their specs.",
@@ -43,7 +43,6 @@ func detailsCommand() *cobra.Command {
 				log.Fatalf("Failed to get filter from flags: %s", err)
 			}
 
-			ctx := context.Background()
 			client, err := connection.NewClient(ctx)
 			if err != nil {
 				log.Fatalf("%s", err.Error())

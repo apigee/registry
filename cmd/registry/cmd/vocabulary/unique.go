@@ -26,7 +26,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func uniqueCommand() *cobra.Command {
+func uniqueCommand(ctx context.Context) *cobra.Command {
 	var outputID string
 	cmd := &cobra.Command{
 		Use:   "unique",

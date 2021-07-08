@@ -25,7 +25,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func updateCommand() *cobra.Command {
+func updateCommand(ctx context.Context) *cobra.Command {
 	return &cobra.Command{
 		Use:   "update FILENAME",
 		Short: "Generate a list of commands to update the registry state (experimental)",

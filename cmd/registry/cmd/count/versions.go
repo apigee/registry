@@ -27,7 +27,7 @@ import (
 	"google.golang.org/api/iterator"
 )
 
-func versionsCommand() *cobra.Command {
+func versionsCommand(ctx context.Context) *cobra.Command {
 	var filter string
 	cmd := &cobra.Command{
 		Use:   "versions",

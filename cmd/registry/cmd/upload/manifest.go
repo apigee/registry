@@ -26,7 +26,7 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func manifestCommand() *cobra.Command {
+func manifestCommand(ctx context.Context) *cobra.Command {
 	var projectID string
 	cmd := &cobra.Command{
 		Use:   "manifest FILE_PATH --project_id=value",

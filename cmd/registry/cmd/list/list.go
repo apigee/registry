@@ -25,7 +25,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func Command() *cobra.Command {
+func Command(ctx context.Context) *cobra.Command {
 	var filter string
 	cmd := &cobra.Command{
 		Use:   "list",

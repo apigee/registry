@@ -30,7 +30,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func specCommand() *cobra.Command {
+func specCommand(ctx context.Context) *cobra.Command {
 	var (
 		version string
 		style   string

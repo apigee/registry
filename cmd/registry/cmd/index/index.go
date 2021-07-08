@@ -27,13 +27,13 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func Command() *cobra.Command {
+func Command(ctx context.Context) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "index",
 		Short: "Operate on API indexes in the API Registry",
 	}
 
-	cmd.AddCommand(unionCommand())
+	cmd.AddCommand(unionCommand(ctx))
 
 	return cmd
 }

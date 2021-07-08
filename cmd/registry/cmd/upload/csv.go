@@ -32,7 +32,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func csvCommand() *cobra.Command {
+func csvCommand(ctx context.Context) *cobra.Command {
 	var (
 		projectID string
 		delimiter string

@@ -24,7 +24,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func Command() *cobra.Command {
+func Command(ctx context.Context) *cobra.Command {
 	var getContents bool
 	cmd := &cobra.Command{
 		Use:   "get",

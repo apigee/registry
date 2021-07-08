@@ -27,7 +27,7 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func lintCommand() *cobra.Command {
+func lintCommand(ctx context.Context) *cobra.Command {
 	var linter string
 	cmd := &cobra.Command{
 		Use:   "lint",

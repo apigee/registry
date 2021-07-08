@@ -31,7 +31,7 @@ import (
 	oas3 "github.com/googleapis/gnostic/openapiv3"
 )
 
-func descriptorCommand() *cobra.Command {
+func descriptorCommand(ctx context.Context) *cobra.Command {
 	return &cobra.Command{
 		Use:   "descriptor",
 		Short: "Compute descriptors of API specs",
@@ -42,7 +42,6 @@ func descriptorCommand() *cobra.Command {
 				log.Fatalf("Failed to get filter from flags: %s", err)
 			}
 
-			ctx := context.Background()
 			client, err := connection.NewClient(ctx)
 			if err != nil {
 				log.Fatalf("%s", err.Error())

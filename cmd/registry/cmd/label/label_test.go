@@ -110,7 +110,7 @@ func TestLabel(t *testing.T) {
 	}
 	// test labels for APIs.
 	for _, tc := range testCases {
-		cmd := Command()
+		cmd := Command(ctx)
 		cmd.SetArgs(append([]string{apiName}, tc.args...))
 		if err := cmd.Execute(); err != nil {
 			t.Fatalf("Execute() with args %+v returned error: %s", tc.args, err)
@@ -128,7 +128,7 @@ func TestLabel(t *testing.T) {
 	}
 	// test labels for versions.
 	for _, tc := range testCases {
-		cmd := Command()
+		cmd := Command(ctx)
 		cmd.SetArgs(append([]string{versionName}, tc.args...))
 		if err := cmd.Execute(); err != nil {
 			t.Fatalf("Execute() with args %+v returned error: %s", tc.args, err)
@@ -146,7 +146,7 @@ func TestLabel(t *testing.T) {
 	}
 	// test labels for specs.
 	for _, tc := range testCases {
-		cmd := Command()
+		cmd := Command(ctx)
 		cmd.SetArgs(append([]string{specName}, tc.args...))
 		if err := cmd.Execute(); err != nil {
 			t.Fatalf("Execute() with args %+v returned error: %s", tc.args, err)

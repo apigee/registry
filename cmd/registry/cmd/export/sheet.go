@@ -32,7 +32,7 @@ import (
 	metrics "github.com/googleapis/gnostic/metrics"
 )
 
-func sheetCommand() *cobra.Command {
+func sheetCommand(ctx context.Context) *cobra.Command {
 	var (
 		filter   string
 		artifact string

@@ -15,20 +15,22 @@
 package upload
 
 import (
+	"context"
+
 	"github.com/apigee/registry/cmd/registry/cmd/upload/bulk"
 	"github.com/spf13/cobra"
 )
 
-func Command() *cobra.Command {
+func Command(ctx context.Context) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "upload",
 		Short: "Upload information to the API Registry",
 	}
 
-	cmd.AddCommand(bulk.Command())
-	cmd.AddCommand(csvCommand())
-	cmd.AddCommand(manifestCommand())
-	cmd.AddCommand(specCommand())
+	cmd.AddCommand(bulk.Command(ctx))
+	cmd.AddCommand(csvCommand(ctx))
+	cmd.AddCommand(manifestCommand(ctx))
+	cmd.AddCommand(specCommand(ctx))
 
 	return cmd
 }

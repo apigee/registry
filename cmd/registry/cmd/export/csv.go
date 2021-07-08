@@ -34,7 +34,7 @@ type exportCSVRow struct {
 	ContentsPath string
 }
 
-func csvCommand() *cobra.Command {
+func csvCommand(ctx context.Context) *cobra.Command {
 	var filter string
 	cmd := &cobra.Command{
 		Use:   "csv [--filter expression] parent ...",

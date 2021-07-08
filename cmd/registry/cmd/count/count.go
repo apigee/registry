@@ -15,16 +15,18 @@
 package count
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
-func Command() *cobra.Command {
+func Command(ctx context.Context) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "count",
 		Short: "Count quantities in the API Registry",
 	}
 
-	cmd.AddCommand(versionsCommand())
+	cmd.AddCommand(versionsCommand(ctx))
 
 	return cmd
 }

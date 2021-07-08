@@ -15,18 +15,20 @@
 package export
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
-func Command() *cobra.Command {
+func Command(ctx context.Context) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "export",
 		Short: "Export resources from the API Registry",
 	}
 
-	cmd.AddCommand(csvCommand())
-	cmd.AddCommand(sheetCommand())
-	cmd.AddCommand(yamlCommand())
+	cmd.AddCommand(csvCommand(ctx))
+	cmd.AddCommand(sheetCommand(ctx))
+	cmd.AddCommand(yamlCommand(ctx))
 
 	return cmd
 }

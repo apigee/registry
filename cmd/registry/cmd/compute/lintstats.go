@@ -32,7 +32,7 @@ func lintStatsRelation(linter string) string {
 	return "lintstats-" + linter
 }
 
-func lintStatsCommand() *cobra.Command {
+func lintStatsCommand(ctx context.Context) *cobra.Command {
 	var linter string
 	cmd := &cobra.Command{
 		Use:   "lintstats",

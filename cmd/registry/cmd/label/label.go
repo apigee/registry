@@ -29,7 +29,7 @@ import (
 	"google.golang.org/genproto/protobuf/field_mask"
 )
 
-func Command() *cobra.Command {
+func Command(ctx context.Context) *cobra.Command {
 	var (
 		filter    string
 		overwrite bool

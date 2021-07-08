@@ -24,7 +24,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func intersectionCommand() *cobra.Command {
+func intersectionCommand(ctx context.Context) *cobra.Command {
 	var output string
 	cmd := &cobra.Command{
 		Use:   "intersection",

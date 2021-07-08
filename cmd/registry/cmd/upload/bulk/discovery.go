@@ -28,7 +28,7 @@ import (
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
-func discoveryCommand() *cobra.Command {
+func discoveryCommand(ctx context.Context) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "discovery",
 		Short: "Bulk-upload API Discovery documents from the Google API Discovery service",

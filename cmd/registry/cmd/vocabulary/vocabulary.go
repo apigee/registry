@@ -29,17 +29,17 @@ import (
 	metrics "github.com/googleapis/gnostic/metrics"
 )
 
-func Command() *cobra.Command {
+func Command(ctx context.Context) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "vocabulary",
 		Short: "Operate on API vocabularies in the API Registry",
 	}
 
-	cmd.AddCommand(differenceCommand())
-	cmd.AddCommand(intersectionCommand())
-	cmd.AddCommand(unionCommand())
-	cmd.AddCommand(uniqueCommand())
-	cmd.AddCommand(versionsCommand())
+	cmd.AddCommand(differenceCommand(ctx))
+	cmd.AddCommand(intersectionCommand(ctx))
+	cmd.AddCommand(unionCommand(ctx))
+	cmd.AddCommand(uniqueCommand(ctx))
+	cmd.AddCommand(versionsCommand(ctx))
 
 	cmd.PersistentFlags().String("filter", "", "Filter selected resources")
 	return cmd

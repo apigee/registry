@@ -83,7 +83,7 @@ func TestManifestUpload(t *testing.T) {
 				t.Fatalf("Failed to create project %s: %s", test.project, err.Error())
 			}
 
-			cmd := Command()
+			cmd := Command(ctx)
 			args := []string{"manifest", test.filePath, "--project_id", test.project}
 			cmd.SetArgs(args)
 			if err = cmd.Execute(); err != nil {

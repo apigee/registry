@@ -15,16 +15,18 @@
 package controller
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
-func Command() *cobra.Command {
+func Command(ctx context.Context) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "controller",
 		Short: "Manage the state of the registry (experimental)",
 	}
 
-	cmd.AddCommand(updateCommand())
+	cmd.AddCommand(updateCommand(ctx))
 
 	return cmd
 }
