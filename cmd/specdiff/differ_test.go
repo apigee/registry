@@ -1,7 +1,6 @@
 package specdiff
 
 import (
-	"fmt"
 	"io/ioutil"
 	"reflect"
 	"testing"
@@ -11,7 +10,6 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/tufin/oasdiff/diff"
 	"google.golang.org/protobuf/testing/protocmp"
-	"gopkg.in/yaml.v2"
 )
 
 type testStruct struct {
@@ -84,15 +82,10 @@ func TestDiffProtoStruct(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Failed to get revision spec yaml: %s", err)
 			}
-			diff, err := GetDiff(yamlFile, yamlFile2)
+			diffProto, err := GetDiff(yamlFile, yamlFile2)
 			if err != nil {
 				t.Fatalf("Failed to get diff.Diff: %s", err)
 			}
-			diffProto, err := GetChanges(diff)
-			if err != nil {
-				t.Fatalf("Failed to get diff proto: %s", err)
-			}
-
 			opts := cmp.Options{
 				protocmp.Transform(),
 				cmpopts.SortSlices(func(a, b string) bool { return a < b }),
@@ -108,18 +101,18 @@ func TestMaps(t *testing.T) {
 	tests := []struct {
 		desc      string
 		testMap   reflect.Value
-		change    Change
+		change    change
 		wantProto *rpc.Diff
 	}{
 		{
-			desc: "Map Diff Simple",
+			desc: "Map Diff String",
 			testMap: reflect.ValueOf(map[string]string{
 				"input1": "result1",
 				"input2": "result2",
 			}),
-			change: Change{
-				FieldPath:  []string{},
-				ChangeType: "added",
+			change: change{
+				fieldPath:  []string{},
+				changeType: "added",
 			},
 			wantProto: &rpc.Diff{
 				Added: []string{
@@ -129,27 +122,20 @@ func TestMaps(t *testing.T) {
 			},
 		}, {
 			desc: "Map Diff Recursive Key",
-			testMap: reflect.ValueOf(map[*testStruct]testStruct{
-				{
-					Name: "TestStruct1",
-					TestMap: map[string]string{
-						"input1": "result1",
-						"input2": "result2",
-					},
+			testMap: reflect.ValueOf(map[diff.Endpoint]testStruct{
+				{ Method : "Test-Method",
+					Path: "Test-Path",
 				}: {
 					Name: "TestStructResult1",
 				},
 			}),
-			change: Change{
-				FieldPath:  []string{},
-				ChangeType: "added",
+			change: change{
+				fieldPath:  []string{},
+				changeType: "added",
 			},
 			wantProto: &rpc.Diff{
 				Added: []string{
-					"testmap.input1.result1",
-					"testmap.input2.result2",
-					"name.TestStruct1",
-					"name.TestStructResult1",
+					"{method.Test-Method path.Test-Path}.name.TestStructResult1",
 				},
 			},
 		},
@@ -166,7 +152,7 @@ func TestMaps(t *testing.T) {
 		change := test.change
 		err := searchMapType(val, diffProto, &change)
 		if err != nil {
-			t.Fatalf("Failed to get get diff proto: %+v", err)
+			t.Fatalf("Failed to get diff proto, returnd with error: %+v", err)
 		}
 		if !cmp.Equal(test.wantProto, diffProto, opts) {
 			t.Errorf("Test %+v returned unexpected diff (-want +got):\n%s", test.desc, cmp.Diff(test.wantProto, diffProto, opts))
@@ -178,11 +164,11 @@ func TestArrays(t *testing.T) {
 	tests := []struct {
 		desc      string
 		testArray reflect.Value
-		change    Change
+		change    change
 		wantProto *rpc.Diff
 	}{
 		{
-			desc: "Array Diff Test Simple",
+			desc: "Array Diff String",
 			testArray: reflect.ValueOf([]string{
 				"input1",
 				"input2",
@@ -190,9 +176,9 @@ func TestArrays(t *testing.T) {
 				"input4",
 				"",
 			}),
-			change: Change{
-				FieldPath:  []string{},
-				ChangeType: "added",
+			change: change{
+				fieldPath:  []string{},
+				changeType: "added",
 			},
 			wantProto: &rpc.Diff{
 				Added: []string{
@@ -200,6 +186,31 @@ func TestArrays(t *testing.T) {
 					"input2",
 					"input3",
 					"input4",
+				},
+			},
+		},{
+			desc: "Array Diff Endpoint",
+			testArray: reflect.ValueOf([]diff.Endpoint{
+				{
+				Method : "Test-Method-1",
+				Path: "Test-Path-1",
+				},{
+				Method : "Test-Method-2",
+				Path: "Test-Path-2",
+				},{
+				Method : "Test-Method-3",
+				Path: "Test-Path-3",
+				},
+			}),
+			change: change{
+				fieldPath:  []string{},
+				changeType: "added",
+			},
+			wantProto: &rpc.Diff{
+				Added: []string{
+					"{method.Test-Method-1 path.Test-Path-1}",
+					"{method.Test-Method-2 path.Test-Path-2}",
+					"{method.Test-Method-3 path.Test-Path-3}",
 				},
 			},
 		},
@@ -214,7 +225,7 @@ func TestArrays(t *testing.T) {
 			Modification: make(map[string]*rpc.DiffValueModification),
 		}
 		change := test.change
-	  err := searchArrayAndSliceType(val, diffProto, &change)
+		err := searchArrayAndSliceType(val, diffProto, &change)
 		if err != nil {
 			t.Fatalf("Failed to get get diff proto: %+v", err)
 		}
@@ -228,16 +239,16 @@ func TestValueDiff(t *testing.T) {
 	tests := []struct {
 		desc          string
 		testValueDiff reflect.Value
-		change        Change
+		change        change
 		wantProto     *rpc.Diff
 	}{
 		{
 			desc: "Value Diff Test",
 			testValueDiff: reflect.ValueOf(diff.ValueDiff{From: 66,
 				To: true}),
-			change: Change{
-				FieldPath:  []string{"ValueDiffTest"},
-				ChangeType: "Modified",
+			change: change{
+				fieldPath:  []string{"ValueDiffTest"},
+				changeType: "Modified",
 			},
 			wantProto: &rpc.Diff{
 				Modification: map[string]*rpc.DiffValueModification{
@@ -271,6 +282,7 @@ func TestValueDiff(t *testing.T) {
 }
 
 //Test Yaml Diff
+/*
 func TestDiffYaml(t *testing.T){
 	yamlFile, err := ioutil.ReadFile("./data/openapi-test1.yaml")
 	if err != nil {
@@ -306,4 +318,4 @@ func getYAML(output interface{}) (string) {
 	}
 	return string(bytes)
 }
-
+*/
