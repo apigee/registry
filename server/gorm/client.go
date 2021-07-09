@@ -138,33 +138,12 @@ func (c *Client) close() {
 	sqlDB.Close()
 }
 
-func (c *Client) resetTable(v interface{}) {
-	mylock()
-	defer myunlock()
-	if c.db.Migrator().HasTable(v) {
-		c.db.Migrator().DropTable(v)
-	}
-	if !c.db.Migrator().HasTable(v) {
-		c.db.Migrator().CreateTable(v)
-	}
-}
-
 func (c *Client) ensureTable(v interface{}) {
 	mylock()
 	defer myunlock()
 	if !c.db.Migrator().HasTable(v) {
 		c.db.Migrator().CreateTable(v)
 	}
-}
-
-func (c *Client) reset() {
-	c.resetTable(&models.Project{})
-	c.resetTable(&models.Api{})
-	c.resetTable(&models.Version{})
-	c.resetTable(&models.Spec{})
-	c.resetTable(&models.Blob{})
-	c.resetTable(&models.Artifact{})
-	c.resetTable(&models.SpecRevisionTag{})
 }
 
 func (c *Client) ensure() *Client {
