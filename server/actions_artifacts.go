@@ -25,6 +25,8 @@ import (
 	"github.com/apigee/registry/server/names"
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/genproto/googleapis/api/httpbody"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type artifactParent interface {
@@ -49,29 +51,29 @@ func parseArtifactParent(name string) (artifactParent, error) {
 func (s *RegistryServer) CreateArtifact(ctx context.Context, req *rpc.CreateArtifactRequest) (*rpc.Artifact, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
-		return nil, unavailableError(err)
+		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 	defer s.releaseStorageClient(client)
 	db := dao.NewDAO(client)
 
 	if req.GetArtifact() == nil {
-		return nil, invalidArgumentError(fmt.Errorf("invalid artifact %+v: body must be provided", req.GetArtifact()))
+		return nil, status.Errorf(codes.InvalidArgument, "invalid artifact %+v: body must be provided", req.GetArtifact())
 	}
 
 	parent, err := parseArtifactParent(req.GetParent())
 	if err != nil {
-		return nil, invalidArgumentError(err)
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	name := parent.Artifact(req.GetArtifactId())
 	if _, err := db.GetArtifact(ctx, name); err == nil {
-		return nil, alreadyExistsError(fmt.Errorf("artifact %q already exists", name))
+		return nil, status.Errorf(codes.AlreadyExists, "artifact %q already exists", name)
 	} else if !isNotFound(err) {
 		return nil, err
 	}
 
 	if err := name.Validate(); err != nil {
-		return nil, invalidArgumentError(err)
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	// Creation should only succeed when the parent exists.
@@ -105,7 +107,7 @@ func (s *RegistryServer) CreateArtifact(ctx context.Context, req *rpc.CreateArti
 
 	message, err := artifact.BasicMessage()
 	if err != nil {
-		return nil, internalError(err)
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	s.notify(ctx, rpc.Notification_CREATED, name.String())
@@ -116,14 +118,14 @@ func (s *RegistryServer) CreateArtifact(ctx context.Context, req *rpc.CreateArti
 func (s *RegistryServer) DeleteArtifact(ctx context.Context, req *rpc.DeleteArtifactRequest) (*empty.Empty, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
-		return nil, unavailableError(err)
+		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 	defer s.releaseStorageClient(client)
 	db := dao.NewDAO(client)
 
 	name, err := names.ParseArtifact(req.GetName())
 	if err != nil {
-		return nil, invalidArgumentError(err)
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	// Deletion should only succeed on artifacts that currently exist.
@@ -143,14 +145,14 @@ func (s *RegistryServer) DeleteArtifact(ctx context.Context, req *rpc.DeleteArti
 func (s *RegistryServer) GetArtifact(ctx context.Context, req *rpc.GetArtifactRequest) (*rpc.Artifact, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
-		return nil, unavailableError(err)
+		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 	defer s.releaseStorageClient(client)
 	db := dao.NewDAO(client)
 
 	name, err := names.ParseArtifact(req.GetName())
 	if err != nil {
-		return nil, invalidArgumentError(err)
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	artifact, err := db.GetArtifact(ctx, name)
@@ -160,7 +162,7 @@ func (s *RegistryServer) GetArtifact(ctx context.Context, req *rpc.GetArtifactRe
 
 	message, err := artifact.BasicMessage()
 	if err != nil {
-		return nil, internalError(err)
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	return message, nil
@@ -170,14 +172,14 @@ func (s *RegistryServer) GetArtifact(ctx context.Context, req *rpc.GetArtifactRe
 func (s *RegistryServer) GetArtifactContents(ctx context.Context, req *rpc.GetArtifactContentsRequest) (*httpbody.HttpBody, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
-		return nil, unavailableError(err)
+		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 	defer s.releaseStorageClient(client)
 	db := dao.NewDAO(client)
 
 	name, err := names.ParseArtifact(strings.TrimSuffix(req.GetName(), "/contents"))
 	if err != nil {
-		return nil, invalidArgumentError(err)
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	artifact, err := db.GetArtifact(ctx, name)
@@ -200,13 +202,13 @@ func (s *RegistryServer) GetArtifactContents(ctx context.Context, req *rpc.GetAr
 func (s *RegistryServer) ListArtifacts(ctx context.Context, req *rpc.ListArtifactsRequest) (*rpc.ListArtifactsResponse, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
-		return nil, unavailableError(err)
+		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 	defer s.releaseStorageClient(client)
 	db := dao.NewDAO(client)
 
 	if req.GetPageSize() < 0 {
-		return nil, invalidArgumentError(fmt.Errorf("invalid page_size %d: must not be negative", req.GetPageSize()))
+		return nil, status.Errorf(codes.InvalidArgument, "invalid page_size %d: must not be negative", req.GetPageSize())
 	} else if req.GetPageSize() > 1000 {
 		req.PageSize = 1000
 	} else if req.GetPageSize() == 0 {
@@ -215,7 +217,7 @@ func (s *RegistryServer) ListArtifacts(ctx context.Context, req *rpc.ListArtifac
 
 	parent, err := parseArtifactParent(req.GetParent())
 	if err != nil {
-		return nil, invalidArgumentError(err)
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	var listing dao.ArtifactList
@@ -257,7 +259,7 @@ func (s *RegistryServer) ListArtifacts(ctx context.Context, req *rpc.ListArtifac
 	for i, artifact := range listing.Artifacts {
 		response.Artifacts[i], err = artifact.BasicMessage()
 		if err != nil {
-			return nil, internalError(err)
+			return nil, status.Error(codes.Internal, err.Error())
 		}
 	}
 
@@ -268,14 +270,14 @@ func (s *RegistryServer) ListArtifacts(ctx context.Context, req *rpc.ListArtifac
 func (s *RegistryServer) ReplaceArtifact(ctx context.Context, req *rpc.ReplaceArtifactRequest) (*rpc.Artifact, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
-		return nil, unavailableError(err)
+		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 	defer s.releaseStorageClient(client)
 	db := dao.NewDAO(client)
 
 	name, err := names.ParseArtifact(req.Artifact.GetName())
 	if err != nil {
-		return nil, invalidArgumentError(err)
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	// Replacement should only succeed on artifacts that currently exist.
@@ -289,7 +291,7 @@ func (s *RegistryServer) ReplaceArtifact(ctx context.Context, req *rpc.ReplaceAr
 	}
 
 	if err := db.SaveArtifactContents(ctx, artifact, req.Artifact.GetContents()); err != nil {
-		return nil, internalError(err)
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	s.notify(ctx, rpc.Notification_UPDATED, name.String())
