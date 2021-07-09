@@ -72,7 +72,6 @@ func lintCommand(ctx context.Context) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&linter, "linter", "", "The linter to use (aip|spectral|gnostic)")
-	cmd.MarkFlagRequired("linter")
 	return cmd
 }
 

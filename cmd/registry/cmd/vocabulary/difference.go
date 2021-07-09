@@ -52,6 +52,5 @@ func differenceCommand(ctx context.Context) *cobra.Command {
 	}
 
 	cmd.Flags().String("output", "", "Artifact name to use when saving the vocabulary artifact")
-	cmd.MarkFlagRequired("output")
 	return cmd
 }
