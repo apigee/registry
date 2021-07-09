@@ -55,13 +55,8 @@ func (s *RegistryServer) CreateProject(ctx context.Context, req *rpc.CreateProje
 		return nil, err
 	}
 
-	message, err := project.Message()
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
 	s.notify(ctx, rpc.Notification_CREATED, name.String())
-	return message, nil
+	return project.Message(), nil
 }
 
 // DeleteProject handles the corresponding API request.
@@ -110,12 +105,7 @@ func (s *RegistryServer) GetProject(ctx context.Context, req *rpc.GetProjectRequ
 		return nil, err
 	}
 
-	message, err := project.Message()
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	return message, nil
+	return project.Message(), nil
 }
 
 // ListProjects handles the corresponding API request.
@@ -150,10 +140,7 @@ func (s *RegistryServer) ListProjects(ctx context.Context, req *rpc.ListProjects
 	}
 
 	for i, project := range listing.Projects {
-		response.Projects[i], err = project.Message()
-		if err != nil {
-			return nil, status.Error(codes.Internal, err.Error())
-		}
+		response.Projects[i] = project.Message()
 	}
 
 	return response, nil
@@ -189,11 +176,6 @@ func (s *RegistryServer) UpdateProject(ctx context.Context, req *rpc.UpdateProje
 		return nil, err
 	}
 
-	message, err := project.Message()
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
 	s.notify(ctx, rpc.Notification_UPDATED, name.String())
-	return message, nil
+	return project.Message(), nil
 }

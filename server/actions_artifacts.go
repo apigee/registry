@@ -105,13 +105,8 @@ func (s *RegistryServer) CreateArtifact(ctx context.Context, req *rpc.CreateArti
 		return nil, err
 	}
 
-	message, err := artifact.BasicMessage()
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
 	s.notify(ctx, rpc.Notification_CREATED, name.String())
-	return message, nil
+	return artifact.Message(), nil
 }
 
 // DeleteArtifact handles the corresponding API request.
@@ -160,12 +155,7 @@ func (s *RegistryServer) GetArtifact(ctx context.Context, req *rpc.GetArtifactRe
 		return nil, err
 	}
 
-	message, err := artifact.BasicMessage()
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	return message, nil
+	return artifact.Message(), nil
 }
 
 // GetArtifactContents handles the corresponding API request.
@@ -257,10 +247,7 @@ func (s *RegistryServer) ListArtifacts(ctx context.Context, req *rpc.ListArtifac
 	}
 
 	for i, artifact := range listing.Artifacts {
-		response.Artifacts[i], err = artifact.BasicMessage()
-		if err != nil {
-			return nil, status.Error(codes.Internal, err.Error())
-		}
+		response.Artifacts[i] = artifact.Message()
 	}
 
 	return response, nil
@@ -295,5 +282,5 @@ func (s *RegistryServer) ReplaceArtifact(ctx context.Context, req *rpc.ReplaceAr
 	}
 
 	s.notify(ctx, rpc.Notification_UPDATED, name.String())
-	return artifact.BasicMessage()
+	return artifact.Message(), nil
 }

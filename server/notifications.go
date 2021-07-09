@@ -17,14 +17,13 @@ package server
 import (
 	"context"
 	"log"
-	"time"
 
 	"cloud.google.com/go/pubsub"
 	"github.com/apigee/registry/rpc"
 	"github.com/golang/protobuf/jsonpb"
-	"github.com/golang/protobuf/ptypes"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 const verbose = false
@@ -59,7 +58,7 @@ func (s *RegistryServer) notify(ctx context.Context, change rpc.Notification_Cha
 	n := &rpc.Notification{}
 	n.Change = change
 	n.Resource = resource
-	n.ChangeTime, err = ptypes.TimestampProto(time.Now())
+	n.ChangeTime = timestamppb.Now()
 	// Marshal the notification.
 	m, err := (&jsonpb.Marshaler{}).MarshalToString(n)
 	if err != nil {
