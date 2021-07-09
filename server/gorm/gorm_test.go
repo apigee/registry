@@ -137,38 +137,30 @@ func TestLoad(t *testing.T) {
 
 	var err error
 	for i := 0; i < 99; i++ {
-		{
-			done := make(chan bool, 1)
-			go func(done chan bool) {
-				c, err = NewClient(ctx, "sqlite3", "/tmp/testing.db")
-				if err != nil {
-					t.Fatalf("Unable to create client: %+v", err)
-				}
-				now := time.Now()
-				apiID := fmt.Sprintf("api-%04d", i)
-				api := &models.Api{
-					ProjectID:   "demo",
-					ApiID:       apiID,
-					Description: "Demonstration API",
-					CreateTime:  now,
-					UpdateTime:  now,
-				}
-				k := c.NewKey(storage.ApiEntityName, api.Name())
-				// fail if api already exists
-				existing := &models.Api{}
-				err := c.Get(ctx, k, existing)
-				if err == nil {
-					t.Errorf(err.Error())
-				}
-				_, err = c.Put(ctx, k, api)
-				if err != nil {
-					t.Errorf(err.Error())
-				}
-				c.Close()
-
-				done <- true
-			}(done)
-			<-done
+		c, err = NewClient(ctx, "sqlite3", "/tmp/testing.db")
+		if err != nil {
+			t.Fatalf("Unable to create client: %+v", err)
 		}
+		now := time.Now()
+		apiID := fmt.Sprintf("api-%04d", i)
+		api := &models.Api{
+			ProjectID:   "demo",
+			ApiID:       apiID,
+			Description: "Demonstration API",
+			CreateTime:  now,
+			UpdateTime:  now,
+		}
+		k := c.NewKey(storage.ApiEntityName, api.Name())
+		// fail if api already exists
+		existing := &models.Api{}
+		err := c.Get(ctx, k, existing)
+		if err == nil {
+			t.Errorf(err.Error())
+		}
+		_, err = c.Put(ctx, k, api)
+		if err != nil {
+			t.Errorf(err.Error())
+		}
+		c.Close()
 	}
 }
