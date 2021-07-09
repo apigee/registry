@@ -1,6 +1,7 @@
 package specdiff
 
 import (
+	"fmt"
 	"io/ioutil"
 	"reflect"
 	"testing"
@@ -10,6 +11,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/tufin/oasdiff/diff"
 	"google.golang.org/protobuf/testing/protocmp"
+	"gopkg.in/yaml.v2"
 )
 
 type testStruct struct {
@@ -30,8 +32,8 @@ func TestDiffProtoStruct(t *testing.T) {
 			revisionSpec: "./test-specs/struct-test-add.yaml",
 			wantProto: &rpc.Diff{
 				Added: []string{
-					"components.schemas.Pet.required.added.age",
-					"components.schemas.Pet.properties.added.age",
+					"components.schemas.Pet.required.age",
+					"components.schemas.Pet.properties.age",
 				},
 				Deleted:      []string{},
 				Modification: map[string]*rpc.DiffValueModification{},
@@ -44,7 +46,7 @@ func TestDiffProtoStruct(t *testing.T) {
 			wantProto: &rpc.Diff{
 				Added: []string{},
 				Deleted: []string{
-					"components.schemas.Pet.required.deleted.name",
+					"components.schemas.Pet.required.name",
 				},
 				Modification: map[string]*rpc.DiffValueModification{},
 			},
@@ -76,19 +78,19 @@ func TestDiffProtoStruct(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			yamlFile, err := ioutil.ReadFile(test.baseSpec)
 			if err != nil {
-				t.Fatalf("Failed to get test-yaml: %s", err)
+				t.Fatalf("Failed to get base spec yaml: %s", err)
 			}
 			yamlFile2, err := ioutil.ReadFile(test.revisionSpec)
 			if err != nil {
-				t.Fatalf("Failed to get test-yaml: %s", err)
+				t.Fatalf("Failed to get revision spec yaml: %s", err)
 			}
 			diff, err := GetDiff(yamlFile, yamlFile2)
 			if err != nil {
-				t.Fatalf("Failed to get get diff.Diff: %s", err)
+				t.Fatalf("Failed to get diff.Diff: %s", err)
 			}
 			diffProto, err := GetChanges(diff)
 			if err != nil {
-				t.Fatalf("Failed to get get diff proto: %s", err)
+				t.Fatalf("Failed to get diff proto: %s", err)
 			}
 
 			opts := cmp.Options{
@@ -162,11 +164,11 @@ func TestMaps(t *testing.T) {
 			Modification: make(map[string]*rpc.DiffValueModification),
 		}
 		change := test.change
-		diffProtoResult, _, err := searchMapType(val, diffProto, &change, nil)
+		err := searchMapType(val, diffProto, &change)
 		if err != nil {
 			t.Fatalf("Failed to get get diff proto: %+v", err)
 		}
-		if !cmp.Equal(test.wantProto, diffProtoResult, opts) {
+		if !cmp.Equal(test.wantProto, diffProto, opts) {
 			t.Errorf("Test %+v returned unexpected diff (-want +got):\n%s", test.desc, cmp.Diff(test.wantProto, diffProto, opts))
 		}
 	}
@@ -186,6 +188,7 @@ func TestArrays(t *testing.T) {
 				"input2",
 				"input3",
 				"input4",
+				"",
 			}),
 			change: Change{
 				FieldPath:  []string{},
@@ -211,11 +214,11 @@ func TestArrays(t *testing.T) {
 			Modification: make(map[string]*rpc.DiffValueModification),
 		}
 		change := test.change
-		diffProtoResult, _, err := searchArrayAndSliceType(val, diffProto, &change, nil)
+	  err := searchArrayAndSliceType(val, diffProto, &change)
 		if err != nil {
 			t.Fatalf("Failed to get get diff proto: %+v", err)
 		}
-		if !cmp.Equal(test.wantProto, diffProtoResult, opts) {
+		if !cmp.Equal(test.wantProto, diffProto, opts) {
 			t.Errorf("Test %+v returned unexpected diff (-want +got):\n%s", test.desc, cmp.Diff(test.wantProto, diffProto, opts))
 		}
 	}
@@ -240,7 +243,8 @@ func TestValueDiff(t *testing.T) {
 				Modification: map[string]*rpc.DiffValueModification{
 					"ValueDiffTest": {
 						To:   "true",
-						From: "66"},
+						From: "66",
+					},
 				},
 			},
 		},
@@ -255,31 +259,31 @@ func TestValueDiff(t *testing.T) {
 			Modification: make(map[string]*rpc.DiffValueModification),
 		}
 		change := test.change
-		diffProtoResult, _, err := handleValueDiffStruct(val, diffProto, &change, nil)
-		if err != nil {
-			t.Fatalf("Failed to get get diff proto: %+v", err)
+		vd, ok := val.Interface().(diff.ValueDiff)
+		if !ok {
+			t.Fatalf("Failed to convert from reflect.Value to diff.ValueDiff")
 		}
-		if !cmp.Equal(test.wantProto, diffProtoResult, opts) {
+		handleValueDiffStruct(vd, diffProto, &change)
+		if !cmp.Equal(test.wantProto, diffProto, opts) {
 			t.Errorf("Test %+v returned unexpected diff (-want +got):\n%s", test.desc, cmp.Diff(test.wantProto, diffProto, opts))
 		}
 	}
 }
 
 //Test Yaml Diff
-/*func TestDiffYaml(t *testing.T){
-	yamlFile, err := ioutil.ReadFile("./test-specs/base-test.yaml")
+func TestDiffYaml(t *testing.T){
+	yamlFile, err := ioutil.ReadFile("./data/openapi-test1.yaml")
 	if err != nil {
 		t.Fatalf("Failed to get test-yaml: %+v", err)
-		t.FailNow()
 	}
-	yamlFile2, err := ioutil.ReadFile("./test-specs/struct-test-modify.yaml")
+	yamlFile2, err := ioutil.ReadFile("./data/openapi-test2.yaml")
 	if err != nil {
-		t.Logf("Failed to get test-yaml: %+v", err)
-		t.FailNow()
+		t.Fatalf("Failed to get test-yaml: %+v", err)
 	}
+
 	diff, _ := GetDiff(yamlFile, yamlFile2)
 
-	diffProto, err := GetChangesRecursive(diff)
+	diffProto, err := GetChanges(diff)
 	for i := 0; i < len(diffProto.Added); i++{
 		t.Logf("CHANGETYPE:%+v 	 |Change: %+v \n", "Added", diffProto.Added[i])
 	}
@@ -289,17 +293,17 @@ func TestValueDiff(t *testing.T) {
 	for i := range diffProto.Modification{
 		t.Logf("CHANGETYPE:%+v 	 |Change: %+v |Modification: %+v \n", "Modified", i, diffProto.Modification[i])
 	}
-	//'t.Logf("Protobuf: %+v \n", diffProto)
+
 
 	t.FailNow()
 }
 
-func getYAML(output interface{}) ([]byte) {
+func getYAML(output interface{}) (string) {
 	bytes, err := yaml.Marshal(output)
 	if err != nil {
 		fmt.Printf("failed to marshal result as yaml with %v", err)
-		return bytes
+		return string(bytes)
 	}
-	return bytes
+	return string(bytes)
 }
-*/
+

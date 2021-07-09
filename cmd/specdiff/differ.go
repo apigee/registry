@@ -5,39 +5,38 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/apigee/registry/rpc"
 	pb "github.com/apigee/registry/rpc"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/tufin/oasdiff/diff"
 )
 
 // Change TODO
-type Change struct {
-	FieldPath  Stack
+type Change struct{
+	FieldPath Stack
 	ChangeType string
 }
 
 // Stack TODO
 type Stack []string
 
-func (s *Stack) String() string {
-	return strings.Join(*s, ".")
+func (s Stack) String() string {
+	return strings.Join(s, ".")
 }
 
 // IsEmpty TODO
-func (s *Stack) IsEmpty() bool {
-	return len(*s) == 0
+func (s Stack) IsEmpty() bool {
+	return len(s) == 0
 }
 
 // Push TODO
 func (s *Stack) Push(str string) {
 	*s = append(*s, str)
-	//fmt.Printf("Pushed | %+v  Stack : %+v \n", str, s)
 }
 
 // Pop TODO
 func (s *Stack) Pop() (string, bool) {
 	if s.IsEmpty() {
-		//fmt.Printf("Poped Failed \n")
 		return "", false
 	}
 	index := len(*s) - 1
@@ -47,7 +46,8 @@ func (s *Stack) Pop() (string, bool) {
 }
 
 // GetDiff takes two yaml or json Open API 3 Specs and diffs them.
-func GetDiff(base []byte, revision []byte) (*diff.Diff, error) {
+// TODO: Return *pb.Diff
+func GetDiff(base, revision []byte) (*diff.Diff, error) {
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 	baseSpec, err := loader.LoadFromData(base)
@@ -71,190 +71,210 @@ func GetDiff(base []byte, revision []byte) (*diff.Diff, error) {
 	return diffReport, nil
 }
 
-// AddToDiffProto TODO
-func AddToDiffProto(diffProto *pb.Diff, change *Change, fromValue string, toValue string) {
-	if change.ChangeType == "added" {
-		diffProto.Added = append(diffProto.Added, change.FieldPath.String())
-	}
-	if change.ChangeType == "deleted" {
-		diffProto.Deleted = append(diffProto.Deleted, change.FieldPath.String())
-	}
-	if change.ChangeType == "modified" {
-		valueModification := &pb.DiffValueModification{
-			To:   toValue,
-			From: fromValue,
-		}
-		diffProto.Modification[change.FieldPath.String()] = valueModification
+func addToDiffProto(diffProto *pb.Diff, change *Change) {
+	fieldName := change.FieldPath.String()
+	switch change.ChangeType {
+	case "added":
+		diffProto.Added = append(diffProto.Added, fieldName)
+	case "deleted":
+		diffProto.Deleted = append(diffProto.Deleted, fieldName)
 	}
 }
 
 //GetChanges creates a protodif report from a diff.Diff struct.
-func GetChanges(diff *diff.Diff) (*pb.Diff, error) {
+// TODO: unexport this function or combine it with GetDiff.
+func GetChanges(diff *diff.Diff) (*pb.Diff, error){
 	diffProto := &pb.Diff{
-		Added:        []string{},
-		Deleted:      []string{},
+		Added: []string{},
+		Deleted: []string{},
 		Modification: make(map[string]*pb.DiffValueModification),
 	}
-	change := Change{
-		FieldPath:  []string{},
+	change := &Change{
+		FieldPath:  Stack{},
 		ChangeType: "",
 	}
 	diffNode := reflect.ValueOf(diff)
-	finaldiffProto, _, err := getChanges(&diffNode, diffProto, &change, nil)
-	return finaldiffProto, err
+	err := getChanges(diffNode, diffProto, change)
+	return diffProto, err
 }
 
-func getChanges(value *reflect.Value, diffProto *pb.Diff, change *Change, err error) (*pb.Diff, *Change, error) {
-	if err != nil {
-		return diffProto, change, err
-	}
-	//Get the actual Object.
-	diffNode := reflect.Indirect(*value)
-	if !diffNode.IsValid() {
-		return diffProto, change, err
-	}
-	nodeKind := diffNode.Kind()
-	if nodeKind == reflect.Map {
-		return searchMapType(diffNode, diffProto, change, err)
-	}
-	if nodeKind == reflect.Array || nodeKind == reflect.Slice {
-		return searchArrayAndSliceType(diffNode, diffProto, change, err)
-	}
-	/*if nodeKind == reflect.Interface{
-		return searchInterfaceType(diffNode, diffProto, change, err)
-	}*/
-	if nodeKind == reflect.Struct {
-		return searchStructType(diffNode, diffProto, change, err)
-	}
-	atomicType, stringElement := handleNonRecursiveType(diffNode)
-	if !atomicType {
-		return diffProto, change, fmt.Errorf("NO TYPE:%+v: for Type: %+v\n ", diffNode.Type(), diffNode)
+func getChanges(value reflect.Value, diffProto *pb.Diff, change *Change) error {
+	// Some values might be pointers, so we should dereference before continuing.
+	value = reflect.Indirect(value)
+
+	// Invalid values aren't relevant to the diff.
+	if !value.IsValid() {
+		return nil
 	}
 
-	change.FieldPath.Push(stringElement)
-	AddToDiffProto(diffProto, change, "", "")
-	change.FieldPath.Pop()
-
-	return diffProto, change, err
+	switch value.Kind() {
+	case reflect.Map:
+		return searchMapType(value, diffProto, change)
+	case reflect.Array, reflect.Slice:
+		return searchArrayAndSliceType(value, diffProto, change)
+	case reflect.Struct:
+		return searchStructType(value, diffProto, change)
+	case reflect.Float64, reflect.String, reflect.Bool, reflect.Int:
+		valueString, _ := handleAtomicType(value)
+		change.FieldPath.Push(valueString)
+		addToDiffProto(diffProto, change)
+		change.FieldPath.Pop()
+		return nil
+	default:
+		return fmt.Errorf("field %q has unknown type %s with value %v", change.FieldPath, value.Type(), value)
+	}
 }
 
-func searchMapType(mapNode reflect.Value, diffProto *pb.Diff, change *Change, err error) (*pb.Diff, *Change, error) {
-	mapNodeKeys := mapNode.MapKeys()
-	for _, childNodeKey := range mapNodeKeys {
+func searchMapType(mapNode reflect.Value, diffProto *pb.Diff, change *Change) ( error) {
+	if mapNode.Kind() != reflect.Map {
+		panic("searchMapType called with invalid type")
+	}
+
+	for _ , childNodeKey := range mapNode.MapKeys() {
 		childNode := mapNode.MapIndex(childNodeKey)
-		if childNode.IsZero() || mapNode.IsNil() {
+		if childNode.IsZero(){
 			continue
 		}
-		atomicType, childNodeKeyName := handleNonRecursiveType(childNodeKey)
-		if atomicType {
+
+		// TODO: Split this into separate atomic check + parse.
+		childNodeKeyName, ok := handleAtomicType(childNodeKey)
+		if ok {
 			change.FieldPath.Push(childNodeKeyName)
-			diffProto, change, err = getChanges(&childNode, diffProto, change, err)
+			err := getChanges(childNode, diffProto, change)
+			if err != nil {
+				return err
+			}
 			change.FieldPath.Pop()
-
 		} else {
-			diffProto, change, err = getChanges(&childNodeKey, diffProto, change, err)
-			diffProto, change, err = getChanges(&childNode, diffProto, change, err)
-		}
+			err := getChanges(childNodeKey, diffProto, change)
+			if err != nil {
+				return err
+			}
 
+			err = getChanges(childNode, diffProto, change)
+			if err != nil {
+				return err
+			}
+		}
 	}
-	return diffProto, change, err
+	return nil
 }
 
-func searchArrayAndSliceType(arrayNode reflect.Value, diffProto *pb.Diff, change *Change, err error) (*pb.Diff, *Change, error) {
+func searchArrayAndSliceType(arrayNode reflect.Value, diffProto *pb.Diff, change *Change) (error){
+	if arrayNode.Kind() != reflect.Slice && arrayNode.Kind() != reflect.Array {
+		panic("searchArrayAndSliceType called with invalid type")
+	}
+
 	for i := 0; i < (arrayNode.Len()); i++ {
 		childNode := arrayNode.Index(i)
-		if !childNode.IsZero() {
-			if childNode.Kind() == reflect.String {
-				change.FieldPath.Push(string(childNode.String()))
-				AddToDiffProto(diffProto, change, "", "")
-				change.FieldPath.Pop()
-				continue
-			}
-			diffProto, change, err = getChanges(&childNode, diffProto, change, err)
-		}
-	}
-	return diffProto, change, err
-}
-
-/*func searchInterfaceType(interfaceNode reflect.Value, diffProto *pb.Diff, change *Change, err error)(*pb.Diff, *Change, error){
-	_, interfaceElement := handleNonRecursiveType(interfaceNode.Elem())
-	change.FieldPath.Push(interfaceElement)
-	AddToDiffProto(diffProto, change, "","")
-	_, _ = change.FieldPath.Pop()
-	return diffProto, change, err
-}*/
-
-func searchStructType(structNode reflect.Value, diffProto *pb.Diff, change *Change, err error) (*pb.Diff, *Change, error) {
-	if structNode.Type().String() == "diff.ValueDiff" {
-		diffProto, change, err = handleValueDiffStruct(structNode, diffProto, change, err)
-		return diffProto, change, err
-	}
-	emptyChildren := true
-	for i := 0; i < structNode.NumField(); i++ {
-		structNodeTag := structNode.Type().Field(i).Tag
-
-		structNodeTagName, ok := structNodeTag.Lookup("json")
-		// Why isnt this an error?
-		if !ok {
-			continue
-		}
-		childNode := structNode.Field(i)
 		if childNode.IsZero() {
 			continue
 		}
-		structNodeTagName = strings.Split(string(structNodeTagName), ",")[0]
-		emptyChildren = false
-		setChangeType(structNodeTagName, change)
-		if structNodeTagName != "modified" {
-			change.FieldPath.Push(structNodeTagName)
-			diffProto, change, err = getChanges(&childNode, diffProto, change, err)
+		if childNode.Kind() == reflect.String {
+			change.FieldPath.Push(childNode.String())
+			addToDiffProto(diffProto, change)
 			change.FieldPath.Pop()
 			continue
 		}
-		diffProto, change, err = getChanges(&childNode, diffProto, change, err)
+		err := getChanges(childNode, diffProto, change)
+		if err != nil {
+			return err
+		}
 	}
-	if emptyChildren {
-		AddToDiffProto(diffProto, change, "", "")
-	}
+	return nil
+}
+/*
+func searchInterfaceType(interfaceNode reflect.Value, diffProto *pb.Diff, change *Change, err error) (*pb.Diff, *Change, error){
+	interfaceElement, _ := handleAtomicType(interfaceNode.Elem())
+	change.FieldPath.Push(interfaceElement)
+	addToDiffProto(diffProto, change, "","")
+	_, _ = change.FieldPath.Pop()
 	return diffProto, change, err
 }
+*/
+func searchStructType(structNode reflect.Value, diffProto *pb.Diff, change *Change) (error){
+	if structNode.Kind() != reflect.Struct {
+		panic("searchStructType called with invalid type")
+	}
 
-func handleValueDiffStruct(valueDiffNode reflect.Value, diffProto *pb.Diff, change *Change, err error) (*pb.Diff, *Change, error) {
-	setChangeType("modified", change)
-	_, fromValue := handleNonRecursiveType(valueDiffNode.FieldByName("From").Elem())
-	_, toValue := handleNonRecursiveType(valueDiffNode.FieldByName("To").Elem())
-	AddToDiffProto(diffProto, change, fromValue, toValue)
-	return diffProto, change, err
+	if vd, ok := structNode.Interface().(diff.ValueDiff); ok {
+		handleValueDiffStruct(vd, diffProto, change)
+		return nil
+	}
+
+	//emptyChildren := true
+	for i := 0; i < structNode.NumField(); i++ {
+		tag, ok := structNode.Type().Field(i).Tag.Lookup("json")
+		if !ok {
+			// Fields that don't have a JSON name aren't part of the diff.
+			continue
+		}
+
+		// Empty fields in the diff are redundant. Skip them.
+		childNode := structNode.Field(i)
+		if childNode.IsZero(){
+			continue
+		}
+		// emptyChildren = false
+
+		// Struct field tags have the format "fieldname,omitempty". We only want the field name.
+		// TODO: Is there a better way to find this field name?
+		fieldName := strings.Split(tag, ",")[0]
+
+		err := handleStructField(childNode, fieldName, diffProto, change)
+		if err != nil {
+			return err
+		}
+	}
+	// if emptyChildren {
+	// 	addToDiffProto(diffProto, change, "","")
+	// }
+	return nil
 }
 
-func setChangeType(element string, change *Change) {
-	if element == "added" {
-		change.ChangeType = "added"
+func handleStructField(value reflect.Value, name string, diffProto *rpc.Diff, change *Change) ( error) {
+	// Empty fields in the diff are redundant. Skip them.
+	if value.IsZero(){
+		return  nil
 	}
-	if element == "deleted" {
-		change.ChangeType = "deleted"
+
+	switch name {
+	case "added", "deleted", "modified":
+		change.ChangeType = name
+	default:
+		change.FieldPath.Push(name)
+		defer change.FieldPath.Pop()
 	}
-	if element == "modified" || element == "from" || element == "to" {
-		change.ChangeType = "modified"
+
+	err := getChanges(value, diffProto, change)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func handleValueDiffStruct(vd diff.ValueDiff, diffProto *pb.Diff, change *Change) {
+	fromValue, _ := handleAtomicType(reflect.ValueOf(vd.From))
+	toValue, _ := handleAtomicType(reflect.ValueOf(vd.To))
+
+	diffProto.Modification[change.FieldPath.String()] = &pb.DiffValueModification{
+		From: fromValue,
+		To: toValue,
 	}
 }
 
-func handleNonRecursiveType(node reflect.Value) (bool, string) {
-	nodeKind := node.Kind()
-	if nodeKind == reflect.Float64 {
-		float64Value := fmt.Sprintf("%f", node.Float())
-		return true, string(float64Value)
+func handleAtomicType(node reflect.Value) (string, bool) {
+	switch node.Kind() {
+	case reflect.Float64:
+		return fmt.Sprintf("%f", node.Float()), true
+	case reflect.String:
+		return node.String(), true
+	case reflect.Bool:
+		return fmt.Sprintf("%t", node.Bool()), true
+	case reflect.Int:
+		return fmt.Sprintf("%d", node.Int()), true
+	default:
+		return "", false
 	}
-	if nodeKind == reflect.String {
-		return true, node.String()
-	}
-	if nodeKind == reflect.Bool {
-		boolStringValue := fmt.Sprintf("%v", node.Bool())
-		return true, boolStringValue
-	}
-	if nodeKind == reflect.Int {
-		intStringValue := fmt.Sprintf("%v", node.Int())
-		return true, intStringValue
-	}
-	return false, ""
 }
