@@ -34,7 +34,7 @@ var (
 	artifactContents = []byte(`{"contents": "foo"}`)
 )
 
-func seedArtifacts(ctx context.Context, t *testing.T, s *RegistryServer, artifacts ...*rpc.Artifact) {
+func seedArtifacts(ctx context.Context, t *testing.T, s rpc.RegistryServer, artifacts ...*rpc.Artifact) {
 	t.Helper()
 
 	for _, artifact := range artifacts {

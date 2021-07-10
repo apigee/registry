@@ -29,7 +29,7 @@ import (
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
-func seedApis(ctx context.Context, t *testing.T, s *RegistryServer, apis ...*rpc.Api) {
+func seedApis(ctx context.Context, t *testing.T, s rpc.RegistryServer, apis ...*rpc.Api) {
 	t.Helper()
 
 	for _, api := range apis {

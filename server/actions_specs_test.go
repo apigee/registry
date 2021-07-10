@@ -39,7 +39,7 @@ func sha256hash(bytes []byte) string {
 	return fmt.Sprintf("%x", sha256.Sum256(bytes))
 }
 
-func seedSpecs(ctx context.Context, t *testing.T, s *RegistryServer, specs ...*rpc.ApiSpec) {
+func seedSpecs(ctx context.Context, t *testing.T, s rpc.RegistryServer, specs ...*rpc.ApiSpec) {
 	t.Helper()
 
 	for _, spec := range specs {

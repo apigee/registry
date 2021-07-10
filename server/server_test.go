@@ -17,9 +17,10 @@ package server
 import (
 	"fmt"
 	"testing"
+	"github.com/apigee/registry/rpc"
 )
 
-func defaultTestServer(t *testing.T) *RegistryServer {
+func defaultTestServer(t *testing.T) rpc.RegistryServer {
 	t.Helper()
 	return &RegistryServer{
 		database:     "sqlite3",

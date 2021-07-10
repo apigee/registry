@@ -29,7 +29,7 @@ import (
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
-func seedVersions(ctx context.Context, t *testing.T, s *RegistryServer, versions ...*rpc.ApiVersion) {
+func seedVersions(ctx context.Context, t *testing.T, s rpc.RegistryServer, versions ...*rpc.ApiVersion) {
 	t.Helper()
 
 	for _, version := range versions {
