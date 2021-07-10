@@ -17,6 +17,7 @@ package server
 import (
 	"fmt"
 	"testing"
+
 	"github.com/apigee/registry/rpc"
 )
 
