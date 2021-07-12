@@ -4,7 +4,6 @@ package google.cloud.apigee.registry.applications.v1;
 option go_package = "github.com/apigee/registry/rpc;rpc";
 // [END go_declaration]
 
-<<<<<<< HEAD
 /* This proto contains the diff of a spec and its revision. Changes that are
 additions fall in the added field. Changes that are Deletions fall in the
 deleted field, and changes that modify values fall in the value_modify map
@@ -19,97 +18,11 @@ message Diff {
     string From = 1;
     string To = 2;
   }
-  // Change will be displayed in format foo.bar.x
+  // Change will be displayed in format foo.bar.x {to.x from.x}
   map <string, value_modification> modification= 3;
 }
-/*
 
-components.schemas.x
-components.schemas.x.x.x.x
-components.schemas.Pet.required.deleted.name
-
- */
-=======
-/* What the Differ Module will compute, this proto contains
-the text diff of a spec and its revision */
-message TextDiff {
-  string diff = 1;
-  string spec = 2;
-  string spec_revision = 3;
+message Changes {
+  Diff breaking_changes = 1;
+  Diff nonbreaking_changes = 2;
 }
-
-/* What the Breaking Change Module will compute, this proto contains
-the diff separated into lines which represent individual changes.
-These changes are then labeled as a breaking change or non breaking change. */
-message DiffAnalysis {
-  //A single change
-  message ChangeLine{
-    enum ChangeType {
-      ADDED = 0;
-      MODIFIED = 1;
-      DELETED = 2;
-    }
-    /* A string line that represents 1 change
-   Ex : Components: schemas: modified: Pet: properties:
-   modified: name: type: from: string: to: "null" */
-    string line = 1;
-    //Added, Modified, Deleted
-    ChangeType change_type = 2;
-    bool breaking_change = 3;
-  }
-  repeated ChangeLine change_line = 1;
-  int64 change_count = 2;
-  int64 breaking_change_count = 3;
-}
-
-/* This represents the total stats of a resource.
-These stats are computed for all resources. */
-message Stats {
-  int64 changes = 1;
-  int64 breaking_changes = 2;
-  int64 revisions = 3;
-  int64 featurers_added = 4;
-  int64 features_removed = 5;
-}
-/* This represents computed metrics for a resource.
-These metrics are computed for all resources */
-message Metrics {
-  // (Breaking_Changes / Changes)
-  double breaking_change_percentage = 1;
-  // ((features_added - features_removed) / revisions)
-  double feature_rate = 2;
-  // (breaking_changes / revisions)
-  double breaking_change_rate = 3;
-}
-
-/* This represents the stability info for a Spec */
-message SpecStability {
-  Stats stats = 1;
-  Metrics metrics = 2;
-  // the filter used on the Spec
-  string filter_used = 3;
-}
-
-/* This represents the stability info for a Version */
-message VersionStability {
-  Stats stats = 1;
-  Metrics metrics = 2;
-  // the filter used on the Version
-  string filter_used = 3;
-}
-/* This represents the stability info for a API */
-message APIStability {
-  Stats stats = 1;
-  Metrics metrics = 2;
-  // the filter used on the API
-  string filter_used = 3;
-}
-
-/* This represents the stability info for a Project (Catalog)*/
-message ProjectStability {
-  Stats stats = 1;
-  Metrics metrics = 2;
-  // the filter used on the Project
-  string filter_used = 3;
-}
->>>>>>> fecbde2ce5549b669f4eb932004e311b090f4e24
