@@ -1,0 +1,44 @@
+syntax = "proto3";
+package google.cloud.apigee.registry.applications.v1;
+// [START go_declaration]
+option go_package = "github.com/apigee/registry/rpc;rpc";
+// [END go_declaration]
+
+message Diff {
+  // Change will be displayed in format foo.bar.x
+  repeated string added = 1;
+  // Change will be displayed in format foo.bar.x
+  repeated string deleted = 2;
+
+  message Value_Modification {
+    string From = 1;
+    string To = 2;
+  }
+  // Change will be displayed in format foo.bar.x
+  map <string, value_modification> modification= 3;
+}
+
+message Changes1 {
+  Diff breaking_changes = 1;
+  Diff nonbreaking_changes = 2;
+}
+
+message Changes2 {
+
+  message Change {
+    enum ChangeStatus {
+      NONBREAKING = 0;
+      BREAKING = 1;
+    }
+    enum ChangeType {
+      ADDITION = 1;
+      DELETION = 2;
+      MODIFICATION = 3;
+    }
+    string change_line = 1;
+    ChangeStatus change_status = 2;
+    ChangeType change_type = 3;
+  }
+
+  repeated Change change = 1;
+}
