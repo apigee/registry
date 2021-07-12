@@ -24,9 +24,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var getContents bool
-
-func Command() *cobra.Command {
+func Command(ctx context.Context) *cobra.Command {
+	var getContents bool
 	cmd := &cobra.Command{
 		Use:   "get",
 		Short: "Get resources from the API Registry",
@@ -70,7 +69,6 @@ func Command() *cobra.Command {
 		},
 	}
 
-	// TODO: Remove the global state.
-	cmd.Flags().BoolVar(&getContents, "contents", false, "Get item contents (if applicable).")
+	cmd.Flags().BoolVar(&getContents, "contents", false, "Include resource contents if available")
 	return cmd
 }

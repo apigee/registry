@@ -29,26 +29,17 @@ import (
 	"google.golang.org/genproto/protobuf/field_mask"
 )
 
-const annotateFieldName = "annotations"
-const annotateCommandName = "annotate"
+func Command(ctx context.Context) *cobra.Command {
+	var (
+		filter    string
+		overwrite bool
+	)
 
-func Command() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   fmt.Sprintf("%s RESOURCE KEY_1=VAL_1 ... KEY_N=VAL_N", annotateCommandName),
-		Short: fmt.Sprintf("%s resources in the API Registry", strings.Title(annotateCommandName)),
+		Use:   "annotate RESOURCE KEY_1=VAL_1 ... KEY_N=VAL_N",
+		Short: "Annotate resources in the API Registry",
 		Args:  cobra.MinimumNArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
-			flagset := cmd.LocalFlags()
-			filter, err := flagset.GetString("filter")
-			if err != nil {
-				log.Fatalf("Failed to get filter string from flags: %s", err)
-			}
-			overwrite, err := flagset.GetBool("overwrite")
-			if err != nil {
-				log.Fatalf("Failed to get overwrite boolean from flags: %s", err)
-			}
-
-			ctx := context.Background()
 			client, err := connection.NewClient(ctx)
 			if err != nil {
 				log.Fatalf("%s", err.Error())
@@ -88,8 +79,9 @@ func Command() *cobra.Command {
 			core.WaitGroup().Wait()
 		},
 	}
-	cmd.Flags().String("filter", "", "Filter selected resources")
-	cmd.Flags().Bool("overwrite", false, "Overwrite existing annotations")
+
+	cmd.Flags().StringVar(&filter, "filter", "", "Filter selected resources")
+	cmd.Flags().BoolVar(&overwrite, "overwrite", false, "Overwrite existing annotations")
 	return cmd
 }
 
@@ -176,7 +168,7 @@ type annotateApiTask struct {
 }
 
 func (task *annotateApiTask) String() string {
-	return annotateCommandName + " " + task.api.Name
+	return "annotate " + task.api.Name
 }
 
 func (task *annotateApiTask) Run(ctx context.Context) error {
@@ -189,7 +181,7 @@ func (task *annotateApiTask) Run(ctx context.Context) error {
 		&rpc.UpdateApiRequest{
 			Api: task.api,
 			UpdateMask: &field_mask.FieldMask{
-				Paths: []string{annotateFieldName},
+				Paths: []string{"annotations"},
 			},
 		})
 	return err
@@ -202,7 +194,7 @@ type annotateVersionTask struct {
 }
 
 func (task *annotateVersionTask) String() string {
-	return annotateCommandName + " " + task.version.Name
+	return "annotate " + task.version.Name
 }
 
 func (task *annotateVersionTask) Run(ctx context.Context) error {
@@ -215,7 +207,7 @@ func (task *annotateVersionTask) Run(ctx context.Context) error {
 		&rpc.UpdateApiVersionRequest{
 			ApiVersion: task.version,
 			UpdateMask: &field_mask.FieldMask{
-				Paths: []string{annotateFieldName},
+				Paths: []string{"annotations"},
 			},
 		})
 	return err
@@ -228,7 +220,7 @@ type annotateSpecTask struct {
 }
 
 func (task *annotateSpecTask) String() string {
-	return annotateCommandName + " " + task.spec.Name
+	return "annotate " + task.spec.Name
 }
 
 func (task *annotateSpecTask) Run(ctx context.Context) error {
@@ -241,7 +233,7 @@ func (task *annotateSpecTask) Run(ctx context.Context) error {
 		&rpc.UpdateApiSpecRequest{
 			ApiSpec: task.spec,
 			UpdateMask: &field_mask.FieldMask{
-				Paths: []string{annotateFieldName},
+				Paths: []string{"annotations"},
 			},
 		})
 	return err

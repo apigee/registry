@@ -27,77 +27,73 @@ import (
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
-	rpcpb "github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
-func init() {
-	uploadCsvCmd.Flags().String("project_id", "", "Project id.")
-	uploadCsvCmd.MarkFlagRequired("project_id")
-	uploadCsvCmd.Flags().String("delimiter", ",", "Field delimiter of the CSV file.")
-}
+func csvCommand(ctx context.Context) *cobra.Command {
+	var (
+		projectID string
+		delimiter string
+	)
 
-var uploadCsvCmd = &cobra.Command{
-	Use:   "csv file --project_id=value [--delimiter=value]",
-	Short: "Upload API specs from a CSV file",
-	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		flagset := cmd.LocalFlags()
-		projectID, err := flagset.GetString("project_id")
-		if err != nil {
-			log.Fatalf("Failed to get project_id string from flags: %s", err)
-		}
+	cmd := &cobra.Command{
+		Use:   "csv file --project_id=value [--delimiter=value]",
+		Short: "Upload API specs from a CSV file",
+		Args:  cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(delimiter) != 1 {
+				log.Fatalf("Invalid delimiter %q: must be exactly one character", delimiter)
+			}
 
-		delimiter, err := flagset.GetString("delimiter")
-		if err != nil {
-			log.Fatalf("Failed to get delimiter string from flags: %s", err)
-		} else if len(delimiter) != 1 {
-			log.Fatalf("Invalid delimiter %q: must be exactly one character", delimiter)
-		}
-
-		ctx := context.Background()
-		client, err := connection.NewClient(ctx)
-		if err != nil {
-			log.Fatalf("Failed to create client: %s", err)
-		}
-		core.EnsureProjectExists(ctx, client, projectID)
-
-		taskQueue := make(chan core.Task, 64)
-		for i := 0; i < 64; i++ {
-			core.WaitGroup().Add(1)
-			go core.Worker(ctx, taskQueue)
-		}
-		defer core.WaitGroup().Wait()
-		defer close(taskQueue)
-
-		file, err := os.Open(args[0])
-		if err != nil {
-			log.Fatalf("Failed to open file: %s", err)
-		}
-		defer file.Close()
-
-		r := uploadCSVReader{
-			Reader:    csv.NewReader(file),
-			Delimiter: rune(delimiter[0]),
-		}
-
-		for row, err := r.Read(); err != io.EOF; row, err = r.Read() {
+			ctx := context.Background()
+			client, err := connection.NewClient(ctx)
 			if err != nil {
-				log.Fatalf("Failed to read row from file: %s", err)
+				log.Fatalf("Failed to create client: %s", err)
+			}
+			core.EnsureProjectExists(ctx, client, projectID)
+
+			taskQueue := make(chan core.Task, 64)
+			for i := 0; i < 64; i++ {
+				core.WaitGroup().Add(1)
+				go core.Worker(ctx, taskQueue)
+			}
+			defer core.WaitGroup().Wait()
+			defer close(taskQueue)
+
+			file, err := os.Open(args[0])
+			if err != nil {
+				log.Fatalf("Failed to open file: %s", err)
+			}
+			defer file.Close()
+
+			r := uploadCSVReader{
+				Reader:    csv.NewReader(file),
+				Delimiter: rune(delimiter[0]),
 			}
 
-			taskQueue <- &uploadSpecTask{
-				client:    client,
-				projectID: projectID,
-				apiID:     row.ApiID,
-				versionID: row.VersionID,
-				specID:    row.SpecID,
-				filepath:  row.Filepath,
+			for row, err := r.Read(); err != io.EOF; row, err = r.Read() {
+				if err != nil {
+					log.Fatalf("Failed to read row from file: %s", err)
+				}
+
+				taskQueue <- &uploadSpecTask{
+					client:    client,
+					projectID: projectID,
+					apiID:     row.ApiID,
+					versionID: row.VersionID,
+					specID:    row.SpecID,
+					filepath:  row.Filepath,
+				}
 			}
-		}
-	},
+		},
+	}
+
+	cmd.Flags().StringVar(&projectID, "project_id", "", "Project ID to use for each upload")
+	cmd.MarkFlagRequired("project_id")
+	cmd.Flags().StringVar(&delimiter, "delimiter", ",", "Field delimiter for the CSV file")
+	return cmd
 }
 
 type uploadCSVReader struct {
@@ -182,10 +178,10 @@ type uploadSpecTask struct {
 }
 
 func (t uploadSpecTask) Run(ctx context.Context) error {
-	api, err := t.client.CreateApi(ctx, &rpcpb.CreateApiRequest{
+	api, err := t.client.CreateApi(ctx, &rpc.CreateApiRequest{
 		Parent: fmt.Sprintf("projects/%s", t.projectID),
 		ApiId:  t.apiID,
-		Api:    &rpcpb.Api{},
+		Api:    &rpc.Api{},
 	})
 
 	switch status.Code(err) {
@@ -199,10 +195,10 @@ func (t uploadSpecTask) Run(ctx context.Context) error {
 		return fmt.Errorf("failed to ensure API exists: %s", err)
 	}
 
-	version, err := t.client.CreateApiVersion(ctx, &rpcpb.CreateApiVersionRequest{
+	version, err := t.client.CreateApiVersion(ctx, &rpc.CreateApiVersionRequest{
 		Parent:       api.GetName(),
 		ApiVersionId: t.versionID,
-		ApiVersion:   &rpcpb.ApiVersion{},
+		ApiVersion:   &rpc.ApiVersion{},
 	})
 
 	switch status.Code(err) {
@@ -226,10 +222,10 @@ func (t uploadSpecTask) Run(ctx context.Context) error {
 		return err
 	}
 
-	spec, err := t.client.CreateApiSpec(ctx, &rpcpb.CreateApiSpecRequest{
+	spec, err := t.client.CreateApiSpec(ctx, &rpc.CreateApiSpecRequest{
 		Parent:    version.GetName(),
 		ApiSpecId: t.specID,
-		ApiSpec: &rpcpb.ApiSpec{
+		ApiSpec: &rpc.ApiSpec{
 			// TODO: How do we choose a mime type?
 			MimeType: core.OpenAPIMimeType("+gzip", "3.0.0"),
 			Contents: compressed,

@@ -27,41 +27,46 @@ import (
 	"google.golang.org/api/iterator"
 )
 
-var countVersionsCmd = &cobra.Command{
-	Use:   "versions",
-	Short: "Count the number of versions of specified APIs",
-	Args:  cobra.MinimumNArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-
-		ctx := context.Background()
-		client, err := connection.NewClient(ctx)
-		if err != nil {
-			log.Fatalf("%s", err.Error())
-		}
-		// Initialize task queue.
-		taskQueue := make(chan core.Task, 1024)
-		workerCount := 64
-		for i := 0; i < workerCount; i++ {
-			core.WaitGroup().Add(1)
-			go core.Worker(ctx, taskQueue)
-		}
-		// Generate tasks.
-		name := args[0]
-		if m := names.ApiRegexp().FindStringSubmatch(name); m != nil {
-			// Iterate through a collection of APIs and count the number of versions of each.
-			err = core.ListAPIs(ctx, client, m, countFilter, func(api *rpc.Api) {
-				taskQueue <- &countVersionsTask{
-					client:  client,
-					apiName: api.Name,
-				}
-			})
+func versionsCommand(ctx context.Context) *cobra.Command {
+	var filter string
+	cmd := &cobra.Command{
+		Use:   "versions",
+		Short: "Count the number of versions of specified APIs",
+		Args:  cobra.MinimumNArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			ctx := context.Background()
+			client, err := connection.NewClient(ctx)
 			if err != nil {
 				log.Fatalf("%s", err.Error())
 			}
-			close(taskQueue)
-			core.WaitGroup().Wait()
-		}
-	},
+			// Initialize task queue.
+			taskQueue := make(chan core.Task, 1024)
+			workerCount := 64
+			for i := 0; i < workerCount; i++ {
+				core.WaitGroup().Add(1)
+				go core.Worker(ctx, taskQueue)
+			}
+			// Generate tasks.
+			name := args[0]
+			if m := names.ApiRegexp().FindStringSubmatch(name); m != nil {
+				// Iterate through a collection of APIs and count the number of versions of each.
+				err = core.ListAPIs(ctx, client, m, filter, func(api *rpc.Api) {
+					taskQueue <- &countVersionsTask{
+						client:  client,
+						apiName: api.Name,
+					}
+				})
+				if err != nil {
+					log.Fatalf("%s", err.Error())
+				}
+				close(taskQueue)
+				core.WaitGroup().Wait()
+			}
+		},
+	}
+
+	cmd.Flags().StringVar(&filter, "filter", "", "Filter selected resources")
+	return cmd
 }
 
 type countVersionsTask struct {

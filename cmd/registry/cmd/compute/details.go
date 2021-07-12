@@ -24,48 +24,55 @@ import (
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
-	discovery_v1 "github.com/googleapis/gnostic/discovery"
-	openapi_v2 "github.com/googleapis/gnostic/openapiv2"
-	openapi_v3 "github.com/googleapis/gnostic/openapiv3"
 	"github.com/spf13/cobra"
 	"google.golang.org/genproto/protobuf/field_mask"
+
+	discovery "github.com/googleapis/gnostic/discovery"
+	oas2 "github.com/googleapis/gnostic/openapiv2"
+	oas3 "github.com/googleapis/gnostic/openapiv3"
 )
 
-var computeDetailsCmd = &cobra.Command{
-	Use:   "details",
-	Short: "Compute details about APIs from information in their specs.",
-	Args:  cobra.MinimumNArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		ctx := context.Background()
-		client, err := connection.NewClient(ctx)
-		if err != nil {
-			log.Fatalf("%s", err.Error())
-		}
-		// Initialize task queue.
-		taskQueue := make(chan core.Task, 1024)
-		workerCount := 64
-		for i := 0; i < workerCount; i++ {
-			core.WaitGroup().Add(1)
-			go core.Worker(ctx, taskQueue)
-		}
-		// Generate tasks.
-		name := args[0]
-		if m := names.ApiRegexp().FindStringSubmatch(name); m != nil {
-			// Iterate through a collection of specs and summarize each.
-			err = core.ListAPIs(ctx, client, m, computeFilter, func(api *rpc.Api) {
-				taskQueue <- &computeDetailsTask{
-					client:  client,
-					apiName: api.Name,
-				}
-			})
+func detailsCommand(ctx context.Context) *cobra.Command {
+	return &cobra.Command{
+		Use:   "details",
+		Short: "Compute details about APIs from information in their specs.",
+		Args:  cobra.MinimumNArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			filter, err := cmd.Flags().GetString("filter")
 			if err != nil {
-				// some errors are OK.
-				log.Printf("%s", err.Error())
+				log.Fatalf("Failed to get filter from flags: %s", err)
 			}
-			close(taskQueue)
-			core.WaitGroup().Wait()
-		}
-	},
+
+			client, err := connection.NewClient(ctx)
+			if err != nil {
+				log.Fatalf("%s", err.Error())
+			}
+			// Initialize task queue.
+			taskQueue := make(chan core.Task, 1024)
+			workerCount := 64
+			for i := 0; i < workerCount; i++ {
+				core.WaitGroup().Add(1)
+				go core.Worker(ctx, taskQueue)
+			}
+			// Generate tasks.
+			name := args[0]
+			if m := names.ApiRegexp().FindStringSubmatch(name); m != nil {
+				// Iterate through a collection of specs and summarize each.
+				err = core.ListAPIs(ctx, client, m, filter, func(api *rpc.Api) {
+					taskQueue <- &computeDetailsTask{
+						client:  client,
+						apiName: api.Name,
+					}
+				})
+				if err != nil {
+					// some errors are OK.
+					log.Printf("%s", err.Error())
+				}
+				close(taskQueue)
+				core.WaitGroup().Wait()
+			}
+		},
+	}
 }
 
 type computeDetailsTask struct {
@@ -88,9 +95,8 @@ func (task *computeDetailsTask) Run(ctx context.Context) error {
 		return nil
 	}
 	spec := specs[len(specs)-1]
-	var err error
 	m = names.SpecRegexp().FindStringSubmatch(spec.Name)
-	spec, err = core.GetSpec(ctx, task.client, m, true, nil)
+	spec, err := core.GetSpec(ctx, task.client, m, true, nil)
 	if err != nil {
 		return nil
 	}
@@ -102,7 +108,7 @@ func (task *computeDetailsTask) Run(ctx context.Context) error {
 		if err != nil {
 			return nil
 		}
-		document, err := openapi_v2.ParseDocument(data)
+		document, err := oas2.ParseDocument(data)
 		if document == nil && err != nil {
 			return fmt.Errorf("invalid OpenAPI v2: %s", spec.Name)
 		}
@@ -128,7 +134,7 @@ func (task *computeDetailsTask) Run(ctx context.Context) error {
 		if err != nil {
 			return nil
 		}
-		document, err := openapi_v3.ParseDocument(data)
+		document, err := oas3.ParseDocument(data)
 		if document == nil && err != nil {
 			return fmt.Errorf("invalid OpenAPI v3: %s", spec.Name)
 		}
@@ -154,7 +160,7 @@ func (task *computeDetailsTask) Run(ctx context.Context) error {
 		if err != nil {
 			return nil
 		}
-		document, err := discovery_v1.ParseDocument(data)
+		document, err := discovery.ParseDocument(data)
 		if document == nil && err != nil {
 			return fmt.Errorf("invalid Discovery document: %s", spec.Name)
 		}

@@ -26,51 +26,43 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func init() {
-	uploadManifestCmd.Flags().String("project_id", "", "ProjectID this manifest should be associated with.")
-}
+func manifestCommand(ctx context.Context) *cobra.Command {
+	var projectID string
+	cmd := &cobra.Command{
+		Use:   "manifest FILE_PATH --project_id=value",
+		Short: "Upload a dependency manifest",
+		Args:  cobra.MinimumNArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			manifestPath := args[0]
+			if manifestPath == "" {
+				log.Fatal("Please provide manifest_path")
+			}
 
-var uploadManifestCmd = &cobra.Command{
-	Use:   "manifest FILE_PATH --project_id=value",
-	Short: "Upload a dependency manifest",
-	Args:  cobra.MinimumNArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		flagset := cmd.LocalFlags()
-		manifestPath := args[0]
-		if manifestPath == "" {
-			log.Fatal("Please provide manifest_path")
-		}
+			manifest, err := controller.ReadManifestProto(manifestPath)
+			if err != nil {
+				log.Fatal(err.Error())
+			}
+			manifestData, _ := proto.Marshal(manifest)
 
-		project, err := flagset.GetString("project_id")
-		if err != nil {
-			log.Fatalf("%s", err.Error())
-		}
-		if project == "" {
-			log.Fatal("Please specify a project")
-		}
+			ctx := context.Background()
+			client, err := connection.NewClient(ctx)
+			if err != nil {
+				log.Fatalf("%s", err.Error())
+			}
 
-		manifest, err := controller.ReadManifestProto(manifestPath)
-		if err != nil {
-			log.Fatal(err.Error())
-		}
-		manifestData, err := proto.Marshal(manifest)
+			artifact := &rpc.Artifact{
+				Name:     "projects/" + projectID + "/artifacts/" + manifest.Name,
+				MimeType: core.MimeTypeForMessageType("google.cloud.apigee.registry.applications.v1alpha1.Manifest"),
+				Contents: manifestData,
+			}
+			err = core.SetArtifact(ctx, client, artifact)
+			if err != nil {
+				log.Fatal(err.Error())
+			}
+		},
+	}
 
-		ctx := context.Background()
-		client, err := connection.NewClient(ctx)
-		if err != nil {
-			log.Fatalf("%s", err.Error())
-		}
-
-		artifact := &rpc.Artifact{
-			Name:     "projects/" + project + "/artifacts/" + manifest.Name,
-			MimeType: core.MimeTypeForMessageType("google.cloud.apigee.registry.applications.v1alpha1.Manifest"),
-			Contents: manifestData,
-		}
-		err = core.SetArtifact(ctx, client, artifact)
-		if err != nil {
-			log.Fatal(err.Error())
-		}
-
-		return
-	},
+	cmd.Flags().StringVar(&projectID, "project_id", "", "Project ID to use when saving the result manifest artifact")
+	cmd.MarkFlagRequired("project_id")
+	return cmd
 }

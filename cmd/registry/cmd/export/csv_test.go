@@ -87,7 +87,7 @@ func TestExportCSV(t *testing.T) {
 	}
 
 	// Execute
-	cmd := Command()
+	cmd := Command(ctx)
 	out := bytes.NewBuffer(make([]byte, 0))
 	args := []string{"csv", version.GetName()}
 	cmd.SetOutput(out)

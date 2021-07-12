@@ -15,6 +15,8 @@
 package cmd
 
 import (
+	"context"
+
 	"github.com/apigee/registry/cmd/registry/cmd/annotate"
 	"github.com/apigee/registry/cmd/registry/cmd/compute"
 	"github.com/apigee/registry/cmd/registry/cmd/controller"
@@ -30,24 +32,24 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func Command() *cobra.Command {
+func Command(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "registry",
 		Short: "A simple and eclectic utility for working with the API Registry",
 	}
 
-	cmd.AddCommand(annotate.Command())
-	cmd.AddCommand(compute.Command())
-	cmd.AddCommand(controller.Command())
-	cmd.AddCommand(delete.Command())
-	cmd.AddCommand(export.Command())
-	cmd.AddCommand(get.Command())
-	cmd.AddCommand(index.Command())
-	cmd.AddCommand(label.Command())
-	cmd.AddCommand(list.Command())
-	cmd.AddCommand(search.Command())
-	cmd.AddCommand(upload.Command())
-	cmd.AddCommand(vocabulary.Command())
+	cmd.AddCommand(annotate.Command(ctx))
+	cmd.AddCommand(compute.Command(ctx))
+	cmd.AddCommand(controller.Command(ctx))
+	cmd.AddCommand(delete.Command(ctx))
+	cmd.AddCommand(export.Command(ctx))
+	cmd.AddCommand(get.Command(ctx))
+	cmd.AddCommand(index.Command(ctx))
+	cmd.AddCommand(label.Command(ctx))
+	cmd.AddCommand(list.Command(ctx))
+	cmd.AddCommand(search.Command(ctx))
+	cmd.AddCommand(upload.Command(ctx))
+	cmd.AddCommand(vocabulary.Command(ctx))
 
 	return cmd
 }
