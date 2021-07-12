@@ -27,49 +27,52 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func init() {
-	computeLintCmd.Flags().String("linter", "", "name of linter to use (aip, spectral, gnostic)")
-}
+func lintCommand(ctx context.Context) *cobra.Command {
+	var linter string
+	cmd := &cobra.Command{
+		Use:   "lint",
+		Short: "Compute lint results for API specs",
+		Args:  cobra.MinimumNArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			filter, err := cmd.Flags().GetString("filter")
+			if err != nil {
+				log.Fatalf("Failed to get filter from flags: %s", err)
+			}
 
-var computeLintCmd = &cobra.Command{
-	Use:   "lint",
-	Short: "Compute lint results for API specs",
-	Args:  cobra.MinimumNArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		linter, err := cmd.LocalFlags().GetString("linter")
-		if err != nil { // ignore errors
-			linter = ""
-		}
-		ctx := context.Background()
-		client, err := connection.NewClient(ctx)
-		if err != nil {
-			log.Fatalf("%s", err.Error())
-		}
-		// Initialize task queue.
-		taskQueue := make(chan core.Task, 1024)
-		workerCount := 16
-		for i := 0; i < workerCount; i++ {
-			core.WaitGroup().Add(1)
-			go core.Worker(ctx, taskQueue)
-		}
-		// Generate tasks.
-		name := args[0]
-		if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
-			// Iterate through a collection of specs and evaluate each.
-			err = core.ListSpecs(ctx, client, m, computeFilter, func(spec *rpc.ApiSpec) {
-				taskQueue <- &computeLintTask{
-					client:   client,
-					specName: spec.Name,
-					linter:   linter,
-				}
-			})
+			ctx := context.Background()
+			client, err := connection.NewClient(ctx)
 			if err != nil {
 				log.Fatalf("%s", err.Error())
 			}
-			close(taskQueue)
-			core.WaitGroup().Wait()
-		}
-	},
+			// Initialize task queue.
+			taskQueue := make(chan core.Task, 1024)
+			workerCount := 16
+			for i := 0; i < workerCount; i++ {
+				core.WaitGroup().Add(1)
+				go core.Worker(ctx, taskQueue)
+			}
+			// Generate tasks.
+			name := args[0]
+			if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
+				// Iterate through a collection of specs and evaluate each.
+				err = core.ListSpecs(ctx, client, m, filter, func(spec *rpc.ApiSpec) {
+					taskQueue <- &computeLintTask{
+						client:   client,
+						specName: spec.Name,
+						linter:   linter,
+					}
+				})
+				if err != nil {
+					log.Fatalf("%s", err.Error())
+				}
+				close(taskQueue)
+				core.WaitGroup().Wait()
+			}
+		},
+	}
+
+	cmd.Flags().StringVar(&linter, "linter", "", "The linter to use (aip|spectral|gnostic)")
+	return cmd
 }
 
 type computeLintTask struct {
@@ -128,7 +131,7 @@ func (task *computeLintTask) Run(ctx context.Context) error {
 		return fmt.Errorf("we don't know how to lint %s", spec.Name)
 	}
 	subject := spec.GetName()
-	messageData, err := proto.Marshal(lint)
+	messageData, _ := proto.Marshal(lint)
 	artifact := &rpc.Artifact{
 		Name:     subject + "/artifacts/" + relation,
 		MimeType: core.MimeTypeForMessageType("google.cloud.apigee.registry.applications.v1alpha1.Lint"),

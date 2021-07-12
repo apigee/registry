@@ -24,32 +24,33 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func init() {
-	vocabularyIntersectionCmd.Flags().String("output", "", "name of artifact where output should be stored")
-}
+func intersectionCommand(ctx context.Context) *cobra.Command {
+	var output string
+	cmd := &cobra.Command{
+		Use:   "intersection",
+		Short: "Compute the intersection of specified API vocabularies",
+		Args:  cobra.MinimumNArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			filter, err := cmd.Flags().GetString("filter")
+			if err != nil {
+				log.Fatalf("Failed to get filter from flags: %s", err)
+			}
 
-var vocabularyIntersectionCmd = &cobra.Command{
-	Use:   "intersection",
-	Short: "Compute the intersection of specified API vocabularies",
-	Args:  cobra.MinimumNArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		var err error
-		flagset := cmd.LocalFlags()
-		outputArtifactName, err := flagset.GetString("output")
-		if err != nil {
-			log.Fatalf("%s", err.Error())
-		}
-		ctx := context.Background()
-		client, err := connection.NewClient(ctx)
-		if err != nil {
-			log.Fatalf("%s", err.Error())
-		}
-		_, inputs := collectInputVocabularies(ctx, client, args, vocabularyFilter)
-		output := vocabulary.Intersection(inputs)
-		if outputArtifactName != "" {
-			setVocabularyToArtifact(ctx, client, output, outputArtifactName)
-		} else {
-			core.PrintMessage(output)
-		}
-	},
+			ctx := context.Background()
+			client, err := connection.NewClient(ctx)
+			if err != nil {
+				log.Fatalf("%s", err.Error())
+			}
+			_, inputs := collectInputVocabularies(ctx, client, args, filter)
+			vocab := vocabulary.Intersection(inputs)
+			if output != "" {
+				setVocabularyToArtifact(ctx, client, vocab, output)
+			} else {
+				core.PrintMessage(vocab)
+			}
+		},
+	}
+
+	cmd.Flags().String("output", "", "Artifact name to use when saving the vocabulary artifact")
+	return cmd
 }

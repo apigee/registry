@@ -23,27 +23,25 @@ import (
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
-	metrics "github.com/googleapis/gnostic/metrics"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/proto"
+
+	metrics "github.com/googleapis/gnostic/metrics"
 )
 
-var vocabularyFilter string
-
-func Command() *cobra.Command {
+func Command(ctx context.Context) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "vocabulary",
 		Short: "Operate on API vocabularies in the API Registry",
 	}
 
-	cmd.AddCommand(vocabularyDifferenceCmd)
-	cmd.AddCommand(vocabularyIntersectionCmd)
-	cmd.AddCommand(vocabularyUnionCmd)
-	cmd.AddCommand(vocabularyUniqueCmd)
-	cmd.AddCommand(vocabularyVersionsCmd)
+	cmd.AddCommand(differenceCommand(ctx))
+	cmd.AddCommand(intersectionCommand(ctx))
+	cmd.AddCommand(unionCommand(ctx))
+	cmd.AddCommand(uniqueCommand(ctx))
+	cmd.AddCommand(versionsCommand(ctx))
 
-	// TODO: Remove the global state.
-	cmd.PersistentFlags().StringVar(&vocabularyFilter, "filter", "", "filter vocabulary arguments")
+	cmd.PersistentFlags().String("filter", "", "Filter selected resources")
 	return cmd
 }
 
@@ -79,13 +77,13 @@ func setVocabularyToArtifact(ctx context.Context, client connection.Client, outp
 	parts := strings.Split(outputArtifactName, "/artifacts/")
 	subject := parts[0]
 	relation := parts[1]
-	messageData, err := proto.Marshal(output)
+	messageData, _ := proto.Marshal(output)
 	artifact := &rpc.Artifact{
 		Name:     subject + "/artifacts/" + relation,
 		MimeType: core.MimeTypeForMessageType("gnostic.metrics.Vocabulary"),
 		Contents: messageData,
 	}
-	err = core.SetArtifact(ctx, client, artifact)
+	err := core.SetArtifact(ctx, client, artifact)
 	if err != nil {
 		log.Fatalf("%s", err.Error())
 	}
@@ -95,13 +93,13 @@ func setVersionHistoryToArtifact(ctx context.Context, client connection.Client, 
 	parts := strings.Split(outputArtifactName, "/artifacts/")
 	subject := parts[0]
 	relation := parts[1]
-	messageData, err := proto.Marshal(output)
+	messageData, _ := proto.Marshal(output)
 	artifact := &rpc.Artifact{
 		Name:     subject + "/artifacts/" + relation,
 		MimeType: core.MimeTypeForMessageType("gnostic.metrics.VersionHistory"),
 		Contents: messageData,
 	}
-	err = core.SetArtifact(ctx, client, artifact)
+	err := core.SetArtifact(ctx, client, artifact)
 	if err != nil {
 		log.Fatalf("%s", err.Error())
 	}

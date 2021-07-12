@@ -15,28 +15,28 @@
 package compute
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
-var computeFilter string
-
-func Command() *cobra.Command {
+func Command(ctx context.Context) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "compute",
 		Short: "Compute properties of resources in the API Registry",
 	}
 
-	cmd.AddCommand(computeBleveCmd)
-	cmd.AddCommand(computeComplexityCmd)
-	cmd.AddCommand(computeDescriptorCmd)
-	cmd.AddCommand(computeDetailsCmd)
-	cmd.AddCommand(computeIndexCmd)
-	cmd.AddCommand(computeLintCmd)
-	cmd.AddCommand(computeLintStatsCmd)
-	cmd.AddCommand(computeReferencesCmd)
-	cmd.AddCommand(computeVocabularyCmd)
+	cmd.AddCommand(complexityCommand(ctx))
+	cmd.AddCommand(descriptorCommand(ctx))
+	cmd.AddCommand(detailsCommand(ctx))
+	cmd.AddCommand(indexCommand(ctx))
+	cmd.AddCommand(lintCommand(ctx))
+	cmd.AddCommand(lintStatsCommand(ctx))
+	cmd.AddCommand(referencesCommand(ctx))
+	cmd.AddCommand(searchIndexCommand(ctx))
+	cmd.AddCommand(vocabularyCommand(ctx))
 
-	// TODO: Remove the global state.
-	cmd.PersistentFlags().StringVar(&computeFilter, "filter", "", "filter compute arguments")
+	cmd.PersistentFlags().String("filter", "", "Filter selected resources")
+	cmd.PersistentFlags().String("something", "", "desc")
 	return cmd
 }

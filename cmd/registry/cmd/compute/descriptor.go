@@ -23,46 +23,53 @@ import (
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
-	discovery_v1 "github.com/googleapis/gnostic/discovery"
-	openapi_v2 "github.com/googleapis/gnostic/openapiv2"
-	openapi_v3 "github.com/googleapis/gnostic/openapiv3"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/proto"
+
+	discovery "github.com/googleapis/gnostic/discovery"
+	oas2 "github.com/googleapis/gnostic/openapiv2"
+	oas3 "github.com/googleapis/gnostic/openapiv3"
 )
 
-var computeDescriptorCmd = &cobra.Command{
-	Use:   "descriptor",
-	Short: "Compute descriptors of API specs",
-	Args:  cobra.MinimumNArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		ctx := context.Background()
-		client, err := connection.NewClient(ctx)
-		if err != nil {
-			log.Fatalf("%s", err.Error())
-		}
-		// Initialize task queue.
-		taskQueue := make(chan core.Task, 1024)
-		workerCount := 64
-		for i := 0; i < workerCount; i++ {
-			core.WaitGroup().Add(1)
-			go core.Worker(ctx, taskQueue)
-		}
-		// Generate tasks.
-		name := args[0]
-		if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
-			err = core.ListSpecs(ctx, client, m, computeFilter, func(spec *rpc.ApiSpec) {
-				taskQueue <- &computeDescriptorTask{
-					client:   client,
-					specName: spec.Name,
-				}
-			})
+func descriptorCommand(ctx context.Context) *cobra.Command {
+	return &cobra.Command{
+		Use:   "descriptor",
+		Short: "Compute descriptors of API specs",
+		Args:  cobra.MinimumNArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			filter, err := cmd.Flags().GetString("filter")
+			if err != nil {
+				log.Fatalf("Failed to get filter from flags: %s", err)
+			}
+
+			client, err := connection.NewClient(ctx)
 			if err != nil {
 				log.Fatalf("%s", err.Error())
 			}
-			close(taskQueue)
-			core.WaitGroup().Wait()
-		}
-	},
+			// Initialize task queue.
+			taskQueue := make(chan core.Task, 1024)
+			workerCount := 64
+			for i := 0; i < workerCount; i++ {
+				core.WaitGroup().Add(1)
+				go core.Worker(ctx, taskQueue)
+			}
+			// Generate tasks.
+			name := args[0]
+			if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
+				err = core.ListSpecs(ctx, client, m, filter, func(spec *rpc.ApiSpec) {
+					taskQueue <- &computeDescriptorTask{
+						client:   client,
+						specName: spec.Name,
+					}
+				})
+				if err != nil {
+					log.Fatalf("%s", err.Error())
+				}
+				close(taskQueue)
+				core.WaitGroup().Wait()
+			}
+		},
+	}
 }
 
 type computeDescriptorTask struct {
@@ -94,19 +101,19 @@ func (task *computeDescriptorTask) Run(ctx context.Context) error {
 	var document proto.Message
 	if core.IsOpenAPIv2(spec.GetMimeType()) {
 		typeURL = "gnostic.openapiv2.Document"
-		document, err = openapi_v2.ParseDocument(data)
+		document, err = oas2.ParseDocument(data)
 		if err != nil {
 			return err
 		}
 	} else if core.IsOpenAPIv3(spec.GetMimeType()) {
 		typeURL = "gnostic.openapiv3.Document"
-		document, err = openapi_v3.ParseDocument(data)
+		document, err = oas3.ParseDocument(data)
 		if err != nil {
 			return err
 		}
 	} else if core.IsDiscovery(spec.GetMimeType()) {
 		typeURL = "gnostic.discoveryv1.Document"
-		document, err = discovery_v1.ParseDocument(data)
+		document, err = discovery.ParseDocument(data)
 		if err != nil {
 			return err
 		}
