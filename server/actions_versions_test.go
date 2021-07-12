@@ -775,7 +775,7 @@ func TestUpdateApiVersion(t *testing.T) {
 		want *rpc.ApiVersion
 	}{
 		{
-			desc: "implicit mask",
+			desc: "implicit nil mask",
 			seed: &rpc.ApiVersion{
 				Name:        "projects/my-project/apis/my-api/versions/v1",
 				DisplayName: "Version One",
@@ -786,6 +786,26 @@ func TestUpdateApiVersion(t *testing.T) {
 					Name:        "projects/my-project/apis/my-api/versions/v1",
 					Description: "My Updated ApiVersion",
 				},
+			},
+			want: &rpc.ApiVersion{
+				Name:        "projects/my-project/apis/my-api/versions/v1",
+				DisplayName: "Version One",
+				Description: "My Updated ApiVersion",
+			},
+		},
+		{
+			desc: "implicit empty mask",
+			seed: &rpc.ApiVersion{
+				Name:        "projects/my-project/apis/my-api/versions/v1",
+				DisplayName: "Version One",
+				Description: "My ApiVersion",
+			},
+			req: &rpc.UpdateApiVersionRequest{
+				ApiVersion: &rpc.ApiVersion{
+					Name:        "projects/my-project/apis/my-api/versions/v1",
+					Description: "My Updated ApiVersion",
+				},
+				UpdateMask: &fieldmaskpb.FieldMask{},
 			},
 			want: &rpc.ApiVersion{
 				Name:        "projects/my-project/apis/my-api/versions/v1",
