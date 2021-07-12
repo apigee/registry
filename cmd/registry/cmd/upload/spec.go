@@ -26,67 +26,60 @@ import (
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/gapic"
-	rpcpb "github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
 )
 
-func init() {
-	specCmd.Flags().String("version", "", "Version for uploaded spec")
-	specCmd.Flags().String("style", "", "style of spec to upload (openapi, discovery, proto)")
-}
+func specCommand(ctx context.Context) *cobra.Command {
+	var (
+		version string
+		style   string
+	)
 
-var specCmd = &cobra.Command{
-	Use:   "spec",
-	Short: "Upload an API spec",
-	Args:  cobra.MinimumNArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		ctx := context.Background()
-		flagset := cmd.LocalFlags()
-		version, err := flagset.GetString("version")
-		if err != nil {
-			log.Fatalf("%s", err.Error())
-		}
-		if version == "" {
-			log.Fatalf("Please specify a version")
-		}
-		style, err := flagset.GetString("style")
-		if err != nil {
-			log.Fatalf("%s", err.Error())
-		}
-		if style == "" {
-			log.Fatal("Please specify a style")
-		}
-		client, err := connection.NewClient(ctx)
-		if err != nil {
-			log.Fatalf("%s", err.Error())
-		}
-		for _, arg := range args {
-			matches, err := filepath.Glob(arg)
+	cmd := &cobra.Command{
+		Use:   "spec",
+		Short: "Upload an API spec",
+		Args:  cobra.MinimumNArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			ctx := context.Background()
+			client, err := connection.NewClient(ctx)
 			if err != nil {
-				log.Printf("%s\n", err.Error())
+				log.Fatalf("%s", err.Error())
 			}
-			// for each match, upload the file
-			for _, match := range matches {
-				log.Printf("now upload %+v", match)
-				fi, err := os.Stat(match)
-				if err == nil {
-					switch mode := fi.Mode(); {
-					case mode.IsDir():
-						fmt.Printf("upload directory %s\n", match)
-						err = uploadSpecDirectory(ctx, match, client, version, style)
-					case mode.IsRegular():
-						fmt.Printf("upload file %s\n", match)
-						err = uploadSpecFile(ctx, match, client, version, style)
-					}
-					if err != nil {
+			for _, arg := range args {
+				matches, err := filepath.Glob(arg)
+				if err != nil {
+					log.Printf("%s\n", err.Error())
+				}
+				// for each match, upload the file
+				for _, match := range matches {
+					log.Printf("now upload %+v", match)
+					fi, err := os.Stat(match)
+					if err == nil {
+						switch mode := fi.Mode(); {
+						case mode.IsDir():
+							fmt.Printf("upload directory %s\n", match)
+							err = uploadSpecDirectory(ctx, match, client, version, style)
+						case mode.IsRegular():
+							fmt.Printf("upload file %s\n", match)
+							err = uploadSpecFile(ctx, match, client, version, style)
+						}
+						if err != nil {
+							log.Fatalf("%s", err.Error())
+						}
+					} else {
 						log.Fatalf("%s", err.Error())
 					}
-				} else {
-					log.Fatalf("%s", err.Error())
 				}
 			}
-		}
-	},
+		},
+	}
+
+	cmd.Flags().StringVar(&version, "version", "", "Version to use as parent for the spec upload")
+	cmd.MarkFlagRequired("version")
+	cmd.Flags().StringVar(&style, "style", "", "Style of spec to upload (openapi|discovery|proto)")
+	cmd.MarkFlagRequired("style")
+	return cmd
 }
 
 func uploadSpecDirectory(ctx context.Context, dirname string, client *gapic.RegistryClient, version string, style string) error {
@@ -100,10 +93,10 @@ func uploadSpecDirectory(ctx context.Context, dirname string, client *gapic.Regi
 	if err != nil {
 		return err
 	}
-	request := &rpcpb.CreateApiSpecRequest{
+	request := &rpc.CreateApiSpecRequest{
 		Parent:    version,
 		ApiSpecId: "protos.zip",
-		ApiSpec: &rpcpb.ApiSpec{
+		ApiSpec: &rpc.ApiSpec{
 			MimeType: style,
 			Filename: core.ProtobufMimeType("+zip"),
 			Contents: buf.Bytes(),
@@ -131,16 +124,14 @@ func uploadSpecFile(ctx context.Context, filename string, client *gapic.Registry
 		} else {
 			mimeType = core.OpenAPIMimeType("+gzip", "3")
 		}
-		break
 	case "discovery":
 		mimeType = core.DiscoveryMimeType("+gzip")
-		break
 	default:
 		return fmt.Errorf("unsupported file style %s", style)
 	}
 	specID := filepath.Base(filename)
 	// does the spec file exist? if not, create it
-	request := &rpcpb.GetApiSpecRequest{}
+	request := &rpc.GetApiSpecRequest{}
 	request.Name = version + "/specs/" + specID
 	_, err := client.GetApiSpec(ctx, request)
 	if err != nil { // TODO only do this for NotFound errors
@@ -148,12 +139,12 @@ func uploadSpecFile(ctx context.Context, filename string, client *gapic.Registry
 		if err != nil {
 			log.Printf("err %+v", err)
 		} else {
-			request := &rpcpb.CreateApiSpecRequest{}
+			request := &rpc.CreateApiSpecRequest{}
 			request.Parent = version
 			request.ApiSpecId = specID
-			request.ApiSpec = &rpcpb.ApiSpec{}
+			request.ApiSpec = &rpc.ApiSpec{}
 			request.ApiSpec.Filename = specID
-			request.ApiSpec.Contents, err = core.GZippedBytes(bytes)
+			request.ApiSpec.Contents, _ = core.GZippedBytes(bytes)
 			request.ApiSpec.MimeType = mimeType
 			response, err := client.CreateApiSpec(ctx, request)
 			log.Printf("response %+v\nerr %+v", response, err)

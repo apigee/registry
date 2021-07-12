@@ -23,48 +23,55 @@ import (
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
-	discovery "github.com/googleapis/gnostic/discovery"
-	metrics "github.com/googleapis/gnostic/metrics"
-	openapi_v2 "github.com/googleapis/gnostic/openapiv2"
-	openapi_v3 "github.com/googleapis/gnostic/openapiv3"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/proto"
+
+	discovery "github.com/googleapis/gnostic/discovery"
+	metrics "github.com/googleapis/gnostic/metrics"
+	oas2 "github.com/googleapis/gnostic/openapiv2"
+	oas3 "github.com/googleapis/gnostic/openapiv3"
 )
 
-var computeComplexityCmd = &cobra.Command{
-	Use:   "complexity",
-	Short: "Compute complexity metrics of API specs",
-	Args:  cobra.MinimumNArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		ctx := context.Background()
-		client, err := connection.NewClient(ctx)
-		if err != nil {
-			log.Fatalf("%s", err.Error())
-		}
-		// Initialize task queue.
-		taskQueue := make(chan core.Task, 1024)
-		workerCount := 64
-		for i := 0; i < workerCount; i++ {
-			core.WaitGroup().Add(1)
-			go core.Worker(ctx, taskQueue)
-		}
-		// Generate tasks.
-		name := args[0]
-		if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
-			// Iterate through a collection of specs and summarize each.
-			err = core.ListSpecs(ctx, client, m, computeFilter, func(spec *rpc.ApiSpec) {
-				taskQueue <- &computeComplexityTask{
-					client:   client,
-					specName: spec.Name,
-				}
-			})
+func complexityCommand(ctx context.Context) *cobra.Command {
+	return &cobra.Command{
+		Use:   "complexity",
+		Short: "Compute complexity metrics of API specs",
+		Args:  cobra.MinimumNArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			filter, err := cmd.Flags().GetString("filter")
+			if err != nil {
+				log.Fatalf("Failed to get filter from flags: %s", err)
+			}
+
+			client, err := connection.NewClient(ctx)
 			if err != nil {
 				log.Fatalf("%s", err.Error())
 			}
-			close(taskQueue)
-			core.WaitGroup().Wait()
-		}
-	},
+			// Initialize task queue.
+			taskQueue := make(chan core.Task, 1024)
+			workerCount := 64
+			for i := 0; i < workerCount; i++ {
+				core.WaitGroup().Add(1)
+				go core.Worker(ctx, taskQueue)
+			}
+			// Generate tasks.
+			name := args[0]
+			if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
+				// Iterate through a collection of specs and summarize each.
+				err = core.ListSpecs(ctx, client, m, filter, func(spec *rpc.ApiSpec) {
+					taskQueue <- &computeComplexityTask{
+						client:   client,
+						specName: spec.Name,
+					}
+				})
+				if err != nil {
+					log.Fatalf("%s", err.Error())
+				}
+				close(taskQueue)
+				core.WaitGroup().Wait()
+			}
+		},
+	}
 }
 
 type computeComplexityTask struct {
@@ -92,7 +99,7 @@ func (task *computeComplexityTask) Run(ctx context.Context) error {
 		if err != nil {
 			return nil
 		}
-		document, err := openapi_v2.ParseDocument(data)
+		document, err := oas2.ParseDocument(data)
 		if err != nil {
 			return fmt.Errorf("invalid OpenAPI: %s", spec.Name)
 		}
@@ -102,7 +109,7 @@ func (task *computeComplexityTask) Run(ctx context.Context) error {
 		if err != nil {
 			return nil
 		}
-		document, err := openapi_v3.ParseDocument(data)
+		document, err := oas3.ParseDocument(data)
 		if err != nil {
 			return fmt.Errorf("invalid OpenAPI: %s", spec.Name)
 		}
@@ -130,7 +137,7 @@ func (task *computeComplexityTask) Run(ctx context.Context) error {
 		return fmt.Errorf("we don't know how to summarize %s", spec.Name)
 	}
 	subject := spec.GetName()
-	messageData, err := proto.Marshal(complexity)
+	messageData, _ := proto.Marshal(complexity)
 	artifact := &rpc.Artifact{
 		Name:     subject + "/artifacts/" + relation,
 		MimeType: core.MimeTypeForMessageType("gnostic.metrics.Complexity"),

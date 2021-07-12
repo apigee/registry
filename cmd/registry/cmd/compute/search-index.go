@@ -25,58 +25,57 @@ import (
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
 	"github.com/blevesearch/bleve"
-	openapi_v2 "github.com/googleapis/gnostic/openapiv2"
-	openapi_v3 "github.com/googleapis/gnostic/openapiv3"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/proto"
+
+	oas2 "github.com/googleapis/gnostic/openapiv2"
+	oas3 "github.com/googleapis/gnostic/openapiv3"
 )
 
-const (
-	bleveDir = "registry.bleve"
-)
-
-var bleveFilter string
 var bleveMutex sync.Mutex
 
-func init() {
-	computeBleveCmd.Flags().StringVar(&bleveFilter, "filter", "", "Filter option to send with calls")
-}
+func searchIndexCommand(ctx context.Context) *cobra.Command {
+	return &cobra.Command{
+		Use:   "search-index",
+		Short: "Compute a local search index of specs (experimental)",
+		Args:  cobra.MinimumNArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			filter, err := cmd.Flags().GetString("filter")
+			if err != nil {
+				log.Fatalf("Failed to get filter from flags: %s", err)
+			}
 
-var computeBleveCmd = &cobra.Command{
-	Use:   "search-index",
-	Short: "Compute a local search index of specs (experimental)",
-	Args:  cobra.MinimumNArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		ctx := context.Background()
-		client, err := connection.NewClient(ctx)
-		if err != nil {
-			log.Fatalf("%s", err.Error())
-		}
-		// Initialize task queue.
-		taskQueue := make(chan core.Task, 1024)
-		workerCount := 64
-		for i := 0; i < workerCount; i++ {
-			core.WaitGroup().Add(1)
-			go core.Worker(ctx, taskQueue)
-		}
-		// Generate tasks.
-		name := args[0]
-		if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
-			err = core.ListSpecs(ctx, client, m, bleveFilter, func(spec *rpc.ApiSpec) {
-				taskQueue <- &indexSpecTask{
-					client:   client,
-					specName: spec.Name,
-				}
-			})
+			ctx := context.Background()
+			client, err := connection.NewClient(ctx)
 			if err != nil {
 				log.Fatalf("%s", err.Error())
 			}
-			close(taskQueue)
-			core.WaitGroup().Wait()
-		} else {
-			log.Fatalf("We don't know how to index %s", name)
-		}
-	},
+			// Initialize task queue.
+			taskQueue := make(chan core.Task, 1024)
+			workerCount := 64
+			for i := 0; i < workerCount; i++ {
+				core.WaitGroup().Add(1)
+				go core.Worker(ctx, taskQueue)
+			}
+			// Generate tasks.
+			name := args[0]
+			if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
+				err = core.ListSpecs(ctx, client, m, filter, func(spec *rpc.ApiSpec) {
+					taskQueue <- &indexSpecTask{
+						client:   client,
+						specName: spec.Name,
+					}
+				})
+				if err != nil {
+					log.Fatalf("%s", err.Error())
+				}
+				close(taskQueue)
+				core.WaitGroup().Wait()
+			} else {
+				log.Fatalf("We don't know how to index %s", name)
+			}
+		},
+	}
 }
 
 type indexSpecTask struct {
@@ -103,7 +102,7 @@ func (task *indexSpecTask) Run(ctx context.Context) error {
 	}
 	var message proto.Message
 	if core.IsOpenAPIv2(spec.GetMimeType()) {
-		document, err := openapi_v2.ParseDocument(data)
+		document, err := oas2.ParseDocument(data)
 		if err != nil {
 			return fmt.Errorf("errors parsing %s", name)
 		}
@@ -116,7 +115,7 @@ func (task *indexSpecTask) Run(ctx context.Context) error {
 		document.SecurityDefinitions = nil
 		message = document
 	} else if core.IsOpenAPIv3(spec.GetMimeType()) {
-		document, err := openapi_v3.ParseDocument(data)
+		document, err := oas3.ParseDocument(data)
 		if err != nil {
 			return fmt.Errorf("errors parsing %s", name)
 		}
@@ -133,6 +132,7 @@ func (task *indexSpecTask) Run(ctx context.Context) error {
 	bleveMutex.Lock()
 	defer bleveMutex.Unlock()
 	// Open the index, creating a new one if necessary.
+	const bleveDir = "registry.bleve"
 	index, err := bleve.Open(bleveDir)
 	if err != nil {
 		mapping := bleve.NewIndexMapping()

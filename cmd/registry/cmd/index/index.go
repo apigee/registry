@@ -27,18 +27,14 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-var indexFilter string
-
-func Command() *cobra.Command {
+func Command(ctx context.Context) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "index",
 		Short: "Operate on API indexes in the API Registry",
 	}
 
-	cmd.AddCommand(indexUnionCmd)
+	cmd.AddCommand(unionCommand(ctx))
 
-	// TODO: Remove the global state.
-	cmd.PersistentFlags().StringVar(&indexFilter, "filter", "", "filter index arguments")
 	return cmd
 }
 

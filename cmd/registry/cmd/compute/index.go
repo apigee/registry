@@ -27,40 +27,46 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-var computeIndexCmd = &cobra.Command{
-	Use:   "index",
-	Short: "Compute indexes of API specs",
-	Args:  cobra.MinimumNArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		ctx := context.Background()
-		client, err := connection.NewClient(ctx)
-		if err != nil {
-			log.Fatalf("%s", err.Error())
-		}
-		// Initialize task queue.
-		taskQueue := make(chan core.Task, 1024)
-		workerCount := 64
-		for i := 0; i < workerCount; i++ {
-			core.WaitGroup().Add(1)
-			go core.Worker(ctx, taskQueue)
-		}
-		// Generate tasks.
-		name := args[0]
-		if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
-			// Iterate through a collection of specs and summarize each.
-			err = core.ListSpecs(ctx, client, m, computeFilter, func(spec *rpc.ApiSpec) {
-				taskQueue <- &computeIndexTask{
-					client:   client,
-					specName: spec.Name,
-				}
-			})
+func indexCommand(ctx context.Context) *cobra.Command {
+	return &cobra.Command{
+		Use:   "index",
+		Short: "Compute indexes of API specs",
+		Args:  cobra.MinimumNArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			filter, err := cmd.Flags().GetString("filter")
+			if err != nil {
+				log.Fatalf("Failed to get filter from flags: %s", err)
+			}
+
+			client, err := connection.NewClient(ctx)
 			if err != nil {
 				log.Fatalf("%s", err.Error())
 			}
-			close(taskQueue)
-			core.WaitGroup().Wait()
-		}
-	},
+			// Initialize task queue.
+			taskQueue := make(chan core.Task, 1024)
+			workerCount := 64
+			for i := 0; i < workerCount; i++ {
+				core.WaitGroup().Add(1)
+				go core.Worker(ctx, taskQueue)
+			}
+			// Generate tasks.
+			name := args[0]
+			if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
+				// Iterate through a collection of specs and summarize each.
+				err = core.ListSpecs(ctx, client, m, filter, func(spec *rpc.ApiSpec) {
+					taskQueue <- &computeIndexTask{
+						client:   client,
+						specName: spec.Name,
+					}
+				})
+				if err != nil {
+					log.Fatalf("%s", err.Error())
+				}
+				close(taskQueue)
+				core.WaitGroup().Wait()
+			}
+		},
+	}
 }
 
 type computeIndexTask struct {
@@ -96,7 +102,7 @@ func (task *computeIndexTask) Run(ctx context.Context) error {
 		return fmt.Errorf("we don't know how to compute the index of %s", spec.Name)
 	}
 	subject := spec.GetName()
-	messageData, err := proto.Marshal(index)
+	messageData, _ := proto.Marshal(index)
 	artifact := &rpc.Artifact{
 		Name:     subject + "/artifacts/" + relation,
 		MimeType: core.MimeTypeForMessageType("google.cloud.apigee.registry.applications.v1alpha1.Index"),

@@ -15,20 +15,18 @@
 package count
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
-var countFilter string
-
-func Command() *cobra.Command {
+func Command(ctx context.Context) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "count",
 		Short: "Count quantities in the API Registry",
 	}
 
-	cmd.AddCommand(countVersionsCmd)
+	cmd.AddCommand(versionsCommand(ctx))
 
-	// TODO: Remove the global state.
-	cmd.PersistentFlags().StringVar(&countFilter, "filter", "", "filter count arguments")
 	return cmd
 }

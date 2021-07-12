@@ -15,22 +15,20 @@
 package export
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
-var exportFilter string
-
-func Command() *cobra.Command {
+func Command(ctx context.Context) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "export",
 		Short: "Export resources from the API Registry",
 	}
 
-	cmd.AddCommand(exportCsvCmd)
-	cmd.AddCommand(exportSheetCmd)
-	cmd.AddCommand(exportYAMLCmd)
+	cmd.AddCommand(csvCommand(ctx))
+	cmd.AddCommand(sheetCommand(ctx))
+	cmd.AddCommand(yamlCommand(ctx))
 
-	// TODO: Remove the global state.
-	cmd.PersistentFlags().StringVar(&exportFilter, "filter", "", "filter export arguments")
 	return cmd
 }

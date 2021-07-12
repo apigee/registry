@@ -83,10 +83,10 @@ func TestManifestUpload(t *testing.T) {
 				t.Fatalf("Failed to create project %s: %s", test.project, err.Error())
 			}
 
-			cmd := Command()
+			cmd := Command(ctx)
 			args := []string{"manifest", test.filePath, "--project_id", test.project}
 			cmd.SetArgs(args)
-			if err = uploadManifestCmd.Execute(); err != nil {
+			if err = cmd.Execute(); err != nil {
 				t.Fatalf("Execute() with args %v returned error: %s", args, err)
 			}
 
@@ -95,9 +95,9 @@ func TestManifestUpload(t *testing.T) {
 			}
 
 			manifest := rpc.Manifest{}
-			body, err := client.GetArtifactContents(ctx, req)
+			body, _ := client.GetArtifactContents(ctx, req)
 			contents := body.GetData()
-			err = proto.Unmarshal(contents, &manifest)
+			_ = proto.Unmarshal(contents, &manifest)
 
 			// Verify the manifest definition is correct
 			opts := cmp.Options{
