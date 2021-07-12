@@ -33,10 +33,10 @@ import (
 
 func readAndGZipFile(t *testing.T, filename string) (*bytes.Buffer, error) {
 	t.Helper()
-	fileBytes, err := ioutil.ReadFile(filename)
+	fileBytes, _ := ioutil.ReadFile(filename)
 	var buf bytes.Buffer
 	zw, _ := gzip.NewWriterLevel(&buf, gzip.BestCompression)
-	_, err = zw.Write(fileBytes)
+	_, err := zw.Write(fileBytes)
 	if err != nil {
 		return nil, err
 	}
@@ -184,7 +184,8 @@ func TestControllerUpdate(t *testing.T) {
 	}
 
 	// Call the controller update command
-	cmd := Command()
+	cmd := Command(ctx)
+	t.Logf("%+v", cmd.PersistentFlags())
 	args := []string{"update", "../../controller/test/manifest_e2e.yaml"}
 	cmd.SetArgs(args)
 	if err = cmd.Execute(); err != nil {
@@ -195,7 +196,7 @@ func TestControllerUpdate(t *testing.T) {
 	got := make([]string, 0)
 	listPattern := "projects/controller-demo/apis/petstore/versions/-/specs/-/artifacts/-"
 	segments := names.ArtifactRegexp().FindStringSubmatch(listPattern)
-	err = core.ListArtifacts(ctx, client, segments, "", false,
+	_ = core.ListArtifacts(ctx, client, segments, "", false,
 		func(artifact *rpc.Artifact) {
 			got = append(got, artifact.Name)
 		},

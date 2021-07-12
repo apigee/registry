@@ -15,6 +15,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -22,7 +23,8 @@ import (
 )
 
 func main() {
-	cmd := cmd.Command()
+	ctx := context.Background()
+	cmd := cmd.Command(ctx)
 	if err := cmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
