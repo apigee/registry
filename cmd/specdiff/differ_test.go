@@ -123,7 +123,7 @@ func TestMaps(t *testing.T) {
 		}, {
 			desc: "Map Diff Recursive Key",
 			testMap: reflect.ValueOf(map[diff.Endpoint]testStruct{
-				{ Method : "Test-Method",
+				{Method: "Test-Method",
 					Path: "Test-Path",
 				}: {
 					Name: "TestStructResult1",
@@ -188,18 +188,18 @@ func TestArrays(t *testing.T) {
 					"input4",
 				},
 			},
-		},{
+		}, {
 			desc: "Array Diff Endpoint",
 			testArray: reflect.ValueOf([]diff.Endpoint{
 				{
-				Method : "Test-Method-1",
-				Path: "Test-Path-1",
-				},{
-				Method : "Test-Method-2",
-				Path: "Test-Path-2",
-				},{
-				Method : "Test-Method-3",
-				Path: "Test-Path-3",
+					Method: "Test-Method-1",
+					Path:   "Test-Path-1",
+				}, {
+					Method: "Test-Method-2",
+					Path:   "Test-Path-2",
+				}, {
+					Method: "Test-Method-3",
+					Path:   "Test-Path-3",
 				},
 			}),
 			change: change{
@@ -280,42 +280,3 @@ func TestValueDiff(t *testing.T) {
 		}
 	}
 }
-
-//Test Yaml Diff
-/*
-func TestDiffYaml(t *testing.T){
-	yamlFile, err := ioutil.ReadFile("./data/openapi-test1.yaml")
-	if err != nil {
-		t.Fatalf("Failed to get test-yaml: %+v", err)
-	}
-	yamlFile2, err := ioutil.ReadFile("./data/openapi-test2.yaml")
-	if err != nil {
-		t.Fatalf("Failed to get test-yaml: %+v", err)
-	}
-
-	diff, _ := GetDiff(yamlFile, yamlFile2)
-
-	diffProto, err := GetChanges(diff)
-	for i := 0; i < len(diffProto.Added); i++{
-		t.Logf("CHANGETYPE:%+v 	 |Change: %+v \n", "Added", diffProto.Added[i])
-	}
-	for i := 0; i < len(diffProto.Deleted); i++{
-		t.Logf("CHANGETYPE:%+v 	 |Change: %+v \n", "Deleted", diffProto.Deleted[i])
-	}
-	for i := range diffProto.Modification{
-		t.Logf("CHANGETYPE:%+v 	 |Change: %+v |Modification: %+v \n", "Modified", i, diffProto.Modification[i])
-	}
-
-
-	t.FailNow()
-}
-
-func getYAML(output interface{}) (string) {
-	bytes, err := yaml.Marshal(output)
-	if err != nil {
-		fmt.Printf("failed to marshal result as yaml with %v", err)
-		return string(bytes)
-	}
-	return string(bytes)
-}
-*/
