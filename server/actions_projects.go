@@ -16,37 +16,38 @@ package server
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/dao"
 	"github.com/apigee/registry/server/models"
 	"github.com/apigee/registry/server/names"
 	"github.com/golang/protobuf/ptypes/empty"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // CreateProject handles the corresponding API request.
 func (s *RegistryServer) CreateProject(ctx context.Context, req *rpc.CreateProjectRequest) (*rpc.Project, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
-		return nil, unavailableError(err)
+		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 	defer s.releaseStorageClient(client)
 	db := dao.NewDAO(client)
 
 	if req.GetProject() == nil {
-		return nil, invalidArgumentError(fmt.Errorf("invalid project %+v: body must be provided", req.GetProject()))
+		return nil, status.Errorf(codes.InvalidArgument, "invalid project %+v: body must be provided", req.GetProject())
 	}
 
 	name := names.Project{ProjectID: req.GetProjectId()}
 	if _, err := db.GetProject(ctx, name); err == nil {
-		return nil, alreadyExistsError(fmt.Errorf("project %q already exists", name))
+		return nil, status.Errorf(codes.AlreadyExists, "project %q already exists", name)
 	} else if !isNotFound(err) {
 		return nil, err
 	}
 
 	if err := name.Validate(); err != nil {
-		return nil, invalidArgumentError(err)
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	project := models.NewProject(name, req.GetProject())
@@ -54,27 +55,22 @@ func (s *RegistryServer) CreateProject(ctx context.Context, req *rpc.CreateProje
 		return nil, err
 	}
 
-	message, err := project.Message()
-	if err != nil {
-		return nil, internalError(err)
-	}
-
 	s.notify(ctx, rpc.Notification_CREATED, name.String())
-	return message, nil
+	return project.Message(), nil
 }
 
 // DeleteProject handles the corresponding API request.
 func (s *RegistryServer) DeleteProject(ctx context.Context, req *rpc.DeleteProjectRequest) (*empty.Empty, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
-		return nil, unavailableError(err)
+		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 	defer s.releaseStorageClient(client)
 	db := dao.NewDAO(client)
 
 	name, err := names.ParseProject(req.GetName())
 	if err != nil {
-		return nil, invalidArgumentError(err)
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	// Deletion should only succeed on projects that currently exist.
@@ -94,14 +90,14 @@ func (s *RegistryServer) DeleteProject(ctx context.Context, req *rpc.DeleteProje
 func (s *RegistryServer) GetProject(ctx context.Context, req *rpc.GetProjectRequest) (*rpc.Project, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
-		return nil, unavailableError(err)
+		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 	defer s.releaseStorageClient(client)
 	db := dao.NewDAO(client)
 
 	name, err := names.ParseProject(req.GetName())
 	if err != nil {
-		return nil, invalidArgumentError(err)
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	project, err := db.GetProject(ctx, name)
@@ -109,25 +105,20 @@ func (s *RegistryServer) GetProject(ctx context.Context, req *rpc.GetProjectRequ
 		return nil, err
 	}
 
-	message, err := project.Message()
-	if err != nil {
-		return nil, internalError(err)
-	}
-
-	return message, nil
+	return project.Message(), nil
 }
 
 // ListProjects handles the corresponding API request.
 func (s *RegistryServer) ListProjects(ctx context.Context, req *rpc.ListProjectsRequest) (*rpc.ListProjectsResponse, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
-		return nil, unavailableError(err)
+		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 	defer s.releaseStorageClient(client)
 	db := dao.NewDAO(client)
 
 	if req.GetPageSize() < 0 {
-		return nil, invalidArgumentError(fmt.Errorf("invalid page_size %d: must not be negative", req.GetPageSize()))
+		return nil, status.Errorf(codes.InvalidArgument, "invalid page_size %d: must not be negative", req.GetPageSize())
 	} else if req.GetPageSize() > 1000 {
 		req.PageSize = 1000
 	} else if req.GetPageSize() == 0 {
@@ -149,10 +140,7 @@ func (s *RegistryServer) ListProjects(ctx context.Context, req *rpc.ListProjects
 	}
 
 	for i, project := range listing.Projects {
-		response.Projects[i], err = project.Message()
-		if err != nil {
-			return nil, internalError(err)
-		}
+		response.Projects[i] = project.Message()
 	}
 
 	return response, nil
@@ -162,20 +150,20 @@ func (s *RegistryServer) ListProjects(ctx context.Context, req *rpc.ListProjects
 func (s *RegistryServer) UpdateProject(ctx context.Context, req *rpc.UpdateProjectRequest) (*rpc.Project, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
-		return nil, unavailableError(err)
+		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 	defer s.releaseStorageClient(client)
 	db := dao.NewDAO(client)
 
 	if req.GetProject() == nil {
-		return nil, invalidArgumentError(fmt.Errorf("invalid project %+v: body must be provided", req.GetProject()))
+		return nil, status.Errorf(codes.InvalidArgument, "invalid project %+v: body must be provided", req.GetProject())
 	} else if err := models.ValidateMask(req.GetProject(), req.GetUpdateMask()); err != nil {
-		return nil, invalidArgumentError(fmt.Errorf("invalid update_mask %v: %s", req.GetUpdateMask(), err))
+		return nil, status.Errorf(codes.InvalidArgument, "invalid update_mask %v: %s", req.GetUpdateMask(), err)
 	}
 
 	name, err := names.ParseProject(req.GetProject().GetName())
 	if err != nil {
-		return nil, invalidArgumentError(err)
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	project, err := db.GetProject(ctx, name)
@@ -188,11 +176,6 @@ func (s *RegistryServer) UpdateProject(ctx context.Context, req *rpc.UpdateProje
 		return nil, err
 	}
 
-	message, err := project.Message()
-	if err != nil {
-		return nil, internalError(err)
-	}
-
 	s.notify(ctx, rpc.Notification_UPDATED, name.String())
-	return message, nil
+	return project.Message(), nil
 }

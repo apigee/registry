@@ -19,8 +19,8 @@ import (
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
-	"github.com/golang/protobuf/ptypes"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // Api is the storage-side representation of an API.
@@ -81,16 +81,8 @@ func (api *Api) Message() (message *rpc.Api, err error) {
 		Description:        api.Description,
 		Availability:       api.Availability,
 		RecommendedVersion: api.RecommendedVersion,
-	}
-
-	message.CreateTime, err = ptypes.TimestampProto(api.CreateTime)
-	if err != nil {
-		return nil, err
-	}
-
-	message.UpdateTime, err = ptypes.TimestampProto(api.UpdateTime)
-	if err != nil {
-		return nil, err
+		CreateTime:         timestamppb.New(api.CreateTime),
+		UpdateTime:         timestamppb.New(api.UpdateTime),
 	}
 
 	message.Labels, err = api.LabelsMap()

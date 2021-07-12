@@ -18,7 +18,6 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
-	"fmt"
 	"io/ioutil"
 	"strings"
 
@@ -37,11 +36,11 @@ import (
 func (s *RegistryServer) CreateApiSpec(ctx context.Context, req *rpc.CreateApiSpecRequest) (*rpc.ApiSpec, error) {
 	parent, err := names.ParseVersion(req.GetParent())
 	if err != nil {
-		return nil, invalidArgumentError(err)
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	if req.GetApiSpec() == nil {
-		return nil, invalidArgumentError(fmt.Errorf("invalid api_spec %+v: body must be provided", req.GetApiSpec()))
+		return nil, status.Errorf(codes.InvalidArgument, "invalid api_spec %+v: body must be provided", req.GetApiSpec())
 	}
 
 	return s.createSpec(ctx, parent.Spec(req.GetApiSpecId()), req.GetApiSpec())
@@ -50,19 +49,19 @@ func (s *RegistryServer) CreateApiSpec(ctx context.Context, req *rpc.CreateApiSp
 func (s *RegistryServer) createSpec(ctx context.Context, name names.Spec, body *rpc.ApiSpec) (*rpc.ApiSpec, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
-		return nil, unavailableError(err)
+		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 	defer s.releaseStorageClient(client)
 	db := dao.NewDAO(client)
 
 	if _, err := db.GetSpec(ctx, name); err == nil {
-		return nil, alreadyExistsError(fmt.Errorf("API spec %q already exists", name))
+		return nil, status.Errorf(codes.AlreadyExists, "API spec %q already exists", name)
 	} else if !isNotFound(err) {
 		return nil, err
 	}
 
 	if err := name.Validate(); err != nil {
-		return nil, invalidArgumentError(err)
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	// Creation should only succeed when the parent exists.
@@ -72,7 +71,7 @@ func (s *RegistryServer) createSpec(ctx context.Context, name names.Spec, body *
 
 	spec, err := models.NewSpec(name, body)
 	if err != nil {
-		return nil, invalidArgumentError(err)
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	if err := db.SaveSpecRevision(ctx, spec); err != nil {
@@ -85,7 +84,7 @@ func (s *RegistryServer) createSpec(ctx context.Context, name names.Spec, body *
 
 	message, err := spec.BasicMessage(name.String())
 	if err != nil {
-		return nil, internalError(err)
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	s.notify(ctx, rpc.Notification_CREATED, spec.RevisionName())
@@ -96,14 +95,14 @@ func (s *RegistryServer) createSpec(ctx context.Context, name names.Spec, body *
 func (s *RegistryServer) DeleteApiSpec(ctx context.Context, req *rpc.DeleteApiSpecRequest) (*empty.Empty, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
-		return nil, unavailableError(err)
+		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 	defer s.releaseStorageClient(client)
 	db := dao.NewDAO(client)
 
 	name, err := names.ParseSpec(req.GetName())
 	if err != nil {
-		return nil, invalidArgumentError(err)
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	// Deletion should only succeed on API specs that currently exist.
@@ -127,13 +126,13 @@ func (s *RegistryServer) GetApiSpec(ctx context.Context, req *rpc.GetApiSpecRequ
 		return s.getApiSpecRevision(ctx, name)
 	}
 
-	return nil, invalidArgumentError(fmt.Errorf("invalid resource name %q, must be an API spec or revision", req.GetName()))
+	return nil, status.Errorf(codes.InvalidArgument, "invalid resource name %q, must be an API spec or revision", req.GetName())
 }
 
 func (s *RegistryServer) getApiSpec(ctx context.Context, name names.Spec) (*rpc.ApiSpec, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
-		return nil, unavailableError(err)
+		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 	defer s.releaseStorageClient(client)
 	db := dao.NewDAO(client)
@@ -145,7 +144,7 @@ func (s *RegistryServer) getApiSpec(ctx context.Context, name names.Spec) (*rpc.
 
 	message, err := spec.BasicMessage(name.String())
 	if err != nil {
-		return nil, internalError(err)
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	return message, nil
@@ -154,7 +153,7 @@ func (s *RegistryServer) getApiSpec(ctx context.Context, name names.Spec) (*rpc.
 func (s *RegistryServer) getApiSpecRevision(ctx context.Context, name names.SpecRevision) (*rpc.ApiSpec, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
-		return nil, unavailableError(err)
+		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 	defer s.releaseStorageClient(client)
 	db := dao.NewDAO(client)
@@ -166,7 +165,7 @@ func (s *RegistryServer) getApiSpecRevision(ctx context.Context, name names.Spec
 
 	message, err := revision.BasicMessage(name.String())
 	if err != nil {
-		return nil, internalError(err)
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	return message, nil
@@ -186,13 +185,13 @@ func GUnzippedBytes(input []byte) ([]byte, error) {
 func (s *RegistryServer) GetApiSpecContents(ctx context.Context, req *rpc.GetApiSpecContentsRequest) (*httpbody.HttpBody, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
-		return nil, unavailableError(err)
+		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 	defer s.releaseStorageClient(client)
 	db := dao.NewDAO(client)
 
 	if !strings.HasSuffix(req.GetName(), "/contents") {
-		return nil, invalidArgumentError(fmt.Errorf("invalid resource name %q, must include /contents suffix", req.GetName()))
+		return nil, status.Errorf(codes.InvalidArgument, "invalid resource name %q, must include /contents suffix", req.GetName())
 	}
 
 	var specName = strings.TrimSuffix(req.GetName(), "/contents")
@@ -209,7 +208,7 @@ func (s *RegistryServer) GetApiSpecContents(ctx context.Context, req *rpc.GetApi
 		}
 		revisionName = name
 	} else {
-		return nil, invalidArgumentError(fmt.Errorf("invalid resource name %q, must be an API spec or revision", specName))
+		return nil, status.Errorf(codes.InvalidArgument, "invalid resource name %q, must be an API spec or revision", specName)
 	}
 	blob, err := db.GetSpecRevisionContents(ctx, revisionName)
 	if err != nil {
@@ -235,13 +234,13 @@ func (s *RegistryServer) GetApiSpecContents(ctx context.Context, req *rpc.GetApi
 func (s *RegistryServer) ListApiSpecs(ctx context.Context, req *rpc.ListApiSpecsRequest) (*rpc.ListApiSpecsResponse, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
-		return nil, unavailableError(err)
+		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 	defer s.releaseStorageClient(client)
 	db := dao.NewDAO(client)
 
 	if req.GetPageSize() < 0 {
-		return nil, invalidArgumentError(fmt.Errorf("invalid page_size %d: must not be negative", req.GetPageSize()))
+		return nil, status.Errorf(codes.InvalidArgument, "invalid page_size %d: must not be negative", req.GetPageSize())
 	} else if req.GetPageSize() > 1000 {
 		req.PageSize = 1000
 	} else if req.GetPageSize() == 0 {
@@ -250,7 +249,7 @@ func (s *RegistryServer) ListApiSpecs(ctx context.Context, req *rpc.ListApiSpecs
 
 	parent, err := names.ParseVersion(req.GetParent())
 	if err != nil {
-		return nil, invalidArgumentError(err)
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	listing, err := db.ListSpecs(ctx, parent, dao.PageOptions{
@@ -270,7 +269,7 @@ func (s *RegistryServer) ListApiSpecs(ctx context.Context, req *rpc.ListApiSpecs
 	for i, spec := range listing.Specs {
 		response.ApiSpecs[i], err = spec.BasicMessage(spec.Name())
 		if err != nil {
-			return nil, internalError(err)
+			return nil, status.Error(codes.Internal, err.Error())
 		}
 	}
 
@@ -281,20 +280,20 @@ func (s *RegistryServer) ListApiSpecs(ctx context.Context, req *rpc.ListApiSpecs
 func (s *RegistryServer) UpdateApiSpec(ctx context.Context, req *rpc.UpdateApiSpecRequest) (*rpc.ApiSpec, error) {
 	client, err := s.getStorageClient(ctx)
 	if err != nil {
-		return nil, unavailableError(err)
+		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 	defer s.releaseStorageClient(client)
 	db := dao.NewDAO(client)
 
 	if req.GetApiSpec() == nil {
-		return nil, invalidArgumentError(fmt.Errorf("invalid api_spec %+v: body must be provided", req.GetApiSpec()))
+		return nil, status.Errorf(codes.InvalidArgument, "invalid api_spec %+v: body must be provided", req.GetApiSpec())
 	} else if err := models.ValidateMask(req.GetApiSpec(), req.GetUpdateMask()); err != nil {
-		return nil, invalidArgumentError(fmt.Errorf("invalid update_mask %v: %s", req.GetUpdateMask(), err))
+		return nil, status.Errorf(codes.InvalidArgument, "invalid update_mask %v: %s", req.GetUpdateMask(), err)
 	}
 
 	name, err := names.ParseSpec(req.ApiSpec.GetName())
 	if err != nil {
-		return nil, invalidArgumentError(err)
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	spec, err := db.GetSpec(ctx, name)
@@ -306,7 +305,7 @@ func (s *RegistryServer) UpdateApiSpec(ctx context.Context, req *rpc.UpdateApiSp
 
 	// Apply the update to the spec - possibly changing the revision ID.
 	if err := spec.Update(req.GetApiSpec(), models.ExpandMask(req.GetApiSpec(), req.GetUpdateMask())); err != nil {
-		return nil, internalError(err)
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	// Save the updated/current spec. This creates a new revision or updates the previous one.
@@ -325,7 +324,7 @@ func (s *RegistryServer) UpdateApiSpec(ctx context.Context, req *rpc.UpdateApiSp
 
 	message, err := spec.BasicMessage(name.String())
 	if err != nil {
-		return nil, internalError(err)
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	s.notify(ctx, rpc.Notification_UPDATED, spec.RevisionName())

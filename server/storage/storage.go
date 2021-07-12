@@ -46,7 +46,6 @@ type Client interface {
 	Run(ctx context.Context, q Query) Iterator
 
 	IsNotFound(err error) bool
-	NotFoundError() error
 
 	NewKey(kind, name string) Key
 	NewQuery(query string) Query

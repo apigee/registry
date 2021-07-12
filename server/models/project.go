@@ -19,8 +19,8 @@ import (
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
-	"github.com/golang/protobuf/ptypes"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // Project is the storage-side representation of a project.
@@ -53,24 +53,14 @@ func (p *Project) Name() string {
 }
 
 // Message returns a message representing a project.
-func (p *Project) Message() (message *rpc.Project, err error) {
-	message = &rpc.Project{
+func (p *Project) Message() *rpc.Project {
+	return &rpc.Project{
 		Name:        p.Name(),
 		DisplayName: p.DisplayName,
 		Description: p.Description,
+		CreateTime:  timestamppb.New(p.CreateTime),
+		UpdateTime:  timestamppb.New(p.UpdateTime),
 	}
-
-	message.CreateTime, err = ptypes.TimestampProto(p.CreateTime)
-	if err != nil {
-		return nil, err
-	}
-
-	message.UpdateTime, err = ptypes.TimestampProto(p.UpdateTime)
-	if err != nil {
-		return nil, err
-	}
-
-	return message, nil
 }
 
 // Update modifies a project using the contents of a message.

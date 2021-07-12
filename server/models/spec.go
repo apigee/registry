@@ -21,9 +21,9 @@ import (
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
-	"github.com/golang/protobuf/ptypes"
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // Spec is the storage-side representation of a spec.
@@ -122,29 +122,17 @@ func (s *Spec) RevisionName() string {
 // BasicMessage returns the basic view of the spec resource as an RPC message.
 func (s *Spec) BasicMessage(name string) (message *rpc.ApiSpec, err error) {
 	message = &rpc.ApiSpec{
-		Name:        name,
-		Filename:    s.FileName,
-		Description: s.Description,
-		Hash:        s.Hash,
-		SizeBytes:   s.SizeInBytes,
-		MimeType:    s.MimeType,
-		SourceUri:   s.SourceURI,
-		RevisionId:  s.RevisionID,
-	}
-
-	message.CreateTime, err = ptypes.TimestampProto(s.CreateTime)
-	if err != nil {
-		return nil, err
-	}
-
-	message.RevisionCreateTime, err = ptypes.TimestampProto(s.RevisionCreateTime)
-	if err != nil {
-		return nil, err
-	}
-
-	message.RevisionUpdateTime, err = ptypes.TimestampProto(s.RevisionUpdateTime)
-	if err != nil {
-		return nil, err
+		Name:               name,
+		Filename:           s.FileName,
+		Description:        s.Description,
+		Hash:               s.Hash,
+		SizeBytes:          s.SizeInBytes,
+		MimeType:           s.MimeType,
+		SourceUri:          s.SourceURI,
+		RevisionId:         s.RevisionID,
+		CreateTime:         timestamppb.New(s.CreateTime),
+		RevisionCreateTime: timestamppb.New(s.RevisionCreateTime),
+		RevisionUpdateTime: timestamppb.New(s.RevisionUpdateTime),
 	}
 
 	message.Labels, err = mapForBytes(s.Labels)
