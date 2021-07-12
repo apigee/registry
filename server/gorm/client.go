@@ -15,12 +15,9 @@
 package gorm
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"log"
-	"runtime"
-	"strconv"
 	"sync"
 
 	_ "github.com/GoogleCloudPlatform/cloudsql-proxy/proxy/dialers/postgres"
@@ -31,15 +28,6 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
-
-func getGID() uint64 {
-	b := make([]byte, 64)
-	b = b[:runtime.Stack(b, false)]
-	b = bytes.TrimPrefix(b, []byte("goroutine "))
-	b = b[:bytes.IndexByte(b, ' ')]
-	n, _ := strconv.ParseUint(string(b), 10, 64)
-	return n
-}
 
 // Client represents a connection to a storage provider.
 type Client struct {
@@ -150,33 +138,12 @@ func (c *Client) close() {
 	sqlDB.Close()
 }
 
-func (c *Client) resetTable(v interface{}) {
-	mylock()
-	defer myunlock()
-	if c.db.Migrator().HasTable(v) == true {
-		c.db.Migrator().DropTable(v)
-	}
-	if c.db.Migrator().HasTable(v) == false {
-		c.db.Migrator().CreateTable(v)
-	}
-}
-
 func (c *Client) ensureTable(v interface{}) {
 	mylock()
 	defer myunlock()
-	if c.db.Migrator().HasTable(v) == false {
+	if !c.db.Migrator().HasTable(v) {
 		c.db.Migrator().CreateTable(v)
 	}
-}
-
-func (c *Client) reset() {
-	c.resetTable(&models.Project{})
-	c.resetTable(&models.Api{})
-	c.resetTable(&models.Version{})
-	c.resetTable(&models.Spec{})
-	c.resetTable(&models.Blob{})
-	c.resetTable(&models.Artifact{})
-	c.resetTable(&models.SpecRevisionTag{})
 }
 
 func (c *Client) ensure() *Client {
@@ -193,11 +160,6 @@ func (c *Client) ensure() *Client {
 // IsNotFound returns true if an error is due to an entity not being found.
 func (c *Client) IsNotFound(err error) bool {
 	return err == gorm.ErrRecordNotFound
-}
-
-// NotFoundError is the error returned when an entity is not found.
-func (c *Client) NotFoundError() error {
-	return gorm.ErrRecordNotFound
 }
 
 // Get gets an entity using the storage client.

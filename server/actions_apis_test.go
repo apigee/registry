@@ -742,7 +742,7 @@ func TestUpdateApi(t *testing.T) {
 		want *rpc.Api
 	}{
 		{
-			desc: "implicit mask",
+			desc: "implicit nil mask",
 			seed: &rpc.Api{
 				Name:        "projects/my-project/apis/my-api",
 				DisplayName: "My Api",
@@ -753,6 +753,26 @@ func TestUpdateApi(t *testing.T) {
 					Name:        "projects/my-project/apis/my-api",
 					DisplayName: "My Updated Api",
 				},
+			},
+			want: &rpc.Api{
+				Name:        "projects/my-project/apis/my-api",
+				DisplayName: "My Updated Api",
+				Description: "Api for my APIs",
+			},
+		},
+		{
+			desc: "implicit empty mask",
+			seed: &rpc.Api{
+				Name:        "projects/my-project/apis/my-api",
+				DisplayName: "My Api",
+				Description: "Api for my APIs",
+			},
+			req: &rpc.UpdateApiRequest{
+				Api: &rpc.Api{
+					Name:        "projects/my-project/apis/my-api",
+					DisplayName: "My Updated Api",
+				},
+				UpdateMask: &fieldmaskpb.FieldMask{},
 			},
 			want: &rpc.Api{
 				Name:        "projects/my-project/apis/my-api",

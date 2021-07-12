@@ -20,10 +20,10 @@ import (
 	"testing"
 
 	"github.com/apigee/registry/rpc"
-	"github.com/golang/protobuf/proto"
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
 )
 

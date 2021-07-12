@@ -628,7 +628,7 @@ func TestUpdateProject(t *testing.T) {
 		want *rpc.Project
 	}{
 		{
-			desc: "implicit mask",
+			desc: "implicit nil mask",
 			seed: &rpc.Project{
 				Name:        "projects/my-project",
 				DisplayName: "My Project",
@@ -639,6 +639,26 @@ func TestUpdateProject(t *testing.T) {
 					Name:        "projects/my-project",
 					DisplayName: "My Updated Project",
 				},
+			},
+			want: &rpc.Project{
+				Name:        "projects/my-project",
+				DisplayName: "My Updated Project",
+				Description: "Project for my APIs",
+			},
+		},
+		{
+			desc: "implicit empty mask",
+			seed: &rpc.Project{
+				Name:        "projects/my-project",
+				DisplayName: "My Project",
+				Description: "Project for my APIs",
+			},
+			req: &rpc.UpdateProjectRequest{
+				Project: &rpc.Project{
+					Name:        "projects/my-project",
+					DisplayName: "My Updated Project",
+				},
+				UpdateMask: &fieldmaskpb.FieldMask{},
 			},
 			want: &rpc.Project{
 				Name:        "projects/my-project",

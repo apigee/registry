@@ -18,7 +18,6 @@ import (
 	"context"
 	"log"
 	"net"
-	"net/http"
 	"path/filepath"
 	"strings"
 
@@ -26,8 +25,6 @@ import (
 	"github.com/apigee/registry/server/gorm"
 	"github.com/apigee/registry/server/storage"
 
-	"github.com/improbable-eng/grpc-web/go/grpcweb"
-	"github.com/soheilhy/cmux"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/reflection"
@@ -107,31 +104,14 @@ func (s *RegistryServer) releaseStorageClient(client storage.Client) {
 // It blocks until the context is cancelled.
 func (s *RegistryServer) Start(ctx context.Context, listener net.Listener) {
 	var (
-		mux          = cmux.New(listener)
-		grpcListener = mux.Match(cmux.HTTP2())
-		httpListener = mux.Match(cmux.HTTP1Fast())
-
 		logInterceptor = grpc.UnaryInterceptor(s.logHandler)
 		grpcServer     = grpc.NewServer(logInterceptor)
-		grpcWebServer  = grpcweb.WrapServer(grpcServer)
-
-		httpServer = http.Server{
-			Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				if grpcWebServer.IsGrpcWebRequest(r) {
-					grpcWebServer.ServeHTTP(w, r)
-				} else {
-					http.NotFound(w, r)
-				}
-			}),
-		}
 	)
 
 	reflection.Register(grpcServer)
 	rpc.RegisterRegistryServer(grpcServer, s)
 
-	go grpcServer.Serve(grpcListener)
-	go httpServer.Serve(httpListener)
-	go mux.Serve()
+	go grpcServer.Serve(listener)
 
 	// Block until the context is cancelled.
 	<-ctx.Done()

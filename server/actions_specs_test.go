@@ -965,7 +965,7 @@ func TestUpdateApiSpec(t *testing.T) {
 			},
 		},
 		{
-			desc: "implicit mask",
+			desc: "implicit nil mask",
 			seed: &rpc.ApiSpec{
 				Name:        "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
 				Description: "My ApiSpec",
@@ -976,6 +976,26 @@ func TestUpdateApiSpec(t *testing.T) {
 					Name:        "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
 					Description: "My Updated ApiSpec",
 				},
+			},
+			want: &rpc.ApiSpec{
+				Name:        "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
+				Description: "My Updated ApiSpec",
+				Filename:    "openapi.json",
+			},
+		},
+		{
+			desc: "implicit empty mask",
+			seed: &rpc.ApiSpec{
+				Name:        "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
+				Description: "My ApiSpec",
+				Filename:    "openapi.json",
+			},
+			req: &rpc.UpdateApiSpecRequest{
+				ApiSpec: &rpc.ApiSpec{
+					Name:        "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
+					Description: "My Updated ApiSpec",
+				},
+				UpdateMask: &fieldmaskpb.FieldMask{},
 			},
 			want: &rpc.ApiSpec{
 				Name:        "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
