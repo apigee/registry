@@ -55,6 +55,7 @@ func manifestCommand(ctx context.Context) *cobra.Command {
 				MimeType: core.MimeTypeForMessageType("google.cloud.apigee.registry.applications.v1alpha1.Manifest"),
 				Contents: manifestData,
 			}
+			log.Printf("uploading %s", artifact.Name)
 			err = core.SetArtifact(ctx, client, artifact)
 			if err != nil {
 				log.Fatal(err.Error())

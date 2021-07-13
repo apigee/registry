@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/rpc"
 	"log"
 	"time"
 )
@@ -30,14 +31,15 @@ type ResourceCollection struct {
 func ProcessManifest(
 	ctx context.Context,
 	client connection.Client,
-	manifest *Manifest) ([]string, error) {
+	projectID string,
+	manifest *rpc.Manifest) ([]string, error) {
 
 	var actions []string
-	for _, entry := range manifest.Entries {
+	for _, resource := range manifest.GeneratedResources {
 
-		newActions, err := processManifestEntry(ctx, client, manifest.Project, entry)
+		newActions, err := processManifestResource(ctx, client, projectID, resource)
 		if err != nil {
-			log.Printf("Skipping entry: %q\nGot error: %s", entry, err.Error())
+			log.Printf("Skipping resource: %q\nGot error: %s", resource, err.Error())
 		}
 		actions = append(actions, newActions...)
 	}
@@ -45,25 +47,32 @@ func ProcessManifest(
 	return actions, nil
 }
 
-func processManifestEntry(
+func processManifestResource(
 	ctx context.Context,
 	client connection.Client,
-	project string,
-	entry ManifestEntry) ([]string, error) {
+	projectID string,
+	resource *rpc.GeneratedResource) ([]string, error) {
 	// Generate dependency map
-	resourcePattern := fmt.Sprintf("projects/%s/%s", project, entry.Resource)
-	dependencyMaps := make([]map[string]ResourceCollection, 0, len(entry.Dependencies))
-	for _, d := range entry.Dependencies {
-		dMap, err := generateDependencyMap(ctx, client, resourcePattern, d.Source, d.Filter)
+	resourcePattern := fmt.Sprintf("projects/%s/%s", projectID, resource.Pattern)
+	dependencyMaps := make([]map[string]ResourceCollection, 0, len(resource.Dependencies))
+	for _, d := range resource.Dependencies {
+		dMap, err := generateDependencyMap(ctx, client, resourcePattern, d.Pattern, d.Filter)
 		if err != nil {
-			log.Printf("Encountered error during updateResources().\n Error: %s\n Skipping entry %+v", err.Error(), entry)
+			log.Printf("Error while generating dependency map.\n Error: %s\n Skipping resource %+v", err.Error(), resource)
 			continue
 		}
 		dependencyMaps = append(dependencyMaps, dMap)
 	}
 
+	// Generate resource list
+	resourceList, err := ListResources(ctx, client, resourcePattern, resource.Filter)
+	if err != nil {
+		return nil, err
+	}
+
 	// Update target resources
-	cmds, err := updateResources(ctx, client, resourcePattern, entry.Dependencies, dependencyMaps, entry.Action)
+	cmds, err := generateActions(ctx, client, resourceList,
+		resource.Dependencies, dependencyMaps, resource.Action)
 	if err != nil {
 		return nil, err
 	}
@@ -75,25 +84,25 @@ func generateDependencyMap(
 	ctx context.Context,
 	client connection.Client,
 	resourcePattern,
-	sourcePattern,
-	sourceFilter string) (map[string]ResourceCollection, error) {
+	dependencyPattern,
+	dependencyFilter string) (map[string]ResourceCollection, error) {
 
 	sourceMap := make(map[string]ResourceCollection)
 
 	// Extend the source pattern if it contains $resource.api like pattern
-	extSourcePattern, err := ExtendSourcePattern(resourcePattern, sourcePattern)
+	extDependencyPattern, err := ExtendSourcePattern(resourcePattern, dependencyPattern)
 	if err != nil {
 		return nil, err
 	}
 
-	// Fetch resources using the extSourcePattern
-	sourceList, err := ListResources(ctx, client, extSourcePattern, sourceFilter)
+	// Fetch resources using the extDependencyPattern
+	sourceList, err := ListResources(ctx, client, extDependencyPattern, dependencyFilter)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, source := range sourceList {
-		group, err := ExtractGroup(sourcePattern, source)
+		group, err := ExtractGroup(dependencyPattern, source)
 		if err != nil {
 			return nil, err
 		}
@@ -116,21 +125,16 @@ func generateDependencyMap(
 
 }
 
-func updateResources(
+func generateActions(
 	ctx context.Context,
 	client connection.Client,
-	resourcePattern string,
-	dependencies []Dependency,
+	resourceList []Resource,
+	dependencies []*rpc.Dependency,
 	dependencyMaps []map[string]ResourceCollection,
 	action string) ([]string, error) {
 
 	visited := make(map[string]bool, 0)
 	cmds := make([]string, 0)
-
-	resourceList, err := ListResources(ctx, client, resourcePattern, "")
-	if err != nil {
-		return nil, err
-	}
 
 	for _, resource := range resourceList {
 		resourceTime := resource.GetUpdateTimestamp()
@@ -142,9 +146,9 @@ func updateResources(
 		for i, dependency := range dependencies {
 			dMap := dependencyMaps[i]
 			// Get the group to look for in dependencyMap
-			group, err := ExtractGroup(dependency.Source, resource)
+			group, err := ExtractGroup(dependency.Pattern, resource)
 			if err != nil {
-				return nil, fmt.Errorf("Cannot match resource with source. Error: %s", err.Error())
+				return nil, fmt.Errorf("Cannot match resource with dependency. Error: %s", err.Error())
 			}
 
 			if collection, ok := dMap[group]; ok {

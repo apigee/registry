@@ -15,10 +15,13 @@
 package controller
 
 import (
+	"context"
 	"fmt"
+	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
 	yaml2 "github.com/ghodss/yaml"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 )
@@ -74,4 +77,28 @@ func ReadManifestProto(filename string) (*rpc.Manifest, error) {
 	}
 
 	return m, nil
+}
+
+func FetchManifest(
+	ctx context.Context,
+	client connection.Client,
+	manifestName string) (*rpc.Manifest, error) {
+
+	manifest := &rpc.Manifest{}
+	body, err := client.GetArtifactContents(
+		ctx,
+		&rpc.GetArtifactContentsRequest{
+			Name: manifestName,
+		})
+	if err != nil {
+		return nil, err
+	}
+
+	contents := body.GetData()
+	err = proto.Unmarshal(contents, manifest)
+	if err != nil {
+		return nil, err
+	}
+
+	return manifest, nil
 }

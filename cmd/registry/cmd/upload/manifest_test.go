@@ -38,19 +38,19 @@ func TestManifestUpload(t *testing.T) {
 		{
 			desc:     "simple manifest upload",
 			project:  "upload-manifest-demo",
-			filePath: "../../controller/test/manifest_test.yaml",
+			filePath: "../../controller/test/manifest_e2e.yaml",
 			want: rpc.Manifest{
 				Name: "test-manifest",
 				GeneratedResources: []*rpc.GeneratedResource{
 					{
-						Pattern: "apis/-/versions/-/specs/-/artifacts/lint-gnostic",
+						Pattern: "apis/-/versions/-/specs/-/artifacts/complexity",
 						Dependencies: []*rpc.Dependency{
 							{
 								Pattern: "$resource.spec",
 								Filter:  "mime_type.contains('openapi')",
 							},
 						},
-						Action: "compute lint $source0 --linter gnostic",
+						Action: "compute complexity $source0",
 					},
 				},
 			},

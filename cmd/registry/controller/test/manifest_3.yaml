@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-project: "controller-test"
-manifest:
-- resource: apis/-/versions/-/specs/-/artifacts/score
+name: "controller-test"
+generated_resources:
+- pattern: apis/-/versions/-/specs/-/artifacts/score
   dependencies:
-  - source: $resource.spec/artifacts/lint-gnostic
-  - source: $resource.spec/artifacts/complexity
+  - pattern: $resource.spec/artifacts/lint-gnostic
+  - pattern: $resource.spec/artifacts/complexity
   action: "compute score $source0 $source1" 
