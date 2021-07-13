@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package controller
+package resolve
 
 import (
 	"bytes"
@@ -21,6 +21,7 @@ import (
 	"io/ioutil"
 	"testing"
 
+	"github.com/apigee/registry/cmd/registry/cmd/upload"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
@@ -46,7 +47,7 @@ func readAndGZipFile(t *testing.T, filename string) (*bytes.Buffer, error) {
 	return &buf, nil
 }
 
-func TestControllerUpdate(t *testing.T) {
+func TestResolve(t *testing.T) {
 	ctx := context.Background()
 	client, err := connection.NewClient(ctx)
 	if err != nil {
@@ -183,12 +184,19 @@ func TestControllerUpdate(t *testing.T) {
 		t.Fatalf("Failed CreateApiSpec(%v): %s", req, err.Error())
 	}
 
+	// Upload the manifest to registry
+	args := []string{"manifest", "../../controller/test/manifest_e2e.yaml", "--project_id=" + testProject}
+	uploadCmd := upload.Command(ctx)
+	uploadCmd.SetArgs(args)
+	if err = uploadCmd.Execute(); err != nil {
+		t.Fatalf("Failed to upload the manifest: %s", err)
+	}
+
 	// Call the controller update command
-	cmd := Command(ctx)
-	t.Logf("%+v", cmd.PersistentFlags())
-	args := []string{"update", "../../controller/test/manifest_e2e.yaml"}
-	cmd.SetArgs(args)
-	if err = cmd.Execute(); err != nil {
+	resolveCmd := Command(ctx)
+	args = []string{"projects/" + testProject + "/artifacts/test-manifest"}
+	resolveCmd.SetArgs(args)
+	if err = resolveCmd.Execute(); err != nil {
 		t.Fatalf("Execute() with args %v returned error: %s", args, err)
 	}
 

@@ -187,13 +187,15 @@ func TestSingleSpec(t *testing.T) {
 	createSpec(ctx, registryClient, t, "projects/controller-test/apis/petstore/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
 
 	// Test the manifest
-	manifest, err := ReadManifest(
+	manifest, err := ReadManifestProto(
 		"test/manifest_1.yaml")
 	if err != nil {
 		t.Error(err.Error())
 	}
 
-	actions, err := ProcessManifest(ctx, registryClient, manifest)
+	log.Printf("%v", manifest)
+
+	actions, err := ProcessManifest(ctx, registryClient, "controller-test", manifest)
 	if err != nil {
 		log.Printf(err.Error())
 	}
@@ -231,13 +233,13 @@ func TestMultipleSpecs(t *testing.T) {
 	createSpec(ctx, registryClient, t, "projects/controller-test/apis/petstore/versions/1.1.0", "openapi.yaml", gzipOpenAPIv3)
 
 	// Test the manifest
-	manifest, err := ReadManifest(
+	manifest, err := ReadManifestProto(
 		"test/manifest_1.yaml")
 	if err != nil {
 		t.Error(err.Error())
 	}
 
-	actions, err := ProcessManifest(ctx, registryClient, manifest)
+	actions, err := ProcessManifest(ctx, registryClient, "controller-test", manifest)
 	if err != nil {
 		log.Printf(err.Error())
 	}
@@ -281,13 +283,13 @@ func TestPartiallyExistingArtifacts(t *testing.T) {
 	createSpec(ctx, registryClient, t, "projects/controller-test/apis/petstore/versions/1.1.0", "openapi.yaml", gzipOpenAPIv3)
 
 	// Test the manifest
-	manifest, err := ReadManifest(
+	manifest, err := ReadManifestProto(
 		"test/manifest_1.yaml")
 	if err != nil {
 		t.Error(err.Error())
 	}
 
-	actions, err := ProcessManifest(ctx, registryClient, manifest)
+	actions, err := ProcessManifest(ctx, registryClient, "controller-test", manifest)
 	if err != nil {
 		log.Printf(err.Error())
 	}
@@ -332,13 +334,13 @@ func TestOutdatedArtifacts(t *testing.T) {
 	updateSpec(ctx, registryClient, t, "projects/controller-test/apis/petstore/versions/1.0.1/specs/openapi.yaml")
 
 	// Test the manifest
-	manifest, err := ReadManifest(
+	manifest, err := ReadManifestProto(
 		"test/manifest_1.yaml")
 	if err != nil {
 		t.Error(err.Error())
 	}
 
-	actions, err := ProcessManifest(ctx, registryClient, manifest)
+	actions, err := ProcessManifest(ctx, registryClient, "controller-test", manifest)
 	if err != nil {
 		log.Printf(err.Error())
 	}
@@ -389,13 +391,13 @@ func TestApiLevelArtifactsCreate(t *testing.T) {
 	createSpec(ctx, registryClient, t, "projects/controller-test/apis/test-api-2/versions/1.1.0", "openapi.yaml", gzipOpenAPIv3)
 
 	// Test the manifest
-	manifest, err := ReadManifest(
+	manifest, err := ReadManifestProto(
 		"test/manifest_2.yaml")
 	if err != nil {
 		t.Error(err.Error())
 	}
 
-	actions, err := ProcessManifest(ctx, registryClient, manifest)
+	actions, err := ProcessManifest(ctx, registryClient, "controller-test", manifest)
 	if err != nil {
 		log.Printf(err.Error())
 	}
@@ -449,13 +451,13 @@ func TestApiLevelArtifactsOutdated(t *testing.T) {
 	updateSpec(ctx, registryClient, t, "projects/controller-test/apis/test-api-2/versions/1.0.1/specs/openapi.yaml")
 
 	// Test the manifest
-	manifest, err := ReadManifest(
+	manifest, err := ReadManifestProto(
 		"test/manifest_2.yaml")
 	if err != nil {
 		t.Error(err.Error())
 	}
 
-	actions, err := ProcessManifest(ctx, registryClient, manifest)
+	actions, err := ProcessManifest(ctx, registryClient, "controller-test", manifest)
 	if err != nil {
 		log.Printf(err.Error())
 	}
@@ -499,13 +501,13 @@ func TestDerivedArtifactsCreate(t *testing.T) {
 	createUpdateArtifact(ctx, registryClient, t, "projects/controller-test/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/complexity")
 
 	// Test the manifest
-	manifest, err := ReadManifest(
+	manifest, err := ReadManifestProto(
 		"test/manifest_3.yaml")
 	if err != nil {
 		t.Error(err.Error())
 	}
 
-	actions, err := ProcessManifest(ctx, registryClient, manifest)
+	actions, err := ProcessManifest(ctx, registryClient, "controller-test", manifest)
 	if err != nil {
 		log.Printf(err.Error())
 	}
@@ -558,13 +560,13 @@ func TestDerivedArtifactsMissing(t *testing.T) {
 	createUpdateArtifact(ctx, registryClient, t, "projects/controller-test/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/complexity")
 
 	// Test the manifest
-	manifest, err := ReadManifest(
+	manifest, err := ReadManifestProto(
 		"test/manifest_3.yaml")
 	if err != nil {
 		t.Error(err.Error())
 	}
 
-	actions, err := ProcessManifest(ctx, registryClient, manifest)
+	actions, err := ProcessManifest(ctx, registryClient, "controller-test", manifest)
 	if err != nil {
 		log.Printf(err.Error())
 	}
@@ -619,13 +621,13 @@ func TestDerivedArtifactsOutdated(t *testing.T) {
 	createUpdateArtifact(ctx, registryClient, t, "projects/controller-test/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/complexity")
 
 	// Test the manifest
-	manifest, err := ReadManifest(
+	manifest, err := ReadManifestProto(
 		"test/manifest_3.yaml")
 	if err != nil {
 		t.Error(err.Error())
 	}
 
-	actions, err := ProcessManifest(ctx, registryClient, manifest)
+	actions, err := ProcessManifest(ctx, registryClient, "controller-test", manifest)
 	if err != nil {
 		log.Printf(err.Error())
 	}

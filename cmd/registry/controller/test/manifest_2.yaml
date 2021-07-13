@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-project: "controller-test"
-manifest:
-- resource: apis/-/artifacts/vocabulary
+name: "controller-test"
+generated_resources:
+- pattern: apis/-/artifacts/vocabulary
   dependencies:
-  - source: $resource.api/versions/-/specs/-
+  - pattern: $resource.api/versions/-/specs/-
   action: "compute vocabulary $source0.api"
