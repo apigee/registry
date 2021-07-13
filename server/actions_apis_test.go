@@ -17,7 +17,6 @@ package server
 import (
 	"context"
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/apigee/registry/rpc"
@@ -28,23 +27,6 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
-)
-
-var (
-	// Full API view includes annotations.
-	fullApi = &rpc.Api{
-		Name:               "projects/my-project/apis/my-api",
-		DisplayName:        "My Api",
-		Description:        "Api for my versions",
-		Availability:       "GENERAL",
-		RecommendedVersion: "v1",
-		Labels: map[string]string{
-			"label-key": "label-value",
-		},
-		Annotations: map[string]string{
-			"annotation-key": "annotation-value",
-		},
-	}
 )
 
 func seedApis(ctx context.Context, t *testing.T, s *RegistryServer, apis ...*rpc.Api) {
@@ -78,37 +60,44 @@ func seedApis(ctx context.Context, t *testing.T, s *RegistryServer, apis ...*rpc
 
 func TestCreateApi(t *testing.T) {
 	tests := []struct {
-		desc      string
-		seed      *rpc.Project
-		req       *rpc.CreateApiRequest
-		want      *rpc.Api
-		extraOpts cmp.Option
+		desc string
+		seed *rpc.Project
+		req  *rpc.CreateApiRequest
+		want *rpc.Api
 	}{
 		{
-			desc: "populated resource with default parameters",
-			seed: &rpc.Project{
-				Name: "projects/my-project",
-			},
-			req: &rpc.CreateApiRequest{
-				Parent: "projects/my-project",
-				Api:    fullApi,
-			},
-			want: fullApi,
-			// Name field is generated.
-			extraOpts: protocmp.IgnoreFields(new(rpc.Api), "name"),
-		},
-		{
-			desc: "custom identifier",
+			desc: "fully populated resource",
 			seed: &rpc.Project{
 				Name: "projects/my-project",
 			},
 			req: &rpc.CreateApiRequest{
 				Parent: "projects/my-project",
 				ApiId:  "my-api",
-				Api:    &rpc.Api{},
+				Api: &rpc.Api{
+					DisplayName:        "My Display Name",
+					Description:        "My Description",
+					Availability:       "My Availability",
+					RecommendedVersion: "My Version",
+					Labels: map[string]string{
+						"label-key": "label-value",
+					},
+					Annotations: map[string]string{
+						"annotation-key": "annotation-value",
+					},
+				},
 			},
 			want: &rpc.Api{
-				Name: "projects/my-project/apis/my-api",
+				Name:               "projects/my-project/apis/my-api",
+				DisplayName:        "My Display Name",
+				Description:        "My Description",
+				Availability:       "My Availability",
+				RecommendedVersion: "My Version",
+				Labels: map[string]string{
+					"label-key": "label-value",
+				},
+				Annotations: map[string]string{
+					"annotation-key": "annotation-value",
+				},
 			},
 		},
 	}
@@ -127,15 +116,10 @@ func TestCreateApi(t *testing.T) {
 			opts := cmp.Options{
 				protocmp.Transform(),
 				protocmp.IgnoreFields(new(rpc.Api), "create_time", "update_time"),
-				test.extraOpts,
 			}
 
 			if !cmp.Equal(test.want, created, opts) {
 				t.Errorf("CreateApi(%+v) returned unexpected diff (-want +got):\n%s", test.req, cmp.Diff(test.want, created, opts))
-			}
-
-			if !strings.HasPrefix(created.GetName(), test.req.GetParent()+"/apis/") {
-				t.Errorf("CreateApi(%+v) returned unexpected name %q, expected collection prefix", test.req, created.GetName())
 			}
 
 			if created.CreateTime == nil || created.UpdateTime == nil {
@@ -175,7 +159,8 @@ func TestCreateApiResponseCodes(t *testing.T) {
 			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.CreateApiRequest{
 				Parent: "projects/other-project",
-				Api:    fullApi,
+				ApiId:  "valid-id",
+				Api:    &rpc.Api{},
 			},
 			want: codes.NotFound,
 		},
@@ -184,7 +169,18 @@ func TestCreateApiResponseCodes(t *testing.T) {
 			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.CreateApiRequest{
 				Parent: "projects/my-project",
+				ApiId:  "valid-id",
 				Api:    nil,
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "missing custom identifier",
+			seed: &rpc.Project{Name: "projects/my-project"},
+			req: &rpc.CreateApiRequest{
+				Parent: "projects/my-project",
+				ApiId:  "",
+				Api:    &rpc.Api{},
 			},
 			want: codes.InvalidArgument,
 		},
@@ -264,35 +260,45 @@ func TestCreateApiResponseCodes(t *testing.T) {
 }
 
 func TestCreateApiDuplicates(t *testing.T) {
-	ctx := context.Background()
-	server := defaultTestServer(t)
-	seedApis(ctx, t, server, &rpc.Api{
-		Name: "projects/my-project/apis/my-api",
-	})
+	tests := []struct {
+		desc string
+		seed *rpc.Api
+		req  *rpc.CreateApiRequest
+		want codes.Code
+	}{
+		{
+			desc: "case sensitive",
+			seed: &rpc.Api{Name: "projects/my-project/apis/my-api"},
+			req: &rpc.CreateApiRequest{
+				Parent: "projects/my-project",
+				ApiId:  "my-api",
+				Api:    &rpc.Api{},
+			},
+			want: codes.AlreadyExists,
+		},
+		{
+			desc: "case insensitive",
+			seed: &rpc.Api{Name: "projects/my-project/apis/my-api"},
+			req: &rpc.CreateApiRequest{
+				Parent: "projects/my-project",
+				ApiId:  "My-Api",
+				Api:    &rpc.Api{},
+			},
+			want: codes.AlreadyExists,
+		},
+	}
 
-	t.Run("case sensitive duplicate", func(t *testing.T) {
-		req := &rpc.CreateApiRequest{
-			Parent: "projects/my-project",
-			ApiId:  "my-api",
-			Api:    &rpc.Api{},
-		}
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			ctx := context.Background()
+			server := defaultTestServer(t)
+			seedApis(ctx, t, server, test.seed)
 
-		if _, err := server.CreateApi(ctx, req); status.Code(err) != codes.AlreadyExists {
-			t.Errorf("CreateApi(%+v) returned status code %q, want %q: %v", req, status.Code(err), codes.AlreadyExists, err)
-		}
-	})
-
-	t.Run("case insensitive duplicate", func(t *testing.T) {
-		req := &rpc.CreateApiRequest{
-			Parent: "projects/my-project",
-			ApiId:  "My-Api",
-			Api:    &rpc.Api{},
-		}
-
-		if _, err := server.CreateApi(ctx, req); status.Code(err) != codes.AlreadyExists {
-			t.Errorf("CreateApi(%+v) returned status code %q, want %q: %v", req, status.Code(err), codes.AlreadyExists, err)
-		}
-	})
+			if _, err := server.CreateApi(ctx, test.req); status.Code(err) != test.want {
+				t.Errorf("CreateApi(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
+			}
+		})
+	}
 }
 
 func TestGetApi(t *testing.T) {
@@ -303,12 +309,36 @@ func TestGetApi(t *testing.T) {
 		want *rpc.Api
 	}{
 		{
-			desc: "default view",
-			seed: fullApi,
-			req: &rpc.GetApiRequest{
-				Name: fullApi.Name,
+			desc: "fully populated resource",
+			seed: &rpc.Api{
+				Name:               "projects/my-project/apis/my-api",
+				DisplayName:        "My Display Name",
+				Description:        "My Description",
+				Availability:       "My Availability",
+				RecommendedVersion: "My Version",
+				Labels: map[string]string{
+					"label-key": "label-value",
+				},
+				Annotations: map[string]string{
+					"annotation-key": "annotation-value",
+				},
 			},
-			want: fullApi,
+			req: &rpc.GetApiRequest{
+				Name: "projects/my-project/apis/my-api",
+			},
+			want: &rpc.Api{
+				Name:               "projects/my-project/apis/my-api",
+				DisplayName:        "My Display Name",
+				Description:        "My Description",
+				Availability:       "My Availability",
+				RecommendedVersion: "My Version",
+				Labels: map[string]string{
+					"label-key": "label-value",
+				},
+				Annotations: map[string]string{
+					"annotation-key": "annotation-value",
+				},
+			},
 		},
 	}
 
@@ -511,8 +541,7 @@ func TestListApis(t *testing.T) {
 			if test.wantToken && got.NextPageToken == "" {
 				t.Errorf("ListApis(%+v) returned empty next_page_token, expected non-empty next_page_token", test.req)
 			} else if !test.wantToken && got.NextPageToken != "" {
-				// TODO: This should be changed to a test error when possible. See: https://github.com/apigee/registry/issues/68
-				t.Logf("ListApis(%+v) returned non-empty next_page_token, expected empty next_page_token: %s", test.req, got.GetNextPageToken())
+				t.Errorf("ListApis(%+v) returned non-empty next_page_token, expected empty next_page_token: %s", test.req, got.GetNextPageToken())
 			}
 		})
 	}
@@ -651,8 +680,7 @@ func TestListApisSequence(t *testing.T) {
 		}
 
 		if got.GetNextPageToken() != "" {
-			// TODO: This should be changed to a test error when possible. See: https://github.com/apigee/registry/issues/68
-			t.Logf("ListApis(%+v) returned next_page_token, expected no next page", req)
+			t.Errorf("ListApis(%+v) returned next_page_token, expected no next page", req)
 		}
 
 		listed = append(listed, got.Apis...)
@@ -682,14 +710,14 @@ func TestListApisLargeCollectionFiltering(t *testing.T) {
 	server := defaultTestServer(t)
 	for i := 1; i <= 100; i++ {
 		seedApis(ctx, t, server, &rpc.Api{
-			Name: fmt.Sprintf("projects/my-project/apis/a%d", i),
+			Name: fmt.Sprintf("projects/my-project/apis/a%03d", i),
 		})
 	}
 
 	req := &rpc.ListApisRequest{
 		Parent:   "projects/my-project",
 		PageSize: 1,
-		Filter:   "name == 'projects/my-project/apis/a99'",
+		Filter:   "name == 'projects/my-project/apis/a099'",
 	}
 
 	got, err := server.ListApis(ctx, req)
@@ -698,8 +726,7 @@ func TestListApisLargeCollectionFiltering(t *testing.T) {
 	}
 
 	if len(got.GetApis()) == 1 && got.GetNextPageToken() != "" {
-		// TODO: This should be changed to a test error when possible. See: https://github.com/apigee/registry/issues/68
-		t.Logf("ListApis(%+v) returned a page token when the only matching resource has been listed: %+v", req, got)
+		t.Errorf("ListApis(%+v) returned a page token when the only matching resource has been listed: %+v", req, got)
 	} else if len(got.GetApis()) == 0 && got.GetNextPageToken() == "" {
 		t.Errorf("ListApis(%+v) returned an empty next page token before listing the only matching resource", req)
 	} else if count := len(got.GetApis()); count > 1 {
@@ -708,8 +735,6 @@ func TestListApisLargeCollectionFiltering(t *testing.T) {
 }
 
 func TestUpdateApi(t *testing.T) {
-	t.Skip("Default/empty mask behavior is incorrect and replacement wildcard is not implemented")
-
 	tests := []struct {
 		desc string
 		seed *rpc.Api
@@ -717,17 +742,7 @@ func TestUpdateApi(t *testing.T) {
 		want *rpc.Api
 	}{
 		{
-			desc: "populated resource with default parameters",
-			seed: fullApi,
-			req: &rpc.UpdateApiRequest{
-				Api: &rpc.Api{
-					Name: fullApi.Name,
-				},
-			},
-			want: fullApi,
-		},
-		{
-			desc: "implicit mask",
+			desc: "implicit nil mask",
 			seed: &rpc.Api{
 				Name:        "projects/my-project/apis/my-api",
 				DisplayName: "My Api",
@@ -738,6 +753,26 @@ func TestUpdateApi(t *testing.T) {
 					Name:        "projects/my-project/apis/my-api",
 					DisplayName: "My Updated Api",
 				},
+			},
+			want: &rpc.Api{
+				Name:        "projects/my-project/apis/my-api",
+				DisplayName: "My Updated Api",
+				Description: "Api for my APIs",
+			},
+		},
+		{
+			desc: "implicit empty mask",
+			seed: &rpc.Api{
+				Name:        "projects/my-project/apis/my-api",
+				DisplayName: "My Api",
+				Description: "Api for my APIs",
+			},
+			req: &rpc.UpdateApiRequest{
+				Api: &rpc.Api{
+					Name:        "projects/my-project/apis/my-api",
+					DisplayName: "My Updated Api",
+				},
+				UpdateMask: &fieldmaskpb.FieldMask{},
 			},
 			want: &rpc.Api{
 				Name:        "projects/my-project/apis/my-api",
@@ -828,8 +863,6 @@ func TestUpdateApi(t *testing.T) {
 }
 
 func TestUpdateApiResponseCodes(t *testing.T) {
-	t.Skip("Update mask validation is not implemented")
-
 	tests := []struct {
 		desc string
 		seed *rpc.Api
@@ -893,7 +926,7 @@ func TestDeleteApi(t *testing.T) {
 		req  *rpc.DeleteApiRequest
 	}{
 		{
-			desc: "existing api",
+			desc: "existing resource",
 			seed: &rpc.Api{
 				Name: "projects/my-project/apis/my-api",
 			},

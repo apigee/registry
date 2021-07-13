@@ -17,14 +17,13 @@ package server
 import (
 	"context"
 	"log"
-	"time"
 
 	"cloud.google.com/go/pubsub"
 	"github.com/apigee/registry/rpc"
-	"github.com/golang/protobuf/jsonpb"
-	"github.com/golang/protobuf/ptypes"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 const verbose = false
@@ -33,59 +32,47 @@ const TopicName = "registry-events"
 
 var notificationTotal int
 
-func (s *RegistryServer) notify(change rpc.Notification_Change, resource string) error {
-	if !s.enableNotifications {
+func (s *RegistryServer) notify(ctx context.Context, change rpc.Notification_Change, resource string) error {
+	if !s.notifyEnabled || s.projectID == "" {
 		return nil
 	}
-	projectID, err := s.getProjectID()
-	if err != nil {
-		return err
-	}
-	ctx := context.Background()
-	client, err := pubsub.NewClient(ctx, projectID)
+
+	client, err := pubsub.NewClient(ctx, s.projectID)
 	if err != nil {
 		return err
 	}
 	defer client.Close()
-	// Ensure that topic exists.
-	{
-		_, err := client.CreateTopic(context.Background(), TopicName)
-		if err != nil {
-			code := status.Code(err)
-			if code != codes.AlreadyExists {
-				return err
-			}
-		}
+
+	if _, err := client.CreateTopic(ctx, TopicName); err != nil && status.Code(err) != codes.AlreadyExists {
+		return err
 	}
-	// Get the topic.
+
 	topic := client.Topic(TopicName)
 	defer topic.Stop()
-	// Create the notification
-	n := &rpc.Notification{}
-	n.Change = change
-	n.Resource = resource
-	n.ChangeTime, err = ptypes.TimestampProto(time.Now())
-	// Marshal the notification.
-	m, err := (&jsonpb.Marshaler{}).MarshalToString(n)
+
+	msg, err := protojson.Marshal(&rpc.Notification{
+		Change:     change,
+		Resource:   resource,
+		ChangeTime: timestamppb.Now(),
+	})
 	if err != nil {
 		return err
 	}
-	// Send the notification.
-	notificationTotal++
-	log.Printf("^^ [%03d] %+s", notificationTotal, m)
-	var results []*pubsub.PublishResult
-	r := topic.Publish(ctx, &pubsub.Message{
-		Data: []byte(m),
+
+	result := topic.Publish(ctx, &pubsub.Message{
+		Data: msg,
 	})
-	results = append(results, r)
-	for _, r := range results {
-		id, err := r.Get(ctx)
-		if err != nil {
-			return err
-		}
-		if verbose {
-			log.Printf("Published a message with a message ID: %s", id)
-		}
+
+	id, err := result.Get(ctx)
+	if err != nil {
+		return err
 	}
+
+	notificationTotal++
+	if verbose {
+		log.Printf("^^ [%03d] %+s", notificationTotal, msg)
+		log.Printf("Published a message with a message ID: %s", id)
+	}
+
 	return nil
 }

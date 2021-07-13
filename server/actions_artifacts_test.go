@@ -16,6 +16,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -31,21 +32,6 @@ import (
 var (
 	// Example artifact contents for a JSON artifact.
 	artifactContents = []byte(`{"contents": "foo"}`)
-	// Basic artifact view does not include contents.
-	basicArtifact = &rpc.Artifact{
-		Name:      "projects/my-project/apis/my-api/versions/v1/artifacts/my-artifact",
-		MimeType:  "application/json",
-		SizeBytes: int32(len(artifactContents)),
-		Hash:      sha256hash(artifactContents),
-	}
-	// Full artifact view includes contents.
-	fullArtifact = &rpc.Artifact{
-		Name:      "projects/my-project/apis/my-api/versions/v1/artifacts/my-artifact",
-		MimeType:  "application/json",
-		SizeBytes: int32(len(artifactContents)),
-		Hash:      sha256hash(artifactContents),
-		Contents:  artifactContents,
-	}
 )
 
 func seedArtifacts(ctx context.Context, t *testing.T, s *RegistryServer, artifacts ...*rpc.Artifact) {
@@ -95,33 +81,29 @@ func seedArtifacts(ctx context.Context, t *testing.T, s *RegistryServer, artifac
 
 func TestCreateArtifact(t *testing.T) {
 	tests := []struct {
-		desc      string
-		seed      *rpc.ApiVersion
-		req       *rpc.CreateArtifactRequest
-		want      *rpc.Artifact
-		extraOpts cmp.Option
+		desc string
+		seed *rpc.Project
+		req  *rpc.CreateArtifactRequest
+		want *rpc.Artifact
 	}{
 		{
-			desc: "populated resource with default parameters",
-			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
+			desc: "fully populated resource",
+			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.CreateArtifactRequest{
-				Parent:   "projects/my-project/apis/my-api/versions/v1",
-				Artifact: fullArtifact,
-			},
-			want: basicArtifact,
-			// Name field is generated.
-			extraOpts: protocmp.IgnoreFields(new(rpc.Artifact), "name"),
-		},
-		{
-			desc: "custom identifier",
-			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
-			req: &rpc.CreateArtifactRequest{
-				Parent:     "projects/my-project/apis/my-api/versions/v1",
+				Parent:     "projects/my-project",
 				ArtifactId: "my-artifact",
-				Artifact:   &rpc.Artifact{},
+				Artifact: &rpc.Artifact{
+					MimeType:  "application/json",
+					SizeBytes: int32(len(artifactContents)),
+					Hash:      sha256hash(artifactContents),
+					Contents:  artifactContents,
+				},
 			},
 			want: &rpc.Artifact{
-				Name: "projects/my-project/apis/my-api/versions/v1/artifacts/my-artifact",
+				Name:      "projects/my-project/artifacts/my-artifact",
+				MimeType:  "application/json",
+				SizeBytes: int32(len(artifactContents)),
+				Hash:      sha256hash(artifactContents),
 			},
 		},
 	}
@@ -130,7 +112,7 @@ func TestCreateArtifact(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedVersions(ctx, t, server, test.seed)
+			seedProjects(ctx, t, server, test.seed)
 
 			created, err := server.CreateArtifact(ctx, test.req)
 			if err != nil {
@@ -140,15 +122,10 @@ func TestCreateArtifact(t *testing.T) {
 			opts := cmp.Options{
 				protocmp.Transform(),
 				protocmp.IgnoreFields(new(rpc.Artifact), "create_time", "update_time"),
-				test.extraOpts,
 			}
 
 			if !cmp.Equal(test.want, created, opts) {
 				t.Errorf("CreateArtifact(%+v) returned unexpected diff (-want +got):\n%s", test.req, cmp.Diff(test.want, created, opts))
-			}
-
-			if !strings.HasPrefix(created.GetName(), test.req.GetParent()+"/artifacts/") {
-				t.Errorf("CreateArtifact(%+v) returned unexpected name %q, expected collection prefix", test.req, created.GetName())
 			}
 
 			if created.CreateTime == nil && created.UpdateTime == nil {
@@ -187,8 +164,9 @@ func TestCreateArtifactResponseCodes(t *testing.T) {
 			desc: "parent not found",
 			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.CreateArtifactRequest{
-				Parent:   "projects/other-project",
-				Artifact: fullArtifact,
+				Parent:     "projects/other-project",
+				ArtifactId: "valid-id",
+				Artifact:   &rpc.Artifact{},
 			},
 			want: codes.NotFound,
 		},
@@ -196,8 +174,19 @@ func TestCreateArtifactResponseCodes(t *testing.T) {
 			desc: "missing resource body",
 			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.CreateArtifactRequest{
-				Parent:   "projects/my-project",
-				Artifact: nil,
+				Parent:     "projects/my-project",
+				ArtifactId: "valid-id",
+				Artifact:   nil,
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "missing custom identifier",
+			seed: &rpc.Project{Name: "projects/my-project"},
+			req: &rpc.CreateArtifactRequest{
+				Parent:     "projects/my-project",
+				ArtifactId: "",
+				Artifact:   &rpc.Artifact{},
 			},
 			want: codes.InvalidArgument,
 		},
@@ -277,35 +266,45 @@ func TestCreateArtifactResponseCodes(t *testing.T) {
 }
 
 func TestCreateArtifactDuplicates(t *testing.T) {
-	ctx := context.Background()
-	server := defaultTestServer(t)
-	seedArtifacts(ctx, t, server, &rpc.Artifact{
-		Name: "projects/my-project/apis/my-api/versions/v1/artifacts/my-artifact",
-	})
+	tests := []struct {
+		desc string
+		seed *rpc.Artifact
+		req  *rpc.CreateArtifactRequest
+		want codes.Code
+	}{
+		{
+			desc: "case sensitive",
+			seed: &rpc.Artifact{Name: "projects/my-project/artifacts/my-artifact"},
+			req: &rpc.CreateArtifactRequest{
+				Parent:     "projects/my-project",
+				ArtifactId: "my-artifact",
+				Artifact:   &rpc.Artifact{},
+			},
+			want: codes.AlreadyExists,
+		},
+		{
+			desc: "case insensitive",
+			seed: &rpc.Artifact{Name: "projects/my-project/artifacts/my-artifact"},
+			req: &rpc.CreateArtifactRequest{
+				Parent:     "projects/my-project",
+				ArtifactId: "My-Artifact",
+				Artifact:   &rpc.Artifact{},
+			},
+			want: codes.AlreadyExists,
+		},
+	}
 
-	t.Run("case sensitive duplicate", func(t *testing.T) {
-		req := &rpc.CreateArtifactRequest{
-			Parent:     "projects/my-project/apis/my-api/versions/v1",
-			ArtifactId: "my-artifact",
-			Artifact:   &rpc.Artifact{},
-		}
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			ctx := context.Background()
+			server := defaultTestServer(t)
+			seedArtifacts(ctx, t, server, test.seed)
 
-		if _, err := server.CreateArtifact(ctx, req); status.Code(err) != codes.AlreadyExists {
-			t.Errorf("CreateArtifact(%+v) returned status code %q, want %q: %v", req, status.Code(err), codes.AlreadyExists, err)
-		}
-	})
-
-	t.Run("case insensitive duplicate", func(t *testing.T) {
-		req := &rpc.CreateArtifactRequest{
-			Parent:     "projects/my-project/apis/my-api/versions/v1",
-			ArtifactId: "My-Artifact",
-			Artifact:   &rpc.Artifact{},
-		}
-
-		if _, err := server.CreateArtifact(ctx, req); status.Code(err) != codes.AlreadyExists {
-			t.Errorf("CreateArtifact(%+v) returned status code %q, want %q: %v", req, status.Code(err), codes.AlreadyExists, err)
-		}
-	})
+			if _, err := server.CreateArtifact(ctx, test.req); status.Code(err) != test.want {
+				t.Errorf("CreateArtifact(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
+			}
+		})
+	}
 }
 
 func TestGetArtifact(t *testing.T) {
@@ -316,12 +315,23 @@ func TestGetArtifact(t *testing.T) {
 		want *rpc.Artifact
 	}{
 		{
-			desc: "default view",
-			seed: fullArtifact,
-			req: &rpc.GetArtifactRequest{
-				Name: fullArtifact.Name,
+			desc: "fully populated resource",
+			seed: &rpc.Artifact{
+				Name:      "projects/my-project/artifacts/my-artifact",
+				MimeType:  "application/json",
+				SizeBytes: int32(len(artifactContents)),
+				Hash:      sha256hash(artifactContents),
+				Contents:  artifactContents,
 			},
-			want: basicArtifact,
+			req: &rpc.GetArtifactRequest{
+				Name: "projects/my-project/artifacts/my-artifact",
+			},
+			want: &rpc.Artifact{
+				Name:      "projects/my-project/artifacts/my-artifact",
+				MimeType:  "application/json",
+				SizeBytes: int32(len(artifactContents)),
+				Hash:      sha256hash(artifactContents),
+			},
 		},
 	}
 
@@ -359,7 +369,7 @@ func TestGetArtifactResponseCodes(t *testing.T) {
 			desc: "resource not found",
 			seed: &rpc.Artifact{Name: "projects/my-project/artifacts/my-artifact"},
 			req: &rpc.GetArtifactRequest{
-				Name: "projects/my-project/apis/my-api/versions/v1/artifacts/doesnt-exist",
+				Name: "projects/my-project/artifacts/doesnt-exist",
 			},
 			want: codes.NotFound,
 		},
@@ -606,8 +616,7 @@ func TestListArtifacts(t *testing.T) {
 			if test.wantToken && got.NextPageToken == "" {
 				t.Errorf("ListArtifacts(%+v) returned empty next_page_token, expected non-empty next_page_token", test.req)
 			} else if !test.wantToken && got.NextPageToken != "" {
-				// TODO: This should be changed to a test error when possible. See: https://github.com/apigee/registry/issues/68
-				t.Logf("ListArtifacts(%+v) returned non-empty next_page_token, expected empty next_page_token: %s", test.req, got.GetNextPageToken())
+				t.Errorf("ListArtifacts(%+v) returned non-empty next_page_token, expected empty next_page_token: %s", test.req, got.GetNextPageToken())
 			}
 		})
 	}
@@ -760,8 +769,7 @@ func TestListArtifactsSequence(t *testing.T) {
 		}
 
 		if got.GetNextPageToken() != "" {
-			// TODO: This should be changed to a test error when possible. See: https://github.com/apigee/registry/issues/68
-			t.Logf("ListArtifacts(%+v) returned next_page_token, expected no next page", req)
+			t.Errorf("ListArtifacts(%+v) returned next_page_token, expected no next page", req)
 		}
 
 		listed = append(listed, got.Artifacts...)
@@ -784,6 +792,37 @@ func TestListArtifactsSequence(t *testing.T) {
 	}
 }
 
+// This test prevents the list sequence from ending before a known filter match is listed.
+// For simplicity, it does not guarantee the resource is returned on a later page.
+func TestListArtifactsLargeCollectionFiltering(t *testing.T) {
+	ctx := context.Background()
+	server := defaultTestServer(t)
+	for i := 1; i <= 100; i++ {
+		seedArtifacts(ctx, t, server, &rpc.Artifact{
+			Name: fmt.Sprintf("projects/my-project/artifacts/a%03d", i),
+		})
+	}
+
+	req := &rpc.ListArtifactsRequest{
+		Parent:   "projects/my-project",
+		PageSize: 1,
+		Filter:   "name == 'projects/my-project/artifacts/a099'",
+	}
+
+	got, err := server.ListArtifacts(ctx, req)
+	if err != nil {
+		t.Fatalf("ListArtifacts(%+v) returned error: %s", req, err)
+	}
+
+	if len(got.GetArtifacts()) == 1 && got.GetNextPageToken() != "" {
+		t.Errorf("ListArtifacts(%+v) returned a page token when the only matching resource has been listed: %+v", req, got)
+	} else if len(got.GetArtifacts()) == 0 && got.GetNextPageToken() == "" {
+		t.Errorf("ListArtifacts(%+v) returned an empty next page token before listing the only matching resource", req)
+	} else if count := len(got.GetArtifacts()); count > 1 {
+		t.Errorf("ListArtifacts(%+v) returned %d projects, expected at most one: %+v", req, count, got.GetArtifacts())
+	}
+}
+
 func TestReplaceArtifact(t *testing.T) {
 	tests := []struct {
 		desc string
@@ -792,14 +831,25 @@ func TestReplaceArtifact(t *testing.T) {
 		want *rpc.Artifact
 	}{
 		{
-			desc: "populated resource",
+			desc: "fully populated resource",
 			seed: &rpc.Artifact{
-				Name: fullArtifact.Name,
+				Name: "projects/my-project/artifacts/my-artifact",
 			},
 			req: &rpc.ReplaceArtifactRequest{
-				Artifact: fullArtifact,
+				Artifact: &rpc.Artifact{
+					Name:      "projects/my-project/artifacts/my-artifact",
+					MimeType:  "application/json",
+					SizeBytes: int32(len(artifactContents)),
+					Hash:      sha256hash(artifactContents),
+					Contents:  artifactContents,
+				},
 			},
-			want: basicArtifact,
+			want: &rpc.Artifact{
+				Name:      "projects/my-project/artifacts/my-artifact",
+				MimeType:  "application/json",
+				SizeBytes: int32(len(artifactContents)),
+				Hash:      sha256hash(artifactContents),
+			},
 		},
 	}
 
@@ -895,7 +945,7 @@ func TestDeleteArtifact(t *testing.T) {
 		req  *rpc.DeleteArtifactRequest
 	}{
 		{
-			desc: "existing parent",
+			desc: "existing resource",
 			seed: &rpc.Artifact{
 				Name: "projects/my-project/apis/my-api/versions/v1/artifacts/my-artifact",
 			},

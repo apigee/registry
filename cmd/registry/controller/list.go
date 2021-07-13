@@ -15,16 +15,15 @@
 package controller
 
 import (
-	"github.com/apigee/registry/server/names"
-	"github.com/apigee/registry/connection"
 	"context"
 	"github.com/apigee/registry/cmd/registry/core"
-
+	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/server/names"
 )
 
 func ListResources(ctx context.Context, client connection.Client, pattern, filter string) ([]Resource, error) {
- 	var result []Resource 
- 	var err error
+	var result []Resource
+	var err error
 
 	// First try to match collection names.
 	if m := names.ApisRegexp().FindStringSubmatch(pattern); m != nil {
@@ -50,4 +49,3 @@ func ListResources(ctx context.Context, client connection.Client, pattern, filte
 
 	return result, err
 }
- 

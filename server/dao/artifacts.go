@@ -233,8 +233,6 @@ func (d *DAO) listArtifacts(ctx context.Context, it storage.Iterator, opts PageO
 
 	artifact := new(models.Artifact)
 	for _, err = it.Next(artifact); err == nil; _, err = it.Next(artifact) {
-		token.Offset++
-
 		artifactMap, err := artifactMap(*artifact)
 		if err != nil {
 			return response, status.Error(codes.Internal, err.Error())
@@ -243,16 +241,15 @@ func (d *DAO) listArtifacts(ctx context.Context, it storage.Iterator, opts PageO
 		match, err := filter.Matches(artifactMap)
 		if err != nil {
 			return response, err
-		} else if !match {
+		} else if !match || !include(artifact) {
+			token.Offset++
 			continue
-		} else if !include(artifact) {
-			continue
+		} else if len(response.Artifacts) == int(opts.Size) {
+			break
 		}
 
 		response.Artifacts = append(response.Artifacts, *artifact)
-		if len(response.Artifacts) == int(opts.Size) {
-			break
-		}
+		token.Offset++
 	}
 	if err != nil && err != iterator.Done {
 		return response, status.Error(codes.Internal, err.Error())

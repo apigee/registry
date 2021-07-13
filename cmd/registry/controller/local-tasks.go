@@ -15,11 +15,11 @@
 package controller
 
 import (
-	"os/exec"
+	"context"
 	"log"
+	"os/exec"
 	"strings"
 )
-
 
 type ExecCommandTask struct {
 	Action string
@@ -30,7 +30,7 @@ func (task *ExecCommandTask) String() string {
 	return "Execute command: " + task.Action
 }
 
-func (task *ExecCommandTask) Run() error {
+func (task *ExecCommandTask) Run(ctx context.Context) error {
 	cmd := exec.Command("registry", strings.Split(task.Action, " ")...)
 	output, err := cmd.CombinedOutput()
 	if err != nil {

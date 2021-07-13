@@ -30,7 +30,7 @@ import (
 )
 
 // Retrieve a token, saves the token, then returns the authenticated client.
-func GetAuthenticatedClient() (*http.Client, error) {
+func GetAuthenticatedClient(ctx context.Context) (*http.Client, error) {
 	usr, err := user.Current()
 	if err != nil {
 		return nil, err
@@ -52,14 +52,14 @@ func GetAuthenticatedClient() (*http.Client, error) {
 	tokenFile := filepath.Join(dir, ".credentials/registry-token.json")
 	token, err := readTokenFromFile(tokenFile)
 	if err != nil {
-		token = getTokenFromBrowser(config)
+		token = getTokenFromBrowser(ctx, config)
 		saveTokenToFile(tokenFile, token)
 	}
-	return config.Client(context.Background(), token), nil
+	return config.Client(ctx, token), nil
 }
 
 // Request a token from the web, then returns the retrieved token.
-func getTokenFromBrowser(config *oauth2.Config) *oauth2.Token {
+func getTokenFromBrowser(ctx context.Context, config *oauth2.Config) *oauth2.Token {
 	authURL := config.AuthCodeURL("state-token", oauth2.AccessTypeOffline)
 	fmt.Printf("Go to the following link in your browser then type the "+
 		"authorization code: \n%v\n", authURL)
@@ -69,7 +69,7 @@ func getTokenFromBrowser(config *oauth2.Config) *oauth2.Token {
 		log.Fatalf("Unable to read authorization code: %v", err)
 	}
 
-	tok, err := config.Exchange(context.TODO(), authCode)
+	tok, err := config.Exchange(ctx, authCode)
 	if err != nil {
 		log.Fatalf("Unable to retrieve token from web: %v", err)
 	}

@@ -15,163 +15,163 @@
 package dispatcher
 
 import (
-        "log"
-        "time"
-        "os"
-        "context"
-        "runtime"
-        "regexp"
-        "encoding/json"
-        "cloud.google.com/go/pubsub"
-        "github.com/apigee/registry/rpc"
-	    "github.com/golang/protobuf/jsonpb"
-        "google.golang.org/grpc/codes"
-        "google.golang.org/grpc/status"
-        "github.com/apigee/registry/cmd/capabilities/worker-server/worker"
-        "github.com/apigee/registry/server"
-        cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
-        taskspb "google.golang.org/genproto/googleapis/cloud/tasks/v2"
+	cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
+	"cloud.google.com/go/pubsub"
+	"context"
+	"encoding/json"
+	"github.com/apigee/registry/cmd/capabilities/worker-server/worker"
+	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/server"
+	"github.com/golang/protobuf/jsonpb"
+	taskspb "google.golang.org/genproto/googleapis/cloud/tasks/v2"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"log"
+	"os"
+	"regexp"
+	"runtime"
+	"time"
 )
 
 const subscriptionName = server.TopicName + "-pull-subscriber"
 
 type Dispatcher struct {
-    pubsubClient *pubsub.Client
-    subscription *pubsub.Subscription
+	pubsubClient *pubsub.Client
+	subscription *pubsub.Subscription
 }
 
 func (d *Dispatcher) setUp(ctx context.Context) error {
-    var err error
-    d.pubsubClient, err = pubsub.NewClient(ctx, os.Getenv("REGISTRY_PROJECT_IDENTIFIER"))
-    if err != nil {
-        return err
-    }
+	var err error
+	d.pubsubClient, err = pubsub.NewClient(ctx, os.Getenv("REGISTRY_PROJECT_IDENTIFIER"))
+	if err != nil {
+		return err
+	}
 
-    var topic *pubsub.Topic
-    topic, err = d.pubsubClient.CreateTopic(ctx, server.TopicName)
-    if status.Code(err) == codes.AlreadyExists {
-        topic = d.pubsubClient.Topic(server.TopicName)
-    } else if err != nil {
-        return err
-    }
+	var topic *pubsub.Topic
+	topic, err = d.pubsubClient.CreateTopic(ctx, server.TopicName)
+	if status.Code(err) == codes.AlreadyExists {
+		topic = d.pubsubClient.Topic(server.TopicName)
+	} else if err != nil {
+		return err
+	}
 
-    d.subscription, err = d.pubsubClient.CreateSubscription(ctx, subscriptionName, pubsub.SubscriptionConfig{
-            Topic:            topic,
-            AckDeadline:      10 * time.Second,
-        })
-    if status.Code(err) == codes.AlreadyExists {
-        d.subscription = d.pubsubClient.Subscription(subscriptionName)
-    } else if err != nil {
-        return err
-    }
+	d.subscription, err = d.pubsubClient.CreateSubscription(ctx, subscriptionName, pubsub.SubscriptionConfig{
+		Topic:       topic,
+		AckDeadline: 10 * time.Second,
+	})
+	if status.Code(err) == codes.AlreadyExists {
+		d.subscription = d.pubsubClient.Subscription(subscriptionName)
+	} else if err != nil {
+		return err
+	}
 
-    log.Printf("Created subscription: %s", d.subscription)
+	log.Printf("Created subscription: %s", d.subscription)
 
-    // Configure subscriber.
-    d.subscription.ReceiveSettings.MaxOutstandingMessages = 10
-    d.subscription.ReceiveSettings.NumGoroutines = runtime.NumCPU()
-    return nil
+	// Configure subscriber.
+	d.subscription.ReceiveSettings.MaxOutstandingMessages = 10
+	d.subscription.ReceiveSettings.NumGoroutines = runtime.NumCPU()
+	return nil
 }
 
 func (d *Dispatcher) StartServer(ctx context.Context) error {
-    // Setup the dispatcher object
-    if err := d.setUp(ctx); err != nil {
-        return err
-    }
+	// Setup the dispatcher object
+	if err := d.setUp(ctx); err != nil {
+		return err
+	}
 
-    err := d.subscription.Receive(ctx, messageHandler)
-    if err != nil {
-        return err
-    }
-    return nil
+	err := d.subscription.Receive(ctx, messageHandler)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func messageHandler(ctx context.Context, msg *pubsub.Message) {
-    data := string(msg.Data)
-    message := rpc.Notification{}
-    if err := jsonpb.UnmarshalString(data, &message); err != nil {
-        log.Printf("Message data: %s", data)
-        log.Printf("Error in json.Unmarshal: %v", err)
-        msg.Ack()
-        return
-    }
+	data := string(msg.Data)
+	message := rpc.Notification{}
+	if err := jsonpb.UnmarshalString(data, &message); err != nil {
+		log.Printf("Message data: %s", data)
+		log.Printf("Error in json.Unmarshal: %v", err)
+		msg.Ack()
+		return
+	}
 
-    // Regex for specs
-    r := `projects/.+/apis/.+/versions/.+/specs/.+`
-    matched, err := regexp.Match(r, []byte(message.Resource))
-    if err!= nil {
-        log.Printf("Error parsing regex: %s", err)
-        // Nack message so that it will be retried by pub/sub
-        msg.Nack()
-        return
-    }
+	// Regex for specs
+	r := `projects/.+/apis/.+/versions/.+/specs/.+`
+	matched, err := regexp.Match(r, []byte(message.Resource))
+	if err != nil {
+		log.Printf("Error parsing regex: %s", err)
+		// Nack message so that it will be retried by pub/sub
+		msg.Nack()
+		return
+	}
 
-    // Create a task only if the resource is a spec
-    if !matched {
-        log.Printf("Resource is not a spec: %s", message.Resource)
-        msg.Ack()
-        return
-    }
+	// Create a task only if the resource is a spec
+	if !matched {
+		log.Printf("Resource is not a spec: %s", message.Resource)
+		msg.Ack()
+		return
+	}
 
-    switch changeType := message.Change; changeType {
-        case rpc.Notification_CREATED, rpc.Notification_UPDATED:
-            log.Printf("Creating task for change type %q", changeType)
-        default:
-            log.Printf("Ignoring change type %q", changeType)
-            msg.Ack()
-            return
-    }
+	switch changeType := message.Change; changeType {
+	case rpc.Notification_CREATED, rpc.Notification_UPDATED:
+		log.Printf("Creating task for change type %q", changeType)
+	default:
+		log.Printf("Ignoring change type %q", changeType)
+		msg.Ack()
+		return
+	}
 
-    if err := createQueueTask(ctx, message.Resource); err!= nil {
-        log.Printf("Error creating queue task: %s", err)
-        msg.Nack()
-        return
-    }
+	if err := createQueueTask(ctx, message.Resource); err != nil {
+		log.Printf("Error creating queue task: %s", err)
+		msg.Nack()
+		return
+	}
 
-    msg.Ack()
-    return
+	msg.Ack()
+	return
 }
 
 func createQueueTask(ctx context.Context, resource string) error {
-    // Create CloudTasks client
-    client, err := cloudtasks.NewClient(ctx)
-    if err != nil {
-            return err
-    }
-    // Build the Task queue path.
-    queuePath := os.Getenv("TASK_QUEUE_ID")
-    workerUrl := os.Getenv("WORKER_URL")
+	// Create CloudTasks client
+	client, err := cloudtasks.NewClient(ctx)
+	if err != nil {
+		return err
+	}
+	// Build the Task queue path.
+	queuePath := os.Getenv("TASK_QUEUE_ID")
+	workerUrl := os.Getenv("WORKER_URL")
 
-    // Build the request body
-    body := worker.WorkerRequest{
-        Resource: resource,
-        Command: "registry compute lint",
-    }
-    jsonBody, err := json.Marshal(body)
-    if err != nil {
-        return err
-    }
+	// Build the request body
+	body := worker.WorkerRequest{
+		Resource: resource,
+		Command:  "registry compute lint",
+	}
+	jsonBody, err := json.Marshal(body)
+	if err != nil {
+		return err
+	}
 
-    req := &taskspb.CreateTaskRequest{
-        Parent: queuePath,
-        Task: &taskspb.Task{
-            // https://godoc.org/google.golang.org/genproto/googleapis/cloud/tasks/v2#HttpRequest
-            MessageType: &taskspb.Task_HttpRequest{
-                HttpRequest: &taskspb.HttpRequest{
-                    HttpMethod: taskspb.HttpMethod_POST,
-                    Url:        workerUrl,
-                    Headers:    map[string]string{"content-type": "application/json"},
-                    Body:       []byte(jsonBody),
-                },
-            },
-        },
-    }
+	req := &taskspb.CreateTaskRequest{
+		Parent: queuePath,
+		Task: &taskspb.Task{
+			// https://godoc.org/google.golang.org/genproto/googleapis/cloud/tasks/v2#HttpRequest
+			MessageType: &taskspb.Task_HttpRequest{
+				HttpRequest: &taskspb.HttpRequest{
+					HttpMethod: taskspb.HttpMethod_POST,
+					Url:        workerUrl,
+					Headers:    map[string]string{"content-type": "application/json"},
+					Body:       []byte(jsonBody),
+				},
+			},
+		},
+	}
 
-    createdTask, err := client.CreateTask(ctx, req)
-    if err != nil {
-            return err
-    }
+	createdTask, err := client.CreateTask(ctx, req)
+	if err != nil {
+		return err
+	}
 
-    log.Printf("Created task: %v", createdTask)
-    return nil
+	log.Printf("Created task: %v", createdTask)
+	return nil
 }

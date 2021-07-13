@@ -68,13 +68,13 @@ func NewFilter(filter string, fields []Field) (Filter, error) {
 	for _, field := range fields {
 		switch field.Type {
 		case String:
-			declarations = append(declarations, decls.NewIdent(field.Name, decls.String, nil))
+			declarations = append(declarations, decls.NewConst(field.Name, decls.String, nil))
 		case Int:
-			declarations = append(declarations, decls.NewIdent(field.Name, decls.Int, nil))
+			declarations = append(declarations, decls.NewConst(field.Name, decls.Int, nil))
 		case Timestamp:
-			declarations = append(declarations, decls.NewIdent(field.Name, decls.Timestamp, nil))
+			declarations = append(declarations, decls.NewConst(field.Name, decls.Timestamp, nil))
 		case StringMap:
-			declarations = append(declarations, decls.NewIdent(field.Name, decls.NewMapType(decls.String, decls.String), nil))
+			declarations = append(declarations, decls.NewConst(field.Name, decls.NewMapType(decls.String, decls.String), nil))
 		default:
 			return Filter{}, status.Errorf(codes.InvalidArgument, "unknown filter argument type")
 		}

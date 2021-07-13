@@ -38,7 +38,7 @@ func ResourceNameOfSpec(segments []string) string {
 }
 
 func GetBytesForSpec(ctx context.Context, client connection.Client, spec *rpc.ApiSpec) ([]byte, error) {
-	request := &rpc.GetApiSpecContentsRequest{Name:fmt.Sprintf("%s/contents", spec.GetName())}
+	request := &rpc.GetApiSpecContentsRequest{Name: fmt.Sprintf("%s/contents", spec.GetName())}
 	contents, err := client.GetApiSpecContents(ctx, request)
 	if err != nil {
 		return nil, err
