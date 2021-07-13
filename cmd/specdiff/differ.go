@@ -80,7 +80,7 @@ func getChanges(diff *diff.Diff) (*rpc.Diff, error) {
 	diffProto := &rpc.Diff{
 		Added:        []string{},
 		Deleted:      []string{},
-		Modification: make(map[string]*rpc.DiffValueModification),
+		Modification: make(map[string]*rpc.Diff_ValueChange),
 	}
 	change := &change{
 		fieldPath:  stack{},
@@ -246,7 +246,7 @@ func handleValueDiffStruct(vd diff.ValueDiff, diffProto *rpc.Diff, changePath *c
 	fromValue := getAtomicType(reflect.ValueOf(vd.From))
 	toValue := getAtomicType(reflect.ValueOf(vd.To))
 
-	diffProto.Modification[changePath.fieldPath.String()] = &rpc.DiffValueModification{
+	diffProto.Modification[changePath.fieldPath.String()] = &rpc.Diff_ValueChange{
 		From: fromValue,
 		To:   toValue,
 	}

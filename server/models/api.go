@@ -19,8 +19,8 @@ import (
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
-	"github.com/golang/protobuf/ptypes"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // Api is the storage-side representation of an API.
@@ -81,16 +81,8 @@ func (api *Api) Message() (message *rpc.Api, err error) {
 		Description:        api.Description,
 		Availability:       api.Availability,
 		RecommendedVersion: api.RecommendedVersion,
-	}
-
-	message.CreateTime, err = ptypes.TimestampProto(api.CreateTime)
-	if err != nil {
-		return nil, err
-	}
-
-	message.UpdateTime, err = ptypes.TimestampProto(api.UpdateTime)
-	if err != nil {
-		return nil, err
+		CreateTime:         timestamppb.New(api.CreateTime),
+		UpdateTime:         timestamppb.New(api.UpdateTime),
 	}
 
 	message.Labels, err = api.LabelsMap()
@@ -108,43 +100,30 @@ func (api *Api) Message() (message *rpc.Api, err error) {
 
 // Update modifies a api using the contents of a message.
 func (api *Api) Update(message *rpc.Api, mask *fieldmaskpb.FieldMask) error {
-	if activeUpdateMask(mask) {
-		for _, field := range mask.Paths {
-			switch field {
-			case "display_name":
-				api.DisplayName = message.GetDisplayName()
-			case "description":
-				api.Description = message.GetDescription()
-			case "availability":
-				api.Availability = message.GetAvailability()
-			case "recommended_version":
-				api.RecommendedVersion = message.GetRecommendedVersion()
-			case "labels":
-				var err error
-				if api.Labels, err = bytesForMap(message.GetLabels()); err != nil {
-					return err
-				}
-			case "annotations":
-				var err error
-				if api.Annotations, err = bytesForMap(message.GetAnnotations()); err != nil {
-					return err
-				}
+	api.UpdateTime = time.Now()
+	for _, field := range mask.Paths {
+		switch field {
+		case "display_name":
+			api.DisplayName = message.GetDisplayName()
+		case "description":
+			api.Description = message.GetDescription()
+		case "availability":
+			api.Availability = message.GetAvailability()
+		case "recommended_version":
+			api.RecommendedVersion = message.GetRecommendedVersion()
+		case "labels":
+			var err error
+			if api.Labels, err = bytesForMap(message.GetLabels()); err != nil {
+				return err
+			}
+		case "annotations":
+			var err error
+			if api.Annotations, err = bytesForMap(message.GetAnnotations()); err != nil {
+				return err
 			}
 		}
-	} else {
-		api.DisplayName = message.GetDisplayName()
-		api.Description = message.GetDescription()
-		api.Availability = message.GetAvailability()
-		api.RecommendedVersion = message.GetRecommendedVersion()
-		var err error
-		if api.Labels, err = bytesForMap(message.GetLabels()); err != nil {
-			return err
-		}
-		if api.Annotations, err = bytesForMap(message.GetAnnotations()); err != nil {
-			return err
-		}
 	}
-	api.UpdateTime = time.Now()
+
 	return nil
 }
 

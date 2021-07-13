@@ -15,9 +15,15 @@
 package controller
 
 import (
-	"io/ioutil"
+	"context"
 	"fmt"
+	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/rpc"
+	yaml2 "github.com/ghodss/yaml"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 	"gopkg.in/yaml.v2"
+	"io/ioutil"
 )
 
 type Dependency struct {
@@ -26,31 +32,73 @@ type Dependency struct {
 }
 
 type ManifestEntry struct {
-	Resource string `yaml:"resource"`
-	Filter string `yaml:"filter"`
+	Resource     string       `yaml:"resource"`
+	Filter       string       `yaml:"filter"`
 	Dependencies []Dependency `yaml:"dependencies"`
-	Action string `yaml:"action"`
+	Action       string       `yaml:"action"`
 }
 
 type Manifest struct {
-	Project string `yaml:"project"`
+	Project string          `yaml:"project"`
 	Entries []ManifestEntry `yaml:"manifest"`
 }
 
-// TODO: Add validation for pattern values and actions
+// TODO: Remove this function while cleaning up the controller commands
 func ReadManifest(filename string) (*Manifest, error) {
 
 	buf, err := ioutil.ReadFile(filename)
-    if err != nil {
-        return nil, err
-    }
+	if err != nil {
+		return nil, err
+	}
 
-    m := &Manifest{}
-    err = yaml.Unmarshal(buf, m)
-    if err != nil {
-        return nil, fmt.Errorf("in file %q: %v", filename, err)
-    }
+	m := &Manifest{}
+	err = yaml.Unmarshal(buf, m)
+	if err != nil {
+		return nil, fmt.Errorf("in file %q: %v", filename, err)
+	}
 
-    return m, nil
+	return m, nil
 }
- 
+
+// TODO: Add validation for pattern values and actions
+func ReadManifestProto(filename string) (*rpc.Manifest, error) {
+
+	yamlBytes, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	jsonBytes, err := yaml2.YAMLToJSON(yamlBytes)
+	m := &rpc.Manifest{}
+	err = protojson.Unmarshal(jsonBytes, m)
+
+	if err != nil {
+		return nil, fmt.Errorf("in file %q: %v", filename, err)
+	}
+
+	return m, nil
+}
+
+func FetchManifest(
+	ctx context.Context,
+	client connection.Client,
+	manifestName string) (*rpc.Manifest, error) {
+
+	manifest := &rpc.Manifest{}
+	body, err := client.GetArtifactContents(
+		ctx,
+		&rpc.GetArtifactContentsRequest{
+			Name: manifestName,
+		})
+	if err != nil {
+		return nil, err
+	}
+
+	contents := body.GetData()
+	err = proto.Unmarshal(contents, manifest)
+	if err != nil {
+		return nil, err
+	}
+
+	return manifest, nil
+}

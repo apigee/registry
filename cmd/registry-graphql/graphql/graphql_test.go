@@ -86,7 +86,7 @@ func TestGraphQL(t *testing.T) {
 		VariableValues: map[string]interface{}{
 			"cursor": "",
 		},
-		Context: context.Background(),
+		Context: ctx,
 	}
 	// Run the query.
 	payload := evaluateQuery(params)
@@ -98,12 +98,6 @@ func TestGraphQL(t *testing.T) {
 	payload = evaluateQuery(params)
 	if len(payload.Data.Project.APIs.Edges) != 5 {
 		t.Errorf("Unexpected number of APIs from query 2")
-	}
-	// Update the cursor and repeat the query.
-	params.VariableValues["cursor"] = payload.Data.Project.APIs.PageInfo.EndCursor
-	payload = evaluateQuery(params)
-	if len(payload.Data.Project.APIs.Edges) != 0 {
-		t.Errorf("Unexpected number of APIs from query 3")
 	}
 	// Delete the test project
 	deleteTestProject(ctx, registryClient, t, projectID)

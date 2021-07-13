@@ -14,13 +14,14 @@ message Diff {
   // Change will be displayed in format foo.bar.x
   repeated string deleted = 2;
 
-  message Value_Modification {
+  message ValueChange {
     string From = 1;
     string To = 2;
   }
   // Change will be displayed in format foo.bar.x {to.x from.x}
-  map <string, value_modification> modification= 3;
+  map <string, ValueChange> modification= 3;
 }
+
 message Changes {
   Diff breaking_changes = 1;
   Diff nonbreaking_changes = 2;

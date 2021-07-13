@@ -24,5 +24,3 @@ func GenerateSpecHandler(result *[]Resource) func(*rpc.ApiSpec) {
 		(*result) = append((*result), resource)
 	}
 }
-
-

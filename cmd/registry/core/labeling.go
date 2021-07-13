@@ -33,7 +33,7 @@ func (l *Labeling) Apply(m map[string]string) (map[string]string, error) {
 		m = make(map[string]string)
 	}
 	if !l.Overwrite {
-		for k, _ := range l.Set {
+		for k := range l.Set {
 			if v, ok := m[k]; ok {
 				return nil, fmt.Errorf("%q already has a value (%s), and --overwrite is false", k, v)
 			}
@@ -57,7 +57,7 @@ func UpdateMap(m map[string]string,
 		m = make(map[string]string)
 	}
 	if !keyOverwrite {
-		for k, _ := range keysToSet {
+		for k := range keysToSet {
 			if v, ok := m[k]; ok {
 				return nil, fmt.Errorf("%q already has a value (%s), and --overwrite is false", k, v)
 			}

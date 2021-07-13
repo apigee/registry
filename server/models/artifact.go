@@ -20,7 +20,7 @@ import (
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
-	"github.com/golang/protobuf/ptypes"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // Artifact is the storage-side representation of an artifact.
@@ -80,24 +80,14 @@ func (artifact *Artifact) Name() string {
 	}
 }
 
-// BasicMessage returns the basic view of the artifact resource as an RPC message.
-func (artifact *Artifact) BasicMessage() (message *rpc.Artifact, err error) {
-	message = &rpc.Artifact{
-		Name:      artifact.Name(),
-		MimeType:  artifact.MimeType,
-		SizeBytes: artifact.SizeInBytes,
-		Hash:      artifact.Hash,
+// Message returns an RPC message representing the artifact.
+func (artifact *Artifact) Message() *rpc.Artifact {
+	return &rpc.Artifact{
+		Name:       artifact.Name(),
+		MimeType:   artifact.MimeType,
+		SizeBytes:  artifact.SizeInBytes,
+		Hash:       artifact.Hash,
+		CreateTime: timestamppb.New(artifact.CreateTime),
+		UpdateTime: timestamppb.New(artifact.UpdateTime),
 	}
-
-	message.CreateTime, err = ptypes.TimestampProto(artifact.CreateTime)
-	if err != nil {
-		return nil, err
-	}
-
-	message.UpdateTime, err = ptypes.TimestampProto(artifact.UpdateTime)
-	if err != nil {
-		return nil, err
-	}
-
-	return message, nil
 }

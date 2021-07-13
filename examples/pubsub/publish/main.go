@@ -20,9 +20,9 @@ import (
 	"os"
 
 	"cloud.google.com/go/pubsub"
+	"github.com/apigee/registry/server"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"github.com/apigee/registry/server"
 )
 
 func main() {
@@ -37,7 +37,7 @@ func main() {
 	}
 
 	// Create the topic (or use it if it already exists).
-	topic, err := client.CreateTopic(context.Background(), server.TopicName)
+	topic, err := client.CreateTopic(ctx, server.TopicName)
 	if err != nil {
 		code := status.Code(err)
 		if code == codes.AlreadyExists {

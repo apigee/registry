@@ -80,8 +80,6 @@ func (d *DAO) ListApis(ctx context.Context, parent names.Project, opts PageOptio
 
 	api := new(models.Api)
 	for _, err = it.Next(api); err == nil; _, err = it.Next(api) {
-		token.Offset++
-
 		apiMap, err := apiMap(*api)
 		if err != nil {
 			return response, status.Error(codes.Internal, err.Error())
@@ -91,13 +89,14 @@ func (d *DAO) ListApis(ctx context.Context, parent names.Project, opts PageOptio
 		if err != nil {
 			return response, err
 		} else if !match {
+			token.Offset++
 			continue
+		} else if len(response.Apis) == int(opts.Size) {
+			break
 		}
 
 		response.Apis = append(response.Apis, *api)
-		if len(response.Apis) == int(opts.Size) {
-			break
-		}
+		token.Offset++
 	}
 	if err != nil && err != iterator.Done {
 		return response, status.Error(codes.Internal, err.Error())

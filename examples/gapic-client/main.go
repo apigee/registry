@@ -25,7 +25,7 @@ import (
 )
 
 func main() {
-	ctx := context.TODO()
+	ctx := context.Background()
 	client, err := connection.NewClient(ctx)
 	if err != nil {
 		log.Fatalf("%s", err.Error())

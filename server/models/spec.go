@@ -21,9 +21,9 @@ import (
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
-	"github.com/golang/protobuf/ptypes"
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // Spec is the storage-side representation of a spec.
@@ -122,29 +122,17 @@ func (s *Spec) RevisionName() string {
 // BasicMessage returns the basic view of the spec resource as an RPC message.
 func (s *Spec) BasicMessage(name string) (message *rpc.ApiSpec, err error) {
 	message = &rpc.ApiSpec{
-		Name:        name,
-		Filename:    s.FileName,
-		Description: s.Description,
-		Hash:        s.Hash,
-		SizeBytes:   s.SizeInBytes,
-		MimeType:    s.MimeType,
-		SourceUri:   s.SourceURI,
-		RevisionId:  s.RevisionID,
-	}
-
-	message.CreateTime, err = ptypes.TimestampProto(s.CreateTime)
-	if err != nil {
-		return nil, err
-	}
-
-	message.RevisionCreateTime, err = ptypes.TimestampProto(s.RevisionCreateTime)
-	if err != nil {
-		return nil, err
-	}
-
-	message.RevisionUpdateTime, err = ptypes.TimestampProto(s.RevisionUpdateTime)
-	if err != nil {
-		return nil, err
+		Name:               name,
+		Filename:           s.FileName,
+		Description:        s.Description,
+		Hash:               s.Hash,
+		SizeBytes:          s.SizeInBytes,
+		MimeType:           s.MimeType,
+		SourceUri:          s.SourceURI,
+		RevisionId:         s.RevisionID,
+		CreateTime:         timestamppb.New(s.CreateTime),
+		RevisionCreateTime: timestamppb.New(s.RevisionCreateTime),
+		RevisionUpdateTime: timestamppb.New(s.RevisionUpdateTime),
 	}
 
 	message.Labels, err = mapForBytes(s.Labels)
@@ -162,61 +150,32 @@ func (s *Spec) BasicMessage(name string) (message *rpc.ApiSpec, err error) {
 
 // Update modifies a spec using the contents of a message.
 func (s *Spec) Update(message *rpc.ApiSpec, mask *fieldmaskpb.FieldMask) error {
-	now := time.Now()
-	if activeUpdateMask(mask) {
-		for _, field := range mask.Paths {
-			switch field {
-			case "filename":
-				s.FileName = message.GetFilename()
-			case "description":
-				s.Description = message.GetDescription()
-			case "contents":
-				s.updateContents(message.GetContents())
-			case "mime_type":
-				s.MimeType = message.GetMimeType()
-			case "source_uri":
-				s.SourceURI = message.GetSourceUri()
-			case "labels":
-				var err error
-				if s.Labels, err = bytesForMap(message.GetLabels()); err != nil {
-					return err
-				}
-			case "annotations":
-				var err error
-				if s.Annotations, err = bytesForMap(message.GetAnnotations()); err != nil {
-					return err
-				}
+	s.RevisionUpdateTime = time.Now()
+	for _, field := range mask.Paths {
+		switch field {
+		case "filename":
+			s.FileName = message.GetFilename()
+		case "description":
+			s.Description = message.GetDescription()
+		case "contents":
+			s.updateContents(message.GetContents())
+		case "mime_type":
+			s.MimeType = message.GetMimeType()
+		case "source_uri":
+			s.SourceURI = message.GetSourceUri()
+		case "labels":
+			var err error
+			if s.Labels, err = bytesForMap(message.GetLabels()); err != nil {
+				return err
+			}
+		case "annotations":
+			var err error
+			if s.Annotations, err = bytesForMap(message.GetAnnotations()); err != nil {
+				return err
 			}
 		}
-	} else {
-		filename := message.GetFilename()
-		if filename != "" {
-			s.FileName = filename
-		}
-		description := message.GetDescription()
-		if description != "" {
-			s.Description = description
-		}
-		if contents := message.GetContents(); contents != nil {
-			s.updateContents(message.GetContents())
-		}
-		mimeType := message.GetMimeType()
-		if mimeType != "" {
-			s.MimeType = mimeType
-		}
-		sourceURI := message.GetSourceUri()
-		if sourceURI != "" {
-			s.SourceURI = sourceURI
-		}
-		var err error
-		if s.Labels, err = bytesForMap(message.GetLabels()); err != nil {
-			return err
-		}
-		if s.Annotations, err = bytesForMap(message.GetAnnotations()); err != nil {
-			return err
-		}
 	}
-	s.RevisionUpdateTime = now
+
 	return nil
 }
 

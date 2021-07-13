@@ -15,13 +15,14 @@
 package core
 
 import (
+	"context"
 	"fmt"
 
 	metrics "github.com/googleapis/gnostic/metrics"
 )
 
-func ExportVocabularyToSheet(name string, vocabulary *metrics.Vocabulary) (string, error) {
-	sheetsClient, err := NewSheetsClient("")
+func ExportVocabularyToSheet(ctx context.Context, name string, vocabulary *metrics.Vocabulary) (string, error) {
+	sheetsClient, err := NewSheetsClient(ctx, "")
 	if err != nil {
 		return "", err
 	}
@@ -30,7 +31,7 @@ func ExportVocabularyToSheet(name string, vocabulary *metrics.Vocabulary) (strin
 		return "", err
 	}
 	for _, s := range sheet.Sheets {
-		_, err := sheetsClient.FormatHeaderRow(s.Properties.SheetId)
+		_, err := sheetsClient.FormatHeaderRow(ctx, s.Properties.SheetId)
 		if err != nil {
 			return "", err
 		}
@@ -50,7 +51,7 @@ func ExportVocabularyToSheet(name string, vocabulary *metrics.Vocabulary) (strin
 		for _, wc := range vocabulary.Parameters {
 			rows = append(rows, rowForLabeledWordCount("parameter", wc))
 		}
-		_, err = sheetsClient.Update(fmt.Sprintf("Everything!A1:C%d", len(rows)), rows)
+		_, err = sheetsClient.Update(ctx, fmt.Sprintf("Everything!A1:C%d", len(rows)), rows)
 		if err != nil {
 			return "", err
 		}
@@ -62,7 +63,7 @@ func ExportVocabularyToSheet(name string, vocabulary *metrics.Vocabulary) (strin
 		for _, wc := range pairs {
 			rows = append(rows, rowForWordCount(wc))
 		}
-		_, err = sheetsClient.Update(fmt.Sprintf("%s!A1:C%d", title, len(rows)), rows)
+		_, err = sheetsClient.Update(ctx, fmt.Sprintf("%s!A1:C%d", title, len(rows)), rows)
 		return err
 	}
 	updateSheet("Schemas", vocabulary.Schemas)

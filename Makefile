@@ -10,7 +10,7 @@ protos:
 
 test:
 	go clean -testcache
-	go test -v ./...
+	go test ./...
 
 clean:
 	rm -rf \

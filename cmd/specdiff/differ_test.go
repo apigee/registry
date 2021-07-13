@@ -34,7 +34,7 @@ func TestDiffProtoStruct(t *testing.T) {
 					"components.schemas.Pet.properties.age",
 				},
 				Deleted:      []string{},
-				Modification: map[string]*rpc.DiffValueModification{},
+				Modification: map[string]*rpc.Diff_ValueChange{},
 			},
 		},
 		{
@@ -46,7 +46,7 @@ func TestDiffProtoStruct(t *testing.T) {
 				Deleted: []string{
 					"components.schemas.Pet.required.name",
 				},
-				Modification: map[string]*rpc.DiffValueModification{},
+				Modification: map[string]*rpc.Diff_ValueChange{},
 			},
 		},
 		{
@@ -56,7 +56,7 @@ func TestDiffProtoStruct(t *testing.T) {
 			wantProto: &rpc.Diff{
 				Added:   []string{},
 				Deleted: []string{},
-				Modification: map[string]*rpc.DiffValueModification{
+				Modification: map[string]*rpc.Diff_ValueChange{
 					"info.version": {
 						To:   "1.0.1",
 						From: "1.0.0",
@@ -147,7 +147,7 @@ func TestMaps(t *testing.T) {
 		diffProto := &rpc.Diff{
 			Added:        []string{},
 			Deleted:      []string{},
-			Modification: make(map[string]*rpc.DiffValueModification),
+			Modification: make(map[string]*rpc.Diff_ValueChange),
 		}
 		change := test.change
 		err := searchMapType(val, diffProto, &change)
@@ -222,7 +222,7 @@ func TestArrays(t *testing.T) {
 		diffProto := &rpc.Diff{
 			Added:        []string{},
 			Deleted:      []string{},
-			Modification: make(map[string]*rpc.DiffValueModification),
+			Modification: make(map[string]*rpc.Diff_ValueChange),
 		}
 		change := test.change
 		err := searchArrayAndSliceType(val, diffProto, &change)
@@ -251,7 +251,7 @@ func TestValueDiff(t *testing.T) {
 				changeType: "Modified",
 			},
 			wantProto: &rpc.Diff{
-				Modification: map[string]*rpc.DiffValueModification{
+				Modification: map[string]*rpc.Diff_ValueChange{
 					"ValueDiffTest": {
 						To:   "true",
 						From: "66",
@@ -267,7 +267,7 @@ func TestValueDiff(t *testing.T) {
 		diffProto := &rpc.Diff{
 			Added:        []string{},
 			Deleted:      []string{},
-			Modification: make(map[string]*rpc.DiffValueModification),
+			Modification: make(map[string]*rpc.Diff_ValueChange),
 		}
 		change := test.change
 		vd, ok := val.Interface().(diff.ValueDiff)

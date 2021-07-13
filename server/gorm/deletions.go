@@ -71,6 +71,7 @@ func (c *Client) DeleteChildrenOfProject(ctx context.Context, project names.Proj
 // DeleteChildrenOfApi deletes all the children of a api.
 func (c *Client) DeleteChildrenOfApi(ctx context.Context, api names.Api) error {
 	for _, entityName := range []string{
+		storage.ArtifactEntityName,
 		models.BlobEntityName,
 		storage.SpecEntityName,
 		storage.VersionEntityName,
@@ -89,6 +90,7 @@ func (c *Client) DeleteChildrenOfApi(ctx context.Context, api names.Api) error {
 // DeleteChildrenOfVersion deletes all the children of a version.
 func (c *Client) DeleteChildrenOfVersion(ctx context.Context, version names.Version) error {
 	for _, entityName := range []string{
+		storage.ArtifactEntityName,
 		models.BlobEntityName,
 		storage.SpecEntityName,
 	} {
@@ -105,10 +107,19 @@ func (c *Client) DeleteChildrenOfVersion(ctx context.Context, version names.Vers
 
 // DeleteChildrenOfSpec deletes all the children of a spec.
 func (c *Client) DeleteChildrenOfSpec(ctx context.Context, spec names.Spec) error {
-	q := c.NewQuery(models.BlobEntityName)
-	q = q.Require("ProjectID", spec.ProjectID)
-	q = q.Require("ApiID", spec.ApiID)
-	q = q.Require("VersionID", spec.VersionID)
-	q = q.Require("SpecID", spec.SpecID)
-	return c.DeleteAllMatches(ctx, q)
+	for _, entityName := range []string{
+		storage.ArtifactEntityName,
+		models.BlobEntityName,
+	} {
+		q := c.NewQuery(entityName)
+		q = q.Require("ProjectID", spec.ProjectID)
+		q = q.Require("ApiID", spec.ApiID)
+		q = q.Require("VersionID", spec.VersionID)
+		q = q.Require("SpecID", spec.SpecID)
+		if err := c.DeleteAllMatches(ctx, q); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

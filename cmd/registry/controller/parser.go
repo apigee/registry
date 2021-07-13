@@ -15,10 +15,10 @@
 package controller
 
 import (
-	"regexp"
-	"strings"
 	"errors"
 	"fmt"
+	"regexp"
+	"strings"
 )
 
 func ExtendSourcePattern(
@@ -34,7 +34,6 @@ func ExtendSourcePattern(
 	// sourcePattern: "$resource.api/versions/-"
 	// Returns "apis/-/versions/-"
 
-
 	if !strings.HasPrefix(sourcePattern, "$resource") {
 		return sourcePattern, nil
 	}
@@ -43,7 +42,7 @@ func ExtendSourcePattern(
 	matches := entityRegex.FindStringSubmatch(sourcePattern)
 	if len(matches) <= 1 {
 		return "", errors.New(fmt.Sprintf("Invalid source pattern: %s", sourcePattern))
-	} 
+	}
 
 	entity, entityType := matches[0], matches[1]
 	entityVal := ""
@@ -70,13 +69,13 @@ func ExtendSourcePattern(
 
 func ExtractGroup(pattern string, resource Resource) (string, error) {
 	// Reads the sourcePattern, finds out group by entity type and returns te group value
-	// Example: 
+	// Example:
 	// pattern: $resource.api/versions/-/specs/-
 	// resource: "projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml"
 	// returns "projects/demo/apis/petstore"
 
 	if strings.HasPrefix(pattern, "$resource") {
-		// Example: 
+		// Example:
 		// pattern: "$resource.api/versions/-/specs/-"
 		// re.FindStringSubmatch will return:
 		// ["$resource.api", "api"]
@@ -86,21 +85,21 @@ func ExtractGroup(pattern string, resource Resource) (string, error) {
 		if len(matches) <= 1 {
 			return "", errors.New(fmt.Sprintf("Invalid pattern: Cannot extract group from pattern %s", pattern))
 		}
-		
+
 		switch entityType := matches[1]; entityType {
-			case "api":
-				return resource.GetApi(), nil
-			case "version":
-				return resource.GetVersion(), nil
-			case "spec":
-				return resource.GetSpec(), nil
-			case "artifact":
-				return resource.GetArtifact(), nil
+		case "api":
+			return resource.GetApi(), nil
+		case "version":
+			return resource.GetVersion(), nil
+		case "spec":
+			return resource.GetSpec(), nil
+		case "artifact":
+			return resource.GetArtifact(), nil
 		}
 	}
-	
+
 	return "default", nil
-	
+
 }
 
 func GenerateCommand(action string, args []Resource) (string, error) {
@@ -138,7 +137,7 @@ func GenerateCommand(action string, args []Resource) (string, error) {
 					return "", errors.New(fmt.Sprintf("Error generating command, cannot derive args for action. Invalid action: %s", action))
 				}
 				action = strings.ReplaceAll(action, entity, entityVal)
-			
+
 			} else if len(entity) > 0 { //if only source is present. Eg: $source0
 				entityVal := resource.GetName()
 				action = strings.ReplaceAll(action, entity, entityVal)

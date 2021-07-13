@@ -20,10 +20,10 @@ import (
 	"testing"
 
 	"github.com/apigee/registry/rpc"
-	"github.com/golang/protobuf/proto"
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
 )
 
@@ -287,8 +287,9 @@ func TestListApiSpecRevisions(t *testing.T) {
 	})
 
 	createReq := &rpc.CreateApiSpecRequest{
-		Parent:  "projects/my-project/apis/my-api/versions/v1",
-		ApiSpec: &rpc.ApiSpec{},
+		Parent:    "projects/my-project/apis/my-api/versions/v1",
+		ApiSpecId: "my-spec",
+		ApiSpec:   &rpc.ApiSpec{},
 	}
 
 	firstRevision, err := server.CreateApiSpec(ctx, createReq)
@@ -387,8 +388,7 @@ func TestListApiSpecRevisions(t *testing.T) {
 		}
 
 		if got.GetNextPageToken() != "" {
-			// TODO: This should be changed to a test error when possible. See: https://github.com/apigee/registry/issues/68
-			t.Logf("ListApiSpecRevisions(%+v) returned next_page_token, expected no next page", req)
+			t.Errorf("ListApiSpecRevisions(%+v) returned next_page_token, expected no next page", req)
 		}
 	})
 }
@@ -401,7 +401,8 @@ func TestUpdateApiSpecRevisions(t *testing.T) {
 	})
 
 	createReq := &rpc.CreateApiSpecRequest{
-		Parent: "projects/my-project/apis/my-api/versions/v1",
+		Parent:    "projects/my-project/apis/my-api/versions/v1",
+		ApiSpecId: "my-spec",
 		ApiSpec: &rpc.ApiSpec{
 			Description: "Empty First Revision",
 		},

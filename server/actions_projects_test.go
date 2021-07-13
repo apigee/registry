@@ -17,7 +17,6 @@ package server
 import (
 	"context"
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/apigee/registry/rpc"
@@ -55,34 +54,23 @@ func seedProjects(ctx context.Context, t *testing.T, s *RegistryServer, projects
 
 func TestCreateProject(t *testing.T) {
 	tests := []struct {
-		desc      string
-		req       *rpc.CreateProjectRequest
-		want      *rpc.Project
-		extraOpts cmp.Option
+		desc string
+		req  *rpc.CreateProjectRequest
+		want *rpc.Project
 	}{
 		{
-			desc: "default parameters",
+			desc: "fully populated resource",
 			req: &rpc.CreateProjectRequest{
+				ProjectId: "my-project",
 				Project: &rpc.Project{
-					DisplayName: "My Project",
-					Description: "Project for my APIs",
+					DisplayName: "My Display Name",
+					Description: "My Description",
 				},
 			},
 			want: &rpc.Project{
-				DisplayName: "My Project",
-				Description: "Project for my APIs",
-			},
-			// Name field is generated.
-			extraOpts: protocmp.IgnoreFields(new(rpc.Project), "name"),
-		},
-		{
-			desc: "custom identifier",
-			req: &rpc.CreateProjectRequest{
-				ProjectId: "my-project",
-				Project:   &rpc.Project{},
-			},
-			want: &rpc.Project{
-				Name: "projects/my-project",
+				Name:        "projects/my-project",
+				DisplayName: "My Display Name",
+				Description: "My Description",
 			},
 		},
 	}
@@ -100,15 +88,10 @@ func TestCreateProject(t *testing.T) {
 			opts := cmp.Options{
 				protocmp.Transform(),
 				protocmp.IgnoreFields(new(rpc.Project), "create_time", "update_time"),
-				test.extraOpts,
 			}
 
 			if !cmp.Equal(test.want, created, opts) {
 				t.Errorf("CreateProject(%+v) returned unexpected diff (-want +got):\n%s", test.req, cmp.Diff(test.want, created, opts))
-			}
-
-			if !strings.HasPrefix(created.GetName(), "projects/") {
-				t.Errorf("CreateProject(%+v) returned unexpected name %q, expected collection prefix", test.req, created.GetName())
 			}
 
 			if created.CreateTime == nil || created.UpdateTime == nil {
@@ -145,7 +128,16 @@ func TestCreateProjectResponseCodes(t *testing.T) {
 		{
 			desc: "missing resource body",
 			req: &rpc.CreateProjectRequest{
-				Project: nil,
+				ProjectId: "valid-id",
+				Project:   nil,
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "missing custom identifier",
+			req: &rpc.CreateProjectRequest{
+				ProjectId: "",
+				Project:   &rpc.Project{},
 			},
 			want: codes.InvalidArgument,
 		},
@@ -212,33 +204,91 @@ func TestCreateProjectResponseCodes(t *testing.T) {
 }
 
 func TestCreateProjectDuplicates(t *testing.T) {
-	ctx := context.Background()
-	server := defaultTestServer(t)
-	seedProjects(ctx, t, server, &rpc.Project{
-		Name: "projects/my-project",
-	})
+	tests := []struct {
+		desc string
+		seed *rpc.Project
+		req  *rpc.CreateProjectRequest
+		want codes.Code
+	}{
+		{
+			desc: "case sensitive",
+			seed: &rpc.Project{Name: "projects/my-project"},
+			req: &rpc.CreateProjectRequest{
+				ProjectId: "my-project",
+				Project:   &rpc.Project{},
+			},
+			want: codes.AlreadyExists,
+		},
+		{
+			desc: "case insensitive",
+			seed: &rpc.Project{Name: "projects/my-project"},
+			req: &rpc.CreateProjectRequest{
+				ProjectId: "My-Project",
+				Project:   &rpc.Project{},
+			},
+			want: codes.AlreadyExists,
+		},
+	}
 
-	t.Run("case sensitive duplicate", func(t *testing.T) {
-		req := &rpc.CreateProjectRequest{
-			ProjectId: "my-project",
-			Project:   &rpc.Project{},
-		}
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			ctx := context.Background()
+			server := defaultTestServer(t)
+			seedProjects(ctx, t, server, test.seed)
 
-		if _, err := server.CreateProject(ctx, req); status.Code(err) != codes.AlreadyExists {
-			t.Errorf("CreateProject(%+v) returned status code %q, want %q: %v", req, status.Code(err), codes.AlreadyExists, err)
-		}
-	})
+			if _, err := server.CreateProject(ctx, test.req); status.Code(err) != test.want {
+				t.Errorf("CreateProject(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
+			}
+		})
+	}
+}
 
-	t.Run("case insensitive duplicate", func(t *testing.T) {
-		req := &rpc.CreateProjectRequest{
-			ProjectId: "My-Project",
-			Project:   &rpc.Project{},
-		}
+func TestGetProject(t *testing.T) {
+	tests := []struct {
+		desc string
+		seed *rpc.Project
+		req  *rpc.GetProjectRequest
+		want *rpc.Project
+	}{
+		{
+			desc: "fully populated resource",
+			seed: &rpc.Project{
+				Name:        "projects/my-project",
+				DisplayName: "My Display Name",
+				Description: "My Description",
+			},
+			req: &rpc.GetProjectRequest{
+				Name: "projects/my-project",
+			},
+			want: &rpc.Project{
+				Name:        "projects/my-project",
+				DisplayName: "My Display Name",
+				Description: "My Description",
+			},
+		},
+	}
 
-		if _, err := server.CreateProject(ctx, req); status.Code(err) != codes.AlreadyExists {
-			t.Errorf("CreateProject(%+v) returned status code %q, want %q: %v", req, status.Code(err), codes.AlreadyExists, err)
-		}
-	})
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			ctx := context.Background()
+			server := defaultTestServer(t)
+			seedProjects(ctx, t, server, test.seed)
+
+			got, err := server.GetProject(ctx, test.req)
+			if err != nil {
+				t.Fatalf("GetProject(%+v) returned error: %s", test.req, err)
+			}
+
+			opts := cmp.Options{
+				protocmp.Transform(),
+				protocmp.IgnoreFields(new(rpc.Project), "create_time", "update_time"),
+			}
+
+			if !cmp.Equal(test.want, got, opts) {
+				t.Errorf("GetProject(%+v) returned unexpected diff (-want +got):\n%s", test.req, cmp.Diff(test.want, got, opts))
+			}
+		})
+	}
 }
 
 func TestGetProjectResponseCodes(t *testing.T) {
@@ -388,8 +438,7 @@ func TestListProjects(t *testing.T) {
 			if test.wantToken && got.NextPageToken == "" {
 				t.Errorf("ListProjects(%+v) returned empty next_page_token, expected non-empty next_page_token", test.req)
 			} else if !test.wantToken && got.NextPageToken != "" {
-				// TODO: This should be changed to a test error when possible. See: https://github.com/apigee/registry/issues/68
-				t.Logf("ListProjects(%+v) returned non-empty next_page_token, expected empty next_page_token: %s", test.req, got.GetNextPageToken())
+				t.Errorf("ListProjects(%+v) returned non-empty next_page_token, expected empty next_page_token: %s", test.req, got.GetNextPageToken())
 			}
 		})
 	}
@@ -518,8 +567,7 @@ func TestListProjectsSequence(t *testing.T) {
 		}
 
 		if got.GetNextPageToken() != "" {
-			// TODO: This should be changed to a test error when possible. See: https://github.com/apigee/registry/issues/68
-			t.Logf("ListProjects(%+v) returned next_page_token, expected no next page", req)
+			t.Errorf("ListProjects(%+v) returned next_page_token, expected no next page", req)
 		}
 
 		listed = append(listed, got.Projects...)
@@ -549,13 +597,13 @@ func TestListProjectsLargeCollectionFiltering(t *testing.T) {
 	server := defaultTestServer(t)
 	for i := 1; i <= 100; i++ {
 		seedProjects(ctx, t, server, &rpc.Project{
-			Name: fmt.Sprintf("projects/project%d", i),
+			Name: fmt.Sprintf("projects/project%03d", i),
 		})
 	}
 
 	req := &rpc.ListProjectsRequest{
 		PageSize: 1,
-		Filter:   "name == 'projects/project99'",
+		Filter:   "name == 'projects/project099'",
 	}
 
 	got, err := server.ListProjects(ctx, req)
@@ -564,8 +612,7 @@ func TestListProjectsLargeCollectionFiltering(t *testing.T) {
 	}
 
 	if len(got.GetProjects()) == 1 && got.GetNextPageToken() != "" {
-		// TODO: This should be changed to a test error when possible. See: https://github.com/apigee/registry/issues/68
-		t.Logf("ListProjects(%+v) returned a page token when the only matching resource has been listed: %+v", req, got)
+		t.Errorf("ListProjects(%+v) returned a page token when the only matching resource has been listed: %+v", req, got)
 	} else if len(got.GetProjects()) == 0 && got.GetNextPageToken() == "" {
 		t.Errorf("ListProjects(%+v) returned an empty next page token before listing the only matching resource", req)
 	} else if count := len(got.GetProjects()); count > 1 {
@@ -574,8 +621,6 @@ func TestListProjectsLargeCollectionFiltering(t *testing.T) {
 }
 
 func TestUpdateProject(t *testing.T) {
-	t.Skip("Default/empty mask behavior is incorrect and replacement wildcard is not implemented")
-
 	tests := []struct {
 		desc string
 		seed *rpc.Project
@@ -583,7 +628,7 @@ func TestUpdateProject(t *testing.T) {
 		want *rpc.Project
 	}{
 		{
-			desc: "default parameters",
+			desc: "implicit nil mask",
 			seed: &rpc.Project{
 				Name:        "projects/my-project",
 				DisplayName: "My Project",
@@ -594,6 +639,26 @@ func TestUpdateProject(t *testing.T) {
 					Name:        "projects/my-project",
 					DisplayName: "My Updated Project",
 				},
+			},
+			want: &rpc.Project{
+				Name:        "projects/my-project",
+				DisplayName: "My Updated Project",
+				Description: "Project for my APIs",
+			},
+		},
+		{
+			desc: "implicit empty mask",
+			seed: &rpc.Project{
+				Name:        "projects/my-project",
+				DisplayName: "My Project",
+				Description: "Project for my APIs",
+			},
+			req: &rpc.UpdateProjectRequest{
+				Project: &rpc.Project{
+					Name:        "projects/my-project",
+					DisplayName: "My Updated Project",
+				},
+				UpdateMask: &fieldmaskpb.FieldMask{},
 			},
 			want: &rpc.Project{
 				Name:        "projects/my-project",
@@ -684,8 +749,6 @@ func TestUpdateProject(t *testing.T) {
 }
 
 func TestUpdateProjectResponseCodes(t *testing.T) {
-	t.Skip("Update mask validation is not implemented")
-
 	tests := []struct {
 		desc string
 		seed *rpc.Project
@@ -749,7 +812,7 @@ func TestDeleteProject(t *testing.T) {
 		req  *rpc.DeleteProjectRequest
 	}{
 		{
-			desc: "existing project",
+			desc: "existing resource",
 			seed: &rpc.Project{
 				Name: "projects/my-project",
 			},

@@ -18,7 +18,6 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/apigee/registry/rpc"
@@ -34,41 +33,6 @@ import (
 var (
 	// Example spec contents for an OpenAPI JSON spec.
 	specContents = []byte(`{"openapi": "3.0.0", "info": {"title": "My API", "version": "v1"}, "paths": {}}`)
-	// Basic spec view does not include file contents.
-	basicSpec = &rpc.ApiSpec{
-		Name:         "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
-		Filename:     "openapi.json",
-		Description:  "My API Spec",
-		MimeType:     "application/x.openapi;version=3.0.0",
-		SizeBytes:    int32(len(specContents)),
-		Hash:         sha256hash(specContents),
-		SourceUri:    "https://www.example.com/openapi.json",
-		RevisionTags: []string{},
-		Labels: map[string]string{
-			"label-key": "label-value",
-		},
-		Annotations: map[string]string{
-			"annotation-key": "annotation-value",
-		},
-	}
-	// Full spec view includes contents.
-	fullSpec = &rpc.ApiSpec{
-		Name:         "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
-		Filename:     "openapi.json",
-		Description:  "My API Spec",
-		MimeType:     "application/x.openapi;version=3.0.0",
-		SizeBytes:    int32(len(specContents)),
-		Hash:         sha256hash(specContents),
-		SourceUri:    "https://www.example.com/openapi.json",
-		Contents:     specContents,
-		RevisionTags: []string{},
-		Labels: map[string]string{
-			"label-key": "label-value",
-		},
-		Annotations: map[string]string{
-			"annotation-key": "annotation-value",
-		},
-	}
 )
 
 func sha256hash(bytes []byte) string {
@@ -104,33 +68,46 @@ func seedSpecs(ctx context.Context, t *testing.T, s *RegistryServer, specs ...*r
 
 func TestCreateApiSpec(t *testing.T) {
 	tests := []struct {
-		desc      string
-		seed      *rpc.ApiVersion
-		req       *rpc.CreateApiSpecRequest
-		want      *rpc.ApiSpec
-		extraOpts cmp.Option
+		desc string
+		seed *rpc.ApiVersion
+		req  *rpc.CreateApiSpecRequest
+		want *rpc.ApiSpec
 	}{
 		{
-			desc: "populated resource with default parameters",
-			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
-			req: &rpc.CreateApiSpecRequest{
-				Parent:  "projects/my-project/apis/my-api/versions/v1",
-				ApiSpec: fullSpec,
-			},
-			want: basicSpec,
-			// Name field is generated.
-			extraOpts: protocmp.IgnoreFields(new(rpc.ApiSpec), "name"),
-		},
-		{
-			desc: "custom identifier",
+			desc: "fully populated resource",
 			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
 			req: &rpc.CreateApiSpecRequest{
 				Parent:    "projects/my-project/apis/my-api/versions/v1",
 				ApiSpecId: "my-spec",
-				ApiSpec:   &rpc.ApiSpec{},
+				ApiSpec: &rpc.ApiSpec{
+					Filename:    "openapi.json",
+					Description: "My Description",
+					MimeType:    "application/x.openapi;version=3.0.0",
+					SourceUri:   "https://www.example.com/openapi.json",
+					Contents:    specContents,
+					Labels: map[string]string{
+						"label-key": "label-value",
+					},
+					Annotations: map[string]string{
+						"annotation-key": "annotation-value",
+					},
+				},
 			},
 			want: &rpc.ApiSpec{
-				Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
+				Name:         "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
+				Filename:     "openapi.json",
+				Description:  "My Description",
+				MimeType:     "application/x.openapi;version=3.0.0",
+				SizeBytes:    int32(len(specContents)),
+				Hash:         sha256hash(specContents),
+				SourceUri:    "https://www.example.com/openapi.json",
+				RevisionTags: []string{},
+				Labels: map[string]string{
+					"label-key": "label-value",
+				},
+				Annotations: map[string]string{
+					"annotation-key": "annotation-value",
+				},
 			},
 		},
 	}
@@ -149,15 +126,10 @@ func TestCreateApiSpec(t *testing.T) {
 			opts := cmp.Options{
 				protocmp.Transform(),
 				protocmp.IgnoreFields(new(rpc.ApiSpec), "revision_id", "create_time", "revision_create_time", "revision_update_time"),
-				test.extraOpts,
 			}
 
 			if !cmp.Equal(test.want, created, opts) {
 				t.Errorf("CreateApiSpec(%+v) returned unexpected diff (-want +got):\n%s", test.req, cmp.Diff(test.want, created, opts))
-			}
-
-			if !strings.HasPrefix(created.GetName(), test.req.GetParent()+"/specs/") {
-				t.Errorf("CreateApiSpec(%+v) returned unexpected name %q, expected collection prefix", test.req, created.GetName())
 			}
 
 			if created.RevisionId == "" {
@@ -202,8 +174,9 @@ func TestCreateApiSpecResponseCodes(t *testing.T) {
 			desc: "parent not found",
 			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
 			req: &rpc.CreateApiSpecRequest{
-				Parent:  "projects/my-project/apis/my-api/versions/v2",
-				ApiSpec: fullSpec,
+				Parent:    "projects/my-project/apis/my-api/versions/v2",
+				ApiSpecId: "valid-id",
+				ApiSpec:   &rpc.ApiSpec{},
 			},
 			want: codes.NotFound,
 		},
@@ -211,8 +184,19 @@ func TestCreateApiSpecResponseCodes(t *testing.T) {
 			desc: "missing resource body",
 			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
 			req: &rpc.CreateApiSpecRequest{
-				Parent:  "projects/my-project/apis/my-api/versions/v1",
-				ApiSpec: nil,
+				Parent:    "projects/my-project/apis/my-api/versions/v1",
+				ApiSpecId: "valid-id",
+				ApiSpec:   nil,
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "missing custom identifier",
+			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
+			req: &rpc.CreateApiSpecRequest{
+				Parent:    "projects/my-project/apis/my-api/versions/v1",
+				ApiSpecId: "",
+				ApiSpec:   &rpc.ApiSpec{},
 			},
 			want: codes.InvalidArgument,
 		},
@@ -302,35 +286,45 @@ func TestCreateApiSpecResponseCodes(t *testing.T) {
 }
 
 func TestCreateApiSpecDuplicates(t *testing.T) {
-	ctx := context.Background()
-	server := defaultTestServer(t)
-	seedSpecs(ctx, t, server, &rpc.ApiSpec{
-		Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
-	})
+	tests := []struct {
+		desc string
+		seed *rpc.ApiSpec
+		req  *rpc.CreateApiSpecRequest
+		want codes.Code
+	}{
+		{
+			desc: "case sensitive",
+			seed: &rpc.ApiSpec{Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec"},
+			req: &rpc.CreateApiSpecRequest{
+				Parent:    "projects/my-project/apis/my-api/versions/v1",
+				ApiSpecId: "my-spec",
+				ApiSpec:   &rpc.ApiSpec{},
+			},
+			want: codes.AlreadyExists,
+		},
+		{
+			desc: "case insensitive",
+			seed: &rpc.ApiSpec{Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec"},
+			req: &rpc.CreateApiSpecRequest{
+				Parent:    "projects/my-project/apis/my-api/versions/v1",
+				ApiSpecId: "My-Spec",
+				ApiSpec:   &rpc.ApiSpec{},
+			},
+			want: codes.AlreadyExists,
+		},
+	}
 
-	t.Run("case sensitive duplicate", func(t *testing.T) {
-		req := &rpc.CreateApiSpecRequest{
-			Parent:    "projects/my-project/apis/my-api/versions/v1",
-			ApiSpecId: "my-spec",
-			ApiSpec:   &rpc.ApiSpec{},
-		}
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			ctx := context.Background()
+			server := defaultTestServer(t)
+			seedSpecs(ctx, t, server, test.seed)
 
-		if _, err := server.CreateApiSpec(ctx, req); status.Code(err) != codes.AlreadyExists {
-			t.Errorf("CreateApiSpec(%+v) returned status code %q, want %q: %v", req, status.Code(err), codes.AlreadyExists, err)
-		}
-	})
-
-	t.Run("case insensitive duplicate", func(t *testing.T) {
-		req := &rpc.CreateApiSpecRequest{
-			Parent:    "projects/my-project/apis/my-api/versions/v1",
-			ApiSpecId: "My-Spec",
-			ApiSpec:   &rpc.ApiSpec{},
-		}
-
-		if _, err := server.CreateApiSpec(ctx, req); status.Code(err) != codes.AlreadyExists {
-			t.Errorf("CreateApiSpec(%+v) returned status code %q, want %q: %v", req, status.Code(err), codes.AlreadyExists, err)
-		}
-	})
+			if _, err := server.CreateApiSpec(ctx, test.req); status.Code(err) != test.want {
+				t.Errorf("CreateApiSpec(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
+			}
+		})
+	}
 }
 
 func TestGetApiSpec(t *testing.T) {
@@ -341,12 +335,40 @@ func TestGetApiSpec(t *testing.T) {
 		want *rpc.ApiSpec
 	}{
 		{
-			desc: "default view",
-			seed: fullSpec,
-			req: &rpc.GetApiSpecRequest{
-				Name: fullSpec.Name,
+			desc: "fully populated resource",
+			seed: &rpc.ApiSpec{
+				Name:        "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
+				Filename:    "openapi.json",
+				Description: "My API Spec",
+				MimeType:    "application/x.openapi;version=3.0.0",
+				SourceUri:   "https://www.example.com/openapi.json",
+				Contents:    specContents,
+				Labels: map[string]string{
+					"label-key": "label-value",
+				},
+				Annotations: map[string]string{
+					"annotation-key": "annotation-value",
+				},
 			},
-			want: basicSpec,
+			req: &rpc.GetApiSpecRequest{
+				Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
+			},
+			want: &rpc.ApiSpec{
+				Name:         "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
+				Filename:     "openapi.json",
+				Description:  "My API Spec",
+				MimeType:     "application/x.openapi;version=3.0.0",
+				SizeBytes:    int32(len(specContents)),
+				Hash:         sha256hash(specContents),
+				SourceUri:    "https://www.example.com/openapi.json",
+				RevisionTags: []string{},
+				Labels: map[string]string{
+					"label-key": "label-value",
+				},
+				Annotations: map[string]string{
+					"annotation-key": "annotation-value",
+				},
+			},
 		},
 	}
 
@@ -692,8 +714,7 @@ func TestListApiSpecs(t *testing.T) {
 			if test.wantToken && got.NextPageToken == "" {
 				t.Errorf("ListApiSpecs(%+v) returned empty next_page_token, expected non-empty next_page_token", test.req)
 			} else if !test.wantToken && got.NextPageToken != "" {
-				// TODO: This should be changed to a test error when possible. See: https://github.com/apigee/registry/issues/68
-				t.Logf("ListApiSpecs(%+v) returned non-empty next_page_token, expected empty next_page_token: %s", test.req, got.GetNextPageToken())
+				t.Errorf("ListApiSpecs(%+v) returned non-empty next_page_token, expected empty next_page_token: %s", test.req, got.GetNextPageToken())
 			}
 		})
 	}
@@ -846,8 +867,7 @@ func TestListApiSpecsSequence(t *testing.T) {
 		}
 
 		if got.GetNextPageToken() != "" {
-			// TODO: This should be changed to a test error when possible. See: https://github.com/apigee/registry/issues/68
-			t.Logf("ListApiSpecs(%+v) returned next_page_token, expected no next page", req)
+			t.Errorf("ListApiSpecs(%+v) returned next_page_token, expected no next page", req)
 		}
 
 		listed = append(listed, got.ApiSpecs...)
@@ -870,25 +890,44 @@ func TestListApiSpecsSequence(t *testing.T) {
 	}
 }
 
-func TestUpdateApiSpec(t *testing.T) {
-	t.Skip("Default/empty mask behavior is incorrect and replacement wildcard is not implemented")
+// This test prevents the list sequence from ending before a known filter match is listed.
+// For simplicity, it does not guarantee the resource is returned on a later page.
+func TestListApiSpecsLargeCollectionFiltering(t *testing.T) {
+	ctx := context.Background()
+	server := defaultTestServer(t)
+	for i := 1; i <= 100; i++ {
+		seedSpecs(ctx, t, server, &rpc.ApiSpec{
+			Name: fmt.Sprintf("projects/my-project/apis/my-api/versions/v1/specs/s%03d", i),
+		})
+	}
 
+	req := &rpc.ListApiSpecsRequest{
+		Parent:   "projects/my-project/apis/my-api/versions/v1",
+		PageSize: 1,
+		Filter:   "name == 'projects/my-project/apis/my-api/versions/v1/specs/s099'",
+	}
+
+	got, err := server.ListApiSpecs(ctx, req)
+	if err != nil {
+		t.Fatalf("ListApiSpecs(%+v) returned error: %s", req, err)
+	}
+
+	if len(got.GetApiSpecs()) == 1 && got.GetNextPageToken() != "" {
+		t.Errorf("ListApiSpecs(%+v) returned a page token when the only matching resource has been listed: %+v", req, got)
+	} else if len(got.GetApiSpecs()) == 0 && got.GetNextPageToken() == "" {
+		t.Errorf("ListApiSpecs(%+v) returned an empty next page token before listing the only matching resource", req)
+	} else if count := len(got.GetApiSpecs()); count > 1 {
+		t.Errorf("ListApiSpecs(%+v) returned %d projects, expected at most one: %+v", req, count, got.GetApiSpecs())
+	}
+}
+
+func TestUpdateApiSpec(t *testing.T) {
 	tests := []struct {
 		desc string
 		seed *rpc.ApiSpec
 		req  *rpc.UpdateApiSpecRequest
 		want *rpc.ApiSpec
 	}{
-		{
-			desc: "populated resource with default parameters",
-			seed: fullSpec,
-			req: &rpc.UpdateApiSpecRequest{
-				ApiSpec: &rpc.ApiSpec{
-					Name: fullSpec.Name,
-				},
-			},
-			want: basicSpec,
-		},
 		{
 			desc: "allow missing updates existing resources",
 			seed: &rpc.ApiSpec{
@@ -926,20 +965,40 @@ func TestUpdateApiSpec(t *testing.T) {
 			},
 		},
 		{
-			desc: "implicit mask",
+			desc: "implicit nil mask",
 			seed: &rpc.ApiSpec{
-				Name:        "projects/my-project/apis/my-api/versions/v1",
+				Name:        "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
 				Description: "My ApiSpec",
 				Filename:    "openapi.json",
 			},
 			req: &rpc.UpdateApiSpecRequest{
 				ApiSpec: &rpc.ApiSpec{
-					Name:        "projects/my-project/apis/my-api/versions/v1",
+					Name:        "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
 					Description: "My Updated ApiSpec",
 				},
 			},
 			want: &rpc.ApiSpec{
-				Name:        "projects/my-project/apis/my-api/versions/v1",
+				Name:        "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
+				Description: "My Updated ApiSpec",
+				Filename:    "openapi.json",
+			},
+		},
+		{
+			desc: "implicit empty mask",
+			seed: &rpc.ApiSpec{
+				Name:        "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
+				Description: "My ApiSpec",
+				Filename:    "openapi.json",
+			},
+			req: &rpc.UpdateApiSpecRequest{
+				ApiSpec: &rpc.ApiSpec{
+					Name:        "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
+					Description: "My Updated ApiSpec",
+				},
+				UpdateMask: &fieldmaskpb.FieldMask{},
+			},
+			want: &rpc.ApiSpec{
+				Name:        "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
 				Description: "My Updated ApiSpec",
 				Filename:    "openapi.json",
 			},
@@ -947,20 +1006,20 @@ func TestUpdateApiSpec(t *testing.T) {
 		{
 			desc: "field specific mask",
 			seed: &rpc.ApiSpec{
-				Name:        "projects/my-project/apis/my-api/versions/v1",
+				Name:        "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
 				Description: "My ApiSpec",
 				Filename:    "openapi.json",
 			},
 			req: &rpc.UpdateApiSpecRequest{
 				ApiSpec: &rpc.ApiSpec{
-					Name:        "projects/my-project/apis/my-api/versions/v1",
+					Name:        "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
 					Description: "My Updated ApiSpec",
 					Filename:    "Ignored",
 				},
 				UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"description"}},
 			},
 			want: &rpc.ApiSpec{
-				Name:        "projects/my-project/apis/my-api/versions/v1",
+				Name:        "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
 				Description: "My Updated ApiSpec",
 				Filename:    "openapi.json",
 			},
@@ -968,7 +1027,7 @@ func TestUpdateApiSpec(t *testing.T) {
 		{
 			desc: "full replacement wildcard mask",
 			seed: &rpc.ApiSpec{
-				Name:        "projects/my-project/apis/my-api/versions/v1",
+				Name:        "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
 				Description: "My ApiSpec",
 				Filename:    "openapi.json",
 			},
@@ -980,7 +1039,7 @@ func TestUpdateApiSpec(t *testing.T) {
 				UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"*"}},
 			},
 			want: &rpc.ApiSpec{
-				Name:        "projects/my-project/apis/my-api/versions/v1",
+				Name:        "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
 				Description: "My Updated ApiSpec",
 				Filename:    "",
 			},
@@ -1027,8 +1086,6 @@ func TestUpdateApiSpec(t *testing.T) {
 }
 
 func TestUpdateApiSpecResponseCodes(t *testing.T) {
-	t.Skip("Update mask validation is not implemented")
-
 	tests := []struct {
 		desc string
 		seed *rpc.ApiSpec
@@ -1102,7 +1159,7 @@ func TestDeleteApiSpec(t *testing.T) {
 		req  *rpc.DeleteApiSpecRequest
 	}{
 		{
-			desc: "existing version",
+			desc: "existing resource",
 			seed: &rpc.ApiSpec{
 				Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
 			},

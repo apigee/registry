@@ -19,8 +19,9 @@ import (
 	"log"
 	"os"
 	"time"
-    "github.com/apigee/registry/server"
+
 	"cloud.google.com/go/pubsub"
+	"github.com/apigee/registry/server"
 )
 
 func main() {
@@ -69,7 +70,7 @@ func main() {
 
 	// Cancel the subscription and exit.
 	cancel()
-	err = sub.Delete(context.Background())
+	err = sub.Delete(ctx)
 	if err != nil {
 		panic(err)
 	}

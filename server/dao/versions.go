@@ -89,8 +89,6 @@ func (d *DAO) ListVersions(ctx context.Context, parent names.Api, opts PageOptio
 
 	version := new(models.Version)
 	for _, err = it.Next(version); err == nil; _, err = it.Next(version) {
-		token.Offset++
-
 		versionMap, err := versionMap(*version)
 		if err != nil {
 			return response, status.Error(codes.Internal, err.Error())
@@ -100,13 +98,14 @@ func (d *DAO) ListVersions(ctx context.Context, parent names.Api, opts PageOptio
 		if err != nil {
 			return response, err
 		} else if !match {
+			token.Offset++
 			continue
+		} else if len(response.Versions) == int(opts.Size) {
+			break
 		}
 
 		response.Versions = append(response.Versions, *version)
-		if len(response.Versions) == int(opts.Size) {
-			break
-		}
+		token.Offset++
 	}
 	if err != nil && err != iterator.Done {
 		return response, status.Error(codes.Internal, err.Error())
