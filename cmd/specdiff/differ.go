@@ -69,18 +69,24 @@ func addToDiffProto(diffProto *rpc.Diff, changePath *change) {
 	fieldName := changePath.fieldPath.String()
 	switch changePath.changeType {
 	case "added":
-		diffProto.Added = append(diffProto.Added, fieldName)
+		diffProto.Additions = append(diffProto.Additions, fieldName)
 	case "deleted":
-		diffProto.Deleted = append(diffProto.Deleted, fieldName)
+		diffProto.Deletions = append(diffProto.Deletions, fieldName)
 	}
 }
 
 // getChanges creates a protodif report from a diff.Diff struct.
 func getChanges(diff *diff.Diff) (*rpc.Diff, error) {
 	diffProto := &rpc.Diff{
+<<<<<<< HEAD
 		Added:        []string{},
 		Deleted:      []string{},
 		Modification: make(map[string]*rpc.Diff_ValueChange),
+=======
+		Additions:        []string{},
+		Deletions:      []string{},
+		Modifications: make(map[string]*rpc.Diff_ValueChange),
+>>>>>>> differ
 	}
 	change := &change{
 		fieldPath:  stack{},
@@ -108,7 +114,7 @@ func searchNode(value reflect.Value, diffProto *rpc.Diff, changePath *change) er
 	case reflect.Struct:
 		return searchStructType(value, diffProto, changePath)
 	case reflect.Float64, reflect.String, reflect.Bool, reflect.Int:
-		valueString := getAtomicType(value)
+		valueString := scalarToString(value)
 		changePath.fieldPath.push(valueString)
 		addToDiffProto(diffProto, changePath)
 		changePath.fieldPath.pop()
@@ -128,9 +134,9 @@ func searchMapType(mapNode reflect.Value, diffProto *rpc.Diff, changePath *chang
 		if childNode.IsZero() {
 			continue
 		}
-
-		if isAtomicType(childNodeKey) {
-			childNodeKeyName := getAtomicType(childNodeKey)
+		switch childNodeKey.Interface().(type) {
+		case float64, string, bool, int:
+			childNodeKeyName := scalarToString(childNodeKey)
 			changePath.fieldPath.push(childNodeKeyName)
 			err := searchNode(childNode, diffProto, changePath)
 			if err != nil {
@@ -138,17 +144,21 @@ func searchMapType(mapNode reflect.Value, diffProto *rpc.Diff, changePath *chang
 			}
 			changePath.fieldPath.pop()
 			continue
-		}
-		if endpoint, ok := childNodeKey.Interface().(diff.Endpoint); ok {
-			changePath.fieldPath.push(handleEndpointStruct(endpoint))
-			err := searchNode(childNode, diffProto, changePath)
-			if err != nil {
-				return err
+
+		case diff.Endpoint:
+			if endpoint, ok := childNodeKey.Interface().(diff.Endpoint); ok {
+				changePath.fieldPath.push(fmt.Sprintf("{%s %s}", endpoint.Method, endpoint.Path))
+				err := searchNode(childNode, diffProto, changePath)
+				if err != nil {
+					return err
+				}
+				changePath.fieldPath.pop()
+				continue
 			}
-			changePath.fieldPath.pop()
-			continue
-		}
+			return fmt.Errorf("searchMapType called with invalid diff.Endpoint type: %v", childNodeKey)
+		default:
 		return fmt.Errorf("map node key %v is not supported", childNodeKey)
+	}
 
 	}
 	return nil
@@ -171,7 +181,7 @@ func searchArrayAndSliceType(arrayNode reflect.Value, diffProto *rpc.Diff, chang
 			continue
 		}
 		if endpoint, ok := childNode.Interface().(diff.Endpoint); ok {
-			changePath.fieldPath.push(handleEndpointStruct(endpoint))
+			changePath.fieldPath.push(fmt.Sprintf("{%s %s}", endpoint.Method, endpoint.Path))
 			addToDiffProto(diffProto, changePath)
 			changePath.fieldPath.pop()
 			continue
@@ -187,7 +197,10 @@ func searchStructType(structNode reflect.Value, diffProto *rpc.Diff, changePath 
 	}
 
 	if vd, ok := structNode.Interface().(diff.ValueDiff); ok {
-		handleValueDiffStruct(vd, diffProto, changePath)
+		diffProto.Modifications[changePath.fieldPath.String()] = &rpc.Diff_ValueChange{
+			From: scalarToString(reflect.ValueOf(vd.From)),
+			To:   scalarToString(reflect.ValueOf(vd.To)),
+		}
 		return nil
 	}
 	for i := 0; i < structNode.NumField(); i++ {
@@ -236,6 +249,7 @@ func handleStructField(value reflect.Value, name string, diffProto *rpc.Diff, ch
 	return nil
 }
 
+<<<<<<< HEAD
 func handleEndpointStruct(ed diff.Endpoint) string {
 	Method := getAtomicType(reflect.ValueOf(ed.Method))
 	Path := getAtomicType(reflect.ValueOf(ed.Path))
@@ -268,6 +282,9 @@ func isAtomicType(node reflect.Value) bool {
 }
 
 func getAtomicType(node reflect.Value) string {
+=======
+func scalarToString(node reflect.Value) string {
+>>>>>>> differ
 	switch node.Kind() {
 	case reflect.Float64:
 		return fmt.Sprintf("%f", node.Float())
