@@ -1,4 +1,4 @@
-package specdiff
+package diff
 
 import (
 	"io/ioutil"

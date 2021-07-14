@@ -1,4 +1,4 @@
-package specdiff
+package diff
 
 import (
 	"fmt"
@@ -168,19 +168,23 @@ func searchArrayAndSliceType(arrayNode reflect.Value, diffProto *rpc.Diff, chang
 		if childNode.IsZero() {
 			continue
 		}
-		if childNode.Kind() == reflect.String {
+		switch childNode.Interface().(type) {
+		case string:
 			changePath.fieldPath.push(childNode.String())
 			addToDiffProto(diffProto, changePath)
 			changePath.fieldPath.pop()
 			continue
+		case diff.Endpoint:
+			if endpoint, ok := childNode.Interface().(diff.Endpoint); ok {
+				changePath.fieldPath.push(fmt.Sprintf("{%s %s}", endpoint.Method, endpoint.Path))
+				addToDiffProto(diffProto, changePath)
+				changePath.fieldPath.pop()
+				continue
+			}
+			return fmt.Errorf("searchArrayAndSliceType called with invalid diff.Endpoint type: %v", childNode)
+		default:
+			return fmt.Errorf("array child node %v is not supported", childNode)
 		}
-		if endpoint, ok := childNode.Interface().(diff.Endpoint); ok {
-			changePath.fieldPath.push(fmt.Sprintf("{%s %s}", endpoint.Method, endpoint.Path))
-			addToDiffProto(diffProto, changePath)
-			changePath.fieldPath.pop()
-			continue
-		}
-		return fmt.Errorf("array child node %v is not supported", childNode)
 	}
 	return nil
 }
