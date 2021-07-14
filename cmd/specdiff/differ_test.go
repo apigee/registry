@@ -29,12 +29,12 @@ func TestDiffProtoStruct(t *testing.T) {
 			baseSpec:     "./test-specs/base-test.yaml",
 			revisionSpec: "./test-specs/struct-test-add.yaml",
 			wantProto: &rpc.Diff{
-				Added: []string{
+				Additions: []string{
 					"components.schemas.Pet.required.age",
 					"components.schemas.Pet.properties.age",
 				},
-				Deleted:      []string{},
-				Modification: map[string]*rpc.Diff_ValueChange{},
+				Deletions:      []string{},
+				Modifications: map[string]*rpc.Diff_ValueChange{},
 			},
 		},
 		{
@@ -42,11 +42,26 @@ func TestDiffProtoStruct(t *testing.T) {
 			baseSpec:     "./test-specs/base-test.yaml",
 			revisionSpec: "./test-specs/struct-test-delete.yaml",
 			wantProto: &rpc.Diff{
-				Added: []string{},
-				Deleted: []string{
+				Additions: []string{},
+				Deletions: []string{
 					"components.schemas.Pet.required.name",
 				},
-				Modification: map[string]*rpc.Diff_ValueChange{},
+				Modifications: map[string]*rpc.Diff_ValueChange{},
+			},
+		},
+		{
+			desc:         "Struct Diff Reordered",
+			baseSpec:     "./test-specs/base-test.yaml",
+			revisionSpec: "./test-specs/struct-test-order.yaml",
+			wantProto: &rpc.Diff{
+				Additions:   []string{},
+				Deletions: []string{},
+				Modifications: map[string]*rpc.Diff_ValueChange{
+					"info.version": {
+						To:   "1.0.1",
+						From: "1.0.0",
+					},
+				},
 			},
 		},
 		{
@@ -54,9 +69,9 @@ func TestDiffProtoStruct(t *testing.T) {
 			baseSpec:     "./test-specs/base-test.yaml",
 			revisionSpec: "./test-specs/struct-test-modify.yaml",
 			wantProto: &rpc.Diff{
-				Added:   []string{},
-				Deleted: []string{},
-				Modification: map[string]*rpc.Diff_ValueChange{
+				Additions:   []string{},
+				Deletions: []string{},
+				Modifications: map[string]*rpc.Diff_ValueChange{
 					"info.version": {
 						To:   "1.0.1",
 						From: "1.0.0",
@@ -74,15 +89,15 @@ func TestDiffProtoStruct(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			yamlFile, err := ioutil.ReadFile(test.baseSpec)
+			baseYaml, err := ioutil.ReadFile(test.baseSpec)
 			if err != nil {
 				t.Fatalf("Failed to get base spec yaml: %s", err)
 			}
-			yamlFile2, err := ioutil.ReadFile(test.revisionSpec)
+			revisionYaml, err := ioutil.ReadFile(test.revisionSpec)
 			if err != nil {
 				t.Fatalf("Failed to get revision spec yaml: %s", err)
 			}
-			diffProto, err := GetDiff(yamlFile, yamlFile2)
+			diffProto, err := GetDiff(baseYaml, revisionYaml)
 			if err != nil {
 				t.Fatalf("Failed to get diff.Diff: %s", err)
 			}
@@ -91,7 +106,7 @@ func TestDiffProtoStruct(t *testing.T) {
 				cmpopts.SortSlices(func(a, b string) bool { return a < b }),
 			}
 			if !cmp.Equal(test.wantProto, diffProto, opts) {
-				t.Errorf("Test %+v returned unexpected diff (-want +got):\n%s", test.desc, cmp.Diff(test.wantProto, diffProto, opts))
+				t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(test.wantProto, diffProto, opts))
 			}
 		})
 	}
@@ -115,16 +130,17 @@ func TestMaps(t *testing.T) {
 				changeType: "added",
 			},
 			wantProto: &rpc.Diff{
-				Added: []string{
+				Additions: []string{
 					"input1.result1",
 					"input2.result2",
 				},
 			},
 		}, {
-			desc: "Map Diff Recursive Key",
+			desc: "Map Diff Endpoint Key",
 			testMap: reflect.ValueOf(map[diff.Endpoint]testStruct{
-				{Method: "Test-Method",
-					Path: "Test-Path",
+				{
+					Method: "Test-Method",
+					Path: "Test/Path",
 				}: {
 					Name: "TestStructResult1",
 				},
@@ -134,8 +150,8 @@ func TestMaps(t *testing.T) {
 				changeType: "added",
 			},
 			wantProto: &rpc.Diff{
-				Added: []string{
-					"{method.Test-Method path.Test-Path}.name.TestStructResult1",
+				Additions: []string{
+					"{Test-Method Test/Path}.name.TestStructResult1",
 				},
 			},
 		},
@@ -145,9 +161,9 @@ func TestMaps(t *testing.T) {
 	for _, test := range tests {
 		val := test.testMap
 		diffProto := &rpc.Diff{
-			Added:        []string{},
-			Deleted:      []string{},
-			Modification: make(map[string]*rpc.Diff_ValueChange),
+			Additions:        []string{},
+			Deletions:      []string{},
+			Modifications: make(map[string]*rpc.Diff_ValueChange),
 		}
 		change := test.change
 		err := searchMapType(val, diffProto, &change)
@@ -155,7 +171,7 @@ func TestMaps(t *testing.T) {
 			t.Fatalf("Failed to get diff proto, returnd with error: %+v", err)
 		}
 		if !cmp.Equal(test.wantProto, diffProto, opts) {
-			t.Errorf("Test %+v returned unexpected diff (-want +got):\n%s", test.desc, cmp.Diff(test.wantProto, diffProto, opts))
+			t.Errorf("searchMapType function returned unexpected diff (-want +got):\n%s", cmp.Diff(test.wantProto, diffProto, opts))
 		}
 	}
 }
@@ -181,7 +197,7 @@ func TestArrays(t *testing.T) {
 				changeType: "added",
 			},
 			wantProto: &rpc.Diff{
-				Added: []string{
+				Additions: []string{
 					"input1",
 					"input2",
 					"input3",
@@ -193,13 +209,13 @@ func TestArrays(t *testing.T) {
 			testArray: reflect.ValueOf([]diff.Endpoint{
 				{
 					Method: "Test-Method-1",
-					Path:   "Test-Path-1",
+					Path:   "Test/Path/1",
 				}, {
 					Method: "Test-Method-2",
-					Path:   "Test-Path-2",
+					Path:   "Test/Path/2",
 				}, {
 					Method: "Test-Method-3",
-					Path:   "Test-Path-3",
+					Path:   "Test/Path/3",
 				},
 			}),
 			change: change{
@@ -207,10 +223,10 @@ func TestArrays(t *testing.T) {
 				changeType: "added",
 			},
 			wantProto: &rpc.Diff{
-				Added: []string{
-					"{method.Test-Method-1 path.Test-Path-1}",
-					"{method.Test-Method-2 path.Test-Path-2}",
-					"{method.Test-Method-3 path.Test-Path-3}",
+				Additions: []string{
+					"{Test-Method-1 Test/Path/1}",
+					"{Test-Method-2 Test/Path/2}",
+					"{Test-Method-3 Test/Path/3}",
 				},
 			},
 		},
@@ -220,9 +236,9 @@ func TestArrays(t *testing.T) {
 	for _, test := range tests {
 		val := test.testArray
 		diffProto := &rpc.Diff{
-			Added:        []string{},
-			Deleted:      []string{},
-			Modification: make(map[string]*rpc.Diff_ValueChange),
+			Additions:        []string{},
+			Deletions:      []string{},
+			Modifications: make(map[string]*rpc.Diff_ValueChange),
 		}
 		change := test.change
 		err := searchArrayAndSliceType(val, diffProto, &change)
@@ -230,7 +246,7 @@ func TestArrays(t *testing.T) {
 			t.Fatalf("Failed to get get diff proto: %+v", err)
 		}
 		if !cmp.Equal(test.wantProto, diffProto, opts) {
-			t.Errorf("Test %+v returned unexpected diff (-want +got):\n%s", test.desc, cmp.Diff(test.wantProto, diffProto, opts))
+			t.Errorf("searchArrayAndSliceType returned unexpected diff (-want +got):\n%s", cmp.Diff(test.wantProto, diffProto, opts))
 		}
 	}
 }
@@ -244,14 +260,16 @@ func TestValueDiff(t *testing.T) {
 	}{
 		{
 			desc: "Value Diff Test",
-			testValueDiff: reflect.ValueOf(diff.ValueDiff{From: 66,
-				To: true}),
+			testValueDiff: reflect.ValueOf(diff.ValueDiff{
+				From: 66,
+				To: true,
+			}),
 			change: change{
 				fieldPath:  []string{"ValueDiffTest"},
 				changeType: "Modified",
 			},
 			wantProto: &rpc.Diff{
-				Modification: map[string]*rpc.Diff_ValueChange{
+				Modifications: map[string]*rpc.Diff_ValueChange{
 					"ValueDiffTest": {
 						To:   "true",
 						From: "66",
@@ -265,18 +283,14 @@ func TestValueDiff(t *testing.T) {
 	for _, test := range tests {
 		val := test.testValueDiff
 		diffProto := &rpc.Diff{
-			Added:        []string{},
-			Deleted:      []string{},
-			Modification: make(map[string]*rpc.Diff_ValueChange),
+			Additions:        []string{},
+			Deletions:      []string{},
+			Modifications: make(map[string]*rpc.Diff_ValueChange),
 		}
 		change := test.change
-		vd, ok := val.Interface().(diff.ValueDiff)
-		if !ok {
-			t.Fatalf("Failed to convert from reflect.Value to diff.ValueDiff")
-		}
-		handleValueDiffStruct(vd, diffProto, &change)
+		searchNode(val, diffProto, &change)
 		if !cmp.Equal(test.wantProto, diffProto, opts) {
-			t.Errorf("Test %+v returned unexpected diff (-want +got):\n%s", test.desc, cmp.Diff(test.wantProto, diffProto, opts))
+			t.Errorf("searchNode returned unexpected diff (-want +got):\n%s", cmp.Diff(test.wantProto, diffProto, opts))
 		}
 	}
 }

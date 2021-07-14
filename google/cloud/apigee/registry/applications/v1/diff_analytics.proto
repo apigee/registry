@@ -10,14 +10,14 @@ deleted field, and changes that modify values fall in the value_modify map
 field. */
 message Diff {
   // Change will be displayed in format foo.bar.x
-  repeated string added = 1;
+  repeated string additions = 1;
   // Change will be displayed in format foo.bar.x
-  repeated string deleted = 2;
+  repeated string deletions = 2;
 
   message ValueChange {
     string From = 1;
     string To = 2;
   }
   // Change will be displayed in format foo.bar.x {to.x from.x}
-  map <string, ValueChange> modification= 3;
+  map <string, ValueChange> modifications = 3;
 }
