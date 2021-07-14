@@ -78,8 +78,8 @@ func addToDiffProto(diffProto *rpc.Diff, changePath *change) {
 // getChanges creates a protodif report from a diff.Diff struct.
 func getChanges(diff *diff.Diff) (*rpc.Diff, error) {
 	diffProto := &rpc.Diff{
-		Additions:        []string{},
-		Deletions:      []string{},
+		Additions:     []string{},
+		Deletions:     []string{},
 		Modifications: make(map[string]*rpc.Diff_ValueChange),
 	}
 	change := &change{
@@ -151,8 +151,8 @@ func searchMapType(mapNode reflect.Value, diffProto *rpc.Diff, changePath *chang
 			}
 			return fmt.Errorf("searchMapType called with invalid diff.Endpoint type: %v", childNodeKey)
 		default:
-		return fmt.Errorf("map node key %v is not supported", childNodeKey)
-	}
+			return fmt.Errorf("map node key %v is not supported", childNodeKey)
+		}
 
 	}
 	return nil

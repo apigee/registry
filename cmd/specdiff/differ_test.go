@@ -33,7 +33,7 @@ func TestDiffProtoStruct(t *testing.T) {
 					"components.schemas.Pet.required.age",
 					"components.schemas.Pet.properties.age",
 				},
-				Deletions:      []string{},
+				Deletions:     []string{},
 				Modifications: map[string]*rpc.Diff_ValueChange{},
 			},
 		},
@@ -54,7 +54,7 @@ func TestDiffProtoStruct(t *testing.T) {
 			baseSpec:     "./test-specs/base-test.yaml",
 			revisionSpec: "./test-specs/struct-test-order.yaml",
 			wantProto: &rpc.Diff{
-				Additions:   []string{},
+				Additions: []string{},
 				Deletions: []string{},
 				Modifications: map[string]*rpc.Diff_ValueChange{
 					"info.version": {
@@ -69,7 +69,7 @@ func TestDiffProtoStruct(t *testing.T) {
 			baseSpec:     "./test-specs/base-test.yaml",
 			revisionSpec: "./test-specs/struct-test-modify.yaml",
 			wantProto: &rpc.Diff{
-				Additions:   []string{},
+				Additions: []string{},
 				Deletions: []string{},
 				Modifications: map[string]*rpc.Diff_ValueChange{
 					"info.version": {
@@ -140,7 +140,7 @@ func TestMaps(t *testing.T) {
 			testMap: reflect.ValueOf(map[diff.Endpoint]testStruct{
 				{
 					Method: "Test-Method",
-					Path: "Test/Path",
+					Path:   "Test/Path",
 				}: {
 					Name: "TestStructResult1",
 				},
@@ -161,8 +161,8 @@ func TestMaps(t *testing.T) {
 	for _, test := range tests {
 		val := test.testMap
 		diffProto := &rpc.Diff{
-			Additions:        []string{},
-			Deletions:      []string{},
+			Additions:     []string{},
+			Deletions:     []string{},
 			Modifications: make(map[string]*rpc.Diff_ValueChange),
 		}
 		change := test.change
@@ -236,8 +236,8 @@ func TestArrays(t *testing.T) {
 	for _, test := range tests {
 		val := test.testArray
 		diffProto := &rpc.Diff{
-			Additions:        []string{},
-			Deletions:      []string{},
+			Additions:     []string{},
+			Deletions:     []string{},
 			Modifications: make(map[string]*rpc.Diff_ValueChange),
 		}
 		change := test.change
@@ -262,7 +262,7 @@ func TestValueDiff(t *testing.T) {
 			desc: "Value Diff Test",
 			testValueDiff: reflect.ValueOf(diff.ValueDiff{
 				From: 66,
-				To: true,
+				To:   true,
 			}),
 			change: change{
 				fieldPath:  []string{"ValueDiffTest"},
@@ -283,8 +283,8 @@ func TestValueDiff(t *testing.T) {
 	for _, test := range tests {
 		val := test.testValueDiff
 		diffProto := &rpc.Diff{
-			Additions:        []string{},
-			Deletions:      []string{},
+			Additions:     []string{},
+			Deletions:     []string{},
 			Modifications: make(map[string]*rpc.Diff_ValueChange),
 		}
 		change := test.change
