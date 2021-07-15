@@ -1,4 +1,4 @@
-package specdiff
+package diff
 
 import (
 	"io/ioutil"
@@ -33,11 +33,15 @@ func TestDiffProtoStruct(t *testing.T) {
 					"components.schemas.Pet.required.age",
 					"components.schemas.Pet.properties.age",
 				},
+<<<<<<< HEAD:cmd/specdiff/differ_test.go
 <<<<<<< HEAD
 				Deleted:      []string{},
 				Modification: map[string]*rpc.Diff_ValueChange{},
 =======
 				Deletions:      []string{},
+=======
+				Deletions:     []string{},
+>>>>>>> differ:cmd/registry/diff/differ_test.go
 				Modifications: map[string]*rpc.Diff_ValueChange{},
 >>>>>>> differ
 			},
@@ -62,7 +66,7 @@ func TestDiffProtoStruct(t *testing.T) {
 			baseSpec:     "./test-specs/base-test.yaml",
 			revisionSpec: "./test-specs/struct-test-order.yaml",
 			wantProto: &rpc.Diff{
-				Additions:   []string{},
+				Additions: []string{},
 				Deletions: []string{},
 				Modifications: map[string]*rpc.Diff_ValueChange{
 					"info.version": {
@@ -78,12 +82,16 @@ func TestDiffProtoStruct(t *testing.T) {
 			baseSpec:     "./test-specs/base-test.yaml",
 			revisionSpec: "./test-specs/struct-test-modify.yaml",
 			wantProto: &rpc.Diff{
+<<<<<<< HEAD:cmd/specdiff/differ_test.go
 <<<<<<< HEAD
 				Added:   []string{},
 				Deleted: []string{},
 				Modification: map[string]*rpc.Diff_ValueChange{
 =======
 				Additions:   []string{},
+=======
+				Additions: []string{},
+>>>>>>> differ:cmd/registry/diff/differ_test.go
 				Deletions: []string{},
 				Modifications: map[string]*rpc.Diff_ValueChange{
 >>>>>>> differ
@@ -155,7 +163,7 @@ func TestMaps(t *testing.T) {
 			testMap: reflect.ValueOf(map[diff.Endpoint]testStruct{
 				{
 					Method: "Test-Method",
-					Path: "Test/Path",
+					Path:   "Test/Path",
 				}: {
 					Name: "TestStructResult1",
 				},
@@ -176,6 +184,7 @@ func TestMaps(t *testing.T) {
 	for _, test := range tests {
 		val := test.testMap
 		diffProto := &rpc.Diff{
+<<<<<<< HEAD:cmd/specdiff/differ_test.go
 <<<<<<< HEAD
 			Added:        []string{},
 			Deleted:      []string{},
@@ -183,6 +192,10 @@ func TestMaps(t *testing.T) {
 =======
 			Additions:        []string{},
 			Deletions:      []string{},
+=======
+			Additions:     []string{},
+			Deletions:     []string{},
+>>>>>>> differ:cmd/registry/diff/differ_test.go
 			Modifications: make(map[string]*rpc.Diff_ValueChange),
 >>>>>>> differ
 		}
@@ -257,6 +270,7 @@ func TestArrays(t *testing.T) {
 	for _, test := range tests {
 		val := test.testArray
 		diffProto := &rpc.Diff{
+<<<<<<< HEAD:cmd/specdiff/differ_test.go
 <<<<<<< HEAD
 			Added:        []string{},
 			Deleted:      []string{},
@@ -264,6 +278,10 @@ func TestArrays(t *testing.T) {
 =======
 			Additions:        []string{},
 			Deletions:      []string{},
+=======
+			Additions:     []string{},
+			Deletions:     []string{},
+>>>>>>> differ:cmd/registry/diff/differ_test.go
 			Modifications: make(map[string]*rpc.Diff_ValueChange),
 >>>>>>> differ
 		}
@@ -289,7 +307,7 @@ func TestValueDiff(t *testing.T) {
 			desc: "Value Diff Test",
 			testValueDiff: reflect.ValueOf(diff.ValueDiff{
 				From: 66,
-				To: true,
+				To:   true,
 			}),
 			change: change{
 				fieldPath:  []string{"ValueDiffTest"},
@@ -314,6 +332,7 @@ func TestValueDiff(t *testing.T) {
 	for _, test := range tests {
 		val := test.testValueDiff
 		diffProto := &rpc.Diff{
+<<<<<<< HEAD:cmd/specdiff/differ_test.go
 <<<<<<< HEAD
 			Added:        []string{},
 			Deleted:      []string{},
@@ -321,6 +340,10 @@ func TestValueDiff(t *testing.T) {
 =======
 			Additions:        []string{},
 			Deletions:      []string{},
+=======
+			Additions:     []string{},
+			Deletions:     []string{},
+>>>>>>> differ:cmd/registry/diff/differ_test.go
 			Modifications: make(map[string]*rpc.Diff_ValueChange),
 >>>>>>> differ
 		}

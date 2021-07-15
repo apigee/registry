@@ -1,4 +1,4 @@
-package specdiff
+package diff
 
 import (
 	"fmt"
@@ -78,6 +78,7 @@ func addToDiffProto(diffProto *rpc.Diff, changePath *change) {
 // getChanges creates a protodif report from a diff.Diff struct.
 func getChanges(diff *diff.Diff) (*rpc.Diff, error) {
 	diffProto := &rpc.Diff{
+<<<<<<< HEAD:cmd/specdiff/differ.go
 <<<<<<< HEAD
 		Added:        []string{},
 		Deleted:      []string{},
@@ -85,6 +86,10 @@ func getChanges(diff *diff.Diff) (*rpc.Diff, error) {
 =======
 		Additions:        []string{},
 		Deletions:      []string{},
+=======
+		Additions:     []string{},
+		Deletions:     []string{},
+>>>>>>> differ:cmd/registry/diff/differ.go
 		Modifications: make(map[string]*rpc.Diff_ValueChange),
 >>>>>>> differ
 	}
@@ -157,8 +162,8 @@ func searchMapType(mapNode reflect.Value, diffProto *rpc.Diff, changePath *chang
 			}
 			return fmt.Errorf("searchMapType called with invalid diff.Endpoint type: %v", childNodeKey)
 		default:
-		return fmt.Errorf("map node key %v is not supported", childNodeKey)
-	}
+			return fmt.Errorf("map node key %v is not supported", childNodeKey)
+		}
 
 	}
 	return nil
@@ -174,19 +179,23 @@ func searchArrayAndSliceType(arrayNode reflect.Value, diffProto *rpc.Diff, chang
 		if childNode.IsZero() {
 			continue
 		}
-		if childNode.Kind() == reflect.String {
+		switch childNode.Interface().(type) {
+		case string:
 			changePath.fieldPath.push(childNode.String())
 			addToDiffProto(diffProto, changePath)
 			changePath.fieldPath.pop()
 			continue
+		case diff.Endpoint:
+			if endpoint, ok := childNode.Interface().(diff.Endpoint); ok {
+				changePath.fieldPath.push(fmt.Sprintf("{%s %s}", endpoint.Method, endpoint.Path))
+				addToDiffProto(diffProto, changePath)
+				changePath.fieldPath.pop()
+				continue
+			}
+			return fmt.Errorf("searchArrayAndSliceType called with invalid diff.Endpoint type: %v", childNode)
+		default:
+			return fmt.Errorf("array child node %v is not supported", childNode)
 		}
-		if endpoint, ok := childNode.Interface().(diff.Endpoint); ok {
-			changePath.fieldPath.push(fmt.Sprintf("{%s %s}", endpoint.Method, endpoint.Path))
-			addToDiffProto(diffProto, changePath)
-			changePath.fieldPath.pop()
-			continue
-		}
-		return fmt.Errorf("array child node %v is not supported", childNode)
 	}
 	return nil
 }
