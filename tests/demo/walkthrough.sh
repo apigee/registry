@@ -55,15 +55,14 @@ echo
 echo Get the API spec.
 apg registry get-api-spec \
     --name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml \
-    --view full \
     --json
 
 echo
 echo Get the contents of the API spec.
-apg registry get-api-spec \
-    --name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml \
-    --view full --json | \
-    jq '.contents' -r | \
+apg registry get-api-spec-contents \
+    --name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml/contents \
+    --json | \
+    jq '.data' -r | \
     registry-decode-spec
 
 echo
@@ -77,7 +76,6 @@ echo
 echo Get the modifed API spec.
 apg registry get-api-spec \
     --name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml \
-    --view full \
     --json
 
 echo
@@ -104,7 +102,6 @@ echo
 echo Get the API spec.
 apg registry get-api-spec \
     --name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml \
-    --view full \
     --json
 
 echo
@@ -118,31 +115,31 @@ echo List just the names of the revisions of the spec.
 apg registry list-api-spec-revisions \
     --name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml \
     --json | \
-    jq '.specs[].name' -r 
+    jq '.apiSpecs[].name' -r 
 
 echo
 echo Get the latest revision of the spec.
 apg registry list-api-spec-revisions \
     --name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml \
     --json | \
-    jq '.specs[0].name' -r 
+    jq '.apiSpecs[0].name' -r 
 
 echo
 echo Get the oldest revision of the spec.
 apg registry list-api-spec-revisions \
     --name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml \
     --json | \
-    jq '.specs[-1].name' -r 
+    jq '.apiSpecs[-1].name' -r 
 
 ORIGINAL=`apg registry list-api-spec-revisions \
     --name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml \
     --json | \
-    jq '.specs[-1].name' -r`
+    jq '.apiSpecs[-1].name' -r`
 
 ORIGINAL_HASH=`apg registry list-api-spec-revisions \
     --name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml \
     --json | \
-    jq '.specs[-1].hash' -r`
+    jq '.apiSpecs[-1].hash' -r`
 
 echo
 echo Tag a spec revision.
@@ -152,7 +149,6 @@ echo
 echo Get a spec by its tag.
 apg registry get-api-spec \
     --name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml@og \
-    --view basic \
     --json
 
 echo
