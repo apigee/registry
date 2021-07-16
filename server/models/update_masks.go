@@ -53,7 +53,7 @@ func ValidateMask(message protoreflect.ProtoMessage, mask *fieldmaskpb.FieldMask
 // When the mask argument is nil, only populated (non-default) fields are included.
 // When the mask argument only contains the wildcard character '*', every proto fields is included.
 func ExpandMask(m protoreflect.ProtoMessage, mask *fieldmaskpb.FieldMask) *fieldmaskpb.FieldMask {
-	if mask == nil {
+	if mask == nil || len(mask.GetPaths()) == 0 {
 		return populatedFields(m)
 	} else if len(mask.GetPaths()) == 1 && mask.Paths[0] == "*" {
 		return allFields(m)

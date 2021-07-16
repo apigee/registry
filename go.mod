@@ -27,8 +27,8 @@ require (
 	github.com/google/cel-go v0.6.0
 	github.com/google/go-cmp v0.5.6
 	github.com/google/uuid v1.1.2
-	github.com/googleapis/api-linter v1.25.0 // indirect
-	github.com/googleapis/gapic-generator-go v0.21.3 // indirect
+	github.com/googleapis/api-linter v1.25.1 // indirect
+	github.com/googleapis/gapic-generator-go v0.21.7 // indirect
 	github.com/googleapis/gax-go/v2 v2.0.5
 	github.com/googleapis/gnostic v0.5.4
 	github.com/graphql-go/graphql v0.7.9
@@ -52,7 +52,7 @@ require (
 	golang.org/x/oauth2 v0.0.0-20210615190721-d04028783cf1
 	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c // indirect
 	google.golang.org/api v0.49.0
-	google.golang.org/genproto v0.0.0-20210701133433-6b8dcf568a95
+	google.golang.org/genproto v0.0.0-20210708141623-e76da96a951f
 	google.golang.org/grpc v1.39.0
 	google.golang.org/grpc/examples v0.0.0-20210424002626-9572fd6faeae // indirect
 	google.golang.org/protobuf v1.27.1

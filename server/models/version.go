@@ -19,8 +19,8 @@ import (
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
-	"github.com/golang/protobuf/ptypes"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // Version is the storage-side representation of a version.
@@ -81,16 +81,8 @@ func (v *Version) Message() (message *rpc.ApiVersion, err error) {
 		DisplayName: v.DisplayName,
 		Description: v.Description,
 		State:       v.State,
-	}
-
-	message.CreateTime, err = ptypes.TimestampProto(v.CreateTime)
-	if err != nil {
-		return nil, err
-	}
-
-	message.UpdateTime, err = ptypes.TimestampProto(v.UpdateTime)
-	if err != nil {
-		return nil, err
+		CreateTime:  timestamppb.New(v.CreateTime),
+		UpdateTime:  timestamppb.New(v.UpdateTime),
 	}
 
 	message.Labels, err = v.LabelsMap()

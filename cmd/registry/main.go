@@ -14,8 +14,19 @@
 
 package main
 
-import "github.com/apigee/registry/cmd/registry/cmd"
+import (
+	"context"
+	"fmt"
+	"os"
+
+	"github.com/apigee/registry/cmd/registry/cmd"
+)
 
 func main() {
-	cmd.Execute()
+	ctx := context.Background()
+	cmd := cmd.Command(ctx)
+	if err := cmd.Execute(); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 }
