@@ -18,6 +18,12 @@
 echo This walkthrough script demonstrates key registry operations that can be performed
 echo through the API or using the automatically-generated apg command-line tool.
 
+if ! type "jq" > /dev/null; then
+  echo
+  echo "Error: this script requires jq (https://stedolan.github.io/jq/)"
+  exit 1
+fi
+
 echo
 echo Delete everything associated with any preexisting project named "demo".
 apg registry delete-project --name projects/demo
