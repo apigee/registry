@@ -78,20 +78,9 @@ func addToDiffProto(diffProto *rpc.Diff, changePath *change) {
 // getChanges creates a protodif report from a diff.Diff struct.
 func getChanges(diff *diff.Diff) (*rpc.Diff, error) {
 	diffProto := &rpc.Diff{
-<<<<<<< HEAD:cmd/specdiff/differ.go
-<<<<<<< HEAD
-		Added:        []string{},
-		Deleted:      []string{},
-		Modification: make(map[string]*rpc.Diff_ValueChange),
-=======
-		Additions:        []string{},
-		Deletions:      []string{},
-=======
 		Additions:     []string{},
 		Deletions:     []string{},
->>>>>>> differ:cmd/registry/diff/differ.go
 		Modifications: make(map[string]*rpc.Diff_ValueChange),
->>>>>>> differ
 	}
 	change := &change{
 		fieldPath:  stack{},
@@ -258,42 +247,7 @@ func handleStructField(value reflect.Value, name string, diffProto *rpc.Diff, ch
 	return nil
 }
 
-<<<<<<< HEAD
-func handleEndpointStruct(ed diff.Endpoint) string {
-	Method := getAtomicType(reflect.ValueOf(ed.Method))
-	Path := getAtomicType(reflect.ValueOf(ed.Path))
-	return fmt.Sprintf("{method.%s path.%s}", Method, Path)
-}
-
-func handleValueDiffStruct(vd diff.ValueDiff, diffProto *rpc.Diff, changePath *change) {
-	fromValue := getAtomicType(reflect.ValueOf(vd.From))
-	toValue := getAtomicType(reflect.ValueOf(vd.To))
-
-	diffProto.Modification[changePath.fieldPath.String()] = &rpc.Diff_ValueChange{
-		From: fromValue,
-		To:   toValue,
-	}
-}
-
-func isAtomicType(node reflect.Value) bool {
-	switch node.Kind() {
-	case reflect.Float64:
-		return true
-	case reflect.String:
-		return true
-	case reflect.Bool:
-		return true
-	case reflect.Int:
-		return true
-	default:
-		return false
-	}
-}
-
-func getAtomicType(node reflect.Value) string {
-=======
 func scalarToString(node reflect.Value) string {
->>>>>>> differ
 	switch node.Kind() {
 	case reflect.Float64:
 		return fmt.Sprintf("%f", node.Float())

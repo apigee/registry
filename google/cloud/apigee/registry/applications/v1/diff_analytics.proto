@@ -19,11 +19,10 @@ message Diff {
     string To = 2;
   }
   // Change will be displayed in format foo.bar.x {to.x from.x}
-  map <string, ValueChange> modification= 3;
+  map <string, ValueChange> modifications = 3;
 }
 
 message Changes {
   Diff breaking_changes = 1;
   Diff nonbreaking_changes = 2;
-  map <string, ValueChange> modifications = 3;
 }

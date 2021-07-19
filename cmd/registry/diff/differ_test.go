@@ -33,17 +33,8 @@ func TestDiffProtoStruct(t *testing.T) {
 					"components.schemas.Pet.required.age",
 					"components.schemas.Pet.properties.age",
 				},
-<<<<<<< HEAD:cmd/specdiff/differ_test.go
-<<<<<<< HEAD
-				Deleted:      []string{},
-				Modification: map[string]*rpc.Diff_ValueChange{},
-=======
-				Deletions:      []string{},
-=======
 				Deletions:     []string{},
->>>>>>> differ:cmd/registry/diff/differ_test.go
 				Modifications: map[string]*rpc.Diff_ValueChange{},
->>>>>>> differ
 			},
 		},
 		{
@@ -55,9 +46,6 @@ func TestDiffProtoStruct(t *testing.T) {
 				Deletions: []string{
 					"components.schemas.Pet.required.name",
 				},
-<<<<<<< HEAD
-				Modification: map[string]*rpc.Diff_ValueChange{},
-=======
 				Modifications: map[string]*rpc.Diff_ValueChange{},
 			},
 		},
@@ -74,7 +62,6 @@ func TestDiffProtoStruct(t *testing.T) {
 						From: "1.0.0",
 					},
 				},
->>>>>>> differ
 			},
 		},
 		{
@@ -82,19 +69,9 @@ func TestDiffProtoStruct(t *testing.T) {
 			baseSpec:     "./test-specs/base-test.yaml",
 			revisionSpec: "./test-specs/struct-test-modify.yaml",
 			wantProto: &rpc.Diff{
-<<<<<<< HEAD:cmd/specdiff/differ_test.go
-<<<<<<< HEAD
-				Added:   []string{},
-				Deleted: []string{},
-				Modification: map[string]*rpc.Diff_ValueChange{
-=======
-				Additions:   []string{},
-=======
 				Additions: []string{},
->>>>>>> differ:cmd/registry/diff/differ_test.go
 				Deletions: []string{},
 				Modifications: map[string]*rpc.Diff_ValueChange{
->>>>>>> differ
 					"info.version": {
 						To:   "1.0.1",
 						From: "1.0.0",
@@ -184,20 +161,9 @@ func TestMaps(t *testing.T) {
 	for _, test := range tests {
 		val := test.testMap
 		diffProto := &rpc.Diff{
-<<<<<<< HEAD:cmd/specdiff/differ_test.go
-<<<<<<< HEAD
-			Added:        []string{},
-			Deleted:      []string{},
-			Modification: make(map[string]*rpc.Diff_ValueChange),
-=======
-			Additions:        []string{},
-			Deletions:      []string{},
-=======
 			Additions:     []string{},
 			Deletions:     []string{},
->>>>>>> differ:cmd/registry/diff/differ_test.go
 			Modifications: make(map[string]*rpc.Diff_ValueChange),
->>>>>>> differ
 		}
 		change := test.change
 		err := searchMapType(val, diffProto, &change)
@@ -270,20 +236,9 @@ func TestArrays(t *testing.T) {
 	for _, test := range tests {
 		val := test.testArray
 		diffProto := &rpc.Diff{
-<<<<<<< HEAD:cmd/specdiff/differ_test.go
-<<<<<<< HEAD
-			Added:        []string{},
-			Deleted:      []string{},
-			Modification: make(map[string]*rpc.Diff_ValueChange),
-=======
-			Additions:        []string{},
-			Deletions:      []string{},
-=======
 			Additions:     []string{},
 			Deletions:     []string{},
->>>>>>> differ:cmd/registry/diff/differ_test.go
 			Modifications: make(map[string]*rpc.Diff_ValueChange),
->>>>>>> differ
 		}
 		change := test.change
 		err := searchArrayAndSliceType(val, diffProto, &change)
@@ -314,11 +269,7 @@ func TestValueDiff(t *testing.T) {
 				changeType: "Modified",
 			},
 			wantProto: &rpc.Diff{
-<<<<<<< HEAD
-				Modification: map[string]*rpc.Diff_ValueChange{
-=======
 				Modifications: map[string]*rpc.Diff_ValueChange{
->>>>>>> differ
 					"ValueDiffTest": {
 						To:   "true",
 						From: "66",
@@ -332,20 +283,9 @@ func TestValueDiff(t *testing.T) {
 	for _, test := range tests {
 		val := test.testValueDiff
 		diffProto := &rpc.Diff{
-<<<<<<< HEAD:cmd/specdiff/differ_test.go
-<<<<<<< HEAD
-			Added:        []string{},
-			Deleted:      []string{},
-			Modification: make(map[string]*rpc.Diff_ValueChange),
-=======
-			Additions:        []string{},
-			Deletions:      []string{},
-=======
 			Additions:     []string{},
 			Deletions:     []string{},
->>>>>>> differ:cmd/registry/diff/differ_test.go
 			Modifications: make(map[string]*rpc.Diff_ValueChange),
->>>>>>> differ
 		}
 		change := test.change
 		searchNode(val, diffProto, &change)
