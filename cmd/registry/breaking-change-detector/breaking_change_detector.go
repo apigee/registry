@@ -2,10 +2,14 @@ package breakingChangeDetector
 
 import (
 	"regexp"
+	"strconv"
 
 	"github.com/apigee/registry/rpc"
 )
-
+type detectionTypeList struct {
+	breakingChanges detectionList
+	nonBreakingChanges detectionList
+}
 type detectionList struct {
 	additions []detectionPattern
 	deletions []detectionPattern
@@ -14,102 +18,174 @@ type detectionList struct {
 
 type detectionPattern struct {
 	detectionWeight int
-	detectionPatternPositive string
-	detectionPatternNegative string
-}
-
-func getChangePatterns()(detectionList, detectionList){
-
-	breakingChanges := detectionList{
-
-		additions: []detectionPattern{
-			{
-		detectionWeight: 1,
-		detectionPatternPositive: "(components.)+(.|)+(schemas)+(.)+(required)",
-		detectionPatternNegative: "",
-			},
-		},
-
-		deletions: []detectionPattern{
-			{
-		detectionWeight: 1,
-		detectionPatternPositive: "(components.)+(.|)+(schemas)+(.)",
-		detectionPatternNegative: "(components.)+(.|)+(schemas)+(.)+(required)",
-			},
-		},
-		modifications: []detectionPattern{},
-
-	}
-
-	nonBreakingChanges := detectionList{
-
-		additions: []detectionPattern{
-			{
-		detectionWeight: 1,
-		detectionPatternPositive: "",
-		detectionPatternNegative: "",
-			},
-		},
-
-		deletions: []detectionPattern{
-			{
-		detectionWeight: 1,
-		detectionPatternPositive: "",
-		detectionPatternNegative: "",
-			},
-		},
-		modifications: []detectionPattern{},
-	}
-
-	return breakingChanges, nonBreakingChanges
+	PositiveMatchRegex *regexp.Regexp
+	NegativeMatchRegex *regexp.Regexp
 }
 
 func GetBreakingChanges(diff *rpc.Diff) *rpc.Changes {
-
-	breakingChanges, nonBreakingChanges := getChangePatterns()
-	breakingChangesProto := compareChangesToPatterns(breakingChanges, diff)
-	nonBreakingChangesProto := compareChangesToPatterns(nonBreakingChanges, diff)
-
-	changesProto := &rpc.Changes{
-		BreakingChanges: breakingChangesProto,
-		NonbreakingChanges: nonBreakingChangesProto,
-	}
-
+	changePatterns := getChangePatterns()
+	changesProto, _ := compareChangesToPatterns(changePatterns, diff)
 	return changesProto
 }
 
-func compareChangesToPatterns(d detectionList, diff *rpc.Diff) *rpc.Diff{
-	changesProto := &rpc.Diff{
-		Additions:     []string{},
-		Deletions:     []string{},
-		Modifications: make(map[string]*rpc.Diff_ValueChange),
-	}
+func getChangePatterns()(detectionTypeList){
+	breakingChanges := detectionList{
+		additions: []detectionPattern{
+			{
+		detectionWeight: 1,
+		PositiveMatchRegex: regexp.MustCompile("(components.)+(.|)+(schemas)+(.)+(required)"),
+		NegativeMatchRegex: regexp.MustCompile(""),
+			},
+		},
 
+		deletions: []detectionPattern{
+			{
+		detectionWeight: 1,
+		PositiveMatchRegex: regexp.MustCompile("(components.)+(.|)+(schemas)+(.)"),
+		NegativeMatchRegex: regexp.MustCompile("(components.)+(.|)+(schemas)+(.)+(required)"),
+			},
+		},
+
+		modifications: []detectionPattern{
+			{
+		detectionWeight: 1,
+		PositiveMatchRegex: regexp.MustCompile("(components.)+(.|)+(schemas)+(.|)+(type)"),
+		NegativeMatchRegex: regexp.MustCompile(""),
+					},
+		},
+	}
+	nonBreakingChanges := detectionList{
+		additions: []detectionPattern{
+			{
+		detectionWeight: 1,
+		PositiveMatchRegex: regexp.MustCompile("(info.)+(.)"),
+		NegativeMatchRegex: regexp.MustCompile(""),
+			},
+		},
+
+		deletions: []detectionPattern{
+			{
+		detectionWeight: 1,
+		PositiveMatchRegex: regexp.MustCompile("(info.)+(.)"),
+		NegativeMatchRegex: regexp.MustCompile(""),
+			},
+		},
+
+		modifications: []detectionPattern{
+			{
+			detectionWeight: 1,
+			PositiveMatchRegex: regexp.MustCompile("(info.)+(.)"),
+			NegativeMatchRegex: regexp.MustCompile(""),
+			},
+		},
+	}
+	return detectionTypeList{breakingChanges:breakingChanges, nonBreakingChanges:nonBreakingChanges,}
+}
+
+func compareChangesToPatterns(d detectionTypeList, diff *rpc.Diff) (*rpc.Changes, error){
+	allChanges := &rpc.Changes{
+		BreakingChanges: &rpc.Diff{
+			Additions:     []string{},
+			Deletions:     []string{},
+			Modifications: make(map[string]*rpc.Diff_ValueChange),
+		},
+		NonbreakingChanges:&rpc.Diff{
+			Additions:     []string{},
+			Deletions:     []string{},
+			Modifications: make(map[string]*rpc.Diff_ValueChange),
+		},
+		UnknownChanges:&rpc.Diff{
+			Additions:     []string{},
+			Deletions:     []string{},
+			Modifications: make(map[string]*rpc.Diff_ValueChange),
+		},
+	}
 	additions := diff.GetAdditions()
 	for _, addition := range additions{
-			if fitsPatterns(d.additions, addition){
-				changesProto.Additions = append(changesProto.Additions, addition)
+			if fitsAnyPattern(d.breakingChanges.additions, addition){
+				allChanges.BreakingChanges.Additions = append(allChanges.BreakingChanges.Additions, addition)
+				continue
 			}
+			if fitsAnyPattern(d.nonBreakingChanges.additions, addition){
+				allChanges.NonbreakingChanges.Additions = append(allChanges.NonbreakingChanges.Additions, addition)
+				continue
+			}
+			allChanges.UnknownChanges.Additions = append(allChanges.UnknownChanges.Additions, addition)
 	}
-
 	deletions := diff.GetDeletions()
 	for _, deletion := range deletions{
-			if fitsPatterns(d.deletions, deletion){
-				changesProto.Deletions = append(changesProto.Deletions, deletion)
-			}
-	}
-
-	return changesProto
-}
-
-func fitsPatterns(patterns []detectionPattern, change string)(bool){
-	for _, pattern := range patterns{
-		re := regexp.MustCompile(pattern.detectionPatternPositive)
-		if match := re.FindString(change); match == "" {
+		if fitsAnyPattern(d.breakingChanges.deletions, deletion){
+			allChanges.BreakingChanges.Deletions = append(allChanges.BreakingChanges.Deletions, deletion)
 			continue
 		}
-		re = regexp.MustCompile(pattern.detectionPatternNegative)
-		if match := re.FindString(change); match == "" {
+		if fitsAnyPattern(d.nonBreakingChanges.deletions, deletion){
+			allChanges.NonbreakingChanges.Deletions = append(allChanges.NonbreakingChanges.Deletions, deletion)
+			continue
+		}
+		allChanges.UnknownChanges.Deletions = append(allChanges.UnknownChanges.Deletions, deletion)
+	}
+	modifications := diff.GetModifications()
+	for modification, mod_value := range modifications {
+		if fitsAnyPattern(d.breakingChanges.modifications, modification){
+			allChanges.BreakingChanges.Modifications[modification] = mod_value
+			continue
+		}
+		if fitsAnyPattern(d.nonBreakingChanges.modifications, modification){
+			allChanges.NonbreakingChanges.Modifications[modification] = mod_value
+			continue
+		}
+		if isNonStringValue(mod_value.To) || isNonStringValue(mod_value.From){
+			if !isSameType(mod_value.To, mod_value.From){
+				allChanges.BreakingChanges.Modifications[modification] = mod_value
+				continue
+			}
+	}
+	allChanges.UnknownChanges.Modifications[modification] = mod_value
+	}
+	return allChanges, nil
+}
+
+func isSameType(valueOne, valueTwo string) (bool){
+	if valueOne == valueTwo{
+		return true
+	}
+	if _, err := strconv.ParseInt(valueOne,10, 64); err == nil{
+		if _, err := strconv.ParseInt(valueTwo,10, 64); err == nil{
+			return true
+		}
+	}
+	if _, err := strconv.ParseFloat(valueOne, 64); err == nil{
+		if _, err := strconv.ParseFloat(valueTwo, 64); err == nil{
+			return  true
+		}
+	}
+	if _, err := strconv.ParseBool(valueOne); err == nil{
+		if _, err := strconv.ParseBool(valueOne); err == nil{
+			return true
+		}
+	}
+	return  false
+}
+
+func isNonStringValue(value string) (bool){
+	if _, err := strconv.ParseFloat(value, 64); err == nil{
+		return true
+		}
+	if _, err := strconv.ParseInt(value,10, 64); err == nil{
+		return true
+		}
+	if _, err := strconv.ParseBool(value); err == nil{
+		return true
+		}
+	return false
+}
+
+func fitsAnyPattern(patterns []detectionPattern, change string)(bool){
+	for _, pattern := range patterns{
+		if pattern.PositiveMatchRegex.FindString(change) == "" {
+			continue
+		}
+		if pattern.NegativeMatchRegex.FindString(change) == "" {
 			return true
 		}
 	}
