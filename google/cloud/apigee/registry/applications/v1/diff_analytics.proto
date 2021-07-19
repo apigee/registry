@@ -4,20 +4,28 @@ package google.cloud.apigee.registry.applications.v1;
 option go_package = "github.com/apigee/registry/rpc;rpc";
 // [END go_declaration]
 
-/* This proto contains the diff of a spec and its revision. Changes that are
-additions fall in the added field. Changes that are Deletions fall in the
-deleted field, and changes that modify values fall in the value_modify map
-field. */
+/*Diff contains the diff of a spec and its revision. */
 message Diff {
-  // Change will be displayed in format foo.bar.x
+  /* additions holds every addition change in the diff.
+     The string will hold the entire field path of one addition change in the
+     format foo.bar.x .*/
   repeated string additions = 1;
-  // Change will be displayed in format foo.bar.x
+  /* deletions holds every deletion change in the diff.
+     The string will hold the entire field path of one deletion change in the
+     format foo.bar.x .*/
   repeated string deletions = 2;
 
+  // ValueChange hold the values of the elements that changed in one diff change.
   message ValueChange {
-    string From = 1;
-    string To = 2;
+    // from repersents the previous value of the element.
+    string from = 1;
+    // to repersents the current value of the element.
+    string to = 2;
   }
-  // Change will be displayed in format foo.bar.x {to.x from.x}
+  /* modifications holds every modification change in the diff.
+     The string key will hold the field path of one modification change in the
+     format foo.bar.x.
+     The value of the key will repersent the element that was modified in the
+     field. */
   map <string, ValueChange> modifications = 3;
 }
