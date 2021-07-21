@@ -413,6 +413,8 @@ github.com/googleapis/api-linter v1.25.0 h1:3ZeOao8PCCT2h/YQ+M48tZ2SEKla1FooBiJc
 github.com/googleapis/api-linter v1.25.0/go.mod h1:ZX2eUek3/3vAi7moEBg9ayn7CCegRngM5yrZhuAz738=
 github.com/googleapis/api-linter v1.25.1 h1:+ivF57UzO64b0UqQ6oO2suinxz/HQeeY2zcocetBccY=
 github.com/googleapis/api-linter v1.25.1/go.mod h1:RkQBsdF3/0iGLlCeKX3F7wcNX7iaUlKeV5mjRLvmlT0=
+github.com/googleapis/api-linter v1.26.0 h1:NbbzVwjRIpxvUuVTXbajmZEcdycphZA89ak0jut2NHs=
+github.com/googleapis/api-linter v1.26.0/go.mod h1:qwgB18UAjuKAcjCECGBC4ryhD6xGL3ChXTQFL81EwBU=
 github.com/googleapis/gapic-generator-go v0.16.0 h1:S1XVOuROJERt6zj1VZOO85dRoGE+5//FjZ1+SWbYzIg=
 github.com/googleapis/gapic-generator-go v0.16.0/go.mod h1:yl/RVCI7Yp1eLhTTZ7q1xSI+Jy0sCmrD7otRcch4RHM=
 github.com/googleapis/gapic-generator-go v0.18.1 h1:VHRU7rr68F+fDrFyPeeikA940cNRocRQm7kWrxIvRmw=
@@ -1443,8 +1445,11 @@ google.golang.org/genproto v0.0.0-20210713002101-d411969a0d9a h1:89EorDSnBRFywcv
 google.golang.org/genproto v0.0.0-20210713002101-d411969a0d9a/go.mod h1:AxrInvYm1dci+enl5hChSFPOmmUF1+uAa/UsgNRWd7k=
 google.golang.org/genproto v0.0.0-20210714021259-044028024a4f h1:UUQZ0BNnLgSI3v/uqq0hjdxwctexOPwnvKA5AA/Aze4=
 google.golang.org/genproto v0.0.0-20210714021259-044028024a4f/go.mod h1:AxrInvYm1dci+enl5hChSFPOmmUF1+uAa/UsgNRWd7k=
+google.golang.org/genproto v0.0.0-20210716133855-ce7ef5c701ea/go.mod h1:AxrInvYm1dci+enl5hChSFPOmmUF1+uAa/UsgNRWd7k=
 google.golang.org/genproto v0.0.0-20210719143636-1d5a45f8e492 h1:7yQQsvnwjfEahbNNEKcBHv3mR+HnB1ctGY/z1JXzx8M=
 google.golang.org/genproto v0.0.0-20210719143636-1d5a45f8e492/go.mod h1:ob2IJxKrgPT52GcgX759i1sleT07tiKowYBGbczaW48=
+google.golang.org/genproto v0.0.0-20210721163202-f1cecdd8b78a h1:17YmRUuEF4d+t2ygJZaDPhqNL2Hf17832xWKcMU7r2I=
+google.golang.org/genproto v0.0.0-20210721163202-f1cecdd8b78a/go.mod h1:ob2IJxKrgPT52GcgX759i1sleT07tiKowYBGbczaW48=
 google.golang.org/grpc v1.8.0/go.mod h1:yo6s7OP7yaDglbqo1J04qKzAhqBH6lvTonzMVmEdcZw=
 google.golang.org/grpc v1.16.0/go.mod h1:0JHn/cJsOMiMfNA9+DeHDlAU7KAAB5GDlYFpa9MZMio=
 google.golang.org/grpc v1.19.0/go.mod h1:mqu4LbDTu4XGKhr4mRzUsmM4RtVoemTSY81AxZiDr8c=
