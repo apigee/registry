@@ -89,7 +89,7 @@ func compareChangesToPatterns(d detectionTypeList, diff *rpc.Diff) (*rpc.Changes
 			Deletions:     []string{},
 			Modifications: make(map[string]*rpc.Diff_ValueChange),
 		},
-		NonbreakingChanges:&rpc.Diff{
+		NonBreakingChanges:&rpc.Diff{
 			Additions:     []string{},
 			Deletions:     []string{},
 			Modifications: make(map[string]*rpc.Diff_ValueChange),
@@ -107,7 +107,7 @@ func compareChangesToPatterns(d detectionTypeList, diff *rpc.Diff) (*rpc.Changes
 				continue
 			}
 			if fitsAnyPattern(d.nonBreakingChanges.additions, addition){
-				allChanges.NonbreakingChanges.Additions = append(allChanges.NonbreakingChanges.Additions, addition)
+				allChanges.NonBreakingChanges.Additions = append(allChanges.NonBreakingChanges.Additions, addition)
 				continue
 			}
 			allChanges.UnknownChanges.Additions = append(allChanges.UnknownChanges.Additions, addition)
@@ -119,7 +119,7 @@ func compareChangesToPatterns(d detectionTypeList, diff *rpc.Diff) (*rpc.Changes
 			continue
 		}
 		if fitsAnyPattern(d.nonBreakingChanges.deletions, deletion){
-			allChanges.NonbreakingChanges.Deletions = append(allChanges.NonbreakingChanges.Deletions, deletion)
+			allChanges.NonBreakingChanges.Deletions = append(allChanges.NonBreakingChanges.Deletions, deletion)
 			continue
 		}
 		allChanges.UnknownChanges.Deletions = append(allChanges.UnknownChanges.Deletions, deletion)
@@ -131,7 +131,7 @@ func compareChangesToPatterns(d detectionTypeList, diff *rpc.Diff) (*rpc.Changes
 			continue
 		}
 		if fitsAnyPattern(d.nonBreakingChanges.modifications, modification){
-			allChanges.NonbreakingChanges.Modifications[modification] = mod_value
+			allChanges.NonBreakingChanges.Modifications[modification] = mod_value
 			continue
 		}
 		if isNonStringValue(mod_value.To) || isNonStringValue(mod_value.From){

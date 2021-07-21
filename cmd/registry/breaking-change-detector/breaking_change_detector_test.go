@@ -24,7 +24,7 @@ func TestChanges(t *testing.T) {
 			BreakingChanges: &rpc.Diff{
 			Additions: []string{"components.schemas.x.required.x"},
 			},
-			NonbreakingChanges: &rpc.Diff{
+			NonBreakingChanges: &rpc.Diff{
 				},
 			UnknownChanges: &rpc.Diff{
 				},
@@ -39,7 +39,7 @@ func TestChanges(t *testing.T) {
 				BreakingChanges: &rpc.Diff{
 				Deletions: []string{"components.schemas.x.x"},
 				},
-				NonbreakingChanges: &rpc.Diff{
+				NonBreakingChanges: &rpc.Diff{
 					},
 				UnknownChanges: &rpc.Diff{
 					},
@@ -64,7 +64,7 @@ func TestChanges(t *testing.T) {
 								},
 							},
 						},
-						NonbreakingChanges: &rpc.Diff{
+						NonBreakingChanges: &rpc.Diff{
 							},
 						UnknownChanges: &rpc.Diff{
 							},
