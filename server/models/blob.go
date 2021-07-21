@@ -54,7 +54,7 @@ func NewBlobForSpec(spec *Spec, contents []byte) *Blob {
 
 // NewBlobForArtifact creates a new Blob object to store artifact contents.
 func NewBlobForArtifact(artifact *Artifact, contents []byte) *Blob {
-	now := time.Now()
+	now := time.Now().Round(time.Microsecond)
 	return &Blob{
 		ProjectID:   artifact.ProjectID,
 		ApiID:       artifact.ApiID,

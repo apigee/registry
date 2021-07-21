@@ -100,7 +100,7 @@ func (api *Api) Message() (message *rpc.Api, err error) {
 
 // Update modifies a api using the contents of a message.
 func (api *Api) Update(message *rpc.Api, mask *fieldmaskpb.FieldMask) error {
-	api.UpdateTime = time.Now()
+	api.UpdateTime = time.Now().Round(time.Microsecond)
 	for _, field := range mask.Paths {
 		switch field {
 		case "display_name":

@@ -100,7 +100,7 @@ func (v *Version) Message() (message *rpc.ApiVersion, err error) {
 
 // Update modifies a version using the contents of a message.
 func (v *Version) Update(message *rpc.ApiVersion, mask *fieldmaskpb.FieldMask) error {
-	v.UpdateTime = time.Now()
+	v.UpdateTime = time.Now().Round(time.Microsecond)
 	for _, field := range mask.Paths {
 		switch field {
 		case "display_name":
