@@ -34,7 +34,6 @@ func getChangePatterns()(detectionTypeList){
 			{
 		detectionWeight: 1,
 		PositiveMatchRegex: regexp.MustCompile("(components.)+(.|)+(schemas)+(.)+(required)"),
-		NegativeMatchRegex: regexp.MustCompile(""),
 			},
 		},
 
@@ -50,7 +49,6 @@ func getChangePatterns()(detectionTypeList){
 			{
 		detectionWeight: 1,
 		PositiveMatchRegex: regexp.MustCompile("(components.)+(.|)+(schemas)+(.|)+(type)"),
-		NegativeMatchRegex: regexp.MustCompile(""),
 					},
 		},
 	}
@@ -59,7 +57,6 @@ func getChangePatterns()(detectionTypeList){
 			{
 		detectionWeight: 1,
 		PositiveMatchRegex: regexp.MustCompile("(info.)+(.)"),
-		NegativeMatchRegex: regexp.MustCompile(""),
 			},
 		},
 
@@ -67,7 +64,6 @@ func getChangePatterns()(detectionTypeList){
 			{
 		detectionWeight: 1,
 		PositiveMatchRegex: regexp.MustCompile("(info.)+(.)"),
-		NegativeMatchRegex: regexp.MustCompile(""),
 			},
 		},
 
@@ -75,7 +71,6 @@ func getChangePatterns()(detectionTypeList){
 			{
 			detectionWeight: 1,
 			PositiveMatchRegex: regexp.MustCompile("(info.)+(.)"),
-			NegativeMatchRegex: regexp.MustCompile(""),
 			},
 		},
 	}
@@ -182,10 +177,20 @@ func isNonStringValue(value string) (bool){
 
 func fitsAnyPattern(patterns []detectionPattern, change string)(bool){
 	for _, pattern := range patterns{
-		if pattern.PositiveMatchRegex.FindString(change) == "" {
+		if pattern.PositiveMatchRegex == nil {
+			if !pattern.NegativeMatchRegex.MatchString(change){
+				return true
+			}
+		}
+		if pattern.NegativeMatchRegex == nil {
+			if pattern.PositiveMatchRegex.MatchString(change){
+				return true
+			}
+		}
+		if pattern.NegativeMatchRegex.MatchString(change){
 			continue
 		}
-		if pattern.NegativeMatchRegex.FindString(change) == "" {
+		if pattern.PositiveMatchRegex.MatchString(change){
 			return true
 		}
 	}
