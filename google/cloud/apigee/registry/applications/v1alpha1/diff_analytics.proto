@@ -1,5 +1,5 @@
 syntax = "proto3";
-package google.cloud.apigee.registry.applications.v1;
+package google.cloud.apigee.registry.v1alpha1.v1;
 // [START go_declaration]
 option go_package = "github.com/apigee/registry/rpc;rpc";
 // [END go_declaration]
