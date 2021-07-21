@@ -35,7 +35,7 @@ type Project struct {
 
 // NewProject initializes a new resource.
 func NewProject(name names.Project, body *rpc.Project) *Project {
-	now := time.Now()
+	now := time.Now().Round(time.Microsecond)
 	return &Project{
 		ProjectID:   name.ProjectID,
 		Description: body.GetDescription(),

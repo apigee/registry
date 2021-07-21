@@ -85,7 +85,7 @@ func NewSpec(name names.Spec, body *rpc.ApiSpec) (spec *Spec, err error) {
 
 // NewRevision returns a new revision based on the spec.
 func (s *Spec) NewRevision() *Spec {
-	now := time.Now()
+	now := time.Now().Round(time.Microsecond)
 	return &Spec{
 		ProjectID:          s.ProjectID,
 		ApiID:              s.ApiID,

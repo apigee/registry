@@ -40,7 +40,7 @@ type Version struct {
 
 // NewVersion initializes a new resource.
 func NewVersion(name names.Version, body *rpc.ApiVersion) (version *Version, err error) {
-	now := time.Now()
+	now := time.Now().Round(time.Microsecond)
 	version = &Version{
 		ProjectID:   name.ProjectID,
 		ApiID:       name.ApiID,

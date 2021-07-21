@@ -40,7 +40,7 @@ type Api struct {
 
 // NewApi initializes a new resource.
 func NewApi(name names.Api, body *rpc.Api) (api *Api, err error) {
-	now := time.Now()
+	now := time.Now().Round(time.Microsecond)
 	api = &Api{
 		ProjectID:          name.ProjectID,
 		ApiID:              name.ApiID,
