@@ -78,10 +78,10 @@ apg registry get-api-spec --name projects/protos/apis/google-cloud-translate/ver
 # Add the `--json` flag to get this as JSON:
 apg registry get-api-spec --name projects/protos/apis/google-cloud-translate/versions/v3/specs/protos.zip --json
 
-# You might notice that this doesn't return the actual spec. That's because the get-api-spec
-# API takes a `view` argument, and its default value ("BASIC") excludes the spec bytes.
-# To get the spec contents, add "--view FULL" to your API call:
-apg registry get-api-spec --name projects/protos/apis/google-cloud-translate/versions/v3/specs/protos.zip --json --view FULL
+# You might notice that that didn't return the actual spec. That's because the spec contents
+# are accessed through a separate method that (when transcoded to HTTP) allows direct download
+# of spec contents.
+apg registry get-api-spec-contents --name projects/protos/apis/google-cloud-translate/versions/v3/specs/protos.zip/contents
 
 # An easier way to get the bytes of the spec is to use `registry get` with the `--contents` flag.
 # This writes the bytes to stdout, so you probably want to redirect this to a file, as follows:

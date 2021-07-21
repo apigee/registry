@@ -59,6 +59,14 @@ registry get projects/openapi/apis/wordnik.com
 # Add the --json option to get JSON-formatted output.
 apg registry get-api --name projects/openapi/apis/wordnik.com --json
 
+# You might notice that that didn't return the actual spec. That's because the spec contents
+# are accessed through a separate method that (when transcoded to HTTP) allows direct download
+# of spec contents.
+apg registry get-api-spec-contents --name projects/openapi/apis/wordnik.com/contents
+
+# Another way to get the bytes of the spec is to use `registry get` with the `--contents` flag.
+registry get projects/openapi/apis/wordnik.com --contents
+
 # List all of the APIs in the project.
 registry list projects/openapi/apis
 
