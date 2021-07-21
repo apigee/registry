@@ -188,7 +188,7 @@ func TestSingleSpec(t *testing.T) {
 
 	// Test the manifest
 	manifest, err := ReadManifestProto(
-		"test/manifest_1.yaml")
+		"testdata/manifest_1.yaml")
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -234,7 +234,7 @@ func TestMultipleSpecs(t *testing.T) {
 
 	// Test the manifest
 	manifest, err := ReadManifestProto(
-		"test/manifest_1.yaml")
+		"testdata/manifest_1.yaml")
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -284,7 +284,7 @@ func TestPartiallyExistingArtifacts(t *testing.T) {
 
 	// Test the manifest
 	manifest, err := ReadManifestProto(
-		"test/manifest_1.yaml")
+		"testdata/manifest_1.yaml")
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -335,7 +335,7 @@ func TestOutdatedArtifacts(t *testing.T) {
 
 	// Test the manifest
 	manifest, err := ReadManifestProto(
-		"test/manifest_1.yaml")
+		"testdata/manifest_1.yaml")
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -392,7 +392,7 @@ func TestApiLevelArtifactsCreate(t *testing.T) {
 
 	// Test the manifest
 	manifest, err := ReadManifestProto(
-		"test/manifest_2.yaml")
+		"testdata/manifest_2.yaml")
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -452,7 +452,7 @@ func TestApiLevelArtifactsOutdated(t *testing.T) {
 
 	// Test the manifest
 	manifest, err := ReadManifestProto(
-		"test/manifest_2.yaml")
+		"testdata/manifest_2.yaml")
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -502,7 +502,7 @@ func TestDerivedArtifactsCreate(t *testing.T) {
 
 	// Test the manifest
 	manifest, err := ReadManifestProto(
-		"test/manifest_3.yaml")
+		"testdata/manifest_3.yaml")
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -561,7 +561,7 @@ func TestDerivedArtifactsMissing(t *testing.T) {
 
 	// Test the manifest
 	manifest, err := ReadManifestProto(
-		"test/manifest_3.yaml")
+		"testdata/manifest_3.yaml")
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -622,7 +622,7 @@ func TestDerivedArtifactsOutdated(t *testing.T) {
 
 	// Test the manifest
 	manifest, err := ReadManifestProto(
-		"test/manifest_3.yaml")
+		"testdata/manifest_3.yaml")
 	if err != nil {
 		t.Error(err.Error())
 	}
