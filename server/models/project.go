@@ -35,7 +35,7 @@ type Project struct {
 
 // NewProject initializes a new resource.
 func NewProject(name names.Project, body *rpc.Project) *Project {
-	now := time.Now()
+	now := time.Now().Round(time.Microsecond)
 	return &Project{
 		ProjectID:   name.ProjectID,
 		Description: body.GetDescription(),
@@ -65,7 +65,7 @@ func (p *Project) Message() *rpc.Project {
 
 // Update modifies a project using the contents of a message.
 func (p *Project) Update(message *rpc.Project, mask *fieldmaskpb.FieldMask) {
-	p.UpdateTime = time.Now()
+	p.UpdateTime = time.Now().Round(time.Microsecond)
 	for _, field := range mask.GetPaths() {
 		switch field {
 		case "display_name":
