@@ -31,6 +31,8 @@ message Diff {
 }
 
 message Changes {
-  Diff breaking_changes = 1;
-  Diff nonbreaking_changes = 2;
+  Diff breakingChanges = 1;
+  Diff nonBreakingChanges = 2;
+  Diff unknownChanges = 3;
 }
+
