@@ -40,7 +40,7 @@ type Version struct {
 
 // NewVersion initializes a new resource.
 func NewVersion(name names.Version, body *rpc.ApiVersion) (version *Version, err error) {
-	now := time.Now()
+	now := time.Now().Round(time.Microsecond)
 	version = &Version{
 		ProjectID:   name.ProjectID,
 		ApiID:       name.ApiID,
@@ -100,7 +100,7 @@ func (v *Version) Message() (message *rpc.ApiVersion, err error) {
 
 // Update modifies a version using the contents of a message.
 func (v *Version) Update(message *rpc.ApiVersion, mask *fieldmaskpb.FieldMask) error {
-	v.UpdateTime = time.Now()
+	v.UpdateTime = time.Now().Round(time.Microsecond)
 	for _, field := range mask.Paths {
 		switch field {
 		case "display_name":

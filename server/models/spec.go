@@ -49,7 +49,7 @@ type Spec struct {
 
 // NewSpec initializes a new resource.
 func NewSpec(name names.Spec, body *rpc.ApiSpec) (spec *Spec, err error) {
-	now := time.Now()
+	now := time.Now().Round(time.Microsecond)
 	spec = &Spec{
 		ProjectID:          name.ProjectID,
 		ApiID:              name.ApiID,
@@ -85,7 +85,7 @@ func NewSpec(name names.Spec, body *rpc.ApiSpec) (spec *Spec, err error) {
 
 // NewRevision returns a new revision based on the spec.
 func (s *Spec) NewRevision() *Spec {
-	now := time.Now()
+	now := time.Now().Round(time.Microsecond)
 	return &Spec{
 		ProjectID:          s.ProjectID,
 		ApiID:              s.ApiID,
@@ -150,7 +150,7 @@ func (s *Spec) BasicMessage(name string) (message *rpc.ApiSpec, err error) {
 
 // Update modifies a spec using the contents of a message.
 func (s *Spec) Update(message *rpc.ApiSpec, mask *fieldmaskpb.FieldMask) error {
-	s.RevisionUpdateTime = time.Now()
+	s.RevisionUpdateTime = time.Now().Round(time.Microsecond)
 	for _, field := range mask.Paths {
 		switch field {
 		case "filename":
@@ -185,7 +185,7 @@ func (s *Spec) updateContents(contents []byte) {
 		s.RevisionID = newRevisionID()
 		s.SizeInBytes = int32(len(contents))
 
-		now := time.Now()
+		now := time.Now().Round(time.Microsecond)
 		s.RevisionCreateTime = now
 		s.RevisionUpdateTime = now
 	}
@@ -227,7 +227,7 @@ type SpecRevisionTag struct {
 
 // NewSpecRevisionTag initializes a new revision tag from a given revision name and tag string.
 func NewSpecRevisionTag(name names.SpecRevision, tag string) *SpecRevisionTag {
-	now := time.Now()
+	now := time.Now().Round(time.Microsecond)
 	return &SpecRevisionTag{
 		ProjectID:  name.ProjectID,
 		ApiID:      name.ApiID,
