@@ -1,4 +1,4 @@
-package breakingChangeDetector
+package breakingchangedetector
 
 import (
 	"testing"
@@ -11,66 +11,59 @@ import (
 
 func TestChanges(t *testing.T) {
 	tests := []struct {
-		desc         string
-		diffProto 	 *rpc.Diff
-		wantProto    *rpc.Changes
+		desc      string
+		diffProto *rpc.Diff
+		wantProto *rpc.Changes
 	}{
 		{
-		desc: "basic Addition Breaking Test",
-		diffProto: &rpc.Diff{
-			Additions: []string{"components.schemas.x.required.x"},
-		},
-		wantProto: &rpc.Changes{
-			BreakingChanges: &rpc.Diff{
-			Additions: []string{"components.schemas.x.required.x"},
+			desc: "basic Addition Breaking Test",
+			diffProto: &rpc.Diff{
+				Additions: []string{"components.schemas.x.required.x"},
 			},
-			NonBreakingChanges: &rpc.Diff{
+			wantProto: &rpc.Changes{
+				BreakingChanges: &rpc.Diff{
+					Additions: []string{"components.schemas.x.required.x"},
 				},
-			UnknownChanges: &rpc.Diff{
-				},
+				NonBreakingChanges: &rpc.Diff{},
+				UnknownChanges:     &rpc.Diff{},
 			},
 		},
 		{
-		desc: "basic Deletion Breaking Test",
-		diffProto: &rpc.Diff{
+			desc: "basic Deletion Breaking Test",
+			diffProto: &rpc.Diff{
 				Deletions: []string{"components.schemas.x.x"},
 			},
 			wantProto: &rpc.Changes{
 				BreakingChanges: &rpc.Diff{
-				Deletions: []string{"components.schemas.x.x"},
+					Deletions: []string{"components.schemas.x.x"},
 				},
-				NonBreakingChanges: &rpc.Diff{
-					},
-				UnknownChanges: &rpc.Diff{
+				NonBreakingChanges: &rpc.Diff{},
+				UnknownChanges:     &rpc.Diff{},
+			},
+		},
+		{
+			desc: "basic Modification Breaking Test",
+			diffProto: &rpc.Diff{
+				Modifications: map[string]*rpc.Diff_ValueChange{
+					"components.schemas.x.properties.type": {
+						To:   "float",
+						From: "int64",
 					},
 				},
 			},
-			{
-				desc: "basic Modification Breaking Test",
-				diffProto: &rpc.Diff{
-						Modifications: map[string]*rpc.Diff_ValueChange{
-							"components.schemas.x.properties.type":{
-								To:"float",
-								From:"int64",
-							},
+			wantProto: &rpc.Changes{
+				BreakingChanges: &rpc.Diff{
+					Modifications: map[string]*rpc.Diff_ValueChange{
+						"components.schemas.x.properties.type": {
+							To:   "float",
+							From: "int64",
 						},
 					},
-					wantProto: &rpc.Changes{
-						BreakingChanges: &rpc.Diff{
-							Modifications: map[string]*rpc.Diff_ValueChange{
-								"components.schemas.x.properties.type":{
-									To:"float",
-									From:"int64",
-								},
-							},
-						},
-						NonBreakingChanges: &rpc.Diff{
-							},
-						UnknownChanges: &rpc.Diff{
-							},
-						},
-					},
-
+				},
+				NonBreakingChanges: &rpc.Diff{},
+				UnknownChanges:     &rpc.Diff{},
+			},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
