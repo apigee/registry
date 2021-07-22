@@ -72,12 +72,12 @@ apg registry get-api-spec --name projects/disco/apis/translate/versions/v3/specs
 # Add the `--json` flag to get this as JSON:
 apg registry get-api-spec --name projects/disco/apis/translate/versions/v3/specs/discovery.json --json
 
-# You might notice that this doesn't return the actual spec. That's because the get-api-spec
-# API takes a `view` argument, and its default value ("BASIC") excludes the spec bytes.
-# To get the spec contents, add "--view FULL" to your API call:
-apg registry get-api-spec --name projects/disco/apis/translate/versions/v3/specs/discovery.json --json --view FULL
+# You might notice that that didn't return the actual spec. That's because the spec contents
+# are accessed through a separate method that (when transcoded to HTTP) allows direct download
+# of spec contents.
+apg registry get-api-spec-contents --name projects/disco/apis/translate/versions/v3/specs/discovery.json/contents
 
-# An easier way to get the bytes of the spec is to use `registry get` with the `--contents` flag.
+# Another way to get the bytes of the spec is to use `registry get` with the `--contents` flag.
 registry get projects/disco/apis/translate/versions/v3/specs/discovery.json --contents
 
 # The registry tool can compute simple complexity metrics for Discovery documents stored in the Registry.

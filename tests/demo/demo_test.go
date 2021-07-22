@@ -21,6 +21,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"io/ioutil"
+	"path/filepath"
 	"testing"
 
 	"github.com/apigee/registry/connection"
@@ -203,7 +204,7 @@ func TestDemo(t *testing.T) {
 	}
 	// Upload the petstore 1.0.0 OpenAPI spec.
 	{
-		buf, err := readAndGZipFile("petstore/1.0.0/openapi.yaml@r0")
+		buf, err := readAndGZipFile(filepath.Join("testdata", "openapi.yaml@r0"))
 		check(t, "error reading spec", err)
 		req := &rpc.CreateApiSpecRequest{
 			Parent:    "projects/demo/apis/petstore/versions/1.0.0",
@@ -220,9 +221,9 @@ func TestDemo(t *testing.T) {
 	}
 	// Update the OpenAPI spec three times with different revisions.
 	for _, filename := range []string{
-		"petstore/1.0.0/openapi.yaml@r1",
-		"petstore/1.0.0/openapi.yaml@r2",
-		"petstore/1.0.0/openapi.yaml@r3",
+		filepath.Join("testdata", "openapi.yaml@r1"),
+		filepath.Join("testdata", "openapi.yaml@r2"),
+		filepath.Join("testdata", "openapi.yaml@r3"),
 	} {
 		buf, err := readAndGZipFile(filename)
 		check(t, "error reading spec", err)
@@ -249,7 +250,7 @@ func TestDemo(t *testing.T) {
 		spec, err := registryClient.GetApiSpec(ctx, req)
 		check(t, "error getting spec %s", err)
 		// compute the hash of the original file
-		buf, err := readAndGZipFile("petstore/1.0.0/openapi.yaml@r0")
+		buf, err := readAndGZipFile(filepath.Join("testdata", "openapi.yaml@r0"))
 		check(t, "error reading spec", err)
 		if hash := hashForBytes(buf.Bytes()); spec.GetHash() != hash {
 			t.Errorf("Hash mismatch %s != %s", spec.GetHash(), hash)

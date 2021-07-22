@@ -22,10 +22,27 @@ on:
     branches:
     - main
 jobs:
-
   build:
     name: Build
     runs-on: ubuntu-18.04
+    services:
+      postgres:
+        image: postgres
+        env:
+          # Define a super user. Password for super user is required.
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          # Allow other connections without a password.
+          POSTGRES_HOST_AUTH_METHOD: trust
+        # Set health checks to wait until postgres has started.
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          # Map tcp service container port 5432 to the host.
+          - 5432:5432
     steps:
 
     - name: Set up Go 1.x
@@ -57,3 +74,17 @@ jobs:
         export APG_REGISTRY_INSECURE=1
         registry-server -c config/sqlite.yaml &
         make test
+
+    - name: Configure PostgreSQL
+      env:
+        # Connect to the locally mapped port.
+        PGHOST: localhost
+        PGPORT: 5432
+        # Use the super user for configuration.
+        PGUSER: postgres
+        PGPASSWORD: postgres
+      # Create the database and user required by the PostgreSQL tests.
+      run: psql -c "CREATE DATABASE registry_test" -c "CREATE USER registry_tester"
+
+    - name: Test server with PostgreSQL
+      run: go test ./server -postgresql

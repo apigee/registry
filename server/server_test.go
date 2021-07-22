@@ -15,17 +15,90 @@
 package server
 
 import (
+	"flag"
 	"fmt"
+	"sync"
 	"testing"
 
 	"github.com/apigee/registry/rpc"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
-func defaultTestServer(t *testing.T) rpc.RegistryServer {
+const (
+	postgresDriver   = "postgres"
+	postgresTestUser = "registry_tester"
+	postgresDBConfig = "host=localhost port=5432 user=registry_tester dbname=registry_test sslmode=disable"
+)
+
+var (
+	sharedStorage sync.Mutex
+	usePostgres   = false
+)
+
+func init() {
+	flag.BoolVar(&usePostgres, "postgresql", false, "perform server tests using postgresql")
+}
+
+func defaultTestServer(t *testing.T) *RegistryServer {
 	t.Helper()
-	return &RegistryServer{
-		database:     "sqlite3",
-		dbConfig:     fmt.Sprintf("%s/registry.db", t.TempDir()),
-		loggingLevel: loggingError,
+
+	if !usePostgres {
+		return serverWithSQLite(t)
 	}
+
+	server, err := serverWithPostgres(t)
+	if err != nil {
+		t.Errorf("Setup: failed to get server with postgres: %s", err)
+		t.Log("Falling back to server with SQLite storage")
+		return serverWithSQLite(t)
+	}
+
+	return server
+}
+
+func serverWithSQLite(t *testing.T) *RegistryServer {
+	return New(Config{
+		Database: "sqlite3",
+		DBConfig: fmt.Sprintf("%s/registry.db", t.TempDir()),
+	})
+}
+
+func serverWithPostgres(t *testing.T) (*RegistryServer, error) {
+	sharedStorage.Lock()
+	t.Cleanup(sharedStorage.Unlock)
+
+	if err := resetPostgres(); err != nil {
+		return nil, fmt.Errorf("failed to reset database: %s", err)
+	}
+
+	return New(Config{
+		Database: postgresDriver,
+		DBConfig: postgresDBConfig,
+	}), nil
+}
+
+func resetPostgres() error {
+	db, err := gorm.Open(postgres.New(postgres.Config{
+		DriverName: postgresDriver,
+		DSN:        postgresDBConfig,
+	}), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Silent),
+	})
+	if err != nil {
+		return fmt.Errorf("failed to connect: %s", err)
+	}
+
+	if err := db.Exec("DROP owned BY registry_tester").Error; err != nil {
+		return fmt.Errorf("failed to drop test user's contents: %s", err)
+	}
+
+	if sqlDB, err := db.DB(); err != nil {
+		return fmt.Errorf("failed to get database for closing: %s", err)
+	} else if err := sqlDB.Close(); err != nil {
+		return fmt.Errorf("failed to close test database: %s", err)
+	}
+
+	return nil
 }
