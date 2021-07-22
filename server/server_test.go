@@ -41,7 +41,7 @@ func init() {
 	flag.BoolVar(&usePostgres, "postgresql", false, "perform server tests using postgresql")
 }
 
-func defaultTestServer(t *testing.T) *RegistryServer {
+func defaultTestServer(t *testing.T) rpc.RegistryServer {
 	t.Helper()
 
 	if !usePostgres {
@@ -58,14 +58,14 @@ func defaultTestServer(t *testing.T) *RegistryServer {
 	return server
 }
 
-func serverWithSQLite(t *testing.T) *RegistryServer {
+func serverWithSQLite(t *testing.T) rpc.RegistryServer {
 	return New(Config{
 		Database: "sqlite3",
 		DBConfig: fmt.Sprintf("%s/registry.db", t.TempDir()),
 	})
 }
 
-func serverWithPostgres(t *testing.T) (*RegistryServer, error) {
+func serverWithPostgres(t *testing.T) (rpc.RegistryServer, error) {
 	sharedStorage.Lock()
 	t.Cleanup(sharedStorage.Unlock)
 
