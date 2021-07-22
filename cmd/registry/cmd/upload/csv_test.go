@@ -23,7 +23,6 @@ import (
 
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/tests/seeding/fileseed"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"google.golang.org/api/iterator"
@@ -59,10 +58,9 @@ func TestUploadCSV(t *testing.T) {
 
 	const testProject = "csv-demo"
 	tests := []struct {
-		desc  string
-		files []fileseed.File
-		args  []string
-		want  []*rpc.ApiSpec
+		desc string
+		args []string
+		want []*rpc.ApiSpec
 	}{
 		{
 			desc: "multiple spec upload",
@@ -130,10 +128,6 @@ func TestUploadCSV(t *testing.T) {
 			})
 			if err != nil && status.Code(err) != codes.NotFound {
 				t.Fatalf("Setup: Failed to delete test project: %s", err)
-			}
-
-			if err := fileseed.Write(test.files...); err != nil {
-				t.Fatalf("Setup: Failed to write test files: %s", err)
 			}
 
 			args := append([]string{"csv"}, test.args...)
