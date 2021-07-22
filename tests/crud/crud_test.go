@@ -21,6 +21,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"io/ioutil"
+	"path/filepath"
 	"testing"
 
 	"github.com/apigee/registry/connection"
@@ -132,7 +133,7 @@ func TestCRUD(t *testing.T) {
 	}
 	// Upload the sample 1.0.0 OpenAPI spec.
 	{
-		buf, err := readAndGZipFile("openapi.yaml@r0")
+		buf, err := readAndGZipFile(filepath.Join("testdata", "openapi.yaml"))
 		check(t, "error reading spec", err)
 		req := &rpc.CreateApiSpecRequest{
 			Parent:    "projects/test/apis/sample/versions/1.0.0",
@@ -192,7 +193,7 @@ func TestCRUD(t *testing.T) {
 		revision = spec.GetRevisionId()
 	}
 	// Compute some common values for subsequent tests.
-	buf, err := ioutil.ReadFile("openapi.yaml@r0")
+	buf, err := ioutil.ReadFile(filepath.Join("testdata", "openapi.yaml"))
 	check(t, "error reading spec", err)
 	expectedHash := hashForBytes(buf)
 	expectedContentType := "application/x.openapi;version=3.0.0"

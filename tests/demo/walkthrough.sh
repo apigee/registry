@@ -54,7 +54,7 @@ echo Add a spec for the API version that we just added to the registry.
 apg registry create-api-spec \
     --parent projects/demo/apis/petstore/versions/1.0.0 \
     --api_spec_id openapi.yaml \
-    --api_spec.contents `registry-encode-spec < petstore/1.0.0/openapi.yaml@r0` \
+    --api_spec.contents `registry-encode-spec < testdata/openapi.yaml@r0` \
     --json
 
 echo
@@ -88,21 +88,21 @@ echo
 echo Update the spec to new contents.
 apg registry update-api-spec \
 	--api_spec.name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml \
-	--api_spec.contents `registry-encode-spec < petstore/1.0.0/openapi.yaml@r1` \
+	--api_spec.contents `registry-encode-spec < testdata/openapi.yaml@r1` \
     --json
 
 echo
 echo Again update the spec to new contents.
 apg registry update-api-spec \
 	--api_spec.name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml \
-	--api_spec.contents `registry-encode-spec < petstore/1.0.0/openapi.yaml@r2` \
+	--api_spec.contents `registry-encode-spec < testdata/openapi.yaml@r2` \
     --json
 
 echo
 echo Make a third update of the spec contents.
 apg registry update-api-spec \
 	--api_spec.name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml \
-	--api_spec.contents `registry-encode-spec < petstore/1.0.0/openapi.yaml@r3`
+	--api_spec.contents `registry-encode-spec < testdata/openapi.yaml@r3`
 
 echo
 echo Get the API spec.
