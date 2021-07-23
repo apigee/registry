@@ -19,6 +19,7 @@ import (
 	"compress/gzip"
 	"context"
 	"io/ioutil"
+	"path/filepath"
 	"testing"
 
 	"github.com/apigee/registry/cmd/registry/cmd/upload"
@@ -119,7 +120,7 @@ func TestResolve(t *testing.T) {
 	}
 
 	// Create Spec in each of the versions
-	buf, err := readAndGZipFile(t, "../../../../tests/demo/petstore/1.0.0/openapi.yaml@r0")
+	buf, err := readAndGZipFile(t, filepath.Join("testdata", "openapi.yaml"))
 	if err != nil {
 		t.Fatalf("Failed reading API contents: %s", err.Error())
 	}
@@ -185,7 +186,7 @@ func TestResolve(t *testing.T) {
 	}
 
 	// Upload the manifest to registry
-	args := []string{"manifest", "../../controller/test/manifest_e2e.yaml", "--project_id=" + testProject}
+	args := []string{"manifest", filepath.Join("testdata", "manifest.yaml"), "--project_id=" + testProject}
 	uploadCmd := upload.Command(ctx)
 	uploadCmd.SetArgs(args)
 	if err = uploadCmd.Execute(); err != nil {
