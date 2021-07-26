@@ -56,7 +56,7 @@ require (
 	golang.org/x/oauth2 v0.0.0-20210615190721-d04028783cf1
 	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c // indirect
 	google.golang.org/api v0.49.0
-	google.golang.org/genproto v0.0.0-20210721163202-f1cecdd8b78a
+	google.golang.org/genproto v0.0.0-20210722135532-667f2b7c528f
 	google.golang.org/grpc v1.39.0
 	google.golang.org/grpc/examples v0.0.0-20210424002626-9572fd6faeae // indirect
 	google.golang.org/protobuf v1.27.1

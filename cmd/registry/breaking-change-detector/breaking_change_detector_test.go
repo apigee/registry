@@ -13,14 +13,14 @@ func TestChanges(t *testing.T) {
 	tests := []struct {
 		desc      string
 		diffProto *rpc.Diff
-		wantProto *rpc.Changes
+		wantProto *rpc.ClassifiedChanges
 	}{
 		{
 			desc: "basic Addition Breaking Test",
 			diffProto: &rpc.Diff{
 				Additions: []string{"components.schemas.x.required.x"},
 			},
-			wantProto: &rpc.Changes{
+			wantProto: &rpc.ClassifiedChanges{
 				BreakingChanges: &rpc.Diff{
 					Additions: []string{"components.schemas.x.required.x"},
 				},
@@ -33,7 +33,7 @@ func TestChanges(t *testing.T) {
 			diffProto: &rpc.Diff{
 				Deletions: []string{"components.schemas.x.x"},
 			},
-			wantProto: &rpc.Changes{
+			wantProto: &rpc.ClassifiedChanges{
 				BreakingChanges: &rpc.Diff{
 					Deletions: []string{"components.schemas.x.x"},
 				},
@@ -51,7 +51,7 @@ func TestChanges(t *testing.T) {
 					},
 				},
 			},
-			wantProto: &rpc.Changes{
+			wantProto: &rpc.ClassifiedChanges{
 				BreakingChanges: &rpc.Diff{
 					Modifications: map[string]*rpc.Diff_ValueChange{
 						"components.schemas.x.properties.type": {

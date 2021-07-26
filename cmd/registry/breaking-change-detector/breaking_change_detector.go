@@ -25,7 +25,7 @@ type detectionPattern struct {
 
 // GetBreakingChanges compares each change in a diff Proto to the relavant change type detection Patterns.
 // Each change is then catgorized as breaking, nonbreaking, or unknown.
-func GetBreakingChanges(diff *rpc.Diff) *rpc.Changes {
+func GetBreakingChanges(diff *rpc.Diff) *rpc.ClassifiedChanges {
 	changePatterns := getChangePatterns()
 	changesProto := compareChangesToPatterns(changePatterns, diff)
 	return changesProto
@@ -47,12 +47,22 @@ func getChangePatterns() detectionTypeList {
 				PositiveMatchRegex: regexp.MustCompile("(components.)+(.|)+(schemas)+(.)"),
 				NegativeMatchRegex: regexp.MustCompile("(components.)+(.|)+(schemas)+(.)+(required)"),
 			},
+			{
+				detectionWeight:    1,
+				PositiveMatchRegex: regexp.MustCompile("(paths.)+(.|)"),
+				NegativeMatchRegex: regexp.MustCompile("((paths.)+(.|)+(tags))+(|)+((paths.)+(.|)+(description))"),
+			},
 		},
 
 		modifications: []detectionPattern{
 			{
 				detectionWeight:    1,
 				PositiveMatchRegex: regexp.MustCompile("(components.)+(.|)+(schemas)+(.|)+(type)"),
+			},
+			{
+				detectionWeight:    1,
+				PositiveMatchRegex: regexp.MustCompile("(paths.)+(.|)+(type)"),
+				NegativeMatchRegex: regexp.MustCompile("((paths.)+(.|)+(tags))+(|)+((paths.)+(.|)+(description))"),
 			},
 		},
 	}
@@ -62,12 +72,20 @@ func getChangePatterns() detectionTypeList {
 				detectionWeight:    1,
 				PositiveMatchRegex: regexp.MustCompile("(info.)+(.)"),
 			},
+			{
+				detectionWeight:    1,
+				PositiveMatchRegex: regexp.MustCompile("(tags.)+(.)"),
+			},
 		},
 
 		deletions: []detectionPattern{
 			{
 				detectionWeight:    1,
 				PositiveMatchRegex: regexp.MustCompile("(info.)+(.)"),
+			},
+			{
+				detectionWeight:    1,
+				PositiveMatchRegex: regexp.MustCompile("(tags.)+(.)"),
 			},
 		},
 
@@ -76,13 +94,17 @@ func getChangePatterns() detectionTypeList {
 				detectionWeight:    1,
 				PositiveMatchRegex: regexp.MustCompile("(info.)+(.)"),
 			},
+			{
+				detectionWeight:    1,
+				PositiveMatchRegex: regexp.MustCompile("(tags.)+(.)"),
+			},
 		},
 	}
 	return detectionTypeList{breakingChanges: breakingChanges, nonBreakingChanges: nonBreakingChanges}
 }
 
-func compareChangesToPatterns(d detectionTypeList, diff *rpc.Diff) *rpc.Changes {
-	allChanges := &rpc.Changes{
+func compareChangesToPatterns(d detectionTypeList, diff *rpc.Diff) *rpc.ClassifiedChanges {
+	allChanges := &rpc.ClassifiedChanges{
 		BreakingChanges: &rpc.Diff{
 			Additions:     []string{},
 			Deletions:     []string{},
@@ -106,7 +128,7 @@ func compareChangesToPatterns(d detectionTypeList, diff *rpc.Diff) *rpc.Changes 
 	return allChanges
 }
 
-func updateChangeStatusAdditions(allChanges *rpc.Changes, d detectionTypeList, diff *rpc.Diff) {
+func updateChangeStatusAdditions(allChanges *rpc.ClassifiedChanges, d detectionTypeList, diff *rpc.Diff) {
 	additions := diff.GetAdditions()
 	for _, addition := range additions {
 		if fitsAnyPattern(d.breakingChanges.additions, addition) {
@@ -121,7 +143,7 @@ func updateChangeStatusAdditions(allChanges *rpc.Changes, d detectionTypeList, d
 	}
 }
 
-func updateChangeStatusDeletions(allChanges *rpc.Changes, d detectionTypeList, diff *rpc.Diff) {
+func updateChangeStatusDeletions(allChanges *rpc.ClassifiedChanges, d detectionTypeList, diff *rpc.Diff) {
 	deletions := diff.GetDeletions()
 	for _, deletion := range deletions {
 		if fitsAnyPattern(d.breakingChanges.deletions, deletion) {
@@ -136,7 +158,7 @@ func updateChangeStatusDeletions(allChanges *rpc.Changes, d detectionTypeList, d
 	}
 }
 
-func updateChangeStatusModifications(allChanges *rpc.Changes, d detectionTypeList, diff *rpc.Diff) {
+func updateChangeStatusModifications(allChanges *rpc.ClassifiedChanges, d detectionTypeList, diff *rpc.Diff) {
 	modifications := diff.GetModifications()
 	for modification, modValue := range modifications {
 		if fitsAnyPattern(d.breakingChanges.modifications, modification) {
