@@ -40,7 +40,7 @@ type Artifact struct {
 
 // NewArtifact initializes a new resource.
 func NewArtifact(name names.Artifact, body *rpc.Artifact) *Artifact {
-	now := time.Now()
+	now := time.Now().Round(time.Microsecond)
 	artifact := &Artifact{
 		ProjectID:  name.ProjectID(),
 		ApiID:      name.ApiID(),
