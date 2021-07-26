@@ -1,0 +1,35 @@
+# Copyright 2021 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Port for the server to listen on.
+# If unset or zero, an open port will be assigned.
+port: 8080
+database:
+  # Driver for the database connection.
+  # Options: [ sqlite3, postgres, cloudsqlpostgres ]
+  driver: sqlite3
+  # DSN for the database connection.
+  # Reference: https://github.com/go-sql-driver/mysql#dsn-data-source-name
+  dsn: /tmp/registry.db
+logging:
+  # Level of logging to print to standard output.
+  # Options: [ debug, info, warn, error, fatal ]
+  level: info
+pubsub:
+  # Enable Pub/Sub for event notification publishing.
+  # Options: [ true, false ]
+  enable: false
+  # Project ID of the Google Cloud project to use for Pub/Sub.
+  # Reference: https://cloud.google.com/resource-manager/docs/creating-managing-projects
+  project: ""
