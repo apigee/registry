@@ -1,8 +1,12 @@
 lite:
 	go install ./...
 
-all:	protos
+all:	protos configfiles
 	go install ./...
+
+configfiles:
+	mkdir -p ${HOME}/.config/registry
+	cp -n config/registry-server.yaml ${HOME}/.config/registry/registry-server.yaml || true
 
 protos:
 	cd third_party; sh ./SETUP.sh
@@ -16,7 +20,8 @@ clean:
 	rm -rf \
 		cmd/apg/*.go gapic/*.go rpc/*.go \
 		third_party/api-common-protos third_party/gnostic \
-		envoy/proto.pb
+		envoy/proto.pb \
+		${HOME}/.config/registry
 
 build:
 ifndef REGISTRY_PROJECT_IDENTIFIER
