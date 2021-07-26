@@ -72,7 +72,7 @@ jobs:
         export APG_REGISTRY_ADDRESS=localhost:8080
         export APG_REGISTRY_AUDIENCES=http://localhost:8080
         export APG_REGISTRY_INSECURE=1
-        registry-server -c config/sqlite.yaml &
+        registry-server &
         make test
 
     - name: Configure PostgreSQL

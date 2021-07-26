@@ -28,7 +28,7 @@ set -e
 
 # run the registry server on a fixed port.
 REGISTRY_SERVER_PORT=8081
-PORT=$REGISTRY_SERVER_PORT /registry-server -c registry.yaml &
+PORT=$REGISTRY_SERVER_PORT /registry-server &
 
 # update envoy.yaml to look for the registry-server on the port we just set.
 sed -i "s/8080/${REGISTRY_SERVER_PORT}/g" /etc/envoy/envoy.yaml

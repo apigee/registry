@@ -52,7 +52,7 @@ RUN apk add --no-cache ca-certificates
 COPY --from=builder /app/registry-server /registry-server
 
 # Copy the standard registry configuration from the builder image.
-COPY config/registry.yaml /registry.yaml
+COPY config/registry-server.yaml /registry-server.yaml
 
 # Run the web service on container startup.
-CMD ["/registry-server", "-c", "registry.yaml"]
+CMD ["/registry-server"]
