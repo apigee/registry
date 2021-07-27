@@ -16,6 +16,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net"
 	"os"
@@ -52,6 +53,10 @@ func main() {
 		log.Fatalf("Failed to read config: %s", err)
 	}
 
+	if err := validateConfig(); err != nil {
+		log.Fatalf("Invalid configuration: %s", err)
+	}
+
 	listener, err := net.ListenTCP("tcp", &net.TCPAddr{
 		Port: viper.GetInt("port"),
 	})
@@ -75,4 +80,28 @@ func main() {
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGTERM)
 	<-done
+}
+
+func validateConfig() error {
+	if port := viper.GetInt("port"); port < 0 {
+		return fmt.Errorf("invalid port %q: must be non-negative", port)
+	}
+
+	switch driver := viper.GetString("database.driver"); driver {
+	case "sqlite3", "postgres", "cloudsqlpostgres":
+	default:
+		return fmt.Errorf("invalid database.driver %q: must be one of [sqlite3, postgres, cloudsqlpostgres]", driver)
+	}
+
+	switch level := viper.GetString("logging.level"); level {
+	case "fatal", "error", "warn", "info", "debug":
+	default:
+		return fmt.Errorf("invalid logging.level %q: must be one of [fatal, error, warn, info, debug]", level)
+	}
+
+	if project := viper.GetString("pubsub.project"); viper.GetBool("pubsub.enabled") && project == "" {
+		return fmt.Errorf("invalid pubsub.project %q: pubsub cannot be enabled without GCP project ID", project)
+	}
+
+	return nil
 }
