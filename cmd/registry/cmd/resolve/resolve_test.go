@@ -22,6 +22,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/apigee/registry/cmd/registry/cmd/compute"
 	"github.com/apigee/registry/cmd/registry/cmd/upload"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
@@ -29,6 +30,7 @@ import (
 	"github.com/apigee/registry/server/names"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/spf13/cobra"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -193,11 +195,21 @@ func TestResolve(t *testing.T) {
 		t.Fatalf("Failed to upload the manifest: %s", err)
 	}
 
-	// Call the controller update command
-	resolveCmd := Command(ctx)
-	args = []string{"projects/" + testProject + "/artifacts/test-manifest"}
-	resolveCmd.SetArgs(args)
-	if err = resolveCmd.Execute(); err != nil {
+	// Set up the root command for resolve actions
+	// This is required because the resolve command expects
+	// itself to have a root, that root commaand should support
+	// all the actions mentioned in the config file
+	var rootCmd = &cobra.Command{
+		Use:   "registry",
+		Short: "test command",
+	}
+	rootCmd.AddCommand(compute.Command(ctx))
+	rootCmd.AddCommand(Command(ctx))
+
+	// Call the resolve command
+	args = []string{"resolve", "projects/" + testProject + "/artifacts/test-manifest"}
+	rootCmd.SetArgs(args)
+	if err = rootCmd.Execute(); err != nil {
 		t.Fatalf("Execute() with args %v returned error: %s", args, err)
 	}
 
