@@ -1,0 +1,31 @@
+syntax = "proto3";
+package google.cloud.apigee.registry.applications.v1alpha1;
+// [START go_declaration]
+option go_package = "github.com/apigee/registry/rpc;rpc";
+// [END go_declaration]
+
+/*Diff contains the diff of a spec and its revision. */
+message Diff {
+  /* additions holds every addition change in the diff.
+     The string will hold the entire field path of one addition change in the
+     format foo.bar.x .*/
+  repeated string additions = 1;
+  /* deletions holds every deletion change in the diff.
+     The string will hold the entire field path of one deletion change in the
+     format foo.bar.x .*/
+  repeated string deletions = 2;
+
+  // ValueChange hold the values of the elements that changed in one diff change.
+  message ValueChange {
+    // from repersents the previous value of the element.
+    string from = 1;
+    // to repersents the current value of the element.
+    string to = 2;
+  }
+  /* modifications holds every modification change in the diff.
+     The string key will hold the field path of one modification change in the
+     format foo.bar.x.
+     The value of the key will repersent the element that was modified in the
+     field. */
+  map <string, ValueChange> modifications = 3;
+}
