@@ -16,6 +16,7 @@ package upload
 
 import (
 	"context"
+	"path/filepath"
 	"testing"
 
 	"github.com/apigee/registry/connection"
@@ -38,7 +39,7 @@ func TestManifestUpload(t *testing.T) {
 		{
 			desc:     "simple manifest upload",
 			project:  "upload-manifest-demo",
-			filePath: "../../controller/test/manifest_e2e.yaml",
+			filePath: filepath.Join("testdata", "manifest.yaml"),
 			want: rpc.Manifest{
 				Name: "test-manifest",
 				GeneratedResources: []*rpc.GeneratedResource{

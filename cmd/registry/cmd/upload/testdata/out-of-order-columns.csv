@@ -1,0 +1,2 @@
+filepath,spec_id,version_id,api_id
+testdata/cloudtasks/v2/openapi.yaml,openapi.yaml,v2,cloudtasks

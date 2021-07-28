@@ -37,7 +37,7 @@ echo 'Create a spec'
 apg registry create-api-spec \
     --parent projects/capabilities-demo/apis/petstore/versions/1.0.0 \
     --api_spec_id openapi.yaml \
-    --api_spec.contents `registry-encode-spec < tests/demo/petstore/1.0.0/openapi.yaml@r0` \
+    --api_spec.contents `registry-encode-spec < cmd/capabilities/testdata/openapi.yaml` \
     --api_spec.mime_type "application/x.openapi+gzip;version=3" \
     --json
 
