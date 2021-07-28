@@ -16,8 +16,8 @@ package resolve
 
 import (
 	"context"
-	"fmt"
 	"log"
+	"strings"
 
 	"github.com/apigee/registry/cmd/registry/controller"
 	"github.com/apigee/registry/cmd/registry/core"
@@ -64,19 +64,13 @@ func Command(ctx context.Context) *cobra.Command {
 
 			log.Printf("Generated %d actions. Starting Execution...", len(actions))
 
-			taskQueue := make(chan core.Task, 1024)
-			for i := 0; i < 64; i++ {
-				core.WaitGroup().Add(1)
-				go core.Worker(ctx, taskQueue)
-			}
-			defer core.WaitGroup().Wait()
-			defer close(taskQueue)
+			for _, a := range actions {
+				log.Printf("Executing action: %s", a)
+				rootCmd := cmd.Root()
+				rootCmd.SetArgs(strings.Fields(a))
 
-			// Submit tasks to taskQueue
-			for i, a := range actions {
-				taskQueue <- &controller.ExecCommandTask{
-					Action: a,
-					TaskID: fmt.Sprintf("task%d", i),
+				if err := rootCmd.Execute(); err != nil {
+					log.Printf("Error executing action: %s", err)
 				}
 			}
 		},
