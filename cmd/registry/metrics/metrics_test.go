@@ -15,29 +15,46 @@ func TestMetrics(t *testing.T) {
 			desc: "Test 1",
 			diffProtos: []*rpc.ClassifiedChanges{
 				{
-					&rpc.ClassifiedChanges{
-						BreakingChanges: &rpc.Diff{
-							Deletions: []string{"components.schemas.x.x"},
+					BreakingChanges:    &rpc.Diff{
+						Deletions: []string{"breakingChange"},
+						Additions: []string{"breakingChange"},
+						Modifications: map[string]*rpc.Diff_ValueChange{
+							"breakingChange":{To:"test", From:"test"},
 						},
-						NonBreakingChanges: &rpc.Diff{},
-						UnknownChanges:     &rpc.Diff{},
+					},
+					NonBreakingChanges: &rpc.Diff{
+						Deletions: []string{"Change"},
+						Additions: []string{"Change"},
+						Modifications: map[string]*rpc.Diff_ValueChange{
+							"Change":{To:"test", From:"test"},
+						},
+					},
+					UnknownChanges:     &rpc.Diff{
+						Deletions: []string{"Change"},
+						Additions: []string{"Change"},
+						Modifications: map[string]*rpc.Diff_ValueChange{
+							"Change":{To:"test", From:"test"},
+						},
 					},
 				},
 				{
-					&rpc.ClassifiedChanges{
-						BreakingChanges: &rpc.Diff{
-							Deletions: []string{"components.schemas.x.x"},
+					BreakingChanges:    &rpc.Diff{},
+					NonBreakingChanges: &rpc.Diff{
+						Deletions: []string{"Change"},
+						Additions: []string{"Change"},
+						Modifications: map[string]*rpc.Diff_ValueChange{
+							"Change":{To:"test", From:"test"},
 						},
-						NonBreakingChanges: &rpc.Diff{},
-						UnknownChanges:     &rpc.Diff{},
 					},
+					UnknownChanges:     &rpc.Diff{},
 				},
 			},
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			CaluclateMetrics(test.diffProtos)
+			metrics := CaluclateMetrics(test.diffProtos)
+			t.Logf("Metrics: %+v \n",metrics)
 			t.Fail()
 			/*opts := cmp.Options{
 				protocmp.Transform(),

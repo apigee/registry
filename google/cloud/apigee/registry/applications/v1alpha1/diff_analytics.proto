@@ -43,3 +43,21 @@ message ClassifiedChanges {
   Diff unknownChanges = 3;
 }
 
+message Stats {
+  int64 totalChanges = 1;
+  int64 totalBreakingChanges = 2;
+  int64 totalNonBreakingChanges = 3;
+  int64 numberOfDiffs = 4;
+}
+
+message Metrics {
+  Stats stats = 1;
+  double breakingChangePercentage = 2;
+  double breakingChangeRate = 3;
+  }
+
+message Stability {
+  double stabilityScore = 1;
+  Metrics metrics = 2;
+
+}
