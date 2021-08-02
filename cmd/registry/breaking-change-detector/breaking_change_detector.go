@@ -2,7 +2,6 @@ package breakingchangedetector
 
 import (
 	"regexp"
-	"strconv"
 
 	"github.com/apigee/registry/rpc"
 )
@@ -132,14 +131,7 @@ func getBreakingChanges(diff *rpc.Diff) *rpc.Diff {
 	for modification, modValue := range diff.GetModifications() {
 		if fitsAnyPattern(unsafeMods, modification) {
 			breakingChanges.Modifications[modification] = modValue
-			continue
-		} else if isValueChangeBreaking(modValue) {
-			breakingChanges.Modifications[modification] = modValue
-			continue
-		} else {
-			continue
 		}
-
 	}
 	return breakingChanges
 }
@@ -162,11 +154,7 @@ func getNonBreakingChanges(diff *rpc.Diff) *rpc.Diff {
 	}
 
 	for modification, modValue := range diff.GetModifications() {
-		if !fitsAnyPattern(safeMods, modification) {
-			continue
-		} else if isValueChangeBreaking(modValue) {
-			continue
-		} else {
+		if fitsAnyPattern(safeMods, modification) {
 			nonBreakingChanges.Modifications[modification] = modValue
 		}
 	}
@@ -192,62 +180,11 @@ func getUnknownChanges(diff *rpc.Diff) *rpc.Diff {
 	}
 
 	for modification, modValue := range diff.GetModifications() {
-		if fitsAnyPattern(safeMods, modification) || fitsAnyPattern(unsafeMods, modification) {
-			continue
-		} else if isValueChangeBreaking(modValue) {
-			continue
-		} else {
+		if !fitsAnyPattern(safeMods, modification) && !fitsAnyPattern(unsafeMods, modification) {
 			unknownChanges.Modifications[modification] = modValue
 		}
 	}
 	return unknownChanges
-}
-
-func isValueChangeBreaking(valueChange *rpc.Diff_ValueChange) bool {
-	if isStringValue(valueChange.To) && isStringValue(valueChange.From) {
-		return false
-	} else if isSameType(valueChange.To, valueChange.From) {
-		return false
-	}
-	return true
-}
-
-func isSameType(valueOne, valueTwo string) bool {
-	if valueOne == valueTwo {
-		return true
-	}
-	if valueOne == "" || valueTwo == "" {
-		return true
-	}
-	if _, err := strconv.ParseInt(valueOne, 10, 64); err == nil {
-		if _, err := strconv.ParseInt(valueTwo, 10, 64); err == nil {
-			return true
-		}
-	}
-	if _, err := strconv.ParseFloat(valueOne, 64); err == nil {
-		if _, err := strconv.ParseFloat(valueTwo, 64); err == nil {
-			return true
-		}
-	}
-	if _, err := strconv.ParseBool(valueOne); err == nil {
-		if _, err := strconv.ParseBool(valueOne); err == nil {
-			return true
-		}
-	}
-	return false
-}
-
-func isStringValue(value string) bool {
-	if _, err := strconv.ParseFloat(value, 64); err == nil {
-		return false
-	}
-	if _, err := strconv.ParseInt(value, 10, 64); err == nil {
-		return false
-	}
-	if _, err := strconv.ParseBool(value); err == nil {
-		return false
-	}
-	return true
 }
 
 func fitsAnyPattern(patterns []detectionPattern, change string) bool {
