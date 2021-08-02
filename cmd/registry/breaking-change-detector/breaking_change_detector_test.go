@@ -16,7 +16,7 @@ func TestChanges(t *testing.T) {
 		wantProto *rpc.ClassifiedChanges
 	}{
 		{
-			desc: "basic Addition Breaking Test",
+			desc: "Components.Required field Addition Breaking Test",
 			diffProto: &rpc.Diff{
 				Additions: []string{"components.schemas.x.required.x"},
 			},
@@ -29,7 +29,7 @@ func TestChanges(t *testing.T) {
 			},
 		},
 		{
-			desc: "basic Deletion Breaking Test",
+			desc: "Components.Schemas field Deletion Breaking Test",
 			diffProto: &rpc.Diff{
 				Deletions: []string{"components.schemas.x.x"},
 			},
@@ -42,7 +42,7 @@ func TestChanges(t *testing.T) {
 			},
 		},
 		{
-			desc: "basic Modification Breaking Test",
+			desc: "Components.Schema.Type field Modification Breaking Test",
 			diffProto: &rpc.Diff{
 				Modifications: map[string]*rpc.Diff_ValueChange{
 					"components.schemas.x.properties.type": {
@@ -62,6 +62,55 @@ func TestChanges(t *testing.T) {
 				},
 				NonBreakingChanges: &rpc.Diff{},
 				UnknownChanges:     &rpc.Diff{},
+			},
+		},
+		{
+			desc: "Info field Addition NonBreaking Test",
+			diffProto: &rpc.Diff{
+				Additions: []string{"info.x.x"},
+			},
+			wantProto: &rpc.ClassifiedChanges{
+				BreakingChanges: &rpc.Diff{},
+				NonBreakingChanges: &rpc.Diff{
+					Additions: []string{"info.x.x"},
+				},
+				UnknownChanges: &rpc.Diff{},
+			},
+		},
+		{
+			desc: "Info field Deletion NonBreaking Test",
+			diffProto: &rpc.Diff{
+				Deletions: []string{"info.x.x"},
+			},
+			wantProto: &rpc.ClassifiedChanges{
+				BreakingChanges: &rpc.Diff{},
+				NonBreakingChanges: &rpc.Diff{
+					Deletions: []string{"info.x.x"},
+				},
+				UnknownChanges: &rpc.Diff{},
+			},
+		},
+		{
+			desc: "Info field Modification NonBreaking Test",
+			diffProto: &rpc.Diff{
+				Modifications: map[string]*rpc.Diff_ValueChange{
+					"info.x.x.x": {
+						To:   "to",
+						From: "from",
+					},
+				},
+			},
+			wantProto: &rpc.ClassifiedChanges{
+				BreakingChanges: &rpc.Diff{},
+				NonBreakingChanges: &rpc.Diff{
+					Modifications: map[string]*rpc.Diff_ValueChange{
+						"info.x.x.x": {
+							To:   "to",
+							From: "from",
+						},
+					},
+				},
+				UnknownChanges: &rpc.Diff{},
 			},
 		},
 	}
