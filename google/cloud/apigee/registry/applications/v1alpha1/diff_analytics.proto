@@ -55,9 +55,3 @@ message Metrics {
   double breakingChangePercentage = 2;
   double breakingChangeRate = 3;
   }
-
-message Stability {
-  double stabilityScore = 1;
-  Metrics metrics = 2;
-
-}

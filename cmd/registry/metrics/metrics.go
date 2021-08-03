@@ -3,63 +3,49 @@ package metrics
 import (
 	"github.com/apigee/registry/rpc"
 )
-func ComputeStability(calculatedDiffs []*rpc.ClassifiedChanges)*rpc.Stability{
+
+// ComputeMetrics will compute the metrics proto for a list of Classified Diffs.
+func ComputeMetrics(calculatedDiffs []*rpc.ClassifiedChanges) *rpc.Metrics {
 	stats := calculateStats(calculatedDiffs)
-	metrics := caluclateMetrics(stats)
+	return caluclateMetrics(stats)
 }
 
-func calculateStats(calculatedDiffs []*rpc.ClassifiedChanges)*rpc.Stats{
-	numberOfDiffs := len(calculatedDiffs)
-	totalChanges := 0
+func calculateStats(calculatedDiffs []*rpc.ClassifiedChanges) *rpc.Stats {
 	totalBreakingChanges := 0
 	totalNonbreakingChanges := 0
 	for _, caluclatedDiff := range calculatedDiffs {
-		breakingAdditions := caluclatedDiff.BreakingChanges.Additions
-		breakingDeletions := caluclatedDiff.BreakingChanges.Deletions
-		breakingModificaions := caluclatedDiff.BreakingChanges.Modifications
 
-		totalBreakingChanges = (totalBreakingChanges + len(breakingAdditions) +
-			len(breakingDeletions) + len(breakingModificaions))
+		totalBreakingChanges = (totalBreakingChanges +
+			len(caluclatedDiff.BreakingChanges.Additions) +
+			len(caluclatedDiff.BreakingChanges.Deletions) +
+			len(caluclatedDiff.BreakingChanges.Modifications))
 
-		nonBreakingAdditions := caluclatedDiff.BreakingChanges.Additions
-		nonBreakingDeletions := caluclatedDiff.BreakingChanges.Deletions
-		nonBreakingModificaions := caluclatedDiff.BreakingChanges.Modifications
+		totalNonbreakingChanges = (totalNonbreakingChanges +
+			len(caluclatedDiff.NonBreakingChanges.Additions) +
+			len(caluclatedDiff.NonBreakingChanges.Deletions) +
+			len(caluclatedDiff.NonBreakingChanges.Modifications))
 
-		unknownAdditions := caluclatedDiff.UnknownChanges.Additions
-		unknownDeletions := caluclatedDiff.UnknownChanges.Deletions
-		unknownModificaions := caluclatedDiff.UnknownChanges.Modifications
-
-		totalNonbreakingChanges = (totalNonbreakingChanges + len(nonBreakingAdditions) +
-			len(nonBreakingDeletions) + len(nonBreakingModificaions))
 		// Default Unknown Changes to Nonbreaking.
-		totalNonbreakingChanges = (totalNonbreakingChanges + len(unknownAdditions) +
-			len(unknownDeletions) + len(unknownModificaions))
-
-		totalChanges = totalChanges + totalBreakingChanges + totalNonbreakingChanges
+		totalNonbreakingChanges = (totalNonbreakingChanges +
+			len(caluclatedDiff.UnknownChanges.Additions) +
+			len(caluclatedDiff.UnknownChanges.Deletions) +
+			len(caluclatedDiff.UnknownChanges.Modifications))
 	}
 
 	return &rpc.Stats{
-		TotalChanges: int64(totalChanges),
-		TotalBreakingChanges: int64(totalBreakingChanges),
+		TotalChanges:            int64(totalBreakingChanges + totalNonbreakingChanges),
+		TotalBreakingChanges:    int64(totalBreakingChanges),
 		TotalNonBreakingChanges: int64(totalNonbreakingChanges),
-		NumberOfDiffs: int64(numberOfDiffs),
-}
+		NumberOfDiffs:           int64(len(calculatedDiffs)),
+	}
 }
 
-func caluclateMetrics(stats *rpc.Stats) *rpc.Metrics{
-	breakingChangePercentage := float64(stats.TotalBreakingChanges/stats.TotalChanges)
-
-	breakingChangeRate := float64(stats.TotalBreakingChanges/stats.NumberOfDiffs)
+func caluclateMetrics(stats *rpc.Stats) *rpc.Metrics {
+	breakingChangePercentage := float64(stats.TotalBreakingChanges) / float64(stats.TotalChanges)
+	breakingChangeRate := float64(stats.TotalBreakingChanges) / float64(stats.NumberOfDiffs)
 	return &rpc.Metrics{
-		Stats: stats,
+		Stats:                    stats,
 		BreakingChangePercentage: breakingChangePercentage,
-		BreakingChangeRate: breakingChangeRate,
+		BreakingChangeRate:       breakingChangeRate,
 	}
 }
-
-func calculateStability(metrics *rpc.Metrics) *rpc.Stability{
-	return &rpc.Stability{
-		Metrics:metrics,
-	}
-}
-
