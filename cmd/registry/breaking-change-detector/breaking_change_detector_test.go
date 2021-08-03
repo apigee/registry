@@ -116,7 +116,7 @@ func TestChanges(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			gotProto := GetBreakingChanges(test.diffProto)
+			gotProto := GetClassifiedChanges(test.diffProto)
 			opts := cmp.Options{
 				protocmp.Transform(),
 				cmpopts.SortSlices(func(a, b string) bool { return a < b }),

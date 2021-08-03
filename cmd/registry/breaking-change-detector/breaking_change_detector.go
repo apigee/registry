@@ -7,7 +7,6 @@ import (
 )
 
 type detectionPattern struct {
-	detectionWeight    int
 	PositiveMatchRegex *regexp.Regexp
 	NegativeMatchRegex *regexp.Regexp
 }
@@ -15,19 +14,16 @@ type detectionPattern struct {
 var (
 	unsafeAdds = []detectionPattern{
 		{
-			detectionWeight:    1,
 			PositiveMatchRegex: regexp.MustCompile("(components.)+(.|)+(schemas)+(.)+(required)"),
 		},
 	}
 
 	unsafeDeletes = []detectionPattern{
 		{
-			detectionWeight:    1,
 			PositiveMatchRegex: regexp.MustCompile("(components.)+(.|)+(schemas)+(.)"),
 			NegativeMatchRegex: regexp.MustCompile("(components.)+(.|)+(schemas)+(.)+(required)"),
 		},
 		{
-			detectionWeight:    1,
 			PositiveMatchRegex: regexp.MustCompile("(paths.)+(.|)"),
 			NegativeMatchRegex: regexp.MustCompile("((paths.)+(.|)+(tags))+(|)+((paths.)+(.|)+(description))"),
 		},
@@ -35,11 +31,9 @@ var (
 
 	unsafeMods = []detectionPattern{
 		{
-			detectionWeight:    1,
 			PositiveMatchRegex: regexp.MustCompile("(components.)+(.|)+(schemas)+(.|)+(type)"),
 		},
 		{
-			detectionWeight:    1,
 			PositiveMatchRegex: regexp.MustCompile("(paths.)+(.|)+(type)"),
 			NegativeMatchRegex: regexp.MustCompile("((paths.)+(.|)+(tags))+(|)+((paths.)+(.|)+(description))"),
 		},
@@ -47,67 +41,40 @@ var (
 
 	safeAdds = []detectionPattern{
 		{
-			detectionWeight:    1,
 			PositiveMatchRegex: regexp.MustCompile("(info.)+(.)"),
 		},
 		{
-			detectionWeight:    1,
 			PositiveMatchRegex: regexp.MustCompile("(tags.)+(.)"),
 		},
 	}
 
 	safeDeletes = []detectionPattern{
 		{
-			detectionWeight:    1,
 			PositiveMatchRegex: regexp.MustCompile("(info.)+(.)"),
 		},
 		{
-			detectionWeight:    1,
 			PositiveMatchRegex: regexp.MustCompile("(tags.)+(.)"),
 		},
 	}
 
 	safeMods = []detectionPattern{
 		{
-			detectionWeight:    1,
 			PositiveMatchRegex: regexp.MustCompile("(info.)+(.)"),
 		},
 		{
-			detectionWeight:    1,
 			PositiveMatchRegex: regexp.MustCompile("(tags.)+(.)"),
 		},
 	}
 )
 
-// GetBreakingChanges compares each change in a diff Proto to the relavant change type detection Patterns.
+// GetClassifiedChanges compares each change in a diff Proto to the relavant change type detection Patterns.
 // Each change is then catgorized as breaking, nonbreaking, or unknown.
-func GetBreakingChanges(diff *rpc.Diff) *rpc.ClassifiedChanges {
-	changesProto := compareChangesToPatterns(diff)
-	return changesProto
-}
-
-func compareChangesToPatterns(diff *rpc.Diff) *rpc.ClassifiedChanges {
-	allChanges := &rpc.ClassifiedChanges{
-		BreakingChanges: &rpc.Diff{
-			Additions:     []string{},
-			Deletions:     []string{},
-			Modifications: make(map[string]*rpc.Diff_ValueChange),
-		},
-		NonBreakingChanges: &rpc.Diff{
-			Additions:     []string{},
-			Deletions:     []string{},
-			Modifications: make(map[string]*rpc.Diff_ValueChange),
-		},
-		UnknownChanges: &rpc.Diff{
-			Additions:     []string{},
-			Deletions:     []string{},
-			Modifications: make(map[string]*rpc.Diff_ValueChange),
-		},
+func GetClassifiedChanges(diff *rpc.Diff) *rpc.ClassifiedChanges {
+	return &rpc.ClassifiedChanges{
+		BreakingChanges:    getBreakingChanges(diff),
+		NonBreakingChanges: getNonBreakingChanges(diff),
+		UnknownChanges:     getUnknownChanges(diff),
 	}
-	allChanges.BreakingChanges = getBreakingChanges(diff)
-	allChanges.NonBreakingChanges = getNonBreakingChanges(diff)
-	allChanges.UnknownChanges = getUnknownChanges(diff)
-	return allChanges
 }
 
 func getBreakingChanges(diff *rpc.Diff) *rpc.Diff {
@@ -189,22 +156,10 @@ func getUnknownChanges(diff *rpc.Diff) *rpc.Diff {
 
 func fitsAnyPattern(patterns []detectionPattern, change string) bool {
 	for _, pattern := range patterns {
-		if pattern.PositiveMatchRegex == nil {
-			if !pattern.NegativeMatchRegex.MatchString(change) {
-				return true
-			}
+		if p := pattern.NegativeMatchRegex; p != nil && p.MatchString(change) {
 			continue
 		}
-		if pattern.NegativeMatchRegex == nil {
-			if pattern.PositiveMatchRegex.MatchString(change) {
-				return true
-			}
-			continue
-		}
-		if pattern.NegativeMatchRegex.MatchString(change) {
-			continue
-		}
-		if pattern.PositiveMatchRegex.MatchString(change) {
+		if p := pattern.PositiveMatchRegex; p != nil && p.MatchString(change) {
 			return true
 		}
 	}
