@@ -67,9 +67,9 @@ var (
 	}
 )
 
-// GetBreakingChanges compares each change in a diff Proto to the relavant change type detection Patterns.
+// GetClassifiedChanges compares each change in a diff Proto to the relavant change type detection Patterns.
 // Each change is then catgorized as breaking, nonbreaking, or unknown.
-func GetBreakingChanges(diff *rpc.Diff) *rpc.ClassifiedChanges {
+func GetClassifiedChanges(diff *rpc.Diff) *rpc.ClassifiedChanges {
 	return &rpc.ClassifiedChanges{
 		BreakingChanges: getBreakingChanges(diff),
 		NonBreakingChanges: getNonBreakingChanges(diff),
