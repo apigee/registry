@@ -71,9 +71,9 @@ var (
 // Each change is then catgorized as breaking, nonbreaking, or unknown.
 func GetClassifiedChanges(diff *rpc.Diff) *rpc.ClassifiedChanges {
 	return &rpc.ClassifiedChanges{
-		BreakingChanges: getBreakingChanges(diff),
+		BreakingChanges:    getBreakingChanges(diff),
 		NonBreakingChanges: getNonBreakingChanges(diff),
-		UnknownChanges: getUnknownChanges(diff),
+		UnknownChanges:     getUnknownChanges(diff),
 	}
 }
 
