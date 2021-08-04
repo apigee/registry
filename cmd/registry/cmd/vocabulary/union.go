@@ -25,7 +25,6 @@ import (
 )
 
 func unionCommand(ctx context.Context) *cobra.Command {
-	var output string
 	cmd := &cobra.Command{
 		Use:   "union",
 		Short: "Compute the union of specified API vocabularies",
@@ -35,7 +34,10 @@ func unionCommand(ctx context.Context) *cobra.Command {
 			if err != nil {
 				log.Fatalf("Failed to get filter from flags: %s", err)
 			}
-
+			output, err := cmd.Flags().GetString("output")
+			if err != nil {
+				log.Fatalf("Failed to get output from flags: %s", err)
+			}
 			ctx := context.Background()
 			client, err := connection.NewClient(ctx)
 			if err != nil {
