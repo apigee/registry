@@ -30,7 +30,7 @@ require (
 	github.com/google/go-cmp v0.5.6
 	github.com/google/uuid v1.1.2
 	github.com/googleapis/api-linter v1.26.0 // indirect
-	github.com/googleapis/gapic-generator-go v0.21.8 // indirect
+	github.com/googleapis/gapic-generator-go v0.22.0 // indirect
 	github.com/googleapis/gax-go/v2 v2.0.5
 	github.com/googleapis/gnostic v0.5.4
 	github.com/graphql-go/graphql v0.7.9

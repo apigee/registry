@@ -16,14 +16,40 @@ package resolve
 
 import (
 	"context"
+	"fmt"
 	"log"
-	"strings"
 
 	"github.com/apigee/registry/cmd/registry/controller"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
+	"google.golang.org/protobuf/proto"
 )
+
+func fetchManifest(
+	ctx context.Context,
+	client connection.Client,
+	manifestName string) (*rpc.Manifest, error) {
+
+	manifest := &rpc.Manifest{}
+	body, err := client.GetArtifactContents(
+		ctx,
+		&rpc.GetArtifactContentsRequest{
+			Name: manifestName,
+		})
+	if err != nil {
+		return nil, err
+	}
+
+	contents := body.GetData()
+	err = proto.Unmarshal(contents, manifest)
+	if err != nil {
+		return nil, err
+	}
+
+	return manifest, nil
+}
 
 func Command(ctx context.Context) *cobra.Command {
 	cmd := &cobra.Command{
@@ -41,7 +67,7 @@ func Command(ctx context.Context) *cobra.Command {
 				log.Fatal(err.Error())
 			}
 
-			manifest, err := controller.FetchManifest(ctx, client, manifestName)
+			manifest, err := fetchManifest(ctx, client, manifestName)
 			if err != nil {
 				log.Fatal(err.Error())
 			}
@@ -64,13 +90,13 @@ func Command(ctx context.Context) *cobra.Command {
 
 			log.Printf("Generated %d actions. Starting Execution...", len(actions))
 
-			for _, a := range actions {
-				log.Printf("Executing action: %s", a)
-				rootCmd := cmd.Root()
-				rootCmd.SetArgs(strings.Fields(a))
-
-				if err := rootCmd.Execute(); err != nil {
-					log.Printf("Error executing action: %s", err)
+			taskQueue, wait := core.WorkerPool(ctx, 64)
+			defer wait()
+			// Submit tasks to taskQueue
+			for i, a := range actions {
+				taskQueue <- &controller.ExecCommandTask{
+					Action: a,
+					TaskID: fmt.Sprintf("task%d", i),
 				}
 			}
 		},
