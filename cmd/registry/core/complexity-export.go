@@ -17,7 +17,6 @@ package core
 import (
 	"context"
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/apigee/registry/rpc"
@@ -28,29 +27,29 @@ import (
 func ExportComplexityToSheet(ctx context.Context, name string, inputs []*rpc.Artifact) (string, error) {
 	sheetsClient, err := NewSheetsClient(ctx, "")
 	if err != nil {
-		log.Fatalf("%s", err.Error())
+		return "", err
 	}
 	sheet, err := sheetsClient.CreateSheet(name, []string{"Complexity"})
 	if err != nil {
-		log.Fatalf("%s", err.Error())
+		return "", err
 	}
 	_, err = sheetsClient.FormatHeaderRow(ctx, sheet.Sheets[0].Properties.SheetId)
 	if err != nil {
-		log.Fatalf("%s", err.Error())
+		return "", err
 	}
 	rows := make([][]interface{}, 0)
 	rows = append(rows, rowForLabeledComplexity("", "", nil))
 	for _, input := range inputs {
 		complexity, err := getComplexity(input)
 		if err != nil {
-			log.Fatalf("%s", err.Error())
+			return "", err
 		}
 		parts := strings.Split(input.Name, "/") // use to get api_id [3] and version_id [5]
 		rows = append(rows, rowForLabeledComplexity(parts[3], parts[5], complexity))
 	}
-	_, err = sheetsClient.Update(ctx, fmt.Sprintf("Complexity"), rows)
+	_, err = sheetsClient.Update(ctx, "Complexity", rows)
 	if err != nil {
-		log.Fatalf("%s", err.Error())
+		return "", err
 	}
 	return sheet.SpreadsheetUrl, nil
 }

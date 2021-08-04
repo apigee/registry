@@ -16,7 +16,6 @@ package core
 
 import (
 	"context"
-	"log"
 
 	"github.com/apigee/registry/rpc"
 )
@@ -24,16 +23,16 @@ import (
 func ExportIndexToSheet(ctx context.Context, name string, index *rpc.Index) (string, error) {
 	sheetsClient, err := NewSheetsClient(ctx, "")
 	if err != nil {
-		log.Fatalf("%s", err.Error())
+		return "", err
 	}
 	sheet, err := sheetsClient.CreateSheet(name, []string{"Operations", "Schemas", "Fields"})
 	if err != nil {
-		log.Fatalf("%s", err.Error())
+		return "", err
 	}
 	for _, s := range sheet.Sheets {
 		_, err := sheetsClient.FormatHeaderRow(ctx, s.Properties.SheetId)
 		if err != nil {
-			log.Fatalf("%s", err.Error())
+			return "", err
 		}
 	}
 	{
@@ -43,6 +42,9 @@ func ExportIndexToSheet(ctx context.Context, name string, index *rpc.Index) (str
 			rows = append(rows, rowForOperation(op))
 		}
 		_, err = sheetsClient.Update(ctx, "Operations", rows)
+		if err != nil {
+			return "", err
+		}
 	}
 	{
 		rows := make([][]interface{}, 0)
@@ -51,6 +53,9 @@ func ExportIndexToSheet(ctx context.Context, name string, index *rpc.Index) (str
 			rows = append(rows, rowForSchema(op))
 		}
 		_, err = sheetsClient.Update(ctx, "Schemas", rows)
+		if err != nil {
+			return "", err
+		}
 	}
 	{
 		rows := make([][]interface{}, 0)
@@ -59,6 +64,9 @@ func ExportIndexToSheet(ctx context.Context, name string, index *rpc.Index) (str
 			rows = append(rows, rowForField(op))
 		}
 		_, err = sheetsClient.Update(ctx, "Fields", rows)
+		if err != nil {
+			return "", err
+		}
 	}
 	return sheet.SpreadsheetUrl, nil
 }
