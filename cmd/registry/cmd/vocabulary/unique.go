@@ -27,6 +27,7 @@ import (
 )
 
 func uniqueCommand(ctx context.Context) *cobra.Command {
+	var outputID string
 	cmd := &cobra.Command{
 		Use:   "unique",
 		Short: "Compute the unique subsets of each member of specified vocabularies",
@@ -36,13 +37,11 @@ func uniqueCommand(ctx context.Context) *cobra.Command {
 			if err != nil {
 				log.Fatalf("Failed to get filter from flags: %s", err)
 			}
-			outputID, err := cmd.Flags().GetString("output_id")
-			if err != nil {
-				log.Fatalf("Failed to get output from flags: %s", err)
-			}
+
 			if strings.Contains(outputID, "/") {
 				log.Fatal("output_id must specify an artifact id (final segment only) and not a full name.")
 			}
+
 			ctx := context.Background()
 			client, err := connection.NewClient(ctx)
 			if err != nil {
@@ -61,6 +60,6 @@ func uniqueCommand(ctx context.Context) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().String("output_id", "vocabulary-unique", "Artifact ID to use when saving each result vocabulary")
+	cmd.Flags().StringVar(&outputID, "output_id", "vocabulary-unique", "Artifact ID to use when saving each result vocabulary")
 	return cmd
 }
