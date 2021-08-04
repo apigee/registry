@@ -61,13 +61,8 @@ func protosCommand(ctx context.Context) *cobra.Command {
 
 func scanDirectoryForProtos(ctx context.Context, client connection.Client, projectID, baseURI, directory string) {
 	// create a queue for upload tasks and wait for the workers to finish after filling it.
-	taskQueue := make(chan core.Task, 1024)
-	for i := 0; i < 64; i++ {
-		core.WaitGroup().Add(1)
-		go core.Worker(ctx, taskQueue)
-	}
-	defer core.WaitGroup().Wait()
-	defer close(taskQueue)
+	taskQueue, wait := core.WorkerPool(ctx, 64)
+	defer wait()
 
 	dirPattern := regexp.MustCompile("v.*[1-9]+.*")
 	if err := filepath.Walk(directory, func(filepath string, info os.FileInfo, err error) error {

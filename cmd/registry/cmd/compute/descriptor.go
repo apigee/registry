@@ -47,12 +47,8 @@ func descriptorCommand(ctx context.Context) *cobra.Command {
 				log.Fatalf("%s", err.Error())
 			}
 			// Initialize task queue.
-			taskQueue := make(chan core.Task, 1024)
-			workerCount := 64
-			for i := 0; i < workerCount; i++ {
-				core.WaitGroup().Add(1)
-				go core.Worker(ctx, taskQueue)
-			}
+			taskQueue, wait := core.WorkerPool(ctx, 64)
+			defer wait()
 			// Generate tasks.
 			name := args[0]
 			if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
@@ -65,8 +61,6 @@ func descriptorCommand(ctx context.Context) *cobra.Command {
 				if err != nil {
 					log.Fatalf("%s", err.Error())
 				}
-				close(taskQueue)
-				core.WaitGroup().Wait()
 			}
 		},
 	}

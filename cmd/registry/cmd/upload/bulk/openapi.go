@@ -67,13 +67,8 @@ func scanDirectoryForOpenAPI(ctx context.Context, projectID, baseURI, directory 
 	}
 
 	// create a queue for upload tasks and wait for the workers to finish after filling it.
-	taskQueue := make(chan core.Task, 1024)
-	for i := 0; i < 64; i++ {
-		core.WaitGroup().Add(1)
-		go core.Worker(ctx, taskQueue)
-	}
-	defer core.WaitGroup().Wait()
-	defer close(taskQueue)
+	taskQueue, wait := core.WorkerPool(ctx, 64)
+	defer wait()
 
 	// walk a directory hierarchy, uploading every API spec that matches a set of expected file names.
 	if err := filepath.Walk(directory, func(path string, info os.FileInfo, err error) error {

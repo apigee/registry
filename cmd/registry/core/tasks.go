@@ -26,18 +26,41 @@ type Task interface {
 	String() string
 }
 
-var wg sync.WaitGroup
+// This function creates a waitgroup and a taskQueue for the workerPool.
+// It will create "n" workers which will listen for Tasks on the taskQueue.
+// It returns the taskQueue and a wait func.
+// The clients should add new tasks to this taskQueue
+// and call the call the wait func when done.
+// Do not separately close the taskQueue, make use of the wait func.
+func WorkerPool(ctx context.Context, n int) (chan<- Task, func()) {
+	var wg sync.WaitGroup
+	taskQueue := make(chan Task, 1024)
+	for i := 0; i < n; i++ {
+		wg.Add(1)
+		go worker(ctx, &wg, taskQueue)
+	}
 
-func WaitGroup() *sync.WaitGroup {
-	return &wg
+	wait := func() {
+		close(taskQueue)
+		wg.Wait()
+	}
+
+	return taskQueue, wait
+
 }
 
-func Worker(ctx context.Context, taskChan <-chan Task) {
+func worker(ctx context.Context, wg *sync.WaitGroup, taskQueue <-chan Task) {
 	defer wg.Done()
-	for task := range taskChan {
-		err := task.Run(ctx)
-		if err != nil {
-			log.Printf("%s: %s", task, err)
+	for task := range taskQueue {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			err := task.Run(ctx)
+			if err != nil {
+				log.Printf("%s: %s", task, err)
+			}
 		}
+
 	}
 }

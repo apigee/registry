@@ -30,12 +30,13 @@ require (
 	github.com/google/go-cmp v0.5.6
 	github.com/google/uuid v1.1.2
 	github.com/googleapis/api-linter v1.26.0 // indirect
-	github.com/googleapis/gapic-generator-go v0.21.8 // indirect
+	github.com/googleapis/gapic-generator-go v0.22.0 // indirect
 	github.com/googleapis/gax-go/v2 v2.0.5
 	github.com/googleapis/gnostic v0.5.4
 	github.com/graphql-go/graphql v0.7.9
 	github.com/graphql-go/handler v0.2.3
 	github.com/improbable-eng/grpc-web v0.13.0
+	github.com/jhump/protoreflect v1.9.0 // indirect
 	github.com/jmhodges/levigo v1.0.0 // indirect
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/nsf/jsondiff v0.0.0-20200515183724-f29ed568f4ce
@@ -51,11 +52,11 @@ require (
 	github.com/tufin/oasdiff v0.5.7
 	github.com/yoheimuta/go-protoparser/v4 v4.2.1
 	gitlab.com/golang-commonmark/linkify v0.0.0-20200225224916-64bca66f6ad3 // indirect
-	golang.org/x/net v0.0.0-20210716203947-853a461950ff
+	golang.org/x/net v0.0.0-20210726213435-c6fcb2dbf985
 	golang.org/x/oauth2 v0.0.0-20210615190721-d04028783cf1
 	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c // indirect
 	google.golang.org/api v0.49.0
-	google.golang.org/genproto v0.0.0-20210721163202-f1cecdd8b78a
+	google.golang.org/genproto v0.0.0-20210803142424-70bd63adacf2
 	google.golang.org/grpc v1.39.0
 	google.golang.org/grpc/examples v0.0.0-20210424002626-9572fd6faeae // indirect
 	google.golang.org/protobuf v1.27.1
