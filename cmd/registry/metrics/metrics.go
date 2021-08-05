@@ -5,11 +5,11 @@ import (
 )
 
 // ComputeStats will compute the ChangeStats proto for a list of Classified Diffs.
-func ComputeStats(calculatedDiffs []*rpc.ClassifiedChanges) *rpc.ChangeStats {
+func ComputeStats(diffs []*rpc.ClassifiedChanges) *rpc.ChangeStats {
 	var breaking int64 = 0
 	var nonbreaking int64 = 0
 	var unknown int64 = 0
-	for _, diff := range calculatedDiffs {
+	for _, diff := range diffs {
 
 		breaking += int64(len(diff.BreakingChanges.Additions))
 		breaking += int64(len(diff.BreakingChanges.Deletions))
@@ -29,7 +29,7 @@ func ComputeStats(calculatedDiffs []*rpc.ClassifiedChanges) *rpc.ChangeStats {
 		TotalBreakingChanges: breaking,
 		// Default Unknown Changes to Nonbreaking.
 		TotalNonBreakingChanges: nonbreaking + unknown,
-		NumDiffs:                int64(len(calculatedDiffs)),
+		NumDiffs:                int64(len(diffs)),
 	}
 }
 
