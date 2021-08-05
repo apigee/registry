@@ -178,7 +178,7 @@ func TestMetrics(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			stats := ComputeStats(test.diffProtos)
+			stats := ComputeStats(test.diffProtos...)
 			gotProto := ComputeMetrics(stats)
 			opts := cmp.Options{
 				protocmp.Transform(),
