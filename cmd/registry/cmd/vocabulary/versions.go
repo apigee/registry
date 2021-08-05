@@ -26,7 +26,6 @@ import (
 )
 
 func versionsCommand(ctx context.Context) *cobra.Command {
-	var output string
 	cmd := &cobra.Command{
 		Use:   "versions",
 		Short: "Compute the differences in API vocabularies associated with successive API versions",
@@ -36,7 +35,10 @@ func versionsCommand(ctx context.Context) *cobra.Command {
 			if err != nil {
 				log.Fatalf("Failed to get filter from flags: %s", err)
 			}
-
+			output, err := cmd.Flags().GetString("output")
+			if err != nil {
+				log.Fatalf("Failed to get output from flags: %s", err)
+			}
 			ctx := context.Background()
 			client, err := connection.NewClient(ctx)
 			if err != nil {

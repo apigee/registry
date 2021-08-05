@@ -16,7 +16,6 @@ package core
 
 import (
 	"context"
-	"log"
 	"strconv"
 
 	"github.com/apigee/registry/rpc"
@@ -25,15 +24,15 @@ import (
 func ExportInt64ToSheet(ctx context.Context, name string, artifacts []*rpc.Artifact) (string, error) {
 	sheetsClient, err := NewSheetsClient(ctx, "")
 	if err != nil {
-		log.Fatalf("%s", err.Error())
+		return "", err
 	}
 	sheet, err := sheetsClient.CreateSheet(name, []string{"Values"})
 	if err != nil {
-		log.Fatalf("%s", err.Error())
+		return "", err
 	}
 	_, err = sheetsClient.FormatHeaderRow(ctx, sheet.Sheets[0].Properties.SheetId)
 	if err != nil {
-		log.Fatalf("%s", err.Error())
+		return "", err
 	}
 	rows := make([][]interface{}, 0)
 	rows = append(rows, rowForInt64Artifact(nil))
@@ -42,7 +41,7 @@ func ExportInt64ToSheet(ctx context.Context, name string, artifacts []*rpc.Artif
 	}
 	_, err = sheetsClient.Update(ctx, "Values", rows)
 	if err != nil {
-		log.Fatalf("%s", err.Error())
+		return "", err
 	}
 	return sheet.SpreadsheetUrl, nil
 }
