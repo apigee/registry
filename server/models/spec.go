@@ -15,8 +15,12 @@
 package models
 
 import (
+	"bytes"
+	"compress/gzip"
 	"crypto/sha256"
 	"fmt"
+	"io/ioutil"
+	"strings"
 	"time"
 
 	"github.com/apigee/registry/rpc"
@@ -25,6 +29,16 @@ import (
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
+
+// GUnzippedBytes uncompresses a slice of bytes.
+func GUnzippedBytes(input []byte) ([]byte, error) {
+	buf := bytes.NewBuffer(input)
+	zr, err := gzip.NewReader(buf)
+	if err != nil {
+		return nil, err
+	}
+	return ioutil.ReadAll(zr)
+}
 
 // Spec is the storage-side representation of a spec.
 type Spec struct {
@@ -76,8 +90,16 @@ func NewSpec(name names.Spec, body *rpc.ApiSpec) (spec *Spec, err error) {
 	}
 
 	if body.GetContents() != nil {
-		spec.SizeInBytes = int32(len(body.GetContents()))
-		spec.Hash = hashForBytes(body.GetContents())
+		contents := body.GetContents()
+		// if contents are gzipped, uncompress before computing size and hash.
+		if strings.Contains(spec.MimeType, "+gzip") && len(contents) > 0 {
+			contents, err = GUnzippedBytes(contents)
+			if err != nil {
+				return nil, err
+			}
+		}
+		spec.SizeInBytes = int32(len(contents))
+		spec.Hash = hashForBytes(contents)
 	}
 
 	return spec, nil

@@ -16,6 +16,7 @@ package models
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/apigee/registry/rpc"
@@ -39,9 +40,9 @@ type Artifact struct {
 }
 
 // NewArtifact initializes a new resource.
-func NewArtifact(name names.Artifact, body *rpc.Artifact) *Artifact {
+func NewArtifact(name names.Artifact, body *rpc.Artifact) (artifact *Artifact, err error) {
 	now := time.Now().Round(time.Microsecond)
-	artifact := &Artifact{
+	artifact = &Artifact{
 		ProjectID:  name.ProjectID(),
 		ApiID:      name.ApiID(),
 		VersionID:  name.VersionID(),
@@ -53,11 +54,19 @@ func NewArtifact(name names.Artifact, body *rpc.Artifact) *Artifact {
 	}
 
 	if body.GetContents() != nil {
-		artifact.SizeInBytes = int32(len(body.GetContents()))
-		artifact.Hash = hashForBytes(body.GetContents())
+		contents := body.GetContents()
+		// if contents are gzipped, uncompress before computing size and hash.
+		if strings.Contains(artifact.MimeType, "+gzip") && len(contents) > 0 {
+			contents, err = GUnzippedBytes(contents)
+			if err != nil {
+				return nil, err
+			}
+		}
+		artifact.SizeInBytes = int32(len(contents))
+		artifact.Hash = hashForBytes(contents)
 	}
 
-	return artifact
+	return artifact, nil
 }
 
 // Name returns the resource name of the artifact.

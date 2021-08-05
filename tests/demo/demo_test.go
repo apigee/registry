@@ -250,9 +250,9 @@ func TestDemo(t *testing.T) {
 		spec, err := registryClient.GetApiSpec(ctx, req)
 		check(t, "error getting spec %s", err)
 		// compute the hash of the original file
-		buf, err := readAndGZipFile(filepath.Join("testdata", "openapi.yaml@r0"))
+		fileBytes, err := ioutil.ReadFile(filepath.Join("testdata", "openapi.yaml@r0"))
 		check(t, "error reading spec", err)
-		if hash := hashForBytes(buf.Bytes()); spec.GetHash() != hash {
+		if hash := hashForBytes(fileBytes); spec.GetHash() != hash {
 			t.Errorf("Hash mismatch %s != %s", spec.GetHash(), hash)
 		}
 	}

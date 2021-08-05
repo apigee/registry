@@ -15,10 +15,7 @@
 package server
 
 import (
-	"bytes"
-	"compress/gzip"
 	"context"
-	"io/ioutil"
 	"strings"
 
 	"github.com/apigee/registry/rpc"
@@ -171,16 +168,6 @@ func (s *RegistryServer) getApiSpecRevision(ctx context.Context, name names.Spec
 	return message, nil
 }
 
-// GUnzippedBytes uncompresses a slice of bytes.
-func GUnzippedBytes(input []byte) ([]byte, error) {
-	buf := bytes.NewBuffer(input)
-	zr, err := gzip.NewReader(buf)
-	if err != nil {
-		return nil, err
-	}
-	return ioutil.ReadAll(zr)
-}
-
 // GetApiSpecContents handles the corresponding API request.
 func (s *RegistryServer) GetApiSpecContents(ctx context.Context, req *rpc.GetApiSpecContentsRequest) (*httpbody.HttpBody, error) {
 	client, err := s.getStorageClient(ctx)
@@ -215,7 +202,7 @@ func (s *RegistryServer) GetApiSpecContents(ctx context.Context, req *rpc.GetApi
 		return nil, err
 	}
 	if strings.Contains(spec.MimeType, "+gzip") {
-		contents, err := GUnzippedBytes(blob.Contents)
+		contents, err := models.GUnzippedBytes(blob.Contents)
 		if err != nil {
 			return nil, status.Errorf(codes.FailedPrecondition, "failed to unzip contents with gzip MIME type: %s", err)
 		}
