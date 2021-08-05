@@ -13,7 +13,7 @@ func TestMetrics(t *testing.T) {
 	tests := []struct {
 		desc       string
 		diffProtos []*rpc.ClassifiedChanges
-		wantProto  *rpc.Metrics
+		wantProto  *rpc.ChangeMetrics
 	}{
 		{
 			desc: "Breaking Change Percentage And Rate Test",
@@ -53,14 +53,14 @@ func TestMetrics(t *testing.T) {
 					UnknownChanges: &rpc.Diff{},
 				},
 			},
-			wantProto: &rpc.Metrics{
+			wantProto: &rpc.ChangeMetrics{
 				BreakingChangePercentage: .25,
 				BreakingChangeRate:       1.5,
-				Stats: &rpc.Stats{
+				Stats: &rpc.ChangeStats{
 					TotalBreakingChanges:    3,
 					TotalNonBreakingChanges: 9,
 					TotalChanges:            12,
-					NumberOfDiffs:           2,
+					NumDiffs:                2,
 				},
 			},
 		},
@@ -90,14 +90,14 @@ func TestMetrics(t *testing.T) {
 					UnknownChanges: &rpc.Diff{},
 				},
 			},
-			wantProto: &rpc.Metrics{
+			wantProto: &rpc.ChangeMetrics{
 				BreakingChangePercentage: 0,
 				BreakingChangeRate:       0,
-				Stats: &rpc.Stats{
+				Stats: &rpc.ChangeStats{
 					TotalBreakingChanges:    0,
 					TotalNonBreakingChanges: 6,
 					TotalChanges:            6,
-					NumberOfDiffs:           2,
+					NumDiffs:                2,
 				},
 			},
 		},
@@ -127,14 +127,14 @@ func TestMetrics(t *testing.T) {
 					},
 				},
 			},
-			wantProto: &rpc.Metrics{
+			wantProto: &rpc.ChangeMetrics{
 				BreakingChangePercentage: 0,
 				BreakingChangeRate:       0,
-				Stats: &rpc.Stats{
+				Stats: &rpc.ChangeStats{
 					TotalBreakingChanges:    0,
 					TotalNonBreakingChanges: 6,
 					TotalChanges:            6,
-					NumberOfDiffs:           2,
+					NumDiffs:                2,
 				},
 			},
 		},
@@ -164,21 +164,22 @@ func TestMetrics(t *testing.T) {
 					UnknownChanges:     &rpc.Diff{},
 				},
 			},
-			wantProto: &rpc.Metrics{
+			wantProto: &rpc.ChangeMetrics{
 				BreakingChangePercentage: 1,
 				BreakingChangeRate:       3,
-				Stats: &rpc.Stats{
+				Stats: &rpc.ChangeStats{
 					TotalBreakingChanges:    6,
 					TotalNonBreakingChanges: 0,
 					TotalChanges:            6,
-					NumberOfDiffs:           2,
+					NumDiffs:                2,
 				},
 			},
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			gotProto := ComputeMetrics(test.diffProtos)
+			stats := ComputeStats(test.diffProtos)
+			gotProto := ComputeMetrics(stats)
 			opts := cmp.Options{
 				protocmp.Transform(),
 				cmpopts.SortSlices(func(a, b string) bool { return a < b }),
