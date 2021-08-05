@@ -59,10 +59,16 @@ registry get projects/openapi/apis/wordnik.com
 # Add the --json option to get JSON-formatted output.
 apg registry get-api --name projects/openapi/apis/wordnik.com --json
 
+# Get the API spec
+apg registry get-api-spec --name projects/openapi/apis/wordnik.com/versions/4.0/specs/swagger.yaml
+
 # You might notice that that didn't return the actual spec. That's because the spec contents
 # are accessed through a separate method that (when transcoded to HTTP) allows direct download
 # of spec contents.
-apg registry get-api-spec-contents --name projects/openapi/apis/wordnik.com/contents
+apg registry get-api-spec-contents --name projects/openapi/apis/wordnik.com/versions/4.0/specs/swagger.yaml/contents
+
+# If you have jq and the base64 tool installed, you can get the spec contents from the RPC response.
+# apg registry get-api-spec-contents --name projects/openapi/apis/wordnik.com/versions/4.0/specs/swagger.yaml/contents --json | jq .data -r | base64 --decode
 
 # Another way to get the bytes of the spec is to use `registry get` with the `--contents` flag.
 registry get projects/openapi/apis/wordnik.com --contents
