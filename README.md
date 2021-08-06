@@ -114,10 +114,10 @@ more demonstrations, see the [demos](demos) directory.
 ### Configuration
 
 Configuration for `registry-server` is loaded from the
-`$HOME/.config/registry/` directory. YAML, JSON, TOML, and other common formats
-are supported. The file name must be `registry-server` with a file extension
-indicating the configuration format, e.g. `registry-server.yaml`. Refer to the
-[example](config/registry-server.yaml) for documentation of each
+`$HOME/.config/registry/` directory by default. We recommend YAML
+configuration, but other file types are supported. See the Viper
+[documentation](https://github.com/spf13/viper) for more information. Refer to
+this [example](config/registry-server.yaml) for documentation of each
 configurable value.
 
 Values can be set or overridden using environment variables. Each configuration
