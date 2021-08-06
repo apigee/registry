@@ -55,4 +55,4 @@ COPY --from=builder /app/registry-server /registry-server
 COPY config/registry-server.yaml /registry-server.yaml
 
 # Run the web service on container startup.
-CMD ["/registry-server"]
+CMD ["/registry-server", "--configuration", "registry-server.yaml"]
