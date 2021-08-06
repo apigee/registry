@@ -48,12 +48,8 @@ func detailsCommand(ctx context.Context) *cobra.Command {
 				log.Fatalf("%s", err.Error())
 			}
 			// Initialize task queue.
-			taskQueue := make(chan core.Task, 1024)
-			workerCount := 64
-			for i := 0; i < workerCount; i++ {
-				core.WaitGroup().Add(1)
-				go core.Worker(ctx, taskQueue)
-			}
+			taskQueue, wait := core.WorkerPool(ctx, 64)
+			defer wait()
 			// Generate tasks.
 			name := args[0]
 			if m := names.ApiRegexp().FindStringSubmatch(name); m != nil {
@@ -68,8 +64,6 @@ func detailsCommand(ctx context.Context) *cobra.Command {
 					// some errors are OK.
 					log.Printf("%s", err.Error())
 				}
-				close(taskQueue)
-				core.WaitGroup().Wait()
 			}
 		},
 	}
