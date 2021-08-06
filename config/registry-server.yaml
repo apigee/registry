@@ -20,7 +20,8 @@ database:
   # Options: [ sqlite3, postgres, cloudsqlpostgres ]
   driver: sqlite3
   # DSN for the database connection.
-  # Reference: https://github.com/go-sql-driver/mysql#dsn-data-source-name
+  # PostgreSQL Reference: See "Connection Strings" at https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING
+  # SQLite Reference: See "URI filename examples" at https://www.sqlite.org/c3ref/open.html
   dsn: /tmp/registry.db
 logging:
   # Level of logging to print to standard output.
