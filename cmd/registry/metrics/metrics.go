@@ -25,20 +25,19 @@ func ComputeStats(diffs ...*rpc.ClassifiedChanges) *rpc.ChangeStats {
 	}
 
 	return &rpc.ChangeStats{
-		TotalChanges:         breaking + nonbreaking + unknown,
-		TotalBreakingChanges: breaking,
+		BreakingChangeCount: breaking,
 		// Default Unknown Changes to Nonbreaking.
-		TotalNonBreakingChanges: nonbreaking + unknown,
-		NumDiffs:                int64(len(diffs)),
+		NonbreakingChangeCount: nonbreaking + unknown,
+		DiffCount:              int64(len(diffs)),
 	}
 }
 
 // ComputeMetrics will compute the metrics proto for a list of Classified Diffs.
 func ComputeMetrics(stats *rpc.ChangeStats) *rpc.ChangeMetrics {
-	breakingChangePercentage := float64(stats.TotalBreakingChanges) / float64(stats.TotalChanges)
-	breakingChangeRate := float64(stats.TotalBreakingChanges) / float64(stats.NumDiffs)
+	breakingChangePercentage := (float64(stats.BreakingChangeCount) /
+		float64(stats.BreakingChangeCount+stats.NonbreakingChangeCount))
+	breakingChangeRate := float64(stats.BreakingChangeCount) / float64(stats.DiffCount)
 	return &rpc.ChangeMetrics{
-		Stats:                    stats,
 		BreakingChangePercentage: breakingChangePercentage,
 		BreakingChangeRate:       breakingChangeRate,
 	}
