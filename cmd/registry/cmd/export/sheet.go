@@ -57,7 +57,8 @@ func sheetCommand(ctx context.Context) *cobra.Command {
 				title := "artifacts/" + filepath.Base(inputs[0].GetName())
 				path, err = core.ExportInt64ToSheet(ctx, title, inputs)
 				if err != nil {
-					log.Fatalf("%s", err.Error())
+					log.Printf("failed to export int64 %+v, %s", inputs, err)
+					return
 				}
 				log.Printf("exported int64 %+v to %s", inputs, path)
 				saveSheetPath(ctx, client, path, artifact)
@@ -74,7 +75,11 @@ func sheetCommand(ctx context.Context) *cobra.Command {
 				if err != nil {
 					log.Fatalf("%s", err.Error())
 				}
-				path, _ = core.ExportVocabularyToSheet(ctx, inputs[0].Name, vocabulary)
+				path, err = core.ExportVocabularyToSheet(ctx, inputs[0].Name, vocabulary)
+				if err != nil {
+					log.Printf("failed to export vocabulary %s, %s", inputs[0].Name, err)
+					return
+				}
 				log.Printf("exported vocabulary %s to %s", inputs[0].Name, path)
 				if artifact == "" {
 					artifact = inputs[0].Name + "-sheet"
@@ -85,14 +90,22 @@ func sheetCommand(ctx context.Context) *cobra.Command {
 					log.Fatalf("please specify exactly one version history to export")
 					return
 				}
-				path, _ = core.ExportVersionHistoryToSheet(ctx, inputNames[0], inputs[0])
+				path, err = core.ExportVersionHistoryToSheet(ctx, inputNames[0], inputs[0])
+				if err != nil {
+					log.Printf("failed to export version history %s, %s", inputs[0].Name, err)
+					return
+				}
 				log.Printf("exported version history %s to %s", inputs[0].Name, path)
 				if artifact == "" {
 					artifact = inputs[0].Name + "-sheet"
 				}
 				saveSheetPath(ctx, client, path, artifact)
 			} else if messageType == "gnostic.metrics.Complexity" {
-				path, _ = core.ExportComplexityToSheet(ctx, "Complexity", inputs)
+				path, err = core.ExportComplexityToSheet(ctx, "Complexity", inputs)
+				if err != nil {
+					log.Printf("failed to export complexity, %s", err)
+					return
+				}
 				log.Printf("exported complexity to %s", path)
 				saveSheetPath(ctx, client, path, artifact)
 			} else if messageType == "google.cloud.apigee.registry.applications.v1alpha1.Index" {
@@ -103,7 +116,11 @@ func sheetCommand(ctx context.Context) *cobra.Command {
 				if err != nil {
 					log.Fatalf("%s", err.Error())
 				}
-				path, _ = core.ExportIndexToSheet(ctx, inputs[0].Name, index)
+				path, err = core.ExportIndexToSheet(ctx, inputs[0].Name, index)
+				if err != nil {
+					log.Printf("failed to export index %+v, %s", inputs[0].Name, err)
+					return
+				}
 				log.Printf("exported index %s to %s", inputs[0].Name, path)
 				if artifact == "" {
 					artifact = inputs[0].Name + "-sheet"
