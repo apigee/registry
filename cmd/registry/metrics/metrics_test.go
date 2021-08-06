@@ -11,16 +11,10 @@ import (
 
 func TestMetrics(t *testing.T) {
 	tests := []struct {
-<<<<<<< HEAD
-		desc       string
-		diffProtos []*rpc.ChangeDetails
-		wantProto  *rpc.ChangeMetrics
-=======
 		desc        string
-		diffProtos  []*rpc.ClassifiedChanges
+		diffProtos  []*rpc.ChangeDetails
 		wantMetrics *rpc.ChangeMetrics
 		wantStats   *rpc.ChangeStats
->>>>>>> metrics
 	}{
 		{
 			desc: "Breaking Change Percentage And Rate Test",
