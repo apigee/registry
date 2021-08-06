@@ -25,6 +25,7 @@ import (
 	"syscall"
 
 	"github.com/apigee/registry/server"
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
 
@@ -46,11 +47,26 @@ func init() {
 }
 
 func main() {
-	err := viper.ReadInConfig()
-	if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-		log.Println(err)
-	} else if err != nil {
-		log.Fatalf("Failed to read config: %s", err)
+	var configPath string
+	pflag.StringVarP(&configPath, "configuration", "c", "", "The server configuration file to load.")
+	pflag.Parse()
+
+	if configPath != "" {
+		log.Println("Loading custom")
+		f, err := os.Open(configPath)
+		if err != nil {
+			log.Fatalf("Failed to open config file: %s", err)
+		}
+		if err := viper.ReadConfig(f); err != nil {
+			log.Fatalf("Failed to read config contents: %s", err)
+		}
+	} else {
+		err := viper.ReadInConfig()
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			log.Println(err)
+		} else if err != nil {
+			log.Fatalf("Failed to read config: %s", err)
+		}
 	}
 
 	if err := validateConfig(); err != nil {

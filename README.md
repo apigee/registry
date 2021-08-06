@@ -120,6 +120,9 @@ configuration, but other file types are supported. See the Viper
 this [example](config/registry-server.yaml) for documentation of each
 configurable value.
 
+Configuration can be loaded from a custom file path using the `--configuration`
+or `-c` flag. If provided, other directories will not be searched.
+
 Values can be set or overridden using environment variables. Each configuration
 value should be uppercased, prefixed with `REGISTRY_`, and use underscores to
 indicate nesting. For example, you can override the `database.driver` value by
