@@ -57,3 +57,26 @@ message ClassifiedChanges {
   Diff unknownChanges = 3;
 }
 
+/* ChangeStats holds information relating to a list of diffs*/
+message ChangeStats {
+  // breaking_change_count repersents the total number of breaking changes.
+  int64 breaking_change_count = 1;
+  // nonbreaking_change_count repersents the total number of non-breaking changes.
+  int64 nonbreaking_change_count = 2;
+  // diff_count repersents the number of diffs used in this stats
+  int64 diff_count = 3;
+  }
+
+/* ChangeMetrics holds metrics about a list of diffs. Each metric is computed from
+two or more stats. */
+message ChangeMetrics {
+  /* breaking_change_percentage is the precentage of changes that are breaking.
+  It is computed by the equation
+  (breaking_change_count / (nonbreaking_change_count + breaking_change_count))*/
+  double breaking_change_percentage = 1;
+  /* breaking_change_rate is the average number of breaking changes that are
+  introduced per Diff.
+  It is computed by the equation
+  ((nonbreaking_change_count + breaking_change_count) / diff_count)*/
+  double breaking_change_rate = 2;
+  }
