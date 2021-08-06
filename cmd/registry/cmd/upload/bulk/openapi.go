@@ -186,10 +186,12 @@ func (task *uploadOpenAPITask) createAPI(ctx context.Context) error {
 			DisplayName: task.apiID,
 		},
 	})
-	if err != nil {
-		log.Printf("error %s: %s", task.apiName(), err.Error())
-	} else {
+	if err == nil {
 		log.Printf("created %s", response.Name)
+	} else if core.AlreadyExists(err) {
+		log.Printf("found %s", task.apiName())
+	} else {
+		log.Printf("error %s: %s", task.apiName(), err.Error())
 	}
 
 	return nil

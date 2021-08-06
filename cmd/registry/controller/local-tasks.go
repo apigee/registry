@@ -40,7 +40,7 @@ type ExecCommandTask struct {
 
 func getCommand(ctx context.Context, action []string) (*cobra.Command, error) {
 	if len(action) == 0 {
-		return nil, fmt.Errorf("Empty action string")
+		return nil, fmt.Errorf("empty action string")
 	}
 
 	switch action[0] {
@@ -66,8 +66,10 @@ func getCommand(ctx context.Context, action []string) (*cobra.Command, error) {
 		return upload.Command(ctx), nil
 	case "vocabulary":
 		return vocabulary.Command(ctx), nil
+	case "resolve":
+		return nil, fmt.Errorf("cannot use command 'resolve' in action")
 	default:
-		return nil, fmt.Errorf("Action '%s' is not supported.", strings.Join(action, " "))
+		return nil, fmt.Errorf("action '%s' is not supported", strings.Join(action, " "))
 	}
 }
 
@@ -86,7 +88,7 @@ func (task *ExecCommandTask) Run(ctx context.Context) error {
 		cmd.SetArgs(args[1:])
 	}
 	if err := cmd.Execute(); err != nil {
-		return fmt.Errorf("Error executing action %s: %s", task.Action, err)
+		return fmt.Errorf("error executing action %s: %s", task.Action, err)
 	}
 
 	log.Printf("Finished executing taskId %s with action: %s", task.TaskID, task.Action)
