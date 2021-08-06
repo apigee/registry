@@ -43,7 +43,6 @@ func init() {
 	// Enable config files.
 	viper.SetConfigName("registry-server")
 	viper.AddConfigPath("$HOME/.config/registry")
-	viper.AddConfigPath(".")
 }
 
 func main() {
