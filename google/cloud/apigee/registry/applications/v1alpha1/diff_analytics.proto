@@ -44,17 +44,17 @@ message Diff {
   map <string, ValueChange> modifications = 3;
 }
 
-/* ClassifiedChanges classifies changes from diff in to seperate categories. */
-message ClassifiedChanges {
+/* ChangeDetails classifies changes from diff in to seperate categories. */
+message ChangeDetails {
   /* breakingChanges is a Diff proto that only contians the breaking changes
   of a diff.*/
-  Diff breakingChanges = 1;
+  Diff breaking_changes = 1;
   /* nonBreakingChanges is a Diff proto that only contians the non-breaking
   changes of a diff.*/
-  Diff nonBreakingChanges = 2;
+  Diff non_breaking_changes = 2;
   /* unknownChanges is a Diff proto that contians all the changes that could not
   be classifed in the other categories.*/
-  Diff unknownChanges = 3;
+  Diff unknown_changes = 3;
 }
 
 /* ChangeStats holds information relating to a list of diffs*/

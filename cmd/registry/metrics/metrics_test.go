@@ -12,13 +12,13 @@ import (
 func TestMetrics(t *testing.T) {
 	tests := []struct {
 		desc        string
-		diffProtos  []*rpc.ClassifiedChanges
+		diffProtos  []*rpc.ChangeDetails
 		wantMetrics *rpc.ChangeMetrics
 		wantStats   *rpc.ChangeStats
 	}{
 		{
 			desc: "Breaking Change Percentage And Rate Test",
-			diffProtos: []*rpc.ClassifiedChanges{
+			diffProtos: []*rpc.ChangeDetails{
 				{
 					BreakingChanges: &rpc.Diff{
 						Deletions: []string{"breakingChange"},
@@ -66,7 +66,7 @@ func TestMetrics(t *testing.T) {
 		},
 		{
 			desc: "NonBreaking Changes Test",
-			diffProtos: []*rpc.ClassifiedChanges{
+			diffProtos: []*rpc.ChangeDetails{
 				{
 					BreakingChanges: &rpc.Diff{},
 					NonBreakingChanges: &rpc.Diff{
@@ -102,7 +102,7 @@ func TestMetrics(t *testing.T) {
 		},
 		{
 			desc: "Unknown Default to NonBreaking Changes Test",
-			diffProtos: []*rpc.ClassifiedChanges{
+			diffProtos: []*rpc.ChangeDetails{
 				{
 					BreakingChanges:    &rpc.Diff{},
 					NonBreakingChanges: &rpc.Diff{},
@@ -138,7 +138,7 @@ func TestMetrics(t *testing.T) {
 		},
 		{
 			desc: "Breaking Changes Test",
-			diffProtos: []*rpc.ClassifiedChanges{
+			diffProtos: []*rpc.ChangeDetails{
 				{
 					BreakingChanges: &rpc.Diff{
 						Deletions: []string{"breakingChange"},

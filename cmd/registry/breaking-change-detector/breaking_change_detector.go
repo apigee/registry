@@ -60,6 +60,10 @@ var (
 		{
 			PositiveMatchRegex: regexp.MustCompile("(tags.)+(.)"),
 		},
+		{
+			PositiveMatchRegex: regexp.MustCompile("(components.)+(.|)+(schemas)+(.)"),
+			NegativeMatchRegex: regexp.MustCompile("(components.)+(.|)+(schemas)+(.)+(required)"),
+		},
 	}
 
 	safeDeletes = []detectionPattern{
@@ -81,10 +85,10 @@ var (
 	}
 )
 
-// GetClassifiedChanges compares each change in a diff Proto to the relavant change type detection Patterns.
+// GetChangeDetails compares each change in a diff Proto to the relavant change type detection Patterns.
 // Each change is then catgorized as breaking, nonbreaking, or unknown.
-func GetClassifiedChanges(diff *rpc.Diff) *rpc.ClassifiedChanges {
-	return &rpc.ClassifiedChanges{
+func GetChangeDetails(diff *rpc.Diff) *rpc.ChangeDetails {
+	return &rpc.ChangeDetails{
 		BreakingChanges:    getBreakingChanges(diff),
 		NonBreakingChanges: getNonBreakingChanges(diff),
 		UnknownChanges:     getUnknownChanges(diff),

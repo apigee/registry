@@ -5,7 +5,7 @@ import (
 )
 
 // ComputeStats will compute the ChangeStats proto for a list of Classified Diffs.
-func ComputeStats(diffs ...*rpc.ClassifiedChanges) *rpc.ChangeStats {
+func ComputeStats(diffs ...*rpc.ChangeDetails) *rpc.ChangeStats {
 	var breaking int64 = 0
 	var nonbreaking int64 = 0
 	var unknown int64 = 0
