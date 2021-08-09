@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-project: "controller-test"
-manifest:
-- resource: apis/-/versions/-/specs/-/artifacts/score
+name: "test-manifest"
+generated_resources:
+- pattern: apis/-/versions/-/specs/-/artifacts/complexity
   dependencies:
-  - source: $resource.spec/artifacts/lint-gnostic
-  - source: $resource.spec/artifacts/complexity
-  action: "compute score $source0 $source1" 
+  - pattern: $resource.spec
+    filter: "mime_type.contains('openapi')"
+  action: "compute complexity $source0"

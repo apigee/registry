@@ -17,7 +17,6 @@ package core
 import (
 	"context"
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/apigee/registry/rpc"
@@ -28,9 +27,12 @@ import (
 func ExportVersionHistoryToSheet(ctx context.Context, name string, artifact *rpc.Artifact) (string, error) {
 	sheetsClient, err := NewSheetsClient(ctx, "")
 	if err != nil {
-		log.Fatalf("%s", err.Error())
+		return "", err
 	}
 	versionHistory, err := getVersionHistory(artifact)
+	if err != nil {
+		return "", err
+	}
 	sheetNames := []string{"Summary"}
 	for _, version := range versionHistory.Versions {
 		versionName := nameForVersion(version.Name)
@@ -39,28 +41,28 @@ func ExportVersionHistoryToSheet(ctx context.Context, name string, artifact *rpc
 	}
 	sheet, err := sheetsClient.CreateSheet(name, sheetNames)
 	if err != nil {
-		log.Fatalf("%s", err.Error())
+		return "", err
 	}
 	rows := make([][]interface{}, 0)
 	rows = append(rows, rowForVersionSummary(nil))
 	for _, version := range versionHistory.Versions {
 		rows = append(rows, rowForVersionSummary(version))
 	}
-	_, err = sheetsClient.Update(ctx, fmt.Sprintf("Summary"), rows)
+	_, err = sheetsClient.Update(ctx, "Summary", rows)
 	if err != nil {
-		log.Fatalf("%s", err.Error())
+		return "", err
 	}
 	for _, version := range versionHistory.Versions {
 		versionName := nameForVersion(version.Name)
 		rows := rowsForVocabulary(version.NewTerms)
-		_, err = sheetsClient.Update(ctx, fmt.Sprintf(versionName+"-new"), rows)
+		_, err = sheetsClient.Update(ctx, versionName+"-new", rows)
 		if err != nil {
-			log.Fatalf("%s", err.Error())
+			return "", err
 		}
 		rows = rowsForVocabulary(version.DeletedTerms)
-		_, err = sheetsClient.Update(ctx, fmt.Sprintf(versionName+"-deleted"), rows)
+		_, err = sheetsClient.Update(ctx, versionName+"-deleted", rows)
 		if err != nil {
-			log.Fatalf("%s", err.Error())
+			return "", err
 		}
 	}
 	return sheet.SpreadsheetUrl, nil

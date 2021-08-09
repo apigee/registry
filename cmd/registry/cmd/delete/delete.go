@@ -41,20 +41,13 @@ func Command(ctx context.Context) *cobra.Command {
 			}
 
 			// Initialize task queue.
-			taskQueue := make(chan core.Task, 1024)
-			workerCount := 64
-			for i := 0; i < workerCount; i++ {
-				core.WaitGroup().Add(1)
-				go core.Worker(ctx, taskQueue)
-			}
+			taskQueue, wait := core.WorkerPool(ctx, 64)
+			defer wait()
 
 			err = matchAndHandleDeleteCmd(ctx, client, taskQueue, args[0], filter)
 			if err != nil {
 				log.Fatalf("%s", err.Error())
 			}
-
-			close(taskQueue)
-			core.WaitGroup().Wait()
 		},
 	}
 
@@ -91,7 +84,7 @@ func (task *deleteTask) Run(ctx context.Context) error {
 func matchAndHandleDeleteCmd(
 	ctx context.Context,
 	client connection.Client,
-	taskQueue chan core.Task,
+	taskQueue chan<- core.Task,
 	name string,
 	filter string,
 ) error {
@@ -113,7 +106,7 @@ func deleteAPIs(
 	client *gapic.RegistryClient,
 	segments []string,
 	filterFlag string,
-	taskQueue chan core.Task) error {
+	taskQueue chan<- core.Task) error {
 	return core.ListAPIs(ctx, client, segments, filterFlag, func(api *rpc.Api) {
 		taskQueue <- &deleteTask{
 			client:       client,
@@ -128,7 +121,7 @@ func deleteVersions(
 	client *gapic.RegistryClient,
 	segments []string,
 	filterFlag string,
-	taskQueue chan core.Task) error {
+	taskQueue chan<- core.Task) error {
 	return core.ListVersions(ctx, client, segments, filterFlag, func(version *rpc.ApiVersion) {
 		taskQueue <- &deleteTask{
 			client:       client,
@@ -143,7 +136,7 @@ func deleteSpecs(
 	client *gapic.RegistryClient,
 	segments []string,
 	filterFlag string,
-	taskQueue chan core.Task) error {
+	taskQueue chan<- core.Task) error {
 	return core.ListSpecs(ctx, client, segments, filterFlag, func(spec *rpc.ApiSpec) {
 		taskQueue <- &deleteTask{
 			client:       client,
@@ -158,7 +151,7 @@ func deleteArtifacts(
 	client *gapic.RegistryClient,
 	segments []string,
 	filterFlag string,
-	taskQueue chan core.Task) error {
+	taskQueue chan<- core.Task) error {
 	return core.ListArtifacts(ctx, client, segments, filterFlag, false, func(artifact *rpc.Artifact) {
 		taskQueue <- &deleteTask{
 			client:       client,

@@ -16,17 +16,19 @@ package controller
 
 import (
 	"context"
-
-	"github.com/spf13/cobra"
+	"testing"
 )
 
-func Command(ctx context.Context) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "controller",
-		Short: "Manage the state of the registry (experimental)",
+// Test the error scenario
+func TestErrorCases(t *testing.T) {
+
+	task := &ExecCommandTask{
+		Action: "resolve projects/demo/artifacts/test-manifest",
+		TaskID: "task0",
 	}
-
-	cmd.AddCommand(updateCommand(ctx))
-
-	return cmd
+	ctx := context.Background()
+	err := task.Run(ctx)
+	if err == nil {
+		t.Errorf("Expected GetCommand() to return error.")
+	}
 }

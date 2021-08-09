@@ -18,6 +18,12 @@
 echo This walkthrough script demonstrates key registry operations that can be performed
 echo through the API or using the automatically-generated apg command-line tool.
 
+if ! type "jq" > /dev/null; then
+  echo
+  echo "Error: this script requires jq (https://stedolan.github.io/jq/)"
+  exit 1
+fi
+
 echo
 echo Delete everything associated with any preexisting project named "demo".
 apg registry delete-project --name projects/demo
@@ -48,22 +54,21 @@ echo Add a spec for the API version that we just added to the registry.
 apg registry create-api-spec \
     --parent projects/demo/apis/petstore/versions/1.0.0 \
     --api_spec_id openapi.yaml \
-    --api_spec.contents `registry-encode-spec < petstore/1.0.0/openapi.yaml@r0` \
+    --api_spec.contents `registry-encode-spec < testdata/openapi.yaml@r0` \
     --json
 
 echo
 echo Get the API spec.
 apg registry get-api-spec \
     --name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml \
-    --view full \
     --json
 
 echo
 echo Get the contents of the API spec.
-apg registry get-api-spec \
-    --name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml \
-    --view full --json | \
-    jq '.contents' -r | \
+apg registry get-api-spec-contents \
+    --name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml/contents \
+    --json | \
+    jq '.data' -r | \
     registry-decode-spec
 
 echo
@@ -77,34 +82,32 @@ echo
 echo Get the modifed API spec.
 apg registry get-api-spec \
     --name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml \
-    --view full \
     --json
 
 echo
 echo Update the spec to new contents.
 apg registry update-api-spec \
 	--api_spec.name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml \
-	--api_spec.contents `registry-encode-spec < petstore/1.0.0/openapi.yaml@r1` \
+	--api_spec.contents `registry-encode-spec < testdata/openapi.yaml@r1` \
     --json
 
 echo
 echo Again update the spec to new contents.
 apg registry update-api-spec \
 	--api_spec.name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml \
-	--api_spec.contents `registry-encode-spec < petstore/1.0.0/openapi.yaml@r2` \
+	--api_spec.contents `registry-encode-spec < testdata/openapi.yaml@r2` \
     --json
 
 echo
 echo Make a third update of the spec contents.
 apg registry update-api-spec \
 	--api_spec.name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml \
-	--api_spec.contents `registry-encode-spec < petstore/1.0.0/openapi.yaml@r3`
+	--api_spec.contents `registry-encode-spec < testdata/openapi.yaml@r3`
 
 echo
 echo Get the API spec.
 apg registry get-api-spec \
     --name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml \
-    --view full \
     --json
 
 echo
@@ -118,31 +121,31 @@ echo List just the names of the revisions of the spec.
 apg registry list-api-spec-revisions \
     --name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml \
     --json | \
-    jq '.specs[].name' -r 
+    jq '.apiSpecs[].name' -r 
 
 echo
 echo Get the latest revision of the spec.
 apg registry list-api-spec-revisions \
     --name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml \
     --json | \
-    jq '.specs[0].name' -r 
+    jq '.apiSpecs[0].name' -r 
 
 echo
 echo Get the oldest revision of the spec.
 apg registry list-api-spec-revisions \
     --name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml \
     --json | \
-    jq '.specs[-1].name' -r 
+    jq '.apiSpecs[-1].name' -r 
 
 ORIGINAL=`apg registry list-api-spec-revisions \
     --name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml \
     --json | \
-    jq '.specs[-1].name' -r`
+    jq '.apiSpecs[-1].name' -r`
 
 ORIGINAL_HASH=`apg registry list-api-spec-revisions \
     --name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml \
     --json | \
-    jq '.specs[-1].hash' -r`
+    jq '.apiSpecs[-1].hash' -r`
 
 echo
 echo Tag a spec revision.
@@ -152,7 +155,6 @@ echo
 echo Get a spec by its tag.
 apg registry get-api-spec \
     --name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml@og \
-    --view basic \
     --json
 
 echo

@@ -15,6 +15,8 @@
 package core
 
 import (
+	"errors"
+	"fmt"
 	"strings"
 )
 
@@ -23,4 +25,14 @@ func ParentAndIdOfResourceNamed(name string) (string, string) {
 	parts := strings.Split(name, "/")
 	last := len(parts) - 1
 	return strings.Join(parts[0:last-1], "/"), parts[last]
+}
+
+// ProjectID returns the projectID from the resource name
+func ProjectID(name string) (string, error) {
+	parts := strings.Split(name, "/")
+	if len(parts) < 2 {
+		return "", errors.New(fmt.Sprintf("Invalid resource name %s", name))
+	}
+
+	return parts[1], nil
 }
