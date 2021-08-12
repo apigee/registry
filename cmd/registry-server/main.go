@@ -82,7 +82,7 @@ func main() {
 
 	srv := server.New(server.Config{
 		Database:  viper.GetString("database.driver"),
-		DBConfig:  viper.GetString("database.data_source_name"),
+		DBConfig:  viper.GetString("database.config"),
 		Log:       viper.GetString("logging.level"),
 		Notify:    viper.GetBool("pubsub.enabled"),
 		ProjectID: viper.GetString("pubsub.project"),

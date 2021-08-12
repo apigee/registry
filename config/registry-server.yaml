@@ -19,10 +19,10 @@ database:
   # Driver for the database connection.
   # Options: [ sqlite3, postgres, cloudsqlpostgres ]
   driver: sqlite3
-  # Data source name for the database connection.
+  # Config for the database connection. The format is a data source name (DSN).
   # PostgreSQL Reference: See "Connection Strings" at https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING
   # SQLite Reference: See "URI filename examples" at https://www.sqlite.org/c3ref/open.html
-  data_source_name: file:/tmp/registry.db
+  config: file:/tmp/registry.db
 logging:
   # Level of logging to print to standard output.
   # Options: [ debug, info, warn, error, fatal ]
