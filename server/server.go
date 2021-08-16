@@ -44,11 +44,11 @@ const (
 
 // Config configures the registry server.
 type Config struct {
-	Database  string `yaml:"database"`
-	DBConfig  string `yaml:"dbconfig"`
-	Log       string `yaml:"log"`
-	Notify    bool   `yaml:"notify"`
-	ProjectID string `yaml:"project"`
+	Database  string
+	DBConfig  string
+	Log       string
+	Notify    bool
+	ProjectID string
 }
 
 // RegistryServer implements a Registry server.

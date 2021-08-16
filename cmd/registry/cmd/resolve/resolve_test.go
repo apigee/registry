@@ -193,7 +193,6 @@ func TestResolve(t *testing.T) {
 		t.Fatalf("Failed to upload the manifest: %s", err)
 	}
 
-	// Call the controller update command
 	resolveCmd := Command(ctx)
 	args = []string{"projects/" + testProject + "/artifacts/test-manifest"}
 	resolveCmd.SetArgs(args)

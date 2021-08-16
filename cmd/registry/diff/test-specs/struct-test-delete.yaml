@@ -12,10 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: "controller-test"
-generated_resources:
-- pattern: apis/-/versions/-/specs/-/artifacts/lint-gnostic
-  dependencies:
-  - pattern: $resource.spec
-    filter: "mime_type.contains('openapi')"
-  action: "compute lint $source0 --linter gnostic"
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Test Proto
+components:
+  schemas:
+    Pet:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        tag:
+          type: string
+

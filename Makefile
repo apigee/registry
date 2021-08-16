@@ -1,8 +1,12 @@
 lite:
 	go install ./...
 
-all:	protos
+all:	protos configfiles
 	go install ./...
+
+configfiles:
+	mkdir -p ${HOME}/.config/registry
+	cp -n config/registry-server.yaml ${HOME}/.config/registry/registry-server.yaml || true
 
 protos:
 	cd third_party; sh ./SETUP.sh
@@ -16,7 +20,8 @@ clean:
 	rm -rf \
 		cmd/apg/*.go gapic/*.go rpc/*.go \
 		third_party/api-common-protos third_party/gnostic \
-		envoy/proto.pb
+		envoy/proto.pb \
+		${HOME}/.config/registry
 
 build:
 ifndef REGISTRY_PROJECT_IDENTIFIER
@@ -39,6 +44,17 @@ ifeq ($(LB),internal)
 else
 	./deployments/gke/DEPLOY-TO-GKE.sh
 endif
+
+deploy-cron-job:
+ifndef REGISTRY_PROJECT_IDENTIFIER
+	@echo "Error! REGISTRY_PROJECT_IDENTIFIER must be set."; exit 1
+endif
+ifndef REGISTRY_MANIFEST_ID
+	@echo "Error! REGISTRY_MANIFEST_ID must be set."; exit 1
+endif
+	gcloud container clusters get-credentials registry-backend --zone us-central1-a
+	export DEFAULT_SA_KEY=$(kubectl get secrets -o jsonpath="{.items[0].metadata.name}" | grep default-token)
+	envsubst < deployments/gke-job/cron-job.yaml | kubectl apply -f -
 
 build-workers:
 ifndef REGISTRY_PROJECT_IDENTIFIER

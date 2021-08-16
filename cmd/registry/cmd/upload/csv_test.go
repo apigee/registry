@@ -17,12 +17,12 @@ package upload
 import (
 	"context"
 	"fmt"
-	"strings"
+	"io/ioutil"
+	"path/filepath"
 	"testing"
 
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/tests/seeding/fileseed"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"google.golang.org/api/iterator"
@@ -35,109 +35,82 @@ const (
 	gzipOpenAPIv3 = "application/x.openapi+gzip;version=3.0.0"
 )
 
-var (
-	specContents1 = []byte(`{"openapi": "3.0.0", "info": {"title": "First Spec", "version": "v1"}, "paths": {}}`)
-	specContents2 = []byte(`{"openapi": "3.0.0", "info": {"title": "Second Spec", "version": "v1"}, "paths": {}}`)
-	specContents3 = []byte(`{"openapi": "3.0.0", "info": {"title": "Third Spec", "version": "v1"}, "paths": {}}`)
-	specContents4 = []byte(`{"openapi": "3.0.0", "info": {"title": "Fourth Spec", "version": "v1"}, "paths": {}}`)
-)
-
 func TestUploadCSV(t *testing.T) {
+	cloudtasksGA, err := ioutil.ReadFile(filepath.Join("testdata", "cloudtasks", "v2", "openapi.yaml"))
+	if err != nil {
+		t.Fatalf("Setup: Failed to read spec contents: %s", err)
+	}
+
+	cloudtasksBeta, err := ioutil.ReadFile(filepath.Join("testdata", "cloudtasks", "v2beta2", "openapi.yaml"))
+	if err != nil {
+		t.Fatalf("Setup: Failed to read spec contents: %s", err)
+	}
+
+	datastoreGA, err := ioutil.ReadFile(filepath.Join("testdata", "datastore", "v1", "openapi.yaml"))
+	if err != nil {
+		t.Fatalf("Setup: Failed to read spec contents: %s", err)
+	}
+
+	datastoreBeta, err := ioutil.ReadFile(filepath.Join("testdata", "datastore", "v1beta1", "openapi.yaml"))
+	if err != nil {
+		t.Fatalf("Setup: Failed to read spec contents: %s", err)
+	}
+
 	const testProject = "csv-demo"
-	root := t.TempDir()
 	tests := []struct {
-		desc  string
-		files []fileseed.File
-		args  []string
-		want  []*rpc.ApiSpec
+		desc string
+		args []string
+		want []*rpc.ApiSpec
 	}{
 		{
 			desc: "multiple spec upload",
-			files: []fileseed.File{
-				{
-					Path:     fmt.Sprintf("%s/cloudtasks/v2beta2/openapi.yaml", root),
-					Contents: specContents1,
-				},
-				{
-					Path:     fmt.Sprintf("%s/cloudtasks/v2/openapi.yaml", root),
-					Contents: specContents2,
-				},
-				{
-					Path:     fmt.Sprintf("%s/datastore/v1beta1/openapi.yaml", root),
-					Contents: specContents3,
-				},
-				{
-					Path:     fmt.Sprintf("%s/datastore/v1/openapi.yaml", root),
-					Contents: specContents4,
-				},
-				{
-					Path: fmt.Sprintf("%s/specs.csv", root),
-					Contents: []byte(strings.Join([]string{
-						"api_id,version_id,spec_id,filepath",
-						fmt.Sprintf("cloudtasks,v2beta2,openapi.yaml,%s/cloudtasks/v2beta2/openapi.yaml", root),
-						fmt.Sprintf("cloudtasks,v2,openapi.yaml,%s/cloudtasks/v2/openapi.yaml", root),
-						fmt.Sprintf("datastore,v1beta1,openapi.yaml,%s/datastore/v1beta1/openapi.yaml", root),
-						fmt.Sprintf("datastore,v1,openapi.yaml,%s/datastore/v1/openapi.yaml", root),
-					}, "\n")),
-				},
+			args: []string{
+				filepath.Join("testdata", "multiple-specs.csv"),
+				"--project_id", testProject,
 			},
-			args: []string{fmt.Sprintf("%s/specs.csv", root), "--project_id", testProject},
 			want: []*rpc.ApiSpec{
 				{
 					Name:     fmt.Sprintf("projects/%s/apis/cloudtasks/versions/v2beta2/specs/openapi.yaml", testProject),
 					MimeType: gzipOpenAPIv3,
-					Contents: specContents1,
+					Contents: cloudtasksBeta,
 				},
 				{
 					Name:     fmt.Sprintf("projects/%s/apis/cloudtasks/versions/v2/specs/openapi.yaml", testProject),
 					MimeType: gzipOpenAPIv3,
-					Contents: specContents2,
+					Contents: cloudtasksGA,
 				},
 				{
 					Name:     fmt.Sprintf("projects/%s/apis/datastore/versions/v1beta1/specs/openapi.yaml", testProject),
 					MimeType: gzipOpenAPIv3,
-					Contents: specContents3,
+					Contents: datastoreBeta,
 				},
 				{
 					Name:     fmt.Sprintf("projects/%s/apis/datastore/versions/v1/specs/openapi.yaml", testProject),
 					MimeType: gzipOpenAPIv3,
-					Contents: specContents4,
+					Contents: datastoreGA,
 				},
 			},
 		},
 		{
 			desc: "out of order columns",
-			files: []fileseed.File{
-				{
-					Path:     fmt.Sprintf("%s/openapi.yaml", root),
-					Contents: specContents1,
-				},
-				{
-					Path: fmt.Sprintf("%s/specs.csv", root),
-					Contents: []byte(strings.Join([]string{
-						"filepath,spec_id,version_id,api_id",
-						fmt.Sprintf("%s/openapi.yaml,openapi.yaml,v2,cloudtasks", root),
-					}, "\n")),
-				},
+			args: []string{
+				filepath.Join("testdata", "out-of-order-columns.csv"),
+				"--project_id", testProject,
 			},
-			args: []string{fmt.Sprintf("%s/specs.csv", root), "--project_id", testProject},
 			want: []*rpc.ApiSpec{
 				{
 					Name:     fmt.Sprintf("projects/%s/apis/cloudtasks/versions/v2/specs/openapi.yaml", testProject),
 					MimeType: gzipOpenAPIv3,
-					Contents: specContents1,
+					Contents: cloudtasksGA,
 				},
 			},
 		},
 		{
 			desc: "empty sheet",
-			files: []fileseed.File{
-				{
-					Path:     fmt.Sprintf("%s/specs.csv", root),
-					Contents: []byte("api_id,version_id,spec_id,filepath"),
-				},
+			args: []string{
+				filepath.Join("testdata", "empty-sheet.csv"),
+				"--project_id", testProject,
 			},
-			args: []string{fmt.Sprintf("%s/specs.csv", root), "--project_id", testProject},
 			want: []*rpc.ApiSpec{},
 		},
 	}
@@ -155,10 +128,6 @@ func TestUploadCSV(t *testing.T) {
 			})
 			if err != nil && status.Code(err) != codes.NotFound {
 				t.Fatalf("Setup: Failed to delete test project: %s", err)
-			}
-
-			if err := fileseed.Write(test.files...); err != nil {
-				t.Fatalf("Setup: Failed to write test files: %s", err)
 			}
 
 			args := append([]string{"csv"}, test.args...)

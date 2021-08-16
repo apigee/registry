@@ -22,8 +22,34 @@ import (
 	"github.com/apigee/registry/cmd/registry/controller"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
+	"google.golang.org/protobuf/proto"
 )
+
+func fetchManifest(
+	ctx context.Context,
+	client connection.Client,
+	manifestName string) (*rpc.Manifest, error) {
+
+	manifest := &rpc.Manifest{}
+	body, err := client.GetArtifactContents(
+		ctx,
+		&rpc.GetArtifactContentsRequest{
+			Name: manifestName,
+		})
+	if err != nil {
+		return nil, err
+	}
+
+	contents := body.GetData()
+	err = proto.Unmarshal(contents, manifest)
+	if err != nil {
+		return nil, err
+	}
+
+	return manifest, nil
+}
 
 func Command(ctx context.Context) *cobra.Command {
 	cmd := &cobra.Command{
@@ -41,7 +67,7 @@ func Command(ctx context.Context) *cobra.Command {
 				log.Fatal(err.Error())
 			}
 
-			manifest, err := controller.FetchManifest(ctx, client, manifestName)
+			manifest, err := fetchManifest(ctx, client, manifestName)
 			if err != nil {
 				log.Fatal(err.Error())
 			}
@@ -64,14 +90,8 @@ func Command(ctx context.Context) *cobra.Command {
 
 			log.Printf("Generated %d actions. Starting Execution...", len(actions))
 
-			taskQueue := make(chan core.Task, 1024)
-			for i := 0; i < 64; i++ {
-				core.WaitGroup().Add(1)
-				go core.Worker(ctx, taskQueue)
-			}
-			defer core.WaitGroup().Wait()
-			defer close(taskQueue)
-
+			taskQueue, wait := core.WorkerPool(ctx, 64)
+			defer wait()
 			// Submit tasks to taskQueue
 			for i, a := range actions {
 				taskQueue <- &controller.ExecCommandTask{

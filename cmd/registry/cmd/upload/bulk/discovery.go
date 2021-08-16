@@ -45,13 +45,8 @@ func discoveryCommand(ctx context.Context) *cobra.Command {
 			}
 
 			// create a queue for upload tasks and wait for the workers to finish after filling it.
-			taskQueue := make(chan core.Task, 1024)
-			for i := 0; i < 64; i++ {
-				core.WaitGroup().Add(1)
-				go core.Worker(ctx, taskQueue)
-			}
-			defer core.WaitGroup().Wait()
-			defer close(taskQueue)
+			taskQueue, wait := core.WorkerPool(ctx, 64)
+			defer wait()
 
 			core.EnsureProjectExists(ctx, client, projectID)
 			discoveryResponse, err := discovery.FetchList()
@@ -121,10 +116,12 @@ func (task *uploadDiscoveryTask) createAPI(ctx context.Context) error {
 			DisplayName: task.apiID,
 		},
 	})
-	if err != nil {
-		log.Printf("error %s: %s", task.apiName(), err.Error())
-	} else {
+	if err == nil {
 		log.Printf("created %s", response.Name)
+	} else if core.AlreadyExists(err) {
+		log.Printf("found %s", task.apiName())
+	} else {
+		log.Printf("error %s: %s", task.apiName(), err.Error())
 	}
 
 	return nil

@@ -16,15 +16,36 @@ package upload
 
 import (
 	"context"
+	"fmt"
 	"log"
 
-	"github.com/apigee/registry/cmd/registry/controller"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
+	"github.com/ghodss/yaml"
 	"github.com/spf13/cobra"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
+	"io/ioutil"
 )
+
+func readManifestProto(filename string) (*rpc.Manifest, error) {
+
+	yamlBytes, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	jsonBytes, err := yaml.YAMLToJSON(yamlBytes)
+	m := &rpc.Manifest{}
+	err = protojson.Unmarshal(jsonBytes, m)
+
+	if err != nil {
+		return nil, fmt.Errorf("in file %q: %v", filename, err)
+	}
+
+	return m, nil
+}
 
 func manifestCommand(ctx context.Context) *cobra.Command {
 	var projectID string
@@ -38,7 +59,7 @@ func manifestCommand(ctx context.Context) *cobra.Command {
 				log.Fatal("Please provide manifest_path")
 			}
 
-			manifest, err := controller.ReadManifestProto(manifestPath)
+			manifest, err := readManifestProto(manifestPath)
 			if err != nil {
 				log.Fatal(err.Error())
 			}

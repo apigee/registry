@@ -54,13 +54,8 @@ func csvCommand(ctx context.Context) *cobra.Command {
 			}
 			core.EnsureProjectExists(ctx, client, projectID)
 
-			taskQueue := make(chan core.Task, 64)
-			for i := 0; i < 64; i++ {
-				core.WaitGroup().Add(1)
-				go core.Worker(ctx, taskQueue)
-			}
-			defer core.WaitGroup().Wait()
-			defer close(taskQueue)
+			taskQueue, wait := core.WorkerPool(ctx, 64)
+			defer wait()
 
 			file, err := os.Open(args[0])
 			if err != nil {

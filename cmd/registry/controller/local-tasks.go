@@ -16,6 +16,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os/exec"
 	"strings"
@@ -31,11 +32,16 @@ func (task *ExecCommandTask) String() string {
 }
 
 func (task *ExecCommandTask) Run(ctx context.Context) error {
-	cmd := exec.Command("registry", strings.Split(task.Action, " ")...)
+	if strings.HasPrefix(task.Action, "resolve") {
+		return fmt.Errorf("'resolve' not allowed in action, cannot invoke %q", task.Action)
+	}
+	cmd := exec.Command("registry", strings.Fields(task.Action)...)
 	output, err := cmd.CombinedOutput()
+
 	if err != nil {
 		return err
 	}
 	log.Printf("Finished executing taskId %s with action: %s\n Output: %s", task.TaskID, task.Action, output)
+
 	return nil
 }

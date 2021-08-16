@@ -61,7 +61,7 @@ COPY --from=builder /app/registry-server /registry-server
 COPY --from=builder /app/authz-server /authz-server
 
 # Copy configuration files to the production image.
-COPY config/registry.yaml /registry.yaml
+COPY config/registry-server.yaml /registry-server.yaml
 COPY cmd/authz-server/authz.yaml /authz.yaml
 
 # Run as root in the container. Needed to use the Envoy release image.

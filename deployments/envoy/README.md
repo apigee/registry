@@ -19,3 +19,10 @@ an Envoy authorization filter.
 
 5. Run any of the included tools or examples for accessing your local Registry,
    e.g. `apg registry get-status`.
+
+## Running Envoy without authz
+
+The `envoy-noauth.yaml` configuration omits the `authz` filter configuration
+in `envoy.yaml`. To run Envoy without authz, skip step 2 above and use this
+configuration file instead. This allows independent testing of grpc-web
+and gRPC transcoding support.
