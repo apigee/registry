@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"os/exec"
 	"strings"
 )
@@ -36,12 +37,14 @@ func (task *ExecCommandTask) Run(ctx context.Context) error {
 		return fmt.Errorf("'resolve' not allowed in action, cannot invoke %q", task.Action)
 	}
 	cmd := exec.Command("registry", strings.Fields(task.Action)...)
-	output, err := cmd.CombinedOutput()
+	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
+	err := cmd.Run()
+	details := fmt.Sprintf("action={%s} taskID={%s}", task.Action, task.TaskID)
 
 	if err != nil {
+		log.Printf("Failed Execution: %s Error: %s", details, err)
 		return err
 	}
-	log.Printf("Finished executing taskId %s with action: %s\n Output: %s", task.TaskID, task.Action, output)
-
+	log.Printf("Successful Execution: %s", details)
 	return nil
 }

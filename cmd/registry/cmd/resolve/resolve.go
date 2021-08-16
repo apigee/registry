@@ -84,7 +84,7 @@ func Command(ctx context.Context) *cobra.Command {
 			}
 
 			if len(actions) == 0 {
-				log.Printf("No actions needed. The registry is already in a resolved state.")
+				log.Printf("Generated 0 actions. The registry is already in a resolved state.")
 				return
 			}
 
