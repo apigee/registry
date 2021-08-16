@@ -8,10 +8,10 @@ This directory contains configuration tools and other support files for running
 Following steps assume you're in the root directory.
 
 1. Run `make build` to build the docker image and upload to GCR. The default
-   database configuration is
-   [config/registry.yaml](../../config/registry.yaml). You can specify a
-   different config file by replacing this file or by specifying values for the
-   environment variables that it contains.
+   server configuration is
+   [registry-server.yaml](../../config/registry-server.yaml). You can provide a
+   different configuration by replacing this file or by setting configuration
+   using environment variables.
 
 1. Create a GKE deployment and expose the backend server through a load
    balancer:
