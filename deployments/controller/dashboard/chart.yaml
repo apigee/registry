@@ -1,0 +1,135 @@
+# Copyright 2021 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: projects/$REGISTRY_PROJECT_IDENTIFIER/dashboards/registry-controller-status
+displayName: 'Registry Controller Status'
+mosaicLayout:
+  columns: 12
+  tiles:
+  - height: 4
+    width: 12
+    widget:
+      title: Number of actions generated
+      xyChart:
+        chartOptions:
+          mode: COLOR
+        dataSets:
+        - plotType: LINE
+          targetAxis: Y1
+          timeSeriesQuery:
+            timeSeriesQueryLanguage: |-
+              fetch k8s_container
+              | metric 'logging.googleapis.com/user/task_generation'
+              | group_by [resource.container_name, resource.cluster_name], mean(metric.num_tasks) 
+        timeshiftDuration: 0s
+        yAxis:
+          label: y1Axis
+          scale: LINEAR
+  - height: 4
+    width: 6
+    xPos: 6
+    yPos: 4
+    widget:
+      title: Percent successful tasks
+      xyChart:
+        chartOptions:
+          mode: COLOR
+        dataSets:
+        - plotType: STACKED_BAR
+          targetAxis: Y1
+          timeSeriesQuery:
+            timeSeriesQueryLanguage: |-
+              fetch k8s_container :: logging.googleapis.com/user/task_execution
+              | { t_0:
+                    filter metric.status='Successful'
+                    | align delta()
+                    | group_by [resource.pod_name],
+                        aggregate(value.task_execution); t_1:
+                      ident
+                    | align delta()
+                    | group_by [resource.pod_name],
+                        aggregate(value.task_execution)
+              }
+              | ratio 
+              | mul 100
+        timeshiftDuration: 0s
+        yAxis:
+          label: y1Axis
+          scale: LINEAR
+  - height: 4
+    width: 6
+    yPos: 4
+    widget:
+      title: Task executions
+      xyChart:
+        chartOptions:
+          mode: COLOR
+        dataSets:
+        - plotType: STACKED_BAR
+          targetAxis: Y1
+          timeSeriesQuery:
+            timeSeriesQueryLanguage: |-
+              fetch k8s_container
+              | metric 'logging.googleapis.com/user/task_execution'
+              | align rate(1m)
+              | every 1m
+        timeshiftDuration: 0s
+        yAxis:
+          label: y1Axis
+          scale: LINEAR
+  - height: 4
+    width: 6
+    xPos: 6
+    yPos: 8
+    widget:
+      title: Failed tasks
+      xyChart:
+        chartOptions:
+          mode: COLOR
+        dataSets:
+        - plotType: STACKED_BAR
+          targetAxis: Y1
+          timeSeriesQuery:
+            timeSeriesQueryLanguage: |-
+              fetch k8s_container
+              | metric 'logging.googleapis.com/user/task_execution'
+              | filter metric.status='Failed'
+              | align rate(1m)
+              | every 1m
+        timeshiftDuration: 0s
+        yAxis:
+          label: y1Axis
+          scale: LINEAR
+  - height: 4
+    width: 6
+    yPos: 8
+    widget:
+      title: Successful tasks
+      xyChart:
+        chartOptions:
+          mode: COLOR
+        dataSets:
+        - plotType: STACKED_BAR
+          targetAxis: Y1
+          timeSeriesQuery:
+            timeSeriesQueryLanguage: |-
+              fetch k8s_container
+              | metric 'logging.googleapis.com/user/task_execution'
+              | filter metric.status='Successful'
+              | align rate(1m)
+              | every 1m
+        timeshiftDuration: 0s
+        yAxis:
+          label: y1Axis
+          scale: LINEAR
