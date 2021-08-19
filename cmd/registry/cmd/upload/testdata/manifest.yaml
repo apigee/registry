@@ -18,4 +18,4 @@ generated_resources:
   dependencies:
   - pattern: $resource.spec
     filter: "mime_type.contains('openapi')"
-  action: "compute complexity $source0"
+  action: "compute complexity $dependency0"
