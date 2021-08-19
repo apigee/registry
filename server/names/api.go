@@ -63,6 +63,11 @@ func (a Api) Artifact(id string) Artifact {
 	}
 }
 
+// Parent returns this resource's parent project resource name.
+func (a Api) Parent() string {
+	return a.Project().String()
+}
+
 func (a Api) String() string {
 	return normalize(fmt.Sprintf("projects/%s/apis/%s", a.ProjectID, a.ApiID))
 }
