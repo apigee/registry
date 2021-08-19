@@ -45,10 +45,11 @@ message GeneratedResource {
 		(google.api.field_behavior) = REQUIRED
 	];
 	string filter = 2;
-	repeated Dependency dependencies = 3;
+	bool placeholder = 3;
+	repeated Dependency dependencies = 4;
 	// action Can contain references to both the resource and dependencies
 	// Example: "compute complexity $dependency0 $resource"
-	string action = 4 [
+	string action = 5 [
 		(google.api.field_behavior) = REQUIRED
 	];
 }

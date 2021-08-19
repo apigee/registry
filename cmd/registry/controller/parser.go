@@ -25,7 +25,8 @@ const resourceKW = "$resource"
 
 func ExtendSourcePattern(
 	resourcePattern string,
-	sourcePattern string) (string, error) {
+	sourcePattern string,
+	projectID string) (string, error) {
 	// Extends the source pattern by replacing references to $resource
 	// Example:
 	// resourcePattern: "apis/-/versions/-/specs/-/artifacts/-"
@@ -37,7 +38,7 @@ func ExtendSourcePattern(
 	// Returns "apis/-/versions/-"
 
 	if !strings.HasPrefix(sourcePattern, resourceKW) {
-		return sourcePattern, nil
+		return fmt.Sprintf("projects/%s/locations/global/%s", projectID, sourcePattern), nil
 	}
 
 	entityRegex := regexp.MustCompile(fmt.Sprintf(`\%s\.(api|version|spec|artifact)`, resourceKW))
@@ -69,8 +70,37 @@ func ExtendSourcePattern(
 
 }
 
+func ResourceNameFromDependency(
+	resourcePattern string,
+	dependency Resource) (string, error) {
+	// Derives the resource name from the provided resourcePattern and dependencyName.
+	// Example:
+	// resourcePattern: apis/-/versions/-/specs/-
+	// dependencyName: apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity
+	// returns apis/petstore/versions/1.0.0/specs/opennapi.yaml
+	// Replace apis/- pattern with the corresponding name and so on.
+	re := regexp.MustCompile(`.*(/apis/)-`)
+	resourceName := string(
+		re.ReplaceAll([]byte(resourcePattern), []byte(fmt.Sprintf("%s", dependency.GetApi()))))
+
+	re = regexp.MustCompile(`.*(/versions/)-`)
+	resourceName = string(
+		re.ReplaceAll([]byte(resourceName), []byte(fmt.Sprintf("%s", dependency.GetVersion()))))
+
+	re = regexp.MustCompile(`.*(/specs/)-`)
+	resourceName = string(
+		re.ReplaceAll([]byte(resourceName), []byte(fmt.Sprintf("%s", dependency.GetSpec()))))
+
+	re = regexp.MustCompile(`.*(/artifacts/)-`)
+	resourceName = string(
+		re.ReplaceAll([]byte(resourceName), []byte(fmt.Sprintf("%s", dependency.GetArtifact()))))
+
+	return resourceName, nil
+
+}
+
 func ExtractGroup(pattern string, resource Resource) (string, error) {
-	// Reads the sourcePattern, finds out group by entity type and returns te group value
+	// Reads the sourcePattern, finds out group by entity type and returns the group value
 	// Example:
 	// pattern: $resource.api/versions/-/specs/-
 	// resource: "projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml"
