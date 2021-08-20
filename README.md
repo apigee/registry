@@ -31,8 +31,7 @@ This reference implementation is a [gRPC](https://grpc.io) service written in
 Go. It can be run locally or deployed in a container using services including
 [Google Cloud Run](https://cloud.google.com/run). It stores data using a
 configurable relational interface layer that currently supports
-[PostgreSQL](https://www.postgresql.org/) and [SQLite](https://www.sqlite.org/)
-(see [config](config) for details).
+[PostgreSQL](https://www.postgresql.org/) and [SQLite](https://www.sqlite.org/).
 
 The Registry API service is annotated to support
 [gRPC HTTP/JSON transcoding](https://aip.dev/127), which allows it to be
@@ -91,10 +90,10 @@ include:
 
 ## Quickstart
 
-The easiest way to try the Registry API is to run `registry-server` locally
-using the SQLite backend.
+The easiest way to try the Registry API is to run `registry-server` locally.
+By default, the server is configured to use a SQLite database.
 
-`registry-server -c config/sqlite.yaml`
+`registry-server`
 
 Next, in a separate terminal, configure your environment to point to this
 server with the following:
@@ -110,37 +109,57 @@ Next run a suite of tests with `make test` and see a corresponding walkthrough
 of API features in [tests/demo/walkthrough.sh](tests/demo/walkthrough.sh). For
 more demonstrations, see the [demos](demos) directory.
 
-## Running the Registry API server locally
+## Running the Registry API server
+
+### Configuration
+
+Configuration for `registry-server` is loaded from the
+`$HOME/.config/registry/` directory by default. We recommend YAML
+configuration, but other file types are supported. See the Viper
+[documentation](https://github.com/spf13/viper) for more information. Refer to
+this [example](config/registry-server.yaml) for documentation of each
+configurable value.
+
+Configuration can be loaded from a custom file path using the `--configuration`
+or `-c` flag. If provided, other directories will not be searched.
+
+Values can be set or overridden using environment variables. Each configuration
+value should be uppercased, prefixed with `REGISTRY_`, and use underscores to
+indicate nesting. For example, you can override the `database.driver` value by
+setting the `REGISTRY_DATABASE_DRIVER` environment variable.
 
 ### Running the Registry API server
 
-Running `source auth/LOCAL.sh` will configure your environment to run the
-Registry API server locally and for the included clients to call your local
-instance. Start the server by running `registry-server`. By default a SQLite
-backend will be used (this is equivalent to running
-`registry-server -c config/sqlite.yaml`).
+Run `source auth/LOCAL.sh` to configure your environment to run the Registry
+API server locally and for the included clients to call your local instance.
+Start the server by running `registry-server`.
 
-### Optional: Running with a PostgreSQL backend
+### Optional: Use a PostgreSQL database on the local machine
 
-The `config` directory contains examples of files that can be used to configure
-the `registry-server`. [config/postgres.yaml](config/postgres.yaml) contains a
-sample configuration; you'll likely need to customize this for your own
-`postgresql` instance. Use it with:
+Ensure you have PostgreSQL [installed](https://www.postgresql.org/download/)
+and set up on your machine. After it's ready, update the `database.driver` and
+`database.dsn` values in your configuration.
 
-`registry-server -c config/postgres.yaml`
+For example:
+```
+database:
+  driver: postgres
+  dsn: host=localhost port=<dbport> user=<dbuser> dbname=<dbname> password=<dbpassword> sslmode=disable
+```
 
-### Optional: Running with a PostgreSQL backend on Google CloudSQL
+### Optional: Use a PostgreSQL database on Google Cloud SQL
 
-[config/cloudsql-postgres.yaml](config/cloudsql-postgres.yaml) contains the
-configuration to connect to a PostgreSQL database hosted on CloudSQL. If you
-don't have an existing PostgreSQL instance, you can follow
-[these instructions](https://cloud.google.com/sql/docs/postgres/quickstart) to
-setup one. Please make sure to update
-[config/cloudsql-postgres.yaml](config/cloudsql-postgres.yaml) with the correct
-host configuration. As previously noted, you can start the server with the
-following:
+If you don't have an existing PostgreSQL instance, you can follow
+[these instructions](https://cloud.google.com/sql/docs/postgres/quickstart).
+After your instance is ready, update the `database.driver` and `database.dsn`
+values in your configuration.
 
-`registry-server -c config/cloudsql-postgres.yaml`
+For example:
+```
+database:
+  driver: cloudsqlpostgres
+  dsn: host=<project_id>:<region>:<instance_id> user=<dbuser> dbname=<dbname> password=<dbpassword> sslmode=disable
+```
 
 ### Optional: Proxying a local service with Envoy
 
@@ -190,33 +209,31 @@ like this:
 docker run -p 8080:8080 registry-server:latest
 ```
 
-Since this is using the default configuration, you'll get an error message
-similar to this:
+Since the default configuration uses a SQLite database, any requests that try
+to connect to the database will get an error similar to this:
 
 ```
-Failed to start: sqlite3 is unavailable, please recompile with CGO_ENABLED=1 or configure registry-server to use a different database
+Binary was compiled with 'CGO_ENABLED=0', go-sqlite3 requires cgo to work. This is a stub
 ```
 
-This is because container builds exclude `CGO`, which is required by the
-default database (sqlite3). To resolve this, you could rebuild your container
-with a modified `registry.yaml` (this is the default configuration used by the
-build) or, more simply, specify a configuration using the environment variables
-referenced in [config/registry.yaml](config/registry.yaml). Following those,
-your `docker run` invocation might look like this:
+This is because container builds exclude `CGO`, which is required by SQLite. To
+resolve this, you can rebuild your container with a modified configuration or,
+more simply, override the configuration using environment variables.
+
+Your `docker run` invocation might look like this:
 
 ```
 docker run \
   -p 8080:8080 \
-  -e REGISTRY_DATABASE=postgres \
-  -e REGISTRY_DBCONFIG="host=${PGHOST} port=5432 user=registry dbname=registry password=iloveapis sslmode=disable" \
+  -e REGISTRY_DATABASE_DRIVER=postgres \
+  -e REGISTRY_DATABASE_DSN="host=${PGHOST} port=5432 user=registry dbname=registry password=iloveapis sslmode=disable" \
   registry-server:latest
 ```
 
 Be sure to replace `${PGHOST}` with the address of your Postgres server (either
 directly or by setting `PGHOST` with another `-e` argument to `docker run`),
-check all the other REGISTRY_DBCONFIG parameters, and verify that your server
-is configured to accept remote connections (in `postgres.conf` and
-`pg_hba.conf`).
+check all the other DSN parameters, and verify that your server is configured
+to accept remote connections (in `postgres.conf` and `pg_hba.conf`).
 
 ## Running the Registry API server with Google Cloud Run
 

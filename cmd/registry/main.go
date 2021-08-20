@@ -17,10 +17,18 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/apigee/registry/cmd/registry/cmd"
+	"github.com/google/uuid"
 )
+
+// Initialize global default logger with unique process identifier.
+func init() {
+	uid := fmt.Sprintf("[ %.8s ] ", uuid.New())
+	log.SetPrefix(uid)
+}
 
 func main() {
 	ctx := context.Background()
