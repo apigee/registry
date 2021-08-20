@@ -95,6 +95,51 @@ func SeedRegistry(ctx context.Context, s rpc.RegistryServer, resources ...Regist
 	return nil
 }
 
+// SeedProjects is a convenience function for calling SeedRegistry with only Project messages.
+func SeedProjects(ctx context.Context, s rpc.RegistryServer, projects ...*rpc.Project) error {
+	resources := make([]RegistryResource, 0, len(projects))
+	for _, r := range projects {
+		resources = append(resources, r)
+	}
+	return SeedRegistry(ctx, s, resources...)
+}
+
+// SeedApis is a convenience function for calling SeedRegistry with only Api messages.
+func SeedApis(ctx context.Context, s rpc.RegistryServer, apis ...*rpc.Api) error {
+	resources := make([]RegistryResource, 0, len(apis))
+	for _, r := range apis {
+		resources = append(resources, r)
+	}
+	return SeedRegistry(ctx, s, resources...)
+}
+
+// SeedVersions is a convenience function for calling SeedRegistry with only ApiVersion messages.
+func SeedVersions(ctx context.Context, s rpc.RegistryServer, versions ...*rpc.ApiVersion) error {
+	resources := make([]RegistryResource, 0, len(versions))
+	for _, r := range versions {
+		resources = append(resources, r)
+	}
+	return SeedRegistry(ctx, s, resources...)
+}
+
+// SeedSpecs is a convenience function for calling SeedRegistry with only ApiSpec messages.
+func SeedSpecs(ctx context.Context, s rpc.RegistryServer, specs ...*rpc.ApiSpec) error {
+	resources := make([]RegistryResource, 0, len(specs))
+	for _, r := range specs {
+		resources = append(resources, r)
+	}
+	return SeedRegistry(ctx, s, resources...)
+}
+
+// SeedArtifacts is a convenience function for calling SeedRegistry with only Artifact messages.
+func SeedArtifacts(ctx context.Context, s rpc.RegistryServer, artifacts ...*rpc.Artifact) error {
+	resources := make([]RegistryResource, 0, len(artifacts))
+	for _, r := range artifacts {
+		resources = append(resources, r)
+	}
+	return SeedRegistry(ctx, s, resources...)
+}
+
 func seedProject(ctx context.Context, s rpc.RegistryServer, p *rpc.Project, history map[string]bool) error {
 	if id := p.GetName(); history[id] {
 		return nil
