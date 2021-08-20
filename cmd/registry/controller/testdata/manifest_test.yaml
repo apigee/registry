@@ -18,4 +18,4 @@ generated_resources:
   dependencies:
   - pattern: $resource.spec
     filter: "mime_type.contains('openapi')"
-  action: "compute lint $source0 --linter gnostic"
+  action: "compute lint $0 --linter gnostic"
