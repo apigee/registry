@@ -142,7 +142,7 @@ func (s *Spec) RevisionName() string {
 }
 
 // BasicMessage returns the basic view of the spec resource as an RPC message.
-func (s *Spec) BasicMessage(name string) (message *rpc.ApiSpec, err error) {
+func (s *Spec) BasicMessage(name string, tags []string) (message *rpc.ApiSpec, err error) {
 	message = &rpc.ApiSpec{
 		Name:               name,
 		Filename:           s.FileName,
@@ -152,6 +152,7 @@ func (s *Spec) BasicMessage(name string) (message *rpc.ApiSpec, err error) {
 		MimeType:           s.MimeType,
 		SourceUri:          s.SourceURI,
 		RevisionId:         s.RevisionID,
+		RevisionTags:       tags,
 		CreateTime:         timestamppb.New(s.CreateTime),
 		RevisionCreateTime: timestamppb.New(s.RevisionCreateTime),
 		RevisionUpdateTime: timestamppb.New(s.RevisionUpdateTime),
