@@ -287,7 +287,7 @@ func TestListApiSpecRevisions(t *testing.T) {
 	})
 
 	createReq := &rpc.CreateApiSpecRequest{
-		Parent:    "projects/my-project/apis/my-api/versions/v1",
+		Parent:    "projects/my-project/locations/global/apis/my-api/versions/v1",
 		ApiSpecId: "my-spec",
 		ApiSpec:   &rpc.ApiSpec{},
 	}
@@ -401,7 +401,7 @@ func TestUpdateApiSpecRevisions(t *testing.T) {
 	})
 
 	createReq := &rpc.CreateApiSpecRequest{
-		Parent:    "projects/my-project/apis/my-api/versions/v1",
+		Parent:    "projects/my-project/locations/global/apis/my-api/versions/v1",
 		ApiSpecId: "my-spec",
 		ApiSpec: &rpc.ApiSpec{
 			Description: "Empty First Revision",

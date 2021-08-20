@@ -56,9 +56,9 @@ func seedArtifacts(ctx context.Context, t *testing.T, s *RegistryServer, artifac
 			seedApis(ctx, t, s, &rpc.Api{
 				Name: parent,
 			})
-		} else if _, err := names.ParseProject(parent); err == nil {
+		} else if p, err := names.ParseProjectWithLocation(parent); err == nil {
 			seedProjects(ctx, t, s, &rpc.Project{
-				Name: parent,
+				Name: "projects/" + p.ProjectID,
 			})
 		} else {
 			t.Log("Failed to identify parent resource: proceeding without seeding parent")
@@ -90,7 +90,7 @@ func TestCreateArtifact(t *testing.T) {
 			desc: "fully populated resource",
 			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.CreateArtifactRequest{
-				Parent:     "projects/my-project",
+				Parent:     "projects/my-project/locations/global",
 				ArtifactId: "my-artifact",
 				Artifact: &rpc.Artifact{
 					MimeType:  "application/json",
@@ -100,7 +100,7 @@ func TestCreateArtifact(t *testing.T) {
 				},
 			},
 			want: &rpc.Artifact{
-				Name:      "projects/my-project/artifacts/my-artifact",
+				Name:      "projects/my-project/locations/global/artifacts/my-artifact",
 				MimeType:  "application/json",
 				SizeBytes: int32(len(artifactContents)),
 				Hash:      sha256hash(artifactContents),
@@ -164,7 +164,7 @@ func TestCreateArtifactResponseCodes(t *testing.T) {
 			desc: "parent not found",
 			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.CreateArtifactRequest{
-				Parent:     "projects/other-project",
+				Parent:     "projects/other-project/locations/global",
 				ArtifactId: "valid-id",
 				Artifact:   &rpc.Artifact{},
 			},
@@ -174,7 +174,7 @@ func TestCreateArtifactResponseCodes(t *testing.T) {
 			desc: "missing resource body",
 			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.CreateArtifactRequest{
-				Parent:     "projects/my-project",
+				Parent:     "projects/my-project/locations/global",
 				ArtifactId: "valid-id",
 				Artifact:   nil,
 			},
@@ -184,7 +184,7 @@ func TestCreateArtifactResponseCodes(t *testing.T) {
 			desc: "missing custom identifier",
 			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.CreateArtifactRequest{
-				Parent:     "projects/my-project",
+				Parent:     "projects/my-project/locations/global",
 				ArtifactId: "",
 				Artifact:   &rpc.Artifact{},
 			},
@@ -194,7 +194,7 @@ func TestCreateArtifactResponseCodes(t *testing.T) {
 			desc: "long custom identifier",
 			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.CreateArtifactRequest{
-				Parent:     "projects/my-project",
+				Parent:     "projects/my-project/locations/global",
 				ArtifactId: "this-identifier-is-invalid-because-it-exceeds-the-eighty-character-maximum-length",
 				Artifact:   &rpc.Artifact{},
 			},
@@ -204,7 +204,7 @@ func TestCreateArtifactResponseCodes(t *testing.T) {
 			desc: "custom identifier underscores",
 			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.CreateArtifactRequest{
-				Parent:     "projects/my-project",
+				Parent:     "projects/my-project/locations/global",
 				ArtifactId: "underscore_identifier",
 				Artifact:   &rpc.Artifact{},
 			},
@@ -214,7 +214,7 @@ func TestCreateArtifactResponseCodes(t *testing.T) {
 			desc: "custom identifier hyphen prefix",
 			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.CreateArtifactRequest{
-				Parent:     "projects/my-project",
+				Parent:     "projects/my-project/locations/global",
 				ArtifactId: "-identifier",
 				Artifact:   &rpc.Artifact{},
 			},
@@ -224,7 +224,7 @@ func TestCreateArtifactResponseCodes(t *testing.T) {
 			desc: "custom identifier hyphen suffix",
 			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.CreateArtifactRequest{
-				Parent:     "projects/my-project",
+				Parent:     "projects/my-project/locations/global",
 				ArtifactId: "identifier-",
 				Artifact:   &rpc.Artifact{},
 			},
@@ -234,7 +234,7 @@ func TestCreateArtifactResponseCodes(t *testing.T) {
 			desc: "customer identifier uuid format",
 			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.CreateArtifactRequest{
-				Parent:     "projects/my-project",
+				Parent:     "projects/my-project/locations/global",
 				ArtifactId: "072d2288-c685-42d8-9df0-5edbb2a809ea",
 				Artifact:   &rpc.Artifact{},
 			},
@@ -244,7 +244,7 @@ func TestCreateArtifactResponseCodes(t *testing.T) {
 			desc: "custom identifier mixed case",
 			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.CreateArtifactRequest{
-				Parent:     "projects/my-project",
+				Parent:     "projects/my-project/locations/global",
 				ArtifactId: "IDentifier",
 				Artifact:   &rpc.Artifact{},
 			},
@@ -274,9 +274,9 @@ func TestCreateArtifactDuplicates(t *testing.T) {
 	}{
 		{
 			desc: "case sensitive",
-			seed: &rpc.Artifact{Name: "projects/my-project/artifacts/my-artifact"},
+			seed: &rpc.Artifact{Name: "projects/my-project/locations/global/artifacts/my-artifact"},
 			req: &rpc.CreateArtifactRequest{
-				Parent:     "projects/my-project",
+				Parent:     "projects/my-project/locations/global",
 				ArtifactId: "my-artifact",
 				Artifact:   &rpc.Artifact{},
 			},
@@ -284,9 +284,9 @@ func TestCreateArtifactDuplicates(t *testing.T) {
 		},
 		{
 			desc: "case insensitive",
-			seed: &rpc.Artifact{Name: "projects/my-project/artifacts/my-artifact"},
+			seed: &rpc.Artifact{Name: "projects/my-project/locations/global/artifacts/my-artifact"},
 			req: &rpc.CreateArtifactRequest{
-				Parent:     "projects/my-project",
+				Parent:     "projects/my-project/locations/global",
 				ArtifactId: "My-Artifact",
 				Artifact:   &rpc.Artifact{},
 			},
@@ -317,17 +317,17 @@ func TestGetArtifact(t *testing.T) {
 		{
 			desc: "fully populated resource",
 			seed: &rpc.Artifact{
-				Name:      "projects/my-project/artifacts/my-artifact",
+				Name:      "projects/my-project/locations/global/artifacts/my-artifact",
 				MimeType:  "application/json",
 				SizeBytes: int32(len(artifactContents)),
 				Hash:      sha256hash(artifactContents),
 				Contents:  artifactContents,
 			},
 			req: &rpc.GetArtifactRequest{
-				Name: "projects/my-project/artifacts/my-artifact",
+				Name: "projects/my-project/locations/global/artifacts/my-artifact",
 			},
 			want: &rpc.Artifact{
-				Name:      "projects/my-project/artifacts/my-artifact",
+				Name:      "projects/my-project/locations/global/artifacts/my-artifact",
 				MimeType:  "application/json",
 				SizeBytes: int32(len(artifactContents)),
 				Hash:      sha256hash(artifactContents),
@@ -369,7 +369,7 @@ func TestGetArtifactResponseCodes(t *testing.T) {
 			desc: "resource not found",
 			seed: &rpc.Artifact{Name: "projects/my-project/locations/global/artifacts/my-artifact"},
 			req: &rpc.GetArtifactRequest{
-				Name: "projects/my-project/artifacts/doesnt-exist",
+				Name: "projects/my-project/locations/global/artifacts/doesnt-exist",
 			},
 			want: codes.NotFound,
 		},
@@ -804,7 +804,7 @@ func TestListArtifactsLargeCollectionFiltering(t *testing.T) {
 	}
 
 	req := &rpc.ListArtifactsRequest{
-		Parent:   "projects/my-project",
+		Parent:   "projects/my-project/locations/global",
 		PageSize: 1,
 		Filter:   "name == 'projects/my-project/locations/global/artifacts/a099'",
 	}
@@ -833,11 +833,11 @@ func TestReplaceArtifact(t *testing.T) {
 		{
 			desc: "fully populated resource",
 			seed: &rpc.Artifact{
-				Name: "projects/my-project/artifacts/my-artifact",
+				Name: "projects/my-project/locations/global/artifacts/my-artifact",
 			},
 			req: &rpc.ReplaceArtifactRequest{
 				Artifact: &rpc.Artifact{
-					Name:      "projects/my-project/artifacts/my-artifact",
+					Name:      "projects/my-project/locations/global/artifacts/my-artifact",
 					MimeType:  "application/json",
 					SizeBytes: int32(len(artifactContents)),
 					Hash:      sha256hash(artifactContents),
@@ -845,7 +845,7 @@ func TestReplaceArtifact(t *testing.T) {
 				},
 			},
 			want: &rpc.Artifact{
-				Name:      "projects/my-project/artifacts/my-artifact",
+				Name:      "projects/my-project/locations/global/artifacts/my-artifact",
 				MimeType:  "application/json",
 				SizeBytes: int32(len(artifactContents)),
 				Hash:      sha256hash(artifactContents),

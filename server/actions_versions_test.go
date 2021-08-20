@@ -71,7 +71,7 @@ func TestCreateApiVersion(t *testing.T) {
 				Name: "projects/my-project/locations/global/apis/my-api",
 			},
 			req: &rpc.CreateApiVersionRequest{
-				Parent:       "projects/my-project/apis/my-api",
+				Parent:       "projects/my-project/locations/global/apis/my-api",
 				ApiVersionId: "v1",
 				ApiVersion: &rpc.ApiVersion{
 					DisplayName: "My Display Name",
@@ -86,7 +86,7 @@ func TestCreateApiVersion(t *testing.T) {
 				},
 			},
 			want: &rpc.ApiVersion{
-				Name:        "projects/my-project/apis/my-api/versions/v1",
+				Name:        "projects/my-project/locations/global/apis/my-api/versions/v1",
 				DisplayName: "My Display Name",
 				Description: "My Description",
 				State:       "My State",
@@ -156,7 +156,7 @@ func TestCreateApiVersionResponseCodes(t *testing.T) {
 			desc: "parent not found",
 			seed: &rpc.Api{Name: "projects/my-project/locations/global/apis/my-api"},
 			req: &rpc.CreateApiVersionRequest{
-				Parent:       "projects/my-project/apis/other-api",
+				Parent:       "projects/my-project/locations/global/apis/other-api",
 				ApiVersionId: "valid-id",
 				ApiVersion:   &rpc.ApiVersion{},
 			},
@@ -166,7 +166,7 @@ func TestCreateApiVersionResponseCodes(t *testing.T) {
 			desc: "missing resource body",
 			seed: &rpc.Api{Name: "projects/my-project/locations/global/apis/my-api"},
 			req: &rpc.CreateApiVersionRequest{
-				Parent:       "projects/my-project/apis/my-api",
+				Parent:       "projects/my-project/locations/global/apis/my-api",
 				ApiVersionId: "valid-id",
 				ApiVersion:   nil,
 			},
@@ -174,9 +174,9 @@ func TestCreateApiVersionResponseCodes(t *testing.T) {
 		},
 		{
 			desc: "missing custom identifier",
-			seed: &rpc.Api{Name: "projects/my-project/apis/my-api"},
+			seed: &rpc.Api{Name: "projects/my-project/locations/global/apis/my-api"},
 			req: &rpc.CreateApiVersionRequest{
-				Parent:       "projects/my-project/apis/my-api",
+				Parent:       "projects/my-project/locations/global/apis/my-api",
 				ApiVersionId: "",
 				ApiVersion:   &rpc.ApiVersion{},
 			},
@@ -266,9 +266,9 @@ func TestCreateApiVersionDuplicates(t *testing.T) {
 	}{
 		{
 			desc: "case sensitive",
-			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
+			seed: &rpc.ApiVersion{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
 			req: &rpc.CreateApiVersionRequest{
-				Parent:       "projects/my-project/apis/my-api",
+				Parent:       "projects/my-project/locations/global/apis/my-api",
 				ApiVersionId: "v1",
 				ApiVersion:   &rpc.ApiVersion{},
 			},
@@ -276,9 +276,9 @@ func TestCreateApiVersionDuplicates(t *testing.T) {
 		},
 		{
 			desc: "case insensitive",
-			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
+			seed: &rpc.ApiVersion{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
 			req: &rpc.CreateApiVersionRequest{
-				Parent:       "projects/my-project/apis/my-api",
+				Parent:       "projects/my-project/locations/global/apis/my-api",
 				ApiVersionId: "V1",
 				ApiVersion:   &rpc.ApiVersion{},
 			},
@@ -309,7 +309,7 @@ func TestGetApiVersion(t *testing.T) {
 		{
 			desc: "fully populated resource",
 			seed: &rpc.ApiVersion{
-				Name:        "projects/my-project/apis/my-api/versions/my-version",
+				Name:        "projects/my-project/locations/global/apis/my-api/versions/my-version",
 				DisplayName: "My Display Name",
 				Description: "My Description",
 				State:       "My State",
@@ -321,10 +321,10 @@ func TestGetApiVersion(t *testing.T) {
 				},
 			},
 			req: &rpc.GetApiVersionRequest{
-				Name: "projects/my-project/apis/my-api/versions/my-version",
+				Name: "projects/my-project/locations/global/apis/my-api/versions/my-version",
 			},
 			want: &rpc.ApiVersion{
-				Name:        "projects/my-project/apis/my-api/versions/my-version",
+				Name:        "projects/my-project/locations/global/apis/my-api/versions/my-version",
 				DisplayName: "My Display Name",
 				Description: "My Description",
 				State:       "My State",
@@ -777,18 +777,18 @@ func TestUpdateApiVersion(t *testing.T) {
 		{
 			desc: "implicit nil mask",
 			seed: &rpc.ApiVersion{
-				Name:        "projects/my-project/apis/my-api/versions/v1",
+				Name:        "projects/my-project/locations/global/apis/my-api/versions/v1",
 				DisplayName: "Version One",
 				Description: "My ApiVersion",
 			},
 			req: &rpc.UpdateApiVersionRequest{
 				ApiVersion: &rpc.ApiVersion{
-					Name:        "projects/my-project/apis/my-api/versions/v1",
+					Name:        "projects/my-project/locations/global/apis/my-api/versions/v1",
 					Description: "My Updated ApiVersion",
 				},
 			},
 			want: &rpc.ApiVersion{
-				Name:        "projects/my-project/apis/my-api/versions/v1",
+				Name:        "projects/my-project/locations/global/apis/my-api/versions/v1",
 				DisplayName: "Version One",
 				Description: "My Updated ApiVersion",
 			},

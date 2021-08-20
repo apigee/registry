@@ -75,7 +75,7 @@ func TestCreateApiSpec(t *testing.T) {
 	}{
 		{
 			desc: "fully populated resource",
-			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
+			seed: &rpc.ApiVersion{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
 			req: &rpc.CreateApiSpecRequest{
 				Parent:    "projects/my-project/locations/global/apis/my-api/versions/v1",
 				ApiSpecId: "my-spec",
@@ -94,7 +94,7 @@ func TestCreateApiSpec(t *testing.T) {
 				},
 			},
 			want: &rpc.ApiSpec{
-				Name:         "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
+				Name:         "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
 				Filename:     "openapi.json",
 				Description:  "My Description",
 				MimeType:     "application/x.openapi;version=3.0.0",
@@ -174,7 +174,7 @@ func TestCreateApiSpecResponseCodes(t *testing.T) {
 			desc: "parent not found",
 			seed: &rpc.ApiVersion{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
 			req: &rpc.CreateApiSpecRequest{
-				Parent:    "projects/my-project/apis/my-api/versions/v2",
+				Parent:    "projects/my-project/locations/global/apis/my-api/versions/v2",
 				ApiSpecId: "valid-id",
 				ApiSpec:   &rpc.ApiSpec{},
 			},
@@ -184,7 +184,7 @@ func TestCreateApiSpecResponseCodes(t *testing.T) {
 			desc: "missing resource body",
 			seed: &rpc.ApiVersion{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
 			req: &rpc.CreateApiSpecRequest{
-				Parent:    "projects/my-project/apis/my-api/versions/v1",
+				Parent:    "projects/my-project/locations/global/apis/my-api/versions/v1",
 				ApiSpecId: "valid-id",
 				ApiSpec:   nil,
 			},
@@ -192,9 +192,9 @@ func TestCreateApiSpecResponseCodes(t *testing.T) {
 		},
 		{
 			desc: "missing custom identifier",
-			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
+			seed: &rpc.ApiVersion{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
 			req: &rpc.CreateApiSpecRequest{
-				Parent:    "projects/my-project/apis/my-api/versions/v1",
+				Parent:    "projects/my-project/locations/global/apis/my-api/versions/v1",
 				ApiSpecId: "",
 				ApiSpec:   &rpc.ApiSpec{},
 			},
@@ -294,9 +294,9 @@ func TestCreateApiSpecDuplicates(t *testing.T) {
 	}{
 		{
 			desc: "case sensitive",
-			seed: &rpc.ApiSpec{Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec"},
+			seed: &rpc.ApiSpec{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
 			req: &rpc.CreateApiSpecRequest{
-				Parent:    "projects/my-project/apis/my-api/versions/v1",
+				Parent:    "projects/my-project/locations/global/apis/my-api/versions/v1",
 				ApiSpecId: "my-spec",
 				ApiSpec:   &rpc.ApiSpec{},
 			},
@@ -304,9 +304,9 @@ func TestCreateApiSpecDuplicates(t *testing.T) {
 		},
 		{
 			desc: "case insensitive",
-			seed: &rpc.ApiSpec{Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec"},
+			seed: &rpc.ApiSpec{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
 			req: &rpc.CreateApiSpecRequest{
-				Parent:    "projects/my-project/apis/my-api/versions/v1",
+				Parent:    "projects/my-project/locations/global/apis/my-api/versions/v1",
 				ApiSpecId: "My-Spec",
 				ApiSpec:   &rpc.ApiSpec{},
 			},
@@ -337,7 +337,7 @@ func TestGetApiSpec(t *testing.T) {
 		{
 			desc: "fully populated resource",
 			seed: &rpc.ApiSpec{
-				Name:        "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
+				Name:        "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
 				Filename:    "openapi.json",
 				Description: "My API Spec",
 				MimeType:    "application/x.openapi;version=3.0.0",
@@ -351,10 +351,10 @@ func TestGetApiSpec(t *testing.T) {
 				},
 			},
 			req: &rpc.GetApiSpecRequest{
-				Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
+				Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
 			},
 			want: &rpc.ApiSpec{
-				Name:         "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
+				Name:         "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
 				Filename:     "openapi.json",
 				Description:  "My API Spec",
 				MimeType:     "application/x.openapi;version=3.0.0",
@@ -967,18 +967,18 @@ func TestUpdateApiSpec(t *testing.T) {
 		{
 			desc: "implicit nil mask",
 			seed: &rpc.ApiSpec{
-				Name:        "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
+				Name:        "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
 				Description: "My ApiSpec",
 				Filename:    "openapi.json",
 			},
 			req: &rpc.UpdateApiSpecRequest{
 				ApiSpec: &rpc.ApiSpec{
-					Name:        "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
+					Name:        "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
 					Description: "My Updated ApiSpec",
 				},
 			},
 			want: &rpc.ApiSpec{
-				Name:        "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
+				Name:        "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
 				Description: "My Updated ApiSpec",
 				Filename:    "openapi.json",
 			},

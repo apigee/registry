@@ -65,5 +65,5 @@ func normalize(identifier string) string {
 }
 
 // LocationSegment is included in resource names immediately following the
-// project_id. It can be set to an empty string to omit location.
+// project_id.
 var LocationSegment = "/locations/global"
