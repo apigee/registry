@@ -158,7 +158,7 @@ func buildTestProject(ctx context.Context, registryClient connection.Client, t *
 	// Create test APIs.
 	for i := 0; i < apiCount; i++ {
 		req := &rpc.CreateApiRequest{
-			Parent: project.GetName(),
+			Parent: project.GetName() + "/locations/global",
 			ApiId:  fmt.Sprintf("api%03d", i),
 			Api: &rpc.Api{
 				DisplayName:  fmt.Sprintf("API-%03d", i),
