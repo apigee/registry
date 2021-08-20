@@ -15,11 +15,8 @@
 package models
 
 import (
-	"bytes"
-	"compress/gzip"
 	"crypto/sha256"
 	"fmt"
-	"io/ioutil"
 	"strings"
 	"time"
 
@@ -29,16 +26,6 @@ import (
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
-
-// GUnzippedBytes uncompresses a slice of bytes.
-func GUnzippedBytes(input []byte) ([]byte, error) {
-	buf := bytes.NewBuffer(input)
-	zr, err := gzip.NewReader(buf)
-	if err != nil {
-		return nil, err
-	}
-	return ioutil.ReadAll(zr)
-}
 
 // Spec is the storage-side representation of a spec.
 type Spec struct {
