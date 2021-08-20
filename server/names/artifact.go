@@ -20,10 +20,10 @@ import (
 )
 
 var (
-	projectArtifactRegexp = regexp.MustCompile(fmt.Sprintf("^projects/%s/artifacts/%s", identifier, identifier))
-	apiArtifactRegexp     = regexp.MustCompile(fmt.Sprintf("^projects/%s/apis/%s/artifacts/%s", identifier, identifier, identifier))
-	versionArtifactRegexp = regexp.MustCompile(fmt.Sprintf("^projects/%s/apis/%s/versions/%s/artifacts/%s", identifier, identifier, identifier, identifier))
-	specArtifactRegexp    = regexp.MustCompile(fmt.Sprintf("^projects/%s/apis/%s/versions/%s/specs/%s/artifacts/%s", identifier, identifier, identifier, identifier, identifier))
+	projectArtifactRegexp = regexp.MustCompile(fmt.Sprintf("^projects/%s%s/artifacts/%s", identifier, LocationSegment, identifier))
+	apiArtifactRegexp     = regexp.MustCompile(fmt.Sprintf("^projects/%s%s/apis/%s/artifacts/%s", identifier, LocationSegment, identifier, identifier))
+	versionArtifactRegexp = regexp.MustCompile(fmt.Sprintf("^projects/%s%s/apis/%s/versions/%s/artifacts/%s", identifier, LocationSegment, identifier, identifier, identifier))
+	specArtifactRegexp    = regexp.MustCompile(fmt.Sprintf("^projects/%s%s/apis/%s/versions/%s/specs/%s/artifacts/%s", identifier, LocationSegment, identifier, identifier, identifier, identifier))
 )
 
 // Artifact represents a resource name for an artifact.
@@ -146,7 +146,8 @@ func (a projectArtifact) Validate() error {
 }
 
 func (a projectArtifact) String() string {
-	return normalize(fmt.Sprintf("projects/%s/artifacts/%s", a.ProjectID, a.ArtifactID))
+	return normalize(fmt.Sprintf("projects/%s%s/artifacts/%s",
+		a.ProjectID, LocationSegment, a.ArtifactID))
 }
 
 func parseProjectArtifact(name string) (projectArtifact, error) {
@@ -178,7 +179,8 @@ func (a apiArtifact) Validate() error {
 }
 
 func (a apiArtifact) String() string {
-	return normalize(fmt.Sprintf("projects/%s/apis/%s/artifacts/%s", a.ProjectID, a.ApiID, a.ArtifactID))
+	return normalize(fmt.Sprintf("projects/%s%s/apis/%s/artifacts/%s",
+		a.ProjectID, LocationSegment, a.ApiID, a.ArtifactID))
 }
 
 func parseApiArtifact(name string) (apiArtifact, error) {
@@ -212,7 +214,8 @@ func (a versionArtifact) Validate() error {
 }
 
 func (a versionArtifact) String() string {
-	return normalize(fmt.Sprintf("projects/%s/apis/%s/versions/%s/artifacts/%s", a.ProjectID, a.ApiID, a.VersionID, a.ArtifactID))
+	return normalize(fmt.Sprintf("projects/%s%s/apis/%s/versions/%s/artifacts/%s",
+		a.ProjectID, LocationSegment, a.ApiID, a.VersionID, a.ArtifactID))
 }
 
 func parseVersionArtifact(name string) (versionArtifact, error) {
@@ -248,7 +251,8 @@ func (a specArtifact) Validate() error {
 }
 
 func (a specArtifact) String() string {
-	return normalize(fmt.Sprintf("projects/%s/apis/%s/versions/%s/specs/%s/artifacts/%s", a.ProjectID, a.ApiID, a.VersionID, a.SpecID, a.ArtifactID))
+	return normalize(fmt.Sprintf("projects/%s%s/apis/%s/versions/%s/specs/%s/artifacts/%s",
+		a.ProjectID, LocationSegment, a.ApiID, a.VersionID, a.SpecID, a.ArtifactID))
 }
 
 func parseSpecArtifact(name string) (specArtifact, error) {
@@ -270,10 +274,14 @@ func parseSpecArtifact(name string) (specArtifact, error) {
 
 // ArtifactsRegexp returns a regular expression that matches collection of artifacts.
 func ArtifactsRegexp() *regexp.Regexp {
-	return regexp.MustCompile(fmt.Sprintf("^projects/%s(/apis/%s(/versions/%s(/specs/%s)?)?)?/artifacts$", identifier, identifier, identifier, identifier))
+	return regexp.MustCompile(
+		fmt.Sprintf("^projects/%s%s(/apis/%s(/versions/%s(/specs/%s)?)?)?/artifacts$",
+			identifier, LocationSegment, identifier, identifier, identifier))
 }
 
 // ArtifactRegexp returns a regular expression that matches an artifact resource name.
 func ArtifactRegexp() *regexp.Regexp {
-	return regexp.MustCompile(fmt.Sprintf("^projects/%s(/apis/%s(/versions/%s(/specs/%s)?)?)?/artifacts/%s$", identifier, identifier, identifier, identifier, identifier))
+	return regexp.MustCompile(
+		fmt.Sprintf("^projects/%s%s(/apis/%s(/versions/%s(/specs/%s)?)?)?/artifacts/%s$",
+			identifier, LocationSegment, identifier, identifier, identifier, identifier))
 }
