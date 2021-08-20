@@ -109,7 +109,7 @@ func TestFilters(t *testing.T) {
 		}
 	}
 	// Create some sample apis.
-	apiParent := "projects/filters"
+	apiParent := "projects/filters/locations/global"
 	for i := 0; i < len(testLabels); i++ {
 		req := &rpc.CreateApiRequest{
 			Parent: apiParent,
@@ -153,7 +153,7 @@ func TestFilters(t *testing.T) {
 		}
 	}
 	// Create some sample versions.
-	versionParent := "projects/filters/apis/1"
+	versionParent := "projects/filters/locations/global/apis/1"
 	for i := 0; i < len(testLabels); i++ {
 		req := &rpc.CreateApiVersionRequest{
 			Parent:       versionParent,
@@ -197,7 +197,7 @@ func TestFilters(t *testing.T) {
 		}
 	}
 	// Create some sample specs.
-	specParent := "projects/filters/apis/1/versions/1"
+	specParent := "projects/filters/locations/global/apis/1/versions/1"
 	for i := 0; i < len(testLabels); i++ {
 		req := &rpc.CreateApiSpecRequest{
 			Parent:    specParent,
