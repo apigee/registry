@@ -508,6 +508,36 @@ func TestListApiSpecs(t *testing.T) {
 			},
 		},
 		{
+			desc: "with specs containing multiple revisions",
+			seed: []*rpc.ApiSpec{
+				{
+					Name: "projects/my-project/apis/my-api/versions/v1/specs/spec1",
+				},
+				{
+					Name:     "projects/my-project/apis/my-api/versions/v1/specs/spec1",
+					Contents: []byte(specContents),
+				},
+				{
+					Name: "projects/my-project/apis/my-api/versions/v1/specs/spec2",
+				},
+			},
+			req: &rpc.ListApiSpecsRequest{
+				Parent: "projects/my-project/apis/my-api/versions/v1",
+			},
+			want: &rpc.ListApiSpecsResponse{
+				ApiSpecs: []*rpc.ApiSpec{
+					{
+						Name:      "projects/my-project/apis/my-api/versions/v1/specs/spec1",
+						Hash:      sha256hash(specContents),
+						SizeBytes: int32(len(specContents)),
+					},
+					{
+						Name: "projects/my-project/apis/my-api/versions/v1/specs/spec2",
+					},
+				},
+			},
+		},
+		{
 			desc: "across all versions in a specific project and api",
 			seed: []*rpc.ApiSpec{
 				{Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec"},
