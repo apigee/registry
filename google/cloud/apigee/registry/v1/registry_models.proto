@@ -217,10 +217,12 @@ message ApiSpec {
   // defined in RFC6838 (https://tools.ietf.org/html/rfc6838) and are not final.
   string mime_type = 8;
 
-  // The size of the spec file in bytes.
+  // The size of the spec file in bytes. If the spec is gzipped, this is the
+  // size of the uncompressed spec.
   int32 size_bytes = 9 [(google.api.field_behavior) = OUTPUT_ONLY];
 
-  // A SHA-256 hash of the spec's contents
+  // A SHA-256 hash of the spec's contents. If the spec is gzipped, this is
+  // the hash of the uncompressed spec.
   string hash = 10 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // The original source URI of the spec (if one exists).
@@ -294,10 +296,12 @@ message Artifact {
   // parameter that specifies a schema for the stored information.
   string mime_type = 4;
 
-  // The size of the artifact in bytes.
+  // The size of the artifact in bytes. If the artifact is gzipped, this is
+  // the size of the uncompressed artifact.
   int32 size_bytes = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
 
-  // A SHA-256 hash of the artifact's contents
+  // A SHA-256 hash of the artifact's contents. If the artifact is gzipped,
+  // this is the hash of the uncompressed artifact.
   string hash = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // The contents of the artifact.
