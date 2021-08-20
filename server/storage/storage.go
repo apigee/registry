@@ -16,12 +16,6 @@ package storage
 
 // This is the data storage protocol currently used by the Registry server.
 
-import (
-	"context"
-
-	"github.com/apigee/registry/server/names"
-)
-
 const (
 	// ProjectEntityName is the storage entity name for project resources.
 	ProjectEntityName = "Project"
@@ -36,39 +30,3 @@ const (
 	// ArtifactEntityName is the storage entity name for artifact resources.
 	ArtifactEntityName = "Artifact"
 )
-
-type Client interface {
-	Close()
-
-	Get(ctx context.Context, k Key, v interface{}) error
-	Put(ctx context.Context, k Key, v interface{}) (Key, error)
-	Delete(ctx context.Context, k Key) error
-	Run(ctx context.Context, q Query) Iterator
-
-	IsNotFound(err error) bool
-
-	NewKey(kind, name string) Key
-	NewQuery(query string) Query
-
-	DeleteChildrenOfProject(ctx context.Context, project names.Project) error
-	DeleteChildrenOfApi(ctx context.Context, api names.Api) error
-	DeleteChildrenOfVersion(ctx context.Context, version names.Version) error
-	DeleteAllMatches(ctx context.Context, q Query) error
-	DeleteChildrenOfSpec(ctx context.Context, spec names.Spec) error
-
-	GetRecentSpecRevisions(ctx context.Context, offset int32, projectID, apiID, versionID string) Iterator
-}
-
-type Key interface {
-	String() string
-}
-
-type Query interface {
-	Require(name string, value interface{}) Query
-	Descending(field string) Query
-	ApplyOffset(int32) Query
-}
-
-type Iterator interface {
-	Next(interface{}) (Key, error)
-}

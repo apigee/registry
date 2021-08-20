@@ -17,6 +17,7 @@ package dao
 import (
 	"context"
 
+	"github.com/apigee/registry/server/gorm"
 	"github.com/apigee/registry/server/models"
 	"github.com/apigee/registry/server/names"
 	"github.com/apigee/registry/server/storage"
@@ -214,7 +215,7 @@ func (d *DAO) ListProjectArtifacts(ctx context.Context, parent names.Project, op
 	})
 }
 
-func (d *DAO) listArtifacts(ctx context.Context, it storage.Iterator, opts PageOptions, include func(*models.Artifact) bool) (ArtifactList, error) {
+func (d *DAO) listArtifacts(ctx context.Context, it *gorm.Iterator, opts PageOptions, include func(*models.Artifact) bool) (ArtifactList, error) {
 	token, err := decodeToken(opts.Token)
 	if err != nil {
 		return ArtifactList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())

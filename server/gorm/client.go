@@ -22,7 +22,6 @@ import (
 
 	_ "github.com/GoogleCloudPlatform/cloudsql-proxy/proxy/dialers/postgres"
 	"github.com/apigee/registry/server/models"
-	"github.com/apigee/registry/server/storage"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -163,36 +162,36 @@ func (c *Client) IsNotFound(err error) bool {
 }
 
 // Get gets an entity using the storage client.
-func (c *Client) Get(ctx context.Context, k storage.Key, v interface{}) error {
+func (c *Client) Get(ctx context.Context, k *Key, v interface{}) error {
 	mylock()
 	defer myunlock()
-	return c.db.Where("key = ?", k.(*Key).Name).First(v).Error
+	return c.db.Where("key = ?", k.Name).First(v).Error
 }
 
 // Put puts an entity using the storage client.
-func (c *Client) Put(ctx context.Context, k storage.Key, v interface{}) (storage.Key, error) {
+func (c *Client) Put(ctx context.Context, k *Key, v interface{}) (*Key, error) {
 	mylock()
 	defer myunlock()
 	switch r := v.(type) {
 	case *models.Project:
-		r.Key = k.(*Key).Name
+		r.Key = k.Name
 	case *models.Api:
-		r.Key = k.(*Key).Name
+		r.Key = k.Name
 	case *models.Version:
-		r.Key = k.(*Key).Name
+		r.Key = k.Name
 	case *models.Spec:
-		r.Key = k.(*Key).Name
+		r.Key = k.Name
 	case *models.SpecRevisionTag:
-		r.Key = k.(*Key).Name
+		r.Key = k.Name
 	case *models.Blob:
-		r.Key = k.(*Key).Name
+		r.Key = k.Name
 	case *models.Artifact:
-		r.Key = k.(*Key).Name
+		r.Key = k.Name
 	}
 	c.db.Transaction(
 		func(tx *gorm.DB) error {
 			// Update all fields from model: https://gorm.io/docs/update.html#Update-Selected-Fields
-			rowsAffected := tx.Model(v).Select("*").Where("key = ?", k.(*Key).Name).Updates(v).RowsAffected
+			rowsAffected := tx.Model(v).Select("*").Where("key = ?", k.Name).Updates(v).RowsAffected
 			if rowsAffected == 0 {
 				err := tx.Create(v).Error
 				if err != nil {
@@ -205,27 +204,27 @@ func (c *Client) Put(ctx context.Context, k storage.Key, v interface{}) (storage
 }
 
 // Delete deletes an entity using the storage client.
-func (c *Client) Delete(ctx context.Context, k storage.Key) error {
+func (c *Client) Delete(ctx context.Context, k *Key) error {
 	mylock()
 	defer myunlock()
 	var err error
-	switch k.(*Key).Kind {
+	switch k.Kind {
 	case "Project":
-		err = c.db.Delete(&models.Project{}, "key = ?", k.(*Key).Name).Error
+		err = c.db.Delete(&models.Project{}, "key = ?", k.Name).Error
 	case "Api":
-		err = c.db.Delete(&models.Api{}, "key = ?", k.(*Key).Name).Error
+		err = c.db.Delete(&models.Api{}, "key = ?", k.Name).Error
 	case "Version":
-		err = c.db.Delete(&models.Version{}, "key = ?", k.(*Key).Name).Error
+		err = c.db.Delete(&models.Version{}, "key = ?", k.Name).Error
 	case "Spec":
-		err = c.db.Delete(&models.Spec{}, "key = ?", k.(*Key).Name).Error
+		err = c.db.Delete(&models.Spec{}, "key = ?", k.Name).Error
 	case "SpecRevisionTag":
-		err = c.db.Delete(&models.SpecRevisionTag{}, "key = ?", k.(*Key).Name).Error
+		err = c.db.Delete(&models.SpecRevisionTag{}, "key = ?", k.Name).Error
 	case "Blob":
-		err = c.db.Delete(&models.Blob{}, "key = ?", k.(*Key).Name).Error
+		err = c.db.Delete(&models.Blob{}, "key = ?", k.Name).Error
 	case "Artifact":
-		err = c.db.Delete(&models.Artifact{}, "key = ?", k.(*Key).Name).Error
+		err = c.db.Delete(&models.Artifact{}, "key = ?", k.Name).Error
 	default:
-		return fmt.Errorf("invalid key type (fix in client.go): %s", k.(*Key).Kind)
+		return fmt.Errorf("invalid key type (fix in client.go): %s", k.Kind)
 	}
 	if err != nil {
 		log.Printf("ignoring error: %+v", err)
@@ -234,7 +233,7 @@ func (c *Client) Delete(ctx context.Context, k storage.Key) error {
 }
 
 // Run runs a query using the storage client, returning an iterator.
-func (c *Client) Run(ctx context.Context, q storage.Query) storage.Iterator {
+func (c *Client) Run(ctx context.Context, q *Query) *Iterator {
 	mylock()
 	defer myunlock()
 
@@ -243,18 +242,18 @@ func (c *Client) Run(ctx context.Context, q storage.Query) storage.Iterator {
 	// the iterator if there are no more resources to consider. Previously,
 	// the entire table would be read into memory. This limit should maintain
 	// that behavior until we improve our iterator implementation.
-	op := c.db.Offset(q.(*Query).Offset).Limit(100000)
-	for _, r := range q.(*Query).Requirements {
+	op := c.db.Offset(q.Offset).Limit(100000)
+	for _, r := range q.Requirements {
 		op = op.Where(r.Name+" = ?", r.Value)
 	}
 
-	if order := q.(*Query).Order; order != "" {
+	if order := q.Order; order != "" {
 		op = op.Order(order)
 	} else {
 		op = op.Order("key")
 	}
 
-	switch q.(*Query).Kind {
+	switch q.Kind {
 	case "Project":
 		var v []models.Project
 		_ = op.Find(&v).Error
@@ -284,12 +283,12 @@ func (c *Client) Run(ctx context.Context, q storage.Query) storage.Iterator {
 		_ = op.Find(&v).Error
 		return &Iterator{Client: c, Values: v, Index: 0}
 	default:
-		log.Printf("Unable to run query for kind %s", q.(*Query).Kind)
+		log.Printf("Unable to run query for kind %s", q.Kind)
 		return nil
 	}
 }
 
-func (c *Client) GetRecentSpecRevisions(ctx context.Context, offset int32, projectID, apiID, versionID string) storage.Iterator {
+func (c *Client) GetRecentSpecRevisions(ctx context.Context, offset int32, projectID, apiID, versionID string) *Iterator {
 	mylock()
 	defer myunlock()
 

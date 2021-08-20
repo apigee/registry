@@ -20,7 +20,7 @@ import (
 	"encoding/gob"
 	"fmt"
 
-	"github.com/apigee/registry/server/storage"
+	"github.com/apigee/registry/server/gorm"
 )
 
 // PageOptions contains custom arguments for listing requests.
@@ -37,10 +37,10 @@ type PageOptions struct {
 }
 
 type DAO struct {
-	storage.Client
+	*gorm.Client
 }
 
-func NewDAO(c storage.Client) DAO {
+func NewDAO(c *gorm.Client) DAO {
 	return DAO{
 		Client: c,
 	}

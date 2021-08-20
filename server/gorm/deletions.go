@@ -23,12 +23,12 @@ import (
 )
 
 // DeleteAllMatches deletes all entities matching a query.
-func (c *Client) DeleteAllMatches(ctx context.Context, q storage.Query) error {
+func (c *Client) DeleteAllMatches(ctx context.Context, q *Query) error {
 	op := c.db
-	for _, r := range q.(*Query).Requirements {
+	for _, r := range q.Requirements {
 		op = op.Where(r.Name+" = ?", r.Value)
 	}
-	switch q.(*Query).Kind {
+	switch q.Kind {
 	case "Project":
 		return op.Delete(models.Project{}).Error
 	case "Api":

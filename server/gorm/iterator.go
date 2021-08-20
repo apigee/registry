@@ -19,7 +19,6 @@ import (
 	"fmt"
 
 	"github.com/apigee/registry/server/models"
-	"github.com/apigee/registry/server/storage"
 	"google.golang.org/api/iterator"
 )
 
@@ -38,7 +37,7 @@ func (it *Iterator) GetCursor() (string, error) {
 }
 
 // Next gets the next value from the iterator.
-func (it *Iterator) Next(v interface{}) (storage.Key, error) {
+func (it *Iterator) Next(v interface{}) (*Key, error) {
 	switch x := v.(type) {
 	case *models.Project:
 		values := it.Values.([]models.Project)

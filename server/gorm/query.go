@@ -16,8 +16,6 @@ package gorm
 
 import (
 	"log"
-
-	"github.com/apigee/registry/server/storage"
 )
 
 // Query represents a query in a storage provider.
@@ -35,14 +33,14 @@ type Requirement struct {
 }
 
 // NewQuery creates a new query.
-func (c *Client) NewQuery(kind string) storage.Query {
+func (c *Client) NewQuery(kind string) *Query {
 	return &Query{
 		Kind: kind,
 	}
 }
 
 // Require adds a filter to a query that requires a field to have a specified value.
-func (q *Query) Require(name string, value interface{}) storage.Query {
+func (q *Query) Require(name string, value interface{}) *Query {
 	switch name {
 	case "ProjectID":
 		name = "project_id"
@@ -59,7 +57,7 @@ func (q *Query) Require(name string, value interface{}) storage.Query {
 	return q
 }
 
-func (q *Query) Descending(field string) storage.Query {
+func (q *Query) Descending(field string) *Query {
 	switch field {
 	case "RevisionCreateTime":
 		q.Order = "revision_create_time desc"
@@ -68,7 +66,7 @@ func (q *Query) Descending(field string) storage.Query {
 	return q
 }
 
-func (q *Query) ApplyOffset(offset int32) storage.Query {
+func (q *Query) ApplyOffset(offset int32) *Query {
 	q.Offset = int(offset)
 	return q
 }
