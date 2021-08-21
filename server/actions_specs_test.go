@@ -21,7 +21,7 @@ import (
 	"testing"
 
 	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/server/names"
+	"github.com/apigee/registry/server/internal/test/seeder"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"google.golang.org/grpc/codes"
@@ -37,33 +37,6 @@ var (
 
 func sha256hash(bytes []byte) string {
 	return fmt.Sprintf("%x", sha256.Sum256(bytes))
-}
-
-func seedSpecs(ctx context.Context, t *testing.T, s *RegistryServer, specs ...*rpc.ApiSpec) {
-	t.Helper()
-
-	for _, spec := range specs {
-		name, err := names.ParseSpec(spec.Name)
-		if err != nil {
-			t.Fatalf("Setup/Seeding: ParseSpec(%q) returned error: %s", spec.Name, err)
-		}
-
-		seedVersions(ctx, t, s, &rpc.ApiVersion{
-			Name: name.Version().String(),
-		})
-
-		req := &rpc.UpdateApiSpecRequest{
-			ApiSpec:      spec,
-			AllowMissing: true,
-		}
-
-		switch _, err := s.UpdateApiSpec(ctx, req); status.Code(err) {
-		case codes.OK, codes.AlreadyExists:
-			// ApiSpec is now ready for use in test.
-		default:
-			t.Fatalf("Setup/Seeding: UpdateApiSpec(%+v) returned error: %s", req, err)
-		}
-	}
 }
 
 func TestCreateApiSpec(t *testing.T) {
@@ -116,7 +89,9 @@ func TestCreateApiSpec(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedVersions(ctx, t, server, test.seed)
+			if err := seeder.SeedVersions(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			created, err := server.CreateApiSpec(ctx, test.req)
 			if err != nil {
@@ -276,7 +251,9 @@ func TestCreateApiSpecResponseCodes(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedVersions(ctx, t, server, test.seed)
+			if err := seeder.SeedVersions(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			if _, err := server.CreateApiSpec(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("CreateApiSpec(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
@@ -318,7 +295,9 @@ func TestCreateApiSpecDuplicates(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedSpecs(ctx, t, server, test.seed)
+			if err := seeder.SeedSpecs(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			if _, err := server.CreateApiSpec(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("CreateApiSpec(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
@@ -376,7 +355,9 @@ func TestGetApiSpec(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedSpecs(ctx, t, server, test.seed)
+			if err := seeder.SeedSpecs(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			got, err := server.GetApiSpec(ctx, test.req)
 			if err != nil {
@@ -424,7 +405,9 @@ func TestGetApiSpecResponseCodes(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedSpecs(ctx, t, server, test.seed)
+			if err := seeder.SeedSpecs(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			if _, err := server.GetApiSpec(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("GetApiSpec(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
@@ -485,7 +468,9 @@ func TestGetApiSpecContents(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedSpecs(ctx, t, server, test.seed)
+			if err := seeder.SeedSpecs(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			if _, err := server.GetApiSpecContents(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("GetApiSpecContents(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
@@ -519,6 +504,36 @@ func TestListApiSpecs(t *testing.T) {
 					{Name: "projects/my-project/apis/my-api/versions/v1/specs/spec1"},
 					{Name: "projects/my-project/apis/my-api/versions/v1/specs/spec2"},
 					{Name: "projects/my-project/apis/my-api/versions/v1/specs/spec3"},
+				},
+			},
+		},
+		{
+			desc: "with specs containing multiple revisions",
+			seed: []*rpc.ApiSpec{
+				{
+					Name: "projects/my-project/apis/my-api/versions/v1/specs/spec1",
+				},
+				{
+					Name:     "projects/my-project/apis/my-api/versions/v1/specs/spec1",
+					Contents: []byte(specContents),
+				},
+				{
+					Name: "projects/my-project/apis/my-api/versions/v1/specs/spec2",
+				},
+			},
+			req: &rpc.ListApiSpecsRequest{
+				Parent: "projects/my-project/apis/my-api/versions/v1",
+			},
+			want: &rpc.ListApiSpecsResponse{
+				ApiSpecs: []*rpc.ApiSpec{
+					{
+						Name:      "projects/my-project/apis/my-api/versions/v1/specs/spec1",
+						Hash:      sha256hash(specContents),
+						SizeBytes: int32(len(specContents)),
+					},
+					{
+						Name: "projects/my-project/apis/my-api/versions/v1/specs/spec2",
+					},
 				},
 			},
 		},
@@ -690,7 +705,9 @@ func TestListApiSpecs(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedSpecs(ctx, t, server, test.seed...)
+			if err := seeder.SeedSpecs(ctx, server, test.seed...); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			got, err := server.ListApiSpecs(ctx, test.req)
 			if err != nil {
@@ -790,7 +807,9 @@ func TestListApiSpecsSequence(t *testing.T) {
 		{Name: "projects/my-project/apis/my-api/versions/v1/specs/spec2"},
 		{Name: "projects/my-project/apis/my-api/versions/v1/specs/spec3"},
 	}
-	seedSpecs(ctx, t, server, seed...)
+	if err := seeder.SeedSpecs(ctx, server, seed...); err != nil {
+		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+	}
 
 	listed := make([]*rpc.ApiSpec, 0, 3)
 
@@ -895,10 +914,15 @@ func TestListApiSpecsSequence(t *testing.T) {
 func TestListApiSpecsLargeCollectionFiltering(t *testing.T) {
 	ctx := context.Background()
 	server := defaultTestServer(t)
-	for i := 1; i <= 100; i++ {
-		seedSpecs(ctx, t, server, &rpc.ApiSpec{
+	seed := make([]*rpc.ApiSpec, 0, 100)
+	for i := 1; i <= cap(seed); i++ {
+		seed = append(seed, &rpc.ApiSpec{
 			Name: fmt.Sprintf("projects/my-project/apis/my-api/versions/v1/specs/s%03d", i),
 		})
+	}
+
+	if err := seeder.SeedSpecs(ctx, server, seed...); err != nil {
+		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
 	}
 
 	req := &rpc.ListApiSpecsRequest{
@@ -1050,7 +1074,9 @@ func TestUpdateApiSpec(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedSpecs(ctx, t, server, test.seed)
+			if err := seeder.SeedSpecs(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			updated, err := server.UpdateApiSpec(ctx, test.req)
 			if err != nil {
@@ -1143,7 +1169,9 @@ func TestUpdateApiSpecResponseCodes(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedSpecs(ctx, t, server, test.seed)
+			if err := seeder.SeedSpecs(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			if _, err := server.UpdateApiSpec(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("UpdateApiSpec(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
@@ -1173,7 +1201,9 @@ func TestDeleteApiSpec(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedSpecs(ctx, t, server, test.seed)
+			if err := seeder.SeedSpecs(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			if _, err := server.DeleteApiSpec(ctx, test.req); err != nil {
 				t.Fatalf("DeleteApiSpec(%+v) returned error: %s", test.req, err)

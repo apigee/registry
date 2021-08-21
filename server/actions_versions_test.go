@@ -20,7 +20,7 @@ import (
 	"testing"
 
 	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/server/names"
+	"github.com/apigee/registry/server/internal/test/seeder"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"google.golang.org/grpc/codes"
@@ -28,35 +28,6 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
-
-func seedVersions(ctx context.Context, t *testing.T, s *RegistryServer, versions ...*rpc.ApiVersion) {
-	t.Helper()
-
-	for _, version := range versions {
-		name, err := names.ParseVersion(version.Name)
-		if err != nil {
-			t.Fatalf("Setup/Seeding: ParseVersion(%q) returned error: %s", version.Name, err)
-		}
-
-		parent := name.Api()
-		seedApis(ctx, t, s, &rpc.Api{
-			Name: parent.String(),
-		})
-
-		req := &rpc.CreateApiVersionRequest{
-			Parent:       parent.String(),
-			ApiVersionId: name.VersionID,
-			ApiVersion:   version,
-		}
-
-		switch _, err := s.CreateApiVersion(ctx, req); status.Code(err) {
-		case codes.OK, codes.AlreadyExists:
-			// ApiVersion is now ready for use in test.
-		default:
-			t.Fatalf("Setup/Seeding: CreateApiVersion(%+v) returned error: %s", req, err)
-		}
-	}
-}
 
 func TestCreateApiVersion(t *testing.T) {
 	tests := []struct {
@@ -104,7 +75,9 @@ func TestCreateApiVersion(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedApis(ctx, t, server, test.seed)
+			if err := seeder.SeedApis(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			created, err := server.CreateApiVersion(ctx, test.req)
 			if err != nil {
@@ -248,7 +221,9 @@ func TestCreateApiVersionResponseCodes(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedApis(ctx, t, server, test.seed)
+			if err := seeder.SeedApis(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			if _, err := server.CreateApiVersion(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("CreateApiVersion(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
@@ -290,7 +265,9 @@ func TestCreateApiVersionDuplicates(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedVersions(ctx, t, server, test.seed)
+			if err := seeder.SeedVersions(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			if _, err := server.CreateApiVersion(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("CreateApiVersion(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
@@ -342,7 +319,9 @@ func TestGetApiVersion(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedVersions(ctx, t, server, test.seed)
+			if err := seeder.SeedVersions(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			got, err := server.GetApiVersion(ctx, test.req)
 			if err != nil {
@@ -390,7 +369,9 @@ func TestGetApiVersionResponseCodes(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedVersions(ctx, t, server, test.seed)
+			if err := seeder.SeedVersions(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			if _, err := server.GetApiVersion(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("GetApiVersion(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
@@ -543,7 +524,9 @@ func TestListApiVersions(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedVersions(ctx, t, server, test.seed...)
+			if err := seeder.SeedVersions(ctx, server, test.seed...); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			got, err := server.ListApiVersions(ctx, test.req)
 			if err != nil {
@@ -636,7 +619,9 @@ func TestListApiVersionsSequence(t *testing.T) {
 		{Name: "projects/my-project/apis/my-api/versions/v2"},
 		{Name: "projects/my-project/apis/my-api/versions/v3"},
 	}
-	seedVersions(ctx, t, server, seed...)
+	if err := seeder.SeedVersions(ctx, server, seed...); err != nil {
+		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+	}
 
 	listed := make([]*rpc.ApiVersion, 0, 3)
 
@@ -741,10 +726,15 @@ func TestListApiVersionsSequence(t *testing.T) {
 func TestListApiVersionsLargeCollectionFiltering(t *testing.T) {
 	ctx := context.Background()
 	server := defaultTestServer(t)
-	for i := 1; i <= 100; i++ {
-		seedVersions(ctx, t, server, &rpc.ApiVersion{
+	seed := make([]*rpc.ApiVersion, 0, 100)
+	for i := 1; i <= cap(seed); i++ {
+		seed = append(seed, &rpc.ApiVersion{
 			Name: fmt.Sprintf("projects/my-project/apis/my-api/versions/v%03d", i),
 		})
+	}
+
+	if err := seeder.SeedVersions(ctx, server, seed...); err != nil {
+		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
 	}
 
 	req := &rpc.ListApiVersionsRequest{
@@ -860,7 +850,9 @@ func TestUpdateApiVersion(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedVersions(ctx, t, server, test.seed)
+			if err := seeder.SeedVersions(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			updated, err := server.UpdateApiVersion(ctx, test.req)
 			if err != nil {
@@ -943,7 +935,9 @@ func TestUpdateApiVersionResponseCodes(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedVersions(ctx, t, server, test.seed)
+			if err := seeder.SeedVersions(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			if _, err := server.UpdateApiVersion(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("UpdateApiVersion(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
@@ -973,7 +967,9 @@ func TestDeleteApiVersion(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedVersions(ctx, t, server, test.seed)
+			if err := seeder.SeedVersions(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			if _, err := server.DeleteApiVersion(ctx, test.req); err != nil {
 				t.Fatalf("DeleteApiVersion(%+v) returned error: %s", test.req, err)
