@@ -30,7 +30,7 @@ func TestAnnotate(t *testing.T) {
 		projectID   = "annotate-test"
 		projectName = "projects/" + projectID
 		apiID       = "sample"
-		apiName     = projectName + "/apis/" + apiID
+		apiName     = projectName + "/locations/global/apis/" + apiID
 		versionID   = "1.0.0"
 		versionName = apiName + "/versions/" + versionID
 		specID      = "openapi.json"
@@ -64,7 +64,7 @@ func TestAnnotate(t *testing.T) {
 	}
 	// Create a sample api.
 	_, err = registryClient.CreateApi(ctx, &rpc.CreateApiRequest{
-		Parent: projectName,
+		Parent: projectName + "/locations/global",
 		ApiId:  apiID,
 		Api:    &rpc.Api{},
 	})
