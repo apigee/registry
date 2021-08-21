@@ -54,11 +54,6 @@ func config() *gorm.Config {
 	}
 }
 
-var clientCount int
-var clientTotal int
-
-var openErrorCount int
-
 // Validate checks a database name and config string for validity.
 func Validate(gormDBName, gormConfig string) error {
 	switch gormDBName {
@@ -86,14 +81,10 @@ func Validate(gormDBName, gormConfig string) error {
 // SQLite DSN Reference: See "URI filename examples" at https://www.sqlite.org/c3ref/open.html
 func NewClient(ctx context.Context, driver, dsn string) (*Client, error) {
 	mylock()
-	clientCount++
-	clientTotal++
 	switch driver {
 	case "sqlite3":
 		db, err := gorm.Open(sqlite.Open(dsn), config())
 		if err != nil {
-			openErrorCount++
-			log.Printf("OPEN ERROR %d %s", openErrorCount, err.Error())
 			(&Client{db: db}).close()
 			myunlock()
 			return nil, err
@@ -110,8 +101,6 @@ func NewClient(ctx context.Context, driver, dsn string) (*Client, error) {
 			DSN:        dsn,
 		}), config())
 		if err != nil {
-			openErrorCount++
-			log.Printf("OPEN ERROR %d %s", openErrorCount, err.Error())
 			(&Client{db: db}).close()
 			myunlock()
 			return nil, err
@@ -136,7 +125,6 @@ func (c *Client) Close() {
 }
 
 func (c *Client) close() {
-	clientCount--
 	sqlDB, _ := c.db.DB()
 	sqlDB.Close()
 }
