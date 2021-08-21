@@ -20,7 +20,7 @@ import (
 	"testing"
 
 	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/server/names"
+	"github.com/apigee/registry/server/internal/test/seeder"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"google.golang.org/grpc/codes"
@@ -28,35 +28,6 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
-
-func seedApis(ctx context.Context, t *testing.T, s *RegistryServer, apis ...*rpc.Api) {
-	t.Helper()
-
-	for _, api := range apis {
-		name, err := names.ParseApi(api.Name)
-		if err != nil {
-			t.Fatalf("Setup/Seeding: ParseApi(%q) returned error: %s", api.Name, err)
-		}
-
-		parent := name.Project()
-		seedProjects(ctx, t, s, &rpc.Project{
-			Name: parent.String(),
-		})
-
-		req := &rpc.CreateApiRequest{
-			Parent: parent.String() + "/locations/global",
-			ApiId:  name.ApiID,
-			Api:    api,
-		}
-
-		switch _, err := s.CreateApi(ctx, req); status.Code(err) {
-		case codes.OK, codes.AlreadyExists:
-			// Api is now ready for use in test.
-		default:
-			t.Fatalf("Setup/Seeding: CreateApi(%+v) returned error: %s", req, err)
-		}
-	}
-}
 
 func TestCreateApi(t *testing.T) {
 	tests := []struct {
@@ -106,7 +77,9 @@ func TestCreateApi(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedProjects(ctx, t, server, test.seed)
+			if err := seeder.SeedProjects(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			created, err := server.CreateApi(ctx, test.req)
 			if err != nil {
@@ -250,7 +223,9 @@ func TestCreateApiResponseCodes(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedProjects(ctx, t, server, test.seed)
+			if err := seeder.SeedProjects(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			if _, err := server.CreateApi(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("CreateApi(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
@@ -292,7 +267,9 @@ func TestCreateApiDuplicates(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedApis(ctx, t, server, test.seed)
+			if err := seeder.SeedApis(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			if _, err := server.CreateApi(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("CreateApi(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
@@ -346,7 +323,9 @@ func TestGetApi(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedApis(ctx, t, server, test.seed)
+			if err := seeder.SeedApis(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			got, err := server.GetApi(ctx, test.req)
 			if err != nil {
@@ -394,7 +373,9 @@ func TestGetApiResponseCodes(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedApis(ctx, t, server, test.seed)
+			if err := seeder.SeedApis(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			if _, err := server.GetApi(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("GetApi(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
@@ -517,7 +498,9 @@ func TestListApis(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedApis(ctx, t, server, test.seed...)
+			if err := seeder.SeedApis(ctx, server, test.seed...); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			got, err := server.ListApis(ctx, test.req)
 			if err != nil {
@@ -603,7 +586,9 @@ func TestListApisSequence(t *testing.T) {
 		{Name: "projects/my-project/locations/global/apis/api2"},
 		{Name: "projects/my-project/locations/global/apis/api3"},
 	}
-	seedApis(ctx, t, server, seed...)
+	if err := seeder.SeedApis(ctx, server, seed...); err != nil {
+		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+	}
 
 	listed := make([]*rpc.Api, 0, 3)
 
@@ -708,10 +693,15 @@ func TestListApisSequence(t *testing.T) {
 func TestListApisLargeCollectionFiltering(t *testing.T) {
 	ctx := context.Background()
 	server := defaultTestServer(t)
-	for i := 1; i <= 100; i++ {
-		seedApis(ctx, t, server, &rpc.Api{
+	seed := make([]*rpc.Api, 0, 100)
+	for i := 1; i <= cap(seed); i++ {
+		seed = append(seed, &rpc.Api{
 			Name: fmt.Sprintf("projects/my-project/locations/global/apis/a%03d", i),
 		})
+	}
+
+	if err := seeder.SeedApis(ctx, server, seed...); err != nil {
+		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
 	}
 
 	req := &rpc.ListApisRequest{
@@ -827,7 +817,9 @@ func TestUpdateApi(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedApis(ctx, t, server, test.seed)
+			if err := seeder.SeedApis(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			updated, err := server.UpdateApi(ctx, test.req)
 			if err != nil {
@@ -910,7 +902,9 @@ func TestUpdateApiResponseCodes(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedApis(ctx, t, server, test.seed)
+			if err := seeder.SeedApis(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			if _, err := server.UpdateApi(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("UpdateApi(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
@@ -940,7 +934,9 @@ func TestDeleteApi(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedApis(ctx, t, server, test.seed)
+			if err := seeder.SeedApis(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			if _, err := server.DeleteApi(ctx, test.req); err != nil {
 				t.Fatalf("DeleteApi(%+v) returned error: %s", test.req, err)

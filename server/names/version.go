@@ -72,6 +72,11 @@ func (v Version) Spec(id string) Spec {
 	}
 }
 
+// Parent returns this resource's parent API resource name.
+func (v Version) Parent() string {
+	return v.Api().String()
+}
+
 func (v Version) String() string {
 	return normalize(fmt.Sprintf("projects/%s/locations/%s/apis/%s/versions/%s",
 		v.ProjectID, Location, v.ApiID, v.VersionID))

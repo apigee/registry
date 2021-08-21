@@ -101,6 +101,11 @@ func (s Spec) Normal() Spec {
 	}
 }
 
+// Parent returns this resource's parent version resource name.
+func (s Spec) Parent() string {
+	return s.Version().String()
+}
+
 func (s Spec) String() string {
 	return normalize(fmt.Sprintf("projects/%s/locations/%s/apis/%s/versions/%s/specs/%s",
 		s.ProjectID, Location, s.ApiID, s.VersionID, s.SpecID))

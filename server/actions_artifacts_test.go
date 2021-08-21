@@ -17,11 +17,10 @@ package server
 import (
 	"context"
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/server/names"
+	"github.com/apigee/registry/server/internal/test/seeder"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"google.golang.org/grpc/codes"
@@ -33,51 +32,6 @@ var (
 	// Example artifact contents for a JSON artifact.
 	artifactContents = []byte(`{"contents": "foo"}`)
 )
-
-func seedArtifacts(ctx context.Context, t *testing.T, s *RegistryServer, artifacts ...*rpc.Artifact) {
-	t.Helper()
-
-	for _, artifact := range artifacts {
-		name, err := names.ParseArtifact(artifact.Name)
-		if err != nil {
-			t.Fatalf("Setup/Seeding: ParseArtifact(%q) returned error: %s", artifact.Name, err)
-		}
-
-		parent := strings.TrimSuffix(name.String(), "/artifacts/"+name.ArtifactID())
-		if _, err := names.ParseSpec(parent); err == nil {
-			seedSpecs(ctx, t, s, &rpc.ApiSpec{
-				Name: parent,
-			})
-		} else if _, err := names.ParseVersion(parent); err == nil {
-			seedVersions(ctx, t, s, &rpc.ApiVersion{
-				Name: parent,
-			})
-		} else if _, err := names.ParseApi(parent); err == nil {
-			seedApis(ctx, t, s, &rpc.Api{
-				Name: parent,
-			})
-		} else if p, err := names.ParseProjectWithLocation(parent); err == nil {
-			seedProjects(ctx, t, s, &rpc.Project{
-				Name: "projects/" + p.ProjectID,
-			})
-		} else {
-			t.Log("Failed to identify parent resource: proceeding without seeding parent")
-		}
-
-		req := &rpc.CreateArtifactRequest{
-			Parent:     parent,
-			ArtifactId: name.ArtifactID(),
-			Artifact:   artifact,
-		}
-
-		switch _, err := s.CreateArtifact(ctx, req); status.Code(err) {
-		case codes.OK, codes.AlreadyExists:
-			// Artifact is now ready for use in test.
-		default:
-			t.Fatalf("Setup/Seeding: CreateArtifact(%+v) returned error: %s", req, err)
-		}
-	}
-}
 
 func TestCreateArtifact(t *testing.T) {
 	tests := []struct {
@@ -112,7 +66,9 @@ func TestCreateArtifact(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedProjects(ctx, t, server, test.seed)
+			if err := seeder.SeedProjects(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			created, err := server.CreateArtifact(ctx, test.req)
 			if err != nil {
@@ -256,7 +212,9 @@ func TestCreateArtifactResponseCodes(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedProjects(ctx, t, server, test.seed)
+			if err := seeder.SeedProjects(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			if _, err := server.CreateArtifact(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("CreateArtifact(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
@@ -298,7 +256,9 @@ func TestCreateArtifactDuplicates(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedArtifacts(ctx, t, server, test.seed)
+			if err := seeder.SeedArtifacts(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			if _, err := server.CreateArtifact(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("CreateArtifact(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
@@ -339,7 +299,9 @@ func TestGetArtifact(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedArtifacts(ctx, t, server, test.seed)
+			if err := seeder.SeedArtifacts(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			got, err := server.GetArtifact(ctx, test.req)
 			if err != nil {
@@ -387,7 +349,9 @@ func TestGetArtifactResponseCodes(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedArtifacts(ctx, t, server, test.seed)
+			if err := seeder.SeedArtifacts(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			if _, err := server.GetArtifact(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("GetArtifact(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
@@ -592,7 +556,9 @@ func TestListArtifacts(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedArtifacts(ctx, t, server, test.seed...)
+			if err := seeder.SeedArtifacts(ctx, server, test.seed...); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			got, err := server.ListArtifacts(ctx, test.req)
 			if err != nil {
@@ -692,7 +658,9 @@ func TestListArtifactsSequence(t *testing.T) {
 		{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/artifact2"},
 		{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/artifact3"},
 	}
-	seedArtifacts(ctx, t, server, seed...)
+	if err := seeder.SeedArtifacts(ctx, server, seed...); err != nil {
+		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+	}
 
 	listed := make([]*rpc.Artifact, 0, 3)
 
@@ -797,10 +765,15 @@ func TestListArtifactsSequence(t *testing.T) {
 func TestListArtifactsLargeCollectionFiltering(t *testing.T) {
 	ctx := context.Background()
 	server := defaultTestServer(t)
-	for i := 1; i <= 100; i++ {
-		seedArtifacts(ctx, t, server, &rpc.Artifact{
+	seed := make([]*rpc.Artifact, 0, 100)
+	for i := 1; i <= cap(seed); i++ {
+		seed = append(seed, &rpc.Artifact{
 			Name: fmt.Sprintf("projects/my-project/locations/global/artifacts/a%03d", i),
 		})
+	}
+
+	if err := seeder.SeedArtifacts(ctx, server, seed...); err != nil {
+		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
 	}
 
 	req := &rpc.ListArtifactsRequest{
@@ -857,7 +830,9 @@ func TestReplaceArtifact(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedArtifacts(ctx, t, server, test.seed)
+			if err := seeder.SeedArtifacts(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			updated, err := server.ReplaceArtifact(ctx, test.req)
 			if err != nil {
@@ -929,7 +904,9 @@ func TestReplaceArtifactResponseCodes(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedArtifacts(ctx, t, server, test.seed)
+			if err := seeder.SeedArtifacts(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			if _, err := server.ReplaceArtifact(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("ReplaceArtifact(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
@@ -959,7 +936,9 @@ func TestDeleteArtifact(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedArtifacts(ctx, t, server, test.seed)
+			if err := seeder.SeedArtifacts(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			if _, err := server.DeleteArtifact(ctx, test.req); err != nil {
 				t.Fatalf("DeleteArtifact(%+v) returned error: %s", test.req, err)
