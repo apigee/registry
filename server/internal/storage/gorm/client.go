@@ -79,14 +79,18 @@ func Validate(gormDBName, gormConfig string) error {
 	return nil
 }
 
-// NewClient creates a new database session.
-func NewClient(ctx context.Context, gormDBName, gormConfig string) (*Client, error) {
+// NewClient creates a new database session using the provided driver and data source name.
+// Driver must be one of [ sqlite3, postgres, cloudsqlpostgres ]. DSN format varies per database driver.
+//
+// PostgreSQL DSN Reference: See "Connection Strings" at https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING
+// SQLite DSN Reference: See "URI filename examples" at https://www.sqlite.org/c3ref/open.html
+func NewClient(ctx context.Context, driver, dsn string) (*Client, error) {
 	mylock()
 	clientCount++
 	clientTotal++
-	switch gormDBName {
+	switch driver {
 	case "sqlite3":
-		db, err := gorm.Open(sqlite.Open(gormConfig), config())
+		db, err := gorm.Open(sqlite.Open(dsn), config())
 		if err != nil {
 			openErrorCount++
 			log.Printf("OPEN ERROR %d %s", openErrorCount, err.Error())
@@ -102,8 +106,8 @@ func NewClient(ctx context.Context, gormDBName, gormConfig string) (*Client, err
 		return c, nil
 	case "postgres", "cloudsqlpostgres":
 		db, err := gorm.Open(postgres.New(postgres.Config{
-			DriverName: gormDBName,
-			DSN:        gormConfig,
+			DriverName: driver,
+			DSN:        dsn,
 		}), config())
 		if err != nil {
 			openErrorCount++
@@ -120,7 +124,7 @@ func NewClient(ctx context.Context, gormDBName, gormConfig string) (*Client, err
 		return c, nil
 	default:
 		myunlock()
-		return nil, fmt.Errorf("unsupported database %s", gormDBName)
+		return nil, fmt.Errorf("unsupported database %s", driver)
 	}
 }
 
