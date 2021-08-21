@@ -162,13 +162,20 @@ func (d *DAO) SaveVersion(ctx context.Context, version *models.Version) error {
 }
 
 func (d *DAO) DeleteVersion(ctx context.Context, name names.Version) error {
-	if err := d.DeleteChildrenOfVersion(ctx, name); err != nil {
-		return status.Error(codes.Internal, err.Error())
-	}
-
-	k := d.NewKey(gorm.VersionEntityName, name.String())
-	if err := d.Delete(ctx, k); err != nil {
-		return status.Error(codes.Internal, err.Error())
+	for _, entityName := range []string{
+		gorm.VersionEntityName,
+		gorm.SpecEntityName,
+		gorm.SpecRevisionTagEntityName,
+		gorm.ArtifactEntityName,
+		gorm.BlobEntityName,
+	} {
+		q := d.NewQuery(entityName)
+		q = q.Require("ProjectID", name.ProjectID)
+		q = q.Require("ApiID", name.ApiID)
+		q = q.Require("VersionID", name.VersionID)
+		if err := d.Delete(ctx, q); err != nil {
+			return status.Error(codes.Internal, err.Error())
+		}
 	}
 
 	return nil

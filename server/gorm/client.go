@@ -203,31 +203,27 @@ func (c *Client) Put(ctx context.Context, k *Key, v interface{}) (*Key, error) {
 	return k, nil
 }
 
-// Delete deletes an entity using the storage client.
-func (c *Client) Delete(ctx context.Context, k *Key) error {
-	mylock()
-	defer myunlock()
-	var err error
-	switch k.Kind {
-	case "Project":
-		err = c.db.Delete(&models.Project{}, "key = ?", k.Name).Error
-	case "Api":
-		err = c.db.Delete(&models.Api{}, "key = ?", k.Name).Error
-	case "Version":
-		err = c.db.Delete(&models.Version{}, "key = ?", k.Name).Error
-	case "Spec":
-		err = c.db.Delete(&models.Spec{}, "key = ?", k.Name).Error
-	case "SpecRevisionTag":
-		err = c.db.Delete(&models.SpecRevisionTag{}, "key = ?", k.Name).Error
-	case "Blob":
-		err = c.db.Delete(&models.Blob{}, "key = ?", k.Name).Error
-	case "Artifact":
-		err = c.db.Delete(&models.Artifact{}, "key = ?", k.Name).Error
-	default:
-		return fmt.Errorf("invalid key type (fix in client.go): %s", k.Kind)
+// Delete deletes all entities matching a query.
+func (c *Client) Delete(ctx context.Context, q *Query) error {
+	op := c.db
+	for _, r := range q.Requirements {
+		op = op.Where(r.Name+" = ?", r.Value)
 	}
-	if err != nil {
-		log.Printf("ignoring error: %+v", err)
+	switch q.Kind {
+	case "Project":
+		return op.Delete(models.Project{}).Error
+	case "Api":
+		return op.Delete(models.Api{}).Error
+	case "Version":
+		return op.Delete(models.Version{}).Error
+	case "Spec":
+		return op.Delete(models.Spec{}).Error
+	case "Blob":
+		return op.Delete(models.Blob{}).Error
+	case "Artifact":
+		return op.Delete(models.Artifact{}).Error
+	case "SpecRevisionTag":
+		return op.Delete(models.SpecRevisionTag{}).Error
 	}
 	return nil
 }

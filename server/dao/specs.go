@@ -164,22 +164,20 @@ func (d *DAO) GetSpec(ctx context.Context, name names.Spec) (*models.Spec, error
 }
 
 func (d *DAO) DeleteSpec(ctx context.Context, name names.Spec) error {
-	if err := d.DeleteChildrenOfSpec(ctx, name); err != nil {
-		return status.Error(codes.Internal, err.Error())
-	}
-
-	k := d.NewKey(gorm.SpecEntityName, name.String())
-	if err := d.Delete(ctx, k); err != nil {
-		return status.Error(codes.Internal, err.Error())
-	}
-
-	q := d.NewQuery(gorm.SpecEntityName)
-	q = q.Require("ProjectID", name.ProjectID)
-	q = q.Require("ApiID", name.ApiID)
-	q = q.Require("VersionID", name.VersionID)
-	q = q.Require("SpecID", name.SpecID)
-	if err := d.DeleteAllMatches(ctx, q); err != nil {
-		return status.Error(codes.Internal, err.Error())
+	for _, entityName := range []string{
+		gorm.SpecEntityName,
+		gorm.SpecRevisionTagEntityName,
+		gorm.ArtifactEntityName,
+		gorm.BlobEntityName,
+	} {
+		q := d.NewQuery(entityName)
+		q = q.Require("ProjectID", name.ProjectID)
+		q = q.Require("ApiID", name.ApiID)
+		q = q.Require("VersionID", name.VersionID)
+		q = q.Require("SpecID", name.SpecID)
+		if err := d.Delete(ctx, q); err != nil {
+			return status.Error(codes.Internal, err.Error())
+		}
 	}
 
 	return nil

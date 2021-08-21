@@ -50,6 +50,10 @@ func (q *Query) Require(name string, value interface{}) *Query {
 		name = "version_id"
 	case "SpecID":
 		name = "spec_id"
+	case "RevisionID":
+		name = "revision_id"
+	case "ArtifactID":
+		name = "artifact_id"
 	default:
 		log.Fatalf("UNEXPECTED REQUIRE TYPE: %s", name)
 	}

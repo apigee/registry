@@ -154,13 +154,20 @@ func (d *DAO) SaveApi(ctx context.Context, api *models.Api) error {
 }
 
 func (d *DAO) DeleteApi(ctx context.Context, name names.Api) error {
-	if err := d.DeleteChildrenOfApi(ctx, name); err != nil {
-		return status.Error(codes.Internal, err.Error())
-	}
-
-	k := d.NewKey(gorm.ApiEntityName, name.String())
-	if err := d.Delete(ctx, k); err != nil {
-		return status.Error(codes.Internal, err.Error())
+	for _, entityName := range []string{
+		gorm.ApiEntityName,
+		gorm.VersionEntityName,
+		gorm.SpecEntityName,
+		gorm.SpecRevisionTagEntityName,
+		gorm.ArtifactEntityName,
+		gorm.BlobEntityName,
+	} {
+		q := d.NewQuery(entityName)
+		q = q.Require("ProjectID", name.ProjectID)
+		q = q.Require("ApiID", name.ApiID)
+		if err := d.Delete(ctx, q); err != nil {
+			return status.Error(codes.Internal, err.Error())
+		}
 	}
 
 	return nil

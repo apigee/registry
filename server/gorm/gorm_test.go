@@ -109,7 +109,8 @@ func TestCRUD(t *testing.T) {
 	}
 
 	// Delete the project.
-	err = c.Delete(ctx, k)
+	q := c.NewQuery("Project").Require("ProjectID", project.ProjectID)
+	err = c.Delete(ctx, q)
 	if err != nil {
 		t.Errorf(err.Error())
 	}

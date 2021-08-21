@@ -129,13 +129,20 @@ func (d *DAO) SaveProject(ctx context.Context, project *models.Project) error {
 }
 
 func (d *DAO) DeleteProject(ctx context.Context, name names.Project) error {
-	if err := d.DeleteChildrenOfProject(ctx, name); err != nil {
-		return status.Error(codes.Internal, err.Error())
-	}
-
-	k := d.NewKey(gorm.ProjectEntityName, name.String())
-	if err := d.Delete(ctx, k); err != nil {
-		return status.Error(codes.Internal, err.Error())
+	for _, entityName := range []string{
+		gorm.ProjectEntityName,
+		gorm.ApiEntityName,
+		gorm.VersionEntityName,
+		gorm.SpecEntityName,
+		gorm.SpecRevisionTagEntityName,
+		gorm.ArtifactEntityName,
+		gorm.BlobEntityName,
+	} {
+		q := d.NewQuery(entityName)
+		q = q.Require("ProjectID", name.ProjectID)
+		if err := d.Delete(ctx, q); err != nil {
+			return status.Error(codes.Internal, err.Error())
+		}
 	}
 
 	return nil

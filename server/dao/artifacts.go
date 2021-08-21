@@ -324,14 +324,19 @@ func (d *DAO) GetArtifactContents(ctx context.Context, name names.Artifact) (*mo
 }
 
 func (d *DAO) DeleteArtifact(ctx context.Context, name names.Artifact) error {
-	k := d.NewKey(gorm.BlobEntityName, name.String())
-	if err := d.Delete(ctx, k); err != nil {
-		return status.Error(codes.Internal, err.Error())
-	}
-
-	k = d.NewKey(gorm.ArtifactEntityName, name.String())
-	if err := d.Delete(ctx, k); err != nil {
-		return status.Error(codes.Internal, err.Error())
+	for _, entityName := range []string{
+		gorm.ArtifactEntityName,
+		gorm.BlobEntityName,
+	} {
+		q := d.NewQuery(entityName)
+		q = q.Require("ProjectID", name.ProjectID())
+		q = q.Require("ApiID", name.ApiID())
+		q = q.Require("VersionID", name.VersionID())
+		q = q.Require("SpecID", name.SpecID())
+		q = q.Require("ArtifactID", name.ArtifactID())
+		if err := d.Delete(ctx, q); err != nil {
+			return status.Error(codes.Internal, err.Error())
+		}
 	}
 
 	return nil

@@ -131,14 +131,20 @@ func (d *DAO) DeleteSpecRevision(ctx context.Context, name names.SpecRevision) e
 		return err
 	}
 
-	k := d.NewKey(gorm.BlobEntityName, name.String())
-	if err := d.Delete(ctx, k); err != nil {
-		return status.Error(codes.Internal, err.Error())
-	}
-
-	k = d.NewKey(gorm.SpecEntityName, name.String())
-	if err := d.Delete(ctx, k); err != nil {
-		return status.Error(codes.Internal, err.Error())
+	for _, entityName := range []string{
+		gorm.SpecEntityName,
+		gorm.SpecRevisionTagEntityName,
+		gorm.BlobEntityName,
+	} {
+		q := d.NewQuery(entityName)
+		q = q.Require("ProjectID", name.ProjectID)
+		q = q.Require("ApiID", name.ApiID)
+		q = q.Require("VersionID", name.VersionID)
+		q = q.Require("SpecID", name.SpecID)
+		q = q.Require("RevisionID", name.RevisionID)
+		if err := d.Delete(ctx, q); err != nil {
+			return status.Error(codes.Internal, err.Error())
+		}
 	}
 
 	return nil
