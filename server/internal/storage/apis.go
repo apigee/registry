@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package dao
+package storage
 
 import (
 	"context"
 
-	"github.com/apigee/registry/server/gorm"
+	"github.com/apigee/registry/server/internal/storage/filtering"
+	"github.com/apigee/registry/server/internal/storage/gorm"
 	"github.com/apigee/registry/server/models"
 	"github.com/apigee/registry/server/names"
-	"github.com/apigee/registry/server/storage/filtering"
 	"google.golang.org/api/iterator"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -45,7 +45,7 @@ var apiFields = []filtering.Field{
 	{Name: "labels", Type: filtering.StringMap},
 }
 
-func (d *DAO) ListApis(ctx context.Context, parent names.Project, opts PageOptions) (ApiList, error) {
+func (d *Client) ListApis(ctx context.Context, parent names.Project, opts PageOptions) (ApiList, error) {
 	q := d.NewQuery(gorm.ApiEntityName)
 
 	token, err := decodeToken(opts.Token)
@@ -132,7 +132,7 @@ func apiMap(api models.Api) (map[string]interface{}, error) {
 	}, nil
 }
 
-func (d *DAO) GetApi(ctx context.Context, name names.Api) (*models.Api, error) {
+func (d *Client) GetApi(ctx context.Context, name names.Api) (*models.Api, error) {
 	api := new(models.Api)
 	k := d.NewKey(gorm.ApiEntityName, name.String())
 	if err := d.Get(ctx, k, api); d.IsNotFound(err) {
@@ -144,7 +144,7 @@ func (d *DAO) GetApi(ctx context.Context, name names.Api) (*models.Api, error) {
 	return api, nil
 }
 
-func (d *DAO) SaveApi(ctx context.Context, api *models.Api) error {
+func (d *Client) SaveApi(ctx context.Context, api *models.Api) error {
 	k := d.NewKey(gorm.ApiEntityName, api.Name())
 	if _, err := d.Put(ctx, k, api); err != nil {
 		return status.Error(codes.Internal, err.Error())
@@ -153,7 +153,7 @@ func (d *DAO) SaveApi(ctx context.Context, api *models.Api) error {
 	return nil
 }
 
-func (d *DAO) DeleteApi(ctx context.Context, name names.Api) error {
+func (d *Client) DeleteApi(ctx context.Context, name names.Api) error {
 	for _, entityName := range []string{
 		gorm.ApiEntityName,
 		gorm.VersionEntityName,

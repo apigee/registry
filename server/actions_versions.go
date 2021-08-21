@@ -18,7 +18,7 @@ import (
 	"context"
 
 	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/server/dao"
+	"github.com/apigee/registry/server/internal/storage"
 	"github.com/apigee/registry/server/models"
 	"github.com/apigee/registry/server/names"
 	"github.com/golang/protobuf/ptypes/empty"
@@ -33,7 +33,7 @@ func (s *RegistryServer) CreateApiVersion(ctx context.Context, req *rpc.CreateAp
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 	defer s.releaseStorageClient(client)
-	db := dao.NewDAO(client)
+	db := storage.NewClient(client)
 
 	if req.GetApiVersion() == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid api_version %+v: body must be provided", req.GetApiVersion())
@@ -85,7 +85,7 @@ func (s *RegistryServer) DeleteApiVersion(ctx context.Context, req *rpc.DeleteAp
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 	defer s.releaseStorageClient(client)
-	db := dao.NewDAO(client)
+	db := storage.NewClient(client)
 
 	name, err := names.ParseVersion(req.GetName())
 	if err != nil {
@@ -112,7 +112,7 @@ func (s *RegistryServer) GetApiVersion(ctx context.Context, req *rpc.GetApiVersi
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 	defer s.releaseStorageClient(client)
-	db := dao.NewDAO(client)
+	db := storage.NewClient(client)
 
 	name, err := names.ParseVersion(req.GetName())
 	if err != nil {
@@ -139,7 +139,7 @@ func (s *RegistryServer) ListApiVersions(ctx context.Context, req *rpc.ListApiVe
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 	defer s.releaseStorageClient(client)
-	db := dao.NewDAO(client)
+	db := storage.NewClient(client)
 
 	if req.GetPageSize() < 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid page_size %d: must not be negative", req.GetPageSize())
@@ -154,7 +154,7 @@ func (s *RegistryServer) ListApiVersions(ctx context.Context, req *rpc.ListApiVe
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	listing, err := db.ListVersions(ctx, parent, dao.PageOptions{
+	listing, err := db.ListVersions(ctx, parent, storage.PageOptions{
 		Size:   req.GetPageSize(),
 		Filter: req.GetFilter(),
 		Token:  req.GetPageToken(),
@@ -185,7 +185,7 @@ func (s *RegistryServer) UpdateApiVersion(ctx context.Context, req *rpc.UpdateAp
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 	defer s.releaseStorageClient(client)
-	db := dao.NewDAO(client)
+	db := storage.NewClient(client)
 
 	if req.GetApiVersion() == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid api_version %+v: body must be provided", req.GetApiVersion())

@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package dao
+package storage
 
 import (
 	"context"
 
-	"github.com/apigee/registry/server/gorm"
+	"github.com/apigee/registry/server/internal/storage/filtering"
+	"github.com/apigee/registry/server/internal/storage/gorm"
 	"github.com/apigee/registry/server/models"
 	"github.com/apigee/registry/server/names"
-	"github.com/apigee/registry/server/storage/filtering"
 	"google.golang.org/api/iterator"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -41,7 +41,7 @@ var projectFields = []filtering.Field{
 	{Name: "update_time", Type: filtering.Timestamp},
 }
 
-func (d *DAO) ListProjects(ctx context.Context, opts PageOptions) (ProjectList, error) {
+func (d *Client) ListProjects(ctx context.Context, opts PageOptions) (ProjectList, error) {
 	q := d.NewQuery(gorm.ProjectEntityName)
 
 	token, err := decodeToken(opts.Token)
@@ -107,7 +107,7 @@ func projectMap(p models.Project) map[string]interface{} {
 	}
 }
 
-func (d *DAO) GetProject(ctx context.Context, name names.Project) (*models.Project, error) {
+func (d *Client) GetProject(ctx context.Context, name names.Project) (*models.Project, error) {
 	project := new(models.Project)
 	k := d.NewKey(gorm.ProjectEntityName, name.String())
 	if err := d.Get(ctx, k, project); d.IsNotFound(err) {
@@ -119,7 +119,7 @@ func (d *DAO) GetProject(ctx context.Context, name names.Project) (*models.Proje
 	return project, nil
 }
 
-func (d *DAO) SaveProject(ctx context.Context, project *models.Project) error {
+func (d *Client) SaveProject(ctx context.Context, project *models.Project) error {
 	k := d.NewKey(gorm.ProjectEntityName, project.Name())
 	if _, err := d.Put(ctx, k, project); err != nil {
 		return status.Error(codes.Internal, err.Error())
@@ -128,7 +128,7 @@ func (d *DAO) SaveProject(ctx context.Context, project *models.Project) error {
 	return nil
 }
 
-func (d *DAO) DeleteProject(ctx context.Context, name names.Project) error {
+func (d *Client) DeleteProject(ctx context.Context, name names.Project) error {
 	for _, entityName := range []string{
 		gorm.ProjectEntityName,
 		gorm.ApiEntityName,

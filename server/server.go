@@ -22,7 +22,7 @@ import (
 	"strings"
 
 	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/server/gorm"
+	"github.com/apigee/registry/server/internal/storage/gorm"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"

@@ -18,7 +18,7 @@ import (
 	"context"
 
 	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/server/dao"
+	"github.com/apigee/registry/server/internal/storage"
 	"github.com/apigee/registry/server/models"
 	"github.com/apigee/registry/server/names"
 	"github.com/golang/protobuf/ptypes/empty"
@@ -33,7 +33,7 @@ func (s *RegistryServer) CreateApi(ctx context.Context, req *rpc.CreateApiReques
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 	defer s.releaseStorageClient(client)
-	db := dao.NewDAO(client)
+	db := storage.NewClient(client)
 
 	if req.GetApi() == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid api %+v: body must be provided", req.GetApi())
@@ -85,7 +85,7 @@ func (s *RegistryServer) DeleteApi(ctx context.Context, req *rpc.DeleteApiReques
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 	defer s.releaseStorageClient(client)
-	db := dao.NewDAO(client)
+	db := storage.NewClient(client)
 
 	name, err := names.ParseApi(req.GetName())
 	if err != nil {
@@ -112,7 +112,7 @@ func (s *RegistryServer) GetApi(ctx context.Context, req *rpc.GetApiRequest) (*r
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 	defer s.releaseStorageClient(client)
-	db := dao.NewDAO(client)
+	db := storage.NewClient(client)
 
 	name, err := names.ParseApi(req.GetName())
 	if err != nil {
@@ -139,7 +139,7 @@ func (s *RegistryServer) ListApis(ctx context.Context, req *rpc.ListApisRequest)
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 	defer s.releaseStorageClient(client)
-	db := dao.NewDAO(client)
+	db := storage.NewClient(client)
 
 	if req.GetPageSize() < 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid page_size %d: must not be negative", req.GetPageSize())
@@ -154,7 +154,7 @@ func (s *RegistryServer) ListApis(ctx context.Context, req *rpc.ListApisRequest)
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	listing, err := db.ListApis(ctx, parent, dao.PageOptions{
+	listing, err := db.ListApis(ctx, parent, storage.PageOptions{
 		Size:   req.GetPageSize(),
 		Filter: req.GetFilter(),
 		Token:  req.GetPageToken(),
@@ -185,7 +185,7 @@ func (s *RegistryServer) UpdateApi(ctx context.Context, req *rpc.UpdateApiReques
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 	defer s.releaseStorageClient(client)
-	db := dao.NewDAO(client)
+	db := storage.NewClient(client)
 
 	if req.GetApi() == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid api %v: body must be provided", req.GetApi())

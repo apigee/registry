@@ -12,15 +12,15 @@
 // See the License for the artifactific language governing permissions and
 // limitations under the License.
 
-package dao
+package storage
 
 import (
 	"context"
 
-	"github.com/apigee/registry/server/gorm"
+	"github.com/apigee/registry/server/internal/storage/filtering"
+	"github.com/apigee/registry/server/internal/storage/gorm"
 	"github.com/apigee/registry/server/models"
 	"github.com/apigee/registry/server/names"
-	"github.com/apigee/registry/server/storage/filtering"
 	"google.golang.org/api/iterator"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -45,7 +45,7 @@ var artifactFields = []filtering.Field{
 	{Name: "size_bytes", Type: filtering.Int},
 }
 
-func (d *DAO) ListSpecArtifacts(ctx context.Context, parent names.Spec, opts PageOptions) (ArtifactList, error) {
+func (d *Client) ListSpecArtifacts(ctx context.Context, parent names.Spec, opts PageOptions) (ArtifactList, error) {
 	q := d.NewQuery(gorm.ArtifactEntityName)
 
 	token, err := decodeToken(opts.Token)
@@ -97,7 +97,7 @@ func (d *DAO) ListSpecArtifacts(ctx context.Context, parent names.Spec, opts Pag
 	})
 }
 
-func (d *DAO) ListVersionArtifacts(ctx context.Context, parent names.Version, opts PageOptions) (ArtifactList, error) {
+func (d *Client) ListVersionArtifacts(ctx context.Context, parent names.Version, opts PageOptions) (ArtifactList, error) {
 	q := d.NewQuery(gorm.ArtifactEntityName)
 	q = q.Require("SpecID", "")
 
@@ -143,7 +143,7 @@ func (d *DAO) ListVersionArtifacts(ctx context.Context, parent names.Version, op
 	})
 }
 
-func (d *DAO) ListApiArtifacts(ctx context.Context, parent names.Api, opts PageOptions) (ArtifactList, error) {
+func (d *Client) ListApiArtifacts(ctx context.Context, parent names.Api, opts PageOptions) (ArtifactList, error) {
 	q := d.NewQuery(gorm.ArtifactEntityName)
 	q = q.Require("VersionID", "")
 	q = q.Require("SpecID", "")
@@ -183,7 +183,7 @@ func (d *DAO) ListApiArtifacts(ctx context.Context, parent names.Api, opts PageO
 	})
 }
 
-func (d *DAO) ListProjectArtifacts(ctx context.Context, parent names.Project, opts PageOptions) (ArtifactList, error) {
+func (d *Client) ListProjectArtifacts(ctx context.Context, parent names.Project, opts PageOptions) (ArtifactList, error) {
 	q := d.NewQuery(gorm.ArtifactEntityName)
 	q = q.Require("ApiID", "")
 	q = q.Require("VersionID", "")
@@ -214,7 +214,7 @@ func (d *DAO) ListProjectArtifacts(ctx context.Context, parent names.Project, op
 	})
 }
 
-func (d *DAO) listArtifacts(ctx context.Context, it *gorm.Iterator, opts PageOptions, include func(*models.Artifact) bool) (ArtifactList, error) {
+func (d *Client) listArtifacts(ctx context.Context, it *gorm.Iterator, opts PageOptions, include func(*models.Artifact) bool) (ArtifactList, error) {
 	token, err := decodeToken(opts.Token)
 	if err != nil {
 		return ArtifactList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
@@ -280,7 +280,7 @@ func artifactMap(artifact models.Artifact) (map[string]interface{}, error) {
 	}, nil
 }
 
-func (d *DAO) SaveArtifact(ctx context.Context, artifact *models.Artifact) error {
+func (d *Client) SaveArtifact(ctx context.Context, artifact *models.Artifact) error {
 	k := d.NewKey(gorm.ArtifactEntityName, artifact.Name())
 	if _, err := d.Put(ctx, k, artifact); err != nil {
 		return status.Error(codes.Internal, err.Error())
@@ -289,7 +289,7 @@ func (d *DAO) SaveArtifact(ctx context.Context, artifact *models.Artifact) error
 	return nil
 }
 
-func (d *DAO) SaveArtifactContents(ctx context.Context, artifact *models.Artifact, contents []byte) error {
+func (d *Client) SaveArtifactContents(ctx context.Context, artifact *models.Artifact, contents []byte) error {
 	blob := models.NewBlobForArtifact(artifact, contents)
 	k := d.NewKey(gorm.BlobEntityName, artifact.Name())
 	if _, err := d.Put(ctx, k, blob); err != nil {
@@ -299,7 +299,7 @@ func (d *DAO) SaveArtifactContents(ctx context.Context, artifact *models.Artifac
 	return nil
 }
 
-func (d *DAO) GetArtifact(ctx context.Context, name names.Artifact) (*models.Artifact, error) {
+func (d *Client) GetArtifact(ctx context.Context, name names.Artifact) (*models.Artifact, error) {
 	artifact := new(models.Artifact)
 	k := d.NewKey(gorm.ArtifactEntityName, name.String())
 	if err := d.Get(ctx, k, artifact); d.IsNotFound(err) {
@@ -311,7 +311,7 @@ func (d *DAO) GetArtifact(ctx context.Context, name names.Artifact) (*models.Art
 	return artifact, nil
 }
 
-func (d *DAO) GetArtifactContents(ctx context.Context, name names.Artifact) (*models.Blob, error) {
+func (d *Client) GetArtifactContents(ctx context.Context, name names.Artifact) (*models.Blob, error) {
 	blob := new(models.Blob)
 	k := d.NewKey(gorm.BlobEntityName, name.String())
 	if err := d.Get(ctx, k, blob); d.IsNotFound(err) {
@@ -323,7 +323,7 @@ func (d *DAO) GetArtifactContents(ctx context.Context, name names.Artifact) (*mo
 	return blob, nil
 }
 
-func (d *DAO) DeleteArtifact(ctx context.Context, name names.Artifact) error {
+func (d *Client) DeleteArtifact(ctx context.Context, name names.Artifact) error {
 	for _, entityName := range []string{
 		gorm.ArtifactEntityName,
 		gorm.BlobEntityName,

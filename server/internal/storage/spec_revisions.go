@@ -12,12 +12,12 @@
 // See the License for the revisionific language governing permissions and
 // limitations under the License.
 
-package dao
+package storage
 
 import (
 	"context"
 
-	"github.com/apigee/registry/server/gorm"
+	"github.com/apigee/registry/server/internal/storage/gorm"
 	"github.com/apigee/registry/server/models"
 	"github.com/apigee/registry/server/names"
 	"google.golang.org/api/iterator"
@@ -25,7 +25,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (d *DAO) ListSpecRevisions(ctx context.Context, parent names.Spec, opts PageOptions) (SpecList, error) {
+func (d *Client) ListSpecRevisions(ctx context.Context, parent names.Spec, opts PageOptions) (SpecList, error) {
 	q := d.NewQuery(gorm.SpecEntityName)
 	q = q.Require("ProjectID", parent.ProjectID)
 	q = q.Require("ApiID", parent.ApiID)
@@ -72,7 +72,7 @@ func (d *DAO) ListSpecRevisions(ctx context.Context, parent names.Spec, opts Pag
 	return response, nil
 }
 
-func (d *DAO) SaveSpecRevision(ctx context.Context, revision *models.Spec) error {
+func (d *Client) SaveSpecRevision(ctx context.Context, revision *models.Spec) error {
 	k := d.NewKey(gorm.SpecEntityName, revision.RevisionName())
 	if _, err := d.Put(ctx, k, revision); err != nil {
 		return status.Error(codes.Internal, err.Error())
@@ -81,7 +81,7 @@ func (d *DAO) SaveSpecRevision(ctx context.Context, revision *models.Spec) error
 	return nil
 }
 
-func (d *DAO) SaveSpecRevisionContents(ctx context.Context, spec *models.Spec, contents []byte) error {
+func (d *Client) SaveSpecRevisionContents(ctx context.Context, spec *models.Spec, contents []byte) error {
 	blob := models.NewBlobForSpec(spec, contents)
 	k := d.NewKey(gorm.BlobEntityName, spec.RevisionName())
 	if _, err := d.Put(ctx, k, blob); err != nil {
@@ -91,7 +91,7 @@ func (d *DAO) SaveSpecRevisionContents(ctx context.Context, spec *models.Spec, c
 	return nil
 }
 
-func (d *DAO) GetSpecRevision(ctx context.Context, name names.SpecRevision) (*models.Spec, error) {
+func (d *Client) GetSpecRevision(ctx context.Context, name names.SpecRevision) (*models.Spec, error) {
 	name, err := d.unwrapSpecRevisionTag(ctx, name)
 	if err != nil {
 		return nil, err
@@ -108,7 +108,7 @@ func (d *DAO) GetSpecRevision(ctx context.Context, name names.SpecRevision) (*mo
 	return spec, nil
 }
 
-func (d *DAO) GetSpecRevisionContents(ctx context.Context, name names.SpecRevision) (*models.Blob, error) {
+func (d *Client) GetSpecRevisionContents(ctx context.Context, name names.SpecRevision) (*models.Blob, error) {
 	name, err := d.unwrapSpecRevisionTag(ctx, name)
 	if err != nil {
 		return nil, err
@@ -125,7 +125,7 @@ func (d *DAO) GetSpecRevisionContents(ctx context.Context, name names.SpecRevisi
 	return blob, nil
 }
 
-func (d *DAO) DeleteSpecRevision(ctx context.Context, name names.SpecRevision) error {
+func (d *Client) DeleteSpecRevision(ctx context.Context, name names.SpecRevision) error {
 	name, err := d.unwrapSpecRevisionTag(ctx, name)
 	if err != nil {
 		return err
@@ -150,7 +150,7 @@ func (d *DAO) DeleteSpecRevision(ctx context.Context, name names.SpecRevision) e
 	return nil
 }
 
-func (d *DAO) SaveSpecRevisionTag(ctx context.Context, tag *models.SpecRevisionTag) error {
+func (d *Client) SaveSpecRevisionTag(ctx context.Context, tag *models.SpecRevisionTag) error {
 	k := d.NewKey(gorm.SpecRevisionTagEntityName, tag.String())
 	if _, err := d.Put(ctx, k, tag); err != nil {
 		return status.Error(codes.Internal, err.Error())
@@ -159,7 +159,7 @@ func (d *DAO) SaveSpecRevisionTag(ctx context.Context, tag *models.SpecRevisionT
 	return nil
 }
 
-func (d *DAO) unwrapSpecRevisionTag(ctx context.Context, name names.SpecRevision) (names.SpecRevision, error) {
+func (d *Client) unwrapSpecRevisionTag(ctx context.Context, name names.SpecRevision) (names.SpecRevision, error) {
 	tag := new(models.SpecRevisionTag)
 	if err := d.Get(ctx, d.NewKey(gorm.SpecRevisionTagEntityName, name.String()), tag); d.IsNotFound(err) {
 		return name, nil

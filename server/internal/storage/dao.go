@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package dao
+package storage
 
 import (
 	"bytes"
@@ -20,7 +20,7 @@ import (
 	"encoding/gob"
 	"fmt"
 
-	"github.com/apigee/registry/server/gorm"
+	"github.com/apigee/registry/server/internal/storage/gorm"
 )
 
 // PageOptions contains custom arguments for listing requests.
@@ -36,12 +36,12 @@ type PageOptions struct {
 	Token string
 }
 
-type DAO struct {
+type Client struct {
 	*gorm.Client
 }
 
-func NewDAO(c *gorm.Client) DAO {
-	return DAO{
+func NewClient(c *gorm.Client) Client {
+	return Client{
 		Client: c,
 	}
 }

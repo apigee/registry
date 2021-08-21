@@ -20,7 +20,7 @@ import (
 	"strings"
 
 	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/server/dao"
+	"github.com/apigee/registry/server/internal/storage"
 	"github.com/apigee/registry/server/models"
 	"github.com/apigee/registry/server/names"
 	"github.com/golang/protobuf/ptypes/empty"
@@ -54,7 +54,7 @@ func (s *RegistryServer) CreateArtifact(ctx context.Context, req *rpc.CreateArti
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 	defer s.releaseStorageClient(client)
-	db := dao.NewDAO(client)
+	db := storage.NewClient(client)
 
 	if req.GetArtifact() == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid artifact %+v: body must be provided", req.GetArtifact())
@@ -116,7 +116,7 @@ func (s *RegistryServer) DeleteArtifact(ctx context.Context, req *rpc.DeleteArti
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 	defer s.releaseStorageClient(client)
-	db := dao.NewDAO(client)
+	db := storage.NewClient(client)
 
 	name, err := names.ParseArtifact(req.GetName())
 	if err != nil {
@@ -143,7 +143,7 @@ func (s *RegistryServer) GetArtifact(ctx context.Context, req *rpc.GetArtifactRe
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 	defer s.releaseStorageClient(client)
-	db := dao.NewDAO(client)
+	db := storage.NewClient(client)
 
 	name, err := names.ParseArtifact(req.GetName())
 	if err != nil {
@@ -165,7 +165,7 @@ func (s *RegistryServer) GetArtifactContents(ctx context.Context, req *rpc.GetAr
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 	defer s.releaseStorageClient(client)
-	db := dao.NewDAO(client)
+	db := storage.NewClient(client)
 
 	name, err := names.ParseArtifact(strings.TrimSuffix(req.GetName(), "/contents"))
 	if err != nil {
@@ -195,7 +195,7 @@ func (s *RegistryServer) ListArtifacts(ctx context.Context, req *rpc.ListArtifac
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 	defer s.releaseStorageClient(client)
-	db := dao.NewDAO(client)
+	db := storage.NewClient(client)
 
 	if req.GetPageSize() < 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid page_size %d: must not be negative", req.GetPageSize())
@@ -210,28 +210,28 @@ func (s *RegistryServer) ListArtifacts(ctx context.Context, req *rpc.ListArtifac
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	var listing dao.ArtifactList
+	var listing storage.ArtifactList
 	switch parent := parent.(type) {
 	case names.Project:
-		listing, err = db.ListProjectArtifacts(ctx, parent, dao.PageOptions{
+		listing, err = db.ListProjectArtifacts(ctx, parent, storage.PageOptions{
 			Size:   req.GetPageSize(),
 			Filter: req.GetFilter(),
 			Token:  req.GetPageToken(),
 		})
 	case names.Api:
-		listing, err = db.ListApiArtifacts(ctx, parent, dao.PageOptions{
+		listing, err = db.ListApiArtifacts(ctx, parent, storage.PageOptions{
 			Size:   req.GetPageSize(),
 			Filter: req.GetFilter(),
 			Token:  req.GetPageToken(),
 		})
 	case names.Version:
-		listing, err = db.ListVersionArtifacts(ctx, parent, dao.PageOptions{
+		listing, err = db.ListVersionArtifacts(ctx, parent, storage.PageOptions{
 			Size:   req.GetPageSize(),
 			Filter: req.GetFilter(),
 			Token:  req.GetPageToken(),
 		})
 	case names.Spec:
-		listing, err = db.ListSpecArtifacts(ctx, parent, dao.PageOptions{
+		listing, err = db.ListSpecArtifacts(ctx, parent, storage.PageOptions{
 			Size:   req.GetPageSize(),
 			Filter: req.GetFilter(),
 			Token:  req.GetPageToken(),
@@ -260,7 +260,7 @@ func (s *RegistryServer) ReplaceArtifact(ctx context.Context, req *rpc.ReplaceAr
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 	defer s.releaseStorageClient(client)
-	db := dao.NewDAO(client)
+	db := storage.NewClient(client)
 
 	name, err := names.ParseArtifact(req.Artifact.GetName())
 	if err != nil {

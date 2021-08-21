@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package dao
+package storage
 
 import (
 	"context"
 
-	"github.com/apigee/registry/server/gorm"
+	"github.com/apigee/registry/server/internal/storage/filtering"
+	"github.com/apigee/registry/server/internal/storage/gorm"
 	"github.com/apigee/registry/server/models"
 	"github.com/apigee/registry/server/names"
-	"github.com/apigee/registry/server/storage/filtering"
 	"google.golang.org/api/iterator"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -45,7 +45,7 @@ var versionFields = []filtering.Field{
 	{Name: "labels", Type: filtering.StringMap},
 }
 
-func (d *DAO) ListVersions(ctx context.Context, parent names.Api, opts PageOptions) (VersionList, error) {
+func (d *Client) ListVersions(ctx context.Context, parent names.Api, opts PageOptions) (VersionList, error) {
 	q := d.NewQuery(gorm.VersionEntityName)
 
 	token, err := decodeToken(opts.Token)
@@ -140,7 +140,7 @@ func versionMap(version models.Version) (map[string]interface{}, error) {
 	}, nil
 }
 
-func (d *DAO) GetVersion(ctx context.Context, name names.Version) (*models.Version, error) {
+func (d *Client) GetVersion(ctx context.Context, name names.Version) (*models.Version, error) {
 	version := new(models.Version)
 	k := d.NewKey(gorm.VersionEntityName, name.String())
 	if err := d.Get(ctx, k, version); d.IsNotFound(err) {
@@ -152,7 +152,7 @@ func (d *DAO) GetVersion(ctx context.Context, name names.Version) (*models.Versi
 	return version, nil
 }
 
-func (d *DAO) SaveVersion(ctx context.Context, version *models.Version) error {
+func (d *Client) SaveVersion(ctx context.Context, version *models.Version) error {
 	k := d.NewKey(gorm.VersionEntityName, version.Name())
 	if _, err := d.Put(ctx, k, version); err != nil {
 		return status.Error(codes.Internal, err.Error())
@@ -161,7 +161,7 @@ func (d *DAO) SaveVersion(ctx context.Context, version *models.Version) error {
 	return nil
 }
 
-func (d *DAO) DeleteVersion(ctx context.Context, name names.Version) error {
+func (d *Client) DeleteVersion(ctx context.Context, name names.Version) error {
 	for _, entityName := range []string{
 		gorm.VersionEntityName,
 		gorm.SpecEntityName,

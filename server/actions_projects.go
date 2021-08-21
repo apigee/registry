@@ -18,7 +18,7 @@ import (
 	"context"
 
 	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/server/dao"
+	"github.com/apigee/registry/server/internal/storage"
 	"github.com/apigee/registry/server/models"
 	"github.com/apigee/registry/server/names"
 	"github.com/golang/protobuf/ptypes/empty"
@@ -33,7 +33,7 @@ func (s *RegistryServer) CreateProject(ctx context.Context, req *rpc.CreateProje
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 	defer s.releaseStorageClient(client)
-	db := dao.NewDAO(client)
+	db := storage.NewClient(client)
 
 	if req.GetProject() == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid project %+v: body must be provided", req.GetProject())
@@ -66,7 +66,7 @@ func (s *RegistryServer) DeleteProject(ctx context.Context, req *rpc.DeleteProje
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 	defer s.releaseStorageClient(client)
-	db := dao.NewDAO(client)
+	db := storage.NewClient(client)
 
 	name, err := names.ParseProject(req.GetName())
 	if err != nil {
@@ -93,7 +93,7 @@ func (s *RegistryServer) GetProject(ctx context.Context, req *rpc.GetProjectRequ
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 	defer s.releaseStorageClient(client)
-	db := dao.NewDAO(client)
+	db := storage.NewClient(client)
 
 	name, err := names.ParseProject(req.GetName())
 	if err != nil {
@@ -115,7 +115,7 @@ func (s *RegistryServer) ListProjects(ctx context.Context, req *rpc.ListProjects
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 	defer s.releaseStorageClient(client)
-	db := dao.NewDAO(client)
+	db := storage.NewClient(client)
 
 	if req.GetPageSize() < 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid page_size %d: must not be negative", req.GetPageSize())
@@ -125,7 +125,7 @@ func (s *RegistryServer) ListProjects(ctx context.Context, req *rpc.ListProjects
 		req.PageSize = 50
 	}
 
-	listing, err := db.ListProjects(ctx, dao.PageOptions{
+	listing, err := db.ListProjects(ctx, storage.PageOptions{
 		Size:   req.GetPageSize(),
 		Filter: req.GetFilter(),
 		Token:  req.GetPageToken(),
@@ -153,7 +153,7 @@ func (s *RegistryServer) UpdateProject(ctx context.Context, req *rpc.UpdateProje
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 	defer s.releaseStorageClient(client)
-	db := dao.NewDAO(client)
+	db := storage.NewClient(client)
 
 	if req.GetProject() == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid project %+v: body must be provided", req.GetProject())
