@@ -22,7 +22,7 @@ import (
 	"strings"
 
 	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/server/internal/storage/gorm"
+	"github.com/apigee/registry/server/internal/storage"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -90,13 +90,8 @@ func New(config Config) *RegistryServer {
 	return s
 }
 
-func (s *RegistryServer) getStorageClient(ctx context.Context) (*gorm.Client, error) {
-	return gorm.NewClient(ctx, s.database, s.dbConfig)
-}
-
-// if we had one client per handler, this would close the client.
-func (s *RegistryServer) releaseStorageClient(client *gorm.Client) {
-	client.Close()
+func (s *RegistryServer) getStorageClient(ctx context.Context) (*storage.Client, error) {
+	return storage.NewClient(ctx, s.database, s.dbConfig)
 }
 
 // Start runs the Registry server using the provided listener.

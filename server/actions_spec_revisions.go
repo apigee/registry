@@ -28,12 +28,11 @@ import (
 
 // ListApiSpecRevisions handles the corresponding API request.
 func (s *RegistryServer) ListApiSpecRevisions(ctx context.Context, req *rpc.ListApiSpecRevisionsRequest) (*rpc.ListApiSpecRevisionsResponse, error) {
-	client, err := s.getStorageClient(ctx)
+	db, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer s.releaseStorageClient(client)
-	db := storage.NewClient(client)
+	defer db.Close()
 
 	if req.GetPageSize() < 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid page_size %d: must not be negative", req.GetPageSize())
@@ -79,12 +78,11 @@ func (s *RegistryServer) ListApiSpecRevisions(ctx context.Context, req *rpc.List
 
 // DeleteApiSpecRevision handles the corresponding API request.
 func (s *RegistryServer) DeleteApiSpecRevision(ctx context.Context, req *rpc.DeleteApiSpecRevisionRequest) (*empty.Empty, error) {
-	client, err := s.getStorageClient(ctx)
+	db, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer s.releaseStorageClient(client)
-	db := storage.NewClient(client)
+	defer db.Close()
 
 	name, err := names.ParseSpecRevision(req.GetName())
 	if err != nil {
@@ -113,12 +111,11 @@ func (s *RegistryServer) DeleteApiSpecRevision(ctx context.Context, req *rpc.Del
 
 // TagApiSpecRevision handles the corresponding API request.
 func (s *RegistryServer) TagApiSpecRevision(ctx context.Context, req *rpc.TagApiSpecRevisionRequest) (*rpc.ApiSpec, error) {
-	client, err := s.getStorageClient(ctx)
+	db, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer s.releaseStorageClient(client)
-	db := storage.NewClient(client)
+	defer db.Close()
 
 	if req.GetTag() == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid tag %q, must not be empty", req.GetTag())
@@ -165,12 +162,11 @@ func (s *RegistryServer) TagApiSpecRevision(ctx context.Context, req *rpc.TagApi
 
 // RollbackApiSpec handles the corresponding API request.
 func (s *RegistryServer) RollbackApiSpec(ctx context.Context, req *rpc.RollbackApiSpecRequest) (*rpc.ApiSpec, error) {
-	client, err := s.getStorageClient(ctx)
+	db, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer s.releaseStorageClient(client)
-	db := storage.NewClient(client)
+	defer db.Close()
 
 	if req.GetRevisionId() == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid revision ID %q, must not be empty", req.GetRevisionId())

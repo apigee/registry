@@ -16,6 +16,7 @@ package storage
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/gob"
 	"fmt"
@@ -40,10 +41,15 @@ type Client struct {
 	*gorm.Client
 }
 
-func NewClient(c *gorm.Client) Client {
-	return Client{
-		Client: c,
+func NewClient(ctx context.Context, driver, dsn string) (*Client, error) {
+	gc, err := gorm.NewClient(ctx, driver, dsn)
+	if err != nil {
+		return nil, err
 	}
+
+	return &Client{
+		Client: gc,
+	}, nil
 }
 
 // token contains information to share between sequential page iterators.

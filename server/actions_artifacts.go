@@ -49,12 +49,11 @@ func parseArtifactParent(name string) (artifactParent, error) {
 
 // CreateArtifact handles the corresponding API request.
 func (s *RegistryServer) CreateArtifact(ctx context.Context, req *rpc.CreateArtifactRequest) (*rpc.Artifact, error) {
-	client, err := s.getStorageClient(ctx)
+	db, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer s.releaseStorageClient(client)
-	db := storage.NewClient(client)
+	defer db.Close()
 
 	if req.GetArtifact() == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid artifact %+v: body must be provided", req.GetArtifact())
@@ -111,12 +110,11 @@ func (s *RegistryServer) CreateArtifact(ctx context.Context, req *rpc.CreateArti
 
 // DeleteArtifact handles the corresponding API request.
 func (s *RegistryServer) DeleteArtifact(ctx context.Context, req *rpc.DeleteArtifactRequest) (*empty.Empty, error) {
-	client, err := s.getStorageClient(ctx)
+	db, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer s.releaseStorageClient(client)
-	db := storage.NewClient(client)
+	defer db.Close()
 
 	name, err := names.ParseArtifact(req.GetName())
 	if err != nil {
@@ -138,12 +136,11 @@ func (s *RegistryServer) DeleteArtifact(ctx context.Context, req *rpc.DeleteArti
 
 // GetArtifact handles the corresponding API request.
 func (s *RegistryServer) GetArtifact(ctx context.Context, req *rpc.GetArtifactRequest) (*rpc.Artifact, error) {
-	client, err := s.getStorageClient(ctx)
+	db, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer s.releaseStorageClient(client)
-	db := storage.NewClient(client)
+	defer db.Close()
 
 	name, err := names.ParseArtifact(req.GetName())
 	if err != nil {
@@ -160,12 +157,11 @@ func (s *RegistryServer) GetArtifact(ctx context.Context, req *rpc.GetArtifactRe
 
 // GetArtifactContents handles the corresponding API request.
 func (s *RegistryServer) GetArtifactContents(ctx context.Context, req *rpc.GetArtifactContentsRequest) (*httpbody.HttpBody, error) {
-	client, err := s.getStorageClient(ctx)
+	db, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer s.releaseStorageClient(client)
-	db := storage.NewClient(client)
+	defer db.Close()
 
 	name, err := names.ParseArtifact(strings.TrimSuffix(req.GetName(), "/contents"))
 	if err != nil {
@@ -190,12 +186,11 @@ func (s *RegistryServer) GetArtifactContents(ctx context.Context, req *rpc.GetAr
 
 // ListArtifacts handles the corresponding API request.
 func (s *RegistryServer) ListArtifacts(ctx context.Context, req *rpc.ListArtifactsRequest) (*rpc.ListArtifactsResponse, error) {
-	client, err := s.getStorageClient(ctx)
+	db, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer s.releaseStorageClient(client)
-	db := storage.NewClient(client)
+	defer db.Close()
 
 	if req.GetPageSize() < 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid page_size %d: must not be negative", req.GetPageSize())
@@ -255,12 +250,11 @@ func (s *RegistryServer) ListArtifacts(ctx context.Context, req *rpc.ListArtifac
 
 // ReplaceArtifact handles the corresponding API request.
 func (s *RegistryServer) ReplaceArtifact(ctx context.Context, req *rpc.ReplaceArtifactRequest) (*rpc.Artifact, error) {
-	client, err := s.getStorageClient(ctx)
+	db, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer s.releaseStorageClient(client)
-	db := storage.NewClient(client)
+	defer db.Close()
 
 	name, err := names.ParseArtifact(req.Artifact.GetName())
 	if err != nil {
