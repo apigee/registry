@@ -61,8 +61,14 @@ func (s *RegistryServer) ListApiSpecRevisions(ctx context.Context, req *rpc.List
 		NextPageToken: listing.Token,
 	}
 
+	tags, err := db.GetSpecTags(ctx, parent)
+	if err != nil {
+		return nil, err
+	}
+
+	tagsByRev := tagsByRevision(tags)
 	for i, spec := range listing.Specs {
-		response.ApiSpecs[i], err = spec.BasicMessage(spec.RevisionName())
+		response.ApiSpecs[i], err = spec.BasicMessage(spec.RevisionName(), tagsByRev[spec.RevisionName()])
 		if err != nil {
 			return nil, status.Error(codes.Internal, err.Error())
 		}
@@ -143,7 +149,12 @@ func (s *RegistryServer) TagApiSpecRevision(ctx context.Context, req *rpc.TagApi
 		return nil, err
 	}
 
-	message, err := revision.BasicMessage(tag.String())
+	tags, err := revisionTags(ctx, db, name)
+	if err != nil {
+		return nil, err
+	}
+
+	message, err := revision.BasicMessage(tag.String(), tags)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -194,7 +205,7 @@ func (s *RegistryServer) RollbackApiSpec(ctx context.Context, req *rpc.RollbackA
 		return nil, err
 	}
 
-	message, err := rollback.BasicMessage(rollback.RevisionName())
+	message, err := rollback.BasicMessage(rollback.RevisionName(), []string{})
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}

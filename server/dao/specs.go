@@ -184,3 +184,29 @@ func (d *DAO) DeleteSpec(ctx context.Context, name names.Spec) error {
 
 	return nil
 }
+
+func (d *DAO) GetSpecTags(ctx context.Context, name names.Spec) ([]*models.SpecRevisionTag, error) {
+	q := d.NewQuery(storage.SpecRevisionTagEntityName)
+	q = q.Require("ProjectID", name.ProjectID)
+	q = q.Require("ApiID", name.ApiID)
+	q = q.Require("VersionID", name.VersionID)
+	if name.SpecID != "-" {
+		q = q.Require("SpecID", name.SpecID)
+	}
+
+	var (
+		tags = make([]*models.SpecRevisionTag, 0)
+		tag  = new(models.SpecRevisionTag)
+		it   = d.Run(ctx, q)
+		err  error
+	)
+
+	for _, err = it.Next(tag); err == nil; _, err = it.Next(tag) {
+		tags = append(tags, tag)
+	}
+	if err != nil && err != iterator.Done {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return tags, nil
+}
