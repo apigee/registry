@@ -36,42 +36,22 @@ type Client struct {
 var mutex sync.Mutex
 var disableMutex bool
 
-func mylock() {
+func lock() {
 	if !disableMutex {
 		mutex.Lock()
 	}
 }
 
-func myunlock() {
+func unlock() {
 	if !disableMutex {
 		mutex.Unlock()
 	}
 }
 
-func config() *gorm.Config {
+func defaultConfig() *gorm.Config {
 	return &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent), // https://gorm.io/docs/logger.html
 	}
-}
-
-// Validate checks a database name and config string for validity.
-func Validate(gormDBName, gormConfig string) error {
-	switch gormDBName {
-	case "sqlite3":
-		if !cgoEnabled {
-			return fmt.Errorf("%s is unavailable, please recompile with CGO_ENABLED=1 or configure registry-server to use a different database", gormDBName)
-		}
-	case "postgres":
-		break
-	case "cloudsqlpostgres":
-		break
-	default:
-		return fmt.Errorf("unsupported database (%s)", gormDBName)
-	}
-	if gormConfig == "" {
-		return fmt.Errorf("dbconfig cannot be empty")
-	}
-	return nil
 }
 
 // NewClient creates a new database session using the provided driver and data source name.
@@ -80,47 +60,51 @@ func Validate(gormDBName, gormConfig string) error {
 // PostgreSQL DSN Reference: See "Connection Strings" at https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING
 // SQLite DSN Reference: See "URI filename examples" at https://www.sqlite.org/c3ref/open.html
 func NewClient(ctx context.Context, driver, dsn string) (*Client, error) {
-	mylock()
+	lock()
 	switch driver {
 	case "sqlite3":
-		db, err := gorm.Open(sqlite.Open(dsn), config())
+		db, err := gorm.Open(sqlite.Open(dsn), defaultConfig())
 		if err != nil {
-			(&Client{db: db}).close()
-			myunlock()
+			c := &Client{db: db}
+			c.close()
+			unlock()
 			return nil, err
 		}
-		myunlock()
+		unlock()
 		// empirically, it does not seem safe to disable the mutex for sqlite3,
 		// which might make sense since sqlite database access is in-process.
-		//disableMutex = true
-		c := (&Client{db: db}).ensure()
+		disableMutex = false
+		c := &Client{db: db}
+		c.ensure()
 		return c, nil
 	case "postgres", "cloudsqlpostgres":
 		db, err := gorm.Open(postgres.New(postgres.Config{
 			DriverName: driver,
 			DSN:        dsn,
-		}), config())
+		}), defaultConfig())
 		if err != nil {
-			(&Client{db: db}).close()
-			myunlock()
+			c := &Client{db: db}
+			c.close()
+			unlock()
 			return nil, err
 		}
-		myunlock()
+		unlock()
 		// postgres runs in a separate process and seems to have no problems
 		// with concurrent access and modifications.
 		disableMutex = true
-		c := (&Client{db: db}).ensure()
+		c := &Client{db: db}
+		c.ensure()
 		return c, nil
 	default:
-		myunlock()
+		unlock()
 		return nil, fmt.Errorf("unsupported database %s", driver)
 	}
 }
 
 // Close closes a database session.
 func (c *Client) Close() {
-	mylock()
-	defer myunlock()
+	lock()
+	defer unlock()
 	c.close()
 }
 
@@ -130,14 +114,14 @@ func (c *Client) close() {
 }
 
 func (c *Client) ensureTable(v interface{}) {
-	mylock()
-	defer myunlock()
+	lock()
+	defer unlock()
 	if !c.db.Migrator().HasTable(v) {
 		c.db.Migrator().CreateTable(v)
 	}
 }
 
-func (c *Client) ensure() *Client {
+func (c *Client) ensure() {
 	c.ensureTable(&models.Project{})
 	c.ensureTable(&models.Api{})
 	c.ensureTable(&models.Version{})
@@ -145,7 +129,6 @@ func (c *Client) ensure() *Client {
 	c.ensureTable(&models.Blob{})
 	c.ensureTable(&models.Artifact{})
 	c.ensureTable(&models.SpecRevisionTag{})
-	return c
 }
 
 // IsNotFound returns true if an error is due to an entity not being found.
@@ -155,15 +138,15 @@ func (c *Client) IsNotFound(err error) bool {
 
 // Get gets an entity using the storage client.
 func (c *Client) Get(ctx context.Context, k *Key, v interface{}) error {
-	mylock()
-	defer myunlock()
+	lock()
+	defer unlock()
 	return c.db.Where("key = ?", k.Name).First(v).Error
 }
 
 // Put puts an entity using the storage client.
 func (c *Client) Put(ctx context.Context, k *Key, v interface{}) (*Key, error) {
-	mylock()
-	defer myunlock()
+	lock()
+	defer unlock()
 	switch r := v.(type) {
 	case *models.Project:
 		r.Key = k.Name
@@ -222,8 +205,8 @@ func (c *Client) Delete(ctx context.Context, q *Query) error {
 
 // Run runs a query using the storage client, returning an iterator.
 func (c *Client) Run(ctx context.Context, q *Query) *Iterator {
-	mylock()
-	defer myunlock()
+	lock()
+	defer unlock()
 
 	// Filtering is currently implemented by skipping iterator elements that
 	// don't match the filter criteria, and expects to only reach the end of
@@ -277,8 +260,8 @@ func (c *Client) Run(ctx context.Context, q *Query) *Iterator {
 }
 
 func (c *Client) GetRecentSpecRevisions(ctx context.Context, offset int32, projectID, apiID, versionID string) *Iterator {
-	mylock()
-	defer myunlock()
+	lock()
+	defer unlock()
 
 	// Select all columns from `specs` table specifically.
 	// We do not want to select duplicates from the joined subquery result.
