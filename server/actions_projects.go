@@ -19,7 +19,7 @@ import (
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/internal/storage"
-	"github.com/apigee/registry/server/models"
+	"github.com/apigee/registry/server/internal/storage/models"
 	"github.com/apigee/registry/server/names"
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc/codes"

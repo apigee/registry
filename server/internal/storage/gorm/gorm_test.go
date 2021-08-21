@@ -20,7 +20,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/apigee/registry/server/models"
+	"github.com/apigee/registry/server/internal/storage/models"
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/testing/protocmp"
 )

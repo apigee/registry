@@ -19,7 +19,7 @@ import (
 
 	"github.com/apigee/registry/server/internal/storage/filtering"
 	"github.com/apigee/registry/server/internal/storage/gorm"
-	"github.com/apigee/registry/server/models"
+	"github.com/apigee/registry/server/internal/storage/models"
 	"github.com/apigee/registry/server/names"
 	"google.golang.org/api/iterator"
 	"google.golang.org/grpc/codes"

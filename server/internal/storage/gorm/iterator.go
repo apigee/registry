@@ -18,7 +18,7 @@ import (
 	"encoding/base64"
 	"fmt"
 
-	"github.com/apigee/registry/server/models"
+	"github.com/apigee/registry/server/internal/storage/models"
 	"google.golang.org/api/iterator"
 )
 

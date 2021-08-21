@@ -21,7 +21,7 @@ import (
 	"sync"
 
 	_ "github.com/GoogleCloudPlatform/cloudsql-proxy/proxy/dialers/postgres"
-	"github.com/apigee/registry/server/models"
+	"github.com/apigee/registry/server/internal/storage/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
