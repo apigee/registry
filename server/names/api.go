@@ -64,20 +64,20 @@ func (a Api) Artifact(id string) Artifact {
 }
 
 func (a Api) String() string {
-	return normalize(fmt.Sprintf("projects/%s%s/apis/%s",
-		a.ProjectID, LocationSegment, a.ApiID))
+	return normalize(fmt.Sprintf("projects/%s/locations/%s/apis/%s",
+		a.ProjectID, Location, a.ApiID))
 }
 
 // ApisRegexp returns a regular expression that matches collection of apis.
 func ApisRegexp() *regexp.Regexp {
-	return regexp.MustCompile(fmt.Sprintf("^projects/%s%s/apis$",
-		identifier, LocationSegment))
+	return regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis$",
+		identifier, Location))
 }
 
 // ApiRegexp returns a regular expression that matches a api resource name.
 func ApiRegexp() *regexp.Regexp {
-	return regexp.MustCompile(fmt.Sprintf("^projects/%s%s/apis/%s$",
-		identifier, LocationSegment, identifier))
+	return regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s$",
+		identifier, Location, identifier))
 }
 
 // ParseApi parses the name of an Api.

@@ -55,8 +55,8 @@ func TestResourceNames(t *testing.T) {
 			name:   "apis",
 			regexp: ApisRegexp(),
 			pass: []string{
-				"projects/googleLOCATION/apis",
-				"projects/-LOCATION/apis",
+				"projects/google/locations/LOCATION/apis",
+				"projects/-/locations/LOCATION/apis",
 			},
 			fail: []string{
 				"-",
@@ -66,26 +66,26 @@ func TestResourceNames(t *testing.T) {
 			name:   "api",
 			regexp: ApiRegexp(),
 			pass: []string{
-				"projects/googleLOCATION/apis/sample",
-				"projects/-LOCATION/apis/-",
-				"projects/123LOCATION/apis/abc",
-				"projects/1-2-3LOCATION/apis/abc",
+				"projects/google/locations/LOCATION/apis/sample",
+				"projects/-/locations/LOCATION/apis/-",
+				"projects/123/locations/LOCATION/apis/abc",
+				"projects/1-2-3/locations/LOCATION/apis/abc",
 			},
 			fail: []string{
 				"-",
 				"invalid",
-				"projects/LOCATION/apis/123",
-				"projects/123LOCATION/apis/",
-				"projects/123LOCATION/invalid/123",
-				"projects/123LOCATION/apis/ 123",
+				"projects//locations/LOCATION/apis/123",
+				"projects/123/locations/LOCATION/apis/",
+				"projects/123/locations/LOCATION/invalid/123",
+				"projects/123/locations/LOCATION/apis/ 123",
 			},
 		},
 		{
 			name:   "versions",
 			regexp: VersionsRegexp(),
 			pass: []string{
-				"projects/googleLOCATION/apis/sample/versions",
-				"projects/-LOCATION/apis/-/versions",
+				"projects/google/locations/LOCATION/apis/sample/versions",
+				"projects/-/locations/LOCATION/apis/-/versions",
 			},
 			fail: []string{
 				"-",
@@ -95,26 +95,26 @@ func TestResourceNames(t *testing.T) {
 			name:   "version",
 			regexp: VersionRegexp(),
 			pass: []string{
-				"projects/googleLOCATION/apis/sample/versions/v1",
-				"projects/-LOCATION/apis/-/versions/-",
-				"projects/123LOCATION/apis/abc/versions/123",
-				"projects/1-2-3LOCATION/apis/abc/versions/123",
+				"projects/google/locations/LOCATION/apis/sample/versions/v1",
+				"projects/-/locations/LOCATION/apis/-/versions/-",
+				"projects/123/locations/LOCATION/apis/abc/versions/123",
+				"projects/1-2-3/locations/LOCATION/apis/abc/versions/123",
 			},
 			fail: []string{
 				"-",
 				"invalid",
-				"projects/LOCATION/apis/123",
-				"projects/123LOCATION/apis/",
-				"projects/123LOCATION/invalid/123",
-				"projects/123LOCATION/apis/ 123",
+				"projects//locations/LOCATION/apis/123",
+				"projects/123/locations/LOCATION/apis/",
+				"projects/123/locations/LOCATION/invalid/123",
+				"projects/123/locations/LOCATION/apis/ 123",
 			},
 		},
 		{
 			name:   "specs",
 			regexp: SpecsRegexp(),
 			pass: []string{
-				"projects/googleLOCATION/apis/sample/versions/v1/specs",
-				"projects/-LOCATION/apis/-/versions/-/specs",
+				"projects/google/locations/LOCATION/apis/sample/versions/v1/specs",
+				"projects/-/locations/LOCATION/apis/-/versions/-/specs",
 			},
 			fail: []string{
 				"-",
@@ -124,29 +124,29 @@ func TestResourceNames(t *testing.T) {
 			name:   "spec",
 			regexp: SpecRegexp(),
 			pass: []string{
-				"projects/googleLOCATION/apis/sample/versions/v1/specs/openapi.yaml@1234567890abcdef",
-				"projects/googleLOCATION/apis/sample/versions/v1/specs/openapi.yaml",
-				"projects/-LOCATION/apis/-/versions/-/specs/-",
-				"projects/123LOCATION/apis/abc/versions/123/specs/abc",
-				"projects/1-2-3LOCATION/apis/abc/versions/123/specs/abc",
+				"projects/google/locations/LOCATION/apis/sample/versions/v1/specs/openapi.yaml@1234567890abcdef",
+				"projects/google/locations/LOCATION/apis/sample/versions/v1/specs/openapi.yaml",
+				"projects/-/locations/LOCATION/apis/-/versions/-/specs/-",
+				"projects/123/locations/LOCATION/apis/abc/versions/123/specs/abc",
+				"projects/1-2-3/locations/LOCATION/apis/abc/versions/123/specs/abc",
 			},
 			fail: []string{
 				"-",
 				"invalid",
-				"projects/LOCATION/apis/123",
-				"projects/123LOCATION/apis/",
-				"projects/123LOCATION/invalid/123",
-				"projects/123LOCATION/apis/ 123",
+				"projects//locations/LOCATION/apis/123",
+				"projects/123/locations/LOCATION/apis/",
+				"projects/123/locations/LOCATION/invalid/123",
+				"projects/123/locations/LOCATION/apis/ 123",
 			},
 		},
 		{
 			name:   "artifacts",
 			regexp: ArtifactsRegexp(),
 			pass: []string{
-				"projects/googleLOCATION/apis/sample/versions/v1/specs/openapi.yaml/artifacts",
-				"projects/googleLOCATION/apis/sample/versions/v1/artifacts",
-				"projects/googleLOCATION/apis/sample/artifacts",
-				"projects/googleLOCATION/artifacts",
+				"projects/google/locations/LOCATION/apis/sample/versions/v1/specs/openapi.yaml/artifacts",
+				"projects/google/locations/LOCATION/apis/sample/versions/v1/artifacts",
+				"projects/google/locations/LOCATION/apis/sample/artifacts",
+				"projects/google/locations/LOCATION/artifacts",
 			},
 			fail: []string{
 				"-",
@@ -156,10 +156,10 @@ func TestResourceNames(t *testing.T) {
 			name:   "artifact",
 			regexp: ArtifactRegexp(),
 			pass: []string{
-				"projects/googleLOCATION/apis/sample/versions/v1/specs/openapi.yaml/artifacts/test-artifact",
-				"projects/googleLOCATION/apis/sample/versions/v1/artifacts/test-artifact",
-				"projects/googleLOCATION/apis/sample/artifacts/test-artifact",
-				"projects/googleLOCATION/artifacts/test-artifact",
+				"projects/google/locations/LOCATION/apis/sample/versions/v1/specs/openapi.yaml/artifacts/test-artifact",
+				"projects/google/locations/LOCATION/apis/sample/versions/v1/artifacts/test-artifact",
+				"projects/google/locations/LOCATION/apis/sample/artifacts/test-artifact",
+				"projects/google/locations/LOCATION/artifacts/test-artifact",
 			},
 			fail: []string{
 				"-",
@@ -168,14 +168,14 @@ func TestResourceNames(t *testing.T) {
 	}
 	for _, g := range groups {
 		for _, path := range g.pass {
-			path = strings.ReplaceAll(path, "LOCATION", LocationSegment)
+			path = strings.ReplaceAll(path, "LOCATION", Location)
 			m := g.regexp.FindStringSubmatch(path)
 			if m == nil {
 				t.Errorf("failed to match %s: %s", g.name, path)
 			}
 		}
 		for _, path := range g.fail {
-			path = strings.ReplaceAll(path, "LOCATION", LocationSegment)
+			path = strings.ReplaceAll(path, "LOCATION", Location)
 			m := g.regexp.FindStringSubmatch(path)
 			if m != nil {
 				t.Errorf("false match %s: %s", g.name, path)

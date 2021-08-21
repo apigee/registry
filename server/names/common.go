@@ -64,6 +64,6 @@ func normalize(identifier string) string {
 	return strings.ToLower(identifier)
 }
 
-// LocationSegment is included in resource names immediately following the
+// Location is included in resource names immediately following the
 // project_id.
-var LocationSegment = "/locations/global"
+var Location = "global"
