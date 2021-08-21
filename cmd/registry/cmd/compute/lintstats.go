@@ -103,7 +103,7 @@ func lintStatsCommand(ctx context.Context) *cobra.Command {
 					// Create a top-level list of problem counts for the project
 					problemCounts := make([]*rpc.LintProblemCount, 0)
 					// get the lintstats for each spec in the project
-					pattern := project.Name + "/apis/-/versions/-/specs/-/artifacts/" + lintStatsRelation(linter)
+					pattern := project.Name + "/locations/global/apis/-/versions/-/specs/-/artifacts/" + lintStatsRelation(linter)
 					if m2 := names.ArtifactRegexp().FindStringSubmatch(pattern); m2 != nil {
 						err = core.ListArtifacts(ctx, client, m2, "", true, func(artifact *rpc.Artifact) {
 							log.Printf("%+v", artifact.Name)
@@ -134,7 +134,7 @@ func lintStatsCommand(ctx context.Context) *cobra.Command {
 						relation := lintStatsRelation(linter)
 						messageData, _ := proto.Marshal(lintstats)
 						artifact := &rpc.Artifact{
-							Name:     subject + "/artifacts/" + relation,
+							Name:     subject + "/locations/global/artifacts/" + relation,
 							MimeType: core.MimeTypeForMessageType("google.cloud.apigee.registry.applications.v1alpha1.LintStats"),
 							Contents: messageData,
 						}
