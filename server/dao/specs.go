@@ -17,9 +17,9 @@ package dao
 import (
 	"context"
 
+	"github.com/apigee/registry/server/gorm"
 	"github.com/apigee/registry/server/models"
 	"github.com/apigee/registry/server/names"
-	"github.com/apigee/registry/server/storage"
 	"github.com/apigee/registry/server/storage/filtering"
 	"google.golang.org/api/iterator"
 	"google.golang.org/grpc/codes"
@@ -147,7 +147,7 @@ func specMap(spec models.Spec) (map[string]interface{}, error) {
 
 func (d *DAO) GetSpec(ctx context.Context, name names.Spec) (*models.Spec, error) {
 	normal := name.Normal()
-	q := d.NewQuery(storage.SpecEntityName)
+	q := d.NewQuery(gorm.SpecEntityName)
 	q = q.Require("ProjectID", normal.ProjectID)
 	q = q.Require("ApiID", normal.ApiID)
 	q = q.Require("VersionID", normal.VersionID)
@@ -168,12 +168,12 @@ func (d *DAO) DeleteSpec(ctx context.Context, name names.Spec) error {
 		return status.Error(codes.Internal, err.Error())
 	}
 
-	k := d.NewKey(storage.SpecEntityName, name.String())
+	k := d.NewKey(gorm.SpecEntityName, name.String())
 	if err := d.Delete(ctx, k); err != nil {
 		return status.Error(codes.Internal, err.Error())
 	}
 
-	q := d.NewQuery(storage.SpecEntityName)
+	q := d.NewQuery(gorm.SpecEntityName)
 	q = q.Require("ProjectID", name.ProjectID)
 	q = q.Require("ApiID", name.ApiID)
 	q = q.Require("VersionID", name.VersionID)
@@ -186,7 +186,7 @@ func (d *DAO) DeleteSpec(ctx context.Context, name names.Spec) error {
 }
 
 func (d *DAO) GetSpecTags(ctx context.Context, name names.Spec) ([]*models.SpecRevisionTag, error) {
-	q := d.NewQuery(storage.SpecRevisionTagEntityName)
+	q := d.NewQuery(gorm.SpecRevisionTagEntityName)
 	q = q.Require("ProjectID", name.ProjectID)
 	q = q.Require("ApiID", name.ApiID)
 	q = q.Require("VersionID", name.VersionID)

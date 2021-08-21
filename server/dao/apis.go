@@ -17,9 +17,9 @@ package dao
 import (
 	"context"
 
+	"github.com/apigee/registry/server/gorm"
 	"github.com/apigee/registry/server/models"
 	"github.com/apigee/registry/server/names"
-	"github.com/apigee/registry/server/storage"
 	"github.com/apigee/registry/server/storage/filtering"
 	"google.golang.org/api/iterator"
 	"google.golang.org/grpc/codes"
@@ -46,7 +46,7 @@ var apiFields = []filtering.Field{
 }
 
 func (d *DAO) ListApis(ctx context.Context, parent names.Project, opts PageOptions) (ApiList, error) {
-	q := d.NewQuery(storage.ApiEntityName)
+	q := d.NewQuery(gorm.ApiEntityName)
 
 	token, err := decodeToken(opts.Token)
 	if err != nil {
@@ -134,7 +134,7 @@ func apiMap(api models.Api) (map[string]interface{}, error) {
 
 func (d *DAO) GetApi(ctx context.Context, name names.Api) (*models.Api, error) {
 	api := new(models.Api)
-	k := d.NewKey(storage.ApiEntityName, name.String())
+	k := d.NewKey(gorm.ApiEntityName, name.String())
 	if err := d.Get(ctx, k, api); d.IsNotFound(err) {
 		return nil, status.Errorf(codes.NotFound, "api %q not found in database", name)
 	} else if err != nil {
@@ -145,7 +145,7 @@ func (d *DAO) GetApi(ctx context.Context, name names.Api) (*models.Api, error) {
 }
 
 func (d *DAO) SaveApi(ctx context.Context, api *models.Api) error {
-	k := d.NewKey(storage.ApiEntityName, api.Name())
+	k := d.NewKey(gorm.ApiEntityName, api.Name())
 	if _, err := d.Put(ctx, k, api); err != nil {
 		return status.Error(codes.Internal, err.Error())
 	}
@@ -158,7 +158,7 @@ func (d *DAO) DeleteApi(ctx context.Context, name names.Api) error {
 		return status.Error(codes.Internal, err.Error())
 	}
 
-	k := d.NewKey(storage.ApiEntityName, name.String())
+	k := d.NewKey(gorm.ApiEntityName, name.String())
 	if err := d.Delete(ctx, k); err != nil {
 		return status.Error(codes.Internal, err.Error())
 	}

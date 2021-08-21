@@ -17,9 +17,9 @@ package dao
 import (
 	"context"
 
+	"github.com/apigee/registry/server/gorm"
 	"github.com/apigee/registry/server/models"
 	"github.com/apigee/registry/server/names"
-	"github.com/apigee/registry/server/storage"
 	"github.com/apigee/registry/server/storage/filtering"
 	"google.golang.org/api/iterator"
 	"google.golang.org/grpc/codes"
@@ -46,7 +46,7 @@ var versionFields = []filtering.Field{
 }
 
 func (d *DAO) ListVersions(ctx context.Context, parent names.Api, opts PageOptions) (VersionList, error) {
-	q := d.NewQuery(storage.VersionEntityName)
+	q := d.NewQuery(gorm.VersionEntityName)
 
 	token, err := decodeToken(opts.Token)
 	if err != nil {
@@ -142,7 +142,7 @@ func versionMap(version models.Version) (map[string]interface{}, error) {
 
 func (d *DAO) GetVersion(ctx context.Context, name names.Version) (*models.Version, error) {
 	version := new(models.Version)
-	k := d.NewKey(storage.VersionEntityName, name.String())
+	k := d.NewKey(gorm.VersionEntityName, name.String())
 	if err := d.Get(ctx, k, version); d.IsNotFound(err) {
 		return nil, status.Errorf(codes.NotFound, "api version %q not found in database", name)
 	} else if err != nil {
@@ -153,7 +153,7 @@ func (d *DAO) GetVersion(ctx context.Context, name names.Version) (*models.Versi
 }
 
 func (d *DAO) SaveVersion(ctx context.Context, version *models.Version) error {
-	k := d.NewKey(storage.VersionEntityName, version.Name())
+	k := d.NewKey(gorm.VersionEntityName, version.Name())
 	if _, err := d.Put(ctx, k, version); err != nil {
 		return status.Error(codes.Internal, err.Error())
 	}
@@ -166,7 +166,7 @@ func (d *DAO) DeleteVersion(ctx context.Context, name names.Version) error {
 		return status.Error(codes.Internal, err.Error())
 	}
 
-	k := d.NewKey(storage.VersionEntityName, name.String())
+	k := d.NewKey(gorm.VersionEntityName, name.String())
 	if err := d.Delete(ctx, k); err != nil {
 		return status.Error(codes.Internal, err.Error())
 	}

@@ -17,16 +17,16 @@ package dao
 import (
 	"context"
 
+	"github.com/apigee/registry/server/gorm"
 	"github.com/apigee/registry/server/models"
 	"github.com/apigee/registry/server/names"
-	"github.com/apigee/registry/server/storage"
 	"google.golang.org/api/iterator"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
 func (d *DAO) ListSpecRevisions(ctx context.Context, parent names.Spec, opts PageOptions) (SpecList, error) {
-	q := d.NewQuery(storage.SpecEntityName)
+	q := d.NewQuery(gorm.SpecEntityName)
 	q = q.Require("ProjectID", parent.ProjectID)
 	q = q.Require("ApiID", parent.ApiID)
 	q = q.Require("VersionID", parent.VersionID)
@@ -73,7 +73,7 @@ func (d *DAO) ListSpecRevisions(ctx context.Context, parent names.Spec, opts Pag
 }
 
 func (d *DAO) SaveSpecRevision(ctx context.Context, revision *models.Spec) error {
-	k := d.NewKey(storage.SpecEntityName, revision.RevisionName())
+	k := d.NewKey(gorm.SpecEntityName, revision.RevisionName())
 	if _, err := d.Put(ctx, k, revision); err != nil {
 		return status.Error(codes.Internal, err.Error())
 	}
@@ -83,7 +83,7 @@ func (d *DAO) SaveSpecRevision(ctx context.Context, revision *models.Spec) error
 
 func (d *DAO) SaveSpecRevisionContents(ctx context.Context, spec *models.Spec, contents []byte) error {
 	blob := models.NewBlobForSpec(spec, contents)
-	k := d.NewKey(models.BlobEntityName, spec.RevisionName())
+	k := d.NewKey(gorm.BlobEntityName, spec.RevisionName())
 	if _, err := d.Put(ctx, k, blob); err != nil {
 		return status.Error(codes.Internal, err.Error())
 	}
@@ -98,7 +98,7 @@ func (d *DAO) GetSpecRevision(ctx context.Context, name names.SpecRevision) (*mo
 	}
 
 	spec := new(models.Spec)
-	k := d.NewKey(storage.SpecEntityName, name.String())
+	k := d.NewKey(gorm.SpecEntityName, name.String())
 	if err := d.Get(ctx, k, spec); d.IsNotFound(err) {
 		return nil, status.Errorf(codes.NotFound, "spec revision %q not found", name)
 	} else if err != nil {
@@ -115,7 +115,7 @@ func (d *DAO) GetSpecRevisionContents(ctx context.Context, name names.SpecRevisi
 	}
 
 	blob := new(models.Blob)
-	k := d.NewKey(models.BlobEntityName, name.String())
+	k := d.NewKey(gorm.BlobEntityName, name.String())
 	if err := d.Get(ctx, k, blob); d.IsNotFound(err) {
 		return nil, status.Errorf(codes.NotFound, "spec revision contents %q not found", name)
 	} else if err != nil {
@@ -131,12 +131,12 @@ func (d *DAO) DeleteSpecRevision(ctx context.Context, name names.SpecRevision) e
 		return err
 	}
 
-	k := d.NewKey(models.BlobEntityName, name.String())
+	k := d.NewKey(gorm.BlobEntityName, name.String())
 	if err := d.Delete(ctx, k); err != nil {
 		return status.Error(codes.Internal, err.Error())
 	}
 
-	k = d.NewKey(storage.SpecEntityName, name.String())
+	k = d.NewKey(gorm.SpecEntityName, name.String())
 	if err := d.Delete(ctx, k); err != nil {
 		return status.Error(codes.Internal, err.Error())
 	}
@@ -145,7 +145,7 @@ func (d *DAO) DeleteSpecRevision(ctx context.Context, name names.SpecRevision) e
 }
 
 func (d *DAO) SaveSpecRevisionTag(ctx context.Context, tag *models.SpecRevisionTag) error {
-	k := d.NewKey(storage.SpecRevisionTagEntityName, tag.String())
+	k := d.NewKey(gorm.SpecRevisionTagEntityName, tag.String())
 	if _, err := d.Put(ctx, k, tag); err != nil {
 		return status.Error(codes.Internal, err.Error())
 	}
@@ -155,7 +155,7 @@ func (d *DAO) SaveSpecRevisionTag(ctx context.Context, tag *models.SpecRevisionT
 
 func (d *DAO) unwrapSpecRevisionTag(ctx context.Context, name names.SpecRevision) (names.SpecRevision, error) {
 	tag := new(models.SpecRevisionTag)
-	if err := d.Get(ctx, d.NewKey(storage.SpecRevisionTagEntityName, name.String()), tag); d.IsNotFound(err) {
+	if err := d.Get(ctx, d.NewKey(gorm.SpecRevisionTagEntityName, name.String()), tag); d.IsNotFound(err) {
 		return name, nil
 	} else if err != nil {
 		return names.SpecRevision{}, status.Error(codes.Internal, err.Error())

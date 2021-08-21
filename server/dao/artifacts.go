@@ -20,7 +20,6 @@ import (
 	"github.com/apigee/registry/server/gorm"
 	"github.com/apigee/registry/server/models"
 	"github.com/apigee/registry/server/names"
-	"github.com/apigee/registry/server/storage"
 	"github.com/apigee/registry/server/storage/filtering"
 	"google.golang.org/api/iterator"
 	"google.golang.org/grpc/codes"
@@ -47,7 +46,7 @@ var artifactFields = []filtering.Field{
 }
 
 func (d *DAO) ListSpecArtifacts(ctx context.Context, parent names.Spec, opts PageOptions) (ArtifactList, error) {
-	q := d.NewQuery(storage.ArtifactEntityName)
+	q := d.NewQuery(gorm.ArtifactEntityName)
 
 	token, err := decodeToken(opts.Token)
 	if err != nil {
@@ -99,7 +98,7 @@ func (d *DAO) ListSpecArtifacts(ctx context.Context, parent names.Spec, opts Pag
 }
 
 func (d *DAO) ListVersionArtifacts(ctx context.Context, parent names.Version, opts PageOptions) (ArtifactList, error) {
-	q := d.NewQuery(storage.ArtifactEntityName)
+	q := d.NewQuery(gorm.ArtifactEntityName)
 	q = q.Require("SpecID", "")
 
 	token, err := decodeToken(opts.Token)
@@ -145,7 +144,7 @@ func (d *DAO) ListVersionArtifacts(ctx context.Context, parent names.Version, op
 }
 
 func (d *DAO) ListApiArtifacts(ctx context.Context, parent names.Api, opts PageOptions) (ArtifactList, error) {
-	q := d.NewQuery(storage.ArtifactEntityName)
+	q := d.NewQuery(gorm.ArtifactEntityName)
 	q = q.Require("VersionID", "")
 	q = q.Require("SpecID", "")
 
@@ -185,7 +184,7 @@ func (d *DAO) ListApiArtifacts(ctx context.Context, parent names.Api, opts PageO
 }
 
 func (d *DAO) ListProjectArtifacts(ctx context.Context, parent names.Project, opts PageOptions) (ArtifactList, error) {
-	q := d.NewQuery(storage.ArtifactEntityName)
+	q := d.NewQuery(gorm.ArtifactEntityName)
 	q = q.Require("ApiID", "")
 	q = q.Require("VersionID", "")
 	q = q.Require("SpecID", "")
@@ -282,7 +281,7 @@ func artifactMap(artifact models.Artifact) (map[string]interface{}, error) {
 }
 
 func (d *DAO) SaveArtifact(ctx context.Context, artifact *models.Artifact) error {
-	k := d.NewKey(storage.ArtifactEntityName, artifact.Name())
+	k := d.NewKey(gorm.ArtifactEntityName, artifact.Name())
 	if _, err := d.Put(ctx, k, artifact); err != nil {
 		return status.Error(codes.Internal, err.Error())
 	}
@@ -292,7 +291,7 @@ func (d *DAO) SaveArtifact(ctx context.Context, artifact *models.Artifact) error
 
 func (d *DAO) SaveArtifactContents(ctx context.Context, artifact *models.Artifact, contents []byte) error {
 	blob := models.NewBlobForArtifact(artifact, contents)
-	k := d.NewKey(models.BlobEntityName, artifact.Name())
+	k := d.NewKey(gorm.BlobEntityName, artifact.Name())
 	if _, err := d.Put(ctx, k, blob); err != nil {
 		return status.Error(codes.Internal, err.Error())
 	}
@@ -302,7 +301,7 @@ func (d *DAO) SaveArtifactContents(ctx context.Context, artifact *models.Artifac
 
 func (d *DAO) GetArtifact(ctx context.Context, name names.Artifact) (*models.Artifact, error) {
 	artifact := new(models.Artifact)
-	k := d.NewKey(storage.ArtifactEntityName, name.String())
+	k := d.NewKey(gorm.ArtifactEntityName, name.String())
 	if err := d.Get(ctx, k, artifact); d.IsNotFound(err) {
 		return nil, status.Errorf(codes.NotFound, "artifact %q not found in database", name)
 	} else if err != nil {
@@ -314,7 +313,7 @@ func (d *DAO) GetArtifact(ctx context.Context, name names.Artifact) (*models.Art
 
 func (d *DAO) GetArtifactContents(ctx context.Context, name names.Artifact) (*models.Blob, error) {
 	blob := new(models.Blob)
-	k := d.NewKey(models.BlobEntityName, name.String())
+	k := d.NewKey(gorm.BlobEntityName, name.String())
 	if err := d.Get(ctx, k, blob); d.IsNotFound(err) {
 		return nil, status.Errorf(codes.NotFound, "artifact contents %q not found", name)
 	} else if err != nil {
@@ -325,12 +324,12 @@ func (d *DAO) GetArtifactContents(ctx context.Context, name names.Artifact) (*mo
 }
 
 func (d *DAO) DeleteArtifact(ctx context.Context, name names.Artifact) error {
-	k := d.NewKey(models.BlobEntityName, name.String())
+	k := d.NewKey(gorm.BlobEntityName, name.String())
 	if err := d.Delete(ctx, k); err != nil {
 		return status.Error(codes.Internal, err.Error())
 	}
 
-	k = d.NewKey(storage.ArtifactEntityName, name.String())
+	k = d.NewKey(gorm.ArtifactEntityName, name.String())
 	if err := d.Delete(ctx, k); err != nil {
 		return status.Error(codes.Internal, err.Error())
 	}

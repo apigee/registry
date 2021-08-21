@@ -17,9 +17,9 @@ package dao
 import (
 	"context"
 
+	"github.com/apigee/registry/server/gorm"
 	"github.com/apigee/registry/server/models"
 	"github.com/apigee/registry/server/names"
-	"github.com/apigee/registry/server/storage"
 	"github.com/apigee/registry/server/storage/filtering"
 	"google.golang.org/api/iterator"
 	"google.golang.org/grpc/codes"
@@ -42,7 +42,7 @@ var projectFields = []filtering.Field{
 }
 
 func (d *DAO) ListProjects(ctx context.Context, opts PageOptions) (ProjectList, error) {
-	q := d.NewQuery(storage.ProjectEntityName)
+	q := d.NewQuery(gorm.ProjectEntityName)
 
 	token, err := decodeToken(opts.Token)
 	if err != nil {
@@ -109,7 +109,7 @@ func projectMap(p models.Project) map[string]interface{} {
 
 func (d *DAO) GetProject(ctx context.Context, name names.Project) (*models.Project, error) {
 	project := new(models.Project)
-	k := d.NewKey(storage.ProjectEntityName, name.String())
+	k := d.NewKey(gorm.ProjectEntityName, name.String())
 	if err := d.Get(ctx, k, project); d.IsNotFound(err) {
 		return nil, status.Errorf(codes.NotFound, "project %q not found in database", name)
 	} else if err != nil {
@@ -120,7 +120,7 @@ func (d *DAO) GetProject(ctx context.Context, name names.Project) (*models.Proje
 }
 
 func (d *DAO) SaveProject(ctx context.Context, project *models.Project) error {
-	k := d.NewKey(storage.ProjectEntityName, project.Name())
+	k := d.NewKey(gorm.ProjectEntityName, project.Name())
 	if _, err := d.Put(ctx, k, project); err != nil {
 		return status.Error(codes.Internal, err.Error())
 	}
@@ -133,7 +133,7 @@ func (d *DAO) DeleteProject(ctx context.Context, name names.Project) error {
 		return status.Error(codes.Internal, err.Error())
 	}
 
-	k := d.NewKey(storage.ProjectEntityName, name.String())
+	k := d.NewKey(gorm.ProjectEntityName, name.String())
 	if err := d.Delete(ctx, k); err != nil {
 		return status.Error(codes.Internal, err.Error())
 	}

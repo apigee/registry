@@ -19,7 +19,6 @@ import (
 
 	"github.com/apigee/registry/server/models"
 	"github.com/apigee/registry/server/names"
-	"github.com/apigee/registry/server/storage"
 )
 
 // DeleteAllMatches deletes all entities matching a query.
@@ -50,12 +49,12 @@ func (c *Client) DeleteAllMatches(ctx context.Context, q *Query) error {
 // DeleteChildrenOfProject deletes all the children of a project.
 func (c *Client) DeleteChildrenOfProject(ctx context.Context, project names.Project) error {
 	entityNames := []string{
-		storage.ArtifactEntityName,
-		models.BlobEntityName,
-		storage.SpecEntityName,
-		storage.SpecRevisionTagEntityName,
-		storage.VersionEntityName,
-		storage.ApiEntityName,
+		ArtifactEntityName,
+		BlobEntityName,
+		SpecEntityName,
+		SpecRevisionTagEntityName,
+		VersionEntityName,
+		ApiEntityName,
 	}
 	for _, entityName := range entityNames {
 		q := c.NewQuery(entityName)
@@ -71,10 +70,10 @@ func (c *Client) DeleteChildrenOfProject(ctx context.Context, project names.Proj
 // DeleteChildrenOfApi deletes all the children of a api.
 func (c *Client) DeleteChildrenOfApi(ctx context.Context, api names.Api) error {
 	for _, entityName := range []string{
-		storage.ArtifactEntityName,
-		models.BlobEntityName,
-		storage.SpecEntityName,
-		storage.VersionEntityName,
+		ArtifactEntityName,
+		BlobEntityName,
+		SpecEntityName,
+		VersionEntityName,
 	} {
 		q := c.NewQuery(entityName)
 		q = q.Require("ProjectID", api.ProjectID)
@@ -90,9 +89,9 @@ func (c *Client) DeleteChildrenOfApi(ctx context.Context, api names.Api) error {
 // DeleteChildrenOfVersion deletes all the children of a version.
 func (c *Client) DeleteChildrenOfVersion(ctx context.Context, version names.Version) error {
 	for _, entityName := range []string{
-		storage.ArtifactEntityName,
-		models.BlobEntityName,
-		storage.SpecEntityName,
+		ArtifactEntityName,
+		BlobEntityName,
+		SpecEntityName,
 	} {
 		q := c.NewQuery(entityName)
 		q = q.Require("ProjectID", version.ProjectID)
@@ -108,8 +107,8 @@ func (c *Client) DeleteChildrenOfVersion(ctx context.Context, version names.Vers
 // DeleteChildrenOfSpec deletes all the children of a spec.
 func (c *Client) DeleteChildrenOfSpec(ctx context.Context, spec names.Spec) error {
 	for _, entityName := range []string{
-		storage.ArtifactEntityName,
-		models.BlobEntityName,
+		ArtifactEntityName,
+		BlobEntityName,
 	} {
 		q := c.NewQuery(entityName)
 		q = q.Require("ProjectID", spec.ProjectID)

@@ -1,4 +1,4 @@
-// Copyright 2020 Google LLC. All Rights Reserved.
+// Copyright 2021 Google LLC. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,9 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package storage
-
-// This is the data storage protocol currently used by the Registry server.
+package gorm
 
 const (
 	// ProjectEntityName is the storage entity name for project resources.
@@ -29,4 +27,6 @@ const (
 	SpecRevisionTagEntityName = "SpecRevisionTag"
 	// ArtifactEntityName is the storage entity name for artifact resources.
 	ArtifactEntityName = "Artifact"
+	// BlobEntityName is the storage entity name for blob resources.
+	BlobEntityName = "Blob"
 )
