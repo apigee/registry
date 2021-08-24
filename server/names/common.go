@@ -64,6 +64,5 @@ func normalize(identifier string) string {
 	return strings.ToLower(identifier)
 }
 
-// Location is included in resource names immediately following the
-// project_id.
+// Location is included in resource names immediately following the project_id.
 var Location = "global"

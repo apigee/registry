@@ -102,7 +102,7 @@ service Registry {
   // ListApis returns matching APIs.
   rpc ListApis(ListApisRequest) returns (ListApisResponse) {
     option (google.api.http) = {
-    get: "/v1/{parent=projects/*/locations/*}/apis"
+    get: "/v1/{parent=projects/*/locations/global}/apis"
     };
     option (google.api.method_signature) = "parent";
   }
@@ -110,7 +110,7 @@ service Registry {
   // GetApi returns a specified API.
   rpc GetApi(GetApiRequest) returns (Api) {
     option (google.api.http) = {
-      get: "/v1/{name=projects/*/locations/*/apis/*}"
+      get: "/v1/{name=projects/*/locations/global/apis/*}"
     };
     option (google.api.method_signature) = "name";
   }
@@ -118,7 +118,7 @@ service Registry {
   // CreateApi creates a specified API.
   rpc CreateApi(CreateApiRequest) returns (Api) {
     option (google.api.http) = {
-    post: "/v1/{parent=projects/*/locations/*}/apis"
+    post: "/v1/{parent=projects/*/locations/global}/apis"
       body: "api"
     };
     option (google.api.method_signature) = "parent,api,api_id";
@@ -127,7 +127,7 @@ service Registry {
   // UpdateApi can be used to modify a specified API.
   rpc UpdateApi(UpdateApiRequest) returns (Api) {
     option (google.api.http) = {
-      patch: "/v1/{api.name=projects/*/locations/*/apis/*}"
+      patch: "/v1/{api.name=projects/*/locations/global/apis/*}"
       body: "api"
     };
     option (google.api.method_signature) = "api,update_mask";
@@ -137,7 +137,7 @@ service Registry {
   // owns.
   rpc DeleteApi(DeleteApiRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      delete: "/v1/{name=projects/*/locations/*/apis/*}"
+      delete: "/v1/{name=projects/*/locations/global/apis/*}"
     };
     option (google.api.method_signature) = "name";
   }
@@ -146,7 +146,7 @@ service Registry {
   rpc ListApiVersions(ListApiVersionsRequest)
       returns (ListApiVersionsResponse) {
     option (google.api.http) = {
-      get: "/v1/{parent=projects/*/locations/*/apis/*}/versions"
+      get: "/v1/{parent=projects/*/locations/global/apis/*}/versions"
     };
     option (google.api.method_signature) = "parent";
   }
@@ -154,7 +154,7 @@ service Registry {
   // GetApiVersion returns a specified version.
   rpc GetApiVersion(GetApiVersionRequest) returns (ApiVersion) {
     option (google.api.http) = {
-      get: "/v1/{name=projects/*/locations/*/apis/*/versions/*}"
+      get: "/v1/{name=projects/*/locations/global/apis/*/versions/*}"
     };
     option (google.api.method_signature) = "name";
   }
@@ -162,7 +162,7 @@ service Registry {
   // CreateApiVersion creates a specified version.
   rpc CreateApiVersion(CreateApiVersionRequest) returns (ApiVersion) {
     option (google.api.http) = {
-      post: "/v1/{parent=projects/*/locations/*/apis/*}/versions"
+      post: "/v1/{parent=projects/*/locations/global/apis/*}/versions"
       body: "api_version"
     };
     option (google.api.method_signature) = "parent,api_version,api_version_id";
@@ -171,7 +171,7 @@ service Registry {
   // UpdateApiVersion can be used to modify a specified version.
   rpc UpdateApiVersion(UpdateApiVersionRequest) returns (ApiVersion) {
     option (google.api.http) = {
-      patch: "/v1/{api_version.name=projects/*/locations/*/apis/*/versions/*}"
+      patch: "/v1/{api_version.name=projects/*/locations/global/apis/*/versions/*}"
       body: "api_version"
     };
     option (google.api.method_signature) = "api_version,update_mask";
@@ -182,7 +182,7 @@ service Registry {
   rpc DeleteApiVersion(DeleteApiVersionRequest)
       returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      delete: "/v1/{name=projects/*/locations/*/apis/*/versions/*}"
+      delete: "/v1/{name=projects/*/locations/global/apis/*/versions/*}"
     };
     option (google.api.method_signature) = "name";
   }
@@ -190,7 +190,7 @@ service Registry {
   // ListApiSpecs returns matching specs.
   rpc ListApiSpecs(ListApiSpecsRequest) returns (ListApiSpecsResponse) {
     option (google.api.http) = {
-      get: "/v1/{parent=projects/*/locations/*/apis/*/versions/*}/specs"
+      get: "/v1/{parent=projects/*/locations/global/apis/*/versions/*}/specs"
     };
     option (google.api.method_signature) = "parent";
   }
@@ -198,7 +198,7 @@ service Registry {
   // GetApiSpec returns a specified spec.
   rpc GetApiSpec(GetApiSpecRequest) returns (ApiSpec) {
     option (google.api.http) = {
-      get: "/v1/{name=projects/*/locations/*/apis/*/versions/*/specs/*}"
+      get: "/v1/{name=projects/*/locations/global/apis/*/versions/*/specs/*}"
     };
     option (google.api.method_signature) = "name";
   }
@@ -208,7 +208,7 @@ service Registry {
   //     aip.dev/not-precedent: Responses are arbitrary blobs of data. --)
   rpc GetApiSpecContents(GetApiSpecContentsRequest) returns (google.api.HttpBody) {
     option (google.api.http) = {
-      get: "/v1/{name=projects/*/locations/*/apis/*/versions/*/specs/*/contents}"
+      get: "/v1/{name=projects/*/locations/global/apis/*/versions/*/specs/*/contents}"
     };
     option (google.api.method_signature) = "name";
   }
@@ -216,7 +216,7 @@ service Registry {
   // CreateApiSpec creates a specified spec.
   rpc CreateApiSpec(CreateApiSpecRequest) returns (ApiSpec) {
     option (google.api.http) = {
-      post: "/v1/{parent=projects/*/locations/*/apis/*/versions/*}/specs"
+      post: "/v1/{parent=projects/*/locations/global/apis/*/versions/*}/specs"
       body: "api_spec"
     };
     option (google.api.method_signature) = "parent,api_spec,api_spec_id";
@@ -225,7 +225,7 @@ service Registry {
   // UpdateApiSpec can be used to modify a specified spec.
   rpc UpdateApiSpec(UpdateApiSpecRequest) returns (ApiSpec) {
     option (google.api.http) = {
-      patch: "/v1/{api_spec.name=projects/*/locations/*/apis/*/versions/*/specs/*}"
+      patch: "/v1/{api_spec.name=projects/*/locations/global/apis/*/versions/*/specs/*}"
       body: "api_spec"
     };
     option (google.api.method_signature) = "api_spec,update_mask";
@@ -235,7 +235,7 @@ service Registry {
   // resources (e.g. artifacts).
   rpc DeleteApiSpec(DeleteApiSpecRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      delete: "/v1/{name=projects/*/locations/*/apis/*/versions/*/specs/*}"
+      delete: "/v1/{name=projects/*/locations/global/apis/*/versions/*/specs/*}"
     };
     option (google.api.method_signature) = "name";
   }
@@ -243,7 +243,7 @@ service Registry {
   // TagApiSpecRevision adds a tag to a specified revision of a spec.
   rpc TagApiSpecRevision(TagApiSpecRevisionRequest) returns (ApiSpec) {
     option (google.api.http) = {
-      post: "/v1/{name=projects/*/locations/*/apis/*/versions/*/specs/*}:tagRevision"
+      post: "/v1/{name=projects/*/locations/global/apis/*/versions/*/specs/*}:tagRevision"
       body: "*"
     };
   }
@@ -253,7 +253,7 @@ service Registry {
   rpc ListApiSpecRevisions(ListApiSpecRevisionsRequest)
       returns (ListApiSpecRevisionsResponse) {
     option (google.api.http) = {
-      get: "/v1/{name=projects/*/locations/*/apis/*/versions/*/specs/*}:listRevisions"
+      get: "/v1/{name=projects/*/locations/global/apis/*/versions/*/specs/*}:listRevisions"
     };
   }
 
@@ -261,7 +261,7 @@ service Registry {
   // Note that this creates a new revision with a new revision ID.
   rpc RollbackApiSpec(RollbackApiSpecRequest) returns (ApiSpec) {
     option (google.api.http) = {
-      post: "/v1/{name=projects/*/locations/*/apis/*/versions/*/specs/*}:rollback"
+      post: "/v1/{name=projects/*/locations/global/apis/*/versions/*/specs/*}:rollback"
       body: "*"
     };
   }
@@ -270,7 +270,7 @@ service Registry {
   rpc DeleteApiSpecRevision(DeleteApiSpecRevisionRequest)
       returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      delete: "/v1/{name=projects/*/locations/*/apis/*/versions/*/specs/*}:deleteRevision"
+      delete: "/v1/{name=projects/*/locations/global/apis/*/versions/*/specs/*}:deleteRevision"
     };
     option (google.api.method_signature) = "name";
   }
@@ -279,12 +279,12 @@ service Registry {
   rpc ListArtifacts(ListArtifactsRequest) returns (ListArtifactsResponse) {
     option (google.api.http) = {
       get: "/v1/{parent=projects/*}/artifacts"
-      additional_bindings: { get: "/v1/{parent=projects/*/locations/*/apis/*}/artifacts" }
+      additional_bindings: { get: "/v1/{parent=projects/*/locations/global/apis/*}/artifacts" }
       additional_bindings: {
-        get: "/v1/{parent=projects/*/locations/*/apis/*/versions/*}/artifacts"
+        get: "/v1/{parent=projects/*/locations/global/apis/*/versions/*}/artifacts"
       }
       additional_bindings: {
-        get: "/v1/{parent=projects/*/locations/*/apis/*/versions/*/specs/*}/artifacts"
+        get: "/v1/{parent=projects/*/locations/global/apis/*/versions/*/specs/*}/artifacts"
       }
     };
     option (google.api.method_signature) = "parent";
@@ -293,13 +293,13 @@ service Registry {
   // GetArtifact returns a specified artifact.
   rpc GetArtifact(GetArtifactRequest) returns (Artifact) {
     option (google.api.http) = {
-      get: "/v1/{name=projects/*/locations/*/artifacts/*}"
-      additional_bindings: { get: "/v1/{name=projects/*/locations/*/apis/*/artifacts/*}" }
+      get: "/v1/{name=projects/*/locations/global/artifacts/*}"
+      additional_bindings: { get: "/v1/{name=projects/*/locations/global/apis/*/artifacts/*}" }
       additional_bindings: {
-        get: "/v1/{name=projects/*/locations/*/apis/*/versions/*/artifacts/*}"
+        get: "/v1/{name=projects/*/locations/global/apis/*/versions/*/artifacts/*}"
       }
       additional_bindings: {
-        get: "/v1/{name=projects/*/locations/*/apis/*/versions/*/specs/*/artifacts/*}"
+        get: "/v1/{name=projects/*/locations/global/apis/*/versions/*/specs/*/artifacts/*}"
       }
     };
     option (google.api.method_signature) = "name";
@@ -310,15 +310,15 @@ service Registry {
   //     aip.dev/not-precedent: Responses are arbitrary blobs of data. --)
   rpc GetArtifactContents(GetArtifactContentsRequest) returns (google.api.HttpBody) {
     option (google.api.http) = {
-      get: "/v1/{name=projects/*/locations/*/artifacts/*/contents}"
+      get: "/v1/{name=projects/*/locations/global/artifacts/*/contents}"
       additional_bindings: { 
-        get: "/v1/{name=projects/*/locations/*/apis/*/artifacts/*/contents}" 
+        get: "/v1/{name=projects/*/locations/global/apis/*/artifacts/*/contents}" 
       }
       additional_bindings: {
-        get: "/v1/{name=projects/*/locations/*/apis/*/versions/*/artifacts/*/contents}"
+        get: "/v1/{name=projects/*/locations/global/apis/*/versions/*/artifacts/*/contents}"
       }
       additional_bindings: {
-        get: "/v1/{name=projects/*/locations/*/apis/*/versions/*/specs/*/artifacts/*/contents}"
+        get: "/v1/{name=projects/*/locations/global/apis/*/versions/*/specs/*/artifacts/*/contents}"
       }
     };
     option (google.api.method_signature) = "name";
@@ -330,15 +330,15 @@ service Registry {
       post: "/v1/{parent=projects/*}/artifacts"
       body: "artifact"
       additional_bindings: {
-        post: "/v1/{parent=projects/*/locations/*/apis/*}/artifacts"
+        post: "/v1/{parent=projects/*/locations/global/apis/*}/artifacts"
         body: "artifact"
       }
       additional_bindings: {
-        post: "/v1/{parent=projects/*/locations/*/apis/*/versions/*}/artifacts"
+        post: "/v1/{parent=projects/*/locations/global/apis/*/versions/*}/artifacts"
         body: "artifact"
       }
       additional_bindings: {
-        post: "/v1/{parent=projects/*/locations/*/apis/*/versions/*/specs/*}/artifacts"
+        post: "/v1/{parent=projects/*/locations/global/apis/*/versions/*/specs/*}/artifacts"
         body: "artifact"
       }
     };
@@ -348,18 +348,18 @@ service Registry {
   // ReplaceArtifact can be used to replace a specified artifact.
   rpc ReplaceArtifact(ReplaceArtifactRequest) returns (Artifact) {
     option (google.api.http) = {
-      put: "/v1/{artifact.name=projects/*/locations/*/artifacts/*}"
+      put: "/v1/{artifact.name=projects/*/locations/global/artifacts/*}"
       body: "artifact"
       additional_bindings: {
-        put: "/v1/{artifact.name=projects/*/locations/*/apis/*/artifacts/*}"
+        put: "/v1/{artifact.name=projects/*/locations/global/apis/*/artifacts/*}"
         body: "artifact"
       }
       additional_bindings: {
-        put: "/v1/{artifact.name=projects/*/locations/*/apis/*/versions/*/artifacts/*}"
+        put: "/v1/{artifact.name=projects/*/locations/global/apis/*/versions/*/artifacts/*}"
         body: "artifact"
       }
       additional_bindings: {
-        put: "/v1/{artifact.name=projects/*/locations/*/apis/*/versions/*/specs/*/artifacts/*}"
+        put: "/v1/{artifact.name=projects/*/locations/global/apis/*/versions/*/specs/*/artifacts/*}"
         body: "artifact"
       }
     };
@@ -369,15 +369,15 @@ service Registry {
   // DeleteArtifact removes a specified artifact.
   rpc DeleteArtifact(DeleteArtifactRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      delete: "/v1/{name=projects/*/locations/*/artifacts/*}"
+      delete: "/v1/{name=projects/*/locations/global/artifacts/*}"
       additional_bindings: {
-        delete: "/v1/{name=projects/*/locations/*/apis/*/artifacts/*}"
+        delete: "/v1/{name=projects/*/locations/global/apis/*/artifacts/*}"
       }
       additional_bindings: {
-        delete: "/v1/{name=projects/*/locations/*/apis/*/versions/*/artifacts/*}"
+        delete: "/v1/{name=projects/*/locations/global/apis/*/versions/*/artifacts/*}"
       }
       additional_bindings: {
-        delete: "/v1/{name=projects/*/locations/*/apis/*/versions/*/specs/*/artifacts/*}"
+        delete: "/v1/{name=projects/*/locations/global/apis/*/versions/*/specs/*/artifacts/*}"
       }
     };
     option (google.api.method_signature) = "name";
@@ -517,7 +517,7 @@ message ListApisResponse {
 // Request message for GetApi.
 message GetApiRequest {
   // The name of the API to retrieve.
-  // Format: projects/*/locations/*/apis/*
+  // Format: projects/*/locations/global/apis/*
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = { type: "registry.googleapis.com/Api" }
@@ -549,7 +549,7 @@ message UpdateApiRequest {
   // The API to update.
   //
   // The `name` field is used to identify the API to update.
-  // Format: projects/*/locations/*/apis/*
+  // Format: projects/*/locations/global/apis/*
   Api api = 1 [(google.api.field_behavior) = REQUIRED];
 
   // The list of fields to be updated. If omitted, all fields are updated that
@@ -562,7 +562,7 @@ message UpdateApiRequest {
 // Request message for DeleteApi.
 message DeleteApiRequest {
   // The name of the API to delete.
-  // Format: projects/*/locations/*/apis/*
+  // Format: projects/*/locations/global/apis/*
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = { type: "registry.googleapis.com/Api" }
@@ -572,7 +572,7 @@ message DeleteApiRequest {
 // Request message for ListApiVersions.
 message ListApiVersionsRequest {
   // The parent, which owns this collection of versions.
-  // Format: projects/*/locations/*/apis/*
+  // Format: projects/*/locations/global/apis/*
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
@@ -610,7 +610,7 @@ message ListApiVersionsResponse {
 // Request message for GetApiVersion.
 message GetApiVersionRequest {
   // The name of the version to retrieve.
-  // Format: projects/*/locations/*/apis/*/versions/*
+  // Format: projects/*/locations/global/apis/*/versions/*
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
@@ -622,7 +622,7 @@ message GetApiVersionRequest {
 // Request message for CreateApiVersion.
 message CreateApiVersionRequest {
   // The parent, which owns this collection of versions.
-  // Format: projects/*/locations/*/apis/*
+  // Format: projects/*/locations/global/apis/*
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
@@ -644,7 +644,7 @@ message UpdateApiVersionRequest {
   // The version to update.
   //
   // The `name` field is used to identify the version to update.
-  // Format: projects/*/locations/*/apis/*/versions/*
+  // Format: projects/*/locations/global/apis/*/versions/*
   ApiVersion api_version = 1 [(google.api.field_behavior) = REQUIRED];
 
   // The list of fields to be updated. If omitted, all fields are updated that
@@ -657,7 +657,7 @@ message UpdateApiVersionRequest {
 // Request message for DeleteApiVersion.
 message DeleteApiVersionRequest {
   // The name of the version to delete.
-  // Format: projects/*/locations/*/apis/*/versions/*
+  // Format: projects/*/locations/global/apis/*/versions/*
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
@@ -669,7 +669,7 @@ message DeleteApiVersionRequest {
 // Request message for ListApiSpecs.
 message ListApiSpecsRequest {
   // The parent, which owns this collection of specs.
-  // Format: projects/*/locations/*/apis/*/versions/*
+  // Format: projects/*/locations/global/apis/*/versions/*
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
@@ -707,7 +707,7 @@ message ListApiSpecsResponse {
 // Request message for GetApiSpec.
 message GetApiSpecRequest {
   // The name of the spec to retrieve.
-  // Format: projects/*/locations/*/apis/*/versions/*/specs/*
+  // Format: projects/*/locations/global/apis/*/versions/*/specs/*
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
@@ -719,7 +719,7 @@ message GetApiSpecRequest {
 // Request message for GetApiSpecContents.
 message GetApiSpecContentsRequest {
   // The name of the spec to retrieve.
-  // Format: projects/*/locations/*/apis/*/versions/*/specs/*/contents
+  // Format: projects/*/locations/global/apis/*/versions/*/specs/*/contents
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
@@ -731,7 +731,7 @@ message GetApiSpecContentsRequest {
 // Request message for CreateApiSpec.
 message CreateApiSpecRequest {
   // The parent, which owns this collection of specs.
-  // Format: projects/*/locations/*/apis/*/versions/*
+  // Format: projects/*/locations/global/apis/*/versions/*
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
@@ -753,7 +753,7 @@ message UpdateApiSpecRequest {
   // The spec to update.
   //
   // The `name` field is used to identify the spec to update.
-  // Format: projects/*/locations/*/apis/*/versions/*/specs/*
+  // Format: projects/*/locations/global/apis/*/versions/*/specs/*
   ApiSpec api_spec = 1 [(google.api.field_behavior) = REQUIRED];
 
   // The list of fields to be updated. If omitted, all fields are updated that
@@ -770,7 +770,7 @@ message UpdateApiSpecRequest {
 // Request message for DeleteApiSpec.
 message DeleteApiSpecRequest {
   // The name of the spec to delete.
-  // Format: projects/*/locations/*/apis/*/versions/*/specs/*
+  // Format: projects/*/locations/global/apis/*/versions/*/specs/*
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
