@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package dao
+package storage
 
 import (
 	"context"
 
-	"github.com/apigee/registry/server/models"
+	"github.com/apigee/registry/server/internal/storage/filtering"
+	"github.com/apigee/registry/server/internal/storage/gorm"
+	"github.com/apigee/registry/server/internal/storage/models"
 	"github.com/apigee/registry/server/names"
-	"github.com/apigee/registry/server/storage"
-	"github.com/apigee/registry/server/storage/filtering"
 	"google.golang.org/api/iterator"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -49,7 +49,7 @@ var specFields = []filtering.Field{
 	{Name: "labels", Type: filtering.StringMap},
 }
 
-func (d *DAO) ListSpecs(ctx context.Context, parent names.Version, opts PageOptions) (SpecList, error) {
+func (d *Client) ListSpecs(ctx context.Context, parent names.Version, opts PageOptions) (SpecList, error) {
 	token, err := decodeToken(opts.Token)
 	if err != nil {
 		return SpecList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
@@ -145,9 +145,9 @@ func specMap(spec models.Spec) (map[string]interface{}, error) {
 	}, nil
 }
 
-func (d *DAO) GetSpec(ctx context.Context, name names.Spec) (*models.Spec, error) {
+func (d *Client) GetSpec(ctx context.Context, name names.Spec) (*models.Spec, error) {
 	normal := name.Normal()
-	q := d.NewQuery(storage.SpecEntityName)
+	q := d.NewQuery(gorm.SpecEntityName)
 	q = q.Require("ProjectID", normal.ProjectID)
 	q = q.Require("ApiID", normal.ApiID)
 	q = q.Require("VersionID", normal.VersionID)
@@ -163,30 +163,28 @@ func (d *DAO) GetSpec(ctx context.Context, name names.Spec) (*models.Spec, error
 	return spec, nil
 }
 
-func (d *DAO) DeleteSpec(ctx context.Context, name names.Spec) error {
-	if err := d.DeleteChildrenOfSpec(ctx, name); err != nil {
-		return status.Error(codes.Internal, err.Error())
-	}
-
-	k := d.NewKey(storage.SpecEntityName, name.String())
-	if err := d.Delete(ctx, k); err != nil {
-		return status.Error(codes.Internal, err.Error())
-	}
-
-	q := d.NewQuery(storage.SpecEntityName)
-	q = q.Require("ProjectID", name.ProjectID)
-	q = q.Require("ApiID", name.ApiID)
-	q = q.Require("VersionID", name.VersionID)
-	q = q.Require("SpecID", name.SpecID)
-	if err := d.DeleteAllMatches(ctx, q); err != nil {
-		return status.Error(codes.Internal, err.Error())
+func (d *Client) DeleteSpec(ctx context.Context, name names.Spec) error {
+	for _, entityName := range []string{
+		gorm.SpecEntityName,
+		gorm.SpecRevisionTagEntityName,
+		gorm.ArtifactEntityName,
+		gorm.BlobEntityName,
+	} {
+		q := d.NewQuery(entityName)
+		q = q.Require("ProjectID", name.ProjectID)
+		q = q.Require("ApiID", name.ApiID)
+		q = q.Require("VersionID", name.VersionID)
+		q = q.Require("SpecID", name.SpecID)
+		if err := d.Delete(ctx, q); err != nil {
+			return status.Error(codes.Internal, err.Error())
+		}
 	}
 
 	return nil
 }
 
-func (d *DAO) GetSpecTags(ctx context.Context, name names.Spec) ([]*models.SpecRevisionTag, error) {
-	q := d.NewQuery(storage.SpecRevisionTagEntityName)
+func (d *Client) GetSpecTags(ctx context.Context, name names.Spec) ([]*models.SpecRevisionTag, error) {
+	q := d.NewQuery(gorm.SpecRevisionTagEntityName)
 	q = q.Require("ProjectID", name.ProjectID)
 	q = q.Require("ApiID", name.ApiID)
 	q = q.Require("VersionID", name.VersionID)

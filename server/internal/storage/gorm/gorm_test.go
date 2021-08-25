@@ -20,8 +20,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/apigee/registry/server/models"
-	"github.com/apigee/registry/server/storage"
+	"github.com/apigee/registry/server/internal/storage/models"
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/testing/protocmp"
 )
@@ -40,7 +39,7 @@ func TestFieldClearing(t *testing.T) {
 		Description: "My Project",
 	}
 
-	k := c.NewKey(storage.ProjectEntityName, original.Name())
+	k := c.NewKey(ProjectEntityName, original.Name())
 	if _, err := c.Put(ctx, k, original); err != nil {
 		t.Fatalf("Setup: Put(%q, %+v) returned error: %s", k, original, err)
 	}
@@ -110,7 +109,8 @@ func TestCRUD(t *testing.T) {
 	}
 
 	// Delete the project.
-	err = c.Delete(ctx, k)
+	q := c.NewQuery("Project").Require("ProjectID", project.ProjectID)
+	err = c.Delete(ctx, q)
 	if err != nil {
 		t.Errorf(err.Error())
 	}
@@ -143,7 +143,7 @@ func TestLoad(t *testing.T) {
 			CreateTime:  now,
 			UpdateTime:  now,
 		}
-		k := c.NewKey(storage.ApiEntityName, api.Name())
+		k := c.NewKey(ApiEntityName, api.Name())
 		if err := c.Get(ctx, k, &models.Api{}); err == nil {
 			t.Errorf("API %q already exists, expected not found", api.Name())
 		}

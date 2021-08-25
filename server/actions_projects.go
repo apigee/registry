@@ -18,8 +18,8 @@ import (
 	"context"
 
 	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/server/dao"
-	"github.com/apigee/registry/server/models"
+	"github.com/apigee/registry/server/internal/storage"
+	"github.com/apigee/registry/server/internal/storage/models"
 	"github.com/apigee/registry/server/names"
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc/codes"
@@ -28,12 +28,11 @@ import (
 
 // CreateProject handles the corresponding API request.
 func (s *RegistryServer) CreateProject(ctx context.Context, req *rpc.CreateProjectRequest) (*rpc.Project, error) {
-	client, err := s.getStorageClient(ctx)
+	db, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer s.releaseStorageClient(client)
-	db := dao.NewDAO(client)
+	defer db.Close()
 
 	if req.GetProject() == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid project %+v: body must be provided", req.GetProject())
@@ -61,12 +60,11 @@ func (s *RegistryServer) CreateProject(ctx context.Context, req *rpc.CreateProje
 
 // DeleteProject handles the corresponding API request.
 func (s *RegistryServer) DeleteProject(ctx context.Context, req *rpc.DeleteProjectRequest) (*empty.Empty, error) {
-	client, err := s.getStorageClient(ctx)
+	db, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer s.releaseStorageClient(client)
-	db := dao.NewDAO(client)
+	defer db.Close()
 
 	name, err := names.ParseProject(req.GetName())
 	if err != nil {
@@ -88,12 +86,11 @@ func (s *RegistryServer) DeleteProject(ctx context.Context, req *rpc.DeleteProje
 
 // GetProject handles the corresponding API request.
 func (s *RegistryServer) GetProject(ctx context.Context, req *rpc.GetProjectRequest) (*rpc.Project, error) {
-	client, err := s.getStorageClient(ctx)
+	db, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer s.releaseStorageClient(client)
-	db := dao.NewDAO(client)
+	defer db.Close()
 
 	name, err := names.ParseProject(req.GetName())
 	if err != nil {
@@ -110,12 +107,11 @@ func (s *RegistryServer) GetProject(ctx context.Context, req *rpc.GetProjectRequ
 
 // ListProjects handles the corresponding API request.
 func (s *RegistryServer) ListProjects(ctx context.Context, req *rpc.ListProjectsRequest) (*rpc.ListProjectsResponse, error) {
-	client, err := s.getStorageClient(ctx)
+	db, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer s.releaseStorageClient(client)
-	db := dao.NewDAO(client)
+	defer db.Close()
 
 	if req.GetPageSize() < 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid page_size %d: must not be negative", req.GetPageSize())
@@ -125,7 +121,7 @@ func (s *RegistryServer) ListProjects(ctx context.Context, req *rpc.ListProjects
 		req.PageSize = 50
 	}
 
-	listing, err := db.ListProjects(ctx, dao.PageOptions{
+	listing, err := db.ListProjects(ctx, storage.PageOptions{
 		Size:   req.GetPageSize(),
 		Filter: req.GetFilter(),
 		Token:  req.GetPageToken(),
@@ -148,12 +144,11 @@ func (s *RegistryServer) ListProjects(ctx context.Context, req *rpc.ListProjects
 
 // UpdateProject handles the corresponding API request.
 func (s *RegistryServer) UpdateProject(ctx context.Context, req *rpc.UpdateProjectRequest) (*rpc.Project, error) {
-	client, err := s.getStorageClient(ctx)
+	db, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer s.releaseStorageClient(client)
-	db := dao.NewDAO(client)
+	defer db.Close()
 
 	if req.GetProject() == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid project %+v: body must be provided", req.GetProject())

@@ -12,15 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package dao
+package storage
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/gob"
 	"fmt"
 
-	"github.com/apigee/registry/server/storage"
+	"github.com/apigee/registry/server/internal/storage/gorm"
 )
 
 // PageOptions contains custom arguments for listing requests.
@@ -36,14 +37,19 @@ type PageOptions struct {
 	Token string
 }
 
-type DAO struct {
-	storage.Client
+type Client struct {
+	*gorm.Client
 }
 
-func NewDAO(c storage.Client) DAO {
-	return DAO{
-		Client: c,
+func NewClient(ctx context.Context, driver, dsn string) (*Client, error) {
+	gc, err := gorm.NewClient(ctx, driver, dsn)
+	if err != nil {
+		return nil, err
 	}
+
+	return &Client{
+		Client: gc,
+	}, nil
 }
 
 // token contains information to share between sequential page iterators.
