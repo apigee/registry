@@ -22,8 +22,10 @@ import (
 
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
+	metrics "github.com/googleapis/gnostic/metrics"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/proto"
 )
@@ -52,102 +54,10 @@ func lintStatsCommand(ctx context.Context) *cobra.Command {
 
 			// Generate tasks.
 			name := args[0]
-			if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
-				// Iterate through a collection of specs and evaluate each.
-				err = core.ListSpecs(ctx, client, m, filter, func(spec *rpc.ApiSpec) {
-					fmt.Printf("%s\n", spec.Name)
-					// get the lint results
-					request := rpc.GetArtifactContentsRequest{
-						Name: spec.Name + "/artifacts/" + lintRelation(linter) + "/contents",
-					}
-					contents, _ := client.GetArtifactContents(ctx, &request)
-					if contents == nil {
-						return // ignore missing results
-					}
-					messageType, err := core.MessageTypeForMimeType(contents.GetContentType())
-					if err != nil || messageType != "google.cloud.apigee.registry.applications.v1alpha1.Lint" {
-						return // ignore unexpected message types
-					}
-					lint := &rpc.Lint{}
-					err = proto.Unmarshal(contents.GetData(), lint)
-					if err != nil {
-						log.Printf("%+v", err)
-						return
-					}
-					// generate the stats from the result by counting problems
-					lintStats := computeLintStats(lint)
-					{
-						// store the lintstats artifact
-						subject := spec.GetName()
-						relation := lintStatsRelation(linter)
-						messageData, _ := proto.Marshal(lintStats)
-						artifact := &rpc.Artifact{
-							Name:     subject + "/artifacts/" + relation,
-							MimeType: core.MimeTypeForMessageType("google.cloud.apigee.registry.applications.v1alpha1.LintStats"),
-							Contents: messageData,
-						}
-						err = core.SetArtifact(ctx, client, artifact)
-						if err != nil {
-							log.Printf("%+v", err)
-							return
-						}
-					}
-				})
-				if err != nil {
-					log.Fatalf("%s", err.Error())
-				}
-			}
-			if m := names.ProjectRegexp().FindStringSubmatch(name); m != nil {
-				// Iterate through a collection of projects and evaluate each.
-				err = core.ListProjects(ctx, client, m, filter, func(project *rpc.Project) {
-					// Create a top-level list of problem counts for the project
-					problemCounts := make([]*rpc.LintProblemCount, 0)
-					// get the lintstats for each spec in the project
-					pattern := project.Name + "/locations/global/apis/-/versions/-/specs/-/artifacts/" + lintStatsRelation(linter)
-					if m2 := names.ArtifactRegexp().FindStringSubmatch(pattern); m2 != nil {
-						err = core.ListArtifacts(ctx, client, m2, "", true, func(artifact *rpc.Artifact) {
-							log.Printf("%+v", artifact.Name)
-							// get the lintstats artifact value
-							messageType, err := core.MessageTypeForMimeType(artifact.GetMimeType())
-							if err != nil || messageType != "google.cloud.apigee.registry.applications.v1alpha1.LintStats" {
-								return // ignore unexpected message types
-							}
-							lintstats := &rpc.LintStats{}
-							err = proto.Unmarshal(artifact.GetContents(), lintstats)
-							if err != nil {
-								log.Printf("%+v", err)
-								return
-							}
-							// merge the lintstats into the problemCounts slice
-							problemCounts = mergeLintStats(problemCounts, lintstats)
-						})
-					}
-					// sort results in decreasing order of count
-					sort.Slice(problemCounts, func(i, j int) bool {
-						return problemCounts[i].Count > problemCounts[j].Count
-					})
-					// store the summary in the lintstats artifact
-					lintstats := &rpc.LintStats{ProblemCounts: problemCounts}
-					{
-						// store the lintstats artifact
-						subject := project.GetName()
-						relation := lintStatsRelation(linter)
-						messageData, _ := proto.Marshal(lintstats)
-						artifact := &rpc.Artifact{
-							Name:     subject + "/locations/global/artifacts/" + relation,
-							MimeType: core.MimeTypeForMessageType("google.cloud.apigee.registry.applications.v1alpha1.LintStats"),
-							Contents: messageData,
-						}
-						err = core.SetArtifact(ctx, client, artifact)
-						if err != nil {
-							log.Printf("%+v", err)
-							return
-						}
-					}
-				})
-				if err != nil {
-					log.Fatalf("%s", err.Error())
-				}
+
+			err = matchAndHandleLintStatsCmd(ctx, client, name, filter, linter)
+			if err != nil {
+				log.Fatalf("%s", err.Error())
 			}
 		},
 	}
@@ -183,27 +93,249 @@ func computeLintStats(lint *rpc.Lint) *rpc.LintStats {
 	sort.Slice(problemCounts, func(i, j int) bool {
 		return problemCounts[i].Count > problemCounts[j].Count
 	})
-	return &rpc.LintStats{ProblemCounts: problemCounts}
+	return &rpc.LintStats{ProblemCounts: problemCounts, OperationAndSchemaCount: 1}
 }
 
-func mergeLintStats(problemCounts []*rpc.LintProblemCount, lintstats *rpc.LintStats) []*rpc.LintProblemCount {
-	for _, pc := range lintstats.ProblemCounts {
-		var problemCount *rpc.LintProblemCount
-		for _, pc2 := range problemCounts {
-			if pc2.RuleId == pc.RuleId {
-				problemCount = pc2
-				break
-			}
+func computeLintStatsSpecs(ctx context.Context,
+	client *gapic.RegistryClient,
+	segments []string,
+	filter string,
+	linter string) (*rpc.LintStats, error) {
+
+	ruleIdToProblemCounts := make(map[string]*rpc.LintProblemCount)
+	var operationAndSchemaCount int32 = 0
+
+	if err := core.ListSpecs(ctx, client, segments, filter, func(spec *rpc.ApiSpec) {
+		// Iterate through a collection of specs and evaluate each.
+		fmt.Printf("%s\n", spec.GetName())
+		// get the lint results
+		request := rpc.GetArtifactContentsRequest{
+			Name: spec.Name + "/artifacts/" + lintRelation(linter) + "/contents",
 		}
-		if problemCount == nil {
-			problemCount = &rpc.LintProblemCount{
-				Count:      0,
-				RuleId:     pc.RuleId,
-				RuleDocUri: pc.RuleDocUri,
-			}
-			problemCounts = append(problemCounts, problemCount)
+		contents, _ := client.GetArtifactContents(ctx, &request)
+		if contents == nil {
+			return // ignore missing results
 		}
-		problemCount.Count += pc.Count
+
+		messageType, err := core.MessageTypeForMimeType(contents.GetContentType())
+		if err != nil {
+			return
+		}
+		if messageType != "google.cloud.apigee.registry.applications.v1alpha1.Lint" {
+			return // ignore unexpected message types
+		}
+
+		lint := &rpc.Lint{}
+		err = proto.Unmarshal(contents.GetData(), lint)
+		if err != nil {
+			return
+		}
+
+		// generate the stats from the result by counting problems
+		lintStats := computeLintStats(lint)
+
+		{
+			// Calculate the operation and schema count
+			request := rpc.GetArtifactContentsRequest{
+				Name: spec.Name + "/artifacts/complexity/contents",
+			}
+			contents, _ := client.GetArtifactContents(ctx, &request)
+			if contents == nil {
+				return // ignore missing results
+			}
+			complexity := &metrics.Complexity{}
+			err := proto.Unmarshal(contents.GetData(), complexity)
+			if err != nil {
+				return
+			}
+
+			lintStats.OperationAndSchemaCount = 1 + complexity.GetDeleteCount() +
+				complexity.GetPutCount() + complexity.GetGetCount() +
+				complexity.GetPostCount() + complexity.GetSchemaCount()
+		}
+
+		storeLintStatsArtifact(ctx, client, spec.GetName(), linter, lintStats)
+
+		aggregateLintStats(ruleIdToProblemCounts, lintStats)
+		operationAndSchemaCount += lintStats.GetOperationAndSchemaCount()
+	}); err != nil {
+		return nil, err
 	}
-	return problemCounts
+
+	return constructLintStats(operationAndSchemaCount, ruleIdToProblemCounts), nil
+}
+
+func constructLintStats(operationAndSchemaCount int32,
+	ruleIdToProblemCounts map[string]*rpc.LintProblemCount) *rpc.LintStats {
+	problemCounts := make([]*rpc.LintProblemCount, 0)
+	for _, problemCount := range ruleIdToProblemCounts {
+		problemCounts = append(problemCounts, problemCount)
+	}
+	sort.Slice(problemCounts, func(i, j int) bool {
+		return problemCounts[i].Count > problemCounts[j].Count
+	})
+
+	return &rpc.LintStats{
+		OperationAndSchemaCount: operationAndSchemaCount,
+		ProblemCounts:           problemCounts,
+	}
+}
+
+func computeLintStatsProjects(ctx context.Context,
+	client *gapic.RegistryClient,
+	segments []string,
+	filter string,
+	linter string) (*rpc.LintStats, error) {
+	ruleIdToProblemCounts := make(map[string]*rpc.LintProblemCount)
+	var operationAndSchemaCount int32 = 0
+	if err := core.ListProjects(ctx, client, segments, filter, func(project *rpc.Project) {
+		if project_segments :=
+			names.ProjectRegexp().FindStringSubmatch(project.GetName()); project_segments != nil {
+
+			aggregateStats, err := computeLintStatsAPIs(ctx, client, project_segments, filter, linter)
+			if err != nil {
+				return
+			}
+
+			// Store the aggregate stats on this project
+			storeLintStatsArtifact(ctx, client, project.GetName(), linter, aggregateStats)
+
+			// Aggregate the stats to pass back up
+			aggregateLintStats(ruleIdToProblemCounts, aggregateStats)
+			operationAndSchemaCount += aggregateStats.GetOperationAndSchemaCount()
+		}
+		fmt.Printf("%s\n", project.GetName())
+	}); err != nil {
+		return nil, err
+	}
+
+	return constructLintStats(operationAndSchemaCount, ruleIdToProblemCounts), nil
+}
+
+func computeLintStatsAPIs(ctx context.Context,
+	client *gapic.RegistryClient,
+	segments []string,
+	filter string,
+	linter string) (*rpc.LintStats, error) {
+
+	ruleIdToProblemCounts := make(map[string]*rpc.LintProblemCount)
+	var operationAndSchemaCount int32 = 0
+	fmt.Println(segments)
+	if err := core.ListAPIs(ctx, client, segments, filter, func(api *rpc.Api) {
+		if api_segments :=
+			names.ApiRegexp().FindStringSubmatch(api.GetName()); api_segments != nil {
+
+			aggregateStats, err := computeLintStatsVersions(ctx, client, api_segments, filter, linter)
+			if err != nil {
+				return
+			}
+			// Store the aggregate stats on this api
+			storeLintStatsArtifact(ctx, client, api.GetName(), linter, aggregateStats)
+
+			// Aggregate the stats to pass back up
+			aggregateLintStats(ruleIdToProblemCounts, aggregateStats)
+			operationAndSchemaCount += aggregateStats.GetOperationAndSchemaCount()
+		}
+		fmt.Printf("%s\n", api.GetName())
+	}); err != nil {
+		return nil, err
+	}
+
+	return constructLintStats(operationAndSchemaCount, ruleIdToProblemCounts), nil
+}
+
+func computeLintStatsVersions(ctx context.Context,
+	client *gapic.RegistryClient,
+	segments []string,
+	filter string,
+	linter string) (*rpc.LintStats, error) {
+
+	ruleIdToProblemCounts := make(map[string]*rpc.LintProblemCount)
+	var operationAndSchemaCount int32 = 0
+	if err := core.ListVersions(ctx, client, segments, filter, func(version *rpc.ApiVersion) {
+		if version_name_segments :=
+			names.VersionRegexp().FindStringSubmatch(version.GetName()); version_name_segments != nil {
+
+			aggregateStats, err := computeLintStatsSpecs(ctx, client, version_name_segments, filter, linter)
+			if err != nil {
+				return
+			}
+			// Store the aggregate stats on this version
+			storeLintStatsArtifact(ctx, client, version.GetName(), linter, aggregateStats)
+
+			// Aggregate the stats to pass back up
+			aggregateLintStats(ruleIdToProblemCounts, aggregateStats)
+			operationAndSchemaCount += aggregateStats.GetOperationAndSchemaCount()
+		}
+		fmt.Printf("%s\n", version.GetName())
+	}); err != nil {
+		return nil, err
+	}
+
+	return constructLintStats(operationAndSchemaCount, ruleIdToProblemCounts), nil
+}
+
+func storeLintStatsArtifact(ctx context.Context,
+	client *gapic.RegistryClient,
+	subject string,
+	linter string,
+	lintStats *rpc.LintStats) error {
+	// store the lintstats artifact
+	relation := lintStatsRelation(linter)
+	messageData, _ := proto.Marshal(lintStats)
+	artifact := &rpc.Artifact{
+		Name:     subject + "/artifacts/" + relation,
+		MimeType: core.MimeTypeForMessageType("google.cloud.apigee.registry.applications.v1alpha1.LintStats"),
+		Contents: messageData,
+	}
+	return core.SetArtifact(ctx, client, artifact)
+}
+
+func aggregateLintStats(ruleIdToProblemCounts map[string]*rpc.LintProblemCount,
+	lintStats *rpc.LintStats) {
+	for _, problemCount := range lintStats.GetProblemCounts() {
+		if _, ok := ruleIdToProblemCounts[problemCount.GetRuleId()]; !ok {
+			ruleIdToProblemCounts[problemCount.GetRuleId()] =
+				&rpc.LintProblemCount{
+					RuleId:     problemCount.GetRuleId(),
+					RuleDocUri: problemCount.GetRuleDocUri(),
+				}
+		}
+		ruleIdToProblemCounts[problemCount.GetRuleId()].Count++
+	}
+}
+
+func matchAndHandleLintStatsCmd(
+	ctx context.Context,
+	client connection.Client,
+	name string,
+	filter string,
+	linter string,
+) error {
+
+	var err error
+	// First try to match collection names, then try to match resource names.
+	if m := names.ProjectsRegexp().FindStringSubmatch(name); m != nil {
+		fmt.Println("Here")
+		_, err = computeLintStatsProjects(ctx, client, m, filter, linter)
+	} else if m := names.ApisRegexp().FindStringSubmatch(name); m != nil {
+		_, err = computeLintStatsAPIs(ctx, client, m, filter, linter)
+	} else if m := names.VersionsRegexp().FindStringSubmatch(name); m != nil {
+		_, err = computeLintStatsVersions(ctx, client, m, filter, linter)
+	} else if m := names.SpecsRegexp().FindStringSubmatch(name); m != nil {
+		_, err = computeLintStatsSpecs(ctx, client, m, filter, linter)
+	} else if m := names.ProjectRegexp().FindStringSubmatch(name); m != nil {
+		_, err = computeLintStatsProjects(ctx, client, m, filter, linter)
+	} else if m := names.ApiRegexp().FindStringSubmatch(name); m != nil {
+		_, err = computeLintStatsAPIs(ctx, client, m, filter, linter)
+	} else if m := names.VersionRegexp().FindStringSubmatch(name); m != nil {
+		_, err = computeLintStatsVersions(ctx, client, m, filter, linter)
+	} else if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
+		_, err = computeLintStatsSpecs(ctx, client, m, filter, linter)
+	} else {
+		// If nothing matched, return an error.
+		return fmt.Errorf("unsupported argument: %s", name)
+	}
+
+	return err
 }

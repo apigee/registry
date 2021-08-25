@@ -89,8 +89,11 @@ message LintPosition {
 // (-- api-linter: core::0123::resource-annotation=disabled
 //     aip.dev/not-precedent: This message is not currently used in an API. --)
 message LintStats {
+    // A sum of the total operations (GET, POST, PUT, DELETE) and schema count
+    int32 operation_and_schema_count = 1;
+
     // Problems found in linting.
-    repeated LintProblemCount problem_counts = 1;
+    repeated LintProblemCount problem_counts = 2;
 }
 
 // LintProblemCount represents the number of times a problem was found in linting.
