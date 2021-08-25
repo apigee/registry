@@ -67,8 +67,8 @@ func ProjectRegexp() *regexp.Regexp {
 	return regexp.MustCompile(fmt.Sprintf("^projects/%s$", identifier))
 }
 
-// ProjectWithLocationRegexp returns a regular expression that matches a project resource name followed by a location.
-func ProjectWithLocationRegexp() *regexp.Regexp {
+// projectWithLocationRegexp returns a regular expression that matches a project resource name followed by a location.
+func projectWithLocationRegexp() *regexp.Regexp {
 	return regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s$", identifier, identifier))
 }
 
@@ -87,7 +87,7 @@ func ParseProject(name string) (Project, error) {
 
 // ParseProjectWithLocation parses the name of a project.
 func ParseProjectWithLocation(name string) (Project, error) {
-	r := ProjectWithLocationRegexp()
+	r := projectWithLocationRegexp()
 	if !r.MatchString(name) {
 		return Project{}, fmt.Errorf("invalid project name %q: must match %q", name, r)
 	}

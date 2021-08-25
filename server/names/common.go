@@ -65,4 +65,4 @@ func normalize(identifier string) string {
 }
 
 // Location is included in resource names immediately following the project_id.
-var Location = "global"
+const Location = "global"

@@ -19,7 +19,6 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"sort"
-	"strings"
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
@@ -268,6 +267,8 @@ func seedArtifact(ctx context.Context, s rpc.RegistryServer, a *rpc.Artifact, hi
 		return err
 	}
 
+	parent := name.Parent()
+
 	if name.SpecID() != "" {
 		err = seedSpec(ctx, s, &rpc.ApiSpec{Name: name.Parent()}, history)
 	} else if name.VersionID() != "" {
@@ -276,20 +277,12 @@ func seedArtifact(ctx context.Context, s rpc.RegistryServer, a *rpc.Artifact, hi
 		err = seedApi(ctx, s, &rpc.Api{Name: name.Parent()}, history)
 	} else if name.ProjectID() != "" {
 		err = seedProject(ctx, s, &rpc.Project{Name: name.Parent()}, history)
+		// For projects, CreateArtifact expects the parent to include a location name.
+		parent += "/locations/global"
 	}
 
 	if err != nil {
 		return err
-	}
-
-	// Work around the unexpected dual-meaning of "parent" for projects.
-	// When a project is a parent, sometimes the seeder needs to create it,
-	// so name.Parent() returns the resource name. But when the seeder is
-	// creating an artifact with the project as its parent, it needs to
-	// include the location in the parent name.
-	parent := name.Parent()
-	if len(strings.Split(parent, "/")) == 2 { // project parents have two path segments
-		parent += "/locations/global"
 	}
 
 	_, err = s.CreateArtifact(ctx, &rpc.CreateArtifactRequest{
