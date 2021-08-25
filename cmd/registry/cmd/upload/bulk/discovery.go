@@ -110,7 +110,7 @@ func (task *uploadDiscoveryTask) createAPI(ctx context.Context) error {
 	}
 
 	response, err := task.client.CreateApi(ctx, &rpc.CreateApiRequest{
-		Parent: task.projectName(),
+		Parent: task.projectName() + "/locations/global",
 		ApiId:  task.apiID,
 		Api: &rpc.Api{
 			DisplayName: task.apiID,
@@ -228,7 +228,7 @@ func (task *uploadDiscoveryTask) projectName() string {
 }
 
 func (task *uploadDiscoveryTask) apiName() string {
-	return fmt.Sprintf("%s/apis/%s", task.projectName(), task.apiID)
+	return fmt.Sprintf("%s/locations/global/apis/%s", task.projectName(), task.apiID)
 }
 
 func (task *uploadDiscoveryTask) versionName() string {

@@ -55,7 +55,7 @@ func ListAPIs(ctx context.Context,
 	filterFlag string,
 	handler ApiHandler) error {
 	request := &rpc.ListApisRequest{
-		Parent: "projects/" + segments[1],
+		Parent: "projects/" + segments[1] + "/locations/global",
 	}
 	filter := filterFlag
 	if len(segments) == 3 && segments[2] != "-" {
@@ -83,7 +83,7 @@ func ListVersions(ctx context.Context,
 	filterFlag string,
 	handler VersionHandler) error {
 	request := &rpc.ListApiVersionsRequest{
-		Parent: "projects/" + segments[1] + "/apis/" + segments[2],
+		Parent: "projects/" + segments[1] + "/locations/global/apis/" + segments[2],
 	}
 	filter := filterFlag
 	if len(segments) == 4 && segments[3] != "-" {
@@ -111,7 +111,7 @@ func ListSpecs(ctx context.Context,
 	filterFlag string,
 	handler SpecHandler) error {
 	request := &rpc.ListApiSpecsRequest{
-		Parent: "projects/" + segments[1] + "/apis/" + segments[2] + "/versions/" + segments[3],
+		Parent: "projects/" + segments[1] + "/locations/global/apis/" + segments[2] + "/versions/" + segments[3],
 	}
 	filter := filterFlag
 	if len(segments) > 4 && segments[4] != "-" {
@@ -139,7 +139,7 @@ func ListSpecRevisions(ctx context.Context,
 	filterFlag string,
 	handler SpecHandler) error {
 	request := &rpc.ListApiSpecRevisionsRequest{
-		Name: "projects/" + segments[1] +
+		Name: "projects/" + segments[1] + "/locations/global" +
 			"/apis/" + segments[2] +
 			"/versions/" + segments[3] +
 			"/specs/" + segments[4],
@@ -163,7 +163,7 @@ func ListArtifacts(ctx context.Context,
 	filterFlag string,
 	getContents bool,
 	handler ArtifactHandler) error {
-	parent := "projects/" + segments[1]
+	parent := "projects/" + segments[1] + "/locations/global"
 	if segments[3] != "" {
 		parent += "/apis/" + segments[3]
 		if segments[5] != "" {
@@ -213,7 +213,7 @@ func ListArtifactsForParent(ctx context.Context,
 	client *gapic.RegistryClient,
 	segments []string,
 	handler ArtifactHandler) error {
-	parent := "projects/" + segments[1]
+	parent := "projects/" + segments[1] + "/locations/global"
 	if len(segments) > 2 {
 		parent += "/apis/" + segments[2]
 		if len(segments) > 3 {

@@ -79,7 +79,7 @@ func TestResolve(t *testing.T) {
 
 	// Create API
 	api, err := client.CreateApi(ctx, &rpc.CreateApiRequest{
-		Parent: project.Name,
+		Parent: project.Name + "/locations/global",
 		ApiId:  "petstore",
 		Api: &rpc.Api{
 			DisplayName:  "petstore",
@@ -194,7 +194,7 @@ func TestResolve(t *testing.T) {
 	}
 
 	resolveCmd := Command(ctx)
-	args = []string{"projects/" + testProject + "/artifacts/test-manifest"}
+	args = []string{"projects/" + testProject + "/locations/global/artifacts/test-manifest"}
 	resolveCmd.SetArgs(args)
 	if err = resolveCmd.Execute(); err != nil {
 		t.Fatalf("Execute() with args %v returned error: %s", args, err)
@@ -202,7 +202,7 @@ func TestResolve(t *testing.T) {
 
 	// List all the artifacts
 	got := make([]string, 0)
-	listPattern := "projects/controller-demo/apis/petstore/versions/-/specs/-/artifacts/-"
+	listPattern := "projects/controller-demo/locations/global/apis/petstore/versions/-/specs/-/artifacts/-"
 	segments := names.ArtifactRegexp().FindStringSubmatch(listPattern)
 	_ = core.ListArtifacts(ctx, client, segments, "", false,
 		func(artifact *rpc.Artifact) {

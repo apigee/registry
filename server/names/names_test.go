@@ -54,8 +54,8 @@ func TestResourceNames(t *testing.T) {
 			name:   "apis",
 			regexp: ApisRegexp(),
 			pass: []string{
-				"projects/google/apis",
-				"projects/-/apis",
+				"projects/google/locations/global/apis",
+				"projects/-/locations/global/apis",
 			},
 			fail: []string{
 				"-",
@@ -65,26 +65,26 @@ func TestResourceNames(t *testing.T) {
 			name:   "api",
 			regexp: ApiRegexp(),
 			pass: []string{
-				"projects/google/apis/sample",
-				"projects/-/apis/-",
-				"projects/123/apis/abc",
-				"projects/1-2-3/apis/abc",
+				"projects/google/locations/global/apis/sample",
+				"projects/-/locations/global/apis/-",
+				"projects/123/locations/global/apis/abc",
+				"projects/1-2-3/locations/global/apis/abc",
 			},
 			fail: []string{
 				"-",
 				"invalid",
-				"projects//apis/123",
-				"projects/123/apis/",
-				"projects/123/invalid/123",
-				"projects/123/apis/ 123",
+				"projects//locations/global/apis/123",
+				"projects/123/locations/global/apis/",
+				"projects/123/locations/global/invalid/123",
+				"projects/123/locations/global/apis/ 123",
 			},
 		},
 		{
 			name:   "versions",
 			regexp: VersionsRegexp(),
 			pass: []string{
-				"projects/google/apis/sample/versions",
-				"projects/-/apis/-/versions",
+				"projects/google/locations/global/apis/sample/versions",
+				"projects/-/locations/global/apis/-/versions",
 			},
 			fail: []string{
 				"-",
@@ -94,26 +94,26 @@ func TestResourceNames(t *testing.T) {
 			name:   "version",
 			regexp: VersionRegexp(),
 			pass: []string{
-				"projects/google/apis/sample/versions/v1",
-				"projects/-/apis/-/versions/-",
-				"projects/123/apis/abc/versions/123",
-				"projects/1-2-3/apis/abc/versions/123",
+				"projects/google/locations/global/apis/sample/versions/v1",
+				"projects/-/locations/global/apis/-/versions/-",
+				"projects/123/locations/global/apis/abc/versions/123",
+				"projects/1-2-3/locations/global/apis/abc/versions/123",
 			},
 			fail: []string{
 				"-",
 				"invalid",
-				"projects//apis/123",
-				"projects/123/apis/",
-				"projects/123/invalid/123",
-				"projects/123/apis/ 123",
+				"projects//locations/global/apis/123",
+				"projects/123/locations/global/apis/",
+				"projects/123/locations/global/invalid/123",
+				"projects/123/locations/global/apis/ 123",
 			},
 		},
 		{
 			name:   "specs",
 			regexp: SpecsRegexp(),
 			pass: []string{
-				"projects/google/apis/sample/versions/v1/specs",
-				"projects/-/apis/-/versions/-/specs",
+				"projects/google/locations/global/apis/sample/versions/v1/specs",
+				"projects/-/locations/global/apis/-/versions/-/specs",
 			},
 			fail: []string{
 				"-",
@@ -123,29 +123,29 @@ func TestResourceNames(t *testing.T) {
 			name:   "spec",
 			regexp: SpecRegexp(),
 			pass: []string{
-				"projects/google/apis/sample/versions/v1/specs/openapi.yaml@1234567890abcdef",
-				"projects/google/apis/sample/versions/v1/specs/openapi.yaml",
-				"projects/-/apis/-/versions/-/specs/-",
-				"projects/123/apis/abc/versions/123/specs/abc",
-				"projects/1-2-3/apis/abc/versions/123/specs/abc",
+				"projects/google/locations/global/apis/sample/versions/v1/specs/openapi.yaml@1234567890abcdef",
+				"projects/google/locations/global/apis/sample/versions/v1/specs/openapi.yaml",
+				"projects/-/locations/global/apis/-/versions/-/specs/-",
+				"projects/123/locations/global/apis/abc/versions/123/specs/abc",
+				"projects/1-2-3/locations/global/apis/abc/versions/123/specs/abc",
 			},
 			fail: []string{
 				"-",
 				"invalid",
-				"projects//apis/123",
-				"projects/123/apis/",
-				"projects/123/invalid/123",
-				"projects/123/apis/ 123",
+				"projects//locations/global/apis/123",
+				"projects/123/locations/global/apis/",
+				"projects/123/locations/global/invalid/123",
+				"projects/123/locations/global/apis/ 123",
 			},
 		},
 		{
 			name:   "artifacts",
 			regexp: ArtifactsRegexp(),
 			pass: []string{
-				"projects/google/apis/sample/versions/v1/specs/openapi.yaml/artifacts",
-				"projects/google/apis/sample/versions/v1/artifacts",
-				"projects/google/apis/sample/artifacts",
-				"projects/google/artifacts",
+				"projects/google/locations/global/apis/sample/versions/v1/specs/openapi.yaml/artifacts",
+				"projects/google/locations/global/apis/sample/versions/v1/artifacts",
+				"projects/google/locations/global/apis/sample/artifacts",
+				"projects/google/locations/global/artifacts",
 			},
 			fail: []string{
 				"-",
@@ -155,10 +155,10 @@ func TestResourceNames(t *testing.T) {
 			name:   "artifact",
 			regexp: ArtifactRegexp(),
 			pass: []string{
-				"projects/google/apis/sample/versions/v1/specs/openapi.yaml/artifacts/test-artifact",
-				"projects/google/apis/sample/versions/v1/artifacts/test-artifact",
-				"projects/google/apis/sample/artifacts/test-artifact",
-				"projects/google/artifacts/test-artifact",
+				"projects/google/locations/global/apis/sample/versions/v1/specs/openapi.yaml/artifacts/test-artifact",
+				"projects/google/locations/global/apis/sample/versions/v1/artifacts/test-artifact",
+				"projects/google/locations/global/apis/sample/artifacts/test-artifact",
+				"projects/google/locations/global/artifacts/test-artifact",
 			},
 			fail: []string{
 				"-",
@@ -169,13 +169,13 @@ func TestResourceNames(t *testing.T) {
 		for _, path := range g.pass {
 			m := g.regexp.FindStringSubmatch(path)
 			if m == nil {
-				t.Fatalf("failed to match %s: %s", g.name, path)
+				t.Errorf("failed to match %s: %s", g.name, path)
 			}
 		}
 		for _, path := range g.fail {
 			m := g.regexp.FindStringSubmatch(path)
 			if m != nil {
-				t.Fatalf("false match %s: %s", g.name, path)
+				t.Errorf("false match %s: %s", g.name, path)
 			}
 		}
 	}

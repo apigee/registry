@@ -178,7 +178,7 @@ func seedApi(ctx context.Context, s rpc.RegistryServer, api *rpc.Api, history ma
 	}
 
 	_, err = s.CreateApi(ctx, &rpc.CreateApiRequest{
-		Parent: name.Parent(),
+		Parent: name.Parent() + "/locations/global",
 		ApiId:  name.ApiID,
 		Api:    api,
 	})
@@ -267,6 +267,8 @@ func seedArtifact(ctx context.Context, s rpc.RegistryServer, a *rpc.Artifact, hi
 		return err
 	}
 
+	parent := name.Parent()
+
 	if name.SpecID() != "" {
 		err = seedSpec(ctx, s, &rpc.ApiSpec{Name: name.Parent()}, history)
 	} else if name.VersionID() != "" {
@@ -275,6 +277,8 @@ func seedArtifact(ctx context.Context, s rpc.RegistryServer, a *rpc.Artifact, hi
 		err = seedApi(ctx, s, &rpc.Api{Name: name.Parent()}, history)
 	} else if name.ProjectID() != "" {
 		err = seedProject(ctx, s, &rpc.Project{Name: name.Parent()}, history)
+		// For projects, CreateArtifact expects the parent to include a location name.
+		parent += "/locations/global"
 	}
 
 	if err != nil {
@@ -282,7 +286,7 @@ func seedArtifact(ctx context.Context, s rpc.RegistryServer, a *rpc.Artifact, hi
 	}
 
 	_, err = s.CreateArtifact(ctx, &rpc.CreateArtifactRequest{
-		Parent:     name.Parent(),
+		Parent:     parent,
 		ArtifactId: name.ArtifactID(),
 		Artifact:   a,
 	})

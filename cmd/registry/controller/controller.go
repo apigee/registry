@@ -53,7 +53,7 @@ func processManifestResource(
 	projectID string,
 	resource *rpc.GeneratedResource) ([]string, error) {
 	// Generate dependency map
-	resourcePattern := fmt.Sprintf("projects/%s/%s", projectID, resource.Pattern)
+	resourcePattern := fmt.Sprintf("projects/%s/locations/global/%s", projectID, resource.Pattern)
 	dependencyMaps := make([]map[string]ResourceCollection, 0, len(resource.Dependencies))
 	for _, d := range resource.Dependencies {
 		dMap, err := generateDependencyMap(ctx, client, resourcePattern, d.Pattern, d.Filter)
