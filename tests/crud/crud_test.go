@@ -105,7 +105,7 @@ func TestCRUD(t *testing.T) {
 	// Create the sample api.
 	{
 		req := &rpc.CreateApiRequest{
-			Parent: "projects/test",
+			Parent: "projects/test/locations/global",
 			ApiId:  "sample",
 			Api: &rpc.Api{
 				DisplayName:  "Sample",
@@ -121,7 +121,7 @@ func TestCRUD(t *testing.T) {
 	// Create the sample 1.0.0 version.
 	{
 		req := &rpc.CreateApiVersionRequest{
-			Parent:       "projects/test/apis/sample",
+			Parent:       "projects/test/locations/global/apis/sample",
 			ApiVersionId: "1.0.0",
 			ApiVersion: &rpc.ApiVersion{
 				Labels:      sampleMap,
@@ -136,7 +136,7 @@ func TestCRUD(t *testing.T) {
 		buf, err := readAndGZipFile(filepath.Join("testdata", "openapi.yaml"))
 		check(t, "error reading spec", err)
 		req := &rpc.CreateApiSpecRequest{
-			Parent:    "projects/test/apis/sample/versions/1.0.0",
+			Parent:    "projects/test/locations/global/apis/sample/versions/1.0.0",
 			ApiSpecId: "openapi.yaml",
 			ApiSpec: &rpc.ApiSpec{
 				MimeType:    "application/x.openapi+gzip;version=3.0.0",
@@ -151,7 +151,7 @@ func TestCRUD(t *testing.T) {
 	// Check the created API.
 	{
 		req := &rpc.GetApiRequest{
-			Name: "projects/test/apis/sample",
+			Name: "projects/test/locations/global/apis/sample",
 		}
 		api, err := registryClient.GetApi(ctx, req)
 		check(t, "error getting api %s", err)
@@ -165,7 +165,7 @@ func TestCRUD(t *testing.T) {
 	// Check the created version.
 	{
 		req := &rpc.GetApiVersionRequest{
-			Name: "projects/test/apis/sample/versions/1.0.0",
+			Name: "projects/test/locations/global/apis/sample/versions/1.0.0",
 		}
 		version, err := registryClient.GetApiVersion(ctx, req)
 		check(t, "error getting version %s", err)
@@ -180,7 +180,7 @@ func TestCRUD(t *testing.T) {
 	var revision string
 	{
 		req := &rpc.GetApiSpecRequest{
-			Name: "projects/test/apis/sample/versions/1.0.0/specs/openapi.yaml",
+			Name: "projects/test/locations/global/apis/sample/versions/1.0.0/specs/openapi.yaml",
 		}
 		spec, err := registryClient.GetApiSpec(ctx, req)
 		check(t, "error getting spec %s", err)
@@ -200,7 +200,7 @@ func TestCRUD(t *testing.T) {
 	// Check the contents of the created spec.
 	{
 		req := &rpc.GetApiSpecContentsRequest{
-			Name: "projects/test/apis/sample/versions/1.0.0/specs/openapi.yaml/contents",
+			Name: "projects/test/locations/global/apis/sample/versions/1.0.0/specs/openapi.yaml/contents",
 		}
 		response, err := registryClient.GetApiSpecContents(ctx, req)
 		check(t, "error getting spec contents %s", err)
@@ -217,7 +217,7 @@ func TestCRUD(t *testing.T) {
 	// Check the contents of the created revision.
 	{
 		req := &rpc.GetApiSpecContentsRequest{
-			Name: "projects/test/apis/sample/versions/1.0.0/specs/openapi.yaml@" + revision + "/contents",
+			Name: "projects/test/locations/global/apis/sample/versions/1.0.0/specs/openapi.yaml@" + revision + "/contents",
 		}
 		response, err := registryClient.GetApiSpecContents(ctx, req)
 		check(t, "error getting spec contents %s", err)
@@ -235,7 +235,7 @@ func TestCRUD(t *testing.T) {
 	revisionTag := "prod"
 	{
 		req := &rpc.TagApiSpecRevisionRequest{
-			Name: "projects/test/apis/sample/versions/1.0.0/specs/openapi.yaml@" + revision,
+			Name: "projects/test/locations/global/apis/sample/versions/1.0.0/specs/openapi.yaml@" + revision,
 			Tag:  revisionTag,
 		}
 		_, err := registryClient.TagApiSpecRevision(ctx, req)
@@ -244,7 +244,7 @@ func TestCRUD(t *testing.T) {
 	// Check the contents of the tagged revision.
 	{
 		req := &rpc.GetApiSpecContentsRequest{
-			Name: "projects/test/apis/sample/versions/1.0.0/specs/openapi.yaml@" + revisionTag + "/contents",
+			Name: "projects/test/locations/global/apis/sample/versions/1.0.0/specs/openapi.yaml@" + revisionTag + "/contents",
 		}
 		response, err := registryClient.GetApiSpecContents(ctx, req)
 		check(t, "error getting spec contents %s", err)
@@ -258,10 +258,10 @@ func TestCRUD(t *testing.T) {
 			}
 		}
 	}
-	testArtifacts(ctx, registryClient, t, "projects/test")
-	testArtifacts(ctx, registryClient, t, "projects/test/apis/sample")
-	testArtifacts(ctx, registryClient, t, "projects/test/apis/sample/versions/1.0.0")
-	testArtifacts(ctx, registryClient, t, "projects/test/apis/sample/versions/1.0.0/specs/openapi.yaml")
+	testArtifacts(ctx, registryClient, t, "projects/test/locations/global")
+	testArtifacts(ctx, registryClient, t, "projects/test/locations/global/apis/sample")
+	testArtifacts(ctx, registryClient, t, "projects/test/locations/global/apis/sample/versions/1.0.0")
+	testArtifacts(ctx, registryClient, t, "projects/test/locations/global/apis/sample/versions/1.0.0/specs/openapi.yaml")
 	// Delete the test project.
 	{
 		req := &rpc.DeleteProjectRequest{

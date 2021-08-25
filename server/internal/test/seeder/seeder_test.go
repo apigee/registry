@@ -75,78 +75,78 @@ func TestSeedRegistry(t *testing.T) {
 			desc: "resources can be created explicitly",
 			seed: []RegistryResource{
 				&rpc.Project{Name: "projects/p"},
-				&rpc.Api{Name: "projects/p/apis/a"},
-				&rpc.ApiVersion{Name: "projects/p/apis/a/versions/v"},
-				&rpc.ApiSpec{Name: "projects/p/apis/a/versions/v/specs/s"},
-				&rpc.Artifact{Name: "projects/p/apis/a/versions/v/specs/s/artifacts/a"},
+				&rpc.Api{Name: "projects/p/locations/global/apis/a"},
+				&rpc.ApiVersion{Name: "projects/p/locations/global/apis/a/versions/v"},
+				&rpc.ApiSpec{Name: "projects/p/locations/global/apis/a/versions/v/specs/s"},
+				&rpc.Artifact{Name: "projects/p/locations/global/apis/a/versions/v/specs/s/artifacts/a"},
 			},
 			want: []string{
 				"projects/p",
-				"projects/p/apis/a",
-				"projects/p/apis/a/versions/v",
-				"projects/p/apis/a/versions/v/specs/s",
-				"projects/p/apis/a/versions/v/specs/s/artifacts/a",
+				"projects/p/locations/global/apis/a",
+				"projects/p/locations/global/apis/a/versions/v",
+				"projects/p/locations/global/apis/a/versions/v/specs/s",
+				"projects/p/locations/global/apis/a/versions/v/specs/s/artifacts/a",
 			},
 		},
 		{
 			desc: "resources can be created implicitly",
 			seed: []RegistryResource{
-				&rpc.Artifact{Name: "projects/p/apis/a/versions/v/specs/s/artifacts/a"},
+				&rpc.Artifact{Name: "projects/p/locations/global/apis/a/versions/v/specs/s/artifacts/a"},
 			},
 			want: []string{
 				"projects/p",
-				"projects/p/apis/a",
-				"projects/p/apis/a/versions/v",
-				"projects/p/apis/a/versions/v/specs/s",
-				"projects/p/apis/a/versions/v/specs/s/artifacts/a",
+				"projects/p/locations/global/apis/a",
+				"projects/p/locations/global/apis/a/versions/v",
+				"projects/p/locations/global/apis/a/versions/v/specs/s",
+				"projects/p/locations/global/apis/a/versions/v/specs/s/artifacts/a",
 			},
 		},
 		{
 			desc: "resources can be created out of order",
 			seed: []RegistryResource{
-				&rpc.Artifact{Name: "projects/p/apis/a/versions/v/specs/s/artifacts/a"},
-				&rpc.ApiSpec{Name: "projects/p/apis/a/versions/v/specs/s"},
-				&rpc.ApiVersion{Name: "projects/p/apis/a/versions/v"},
-				&rpc.Api{Name: "projects/p/apis/a"},
+				&rpc.Artifact{Name: "projects/p/locations/global/apis/a/versions/v/specs/s/artifacts/a"},
+				&rpc.ApiSpec{Name: "projects/p/locations/global/apis/a/versions/v/specs/s"},
+				&rpc.ApiVersion{Name: "projects/p/locations/global/apis/a/versions/v"},
+				&rpc.Api{Name: "projects/p/locations/global/apis/a"},
 				&rpc.Project{Name: "projects/p"},
 			},
 			want: []string{
 				"projects/p",
-				"projects/p/apis/a",
-				"projects/p/apis/a/versions/v",
-				"projects/p/apis/a/versions/v/specs/s",
-				"projects/p/apis/a/versions/v/specs/s/artifacts/a",
+				"projects/p/locations/global/apis/a",
+				"projects/p/locations/global/apis/a/versions/v",
+				"projects/p/locations/global/apis/a/versions/v/specs/s",
+				"projects/p/locations/global/apis/a/versions/v/specs/s/artifacts/a",
 			},
 		},
 		{
 			desc: "specs revisions can be created when contents change",
 			seed: []RegistryResource{
 				&rpc.ApiSpec{
-					Name:     "projects/p/apis/a/versions/v/specs/s",
+					Name:     "projects/p/locations/global/apis/a/versions/v/specs/s",
 					Contents: []byte("first"),
 				},
 				&rpc.ApiSpec{
-					Name:     "projects/p/apis/a/versions/v/specs/s",
+					Name:     "projects/p/locations/global/apis/a/versions/v/specs/s",
 					Contents: []byte("first"),
 				},
 				&rpc.ApiSpec{
-					Name:     "projects/p/apis/a/versions/v/specs/s",
+					Name:     "projects/p/locations/global/apis/a/versions/v/specs/s",
 					Contents: []byte("second"),
 				},
 			},
 			want: []string{
 				"projects/p",
-				"projects/p/apis/a",
-				"projects/p/apis/a/versions/v",
-				"projects/p/apis/a/versions/v/specs/s",
-				"projects/p/apis/a/versions/v/specs/s",
+				"projects/p/locations/global/apis/a",
+				"projects/p/locations/global/apis/a/versions/v",
+				"projects/p/locations/global/apis/a/versions/v/specs/s",
+				"projects/p/locations/global/apis/a/versions/v/specs/s",
 			},
 		},
 		{
 			desc: "spec revision tags can be created",
 			seed: []RegistryResource{
 				&rpc.ApiSpec{
-					Name: "projects/p/apis/a/versions/v/specs/s",
+					Name: "projects/p/locations/global/apis/a/versions/v/specs/s",
 					RevisionTags: []string{
 						"first-tag",
 						"second-tag",
@@ -155,11 +155,11 @@ func TestSeedRegistry(t *testing.T) {
 			},
 			want: []string{
 				"projects/p",
-				"projects/p/apis/a",
-				"projects/p/apis/a/versions/v",
-				"projects/p/apis/a/versions/v/specs/s",
-				"projects/p/apis/a/versions/v/specs/s@first-tag",
-				"projects/p/apis/a/versions/v/specs/s@second-tag",
+				"projects/p/locations/global/apis/a",
+				"projects/p/locations/global/apis/a/versions/v",
+				"projects/p/locations/global/apis/a/versions/v/specs/s",
+				"projects/p/locations/global/apis/a/versions/v/specs/s@first-tag",
+				"projects/p/locations/global/apis/a/versions/v/specs/s@second-tag",
 			},
 		},
 	}
@@ -197,22 +197,22 @@ func TestSeedRegistry_Errors(t *testing.T) {
 		{
 			desc: "duplicate apis",
 			seed: []RegistryResource{
-				&rpc.Api{Name: "projects/p/apis/a"},
-				&rpc.Api{Name: "projects/p/apis/a"},
+				&rpc.Api{Name: "projects/p/locations/global/apis/a"},
+				&rpc.Api{Name: "projects/p/locations/global/apis/a"},
 			},
 		},
 		{
 			desc: "duplicate versions",
 			seed: []RegistryResource{
-				&rpc.ApiVersion{Name: "projects/p/apis/a/versions/v"},
-				&rpc.ApiVersion{Name: "projects/p/apis/a/versions/v"},
+				&rpc.ApiVersion{Name: "projects/p/locations/global/apis/a/versions/v"},
+				&rpc.ApiVersion{Name: "projects/p/locations/global/apis/a/versions/v"},
 			},
 		},
 		{
 			desc: "duplicate artifacts",
 			seed: []RegistryResource{
-				&rpc.Artifact{Name: "projects/p/apis/a/versions/v/specs/s/artifacts/a"},
-				&rpc.Artifact{Name: "projects/p/apis/a/versions/v/specs/s/artifacts/a"},
+				&rpc.Artifact{Name: "projects/p/locations/global/apis/a/versions/v/specs/s/artifacts/a"},
+				&rpc.Artifact{Name: "projects/p/locations/global/apis/a/versions/v/specs/s/artifacts/a"},
 			},
 		},
 	}

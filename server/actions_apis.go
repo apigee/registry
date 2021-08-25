@@ -38,7 +38,7 @@ func (s *RegistryServer) CreateApi(ctx context.Context, req *rpc.CreateApiReques
 		return nil, status.Errorf(codes.InvalidArgument, "invalid api %+v: body must be provided", req.GetApi())
 	}
 
-	parent, err := names.ParseProject(req.GetParent())
+	parent, err := names.ParseProjectWithLocation(req.GetParent())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -145,7 +145,7 @@ func (s *RegistryServer) ListApis(ctx context.Context, req *rpc.ListApisRequest)
 		req.PageSize = 50
 	}
 
-	parent, err := names.ParseProject(req.GetParent())
+	parent, err := names.ParseProjectWithLocation(req.GetParent())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}

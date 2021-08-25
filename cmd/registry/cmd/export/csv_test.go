@@ -60,7 +60,7 @@ func TestExportCSV(t *testing.T) {
 	}
 
 	api, err := client.CreateApi(ctx, &rpc.CreateApiRequest{
-		Parent: project.GetName(),
+		Parent: project.GetName() + "/locations/global",
 		ApiId:  apiID,
 		Api:    &rpc.Api{},
 	})

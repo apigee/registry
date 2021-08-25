@@ -40,7 +40,7 @@ func parseArtifactParent(name string) (artifactParent, error) {
 		return v, nil
 	} else if a, err := names.ParseApi(name); err == nil {
 		return a, nil
-	} else if p, err := names.ParseProject(name); err == nil {
+	} else if p, err := names.ParseProjectWithLocation(name); err == nil {
 		return p, nil
 	}
 

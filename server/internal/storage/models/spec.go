@@ -116,7 +116,8 @@ func (s *Spec) Name() string {
 
 // RevisionName generates the resource name of the spec revision.
 func (s *Spec) RevisionName() string {
-	return fmt.Sprintf("projects/%s/apis/%s/versions/%s/specs/%s@%s", s.ProjectID, s.ApiID, s.VersionID, s.SpecID, s.RevisionID)
+	return fmt.Sprintf("projects/%s/locations/%s/apis/%s/versions/%s/specs/%s@%s",
+		s.ProjectID, names.Location, s.ApiID, s.VersionID, s.SpecID, s.RevisionID)
 }
 
 // BasicMessage returns the basic view of the spec resource as an RPC message.
@@ -242,5 +243,6 @@ func NewSpecRevisionTag(name names.SpecRevision, tag string) *SpecRevisionTag {
 }
 
 func (t *SpecRevisionTag) String() string {
-	return fmt.Sprintf("projects/%s/apis/%s/versions/%s/specs/%s@%s", t.ProjectID, t.ApiID, t.VersionID, t.SpecID, t.Tag)
+	return fmt.Sprintf("projects/%s/locations/%s/apis/%s/versions/%s/specs/%s@%s",
+		t.ProjectID, names.Location, t.ApiID, t.VersionID, t.SpecID, t.Tag)
 }

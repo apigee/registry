@@ -50,92 +50,92 @@ apg registry update-project \
 # This will log errors if any of the API specs can't be parsed,
 # but for every spec that is parsed, this will set the display name
 # and description of the corresponding API from the values in the specs.
-registry compute details projects/openapi/apis/-
+registry compute details projects/openapi/locations/global/apis/-
 
 # Verify this for one of the APIs.
-registry get projects/openapi/apis/wordnik.com
+registry get projects/openapi/locations/global/apis/wordnik.com
 
 # You can also get this API with the lower-level apg command.
 # Add the --json option to get JSON-formatted output.
-apg registry get-api --name projects/openapi/apis/wordnik.com --json
+apg registry get-api --name projects/openapi/locations/global/apis/wordnik.com --json
 
 # Get the API spec
-apg registry get-api-spec --name projects/openapi/apis/wordnik.com/versions/4.0/specs/openapi.yaml
+apg registry get-api-spec --name projects/openapi/locations/global/apis/wordnik.com/versions/4.0/specs/openapi.yaml
 
 # You might notice that that didn't return the actual spec. That's because the spec contents
 # are accessed through a separate method that (when transcoded to HTTP) allows direct download
 # of spec contents.
-apg registry get-api-spec-contents --name projects/openapi/apis/wordnik.com/versions/4.0/specs/openapi.yaml/contents
+apg registry get-api-spec-contents --name projects/openapi/locations/global/apis/wordnik.com/versions/4.0/specs/openapi.yaml/contents
 
 # If you have jq and the base64 tool installed, you can get the spec contents from the RPC response.
-# apg registry get-api-spec-contents --name projects/openapi/apis/wordnik.com/versions/4.0/specs/openapi.yaml/contents --json | jq .data -r | base64 --decode
+# apg registry get-api-spec-contents --name projects/openapi/locations/global/apis/wordnik.com/versions/4.0/specs/openapi.yaml/contents --json | jq .data -r | base64 --decode
 
 # Another way to get the bytes of the spec is to use `registry get` with the `--contents` flag.
-registry get projects/openapi/apis/wordnik.com --contents
+registry get projects/openapi/locations/global/apis/wordnik.com --contents
 
 # List all of the APIs in the project.
-registry list projects/openapi/apis
+registry list projects/openapi/locations/global/apis
 
 # List all of the versions of an API.
-registry list projects/openapi/apis/wordnik.com/versions
+registry list projects/openapi/locations/global/apis/wordnik.com/versions
 
 # List all of the specs associated with an API version.
-registry list projects/openapi/apis/wordnik.com/versions/4.0/specs
+registry list projects/openapi/locations/global/apis/wordnik.com/versions/4.0/specs
 
 # Following [AIP-159](https://google.aip.dev/159), the list operations support the "-" wildcard.
 # This allows us to list objects across multiple collections.
-registry list projects/openapi/apis/wordnik.com/versions/-/specs/-
+registry list projects/openapi/locations/global/apis/wordnik.com/versions/-/specs/-
 
 # Now let's list all of the specs in the project.
-registry list projects/openapi/apis/-/versions/-/specs/-
+registry list projects/openapi/locations/global/apis/-/versions/-/specs/-
 
 # That's a lot. Let's count them with `wc -l`.
-registry list projects/openapi/apis/-/versions/-/specs/- | wc -l
+registry list projects/openapi/locations/global/apis/-/versions/-/specs/- | wc -l
 
 # Using wildcards, we can list all of the specs with a particular version.
-registry list projects/openapi/apis/-/versions/1.0.0/specs/-
+registry list projects/openapi/locations/global/apis/-/versions/1.0.0/specs/-
 
 # List operations also support filtering by following [AIP-160](https://google.aip.dev/160).
 # Filter functions are evaluated using [CEL](https://github.com/google/cel-spec).
 # Here's an example:
-registry list projects/openapi/apis/-/versions/-/specs/- --filter "api_id.startsWith('goog')"
+registry list projects/openapi/locations/global/apis/-/versions/-/specs/- --filter "api_id.startsWith('goog')"
 
 # This is a bit more verbose than glob expressions but much more powerful.
 # You can also refer to other fields in the messages that match the pattern:
-registry list projects/openapi/apis/- --filter "description.contains('speech')"
+registry list projects/openapi/locations/global/apis/- --filter "description.contains('speech')"
 
 # The registry command can also compute some basic API properties.
 # This computes simple complexity metrics for every spec in the project.
-registry compute complexity projects/openapi/apis/-/versions/-/specs/-
+registry compute complexity projects/openapi/locations/global/apis/-/versions/-/specs/-
 
 # The complexity metrics are stored in artifacts associated with each spec.
 # In this case, the artifacts were stored in a serialized protocol buffer.
 # You can get their values with the "get" subcommand.
-registry get projects/openapi/apis/wordnik.com/versions/4.0/specs/swagger.yaml/artifacts/complexity
+registry get projects/openapi/locations/global/apis/wordnik.com/versions/4.0/specs/swagger.yaml/artifacts/complexity
 
 # It's also possible to export artifacts to a Google sheet.
 # (The following command expects OAuth client credentials with access to the
 # Google Sheets API to be available locally in ~/.credentials/registry.json)
-registry export sheet projects/openapi/apis/-/versions/-/specs/-/artifacts/complexity \
-	--as projects/openapi/artifacts/complexity-sheet
+registry export sheet projects/openapi/locations/global/apis/-/versions/-/specs/-/artifacts/complexity \
+	--as projects/openapi/locations/global/artifacts/complexity-sheet
 
 # Another interesting property that can be computed is the "vocabulary" of an API.
 # The following command computes vocabularies of every API spec in the project.
-registry compute vocabulary projects/openapi/apis/-/versions/-/specs/-
+registry compute vocabulary projects/openapi/locations/global/apis/-/versions/-/specs/-
 
 # Vocabularies are stored in the "vocabulary" property.
-registry get projects/openapi/apis/wordnik.com/versions/4.0/specs/swagger.yaml/artifacts/vocabulary
+registry get projects/openapi/locations/global/apis/wordnik.com/versions/4.0/specs/swagger.yaml/artifacts/vocabulary
 
 # The registry command can perform set operations on vocabularies.
 # To find common terms in all Google APIs, use the following:
-registry vocabulary intersection projects/openapi/apis/-/versions/-/specs/-/artifacts/vocabulary --filter "api_id.startsWith('googleapis')"
+registry vocabulary intersection projects/openapi/locations/global/apis/-/versions/-/specs/-/artifacts/vocabulary --filter "api_id.startsWith('googleapis')"
 
 # We can also save this to a property.
-registry vocabulary intersection projects/openapi/apis/-/versions/-/specs/-/artifacts/vocabulary --filter "api_id.startsWith('googleapis')" --output projects/openapi/artifacts/google-common
+registry vocabulary intersection projects/openapi/locations/global/apis/-/versions/-/specs/-/artifacts/vocabulary --filter "api_id.startsWith('googleapis')" --output projects/openapi/locations/global/artifacts/google-common
 
 # We can then read it directly or export it to a Google Sheet.
-registry get projects/openapi/artifacts/google-common
-registry export sheet projects/openapi/artifacts/google-common
+registry get projects/openapi/locations/global/artifacts/google-common
+registry export sheet projects/openapi/locations/global/artifacts/google-common
 
 # With vocabulary operations we can discover common terms across groups of APIs,
 # track changes across versions, and find unique terms in APIs that we are reviewing.
