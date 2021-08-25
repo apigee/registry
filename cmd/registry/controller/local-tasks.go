@@ -33,18 +33,22 @@ func (task *ExecCommandTask) String() string {
 }
 
 func (task *ExecCommandTask) Run(ctx context.Context) error {
+	//The monitoring metrics/dashboards are built on top of the format of the log messages here.
+	//Check the metric filters before making  any changes to the format.
+	//Location: registry/deployments/controller/dashboard/*
+	taskDetails := fmt.Sprintf("action={%s} taskID={%s}", task.Action, task.TaskID)
+
 	if strings.HasPrefix(task.Action, "resolve") {
-		return fmt.Errorf("'resolve' not allowed in action, cannot invoke %q", task.Action)
+		return fmt.Errorf("Failed Execution: %s Error: 'resolve' not allowed in action", taskDetails)
 	}
 	cmd := exec.Command("registry", strings.Fields(task.Action)...)
 	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
 	err := cmd.Run()
-	details := fmt.Sprintf("action={%s} taskID={%s}", task.Action, task.TaskID)
 
 	if err != nil {
-		log.Printf("Failed Execution: %s Error: %s", details, err)
+		log.Printf("Failed Execution: %s Error: %s", taskDetails, err)
 		return err
 	}
-	log.Printf("Successful Execution: %s", details)
+	log.Printf("Successful Execution: %s", taskDetails)
 	return nil
 }
