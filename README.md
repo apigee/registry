@@ -113,20 +113,18 @@ more demonstrations, see the [demos](demos) directory.
 
 ### Configuration
 
-Configuration for `registry-server` is loaded from the
-`$HOME/.config/registry/` directory by default. We recommend YAML
-configuration, but other file types are supported. See the Viper
-[documentation](https://github.com/spf13/viper) for more information. Refer to
-this [example](config/registry-server.yaml) for documentation of each
-configurable value.
+Configuration for `registry-server` is loaded from a YAML file specified using
+the `--configuration` (`-c`) flag. 
 
-Configuration can be loaded from a custom file path using the `--configuration`
-or `-c` flag. If provided, other directories will not be searched.
+Configuration files can contain environment variable references. See
+[config/registry_server.yaml](config/registry_server.yaml) for an example.
+When that configuration file is specified, the port configuration value
+can be set using the `PORT` environment variable. Other useful environment
+variables are also defined there.
 
-Values can be set or overridden using environment variables. Each configuration
-value should be uppercased, prefixed with `REGISTRY_`, and use underscores to
-indicate nesting. For example, you can override the `database.driver` value by
-setting the `REGISTRY_DATABASE_DRIVER` environment variable.
+When no configuration is specified, `registry-server` runs on port 8080 using
+a sqlite database stored in a file at `/tmp/registry.db`. For other default
+configuration settings, see [cmd/registry-server/main.go](cmd/registry-server/main.go).
 
 ### Running the Registry API server
 
