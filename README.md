@@ -226,14 +226,13 @@ Your `docker run` invocation might look like this:
 docker run \
   -p 8080:8080 \
   -e REGISTRY_DATABASE_DRIVER=postgres \
-  -e REGISTRY_DATABASE_CONFIG="host=${PGHOST} port=5432 user=registry dbname=registry password=iloveapis sslmode=disable" \
+  -e REGISTRY_DATABASE_CONFIG="host=HOST port=PORT user=USER dbname=DATABASE password=PASSWORD sslmode=disable" \
   registry-server:latest
 ```
 
-Be sure to replace `${PGHOST}` with the address of your Postgres server (either
-directly or by setting `PGHOST` with another `-e` argument to `docker run`),
-check the configuration parameters, and verify that your server is configured
-to accept remote connections (in `postgres.conf` and `pg_hba.conf`).
+Be sure to replace `HOST` and the other database configuration parameters and verify
+that your server is configured to accept remote connections (in `postgres.conf` and
+`pg_hba.conf`).
 
 ## Running the Registry API server with Google Cloud Run
 
