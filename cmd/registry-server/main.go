@@ -21,6 +21,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strings"
 	"syscall"
 
@@ -51,11 +52,12 @@ func main() {
 	pflag.Parse()
 
 	if configPath != "" {
-		log.Println("Loading custom")
+		log.Printf("Loading configuration from %s", configPath)
 		f, err := os.Open(configPath)
 		if err != nil {
 			log.Fatalf("Failed to open config file: %s", err)
 		}
+		viper.SetConfigType(strings.TrimLeft(filepath.Ext(configPath), "."))
 		if err := viper.ReadConfig(f); err != nil {
 			log.Fatalf("Failed to read config contents: %s", err)
 		}
