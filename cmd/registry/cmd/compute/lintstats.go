@@ -93,19 +93,16 @@ func computeLintStats(lint *rpc.Lint) *rpc.LintStats {
 	sort.Slice(problemCounts, func(i, j int) bool {
 		return problemCounts[i].Count > problemCounts[j].Count
 	})
-	return &rpc.LintStats{ProblemCounts: problemCounts, OperationAndSchemaCount: 1}
+	return &rpc.LintStats{ProblemCounts: problemCounts}
 }
 
 func computeLintStatsSpecs(ctx context.Context,
 	client *gapic.RegistryClient,
 	segments []string,
 	filter string,
-	linter string) (*rpc.LintStats, error) {
+	linter string) error {
 
-	ruleIdToProblemCounts := make(map[string]*rpc.LintProblemCount)
-	var operationAndSchemaCount int32 = 0
-
-	if err := core.ListSpecs(ctx, client, segments, filter, func(spec *rpc.ApiSpec) {
+	return core.ListSpecs(ctx, client, segments, filter, func(spec *rpc.ApiSpec) {
 		// Iterate through a collection of specs and evaluate each.
 		fmt.Printf("%s\n", spec.GetName())
 		// get the lint results
@@ -149,130 +146,83 @@ func computeLintStatsSpecs(ctx context.Context,
 				return
 			}
 
-			lintStats.OperationAndSchemaCount = 1 + complexity.GetDeleteCount() +
-				complexity.GetPutCount() + complexity.GetGetCount() +
-				complexity.GetPostCount() + complexity.GetSchemaCount()
+			lintStats.OperationCount = complexity.GetDeleteCount() +
+				complexity.GetPutCount() + complexity.GetGetCount() + complexity.GetPostCount()
+
+			lintStats.SchemaCount = complexity.GetSchemaCount()
 		}
 
 		storeLintStatsArtifact(ctx, client, spec.GetName(), linter, lintStats)
-
-		aggregateLintStats(ruleIdToProblemCounts, lintStats)
-		operationAndSchemaCount += lintStats.GetOperationAndSchemaCount()
-	}); err != nil {
-		return nil, err
-	}
-
-	return constructLintStats(operationAndSchemaCount, ruleIdToProblemCounts), nil
-}
-
-func constructLintStats(operationAndSchemaCount int32,
-	ruleIdToProblemCounts map[string]*rpc.LintProblemCount) *rpc.LintStats {
-	problemCounts := make([]*rpc.LintProblemCount, 0)
-	for _, problemCount := range ruleIdToProblemCounts {
-		problemCounts = append(problemCounts, problemCount)
-	}
-	sort.Slice(problemCounts, func(i, j int) bool {
-		return problemCounts[i].Count > problemCounts[j].Count
 	})
-
-	return &rpc.LintStats{
-		OperationAndSchemaCount: operationAndSchemaCount,
-		ProblemCounts:           problemCounts,
-	}
 }
 
 func computeLintStatsProjects(ctx context.Context,
 	client *gapic.RegistryClient,
 	segments []string,
 	filter string,
-	linter string) (*rpc.LintStats, error) {
-	ruleIdToProblemCounts := make(map[string]*rpc.LintProblemCount)
-	var operationAndSchemaCount int32 = 0
-	if err := core.ListProjects(ctx, client, segments, filter, func(project *rpc.Project) {
+	linter string) error {
+	return core.ListProjects(ctx, client, segments, filter, func(project *rpc.Project) {
 		if project_segments :=
 			names.ProjectRegexp().FindStringSubmatch(project.GetName()); project_segments != nil {
+			project_stats := &rpc.LintStats{}
 
-			aggregateStats, err := computeLintStatsAPIs(ctx, client, project_segments, filter, linter)
-			if err != nil {
+			if err := core.ListAPIs(ctx, client, segments, filter, func(api *rpc.Api) {
+				aggregateLintStats(ctx, client, api.GetName(), linter, project_stats)
+			}); err != nil {
 				return
 			}
-
-			// Store the aggregate stats on this project
-			storeLintStatsArtifact(ctx, client, project.GetName(), linter, aggregateStats)
-
-			// Aggregate the stats to pass back up
-			aggregateLintStats(ruleIdToProblemCounts, aggregateStats)
-			operationAndSchemaCount += aggregateStats.GetOperationAndSchemaCount()
+			// Store the aggregate stats on this api
+			storeLintStatsArtifact(ctx, client, project.GetName(), linter, project_stats)
 		}
 		fmt.Printf("%s\n", project.GetName())
-	}); err != nil {
-		return nil, err
-	}
-
-	return constructLintStats(operationAndSchemaCount, ruleIdToProblemCounts), nil
+	})
 }
 
 func computeLintStatsAPIs(ctx context.Context,
 	client *gapic.RegistryClient,
 	segments []string,
 	filter string,
-	linter string) (*rpc.LintStats, error) {
+	linter string) error {
 
-	ruleIdToProblemCounts := make(map[string]*rpc.LintProblemCount)
-	var operationAndSchemaCount int32 = 0
-	fmt.Println(segments)
-	if err := core.ListAPIs(ctx, client, segments, filter, func(api *rpc.Api) {
+	return core.ListAPIs(ctx, client, segments, filter, func(api *rpc.Api) {
 		if api_segments :=
 			names.ApiRegexp().FindStringSubmatch(api.GetName()); api_segments != nil {
+			api_stats := &rpc.LintStats{}
 
-			aggregateStats, err := computeLintStatsVersions(ctx, client, api_segments, filter, linter)
-			if err != nil {
+			if err := core.ListVersions(ctx, client, segments, filter, func(version *rpc.ApiVersion) {
+				aggregateLintStats(ctx, client, version.GetName(), linter, api_stats)
+			}); err != nil {
 				return
 			}
 			// Store the aggregate stats on this api
-			storeLintStatsArtifact(ctx, client, api.GetName(), linter, aggregateStats)
-
-			// Aggregate the stats to pass back up
-			aggregateLintStats(ruleIdToProblemCounts, aggregateStats)
-			operationAndSchemaCount += aggregateStats.GetOperationAndSchemaCount()
+			storeLintStatsArtifact(ctx, client, api.GetName(), linter, api_stats)
 		}
 		fmt.Printf("%s\n", api.GetName())
-	}); err != nil {
-		return nil, err
-	}
-
-	return constructLintStats(operationAndSchemaCount, ruleIdToProblemCounts), nil
+	})
 }
 
 func computeLintStatsVersions(ctx context.Context,
 	client *gapic.RegistryClient,
 	segments []string,
 	filter string,
-	linter string) (*rpc.LintStats, error) {
+	linter string) error {
 
-	ruleIdToProblemCounts := make(map[string]*rpc.LintProblemCount)
-	var operationAndSchemaCount int32 = 0
-	if err := core.ListVersions(ctx, client, segments, filter, func(version *rpc.ApiVersion) {
+	return core.ListVersions(ctx, client, segments, filter, func(version *rpc.ApiVersion) {
 		if version_name_segments :=
 			names.VersionRegexp().FindStringSubmatch(version.GetName()); version_name_segments != nil {
 
-			aggregateStats, err := computeLintStatsSpecs(ctx, client, version_name_segments, filter, linter)
-			if err != nil {
+			version_stats := &rpc.LintStats{}
+
+			if err := core.ListSpecs(ctx, client, segments, filter, func(spec *rpc.ApiSpec) {
+				aggregateLintStats(ctx, client, spec.GetName(), linter, version_stats)
+			}); err != nil {
 				return
 			}
 			// Store the aggregate stats on this version
-			storeLintStatsArtifact(ctx, client, version.GetName(), linter, aggregateStats)
-
-			// Aggregate the stats to pass back up
-			aggregateLintStats(ruleIdToProblemCounts, aggregateStats)
-			operationAndSchemaCount += aggregateStats.GetOperationAndSchemaCount()
+			storeLintStatsArtifact(ctx, client, version.GetName(), linter, version_stats)
 		}
 		fmt.Printf("%s\n", version.GetName())
-	}); err != nil {
-		return nil, err
-	}
-
-	return constructLintStats(operationAndSchemaCount, ruleIdToProblemCounts), nil
+	})
 }
 
 func storeLintStatsArtifact(ctx context.Context,
@@ -291,18 +241,28 @@ func storeLintStatsArtifact(ctx context.Context,
 	return core.SetArtifact(ctx, client, artifact)
 }
 
-func aggregateLintStats(ruleIdToProblemCounts map[string]*rpc.LintProblemCount,
-	lintStats *rpc.LintStats) {
-	for _, problemCount := range lintStats.GetProblemCounts() {
-		if _, ok := ruleIdToProblemCounts[problemCount.GetRuleId()]; !ok {
-			ruleIdToProblemCounts[problemCount.GetRuleId()] =
-				&rpc.LintProblemCount{
-					RuleId:     problemCount.GetRuleId(),
-					RuleDocUri: problemCount.GetRuleDocUri(),
-				}
-		}
-		ruleIdToProblemCounts[problemCount.GetRuleId()].Count++
+func aggregateLintStats(ctx context.Context,
+	client connection.Client,
+	name string,
+	linter string,
+	aggregateStats *rpc.LintStats) {
+	// Calculate the operation and schema count
+	request := rpc.GetArtifactContentsRequest{
+		Name: name + "/artifacts/" + lintStatsRelation(linter) + "/contents",
 	}
+	contents, _ := client.GetArtifactContents(ctx, &request)
+	if contents == nil {
+		return // ignore missing results
+	}
+	stats := &rpc.LintStats{}
+	err := proto.Unmarshal(contents.GetData(), stats)
+	if err != nil {
+		return
+	}
+
+	aggregateStats.OperationCount += stats.OperationCount
+	aggregateStats.SchemaCount += stats.SchemaCount
+	aggregateStats.ProblemCounts = append(aggregateStats.ProblemCounts, stats.ProblemCounts...)
 }
 
 func matchAndHandleLintStatsCmd(
@@ -316,22 +276,21 @@ func matchAndHandleLintStatsCmd(
 	var err error
 	// First try to match collection names, then try to match resource names.
 	if m := names.ProjectsRegexp().FindStringSubmatch(name); m != nil {
-		fmt.Println("Here")
-		_, err = computeLintStatsProjects(ctx, client, m, filter, linter)
+		err = computeLintStatsProjects(ctx, client, m, filter, linter)
 	} else if m := names.ApisRegexp().FindStringSubmatch(name); m != nil {
-		_, err = computeLintStatsAPIs(ctx, client, m, filter, linter)
+		err = computeLintStatsAPIs(ctx, client, m, filter, linter)
 	} else if m := names.VersionsRegexp().FindStringSubmatch(name); m != nil {
-		_, err = computeLintStatsVersions(ctx, client, m, filter, linter)
+		err = computeLintStatsVersions(ctx, client, m, filter, linter)
 	} else if m := names.SpecsRegexp().FindStringSubmatch(name); m != nil {
-		_, err = computeLintStatsSpecs(ctx, client, m, filter, linter)
+		err = computeLintStatsSpecs(ctx, client, m, filter, linter)
 	} else if m := names.ProjectRegexp().FindStringSubmatch(name); m != nil {
-		_, err = computeLintStatsProjects(ctx, client, m, filter, linter)
+		err = computeLintStatsProjects(ctx, client, m, filter, linter)
 	} else if m := names.ApiRegexp().FindStringSubmatch(name); m != nil {
-		_, err = computeLintStatsAPIs(ctx, client, m, filter, linter)
+		err = computeLintStatsAPIs(ctx, client, m, filter, linter)
 	} else if m := names.VersionRegexp().FindStringSubmatch(name); m != nil {
-		_, err = computeLintStatsVersions(ctx, client, m, filter, linter)
+		err = computeLintStatsVersions(ctx, client, m, filter, linter)
 	} else if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
-		_, err = computeLintStatsSpecs(ctx, client, m, filter, linter)
+		err = computeLintStatsSpecs(ctx, client, m, filter, linter)
 	} else {
 		// If nothing matched, return an error.
 		return fmt.Errorf("unsupported argument: %s", name)
