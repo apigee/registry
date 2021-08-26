@@ -138,27 +138,27 @@ Start the server by running `registry-server`.
 
 Ensure you have PostgreSQL [installed](https://www.postgresql.org/download/)
 and set up on your machine. After it's ready, update the `database.driver` and
-`database.dsn` values in your configuration.
+`database.config` values in your configuration.
 
 For example:
 ```
 database:
   driver: postgres
-  dsn: host=localhost port=<dbport> user=<dbuser> dbname=<dbname> password=<dbpassword> sslmode=disable
+  config: host=localhost port=<dbport> user=<dbuser> dbname=<dbname> password=<dbpassword> sslmode=disable
 ```
 
 ### Optional: Use a PostgreSQL database on Google Cloud SQL
 
 If you don't have an existing PostgreSQL instance, you can follow
 [these instructions](https://cloud.google.com/sql/docs/postgres/quickstart).
-After your instance is ready, update the `database.driver` and `database.dsn`
-values in your configuration.
+After your instance is ready, update the `database.driver` and
+`database.config` values in your configuration.
 
 For example:
 ```
 database:
   driver: cloudsqlpostgres
-  dsn: host=<project_id>:<region>:<instance_id> user=<dbuser> dbname=<dbname> password=<dbpassword> sslmode=disable
+  config: host=<project_id>:<region>:<instance_id> user=<dbuser> dbname=<dbname> password=<dbpassword> sslmode=disable
 ```
 
 ### Optional: Proxying a local service with Envoy
@@ -226,14 +226,13 @@ Your `docker run` invocation might look like this:
 docker run \
   -p 8080:8080 \
   -e REGISTRY_DATABASE_DRIVER=postgres \
-  -e REGISTRY_DATABASE_DSN="host=${PGHOST} port=5432 user=registry dbname=registry password=iloveapis sslmode=disable" \
+  -e REGISTRY_DATABASE_CONFIG="host=HOST port=PORT user=USER dbname=DATABASE password=PASSWORD sslmode=disable" \
   registry-server:latest
 ```
 
-Be sure to replace `${PGHOST}` with the address of your Postgres server (either
-directly or by setting `PGHOST` with another `-e` argument to `docker run`),
-check all the other DSN parameters, and verify that your server is configured
-to accept remote connections (in `postgres.conf` and `pg_hba.conf`).
+Be sure to replace `HOST` and the other database configuration parameters and verify
+that your server is configured to accept remote connections (in `postgres.conf` and
+`pg_hba.conf`).
 
 ## Running the Registry API server with Google Cloud Run
 
