@@ -166,7 +166,7 @@ func computeLintStatsProjects(ctx context.Context,
 			names.ProjectRegexp().FindStringSubmatch(project.GetName()); project_segments != nil {
 			project_stats := &rpc.LintStats{}
 
-			if err := core.ListAPIs(ctx, client, segments, filter, func(api *rpc.Api) {
+			if err := core.ListAPIs(ctx, client, project_segments, filter, func(api *rpc.Api) {
 				aggregateLintStats(ctx, client, api.GetName(), linter, project_stats)
 			}); err != nil {
 				return
@@ -189,7 +189,7 @@ func computeLintStatsAPIs(ctx context.Context,
 			names.ApiRegexp().FindStringSubmatch(api.GetName()); api_segments != nil {
 			api_stats := &rpc.LintStats{}
 
-			if err := core.ListVersions(ctx, client, segments, filter, func(version *rpc.ApiVersion) {
+			if err := core.ListVersions(ctx, client, api_segments, filter, func(version *rpc.ApiVersion) {
 				aggregateLintStats(ctx, client, version.GetName(), linter, api_stats)
 			}); err != nil {
 				return
@@ -208,12 +208,12 @@ func computeLintStatsVersions(ctx context.Context,
 	linter string) error {
 
 	return core.ListVersions(ctx, client, segments, filter, func(version *rpc.ApiVersion) {
-		if version_name_segments :=
-			names.VersionRegexp().FindStringSubmatch(version.GetName()); version_name_segments != nil {
+		if version_segments :=
+			names.VersionRegexp().FindStringSubmatch(version.GetName()); version_segments != nil {
 
 			version_stats := &rpc.LintStats{}
 
-			if err := core.ListSpecs(ctx, client, segments, filter, func(spec *rpc.ApiSpec) {
+			if err := core.ListSpecs(ctx, client, version_segments, filter, func(spec *rpc.ApiSpec) {
 				aggregateLintStats(ctx, client, spec.GetName(), linter, version_stats)
 			}); err != nil {
 				return
