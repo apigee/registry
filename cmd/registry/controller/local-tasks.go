@@ -75,19 +75,12 @@ func touchArtifact(
 		log.Fatal(err.Error())
 	}
 
-	// TODO: Define a proto for storing placeholder artifacts
+	// Hex encode the string contents until we define a protobuf for this
 	contents := []byte(action)
 	encodedContents := make([]byte, hex.EncodedLen(len(contents)))
 	hex.Encode(encodedContents, contents)
 
-	artifact := &rpc.Artifact{
+	return core.SetArtifact(ctx, client, &rpc.Artifact{
 		Name:     artifactName,
-		Contents: encodedContents,
-	}
-
-	err = core.SetArtifact(ctx, client, artifact)
-	if err != nil {
-		return err
-	}
-	return nil
+		Contents: encodedContents})
 }

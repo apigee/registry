@@ -17,6 +17,7 @@ package controller
 import (
 	"errors"
 	"fmt"
+	"github.com/apigee/registry/server/names"
 	"regexp"
 	"strings"
 )
@@ -75,28 +76,40 @@ func ResourceNameFromDependency(
 	dependency Resource) (string, error) {
 	// Derives the resource name from the provided resourcePattern and dependencyName.
 	// Example:
-	// resourcePattern: apis/-/versions/-/specs/-
-	// dependencyName: apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity
-	// returns apis/petstore/versions/1.0.0/specs/opennapi.yaml
+	// 1) resourcePattern: projects/demo/locations/global/apis/-/versions/-/specs/-
+	//    dependencyName: projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity
+	//    returns projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml
+	// 2) resourcePattern: projects/demo/locations/global/apis/petstore/versions/-/specs/-/artifacts/custom-artifact
+	//    dependencyName: projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity
+	//    returns projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/custom-artifact
+
 	// Replace apis/- pattern with the corresponding name and so on.
-	re := regexp.MustCompile(`.*(/apis/)-`)
-	resourceName := string(
-		re.ReplaceAll([]byte(resourcePattern), []byte(fmt.Sprintf("%s", dependency.GetApi()))))
+	apiPattern := regexp.MustCompile(`.*(/apis/)-`)
+	resourceName := apiPattern.ReplaceAllString(resourcePattern, fmt.Sprintf("%s", dependency.GetApi()))
 
-	re = regexp.MustCompile(`.*(/versions/)-`)
-	resourceName = string(
-		re.ReplaceAll([]byte(resourceName), []byte(fmt.Sprintf("%s", dependency.GetVersion()))))
+	versionPattern := regexp.MustCompile(`.*(/versions/)-`)
+	resourceName = versionPattern.ReplaceAllString(resourceName, fmt.Sprintf("%s", dependency.GetVersion()))
 
-	re = regexp.MustCompile(`.*(/specs/)-`)
-	resourceName = string(
-		re.ReplaceAll([]byte(resourceName), []byte(fmt.Sprintf("%s", dependency.GetSpec()))))
+	specPattern := regexp.MustCompile(`.*(/specs/)-`)
+	resourceName = specPattern.ReplaceAllString(resourceName, fmt.Sprintf("%s", dependency.GetSpec()))
 
-	re = regexp.MustCompile(`.*(/artifacts/)-`)
-	resourceName = string(
-		re.ReplaceAll([]byte(resourceName), []byte(fmt.Sprintf("%s", dependency.GetArtifact()))))
+	artifactPattern := regexp.MustCompile(`.*(/artifacts/)-`)
+	resourceName = artifactPattern.ReplaceAllString(resourceName, fmt.Sprintf("%s", dependency.GetArtifact()))
 
-	return resourceName, nil
+	//Validate resourceName
+	if m := names.ProjectRegexp().FindStringSubmatch(resourceName); m != nil {
+		return resourceName, nil
+	} else if m := names.ApiRegexp().FindStringSubmatch(resourceName); m != nil {
+		return resourceName, nil
+	} else if m := names.VersionRegexp().FindStringSubmatch(resourceName); m != nil {
+		return resourceName, nil
+	} else if m := names.SpecRegexp().FindStringSubmatch(resourceName); m != nil {
+		return resourceName, nil
+	} else if m := names.ArtifactRegexp().FindStringSubmatch(resourceName); m != nil {
+		return resourceName, nil
+	}
 
+	return "", errors.New(fmt.Sprintf("Invalid pattern: %q cannot derive GeneratedResource name", resourcePattern))
 }
 
 func ExtractGroup(pattern string, resource Resource) (string, error) {

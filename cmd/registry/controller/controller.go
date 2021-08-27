@@ -77,23 +77,13 @@ func processManifestResource(
 	}
 
 	// Update target resources
-	actions, err := generateActions(ctx, client, resourcePattern, resourceList,
-		resource.Dependencies, dependencyMaps, resource.Action)
+	actions, err := generateActions(
+		ctx, client, resourcePattern, resourceList, dependencyMaps, resource)
 	if err != nil {
 		return nil, err
 	}
 
-	if resource.Placeholder {
-		applyPlaceholderFlag(actions, resource.Placeholder)
-	}
-
 	return actions, nil
-}
-
-func applyPlaceholderFlag(actions []*Action, flag bool) {
-	for _, action := range actions {
-		action.Placeholder = flag
-	}
 }
 
 func generateDependencyMap(
@@ -147,9 +137,8 @@ func generateActions(
 	client connection.Client,
 	resourcePattern string,
 	resourceList []Resource,
-	dependencies []*rpc.Dependency,
 	dependencyMaps []map[string]ResourceCollection,
-	action string) ([]*Action, error) {
+	generatedResource *rpc.GeneratedResource) ([]*Action, error) {
 
 	visited := make(map[string]bool, 0)
 	actions := make([]*Action, 0)
@@ -161,7 +150,7 @@ func generateActions(
 		var args []Resource
 
 		// Evaluate this resource against each dependency source pattern
-		for i, dependency := range dependencies {
+		for i, dependency := range generatedResource.Dependencies {
 			dMap := dependencyMaps[i]
 			// Get the group to look for in dependencyMap
 			group, err := ExtractGroup(dependency.Pattern, resource)
@@ -186,13 +175,14 @@ func generateActions(
 		}
 
 		if takeAction {
-			cmd, err := GenerateCommand(action, args)
+			cmd, err := GenerateCommand(generatedResource.Action, args)
 			if err != nil {
 				return nil, err
 			}
 			action := &Action{
 				Command:           cmd,
 				GeneratedResource: resource.GetName(),
+				Placeholder:       generatedResource.Placeholder,
 			}
 			actions = append(actions, action)
 		}
@@ -226,7 +216,7 @@ func generateActions(
 			}
 
 			if takeAction {
-				cmd, err := GenerateCommand(action, args)
+				cmd, err := GenerateCommand(generatedResource.Action, args)
 				if err != nil {
 					return nil, err
 				}
@@ -234,6 +224,7 @@ func generateActions(
 				action := &Action{
 					Command:           cmd,
 					GeneratedResource: resourceName,
+					Placeholder:       generatedResource.Placeholder,
 				}
 				actions = append(actions, action)
 			}
