@@ -201,11 +201,18 @@ func generateActions(
 				for _, dMap := range dependencyMaps {
 					collection, ok := dMap[key]
 					if ok {
+						collectedResource := collection.resourceList[0]
 						// Since the GeneratedResource is non-existent here,
 						// we will have to derive the exact name of the target resource
-						resourceName, _ = ResourceNameFromDependency(
-							resourcePattern, collection.resourceList[0])
-						args = append(args, collection.resourceList[0])
+						var err error
+						resourceName, err = resourceNameFromDependency(
+							resourcePattern, collectedResource)
+						if err != nil {
+							log.Printf("skipping entry for %q, cannot derive generated resource name from invalid pattern: %q", collectedResource, resourcePattern)
+							takeAction = false
+							break
+						}
+						args = append(args, collectedResource)
 					} else {
 						takeAction = false
 						break

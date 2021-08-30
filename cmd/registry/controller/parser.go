@@ -71,7 +71,7 @@ func ExtendSourcePattern(
 
 }
 
-func ResourceNameFromDependency(
+func resourceNameFromDependency(
 	resourcePattern string,
 	dependency Resource) (string, error) {
 	// Derives the resource name from the provided resourcePattern and dependencyName.
