@@ -97,7 +97,7 @@ func generateDependencyMap(
 	sourceMap := make(map[string]ResourceCollection)
 
 	// Extend the source pattern if it contains $resource.api like pattern
-	extDependencyPattern, err := ExtendSourcePattern(resourcePattern, dependencyPattern, projectID)
+	extDependencyPattern, err := extendDependencyPattern(resourcePattern, dependencyPattern)
 	if err != nil {
 		return nil, err
 	}

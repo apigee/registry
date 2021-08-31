@@ -24,28 +24,28 @@ import (
 
 const resourceKW = "$resource"
 
-func ExtendSourcePattern(
+func extendDependencyPattern(
 	resourcePattern string,
-	sourcePattern string,
+	dependencyPattern string,
 	projectID string) (string, error) {
 	// Extends the source pattern by replacing references to $resource
 	// Example:
-	// resourcePattern: "apis/-/versions/-/specs/-/artifacts/-"
-	// sourcePattern: "$resource.spec"
-	// Returns "apis/-/versions/-/specs/-"
+	// resourcePattern: "projects/demo/locations/global/apis/-/versions/-/specs/-/artifacts/-"
+	// dependencyPattern: "$resource.spec"
+	// Returns "projects/demo/locations/global/apis/-/versions/-/specs/-"
 
-	// resourcePattern: "apis/-/versions/-/specs/-/artifacts/-"
-	// sourcePattern: "$resource.api/versions/-"
-	// Returns "apis/-/versions/-"
+	// resourcePattern: "projects/demo/locations/global/apis/-/versions/-/specs/-/artifacts/-"
+	// dependencyPattern: "$resource.api/versions/-"
+	// Returns "projects/demo/locations/global/apis/-/versions/-"
 
-	if !strings.HasPrefix(sourcePattern, resourceKW) {
-		return fmt.Sprintf("projects/%s/locations/global/%s", projectID, sourcePattern), nil
+	if !strings.HasPrefix(dependencyPattern, resourceKW) {
+		return fmt.Sprintf("projects/%s/locations/global/%s", projectID, dependencyPattern), nil
 	}
 
 	entityRegex := regexp.MustCompile(fmt.Sprintf(`\%s\.(api|version|spec|artifact)`, resourceKW))
-	matches := entityRegex.FindStringSubmatch(sourcePattern)
+	matches := entityRegex.FindStringSubmatch(dependencyPattern)
 	if len(matches) <= 1 {
-		return "", errors.New(fmt.Sprintf("Invalid source pattern: %s", sourcePattern))
+		return "", errors.New(fmt.Sprintf("Invalid source pattern: %s", dependencyPattern))
 	}
 
 	entity, entityType := matches[0], matches[1]
@@ -64,10 +64,14 @@ func ExtendSourcePattern(
 		re := regexp.MustCompile(`.*/artifacts/[^/]*`)
 		entityVal = re.FindString(resourcePattern)
 	default:
-		return "", errors.New(fmt.Sprintf("Invalid source pattern: %s", sourcePattern))
+		return "", errors.New(fmt.Sprintf("Invalid combination resourcePattern: %q dependencyPattern: %q", resourcePattern, dependencyPattern))
 	}
 
-	return strings.Replace(sourcePattern, entity, entityVal, 1), nil
+	if len(entityVal) == 0 {
+		return "", errors.New(fmt.Sprintf("Invalid combination resourcePattern: %q dependencyPattern: %q", resourcePattern, dependencyPattern))
+	}
+
+	return strings.Replace(dependencyPattern, entity, entityVal, 1), nil
 
 }
 
