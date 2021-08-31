@@ -171,8 +171,12 @@ func computeLintStatsProjects(ctx context.Context,
 			}); err != nil {
 				return
 			}
-			// Store the aggregate stats on this api
-			storeLintStatsArtifact(ctx, client, project.GetName(), linter, project_stats)
+			// Store the aggregate stats on this project
+			storeLintStatsArtifact(ctx,
+				client,
+				project.GetName()+"/locations/global",
+				linter,
+				project_stats)
 		}
 		fmt.Printf("%s\n", project.GetName())
 	})
