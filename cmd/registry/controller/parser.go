@@ -17,6 +17,7 @@ package controller
 import (
 	"errors"
 	"fmt"
+	"github.com/apigee/registry/server/names"
 	"regexp"
 	"strings"
 )
@@ -25,7 +26,8 @@ const resourceKW = "$resource"
 
 func ExtendSourcePattern(
 	resourcePattern string,
-	sourcePattern string) (string, error) {
+	sourcePattern string,
+	projectID string) (string, error) {
 	// Extends the source pattern by replacing references to $resource
 	// Example:
 	// resourcePattern: "apis/-/versions/-/specs/-/artifacts/-"
@@ -37,7 +39,7 @@ func ExtendSourcePattern(
 	// Returns "apis/-/versions/-"
 
 	if !strings.HasPrefix(sourcePattern, resourceKW) {
-		return sourcePattern, nil
+		return fmt.Sprintf("projects/%s/locations/global/%s", projectID, sourcePattern), nil
 	}
 
 	entityRegex := regexp.MustCompile(fmt.Sprintf(`\%s\.(api|version|spec|artifact)`, resourceKW))
@@ -69,8 +71,49 @@ func ExtendSourcePattern(
 
 }
 
+func resourceNameFromDependency(
+	resourcePattern string,
+	dependency Resource) (string, error) {
+	// Derives the resource name from the provided resourcePattern and dependencyName.
+	// Example:
+	// 1) resourcePattern: projects/demo/locations/global/apis/-/versions/-/specs/-
+	//    dependencyName: projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity
+	//    returns projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml
+	// 2) resourcePattern: projects/demo/locations/global/apis/petstore/versions/-/specs/-/artifacts/custom-artifact
+	//    dependencyName: projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity
+	//    returns projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/custom-artifact
+
+	// Replace apis/- pattern with the corresponding name and so on.
+	apiPattern := regexp.MustCompile(`.*(/apis/)-`)
+	resourceName := apiPattern.ReplaceAllString(resourcePattern, fmt.Sprintf("%s", dependency.GetApi()))
+
+	versionPattern := regexp.MustCompile(`.*(/versions/)-`)
+	resourceName = versionPattern.ReplaceAllString(resourceName, fmt.Sprintf("%s", dependency.GetVersion()))
+
+	specPattern := regexp.MustCompile(`.*(/specs/)-`)
+	resourceName = specPattern.ReplaceAllString(resourceName, fmt.Sprintf("%s", dependency.GetSpec()))
+
+	artifactPattern := regexp.MustCompile(`.*(/artifacts/)-`)
+	resourceName = artifactPattern.ReplaceAllString(resourceName, fmt.Sprintf("%s", dependency.GetArtifact()))
+
+	//Validate resourceName
+	if m := names.ProjectRegexp().FindStringSubmatch(resourceName); m != nil {
+		return resourceName, nil
+	} else if m := names.ApiRegexp().FindStringSubmatch(resourceName); m != nil {
+		return resourceName, nil
+	} else if m := names.VersionRegexp().FindStringSubmatch(resourceName); m != nil {
+		return resourceName, nil
+	} else if m := names.SpecRegexp().FindStringSubmatch(resourceName); m != nil {
+		return resourceName, nil
+	} else if m := names.ArtifactRegexp().FindStringSubmatch(resourceName); m != nil {
+		return resourceName, nil
+	}
+
+	return "", errors.New(fmt.Sprintf("Invalid pattern: %q cannot derive GeneratedResource name", resourcePattern))
+}
+
 func ExtractGroup(pattern string, resource Resource) (string, error) {
-	// Reads the sourcePattern, finds out group by entity type and returns te group value
+	// Reads the sourcePattern, finds out group by entity type and returns the group value
 	// Example:
 	// pattern: $resource.api/versions/-/specs/-
 	// resource: "projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml"
