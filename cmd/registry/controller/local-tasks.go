@@ -16,7 +16,11 @@ package controller
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
+	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/rpc"
 	"log"
 	"os"
 	"os/exec"
@@ -24,8 +28,10 @@ import (
 )
 
 type ExecCommandTask struct {
-	Action string
-	TaskID string
+	Action            string
+	TaskID            string
+	Placeholder       bool
+	GeneratedResource string
 }
 
 func (task *ExecCommandTask) String() string {
@@ -49,6 +55,32 @@ func (task *ExecCommandTask) Run(ctx context.Context) error {
 		log.Printf("Failed Execution: %s Error: %s", taskDetails, err)
 		return err
 	}
+	if task.Placeholder {
+		err := touchArtifact(ctx, task.GeneratedResource, task.Action)
+		if err != nil {
+			log.Printf("Failed Execution: %s Error: Failed updating placeholder %s", taskDetails, err)
+		}
+	}
 	log.Printf("Successful Execution: %s", taskDetails)
 	return nil
+}
+
+func touchArtifact(
+	ctx context.Context,
+	artifactName string,
+	action string,
+) error {
+	client, err := connection.NewClient(ctx)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	// Hex encode the string contents until we define a protobuf for this
+	contents := []byte(action)
+	encodedContents := make([]byte, hex.EncodedLen(len(contents)))
+	hex.Encode(encodedContents, contents)
+
+	return core.SetArtifact(ctx, client, &rpc.Artifact{
+		Name:     artifactName,
+		Contents: encodedContents})
 }
