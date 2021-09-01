@@ -278,7 +278,7 @@ service Registry {
   // ListArtifacts returns matching artifacts.
   rpc ListArtifacts(ListArtifactsRequest) returns (ListArtifactsResponse) {
     option (google.api.http) = {
-      get: "/v1/{parent=projects/*}/artifacts"
+      get: "/v1/{parent=projects/*/locations/global}/artifacts"
       additional_bindings: { get: "/v1/{parent=projects/*/locations/global/apis/*}/artifacts" }
       additional_bindings: {
         get: "/v1/{parent=projects/*/locations/global/apis/*/versions/*}/artifacts"
@@ -327,7 +327,7 @@ service Registry {
   // CreateArtifact creates a specified artifact.
   rpc CreateArtifact(CreateArtifactRequest) returns (Artifact) {
     option (google.api.http) = {
-      post: "/v1/{parent=projects/*}/artifacts"
+      post: "/v1/{parent=projects/*/locations/global}/artifacts"
       body: "artifact"
       additional_bindings: {
         post: "/v1/{parent=projects/*/locations/global/apis/*}/artifacts"
