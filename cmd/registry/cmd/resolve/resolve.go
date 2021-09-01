@@ -97,7 +97,7 @@ func Command(ctx context.Context) *cobra.Command {
 				taskQueue <- &controller.ExecCommandTask{
 					Action:            a.Command,
 					TaskID:            fmt.Sprintf("task%d", i),
-					Placeholder:       a.Placeholder,
+					Receipt:           a.Receipt,
 					GeneratedResource: a.GeneratedResource,
 				}
 			}

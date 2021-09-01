@@ -46,7 +46,7 @@ message GeneratedResource {
 	];
 	string filter = 2;
 	//set to true if the action is not going to store any information in the GeneratedResource
-	bool placeholder = 3;
+	bool receipt = 3;
 	repeated Dependency dependencies = 4;
 	// action can contain references to both the resource and dependencies
 	// Example: "compute complexity $dependency0 $resource"

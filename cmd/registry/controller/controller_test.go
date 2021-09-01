@@ -85,8 +85,8 @@ var manifests = []*rpc.Manifest{
 		Name: "controller-test",
 		GeneratedResources: []*rpc.GeneratedResource{
 			{
-				Pattern:     "apis/-/versions/-/specs/-/artifacts/custom-artifact",
-				Placeholder: true,
+				Pattern: "apis/-/versions/-/specs/-/artifacts/custom-artifact",
+				Receipt: true,
 				Dependencies: []*rpc.Dependency{
 					{
 						Pattern: "$resource.spec",
@@ -100,8 +100,8 @@ var manifests = []*rpc.Manifest{
 		Name: "controller-test",
 		GeneratedResources: []*rpc.GeneratedResource{
 			{
-				Pattern:     "artifacts/search-index",
-				Placeholder: true,
+				Pattern: "artifacts/search-index",
+				Receipt: true,
 				Dependencies: []*rpc.Dependency{
 					{
 						Pattern: "apis/-/versions/-/specs/-",
@@ -744,7 +744,7 @@ func TestDerivedArtifactsOutdated(t *testing.T) {
 	deleteProject(ctx, registryClient, t, "controller-test")
 }
 
-func TestPlaceholderArtifacts(t *testing.T) {
+func TestReceiptArtifacts(t *testing.T) {
 	ctx := context.Background()
 	registryClient, err := connection.NewClient(ctx)
 	if err != nil {
@@ -778,17 +778,17 @@ func TestPlaceholderArtifacts(t *testing.T) {
 		{
 			Command:           "exec command projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 			GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/custom-artifact",
-			Placeholder:       true,
+			Receipt:           true,
 		},
 		{
 			Command:           "exec command projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
 			GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/custom-artifact",
-			Placeholder:       true,
+			Receipt:           true,
 		},
 		{
 			Command:           "exec command projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
 			GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/custom-artifact",
-			Placeholder:       true,
+			Receipt:           true,
 		},
 	}
 	if diff := cmp.Diff(expectedActions, actions, sortActions); diff != "" {
@@ -798,7 +798,7 @@ func TestPlaceholderArtifacts(t *testing.T) {
 	deleteProject(ctx, registryClient, t, "controller-test")
 }
 
-func TestPlaceholderAggArtifacts(t *testing.T) {
+func TestReceiptAggArtifacts(t *testing.T) {
 	ctx := context.Background()
 	registryClient, err := connection.NewClient(ctx)
 	if err != nil {
@@ -832,7 +832,7 @@ func TestPlaceholderAggArtifacts(t *testing.T) {
 		{
 			Command:           "compute search-index projects/controller-test/locations/global/apis/-/versions/-/specs/-",
 			GeneratedResource: "projects/controller-test/locations/global/artifacts/search-index",
-			Placeholder:       true,
+			Receipt:           true,
 		},
 	}
 	if diff := cmp.Diff(expectedActions, actions, sortActions); diff != "" {
@@ -842,7 +842,7 @@ func TestPlaceholderAggArtifacts(t *testing.T) {
 	deleteProject(ctx, registryClient, t, "controller-test")
 }
 
-func TestPlaceholderAggUpdatedArtifacts(t *testing.T) {
+func TestReceiptAggUpdatedArtifacts(t *testing.T) {
 	ctx := context.Background()
 	registryClient, err := connection.NewClient(ctx)
 	if err != nil {
@@ -879,7 +879,7 @@ func TestPlaceholderAggUpdatedArtifacts(t *testing.T) {
 		{
 			Command:           "compute search-index projects/controller-test/locations/global/apis/-/versions/-/specs/-",
 			GeneratedResource: "projects/controller-test/locations/global/artifacts/search-index",
-			Placeholder:       true,
+			Receipt:           true,
 		},
 	}
 	if diff := cmp.Diff(expectedActions, actions, sortActions); diff != "" {
