@@ -92,20 +92,20 @@ func resourceNameFromDependency(
 	// We use stringsSplit()[-1] to extract only the API name
 	// apiPattern := regexp.MustCompile(`/apis/-`)
 	apiName := strings.Split(dependency.GetApi(), "/")
-	resourceName := strings.Replace(resourcePattern, "/apis/-",
-		fmt.Sprintf("/apis/%s", apiName[len(apiName)-1]), -1)
+	resourceName := strings.ReplaceAll(resourcePattern, "/apis/-",
+		fmt.Sprintf("/apis/%s", apiName[len(apiName)-1]))
 
 	versionName := strings.Split(dependency.GetVersion(), "/")
-	resourceName = strings.Replace(resourceName, "/versions/-",
-		fmt.Sprintf("/versions/%s", versionName[len(versionName)-1]), -1)
+	resourceName = strings.ReplaceAll(resourceName, "/versions/-",
+		fmt.Sprintf("/versions/%s", versionName[len(versionName)-1]))
 
 	specName := strings.Split(dependency.GetSpec(), "/")
-	resourceName = strings.Replace(resourceName, "/specs/-",
-		fmt.Sprintf("/specs/%s", specName[len(specName)-1]), -1)
+	resourceName = strings.ReplaceAll(resourceName, "/specs/-",
+		fmt.Sprintf("/specs/%s", specName[len(specName)-1]))
 
 	artifactName := strings.Split(dependency.GetArtifact(), "/")
-	resourceName = strings.Replace(resourceName, "/artifacts/-",
-		fmt.Sprintf("/artifacts/%s", artifactName[len(artifactName)-1]), -1)
+	resourceName = strings.ReplaceAll(resourceName, "/artifacts/-",
+		fmt.Sprintf("/artifacts/%s", artifactName[len(artifactName)-1]))
 
 	//Validate resourceName
 	if m := names.ProjectRegexp().FindStringSubmatch(resourceName); m != nil {
