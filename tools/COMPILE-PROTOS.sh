@@ -37,6 +37,7 @@ mkdir -p rpc gapic cmd/apg
 ANNOTATIONS="third_party/api-common-protos"
 
 PROTOS=( \
+	google/cloud/apigee/registry/applications/v1alpha1/registry_api_style_guide.proto \
 	google/cloud/apigee/registry/applications/v1alpha1/registry_index.proto \
 	google/cloud/apigee/registry/applications/v1alpha1/registry_lint.proto \
 	google/cloud/apigee/registry/applications/v1alpha1/registry_references.proto \

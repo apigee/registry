@@ -1,0 +1,94 @@
+// Copyright 2021 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package google.cloud.apigee.registry.applications.v1alpha1;
+
+import "google/api/field_behavior.proto";
+
+option java_package = "com.google.cloud.apigee.registry.applications.v1alpha1";
+option java_multiple_files = true;
+option java_outer_classname = "RegistryAPIStyleGuideProto";
+option go_package = "github.com/apigee/registry/rpc;rpc";
+
+// APIStyleGuide defines a set of guidelines and linters that govern
+// the static analysis of API Specs.
+message APIStyleGuide {
+    // Name of the API Style Guide
+    string name = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
+
+    // A list containing style (format) descriptors for this style guide that 
+    // are specified as a Media Type (https://en.wikipedia.org/wiki/Media_type).
+    // Possible values include "application/vnd.apigee.proto", 
+    // "application/vnd.apigee.openapi", and "application/vnd.apigee.graphql",
+    // with possible suffixes representing compression types. These hypothetical
+    // names are defined in the vendor tree defined in RFC6838 
+    // (https://tools.ietf.org/html/rfc6838) and are not final.
+    repeated string mime_types = 2 [
+		(google.api.field_behavior) = REQUIRED
+	];
+
+    // A list of guidelines that are specified by this style guide.
+    repeated Guideline guidelines = 3;
+
+    // A list of linters that this style guide uses.
+    repeated Linter linters = 4;
+}
+
+message Guideline {
+    // Name of the rule that this guideline specifies.
+    string rule_name = 1 [
+		(google.api.field_behavior) = REQUIRED
+	];
+
+    // Name of the linter that enforces this guideline.
+    string linter_name = 2 [
+		(google.api.field_behavior) = REQUIRED
+	];
+
+    // Name of the linter rule that this guideline corresponds to.
+    string linter_rule_name = 3 [
+		(google.api.field_behavior) = REQUIRED
+	];
+
+    // Description of this guideline.
+    string description = 4;
+
+    // Severity of violating this guideline.
+    enum Severity {
+        ERROR = 0;
+        WARNING = 1;
+        INFO = 2;
+        HINT = 3;
+    }
+    Severity severity = 5;
+
+    // Indicates whether the guideline has been deprecated.
+    bool deprecated = 6;
+}
+
+message Linter {
+    // Name of the linter.
+    string name = 1 [
+		(google.api.field_behavior) = REQUIRED
+	];
+
+    // Path to the linter binary executable.
+    string uri = 2 [
+		(google.api.field_behavior) = REQUIRED
+	];
+}
