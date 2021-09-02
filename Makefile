@@ -1,12 +1,8 @@
 lite:
 	go install ./...
 
-all:	protos configfiles
+all:	protos
 	go install ./...
-
-configfiles:
-	mkdir -p ${HOME}/.config/registry
-	cp -n config/registry-server.yaml ${HOME}/.config/registry/registry-server.yaml || true
 
 protos:
 	cd third_party; sh ./SETUP.sh
