@@ -12,25 +12,34 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Port for the server to listen on.
+# This configuration file uses environment variables to configure the registry
+# server. Environment variable names are arbitrary and can be changed to any
+# user-preferred values. Environment variable references can also be replaced
+# with specific values. For example, "${PORT}" could be replaced with "8080"
+# to specify a specific port or changed to "${REGISTRY_PORT}" to refer to the
+# REGISTRY_PORT environment variable. Here we use PORT instead of REGISTRY_PORT
+# because PORT is the variable passed in by Google Cloud Run to configure hosted
+# services.
+
+# Port where the server will listen.
 # If unset or zero, an open port will be assigned.
-port: 8080
+port: ${PORT}
 database:
   # Driver for the database connection.
   # Options: [ sqlite3, postgres, cloudsqlpostgres ]
-  driver: sqlite3
+  driver: ${REGISTRY_DATABASE_DRIVER}
   # Config for the database connection. The format is a data source name (DSN).
   # PostgreSQL Reference: See "Connection Strings" at https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING
   # SQLite Reference: See "URI filename examples" at https://www.sqlite.org/c3ref/open.html
-  config: file:/tmp/registry.db
+  config: ${REGISTRY_DATABASE_CONFIG}
 logging:
   # Level of logging to print to standard output.
   # Options: [ debug, info, warn, error, fatal ]
-  level: info
+  level: ${REGISTRY_LOGGING_LEVEL}
 pubsub:
   # Enable Pub/Sub for event notification publishing.
   # Options: [ true, false ]
-  enable: false
+  enable: ${REGISTRY_PUBSUB_ENABLE}
   # Project ID of the Google Cloud project to use for Pub/Sub.
   # Reference: https://cloud.google.com/resource-manager/docs/creating-managing-projects
-  project: ""
+  project: ${REGISTRY_PUBSUB_PROJECT}
