@@ -97,7 +97,7 @@ func generateDependencyMap(
 	sourceMap := make(map[string]ResourceCollection)
 
 	// Extend the source pattern if it contains $resource.api like pattern
-	extDependencyPattern, err := ExtendSourcePattern(resourcePattern, dependencyPattern, projectID)
+	extDependencyPattern, err := extendDependencyPattern(resourcePattern, dependencyPattern, projectID)
 	if err != nil {
 		return nil, err
 	}
@@ -109,7 +109,7 @@ func generateDependencyMap(
 	}
 
 	for _, source := range sourceList {
-		group, err := ExtractGroup(dependencyPattern, source)
+		group, err := getGroupKey(dependencyPattern, source)
 		if err != nil {
 			return nil, err
 		}
@@ -153,7 +153,7 @@ func generateActions(
 		for i, dependency := range generatedResource.Dependencies {
 			dMap := dependencyMaps[i]
 			// Get the group to look for in dependencyMap
-			group, err := ExtractGroup(dependency.Pattern, resource)
+			group, err := getGroupKey(dependency.Pattern, resource)
 			if err != nil {
 				return nil, fmt.Errorf("Cannot match resource with dependency. Error: %s", err.Error())
 			}
@@ -175,7 +175,7 @@ func generateActions(
 		}
 
 		if takeAction {
-			cmd, err := GenerateCommand(generatedResource.Action, args)
+			cmd, err := generateCommand(generatedResource.Action, args)
 			if err != nil {
 				return nil, err
 			}
@@ -223,7 +223,7 @@ func generateActions(
 			}
 
 			if takeAction {
-				cmd, err := GenerateCommand(generatedResource.Action, args)
+				cmd, err := generateCommand(generatedResource.Action, args)
 				if err != nil {
 					return nil, err
 				}
