@@ -778,17 +778,17 @@ func TestReceiptArtifacts(t *testing.T) {
 		{
 			Command:           "exec command projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 			GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/custom-artifact",
-			Receipt:           true,
+			RequiresReceipt:   true,
 		},
 		{
 			Command:           "exec command projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
 			GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/custom-artifact",
-			Receipt:           true,
+			RequiresReceipt:   true,
 		},
 		{
 			Command:           "exec command projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
 			GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/custom-artifact",
-			Receipt:           true,
+			RequiresReceipt:   true,
 		},
 	}
 	if diff := cmp.Diff(expectedActions, actions, sortActions); diff != "" {
@@ -832,7 +832,7 @@ func TestReceiptAggArtifacts(t *testing.T) {
 		{
 			Command:           "compute search-index projects/controller-test/locations/global/apis/-/versions/-/specs/-",
 			GeneratedResource: "projects/controller-test/locations/global/artifacts/search-index",
-			Receipt:           true,
+			RequiresReceipt:   true,
 		},
 	}
 	if diff := cmp.Diff(expectedActions, actions, sortActions); diff != "" {
@@ -879,7 +879,7 @@ func TestReceiptAggUpdatedArtifacts(t *testing.T) {
 		{
 			Command:           "compute search-index projects/controller-test/locations/global/apis/-/versions/-/specs/-",
 			GeneratedResource: "projects/controller-test/locations/global/artifacts/search-index",
-			Receipt:           true,
+			RequiresReceipt:   true,
 		},
 	}
 	if diff := cmp.Diff(expectedActions, actions, sortActions); diff != "" {
