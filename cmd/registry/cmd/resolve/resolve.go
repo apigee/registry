@@ -95,10 +95,8 @@ func Command(ctx context.Context) *cobra.Command {
 			// Submit tasks to taskQueue
 			for i, a := range actions {
 				taskQueue <- &controller.ExecCommandTask{
-					Action:            a.Command,
-					TaskID:            fmt.Sprintf("task%d", i),
-					Placeholder:       a.Placeholder,
-					GeneratedResource: a.GeneratedResource,
+					Action: a,
+					TaskID: fmt.Sprintf("task%d", i),
 				}
 			}
 		},

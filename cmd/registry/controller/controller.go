@@ -26,7 +26,7 @@ import (
 type Action struct {
 	Command           string
 	GeneratedResource string
-	Placeholder       bool
+	RequiresReceipt   bool
 }
 
 type ResourceCollection struct {
@@ -182,7 +182,7 @@ func generateActions(
 			action := &Action{
 				Command:           cmd,
 				GeneratedResource: resource.GetName(),
-				Placeholder:       generatedResource.Placeholder,
+				RequiresReceipt:   generatedResource.Receipt,
 			}
 			actions = append(actions, action)
 		}
@@ -231,7 +231,7 @@ func generateActions(
 				action := &Action{
 					Command:           cmd,
 					GeneratedResource: resourceName,
-					Placeholder:       generatedResource.Placeholder,
+					RequiresReceipt:   generatedResource.Receipt,
 				}
 				actions = append(actions, action)
 			}
