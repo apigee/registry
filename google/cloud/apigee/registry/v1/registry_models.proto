@@ -59,7 +59,7 @@ message Project {
 message Api {
   option (google.api.resource) = {
     type: "registry.googleapis.com/Api"
-    pattern: "projects/{project}/locations/global/apis/{api}"
+    pattern: "projects/{project}/locations/{location}/apis/{api}"
   };
 
   // Resource name.
@@ -117,7 +117,7 @@ message Api {
 message ApiVersion {
   option (google.api.resource) = {
     type: "registry.googleapis.com/ApiVersion"
-    pattern: "projects/{project}/locations/global/apis/{api}/versions/{version}"
+    pattern: "projects/{project}/locations/{location}/apis/{api}/versions/{version}"
   };
 
   // Resource name.
@@ -176,7 +176,7 @@ message ApiVersion {
 message ApiSpec {
   option (google.api.resource) = {
     type: "registry.googleapis.com/ApiSpec"
-    pattern: "projects/{project}/locations/global/apis/{api}/versions/{version}/specs/"
+    pattern: "projects/{project}/locations/{location}/apis/{api}/versions/{version}/specs/"
              "{spec}"
   };
 
@@ -271,10 +271,10 @@ message ApiSpec {
 message Artifact {
   option (google.api.resource) = {
     type: "registry.googleapis.com/Artifact"
-    pattern: "projects/{project}/locations/global/artifacts/{artifact}"
-    pattern: "projects/{project}/locations/global/apis/{api}/artifacts/{artifact}"
-    pattern: "projects/{project}/locations/global/apis/{api}/versions/{version}/artifacts/{artifact}"
-    pattern: "projects/{project}/locations/global/apis/{api}/versions/{version}/specs/{spec}/artifacts/{artifact}"
+    pattern: "projects/{project}/locations/{location}/artifacts/{artifact}"
+    pattern: "projects/{project}/locations/{location}/apis/{api}/artifacts/{artifact}"
+    pattern: "projects/{project}/locations/{location}/apis/{api}/versions/{version}/artifacts/{artifact}"
+    pattern: "projects/{project}/locations/{location}/apis/{api}/versions/{version}/specs/{spec}/artifacts/{artifact}"
   };
 
   // Resource name.
