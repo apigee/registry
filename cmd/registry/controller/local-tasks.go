@@ -16,11 +16,11 @@ package controller
 
 import (
 	"context"
-	"encoding/hex"
 	"fmt"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
+	"google.golang.org/protobuf/proto"
 	"log"
 	"os"
 	"os/exec"
@@ -28,26 +28,24 @@ import (
 )
 
 type ExecCommandTask struct {
-	Action            string
-	TaskID            string
-	Placeholder       bool
-	GeneratedResource string
+	Action *Action
+	TaskID string
 }
 
 func (task *ExecCommandTask) String() string {
-	return "Execute command: " + task.Action
+	return "Execute command: " + task.Action.Command
 }
 
 func (task *ExecCommandTask) Run(ctx context.Context) error {
 	//The monitoring metrics/dashboards are built on top of the format of the log messages here.
 	//Check the metric filters before making  any changes to the format.
 	//Location: registry/deployments/controller/dashboard/*
-	taskDetails := fmt.Sprintf("action={%s} taskID={%s}", task.Action, task.TaskID)
+	taskDetails := fmt.Sprintf("action={%s} taskID={%s}", task.Action.Command, task.TaskID)
 
-	if strings.HasPrefix(task.Action, "resolve") {
+	if strings.HasPrefix(task.Action.Command, "resolve") {
 		return fmt.Errorf("Failed Execution: %s Error: 'resolve' not allowed in action", taskDetails)
 	}
-	cmd := exec.Command("registry", strings.Fields(task.Action)...)
+	cmd := exec.Command("registry", strings.Fields(task.Action.Command)...)
 	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
 	err := cmd.Run()
 
@@ -55,10 +53,10 @@ func (task *ExecCommandTask) Run(ctx context.Context) error {
 		log.Printf("Failed Execution: %s Error: %s", taskDetails, err)
 		return err
 	}
-	if task.Placeholder {
-		err := touchArtifact(ctx, task.GeneratedResource, task.Action)
+	if task.Action.RequiresReceipt {
+		err := touchArtifact(ctx, task.Action.GeneratedResource, task.Action.Command)
 		if err != nil {
-			log.Printf("Failed Execution: %s Error: Failed updating placeholder %s", taskDetails, err)
+			log.Printf("Failed Execution: %s Error: Failed updating Receipt %s", taskDetails, err)
 		}
 	}
 	log.Printf("Successful Execution: %s", taskDetails)
@@ -75,12 +73,9 @@ func touchArtifact(
 		log.Fatal(err.Error())
 	}
 
-	// Hex encode the string contents until we define a protobuf for this
-	contents := []byte(action)
-	encodedContents := make([]byte, hex.EncodedLen(len(contents)))
-	hex.Encode(encodedContents, contents)
+	messageData, _ := proto.Marshal(&rpc.Receipt{Action: action})
 
 	return core.SetArtifact(ctx, client, &rpc.Artifact{
 		Name:     artifactName,
-		Contents: encodedContents})
+		Contents: messageData})
 }

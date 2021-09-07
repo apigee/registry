@@ -334,8 +334,6 @@ Requirements:
 For detailed steps on how to deploy to GKE, please refer to
 [deployments/gke/README.md](deployments/gke/README.md).
 
-```
-
 ## License
 
 This software is licensed under the Apache License, Version 2.0. See
@@ -351,4 +349,3 @@ ad-hoc volunteer basis.
 
 Contributions are welcome! Please see [CONTRIBUTING](CONTRIBUTING.md) for notes
 on how to contribute to this project.
-```

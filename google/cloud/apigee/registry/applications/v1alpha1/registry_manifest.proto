@@ -45,8 +45,9 @@ message GeneratedResource {
 		(google.api.field_behavior) = REQUIRED
 	];
 	string filter = 2;
-	//set to true if the action is not going to store any information in the GeneratedResource
-	bool placeholder = 3;
+	// set to true if the action is not going to store any artifact
+	// and it needs a receipt artifact as the GeneratedResource
+	bool receipt = 3;
 	repeated Dependency dependencies = 4;
 	// action can contain references to both the resource and dependencies
 	// Example: "compute complexity $dependency0 $resource"
