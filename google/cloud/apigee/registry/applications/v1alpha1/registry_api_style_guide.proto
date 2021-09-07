@@ -20,13 +20,13 @@ import "google/api/field_behavior.proto";
 
 option java_package = "com.google.cloud.apigee.registry.applications.v1alpha1";
 option java_multiple_files = true;
-option java_outer_classname = "RegistryAPIStyleGuideProto";
+option java_outer_classname = "RegistryStyleGuideProto";
 option go_package = "github.com/apigee/registry/rpc;rpc";
 
-// APIStyleGuide defines a set of guidelines and linters that govern
+// StyleGuide defines a set of guidelines and linters that govern
 // the static analysis of API Specs.
-message APIStyleGuide {
-    // Name of the API Style Guide
+message StyleGuide {
+    // Resource name of the style guide.
     string name = 1 [
         (google.api.field_behavior) = REQUIRED
     ];
@@ -50,35 +50,48 @@ message APIStyleGuide {
 }
 
 message Guideline {
-    // Name of the rule that this guideline specifies.
-    string rule_name = 1 [
+    // Resource name of the guideline.
+    string name = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
+
+    // Human-meaningful name.
+    string display_name = 2 [
+        (google.api.field_behavior) = REQUIRED
+    ];
+
+    // A detailed description of the guideline.
+    string description = 3;
+
+    // A list of rules that this guideline specifies.
+    repeated Rule rules = 4;
+
+    // Indicates whether the guideline has been deprecated.
+    bool deprecated = 5;
+}
+
+message Rule {
+    // Name of the rule.
+    string name = 1 [
 		(google.api.field_behavior) = REQUIRED
 	];
 
-    // Name of the linter that enforces this guideline.
+    // Name of the linter that enforces this rule.
     string linter_name = 2 [
 		(google.api.field_behavior) = REQUIRED
 	];
+    
+    // A detailed description of the rule.
+    string description = 3;
 
-    // Name of the linter rule that this guideline corresponds to.
-    string linter_rule_name = 3 [
-		(google.api.field_behavior) = REQUIRED
-	];
-
-    // Description of this guideline.
-    string description = 4;
-
-    // Severity of violating this guideline.
+    // Severity of violating this rule.
     enum Severity {
         ERROR = 0;
         WARNING = 1;
         INFO = 2;
         HINT = 3;
     }
-    Severity severity = 5;
-
-    // Indicates whether the guideline has been deprecated.
-    bool deprecated = 6;
+    Severity severity = 4;
 }
 
 message Linter {
@@ -87,7 +100,7 @@ message Linter {
 		(google.api.field_behavior) = REQUIRED
 	];
 
-    // Path to the linter binary executable.
+    // A uri to the linter source code or documentation.
     string uri = 2 [
 		(google.api.field_behavior) = REQUIRED
 	];

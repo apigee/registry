@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"regexp"
 	"strings"
 
 	"io/ioutil"
@@ -31,14 +32,16 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func styleGuideRelation(styleGuideName string) string {
-	return "styleguide-" +
-		strings.ReplaceAll(
-			strings.ToLower(styleGuideName), " ", "-",
-		)
+// normalizeArtifactId makes a provided Artifact Id a lower-cased alphanumeric string
+func normalizeArtifactId(resourceName string) string {
+	reg, err := regexp.Compile("[^a-zA-Z0-9]+")
+	if err != nil {
+		log.Fatal(err)
+	}
+	return strings.ToLower(reg.ReplaceAllString(resourceName, ""))
 }
 
-func readStyleGuideProto(filename string) (*rpc.APIStyleGuide, error) {
+func readStyleGuideProto(filename string) (*rpc.StyleGuide, error) {
 
 	yamlBytes, err := ioutil.ReadFile(filename)
 	if err != nil {
@@ -46,7 +49,7 @@ func readStyleGuideProto(filename string) (*rpc.APIStyleGuide, error) {
 	}
 
 	jsonBytes, err := yaml.YAMLToJSON(yamlBytes)
-	m := &rpc.APIStyleGuide{}
+	m := &rpc.StyleGuide{}
 	err = protojson.Unmarshal(jsonBytes, m)
 
 	if err != nil {
@@ -84,7 +87,7 @@ func styleGuideCommand(ctx context.Context) *cobra.Command {
 				Name: "projects/" +
 					projectID +
 					"/locations/global/artifacts/" +
-					styleGuideRelation(styleGuide.GetName()),
+					normalizeArtifactId(styleGuide.GetName()),
 				MimeType: core.MimeTypeForMessageType(
 					"google.cloud.apigee.registry.applications.v1alpha1.styleguide",
 				),
