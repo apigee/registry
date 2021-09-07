@@ -20,6 +20,7 @@ import (
 	"github.com/apigee/registry/cmd/registry/cmd/annotate"
 	"github.com/apigee/registry/cmd/registry/cmd/compute"
 	"github.com/apigee/registry/cmd/registry/cmd/delete"
+	"github.com/apigee/registry/cmd/registry/cmd/exec"
 	"github.com/apigee/registry/cmd/registry/cmd/export"
 	"github.com/apigee/registry/cmd/registry/cmd/get"
 	"github.com/apigee/registry/cmd/registry/cmd/index"
@@ -43,6 +44,7 @@ func Command(ctx context.Context) *cobra.Command {
 	cmd.AddCommand(resolve.Command(ctx))
 	cmd.AddCommand(delete.Command(ctx))
 	cmd.AddCommand(export.Command(ctx))
+	cmd.AddCommand(exec.Command(ctx))
 	cmd.AddCommand(get.Command(ctx))
 	cmd.AddCommand(index.Command(ctx))
 	cmd.AddCommand(label.Command(ctx))
