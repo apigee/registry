@@ -15,6 +15,7 @@
 package exec
 
 import (
+	"bytes"
 	"context"
 	"testing"
 )
@@ -25,10 +26,21 @@ func TestExec(t *testing.T) {
 	ctx := context.Background()
 
 	cmd := Command(ctx)
-	args := []string{"echo test"}
+	out := bytes.NewBuffer(make([]byte, 0))
+	args := []string{"echo sample test"}
 	cmd.SetArgs(args)
+	cmd.SetOutput(out)
+
 	if err := cmd.Execute(); err != nil {
 		t.Fatalf("Execute() with args %v returned error: %s", args, err)
+	}
+
+	output := out.String()
+	want := "sample test\n"
+	// The exec command should execute all the args passed to it
+	// Make sure that the output produced is "sample test" and not only "sample"
+	if output != want {
+		t.Fatalf("Execute() with args %v generated unexpected output, want: %q got: %q", args, want, output)
 	}
 
 }

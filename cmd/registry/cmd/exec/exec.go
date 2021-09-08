@@ -19,7 +19,6 @@ import (
 	"log"
 
 	"github.com/spf13/cobra"
-	"os"
 	osexec "os/exec"
 	"strings"
 )
@@ -42,7 +41,7 @@ func Command(ctx context.Context) *cobra.Command {
 				commandArgs = commandFields[1:]
 			}
 			execCmd := osexec.Command(command, commandArgs...)
-			execCmd.Stdout, execCmd.Stderr = os.Stdout, os.Stderr
+			execCmd.Stdout, execCmd.Stderr = cmd.OutOrStdout(), cmd.ErrOrStderr()
 			err := execCmd.Run()
 
 			if err != nil {
