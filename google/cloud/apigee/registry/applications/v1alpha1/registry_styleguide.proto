@@ -23,7 +23,7 @@ option java_multiple_files = true;
 option java_outer_classname = "RegistryStyleGuideProto";
 option go_package = "github.com/apigee/registry/rpc;rpc";
 
-// StyleGuide defines a set of guidelines and linters that govern
+// StyleGuide defines a set of guidelines, rules, and linters that govern
 // the static analysis of API Specs.
 message StyleGuide {
     // Resource name of the style guide.
@@ -66,23 +66,37 @@ message Guideline {
     // A list of rules that this guideline specifies.
     repeated Rule rules = 4;
 
-    // Indicates whether the guideline has been deprecated.
-    bool deprecated = 5;
+    // Indicates the status of the guideline.
+    enum Status {
+        PROPOSED = 0;
+        ACTIVE = 1;
+        DEPRECATED = 2;
+        DISABLED = 3;
+    }
+    Status status = 5;
 }
 
 message Rule {
-    // Name of the rule.
+    // Resource name of the rule.
     string name = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
+
+    // Human-meaningful name.
+    string display_name = 2;
+
+    // A detailed description of the rule.
+    string description = 3;
+
+    // Name of the linter that enforces this rule.
+    string linter = 4 [
 		(google.api.field_behavior) = REQUIRED
 	];
 
-    // Name of the linter that enforces this rule.
-    string linter_name = 2 [
-		(google.api.field_behavior) = REQUIRED
-	];
-    
-    // A detailed description of the rule.
-    string description = 3;
+    // Name of the rule on the linter that enforces it.
+    string linter_rulename = 5 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 
     // Severity of violating this rule.
     enum Severity {
@@ -91,7 +105,7 @@ message Rule {
         INFO = 2;
         HINT = 3;
     }
-    Severity severity = 4;
+    Severity severity = 6;
 }
 
 message Linter {
