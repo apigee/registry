@@ -18,8 +18,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"regexp"
-	"strings"
 
 	"io/ioutil"
 
@@ -31,15 +29,6 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
-
-// normalizeArtifactId makes a provided Artifact Id a lower-cased alphanumeric string
-func normalizeArtifactId(resourceName string) string {
-	reg, err := regexp.Compile("[^a-zA-Z0-9]+")
-	if err != nil {
-		log.Fatal(err)
-	}
-	return strings.ToLower(reg.ReplaceAllString(resourceName, ""))
-}
 
 func readStyleGuideProto(filename string) (*rpc.StyleGuide, error) {
 
@@ -87,7 +76,7 @@ func styleGuideCommand(ctx context.Context) *cobra.Command {
 				Name: "projects/" +
 					projectID +
 					"/locations/global/artifacts/" +
-					normalizeArtifactId(styleGuide.GetName()),
+					styleGuide.GetName(),
 				MimeType: core.MimeTypeForMessageType(
 					"google.cloud.apigee.registry.applications.v1alpha1.styleguide",
 				),
