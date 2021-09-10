@@ -69,11 +69,23 @@ message Guideline {
     // A list of rules that this guideline specifies.
     repeated Rule rules = 4;
 
+    // Possible severities for this guideline.
     enum Status {
-        UNSPECIFIED = 0;
+        // The default value, unused.
+        STATUS_UNSPECIFIED = 0;
+
+        // The guideline is being proposed, and shouldn't yet
+        // be enforced.
         PROPOSED = 1;
+
+        // The guideline is active and should be enforced.
         ACTIVE = 2;
+
+        // The guideline is deprecated as of the recent version,
+        // and shouldn't be enforced.
         DEPRECATED = 3;
+
+        // The guideline has been disabled and shouldn't be enforced.
         DISABLED = 4;
     }
     // Indicates the status of the guideline.
@@ -104,11 +116,24 @@ message Rule {
         (google.api.field_behavior) = REQUIRED
     ];
 
+    // Possible severities for the violation of a rule.
     enum Severity {
-        UNSPECIFIED = 0;
+        // The default value, unused.
+        SEVERITY_UNSPECIFIED = 0;
+
+        // Violation of the rule is an error that must be fixed.
         ERROR = 1;
+
+        // Violation of the rule is a pattern that is wrong,
+        // and should be warned about.
         WARNING = 2;
+        
+        // Violation of the rule is not necessarily a bad pattern
+        // or error, but information the user should be aware of.
         INFO = 3;
+
+        // Violation of the rule is a hint that is provided to
+        // the user to fix their spec's design.
         HINT = 4;
     }
     // Severity of violating this rule.
