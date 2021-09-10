@@ -21,11 +21,11 @@
 #
 
 echo "Updating tool dependencies."
-go get -u google.golang.org/grpc
-go get -u github.com/golang/protobuf/protoc-gen-go
-go get -u github.com/googleapis/gapic-generator-go/cmd/protoc-gen-go_gapic
-go get -u github.com/googleapis/gapic-generator-go/cmd/protoc-gen-go_cli
-go get -u github.com/googleapis/api-linter/cmd/api-linter
+go install google.golang.org/protobuf/cmd/protoc-gen-go
+go install google.golang.org/grpc/cmd/protoc-gen-go-grpc
+go install github.com/googleapis/gapic-generator-go/cmd/protoc-gen-go_gapic
+go install github.com/googleapis/gapic-generator-go/cmd/protoc-gen-go_cli
+go install github.com/googleapis/api-linter/cmd/api-linter
 
 # add installed dependencies to PATH in case they aren't already
 export PATH=$PATH:$(go env GOBIN):$(go env GOPATH)/bin
@@ -59,7 +59,8 @@ done
 echo "Generating proto support code."
 protoc --proto_path=. --proto_path=${ANNOTATIONS} \
 	${PROTOS[*]} \
-	--go_out=plugins=grpc:rpc
+	--go_out=rpc \
+	--go-grpc_out=rpc
 
 # fix the location of proto output files
 mv rpc/github.com/apigee/registry/rpc/* rpc

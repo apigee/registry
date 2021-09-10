@@ -22,7 +22,7 @@ import (
 	"strings"
 
 	"github.com/apigee/registry/rpc"
-	"github.com/golang/protobuf/jsonpb"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 // NewLintFromZippedProtos runs the API linter and returns the results.
@@ -96,7 +96,7 @@ func lintFileForProto(path string, root string) (*rpc.LintFile, error) {
 	// The API linter returns a JSON array. Since the proto parser requires a top-level struct,
 	// wrap the results so that they are in the form of an rpc.Lint JSON serialization.
 	wrappedJSON := "{\"files\": " + string(data) + "}"
-	err = jsonpb.UnmarshalString(wrappedJSON, &result)
+	err = protojson.Unmarshal([]byte(wrappedJSON), &result)
 	if err != nil {
 		return nil, err
 	}

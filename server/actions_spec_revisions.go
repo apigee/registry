@@ -21,9 +21,9 @@ import (
 	"github.com/apigee/registry/server/internal/storage"
 	"github.com/apigee/registry/server/internal/storage/models"
 	"github.com/apigee/registry/server/names"
-	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 // ListApiSpecRevisions handles the corresponding API request.
@@ -77,7 +77,7 @@ func (s *RegistryServer) ListApiSpecRevisions(ctx context.Context, req *rpc.List
 }
 
 // DeleteApiSpecRevision handles the corresponding API request.
-func (s *RegistryServer) DeleteApiSpecRevision(ctx context.Context, req *rpc.DeleteApiSpecRevisionRequest) (*empty.Empty, error) {
+func (s *RegistryServer) DeleteApiSpecRevision(ctx context.Context, req *rpc.DeleteApiSpecRevisionRequest) (*emptypb.Empty, error) {
 	db, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
@@ -106,7 +106,7 @@ func (s *RegistryServer) DeleteApiSpecRevision(ctx context.Context, req *rpc.Del
 	}
 
 	s.notify(ctx, rpc.Notification_DELETED, name.String())
-	return &empty.Empty{}, nil
+	return &emptypb.Empty{}, nil
 }
 
 // TagApiSpecRevision handles the corresponding API request.

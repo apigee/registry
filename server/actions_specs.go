@@ -25,10 +25,10 @@ import (
 	"github.com/apigee/registry/server/internal/storage"
 	"github.com/apigee/registry/server/internal/storage/models"
 	"github.com/apigee/registry/server/names"
-	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/genproto/googleapis/api/httpbody"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
@@ -91,7 +91,7 @@ func (s *RegistryServer) createSpec(ctx context.Context, name names.Spec, body *
 }
 
 // DeleteApiSpec handles the corresponding API request.
-func (s *RegistryServer) DeleteApiSpec(ctx context.Context, req *rpc.DeleteApiSpecRequest) (*empty.Empty, error) {
+func (s *RegistryServer) DeleteApiSpec(ctx context.Context, req *rpc.DeleteApiSpecRequest) (*emptypb.Empty, error) {
 	db, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
@@ -113,7 +113,7 @@ func (s *RegistryServer) DeleteApiSpec(ctx context.Context, req *rpc.DeleteApiSp
 	}
 
 	s.notify(ctx, rpc.Notification_DELETED, name.String())
-	return &empty.Empty{}, nil
+	return &emptypb.Empty{}, nil
 }
 
 // GetApiSpec handles the corresponding API request.

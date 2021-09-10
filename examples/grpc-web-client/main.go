@@ -24,9 +24,9 @@ import (
 	"os"
 
 	"github.com/apigee/registry/rpc"
-	"github.com/golang/protobuf/proto"
 	statuspb "google.golang.org/genproto/googleapis/rpc/status"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 )
 
 func check(err error) {
