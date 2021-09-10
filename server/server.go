@@ -57,6 +57,8 @@ type RegistryServer struct {
 	notifyEnabled bool
 	loggingLevel  LogLevel
 	projectID     string
+
+	rpc.UnimplementedRegistryServer
 }
 
 func New(config Config) *RegistryServer {
