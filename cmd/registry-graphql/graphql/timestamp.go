@@ -17,8 +17,8 @@ package registry
 import (
 	"time"
 
-	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/graphql-go/graphql"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 var timestampType = graphql.NewObject(
@@ -38,7 +38,7 @@ var timestampType = graphql.NewObject(
 	},
 )
 
-func representationForTimestamp(timestamp *timestamp.Timestamp) map[string]interface{} {
+func representationForTimestamp(timestamp *timestamppb.Timestamp) map[string]interface{} {
 	return map[string]interface{}{
 		"seconds": timestamp.Seconds,
 		"nanos":   timestamp.Nanos,
