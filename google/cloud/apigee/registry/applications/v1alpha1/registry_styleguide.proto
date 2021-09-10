@@ -23,16 +23,17 @@ option java_multiple_files = true;
 option java_outer_classname = "RegistryStyleGuideProto";
 option go_package = "github.com/apigee/registry/rpc;rpc";
 
-// StyleGuide defines a set of guidelines, rules, and linters that govern
-// the static analysis of API Specs.
+// StyleGuide defines a set of guidelines and linters that govern the
+// static analysis of API Specs with specified mime types.
 message StyleGuide {
     // Resource name of the style guide.
     string name = 1 [
         (google.api.field_behavior) = REQUIRED
     ];
 
-    // A list containing style (format) descriptors for this style guide that 
-    // are specified as a Media Type (https://en.wikipedia.org/wiki/Media_type).
+    // This field lists the MIME types of the specs that the style guide applies to.
+    // It is a list containing style (format) descriptors that are specified
+    // as a Media Type (https://en.wikipedia.org/wiki/Media_type).
     // Possible values include "application/vnd.apigee.proto", 
     // "application/vnd.apigee.openapi", and "application/vnd.apigee.graphql",
     // with possible suffixes representing compression types. These hypothetical
@@ -49,6 +50,8 @@ message StyleGuide {
     repeated Linter linters = 4;
 }
 
+// Guideline defines a set of rules that achieve a common design
+// goal for API specs.
 message Guideline {
     // Resource name of the guideline.
     string name = 1 [
@@ -66,16 +69,31 @@ message Guideline {
     // A list of rules that this guideline specifies.
     repeated Rule rules = 4;
 
-    // Indicates the status of the guideline.
+    // Possible severities for this guideline.
     enum Status {
-        PROPOSED = 0;
-        ACTIVE = 1;
-        DEPRECATED = 2;
-        DISABLED = 3;
+        // The default value, unused.
+        STATUS_UNSPECIFIED = 0;
+
+        // The guideline is being proposed, and shouldn't yet
+        // be enforced.
+        PROPOSED = 1;
+
+        // The guideline is active and should be enforced.
+        ACTIVE = 2;
+
+        // The guideline is deprecated as of the recent version,
+        // and shouldn't be enforced.
+        DEPRECATED = 3;
+
+        // The guideline has been disabled and shouldn't be enforced.
+        DISABLED = 4;
     }
+    // Indicates the status of the guideline.
     Status status = 5;
 }
 
+// Rule is a specific design rule that can be applied to an API spec,
+// and is enforced by a specified linter.
 message Rule {
     // Resource name of the rule.
     string name = 1 [
@@ -98,16 +116,32 @@ message Rule {
         (google.api.field_behavior) = REQUIRED
     ];
 
-    // Severity of violating this rule.
+    // Possible severities for the violation of a rule.
     enum Severity {
-        ERROR = 0;
-        WARNING = 1;
-        INFO = 2;
-        HINT = 3;
+        // The default value, unused.
+        SEVERITY_UNSPECIFIED = 0;
+
+        // Violation of the rule is an error that must be fixed.
+        ERROR = 1;
+
+        // Violation of the rule is a pattern that is wrong,
+        // and should be warned about.
+        WARNING = 2;
+        
+        // Violation of the rule is not necessarily a bad pattern
+        // or error, but information the user should be aware of.
+        INFO = 3;
+
+        // Violation of the rule is a hint that is provided to
+        // the user to fix their spec's design.
+        HINT = 4;
     }
+    // Severity of violating this rule.
     Severity severity = 6;
 }
 
+// Linter contains the name and source code / documentation of specific
+// linter that a style guide uses.
 message Linter {
     // Name of the linter.
     string name = 1 [

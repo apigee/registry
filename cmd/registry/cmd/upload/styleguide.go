@@ -38,6 +38,10 @@ func readStyleGuideProto(filename string) (*rpc.StyleGuide, error) {
 	}
 
 	jsonBytes, err := yaml.YAMLToJSON(yamlBytes)
+	if err != nil {
+		return nil, err
+	}
+
 	m := &rpc.StyleGuide{}
 	err = protojson.Unmarshal(jsonBytes, m)
 
@@ -53,7 +57,7 @@ func styleGuideCommand(ctx context.Context) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "styleguide FILE_PATH --project_id=value",
 		Short: "Upload an API style guide",
-		Args:  cobra.MinimumNArgs(1),
+		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			styleGuidePath := args[0]
 			if styleGuidePath == "" {
@@ -64,9 +68,11 @@ func styleGuideCommand(ctx context.Context) *cobra.Command {
 			if err != nil {
 				log.Fatal(err.Error())
 			}
-			styleGuideData, _ := proto.Marshal(styleGuide)
+			styleGuideMarshalled, err := proto.Marshal(styleGuide)
+			if err != nil {
+				log.Fatal(err.Error())
+			}
 
-			ctx := context.Background()
 			client, err := connection.NewClient(ctx)
 			if err != nil {
 				log.Fatalf("%s", err.Error())
@@ -80,7 +86,7 @@ func styleGuideCommand(ctx context.Context) *cobra.Command {
 				MimeType: core.MimeTypeForMessageType(
 					"google.cloud.apigee.registry.applications.v1alpha1.styleguide",
 				),
-				Contents: styleGuideData,
+				Contents: styleGuideMarshalled,
 			}
 			log.Printf("uploading %s", artifact.Name)
 			err = core.SetArtifact(ctx, client, artifact)
