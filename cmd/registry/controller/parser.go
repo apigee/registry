@@ -42,13 +42,15 @@ func extendDependencyPattern(
 		return fmt.Sprintf("projects/%s/locations/global/%s", projectID, dependencyPattern), nil
 	}
 
-	entityRegex := regexp.MustCompile(fmt.Sprintf(`\%s\.(api|version|spec|artifact)`, resourceKW))
+	entityRegex := regexp.MustCompile(fmt.Sprintf(`(\%s\.(api|version|spec|artifact))(/|$)`, resourceKW))
 	matches := entityRegex.FindStringSubmatch(dependencyPattern)
-	if len(matches) <= 1 {
-		return "", errors.New(fmt.Sprintf("Invalid source pattern: %s", dependencyPattern))
+	// dependencyPattern: "$resource.api/artifacts/score"
+	// matches: ["$resource.api/", "$resource.api", "api"]
+	if len(matches) <= 2 {
+		return "", errors.New(fmt.Sprintf("Invalid dependency pattern: %s", dependencyPattern))
 	}
 
-	entity, entityType := matches[0], matches[1]
+	entity, entityType := matches[1], matches[2]
 	entityVal := ""
 	switch entityType {
 	case "api":

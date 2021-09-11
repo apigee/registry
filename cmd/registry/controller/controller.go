@@ -16,6 +16,7 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
@@ -38,19 +39,21 @@ func ProcessManifest(
 	ctx context.Context,
 	client connection.Client,
 	projectID string,
-	manifest *rpc.Manifest) ([]*Action, error) {
+	manifest *rpc.Manifest) []*Action {
 
 	var actions []*Action
 	for _, resource := range manifest.GeneratedResources {
+		log.Printf("Processing entry: %v", resource)
 
 		newActions, err := processManifestResource(ctx, client, projectID, resource)
 		if err != nil {
-			log.Printf("Skipping resource: %q\nGot error: %s", resource, err.Error())
+			log.Printf("Skipping resource: %q Got error: %s", resource, err.Error())
+			continue
 		}
 		actions = append(actions, newActions...)
 	}
 
-	return actions, nil
+	return actions
 }
 
 func processManifestResource(
@@ -61,11 +64,10 @@ func processManifestResource(
 	// Generate dependency map
 	resourcePattern := fmt.Sprintf("projects/%s/locations/global/%s", projectID, resource.Pattern)
 	dependencyMaps := make([]map[string]ResourceCollection, 0, len(resource.Dependencies))
-	for _, d := range resource.Dependencies {
-		dMap, err := generateDependencyMap(ctx, client, resourcePattern, d.Pattern, d.Filter, projectID)
+	for _, dependency := range resource.Dependencies {
+		dMap, err := generateDependencyMap(ctx, client, resourcePattern, dependency, projectID)
 		if err != nil {
-			log.Printf("Error while generating dependency map.\n Error: %s\n Skipping resource %+v", err.Error(), resource)
-			continue
+			return nil, errors.New(fmt.Sprintf("Error while generating dependency map for %v Error: %s", dependency, err.Error()))
 		}
 		dependencyMaps = append(dependencyMaps, dMap)
 	}
@@ -76,7 +78,7 @@ func processManifestResource(
 		return nil, err
 	}
 
-	// Update target resources
+	// Generate actions to update target resources
 	actions, err := generateActions(
 		ctx, client, resourcePattern, resourceList, dependencyMaps, resource)
 	if err != nil {
@@ -89,27 +91,26 @@ func processManifestResource(
 func generateDependencyMap(
 	ctx context.Context,
 	client connection.Client,
-	resourcePattern,
-	dependencyPattern,
-	dependencyFilter string,
+	resourcePattern string,
+	dependency *rpc.Dependency,
 	projectID string) (map[string]ResourceCollection, error) {
 
 	sourceMap := make(map[string]ResourceCollection)
 
 	// Extend the source pattern if it contains $resource.api like pattern
-	extDependencyPattern, err := extendDependencyPattern(resourcePattern, dependencyPattern, projectID)
+	extDependencyPattern, err := extendDependencyPattern(resourcePattern, dependency.Pattern, projectID)
 	if err != nil {
 		return nil, err
 	}
 
 	// Fetch resources using the extDependencyPattern
-	sourceList, err := ListResources(ctx, client, extDependencyPattern, dependencyFilter)
+	sourceList, err := ListResources(ctx, client, extDependencyPattern, dependency.Filter)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, source := range sourceList {
-		group, err := getGroupKey(dependencyPattern, source)
+		group, err := getGroupKey(dependency.Pattern, source)
 		if err != nil {
 			return nil, err
 		}
@@ -126,6 +127,10 @@ func generateDependencyMap(
 
 		collection.resourceList = append(collection.resourceList, source)
 		sourceMap[group] = collection
+	}
+
+	if len(sourceMap) == 0 {
+		return nil, errors.New(fmt.Sprintf("No resources found for pattern: %s, filer: %s", extDependencyPattern, dependency.Filter))
 	}
 
 	return sourceMap, nil
