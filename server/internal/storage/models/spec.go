@@ -169,7 +169,16 @@ func (s *Spec) Update(message *rpc.ApiSpec, mask *fieldmaskpb.FieldMask) error {
 		case "description":
 			s.Description = message.GetDescription()
 		case "contents":
-			s.updateContents(message.GetContents())
+			contents := message.GetContents()
+			// if contents are gzipped, uncompress before computing size and hash.
+			if strings.Contains(s.MimeType, "+gzip") && len(contents) > 0 {
+				var err error
+				contents, err = GUnzippedBytes(contents)
+				if err != nil {
+					return err
+				}
+			}
+			s.updateContents(contents)
 		case "mime_type":
 			s.MimeType = message.GetMimeType()
 		case "source_uri":
