@@ -73,17 +73,17 @@ func NewArtifact(name names.Artifact, body *rpc.Artifact) (artifact *Artifact, e
 func (artifact *Artifact) Name() string {
 	switch {
 	case artifact.SpecID != "":
-		return fmt.Sprintf("projects/%s/apis/%s/versions/%s/specs/%s/artifacts/%s",
-			artifact.ProjectID, artifact.ApiID, artifact.VersionID, artifact.SpecID, artifact.ArtifactID)
+		return fmt.Sprintf("projects/%s/locations/%s/apis/%s/versions/%s/specs/%s/artifacts/%s",
+			artifact.ProjectID, names.Location, artifact.ApiID, artifact.VersionID, artifact.SpecID, artifact.ArtifactID)
 	case artifact.VersionID != "":
-		return fmt.Sprintf("projects/%s/apis/%s/versions/%s/artifacts/%s",
-			artifact.ProjectID, artifact.ApiID, artifact.VersionID, artifact.ArtifactID)
+		return fmt.Sprintf("projects/%s/locations/%s/apis/%s/versions/%s/artifacts/%s",
+			artifact.ProjectID, names.Location, artifact.ApiID, artifact.VersionID, artifact.ArtifactID)
 	case artifact.ApiID != "":
-		return fmt.Sprintf("projects/%s/apis/%s/artifacts/%s",
-			artifact.ProjectID, artifact.ApiID, artifact.ArtifactID)
+		return fmt.Sprintf("projects/%s/locations/%s/apis/%s/artifacts/%s",
+			artifact.ProjectID, names.Location, artifact.ApiID, artifact.ArtifactID)
 	case artifact.ProjectID != "":
-		return fmt.Sprintf("projects/%s/artifacts/%s",
-			artifact.ProjectID, artifact.ArtifactID)
+		return fmt.Sprintf("projects/%s/locations/%s/artifacts/%s",
+			artifact.ProjectID, names.Location, artifact.ArtifactID)
 	default:
 		return "UNKNOWN"
 	}

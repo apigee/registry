@@ -20,13 +20,13 @@ import (
 	"strings"
 
 	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/server/dao"
-	"github.com/apigee/registry/server/models"
+	"github.com/apigee/registry/server/internal/storage"
+	"github.com/apigee/registry/server/internal/storage/models"
 	"github.com/apigee/registry/server/names"
-	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/genproto/googleapis/api/httpbody"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type artifactParent interface {
@@ -40,7 +40,7 @@ func parseArtifactParent(name string) (artifactParent, error) {
 		return v, nil
 	} else if a, err := names.ParseApi(name); err == nil {
 		return a, nil
-	} else if p, err := names.ParseProject(name); err == nil {
+	} else if p, err := names.ParseProjectWithLocation(name); err == nil {
 		return p, nil
 	}
 
@@ -49,12 +49,11 @@ func parseArtifactParent(name string) (artifactParent, error) {
 
 // CreateArtifact handles the corresponding API request.
 func (s *RegistryServer) CreateArtifact(ctx context.Context, req *rpc.CreateArtifactRequest) (*rpc.Artifact, error) {
-	client, err := s.getStorageClient(ctx)
+	db, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer s.releaseStorageClient(client)
-	db := dao.NewDAO(client)
+	defer db.Close()
 
 	if req.GetArtifact() == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid artifact %+v: body must be provided", req.GetArtifact())
@@ -113,13 +112,12 @@ func (s *RegistryServer) CreateArtifact(ctx context.Context, req *rpc.CreateArti
 }
 
 // DeleteArtifact handles the corresponding API request.
-func (s *RegistryServer) DeleteArtifact(ctx context.Context, req *rpc.DeleteArtifactRequest) (*empty.Empty, error) {
-	client, err := s.getStorageClient(ctx)
+func (s *RegistryServer) DeleteArtifact(ctx context.Context, req *rpc.DeleteArtifactRequest) (*emptypb.Empty, error) {
+	db, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer s.releaseStorageClient(client)
-	db := dao.NewDAO(client)
+	defer db.Close()
 
 	name, err := names.ParseArtifact(req.GetName())
 	if err != nil {
@@ -136,17 +134,16 @@ func (s *RegistryServer) DeleteArtifact(ctx context.Context, req *rpc.DeleteArti
 	}
 
 	s.notify(ctx, rpc.Notification_DELETED, name.String())
-	return &empty.Empty{}, nil
+	return &emptypb.Empty{}, nil
 }
 
 // GetArtifact handles the corresponding API request.
 func (s *RegistryServer) GetArtifact(ctx context.Context, req *rpc.GetArtifactRequest) (*rpc.Artifact, error) {
-	client, err := s.getStorageClient(ctx)
+	db, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer s.releaseStorageClient(client)
-	db := dao.NewDAO(client)
+	defer db.Close()
 
 	name, err := names.ParseArtifact(req.GetName())
 	if err != nil {
@@ -163,12 +160,11 @@ func (s *RegistryServer) GetArtifact(ctx context.Context, req *rpc.GetArtifactRe
 
 // GetArtifactContents handles the corresponding API request.
 func (s *RegistryServer) GetArtifactContents(ctx context.Context, req *rpc.GetArtifactContentsRequest) (*httpbody.HttpBody, error) {
-	client, err := s.getStorageClient(ctx)
+	db, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer s.releaseStorageClient(client)
-	db := dao.NewDAO(client)
+	defer db.Close()
 
 	name, err := names.ParseArtifact(strings.TrimSuffix(req.GetName(), "/contents"))
 	if err != nil {
@@ -193,12 +189,11 @@ func (s *RegistryServer) GetArtifactContents(ctx context.Context, req *rpc.GetAr
 
 // ListArtifacts handles the corresponding API request.
 func (s *RegistryServer) ListArtifacts(ctx context.Context, req *rpc.ListArtifactsRequest) (*rpc.ListArtifactsResponse, error) {
-	client, err := s.getStorageClient(ctx)
+	db, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer s.releaseStorageClient(client)
-	db := dao.NewDAO(client)
+	defer db.Close()
 
 	if req.GetPageSize() < 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid page_size %d: must not be negative", req.GetPageSize())
@@ -213,28 +208,28 @@ func (s *RegistryServer) ListArtifacts(ctx context.Context, req *rpc.ListArtifac
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	var listing dao.ArtifactList
+	var listing storage.ArtifactList
 	switch parent := parent.(type) {
 	case names.Project:
-		listing, err = db.ListProjectArtifacts(ctx, parent, dao.PageOptions{
+		listing, err = db.ListProjectArtifacts(ctx, parent, storage.PageOptions{
 			Size:   req.GetPageSize(),
 			Filter: req.GetFilter(),
 			Token:  req.GetPageToken(),
 		})
 	case names.Api:
-		listing, err = db.ListApiArtifacts(ctx, parent, dao.PageOptions{
+		listing, err = db.ListApiArtifacts(ctx, parent, storage.PageOptions{
 			Size:   req.GetPageSize(),
 			Filter: req.GetFilter(),
 			Token:  req.GetPageToken(),
 		})
 	case names.Version:
-		listing, err = db.ListVersionArtifacts(ctx, parent, dao.PageOptions{
+		listing, err = db.ListVersionArtifacts(ctx, parent, storage.PageOptions{
 			Size:   req.GetPageSize(),
 			Filter: req.GetFilter(),
 			Token:  req.GetPageToken(),
 		})
 	case names.Spec:
-		listing, err = db.ListSpecArtifacts(ctx, parent, dao.PageOptions{
+		listing, err = db.ListSpecArtifacts(ctx, parent, storage.PageOptions{
 			Size:   req.GetPageSize(),
 			Filter: req.GetFilter(),
 			Token:  req.GetPageToken(),
@@ -258,12 +253,11 @@ func (s *RegistryServer) ListArtifacts(ctx context.Context, req *rpc.ListArtifac
 
 // ReplaceArtifact handles the corresponding API request.
 func (s *RegistryServer) ReplaceArtifact(ctx context.Context, req *rpc.ReplaceArtifactRequest) (*rpc.Artifact, error) {
-	client, err := s.getStorageClient(ctx)
+	db, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer s.releaseStorageClient(client)
-	db := dao.NewDAO(client)
+	defer db.Close()
 
 	name, err := names.ParseArtifact(req.Artifact.GetName())
 	if err != nil {

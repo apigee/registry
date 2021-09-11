@@ -31,6 +31,7 @@ func Command(ctx context.Context) *cobra.Command {
 	cmd.AddCommand(csvCommand(ctx))
 	cmd.AddCommand(manifestCommand(ctx))
 	cmd.AddCommand(specCommand(ctx))
+	cmd.AddCommand(styleGuideCommand(ctx))
 
 	return cmd
 }

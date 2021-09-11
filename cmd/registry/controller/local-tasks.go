@@ -17,6 +17,10 @@ package controller
 import (
 	"context"
 	"fmt"
+	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/rpc"
+	"google.golang.org/protobuf/proto"
 	"log"
 	"os"
 	"os/exec"
@@ -24,27 +28,54 @@ import (
 )
 
 type ExecCommandTask struct {
-	Action string
+	Action *Action
 	TaskID string
 }
 
 func (task *ExecCommandTask) String() string {
-	return "Execute command: " + task.Action
+	return "Execute command: " + task.Action.Command
 }
 
 func (task *ExecCommandTask) Run(ctx context.Context) error {
-	if strings.HasPrefix(task.Action, "resolve") {
-		return fmt.Errorf("'resolve' not allowed in action, cannot invoke %q", task.Action)
+	//The monitoring metrics/dashboards are built on top of the format of the log messages here.
+	//Check the metric filters before making  any changes to the format.
+	//Location: registry/deployments/controller/dashboard/*
+	taskDetails := fmt.Sprintf("action={%s} taskID={%s}", task.Action.Command, task.TaskID)
+
+	if strings.HasPrefix(task.Action.Command, "resolve") {
+		return fmt.Errorf("Failed Execution: %s Error: 'resolve' not allowed in action", taskDetails)
 	}
-	cmd := exec.Command("registry", strings.Fields(task.Action)...)
+	cmd := exec.Command("registry", strings.Fields(task.Action.Command)...)
 	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
 	err := cmd.Run()
-	details := fmt.Sprintf("action={%s} taskID={%s}", task.Action, task.TaskID)
 
 	if err != nil {
-		log.Printf("Failed Execution: %s Error: %s", details, err)
+		log.Printf("Failed Execution: %s Error: %s", taskDetails, err)
 		return err
 	}
-	log.Printf("Successful Execution: %s", details)
+	if task.Action.RequiresReceipt {
+		err := touchArtifact(ctx, task.Action.GeneratedResource, task.Action.Command)
+		if err != nil {
+			log.Printf("Failed Execution: %s Error: Failed updating Receipt %s", taskDetails, err)
+		}
+	}
+	log.Printf("Successful Execution: %s", taskDetails)
 	return nil
+}
+
+func touchArtifact(
+	ctx context.Context,
+	artifactName string,
+	action string,
+) error {
+	client, err := connection.NewClient(ctx)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	messageData, _ := proto.Marshal(&rpc.Receipt{Action: action})
+
+	return core.SetArtifact(ctx, client, &rpc.Artifact{
+		Name:     artifactName,
+		Contents: messageData})
 }

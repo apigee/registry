@@ -174,7 +174,7 @@ type uploadSpecTask struct {
 
 func (t uploadSpecTask) Run(ctx context.Context) error {
 	api, err := t.client.CreateApi(ctx, &rpc.CreateApiRequest{
-		Parent: fmt.Sprintf("projects/%s", t.projectID),
+		Parent: fmt.Sprintf("projects/%s/locations/global", t.projectID),
 		ApiId:  t.apiID,
 		Api:    &rpc.Api{},
 	})
@@ -184,7 +184,7 @@ func (t uploadSpecTask) Run(ctx context.Context) error {
 		log.Printf("Created API: %s", api.GetName())
 	case codes.AlreadyExists:
 		api = &rpc.Api{
-			Name: fmt.Sprintf("projects/%s/apis/%s", t.projectID, t.apiID),
+			Name: fmt.Sprintf("projects/%s/locations/global/apis/%s", t.projectID, t.apiID),
 		}
 	default:
 		return fmt.Errorf("failed to ensure API exists: %s", err)

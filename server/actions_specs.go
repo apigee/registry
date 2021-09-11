@@ -19,13 +19,13 @@ import (
 	"strings"
 
 	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/server/dao"
-	"github.com/apigee/registry/server/models"
+	"github.com/apigee/registry/server/internal/storage"
+	"github.com/apigee/registry/server/internal/storage/models"
 	"github.com/apigee/registry/server/names"
-	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/genproto/googleapis/api/httpbody"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
@@ -44,12 +44,11 @@ func (s *RegistryServer) CreateApiSpec(ctx context.Context, req *rpc.CreateApiSp
 }
 
 func (s *RegistryServer) createSpec(ctx context.Context, name names.Spec, body *rpc.ApiSpec) (*rpc.ApiSpec, error) {
-	client, err := s.getStorageClient(ctx)
+	db, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer s.releaseStorageClient(client)
-	db := dao.NewDAO(client)
+	defer db.Close()
 
 	if _, err := db.GetSpec(ctx, name); err == nil {
 		return nil, status.Errorf(codes.AlreadyExists, "API spec %q already exists", name)
@@ -89,13 +88,12 @@ func (s *RegistryServer) createSpec(ctx context.Context, name names.Spec, body *
 }
 
 // DeleteApiSpec handles the corresponding API request.
-func (s *RegistryServer) DeleteApiSpec(ctx context.Context, req *rpc.DeleteApiSpecRequest) (*empty.Empty, error) {
-	client, err := s.getStorageClient(ctx)
+func (s *RegistryServer) DeleteApiSpec(ctx context.Context, req *rpc.DeleteApiSpecRequest) (*emptypb.Empty, error) {
+	db, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer s.releaseStorageClient(client)
-	db := dao.NewDAO(client)
+	defer db.Close()
 
 	name, err := names.ParseSpec(req.GetName())
 	if err != nil {
@@ -112,7 +110,7 @@ func (s *RegistryServer) DeleteApiSpec(ctx context.Context, req *rpc.DeleteApiSp
 	}
 
 	s.notify(ctx, rpc.Notification_DELETED, name.String())
-	return &empty.Empty{}, nil
+	return &emptypb.Empty{}, nil
 }
 
 // GetApiSpec handles the corresponding API request.
@@ -127,12 +125,11 @@ func (s *RegistryServer) GetApiSpec(ctx context.Context, req *rpc.GetApiSpecRequ
 }
 
 func (s *RegistryServer) getApiSpec(ctx context.Context, name names.Spec) (*rpc.ApiSpec, error) {
-	client, err := s.getStorageClient(ctx)
+	db, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer s.releaseStorageClient(client)
-	db := dao.NewDAO(client)
+	defer db.Close()
 
 	spec, err := db.GetSpec(ctx, name)
 	if err != nil {
@@ -153,12 +150,11 @@ func (s *RegistryServer) getApiSpec(ctx context.Context, name names.Spec) (*rpc.
 }
 
 func (s *RegistryServer) getApiSpecRevision(ctx context.Context, name names.SpecRevision) (*rpc.ApiSpec, error) {
-	client, err := s.getStorageClient(ctx)
+	db, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer s.releaseStorageClient(client)
-	db := dao.NewDAO(client)
+	defer db.Close()
 
 	revision, err := db.GetSpecRevision(ctx, name)
 	if err != nil {
@@ -180,12 +176,11 @@ func (s *RegistryServer) getApiSpecRevision(ctx context.Context, name names.Spec
 
 // GetApiSpecContents handles the corresponding API request.
 func (s *RegistryServer) GetApiSpecContents(ctx context.Context, req *rpc.GetApiSpecContentsRequest) (*httpbody.HttpBody, error) {
-	client, err := s.getStorageClient(ctx)
+	db, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer s.releaseStorageClient(client)
-	db := dao.NewDAO(client)
+	defer db.Close()
 
 	if !strings.HasSuffix(req.GetName(), "/contents") {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid resource name %q, must include /contents suffix", req.GetName())
@@ -229,12 +224,11 @@ func (s *RegistryServer) GetApiSpecContents(ctx context.Context, req *rpc.GetApi
 
 // ListApiSpecs handles the corresponding API request.
 func (s *RegistryServer) ListApiSpecs(ctx context.Context, req *rpc.ListApiSpecsRequest) (*rpc.ListApiSpecsResponse, error) {
-	client, err := s.getStorageClient(ctx)
+	db, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer s.releaseStorageClient(client)
-	db := dao.NewDAO(client)
+	defer db.Close()
 
 	if req.GetPageSize() < 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid page_size %d: must not be negative", req.GetPageSize())
@@ -249,7 +243,7 @@ func (s *RegistryServer) ListApiSpecs(ctx context.Context, req *rpc.ListApiSpecs
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	listing, err := db.ListSpecs(ctx, parent, dao.PageOptions{
+	listing, err := db.ListSpecs(ctx, parent, storage.PageOptions{
 		Size:   req.GetPageSize(),
 		Filter: req.GetFilter(),
 		Token:  req.GetPageToken(),
@@ -281,12 +275,11 @@ func (s *RegistryServer) ListApiSpecs(ctx context.Context, req *rpc.ListApiSpecs
 
 // UpdateApiSpec handles the corresponding API request.
 func (s *RegistryServer) UpdateApiSpec(ctx context.Context, req *rpc.UpdateApiSpecRequest) (*rpc.ApiSpec, error) {
-	client, err := s.getStorageClient(ctx)
+	db, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer s.releaseStorageClient(client)
-	db := dao.NewDAO(client)
+	defer db.Close()
 
 	if req.GetApiSpec() == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid api_spec %+v: body must be provided", req.GetApiSpec())
@@ -338,7 +331,7 @@ func (s *RegistryServer) UpdateApiSpec(ctx context.Context, req *rpc.UpdateApiSp
 	return message, nil
 }
 
-func revisionTags(ctx context.Context, db dao.DAO, name names.SpecRevision) ([]string, error) {
+func revisionTags(ctx context.Context, db *storage.Client, name names.SpecRevision) ([]string, error) {
 	allTags, err := db.GetSpecTags(ctx, name.Spec())
 	if err != nil {
 		return nil, err

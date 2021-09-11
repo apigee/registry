@@ -20,6 +20,7 @@ import (
 	"testing"
 
 	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/server/internal/test/seeder"
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -30,13 +31,13 @@ import (
 func TestTagApiSpecRevision(t *testing.T) {
 	ctx := context.Background()
 	server := defaultTestServer(t)
-	seedSpecs(ctx, t, server, &rpc.ApiSpec{
-		Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
-	})
+	if err := seeder.SeedSpecs(ctx, server, &rpc.ApiSpec{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"}); err != nil {
+		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+	}
 
 	updateReq := &rpc.UpdateApiSpecRequest{
 		ApiSpec: &rpc.ApiSpec{
-			Name:     "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
+			Name:     "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
 			Contents: specContents,
 		},
 	}
@@ -158,12 +159,12 @@ func TestTagApiSpecRevision(t *testing.T) {
 func TestRollbackApiSpec(t *testing.T) {
 	ctx := context.Background()
 	server := defaultTestServer(t)
-	seedVersions(ctx, t, server, &rpc.ApiVersion{
-		Name: "projects/my-project/apis/my-api/versions/v1",
-	})
+	if err := seeder.SeedVersions(ctx, server, &rpc.ApiVersion{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"}); err != nil {
+		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+	}
 
 	createReq := &rpc.CreateApiSpecRequest{
-		Parent:    "projects/my-project/apis/my-api/versions/v1",
+		Parent:    "projects/my-project/locations/global/apis/my-api/versions/v1",
 		ApiSpecId: "my-spec",
 		ApiSpec:   &rpc.ApiSpec{},
 	}
@@ -229,15 +230,15 @@ func TestRollbackApiSpec(t *testing.T) {
 func TestDeleteApiSpecRevision(t *testing.T) {
 	ctx := context.Background()
 	server := defaultTestServer(t)
-	seedSpecs(ctx, t, server, &rpc.ApiSpec{
-		Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
-	})
+	if err := seeder.SeedSpecs(ctx, server, &rpc.ApiSpec{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"}); err != nil {
+		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+	}
 
 	t.Run("only remaining revision", func(t *testing.T) {
 		t.Skip("not yet supported")
 
 		req := &rpc.DeleteApiSpecRevisionRequest{
-			Name: "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
+			Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
 		}
 
 		if _, err := server.DeleteApiSpecRevision(ctx, req); status.Code(err) != codes.FailedPrecondition {
@@ -248,7 +249,7 @@ func TestDeleteApiSpecRevision(t *testing.T) {
 	// Create a new revision so we can delete it.
 	updateReq := &rpc.UpdateApiSpecRequest{
 		ApiSpec: &rpc.ApiSpec{
-			Name:     "projects/my-project/apis/my-api/versions/v1/specs/my-spec",
+			Name:     "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
 			Contents: specContents,
 		},
 	}
@@ -260,7 +261,7 @@ func TestDeleteApiSpecRevision(t *testing.T) {
 
 	t.Run("one of multiple existing revisions", func(t *testing.T) {
 		req := &rpc.DeleteApiSpecRevisionRequest{
-			Name: fmt.Sprintf("projects/my-project/apis/my-api/versions/v1/specs/my-spec@%s", secondRevision.GetRevisionId()),
+			Name: fmt.Sprintf("projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec@%s", secondRevision.GetRevisionId()),
 		}
 
 		if _, err := server.DeleteApiSpecRevision(ctx, req); err != nil {
@@ -282,12 +283,12 @@ func TestDeleteApiSpecRevision(t *testing.T) {
 func TestListApiSpecRevisions(t *testing.T) {
 	ctx := context.Background()
 	server := defaultTestServer(t)
-	seedVersions(ctx, t, server, &rpc.ApiVersion{
-		Name: "projects/my-project/apis/my-api/versions/v1",
-	})
+	if err := seeder.SeedVersions(ctx, server, &rpc.ApiVersion{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"}); err != nil {
+		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+	}
 
 	createReq := &rpc.CreateApiSpecRequest{
-		Parent:    "projects/my-project/apis/my-api/versions/v1",
+		Parent:    "projects/my-project/locations/global/apis/my-api/versions/v1",
 		ApiSpecId: "my-spec",
 		ApiSpec:   &rpc.ApiSpec{},
 	}
@@ -396,12 +397,12 @@ func TestListApiSpecRevisions(t *testing.T) {
 func TestUpdateApiSpecRevisions(t *testing.T) {
 	ctx := context.Background()
 	server := defaultTestServer(t)
-	seedVersions(ctx, t, server, &rpc.ApiVersion{
-		Name: "projects/my-project/apis/my-api/versions/v1",
-	})
+	if err := seeder.SeedVersions(ctx, server, &rpc.ApiVersion{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"}); err != nil {
+		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+	}
 
 	createReq := &rpc.CreateApiSpecRequest{
-		Parent:    "projects/my-project/apis/my-api/versions/v1",
+		Parent:    "projects/my-project/locations/global/apis/my-api/versions/v1",
 		ApiSpecId: "my-spec",
 		ApiSpec: &rpc.ApiSpec{
 			Description: "Empty First Revision",

@@ -74,7 +74,7 @@ func resolveAPIs(p graphql.ResolveParams) (interface{}, error) {
 		return nil, err
 	}
 	req := &rpc.ListApisRequest{
-		Parent: getParentFromParams(p),
+		Parent: getParentFromParams(p) + "/locations/global",
 	}
 	filter, isFound := p.Args["filter"].(string)
 	if isFound {

@@ -17,11 +17,10 @@ package server
 import (
 	"context"
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/server/names"
+	"github.com/apigee/registry/server/internal/test/seeder"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"google.golang.org/grpc/codes"
@@ -34,51 +33,6 @@ var (
 	artifactContents = []byte(`{"contents": "foo"}`)
 )
 
-func seedArtifacts(ctx context.Context, t *testing.T, s *RegistryServer, artifacts ...*rpc.Artifact) {
-	t.Helper()
-
-	for _, artifact := range artifacts {
-		name, err := names.ParseArtifact(artifact.Name)
-		if err != nil {
-			t.Fatalf("Setup/Seeding: ParseArtifact(%q) returned error: %s", artifact.Name, err)
-		}
-
-		parent := strings.TrimSuffix(name.String(), "/artifacts/"+name.ArtifactID())
-		if _, err := names.ParseSpec(parent); err == nil {
-			seedSpecs(ctx, t, s, &rpc.ApiSpec{
-				Name: parent,
-			})
-		} else if _, err := names.ParseVersion(parent); err == nil {
-			seedVersions(ctx, t, s, &rpc.ApiVersion{
-				Name: parent,
-			})
-		} else if _, err := names.ParseApi(parent); err == nil {
-			seedApis(ctx, t, s, &rpc.Api{
-				Name: parent,
-			})
-		} else if _, err := names.ParseProject(parent); err == nil {
-			seedProjects(ctx, t, s, &rpc.Project{
-				Name: parent,
-			})
-		} else {
-			t.Log("Failed to identify parent resource: proceeding without seeding parent")
-		}
-
-		req := &rpc.CreateArtifactRequest{
-			Parent:     parent,
-			ArtifactId: name.ArtifactID(),
-			Artifact:   artifact,
-		}
-
-		switch _, err := s.CreateArtifact(ctx, req); status.Code(err) {
-		case codes.OK, codes.AlreadyExists:
-			// Artifact is now ready for use in test.
-		default:
-			t.Fatalf("Setup/Seeding: CreateArtifact(%+v) returned error: %s", req, err)
-		}
-	}
-}
-
 func TestCreateArtifact(t *testing.T) {
 	tests := []struct {
 		desc string
@@ -90,7 +44,7 @@ func TestCreateArtifact(t *testing.T) {
 			desc: "fully populated resource",
 			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.CreateArtifactRequest{
-				Parent:     "projects/my-project",
+				Parent:     "projects/my-project/locations/global",
 				ArtifactId: "my-artifact",
 				Artifact: &rpc.Artifact{
 					MimeType:  "application/json",
@@ -100,7 +54,7 @@ func TestCreateArtifact(t *testing.T) {
 				},
 			},
 			want: &rpc.Artifact{
-				Name:      "projects/my-project/artifacts/my-artifact",
+				Name:      "projects/my-project/locations/global/artifacts/my-artifact",
 				MimeType:  "application/json",
 				SizeBytes: int32(len(artifactContents)),
 				Hash:      sha256hash(artifactContents),
@@ -112,7 +66,9 @@ func TestCreateArtifact(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedProjects(ctx, t, server, test.seed)
+			if err := seeder.SeedProjects(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			created, err := server.CreateArtifact(ctx, test.req)
 			if err != nil {
@@ -164,7 +120,7 @@ func TestCreateArtifactResponseCodes(t *testing.T) {
 			desc: "parent not found",
 			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.CreateArtifactRequest{
-				Parent:     "projects/other-project",
+				Parent:     "projects/other-project/locations/global",
 				ArtifactId: "valid-id",
 				Artifact:   &rpc.Artifact{},
 			},
@@ -174,7 +130,7 @@ func TestCreateArtifactResponseCodes(t *testing.T) {
 			desc: "missing resource body",
 			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.CreateArtifactRequest{
-				Parent:     "projects/my-project",
+				Parent:     "projects/my-project/locations/global",
 				ArtifactId: "valid-id",
 				Artifact:   nil,
 			},
@@ -184,7 +140,7 @@ func TestCreateArtifactResponseCodes(t *testing.T) {
 			desc: "missing custom identifier",
 			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.CreateArtifactRequest{
-				Parent:     "projects/my-project",
+				Parent:     "projects/my-project/locations/global",
 				ArtifactId: "",
 				Artifact:   &rpc.Artifact{},
 			},
@@ -194,7 +150,7 @@ func TestCreateArtifactResponseCodes(t *testing.T) {
 			desc: "long custom identifier",
 			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.CreateArtifactRequest{
-				Parent:     "projects/my-project",
+				Parent:     "projects/my-project/locations/global",
 				ArtifactId: "this-identifier-is-invalid-because-it-exceeds-the-eighty-character-maximum-length",
 				Artifact:   &rpc.Artifact{},
 			},
@@ -204,7 +160,7 @@ func TestCreateArtifactResponseCodes(t *testing.T) {
 			desc: "custom identifier underscores",
 			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.CreateArtifactRequest{
-				Parent:     "projects/my-project",
+				Parent:     "projects/my-project/locations/global",
 				ArtifactId: "underscore_identifier",
 				Artifact:   &rpc.Artifact{},
 			},
@@ -214,7 +170,7 @@ func TestCreateArtifactResponseCodes(t *testing.T) {
 			desc: "custom identifier hyphen prefix",
 			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.CreateArtifactRequest{
-				Parent:     "projects/my-project",
+				Parent:     "projects/my-project/locations/global",
 				ArtifactId: "-identifier",
 				Artifact:   &rpc.Artifact{},
 			},
@@ -224,7 +180,7 @@ func TestCreateArtifactResponseCodes(t *testing.T) {
 			desc: "custom identifier hyphen suffix",
 			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.CreateArtifactRequest{
-				Parent:     "projects/my-project",
+				Parent:     "projects/my-project/locations/global",
 				ArtifactId: "identifier-",
 				Artifact:   &rpc.Artifact{},
 			},
@@ -234,7 +190,7 @@ func TestCreateArtifactResponseCodes(t *testing.T) {
 			desc: "customer identifier uuid format",
 			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.CreateArtifactRequest{
-				Parent:     "projects/my-project",
+				Parent:     "projects/my-project/locations/global",
 				ArtifactId: "072d2288-c685-42d8-9df0-5edbb2a809ea",
 				Artifact:   &rpc.Artifact{},
 			},
@@ -244,7 +200,7 @@ func TestCreateArtifactResponseCodes(t *testing.T) {
 			desc: "custom identifier mixed case",
 			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.CreateArtifactRequest{
-				Parent:     "projects/my-project",
+				Parent:     "projects/my-project/locations/global",
 				ArtifactId: "IDentifier",
 				Artifact:   &rpc.Artifact{},
 			},
@@ -256,7 +212,9 @@ func TestCreateArtifactResponseCodes(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedProjects(ctx, t, server, test.seed)
+			if err := seeder.SeedProjects(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			if _, err := server.CreateArtifact(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("CreateArtifact(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
@@ -274,9 +232,9 @@ func TestCreateArtifactDuplicates(t *testing.T) {
 	}{
 		{
 			desc: "case sensitive",
-			seed: &rpc.Artifact{Name: "projects/my-project/artifacts/my-artifact"},
+			seed: &rpc.Artifact{Name: "projects/my-project/locations/global/artifacts/my-artifact"},
 			req: &rpc.CreateArtifactRequest{
-				Parent:     "projects/my-project",
+				Parent:     "projects/my-project/locations/global",
 				ArtifactId: "my-artifact",
 				Artifact:   &rpc.Artifact{},
 			},
@@ -284,9 +242,9 @@ func TestCreateArtifactDuplicates(t *testing.T) {
 		},
 		{
 			desc: "case insensitive",
-			seed: &rpc.Artifact{Name: "projects/my-project/artifacts/my-artifact"},
+			seed: &rpc.Artifact{Name: "projects/my-project/locations/global/artifacts/my-artifact"},
 			req: &rpc.CreateArtifactRequest{
-				Parent:     "projects/my-project",
+				Parent:     "projects/my-project/locations/global",
 				ArtifactId: "My-Artifact",
 				Artifact:   &rpc.Artifact{},
 			},
@@ -298,7 +256,9 @@ func TestCreateArtifactDuplicates(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedArtifacts(ctx, t, server, test.seed)
+			if err := seeder.SeedArtifacts(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			if _, err := server.CreateArtifact(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("CreateArtifact(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
@@ -317,17 +277,17 @@ func TestGetArtifact(t *testing.T) {
 		{
 			desc: "fully populated resource",
 			seed: &rpc.Artifact{
-				Name:      "projects/my-project/artifacts/my-artifact",
+				Name:      "projects/my-project/locations/global/artifacts/my-artifact",
 				MimeType:  "application/json",
 				SizeBytes: int32(len(artifactContents)),
 				Hash:      sha256hash(artifactContents),
 				Contents:  artifactContents,
 			},
 			req: &rpc.GetArtifactRequest{
-				Name: "projects/my-project/artifacts/my-artifact",
+				Name: "projects/my-project/locations/global/artifacts/my-artifact",
 			},
 			want: &rpc.Artifact{
-				Name:      "projects/my-project/artifacts/my-artifact",
+				Name:      "projects/my-project/locations/global/artifacts/my-artifact",
 				MimeType:  "application/json",
 				SizeBytes: int32(len(artifactContents)),
 				Hash:      sha256hash(artifactContents),
@@ -339,7 +299,9 @@ func TestGetArtifact(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedArtifacts(ctx, t, server, test.seed)
+			if err := seeder.SeedArtifacts(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			got, err := server.GetArtifact(ctx, test.req)
 			if err != nil {
@@ -367,17 +329,17 @@ func TestGetArtifactResponseCodes(t *testing.T) {
 	}{
 		{
 			desc: "resource not found",
-			seed: &rpc.Artifact{Name: "projects/my-project/artifacts/my-artifact"},
+			seed: &rpc.Artifact{Name: "projects/my-project/locations/global/artifacts/my-artifact"},
 			req: &rpc.GetArtifactRequest{
-				Name: "projects/my-project/artifacts/doesnt-exist",
+				Name: "projects/my-project/locations/global/artifacts/doesnt-exist",
 			},
 			want: codes.NotFound,
 		},
 		{
 			desc: "case insensitive name",
-			seed: &rpc.Artifact{Name: "projects/my-project/artifacts/my-artifact"},
+			seed: &rpc.Artifact{Name: "projects/my-project/locations/global/artifacts/my-artifact"},
 			req: &rpc.GetArtifactRequest{
-				Name: "projects/my-project/artifacts/My-Artifact",
+				Name: "projects/my-project/locations/global/artifacts/My-Artifact",
 			},
 			want: codes.OK,
 		},
@@ -387,7 +349,9 @@ func TestGetArtifactResponseCodes(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedArtifacts(ctx, t, server, test.seed)
+			if err := seeder.SeedArtifacts(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			if _, err := server.GetArtifact(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("GetArtifact(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
@@ -408,133 +372,133 @@ func TestListArtifacts(t *testing.T) {
 		{
 			desc: "default parameters",
 			seed: []*rpc.Artifact{
-				{Name: "projects/my-project/apis/my-api/versions/v1/artifacts/artifact1"},
-				{Name: "projects/my-project/apis/my-api/versions/v1/artifacts/artifact2"},
-				{Name: "projects/my-project/apis/my-api/versions/v1/artifacts/artifact3"},
-				{Name: "projects/my-project/apis/my-api/versions/v2/artifacts/artifact1"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/artifact1"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/artifact2"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/artifact3"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v2/artifacts/artifact1"},
 			},
 			req: &rpc.ListArtifactsRequest{
-				Parent: "projects/my-project/apis/my-api/versions/v1",
+				Parent: "projects/my-project/locations/global/apis/my-api/versions/v1",
 			},
 			want: &rpc.ListArtifactsResponse{
 				Artifacts: []*rpc.Artifact{
-					{Name: "projects/my-project/apis/my-api/versions/v1/artifacts/artifact1"},
-					{Name: "projects/my-project/apis/my-api/versions/v1/artifacts/artifact2"},
-					{Name: "projects/my-project/apis/my-api/versions/v1/artifacts/artifact3"},
+					{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/artifact1"},
+					{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/artifact2"},
+					{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/artifact3"},
 				},
 			},
 		},
 		{
 			desc: "across all version in a artifact project and api",
 			seed: []*rpc.Artifact{
-				{Name: "projects/my-project/apis/my-api/versions/v1/artifacts/my-artifact"},
-				{Name: "projects/my-project/apis/my-api/versions/v2/artifacts/my-artifact"},
-				{Name: "projects/other-project/apis/my-api/versions/v1/artifacts/my-artifact"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/my-artifact"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v2/artifacts/my-artifact"},
+				{Name: "projects/other-project/locations/global/apis/my-api/versions/v1/artifacts/my-artifact"},
 			},
 			req: &rpc.ListArtifactsRequest{
-				Parent: "projects/my-project/apis/my-api/versions/-",
+				Parent: "projects/my-project/locations/global/apis/my-api/versions/-",
 			},
 			want: &rpc.ListArtifactsResponse{
 				Artifacts: []*rpc.Artifact{
-					{Name: "projects/my-project/apis/my-api/versions/v1/artifacts/my-artifact"},
-					{Name: "projects/my-project/apis/my-api/versions/v2/artifacts/my-artifact"},
+					{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/my-artifact"},
+					{Name: "projects/my-project/locations/global/apis/my-api/versions/v2/artifacts/my-artifact"},
 				},
 			},
 		},
 		{
 			desc: "across all apis and version in a artifact project",
 			seed: []*rpc.Artifact{
-				{Name: "projects/my-project/apis/my-api/versions/v1/artifacts/my-artifact"},
-				{Name: "projects/my-project/apis/other-api/versions/v2/artifacts/my-artifact"},
-				{Name: "projects/other-project/apis/my-api/versions/v1/artifacts/my-artifact"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/my-artifact"},
+				{Name: "projects/my-project/locations/global/apis/other-api/versions/v2/artifacts/my-artifact"},
+				{Name: "projects/other-project/locations/global/apis/my-api/versions/v1/artifacts/my-artifact"},
 			},
 			req: &rpc.ListArtifactsRequest{
-				Parent: "projects/my-project/apis/-/versions/-",
+				Parent: "projects/my-project/locations/global/apis/-/versions/-",
 			},
 			want: &rpc.ListArtifactsResponse{
 				Artifacts: []*rpc.Artifact{
-					{Name: "projects/my-project/apis/my-api/versions/v1/artifacts/my-artifact"},
-					{Name: "projects/my-project/apis/other-api/versions/v2/artifacts/my-artifact"},
+					{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/my-artifact"},
+					{Name: "projects/my-project/locations/global/apis/other-api/versions/v2/artifacts/my-artifact"},
 				},
 			},
 		},
 		{
 			desc: "across all projects, apis, and version",
 			seed: []*rpc.Artifact{
-				{Name: "projects/my-project/apis/my-api/versions/v1/artifacts/my-artifact"},
-				{Name: "projects/other-project/apis/other-api/versions/v2/artifacts/my-artifact"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/my-artifact"},
+				{Name: "projects/other-project/locations/global/apis/other-api/versions/v2/artifacts/my-artifact"},
 			},
 			req: &rpc.ListArtifactsRequest{
-				Parent: "projects/-/apis/-/versions/-",
+				Parent: "projects/-/locations/global/apis/-/versions/-",
 			},
 			want: &rpc.ListArtifactsResponse{
 				Artifacts: []*rpc.Artifact{
-					{Name: "projects/my-project/apis/my-api/versions/v1/artifacts/my-artifact"},
-					{Name: "projects/other-project/apis/other-api/versions/v2/artifacts/my-artifact"},
+					{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/my-artifact"},
+					{Name: "projects/other-project/locations/global/apis/other-api/versions/v2/artifacts/my-artifact"},
 				},
 			},
 		},
 		{
 			desc: "in a artifact api and parent across all projects",
 			seed: []*rpc.Artifact{
-				{Name: "projects/my-project/apis/my-api/versions/v1/artifacts/my-artifact"},
-				{Name: "projects/other-project/apis/my-api/versions/v1/artifacts/my-artifact"},
-				{Name: "projects/my-project/apis/other-api/versions/v1/artifacts/my-artifact"},
-				{Name: "projects/my-project/apis/my-api/versions/v2/artifacts/my-artifact"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/my-artifact"},
+				{Name: "projects/other-project/locations/global/apis/my-api/versions/v1/artifacts/my-artifact"},
+				{Name: "projects/my-project/locations/global/apis/other-api/versions/v1/artifacts/my-artifact"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v2/artifacts/my-artifact"},
 			},
 			req: &rpc.ListArtifactsRequest{
-				Parent: "projects/-/apis/my-api/versions/v1",
+				Parent: "projects/-/locations/global/apis/my-api/versions/v1",
 			},
 			want: &rpc.ListArtifactsResponse{
 				Artifacts: []*rpc.Artifact{
-					{Name: "projects/my-project/apis/my-api/versions/v1/artifacts/my-artifact"},
-					{Name: "projects/other-project/apis/my-api/versions/v1/artifacts/my-artifact"},
+					{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/my-artifact"},
+					{Name: "projects/other-project/locations/global/apis/my-api/versions/v1/artifacts/my-artifact"},
 				},
 			},
 		},
 		{
 			desc: "in a artifact parent across all projects and apis",
 			seed: []*rpc.Artifact{
-				{Name: "projects/my-project/apis/my-api/versions/v1/artifacts/my-artifact"},
-				{Name: "projects/other-project/apis/other-api/versions/v1/artifacts/my-artifact"},
-				{Name: "projects/my-project/apis/my-api/versions/v2/artifacts/my-artifact"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/my-artifact"},
+				{Name: "projects/other-project/locations/global/apis/other-api/versions/v1/artifacts/my-artifact"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v2/artifacts/my-artifact"},
 			},
 			req: &rpc.ListArtifactsRequest{
-				Parent: "projects/-/apis/-/versions/v1",
+				Parent: "projects/-/locations/global/apis/-/versions/v1",
 			},
 			want: &rpc.ListArtifactsResponse{
 				Artifacts: []*rpc.Artifact{
-					{Name: "projects/my-project/apis/my-api/versions/v1/artifacts/my-artifact"},
-					{Name: "projects/other-project/apis/other-api/versions/v1/artifacts/my-artifact"},
+					{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/my-artifact"},
+					{Name: "projects/other-project/locations/global/apis/other-api/versions/v1/artifacts/my-artifact"},
 				},
 			},
 		},
 		{
 			desc: "in all version of a artifact api across all projects",
 			seed: []*rpc.Artifact{
-				{Name: "projects/my-project/apis/my-api/versions/v1/artifacts/my-artifact"},
-				{Name: "projects/other-project/apis/my-api/versions/v2/artifacts/my-artifact"},
-				{Name: "projects/my-project/apis/other-api/versions/v1/artifacts/my-artifact"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/my-artifact"},
+				{Name: "projects/other-project/locations/global/apis/my-api/versions/v2/artifacts/my-artifact"},
+				{Name: "projects/my-project/locations/global/apis/other-api/versions/v1/artifacts/my-artifact"},
 			},
 			req: &rpc.ListArtifactsRequest{
-				Parent: "projects/-/apis/my-api/versions/-",
+				Parent: "projects/-/locations/global/apis/my-api/versions/-",
 			},
 			want: &rpc.ListArtifactsResponse{
 				Artifacts: []*rpc.Artifact{
-					{Name: "projects/my-project/apis/my-api/versions/v1/artifacts/my-artifact"},
-					{Name: "projects/other-project/apis/my-api/versions/v2/artifacts/my-artifact"},
+					{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/my-artifact"},
+					{Name: "projects/other-project/locations/global/apis/my-api/versions/v2/artifacts/my-artifact"},
 				},
 			},
 		},
 		{
 			desc: "custom page size",
 			seed: []*rpc.Artifact{
-				{Name: "projects/my-project/apis/my-api/versions/v1/artifacts/artifact1"},
-				{Name: "projects/my-project/apis/my-api/versions/v1/artifacts/artifact2"},
-				{Name: "projects/my-project/apis/my-api/versions/v1/artifacts/artifact3"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/artifact1"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/artifact2"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/artifact3"},
 			},
 			req: &rpc.ListArtifactsRequest{
-				Parent:   "projects/my-project/apis/my-api/versions/v1",
+				Parent:   "projects/my-project/locations/global/apis/my-api/versions/v1",
 				PageSize: 1,
 			},
 			want: &rpc.ListArtifactsResponse{
@@ -549,17 +513,17 @@ func TestListArtifacts(t *testing.T) {
 		{
 			desc: "name equality filtering",
 			seed: []*rpc.Artifact{
-				{Name: "projects/my-project/apis/my-api/versions/v1/artifacts/artifact1"},
-				{Name: "projects/my-project/apis/my-api/versions/v1/artifacts/artifact2"},
-				{Name: "projects/my-project/apis/my-api/versions/v1/artifacts/artifact3"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/artifact1"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/artifact2"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/artifact3"},
 			},
 			req: &rpc.ListArtifactsRequest{
-				Parent: "projects/my-project/apis/my-api/versions/v1",
-				Filter: "name == 'projects/my-project/apis/my-api/versions/v1/artifacts/artifact2'",
+				Parent: "projects/my-project/locations/global/apis/my-api/versions/v1",
+				Filter: "name == 'projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/artifact2'",
 			},
 			want: &rpc.ListArtifactsResponse{
 				Artifacts: []*rpc.Artifact{
-					{Name: "projects/my-project/apis/my-api/versions/v1/artifacts/artifact2"},
+					{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/artifact2"},
 				},
 			},
 		},
@@ -567,20 +531,20 @@ func TestListArtifacts(t *testing.T) {
 			desc: "description inequality filtering",
 			seed: []*rpc.Artifact{
 				{
-					Name:     "projects/my-project/apis/my-api/versions/v1/artifacts/artifact1",
+					Name:     "projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/artifact1",
 					MimeType: "application/json",
 				},
-				{Name: "projects/my-project/apis/my-api/versions/v1/artifacts/artifact2"},
-				{Name: "projects/my-project/apis/my-api/versions/v1/artifacts/artifact3"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/artifact2"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/artifact3"},
 			},
 			req: &rpc.ListArtifactsRequest{
-				Parent: "projects/my-project/apis/my-api/versions/v1",
+				Parent: "projects/my-project/locations/global/apis/my-api/versions/v1",
 				Filter: "mime_type != ''",
 			},
 			want: &rpc.ListArtifactsResponse{
 				Artifacts: []*rpc.Artifact{
 					{
-						Name:     "projects/my-project/apis/my-api/versions/v1/artifacts/artifact1",
+						Name:     "projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/artifact1",
 						MimeType: "application/json",
 					},
 				},
@@ -592,7 +556,9 @@ func TestListArtifacts(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedArtifacts(ctx, t, server, test.seed...)
+			if err := seeder.SeedArtifacts(ctx, server, test.seed...); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			got, err := server.ListArtifacts(ctx, test.req)
 			if err != nil {
@@ -631,21 +597,21 @@ func TestListArtifactsResponseCodes(t *testing.T) {
 		{
 			desc: "parent parent not found",
 			req: &rpc.ListArtifactsRequest{
-				Parent: "projects/my-project/apis/my-api/versions/v1",
+				Parent: "projects/my-project/locations/global/apis/my-api/versions/v1",
 			},
 			want: codes.NotFound,
 		},
 		{
 			desc: "parent api not found",
 			req: &rpc.ListArtifactsRequest{
-				Parent: "projects/my-project/apis/my-api/versions/-",
+				Parent: "projects/my-project/locations/global/apis/my-api/versions/-",
 			},
 			want: codes.NotFound,
 		},
 		{
 			desc: "parent project not found",
 			req: &rpc.ListArtifactsRequest{
-				Parent: "projects/my-project/apis/-/versions/-",
+				Parent: "projects/my-project/locations/global/apis/-/versions/-",
 			},
 			want: codes.NotFound,
 		},
@@ -688,18 +654,20 @@ func TestListArtifactsSequence(t *testing.T) {
 	ctx := context.Background()
 	server := defaultTestServer(t)
 	seed := []*rpc.Artifact{
-		{Name: "projects/my-project/apis/my-api/versions/v1/artifacts/artifact1"},
-		{Name: "projects/my-project/apis/my-api/versions/v1/artifacts/artifact2"},
-		{Name: "projects/my-project/apis/my-api/versions/v1/artifacts/artifact3"},
+		{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/artifact1"},
+		{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/artifact2"},
+		{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/artifact3"},
 	}
-	seedArtifacts(ctx, t, server, seed...)
+	if err := seeder.SeedArtifacts(ctx, server, seed...); err != nil {
+		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+	}
 
 	listed := make([]*rpc.Artifact, 0, 3)
 
 	var nextToken string
 	t.Run("first page", func(t *testing.T) {
 		req := &rpc.ListArtifactsRequest{
-			Parent:   "projects/my-project/apis/my-api/versions/v1",
+			Parent:   "projects/my-project/locations/global/apis/my-api/versions/v1",
 			PageSize: 1,
 		}
 
@@ -726,7 +694,7 @@ func TestListArtifactsSequence(t *testing.T) {
 
 	t.Run("intermediate page", func(t *testing.T) {
 		req := &rpc.ListArtifactsRequest{
-			Parent:    "projects/my-project/apis/my-api/versions/v1",
+			Parent:    "projects/my-project/locations/global/apis/my-api/versions/v1",
 			PageSize:  1,
 			PageToken: nextToken,
 		}
@@ -754,7 +722,7 @@ func TestListArtifactsSequence(t *testing.T) {
 
 	t.Run("final page", func(t *testing.T) {
 		req := &rpc.ListArtifactsRequest{
-			Parent:    "projects/my-project/apis/my-api/versions/v1",
+			Parent:    "projects/my-project/locations/global/apis/my-api/versions/v1",
 			PageSize:  1,
 			PageToken: nextToken,
 		}
@@ -797,16 +765,21 @@ func TestListArtifactsSequence(t *testing.T) {
 func TestListArtifactsLargeCollectionFiltering(t *testing.T) {
 	ctx := context.Background()
 	server := defaultTestServer(t)
-	for i := 1; i <= 100; i++ {
-		seedArtifacts(ctx, t, server, &rpc.Artifact{
-			Name: fmt.Sprintf("projects/my-project/artifacts/a%03d", i),
+	seed := make([]*rpc.Artifact, 0, 100)
+	for i := 1; i <= cap(seed); i++ {
+		seed = append(seed, &rpc.Artifact{
+			Name: fmt.Sprintf("projects/my-project/locations/global/artifacts/a%03d", i),
 		})
 	}
 
+	if err := seeder.SeedArtifacts(ctx, server, seed...); err != nil {
+		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+	}
+
 	req := &rpc.ListArtifactsRequest{
-		Parent:   "projects/my-project",
+		Parent:   "projects/my-project/locations/global",
 		PageSize: 1,
-		Filter:   "name == 'projects/my-project/artifacts/a099'",
+		Filter:   "name == 'projects/my-project/locations/global/artifacts/a099'",
 	}
 
 	got, err := server.ListArtifacts(ctx, req)
@@ -833,11 +806,11 @@ func TestReplaceArtifact(t *testing.T) {
 		{
 			desc: "fully populated resource",
 			seed: &rpc.Artifact{
-				Name: "projects/my-project/artifacts/my-artifact",
+				Name: "projects/my-project/locations/global/artifacts/my-artifact",
 			},
 			req: &rpc.ReplaceArtifactRequest{
 				Artifact: &rpc.Artifact{
-					Name:      "projects/my-project/artifacts/my-artifact",
+					Name:      "projects/my-project/locations/global/artifacts/my-artifact",
 					MimeType:  "application/json",
 					SizeBytes: int32(len(artifactContents)),
 					Hash:      sha256hash(artifactContents),
@@ -845,7 +818,7 @@ func TestReplaceArtifact(t *testing.T) {
 				},
 			},
 			want: &rpc.Artifact{
-				Name:      "projects/my-project/artifacts/my-artifact",
+				Name:      "projects/my-project/locations/global/artifacts/my-artifact",
 				MimeType:  "application/json",
 				SizeBytes: int32(len(artifactContents)),
 				Hash:      sha256hash(artifactContents),
@@ -857,7 +830,9 @@ func TestReplaceArtifact(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedArtifacts(ctx, t, server, test.seed)
+			if err := seeder.SeedArtifacts(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			updated, err := server.ReplaceArtifact(ctx, test.req)
 			if err != nil {
@@ -901,23 +876,23 @@ func TestReplaceArtifactResponseCodes(t *testing.T) {
 	}{
 		{
 			desc: "resource not found",
-			seed: &rpc.Artifact{Name: "projects/my-project/apis/my-api/versions/v1/artifacts/my-artifact"},
+			seed: &rpc.Artifact{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/my-artifact"},
 			req: &rpc.ReplaceArtifactRequest{
 				Artifact: &rpc.Artifact{
-					Name: "projects/my-project/apis/my-api/versions/v1/artifacts/doesnt-exist",
+					Name: "projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/doesnt-exist",
 				},
 			},
 			want: codes.NotFound,
 		},
 		{
 			desc: "missing resource body",
-			seed: &rpc.Artifact{Name: "projects/my-project/apis/my-api/versions/v1/artifacts/my-artifact"},
+			seed: &rpc.Artifact{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/my-artifact"},
 			req:  &rpc.ReplaceArtifactRequest{},
 			want: codes.InvalidArgument,
 		},
 		{
 			desc: "missing resource name",
-			seed: &rpc.Artifact{Name: "projects/my-project/apis/my-api/versions/v1/artifacts/my-artifact"},
+			seed: &rpc.Artifact{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/my-artifact"},
 			req: &rpc.ReplaceArtifactRequest{
 				Artifact: &rpc.Artifact{},
 			},
@@ -929,7 +904,9 @@ func TestReplaceArtifactResponseCodes(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedArtifacts(ctx, t, server, test.seed)
+			if err := seeder.SeedArtifacts(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			if _, err := server.ReplaceArtifact(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("ReplaceArtifact(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
@@ -947,10 +924,10 @@ func TestDeleteArtifact(t *testing.T) {
 		{
 			desc: "existing resource",
 			seed: &rpc.Artifact{
-				Name: "projects/my-project/apis/my-api/versions/v1/artifacts/my-artifact",
+				Name: "projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/my-artifact",
 			},
 			req: &rpc.DeleteArtifactRequest{
-				Name: "projects/my-project/apis/my-api/versions/v1/artifacts/my-artifact",
+				Name: "projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/my-artifact",
 			},
 		},
 	}
@@ -959,7 +936,9 @@ func TestDeleteArtifact(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedArtifacts(ctx, t, server, test.seed)
+			if err := seeder.SeedArtifacts(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			if _, err := server.DeleteArtifact(ctx, test.req); err != nil {
 				t.Fatalf("DeleteArtifact(%+v) returned error: %s", test.req, err)
@@ -987,7 +966,7 @@ func TestDeleteArtifactResponseCodes(t *testing.T) {
 		{
 			desc: "resource not found",
 			req: &rpc.DeleteArtifactRequest{
-				Name: "projects/my-project/apis/my-api/versions/v1/artifacts/doesnt-exist",
+				Name: "projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/doesnt-exist",
 			},
 			want: codes.NotFound,
 		},

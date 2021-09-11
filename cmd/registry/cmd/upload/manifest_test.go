@@ -92,7 +92,7 @@ func TestManifestUpload(t *testing.T) {
 			}
 
 			req := &rpc.GetArtifactContentsRequest{
-				Name: "projects/" + test.project + "/artifacts/test-manifest",
+				Name: "projects/" + test.project + "/locations/global/artifacts/test-manifest",
 			}
 
 			manifest := rpc.Manifest{}

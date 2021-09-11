@@ -20,7 +20,7 @@ import (
 	"testing"
 
 	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/server/names"
+	"github.com/apigee/registry/server/internal/test/seeder"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"google.golang.org/grpc/codes"
@@ -28,35 +28,6 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
-
-func seedVersions(ctx context.Context, t *testing.T, s *RegistryServer, versions ...*rpc.ApiVersion) {
-	t.Helper()
-
-	for _, version := range versions {
-		name, err := names.ParseVersion(version.Name)
-		if err != nil {
-			t.Fatalf("Setup/Seeding: ParseVersion(%q) returned error: %s", version.Name, err)
-		}
-
-		parent := name.Api()
-		seedApis(ctx, t, s, &rpc.Api{
-			Name: parent.String(),
-		})
-
-		req := &rpc.CreateApiVersionRequest{
-			Parent:       parent.String(),
-			ApiVersionId: name.VersionID,
-			ApiVersion:   version,
-		}
-
-		switch _, err := s.CreateApiVersion(ctx, req); status.Code(err) {
-		case codes.OK, codes.AlreadyExists:
-			// ApiVersion is now ready for use in test.
-		default:
-			t.Fatalf("Setup/Seeding: CreateApiVersion(%+v) returned error: %s", req, err)
-		}
-	}
-}
 
 func TestCreateApiVersion(t *testing.T) {
 	tests := []struct {
@@ -68,10 +39,10 @@ func TestCreateApiVersion(t *testing.T) {
 		{
 			desc: "fully populated resource",
 			seed: &rpc.Api{
-				Name: "projects/my-project/apis/my-api",
+				Name: "projects/my-project/locations/global/apis/my-api",
 			},
 			req: &rpc.CreateApiVersionRequest{
-				Parent:       "projects/my-project/apis/my-api",
+				Parent:       "projects/my-project/locations/global/apis/my-api",
 				ApiVersionId: "v1",
 				ApiVersion: &rpc.ApiVersion{
 					DisplayName: "My Display Name",
@@ -86,7 +57,7 @@ func TestCreateApiVersion(t *testing.T) {
 				},
 			},
 			want: &rpc.ApiVersion{
-				Name:        "projects/my-project/apis/my-api/versions/v1",
+				Name:        "projects/my-project/locations/global/apis/my-api/versions/v1",
 				DisplayName: "My Display Name",
 				Description: "My Description",
 				State:       "My State",
@@ -104,7 +75,9 @@ func TestCreateApiVersion(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedApis(ctx, t, server, test.seed)
+			if err := seeder.SeedApis(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			created, err := server.CreateApiVersion(ctx, test.req)
 			if err != nil {
@@ -154,9 +127,9 @@ func TestCreateApiVersionResponseCodes(t *testing.T) {
 	}{
 		{
 			desc: "parent not found",
-			seed: &rpc.Api{Name: "projects/my-project/apis/my-api"},
+			seed: &rpc.Api{Name: "projects/my-project/locations/global/apis/my-api"},
 			req: &rpc.CreateApiVersionRequest{
-				Parent:       "projects/my-project/apis/other-api",
+				Parent:       "projects/my-project/locations/global/apis/other-api",
 				ApiVersionId: "valid-id",
 				ApiVersion:   &rpc.ApiVersion{},
 			},
@@ -164,9 +137,9 @@ func TestCreateApiVersionResponseCodes(t *testing.T) {
 		},
 		{
 			desc: "missing resource body",
-			seed: &rpc.Api{Name: "projects/my-project/apis/my-api"},
+			seed: &rpc.Api{Name: "projects/my-project/locations/global/apis/my-api"},
 			req: &rpc.CreateApiVersionRequest{
-				Parent:       "projects/my-project/apis/my-api",
+				Parent:       "projects/my-project/locations/global/apis/my-api",
 				ApiVersionId: "valid-id",
 				ApiVersion:   nil,
 			},
@@ -174,9 +147,9 @@ func TestCreateApiVersionResponseCodes(t *testing.T) {
 		},
 		{
 			desc: "missing custom identifier",
-			seed: &rpc.Api{Name: "projects/my-project/apis/my-api"},
+			seed: &rpc.Api{Name: "projects/my-project/locations/global/apis/my-api"},
 			req: &rpc.CreateApiVersionRequest{
-				Parent:       "projects/my-project/apis/my-api",
+				Parent:       "projects/my-project/locations/global/apis/my-api",
 				ApiVersionId: "",
 				ApiVersion:   &rpc.ApiVersion{},
 			},
@@ -184,9 +157,9 @@ func TestCreateApiVersionResponseCodes(t *testing.T) {
 		},
 		{
 			desc: "long custom identifier",
-			seed: &rpc.Api{Name: "projects/my-project/apis/my-api"},
+			seed: &rpc.Api{Name: "projects/my-project/locations/global/apis/my-api"},
 			req: &rpc.CreateApiVersionRequest{
-				Parent:       "projects/my-project/apis/my-api",
+				Parent:       "projects/my-project/locations/global/apis/my-api",
 				ApiVersionId: "this-identifier-is-invalid-because-it-exceeds-the-eighty-character-maximum-length",
 				ApiVersion:   &rpc.ApiVersion{},
 			},
@@ -194,9 +167,9 @@ func TestCreateApiVersionResponseCodes(t *testing.T) {
 		},
 		{
 			desc: "custom identifier underscores",
-			seed: &rpc.Api{Name: "projects/my-project/apis/my-api"},
+			seed: &rpc.Api{Name: "projects/my-project/locations/global/apis/my-api"},
 			req: &rpc.CreateApiVersionRequest{
-				Parent:       "projects/my-project/apis/my-api",
+				Parent:       "projects/my-project/locations/global/apis/my-api",
 				ApiVersionId: "underscore_identifier",
 				ApiVersion:   &rpc.ApiVersion{},
 			},
@@ -204,9 +177,9 @@ func TestCreateApiVersionResponseCodes(t *testing.T) {
 		},
 		{
 			desc: "custom identifier hyphen prefix",
-			seed: &rpc.Api{Name: "projects/my-project/apis/my-api"},
+			seed: &rpc.Api{Name: "projects/my-project/locations/global/apis/my-api"},
 			req: &rpc.CreateApiVersionRequest{
-				Parent:       "projects/my-project/apis/my-api",
+				Parent:       "projects/my-project/locations/global/apis/my-api",
 				ApiVersionId: "-identifier",
 				ApiVersion:   &rpc.ApiVersion{},
 			},
@@ -214,9 +187,9 @@ func TestCreateApiVersionResponseCodes(t *testing.T) {
 		},
 		{
 			desc: "custom identifier hyphen suffix",
-			seed: &rpc.Api{Name: "projects/my-project/apis/my-api"},
+			seed: &rpc.Api{Name: "projects/my-project/locations/global/apis/my-api"},
 			req: &rpc.CreateApiVersionRequest{
-				Parent:       "projects/my-project/apis/my-api",
+				Parent:       "projects/my-project/locations/global/apis/my-api",
 				ApiVersionId: "identifier-",
 				ApiVersion:   &rpc.ApiVersion{},
 			},
@@ -224,9 +197,9 @@ func TestCreateApiVersionResponseCodes(t *testing.T) {
 		},
 		{
 			desc: "customer identifier uuid format",
-			seed: &rpc.Api{Name: "projects/my-project/apis/my-api"},
+			seed: &rpc.Api{Name: "projects/my-project/locations/global/apis/my-api"},
 			req: &rpc.CreateApiVersionRequest{
-				Parent:       "projects/my-project/apis/my-api",
+				Parent:       "projects/my-project/locations/global/apis/my-api",
 				ApiVersionId: "072d2288-c685-42d8-9df0-5edbb2a809ea",
 				ApiVersion:   &rpc.ApiVersion{},
 			},
@@ -234,9 +207,9 @@ func TestCreateApiVersionResponseCodes(t *testing.T) {
 		},
 		{
 			desc: "custom identifier mixed case",
-			seed: &rpc.Api{Name: "projects/my-project/apis/my-api"},
+			seed: &rpc.Api{Name: "projects/my-project/locations/global/apis/my-api"},
 			req: &rpc.CreateApiVersionRequest{
-				Parent:       "projects/my-project/apis/my-api",
+				Parent:       "projects/my-project/locations/global/apis/my-api",
 				ApiVersionId: "IDentifier",
 				ApiVersion:   &rpc.ApiVersion{},
 			},
@@ -248,7 +221,9 @@ func TestCreateApiVersionResponseCodes(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedApis(ctx, t, server, test.seed)
+			if err := seeder.SeedApis(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			if _, err := server.CreateApiVersion(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("CreateApiVersion(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
@@ -266,9 +241,9 @@ func TestCreateApiVersionDuplicates(t *testing.T) {
 	}{
 		{
 			desc: "case sensitive",
-			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
+			seed: &rpc.ApiVersion{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
 			req: &rpc.CreateApiVersionRequest{
-				Parent:       "projects/my-project/apis/my-api",
+				Parent:       "projects/my-project/locations/global/apis/my-api",
 				ApiVersionId: "v1",
 				ApiVersion:   &rpc.ApiVersion{},
 			},
@@ -276,9 +251,9 @@ func TestCreateApiVersionDuplicates(t *testing.T) {
 		},
 		{
 			desc: "case insensitive",
-			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
+			seed: &rpc.ApiVersion{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
 			req: &rpc.CreateApiVersionRequest{
-				Parent:       "projects/my-project/apis/my-api",
+				Parent:       "projects/my-project/locations/global/apis/my-api",
 				ApiVersionId: "V1",
 				ApiVersion:   &rpc.ApiVersion{},
 			},
@@ -290,7 +265,9 @@ func TestCreateApiVersionDuplicates(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedVersions(ctx, t, server, test.seed)
+			if err := seeder.SeedVersions(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			if _, err := server.CreateApiVersion(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("CreateApiVersion(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
@@ -309,7 +286,7 @@ func TestGetApiVersion(t *testing.T) {
 		{
 			desc: "fully populated resource",
 			seed: &rpc.ApiVersion{
-				Name:        "projects/my-project/apis/my-api/versions/my-version",
+				Name:        "projects/my-project/locations/global/apis/my-api/versions/my-version",
 				DisplayName: "My Display Name",
 				Description: "My Description",
 				State:       "My State",
@@ -321,10 +298,10 @@ func TestGetApiVersion(t *testing.T) {
 				},
 			},
 			req: &rpc.GetApiVersionRequest{
-				Name: "projects/my-project/apis/my-api/versions/my-version",
+				Name: "projects/my-project/locations/global/apis/my-api/versions/my-version",
 			},
 			want: &rpc.ApiVersion{
-				Name:        "projects/my-project/apis/my-api/versions/my-version",
+				Name:        "projects/my-project/locations/global/apis/my-api/versions/my-version",
 				DisplayName: "My Display Name",
 				Description: "My Description",
 				State:       "My State",
@@ -342,7 +319,9 @@ func TestGetApiVersion(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedVersions(ctx, t, server, test.seed)
+			if err := seeder.SeedVersions(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			got, err := server.GetApiVersion(ctx, test.req)
 			if err != nil {
@@ -370,17 +349,17 @@ func TestGetApiVersionResponseCodes(t *testing.T) {
 	}{
 		{
 			desc: "resource not found",
-			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
+			seed: &rpc.ApiVersion{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
 			req: &rpc.GetApiVersionRequest{
-				Name: "projects/my-project/apis/my-api/versions/doesnt-exist",
+				Name: "projects/my-project/locations/global/apis/my-api/versions/doesnt-exist",
 			},
 			want: codes.NotFound,
 		},
 		{
 			desc: "case insensitive name",
-			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
+			seed: &rpc.ApiVersion{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
 			req: &rpc.GetApiVersionRequest{
-				Name: "projects/my-project/apis/my-api/versions/V1",
+				Name: "projects/my-project/locations/global/apis/my-api/versions/V1",
 			},
 			want: codes.OK,
 		},
@@ -390,7 +369,9 @@ func TestGetApiVersionResponseCodes(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedVersions(ctx, t, server, test.seed)
+			if err := seeder.SeedVersions(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			if _, err := server.GetApiVersion(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("GetApiVersion(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
@@ -411,81 +392,81 @@ func TestListApiVersions(t *testing.T) {
 		{
 			desc: "default parameters",
 			seed: []*rpc.ApiVersion{
-				{Name: "projects/my-project/apis/my-api/versions/v1"},
-				{Name: "projects/my-project/apis/my-api/versions/v2"},
-				{Name: "projects/my-project/apis/my-api/versions/v3"},
-				{Name: "projects/my-project/apis/other-api/versions/v1"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v2"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v3"},
+				{Name: "projects/my-project/locations/global/apis/other-api/versions/v1"},
 			},
 			req: &rpc.ListApiVersionsRequest{
-				Parent: "projects/my-project/apis/my-api",
+				Parent: "projects/my-project/locations/global/apis/my-api",
 			},
 			want: &rpc.ListApiVersionsResponse{
 				ApiVersions: []*rpc.ApiVersion{
-					{Name: "projects/my-project/apis/my-api/versions/v1"},
-					{Name: "projects/my-project/apis/my-api/versions/v2"},
-					{Name: "projects/my-project/apis/my-api/versions/v3"},
+					{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
+					{Name: "projects/my-project/locations/global/apis/my-api/versions/v2"},
+					{Name: "projects/my-project/locations/global/apis/my-api/versions/v3"},
 				},
 			},
 		},
 		{
 			desc: "across all apis in a specific project",
 			seed: []*rpc.ApiVersion{
-				{Name: "projects/my-project/apis/my-api/versions/v1"},
-				{Name: "projects/my-project/apis/other-api/versions/v1"},
-				{Name: "projects/other-project/apis/my-api/versions/v1"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
+				{Name: "projects/my-project/locations/global/apis/other-api/versions/v1"},
+				{Name: "projects/other-project/locations/global/apis/my-api/versions/v1"},
 			},
 			req: &rpc.ListApiVersionsRequest{
-				Parent: "projects/my-project/apis/-",
+				Parent: "projects/my-project/locations/global/apis/-",
 			},
 			want: &rpc.ListApiVersionsResponse{
 				ApiVersions: []*rpc.ApiVersion{
-					{Name: "projects/my-project/apis/my-api/versions/v1"},
-					{Name: "projects/my-project/apis/other-api/versions/v1"},
+					{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
+					{Name: "projects/my-project/locations/global/apis/other-api/versions/v1"},
 				},
 			},
 		},
 		{
 			desc: "across all projects and apis",
 			seed: []*rpc.ApiVersion{
-				{Name: "projects/my-project/apis/my-api/versions/v1"},
-				{Name: "projects/other-project/apis/other-api/versions/v1"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
+				{Name: "projects/other-project/locations/global/apis/other-api/versions/v1"},
 			},
 			req: &rpc.ListApiVersionsRequest{
-				Parent: "projects/-/apis/-",
+				Parent: "projects/-/locations/global/apis/-",
 			},
 			want: &rpc.ListApiVersionsResponse{
 				ApiVersions: []*rpc.ApiVersion{
-					{Name: "projects/my-project/apis/my-api/versions/v1"},
-					{Name: "projects/other-project/apis/other-api/versions/v1"},
+					{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
+					{Name: "projects/other-project/locations/global/apis/other-api/versions/v1"},
 				},
 			},
 		},
 		{
 			desc: "in a specific api across all projects",
 			seed: []*rpc.ApiVersion{
-				{Name: "projects/my-project/apis/my-api/versions/v1"},
-				{Name: "projects/other-project/apis/my-api/versions/v1"},
-				{Name: "projects/my-project/apis/other-api/versions/v1"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
+				{Name: "projects/other-project/locations/global/apis/my-api/versions/v1"},
+				{Name: "projects/my-project/locations/global/apis/other-api/versions/v1"},
 			},
 			req: &rpc.ListApiVersionsRequest{
-				Parent: "projects/-/apis/my-api",
+				Parent: "projects/-/locations/global/apis/my-api",
 			},
 			want: &rpc.ListApiVersionsResponse{
 				ApiVersions: []*rpc.ApiVersion{
-					{Name: "projects/my-project/apis/my-api/versions/v1"},
-					{Name: "projects/other-project/apis/my-api/versions/v1"},
+					{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
+					{Name: "projects/other-project/locations/global/apis/my-api/versions/v1"},
 				},
 			},
 		},
 		{
 			desc: "custom page size",
 			seed: []*rpc.ApiVersion{
-				{Name: "projects/my-project/apis/my-api/versions/v1"},
-				{Name: "projects/my-project/apis/my-api/versions/v2"},
-				{Name: "projects/my-project/apis/my-api/versions/v3"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v2"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v3"},
 			},
 			req: &rpc.ListApiVersionsRequest{
-				Parent:   "projects/my-project/apis/my-api",
+				Parent:   "projects/my-project/locations/global/apis/my-api",
 				PageSize: 1,
 			},
 			want: &rpc.ListApiVersionsResponse{
@@ -500,17 +481,17 @@ func TestListApiVersions(t *testing.T) {
 		{
 			desc: "name equality filtering",
 			seed: []*rpc.ApiVersion{
-				{Name: "projects/my-project/apis/my-api/versions/v1"},
-				{Name: "projects/my-project/apis/my-api/versions/v2"},
-				{Name: "projects/my-project/apis/my-api/versions/v3"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v2"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v3"},
 			},
 			req: &rpc.ListApiVersionsRequest{
-				Parent: "projects/my-project/apis/my-api",
-				Filter: "name == 'projects/my-project/apis/my-api/versions/v2'",
+				Parent: "projects/my-project/locations/global/apis/my-api",
+				Filter: "name == 'projects/my-project/locations/global/apis/my-api/versions/v2'",
 			},
 			want: &rpc.ListApiVersionsResponse{
 				ApiVersions: []*rpc.ApiVersion{
-					{Name: "projects/my-project/apis/my-api/versions/v2"},
+					{Name: "projects/my-project/locations/global/apis/my-api/versions/v2"},
 				},
 			},
 		},
@@ -518,20 +499,20 @@ func TestListApiVersions(t *testing.T) {
 			desc: "description inequality filtering",
 			seed: []*rpc.ApiVersion{
 				{
-					Name:        "projects/my-project/apis/my-api/versions/v1",
+					Name:        "projects/my-project/locations/global/apis/my-api/versions/v1",
 					Description: "First ApiVersion",
 				},
-				{Name: "projects/my-project/apis/my-api/versions/v2"},
-				{Name: "projects/my-project/apis/my-api/versions/v3"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v2"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v3"},
 			},
 			req: &rpc.ListApiVersionsRequest{
-				Parent: "projects/my-project/apis/my-api",
+				Parent: "projects/my-project/locations/global/apis/my-api",
 				Filter: "description != ''",
 			},
 			want: &rpc.ListApiVersionsResponse{
 				ApiVersions: []*rpc.ApiVersion{
 					{
-						Name:        "projects/my-project/apis/my-api/versions/v1",
+						Name:        "projects/my-project/locations/global/apis/my-api/versions/v1",
 						Description: "First ApiVersion",
 					},
 				},
@@ -543,7 +524,9 @@ func TestListApiVersions(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedVersions(ctx, t, server, test.seed...)
+			if err := seeder.SeedVersions(ctx, server, test.seed...); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			got, err := server.ListApiVersions(ctx, test.req)
 			if err != nil {
@@ -582,14 +565,14 @@ func TestListApiVersionsResponseCodes(t *testing.T) {
 		{
 			desc: "parent api not found",
 			req: &rpc.ListApiVersionsRequest{
-				Parent: "projects/my-project/apis/my-api",
+				Parent: "projects/my-project/locations/global/apis/my-api",
 			},
 			want: codes.NotFound,
 		},
 		{
 			desc: "parent project not found",
 			req: &rpc.ListApiVersionsRequest{
-				Parent: "projects/my-project/apis/-",
+				Parent: "projects/my-project/locations/global/apis/-",
 			},
 			want: codes.NotFound,
 		},
@@ -632,18 +615,20 @@ func TestListApiVersionsSequence(t *testing.T) {
 	ctx := context.Background()
 	server := defaultTestServer(t)
 	seed := []*rpc.ApiVersion{
-		{Name: "projects/my-project/apis/my-api/versions/v1"},
-		{Name: "projects/my-project/apis/my-api/versions/v2"},
-		{Name: "projects/my-project/apis/my-api/versions/v3"},
+		{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
+		{Name: "projects/my-project/locations/global/apis/my-api/versions/v2"},
+		{Name: "projects/my-project/locations/global/apis/my-api/versions/v3"},
 	}
-	seedVersions(ctx, t, server, seed...)
+	if err := seeder.SeedVersions(ctx, server, seed...); err != nil {
+		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+	}
 
 	listed := make([]*rpc.ApiVersion, 0, 3)
 
 	var nextToken string
 	t.Run("first page", func(t *testing.T) {
 		req := &rpc.ListApiVersionsRequest{
-			Parent:   "projects/my-project/apis/my-api",
+			Parent:   "projects/my-project/locations/global/apis/my-api",
 			PageSize: 1,
 		}
 
@@ -670,7 +655,7 @@ func TestListApiVersionsSequence(t *testing.T) {
 
 	t.Run("intermediate page", func(t *testing.T) {
 		req := &rpc.ListApiVersionsRequest{
-			Parent:    "projects/my-project/apis/my-api",
+			Parent:    "projects/my-project/locations/global/apis/my-api",
 			PageSize:  1,
 			PageToken: nextToken,
 		}
@@ -698,7 +683,7 @@ func TestListApiVersionsSequence(t *testing.T) {
 
 	t.Run("final page", func(t *testing.T) {
 		req := &rpc.ListApiVersionsRequest{
-			Parent:    "projects/my-project/apis/my-api",
+			Parent:    "projects/my-project/locations/global/apis/my-api",
 			PageSize:  1,
 			PageToken: nextToken,
 		}
@@ -741,16 +726,21 @@ func TestListApiVersionsSequence(t *testing.T) {
 func TestListApiVersionsLargeCollectionFiltering(t *testing.T) {
 	ctx := context.Background()
 	server := defaultTestServer(t)
-	for i := 1; i <= 100; i++ {
-		seedVersions(ctx, t, server, &rpc.ApiVersion{
-			Name: fmt.Sprintf("projects/my-project/apis/my-api/versions/v%03d", i),
+	seed := make([]*rpc.ApiVersion, 0, 100)
+	for i := 1; i <= cap(seed); i++ {
+		seed = append(seed, &rpc.ApiVersion{
+			Name: fmt.Sprintf("projects/my-project/locations/global/apis/my-api/versions/v%03d", i),
 		})
 	}
 
+	if err := seeder.SeedVersions(ctx, server, seed...); err != nil {
+		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+	}
+
 	req := &rpc.ListApiVersionsRequest{
-		Parent:   "projects/my-project/apis/my-api",
+		Parent:   "projects/my-project/locations/global/apis/my-api",
 		PageSize: 1,
-		Filter:   "name == 'projects/my-project/apis/my-api/versions/v099'",
+		Filter:   "name == 'projects/my-project/locations/global/apis/my-api/versions/v099'",
 	}
 
 	got, err := server.ListApiVersions(ctx, req)
@@ -777,18 +767,18 @@ func TestUpdateApiVersion(t *testing.T) {
 		{
 			desc: "implicit nil mask",
 			seed: &rpc.ApiVersion{
-				Name:        "projects/my-project/apis/my-api/versions/v1",
+				Name:        "projects/my-project/locations/global/apis/my-api/versions/v1",
 				DisplayName: "Version One",
 				Description: "My ApiVersion",
 			},
 			req: &rpc.UpdateApiVersionRequest{
 				ApiVersion: &rpc.ApiVersion{
-					Name:        "projects/my-project/apis/my-api/versions/v1",
+					Name:        "projects/my-project/locations/global/apis/my-api/versions/v1",
 					Description: "My Updated ApiVersion",
 				},
 			},
 			want: &rpc.ApiVersion{
-				Name:        "projects/my-project/apis/my-api/versions/v1",
+				Name:        "projects/my-project/locations/global/apis/my-api/versions/v1",
 				DisplayName: "Version One",
 				Description: "My Updated ApiVersion",
 			},
@@ -796,19 +786,19 @@ func TestUpdateApiVersion(t *testing.T) {
 		{
 			desc: "implicit empty mask",
 			seed: &rpc.ApiVersion{
-				Name:        "projects/my-project/apis/my-api/versions/v1",
+				Name:        "projects/my-project/locations/global/apis/my-api/versions/v1",
 				DisplayName: "Version One",
 				Description: "My ApiVersion",
 			},
 			req: &rpc.UpdateApiVersionRequest{
 				ApiVersion: &rpc.ApiVersion{
-					Name:        "projects/my-project/apis/my-api/versions/v1",
+					Name:        "projects/my-project/locations/global/apis/my-api/versions/v1",
 					Description: "My Updated ApiVersion",
 				},
 				UpdateMask: &fieldmaskpb.FieldMask{},
 			},
 			want: &rpc.ApiVersion{
-				Name:        "projects/my-project/apis/my-api/versions/v1",
+				Name:        "projects/my-project/locations/global/apis/my-api/versions/v1",
 				DisplayName: "Version One",
 				Description: "My Updated ApiVersion",
 			},
@@ -816,20 +806,20 @@ func TestUpdateApiVersion(t *testing.T) {
 		{
 			desc: "field specific mask",
 			seed: &rpc.ApiVersion{
-				Name:        "projects/my-project/apis/my-api/versions/v1",
+				Name:        "projects/my-project/locations/global/apis/my-api/versions/v1",
 				DisplayName: "Version One",
 				Description: "My ApiVersion",
 			},
 			req: &rpc.UpdateApiVersionRequest{
 				ApiVersion: &rpc.ApiVersion{
-					Name:        "projects/my-project/apis/my-api/versions/v1",
+					Name:        "projects/my-project/locations/global/apis/my-api/versions/v1",
 					DisplayName: "Ignored",
 					Description: "My Updated ApiVersion",
 				},
 				UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"description"}},
 			},
 			want: &rpc.ApiVersion{
-				Name:        "projects/my-project/apis/my-api/versions/v1",
+				Name:        "projects/my-project/locations/global/apis/my-api/versions/v1",
 				DisplayName: "Version One",
 				Description: "My Updated ApiVersion",
 			},
@@ -837,19 +827,19 @@ func TestUpdateApiVersion(t *testing.T) {
 		{
 			desc: "full replacement wildcard mask",
 			seed: &rpc.ApiVersion{
-				Name:        "projects/my-project/apis/my-api/versions/v1",
+				Name:        "projects/my-project/locations/global/apis/my-api/versions/v1",
 				DisplayName: "Version One",
 				Description: "My ApiVersion",
 			},
 			req: &rpc.UpdateApiVersionRequest{
 				ApiVersion: &rpc.ApiVersion{
-					Name:        "projects/my-project/apis/my-api/versions/v1",
+					Name:        "projects/my-project/locations/global/apis/my-api/versions/v1",
 					Description: "My Updated ApiVersion",
 				},
 				UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"*"}},
 			},
 			want: &rpc.ApiVersion{
-				Name:        "projects/my-project/apis/my-api/versions/v1",
+				Name:        "projects/my-project/locations/global/apis/my-api/versions/v1",
 				DisplayName: "",
 				Description: "My Updated ApiVersion",
 			},
@@ -860,7 +850,9 @@ func TestUpdateApiVersion(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedVersions(ctx, t, server, test.seed)
+			if err := seeder.SeedVersions(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			updated, err := server.UpdateApiVersion(ctx, test.req)
 			if err != nil {
@@ -904,23 +896,23 @@ func TestUpdateApiVersionResponseCodes(t *testing.T) {
 	}{
 		{
 			desc: "resource not found",
-			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
+			seed: &rpc.ApiVersion{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
 			req: &rpc.UpdateApiVersionRequest{
 				ApiVersion: &rpc.ApiVersion{
-					Name: "projects/my-project/apis/my-api/versions/doesnt-exist",
+					Name: "projects/my-project/locations/global/apis/my-api/versions/doesnt-exist",
 				},
 			},
 			want: codes.NotFound,
 		},
 		{
 			desc: "missing resource body",
-			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
+			seed: &rpc.ApiVersion{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
 			req:  &rpc.UpdateApiVersionRequest{},
 			want: codes.InvalidArgument,
 		},
 		{
 			desc: "missing resource name",
-			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
+			seed: &rpc.ApiVersion{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
 			req: &rpc.UpdateApiVersionRequest{
 				ApiVersion: &rpc.ApiVersion{},
 			},
@@ -928,10 +920,10 @@ func TestUpdateApiVersionResponseCodes(t *testing.T) {
 		},
 		{
 			desc: "nonexistent field in mask",
-			seed: &rpc.ApiVersion{Name: "projects/my-project/apis/my-api/versions/v1"},
+			seed: &rpc.ApiVersion{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
 			req: &rpc.UpdateApiVersionRequest{
 				ApiVersion: &rpc.ApiVersion{
-					Name: "projects/my-project/apis/my-api/versions/v1",
+					Name: "projects/my-project/locations/global/apis/my-api/versions/v1",
 				},
 				UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"this field does not exist"}},
 			},
@@ -943,7 +935,9 @@ func TestUpdateApiVersionResponseCodes(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedVersions(ctx, t, server, test.seed)
+			if err := seeder.SeedVersions(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			if _, err := server.UpdateApiVersion(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("UpdateApiVersion(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
@@ -961,10 +955,10 @@ func TestDeleteApiVersion(t *testing.T) {
 		{
 			desc: "existing resource",
 			seed: &rpc.ApiVersion{
-				Name: "projects/my-project/apis/my-api/versions/v1",
+				Name: "projects/my-project/locations/global/apis/my-api/versions/v1",
 			},
 			req: &rpc.DeleteApiVersionRequest{
-				Name: "projects/my-project/apis/my-api/versions/v1",
+				Name: "projects/my-project/locations/global/apis/my-api/versions/v1",
 			},
 		},
 	}
@@ -973,7 +967,9 @@ func TestDeleteApiVersion(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedVersions(ctx, t, server, test.seed)
+			if err := seeder.SeedVersions(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			if _, err := server.DeleteApiVersion(ctx, test.req); err != nil {
 				t.Fatalf("DeleteApiVersion(%+v) returned error: %s", test.req, err)
@@ -1001,7 +997,7 @@ func TestDeleteApiVersionResponseCodes(t *testing.T) {
 		{
 			desc: "resource not found",
 			req: &rpc.DeleteApiVersionRequest{
-				Name: "projects/my-project/apis/my-api/versions/doesnt-exist",
+				Name: "projects/my-project/locations/global/apis/my-api/versions/doesnt-exist",
 			},
 			want: codes.NotFound,
 		},

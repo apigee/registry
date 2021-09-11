@@ -1,6 +1,4 @@
-// +build cgo
-
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2020 Google LLC. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,4 +14,17 @@
 
 package gorm
 
-const cgoEnabled = true
+// Key represents a key in a storage provider
+type Key struct {
+	Kind string
+	Name string
+}
+
+// NewKey creates a new storage key.
+func (c *Client) NewKey(kind, name string) *Key {
+	return &Key{Kind: kind, Name: name}
+}
+
+func (k *Key) String() string {
+	return k.Kind + ":" + k.Name
+}

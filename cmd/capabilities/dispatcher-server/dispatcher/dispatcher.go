@@ -15,22 +15,23 @@
 package dispatcher
 
 import (
-	cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
-	"cloud.google.com/go/pubsub"
 	"context"
 	"encoding/json"
-	"github.com/apigee/registry/cmd/capabilities/worker-server/worker"
-	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/server"
-	"github.com/golang/protobuf/jsonpb"
-	taskspb "google.golang.org/genproto/googleapis/cloud/tasks/v2"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"log"
 	"os"
 	"regexp"
 	"runtime"
 	"time"
+
+	cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
+	"cloud.google.com/go/pubsub"
+	"github.com/apigee/registry/cmd/capabilities/worker-server/worker"
+	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/server"
+	taskspb "google.golang.org/genproto/googleapis/cloud/tasks/v2"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 const subscriptionName = server.TopicName + "-pull-subscriber"
@@ -87,10 +88,9 @@ func (d *Dispatcher) StartServer(ctx context.Context) error {
 }
 
 func messageHandler(ctx context.Context, msg *pubsub.Message) {
-	data := string(msg.Data)
 	message := rpc.Notification{}
-	if err := jsonpb.UnmarshalString(data, &message); err != nil {
-		log.Printf("Message data: %s", data)
+	if err := protojson.Unmarshal(msg.Data, &message); err != nil {
+		log.Printf("Message data: %s", string(msg.Data))
 		log.Printf("Error in json.Unmarshal: %v", err)
 		msg.Ack()
 		return

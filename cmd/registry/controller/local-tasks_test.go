@@ -23,7 +23,9 @@ import (
 func TestErrorCases(t *testing.T) {
 
 	task := &ExecCommandTask{
-		Action: "resolve projects/demo/artifacts/test-manifest",
+		Action: &Action{
+			Command: "resolve projects/demo/artifacts/test-manifest",
+		},
 		TaskID: "task0",
 	}
 	ctx := context.Background()

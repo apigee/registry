@@ -143,7 +143,7 @@ func (task *uploadProtoTask) createAPI(ctx context.Context) error {
 	}
 
 	response, err := task.client.CreateApi(ctx, &rpc.CreateApiRequest{
-		Parent: task.projectName(),
+		Parent: task.projectName() + "/locations/global",
 		ApiId:  task.apiID,
 		Api:    &rpc.Api{},
 	})
@@ -250,7 +250,7 @@ func (task *uploadProtoTask) projectName() string {
 }
 
 func (task *uploadProtoTask) apiName() string {
-	return fmt.Sprintf("%s/apis/%s", task.projectName(), task.apiID)
+	return fmt.Sprintf("%s/locations/global/apis/%s", task.projectName(), task.apiID)
 }
 
 func (task *uploadProtoTask) versionName() string {

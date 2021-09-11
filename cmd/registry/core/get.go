@@ -44,7 +44,7 @@ func GetAPI(ctx context.Context,
 	segments []string,
 	handler ApiHandler) (*rpc.Api, error) {
 	request := &rpc.GetApiRequest{
-		Name: "projects/" + segments[1] + "/apis/" + segments[2],
+		Name: "projects/" + segments[1] + "/locations/global/apis/" + segments[2],
 	}
 	api, err := client.GetApi(ctx, request)
 	if err != nil {
@@ -61,7 +61,7 @@ func GetVersion(ctx context.Context,
 	segments []string,
 	handler VersionHandler) (*rpc.ApiVersion, error) {
 	request := &rpc.GetApiVersionRequest{
-		Name: "projects/" + segments[1] + "/apis/" + segments[2] + "/versions/" + segments[3],
+		Name: "projects/" + segments[1] + "/locations/global/apis/" + segments[2] + "/versions/" + segments[3],
 	}
 	version, err := client.GetApiVersion(ctx, request)
 	if err != nil {
@@ -79,7 +79,7 @@ func GetSpec(ctx context.Context,
 	getContents bool,
 	handler SpecHandler) (*rpc.ApiSpec, error) {
 	request := &rpc.GetApiSpecRequest{
-		Name: "projects/" + segments[1] + "/apis/" + segments[2] + "/versions/" + segments[3] + "/specs/" + segments[4],
+		Name: "projects/" + segments[1] + "/locations/global/apis/" + segments[2] + "/versions/" + segments[3] + "/specs/" + segments[4],
 	}
 	spec, err := client.GetApiSpec(ctx, request)
 	if err != nil {
@@ -109,13 +109,13 @@ func GetArtifact(ctx context.Context,
 	handler ArtifactHandler) (*rpc.Artifact, error) {
 	request := &rpc.GetArtifactRequest{}
 	if segments[3] == "" {
-		request.Name = "projects/" + segments[1]
+		request.Name = "projects/" + segments[1] + "/locations/global"
 	} else if segments[5] == "" {
-		request.Name = "projects/" + segments[1] + "/apis/" + segments[3]
+		request.Name = "projects/" + segments[1] + "/locations/global/apis/" + segments[3]
 	} else if segments[7] == "" {
-		request.Name = "projects/" + segments[1] + "/apis/" + segments[3] + "/versions/" + segments[5]
+		request.Name = "projects/" + segments[1] + "/locations/global/apis/" + segments[3] + "/versions/" + segments[5]
 	} else {
-		request.Name = "projects/" + segments[1] + "/apis/" + segments[3] + "/versions/" + segments[5] + "/specs/" + segments[7]
+		request.Name = "projects/" + segments[1] + "/locations/global/apis/" + segments[3] + "/versions/" + segments[5] + "/specs/" + segments[7]
 	}
 	request.Name += "/artifacts/" + segments[8]
 

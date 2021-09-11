@@ -20,7 +20,7 @@ import (
 	"testing"
 
 	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/server/names"
+	"github.com/apigee/registry/server/internal/test/seeder"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"google.golang.org/grpc/codes"
@@ -28,35 +28,6 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
-
-func seedApis(ctx context.Context, t *testing.T, s *RegistryServer, apis ...*rpc.Api) {
-	t.Helper()
-
-	for _, api := range apis {
-		name, err := names.ParseApi(api.Name)
-		if err != nil {
-			t.Fatalf("Setup/Seeding: ParseApi(%q) returned error: %s", api.Name, err)
-		}
-
-		parent := name.Project()
-		seedProjects(ctx, t, s, &rpc.Project{
-			Name: parent.String(),
-		})
-
-		req := &rpc.CreateApiRequest{
-			Parent: parent.String(),
-			ApiId:  name.ApiID,
-			Api:    api,
-		}
-
-		switch _, err := s.CreateApi(ctx, req); status.Code(err) {
-		case codes.OK, codes.AlreadyExists:
-			// Api is now ready for use in test.
-		default:
-			t.Fatalf("Setup/Seeding: CreateApi(%+v) returned error: %s", req, err)
-		}
-	}
-}
 
 func TestCreateApi(t *testing.T) {
 	tests := []struct {
@@ -71,7 +42,7 @@ func TestCreateApi(t *testing.T) {
 				Name: "projects/my-project",
 			},
 			req: &rpc.CreateApiRequest{
-				Parent: "projects/my-project",
+				Parent: "projects/my-project/locations/global",
 				ApiId:  "my-api",
 				Api: &rpc.Api{
 					DisplayName:        "My Display Name",
@@ -87,7 +58,7 @@ func TestCreateApi(t *testing.T) {
 				},
 			},
 			want: &rpc.Api{
-				Name:               "projects/my-project/apis/my-api",
+				Name:               "projects/my-project/locations/global/apis/my-api",
 				DisplayName:        "My Display Name",
 				Description:        "My Description",
 				Availability:       "My Availability",
@@ -106,7 +77,9 @@ func TestCreateApi(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedProjects(ctx, t, server, test.seed)
+			if err := seeder.SeedProjects(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			created, err := server.CreateApi(ctx, test.req)
 			if err != nil {
@@ -158,7 +131,7 @@ func TestCreateApiResponseCodes(t *testing.T) {
 			desc: "parent not found",
 			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.CreateApiRequest{
-				Parent: "projects/other-project",
+				Parent: "projects/other-project/locations/global",
 				ApiId:  "valid-id",
 				Api:    &rpc.Api{},
 			},
@@ -168,7 +141,7 @@ func TestCreateApiResponseCodes(t *testing.T) {
 			desc: "missing resource body",
 			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.CreateApiRequest{
-				Parent: "projects/my-project",
+				Parent: "projects/my-project/locations/global",
 				ApiId:  "valid-id",
 				Api:    nil,
 			},
@@ -178,7 +151,7 @@ func TestCreateApiResponseCodes(t *testing.T) {
 			desc: "missing custom identifier",
 			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.CreateApiRequest{
-				Parent: "projects/my-project",
+				Parent: "projects/my-project/locations/global",
 				ApiId:  "",
 				Api:    &rpc.Api{},
 			},
@@ -188,7 +161,7 @@ func TestCreateApiResponseCodes(t *testing.T) {
 			desc: "long custom identifier",
 			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.CreateApiRequest{
-				Parent: "projects/my-project",
+				Parent: "projects/my-project/locations/global",
 				ApiId:  "this-identifier-is-invalid-because-it-exceeds-the-eighty-character-maximum-length",
 				Api:    &rpc.Api{},
 			},
@@ -198,7 +171,7 @@ func TestCreateApiResponseCodes(t *testing.T) {
 			desc: "custom identifier underscores",
 			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.CreateApiRequest{
-				Parent: "projects/my-project",
+				Parent: "projects/my-project/locations/global",
 				ApiId:  "underscore_identifier",
 				Api:    &rpc.Api{},
 			},
@@ -208,7 +181,7 @@ func TestCreateApiResponseCodes(t *testing.T) {
 			desc: "custom identifier hyphen prefix",
 			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.CreateApiRequest{
-				Parent: "projects/my-project",
+				Parent: "projects/my-project/locations/global",
 				ApiId:  "-identifier",
 				Api:    &rpc.Api{},
 			},
@@ -218,7 +191,7 @@ func TestCreateApiResponseCodes(t *testing.T) {
 			desc: "custom identifier hyphen suffix",
 			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.CreateApiRequest{
-				Parent: "projects/my-project",
+				Parent: "projects/my-project/locations/global",
 				ApiId:  "identifier-",
 				Api:    &rpc.Api{},
 			},
@@ -228,7 +201,7 @@ func TestCreateApiResponseCodes(t *testing.T) {
 			desc: "customer identifier uuid format",
 			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.CreateApiRequest{
-				Parent: "projects/my-project",
+				Parent: "projects/my-project/locations/global",
 				ApiId:  "072d2288-c685-42d8-9df0-5edbb2a809ea",
 				Api:    &rpc.Api{},
 			},
@@ -238,7 +211,7 @@ func TestCreateApiResponseCodes(t *testing.T) {
 			desc: "custom identifier mixed case",
 			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.CreateApiRequest{
-				Parent: "projects/my-project",
+				Parent: "projects/my-project/locations/global",
 				ApiId:  "IDentifier",
 				Api:    &rpc.Api{},
 			},
@@ -250,7 +223,9 @@ func TestCreateApiResponseCodes(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedProjects(ctx, t, server, test.seed)
+			if err := seeder.SeedProjects(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			if _, err := server.CreateApi(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("CreateApi(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
@@ -268,9 +243,9 @@ func TestCreateApiDuplicates(t *testing.T) {
 	}{
 		{
 			desc: "case sensitive",
-			seed: &rpc.Api{Name: "projects/my-project/apis/my-api"},
+			seed: &rpc.Api{Name: "projects/my-project/locations/global/apis/my-api"},
 			req: &rpc.CreateApiRequest{
-				Parent: "projects/my-project",
+				Parent: "projects/my-project/locations/global",
 				ApiId:  "my-api",
 				Api:    &rpc.Api{},
 			},
@@ -278,9 +253,9 @@ func TestCreateApiDuplicates(t *testing.T) {
 		},
 		{
 			desc: "case insensitive",
-			seed: &rpc.Api{Name: "projects/my-project/apis/my-api"},
+			seed: &rpc.Api{Name: "projects/my-project/locations/global/apis/my-api"},
 			req: &rpc.CreateApiRequest{
-				Parent: "projects/my-project",
+				Parent: "projects/my-project/locations/global",
 				ApiId:  "My-Api",
 				Api:    &rpc.Api{},
 			},
@@ -292,7 +267,9 @@ func TestCreateApiDuplicates(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedApis(ctx, t, server, test.seed)
+			if err := seeder.SeedApis(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			if _, err := server.CreateApi(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("CreateApi(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
@@ -311,7 +288,7 @@ func TestGetApi(t *testing.T) {
 		{
 			desc: "fully populated resource",
 			seed: &rpc.Api{
-				Name:               "projects/my-project/apis/my-api",
+				Name:               "projects/my-project/locations/global/apis/my-api",
 				DisplayName:        "My Display Name",
 				Description:        "My Description",
 				Availability:       "My Availability",
@@ -324,10 +301,10 @@ func TestGetApi(t *testing.T) {
 				},
 			},
 			req: &rpc.GetApiRequest{
-				Name: "projects/my-project/apis/my-api",
+				Name: "projects/my-project/locations/global/apis/my-api",
 			},
 			want: &rpc.Api{
-				Name:               "projects/my-project/apis/my-api",
+				Name:               "projects/my-project/locations/global/apis/my-api",
 				DisplayName:        "My Display Name",
 				Description:        "My Description",
 				Availability:       "My Availability",
@@ -346,7 +323,9 @@ func TestGetApi(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedApis(ctx, t, server, test.seed)
+			if err := seeder.SeedApis(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			got, err := server.GetApi(ctx, test.req)
 			if err != nil {
@@ -374,17 +353,17 @@ func TestGetApiResponseCodes(t *testing.T) {
 	}{
 		{
 			desc: "resource not found",
-			seed: &rpc.Api{Name: "projects/my-project/apis/my-api"},
+			seed: &rpc.Api{Name: "projects/my-project/locations/global/apis/my-api"},
 			req: &rpc.GetApiRequest{
-				Name: "projects/my-project/apis/doesnt-exist",
+				Name: "projects/my-project/locations/global/apis/doesnt-exist",
 			},
 			want: codes.NotFound,
 		},
 		{
 			desc: "case insensitive name",
-			seed: &rpc.Api{Name: "projects/my-project/apis/my-api"},
+			seed: &rpc.Api{Name: "projects/my-project/locations/global/apis/my-api"},
 			req: &rpc.GetApiRequest{
-				Name: "projects/my-project/apis/My-Api",
+				Name: "projects/my-project/locations/global/apis/My-Api",
 			},
 			want: codes.OK,
 		},
@@ -394,7 +373,9 @@ func TestGetApiResponseCodes(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedApis(ctx, t, server, test.seed)
+			if err := seeder.SeedApis(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			if _, err := server.GetApi(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("GetApi(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
@@ -415,51 +396,51 @@ func TestListApis(t *testing.T) {
 		{
 			desc: "default parameters",
 			seed: []*rpc.Api{
-				{Name: "projects/my-project/apis/api1"},
-				{Name: "projects/my-project/apis/api2"},
-				{Name: "projects/my-project/apis/api3"},
-				{Name: "projects/other-project/apis/api1"},
+				{Name: "projects/my-project/locations/global/apis/api1"},
+				{Name: "projects/my-project/locations/global/apis/api2"},
+				{Name: "projects/my-project/locations/global/apis/api3"},
+				{Name: "projects/other-project/locations/global/apis/api1"},
 			},
 			req: &rpc.ListApisRequest{
-				Parent: "projects/my-project",
+				Parent: "projects/my-project/locations/global",
 			},
 			want: &rpc.ListApisResponse{
 				Apis: []*rpc.Api{
-					{Name: "projects/my-project/apis/api1"},
-					{Name: "projects/my-project/apis/api2"},
-					{Name: "projects/my-project/apis/api3"},
+					{Name: "projects/my-project/locations/global/apis/api1"},
+					{Name: "projects/my-project/locations/global/apis/api2"},
+					{Name: "projects/my-project/locations/global/apis/api3"},
 				},
 			},
 		},
 		{
 			desc: "across all projects",
 			seed: []*rpc.Api{
-				{Name: "projects/my-project/apis/api1"},
-				{Name: "projects/my-project/apis/api2"},
-				{Name: "projects/my-project/apis/api3"},
-				{Name: "projects/other-project/apis/api1"},
+				{Name: "projects/my-project/locations/global/apis/api1"},
+				{Name: "projects/my-project/locations/global/apis/api2"},
+				{Name: "projects/my-project/locations/global/apis/api3"},
+				{Name: "projects/other-project/locations/global/apis/api1"},
 			},
 			req: &rpc.ListApisRequest{
-				Parent: "projects/-",
+				Parent: "projects/-/locations/global",
 			},
 			want: &rpc.ListApisResponse{
 				Apis: []*rpc.Api{
-					{Name: "projects/my-project/apis/api1"},
-					{Name: "projects/my-project/apis/api2"},
-					{Name: "projects/my-project/apis/api3"},
-					{Name: "projects/other-project/apis/api1"},
+					{Name: "projects/my-project/locations/global/apis/api1"},
+					{Name: "projects/my-project/locations/global/apis/api2"},
+					{Name: "projects/my-project/locations/global/apis/api3"},
+					{Name: "projects/other-project/locations/global/apis/api1"},
 				},
 			},
 		},
 		{
 			desc: "custom page size",
 			seed: []*rpc.Api{
-				{Name: "projects/my-project/apis/api1"},
-				{Name: "projects/my-project/apis/api2"},
-				{Name: "projects/my-project/apis/api3"},
+				{Name: "projects/my-project/locations/global/apis/api1"},
+				{Name: "projects/my-project/locations/global/apis/api2"},
+				{Name: "projects/my-project/locations/global/apis/api3"},
 			},
 			req: &rpc.ListApisRequest{
-				Parent:   "projects/my-project",
+				Parent:   "projects/my-project/locations/global",
 				PageSize: 1,
 			},
 			want: &rpc.ListApisResponse{
@@ -474,17 +455,17 @@ func TestListApis(t *testing.T) {
 		{
 			desc: "name equality filtering",
 			seed: []*rpc.Api{
-				{Name: "projects/my-project/apis/api1"},
-				{Name: "projects/my-project/apis/api2"},
-				{Name: "projects/my-project/apis/api3"},
+				{Name: "projects/my-project/locations/global/apis/api1"},
+				{Name: "projects/my-project/locations/global/apis/api2"},
+				{Name: "projects/my-project/locations/global/apis/api3"},
 			},
 			req: &rpc.ListApisRequest{
-				Parent: "projects/my-project",
-				Filter: "name == 'projects/my-project/apis/api2'",
+				Parent: "projects/my-project/locations/global",
+				Filter: "name == 'projects/my-project/locations/global/apis/api2'",
 			},
 			want: &rpc.ListApisResponse{
 				Apis: []*rpc.Api{
-					{Name: "projects/my-project/apis/api2"},
+					{Name: "projects/my-project/locations/global/apis/api2"},
 				},
 			},
 		},
@@ -492,20 +473,20 @@ func TestListApis(t *testing.T) {
 			desc: "description inequality filtering",
 			seed: []*rpc.Api{
 				{
-					Name:        "projects/my-project/apis/api1",
+					Name:        "projects/my-project/locations/global/apis/api1",
 					Description: "First Api",
 				},
-				{Name: "projects/my-project/apis/api2"},
-				{Name: "projects/my-project/apis/api3"},
+				{Name: "projects/my-project/locations/global/apis/api2"},
+				{Name: "projects/my-project/locations/global/apis/api3"},
 			},
 			req: &rpc.ListApisRequest{
-				Parent: "projects/my-project",
+				Parent: "projects/my-project/locations/global",
 				Filter: "description != ''",
 			},
 			want: &rpc.ListApisResponse{
 				Apis: []*rpc.Api{
 					{
-						Name:        "projects/my-project/apis/api1",
+						Name:        "projects/my-project/locations/global/apis/api1",
 						Description: "First Api",
 					},
 				},
@@ -517,7 +498,9 @@ func TestListApis(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedApis(ctx, t, server, test.seed...)
+			if err := seeder.SeedApis(ctx, server, test.seed...); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			got, err := server.ListApis(ctx, test.req)
 			if err != nil {
@@ -556,7 +539,7 @@ func TestListApisResponseCodes(t *testing.T) {
 		{
 			desc: "parent not found",
 			req: &rpc.ListApisRequest{
-				Parent: "projects/my-project",
+				Parent: "projects/my-project/locations/global",
 			},
 			want: codes.NotFound,
 		},
@@ -599,18 +582,20 @@ func TestListApisSequence(t *testing.T) {
 	ctx := context.Background()
 	server := defaultTestServer(t)
 	seed := []*rpc.Api{
-		{Name: "projects/my-project/apis/api1"},
-		{Name: "projects/my-project/apis/api2"},
-		{Name: "projects/my-project/apis/api3"},
+		{Name: "projects/my-project/locations/global/apis/api1"},
+		{Name: "projects/my-project/locations/global/apis/api2"},
+		{Name: "projects/my-project/locations/global/apis/api3"},
 	}
-	seedApis(ctx, t, server, seed...)
+	if err := seeder.SeedApis(ctx, server, seed...); err != nil {
+		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+	}
 
 	listed := make([]*rpc.Api, 0, 3)
 
 	var nextToken string
 	t.Run("first page", func(t *testing.T) {
 		req := &rpc.ListApisRequest{
-			Parent:   "projects/my-project",
+			Parent:   "projects/my-project/locations/global",
 			PageSize: 1,
 		}
 
@@ -637,7 +622,7 @@ func TestListApisSequence(t *testing.T) {
 
 	t.Run("intermediate page", func(t *testing.T) {
 		req := &rpc.ListApisRequest{
-			Parent:    "projects/my-project",
+			Parent:    "projects/my-project/locations/global",
 			PageSize:  1,
 			PageToken: nextToken,
 		}
@@ -665,7 +650,7 @@ func TestListApisSequence(t *testing.T) {
 
 	t.Run("final page", func(t *testing.T) {
 		req := &rpc.ListApisRequest{
-			Parent:    "projects/my-project",
+			Parent:    "projects/my-project/locations/global",
 			PageSize:  1,
 			PageToken: nextToken,
 		}
@@ -708,16 +693,21 @@ func TestListApisSequence(t *testing.T) {
 func TestListApisLargeCollectionFiltering(t *testing.T) {
 	ctx := context.Background()
 	server := defaultTestServer(t)
-	for i := 1; i <= 100; i++ {
-		seedApis(ctx, t, server, &rpc.Api{
-			Name: fmt.Sprintf("projects/my-project/apis/a%03d", i),
+	seed := make([]*rpc.Api, 0, 100)
+	for i := 1; i <= cap(seed); i++ {
+		seed = append(seed, &rpc.Api{
+			Name: fmt.Sprintf("projects/my-project/locations/global/apis/a%03d", i),
 		})
 	}
 
+	if err := seeder.SeedApis(ctx, server, seed...); err != nil {
+		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+	}
+
 	req := &rpc.ListApisRequest{
-		Parent:   "projects/my-project",
+		Parent:   "projects/my-project/locations/global",
 		PageSize: 1,
-		Filter:   "name == 'projects/my-project/apis/a099'",
+		Filter:   "name == 'projects/my-project/locations/global/apis/a099'",
 	}
 
 	got, err := server.ListApis(ctx, req)
@@ -744,18 +734,18 @@ func TestUpdateApi(t *testing.T) {
 		{
 			desc: "implicit nil mask",
 			seed: &rpc.Api{
-				Name:        "projects/my-project/apis/my-api",
+				Name:        "projects/my-project/locations/global/apis/my-api",
 				DisplayName: "My Api",
 				Description: "Api for my APIs",
 			},
 			req: &rpc.UpdateApiRequest{
 				Api: &rpc.Api{
-					Name:        "projects/my-project/apis/my-api",
+					Name:        "projects/my-project/locations/global/apis/my-api",
 					DisplayName: "My Updated Api",
 				},
 			},
 			want: &rpc.Api{
-				Name:        "projects/my-project/apis/my-api",
+				Name:        "projects/my-project/locations/global/apis/my-api",
 				DisplayName: "My Updated Api",
 				Description: "Api for my APIs",
 			},
@@ -763,19 +753,19 @@ func TestUpdateApi(t *testing.T) {
 		{
 			desc: "implicit empty mask",
 			seed: &rpc.Api{
-				Name:        "projects/my-project/apis/my-api",
+				Name:        "projects/my-project/locations/global/apis/my-api",
 				DisplayName: "My Api",
 				Description: "Api for my APIs",
 			},
 			req: &rpc.UpdateApiRequest{
 				Api: &rpc.Api{
-					Name:        "projects/my-project/apis/my-api",
+					Name:        "projects/my-project/locations/global/apis/my-api",
 					DisplayName: "My Updated Api",
 				},
 				UpdateMask: &fieldmaskpb.FieldMask{},
 			},
 			want: &rpc.Api{
-				Name:        "projects/my-project/apis/my-api",
+				Name:        "projects/my-project/locations/global/apis/my-api",
 				DisplayName: "My Updated Api",
 				Description: "Api for my APIs",
 			},
@@ -783,20 +773,20 @@ func TestUpdateApi(t *testing.T) {
 		{
 			desc: "field specific mask",
 			seed: &rpc.Api{
-				Name:        "projects/my-project/apis/my-api",
+				Name:        "projects/my-project/locations/global/apis/my-api",
 				DisplayName: "My Api",
 				Description: "Api for my APIs",
 			},
 			req: &rpc.UpdateApiRequest{
 				Api: &rpc.Api{
-					Name:        "projects/my-project/apis/my-api",
+					Name:        "projects/my-project/locations/global/apis/my-api",
 					DisplayName: "My Updated Api",
 					Description: "Ignored",
 				},
 				UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"display_name"}},
 			},
 			want: &rpc.Api{
-				Name:        "projects/my-project/apis/my-api",
+				Name:        "projects/my-project/locations/global/apis/my-api",
 				DisplayName: "My Updated Api",
 				Description: "Api for my APIs",
 			},
@@ -804,19 +794,19 @@ func TestUpdateApi(t *testing.T) {
 		{
 			desc: "full replacement wildcard mask",
 			seed: &rpc.Api{
-				Name:        "projects/my-project/apis/my-api",
+				Name:        "projects/my-project/locations/global/apis/my-api",
 				DisplayName: "My Api",
 				Description: "Api for my APIs",
 			},
 			req: &rpc.UpdateApiRequest{
 				Api: &rpc.Api{
-					Name:        "projects/my-project/apis/my-api",
+					Name:        "projects/my-project/locations/global/apis/my-api",
 					DisplayName: "My Updated Api",
 				},
 				UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"*"}},
 			},
 			want: &rpc.Api{
-				Name:        "projects/my-project/apis/my-api",
+				Name:        "projects/my-project/locations/global/apis/my-api",
 				DisplayName: "My Updated Api",
 				Description: "",
 			},
@@ -827,7 +817,9 @@ func TestUpdateApi(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedApis(ctx, t, server, test.seed)
+			if err := seeder.SeedApis(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			updated, err := server.UpdateApi(ctx, test.req)
 			if err != nil {
@@ -871,23 +863,23 @@ func TestUpdateApiResponseCodes(t *testing.T) {
 	}{
 		{
 			desc: "resource not found",
-			seed: &rpc.Api{Name: "projects/my-project/apis/my-api"},
+			seed: &rpc.Api{Name: "projects/my-project/locations/global/apis/my-api"},
 			req: &rpc.UpdateApiRequest{
 				Api: &rpc.Api{
-					Name: "projects/my-project/apis/doesnt-exist",
+					Name: "projects/my-project/locations/global/apis/doesnt-exist",
 				},
 			},
 			want: codes.NotFound,
 		},
 		{
 			desc: "missing resource body",
-			seed: &rpc.Api{Name: "projects/my-project/apis/my-api"},
+			seed: &rpc.Api{Name: "projects/my-project/locations/global/apis/my-api"},
 			req:  &rpc.UpdateApiRequest{},
 			want: codes.InvalidArgument,
 		},
 		{
 			desc: "missing resource name",
-			seed: &rpc.Api{Name: "projects/my-project/apis/my-api"},
+			seed: &rpc.Api{Name: "projects/my-project/locations/global/apis/my-api"},
 			req: &rpc.UpdateApiRequest{
 				Api: &rpc.Api{},
 			},
@@ -895,10 +887,10 @@ func TestUpdateApiResponseCodes(t *testing.T) {
 		},
 		{
 			desc: "nonexistent field in mask",
-			seed: &rpc.Api{Name: "projects/my-project/apis/my-api"},
+			seed: &rpc.Api{Name: "projects/my-project/locations/global/apis/my-api"},
 			req: &rpc.UpdateApiRequest{
 				Api: &rpc.Api{
-					Name: "projects/my-project/apis/my-api",
+					Name: "projects/my-project/locations/global/apis/my-api",
 				},
 				UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"this field does not exist"}},
 			},
@@ -910,7 +902,9 @@ func TestUpdateApiResponseCodes(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedApis(ctx, t, server, test.seed)
+			if err := seeder.SeedApis(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			if _, err := server.UpdateApi(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("UpdateApi(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
@@ -928,10 +922,10 @@ func TestDeleteApi(t *testing.T) {
 		{
 			desc: "existing resource",
 			seed: &rpc.Api{
-				Name: "projects/my-project/apis/my-api",
+				Name: "projects/my-project/locations/global/apis/my-api",
 			},
 			req: &rpc.DeleteApiRequest{
-				Name: "projects/my-project/apis/my-api",
+				Name: "projects/my-project/locations/global/apis/my-api",
 			},
 		},
 	}
@@ -940,7 +934,9 @@ func TestDeleteApi(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedApis(ctx, t, server, test.seed)
+			if err := seeder.SeedApis(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			if _, err := server.DeleteApi(ctx, test.req); err != nil {
 				t.Fatalf("DeleteApi(%+v) returned error: %s", test.req, err)
@@ -968,7 +964,7 @@ func TestDeleteApiResponseCodes(t *testing.T) {
 		{
 			desc: "resource not found",
 			req: &rpc.DeleteApiRequest{
-				Name: "projects/my-project/apis/doesnt-exist",
+				Name: "projects/my-project/locations/global/apis/doesnt-exist",
 			},
 			want: codes.NotFound,
 		},

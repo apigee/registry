@@ -32,7 +32,9 @@ func TestCommandCoverage(t *testing.T) {
 			continue
 		}
 		task := &controller.ExecCommandTask{
-			Action: cmd.Name() + " --help",
+			Action: &controller.Action{
+				Command: cmd.Name() + " --help",
+			},
 			TaskID: fmt.Sprintf("task%d", i),
 		}
 		if err := task.Run(ctx); err != nil {

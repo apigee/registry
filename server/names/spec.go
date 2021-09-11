@@ -21,7 +21,8 @@ import (
 
 // specRegexp is the regex pattern for spec resource names.
 // Notably, this differs from SpecRegexp() by not accepting spec revision IDs in the resource name.
-var specRegexp = regexp.MustCompile(fmt.Sprintf("^projects/%s/apis/%s/versions/%s/specs/%s$", identifier, identifier, identifier, identifier))
+var specRegexp = regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/versions/%s/specs/%s$",
+	identifier, Location, identifier, identifier, identifier))
 
 // Spec represents a resource name for an API spec.
 type Spec struct {
@@ -100,18 +101,26 @@ func (s Spec) Normal() Spec {
 	}
 }
 
+// Parent returns this resource's parent version resource name.
+func (s Spec) Parent() string {
+	return s.Version().String()
+}
+
 func (s Spec) String() string {
-	return normalize(fmt.Sprintf("projects/%s/apis/%s/versions/%s/specs/%s", s.ProjectID, s.ApiID, s.VersionID, s.SpecID))
+	return normalize(fmt.Sprintf("projects/%s/locations/%s/apis/%s/versions/%s/specs/%s",
+		s.ProjectID, Location, s.ApiID, s.VersionID, s.SpecID))
 }
 
 // SpecsRegexp returns a regular expression that matches a collection of specs.
 func SpecsRegexp() *regexp.Regexp {
-	return regexp.MustCompile(fmt.Sprintf("^projects/%s/apis/%s/versions/%s/specs$", identifier, identifier, identifier))
+	return regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/versions/%s/specs$",
+		identifier, Location, identifier, identifier))
 }
 
 // SpecRegexp returns a regular expression that matches a spec resource name with an optional revision identifier.
 func SpecRegexp() *regexp.Regexp {
-	return regexp.MustCompile(fmt.Sprintf("^projects/%s/apis/%s/versions/%s/specs/%s(@%s)?$", identifier, identifier, identifier, identifier, revisionTag))
+	return regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/versions/%s/specs/%s(@%s)?$",
+		identifier, Location, identifier, identifier, identifier, revisionTag))
 }
 
 // ParseSpec parses the name of a spec.

@@ -72,18 +72,26 @@ func (v Version) Spec(id string) Spec {
 	}
 }
 
+// Parent returns this resource's parent API resource name.
+func (v Version) Parent() string {
+	return v.Api().String()
+}
+
 func (v Version) String() string {
-	return normalize(fmt.Sprintf("projects/%s/apis/%s/versions/%s", v.ProjectID, v.ApiID, v.VersionID))
+	return normalize(fmt.Sprintf("projects/%s/locations/%s/apis/%s/versions/%s",
+		v.ProjectID, Location, v.ApiID, v.VersionID))
 }
 
 // VersionsRegexp returns a regular expression that matches a collection of versions.
 func VersionsRegexp() *regexp.Regexp {
-	return regexp.MustCompile(fmt.Sprintf("^projects/%s/apis/%s/versions$", identifier, identifier))
+	return regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/versions$",
+		identifier, Location, identifier))
 }
 
 // VersionRegexp returns a regular expression that matches a version resource name.
 func VersionRegexp() *regexp.Regexp {
-	return regexp.MustCompile(fmt.Sprintf("^projects/%s/apis/%s/versions/%s$", identifier, identifier, identifier))
+	return regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/versions/%s$",
+		identifier, Location, identifier, identifier))
 }
 
 // ParseVersion parses the name of a version.

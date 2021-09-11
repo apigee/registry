@@ -113,20 +113,18 @@ more demonstrations, see the [demos](demos) directory.
 
 ### Configuration
 
-Configuration for `registry-server` is loaded from the
-`$HOME/.config/registry/` directory by default. We recommend YAML
-configuration, but other file types are supported. See the Viper
-[documentation](https://github.com/spf13/viper) for more information. Refer to
-this [example](config/registry-server.yaml) for documentation of each
-configurable value.
+Configuration for `registry-server` is loaded from a YAML file specified using
+the `--configuration` (`-c`) flag. 
 
-Configuration can be loaded from a custom file path using the `--configuration`
-or `-c` flag. If provided, other directories will not be searched.
+Configuration files can contain environment variable references. See
+[config/registry_server.yaml](config/registry_server.yaml) for an example.
+When that configuration file is specified, the port configuration value
+can be set using the `PORT` environment variable. Other useful environment
+variables are also defined there.
 
-Values can be set or overridden using environment variables. Each configuration
-value should be uppercased, prefixed with `REGISTRY_`, and use underscores to
-indicate nesting. For example, you can override the `database.driver` value by
-setting the `REGISTRY_DATABASE_DRIVER` environment variable.
+When no configuration is specified, `registry-server` runs on port 8080 using
+a sqlite database stored in a file at `/tmp/registry.db`. For other default
+configuration settings, see [cmd/registry-server/main.go](cmd/registry-server/main.go).
 
 ### Running the Registry API server
 
@@ -138,27 +136,27 @@ Start the server by running `registry-server`.
 
 Ensure you have PostgreSQL [installed](https://www.postgresql.org/download/)
 and set up on your machine. After it's ready, update the `database.driver` and
-`database.dsn` values in your configuration.
+`database.config` values in your configuration.
 
 For example:
 ```
 database:
   driver: postgres
-  dsn: host=localhost port=<dbport> user=<dbuser> dbname=<dbname> password=<dbpassword> sslmode=disable
+  config: host=localhost port=<dbport> user=<dbuser> dbname=<dbname> password=<dbpassword> sslmode=disable
 ```
 
 ### Optional: Use a PostgreSQL database on Google Cloud SQL
 
 If you don't have an existing PostgreSQL instance, you can follow
 [these instructions](https://cloud.google.com/sql/docs/postgres/quickstart).
-After your instance is ready, update the `database.driver` and `database.dsn`
-values in your configuration.
+After your instance is ready, update the `database.driver` and
+`database.config` values in your configuration.
 
 For example:
 ```
 database:
   driver: cloudsqlpostgres
-  dsn: host=<project_id>:<region>:<instance_id> user=<dbuser> dbname=<dbname> password=<dbpassword> sslmode=disable
+  config: host=<project_id>:<region>:<instance_id> user=<dbuser> dbname=<dbname> password=<dbpassword> sslmode=disable
 ```
 
 ### Optional: Proxying a local service with Envoy
@@ -226,14 +224,13 @@ Your `docker run` invocation might look like this:
 docker run \
   -p 8080:8080 \
   -e REGISTRY_DATABASE_DRIVER=postgres \
-  -e REGISTRY_DATABASE_DSN="host=${PGHOST} port=5432 user=registry dbname=registry password=iloveapis sslmode=disable" \
+  -e REGISTRY_DATABASE_CONFIG="host=HOST port=PORT user=USER dbname=DATABASE password=PASSWORD sslmode=disable" \
   registry-server:latest
 ```
 
-Be sure to replace `${PGHOST}` with the address of your Postgres server (either
-directly or by setting `PGHOST` with another `-e` argument to `docker run`),
-check all the other DSN parameters, and verify that your server is configured
-to accept remote connections (in `postgres.conf` and `pg_hba.conf`).
+Be sure to replace `HOST` and the other database configuration parameters and verify
+that your server is configured to accept remote connections (in `postgres.conf` and
+`pg_hba.conf`).
 
 ## Running the Registry API server with Google Cloud Run
 
@@ -337,8 +334,6 @@ Requirements:
 For detailed steps on how to deploy to GKE, please refer to
 [deployments/gke/README.md](deployments/gke/README.md).
 
-```
-
 ## License
 
 This software is licensed under the Apache License, Version 2.0. See
@@ -354,4 +349,3 @@ ad-hoc volunteer basis.
 
 Contributions are welcome! Please see [CONTRIBUTING](CONTRIBUTING.md) for notes
 on how to contribute to this project.
-```

@@ -18,22 +18,21 @@ import (
 	"context"
 
 	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/server/dao"
-	"github.com/apigee/registry/server/models"
+	"github.com/apigee/registry/server/internal/storage"
+	"github.com/apigee/registry/server/internal/storage/models"
 	"github.com/apigee/registry/server/names"
-	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 // CreateApiVersion handles the corresponding API request.
 func (s *RegistryServer) CreateApiVersion(ctx context.Context, req *rpc.CreateApiVersionRequest) (*rpc.ApiVersion, error) {
-	client, err := s.getStorageClient(ctx)
+	db, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer s.releaseStorageClient(client)
-	db := dao.NewDAO(client)
+	defer db.Close()
 
 	if req.GetApiVersion() == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid api_version %+v: body must be provided", req.GetApiVersion())
@@ -79,13 +78,12 @@ func (s *RegistryServer) CreateApiVersion(ctx context.Context, req *rpc.CreateAp
 }
 
 // DeleteApiVersion handles the corresponding API request.
-func (s *RegistryServer) DeleteApiVersion(ctx context.Context, req *rpc.DeleteApiVersionRequest) (*empty.Empty, error) {
-	client, err := s.getStorageClient(ctx)
+func (s *RegistryServer) DeleteApiVersion(ctx context.Context, req *rpc.DeleteApiVersionRequest) (*emptypb.Empty, error) {
+	db, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer s.releaseStorageClient(client)
-	db := dao.NewDAO(client)
+	defer db.Close()
 
 	name, err := names.ParseVersion(req.GetName())
 	if err != nil {
@@ -102,17 +100,16 @@ func (s *RegistryServer) DeleteApiVersion(ctx context.Context, req *rpc.DeleteAp
 	}
 
 	s.notify(ctx, rpc.Notification_DELETED, name.String())
-	return &empty.Empty{}, nil
+	return &emptypb.Empty{}, nil
 }
 
 // GetApiVersion handles the corresponding API request.
 func (s *RegistryServer) GetApiVersion(ctx context.Context, req *rpc.GetApiVersionRequest) (*rpc.ApiVersion, error) {
-	client, err := s.getStorageClient(ctx)
+	db, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer s.releaseStorageClient(client)
-	db := dao.NewDAO(client)
+	defer db.Close()
 
 	name, err := names.ParseVersion(req.GetName())
 	if err != nil {
@@ -134,12 +131,11 @@ func (s *RegistryServer) GetApiVersion(ctx context.Context, req *rpc.GetApiVersi
 
 // ListApiVersions handles the corresponding API request.
 func (s *RegistryServer) ListApiVersions(ctx context.Context, req *rpc.ListApiVersionsRequest) (*rpc.ListApiVersionsResponse, error) {
-	client, err := s.getStorageClient(ctx)
+	db, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer s.releaseStorageClient(client)
-	db := dao.NewDAO(client)
+	defer db.Close()
 
 	if req.GetPageSize() < 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid page_size %d: must not be negative", req.GetPageSize())
@@ -154,7 +150,7 @@ func (s *RegistryServer) ListApiVersions(ctx context.Context, req *rpc.ListApiVe
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	listing, err := db.ListVersions(ctx, parent, dao.PageOptions{
+	listing, err := db.ListVersions(ctx, parent, storage.PageOptions{
 		Size:   req.GetPageSize(),
 		Filter: req.GetFilter(),
 		Token:  req.GetPageToken(),
@@ -180,12 +176,11 @@ func (s *RegistryServer) ListApiVersions(ctx context.Context, req *rpc.ListApiVe
 
 // UpdateApiVersion handles the corresponding API request.
 func (s *RegistryServer) UpdateApiVersion(ctx context.Context, req *rpc.UpdateApiVersionRequest) (*rpc.ApiVersion, error) {
-	client, err := s.getStorageClient(ctx)
+	db, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer s.releaseStorageClient(client)
-	db := dao.NewDAO(client)
+	defer db.Close()
 
 	if req.GetApiVersion() == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid api_version %+v: body must be provided", req.GetApiVersion())

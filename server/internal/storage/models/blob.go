@@ -16,9 +16,6 @@ package models
 
 import "time"
 
-// BlobEntityName is used to represent blobs in storage.
-const BlobEntityName = "Blob"
-
 // Blob is the storage-side representation of a blob.
 type Blob struct {
 	Key         string    `gorm:"primaryKey"`

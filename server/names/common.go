@@ -63,3 +63,6 @@ func validateID(id string) error {
 func normalize(identifier string) string {
 	return strings.ToLower(identifier)
 }
+
+// Location is included in resource names immediately following the project_id.
+const Location = "global"

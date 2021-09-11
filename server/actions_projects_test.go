@@ -20,7 +20,7 @@ import (
 	"testing"
 
 	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/server/names"
+	"github.com/apigee/registry/server/internal/test/seeder"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"google.golang.org/grpc/codes"
@@ -28,29 +28,6 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
-
-func seedProjects(ctx context.Context, t *testing.T, s *RegistryServer, projects ...*rpc.Project) {
-	t.Helper()
-
-	for _, p := range projects {
-		name, err := names.ParseProject(p.Name)
-		if err != nil {
-			t.Fatalf("Setup/Seeding: ParseProject(%q) returned error: %s", p.Name, err)
-		}
-
-		req := &rpc.CreateProjectRequest{
-			ProjectId: name.ProjectID,
-			Project:   p,
-		}
-
-		switch _, err := s.CreateProject(ctx, req); status.Code(err) {
-		case codes.OK, codes.AlreadyExists:
-			// Project is now ready for use in test.
-		default:
-			t.Fatalf("Setup/Seeding: CreateProject(%+v) returned error: %s", req, err)
-		}
-	}
-}
 
 func TestCreateProject(t *testing.T) {
 	tests := []struct {
@@ -234,7 +211,9 @@ func TestCreateProjectDuplicates(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedProjects(ctx, t, server, test.seed)
+			if err := seeder.SeedProjects(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			if _, err := server.CreateProject(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("CreateProject(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
@@ -272,7 +251,9 @@ func TestGetProject(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedProjects(ctx, t, server, test.seed)
+			if err := seeder.SeedProjects(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			got, err := server.GetProject(ctx, test.req)
 			if err != nil {
@@ -320,7 +301,9 @@ func TestGetProjectResponseCodes(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedProjects(ctx, t, server, test.seed)
+			if err := seeder.SeedProjects(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			if _, err := server.GetProject(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("GetProject(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
@@ -417,7 +400,9 @@ func TestListProjects(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedProjects(ctx, t, server, test.seed...)
+			if err := seeder.SeedProjects(ctx, server, test.seed...); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			got, err := server.ListProjects(ctx, test.req)
 			if err != nil {
@@ -493,7 +478,10 @@ func TestListProjectsSequence(t *testing.T) {
 		{Name: "projects/project2"},
 		{Name: "projects/project3"},
 	}
-	seedProjects(ctx, t, server, seed...)
+
+	if err := seeder.SeedProjects(ctx, server, seed...); err != nil {
+		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+	}
 
 	listed := make([]*rpc.Project, 0, 3)
 
@@ -595,10 +583,15 @@ func TestListProjectsSequence(t *testing.T) {
 func TestListProjectsLargeCollectionFiltering(t *testing.T) {
 	ctx := context.Background()
 	server := defaultTestServer(t)
-	for i := 1; i <= 100; i++ {
-		seedProjects(ctx, t, server, &rpc.Project{
+	seed := make([]*rpc.Project, 0, 100)
+	for i := 1; i <= cap(seed); i++ {
+		seed = append(seed, &rpc.Project{
 			Name: fmt.Sprintf("projects/project%03d", i),
 		})
+	}
+
+	if err := seeder.SeedProjects(ctx, server, seed...); err != nil {
+		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
 	}
 
 	req := &rpc.ListProjectsRequest{
@@ -713,7 +706,9 @@ func TestUpdateProject(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedProjects(ctx, t, server, test.seed)
+			if err := seeder.SeedProjects(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			updated, err := server.UpdateProject(ctx, test.req)
 			if err != nil {
@@ -796,7 +791,9 @@ func TestUpdateProjectResponseCodes(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedProjects(ctx, t, server, test.seed)
+			if err := seeder.SeedProjects(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			if _, err := server.UpdateProject(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("UpdateProject(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
@@ -826,7 +823,9 @@ func TestDeleteProject(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			seedProjects(ctx, t, server, test.seed)
+			if err := seeder.SeedProjects(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			if _, err := server.DeleteProject(ctx, test.req); err != nil {
 				t.Fatalf("DeleteProject(%+v) returned error: %s", test.req, err)
