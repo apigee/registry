@@ -80,9 +80,11 @@ func scanDirectoryForOpenAPI(ctx context.Context, client connection.Client, proj
 
 		switch {
 		case strings.HasSuffix(path, "swagger.yaml"), strings.HasSuffix(path, "swagger.json"):
+			fmt.Println(path)
 			task.version = "2"
 			taskQueue <- task
 		case strings.HasSuffix(path, "openapi.yaml"), strings.HasSuffix(path, "openapi.json"):
+			fmt.Println(path)
 			task.version = "3"
 			taskQueue <- task
 		}
