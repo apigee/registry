@@ -153,10 +153,6 @@ func (task *computeConformantTask) String() string {
 	return fmt.Sprintf("compute %s/conformance-%s", task.spec.GetName(), task.linter.GetName())
 }
 
-func conformanceRelation(linter string) string {
-	return "conformance-" + linter
-}
-
 func (task *computeConformantTask) Run(ctx context.Context) error {
 	// Get the linter
 	linter := task.linter
@@ -199,7 +195,7 @@ func (task *computeConformantTask) Run(ctx context.Context) error {
 		return err
 	}
 	artifact := &rpc.Artifact{
-		Name:     subject + "/artifacts/" + conformanceRelation(task.linter.GetName()),
+		Name:     subject + "/artifacts/" + lintRelation(task.linter.GetName()),
 		MimeType: core.MimeTypeForMessageType("google.cloud.apigee.registry.applications.v1alpha1.Lint"),
 		Contents: messageData,
 	}
