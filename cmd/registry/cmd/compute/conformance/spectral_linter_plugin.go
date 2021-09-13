@@ -1,4 +1,4 @@
-package core
+package conformance
 
 import (
 	"fmt"
@@ -7,7 +7,6 @@ import (
 )
 
 type SpectralLinter struct {
-	Name  string
 	Rules map[string][]string
 }
 
@@ -15,12 +14,8 @@ func (linter SpectralLinter) AddRule(mimeType string, rule string) {
 	linter.Rules[mimeType] = append(linter.Rules[mimeType], rule)
 }
 
-func (linter SpectralLinter) GetRules(mimeType string) []string {
-	return linter.Rules[mimeType]
-}
-
 func (linter SpectralLinter) GetName() string {
-	return linter.Name
+	return "spectral"
 }
 
 func (linter SpectralLinter) SupportsMimeType(mimeType string) bool {

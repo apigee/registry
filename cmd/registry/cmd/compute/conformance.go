@@ -23,6 +23,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/apigee/registry/cmd/registry/cmd/compute/conformance"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
@@ -67,7 +68,7 @@ func conformantsCommand(ctx context.Context) *cobra.Command {
 
 			projectSegments := []string{"projects", spec.ProjectID}
 
-			linterNameToLinter := make(map[string]core.Linter)
+			linterNameToLinter := make(map[string]conformance.Linter)
 			err = core.ListArtifacts(ctx, client, projectSegments, filter, true, func(artifact *rpc.Artifact) {
 				fmt.Println("Artifact")
 				// Only consider artifacts which have the styleguide mimetype
@@ -92,7 +93,7 @@ func conformantsCommand(ctx context.Context) *cobra.Command {
 					for _, rule := range guideline.GetRules() {
 						linter_name := rule.GetLinter()
 						if _, ok := linterNameToLinter[linter_name]; !ok {
-							linter, err := core.CreateLinter(rule.GetLinter())
+							linter, err := conformance.CreateLinter(rule.GetLinter())
 							if err != nil {
 								// If the linter is unsupported, there is no reason
 								// to prematurely exit. We can just ignore this specific
@@ -115,11 +116,6 @@ func conformantsCommand(ctx context.Context) *cobra.Command {
 
 				fmt.Println(styleGuide.Name)
 			})
-
-			for name, linter := range linterNameToLinter {
-				fmt.Println(name, linter.GetName())
-				fmt.Println(linter.GetRules("application/vnd.apigee.openapi"))
-			}
 
 			if err != nil {
 				log.Fatalf("%s", err.Error())
@@ -159,11 +155,11 @@ func conformantsCommand(ctx context.Context) *cobra.Command {
 type computeConformantTask struct {
 	client connection.Client
 	spec   *rpc.ApiSpec
-	linter core.Linter
+	linter conformance.Linter
 }
 
 func (task *computeConformantTask) String() string {
-	return fmt.Sprintf("compute %s/conformance-%s", task.spec.GetName(), task.linter)
+	return fmt.Sprintf("compute %s/conformance-%s", task.spec.GetName(), task.linter.GetName())
 }
 
 func conformanceRelation(linter string) string {
