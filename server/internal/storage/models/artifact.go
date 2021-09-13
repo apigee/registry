@@ -21,6 +21,8 @@ import (
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -59,7 +61,7 @@ func NewArtifact(name names.Artifact, body *rpc.Artifact) (artifact *Artifact, e
 		if strings.Contains(artifact.MimeType, "+gzip") && len(contents) > 0 {
 			contents, err = GUnzippedBytes(contents)
 			if err != nil {
-				return nil, err
+				return nil, status.Error(codes.InvalidArgument, err.Error())
 			}
 		}
 		artifact.SizeInBytes = int32(len(contents))
