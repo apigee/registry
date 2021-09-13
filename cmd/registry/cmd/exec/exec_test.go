@@ -21,26 +21,46 @@ import (
 )
 
 // COMMAND should be passed as a single arg.
-// Exaample: registry exec "echo test"
+// Example: registry exec "echo test"
 func TestExec(t *testing.T) {
-	ctx := context.Background()
-
-	cmd := Command(ctx)
-	out := bytes.NewBuffer(make([]byte, 0))
-	args := []string{"echo sample test"}
-	cmd.SetArgs(args)
-	cmd.SetOutput(out)
-
-	if err := cmd.Execute(); err != nil {
-		t.Fatalf("Execute() with args %v returned error: %s", args, err)
+	tests := []struct {
+		desc    string
+		command string
+		want    string
+	}{
+		{
+			desc:    "single cmd arg",
+			command: "echo test",
+			want:    "test\n",
+		},
+		{
+			desc:    "multiple cmd arg",
+			command: "echo sample test",
+			want:    "sample test\n",
+		},
 	}
 
-	output := out.String()
-	want := "sample test\n"
-	// The exec command should execute all the args passed to it
-	// Make sure that the output produced is "sample test" and not only "sample"
-	if output != want {
-		t.Fatalf("Execute() with args %v generated unexpected output, want: %q got: %q", args, want, output)
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			ctx := context.Background()
+
+			cmd := Command(ctx)
+			out := bytes.NewBuffer(make([]byte, 0))
+			args := []string{test.command}
+			cmd.SetArgs(args)
+			cmd.SetOutput(out)
+
+			if err := cmd.Execute(); err != nil {
+				t.Fatalf("Execute() with args %v returned error: %s", args, err)
+			}
+
+			output := out.String()
+			// The exec command should execute all the args passed to it
+			// Make sure that the output produced is "sample test" and not only "sample" for multi-arg case
+			if output != test.want {
+				t.Fatalf("Execute() with args %v generated unexpected output, want: %q got: %q", args, test.want, output)
+			}
+		})
 	}
 
 }
