@@ -70,7 +70,6 @@ func conformantsCommand(ctx context.Context) *cobra.Command {
 
 			linterNameToLinter := make(map[string]conformance.Linter)
 			err = core.ListArtifacts(ctx, client, projectSegments, filter, true, func(artifact *rpc.Artifact) {
-				fmt.Println("Artifact")
 				// Only consider artifacts which have the styleguide mimetype
 				messageType, err := core.MessageTypeForMimeType(artifact.GetMimeType())
 				if err != nil {
@@ -108,13 +107,9 @@ func conformantsCommand(ctx context.Context) *cobra.Command {
 						for _, allowedMimeType := range styleGuide.MimeTypes {
 							linter.AddRule(allowedMimeType, rule.GetLinterRulename())
 						}
-						fmt.Println(rule.GetName())
-
 					}
 
 				}
-
-				fmt.Println(styleGuide.Name)
 			})
 
 			if err != nil {
@@ -128,11 +123,8 @@ func conformantsCommand(ctx context.Context) *cobra.Command {
 			// Generate tasks.
 			err = core.ListSpecs(ctx, client, specSegments, filter, func(spec *rpc.ApiSpec) {
 				// Lint with every linter that supports the spec's mime type
-				fmt.Println("mime type:", spec.GetMimeType())
 				for _, linter := range linterNameToLinter {
-					fmt.Println(spec.GetMimeType())
 					if linter.SupportsMimeType(spec.GetMimeType()) {
-						fmt.Println("Name: ", spec.Name)
 						taskQueue <- &computeConformantTask{
 							client: client,
 							spec:   spec,
@@ -140,7 +132,6 @@ func conformantsCommand(ctx context.Context) *cobra.Command {
 						}
 					}
 				}
-				fmt.Println(spec.Name)
 			})
 			if err != nil {
 				log.Fatalf("%s", err.Error())
