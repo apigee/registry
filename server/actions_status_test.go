@@ -19,16 +19,16 @@ import (
 	"testing"
 
 	"github.com/apigee/registry/rpc"
-	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/testing/protocmp"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 func TestGetStatus(t *testing.T) {
 	ctx := context.Background()
 	server := defaultTestServer(t)
 
-	req := &empty.Empty{}
+	req := &emptypb.Empty{}
 	want := &rpc.Status{
 		Message: "running",
 	}

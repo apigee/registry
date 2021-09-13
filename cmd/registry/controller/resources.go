@@ -16,10 +16,10 @@ package controller
 
 import (
 	"fmt"
-	"github.com/apigee/registry/rpc"
-	"github.com/golang/protobuf/ptypes"
 	"regexp"
 	"time"
+
+	"github.com/apigee/registry/rpc"
 )
 
 type Resource interface {
@@ -59,8 +59,7 @@ func (s SpecResource) GetName() string {
 }
 
 func (s SpecResource) GetUpdateTimestamp() time.Time {
-	ts, _ := ptypes.Timestamp(s.Spec.RevisionUpdateTime)
-	return ts
+	return s.Spec.RevisionUpdateTime.AsTime()
 }
 
 func (s SpecResource) ExtractResourceGroup(group_id string) string {
@@ -93,8 +92,7 @@ func (a ApiResource) GetName() string {
 }
 
 func (a ApiResource) GetUpdateTimestamp() time.Time {
-	ts, _ := ptypes.Timestamp(a.Api.UpdateTime)
-	return ts
+	return a.Api.UpdateTime.AsTime()
 }
 
 func (a ApiResource) ExtractResourceGroup(group_id string) string {
@@ -130,8 +128,7 @@ func (ar ArtifactResource) GetName() string {
 }
 
 func (ar ArtifactResource) GetUpdateTimestamp() time.Time {
-	ts, _ := ptypes.Timestamp(ar.Artifact.UpdateTime)
-	return ts
+	return ar.Artifact.UpdateTime.AsTime()
 }
 
 func (ar ArtifactResource) ExtractResourceGroup(group_id string) string {
