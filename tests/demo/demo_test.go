@@ -243,19 +243,25 @@ func TestDemo(t *testing.T) {
 			t.Errorf("Incorrect revision count: %d (if this is zero, be sure that all indexes are built)", len(revisionIDs))
 		}
 	}
-	if len(revisionIDs) > 0 {
+	// check the size and hash of each spec revision
+	for i, revisionID := range revisionIDs {
 		req := &rpc.GetApiSpecRequest{
-			Name: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml" + "@" + revisionIDs[len(revisionIDs)-1],
+			Name: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml" + "@" + revisionID,
 		}
 		spec, err := registryClient.GetApiSpec(ctx, req)
 		check(t, "error getting spec %s", err)
-		// compute the hash of the original file
-		fileBytes, err := ioutil.ReadFile(filepath.Join("testdata", "openapi.yaml@r0"))
+		// compute the size and hash of the original file
+		fileName := fmt.Sprintf("openapi.yaml@r%d", len(revisionIDs)-i-1)
+		fileBytes, err := ioutil.ReadFile(filepath.Join("testdata", fileName))
 		check(t, "error reading spec", err)
+		if int(spec.GetSizeBytes()) != len(fileBytes) {
+			t.Errorf("size mismatch %d != %d (%s)", spec.GetSizeBytes(), len(fileBytes), fileName)
+		}
 		if hash := hashForBytes(fileBytes); spec.GetHash() != hash {
-			t.Errorf("Hash mismatch %s != %s", spec.GetHash(), hash)
+			t.Errorf("Hash mismatch %s != %s (%s)", spec.GetHash(), hash, fileName)
 		}
 	}
+
 	// List specs; there should be only one.
 	{
 		specs = listAllSpecs(ctx, registryClient)
