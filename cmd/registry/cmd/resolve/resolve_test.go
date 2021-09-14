@@ -49,184 +49,208 @@ func readAndGZipFile(t *testing.T, filename string) (*bytes.Buffer, error) {
 }
 
 func TestResolve(t *testing.T) {
-	ctx := context.Background()
-	client, err := connection.NewClient(ctx)
-	if err != nil {
-		t.Fatalf("Setup: Failed to create client: %s", err)
-	}
-
-	testProject := "controller-demo"
-
-	err = client.DeleteProject(ctx, &rpc.DeleteProjectRequest{
-		Name: "projects/" + testProject,
-	})
-	if err != nil && status.Code(err) != codes.NotFound {
-		t.Fatalf("Setup: Failed to delete test project: %s", err)
-	}
-
-	project, err := client.CreateProject(ctx, &rpc.CreateProjectRequest{
-		ProjectId: testProject,
-		Project: &rpc.Project{
-			DisplayName: "Demo",
-			Description: "A demo catalog",
+	tests := []struct {
+		desc         string
+		manifestPath string
+		listPattern  string
+		want         []string
+	}{
+		{
+			desc:         "normal case",
+			manifestPath: filepath.Join("testdata", "manifest.yaml"),
+			listPattern:  "projects/controller-demo/locations/global/apis/petstore/versions/-/specs/-/artifacts/-",
+			want: []string{
+				"projects/controller-demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity",
+				"projects/controller-demo/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/complexity",
+				"projects/controller-demo/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/complexity",
+			},
 		},
-	})
-	if err != nil {
-		t.Fatalf("Failed to create project %s: %s", testProject, err.Error())
-	}
-
-	// Setup some resources in the project
-
-	// Create API
-	api, err := client.CreateApi(ctx, &rpc.CreateApiRequest{
-		Parent: project.Name + "/locations/global",
-		ApiId:  "petstore",
-		Api: &rpc.Api{
-			DisplayName:  "petstore",
-			Description:  "Sample Test API",
-			Availability: "GENERAL",
-		},
-	})
-	if err != nil {
-		t.Fatalf("Failed CreateApi %s: %s", "petstore", err.Error())
-	}
-
-	// Create Versions 1.0.0, 1.0.1, 1.1.0
-	v1, err := client.CreateApiVersion(ctx, &rpc.CreateApiVersionRequest{
-		Parent:       api.Name,
-		ApiVersionId: "1.0.0",
-		ApiVersion:   &rpc.ApiVersion{},
-	})
-	if err != nil {
-		t.Fatalf("Failed CreateVersion 1.0.0: %s", err.Error())
-	}
-
-	v2, err := client.CreateApiVersion(ctx, &rpc.CreateApiVersionRequest{
-		Parent:       api.Name,
-		ApiVersionId: "1.0.1",
-		ApiVersion:   &rpc.ApiVersion{},
-	})
-	if err != nil {
-		t.Fatalf("Failed CreateVersion 1.0.1: %s", err.Error())
-	}
-
-	v3, err := client.CreateApiVersion(ctx, &rpc.CreateApiVersionRequest{
-		Parent:       api.Name,
-		ApiVersionId: "1.1.0",
-		ApiVersion:   &rpc.ApiVersion{},
-	})
-	if err != nil {
-		t.Fatalf("Failed CreateVersion 1.1.0: %s", err.Error())
-	}
-
-	// Create Spec in each of the versions
-	buf, err := readAndGZipFile(t, filepath.Join("testdata", "openapi.yaml"))
-	if err != nil {
-		t.Fatalf("Failed reading API contents: %s", err.Error())
-	}
-
-	req := &rpc.CreateApiSpecRequest{
-		Parent:    v1.Name,
-		ApiSpecId: "openapi.yaml",
-		ApiSpec: &rpc.ApiSpec{
-			MimeType: "application/x.openapi+gzip;version=3.0.0",
-			Contents: buf.Bytes(),
+		{
+			desc:         "receipt artifact",
+			manifestPath: filepath.Join("testdata", "manifest_receipt.yaml"),
+			listPattern:  "projects/controller-demo/locations/global/apis/petstore/versions/-/specs/-/artifacts/-",
+			want: []string{
+				"projects/controller-demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/test-receipt-artifact",
+				"projects/controller-demo/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/test-receipt-artifact",
+				"projects/controller-demo/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/test-receipt-artifact",
+			},
 		},
 	}
-	v1spec, err := client.CreateApiSpec(ctx, &rpc.CreateApiSpecRequest{
-		Parent:    v1.Name,
-		ApiSpecId: "openapi.yaml",
-		ApiSpec: &rpc.ApiSpec{
-			MimeType: "application/x.openapi+gzip;version=3.0.0",
-			Contents: buf.Bytes(),
-		},
-	})
-	if err != nil {
-		t.Fatalf("Failed CreateApiSpec(%v): %s", req, err.Error())
-	}
 
-	req = &rpc.CreateApiSpecRequest{
-		Parent:    v2.Name,
-		ApiSpecId: "openapi.yaml",
-		ApiSpec: &rpc.ApiSpec{
-			MimeType: "application/x.openapi+gzip;version=3.0.0",
-			Contents: buf.Bytes(),
-		},
-	}
-	v2spec, err := client.CreateApiSpec(ctx, &rpc.CreateApiSpecRequest{
-		Parent:    v2.Name,
-		ApiSpecId: "openapi.yaml",
-		ApiSpec: &rpc.ApiSpec{
-			MimeType: "application/x.openapi+gzip;version=3.0.0",
-			Contents: buf.Bytes(),
-		},
-	})
-	if err != nil {
-		t.Fatalf("Failed CreateApiSpec(%v): %s", req, err.Error())
-	}
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			ctx := context.Background()
+			client, err := connection.NewClient(ctx)
+			if err != nil {
+				t.Fatalf("Setup: Failed to create client: %s", err)
+			}
 
-	req = &rpc.CreateApiSpecRequest{
-		Parent:    v3.Name,
-		ApiSpecId: "openapi.yaml",
-		ApiSpec: &rpc.ApiSpec{
-			MimeType: "application/x.openapi+gzip;version=3.0.0",
-			Contents: buf.Bytes(),
-		},
-	}
-	v3spec, err := client.CreateApiSpec(ctx, &rpc.CreateApiSpecRequest{
-		Parent:    v3.Name,
-		ApiSpecId: "openapi.yaml",
-		ApiSpec: &rpc.ApiSpec{
-			MimeType: "application/x.openapi+gzip;version=3.0.0",
-			Contents: buf.Bytes(),
-		},
-	})
-	if err != nil {
-		t.Fatalf("Failed CreateApiSpec(%v): %s", req, err.Error())
-	}
+			testProject := "controller-demo"
 
-	// Upload the manifest to registry
-	args := []string{"manifest", filepath.Join("testdata", "manifest.yaml"), "--project_id=" + testProject}
-	uploadCmd := upload.Command(ctx)
-	uploadCmd.SetArgs(args)
-	if err = uploadCmd.Execute(); err != nil {
-		t.Fatalf("Failed to upload the manifest: %s", err)
+			err = client.DeleteProject(ctx, &rpc.DeleteProjectRequest{
+				Name: "projects/" + testProject,
+			})
+			if err != nil && status.Code(err) != codes.NotFound {
+				t.Fatalf("Setup: Failed to delete test project: %s", err)
+			}
+
+			project, err := client.CreateProject(ctx, &rpc.CreateProjectRequest{
+				ProjectId: testProject,
+				Project: &rpc.Project{
+					DisplayName: "Demo",
+					Description: "A demo catalog",
+				},
+			})
+			if err != nil {
+				t.Fatalf("Failed to create project %s: %s", testProject, err.Error())
+			}
+
+			// Setup some resources in the project
+
+			// Create API
+			api, err := client.CreateApi(ctx, &rpc.CreateApiRequest{
+				Parent: project.Name + "/locations/global",
+				ApiId:  "petstore",
+				Api: &rpc.Api{
+					DisplayName:  "petstore",
+					Description:  "Sample Test API",
+					Availability: "GENERAL",
+				},
+			})
+			if err != nil {
+				t.Fatalf("Failed CreateApi %s: %s", "petstore", err.Error())
+			}
+
+			// Create Versions 1.0.0, 1.0.1, 1.1.0
+			v1, err := client.CreateApiVersion(ctx, &rpc.CreateApiVersionRequest{
+				Parent:       api.Name,
+				ApiVersionId: "1.0.0",
+				ApiVersion:   &rpc.ApiVersion{},
+			})
+			if err != nil {
+				t.Fatalf("Failed CreateVersion 1.0.0: %s", err.Error())
+			}
+
+			v2, err := client.CreateApiVersion(ctx, &rpc.CreateApiVersionRequest{
+				Parent:       api.Name,
+				ApiVersionId: "1.0.1",
+				ApiVersion:   &rpc.ApiVersion{},
+			})
+			if err != nil {
+				t.Fatalf("Failed CreateVersion 1.0.1: %s", err.Error())
+			}
+
+			v3, err := client.CreateApiVersion(ctx, &rpc.CreateApiVersionRequest{
+				Parent:       api.Name,
+				ApiVersionId: "1.1.0",
+				ApiVersion:   &rpc.ApiVersion{},
+			})
+			if err != nil {
+				t.Fatalf("Failed CreateVersion 1.1.0: %s", err.Error())
+			}
+
+			// Create Spec in each of the versions
+			buf, err := readAndGZipFile(t, filepath.Join("testdata", "openapi.yaml"))
+			if err != nil {
+				t.Fatalf("Failed reading API contents: %s", err.Error())
+			}
+
+			req := &rpc.CreateApiSpecRequest{
+				Parent:    v1.Name,
+				ApiSpecId: "openapi.yaml",
+				ApiSpec: &rpc.ApiSpec{
+					MimeType: "application/x.openapi+gzip;version=3.0.0",
+					Contents: buf.Bytes(),
+				},
+			}
+			_, err = client.CreateApiSpec(ctx, &rpc.CreateApiSpecRequest{
+				Parent:    v1.Name,
+				ApiSpecId: "openapi.yaml",
+				ApiSpec: &rpc.ApiSpec{
+					MimeType: "application/x.openapi+gzip;version=3.0.0",
+					Contents: buf.Bytes(),
+				},
+			})
+			if err != nil {
+				t.Fatalf("Failed CreateApiSpec(%v): %s", req, err.Error())
+			}
+
+			req = &rpc.CreateApiSpecRequest{
+				Parent:    v2.Name,
+				ApiSpecId: "openapi.yaml",
+				ApiSpec: &rpc.ApiSpec{
+					MimeType: "application/x.openapi+gzip;version=3.0.0",
+					Contents: buf.Bytes(),
+				},
+			}
+			_, err = client.CreateApiSpec(ctx, &rpc.CreateApiSpecRequest{
+				Parent:    v2.Name,
+				ApiSpecId: "openapi.yaml",
+				ApiSpec: &rpc.ApiSpec{
+					MimeType: "application/x.openapi+gzip;version=3.0.0",
+					Contents: buf.Bytes(),
+				},
+			})
+			if err != nil {
+				t.Fatalf("Failed CreateApiSpec(%v): %s", req, err.Error())
+			}
+
+			req = &rpc.CreateApiSpecRequest{
+				Parent:    v3.Name,
+				ApiSpecId: "openapi.yaml",
+				ApiSpec: &rpc.ApiSpec{
+					MimeType: "application/x.openapi+gzip;version=3.0.0",
+					Contents: buf.Bytes(),
+				},
+			}
+			_, err = client.CreateApiSpec(ctx, &rpc.CreateApiSpecRequest{
+				Parent:    v3.Name,
+				ApiSpecId: "openapi.yaml",
+				ApiSpec: &rpc.ApiSpec{
+					MimeType: "application/x.openapi+gzip;version=3.0.0",
+					Contents: buf.Bytes(),
+				},
+			})
+			if err != nil {
+				t.Fatalf("Failed CreateApiSpec(%v): %s", req, err.Error())
+			}
+
+			// Upload the manifest to registry
+			args := []string{"manifest", test.manifestPath, "--project_id=" + testProject}
+			uploadCmd := upload.Command(ctx)
+			uploadCmd.SetArgs(args)
+			if err = uploadCmd.Execute(); err != nil {
+				t.Fatalf("Failed to upload the manifest: %s", err)
+			}
+
+			resolveCmd := Command(ctx)
+			args = []string{"projects/" + testProject + "/locations/global/artifacts/test-manifest"}
+			resolveCmd.SetArgs(args)
+			if err = resolveCmd.Execute(); err != nil {
+				t.Fatalf("Execute() with args %v returned error: %s", args, err)
+			}
+
+			// List all the artifacts
+			got := make([]string, 0)
+			segments := names.ArtifactRegexp().FindStringSubmatch(test.listPattern)
+			_ = core.ListArtifacts(ctx, client, segments, "", false,
+				func(artifact *rpc.Artifact) {
+					got = append(got, artifact.Name)
+				},
+			)
+
+			sortStrings := cmpopts.SortSlices(func(a, b string) bool { return a < b })
+			if diff := cmp.Diff(test.want, got, sortStrings); diff != "" {
+				t.Errorf("Returned unexpected diff (-want +got):\n%s", diff)
+			}
+
+			// Delete the demo project
+			err = client.DeleteProject(ctx, &rpc.DeleteProjectRequest{
+				Name: "projects/" + testProject,
+			})
+			if err != nil && status.Code(err) != codes.NotFound {
+				t.Fatalf("Setup: Failed to delete test project: %s", err)
+			}
+		})
 	}
-
-	resolveCmd := Command(ctx)
-	args = []string{"projects/" + testProject + "/locations/global/artifacts/test-manifest"}
-	resolveCmd.SetArgs(args)
-	if err = resolveCmd.Execute(); err != nil {
-		t.Fatalf("Execute() with args %v returned error: %s", args, err)
-	}
-
-	// List all the artifacts
-	got := make([]string, 0)
-	listPattern := "projects/controller-demo/locations/global/apis/petstore/versions/-/specs/-/artifacts/-"
-	segments := names.ArtifactRegexp().FindStringSubmatch(listPattern)
-	_ = core.ListArtifacts(ctx, client, segments, "", false,
-		func(artifact *rpc.Artifact) {
-			got = append(got, artifact.Name)
-		},
-	)
-
-	want := []string{
-		v1spec.Name + "/artifacts/complexity",
-		v2spec.Name + "/artifacts/complexity",
-		v3spec.Name + "/artifacts/complexity",
-	}
-
-	sortStrings := cmpopts.SortSlices(func(a, b string) bool { return a < b })
-	if diff := cmp.Diff(want, got, sortStrings); diff != "" {
-		t.Errorf("Returned unexpected diff (-want +got):\n%s", diff)
-	}
-
-	// Delete the demo project
-	err = client.DeleteProject(ctx, &rpc.DeleteProjectRequest{
-		Name: "projects/" + testProject,
-	})
-	if err != nil && status.Code(err) != codes.NotFound {
-		t.Fatalf("Setup: Failed to delete test project: %s", err)
-	}
-
 }
