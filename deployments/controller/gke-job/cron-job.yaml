@@ -35,11 +35,6 @@ spec:
               value: "1"
             - name: APG_REGISTRY_ADDRESS
               value: registry-backend:80
-            - name: APG_REGISTRY_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  key: token
-                  name: $DEFAULT_SA_KEY
             args:
             - registry
             - resolve
