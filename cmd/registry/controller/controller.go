@@ -16,7 +16,6 @@ package controller
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
@@ -67,7 +66,7 @@ func processManifestResource(
 	for _, dependency := range resource.Dependencies {
 		dMap, err := generateDependencyMap(ctx, client, resourcePattern, dependency, projectID)
 		if err != nil {
-			return nil, errors.New(fmt.Sprintf("Error while generating dependency map for %v Error: %s", dependency, err.Error()))
+			return nil, fmt.Errorf("error while generating dependency map for %v Error: %s", dependency, err)
 		}
 		dependencyMaps = append(dependencyMaps, dMap)
 	}
@@ -130,7 +129,7 @@ func generateDependencyMap(
 	}
 
 	if len(sourceMap) == 0 {
-		return nil, errors.New(fmt.Sprintf("No resources found for pattern: %s, filer: %s", extDependencyPattern, dependency.Filter))
+		return nil, fmt.Errorf("no resources found for pattern: %s, filer: %s", extDependencyPattern, dependency.Filter)
 	}
 
 	return sourceMap, nil
@@ -160,7 +159,7 @@ func generateActions(
 			// Get the group to look for in dependencyMap
 			group, err := getGroupKey(dependency.Pattern, resource)
 			if err != nil {
-				return nil, fmt.Errorf("Cannot match resource with dependency. Error: %s", err.Error())
+				return nil, fmt.Errorf("cannot match resource with dependency. Error: %s", err.Error())
 			}
 
 			if collection, ok := dMap[group]; ok {
