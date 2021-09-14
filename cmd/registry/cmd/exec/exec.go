@@ -16,11 +16,12 @@ package exec
 
 import (
 	"context"
-	"log"
-
-	"github.com/spf13/cobra"
-	osexec "os/exec"
 	"strings"
+
+	"github.com/apex/log"
+	"github.com/spf13/cobra"
+
+	osexec "os/exec"
 )
 
 func Command(ctx context.Context) *cobra.Command {
@@ -31,7 +32,7 @@ func Command(ctx context.Context) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			commandStr := args[0]
 			if commandStr == "" {
-				log.Fatal("please provide a command to execute")
+				log.Fatal("Please provide a command to execute")
 			}
 
 			commandFields := strings.Fields(commandStr)
@@ -45,7 +46,7 @@ func Command(ctx context.Context) *cobra.Command {
 			err := execCmd.Run()
 
 			if err != nil {
-				log.Fatalf("failed executing command: %q error: %q", command, err)
+				log.WithError(err).Fatalf("Failed executing command: %q", command)
 			}
 		},
 	}
