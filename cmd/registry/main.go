@@ -17,17 +17,21 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 
+	"github.com/apex/log"
+	"github.com/apex/log/handlers/text"
 	"github.com/apigee/registry/cmd/registry/cmd"
 	"github.com/google/uuid"
 )
 
 // Initialize global default logger with unique process identifier.
 func init() {
-	uid := fmt.Sprintf("[ %.8s ] ", uuid.New())
-	log.SetPrefix(uid)
+	logger := &log.Logger{
+		Level:   log.DebugLevel,
+		Handler: text.Default,
+	}
+	log.Log = logger.WithField("uid", fmt.Sprintf("[ %.8s ] ", uuid.New()))
 }
 
 func main() {

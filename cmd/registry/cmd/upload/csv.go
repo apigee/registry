@@ -21,9 +21,9 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"os"
 
+	"github.com/apex/log"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
@@ -50,7 +50,7 @@ func csvCommand(ctx context.Context) *cobra.Command {
 			ctx := context.Background()
 			client, err := connection.NewClient(ctx)
 			if err != nil {
-				log.Fatalf("Failed to create client: %s", err)
+				log.WithError(err).Fatal("Failed to get client")
 			}
 			core.EnsureProjectExists(ctx, client, projectID)
 
@@ -59,7 +59,7 @@ func csvCommand(ctx context.Context) *cobra.Command {
 
 			file, err := os.Open(args[0])
 			if err != nil {
-				log.Fatalf("Failed to open file: %s", err)
+				log.WithError(err).Fatalf("Failed to open file")
 			}
 			defer file.Close()
 
@@ -70,7 +70,7 @@ func csvCommand(ctx context.Context) *cobra.Command {
 
 			for row, err := r.Read(); err != io.EOF; row, err = r.Read() {
 				if err != nil {
-					log.Fatalf("Failed to read row from file: %s", err)
+					log.WithError(err).Fatalf("Failed to read row from file")
 				}
 
 				taskQueue <- &uploadSpecTask{
@@ -181,7 +181,7 @@ func (t uploadSpecTask) Run(ctx context.Context) error {
 
 	switch status.Code(err) {
 	case codes.OK:
-		log.Printf("Created API: %s", api.GetName())
+		log.Debugf("Created API: %s", api.GetName())
 	case codes.AlreadyExists:
 		api = &rpc.Api{
 			Name: fmt.Sprintf("projects/%s/locations/global/apis/%s", t.projectID, t.apiID),
@@ -198,7 +198,7 @@ func (t uploadSpecTask) Run(ctx context.Context) error {
 
 	switch status.Code(err) {
 	case codes.OK:
-		log.Printf("Created API version: %s", version.GetName())
+		log.Debugf("Created API version: %s", version.GetName())
 	case codes.AlreadyExists:
 		version = &rpc.ApiVersion{
 			Name: fmt.Sprintf("projects/%s/apis/%s/versions/%s", t.projectID, t.apiID, t.versionID),
@@ -229,7 +229,7 @@ func (t uploadSpecTask) Run(ctx context.Context) error {
 
 	switch status.Code(err) {
 	case codes.OK:
-		log.Printf("Created API spec: %s", spec.GetName())
+		log.Debugf("Created API spec: %s", spec.GetName())
 	case codes.AlreadyExists:
 		// When the spec already exists we can silently continue.
 	default:

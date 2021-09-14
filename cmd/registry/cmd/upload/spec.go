@@ -18,11 +18,11 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/apex/log"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/gapic"
@@ -44,31 +44,31 @@ func specCommand(ctx context.Context) *cobra.Command {
 			ctx := context.Background()
 			client, err := connection.NewClient(ctx)
 			if err != nil {
-				log.Fatalf("%s", err.Error())
+				log.WithError(err).Fatal("Failed to get client")
 			}
 			for _, arg := range args {
 				matches, err := filepath.Glob(arg)
 				if err != nil {
-					log.Printf("%s\n", err.Error())
+					log.WithError(err).Debug("Failed to glob argument")
 				}
 				// for each match, upload the file
 				for _, match := range matches {
-					log.Printf("now upload %+v", match)
+					log.Debugf("Now upload %+v", match)
 					fi, err := os.Stat(match)
-					if err == nil {
-						switch mode := fi.Mode(); {
-						case mode.IsDir():
-							fmt.Printf("upload directory %s\n", match)
-							err = uploadSpecDirectory(ctx, match, client, version, style)
-						case mode.IsRegular():
-							fmt.Printf("upload file %s\n", match)
-							err = uploadSpecFile(ctx, match, client, version, style)
-						}
-						if err != nil {
-							log.Fatalf("%s", err.Error())
-						}
-					} else {
-						log.Fatalf("%s", err.Error())
+					if err != nil {
+						log.WithError(err).Fatal("Failed to get file info")
+					}
+
+					switch mode := fi.Mode(); {
+					case mode.IsDir():
+						log.Debugf("Upload directory %s", match)
+						err = uploadSpecDirectory(ctx, match, client, version, style)
+					case mode.IsRegular():
+						log.Debugf("Upload file %s", match)
+						err = uploadSpecFile(ctx, match, client, version, style)
+					}
+					if err != nil {
+						log.WithError(err).Fatal("Failed to upload")
 					}
 				}
 			}
@@ -104,13 +104,11 @@ func uploadSpecDirectory(ctx context.Context, dirname string, client *gapic.Regi
 	}
 	response, err := client.CreateApiSpec(ctx, request)
 	if err == nil {
-		log.Printf("created %s", response.Name)
+		log.Debugf("Created %s", response.Name)
 	} else if core.AlreadyExists(err) {
-		log.Printf("found %s/specs/%s", request.Parent, request.ApiSpecId)
+		log.Debugf("Found %s/specs/%s", request.Parent, request.ApiSpecId)
 	} else {
-		details := fmt.Sprintf("contents-length: %d", len(request.ApiSpec.Contents))
-		log.Printf("error %s/specs/%s: %s [%s]",
-			request.Parent, request.ApiSpecId, err.Error(), details)
+		log.WithError(err).Debugf("Error %s/specs/%s [contents-length %d]", request.Parent, request.ApiSpecId, len(request.ApiSpec.Contents))
 	}
 	return nil
 }
@@ -137,17 +135,27 @@ func uploadSpecFile(ctx context.Context, filename string, client *gapic.Registry
 	if err != nil { // TODO only do this for NotFound errors
 		bytes, err := ioutil.ReadFile(filename)
 		if err != nil {
-			log.Printf("err %+v", err)
+			log.WithError(err).Debug("Failed to read file")
 		} else {
-			request := &rpc.CreateApiSpecRequest{}
-			request.Parent = version
-			request.ApiSpecId = specID
-			request.ApiSpec = &rpc.ApiSpec{}
-			request.ApiSpec.Filename = specID
-			request.ApiSpec.Contents, _ = core.GZippedBytes(bytes)
-			request.ApiSpec.MimeType = mimeType
+			request := &rpc.CreateApiSpecRequest{
+				Parent:    version,
+				ApiSpecId: specID,
+				ApiSpec: &rpc.ApiSpec{
+					Filename: specID,
+					MimeType: mimeType,
+				},
+			}
+			request.ApiSpec.Contents, err = core.GZippedBytes(bytes)
+			if err != nil {
+				log.WithError(err).Debug("Failed to compress spec contents")
+			}
+
 			response, err := client.CreateApiSpec(ctx, request)
-			log.Printf("response %+v\nerr %+v", response, err)
+			if err != nil {
+				log.WithError(err).Debug("Failed to create spec")
+			}
+
+			log.Debugf("Response %+v", response)
 		}
 	}
 	return nil

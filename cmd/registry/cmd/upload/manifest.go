@@ -17,8 +17,9 @@ package upload
 import (
 	"context"
 	"fmt"
-	"log"
+	"io/ioutil"
 
+	"github.com/apex/log"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
@@ -26,7 +27,6 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
-	"io/ioutil"
 )
 
 func readManifestProto(filename string) (*rpc.Manifest, error) {
@@ -61,14 +61,14 @@ func manifestCommand(ctx context.Context) *cobra.Command {
 
 			manifest, err := readManifestProto(manifestPath)
 			if err != nil {
-				log.Fatal(err.Error())
+				log.WithError(err).Fatal("Failed to read manifest")
 			}
 			manifestData, _ := proto.Marshal(manifest)
 
 			ctx := context.Background()
 			client, err := connection.NewClient(ctx)
 			if err != nil {
-				log.Fatalf("%s", err.Error())
+				log.WithError(err).Fatal("Failed to get client")
 			}
 
 			artifact := &rpc.Artifact{
@@ -76,10 +76,10 @@ func manifestCommand(ctx context.Context) *cobra.Command {
 				MimeType: core.MimeTypeForMessageType("google.cloud.apigee.registry.applications.v1alpha1.Manifest"),
 				Contents: manifestData,
 			}
-			log.Printf("uploading %s", artifact.Name)
+			log.Debugf("Uploading %s", artifact.Name)
 			err = core.SetArtifact(ctx, client, artifact)
 			if err != nil {
-				log.Fatal(err.Error())
+				log.WithError(err).Fatal("Failed to save artifact")
 			}
 		},
 	}

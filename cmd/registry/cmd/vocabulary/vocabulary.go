@@ -16,9 +16,9 @@ package vocabulary
 
 import (
 	"context"
-	"log"
 	"strings"
 
+	"github.com/apex/log"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
@@ -56,17 +56,17 @@ func collectInputVocabularies(ctx context.Context, client connection.Client, arg
 					vocab := &metrics.Vocabulary{}
 					err := proto.Unmarshal(artifact.GetContents(), vocab)
 					if err != nil {
-						log.Printf("%+v", err)
+						log.WithError(err).Debug("Failed to unmarshal contents")
 					} else {
 						inputNames = append(inputNames, artifact.Name)
 						inputs = append(inputs, vocab)
 					}
 				} else {
-					log.Printf("skipping, not a vocabulary: %s\n", artifact.Name)
+					log.Debugf("Skipping, not a vocabulary: %s", artifact.Name)
 				}
 			})
 			if err != nil {
-				log.Fatalf("%s", err.Error())
+				log.WithError(err).Fatal("Failed to list artifacts")
 			}
 		}
 	}
@@ -85,7 +85,7 @@ func setVocabularyToArtifact(ctx context.Context, client connection.Client, outp
 	}
 	err := core.SetArtifact(ctx, client, artifact)
 	if err != nil {
-		log.Fatalf("%s", err.Error())
+		log.WithError(err).Fatal("Failed to save artifact")
 	}
 }
 
@@ -101,6 +101,6 @@ func setVersionHistoryToArtifact(ctx context.Context, client connection.Client, 
 	}
 	err := core.SetArtifact(ctx, client, artifact)
 	if err != nil {
-		log.Fatalf("%s", err.Error())
+		log.WithError(err).Fatal("Failed to save artifact")
 	}
 }
