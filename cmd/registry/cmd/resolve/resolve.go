@@ -78,10 +78,7 @@ func Command(ctx context.Context) *cobra.Command {
 			}
 
 			log.Print("Generating the list of actions...")
-			actions, err := controller.ProcessManifest(ctx, client, projectID, manifest)
-			if err != nil {
-				log.Fatal(err.Error())
-			}
+			actions := controller.ProcessManifest(ctx, client, projectID, manifest)
 
 			if len(actions) == 0 {
 				log.Printf("Generated 0 actions. The registry is already in a resolved state.")

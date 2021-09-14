@@ -15,7 +15,6 @@
 package controller
 
 import (
-	"errors"
 	"fmt"
 	"github.com/apigee/registry/server/names"
 	"regexp"
@@ -42,13 +41,15 @@ func extendDependencyPattern(
 		return fmt.Sprintf("projects/%s/locations/global/%s", projectID, dependencyPattern), nil
 	}
 
-	entityRegex := regexp.MustCompile(fmt.Sprintf(`\%s\.(api|version|spec|artifact)`, resourceKW))
+	entityRegex := regexp.MustCompile(fmt.Sprintf(`(\%s\.(api|version|spec|artifact))(/|$)`, resourceKW))
 	matches := entityRegex.FindStringSubmatch(dependencyPattern)
-	if len(matches) <= 1 {
-		return "", errors.New(fmt.Sprintf("Invalid source pattern: %s", dependencyPattern))
+	// dependencyPattern: "$resource.api/artifacts/score"
+	// matches: ["$resource.api/", "$resource.api", "api"]
+	if len(matches) <= 2 {
+		return "", fmt.Errorf("invalid dependency pattern: %s", dependencyPattern)
 	}
 
-	entity, entityType := matches[0], matches[1]
+	entity, entityType := matches[1], matches[2]
 	entityVal := ""
 	switch entityType {
 	case "api":
@@ -64,11 +65,11 @@ func extendDependencyPattern(
 		re := regexp.MustCompile(`.*/artifacts/[^/]*`)
 		entityVal = re.FindString(resourcePattern)
 	default:
-		return "", errors.New(fmt.Sprintf("Invalid combination resourcePattern: %q dependencyPattern: %q", resourcePattern, dependencyPattern))
+		return "", fmt.Errorf("invalid combination resourcePattern: %q dependencyPattern: %q", resourcePattern, dependencyPattern)
 	}
 
 	if len(entityVal) == 0 {
-		return "", errors.New(fmt.Sprintf("Invalid combination resourcePattern: %q dependencyPattern: %q", resourcePattern, dependencyPattern))
+		return "", fmt.Errorf("invalid combination resourcePattern: %q dependencyPattern: %q", resourcePattern, dependencyPattern)
 	}
 
 	return strings.Replace(dependencyPattern, entity, entityVal, 1), nil
@@ -120,7 +121,7 @@ func resourceNameFromDependency(
 		return resourceName, nil
 	}
 
-	return "", errors.New(fmt.Sprintf("Invalid pattern: %q cannot derive GeneratedResource name", resourcePattern))
+	return "", fmt.Errorf("invalid pattern: %q cannot derive GeneratedResource name", resourcePattern)
 }
 
 func getGroupKey(pattern string, resource Resource) (string, error) {
@@ -142,7 +143,7 @@ func getGroupKey(pattern string, resource Resource) (string, error) {
 
 	matches := re.FindStringSubmatch(pattern)
 	if len(matches) <= 1 {
-		return "", errors.New(fmt.Sprintf("Invalid pattern: Cannot extract group from pattern %s", pattern))
+		return "", fmt.Errorf("invalid pattern: Cannot extract group from pattern %s", pattern)
 	}
 
 	switch entityType := matches[1]; entityType {
@@ -155,7 +156,7 @@ func getGroupKey(pattern string, resource Resource) (string, error) {
 	case "artifact":
 		return resource.GetArtifact(), nil
 	default:
-		return "", errors.New(fmt.Sprintf("Invalid pattern: Cannot extract group from pattern %s", pattern))
+		return "", fmt.Errorf("invalid pattern: Cannot extract group from pattern %s", pattern)
 	}
 
 }
@@ -197,7 +198,7 @@ func generateCommand(action string, args []Resource) (string, error) {
 				}
 
 				if len(entityVal) == 0 {
-					return "", errors.New(fmt.Sprintf("Error generating command, cannot derive args for action. Invalid action: %s", action))
+					return "", fmt.Errorf("error generating command, cannot derive args for action. Invalid action: %s", action)
 				}
 				action = strings.ReplaceAll(action, entity, entityVal)
 
@@ -206,7 +207,7 @@ func generateCommand(action string, args []Resource) (string, error) {
 				action = strings.ReplaceAll(action, entity, entityVal)
 			}
 		} else {
-			return "", errors.New(fmt.Sprintf("Error generating command, cannot derive args for action. Invalid action: %s", action))
+			return "", fmt.Errorf("error generating command, cannot derive args for action. Invalid action: %s", action)
 		}
 	}
 

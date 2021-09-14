@@ -60,7 +60,6 @@ ifndef REGISTRY_MANIFEST_ID
 	@echo "Error! REGISTRY_MANIFEST_ID must be set."; exit 1
 endif
 	gcloud container clusters get-credentials registry-backend --zone us-central1-a
-	export DEFAULT_SA_KEY=$(kubectl get secrets -o jsonpath="{.items[0].metadata.name}" | grep default-token)
 	envsubst < deployments/controller/gke-job/cron-job.yaml | kubectl apply -f -
 
 deploy-controller-dashboard:
