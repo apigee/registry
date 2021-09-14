@@ -7,7 +7,6 @@ import (
 )
 
 type ApiLinter struct {
-	Name  string
 	Rules map[string][]string
 }
 
@@ -16,11 +15,10 @@ func (linter ApiLinter) AddRule(mimeType string, rule string) {
 }
 
 func (linter ApiLinter) GetName() string {
-	return linter.Name
+	return "api-linter"
 }
 
 func (linter ApiLinter) SupportsMimeType(mimeType string) bool {
-	// Spectral supports OpenAPI and AsyncAPI
 	return true
 }
 

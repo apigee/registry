@@ -19,7 +19,6 @@ func (linter SpectralLinter) GetName() string {
 }
 
 func (linter SpectralLinter) SupportsMimeType(mimeType string) bool {
-	// Spectral supports OpenAPI and AsyncAPI
 	return true
 }
 

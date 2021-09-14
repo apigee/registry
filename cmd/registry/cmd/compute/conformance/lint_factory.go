@@ -5,6 +5,7 @@ import (
 	"fmt"
 )
 
+// CreateLinter returns a Linter object when provided the name of a linter
 func CreateLinter(linter_name string) (Linter, error) {
 	if linter_name == "spectral" {
 		return SpectralLinter{Rules: make(map[string][]string)}, nil
