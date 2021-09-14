@@ -74,18 +74,21 @@ func Command(ctx context.Context) *cobra.Command {
 
 			projectID, err := core.ProjectID(manifestName)
 			if err != nil {
-				log.WithError(err).Fatalf("Failed to extract project ID")
+				log.WithError(err).Fatal("Failed to extract project ID")
 			}
 
 			log.Debug("Generating the list of actions...")
 			actions := controller.ProcessManifest(ctx, client, projectID, manifest)
 
+			// The monitoring metrics/dashboards are built on top of the format of the log messages here.
+			// Check the metric filters before making any changes to the format.
+			// Location: registry/deployments/controller/dashboard/*
 			if len(actions) == 0 {
 				log.Debugf("Generated 0 actions. The registry is already in a resolved state.")
 				return
+			} else {
+				log.Debugf("Generated %d actions. Starting Execution...", len(actions))
 			}
-
-			log.Debugf("Generated %d actions. Starting Execution...", len(actions))
 
 			taskQueue, wait := core.WorkerPool(ctx, 64)
 			defer wait()
