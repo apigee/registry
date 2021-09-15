@@ -32,7 +32,7 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func conformantsCommand(ctx context.Context) *cobra.Command {
+func conformanceCommand(ctx context.Context) *cobra.Command {
 	var linter string
 	cmd := &cobra.Command{
 		Use:   "conformance",
@@ -73,9 +73,11 @@ func conformantsCommand(ctx context.Context) *cobra.Command {
 				// Only consider artifacts which have the styleguide mimetype
 				messageType, err := core.MessageTypeForMimeType(artifact.GetMimeType())
 				if err != nil {
+					log.Printf("MessageTypeForMimeType() on %s returned error: %s", messageType, err)
 					return
 				}
 				if messageType != "google.cloud.apigee.registry.applications.v1alpha1.styleguide" {
+					// Ignore any artifact that isn't a style guide
 					return
 				}
 
@@ -83,6 +85,11 @@ func conformantsCommand(ctx context.Context) *cobra.Command {
 				styleGuide := &rpc.StyleGuide{}
 				err = proto.Unmarshal(artifact.GetContents(), styleGuide)
 				if err != nil {
+					log.Printf(
+						"Unmarshal() to StyleGuide on artifact of type %s returned error: %s",
+						messageType,
+						err,
+					)
 					return
 				}
 
@@ -108,7 +115,6 @@ func conformantsCommand(ctx context.Context) *cobra.Command {
 							linter.AddRule(allowedMimeType, rule.GetLinterRulename())
 						}
 					}
-
 				}
 			})
 
@@ -125,7 +131,7 @@ func conformantsCommand(ctx context.Context) *cobra.Command {
 				// Lint with every linter that supports the spec's mime type
 				for _, linter := range linterNameToLinter {
 					if linter.SupportsMimeType(spec.GetMimeType()) {
-						taskQueue <- &computeConformantTask{
+						taskQueue <- &computeConformanceTask{
 							client: client,
 							spec:   spec,
 							linter: linter,
@@ -143,17 +149,17 @@ func conformantsCommand(ctx context.Context) *cobra.Command {
 	return cmd
 }
 
-type computeConformantTask struct {
+type computeConformanceTask struct {
 	client connection.Client
 	spec   *rpc.ApiSpec
 	linter conformance.Linter
 }
 
-func (task *computeConformantTask) String() string {
+func (task *computeConformanceTask) String() string {
 	return fmt.Sprintf("compute %s/conformance-%s", task.spec.GetName(), task.linter.GetName())
 }
 
-func (task *computeConformantTask) Run(ctx context.Context) error {
+func (task *computeConformanceTask) Run(ctx context.Context) error {
 	// Get the linter
 	linter := task.linter
 	if linter == nil {
