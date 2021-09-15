@@ -1,0 +1,17 @@
+name: test-styleguide
+mime_types:
+  - application/x.openapi+gzip;version=2
+guidelines:
+  - name: refproperties
+    display_name: Govern Ref Properties
+    description: This guideline governs properties for ref fields on specs.
+    rules:
+      - name: norefsiblings
+        description: An object exposing a $ref property cannot be further extended with additional properties.
+        linter: spectral
+        linter_rulename: no-$ref-siblings
+        severity: ERROR
+    status: ACTIVE
+linters:
+  - name: spectral
+    uri: https://github.com/stoplightio/spectral
