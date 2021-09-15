@@ -33,7 +33,11 @@ import (
 )
 
 func conformanceCommand(ctx context.Context) *cobra.Command {
-	var linter string
+	var (
+		linter string
+		filter string
+	)
+
 	cmd := &cobra.Command{
 		Use:   "conformance",
 		Short: "Compute lint results for API specs",
@@ -145,6 +149,7 @@ func conformanceCommand(ctx context.Context) *cobra.Command {
 		},
 	}
 
+	cmd.Flags().StringVar(&filter, "filter", "", "Filter selected resources")
 	cmd.Flags().StringVar(&linter, "linter", "", "The linter to use (aip|spectral|gnostic)")
 	return cmd
 }
