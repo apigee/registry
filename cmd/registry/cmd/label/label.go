@@ -17,9 +17,9 @@ package label
 import (
 	"context"
 	"fmt"
-	"log"
 	"strings"
 
+	"github.com/apex/log"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/gapic"
@@ -43,7 +43,7 @@ func Command(ctx context.Context) *cobra.Command {
 			ctx := context.Background()
 			client, err := connection.NewClient(ctx)
 			if err != nil {
-				log.Fatalf("%s", err.Error())
+				log.WithError(err).Fatal("Failed to get client")
 			}
 
 			taskQueue, wait := core.WorkerPool(ctx, 64)
@@ -69,7 +69,7 @@ func Command(ctx context.Context) *cobra.Command {
 
 			err = matchAndHandleLabelCmd(ctx, client, taskQueue, args[0], filter, labeling)
 			if err != nil {
-				log.Fatalf("%s", err.Error())
+				log.WithError(err).Fatal("Failed to match or handle command")
 			}
 		},
 	}

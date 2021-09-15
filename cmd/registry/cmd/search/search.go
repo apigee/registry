@@ -17,11 +17,10 @@ package search
 import (
 	"context"
 	"fmt"
-	"log"
 
+	"github.com/apex/log"
 	"github.com/blevesearch/bleve"
 	_ "github.com/blevesearch/bleve/search/highlight/highlighter/ansi"
-
 	"github.com/spf13/cobra"
 )
 
@@ -34,21 +33,21 @@ func Command(ctx context.Context) *cobra.Command {
 			// open an existing index
 			index, err := bleve.Open("registry.bleve")
 			if err != nil {
-				fmt.Println(err)
+				log.WithError(err).Debug("Failed to open bleve")
 				return
 			}
 
-			log.Printf("searching for %s", args[0])
+			log.Debugf("Searching for %s", args[0])
 			// search for some text
 			query := bleve.NewQueryStringQuery(args[0])
 			search := bleve.NewSearchRequest(query)
 			search.Highlight = bleve.NewHighlightWithStyle("ansi")
 			searchResults, err := index.Search(search)
 			if err != nil {
-				fmt.Println(err)
+				log.WithError(err).Debug("Failed to search index")
 				return
 			}
-			fmt.Println(searchResults)
+			log.Debug(fmt.Sprint(searchResults))
 		},
 	}
 }

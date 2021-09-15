@@ -17,11 +17,11 @@ package export
 import (
 	"context"
 	"fmt"
-	"log"
 	"path/filepath"
 	"strconv"
 	"strings"
 
+	"github.com/apex/log"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
@@ -47,7 +47,7 @@ func sheetCommand(ctx context.Context) *cobra.Command {
 			ctx := context.Background()
 			client, err := connection.NewClient(ctx)
 			if err != nil {
-				log.Fatalf("%s", err.Error())
+				log.WithError(err).Fatal("Failed to get client")
 			}
 			inputNames, inputs := collectInputArtifacts(ctx, client, args, filter)
 			if len(inputs) == 0 {
@@ -57,10 +57,10 @@ func sheetCommand(ctx context.Context) *cobra.Command {
 				title := "artifacts/" + filepath.Base(inputs[0].GetName())
 				path, err = core.ExportInt64ToSheet(ctx, title, inputs)
 				if err != nil {
-					log.Printf("failed to export int64 %+v, %s", inputs, err)
+					log.WithError(err).Debugf("Failed to export int64 %+v", inputs)
 					return
 				}
-				log.Printf("exported int64 %+v to %s", inputs, path)
+				log.Debugf("Exported int64 %+v to %s", inputs, path)
 				saveSheetPath(ctx, client, path, artifact)
 				return
 			}
@@ -73,14 +73,14 @@ func sheetCommand(ctx context.Context) *cobra.Command {
 				}
 				vocabulary, err := getVocabulary(inputs[0])
 				if err != nil {
-					log.Fatalf("%s", err.Error())
+					log.WithError(err).Fatal("Failed to get vocabulary")
 				}
 				path, err = core.ExportVocabularyToSheet(ctx, inputs[0].Name, vocabulary)
 				if err != nil {
-					log.Printf("failed to export vocabulary %s, %s", inputs[0].Name, err)
+					log.WithError(err).Debugf("Failed to export vocabulary %s", inputs[0].Name)
 					return
 				}
-				log.Printf("exported vocabulary %s to %s", inputs[0].Name, path)
+				log.Debugf("Exported vocabulary %s to %s", inputs[0].Name, path)
 				if artifact == "" {
 					artifact = inputs[0].Name + "-sheet"
 				}
@@ -92,10 +92,10 @@ func sheetCommand(ctx context.Context) *cobra.Command {
 				}
 				path, err = core.ExportVersionHistoryToSheet(ctx, inputNames[0], inputs[0])
 				if err != nil {
-					log.Printf("failed to export version history %s, %s", inputs[0].Name, err)
+					log.WithError(err).Debugf("Failed to export version history %s", inputs[0].Name)
 					return
 				}
-				log.Printf("exported version history %s to %s", inputs[0].Name, path)
+				log.Debugf("Exported version history %s to %s", inputs[0].Name, path)
 				if artifact == "" {
 					artifact = inputs[0].Name + "-sheet"
 				}
@@ -103,10 +103,10 @@ func sheetCommand(ctx context.Context) *cobra.Command {
 			} else if messageType == "gnostic.metrics.Complexity" {
 				path, err = core.ExportComplexityToSheet(ctx, "Complexity", inputs)
 				if err != nil {
-					log.Printf("failed to export complexity, %s", err)
+					log.WithError(err).Debugf("Failed to export complexity")
 					return
 				}
-				log.Printf("exported complexity to %s", path)
+				log.Debugf("Exported complexity to %s", path)
 				saveSheetPath(ctx, client, path, artifact)
 			} else if messageType == "google.cloud.apigee.registry.applications.v1alpha1.Index" {
 				if len(inputs) != 1 {
@@ -114,14 +114,14 @@ func sheetCommand(ctx context.Context) *cobra.Command {
 				}
 				index, err := getIndex(inputs[0])
 				if err != nil {
-					log.Fatalf("%s", err.Error())
+					log.WithError(err).Fatal("Failed to get index")
 				}
 				path, err = core.ExportIndexToSheet(ctx, inputs[0].Name, index)
 				if err != nil {
-					log.Printf("failed to export index %+v, %s", inputs[0].Name, err)
+					log.WithError(err).Debugf("Failed to export index %+v", inputs[0].Name)
 					return
 				}
-				log.Printf("exported index %s to %s", inputs[0].Name, path)
+				log.Debugf("Exported index %s to %s", inputs[0].Name, path)
 				if artifact == "" {
 					artifact = inputs[0].Name + "-sheet"
 				}
@@ -147,7 +147,7 @@ func collectInputArtifacts(ctx context.Context, client connection.Client, args [
 				inputs = append(inputs, artifact)
 			})
 			if err != nil {
-				log.Fatalf("%s", err.Error())
+				log.WithError(err).Fatal("Failed to list artifacts")
 			}
 		}
 	}

@@ -15,8 +15,7 @@
 package export
 
 import (
-	"log"
-
+	"github.com/apex/log"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
@@ -24,12 +23,6 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 )
-
-func check(err error) {
-	if err != nil {
-		log.Fatalf("%s", err.Error())
-	}
-}
 
 func yamlCommand(ctx context.Context) *cobra.Command {
 	return &cobra.Command{
@@ -40,7 +33,7 @@ func yamlCommand(ctx context.Context) *cobra.Command {
 			ctx := context.Background()
 			client, err := connection.NewClient(ctx)
 			if err != nil {
-				log.Fatalf("%s", err.Error())
+				log.WithError(err).Fatal("Failed to get client")
 			}
 
 			var name string
@@ -52,22 +45,30 @@ func yamlCommand(ctx context.Context) *cobra.Command {
 				_, err := core.GetProject(ctx, client, m, func(message *rpc.Project) {
 					core.ExportYAMLForProject(ctx, client, message)
 				})
-				check(err)
+				if err != nil {
+					log.WithError(err).Fatal("Failed to export project YAML")
+				}
 			} else if m := names.ApiRegexp().FindStringSubmatch(name); m != nil {
 				_, err = core.GetAPI(ctx, client, m, func(message *rpc.Api) {
 					core.ExportYAMLForAPI(ctx, client, message)
 				})
-				check(err)
+				if err != nil {
+					log.WithError(err).Fatal("Failed to export API YAML")
+				}
 			} else if m := names.VersionRegexp().FindStringSubmatch(name); m != nil {
 				_, err = core.GetVersion(ctx, client, m, func(message *rpc.ApiVersion) {
 					core.ExportYAMLForVersion(ctx, client, message)
 				})
-				check(err)
+				if err != nil {
+					log.WithError(err).Fatal("Failed to export version YAML")
+				}
 			} else if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
 				_, err = core.GetSpec(ctx, client, m, false, func(message *rpc.ApiSpec) {
 					core.ExportYAMLForSpec(ctx, client, message)
 				})
-				check(err)
+				if err != nil {
+					log.WithError(err).Fatal("Failed to export spec YAML")
+				}
 			} else {
 				log.Fatalf("Unsupported entity %+s", name)
 			}

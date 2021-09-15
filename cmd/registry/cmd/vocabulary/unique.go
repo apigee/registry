@@ -16,10 +16,10 @@ package vocabulary
 
 import (
 	"context"
-	"log"
 	"path/filepath"
 	"strings"
 
+	"github.com/apex/log"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/googleapis/gnostic/metrics/vocabulary"
@@ -35,7 +35,7 @@ func uniqueCommand(ctx context.Context) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			filter, err := cmd.Flags().GetString("filter")
 			if err != nil {
-				log.Fatalf("Failed to get filter from flags: %s", err)
+				log.WithError(err).Fatal("Failed to get filter from flags")
 			}
 
 			if strings.Contains(outputID, "/") {
@@ -45,7 +45,7 @@ func uniqueCommand(ctx context.Context) *cobra.Command {
 			ctx := context.Background()
 			client, err := connection.NewClient(ctx)
 			if err != nil {
-				log.Fatalf("%s", err.Error())
+				log.WithError(err).Fatal("Failed to get client")
 			}
 			names, inputs := collectInputVocabularies(ctx, client, args, filter)
 			list := vocabulary.FilterCommon(inputs)

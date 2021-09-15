@@ -18,12 +18,12 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 
+	"github.com/apex/log"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
@@ -40,17 +40,17 @@ func openAPICommand(ctx context.Context) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			projectID, err := cmd.Flags().GetString("project_id")
 			if err != nil {
-				log.Fatal(err.Error())
+				log.WithError(err).Fatal("Failed to get project_id from flags")
 			}
 
 			ctx := context.Background()
 			client, err := connection.NewClient(ctx)
 			if err != nil {
-				log.Fatal(err.Error())
+				log.WithError(err).Fatal("Failed to save artifact")
 			}
 			core.EnsureProjectExists(ctx, client, projectID)
 			for _, arg := range args {
-				scanDirectoryForOpenAPI(ctx, projectID, baseURI, arg)
+				scanDirectoryForOpenAPI(ctx, client, projectID, baseURI, arg)
 			}
 		},
 	}
@@ -59,13 +59,7 @@ func openAPICommand(ctx context.Context) *cobra.Command {
 	return cmd
 }
 
-func scanDirectoryForOpenAPI(ctx context.Context, projectID, baseURI, directory string) {
-	client, err := connection.NewClient(ctx)
-	if err != nil {
-		fmt.Println(err.Error())
-		os.Exit(-1)
-	}
-
+func scanDirectoryForOpenAPI(ctx context.Context, client connection.Client, projectID, baseURI, directory string) {
 	// create a queue for upload tasks and wait for the workers to finish after filling it.
 	taskQueue, wait := core.WorkerPool(ctx, 64)
 	defer wait()
@@ -95,7 +89,7 @@ func scanDirectoryForOpenAPI(ctx context.Context, projectID, baseURI, directory 
 
 		return nil
 	}); err != nil {
-		log.Println(err)
+		log.WithError(err).Debug("Failed to walk directory")
 	}
 }
 
@@ -135,7 +129,7 @@ func (task *uploadOpenAPITask) Run(ctx context.Context) error {
 	if err := task.populateFields(); err != nil {
 		return err
 	}
-	log.Printf("^^ apis/%s/versions/%s/specs/%s", task.apiID, task.versionID, task.specID)
+	log.Debugf("^^ apis/%s/versions/%s/specs/%s", task.apiID, task.versionID, task.specID)
 
 	// If the API does not exist, create it.
 	if err := task.createAPI(ctx); err != nil {
@@ -187,11 +181,11 @@ func (task *uploadOpenAPITask) createAPI(ctx context.Context) error {
 		},
 	})
 	if err == nil {
-		log.Printf("created %s", response.Name)
+		log.Debugf("Created %s", response.Name)
 	} else if core.AlreadyExists(err) {
-		log.Printf("found %s", task.apiName())
+		log.Debugf("Found %s", task.apiName())
 	} else {
-		log.Printf("error %s: %s", task.apiName(), err.Error())
+		log.WithError(err).Debugf("Failed to create API %s", task.apiName())
 	}
 
 	return nil
@@ -210,9 +204,9 @@ func (task *uploadOpenAPITask) createVersion(ctx context.Context) error {
 		ApiVersion:   &rpc.ApiVersion{},
 	})
 	if err != nil {
-		log.Printf("error %s: %s", task.versionName(), err.Error())
+		log.WithError(err).Debugf("Failed to create version %s", task.versionName())
 	} else {
-		log.Printf("created %s", response.Name)
+		log.Debugf("Created %s", response.Name)
 	}
 
 	return nil
@@ -245,9 +239,9 @@ func (task *uploadOpenAPITask) createSpec(ctx context.Context) error {
 
 	response, err := task.client.CreateApiSpec(ctx, request)
 	if err != nil {
-		log.Printf("error %s: %s [contents-length: %d]", task.specName(), err.Error(), len(contents))
+		log.WithError(err).Debugf("Error %s [contents-length: %d]", task.specName(), len(contents))
 	} else {
-		log.Printf("created %s", response.Name)
+		log.Debugf("Created %s", response.Name)
 	}
 
 	return nil
@@ -276,9 +270,9 @@ func (task *uploadOpenAPITask) updateSpec(ctx context.Context) error {
 
 	response, err := task.client.UpdateApiSpec(ctx, request)
 	if err != nil {
-		log.Printf("error %s: %s [contents-length: %d]", request.ApiSpec.Name, err.Error(), len(contents))
+		log.WithError(err).Debugf("Error %s [contents-length: %d]", request.ApiSpec.Name, len(contents))
 	} else if response.RevisionId != spec.RevisionId {
-		log.Printf("updated %s", response.Name)
+		log.Debugf("Updated %s", response.Name)
 	}
 
 	return nil

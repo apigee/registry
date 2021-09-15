@@ -17,8 +17,8 @@ package compute
 import (
 	"context"
 	"fmt"
-	"log"
 
+	"github.com/apex/log"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
@@ -39,12 +39,12 @@ func descriptorCommand(ctx context.Context) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			filter, err := cmd.Flags().GetString("filter")
 			if err != nil {
-				log.Fatalf("Failed to get filter from flags: %s", err)
+				log.WithError(err).Fatal("Failed to get filter from flags")
 			}
 
 			client, err := connection.NewClient(ctx)
 			if err != nil {
-				log.Fatalf("%s", err.Error())
+				log.WithError(err).Fatal("Failed to get client")
 			}
 			// Initialize task queue.
 			taskQueue, wait := core.WorkerPool(ctx, 64)
@@ -59,7 +59,7 @@ func descriptorCommand(ctx context.Context) *cobra.Command {
 					}
 				})
 				if err != nil {
-					log.Fatalf("%s", err.Error())
+					log.WithError(err).Fatal("Failed to list specs")
 				}
 			}
 		},
@@ -85,7 +85,7 @@ func (task *computeDescriptorTask) Run(ctx context.Context) error {
 	}
 	name := spec.GetName()
 	relation := "descriptor"
-	log.Printf("computing %s/artifacts/%s", name, relation)
+	log.Debugf("Computing %s/artifacts/%s", name, relation)
 	data, err := core.GetBytesForSpec(ctx, task.client, spec)
 	if err != nil {
 		return nil
