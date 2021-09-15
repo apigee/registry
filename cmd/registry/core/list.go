@@ -164,11 +164,11 @@ func ListArtifacts(ctx context.Context,
 	getContents bool,
 	handler ArtifactHandler) error {
 	parent := "projects/" + segments[1] + "/locations/global"
-	if segments[3] != "" {
+	if len(segments) >= 4 && segments[3] != "" {
 		parent += "/apis/" + segments[3]
-		if segments[5] != "" {
+		if len(segments) >= 6 && segments[5] != "" {
 			parent += "/versions/" + segments[5]
-			if segments[7] != "" {
+			if len(segments) >= 8 && segments[7] != "" {
 				parent += "/specs/" + segments[7]
 			}
 		}
