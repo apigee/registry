@@ -107,94 +107,76 @@ func TestExtendDependencyPatternError(t *testing.T) {
 	}
 }
 
-func TestResourceNameFromDependency(t *testing.T) {
+func TestResourceNameFromGroupKey(t *testing.T) {
 	tests := []struct {
 		desc            string
 		resourcePattern string
-		dependency      Resource
+		groupKey        string
 		want            string
 	}{
 		{
 			desc:            "api pattern",
 			resourcePattern: "projects/demo/locations/global/apis/-",
-			dependency: SpecResource{
-				Spec: &rpc.ApiSpec{
-					Name: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml"},
-			},
-			want: "projects/demo/locations/global/apis/petstore",
+			groupKey:        "projects/demo/locations/global/apis/petstore",
+			want:            "projects/demo/locations/global/apis/petstore",
 		},
 		{
 			desc:            "version pattern",
 			resourcePattern: "projects/demo/locations/global/apis/-/versions/-",
-			dependency: SpecResource{
-				Spec: &rpc.ApiSpec{
-					Name: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml"},
-			},
-			want: "projects/demo/locations/global/apis/petstore/versions/1.0.0",
+			groupKey:        "projects/demo/locations/global/apis/petstore/versions/1.0.0",
+			want:            "projects/demo/locations/global/apis/petstore/versions/1.0.0",
 		},
 		{
 			desc:            "spec pattern",
 			resourcePattern: "projects/demo/locations/global/apis/petstore/versions/-/specs/-/artifacts/complexity",
-			dependency: SpecResource{
-				Spec: &rpc.ApiSpec{
-					Name: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml"},
-			},
-			want: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity",
+			groupKey:        "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+			want:            "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity",
 		},
 		{
 			desc:            "artifact pattern",
 			resourcePattern: "projects/demo/locations/global/apis/-/versions/-/specs/-/artifacts/-",
-			dependency: ArtifactResource{
-				Artifact: &rpc.Artifact{
-					Name: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity"},
-			},
-			want: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity",
+			groupKey:        "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity",
+			want:            "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity",
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			got, err := resourceNameFromDependency(test.resourcePattern, test.dependency)
+			got, err := resourceNameFromGroupKey(test.resourcePattern, test.groupKey)
 			if err != nil {
-				t.Errorf("resourceNameFromDependency returned unexpected error: %s", err)
+				t.Errorf("resourceNameFromGroupKey returned unexpected error: %s", err)
 			}
 			if got != test.want {
-				t.Errorf("resourceNameFromDependency returned unexpected value want: %q got:%q", test.want, got)
+				t.Errorf("resourceNameFromGroupKey returned unexpected value want: %q got:%q", test.want, got)
 			}
 		})
 	}
 
 }
 
-func TestResourceNameFromDependencyError(t *testing.T) {
+func TestResourceNameFromGroupKeyError(t *testing.T) {
 	tests := []struct {
 		desc            string
 		resourcePattern string
-		dependency      Resource
+		groupKey        string
 	}{
 		{
 			desc:            "incorrect keywords",
 			resourcePattern: "projects/demo/locations/global/apis/-/versions/-/apispecs/-",
-			dependency: SpecResource{
-				Spec: &rpc.ApiSpec{
-					Name: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml"},
-			},
+			groupKey:        "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 		},
 		{
 			desc:            "incorrect pattern",
 			resourcePattern: "projects/demo/locations/global/apis/-/specs/-",
-			dependency: SpecResource{
-				Spec: &rpc.ApiSpec{
-					Name: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml"},
-			},
+			groupKey:        "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			got, err := resourceNameFromDependency(test.resourcePattern, test.dependency)
+			got, err := resourceNameFromGroupKey(test.resourcePattern, test.groupKey)
 			if err == nil {
-				t.Errorf("expected resourceNameFromDependency to return error, got: %q", got)
+				t.Errorf("expected resourceNameFromGroupKey to return error, got: %q", got)
 			}
 		})
 	}
@@ -314,99 +296,48 @@ func TestGetGroupKeyError(t *testing.T) {
 
 func TestGenerateCommand(t *testing.T) {
 	tests := []struct {
-		desc   string
-		action string
-		args   []Resource
-		want   string
+		desc         string
+		action       string
+		resourceName string
+		want         string
 	}{
 		{
-			desc:   "api reference",
-			action: "compute lintstats $0.api",
-			args: []Resource{
-				SpecResource{
-					Spec: &rpc.ApiSpec{
-						Name: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml"},
-				},
-			},
-			want: "compute lintstats projects/demo/locations/global/apis/petstore",
+			desc:         "api reference",
+			action:       "compute lintstats $resource.api --linter=gnostic",
+			resourceName: "projects/demo/locations/global/apis/petstore/artifacts/lintstats-gnostic",
+			want:         "compute lintstats projects/demo/locations/global/apis/petstore --linter=gnostic",
 		},
 		{
-			desc:   "version reference",
-			action: "compute lintstats $0.version",
-			args: []Resource{
-				SpecResource{
-					Spec: &rpc.ApiSpec{
-						Name: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml"},
-				},
-			},
-			want: "compute lintstats projects/demo/locations/global/apis/petstore/versions/1.0.0",
+			desc:         "version reference",
+			action:       "compute lintstats $resource.version --linter=gnostic",
+			resourceName: "projects/demo/locations/global/apis/petstore/versions/1.0.0/artifacts/lintstats-gnostic",
+			want:         "compute lintstats projects/demo/locations/global/apis/petstore/versions/1.0.0 --linter=gnostic",
 		},
 		{
-			desc:   "spec reference",
-			action: "compute lintstats $0.spec",
-			args: []Resource{
-				SpecResource{
-					Spec: &rpc.ApiSpec{
-						Name: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml"},
-				},
-			},
-			want: "compute lintstats projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+			desc:         "spec reference",
+			action:       "compute lint $resource.spec --linter=gnostic",
+			resourceName: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic",
+			want:         "compute lint projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml --linter=gnostic",
 		},
 		{
-			desc:   "artifact reference",
-			action: "compute score $0.artifact",
-			args: []Resource{
-				ArtifactResource{
-					Artifact: &rpc.Artifact{
-						Name: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity"},
-				},
-			},
-			want: "compute score projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity",
-		},
-		{
-			desc:   "direct dep reference",
-			action: "compute lint $0 --linter=gnostic",
-			args: []Resource{
-				SpecResource{
-					Spec: &rpc.ApiSpec{
-						Name: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml"},
-				},
-			},
-			want: "compute lint projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml --linter=gnostic",
-		},
-		{
-			desc:   "multiple args",
-			action: "compute score $0 $1.artifact",
-			args: []Resource{
-				ArtifactResource{
-					Artifact: &rpc.Artifact{
-						Name: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity"},
-				},
-				ArtifactResource{
-					Artifact: &rpc.Artifact{
-						Name: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/vocabulary"},
-				},
-			},
+			desc:         "multiple args",
+			action:       "compute score $resource.spec/artifacts/complexity $resource.spec/artifacts/vocabulary",
+			resourceName: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score",
 			want: fmt.Sprintf("compute score %s %s",
 				"projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity",
 				"projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/vocabulary"),
 		},
 		{
-			desc:   "extended reference",
-			action: "compute score $0/artifacts/complexity",
-			args: []Resource{
-				SpecResource{
-					Spec: &rpc.ApiSpec{
-						Name: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml"},
-				},
-			},
-			want: fmt.Sprintf("compute score projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity"),
+			desc:         "extended reference",
+			action:       "compute score $resource.spec/artifacts/complexity",
+			resourceName: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+			want:         "compute score projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity",
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			got, err := generateCommand(test.action, test.args)
+			got, err := generateCommand(test.action, test.resourceName)
 			if err != nil {
 				t.Errorf("generateCommand returned unexpected error: %s", err)
 			}
@@ -420,45 +351,30 @@ func TestGenerateCommand(t *testing.T) {
 
 func TestGenerateCommandError(t *testing.T) {
 	tests := []struct {
-		desc   string
-		action string
-		args   []Resource
+		desc         string
+		action       string
+		resourceName string
 	}{
 		{
-			desc:   "incorrect reference",
-			action: "compute lintstats $0.apispec",
-			args: []Resource{
-				SpecResource{
-					Spec: &rpc.ApiSpec{
-						Name: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml"},
-				},
-			},
+			desc:         "incorrect reference",
+			action:       "compute lintstats $resource.apispec",
+			resourceName: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 		},
 		{
-			desc:   "incorrect format",
-			action: "compute lintstats $0version",
-			args: []Resource{
-				SpecResource{
-					Spec: &rpc.ApiSpec{
-						Name: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml"},
-				},
-			},
+			desc:         "incorrect format",
+			action:       "compute lintstats $resourceversion",
+			resourceName: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 		},
 		{
-			desc:   "invalid reference",
-			action: "compute lintstats $0.artifact",
-			args: []Resource{
-				SpecResource{
-					Spec: &rpc.ApiSpec{
-						Name: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml"},
-				},
-			},
+			desc:         "invalid reference",
+			action:       "compute lintstats $resource.artifact",
+			resourceName: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			got, err := generateCommand(test.action, test.args)
+			got, err := generateCommand(test.action, test.resourceName)
 			if err == nil {
 				t.Errorf("expected generateCommand to return error, got: %q", got)
 			}

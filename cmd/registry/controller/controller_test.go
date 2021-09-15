@@ -166,7 +166,7 @@ func TestArtifacts(t *testing.T) {
 								Filter:  "mime_type.contains('openapi')",
 							},
 						},
-						Action: "compute lint $0 --linter gnostic",
+						Action: "compute lint $resource.spec --linter gnostic",
 					},
 				},
 			}
@@ -189,7 +189,7 @@ func TestAggregateArtifacts(t *testing.T) {
 		want  []*Action
 	}{
 		{
-			desc: "create arttifacts",
+			desc: "create artifacts",
 			setup: func(ctx context.Context, client connection.Client) {
 				deleteProject(ctx, client, t, "controller-test")
 				createProject(ctx, client, t, "controller-test")
@@ -292,7 +292,7 @@ func TestAggregateArtifacts(t *testing.T) {
 								Pattern: "$resource.api/versions/-/specs/-",
 							},
 						},
-						Action: "compute vocabulary $0.api",
+						Action: "compute vocabulary $resource.api",
 					},
 				},
 			}
@@ -340,24 +340,24 @@ func TestDerivedArtifacts(t *testing.T) {
 			want: []*Action{
 				{
 					Command: fmt.Sprintf(
-						"compute score %s %s",
+						"compute summary %s %s",
 						"projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic",
 						"projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity"),
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score",
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/summary",
 				},
 				{
 					Command: fmt.Sprintf(
-						"compute score %s %s",
+						"compute summary %s %s",
 						"projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/lint-gnostic",
 						"projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/complexity"),
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/score",
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/summary",
 				},
 				{
 					Command: fmt.Sprintf(
-						"compute score %s %s",
+						"compute summary %s %s",
 						"projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/lint-gnostic",
 						"projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/complexity"),
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/score",
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/summary",
 				},
 			},
 		},
@@ -384,10 +384,10 @@ func TestDerivedArtifacts(t *testing.T) {
 			want: []*Action{
 				{
 					Command: fmt.Sprintf(
-						"compute score %s %s",
+						"compute summary %s %s",
 						"projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/lint-gnostic",
 						"projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/complexity"),
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/score",
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/summary",
 				},
 			},
 		},
@@ -403,19 +403,19 @@ func TestDerivedArtifacts(t *testing.T) {
 				createSpec(ctx, client, t, "projects/controller-test/locations/global/apis/petstore/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
 				createUpdateArtifact(ctx, client, t, "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic")
 				createUpdateArtifact(ctx, client, t, "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity")
-				createUpdateArtifact(ctx, client, t, "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score")
+				createUpdateArtifact(ctx, client, t, "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/summary")
 				// Version 1.0.1
 				createVersion(ctx, client, t, "projects/controller-test/locations/global/apis/petstore", "1.0.1")
 				createSpec(ctx, client, t, "projects/controller-test/locations/global/apis/petstore/versions/1.0.1", "openapi.yaml", gzipOpenAPIv3)
 				createUpdateArtifact(ctx, client, t, "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/lint-gnostic")
 				createUpdateArtifact(ctx, client, t, "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/complexity")
-				createUpdateArtifact(ctx, client, t, "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/score")
+				createUpdateArtifact(ctx, client, t, "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/summary")
 				// Version 1.1.0
 				createVersion(ctx, client, t, "projects/controller-test/locations/global/apis/petstore", "1.1.0")
 				createSpec(ctx, client, t, "projects/controller-test/locations/global/apis/petstore/versions/1.1.0", "openapi.yaml", gzipOpenAPIv3)
 				createUpdateArtifact(ctx, client, t, "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/lint-gnostic")
 				createUpdateArtifact(ctx, client, t, "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/complexity")
-				createUpdateArtifact(ctx, client, t, "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/score")
+				createUpdateArtifact(ctx, client, t, "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/summary")
 
 				// Make some artifacts outdated from the above setup
 				createUpdateArtifact(ctx, client, t, "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic")
@@ -424,17 +424,17 @@ func TestDerivedArtifacts(t *testing.T) {
 			want: []*Action{
 				{
 					Command: fmt.Sprintf(
-						"compute score %s %s",
+						"compute summary %s %s",
 						"projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic",
 						"projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity"),
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score",
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/summary",
 				},
 				{
 					Command: fmt.Sprintf(
-						"compute score %s %s",
+						"compute summary %s %s",
 						"projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/lint-gnostic",
 						"projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/complexity"),
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/score",
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/summary",
 				},
 			},
 		},
@@ -457,7 +457,7 @@ func TestDerivedArtifacts(t *testing.T) {
 				Name: "controller-test",
 				GeneratedResources: []*rpc.GeneratedResource{
 					{
-						Pattern: "apis/-/versions/-/specs/-/artifacts/score",
+						Pattern: "apis/-/versions/-/specs/-/artifacts/summary",
 						Dependencies: []*rpc.Dependency{
 							{
 								Pattern: "$resource.spec/artifacts/lint-gnostic",
@@ -466,7 +466,7 @@ func TestDerivedArtifacts(t *testing.T) {
 								Pattern: "$resource.spec/artifacts/complexity",
 							},
 						},
-						Action: "compute score $0 $1",
+						Action: "compute summary $resource.spec/artifacts/lint-gnostic $resource.spec/artifacts/complexity",
 					},
 				},
 			}
@@ -550,7 +550,7 @@ func TestReceiptArtifacts(t *testing.T) {
 								Pattern: "$resource.spec",
 							},
 						},
-						Action: "exec command $0",
+						Action: "exec command $resource.spec",
 					},
 				},
 			}
@@ -652,7 +652,6 @@ func TestReceiptAggArtifacts(t *testing.T) {
 								Pattern: "apis/-/versions/-/specs/-",
 							},
 						},
-						// TODO: Add support for "$0.pattern" reference
 						Action: "compute search-index projects/controller-test/locations/global/apis/-/versions/-/specs/-",
 					},
 				},

@@ -15,8 +15,6 @@
 package controller
 
 import (
-	"fmt"
-	"regexp"
 	"time"
 
 	"github.com/apigee/registry/rpc"
@@ -45,12 +43,12 @@ func (s SpecResource) GetSpec() string {
 }
 
 func (s SpecResource) GetVersion() string {
-	version := extractGroup(s.Spec.Name, "versions")
+	version := extractEntityName(s.Spec.Name, "version")
 	return version
 }
 
 func (s SpecResource) GetApi() string {
-	api := extractGroup(s.Spec.Name, "apis")
+	api := extractEntityName(s.Spec.Name, "api")
 	return api
 }
 
@@ -63,7 +61,7 @@ func (s SpecResource) GetUpdateTimestamp() time.Time {
 }
 
 func (s SpecResource) ExtractResourceGroup(group_id string) string {
-	group_v := extractGroup(s.Spec.Name, group_id)
+	group_v := extractEntityName(s.Spec.Name, group_id)
 	return group_v
 }
 
@@ -96,7 +94,7 @@ func (a ApiResource) GetUpdateTimestamp() time.Time {
 }
 
 func (a ApiResource) ExtractResourceGroup(group_id string) string {
-	group_v := extractGroup(a.Api.Name, group_id)
+	group_v := extractEntityName(a.Api.Name, group_id)
 	return group_v
 }
 
@@ -109,17 +107,17 @@ func (ar ArtifactResource) GetArtifact() string {
 }
 
 func (ar ArtifactResource) GetSpec() string {
-	spec := extractGroup(ar.Artifact.Name, "specs")
+	spec := extractEntityName(ar.Artifact.Name, "spec")
 	return spec
 }
 
 func (ar ArtifactResource) GetVersion() string {
-	version := extractGroup(ar.Artifact.Name, "versions")
+	version := extractEntityName(ar.Artifact.Name, "version")
 	return version
 }
 
 func (ar ArtifactResource) GetApi() string {
-	api := extractGroup(ar.Artifact.Name, "apis")
+	api := extractEntityName(ar.Artifact.Name, "api")
 	return api
 }
 
@@ -132,12 +130,6 @@ func (ar ArtifactResource) GetUpdateTimestamp() time.Time {
 }
 
 func (ar ArtifactResource) ExtractResourceGroup(group_id string) string {
-	group_v := extractGroup(ar.Artifact.Name, group_id)
+	group_v := extractEntityName(ar.Artifact.Name, group_id)
 	return group_v
-}
-
-func extractGroup(name string, group_name string) string {
-	re := regexp.MustCompile(fmt.Sprintf(".*\\/%s\\/[^\\/]*", group_name))
-	group := re.FindString(name)
-	return group
 }

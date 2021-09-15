@@ -20,6 +20,7 @@ import (
 	"io/ioutil"
 
 	"github.com/apex/log"
+	"github.com/apigee/registry/cmd/registry/controller"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
@@ -63,8 +64,20 @@ func manifestCommand(ctx context.Context) *cobra.Command {
 			if err != nil {
 				log.WithError(err).Fatal("Failed to read manifest")
 			}
-			manifestData, _ := proto.Marshal(manifest)
 
+			// validate the manifest
+			isValid := true
+			for _, resource := range manifest.GeneratedResources {
+				if err := controller.ValidateResourceEntry(resource); err != nil {
+					log.WithError(err).Errorf("Invalid manifest entry %v", resource)
+					isValid = false
+				}
+			}
+			if !isValid {
+				log.Fatal("Manifest definition contains errors")
+			}
+
+			manifestData, _ := proto.Marshal(manifest)
 			ctx := context.Background()
 			client, err := connection.NewClient(ctx)
 			if err != nil {

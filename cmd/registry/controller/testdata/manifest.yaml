@@ -18,26 +18,26 @@ generated_resources:
   dependencies:
   - pattern: $resource.spec
     filter: "mime_type.contains('openapi')"
-  action: "compute lint $dep0 --linter gnostic"
+  action: "compute lint $resource.spec --linter gnostic"
 - pattern: apis/-/versions/-/specs/-/artifacts/lint-aip
   dependencies:
   - pattern: $resource.spec
     filter: "mime_type.contains('protobuf')"
-  action: "compute lint $dep0 --linter aip"
+  action: "compute lint $resource.spec --linter aip"
 - pattern: apis/-/versions/-/specs/-/artifacts/lintstats-gnostic
   dependencies:
   - pattern: $resource.spec/artifacts/lint-gnostic
-  action: "compute lintstats $dep0 --linter gnostic"
+  action: "compute lintstats $resource.spec/artifacts/lint-gnostic --linter gnostic"
 - pattern: apis/-/artifacts/vocabulary
   dependencies:
   - pattern: $resource.api/versions/-/specs/-
-  action: "compute vocabulary $dep0.api"
+  action: "compute vocabulary $resource.api"
 - pattern: apis/-/versions/-/artifacts/vocabulary
   dependencies:
   - pattern: $resource.version/-/specs/-
-  action: "compute vocabulary $dep0.version"
+  action: "compute vocabulary $resource.version"
 - pattern: apis/-/versions/-/specs/-/artifacts/score
   dependencies:
   - pattern: $resource.spec/artifacts/lint-gnostic
   - pattern: $resource.spec/artifacts/complexity
-  action: "compute score $dep0 $dep1" 
+  action: "compute score $resource.spec/artifacts/lint-gnostic $resource.spec/artifacts/complexity" 
