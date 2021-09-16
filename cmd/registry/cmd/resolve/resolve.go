@@ -84,7 +84,7 @@ func Command(ctx context.Context) *cobra.Command {
 			// Check the metric filters before making any changes to the format.
 			// Location: registry/deployments/controller/dashboard/*
 			if len(actions) == 0 {
-				log.Debugf("Generated 0 actions. The registry is already in a resolved state.")
+				log.Debug("Generated 0 actions. The registry is already in a resolved state.")
 				return
 			} else {
 				log.Debugf("Generated %d actions. Starting Execution...", len(actions))

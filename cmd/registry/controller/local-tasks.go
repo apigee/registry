@@ -47,7 +47,7 @@ func (task *ExecCommandTask) Run(ctx context.Context) error {
 	})
 
 	if strings.HasPrefix(task.Action.Command, "resolve") {
-		logger.Debug("Failed Execution:")
+		logger.Debug("Failed Execution: 'resolve' not allowed in action")
 		return nil
 	}
 
@@ -60,7 +60,7 @@ func (task *ExecCommandTask) Run(ctx context.Context) error {
 
 	if task.Action.RequiresReceipt {
 		if err := touchArtifact(ctx, task.Action.GeneratedResource, task.Action.Command); err != nil {
-			logger.WithError(err).Debug("Failed Execution:")
+			logger.WithError(err).Debug("Failed Execution: failed uploading receipt")
 			return nil
 		}
 	}

@@ -17,10 +17,11 @@ package controller
 import (
 	"context"
 	"fmt"
+	"time"
+
+	"github.com/apex/log"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
-	"log"
-	"time"
 )
 
 type Action struct {
@@ -42,11 +43,11 @@ func ProcessManifest(
 
 	var actions []*Action
 	for _, resource := range manifest.GeneratedResources {
-		log.Printf("Processing entry: %v", resource)
+		log.Debugf("Processing entry: %v", resource)
 
 		newActions, err := processManifestResource(ctx, client, projectID, resource)
 		if err != nil {
-			log.Printf("Skipping resource: %q Got error: %s", resource, err.Error())
+			log.WithError(err).Debugf("Skipping resource: %q", resource)
 			continue
 		}
 		actions = append(actions, newActions...)
@@ -66,7 +67,7 @@ func processManifestResource(
 	for _, dependency := range resource.Dependencies {
 		dMap, err := generateDependencyMap(ctx, client, resourcePattern, dependency, projectID)
 		if err != nil {
-			return nil, fmt.Errorf("error while generating dependency map for %v Error: %s", dependency, err)
+			return nil, fmt.Errorf("error while generating dependency map for %v: %s", dependency, err)
 		}
 		dependencyMaps = append(dependencyMaps, dMap)
 	}
@@ -212,7 +213,7 @@ func generateActions(
 						resourceName, err = resourceNameFromDependency(
 							resourcePattern, collectedResource)
 						if err != nil {
-							log.Printf("skipping entry for %q, cannot derive generated resource name from invalid pattern: %q", collectedResource, resourcePattern)
+							log.Debugf("Skipping entry for %q, cannot derive generated resource name from invalid pattern: %q", collectedResource, resourcePattern)
 							takeAction = false
 							break
 						}

@@ -16,8 +16,9 @@ package core
 
 import (
 	"context"
-	"log"
 	"sync"
+
+	"github.com/apex/log"
 )
 
 // Task is a generic interface for a runnable operation
@@ -56,11 +57,9 @@ func worker(ctx context.Context, wg *sync.WaitGroup, taskQueue <-chan Task) {
 		case <-ctx.Done():
 			return
 		default:
-			err := task.Run(ctx)
-			if err != nil {
-				log.Printf("%s: %s", task, err)
+			if err := task.Run(ctx); err != nil {
+				log.WithError(err).Debugf("Task failed: %s", task)
 			}
 		}
-
 	}
 }

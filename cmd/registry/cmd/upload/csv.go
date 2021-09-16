@@ -59,7 +59,7 @@ func csvCommand(ctx context.Context) *cobra.Command {
 
 			file, err := os.Open(args[0])
 			if err != nil {
-				log.WithError(err).Fatalf("Failed to open file")
+				log.WithError(err).Fatal("Failed to open file")
 			}
 			defer file.Close()
 
@@ -70,7 +70,7 @@ func csvCommand(ctx context.Context) *cobra.Command {
 
 			for row, err := r.Read(); err != io.EOF; row, err = r.Read() {
 				if err != nil {
-					log.WithError(err).Fatalf("Failed to read row from file")
+					log.WithError(err).Fatal("Failed to read row from file")
 				}
 
 				taskQueue <- &uploadSpecTask{
