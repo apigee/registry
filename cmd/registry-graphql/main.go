@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"net/http"
 
-	registry "github.com/apigee/registry/cmd/registry-graphql/graphql"
+	"github.com/apigee/registry/cmd/registry-graphql/graphql"
 	"github.com/graphql-go/handler"
 )
 
@@ -50,7 +50,7 @@ func main() {
 
 	// graphql handler
 	h := handler.New(&handler.Config{
-		Schema: &registry.Schema,
+		Schema: &graphql.Schema,
 		Pretty: true,
 	})
 	http.Handle("/graphql", &corsProxy{h: h})
