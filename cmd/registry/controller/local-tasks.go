@@ -52,7 +52,10 @@ func (task *ExecCommandTask) Run(ctx context.Context) error {
 		return errors.New("'resolve' not allowed in action")
 	}
 
-	cmd := exec.Command("registry", strings.Fields(task.Action.Command)...)
+	fullCmd := strings.Fields(fmt.Sprintf("registry %s --task_id=%s", task.Action.Command, task.TaskID))
+
+	cmd := exec.Command(fullCmd[0], fullCmd[1:]...)
+
 	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
 	if err := cmd.Run(); err != nil {
 		logger.WithError(err).Debug("Failed Execution: failed running command")
