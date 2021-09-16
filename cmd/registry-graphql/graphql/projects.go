@@ -89,7 +89,7 @@ func resolveProjects(p graphql.ResolveParams) (interface{}, error) {
 	var response *rpc.ListProjectsResponse
 	edges := []map[string]interface{}{}
 	for len(edges) < pageSize {
-		response, err = c.GrpcClient().ListProjects(ctx, req)
+		response, _ = c.GrpcClient().ListProjects(ctx, req)
 		for _, project := range response.GetProjects() {
 			edges = append(edges, representationForEdge(representationForProject(project)))
 		}

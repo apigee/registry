@@ -110,7 +110,7 @@ func evaluateQuery(params *graphql.Params) *Payload {
 	}
 	rJSON, _ := json.Marshal(r)
 	payload := &Payload{}
-	json.Unmarshal(rJSON, payload)
+	_ = json.Unmarshal(rJSON, payload)
 	return payload
 }
 

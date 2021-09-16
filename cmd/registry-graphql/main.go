@@ -36,7 +36,7 @@ func (p *corsProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", *corsAllowOriginFlag)
 		if r.Method == "OPTIONS" {
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(""))
+			_, _ = w.Write([]byte(""))
 			return
 		}
 	}
@@ -62,5 +62,5 @@ func main() {
 	// run the server
 	port := "8088"
 	fmt.Println("Running server on port " + port)
-	http.ListenAndServe(":"+port, nil)
+	_ = http.ListenAndServe(":"+port, nil)
 }
