@@ -64,11 +64,6 @@ jobs:
     - name: Build
       run: make all
 
-    - name: golangci-lint
-      uses: golangci/golangci-lint-action@v2
-      with:
-        version: v1.36
-
     - name: Test
       run: |
         export APG_REGISTRY_ADDRESS=localhost:8080
