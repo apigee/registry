@@ -16,6 +16,7 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -48,20 +49,20 @@ func (task *ExecCommandTask) Run(ctx context.Context) error {
 
 	if strings.HasPrefix(task.Action.Command, "resolve") {
 		logger.Debug("Failed Execution: 'resolve' not allowed in action")
-		return nil
+		return errors.New("'resolve' not allowed in action")
 	}
 
 	cmd := exec.Command("registry", strings.Fields(task.Action.Command)...)
 	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
 	if err := cmd.Run(); err != nil {
-		logger.WithError(err).Debug("Failed Execution:")
-		return nil
+		logger.WithError(err).Debug("Failed Execution: failed running command")
+		return errors.New("failed running command")
 	}
 
 	if task.Action.RequiresReceipt {
 		if err := touchArtifact(ctx, task.Action.GeneratedResource, task.Action.Command); err != nil {
 			logger.WithError(err).Debug("Failed Execution: failed uploading receipt")
-			return nil
+			return errors.New("failed uploading receipt")
 		}
 	}
 
