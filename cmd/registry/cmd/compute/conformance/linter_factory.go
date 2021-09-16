@@ -1,7 +1,6 @@
 package conformance
 
 import (
-	"errors"
 	"fmt"
 )
 
@@ -13,5 +12,5 @@ func CreateLinter(linter_name string) (Linter, error) {
 		return ApiLinter{Rules: make(map[string][]string)}, nil
 	}
 
-	return nil, errors.New(fmt.Sprintf("Unknown Linter: %s", linter_name))
+	return nil, fmt.Errorf("unknown linter: %s", linter_name)
 }
