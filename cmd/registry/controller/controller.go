@@ -145,7 +145,7 @@ func generateActions(
 	dependencyMaps []map[string]ResourceCollection,
 	generatedResource *rpc.GeneratedResource) ([]*Action, error) {
 
-	visited := make(map[string]bool, 0)
+	visited := make(map[string]bool)
 	actions := make([]*Action, 0)
 
 	for _, resource := range resourceList {
