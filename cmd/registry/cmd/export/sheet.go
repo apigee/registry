@@ -87,7 +87,7 @@ func sheetCommand(ctx context.Context) *cobra.Command {
 				saveSheetPath(ctx, client, path, artifact)
 			} else if messageType == "gnostic.metrics.VersionHistory" {
 				if len(inputs) != 1 {
-					log.Fatalf("please specify exactly one version history to export")
+					log.Fatalf("Please specify exactly one version history to export")
 					return
 				}
 				path, err = core.ExportVersionHistoryToSheet(ctx, inputNames[0], inputs[0])

@@ -19,10 +19,10 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 
+	"github.com/apex/log"
 	"github.com/apigee/registry/cmd/registry/cmd/compute/conformance"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
@@ -45,12 +45,12 @@ func conformanceCommand(ctx context.Context) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			filter, err := cmd.Flags().GetString("filter")
 			if err != nil {
-				log.Fatalf("Failed to get filter from flags: %s", err)
+				log.WithError(err).Fatal("Failed to get filter from flags")
 			}
 
 			client, err := connection.NewClient(ctx)
 			if err != nil {
-				log.Fatalf("%s", err.Error())
+				log.WithError(err).Fatal("Failed to get client")
 			}
 
 			name := args[0]
@@ -58,16 +58,11 @@ func conformanceCommand(ctx context.Context) *cobra.Command {
 			// Ensure that the provided argument is a spec
 			var specSegments []string
 			if specSegments = names.SpecRegexp().FindStringSubmatch(name); specSegments == nil {
-				log.Fatalf(
-					fmt.Sprintf(
-						"The provided argument %s does not match the regex of a spec",
-						name,
-					),
-				)
+				log.Fatalf("The provided argument %s does not match the regex of a spec", name)
 			}
 			spec, err := names.ParseSpec(name)
 			if err != nil {
-				log.Fatalf("%s", err.Error())
+				log.WithError(err).Fatal("Invalid spec")
 			}
 
 			projectSegments := []string{"projects", spec.ProjectID}
@@ -77,7 +72,7 @@ func conformanceCommand(ctx context.Context) *cobra.Command {
 				// Only consider artifacts which have the styleguide mimetype
 				messageType, err := core.MessageTypeForMimeType(artifact.GetMimeType())
 				if err != nil {
-					log.Printf("MessageTypeForMimeType() on %s returned error: %s", messageType, err)
+					log.WithError(err).Debugf("Failed to get message type for MIME type %q", artifact.GetMimeType())
 					return
 				}
 				if messageType != "google.cloud.apigee.registry.applications.v1alpha1.styleguide" {
@@ -89,11 +84,7 @@ func conformanceCommand(ctx context.Context) *cobra.Command {
 				styleGuide := &rpc.StyleGuide{}
 				err = proto.Unmarshal(artifact.GetContents(), styleGuide)
 				if err != nil {
-					log.Printf(
-						"Unmarshal() to StyleGuide on artifact of type %s returned error: %s",
-						messageType,
-						err,
-					)
+					log.WithError(err).Debugf("Unmarshal() to StyleGuide failed on artifact of type %s", messageType)
 					return
 				}
 
@@ -108,7 +99,7 @@ func conformanceCommand(ctx context.Context) *cobra.Command {
 								// If the linter is unsupported, there is no reason
 								// to prematurely exit. We can just ignore this specific
 								// linter and log the message to the user.
-								log.Printf("%s", err.Error())
+								log.WithError(err).Debug("Failed to create linter")
 							}
 							linterNameToLinter[linter_name] = linter
 						}
@@ -123,7 +114,7 @@ func conformanceCommand(ctx context.Context) *cobra.Command {
 			})
 
 			if err != nil {
-				log.Fatalf("%s", err.Error())
+				log.WithError(err).Fatal("Failed to list artifacts")
 			}
 
 			// Initialize task queue.
@@ -144,7 +135,7 @@ func conformanceCommand(ctx context.Context) *cobra.Command {
 				}
 			})
 			if err != nil {
-				log.Fatalf("%s", err.Error())
+				log.WithError(err).Fatal("Failed to list specs")
 			}
 		},
 	}
@@ -168,7 +159,7 @@ func (task *computeConformanceTask) Run(ctx context.Context) error {
 	// Get the linter
 	linter := task.linter
 	if linter == nil {
-		return errors.New("Linter is nil")
+		return errors.New("linter is nil")
 	}
 
 	// Get the spec's bytes

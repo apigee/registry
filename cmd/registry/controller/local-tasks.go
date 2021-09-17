@@ -16,15 +16,17 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"os"
+	"os/exec"
+	"strings"
+
+	"github.com/apex/log"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
 	"google.golang.org/protobuf/proto"
-	"log"
-	"os"
-	"os/exec"
-	"strings"
 )
 
 type ExecCommandTask struct {
@@ -37,45 +39,46 @@ func (task *ExecCommandTask) String() string {
 }
 
 func (task *ExecCommandTask) Run(ctx context.Context) error {
-	//The monitoring metrics/dashboards are built on top of the format of the log messages here.
-	//Check the metric filters before making  any changes to the format.
-	//Location: registry/deployments/controller/dashboard/*
-	taskDetails := fmt.Sprintf("action={%s} taskID={%s}", task.Action.Command, task.TaskID)
+	// The monitoring metrics/dashboards are built on top of the format of the log messages here.
+	// Check the metric filters before making any changes to the format.
+	// Location: registry/deployments/controller/dashboard/*
+	logger := log.WithFields(log.Fields{
+		"action": fmt.Sprintf("{%s}", task.Action.Command),
+		"taskID": fmt.Sprintf("{%s}", task.TaskID),
+	})
 
 	if strings.HasPrefix(task.Action.Command, "resolve") {
-		return fmt.Errorf("Failed Execution: %s Error: 'resolve' not allowed in action", taskDetails)
+		logger.Debug("Failed Execution: 'resolve' not allowed in action")
+		return errors.New("'resolve' not allowed in action")
 	}
+
 	cmd := exec.Command("registry", strings.Fields(task.Action.Command)...)
 	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
-	err := cmd.Run()
-
-	if err != nil {
-		log.Printf("Failed Execution: %s Error: %s", taskDetails, err)
-		return err
+	if err := cmd.Run(); err != nil {
+		logger.WithError(err).Debug("Failed Execution: failed running command")
+		return errors.New("failed running command")
 	}
+
 	if task.Action.RequiresReceipt {
-		err := touchArtifact(ctx, task.Action.GeneratedResource, task.Action.Command)
-		if err != nil {
-			log.Printf("Failed Execution: %s Error: Failed updating Receipt %s", taskDetails, err)
+		if err := touchArtifact(ctx, task.Action.GeneratedResource, task.Action.Command); err != nil {
+			logger.WithError(err).Debug("Failed Execution: failed uploading receipt")
+			return errors.New("failed uploading receipt")
 		}
 	}
-	log.Printf("Successful Execution: %s", taskDetails)
+
+	logger.Debug("Successful Execution:")
 	return nil
 }
 
-func touchArtifact(
-	ctx context.Context,
-	artifactName string,
-	action string,
-) error {
+func touchArtifact(ctx context.Context, artifactName, action string) error {
 	client, err := connection.NewClient(ctx)
 	if err != nil {
-		log.Fatal(err.Error())
+		log.WithError(err).Fatal("Failed to get client")
 	}
 
 	messageData, _ := proto.Marshal(&rpc.Receipt{Action: action})
-
 	return core.SetArtifact(ctx, client, &rpc.Artifact{
 		Name:     artifactName,
-		Contents: messageData})
+		Contents: messageData,
+	})
 }
