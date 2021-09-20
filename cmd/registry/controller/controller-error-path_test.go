@@ -24,7 +24,7 @@ func TestControllerErrors(t *testing.T) {
 						Pattern: "$resource.spec", // Correct pattern should be: $resource.version/specs/-
 					},
 				},
-				Action: "compute lint $0 --linter gnostic",
+				Action: "registry compute lint $0 --linter gnostic",
 			},
 		},
 		{
@@ -36,7 +36,7 @@ func TestControllerErrors(t *testing.T) {
 						Pattern: "$resource.apispec", // Correct pattern should be: $resource.spec
 					},
 				},
-				Action: "compute lint $0 --linter gnostic",
+				Action: "registry compute lint $0 --linter gnostic",
 			},
 		},
 		{
@@ -48,7 +48,7 @@ func TestControllerErrors(t *testing.T) {
 						Pattern: "$resource.version/artifacts/lint-gnostic", // There is no version level lint-gnostic artifact in the registry
 					},
 				},
-				Action: "compute lintstats $0 --linter gnostic",
+				Action: "registry compute lintstats $0 --linter gnostic",
 			},
 		},
 		{
@@ -60,7 +60,7 @@ func TestControllerErrors(t *testing.T) {
 						Pattern: "$resource.spec",
 					},
 				},
-				Action: "compute lintstats $0.artifact --linter gnostic", // Correct reference should be: $0.spec/artifacts/lint-gnostic
+				Action: "registry compute lintstats $0.artifact --linter gnostic", // Correct reference should be: $0.spec/artifacts/lint-gnostic
 			},
 		},
 		{
@@ -72,7 +72,7 @@ func TestControllerErrors(t *testing.T) {
 						Pattern: "$resource.spec",
 					},
 				},
-				Action: "compute lintstats $0.artifact --linter gnostic",
+				Action: "registry compute lintstats $0.artifact --linter gnostic",
 			},
 		},
 	}
