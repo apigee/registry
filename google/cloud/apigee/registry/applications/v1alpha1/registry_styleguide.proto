@@ -140,7 +140,7 @@ message Rule {
     Severity severity = 6;
 
     // A link to additional documentation relating to this rule.
-    Severity doc_uri = 7;
+    string doc_uri = 7;
 }
 
 // Linter contains the name and source code / documentation of specific
