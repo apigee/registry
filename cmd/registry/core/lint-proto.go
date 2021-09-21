@@ -32,7 +32,6 @@ func NewLintFromZippedProtos(name string, b []byte) (*rpc.Lint, error) {
 	if err != nil {
 		return nil, err
 	}
-	// log.Printf("running in %s", root)
 	// whenever we finish, delete the tmp directory
 	defer os.RemoveAll(root)
 	// unzip the protos to the temp directory

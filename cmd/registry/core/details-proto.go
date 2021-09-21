@@ -16,14 +16,15 @@ package core
 
 import (
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 
-	protoparser "github.com/yoheimuta/go-protoparser/v4"
+	"github.com/apex/log"
 	"github.com/yoheimuta/go-protoparser/v4/parser"
+
+	protoparser "github.com/yoheimuta/go-protoparser/v4"
 	yaml "gopkg.in/yaml.v3"
 )
 
@@ -63,7 +64,7 @@ func NewDetailsFromZippedProtos(b []byte) (*Details, error) {
 			return nil
 		})
 	if err != nil {
-		log.Println(err)
+		log.WithError(err).Debug("Failed to walk directory")
 	}
 	if len(details) == 1 {
 		return details[0], nil
