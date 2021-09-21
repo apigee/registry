@@ -179,20 +179,24 @@ func (task *computeConformanceTask) Run(ctx context.Context) error {
 	defer os.RemoveAll(root)
 
 	// Write the file to the temporary directory
-	err = ioutil.WriteFile(filepath.Join(root, name), data, 0644)
+	filePath := filepath.Join(root, name)
+	err = ioutil.WriteFile(filePath, data, 0644)
 	if err != nil {
 		return err
 	}
 
 	// Lint the directory containing the spec
-	lint, err := linter.Lint(task.spec.GetMimeType(), root)
+	lintProblems, err := linter.LintSpec(task.spec.GetMimeType(), filePath)
 	if err != nil {
 		return err
 	}
 
-	// Store the Lint results as an artifact on the spec
+	// Store the Lint results as an artifact on the spec.
+	// TODO in the future, this will change. We will store a conformance report
+	// on the spec instead of just simple lint results.
+	lintFile := &rpc.LintFile{Problems: lintProblems}
 	subject := task.spec.GetName()
-	messageData, err := proto.Marshal(lint)
+	messageData, err := proto.Marshal(lintFile)
 	if err != nil {
 		return err
 	}
