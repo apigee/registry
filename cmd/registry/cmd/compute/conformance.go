@@ -107,7 +107,7 @@ func conformanceCommand(ctx context.Context) *cobra.Command {
 						// Add each rule to the linter
 						linter := linterNameToLinter[linter_name]
 						for _, allowedMimeType := range styleGuide.MimeTypes {
-							linter.AddRule(allowedMimeType, rule.GetLinterRulename())
+							_ = linter.AddRule(allowedMimeType, rule.GetLinterRulename())
 						}
 					}
 				}

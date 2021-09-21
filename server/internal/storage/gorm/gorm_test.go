@@ -103,7 +103,7 @@ func TestCRUD(t *testing.T) {
 	}
 
 	// Verify the project update.
-	c.Get(ctx, k, project)
+	_ = c.Get(ctx, k, project)
 	if project.ProjectID != "updated" {
 		t.Errorf("Project update failed")
 	}

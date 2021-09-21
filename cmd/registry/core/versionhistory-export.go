@@ -20,8 +20,9 @@ import (
 	"strings"
 
 	"github.com/apigee/registry/rpc"
-	metrics "github.com/googleapis/gnostic/metrics"
 	"google.golang.org/protobuf/proto"
+
+	metrics "github.com/googleapis/gnostic/metrics"
 )
 
 func ExportVersionHistoryToSheet(ctx context.Context, name string, artifact *rpc.Artifact) (string, error) {

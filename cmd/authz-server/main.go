@@ -29,38 +29,33 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/gogo/googleapis/google/rpc"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	"gopkg.in/yaml.v2"
-
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/health"
-	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/status"
-
-	rpcstatus "google.golang.org/genproto/googleapis/rpc/status"
+	"gopkg.in/yaml.v2"
 
 	core "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
 	auth "github.com/envoyproxy/go-control-plane/envoy/service/auth/v3"
 	envoy_type "github.com/envoyproxy/go-control-plane/envoy/type/v3"
-	"github.com/gogo/googleapis/google/rpc"
+	rpcstatus "google.golang.org/genproto/googleapis/rpc/status"
+	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
 var (
 	portFlag   = flag.String("p", ":50051", "port")
 	configFlag = flag.String("c", "", "configuration file")
-	conn       *grpc.ClientConn
-	hs         *health.Server
 )
 
 // AuthzConfig configures the authz filter.
 type AuthzConfig struct {
-	Anonymous bool     `json:"anonymous", yaml:"anonymous"`
-	TrustJWTs bool     `json:"trustJWTs", yaml:"trustJWTs"`
-	Readers   []string `json:"readers", yaml:"readers"`
-	Writers   []string `json:"writers", yaml:"writers"`
+	Anonymous bool     `json:"anonymous" yaml:"anonymous"`
+	TrustJWTs bool     `json:"trustJWTs" yaml:"trustJWTs"`
+	Readers   []string `json:"readers" yaml:"readers"`
+	Writers   []string `json:"writers" yaml:"writers"`
 	// hard-coded tokens and corresponding user ids (for testing only)
-	Tokens map[string]string `json:"tokens", yaml:"tokens"`
+	Tokens map[string]string `json:"tokens" yaml:"tokens"`
 }
 
 var config AuthzConfig
@@ -223,7 +218,7 @@ func isJWTToken(credential string) (bool, string) {
 		return false, ""
 	}
 	var tokenHeader jwtTokenHeader
-	json.Unmarshal(v, &tokenHeader)
+	_ = json.Unmarshal(v, &tokenHeader)
 	valid := tokenHeader.Typ == "JWT"
 	signature := parts[2]
 	return valid, signature
@@ -245,7 +240,7 @@ func getJWTTokenEmail(credential string) string {
 	}
 	log.Printf("token payload %+v\n", string(v))
 	var tokenPayload jwtTokenPayload
-	json.Unmarshal(v, &tokenPayload)
+	_ = json.Unmarshal(v, &tokenPayload)
 	return tokenPayload.Email
 }
 
@@ -288,7 +283,7 @@ func getUser(credential string) (*GoogleUser, error) {
 		if err != nil {
 			return nil, err
 		}
-		return nil, fmt.Errorf("Unsuccessful response from userinfo service: %d (%s): %s",
+		return nil, fmt.Errorf("unsuccessful response from userinfo service: %d (%s): %s",
 			resp.StatusCode, resp.Status, string(b))
 	}
 
@@ -344,7 +339,7 @@ func getVerifiedToken(credential string) (*GoogleToken, error) {
 		if err != nil {
 			return nil, err
 		}
-		return nil, fmt.Errorf("Unsuccessful response from tokeninfo service: %d (%s): %s",
+		return nil, fmt.Errorf("unsuccessful response from tokeninfo service: %d (%s): %s",
 			resp.StatusCode, resp.Status, string(b))
 	}
 	b, err := ioutil.ReadAll(resp.Body)
@@ -478,5 +473,5 @@ func main() {
 	healthpb.RegisterHealthServer(s, &healthServer{})
 
 	log.Printf("authz-server listening on %s", *portFlag)
-	s.Serve(lis)
+	_ = s.Serve(lis)
 }

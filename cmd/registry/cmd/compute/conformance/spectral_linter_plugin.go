@@ -2,7 +2,6 @@ package conformance
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -151,7 +150,7 @@ func executeSpectralLinter(specPath string, configFilePath string, destinationPa
 		"--output", destinationPath,
 	)
 	// Ignore errors from Spectral because Spectral returns an error result when APIs have errors.
-	cmd.Run()
+	_ = cmd.Run()
 }
 
 func parseSpectralOutput(spectralOutputFilePath string) ([]*rpc.LintProblem, error) {
@@ -188,10 +187,5 @@ func parseSpectralOutput(spectralOutputFilePath string) ([]*rpc.LintProblem, err
 
 // createUnsupportedMimeTypeError returns an error for unsupported mime types.
 func createUnsupportedMimeTypeError(mimeType string) error {
-	return errors.New(
-		fmt.Sprintf(
-			"Mime type %s is not supported by the spectral linter",
-			mimeType,
-		),
-	)
+	return fmt.Errorf("mime type %s is not supported by the spectral linter", mimeType)
 }
