@@ -17,10 +17,9 @@ package upload
 import (
 	"context"
 	"fmt"
-	"log"
-
 	"io/ioutil"
 
+	"github.com/apex/log"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
@@ -66,16 +65,16 @@ func styleGuideCommand(ctx context.Context) *cobra.Command {
 
 			styleGuide, err := readStyleGuideProto(styleGuidePath)
 			if err != nil {
-				log.Fatal(err.Error())
+				log.WithError(err).Fatal("Failed to read style guide")
 			}
 			styleGuideMarshalled, err := proto.Marshal(styleGuide)
 			if err != nil {
-				log.Fatal(err.Error())
+				log.WithError(err).Fatal("Failed to encode style guide")
 			}
 
 			client, err := connection.NewClient(ctx)
 			if err != nil {
-				log.Fatalf("%s", err.Error())
+				log.WithError(err).Fatal("Failed to get client")
 			}
 
 			artifact := &rpc.Artifact{
@@ -88,10 +87,10 @@ func styleGuideCommand(ctx context.Context) *cobra.Command {
 				),
 				Contents: styleGuideMarshalled,
 			}
-			log.Printf("uploading %s", artifact.Name)
+			log.Debugf("Uploading %s", artifact.Name)
 			err = core.SetArtifact(ctx, client, artifact)
 			if err != nil {
-				log.Fatal(err.Error())
+				log.WithError(err).Fatal("Failed to save artifact")
 			}
 		},
 	}

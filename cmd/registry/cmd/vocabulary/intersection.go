@@ -16,8 +16,8 @@ package vocabulary
 
 import (
 	"context"
-	"log"
 
+	"github.com/apex/log"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/googleapis/gnostic/metrics/vocabulary"
@@ -32,16 +32,16 @@ func intersectionCommand(ctx context.Context) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			filter, err := cmd.Flags().GetString("filter")
 			if err != nil {
-				log.Fatalf("Failed to get filter from flags: %s", err)
+				log.WithError(err).Fatal("Failed to get filter from flags")
 			}
 			output, err := cmd.Flags().GetString("output")
 			if err != nil {
-				log.Fatalf("Failed to get output from flags: %s", err)
+				log.WithError(err).Fatal("Failed to get output from flags")
 			}
 			ctx := context.Background()
 			client, err := connection.NewClient(ctx)
 			if err != nil {
-				log.Fatalf("%s", err.Error())
+				log.WithError(err).Fatal("Failed to get client")
 			}
 			_, inputs := collectInputVocabularies(ctx, client, args, filter)
 			vocab := vocabulary.Intersection(inputs)

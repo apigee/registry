@@ -17,17 +17,18 @@ package compute
 import (
 	"context"
 	"fmt"
-	"log"
 	"sort"
 
+	"github.com/apex/log"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
-	metrics "github.com/googleapis/gnostic/metrics"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/proto"
+
+	metrics "github.com/googleapis/gnostic/metrics"
 )
 
 func lintStatsRelation(linter string) string {
@@ -43,13 +44,13 @@ func lintStatsCommand(ctx context.Context) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			filter, err := cmd.Flags().GetString("filter")
 			if err != nil {
-				log.Fatalf("Failed to get filter from flags: %s", err)
+				log.WithError(err).Fatal("Failed to get filter from flags")
 			}
 
 			ctx := context.Background()
 			client, err := connection.NewClient(ctx)
 			if err != nil {
-				log.Fatalf("%s", err.Error())
+				log.WithError(err).Fatal("Failed to get client")
 			}
 
 			// Generate tasks.
@@ -57,7 +58,7 @@ func lintStatsCommand(ctx context.Context) *cobra.Command {
 
 			err = matchAndHandleLintStatsCmd(ctx, client, name, filter, linter)
 			if err != nil {
-				log.Fatalf("%s", err.Error())
+				log.WithError(err).Fatal("Failed to match or handle command")
 			}
 		},
 	}
@@ -104,7 +105,7 @@ func computeLintStatsSpecs(ctx context.Context,
 
 	return core.ListSpecs(ctx, client, segments, filter, func(spec *rpc.ApiSpec) {
 		// Iterate through a collection of specs and evaluate each.
-		fmt.Printf("%s\n", spec.GetName())
+		log.Debug(spec.GetName())
 		// get the lint results
 		request := rpc.GetArtifactContentsRequest{
 			Name: spec.Name + "/artifacts/" + lintRelation(linter) + "/contents",
@@ -178,7 +179,7 @@ func computeLintStatsProjects(ctx context.Context,
 				linter,
 				project_stats)
 		}
-		fmt.Printf("%s\n", project.GetName())
+		log.Debug(project.GetName())
 	})
 }
 
@@ -201,7 +202,7 @@ func computeLintStatsAPIs(ctx context.Context,
 			// Store the aggregate stats on this api
 			storeLintStatsArtifact(ctx, client, api.GetName(), linter, api_stats)
 		}
-		fmt.Printf("%s\n", api.GetName())
+		log.Debug(api.GetName())
 	})
 }
 
@@ -225,7 +226,7 @@ func computeLintStatsVersions(ctx context.Context,
 			// Store the aggregate stats on this version
 			storeLintStatsArtifact(ctx, client, version.GetName(), linter, version_stats)
 		}
-		fmt.Printf("%s\n", version.GetName())
+		log.Debug(version.GetName())
 	})
 }
 

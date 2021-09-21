@@ -17,8 +17,8 @@ package delete
 import (
 	"context"
 	"fmt"
-	"log"
 
+	"github.com/apex/log"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/gapic"
@@ -37,7 +37,7 @@ func Command(ctx context.Context) *cobra.Command {
 			ctx := context.Background()
 			client, err := connection.NewClient(ctx)
 			if err != nil {
-				log.Fatalf("%s", err.Error())
+				log.WithError(err).Fatal("Failed to get client")
 			}
 
 			// Initialize task queue.
@@ -46,7 +46,7 @@ func Command(ctx context.Context) *cobra.Command {
 
 			err = matchAndHandleDeleteCmd(ctx, client, taskQueue, args[0], filter)
 			if err != nil {
-				log.Fatalf("%s", err.Error())
+				log.WithError(err).Fatal("Failed to match or handle command")
 			}
 		},
 	}
@@ -66,7 +66,7 @@ func (task *deleteTask) String() string {
 }
 
 func (task *deleteTask) Run(ctx context.Context) error {
-	log.Printf("deleting %s %s", task.resourceKind, task.resourceName)
+	log.Debugf("Deleting %s %s", task.resourceKind, task.resourceName)
 	switch task.resourceKind {
 	case "api":
 		return task.client.DeleteApi(ctx, &rpc.DeleteApiRequest{Name: task.resourceName})

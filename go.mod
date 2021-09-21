@@ -6,6 +6,7 @@ require (
 	cloud.google.com/go v0.84.0
 	cloud.google.com/go/pubsub v1.3.1
 	github.com/GoogleCloudPlatform/cloudsql-proxy v1.19.1
+	github.com/apex/log v1.9.0
 	github.com/blevesearch/bleve v1.0.13
 	github.com/cznic/b v0.0.0-20181122101859-a26611c4d92d // indirect
 	github.com/cznic/mathutil v0.0.0-20181122101859-297441e03548 // indirect
@@ -18,6 +19,7 @@ require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/gogo/googleapis v1.4.0
 	github.com/gogo/protobuf v1.3.1
+	github.com/golang/protobuf v1.5.2
 	github.com/google/cel-go v0.6.0
 	github.com/google/go-cmp v0.5.6
 	github.com/google/uuid v1.1.2

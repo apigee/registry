@@ -16,26 +16,24 @@ package core
 
 import (
 	"context"
-	"log"
 
+	"github.com/apex/log"
 	"github.com/apigee/registry/gapic"
-	rpcpb "github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/rpc"
 )
 
 func EnsureProjectExists(ctx context.Context, client *gapic.RegistryClient, projectID string) {
-	// if the project doesn't exist, create it
-	req := &rpcpb.GetProjectRequest{Name: "projects/" + projectID}
-	_, err := client.GetProject(ctx, req)
-	if NotFound(err) {
-		req := &rpcpb.CreateProjectRequest{
+	req := &rpc.GetProjectRequest{Name: "projects/" + projectID}
+	if _, err := client.GetProject(ctx, req); NotFound(err) {
+		req := &rpc.CreateProjectRequest{
 			ProjectId: projectID,
-			Project:   &rpcpb.Project{},
+			Project:   &rpc.Project{},
 		}
-		_, err := client.CreateProject(ctx, req)
-		if err != nil {
-			log.Fatalf("%s", err.Error())
+
+		if _, err := client.CreateProject(ctx, req); err != nil {
+			log.WithError(err).Fatal("Failed to create project")
 		}
 	} else if err != nil {
-		log.Fatalf("GetProject returned error during project existence check: %s", err.Error())
+		log.WithError(err).Fatal("GetProject returned error during project existence check")
 	}
 }

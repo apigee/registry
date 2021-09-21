@@ -17,21 +17,15 @@ package core
 import (
 	"context"
 	"fmt"
-	"log"
 	"path"
 	"time"
 
+	"github.com/apex/log"
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
 	"gopkg.in/yaml.v3"
 )
-
-func check(err error) {
-	if err != nil {
-		log.Fatalf("%s", err.Error())
-	}
-}
 
 // ExportYAMLForProject writes a project as a YAML file.
 func ExportYAMLForProject(ctx context.Context, client *gapic.RegistryClient, message *rpc.Project) {
@@ -61,7 +55,9 @@ func exportProject(ctx context.Context, client *gapic.RegistryClient, message *r
 		apiMapContent := exportAPI(ctx, client, message)
 		apisMapContent = appendPair(apisMapContent, path.Base(message.Name), nodeForMapping(apiMapContent))
 	})
-	check(err)
+	if err != nil {
+		log.WithError(err).Fatal("Failed to list APIs")
+	}
 	projectMapContent = appendPair(projectMapContent, "apis", nodeForMapping(apisMapContent))
 	return projectMapContent
 }
@@ -77,10 +73,14 @@ func exportAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.A
 		versionMapContent := exportVersion(ctx, client, message)
 		versionsMapContent = appendPair(versionsMapContent, path.Base(message.Name), nodeForMapping(versionMapContent))
 	})
-	check(err)
+	if err != nil {
+		log.WithError(err).Fatal("Failed to list versions")
+	}
 	apiMapContent = appendPair(apiMapContent, "versions", nodeForMapping(versionsMapContent))
 	artifactsMapContent := nodeSlice()
-	err = ListArtifactsForParent(ctx, client, m, func(message *rpc.Artifact) {
+
+	// TODO: Should this be checked? If not, why?
+	_ = ListArtifactsForParent(ctx, client, m, func(message *rpc.Artifact) {
 		artifactsMapContent = appendPair(artifactsMapContent,
 			path.Base(message.Name),
 			nodeForMapping(exportArtifact(ctx, client, message)))
@@ -105,12 +105,18 @@ func exportVersion(ctx context.Context, client *gapic.RegistryClient, message *r
 			specMapContent := exportSpec(ctx, client, message)
 			specsMapContent = appendPair(specsMapContent, path.Base(message.Name), nodeForMapping(specMapContent))
 		})
-		check(err)
+		if err != nil {
+			log.WithError(err).Fatal("Failed to list spec revisions")
+		}
 	})
-	check(err)
+	if err != nil {
+		log.WithError(err).Fatal("Failed to list specs")
+	}
 	versionMapContent = appendPair(versionMapContent, "specs", nodeForMapping(specsMapContent))
 	artifactsMapContent := nodeSlice()
-	err = ListArtifactsForParent(ctx, client, m, func(message *rpc.Artifact) {
+
+	// TODO: Should this be checked? If not, why?
+	_ = ListArtifactsForParent(ctx, client, m, func(message *rpc.Artifact) {
 		artifactsMapContent = appendPair(artifactsMapContent,
 			path.Base(message.Name),
 			nodeForMapping(exportArtifact(ctx, client, message)))
@@ -149,13 +155,6 @@ func nodeForMapping(content []*yaml.Node) *yaml.Node {
 	}
 }
 
-func nodeForSequence(content []*yaml.Node) *yaml.Node {
-	return &yaml.Node{
-		Kind:    yaml.SequenceNode,
-		Content: content,
-	}
-}
-
 func nodeForString(value string) *yaml.Node {
 	return &yaml.Node{
 		Kind:  yaml.ScalarNode,
@@ -164,27 +163,11 @@ func nodeForString(value string) *yaml.Node {
 	}
 }
 
-func nodeForBoolean(value bool) *yaml.Node {
-	return &yaml.Node{
-		Kind:  yaml.ScalarNode,
-		Tag:   "!!bool",
-		Value: fmt.Sprintf("%t", value),
-	}
-}
-
 func nodeForInt64(value int64) *yaml.Node {
 	return &yaml.Node{
 		Kind:  yaml.ScalarNode,
 		Tag:   "!!int",
 		Value: fmt.Sprintf("%d", value),
-	}
-}
-
-func nodeForFloat64(value float64) *yaml.Node {
-	return &yaml.Node{
-		Kind:  yaml.ScalarNode,
-		Tag:   "!!float",
-		Value: fmt.Sprintf("%f", value),
 	}
 }
 
@@ -214,6 +197,8 @@ func docForMapping(nodes []*yaml.Node) *yaml.Node {
 
 func printDocAsYaml(doc *yaml.Node) {
 	b, err := yaml.Marshal(doc)
-	check(err)
+	if err != nil {
+		log.WithError(err).Fatal("Failed to marshal doc as YAML")
+	}
 	fmt.Println(string(b))
 }

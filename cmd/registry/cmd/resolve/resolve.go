@@ -17,8 +17,8 @@ package resolve
 import (
 	"context"
 	"fmt"
-	"log"
 
+	"github.com/apex/log"
 	"github.com/apigee/registry/cmd/registry/controller"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
@@ -64,31 +64,31 @@ func Command(ctx context.Context) *cobra.Command {
 
 			client, err := connection.NewClient(ctx)
 			if err != nil {
-				log.Fatal(err.Error())
+				log.WithError(err).Fatal("Failed to get client")
 			}
 
 			manifest, err := fetchManifest(ctx, client, manifestName)
 			if err != nil {
-				log.Fatal(err.Error())
+				log.WithError(err).Fatal("Failed to fetch manifest")
 			}
 
 			projectID, err := core.ProjectID(manifestName)
 			if err != nil {
-				log.Fatalf("Error while extracting project_id: %s", err.Error())
+				log.WithError(err).Fatal("Failed to extract project ID")
 			}
 
-			log.Print("Generating the list of actions...")
-			actions, err := controller.ProcessManifest(ctx, client, projectID, manifest)
-			if err != nil {
-				log.Fatal(err.Error())
-			}
+			log.Debug("Generating the list of actions...")
+			actions := controller.ProcessManifest(ctx, client, projectID, manifest)
 
+			// The monitoring metrics/dashboards are built on top of the format of the log messages here.
+			// Check the metric filters before making any changes to the format.
+			// Location: registry/deployments/controller/dashboard/*
 			if len(actions) == 0 {
-				log.Printf("Generated 0 actions. The registry is already in a resolved state.")
+				log.Debug("Generated 0 actions. The registry is already in a resolved state.")
 				return
+			} else {
+				log.Debugf("Generated %d actions. Starting Execution...", len(actions))
 			}
-
-			log.Printf("Generated %d actions. Starting Execution...", len(actions))
 
 			taskQueue, wait := core.WorkerPool(ctx, 64)
 			defer wait()

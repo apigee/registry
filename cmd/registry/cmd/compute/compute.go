@@ -26,6 +26,7 @@ func Command(ctx context.Context) *cobra.Command {
 		Short: "Compute properties of resources in the API Registry",
 	}
 
+	cmd.AddCommand(conformanceCommand(ctx))
 	cmd.AddCommand(complexityCommand(ctx))
 	cmd.AddCommand(descriptorCommand(ctx))
 	cmd.AddCommand(detailsCommand(ctx))

@@ -19,10 +19,11 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/apex/log"
 )
 
 // UnzipArchiveToPath will decompress a zip archive, writing all files and folders
@@ -77,20 +78,20 @@ func ZipArchiveOfPath(path, prefix string) (buf bytes.Buffer, err error) {
 	zipWriter := zip.NewWriter(&buf)
 	defer zipWriter.Close()
 
-	err = filepath.Walk(path,
-		func(p string, info os.FileInfo, err error) error {
-			if err != nil {
-				return err
-			}
-			if info.IsDir() {
-				return nil
-			}
-			if err = addFileToZip(zipWriter, p, prefix); err != nil {
-				log.Printf("error adding file %s", err.Error())
-				return err
-			}
+	// TODO: Should this be checked? If not, why?
+	_ = filepath.Walk(path, func(p string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
 			return nil
-		})
+		}
+		if err = addFileToZip(zipWriter, p, prefix); err != nil {
+			log.WithError(err).Debugf("Failed to add file to zip")
+			return err
+		}
+		return nil
+	})
 	return buf, nil
 }
 

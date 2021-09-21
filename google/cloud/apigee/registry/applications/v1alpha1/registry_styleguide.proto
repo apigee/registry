@@ -138,6 +138,9 @@ message Rule {
     }
     // Severity of violating this rule.
     Severity severity = 6;
+
+    // A link to additional documentation relating to this rule.
+    string doc_uri = 7;
 }
 
 // Linter contains the name and source code / documentation of specific
