@@ -215,6 +215,8 @@ message ApiSpec {
   // "application/vnd.apigee.graphql", with possible suffixes representing
   // compression types. These hypothetical names are defined in the vendor tree
   // defined in RFC6838 (https://tools.ietf.org/html/rfc6838) and are not final.
+  // Content types can optionally specify compression. Currently only
+  // GZip compression is supported (indicated with "+gzip").
   string mime_type = 8;
 
   // The size of the spec file in bytes. If the spec is gzipped, this is the
@@ -294,6 +296,8 @@ message Artifact {
   // Content type specifiers are Media Types
   // (https://en.wikipedia.org/wiki/Media_type) with a possible "schema"
   // parameter that specifies a schema for the stored information.
+  // Content types can optionally specify compression. Currently only
+  // GZip compression is supported (indicated with "+gzip").
   string mime_type = 4;
 
   // The size of the artifact in bytes. If the artifact is gzipped, this is
