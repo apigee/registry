@@ -15,5 +15,5 @@ type Linter interface {
 
 	// Lints a provided specification of given mime type and returns a
 	// LintFile object.
-	LintSpec(mimeType string, specPath string) (*rpc.LintFile, error)
+	LintSpec(mimeType string, specPath string) ([]*rpc.LintProblem, error)
 }

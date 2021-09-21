@@ -186,14 +186,17 @@ func (task *computeConformanceTask) Run(ctx context.Context) error {
 	}
 
 	// Lint the directory containing the spec
-	lintFile, err := linter.LintSpec(task.spec.GetMimeType(), filePath)
+	lintProblems, err := linter.LintSpec(task.spec.GetMimeType(), filePath)
 	if err != nil {
 		return err
 	}
 
-	// Store the Lint results as an artifact on the spec
+	// Store the Lint results as an artifact on the spec.
+	// TODO in the future, this will change. We will store a conformance report
+	// on the spec instead of just simple lint results.
+	lintFile := rpc.LintFile{Problems: lintProblems}
 	subject := task.spec.GetName()
-	messageData, err := proto.Marshal(lintFile)
+	messageData, err := proto.Marshal(&lintFile)
 	if err != nil {
 		return err
 	}

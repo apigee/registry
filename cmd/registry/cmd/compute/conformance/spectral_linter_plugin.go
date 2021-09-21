@@ -75,7 +75,7 @@ func (linter SpectralLinter) SupportsMimeType(mimeType string) bool {
 
 // LintSpec lints the spec pointed at by a spec path, which has a provided mime type.
 // It returns the results as a LintFile object.
-func (linter SpectralLinter) LintSpec(mimeType string, specPath string) (*rpc.LintFile, error) {
+func (linter SpectralLinter) LintSpec(mimeType string, specPath string) ([]*rpc.LintProblem, error) {
 	// Check if the linter supports the mime type
 	if !linter.SupportsMimeType(mimeType) {
 		return nil, createUnsupportedMimeTypeError(mimeType)
@@ -103,12 +103,12 @@ func (linter SpectralLinter) LintSpec(mimeType string, specPath string) (*rpc.Li
 	executeSpectralLinter(specPath, configFilePath, destinationPath)
 
 	// Get the lint results as a LintFile object from the spectral output file
-	lintFile, err := parseSpectralOutput(destinationPath)
+	lintProblems, err := parseSpectralOutput(destinationPath)
 	if err != nil {
 		return nil, err
 	}
 
-	return lintFile, nil
+	return lintProblems, nil
 }
 
 // Creates a configuration file and returns its path.
@@ -154,7 +154,7 @@ func executeSpectralLinter(specPath string, configFilePath string, destinationPa
 	cmd.Run()
 }
 
-func parseSpectralOutput(spectralOutputFilePath string) (*rpc.LintFile, error) {
+func parseSpectralOutput(spectralOutputFilePath string) ([]*rpc.LintProblem, error) {
 	b, err := ioutil.ReadFile(spectralOutputFilePath)
 	if err != nil {
 		return nil, err
@@ -183,8 +183,7 @@ func parseSpectralOutput(spectralOutputFilePath string) (*rpc.LintFile, error) {
 		}
 		problems[i] = problem
 	}
-	result := &rpc.LintFile{Problems: problems}
-	return result, nil
+	return problems, nil
 }
 
 // createUnsupportedMimeTypeError returns an error for unsupported mime types.

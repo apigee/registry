@@ -23,7 +23,7 @@ func (linter ApiLinter) SupportsMimeType(mimeType string) bool {
 	return true
 }
 
-func (linter ApiLinter) LintSpec(mimeType string, specPath string) (*rpc.LintFile, error) {
+func (linter ApiLinter) LintSpec(mimeType string, specPath string) ([]*rpc.LintProblem, error) {
 	fmt.Println("Linter got mime type:", mimeType, "and path:", specPath)
-	return &rpc.LintFile{}, nil
+	return []*rpc.LintProblem{}, nil
 }
