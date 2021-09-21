@@ -23,6 +23,8 @@ import (
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
 	"github.com/google/uuid"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -82,7 +84,7 @@ func NewSpec(name names.Spec, body *rpc.ApiSpec) (spec *Spec, err error) {
 		if strings.Contains(spec.MimeType, "+gzip") && len(contents) > 0 {
 			contents, err = GUnzippedBytes(contents)
 			if err != nil {
-				return nil, err
+				return nil, status.Error(codes.InvalidArgument, err.Error())
 			}
 		}
 		spec.SizeInBytes = int32(len(contents))
@@ -175,7 +177,7 @@ func (s *Spec) Update(message *rpc.ApiSpec, mask *fieldmaskpb.FieldMask) error {
 				var err error
 				contents, err = GUnzippedBytes(contents)
 				if err != nil {
-					return err
+					return status.Error(codes.InvalidArgument, err.Error())
 				}
 			}
 			s.updateContents(contents)
