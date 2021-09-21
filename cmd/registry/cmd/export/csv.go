@@ -18,8 +18,8 @@ import (
 	"context"
 	"encoding/csv"
 	"fmt"
-	"log"
 
+	"github.com/apex/log"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
@@ -52,14 +52,14 @@ func csvCommand(ctx context.Context) *cobra.Command {
 			ctx := context.Background()
 			client, err := connection.NewClient(ctx)
 			if err != nil {
-				log.Fatalf("Failed to create client: %s", err)
+				log.WithError(err).Fatal("Failed to get client")
 			}
 
 			rows := make([]exportCSVRow, 0)
 			for _, parent := range args {
 				err := core.ListSpecs(ctx, client, names.VersionRegexp().FindStringSubmatch(parent), filter, func(spec *rpc.ApiSpec) {
 					if !names.SpecRegexp().MatchString(spec.GetName()) {
-						log.Printf("Failed to parse spec name %q: skipping spec row", spec.GetName())
+						log.Debugf("Failed to parse spec name %q: skipping spec row", spec.GetName())
 						return
 					}
 
@@ -72,24 +72,24 @@ func csvCommand(ctx context.Context) *cobra.Command {
 					})
 				})
 				if err != nil {
-					log.Fatalf("Failed to list specs: %s", err)
+					log.WithError(err).Fatalf("Failed to list specs")
 				}
 			}
 
 			w := csv.NewWriter(cmd.OutOrStdout())
 			if err := w.Write([]string{"api_id", "version_id", "spec_id", "contents_path"}); err != nil {
-				log.Fatalf("Failed to write CSV header: %s", err)
+				log.WithError(err).Fatalf("Failed to write CSV header")
 			}
 
 			for _, row := range rows {
 				if err := w.Write([]string{row.ApiID, row.VersionID, row.SpecID, row.ContentsPath}); err != nil {
-					log.Fatalf("Failed to write CSV row %v: %s", row, err)
+					log.WithError(err).Fatalf("Failed to write CSV row %v", row)
 				}
 			}
 
 			w.Flush()
 			if err := w.Error(); err != nil {
-				log.Fatalf("Error occured while flushing writes to output: %s", err)
+				log.WithError(err).Fatalf("Failed to flush writes to output")
 			}
 		},
 	}

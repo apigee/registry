@@ -17,8 +17,8 @@ package compute
 import (
 	"context"
 	"fmt"
-	"log"
 
+	"github.com/apex/log"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
@@ -36,13 +36,13 @@ func lintCommand(ctx context.Context) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			filter, err := cmd.Flags().GetString("filter")
 			if err != nil {
-				log.Fatalf("Failed to get filter from flags: %s", err)
+				log.WithError(err).Fatal("Failed to get filter from flags")
 			}
 
 			ctx := context.Background()
 			client, err := connection.NewClient(ctx)
 			if err != nil {
-				log.Fatalf("%s", err.Error())
+				log.WithError(err).Fatal("Failed to get client")
 			}
 			// Initialize task queue.
 			taskQueue, wait := core.WorkerPool(ctx, 16)
@@ -60,7 +60,7 @@ func lintCommand(ctx context.Context) *cobra.Command {
 					}
 				})
 				if err != nil {
-					log.Fatalf("%s", err.Error())
+					log.WithError(err).Fatal("Failed to list specs")
 				}
 			}
 		},
@@ -104,7 +104,7 @@ func (task *computeLintTask) Run(ctx context.Context) error {
 			task.linter = "gnostic"
 		}
 		relation = lintRelation(task.linter)
-		log.Printf("computing %s/artifacts/%s", spec.Name, relation)
+		log.Debugf("Computing %s/artifacts/%s", spec.Name, relation)
 		lint, err = core.NewLintFromOpenAPI(spec.Name, data, task.linter)
 		if err != nil {
 			return fmt.Errorf("error processing OpenAPI: %s (%s)", spec.Name, err.Error())
@@ -117,7 +117,7 @@ func (task *computeLintTask) Run(ctx context.Context) error {
 			task.linter = "aip"
 		}
 		relation = lintRelation(task.linter)
-		log.Printf("computing %s/artifacts/%s", spec.Name, relation)
+		log.Debugf("Computing %s/artifacts/%s", spec.Name, relation)
 		lint, err = core.NewLintFromZippedProtos(spec.Name, data)
 		if err != nil {
 			return fmt.Errorf("error processing protos: %s (%s)", spec.Name, err.Error())

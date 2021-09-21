@@ -6,6 +6,7 @@ require (
 	cloud.google.com/go v0.84.0
 	cloud.google.com/go/pubsub v1.3.1
 	github.com/GoogleCloudPlatform/cloudsql-proxy v1.19.1
+	github.com/apex/log v1.9.0
 	github.com/blevesearch/bleve v1.0.13
 	github.com/cznic/b v0.0.0-20181122101859-a26611c4d92d // indirect
 	github.com/cznic/mathutil v0.0.0-20181122101859-297441e03548 // indirect
@@ -18,17 +19,10 @@ require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/gogo/googleapis v1.4.0
 	github.com/gogo/protobuf v1.3.1
-	github.com/golang-commonmark/html v0.0.0-20180910111043-7d7c804e1d46 // indirect
-	github.com/golang-commonmark/linkify v0.0.0-20180910111149-f05efb453a0e // indirect
-	github.com/golang-commonmark/markdown v0.0.0-20180910011815-a8f139058164 // indirect
-	github.com/golang-commonmark/mdurl v0.0.0-20180910110917-8d018c6567d6 // indirect
-	github.com/golang-commonmark/puny v0.0.0-20180910110745-050be392d8b8 // indirect
-	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/golang/protobuf v1.5.2
 	github.com/google/cel-go v0.6.0
 	github.com/google/go-cmp v0.5.6
 	github.com/google/uuid v1.1.2
-	github.com/googleapis/api-linter v1.27.0 // indirect
-	github.com/googleapis/gapic-generator-go v0.23.1 // indirect
 	github.com/googleapis/gax-go/v2 v2.0.5
 	github.com/googleapis/gnostic v0.5.4
 	github.com/graphql-go/graphql v0.7.9

@@ -17,8 +17,9 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"github.com/apigee/registry/cmd/registry/controller"
 	"testing"
+
+	"github.com/apigee/registry/cmd/registry/controller"
 )
 
 // Test that currently supported commands in the registry tool execute successfully in ExecCommandTask

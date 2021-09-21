@@ -17,8 +17,8 @@ package compute
 import (
 	"context"
 	"fmt"
-	"log"
 
+	"github.com/apex/log"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
@@ -35,13 +35,13 @@ func referencesCommand(ctx context.Context) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			filter, err := cmd.Flags().GetString("filter")
 			if err != nil {
-				log.Fatalf("Failed to get filter from flags: %s", err)
+				log.WithError(err).Fatal("Failed to get filter from flags")
 			}
 
 			ctx := context.Background()
 			client, err := connection.NewClient(ctx)
 			if err != nil {
-				log.Fatalf("%s", err.Error())
+				log.WithError(err).Fatal("Failed to get client")
 			}
 			// Initialize task queue.
 			taskQueue, wait := core.WorkerPool(ctx, 64)
@@ -57,7 +57,7 @@ func referencesCommand(ctx context.Context) *cobra.Command {
 					}
 				})
 				if err != nil {
-					log.Fatalf("%s", err.Error())
+					log.WithError(err).Fatal("Failed to list specs")
 				}
 			}
 		},
@@ -82,7 +82,7 @@ func (task *computeReferencesTask) Run(ctx context.Context) error {
 		return err
 	}
 	relation := "references"
-	log.Printf("computing %s/properties/%s", spec.Name, relation)
+	log.Debugf("Computing %s/properties/%s", spec.Name, relation)
 	var references *rpc.References
 	if core.IsProto(spec.MimeType) && core.IsZipArchive(spec.MimeType) {
 		data, err := core.GetBytesForSpec(ctx, task.client, spec)

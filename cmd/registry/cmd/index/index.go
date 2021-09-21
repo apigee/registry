@@ -16,9 +16,9 @@ package index
 
 import (
 	"context"
-	"log"
 	"strings"
 
+	"github.com/apex/log"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
@@ -49,17 +49,17 @@ func collectInputIndexes(ctx context.Context, client connection.Client, args []s
 					vocab := &rpc.Index{}
 					err := proto.Unmarshal(artifact.GetContents(), vocab)
 					if err != nil {
-						log.Printf("%+v", err)
+						log.WithError(err).Debug("Failed to unmarshal contents")
 					} else {
 						inputNames = append(inputNames, artifact.Name)
 						inputs = append(inputs, vocab)
 					}
 				} else {
-					log.Printf("skipping, not an index: %s\n", artifact.Name)
+					log.Debugf("Skipping, not an index: %s", artifact.Name)
 				}
 			})
 			if err != nil {
-				log.Fatalf("%s", err.Error())
+				log.WithError(err).Fatal("Failed to list artifacts")
 			}
 		}
 	}
@@ -72,11 +72,11 @@ func setIndexToArtifact(ctx context.Context, client connection.Client, output *r
 	relation := parts[1]
 	messageData, err := proto.Marshal(output)
 	if err != nil {
-		log.Fatalf("%s", err.Error())
+		log.WithError(err).Fatal("Failed to marshal output proto")
 	}
 	messageData, err = core.GZippedBytes(messageData)
 	if err != nil {
-		log.Fatalf("%s", err.Error())
+		log.WithError(err).Fatal("Failed to compress artifact contents")
 	}
 	artifact := &rpc.Artifact{
 		Name:     subject + "/artifacts/" + relation,
@@ -85,6 +85,6 @@ func setIndexToArtifact(ctx context.Context, client connection.Client, output *r
 	}
 	err = core.SetArtifact(ctx, client, artifact)
 	if err != nil {
-		log.Fatalf("%s", err.Error())
+		log.WithError(err).Fatal("Failed to save artifact")
 	}
 }

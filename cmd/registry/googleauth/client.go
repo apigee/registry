@@ -19,12 +19,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"os/user"
 	"path/filepath"
 
+	"github.com/apex/log"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 )
@@ -66,12 +66,12 @@ func getTokenFromBrowser(ctx context.Context, config *oauth2.Config) *oauth2.Tok
 
 	var authCode string
 	if _, err := fmt.Scan(&authCode); err != nil {
-		log.Fatalf("Unable to read authorization code: %v", err)
+		log.WithError(err).Fatalf("Unable to read authorization code")
 	}
 
 	tok, err := config.Exchange(ctx, authCode)
 	if err != nil {
-		log.Fatalf("Unable to retrieve token from web: %v", err)
+		log.WithError(err).Fatalf("Unable to retrieve token from web")
 	}
 	return tok
 }
@@ -93,7 +93,7 @@ func saveTokenToFile(path string, token *oauth2.Token) {
 	fmt.Printf("Saving credential file to: %s\n", path)
 	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
-		log.Fatalf("Unable to cache oauth token: %v", err)
+		log.WithError(err).Fatalf("Unable to cache oauth token")
 	}
 	defer f.Close()
 	json.NewEncoder(f).Encode(token)

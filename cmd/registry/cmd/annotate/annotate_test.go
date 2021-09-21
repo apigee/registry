@@ -41,7 +41,7 @@ func TestAnnotate(t *testing.T) {
 	ctx := context.Background()
 	registryClient, err := connection.NewClient(ctx)
 	if err != nil {
-		t.Fatalf("error creating client: %+v", err)
+		t.Fatalf("Error creating client: %+v", err)
 	}
 	defer registryClient.Close()
 	// Clear the test project.
@@ -49,7 +49,7 @@ func TestAnnotate(t *testing.T) {
 		Name: projectName,
 	})
 	if err != nil && status.Code(err) != codes.NotFound {
-		t.Fatalf("error deleting test project: %+v", err)
+		t.Fatalf("Error deleting test project: %+v", err)
 	}
 	// Create the test project.
 	_, err = registryClient.CreateProject(ctx, &rpc.CreateProjectRequest{
@@ -60,7 +60,7 @@ func TestAnnotate(t *testing.T) {
 		},
 	})
 	if err != nil {
-		t.Fatalf("error creating project %s", err)
+		t.Fatalf("Error creating project %s", err)
 	}
 	// Create a sample api.
 	_, err = registryClient.CreateApi(ctx, &rpc.CreateApiRequest{
@@ -69,7 +69,7 @@ func TestAnnotate(t *testing.T) {
 		Api:    &rpc.Api{},
 	})
 	if err != nil {
-		t.Fatalf("error creating api %s", err)
+		t.Fatalf("Error creating api %s", err)
 	}
 	// Create a sample version.
 	_, err = registryClient.CreateApiVersion(ctx, &rpc.CreateApiVersionRequest{
@@ -78,7 +78,7 @@ func TestAnnotate(t *testing.T) {
 		ApiVersion:   &rpc.ApiVersion{},
 	})
 	if err != nil {
-		t.Fatalf("error creating version %s", err)
+		t.Fatalf("Error creating version %s", err)
 	}
 	// Create a sample spec.
 	_, err = registryClient.CreateApiSpec(ctx, &rpc.CreateApiSpecRequest{
@@ -90,7 +90,7 @@ func TestAnnotate(t *testing.T) {
 		},
 	})
 	if err != nil {
-		t.Fatalf("error creating spec %s", err)
+		t.Fatalf("Error creating spec %s", err)
 	}
 
 	testCases := []struct {
@@ -119,10 +119,10 @@ func TestAnnotate(t *testing.T) {
 			Name: apiName,
 		})
 		if err != nil {
-			t.Errorf("error getting api %s", err)
+			t.Errorf("Error getting api %s", err)
 		} else {
 			if diff := cmp.Diff(api.Annotations, tc.expected); diff != "" {
-				t.Errorf("annotations were incorrectly set %+v", api.Annotations)
+				t.Errorf("Annotations were incorrectly set %+v", api.Annotations)
 			}
 		}
 	}
@@ -137,10 +137,10 @@ func TestAnnotate(t *testing.T) {
 			Name: versionName,
 		})
 		if err != nil {
-			t.Errorf("error getting version %s", err)
+			t.Errorf("Error getting version %s", err)
 		} else {
 			if diff := cmp.Diff(version.Annotations, tc.expected); diff != "" {
-				t.Errorf("annotations were incorrectly set %+v", version.Annotations)
+				t.Errorf("Annotations were incorrectly set %+v", version.Annotations)
 			}
 		}
 	}
@@ -155,10 +155,10 @@ func TestAnnotate(t *testing.T) {
 			Name: specName,
 		})
 		if err != nil {
-			t.Errorf("error getting api %s", err)
+			t.Errorf("Error getting api %s", err)
 		} else {
 			if diff := cmp.Diff(spec.Annotations, tc.expected); diff != "" {
-				t.Errorf("annotations were incorrectly set %+v", spec.Annotations)
+				t.Errorf("Annotations were incorrectly set %+v", spec.Annotations)
 			}
 		}
 	}
@@ -170,7 +170,7 @@ func TestAnnotate(t *testing.T) {
 		}
 		err = registryClient.DeleteProject(ctx, req)
 		if err != nil {
-			t.Fatalf("failed to delete test project: %s", err)
+			t.Fatalf("Failed to delete test project: %s", err)
 		}
 	}
 }
