@@ -194,9 +194,9 @@ func (task *computeConformanceTask) Run(ctx context.Context) error {
 	// Store the Lint results as an artifact on the spec.
 	// TODO in the future, this will change. We will store a conformance report
 	// on the spec instead of just simple lint results.
-	lintFile := rpc.LintFile{Problems: lintProblems}
+	lintFile := &rpc.LintFile{Problems: lintProblems}
 	subject := task.spec.GetName()
-	messageData, err := proto.Marshal(&lintFile)
+	messageData, err := proto.Marshal(lintFile)
 	if err != nil {
 		return err
 	}
