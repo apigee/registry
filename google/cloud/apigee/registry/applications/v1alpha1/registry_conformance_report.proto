@@ -53,16 +53,11 @@ message RuleReport {
         (google.api.field_behavior) = REQUIRED
     ];
 
-    // URI of the Rule object on the style guide.
-    string rule_uri = 3 [
-        (google.api.field_behavior) = REQUIRED
-    ];
-
     // A suggestion for resolving the problem.
-    string suggestion = 4;
+    string suggestion = 3;
 
     // The location of the problem in the spec file.
-    LintLocation location = 5;
+    LintLocation location = 4;
 }
 
 // GuidelineReportGroup is an abstraction that maps status
