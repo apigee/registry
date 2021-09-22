@@ -46,7 +46,7 @@ func main() {
 	token := os.Getenv("APG_REGISTRY_TOKEN")
 
 	// Put the auth token in the headers that get sent with the CheckRequest.
-	headers := make(map[string]string, 0)
+	headers := make(map[string]string)
 	if token != "" {
 		headers["authorization"] = "Bearer " + token
 	}
@@ -69,8 +69,9 @@ func main() {
 		},
 	}
 
-	// Call the Check method.
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
 	res, err := client.Check(ctx, req)
 	if res != nil {
 		fmt.Printf("%+v\n", res)

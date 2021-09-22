@@ -80,7 +80,7 @@ func (task *computeDetailsTask) String() string {
 func (task *computeDetailsTask) Run(ctx context.Context) error {
 	m := names.SpecRegexp().FindStringSubmatch(task.apiName + "/versions/-/specs/-")
 	specs := make([]*rpc.ApiSpec, 0)
-	core.ListSpecs(ctx, task.client, m, "", func(spec *rpc.ApiSpec) {
+	_ = core.ListSpecs(ctx, task.client, m, "", func(spec *rpc.ApiSpec) {
 		specs = append(specs, spec)
 	})
 	// use the last (presumed latest) spec

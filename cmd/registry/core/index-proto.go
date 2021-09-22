@@ -26,9 +26,10 @@ import (
 
 	"github.com/apigee/registry/rpc"
 	"github.com/gogo/protobuf/jsonpb"
-	protoparser "github.com/yoheimuta/go-protoparser/v4"
 	"github.com/yoheimuta/go-protoparser/v4/interpret/unordered"
 	"github.com/yoheimuta/go-protoparser/v4/parser"
+
+	protoparser "github.com/yoheimuta/go-protoparser/v4"
 )
 
 func NewIndexFromZippedProtos(b []byte) (*rpc.Index, error) {
@@ -40,7 +41,7 @@ func NewIndexFromZippedProtos(b []byte) (*rpc.Index, error) {
 	// whenever we finish, delete the tmp directory
 	defer os.RemoveAll(dname)
 	// unzip the protos to the temp directory
-	_, err = UnzipArchiveToPath(b, dname)
+	_, err = unzipArchiveToPath(b, dname)
 	if err != nil {
 		return nil, err
 	}
@@ -49,9 +50,9 @@ func NewIndexFromZippedProtos(b []byte) (*rpc.Index, error) {
 	if err != nil {
 		return nil, err
 	}
-	BuildIndex(c)
-	RemoveRequestAndResponseSchemas(c)
-	FlattenPaths(c)
+	buildIndex(c)
+	removeRequestAndResponseSchemas(c)
+	flattenPaths(c)
 	return c, nil
 }
 
@@ -179,8 +180,8 @@ func trimQuotes(s string) string {
 	return s
 }
 
-// FlattenPaths removes assignments and parameters from operation paths
-func FlattenPaths(index *rpc.Index) {
+// flattenPaths removes assignments and parameters from operation paths
+func flattenPaths(index *rpc.Index) {
 	r1 := regexp.MustCompile("{[^{}=]+=([^{}=]+)}")
 	r2 := regexp.MustCompile("{[^{}].*}")
 	for _, op := range index.Operations {
@@ -192,30 +193,35 @@ func FlattenPaths(index *rpc.Index) {
 	}
 }
 
-// BuildIndex adds flat arrays of fields, schemas, and operations.
-func BuildIndex(index *rpc.Index) {
+// buildIndex adds flat arrays of fields, schemas, and operations.
+func buildIndex(index *rpc.Index) {
 	index.Fields = make([]*rpc.Field, 0)
 	index.Schemas = make([]*rpc.Schema, 0)
 	index.Operations = make([]*rpc.Operation, 0)
 	for _, file := range index.Files {
 		for _, op := range file.Operations {
-			opCopy := &rpc.Operation{}
-			*opCopy = *op
-			opCopy.File = file.Name
-			index.Operations = append(index.Operations, opCopy)
+			index.Operations = append(index.Operations, &rpc.Operation{
+				Name:    op.GetName(),
+				Service: op.GetService(),
+				Verb:    op.GetVerb(),
+				Path:    op.GetPath(),
+				File:    file.GetName(),
+			})
 		}
 		for _, schema := range file.Schemas {
-			schemaCopy := &rpc.Schema{}
-			*schemaCopy = *schema
-			schemaCopy.Fields = nil
-			schemaCopy.File = file.Name
-			index.Schemas = append(index.Schemas, schemaCopy)
+			index.Schemas = append(index.Schemas, &rpc.Schema{
+				Name:     schema.GetName(),
+				Resource: schema.GetResource(),
+				Type:     schema.GetType(),
+				File:     file.GetName(),
+				Fields:   nil,
+			})
 			for _, field := range schema.Fields {
-				fieldCopy := &rpc.Field{}
-				*fieldCopy = *field
-				fieldCopy.File = file.Name
-				fieldCopy.Schema = schema.Name
-				index.Fields = append(index.Fields, fieldCopy)
+				index.Fields = append(index.Fields, &rpc.Field{
+					Name:   field.GetName(),
+					Schema: schema.GetName(),
+					File:   file.GetName(),
+				})
 			}
 		}
 	}
@@ -230,8 +236,8 @@ func BuildIndex(index *rpc.Index) {
 	})
 }
 
-// RemoveRequestAndResponseSchemas removes these from the flat schema list.
-func RemoveRequestAndResponseSchemas(index *rpc.Index) {
+// removeRequestAndResponseSchemas removes these from the flat schema list.
+func removeRequestAndResponseSchemas(index *rpc.Index) {
 	filteredSchemas := make([]*rpc.Schema, 0)
 	for _, schema := range index.Schemas {
 		if strings.HasSuffix(schema.Name, "Request") ||

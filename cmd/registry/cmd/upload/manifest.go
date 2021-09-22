@@ -36,7 +36,7 @@ func readManifestProto(filename string) (*rpc.Manifest, error) {
 		return nil, err
 	}
 
-	jsonBytes, err := yaml.YAMLToJSON(yamlBytes)
+	jsonBytes, _ := yaml.YAMLToJSON(yamlBytes)
 	m := &rpc.Manifest{}
 	err = protojson.Unmarshal(jsonBytes, m)
 
@@ -85,6 +85,6 @@ func manifestCommand(ctx context.Context) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&projectID, "project_id", "", "Project ID to use when saving the result manifest artifact")
-	cmd.MarkFlagRequired("project_id")
+	_ = cmd.MarkFlagRequired("project_id")
 	return cmd
 }

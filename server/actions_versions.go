@@ -73,7 +73,7 @@ func (s *RegistryServer) CreateApiVersion(ctx context.Context, req *rpc.CreateAp
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	s.notify(ctx, rpc.Notification_CREATED, name.String())
+	_ = s.notify(ctx, rpc.Notification_CREATED, name.String())
 	return message, nil
 }
 
@@ -99,7 +99,7 @@ func (s *RegistryServer) DeleteApiVersion(ctx context.Context, req *rpc.DeleteAp
 		return nil, err
 	}
 
-	s.notify(ctx, rpc.Notification_DELETED, name.String())
+	_ = s.notify(ctx, rpc.Notification_DELETED, name.String())
 	return &emptypb.Empty{}, nil
 }
 
@@ -211,6 +211,6 @@ func (s *RegistryServer) UpdateApiVersion(ctx context.Context, req *rpc.UpdateAp
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	s.notify(ctx, rpc.Notification_UPDATED, name.String())
+	_ = s.notify(ctx, rpc.Notification_UPDATED, name.String())
 	return message, nil
 }

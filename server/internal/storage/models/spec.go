@@ -229,7 +229,7 @@ func hashForBytes(b []byte) string {
 	}
 
 	h := sha256.New()
-	h.Write(b)
+	_, _ = h.Write(b)
 	bs := h.Sum(nil)
 	return fmt.Sprintf("%x", bs)
 }

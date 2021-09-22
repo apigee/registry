@@ -18,6 +18,7 @@ import (
 	"context"
 
 	"github.com/apigee/registry/cmd/registry/googleauth"
+	"google.golang.org/api/option"
 	"google.golang.org/api/sheets/v4"
 )
 
@@ -34,7 +35,7 @@ func NewSheetsClient(ctx context.Context, id string) (*SheetsClient, error) {
 		return nil, err
 	}
 	sheetsClient := &SheetsClient{sheetID: id}
-	sheetsClient.service, err = sheets.New(httpClient)
+	sheetsClient.service, err = sheets.NewService(ctx, option.WithHTTPClient(httpClient))
 	return sheetsClient, err
 }
 
@@ -47,7 +48,7 @@ func (sc *SheetsClient) CreateSheet(title string, sheetTitles []string) (*sheets
 			AutoRecalc: "ON_CHANGE",
 		},
 	}
-	if sheetTitles != nil && len(sheetTitles) > 0 {
+	if len(sheetTitles) > 0 {
 		sheetArray := make([]*sheets.Sheet, 0)
 		for _, sheetTitle := range sheetTitles {
 			sheetArray = append(sheetArray, &sheets.Sheet{Properties: &sheets.SheetProperties{Title: sheetTitle}})

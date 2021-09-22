@@ -107,7 +107,7 @@ func (s *RegistryServer) CreateArtifact(ctx context.Context, req *rpc.CreateArti
 		return nil, err
 	}
 
-	s.notify(ctx, rpc.Notification_CREATED, name.String())
+	_ = s.notify(ctx, rpc.Notification_CREATED, name.String())
 	return artifact.Message(), nil
 }
 
@@ -133,7 +133,7 @@ func (s *RegistryServer) DeleteArtifact(ctx context.Context, req *rpc.DeleteArti
 		return nil, err
 	}
 
-	s.notify(ctx, rpc.Notification_DELETED, name.String())
+	_ = s.notify(ctx, rpc.Notification_DELETED, name.String())
 	return &emptypb.Empty{}, nil
 }
 
@@ -281,6 +281,6 @@ func (s *RegistryServer) ReplaceArtifact(ctx context.Context, req *rpc.ReplaceAr
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	s.notify(ctx, rpc.Notification_UPDATED, name.String())
+	_ = s.notify(ctx, rpc.Notification_UPDATED, name.String())
 	return artifact.Message(), nil
 }

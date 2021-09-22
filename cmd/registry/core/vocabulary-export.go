@@ -66,10 +66,10 @@ func ExportVocabularyToSheet(ctx context.Context, name string, vocabulary *metri
 		_, err = sheetsClient.Update(ctx, fmt.Sprintf("%s!A1:C%d", title, len(rows)), rows)
 		return err
 	}
-	updateSheet("Schemas", vocabulary.Schemas)
-	updateSheet("Properties", vocabulary.Properties)
-	updateSheet("Operations", vocabulary.Operations)
-	updateSheet("Parameters", vocabulary.Parameters)
+	_ = updateSheet("Schemas", vocabulary.Schemas)
+	_ = updateSheet("Properties", vocabulary.Properties)
+	_ = updateSheet("Operations", vocabulary.Operations)
+	_ = updateSheet("Parameters", vocabulary.Parameters)
 	return sheet.SpreadsheetUrl, nil
 }
 

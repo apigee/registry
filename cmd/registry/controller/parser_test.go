@@ -16,8 +16,9 @@ package controller
 
 import (
 	"fmt"
-	"github.com/apigee/registry/rpc"
 	"testing"
+
+	"github.com/apigee/registry/rpc"
 )
 
 func TestExtendDependencyPattern(t *testing.T) {
@@ -255,7 +256,6 @@ func TestGetGroupKey(t *testing.T) {
 		},
 	}
 
-	const projectID = "demo"
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			got, err := getGroupKey(test.pattern, test.resource)
@@ -301,7 +301,6 @@ func TestGetGroupKeyError(t *testing.T) {
 		},
 	}
 
-	const projectID = "demo"
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			got, err := getGroupKey(test.pattern, test.resource)
@@ -400,7 +399,7 @@ func TestGenerateCommand(t *testing.T) {
 						Name: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml"},
 				},
 			},
-			want: fmt.Sprintf("compute score projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity"),
+			want: "compute score projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity",
 		},
 	}
 
