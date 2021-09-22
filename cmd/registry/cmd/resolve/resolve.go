@@ -52,6 +52,7 @@ func fetchManifest(
 }
 
 func Command(ctx context.Context) *cobra.Command {
+	var dryRun bool
 	cmd := &cobra.Command{
 		Use:   "resolve MANIFEST_RESOURCE",
 		Short: "resolve the dependencies and update the registry state (experimental)",
@@ -86,10 +87,19 @@ func Command(ctx context.Context) *cobra.Command {
 			if len(actions) == 0 {
 				log.Debug("Generated 0 actions. The registry is already in a resolved state.")
 				return
-			} else {
-				log.Debugf("Generated %d actions. Starting Execution...", len(actions))
 			}
 
+			log.Debugf("Generated %d actions.", len(actions))
+
+			// If dry_run is set to true, print the generated actions and exit
+			if dryRun {
+				for _, a := range actions {
+					log.Debugf("Action: %q", a.Command)
+				}
+				return
+			}
+
+			log.Debug("Starting execution...")
 			taskQueue, wait := core.WorkerPool(ctx, 64)
 			defer wait()
 			// Submit tasks to taskQueue
@@ -101,5 +111,7 @@ func Command(ctx context.Context) *cobra.Command {
 			}
 		},
 	}
+
+	cmd.Flags().BoolVar(&dryRun, "dry_run", false, "if set, actions will only be printed and not executed")
 	return cmd
 }
