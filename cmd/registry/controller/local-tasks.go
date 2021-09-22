@@ -35,10 +35,7 @@ type LogWriter struct {
 }
 
 func (w LogWriter) Write(p []byte) (n int, err error) {
-	// This is required to attach logger info to each line in multiline logs
-	for _, s := range strings.Split(strings.TrimRight(string(p), "\n"), "\n") {
-		w.logger.Debug(s)
-	}
+	w.logger.Debug(string(p))
 	return len(p), nil
 }
 
