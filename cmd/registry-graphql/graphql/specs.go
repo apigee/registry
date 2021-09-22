@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package registry
+package graphql
 
 import (
 	"errors"
@@ -20,7 +20,6 @@ import (
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/graphql-go/graphql"
-	"github.com/graphql-go/graphql/language/ast"
 )
 
 var specType = graphql.NewObject(
@@ -108,7 +107,7 @@ func resolveSpecs(p graphql.ResolveParams) (interface{}, error) {
 	var response *rpc.ListApiSpecsResponse
 	edges := []map[string]interface{}{}
 	for len(edges) < pageSize {
-		response, err = c.GrpcClient().ListApiSpecs(ctx, req)
+		response, _ = c.GrpcClient().ListApiSpecs(ctx, req)
 		for _, spec := range response.GetApiSpecs() {
 			edges = append(edges, representationForEdge(representationForSpec(spec)))
 		}
@@ -118,28 +117,6 @@ func resolveSpecs(p graphql.ResolveParams) (interface{}, error) {
 		}
 	}
 	return connectionForEdgesAndEndCursor(edges, response.GetNextPageToken()), nil
-}
-
-// returns true if a selection set contains a path that ends with a specified path
-func selectionSetContainsPath(selectionSet *ast.SelectionSet, path []string) bool {
-	if len(path) == 0 {
-		return true
-	}
-	if selectionSet == nil {
-		return false
-	}
-	for _, s := range selectionSet.Selections {
-		fieldName := s.(*ast.Field).Name.Value
-		fieldSelection := s.(*ast.Field).GetSelectionSet()
-		if fieldName == path[0] {
-			return selectionSetContainsPath(fieldSelection, path[1:])
-		} else {
-			if selectionSetContainsPath(fieldSelection, path) {
-				return true
-			}
-		}
-	}
-	return false
 }
 
 func resolveSpec(p graphql.ResolveParams) (interface{}, error) {

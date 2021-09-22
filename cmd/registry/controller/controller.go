@@ -30,11 +30,6 @@ type Action struct {
 	RequiresReceipt   bool
 }
 
-type ResourceCollection struct {
-	maxUpdateTime time.Time
-	resourceList  []Resource
-}
-
 func ProcessManifest(
 	ctx context.Context,
 	client connection.Client,
@@ -44,6 +39,12 @@ func ProcessManifest(
 	var actions []*Action
 	for _, resource := range manifest.GeneratedResources {
 		log.Debugf("Processing entry: %v", resource)
+
+		err := ValidateResourceEntry(resource)
+		if err != nil {
+			log.WithError(err).Debugf("Skipping resource: %q invalid resource pattern", resource)
+			continue
+		}
 
 		newActions, err := processManifestResource(ctx, client, projectID, resource)
 		if err != nil {
@@ -63,7 +64,7 @@ func processManifestResource(
 	resource *rpc.GeneratedResource) ([]*Action, error) {
 	// Generate dependency map
 	resourcePattern := fmt.Sprintf("projects/%s/locations/global/%s", projectID, resource.Pattern)
-	dependencyMaps := make([]map[string]ResourceCollection, 0, len(resource.Dependencies))
+	dependencyMaps := make([]map[string]time.Time, 0, len(resource.Dependencies))
 	for _, dependency := range resource.Dependencies {
 		dMap, err := generateDependencyMap(ctx, client, resourcePattern, dependency, projectID)
 		if err != nil {
@@ -93,18 +94,27 @@ func generateDependencyMap(
 	client connection.Client,
 	resourcePattern string,
 	dependency *rpc.Dependency,
-	projectID string) (map[string]ResourceCollection, error) {
+	projectID string) (map[string]time.Time, error) {
+	// Creates a map of the resources to group them into corresponding buckets
+	// of match pattern which store the maxTimestamp
+	// An example entry will look like this:
+	// dependencyPattern: $resource.api/versions/-/specs/-   ($resource.api is the match)
+	// Map:
+	// - key: projects/demo/locations/global/apis/petstore
+	//   value: maxUpdateTime: 00:00:00
+	// - key: projects/demo/locations/global/apis/wordnik.com
+	//   value: maxUpdateTime: 00:00:00
 
-	sourceMap := make(map[string]ResourceCollection)
+	sourceMap := make(map[string]time.Time)
 
-	// Extend the source pattern if it contains $resource.api like pattern
-	extDependencyPattern, err := extendDependencyPattern(resourcePattern, dependency.Pattern, projectID)
+	// Extend the dependency pattern if it contains $resource.api like pattern
+	extDependencyQuery, err := extendDependencyPattern(resourcePattern, dependency.Pattern, projectID)
 	if err != nil {
 		return nil, err
 	}
 
-	// Fetch resources using the extDependencyPattern
-	sourceList, err := ListResources(ctx, client, extDependencyPattern, dependency.Filter)
+	// Fetch resources using the extDependencyQuery
+	sourceList, err := ListResources(ctx, client, extDependencyQuery, dependency.Filter)
 	if err != nil {
 		return nil, err
 	}
@@ -116,21 +126,14 @@ func generateDependencyMap(
 		}
 
 		sourceTime := source.GetUpdateTimestamp()
-		collection, exists := sourceMap[group]
-		if !exists {
-			collection = ResourceCollection{
-				maxUpdateTime: sourceTime,
-			}
-		} else if collection.maxUpdateTime.Before(sourceTime) {
-			collection.maxUpdateTime = sourceTime
+		maxUpdateTime, exists := sourceMap[group]
+		if !exists || maxUpdateTime.Before(sourceTime) {
+			sourceMap[group] = sourceTime
 		}
-
-		collection.resourceList = append(collection.resourceList, source)
-		sourceMap[group] = collection
 	}
 
 	if len(sourceMap) == 0 {
-		return nil, fmt.Errorf("no resources found for pattern: %s, filer: %s", extDependencyPattern, dependency.Filter)
+		return nil, fmt.Errorf("no resources found for pattern: %s, filer: %s", extDependencyQuery, dependency.Filter)
 	}
 
 	return sourceMap, nil
@@ -142,17 +145,16 @@ func generateActions(
 	client connection.Client,
 	resourcePattern string,
 	resourceList []Resource,
-	dependencyMaps []map[string]ResourceCollection,
+	dependencyMaps []map[string]time.Time,
 	generatedResource *rpc.GeneratedResource) ([]*Action, error) {
 
-	visited := make(map[string]bool, 0)
+	visited := make(map[string]bool)
 	actions := make([]*Action, 0)
 
 	for _, resource := range resourceList {
 		resourceTime := resource.GetUpdateTimestamp()
 
 		takeAction := false
-		var args []Resource
 
 		// Evaluate this resource against each dependency source pattern
 		for i, dependency := range generatedResource.Dependencies {
@@ -163,14 +165,12 @@ func generateActions(
 				return nil, fmt.Errorf("cannot match resource with dependency. Error: %s", err.Error())
 			}
 
-			if collection, ok := dMap[group]; ok {
+			if maxUpdateTime, ok := dMap[group]; ok {
 				// Take action if dependency timestamp is later than resource timestamp
-				if collection.maxUpdateTime.After(resourceTime) {
+				if maxUpdateTime.After(resourceTime) {
 					takeAction = true
 				}
 				visited[group] = true
-				// TODO: Evaluate if append only the group or resource name should be enough
-				args = append(args, collection.resourceList[0])
 			} else {
 				// For a given resource, each of it's defined dependency group should be present.
 				// If any one of the dependency groups is missing, avoid calculating any action for the resource
@@ -180,7 +180,7 @@ func generateActions(
 		}
 
 		if takeAction {
-			cmd, err := generateCommand(generatedResource.Action, args)
+			cmd, err := generateCommand(generatedResource.Action, resource.GetName())
 			if err != nil {
 				return nil, err
 			}
@@ -198,27 +198,21 @@ func generateActions(
 	// Iterate over first dependency source and evaluate that against remaining dependencies
 	if len(dependencyMaps) > 0 {
 		dMap0 := dependencyMaps[0]
-		for key := range dMap0 {
+		for groupKey := range dMap0 {
 			takeAction := true
-			var args []Resource
-			var resourceName string
-			if _, ok := visited[key]; !ok {
+			if _, ok := visited[groupKey]; !ok {
 				for _, dMap := range dependencyMaps {
-					collection, ok := dMap[key]
-					if ok {
-						collectedResource := collection.resourceList[0]
-						// Since the GeneratedResource is non-existent here,
-						// we will have to derive the exact name of the target resource
-						var err error
-						resourceName, err = resourceNameFromDependency(
-							resourcePattern, collectedResource)
-						if err != nil {
-							log.Debugf("Skipping entry for %q, cannot derive generated resource name from invalid pattern: %q", collectedResource, resourcePattern)
-							takeAction = false
-							break
-						}
-						args = append(args, collectedResource)
-					} else {
+					// in a particular group resources for each dependencyPattern must exist
+					// for the controller to generate new targeted resource.
+					// Example:
+					// generated_resource: apis/-/artifacts/summary
+					// - dependencies:
+					//   - pattern: $resource.api/artifacts/complexity
+					//   - pattern: $resource.api/artifacts/vocabulary
+					// for a particular api group, "petstore"
+					// both apis/petstore/artifacts/complexity and apis/petstore/artifacts/vocabulary should be present
+					_, dependencyExists := dMap[groupKey]
+					if !dependencyExists {
 						takeAction = false
 						break
 					}
@@ -228,7 +222,15 @@ func generateActions(
 			}
 
 			if takeAction {
-				cmd, err := generateCommand(generatedResource.Action, args)
+				// Since the GeneratedResource is non-existent here,
+				// we will have to derive the exact name of the target resourc
+				resourceName, err := resourceNameFromGroupKey(
+					resourcePattern, groupKey)
+				if err != nil {
+					log.Debugf("skipping entry for %q, cannot derive target resource name for pattern: %q", groupKey, resourcePattern)
+					continue
+				}
+				cmd, err := generateCommand(generatedResource.Action, resourceName)
 				if err != nil {
 					return nil, err
 				}

@@ -204,6 +204,9 @@ service Registry {
   }
 
   // GetApiSpecContents returns the contents of a specified spec.
+  // If specs are stored with GZip compression, the default behavior
+  // is to return the spec uncompressed (the mime_type response field
+  // indicates the exact format returned).
   // (-- api-linter: core::0131::response-message-name=disabled
   //     aip.dev/not-precedent: Responses are arbitrary blobs of data. --)
   rpc GetApiSpecContents(GetApiSpecContentsRequest) returns (google.api.HttpBody) {
@@ -306,6 +309,9 @@ service Registry {
   }
 
   // GetArtifactContents returns the contents of a specified artifact.
+  // If artifacts are stored with GZip compression, the default behavior
+  // is to return the artifact uncompressed (the mime_type response field
+  // indicates the exact format returned).
   // (-- api-linter: core::0131::response-message-name=disabled
   //     aip.dev/not-precedent: Responses are arbitrary blobs of data. --)
   rpc GetArtifactContents(GetArtifactContentsRequest) returns (google.api.HttpBody) {

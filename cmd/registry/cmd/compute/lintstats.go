@@ -64,7 +64,7 @@ func lintStatsCommand(ctx context.Context) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&linter, "linter", "", "The name of the linter whose results will be used to compute stats (aip|spectral|gnostic)")
-	cmd.MarkFlagRequired("linter")
+	_ = cmd.MarkFlagRequired("linter")
 	return cmd
 }
 
@@ -153,7 +153,7 @@ func computeLintStatsSpecs(ctx context.Context,
 			lintStats.SchemaCount = complexity.GetSchemaCount()
 		}
 
-		storeLintStatsArtifact(ctx, client, spec.GetName(), linter, lintStats)
+		_ = storeLintStatsArtifact(ctx, client, spec.GetName(), linter, lintStats)
 	})
 }
 
@@ -173,11 +173,7 @@ func computeLintStatsProjects(ctx context.Context,
 				return
 			}
 			// Store the aggregate stats on this project
-			storeLintStatsArtifact(ctx,
-				client,
-				project.GetName()+"/locations/global",
-				linter,
-				project_stats)
+			_ = storeLintStatsArtifact(ctx, client, project.GetName()+"/locations/global", linter, project_stats)
 		}
 		log.Debug(project.GetName())
 	})
@@ -200,7 +196,7 @@ func computeLintStatsAPIs(ctx context.Context,
 				return
 			}
 			// Store the aggregate stats on this api
-			storeLintStatsArtifact(ctx, client, api.GetName(), linter, api_stats)
+			_ = storeLintStatsArtifact(ctx, client, api.GetName(), linter, api_stats)
 		}
 		log.Debug(api.GetName())
 	})
@@ -224,7 +220,7 @@ func computeLintStatsVersions(ctx context.Context,
 				return
 			}
 			// Store the aggregate stats on this version
-			storeLintStatsArtifact(ctx, client, version.GetName(), linter, version_stats)
+			_ = storeLintStatsArtifact(ctx, client, version.GetName(), linter, version_stats)
 		}
 		log.Debug(version.GetName())
 	})

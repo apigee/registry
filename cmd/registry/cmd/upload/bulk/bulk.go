@@ -31,6 +31,6 @@ func Command(ctx context.Context) *cobra.Command {
 	cmd.AddCommand(protosCommand(ctx))
 
 	cmd.PersistentFlags().String("project_id", "", "Project ID to use for each upload")
-	cmd.MarkFlagRequired("project_id")
+	_ = cmd.MarkFlagRequired("project_id")
 	return cmd
 }

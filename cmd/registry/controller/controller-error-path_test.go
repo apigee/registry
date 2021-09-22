@@ -24,7 +24,7 @@ func TestControllerErrors(t *testing.T) {
 						Pattern: "$resource.spec", // Correct pattern should be: $resource.version/specs/-
 					},
 				},
-				Action: "registry compute lint $0 --linter gnostic",
+				Action: "registry compute lint $resource.spec --linter gnostic",
 			},
 		},
 		{
@@ -36,7 +36,7 @@ func TestControllerErrors(t *testing.T) {
 						Pattern: "$resource.apispec", // Correct pattern should be: $resource.spec
 					},
 				},
-				Action: "registry compute lint $0 --linter gnostic",
+				Action: "registry compute lint $resource.apispec --linter gnostic",
 			},
 		},
 		{
@@ -48,7 +48,7 @@ func TestControllerErrors(t *testing.T) {
 						Pattern: "$resource.version/artifacts/lint-gnostic", // There is no version level lint-gnostic artifact in the registry
 					},
 				},
-				Action: "registry compute lintstats $0 --linter gnostic",
+				Action: "registry compute lintstats $resource.version/artifacts/lint-gnostic --linter gnostic",
 			},
 		},
 		{
@@ -60,7 +60,7 @@ func TestControllerErrors(t *testing.T) {
 						Pattern: "$resource.spec",
 					},
 				},
-				Action: "registry compute lintstats $0.artifact --linter gnostic", // Correct reference should be: $0.spec/artifacts/lint-gnostic
+				Action: "registry compute lintstats $resource.artifact --linter gnostic", // Correct reference should be: $artifact.spec/artifacts/lint-gnostic
 			},
 		},
 		{
@@ -72,7 +72,50 @@ func TestControllerErrors(t *testing.T) {
 						Pattern: "$resource.spec",
 					},
 				},
-				Action: "registry compute lintstats $0.artifact --linter gnostic",
+				Action: "registry compute lintstats $resource.specs/artifacts/lint-gnostic --linter gnostic",
+			},
+		},
+		{
+			desc: "Incorrect matching",
+			generatedResource: &rpc.GeneratedResource{
+				Pattern: "apis/-/versions/-/artifacts/summary",
+				Dependencies: []*rpc.Dependency{
+					{
+						Pattern: "$resource.api/versions/-/artifacts/complexity", // Correct pattern should be: $resource.version/artifacts/vocabulary
+					},
+					{
+						Pattern: "$resource.version/artifacts/vocabulary",
+					},
+				},
+				Action: "registry compute summary $resource.version",
+			},
+		},
+		{
+			desc: "Incorrect action reference",
+			generatedResource: &rpc.GeneratedResource{
+				Pattern: "apis/-/versions/-/artifacts/score",
+				Dependencies: []*rpc.Dependency{
+					{
+						Pattern: "$resource.version/-/artifacts/complexity",
+					},
+				},
+				// Correct action should be: "compute summary $resource.version/artifacts/complexity"
+				Action: "registry compute summary $resource.api/versions/-/artifacts/complexity",
+			},
+		},
+		{
+			desc: "Missing reference",
+			generatedResource: &rpc.GeneratedResource{
+				Pattern: "apis/-/artifacts/summary",
+				Dependencies: []*rpc.Dependency{
+					{
+						Pattern: "$resource.api/versions/-/artifacts/complexity",
+					},
+					{
+						Pattern: "$resource.api/versions/-/artifacts/vocabulary",
+					},
+				},
+				Action: "registry compute summary $resource", // Correct action should be: compute summary $resource.api
 			},
 		},
 	}

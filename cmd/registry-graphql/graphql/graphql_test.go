@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package registry
+package graphql
 
 import (
 	"context"
@@ -110,7 +110,7 @@ func evaluateQuery(params *graphql.Params) *Payload {
 	}
 	rJSON, _ := json.Marshal(r)
 	payload := &Payload{}
-	json.Unmarshal(rJSON, payload)
+	_ = json.Unmarshal(rJSON, payload)
 	return payload
 }
 

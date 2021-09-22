@@ -21,8 +21,9 @@ import (
 	"strconv"
 
 	"github.com/apigee/registry/rpc"
-	linter "github.com/googleapis/gnostic/metrics/lint"
 	"google.golang.org/protobuf/proto"
+
+	linter "github.com/googleapis/gnostic/metrics/lint"
 	yaml "gopkg.in/yaml.v3"
 )
 
