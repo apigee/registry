@@ -51,7 +51,7 @@ func TestManifestUpload(t *testing.T) {
 								Filter:  "mime_type.contains('openapi')",
 							},
 						},
-						Action: "compute complexity $dependency0",
+						Action: "compute complexity $resource.spec",
 					},
 				},
 			},
