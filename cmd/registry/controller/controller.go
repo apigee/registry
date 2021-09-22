@@ -30,11 +30,6 @@ type Action struct {
 	RequiresReceipt   bool
 }
 
-type ResourceCollection struct {
-	maxUpdateTime time.Time
-	resourceGroup string
-}
-
 func ProcessManifest(
 	ctx context.Context,
 	client connection.Client,
