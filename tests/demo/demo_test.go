@@ -52,10 +52,10 @@ func check(t *testing.T, message string, err error) {
 }
 
 func readAndGZipFile(filename string) (*bytes.Buffer, error) {
-	fileBytes, err := ioutil.ReadFile(filename)
+	fileBytes, _ := ioutil.ReadFile(filename)
 	var buf bytes.Buffer
 	zw, _ := gzip.NewWriterLevel(&buf, gzip.BestCompression)
-	_, err = zw.Write(fileBytes)
+	_, err := zw.Write(fileBytes)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +67,7 @@ func readAndGZipFile(filename string) (*bytes.Buffer, error) {
 
 func hashForBytes(b []byte) string {
 	h := sha256.New()
-	h.Write(b)
+	_, _ = h.Write(b)
 	bs := h.Sum(nil)
 	return fmt.Sprintf("%x", bs)
 }

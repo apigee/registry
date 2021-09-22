@@ -27,7 +27,6 @@ import (
 
 const (
 	postgresDriver   = "postgres"
-	postgresTestUser = "registry_tester"
 	postgresDBConfig = "host=localhost port=5432 user=registry_tester dbname=registry_test sslmode=disable"
 )
 

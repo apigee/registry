@@ -76,9 +76,9 @@ func specCommand(ctx context.Context) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&version, "version", "", "Version to use as parent for the spec upload")
-	cmd.MarkFlagRequired("version")
+	_ = cmd.MarkFlagRequired("version")
 	cmd.Flags().StringVar(&style, "style", "", "Style of spec to upload (openapi|discovery|proto)")
-	cmd.MarkFlagRequired("style")
+	_ = cmd.MarkFlagRequired("style")
 	return cmd
 }
 

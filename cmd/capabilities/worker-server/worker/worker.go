@@ -15,7 +15,6 @@
 package worker
 
 import (
-	"cloud.google.com/go/compute/metadata"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -24,6 +23,8 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+
+	"cloud.google.com/go/compute/metadata"
 )
 
 type WorkerRequest struct {
@@ -77,11 +78,10 @@ func RequestHandler(w http.ResponseWriter, r *http.Request) {
 	log.Print(string(output))
 	if err != nil {
 		log.Printf("Error executing command: %v", err)
-		w.Write([]byte("Execution Completed"))
+		_, _ = w.Write([]byte("Execution Completed"))
 		return
 	}
 
 	log.Printf("Execution Completed: \n command: %s \nresource %s", req.Command, req.Resource)
-	w.Write([]byte("Execution Completed"))
-	return
+	_, _ = w.Write([]byte("Execution Completed"))
 }

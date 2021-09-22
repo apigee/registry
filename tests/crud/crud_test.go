@@ -53,10 +53,10 @@ func check(t *testing.T, message string, err error) {
 }
 
 func readAndGZipFile(filename string) (*bytes.Buffer, error) {
-	fileBytes, err := ioutil.ReadFile(filename)
+	fileBytes, _ := ioutil.ReadFile(filename)
 	var buf bytes.Buffer
 	zw, _ := gzip.NewWriterLevel(&buf, gzip.BestCompression)
-	_, err = zw.Write(fileBytes)
+	_, err := zw.Write(fileBytes)
 	if err != nil {
 		return nil, err
 	}
@@ -274,7 +274,7 @@ func TestCRUD(t *testing.T) {
 
 func hashForBytes(b []byte) string {
 	h := sha256.New()
-	h.Write(b)
+	_, _ = h.Write(b)
 	bs := h.Sum(nil)
 	return fmt.Sprintf("%x", bs)
 }
@@ -326,7 +326,7 @@ func testArtifacts(ctx context.Context, registryClient connection.Client, t *tes
 			if resp.GetContentType() != messageMimeType {
 				t.Errorf("Unexpected mime type %s (expected %s)", resp.GetContentType(), messageMimeType)
 			}
-			if bytes.Compare(resp.GetData(), messageContents) != 0 {
+			if !bytes.Equal(resp.GetData(), messageContents) {
 				t.Errorf("Unexpected data %s (expected %s)", string(resp.GetData()), string(messageContents))
 			}
 		}

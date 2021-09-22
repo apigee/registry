@@ -96,5 +96,5 @@ func saveTokenToFile(path string, token *oauth2.Token) {
 		log.WithError(err).Fatalf("Unable to cache oauth token")
 	}
 	defer f.Close()
-	json.NewEncoder(f).Encode(token)
+	_ = json.NewEncoder(f).Encode(token)
 }

@@ -20,11 +20,12 @@ import (
 	"strings"
 
 	"github.com/apigee/registry/rpc"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
+
 	metrics "github.com/googleapis/gnostic/metrics"
 	openapiv2 "github.com/googleapis/gnostic/openapiv2"
 	openapiv3 "github.com/googleapis/gnostic/openapiv3"
-	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/proto"
 )
 
 func PrintProject(project *rpc.Project) {
