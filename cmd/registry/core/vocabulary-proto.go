@@ -21,10 +21,10 @@ import (
 	"sort"
 	"strings"
 
-	metrics "github.com/googleapis/gnostic/metrics"
-
-	protoparser "github.com/yoheimuta/go-protoparser/v4"
 	"github.com/yoheimuta/go-protoparser/v4/parser"
+
+	metrics "github.com/googleapis/gnostic/metrics"
+	protoparser "github.com/yoheimuta/go-protoparser/v4"
 )
 
 func NewVocabularyFromZippedProtos(b []byte) (*metrics.Vocabulary, error) {
@@ -36,7 +36,7 @@ func NewVocabularyFromZippedProtos(b []byte) (*metrics.Vocabulary, error) {
 	// whenever we finish, delete the tmp directory
 	defer os.RemoveAll(dname)
 	// unzip the protos to the temp directory
-	_, err = UnzipArchiveToPath(b, dname)
+	_, err = unzipArchiveToPath(b, dname)
 	if err != nil {
 		return nil, err
 	}

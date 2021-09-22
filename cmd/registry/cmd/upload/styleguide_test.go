@@ -34,13 +34,13 @@ func TestStyleGuideUpload(t *testing.T) {
 		desc     string
 		project  string
 		filePath string
-		want     rpc.StyleGuide
+		want     *rpc.StyleGuide
 	}{
 		{
 			desc:     "simple style guide upload",
 			project:  "upload-styleguide-demo",
 			filePath: filepath.Join("testdata", "styleguide.yaml"),
-			want: rpc.StyleGuide{
+			want: &rpc.StyleGuide{
 				Name: "test-styleguide",
 				MimeTypes: []string{
 					"application/x.openapi+gzip;version=2",
@@ -108,14 +108,14 @@ func TestStyleGuideUpload(t *testing.T) {
 				Name: "projects/" + test.project + "/locations/global/artifacts/test-styleguide",
 			}
 
-			styleguide := rpc.StyleGuide{}
+			styleguide := &rpc.StyleGuide{}
 			body, err := client.GetArtifactContents(ctx, req)
 			if err != nil {
 				t.Fatalf("GetArtifactContents() returned error: %s", err)
 			}
 
 			contents := body.GetData()
-			err = proto.Unmarshal(contents, &styleguide)
+			err = proto.Unmarshal(contents, styleguide)
 			if err != nil {
 				t.Fatalf("Unmarshal() returned error: %s", err)
 			}

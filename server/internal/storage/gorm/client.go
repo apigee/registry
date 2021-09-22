@@ -117,7 +117,7 @@ func (c *Client) ensureTable(v interface{}) {
 	lock()
 	defer unlock()
 	if !c.db.Migrator().HasTable(v) {
-		c.db.Migrator().CreateTable(v)
+		_ = c.db.Migrator().CreateTable(v)
 	}
 }
 
@@ -163,18 +163,17 @@ func (c *Client) Put(ctx context.Context, k *Key, v interface{}) (*Key, error) {
 	case *models.Artifact:
 		r.Key = k.Name
 	}
-	c.db.Transaction(
-		func(tx *gorm.DB) error {
-			// Update all fields from model: https://gorm.io/docs/update.html#Update-Selected-Fields
-			rowsAffected := tx.Model(v).Select("*").Where("key = ?", k.Name).Updates(v).RowsAffected
-			if rowsAffected == 0 {
-				err := tx.Create(v).Error
-				if err != nil {
-					log.Printf("CREATE ERROR %s", err.Error())
-				}
+	_ = c.db.Transaction(func(tx *gorm.DB) error {
+		// Update all fields from model: https://gorm.io/docs/update.html#Update-Selected-Fields
+		rowsAffected := tx.Model(v).Select("*").Where("key = ?", k.Name).Updates(v).RowsAffected
+		if rowsAffected == 0 {
+			err := tx.Create(v).Error
+			if err != nil {
+				log.Printf("CREATE ERROR %s", err.Error())
 			}
-			return nil
-		})
+		}
+		return nil
+	})
 	return k, nil
 }
 

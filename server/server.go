@@ -107,7 +107,9 @@ func (s *RegistryServer) Start(ctx context.Context, listener net.Listener) {
 	reflection.Register(grpcServer)
 	rpc.RegisterRegistryServer(grpcServer, s)
 
-	go grpcServer.Serve(listener)
+	go func() {
+		_ = grpcServer.Serve(listener)
+	}()
 
 	// Block until the context is cancelled.
 	<-ctx.Done()

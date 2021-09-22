@@ -34,13 +34,13 @@ func TestManifestUpload(t *testing.T) {
 		desc     string
 		project  string
 		filePath string
-		want     rpc.Manifest
+		want     *rpc.Manifest
 	}{
 		{
 			desc:     "simple manifest upload",
 			project:  "upload-manifest-demo",
 			filePath: filepath.Join("testdata", "manifest.yaml"),
-			want: rpc.Manifest{
+			want: &rpc.Manifest{
 				Name: "test-manifest",
 				GeneratedResources: []*rpc.GeneratedResource{
 					{
@@ -95,10 +95,10 @@ func TestManifestUpload(t *testing.T) {
 				Name: "projects/" + test.project + "/locations/global/artifacts/test-manifest",
 			}
 
-			manifest := rpc.Manifest{}
+			manifest := &rpc.Manifest{}
 			body, _ := client.GetArtifactContents(ctx, req)
 			contents := body.GetData()
-			_ = proto.Unmarshal(contents, &manifest)
+			_ = proto.Unmarshal(contents, manifest)
 
 			// Verify the manifest definition is correct
 			opts := cmp.Options{

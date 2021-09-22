@@ -69,7 +69,7 @@ func populatedFields(m protoreflect.ProtoMessage) *fieldmaskpb.FieldMask {
 
 	// Range iterates over the populated proto fields only.
 	m.ProtoReflect().Range(func(field protoreflect.FieldDescriptor, _ protoreflect.Value) bool {
-		mask.Append(m, string(field.Name()))
+		_ = mask.Append(m, string(field.Name()))
 		return true // Continue iterating.
 	})
 
@@ -83,7 +83,7 @@ func allFields(m protoreflect.ProtoMessage) *fieldmaskpb.FieldMask {
 	// Fields gives us all of the proto's field names.
 	fields := m.ProtoReflect().Descriptor().Fields()
 	for i := 0; i < fields.Len(); i++ {
-		mask.Append(m, string(fields.Get(i).Name()))
+		_ = mask.Append(m, string(fields.Get(i).Name()))
 	}
 
 	return mask

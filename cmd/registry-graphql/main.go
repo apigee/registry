@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"net/http"
 
-	registry "github.com/apigee/registry/cmd/registry-graphql/graphql"
+	"github.com/apigee/registry/cmd/registry-graphql/graphql"
 	"github.com/graphql-go/handler"
 )
 
@@ -36,7 +36,7 @@ func (p *corsProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", *corsAllowOriginFlag)
 		if r.Method == "OPTIONS" {
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(""))
+			_, _ = w.Write([]byte(""))
 			return
 		}
 	}
@@ -50,7 +50,7 @@ func main() {
 
 	// graphql handler
 	h := handler.New(&handler.Config{
-		Schema: &registry.Schema,
+		Schema: &graphql.Schema,
 		Pretty: true,
 	})
 	http.Handle("/graphql", &corsProxy{h: h})
@@ -62,5 +62,5 @@ func main() {
 	// run the server
 	port := "8088"
 	fmt.Println("Running server on port " + port)
-	http.ListenAndServe(":"+port, nil)
+	_ = http.ListenAndServe(":"+port, nil)
 }
