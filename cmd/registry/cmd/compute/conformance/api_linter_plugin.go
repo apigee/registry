@@ -10,8 +10,8 @@ type ApiLinter struct {
 	Rules map[string][]string
 }
 
-func NewApiLinter() SpectralLinter {
-	return SpectralLinter{
+func NewApiLinter() ApiLinter {
+	return ApiLinter{
 		Rules: make(map[string][]string),
 	}
 }

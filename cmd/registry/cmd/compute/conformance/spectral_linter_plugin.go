@@ -1,7 +1,6 @@
 package conformance
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -222,19 +221,37 @@ func (*concreteSpectralRunner) Run(
 	specPath,
 	configPath string,
 ) ([]*spectralLintResult, error) {
+	// Create a temporary destination directory to store the output.
+	root, err := createTemporaryConfigDirectory("spectral-output-")
+	if err != nil {
+		return nil, err
+	}
+	defer os.RemoveAll(root)
+
+	// Set the destination path of the spectral output.
+	outputPath := filepath.Join(root, "spectral-lint.json")
+
 	cmd := exec.Command("spectral",
 		"lint", specPath,
 		"--r", configPath,
 		"--f", "json",
+		"--output", outputPath,
 	)
-	var b bytes.Buffer
-	cmd.Stdout = &b
-	// Ignore errors from Spectral because Spectral returns an error result when APIs have errors.
+
+	// Ignore errors from Spectral because Spectral returns an
+	// error result when APIs have errors.
 	cmd.Run()
-	var lintResults []*spectralLintResult
-	err := json.Unmarshal(b.Bytes(), &lintResults)
+
+	// Read and parse the spectral output.
+	b, err := ioutil.ReadFile(outputPath)
 	if err != nil {
 		return nil, err
 	}
+	var lintResults []*spectralLintResult
+	err = json.Unmarshal(b, &lintResults)
+	if err != nil {
+		return nil, err
+	}
+
 	return lintResults, nil
 }
