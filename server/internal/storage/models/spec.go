@@ -17,11 +17,14 @@ package models
 import (
 	"crypto/sha256"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/names"
 	"github.com/google/uuid"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -76,8 +79,16 @@ func NewSpec(name names.Spec, body *rpc.ApiSpec) (spec *Spec, err error) {
 	}
 
 	if body.GetContents() != nil {
-		spec.SizeInBytes = int32(len(body.GetContents()))
-		spec.Hash = hashForBytes(body.GetContents())
+		contents := body.GetContents()
+		// if contents are gzipped, uncompress before computing size and hash.
+		if strings.Contains(spec.MimeType, "+gzip") && len(contents) > 0 {
+			contents, err = GUnzippedBytes(contents)
+			if err != nil {
+				return nil, status.Error(codes.InvalidArgument, err.Error())
+			}
+		}
+		spec.SizeInBytes = int32(len(contents))
+		spec.Hash = hashForBytes(contents)
 	}
 
 	return spec, nil
@@ -160,7 +171,16 @@ func (s *Spec) Update(message *rpc.ApiSpec, mask *fieldmaskpb.FieldMask) error {
 		case "description":
 			s.Description = message.GetDescription()
 		case "contents":
-			s.updateContents(message.GetContents())
+			contents := message.GetContents()
+			// if contents are gzipped, uncompress before computing size and hash.
+			if strings.Contains(s.MimeType, "+gzip") && len(contents) > 0 {
+				var err error
+				contents, err = GUnzippedBytes(contents)
+				if err != nil {
+					return status.Error(codes.InvalidArgument, err.Error())
+				}
+			}
+			s.updateContents(contents)
 		case "mime_type":
 			s.MimeType = message.GetMimeType()
 		case "source_uri":

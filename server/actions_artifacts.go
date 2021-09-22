@@ -95,7 +95,10 @@ func (s *RegistryServer) CreateArtifact(ctx context.Context, req *rpc.CreateArti
 		}
 	}
 
-	artifact := models.NewArtifact(name, req.GetArtifact())
+	artifact, err := models.NewArtifact(name, req.GetArtifact())
+	if err != nil {
+		return nil, err
+	}
 	if err := db.SaveArtifact(ctx, artifact); err != nil {
 		return nil, err
 	}
@@ -266,7 +269,10 @@ func (s *RegistryServer) ReplaceArtifact(ctx context.Context, req *rpc.ReplaceAr
 		return nil, err
 	}
 
-	artifact := models.NewArtifact(name, req.GetArtifact())
+	artifact, err := models.NewArtifact(name, req.GetArtifact())
+	if err != nil {
+		return nil, err
+	}
 	if err := db.SaveArtifact(ctx, artifact); err != nil {
 		return nil, err
 	}
