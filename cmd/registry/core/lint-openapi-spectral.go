@@ -46,7 +46,7 @@ func lintFileForOpenAPIWithSpectral(path string, root string) (*rpc.LintFile, er
 	cmd := exec.Command("spectral", "lint", path, "--f", "json", "--output", "spectral-lint.json")
 	cmd.Dir = root
 	// ignore errors from Spectral because Spectral returns an error result when APIs have errors.
-	cmd.Run()
+	_ = cmd.Run()
 	b, err := ioutil.ReadFile(filepath.Join(root, "/spectral-lint.json"))
 	if err != nil {
 		return nil, err
