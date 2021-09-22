@@ -23,15 +23,16 @@ import (
 	"runtime"
 	"time"
 
-	cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
 	"cloud.google.com/go/pubsub"
 	"github.com/apigee/registry/cmd/capabilities/worker-server/worker"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server"
-	taskspb "google.golang.org/genproto/googleapis/cloud/tasks/v2"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
+
+	cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
+	taskspb "google.golang.org/genproto/googleapis/cloud/tasks/v2"
 )
 
 const subscriptionName = server.TopicName + "-pull-subscriber"
@@ -129,7 +130,6 @@ func messageHandler(ctx context.Context, msg *pubsub.Message) {
 	}
 
 	msg.Ack()
-	return
 }
 
 func createQueueTask(ctx context.Context, resource string) error {

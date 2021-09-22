@@ -96,6 +96,6 @@ func styleGuideCommand(ctx context.Context) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&projectID, "project_id", "", "Project ID to use when storing the styleguide artifact")
-	cmd.MarkFlagRequired("project_id")
+	_ = cmd.MarkFlagRequired("project_id")
 	return cmd
 }

@@ -61,7 +61,7 @@ func sheetCommand(ctx context.Context) *cobra.Command {
 					return
 				}
 				log.Debugf("Exported int64 %+v to %s", inputs, path)
-				saveSheetPath(ctx, client, path, artifact)
+				_ = saveSheetPath(ctx, client, path, artifact)
 				return
 			}
 			messageType, err := core.MessageTypeForMimeType(inputs[0].GetMimeType())
@@ -84,7 +84,7 @@ func sheetCommand(ctx context.Context) *cobra.Command {
 				if artifact == "" {
 					artifact = inputs[0].Name + "-sheet"
 				}
-				saveSheetPath(ctx, client, path, artifact)
+				_ = saveSheetPath(ctx, client, path, artifact)
 			} else if messageType == "gnostic.metrics.VersionHistory" {
 				if len(inputs) != 1 {
 					log.Fatalf("Please specify exactly one version history to export")
@@ -99,7 +99,7 @@ func sheetCommand(ctx context.Context) *cobra.Command {
 				if artifact == "" {
 					artifact = inputs[0].Name + "-sheet"
 				}
-				saveSheetPath(ctx, client, path, artifact)
+				_ = saveSheetPath(ctx, client, path, artifact)
 			} else if messageType == "gnostic.metrics.Complexity" {
 				path, err = core.ExportComplexityToSheet(ctx, "Complexity", inputs)
 				if err != nil {
@@ -107,7 +107,7 @@ func sheetCommand(ctx context.Context) *cobra.Command {
 					return
 				}
 				log.Debugf("Exported complexity to %s", path)
-				saveSheetPath(ctx, client, path, artifact)
+				_ = saveSheetPath(ctx, client, path, artifact)
 			} else if messageType == "google.cloud.apigee.registry.applications.v1alpha1.Index" {
 				if len(inputs) != 1 {
 					log.Fatalf("%d artifacts matched. Please specify exactly one for export.", len(inputs))
@@ -125,7 +125,7 @@ func sheetCommand(ctx context.Context) *cobra.Command {
 				if artifact == "" {
 					artifact = inputs[0].Name + "-sheet"
 				}
-				saveSheetPath(ctx, client, path, artifact)
+				_ = saveSheetPath(ctx, client, path, artifact)
 			} else {
 				log.Fatalf("Unknown message type: %s", messageType)
 			}

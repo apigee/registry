@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package registry
+package graphql
 
 import (
 	"errors"
@@ -93,7 +93,7 @@ func resolveAPIs(p graphql.ResolveParams) (interface{}, error) {
 	var response *rpc.ListApisResponse
 	edges := []map[string]interface{}{}
 	for len(edges) < pageSize {
-		response, err = c.GrpcClient().ListApis(ctx, req)
+		response, _ = c.GrpcClient().ListApis(ctx, req)
 		for _, api := range response.GetApis() {
 			edges = append(edges, representationForEdge(representationForAPI(api)))
 		}

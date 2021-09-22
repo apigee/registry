@@ -20,6 +20,7 @@ import (
 	"io/ioutil"
 
 	"github.com/apex/log"
+	"github.com/apigee/registry/cmd/registry/controller"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
@@ -36,7 +37,7 @@ func readManifestProto(filename string) (*rpc.Manifest, error) {
 		return nil, err
 	}
 
-	jsonBytes, err := yaml.YAMLToJSON(yamlBytes)
+	jsonBytes, _ := yaml.YAMLToJSON(yamlBytes)
 	m := &rpc.Manifest{}
 	err = protojson.Unmarshal(jsonBytes, m)
 
@@ -63,8 +64,20 @@ func manifestCommand(ctx context.Context) *cobra.Command {
 			if err != nil {
 				log.WithError(err).Fatal("Failed to read manifest")
 			}
-			manifestData, _ := proto.Marshal(manifest)
 
+			// validate the manifest
+			isValid := true
+			for _, resource := range manifest.GeneratedResources {
+				if err := controller.ValidateResourceEntry(resource); err != nil {
+					log.WithError(err).Errorf("Invalid manifest entry %v", resource)
+					isValid = false
+				}
+			}
+			if !isValid {
+				log.Fatal("Manifest definition contains errors")
+			}
+
+			manifestData, _ := proto.Marshal(manifest)
 			ctx := context.Background()
 			client, err := connection.NewClient(ctx)
 			if err != nil {
@@ -85,6 +98,6 @@ func manifestCommand(ctx context.Context) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&projectID, "project_id", "", "Project ID to use when saving the result manifest artifact")
-	cmd.MarkFlagRequired("project_id")
+	_ = cmd.MarkFlagRequired("project_id")
 	return cmd
 }

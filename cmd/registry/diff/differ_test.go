@@ -302,7 +302,7 @@ func TestValueDiff(t *testing.T) {
 			Modifications: make(map[string]*rpc.Diff_ValueChange),
 		}
 		change := test.change
-		searchNode(val, diffProto, &change)
+		_ = searchNode(val, diffProto, &change)
 		if !cmp.Equal(test.wantProto, diffProto, opts) {
 			t.Errorf("searchNode returned unexpected diff (-want +got):\n%s", cmp.Diff(test.wantProto, diffProto, opts))
 		}

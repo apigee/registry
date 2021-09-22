@@ -15,10 +15,7 @@
 package server
 
 import (
-	"bytes"
-	"compress/gzip"
 	"context"
-	"io/ioutil"
 	"strings"
 
 	"github.com/apigee/registry/rpc"
@@ -86,7 +83,7 @@ func (s *RegistryServer) createSpec(ctx context.Context, name names.Spec, body *
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	s.notify(ctx, rpc.Notification_CREATED, spec.RevisionName())
+	_ = s.notify(ctx, rpc.Notification_CREATED, spec.RevisionName())
 	return message, nil
 }
 
@@ -112,7 +109,7 @@ func (s *RegistryServer) DeleteApiSpec(ctx context.Context, req *rpc.DeleteApiSp
 		return nil, err
 	}
 
-	s.notify(ctx, rpc.Notification_DELETED, name.String())
+	_ = s.notify(ctx, rpc.Notification_DELETED, name.String())
 	return &emptypb.Empty{}, nil
 }
 
@@ -177,16 +174,6 @@ func (s *RegistryServer) getApiSpecRevision(ctx context.Context, name names.Spec
 	return message, nil
 }
 
-// GUnzippedBytes uncompresses a slice of bytes.
-func GUnzippedBytes(input []byte) ([]byte, error) {
-	buf := bytes.NewBuffer(input)
-	zr, err := gzip.NewReader(buf)
-	if err != nil {
-		return nil, err
-	}
-	return ioutil.ReadAll(zr)
-}
-
 // GetApiSpecContents handles the corresponding API request.
 func (s *RegistryServer) GetApiSpecContents(ctx context.Context, req *rpc.GetApiSpecContentsRequest) (*httpbody.HttpBody, error) {
 	db, err := s.getStorageClient(ctx)
@@ -220,7 +207,7 @@ func (s *RegistryServer) GetApiSpecContents(ctx context.Context, req *rpc.GetApi
 		return nil, err
 	}
 	if strings.Contains(spec.MimeType, "+gzip") {
-		contents, err := GUnzippedBytes(blob.Contents)
+		contents, err := models.GUnzippedBytes(blob.Contents)
 		if err != nil {
 			return nil, status.Errorf(codes.FailedPrecondition, "failed to unzip contents with gzip MIME type: %s", err)
 		}
@@ -340,7 +327,7 @@ func (s *RegistryServer) UpdateApiSpec(ctx context.Context, req *rpc.UpdateApiSp
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	s.notify(ctx, rpc.Notification_UPDATED, spec.RevisionName())
+	_ = s.notify(ctx, rpc.Notification_UPDATED, spec.RevisionName())
 	return message, nil
 }
 

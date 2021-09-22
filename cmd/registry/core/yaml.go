@@ -78,8 +78,6 @@ func exportAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.A
 	}
 	apiMapContent = appendPair(apiMapContent, "versions", nodeForMapping(versionsMapContent))
 	artifactsMapContent := nodeSlice()
-
-	// TODO: Should this be checked? If not, why?
 	_ = ListArtifactsForParent(ctx, client, m, func(message *rpc.Artifact) {
 		artifactsMapContent = appendPair(artifactsMapContent,
 			path.Base(message.Name),
@@ -114,8 +112,6 @@ func exportVersion(ctx context.Context, client *gapic.RegistryClient, message *r
 	}
 	versionMapContent = appendPair(versionMapContent, "specs", nodeForMapping(specsMapContent))
 	artifactsMapContent := nodeSlice()
-
-	// TODO: Should this be checked? If not, why?
 	_ = ListArtifactsForParent(ctx, client, m, func(message *rpc.Artifact) {
 		artifactsMapContent = appendPair(artifactsMapContent,
 			path.Base(message.Name),

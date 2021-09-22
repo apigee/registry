@@ -1,6 +1,3 @@
-//go:build cgo
-// +build cgo
-
 // Copyright 2021 Google LLC. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,6 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package gorm
+package models
 
-const cgoEnabled = true
+import (
+	"bytes"
+	"compress/gzip"
+	"io/ioutil"
+)
+
+// GUnzippedBytes uncompresses a slice of bytes.
+func GUnzippedBytes(input []byte) ([]byte, error) {
+	buf := bytes.NewBuffer(input)
+	zr, err := gzip.NewReader(buf)
+	if err != nil {
+		return nil, err
+	}
+	return ioutil.ReadAll(zr)
+}
