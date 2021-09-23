@@ -30,18 +30,13 @@ import (
 )
 
 // Implement io.Writer interface https://pkg.go.dev/io#Writer
-type LogWriter struct {
+type logWriter struct {
 	logger *log.Entry
 }
 
-func (w LogWriter) Write(p []byte) (n int, err error) {
+func (w logWriter) Write(p []byte) (n int, err error) {
 	w.logger.Debug(string(p))
 	return len(p), nil
-}
-
-func NewCmdLogWriter(l *log.Entry) *LogWriter {
-	lw := &LogWriter{logger: l}
-	return lw
 }
 
 type ExecCommandTask struct {
@@ -80,7 +75,7 @@ func (task *ExecCommandTask) Run(ctx context.Context) error {
 		}
 	} else { //third party commands
 		fullCmd := strings.Fields(task.Action.Command)
-		cmdLogger := &LogWriter{
+		cmdLogger := &logWriter{
 			logger: log.WithFields(log.Fields{
 				"uid": task.TaskID,
 			}),
