@@ -176,17 +176,6 @@ func createTemporaryConfigDirectory(prefix string) (string, error) {
 	return ioutil.TempDir("", prefix)
 }
 
-func executeSpectralLinter(specPath string, configFilePath string, destinationPath string) {
-	cmd := exec.Command("spectral",
-		"lint", specPath,
-		"--r", configFilePath,
-		"--f", "json",
-		"--output", destinationPath,
-	)
-	// Ignore errors from Spectral because Spectral returns an error result when APIs have errors.
-	_ = cmd.Run()
-}
-
 func getLintProblemsFromSpectralResults(
 	lintResults []*spectralLintResult,
 ) ([]*rpc.LintProblem, error) {
@@ -240,7 +229,7 @@ func (*concreteSpectralRunner) Run(
 
 	// Ignore errors from Spectral because Spectral returns an
 	// error result when APIs have errors.
-	cmd.Run()
+	_ = cmd.Run()
 
 	// Read and parse the spectral output.
 	b, err := ioutil.ReadFile(outputPath)
