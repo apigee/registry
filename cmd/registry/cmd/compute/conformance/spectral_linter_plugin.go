@@ -1,6 +1,7 @@
 package conformance
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -47,6 +48,21 @@ type spectralLintLocation struct {
 	Character int32 `json:"character"`
 }
 
+// spectralRunner is an interface through which the Spectral Linter executes.
+type spectralRunner interface {
+	// Runs the spectral linter with a provided spec and configuration path
+	Run(specPath, configPath string) ([]*spectralLintResult, error)
+}
+
+// concreteSpectralRunner implements the spectral runner interface.
+type concreteSpectralRunner struct{}
+
+func NewSpectralLinter() SpectralLinter {
+	return SpectralLinter{
+		Rules: make(map[string][]string),
+	}
+}
+
 // AddRule registers a specific linter rule onto a given mime type.
 func (linter SpectralLinter) AddRule(mimeType string, rule string) error {
 	// Check if the linter supports the mime type.
@@ -74,14 +90,25 @@ func (linter SpectralLinter) SupportsMimeType(mimeType string) bool {
 
 // LintSpec lints the spec pointed at by a spec path, which has a provided mime type.
 // It returns the results as a LintFile object.
-func (linter SpectralLinter) LintSpec(mimeType string, specPath string) ([]*rpc.LintProblem, error) {
+func (linter SpectralLinter) LintSpec(
+	mimeType string,
+	specPath string,
+) ([]*rpc.LintProblem, error) {
+	return linter.LintSpecImpl(mimeType, specPath, &concreteSpectralRunner{})
+}
+
+func (linter SpectralLinter) LintSpecImpl(
+	mimeType string,
+	specPath string,
+	runner spectralRunner,
+) ([]*rpc.LintProblem, error) {
 	// Check if the linter supports the mime type
 	if !linter.SupportsMimeType(mimeType) {
 		return nil, createUnsupportedMimeTypeError(mimeType)
 	}
 
 	// Create a temporary directory to store the configuration.
-	root, err := ioutil.TempDir("", "spectral-config-")
+	root, err := createTemporaryConfigDirectory("spectral-config-")
 	if err != nil {
 		return nil, err
 	}
@@ -90,19 +117,19 @@ func (linter SpectralLinter) LintSpec(mimeType string, specPath string) ([]*rpc.
 	defer os.RemoveAll(root)
 
 	// Create configuration file for Spectral to execute the correct rules
-	configFilePath, err := linter.createConfigurationFile(root, mimeType)
+	configPath, err := linter.createConfigurationFile(root, mimeType)
 	if err != nil {
 		return nil, err
 	}
 
-	// Set the destination path of the spectral output
-	destinationPath := filepath.Join(root, "spectral-lint.json")
-
-	// Execute the spectral linter
-	executeSpectralLinter(specPath, configFilePath, destinationPath)
+	// Execute the spectral linter.
+	lintResults, err := runner.Run(specPath, configPath)
+	if err != nil {
+		return nil, err
+	}
 
 	// Get the lint results as a LintFile object from the spectral output file
-	lintProblems, err := parseSpectralOutput(destinationPath)
+	lintProblems, err := getLintProblemsFromSpectralResults(lintResults)
 	if err != nil {
 		return nil, err
 	}
@@ -133,13 +160,21 @@ func (linter SpectralLinter) createConfigurationFile(root string, mimeType strin
 	}
 
 	// Write the configuration to the temporary directory.
-	configFilePath := filepath.Join(root, "spectral.json")
-	err = ioutil.WriteFile(configFilePath, file, 0644)
+	configPath := filepath.Join(root, "spectral.json")
+	err = writeBytesToFile(configPath, file)
 	if err != nil {
 		return "", err
 	}
 
-	return configFilePath, nil
+	return configPath, nil
+}
+
+func writeBytesToFile(filepath string, file []byte) error {
+	return ioutil.WriteFile(filepath, file, 0644)
+}
+
+func createTemporaryConfigDirectory(prefix string) (string, error) {
+	return ioutil.TempDir("", prefix)
 }
 
 func executeSpectralLinter(specPath string, configFilePath string, destinationPath string) {
@@ -153,16 +188,9 @@ func executeSpectralLinter(specPath string, configFilePath string, destinationPa
 	_ = cmd.Run()
 }
 
-func parseSpectralOutput(spectralOutputFilePath string) ([]*rpc.LintProblem, error) {
-	b, err := ioutil.ReadFile(spectralOutputFilePath)
-	if err != nil {
-		return nil, err
-	}
-	var lintResults []*spectralLintResult
-	err = json.Unmarshal(b, &lintResults)
-	if err != nil {
-		return nil, err
-	}
+func getLintProblemsFromSpectralResults(
+	lintResults []*spectralLintResult,
+) ([]*rpc.LintProblem, error) {
 	problems := make([]*rpc.LintProblem, len(lintResults))
 	for i, result := range lintResults {
 		problem := &rpc.LintProblem{
@@ -188,4 +216,25 @@ func parseSpectralOutput(spectralOutputFilePath string) ([]*rpc.LintProblem, err
 // createUnsupportedMimeTypeError returns an error for unsupported mime types.
 func createUnsupportedMimeTypeError(mimeType string) error {
 	return fmt.Errorf("mime type %s is not supported by the spectral linter", mimeType)
+}
+
+func (*concreteSpectralRunner) Run(
+	specPath,
+	configPath string,
+) ([]*spectralLintResult, error) {
+	cmd := exec.Command("spectral",
+		"lint", specPath,
+		"--r", configPath,
+		"--f", "json",
+	)
+	var b bytes.Buffer
+	cmd.Stdout = &b
+	// Ignore errors from Spectral because Spectral returns an error result when APIs have errors.
+	cmd.Run()
+	var lintResults []*spectralLintResult
+	err := json.Unmarshal(b.Bytes(), &lintResults)
+	if err != nil {
+		return nil, err
+	}
+	return lintResults, nil
 }
