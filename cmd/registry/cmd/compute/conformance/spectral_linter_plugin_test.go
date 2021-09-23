@@ -30,13 +30,13 @@ func TestAddRule(t *testing.T) {
 		rule string
         expectedError  error
     }{
-        {
+		{
 			NewSpectralLinter(),
 			"application/x.openapi+gzip;version=2",
 			"testRule1",
 			nil,
 		},
-        {
+		{
 			NewSpectralLinter(), 
 			"application/x.protobuf+gzip",
 			"testRule2",
@@ -180,7 +180,7 @@ func TestLintSpec(t *testing.T) {
 						},
 					},
 				},
-				nil,
+			nil,
 			),
 			[]*rpc.LintProblem{
 				{
@@ -201,7 +201,6 @@ func TestLintSpec(t *testing.T) {
 			},
 			nil,
 		},
-
 		{
 			NewSpectralLinter(),
 			"application/x.asyncapi+gzip;version=2",
