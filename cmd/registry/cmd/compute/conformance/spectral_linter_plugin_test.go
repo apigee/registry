@@ -83,11 +83,11 @@ func TestAddRule(t *testing.T) {
 
 func TestSupportsMimeType(t *testing.T) {
 	supportsMimeTypeTests := []struct {
-        linter SpectralLinter
+		linter SpectralLinter
 		mimeType string
-        want  bool
-    }{
-        {
+		want  bool
+	}{
+		{
 			NewSpectralLinter(),
 			"application/x.openapi+gzip;version=2",
 			true,
@@ -102,7 +102,7 @@ func TestSupportsMimeType(t *testing.T) {
 			"application/x.asyncapi+gzip;version=2",
 			true,
 		},
-        {
+		{
 			NewSpectralLinter(), 
 			"application/x.protobuf+gzip",
 			false,
@@ -112,11 +112,11 @@ func TestSupportsMimeType(t *testing.T) {
 			"application/x.asyncapi+gzip;version=3",
 			false,
 		},
-    }
+	}
 
-    for _, tt := range supportsMimeTypeTests {
+	for _, tt := range supportsMimeTypeTests {
 		if supports := 
-			tt.linter.SupportsMimeType(tt.mimeType); supports != tt.want {
+		tt.linter.SupportsMimeType(tt.mimeType); supports != tt.want {
 			t.Errorf(
 				"SupportsMimeType returned %t for mime type %s, expected %t",
 				supports,
@@ -124,7 +124,7 @@ func TestSupportsMimeType(t *testing.T) {
 				tt.want,
 			)
 		}
-    }
+	}
 }
 
 // mockSpectralRunner implements the spectral runner interface.
