@@ -24,7 +24,7 @@ func TestControllerErrors(t *testing.T) {
 						Pattern: "$resource.spec", // Correct pattern should be: $resource.version/specs/-
 					},
 				},
-				Action: "compute lint $resource.spec --linter gnostic",
+				Action: "registry compute lint $resource.spec --linter gnostic",
 			},
 		},
 		{
@@ -36,7 +36,7 @@ func TestControllerErrors(t *testing.T) {
 						Pattern: "$resource.apispec", // Correct pattern should be: $resource.spec
 					},
 				},
-				Action: "compute lint $resource.apispec --linter gnostic",
+				Action: "registry compute lint $resource.apispec --linter gnostic",
 			},
 		},
 		{
@@ -48,7 +48,7 @@ func TestControllerErrors(t *testing.T) {
 						Pattern: "$resource.version/artifacts/lint-gnostic", // There is no version level lint-gnostic artifact in the registry
 					},
 				},
-				Action: "compute lintstats $resource.version/artifacts/lint-gnostic --linter gnostic",
+				Action: "registry compute lintstats $resource.version/artifacts/lint-gnostic --linter gnostic",
 			},
 		},
 		{
@@ -60,7 +60,7 @@ func TestControllerErrors(t *testing.T) {
 						Pattern: "$resource.spec",
 					},
 				},
-				Action: "compute lintstats $resource.artifact --linter gnostic", // Correct reference should be: $artifact.spec/artifacts/lint-gnostic
+				Action: "registry compute lintstats $resource.artifact --linter gnostic", // Correct reference should be: $artifact.spec/artifacts/lint-gnostic
 			},
 		},
 		{
@@ -72,7 +72,7 @@ func TestControllerErrors(t *testing.T) {
 						Pattern: "$resource.spec",
 					},
 				},
-				Action: "compute lintstats $resource.specs/artifacts/lint-gnostic --linter gnostic",
+				Action: "registry compute lintstats $resource.specs/artifacts/lint-gnostic --linter gnostic",
 			},
 		},
 		{
@@ -87,7 +87,7 @@ func TestControllerErrors(t *testing.T) {
 						Pattern: "$resource.version/artifacts/vocabulary",
 					},
 				},
-				Action: "compute summary $resource.version",
+				Action: "registry compute summary $resource.version",
 			},
 		},
 		{
@@ -100,7 +100,7 @@ func TestControllerErrors(t *testing.T) {
 					},
 				},
 				// Correct action should be: "compute summary $resource.version/artifacts/complexity"
-				Action: "compute summary $resource.api/versions/-/artifacts/complexity",
+				Action: "registry compute summary $resource.api/versions/-/artifacts/complexity",
 			},
 		},
 		{
@@ -115,7 +115,7 @@ func TestControllerErrors(t *testing.T) {
 						Pattern: "$resource.api/versions/-/artifacts/vocabulary",
 					},
 				},
-				Action: "compute summary $resource", // Correct action should be: compute summary $resource.api
+				Action: "registry compute summary $resource", // Correct action should be: compute summary $resource.api
 			},
 		},
 	}
