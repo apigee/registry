@@ -18,4 +18,4 @@ generated_resources:
   receipt: true
   dependencies:
   - pattern: $resource.spec
-  action: "exec echo test-receipt-artifact"
+  action: "echo test-receipt-artifact"
