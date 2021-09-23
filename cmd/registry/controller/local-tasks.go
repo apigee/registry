@@ -29,6 +29,16 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+// Implement io.Writer interface https://pkg.go.dev/io#Writer
+type logWriter struct {
+	logger *log.Entry
+}
+
+func (w logWriter) Write(p []byte) (n int, err error) {
+	w.logger.Debug(string(p))
+	return len(p), nil
+}
+
 type ExecCommandTask struct {
 	Action *Action
 	TaskID string
@@ -47,16 +57,38 @@ func (task *ExecCommandTask) Run(ctx context.Context) error {
 		"taskID": fmt.Sprintf("{%s}", task.TaskID),
 	})
 
-	if strings.HasPrefix(task.Action.Command, "resolve") {
-		logger.Debug("Failed Execution: 'resolve' not allowed in action")
-		return errors.New("'resolve' not allowed in action")
+	if strings.HasPrefix(task.Action.Command, "registry resolve") {
+		logger.Debug("Failed Execution: 'registry resolve' not allowed in action")
+		return errors.New("'registry resolve' not allowed in action")
 	}
 
-	cmd := exec.Command("registry", strings.Fields(task.Action.Command)...)
-	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
-	if err := cmd.Run(); err != nil {
-		logger.WithError(err).Debug("Failed Execution: failed running command")
-		return errors.New("failed running command")
+	// first party registry commands
+	if strings.HasPrefix(task.Action.Command, "registry") {
+		fullCmd := append(strings.Fields(task.Action.Command), fmt.Sprintf("--log_id=%s", task.TaskID))
+
+		cmd := exec.Command(fullCmd[0], fullCmd[1:]...)
+		cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
+
+		if err := cmd.Run(); err != nil {
+			logger.WithError(err).Debug("Failed Execution: failed running command")
+			return errors.New("failed running command")
+		}
+	} else { //third party commands
+		fullCmd := strings.Fields(task.Action.Command)
+		cmdLogger := &logWriter{
+			logger: log.WithFields(log.Fields{
+				"uid": task.TaskID,
+			}),
+		}
+
+		cmd := exec.Command(fullCmd[0], fullCmd[1:]...)
+		// redirect the output of the subcommands to the logger
+		cmd.Stdout, cmd.Stderr = cmdLogger, cmdLogger
+
+		if err := cmd.Run(); err != nil {
+			logger.WithError(err).Debug("Failed Execution: failed running command")
+			return errors.New("failed running command")
+		}
 	}
 
 	if task.Action.RequiresReceipt {
