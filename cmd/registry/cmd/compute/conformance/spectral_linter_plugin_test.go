@@ -139,7 +139,6 @@ func (runner *mockSpectralRunner) Run(
 	spec, 
 	config string,
 ) ([]*spectralLintResult, error) {
-	fmt.Println(runner.results)
 	return runner.results, runner.err
 }
 
