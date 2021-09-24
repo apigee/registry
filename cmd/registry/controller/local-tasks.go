@@ -64,7 +64,7 @@ func (task *ExecCommandTask) Run(ctx context.Context) error {
 
 	// first party registry commands
 	if strings.HasPrefix(task.Action.Command, "registry") {
-		fullCmd := append(strings.Fields(task.Action.Command), fmt.Sprintf("--log_id=%s", task.TaskID))
+		fullCmd := append(strings.Fields(task.Action.Command), fmt.Sprintf("--log-id=%s", task.TaskID))
 
 		cmd := exec.Command(fullCmd[0], fullCmd[1:]...)
 		cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr

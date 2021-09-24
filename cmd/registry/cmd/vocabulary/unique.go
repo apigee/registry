@@ -39,7 +39,7 @@ func uniqueCommand(ctx context.Context) *cobra.Command {
 			}
 
 			if strings.Contains(outputID, "/") {
-				log.Fatal("output_id must specify an artifact id (final segment only) and not a full name.")
+				log.Fatal("output-id must specify an artifact id (final segment only) and not a full name.")
 			}
 
 			ctx := context.Background()
@@ -60,6 +60,6 @@ func uniqueCommand(ctx context.Context) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&outputID, "output_id", "vocabulary-unique", "Artifact ID to use when saving each result vocabulary")
+	cmd.Flags().StringVar(&outputID, "output-id", "vocabulary-unique", "Artifact ID to use when saving each result vocabulary")
 	return cmd
 }

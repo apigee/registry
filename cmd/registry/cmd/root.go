@@ -67,6 +67,6 @@ func Command(ctx context.Context) *cobra.Command {
 	cmd.AddCommand(upload.Command(ctx))
 	cmd.AddCommand(vocabulary.Command(ctx))
 
-	cmd.PersistentFlags().StringVar(&logID, "log_id", "", "Assign an ID which gets attached to the log produced")
+	cmd.PersistentFlags().StringVar(&logID, "log-id", "", "Assign an ID which gets attached to the log produced")
 	return cmd
 }

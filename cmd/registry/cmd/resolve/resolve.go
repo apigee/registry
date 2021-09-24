@@ -113,6 +113,6 @@ func Command(ctx context.Context) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().BoolVar(&dryRun, "dry_run", false, "if set, actions will only be printed and not executed")
+	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "if set, actions will only be printed and not executed")
 	return cmd
 }

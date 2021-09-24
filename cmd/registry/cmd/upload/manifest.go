@@ -51,13 +51,13 @@ func readManifestProto(filename string) (*rpc.Manifest, error) {
 func manifestCommand(ctx context.Context) *cobra.Command {
 	var projectID string
 	cmd := &cobra.Command{
-		Use:   "manifest FILE_PATH --project_id=value",
+		Use:   "manifest FILE_PATH --project-id=value",
 		Short: "Upload a dependency manifest",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			manifestPath := args[0]
 			if manifestPath == "" {
-				log.Fatal("Please provide manifest_path")
+				log.Fatal("Please provide manifest-path")
 			}
 
 			manifest, err := readManifestProto(manifestPath)
@@ -97,7 +97,7 @@ func manifestCommand(ctx context.Context) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&projectID, "project_id", "", "Project ID to use when saving the result manifest artifact")
-	_ = cmd.MarkFlagRequired("project_id")
+	cmd.Flags().StringVar(&projectID, "project-id", "", "Project ID to use when saving the result manifest artifact")
+	_ = cmd.MarkFlagRequired("project-id")
 	return cmd
 }
