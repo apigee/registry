@@ -30,7 +30,7 @@ func Command(ctx context.Context) *cobra.Command {
 	cmd.AddCommand(openAPICommand(ctx))
 	cmd.AddCommand(protosCommand(ctx))
 
-	cmd.PersistentFlags().String("project_id", "", "Project ID to use for each upload")
-	_ = cmd.MarkFlagRequired("project_id")
+	cmd.PersistentFlags().String("project-id", "", "Project ID to use for each upload")
+	_ = cmd.MarkFlagRequired("project-id")
 	return cmd
 }

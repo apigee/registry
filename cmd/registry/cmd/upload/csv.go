@@ -39,7 +39,7 @@ func csvCommand(ctx context.Context) *cobra.Command {
 	)
 
 	cmd := &cobra.Command{
-		Use:   "csv file --project_id=value [--delimiter=value]",
+		Use:   "csv file --project-id=value [--delimiter=value]",
 		Short: "Upload API specs from a CSV file",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
@@ -85,8 +85,8 @@ func csvCommand(ctx context.Context) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&projectID, "project_id", "", "Project ID to use for each upload")
-	_ = cmd.MarkFlagRequired("project_id")
+	cmd.Flags().StringVar(&projectID, "project-id", "", "Project ID to use for each upload")
+	_ = cmd.MarkFlagRequired("project-id")
 	cmd.Flags().StringVar(&delimiter, "delimiter", ",", "Field delimiter for the CSV file")
 	return cmd
 }

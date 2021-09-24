@@ -52,12 +52,14 @@ func TestResolve(t *testing.T) {
 	tests := []struct {
 		desc         string
 		manifestPath string
+		dryRun       bool
 		listPattern  string
 		want         []string
 	}{
 		{
 			desc:         "normal case",
 			manifestPath: filepath.Join("testdata", "manifest.yaml"),
+			dryRun:       false,
 			listPattern:  "projects/controller-demo/locations/global/apis/petstore/versions/-/specs/-/artifacts/-",
 			want: []string{
 				"projects/controller-demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity",
@@ -68,12 +70,20 @@ func TestResolve(t *testing.T) {
 		{
 			desc:         "receipt artifact",
 			manifestPath: filepath.Join("testdata", "manifest_receipt.yaml"),
+			dryRun:       false,
 			listPattern:  "projects/controller-demo/locations/global/apis/petstore/versions/-/specs/-/artifacts/-",
 			want: []string{
 				"projects/controller-demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/test-receipt-artifact",
 				"projects/controller-demo/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/test-receipt-artifact",
 				"projects/controller-demo/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/test-receipt-artifact",
 			},
+		},
+		{
+			desc:         "dry run",
+			manifestPath: filepath.Join("testdata", "manifest.yaml"),
+			dryRun:       true,
+			listPattern:  "projects/controller-demo/locations/global/apis/petstore/versions/-/specs/-/artifacts/-",
+			want:         []string{},
 		},
 	}
 
@@ -216,7 +226,7 @@ func TestResolve(t *testing.T) {
 			}
 
 			// Upload the manifest to registry
-			args := []string{"manifest", test.manifestPath, "--project_id=" + testProject}
+			args := []string{"manifest", test.manifestPath, "--project-id=" + testProject}
 			uploadCmd := upload.Command(ctx)
 			uploadCmd.SetArgs(args)
 			if err = uploadCmd.Execute(); err != nil {
@@ -224,8 +234,13 @@ func TestResolve(t *testing.T) {
 			}
 
 			resolveCmd := Command(ctx)
+
 			args = []string{"projects/" + testProject + "/locations/global/artifacts/test-manifest"}
+			if test.dryRun {
+				args = append(args, "--dry-run")
+			}
 			resolveCmd.SetArgs(args)
+
 			if err = resolveCmd.Execute(); err != nil {
 				t.Fatalf("Execute() with args %v returned error: %s", args, err)
 			}
