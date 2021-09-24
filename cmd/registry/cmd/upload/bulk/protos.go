@@ -38,9 +38,9 @@ func protosCommand(ctx context.Context) *cobra.Command {
 		Short: "Bulk-upload Protocol Buffer descriptions from a directory of specs",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			projectID, err := cmd.Flags().GetString("project_id")
+			projectID, err := cmd.Flags().GetString("project-id")
 			if err != nil {
-				log.WithError(err).Fatal("Failed to get project_id from flags")
+				log.WithError(err).Fatal("Failed to get project-id from flags")
 			}
 
 			ctx := context.Background()
@@ -55,7 +55,7 @@ func protosCommand(ctx context.Context) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&baseURI, "base_uri", "", "Prefix to use for the source_uri field of each proto upload")
+	cmd.Flags().StringVar(&baseURI, "base-uri", "", "Prefix to use for the source_uri field of each proto upload")
 	return cmd
 }
 

@@ -66,7 +66,7 @@ func TestUploadCSV(t *testing.T) {
 			desc: "multiple spec upload",
 			args: []string{
 				filepath.Join("testdata", "multiple-specs.csv"),
-				"--project_id", testProject,
+				"--project-id", testProject,
 			},
 			want: []*rpc.ApiSpec{
 				{
@@ -95,7 +95,7 @@ func TestUploadCSV(t *testing.T) {
 			desc: "out of order columns",
 			args: []string{
 				filepath.Join("testdata", "out-of-order-columns.csv"),
-				"--project_id", testProject,
+				"--project-id", testProject,
 			},
 			want: []*rpc.ApiSpec{
 				{
@@ -109,7 +109,7 @@ func TestUploadCSV(t *testing.T) {
 			desc: "empty sheet",
 			args: []string{
 				filepath.Join("testdata", "empty-sheet.csv"),
-				"--project_id", testProject,
+				"--project-id", testProject,
 			},
 			want: []*rpc.ApiSpec{},
 		},

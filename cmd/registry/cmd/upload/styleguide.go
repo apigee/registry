@@ -54,7 +54,7 @@ func readStyleGuideProto(filename string) (*rpc.StyleGuide, error) {
 func styleGuideCommand(ctx context.Context) *cobra.Command {
 	var projectID string
 	cmd := &cobra.Command{
-		Use:   "styleguide FILE_PATH --project_id=value",
+		Use:   "styleguide FILE_PATH --project-id=value",
 		Short: "Upload an API style guide",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
@@ -95,7 +95,7 @@ func styleGuideCommand(ctx context.Context) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&projectID, "project_id", "", "Project ID to use when storing the styleguide artifact")
-	_ = cmd.MarkFlagRequired("project_id")
+	cmd.Flags().StringVar(&projectID, "project-id", "", "Project ID to use when storing the styleguide artifact")
+	_ = cmd.MarkFlagRequired("project-id")
 	return cmd
 }

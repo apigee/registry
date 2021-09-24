@@ -34,9 +34,9 @@ func discoveryCommand(ctx context.Context) *cobra.Command {
 		Use:   "discovery",
 		Short: "Bulk-upload API Discovery documents from the Google API Discovery service",
 		Run: func(cmd *cobra.Command, args []string) {
-			projectID, err := cmd.Flags().GetString("project_id")
+			projectID, err := cmd.Flags().GetString("project-id")
 			if err != nil {
-				log.WithError(err).Fatal("Failed to get project_id from flags")
+				log.WithError(err).Fatal("Failed to get project-id from flags")
 			}
 
 			ctx := context.Background()
