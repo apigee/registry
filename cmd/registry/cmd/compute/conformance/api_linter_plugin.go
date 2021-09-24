@@ -10,6 +10,12 @@ type ApiLinter struct {
 	Rules map[string][]string
 }
 
+func NewApiLinter() ApiLinter {
+	return ApiLinter{
+		Rules: make(map[string][]string),
+	}
+}
+
 func (linter ApiLinter) AddRule(mimeType string, rule string) error {
 	linter.Rules[mimeType] = append(linter.Rules[mimeType], rule)
 	return nil

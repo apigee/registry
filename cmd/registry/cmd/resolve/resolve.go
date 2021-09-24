@@ -23,6 +23,7 @@ import (
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
+	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/proto"
 )
@@ -103,10 +104,10 @@ func Command(ctx context.Context) *cobra.Command {
 			taskQueue, wait := core.WorkerPool(ctx, 64)
 			defer wait()
 			// Submit tasks to taskQueue
-			for i, a := range actions {
+			for _, a := range actions {
 				taskQueue <- &controller.ExecCommandTask{
 					Action: a,
-					TaskID: fmt.Sprintf("task%d", i),
+					TaskID: fmt.Sprintf("%.8s", uuid.New()),
 				}
 			}
 		},
