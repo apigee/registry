@@ -427,7 +427,7 @@ func TestGetApiSpecContents(t *testing.T) {
 			desc: "resource not found",
 			seed: &rpc.ApiSpec{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
 			req: &rpc.GetApiSpecContentsRequest{
-				Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/doesnt-exist/contents",
+				Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/doesnt-exist",
 			},
 			want: codes.NotFound,
 		},
@@ -435,18 +435,18 @@ func TestGetApiSpecContents(t *testing.T) {
 			desc: "case insensitive identifiers",
 			seed: &rpc.ApiSpec{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
 			req: &rpc.GetApiSpecContentsRequest{
-				Name: "projects/My-project/locations/global/apis/My-api/versions/V1/specs/My-Spec/contents",
+				Name: "projects/My-project/locations/global/apis/My-api/versions/V1/specs/My-Spec",
 			},
 			want: codes.OK,
 		},
 		{
-			desc: "missing contents suffix in resource name",
+			desc: "inappropriate contents suffix in resource name",
 			seed: &rpc.ApiSpec{
 				Name:     "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
 				Contents: []byte{},
 			},
 			req: &rpc.GetApiSpecContentsRequest{
-				Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
+				Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec/contents",
 			},
 			want: codes.InvalidArgument,
 		},
@@ -458,7 +458,7 @@ func TestGetApiSpecContents(t *testing.T) {
 				Contents: []byte{},
 			},
 			req: &rpc.GetApiSpecContentsRequest{
-				Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec/contents",
+				Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
 			},
 			want: codes.FailedPrecondition,
 		},

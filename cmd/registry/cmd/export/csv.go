@@ -68,7 +68,7 @@ func csvCommand(ctx context.Context) *cobra.Command {
 						ApiID:        m[2],
 						VersionID:    m[3],
 						SpecID:       m[4],
-						ContentsPath: fmt.Sprintf("$APG_REGISTRY_ADDRESS/%s/contents", spec.GetName()),
+						ContentsPath: fmt.Sprintf("$APG_REGISTRY_ADDRESS/%s", spec.GetName()),
 					})
 				})
 				if err != nil {

@@ -211,7 +211,7 @@ service Registry {
   //     aip.dev/not-precedent: Responses are arbitrary blobs of data. --)
   rpc GetApiSpecContents(GetApiSpecContentsRequest) returns (google.api.HttpBody) {
     option (google.api.http) = {
-      get: "/v1/{name=projects/*/locations/*/apis/*/versions/*/specs/*/contents}"
+      get: "/v1/{name=projects/*/locations/*/apis/*/versions/*/specs/*}:getContents"
     };
     option (google.api.method_signature) = "name";
   }
@@ -316,15 +316,15 @@ service Registry {
   //     aip.dev/not-precedent: Responses are arbitrary blobs of data. --)
   rpc GetArtifactContents(GetArtifactContentsRequest) returns (google.api.HttpBody) {
     option (google.api.http) = {
-      get: "/v1/{name=projects/*/locations/*/artifacts/*/contents}"
+      get: "/v1/{name=projects/*/locations/*/artifacts/*}:getContents"
       additional_bindings: { 
-        get: "/v1/{name=projects/*/locations/*/apis/*/artifacts/*/contents}" 
+        get: "/v1/{name=projects/*/locations/*/apis/*/artifacts/*}:getContents" 
       }
       additional_bindings: {
-        get: "/v1/{name=projects/*/locations/*/apis/*/versions/*/artifacts/*/contents}"
+        get: "/v1/{name=projects/*/locations/*/apis/*/versions/*/artifacts/*}:getContents"
       }
       additional_bindings: {
-        get: "/v1/{name=projects/*/locations/*/apis/*/versions/*/specs/*/artifacts/*/contents}"
+        get: "/v1/{name=projects/*/locations/*/apis/*/versions/*/specs/*/artifacts/*}:getContents"
       }
     };
     option (google.api.method_signature) = "name";
@@ -725,7 +725,7 @@ message GetApiSpecRequest {
 // Request message for GetApiSpecContents.
 message GetApiSpecContentsRequest {
   // The name of the spec to retrieve.
-  // Format: projects/*/locations/*/apis/*/versions/*/specs/*/contents
+  // Format: projects/*/locations/*/apis/*/versions/*/specs/*
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
@@ -919,7 +919,7 @@ message GetArtifactRequest {
 // Request message for GetArtifactContents.
 message GetArtifactContentsRequest {
   // The name of the artifact to retrieve.
-  // Format: {parent}/artifacts/*/contents
+  // Format: {parent}/artifacts/*
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {

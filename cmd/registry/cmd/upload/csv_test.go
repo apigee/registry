@@ -150,7 +150,7 @@ func TestUploadCSV(t *testing.T) {
 				}
 
 				body, err := client.GetApiSpecContents(ctx, &rpc.GetApiSpecContentsRequest{
-					Name: fmt.Sprintf("%s/contents", spec.GetName()),
+					Name: spec.GetName(),
 				})
 				if err != nil {
 					t.Fatalf("GetApiSpecContents(%q) returned error: %s", spec.GetName(), err)
