@@ -17,10 +17,21 @@
 
 set -e
 
+ALL_PROTOS=(
+	google/cloud/apigee/registry/applications/v1alpha1/*.proto
+	google/cloud/apigee/registry/internal/v1/*.proto
+	google/cloud/apigee/registry/v1/*.proto
+)
+
+for proto in ${ALL_PROTOS[@]}; do
+	echo "Generating Go types for $proto"
+	protoc $proto --proto_path='.' --proto_path='third_party/api-common-protos' --go_opt='module=github.com/apigee/registry' --go_out='.'
+done
+
 SERVICE_PROTOS=(
 	google/cloud/apigee/registry/v1/registry_models.proto
 	google/cloud/apigee/registry/v1/registry_service.proto
 )
 
-echo "Generating OpenAPI spec for ${SERVICE_PROTOS[@]}"
-protoc ${SERVICE_PROTOS[*]} --proto_path='.' --proto_path='third_party/api-common-protos' --openapi_out='.'
+echo "Generating Go gRPC client/server for ${SERVICE_PROTOS[@]}"
+protoc ${SERVICE_PROTOS[*]} --proto_path='.' --proto_path='third_party/api-common-protos' --go-grpc_opt='module=github.com/apigee/registry' --go-grpc_out='.'

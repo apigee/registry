@@ -1,9 +1,32 @@
 lite:
 	go install ./...
 
-all: 
+all:
+	rm -rf third_party/api-common-protos && git clone https://github.com/googleapis/api-common-protos third_party/api-common-protos
+	./tools/GENERATE-RPC.sh
+	./tools/GENERATE-GAPIC.sh
+	./tools/GENERATE-APG.sh
+	./tools/GENERATE-ENVOY-DESCRIPTORS.sh
 	go install ./...
 
+apg:
+	./tools/GENERATE-APG.sh
+
+docs:
+	./tools/GENERATE-DOCS.sh
+
+envoy-descriptors:
+	./tools/GENERATE-ENVOY-DESCRIPTORS.sh
+
+lint:
+	./tools/LINT-PROTOS.sh
+
+openapi:
+	./tools/GENERATE-OPENAPI.sh
+
+protos:
+	./tools/GENERATE-RPC.sh
+	./tools/GENERATE-GAPIC.sh
 
 test:
 	go clean -testcache

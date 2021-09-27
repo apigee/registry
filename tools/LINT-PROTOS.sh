@@ -17,10 +17,12 @@
 
 set -e
 
-SERVICE_PROTOS=(
-	google/cloud/apigee/registry/v1/registry_models.proto
-	google/cloud/apigee/registry/v1/registry_service.proto
+ALL_PROTOS=(
+	google/cloud/apigee/registry/applications/v1alpha1/*.proto
+	google/cloud/apigee/registry/internal/v1/*.proto
+	google/cloud/apigee/registry/v1/*.proto
 )
 
-echo "Generating OpenAPI spec for ${SERVICE_PROTOS[@]}"
-protoc ${SERVICE_PROTOS[*]} --proto_path='.' --proto_path='third_party/api-common-protos' --openapi_out='.'
+for proto in ${ALL_PROTOS[@]}; do
+    api-linter $proto --proto-path='third_party/api-common-protos'
+done
