@@ -1,10 +1,10 @@
 # Generated files
 cmd/apg/*.go
 gapic/*.go
-rpc/*.go
-*.pb.go
+rpc/*.pb.go
 *.bleve
 deployments/envoy/proto.pb
+docs/
 
 # VSCode
 .vscode/
