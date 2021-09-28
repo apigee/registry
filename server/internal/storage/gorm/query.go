@@ -15,7 +15,7 @@
 package gorm
 
 import (
-	"log"
+	"github.com/apex/log"
 )
 
 // Query represents a query in a storage provider.

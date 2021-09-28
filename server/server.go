@@ -16,11 +16,11 @@ package server
 
 import (
 	"context"
-	"log"
 	"net"
 	"path/filepath"
 	"strings"
 
+	"github.com/apex/log"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/internal/storage"
 
@@ -118,15 +118,15 @@ func (s *RegistryServer) Start(ctx context.Context, listener net.Listener) {
 func (s *RegistryServer) logHandler(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 	method := filepath.Base(info.FullMethod)
 	if s.loggingLevel >= loggingInfo {
-		log.Printf(">> %s", method)
+		log.Infof(">> %s", method)
 	}
 	resp, err := handler(ctx, req)
 	if isNotFound(err) && s.loggingLevel >= loggingDebug {
 		// Only log "not found" at DEBUG and higher.
-		log.Printf("[%s] %s", method, err.Error())
+		log.WithError(err).Infof("[%s]", method)
 	} else if err != nil && s.loggingLevel >= loggingError {
 		// Log all other problems at ERROR and higher.
-		log.Printf("[%s] %s", method, err.Error())
+		log.WithError(err).Infof("[%s]", method)
 	}
 	return resp, err
 }

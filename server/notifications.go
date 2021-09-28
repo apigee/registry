@@ -16,17 +16,15 @@ package server
 
 import (
 	"context"
-	"log"
 
 	"cloud.google.com/go/pubsub"
+	"github.com/apex/log"
 	"github.com/apigee/registry/rpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
-
-const verbose = false
 
 const TopicName = "registry-events"
 
@@ -69,10 +67,8 @@ func (s *RegistryServer) notify(ctx context.Context, change rpc.Notification_Cha
 	}
 
 	notificationTotal++
-	if verbose {
-		log.Printf("^^ [%03d] %+s", notificationTotal, msg)
-		log.Printf("Published a message with a message ID: %s", id)
-	}
+	log.Infof("^^ [%03d] %+s", notificationTotal, msg)
+	log.Infof("Published a message with a message ID: %s", id)
 
 	return nil
 }
