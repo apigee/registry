@@ -27,5 +27,6 @@ SERVICE_PROTOS=(
 	google/cloud/apigee/registry/v1/registry_service.proto
 )
 
-echo "Generating OpenAPI spec for ${SERVICE_PROTOS[@]}"
+printf "Generating OpenAPI spec for ${SERVICE_PROTOS[@]}"
 protoc ${SERVICE_PROTOS[*]} --proto_path='.' --proto_path='third_party/api-common-protos' --openapi_out='.'
+printf ", done.\n"

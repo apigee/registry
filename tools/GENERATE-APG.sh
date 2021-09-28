@@ -27,10 +27,11 @@ SERVICE_PROTOS=(
 	google/cloud/apigee/registry/v1/registry_service.proto
 )
 
-echo "Generating Go client CLI for ${SERVICE_PROTOS[@]}"
+printf "Generating Go client CLI for ${SERVICE_PROTOS[@]}"
 protoc ${SERVICE_PROTOS[*]} \
 	--proto_path='.' \
 	--proto_path='third_party/api-common-protos' \
   	--go_cli_opt='root=apg' \
   	--go_cli_opt='gapic=github.com/apigee/registry/gapic' \
   	--go_cli_out='cmd/apg'
+printf ", done.\n"

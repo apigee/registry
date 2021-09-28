@@ -27,7 +27,7 @@ SERVICE_PROTOS=(
 	google/cloud/apigee/registry/v1/registry_service.proto
 )
 
-echo "Generating Go client library for ${SERVICE_PROTOS[@]}"
+printf "Generating Go client library for ${SERVICE_PROTOS[@]}"
 protoc ${SERVICE_PROTOS[*]} \
 	--proto_path='.' \
 	--proto_path='third_party/api-common-protos' \
@@ -35,6 +35,7 @@ protoc ${SERVICE_PROTOS[*]} \
 	--go_gapic_opt='grpc-service-config=gapic/grpc_service_config.json' \
 	--go_gapic_opt='module=github.com/apigee/registry' \
 	--go_gapic_out='.'
+printf ", done.\n"
 
 # Add an accessor for the underlying gRPC client of the GAPIC client.
 cat >> gapic/registry_client.go <<END

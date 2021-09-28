@@ -27,5 +27,6 @@ SERVICE_PROTOS=(
 	google/cloud/apigee/registry/v1/registry_service.proto
 )
 
-echo "Generating documentation for ${SERVICE_PROTOS[@]}"
+printf "Generating documentation for ${SERVICE_PROTOS[@]}"
 protoc ${SERVICE_PROTOS[*]} --proto_path='.' --proto_path='third_party/api-common-protos' --doc_opt='html,api.html'	--doc_out='./docs'
+printf ", done.\n"
