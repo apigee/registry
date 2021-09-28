@@ -26,8 +26,13 @@ option go_package = "github.com/apigee/registry/rpc;rpc";
 // StyleGuide defines a set of guidelines and linters that govern the
 // static analysis of API Specs with specified mime types.
 message StyleGuide {
-    // Resource name of the style guide.
-    string name = 1 [
+    // Identifier of the style guide.
+    string id = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
+
+    // Human-meaningful name of the style guide.
+    string display_name = 2 [
         (google.api.field_behavior) = REQUIRED
     ];
 
@@ -39,26 +44,26 @@ message StyleGuide {
     // with possible suffixes representing compression types. These hypothetical
     // names are defined in the vendor tree defined in RFC6838 
     // (https://tools.ietf.org/html/rfc6838) and are not final.
-    repeated string mime_types = 2 [
+    repeated string mime_types = 3 [
 		(google.api.field_behavior) = REQUIRED
 	];
 
     // A list of guidelines that are specified by this style guide.
-    repeated Guideline guidelines = 3;
+    repeated Guideline guidelines = 4;
 
     // A list of linters that this style guide uses.
-    repeated Linter linters = 4;
+    repeated Linter linters = 5;
 }
 
 // Guideline defines a set of rules that achieve a common design
 // goal for API specs.
 message Guideline {
-    // Resource name of the guideline.
-    string name = 1 [
+    // Identifier of the guideline.
+    string id = 1 [
         (google.api.field_behavior) = REQUIRED
     ];
 
-    // Human-meaningful name.
+    // Human-meaningful name of the guideline.
     string display_name = 2 [
         (google.api.field_behavior) = REQUIRED
     ];
@@ -95,12 +100,12 @@ message Guideline {
 // Rule is a specific design rule that can be applied to an API spec,
 // and is enforced by a specified linter.
 message Rule {
-    // Resource name of the rule.
-    string name = 1 [
+    // Identifier of the rule.
+    string id = 1 [
         (google.api.field_behavior) = REQUIRED
     ];
 
-    // Human-meaningful name.
+    // Human-meaningful name of the rule.
     string display_name = 2;
 
     // A detailed description of the rule.

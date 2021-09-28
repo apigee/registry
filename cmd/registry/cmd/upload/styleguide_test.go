@@ -41,18 +41,18 @@ func TestStyleGuideUpload(t *testing.T) {
 			project:  "upload-styleguide-demo",
 			filePath: filepath.Join("testdata", "styleguide.yaml"),
 			want: &rpc.StyleGuide{
-				Name: "test-styleguide",
+				Id: "test-styleguide",
 				MimeTypes: []string{
 					"application/x.openapi+gzip;version=2",
 				},
 				Guidelines: []*rpc.Guideline{
 					{
-						Name:        "refproperties",
+						Id:          "refproperties",
 						DisplayName: "Govern Ref Properties",
 						Description: "This guideline governs properties for ref fields on specs.",
 						Rules: []*rpc.Rule{
 							{
-								Name:           "norefsiblings",
+								Id:             "norefsiblings",
 								Description:    "An object exposing a $ref property cannot be further extended with additional properties.",
 								Linter:         "spectral",
 								LinterRulename: "no-$ref-siblings",
