@@ -1,7 +1,5 @@
 # Generated files
 cmd/apg/*.go
-gapic/*.go
-rpc/*.pb.go
 *.bleve
 deployments/envoy/proto.pb
 docs/
