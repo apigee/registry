@@ -29,9 +29,8 @@ ALL_PROTOS=(
 )
 
 for proto in ${ALL_PROTOS[@]}; do
-	printf "Generating Go types for $proto"
+	echo "Generating Go types for $proto"
 	protoc $proto --proto_path='.' --proto_path='third_party/api-common-protos' --go_opt='module=github.com/apigee/registry' --go_out='.'
-	printf ", done.\n"
 done
 
 SERVICE_PROTOS=(
@@ -39,6 +38,5 @@ SERVICE_PROTOS=(
 	google/cloud/apigee/registry/v1/registry_service.proto
 )
 
-printf "Generating Go gRPC client/server for ${SERVICE_PROTOS[@]}"
+echo "Generating Go gRPC client/server for ${SERVICE_PROTOS[@]}"
 protoc ${SERVICE_PROTOS[*]} --proto_path='.' --proto_path='third_party/api-common-protos' --go-grpc_opt='module=github.com/apigee/registry' --go-grpc_out='.'
-printf ", done.\n"

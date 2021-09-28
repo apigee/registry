@@ -27,11 +27,10 @@ SERVICE_PROTOS=(
 	google/cloud/apigee/registry/v1/registry_service.proto
 )
 
-printf "Generating Envoy gRPC-JSON transcoding descriptor set for ${SERVICE_PROTOS[@]}"
+echo "Generating Envoy gRPC-JSON transcoding descriptor set for ${SERVICE_PROTOS[@]}"
 protoc ${SERVICE_PROTOS[*]} \
 	--proto_path='.' \
 	--proto_path='third_party/api-common-protos' \
     --descriptor_set_out='deployments/envoy/proto.pb' \
 	--include_imports \
     --include_source_info
-printf ", done.\n"
