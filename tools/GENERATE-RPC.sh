@@ -28,6 +28,8 @@ ALL_PROTOS=(
 	google/cloud/apigee/registry/v1/*.proto
 )
 
+go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+
 for proto in ${ALL_PROTOS[@]}; do
 	echo "Generating Go types for $proto"
 	protoc $proto --proto_path='.' --proto_path='third_party/api-common-protos' --go_opt='module=github.com/apigee/registry' --go_out='.'

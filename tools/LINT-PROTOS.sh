@@ -28,6 +28,8 @@ ALL_PROTOS=(
 	google/cloud/apigee/registry/v1/*.proto
 )
 
+go install github.com/googleapis/api-linter/cmd/api-linter@latest
+
 for proto in ${ALL_PROTOS[@]}; do
     api-linter $proto --proto-path='third_party/api-common-protos'
 done

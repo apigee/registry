@@ -27,6 +27,8 @@ SERVICE_PROTOS=(
 	google/cloud/apigee/registry/v1/registry_service.proto
 )
 
+go install github.com/googleapis/gapic-generator-go/cmd/protoc-gen-go_gapic@latest
+
 echo "Generating Go client library for ${SERVICE_PROTOS[@]}"
 protoc ${SERVICE_PROTOS[*]} \
 	--proto_path='.' \
