@@ -22,15 +22,12 @@ then
   git clone https://github.com/googleapis/api-common-protos third_party/api-common-protos
 fi
 
-ALL_PROTOS=(
-	google/cloud/apigee/registry/applications/v1alpha1/*.proto
-	google/cloud/apigee/registry/internal/v1/*.proto
-	google/cloud/apigee/registry/v1/*.proto
+SERVICE_PROTOS=(
+	google/cloud/apigee/registry/v1/registry_models.proto
+	google/cloud/apigee/registry/v1/registry_service.proto
 )
 
-go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 
-for proto in ${ALL_PROTOS[@]}; do
-	echo "Generating Go types for $proto"
-	protoc $proto --proto_path='.' --proto_path='third_party/api-common-protos' --go_opt='module=github.com/apigee/registry' --go_out='.'
-done
+echo "Generating Go gRPC client/server for ${SERVICE_PROTOS[@]}"
+protoc ${SERVICE_PROTOS[*]} --proto_path='.' --proto_path='third_party/api-common-protos' --go-grpc_opt='module=github.com/apigee/registry' --go-grpc_out='.'

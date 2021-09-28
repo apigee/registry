@@ -3,6 +3,7 @@ lite:
 
 all:
 	./tools/GENERATE-RPC.sh
+	./tools/GENERATE-GRPC.sh
 	./tools/GENERATE-GAPIC.sh
 	./tools/GENERATE-APG.sh
 	./tools/GENERATE-ENVOY-DESCRIPTORS.sh
@@ -14,6 +15,7 @@ apg:
 
 protos:
 	./tools/GENERATE-RPC.sh
+	./tools/GENERATE-GRPC.sh
 	./tools/GENERATE-GAPIC.sh
 
 test:
