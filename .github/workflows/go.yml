@@ -44,7 +44,6 @@ jobs:
           # Map tcp service container port 5432 to the host.
           - 5432:5432
     steps:
-
     - name: Set up Go 1.x
       uses: actions/setup-go@v2
       with:
@@ -52,14 +51,6 @@ jobs:
 
     - name: Check out code into the Go module directory
       uses: actions/checkout@v2
- 
-    - name: Get protoc
-      run: |
-        sudo ./tools/FETCH-PROTOC.sh
-        sudo chown -R $USER /usr/local
-       
-    - name: Build
-      run: make all
 
     - name: golangci-lint
       uses: golangci/golangci-lint-action@v2
@@ -67,13 +58,12 @@ jobs:
         version: v1.36
         args: --timeout 5m0s
 
-    - name: Test
-      run: |
-        export APG_REGISTRY_ADDRESS=localhost:8080
-        export APG_REGISTRY_AUDIENCES=http://localhost:8080
-        export APG_REGISTRY_INSECURE=1
-        registry-server &
-        make test
+    - name: Test everything with SQLite
+      run: registry-server & make test
+      env:
+        APG_REGISTRY_ADDRESS: localhost:8080 
+        APG_REGISTRY_AUDIENCES: http://localhost:8080
+        APG_REGISTRY_INSECURE: 1
 
     - name: Configure PostgreSQL
       env:
