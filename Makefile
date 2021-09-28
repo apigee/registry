@@ -8,21 +8,6 @@ all:
 	./tools/GENERATE-ENVOY-DESCRIPTORS.sh
 	go install ./...
 
-apg:
-	./tools/GENERATE-APG.sh
-
-docs:
-	./tools/GENERATE-DOCS.sh
-
-envoy-descriptors:
-	./tools/GENERATE-ENVOY-DESCRIPTORS.sh
-
-lint:
-	./tools/LINT-PROTOS.sh
-
-openapi:
-	./tools/GENERATE-OPENAPI.sh
-
 protos:
 	./tools/GENERATE-RPC.sh
 	./tools/GENERATE-GAPIC.sh
