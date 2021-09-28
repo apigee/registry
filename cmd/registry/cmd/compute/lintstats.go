@@ -108,7 +108,7 @@ func computeLintStatsSpecs(ctx context.Context,
 		log.Debug(spec.GetName())
 		// get the lint results
 		request := rpc.GetArtifactContentsRequest{
-			Name: spec.Name + "/artifacts/" + lintRelation(linter) + "/contents",
+			Name: spec.Name + "/artifacts/" + lintRelation(linter),
 		}
 		contents, _ := client.GetArtifactContents(ctx, &request)
 		if contents == nil {
@@ -135,7 +135,7 @@ func computeLintStatsSpecs(ctx context.Context,
 		{
 			// Calculate the operation and schema count
 			request := rpc.GetArtifactContentsRequest{
-				Name: spec.Name + "/artifacts/complexity/contents",
+				Name: spec.Name + "/artifacts/complexity",
 			}
 			contents, _ := client.GetArtifactContents(ctx, &request)
 			if contents == nil {
@@ -249,7 +249,7 @@ func aggregateLintStats(ctx context.Context,
 	aggregateStats *rpc.LintStats) {
 	// Calculate the operation and schema count
 	request := rpc.GetArtifactContentsRequest{
-		Name: name + "/artifacts/" + lintStatsRelation(linter) + "/contents",
+		Name: name + "/artifacts/" + lintStatsRelation(linter),
 	}
 	contents, _ := client.GetArtifactContents(ctx, &request)
 	if contents == nil {

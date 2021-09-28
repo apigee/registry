@@ -16,7 +16,6 @@ package core
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/rpc"
@@ -196,7 +195,7 @@ func ListArtifacts(ctx context.Context,
 		}
 		if getContents {
 			req := &rpc.GetArtifactContentsRequest{
-				Name: fmt.Sprintf("%s/contents", artifact.GetName()),
+				Name: artifact.GetName(),
 			}
 			resp, err := client.GetArtifactContents(ctx, req)
 			if err != nil {

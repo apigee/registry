@@ -718,7 +718,7 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/ApiSpec'
-    /v1/projects/{project}/locations/{location}/apis/{api}/versions/{version}/specs/{spec}/contents:
+    /v1/projects/{project}/locations/{location}/apis/{api}/versions/{version}/specs/{spec}:getContents:
         get:
             summary: GetApiSpecContents returns the contents of a specified spec.
             operationId: Registry_GetApiSpecContents
@@ -1109,7 +1109,7 @@ paths:
                 "200":
                     description: OK
                     content: {}
-    /v1/projects/{project}/locations/{location}/artifacts/{artifact}/contents:
+    /v1/projects/{project}/locations/{location}/artifacts/{artifact}:getContents:
         get:
             summary: GetArtifactContents returns the contents of a specified artifact.
             operationId: Registry_GetArtifactContents
