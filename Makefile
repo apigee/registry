@@ -8,6 +8,10 @@ all:
 	./tools/GENERATE-ENVOY-DESCRIPTORS.sh
 	go install ./...
 
+apg:
+	./tools/GENERATE-APG.sh
+	go install ./cmd/apg
+
 protos:
 	./tools/GENERATE-RPC.sh
 	./tools/GENERATE-GAPIC.sh
