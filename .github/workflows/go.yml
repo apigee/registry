@@ -58,6 +58,9 @@ jobs:
         version: v1.36
         args: --timeout 5m0s
 
+    - name: Install
+      run: go install ./...
+
     - name: Test everything with SQLite
       run: registry-server & make test
       env:
