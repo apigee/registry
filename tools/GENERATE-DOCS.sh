@@ -27,5 +27,8 @@ SERVICE_PROTOS=(
 	google/cloud/apigee/registry/v1/registry_service.proto
 )
 
+go install github.com/pseudomuto/protoc-gen-doc/cmd/protoc-gen-doc@latest
+
 echo "Generating documentation for ${SERVICE_PROTOS[@]}"
-protoc ${SERVICE_PROTOS[*]} --proto_path='.' --proto_path='third_party/api-common-protos' --doc_opt='html,api.html'	--doc_out='./docs'
+mkdir -p ./docs/
+protoc ${SERVICE_PROTOS[*]} --proto_path='.' --proto_path='third_party/api-common-protos' --doc_opt='html,api.html' --doc_out='./docs'
