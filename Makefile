@@ -2,7 +2,6 @@ lite:
 	go install ./...
 
 all:
-	rm -rf third_party/api-common-protos && git clone https://github.com/googleapis/api-common-protos third_party/api-common-protos
 	./tools/GENERATE-RPC.sh
 	./tools/GENERATE-GAPIC.sh
 	./tools/GENERATE-APG.sh

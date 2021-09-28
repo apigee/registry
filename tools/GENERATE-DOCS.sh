@@ -17,6 +17,11 @@
 
 set -e
 
+if [ ! -d "third_party/api-common-protos" ]
+then
+  git clone https://github.com/googleapis/api-common-protos third_party/api-common-protos
+fi
+
 SERVICE_PROTOS=(
 	google/cloud/apigee/registry/v1/registry_models.proto
 	google/cloud/apigee/registry/v1/registry_service.proto
