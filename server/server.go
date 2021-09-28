@@ -16,13 +16,17 @@ package server
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"net"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/apex/log"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/internal/storage"
+	"github.com/google/uuid"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -100,7 +104,7 @@ func (s *RegistryServer) getStorageClient(ctx context.Context) (*storage.Client,
 // It blocks until the context is cancelled.
 func (s *RegistryServer) Start(ctx context.Context, listener net.Listener) {
 	var (
-		logInterceptor = grpc.UnaryInterceptor(s.logHandler)
+		logInterceptor = grpc.UnaryInterceptor(s.loggingInterceptor)
 		grpcServer     = grpc.NewServer(logInterceptor)
 	)
 
@@ -115,19 +119,64 @@ func (s *RegistryServer) Start(ctx context.Context, listener net.Listener) {
 	<-ctx.Done()
 }
 
-func (s *RegistryServer) logHandler(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-	method := filepath.Base(info.FullMethod)
-	if s.loggingLevel >= loggingInfo {
-		log.Infof(">> %s", method)
+func (s *RegistryServer) logger(ctx context.Context) log.Interface {
+	return log.FromContext(ctx)
+}
+
+func (s *RegistryServer) loggingInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	reqInfo := log.Fields{
+		"request_id": fmt.Sprintf("%.8s", uuid.New()),
+		"method":     filepath.Base(info.FullMethod),
 	}
+
+	type (
+		resourceOp   interface{ GetName() string }
+		collectionOp interface{ GetParent() string }
+	)
+
+	switch r := req.(type) {
+	case resourceOp:
+		reqInfo["resource"] = r.GetName()
+	case collectionOp:
+		reqInfo["collection"] = r.GetParent()
+	}
+
+	// Bind request-scoped attributes to the context logger before handling the request.
+	logger := s.logger(ctx).WithFields(reqInfo)
+	ctx = log.NewContext(ctx, logger)
+
+	logger.Info("Handling request.")
+	start := time.Now()
 	resp, err := handler(ctx, req)
-	if isNotFound(err) && s.loggingLevel >= loggingDebug {
-		// Only log "not found" at DEBUG and higher.
-		log.WithError(err).Infof("[%s]", method)
-	} else if err != nil && s.loggingLevel >= loggingError {
-		// Log all other problems at ERROR and higher.
-		log.WithError(err).Infof("[%s]", method)
+
+	// Error messages may include a status code, but we want to log them separately.
+	if err != nil {
+		st, _ := status.FromError(err)
+		unwrapped := errors.New(st.Message())
+		logger = logger.WithError(unwrapped)
 	}
+
+	respInfo := log.Fields{
+		"duration":    time.Since(start),
+		"status_code": status.Code(err),
+	}
+
+	if r, ok := resp.(resourceOp); ok {
+		respInfo["resource"] = r.GetName()
+	}
+
+	logger = logger.WithFields(respInfo)
+	switch status.Code(err) {
+	case codes.OK:
+		logger.Info("Success.")
+	case codes.Internal:
+		logger.Error("Internal error.")
+	case codes.Unknown:
+		logger.Error("Unknown error.")
+	default:
+		logger.Info("User error.")
+	}
+
 	return resp, err
 }
 
