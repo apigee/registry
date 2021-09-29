@@ -33,10 +33,7 @@ import (
 )
 
 func conformanceCommand(ctx context.Context) *cobra.Command {
-	var (
-		linter string
-		filter string
-	)
+	var filter string
 
 	cmd := &cobra.Command{
 		Use:   "conformance",
@@ -55,7 +52,7 @@ func conformanceCommand(ctx context.Context) *cobra.Command {
 
 			name := args[0]
 
-			// Ensure that the provided argument is a spec
+			// Ensure that the provided argument is a spec.
 			var specSegments []string
 			if specSegments = names.SpecRegexp().FindStringSubmatch(name); specSegments == nil {
 				log.Fatalf("The provided argument %s does not match the regex of a spec", name)
@@ -67,148 +64,274 @@ func conformanceCommand(ctx context.Context) *cobra.Command {
 
 			projectSegments := []string{"projects", spec.ProjectID}
 
-			linterNameToLinter := make(map[string]conformance.Linter)
 			err = core.ListArtifacts(ctx, client, projectSegments, filter, true, func(artifact *rpc.Artifact) {
-				// Only consider artifacts which have the styleguide mimetype
+				// Only consider artifacts which have the styleguide mimetype.
 				messageType, err := core.MessageTypeForMimeType(artifact.GetMimeType())
 				if err != nil {
 					log.WithError(err).Debugf("Failed to get message type for MIME type %q", artifact.GetMimeType())
 					return
 				}
 				if messageType != "google.cloud.apigee.registry.applications.v1alpha1.styleguide" {
-					// Ignore any artifact that isn't a style guide
+					// Ignore any artifact that isn't a style guide.
 					return
 				}
 
 				// Unmarshal the contents of the artifact into a style guide
-				styleGuide := &rpc.StyleGuide{}
-				err = proto.Unmarshal(artifact.GetContents(), styleGuide)
+				styleguide := &rpc.StyleGuide{}
+				err = proto.Unmarshal(artifact.GetContents(), styleguide)
 				if err != nil {
 					log.WithError(err).Debugf("Unmarshal() to StyleGuide failed on artifact of type %s", messageType)
 					return
 				}
 
-				// Construct a mapping between the linter name and the linter, and populate
-				// all the rules that the linter should support
-				for _, guideline := range styleGuide.GetGuidelines() {
-					for _, rule := range guideline.GetRules() {
-						linter_name := rule.GetLinter()
-						if _, ok := linterNameToLinter[linter_name]; !ok {
-							linter, err := conformance.CreateLinter(rule.GetLinter())
-							if err != nil {
-								// If the linter is unsupported, there is no reason
-								// to prematurely exit. We can just ignore this specific
-								// linter and log the message to the user.
-								log.WithError(err).Debug("Failed to create linter")
-							}
-							linterNameToLinter[linter_name] = linter
-						}
-
-						// Add each rule to the linter
-						linter := linterNameToLinter[linter_name]
-						for _, allowedMimeType := range styleGuide.MimeTypes {
-							_ = linter.AddRule(allowedMimeType, rule.GetLinterRulename())
-						}
-					}
-				}
+				computeConformanceForStyleGuide(ctx, client, styleguide, specSegments, filter)
 			})
 
 			if err != nil {
 				log.WithError(err).Fatal("Failed to list artifacts")
 			}
-
-			// Initialize task queue.
-			taskQueue, wait := core.WorkerPool(ctx, 16)
-			defer wait()
-
-			// Generate tasks.
-			err = core.ListSpecs(ctx, client, specSegments, filter, func(spec *rpc.ApiSpec) {
-				// Lint with every linter that supports the spec's mime type
-				for _, linter := range linterNameToLinter {
-					if linter.SupportsMimeType(spec.GetMimeType()) {
-						taskQueue <- &computeConformanceTask{
-							client: client,
-							spec:   spec,
-							linter: linter,
-						}
-					}
-				}
-			})
-			if err != nil {
-				log.WithError(err).Fatal("Failed to list specs")
-			}
 		},
 	}
 
 	cmd.Flags().StringVar(&filter, "filter", "", "Filter selected resources")
-	cmd.Flags().StringVar(&linter, "linter", "", "The linter to use (aip|spectral|gnostic)")
 	return cmd
 }
 
+// computeConformanceForStyleGuide computes and attaches conformance reports as
+// artifacts to a spec or a collection of specs.
+func computeConformanceForStyleGuide(ctx context.Context,
+	client connection.Client,
+	styleguide *rpc.StyleGuide,
+	specSegments []string,
+	filter string) {
+	// A mapping between the linter name and the linter, and populate
+	// all the rules that the linter should support.
+	linterNameToLinter := make(map[string]conformance.Linter)
+
+	// A mapping between the canonicalized rule name to the rule
+	// object associated with it.
+	ruleNameToRule := make(map[string]*rpc.Rule)
+
+	// A mapping between the canonicalized guidline name to the
+	// guideline object associated with it.
+	ruleNameToGuideline := make(map[string]*rpc.Guideline)
+
+	// Iterate through all the guidelines of the style guide.
+	for _, guideline := range styleguide.GetGuidelines() {
+
+		// Iterate through all the rules of the style guide.
+		for _, rule := range guideline.GetRules() {
+
+			// Get the name of the linter associated with the rule.
+			linter_name := rule.GetLinter()
+
+			// If the linter isn't initialized yet, initialize it.
+			if _, ok := linterNameToLinter[linter_name]; !ok {
+				linter, err := conformance.CreateLinter(rule.GetLinter())
+				normalizedRuleName := canonicalizeRuleName(linter.GetName(), rule.GetLinterRulename())
+				ruleNameToGuideline[normalizedRuleName] = guideline
+				ruleNameToRule[normalizedRuleName] = rule
+				if err != nil {
+					// If the linter is unsupported, there is no reason
+					// to prematurely exit. We can just ignore this specific
+					// linter and log the message to the user.
+					log.WithError(err).Debug("Failed to create linter")
+				}
+				linterNameToLinter[linter_name] = linter
+			}
+
+			// Register each rule specified by the style guide to the linter.
+			linter := linterNameToLinter[linter_name]
+			for _, allowedMimeType := range styleguide.MimeTypes {
+				_ = linter.AddRule(allowedMimeType, rule.GetLinterRulename())
+			}
+		}
+	}
+
+	// Initialize task queue.
+	taskQueue, wait := core.WorkerPool(ctx, 16)
+	defer wait()
+
+	// Generate tasks.
+	err := core.ListSpecs(ctx, client, specSegments, filter, func(spec *rpc.ApiSpec) {
+		// A list of linters that are used to lint this spec.
+		linters := make([]conformance.Linter, 0)
+		for _, linter := range linterNameToLinter {
+
+			// If the linter supports the spec's mime type, then it can be used
+			// to lint the spec.
+			if linter.SupportsMimeType(spec.GetMimeType()) {
+				linters = append(linters, linter)
+			}
+		}
+
+		// Delegate the task of computing the conformance report for this spec
+		// to the worker pool.
+		taskQueue <- &computeConformanceTask{
+			client:              client,
+			spec:                spec,
+			linters:             linters,
+			styleguideId:        styleguide.GetId(),
+			ruleNameToGuideline: ruleNameToGuideline,
+			ruleNameToRule:      ruleNameToRule,
+		}
+	})
+	if err != nil {
+		log.WithError(err).Fatal("Failed to list specs")
+	}
+}
+
+// canonicalizeRuleName normalizes a rule name according to a linter.
+// This allows multiple linters to have the same rule name.
+func canonicalizeRuleName(linterName string, ruleName string) string {
+	return fmt.Sprintf("%s_%s", linterName, ruleName)
+}
+
+func conformanceRelation(styleguideName string) string {
+	return "conformance-" + styleguideName
+}
+
 type computeConformanceTask struct {
-	client connection.Client
-	spec   *rpc.ApiSpec
-	linter conformance.Linter
+	client              connection.Client
+	spec                *rpc.ApiSpec
+	linters             []conformance.Linter
+	styleguideId        string
+	ruleNameToGuideline map[string]*rpc.Guideline
+	ruleNameToRule      map[string]*rpc.Rule
 }
 
 func (task *computeConformanceTask) String() string {
-	return fmt.Sprintf("compute %s/conformance-%s", task.spec.GetName(), task.linter.GetName())
+	return fmt.Sprintf("compute %s/conformance-%s", task.spec.GetName(), task.styleguideId)
 }
 
 func (task *computeConformanceTask) Run(ctx context.Context) error {
-	// Get the linter
-	linter := task.linter
-	if linter == nil {
-		return errors.New("linter is nil")
-	}
+	// Log to debug the conformance report that is being computed.
+	log.Debug(task.String())
 
-	// Get the spec's bytes
+	// Get the spec's bytes.
 	data, err := core.GetBytesForSpec(ctx, task.client, task.spec)
 	if err != nil {
 		return err
 	}
 
-	// Put the spec in a temporary directory
+	// Put the spec in a temporary directory.
 	root, err := ioutil.TempDir("", "registry-openapi-")
 	if err != nil {
 		return err
 	}
 	name := filepath.Base(task.spec.GetName())
 
-	// Defer the deletion of the the temporary directory
+	// Defer the deletion of the the temporary directory.
 	defer os.RemoveAll(root)
 
-	// Write the file to the temporary directory
+	// Write the file to the temporary directory.
 	filePath := filepath.Join(root, name)
 	err = ioutil.WriteFile(filePath, data, 0644)
 	if err != nil {
 		return err
 	}
 
-	// Lint the directory containing the spec
-	lintProblems, err := linter.LintSpec(task.spec.GetMimeType(), filePath)
-	if err != nil {
-		return err
+	conformanceReport := task.initializeConformanceReport()
+
+	// Iterate over all the linters, and lint.
+	for _, linter := range task.linters {
+		if linter == nil {
+			return errors.New("linter is nil")
+		}
+
+		// Lint the directory containing the spec.
+		lintProblems, err := linter.LintSpec(task.spec.GetMimeType(), filePath)
+		if err != nil {
+			return err
+		}
+
+		// Organize the lint results into a conformance report proto.
+		guidelineIdToGuidelineReport := make(map[string]*rpc.GuidelineReport)
+
+		// Iterate over the list of problems returned by the linter.
+		for _, problem := range lintProblems {
+			normalizedRuleName := canonicalizeRuleName(linter.GetName(), problem.GetRuleId())
+			guideline := task.ruleNameToGuideline[normalizedRuleName]
+			rule := task.ruleNameToRule[normalizedRuleName]
+
+			// Check if the guideline report for the guideline which contains this rule
+			// has already been initialized. If it hasn't then create one.
+			if _, ok := guidelineIdToGuidelineReport[guideline.GetId()]; !ok {
+				report := task.initializeGuidelineReport()
+				guidelineIdToGuidelineReport[guideline.GetId()] = report
+
+				conformanceReport.GuidelineReportGroups[guideline.Status].GuidelineReports =
+					append(conformanceReport.GuidelineReportGroups[guideline.Status].GuidelineReports, report)
+			}
+
+			// Add the rule report to the appropriate guideline report.
+			guidelineReport := guidelineIdToGuidelineReport[guideline.GetId()]
+			ruleReport := &rpc.RuleReport{
+				RuleName:   rule.GetId(),
+				SpecName:   task.spec.GetName(),
+				Suggestion: problem.Suggestion,
+				Location:   problem.Location,
+			}
+			guidelineReport.RuleReportGroups[rule.Severity].RuleReports =
+				append(guidelineReport.RuleReportGroups[rule.Severity].RuleReports, ruleReport)
+		}
+
+		// Store the conformance report.
+		subject := task.spec.GetName()
+		messageData, err := proto.Marshal(conformanceReport)
+		if err != nil {
+			return err
+		}
+
+		artifact := &rpc.Artifact{
+			Name:     subject + "/artifacts/" + conformanceRelation(task.styleguideId),
+			MimeType: core.MimeTypeForMessageType("google.cloud.apigee.registry.applications.v1alpha1.Lint"),
+			Contents: messageData,
+		}
+		err = core.SetArtifact(ctx, task.client, artifact)
+		if err != nil {
+			return err
+		}
 	}
 
-	// Store the Lint results as an artifact on the spec.
-	// TODO in the future, this will change. We will store a conformance report
-	// on the spec instead of just simple lint results.
-	lintFile := &rpc.LintFile{Problems: lintProblems}
-	subject := task.spec.GetName()
-	messageData, err := proto.Marshal(lintFile)
-	if err != nil {
-		return err
-	}
-	artifact := &rpc.Artifact{
-		Name:     subject + "/artifacts/" + lintRelation(task.linter.GetName()),
-		MimeType: core.MimeTypeForMessageType("google.cloud.apigee.registry.applications.v1alpha1.Lint"),
-		Contents: messageData,
-	}
-	err = core.SetArtifact(ctx, task.client, artifact)
-	if err != nil {
-		return err
+	return err
+}
+
+func (task *computeConformanceTask) initializeConformanceReport() *rpc.ConformanceReport {
+	// Create an empty conformance report.
+	conformanceReport := &rpc.ConformanceReport{
+		Name:           task.spec.GetName() + "/artifacts/" + conformanceRelation(task.styleguideId),
+		StyleguideName: task.styleguideId,
 	}
 
-	return nil
+	// Initialize guideline report groups.
+	guidelineStatus := rpc.Guideline_Status(0)
+	numStatuses := guidelineStatus.Descriptor().Values().Len()
+	conformanceReport.GuidelineReportGroups = make([]*rpc.GuidelineReportGroup, numStatuses)
+	for i := 0; i < numStatuses; i++ {
+		conformanceReport.GuidelineReportGroups[i] = &rpc.GuidelineReportGroup{
+			Status:           rpc.Guideline_Status(i),
+			GuidelineReports: make([]*rpc.GuidelineReport, 0),
+		}
+	}
+
+	return conformanceReport
+}
+
+func (task *computeConformanceTask) initializeGuidelineReport() *rpc.GuidelineReport {
+	// Create an empty guideline report.
+	guidelineReport := &rpc.GuidelineReport{}
+
+	// Initialize rule report groups.
+	ruleSeverity := rpc.Rule_Severity(0)
+	numSeverities := ruleSeverity.Descriptor().Values().Len()
+	guidelineReport.RuleReportGroups = make([]*rpc.RuleReportGroup, numSeverities)
+	for i := 0; i < numSeverities; i++ {
+		guidelineReport.RuleReportGroups[i] = &rpc.RuleReportGroup{
+			Severity:    rpc.Rule_Severity(i),
+			RuleReports: make([]*rpc.RuleReport, 0),
+		}
+	}
+
+	return guidelineReport
 }
