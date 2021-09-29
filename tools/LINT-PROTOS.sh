@@ -17,19 +17,11 @@
 
 set -e
 
-if [ ! -d "third_party/api-common-protos" ]
-then
-  git clone https://github.com/googleapis/api-common-protos third_party/api-common-protos
-fi
-
-ALL_PROTOS=(
-	google/cloud/apigee/registry/applications/v1alpha1/*.proto
-	google/cloud/apigee/registry/internal/v1/*.proto
-	google/cloud/apigee/registry/v1/*.proto
-)
+source tools/PROTOS.sh
+clone_common_protos
 
 go install github.com/googleapis/api-linter/cmd/api-linter@latest
 
 for proto in ${ALL_PROTOS[@]}; do
-    api-linter $proto --proto-path='third_party/api-common-protos'
+    api-linter $proto --proto-path=$COMMON_PROTOS_PATH
 done

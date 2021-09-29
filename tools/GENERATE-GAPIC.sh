@@ -17,22 +17,15 @@
 
 set -e
 
-if [ ! -d "third_party/api-common-protos" ]
-then
-  git clone https://github.com/googleapis/api-common-protos third_party/api-common-protos
-fi
-
-SERVICE_PROTOS=(
-	google/cloud/apigee/registry/v1/registry_models.proto
-	google/cloud/apigee/registry/v1/registry_service.proto
-)
+source tools/PROTOS.sh
+clone_common_protos
 
 go install github.com/googleapis/gapic-generator-go/cmd/protoc-gen-go_gapic@latest
 
 echo "Generating Go client library for ${SERVICE_PROTOS[@]}"
 protoc ${SERVICE_PROTOS[*]} \
 	--proto_path='.' \
-	--proto_path='third_party/api-common-protos' \
+	--proto_path=$COMMON_PROTOS_PATH \
 	--go_gapic_opt='go-gapic-package=github.com/apigee/registry/gapic;gapic' \
 	--go_gapic_opt='grpc-service-config=gapic/grpc_service_config.json' \
 	--go_gapic_opt='module=github.com/apigee/registry' \

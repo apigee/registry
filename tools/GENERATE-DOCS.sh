@@ -17,18 +17,11 @@
 
 set -e
 
-if [ ! -d "third_party/api-common-protos" ]
-then
-  git clone https://github.com/googleapis/api-common-protos third_party/api-common-protos
-fi
-
-SERVICE_PROTOS=(
-	google/cloud/apigee/registry/v1/registry_models.proto
-	google/cloud/apigee/registry/v1/registry_service.proto
-)
+source tools/PROTOS.sh
+clone_common_protos
 
 go install github.com/pseudomuto/protoc-gen-doc/cmd/protoc-gen-doc@latest
 
 echo "Generating documentation for ${SERVICE_PROTOS[@]}"
 mkdir -p ./docs/
-protoc ${SERVICE_PROTOS[*]} --proto_path='.' --proto_path='third_party/api-common-protos' --doc_opt='html,api.html' --doc_out='./docs'
+protoc ${SERVICE_PROTOS[*]} --proto_path='.' --proto_path=$COMMON_PROTOS_PATH --doc_opt='html,api.html' --doc_out='./docs'

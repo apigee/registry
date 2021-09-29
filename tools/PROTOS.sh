@@ -15,18 +15,22 @@
 # limitations under the License.
 #
 
-set -e
+ALL_PROTOS=(
+	google/cloud/apigee/registry/applications/v1alpha1/*.proto
+	google/cloud/apigee/registry/internal/v1/*.proto
+	google/cloud/apigee/registry/v1/*.proto
+)
 
-source tools/PROTOS.sh
-clone_common_protos
+SERVICE_PROTOS=(
+	google/cloud/apigee/registry/v1/registry_models.proto
+	google/cloud/apigee/registry/v1/registry_service.proto
+)
 
-go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-go install github.com/googleapis/gapic-generator-go/cmd/protoc-gen-go_cli@latest
+COMMON_PROTOS_PATH='third_party/api-common-protos'
 
-echo "Generating Go client CLI for ${SERVICE_PROTOS[@]}"
-protoc ${SERVICE_PROTOS[*]} \
-	--proto_path='.' \
-	--proto_path=$COMMON_PROTOS_PATH \
-  	--go_cli_opt='root=apg' \
-  	--go_cli_opt='gapic=github.com/apigee/registry/gapic' \
-  	--go_cli_out='cmd/apg'
+function clone_common_protos {
+	if [ ! -d $COMMON_PROTOS_PATH ]
+	then
+		git clone https://github.com/googleapis/api-common-protos $COMMON_PROTOS_PATH
+	fi
+}

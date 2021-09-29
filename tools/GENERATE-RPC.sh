@@ -17,20 +17,12 @@
 
 set -e
 
-if [ ! -d "third_party/api-common-protos" ]
-then
-  git clone https://github.com/googleapis/api-common-protos third_party/api-common-protos
-fi
-
-ALL_PROTOS=(
-	google/cloud/apigee/registry/applications/v1alpha1/*.proto
-	google/cloud/apigee/registry/internal/v1/*.proto
-	google/cloud/apigee/registry/v1/*.proto
-)
+source tools/PROTOS.sh
+clone_common_protos
 
 go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
 
 for proto in ${ALL_PROTOS[@]}; do
 	echo "Generating Go types for $proto"
-	protoc $proto --proto_path='.' --proto_path='third_party/api-common-protos' --go_opt='module=github.com/apigee/registry' --go_out='.'
+	protoc $proto --proto_path='.' --proto_path=$COMMON_PROTOS_PATH --go_opt='module=github.com/apigee/registry' --go_out='.'
 done

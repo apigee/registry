@@ -17,17 +17,10 @@
 
 set -e
 
-if [ ! -d "third_party/api-common-protos" ]
-then
-  git clone https://github.com/googleapis/api-common-protos third_party/api-common-protos
-fi
-
-SERVICE_PROTOS=(
-	google/cloud/apigee/registry/v1/registry_models.proto
-	google/cloud/apigee/registry/v1/registry_service.proto
-)
+source tools/PROTOS.sh
+clone_common_protos
 
 go install github.com/googleapis/gnostic/apps/protoc-gen-openapi@latest
 
 echo "Generating OpenAPI spec for ${SERVICE_PROTOS[@]}"
-protoc ${SERVICE_PROTOS[*]} --proto_path='.' --proto_path='third_party/api-common-protos' --openapi_out='.'
+protoc ${SERVICE_PROTOS[*]} --proto_path='.' --proto_path=$COMMON_PROTOS_PATH --openapi_out='.'
