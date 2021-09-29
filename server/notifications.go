@@ -28,20 +28,26 @@ import (
 
 const TopicName = "registry-events"
 
-var notificationTotal int
 func (s *RegistryServer) notify(ctx context.Context, change rpc.Notification_Change, resource string) {
+	logger := log.FromContext(ctx)
+	if !s.notifyEnabled {
+		return
+	}
 
-	if !s.notifyEnabled || s.projectID == "" {
+	if s.projectID == "" {
+		logger.Warn("Notifications are enabled but project ID is not set. Skipping notification.")
 		return
 	}
 
 	client, err := pubsub.NewClient(ctx, s.projectID)
 	if err != nil {
+		logger.WithError(err).Error("Failed to create PubSub client.")
 		return
 	}
 	defer client.Close()
 
 	if _, err := client.CreateTopic(ctx, TopicName); err != nil && status.Code(err) != codes.AlreadyExists {
+		logger.WithError(err).Error("Failed to create PubSub topic.")
 		return
 	}
 
@@ -53,6 +59,7 @@ func (s *RegistryServer) notify(ctx context.Context, change rpc.Notification_Cha
 
 	msg, err := protojson.Marshal(notification)
 	if err != nil {
+		logger.WithError(err).Errorf("Failed to serialize notification: %v", notification)
 		return
 	}
 
@@ -65,10 +72,9 @@ func (s *RegistryServer) notify(ctx context.Context, change rpc.Notification_Cha
 
 	id, err := result.Get(ctx)
 	if err != nil {
+		logger.WithError(err).Error("Failed to publish notification.")
 		return
 	}
 
-	notificationTotal++
-	log.Infof("^^ [%03d] %+s", notificationTotal, msg)
-	log.Infof("Published a message with a message ID: %s", id)
+	logger.Infof("Published notification with message ID: %s", id)
 }
