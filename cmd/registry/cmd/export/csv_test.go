@@ -99,7 +99,7 @@ func TestExportCSV(t *testing.T) {
 	// Verify
 	var (
 		expectedHeader = []string{"api_id", "version_id", "spec_id", "contents_path"}
-		expectedRow    = []string{apiID, versionID, specID, fmt.Sprintf("$APG_REGISTRY_ADDRESS/%s/contents", spec.GetName())}
+		expectedRow    = []string{apiID, versionID, specID, fmt.Sprintf("$APG_REGISTRY_ADDRESS/%s", spec.GetName())}
 	)
 
 	r := csv.NewReader(out)

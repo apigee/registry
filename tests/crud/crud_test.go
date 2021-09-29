@@ -200,7 +200,7 @@ func TestCRUD(t *testing.T) {
 	// Check the contents of the created spec.
 	{
 		req := &rpc.GetApiSpecContentsRequest{
-			Name: "projects/test/locations/global/apis/sample/versions/1.0.0/specs/openapi.yaml/contents",
+			Name: "projects/test/locations/global/apis/sample/versions/1.0.0/specs/openapi.yaml",
 		}
 		response, err := registryClient.GetApiSpecContents(ctx, req)
 		check(t, "error getting spec contents %s", err)
@@ -217,7 +217,7 @@ func TestCRUD(t *testing.T) {
 	// Check the contents of the created revision.
 	{
 		req := &rpc.GetApiSpecContentsRequest{
-			Name: "projects/test/locations/global/apis/sample/versions/1.0.0/specs/openapi.yaml@" + revision + "/contents",
+			Name: "projects/test/locations/global/apis/sample/versions/1.0.0/specs/openapi.yaml@" + revision,
 		}
 		response, err := registryClient.GetApiSpecContents(ctx, req)
 		check(t, "error getting spec contents %s", err)
@@ -244,7 +244,7 @@ func TestCRUD(t *testing.T) {
 	// Check the contents of the tagged revision.
 	{
 		req := &rpc.GetApiSpecContentsRequest{
-			Name: "projects/test/locations/global/apis/sample/versions/1.0.0/specs/openapi.yaml@" + revisionTag + "/contents",
+			Name: "projects/test/locations/global/apis/sample/versions/1.0.0/specs/openapi.yaml@" + revisionTag,
 		}
 		response, err := registryClient.GetApiSpecContents(ctx, req)
 		check(t, "error getting spec contents %s", err)
@@ -318,7 +318,7 @@ func testArtifacts(ctx context.Context, registryClient connection.Client, t *tes
 	// Check the artifact contents.
 	{
 		req := &rpc.GetArtifactContentsRequest{
-			Name: fmt.Sprintf("%s/artifacts/sample/contents", parent),
+			Name: fmt.Sprintf("%s/artifacts/sample", parent),
 		}
 		resp, err := registryClient.GetArtifactContents(ctx, req)
 		check(t, "error getting artifact contents %s", err)

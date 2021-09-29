@@ -81,7 +81,7 @@ apg registry get-api-spec --name projects/protos/locations/global/apis/google-cl
 # You might notice that that didn't return the actual spec. That's because the spec contents
 # are accessed through a separate method that (when transcoded to HTTP) allows direct download
 # of spec contents.
-apg registry get-api-spec-contents --name projects/protos/locations/global/apis/google-cloud-translate/versions/v3/specs/protos.zip/contents
+apg registry get-api-spec-contents --name projects/protos/locations/global/apis/google-cloud-translate/versions/v3/specs/protos.zip
 
 # An easier way to get the bytes of the spec is to use `registry get` with the `--contents` flag.
 # This writes the bytes to stdout, so you probably want to redirect this to a file, as follows:

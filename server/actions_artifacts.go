@@ -17,7 +17,6 @@ package server
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/internal/storage"
@@ -166,7 +165,7 @@ func (s *RegistryServer) GetArtifactContents(ctx context.Context, req *rpc.GetAr
 	}
 	defer db.Close()
 
-	name, err := names.ParseArtifact(strings.TrimSuffix(req.GetName(), "/contents"))
+	name, err := names.ParseArtifact(req.GetName())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
