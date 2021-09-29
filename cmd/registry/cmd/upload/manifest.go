@@ -85,7 +85,7 @@ func manifestCommand(ctx context.Context) *cobra.Command {
 			}
 
 			artifact := &rpc.Artifact{
-				Name:     "projects/" + projectID + "/locations/global/artifacts/" + manifest.Name,
+				Name:     "projects/" + projectID + "/locations/global/artifacts/" + manifest.GetId(),
 				MimeType: core.MimeTypeForMessageType("google.cloud.apigee.registry.applications.v1alpha1.Manifest"),
 				Contents: manifestData,
 			}

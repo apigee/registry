@@ -156,7 +156,7 @@ func TestArtifacts(t *testing.T) {
 			test.setup(ctx, registryClient)
 
 			manifest := &rpc.Manifest{
-				Name: "controller-test",
+				Id: "controller-test",
 				GeneratedResources: []*rpc.GeneratedResource{
 					{
 						Pattern: "apis/-/versions/-/specs/-/artifacts/lint-gnostic",
@@ -283,7 +283,7 @@ func TestAggregateArtifacts(t *testing.T) {
 
 			manifest := &rpc.Manifest{
 
-				Name: "controller-test",
+				Id: "controller-test",
 				GeneratedResources: []*rpc.GeneratedResource{
 					{
 						Pattern: "apis/-/artifacts/vocabulary",
@@ -454,7 +454,7 @@ func TestDerivedArtifacts(t *testing.T) {
 			test.setup(ctx, registryClient)
 
 			manifest := &rpc.Manifest{
-				Name: "controller-test",
+				Id: "controller-test",
 				GeneratedResources: []*rpc.GeneratedResource{
 					{
 						Pattern: "apis/-/versions/-/specs/-/artifacts/summary",
@@ -540,7 +540,7 @@ func TestReceiptArtifacts(t *testing.T) {
 			test.setup(ctx, registryClient)
 
 			manifest := &rpc.Manifest{
-				Name: "controller-test",
+				Id: "controller-test",
 				GeneratedResources: []*rpc.GeneratedResource{
 					{
 						Pattern: "apis/-/versions/-/specs/-/artifacts/custom-artifact",
@@ -642,7 +642,7 @@ func TestReceiptAggArtifacts(t *testing.T) {
 			test.setup(ctx, registryClient)
 
 			manifest := &rpc.Manifest{
-				Name: "controller-test",
+				Id: "controller-test",
 				GeneratedResources: []*rpc.GeneratedResource{
 					{
 						Pattern: "artifacts/search-index",

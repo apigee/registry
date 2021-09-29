@@ -81,7 +81,7 @@ func styleGuideCommand(ctx context.Context) *cobra.Command {
 				Name: "projects/" +
 					projectID +
 					"/locations/global/artifacts/" +
-					styleGuide.GetName(),
+					styleGuide.GetId(),
 				MimeType: core.MimeTypeForMessageType(
 					"google.cloud.apigee.registry.applications.v1alpha1.styleguide",
 				),

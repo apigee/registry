@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: "test-manifest"
+id: "test-manifest"
 generated_resources:
-- pattern: apis/-/versions/-/specs/-/artifacts/lint-gnostic
-  dependencies:
-  - pattern: $resource.spec
-    filter: "mime_type.contains('openapi')"
-  action: "registry compute lint $resource.spec --linter gnostic"
+  - pattern: apis/-/versions/-/specs/-/artifacts/lint-gnostic
+    dependencies:
+      - pattern: $resource.spec
+        filter: "mime_type.contains('openapi')"
+    action: "registry compute lint $resource.spec --linter gnostic"

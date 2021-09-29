@@ -12,27 +12,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: "test-manifest"
+id: "test-manifest"
 generated_resources:
-- pattern: apis/-/versions/-/specs/-/artifacts/lint-gnostic
-  dependencies:
-  - pattern: $resource.spec
-    filter: "mime_type.contains('openapi')"
-  action: "registry compute lint $resource.spec --linter gnostic"
-- pattern: apis/-/versions/-/specs/-/artifacts/lint-aip
-  dependencies:
-  - pattern: $resource.spec
-    filter: "mime_type.contains('protobuf')"
-  action: "registry compute lint $resource.spec --linter aip"
-- pattern: apis/-/versions/-/specs/-/artifacts/lintstats-gnostic
-  dependencies:
-  - pattern: $resource.spec/artifacts/lint-gnostic
-  action: "registry compute lintstats $resource.spec --linter gnostic"
-- pattern: apis/-/versions/-/specs/-/artifacts/vocabulary
-  dependencies:
-  - pattern: $resource.spec
-  action: "registry compute vocabulary $resource.spec"
-- pattern: apis/-/versions/-/specs/-/artifacts/complexity
-  dependencies:
-  - pattern: $resource.spec
-  action: "registry compute complexity $resource.spec" 
+  - pattern: apis/-/versions/-/specs/-/artifacts/lint-gnostic
+    dependencies:
+      - pattern: $resource.spec
+        filter: "mime_type.contains('openapi')"
+    action: "registry compute lint $resource.spec --linter gnostic"
+  - pattern: apis/-/versions/-/specs/-/artifacts/lint-aip
+    dependencies:
+      - pattern: $resource.spec
+        filter: "mime_type.contains('protobuf')"
+    action: "registry compute lint $resource.spec --linter aip"
+  - pattern: apis/-/versions/-/specs/-/artifacts/lintstats-gnostic
+    dependencies:
+      - pattern: $resource.spec/artifacts/lint-gnostic
+    action: "registry compute lintstats $resource.spec --linter gnostic"
+  - pattern: apis/-/versions/-/specs/-/artifacts/vocabulary
+    dependencies:
+      - pattern: $resource.spec
+    action: "registry compute vocabulary $resource.spec"
+  - pattern: apis/-/versions/-/specs/-/artifacts/complexity
+    dependencies:
+      - pattern: $resource.spec
+    action: "registry compute complexity $resource.spec"

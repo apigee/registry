@@ -12,15 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: test-styleguide
+id: test-styleguide
 mime_types:
   - application/x.openapi+gzip;version=2
 guidelines:
-  - name: refproperties
+  - id: refproperties
     display_name: Govern Ref Properties
     description: This guideline governs properties for ref fields on specs.
     rules:
-      - name: norefsiblings
+      - id: norefsiblings
         description: An object exposing a $ref property cannot be further extended with additional properties.
         linter: spectral
         linter_rulename: no-$ref-siblings

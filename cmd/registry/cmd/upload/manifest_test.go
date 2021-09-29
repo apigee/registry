@@ -41,7 +41,7 @@ func TestManifestUpload(t *testing.T) {
 			project:  "upload-manifest-demo",
 			filePath: filepath.Join("testdata", "manifest.yaml"),
 			want: &rpc.Manifest{
-				Name: "test-manifest",
+				Id: "test-manifest",
 				GeneratedResources: []*rpc.GeneratedResource{
 					{
 						Pattern: "apis/-/versions/-/specs/-/artifacts/complexity",
