@@ -29,33 +29,35 @@ import (
 const TopicName = "registry-events"
 
 var notificationTotal int
+func (s *RegistryServer) notify(ctx context.Context, change rpc.Notification_Change, resource string) {
 
-func (s *RegistryServer) notify(ctx context.Context, change rpc.Notification_Change, resource string) error {
 	if !s.notifyEnabled || s.projectID == "" {
-		return nil
+		return
 	}
 
 	client, err := pubsub.NewClient(ctx, s.projectID)
 	if err != nil {
-		return err
+		return
 	}
 	defer client.Close()
 
 	if _, err := client.CreateTopic(ctx, TopicName); err != nil && status.Code(err) != codes.AlreadyExists {
-		return err
+		return
+	}
+
+	notification := &rpc.Notification{
+		Change:     change,
+		Resource:   resource,
+		ChangeTime: timestamppb.Now(),
+	}
+
+	msg, err := protojson.Marshal(notification)
+	if err != nil {
+		return
 	}
 
 	topic := client.Topic(TopicName)
 	defer topic.Stop()
-
-	msg, err := protojson.Marshal(&rpc.Notification{
-		Change:     change,
-		Resource:   resource,
-		ChangeTime: timestamppb.Now(),
-	})
-	if err != nil {
-		return err
-	}
 
 	result := topic.Publish(ctx, &pubsub.Message{
 		Data: msg,
@@ -63,12 +65,10 @@ func (s *RegistryServer) notify(ctx context.Context, change rpc.Notification_Cha
 
 	id, err := result.Get(ctx)
 	if err != nil {
-		return err
+		return
 	}
 
 	notificationTotal++
 	log.Infof("^^ [%03d] %+s", notificationTotal, msg)
 	log.Infof("Published a message with a message ID: %s", id)
-
-	return nil
 }
