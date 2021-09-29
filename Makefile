@@ -1,23 +1,29 @@
 lite:
 	go install ./...
 
-all:	protos
+all:
+	./tools/GENERATE-RPC.sh
+	./tools/GENERATE-GRPC.sh
+	./tools/GENERATE-GAPIC.sh
+	./tools/GENERATE-APG.sh
+	./tools/GENERATE-ENVOY-DESCRIPTORS.sh
 	go install ./...
 
+apg:
+	./tools/GENERATE-APG.sh
+	go install ./cmd/apg
+
 protos:
-	cd third_party; sh ./SETUP.sh
-	./tools/COMPILE-PROTOS.sh
+	./tools/GENERATE-RPC.sh
+	./tools/GENERATE-GRPC.sh
+	./tools/GENERATE-GAPIC.sh
 
 test:
 	go clean -testcache
 	go test ./...
 
 clean:
-	rm -rf \
-		cmd/apg/*.go gapic/*.go rpc/*.go \
-		third_party/api-common-protos third_party/gnostic \
-		envoy/proto.pb \
-		${HOME}/.config/registry
+	rm -rf cmd/apg/*.go envoy/proto.pb docs/ third_party/api-common-protos
 
 build:
 ifndef REGISTRY_PROJECT_IDENTIFIER

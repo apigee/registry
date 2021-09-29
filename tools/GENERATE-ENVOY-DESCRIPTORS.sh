@@ -20,7 +20,10 @@ set -e
 source tools/PROTOS.sh
 clone_common_protos
 
-go install github.com/googleapis/gnostic/apps/protoc-gen-openapi@latest
-
-echo "Generating OpenAPI spec for ${SERVICE_PROTOS[@]}"
-protoc ${SERVICE_PROTOS[*]} --proto_path='.' --proto_path=$COMMON_PROTOS_PATH --openapi_out='.'
+echo "Generating Envoy gRPC-JSON transcoding descriptor set for ${SERVICE_PROTOS[@]}"
+protoc ${SERVICE_PROTOS[*]} \
+	--proto_path='.' \
+	--proto_path=$COMMON_PROTOS_PATH \
+    --descriptor_set_out='deployments/envoy/proto.pb' \
+	--include_imports \
+    --include_source_info

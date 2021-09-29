@@ -78,16 +78,6 @@ builds can be made with `go install ./...` or `make lite`. The Makefile also
 includes targets that build and deploy the API on
 [Google Cloud Run](https://cloud.google.com/run) (see below).
 
-## Generated Components
-
-Several directories of generated code are produced by the build process (see
-the [COMPILE-PROTOS.sh](tools/COMPILE-PROTOS.sh) script for details). These
-include:
-
-- [rpc](rpc), containing generated Go Protocol Buffer support code.
-- [gapic](gapic), containing the Go GAPIC (generated API client) library.
-- [cmd/apg](cmd/apg), containing a generated command-line interface.
-
 ## Quickstart
 
 The easiest way to try the Registry API is to run `registry-server` locally.

@@ -15,12 +15,22 @@
 # limitations under the License.
 #
 
-set -e
+ALL_PROTOS=(
+	google/cloud/apigee/registry/applications/v1alpha1/*.proto
+	google/cloud/apigee/registry/internal/v1/*.proto
+	google/cloud/apigee/registry/v1/*.proto
+)
 
-source tools/PROTOS.sh
-clone_common_protos
+SERVICE_PROTOS=(
+	google/cloud/apigee/registry/v1/registry_models.proto
+	google/cloud/apigee/registry/v1/registry_service.proto
+)
 
-go install github.com/googleapis/gnostic/apps/protoc-gen-openapi@latest
+COMMON_PROTOS_PATH='third_party/api-common-protos'
 
-echo "Generating OpenAPI spec for ${SERVICE_PROTOS[@]}"
-protoc ${SERVICE_PROTOS[*]} --proto_path='.' --proto_path=$COMMON_PROTOS_PATH --openapi_out='.'
+function clone_common_protos {
+	if [ ! -d $COMMON_PROTOS_PATH ]
+	then
+		git clone https://github.com/googleapis/api-common-protos $COMMON_PROTOS_PATH
+	fi
+}

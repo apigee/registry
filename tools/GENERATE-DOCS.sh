@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright 2020 Google LLC. All Rights Reserved.
+# Copyright 2021 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,23 +15,13 @@
 # limitations under the License.
 #
 
-#
-# Automatically generate API documentation.
-#
+set -e
 
-echo "Updating tool dependencies."
-go get -u github.com/pseudomuto/protoc-gen-doc/cmd/protoc-gen-doc
+source tools/PROTOS.sh
+clone_common_protos
 
-ANNOTATIONS="third_party/api-common-protos"
+go install github.com/pseudomuto/protoc-gen-doc/cmd/protoc-gen-doc@latest
 
-PROTOS=( \
-	google/cloud/apigee/registry/v1/registry_models.proto \
-	google/cloud/apigee/registry/v1/registry_service.proto \
-)
-
-echo "Generating documentation."
-mkdir -p ./docs
-protoc --proto_path=. --proto_path=${ANNOTATIONS} \
-	${PROTOS[*]} \
-	--doc_out=./docs \
-	--doc_opt=html,api.html
+echo "Generating documentation for ${SERVICE_PROTOS[@]}"
+mkdir -p ./docs/
+protoc ${SERVICE_PROTOS[*]} --proto_path='.' --proto_path=$COMMON_PROTOS_PATH --doc_opt='html,api.html' --doc_out='./docs'
