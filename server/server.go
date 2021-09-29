@@ -161,7 +161,7 @@ func (s *RegistryServer) loggingInterceptor(ctx context.Context, req interface{}
 		"status_code": status.Code(err),
 	}
 
-	if r, ok := resp.(resourceOp); ok {
+	if r, ok := resp.(resourceOp); err == nil && ok {
 		respInfo["resource"] = r.GetName()
 	}
 
