@@ -182,11 +182,7 @@ func (s *RegistryServer) GetApiSpecContents(ctx context.Context, req *rpc.GetApi
 	}
 	defer db.Close()
 
-	if !strings.HasSuffix(req.GetName(), "/contents") {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid resource name %q, must include /contents suffix", req.GetName())
-	}
-
-	var specName = strings.TrimSuffix(req.GetName(), "/contents")
+	var specName = req.GetName()
 	var spec *models.Spec
 	var revisionName names.SpecRevision
 	if name, err := names.ParseSpec(specName); err == nil {

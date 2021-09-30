@@ -20,7 +20,7 @@ set -e
 source tools/PROTOS.sh
 clone_common_protos
 
-go install github.com/googleapis/gnostic/apps/protoc-gen-openapi@latest
+go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 
-echo "Generating OpenAPI spec for ${SERVICE_PROTOS[@]}"
-protoc ${SERVICE_PROTOS[*]} --proto_path='.' --proto_path=$COMMON_PROTOS_PATH --openapi_out='.'
+echo "Generating Go gRPC client/server for ${SERVICE_PROTOS[@]}"
+protoc ${SERVICE_PROTOS[*]} --proto_path='.' --proto_path=$COMMON_PROTOS_PATH --go-grpc_opt='module=github.com/apigee/registry' --go-grpc_out='.'

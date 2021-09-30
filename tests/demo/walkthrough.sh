@@ -66,7 +66,7 @@ apg registry get-api-spec \
 echo
 echo Get the contents of the API spec.
 apg registry get-api-spec-contents \
-    --name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml/contents \
+    --name projects/demo/apis/petstore/versions/1.0.0/specs/openapi.yaml \
     --json | \
     jq '.data' -r | \
     registry-decode-spec

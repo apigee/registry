@@ -20,7 +20,8 @@ set -e
 source tools/PROTOS.sh
 clone_common_protos
 
-go install github.com/googleapis/gnostic/apps/protoc-gen-openapi@latest
+go install github.com/googleapis/api-linter/cmd/api-linter@latest
 
-echo "Generating OpenAPI spec for ${SERVICE_PROTOS[@]}"
-protoc ${SERVICE_PROTOS[*]} --proto_path='.' --proto_path=$COMMON_PROTOS_PATH --openapi_out='.'
+for proto in ${ALL_PROTOS[@]}; do
+    api-linter $proto --proto-path=$COMMON_PROTOS_PATH
+done

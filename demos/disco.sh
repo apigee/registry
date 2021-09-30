@@ -75,7 +75,7 @@ apg registry get-api-spec --name projects/disco/locations/global/apis/translate/
 # You might notice that that didn't return the actual spec. That's because the spec contents
 # are accessed through a separate method that (when transcoded to HTTP) allows direct download
 # of spec contents.
-apg registry get-api-spec-contents --name projects/disco/locations/global/apis/translate/versions/v3/specs/discovery.json/contents
+apg registry get-api-spec-contents --name projects/disco/locations/global/apis/translate/versions/v3/specs/discovery.json
 
 # Another way to get the bytes of the spec is to use `registry get` with the `--contents` flag.
 registry get projects/disco/locations/global/apis/translate/versions/v3/specs/discovery.json --contents

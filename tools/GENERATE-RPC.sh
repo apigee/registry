@@ -20,7 +20,9 @@ set -e
 source tools/PROTOS.sh
 clone_common_protos
 
-go install github.com/googleapis/gnostic/apps/protoc-gen-openapi@latest
+go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
 
-echo "Generating OpenAPI spec for ${SERVICE_PROTOS[@]}"
-protoc ${SERVICE_PROTOS[*]} --proto_path='.' --proto_path=$COMMON_PROTOS_PATH --openapi_out='.'
+for proto in ${ALL_PROTOS[@]}; do
+	echo "Generating Go types for $proto"
+	protoc $proto --proto_path='.' --proto_path=$COMMON_PROTOS_PATH --go_opt='module=github.com/apigee/registry' --go_out='.'
+done

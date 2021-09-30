@@ -27,7 +27,7 @@ option go_package = "github.com/apigee/registry/rpc;rpc";
 // in a registry and is used by the controller to keep these resources up-to-date.
 message Manifest {
   // Name of manifest entry
-  string name = 1 [
+  string id = 1 [
 		(google.api.field_behavior) = REQUIRED
 	];
   // List of Generated resources.
