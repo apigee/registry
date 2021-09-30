@@ -16,9 +16,9 @@ package server
 
 import (
 	"context"
-	"log"
 
 	"cloud.google.com/go/pubsub"
+	"github.com/apex/log"
 	"github.com/apigee/registry/rpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -26,38 +26,45 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-const verbose = false
-
 const TopicName = "registry-events"
 
-var notificationTotal int
+func (s *RegistryServer) notify(ctx context.Context, change rpc.Notification_Change, resource string) {
+	logger := log.FromContext(ctx)
+	if !s.notifyEnabled {
+		return
+	}
 
-func (s *RegistryServer) notify(ctx context.Context, change rpc.Notification_Change, resource string) error {
-	if !s.notifyEnabled || s.projectID == "" {
-		return nil
+	if s.projectID == "" {
+		logger.Warn("Notifications are enabled but project ID is not set. Skipping notification.")
+		return
 	}
 
 	client, err := pubsub.NewClient(ctx, s.projectID)
 	if err != nil {
-		return err
+		logger.WithError(err).Error("Failed to create PubSub client.")
+		return
 	}
 	defer client.Close()
 
 	if _, err := client.CreateTopic(ctx, TopicName); err != nil && status.Code(err) != codes.AlreadyExists {
-		return err
+		logger.WithError(err).Error("Failed to create PubSub topic.")
+		return
+	}
+
+	notification := &rpc.Notification{
+		Change:     change,
+		Resource:   resource,
+		ChangeTime: timestamppb.Now(),
+	}
+
+	msg, err := protojson.Marshal(notification)
+	if err != nil {
+		logger.WithError(err).Errorf("Failed to serialize notification: %v", notification)
+		return
 	}
 
 	topic := client.Topic(TopicName)
 	defer topic.Stop()
-
-	msg, err := protojson.Marshal(&rpc.Notification{
-		Change:     change,
-		Resource:   resource,
-		ChangeTime: timestamppb.Now(),
-	})
-	if err != nil {
-		return err
-	}
 
 	result := topic.Publish(ctx, &pubsub.Message{
 		Data: msg,
@@ -65,14 +72,9 @@ func (s *RegistryServer) notify(ctx context.Context, change rpc.Notification_Cha
 
 	id, err := result.Get(ctx)
 	if err != nil {
-		return err
+		logger.WithError(err).Error("Failed to publish notification.")
+		return
 	}
 
-	notificationTotal++
-	if verbose {
-		log.Printf("^^ [%03d] %+s", notificationTotal, msg)
-		log.Printf("Published a message with a message ID: %s", id)
-	}
-
-	return nil
+	logger.Infof("Published notification with message ID: %s", id)
 }

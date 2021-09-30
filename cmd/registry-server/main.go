@@ -18,12 +18,12 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/apex/log"
 	"github.com/apigee/registry/server"
 	"github.com/spf13/pflag"
 	"gopkg.in/yaml.v2"
@@ -88,7 +88,7 @@ func main() {
 	pflag.Parse()
 
 	if configPath != "" {
-		log.Printf("Loading configuration from %s", configPath)
+		log.Infof("Loading configuration from %s", configPath)
 		raw, err := ioutil.ReadFile(configPath)
 		if err != nil {
 			log.Fatalf("Failed to open config file: %s", err)
@@ -105,7 +105,7 @@ func main() {
 		log.Fatalf("Invalid configuration: %s", err)
 	}
 
-	log.Printf("Configured port %d", config.Port)
+	log.Infof("Configured port %d", config.Port)
 	listener, err := net.ListenTCP("tcp", &net.TCPAddr{
 		Port: config.Port,
 	})
@@ -123,7 +123,7 @@ func main() {
 	})
 
 	go srv.Start(context.Background(), listener)
-	log.Printf("Listening on %s", listener.Addr())
+	log.Infof("Listening on %s", listener.Addr())
 
 	// Wait for an interruption signal.
 	done := make(chan os.Signal, 1)

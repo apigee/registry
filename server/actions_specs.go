@@ -83,7 +83,7 @@ func (s *RegistryServer) createSpec(ctx context.Context, name names.Spec, body *
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	_ = s.notify(ctx, rpc.Notification_CREATED, spec.RevisionName())
+	s.notify(ctx, rpc.Notification_CREATED, spec.RevisionName())
 	return message, nil
 }
 
@@ -109,7 +109,7 @@ func (s *RegistryServer) DeleteApiSpec(ctx context.Context, req *rpc.DeleteApiSp
 		return nil, err
 	}
 
-	_ = s.notify(ctx, rpc.Notification_DELETED, name.String())
+	s.notify(ctx, rpc.Notification_DELETED, name.String())
 	return &emptypb.Empty{}, nil
 }
 
@@ -323,7 +323,7 @@ func (s *RegistryServer) UpdateApiSpec(ctx context.Context, req *rpc.UpdateApiSp
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	_ = s.notify(ctx, rpc.Notification_UPDATED, spec.RevisionName())
+	s.notify(ctx, rpc.Notification_UPDATED, spec.RevisionName())
 	return message, nil
 }
 

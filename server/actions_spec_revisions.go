@@ -105,7 +105,7 @@ func (s *RegistryServer) DeleteApiSpecRevision(ctx context.Context, req *rpc.Del
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	_ = s.notify(ctx, rpc.Notification_DELETED, name.String())
+	s.notify(ctx, rpc.Notification_DELETED, name.String())
 	return &emptypb.Empty{}, nil
 }
 
@@ -156,7 +156,7 @@ func (s *RegistryServer) TagApiSpecRevision(ctx context.Context, req *rpc.TagApi
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	_ = s.notify(ctx, rpc.Notification_UPDATED, name.String())
+	s.notify(ctx, rpc.Notification_UPDATED, name.String())
 	return message, nil
 }
 
@@ -206,6 +206,6 @@ func (s *RegistryServer) RollbackApiSpec(ctx context.Context, req *rpc.RollbackA
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	_ = s.notify(ctx, rpc.Notification_CREATED, rollback.RevisionName())
+	s.notify(ctx, rpc.Notification_CREATED, rollback.RevisionName())
 	return message, nil
 }
