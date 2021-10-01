@@ -155,7 +155,7 @@ Once the artifacts are cleaned up, we can see the controller in action.
 
 #### Desired state definitions:
 
-##### Recommended definition:
+##### Recommended manifest:
 To get started with the controller framework, we recommend using the following manifest. It defines four artifacts and all of them can be generated using the `registry tool`.  This is the same manifest used in the walkthrough above.
 ```yaml
 id: "test-manifest"
@@ -169,6 +169,35 @@ generated_resources:
     dependencies:
       - pattern: "$resource.spec/artifacts/lint-spectral"
     action: "registry compute lintstats $resource.spec --linter spectral"
+  - pattern: "apis/-/versions/-/specs/-/artifacts/vocabulary"
+    dependencies:
+      - pattern: "$resource.spec"
+    action: "registry compute vocabulary $resource.spec"
+  - pattern: "apis/-/versions/-/specs/-/artifacts/complexity"
+    dependencies:
+      - pattern: "$resource.spec"
+    action: "registry compute complexity $resource.spec"
+```
+
+##### Projects with protobuf spec definitions:
+If your project contains protobuf definitions, use the api-linter.
+```yaml
+id: "test-manifest"
+generated_resources:
+  - pattern: "apis/-/versions/-/specs/-/artifacts/lint-aip"
+    dependencies:
+      - pattern: "$resource.spec"
+        filter: "mime_type.contains('protobuf')"
+    action: "registry compute lint $resource.spec --linter aip"
+  - pattern: "apis/-/versions/-/specs/-/artifacts/lintstats-aip"
+    dependencies:
+      - pattern: "$resource.spec/artifacts/lint-aip"
+    action: "registry compute lintstats $resource.spec --linter aip"
+  - pattern: "apis/-/versions/-/specs/-/artifacts/references"
+    dependencies:
+      - pattern: "$resource.spec"
+        filter: "mime_type.contains('protobuf')"
+    action: "registry compute references $resource.spec"
   - pattern: "apis/-/versions/-/specs/-/artifacts/vocabulary"
     dependencies:
       - pattern: "$resource.spec"
