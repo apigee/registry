@@ -14,10 +14,6 @@
 
 package gorm
 
-import (
-	"log"
-)
-
 // Query represents a query in a storage provider.
 type Query struct {
 	Kind         string
@@ -54,8 +50,6 @@ func (q *Query) Require(name string, value interface{}) *Query {
 		name = "revision_id"
 	case "ArtifactID":
 		name = "artifact_id"
-	default:
-		log.Fatalf("UNEXPECTED REQUIRE TYPE: %s", name)
 	}
 	q.Requirements = append(q.Requirements, &Requirement{Name: name, Value: value})
 	return q

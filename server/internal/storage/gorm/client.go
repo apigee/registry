@@ -17,7 +17,6 @@ package gorm
 import (
 	"context"
 	"fmt"
-	"log"
 	"sync"
 
 	_ "github.com/GoogleCloudPlatform/cloudsql-proxy/proxy/dialers/postgres"
@@ -167,10 +166,7 @@ func (c *Client) Put(ctx context.Context, k *Key, v interface{}) (*Key, error) {
 		// Update all fields from model: https://gorm.io/docs/update.html#Update-Selected-Fields
 		rowsAffected := tx.Model(v).Select("*").Where("key = ?", k.Name).Updates(v).RowsAffected
 		if rowsAffected == 0 {
-			err := tx.Create(v).Error
-			if err != nil {
-				log.Printf("CREATE ERROR %s", err.Error())
-			}
+			tx.Create(v)
 		}
 		return nil
 	})
@@ -253,7 +249,6 @@ func (c *Client) Run(ctx context.Context, q *Query) *Iterator {
 		_ = op.Find(&v).Error
 		return &Iterator{Client: c, Values: v, Index: 0}
 	default:
-		log.Printf("Unable to run query for kind %s", q.Kind)
 		return nil
 	}
 }

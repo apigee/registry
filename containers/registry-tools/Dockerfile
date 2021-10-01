@@ -36,9 +36,6 @@ RUN go mod download
 # Copy local code to the container image.
 COPY . ./
 
-# Compile protos.
-RUN make protos
-
 # Build registry.
 RUN CGO_ENABLED=0 GOOS=linux go build -v -o registry ./cmd/registry
 
