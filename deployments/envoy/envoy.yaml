@@ -45,14 +45,6 @@ static_resources:
                         expose_headers: grpc-status,grpc-message
                 http_filters:
                   - name: envoy.filters.http.cors
-                  - name: envoy.filters.http.ext_authz
-                    typed_config:
-                      "@type": type.googleapis.com/envoy.extensions.filters.http.ext_authz.v3.ExtAuthz
-                      grpc_service:
-                        envoy_grpc:
-                          cluster_name: authz-server
-                        timeout: 0.5s
-                      transport_api_version: V3
                   - name: envoy.filters.http.grpc_json_transcoder
                     typed_config:
                       "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_json_transcoder.v3.GrpcJsonTranscoder
@@ -81,32 +73,6 @@ static_resources:
                     socket_address:
                       address: 127.0.0.1
                       port_value: 8080
-    - name: authz-server
-      type: static
-      http2_protocol_options: {}
-      load_assignment:
-        cluster_name: authz-server
-        endpoints:
-        - lb_endpoints:
-          - endpoint:
-              address:
-                socket_address:
-                  address: 127.0.0.1
-                  port_value: 50051
-      common_lb_config:
-        healthy_panic_threshold:
-          value: 50.0
-      health_checks:
-        - timeout: 1s
-          interval: 600s
-          interval_jitter: 1s
-          no_traffic_interval: 600s
-          unhealthy_threshold: 1
-          healthy_threshold: 3
-          grpc_health_check:
-            service_name: "envoy.service.auth.v2alpha.Authorization"
-            authority: "server.domain.com"
-      connect_timeout: 0.25s
 
 layered_runtime:
   layers:

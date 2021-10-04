@@ -52,6 +52,7 @@ static_resources:
                         envoy_grpc:
                           cluster_name: authz-server
                         timeout: 0.5s
+                      transport_api_version: V3
                   - name: envoy.filters.http.grpc_json_transcoder
                     typed_config:
                       "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_json_transcoder.v3.GrpcJsonTranscoder

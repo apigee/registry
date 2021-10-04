@@ -24,10 +24,6 @@ RUN apt-get install unzip
 # Create and change to the app directory.
 WORKDIR /app
 
-# Get protoc
-COPY ./tools/FETCH-PROTOC.sh ./
-RUN ./FETCH-PROTOC.sh
-
 # Retrieve application dependencies.
 # This allows the container build to reuse cached dependencies.
 COPY go.* ./
