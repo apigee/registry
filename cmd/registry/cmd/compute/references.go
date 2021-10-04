@@ -100,7 +100,7 @@ func (task *computeReferencesTask) Run(ctx context.Context) error {
 	messageData, _ := proto.Marshal(references)
 	artifact := &rpc.Artifact{
 		Name:     subject + "/artifacts/" + relation,
-		MimeType: core.MimeTypeForMessageType("google.cloud.apigee.registry.applications.v1alpha1.References"),
+		MimeType: core.MimeTypeForMessageType("google.cloud.apigeeregistry.applications.v1alpha1.References"),
 		Contents: messageData,
 	}
 	err = core.SetArtifact(ctx, task.client, artifact)

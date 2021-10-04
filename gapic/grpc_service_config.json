@@ -3,7 +3,7 @@
       {
         "name": [
           {
-            "service": "google.cloud.apigee.registry.v1.Registry"
+            "service": "google.cloud.apigeeregistry.v1.Registry"
           }
         ],
         "timeout": "10s",

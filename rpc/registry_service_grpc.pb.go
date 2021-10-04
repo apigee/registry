@@ -128,7 +128,7 @@ func NewRegistryClient(cc grpc.ClientConnInterface) RegistryClient {
 
 func (c *registryClient) GetStatus(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*Status, error) {
 	out := new(Status)
-	err := c.cc.Invoke(ctx, "/google.cloud.apigee.registry.v1.Registry/GetStatus", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/google.cloud.apigeeregistry.v1.Registry/GetStatus", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +137,7 @@ func (c *registryClient) GetStatus(ctx context.Context, in *emptypb.Empty, opts 
 
 func (c *registryClient) ListProjects(ctx context.Context, in *ListProjectsRequest, opts ...grpc.CallOption) (*ListProjectsResponse, error) {
 	out := new(ListProjectsResponse)
-	err := c.cc.Invoke(ctx, "/google.cloud.apigee.registry.v1.Registry/ListProjects", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/google.cloud.apigeeregistry.v1.Registry/ListProjects", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -146,7 +146,7 @@ func (c *registryClient) ListProjects(ctx context.Context, in *ListProjectsReque
 
 func (c *registryClient) GetProject(ctx context.Context, in *GetProjectRequest, opts ...grpc.CallOption) (*Project, error) {
 	out := new(Project)
-	err := c.cc.Invoke(ctx, "/google.cloud.apigee.registry.v1.Registry/GetProject", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/google.cloud.apigeeregistry.v1.Registry/GetProject", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -155,7 +155,7 @@ func (c *registryClient) GetProject(ctx context.Context, in *GetProjectRequest, 
 
 func (c *registryClient) CreateProject(ctx context.Context, in *CreateProjectRequest, opts ...grpc.CallOption) (*Project, error) {
 	out := new(Project)
-	err := c.cc.Invoke(ctx, "/google.cloud.apigee.registry.v1.Registry/CreateProject", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/google.cloud.apigeeregistry.v1.Registry/CreateProject", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -164,7 +164,7 @@ func (c *registryClient) CreateProject(ctx context.Context, in *CreateProjectReq
 
 func (c *registryClient) UpdateProject(ctx context.Context, in *UpdateProjectRequest, opts ...grpc.CallOption) (*Project, error) {
 	out := new(Project)
-	err := c.cc.Invoke(ctx, "/google.cloud.apigee.registry.v1.Registry/UpdateProject", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/google.cloud.apigeeregistry.v1.Registry/UpdateProject", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -173,7 +173,7 @@ func (c *registryClient) UpdateProject(ctx context.Context, in *UpdateProjectReq
 
 func (c *registryClient) DeleteProject(ctx context.Context, in *DeleteProjectRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, "/google.cloud.apigee.registry.v1.Registry/DeleteProject", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/google.cloud.apigeeregistry.v1.Registry/DeleteProject", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -182,7 +182,7 @@ func (c *registryClient) DeleteProject(ctx context.Context, in *DeleteProjectReq
 
 func (c *registryClient) ListApis(ctx context.Context, in *ListApisRequest, opts ...grpc.CallOption) (*ListApisResponse, error) {
 	out := new(ListApisResponse)
-	err := c.cc.Invoke(ctx, "/google.cloud.apigee.registry.v1.Registry/ListApis", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/google.cloud.apigeeregistry.v1.Registry/ListApis", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -191,7 +191,7 @@ func (c *registryClient) ListApis(ctx context.Context, in *ListApisRequest, opts
 
 func (c *registryClient) GetApi(ctx context.Context, in *GetApiRequest, opts ...grpc.CallOption) (*Api, error) {
 	out := new(Api)
-	err := c.cc.Invoke(ctx, "/google.cloud.apigee.registry.v1.Registry/GetApi", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/google.cloud.apigeeregistry.v1.Registry/GetApi", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -200,7 +200,7 @@ func (c *registryClient) GetApi(ctx context.Context, in *GetApiRequest, opts ...
 
 func (c *registryClient) CreateApi(ctx context.Context, in *CreateApiRequest, opts ...grpc.CallOption) (*Api, error) {
 	out := new(Api)
-	err := c.cc.Invoke(ctx, "/google.cloud.apigee.registry.v1.Registry/CreateApi", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/google.cloud.apigeeregistry.v1.Registry/CreateApi", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -209,7 +209,7 @@ func (c *registryClient) CreateApi(ctx context.Context, in *CreateApiRequest, op
 
 func (c *registryClient) UpdateApi(ctx context.Context, in *UpdateApiRequest, opts ...grpc.CallOption) (*Api, error) {
 	out := new(Api)
-	err := c.cc.Invoke(ctx, "/google.cloud.apigee.registry.v1.Registry/UpdateApi", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/google.cloud.apigeeregistry.v1.Registry/UpdateApi", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -218,7 +218,7 @@ func (c *registryClient) UpdateApi(ctx context.Context, in *UpdateApiRequest, op
 
 func (c *registryClient) DeleteApi(ctx context.Context, in *DeleteApiRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, "/google.cloud.apigee.registry.v1.Registry/DeleteApi", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/google.cloud.apigeeregistry.v1.Registry/DeleteApi", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -227,7 +227,7 @@ func (c *registryClient) DeleteApi(ctx context.Context, in *DeleteApiRequest, op
 
 func (c *registryClient) ListApiVersions(ctx context.Context, in *ListApiVersionsRequest, opts ...grpc.CallOption) (*ListApiVersionsResponse, error) {
 	out := new(ListApiVersionsResponse)
-	err := c.cc.Invoke(ctx, "/google.cloud.apigee.registry.v1.Registry/ListApiVersions", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/google.cloud.apigeeregistry.v1.Registry/ListApiVersions", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -236,7 +236,7 @@ func (c *registryClient) ListApiVersions(ctx context.Context, in *ListApiVersion
 
 func (c *registryClient) GetApiVersion(ctx context.Context, in *GetApiVersionRequest, opts ...grpc.CallOption) (*ApiVersion, error) {
 	out := new(ApiVersion)
-	err := c.cc.Invoke(ctx, "/google.cloud.apigee.registry.v1.Registry/GetApiVersion", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/google.cloud.apigeeregistry.v1.Registry/GetApiVersion", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -245,7 +245,7 @@ func (c *registryClient) GetApiVersion(ctx context.Context, in *GetApiVersionReq
 
 func (c *registryClient) CreateApiVersion(ctx context.Context, in *CreateApiVersionRequest, opts ...grpc.CallOption) (*ApiVersion, error) {
 	out := new(ApiVersion)
-	err := c.cc.Invoke(ctx, "/google.cloud.apigee.registry.v1.Registry/CreateApiVersion", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/google.cloud.apigeeregistry.v1.Registry/CreateApiVersion", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -254,7 +254,7 @@ func (c *registryClient) CreateApiVersion(ctx context.Context, in *CreateApiVers
 
 func (c *registryClient) UpdateApiVersion(ctx context.Context, in *UpdateApiVersionRequest, opts ...grpc.CallOption) (*ApiVersion, error) {
 	out := new(ApiVersion)
-	err := c.cc.Invoke(ctx, "/google.cloud.apigee.registry.v1.Registry/UpdateApiVersion", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/google.cloud.apigeeregistry.v1.Registry/UpdateApiVersion", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -263,7 +263,7 @@ func (c *registryClient) UpdateApiVersion(ctx context.Context, in *UpdateApiVers
 
 func (c *registryClient) DeleteApiVersion(ctx context.Context, in *DeleteApiVersionRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, "/google.cloud.apigee.registry.v1.Registry/DeleteApiVersion", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/google.cloud.apigeeregistry.v1.Registry/DeleteApiVersion", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -272,7 +272,7 @@ func (c *registryClient) DeleteApiVersion(ctx context.Context, in *DeleteApiVers
 
 func (c *registryClient) ListApiSpecs(ctx context.Context, in *ListApiSpecsRequest, opts ...grpc.CallOption) (*ListApiSpecsResponse, error) {
 	out := new(ListApiSpecsResponse)
-	err := c.cc.Invoke(ctx, "/google.cloud.apigee.registry.v1.Registry/ListApiSpecs", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/google.cloud.apigeeregistry.v1.Registry/ListApiSpecs", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -281,7 +281,7 @@ func (c *registryClient) ListApiSpecs(ctx context.Context, in *ListApiSpecsReque
 
 func (c *registryClient) GetApiSpec(ctx context.Context, in *GetApiSpecRequest, opts ...grpc.CallOption) (*ApiSpec, error) {
 	out := new(ApiSpec)
-	err := c.cc.Invoke(ctx, "/google.cloud.apigee.registry.v1.Registry/GetApiSpec", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/google.cloud.apigeeregistry.v1.Registry/GetApiSpec", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -290,7 +290,7 @@ func (c *registryClient) GetApiSpec(ctx context.Context, in *GetApiSpecRequest, 
 
 func (c *registryClient) GetApiSpecContents(ctx context.Context, in *GetApiSpecContentsRequest, opts ...grpc.CallOption) (*httpbody.HttpBody, error) {
 	out := new(httpbody.HttpBody)
-	err := c.cc.Invoke(ctx, "/google.cloud.apigee.registry.v1.Registry/GetApiSpecContents", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/google.cloud.apigeeregistry.v1.Registry/GetApiSpecContents", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -299,7 +299,7 @@ func (c *registryClient) GetApiSpecContents(ctx context.Context, in *GetApiSpecC
 
 func (c *registryClient) CreateApiSpec(ctx context.Context, in *CreateApiSpecRequest, opts ...grpc.CallOption) (*ApiSpec, error) {
 	out := new(ApiSpec)
-	err := c.cc.Invoke(ctx, "/google.cloud.apigee.registry.v1.Registry/CreateApiSpec", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/google.cloud.apigeeregistry.v1.Registry/CreateApiSpec", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -308,7 +308,7 @@ func (c *registryClient) CreateApiSpec(ctx context.Context, in *CreateApiSpecReq
 
 func (c *registryClient) UpdateApiSpec(ctx context.Context, in *UpdateApiSpecRequest, opts ...grpc.CallOption) (*ApiSpec, error) {
 	out := new(ApiSpec)
-	err := c.cc.Invoke(ctx, "/google.cloud.apigee.registry.v1.Registry/UpdateApiSpec", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/google.cloud.apigeeregistry.v1.Registry/UpdateApiSpec", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -317,7 +317,7 @@ func (c *registryClient) UpdateApiSpec(ctx context.Context, in *UpdateApiSpecReq
 
 func (c *registryClient) DeleteApiSpec(ctx context.Context, in *DeleteApiSpecRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, "/google.cloud.apigee.registry.v1.Registry/DeleteApiSpec", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/google.cloud.apigeeregistry.v1.Registry/DeleteApiSpec", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -326,7 +326,7 @@ func (c *registryClient) DeleteApiSpec(ctx context.Context, in *DeleteApiSpecReq
 
 func (c *registryClient) TagApiSpecRevision(ctx context.Context, in *TagApiSpecRevisionRequest, opts ...grpc.CallOption) (*ApiSpec, error) {
 	out := new(ApiSpec)
-	err := c.cc.Invoke(ctx, "/google.cloud.apigee.registry.v1.Registry/TagApiSpecRevision", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/google.cloud.apigeeregistry.v1.Registry/TagApiSpecRevision", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -335,7 +335,7 @@ func (c *registryClient) TagApiSpecRevision(ctx context.Context, in *TagApiSpecR
 
 func (c *registryClient) ListApiSpecRevisions(ctx context.Context, in *ListApiSpecRevisionsRequest, opts ...grpc.CallOption) (*ListApiSpecRevisionsResponse, error) {
 	out := new(ListApiSpecRevisionsResponse)
-	err := c.cc.Invoke(ctx, "/google.cloud.apigee.registry.v1.Registry/ListApiSpecRevisions", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/google.cloud.apigeeregistry.v1.Registry/ListApiSpecRevisions", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -344,7 +344,7 @@ func (c *registryClient) ListApiSpecRevisions(ctx context.Context, in *ListApiSp
 
 func (c *registryClient) RollbackApiSpec(ctx context.Context, in *RollbackApiSpecRequest, opts ...grpc.CallOption) (*ApiSpec, error) {
 	out := new(ApiSpec)
-	err := c.cc.Invoke(ctx, "/google.cloud.apigee.registry.v1.Registry/RollbackApiSpec", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/google.cloud.apigeeregistry.v1.Registry/RollbackApiSpec", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -353,7 +353,7 @@ func (c *registryClient) RollbackApiSpec(ctx context.Context, in *RollbackApiSpe
 
 func (c *registryClient) DeleteApiSpecRevision(ctx context.Context, in *DeleteApiSpecRevisionRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, "/google.cloud.apigee.registry.v1.Registry/DeleteApiSpecRevision", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/google.cloud.apigeeregistry.v1.Registry/DeleteApiSpecRevision", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -362,7 +362,7 @@ func (c *registryClient) DeleteApiSpecRevision(ctx context.Context, in *DeleteAp
 
 func (c *registryClient) ListArtifacts(ctx context.Context, in *ListArtifactsRequest, opts ...grpc.CallOption) (*ListArtifactsResponse, error) {
 	out := new(ListArtifactsResponse)
-	err := c.cc.Invoke(ctx, "/google.cloud.apigee.registry.v1.Registry/ListArtifacts", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/google.cloud.apigeeregistry.v1.Registry/ListArtifacts", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -371,7 +371,7 @@ func (c *registryClient) ListArtifacts(ctx context.Context, in *ListArtifactsReq
 
 func (c *registryClient) GetArtifact(ctx context.Context, in *GetArtifactRequest, opts ...grpc.CallOption) (*Artifact, error) {
 	out := new(Artifact)
-	err := c.cc.Invoke(ctx, "/google.cloud.apigee.registry.v1.Registry/GetArtifact", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/google.cloud.apigeeregistry.v1.Registry/GetArtifact", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -380,7 +380,7 @@ func (c *registryClient) GetArtifact(ctx context.Context, in *GetArtifactRequest
 
 func (c *registryClient) GetArtifactContents(ctx context.Context, in *GetArtifactContentsRequest, opts ...grpc.CallOption) (*httpbody.HttpBody, error) {
 	out := new(httpbody.HttpBody)
-	err := c.cc.Invoke(ctx, "/google.cloud.apigee.registry.v1.Registry/GetArtifactContents", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/google.cloud.apigeeregistry.v1.Registry/GetArtifactContents", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -389,7 +389,7 @@ func (c *registryClient) GetArtifactContents(ctx context.Context, in *GetArtifac
 
 func (c *registryClient) CreateArtifact(ctx context.Context, in *CreateArtifactRequest, opts ...grpc.CallOption) (*Artifact, error) {
 	out := new(Artifact)
-	err := c.cc.Invoke(ctx, "/google.cloud.apigee.registry.v1.Registry/CreateArtifact", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/google.cloud.apigeeregistry.v1.Registry/CreateArtifact", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -398,7 +398,7 @@ func (c *registryClient) CreateArtifact(ctx context.Context, in *CreateArtifactR
 
 func (c *registryClient) ReplaceArtifact(ctx context.Context, in *ReplaceArtifactRequest, opts ...grpc.CallOption) (*Artifact, error) {
 	out := new(Artifact)
-	err := c.cc.Invoke(ctx, "/google.cloud.apigee.registry.v1.Registry/ReplaceArtifact", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/google.cloud.apigeeregistry.v1.Registry/ReplaceArtifact", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -407,7 +407,7 @@ func (c *registryClient) ReplaceArtifact(ctx context.Context, in *ReplaceArtifac
 
 func (c *registryClient) DeleteArtifact(ctx context.Context, in *DeleteArtifactRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, "/google.cloud.apigee.registry.v1.Registry/DeleteArtifact", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/google.cloud.apigeeregistry.v1.Registry/DeleteArtifact", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -640,7 +640,7 @@ func _Registry_GetStatus_Handler(srv interface{}, ctx context.Context, dec func(
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/google.cloud.apigee.registry.v1.Registry/GetStatus",
+		FullMethod: "/google.cloud.apigeeregistry.v1.Registry/GetStatus",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RegistryServer).GetStatus(ctx, req.(*emptypb.Empty))
@@ -658,7 +658,7 @@ func _Registry_ListProjects_Handler(srv interface{}, ctx context.Context, dec fu
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/google.cloud.apigee.registry.v1.Registry/ListProjects",
+		FullMethod: "/google.cloud.apigeeregistry.v1.Registry/ListProjects",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RegistryServer).ListProjects(ctx, req.(*ListProjectsRequest))
@@ -676,7 +676,7 @@ func _Registry_GetProject_Handler(srv interface{}, ctx context.Context, dec func
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/google.cloud.apigee.registry.v1.Registry/GetProject",
+		FullMethod: "/google.cloud.apigeeregistry.v1.Registry/GetProject",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RegistryServer).GetProject(ctx, req.(*GetProjectRequest))
@@ -694,7 +694,7 @@ func _Registry_CreateProject_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/google.cloud.apigee.registry.v1.Registry/CreateProject",
+		FullMethod: "/google.cloud.apigeeregistry.v1.Registry/CreateProject",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RegistryServer).CreateProject(ctx, req.(*CreateProjectRequest))
@@ -712,7 +712,7 @@ func _Registry_UpdateProject_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/google.cloud.apigee.registry.v1.Registry/UpdateProject",
+		FullMethod: "/google.cloud.apigeeregistry.v1.Registry/UpdateProject",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RegistryServer).UpdateProject(ctx, req.(*UpdateProjectRequest))
@@ -730,7 +730,7 @@ func _Registry_DeleteProject_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/google.cloud.apigee.registry.v1.Registry/DeleteProject",
+		FullMethod: "/google.cloud.apigeeregistry.v1.Registry/DeleteProject",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RegistryServer).DeleteProject(ctx, req.(*DeleteProjectRequest))
@@ -748,7 +748,7 @@ func _Registry_ListApis_Handler(srv interface{}, ctx context.Context, dec func(i
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/google.cloud.apigee.registry.v1.Registry/ListApis",
+		FullMethod: "/google.cloud.apigeeregistry.v1.Registry/ListApis",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RegistryServer).ListApis(ctx, req.(*ListApisRequest))
@@ -766,7 +766,7 @@ func _Registry_GetApi_Handler(srv interface{}, ctx context.Context, dec func(int
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/google.cloud.apigee.registry.v1.Registry/GetApi",
+		FullMethod: "/google.cloud.apigeeregistry.v1.Registry/GetApi",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RegistryServer).GetApi(ctx, req.(*GetApiRequest))
@@ -784,7 +784,7 @@ func _Registry_CreateApi_Handler(srv interface{}, ctx context.Context, dec func(
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/google.cloud.apigee.registry.v1.Registry/CreateApi",
+		FullMethod: "/google.cloud.apigeeregistry.v1.Registry/CreateApi",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RegistryServer).CreateApi(ctx, req.(*CreateApiRequest))
@@ -802,7 +802,7 @@ func _Registry_UpdateApi_Handler(srv interface{}, ctx context.Context, dec func(
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/google.cloud.apigee.registry.v1.Registry/UpdateApi",
+		FullMethod: "/google.cloud.apigeeregistry.v1.Registry/UpdateApi",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RegistryServer).UpdateApi(ctx, req.(*UpdateApiRequest))
@@ -820,7 +820,7 @@ func _Registry_DeleteApi_Handler(srv interface{}, ctx context.Context, dec func(
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/google.cloud.apigee.registry.v1.Registry/DeleteApi",
+		FullMethod: "/google.cloud.apigeeregistry.v1.Registry/DeleteApi",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RegistryServer).DeleteApi(ctx, req.(*DeleteApiRequest))
@@ -838,7 +838,7 @@ func _Registry_ListApiVersions_Handler(srv interface{}, ctx context.Context, dec
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/google.cloud.apigee.registry.v1.Registry/ListApiVersions",
+		FullMethod: "/google.cloud.apigeeregistry.v1.Registry/ListApiVersions",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RegistryServer).ListApiVersions(ctx, req.(*ListApiVersionsRequest))
@@ -856,7 +856,7 @@ func _Registry_GetApiVersion_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/google.cloud.apigee.registry.v1.Registry/GetApiVersion",
+		FullMethod: "/google.cloud.apigeeregistry.v1.Registry/GetApiVersion",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RegistryServer).GetApiVersion(ctx, req.(*GetApiVersionRequest))
@@ -874,7 +874,7 @@ func _Registry_CreateApiVersion_Handler(srv interface{}, ctx context.Context, de
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/google.cloud.apigee.registry.v1.Registry/CreateApiVersion",
+		FullMethod: "/google.cloud.apigeeregistry.v1.Registry/CreateApiVersion",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RegistryServer).CreateApiVersion(ctx, req.(*CreateApiVersionRequest))
@@ -892,7 +892,7 @@ func _Registry_UpdateApiVersion_Handler(srv interface{}, ctx context.Context, de
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/google.cloud.apigee.registry.v1.Registry/UpdateApiVersion",
+		FullMethod: "/google.cloud.apigeeregistry.v1.Registry/UpdateApiVersion",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RegistryServer).UpdateApiVersion(ctx, req.(*UpdateApiVersionRequest))
@@ -910,7 +910,7 @@ func _Registry_DeleteApiVersion_Handler(srv interface{}, ctx context.Context, de
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/google.cloud.apigee.registry.v1.Registry/DeleteApiVersion",
+		FullMethod: "/google.cloud.apigeeregistry.v1.Registry/DeleteApiVersion",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RegistryServer).DeleteApiVersion(ctx, req.(*DeleteApiVersionRequest))
@@ -928,7 +928,7 @@ func _Registry_ListApiSpecs_Handler(srv interface{}, ctx context.Context, dec fu
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/google.cloud.apigee.registry.v1.Registry/ListApiSpecs",
+		FullMethod: "/google.cloud.apigeeregistry.v1.Registry/ListApiSpecs",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RegistryServer).ListApiSpecs(ctx, req.(*ListApiSpecsRequest))
@@ -946,7 +946,7 @@ func _Registry_GetApiSpec_Handler(srv interface{}, ctx context.Context, dec func
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/google.cloud.apigee.registry.v1.Registry/GetApiSpec",
+		FullMethod: "/google.cloud.apigeeregistry.v1.Registry/GetApiSpec",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RegistryServer).GetApiSpec(ctx, req.(*GetApiSpecRequest))
@@ -964,7 +964,7 @@ func _Registry_GetApiSpecContents_Handler(srv interface{}, ctx context.Context, 
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/google.cloud.apigee.registry.v1.Registry/GetApiSpecContents",
+		FullMethod: "/google.cloud.apigeeregistry.v1.Registry/GetApiSpecContents",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RegistryServer).GetApiSpecContents(ctx, req.(*GetApiSpecContentsRequest))
@@ -982,7 +982,7 @@ func _Registry_CreateApiSpec_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/google.cloud.apigee.registry.v1.Registry/CreateApiSpec",
+		FullMethod: "/google.cloud.apigeeregistry.v1.Registry/CreateApiSpec",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RegistryServer).CreateApiSpec(ctx, req.(*CreateApiSpecRequest))
@@ -1000,7 +1000,7 @@ func _Registry_UpdateApiSpec_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/google.cloud.apigee.registry.v1.Registry/UpdateApiSpec",
+		FullMethod: "/google.cloud.apigeeregistry.v1.Registry/UpdateApiSpec",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RegistryServer).UpdateApiSpec(ctx, req.(*UpdateApiSpecRequest))
@@ -1018,7 +1018,7 @@ func _Registry_DeleteApiSpec_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/google.cloud.apigee.registry.v1.Registry/DeleteApiSpec",
+		FullMethod: "/google.cloud.apigeeregistry.v1.Registry/DeleteApiSpec",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RegistryServer).DeleteApiSpec(ctx, req.(*DeleteApiSpecRequest))
@@ -1036,7 +1036,7 @@ func _Registry_TagApiSpecRevision_Handler(srv interface{}, ctx context.Context, 
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/google.cloud.apigee.registry.v1.Registry/TagApiSpecRevision",
+		FullMethod: "/google.cloud.apigeeregistry.v1.Registry/TagApiSpecRevision",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RegistryServer).TagApiSpecRevision(ctx, req.(*TagApiSpecRevisionRequest))
@@ -1054,7 +1054,7 @@ func _Registry_ListApiSpecRevisions_Handler(srv interface{}, ctx context.Context
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/google.cloud.apigee.registry.v1.Registry/ListApiSpecRevisions",
+		FullMethod: "/google.cloud.apigeeregistry.v1.Registry/ListApiSpecRevisions",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RegistryServer).ListApiSpecRevisions(ctx, req.(*ListApiSpecRevisionsRequest))
@@ -1072,7 +1072,7 @@ func _Registry_RollbackApiSpec_Handler(srv interface{}, ctx context.Context, dec
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/google.cloud.apigee.registry.v1.Registry/RollbackApiSpec",
+		FullMethod: "/google.cloud.apigeeregistry.v1.Registry/RollbackApiSpec",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RegistryServer).RollbackApiSpec(ctx, req.(*RollbackApiSpecRequest))
@@ -1090,7 +1090,7 @@ func _Registry_DeleteApiSpecRevision_Handler(srv interface{}, ctx context.Contex
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/google.cloud.apigee.registry.v1.Registry/DeleteApiSpecRevision",
+		FullMethod: "/google.cloud.apigeeregistry.v1.Registry/DeleteApiSpecRevision",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RegistryServer).DeleteApiSpecRevision(ctx, req.(*DeleteApiSpecRevisionRequest))
@@ -1108,7 +1108,7 @@ func _Registry_ListArtifacts_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/google.cloud.apigee.registry.v1.Registry/ListArtifacts",
+		FullMethod: "/google.cloud.apigeeregistry.v1.Registry/ListArtifacts",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RegistryServer).ListArtifacts(ctx, req.(*ListArtifactsRequest))
@@ -1126,7 +1126,7 @@ func _Registry_GetArtifact_Handler(srv interface{}, ctx context.Context, dec fun
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/google.cloud.apigee.registry.v1.Registry/GetArtifact",
+		FullMethod: "/google.cloud.apigeeregistry.v1.Registry/GetArtifact",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RegistryServer).GetArtifact(ctx, req.(*GetArtifactRequest))
@@ -1144,7 +1144,7 @@ func _Registry_GetArtifactContents_Handler(srv interface{}, ctx context.Context,
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/google.cloud.apigee.registry.v1.Registry/GetArtifactContents",
+		FullMethod: "/google.cloud.apigeeregistry.v1.Registry/GetArtifactContents",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RegistryServer).GetArtifactContents(ctx, req.(*GetArtifactContentsRequest))
@@ -1162,7 +1162,7 @@ func _Registry_CreateArtifact_Handler(srv interface{}, ctx context.Context, dec 
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/google.cloud.apigee.registry.v1.Registry/CreateArtifact",
+		FullMethod: "/google.cloud.apigeeregistry.v1.Registry/CreateArtifact",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RegistryServer).CreateArtifact(ctx, req.(*CreateArtifactRequest))
@@ -1180,7 +1180,7 @@ func _Registry_ReplaceArtifact_Handler(srv interface{}, ctx context.Context, dec
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/google.cloud.apigee.registry.v1.Registry/ReplaceArtifact",
+		FullMethod: "/google.cloud.apigeeregistry.v1.Registry/ReplaceArtifact",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RegistryServer).ReplaceArtifact(ctx, req.(*ReplaceArtifactRequest))
@@ -1198,7 +1198,7 @@ func _Registry_DeleteArtifact_Handler(srv interface{}, ctx context.Context, dec 
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/google.cloud.apigee.registry.v1.Registry/DeleteArtifact",
+		FullMethod: "/google.cloud.apigeeregistry.v1.Registry/DeleteArtifact",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RegistryServer).DeleteArtifact(ctx, req.(*DeleteArtifactRequest))
@@ -1210,7 +1210,7 @@ func _Registry_DeleteArtifact_Handler(srv interface{}, ctx context.Context, dec 
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var Registry_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "google.cloud.apigee.registry.v1.Registry",
+	ServiceName: "google.cloud.apigeeregistry.v1.Registry",
 	HandlerType: (*RegistryServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

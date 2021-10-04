@@ -71,7 +71,7 @@ func conformanceCommand(ctx context.Context) *cobra.Command {
 					log.WithError(err).Debugf("Failed to get message type for MIME type %q", artifact.GetMimeType())
 					return
 				}
-				if messageType != "google.cloud.apigee.registry.applications.v1alpha1.styleguide" {
+				if messageType != "google.cloud.apigeeregistry.applications.v1alpha1.styleguide" {
 					// Ignore any artifact that isn't a style guide.
 					return
 				}
@@ -285,7 +285,7 @@ func (task *computeConformanceTask) Run(ctx context.Context) error {
 
 		artifact := &rpc.Artifact{
 			Name:     subject + "/artifacts/" + conformanceRelation(task.styleguideId),
-			MimeType: core.MimeTypeForMessageType("google.cloud.apigee.registry.applications.v1alpha1.Lint"),
+			MimeType: core.MimeTypeForMessageType("google.cloud.apigeeregistry.applications.v1alpha1.Lint"),
 			Contents: messageData,
 		}
 		err = core.SetArtifact(ctx, task.client, artifact)
