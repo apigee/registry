@@ -14,25 +14,20 @@
 
 id: "test-manifest"
 generated_resources:
-  - pattern: apis/-/versions/-/specs/-/artifacts/lint-gnostic
+  - pattern: "apis/-/versions/-/specs/-/artifacts/lint-spectral"
     dependencies:
-      - pattern: $resource.spec
+      - pattern: "$resource.spec"
         filter: "mime_type.contains('openapi')"
-    action: "registry compute lint $resource.spec --linter gnostic"
-  - pattern: apis/-/versions/-/specs/-/artifacts/lint-aip
+    action: "registry compute lint $resource.spec --linter spectral"
+  - pattern: "apis/-/versions/-/specs/-/artifacts/lintstats-spectral"
     dependencies:
-      - pattern: $resource.spec
-        filter: "mime_type.contains('protobuf')"
-    action: "registry compute lint $resource.spec --linter aip"
-  - pattern: apis/-/versions/-/specs/-/artifacts/lintstats-gnostic
+      - pattern: "$resource.spec/artifacts/lint-spectral"
+    action: "registry compute lintstats $resource.spec --linter spectral"
+  - pattern: "apis/-/versions/-/specs/-/artifacts/vocabulary"
     dependencies:
-      - pattern: $resource.spec/artifacts/lint-gnostic
-    action: "registry compute lintstats $resource.spec --linter gnostic"
-  - pattern: apis/-/versions/-/specs/-/artifacts/vocabulary
-    dependencies:
-      - pattern: $resource.spec
+      - pattern: "$resource.spec"
     action: "registry compute vocabulary $resource.spec"
-  - pattern: apis/-/versions/-/specs/-/artifacts/complexity
+  - pattern: "apis/-/versions/-/specs/-/artifacts/complexity"
     dependencies:
-      - pattern: $resource.spec
+      - pattern: "$resource.spec"
     action: "registry compute complexity $resource.spec"

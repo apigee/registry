@@ -38,7 +38,7 @@ FROM gcr.io/$REGISTRY_PROJECT_IDENTIFIER/registry-tools:latest
 
 # Install spectral linter
 RUN apk add --no-cache nodejs npm
-RUN npm install -g @stoplight/spectral-cli
+RUN npm install -g @stoplight/spectral
 
 # Copy other linter binaries
 COPY --from=builder /go/bin/api-linter /bin/
