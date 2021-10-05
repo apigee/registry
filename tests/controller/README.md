@@ -1,34 +1,32 @@
-##What is a controller?
+## Registry Controller
 
 In simple terms, controller is a framework to keep the registry up-to-date. The idea for this framework is inspired from the [Kubernetes controller](https://kubernetes.io/docs/concepts/architecture/controller/) pattern. Controller can be used to enrich the API data stored in the registry, with additional analytical artifacts. 
 
-### How does it work?
-* A Controller will take in configuration (aka manifest) which describes the desired state of the registry. The desired state in this context is essentially dependency relations between different entities in the database. 
-* The controller’s job is to keep these dependency relations valid and up-to-date. It will take actions to eventually get the registry to it's desired state.
-* Example manifest:
-  ```
-  id: "example-manifest"
-  generated_resources:
-    - pattern: apis/-/versions/-/specs/-/artifacts/lint-spectral
-      dependencies:
-        - pattern: $resource.spec
-          filter: "mime_type.contains('openapi')"
-      action: "registry compute lint $resource.spec --linter spectral"
-  ```
-  The above manifest defines that for every spec (`pattern: $resource.spec`) of type openapi (`filter: "mime_type.contains('openapi')"`) in the registry, there should exist a corresponding lint-spectral artifact (`pattern: apis/-/versions/-/specs/-/artifacts/lint-spectral`). 
-  If the target artifact is not present or out-of-date, then it can be re-generated using the specified action (`action: "registry compute lint $resource.spec --linter spectral"`).
+### Configuration details
+A Controller will take in configuration (aka manifest) which describes the desired state of the registry. The desired state in this context is essentially dependency relations between different entities in the database. The controller’s job is to keep these dependency relations valid and up-to-date. It will take actions to eventually get the registry to its desired state.
 
-* The controller will compare the current and the supplied desired state of the registry. For resources which are non-existing or outdated, the controller will execute the action supplied in the manifest.
+Example manifest:
+```
+id: "example-manifest"
+generated_resources:
+- pattern: apis/-/versions/-/specs/-/artifacts/lint-spectral
+  dependencies:
+    - pattern: $resource.spec
+      filter: "mime_type.contains('openapi')"
+  action: "registry compute lint $resource.spec --linter spectral"
+```
+The above manifest defines that for every spec (`pattern: $resource.spec`) of type openapi (`filter: "mime_type.contains('openapi')"`) in the registry, there should exist a corresponding lint-spectral artifact (`pattern: apis/-/versions/-/specs/-/artifacts/lint-spectral`). If the target artifact is missing or out-of-date, then it should be re-generated using the specified action (`action: "registry compute lint $resource.spec --linter spectral"`).
 
-### How to use it?
+The controller will compare the current and the supplied desired state of the registry. For resources which are non-existing or outdated, the controller will execute the action supplied in the manifest.
+
+### Usage
 
 With this basic definition in mind, you can supply different configurations to the controller to generate various artifacts in the registry.
 
-#### Setup the registry server:
+#### Setup the registry server
 Make sure you have a registry server running. We will deploy the server to GKE for the purpose of this walkthrough. 
 
-- Make sure you have the right config set in [config/registry-server.yaml](https://github.com/apigee/registry/blob/main/config/registry-server.yaml).
-- From the root directory, run the following to deploy a registry server:
+- Deploy the registry server to GKE. The following two make targets will build and deploy the server:
   ```shell
   # Build
   make build
@@ -36,10 +34,15 @@ Make sure you have a registry server running. We will deploy the server to GKE f
   # Deploy
   make deploy-gke
   ``` 
+  Follow these [instructions](https://github.com/apigee/registry/blob/main/README.md#running-the-registry-api-server-on-gke) for more details.
+
 - Populate some resources in the registry:
   ```shell
   # Setup auth
   source auth/GKE.sh
+
+  # Verify the server is running
+  apg registry get-status
 
   # Create demo project
   apg registry create-project --project_id demo --json
@@ -48,7 +51,7 @@ Make sure you have a registry server running. We will deploy the server to GKE f
   ./tests/controller/create_apis.sh 10
   ``` 
 
-#### Upload the "desired state" definition
+#### Upload the manifest
 ```shell
 registry upload manifest tests/controller/testdata/manifest.yaml --project-id=demo
 
@@ -80,7 +83,7 @@ generated_resources:
 There are three ways to run the controller:
 
 ##### Dry-run mode:
-In this mode, the controller will generate the actions, which it calculates, are needed to bring registry up-to-date. However, it will not execute any of this actions. This is a way to try and see what the controller is doing without making any modifications to the registry. The controller caan be invoked by using the `registry resolve` command:
+In this mode, the controller will generate the actions, which it calculates, are needed to bring registry up-to-date. However, it will not execute any of this actions. This is a way to try and see what the controller is doing without making any modifications to the registry. The controller can be invoked by using the `registry resolve` command:
 ```shell
 registry resolve projects/demo/locations/global/artifacts/test-manifest --dry-run
 ```
@@ -145,10 +148,10 @@ make deploy-controller-job
 
 ###### Step 3: Verification
 * Once the job is deployed, you should see that in every iteration it is reading the manifest and calculating the actions. 
-* Since, we already have the artifacts generated fom our previous commands, we need to clean up the previously generated artifacts. 
+* Since, we already have the artifacts generated from our previous commands, we need to clean up the previously generated artifacts. 
 `registry delete projects/demo/locations/global/apis/-/versions/-/specs/-/artifacts/-`.
 Once the artifacts are cleaned up, we can see the controller in action.
-* Use list command to check what artifacts are generated by the controller, the behavior should be same as the one. described in the standalone case.
+* Use list command to check what artifacts are generated by the controller, the behavior should be the same as the one described in the standalone case.
 `registry list projects/demo/locations/global/apis/-/versions/-/specs/-/artifacts/-`
 * You now have a controller continuously running in your GKE project which will be responsible for generating and maintaining the artifacts defined in the manifest. 
 
@@ -207,3 +210,4 @@ generated_resources:
       - pattern: "$resource.spec"
     action: "registry compute complexity $resource.spec"
 ```
+
