@@ -71,7 +71,8 @@ func conformanceCommand(ctx context.Context) *cobra.Command {
 					log.WithError(err).Debugf("Failed to get message type for MIME type %q", artifact.GetMimeType())
 					return
 				}
-				if messageType != "google.cloud.apigeeregistry.applications.v1alpha1.styleguide" {
+
+				if messageType != "google.cloud.apigee.registry.applications.v1alpha1.StyleGuide" {
 					// Ignore any artifact that isn't a style guide.
 					return
 				}
@@ -157,7 +158,6 @@ func computeConformanceForStyleGuide(ctx context.Context,
 		// A list of linters that are used to lint this spec.
 		linters := make([]conformance.Linter, 0)
 		for _, linter := range linterNameToLinter {
-
 			// If the linter supports the spec's mime type, then it can be used
 			// to lint the spec.
 			if linter.SupportsMimeType(spec.GetMimeType()) {
@@ -167,13 +167,15 @@ func computeConformanceForStyleGuide(ctx context.Context,
 
 		// Delegate the task of computing the conformance report for this spec
 		// to the worker pool.
-		taskQueue <- &computeConformanceTask{
-			client:              client,
-			spec:                spec,
-			linters:             linters,
-			styleguideId:        styleguide.GetId(),
-			ruleNameToGuideline: ruleNameToGuideline,
-			ruleNameToRule:      ruleNameToRule,
+		if len(linters) > 0 {
+			taskQueue <- &computeConformanceTask{
+				client:              client,
+				spec:                spec,
+				linters:             linters,
+				styleguideId:        styleguide.GetId(),
+				ruleNameToGuideline: ruleNameToGuideline,
+				ruleNameToRule:      ruleNameToRule,
+			}
 		}
 	})
 	if err != nil {
@@ -201,14 +203,55 @@ type computeConformanceTask struct {
 }
 
 func (task *computeConformanceTask) String() string {
-	return fmt.Sprintf("compute %s/conformance-%s", task.spec.GetName(), task.styleguideId)
+	return fmt.Sprintf("compute %s/artifacts/conformance-%s", task.spec.GetName(), task.styleguideId)
 }
 
 func (task *computeConformanceTask) Run(ctx context.Context) error {
-	// Log to debug the conformance report that is being computed.
-	log.Debug(task.String())
+	// If the spec passed is a compressed archive, then unzip it.
+	if core.IsZipArchive(task.spec.GetMimeType()) {
+		log.Debugf("Computing conformance report for zipped archive %s", task.spec.GetName())
+		// Put the range of specs in a temporary directory
+		root, err := ioutil.TempDir("", "registry-protos-")
+		if err != nil {
+			return err
+		}
 
-	// Get the spec's bytes.
+		// whenever we finish, delete the tmp directory
+		defer os.RemoveAll(root)
+
+		// For each file in the compresed archive, compute the
+		// conformance report.
+		filePaths, err := task.unzipSpecs(ctx, root)
+		if err != nil {
+			return err
+		}
+
+		conformanceReport := task.initializeConformanceReport()
+		guidelineIdToGuidelineReport := make(map[string]*rpc.GuidelineReport)
+		for _, filePath := range filePaths {
+			// Debug the conformance report being computed
+			unzippedSpecName := filepath.Base(filePath)
+			log.Debugf("Adding conformance for spec %s into report.", unzippedSpecName)
+
+			err = task.computeConformanceReport(ctx, filePath, conformanceReport, guidelineIdToGuidelineReport)
+
+			// If computing the conformance report for a given spec fails, we should not
+			// fail completely (because this doesn't imply that computing the conformance
+			// report for another spec will fail, so we should continue.)
+			if err != nil {
+				log.Log.Errorf(
+					"Failed to compute the conformance for spec %s: %s",
+					unzippedSpecName,
+					err,
+				)
+			}
+		}
+
+		return task.storeConformanceReport(ctx, conformanceReport)
+	}
+
+	log.Debugf("Computing conformance report for spec: %s", task.spec.GetName())
+	// Get the spec's bytes
 	data, err := core.GetBytesForSpec(ctx, task.client, task.spec)
 	if err != nil {
 		return err
@@ -232,7 +275,21 @@ func (task *computeConformanceTask) Run(ctx context.Context) error {
 	}
 
 	conformanceReport := task.initializeConformanceReport()
+	guidelineIdToGuidelineReport := make(map[string]*rpc.GuidelineReport)
+	err = task.computeConformanceReport(ctx, filePath, conformanceReport, guidelineIdToGuidelineReport)
+	if err != nil {
+		return err
+	}
 
+	return task.storeConformanceReport(ctx, conformanceReport)
+}
+
+func (task *computeConformanceTask) computeConformanceReport(
+	ctx context.Context,
+	filePath string,
+	conformanceReport *rpc.ConformanceReport,
+	guidelineIdToGuidelineReport map[string]*rpc.GuidelineReport,
+) error {
 	// Iterate over all the linters, and lint.
 	for _, linter := range task.linters {
 		if linter == nil {
@@ -241,12 +298,18 @@ func (task *computeConformanceTask) Run(ctx context.Context) error {
 
 		// Lint the directory containing the spec.
 		lintProblems, err := linter.LintSpec(task.spec.GetMimeType(), filePath)
-		if err != nil {
-			return err
-		}
 
-		// Organize the lint results into a conformance report proto.
-		guidelineIdToGuidelineReport := make(map[string]*rpc.GuidelineReport)
+		// If a linter returned an error, we shouldn't stop linting completely and discard
+		// the conformance report for this spec. We should log but still continue, because there
+		// may still be useful information from other linters that we may be discarding.
+		if err != nil {
+			log.Log.Errorf(
+				"Linting the spec %s with the linter %s failed %s: %s",
+				task.spec.GetName(),
+				linter.GetName(),
+				err,
+			)
+		}
 
 		// Iterate over the list of problems returned by the linter.
 		for _, problem := range lintProblems {
@@ -275,26 +338,9 @@ func (task *computeConformanceTask) Run(ctx context.Context) error {
 			guidelineReport.RuleReportGroups[rule.Severity].RuleReports =
 				append(guidelineReport.RuleReportGroups[rule.Severity].RuleReports, ruleReport)
 		}
-
-		// Store the conformance report.
-		subject := task.spec.GetName()
-		messageData, err := proto.Marshal(conformanceReport)
-		if err != nil {
-			return err
-		}
-
-		artifact := &rpc.Artifact{
-			Name:     subject + "/artifacts/" + conformanceRelation(task.styleguideId),
-			MimeType: core.MimeTypeForMessageType("google.cloud.apigeeregistry.applications.v1alpha1.Lint"),
-			Contents: messageData,
-		}
-		err = core.SetArtifact(ctx, task.client, artifact)
-		if err != nil {
-			return err
-		}
 	}
 
-	return err
+	return nil
 }
 
 func (task *computeConformanceTask) initializeConformanceReport() *rpc.ConformanceReport {
@@ -334,4 +380,34 @@ func (task *computeConformanceTask) initializeGuidelineReport() *rpc.GuidelineRe
 	}
 
 	return guidelineReport
+}
+
+func (task *computeConformanceTask) storeConformanceReport(
+	ctx context.Context,
+	conformanceReport *rpc.ConformanceReport) error {
+	// Store the conformance report.
+	subject := task.spec.GetName()
+	messageData, err := proto.Marshal(conformanceReport)
+	if err != nil {
+		return err
+	}
+
+	artifact := &rpc.Artifact{
+		Name:     subject + "/artifacts/" + conformanceRelation(task.styleguideId),
+		MimeType: core.MimeTypeForMessageType("google.cloud.apigee.registry.applications.v1alpha1.Lint"),
+		Contents: messageData,
+	}
+	return core.SetArtifact(ctx, task.client, artifact)
+}
+
+func (task *computeConformanceTask) unzipSpecs(
+	ctx context.Context,
+	temp_dir_root string) ([]string, error) {
+	data, err := core.GetBytesForSpec(ctx, task.client, task.spec)
+	if err != nil {
+		return nil, err
+	}
+
+	// unzip the protos to the temp directory
+	return core.UnzipArchiveToPath(data, temp_dir_root+"/protos")
 }

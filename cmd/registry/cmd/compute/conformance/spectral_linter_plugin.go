@@ -78,9 +78,8 @@ func (linter SpectralLinter) GetName() string {
 	return "spectral"
 }
 
-// SupportsMimeType returns the mime types that are supported by Spectral's core.
-// rulesets. Currently, Spectral supports OpenAPI v2/v3 and AsyncAPI v2:
-// https://meta.stoplight.io/docs/spectral/ZG9jOjYyMDc0NA-rulesets#core-rulesets
+// SupportsMimeType returns whether a mime type is supported by API Linter. API
+// Linter lints based on AIPs (https://google.aip.dev/) which are defined on protos.
 func (linter SpectralLinter) SupportsMimeType(mimeType string) bool {
 	return core.IsOpenAPIv2(mimeType) ||
 		core.IsOpenAPIv3(mimeType) ||
@@ -88,7 +87,7 @@ func (linter SpectralLinter) SupportsMimeType(mimeType string) bool {
 }
 
 // LintSpec lints the spec pointed at by a spec path, which has a provided mime type.
-// It returns the results as a LintFile object.
+// It returns the results as a list of LintProblem objects.
 func (linter SpectralLinter) LintSpec(
 	mimeType string,
 	specPath string,

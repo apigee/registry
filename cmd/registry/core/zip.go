@@ -26,10 +26,10 @@ import (
 	"github.com/apex/log"
 )
 
-// unzipArchiveToPath will decompress a zip archive, writing all files and folders
+// UnzipArchiveToPath will decompress a zip archive, writing all files and folders
 // within the zip archive (parameter 1) to an output directory (parameter 2).
 // Based on an example published at https://golangcode.com/unzip-files-in-go/
-func unzipArchiveToPath(b []byte, dest string) ([]string, error) {
+func UnzipArchiveToPath(b []byte, dest string) ([]string, error) {
 	var filenames []string
 	r, err := zip.NewReader(bytes.NewReader(b), int64(len(b)))
 	if err != nil {
