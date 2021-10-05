@@ -21,6 +21,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/apex/log"
 	"github.com/apigee/registry/cmd/registry/cmd/compute/conformance"
@@ -157,6 +158,7 @@ func computeConformanceForStyleGuide(ctx context.Context,
 	err := core.ListSpecs(ctx, client, specSegments, filter, func(spec *rpc.ApiSpec) {
 		// A list of linters that are used to lint this spec.
 		linters := make([]conformance.Linter, 0)
+
 		for _, linter := range linterNameToLinter {
 			// If the linter supports the spec's mime type, then it can be used
 			// to lint the spec.
@@ -232,6 +234,11 @@ func (task *computeConformanceTask) Run(ctx context.Context) error {
 		for _, filePath := range filePaths {
 			// Debug the conformance report being computed
 			unzippedSpecName := filepath.Base(filePath)
+			if !strings.HasSuffix(unzippedSpecName, ".proto") {
+				// Currently, only proto files are supported for linting in zipped folders.
+				continue
+			}
+
 			log.Debugf("Adding conformance for spec %s into report.", unzippedSpecName)
 
 =======

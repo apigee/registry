@@ -59,7 +59,8 @@ func (linter ApiLinter) GetName() string {
 	return "api-linter"
 }
 
-// API Linter supports linting of Protobuf specs using the AIP style rules.
+// SupportsMimeType returns whether a mime type is supported by API Linter. API
+// Linter lints based on AIPs (https://google.aip.dev/) which are defined on protos.
 func (linter ApiLinter) SupportsMimeType(mimeType string) bool {
 	return core.IsProto(mimeType)
 }
