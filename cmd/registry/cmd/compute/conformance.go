@@ -441,12 +441,12 @@ func (task *computeConformanceTask) storeConformanceReport(
 
 func (task *computeConformanceTask) unzipSpecs(
 	ctx context.Context,
-	temp_dir_root string) ([]string, error) {
+	tempDirRoot string) ([]string, error) {
 	data, err := core.GetBytesForSpec(ctx, task.client, task.spec)
 	if err != nil {
 		return nil, err
 	}
 
 	// unzip the protos to the temp directory
-	return core.UnzipArchiveToPath(data, temp_dir_root+"/protos")
+	return core.UnzipArchiveToPath(data, tempDirRoot+"/protos")
 }
