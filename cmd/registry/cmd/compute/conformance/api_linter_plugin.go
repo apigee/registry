@@ -14,7 +14,11 @@ type ApiLinter struct {
 	Rules map[string][]string
 }
 
+<<<<<<< HEAD
 // apiLinterRunner is an interface through which the API Linter executes.
+=======
+// apiLinterRunner is an interface through which the Spectral Linter executes.
+>>>>>>> 831220d (Implement linting of Protos with API Linter Plugin)
 type apiLinterRunner interface {
 	// Runs the api-linter with a provided spec and configuration path
 	Run(specPath string) ([]*rpc.LintProblem, error)

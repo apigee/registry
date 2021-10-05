@@ -215,6 +215,7 @@ func (task *computeConformanceTask) Run(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
+<<<<<<< HEAD
 
 		// whenever we finish, delete the tmp directory
 		defer os.RemoveAll(root)
@@ -233,6 +234,26 @@ func (task *computeConformanceTask) Run(ctx context.Context) error {
 			unzippedSpecName := filepath.Base(filePath)
 			log.Debugf("Adding conformance for spec %s into report.", unzippedSpecName)
 
+=======
+
+		// whenever we finish, delete the tmp directory
+		defer os.RemoveAll(root)
+
+		// For each file in the compresed archive, compute the
+		// conformance report.
+		filePaths, err := task.unzipSpecs(ctx, root)
+		if err != nil {
+			return err
+		}
+
+		conformanceReport := task.initializeConformanceReport()
+		guidelineIdToGuidelineReport := make(map[string]*rpc.GuidelineReport)
+		for _, filePath := range filePaths {
+			// Debug the conformance report being computed
+			unzippedSpecName := filepath.Base(filePath)
+			log.Debugf("Adding conformance for spec %s into report.", unzippedSpecName)
+
+>>>>>>> 831220d (Implement linting of Protos with API Linter Plugin)
 			err = task.computeConformanceReport(ctx, filePath, conformanceReport, guidelineIdToGuidelineReport)
 
 			// If computing the conformance report for a given spec fails, we should not
@@ -280,10 +301,17 @@ func (task *computeConformanceTask) Run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+<<<<<<< HEAD
 
 	return task.storeConformanceReport(ctx, conformanceReport)
 }
 
+=======
+
+	return task.storeConformanceReport(ctx, conformanceReport)
+}
+
+>>>>>>> 831220d (Implement linting of Protos with API Linter Plugin)
 func (task *computeConformanceTask) computeConformanceReport(
 	ctx context.Context,
 	filePath string,
@@ -303,6 +331,10 @@ func (task *computeConformanceTask) computeConformanceReport(
 		// the conformance report for this spec. We should log but still continue, because there
 		// may still be useful information from other linters that we may be discarding.
 		if err != nil {
+<<<<<<< HEAD
+=======
+			fmt.Println("DUEENEE")
+>>>>>>> 831220d (Implement linting of Protos with API Linter Plugin)
 			log.Log.Errorf(
 				"Linting the spec %s with the linter %s failed %s: %s",
 				task.spec.GetName(),

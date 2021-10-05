@@ -81,9 +81,7 @@ func (linter SpectralLinter) GetName() string {
 // SupportsMimeType returns whether a mime type is supported by API Linter. API
 // Linter lints based on AIPs (https://google.aip.dev/) which are defined on protos.
 func (linter SpectralLinter) SupportsMimeType(mimeType string) bool {
-	return core.IsOpenAPIv2(mimeType) ||
-		core.IsOpenAPIv3(mimeType) ||
-		core.IsAsyncAPIv2(mimeType)
+	return core.IsProto(mimeType)
 }
 
 // LintSpec lints the spec pointed at by a spec path, which has a provided mime type.
