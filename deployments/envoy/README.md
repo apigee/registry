@@ -1,28 +1,25 @@
 # envoy
 
 This directory contains configuration tools and other support files for running
-Envoy locally alongside a locally-running version of `registry-server`. The
-`envoy.yaml` file is also configured to use a locally-running `authz-server` as
-an Envoy authorization filter.
+Envoy locally alongside a locally-running version of `registry-server`.
 
 ## Instructions
 
 1. Run `registry-server`. It will serve on its default port, 8080.
 
-2. Run `authz-server`. It will serve on its default port, 50051.
-
-3. Run Envoy with the `envoy.yaml` config file. You can do this with
+2. Run Envoy with the `envoy.yaml` config file. You can do this with
    `envoy -c envoy.yaml` or by running the `GETENVOY.sh` script.
 
-4. Configure your environment to send Registry requests through Envoy by
+3. Configure your environment to send Registry requests through Envoy by
    running `source auth/ENVOY.sh` from the top of this repo.
 
-5. Run any of the included tools or examples for accessing your local Registry,
+4. Run any of the included tools or examples for accessing your local Registry,
    e.g. `apg registry get-status`.
 
-## Running Envoy without authz
+## Running Envoy with authz
 
-The `envoy-noauth.yaml` configuration omits the `authz` filter configuration
-in `envoy.yaml`. To run Envoy without authz, skip step 2 above and use this
-configuration file instead. This allows independent testing of grpc-web
-and gRPC transcoding support.
+The `envoy-auth.yaml` file includes an `authz` filter configuration. To run
+Envoy without authz, use this configuration in step 2 above and run the
+`authz-server` from the
+[https://github.com/apigee/registry-experimental](apigee/registry-experimental)
+repo.

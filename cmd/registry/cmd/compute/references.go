@@ -82,7 +82,7 @@ func (task *computeReferencesTask) Run(ctx context.Context) error {
 		return err
 	}
 	relation := "references"
-	log.Debugf("Computing %s/properties/%s", spec.Name, relation)
+	log.Debugf("Computing %s/artifacts/%s", spec.Name, relation)
 	var references *rpc.References
 	if core.IsProto(spec.MimeType) && core.IsZipArchive(spec.MimeType) {
 		data, err := core.GetBytesForSpec(ctx, task.client, spec)

@@ -1,7 +1,6 @@
 # Generated files
 cmd/apg/*.go
 *.bleve
-deployments/envoy/proto.pb
 docs/
 
 # VSCode
