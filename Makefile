@@ -48,16 +48,6 @@ else
 	./deployments/gke/DEPLOY-TO-GKE.sh
 endif
 
-build-workers:
-ifndef REGISTRY_PROJECT_IDENTIFIER
-	@echo "Error! REGISTRY_PROJECT_IDENTIFIER must be set."; exit 1
-endif
-	gcloud builds submit --config deployments/capabilities/cloudbuild.yaml \
-    --substitutions _REGISTRY_PROJECT_IDENTIFIER="${REGISTRY_PROJECT_IDENTIFIER}"
-
-deploy-workers:
-	./deployments/capabilities/DEPLOY-WORKERS.sh
-
 # Actions for controller
 deploy-controller-job:
 ifndef REGISTRY_PROJECT_IDENTIFIER
