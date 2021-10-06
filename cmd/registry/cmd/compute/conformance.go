@@ -73,7 +73,7 @@ func conformanceCommand(ctx context.Context) *cobra.Command {
 					return
 				}
 
-				if messageType != "google.cloud.apigee.registry.applications.v1alpha1.StyleGuide" {
+				if messageType != "google.cloud.apigeeregistry.applications.v1alpha1.StyleGuide" {
 					// Ignore any artifact that isn't a style guide.
 					return
 				}
@@ -401,7 +401,7 @@ func (task *computeConformanceTask) storeConformanceReport(
 
 	artifact := &rpc.Artifact{
 		Name:     subject + "/artifacts/" + conformanceRelation(task.styleguideId),
-		MimeType: core.MimeTypeForMessageType("google.cloud.apigee.registry.applications.v1alpha1.Lint"),
+		MimeType: core.MimeTypeForMessageType("google.cloud.apigeeregistry.applications.v1alpha1.ConformanceReport"),
 		Contents: messageData,
 	}
 	return core.SetArtifact(ctx, task.client, artifact)
