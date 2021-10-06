@@ -36,6 +36,8 @@ COPY . ./
 RUN CGO_ENABLED=0 GOOS=linux go build -v -o registry ./cmd/registry
 
 # Build apg.
+RUN ./tools/FETCH-PROTOC.sh
+RUN make apg
 RUN CGO_ENABLED=0 GOOS=linux go build -v -o apg ./cmd/apg
 
 # Use the official Alpine image for a lean production container.

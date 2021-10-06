@@ -24,7 +24,7 @@ test:
 	go test ./...
 
 clean:
-	rm -rf cmd/apg/*.go envoy/proto.pb docs/ third_party/api-common-protos
+	rm -rf cmd/apg/*.go docs/ third_party/api-common-protos
 
 build:
 ifndef REGISTRY_PROJECT_IDENTIFIER
