@@ -16,14 +16,14 @@
 #
 
 ALL_PROTOS=(
-	google/cloud/apigee/registry/applications/v1alpha1/*.proto
-	google/cloud/apigee/registry/internal/v1/*.proto
-	google/cloud/apigee/registry/v1/*.proto
+	google/cloud/apigeeregistry/applications/v1alpha1/*.proto
+	google/cloud/apigeeregistry/internal/v1/*.proto
+	google/cloud/apigeeregistry/v1/*.proto
 )
 
 SERVICE_PROTOS=(
-	google/cloud/apigee/registry/v1/registry_models.proto
-	google/cloud/apigee/registry/v1/registry_service.proto
+	google/cloud/apigeeregistry/v1/registry_models.proto
+	google/cloud/apigeeregistry/v1/registry_service.proto
 )
 
 COMMON_PROTOS_PATH='third_party/api-common-protos'

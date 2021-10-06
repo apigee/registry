@@ -1343,5 +1343,5 @@ var Registry_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "google/cloud/apigee/registry/v1/registry_service.proto",
+	Metadata: "google/cloud/apigeeregistry/v1/registry_service.proto",
 }
