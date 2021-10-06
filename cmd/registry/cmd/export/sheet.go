@@ -108,7 +108,7 @@ func sheetCommand(ctx context.Context) *cobra.Command {
 				}
 				log.Debugf("Exported complexity to %s", path)
 				_ = saveSheetPath(ctx, client, path, artifact)
-			} else if messageType == "google.cloud.apigee.registry.applications.v1alpha1.Index" {
+			} else if messageType == "google.cloud.apigeeregistry.applications.v1alpha1.Index" {
 				if len(inputs) != 1 {
 					log.Fatalf("%d artifacts matched. Please specify exactly one for export.", len(inputs))
 				}
@@ -174,7 +174,7 @@ func getVocabulary(artifact *rpc.Artifact) (*metrics.Vocabulary, error) {
 
 func getIndex(artifact *rpc.Artifact) (*rpc.Index, error) {
 	messageType, err := core.MessageTypeForMimeType(artifact.GetMimeType())
-	if err == nil && messageType == "google.cloud.apigee.registry.applications.v1alpha1.Index" {
+	if err == nil && messageType == "google.cloud.apigeeregistry.applications.v1alpha1.Index" {
 		index := &rpc.Index{}
 		err := proto.Unmarshal(artifact.GetContents(), index)
 		if err != nil {

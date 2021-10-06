@@ -119,7 +119,7 @@ func computeLintStatsSpecs(ctx context.Context,
 		if err != nil {
 			return
 		}
-		if messageType != "google.cloud.apigee.registry.applications.v1alpha1.Lint" {
+		if messageType != "google.cloud.apigeeregistry.applications.v1alpha1.Lint" {
 			return // ignore unexpected message types
 		}
 
@@ -236,7 +236,7 @@ func storeLintStatsArtifact(ctx context.Context,
 	messageData, _ := proto.Marshal(lintStats)
 	artifact := &rpc.Artifact{
 		Name:     subject + "/artifacts/" + relation,
-		MimeType: core.MimeTypeForMessageType("google.cloud.apigee.registry.applications.v1alpha1.LintStats"),
+		MimeType: core.MimeTypeForMessageType("google.cloud.apigeeregistry.applications.v1alpha1.LintStats"),
 		Contents: messageData,
 	}
 	return core.SetArtifact(ctx, client, artifact)

@@ -14,9 +14,9 @@
 
 syntax = "proto3";
 
-package google.cloud.apigee.registry.applications.v1alpha1;
+package google.cloud.apigeeregistry.applications.v1alpha1;
 
-option java_package = "com.google.cloud.apigee.registry.applications.v1alpha1";
+option java_package = "com.google.cloud.apigeeregistry.applications.v1alpha1";
 option java_multiple_files = true;
 option java_outer_classname = "RegistryIndexProto";
 option go_package = "github.com/apigee/registry/rpc;rpc";

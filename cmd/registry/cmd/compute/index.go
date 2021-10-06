@@ -99,7 +99,7 @@ func (task *computeIndexTask) Run(ctx context.Context) error {
 	messageData, _ := proto.Marshal(index)
 	artifact := &rpc.Artifact{
 		Name:     subject + "/artifacts/" + relation,
-		MimeType: core.MimeTypeForMessageType("google.cloud.apigee.registry.applications.v1alpha1.Index"),
+		MimeType: core.MimeTypeForMessageType("google.cloud.apigeeregistry.applications.v1alpha1.Index"),
 		Contents: messageData,
 	}
 	err = core.SetArtifact(ctx, task.client, artifact)

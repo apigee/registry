@@ -129,7 +129,7 @@ func (task *computeLintTask) Run(ctx context.Context) error {
 	messageData, _ := proto.Marshal(lint)
 	artifact := &rpc.Artifact{
 		Name:     subject + "/artifacts/" + relation,
-		MimeType: core.MimeTypeForMessageType("google.cloud.apigee.registry.applications.v1alpha1.Lint"),
+		MimeType: core.MimeTypeForMessageType("google.cloud.apigeeregistry.applications.v1alpha1.Lint"),
 		Contents: messageData,
 	}
 	err = core.SetArtifact(ctx, task.client, artifact)
