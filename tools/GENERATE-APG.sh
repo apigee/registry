@@ -20,8 +20,8 @@ set -e
 source tools/PROTOS.sh
 clone_common_protos
 
-go install google.golang.org/protobuf/cmd/protoc-gen-go
-go install github.com/googleapis/gapic-generator-go/cmd/protoc-gen-go_cli
+go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+go install github.com/googleapis/gapic-generator-go/cmd/protoc-gen-go_cli@latest
 
 echo "Generating Go client CLI for ${SERVICE_PROTOS[@]}"
 protoc ${SERVICE_PROTOS[*]} \
