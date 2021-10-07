@@ -24,7 +24,7 @@ test:
 	go test ./...
 
 clean:
-	rm -rf cmd/apg/*.go envoy/proto.pb docs/ third_party/api-common-protos
+	rm -rf cmd/apg/*.go docs/ third_party/api-common-protos
 
 build:
 ifndef REGISTRY_PROJECT_IDENTIFIER
@@ -47,16 +47,6 @@ ifeq ($(LB),internal)
 else
 	./deployments/gke/DEPLOY-TO-GKE.sh
 endif
-
-build-workers:
-ifndef REGISTRY_PROJECT_IDENTIFIER
-	@echo "Error! REGISTRY_PROJECT_IDENTIFIER must be set."; exit 1
-endif
-	gcloud builds submit --config deployments/capabilities/cloudbuild.yaml \
-    --substitutions _REGISTRY_PROJECT_IDENTIFIER="${REGISTRY_PROJECT_IDENTIFIER}"
-
-deploy-workers:
-	./deployments/capabilities/DEPLOY-WORKERS.sh
 
 # Actions for controller
 deploy-controller-job:
