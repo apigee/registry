@@ -88,7 +88,7 @@ func (linter SpectralLinter) SupportsMimeType(mimeType string) bool {
 }
 
 // LintSpec lints the spec pointed at by a spec path, which has a provided mime type.
-// It returns the results as a LintFile object.
+// It returns the results as a list of LintProblem objects.
 func (linter SpectralLinter) LintSpec(
 	mimeType string,
 	specPath string,

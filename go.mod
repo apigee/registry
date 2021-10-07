@@ -91,6 +91,4 @@ require (
 	google.golang.org/appengine v1.6.7 // indirect
 )
 
-replace (
-	github.com/willf/bitset => github.com/bits-and-blooms/bitset v1.1.10
-)
+replace github.com/willf/bitset => github.com/bits-and-blooms/bitset v1.1.10

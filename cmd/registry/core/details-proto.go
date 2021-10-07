@@ -44,7 +44,7 @@ func NewDetailsFromZippedProtos(b []byte) (*Details, error) {
 	// whenever we finish, delete the tmp directory
 	defer os.RemoveAll(dname)
 	// unzip the protos to the temp directory
-	_, err = unzipArchiveToPath(b, dname)
+	_, err = UnzipArchiveToPath(b, dname)
 	if err != nil {
 		return nil, err
 	}
