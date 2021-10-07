@@ -29,9 +29,9 @@ require (
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
-	gorm.io/driver/postgres v1.1.2
-	gorm.io/driver/sqlite v1.1.5
-	gorm.io/gorm v1.21.15
+	gorm.io/driver/postgres v1.1.0
+	gorm.io/driver/sqlite v1.1.4
+	gorm.io/gorm v1.21.14
 )
 
 require (
