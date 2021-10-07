@@ -125,7 +125,7 @@ message LinterRequest {
     repeated string enabled_rules = 2;
 }
 
-// LinterResposne represents a response returned from a linter plugin. It contains a
+// LinterResponse represents a response returned from a linter plugin. It contains a
 // list of problems that were identified by the linter.
 // (-- api-linter: core::0123::resource-annotation=disabled
 //     aip.dev/not-precedent: This message is not currently used in an API. --)
