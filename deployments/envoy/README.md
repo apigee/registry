@@ -8,7 +8,7 @@ Envoy locally alongside a locally-running version of `registry-server`.
 1. Run `registry-server`. It will serve on its default port, 8080.
 
 2. Run Envoy with the `envoy.yaml` config file. You can do this with
-   `envoy -c envoy.yaml` or by running the `GETENVOY.sh` script.
+   `envoy -c envoy.yaml`.
 
 3. Configure your environment to send Registry requests through Envoy by
    running `source auth/ENVOY.sh` from the top of this repo.
