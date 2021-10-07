@@ -118,7 +118,7 @@ message LintProblemCount {
 // (-- api-linter: core::0123::resource-annotation=disabled
 //     aip.dev/not-precedent: This message is not currently used in an API. --)
 message LinterRequest {
-    // A path to a local directory containing the specification that needs to be linted.
+    // A file path containing the specification that needs to be linted.
     string spec_path = 1;
 
     // A list of rules that need to be enabled when linting this spec.
