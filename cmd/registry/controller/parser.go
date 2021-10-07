@@ -225,8 +225,8 @@ func getCommandEntitity(action string) (string, string, error) {
 	}
 
 	// Extract the $resource patterns from action
-	// action = "compute lintstats  $resource.spec/artifacts/lint-gnostic"
-	// This expression will match $resource.spec/
+	// action = "compute lintstats $resource.spec"
+	// This expression will match $resource.spec
 	re := regexp.MustCompile(fmt.Sprintf(`\%s(\.api|\.version|\.spec|\.artifact)($|/| )`, resourceKW))
 	match := re.FindAllString(action, -1)
 	if len(match) == 0 {

@@ -27,7 +27,8 @@ generated_resources:
   - pattern: apis/-/versions/-/specs/-/artifacts/lintstats-gnostic
     dependencies:
       - pattern: $resource.spec/artifacts/lint-gnostic
-    action: "registry compute lintstats $resource.spec/artifacts/lint-gnostic --linter gnostic"
+      - pattern: $resource.spec/artifacts/complexity
+    action: "registry compute lintstats $resource.spec --linter gnostic"
   - pattern: apis/-/artifacts/vocabulary
     dependencies:
       - pattern: $resource.api/versions/-/specs/-
