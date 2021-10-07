@@ -30,9 +30,26 @@ func NewApiLinter() ApiLinter {
 }
 
 func unpackGoogleApisProtos(rootDir string) error {
-	cmd := exec.Command("svn", "checkout", "https://github.com/googleapis/googleapis/trunk/google", "-q")
-	cmd.Dir = rootDir
-	return cmd.Run()
+	// Curl the entire folder as a zipped archive from Github (much faster than git checkout).
+	curlCmd := exec.Command("curl", "-L", "https://github.com/googleapis/googleapis/archive/refs/heads/master.zip", "-O")
+	curlCmd.Dir = rootDir
+	err := curlCmd.Run()
+	if err != nil {
+		return err
+	}
+
+	// Unzip the contents of the zipped archive.
+	unzipCmd := exec.Command("unzip", "-q", "master.zip")
+	unzipCmd.Dir = rootDir
+	err = unzipCmd.Run()
+	if err != nil {
+		return err
+	}
+
+	// Move up the google/ directory (the one we're interested in) into the cwd.
+	mvCmd := exec.Command("mv", "googleapis-master/google", "google")
+	mvCmd.Dir = rootDir
+	return mvCmd.Run()
 }
 
 func unpackApiCommonProtos(rootDir string) error {
