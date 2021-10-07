@@ -10,10 +10,10 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestSpectralPluginGetName(t *testing.T) {
-	linter := SpectralLinter{}
+func TestApiLinterPluginGetName(t *testing.T) {
+	linter := ApiLinter{}
 	name := linter.GetName()
-	expectedName := "spectral"
+	expectedName := "api-linter"
 	if name != expectedName {
 		t.Errorf(
 			"Name is incorrect, got: %s, want: %s.",
@@ -23,26 +23,26 @@ func TestSpectralPluginGetName(t *testing.T) {
 	}
 }
 
-func TestSpectralPluginAddRule(t *testing.T) {
+func TestApiLinterPluginAddRule(t *testing.T) {
 	addRuleTests := []struct {
-        linter SpectralLinter
+        linter ApiLinter
 		mimeType string
 		rule string
         expectedError  error
     }{
 		{
-			NewSpectralLinter(),
-			"application/x.openapi+gzip;version=2",
+			NewApiLinter(),
+			"application/x.protobuf+gzip",
 			"testRule1",
 			nil,
 		},
 		{
-			NewSpectralLinter(), 
-			"application/x.protobuf+gzip",
+			NewApiLinter(), 
+			"application/x.openapi+gzip;version=2",
 			"testRule2",
 			fmt.Errorf(
 				"mime type %s is not supported by the spectral linter", 
-				"application/x.protobuf+gzip",
+				"application/x.openapi+gzip;version=2",
 			),
 		},
     }
@@ -81,36 +81,36 @@ func TestSpectralPluginAddRule(t *testing.T) {
     }
 }
 
-func TestSpectralPluginSupportsMimeType(t *testing.T) {
+func TestApiLinterPluginSupportsMimeType(t *testing.T) {
 	supportsMimeTypeTests := []struct {
-		linter SpectralLinter
+		linter ApiLinter
 		mimeType string
 		want  bool
 	}{
 		{
-			NewSpectralLinter(),
+			NewApiLinter(),
 			"application/x.openapi+gzip;version=2",
-			true,
-		},
-		{
-			NewSpectralLinter(),
-			"application/x.openapi+gzip;version=3",
-			true,
-		},
-		{
-			NewSpectralLinter(),
-			"application/x.asyncapi+gzip;version=2",
-			true,
-		},
-		{
-			NewSpectralLinter(), 
-			"application/x.protobuf+gzip",
 			false,
 		},
 		{
-			NewSpectralLinter(), 
+			NewApiLinter(),
+			"application/x.openapi+gzip;version=3",
+			false,
+		},
+		{
+			NewApiLinter(),
+			"application/x.asyncapi+gzip;version=2",
+			false,
+		},
+		{
+			NewApiLinter(), 
 			"application/x.asyncapi+gzip;version=3",
 			false,
+		},
+		{
+			NewApiLinter(), 
+			"application/x.protobuf+gzip",
+			true,
 		},
 	}
 
@@ -129,53 +129,53 @@ func TestSpectralPluginSupportsMimeType(t *testing.T) {
 
 // mockSpectralRunner implements the spectral runner interface.
 // It returns mock results according to data provided in tests.
-type mockSpectralRunner struct {
+type mockApiLinterRunner struct {
 	mock.Mock
-	results []*spectralLintResult
+	results []*rpc.LintProblem
 	err error
 }
 
-func (runner *mockSpectralRunner) Run(
-	spec, 
-	config string,
-) ([]*spectralLintResult, error) {
+func (runner *mockApiLinterRunner) Run(spec string) ([]*rpc.LintProblem, error) {
 	return runner.results, runner.err
 }
 
-func NewMockSpectralRunner(
-	results []*spectralLintResult, 
+func newMockApiLinterRunner(
+	results []*rpc.LintProblem, 
 	err error,
-) spectralRunner {
-	test := &mockSpectralRunner{
+) apiLinterRunner {
+	test := &mockApiLinterRunner{
 		results: results, 
 		err: err,
 	}
 	return test
 }
 
-func TestSpectralPluginLintSpec(t *testing.T) {
+func TestApiLinterPluginLintSpec(t *testing.T) {
 	lintSpecTests := []struct {
-        linter SpectralLinter
+        linter ApiLinter
 		mimeType string
-		runner spectralRunner
+		runner apiLinterRunner
 		expectedLintProblems []*rpc.LintProblem
+		enabledRules []string
 		expectedError error
     }{
         {
-			NewSpectralLinter(),
-			"application/x.asyncapi+gzip;version=2",
-			NewMockSpectralRunner(
-				[]*spectralLintResult {
+			NewApiLinter(),
+			"application/x.protobuf+zip",
+			newMockApiLinterRunner(
+				[]*rpc.LintProblem {
 					{
-						Code: "test",
-						Message: "test",
-						Source: "test",
-						Range: spectralLintRange {
-							Start: spectralLintLocation {
-								Line: 0, Character: 0,
+						Message:    "test",
+						RuleId:     "test",
+						RuleDocUri: "https://meta.stoplight.io/docs/spectral/docs/reference/openapi-rules.md#test",
+						Location: &rpc.LintLocation{
+							StartPosition: &rpc.LintPosition{
+								LineNumber:   1,
+								ColumnNumber: 1,
 							},
-							End: spectralLintLocation {
-								Line: 2, Character: 10,
+							EndPosition: &rpc.LintPosition{
+								LineNumber:   3,
+								ColumnNumber: 10,
 							},
 						},
 					},
@@ -199,21 +199,29 @@ func TestSpectralPluginLintSpec(t *testing.T) {
 					},
 				},
 			},
+			[]string{"test"},
 			nil,
 		},
 		{
-			NewSpectralLinter(),
-			"application/x.asyncapi+gzip;version=2",
-			NewMockSpectralRunner(
-				[]*spectralLintResult{},
+			NewApiLinter(),
+			"application/x.protobuf+zip",
+			newMockApiLinterRunner(
+				[]*rpc.LintProblem{},
 				errors.New("test"),
 			),
 			nil,
+			[]string{},
 			errors.New("test"),
 		},
     }
 
     for _, tt := range lintSpecTests {
+		// Enable the rules that are required for linting to occur
+		for _, rule := range tt.enabledRules {
+			err := tt.linter.AddRule(tt.mimeType, rule)
+			assert.Nil(t, err)
+		}
+
 		lintProblems, err := tt.linter.LintSpecImpl(tt.mimeType, "", tt.runner)
 		assert.Equal(t, tt.expectedError, err)
 		assert.EqualValues(t, tt.expectedLintProblems, lintProblems)
