@@ -132,7 +132,7 @@ message LinterRequest {
 // (-- api-linter: core::0123::resource-annotation=disabled
 //     aip.dev/not-precedent: This message is not currently used in an API. --)
 message LinterResponse {
-    // Error message. If this is non-empty, then that means linting failed.
+    // Error message. If non-empty, the plugin failed.
     // The plugin process should exit with status code zero even if it reports
     // an error in this way. 
     //
