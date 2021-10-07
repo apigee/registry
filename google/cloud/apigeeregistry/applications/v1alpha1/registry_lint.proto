@@ -112,3 +112,24 @@ message LintProblemCount {
     // A link for the related design rule.
     string rule_doc_uri = 3;
 }
+
+// LinterRequest represents a request to a linter plugin. The plugin will lint
+// the provided spec based on rules that have been enabled.
+// (-- api-linter: core::0123::resource-annotation=disabled
+//     aip.dev/not-precedent: This message is not currently used in an API. --)
+message LinterRequest {
+    // A path to a local directory containing the specification that needs to be linted.
+    string spec_path = 1;
+
+    // A list of rules that need to be enabled when linting this spec.
+    repeated string enabled_rules = 2;
+}
+
+// LinterResposne represents a response returned from a linter plugin. It contains a
+// list of problems that were identified by the linter.
+// (-- api-linter: core::0123::resource-annotation=disabled
+//     aip.dev/not-precedent: This message is not currently used in an API. --)
+message LinterResponse {
+   // The problems found when the file was linted.
+   repeated LintProblem problems = 1;
+}
