@@ -20,10 +20,11 @@ import (
 	"fmt"
 	"net"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/apex/log"
+	"github.com/apex/log/handlers/json"
+	"github.com/apex/log/handlers/text"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/internal/storage"
 	"github.com/google/uuid"
@@ -34,22 +35,12 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// LogLevel indicates which types of messages should be logged by the server.
-type LogLevel int
-
-const (
-	loggingFatal LogLevel = iota
-	loggingError LogLevel = iota
-	loggingWarn  LogLevel = iota
-	loggingInfo  LogLevel = iota
-	loggingDebug LogLevel = iota
-)
-
 // Config configures the registry server.
 type Config struct {
 	Database  string
 	DBConfig  string
-	Log       string
+	LogLevel  string
+	LogFormat string
 	Notify    bool
 	ProjectID string
 }
@@ -59,7 +50,8 @@ type RegistryServer struct {
 	database      string
 	dbConfig      string
 	notifyEnabled bool
-	loggingLevel  LogLevel
+	loggingLevel  string
+	loggingFormat string
 	projectID     string
 
 	rpc.UnimplementedRegistryServer
@@ -69,6 +61,8 @@ func New(config Config) *RegistryServer {
 	s := &RegistryServer{
 		database:      config.Database,
 		dbConfig:      config.DBConfig,
+		loggingLevel:  config.LogLevel,
+		loggingFormat: config.LogFormat,
 		notifyEnabled: config.Notify,
 		projectID:     config.ProjectID,
 	}
@@ -76,21 +70,6 @@ func New(config Config) *RegistryServer {
 	if s.database == "" {
 		s.database = "sqlite3"
 		s.dbConfig = "/tmp/registry.db"
-	}
-
-	switch strings.ToUpper(config.Log) {
-	case "FATAL":
-		s.loggingLevel = loggingFatal
-	case "ERROR":
-		s.loggingLevel = loggingError
-	case "WARN":
-		s.loggingLevel = loggingWarn
-	case "INFO":
-		s.loggingLevel = loggingInfo
-	case "DEBUG":
-		s.loggingLevel = loggingDebug
-	default:
-		s.loggingLevel = loggingDebug
 	}
 
 	return s
@@ -124,6 +103,31 @@ func (s *RegistryServer) logger(ctx context.Context) log.Interface {
 }
 
 func (s *RegistryServer) loggingInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	logger := new(log.Logger)
+	switch s.loggingLevel {
+	case "debug":
+		logger.Level = log.DebugLevel
+	case "info":
+		logger.Level = log.InfoLevel
+	case "warn":
+		logger.Level = log.WarnLevel
+	case "error":
+		logger.Level = log.ErrorLevel
+	case "fatal":
+		logger.Level = log.FatalLevel
+	default:
+		logger.Level = log.InfoLevel
+	}
+
+	switch s.loggingFormat {
+	case "json":
+		logger.Handler = json.Default
+	case "text":
+		logger.Handler = text.Default
+	default:
+		logger.Handler = text.Default
+	}
+
 	reqInfo := log.Fields{
 		"request_id": fmt.Sprintf("%.8s", uuid.New()),
 		"method":     filepath.Base(info.FullMethod),
@@ -142,19 +146,12 @@ func (s *RegistryServer) loggingInterceptor(ctx context.Context, req interface{}
 	}
 
 	// Bind request-scoped attributes to the context logger before handling the request.
-	logger := s.logger(ctx).WithFields(reqInfo)
-	ctx = log.NewContext(ctx, logger)
+	reqLogger := logger.WithFields(reqInfo)
+	ctx = log.NewContext(ctx, reqLogger)
 
-	logger.Info("Handling request.")
+	reqLogger.Info("Handling request.")
 	start := time.Now()
 	resp, err := handler(ctx, req)
-
-	// Error messages may include a status code, but we want to log them separately.
-	if err != nil {
-		st, _ := status.FromError(err)
-		unwrapped := errors.New(st.Message())
-		logger = logger.WithError(unwrapped)
-	}
 
 	respInfo := log.Fields{
 		"duration":    time.Since(start),
@@ -165,16 +162,25 @@ func (s *RegistryServer) loggingInterceptor(ctx context.Context, req interface{}
 		respInfo["resource"] = r.GetName()
 	}
 
-	logger = logger.WithFields(respInfo)
+	// Bind response details before logging a response.
+	respLogger := reqLogger.WithFields(respInfo)
+
+	// Error messages may include a status code, but we want to log messages and codes separately.
+	if err != nil {
+		st, _ := status.FromError(err)
+		unwrapped := errors.New(st.Message())
+		respLogger = respLogger.WithError(unwrapped)
+	}
+
 	switch status.Code(err) {
 	case codes.OK:
-		logger.Info("Success.")
+		respLogger.Info("Success.")
 	case codes.Internal:
-		logger.Error("Internal error.")
+		respLogger.Error("Internal error.")
 	case codes.Unknown:
-		logger.Error("Unknown error.")
+		respLogger.Error("Unknown error.")
 	default:
-		logger.Info("User error.")
+		respLogger.Info("User error.")
 	}
 
 	return resp, err
