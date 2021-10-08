@@ -124,6 +124,7 @@ message LinterRequest {
     string spec_path = 1;
 
     // A list of rules that need to be enabled when linting this spec.
+    // If no rules are specified, all of the linter's rules should be enabled.
     repeated string rule_ids = 2;
 }
 
