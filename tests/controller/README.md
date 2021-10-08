@@ -68,6 +68,7 @@ generated_resources:
   - pattern: "apis/-/versions/-/specs/-/artifacts/lintstats-spectral"
     dependencies:
       - pattern: "$resource.spec/artifacts/lint-spectral"
+      - pattern: "$resource.spec/artifacts/complexity"
     action: "registry compute lintstats $resource.spec --linter spectral"
   - pattern: "apis/-/versions/-/specs/-/artifacts/vocabulary"
     dependencies:
