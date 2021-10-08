@@ -18,7 +18,6 @@ import (
 	"context"
 
 	"cloud.google.com/go/pubsub"
-	"github.com/apex/log"
 	"github.com/apigee/registry/rpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -29,7 +28,7 @@ import (
 const TopicName = "registry-events"
 
 func (s *RegistryServer) notify(ctx context.Context, change rpc.Notification_Change, resource string) {
-	logger := log.FromContext(ctx)
+	logger := s.logger(ctx)
 	if !s.notifyEnabled {
 		return
 	}

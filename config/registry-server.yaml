@@ -36,6 +36,9 @@ logging:
   # Level of logging to print to standard output.
   # Options: [ debug, info, warn, error, fatal ]
   level: ${REGISTRY_LOGGING_LEVEL}
+  # Format of log entries.
+  # Options: [ json, text ]
+  format: ${REGISTRY_LOGGING_FORMAT}
 pubsub:
   # Enable Pub/Sub for event notification publishing.
   # Options: [ true, false ]

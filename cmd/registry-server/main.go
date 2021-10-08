@@ -54,6 +54,9 @@ type LoggingConfig struct {
 	// Level of logging to print to standard output.
 	// Values: [ debug, info, warn, error, fatal ]
 	Level string `yaml:"level"`
+	// Format of log entries.
+	// Options: [ json, text ]
+	Format string `yaml:"format"`
 }
 
 // PubsubConfig holds pubsub (notification) configuration.
@@ -74,7 +77,8 @@ var config = ServerConfig{
 		Config: "file:/tmp/registry.db",
 	},
 	Logging: LoggingConfig{
-		Level: "info",
+		Level:  "info",
+		Format: "text",
 	},
 	Pubsub: PubsubConfig{
 		Enable:  false,
@@ -117,7 +121,8 @@ func main() {
 	srv := server.New(server.Config{
 		Database:  config.Database.Driver,
 		DBConfig:  config.Database.Config,
-		Log:       config.Logging.Level,
+		LogLevel:  config.Logging.Level,
+		LogFormat: config.Logging.Format,
 		Notify:    config.Pubsub.Enable,
 		ProjectID: config.Pubsub.Project,
 	})
@@ -146,6 +151,12 @@ func validateConfig() error {
 	case "fatal", "error", "warn", "info", "debug":
 	default:
 		return fmt.Errorf("invalid logging.level %q: must be one of [fatal, error, warn, info, debug]", level)
+	}
+
+	switch format := config.Logging.Format; format {
+	case "json", "text":
+	default:
+		return fmt.Errorf("invalid logging format %q: must be one of [json, text]", format)
 	}
 
 	if project := config.Pubsub.Project; config.Pubsub.Enable && project == "" {
