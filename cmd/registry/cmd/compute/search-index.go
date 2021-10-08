@@ -45,7 +45,6 @@ func searchIndexCommand(ctx context.Context) *cobra.Command {
 				log.WithError(err).Fatal("Failed to get filter from flags")
 			}
 
-			ctx := context.Background()
 			client, err := connection.NewClient(ctx)
 			if err != nil {
 				log.WithError(err).Fatal("Failed to get client")

@@ -34,7 +34,6 @@ func versionsCommand(ctx context.Context) *cobra.Command {
 		Short: "Count the number of versions of specified APIs",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			ctx := context.Background()
 			client, err := connection.NewClient(ctx)
 			if err != nil {
 				log.WithError(err).Fatal("Failed to get client")

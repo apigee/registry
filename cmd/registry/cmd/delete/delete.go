@@ -34,7 +34,6 @@ func Command(ctx context.Context) *cobra.Command {
 		Short: "Delete resources from the API Registry",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			ctx := context.Background()
 			client, err := connection.NewClient(ctx)
 			if err != nil {
 				log.WithError(err).Fatal("Failed to get client")

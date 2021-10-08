@@ -39,7 +39,6 @@ func versionsCommand(ctx context.Context) *cobra.Command {
 			if err != nil {
 				log.WithError(err).Fatal("Failed to get output from flags")
 			}
-			ctx := context.Background()
 			client, err := connection.NewClient(ctx)
 			if err != nil {
 				log.WithError(err).Fatal("Failed to get client")
