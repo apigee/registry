@@ -23,7 +23,7 @@ import (
 )
 
 func main() {
-	()
+	ctx := context.Background()
 	cmd := cmd.Command(ctx)
 	if err := cmd.Execute(); err != nil {
 		fmt.Println(err)
