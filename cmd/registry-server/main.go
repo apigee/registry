@@ -24,7 +24,7 @@ import (
 	"syscall"
 
 	"github.com/apex/log"
-	"github.com/apigee/registry/server"
+	"github.com/apigee/registry/servers/registry"
 	"github.com/spf13/pflag"
 	"gopkg.in/yaml.v2"
 )
@@ -118,7 +118,7 @@ func main() {
 	}
 	defer listener.Close()
 
-	srv := server.New(server.Config{
+	srv := registry.New(registry.Config{
 		Database:  config.Database.Driver,
 		DBConfig:  config.Database.Config,
 		LogLevel:  config.Logging.Level,

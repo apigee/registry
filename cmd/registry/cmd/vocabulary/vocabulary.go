@@ -22,7 +22,7 @@ import (
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/server/names"
+	"github.com/apigee/registry/servers/registry/names"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/proto"
 
