@@ -42,7 +42,6 @@ func uniqueCommand(ctx context.Context) *cobra.Command {
 				log.Fatal("output-id must specify an artifact id (final segment only) and not a full name.")
 			}
 
-			ctx := context.Background()
 			client, err := connection.NewClient(ctx)
 			if err != nil {
 				log.WithError(err).Fatal("Failed to get client")
