@@ -18,7 +18,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net"
 	"path/filepath"
 	"time"
 
@@ -31,7 +30,6 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
 )
 
@@ -79,30 +77,11 @@ func (s *RegistryServer) getStorageClient(ctx context.Context) (*storage.Client,
 	return storage.NewClient(ctx, s.database, s.dbConfig)
 }
 
-// Start runs the Registry server using the provided listener.
-// It blocks until the context is cancelled.
-func (s *RegistryServer) Start(ctx context.Context, listener net.Listener) {
-	var (
-		logInterceptor = grpc.UnaryInterceptor(s.loggingInterceptor)
-		grpcServer     = grpc.NewServer(logInterceptor)
-	)
-
-	reflection.Register(grpcServer)
-	rpc.RegisterRegistryServer(grpcServer, s)
-
-	go func() {
-		_ = grpcServer.Serve(listener)
-	}()
-
-	// Block until the context is cancelled.
-	<-ctx.Done()
-}
-
 func (s *RegistryServer) logger(ctx context.Context) log.Interface {
 	return log.FromContext(ctx)
 }
 
-func (s *RegistryServer) loggingInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+func (s *RegistryServer) LoggingInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 	logger := new(log.Logger)
 	switch s.loggingLevel {
 	case "debug":
