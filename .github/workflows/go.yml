@@ -80,4 +80,4 @@ jobs:
       run: psql -c "CREATE DATABASE registry_test" -c "CREATE USER registry_tester"
 
     - name: Test server with PostgreSQL
-      run: go test ./servers/registry -postgresql
+      run: go test ./service/registry -postgresql
