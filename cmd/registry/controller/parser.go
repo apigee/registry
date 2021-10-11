@@ -17,7 +17,7 @@ package controller
 import (
 	"fmt"
 	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/servers/registry/names"
+	"github.com/apigee/registry/service/registry/names"
 	"regexp"
 	"strings"
 )

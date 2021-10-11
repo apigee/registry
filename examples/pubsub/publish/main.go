@@ -20,7 +20,7 @@ import (
 	"os"
 
 	"cloud.google.com/go/pubsub"
-	"github.com/apigee/registry/servers/registry"
+	"github.com/apigee/registry/service/registry"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
