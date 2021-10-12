@@ -32,7 +32,7 @@ option go_package = "github.com/apigee/registry/rpc;rpc";
 // Cloud projects.
 message Project {
   option (google.api.resource) = {
-    type: "registry.googleapis.com/Project"
+    type: "apigeeregistry.googleapis.com/Project"
     pattern: "projects/{project}"
   };
 
@@ -58,7 +58,7 @@ message Project {
 // Apis are produced by producers and are commitments to provide services.
 message Api {
   option (google.api.resource) = {
-    type: "registry.googleapis.com/Api"
+    type: "apigeeregistry.googleapis.com/Api"
     pattern: "projects/{project}/locations/{location}/apis/{api}"
   };
 
@@ -87,7 +87,7 @@ message Api {
   // The recommended version of the API.
   // Format: apis/{api}/versions/{version}
   string recommended_version = 7 [(google.api.resource_reference) = {
-    type: "registry.googleapis.com/ApiVersion"
+    type: "apigeeregistry.googleapis.com/ApiVersion"
   }];
 
   // Labels attach identifying metadata to resources. Identifying metadata can
@@ -100,7 +100,7 @@ message Api {
   // labels are excluded).
   //
   // See https://goo.gl/xmQnxf for more information and examples of labels.
-  // System reserved label keys are prefixed with "registry.googleapis.com/"
+  // System reserved label keys are prefixed with "apigeeregistry.googleapis.com/"
   // and cannot be changed.
   map<string, string> labels = 9;
 
@@ -116,7 +116,7 @@ message Api {
 // ApiVersions are what consumers actually use.
 message ApiVersion {
   option (google.api.resource) = {
-    type: "registry.googleapis.com/ApiVersion"
+    type: "apigeeregistry.googleapis.com/ApiVersion"
     pattern: "projects/{project}/locations/{location}/apis/{api}/versions/{version}"
   };
 
@@ -153,7 +153,7 @@ message ApiVersion {
   // labels are excluded).
   //
   // See https://goo.gl/xmQnxf for more information and examples of labels.
-  // System reserved label keys are prefixed with "registry.googleapis.com/"
+  // System reserved label keys are prefixed with "apigeeregistry.googleapis.com/"
   // and cannot be changed.
   map<string, string> labels = 7;
 
@@ -175,7 +175,7 @@ message ApiVersion {
 // background services.
 message ApiSpec {
   option (google.api.resource) = {
-    type: "registry.googleapis.com/ApiSpec"
+    type: "apigeeregistry.googleapis.com/ApiSpec"
     pattern: "projects/{project}/locations/{location}/apis/{api}/versions/{version}/specs/"
              "{spec}"
   };
@@ -252,7 +252,7 @@ message ApiSpec {
   // labels are excluded).
   //
   // See https://goo.gl/xmQnxf for more information and examples of labels.
-  // System reserved label keys are prefixed with "registry.googleapis.com/"
+  // System reserved label keys are prefixed with "apigeeregistry.googleapis.com/"
   // and cannot be changed.
   map<string, string> labels = 14;
 
@@ -274,7 +274,7 @@ message ApiSpec {
 // downloading their (potentially-large) contents.
 message Artifact {
   option (google.api.resource) = {
-    type: "registry.googleapis.com/Artifact"
+    type: "apigeeregistry.googleapis.com/Artifact"
     pattern: "projects/{project}/locations/{location}/artifacts/{artifact}"
     pattern: "projects/{project}/locations/{location}/apis/{api}/artifacts/{artifact}"
     pattern: "projects/{project}/locations/{location}/apis/{api}/versions/{version}/artifacts/{artifact}"
