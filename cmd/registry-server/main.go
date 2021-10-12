@@ -24,7 +24,7 @@ import (
 
 	"github.com/apex/log"
 	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/service/registry"
+	"github.com/apigee/registry/server/registry"
 	"github.com/spf13/pflag"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"

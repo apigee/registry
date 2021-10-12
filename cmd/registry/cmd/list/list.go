@@ -21,7 +21,7 @@ import (
 	"github.com/apex/log"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
-	"github.com/apigee/registry/service/registry/names"
+	"github.com/apigee/registry/server/registry/names"
 	"github.com/spf13/cobra"
 )
 

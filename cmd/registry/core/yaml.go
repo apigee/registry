@@ -23,7 +23,7 @@ import (
 	"github.com/apex/log"
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/service/registry/names"
+	"github.com/apigee/registry/server/registry/names"
 	"gopkg.in/yaml.v3"
 )
 

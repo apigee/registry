@@ -18,7 +18,7 @@ import (
 	"context"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
-	"github.com/apigee/registry/service/registry/names"
+	"github.com/apigee/registry/server/registry/names"
 )
 
 func ListResources(ctx context.Context, client connection.Client, pattern, filter string) ([]Resource, error) {

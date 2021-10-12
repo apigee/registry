@@ -21,7 +21,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/pubsub"
-	"github.com/apigee/registry/service/registry"
+	"github.com/apigee/registry/server/registry"
 )
 
 func main() {
