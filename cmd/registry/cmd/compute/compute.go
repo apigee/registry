@@ -34,7 +34,6 @@ func Command(ctx context.Context) *cobra.Command {
 	cmd.AddCommand(lintCommand(ctx))
 	cmd.AddCommand(lintStatsCommand(ctx))
 	cmd.AddCommand(referencesCommand(ctx))
-	cmd.AddCommand(searchIndexCommand(ctx))
 	cmd.AddCommand(vocabularyCommand(ctx))
 
 	cmd.PersistentFlags().String("filter", "", "Filter selected resources")
