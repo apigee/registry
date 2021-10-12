@@ -79,5 +79,5 @@ jobs:
       # Create the database and user required by the PostgreSQL tests.
       run: psql -c "CREATE DATABASE registry_test" -c "CREATE USER registry_tester"
 
-    - name: Test server with PostgreSQL
-      run: go test ./server -postgresql
+    - name: Test registry server with PostgreSQL
+      run: go test ./server/registry -postgresql

@@ -24,7 +24,7 @@ import (
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/server/names"
+	"github.com/apigee/registry/server/registry/names"
 	"github.com/spf13/cobra"
 	"google.golang.org/genproto/protobuf/field_mask"
 )

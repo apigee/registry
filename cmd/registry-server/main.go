@@ -15,7 +15,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -24,8 +23,11 @@ import (
 	"syscall"
 
 	"github.com/apex/log"
-	"github.com/apigee/registry/server"
+	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/server/registry"
 	"github.com/spf13/pflag"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 	"gopkg.in/yaml.v2"
 )
 
@@ -118,7 +120,7 @@ func main() {
 	}
 	defer listener.Close()
 
-	srv := server.New(server.Config{
+	registryServer := registry.New(registry.Config{
 		Database:  config.Database.Driver,
 		DBConfig:  config.Database.Config,
 		LogLevel:  config.Logging.Level,
@@ -127,7 +129,17 @@ func main() {
 		ProjectID: config.Pubsub.Project,
 	})
 
-	go srv.Start(context.Background(), listener)
+	var (
+		logInterceptor = grpc.UnaryInterceptor(registryServer.LoggingInterceptor)
+		grpcServer     = grpc.NewServer(logInterceptor)
+	)
+
+	reflection.Register(grpcServer)
+	rpc.RegisterRegistryServer(grpcServer, registryServer)
+
+	go func() {
+		_ = grpcServer.Serve(listener)
+	}()
 	log.Infof("Listening on %s", listener.Addr())
 
 	// Wait for an interruption signal.

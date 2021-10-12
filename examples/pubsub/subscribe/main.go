@@ -21,7 +21,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/pubsub"
-	"github.com/apigee/registry/server"
+	"github.com/apigee/registry/server/registry"
 )
 
 func main() {
@@ -35,7 +35,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	topic := client.Topic(server.TopicName)
+	topic := client.Topic(registry.TopicName)
 	defer topic.Stop()
 	sub, err := client.CreateSubscription(
 		ctx,
