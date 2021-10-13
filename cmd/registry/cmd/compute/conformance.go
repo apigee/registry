@@ -204,7 +204,7 @@ func computeConformanceForStyleGuide(ctx context.Context,
 
 				// If we couldn't find a linter with the name the user provided, log and move on.
 				if err != nil {
-					log.Log.Errorf(
+					log.Errorf(
 						"Failed to find a linter with the name %s for rule id %s: %s",
 						linterName,
 						rule.GetId(),
@@ -328,7 +328,7 @@ func (task *computeConformanceTask) Run(ctx context.Context) error {
 			// fail completely (because this doesn't imply that computing the conformance
 			// report for another spec will fail, so we should continue.)
 			if err != nil {
-				log.Log.Errorf(
+				log.Errorf(
 					"Failed to compute the conformance for spec %s: %s",
 					unzippedSpecName,
 					err,
@@ -392,7 +392,7 @@ func (task *computeConformanceTask) computeConformanceReport(
 		// the conformance report for this spec. We should log but still continue, because there
 		// may still be useful information from other linters that we may be discarding.
 		if err != nil {
-			log.Log.Errorf(
+			log.Errorf(
 				"Linting the spec %s with the linter %s failed %s: %s",
 				task.spec.GetName(),
 				linter.GetName(),
@@ -552,7 +552,7 @@ func (task *computeConformanceTaskPlugin) Run(ctx context.Context) error {
 			// fail completely (because this doesn't imply that computing the conformance
 			// report for another spec will fail, so we should continue.)
 			if err != nil {
-				log.Log.Errorf(
+				log.Errorf(
 					"Failed to compute the conformance for spec %s: %s",
 					unzippedSpecName,
 					err,
