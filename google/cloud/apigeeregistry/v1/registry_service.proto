@@ -32,7 +32,7 @@ option go_package = "github.com/apigee/registry/rpc;rpc";
 
 // The Registry service allows teams to manage descriptions of APIs.
 service Registry {
-  option (google.api.default_host) = "registry.googleapis.com";
+  option (google.api.default_host) = "apigeeregistry.googleapis.com";
 
   // GetStatus returns the status of the service.
   // GetStatus is for verifying open source deployments only
@@ -436,7 +436,7 @@ message GetProjectRequest {
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
-      type: "registry.googleapis.com/Project"
+      type: "apigeeregistry.googleapis.com/Project"
     }
   ];
 }
@@ -477,7 +477,7 @@ message DeleteProjectRequest {
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
-      type: "registry.googleapis.com/Project"
+      type: "apigeeregistry.googleapis.com/Project"
     }
   ];
 }
@@ -489,7 +489,7 @@ message ListApisRequest {
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
-      child_type: "registry.googleapis.com/Api"
+      child_type: "apigeeregistry.googleapis.com/Api"
     }
   ];
   // The maximum number of APIs to return.
@@ -526,7 +526,7 @@ message GetApiRequest {
   // Format: projects/*/locations/*/apis/*
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = { type: "registry.googleapis.com/Api" }
+    (google.api.resource_reference) = { type: "apigeeregistry.googleapis.com/Api" }
   ];
 }
 
@@ -537,7 +537,7 @@ message CreateApiRequest {
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
-      child_type: "registry.googleapis.com/Api"
+      child_type: "apigeeregistry.googleapis.com/Api"
     }
   ];
   // The API to create.
@@ -571,7 +571,7 @@ message DeleteApiRequest {
   // Format: projects/*/locations/*/apis/*
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
-    (google.api.resource_reference) = { type: "registry.googleapis.com/Api" }
+    (google.api.resource_reference) = { type: "apigeeregistry.googleapis.com/Api" }
   ];
 }
 
@@ -582,7 +582,7 @@ message ListApiVersionsRequest {
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
-      child_type: "registry.googleapis.com/ApiVersion"
+      child_type: "apigeeregistry.googleapis.com/ApiVersion"
     }
   ];
   // The maximum number of versions to return.
@@ -620,7 +620,7 @@ message GetApiVersionRequest {
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
-      type: "registry.googleapis.com/ApiVersion"
+      type: "apigeeregistry.googleapis.com/ApiVersion"
     }
   ];
 }
@@ -632,7 +632,7 @@ message CreateApiVersionRequest {
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
-      child_type: "registry.googleapis.com/ApiVersion"
+      child_type: "apigeeregistry.googleapis.com/ApiVersion"
     }
   ];
   // The version to create.
@@ -667,7 +667,7 @@ message DeleteApiVersionRequest {
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
-      type: "registry.googleapis.com/ApiVersion"
+      type: "apigeeregistry.googleapis.com/ApiVersion"
     }
   ];
 }
@@ -679,7 +679,7 @@ message ListApiSpecsRequest {
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
-      child_type: "registry.googleapis.com/ApiSpec"
+      child_type: "apigeeregistry.googleapis.com/ApiSpec"
     }
   ];
   // The maximum number of specs to return.
@@ -717,7 +717,7 @@ message GetApiSpecRequest {
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
-      type: "registry.googleapis.com/ApiSpec"
+      type: "apigeeregistry.googleapis.com/ApiSpec"
     }
   ];
 }
@@ -729,7 +729,7 @@ message GetApiSpecContentsRequest {
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
-      type: "registry.googleapis.com/ApiSpec"
+      type: "apigeeregistry.googleapis.com/ApiSpec"
     }
   ];
 }
@@ -741,7 +741,7 @@ message CreateApiSpecRequest {
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
-      child_type: "registry.googleapis.com/ApiSpec"
+      child_type: "apigeeregistry.googleapis.com/ApiSpec"
     }
   ];
   // The spec to create.
@@ -780,7 +780,7 @@ message DeleteApiSpecRequest {
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
-      type: "registry.googleapis.com/ApiSpec"
+      type: "apigeeregistry.googleapis.com/ApiSpec"
     }
   ];
 }
@@ -791,7 +791,7 @@ message TagApiSpecRevisionRequest {
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
-      type: "registry.googleapis.com/ApiSpec"
+      type: "apigeeregistry.googleapis.com/ApiSpec"
     }
   ];
 
@@ -810,7 +810,7 @@ message ListApiSpecRevisionsRequest {
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
-      type: "registry.googleapis.com/ApiSpec"
+      type: "apigeeregistry.googleapis.com/ApiSpec"
     }
   ];
 
@@ -840,7 +840,7 @@ message RollbackApiSpecRequest {
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
-      type: "registry.googleapis.com/ApiSpec"
+      type: "apigeeregistry.googleapis.com/ApiSpec"
     }
   ];
 
@@ -861,7 +861,7 @@ message DeleteApiSpecRevisionRequest {
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
-      type: "registry.googleapis.com/ApiSpec"
+      type: "apigeeregistry.googleapis.com/ApiSpec"
     }
   ];
 }
@@ -873,7 +873,7 @@ message ListArtifactsRequest {
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
-      child_type: "registry.googleapis.com/Artifact"
+      child_type: "apigeeregistry.googleapis.com/Artifact"
     }
   ];
   // The maximum number of artifacts to return.
@@ -911,7 +911,7 @@ message GetArtifactRequest {
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
-      type: "registry.googleapis.com/Artifact"
+      type: "apigeeregistry.googleapis.com/Artifact"
     }
   ];
 }
@@ -923,7 +923,7 @@ message GetArtifactContentsRequest {
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
-      type: "registry.googleapis.com/Artifact"
+      type: "apigeeregistry.googleapis.com/Artifact"
     }
   ];
 }
@@ -935,7 +935,7 @@ message CreateArtifactRequest {
   string parent = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
-      child_type: "registry.googleapis.com/Artifact"
+      child_type: "apigeeregistry.googleapis.com/Artifact"
     }
   ];
   // The artifact to create.
@@ -964,7 +964,7 @@ message DeleteArtifactRequest {
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
-      type: "registry.googleapis.com/Artifact"
+      type: "apigeeregistry.googleapis.com/Artifact"
     }
   ];
 }

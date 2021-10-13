@@ -77,9 +77,9 @@ type RegistryCallOptions struct {
 
 func defaultRegistryGRPCClientOptions() []option.ClientOption {
 	return []option.ClientOption{
-		internaloption.WithDefaultEndpoint("registry.googleapis.com:443"),
-		internaloption.WithDefaultMTLSEndpoint("registry.mtls.googleapis.com:443"),
-		internaloption.WithDefaultAudience("https://registry.googleapis.com/"),
+		internaloption.WithDefaultEndpoint("apigeeregistry.googleapis.com:443"),
+		internaloption.WithDefaultMTLSEndpoint("apigeeregistry.mtls.googleapis.com:443"),
+		internaloption.WithDefaultAudience("https://apigeeregistry.googleapis.com/"),
 		internaloption.WithDefaultScopes(DefaultAuthScopes()...),
 		internaloption.EnableJwtWithScope(),
 		option.WithGRPCDialOption(grpc.WithDisableServiceConfig()),
