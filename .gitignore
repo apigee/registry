@@ -1,6 +1,4 @@
 # Generated files
-cmd/apg/*.go
-*.bleve
 docs/
 
 # VSCode
