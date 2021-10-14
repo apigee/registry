@@ -28,7 +28,7 @@ import (
 func TestFieldClearing(t *testing.T) {
 	ctx := context.Background()
 
-	c, err := NewClient(ctx, "sqlite3", t.TempDir()+"/testing.db")
+	c, err := NewClient(ctx, "sqlite3", t.TempDir()+"/testing.db", true)
 	if err != nil {
 		t.Fatalf("NewClient returned error: %s", err)
 	}
@@ -66,7 +66,7 @@ func TestFieldClearing(t *testing.T) {
 func TestCRUD(t *testing.T) {
 	ctx := context.Background()
 
-	c, _ := NewClient(ctx, "sqlite3", t.TempDir()+"/testing.db")
+	c, _ := NewClient(ctx, "sqlite3", t.TempDir()+"/testing.db", true)
 	defer c.Close()
 
 	now := time.Now()
@@ -127,11 +127,11 @@ func TestLoad(t *testing.T) {
 	ctx := context.Background()
 
 	db := t.TempDir() + "/testing.db"
-	c, _ := NewClient(ctx, "sqlite3", db)
+	c, _ := NewClient(ctx, "sqlite3", db, true)
 	c.Close()
 
 	for i := 0; i < 99; i++ {
-		c, err := NewClient(ctx, "sqlite3", db)
+		c, err := NewClient(ctx, "sqlite3", db, true)
 		if err != nil {
 			t.Fatalf("Unable to create client: %+v", err)
 		}
