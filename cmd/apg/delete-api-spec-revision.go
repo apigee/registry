@@ -5,6 +5,8 @@ package main
 import (
 	"github.com/spf13/cobra"
 
+	"fmt"
+
 	"github.com/golang/protobuf/jsonpb"
 
 	"os"
@@ -58,7 +60,12 @@ var DeleteApiSpecRevisionCmd = &cobra.Command{
 		if Verbose {
 			printVerboseInput("Registry", "DeleteApiSpecRevision", &DeleteApiSpecRevisionInput)
 		}
-		err = RegistryClient.DeleteApiSpecRevision(ctx, &DeleteApiSpecRevisionInput)
+		resp, err := RegistryClient.DeleteApiSpecRevision(ctx, &DeleteApiSpecRevisionInput)
+
+		if Verbose {
+			fmt.Print("Output: ")
+		}
+		printMessage(resp)
 
 		return err
 	},
