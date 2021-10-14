@@ -71,7 +71,7 @@ func New(config Config) *RegistryServer {
 	}
 
 	db, _ := storage.NewClientEnsuringTables(context.Background(), s.database, s.dbConfig)
-	defer db.Close()
+	db.Close()
 	return s
 }
 
