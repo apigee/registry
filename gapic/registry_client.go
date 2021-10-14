@@ -475,7 +475,7 @@ type internalRegistryClient interface {
 	TagApiSpecRevision(context.Context, *rpcpb.TagApiSpecRevisionRequest, ...gax.CallOption) (*rpcpb.ApiSpec, error)
 	ListApiSpecRevisions(context.Context, *rpcpb.ListApiSpecRevisionsRequest, ...gax.CallOption) *ApiSpecIterator
 	RollbackApiSpec(context.Context, *rpcpb.RollbackApiSpecRequest, ...gax.CallOption) (*rpcpb.ApiSpec, error)
-	DeleteApiSpecRevision(context.Context, *rpcpb.DeleteApiSpecRevisionRequest, ...gax.CallOption) error
+	DeleteApiSpecRevision(context.Context, *rpcpb.DeleteApiSpecRevisionRequest, ...gax.CallOption) (*rpcpb.ApiSpec, error)
 	ListArtifacts(context.Context, *rpcpb.ListArtifactsRequest, ...gax.CallOption) *ArtifactIterator
 	GetArtifact(context.Context, *rpcpb.GetArtifactRequest, ...gax.CallOption) (*rpcpb.Artifact, error)
 	GetArtifactContents(context.Context, *rpcpb.GetArtifactContentsRequest, ...gax.CallOption) (*httpbodypb.HttpBody, error)
@@ -672,7 +672,7 @@ func (c *RegistryClient) RollbackApiSpec(ctx context.Context, req *rpcpb.Rollbac
 }
 
 // DeleteApiSpecRevision deleteApiSpecRevision deletes a revision of a spec.
-func (c *RegistryClient) DeleteApiSpecRevision(ctx context.Context, req *rpcpb.DeleteApiSpecRevisionRequest, opts ...gax.CallOption) error {
+func (c *RegistryClient) DeleteApiSpecRevision(ctx context.Context, req *rpcpb.DeleteApiSpecRevisionRequest, opts ...gax.CallOption) (*rpcpb.ApiSpec, error) {
 	return c.internalClient.DeleteApiSpecRevision(ctx, req, opts...)
 }
 
@@ -1413,7 +1413,7 @@ func (c *registryGRPCClient) RollbackApiSpec(ctx context.Context, req *rpcpb.Rol
 	return resp, nil
 }
 
-func (c *registryGRPCClient) DeleteApiSpecRevision(ctx context.Context, req *rpcpb.DeleteApiSpecRevisionRequest, opts ...gax.CallOption) error {
+func (c *registryGRPCClient) DeleteApiSpecRevision(ctx context.Context, req *rpcpb.DeleteApiSpecRevisionRequest, opts ...gax.CallOption) (*rpcpb.ApiSpec, error) {
 	if _, ok := ctx.Deadline(); !ok && !c.disableDeadlines {
 		cctx, cancel := context.WithTimeout(ctx, 10000 * time.Millisecond)
 		defer cancel()
@@ -1422,12 +1422,16 @@ func (c *registryGRPCClient) DeleteApiSpecRevision(ctx context.Context, req *rpc
 	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "name", url.QueryEscape(req.GetName())))
 	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append((*c.CallOptions).DeleteApiSpecRevision[0:len((*c.CallOptions).DeleteApiSpecRevision):len((*c.CallOptions).DeleteApiSpecRevision)], opts...)
+	var resp *rpcpb.ApiSpec
 	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
 		var err error
-		_, err = c.registryClient.DeleteApiSpecRevision(ctx, req, settings.GRPC...)
+		resp, err = c.registryClient.DeleteApiSpecRevision(ctx, req, settings.GRPC...)
 		return err
 	}, opts...)
-	return err
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
 }
 
 func (c *registryGRPCClient) ListArtifacts(ctx context.Context, req *rpcpb.ListArtifactsRequest, opts ...gax.CallOption) *ArtifactIterator {

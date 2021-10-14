@@ -341,8 +341,11 @@ func TestDemo(t *testing.T) {
 		req := &rpc.DeleteApiSpecRevisionRequest{
 			Name: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml@og",
 		}
-		err := registryClient.DeleteApiSpecRevision(ctx, req)
+		spec, err := registryClient.DeleteApiSpecRevision(ctx, req)
 		check(t, "error deleting spec revision %s", err)
+		if spec == nil {
+			t.Errorf("Failed to return current spec after deleting revision %s", req.Name)
+		}
 	}
 	// list specs, there should be only one
 	{
