@@ -70,13 +70,13 @@ func New(config Config) *RegistryServer {
 		s.dbConfig = "/tmp/registry.db"
 	}
 
-	db, _ := storage.NewClient(context.Background(), s.database, s.dbConfig, true)
+	db, _ := storage.NewClientEnsuringTables(context.Background(), s.database, s.dbConfig)
 	defer db.Close()
 	return s
 }
 
 func (s *RegistryServer) getStorageClient(ctx context.Context) (*storage.Client, error) {
-	return storage.NewClient(ctx, s.database, s.dbConfig, false)
+	return storage.NewClient(ctx, s.database, s.dbConfig)
 }
 
 func (s *RegistryServer) logger(ctx context.Context) log.Interface {

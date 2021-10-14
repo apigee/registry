@@ -58,7 +58,15 @@ func defaultConfig() *gorm.Config {
 //
 // PostgreSQL DSN Reference: See "Connection Strings" at https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING
 // SQLite DSN Reference: See "URI filename examples" at https://www.sqlite.org/c3ref/open.html
-func NewClient(ctx context.Context, driver, dsn string, ensureTables bool) (*Client, error) {
+func NewClient(ctx context.Context, driver, dsn string) (*Client, error) {
+	return newClient(ctx, driver, dsn, false)
+}
+
+func NewClientEnsuringTables(ctx context.Context, driver, dsn string) (*Client, error) {
+	return newClient(ctx, driver, dsn, true)
+}
+
+func newClient(ctx context.Context, driver, dsn string, ensureTables bool) (*Client, error) {
 	lock()
 	switch driver {
 	case "sqlite3":
