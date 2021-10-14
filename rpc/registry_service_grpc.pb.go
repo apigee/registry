@@ -98,7 +98,7 @@ type RegistryClient interface {
 	// Note that this creates a new revision with a new revision ID.
 	RollbackApiSpec(ctx context.Context, in *RollbackApiSpecRequest, opts ...grpc.CallOption) (*ApiSpec, error)
 	// DeleteApiSpecRevision deletes a revision of a spec.
-	DeleteApiSpecRevision(ctx context.Context, in *DeleteApiSpecRevisionRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	DeleteApiSpecRevision(ctx context.Context, in *DeleteApiSpecRevisionRequest, opts ...grpc.CallOption) (*ApiSpec, error)
 	// ListArtifacts returns matching artifacts.
 	ListArtifacts(ctx context.Context, in *ListArtifactsRequest, opts ...grpc.CallOption) (*ListArtifactsResponse, error)
 	// GetArtifact returns a specified artifact.
@@ -351,8 +351,8 @@ func (c *registryClient) RollbackApiSpec(ctx context.Context, in *RollbackApiSpe
 	return out, nil
 }
 
-func (c *registryClient) DeleteApiSpecRevision(ctx context.Context, in *DeleteApiSpecRevisionRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
-	out := new(emptypb.Empty)
+func (c *registryClient) DeleteApiSpecRevision(ctx context.Context, in *DeleteApiSpecRevisionRequest, opts ...grpc.CallOption) (*ApiSpec, error) {
+	out := new(ApiSpec)
 	err := c.cc.Invoke(ctx, "/google.cloud.apigeeregistry.v1.Registry/DeleteApiSpecRevision", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -496,7 +496,7 @@ type RegistryServer interface {
 	// Note that this creates a new revision with a new revision ID.
 	RollbackApiSpec(context.Context, *RollbackApiSpecRequest) (*ApiSpec, error)
 	// DeleteApiSpecRevision deletes a revision of a spec.
-	DeleteApiSpecRevision(context.Context, *DeleteApiSpecRevisionRequest) (*emptypb.Empty, error)
+	DeleteApiSpecRevision(context.Context, *DeleteApiSpecRevisionRequest) (*ApiSpec, error)
 	// ListArtifacts returns matching artifacts.
 	ListArtifacts(context.Context, *ListArtifactsRequest) (*ListArtifactsResponse, error)
 	// GetArtifact returns a specified artifact.
@@ -596,7 +596,7 @@ func (UnimplementedRegistryServer) ListApiSpecRevisions(context.Context, *ListAp
 func (UnimplementedRegistryServer) RollbackApiSpec(context.Context, *RollbackApiSpecRequest) (*ApiSpec, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RollbackApiSpec not implemented")
 }
-func (UnimplementedRegistryServer) DeleteApiSpecRevision(context.Context, *DeleteApiSpecRevisionRequest) (*emptypb.Empty, error) {
+func (UnimplementedRegistryServer) DeleteApiSpecRevision(context.Context, *DeleteApiSpecRevisionRequest) (*ApiSpec, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteApiSpecRevision not implemented")
 }
 func (UnimplementedRegistryServer) ListArtifacts(context.Context, *ListArtifactsRequest) (*ListArtifactsResponse, error) {

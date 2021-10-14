@@ -271,7 +271,7 @@ service Registry {
 
   // DeleteApiSpecRevision deletes a revision of a spec.
   rpc DeleteApiSpecRevision(DeleteApiSpecRevisionRequest)
-      returns (google.protobuf.Empty) {
+      returns (ApiSpec) {
     option (google.api.http) = {
       delete: "/v1/{name=projects/*/locations/*/apis/*/versions/*/specs/*}:deleteRevision"
     };
