@@ -25,6 +25,7 @@ import (
 	"github.com/apex/log"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry"
+	"github.com/apigee/registry/server/search"
 	"github.com/spf13/pflag"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -129,6 +130,11 @@ func main() {
 		ProjectID: config.Pubsub.Project,
 	})
 
+	searchServer := search.New(search.Config{
+		Database: config.Database.Driver,
+		DBConfig: config.Database.Config,
+	})
+
 	var (
 		logInterceptor = grpc.UnaryInterceptor(registryServer.LoggingInterceptor)
 		grpcServer     = grpc.NewServer(logInterceptor)
@@ -136,6 +142,7 @@ func main() {
 
 	reflection.Register(grpcServer)
 	rpc.RegisterRegistryServer(grpcServer, registryServer)
+	rpc.RegisterSearchServer(grpcServer, searchServer)
 
 	go func() {
 		_ = grpcServer.Serve(listener)

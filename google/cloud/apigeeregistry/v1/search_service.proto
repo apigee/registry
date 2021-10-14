@@ -1,0 +1,87 @@
+// Copyright 2021 Google LLC. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//    http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package google.cloud.apigeeregistry.v1;
+
+import "google/api/annotations.proto";
+import "google/api/client.proto";
+import "google/api/field_behavior.proto";
+
+option java_package = "com.google.cloud.apigeeregistry.v1";
+option java_multiple_files = true;
+option java_outer_classname = "SearchServiceProto";
+option go_package = "github.com/apigee/registry/rpc;rpc";
+
+// Build and search an index of APIs.
+service Search {
+  option (google.api.default_host) = "apigeeregistry.googleapis.com";
+
+  // Add a resource to the search index.
+  rpc Index(IndexRequest) returns (IndexResponse) {
+    option (google.api.http) = {
+      post: "/v1/index"
+    };
+  }
+
+  // Query the index.
+  rpc Query(QueryRequest) returns (QueryResponse) {
+      option (google.api.http) = {
+        get: "/v1/search"
+      };
+  }
+}
+
+message IndexRequest {
+    string resource_name = 1;
+}
+
+message IndexResponse {
+  string status = 1;
+
+  // Additional message, e.g. if search is not available
+  string message = 2;
+}
+
+message QueryRequest {
+  // Search query string
+  string q = 1 [(google.api.field_behavior) = REQUIRED];
+  
+  // Page size
+  int32 page_size = 2;
+  
+  // Page token
+  string page_token = 3;
+}
+
+// Response message for search
+message QueryResponse {
+  // Result of search
+  message Result {
+    // Key of matching entity
+    string key = 1;
+    // Excerpt of matching text
+    string excerpt = 2;
+  }
+
+  // Search results
+  repeated Result results = 1;
+
+  // Next page token
+  string next_page_token = 2;
+
+  // Additional message, e.g. if search is not available
+  string message = 3;
+}
