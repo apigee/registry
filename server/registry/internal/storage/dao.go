@@ -41,8 +41,8 @@ type Client struct {
 	*gorm.Client
 }
 
-func NewClient(ctx context.Context, driver, dsn string) (*Client, error) {
-	gc, err := gorm.NewClient(ctx, driver, dsn)
+func NewClient(ctx context.Context, driver, dsn string, ensureTables bool) (*Client, error) {
+	gc, err := gorm.NewClient(ctx, driver, dsn, ensureTables)
 	if err != nil {
 		return nil, err
 	}

@@ -74,7 +74,11 @@ func New(config Config) *RegistryServer {
 }
 
 func (s *RegistryServer) getStorageClient(ctx context.Context) (*storage.Client, error) {
-	return storage.NewClient(ctx, s.database, s.dbConfig)
+	return storage.NewClient(ctx, s.database, s.dbConfig, false)
+}
+
+func (s *RegistryServer) getStorageClientEnsureTables(ctx context.Context) (*storage.Client, error) {
+	return storage.NewClient(ctx, s.database, s.dbConfig, true)
 }
 
 func (s *RegistryServer) logger(ctx context.Context) log.Interface {

@@ -28,7 +28,7 @@ import (
 
 // CreateProject handles the corresponding API request.
 func (s *RegistryServer) CreateProject(ctx context.Context, req *rpc.CreateProjectRequest) (*rpc.Project, error) {
-	db, err := s.getStorageClient(ctx)
+	db, err := s.getStorageClientEnsureTables(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
@@ -60,7 +60,7 @@ func (s *RegistryServer) CreateProject(ctx context.Context, req *rpc.CreateProje
 
 // DeleteProject handles the corresponding API request.
 func (s *RegistryServer) DeleteProject(ctx context.Context, req *rpc.DeleteProjectRequest) (*emptypb.Empty, error) {
-	db, err := s.getStorageClient(ctx)
+	db, err := s.getStorageClientEnsureTables(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
@@ -86,7 +86,7 @@ func (s *RegistryServer) DeleteProject(ctx context.Context, req *rpc.DeleteProje
 
 // GetProject handles the corresponding API request.
 func (s *RegistryServer) GetProject(ctx context.Context, req *rpc.GetProjectRequest) (*rpc.Project, error) {
-	db, err := s.getStorageClient(ctx)
+	db, err := s.getStorageClientEnsureTables(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
@@ -107,7 +107,7 @@ func (s *RegistryServer) GetProject(ctx context.Context, req *rpc.GetProjectRequ
 
 // ListProjects handles the corresponding API request.
 func (s *RegistryServer) ListProjects(ctx context.Context, req *rpc.ListProjectsRequest) (*rpc.ListProjectsResponse, error) {
-	db, err := s.getStorageClient(ctx)
+	db, err := s.getStorageClientEnsureTables(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
@@ -144,7 +144,7 @@ func (s *RegistryServer) ListProjects(ctx context.Context, req *rpc.ListProjects
 
 // UpdateProject handles the corresponding API request.
 func (s *RegistryServer) UpdateProject(ctx context.Context, req *rpc.UpdateProjectRequest) (*rpc.Project, error) {
-	db, err := s.getStorageClient(ctx)
+	db, err := s.getStorageClientEnsureTables(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
