@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 // Copyright 2021 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,9 +13,6 @@
 // limitations under the License.
 
 package linter
-=======
-package lint
->>>>>>> 99b2a99 (change file names)
 
 import (
 	"fmt"
@@ -29,11 +25,7 @@ import (
 
 // RespondWithErrorAndExit takes in a sequence of errors, sets them in the response,
 // responds, and then exits.
-<<<<<<< HEAD
 func respondWithErrorAndExit(errs ...error) {
-=======
-func RespondWithErrorAndExit(errs ...error) {
->>>>>>> 99b2a99 (change file names)
 	errorMessages := make([]string, len(errs))
 	for i, err := range errs {
 		errorMessages[i] = err.Error()
@@ -41,30 +33,18 @@ func RespondWithErrorAndExit(errs ...error) {
 	response := &rpc.LinterResponse{
 		Errors: errorMessages,
 	}
-<<<<<<< HEAD
 	respondAndExit(response)
 }
 
 // RespondAndExit serializes and writes the plugin response to STDOUT, and then exits.
 func respondAndExit(response *rpc.LinterResponse) {
-=======
-	RespondAndExit(response)
-}
-
-// RespondAndExit serializes and writes the plugin response to STDOUT, and then exits.
-func RespondAndExit(response *rpc.LinterResponse) {
->>>>>>> 99b2a99 (change file names)
 	responseBytes, _ := proto.Marshal(response)
 	os.Stdout.Write(responseBytes)
 	os.Exit(0)
 }
 
 // GetRequest constructs a LinterRequest object from standard input.
-<<<<<<< HEAD
 func getRequest() (*rpc.LinterRequest, error) {
-=======
-func GetRequest() (*rpc.LinterRequest, error) {
->>>>>>> 99b2a99 (change file names)
 	// Read from stdin.
 	pluginData, err := ioutil.ReadAll(os.Stdin)
 	if err != nil {
@@ -84,32 +64,18 @@ func GetRequest() (*rpc.LinterRequest, error) {
 	return linterRequest, nil
 }
 
-<<<<<<< HEAD
 // Lint reads the request from STDIN, runs the linter plugin, and
 // writes the response to STDOUT.
 func Lint(runner LinterRunner) {
 	req, err := getRequest()
 	if err != nil {
 		respondWithErrorAndExit(err)
-=======
-func Main(runner LinterPluginRunner) {
-	req, err := GetRequest()
-	if err != nil {
-		RespondWithErrorAndExit(err)
->>>>>>> 99b2a99 (change file names)
 	}
 
 	resp, err := runner.Run(req)
 	if err != nil {
-<<<<<<< HEAD
 		respondWithErrorAndExit(err)
 	}
 
 	respondAndExit(resp)
-=======
-		RespondWithErrorAndExit(err)
-	}
-
-	RespondAndExit(resp)
->>>>>>> 99b2a99 (change file names)
 }
