@@ -16,80 +16,38 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
-	"os"
 
+	lint "github.com/apigee/registry/cmd/registry/plugins/linter"
 	"github.com/apigee/registry/rpc"
-	"google.golang.org/protobuf/proto"
 )
 
-// RespondWithErrorAndExit takes in a sequence of errors, sets them in the response,
-// responds, and then exits.
-func RespondWithErrorAndExit(errs ...error) {
-	errorMessages := make([]string, len(errs))
-	for i, err := range errs {
-		errorMessages[i] = err.Error()
-	}
-	response := &rpc.LinterResponse{
-		Errors: errorMessages,
-	}
-	RespondAndExit(response)
-}
+// SampleLinterRunner implements the LinterPluginRunner interface for the sample linter.
+type SampleLinterRunner struct{}
 
-// RespondAndExit serializes and writes the plugin response to STDOUT, and then exits.
-func RespondAndExit(response *rpc.LinterResponse) {
-	responseBytes, _ := proto.Marshal(response)
-	os.Stdout.Write(responseBytes)
-	os.Exit(0)
-}
-
-// GetRequest constructs a LinterRequest object from standard input.
-func GetRequest() (*rpc.LinterRequest, error) {
-	// Read from stdin.
-	pluginData, err := ioutil.ReadAll(os.Stdin)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(pluginData) == 0 && err != nil {
-		return nil, fmt.Errorf("no input data")
-	}
-
-	// Deserialize the request from the input into a request object.
-	linterRequest := &rpc.LinterRequest{}
-	if err := proto.Unmarshal(pluginData, linterRequest); err != nil {
-		return nil, err
-	}
-
-	return linterRequest, nil
-}
-
-func main() {
-	req, err := GetRequest()
-	if err != nil {
-		RespondWithErrorAndExit(err)
-	}
-
+func (*SampleLinterRunner) Run(req *rpc.LinterRequest) (*rpc.LinterResponse, error) {
 	// Formulate the response. In this sample plugin, we will simply return a fake rule violation /
 	// lint problem for every rule that the user specifies, on the given file that is provided.
 	lintFile := &rpc.LintFile{
 		FilePath: req.SpecPath,
 	}
+
 	for _, rule := range req.RuleIds {
 		lintFile.Problems = append(lintFile.Problems, &rpc.LintProblem{
 			RuleId:  rule,
 			Message: fmt.Sprintf("This is a sample violation of the rule %s", rule),
 		})
 	}
-	response := &rpc.LinterResponse{
+
+	return &rpc.LinterResponse{
 		Lint: &rpc.Lint{
 			Name: "registry-lint-sample",
 			Files: []*rpc.LintFile{
 				lintFile,
 			},
 		},
-	}
+	}, nil
+}
 
-	// Respond by writing response to STDOUT and exiting.
-	RespondAndExit(response)
+func main() {
+	lint.Main(&SampleLinterRunner{})
 }
