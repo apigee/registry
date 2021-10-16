@@ -85,7 +85,7 @@ func manifestCommand(ctx context.Context) *cobra.Command {
 
 			artifact := &rpc.Artifact{
 				Name:     "projects/" + projectID + "/locations/global/artifacts/" + manifest.GetId(),
-				MimeType: core.MimeTypeForMessageType("google.cloud.apigeeregistry.applications.v1alpha1.Manifest"),
+				MimeType: core.MimeTypeForMessageType("google.cloud.apigeeregistry.v1.controller.Manifest"),
 				Contents: manifestData,
 			}
 			log.Debugf("Uploading %s", artifact.Name)
