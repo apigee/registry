@@ -19,8 +19,8 @@ func init() {
 
 var GetStatusCmd = &cobra.Command{
 	Use:   "get-status",
-	Short: "GetStatus returns the status of the service. ...",
-	Long:  "GetStatus returns the status of the service.  GetStatus is for verifying open source deployments only  and is not included in hosted versions of the...",
+	Short: "GetStatus returns the status of the service.  (--...",
+	Long:  "GetStatus returns the status of the service.  (-- api-linter: core::0131::request-message-name=disabled      aip.dev/not-precedent: Not in the...",
 	PreRun: func(cmd *cobra.Command, args []string) {
 
 	},

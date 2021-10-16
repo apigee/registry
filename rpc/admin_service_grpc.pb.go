@@ -20,8 +20,6 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AdminClient interface {
 	// GetStatus returns the status of the service.
-	// GetStatus is for verifying open source deployments only
-	// and is not included in hosted versions of the API.
 	// (-- api-linter: core::0131::request-message-name=disabled
 	//     aip.dev/not-precedent: Not in the official API. --)
 	// (-- api-linter: core::0131::method-signature=disabled
@@ -117,8 +115,6 @@ func (c *adminClient) DeleteProject(ctx context.Context, in *DeleteProjectReques
 // for forward compatibility
 type AdminServer interface {
 	// GetStatus returns the status of the service.
-	// GetStatus is for verifying open source deployments only
-	// and is not included in hosted versions of the API.
 	// (-- api-linter: core::0131::request-message-name=disabled
 	//     aip.dev/not-precedent: Not in the official API. --)
 	// (-- api-linter: core::0131::method-signature=disabled

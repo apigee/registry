@@ -1,0 +1,55 @@
+// Copyright 2021 Google LLC. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//    http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package google.cloud.apigeeregistry.v1;
+
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "google/protobuf/timestamp.proto";
+
+option java_package = "com.google.cloud.apigeeregistry.v1";
+option java_multiple_files = true;
+option java_outer_classname = "AdminModelsProto";
+option go_package = "github.com/apigee/registry/rpc;rpc";
+
+// A Project is a top-level description of a collection of APIs.
+// Typically there would be one project for an entire organization.
+// Note: in a Google Cloud deployment, this resource and associated methods
+// will be omitted and its children will instead be associated with Google
+// Cloud projects.
+message Project {
+  option (google.api.resource) = {
+    type: "apigeeregistry.googleapis.com/Project"
+    pattern: "projects/{project}"
+  };
+
+  // Resource name.
+  string name = 1;
+
+  // Human-meaningful name.
+  string display_name = 2;
+
+  // A detailed description.
+  string description = 3;
+
+  // Creation timestamp.
+  google.protobuf.Timestamp create_time = 4
+      [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Last update timestamp.
+  google.protobuf.Timestamp update_time = 5
+      [(google.api.field_behavior) = OUTPUT_ONLY];
+}

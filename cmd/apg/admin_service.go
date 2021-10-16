@@ -52,7 +52,7 @@ func init() {
 var AdminServiceCmd = &cobra.Command{
 	Use:       "admin",
 	Short:     "The Admin service supports setup and operation of...",
-	Long:      "The Admin service supports setup and operation of an API registry.",
+	Long:      "The Admin service supports setup and operation of an API registry.  It is typically not included in hosted versions of the API.",
 	ValidArgs: AdminSubCommands,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) (err error) {
 		var opts []option.ClientOption

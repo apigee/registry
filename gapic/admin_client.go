@@ -93,6 +93,7 @@ type internalAdminClient interface {
 // Methods, except Close, may be called concurrently. However, fields must not be modified concurrently with method calls.
 //
 // The Admin service supports setup and operation of an API registry.
+// It is typically not included in hosted versions of the API.
 type AdminClient struct {
 	// The internal transport-dependent client.
 	internalClient internalAdminClient
@@ -125,8 +126,6 @@ func (c *AdminClient) Connection() *grpc.ClientConn {
 }
 
 // GetStatus getStatus returns the status of the service.
-// GetStatus is for verifying open source deployments only
-// and is not included in hosted versions of the API.
 // (– api-linter: core::0131::request-message-name=disabled
 // aip.dev/not-precedent (at http://aip.dev/not-precedent): Not in the official API. –)
 // (– api-linter: core::0131::method-signature=disabled
@@ -195,6 +194,7 @@ type adminGRPCClient struct {
 // The returned client must be Closed when it is done being used to clean up its underlying connections.
 //
 // The Admin service supports setup and operation of an API registry.
+// It is typically not included in hosted versions of the API.
 func NewAdminClient(ctx context.Context, opts ...option.ClientOption) (*AdminClient, error) {
 	clientOpts := defaultAdminGRPCClientOptions()
 	if newAdminClientHook != nil {
