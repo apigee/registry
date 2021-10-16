@@ -40,16 +40,22 @@
 //  }
 //  defer c.Close()
 //
-//  req := &emptypb.Empty{
+//  req := &rpcpb.ListApisRequest{
 //  	// TODO: Fill request struct fields.
-//  	// See https://pkg.go.dev/google.golang.org/protobuf/types/known/emptypb#Empty.
+//  	// See https://pkg.go.dev/github.com/apigee/registry/rpc#ListApisRequest.
 //  }
-//  resp, err := c.GetStatus(ctx, req)
-//  if err != nil {
-//  	// TODO: Handle error.
+//  it := c.ListApis(ctx, req)
+//  for {
+//  	resp, err := it.Next()
+//  	if err == iterator.Done {
+//  		break
+//  	}
+//  	if err != nil {
+//  		// TODO: Handle error.
+//  	}
+//  	// TODO: Use resp.
+//  	_ = resp
 //  }
-//  // TODO: Use resp.
-//  _ = resp
 //
 // Use of Context
 //

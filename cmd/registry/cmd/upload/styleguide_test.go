@@ -79,14 +79,17 @@ func TestStyleGuideUpload(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Setup: Failed to create client: %s", err)
 			}
-
-			err = client.DeleteProject(ctx, &rpc.DeleteProjectRequest{
+			adminClient, err := connection.NewAdminClient(ctx)
+			if err != nil {
+				t.Fatalf("Setup: Failed to create client: %s", err)
+			}
+			err = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{
 				Name: "projects/" + test.project,
 			})
 			if err != nil && status.Code(err) != codes.NotFound {
 				t.Fatalf("Setup: Failed to delete test project: %s", err)
 			}
-			_, err = client.CreateProject(ctx, &rpc.CreateProjectRequest{
+			_, err = adminClient.CreateProject(ctx, &rpc.CreateProjectRequest{
 				ProjectId: test.project,
 				Project: &rpc.Project{
 					DisplayName: "Demo",

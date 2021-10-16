@@ -21,7 +21,7 @@ var UpdateProjectInput rpcpb.UpdateProjectRequest
 var UpdateProjectFromFile string
 
 func init() {
-	RegistryServiceCmd.AddCommand(UpdateProjectCmd)
+	AdminServiceCmd.AddCommand(UpdateProjectCmd)
 
 	UpdateProjectInput.Project = new(rpcpb.Project)
 
@@ -68,9 +68,9 @@ var UpdateProjectCmd = &cobra.Command{
 		}
 
 		if Verbose {
-			printVerboseInput("Registry", "UpdateProject", &UpdateProjectInput)
+			printVerboseInput("Admin", "UpdateProject", &UpdateProjectInput)
 		}
-		resp, err := RegistryClient.UpdateProject(ctx, &UpdateProjectInput)
+		resp, err := AdminClient.UpdateProject(ctx, &UpdateProjectInput)
 
 		if Verbose {
 			fmt.Print("Output: ")

@@ -13,7 +13,7 @@ import (
 var GetStatusInput emptypb.Empty
 
 func init() {
-	RegistryServiceCmd.AddCommand(GetStatusCmd)
+	AdminServiceCmd.AddCommand(GetStatusCmd)
 
 }
 
@@ -27,9 +27,9 @@ var GetStatusCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) (err error) {
 
 		if Verbose {
-			printVerboseInput("Registry", "GetStatus", &GetStatusInput)
+			printVerboseInput("Admin", "GetStatus", &GetStatusInput)
 		}
-		resp, err := RegistryClient.GetStatus(ctx, &GetStatusInput)
+		resp, err := AdminClient.GetStatus(ctx, &GetStatusInput)
 
 		if Verbose {
 			fmt.Print("Output: ")

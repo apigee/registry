@@ -17,7 +17,7 @@ const gzipOpenAPIv3 = "application/x.openapi+gzip;version=3.0.0"
 
 func deleteProject(
 	ctx context.Context,
-	client connection.Client,
+	client connection.AdminClient,
 	t *testing.T,
 	projectID string) {
 	t.Helper()
@@ -32,7 +32,7 @@ func deleteProject(
 
 func createProject(
 	ctx context.Context,
-	client connection.Client,
+	client connection.AdminClient,
 	t *testing.T,
 	projectID string) {
 	t.Helper()

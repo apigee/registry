@@ -22,7 +22,7 @@ import (
 	"github.com/apigee/registry/rpc"
 )
 
-func EnsureProjectExists(ctx context.Context, client *gapic.RegistryClient, projectID string) {
+func EnsureProjectExists(ctx context.Context, client *gapic.AdminClient, projectID string) {
 	req := &rpc.GetProjectRequest{Name: "projects/" + projectID}
 	if _, err := client.GetProject(ctx, req); NotFound(err) {
 		req := &rpc.CreateProjectRequest{

@@ -19,7 +19,7 @@ var GetProjectInput rpcpb.GetProjectRequest
 var GetProjectFromFile string
 
 func init() {
-	RegistryServiceCmd.AddCommand(GetProjectCmd)
+	AdminServiceCmd.AddCommand(GetProjectCmd)
 
 	GetProjectCmd.Flags().StringVar(&GetProjectInput.Name, "name", "", "Required. The name of the project to retrieve.  Format:...")
 
@@ -58,9 +58,9 @@ var GetProjectCmd = &cobra.Command{
 		}
 
 		if Verbose {
-			printVerboseInput("Registry", "GetProject", &GetProjectInput)
+			printVerboseInput("Admin", "GetProject", &GetProjectInput)
 		}
-		resp, err := RegistryClient.GetProject(ctx, &GetProjectInput)
+		resp, err := AdminClient.GetProject(ctx, &GetProjectInput)
 
 		if Verbose {
 			fmt.Print("Output: ")

@@ -22,7 +22,6 @@ import (
 	gapic "github.com/apigee/registry/gapic"
 	rpcpb "github.com/apigee/registry/rpc"
 	"google.golang.org/api/iterator"
-	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 func ExampleNewRegistryClient() {
@@ -35,130 +34,6 @@ func ExampleNewRegistryClient() {
 
 	// TODO: Use client.
 	_ = c
-}
-
-func ExampleRegistryClient_GetStatus() {
-	ctx := context.Background()
-	c, err := gapic.NewRegistryClient(ctx)
-	if err != nil {
-		// TODO: Handle error.
-	}
-	defer c.Close()
-
-	req := &emptypb.Empty{
-		// TODO: Fill request struct fields.
-		// See https://pkg.go.dev/google.golang.org/protobuf/types/known/emptypb#Empty.
-	}
-	resp, err := c.GetStatus(ctx, req)
-	if err != nil {
-		// TODO: Handle error.
-	}
-	// TODO: Use resp.
-	_ = resp
-}
-
-func ExampleRegistryClient_ListProjects() {
-	ctx := context.Background()
-	c, err := gapic.NewRegistryClient(ctx)
-	if err != nil {
-		// TODO: Handle error.
-	}
-	defer c.Close()
-
-	req := &rpcpb.ListProjectsRequest{
-		// TODO: Fill request struct fields.
-		// See https://pkg.go.dev/github.com/apigee/registry/rpc#ListProjectsRequest.
-	}
-	it := c.ListProjects(ctx, req)
-	for {
-		resp, err := it.Next()
-		if err == iterator.Done {
-			break
-		}
-		if err != nil {
-			// TODO: Handle error.
-		}
-		// TODO: Use resp.
-		_ = resp
-	}
-}
-
-func ExampleRegistryClient_GetProject() {
-	ctx := context.Background()
-	c, err := gapic.NewRegistryClient(ctx)
-	if err != nil {
-		// TODO: Handle error.
-	}
-	defer c.Close()
-
-	req := &rpcpb.GetProjectRequest{
-		// TODO: Fill request struct fields.
-		// See https://pkg.go.dev/github.com/apigee/registry/rpc#GetProjectRequest.
-	}
-	resp, err := c.GetProject(ctx, req)
-	if err != nil {
-		// TODO: Handle error.
-	}
-	// TODO: Use resp.
-	_ = resp
-}
-
-func ExampleRegistryClient_CreateProject() {
-	ctx := context.Background()
-	c, err := gapic.NewRegistryClient(ctx)
-	if err != nil {
-		// TODO: Handle error.
-	}
-	defer c.Close()
-
-	req := &rpcpb.CreateProjectRequest{
-		// TODO: Fill request struct fields.
-		// See https://pkg.go.dev/github.com/apigee/registry/rpc#CreateProjectRequest.
-	}
-	resp, err := c.CreateProject(ctx, req)
-	if err != nil {
-		// TODO: Handle error.
-	}
-	// TODO: Use resp.
-	_ = resp
-}
-
-func ExampleRegistryClient_UpdateProject() {
-	ctx := context.Background()
-	c, err := gapic.NewRegistryClient(ctx)
-	if err != nil {
-		// TODO: Handle error.
-	}
-	defer c.Close()
-
-	req := &rpcpb.UpdateProjectRequest{
-		// TODO: Fill request struct fields.
-		// See https://pkg.go.dev/github.com/apigee/registry/rpc#UpdateProjectRequest.
-	}
-	resp, err := c.UpdateProject(ctx, req)
-	if err != nil {
-		// TODO: Handle error.
-	}
-	// TODO: Use resp.
-	_ = resp
-}
-
-func ExampleRegistryClient_DeleteProject() {
-	ctx := context.Background()
-	c, err := gapic.NewRegistryClient(ctx)
-	if err != nil {
-		// TODO: Handle error.
-	}
-	defer c.Close()
-
-	req := &rpcpb.DeleteProjectRequest{
-		// TODO: Fill request struct fields.
-		// See https://pkg.go.dev/github.com/apigee/registry/rpc#DeleteProjectRequest.
-	}
-	err = c.DeleteProject(ctx, req)
-	if err != nil {
-		// TODO: Handle error.
-	}
 }
 
 func ExampleRegistryClient_ListApis() {

@@ -36,7 +36,11 @@ func Command(ctx context.Context) *cobra.Command {
 			if err != nil {
 				log.WithError(err).Fatal("Failed to get client")
 			}
-			err = matchAndHandleListCmd(ctx, client, args[0], filter)
+			adminClient, err := connection.NewAdminClient(ctx)
+			if err != nil {
+				log.WithError(err).Fatal("Failed to get client")
+			}
+			err = matchAndHandleListCmd(ctx, client, adminClient, args[0], filter)
 			if err != nil {
 				log.WithError(err).Fatal("Failed to match or handle command")
 			}
@@ -50,13 +54,14 @@ func Command(ctx context.Context) *cobra.Command {
 func matchAndHandleListCmd(
 	ctx context.Context,
 	client connection.Client,
+	adminClient connection.AdminClient,
 	name string,
 	filter string,
 ) error {
 
 	// First try to match collection names.
 	if m := names.ProjectsRegexp().FindStringSubmatch(name); m != nil {
-		return core.ListProjects(ctx, client, m, filter, core.PrintProject)
+		return core.ListProjects(ctx, adminClient, m, filter, core.PrintProject)
 	} else if m := names.ApisRegexp().FindStringSubmatch(name); m != nil {
 		return core.ListAPIs(ctx, client, m, filter, core.PrintAPI)
 	} else if m := names.VersionsRegexp().FindStringSubmatch(name); m != nil {
@@ -69,7 +74,7 @@ func matchAndHandleListCmd(
 
 	// Then try to match resource names.
 	if m := names.ProjectRegexp().FindStringSubmatch(name); m != nil {
-		return core.ListProjects(ctx, client, m, filter, core.PrintProject)
+		return core.ListProjects(ctx, adminClient, m, filter, core.PrintProject)
 	} else if m := names.ApiRegexp().FindStringSubmatch(name); m != nil {
 		return core.ListAPIs(ctx, client, m, filter, core.PrintAPI)
 	} else if m := names.VersionRegexp().FindStringSubmatch(name); m != nil {

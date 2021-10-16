@@ -51,7 +51,13 @@ func csvCommand(ctx context.Context) *cobra.Command {
 			if err != nil {
 				log.WithError(err).Fatal("Failed to get client")
 			}
-			core.EnsureProjectExists(ctx, client, projectID)
+
+			adminClient, err := connection.NewAdminClient(ctx)
+			if err != nil {
+				log.WithError(err).Fatal("Failed to get client")
+			}
+
+			core.EnsureProjectExists(ctx, adminClient, projectID)
 
 			taskQueue, wait := core.WorkerPool(ctx, 64)
 			defer wait()

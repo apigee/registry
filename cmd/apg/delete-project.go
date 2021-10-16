@@ -17,7 +17,7 @@ var DeleteProjectInput rpcpb.DeleteProjectRequest
 var DeleteProjectFromFile string
 
 func init() {
-	RegistryServiceCmd.AddCommand(DeleteProjectCmd)
+	AdminServiceCmd.AddCommand(DeleteProjectCmd)
 
 	DeleteProjectCmd.Flags().StringVar(&DeleteProjectInput.Name, "name", "", "Required. The name of the project to delete.  Format:...")
 
@@ -56,9 +56,9 @@ var DeleteProjectCmd = &cobra.Command{
 		}
 
 		if Verbose {
-			printVerboseInput("Registry", "DeleteProject", &DeleteProjectInput)
+			printVerboseInput("Admin", "DeleteProject", &DeleteProjectInput)
 		}
-		err = RegistryClient.DeleteProject(ctx, &DeleteProjectInput)
+		err = AdminClient.DeleteProject(ctx, &DeleteProjectInput)
 
 		return err
 	},
