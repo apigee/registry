@@ -11,7 +11,7 @@ import (
 
 // RespondWithErrorAndExit takes in a sequence of errors, sets them in the response,
 // responds, and then exits.
-func RespondWithErrorAndExit(errs ...error) {
+func respondWithErrorAndExit(errs ...error) {
 	errorMessages := make([]string, len(errs))
 	for i, err := range errs {
 		errorMessages[i] = err.Error()
@@ -19,18 +19,18 @@ func RespondWithErrorAndExit(errs ...error) {
 	response := &rpc.LinterResponse{
 		Errors: errorMessages,
 	}
-	RespondAndExit(response)
+	respondAndExit(response)
 }
 
 // RespondAndExit serializes and writes the plugin response to STDOUT, and then exits.
-func RespondAndExit(response *rpc.LinterResponse) {
+func respondAndExit(response *rpc.LinterResponse) {
 	responseBytes, _ := proto.Marshal(response)
 	os.Stdout.Write(responseBytes)
 	os.Exit(0)
 }
 
 // GetRequest constructs a LinterRequest object from standard input.
-func GetRequest() (*rpc.LinterRequest, error) {
+func getRequest() (*rpc.LinterRequest, error) {
 	// Read from stdin.
 	pluginData, err := ioutil.ReadAll(os.Stdin)
 	if err != nil {
@@ -52,16 +52,16 @@ func GetRequest() (*rpc.LinterRequest, error) {
 
 // Main reads the request from STDIN, runs the linter plugin, and
 // writes the response to STDOUT.
-func Main(runner LinterPluginRunner) {
-	req, err := GetRequest()
+func Main(runner LinterRunner) {
+	req, err := getRequest()
 	if err != nil {
-		RespondWithErrorAndExit(err)
+		respondWithErrorAndExit(err)
 	}
 
 	resp, err := runner.Run(req)
 	if err != nil {
-		RespondWithErrorAndExit(err)
+		respondWithErrorAndExit(err)
 	}
 
-	RespondAndExit(resp)
+	respondAndExit(resp)
 }

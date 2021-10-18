@@ -21,7 +21,7 @@ import (
 	"github.com/apigee/registry/rpc"
 )
 
-// SampleLinterRunner implements the LinterPluginRunner interface for the sample linter.
+// SampleLinterRunner implements the LinterRunner interface for the sample linter.
 type SampleLinterRunner struct{}
 
 func (*SampleLinterRunner) Run(req *rpc.LinterRequest) (*rpc.LinterResponse, error) {
