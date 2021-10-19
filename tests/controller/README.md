@@ -42,10 +42,10 @@ Make sure you have a registry server running. We will deploy the server to GKE f
   source auth/GKE.sh
 
   # Verify the server is running
-  apg registry get-status
+  apg admin get-status
 
   # Create demo project
-  apg registry create-project --project_id demo --json
+  apg admin create-project --project_id demo --json
 
   # Create 10 versions of the petstore API
   ./tests/controller/create_apis.sh 10

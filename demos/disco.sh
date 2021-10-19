@@ -28,7 +28,7 @@
 # commands.
 
 # First, delete the "disco" project to get a fresh start.
-apg registry delete-project --name projects/disco
+apg admin delete-project --name projects/disco
 
 # Upload all of the APIs from the Discovery Service at once.
 # This happens in parallel and usually takes a minute or two.
@@ -37,7 +37,7 @@ registry upload bulk discovery \
 
 # The disco project was automatically created. Here we'll use an
 # update-project call to set a few properties of the project.
-apg registry update-project \
+apg admin update-project \
 	--project.name "projects/disco" \
 	--project.display_name "Discovery" \
 	--project.description "Descriptions of public Google APIs from the API Discovery Service"
