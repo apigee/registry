@@ -24,7 +24,6 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 )
 
 // Client represents a connection to a storage provider.
@@ -47,12 +46,6 @@ func unlock() {
 	}
 }
 
-func defaultConfig() *gorm.Config {
-	return &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Silent), // https://gorm.io/docs/logger.html
-	}
-}
-
 // NewClient creates a new database session using the provided driver and data source name.
 // Driver must be one of [ sqlite3, postgres, cloudsqlpostgres ]. DSN format varies per database driver.
 //
@@ -62,7 +55,9 @@ func NewClient(ctx context.Context, driver, dsn string) (*Client, error) {
 	lock()
 	switch driver {
 	case "sqlite3":
-		db, err := gorm.Open(sqlite.Open(dsn), defaultConfig())
+		db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{
+			Logger: NewGormLogger(ctx),
+		})
 		if err != nil {
 			c := &Client{db: db}
 			c.close()
@@ -80,7 +75,9 @@ func NewClient(ctx context.Context, driver, dsn string) (*Client, error) {
 		db, err := gorm.Open(postgres.New(postgres.Config{
 			DriverName: driver,
 			DSN:        dsn,
-		}), defaultConfig())
+		}), &gorm.Config{
+			Logger: NewGormLogger(ctx),
+		})
 		if err != nil {
 			c := &Client{db: db}
 			c.close()
