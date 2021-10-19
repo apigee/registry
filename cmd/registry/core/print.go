@@ -98,8 +98,10 @@ func PrintArtifactContents(artifact *rpc.Artifact) {
 		unmarshalAndPrint(artifact.GetContents(), &rpc.Index{})
 	case "google.cloud.apigeeregistry.applications.v1alpha1.Lint":
 		unmarshalAndPrint(artifact.GetContents(), &rpc.Lint{})
-	case "google.cloud.apigeeregistry.applications.v1alpha1.Manifest":
+	case "google.cloud.apigeeregistry.v1.controller.Manifest":
 		unmarshalAndPrint(artifact.GetContents(), &rpc.Manifest{})
+	case "google.cloud.apigeeregistry.v1.controller.Receipt":
+		unmarshalAndPrint(artifact.GetContents(), &rpc.Receipt{})
 	case "google.cloud.apigeeregistry.applications.v1alpha1.References":
 		unmarshalAndPrint(artifact.GetContents(), &rpc.References{})
 	case "google.cloud.apigeeregistry.applications.v1alpha1.StyleGuide":

@@ -1,0 +1,50 @@
+// Copyright 2021 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+// (-- api-linter: core::0215::versioned-packages=disabled
+//     aip.dev/not-precedent: Support protos for the apigeeregistry.v1 API. --)
+package google.cloud.apigeeregistry.v1.controller;
+
+import "google/api/field_behavior.proto";
+
+option java_package = "com.google.cloud.apigeeregistry.v1.controller";
+option java_multiple_files = true;
+option java_outer_classname = "ControllerReceiptProto";
+option go_package = "github.com/apigee/registry/rpc;rpc";
+
+// Stores the receipt of an external action,
+// which does not store any direct artifacts in the registry.
+message Receipt {
+  // Artifact identifier. May be used in YAML representations to indicate the id
+  // to be used to attach the artifact.
+  string id = 1;
+
+  // Artifact kind. May be used in YAML representations to identify the type of
+  // this artifact.
+  string kind = 2;
+
+  // A human-friendly name for the receipt.
+  string display_name = 3;
+
+  // A more detailed description of the receipt.
+  string description = 4;
+
+  // Action whose receipt is stored as an artifact.
+  string action = 5 [(google.api.field_behavior) = REQUIRED];
+
+  // If appropriate, a URI of the result of the action.
+  string result_uri = 6;
+}
