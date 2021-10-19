@@ -19,6 +19,7 @@ ALL_PROTOS=(
 	google/cloud/apigeeregistry/applications/v1alpha1/*.proto
 	google/cloud/apigeeregistry/internal/v1/*.proto
 	google/cloud/apigeeregistry/v1/*.proto
+	google/cloud/apigeeregistry/v1/controller/*.proto
 )
 
 SERVICE_PROTOS=(
@@ -35,3 +36,11 @@ function clone_common_protos {
 		git clone https://github.com/googleapis/api-common-protos $COMMON_PROTOS_PATH
 	fi
 }
+
+# Require a specific version of protoc for generating files.
+# This stabilizes the generated file output, which includes the protoc version.
+PROTOC_VERSION='3.18.1'
+if [ "$(protoc --version)" != "libprotoc $PROTOC_VERSION" ]; then
+    echo "Please update your protoc to version $PROTOC_VERSION or modify the version in tools/PROTOS.sh"
+    exit
+fi

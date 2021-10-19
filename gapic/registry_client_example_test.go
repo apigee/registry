@@ -571,10 +571,12 @@ func ExampleRegistryClient_DeleteApiSpecRevision() {
 		// TODO: Fill request struct fields.
 		// See https://pkg.go.dev/github.com/apigee/registry/rpc#DeleteApiSpecRevisionRequest.
 	}
-	err = c.DeleteApiSpecRevision(ctx, req)
+	resp, err := c.DeleteApiSpecRevision(ctx, req)
 	if err != nil {
 		// TODO: Handle error.
 	}
+	// TODO: Use resp.
+	_ = resp
 }
 
 func ExampleRegistryClient_ListArtifacts() {

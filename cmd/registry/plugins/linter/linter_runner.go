@@ -12,19 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package conformance
+package linter
 
-import (
-	"fmt"
-)
+import "github.com/apigee/registry/rpc"
 
-// CreateLinter returns a Linter object when provided the name of a linter
-func CreateLinter(linter_name string) (Linter, error) {
-	if linter_name == "spectral" {
-		return NewSpectralLinter(), nil
-	} else if linter_name == "api-linter" {
-		return NewApiLinter(), nil
-	}
+// LinterRunner is an interface through which a linter executes.
+type LinterRunner interface {
 
-	return nil, fmt.Errorf("unknown linter: %s", linter_name)
+	// Runs the linter with a provided linter request.
+	Run(request *rpc.LinterRequest) (*rpc.LinterResponse, error)
 }
