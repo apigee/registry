@@ -49,5 +49,5 @@ func (*SampleLinterRunner) Run(req *rpc.LinterRequest) (*rpc.LinterResponse, err
 }
 
 func main() {
-	lint.Main(&SampleLinterRunner{})
+	lint.Lint(&SampleLinterRunner{})
 }
