@@ -262,11 +262,7 @@ func (c *Client) GetRecentSpecRevisions(ctx context.Context, offset int32, proje
 	op := c.db.Select("specs.*").
 		Table("specs").
 		// Join missing columns that couldn't be selected in the subquery.
-		Joins(`JOIN (?) AS grp ON specs.project_id = grp.project_id AND
-			specs.api_id = grp.api_id AND
-			specs.version_id = grp.version_id AND
-			specs.spec_id = grp.spec_id AND
-			specs.revision_create_time = grp.recent_create_time`,
+		Joins("JOIN (?) AS grp ON specs.project_id = grp.project_id AND specs.api_id = grp.api_id AND specs.version_id = grp.version_id AND specs.spec_id = grp.spec_id AND specs.revision_create_time = grp.recent_create_time",
 			// Select spec names and only their most recent revision_create_time
 			// This query cannot select all the columns we want.
 			// See: https://stackoverflow.com/questions/7745609/sql-select-only-rows-with-max-value-on-a-column
