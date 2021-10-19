@@ -17,6 +17,7 @@ package filtering
 import (
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/checker/decls"
+	"github.com/google/cel-go/ext"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -80,7 +81,7 @@ func NewFilter(filter string, fields []Field) (Filter, error) {
 		}
 	}
 
-	env, err := cel.NewEnv(cel.Container("filter"), cel.Declarations(declarations...))
+	env, err := cel.NewEnv(cel.Container("filter"), cel.Declarations(declarations...), ext.Strings())
 	if err != nil {
 		return Filter{}, status.Error(codes.InvalidArgument, err.Error())
 	}
