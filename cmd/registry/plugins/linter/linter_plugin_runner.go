@@ -1,4 +1,4 @@
-package lint
+package linter
 
 import "github.com/apigee/registry/rpc"
 

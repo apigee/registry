@@ -17,7 +17,7 @@ package main
 import (
 	"fmt"
 
-	lint "github.com/apigee/registry/cmd/registry/plugins/linter"
+	"github.com/apigee/registry/cmd/registry/plugins/linter"
 	"github.com/apigee/registry/rpc"
 )
 
@@ -49,5 +49,5 @@ func (*SampleLinterRunner) Run(req *rpc.LinterRequest) (*rpc.LinterResponse, err
 }
 
 func main() {
-	lint.Lint(&SampleLinterRunner{})
+	linter.Lint(&SampleLinterRunner{})
 }
