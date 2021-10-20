@@ -64,9 +64,9 @@ func getRequest() (*rpc.LinterRequest, error) {
 	return linterRequest, nil
 }
 
-// Lint reads the request from STDIN, runs the linter plugin, and
+// Main reads the request from STDIN, runs the linter plugin, and
 // writes the response to STDOUT.
-func Lint(runner LinterRunner) {
+func Main(runner LinterRunner) {
 	req, err := getRequest()
 	if err != nil {
 		respondWithErrorAndExit(err)
