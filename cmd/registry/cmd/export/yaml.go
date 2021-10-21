@@ -35,14 +35,19 @@ func yamlCommand(ctx context.Context) *cobra.Command {
 				log.WithError(err).Fatal("Failed to get client")
 			}
 
+			adminClient, err := connection.NewAdminClient(ctx)
+			if err != nil {
+				log.WithError(err).Fatal("Failed to get client")
+			}
+
 			var name string
 			if len(args) > 0 {
 				name = args[0]
 			}
 
 			if m := names.ProjectRegexp().FindStringSubmatch(name); m != nil {
-				_, err := core.GetProject(ctx, client, m, func(message *rpc.Project) {
-					core.ExportYAMLForProject(ctx, client, message)
+				_, err := core.GetProject(ctx, adminClient, m, func(message *rpc.Project) {
+					core.ExportYAMLForProject(ctx, client, adminClient, message)
 				})
 				if err != nil {
 					log.WithError(err).Fatal("Failed to export project YAML")

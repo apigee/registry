@@ -14,7 +14,7 @@ Envoy locally alongside a locally-running version of `registry-server`.
    running `source auth/ENVOY.sh` from the top of this repo.
 
 4. Run any of the included tools or examples for accessing your local Registry,
-   e.g. `apg registry get-status`.
+   e.g. `apg admin get-status`.
 
 ## Running Envoy with authz
 

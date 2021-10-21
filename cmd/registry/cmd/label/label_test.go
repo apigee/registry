@@ -44,15 +44,20 @@ func TestLabel(t *testing.T) {
 		t.Fatalf("Error creating client: %+v", err)
 	}
 	defer registryClient.Close()
+	adminClient, err := connection.NewAdminClient(ctx)
+	if err != nil {
+		t.Fatalf("Error creating client: %+v", err)
+	}
+	defer adminClient.Close()
 	// Clear the test project.
-	err = registryClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{
+	err = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{
 		Name: projectName,
 	})
 	if err != nil && status.Code(err) != codes.NotFound {
 		t.Fatalf("Error deleting test project: %+v", err)
 	}
 	// Create the test project.
-	_, err = registryClient.CreateProject(ctx, &rpc.CreateProjectRequest{
+	_, err = adminClient.CreateProject(ctx, &rpc.CreateProjectRequest{
 		ProjectId: projectID,
 		Project: &rpc.Project{
 			DisplayName: "Test",
@@ -168,7 +173,7 @@ func TestLabel(t *testing.T) {
 		req := &rpc.DeleteProjectRequest{
 			Name: projectName,
 		}
-		err = registryClient.DeleteProject(ctx, req)
+		err = adminClient.DeleteProject(ctx, req)
 		if err != nil {
 			t.Fatalf("Failed to delete test project: %s", err)
 		}

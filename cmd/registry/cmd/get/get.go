@@ -35,6 +35,10 @@ func Command(ctx context.Context) *cobra.Command {
 			if err != nil {
 				log.WithError(err).Fatal("Failed to get client")
 			}
+			adminClient, err := connection.NewAdminClient(ctx)
+			if err != nil {
+				log.WithError(err).Fatal("Failed to get client")
+			}
 
 			var name string
 			if len(args) > 0 {
@@ -42,7 +46,7 @@ func Command(ctx context.Context) *cobra.Command {
 			}
 
 			if m := names.ProjectRegexp().FindStringSubmatch(name); m != nil {
-				_, err = core.GetProject(ctx, client, m, core.PrintProjectDetail)
+				_, err = core.GetProject(ctx, adminClient, m, core.PrintProjectDetail)
 			} else if m := names.ApiRegexp().FindStringSubmatch(name); m != nil {
 				_, err = core.GetAPI(ctx, client, m, core.PrintAPIDetail)
 			} else if m := names.VersionRegexp().FindStringSubmatch(name); m != nil {

@@ -26,11 +26,11 @@ fi
 
 echo
 echo Delete everything associated with any preexisting project named "demo".
-apg registry delete-project --name projects/demo
+apg admin delete-project --name projects/demo
 
 echo
 echo Create a project in the registry named "demo".
-apg registry create-project --project_id demo --json
+apg admin create-project --project_id demo --json
 
 echo
 echo Add a API to the registry.

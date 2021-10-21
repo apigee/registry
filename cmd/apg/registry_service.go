@@ -17,12 +17,6 @@ import (
 var RegistryConfig *viper.Viper
 var RegistryClient *gapic.RegistryClient
 var RegistrySubCommands []string = []string{
-	"get-status",
-	"list-projects",
-	"get-project",
-	"create-project",
-	"update-project",
-	"delete-project",
 	"list-apis",
 	"get-api",
 	"create-api",

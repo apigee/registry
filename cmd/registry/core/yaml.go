@@ -28,8 +28,8 @@ import (
 )
 
 // ExportYAMLForProject writes a project as a YAML file.
-func ExportYAMLForProject(ctx context.Context, client *gapic.RegistryClient, message *rpc.Project) {
-	printDocAsYaml(docForMapping(exportProject(ctx, client, message)))
+func ExportYAMLForProject(ctx context.Context, client *gapic.RegistryClient, adminClient *gapic.AdminClient, message *rpc.Project) {
+	printDocAsYaml(docForMapping(exportProject(ctx, client, adminClient, message)))
 }
 
 // ExportYAMLForAPI writes a project as a YAML file.
@@ -47,7 +47,7 @@ func ExportYAMLForSpec(ctx context.Context, client *gapic.RegistryClient, messag
 	printDocAsYaml(docForMapping(exportSpec(ctx, client, message)))
 }
 
-func exportProject(ctx context.Context, client *gapic.RegistryClient, message *rpc.Project) []*yaml.Node {
+func exportProject(ctx context.Context, client *gapic.RegistryClient, adminClient *gapic.AdminClient, message *rpc.Project) []*yaml.Node {
 	m := names.ProjectRegexp().FindStringSubmatch(message.Name)
 	projectMapContent := nodeSlice()
 	apisMapContent := nodeSlice()

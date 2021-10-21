@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-apg registry create-project --project_id demo --json
+apg admin create-project --project_id demo --json
 
 apg registry create-api \
     --parent projects/demo/locations/global \

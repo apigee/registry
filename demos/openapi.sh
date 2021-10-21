@@ -28,7 +28,7 @@
 # commands.
 
 # First, delete the "openapi" project to get a fresh start.
-apg registry delete-project --name projects/openapi
+apg admin delete-project --name projects/openapi
 
 # Get the commit hash of the checked-out OpenAPI directory
 export COMMIT=`(cd ~/Desktop/openapi-directory; git rev-parse HEAD)`
@@ -41,7 +41,7 @@ registry upload bulk openapi \
 
 # The openapi project was automatically created. Here we'll use an
 # update-project call to set a few properties of the project.
-apg registry update-project \
+apg admin update-project \
 	--project.name "projects/openapi" \
 	--project.display_name "OpenAPI Directory" \
 	--project.description "APIs collected from the APIs.guru OpenAPI Directory"

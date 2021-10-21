@@ -31,14 +31,14 @@ var sortActions = cmpopts.SortSlices(func(a, b *Action) bool { return a.Command 
 func TestArtifacts(t *testing.T) {
 	tests := []struct {
 		desc  string
-		setup func(context.Context, connection.Client)
+		setup func(context.Context, connection.Client, connection.AdminClient)
 		want  []*Action
 	}{
 		{
 			desc: "single spec",
-			setup: func(ctx context.Context, client connection.Client) {
-				deleteProject(ctx, client, t, "controller-test")
-				createProject(ctx, client, t, "controller-test")
+			setup: func(ctx context.Context, client connection.Client, adminClient connection.AdminClient) {
+				deleteProject(ctx, adminClient, t, "controller-test")
+				createProject(ctx, adminClient, t, "controller-test")
 				createApi(ctx, client, t, "projects/controller-test/locations/global", "petstore")
 				createVersion(ctx, client, t, "projects/controller-test/locations/global/apis/petstore", "1.0.0")
 				createSpec(ctx, client, t, "projects/controller-test/locations/global/apis/petstore/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
@@ -52,9 +52,9 @@ func TestArtifacts(t *testing.T) {
 		},
 		{
 			desc: "multiple specs",
-			setup: func(ctx context.Context, client connection.Client) {
-				deleteProject(ctx, client, t, "controller-test")
-				createProject(ctx, client, t, "controller-test")
+			setup: func(ctx context.Context, client connection.Client, adminClient connection.AdminClient) {
+				deleteProject(ctx, adminClient, t, "controller-test")
+				createProject(ctx, adminClient, t, "controller-test")
 				createApi(ctx, client, t, "projects/controller-test/locations/global", "petstore")
 				// Version 1.0.0
 				createVersion(ctx, client, t, "projects/controller-test/locations/global/apis/petstore", "1.0.0")
@@ -83,9 +83,9 @@ func TestArtifacts(t *testing.T) {
 		},
 		{
 			desc: "partially existing artifacts",
-			setup: func(ctx context.Context, client connection.Client) {
-				deleteProject(ctx, client, t, "controller-test")
-				createProject(ctx, client, t, "controller-test")
+			setup: func(ctx context.Context, client connection.Client, adminClient connection.AdminClient) {
+				deleteProject(ctx, adminClient, t, "controller-test")
+				createProject(ctx, adminClient, t, "controller-test")
 				createApi(ctx, client, t, "projects/controller-test/locations/global", "petstore")
 				// Version 1.0.0
 				createVersion(ctx, client, t, "projects/controller-test/locations/global/apis/petstore", "1.0.0")
@@ -111,9 +111,9 @@ func TestArtifacts(t *testing.T) {
 		},
 		{
 			desc: "outdated artifacts",
-			setup: func(ctx context.Context, client connection.Client) {
-				deleteProject(ctx, client, t, "controller-test")
-				createProject(ctx, client, t, "controller-test")
+			setup: func(ctx context.Context, client connection.Client, adminClient connection.AdminClient) {
+				deleteProject(ctx, adminClient, t, "controller-test")
+				createProject(ctx, adminClient, t, "controller-test")
 				createApi(ctx, client, t, "projects/controller-test/locations/global", "petstore")
 				// Version 1.0.0
 				createVersion(ctx, client, t, "projects/controller-test/locations/global/apis/petstore", "1.0.0")
@@ -152,8 +152,14 @@ func TestArtifacts(t *testing.T) {
 				t.FailNow()
 			}
 			defer registryClient.Close()
+			adminClient, err := connection.NewAdminClient(ctx)
+			if err != nil {
+				t.Logf("Failed to create client: %+v", err)
+				t.FailNow()
+			}
+			defer adminClient.Close()
 
-			test.setup(ctx, registryClient)
+			test.setup(ctx, registryClient, adminClient)
 
 			manifest := &rpc.Manifest{
 				Id: "controller-test",
@@ -176,7 +182,7 @@ func TestArtifacts(t *testing.T) {
 				t.Errorf("ProcessManifest(%+v) returned unexpected diff (-want +got):\n%s", manifest, diff)
 			}
 
-			deleteProject(ctx, registryClient, t, "controller-test")
+			deleteProject(ctx, adminClient, t, "controller-test")
 		})
 	}
 }
@@ -185,14 +191,14 @@ func TestArtifacts(t *testing.T) {
 func TestAggregateArtifacts(t *testing.T) {
 	tests := []struct {
 		desc  string
-		setup func(context.Context, connection.Client)
+		setup func(context.Context, connection.Client, connection.AdminClient)
 		want  []*Action
 	}{
 		{
 			desc: "create artifacts",
-			setup: func(ctx context.Context, client connection.Client) {
-				deleteProject(ctx, client, t, "controller-test")
-				createProject(ctx, client, t, "controller-test")
+			setup: func(ctx context.Context, client connection.Client, adminClient connection.AdminClient) {
+				deleteProject(ctx, adminClient, t, "controller-test")
+				createProject(ctx, adminClient, t, "controller-test")
 				createApi(ctx, client, t, "projects/controller-test/locations/global", "test-api-1")
 				// Version 1.0.0
 				createVersion(ctx, client, t, "projects/controller-test/locations/global/apis/test-api-1", "1.0.0")
@@ -229,9 +235,9 @@ func TestAggregateArtifacts(t *testing.T) {
 		},
 		{
 			desc: "outdated arttifacts",
-			setup: func(ctx context.Context, client connection.Client) {
-				deleteProject(ctx, client, t, "controller-test")
-				createProject(ctx, client, t, "controller-test")
+			setup: func(ctx context.Context, client connection.Client, adminClient connection.AdminClient) {
+				deleteProject(ctx, adminClient, t, "controller-test")
+				createProject(ctx, adminClient, t, "controller-test")
 				createApi(ctx, client, t, "projects/controller-test/locations/global", "test-api-1")
 				// Version 1.0.0
 				createVersion(ctx, client, t, "projects/controller-test/locations/global/apis/test-api-1", "1.0.0")
@@ -278,8 +284,14 @@ func TestAggregateArtifacts(t *testing.T) {
 				t.FailNow()
 			}
 			defer registryClient.Close()
+			adminClient, err := connection.NewAdminClient(ctx)
+			if err != nil {
+				t.Logf("Failed to create client: %+v", err)
+				t.FailNow()
+			}
+			defer adminClient.Close()
 
-			test.setup(ctx, registryClient)
+			test.setup(ctx, registryClient, adminClient)
 
 			manifest := &rpc.Manifest{
 
@@ -302,7 +314,7 @@ func TestAggregateArtifacts(t *testing.T) {
 				t.Errorf("ProcessManifest(%+v) returned unexpected diff (-want +got):\n%s", manifest, diff)
 			}
 
-			deleteProject(ctx, registryClient, t, "controller-test")
+			deleteProject(ctx, adminClient, t, "controller-test")
 		})
 	}
 
@@ -312,14 +324,14 @@ func TestAggregateArtifacts(t *testing.T) {
 func TestDerivedArtifacts(t *testing.T) {
 	tests := []struct {
 		desc  string
-		setup func(context.Context, connection.Client)
+		setup func(context.Context, connection.Client, connection.AdminClient)
 		want  []*Action
 	}{
 		{
 			desc: "create artifacts",
-			setup: func(ctx context.Context, client connection.Client) {
-				deleteProject(ctx, client, t, "controller-test")
-				createProject(ctx, client, t, "controller-test")
+			setup: func(ctx context.Context, client connection.Client, adminClient connection.AdminClient) {
+				deleteProject(ctx, adminClient, t, "controller-test")
+				createProject(ctx, adminClient, t, "controller-test")
 				createApi(ctx, client, t, "projects/controller-test/locations/global", "petstore")
 				// Version 1.0.0
 				createVersion(ctx, client, t, "projects/controller-test/locations/global/apis/petstore", "1.0.0")
@@ -363,9 +375,9 @@ func TestDerivedArtifacts(t *testing.T) {
 		},
 		{
 			desc: "missing artifacts",
-			setup: func(ctx context.Context, client connection.Client) {
-				deleteProject(ctx, client, t, "controller-test")
-				createProject(ctx, client, t, "controller-test")
+			setup: func(ctx context.Context, client connection.Client, adminClient connection.AdminClient) {
+				deleteProject(ctx, adminClient, t, "controller-test")
+				createProject(ctx, adminClient, t, "controller-test")
 				createApi(ctx, client, t, "projects/controller-test/locations/global", "petstore")
 				// Version 1.0.0
 				createVersion(ctx, client, t, "projects/controller-test/locations/global/apis/petstore", "1.0.0")
@@ -393,9 +405,9 @@ func TestDerivedArtifacts(t *testing.T) {
 		},
 		{
 			desc: "outdated artifacts",
-			setup: func(ctx context.Context, client connection.Client) {
-				deleteProject(ctx, client, t, "controller-test")
-				createProject(ctx, client, t, "controller-test")
+			setup: func(ctx context.Context, client connection.Client, adminClient connection.AdminClient) {
+				deleteProject(ctx, adminClient, t, "controller-test")
+				createProject(ctx, adminClient, t, "controller-test")
 				createApi(ctx, client, t, "projects/controller-test/locations/global", "petstore")
 
 				// Version 1.0.0
@@ -450,8 +462,14 @@ func TestDerivedArtifacts(t *testing.T) {
 				t.FailNow()
 			}
 			defer registryClient.Close()
+			adminClient, err := connection.NewAdminClient(ctx)
+			if err != nil {
+				t.Logf("Failed to create client: %+v", err)
+				t.FailNow()
+			}
+			defer adminClient.Close()
 
-			test.setup(ctx, registryClient)
+			test.setup(ctx, registryClient, adminClient)
 
 			manifest := &rpc.Manifest{
 				Id: "controller-test",
@@ -476,7 +494,7 @@ func TestDerivedArtifacts(t *testing.T) {
 				t.Errorf("ProcessManifest(%+v) returned unexpected diff (-want +got):\n%s", manifest, diff)
 			}
 
-			deleteProject(ctx, registryClient, t, "controller-test")
+			deleteProject(ctx, adminClient, t, "controller-test")
 		})
 	}
 
@@ -486,14 +504,14 @@ func TestDerivedArtifacts(t *testing.T) {
 func TestReceiptArtifacts(t *testing.T) {
 	tests := []struct {
 		desc  string
-		setup func(context.Context, connection.Client)
+		setup func(context.Context, connection.Client, connection.AdminClient)
 		want  []*Action
 	}{
 		{
 			desc: "create artifacts",
-			setup: func(ctx context.Context, client connection.Client) {
-				deleteProject(ctx, client, t, "controller-test")
-				createProject(ctx, client, t, "controller-test")
+			setup: func(ctx context.Context, client connection.Client, adminClient connection.AdminClient) {
+				deleteProject(ctx, adminClient, t, "controller-test")
+				createProject(ctx, adminClient, t, "controller-test")
 				createApi(ctx, client, t, "projects/controller-test/locations/global", "petstore")
 
 				// Version 1.0.0
@@ -536,8 +554,14 @@ func TestReceiptArtifacts(t *testing.T) {
 				t.FailNow()
 			}
 			defer registryClient.Close()
+			adminClient, err := connection.NewAdminClient(ctx)
+			if err != nil {
+				t.Logf("Failed to create client: %+v", err)
+				t.FailNow()
+			}
+			defer adminClient.Close()
 
-			test.setup(ctx, registryClient)
+			test.setup(ctx, registryClient, adminClient)
 
 			manifest := &rpc.Manifest{
 				Id: "controller-test",
@@ -560,7 +584,7 @@ func TestReceiptArtifacts(t *testing.T) {
 				t.Errorf("ProcessManifest(%+v) returned unexpected diff (-want +got):\n%s", manifest, diff)
 			}
 
-			deleteProject(ctx, registryClient, t, "controller-test")
+			deleteProject(ctx, adminClient, t, "controller-test")
 		})
 	}
 
@@ -570,14 +594,14 @@ func TestReceiptArtifacts(t *testing.T) {
 func TestReceiptAggArtifacts(t *testing.T) {
 	tests := []struct {
 		desc  string
-		setup func(context.Context, connection.Client)
+		setup func(context.Context, connection.Client, connection.AdminClient)
 		want  []*Action
 	}{
 		{
 			desc: "create artifacts",
-			setup: func(ctx context.Context, client connection.Client) {
-				deleteProject(ctx, client, t, "controller-test")
-				createProject(ctx, client, t, "controller-test")
+			setup: func(ctx context.Context, client connection.Client, adminClient connection.AdminClient) {
+				deleteProject(ctx, adminClient, t, "controller-test")
+				createProject(ctx, adminClient, t, "controller-test")
 				createApi(ctx, client, t, "projects/controller-test/locations/global", "petstore")
 
 				// Version 1.0.0
@@ -600,9 +624,9 @@ func TestReceiptAggArtifacts(t *testing.T) {
 		},
 		{
 			desc: "updated artifacts",
-			setup: func(ctx context.Context, client connection.Client) {
-				deleteProject(ctx, client, t, "controller-test")
-				createProject(ctx, client, t, "controller-test")
+			setup: func(ctx context.Context, client connection.Client, adminClient connection.AdminClient) {
+				deleteProject(ctx, adminClient, t, "controller-test")
+				createProject(ctx, adminClient, t, "controller-test")
 				createApi(ctx, client, t, "projects/controller-test/locations/global", "petstore")
 
 				// Version 1.0.0
@@ -638,8 +662,14 @@ func TestReceiptAggArtifacts(t *testing.T) {
 				t.FailNow()
 			}
 			defer registryClient.Close()
+			adminClient, err := connection.NewAdminClient(ctx)
+			if err != nil {
+				t.Logf("Failed to create client: %+v", err)
+				t.FailNow()
+			}
+			defer adminClient.Close()
 
-			test.setup(ctx, registryClient)
+			test.setup(ctx, registryClient, adminClient)
 
 			manifest := &rpc.Manifest{
 				Id: "controller-test",
@@ -662,7 +692,7 @@ func TestReceiptAggArtifacts(t *testing.T) {
 				t.Errorf("ProcessManifest(%+v) returned unexpected diff (-want +got):\n%s", manifest, diff)
 			}
 
-			deleteProject(ctx, registryClient, t, "controller-test")
+			deleteProject(ctx, adminClient, t, "controller-test")
 		})
 	}
 

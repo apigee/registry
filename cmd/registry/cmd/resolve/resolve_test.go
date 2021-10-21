@@ -94,17 +94,21 @@ func TestResolve(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Setup: Failed to create client: %s", err)
 			}
+			adminClient, err := connection.NewAdminClient(ctx)
+			if err != nil {
+				t.Fatalf("Setup: Failed to create client: %s", err)
+			}
 
 			testProject := "controller-demo"
 
-			err = client.DeleteProject(ctx, &rpc.DeleteProjectRequest{
+			err = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{
 				Name: "projects/" + testProject,
 			})
 			if err != nil && status.Code(err) != codes.NotFound {
 				t.Fatalf("Setup: Failed to delete test project: %s", err)
 			}
 
-			project, err := client.CreateProject(ctx, &rpc.CreateProjectRequest{
+			project, err := adminClient.CreateProject(ctx, &rpc.CreateProjectRequest{
 				ProjectId: testProject,
 				Project: &rpc.Project{
 					DisplayName: "Demo",
@@ -260,7 +264,7 @@ func TestResolve(t *testing.T) {
 			}
 
 			// Delete the demo project
-			err = client.DeleteProject(ctx, &rpc.DeleteProjectRequest{
+			err = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{
 				Name: "projects/" + testProject,
 			})
 			if err != nil && status.Code(err) != codes.NotFound {
