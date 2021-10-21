@@ -75,12 +75,19 @@ func TestCRUD(t *testing.T) {
 		t.FailNow()
 	}
 	defer registryClient.Close()
+	// Create an admin client.
+	adminClient, err := connection.NewAdminClient(ctx)
+	if err != nil {
+		t.Logf("Failed to create client: %+v", err)
+		t.FailNow()
+	}
+	defer adminClient.Close()
 	// Clear the test project.
 	{
 		req := &rpc.DeleteProjectRequest{
 			Name: "projects/test",
 		}
-		err = registryClient.DeleteProject(ctx, req)
+		err = adminClient.DeleteProject(ctx, req)
 		if status.Code(err) != codes.NotFound {
 			check(t, "Failed to delete test project: %+v", err)
 		}
@@ -94,7 +101,7 @@ func TestCRUD(t *testing.T) {
 				Description: "A test catalog",
 			},
 		}
-		project, err := registryClient.CreateProject(ctx, req)
+		project, err := adminClient.CreateProject(ctx, req)
 		check(t, "error creating project %s", err)
 		if project.GetName() != "projects/test" {
 			t.Errorf("Invalid project name %s", project.GetName())
@@ -267,7 +274,7 @@ func TestCRUD(t *testing.T) {
 		req := &rpc.DeleteProjectRequest{
 			Name: "projects/test",
 		}
-		err = registryClient.DeleteProject(ctx, req)
+		err = adminClient.DeleteProject(ctx, req)
 		check(t, "Failed to delete test project: %+v", err)
 	}
 }

@@ -145,10 +145,16 @@ func TestControllerErrors(t *testing.T) {
 				t.FailNow()
 			}
 			defer registryClient.Close()
+			adminClient, err := connection.NewAdminClient(ctx)
+			if err != nil {
+				t.Logf("Failed to create client: %+v", err)
+				t.FailNow()
+			}
+			defer adminClient.Close()
 
 			// Setup
-			deleteProject(ctx, registryClient, t, "controller-test")
-			createProject(ctx, registryClient, t, "controller-test")
+			deleteProject(ctx, adminClient, t, "controller-test")
+			createProject(ctx, adminClient, t, "controller-test")
 			createApi(ctx, registryClient, t, "projects/controller-test/locations/global", "petstore")
 			// Version 1.0.0
 			createVersion(ctx, registryClient, t, "projects/controller-test/locations/global/apis/petstore", "1.0.0")

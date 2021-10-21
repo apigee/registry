@@ -120,12 +120,19 @@ func TestDemo(t *testing.T) {
 		t.FailNow()
 	}
 	defer registryClient.Close()
+	// Create an admin client.
+	adminClient, err := connection.NewAdminClient(ctx)
+	if err != nil {
+		t.Logf("Failed to create client: %+v", err)
+		t.FailNow()
+	}
+	defer adminClient.Close()
 	// Clear the demo project.
 	{
 		req := &rpc.DeleteProjectRequest{
 			Name: "projects/demo",
 		}
-		err = registryClient.DeleteProject(ctx, req)
+		err = adminClient.DeleteProject(ctx, req)
 		if status.Code(err) != codes.NotFound {
 			check(t, "Failed to delete demo project: %+v", err)
 		}
@@ -139,7 +146,7 @@ func TestDemo(t *testing.T) {
 				Description: "A demo catalog",
 			},
 		}
-		project, err := registryClient.CreateProject(ctx, req)
+		project, err := adminClient.CreateProject(ctx, req)
 		check(t, "error creating project %s", err)
 		if project.GetName() != "projects/demo" {
 			t.Errorf("Invalid project name %s", project.GetName())
@@ -151,7 +158,7 @@ func TestDemo(t *testing.T) {
 			Filter: "project_id == 'demo'",
 		}
 		count := 0
-		it := registryClient.ListProjects(ctx, req)
+		it := adminClient.ListProjects(ctx, req)
 		for {
 			project, err := it.Next()
 			if err == nil {
@@ -172,7 +179,7 @@ func TestDemo(t *testing.T) {
 		req := &rpc.GetProjectRequest{
 			Name: "projects/demo",
 		}
-		project, err := registryClient.GetProject(ctx, req)
+		project, err := adminClient.GetProject(ctx, req)
 		check(t, "error getting project %s", err)
 		if project.Name != "projects/demo" {
 			t.Errorf("Invalid project name: %s", project.Name)
@@ -381,7 +388,7 @@ func TestDemo(t *testing.T) {
 		req := &rpc.DeleteProjectRequest{
 			Name: "projects/demo",
 		}
-		err = registryClient.DeleteProject(ctx, req)
+		err = adminClient.DeleteProject(ctx, req)
 		check(t, "Failed to delete demo project: %+v", err)
 	}
 }

@@ -83,12 +83,19 @@ func TestFilters(t *testing.T) {
 		t.FailNow()
 	}
 	defer registryClient.Close()
+	// Create an admin client.
+	adminClient, err := connection.NewAdminClient(ctx)
+	if err != nil {
+		t.Logf("Failed to create client: %+v", err)
+		t.FailNow()
+	}
+	defer adminClient.Close()
 	// Clear the filters project.
 	{
 		req := &rpc.DeleteProjectRequest{
 			Name: "projects/filters",
 		}
-		err = registryClient.DeleteProject(ctx, req)
+		err = adminClient.DeleteProject(ctx, req)
 		if status.Code(err) != codes.NotFound {
 			check(t, "Failed to delete filters project: %+v", err)
 		}
@@ -102,7 +109,7 @@ func TestFilters(t *testing.T) {
 				Description: "A project for testing filtering",
 			},
 		}
-		project, err := registryClient.CreateProject(ctx, req)
+		project, err := adminClient.CreateProject(ctx, req)
 		check(t, "error creating project %s", err)
 		if project.GetName() != "projects/filters" {
 			t.Errorf("Invalid project name %s", project.GetName())
@@ -244,7 +251,7 @@ func TestFilters(t *testing.T) {
 	req := &rpc.DeleteProjectRequest{
 		Name: "projects/filters",
 	}
-	err = registryClient.DeleteProject(ctx, req)
+	err = adminClient.DeleteProject(ctx, req)
 	check(t, "Failed to delete filters project: %+v", err)
 }
 

@@ -13,23 +13,23 @@ import (
 var GetStatusInput emptypb.Empty
 
 func init() {
-	RegistryServiceCmd.AddCommand(GetStatusCmd)
+	AdminServiceCmd.AddCommand(GetStatusCmd)
 
 }
 
 var GetStatusCmd = &cobra.Command{
 	Use:   "get-status",
-	Short: "GetStatus returns the status of the service. ...",
-	Long:  "GetStatus returns the status of the service.  GetStatus is for verifying open source deployments only  and is not included in hosted versions of the...",
+	Short: "GetStatus returns the status of the service.  (--...",
+	Long:  "GetStatus returns the status of the service.  (-- api-linter: core::0131::request-message-name=disabled      aip.dev/not-precedent: Not in the...",
 	PreRun: func(cmd *cobra.Command, args []string) {
 
 	},
 	RunE: func(cmd *cobra.Command, args []string) (err error) {
 
 		if Verbose {
-			printVerboseInput("Registry", "GetStatus", &GetStatusInput)
+			printVerboseInput("Admin", "GetStatus", &GetStatusInput)
 		}
-		resp, err := RegistryClient.GetStatus(ctx, &GetStatusInput)
+		resp, err := AdminClient.GetStatus(ctx, &GetStatusInput)
 
 		if Verbose {
 			fmt.Print("Output: ")

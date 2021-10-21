@@ -136,6 +136,7 @@ func main() {
 
 	reflection.Register(grpcServer)
 	rpc.RegisterRegistryServer(grpcServer, registryServer)
+	rpc.RegisterAdminServer(grpcServer, registryServer)
 
 	go func() {
 		_ = grpcServer.Serve(listener)

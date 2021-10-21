@@ -23,7 +23,7 @@ import (
 )
 
 func ListProjects(ctx context.Context,
-	client *gapic.RegistryClient,
+	client *gapic.AdminClient,
 	segments []string,
 	filterFlag string,
 	handler ProjectHandler) error {

@@ -46,3 +46,10 @@ export APG_REGISTRY_INSECURE=1
 # Local calls don't need authentication.
 unset APG_REGISTRY_TOKEN
 unset APG_REGISTRY_API_KEY
+
+# Duplicate the client configuration for the Admin service.
+export APG_ADMIN_ADDRESS=$APG_REGISTRY_ADDRESS
+export APG_ADMIN_AUDIENCES=$APG_REGISTRY_AUDIENCES
+export APG_ADMIN_INSECURE=$APG_REGISTRY_INSECURE
+unset APG_ADMIN_TOKEN
+unset APG_ADMIN_API_KEY

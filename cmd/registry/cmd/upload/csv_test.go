@@ -122,8 +122,12 @@ func TestUploadCSV(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Setup: Failed to create client: %s", err)
 			}
+			adminClient, err := connection.NewAdminClient(ctx)
+			if err != nil {
+				t.Fatalf("Setup: Failed to create client: %s", err)
+			}
 
-			err = client.DeleteProject(ctx, &rpc.DeleteProjectRequest{
+			err = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{
 				Name: "projects/" + testProject,
 			})
 			if err != nil && status.Code(err) != codes.NotFound {

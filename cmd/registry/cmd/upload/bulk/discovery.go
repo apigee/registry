@@ -41,14 +41,19 @@ func discoveryCommand(ctx context.Context) *cobra.Command {
 
 			client, err := connection.NewClient(ctx)
 			if err != nil {
-				log.WithError(err).Fatal("Failed to save artifact")
+				log.WithError(err).Fatal("Failed to get client")
+			}
+
+			adminClient, err := connection.NewAdminClient(ctx)
+			if err != nil {
+				log.WithError(err).Fatal("Failed to get client")
 			}
 
 			// create a queue for upload tasks and wait for the workers to finish after filling it.
 			taskQueue, wait := core.WorkerPool(ctx, 64)
 			defer wait()
 
-			core.EnsureProjectExists(ctx, client, projectID)
+			core.EnsureProjectExists(ctx, adminClient, projectID)
 			discoveryResponse, err := discovery.FetchList()
 			if err != nil {
 				log.WithError(err).Fatal("Failed to fetch discovery list")

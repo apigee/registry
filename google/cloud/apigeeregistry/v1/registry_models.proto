@@ -25,35 +25,6 @@ option java_multiple_files = true;
 option java_outer_classname = "RegistryModelsProto";
 option go_package = "github.com/apigee/registry/rpc;rpc";
 
-// A Project is a top-level description of a collection of APIs.
-// Typically there would be one project for an entire organization.
-// Note: in a Google Cloud deployment, this resource and associated methods
-// will be omitted and its children will instead be associated with Google
-// Cloud projects.
-message Project {
-  option (google.api.resource) = {
-    type: "apigeeregistry.googleapis.com/Project"
-    pattern: "projects/{project}"
-  };
-
-  // Resource name.
-  string name = 1;
-
-  // Human-meaningful name.
-  string display_name = 2;
-
-  // A detailed description.
-  string description = 3;
-
-  // Creation timestamp.
-  google.protobuf.Timestamp create_time = 4
-      [(google.api.field_behavior) = OUTPUT_ONLY];
-
-  // Last update timestamp.
-  google.protobuf.Timestamp update_time = 5
-      [(google.api.field_behavior) = OUTPUT_ONLY];
-}
-
 // An Api is a top-level description of an API.
 // Apis are produced by producers and are commitments to provide services.
 message Api {

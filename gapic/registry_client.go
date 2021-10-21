@@ -34,19 +34,12 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/proto"
-	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 var newRegistryClientHook clientHook
 
 // RegistryCallOptions contains the retry settings for each method of RegistryClient.
 type RegistryCallOptions struct {
-	GetStatus []gax.CallOption
-	ListProjects []gax.CallOption
-	GetProject []gax.CallOption
-	CreateProject []gax.CallOption
-	UpdateProject []gax.CallOption
-	DeleteProject []gax.CallOption
 	ListApis []gax.CallOption
 	GetApi []gax.CallOption
 	CreateApi []gax.CallOption
@@ -90,72 +83,6 @@ func defaultRegistryGRPCClientOptions() []option.ClientOption {
 
 func defaultRegistryCallOptions() *RegistryCallOptions {
 	return &RegistryCallOptions{
-		GetStatus: []gax.CallOption{
-			gax.WithRetry(func() gax.Retryer {
-				return gax.OnCodes([]codes.Code{
-					codes.Unavailable,
-				}, gax.Backoff{
-					Initial:    200 * time.Millisecond,
-					Max:        10000 * time.Millisecond,
-					Multiplier: 1.30,
-				})
-			}),
-		},
-		ListProjects: []gax.CallOption{
-			gax.WithRetry(func() gax.Retryer {
-				return gax.OnCodes([]codes.Code{
-					codes.Unavailable,
-				}, gax.Backoff{
-					Initial:    200 * time.Millisecond,
-					Max:        10000 * time.Millisecond,
-					Multiplier: 1.30,
-				})
-			}),
-		},
-		GetProject: []gax.CallOption{
-			gax.WithRetry(func() gax.Retryer {
-				return gax.OnCodes([]codes.Code{
-					codes.Unavailable,
-				}, gax.Backoff{
-					Initial:    200 * time.Millisecond,
-					Max:        10000 * time.Millisecond,
-					Multiplier: 1.30,
-				})
-			}),
-		},
-		CreateProject: []gax.CallOption{
-			gax.WithRetry(func() gax.Retryer {
-				return gax.OnCodes([]codes.Code{
-					codes.Unavailable,
-				}, gax.Backoff{
-					Initial:    200 * time.Millisecond,
-					Max:        10000 * time.Millisecond,
-					Multiplier: 1.30,
-				})
-			}),
-		},
-		UpdateProject: []gax.CallOption{
-			gax.WithRetry(func() gax.Retryer {
-				return gax.OnCodes([]codes.Code{
-					codes.Unavailable,
-				}, gax.Backoff{
-					Initial:    200 * time.Millisecond,
-					Max:        10000 * time.Millisecond,
-					Multiplier: 1.30,
-				})
-			}),
-		},
-		DeleteProject: []gax.CallOption{
-			gax.WithRetry(func() gax.Retryer {
-				return gax.OnCodes([]codes.Code{
-					codes.Unavailable,
-				}, gax.Backoff{
-					Initial:    200 * time.Millisecond,
-					Max:        10000 * time.Millisecond,
-					Multiplier: 1.30,
-				})
-			}),
-		},
 		ListApis: []gax.CallOption{
 			gax.WithRetry(func() gax.Retryer {
 				return gax.OnCodes([]codes.Code{
@@ -450,12 +377,6 @@ type internalRegistryClient interface {
 	Close() error
 	setGoogleClientInfo(...string)
 	Connection() *grpc.ClientConn
-	GetStatus(context.Context, *emptypb.Empty, ...gax.CallOption) (*rpcpb.Status, error)
-	ListProjects(context.Context, *rpcpb.ListProjectsRequest, ...gax.CallOption) *ProjectIterator
-	GetProject(context.Context, *rpcpb.GetProjectRequest, ...gax.CallOption) (*rpcpb.Project, error)
-	CreateProject(context.Context, *rpcpb.CreateProjectRequest, ...gax.CallOption) (*rpcpb.Project, error)
-	UpdateProject(context.Context, *rpcpb.UpdateProjectRequest, ...gax.CallOption) (*rpcpb.Project, error)
-	DeleteProject(context.Context, *rpcpb.DeleteProjectRequest, ...gax.CallOption) error
 	ListApis(context.Context, *rpcpb.ListApisRequest, ...gax.CallOption) *ApiIterator
 	GetApi(context.Context, *rpcpb.GetApiRequest, ...gax.CallOption) (*rpcpb.Api, error)
 	CreateApi(context.Context, *rpcpb.CreateApiRequest, ...gax.CallOption) (*rpcpb.Api, error)
@@ -517,53 +438,6 @@ func (c *RegistryClient) setGoogleClientInfo(keyval ...string) {
 // Deprecated.
 func (c *RegistryClient) Connection() *grpc.ClientConn {
 	return c.internalClient.Connection()
-}
-
-// GetStatus getStatus returns the status of the service.
-// GetStatus is for verifying open source deployments only
-// and is not included in hosted versions of the API.
-// (– api-linter: core::0131::request-message-name=disabled
-// aip.dev/not-precedent (at http://aip.dev/not-precedent): Not in the official API. –)
-// (– api-linter: core::0131::method-signature=disabled
-// aip.dev/not-precedent (at http://aip.dev/not-precedent): Not in the official API. –)
-// (– api-linter: core::0131::http-uri-name=disabled
-// aip.dev/not-precedent (at http://aip.dev/not-precedent): Not in the official API. –)
-func (c *RegistryClient) GetStatus(ctx context.Context, req *emptypb.Empty, opts ...gax.CallOption) (*rpcpb.Status, error) {
-	return c.internalClient.GetStatus(ctx, req, opts...)
-}
-
-// ListProjects listProjects returns matching projects.
-// (– api-linter: standard-methods=disabled –)
-// (– api-linter: core::0132::method-signature=disabled
-// aip.dev/not-precedent (at http://aip.dev/not-precedent): projects are top-level resources. –)
-func (c *RegistryClient) ListProjects(ctx context.Context, req *rpcpb.ListProjectsRequest, opts ...gax.CallOption) *ProjectIterator {
-	return c.internalClient.ListProjects(ctx, req, opts...)
-}
-
-// GetProject getProject returns a specified project.
-func (c *RegistryClient) GetProject(ctx context.Context, req *rpcpb.GetProjectRequest, opts ...gax.CallOption) (*rpcpb.Project, error) {
-	return c.internalClient.GetProject(ctx, req, opts...)
-}
-
-// CreateProject createProject creates a specified project.
-// (– api-linter: standard-methods=disabled –)
-// (– api-linter: core::0133::http-uri-parent=disabled
-// aip.dev/not-precedent (at http://aip.dev/not-precedent): Project has an implicit parent. –)
-// (– api-linter: core::0133::method-signature=disabled
-// aip.dev/not-precedent (at http://aip.dev/not-precedent): Project has an implicit parent. –)
-func (c *RegistryClient) CreateProject(ctx context.Context, req *rpcpb.CreateProjectRequest, opts ...gax.CallOption) (*rpcpb.Project, error) {
-	return c.internalClient.CreateProject(ctx, req, opts...)
-}
-
-// UpdateProject updateProject can be used to modify a specified project.
-func (c *RegistryClient) UpdateProject(ctx context.Context, req *rpcpb.UpdateProjectRequest, opts ...gax.CallOption) (*rpcpb.Project, error) {
-	return c.internalClient.UpdateProject(ctx, req, opts...)
-}
-
-// DeleteProject deleteProject removes a specified project and all of the resources that it
-// owns.
-func (c *RegistryClient) DeleteProject(ctx context.Context, req *rpcpb.DeleteProjectRequest, opts ...gax.CallOption) error {
-	return c.internalClient.DeleteProject(ctx, req, opts...)
 }
 
 // ListApis listApis returns matching APIs.
@@ -790,148 +664,6 @@ func (c *registryGRPCClient) setGoogleClientInfo(keyval ...string) {
 // the client is no longer required.
 func (c *registryGRPCClient) Close() error {
 	return c.connPool.Close()
-}
-
-func (c *registryGRPCClient) GetStatus(ctx context.Context, req *emptypb.Empty, opts ...gax.CallOption) (*rpcpb.Status, error) {
-	if _, ok := ctx.Deadline(); !ok && !c.disableDeadlines {
-		cctx, cancel := context.WithTimeout(ctx, 10000 * time.Millisecond)
-		defer cancel()
-		ctx = cctx
-	}
-	ctx = insertMetadata(ctx, c.xGoogMetadata)
-	opts = append((*c.CallOptions).GetStatus[0:len((*c.CallOptions).GetStatus):len((*c.CallOptions).GetStatus)], opts...)
-	var resp *rpcpb.Status
-	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
-		var err error
-		resp, err = c.registryClient.GetStatus(ctx, req, settings.GRPC...)
-		return err
-	}, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return resp, nil
-}
-
-func (c *registryGRPCClient) ListProjects(ctx context.Context, req *rpcpb.ListProjectsRequest, opts ...gax.CallOption) *ProjectIterator {
-	ctx = insertMetadata(ctx, c.xGoogMetadata)
-	opts = append((*c.CallOptions).ListProjects[0:len((*c.CallOptions).ListProjects):len((*c.CallOptions).ListProjects)], opts...)
-	it := &ProjectIterator{}
-	req = proto.Clone(req).(*rpcpb.ListProjectsRequest)
-	it.InternalFetch = func(pageSize int, pageToken string) ([]*rpcpb.Project, string, error) {
-		resp := &rpcpb.ListProjectsResponse{}
-		if pageToken != "" {
-			req.PageToken = pageToken
-		}
-		if pageSize > math.MaxInt32 {
-			req.PageSize = math.MaxInt32
-		} else if pageSize != 0 {
-			req.PageSize = int32(pageSize)
-		}
-		err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
-			var err error
-			resp, err = c.registryClient.ListProjects(ctx, req, settings.GRPC...)
-			return err
-		}, opts...)
-		if err != nil {
-			return nil, "", err
-		}
-
-		it.Response = resp
-		return resp.GetProjects(), resp.GetNextPageToken(), nil
-	}
-	fetch := func(pageSize int, pageToken string) (string, error) {
-		items, nextPageToken, err := it.InternalFetch(pageSize, pageToken)
-		if err != nil {
-			return "", err
-		}
-		it.items = append(it.items, items...)
-		return nextPageToken, nil
-	}
-
-	it.pageInfo, it.nextFunc = iterator.NewPageInfo(fetch, it.bufLen, it.takeBuf)
-	it.pageInfo.MaxSize = int(req.GetPageSize())
-	it.pageInfo.Token = req.GetPageToken()
-
-	return it
-}
-
-func (c *registryGRPCClient) GetProject(ctx context.Context, req *rpcpb.GetProjectRequest, opts ...gax.CallOption) (*rpcpb.Project, error) {
-	if _, ok := ctx.Deadline(); !ok && !c.disableDeadlines {
-		cctx, cancel := context.WithTimeout(ctx, 10000 * time.Millisecond)
-		defer cancel()
-		ctx = cctx
-	}
-	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "name", url.QueryEscape(req.GetName())))
-	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
-	opts = append((*c.CallOptions).GetProject[0:len((*c.CallOptions).GetProject):len((*c.CallOptions).GetProject)], opts...)
-	var resp *rpcpb.Project
-	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
-		var err error
-		resp, err = c.registryClient.GetProject(ctx, req, settings.GRPC...)
-		return err
-	}, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return resp, nil
-}
-
-func (c *registryGRPCClient) CreateProject(ctx context.Context, req *rpcpb.CreateProjectRequest, opts ...gax.CallOption) (*rpcpb.Project, error) {
-	if _, ok := ctx.Deadline(); !ok && !c.disableDeadlines {
-		cctx, cancel := context.WithTimeout(ctx, 10000 * time.Millisecond)
-		defer cancel()
-		ctx = cctx
-	}
-	ctx = insertMetadata(ctx, c.xGoogMetadata)
-	opts = append((*c.CallOptions).CreateProject[0:len((*c.CallOptions).CreateProject):len((*c.CallOptions).CreateProject)], opts...)
-	var resp *rpcpb.Project
-	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
-		var err error
-		resp, err = c.registryClient.CreateProject(ctx, req, settings.GRPC...)
-		return err
-	}, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return resp, nil
-}
-
-func (c *registryGRPCClient) UpdateProject(ctx context.Context, req *rpcpb.UpdateProjectRequest, opts ...gax.CallOption) (*rpcpb.Project, error) {
-	if _, ok := ctx.Deadline(); !ok && !c.disableDeadlines {
-		cctx, cancel := context.WithTimeout(ctx, 10000 * time.Millisecond)
-		defer cancel()
-		ctx = cctx
-	}
-	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "project.name", url.QueryEscape(req.GetProject().GetName())))
-	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
-	opts = append((*c.CallOptions).UpdateProject[0:len((*c.CallOptions).UpdateProject):len((*c.CallOptions).UpdateProject)], opts...)
-	var resp *rpcpb.Project
-	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
-		var err error
-		resp, err = c.registryClient.UpdateProject(ctx, req, settings.GRPC...)
-		return err
-	}, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return resp, nil
-}
-
-func (c *registryGRPCClient) DeleteProject(ctx context.Context, req *rpcpb.DeleteProjectRequest, opts ...gax.CallOption) error {
-	if _, ok := ctx.Deadline(); !ok && !c.disableDeadlines {
-		cctx, cancel := context.WithTimeout(ctx, 10000 * time.Millisecond)
-		defer cancel()
-		ctx = cctx
-	}
-	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "name", url.QueryEscape(req.GetName())))
-	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
-	opts = append((*c.CallOptions).DeleteProject[0:len((*c.CallOptions).DeleteProject):len((*c.CallOptions).DeleteProject)], opts...)
-	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
-		var err error
-		_, err = c.registryClient.DeleteProject(ctx, req, settings.GRPC...)
-		return err
-	}, opts...)
-	return err
 }
 
 func (c *registryGRPCClient) ListApis(ctx context.Context, req *rpcpb.ListApisRequest, opts ...gax.CallOption) *ApiIterator {
@@ -1762,53 +1494,6 @@ func (it *ArtifactIterator) bufLen() int {
 }
 
 func (it *ArtifactIterator) takeBuf() interface{} {
-	b := it.items
-	it.items = nil
-	return b
-}
-
-// ProjectIterator manages a stream of *rpcpb.Project.
-type ProjectIterator struct {
-	items    []*rpcpb.Project
-	pageInfo *iterator.PageInfo
-	nextFunc func() error
-
-	// Response is the raw response for the current page.
-	// It must be cast to the RPC response type.
-	// Calling Next() or InternalFetch() updates this value.
-	Response interface{}
-
-	// InternalFetch is for use by the Google Cloud Libraries only.
-	// It is not part of the stable interface of this package.
-	//
-	// InternalFetch returns results from a single call to the underlying RPC.
-	// The number of results is no greater than pageSize.
-	// If there are no more results, nextPageToken is empty and err is nil.
-	InternalFetch func(pageSize int, pageToken string) (results []*rpcpb.Project, nextPageToken string, err error)
-}
-
-// PageInfo supports pagination. See the google.golang.org/api/iterator package for details.
-func (it *ProjectIterator) PageInfo() *iterator.PageInfo {
-	return it.pageInfo
-}
-
-// Next returns the next result. Its second return value is iterator.Done if there are no more
-// results. Once Next returns Done, all subsequent calls will return Done.
-func (it *ProjectIterator) Next() (*rpcpb.Project, error) {
-	var item *rpcpb.Project
-	if err := it.nextFunc(); err != nil {
-		return item, err
-	}
-	item = it.items[0]
-	it.items = it.items[1:]
-	return item, nil
-}
-
-func (it *ProjectIterator) bufLen() int {
-	return len(it.items)
-}
-
-func (it *ProjectIterator) takeBuf() interface{} {
 	b := it.items
 	it.items = nil
 	return b

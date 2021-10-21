@@ -52,10 +52,15 @@ func lintStatsCommand(ctx context.Context) *cobra.Command {
 				log.WithError(err).Fatal("Failed to get client")
 			}
 
+			adminClient, err := connection.NewAdminClient(ctx)
+			if err != nil {
+				log.WithError(err).Fatal("Failed to get client")
+			}
+
 			// Generate tasks.
 			name := args[0]
 
-			err = matchAndHandleLintStatsCmd(ctx, client, name, filter, linter)
+			err = matchAndHandleLintStatsCmd(ctx, client, adminClient, name, filter, linter)
 			if err != nil {
 				log.WithError(err).Fatal("Failed to match or handle command")
 			}
@@ -158,10 +163,11 @@ func computeLintStatsSpecs(ctx context.Context,
 
 func computeLintStatsProjects(ctx context.Context,
 	client *gapic.RegistryClient,
+	adminClient *gapic.AdminClient,
 	segments []string,
 	filter string,
 	linter string) error {
-	return core.ListProjects(ctx, client, segments, filter, func(project *rpc.Project) {
+	return core.ListProjects(ctx, adminClient, segments, filter, func(project *rpc.Project) {
 		if project_segments :=
 			names.ProjectRegexp().FindStringSubmatch(project.GetName()); project_segments != nil {
 			project_stats := &rpc.LintStats{}
@@ -268,6 +274,7 @@ func aggregateLintStats(ctx context.Context,
 func matchAndHandleLintStatsCmd(
 	ctx context.Context,
 	client connection.Client,
+	adminClient connection.AdminClient,
 	name string,
 	filter string,
 	linter string,
@@ -276,7 +283,7 @@ func matchAndHandleLintStatsCmd(
 	var err error
 	// First try to match collection names, then try to match resource names.
 	if m := names.ProjectsRegexp().FindStringSubmatch(name); m != nil {
-		err = computeLintStatsProjects(ctx, client, m, filter, linter)
+		err = computeLintStatsProjects(ctx, client, adminClient, m, filter, linter)
 	} else if m := names.ApisRegexp().FindStringSubmatch(name); m != nil {
 		err = computeLintStatsAPIs(ctx, client, m, filter, linter)
 	} else if m := names.VersionsRegexp().FindStringSubmatch(name); m != nil {
@@ -284,7 +291,7 @@ func matchAndHandleLintStatsCmd(
 	} else if m := names.SpecsRegexp().FindStringSubmatch(name); m != nil {
 		err = computeLintStatsSpecs(ctx, client, m, filter, linter)
 	} else if m := names.ProjectRegexp().FindStringSubmatch(name); m != nil {
-		err = computeLintStatsProjects(ctx, client, m, filter, linter)
+		err = computeLintStatsProjects(ctx, client, adminClient, m, filter, linter)
 	} else if m := names.ApiRegexp().FindStringSubmatch(name); m != nil {
 		err = computeLintStatsAPIs(ctx, client, m, filter, linter)
 	} else if m := names.VersionRegexp().FindStringSubmatch(name); m != nil {

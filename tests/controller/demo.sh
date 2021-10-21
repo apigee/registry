@@ -21,7 +21,7 @@ make deploy-gke
 source auth/GKE.sh
 
 # Create demo project
-apg registry create-project --project_id demo --json
+apg admin create-project --project_id demo --json
 
 # Upload a manifest for the GKE job
 registry upload manifest tests/controller/testdata/manifest.yaml --project_id=demo
