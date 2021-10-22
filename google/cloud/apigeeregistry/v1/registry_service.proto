@@ -33,7 +33,6 @@ option java_package = "com.google.cloud.apigeeregistry.v1";
 // The Registry service allows teams to manage descriptions of APIs.
 service Registry {
   option (google.api.default_host) = "apigeeregistry.googleapis.com";
-  option (google.api.oauth_scopes) = "https://www.googleapis.com/auth/cloud-platform";
 
   // ListApis returns matching APIs.
   rpc ListApis(ListApisRequest) returns (ListApisResponse) {

@@ -241,7 +241,6 @@ message Artifact {
     pattern: "projects/{project}/locations/{location}/apis/{api}/artifacts/{artifact}"
     pattern: "projects/{project}/locations/{location}/apis/{api}/versions/{version}/artifacts/{artifact}"
     pattern: "projects/{project}/locations/{location}/apis/{api}/versions/{version}/specs/{spec}/artifacts/{artifact}"
-    pattern: "projects/{project}/locations/{location}/apis/{api}/deployments/{deployment}/artifacts/{artifact}"
   };
 
   // Resource name.
