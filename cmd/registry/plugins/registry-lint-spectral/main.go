@@ -110,7 +110,7 @@ func (linter *spectralLinterRunner) RunImpl(
 
 	return &rpc.LinterResponse{
 		Lint: &rpc.Lint{
-			Name: "registry-lint-sample",
+			Name: "registry-lint-spectral",
 			Files: []*rpc.LintFile{
 				lintFile,
 			},

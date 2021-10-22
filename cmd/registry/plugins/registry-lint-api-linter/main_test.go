@@ -23,56 +23,55 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-// mockSpectralExecuter implements the spectral runner interface.
+// mockApiLinterExecuter implements the apiLinterCommandExecuter interface.
 // It returns mock results according to data provided in tests.
-type mockSpectralExecuter struct {
+type mockApiLinterExecuter struct {
 	mock.Mock
-	results []*spectralLintResult
+	results []*rpc.LintProblem
 	err error
 }
 
-func (runner *mockSpectralExecuter) Execute(
-	spec, 
-	config string,
-) ([]*spectralLintResult, error) {
+func (runner *mockApiLinterExecuter) Execute(specPath string) ([]*rpc.LintProblem, error) {
 	return runner.results, runner.err
 }
 
-func NewMockSpectralExecuter(
-	results []*spectralLintResult, 
+func newMockApiLinterExecuter(
+	results []*rpc.LintProblem, 
 	err error,
-) spectralLintCommandExecuter {
-	return &mockSpectralExecuter{
+) apiLinterCommandExecuter {
+	return &mockApiLinterExecuter{
 		results: results, 
 		err: err,
 	}
 }
 
-func TestSpectralPluginLintSpec(t *testing.T) {
+func TestApiLinterPluginLintSpec(t *testing.T) {
 	lintSpecTests := []struct {
-        linter *spectralLinterRunner
+		linter *apiLinterRunner
 		request *rpc.LinterRequest
-		executer spectralLintCommandExecuter
+		executer apiLinterCommandExecuter
 		expectedResponse *rpc.LinterResponse
 		expectedError error
     }{
         {
-			&spectralLinterRunner{},
+			&apiLinterRunner{},
 			&rpc.LinterRequest{
 				SpecPath: "test",
+				RuleIds: []string{"test"},
 			},
-			NewMockSpectralExecuter(
-				[]*spectralLintResult {
+			newMockApiLinterExecuter(
+				[]*rpc.LintProblem {
 					{
-						Code: "test",
-						Message: "test",
-						Source: "test",
-						Range: spectralLintRange {
-							Start: spectralLintLocation {
-								Line: 0, Character: 0,
+						Message:    "test",
+						RuleId:     "test",
+						Location: &rpc.LintLocation{
+							StartPosition: &rpc.LintPosition{
+								LineNumber:   1,
+								ColumnNumber: 1,
 							},
-							End: spectralLintLocation {
-								Line: 2, Character: 10,
+							EndPosition: &rpc.LintPosition{
+								LineNumber:   3,
+								ColumnNumber: 10,
 							},
 						},
 					},
@@ -81,7 +80,7 @@ func TestSpectralPluginLintSpec(t *testing.T) {
 			),
 			&rpc.LinterResponse{
 				Lint: &rpc.Lint{
-					Name: "registry-lint-spectral",
+					Name: "registry-lint-api-linter",
 					Files: []*rpc.LintFile {
 						{
 							FilePath: "test",
@@ -89,7 +88,6 @@ func TestSpectralPluginLintSpec(t *testing.T) {
 								{
 									Message:    "test",
 									RuleId:     "test",
-									RuleDocUri: "https://meta.stoplight.io/docs/spectral/docs/reference/openapi-rules.md#test",
 									Location: &rpc.LintLocation{
 										StartPosition: &rpc.LintPosition{
 											LineNumber:   1,
@@ -109,12 +107,12 @@ func TestSpectralPluginLintSpec(t *testing.T) {
 			nil,
 		},
 		{
-			&spectralLinterRunner{},
+			&apiLinterRunner{},
 			&rpc.LinterRequest{
 				SpecPath: "test",
 			},
-			NewMockSpectralExecuter(
-				[]*spectralLintResult{},
+			newMockApiLinterExecuter(
+				[]*rpc.LintProblem{},
 				errors.New("test"),
 			),
 			nil,
