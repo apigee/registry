@@ -1,10 +1,10 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2021 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//    http://www.apache.org/licenses/LICENSE-2.0
+//     http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -49,9 +49,9 @@ type Api struct {
 	DisplayName string `protobuf:"bytes,2,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
 	// A detailed description.
 	Description string `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
-	// Creation timestamp.
+	// Output only. Creation timestamp.
 	CreateTime *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
-	// Last update timestamp.
+	// Output only. Last update timestamp.
 	UpdateTime *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
 	// A user-definable description of the availability of this service.
 	// Format: free-form, but we expect single words that describe availability,
@@ -70,8 +70,8 @@ type Api struct {
 	// labels are excluded).
 	//
 	// See https://goo.gl/xmQnxf for more information and examples of labels.
-	// System reserved label keys are prefixed with "apigeeregistry.googleapis.com/"
-	// and cannot be changed.
+	// System reserved label keys are prefixed with
+	// "apigeeregistry.googleapis.com/" and cannot be changed.
 	Labels map[string]string `protobuf:"bytes,9,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 	// Annotations attach non-identifying metadata to resources.
 	//
@@ -189,9 +189,9 @@ type ApiVersion struct {
 	DisplayName string `protobuf:"bytes,2,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
 	// A detailed description.
 	Description string `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
-	// Creation timestamp.
+	// Output only. Creation timestamp.
 	CreateTime *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
-	// Last update timestamp.
+	// Output only. Last update timestamp.
 	UpdateTime *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
 	// A user-definable description of the lifecycle phase of this API version.
 	// Format: free-form, but we expect single words that describe API maturity,
@@ -208,8 +208,8 @@ type ApiVersion struct {
 	// labels are excluded).
 	//
 	// See https://goo.gl/xmQnxf for more information and examples of labels.
-	// System reserved label keys are prefixed with "apigeeregistry.googleapis.com/"
-	// and cannot be changed.
+	// System reserved label keys are prefixed with
+	// "apigeeregistry.googleapis.com/" and cannot be changed.
 	Labels map[string]string `protobuf:"bytes,7,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 	// Annotations attach non-identifying metadata to resources.
 	//
@@ -326,15 +326,15 @@ type ApiSpec struct {
 	Filename string `protobuf:"bytes,2,opt,name=filename,proto3" json:"filename,omitempty"`
 	// A detailed description.
 	Description string `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
-	// The revision ID of the spec.
+	// Output only. Immutable. The revision ID of the spec.
 	// A new revision is committed whenever the spec contents are changed.
 	// The format is an 8-character hexadecimal string.
 	RevisionId string `protobuf:"bytes,4,opt,name=revision_id,json=revisionId,proto3" json:"revision_id,omitempty"`
-	// Creation timestamp; when the spec resource was created.
+	// Output only. Creation timestamp; when the spec resource was created.
 	CreateTime *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
-	// Revision creation timestamp; when the represented revision was created.
+	// Output only. Revision creation timestamp; when the represented revision was created.
 	RevisionCreateTime *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=revision_create_time,json=revisionCreateTime,proto3" json:"revision_create_time,omitempty"`
-	// Last update timestamp: when the represented revision was last modified.
+	// Output only. Last update timestamp: when the represented revision was last modified.
 	RevisionUpdateTime *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=revision_update_time,json=revisionUpdateTime,proto3" json:"revision_update_time,omitempty"`
 	// A style (format) descriptor for this spec that is specified as a Media Type
 	// (https://en.wikipedia.org/wiki/Media_type). Possible values include
@@ -345,10 +345,10 @@ type ApiSpec struct {
 	// Content types can optionally specify compression. Currently only
 	// GZip compression is supported (indicated with "+gzip").
 	MimeType string `protobuf:"bytes,8,opt,name=mime_type,json=mimeType,proto3" json:"mime_type,omitempty"`
-	// The size of the spec file in bytes. If the spec is gzipped, this is the
+	// Output only. The size of the spec file in bytes. If the spec is gzipped, this is the
 	// size of the uncompressed spec.
 	SizeBytes int32 `protobuf:"varint,9,opt,name=size_bytes,json=sizeBytes,proto3" json:"size_bytes,omitempty"`
-	// A SHA-256 hash of the spec's contents. If the spec is gzipped, this is
+	// Output only. A SHA-256 hash of the spec's contents. If the spec is gzipped, this is
 	// the hash of the uncompressed spec.
 	Hash string `protobuf:"bytes,10,opt,name=hash,proto3" json:"hash,omitempty"`
 	// The original source URI of the spec (if one exists).
@@ -356,11 +356,11 @@ type ApiSpec struct {
 	// but which may not be authoritative since this external resource may
 	// change after the spec is retrieved.
 	SourceUri string `protobuf:"bytes,11,opt,name=source_uri,json=sourceUri,proto3" json:"source_uri,omitempty"`
-	// The contents of the spec.
+	// Input only. The contents of the spec.
 	// Provided by API callers when specs are created or updated.
 	// To access the contents of a spec, use GetApiSpecContents.
 	Contents []byte `protobuf:"bytes,12,opt,name=contents,proto3" json:"contents,omitempty"`
-	// The revision tags associated with this revision.
+	// Output only. The revision tags associated with this revision.
 	RevisionTags []string `protobuf:"bytes,13,rep,name=revision_tags,json=revisionTags,proto3" json:"revision_tags,omitempty"`
 	// Labels attach identifying metadata to resources. Identifying metadata can
 	// be used to filter list operations.
@@ -372,8 +372,8 @@ type ApiSpec struct {
 	// labels are excluded).
 	//
 	// See https://goo.gl/xmQnxf for more information and examples of labels.
-	// System reserved label keys are prefixed with "apigeeregistry.googleapis.com/"
-	// and cannot be changed.
+	// System reserved label keys are prefixed with
+	// "apigeeregistry.googleapis.com/" and cannot be changed.
 	Labels map[string]string `protobuf:"bytes,14,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 	// Annotations attach non-identifying metadata to resources.
 	//
@@ -535,9 +535,9 @@ type Artifact struct {
 
 	// Resource name.
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	// Creation timestamp.
+	// Output only. Creation timestamp.
 	CreateTime *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
-	// Last update timestamp.
+	// Output only. Last update timestamp.
 	UpdateTime *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
 	// A content type specifier for the artifact.
 	// Content type specifiers are Media Types
@@ -546,13 +546,13 @@ type Artifact struct {
 	// Content types can optionally specify compression. Currently only
 	// GZip compression is supported (indicated with "+gzip").
 	MimeType string `protobuf:"bytes,4,opt,name=mime_type,json=mimeType,proto3" json:"mime_type,omitempty"`
-	// The size of the artifact in bytes. If the artifact is gzipped, this is
+	// Output only. The size of the artifact in bytes. If the artifact is gzipped, this is
 	// the size of the uncompressed artifact.
 	SizeBytes int32 `protobuf:"varint,5,opt,name=size_bytes,json=sizeBytes,proto3" json:"size_bytes,omitempty"`
-	// A SHA-256 hash of the artifact's contents. If the artifact is gzipped,
+	// Output only. A SHA-256 hash of the artifact's contents. If the artifact is gzipped,
 	// this is the hash of the uncompressed artifact.
 	Hash string `protobuf:"bytes,6,opt,name=hash,proto3" json:"hash,omitempty"`
-	// The contents of the artifact.
+	// Input only. The contents of the artifact.
 	// Provided by API callers when artifacts are created or replaced.
 	// To access the contents of an artifact, use GetArtifactContents.
 	Contents []byte `protobuf:"bytes,7,opt,name=contents,proto3" json:"contents,omitempty"`
@@ -802,7 +802,7 @@ var file_google_cloud_apigeeregistry_v1_registry_models_proto_rawDesc = []byte{
 	0x63, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2f, 0x7b, 0x6c, 0x6f, 0x63, 0x61, 0x74, 0x69, 0x6f,
 	0x6e, 0x7d, 0x2f, 0x61, 0x70, 0x69, 0x73, 0x2f, 0x7b, 0x61, 0x70, 0x69, 0x7d, 0x2f, 0x76, 0x65,
 	0x72, 0x73, 0x69, 0x6f, 0x6e, 0x73, 0x2f, 0x7b, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x7d,
-	0x2f, 0x73, 0x70, 0x65, 0x63, 0x73, 0x2f, 0x7b, 0x73, 0x70, 0x65, 0x63, 0x7d, 0x22, 0x98, 0x05,
+	0x2f, 0x73, 0x70, 0x65, 0x63, 0x73, 0x2f, 0x7b, 0x73, 0x70, 0x65, 0x63, 0x7d, 0x22, 0xfa, 0x05,
 	0x0a, 0x08, 0x41, 0x72, 0x74, 0x69, 0x66, 0x61, 0x63, 0x74, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61,
 	0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x40,
 	0x0a, 0x0b, 0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x5f, 0x74, 0x69, 0x6d, 0x65, 0x18, 0x02, 0x20,
@@ -820,8 +820,8 @@ var file_google_cloud_apigeeregistry_v1_registry_models_proto_rawDesc = []byte{
 	0x74, 0x65, 0x73, 0x12, 0x17, 0x0a, 0x04, 0x68, 0x61, 0x73, 0x68, 0x18, 0x06, 0x20, 0x01, 0x28,
 	0x09, 0x42, 0x03, 0xe0, 0x41, 0x03, 0x52, 0x04, 0x68, 0x61, 0x73, 0x68, 0x12, 0x1f, 0x0a, 0x08,
 	0x63, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x73, 0x18, 0x07, 0x20, 0x01, 0x28, 0x0c, 0x42, 0x03,
-	0xe0, 0x41, 0x04, 0x52, 0x08, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x73, 0x3a, 0xf8, 0x02,
-	0xea, 0x41, 0xf4, 0x02, 0x0a, 0x26, 0x61, 0x70, 0x69, 0x67, 0x65, 0x65, 0x72, 0x65, 0x67, 0x69,
+	0xe0, 0x41, 0x04, 0x52, 0x08, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x73, 0x3a, 0xda, 0x03,
+	0xea, 0x41, 0xd6, 0x03, 0x0a, 0x26, 0x61, 0x70, 0x69, 0x67, 0x65, 0x65, 0x72, 0x65, 0x67, 0x69,
 	0x73, 0x74, 0x72, 0x79, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x61, 0x70, 0x69, 0x73, 0x2e,
 	0x63, 0x6f, 0x6d, 0x2f, 0x41, 0x72, 0x74, 0x69, 0x66, 0x61, 0x63, 0x74, 0x12, 0x3c, 0x70, 0x72,
 	0x6f, 0x6a, 0x65, 0x63, 0x74, 0x73, 0x2f, 0x7b, 0x70, 0x72, 0x6f, 0x6a, 0x65, 0x63, 0x74, 0x7d,
@@ -844,14 +844,20 @@ var file_google_cloud_apigeeregistry_v1_registry_models_proto_rawDesc = []byte{
 	0x70, 0x69, 0x7d, 0x2f, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x73, 0x2f, 0x7b, 0x76, 0x65,
 	0x72, 0x73, 0x69, 0x6f, 0x6e, 0x7d, 0x2f, 0x73, 0x70, 0x65, 0x63, 0x73, 0x2f, 0x7b, 0x73, 0x70,
 	0x65, 0x63, 0x7d, 0x2f, 0x61, 0x72, 0x74, 0x69, 0x66, 0x61, 0x63, 0x74, 0x73, 0x2f, 0x7b, 0x61,
-	0x72, 0x74, 0x69, 0x66, 0x61, 0x63, 0x74, 0x7d, 0x42, 0x5f, 0x0a, 0x22, 0x63, 0x6f, 0x6d, 0x2e,
-	0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x61, 0x70, 0x69,
-	0x67, 0x65, 0x65, 0x72, 0x65, 0x67, 0x69, 0x73, 0x74, 0x72, 0x79, 0x2e, 0x76, 0x31, 0x42, 0x13,
-	0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x72, 0x79, 0x4d, 0x6f, 0x64, 0x65, 0x6c, 0x73, 0x50, 0x72,
-	0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x22, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f,
-	0x6d, 0x2f, 0x61, 0x70, 0x69, 0x67, 0x65, 0x65, 0x2f, 0x72, 0x65, 0x67, 0x69, 0x73, 0x74, 0x72,
-	0x79, 0x2f, 0x72, 0x70, 0x63, 0x3b, 0x72, 0x70, 0x63, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f,
-	0x33,
+	0x72, 0x74, 0x69, 0x66, 0x61, 0x63, 0x74, 0x7d, 0x12, 0x60, 0x70, 0x72, 0x6f, 0x6a, 0x65, 0x63,
+	0x74, 0x73, 0x2f, 0x7b, 0x70, 0x72, 0x6f, 0x6a, 0x65, 0x63, 0x74, 0x7d, 0x2f, 0x6c, 0x6f, 0x63,
+	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x2f, 0x7b, 0x6c, 0x6f, 0x63, 0x61, 0x74, 0x69, 0x6f, 0x6e,
+	0x7d, 0x2f, 0x61, 0x70, 0x69, 0x73, 0x2f, 0x7b, 0x61, 0x70, 0x69, 0x7d, 0x2f, 0x64, 0x65, 0x70,
+	0x6c, 0x6f, 0x79, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x2f, 0x7b, 0x64, 0x65, 0x70, 0x6c, 0x6f, 0x79,
+	0x6d, 0x65, 0x6e, 0x74, 0x7d, 0x2f, 0x61, 0x72, 0x74, 0x69, 0x66, 0x61, 0x63, 0x74, 0x73, 0x2f,
+	0x7b, 0x61, 0x72, 0x74, 0x69, 0x66, 0x61, 0x63, 0x74, 0x7d, 0x42, 0x5f, 0x0a, 0x22, 0x63, 0x6f,
+	0x6d, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x61,
+	0x70, 0x69, 0x67, 0x65, 0x65, 0x72, 0x65, 0x67, 0x69, 0x73, 0x74, 0x72, 0x79, 0x2e, 0x76, 0x31,
+	0x42, 0x13, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x72, 0x79, 0x4d, 0x6f, 0x64, 0x65, 0x6c, 0x73,
+	0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x22, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e,
+	0x63, 0x6f, 0x6d, 0x2f, 0x61, 0x70, 0x69, 0x67, 0x65, 0x65, 0x2f, 0x72, 0x65, 0x67, 0x69, 0x73,
+	0x74, 0x72, 0x79, 0x2f, 0x72, 0x70, 0x63, 0x3b, 0x72, 0x70, 0x63, 0x62, 0x06, 0x70, 0x72, 0x6f,
+	0x74, 0x6f, 0x33,
 }
 
 var (
