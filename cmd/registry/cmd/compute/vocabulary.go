@@ -129,7 +129,8 @@ func (task *computeVocabularyTask) Run(ctx context.Context) error {
 		}
 		vocab, err = core.NewVocabularyFromZippedProtos(data)
 		if err != nil {
-			return fmt.Errorf("error processing protos: %s", spec.Name)
+			log.WithError(err).Warnf("Error processing protos: %s", spec.Name)
+			return nil
 		}
 	} else {
 		return fmt.Errorf("we don't know how to summarize %s", spec.Name)

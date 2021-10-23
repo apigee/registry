@@ -128,7 +128,8 @@ func (task *computeComplexityTask) Run(ctx context.Context) error {
 		}
 		complexity, err = core.NewComplexityFromZippedProtos(data)
 		if err != nil {
-			return fmt.Errorf("error processing protos: %s", spec.Name)
+			log.WithError(err).Warnf("Error processing protos: %s", spec.Name)
+			return nil
 		}
 	} else {
 		return fmt.Errorf("we don't know how to summarize %s", spec.Name)
