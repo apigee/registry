@@ -96,7 +96,8 @@ func (task *computeVocabularyTask) Run(ctx context.Context) error {
 		}
 		document, err := oas2.ParseDocument(data)
 		if err != nil {
-			return fmt.Errorf("invalid OpenAPI: %s", spec.Name)
+			log.WithError(err).Warnf("Invalid OpenAPI: %s", spec.Name)
+			return nil
 		}
 		vocab = vocabulary.NewVocabularyFromOpenAPIv2(document)
 	} else if core.IsOpenAPIv3(spec.GetMimeType()) {
@@ -106,7 +107,8 @@ func (task *computeVocabularyTask) Run(ctx context.Context) error {
 		}
 		document, err := oas3.ParseDocument(data)
 		if err != nil {
-			return fmt.Errorf("invalid OpenAPI: %s", spec.Name)
+			log.WithError(err).Warnf("Invalid OpenAPI: %s", spec.Name)
+			return nil
 		}
 		vocab = vocabulary.NewVocabularyFromOpenAPIv3(document)
 	} else if core.IsDiscovery(spec.GetMimeType()) {
@@ -116,7 +118,8 @@ func (task *computeVocabularyTask) Run(ctx context.Context) error {
 		}
 		document, err := discovery.ParseDocument(data)
 		if err != nil {
-			return fmt.Errorf("invalid Discovery: %s", spec.Name)
+			log.WithError(err).Warnf("Invalid Discovery: %s", spec.Name)
+			return nil
 		}
 		vocab = vocabulary.NewVocabularyFromDiscovery(document)
 	} else if core.IsProto(spec.GetMimeType()) && core.IsZipArchive(spec.GetMimeType()) {
