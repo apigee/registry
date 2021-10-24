@@ -19,7 +19,7 @@ var CreateProjectInput rpcpb.CreateProjectRequest
 var CreateProjectFromFile string
 
 func init() {
-	RegistryServiceCmd.AddCommand(CreateProjectCmd)
+	AdminServiceCmd.AddCommand(CreateProjectCmd)
 
 	CreateProjectInput.Project = new(rpcpb.Project)
 
@@ -64,9 +64,9 @@ var CreateProjectCmd = &cobra.Command{
 		}
 
 		if Verbose {
-			printVerboseInput("Registry", "CreateProject", &CreateProjectInput)
+			printVerboseInput("Admin", "CreateProject", &CreateProjectInput)
 		}
-		resp, err := RegistryClient.CreateProject(ctx, &CreateProjectInput)
+		resp, err := AdminClient.CreateProject(ctx, &CreateProjectInput)
 
 		if Verbose {
 			fmt.Print("Output: ")

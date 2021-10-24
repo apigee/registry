@@ -94,7 +94,7 @@ server with the following:
 Now you can check your server and configuration with the
 automatically-generated `apg` client:
 
-`apg registry get-status`
+`apg admin get-status`
 
 Next run a suite of tests with `make test` and see a corresponding walkthrough
 of API features in [tests/demo/walkthrough.sh](tests/demo/walkthrough.sh). For
@@ -275,7 +275,7 @@ and adding the "Cloud Run Invoker" role to the special username "allUsers".
 
 Now you can call the API with your generated CLI.
 
-`apg registry get-status`
+`apg admin get-status`
 
 You can also verify your installation by running `make test`. This will run
 tests against the same service that your CLI is configured to use via the

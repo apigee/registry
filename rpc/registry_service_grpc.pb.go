@@ -20,35 +20,6 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type RegistryClient interface {
-	// GetStatus returns the status of the service.
-	// GetStatus is for verifying open source deployments only
-	// and is not included in hosted versions of the API.
-	// (-- api-linter: core::0131::request-message-name=disabled
-	//     aip.dev/not-precedent: Not in the official API. --)
-	// (-- api-linter: core::0131::method-signature=disabled
-	//     aip.dev/not-precedent: Not in the official API. --)
-	// (-- api-linter: core::0131::http-uri-name=disabled
-	//     aip.dev/not-precedent: Not in the official API. --)
-	GetStatus(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*Status, error)
-	// ListProjects returns matching projects.
-	// (-- api-linter: standard-methods=disabled --)
-	// (-- api-linter: core::0132::method-signature=disabled
-	//     aip.dev/not-precedent: projects are top-level resources. --)
-	ListProjects(ctx context.Context, in *ListProjectsRequest, opts ...grpc.CallOption) (*ListProjectsResponse, error)
-	// GetProject returns a specified project.
-	GetProject(ctx context.Context, in *GetProjectRequest, opts ...grpc.CallOption) (*Project, error)
-	// CreateProject creates a specified project.
-	// (-- api-linter: standard-methods=disabled --)
-	// (-- api-linter: core::0133::http-uri-parent=disabled
-	//     aip.dev/not-precedent: Project has an implicit parent. --)
-	// (-- api-linter: core::0133::method-signature=disabled
-	//     aip.dev/not-precedent: Project has an implicit parent. --)
-	CreateProject(ctx context.Context, in *CreateProjectRequest, opts ...grpc.CallOption) (*Project, error)
-	// UpdateProject can be used to modify a specified project.
-	UpdateProject(ctx context.Context, in *UpdateProjectRequest, opts ...grpc.CallOption) (*Project, error)
-	// DeleteProject removes a specified project and all of the resources that it
-	// owns.
-	DeleteProject(ctx context.Context, in *DeleteProjectRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// ListApis returns matching APIs.
 	ListApis(ctx context.Context, in *ListApisRequest, opts ...grpc.CallOption) (*ListApisResponse, error)
 	// GetApi returns a specified API.
@@ -124,60 +95,6 @@ type registryClient struct {
 
 func NewRegistryClient(cc grpc.ClientConnInterface) RegistryClient {
 	return &registryClient{cc}
-}
-
-func (c *registryClient) GetStatus(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*Status, error) {
-	out := new(Status)
-	err := c.cc.Invoke(ctx, "/google.cloud.apigeeregistry.v1.Registry/GetStatus", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *registryClient) ListProjects(ctx context.Context, in *ListProjectsRequest, opts ...grpc.CallOption) (*ListProjectsResponse, error) {
-	out := new(ListProjectsResponse)
-	err := c.cc.Invoke(ctx, "/google.cloud.apigeeregistry.v1.Registry/ListProjects", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *registryClient) GetProject(ctx context.Context, in *GetProjectRequest, opts ...grpc.CallOption) (*Project, error) {
-	out := new(Project)
-	err := c.cc.Invoke(ctx, "/google.cloud.apigeeregistry.v1.Registry/GetProject", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *registryClient) CreateProject(ctx context.Context, in *CreateProjectRequest, opts ...grpc.CallOption) (*Project, error) {
-	out := new(Project)
-	err := c.cc.Invoke(ctx, "/google.cloud.apigeeregistry.v1.Registry/CreateProject", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *registryClient) UpdateProject(ctx context.Context, in *UpdateProjectRequest, opts ...grpc.CallOption) (*Project, error) {
-	out := new(Project)
-	err := c.cc.Invoke(ctx, "/google.cloud.apigeeregistry.v1.Registry/UpdateProject", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *registryClient) DeleteProject(ctx context.Context, in *DeleteProjectRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
-	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, "/google.cloud.apigeeregistry.v1.Registry/DeleteProject", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *registryClient) ListApis(ctx context.Context, in *ListApisRequest, opts ...grpc.CallOption) (*ListApisResponse, error) {
@@ -418,35 +335,6 @@ func (c *registryClient) DeleteArtifact(ctx context.Context, in *DeleteArtifactR
 // All implementations must embed UnimplementedRegistryServer
 // for forward compatibility
 type RegistryServer interface {
-	// GetStatus returns the status of the service.
-	// GetStatus is for verifying open source deployments only
-	// and is not included in hosted versions of the API.
-	// (-- api-linter: core::0131::request-message-name=disabled
-	//     aip.dev/not-precedent: Not in the official API. --)
-	// (-- api-linter: core::0131::method-signature=disabled
-	//     aip.dev/not-precedent: Not in the official API. --)
-	// (-- api-linter: core::0131::http-uri-name=disabled
-	//     aip.dev/not-precedent: Not in the official API. --)
-	GetStatus(context.Context, *emptypb.Empty) (*Status, error)
-	// ListProjects returns matching projects.
-	// (-- api-linter: standard-methods=disabled --)
-	// (-- api-linter: core::0132::method-signature=disabled
-	//     aip.dev/not-precedent: projects are top-level resources. --)
-	ListProjects(context.Context, *ListProjectsRequest) (*ListProjectsResponse, error)
-	// GetProject returns a specified project.
-	GetProject(context.Context, *GetProjectRequest) (*Project, error)
-	// CreateProject creates a specified project.
-	// (-- api-linter: standard-methods=disabled --)
-	// (-- api-linter: core::0133::http-uri-parent=disabled
-	//     aip.dev/not-precedent: Project has an implicit parent. --)
-	// (-- api-linter: core::0133::method-signature=disabled
-	//     aip.dev/not-precedent: Project has an implicit parent. --)
-	CreateProject(context.Context, *CreateProjectRequest) (*Project, error)
-	// UpdateProject can be used to modify a specified project.
-	UpdateProject(context.Context, *UpdateProjectRequest) (*Project, error)
-	// DeleteProject removes a specified project and all of the resources that it
-	// owns.
-	DeleteProject(context.Context, *DeleteProjectRequest) (*emptypb.Empty, error)
 	// ListApis returns matching APIs.
 	ListApis(context.Context, *ListApisRequest) (*ListApisResponse, error)
 	// GetApi returns a specified API.
@@ -521,24 +409,6 @@ type RegistryServer interface {
 type UnimplementedRegistryServer struct {
 }
 
-func (UnimplementedRegistryServer) GetStatus(context.Context, *emptypb.Empty) (*Status, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetStatus not implemented")
-}
-func (UnimplementedRegistryServer) ListProjects(context.Context, *ListProjectsRequest) (*ListProjectsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListProjects not implemented")
-}
-func (UnimplementedRegistryServer) GetProject(context.Context, *GetProjectRequest) (*Project, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetProject not implemented")
-}
-func (UnimplementedRegistryServer) CreateProject(context.Context, *CreateProjectRequest) (*Project, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateProject not implemented")
-}
-func (UnimplementedRegistryServer) UpdateProject(context.Context, *UpdateProjectRequest) (*Project, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateProject not implemented")
-}
-func (UnimplementedRegistryServer) DeleteProject(context.Context, *DeleteProjectRequest) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteProject not implemented")
-}
 func (UnimplementedRegistryServer) ListApis(context.Context, *ListApisRequest) (*ListApisResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListApis not implemented")
 }
@@ -628,114 +498,6 @@ type UnsafeRegistryServer interface {
 
 func RegisterRegistryServer(s grpc.ServiceRegistrar, srv RegistryServer) {
 	s.RegisterService(&Registry_ServiceDesc, srv)
-}
-
-func _Registry_GetStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(emptypb.Empty)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(RegistryServer).GetStatus(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/google.cloud.apigeeregistry.v1.Registry/GetStatus",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RegistryServer).GetStatus(ctx, req.(*emptypb.Empty))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Registry_ListProjects_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListProjectsRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(RegistryServer).ListProjects(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/google.cloud.apigeeregistry.v1.Registry/ListProjects",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RegistryServer).ListProjects(ctx, req.(*ListProjectsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Registry_GetProject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetProjectRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(RegistryServer).GetProject(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/google.cloud.apigeeregistry.v1.Registry/GetProject",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RegistryServer).GetProject(ctx, req.(*GetProjectRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Registry_CreateProject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateProjectRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(RegistryServer).CreateProject(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/google.cloud.apigeeregistry.v1.Registry/CreateProject",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RegistryServer).CreateProject(ctx, req.(*CreateProjectRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Registry_UpdateProject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpdateProjectRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(RegistryServer).UpdateProject(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/google.cloud.apigeeregistry.v1.Registry/UpdateProject",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RegistryServer).UpdateProject(ctx, req.(*UpdateProjectRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Registry_DeleteProject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeleteProjectRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(RegistryServer).DeleteProject(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/google.cloud.apigeeregistry.v1.Registry/DeleteProject",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RegistryServer).DeleteProject(ctx, req.(*DeleteProjectRequest))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _Registry_ListApis_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -1213,30 +975,6 @@ var Registry_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "google.cloud.apigeeregistry.v1.Registry",
 	HandlerType: (*RegistryServer)(nil),
 	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "GetStatus",
-			Handler:    _Registry_GetStatus_Handler,
-		},
-		{
-			MethodName: "ListProjects",
-			Handler:    _Registry_ListProjects_Handler,
-		},
-		{
-			MethodName: "GetProject",
-			Handler:    _Registry_GetProject_Handler,
-		},
-		{
-			MethodName: "CreateProject",
-			Handler:    _Registry_CreateProject_Handler,
-		},
-		{
-			MethodName: "UpdateProject",
-			Handler:    _Registry_UpdateProject_Handler,
-		},
-		{
-			MethodName: "DeleteProject",
-			Handler:    _Registry_DeleteProject_Handler,
-		},
 		{
 			MethodName: "ListApis",
 			Handler:    _Registry_ListApis_Handler,

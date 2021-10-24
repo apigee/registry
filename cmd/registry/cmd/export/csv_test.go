@@ -35,6 +35,10 @@ func TestExportCSV(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Setup: Failed to create client: %s", err)
 	}
+	adminClient, err := connection.NewAdminClient(ctx)
+	if err != nil {
+		t.Fatalf("Setup: Failed to create client: %s", err)
+	}
 
 	const (
 		projectID = "export-csv-test-project"
@@ -44,14 +48,14 @@ func TestExportCSV(t *testing.T) {
 	)
 
 	// Setup
-	err = client.DeleteProject(ctx, &rpc.DeleteProjectRequest{
+	err = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{
 		Name: "projects/" + projectID,
 	})
 	if err != nil && status.Code(err) != codes.NotFound {
 		t.Fatalf("Setup: Failed to delete test project: %s", err)
 	}
 
-	project, err := client.CreateProject(ctx, &rpc.CreateProjectRequest{
+	project, err := adminClient.CreateProject(ctx, &rpc.CreateProjectRequest{
 		ProjectId: projectID,
 		Project:   &rpc.Project{},
 	})

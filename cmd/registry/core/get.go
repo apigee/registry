@@ -22,7 +22,7 @@ import (
 )
 
 func GetProject(ctx context.Context,
-	client *gapic.RegistryClient,
+	client *gapic.AdminClient,
 	segments []string,
 	handler ProjectHandler) (*rpc.Project, error) {
 	request := &rpc.GetProjectRequest{

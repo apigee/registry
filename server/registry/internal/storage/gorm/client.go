@@ -24,7 +24,6 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 )
 
 // Client represents a connection to a storage provider.
@@ -47,12 +46,6 @@ func unlock() {
 	}
 }
 
-func defaultConfig() *gorm.Config {
-	return &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Silent), // https://gorm.io/docs/logger.html
-	}
-}
-
 // NewClient creates a new database session using the provided driver and data source name.
 // Driver must be one of [ sqlite3, postgres, cloudsqlpostgres ]. DSN format varies per database driver.
 //
@@ -70,7 +63,9 @@ func newClient(ctx context.Context, driver, dsn string, ensureTables bool) (*Cli
 	lock()
 	switch driver {
 	case "sqlite3":
-		db, err := gorm.Open(sqlite.Open(dsn), defaultConfig())
+		db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{
+			Logger: NewGormLogger(ctx),
+		})
 		if err != nil {
 			c := &Client{db: db}
 			c.close()
@@ -90,7 +85,9 @@ func newClient(ctx context.Context, driver, dsn string, ensureTables bool) (*Cli
 		db, err := gorm.Open(postgres.New(postgres.Config{
 			DriverName: driver,
 			DSN:        dsn,
-		}), defaultConfig())
+		}), &gorm.Config{
+			Logger: NewGormLogger(ctx),
+		})
 		if err != nil {
 			c := &Client{db: db}
 			c.close()
@@ -274,11 +271,7 @@ func (c *Client) GetRecentSpecRevisions(ctx context.Context, offset int32, proje
 	op := c.db.Select("specs.*").
 		Table("specs").
 		// Join missing columns that couldn't be selected in the subquery.
-		Joins(`JOIN (?) AS grp ON specs.project_id = grp.project_id AND
-			specs.api_id = grp.api_id AND
-			specs.version_id = grp.version_id AND
-			specs.spec_id = grp.spec_id AND
-			specs.revision_create_time = grp.recent_create_time`,
+		Joins("JOIN (?) AS grp ON specs.project_id = grp.project_id AND specs.api_id = grp.api_id AND specs.version_id = grp.version_id AND specs.spec_id = grp.spec_id AND specs.revision_create_time = grp.recent_create_time",
 			// Select spec names and only their most recent revision_create_time
 			// This query cannot select all the columns we want.
 			// See: https://stackoverflow.com/questions/7745609/sql-select-only-rows-with-max-value-on-a-column

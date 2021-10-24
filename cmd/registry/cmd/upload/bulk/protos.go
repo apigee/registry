@@ -45,9 +45,15 @@ func protosCommand(ctx context.Context) *cobra.Command {
 
 			client, err := connection.NewClient(ctx)
 			if err != nil {
-				log.WithError(err).Fatal("Failed to save artifact")
+				log.WithError(err).Fatal("Failed to get client")
 			}
-			core.EnsureProjectExists(ctx, client, projectID)
+
+			adminClient, err := connection.NewAdminClient(ctx)
+			if err != nil {
+				log.WithError(err).Fatal("Failed to get client")
+			}
+
+			core.EnsureProjectExists(ctx, adminClient, projectID)
 			for _, arg := range args {
 				scanDirectoryForProtos(ctx, client, projectID, baseURI, arg)
 			}

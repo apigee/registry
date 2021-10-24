@@ -21,7 +21,7 @@ var ListProjectsInput rpcpb.ListProjectsRequest
 var ListProjectsFromFile string
 
 func init() {
-	RegistryServiceCmd.AddCommand(ListProjectsCmd)
+	AdminServiceCmd.AddCommand(ListProjectsCmd)
 
 	ListProjectsCmd.Flags().Int32Var(&ListProjectsInput.PageSize, "page_size", 10, "Default is 10. The maximum number of projects to return.  The...")
 
@@ -62,9 +62,9 @@ var ListProjectsCmd = &cobra.Command{
 		}
 
 		if Verbose {
-			printVerboseInput("Registry", "ListProjects", &ListProjectsInput)
+			printVerboseInput("Admin", "ListProjects", &ListProjectsInput)
 		}
-		iter := RegistryClient.ListProjects(ctx, &ListProjectsInput)
+		iter := AdminClient.ListProjects(ctx, &ListProjectsInput)
 
 		// populate iterator with a page
 		_, err = iter.Next()

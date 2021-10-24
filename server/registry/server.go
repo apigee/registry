@@ -53,6 +53,7 @@ type RegistryServer struct {
 	projectID     string
 
 	rpc.UnimplementedRegistryServer
+	rpc.UnimplementedAdminServer
 }
 
 func New(config Config) *RegistryServer {

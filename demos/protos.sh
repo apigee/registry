@@ -29,7 +29,7 @@
 # commands.
 
 # First, delete the "protos" project to get a fresh start.
-apg registry delete-project --name projects/protos
+apg admin delete-project --name projects/protos
 
 # Get the commit hash of the checked-out protos directory
 export COMMIT=`(cd ~/Desktop/googleapis; git rev-parse HEAD)`
@@ -42,7 +42,7 @@ registry upload bulk protos \
 
 # The protos project was automatically created. Here we'll use an
 # update-project call to set a few properties of the project.
-apg registry update-project \
+apg admin update-project \
 	--project.name "projects/protos" \
 	--project.display_name "Protos" \
 	--project.description "Protocol buffer descriptions of public Google APIs"
