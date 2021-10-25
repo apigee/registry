@@ -506,8 +506,6 @@ func (c *RegistryClient) GetApiSpec(ctx context.Context, req *rpcpb.GetApiSpecRe
 // If specs are stored with GZip compression, the default behavior
 // is to return the spec uncompressed (the mime_type response field
 // indicates the exact format returned).
-// (– api-linter: core::0131::response-message-name=disabled
-// aip.dev/not-precedent (at http://aip.dev/not-precedent): Responses are arbitrary blobs of data. –)
 func (c *RegistryClient) GetApiSpecContents(ctx context.Context, req *rpcpb.GetApiSpecContentsRequest, opts ...gax.CallOption) (*httpbodypb.HttpBody, error) {
 	return c.internalClient.GetApiSpecContents(ctx, req, opts...)
 }
@@ -564,8 +562,6 @@ func (c *RegistryClient) GetArtifact(ctx context.Context, req *rpcpb.GetArtifact
 // If artifacts are stored with GZip compression, the default behavior
 // is to return the artifact uncompressed (the mime_type response field
 // indicates the exact format returned).
-// (– api-linter: core::0131::response-message-name=disabled
-// aip.dev/not-precedent (at http://aip.dev/not-precedent): Responses are arbitrary blobs of data. –)
 func (c *RegistryClient) GetArtifactContents(ctx context.Context, req *rpcpb.GetArtifactContentsRequest, opts ...gax.CallOption) (*httpbodypb.HttpBody, error) {
 	return c.internalClient.GetArtifactContents(ctx, req, opts...)
 }
