@@ -717,16 +717,3 @@ func (task *computeConformanceTaskPlugin) storeConformanceReport(
 	}
 	return core.SetArtifact(ctx, task.client, artifact)
 }
-
-func (task *computeConformanceTaskPlugin) unzipSpecs(
-	ctx context.Context,
-	tempDirRoot string) error {
-	data, err := core.GetBytesForSpec(ctx, task.client, task.spec)
-	if err != nil {
-		return err
-	}
-
-	// unzip to the temp directory
-	_, err = core.UnzipArchiveToPath(data, tempDirRoot)
-	return err
-}
