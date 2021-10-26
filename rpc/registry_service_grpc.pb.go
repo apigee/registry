@@ -50,8 +50,6 @@ type RegistryClient interface {
 	// If specs are stored with GZip compression, the default behavior
 	// is to return the spec uncompressed (the mime_type response field
 	// indicates the exact format returned).
-	// (-- api-linter: core::0131::response-message-name=disabled
-	//     aip.dev/not-precedent: Responses are arbitrary blobs of data. --)
 	GetApiSpecContents(ctx context.Context, in *GetApiSpecContentsRequest, opts ...grpc.CallOption) (*httpbody.HttpBody, error)
 	// CreateApiSpec creates a specified spec.
 	CreateApiSpec(ctx context.Context, in *CreateApiSpecRequest, opts ...grpc.CallOption) (*ApiSpec, error)
@@ -78,8 +76,6 @@ type RegistryClient interface {
 	// If artifacts are stored with GZip compression, the default behavior
 	// is to return the artifact uncompressed (the mime_type response field
 	// indicates the exact format returned).
-	// (-- api-linter: core::0131::response-message-name=disabled
-	//     aip.dev/not-precedent: Responses are arbitrary blobs of data. --)
 	GetArtifactContents(ctx context.Context, in *GetArtifactContentsRequest, opts ...grpc.CallOption) (*httpbody.HttpBody, error)
 	// CreateArtifact creates a specified artifact.
 	CreateArtifact(ctx context.Context, in *CreateArtifactRequest, opts ...grpc.CallOption) (*Artifact, error)
@@ -365,8 +361,6 @@ type RegistryServer interface {
 	// If specs are stored with GZip compression, the default behavior
 	// is to return the spec uncompressed (the mime_type response field
 	// indicates the exact format returned).
-	// (-- api-linter: core::0131::response-message-name=disabled
-	//     aip.dev/not-precedent: Responses are arbitrary blobs of data. --)
 	GetApiSpecContents(context.Context, *GetApiSpecContentsRequest) (*httpbody.HttpBody, error)
 	// CreateApiSpec creates a specified spec.
 	CreateApiSpec(context.Context, *CreateApiSpecRequest) (*ApiSpec, error)
@@ -393,8 +387,6 @@ type RegistryServer interface {
 	// If artifacts are stored with GZip compression, the default behavior
 	// is to return the artifact uncompressed (the mime_type response field
 	// indicates the exact format returned).
-	// (-- api-linter: core::0131::response-message-name=disabled
-	//     aip.dev/not-precedent: Responses are arbitrary blobs of data. --)
 	GetArtifactContents(context.Context, *GetArtifactContentsRequest) (*httpbody.HttpBody, error)
 	// CreateArtifact creates a specified artifact.
 	CreateArtifact(context.Context, *CreateArtifactRequest) (*Artifact, error)
