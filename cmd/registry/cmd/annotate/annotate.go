@@ -168,7 +168,8 @@ func (task *annotateApiTask) Run(ctx context.Context) error {
 	var err error
 	task.api.Annotations, err = task.labeling.Apply(task.api.Annotations)
 	if err != nil {
-		return err
+		log.WithError(err).Errorf("Invalid annotation")
+		return nil
 	}
 	_, err = task.client.UpdateApi(ctx,
 		&rpc.UpdateApiRequest{
@@ -194,7 +195,8 @@ func (task *annotateVersionTask) Run(ctx context.Context) error {
 	var err error
 	task.version.Annotations, err = task.labeling.Apply(task.version.Annotations)
 	if err != nil {
-		return err
+		log.WithError(err).Errorf("Invalid annotation")
+		return nil
 	}
 	_, err = task.client.UpdateApiVersion(ctx,
 		&rpc.UpdateApiVersionRequest{
@@ -220,7 +222,8 @@ func (task *annotateSpecTask) Run(ctx context.Context) error {
 	var err error
 	task.spec.Annotations, err = task.labeling.Apply(task.spec.Annotations)
 	if err != nil {
-		return err
+		log.WithError(err).Errorf("Invalid annotation")
+		return nil
 	}
 	_, err = task.client.UpdateApiSpec(ctx,
 		&rpc.UpdateApiSpecRequest{

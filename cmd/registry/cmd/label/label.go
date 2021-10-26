@@ -168,7 +168,8 @@ func (task *labelApiTask) Run(ctx context.Context) error {
 	var err error
 	task.api.Labels, err = task.labeling.Apply(task.api.Labels)
 	if err != nil {
-		return err
+		log.WithError(err).Errorf("Invalid labelling")
+		return nil
 	}
 	_, err = task.client.UpdateApi(ctx,
 		&rpc.UpdateApiRequest{
@@ -194,7 +195,8 @@ func (task *labelVersionTask) Run(ctx context.Context) error {
 	var err error
 	task.version.Labels, err = task.labeling.Apply(task.version.Labels)
 	if err != nil {
-		return err
+		log.WithError(err).Errorf("Invalid labelling")
+		return nil
 	}
 	_, err = task.client.UpdateApiVersion(ctx,
 		&rpc.UpdateApiVersionRequest{
@@ -220,7 +222,8 @@ func (task *labelSpecTask) Run(ctx context.Context) error {
 	var err error
 	task.spec.Labels, err = task.labeling.Apply(task.spec.Labels)
 	if err != nil {
-		return err
+		log.WithError(err).Errorf("Invalid labelling")
+		return nil
 	}
 	_, err = task.client.UpdateApiSpec(ctx,
 		&rpc.UpdateApiSpecRequest{
