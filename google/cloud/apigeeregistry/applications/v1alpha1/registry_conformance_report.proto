@@ -67,11 +67,16 @@ message RuleReport {
         (google.api.field_behavior) = REQUIRED
     ];
 
+    // File name of the spec that the rule was breached on.
+    string file_name = 3 [
+        (google.api.field_behavior) = REQUIRED
+    ];
+
     // A suggestion for resolving the problem.
-    string suggestion = 3;
+    string suggestion = 4;
 
     // The location of the problem in the spec file.
-    LintLocation location = 4;
+    LintLocation location = 5;
 }
 
 // GuidelineReportGroup is an abstraction that maps status
