@@ -19,6 +19,7 @@ import (
 
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/server/registry/names"
 )
 
 func GetProject(ctx context.Context,
@@ -103,21 +104,12 @@ func GetSpec(ctx context.Context,
 
 func GetArtifact(ctx context.Context,
 	client *gapic.RegistryClient,
-	segments []string,
+	name names.Artifact,
 	getContents bool,
 	handler ArtifactHandler) (*rpc.Artifact, error) {
-	request := &rpc.GetArtifactRequest{}
-	if segments[3] == "" {
-		request.Name = "projects/" + segments[1] + "/locations/global"
-	} else if segments[5] == "" {
-		request.Name = "projects/" + segments[1] + "/locations/global/apis/" + segments[3]
-	} else if segments[7] == "" {
-		request.Name = "projects/" + segments[1] + "/locations/global/apis/" + segments[3] + "/versions/" + segments[5]
-	} else {
-		request.Name = "projects/" + segments[1] + "/locations/global/apis/" + segments[3] + "/versions/" + segments[5] + "/specs/" + segments[7]
+	request := &rpc.GetArtifactRequest{
+		Name: name.String(),
 	}
-	request.Name += "/artifacts/" + segments[8]
-
 	artifact, err := client.GetArtifact(ctx, request)
 	if err != nil {
 		return nil, err

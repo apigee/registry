@@ -69,9 +69,12 @@ func conformanceCommand(ctx context.Context) *cobra.Command {
 				log.WithError(err).Fatal("Invalid spec")
 			}
 
-			projectSegments := []string{"projects", spec.ProjectID}
+			artifact, err := names.ParseArtifact(fmt.Sprintf("projects/%s/artifacts", spec.ProjectID))
+			if err != nil {
+				log.WithError(err).Fatal("Invalid project")
+			}
 
-			err = core.ListArtifacts(ctx, client, projectSegments, filter, true, func(artifact *rpc.Artifact) {
+			err = core.ListArtifacts(ctx, client, artifact, filter, true, func(artifact *rpc.Artifact) {
 				// Only consider artifacts which have the styleguide mimetype.
 				messageType, err := core.MessageTypeForMimeType(artifact.GetMimeType())
 				if err != nil {

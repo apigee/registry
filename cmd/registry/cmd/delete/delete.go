@@ -93,8 +93,8 @@ func matchAndHandleDeleteCmd(
 		return deleteVersions(ctx, client, m, filter, taskQueue)
 	} else if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
 		return deleteSpecs(ctx, client, m, filter, taskQueue)
-	} else if m := names.ArtifactRegexp().FindStringSubmatch(name); m != nil {
-		return deleteArtifacts(ctx, client, m, filter, taskQueue)
+	} else if artifact, err := names.ParseArtifact(name); err == nil {
+		return deleteArtifacts(ctx, client, artifact, filter, taskQueue)
 	} else {
 		return fmt.Errorf("unsupported resource name: see the 'apg registry delete-' subcommands for alternatives")
 	}
@@ -148,10 +148,10 @@ func deleteSpecs(
 func deleteArtifacts(
 	ctx context.Context,
 	client *gapic.RegistryClient,
-	segments []string,
+	artifact names.Artifact,
 	filterFlag string,
 	taskQueue chan<- core.Task) error {
-	return core.ListArtifacts(ctx, client, segments, filterFlag, false, func(artifact *rpc.Artifact) {
+	return core.ListArtifacts(ctx, client, artifact, filterFlag, false, func(artifact *rpc.Artifact) {
 		taskQueue <- &deleteTask{
 			client:       client,
 			resourceName: artifact.Name,

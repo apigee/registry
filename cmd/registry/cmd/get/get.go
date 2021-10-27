@@ -57,11 +57,11 @@ func Command(ctx context.Context) *cobra.Command {
 				} else {
 					_, err = core.GetSpec(ctx, client, m, getContents, core.PrintSpecDetail)
 				}
-			} else if m := names.ArtifactRegexp().FindStringSubmatch(name); m != nil {
+			} else if artifact, err := names.ParseArtifact(name); err == nil {
 				if getContents {
-					_, err = core.GetArtifact(ctx, client, m, getContents, core.PrintArtifactContents)
+					_, err = core.GetArtifact(ctx, client, artifact, getContents, core.PrintArtifactContents)
 				} else {
-					_, err = core.GetArtifact(ctx, client, m, getContents, core.PrintArtifactDetail)
+					_, err = core.GetArtifact(ctx, client, artifact, getContents, core.PrintArtifactDetail)
 				}
 			} else {
 				log.Debugf("Unsupported entity %+v", args)

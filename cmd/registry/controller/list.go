@@ -16,6 +16,7 @@ package controller
 
 import (
 	"context"
+
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/server/registry/names"
@@ -30,8 +31,8 @@ func ListResources(ctx context.Context, client connection.Client, pattern, filte
 		err = core.ListAPIs(ctx, client, m, filter, GenerateApiHandler(&result))
 	} else if m := names.SpecsRegexp().FindStringSubmatch(pattern); m != nil {
 		err = core.ListSpecs(ctx, client, m, filter, GenerateSpecHandler(&result))
-	} else if m := names.ArtifactsRegexp().FindStringSubmatch(pattern); m != nil {
-		err = core.ListArtifacts(ctx, client, m, filter, false, GenerateArtifactHandler(&result))
+	} else if artifact, err := names.ParseArtifactCollection(pattern); err == nil {
+		err = core.ListArtifacts(ctx, client, artifact, filter, false, GenerateArtifactHandler(&result))
 	}
 
 	// Then try to match resource names.
@@ -39,8 +40,8 @@ func ListResources(ctx context.Context, client connection.Client, pattern, filte
 		err = core.ListAPIs(ctx, client, m, filter, GenerateApiHandler(&result))
 	} else if m := names.SpecRegexp().FindStringSubmatch(pattern); m != nil {
 		err = core.ListSpecs(ctx, client, m, filter, GenerateSpecHandler(&result))
-	} else if m := names.ArtifactRegexp().FindStringSubmatch(pattern); m != nil {
-		err = core.ListArtifacts(ctx, client, m, filter, false, GenerateArtifactHandler(&result))
+	} else if artifact, err := names.ParseArtifact(pattern); err == nil {
+		err = core.ListArtifacts(ctx, client, artifact, filter, false, GenerateArtifactHandler(&result))
 	}
 
 	if err != nil {

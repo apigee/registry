@@ -20,10 +20,15 @@ import (
 )
 
 var (
-	projectArtifactRegexp = regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/artifacts/%s", identifier, Location, identifier))
-	apiArtifactRegexp     = regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/artifacts/%s", identifier, Location, identifier, identifier))
-	versionArtifactRegexp = regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/versions/%s/artifacts/%s", identifier, Location, identifier, identifier, identifier))
-	specArtifactRegexp    = regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/versions/%s/specs/%s/artifacts/%s", identifier, Location, identifier, identifier, identifier, identifier))
+	projectArtifactCollectionRegexp = regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/artifacts$", identifier, Location))
+	apiArtifactCollectionRegexp     = regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/artifacts$", identifier, Location, identifier))
+	versionArtifactCollectionRegexp = regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/versions/%s/artifacts$", identifier, Location, identifier, identifier))
+	specArtifactCollectionRegexp    = regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/versions/%s/specs/%s/artifacts$", identifier, Location, identifier, identifier, identifier))
+
+	projectArtifactRegexp = regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/artifacts/%s$", identifier, Location, identifier))
+	apiArtifactRegexp     = regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/artifacts/%s$", identifier, Location, identifier, identifier))
+	versionArtifactRegexp = regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/versions/%s/artifacts/%s$", identifier, Location, identifier, identifier, identifier))
+	specArtifactRegexp    = regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/versions/%s/specs/%s/artifacts/%s$", identifier, Location, identifier, identifier, identifier, identifier))
 )
 
 // Artifact represents a resource name for an artifact.
@@ -148,6 +153,26 @@ func ParseArtifact(name string) (Artifact, error) {
 	})
 }
 
+// ParseArtifactCollection parses the name of an artifact collection.
+func ParseArtifactCollection(name string) (Artifact, error) {
+	if spec, err := parseSpecArtifactCollection(name); err == nil {
+		return Artifact{name: spec}, nil
+	} else if version, err := parseVersionArtifactCollection(name); err == nil {
+		return Artifact{name: version}, nil
+	} else if api, err := parseApiArtifactCollection(name); err == nil {
+		return Artifact{name: api}, nil
+	} else if project, err := parseProjectArtifactCollection(name); err == nil {
+		return Artifact{name: project}, nil
+	}
+
+	return Artifact{}, fmt.Errorf("invalid artifact collection name %q, must match one of: %v", name, []string{
+		projectArtifactCollectionRegexp.String(),
+		apiArtifactCollectionRegexp.String(),
+		versionArtifactCollectionRegexp.String(),
+		specArtifactCollectionRegexp.String(),
+	})
+}
+
 type projectArtifact struct {
 	ProjectID  string
 	ArtifactID string
@@ -181,6 +206,20 @@ func parseProjectArtifact(name string) (projectArtifact, error) {
 	artifact := projectArtifact{
 		ProjectID:  m[1],
 		ArtifactID: m[2],
+	}
+
+	return artifact, nil
+}
+
+func parseProjectArtifactCollection(name string) (projectArtifact, error) {
+	if !projectArtifactCollectionRegexp.MatchString(name) {
+		return projectArtifact{}, fmt.Errorf("invalid project artifact name %q: must match %q", name, projectArtifactCollectionRegexp)
+	}
+
+	m := projectArtifactCollectionRegexp.FindStringSubmatch(name)
+	artifact := projectArtifact{
+		ProjectID:  m[1],
+		ArtifactID: "",
 	}
 
 	return artifact, nil
@@ -227,6 +266,21 @@ func parseApiArtifact(name string) (apiArtifact, error) {
 	return artifact, nil
 }
 
+func parseApiArtifactCollection(name string) (apiArtifact, error) {
+	if !apiArtifactCollectionRegexp.MatchString(name) {
+		return apiArtifact{}, fmt.Errorf("invalid api artifact name %q: must match %q", name, apiArtifactCollectionRegexp)
+	}
+
+	m := apiArtifactCollectionRegexp.FindStringSubmatch(name)
+	artifact := apiArtifact{
+		ProjectID:  m[1],
+		ApiID:      m[2],
+		ArtifactID: "",
+	}
+
+	return artifact, nil
+}
+
 type versionArtifact struct {
 	ProjectID  string
 	ApiID      string
@@ -266,6 +320,22 @@ func parseVersionArtifact(name string) (versionArtifact, error) {
 		ApiID:      m[2],
 		VersionID:  m[3],
 		ArtifactID: m[4],
+	}
+
+	return artifact, nil
+}
+
+func parseVersionArtifactCollection(name string) (versionArtifact, error) {
+	if !versionArtifactCollectionRegexp.MatchString(name) {
+		return versionArtifact{}, fmt.Errorf("invalid version artifact name %q: must match %q", name, versionArtifactCollectionRegexp)
+	}
+
+	m := versionArtifactCollectionRegexp.FindStringSubmatch(name)
+	artifact := versionArtifact{
+		ProjectID:  m[1],
+		ApiID:      m[2],
+		VersionID:  m[3],
+		ArtifactID: "",
 	}
 
 	return artifact, nil
@@ -318,15 +388,34 @@ func parseSpecArtifact(name string) (specArtifact, error) {
 	return artifact, nil
 }
 
+func parseSpecArtifactCollection(name string) (specArtifact, error) {
+	if !specArtifactCollectionRegexp.MatchString(name) {
+		return specArtifact{}, fmt.Errorf("invalid spec artifact name %q: must match %q", name, specArtifactCollectionRegexp)
+	}
+
+	m := specArtifactCollectionRegexp.FindStringSubmatch(name)
+	artifact := specArtifact{
+		ProjectID:  m[1],
+		ApiID:      m[2],
+		VersionID:  m[3],
+		SpecID:     m[4],
+		ArtifactID: "",
+	}
+
+	return artifact, nil
+}
+
 // ArtifactsRegexp returns a regular expression that matches collection of artifacts.
-func ArtifactsRegexp() *regexp.Regexp {
+// TODO: Delete
+func artifactsRegexp() *regexp.Regexp {
 	return regexp.MustCompile(
 		fmt.Sprintf("^projects/%s/locations/%s(/apis/%s(/versions/%s(/specs/%s)?)?)?/artifacts$",
 			identifier, Location, identifier, identifier, identifier))
 }
 
 // ArtifactRegexp returns a regular expression that matches an artifact resource name.
-func ArtifactRegexp() *regexp.Regexp {
+// TODO: Delete
+func artifactRegexp() *regexp.Regexp {
 	return regexp.MustCompile(
 		fmt.Sprintf("^projects/%s/locations/%s(/apis/%s(/versions/%s(/specs/%s)?)?)?/artifacts/%s$",
 			identifier, Location, identifier, identifier, identifier, identifier))

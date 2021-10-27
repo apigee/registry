@@ -140,7 +140,7 @@ func TestResourceNames(t *testing.T) {
 		},
 		{
 			name:   "artifacts",
-			regexp: ArtifactsRegexp(),
+			regexp: artifactsRegexp(),
 			pass: []string{
 				"projects/google/locations/global/apis/sample/versions/v1/specs/openapi.yaml/artifacts",
 				"projects/google/locations/global/apis/sample/versions/v1/artifacts",
@@ -153,7 +153,7 @@ func TestResourceNames(t *testing.T) {
 		},
 		{
 			name:   "artifact",
-			regexp: ArtifactRegexp(),
+			regexp: artifactRegexp(),
 			pass: []string{
 				"projects/google/locations/global/apis/sample/versions/v1/specs/openapi.yaml/artifacts/test-artifact",
 				"projects/google/locations/global/apis/sample/versions/v1/artifacts/test-artifact",

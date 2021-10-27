@@ -68,8 +68,8 @@ func matchAndHandleListCmd(
 		return core.ListVersions(ctx, client, m, filter, core.PrintVersion)
 	} else if m := names.SpecsRegexp().FindStringSubmatch(name); m != nil {
 		return core.ListSpecs(ctx, client, m, filter, core.PrintSpec)
-	} else if m := names.ArtifactsRegexp().FindStringSubmatch(name); m != nil {
-		return core.ListArtifacts(ctx, client, m, filter, false, core.PrintArtifact)
+	} else if artifact, err := names.ParseArtifactCollection(name); err == nil {
+		return core.ListArtifacts(ctx, client, artifact, filter, false, core.PrintArtifact)
 	}
 
 	// Then try to match resource names.
@@ -81,8 +81,8 @@ func matchAndHandleListCmd(
 		return core.ListVersions(ctx, client, m, filter, core.PrintVersion)
 	} else if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
 		return core.ListSpecs(ctx, client, m, filter, core.PrintSpec)
-	} else if m := names.ArtifactRegexp().FindStringSubmatch(name); m != nil {
-		return core.ListArtifacts(ctx, client, m, filter, false, core.PrintArtifact)
+	} else if artifact, err := names.ParseArtifact(name); err == nil {
+		return core.ListArtifacts(ctx, client, artifact, filter, false, core.PrintArtifact)
 	}
 
 	// If nothing matched, return an error.

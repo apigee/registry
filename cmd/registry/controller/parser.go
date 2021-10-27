@@ -16,10 +16,11 @@ package controller
 
 import (
 	"fmt"
-	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/server/registry/names"
 	"regexp"
 	"strings"
+
+	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/server/registry/names"
 )
 
 const resourceKW = "$resource"
@@ -118,7 +119,7 @@ func resourceNameFromGroupKey(
 		return resourceName, nil
 	} else if m := names.SpecRegexp().FindStringSubmatch(resourceName); m != nil {
 		return resourceName, nil
-	} else if m := names.ArtifactRegexp().FindStringSubmatch(resourceName); m != nil {
+	} else if _, err := names.ParseArtifact(resourceName); err == nil {
 		return resourceName, nil
 	}
 

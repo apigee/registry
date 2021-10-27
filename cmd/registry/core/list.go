@@ -16,9 +16,11 @@ package core
 
 import (
 	"context"
+	"log"
 
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/server/registry/names"
 	"google.golang.org/api/iterator"
 )
 
@@ -158,29 +160,21 @@ func ListSpecRevisions(ctx context.Context,
 
 func ListArtifacts(ctx context.Context,
 	client *gapic.RegistryClient,
-	segments []string,
+	name names.Artifact,
 	filterFlag string,
 	getContents bool,
 	handler ArtifactHandler) error {
-	parent := "projects/" + segments[1] + "/locations/global"
-	if len(segments) >= 4 && segments[3] != "" {
-		parent += "/apis/" + segments[3]
-		if len(segments) >= 6 && segments[5] != "" {
-			parent += "/versions/" + segments[5]
-			if len(segments) >= 8 && segments[7] != "" {
-				parent += "/specs/" + segments[7]
-			}
-		}
-	}
 	request := &rpc.ListArtifactsRequest{
-		Parent: parent,
+		Parent: name.Parent(),
 	}
 	filter := filterFlag
-	if len(segments) == 9 && segments[8] != "-" {
+	artifactID := name.ArtifactID()
+	log.Printf("ARTIFACT ID %s", artifactID)
+	if artifactID != "" && artifactID != "-" {
 		if filter != "" {
 			filter += " && "
 		}
-		filter += "artifact_id == '" + segments[8] + "'"
+		filter += "artifact_id == '" + artifactID + "'"
 	}
 	if filter != "" {
 		request.Filter = filter
