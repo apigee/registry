@@ -40,41 +40,41 @@ var newRegistryClientHook clientHook
 
 // RegistryCallOptions contains the retry settings for each method of RegistryClient.
 type RegistryCallOptions struct {
-	ListApis []gax.CallOption
-	GetApi []gax.CallOption
-	CreateApi []gax.CallOption
-	UpdateApi []gax.CallOption
-	DeleteApi []gax.CallOption
-	ListApiVersions []gax.CallOption
-	GetApiVersion []gax.CallOption
-	CreateApiVersion []gax.CallOption
-	UpdateApiVersion []gax.CallOption
-	DeleteApiVersion []gax.CallOption
-	ListApiSpecs []gax.CallOption
-	GetApiSpec []gax.CallOption
-	GetApiSpecContents []gax.CallOption
-	CreateApiSpec []gax.CallOption
-	UpdateApiSpec []gax.CallOption
-	DeleteApiSpec []gax.CallOption
-	TagApiSpecRevision []gax.CallOption
-	ListApiSpecRevisions []gax.CallOption
-	RollbackApiSpec []gax.CallOption
-	DeleteApiSpecRevision []gax.CallOption
-	ListApiDeployments []gax.CallOption
-	GetApiDeployment []gax.CallOption
-	CreateApiDeployment []gax.CallOption
-	UpdateApiDeployment []gax.CallOption
-	DeleteApiDeployment []gax.CallOption
-	TagApiDeploymentRevision []gax.CallOption
-	ListApiDeploymentRevisions []gax.CallOption
-	RollbackApiDeployment []gax.CallOption
+	ListApis                    []gax.CallOption
+	GetApi                      []gax.CallOption
+	CreateApi                   []gax.CallOption
+	UpdateApi                   []gax.CallOption
+	DeleteApi                   []gax.CallOption
+	ListApiVersions             []gax.CallOption
+	GetApiVersion               []gax.CallOption
+	CreateApiVersion            []gax.CallOption
+	UpdateApiVersion            []gax.CallOption
+	DeleteApiVersion            []gax.CallOption
+	ListApiSpecs                []gax.CallOption
+	GetApiSpec                  []gax.CallOption
+	GetApiSpecContents          []gax.CallOption
+	CreateApiSpec               []gax.CallOption
+	UpdateApiSpec               []gax.CallOption
+	DeleteApiSpec               []gax.CallOption
+	TagApiSpecRevision          []gax.CallOption
+	ListApiSpecRevisions        []gax.CallOption
+	RollbackApiSpec             []gax.CallOption
+	DeleteApiSpecRevision       []gax.CallOption
+	ListApiDeployments          []gax.CallOption
+	GetApiDeployment            []gax.CallOption
+	CreateApiDeployment         []gax.CallOption
+	UpdateApiDeployment         []gax.CallOption
+	DeleteApiDeployment         []gax.CallOption
+	TagApiDeploymentRevision    []gax.CallOption
+	ListApiDeploymentRevisions  []gax.CallOption
+	RollbackApiDeployment       []gax.CallOption
 	DeleteApiDeploymentRevision []gax.CallOption
-	ListArtifacts []gax.CallOption
-	GetArtifact []gax.CallOption
-	GetArtifactContents []gax.CallOption
-	CreateArtifact []gax.CallOption
-	ReplaceArtifact []gax.CallOption
-	DeleteArtifact []gax.CallOption
+	ListArtifacts               []gax.CallOption
+	GetArtifact                 []gax.CallOption
+	GetArtifactContents         []gax.CallOption
+	CreateArtifact              []gax.CallOption
+	ReplaceArtifact             []gax.CallOption
+	DeleteArtifact              []gax.CallOption
 }
 
 func defaultRegistryGRPCClientOptions() []option.ClientOption {
@@ -86,7 +86,7 @@ func defaultRegistryGRPCClientOptions() []option.ClientOption {
 		internaloption.EnableJwtWithScope(),
 		option.WithGRPCDialOption(grpc.WithDisableServiceConfig()),
 		option.WithGRPCDialOption(grpc.WithDefaultCallOptions(
-		grpc.MaxCallRecvMsgSize(math.MaxInt32))),
+			grpc.MaxCallRecvMsgSize(math.MaxInt32))),
 	}
 }
 
@@ -532,7 +532,6 @@ type RegistryClient struct {
 
 	// The call options for this service.
 	CallOptions *RegistryCallOptions
-
 }
 
 // Wrapper methods routed to the internal client.
@@ -793,11 +792,10 @@ func NewRegistryClient(ctx context.Context, opts ...option.ClientOption) (*Regis
 	client := RegistryClient{CallOptions: defaultRegistryCallOptions()}
 
 	c := &registryGRPCClient{
-		connPool:    connPool,
+		connPool:         connPool,
 		disableDeadlines: disableDeadlines,
-		registryClient: rpcpb.NewRegistryClient(connPool),
-		CallOptions: &client.CallOptions,
-
+		registryClient:   rpcpb.NewRegistryClient(connPool),
+		CallOptions:      &client.CallOptions,
 	}
 	c.setGoogleClientInfo()
 
@@ -874,7 +872,7 @@ func (c *registryGRPCClient) ListApis(ctx context.Context, req *rpcpb.ListApisRe
 
 func (c *registryGRPCClient) GetApi(ctx context.Context, req *rpcpb.GetApiRequest, opts ...gax.CallOption) (*rpcpb.Api, error) {
 	if _, ok := ctx.Deadline(); !ok && !c.disableDeadlines {
-		cctx, cancel := context.WithTimeout(ctx, 10000 * time.Millisecond)
+		cctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
 		defer cancel()
 		ctx = cctx
 	}
@@ -895,7 +893,7 @@ func (c *registryGRPCClient) GetApi(ctx context.Context, req *rpcpb.GetApiReques
 
 func (c *registryGRPCClient) CreateApi(ctx context.Context, req *rpcpb.CreateApiRequest, opts ...gax.CallOption) (*rpcpb.Api, error) {
 	if _, ok := ctx.Deadline(); !ok && !c.disableDeadlines {
-		cctx, cancel := context.WithTimeout(ctx, 10000 * time.Millisecond)
+		cctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
 		defer cancel()
 		ctx = cctx
 	}
@@ -916,7 +914,7 @@ func (c *registryGRPCClient) CreateApi(ctx context.Context, req *rpcpb.CreateApi
 
 func (c *registryGRPCClient) UpdateApi(ctx context.Context, req *rpcpb.UpdateApiRequest, opts ...gax.CallOption) (*rpcpb.Api, error) {
 	if _, ok := ctx.Deadline(); !ok && !c.disableDeadlines {
-		cctx, cancel := context.WithTimeout(ctx, 10000 * time.Millisecond)
+		cctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
 		defer cancel()
 		ctx = cctx
 	}
@@ -937,7 +935,7 @@ func (c *registryGRPCClient) UpdateApi(ctx context.Context, req *rpcpb.UpdateApi
 
 func (c *registryGRPCClient) DeleteApi(ctx context.Context, req *rpcpb.DeleteApiRequest, opts ...gax.CallOption) error {
 	if _, ok := ctx.Deadline(); !ok && !c.disableDeadlines {
-		cctx, cancel := context.WithTimeout(ctx, 10000 * time.Millisecond)
+		cctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
 		defer cancel()
 		ctx = cctx
 	}
@@ -998,7 +996,7 @@ func (c *registryGRPCClient) ListApiVersions(ctx context.Context, req *rpcpb.Lis
 
 func (c *registryGRPCClient) GetApiVersion(ctx context.Context, req *rpcpb.GetApiVersionRequest, opts ...gax.CallOption) (*rpcpb.ApiVersion, error) {
 	if _, ok := ctx.Deadline(); !ok && !c.disableDeadlines {
-		cctx, cancel := context.WithTimeout(ctx, 10000 * time.Millisecond)
+		cctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
 		defer cancel()
 		ctx = cctx
 	}
@@ -1019,7 +1017,7 @@ func (c *registryGRPCClient) GetApiVersion(ctx context.Context, req *rpcpb.GetAp
 
 func (c *registryGRPCClient) CreateApiVersion(ctx context.Context, req *rpcpb.CreateApiVersionRequest, opts ...gax.CallOption) (*rpcpb.ApiVersion, error) {
 	if _, ok := ctx.Deadline(); !ok && !c.disableDeadlines {
-		cctx, cancel := context.WithTimeout(ctx, 10000 * time.Millisecond)
+		cctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
 		defer cancel()
 		ctx = cctx
 	}
@@ -1040,7 +1038,7 @@ func (c *registryGRPCClient) CreateApiVersion(ctx context.Context, req *rpcpb.Cr
 
 func (c *registryGRPCClient) UpdateApiVersion(ctx context.Context, req *rpcpb.UpdateApiVersionRequest, opts ...gax.CallOption) (*rpcpb.ApiVersion, error) {
 	if _, ok := ctx.Deadline(); !ok && !c.disableDeadlines {
-		cctx, cancel := context.WithTimeout(ctx, 10000 * time.Millisecond)
+		cctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
 		defer cancel()
 		ctx = cctx
 	}
@@ -1061,7 +1059,7 @@ func (c *registryGRPCClient) UpdateApiVersion(ctx context.Context, req *rpcpb.Up
 
 func (c *registryGRPCClient) DeleteApiVersion(ctx context.Context, req *rpcpb.DeleteApiVersionRequest, opts ...gax.CallOption) error {
 	if _, ok := ctx.Deadline(); !ok && !c.disableDeadlines {
-		cctx, cancel := context.WithTimeout(ctx, 10000 * time.Millisecond)
+		cctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
 		defer cancel()
 		ctx = cctx
 	}
@@ -1122,7 +1120,7 @@ func (c *registryGRPCClient) ListApiSpecs(ctx context.Context, req *rpcpb.ListAp
 
 func (c *registryGRPCClient) GetApiSpec(ctx context.Context, req *rpcpb.GetApiSpecRequest, opts ...gax.CallOption) (*rpcpb.ApiSpec, error) {
 	if _, ok := ctx.Deadline(); !ok && !c.disableDeadlines {
-		cctx, cancel := context.WithTimeout(ctx, 10000 * time.Millisecond)
+		cctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
 		defer cancel()
 		ctx = cctx
 	}
@@ -1143,7 +1141,7 @@ func (c *registryGRPCClient) GetApiSpec(ctx context.Context, req *rpcpb.GetApiSp
 
 func (c *registryGRPCClient) GetApiSpecContents(ctx context.Context, req *rpcpb.GetApiSpecContentsRequest, opts ...gax.CallOption) (*httpbodypb.HttpBody, error) {
 	if _, ok := ctx.Deadline(); !ok && !c.disableDeadlines {
-		cctx, cancel := context.WithTimeout(ctx, 10000 * time.Millisecond)
+		cctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
 		defer cancel()
 		ctx = cctx
 	}
@@ -1164,7 +1162,7 @@ func (c *registryGRPCClient) GetApiSpecContents(ctx context.Context, req *rpcpb.
 
 func (c *registryGRPCClient) CreateApiSpec(ctx context.Context, req *rpcpb.CreateApiSpecRequest, opts ...gax.CallOption) (*rpcpb.ApiSpec, error) {
 	if _, ok := ctx.Deadline(); !ok && !c.disableDeadlines {
-		cctx, cancel := context.WithTimeout(ctx, 10000 * time.Millisecond)
+		cctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
 		defer cancel()
 		ctx = cctx
 	}
@@ -1185,7 +1183,7 @@ func (c *registryGRPCClient) CreateApiSpec(ctx context.Context, req *rpcpb.Creat
 
 func (c *registryGRPCClient) UpdateApiSpec(ctx context.Context, req *rpcpb.UpdateApiSpecRequest, opts ...gax.CallOption) (*rpcpb.ApiSpec, error) {
 	if _, ok := ctx.Deadline(); !ok && !c.disableDeadlines {
-		cctx, cancel := context.WithTimeout(ctx, 10000 * time.Millisecond)
+		cctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
 		defer cancel()
 		ctx = cctx
 	}
@@ -1206,7 +1204,7 @@ func (c *registryGRPCClient) UpdateApiSpec(ctx context.Context, req *rpcpb.Updat
 
 func (c *registryGRPCClient) DeleteApiSpec(ctx context.Context, req *rpcpb.DeleteApiSpecRequest, opts ...gax.CallOption) error {
 	if _, ok := ctx.Deadline(); !ok && !c.disableDeadlines {
-		cctx, cancel := context.WithTimeout(ctx, 10000 * time.Millisecond)
+		cctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
 		defer cancel()
 		ctx = cctx
 	}
@@ -1223,7 +1221,7 @@ func (c *registryGRPCClient) DeleteApiSpec(ctx context.Context, req *rpcpb.Delet
 
 func (c *registryGRPCClient) TagApiSpecRevision(ctx context.Context, req *rpcpb.TagApiSpecRevisionRequest, opts ...gax.CallOption) (*rpcpb.ApiSpec, error) {
 	if _, ok := ctx.Deadline(); !ok && !c.disableDeadlines {
-		cctx, cancel := context.WithTimeout(ctx, 10000 * time.Millisecond)
+		cctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
 		defer cancel()
 		ctx = cctx
 	}
@@ -1288,7 +1286,7 @@ func (c *registryGRPCClient) ListApiSpecRevisions(ctx context.Context, req *rpcp
 
 func (c *registryGRPCClient) RollbackApiSpec(ctx context.Context, req *rpcpb.RollbackApiSpecRequest, opts ...gax.CallOption) (*rpcpb.ApiSpec, error) {
 	if _, ok := ctx.Deadline(); !ok && !c.disableDeadlines {
-		cctx, cancel := context.WithTimeout(ctx, 10000 * time.Millisecond)
+		cctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
 		defer cancel()
 		ctx = cctx
 	}
@@ -1309,7 +1307,7 @@ func (c *registryGRPCClient) RollbackApiSpec(ctx context.Context, req *rpcpb.Rol
 
 func (c *registryGRPCClient) DeleteApiSpecRevision(ctx context.Context, req *rpcpb.DeleteApiSpecRevisionRequest, opts ...gax.CallOption) (*rpcpb.ApiSpec, error) {
 	if _, ok := ctx.Deadline(); !ok && !c.disableDeadlines {
-		cctx, cancel := context.WithTimeout(ctx, 10000 * time.Millisecond)
+		cctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
 		defer cancel()
 		ctx = cctx
 	}
@@ -1374,7 +1372,7 @@ func (c *registryGRPCClient) ListApiDeployments(ctx context.Context, req *rpcpb.
 
 func (c *registryGRPCClient) GetApiDeployment(ctx context.Context, req *rpcpb.GetApiDeploymentRequest, opts ...gax.CallOption) (*rpcpb.ApiDeployment, error) {
 	if _, ok := ctx.Deadline(); !ok && !c.disableDeadlines {
-		cctx, cancel := context.WithTimeout(ctx, 10000 * time.Millisecond)
+		cctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
 		defer cancel()
 		ctx = cctx
 	}
@@ -1395,7 +1393,7 @@ func (c *registryGRPCClient) GetApiDeployment(ctx context.Context, req *rpcpb.Ge
 
 func (c *registryGRPCClient) CreateApiDeployment(ctx context.Context, req *rpcpb.CreateApiDeploymentRequest, opts ...gax.CallOption) (*rpcpb.ApiDeployment, error) {
 	if _, ok := ctx.Deadline(); !ok && !c.disableDeadlines {
-		cctx, cancel := context.WithTimeout(ctx, 10000 * time.Millisecond)
+		cctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
 		defer cancel()
 		ctx = cctx
 	}
@@ -1416,7 +1414,7 @@ func (c *registryGRPCClient) CreateApiDeployment(ctx context.Context, req *rpcpb
 
 func (c *registryGRPCClient) UpdateApiDeployment(ctx context.Context, req *rpcpb.UpdateApiDeploymentRequest, opts ...gax.CallOption) (*rpcpb.ApiDeployment, error) {
 	if _, ok := ctx.Deadline(); !ok && !c.disableDeadlines {
-		cctx, cancel := context.WithTimeout(ctx, 10000 * time.Millisecond)
+		cctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
 		defer cancel()
 		ctx = cctx
 	}
@@ -1437,7 +1435,7 @@ func (c *registryGRPCClient) UpdateApiDeployment(ctx context.Context, req *rpcpb
 
 func (c *registryGRPCClient) DeleteApiDeployment(ctx context.Context, req *rpcpb.DeleteApiDeploymentRequest, opts ...gax.CallOption) error {
 	if _, ok := ctx.Deadline(); !ok && !c.disableDeadlines {
-		cctx, cancel := context.WithTimeout(ctx, 10000 * time.Millisecond)
+		cctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
 		defer cancel()
 		ctx = cctx
 	}
@@ -1454,7 +1452,7 @@ func (c *registryGRPCClient) DeleteApiDeployment(ctx context.Context, req *rpcpb
 
 func (c *registryGRPCClient) TagApiDeploymentRevision(ctx context.Context, req *rpcpb.TagApiDeploymentRevisionRequest, opts ...gax.CallOption) (*rpcpb.ApiDeployment, error) {
 	if _, ok := ctx.Deadline(); !ok && !c.disableDeadlines {
-		cctx, cancel := context.WithTimeout(ctx, 10000 * time.Millisecond)
+		cctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
 		defer cancel()
 		ctx = cctx
 	}
@@ -1519,7 +1517,7 @@ func (c *registryGRPCClient) ListApiDeploymentRevisions(ctx context.Context, req
 
 func (c *registryGRPCClient) RollbackApiDeployment(ctx context.Context, req *rpcpb.RollbackApiDeploymentRequest, opts ...gax.CallOption) (*rpcpb.ApiDeployment, error) {
 	if _, ok := ctx.Deadline(); !ok && !c.disableDeadlines {
-		cctx, cancel := context.WithTimeout(ctx, 10000 * time.Millisecond)
+		cctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
 		defer cancel()
 		ctx = cctx
 	}
@@ -1540,7 +1538,7 @@ func (c *registryGRPCClient) RollbackApiDeployment(ctx context.Context, req *rpc
 
 func (c *registryGRPCClient) DeleteApiDeploymentRevision(ctx context.Context, req *rpcpb.DeleteApiDeploymentRevisionRequest, opts ...gax.CallOption) (*rpcpb.ApiDeployment, error) {
 	if _, ok := ctx.Deadline(); !ok && !c.disableDeadlines {
-		cctx, cancel := context.WithTimeout(ctx, 10000 * time.Millisecond)
+		cctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
 		defer cancel()
 		ctx = cctx
 	}
@@ -1605,7 +1603,7 @@ func (c *registryGRPCClient) ListArtifacts(ctx context.Context, req *rpcpb.ListA
 
 func (c *registryGRPCClient) GetArtifact(ctx context.Context, req *rpcpb.GetArtifactRequest, opts ...gax.CallOption) (*rpcpb.Artifact, error) {
 	if _, ok := ctx.Deadline(); !ok && !c.disableDeadlines {
-		cctx, cancel := context.WithTimeout(ctx, 10000 * time.Millisecond)
+		cctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
 		defer cancel()
 		ctx = cctx
 	}
@@ -1626,7 +1624,7 @@ func (c *registryGRPCClient) GetArtifact(ctx context.Context, req *rpcpb.GetArti
 
 func (c *registryGRPCClient) GetArtifactContents(ctx context.Context, req *rpcpb.GetArtifactContentsRequest, opts ...gax.CallOption) (*httpbodypb.HttpBody, error) {
 	if _, ok := ctx.Deadline(); !ok && !c.disableDeadlines {
-		cctx, cancel := context.WithTimeout(ctx, 10000 * time.Millisecond)
+		cctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
 		defer cancel()
 		ctx = cctx
 	}
@@ -1647,7 +1645,7 @@ func (c *registryGRPCClient) GetArtifactContents(ctx context.Context, req *rpcpb
 
 func (c *registryGRPCClient) CreateArtifact(ctx context.Context, req *rpcpb.CreateArtifactRequest, opts ...gax.CallOption) (*rpcpb.Artifact, error) {
 	if _, ok := ctx.Deadline(); !ok && !c.disableDeadlines {
-		cctx, cancel := context.WithTimeout(ctx, 10000 * time.Millisecond)
+		cctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
 		defer cancel()
 		ctx = cctx
 	}
@@ -1668,7 +1666,7 @@ func (c *registryGRPCClient) CreateArtifact(ctx context.Context, req *rpcpb.Crea
 
 func (c *registryGRPCClient) ReplaceArtifact(ctx context.Context, req *rpcpb.ReplaceArtifactRequest, opts ...gax.CallOption) (*rpcpb.Artifact, error) {
 	if _, ok := ctx.Deadline(); !ok && !c.disableDeadlines {
-		cctx, cancel := context.WithTimeout(ctx, 10000 * time.Millisecond)
+		cctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
 		defer cancel()
 		ctx = cctx
 	}
@@ -1689,7 +1687,7 @@ func (c *registryGRPCClient) ReplaceArtifact(ctx context.Context, req *rpcpb.Rep
 
 func (c *registryGRPCClient) DeleteArtifact(ctx context.Context, req *rpcpb.DeleteArtifactRequest, opts ...gax.CallOption) error {
 	if _, ok := ctx.Deadline(); !ok && !c.disableDeadlines {
-		cctx, cancel := context.WithTimeout(ctx, 10000 * time.Millisecond)
+		cctx, cancel := context.WithTimeout(ctx, 10000*time.Millisecond)
 		defer cancel()
 		ctx = cctx
 	}
