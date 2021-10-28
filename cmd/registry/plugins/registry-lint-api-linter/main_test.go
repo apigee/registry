@@ -30,7 +30,7 @@ import (
 type mockApiLinterExecuter struct {
 	mock.Mock
 	results []*rpc.LintProblem
-	err error
+	err     error
 }
 
 func (runner *mockApiLinterExecuter) Execute(specPath string) ([]*rpc.LintProblem, error) {
@@ -38,12 +38,12 @@ func (runner *mockApiLinterExecuter) Execute(specPath string) ([]*rpc.LintProble
 }
 
 func newMockApiLinterExecuter(
-	results []*rpc.LintProblem, 
+	results []*rpc.LintProblem,
 	err error,
 ) apiLinterCommandExecuter {
 	return &mockApiLinterExecuter{
-		results: results, 
-		err: err,
+		results: results,
+		err:     err,
 	}
 }
 
@@ -66,23 +66,23 @@ func TestApiLinterPluginLintSpec(t *testing.T) {
 	assert.Equal(t, err, nil)
 
 	lintSpecTests := []struct {
-		linter *apiLinterRunner
-		request *rpc.LinterRequest
-		executer apiLinterCommandExecuter
+		linter           *apiLinterRunner
+		request          *rpc.LinterRequest
+		executer         apiLinterCommandExecuter
 		expectedResponse *rpc.LinterResponse
-		expectedError error
-    }{
-        {
+		expectedError    error
+	}{
+		{
 			&apiLinterRunner{},
 			&rpc.LinterRequest{
 				SpecPath: path,
-				RuleIds: []string{"test"},
+				RuleIds:  []string{"test"},
 			},
 			newMockApiLinterExecuter(
-				[]*rpc.LintProblem {
+				[]*rpc.LintProblem{
 					{
-						Message:    "test",
-						RuleId:     "test",
+						Message: "test",
+						RuleId:  "test",
 						Location: &rpc.LintLocation{
 							StartPosition: &rpc.LintPosition{
 								LineNumber:   1,
@@ -95,18 +95,18 @@ func TestApiLinterPluginLintSpec(t *testing.T) {
 						},
 					},
 				},
-			nil,
+				nil,
 			),
 			&rpc.LinterResponse{
 				Lint: &rpc.Lint{
 					Name: "registry-lint-api-linter",
-					Files: []*rpc.LintFile {
+					Files: []*rpc.LintFile{
 						{
 							FilePath: path,
 							Problems: []*rpc.LintProblem{
 								{
-									Message:    "test",
-									RuleId:     "test",
+									Message: "test",
+									RuleId:  "test",
 									Location: &rpc.LintLocation{
 										StartPosition: &rpc.LintPosition{
 											LineNumber:   1,
@@ -137,11 +137,11 @@ func TestApiLinterPluginLintSpec(t *testing.T) {
 			nil,
 			errors.New("test"),
 		},
-    }
+	}
 
-    for _, tt := range lintSpecTests {
+	for _, tt := range lintSpecTests {
 		response, err := tt.linter.RunImpl(tt.request, tt.executer)
 		assert.Equal(t, tt.expectedError, err)
 		assert.EqualValues(t, tt.expectedResponse, response)
-    }
+	}
 }
