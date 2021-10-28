@@ -52,9 +52,9 @@ func complexityCommand(ctx context.Context) *cobra.Command {
 			defer wait()
 			// Generate tasks.
 			name := args[0]
-			if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
+			if spec, err := names.ParseSpec(name); err == nil {
 				// Iterate through a collection of specs and summarize each.
-				err = core.ListSpecs(ctx, client, m, filter, func(spec *rpc.ApiSpec) {
+				err = core.ListSpecs(ctx, client, spec, filter, func(spec *rpc.ApiSpec) {
 					taskQueue <- &computeComplexityTask{
 						client:   client,
 						specName: spec.Name,

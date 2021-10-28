@@ -52,9 +52,9 @@ func detailsCommand(ctx context.Context) *cobra.Command {
 			defer wait()
 			// Generate tasks.
 			name := args[0]
-			if m := names.ApiRegexp().FindStringSubmatch(name); m != nil {
+			if api, err := names.ParseApi(name); err == nil {
 				// Iterate through a collection of specs and summarize each.
-				err = core.ListAPIs(ctx, client, m, filter, func(api *rpc.Api) {
+				err = core.ListAPIs(ctx, client, api, filter, func(api *rpc.Api) {
 					taskQueue <- &computeDetailsTask{
 						client:  client,
 						apiName: api.Name,
@@ -78,9 +78,12 @@ func (task *computeDetailsTask) String() string {
 }
 
 func (task *computeDetailsTask) Run(ctx context.Context) error {
-	m := names.SpecRegexp().FindStringSubmatch(task.apiName + "/versions/-/specs/-")
+	specName, err := names.ParseSpec(task.apiName + "/versions/-/specs/-")
+	if err != nil {
+		return err
+	}
 	specs := make([]*rpc.ApiSpec, 0)
-	_ = core.ListSpecs(ctx, task.client, m, "", func(spec *rpc.ApiSpec) {
+	_ = core.ListSpecs(ctx, task.client, specName, "", func(spec *rpc.ApiSpec) {
 		specs = append(specs, spec)
 	})
 	// use the last (presumed latest) spec
@@ -88,8 +91,11 @@ func (task *computeDetailsTask) Run(ctx context.Context) error {
 		return nil
 	}
 	spec := specs[len(specs)-1]
-	m = names.SpecRegexp().FindStringSubmatch(spec.Name)
-	spec, err := core.GetSpec(ctx, task.client, m, true, nil)
+	specName, err = names.ParseSpec(spec.Name)
+	if err != nil {
+		return nil
+	}
+	spec, err = core.GetSpec(ctx, task.client, specName, true, nil)
 	if err != nil {
 		return nil
 	}

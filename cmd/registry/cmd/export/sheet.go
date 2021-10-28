@@ -140,8 +140,8 @@ func collectInputArtifacts(ctx context.Context, client connection.Client, args [
 	inputNames := make([]string, 0)
 	inputs := make([]*rpc.Artifact, 0)
 	for _, name := range args {
-		if m := names.ArtifactRegexp().FindStringSubmatch(name); m != nil {
-			err := core.ListArtifacts(ctx, client, m, filter, true, func(artifact *rpc.Artifact) {
+		if artifact, err := names.ParseArtifact(name); err == nil {
+			err := core.ListArtifacts(ctx, client, artifact, filter, true, func(artifact *rpc.Artifact) {
 				inputNames = append(inputNames, artifact.Name)
 				inputs = append(inputs, artifact)
 			})
