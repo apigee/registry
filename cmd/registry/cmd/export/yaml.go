@@ -45,29 +45,29 @@ func yamlCommand(ctx context.Context) *cobra.Command {
 				name = args[0]
 			}
 
-			if m := names.ProjectRegexp().FindStringSubmatch(name); m != nil {
-				_, err := core.GetProject(ctx, adminClient, m, func(message *rpc.Project) {
+			if project, err := names.ParseProject(name); err == nil {
+				_, err := core.GetProject(ctx, adminClient, project, func(message *rpc.Project) {
 					core.ExportYAMLForProject(ctx, client, adminClient, message)
 				})
 				if err != nil {
 					log.WithError(err).Fatal("Failed to export project YAML")
 				}
-			} else if m := names.ApiRegexp().FindStringSubmatch(name); m != nil {
-				_, err = core.GetAPI(ctx, client, m, func(message *rpc.Api) {
+			} else if api, err := names.ParseApi(name); err == nil {
+				_, err = core.GetAPI(ctx, client, api, func(message *rpc.Api) {
 					core.ExportYAMLForAPI(ctx, client, message)
 				})
 				if err != nil {
 					log.WithError(err).Fatal("Failed to export API YAML")
 				}
-			} else if m := names.VersionRegexp().FindStringSubmatch(name); m != nil {
-				_, err = core.GetVersion(ctx, client, m, func(message *rpc.ApiVersion) {
+			} else if version, err := names.ParseVersion(name); err == nil {
+				_, err = core.GetVersion(ctx, client, version, func(message *rpc.ApiVersion) {
 					core.ExportYAMLForVersion(ctx, client, message)
 				})
 				if err != nil {
 					log.WithError(err).Fatal("Failed to export version YAML")
 				}
-			} else if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
-				_, err = core.GetSpec(ctx, client, m, false, func(message *rpc.ApiSpec) {
+			} else if spec, err := names.ParseSpec(name); err == nil {
+				_, err = core.GetSpec(ctx, client, spec, false, func(message *rpc.ApiSpec) {
 					core.ExportYAMLForSpec(ctx, client, message)
 				})
 				if err != nil {

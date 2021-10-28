@@ -251,8 +251,11 @@ func TestResolve(t *testing.T) {
 
 			// List all the artifacts
 			got := make([]string, 0)
-			segments := names.ArtifactRegexp().FindStringSubmatch(test.listPattern)
-			_ = core.ListArtifacts(ctx, client, segments, "", false,
+			artifact, err := names.ParseArtifact(test.listPattern)
+			if err != nil {
+				t.Fatalf("Invalid artifact %s", test.listPattern)
+			}
+			_ = core.ListArtifacts(ctx, client, artifact, "", false,
 				func(artifact *rpc.Artifact) {
 					got = append(got, artifact.Name)
 				},

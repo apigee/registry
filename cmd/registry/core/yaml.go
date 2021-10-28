@@ -48,10 +48,13 @@ func ExportYAMLForSpec(ctx context.Context, client *gapic.RegistryClient, messag
 }
 
 func exportProject(ctx context.Context, client *gapic.RegistryClient, adminClient *gapic.AdminClient, message *rpc.Project) []*yaml.Node {
-	m := names.ProjectRegexp().FindStringSubmatch(message.Name)
+	project, err := names.ParseProject(message.Name)
+	if err != nil {
+		return nil
+	}
 	projectMapContent := nodeSlice()
 	apisMapContent := nodeSlice()
-	err := ListAPIs(ctx, client, m, "", func(message *rpc.Api) {
+	err = ListAPIs(ctx, client, project.Api(""), "", func(message *rpc.Api) {
 		apiMapContent := exportAPI(ctx, client, message)
 		apisMapContent = appendPair(apisMapContent, path.Base(message.Name), nodeForMapping(apiMapContent))
 	})
@@ -63,13 +66,16 @@ func exportProject(ctx context.Context, client *gapic.RegistryClient, adminClien
 }
 
 func exportAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api) []*yaml.Node {
-	m := names.ApiRegexp().FindStringSubmatch(message.Name)
+	api, err := names.ParseApi(message.Name)
+	if err != nil {
+		return nil
+	}
 	apiMapContent := nodeSlice()
 	apiMapContent = appendPair(apiMapContent, "createTime", nodeForTime(message.CreateTime.AsTime()))
 	apiMapContent = appendPair(apiMapContent, "availability", nodeForString(message.Availability))
 	apiMapContent = appendPair(apiMapContent, "recommended_version", nodeForString(message.RecommendedVersion))
 	versionsMapContent := nodeSlice()
-	err := ListVersions(ctx, client, m, "", func(message *rpc.ApiVersion) {
+	err = ListVersions(ctx, client, api.Version(""), "", func(message *rpc.ApiVersion) {
 		versionMapContent := exportVersion(ctx, client, message)
 		versionsMapContent = appendPair(versionsMapContent, path.Base(message.Name), nodeForMapping(versionMapContent))
 	})
@@ -78,7 +84,7 @@ func exportAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.A
 	}
 	apiMapContent = appendPair(apiMapContent, "versions", nodeForMapping(versionsMapContent))
 	artifactsMapContent := nodeSlice()
-	_ = ListArtifactsForParent(ctx, client, m, func(message *rpc.Artifact) {
+	_ = ListArtifactsForParent(ctx, client, api, func(message *rpc.Artifact) {
 		artifactsMapContent = appendPair(artifactsMapContent,
 			path.Base(message.Name),
 			nodeForMapping(exportArtifact(ctx, client, message)))
@@ -90,16 +96,23 @@ func exportAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.A
 }
 
 func exportVersion(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiVersion) []*yaml.Node {
-	m := names.VersionRegexp().FindStringSubmatch(message.Name)
+	version, err := names.ParseVersion(message.Name)
+	if err != nil {
+		return nil
+	}
 	versionMapContent := nodeSlice()
 	versionMapContent = appendPair(versionMapContent, "createTime", nodeForTime(message.CreateTime.AsTime()))
 	versionMapContent = appendPair(versionMapContent, "state", nodeForString(message.State))
 	specsMapContent := nodeSlice()
-	err := ListSpecs(ctx, client, m, "", func(message *rpc.ApiSpec) {
+	err = ListSpecs(ctx, client, version.Spec(""), "", func(message *rpc.ApiSpec) {
 		specMapContent := exportSpec(ctx, client, message)
 		specsMapContent = appendPair(specsMapContent, path.Base(message.Name), nodeForMapping(specMapContent))
-		m := names.SpecRegexp().FindStringSubmatch(message.Name)
-		err := ListSpecRevisions(ctx, client, m, "", func(message *rpc.ApiSpec) {
+		specName, err := names.ParseSpec(message.Name)
+		if err != nil {
+			log.WithError(err).Fatalf("Failed to parse spec name %s", message.Name)
+			return
+		}
+		err = ListSpecRevisions(ctx, client, specName, "", func(message *rpc.ApiSpec) {
 			specMapContent := exportSpec(ctx, client, message)
 			specsMapContent = appendPair(specsMapContent, path.Base(message.Name), nodeForMapping(specMapContent))
 		})
@@ -112,7 +125,7 @@ func exportVersion(ctx context.Context, client *gapic.RegistryClient, message *r
 	}
 	versionMapContent = appendPair(versionMapContent, "specs", nodeForMapping(specsMapContent))
 	artifactsMapContent := nodeSlice()
-	_ = ListArtifactsForParent(ctx, client, m, func(message *rpc.Artifact) {
+	_ = ListArtifactsForParent(ctx, client, version, func(message *rpc.Artifact) {
 		artifactsMapContent = appendPair(artifactsMapContent,
 			path.Base(message.Name),
 			nodeForMapping(exportArtifact(ctx, client, message)))
