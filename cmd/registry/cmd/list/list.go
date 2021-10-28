@@ -60,29 +60,29 @@ func matchAndHandleListCmd(
 ) error {
 
 	// First try to match collection names.
-	if m := names.ProjectsRegexp().FindStringSubmatch(name); m != nil {
-		return core.ListProjects(ctx, adminClient, m, filter, core.PrintProject)
-	} else if m := names.ApisRegexp().FindStringSubmatch(name); m != nil {
-		return core.ListAPIs(ctx, client, m, filter, core.PrintAPI)
-	} else if m := names.VersionsRegexp().FindStringSubmatch(name); m != nil {
-		return core.ListVersions(ctx, client, m, filter, core.PrintVersion)
-	} else if m := names.SpecsRegexp().FindStringSubmatch(name); m != nil {
-		return core.ListSpecs(ctx, client, m, filter, core.PrintSpec)
-	} else if m := names.ArtifactsRegexp().FindStringSubmatch(name); m != nil {
-		return core.ListArtifacts(ctx, client, m, filter, false, core.PrintArtifact)
+	if project, err := names.ParseProjectCollection(name); err == nil {
+		return core.ListProjects(ctx, adminClient, project, filter, core.PrintProject)
+	} else if api, err := names.ParseApiCollection(name); err == nil {
+		return core.ListAPIs(ctx, client, api, filter, core.PrintAPI)
+	} else if version, err := names.ParseVersionCollection(name); err == nil {
+		return core.ListVersions(ctx, client, version, filter, core.PrintVersion)
+	} else if spec, err := names.ParseSpecCollection(name); err == nil {
+		return core.ListSpecs(ctx, client, spec, filter, core.PrintSpec)
+	} else if artifact, err := names.ParseArtifactCollection(name); err == nil {
+		return core.ListArtifacts(ctx, client, artifact, filter, false, core.PrintArtifact)
 	}
 
 	// Then try to match resource names.
-	if m := names.ProjectRegexp().FindStringSubmatch(name); m != nil {
-		return core.ListProjects(ctx, adminClient, m, filter, core.PrintProject)
-	} else if m := names.ApiRegexp().FindStringSubmatch(name); m != nil {
-		return core.ListAPIs(ctx, client, m, filter, core.PrintAPI)
-	} else if m := names.VersionRegexp().FindStringSubmatch(name); m != nil {
-		return core.ListVersions(ctx, client, m, filter, core.PrintVersion)
-	} else if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
-		return core.ListSpecs(ctx, client, m, filter, core.PrintSpec)
-	} else if m := names.ArtifactRegexp().FindStringSubmatch(name); m != nil {
-		return core.ListArtifacts(ctx, client, m, filter, false, core.PrintArtifact)
+	if project, err := names.ParseProjectCollection(name); err == nil {
+		return core.ListProjects(ctx, adminClient, project, filter, core.PrintProject)
+	} else if api, err := names.ParseApi(name); err == nil {
+		return core.ListAPIs(ctx, client, api, filter, core.PrintAPI)
+	} else if version, err := names.ParseVersion(name); err == nil {
+		return core.ListVersions(ctx, client, version, filter, core.PrintVersion)
+	} else if spec, err := names.ParseSpec(name); err == nil {
+		return core.ListSpecs(ctx, client, spec, filter, core.PrintSpec)
+	} else if artifact, err := names.ParseArtifact(name); err == nil {
+		return core.ListArtifacts(ctx, client, artifact, filter, false, core.PrintArtifact)
 	}
 
 	// If nothing matched, return an error.

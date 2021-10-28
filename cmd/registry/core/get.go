@@ -19,14 +19,15 @@ import (
 
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/server/registry/names"
 )
 
 func GetProject(ctx context.Context,
 	client *gapic.AdminClient,
-	segments []string,
+	name names.Project,
 	handler ProjectHandler) (*rpc.Project, error) {
 	request := &rpc.GetProjectRequest{
-		Name: "projects/" + segments[1],
+		Name: name.String(),
 	}
 	project, err := client.GetProject(ctx, request)
 	if err != nil {
@@ -40,10 +41,10 @@ func GetProject(ctx context.Context,
 
 func GetAPI(ctx context.Context,
 	client *gapic.RegistryClient,
-	segments []string,
+	name names.Api,
 	handler ApiHandler) (*rpc.Api, error) {
 	request := &rpc.GetApiRequest{
-		Name: "projects/" + segments[1] + "/locations/global/apis/" + segments[2],
+		Name: name.String(),
 	}
 	api, err := client.GetApi(ctx, request)
 	if err != nil {
@@ -57,10 +58,10 @@ func GetAPI(ctx context.Context,
 
 func GetVersion(ctx context.Context,
 	client *gapic.RegistryClient,
-	segments []string,
+	name names.Version,
 	handler VersionHandler) (*rpc.ApiVersion, error) {
 	request := &rpc.GetApiVersionRequest{
-		Name: "projects/" + segments[1] + "/locations/global/apis/" + segments[2] + "/versions/" + segments[3],
+		Name: name.String(),
 	}
 	version, err := client.GetApiVersion(ctx, request)
 	if err != nil {
@@ -74,11 +75,11 @@ func GetVersion(ctx context.Context,
 
 func GetSpec(ctx context.Context,
 	client *gapic.RegistryClient,
-	segments []string,
+	name names.Spec,
 	getContents bool,
 	handler SpecHandler) (*rpc.ApiSpec, error) {
 	request := &rpc.GetApiSpecRequest{
-		Name: "projects/" + segments[1] + "/locations/global/apis/" + segments[2] + "/versions/" + segments[3] + "/specs/" + segments[4],
+		Name: name.String(),
 	}
 	spec, err := client.GetApiSpec(ctx, request)
 	if err != nil {
@@ -103,21 +104,12 @@ func GetSpec(ctx context.Context,
 
 func GetArtifact(ctx context.Context,
 	client *gapic.RegistryClient,
-	segments []string,
+	name names.Artifact,
 	getContents bool,
 	handler ArtifactHandler) (*rpc.Artifact, error) {
-	request := &rpc.GetArtifactRequest{}
-	if segments[3] == "" {
-		request.Name = "projects/" + segments[1] + "/locations/global"
-	} else if segments[5] == "" {
-		request.Name = "projects/" + segments[1] + "/locations/global/apis/" + segments[3]
-	} else if segments[7] == "" {
-		request.Name = "projects/" + segments[1] + "/locations/global/apis/" + segments[3] + "/versions/" + segments[5]
-	} else {
-		request.Name = "projects/" + segments[1] + "/locations/global/apis/" + segments[3] + "/versions/" + segments[5] + "/specs/" + segments[7]
+	request := &rpc.GetArtifactRequest{
+		Name: name.String(),
 	}
-	request.Name += "/artifacts/" + segments[8]
-
 	artifact, err := client.GetArtifact(ctx, request)
 	if err != nil {
 		return nil, err

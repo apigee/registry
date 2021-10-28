@@ -29,7 +29,7 @@ type Version struct {
 // Validate returns an error if the resource name is invalid.
 // For backward compatibility, names should only be validated at creation time.
 func (v Version) Validate() error {
-	r := VersionRegexp()
+	r := versionRegexp()
 	if name := v.String(); !r.MatchString(name) {
 		return fmt.Errorf("invalid version name %q: must match %q", name, r)
 	}
@@ -82,21 +82,21 @@ func (v Version) String() string {
 		v.ProjectID, Location, v.ApiID, v.VersionID))
 }
 
-// VersionsRegexp returns a regular expression that matches a collection of versions.
-func VersionsRegexp() *regexp.Regexp {
+// versionCollectionRegexp returns a regular expression that matches a collection of versions.
+func versionCollectionRegexp() *regexp.Regexp {
 	return regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/versions$",
 		identifier, Location, identifier))
 }
 
-// VersionRegexp returns a regular expression that matches a version resource name.
-func VersionRegexp() *regexp.Regexp {
+// versionRegexp returns a regular expression that matches a version resource name.
+func versionRegexp() *regexp.Regexp {
 	return regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/versions/%s$",
 		identifier, Location, identifier, identifier))
 }
 
 // ParseVersion parses the name of a version.
 func ParseVersion(name string) (Version, error) {
-	r := VersionRegexp()
+	r := versionRegexp()
 	if !r.MatchString(name) {
 		return Version{}, fmt.Errorf("invalid version name %q: must match %q", name, r)
 	}
@@ -106,5 +106,20 @@ func ParseVersion(name string) (Version, error) {
 		ProjectID: m[1],
 		ApiID:     m[2],
 		VersionID: m[3],
+	}, nil
+}
+
+// ParseVersionCollection parses the name of a version collection.
+func ParseVersionCollection(name string) (Version, error) {
+	r := versionCollectionRegexp()
+	if !r.MatchString(name) {
+		return Version{}, fmt.Errorf("invalid version collection name %q: must match %q", name, r)
+	}
+
+	m := r.FindStringSubmatch(name)
+	return Version{
+		ProjectID: m[1],
+		ApiID:     m[2],
+		VersionID: "",
 	}, nil
 }

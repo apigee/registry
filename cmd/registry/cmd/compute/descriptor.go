@@ -51,8 +51,8 @@ func descriptorCommand(ctx context.Context) *cobra.Command {
 			defer wait()
 			// Generate tasks.
 			name := args[0]
-			if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
-				err = core.ListSpecs(ctx, client, m, filter, func(spec *rpc.ApiSpec) {
+			if spec, err := names.ParseSpec(name); err == nil {
+				err = core.ListSpecs(ctx, client, spec, filter, func(spec *rpc.ApiSpec) {
 					taskQueue <- &computeDescriptorTask{
 						client:   client,
 						specName: spec.Name,

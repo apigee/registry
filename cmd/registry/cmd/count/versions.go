@@ -43,9 +43,9 @@ func versionsCommand(ctx context.Context) *cobra.Command {
 			defer wait()
 			// Generate tasks.
 			name := args[0]
-			if m := names.ApiRegexp().FindStringSubmatch(name); m != nil {
+			if api, err := names.ParseApi(name); err == nil {
 				// Iterate through a collection of APIs and count the number of versions of each.
-				err = core.ListAPIs(ctx, client, m, filter, func(api *rpc.Api) {
+				err = core.ListAPIs(ctx, client, api, filter, func(api *rpc.Api) {
 					taskQueue <- &countVersionsTask{
 						client:  client,
 						apiName: api.Name,
