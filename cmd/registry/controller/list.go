@@ -24,29 +24,29 @@ import (
 
 func ListResources(ctx context.Context, client connection.Client, pattern, filter string) ([]Resource, error) {
 	var result []Resource
-	var err error
+	var err2 error
 
 	// First try to match collection names.
 	if api, err := names.ParseApiCollection(pattern); err == nil {
-		err = core.ListAPIs(ctx, client, api, filter, GenerateApiHandler(&result))
+		err2 = core.ListAPIs(ctx, client, api, filter, GenerateApiHandler(&result))
 	} else if spec, err := names.ParseSpecCollection(pattern); err == nil {
-		err = core.ListSpecs(ctx, client, spec, filter, GenerateSpecHandler(&result))
+		err2 = core.ListSpecs(ctx, client, spec, filter, GenerateSpecHandler(&result))
 	} else if artifact, err := names.ParseArtifactCollection(pattern); err == nil {
-		err = core.ListArtifacts(ctx, client, artifact, filter, false, GenerateArtifactHandler(&result))
+		err2 = core.ListArtifacts(ctx, client, artifact, filter, false, GenerateArtifactHandler(&result))
 	}
 
 	// Then try to match resource names.
 	if api, err := names.ParseApi(pattern); err == nil {
-		err = core.ListAPIs(ctx, client, api, filter, GenerateApiHandler(&result))
+		err2 = core.ListAPIs(ctx, client, api, filter, GenerateApiHandler(&result))
 	} else if spec, err := names.ParseSpec(pattern); err == nil {
-		err = core.ListSpecs(ctx, client, spec, filter, GenerateSpecHandler(&result))
+		err2 = core.ListSpecs(ctx, client, spec, filter, GenerateSpecHandler(&result))
 	} else if artifact, err := names.ParseArtifact(pattern); err == nil {
-		err = core.ListArtifacts(ctx, client, artifact, filter, false, GenerateArtifactHandler(&result))
+		err2 = core.ListArtifacts(ctx, client, artifact, filter, false, GenerateArtifactHandler(&result))
 	}
 
-	if err != nil {
-		return nil, err
+	if err2 != nil {
+		return nil, err2
 	}
 
-	return result, err
+	return result, nil
 }

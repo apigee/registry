@@ -270,28 +270,25 @@ func matchAndHandleLintStatsCmd(
 	linter string,
 ) error {
 
-	var err error
 	// First try to match collection names, then try to match resource names.
 	if project, err := names.ParseProjectCollection(name); err == nil {
-		err = computeLintStatsProjects(ctx, client, adminClient, project, filter, linter)
+		return computeLintStatsProjects(ctx, client, adminClient, project, filter, linter)
 	} else if api, err := names.ParseApiCollection(name); err == nil {
-		err = computeLintStatsAPIs(ctx, client, api, filter, linter)
+		return computeLintStatsAPIs(ctx, client, api, filter, linter)
 	} else if version, err := names.ParseVersionCollection(name); err == nil {
-		err = computeLintStatsVersions(ctx, client, version, filter, linter)
+		return computeLintStatsVersions(ctx, client, version, filter, linter)
 	} else if spec, err := names.ParseSpecCollection(name); err == nil {
-		err = computeLintStatsSpecs(ctx, client, spec, filter, linter)
+		return computeLintStatsSpecs(ctx, client, spec, filter, linter)
 	} else if project, err := names.ParseProject(name); err == nil {
-		err = computeLintStatsProjects(ctx, client, adminClient, project, filter, linter)
+		return computeLintStatsProjects(ctx, client, adminClient, project, filter, linter)
 	} else if api, err := names.ParseApi(name); err == nil {
-		err = computeLintStatsAPIs(ctx, client, api, filter, linter)
+		return computeLintStatsAPIs(ctx, client, api, filter, linter)
 	} else if version, err := names.ParseVersion(name); err == nil {
-		err = computeLintStatsVersions(ctx, client, version, filter, linter)
+		return computeLintStatsVersions(ctx, client, version, filter, linter)
 	} else if spec, err := names.ParseSpec(name); err == nil {
-		err = computeLintStatsSpecs(ctx, client, spec, filter, linter)
+		return computeLintStatsSpecs(ctx, client, spec, filter, linter)
 	} else {
 		// If nothing matched, return an error.
 		return fmt.Errorf("unsupported argument: %s", name)
 	}
-
-	return err
 }

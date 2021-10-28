@@ -45,29 +45,30 @@ func Command(ctx context.Context) *cobra.Command {
 				name = args[0]
 			}
 
+			var err2 error
 			if project, err := names.ParseProject(name); err == nil {
-				_, err = core.GetProject(ctx, adminClient, project, core.PrintProjectDetail)
+				_, err2 = core.GetProject(ctx, adminClient, project, core.PrintProjectDetail)
 			} else if api, err := names.ParseApi(name); err == nil {
-				_, err = core.GetAPI(ctx, client, api, core.PrintAPIDetail)
+				_, err2 = core.GetAPI(ctx, client, api, core.PrintAPIDetail)
 			} else if version, err := names.ParseVersion(name);err == nil {
-				_, err = core.GetVersion(ctx, client, version, core.PrintVersionDetail)
+				_, err2 = core.GetVersion(ctx, client, version, core.PrintVersionDetail)
 			} else if spec, err := names.ParseSpec(name); err == nil {
 				if getContents {
-					_, err = core.GetSpec(ctx, client, spec, getContents, core.PrintSpecContents)
+					_, err2 = core.GetSpec(ctx, client, spec, getContents, core.PrintSpecContents)
 				} else {
-					_, err = core.GetSpec(ctx, client, spec, getContents, core.PrintSpecDetail)
+					_, err2 = core.GetSpec(ctx, client, spec, getContents, core.PrintSpecDetail)
 				}
 			} else if artifact, err := names.ParseArtifact(name); err == nil {
 				if getContents {
-					_, err = core.GetArtifact(ctx, client, artifact, getContents, core.PrintArtifactContents)
+					_, err2 = core.GetArtifact(ctx, client, artifact, getContents, core.PrintArtifactContents)
 				} else {
-					_, err = core.GetArtifact(ctx, client, artifact, getContents, core.PrintArtifactDetail)
+					_, err2 = core.GetArtifact(ctx, client, artifact, getContents, core.PrintArtifactDetail)
 				}
 			} else {
 				log.Debugf("Unsupported entity %+v", args)
 			}
-			if err != nil {
-				log.WithError(err).Debugf("Failed to get resource")
+			if err2 != nil {
+				log.WithError(err2).Debugf("Failed to get resource")
 			}
 		},
 	}
