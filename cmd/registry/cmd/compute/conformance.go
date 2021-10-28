@@ -60,18 +60,17 @@ func conformanceCommand(ctx context.Context) *cobra.Command {
 			name := args[0]
 
 			// Ensure that the provided argument is a spec.
-			var specSegments []string
-			if specSegments = names.SpecRegexp().FindStringSubmatch(name); specSegments == nil {
-				log.Fatalf("The provided argument %s does not match the regex of a spec", name)
-			}
 			spec, err := names.ParseSpec(name)
 			if err != nil {
-				log.WithError(err).Fatal("Invalid spec")
+				log.WithError(err).Fatalf("The provided argument %s does not match the regex of a spec", name)
 			}
 
-			projectSegments := []string{"projects", spec.ProjectID}
+			artifact, err := names.ParseArtifact(fmt.Sprintf("projects/%s/artifacts", spec.ProjectID))
+			if err != nil {
+				log.WithError(err).Fatal("Invalid project")
+			}
 
-			err = core.ListArtifacts(ctx, client, projectSegments, filter, true, func(artifact *rpc.Artifact) {
+			err = core.ListArtifacts(ctx, client, artifact, filter, true, func(artifact *rpc.Artifact) {
 				// Only consider artifacts which have the styleguide mimetype.
 				messageType, err := core.MessageTypeForMimeType(artifact.GetMimeType())
 				if err != nil {
@@ -93,9 +92,9 @@ func conformanceCommand(ctx context.Context) *cobra.Command {
 				}
 
 				if plugin {
-					computeConformanceForStyleGuideWithPlugin(ctx, client, styleguide, specSegments, filter)
+					computeConformanceForStyleGuideWithPlugin(ctx, client, styleguide, spec, filter)
 				} else {
-					computeConformanceForStyleGuide(ctx, client, styleguide, specSegments, filter)
+					computeConformanceForStyleGuide(ctx, client, styleguide, spec, filter)
 				}
 			})
 
@@ -115,7 +114,7 @@ func conformanceCommand(ctx context.Context) *cobra.Command {
 func computeConformanceForStyleGuideWithPlugin(ctx context.Context,
 	client connection.Client,
 	styleguide *rpc.StyleGuide,
-	specSegments []string,
+	spec names.Spec,
 	filter string) {
 	// A mapping between the linter name and the the names of the
 	// rules that the linter should support. These names are names
@@ -153,7 +152,7 @@ func computeConformanceForStyleGuideWithPlugin(ctx context.Context,
 	defer wait()
 
 	// Generate tasks.
-	err := core.ListSpecs(ctx, client, specSegments, filter, func(spec *rpc.ApiSpec) {
+	err := core.ListSpecs(ctx, client, spec, filter, func(spec *rpc.ApiSpec) {
 		// Delegate the task of computing the conformance report for this spec
 		// to the worker pool.
 		taskQueue <- &computeConformanceTaskPlugin{
@@ -175,7 +174,7 @@ func computeConformanceForStyleGuideWithPlugin(ctx context.Context,
 func computeConformanceForStyleGuide(ctx context.Context,
 	client connection.Client,
 	styleguide *rpc.StyleGuide,
-	specSegments []string,
+	spec names.Spec,
 	filter string) {
 	// A mapping between the linter name and the linter, and populate
 	// all the rules that the linter should support.
@@ -237,7 +236,7 @@ func computeConformanceForStyleGuide(ctx context.Context,
 	defer wait()
 
 	// Generate tasks.
-	err := core.ListSpecs(ctx, client, specSegments, filter, func(spec *rpc.ApiSpec) {
+	err := core.ListSpecs(ctx, client, spec, filter, func(spec *rpc.ApiSpec) {
 		// A list of linters that are used to lint this spec.
 		linters := make([]conformance.Linter, 0)
 
@@ -303,8 +302,7 @@ func (task *computeConformanceTask) Run(ctx context.Context) error {
 		// whenever we finish, delete the tmp directory
 		defer os.RemoveAll(root)
 
-		// For each file in the compresed archive, compute the
-		// conformance report.
+		// Unzip the spec to the temporary folder
 		filePaths, err := task.unzipSpecs(ctx, root)
 		if err != nil {
 			return err
@@ -498,7 +496,7 @@ func (task *computeConformanceTask) unzipSpecs(
 	}
 
 	// unzip the protos to the temp directory
-	return core.UnzipArchiveToPath(data, tempDirRoot+"/protos")
+	return core.UnzipArchiveToPath(data, tempDirRoot)
 }
 
 type computeConformanceTaskPlugin struct {
@@ -515,54 +513,6 @@ func (task *computeConformanceTaskPlugin) String() string {
 }
 
 func (task *computeConformanceTaskPlugin) Run(ctx context.Context) error {
-	// If the spec passed is a compressed archive, then unzip it.
-	if core.IsZipArchive(task.spec.GetMimeType()) {
-		log.Debugf("Computing conformance report for zipped archive %s", task.spec.GetName())
-		// Put the range of specs in a temporary directory
-		root, err := ioutil.TempDir("", "registry-protos-")
-		if err != nil {
-			return err
-		}
-
-		// whenever we finish, delete the tmp directory
-		defer os.RemoveAll(root)
-
-		// For each file in the compresed archive, compute the
-		// conformance report.
-		filePaths, err := task.unzipSpecs(ctx, root)
-		if err != nil {
-			return err
-		}
-
-		conformanceReport := task.initializeConformanceReport()
-		guidelineIdToGuidelineReport := make(map[string]*rpc.GuidelineReport)
-		for _, filePath := range filePaths {
-			// Debug the conformance report being computed
-			unzippedSpecName := filepath.Base(filePath)
-			if !strings.HasSuffix(unzippedSpecName, ".proto") {
-				// Currently, only proto files are supported for linting in zipped folders.
-				continue
-			}
-
-			log.Debugf("Adding conformance for spec %s into report.", unzippedSpecName)
-
-			err = task.computeConformanceReport(ctx, filePath, conformanceReport, guidelineIdToGuidelineReport)
-
-			// If computing the conformance report for a given spec fails, we should not
-			// fail completely (because this doesn't imply that computing the conformance
-			// report for another spec will fail, so we should continue.)
-			if err != nil {
-				log.Errorf(
-					"Failed to compute the conformance for spec %s: %s",
-					unzippedSpecName,
-					err,
-				)
-			}
-		}
-
-		return task.storeConformanceReport(ctx, conformanceReport)
-	}
-
 	log.Debugf("Computing conformance report for spec: %s", task.spec.GetName())
 	// Get the spec's bytes
 	data, err := core.GetBytesForSpec(ctx, task.client, task.spec)
@@ -571,7 +521,7 @@ func (task *computeConformanceTaskPlugin) Run(ctx context.Context) error {
 	}
 
 	// Put the spec in a temporary directory.
-	root, err := ioutil.TempDir("", "registry-openapi-")
+	root, err := ioutil.TempDir("", "registry-spec-")
 	if err != nil {
 		return err
 	}
@@ -580,17 +530,26 @@ func (task *computeConformanceTaskPlugin) Run(ctx context.Context) error {
 	// Defer the deletion of the the temporary directory.
 	defer os.RemoveAll(root)
 
-	// Write the file to the temporary directory.
-	filePath := filepath.Join(root, name)
-	err = ioutil.WriteFile(filePath, data, 0644)
+	if core.IsZipArchive(task.spec.GetMimeType()) {
+		// unzip to the temp directory
+		_, err = core.UnzipArchiveToPath(data, root)
+	} else {
+		// Write the file to the temporary directory.
+		err = ioutil.WriteFile(filepath.Join(root, name), data, 0644)
+	}
 	if err != nil {
 		return err
 	}
 
 	conformanceReport := task.initializeConformanceReport()
 	guidelineIdToGuidelineReport := make(map[string]*rpc.GuidelineReport)
-	err = task.computeConformanceReport(ctx, filePath, conformanceReport, guidelineIdToGuidelineReport)
+	err = task.computeConformanceReport(ctx, root, conformanceReport, guidelineIdToGuidelineReport)
 	if err != nil {
+		log.Errorf(
+			"Failed to compute the conformance for spec %s: %s",
+			task.spec.GetName(),
+			err,
+		)
 		return err
 	}
 
@@ -610,7 +569,7 @@ func createLinterRequest(specPath string, ruleIds []string) *rpc.LinterRequest {
 
 func (task *computeConformanceTaskPlugin) computeConformanceReport(
 	ctx context.Context,
-	filePath string,
+	specsDirectoryPath string,
 	conformanceReport *rpc.ConformanceReport,
 	guidelineIdToGuidelineReport map[string]*rpc.GuidelineReport,
 ) error {
@@ -620,7 +579,7 @@ func (task *computeConformanceTaskPlugin) computeConformanceReport(
 		executableName := getLinterBinaryName(linterName)
 
 		// Formulate the request.
-		requestBytes, err := proto.Marshal(createLinterRequest(filePath, ruleIds))
+		requestBytes, err := proto.Marshal(createLinterRequest(specsDirectoryPath, ruleIds))
 		if err != nil {
 			return err
 		}
@@ -662,35 +621,39 @@ func (task *computeConformanceTaskPlugin) computeConformanceReport(
 		}
 
 		lint := linterResponse.Lint
-		lintFile := lint.GetFiles()[0]
-		lintProblems := lintFile.GetProblems()
+		lintFiles := lint.GetFiles()
 
-		// Iterate over the list of problems returned by the linter.
-		for _, problem := range lintProblems {
-			normalizedRuleName := canonicalizeRuleName(linterName, problem.GetRuleId())
-			guideline := task.ruleNameToGuideline[normalizedRuleName]
-			rule := task.ruleNameToRule[normalizedRuleName]
+		for _, lintFile := range lintFiles {
+			lintProblems := lintFile.GetProblems()
 
-			// Check if the guideline report for the guideline which contains this rule
-			// has already been initialized. If it hasn't then create one.
-			if _, ok := guidelineIdToGuidelineReport[guideline.GetId()]; !ok {
-				report := task.initializeGuidelineReport()
-				guidelineIdToGuidelineReport[guideline.GetId()] = report
+			// Iterate over the list of problems returned by the linter.
+			for _, problem := range lintProblems {
+				normalizedRuleName := canonicalizeRuleName(linterName, problem.GetRuleId())
+				guideline := task.ruleNameToGuideline[normalizedRuleName]
+				rule := task.ruleNameToRule[normalizedRuleName]
 
-				conformanceReport.GuidelineReportGroups[guideline.Status].GuidelineReports =
-					append(conformanceReport.GuidelineReportGroups[guideline.Status].GuidelineReports, report)
+				// Check if the guideline report for the guideline which contains this rule
+				// has already been initialized. If it hasn't then create one.
+				if _, ok := guidelineIdToGuidelineReport[guideline.GetId()]; !ok {
+					report := task.initializeGuidelineReport()
+					guidelineIdToGuidelineReport[guideline.GetId()] = report
+
+					conformanceReport.GuidelineReportGroups[guideline.Status].GuidelineReports =
+						append(conformanceReport.GuidelineReportGroups[guideline.Status].GuidelineReports, report)
+				}
+
+				// Add the rule report to the appropriate guideline report.
+				guidelineReport := guidelineIdToGuidelineReport[guideline.GetId()]
+				ruleReport := &rpc.RuleReport{
+					RuleName:   rule.GetId(),
+					SpecName:   task.spec.GetName(),
+					FileName:   filepath.Base(lintFile.GetFilePath()),
+					Suggestion: problem.Suggestion,
+					Location:   problem.Location,
+				}
+				guidelineReport.RuleReportGroups[rule.Severity].RuleReports =
+					append(guidelineReport.RuleReportGroups[rule.Severity].RuleReports, ruleReport)
 			}
-
-			// Add the rule report to the appropriate guideline report.
-			guidelineReport := guidelineIdToGuidelineReport[guideline.GetId()]
-			ruleReport := &rpc.RuleReport{
-				RuleName:   rule.GetId(),
-				SpecName:   task.spec.GetName(),
-				Suggestion: problem.Suggestion,
-				Location:   problem.Location,
-			}
-			guidelineReport.RuleReportGroups[rule.Severity].RuleReports =
-				append(guidelineReport.RuleReportGroups[rule.Severity].RuleReports, ruleReport)
 		}
 	}
 
@@ -752,16 +715,4 @@ func (task *computeConformanceTaskPlugin) storeConformanceReport(
 		Contents: messageData,
 	}
 	return core.SetArtifact(ctx, task.client, artifact)
-}
-
-func (task *computeConformanceTaskPlugin) unzipSpecs(
-	ctx context.Context,
-	tempDirRoot string) ([]string, error) {
-	data, err := core.GetBytesForSpec(ctx, task.client, task.spec)
-	if err != nil {
-		return nil, err
-	}
-
-	// unzip the protos to the temp directory
-	return core.UnzipArchiveToPath(data, tempDirRoot+"/protos")
 }

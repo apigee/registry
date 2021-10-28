@@ -178,12 +178,12 @@ func seedApi(ctx context.Context, s RegistryImp, api *rpc.Api, history map[strin
 		return err
 	}
 
-	if err := seedProject(ctx, s, &rpc.Project{Name: name.Parent()}, history); err != nil {
+	if err := seedProject(ctx, s, &rpc.Project{Name: fmt.Sprintf("projects/%s", name.ProjectID)}, history); err != nil {
 		return err
 	}
 
 	_, err = s.CreateApi(ctx, &rpc.CreateApiRequest{
-		Parent: name.Parent() + "/locations/global",
+		Parent: name.Parent(),
 		ApiId:  name.ApiID,
 		Api:    api,
 	})
@@ -272,8 +272,6 @@ func seedArtifact(ctx context.Context, s RegistryImp, a *rpc.Artifact, history m
 		return err
 	}
 
-	parent := name.Parent()
-
 	if name.SpecID() != "" {
 		err = seedSpec(ctx, s, &rpc.ApiSpec{Name: name.Parent()}, history)
 	} else if name.VersionID() != "" {
@@ -281,9 +279,7 @@ func seedArtifact(ctx context.Context, s RegistryImp, a *rpc.Artifact, history m
 	} else if name.ApiID() != "" {
 		err = seedApi(ctx, s, &rpc.Api{Name: name.Parent()}, history)
 	} else if name.ProjectID() != "" {
-		err = seedProject(ctx, s, &rpc.Project{Name: name.Parent()}, history)
-		// For projects, CreateArtifact expects the parent to include a location name.
-		parent += "/locations/global"
+		err = seedProject(ctx, s, &rpc.Project{Name: fmt.Sprintf("projects/%s", name.ProjectID())}, history)
 	}
 
 	if err != nil {
@@ -291,7 +287,7 @@ func seedArtifact(ctx context.Context, s RegistryImp, a *rpc.Artifact, history m
 	}
 
 	_, err = s.CreateArtifact(ctx, &rpc.CreateArtifactRequest{
-		Parent:     parent,
+		Parent:     name.Parent(),
 		ArtifactId: name.ArtifactID(),
 		Artifact:   a,
 	})
