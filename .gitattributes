@@ -1,0 +1,7 @@
+# Mark files as generated.
+# GitHub diffs will display changes to these files differently.
+# https://docs.github.com/en/repositories/working-with-files/managing-files/customizing-how-changed-files-appear-on-github
+cmd/apg/*.go linguist-generated=true
+gapic/*.go linguist-generated=true
+rpc/*.pb.go linguist-generated=true
+deployments/envoy/*.pb linguist-generated=true
