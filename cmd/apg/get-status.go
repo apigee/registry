@@ -30,6 +30,9 @@ var GetStatusCmd = &cobra.Command{
 			printVerboseInput("Admin", "GetStatus", &GetStatusInput)
 		}
 		resp, err := AdminClient.GetStatus(ctx, &GetStatusInput)
+		if err != nil {
+			return err
+		}
 
 		if Verbose {
 			fmt.Print("Output: ")

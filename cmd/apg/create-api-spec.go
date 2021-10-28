@@ -29,7 +29,7 @@ func init() {
 
 	CreateApiSpecInput.ApiSpec = new(rpcpb.ApiSpec)
 
-	CreateApiSpecCmd.Flags().StringVar(&CreateApiSpecInput.Parent, "parent", "", "Required. The parent, which owns this collection of specs. ...")
+	CreateApiSpecCmd.Flags().StringVar(&CreateApiSpecInput.Parent, "parent", "", "Required. The parent, which owns this collection...")
 
 	CreateApiSpecCmd.Flags().StringVar(&CreateApiSpecInput.ApiSpec.Name, "api_spec.name", "", "Resource name.")
 
@@ -41,13 +41,13 @@ func init() {
 
 	CreateApiSpecCmd.Flags().StringVar(&CreateApiSpecInput.ApiSpec.SourceUri, "api_spec.source_uri", "", "The original source URI of the spec (if one...")
 
-	CreateApiSpecCmd.Flags().BytesHexVar(&CreateApiSpecInput.ApiSpec.Contents, "api_spec.contents", []byte{}, "The contents of the spec.  Provided by API...")
+	CreateApiSpecCmd.Flags().BytesHexVar(&CreateApiSpecInput.ApiSpec.Contents, "api_spec.contents", []byte{}, "Input only. The contents of the spec.  Provided...")
 
 	CreateApiSpecCmd.Flags().StringArrayVar(&CreateApiSpecInputApiSpecLabels, "api_spec.labels", []string{}, "key=value pairs. Labels attach identifying metadata to resources....")
 
 	CreateApiSpecCmd.Flags().StringArrayVar(&CreateApiSpecInputApiSpecAnnotations, "api_spec.annotations", []string{}, "key=value pairs. Annotations attach non-identifying metadata to...")
 
-	CreateApiSpecCmd.Flags().StringVar(&CreateApiSpecInput.ApiSpecId, "api_spec_id", "", "The ID to use for the spec, which will become the...")
+	CreateApiSpecCmd.Flags().StringVar(&CreateApiSpecInput.ApiSpecId, "api_spec_id", "", "Required. The ID to use for the spec, which will...")
 
 	CreateApiSpecCmd.Flags().StringVar(&CreateApiSpecFromFile, "from_file", "", "Absolute path to JSON file containing request payload")
 
@@ -62,6 +62,8 @@ var CreateApiSpecCmd = &cobra.Command{
 		if CreateApiSpecFromFile == "" {
 
 			cmd.MarkFlagRequired("parent")
+
+			cmd.MarkFlagRequired("api_spec_id")
 
 		}
 
@@ -113,6 +115,9 @@ var CreateApiSpecCmd = &cobra.Command{
 			printVerboseInput("Registry", "CreateApiSpec", &CreateApiSpecInput)
 		}
 		resp, err := RegistryClient.CreateApiSpec(ctx, &CreateApiSpecInput)
+		if err != nil {
+			return err
+		}
 
 		if Verbose {
 			fmt.Print("Output: ")

@@ -59,6 +59,9 @@ var DeleteApiCmd = &cobra.Command{
 			printVerboseInput("Registry", "DeleteApi", &DeleteApiInput)
 		}
 		err = RegistryClient.DeleteApi(ctx, &DeleteApiInput)
+		if err != nil {
+			return err
+		}
 
 		return err
 	},

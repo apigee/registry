@@ -23,7 +23,7 @@ var ListApisFromFile string
 func init() {
 	RegistryServiceCmd.AddCommand(ListApisCmd)
 
-	ListApisCmd.Flags().StringVar(&ListApisInput.Parent, "parent", "", "Required. The parent, which owns this collection of APIs. ...")
+	ListApisCmd.Flags().StringVar(&ListApisInput.Parent, "parent", "", "Required. The parent, which owns this collection...")
 
 	ListApisCmd.Flags().Int32Var(&ListApisInput.PageSize, "page_size", 10, "Default is 10. The maximum number of APIs to return.  The...")
 
