@@ -87,12 +87,12 @@ func matchAndHandleDeleteCmd(
 	name string,
 	filter string,
 ) error {
-	if m := names.ApiRegexp().FindStringSubmatch(name); m != nil {
-		return deleteAPIs(ctx, client, m, filter, taskQueue)
-	} else if m := names.VersionRegexp().FindStringSubmatch(name); m != nil {
-		return deleteVersions(ctx, client, m, filter, taskQueue)
-	} else if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
-		return deleteSpecs(ctx, client, m, filter, taskQueue)
+	if api, err := names.ParseApi(name); err == nil {
+		return deleteAPIs(ctx, client, api, filter, taskQueue)
+	} else if version, err := names.ParseVersion(name); err == nil {
+		return deleteVersions(ctx, client, version, filter, taskQueue)
+	} else if spec, err := names.ParseSpec(name); err == nil {
+		return deleteSpecs(ctx, client, spec, filter, taskQueue)
 	} else if artifact, err := names.ParseArtifact(name); err == nil {
 		return deleteArtifacts(ctx, client, artifact, filter, taskQueue)
 	} else {
@@ -103,10 +103,10 @@ func matchAndHandleDeleteCmd(
 func deleteAPIs(
 	ctx context.Context,
 	client *gapic.RegistryClient,
-	segments []string,
+	api names.Api,
 	filterFlag string,
 	taskQueue chan<- core.Task) error {
-	return core.ListAPIs(ctx, client, segments, filterFlag, func(api *rpc.Api) {
+	return core.ListAPIs(ctx, client, api, filterFlag, func(api *rpc.Api) {
 		taskQueue <- &deleteTask{
 			client:       client,
 			resourceName: api.Name,
@@ -118,10 +118,10 @@ func deleteAPIs(
 func deleteVersions(
 	ctx context.Context,
 	client *gapic.RegistryClient,
-	segments []string,
+	version names.Version,
 	filterFlag string,
 	taskQueue chan<- core.Task) error {
-	return core.ListVersions(ctx, client, segments, filterFlag, func(version *rpc.ApiVersion) {
+	return core.ListVersions(ctx, client, version, filterFlag, func(version *rpc.ApiVersion) {
 		taskQueue <- &deleteTask{
 			client:       client,
 			resourceName: version.Name,
@@ -133,10 +133,10 @@ func deleteVersions(
 func deleteSpecs(
 	ctx context.Context,
 	client *gapic.RegistryClient,
-	segments []string,
+	spec names.Spec,
 	filterFlag string,
 	taskQueue chan<- core.Task) error {
-	return core.ListSpecs(ctx, client, segments, filterFlag, func(spec *rpc.ApiSpec) {
+	return core.ListSpecs(ctx, client, spec, filterFlag, func(spec *rpc.ApiSpec) {
 		taskQueue <- &deleteTask{
 			client:       client,
 			resourceName: spec.Name,

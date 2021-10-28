@@ -60,13 +60,9 @@ func conformanceCommand(ctx context.Context) *cobra.Command {
 			name := args[0]
 
 			// Ensure that the provided argument is a spec.
-			var specSegments []string
-			if specSegments = names.SpecRegexp().FindStringSubmatch(name); specSegments == nil {
-				log.Fatalf("The provided argument %s does not match the regex of a spec", name)
-			}
 			spec, err := names.ParseSpec(name)
 			if err != nil {
-				log.WithError(err).Fatal("Invalid spec")
+				log.WithError(err).Fatalf("The provided argument %s does not match the regex of a spec", name)
 			}
 
 			artifact, err := names.ParseArtifact(fmt.Sprintf("projects/%s/artifacts", spec.ProjectID))
@@ -96,9 +92,9 @@ func conformanceCommand(ctx context.Context) *cobra.Command {
 				}
 
 				if plugin {
-					computeConformanceForStyleGuideWithPlugin(ctx, client, styleguide, specSegments, filter)
+					computeConformanceForStyleGuideWithPlugin(ctx, client, styleguide, spec, filter)
 				} else {
-					computeConformanceForStyleGuide(ctx, client, styleguide, specSegments, filter)
+					computeConformanceForStyleGuide(ctx, client, styleguide, spec, filter)
 				}
 			})
 
@@ -118,7 +114,7 @@ func conformanceCommand(ctx context.Context) *cobra.Command {
 func computeConformanceForStyleGuideWithPlugin(ctx context.Context,
 	client connection.Client,
 	styleguide *rpc.StyleGuide,
-	specSegments []string,
+	spec names.Spec,
 	filter string) {
 	// A mapping between the linter name and the the names of the
 	// rules that the linter should support. These names are names
@@ -156,7 +152,7 @@ func computeConformanceForStyleGuideWithPlugin(ctx context.Context,
 	defer wait()
 
 	// Generate tasks.
-	err := core.ListSpecs(ctx, client, specSegments, filter, func(spec *rpc.ApiSpec) {
+	err := core.ListSpecs(ctx, client, spec, filter, func(spec *rpc.ApiSpec) {
 		// Delegate the task of computing the conformance report for this spec
 		// to the worker pool.
 		taskQueue <- &computeConformanceTaskPlugin{
@@ -178,7 +174,7 @@ func computeConformanceForStyleGuideWithPlugin(ctx context.Context,
 func computeConformanceForStyleGuide(ctx context.Context,
 	client connection.Client,
 	styleguide *rpc.StyleGuide,
-	specSegments []string,
+	spec names.Spec,
 	filter string) {
 	// A mapping between the linter name and the linter, and populate
 	// all the rules that the linter should support.
@@ -240,7 +236,7 @@ func computeConformanceForStyleGuide(ctx context.Context,
 	defer wait()
 
 	// Generate tasks.
-	err := core.ListSpecs(ctx, client, specSegments, filter, func(spec *rpc.ApiSpec) {
+	err := core.ListSpecs(ctx, client, spec, filter, func(spec *rpc.ApiSpec) {
 		// A list of linters that are used to lint this spec.
 		linters := make([]conformance.Linter, 0)
 

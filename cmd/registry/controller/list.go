@@ -27,19 +27,19 @@ func ListResources(ctx context.Context, client connection.Client, pattern, filte
 	var err error
 
 	// First try to match collection names.
-	if m := names.ApisRegexp().FindStringSubmatch(pattern); m != nil {
-		err = core.ListAPIs(ctx, client, m, filter, GenerateApiHandler(&result))
-	} else if m := names.SpecsRegexp().FindStringSubmatch(pattern); m != nil {
-		err = core.ListSpecs(ctx, client, m, filter, GenerateSpecHandler(&result))
+	if api, err := names.ParseApiCollection(pattern); err == nil {
+		err = core.ListAPIs(ctx, client, api, filter, GenerateApiHandler(&result))
+	} else if spec, err := names.ParseSpecCollection(pattern); err == nil {
+		err = core.ListSpecs(ctx, client, spec, filter, GenerateSpecHandler(&result))
 	} else if artifact, err := names.ParseArtifactCollection(pattern); err == nil {
 		err = core.ListArtifacts(ctx, client, artifact, filter, false, GenerateArtifactHandler(&result))
 	}
 
 	// Then try to match resource names.
-	if m := names.ApiRegexp().FindStringSubmatch(pattern); m != nil {
-		err = core.ListAPIs(ctx, client, m, filter, GenerateApiHandler(&result))
-	} else if m := names.SpecRegexp().FindStringSubmatch(pattern); m != nil {
-		err = core.ListSpecs(ctx, client, m, filter, GenerateSpecHandler(&result))
+	if api, err := names.ParseApi(pattern); err == nil {
+		err = core.ListAPIs(ctx, client, api, filter, GenerateApiHandler(&result))
+	} else if spec, err := names.ParseSpec(pattern); err == nil {
+		err = core.ListSpecs(ctx, client, spec, filter, GenerateSpecHandler(&result))
 	} else if artifact, err := names.ParseArtifact(pattern); err == nil {
 		err = core.ListArtifacts(ctx, client, artifact, filter, false, GenerateArtifactHandler(&result))
 	}

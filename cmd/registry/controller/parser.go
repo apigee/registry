@@ -111,13 +111,13 @@ func resourceNameFromGroupKey(
 		fmt.Sprintf("/artifacts/%s", artifactName[len(artifactName)-1]))
 
 	//Validate resourceName
-	if m := names.ProjectRegexp().FindStringSubmatch(resourceName); m != nil {
+	if _, err := names.ParseProject(resourceName); err == nil {
 		return resourceName, nil
-	} else if m := names.ApiRegexp().FindStringSubmatch(resourceName); m != nil {
+	} else if _, err := names.ParseApi(resourceName); err == nil {
 		return resourceName, nil
-	} else if m := names.VersionRegexp().FindStringSubmatch(resourceName); m != nil {
+	} else if _, err := names.ParseVersion(resourceName); err == nil {
 		return resourceName, nil
-	} else if m := names.SpecRegexp().FindStringSubmatch(resourceName); m != nil {
+	} else if _, err := names.ParseSpec(resourceName); err == nil {
 		return resourceName, nil
 	} else if _, err := names.ParseArtifact(resourceName); err == nil {
 		return resourceName, nil

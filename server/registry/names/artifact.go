@@ -187,9 +187,7 @@ func (a projectArtifact) Validate() error {
 }
 
 func (a projectArtifact) Parent() string {
-	return Project{
-		ProjectID: a.ProjectID,
-	}.String()
+	return fmt.Sprintf("projects/%s/locations/%s", a.ProjectID, Location)
 }
 
 func (a projectArtifact) String() string {
@@ -405,15 +403,15 @@ func parseSpecArtifactCollection(name string) (specArtifact, error) {
 	return artifact, nil
 }
 
-// ArtifactsRegexp returns a regular expression that matches collection of artifacts.
+// artifactCollectionRegexp returns a regular expression that matches collection of artifacts.
 // TODO: Delete
-func artifactsRegexp() *regexp.Regexp {
+func artifactCollectionRegexp() *regexp.Regexp {
 	return regexp.MustCompile(
 		fmt.Sprintf("^projects/%s/locations/%s(/apis/%s(/versions/%s(/specs/%s)?)?)?/artifacts$",
 			identifier, Location, identifier, identifier, identifier))
 }
 
-// ArtifactRegexp returns a regular expression that matches an artifact resource name.
+// artifactRegexp returns a regular expression that matches an artifact resource name.
 // TODO: Delete
 func artifactRegexp() *regexp.Regexp {
 	return regexp.MustCompile(

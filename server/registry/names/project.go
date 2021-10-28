@@ -27,7 +27,7 @@ type Project struct {
 // Validate returns an error if the resource name is invalid.
 // For backward compatibility, names should only be validated at creation time.
 func (p Project) Validate() error {
-	r := ProjectRegexp()
+	r := projectRegexp()
 	if name := p.String(); !r.MatchString(name) {
 		return fmt.Errorf("invalid project name %q: must match %q", name, r)
 	}
@@ -57,13 +57,13 @@ func (p Project) String() string {
 	return normalize(fmt.Sprintf("projects/%s", p.ProjectID))
 }
 
-// ProjectsRegexp returns a regular expression that matches collection of projects.
-func ProjectsRegexp() *regexp.Regexp {
+// projectCollectionRegexp returns a regular expression that matches collection of projects.
+func projectCollectionRegexp() *regexp.Regexp {
 	return regexp.MustCompile("^projects$")
 }
 
-// ProjectRegexp returns a regular expression that matches a project resource name.
-func ProjectRegexp() *regexp.Regexp {
+// projectRegexp returns a regular expression that matches a project resource name.
+func projectRegexp() *regexp.Regexp {
 	return regexp.MustCompile(fmt.Sprintf("^projects/%s$", identifier))
 }
 
@@ -74,7 +74,7 @@ func projectWithLocationRegexp() *regexp.Regexp {
 
 // ParseProject parses the name of a project.
 func ParseProject(name string) (Project, error) {
-	r := ProjectRegexp()
+	r := projectRegexp()
 	if !r.MatchString(name) {
 		return Project{}, fmt.Errorf("invalid project name %q: must match %q", name, r)
 	}
@@ -82,6 +82,18 @@ func ParseProject(name string) (Project, error) {
 	m := r.FindStringSubmatch(name)
 	return Project{
 		ProjectID: m[1],
+	}, nil
+}
+
+// ParseProjectCollection parses the name of a project collection.
+func ParseProjectCollection(name string) (Project, error) {
+	r := projectCollectionRegexp()
+	if !r.MatchString(name) {
+		return Project{}, fmt.Errorf("invalid project name %q: must match %q", name, r)
+	}
+
+	return Project{
+		ProjectID: "",
 	}, nil
 }
 

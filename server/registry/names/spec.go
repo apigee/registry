@@ -19,9 +19,9 @@ import (
 	"regexp"
 )
 
-// specRegexp is the regex pattern for spec resource names.
+// simpleSpecRegexp is the regex pattern for spec resource names.
 // Notably, this differs from SpecRegexp() by not accepting spec revision IDs in the resource name.
-var specRegexp = regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/versions/%s/specs/%s$",
+var simpleSpecRegexp = regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/versions/%s/specs/%s$",
 	identifier, Location, identifier, identifier, identifier))
 
 // Spec represents a resource name for an API spec.
@@ -35,7 +35,7 @@ type Spec struct {
 // Validate returns an error if the resource name is invalid.
 // For backward compatibility, names should only be validated at creation time.
 func (s Spec) Validate() error {
-	r := SpecRegexp()
+	r := specRegexp()
 	if name := s.String(); !r.MatchString(name) {
 		return fmt.Errorf("invalid spec name %q: must match %q", name, r)
 	}
@@ -111,30 +111,47 @@ func (s Spec) String() string {
 		s.ProjectID, Location, s.ApiID, s.VersionID, s.SpecID))
 }
 
-// SpecsRegexp returns a regular expression that matches a collection of specs.
-func SpecsRegexp() *regexp.Regexp {
+// specCollectionRegexp returns a regular expression that matches a collection of specs.
+func specCollectionRegexp() *regexp.Regexp {
 	return regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/versions/%s/specs$",
 		identifier, Location, identifier, identifier))
 }
 
-// SpecRegexp returns a regular expression that matches a spec resource name with an optional revision identifier.
-func SpecRegexp() *regexp.Regexp {
+// specRegexp returns a regular expression that matches a spec resource name with an optional revision identifier.
+func specRegexp() *regexp.Regexp {
 	return regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/versions/%s/specs/%s(@%s)?$",
 		identifier, Location, identifier, identifier, identifier, revisionTag))
 }
 
 // ParseSpec parses the name of a spec.
 func ParseSpec(name string) (Spec, error) {
-	if !specRegexp.MatchString(name) {
-		return Spec{}, fmt.Errorf("invalid spec name %q: must match %q", name, specRegexp)
+	if !simpleSpecRegexp.MatchString(name) {
+		return Spec{}, fmt.Errorf("invalid spec name %q: must match %q", name, simpleSpecRegexp)
 	}
 
-	m := specRegexp.FindStringSubmatch(name)
+	m := simpleSpecRegexp.FindStringSubmatch(name)
 	spec := Spec{
 		ProjectID: m[1],
 		ApiID:     m[2],
 		VersionID: m[3],
 		SpecID:    m[4],
+	}
+
+	return spec, nil
+}
+
+// ParseSpecCollection parses the name of a spec collection.
+func ParseSpecCollection(name string) (Spec, error) {
+	if !specCollectionRegexp().MatchString(name) {
+		return Spec{}, fmt.Errorf("invalid spec name %q: must match %q", name, simpleSpecRegexp)
+	}
+
+	m := specCollectionRegexp().FindStringSubmatch(name)
+	spec := Spec{
+		ProjectID: m[1],
+		ApiID:     m[2],
+		VersionID: m[3],
+		SpecID:    "",
 	}
 
 	return spec, nil

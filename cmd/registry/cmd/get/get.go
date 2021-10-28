@@ -45,17 +45,17 @@ func Command(ctx context.Context) *cobra.Command {
 				name = args[0]
 			}
 
-			if m := names.ProjectRegexp().FindStringSubmatch(name); m != nil {
-				_, err = core.GetProject(ctx, adminClient, m, core.PrintProjectDetail)
-			} else if m := names.ApiRegexp().FindStringSubmatch(name); m != nil {
-				_, err = core.GetAPI(ctx, client, m, core.PrintAPIDetail)
-			} else if m := names.VersionRegexp().FindStringSubmatch(name); m != nil {
-				_, err = core.GetVersion(ctx, client, m, core.PrintVersionDetail)
-			} else if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
+			if project, err := names.ParseProject(name); err == nil {
+				_, err = core.GetProject(ctx, adminClient, project, core.PrintProjectDetail)
+			} else if api, err := names.ParseApi(name); err == nil {
+				_, err = core.GetAPI(ctx, client, api, core.PrintAPIDetail)
+			} else if version, err := names.ParseVersion(name);err == nil {
+				_, err = core.GetVersion(ctx, client, version, core.PrintVersionDetail)
+			} else if spec, err := names.ParseSpec(name); err == nil {
 				if getContents {
-					_, err = core.GetSpec(ctx, client, m, getContents, core.PrintSpecContents)
+					_, err = core.GetSpec(ctx, client, spec, getContents, core.PrintSpecContents)
 				} else {
-					_, err = core.GetSpec(ctx, client, m, getContents, core.PrintSpecDetail)
+					_, err = core.GetSpec(ctx, client, spec, getContents, core.PrintSpecDetail)
 				}
 			} else if artifact, err := names.ParseArtifact(name); err == nil {
 				if getContents {
