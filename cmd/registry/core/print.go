@@ -23,9 +23,9 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 
-	metrics "github.com/googleapis/gnostic/metrics"
-	openapiv2 "github.com/googleapis/gnostic/openapiv2"
-	openapiv3 "github.com/googleapis/gnostic/openapiv3"
+	metrics "github.com/google/gnostic/metrics"
+	openapiv2 "github.com/google/gnostic/openapiv2"
+	openapiv3 "github.com/google/gnostic/openapiv3"
 )
 
 func PrintProject(project *rpc.Project) {

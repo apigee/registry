@@ -22,7 +22,7 @@ import (
 	"github.com/apex/log"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
-	"github.com/googleapis/gnostic/metrics/vocabulary"
+	"github.com/google/gnostic/metrics/vocabulary"
 	"github.com/spf13/cobra"
 )
 
