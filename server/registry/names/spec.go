@@ -143,7 +143,7 @@ func ParseSpec(name string) (Spec, error) {
 // ParseSpecCollection parses the name of a spec collection.
 func ParseSpecCollection(name string) (Spec, error) {
 	if !specCollectionRegexp().MatchString(name) {
-		return Spec{}, fmt.Errorf("invalid spec name %q: must match %q", name, simpleSpecRegexp)
+		return Spec{}, fmt.Errorf("invalid spec collection name %q: must match %q", name, simpleSpecRegexp)
 	}
 
 	m := specCollectionRegexp().FindStringSubmatch(name)

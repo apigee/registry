@@ -89,7 +89,7 @@ func ParseProject(name string) (Project, error) {
 func ParseProjectCollection(name string) (Project, error) {
 	r := projectCollectionRegexp()
 	if !r.MatchString(name) {
-		return Project{}, fmt.Errorf("invalid project name %q: must match %q", name, r)
+		return Project{}, fmt.Errorf("invalid project collection name %q: must match %q", name, r)
 	}
 
 	return Project{

@@ -103,7 +103,7 @@ func ParseApi(name string) (Api, error) {
 func ParseApiCollection(name string) (Api, error) {
 	r := apiCollectionRegexp()
 	if !r.MatchString(name) {
-		return Api{}, fmt.Errorf("invalid API name %q: must match %q", name, r)
+		return Api{}, fmt.Errorf("invalid API collection name %q: must match %q", name, r)
 	}
 
 	m := r.FindStringSubmatch(name)

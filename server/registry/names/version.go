@@ -113,7 +113,7 @@ func ParseVersion(name string) (Version, error) {
 func ParseVersionCollection(name string) (Version, error) {
 	r := versionCollectionRegexp()
 	if !r.MatchString(name) {
-		return Version{}, fmt.Errorf("invalid version name %q: must match %q", name, r)
+		return Version{}, fmt.Errorf("invalid version collection name %q: must match %q", name, r)
 	}
 
 	m := r.FindStringSubmatch(name)
