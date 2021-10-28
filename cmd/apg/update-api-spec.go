@@ -115,6 +115,9 @@ var UpdateApiSpecCmd = &cobra.Command{
 			printVerboseInput("Registry", "UpdateApiSpec", &UpdateApiSpecInput)
 		}
 		resp, err := RegistryClient.UpdateApiSpec(ctx, &UpdateApiSpecInput)
+		if err != nil {
+			return err
+		}
 
 		if Verbose {
 			fmt.Print("Output: ")

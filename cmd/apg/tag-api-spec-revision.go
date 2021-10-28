@@ -21,9 +21,9 @@ var TagApiSpecRevisionFromFile string
 func init() {
 	RegistryServiceCmd.AddCommand(TagApiSpecRevisionCmd)
 
-	TagApiSpecRevisionCmd.Flags().StringVar(&TagApiSpecRevisionInput.Name, "name", "", "Required. Required. The name of the spec to be tagged,...")
+	TagApiSpecRevisionCmd.Flags().StringVar(&TagApiSpecRevisionInput.Name, "name", "", "Required. The name of the spec to be tagged,...")
 
-	TagApiSpecRevisionCmd.Flags().StringVar(&TagApiSpecRevisionInput.Tag, "tag", "", "Required. Required. The tag to apply.  The tag should be at...")
+	TagApiSpecRevisionCmd.Flags().StringVar(&TagApiSpecRevisionInput.Tag, "tag", "", "Required. The tag to apply.  The tag should be at...")
 
 	TagApiSpecRevisionCmd.Flags().StringVar(&TagApiSpecRevisionFromFile, "from_file", "", "Absolute path to JSON file containing request payload")
 
@@ -65,6 +65,9 @@ var TagApiSpecRevisionCmd = &cobra.Command{
 			printVerboseInput("Registry", "TagApiSpecRevision", &TagApiSpecRevisionInput)
 		}
 		resp, err := RegistryClient.TagApiSpecRevision(ctx, &TagApiSpecRevisionInput)
+		if err != nil {
+			return err
+		}
 
 		if Verbose {
 			fmt.Print("Output: ")

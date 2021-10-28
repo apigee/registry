@@ -23,7 +23,7 @@ func init() {
 
 	CreateArtifactInput.Artifact = new(rpcpb.Artifact)
 
-	CreateArtifactCmd.Flags().StringVar(&CreateArtifactInput.Parent, "parent", "", "Required. Required. The parent, which owns this collection...")
+	CreateArtifactCmd.Flags().StringVar(&CreateArtifactInput.Parent, "parent", "", "Required. The parent, which owns this collection...")
 
 	CreateArtifactCmd.Flags().StringVar(&CreateArtifactInput.Artifact.Name, "artifact.name", "", "Resource name.")
 
@@ -31,7 +31,7 @@ func init() {
 
 	CreateArtifactCmd.Flags().BytesHexVar(&CreateArtifactInput.Artifact.Contents, "artifact.contents", []byte{}, "Input only. The contents of the artifact. ...")
 
-	CreateArtifactCmd.Flags().StringVar(&CreateArtifactInput.ArtifactId, "artifact_id", "", "Required. Required. The ID to use for the artifact, which...")
+	CreateArtifactCmd.Flags().StringVar(&CreateArtifactInput.ArtifactId, "artifact_id", "", "Required. The ID to use for the artifact, which...")
 
 	CreateArtifactCmd.Flags().StringVar(&CreateArtifactFromFile, "from_file", "", "Absolute path to JSON file containing request payload")
 
@@ -73,6 +73,9 @@ var CreateArtifactCmd = &cobra.Command{
 			printVerboseInput("Registry", "CreateArtifact", &CreateArtifactInput)
 		}
 		resp, err := RegistryClient.CreateArtifact(ctx, &CreateArtifactInput)
+		if err != nil {
+			return err
+		}
 
 		if Verbose {
 			fmt.Print("Output: ")

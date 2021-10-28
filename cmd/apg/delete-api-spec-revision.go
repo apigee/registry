@@ -21,7 +21,7 @@ var DeleteApiSpecRevisionFromFile string
 func init() {
 	RegistryServiceCmd.AddCommand(DeleteApiSpecRevisionCmd)
 
-	DeleteApiSpecRevisionCmd.Flags().StringVar(&DeleteApiSpecRevisionInput.Name, "name", "", "Required. Required. The name of the spec revision to be...")
+	DeleteApiSpecRevisionCmd.Flags().StringVar(&DeleteApiSpecRevisionInput.Name, "name", "", "Required. The name of the spec revision to be...")
 
 	DeleteApiSpecRevisionCmd.Flags().StringVar(&DeleteApiSpecRevisionFromFile, "from_file", "", "Absolute path to JSON file containing request payload")
 
@@ -61,6 +61,9 @@ var DeleteApiSpecRevisionCmd = &cobra.Command{
 			printVerboseInput("Registry", "DeleteApiSpecRevision", &DeleteApiSpecRevisionInput)
 		}
 		resp, err := RegistryClient.DeleteApiSpecRevision(ctx, &DeleteApiSpecRevisionInput)
+		if err != nil {
+			return err
+		}
 
 		if Verbose {
 			fmt.Print("Output: ")

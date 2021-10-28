@@ -21,7 +21,7 @@ var GetArtifactContentsFromFile string
 func init() {
 	RegistryServiceCmd.AddCommand(GetArtifactContentsCmd)
 
-	GetArtifactContentsCmd.Flags().StringVar(&GetArtifactContentsInput.Name, "name", "", "Required. Required. The name of the artifact whose contents...")
+	GetArtifactContentsCmd.Flags().StringVar(&GetArtifactContentsInput.Name, "name", "", "Required. The name of the artifact whose contents...")
 
 	GetArtifactContentsCmd.Flags().StringVar(&GetArtifactContentsFromFile, "from_file", "", "Absolute path to JSON file containing request payload")
 
@@ -61,6 +61,9 @@ var GetArtifactContentsCmd = &cobra.Command{
 			printVerboseInput("Registry", "GetArtifactContents", &GetArtifactContentsInput)
 		}
 		resp, err := RegistryClient.GetArtifactContents(ctx, &GetArtifactContentsInput)
+		if err != nil {
+			return err
+		}
 
 		if Verbose {
 			fmt.Print("Output: ")

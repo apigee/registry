@@ -59,6 +59,9 @@ var DeleteProjectCmd = &cobra.Command{
 			printVerboseInput("Admin", "DeleteProject", &DeleteProjectInput)
 		}
 		err = AdminClient.DeleteProject(ctx, &DeleteProjectInput)
+		if err != nil {
+			return err
+		}
 
 		return err
 	},

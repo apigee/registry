@@ -19,7 +19,7 @@ var DeleteApiVersionFromFile string
 func init() {
 	RegistryServiceCmd.AddCommand(DeleteApiVersionCmd)
 
-	DeleteApiVersionCmd.Flags().StringVar(&DeleteApiVersionInput.Name, "name", "", "Required. Required. The name of the version to delete. ...")
+	DeleteApiVersionCmd.Flags().StringVar(&DeleteApiVersionInput.Name, "name", "", "Required. The name of the version to delete. ...")
 
 	DeleteApiVersionCmd.Flags().StringVar(&DeleteApiVersionFromFile, "from_file", "", "Absolute path to JSON file containing request payload")
 
@@ -59,6 +59,9 @@ var DeleteApiVersionCmd = &cobra.Command{
 			printVerboseInput("Registry", "DeleteApiVersion", &DeleteApiVersionInput)
 		}
 		err = RegistryClient.DeleteApiVersion(ctx, &DeleteApiVersionInput)
+		if err != nil {
+			return err
+		}
 
 		return err
 	},

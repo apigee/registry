@@ -19,7 +19,7 @@ var DeleteApiFromFile string
 func init() {
 	RegistryServiceCmd.AddCommand(DeleteApiCmd)
 
-	DeleteApiCmd.Flags().StringVar(&DeleteApiInput.Name, "name", "", "Required. Required. The name of the API to delete.  Format:...")
+	DeleteApiCmd.Flags().StringVar(&DeleteApiInput.Name, "name", "", "Required. The name of the API to delete.  Format:...")
 
 	DeleteApiCmd.Flags().StringVar(&DeleteApiFromFile, "from_file", "", "Absolute path to JSON file containing request payload")
 
@@ -59,6 +59,9 @@ var DeleteApiCmd = &cobra.Command{
 			printVerboseInput("Registry", "DeleteApi", &DeleteApiInput)
 		}
 		err = RegistryClient.DeleteApi(ctx, &DeleteApiInput)
+		if err != nil {
+			return err
+		}
 
 		return err
 	},

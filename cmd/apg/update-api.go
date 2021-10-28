@@ -43,8 +43,6 @@ func init() {
 
 	UpdateApiCmd.Flags().StringVar(&UpdateApiInput.Api.RecommendedVersion, "api.recommended_version", "", "The recommended version of the API.  Format:...")
 
-	UpdateApiCmd.Flags().StringVar(&UpdateApiInput.Api.RecommendedDeployment, "api.recommended_deployment", "", "The recommended deployment of the API.  Format:...")
-
 	UpdateApiCmd.Flags().StringArrayVar(&UpdateApiInputApiLabels, "api.labels", []string{}, "key=value pairs. Labels attach identifying metadata to resources....")
 
 	UpdateApiCmd.Flags().StringArrayVar(&UpdateApiInputApiAnnotations, "api.annotations", []string{}, "key=value pairs. Annotations attach non-identifying metadata to...")
@@ -113,6 +111,9 @@ var UpdateApiCmd = &cobra.Command{
 			printVerboseInput("Registry", "UpdateApi", &UpdateApiInput)
 		}
 		resp, err := RegistryClient.UpdateApi(ctx, &UpdateApiInput)
+		if err != nil {
+			return err
+		}
 
 		if Verbose {
 			fmt.Print("Output: ")

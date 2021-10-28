@@ -23,7 +23,7 @@ var ListArtifactsFromFile string
 func init() {
 	RegistryServiceCmd.AddCommand(ListArtifactsCmd)
 
-	ListArtifactsCmd.Flags().StringVar(&ListArtifactsInput.Parent, "parent", "", "Required. Required. The parent, which owns this collection...")
+	ListArtifactsCmd.Flags().StringVar(&ListArtifactsInput.Parent, "parent", "", "Required. The parent, which owns this collection...")
 
 	ListArtifactsCmd.Flags().Int32Var(&ListArtifactsInput.PageSize, "page_size", 10, "Default is 10. The maximum number of artifacts to return.  The...")
 

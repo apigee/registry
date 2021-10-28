@@ -65,6 +65,9 @@ var ReplaceArtifactCmd = &cobra.Command{
 			printVerboseInput("Registry", "ReplaceArtifact", &ReplaceArtifactInput)
 		}
 		resp, err := RegistryClient.ReplaceArtifact(ctx, &ReplaceArtifactInput)
+		if err != nil {
+			return err
+		}
 
 		if Verbose {
 			fmt.Print("Output: ")

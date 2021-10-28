@@ -23,7 +23,7 @@ var ListApiSpecsFromFile string
 func init() {
 	RegistryServiceCmd.AddCommand(ListApiSpecsCmd)
 
-	ListApiSpecsCmd.Flags().StringVar(&ListApiSpecsInput.Parent, "parent", "", "Required. Required. The parent, which owns this collection...")
+	ListApiSpecsCmd.Flags().StringVar(&ListApiSpecsInput.Parent, "parent", "", "Required. The parent, which owns this collection...")
 
 	ListApiSpecsCmd.Flags().Int32Var(&ListApiSpecsInput.PageSize, "page_size", 10, "Default is 10. The maximum number of specs to return.  The...")
 

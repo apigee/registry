@@ -29,7 +29,7 @@ func init() {
 
 	CreateApiSpecInput.ApiSpec = new(rpcpb.ApiSpec)
 
-	CreateApiSpecCmd.Flags().StringVar(&CreateApiSpecInput.Parent, "parent", "", "Required. Required. The parent, which owns this collection...")
+	CreateApiSpecCmd.Flags().StringVar(&CreateApiSpecInput.Parent, "parent", "", "Required. The parent, which owns this collection...")
 
 	CreateApiSpecCmd.Flags().StringVar(&CreateApiSpecInput.ApiSpec.Name, "api_spec.name", "", "Resource name.")
 
@@ -47,7 +47,7 @@ func init() {
 
 	CreateApiSpecCmd.Flags().StringArrayVar(&CreateApiSpecInputApiSpecAnnotations, "api_spec.annotations", []string{}, "key=value pairs. Annotations attach non-identifying metadata to...")
 
-	CreateApiSpecCmd.Flags().StringVar(&CreateApiSpecInput.ApiSpecId, "api_spec_id", "", "Required. Required. The ID to use for the spec, which will...")
+	CreateApiSpecCmd.Flags().StringVar(&CreateApiSpecInput.ApiSpecId, "api_spec_id", "", "Required. The ID to use for the spec, which will...")
 
 	CreateApiSpecCmd.Flags().StringVar(&CreateApiSpecFromFile, "from_file", "", "Absolute path to JSON file containing request payload")
 
@@ -115,6 +115,9 @@ var CreateApiSpecCmd = &cobra.Command{
 			printVerboseInput("Registry", "CreateApiSpec", &CreateApiSpecInput)
 		}
 		resp, err := RegistryClient.CreateApiSpec(ctx, &CreateApiSpecInput)
+		if err != nil {
+			return err
+		}
 
 		if Verbose {
 			fmt.Print("Output: ")
