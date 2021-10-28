@@ -29,7 +29,7 @@ func init() {
 
 	CreateApiInput.Api = new(rpcpb.Api)
 
-	CreateApiCmd.Flags().StringVar(&CreateApiInput.Parent, "parent", "", "Required. The parent, which owns this collection of APIs. ...")
+	CreateApiCmd.Flags().StringVar(&CreateApiInput.Parent, "parent", "", "Required. The parent, which owns this collection...")
 
 	CreateApiCmd.Flags().StringVar(&CreateApiInput.Api.Name, "api.name", "", "Resource name.")
 
@@ -45,7 +45,7 @@ func init() {
 
 	CreateApiCmd.Flags().StringArrayVar(&CreateApiInputApiAnnotations, "api.annotations", []string{}, "key=value pairs. Annotations attach non-identifying metadata to...")
 
-	CreateApiCmd.Flags().StringVar(&CreateApiInput.ApiId, "api_id", "", "The ID to use for the api, which will become the...")
+	CreateApiCmd.Flags().StringVar(&CreateApiInput.ApiId, "api_id", "", "Required. The ID to use for the api, which will...")
 
 	CreateApiCmd.Flags().StringVar(&CreateApiFromFile, "from_file", "", "Absolute path to JSON file containing request payload")
 
@@ -60,6 +60,8 @@ var CreateApiCmd = &cobra.Command{
 		if CreateApiFromFile == "" {
 
 			cmd.MarkFlagRequired("parent")
+
+			cmd.MarkFlagRequired("api_id")
 
 		}
 
@@ -111,6 +113,9 @@ var CreateApiCmd = &cobra.Command{
 			printVerboseInput("Registry", "CreateApi", &CreateApiInput)
 		}
 		resp, err := RegistryClient.CreateApi(ctx, &CreateApiInput)
+		if err != nil {
+			return err
+		}
 
 		if Verbose {
 			fmt.Print("Output: ")
