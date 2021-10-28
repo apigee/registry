@@ -16,8 +16,10 @@ package main
 
 import (
 	"encoding/json"
+	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/apex/log"
 	lint "github.com/apigee/registry/cmd/registry/plugins/linter"
@@ -45,27 +47,45 @@ func (linter *apiLinterRunner) RunImpl(
 	req *rpc.LinterRequest,
 	executer apiLinterCommandExecuter,
 ) (*rpc.LinterResponse, error) {
-	// Execute the API linter.
-	lintProblems, err := executer.Execute(req.GetSpecPath())
+
+	lintFiles := make([]*rpc.LintFile, 0)
+
+	// Traverse the files in the directory
+	err := filepath.Walk(req.GetSpecPath(), func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if !strings.HasSuffix(path, ".proto") {
+			// Currently, only proto files are supported by API Linter.
+			return nil
+		}
+
+		// Execute the API linter.
+		lintProblems, err := executer.Execute(path)
+		if err != nil {
+			return err
+		}
+
+		// Filter the problems only those that were enabled by the user.
+		filteredProblems := linter.filterProblems(lintProblems, req.GetRuleIds())
+
+		// Formulate the response.
+		lintFiles = append(lintFiles, &rpc.LintFile{
+			FilePath: path,
+			Problems: filteredProblems,
+		})
+		return nil
+	})
+
 	if err != nil {
 		return nil, err
 	}
 
-	// Filter the problems only those that were enabled by the user.
-	filteredProblems := linter.filterProblems(lintProblems, req.GetRuleIds())
-
-	// Formulate the response.
-	lintFile := &rpc.LintFile{
-		FilePath: req.GetSpecPath(),
-		Problems: filteredProblems,
-	}
-
 	return &rpc.LinterResponse{
 		Lint: &rpc.Lint{
-			Name: "registry-lint-api-linter",
-			Files: []*rpc.LintFile{
-				lintFile,
-			},
+			Name:  "registry-lint-api-linter",
+			Files: lintFiles,
 		},
 	}, nil
 }
