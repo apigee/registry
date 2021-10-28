@@ -26,10 +26,10 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/proto"
 
-	discovery "github.com/googleapis/gnostic/discovery"
-	metrics "github.com/googleapis/gnostic/metrics"
-	oas2 "github.com/googleapis/gnostic/openapiv2"
-	oas3 "github.com/googleapis/gnostic/openapiv3"
+	discovery "github.com/google/gnostic/discovery"
+	metrics "github.com/google/gnostic/metrics"
+	oas2 "github.com/google/gnostic/openapiv2"
+	oas3 "github.com/google/gnostic/openapiv3"
 )
 
 func complexityCommand(ctx context.Context) *cobra.Command {

@@ -26,7 +26,7 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 
-	discovery "github.com/googleapis/gnostic/discovery"
+	discovery "github.com/google/gnostic/discovery"
 )
 
 func discoveryCommand(ctx context.Context) *cobra.Command {

@@ -15,10 +15,10 @@
 package core
 
 import (
-	discovery "github.com/googleapis/gnostic/discovery"
-	metrics "github.com/googleapis/gnostic/metrics"
-	openapi_v2 "github.com/googleapis/gnostic/openapiv2"
-	openapi_v3 "github.com/googleapis/gnostic/openapiv3"
+	discovery "github.com/google/gnostic/discovery"
+	metrics "github.com/google/gnostic/metrics"
+	openapi_v2 "github.com/google/gnostic/openapiv2"
+	openapi_v3 "github.com/google/gnostic/openapiv3"
 )
 
 func SummarizeOpenAPIv2Document(document *openapi_v2.Document) *metrics.Complexity {
