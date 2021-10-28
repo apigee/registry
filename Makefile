@@ -9,6 +9,10 @@ all:
 	./tools/GENERATE-ENVOY-DESCRIPTORS.sh
 	go install ./...
 
+format:
+	go install golang.org/x/tools/cmd/goimports@latest
+	goimports -w ./..
+
 apg:
 	./tools/GENERATE-APG.sh
 	go install ./cmd/apg
