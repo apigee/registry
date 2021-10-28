@@ -23,15 +23,15 @@ func init() {
 
 	CreateArtifactInput.Artifact = new(rpcpb.Artifact)
 
-	CreateArtifactCmd.Flags().StringVar(&CreateArtifactInput.Parent, "parent", "", "Required. The parent, which owns this collection of...")
+	CreateArtifactCmd.Flags().StringVar(&CreateArtifactInput.Parent, "parent", "", "Required. The parent, which owns this collection...")
 
 	CreateArtifactCmd.Flags().StringVar(&CreateArtifactInput.Artifact.Name, "artifact.name", "", "Resource name.")
 
 	CreateArtifactCmd.Flags().StringVar(&CreateArtifactInput.Artifact.MimeType, "artifact.mime_type", "", "A content type specifier for the artifact. ...")
 
-	CreateArtifactCmd.Flags().BytesHexVar(&CreateArtifactInput.Artifact.Contents, "artifact.contents", []byte{}, "The contents of the artifact.  Provided by API...")
+	CreateArtifactCmd.Flags().BytesHexVar(&CreateArtifactInput.Artifact.Contents, "artifact.contents", []byte{}, "Input only. The contents of the artifact. ...")
 
-	CreateArtifactCmd.Flags().StringVar(&CreateArtifactInput.ArtifactId, "artifact_id", "", "The ID to use for the artifact, which will become...")
+	CreateArtifactCmd.Flags().StringVar(&CreateArtifactInput.ArtifactId, "artifact_id", "", "Required. The ID to use for the artifact, which...")
 
 	CreateArtifactCmd.Flags().StringVar(&CreateArtifactFromFile, "from_file", "", "Absolute path to JSON file containing request payload")
 
@@ -46,6 +46,8 @@ var CreateArtifactCmd = &cobra.Command{
 		if CreateArtifactFromFile == "" {
 
 			cmd.MarkFlagRequired("parent")
+
+			cmd.MarkFlagRequired("artifact_id")
 
 		}
 
@@ -71,6 +73,9 @@ var CreateArtifactCmd = &cobra.Command{
 			printVerboseInput("Registry", "CreateArtifact", &CreateArtifactInput)
 		}
 		resp, err := RegistryClient.CreateArtifact(ctx, &CreateArtifactInput)
+		if err != nil {
+			return err
+		}
 
 		if Verbose {
 			fmt.Print("Output: ")
