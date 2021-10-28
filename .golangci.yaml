@@ -16,6 +16,8 @@
 # https://golangci-lint.run/usage/configuration/#config-file
 
 run:
+  # Don't ignore "default" directories.
+  skip-dirs-use-default: false
   # Ignore generated code.
   skip-dirs:
     - ^cmd/apg$
