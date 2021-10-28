@@ -47,7 +47,7 @@ func openAPICommand(ctx context.Context) *cobra.Command {
 			if err != nil {
 				log.WithError(err).Fatal("Failed to get client")
 			}
-			
+
 			adminClient, err := connection.NewAdminClient(ctx)
 			if err != nil {
 				log.WithError(err).Fatal("Failed to get client")
