@@ -109,7 +109,6 @@ func ParseVersion(name string) (Version, error) {
 	}, nil
 }
 
-
 // ParseVersionCollection parses the name of a version collection.
 func ParseVersionCollection(name string) (Version, error) {
 	r := versionCollectionRegexp()
