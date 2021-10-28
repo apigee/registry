@@ -71,9 +71,6 @@ var UpdateProjectCmd = &cobra.Command{
 			printVerboseInput("Admin", "UpdateProject", &UpdateProjectInput)
 		}
 		resp, err := AdminClient.UpdateProject(ctx, &UpdateProjectInput)
-		if err != nil {
-			return err
-		}
 
 		if Verbose {
 			fmt.Print("Output: ")

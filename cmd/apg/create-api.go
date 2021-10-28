@@ -29,7 +29,7 @@ func init() {
 
 	CreateApiInput.Api = new(rpcpb.Api)
 
-	CreateApiCmd.Flags().StringVar(&CreateApiInput.Parent, "parent", "", "Required. The parent, which owns this collection...")
+	CreateApiCmd.Flags().StringVar(&CreateApiInput.Parent, "parent", "", "Required. Required. The parent, which owns this collection...")
 
 	CreateApiCmd.Flags().StringVar(&CreateApiInput.Api.Name, "api.name", "", "Resource name.")
 
@@ -41,11 +41,13 @@ func init() {
 
 	CreateApiCmd.Flags().StringVar(&CreateApiInput.Api.RecommendedVersion, "api.recommended_version", "", "The recommended version of the API.  Format:...")
 
+	CreateApiCmd.Flags().StringVar(&CreateApiInput.Api.RecommendedDeployment, "api.recommended_deployment", "", "The recommended deployment of the API.  Format:...")
+
 	CreateApiCmd.Flags().StringArrayVar(&CreateApiInputApiLabels, "api.labels", []string{}, "key=value pairs. Labels attach identifying metadata to resources....")
 
 	CreateApiCmd.Flags().StringArrayVar(&CreateApiInputApiAnnotations, "api.annotations", []string{}, "key=value pairs. Annotations attach non-identifying metadata to...")
 
-	CreateApiCmd.Flags().StringVar(&CreateApiInput.ApiId, "api_id", "", "Required. The ID to use for the api, which will...")
+	CreateApiCmd.Flags().StringVar(&CreateApiInput.ApiId, "api_id", "", "Required. Required. The ID to use for the api, which will...")
 
 	CreateApiCmd.Flags().StringVar(&CreateApiFromFile, "from_file", "", "Absolute path to JSON file containing request payload")
 
@@ -113,9 +115,6 @@ var CreateApiCmd = &cobra.Command{
 			printVerboseInput("Registry", "CreateApi", &CreateApiInput)
 		}
 		resp, err := RegistryClient.CreateApi(ctx, &CreateApiInput)
-		if err != nil {
-			return err
-		}
 
 		if Verbose {
 			fmt.Print("Output: ")

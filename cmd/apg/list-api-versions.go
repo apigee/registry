@@ -23,7 +23,7 @@ var ListApiVersionsFromFile string
 func init() {
 	RegistryServiceCmd.AddCommand(ListApiVersionsCmd)
 
-	ListApiVersionsCmd.Flags().StringVar(&ListApiVersionsInput.Parent, "parent", "", "Required. The parent, which owns this collection...")
+	ListApiVersionsCmd.Flags().StringVar(&ListApiVersionsInput.Parent, "parent", "", "Required. Required. The parent, which owns this collection...")
 
 	ListApiVersionsCmd.Flags().Int32Var(&ListApiVersionsInput.PageSize, "page_size", 10, "Default is 10. The maximum number of versions to return.  The...")
 

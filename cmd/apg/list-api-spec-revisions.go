@@ -23,7 +23,7 @@ var ListApiSpecRevisionsFromFile string
 func init() {
 	RegistryServiceCmd.AddCommand(ListApiSpecRevisionsCmd)
 
-	ListApiSpecRevisionsCmd.Flags().StringVar(&ListApiSpecRevisionsInput.Name, "name", "", "Required. The name of the spec to list revisions...")
+	ListApiSpecRevisionsCmd.Flags().StringVar(&ListApiSpecRevisionsInput.Name, "name", "", "Required. Required. The name of the spec to list revisions...")
 
 	ListApiSpecRevisionsCmd.Flags().Int32Var(&ListApiSpecRevisionsInput.PageSize, "page_size", 10, "Default is 10. The maximum number of revisions to return per...")
 

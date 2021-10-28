@@ -19,7 +19,7 @@ var DeleteArtifactFromFile string
 func init() {
 	RegistryServiceCmd.AddCommand(DeleteArtifactCmd)
 
-	DeleteArtifactCmd.Flags().StringVar(&DeleteArtifactInput.Name, "name", "", "Required. The name of the artifact to delete. ...")
+	DeleteArtifactCmd.Flags().StringVar(&DeleteArtifactInput.Name, "name", "", "Required. Required. The name of the artifact to delete. ...")
 
 	DeleteArtifactCmd.Flags().StringVar(&DeleteArtifactFromFile, "from_file", "", "Absolute path to JSON file containing request payload")
 
@@ -59,9 +59,6 @@ var DeleteArtifactCmd = &cobra.Command{
 			printVerboseInput("Registry", "DeleteArtifact", &DeleteArtifactInput)
 		}
 		err = RegistryClient.DeleteArtifact(ctx, &DeleteArtifactInput)
-		if err != nil {
-			return err
-		}
 
 		return err
 	},

@@ -21,9 +21,9 @@ var RollbackApiSpecFromFile string
 func init() {
 	RegistryServiceCmd.AddCommand(RollbackApiSpecCmd)
 
-	RollbackApiSpecCmd.Flags().StringVar(&RollbackApiSpecInput.Name, "name", "", "Required. The spec being rolled back.")
+	RollbackApiSpecCmd.Flags().StringVar(&RollbackApiSpecInput.Name, "name", "", "Required. Required. The spec being rolled back.")
 
-	RollbackApiSpecCmd.Flags().StringVar(&RollbackApiSpecInput.RevisionId, "revision_id", "", "Required. The revision ID to roll back to.  It...")
+	RollbackApiSpecCmd.Flags().StringVar(&RollbackApiSpecInput.RevisionId, "revision_id", "", "Required. Required. The revision ID to roll back to.  It...")
 
 	RollbackApiSpecCmd.Flags().StringVar(&RollbackApiSpecFromFile, "from_file", "", "Absolute path to JSON file containing request payload")
 
@@ -65,9 +65,6 @@ var RollbackApiSpecCmd = &cobra.Command{
 			printVerboseInput("Registry", "RollbackApiSpec", &RollbackApiSpecInput)
 		}
 		resp, err := RegistryClient.RollbackApiSpec(ctx, &RollbackApiSpecInput)
-		if err != nil {
-			return err
-		}
 
 		if Verbose {
 			fmt.Print("Output: ")

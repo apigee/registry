@@ -61,9 +61,6 @@ var GetProjectCmd = &cobra.Command{
 			printVerboseInput("Admin", "GetProject", &GetProjectInput)
 		}
 		resp, err := AdminClient.GetProject(ctx, &GetProjectInput)
-		if err != nil {
-			return err
-		}
 
 		if Verbose {
 			fmt.Print("Output: ")
