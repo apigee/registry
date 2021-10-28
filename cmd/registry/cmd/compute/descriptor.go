@@ -26,9 +26,9 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/proto"
 
-	discovery "github.com/googleapis/gnostic/discovery"
-	oas2 "github.com/googleapis/gnostic/openapiv2"
-	oas3 "github.com/googleapis/gnostic/openapiv3"
+	discovery "github.com/google/gnostic/discovery"
+	oas2 "github.com/google/gnostic/openapiv2"
+	oas3 "github.com/google/gnostic/openapiv3"
 )
 
 func descriptorCommand(ctx context.Context) *cobra.Command {
