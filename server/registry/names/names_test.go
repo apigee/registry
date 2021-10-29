@@ -215,6 +215,28 @@ func TestResourceNames(t *testing.T) {
 				"projects/123/locations/global/apis/",
 				"projects/123/locations/global/invalid/123",
 				"projects/123/locations/global/apis/ 123",
+				"projects/google/locations/global/apis/sample/deployments/v1@1234567890abcdef",
+			},
+		},
+		{
+			name: "deployment revision",
+			check: func(name string) bool {
+				_, err := ParseDeploymentRevision(name)
+				return err == nil
+			}, pass: []string{
+				"projects/google/locations/global/apis/sample/deployments/v1@1234567890abcdef",
+			},
+			fail: []string{
+				"-",
+				"invalid",
+				"projects//locations/global/apis/123",
+				"projects/123/locations/global/apis/",
+				"projects/123/locations/global/invalid/123",
+				"projects/123/locations/global/apis/ 123",
+				"projects/google/locations/global/apis/sample/deployments/v1",
+				"projects/-/locations/global/apis/-/deployments/-",
+				"projects/123/locations/global/apis/abc/deployments/123",
+				"projects/1-2-3/locations/global/apis/abc/deployments/123",
 			},
 		},
 		{
