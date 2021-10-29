@@ -142,11 +142,10 @@ func TestResourceNames(t *testing.T) {
 		{
 			name: "spec",
 			check: func(name string) bool {
-				_, err := ParseSpecWithRevision(name)
+				_, err := ParseSpec(name)
 				return err == nil
 			},
 			pass: []string{
-				"projects/google/locations/global/apis/sample/versions/v1/specs/openapi.yaml@1234567890abcdef",
 				"projects/google/locations/global/apis/sample/versions/v1/specs/openapi.yaml",
 				"projects/-/locations/global/apis/-/versions/-/specs/-",
 				"projects/123/locations/global/apis/abc/versions/123/specs/abc",
@@ -159,6 +158,29 @@ func TestResourceNames(t *testing.T) {
 				"projects/123/locations/global/apis/",
 				"projects/123/locations/global/invalid/123",
 				"projects/123/locations/global/apis/ 123",
+				"projects/google/locations/global/apis/sample/versions/v1/specs/openapi.yaml@1234567890abcdef",
+			},
+		},
+		{
+			name: "spec revision",
+			check: func(name string) bool {
+				_, err := ParseSpecRevision(name)
+				return err == nil
+			},
+			pass: []string{
+				"projects/google/locations/global/apis/sample/versions/v1/specs/openapi.yaml@1234567890abcdef",
+			},
+			fail: []string{
+				"-",
+				"invalid",
+				"projects//locations/global/apis/123",
+				"projects/123/locations/global/apis/",
+				"projects/123/locations/global/invalid/123",
+				"projects/123/locations/global/apis/ 123",
+				"projects/google/locations/global/apis/sample/versions/v1/specs/openapi.yaml",
+				"projects/-/locations/global/apis/-/versions/-/specs/-",
+				"projects/123/locations/global/apis/abc/versions/123/specs/abc",
+				"projects/1-2-3/locations/global/apis/abc/versions/123/specs/abc",
 			},
 		},
 		{
