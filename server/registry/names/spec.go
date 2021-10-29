@@ -156,3 +156,20 @@ func ParseSpecCollection(name string) (Spec, error) {
 
 	return spec, nil
 }
+
+// ParseSpecWithRevision parses the name of a spec.
+func ParseSpecWithRevision(name string) (Spec, error) {
+	if !specRegexp().MatchString(name) {
+		return Spec{}, fmt.Errorf("invalid spec name %q: must match %q", name, specRegexp())
+	}
+
+	m := specRegexp().FindStringSubmatch(name)
+	spec := Spec{
+		ProjectID: m[1],
+		ApiID:     m[2],
+		VersionID: m[3],
+		SpecID:    m[4],
+	}
+
+	return spec, nil
+}
