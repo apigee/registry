@@ -39,11 +39,11 @@ func TestSpectralPluginGetName(t *testing.T) {
 
 func TestSpectralPluginAddRule(t *testing.T) {
 	addRuleTests := []struct {
-        linter SpectralLinter
-		mimeType string
-		rule string
-        expectedError  error
-    }{
+		linter        SpectralLinter
+		mimeType      string
+		rule          string
+		expectedError error
+	}{
 		{
 			NewSpectralLinter(),
 			"application/x.openapi+gzip;version=2",
@@ -51,28 +51,28 @@ func TestSpectralPluginAddRule(t *testing.T) {
 			nil,
 		},
 		{
-			NewSpectralLinter(), 
+			NewSpectralLinter(),
 			"application/x.protobuf+gzip",
 			"testRule2",
 			fmt.Errorf(
-				"mime type %s is not supported by the spectral linter", 
+				"mime type %s is not supported by the spectral linter",
 				"application/x.protobuf+gzip",
 			),
 		},
-    }
+	}
 
-    for _, tt := range addRuleTests {
+	for _, tt := range addRuleTests {
 		// Add the rule to the linter
 		err := tt.linter.AddRule(tt.mimeType, tt.rule)
 
 		// Ensure that the error output of AddRule is what we expect
-		if (err == nil || tt.expectedError == nil) {
+		if err == nil || tt.expectedError == nil {
 			if err != tt.expectedError {
 				t.Errorf("got %s want %s", err, tt.expectedError)
 			}
 		} else if err.Error() != tt.expectedError.Error() {
-            t.Errorf("got %s want %s", err, tt.expectedError)
-        }
+			t.Errorf("got %s want %s", err, tt.expectedError)
+		}
 
 		if err != nil {
 			continue
@@ -92,14 +92,14 @@ func TestSpectralPluginAddRule(t *testing.T) {
 				tt.rule,
 			)
 		}
-    }
+	}
 }
 
 func TestSpectralPluginSupportsMimeType(t *testing.T) {
 	supportsMimeTypeTests := []struct {
-		linter SpectralLinter
+		linter   SpectralLinter
 		mimeType string
-		want  bool
+		want     bool
 	}{
 		{
 			NewSpectralLinter(),
@@ -117,20 +117,20 @@ func TestSpectralPluginSupportsMimeType(t *testing.T) {
 			true,
 		},
 		{
-			NewSpectralLinter(), 
+			NewSpectralLinter(),
 			"application/x.protobuf+gzip",
 			false,
 		},
 		{
-			NewSpectralLinter(), 
+			NewSpectralLinter(),
 			"application/x.asyncapi+gzip;version=3",
 			false,
 		},
 	}
 
 	for _, tt := range supportsMimeTypeTests {
-		if supports := 
-		tt.linter.SupportsMimeType(tt.mimeType); supports != tt.want {
+		if supports :=
+			tt.linter.SupportsMimeType(tt.mimeType); supports != tt.want {
 			t.Errorf(
 				"SupportsMimeType returned %t for mime type %s, expected %t",
 				supports,
@@ -146,55 +146,55 @@ func TestSpectralPluginSupportsMimeType(t *testing.T) {
 type mockSpectralRunner struct {
 	mock.Mock
 	results []*spectralLintResult
-	err error
+	err     error
 }
 
 func (runner *mockSpectralRunner) Run(
-	spec, 
+	spec,
 	config string,
 ) ([]*spectralLintResult, error) {
 	return runner.results, runner.err
 }
 
 func NewMockSpectralRunner(
-	results []*spectralLintResult, 
+	results []*spectralLintResult,
 	err error,
 ) spectralRunner {
 	test := &mockSpectralRunner{
-		results: results, 
-		err: err,
+		results: results,
+		err:     err,
 	}
 	return test
 }
 
 func TestSpectralPluginLintSpec(t *testing.T) {
 	lintSpecTests := []struct {
-        linter SpectralLinter
-		mimeType string
-		runner spectralRunner
+		linter               SpectralLinter
+		mimeType             string
+		runner               spectralRunner
 		expectedLintProblems []*rpc.LintProblem
-		expectedError error
-    }{
-        {
+		expectedError        error
+	}{
+		{
 			NewSpectralLinter(),
 			"application/x.asyncapi+gzip;version=2",
 			NewMockSpectralRunner(
-				[]*spectralLintResult {
+				[]*spectralLintResult{
 					{
-						Code: "test",
+						Code:    "test",
 						Message: "test",
-						Source: "test",
-						Range: spectralLintRange {
-							Start: spectralLintLocation {
+						Source:  "test",
+						Range: spectralLintRange{
+							Start: spectralLintLocation{
 								Line: 0, Character: 0,
 							},
-							End: spectralLintLocation {
+							End: spectralLintLocation{
 								Line: 2, Character: 10,
 							},
 						},
 					},
 				},
-			nil,
+				nil,
 			),
 			[]*rpc.LintProblem{
 				{
@@ -225,11 +225,11 @@ func TestSpectralPluginLintSpec(t *testing.T) {
 			nil,
 			errors.New("test"),
 		},
-    }
+	}
 
-    for _, tt := range lintSpecTests {
+	for _, tt := range lintSpecTests {
 		lintProblems, err := tt.linter.LintSpecImpl(tt.mimeType, "", tt.runner)
 		assert.Equal(t, tt.expectedError, err)
 		assert.EqualValues(t, tt.expectedLintProblems, lintProblems)
-    }
+	}
 }

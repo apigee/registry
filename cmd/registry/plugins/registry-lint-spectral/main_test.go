@@ -16,6 +16,8 @@ package main
 
 import (
 	"errors"
+	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/apigee/registry/rpc"
@@ -28,63 +30,79 @@ import (
 type mockSpectralExecuter struct {
 	mock.Mock
 	results []*spectralLintResult
-	err error
+	err     error
 }
 
 func (runner *mockSpectralExecuter) Execute(
-	spec, 
+	spec,
 	config string,
 ) ([]*spectralLintResult, error) {
 	return runner.results, runner.err
 }
 
 func NewMockSpectralExecuter(
-	results []*spectralLintResult, 
+	results []*spectralLintResult,
 	err error,
 ) spectralLintCommandExecuter {
 	return &mockSpectralExecuter{
-		results: results, 
-		err: err,
+		results: results,
+		err:     err,
 	}
 }
 
+func setupFakeSpec() (path string, err error) {
+	tempDir, err := ioutil.TempDir("", "")
+	if err != nil {
+		return "", err
+	}
+
+	f, err := ioutil.TempFile(tempDir, "*.yaml")
+	if err != nil {
+		return "", err
+	}
+	return f.Name(), err
+}
+
 func TestSpectralPluginLintSpec(t *testing.T) {
+	path, err := setupFakeSpec()
+	defer os.RemoveAll(path)
+	assert.Equal(t, err, nil)
 	lintSpecTests := []struct {
-        linter *spectralLinterRunner
-		request *rpc.LinterRequest
-		executer spectralLintCommandExecuter
+		linter           *spectralLinterRunner
+		request          *rpc.LinterRequest
+		executer         spectralLintCommandExecuter
 		expectedResponse *rpc.LinterResponse
-		expectedError error
-    }{
-        {
+		expectedError    error
+	}{
+		{
 			&spectralLinterRunner{},
 			&rpc.LinterRequest{
-				SpecPath: "test",
+				SpecPath: path,
 			},
 			NewMockSpectralExecuter(
-				[]*spectralLintResult {
+				[]*spectralLintResult{
 					{
-						Code: "test",
+						Code:    "test",
 						Message: "test",
-						Source: "test",
-						Range: spectralLintRange {
-							Start: spectralLintLocation {
+						Source:  "test",
+						Range: spectralLintRange{
+							Start: spectralLintLocation{
 								Line: 0, Character: 0,
 							},
-							End: spectralLintLocation {
+							End: spectralLintLocation{
 								Line: 2, Character: 10,
 							},
 						},
 					},
 				},
-			nil,
+				nil,
 			),
 			&rpc.LinterResponse{
 				Lint: &rpc.Lint{
 					Name: "registry-lint-spectral",
-					Files: []*rpc.LintFile {
+					Files: []*rpc.LintFile{
 						{
-							FilePath: "test",
+							FilePath: path,
 							Problems: []*rpc.LintProblem{
 								{
 									Message:    "test",
@@ -111,7 +129,7 @@ func TestSpectralPluginLintSpec(t *testing.T) {
 		{
 			&spectralLinterRunner{},
 			&rpc.LinterRequest{
-				SpecPath: "test",
+				SpecPath: path,
 			},
 			NewMockSpectralExecuter(
 				[]*spectralLintResult{},
@@ -120,11 +138,11 @@ func TestSpectralPluginLintSpec(t *testing.T) {
 			nil,
 			errors.New("test"),
 		},
-    }
+	}
 
-    for _, tt := range lintSpecTests {
+	for _, tt := range lintSpecTests {
 		response, err := tt.linter.RunImpl(tt.request, tt.executer)
 		assert.Equal(t, tt.expectedError, err)
 		assert.EqualValues(t, tt.expectedResponse, response)
-    }
+	}
 }

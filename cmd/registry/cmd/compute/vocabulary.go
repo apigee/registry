@@ -23,14 +23,14 @@ import (
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
-	"github.com/googleapis/gnostic/metrics/vocabulary"
+	"github.com/google/gnostic/metrics/vocabulary"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/proto"
 
-	discovery "github.com/googleapis/gnostic/discovery"
-	metrics "github.com/googleapis/gnostic/metrics"
-	oas2 "github.com/googleapis/gnostic/openapiv2"
-	oas3 "github.com/googleapis/gnostic/openapiv3"
+	discovery "github.com/google/gnostic/discovery"
+	metrics "github.com/google/gnostic/metrics"
+	oas2 "github.com/google/gnostic/openapiv2"
+	oas3 "github.com/google/gnostic/openapiv3"
 )
 
 func vocabularyCommand(ctx context.Context) *cobra.Command {
@@ -53,9 +53,9 @@ func vocabularyCommand(ctx context.Context) *cobra.Command {
 			defer wait()
 			// Generate tasks.
 			name := args[0]
-			if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
+			if spec, err := names.ParseSpec(name); err == nil {
 				// Iterate through a collection of specs and summarize each.
-				err = core.ListSpecs(ctx, client, m, filter, func(spec *rpc.ApiSpec) {
+				err = core.ListSpecs(ctx, client, spec, filter, func(spec *rpc.ApiSpec) {
 					taskQueue <- &computeVocabularyTask{
 						client:   client,
 						specName: spec.Name,

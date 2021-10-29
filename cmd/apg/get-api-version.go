@@ -21,7 +21,7 @@ var GetApiVersionFromFile string
 func init() {
 	RegistryServiceCmd.AddCommand(GetApiVersionCmd)
 
-	GetApiVersionCmd.Flags().StringVar(&GetApiVersionInput.Name, "name", "", "Required. The name of the version to retrieve.  Format:...")
+	GetApiVersionCmd.Flags().StringVar(&GetApiVersionInput.Name, "name", "", "Required. The name of the version to retrieve. ...")
 
 	GetApiVersionCmd.Flags().StringVar(&GetApiVersionFromFile, "from_file", "", "Absolute path to JSON file containing request payload")
 
@@ -61,6 +61,9 @@ var GetApiVersionCmd = &cobra.Command{
 			printVerboseInput("Registry", "GetApiVersion", &GetApiVersionInput)
 		}
 		resp, err := RegistryClient.GetApiVersion(ctx, &GetApiVersionInput)
+		if err != nil {
+			return err
+		}
 
 		if Verbose {
 			fmt.Print("Output: ")

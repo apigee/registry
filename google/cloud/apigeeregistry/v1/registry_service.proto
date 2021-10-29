@@ -207,6 +207,83 @@ service Registry {
     option (google.api.method_signature) = "name";
   }
 
+  // ListApiDeployments returns matching deployments.
+  rpc ListApiDeployments(ListApiDeploymentsRequest) returns (ListApiDeploymentsResponse) {
+    option (google.api.http) = {
+      get: "/v1/{parent=projects/*/locations/*/apis/*}/deployments"
+    };
+    option (google.api.method_signature) = "parent";
+  }
+
+  // GetApiDeployment returns a specified deployment.
+  rpc GetApiDeployment(GetApiDeploymentRequest) returns (ApiDeployment) {
+    option (google.api.http) = {
+      get: "/v1/{name=projects/*/locations/*/apis/*/deployments/*}"
+    };
+    option (google.api.method_signature) = "name";
+  }
+
+  // CreateApiDeployment creates a specified deployment.
+  rpc CreateApiDeployment(CreateApiDeploymentRequest) returns (ApiDeployment) {
+    option (google.api.http) = {
+      post: "/v1/{parent=projects/*/locations/*/apis/*}/deployments"
+      body: "api_deployment"
+    };
+    option (google.api.method_signature) = "parent,api_deployment,api_deployment_id";
+  }
+
+  // UpdateApiDeployment can be used to modify a specified deployment.
+  rpc UpdateApiDeployment(UpdateApiDeploymentRequest) returns (ApiDeployment) {
+    option (google.api.http) = {
+      patch: "/v1/{api_deployment.name=projects/*/locations/*/apis/*/deployments/*}"
+      body: "api_deployment"
+    };
+    option (google.api.method_signature) = "api_deployment,update_mask";
+  }
+
+  // DeleteApiDeployment removes a specified deployment, all revisions, and all
+  // child resources (e.g. artifacts).
+  rpc DeleteApiDeployment(DeleteApiDeploymentRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/v1/{name=projects/*/locations/*/apis/*/deployments/*}"
+    };
+    option (google.api.method_signature) = "name";
+  }
+
+  // TagApiDeploymentRevision adds a tag to a specified revision of a
+  // deployment.
+  rpc TagApiDeploymentRevision(TagApiDeploymentRevisionRequest) returns (ApiDeployment) {
+    option (google.api.http) = {
+      post: "/v1/{name=projects/*/locations/*/apis/*/deployments/*}:tagRevision"
+      body: "*"
+    };
+  }
+
+  // ListApiDeploymentRevisions lists all revisions of a deployment.
+  // Revisions are returned in descending order of revision creation time.
+  rpc ListApiDeploymentRevisions(ListApiDeploymentRevisionsRequest) returns (ListApiDeploymentRevisionsResponse) {
+    option (google.api.http) = {
+      get: "/v1/{name=projects/*/locations/*/apis/*/deployments/*}:listRevisions"
+    };
+  }
+
+  // RollbackApiDeployment sets the current revision to a specified prior
+  // revision. Note that this creates a new revision with a new revision ID.
+  rpc RollbackApiDeployment(RollbackApiDeploymentRequest) returns (ApiDeployment) {
+    option (google.api.http) = {
+      post: "/v1/{name=projects/*/locations/*/apis/*/deployments/*}:rollback"
+      body: "*"
+    };
+  }
+
+  // DeleteApiDeploymentRevision deletes a revision of a deployment.
+  rpc DeleteApiDeploymentRevision(DeleteApiDeploymentRevisionRequest) returns (ApiDeployment) {
+    option (google.api.http) = {
+      delete: "/v1/{name=projects/*/locations/*/apis/*/deployments/*}:deleteRevision"
+    };
+    option (google.api.method_signature) = "name";
+  }
+
   // ListArtifacts returns matching artifacts.
   rpc ListArtifacts(ListArtifactsRequest) returns (ListArtifactsResponse) {
     option (google.api.http) = {
@@ -734,6 +811,183 @@ message DeleteApiSpecRevisionRequest {
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = {
       type: "apigeeregistry.googleapis.com/ApiSpec"
+    }
+  ];
+}
+
+// Request message for ListApiDeployments.
+message ListApiDeploymentsRequest {
+  // Required. The parent, which owns this collection of deployments.
+  // Format: projects/*/locations/*/apis/*
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      child_type: "apigeeregistry.googleapis.com/ApiDeployment"
+    }
+  ];
+
+  // The maximum number of deployments to return.
+  // The service may return fewer than this value.
+  // If unspecified, at most 50 values will be returned.
+  // The maximum is 1000; values above 1000 will be coerced to 1000.
+  int32 page_size = 2;
+
+  // A page token, received from a previous `ListApiDeployments` call.
+  // Provide this to retrieve the subsequent page.
+  //
+  // When paginating, all other parameters provided to `ListApiDeployments` must
+  // match the call that provided the page token.
+  string page_token = 3;
+
+  // An expression that can be used to filter the list. Filters use the Common
+  // Expression Language and can refer to all message fields.
+  string filter = 4;
+}
+
+// Response message for ListApiDeployments.
+message ListApiDeploymentsResponse {
+  // The deployments from the specified publisher.
+  repeated ApiDeployment api_deployments = 1;
+
+  // A token, which can be sent as `page_token` to retrieve the next page.
+  // If this field is omitted, there are no subsequent pages.
+  string next_page_token = 2;
+}
+
+// Request message for GetApiDeployment.
+message GetApiDeploymentRequest {
+  // Required. The name of the deployment to retrieve.
+  // Format: projects/*/locations/*/apis/*/deployments/*
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      type: "apigeeregistry.googleapis.com/ApiDeployment"
+    }
+  ];
+}
+
+// Request message for CreateApiDeployment.
+message CreateApiDeploymentRequest {
+  // Required. The parent, which owns this collection of deployments.
+  // Format: projects/*/locations/*/apis/*
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      child_type: "apigeeregistry.googleapis.com/ApiDeployment"
+    }
+  ];
+
+  // Required. The deployment to create.
+  ApiDeployment api_deployment = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // Required. The ID to use for the deployment, which will become the final component of
+  // the deployment's resource name.
+  //
+  // This value should be 4-63 characters, and valid characters
+  // are /[a-z][0-9]-/.
+  //
+  // Following AIP-162, IDs must not have the form of a UUID.
+  string api_deployment_id = 3 [(google.api.field_behavior) = REQUIRED];
+}
+
+// Request message for UpdateApiDeployment.
+message UpdateApiDeploymentRequest {
+  // Required. The deployment to update.
+  //
+  // The `name` field is used to identify the deployment to update.
+  // Format: projects/*/locations/*/apis/*/deployments/*
+  ApiDeployment api_deployment = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // The list of fields to be updated. If omitted, all fields are updated that
+  // are set in the request message (fields set to default values are ignored).
+  // If a "*" is specified, all fields are updated, including fields that are
+  // unspecified/default in the request.
+  google.protobuf.FieldMask update_mask = 2;
+}
+
+// Request message for DeleteApiDeployment.
+message DeleteApiDeploymentRequest {
+  // Required. The name of the deployment to delete.
+  // Format: projects/*/locations/*/apis/*/deployments/*
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      type: "apigeeregistry.googleapis.com/ApiDeployment"
+    }
+  ];
+}
+
+// Request message for TagApiDeploymentRevision.
+message TagApiDeploymentRevisionRequest {
+  // Required. The name of the deployment to be tagged, including the revision ID.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      type: "apigeeregistry.googleapis.com/ApiDeployment"
+    }
+  ];
+
+  // Required. The tag to apply.
+  // The tag should be at most 40 characters, and match `[a-z][a-z0-9-]{3,39}`.
+  string tag = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+// Request message for ListApiDeploymentRevisions.
+message ListApiDeploymentRevisionsRequest {
+  // Required. The name of the deployment to list revisions for.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      type: "apigeeregistry.googleapis.com/ApiDeployment"
+    }
+  ];
+
+  // The maximum number of revisions to return per page.
+  int32 page_size = 2;
+
+  // The page token, received from a previous ListApiDeploymentRevisions call.
+  // Provide this to retrieve the subsequent page.
+  string page_token = 3;
+}
+
+// Response message for ListApiDeploymentRevisionsResponse.
+message ListApiDeploymentRevisionsResponse {
+  // The revisions of the deployment.
+  repeated ApiDeployment api_deployments = 1;
+
+  // A token that can be sent as `page_token` to retrieve the next page.
+  // If this field is omitted, there are no subsequent pages.
+  string next_page_token = 2;
+}
+
+// Request message for RollbackApiDeployment.
+message RollbackApiDeploymentRequest {
+  // Required. The deployment being rolled back.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      type: "apigeeregistry.googleapis.com/ApiDeployment"
+    }
+  ];
+
+  // Required. The revision ID to roll back to.
+  // It must be a revision of the same deployment.
+  //
+  //   Example: c7cfa2a8
+  string revision_id = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+// Request message for DeleteApiDeploymentRevision.
+message DeleteApiDeploymentRevisionRequest {
+  // Required. The name of the deployment revision to be deleted,
+  // with a revision ID explicitly included.
+  //
+  // Example:
+  // projects/sample/locations/global/apis/petstore/deployments/prod@c7cfa2a8
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {
+      type: "apigeeregistry.googleapis.com/ApiDeployment"
     }
   ];
 }
