@@ -147,6 +147,7 @@ func (s *Deployment) BasicMessage(name string, tags []string) (message *rpc.ApiD
 
 // Update modifies a deployment using the contents of a message.
 func (s *Deployment) Update(message *rpc.ApiDeployment, mask *fieldmaskpb.FieldMask) error {
+	needsNewRevision := false // we update the revision if certain fields change
 	s.RevisionUpdateTime = time.Now().Round(time.Microsecond)
 	for _, field := range mask.Paths {
 		switch field {
@@ -155,8 +156,14 @@ func (s *Deployment) Update(message *rpc.ApiDeployment, mask *fieldmaskpb.FieldM
 		case "description":
 			s.Description = message.GetDescription()
 		case "api_spec_revision":
+			if s.ApiSpecRevision != message.GetApiSpecRevision() {
+				needsNewRevision = true
+			}
 			s.ApiSpecRevision = message.GetApiSpecRevision()
 		case "endpoint_uri":
+			if s.EndpointURI != message.GetEndpointUri() {
+				needsNewRevision = true
+			}
 			s.EndpointURI = message.GetEndpointUri()
 		case "external_channel_uri":
 			s.ExternalChannelURI = message.GetExternalChannelUri()
@@ -174,6 +181,12 @@ func (s *Deployment) Update(message *rpc.ApiDeployment, mask *fieldmaskpb.FieldM
 			if s.Annotations, err = bytesForMap(message.GetAnnotations()); err != nil {
 				return err
 			}
+		}
+		if needsNewRevision {
+			s.RevisionID = newRevisionID()
+			now := time.Now().Round(time.Microsecond)
+			s.RevisionCreateTime = now
+			s.RevisionUpdateTime = now
 		}
 	}
 

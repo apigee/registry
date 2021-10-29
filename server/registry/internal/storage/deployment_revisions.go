@@ -106,7 +106,6 @@ func (d *Client) DeleteDeploymentRevision(ctx context.Context, name names.Deploy
 	for _, entityName := range []string{
 		gorm.DeploymentEntityName,
 		gorm.DeploymentRevisionTagEntityName,
-		gorm.BlobEntityName,
 	} {
 		q := d.NewQuery(entityName)
 		q = q.Require("ProjectID", name.ProjectID)
