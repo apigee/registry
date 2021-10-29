@@ -36,16 +36,17 @@ var deploymentFields = []filtering.Field{
 	{Name: "name", Type: filtering.String},
 	{Name: "project_id", Type: filtering.String},
 	{Name: "api_id", Type: filtering.String},
-	{Name: "version_id", Type: filtering.String},
 	{Name: "deployment_id", Type: filtering.String},
-	{Name: "filename", Type: filtering.String},
+	{Name: "display_name", Type: filtering.String},
 	{Name: "description", Type: filtering.String},
 	{Name: "create_time", Type: filtering.Timestamp},
 	{Name: "revision_create_time", Type: filtering.Timestamp},
 	{Name: "revision_update_time", Type: filtering.Timestamp},
-	{Name: "mime_type", Type: filtering.String},
-	{Name: "size_bytes", Type: filtering.Int},
-	{Name: "source_uri", Type: filtering.String},
+	{Name: "api_spec_revision", Type: filtering.String},
+	{Name: "endpoint_uri", Type: filtering.String},
+	{Name: "external_channel_uri", Type: filtering.String},
+	{Name: "intended_audience", Type: filtering.String},
+	{Name: "access_guidance", Type: filtering.String},
 	{Name: "labels", Type: filtering.StringMap},
 }
 
@@ -126,11 +127,17 @@ func deploymentMap(deployment models.Deployment) (map[string]interface{}, error)
 		"project_id":           deployment.ProjectID,
 		"api_id":               deployment.ApiID,
 		"deployment_id":        deployment.DeploymentID,
-		"description":          deployment.Description,
 		"revision_id":          deployment.RevisionID,
+		"display_name":         deployment.DisplayName,
+		"description":          deployment.Description,
 		"create_time":          deployment.CreateTime,
 		"revision_create_time": deployment.RevisionCreateTime,
 		"revision_update_time": deployment.RevisionUpdateTime,
+		"api_spec_revision":    deployment.ApiSpecRevision,
+		"endpoint_uri":         deployment.EndpointURI,
+		"external_channel_uri": deployment.ExternalChannelURI,
+		"intended_audience":    deployment.IntendedAudience,
+		"access_guidance":      deployment.AccessGuidance,
 		"labels":               labels,
 	}, nil
 }
@@ -157,7 +164,6 @@ func (d *Client) DeleteDeployment(ctx context.Context, name names.Deployment) er
 		gorm.DeploymentEntityName,
 		gorm.DeploymentRevisionTagEntityName,
 		gorm.ArtifactEntityName,
-		gorm.BlobEntityName,
 	} {
 		q := d.NewQuery(entityName)
 		q = q.Require("ProjectID", name.ProjectID)

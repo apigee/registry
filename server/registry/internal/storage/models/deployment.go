@@ -31,10 +31,16 @@ type Deployment struct {
 	ApiID              string    // Uniquely identifies an api within a project.
 	DeploymentID       string    // Uniquely identifies a deployment within an api.
 	RevisionID         string    // Uniquely identifies a revision of a deployment.
+	DisplayName        string    // A human-friendly name.
 	Description        string    // A detailed description.
 	CreateTime         time.Time // Creation time.
 	RevisionCreateTime time.Time // Revision creation time.
 	RevisionUpdateTime time.Time // Time of last change.
+	ApiSpecRevision    string    // The spec being served by the deployment.
+	EndpointURI        string    // The address where the deployment is serving.
+	ExternalChannelURI string    // The address of the external channel of the API.
+	IntendedAudience   string    // The intended audience of the API.
+	AccessGuidance     string    // A brief description of how to access the endpoint.
 	Labels             []byte    // Serialized labels.
 	Annotations        []byte    // Serialized annotations.
 }
@@ -46,11 +52,17 @@ func NewDeployment(name names.Deployment, body *rpc.ApiDeployment) (deployment *
 		ProjectID:          name.ProjectID,
 		ApiID:              name.ApiID,
 		DeploymentID:       name.DeploymentID,
+		RevisionID:         newRevisionID(),
+		DisplayName:        body.GetDisplayName(),
 		Description:        body.GetDescription(),
 		CreateTime:         now,
 		RevisionCreateTime: now,
 		RevisionUpdateTime: now,
-		RevisionID:         newRevisionID(),
+		ApiSpecRevision:    body.GetApiSpecRevision(),
+		EndpointURI:        body.GetEndpointUri(),
+		ExternalChannelURI: body.GetExternalChannelUri(),
+		IntendedAudience:   body.GetIntendedAudience(),
+		AccessGuidance:     body.GetAccessGuidance(),
 	}
 
 	deployment.Labels, err = bytesForMap(body.GetLabels())
@@ -73,11 +85,17 @@ func (s *Deployment) NewRevision() *Deployment {
 		ProjectID:          s.ProjectID,
 		ApiID:              s.ApiID,
 		DeploymentID:       s.DeploymentID,
+		RevisionID:         newRevisionID(),
+		DisplayName:        s.DisplayName,
 		Description:        s.Description,
 		CreateTime:         s.CreateTime,
 		RevisionCreateTime: now,
 		RevisionUpdateTime: now,
-		RevisionID:         newRevisionID(),
+		ApiSpecRevision:    s.ApiSpecRevision,
+		EndpointURI:        s.EndpointURI,
+		ExternalChannelURI: s.ExternalChannelURI,
+		IntendedAudience:   s.IntendedAudience,
+		AccessGuidance:     s.AccessGuidance,
 	}
 }
 
@@ -100,12 +118,18 @@ func (s *Deployment) RevisionName() string {
 func (s *Deployment) BasicMessage(name string, tags []string) (message *rpc.ApiDeployment, err error) {
 	message = &rpc.ApiDeployment{
 		Name:               name,
+		DisplayName:        s.DisplayName,
 		Description:        s.Description,
 		RevisionId:         s.RevisionID,
 		RevisionTags:       tags,
 		CreateTime:         timestamppb.New(s.CreateTime),
 		RevisionCreateTime: timestamppb.New(s.RevisionCreateTime),
 		RevisionUpdateTime: timestamppb.New(s.RevisionUpdateTime),
+		ApiSpecRevision:    s.ApiSpecRevision,
+		EndpointUri:        s.EndpointURI,
+		ExternalChannelUri: s.ExternalChannelURI,
+		IntendedAudience:   s.IntendedAudience,
+		AccessGuidance:     s.AccessGuidance,
 	}
 
 	message.Labels, err = mapForBytes(s.Labels)
@@ -126,8 +150,20 @@ func (s *Deployment) Update(message *rpc.ApiDeployment, mask *fieldmaskpb.FieldM
 	s.RevisionUpdateTime = time.Now().Round(time.Microsecond)
 	for _, field := range mask.Paths {
 		switch field {
+		case "display_name":
+			s.DisplayName = message.GetDisplayName()
 		case "description":
 			s.Description = message.GetDescription()
+		case "api_spec_revision":
+			s.ApiSpecRevision = message.GetApiSpecRevision()
+		case "endpoint_uri":
+			s.EndpointURI = message.GetEndpointUri()
+		case "external_channel_uri":
+			s.ExternalChannelURI = message.GetExternalChannelUri()
+		case "intended_audience":
+			s.IntendedAudience = message.GetIntendedAudience()
+		case "access_guidance":
+			s.AccessGuidance = message.GetAccessGuidance()
 		case "labels":
 			var err error
 			if s.Labels, err = bytesForMap(message.GetLabels()); err != nil {
