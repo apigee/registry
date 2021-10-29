@@ -16,6 +16,7 @@ package controller
 
 import (
 	"context"
+
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/server/registry/names"
@@ -23,29 +24,29 @@ import (
 
 func ListResources(ctx context.Context, client connection.Client, pattern, filter string) ([]Resource, error) {
 	var result []Resource
-	var err error
+	var err2 error
 
 	// First try to match collection names.
-	if m := names.ApisRegexp().FindStringSubmatch(pattern); m != nil {
-		err = core.ListAPIs(ctx, client, m, filter, GenerateApiHandler(&result))
-	} else if m := names.SpecsRegexp().FindStringSubmatch(pattern); m != nil {
-		err = core.ListSpecs(ctx, client, m, filter, GenerateSpecHandler(&result))
-	} else if m := names.ArtifactsRegexp().FindStringSubmatch(pattern); m != nil {
-		err = core.ListArtifacts(ctx, client, m, filter, false, GenerateArtifactHandler(&result))
+	if api, err := names.ParseApiCollection(pattern); err == nil {
+		err2 = core.ListAPIs(ctx, client, api, filter, GenerateApiHandler(&result))
+	} else if spec, err := names.ParseSpecCollection(pattern); err == nil {
+		err2 = core.ListSpecs(ctx, client, spec, filter, GenerateSpecHandler(&result))
+	} else if artifact, err := names.ParseArtifactCollection(pattern); err == nil {
+		err2 = core.ListArtifacts(ctx, client, artifact, filter, false, GenerateArtifactHandler(&result))
 	}
 
 	// Then try to match resource names.
-	if m := names.ApiRegexp().FindStringSubmatch(pattern); m != nil {
-		err = core.ListAPIs(ctx, client, m, filter, GenerateApiHandler(&result))
-	} else if m := names.SpecRegexp().FindStringSubmatch(pattern); m != nil {
-		err = core.ListSpecs(ctx, client, m, filter, GenerateSpecHandler(&result))
-	} else if m := names.ArtifactRegexp().FindStringSubmatch(pattern); m != nil {
-		err = core.ListArtifacts(ctx, client, m, filter, false, GenerateArtifactHandler(&result))
+	if api, err := names.ParseApi(pattern); err == nil {
+		err2 = core.ListAPIs(ctx, client, api, filter, GenerateApiHandler(&result))
+	} else if spec, err := names.ParseSpec(pattern); err == nil {
+		err2 = core.ListSpecs(ctx, client, spec, filter, GenerateSpecHandler(&result))
+	} else if artifact, err := names.ParseArtifact(pattern); err == nil {
+		err2 = core.ListArtifacts(ctx, client, artifact, filter, false, GenerateArtifactHandler(&result))
 	}
 
-	if err != nil {
-		return nil, err
+	if err2 != nil {
+		return nil, err2
 	}
 
-	return result, err
+	return result, nil
 }

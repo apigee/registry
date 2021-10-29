@@ -16,6 +16,8 @@ package main
 
 import (
 	"errors"
+	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/apigee/registry/rpc"
@@ -28,7 +30,7 @@ import (
 type mockApiLinterExecuter struct {
 	mock.Mock
 	results []*rpc.LintProblem
-	err error
+	err     error
 }
 
 func (runner *mockApiLinterExecuter) Execute(specPath string) ([]*rpc.LintProblem, error) {
@@ -36,34 +38,51 @@ func (runner *mockApiLinterExecuter) Execute(specPath string) ([]*rpc.LintProble
 }
 
 func newMockApiLinterExecuter(
-	results []*rpc.LintProblem, 
+	results []*rpc.LintProblem,
 	err error,
 ) apiLinterCommandExecuter {
 	return &mockApiLinterExecuter{
-		results: results, 
-		err: err,
+		results: results,
+		err:     err,
 	}
 }
 
+func setupFakeSpec() (path string, err error) {
+	tempDir, err := ioutil.TempDir("", "")
+	if err != nil {
+		return "", err
+	}
+
+	f, err := ioutil.TempFile(tempDir, "*.proto")
+	if err != nil {
+		return "", err
+	}
+	return f.Name(), err
+}
+
 func TestApiLinterPluginLintSpec(t *testing.T) {
+	path, err := setupFakeSpec()
+	defer os.RemoveAll(path)
+	assert.Equal(t, err, nil)
+
 	lintSpecTests := []struct {
-		linter *apiLinterRunner
-		request *rpc.LinterRequest
-		executer apiLinterCommandExecuter
+		linter           *apiLinterRunner
+		request          *rpc.LinterRequest
+		executer         apiLinterCommandExecuter
 		expectedResponse *rpc.LinterResponse
-		expectedError error
-    }{
-        {
+		expectedError    error
+	}{
+		{
 			&apiLinterRunner{},
 			&rpc.LinterRequest{
-				SpecPath: "test",
-				RuleIds: []string{"test"},
+				SpecPath: path,
+				RuleIds:  []string{"test"},
 			},
 			newMockApiLinterExecuter(
-				[]*rpc.LintProblem {
+				[]*rpc.LintProblem{
 					{
-						Message:    "test",
-						RuleId:     "test",
+						Message: "test",
+						RuleId:  "test",
 						Location: &rpc.LintLocation{
 							StartPosition: &rpc.LintPosition{
 								LineNumber:   1,
@@ -76,18 +95,18 @@ func TestApiLinterPluginLintSpec(t *testing.T) {
 						},
 					},
 				},
-			nil,
+				nil,
 			),
 			&rpc.LinterResponse{
 				Lint: &rpc.Lint{
 					Name: "registry-lint-api-linter",
-					Files: []*rpc.LintFile {
+					Files: []*rpc.LintFile{
 						{
-							FilePath: "test",
+							FilePath: path,
 							Problems: []*rpc.LintProblem{
 								{
-									Message:    "test",
-									RuleId:     "test",
+									Message: "test",
+									RuleId:  "test",
 									Location: &rpc.LintLocation{
 										StartPosition: &rpc.LintPosition{
 											LineNumber:   1,
@@ -109,7 +128,7 @@ func TestApiLinterPluginLintSpec(t *testing.T) {
 		{
 			&apiLinterRunner{},
 			&rpc.LinterRequest{
-				SpecPath: "test",
+				SpecPath: path,
 			},
 			newMockApiLinterExecuter(
 				[]*rpc.LintProblem{},
@@ -118,11 +137,11 @@ func TestApiLinterPluginLintSpec(t *testing.T) {
 			nil,
 			errors.New("test"),
 		},
-    }
+	}
 
-    for _, tt := range lintSpecTests {
+	for _, tt := range lintSpecTests {
 		response, err := tt.linter.RunImpl(tt.request, tt.executer)
 		assert.Equal(t, tt.expectedError, err)
 		assert.EqualValues(t, tt.expectedResponse, response)
-    }
+	}
 }

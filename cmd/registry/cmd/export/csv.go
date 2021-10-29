@@ -41,8 +41,8 @@ func csvCommand(ctx context.Context) *cobra.Command {
 		Short: "Export API specs to a CSV file",
 		Args: func(cmd *cobra.Command, args []string) error {
 			for _, parent := range args {
-				if re := names.VersionRegexp(); !re.MatchString(parent) {
-					return fmt.Errorf("invalid parent argument %q: must match %q", parent, re)
+				if _, err := names.ParseVersion(parent); err != nil {
+					return fmt.Errorf("invalid parent argument %q", parent)
 				}
 			}
 
@@ -56,17 +56,21 @@ func csvCommand(ctx context.Context) *cobra.Command {
 
 			rows := make([]exportCSVRow, 0)
 			for _, parent := range args {
-				err := core.ListSpecs(ctx, client, names.VersionRegexp().FindStringSubmatch(parent), filter, func(spec *rpc.ApiSpec) {
-					if !names.SpecRegexp().MatchString(spec.GetName()) {
+				version, err := names.ParseVersion(parent)
+				if err != nil {
+					log.Debugf("Failed to parse version name %q: skipping spec row", parent)
+					return
+				}
+				err = core.ListSpecs(ctx, client, version.Spec(""), filter, func(spec *rpc.ApiSpec) {
+					specName, err := names.ParseSpec(spec.GetName())
+					if err != nil {
 						log.Debugf("Failed to parse spec name %q: skipping spec row", spec.GetName())
 						return
 					}
-
-					m := names.SpecRegexp().FindStringSubmatch(spec.GetName())
 					rows = append(rows, exportCSVRow{
-						ApiID:        m[2],
-						VersionID:    m[3],
-						SpecID:       m[4],
+						ApiID:        specName.ApiID,
+						VersionID:    specName.VersionID,
+						SpecID:       specName.SpecID,
 						ContentsPath: fmt.Sprintf("$APG_REGISTRY_ADDRESS/%s", spec.GetName()),
 					})
 				})

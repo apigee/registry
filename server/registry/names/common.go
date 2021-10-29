@@ -66,3 +66,8 @@ func normalize(identifier string) string {
 
 // Location is included in resource names immediately following the project_id.
 const Location = "global"
+
+// Name is an interface that represents resource names.
+type Name interface {
+	String() string // all names have a string representation.
+}

@@ -39,11 +39,11 @@ func TestApiLinterPluginGetName(t *testing.T) {
 
 func TestApiLinterPluginAddRule(t *testing.T) {
 	addRuleTests := []struct {
-        linter ApiLinter
-		mimeType string
-		rule string
-        expectedError  error
-    }{
+		linter        ApiLinter
+		mimeType      string
+		rule          string
+		expectedError error
+	}{
 		{
 			NewApiLinter(),
 			"application/x.protobuf+gzip",
@@ -51,28 +51,28 @@ func TestApiLinterPluginAddRule(t *testing.T) {
 			nil,
 		},
 		{
-			NewApiLinter(), 
+			NewApiLinter(),
 			"application/x.openapi+gzip;version=2",
 			"testRule2",
 			fmt.Errorf(
-				"mime type %s is not supported by the spectral linter", 
+				"mime type %s is not supported by the spectral linter",
 				"application/x.openapi+gzip;version=2",
 			),
 		},
-    }
+	}
 
-    for _, tt := range addRuleTests {
+	for _, tt := range addRuleTests {
 		// Add the rule to the linter
 		err := tt.linter.AddRule(tt.mimeType, tt.rule)
 
 		// Ensure that the error output of AddRule is what we expect
-		if (err == nil || tt.expectedError == nil) {
+		if err == nil || tt.expectedError == nil {
 			if err != tt.expectedError {
 				t.Errorf("got %s want %s", err, tt.expectedError)
 			}
 		} else if err.Error() != tt.expectedError.Error() {
-            t.Errorf("got %s want %s", err, tt.expectedError)
-        }
+			t.Errorf("got %s want %s", err, tt.expectedError)
+		}
 
 		if err != nil {
 			continue
@@ -92,14 +92,14 @@ func TestApiLinterPluginAddRule(t *testing.T) {
 				tt.rule,
 			)
 		}
-    }
+	}
 }
 
 func TestApiLinterPluginSupportsMimeType(t *testing.T) {
 	supportsMimeTypeTests := []struct {
-		linter ApiLinter
+		linter   ApiLinter
 		mimeType string
-		want  bool
+		want     bool
 	}{
 		{
 			NewApiLinter(),
@@ -117,20 +117,20 @@ func TestApiLinterPluginSupportsMimeType(t *testing.T) {
 			false,
 		},
 		{
-			NewApiLinter(), 
+			NewApiLinter(),
 			"application/x.asyncapi+gzip;version=3",
 			false,
 		},
 		{
-			NewApiLinter(), 
+			NewApiLinter(),
 			"application/x.protobuf+gzip",
 			true,
 		},
 	}
 
 	for _, tt := range supportsMimeTypeTests {
-		if supports := 
-		tt.linter.SupportsMimeType(tt.mimeType); supports != tt.want {
+		if supports :=
+			tt.linter.SupportsMimeType(tt.mimeType); supports != tt.want {
 			t.Errorf(
 				"SupportsMimeType returned %t for mime type %s, expected %t",
 				supports,
@@ -146,7 +146,7 @@ func TestApiLinterPluginSupportsMimeType(t *testing.T) {
 type mockApiLinterRunner struct {
 	mock.Mock
 	results []*rpc.LintProblem
-	err error
+	err     error
 }
 
 func (runner *mockApiLinterRunner) Run(spec string) ([]*rpc.LintProblem, error) {
@@ -154,30 +154,30 @@ func (runner *mockApiLinterRunner) Run(spec string) ([]*rpc.LintProblem, error) 
 }
 
 func newMockApiLinterRunner(
-	results []*rpc.LintProblem, 
+	results []*rpc.LintProblem,
 	err error,
 ) apiLinterRunner {
 	test := &mockApiLinterRunner{
-		results: results, 
-		err: err,
+		results: results,
+		err:     err,
 	}
 	return test
 }
 
 func TestApiLinterPluginLintSpec(t *testing.T) {
 	lintSpecTests := []struct {
-        linter ApiLinter
-		mimeType string
-		runner apiLinterRunner
+		linter               ApiLinter
+		mimeType             string
+		runner               apiLinterRunner
 		expectedLintProblems []*rpc.LintProblem
-		enabledRules []string
-		expectedError error
-    }{
-        {
+		enabledRules         []string
+		expectedError        error
+	}{
+		{
 			NewApiLinter(),
 			"application/x.protobuf+zip",
 			newMockApiLinterRunner(
-				[]*rpc.LintProblem {
+				[]*rpc.LintProblem{
 					{
 						Message:    "test",
 						RuleId:     "test",
@@ -194,7 +194,7 @@ func TestApiLinterPluginLintSpec(t *testing.T) {
 						},
 					},
 				},
-			nil,
+				nil,
 			),
 			[]*rpc.LintProblem{
 				{
@@ -227,9 +227,9 @@ func TestApiLinterPluginLintSpec(t *testing.T) {
 			[]string{},
 			errors.New("test"),
 		},
-    }
+	}
 
-    for _, tt := range lintSpecTests {
+	for _, tt := range lintSpecTests {
 		// Enable the rules that are required for linting to occur
 		for _, rule := range tt.enabledRules {
 			err := tt.linter.AddRule(tt.mimeType, rule)
@@ -239,5 +239,5 @@ func TestApiLinterPluginLintSpec(t *testing.T) {
 		lintProblems, err := tt.linter.LintSpecImpl(tt.mimeType, "", tt.runner)
 		assert.Equal(t, tt.expectedError, err)
 		assert.EqualValues(t, tt.expectedLintProblems, lintProblems)
-    }
+	}
 }

@@ -109,6 +109,9 @@ var UpdateApiVersionCmd = &cobra.Command{
 			printVerboseInput("Registry", "UpdateApiVersion", &UpdateApiVersionInput)
 		}
 		resp, err := RegistryClient.UpdateApiVersion(ctx, &UpdateApiVersionInput)
+		if err != nil {
+			return err
+		}
 
 		if Verbose {
 			fmt.Print("Output: ")
