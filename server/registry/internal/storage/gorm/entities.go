@@ -25,6 +25,10 @@ const (
 	SpecEntityName = "Spec"
 	// SpecRevisionTagEntityName is the storage entity name for API spec revision tag resources.
 	SpecRevisionTagEntityName = "SpecRevisionTag"
+	// DeploymentEntityName is the storage entity name for API deployment resources.
+	DeploymentEntityName = "Deployment"
+	// DeploymentRevisionTagEntityName is the storage entity name for API deployment revision tag resources.
+	DeploymentRevisionTagEntityName = "DeploymentRevisionTag"
 	// ArtifactEntityName is the storage entity name for artifact resources.
 	ArtifactEntityName = "Artifact"
 	// BlobEntityName is the storage entity name for blob resources.

@@ -25,8 +25,8 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// ListApiSpecRevisions handles the corresponding API request.
-func (s *RegistryServer) ListApiSpecRevisions(ctx context.Context, req *rpc.ListApiSpecRevisionsRequest) (*rpc.ListApiSpecRevisionsResponse, error) {
+// ListApiDeploymentRevisions handles the corresponding API request.
+func (s *RegistryServer) ListApiDeploymentRevisions(ctx context.Context, req *rpc.ListApiDeploymentRevisionsRequest) (*rpc.ListApiDeploymentRevisionsResponse, error) {
 	db, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
@@ -41,12 +41,12 @@ func (s *RegistryServer) ListApiSpecRevisions(ctx context.Context, req *rpc.List
 		req.PageSize = 50
 	}
 
-	parent, err := names.ParseSpec(req.GetName())
+	parent, err := names.ParseDeployment(req.GetName())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	listing, err := db.ListSpecRevisions(ctx, parent, storage.PageOptions{
+	listing, err := db.ListDeploymentRevisions(ctx, parent, storage.PageOptions{
 		Size:  req.GetPageSize(),
 		Token: req.GetPageToken(),
 	})
@@ -54,19 +54,19 @@ func (s *RegistryServer) ListApiSpecRevisions(ctx context.Context, req *rpc.List
 		return nil, err
 	}
 
-	response := &rpc.ListApiSpecRevisionsResponse{
-		ApiSpecs:      make([]*rpc.ApiSpec, len(listing.Specs)),
-		NextPageToken: listing.Token,
+	response := &rpc.ListApiDeploymentRevisionsResponse{
+		ApiDeployments: make([]*rpc.ApiDeployment, len(listing.Deployments)),
+		NextPageToken:  listing.Token,
 	}
 
-	tags, err := db.GetSpecTags(ctx, parent)
+	tags, err := db.GetDeploymentTags(ctx, parent)
 	if err != nil {
 		return nil, err
 	}
 
-	tagsByRev := specTagsByRevision(tags)
-	for i, spec := range listing.Specs {
-		response.ApiSpecs[i], err = spec.BasicMessage(spec.RevisionName(), tagsByRev[spec.RevisionName()])
+	tagsByRev := deploymentTagsByRevision(tags)
+	for i, deployment := range listing.Deployments {
+		response.ApiDeployments[i], err = deployment.BasicMessage(deployment.RevisionName(), tagsByRev[deployment.RevisionName()])
 		if err != nil {
 			return nil, status.Error(codes.Internal, err.Error())
 		}
@@ -75,49 +75,49 @@ func (s *RegistryServer) ListApiSpecRevisions(ctx context.Context, req *rpc.List
 	return response, nil
 }
 
-// DeleteApiSpecRevision handles the corresponding API request.
-func (s *RegistryServer) DeleteApiSpecRevision(ctx context.Context, req *rpc.DeleteApiSpecRevisionRequest) (*rpc.ApiSpec, error) {
+// DeleteApiDeploymentRevision handles the corresponding API request.
+func (s *RegistryServer) DeleteApiDeploymentRevision(ctx context.Context, req *rpc.DeleteApiDeploymentRevisionRequest) (*rpc.ApiDeployment, error) {
 	db, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 	defer db.Close()
 
-	name, err := names.ParseSpecRevision(req.GetName())
+	name, err := names.ParseDeploymentRevision(req.GetName())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	revision, err := db.GetSpecRevision(ctx, name)
+	revision, err := db.GetDeploymentRevision(ctx, name)
 	if err != nil {
 		return nil, err
 	}
 
-	// Parse the retrieved spec revision name, which has a non-tag revision ID.
+	// Parse the retrieved deployment revision name, which has a non-tag revision ID.
 	// This is necessary to ensure the actual revision is deleted.
-	name, err = names.ParseSpecRevision(revision.RevisionName())
+	name, err = names.ParseDeploymentRevision(revision.RevisionName())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	if err := db.DeleteSpecRevision(ctx, name); err != nil {
+	if err := db.DeleteDeploymentRevision(ctx, name); err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	s.notify(ctx, rpc.Notification_DELETED, name.String())
 
-	// return the latest revision of the current spec
-	spec, err := s.getApiSpec(ctx, name.Spec())
+	// return the latest revision of the current deployment
+	deployment, err := s.getApiDeployment(ctx, name.Deployment())
 	if err != nil {
-		// This will fail if we just deleted the only revision of this spec.
+		// This will fail if we just deleted the only revision of this deployment.
 		// TODO: prevent this.
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	return spec, nil
+	return deployment, nil
 }
 
-// TagApiSpecRevision handles the corresponding API request.
-func (s *RegistryServer) TagApiSpecRevision(ctx context.Context, req *rpc.TagApiSpecRevisionRequest) (*rpc.ApiSpec, error) {
+// TagApiDeploymentRevision handles the corresponding API request.
+func (s *RegistryServer) TagApiDeploymentRevision(ctx context.Context, req *rpc.TagApiDeploymentRevisionRequest) (*rpc.ApiDeployment, error) {
 	db, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
@@ -130,30 +130,30 @@ func (s *RegistryServer) TagApiSpecRevision(ctx context.Context, req *rpc.TagApi
 		return nil, status.Errorf(codes.InvalidArgument, "invalid tag %q, must be 40 characters or less", req.GetTag())
 	}
 
-	// Parse the requested spec revision name, which may include a tag name.
-	name, err := names.ParseSpecRevision(req.GetName())
+	// Parse the requested deployment revision name, which may include a tag name.
+	name, err := names.ParseDeploymentRevision(req.GetName())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	revision, err := db.GetSpecRevision(ctx, name)
+	revision, err := db.GetDeploymentRevision(ctx, name)
 	if err != nil {
 		return nil, err
 	}
 
-	// Parse the retrieved spec revision name, which has a non-tag revision ID.
+	// Parse the retrieved deployment revision name, which has a non-tag revision ID.
 	// This is necessary to ensure the new tag is associated with a revision ID, not another tag.
-	name, err = names.ParseSpecRevision(revision.RevisionName())
+	name, err = names.ParseDeploymentRevision(revision.RevisionName())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	tag := models.NewSpecRevisionTag(name, req.GetTag())
-	if err := db.SaveSpecRevisionTag(ctx, tag); err != nil {
+	tag := models.NewDeploymentRevisionTag(name, req.GetTag())
+	if err := db.SaveDeploymentRevisionTag(ctx, tag); err != nil {
 		return nil, err
 	}
 
-	tags, err := revisionTags(ctx, db, name)
+	tags, err := deploymentRevisionTags(ctx, db, name)
 	if err != nil {
 		return nil, err
 	}
@@ -167,8 +167,8 @@ func (s *RegistryServer) TagApiSpecRevision(ctx context.Context, req *rpc.TagApi
 	return message, nil
 }
 
-// RollbackApiSpec handles the corresponding API request.
-func (s *RegistryServer) RollbackApiSpec(ctx context.Context, req *rpc.RollbackApiSpecRequest) (*rpc.ApiSpec, error) {
+// RollbackApiDeployment handles the corresponding API request.
+func (s *RegistryServer) RollbackApiDeployment(ctx context.Context, req *rpc.RollbackApiDeploymentRequest) (*rpc.ApiDeployment, error) {
 	db, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
@@ -179,32 +179,21 @@ func (s *RegistryServer) RollbackApiSpec(ctx context.Context, req *rpc.RollbackA
 		return nil, status.Errorf(codes.InvalidArgument, "invalid revision ID %q, must not be empty", req.GetRevisionId())
 	}
 
-	parent, err := names.ParseSpec(req.GetName())
+	parent, err := names.ParseDeployment(req.GetName())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	// Get the target spec revision to use as a base for the new rollback revision.
+	// Get the target deployment revision to use as a base for the new rollback revision.
 	name := parent.Revision(req.GetRevisionId())
-	target, err := db.GetSpecRevision(ctx, name)
+	target, err := db.GetDeploymentRevision(ctx, name)
 	if err != nil {
 		return nil, err
 	}
 
 	// Save a new rollback revision based on the target revision.
 	rollback := target.NewRevision()
-	if err := db.SaveSpecRevision(ctx, rollback); err != nil {
-		return nil, err
-	}
-
-	blob, err := db.GetSpecRevisionContents(ctx, name)
-	if err != nil {
-		return nil, err
-	}
-
-	// Save a new copy of the target revision blob for the rollback revision.
-	blob.RevisionID = name.RevisionID
-	if err := db.SaveSpecRevisionContents(ctx, rollback, blob.Contents); err != nil {
+	if err := db.SaveDeploymentRevision(ctx, rollback); err != nil {
 		return nil, err
 	}
 

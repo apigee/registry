@@ -26,18 +26,18 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// SpecList contains a page of spec resources.
-type SpecList struct {
-	Specs []models.Spec
-	Token string
+// DeploymentList contains a page of deployment resources.
+type DeploymentList struct {
+	Deployments []models.Deployment
+	Token       string
 }
 
-var specFields = []filtering.Field{
+var deploymentFields = []filtering.Field{
 	{Name: "name", Type: filtering.String},
 	{Name: "project_id", Type: filtering.String},
 	{Name: "api_id", Type: filtering.String},
 	{Name: "version_id", Type: filtering.String},
-	{Name: "spec_id", Type: filtering.String},
+	{Name: "deployment_id", Type: filtering.String},
 	{Name: "filename", Type: filtering.String},
 	{Name: "description", Type: filtering.String},
 	{Name: "create_time", Type: filtering.Timestamp},
@@ -49,60 +49,56 @@ var specFields = []filtering.Field{
 	{Name: "labels", Type: filtering.StringMap},
 }
 
-func (d *Client) ListSpecs(ctx context.Context, parent names.Version, opts PageOptions) (SpecList, error) {
+func (d *Client) ListDeployments(ctx context.Context, parent names.Api, opts PageOptions) (DeploymentList, error) {
 	token, err := decodeToken(opts.Token)
 	if err != nil {
-		return SpecList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
+		return DeploymentList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
 	}
 
 	if err := token.ValidateFilter(opts.Filter); err != nil {
-		return SpecList{}, status.Errorf(codes.InvalidArgument, "invalid filter %q: %s", opts.Filter, err)
+		return DeploymentList{}, status.Errorf(codes.InvalidArgument, "invalid filter %q: %s", opts.Filter, err)
 	} else {
 		token.Filter = opts.Filter
 	}
 
-	if parent.ProjectID != "-" && parent.ApiID != "-" && parent.VersionID != "-" {
-		if _, err := d.GetVersion(ctx, parent); err != nil {
-			return SpecList{}, err
+	if parent.ProjectID != "-" && parent.ApiID != "-" {
+		if _, err := d.GetApi(ctx, parent); err != nil {
+			return DeploymentList{}, err
 		}
-	} else if parent.ProjectID != "-" && parent.ApiID != "-" && parent.VersionID == "-" {
-		if _, err := d.GetApi(ctx, parent.Api()); err != nil {
-			return SpecList{}, err
-		}
-	} else if parent.ProjectID != "-" && parent.ApiID == "-" && parent.VersionID == "-" {
+	} else if parent.ProjectID != "-" && parent.ApiID == "-" {
 		if _, err := d.GetProject(ctx, parent.Project()); err != nil {
-			return SpecList{}, err
+			return DeploymentList{}, err
 		}
 	}
 
-	filter, err := filtering.NewFilter(opts.Filter, specFields)
+	filter, err := filtering.NewFilter(opts.Filter, deploymentFields)
 	if err != nil {
-		return SpecList{}, err
+		return DeploymentList{}, err
 	}
 
-	it := d.GetRecentSpecRevisions(ctx, token.Offset, parent.ProjectID, parent.ApiID, parent.VersionID)
-	response := SpecList{
-		Specs: make([]models.Spec, 0, opts.Size),
+	it := d.GetRecentDeploymentRevisions(ctx, token.Offset, parent.ProjectID, parent.ApiID)
+	response := DeploymentList{
+		Deployments: make([]models.Deployment, 0, opts.Size),
 	}
 
-	spec := new(models.Spec)
-	for _, err = it.Next(spec); err == nil; _, err = it.Next(spec) {
-		specMap, err := specMap(*spec)
+	deployment := new(models.Deployment)
+	for _, err = it.Next(deployment); err == nil; _, err = it.Next(deployment) {
+		deploymentMap, err := deploymentMap(*deployment)
 		if err != nil {
 			return response, status.Error(codes.Internal, err.Error())
 		}
 
-		match, err := filter.Matches(specMap)
+		match, err := filter.Matches(deploymentMap)
 		if err != nil {
 			return response, err
 		} else if !match {
 			token.Offset++
 			continue
-		} else if len(response.Specs) == int(opts.Size) {
+		} else if len(response.Deployments) == int(opts.Size) {
 			break
 		}
 
-		response.Specs = append(response.Specs, *spec)
+		response.Deployments = append(response.Deployments, *deployment)
 		token.Offset++
 	}
 	if err != nil && err != iterator.Done {
@@ -119,62 +115,54 @@ func (d *Client) ListSpecs(ctx context.Context, parent names.Version, opts PageO
 	return response, nil
 }
 
-func specMap(spec models.Spec) (map[string]interface{}, error) {
-	labels, err := spec.LabelsMap()
+func deploymentMap(deployment models.Deployment) (map[string]interface{}, error) {
+	labels, err := deployment.LabelsMap()
 	if err != nil {
 		return nil, err
 	}
 
 	return map[string]interface{}{
-		"name":                 spec.Name(),
-		"project_id":           spec.ProjectID,
-		"api_id":               spec.ApiID,
-		"version_id":           spec.VersionID,
-		"spec_id":              spec.SpecID,
-		"filename":             spec.FileName,
-		"description":          spec.Description,
-		"revision_id":          spec.RevisionID,
-		"create_time":          spec.CreateTime,
-		"revision_create_time": spec.RevisionCreateTime,
-		"revision_update_time": spec.RevisionUpdateTime,
-		"mime_type":            spec.MimeType,
-		"size_bytes":           spec.SizeInBytes,
-		"hash":                 spec.Hash,
-		"source_uri":           spec.SourceURI,
+		"name":                 deployment.Name(),
+		"project_id":           deployment.ProjectID,
+		"api_id":               deployment.ApiID,
+		"deployment_id":        deployment.DeploymentID,
+		"description":          deployment.Description,
+		"revision_id":          deployment.RevisionID,
+		"create_time":          deployment.CreateTime,
+		"revision_create_time": deployment.RevisionCreateTime,
+		"revision_update_time": deployment.RevisionUpdateTime,
 		"labels":               labels,
 	}, nil
 }
 
-func (d *Client) GetSpec(ctx context.Context, name names.Spec) (*models.Spec, error) {
+func (d *Client) GetDeployment(ctx context.Context, name names.Deployment) (*models.Deployment, error) {
 	normal := name.Normal()
-	q := d.NewQuery(gorm.SpecEntityName)
+	q := d.NewQuery(gorm.DeploymentEntityName)
 	q = q.Require("ProjectID", normal.ProjectID)
 	q = q.Require("ApiID", normal.ApiID)
-	q = q.Require("VersionID", normal.VersionID)
-	q = q.Require("SpecID", normal.SpecID)
+	q = q.Require("DeploymentID", normal.DeploymentID)
 	q = q.Descending("RevisionCreateTime")
 
 	it := d.Run(ctx, q)
-	spec := &models.Spec{}
-	if _, err := it.Next(spec); err != nil {
+	deployment := &models.Deployment{}
+	if _, err := it.Next(deployment); err != nil {
 		return nil, status.Error(codes.NotFound, err.Error())
 	}
 
-	return spec, nil
+	return deployment, nil
 }
 
-func (d *Client) DeleteSpec(ctx context.Context, name names.Spec) error {
+func (d *Client) DeleteDeployment(ctx context.Context, name names.Deployment) error {
 	for _, entityName := range []string{
-		gorm.SpecEntityName,
-		gorm.SpecRevisionTagEntityName,
+		gorm.DeploymentEntityName,
+		gorm.DeploymentRevisionTagEntityName,
 		gorm.ArtifactEntityName,
 		gorm.BlobEntityName,
 	} {
 		q := d.NewQuery(entityName)
 		q = q.Require("ProjectID", name.ProjectID)
 		q = q.Require("ApiID", name.ApiID)
-		q = q.Require("VersionID", name.VersionID)
-		q = q.Require("SpecID", name.SpecID)
+		q = q.Require("DeploymentID", name.DeploymentID)
 		if err := d.Delete(ctx, q); err != nil {
 			return status.Error(codes.Internal, err.Error())
 		}
@@ -183,18 +171,17 @@ func (d *Client) DeleteSpec(ctx context.Context, name names.Spec) error {
 	return nil
 }
 
-func (d *Client) GetSpecTags(ctx context.Context, name names.Spec) ([]*models.SpecRevisionTag, error) {
-	q := d.NewQuery(gorm.SpecRevisionTagEntityName)
+func (d *Client) GetDeploymentTags(ctx context.Context, name names.Deployment) ([]*models.DeploymentRevisionTag, error) {
+	q := d.NewQuery(gorm.DeploymentRevisionTagEntityName)
 	q = q.Require("ProjectID", name.ProjectID)
 	q = q.Require("ApiID", name.ApiID)
-	q = q.Require("VersionID", name.VersionID)
-	if name.SpecID != "-" {
-		q = q.Require("SpecID", name.SpecID)
+	if name.DeploymentID != "-" {
+		q = q.Require("DeploymentID", name.DeploymentID)
 	}
 
 	var (
-		tags = make([]*models.SpecRevisionTag, 0)
-		tag  = new(models.SpecRevisionTag)
+		tags = make([]*models.DeploymentRevisionTag, 0)
+		tag  = new(models.DeploymentRevisionTag)
 		it   = d.Run(ctx, q)
 		err  error
 	)
