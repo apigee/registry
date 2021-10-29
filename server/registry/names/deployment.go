@@ -50,6 +50,16 @@ func (v Deployment) Api() Api {
 	}
 }
 
+// Revision returns an API deployment revision with the provided ID and this resource as its parent.
+func (s Deployment) Revision(id string) DeploymentRevision {
+	return DeploymentRevision{
+		ProjectID:    s.ProjectID,
+		ApiID:        s.ApiID,
+		DeploymentID: s.DeploymentID,
+		RevisionID:   id,
+	}
+}
+
 // Artifact returns an artifact with the provided ID and this resource as its parent.
 func (v Deployment) Artifact(id string) Artifact {
 	return Artifact{
