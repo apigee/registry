@@ -139,12 +139,27 @@ func TestResourceNames(t *testing.T) {
 			},
 		},
 		{
-			name:   "artifacts",
-			regexp: artifactCollectionRegexp(),
+			name:   "deployment",
+			regexp: deploymentRegexp(),
 			pass: []string{
-				"projects/google/locations/global/apis/sample/versions/v1/specs/openapi.yaml/artifacts",
-				"projects/google/locations/global/apis/sample/versions/v1/artifacts",
-				"projects/google/locations/global/apis/sample/artifacts",
+				"projects/google/locations/global/apis/sample/deployments/v1",
+				"projects/-/locations/global/apis/-/deployments/-",
+				"projects/123/locations/global/apis/abc/deployments/123",
+				"projects/1-2-3/locations/global/apis/abc/deployments/123",
+			},
+			fail: []string{
+				"-",
+				"invalid",
+				"projects//locations/global/apis/123",
+				"projects/123/locations/global/apis/",
+				"projects/123/locations/global/invalid/123",
+				"projects/123/locations/global/apis/ 123",
+			},
+		},
+		{
+			name:   "project artifacts",
+			regexp: projectArtifactCollectionRegexp,
+			pass: []string{
 				"projects/google/locations/global/artifacts",
 			},
 			fail: []string{
@@ -152,13 +167,90 @@ func TestResourceNames(t *testing.T) {
 			},
 		},
 		{
-			name:   "artifact",
-			regexp: artifactRegexp(),
+			name:   "project artifact",
+			regexp: projectArtifactRegexp,
+			pass: []string{
+				"projects/google/locations/global/artifacts/test-artifact",
+			},
+			fail: []string{
+				"-",
+			},
+		},
+		{
+			name:   "api artifacts",
+			regexp: apiArtifactCollectionRegexp,
+			pass: []string{
+				"projects/google/locations/global/apis/sample/artifacts",
+			},
+			fail: []string{
+				"-",
+			},
+		},
+		{
+			name:   "api artifact",
+			regexp: apiArtifactRegexp,
+			pass: []string{
+				"projects/google/locations/global/apis/sample/artifacts/test-artifact",
+			},
+			fail: []string{
+				"-",
+			},
+		},
+		{
+			name:   "version artifacts",
+			regexp: versionArtifactCollectionRegexp,
+			pass: []string{
+				"projects/google/locations/global/apis/sample/versions/v1/artifacts",
+			},
+			fail: []string{
+				"-",
+			},
+		},
+		{
+			name:   "version artifact",
+			regexp: versionArtifactRegexp,
+			pass: []string{
+				"projects/google/locations/global/apis/sample/versions/v1/artifacts/test-artifact",
+			},
+			fail: []string{
+				"-",
+			},
+		},
+		{
+			name:   "spec artifacts",
+			regexp: specArtifactCollectionRegexp,
+			pass: []string{
+				"projects/google/locations/global/apis/sample/versions/v1/specs/openapi.yaml/artifacts",
+			},
+			fail: []string{
+				"-",
+			},
+		},
+		{
+			name:   "spec artifact",
+			regexp: specArtifactRegexp,
 			pass: []string{
 				"projects/google/locations/global/apis/sample/versions/v1/specs/openapi.yaml/artifacts/test-artifact",
-				"projects/google/locations/global/apis/sample/versions/v1/artifacts/test-artifact",
-				"projects/google/locations/global/apis/sample/artifacts/test-artifact",
-				"projects/google/locations/global/artifacts/test-artifact",
+			},
+			fail: []string{
+				"-",
+			},
+		},
+		{
+			name:   "deployment artifacts",
+			regexp: deploymentArtifactCollectionRegexp,
+			pass: []string{
+				"projects/google/locations/global/apis/sample/deployments/prod/artifacts",
+			},
+			fail: []string{
+				"-",
+			},
+		},
+		{
+			name:   "deployment artifact",
+			regexp: deploymentArtifactRegexp,
+			pass: []string{
+				"projects/google/locations/global/apis/sample/deployments/prod/artifacts/test-artifact",
 			},
 			fail: []string{
 				"-",
