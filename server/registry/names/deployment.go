@@ -28,58 +28,67 @@ type Deployment struct {
 
 // Validate returns an error if the resource name is invalid.
 // For backward compatibility, names should only be validated at creation time.
-func (v Deployment) Validate() error {
+func (d Deployment) Validate() error {
 	r := deploymentRegexp()
-	if name := v.String(); !r.MatchString(name) {
+	if name := d.String(); !r.MatchString(name) {
 		return fmt.Errorf("invalid deployment name %q: must match %q", name, r)
 	}
 
-	return validateID(v.DeploymentID)
+	return validateID(d.DeploymentID)
 }
 
 // Project returns the parent project for this resource.
-func (v Deployment) Project() Project {
-	return v.Api().Project()
+func (d Deployment) Project() Project {
+	return d.Api().Project()
 }
 
 // Api returns the parent API for this resource.
-func (v Deployment) Api() Api {
+func (d Deployment) Api() Api {
 	return Api{
-		ProjectID: v.ProjectID,
-		ApiID:     v.ApiID,
+		ProjectID: d.ProjectID,
+		ApiID:     d.ApiID,
 	}
 }
 
 // Revision returns an API deployment revision with the provided ID and this resource as its parent.
-func (s Deployment) Revision(id string) DeploymentRevision {
+func (d Deployment) Revision(id string) DeploymentRevision {
 	return DeploymentRevision{
-		ProjectID:    s.ProjectID,
-		ApiID:        s.ApiID,
-		DeploymentID: s.DeploymentID,
+		ProjectID:    d.ProjectID,
+		ApiID:        d.ApiID,
+		DeploymentID: d.DeploymentID,
 		RevisionID:   id,
 	}
 }
 
 // Artifact returns an artifact with the provided ID and this resource as its parent.
-func (v Deployment) Artifact(id string) Artifact {
+func (d Deployment) Artifact(id string) Artifact {
 	return Artifact{
 		name: deploymentArtifact{
-			ProjectID:    v.ProjectID,
-			ApiID:        v.ApiID,
-			DeploymentID: v.DeploymentID,
+			ProjectID:    d.ProjectID,
+			ApiID:        d.ApiID,
+			DeploymentID: d.DeploymentID,
 			ArtifactID:   id,
 		},
 	}
 }
 
-// Parent returns this resource's parent API resource name.
-func (v Deployment) Parent() string {
-	return v.Api().String()
+// Normal returns the resource name with normalized identifiers.
+func (d Deployment) Normal() Deployment {
+	return Deployment{
+		ProjectID:    normalize(d.ProjectID),
+		ApiID:        normalize(d.ApiID),
+		DeploymentID: normalize(d.DeploymentID),
+	}
 }
 
-func (v Deployment) String() string {
+// Parent returns this resource's parent API resource name.
+func (d Deployment) Parent() string {
+	return d.Api().String()
+}
+
+func (d Deployment) String() string {
 	return normalize(fmt.Sprintf("projects/%s/locations/%s/apis/%s/deployments/%s",
-		v.ProjectID, Location, v.ApiID, v.DeploymentID))
+		d.ProjectID, Location, d.ApiID, d.DeploymentID))
 }
 
 // deploymentCollectionRegexp returns a regular expression that matches a collection of deployments.
