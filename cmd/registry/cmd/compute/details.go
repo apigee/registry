@@ -109,7 +109,7 @@ func (task *computeDetailsTask) Run(ctx context.Context) error {
 		}
 		document, err := oas2.ParseDocument(data)
 		if document == nil && err != nil {
-			log.WithError(err).Warnf("Invalid OpenAPI: %s", spec.Name)
+			log.WithError(err).Errorf("Invalid OpenAPI: %s", spec.Name)
 			return nil
 		}
 		if document.Info != nil {
@@ -136,7 +136,7 @@ func (task *computeDetailsTask) Run(ctx context.Context) error {
 		}
 		document, err := oas3.ParseDocument(data)
 		if document == nil && err != nil {
-			log.WithError(err).Warnf("Invalid OpenAPI: %s", spec.Name)
+			log.WithError(err).Errorf("Invalid OpenAPI: %s", spec.Name)
 			return nil
 		}
 		if document.Info != nil {
@@ -163,7 +163,7 @@ func (task *computeDetailsTask) Run(ctx context.Context) error {
 		}
 		document, err := discovery.ParseDocument(data)
 		if document == nil && err != nil {
-			log.WithError(err).Warnf("Invalid Discovery document: %s", spec.Name)
+			log.WithError(err).Errorf("Invalid Discovery document: %s", spec.Name)
 			return nil
 		}
 		title := document.Title
@@ -186,7 +186,7 @@ func (task *computeDetailsTask) Run(ctx context.Context) error {
 		log.Debug(spec.Name)
 		details, err := core.NewDetailsFromZippedProtos(spec.GetContents())
 		if err != nil {
-			log.WithError(err).Warnf("Error processing protos: %s", spec.Name)
+			log.WithError(err).Errorf("Error processing protos: %s", spec.Name)
 			return nil
 		}
 		if details != nil {
@@ -214,13 +214,13 @@ func (task *computeDetailsTask) Run(ctx context.Context) error {
 			}
 		}
 	} else {
-		log.Warnf("We don't know how to compute the title of %s", task.apiName)
+		log.Errorf("We don't know how to compute the title of %s", task.apiName)
 		return nil
 	}
 	if request != nil {
 		_, err = task.client.UpdateApi(ctx, request)
 		if err != nil {
-			log.WithError(err).Warnf("Error updating API: %s", task.apiName)
+			log.WithError(err).Errorf("Error updating API: %s", task.apiName)
 			return nil
 		}
 	}

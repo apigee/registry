@@ -95,7 +95,7 @@ func (task *computeComplexityTask) Run(ctx context.Context) error {
 		}
 		document, err := oas2.ParseDocument(data)
 		if err != nil {
-			log.WithError(err).Warnf("Invalid OpenAPI: %s", spec.Name)
+			log.WithError(err).Errorf("Invalid OpenAPI: %s", spec.Name)
 			return nil
 		}
 		complexity = core.SummarizeOpenAPIv2Document(document)
@@ -106,7 +106,7 @@ func (task *computeComplexityTask) Run(ctx context.Context) error {
 		}
 		document, err := oas3.ParseDocument(data)
 		if err != nil {
-			log.WithError(err).Warnf("Invalid OpenAPI: %s", spec.Name)
+			log.WithError(err).Errorf("Invalid OpenAPI: %s", spec.Name)
 			return nil
 		}
 		complexity = core.SummarizeOpenAPIv3Document(document)
@@ -117,7 +117,7 @@ func (task *computeComplexityTask) Run(ctx context.Context) error {
 		}
 		document, err := discovery.ParseDocument(data)
 		if err != nil {
-			log.WithError(err).Warnf("Invalid Discovery: %s", spec.Name)
+			log.WithError(err).Errorf("Invalid Discovery: %s", spec.Name)
 			return nil
 		}
 		complexity = core.SummarizeDiscoveryDocument(document)
@@ -128,7 +128,7 @@ func (task *computeComplexityTask) Run(ctx context.Context) error {
 		}
 		complexity, err = core.NewComplexityFromZippedProtos(data)
 		if err != nil {
-			log.WithError(err).Warnf("Error processing protos: %s", spec.Name)
+			log.WithError(err).Errorf("Error processing protos: %s", spec.Name)
 			return nil
 		}
 	} else {

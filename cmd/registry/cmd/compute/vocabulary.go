@@ -96,7 +96,7 @@ func (task *computeVocabularyTask) Run(ctx context.Context) error {
 		}
 		document, err := oas2.ParseDocument(data)
 		if err != nil {
-			log.WithError(err).Warnf("Invalid OpenAPI: %s", spec.Name)
+			log.WithError(err).Errorf("Invalid OpenAPI: %s", spec.Name)
 			return nil
 		}
 		vocab = vocabulary.NewVocabularyFromOpenAPIv2(document)
@@ -107,7 +107,7 @@ func (task *computeVocabularyTask) Run(ctx context.Context) error {
 		}
 		document, err := oas3.ParseDocument(data)
 		if err != nil {
-			log.WithError(err).Warnf("Invalid OpenAPI: %s", spec.Name)
+			log.WithError(err).Errorf("Invalid OpenAPI: %s", spec.Name)
 			return nil
 		}
 		vocab = vocabulary.NewVocabularyFromOpenAPIv3(document)
@@ -118,7 +118,7 @@ func (task *computeVocabularyTask) Run(ctx context.Context) error {
 		}
 		document, err := discovery.ParseDocument(data)
 		if err != nil {
-			log.WithError(err).Warnf("Invalid Discovery: %s", spec.Name)
+			log.WithError(err).Errorf("Invalid Discovery: %s", spec.Name)
 			return nil
 		}
 		vocab = vocabulary.NewVocabularyFromDiscovery(document)
@@ -129,7 +129,7 @@ func (task *computeVocabularyTask) Run(ctx context.Context) error {
 		}
 		vocab, err = core.NewVocabularyFromZippedProtos(data)
 		if err != nil {
-			log.WithError(err).Warnf("Error processing protos: %s", spec.Name)
+			log.WithError(err).Errorf("Error processing protos: %s", spec.Name)
 			return nil
 		}
 	} else {
