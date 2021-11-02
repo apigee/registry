@@ -44,7 +44,7 @@ type RegistryResource interface {
 // Each revision can be tagged by providing a list of tags in the `revision_tags` field.
 //
 // Resource names must be unique with the exception of ApiSpec resources.
-// Supported resource types are Project, Api, ApiVersion, ApiSpec, and Artifact.
+// Supported resource types are Project, Api, ApiVersion, ApiSpec, ApiDeployment, and Artifact.
 func SeedRegistry(ctx context.Context, s RegistryImp, resources ...RegistryResource) error {
 	// All child resources are prefixed with their parent's name, so this sorts resources into hierarchical ordering.
 	// Using a stable sort keeps multiple resources of the same name in their original order.
@@ -82,6 +82,14 @@ func SeedRegistry(ctx context.Context, s RegistryImp, resources ...RegistryResou
 			}
 		case *rpc.ApiSpec:
 			if err := seedSpec(ctx, s, r, h); err != nil {
+				return err
+			}
+		case *rpc.ApiDeployment:
+			if h[r.GetName()] {
+				return fmt.Errorf("cannot seed multiple deployments with name %s", r.GetName())
+			}
+
+			if err := seedDeployment(ctx, s, r, h); err != nil {
 				return err
 			}
 		case *rpc.Artifact:
@@ -131,6 +139,15 @@ func SeedVersions(ctx context.Context, s RegistryImp, versions ...*rpc.ApiVersio
 func SeedSpecs(ctx context.Context, s RegistryImp, specs ...*rpc.ApiSpec) error {
 	resources := make([]RegistryResource, 0, len(specs))
 	for _, r := range specs {
+		resources = append(resources, r)
+	}
+	return SeedRegistry(ctx, s, resources...)
+}
+
+// SeedDeployments is a convenience function for calling SeedRegistry with only ApiDeployment messages.
+func SeedDeployments(ctx context.Context, s RegistryImp, deployments ...*rpc.ApiDeployment) error {
+	resources := make([]RegistryResource, 0, len(deployments))
+	for _, r := range deployments {
 		resources = append(resources, r)
 	}
 	return SeedRegistry(ctx, s, resources...)
@@ -260,6 +277,47 @@ func sha256hash(bytes []byte) string {
 	return fmt.Sprintf("%x", sha256.Sum256(bytes))
 }
 
+func seedDeployment(ctx context.Context, s RegistryImp, deployment *rpc.ApiDeployment, history map[string]bool) error {
+	signature := sha256hash([]byte(fmt.Sprintf("%s:%s", deployment.GetApiSpecRevision(), deployment.GetEndpointUri())))
+	if id := fmt.Sprintf("%s@%s", deployment.GetName(), signature); history[id] {
+		return nil
+	} else {
+		history[id] = true
+	}
+
+	name, err := names.ParseDeployment(deployment.GetName())
+	if err != nil {
+		return err
+	}
+
+	if err := seedApi(ctx, s, &rpc.Api{Name: name.Parent()}, history); err != nil {
+		return err
+	}
+
+	created, err := s.UpdateApiDeployment(ctx, &rpc.UpdateApiDeploymentRequest{
+		ApiDeployment: deployment,
+		UpdateMask:    &fieldmaskpb.FieldMask{Paths: []string{"*"}},
+		AllowMissing:  true,
+	})
+
+	if err != nil {
+		return err
+	}
+
+	for _, tag := range deployment.RevisionTags {
+		_, err := s.TagApiDeploymentRevision(ctx, &rpc.TagApiDeploymentRevisionRequest{
+			Name: name.Revision(created.GetRevisionId()).String(),
+			Tag:  tag,
+		})
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func seedArtifact(ctx context.Context, s RegistryImp, a *rpc.Artifact, history map[string]bool) error {
 	if id := a.GetName(); history[id] {
 		return nil
@@ -276,6 +334,8 @@ func seedArtifact(ctx context.Context, s RegistryImp, a *rpc.Artifact, history m
 		err = seedSpec(ctx, s, &rpc.ApiSpec{Name: name.Parent()}, history)
 	} else if name.VersionID() != "" {
 		err = seedVersion(ctx, s, &rpc.ApiVersion{Name: name.Parent()}, history)
+	} else if name.DeploymentID() != "" {
+		err = seedDeployment(ctx, s, &rpc.ApiDeployment{Name: name.Parent()}, history)
 	} else if name.ApiID() != "" {
 		err = seedApi(ctx, s, &rpc.Api{Name: name.Parent()}, history)
 	} else if name.ProjectID() != "" {

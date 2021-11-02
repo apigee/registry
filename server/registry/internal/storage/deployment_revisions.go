@@ -1,4 +1,4 @@
-// Copyright 2020 Google LLC. All Rights Reserved.
+// Copyright 2021 Google LLC. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -106,7 +106,6 @@ func (d *Client) DeleteDeploymentRevision(ctx context.Context, name names.Deploy
 	for _, entityName := range []string{
 		gorm.DeploymentEntityName,
 		gorm.DeploymentRevisionTagEntityName,
-		gorm.BlobEntityName,
 	} {
 		q := d.NewQuery(entityName)
 		q = q.Require("ProjectID", name.ProjectID)
