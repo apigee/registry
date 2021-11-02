@@ -34,10 +34,7 @@ import (
 )
 
 func conformanceCommand(ctx context.Context) *cobra.Command {
-	var (
-		filter string
-		plugin bool
-	)
+	var filter string
 
 	cmd := &cobra.Command{
 		Use:   "conformance",
@@ -98,7 +95,6 @@ func conformanceCommand(ctx context.Context) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&filter, "filter", "", "Filter selected resources")
-	cmd.Flags().BoolVar(&plugin, "plugin", false, "Set to true if the plugin binary executable should be used")
 	return cmd
 }
 
@@ -316,13 +312,9 @@ func (task *computeConformanceTask) computeConformanceReport(
 					report := task.initializeGuidelineReport()
 					guidelineIdToGuidelineReport[guideline.GetId()] = report
 
-					fmt.Println("Guideline ", guideline.GetId(), " status: ", guideline.Status)
-					fmt.Println("Guideline aa: ", conformanceReport.GuidelineReportGroups[guideline.Status].GuidelineReports)
-
 					conformanceReport.GuidelineReportGroups[guideline.Status].GuidelineReports =
 						append(conformanceReport.GuidelineReportGroups[guideline.Status].GuidelineReports, report)
 				}
-				fmt.Println("Reached here")
 
 				// Add the rule report to the appropriate guideline report.
 				guidelineReport := guidelineIdToGuidelineReport[guideline.GetId()]
