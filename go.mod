@@ -10,10 +10,10 @@ require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/gogo/protobuf v1.3.2
 	github.com/google/cel-go v0.8.0
+	github.com/google/gnostic v0.5.6
 	github.com/google/go-cmp v0.5.6
 	github.com/google/uuid v1.3.0
 	github.com/googleapis/gax-go/v2 v2.1.1
-	github.com/google/gnostic v0.5.6
 	github.com/nsf/jsondiff v0.0.0-20210926074059-1e845ec5d249
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/pflag v1.0.5
@@ -86,5 +86,3 @@ require (
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 )
-
-replace github.com/willf/bitset => github.com/bits-and-blooms/bitset v1.1.10
