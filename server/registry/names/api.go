@@ -52,6 +52,15 @@ func (a Api) Version(id string) Version {
 	}
 }
 
+// Deployment returns an API deployment with the provided ID and this resource as its parent.
+func (a Api) Deployment(id string) Deployment {
+	return Deployment{
+		ProjectID:    a.ProjectID,
+		ApiID:        a.ApiID,
+		DeploymentID: id,
+	}
+}
+
 // Artifact returns an artifact with the provided ID and this resource as its parent.
 func (a Api) Artifact(id string) Artifact {
 	return Artifact{
