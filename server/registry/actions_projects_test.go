@@ -621,6 +621,40 @@ func TestUpdateProject(t *testing.T) {
 		want *rpc.Project
 	}{
 		{
+			desc: "allow missing updates existing resources",
+			seed: &rpc.Project{
+				Name:        "projects/my-project",
+				Description: "My Project",
+			},
+			req: &rpc.UpdateProjectRequest{
+				Project: &rpc.Project{
+					Name:        "projects/my-project",
+					Description: "My Updated Project",
+				},
+				UpdateMask:   &fieldmaskpb.FieldMask{Paths: []string{"description"}},
+				AllowMissing: true,
+			},
+			want: &rpc.Project{
+				Name:        "projects/my-project",
+				Description: "My Updated Project",
+			},
+		},
+		{
+			desc: "allow missing creates missing resources",
+			seed: &rpc.Project{
+				Name: "projects/my-project-sibling",
+			},
+			req: &rpc.UpdateProjectRequest{
+				Project: &rpc.Project{
+					Name: "projects/my-project",
+				},
+				AllowMissing: true,
+			},
+			want: &rpc.Project{
+				Name: "projects/my-project",
+			},
+		},
+		{
 			desc: "implicit nil mask",
 			seed: &rpc.Project{
 				Name:        "projects/my-project",

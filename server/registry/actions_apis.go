@@ -197,9 +197,6 @@ func (s *RegistryServer) UpdateApi(ctx context.Context, req *rpc.UpdateApiReques
 	}
 
 	api, err := db.GetApi(ctx, name)
-	if err != nil {
-		return nil, err
-	}
 	if req.GetAllowMissing() && isNotFound(err) {
 		return s.createApi(ctx, name, req.GetApi())
 	} else if err != nil {
