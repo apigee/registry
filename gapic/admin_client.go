@@ -407,3 +407,7 @@ func (it *ProjectIterator) takeBuf() interface{} {
 	it.items = nil
 	return b
 }
+
+func (c *AdminClient) GrpcClient() rpcpb.AdminClient {
+	return c.internalClient.(*adminGRPCClient).adminClient
+}
