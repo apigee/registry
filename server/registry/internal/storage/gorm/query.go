@@ -46,6 +46,8 @@ func (q *Query) Require(name string, value interface{}) *Query {
 		name = "version_id"
 	case "SpecID":
 		name = "spec_id"
+	case "DeploymentID":
+		name = "deployment_id"
 	case "RevisionID":
 		name = "revision_id"
 	case "ArtifactID":

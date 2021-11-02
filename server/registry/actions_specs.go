@@ -258,7 +258,7 @@ func (s *RegistryServer) ListApiSpecs(ctx context.Context, req *rpc.ListApiSpecs
 		return nil, err
 	}
 
-	tagsByRev := tagsByRevision(tags)
+	tagsByRev := specTagsByRevision(tags)
 	for i, spec := range listing.Specs {
 		response.ApiSpecs[i], err = spec.BasicMessage(spec.Name(), tagsByRev[spec.RevisionName()])
 		if err != nil {
@@ -343,7 +343,7 @@ func revisionTags(ctx context.Context, db *storage.Client, name names.SpecRevisi
 	return tags, nil
 }
 
-func tagsByRevision(tags []*models.SpecRevisionTag) map[string][]string {
+func specTagsByRevision(tags []*models.SpecRevisionTag) map[string][]string {
 	revTags := make(map[string][]string, len(tags))
 	for _, tag := range tags {
 		rev := names.SpecRevision{
