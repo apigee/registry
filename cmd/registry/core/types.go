@@ -87,5 +87,5 @@ func MessageTypeForMimeType(protoType string) (string, error) {
 	if m == nil || len(m) < 2 || len(m[1]) == 0 {
 		return "", fmt.Errorf("invalid Protocol Buffer type: %s", protoType)
 	}
-	return m[1], nil
+	return strings.TrimSuffix(m[1], "+gzip"), nil
 }

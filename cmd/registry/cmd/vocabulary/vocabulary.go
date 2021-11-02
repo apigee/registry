@@ -78,12 +78,18 @@ func setVocabularyToArtifact(ctx context.Context, client connection.Client, outp
 	subject := parts[0]
 	relation := parts[1]
 	messageData, _ := proto.Marshal(output)
+	var err error
+	messageData, err = core.GZippedBytes(messageData)
+	if err != nil {
+		log.WithError(err).Fatal("Failed to compress artifact")
+	}
+	log.Debugf("Saving vocabulary data (%d bytes)", len(messageData))
 	artifact := &rpc.Artifact{
 		Name:     subject + "/artifacts/" + relation,
-		MimeType: core.MimeTypeForMessageType("gnostic.metrics.Vocabulary"),
+		MimeType: core.MimeTypeForMessageType("gnostic.metrics.Vocabulary+gzip"),
 		Contents: messageData,
 	}
-	err := core.SetArtifact(ctx, client, artifact)
+	err = core.SetArtifact(ctx, client, artifact)
 	if err != nil {
 		log.WithError(err).Fatal("Failed to save artifact")
 	}
