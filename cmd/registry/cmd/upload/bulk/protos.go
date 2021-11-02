@@ -48,12 +48,6 @@ func protosCommand(ctx context.Context) *cobra.Command {
 				log.WithError(err).Fatal("Failed to get client")
 			}
 
-			adminClient, err := connection.NewAdminClient(ctx)
-			if err != nil {
-				log.WithError(err).Fatal("Failed to get client")
-			}
-
-			core.EnsureProjectExists(ctx, adminClient, projectID)
 			for _, arg := range args {
 				scanDirectoryForProtos(ctx, client, projectID, baseURI, arg)
 			}
@@ -113,7 +107,7 @@ func (task *uploadProtoTask) String() string {
 func (task *uploadProtoTask) Run(ctx context.Context) error {
 	// Populate API path fields using the file's path.
 	task.populateFields()
-	log.Debugf("^^ apis/%s/versions/%s/specs/%s", task.apiID, task.versionID, task.specID)
+	log.Infof("Uploading apis/%s/versions/%s/specs/%s", task.apiID, task.versionID, task.specID)
 
 	// If the API does not exist, create it.
 	if err := task.createAPI(ctx); err != nil {
@@ -211,7 +205,7 @@ func (task *uploadProtoTask) createSpec(ctx context.Context) error {
 
 	response, err := task.client.CreateApiSpec(ctx, request)
 	if err != nil {
-		log.WithError(err).Debugf("Error %s [contents-length: %d]", task.specName(), len(contents))
+		log.WithError(err).Errorf("Error %s [contents-length: %d]", task.specName(), len(contents))
 	} else {
 		log.Debugf("Created %s", response.Name)
 	}
@@ -242,7 +236,7 @@ func (task *uploadProtoTask) updateSpec(ctx context.Context) error {
 
 	response, err := task.client.UpdateApiSpec(ctx, request)
 	if err != nil {
-		log.WithError(err).Debugf("Error %s [contents-length: %d]", request.ApiSpec.Name, len(contents))
+		log.WithError(err).Errorf("Error %s [contents-length: %d]", request.ApiSpec.Name, len(contents))
 	} else if response.RevisionId != spec.RevisionId {
 		log.Debugf("Updated %s", response.Name)
 	}
