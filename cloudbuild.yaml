@@ -15,4 +15,6 @@
 steps:
 - name: 'gcr.io/cloud-builders/docker'
   args: [ 'build', '-t', 'gcr.io/${PROJECT_ID}/registry-server', '.']
-images: ['gcr.io/${PROJECT_ID}/registry-server']
+- name: 'gcr.io/cloud-builders/docker'
+  args: [ 'build', '-t', 'gcr.io/${PROJECT_ID}/registry-envoy', '-f', 'deployments/envoy/Dockerfile', '.' ]
+images: ['gcr.io/${PROJECT_ID}/registry-server', 'gcr.io/${PROJECT_ID}/registry-envoy']
