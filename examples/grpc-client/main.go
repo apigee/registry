@@ -55,7 +55,8 @@ func main() {
 
 	// Create a Registry API client from the connection.
 	client := rpc.NewRegistryClient(conn)
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
 	// Configure the context to use an auth token from the environment.
 	token := os.Getenv("APG_REGISTRY_TOKEN")
