@@ -16,6 +16,7 @@ package registry
 
 import (
 	"context"
+	"sync"
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/internal/storage"
@@ -145,6 +146,8 @@ func (s *RegistryServer) ListProjects(ctx context.Context, req *rpc.ListProjects
 	return response, nil
 }
 
+var updateProjectMutex sync.Mutex
+
 // UpdateProject handles the corresponding API request.
 func (s *RegistryServer) UpdateProject(ctx context.Context, req *rpc.UpdateProjectRequest) (*rpc.Project, error) {
 	db, err := s.getStorageClient(ctx)
@@ -162,6 +165,17 @@ func (s *RegistryServer) UpdateProject(ctx context.Context, req *rpc.UpdateProje
 	name, err := names.ParseProject(req.GetProject().GetName())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	if req.GetAllowMissing() {
+		// Prevent a race condition that can occur when two updates are made
+		// to the same non-existent resource. The db.Get...() call returns
+		// NotFound for both updates, and after one creates the resource,
+		// the other creation fails. The lock() prevents this by serializing
+		// the get and create operations. Future updates could improve this
+		// with improvements closer to the database level.
+		updateProjectMutex.Lock()
+		defer updateProjectMutex.Unlock()
 	}
 
 	project, err := db.GetProject(ctx, name)
