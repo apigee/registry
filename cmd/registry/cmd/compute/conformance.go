@@ -238,7 +238,7 @@ func createLinterRequest(specDirectory string, ruleIds []string) *rpc.LinterRequ
 
 func (task *computeConformanceTask) computeConformanceReport(
 	ctx context.Context,
-	specsDirectory string,
+	specDirectory string,
 	conformanceReport *rpc.ConformanceReport,
 	guidelineIdToGuidelineReport map[string]*rpc.GuidelineReport,
 ) error {
@@ -248,7 +248,7 @@ func (task *computeConformanceTask) computeConformanceReport(
 		executableName := getLinterBinaryName(linterName)
 
 		// Formulate the request.
-		requestBytes, err := proto.Marshal(createLinterRequest(specsDirectory, ruleIds))
+		requestBytes, err := proto.Marshal(createLinterRequest(specDirectory, ruleIds))
 		if err != nil {
 			return err
 		}
