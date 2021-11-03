@@ -229,16 +229,16 @@ func getLinterBinaryName(linterName string) string {
 	return "registry-lint-" + linterName
 }
 
-func createLinterRequest(specPath string, ruleIds []string) *rpc.LinterRequest {
+func createLinterRequest(SpecDirectory string, ruleIds []string) *rpc.LinterRequest {
 	return &rpc.LinterRequest{
-		SpecPath: specPath,
-		RuleIds:  ruleIds,
+		SpecDirectory: SpecDirectory,
+		RuleIds:       ruleIds,
 	}
 }
 
 func (task *computeConformanceTask) computeConformanceReport(
 	ctx context.Context,
-	specsDirectoryPath string,
+	specsDirectory string,
 	conformanceReport *rpc.ConformanceReport,
 	guidelineIdToGuidelineReport map[string]*rpc.GuidelineReport,
 ) error {
@@ -248,7 +248,7 @@ func (task *computeConformanceTask) computeConformanceReport(
 		executableName := getLinterBinaryName(linterName)
 
 		// Formulate the request.
-		requestBytes, err := proto.Marshal(createLinterRequest(specsDirectoryPath, ruleIds))
+		requestBytes, err := proto.Marshal(createLinterRequest(specsDirectory, ruleIds))
 		if err != nil {
 			return err
 		}
