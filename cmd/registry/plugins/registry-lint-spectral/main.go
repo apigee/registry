@@ -94,7 +94,7 @@ func (linter *spectralLinterRunner) RunImpl(
 	}
 
 	// Traverse the files in the directory
-	err = filepath.Walk(req.GetSpecPath(), func(path string, info os.FileInfo, err error) error {
+	err = filepath.Walk(req.GetSpecDirectory(), func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -118,7 +118,7 @@ func (linter *spectralLinterRunner) RunImpl(
 
 		// Formulate the response.
 		lintFile := &rpc.LintFile{
-			FilePath: req.GetSpecPath(),
+			FilePath: path,
 			Problems: lintProblems,
 		}
 

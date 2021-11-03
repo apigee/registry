@@ -51,7 +51,7 @@ func (linter *apiLinterRunner) RunImpl(
 	lintFiles := make([]*rpc.LintFile, 0)
 
 	// Traverse the files in the directory
-	err := filepath.Walk(req.GetSpecPath(), func(path string, info os.FileInfo, err error) error {
+	err := filepath.Walk(req.GetSpecDirectory(), func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
