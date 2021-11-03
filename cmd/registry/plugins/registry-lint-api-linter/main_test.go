@@ -61,8 +61,8 @@ func setupFakeSpec() (path string, err error) {
 }
 
 func TestApiLinterPluginLintSpec(t *testing.T) {
-	path, err := setupFakeSpec()
-	defer os.RemoveAll(path)
+	specDirectory, err := setupFakeSpec()
+	defer os.RemoveAll(specDirectory)
 	assert.Equal(t, err, nil)
 
 	lintSpecTests := []struct {
@@ -75,8 +75,8 @@ func TestApiLinterPluginLintSpec(t *testing.T) {
 		{
 			&apiLinterRunner{},
 			&rpc.LinterRequest{
-				SpecPath: path,
-				RuleIds:  []string{"test"},
+				SpecDirectory: specDirectory,
+				RuleIds:       []string{"test"},
 			},
 			newMockApiLinterExecuter(
 				[]*rpc.LintProblem{
@@ -102,7 +102,7 @@ func TestApiLinterPluginLintSpec(t *testing.T) {
 					Name: "registry-lint-api-linter",
 					Files: []*rpc.LintFile{
 						{
-							FilePath: path,
+							FilePath: specDirectory,
 							Problems: []*rpc.LintProblem{
 								{
 									Message: "test",
@@ -128,7 +128,7 @@ func TestApiLinterPluginLintSpec(t *testing.T) {
 		{
 			&apiLinterRunner{},
 			&rpc.LinterRequest{
-				SpecPath: path,
+				SpecDirectory: specDirectory,
 			},
 			newMockApiLinterExecuter(
 				[]*rpc.LintProblem{},

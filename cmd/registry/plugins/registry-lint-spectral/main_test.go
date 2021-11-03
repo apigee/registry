@@ -64,8 +64,8 @@ func setupFakeSpec() (path string, err error) {
 }
 
 func TestSpectralPluginLintSpec(t *testing.T) {
-	path, err := setupFakeSpec()
-	defer os.RemoveAll(path)
+	specDirectory, err := setupFakeSpec()
+	defer os.RemoveAll(specDirectory)
 	assert.Equal(t, err, nil)
 	lintSpecTests := []struct {
 		linter           *spectralLinterRunner
@@ -77,7 +77,7 @@ func TestSpectralPluginLintSpec(t *testing.T) {
 		{
 			&spectralLinterRunner{},
 			&rpc.LinterRequest{
-				SpecPath: path,
+				SpecDirectory: specDirectory,
 			},
 			NewMockSpectralExecuter(
 				[]*spectralLintResult{
@@ -102,7 +102,7 @@ func TestSpectralPluginLintSpec(t *testing.T) {
 					Name: "registry-lint-spectral",
 					Files: []*rpc.LintFile{
 						{
-							FilePath: path,
+							FilePath: specDirectory,
 							Problems: []*rpc.LintProblem{
 								{
 									Message:    "test",
@@ -129,7 +129,7 @@ func TestSpectralPluginLintSpec(t *testing.T) {
 		{
 			&spectralLinterRunner{},
 			&rpc.LinterRequest{
-				SpecPath: path,
+				SpecDirectory: specDirectory,
 			},
 			NewMockSpectralExecuter(
 				[]*spectralLintResult{},

@@ -28,7 +28,7 @@ func (*SampleLinterRunner) Run(req *rpc.LinterRequest) (*rpc.LinterResponse, err
 	// Formulate the response. In this sample plugin, we will simply return a fake rule violation /
 	// lint problem for every rule that the user specifies, on the given file that is provided.
 	lintFile := &rpc.LintFile{
-		FilePath: req.SpecPath,
+		FilePath: req.SpecDirectory,
 	}
 
 	for _, rule := range req.RuleIds {
