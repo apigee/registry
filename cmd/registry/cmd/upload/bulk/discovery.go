@@ -77,7 +77,7 @@ type uploadDiscoveryTask struct {
 	apiID     string
 	versionID string
 	specID    string
-	contents []byte
+	contents  []byte
 }
 
 func (task *uploadDiscoveryTask) String() string {
