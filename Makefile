@@ -13,18 +13,14 @@ apg:
 	./tools/GENERATE-APG.sh
 	go install ./cmd/apg
 
-protos: goimports
+protos:
 	./tools/GENERATE-RPC.sh
 	./tools/GENERATE-GRPC.sh
 	./tools/GENERATE-GAPIC.sh
 	./tools/GENERATE-ENVOY-DESCRIPTORS.sh
-	goimports -w ./rpc ./gapic
 
-format: goimports
-	goimports -w ./..
-
-goimports:
-	go install golang.org/x/tools/cmd/goimports@latest
+lintfix:
+	golangci-lint run --fix
 
 test:
 	go clean -testcache

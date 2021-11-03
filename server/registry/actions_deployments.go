@@ -16,6 +16,7 @@ package registry
 
 import (
 	"context"
+	"sync"
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/internal/storage"
@@ -218,6 +219,8 @@ func (s *RegistryServer) ListApiDeployments(ctx context.Context, req *rpc.ListAp
 	return response, nil
 }
 
+var updateDeploymentMutex sync.Mutex
+
 // UpdateApiDeployment handles the corresponding API request.
 func (s *RegistryServer) UpdateApiDeployment(ctx context.Context, req *rpc.UpdateApiDeploymentRequest) (*rpc.ApiDeployment, error) {
 	db, err := s.getStorageClient(ctx)
@@ -235,6 +238,17 @@ func (s *RegistryServer) UpdateApiDeployment(ctx context.Context, req *rpc.Updat
 	name, err := names.ParseDeployment(req.ApiDeployment.GetName())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	if req.GetAllowMissing() {
+		// Prevent a race condition that can occur when two updates are made
+		// to the same non-existent resource. The db.Get...() call returns
+		// NotFound for both updates, and after one creates the resource,
+		// the other creation fails. The lock() prevents this by serializing
+		// the get and create operations. Future updates could improve this
+		// with improvements closer to the database level.
+		updateDeploymentMutex.Lock()
+		defer updateDeploymentMutex.Unlock()
 	}
 
 	deployment, err := db.GetDeployment(ctx, name)
