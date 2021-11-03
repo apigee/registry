@@ -506,6 +506,10 @@ message UpdateApiRequest {
   // If a "*" is specified, all fields are updated, including fields that are
   // unspecified/default in the request.
   google.protobuf.FieldMask update_mask = 2;
+
+  // If set to true, and the api is not found, a new api_versions will be created.
+  // In this situation, `update_mask` is ignored.
+  bool allow_missing = 3;
 }
 
 // Request message for DeleteApi.
@@ -608,6 +612,10 @@ message UpdateApiVersionRequest {
   // If a "*" is specified, all fields are updated, including fields that are
   // unspecified/default in the request.
   google.protobuf.FieldMask update_mask = 2;
+
+  // If set to true, and the version is not found, a new version will be created.
+  // In this situation, `update_mask` is ignored.
+  bool allow_missing = 3;
 }
 
 // Request message for DeleteApiVersion.

@@ -732,6 +732,40 @@ func TestUpdateApi(t *testing.T) {
 		want *rpc.Api
 	}{
 		{
+			desc: "allow missing updates existing resources",
+			seed: &rpc.Api{
+				Name:        "projects/my-project/locations/global/apis/a",
+				Description: "My Api",
+			},
+			req: &rpc.UpdateApiRequest{
+				Api: &rpc.Api{
+					Name:        "projects/my-project/locations/global/apis/a",
+					Description: "My Updated Api",
+				},
+				UpdateMask:   &fieldmaskpb.FieldMask{Paths: []string{"description"}},
+				AllowMissing: true,
+			},
+			want: &rpc.Api{
+				Name:        "projects/my-project/locations/global/apis/a",
+				Description: "My Updated Api",
+			},
+		},
+		{
+			desc: "allow missing creates missing resources",
+			seed: &rpc.Api{
+				Name: "projects/my-project/locations/global/apis/a-sibling",
+			},
+			req: &rpc.UpdateApiRequest{
+				Api: &rpc.Api{
+					Name: "projects/my-project/locations/global/apis/a",
+				},
+				AllowMissing: true,
+			},
+			want: &rpc.Api{
+				Name: "projects/my-project/locations/global/apis/a",
+			},
+		},
+		{
 			desc: "implicit nil mask",
 			seed: &rpc.Api{
 				Name:        "projects/my-project/locations/global/apis/my-api",

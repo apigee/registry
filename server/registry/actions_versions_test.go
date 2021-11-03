@@ -765,6 +765,40 @@ func TestUpdateApiVersion(t *testing.T) {
 		want *rpc.ApiVersion
 	}{
 		{
+			desc: "allow missing updates existing resources",
+			seed: &rpc.ApiVersion{
+				Name:        "projects/my-project/locations/global/apis/a/versions/v",
+				Description: "My ApiVersion",
+			},
+			req: &rpc.UpdateApiVersionRequest{
+				ApiVersion: &rpc.ApiVersion{
+					Name:        "projects/my-project/locations/global/apis/a/versions/v",
+					Description: "My Updated ApiVersion",
+				},
+				UpdateMask:   &fieldmaskpb.FieldMask{Paths: []string{"description"}},
+				AllowMissing: true,
+			},
+			want: &rpc.ApiVersion{
+				Name:        "projects/my-project/locations/global/apis/a/versions/v",
+				Description: "My Updated ApiVersion",
+			},
+		},
+		{
+			desc: "allow missing creates missing resources",
+			seed: &rpc.ApiVersion{
+				Name: "projects/my-project/locations/global/apis/a/versions/v-sibling",
+			},
+			req: &rpc.UpdateApiVersionRequest{
+				ApiVersion: &rpc.ApiVersion{
+					Name: "projects/my-project/locations/global/apis/a/versions/v",
+				},
+				AllowMissing: true,
+			},
+			want: &rpc.ApiVersion{
+				Name: "projects/my-project/locations/global/apis/a/versions/v",
+			},
+		},
+		{
 			desc: "implicit nil mask",
 			seed: &rpc.ApiVersion{
 				Name:        "projects/my-project/locations/global/apis/my-api/versions/v1",

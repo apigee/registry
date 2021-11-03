@@ -17,6 +17,7 @@ package registry
 import (
 	"context"
 	"strings"
+	"sync"
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/internal/storage"
@@ -269,6 +270,8 @@ func (s *RegistryServer) ListApiSpecs(ctx context.Context, req *rpc.ListApiSpecs
 	return response, nil
 }
 
+var updateSpecMutex sync.Mutex
+
 // UpdateApiSpec handles the corresponding API request.
 func (s *RegistryServer) UpdateApiSpec(ctx context.Context, req *rpc.UpdateApiSpecRequest) (*rpc.ApiSpec, error) {
 	db, err := s.getStorageClient(ctx)
@@ -286,6 +289,17 @@ func (s *RegistryServer) UpdateApiSpec(ctx context.Context, req *rpc.UpdateApiSp
 	name, err := names.ParseSpec(req.ApiSpec.GetName())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	if req.GetAllowMissing() {
+		// Prevent a race condition that can occur when two updates are made
+		// to the same non-existent resource. The db.Get...() call returns
+		// NotFound for both updates, and after one creates the resource,
+		// the other creation fails. The lock() prevents this by serializing
+		// the get and create operations. Future updates could improve this
+		// with improvements closer to the database level.
+		updateSpecMutex.Lock()
+		defer updateSpecMutex.Unlock()
 	}
 
 	spec, err := db.GetSpec(ctx, name)

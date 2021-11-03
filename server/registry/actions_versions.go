@@ -16,6 +16,7 @@ package registry
 
 import (
 	"context"
+	"sync"
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/internal/storage"
@@ -28,27 +29,25 @@ import (
 
 // CreateApiVersion handles the corresponding API request.
 func (s *RegistryServer) CreateApiVersion(ctx context.Context, req *rpc.CreateApiVersionRequest) (*rpc.ApiVersion, error) {
+	parent, err := names.ParseApi(req.GetParent())
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	if req.GetApiVersion() == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid api_version %+v: body must be provided", req.GetApiVersion())
+	}
+
+	return s.createApiVersion(ctx, parent.Version(req.GetApiVersionId()), req.GetApiVersion())
+}
+
+func (s *RegistryServer) createApiVersion(ctx context.Context, name names.Version, body *rpc.ApiVersion) (*rpc.ApiVersion, error) {
 	db, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 	defer db.Close()
 
-	if req.GetApiVersion() == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid api_version %+v: body must be provided", req.GetApiVersion())
-	}
-
-	parent, err := names.ParseApi(req.GetParent())
-	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
-	}
-
-	// Creation should only succeed when the parent exists.
-	if _, err := db.GetApi(ctx, parent); err != nil {
-		return nil, err
-	}
-
-	name := parent.Version(req.GetApiVersionId())
 	if _, err := db.GetVersion(ctx, name); err == nil {
 		return nil, status.Errorf(codes.AlreadyExists, "API version %q already exists", name)
 	} else if !isNotFound(err) {
@@ -59,7 +58,12 @@ func (s *RegistryServer) CreateApiVersion(ctx context.Context, req *rpc.CreateAp
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	version, err := models.NewVersion(name, req.GetApiVersion())
+	// Creation should only succeed when the parent exists.
+	if _, err := db.GetApi(ctx, name.Api()); err != nil {
+		return nil, err
+	}
+
+	version, err := models.NewVersion(name, body)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -174,6 +178,8 @@ func (s *RegistryServer) ListApiVersions(ctx context.Context, req *rpc.ListApiVe
 	return response, nil
 }
 
+var updateVersionMutex sync.Mutex
+
 // UpdateApiVersion handles the corresponding API request.
 func (s *RegistryServer) UpdateApiVersion(ctx context.Context, req *rpc.UpdateApiVersionRequest) (*rpc.ApiVersion, error) {
 	db, err := s.getStorageClient(ctx)
@@ -193,8 +199,21 @@ func (s *RegistryServer) UpdateApiVersion(ctx context.Context, req *rpc.UpdateAp
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
+	if req.GetAllowMissing() {
+		// Prevent a race condition that can occur when two updates are made
+		// to the same non-existent resource. The db.Get...() call returns
+		// NotFound for both updates, and after one creates the resource,
+		// the other creation fails. The lock() prevents this by serializing
+		// the get and create operations. Future updates could improve this
+		// with improvements closer to the database level.
+		updateVersionMutex.Lock()
+		defer updateVersionMutex.Unlock()
+	}
+
 	version, err := db.GetVersion(ctx, name)
-	if err != nil {
+	if req.GetAllowMissing() && isNotFound(err) {
+		return s.createApiVersion(ctx, name, req.GetApiVersion())
+	} else if err != nil {
 		return nil, err
 	}
 
