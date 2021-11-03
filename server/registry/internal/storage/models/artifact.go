@@ -28,31 +28,33 @@ import (
 
 // Artifact is the storage-side representation of an artifact.
 type Artifact struct {
-	Key         string    `gorm:"primaryKey"`
-	ProjectID   string    // Project associated with artifact (required).
-	ApiID       string    // Api associated with artifact (if appropriate).
-	VersionID   string    // Version associated with artifact (if appropriate).
-	SpecID      string    // Spec associated with artifact (if appropriate).
-	ArtifactID  string    // Artifact identifier (required).
-	CreateTime  time.Time // Creation time.
-	UpdateTime  time.Time // Time of last change.
-	MimeType    string    // MIME type of artifact
-	SizeInBytes int32     // Size of the spec.
-	Hash        string    // A hash of the spec.
+	Key          string    `gorm:"primaryKey"`
+	ProjectID    string    // Project associated with artifact (required).
+	ApiID        string    // Api associated with artifact (if appropriate).
+	VersionID    string    // Version associated with artifact (if appropriate).
+	SpecID       string    // Spec associated with artifact (if appropriate).
+	DeploymentID string    // Deployment associated with artifact (if appropriate).
+	ArtifactID   string    // Artifact identifier (required).
+	CreateTime   time.Time // Creation time.
+	UpdateTime   time.Time // Time of last change.
+	MimeType     string    // MIME type of artifact
+	SizeInBytes  int32     // Size of the spec.
+	Hash         string    // A hash of the spec.
 }
 
 // NewArtifact initializes a new resource.
 func NewArtifact(name names.Artifact, body *rpc.Artifact) (artifact *Artifact, err error) {
 	now := time.Now().Round(time.Microsecond)
 	artifact = &Artifact{
-		ProjectID:  name.ProjectID(),
-		ApiID:      name.ApiID(),
-		VersionID:  name.VersionID(),
-		SpecID:     name.SpecID(),
-		ArtifactID: name.ArtifactID(),
-		CreateTime: now,
-		UpdateTime: now,
-		MimeType:   body.GetMimeType(),
+		ProjectID:    name.ProjectID(),
+		ApiID:        name.ApiID(),
+		VersionID:    name.VersionID(),
+		SpecID:       name.SpecID(),
+		DeploymentID: name.DeploymentID(),
+		ArtifactID:   name.ArtifactID(),
+		CreateTime:   now,
+		UpdateTime:   now,
+		MimeType:     body.GetMimeType(),
 	}
 
 	if body.GetContents() != nil {
@@ -80,6 +82,9 @@ func (artifact *Artifact) Name() string {
 	case artifact.VersionID != "":
 		return fmt.Sprintf("projects/%s/locations/%s/apis/%s/versions/%s/artifacts/%s",
 			artifact.ProjectID, names.Location, artifact.ApiID, artifact.VersionID, artifact.ArtifactID)
+	case artifact.DeploymentID != "":
+		return fmt.Sprintf("projects/%s/locations/%s/apis/%s/deployments/%s/artifacts/%s",
+			artifact.ProjectID, names.Location, artifact.ApiID, artifact.DeploymentID, artifact.ArtifactID)
 	case artifact.ApiID != "":
 		return fmt.Sprintf("projects/%s/locations/%s/apis/%s/artifacts/%s",
 			artifact.ProjectID, names.Location, artifact.ApiID, artifact.ArtifactID)

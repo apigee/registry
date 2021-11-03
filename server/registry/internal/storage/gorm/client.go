@@ -122,9 +122,11 @@ func (c *Client) ensure() {
 	c.ensureTable(&models.Api{})
 	c.ensureTable(&models.Version{})
 	c.ensureTable(&models.Spec{})
-	c.ensureTable(&models.Blob{})
-	c.ensureTable(&models.Artifact{})
 	c.ensureTable(&models.SpecRevisionTag{})
+	c.ensureTable(&models.Deployment{})
+	c.ensureTable(&models.DeploymentRevisionTag{})
+	c.ensureTable(&models.Artifact{})
+	c.ensureTable(&models.Blob{})
 }
 
 // IsNotFound returns true if an error is due to an entity not being found.
@@ -154,9 +156,13 @@ func (c *Client) Put(ctx context.Context, k *Key, v interface{}) (*Key, error) {
 		r.Key = k.Name
 	case *models.SpecRevisionTag:
 		r.Key = k.Name
-	case *models.Blob:
+	case *models.Deployment:
+		r.Key = k.Name
+	case *models.DeploymentRevisionTag:
 		r.Key = k.Name
 	case *models.Artifact:
+		r.Key = k.Name
+	case *models.Blob:
 		r.Key = k.Name
 	}
 	_ = c.db.Transaction(func(tx *gorm.DB) error {
@@ -185,12 +191,16 @@ func (c *Client) Delete(ctx context.Context, q *Query) error {
 		return op.Delete(models.Version{}).Error
 	case "Spec":
 		return op.Delete(models.Spec{}).Error
-	case "Blob":
-		return op.Delete(models.Blob{}).Error
-	case "Artifact":
-		return op.Delete(models.Artifact{}).Error
 	case "SpecRevisionTag":
 		return op.Delete(models.SpecRevisionTag{}).Error
+	case "Deployment":
+		return op.Delete(models.Deployment{}).Error
+	case "DeploymentRevisionTag":
+		return op.Delete(models.DeploymentRevisionTag{}).Error
+	case "Artifact":
+		return op.Delete(models.Artifact{}).Error
+	case "Blob":
+		return op.Delete(models.Blob{}).Error
 	}
 	return nil
 }
@@ -233,16 +243,24 @@ func (c *Client) Run(ctx context.Context, q *Query) *Iterator {
 		var v []models.Spec
 		_ = op.Find(&v).Error
 		return &Iterator{Client: c, Values: v, Index: 0}
+	case "SpecRevisionTag":
+		var v []models.SpecRevisionTag
+		_ = op.Find(&v).Error
+		return &Iterator{Client: c, Values: v, Index: 0}
+	case "Deployment":
+		var v []models.Deployment
+		_ = op.Find(&v).Error
+		return &Iterator{Client: c, Values: v, Index: 0}
+	case "DeploymentRevisionTag":
+		var v []models.DeploymentRevisionTag
+		_ = op.Find(&v).Error
+		return &Iterator{Client: c, Values: v, Index: 0}
 	case "Blob":
 		var v []models.Blob
 		_ = op.Find(&v).Error
 		return &Iterator{Client: c, Values: v, Index: 0}
 	case "Artifact":
 		var v []models.Artifact
-		_ = op.Find(&v).Error
-		return &Iterator{Client: c, Values: v, Index: 0}
-	case "SpecRevisionTag":
-		var v []models.SpecRevisionTag
 		_ = op.Find(&v).Error
 		return &Iterator{Client: c, Values: v, Index: 0}
 	default:
@@ -281,6 +299,38 @@ func (c *Client) GetRecentSpecRevisions(ctx context.Context, offset int32, proje
 	}
 
 	var v []models.Spec
+	_ = op.Scan(&v).Error
+	return &Iterator{Client: c, Values: v, Index: 0}
+}
+
+func (c *Client) GetRecentDeploymentRevisions(ctx context.Context, offset int32, projectID, apiID string) *Iterator {
+	lock()
+	defer unlock()
+
+	// Select all columns from `deployments` table specifically.
+	// We do not want to select duplicates from the joined subquery result.
+	op := c.db.Select("deployments.*").
+		Table("deployments").
+		// Join missing columns that couldn't be selected in the subquery.
+		Joins("JOIN (?) AS grp ON deployments.project_id = grp.project_id AND deployments.api_id = grp.api_id AND deployments.deployment_id = grp.deployment_id AND deployments.revision_create_time = grp.recent_create_time",
+			// Select deployment names and only their most recent revision_create_time
+			// This query cannot select all the columns we want.
+			// See: https://stackoverflow.com/questions/7745609/sql-select-only-rows-with-max-value-on-a-column
+			c.db.Select("project_id, api_id, deployment_id, MAX(revision_create_time) AS recent_create_time").
+				Table("deployments").
+				Group("project_id, api_id, deployment_id")).
+		Order("key").
+		Offset(int(offset)).
+		Limit(100000)
+
+	if projectID != "-" {
+		op = op.Where("deployments.project_id = ?", projectID)
+	}
+	if apiID != "-" {
+		op = op.Where("deployments.api_id = ?", apiID)
+	}
+
+	var v []models.Deployment
 	_ = op.Scan(&v).Error
 	return &Iterator{Client: c, Values: v, Index: 0}
 }
