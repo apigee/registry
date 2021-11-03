@@ -42,8 +42,8 @@ func collectInputIndexes(ctx context.Context, client connection.Client, args []s
 	inputNames := make([]string, 0)
 	inputs := make([]*rpc.Index, 0)
 	for _, name := range args {
-		if m := names.ArtifactRegexp().FindStringSubmatch(name); m != nil {
-			err := core.ListArtifacts(ctx, client, m, filter, true, func(artifact *rpc.Artifact) {
+		if artifact, err := names.ParseArtifact(name); err == nil {
+			err := core.ListArtifacts(ctx, client, artifact, filter, true, func(artifact *rpc.Artifact) {
 				messageType, err := core.MessageTypeForMimeType(artifact.GetMimeType())
 				if err == nil && messageType == "google.cloud.apigeeregistry.applications.v1alpha1.Index" {
 					vocab := &rpc.Index{}

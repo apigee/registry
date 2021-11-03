@@ -26,7 +26,7 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 
-	discovery "github.com/googleapis/gnostic/discovery"
+	discovery "github.com/google/gnostic/discovery"
 )
 
 func discoveryCommand(ctx context.Context) *cobra.Command {
@@ -44,16 +44,10 @@ func discoveryCommand(ctx context.Context) *cobra.Command {
 				log.WithError(err).Fatal("Failed to get client")
 			}
 
-			adminClient, err := connection.NewAdminClient(ctx)
-			if err != nil {
-				log.WithError(err).Fatal("Failed to get client")
-			}
-
 			// create a queue for upload tasks and wait for the workers to finish after filling it.
 			taskQueue, wait := core.WorkerPool(ctx, 64)
 			defer wait()
 
-			core.EnsureProjectExists(ctx, adminClient, projectID)
 			discoveryResponse, err := discovery.FetchList()
 			if err != nil {
 				log.WithError(err).Fatal("Failed to fetch discovery list")
@@ -65,8 +59,8 @@ func discoveryCommand(ctx context.Context) *cobra.Command {
 					client:    client,
 					path:      api.DiscoveryRestURL,
 					projectID: projectID,
-					apiID:     api.Name,
-					versionID: api.Version,
+					apiID:     sanitize(api.Name),
+					versionID: sanitize(api.Version),
 					specID:    "discovery.json",
 				}
 			}
@@ -83,6 +77,7 @@ type uploadDiscoveryTask struct {
 	apiID     string
 	versionID string
 	specID    string
+	contents  []byte
 }
 
 func (task *uploadDiscoveryTask) String() string {
@@ -90,7 +85,13 @@ func (task *uploadDiscoveryTask) String() string {
 }
 
 func (task *uploadDiscoveryTask) Run(ctx context.Context) error {
-	log.Debugf("^^ apis/%s/versions/%s/specs/%s", task.apiID, task.versionID, task.specID)
+	log.Infof("Uploading apis/%s/versions/%s/specs/%s", task.apiID, task.versionID, task.specID)
+	// Fetch (and compress) the contents of the discovery doc.
+	// Do this first in case the doc URL is invalid; we ignore these errors.
+	if err := task.fetchDiscoveryDoc(); err != nil {
+		log.WithError(err).Warn("Failed to download discovery doc")
+		return nil
+	}
 	// If the API does not exist, create it.
 	if err := task.createAPI(ctx); err != nil {
 		return err
@@ -127,6 +128,7 @@ func (task *uploadDiscoveryTask) createAPI(ctx context.Context) error {
 		log.Debugf("Found %s", task.apiName())
 	} else {
 		log.WithError(err).Debugf("Failed to create API %s", task.apiName())
+		return fmt.Errorf("Failed to create %s, %s", task.apiName(), err)
 	}
 
 	return nil
@@ -154,11 +156,6 @@ func (task *uploadDiscoveryTask) createVersion(ctx context.Context) error {
 }
 
 func (task *uploadDiscoveryTask) createSpec(ctx context.Context) error {
-	contents, err := task.gzipContents()
-	if err != nil {
-		return err
-	}
-
 	if _, err := task.client.GetApiSpec(ctx, &rpc.GetApiSpecRequest{
 		Name: task.specName(),
 	}); !core.NotFound(err) {
@@ -171,12 +168,12 @@ func (task *uploadDiscoveryTask) createSpec(ctx context.Context) error {
 		ApiSpec: &rpc.ApiSpec{
 			MimeType:  core.DiscoveryMimeType("+gzip"),
 			Filename:  "discovery.json",
-			Contents:  contents,
+			Contents:  task.contents,
 			SourceUri: task.path,
 		},
 	})
 	if err != nil {
-		log.WithError(err).Debugf("Error %s [contents-length: %d]", task.specName(), len(contents))
+		log.WithError(err).Debugf("Error %s [contents-length: %d]", task.specName(), len(task.contents))
 	} else {
 		log.Debugf("Created %s", response.Name)
 	}
@@ -244,11 +241,11 @@ func (task *uploadDiscoveryTask) specName() string {
 	return fmt.Sprintf("%s/specs/%s", task.versionName(), task.specID)
 }
 
-func (task *uploadDiscoveryTask) gzipContents() ([]byte, error) {
+func (task *uploadDiscoveryTask) fetchDiscoveryDoc() error {
 	bytes, err := discovery.FetchDocumentBytes(task.path)
 	if err != nil {
-		return nil, err
+		return err
 	}
-
-	return core.GZippedBytes(bytes)
+	task.contents, err = core.GZippedBytes(bytes)
+	return err
 }

@@ -29,7 +29,7 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/proto"
 
-	metrics "github.com/googleapis/gnostic/metrics"
+	metrics "github.com/google/gnostic/metrics"
 )
 
 func sheetCommand(ctx context.Context) *cobra.Command {
@@ -140,8 +140,8 @@ func collectInputArtifacts(ctx context.Context, client connection.Client, args [
 	inputNames := make([]string, 0)
 	inputs := make([]*rpc.Artifact, 0)
 	for _, name := range args {
-		if m := names.ArtifactRegexp().FindStringSubmatch(name); m != nil {
-			err := core.ListArtifacts(ctx, client, m, filter, true, func(artifact *rpc.Artifact) {
+		if artifact, err := names.ParseArtifact(name); err == nil {
+			err := core.ListArtifacts(ctx, client, artifact, filter, true, func(artifact *rpc.Artifact) {
 				inputNames = append(inputNames, artifact.Name)
 				inputs = append(inputs, artifact)
 			})
@@ -163,9 +163,16 @@ func isInt64Artifact(artifact *rpc.Artifact) bool {
 
 func getVocabulary(artifact *rpc.Artifact) (*metrics.Vocabulary, error) {
 	messageType, err := core.MessageTypeForMimeType(artifact.GetMimeType())
-	if err == nil && messageType == "gnostic.metrics.Vocabulary" {
+	if err == nil && strings.HasPrefix(messageType, "gnostic.metrics.Vocabulary") {
 		vocab := &metrics.Vocabulary{}
-		err := proto.Unmarshal(artifact.GetContents(), vocab)
+		contents := artifact.GetContents()
+		if core.IsGZipCompressed(artifact.GetMimeType()) {
+			contents, err = core.GUnzippedBytes(contents)
+			if err != nil {
+				return nil, err
+			}
+		}
+		err := proto.Unmarshal(contents, vocab)
 		return vocab, err
 	}
 	return nil, fmt.Errorf("not a vocabulary: %s", artifact.Name)

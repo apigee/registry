@@ -16,21 +16,24 @@ package core
 
 import (
 	"context"
+	"log"
 
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/server/registry/names"
 	"google.golang.org/api/iterator"
 )
 
 func ListProjects(ctx context.Context,
 	client *gapic.AdminClient,
-	segments []string,
+	name names.Project,
 	filterFlag string,
 	handler ProjectHandler) error {
 	request := &rpc.ListProjectsRequest{}
 	filter := filterFlag
-	if len(segments) == 2 && segments[1] != "-" {
-		filter = "project_id == '" + segments[1] + "'"
+	projectID := name.ProjectID
+	if projectID != "" && projectID != "-" {
+		filter = "project_id == '" + projectID + "'"
 	}
 	if filter != "" {
 		request.Filter = filter
@@ -50,15 +53,16 @@ func ListProjects(ctx context.Context,
 
 func ListAPIs(ctx context.Context,
 	client *gapic.RegistryClient,
-	segments []string,
+	name names.Api,
 	filterFlag string,
 	handler ApiHandler) error {
 	request := &rpc.ListApisRequest{
-		Parent: "projects/" + segments[1] + "/locations/global",
+		Parent: name.Parent(),
 	}
 	filter := filterFlag
-	if len(segments) == 3 && segments[2] != "-" {
-		filter = "api_id == '" + segments[2] + "'"
+	apiID := name.ApiID
+	if apiID != "" && apiID != "-" {
+		filter = "api_id == '" + apiID + "'"
 	}
 	if filter != "" {
 		request.Filter = filter
@@ -78,15 +82,16 @@ func ListAPIs(ctx context.Context,
 
 func ListVersions(ctx context.Context,
 	client *gapic.RegistryClient,
-	segments []string,
+	name names.Version,
 	filterFlag string,
 	handler VersionHandler) error {
 	request := &rpc.ListApiVersionsRequest{
-		Parent: "projects/" + segments[1] + "/locations/global/apis/" + segments[2],
+		Parent: name.Parent(),
 	}
 	filter := filterFlag
-	if len(segments) == 4 && segments[3] != "-" {
-		filter = "version_id == '" + segments[3] + "'"
+	versionID := name.VersionID
+	if versionID != "" && versionID != "-" {
+		filter = "version_id == '" + versionID + "'"
 	}
 	if filter != "" {
 		request.Filter = filter
@@ -106,15 +111,16 @@ func ListVersions(ctx context.Context,
 
 func ListSpecs(ctx context.Context,
 	client *gapic.RegistryClient,
-	segments []string,
+	name names.Spec,
 	filterFlag string,
 	handler SpecHandler) error {
 	request := &rpc.ListApiSpecsRequest{
-		Parent: "projects/" + segments[1] + "/locations/global/apis/" + segments[2] + "/versions/" + segments[3],
+		Parent: name.Parent(),
 	}
 	filter := filterFlag
-	if len(segments) > 4 && segments[4] != "-" {
-		filter = "spec_id == '" + segments[4] + "'"
+	specID := name.SpecID
+	if specID != "" && specID != "-" {
+		filter = "spec_id == '" + specID + "'"
 	}
 	if filter != "" {
 		request.Filter = filter
@@ -134,14 +140,11 @@ func ListSpecs(ctx context.Context,
 
 func ListSpecRevisions(ctx context.Context,
 	client *gapic.RegistryClient,
-	segments []string,
+	name names.Spec,
 	filterFlag string,
 	handler SpecHandler) error {
 	request := &rpc.ListApiSpecRevisionsRequest{
-		Name: "projects/" + segments[1] + "/locations/global" +
-			"/apis/" + segments[2] +
-			"/versions/" + segments[3] +
-			"/specs/" + segments[4],
+		Name: name.String(),
 	}
 	it := client.ListApiSpecRevisions(ctx, request)
 	for {
@@ -158,29 +161,21 @@ func ListSpecRevisions(ctx context.Context,
 
 func ListArtifacts(ctx context.Context,
 	client *gapic.RegistryClient,
-	segments []string,
+	name names.Artifact,
 	filterFlag string,
 	getContents bool,
 	handler ArtifactHandler) error {
-	parent := "projects/" + segments[1] + "/locations/global"
-	if len(segments) >= 4 && segments[3] != "" {
-		parent += "/apis/" + segments[3]
-		if len(segments) >= 6 && segments[5] != "" {
-			parent += "/versions/" + segments[5]
-			if len(segments) >= 8 && segments[7] != "" {
-				parent += "/specs/" + segments[7]
-			}
-		}
-	}
 	request := &rpc.ListArtifactsRequest{
-		Parent: parent,
+		Parent: name.Parent(),
 	}
 	filter := filterFlag
-	if len(segments) == 9 && segments[8] != "-" {
+	artifactID := name.ArtifactID()
+	log.Printf("ARTIFACT ID %s", artifactID)
+	if artifactID != "" && artifactID != "-" {
 		if filter != "" {
 			filter += " && "
 		}
-		filter += "artifact_id == '" + segments[8] + "'"
+		filter += "artifact_id == '" + artifactID + "'"
 	}
 	if filter != "" {
 		request.Filter = filter
@@ -210,20 +205,10 @@ func ListArtifacts(ctx context.Context,
 
 func ListArtifactsForParent(ctx context.Context,
 	client *gapic.RegistryClient,
-	segments []string,
+	parent names.Name,
 	handler ArtifactHandler) error {
-	parent := "projects/" + segments[1] + "/locations/global"
-	if len(segments) > 2 {
-		parent += "/apis/" + segments[2]
-		if len(segments) > 3 {
-			parent += "/versions/" + segments[3]
-			if len(segments) > 4 {
-				parent += "/specs/" + segments[4]
-			}
-		}
-	}
 	request := &rpc.ListArtifactsRequest{
-		Parent: parent,
+		Parent: parent.String(),
 	}
 	it := client.ListArtifacts(ctx, request)
 	for {

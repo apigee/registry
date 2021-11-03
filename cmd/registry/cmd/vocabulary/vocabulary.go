@@ -26,7 +26,7 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/proto"
 
-	metrics "github.com/googleapis/gnostic/metrics"
+	metrics "github.com/google/gnostic/metrics"
 )
 
 func Command(ctx context.Context) *cobra.Command {
@@ -49,8 +49,8 @@ func collectInputVocabularies(ctx context.Context, client connection.Client, arg
 	inputNames := make([]string, 0)
 	inputs := make([]*metrics.Vocabulary, 0)
 	for _, name := range args {
-		if m := names.ArtifactRegexp().FindStringSubmatch(name); m != nil {
-			err := core.ListArtifacts(ctx, client, m, filter, true, func(artifact *rpc.Artifact) {
+		if artifact, err := names.ParseArtifact(name); err == nil {
+			err := core.ListArtifacts(ctx, client, artifact, filter, true, func(artifact *rpc.Artifact) {
 				messageType, err := core.MessageTypeForMimeType(artifact.GetMimeType())
 				if err == nil && messageType == "gnostic.metrics.Vocabulary" {
 					vocab := &metrics.Vocabulary{}
@@ -78,12 +78,18 @@ func setVocabularyToArtifact(ctx context.Context, client connection.Client, outp
 	subject := parts[0]
 	relation := parts[1]
 	messageData, _ := proto.Marshal(output)
+	var err error
+	messageData, err = core.GZippedBytes(messageData)
+	if err != nil {
+		log.WithError(err).Fatal("Failed to compress artifact")
+	}
+	log.Debugf("Saving vocabulary data (%d bytes)", len(messageData))
 	artifact := &rpc.Artifact{
 		Name:     subject + "/artifacts/" + relation,
-		MimeType: core.MimeTypeForMessageType("gnostic.metrics.Vocabulary"),
+		MimeType: core.MimeTypeForMessageType("gnostic.metrics.Vocabulary+gzip"),
 		Contents: messageData,
 	}
-	err := core.SetArtifact(ctx, client, artifact)
+	err = core.SetArtifact(ctx, client, artifact)
 	if err != nil {
 		log.WithError(err).Fatal("Failed to save artifact")
 	}

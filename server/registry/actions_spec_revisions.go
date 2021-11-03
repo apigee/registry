@@ -64,7 +64,7 @@ func (s *RegistryServer) ListApiSpecRevisions(ctx context.Context, req *rpc.List
 		return nil, err
 	}
 
-	tagsByRev := tagsByRevision(tags)
+	tagsByRev := specTagsByRevision(tags)
 	for i, spec := range listing.Specs {
 		response.ApiSpecs[i], err = spec.BasicMessage(spec.RevisionName(), tagsByRev[spec.RevisionName()])
 		if err != nil {

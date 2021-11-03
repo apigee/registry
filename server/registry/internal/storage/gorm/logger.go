@@ -63,6 +63,6 @@ func (l gormLogger) Trace(ctx context.Context, begin time.Time, fc func() (sql s
 	} else if time.Since(begin) > l.SlowThreshold {
 		entry.Warn("Slow database operation.")
 	} else {
-		entry.Info("Database operation.")
+		entry.Debug("Database operation.")
 	}
 }

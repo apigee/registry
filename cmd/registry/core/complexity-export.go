@@ -22,7 +22,7 @@ import (
 	"github.com/apigee/registry/rpc"
 	"google.golang.org/protobuf/proto"
 
-	metrics "github.com/googleapis/gnostic/metrics"
+	metrics "github.com/google/gnostic/metrics"
 )
 
 func ExportComplexityToSheet(ctx context.Context, name string, inputs []*rpc.Artifact) (string, error) {

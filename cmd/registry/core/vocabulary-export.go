@@ -18,7 +18,7 @@ import (
 	"context"
 	"fmt"
 
-	metrics "github.com/googleapis/gnostic/metrics"
+	metrics "github.com/google/gnostic/metrics"
 )
 
 func ExportVocabularyToSheet(ctx context.Context, name string, vocabulary *metrics.Vocabulary) (string, error) {

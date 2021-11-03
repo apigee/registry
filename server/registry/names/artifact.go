@@ -20,10 +20,17 @@ import (
 )
 
 var (
-	projectArtifactRegexp = regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/artifacts/%s", identifier, Location, identifier))
-	apiArtifactRegexp     = regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/artifacts/%s", identifier, Location, identifier, identifier))
-	versionArtifactRegexp = regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/versions/%s/artifacts/%s", identifier, Location, identifier, identifier, identifier))
-	specArtifactRegexp    = regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/versions/%s/specs/%s/artifacts/%s", identifier, Location, identifier, identifier, identifier, identifier))
+	projectArtifactCollectionRegexp    = regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/artifacts$", identifier, Location))
+	apiArtifactCollectionRegexp        = regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/artifacts$", identifier, Location, identifier))
+	versionArtifactCollectionRegexp    = regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/versions/%s/artifacts$", identifier, Location, identifier, identifier))
+	specArtifactCollectionRegexp       = regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/versions/%s/specs/%s/artifacts$", identifier, Location, identifier, identifier, identifier))
+	deploymentArtifactCollectionRegexp = regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/deployments/%s/artifacts$", identifier, Location, identifier, identifier))
+
+	projectArtifactRegexp    = regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/artifacts/%s$", identifier, Location, identifier))
+	apiArtifactRegexp        = regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/artifacts/%s$", identifier, Location, identifier, identifier))
+	versionArtifactRegexp    = regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/versions/%s/artifacts/%s$", identifier, Location, identifier, identifier, identifier))
+	specArtifactRegexp       = regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/versions/%s/specs/%s/artifacts/%s$", identifier, Location, identifier, identifier, identifier, identifier))
+	deploymentArtifactRegexp = regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/deployments/%s/artifacts/%s$", identifier, Location, identifier, identifier, identifier))
 )
 
 // Artifact represents a resource name for an artifact.
@@ -45,6 +52,8 @@ func (a Artifact) ProjectID() string {
 		return name.ProjectID
 	case specArtifact:
 		return name.ProjectID
+	case deploymentArtifact:
+		return name.ProjectID
 	default:
 		return ""
 	}
@@ -58,6 +67,8 @@ func (a Artifact) ApiID() string {
 	case versionArtifact:
 		return name.ApiID
 	case specArtifact:
+		return name.ApiID
+	case deploymentArtifact:
 		return name.ApiID
 	default:
 		return ""
@@ -86,6 +97,16 @@ func (a Artifact) SpecID() string {
 	}
 }
 
+// DeploymentID returns the artifact's deployment ID, or empty string if it doesn't have one.
+func (a Artifact) DeploymentID() string {
+	switch name := a.name.(type) {
+	case deploymentArtifact:
+		return name.DeploymentID
+	default:
+		return ""
+	}
+}
+
 // ArtifactID returns the artifact's ID.
 func (a Artifact) ArtifactID() string {
 	switch name := a.name.(type) {
@@ -96,6 +117,8 @@ func (a Artifact) ArtifactID() string {
 	case versionArtifact:
 		return name.ArtifactID
 	case specArtifact:
+		return name.ArtifactID
+	case deploymentArtifact:
 		return name.ArtifactID
 	default:
 		return ""
@@ -119,6 +142,8 @@ func (a Artifact) Parent() string {
 		return name.Parent()
 	case specArtifact:
 		return name.Parent()
+	case deploymentArtifact:
+		return name.Parent()
 	default:
 		return ""
 	}
@@ -138,6 +163,8 @@ func ParseArtifact(name string) (Artifact, error) {
 		return Artifact{name: n}, nil
 	} else if n, err := parseProjectArtifact(name); err == nil {
 		return Artifact{name: n}, nil
+	} else if n, err := parseDeploymentArtifact(name); err == nil {
+		return Artifact{name: n}, nil
 	}
 
 	return Artifact{}, fmt.Errorf("invalid artifact name %q, must match one of: %v", name, []string{
@@ -145,6 +172,30 @@ func ParseArtifact(name string) (Artifact, error) {
 		apiArtifactRegexp.String(),
 		versionArtifactRegexp.String(),
 		specArtifactRegexp.String(),
+		deploymentArtifactRegexp.String(),
+	})
+}
+
+// ParseArtifactCollection parses the name of an artifact collection.
+func ParseArtifactCollection(name string) (Artifact, error) {
+	if n, err := parseSpecArtifactCollection(name); err == nil {
+		return Artifact{name: n}, nil
+	} else if n, err := parseVersionArtifactCollection(name); err == nil {
+		return Artifact{name: n}, nil
+	} else if n, err := parseApiArtifactCollection(name); err == nil {
+		return Artifact{name: n}, nil
+	} else if n, err := parseProjectArtifactCollection(name); err == nil {
+		return Artifact{name: n}, nil
+	} else if n, err := parseDeploymentArtifactCollection(name); err == nil {
+		return Artifact{name: n}, nil
+	}
+
+	return Artifact{}, fmt.Errorf("invalid artifact collection name %q, must match one of: %v", name, []string{
+		projectArtifactCollectionRegexp.String(),
+		apiArtifactCollectionRegexp.String(),
+		versionArtifactCollectionRegexp.String(),
+		specArtifactCollectionRegexp.String(),
+		deploymentArtifactCollectionRegexp.String(),
 	})
 }
 
@@ -162,9 +213,7 @@ func (a projectArtifact) Validate() error {
 }
 
 func (a projectArtifact) Parent() string {
-	return Project{
-		ProjectID: a.ProjectID,
-	}.String()
+	return fmt.Sprintf("projects/%s/locations/%s", a.ProjectID, Location)
 }
 
 func (a projectArtifact) String() string {
@@ -181,6 +230,20 @@ func parseProjectArtifact(name string) (projectArtifact, error) {
 	artifact := projectArtifact{
 		ProjectID:  m[1],
 		ArtifactID: m[2],
+	}
+
+	return artifact, nil
+}
+
+func parseProjectArtifactCollection(name string) (projectArtifact, error) {
+	if !projectArtifactCollectionRegexp.MatchString(name) {
+		return projectArtifact{}, fmt.Errorf("invalid project artifact name %q: must match %q", name, projectArtifactCollectionRegexp)
+	}
+
+	m := projectArtifactCollectionRegexp.FindStringSubmatch(name)
+	artifact := projectArtifact{
+		ProjectID:  m[1],
+		ArtifactID: "",
 	}
 
 	return artifact, nil
@@ -227,6 +290,21 @@ func parseApiArtifact(name string) (apiArtifact, error) {
 	return artifact, nil
 }
 
+func parseApiArtifactCollection(name string) (apiArtifact, error) {
+	if !apiArtifactCollectionRegexp.MatchString(name) {
+		return apiArtifact{}, fmt.Errorf("invalid api artifact name %q: must match %q", name, apiArtifactCollectionRegexp)
+	}
+
+	m := apiArtifactCollectionRegexp.FindStringSubmatch(name)
+	artifact := apiArtifact{
+		ProjectID:  m[1],
+		ApiID:      m[2],
+		ArtifactID: "",
+	}
+
+	return artifact, nil
+}
+
 type versionArtifact struct {
 	ProjectID  string
 	ApiID      string
@@ -266,6 +344,22 @@ func parseVersionArtifact(name string) (versionArtifact, error) {
 		ApiID:      m[2],
 		VersionID:  m[3],
 		ArtifactID: m[4],
+	}
+
+	return artifact, nil
+}
+
+func parseVersionArtifactCollection(name string) (versionArtifact, error) {
+	if !versionArtifactCollectionRegexp.MatchString(name) {
+		return versionArtifact{}, fmt.Errorf("invalid version artifact name %q: must match %q", name, versionArtifactCollectionRegexp)
+	}
+
+	m := versionArtifactCollectionRegexp.FindStringSubmatch(name)
+	artifact := versionArtifact{
+		ProjectID:  m[1],
+		ApiID:      m[2],
+		VersionID:  m[3],
+		ArtifactID: "",
 	}
 
 	return artifact, nil
@@ -318,16 +412,79 @@ func parseSpecArtifact(name string) (specArtifact, error) {
 	return artifact, nil
 }
 
-// ArtifactsRegexp returns a regular expression that matches collection of artifacts.
-func ArtifactsRegexp() *regexp.Regexp {
-	return regexp.MustCompile(
-		fmt.Sprintf("^projects/%s/locations/%s(/apis/%s(/versions/%s(/specs/%s)?)?)?/artifacts$",
-			identifier, Location, identifier, identifier, identifier))
+func parseSpecArtifactCollection(name string) (specArtifact, error) {
+	if !specArtifactCollectionRegexp.MatchString(name) {
+		return specArtifact{}, fmt.Errorf("invalid spec artifact name %q: must match %q", name, specArtifactCollectionRegexp)
+	}
+
+	m := specArtifactCollectionRegexp.FindStringSubmatch(name)
+	artifact := specArtifact{
+		ProjectID:  m[1],
+		ApiID:      m[2],
+		VersionID:  m[3],
+		SpecID:     m[4],
+		ArtifactID: "",
+	}
+
+	return artifact, nil
 }
 
-// ArtifactRegexp returns a regular expression that matches an artifact resource name.
-func ArtifactRegexp() *regexp.Regexp {
-	return regexp.MustCompile(
-		fmt.Sprintf("^projects/%s/locations/%s(/apis/%s(/versions/%s(/specs/%s)?)?)?/artifacts/%s$",
-			identifier, Location, identifier, identifier, identifier, identifier))
+type deploymentArtifact struct {
+	ProjectID    string
+	ApiID        string
+	DeploymentID string
+	ArtifactID   string
+}
+
+func (a deploymentArtifact) Validate() error {
+	if name := a.String(); !deploymentArtifactRegexp.MatchString(name) {
+		return fmt.Errorf("invalid version artifact name %q: must match %q", name, deploymentArtifactRegexp)
+	}
+
+	return validateID(a.ArtifactID)
+}
+
+func (a deploymentArtifact) Parent() string {
+	return Deployment{
+		ProjectID:    a.ProjectID,
+		ApiID:        a.ApiID,
+		DeploymentID: a.DeploymentID,
+	}.String()
+}
+
+func (a deploymentArtifact) String() string {
+	return normalize(fmt.Sprintf("projects/%s/locations/%s/apis/%s/deployments/%s/artifacts/%s",
+		a.ProjectID, Location, a.ApiID, a.DeploymentID, a.ArtifactID))
+}
+
+func parseDeploymentArtifact(name string) (deploymentArtifact, error) {
+	if !deploymentArtifactRegexp.MatchString(name) {
+		return deploymentArtifact{}, fmt.Errorf("invalid deployment artifact name %q: must match %q", name, deploymentArtifactRegexp)
+	}
+
+	m := deploymentArtifactRegexp.FindStringSubmatch(name)
+	artifact := deploymentArtifact{
+		ProjectID:    m[1],
+		ApiID:        m[2],
+		DeploymentID: m[3],
+		ArtifactID:   m[4],
+	}
+
+	return artifact, nil
+}
+
+func parseDeploymentArtifactCollection(name string) (deploymentArtifact, error) {
+	if !deploymentArtifactCollectionRegexp.MatchString(name) {
+		return deploymentArtifact{}, fmt.Errorf("invalid deployment artifact name %q: must match %q", name, deploymentArtifactCollectionRegexp)
+	}
+
+	m := deploymentArtifactCollectionRegexp.FindStringSubmatch(name)
+	artifact := deploymentArtifact{
+		ProjectID:    m[1],
+		ApiID:        m[2],
+		DeploymentID: m[3],
+		ArtifactID:   "",
+	}
+
+	return artifact, nil
 }

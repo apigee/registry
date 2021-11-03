@@ -47,13 +47,7 @@ func openAPICommand(ctx context.Context) *cobra.Command {
 			if err != nil {
 				log.WithError(err).Fatal("Failed to get client")
 			}
-			
-			adminClient, err := connection.NewAdminClient(ctx)
-			if err != nil {
-				log.WithError(err).Fatal("Failed to get client")
-			}
 
-			core.EnsureProjectExists(ctx, adminClient, projectID)
 			for _, arg := range args {
 				scanDirectoryForOpenAPI(ctx, client, projectID, baseURI, arg)
 			}
@@ -134,7 +128,7 @@ func (task *uploadOpenAPITask) Run(ctx context.Context) error {
 	if err := task.populateFields(); err != nil {
 		return err
 	}
-	log.Debugf("^^ apis/%s/versions/%s/specs/%s", task.apiID, task.versionID, task.specID)
+	log.Infof("Uploading apis/%s/versions/%s/specs/%s", task.apiID, task.versionID, task.specID)
 
 	// If the API does not exist, create it.
 	if err := task.createAPI(ctx); err != nil {
@@ -191,6 +185,7 @@ func (task *uploadOpenAPITask) createAPI(ctx context.Context) error {
 		log.Debugf("Found %s", task.apiName())
 	} else {
 		log.WithError(err).Debugf("Failed to create API %s", task.apiName())
+		return fmt.Errorf("Failed to create %s, %s", task.apiName(), err)
 	}
 
 	return nil

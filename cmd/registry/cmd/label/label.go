@@ -87,21 +87,21 @@ func matchAndHandleLabelCmd(
 	labeling *core.Labeling,
 ) error {
 	// First try to match collection names.
-	if m := names.ApisRegexp().FindStringSubmatch(name); m != nil {
-		return labelAPIs(ctx, client, m, filter, labeling, taskQueue)
-	} else if m := names.VersionsRegexp().FindStringSubmatch(name); m != nil {
-		return labelVersions(ctx, client, m, filter, labeling, taskQueue)
-	} else if m := names.SpecsRegexp().FindStringSubmatch(name); m != nil {
-		return labelSpecs(ctx, client, m, filter, labeling, taskQueue)
+	if api, err := names.ParseApiCollection(name); err == nil {
+		return labelAPIs(ctx, client, api, filter, labeling, taskQueue)
+	} else if version, err := names.ParseVersionCollection(name); err == nil {
+		return labelVersions(ctx, client, version, filter, labeling, taskQueue)
+	} else if spec, err := names.ParseSpecCollection(name); err == nil {
+		return labelSpecs(ctx, client, spec, filter, labeling, taskQueue)
 	}
 
 	// Then try to match resource names.
-	if m := names.ApiRegexp().FindStringSubmatch(name); m != nil {
-		return labelAPIs(ctx, client, m, filter, labeling, taskQueue)
-	} else if m := names.VersionRegexp().FindStringSubmatch(name); m != nil {
-		return labelVersions(ctx, client, m, filter, labeling, taskQueue)
-	} else if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
-		return labelSpecs(ctx, client, m, filter, labeling, taskQueue)
+	if api, err := names.ParseApi(name); err == nil {
+		return labelAPIs(ctx, client, api, filter, labeling, taskQueue)
+	} else if version, err := names.ParseVersion(name); err == nil {
+		return labelVersions(ctx, client, version, filter, labeling, taskQueue)
+	} else if spec, err := names.ParseSpec(name); err == nil {
+		return labelSpecs(ctx, client, spec, filter, labeling, taskQueue)
 	} else {
 		return fmt.Errorf("unsupported resource name %s", name)
 	}
@@ -109,11 +109,11 @@ func matchAndHandleLabelCmd(
 
 func labelAPIs(ctx context.Context,
 	client *gapic.RegistryClient,
-	segments []string,
+	api names.Api,
 	filterFlag string,
 	labeling *core.Labeling,
 	taskQueue chan<- core.Task) error {
-	return core.ListAPIs(ctx, client, segments, filterFlag, func(api *rpc.Api) {
+	return core.ListAPIs(ctx, client, api, filterFlag, func(api *rpc.Api) {
 		taskQueue <- &labelApiTask{
 			client:   client,
 			api:      api,
@@ -125,11 +125,11 @@ func labelAPIs(ctx context.Context,
 func labelVersions(
 	ctx context.Context,
 	client *gapic.RegistryClient,
-	segments []string,
+	version names.Version,
 	filterFlag string,
 	labeling *core.Labeling,
 	taskQueue chan<- core.Task) error {
-	return core.ListVersions(ctx, client, segments, filterFlag, func(version *rpc.ApiVersion) {
+	return core.ListVersions(ctx, client, version, filterFlag, func(version *rpc.ApiVersion) {
 		taskQueue <- &labelVersionTask{
 			client:   client,
 			version:  version,
@@ -141,11 +141,11 @@ func labelVersions(
 func labelSpecs(
 	ctx context.Context,
 	client *gapic.RegistryClient,
-	segments []string,
+	spec names.Spec,
 	filterFlag string,
 	labeling *core.Labeling,
 	taskQueue chan<- core.Task) error {
-	return core.ListSpecs(ctx, client, segments, filterFlag, func(spec *rpc.ApiSpec) {
+	return core.ListSpecs(ctx, client, spec, filterFlag, func(spec *rpc.ApiSpec) {
 		taskQueue <- &labelSpecTask{
 			client:   client,
 			spec:     spec,
@@ -168,7 +168,8 @@ func (task *labelApiTask) Run(ctx context.Context) error {
 	var err error
 	task.api.Labels, err = task.labeling.Apply(task.api.Labels)
 	if err != nil {
-		return err
+		log.WithError(err).Errorf("Invalid labelling")
+		return nil
 	}
 	_, err = task.client.UpdateApi(ctx,
 		&rpc.UpdateApiRequest{
@@ -194,7 +195,8 @@ func (task *labelVersionTask) Run(ctx context.Context) error {
 	var err error
 	task.version.Labels, err = task.labeling.Apply(task.version.Labels)
 	if err != nil {
-		return err
+		log.WithError(err).Errorf("Invalid labelling")
+		return nil
 	}
 	_, err = task.client.UpdateApiVersion(ctx,
 		&rpc.UpdateApiVersionRequest{
@@ -220,7 +222,8 @@ func (task *labelSpecTask) Run(ctx context.Context) error {
 	var err error
 	task.spec.Labels, err = task.labeling.Apply(task.spec.Labels)
 	if err != nil {
-		return err
+		log.WithError(err).Errorf("Invalid labelling")
+		return nil
 	}
 	_, err = task.client.UpdateApiSpec(ctx,
 		&rpc.UpdateApiSpecRequest{

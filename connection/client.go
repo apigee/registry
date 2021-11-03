@@ -82,10 +82,10 @@ func NewClient(ctx context.Context) (Client, error) {
 
 // NewClientWithSettings creates a GAPIC client with specified settings.
 func NewClientWithSettings(ctx context.Context, settings *Settings) (Client, error) {
-    opts, err := clientOptions(settings)
+	opts, err := clientOptions(settings)
 	if err != nil {
 		return nil, err
-	} 
+	}
 	return gapic.NewRegistryClient(ctx, opts...)
 }
 
@@ -96,7 +96,7 @@ func NewAdminClient(ctx context.Context) (AdminClient, error) {
 	settings, err := newSettings()
 	if err != nil {
 		return nil, err
-	} 
+	}
 	return NewAdminClientWithSettings(ctx, settings)
 }
 
@@ -105,6 +105,6 @@ func NewAdminClientWithSettings(ctx context.Context, settings *Settings) (AdminC
 	opts, err := clientOptions(settings)
 	if err != nil {
 		return nil, err
-	} 
+	}
 	return gapic.NewAdminClient(ctx, opts...)
 }

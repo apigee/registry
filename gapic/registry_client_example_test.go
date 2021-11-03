@@ -454,6 +454,196 @@ func ExampleRegistryClient_DeleteApiSpecRevision() {
 	_ = resp
 }
 
+func ExampleRegistryClient_ListApiDeployments() {
+	ctx := context.Background()
+	c, err := gapic.NewRegistryClient(ctx)
+	if err != nil {
+		// TODO: Handle error.
+	}
+	defer c.Close()
+
+	req := &rpcpb.ListApiDeploymentsRequest{
+		// TODO: Fill request struct fields.
+		// See https://pkg.go.dev/github.com/apigee/registry/rpc#ListApiDeploymentsRequest.
+	}
+	it := c.ListApiDeployments(ctx, req)
+	for {
+		resp, err := it.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			// TODO: Handle error.
+		}
+		// TODO: Use resp.
+		_ = resp
+	}
+}
+
+func ExampleRegistryClient_GetApiDeployment() {
+	ctx := context.Background()
+	c, err := gapic.NewRegistryClient(ctx)
+	if err != nil {
+		// TODO: Handle error.
+	}
+	defer c.Close()
+
+	req := &rpcpb.GetApiDeploymentRequest{
+		// TODO: Fill request struct fields.
+		// See https://pkg.go.dev/github.com/apigee/registry/rpc#GetApiDeploymentRequest.
+	}
+	resp, err := c.GetApiDeployment(ctx, req)
+	if err != nil {
+		// TODO: Handle error.
+	}
+	// TODO: Use resp.
+	_ = resp
+}
+
+func ExampleRegistryClient_CreateApiDeployment() {
+	ctx := context.Background()
+	c, err := gapic.NewRegistryClient(ctx)
+	if err != nil {
+		// TODO: Handle error.
+	}
+	defer c.Close()
+
+	req := &rpcpb.CreateApiDeploymentRequest{
+		// TODO: Fill request struct fields.
+		// See https://pkg.go.dev/github.com/apigee/registry/rpc#CreateApiDeploymentRequest.
+	}
+	resp, err := c.CreateApiDeployment(ctx, req)
+	if err != nil {
+		// TODO: Handle error.
+	}
+	// TODO: Use resp.
+	_ = resp
+}
+
+func ExampleRegistryClient_UpdateApiDeployment() {
+	ctx := context.Background()
+	c, err := gapic.NewRegistryClient(ctx)
+	if err != nil {
+		// TODO: Handle error.
+	}
+	defer c.Close()
+
+	req := &rpcpb.UpdateApiDeploymentRequest{
+		// TODO: Fill request struct fields.
+		// See https://pkg.go.dev/github.com/apigee/registry/rpc#UpdateApiDeploymentRequest.
+	}
+	resp, err := c.UpdateApiDeployment(ctx, req)
+	if err != nil {
+		// TODO: Handle error.
+	}
+	// TODO: Use resp.
+	_ = resp
+}
+
+func ExampleRegistryClient_DeleteApiDeployment() {
+	ctx := context.Background()
+	c, err := gapic.NewRegistryClient(ctx)
+	if err != nil {
+		// TODO: Handle error.
+	}
+	defer c.Close()
+
+	req := &rpcpb.DeleteApiDeploymentRequest{
+		// TODO: Fill request struct fields.
+		// See https://pkg.go.dev/github.com/apigee/registry/rpc#DeleteApiDeploymentRequest.
+	}
+	err = c.DeleteApiDeployment(ctx, req)
+	if err != nil {
+		// TODO: Handle error.
+	}
+}
+
+func ExampleRegistryClient_TagApiDeploymentRevision() {
+	ctx := context.Background()
+	c, err := gapic.NewRegistryClient(ctx)
+	if err != nil {
+		// TODO: Handle error.
+	}
+	defer c.Close()
+
+	req := &rpcpb.TagApiDeploymentRevisionRequest{
+		// TODO: Fill request struct fields.
+		// See https://pkg.go.dev/github.com/apigee/registry/rpc#TagApiDeploymentRevisionRequest.
+	}
+	resp, err := c.TagApiDeploymentRevision(ctx, req)
+	if err != nil {
+		// TODO: Handle error.
+	}
+	// TODO: Use resp.
+	_ = resp
+}
+
+func ExampleRegistryClient_ListApiDeploymentRevisions() {
+	ctx := context.Background()
+	c, err := gapic.NewRegistryClient(ctx)
+	if err != nil {
+		// TODO: Handle error.
+	}
+	defer c.Close()
+
+	req := &rpcpb.ListApiDeploymentRevisionsRequest{
+		// TODO: Fill request struct fields.
+		// See https://pkg.go.dev/github.com/apigee/registry/rpc#ListApiDeploymentRevisionsRequest.
+	}
+	it := c.ListApiDeploymentRevisions(ctx, req)
+	for {
+		resp, err := it.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			// TODO: Handle error.
+		}
+		// TODO: Use resp.
+		_ = resp
+	}
+}
+
+func ExampleRegistryClient_RollbackApiDeployment() {
+	ctx := context.Background()
+	c, err := gapic.NewRegistryClient(ctx)
+	if err != nil {
+		// TODO: Handle error.
+	}
+	defer c.Close()
+
+	req := &rpcpb.RollbackApiDeploymentRequest{
+		// TODO: Fill request struct fields.
+		// See https://pkg.go.dev/github.com/apigee/registry/rpc#RollbackApiDeploymentRequest.
+	}
+	resp, err := c.RollbackApiDeployment(ctx, req)
+	if err != nil {
+		// TODO: Handle error.
+	}
+	// TODO: Use resp.
+	_ = resp
+}
+
+func ExampleRegistryClient_DeleteApiDeploymentRevision() {
+	ctx := context.Background()
+	c, err := gapic.NewRegistryClient(ctx)
+	if err != nil {
+		// TODO: Handle error.
+	}
+	defer c.Close()
+
+	req := &rpcpb.DeleteApiDeploymentRevisionRequest{
+		// TODO: Fill request struct fields.
+		// See https://pkg.go.dev/github.com/apigee/registry/rpc#DeleteApiDeploymentRevisionRequest.
+	}
+	resp, err := c.DeleteApiDeploymentRevision(ctx, req)
+	if err != nil {
+		// TODO: Handle error.
+	}
+	// TODO: Use resp.
+	_ = resp
+}
+
 func ExampleRegistryClient_ListArtifacts() {
 	ctx := context.Background()
 	c, err := gapic.NewRegistryClient(ctx)
