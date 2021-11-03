@@ -229,9 +229,9 @@ func getLinterBinaryName(linterName string) string {
 	return "registry-lint-" + linterName
 }
 
-func createLinterRequest(SpecDirectory string, ruleIds []string) *rpc.LinterRequest {
+func createLinterRequest(specDirectory string, ruleIds []string) *rpc.LinterRequest {
 	return &rpc.LinterRequest{
-		SpecDirectory: SpecDirectory,
+		SpecDirectory: specDirectory,
 		RuleIds:       ruleIds,
 	}
 }
