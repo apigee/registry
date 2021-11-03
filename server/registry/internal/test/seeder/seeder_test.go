@@ -60,6 +60,20 @@ func (s *fakeServer) TagApiSpecRevision(ctx context.Context, req *rpc.TagApiSpec
 	return nil, nil
 }
 
+func (s *fakeServer) UpdateApiDeployment(ctx context.Context, req *rpc.UpdateApiDeploymentRequest) (*rpc.ApiDeployment, error) {
+	s.Resources = append(s.Resources, req.ApiDeployment.GetName())
+	return &rpc.ApiDeployment{
+		Name:       req.ApiDeployment.GetName(),
+		RevisionId: fmt.Sprintf("%.8s", uuid.New().String()),
+	}, nil
+}
+
+func (s *fakeServer) TagApiDeploymentRevision(ctx context.Context, req *rpc.TagApiDeploymentRevisionRequest) (*rpc.ApiDeployment, error) {
+	tagged := fmt.Sprintf("%s@%s", strings.Split(req.GetName(), "@")[0], req.GetTag())
+	s.Resources = append(s.Resources, tagged)
+	return nil, nil
+}
+
 func (s *fakeServer) CreateArtifact(ctx context.Context, req *rpc.CreateArtifactRequest) (*rpc.Artifact, error) {
 	s.Resources = append(s.Resources, fmt.Sprintf("%s/artifacts/%s", req.GetParent(), req.GetArtifactId()))
 	return nil, nil
@@ -78,11 +92,13 @@ func TestSeedRegistry(t *testing.T) {
 				&rpc.Api{Name: "projects/p/locations/global/apis/a"},
 				&rpc.ApiVersion{Name: "projects/p/locations/global/apis/a/versions/v"},
 				&rpc.ApiSpec{Name: "projects/p/locations/global/apis/a/versions/v/specs/s"},
+				&rpc.ApiDeployment{Name: "projects/p/locations/global/apis/a/deployments/d"},
 				&rpc.Artifact{Name: "projects/p/locations/global/apis/a/versions/v/specs/s/artifacts/a"},
 			},
 			want: []string{
 				"projects/p",
 				"projects/p/locations/global/apis/a",
+				"projects/p/locations/global/apis/a/deployments/d",
 				"projects/p/locations/global/apis/a/versions/v",
 				"projects/p/locations/global/apis/a/versions/v/specs/s",
 				"projects/p/locations/global/apis/a/versions/v/specs/s/artifacts/a",
@@ -92,10 +108,13 @@ func TestSeedRegistry(t *testing.T) {
 			desc: "resources can be created implicitly",
 			seed: []RegistryResource{
 				&rpc.Artifact{Name: "projects/p/locations/global/apis/a/versions/v/specs/s/artifacts/a"},
+				&rpc.Artifact{Name: "projects/p/locations/global/apis/a/deployments/d/artifacts/a"},
 			},
 			want: []string{
 				"projects/p",
 				"projects/p/locations/global/apis/a",
+				"projects/p/locations/global/apis/a/deployments/d",
+				"projects/p/locations/global/apis/a/deployments/d/artifacts/a",
 				"projects/p/locations/global/apis/a/versions/v",
 				"projects/p/locations/global/apis/a/versions/v/specs/s",
 				"projects/p/locations/global/apis/a/versions/v/specs/s/artifacts/a",
@@ -104,6 +123,8 @@ func TestSeedRegistry(t *testing.T) {
 		{
 			desc: "resources can be created out of order",
 			seed: []RegistryResource{
+				&rpc.Artifact{Name: "projects/p/locations/global/apis/a/deployments/d/artifacts/a"},
+				&rpc.ApiDeployment{Name: "projects/p/locations/global/apis/a/deployments/d"},
 				&rpc.Artifact{Name: "projects/p/locations/global/apis/a/versions/v/specs/s/artifacts/a"},
 				&rpc.ApiSpec{Name: "projects/p/locations/global/apis/a/versions/v/specs/s"},
 				&rpc.ApiVersion{Name: "projects/p/locations/global/apis/a/versions/v"},
@@ -113,6 +134,8 @@ func TestSeedRegistry(t *testing.T) {
 			want: []string{
 				"projects/p",
 				"projects/p/locations/global/apis/a",
+				"projects/p/locations/global/apis/a/deployments/d",
+				"projects/p/locations/global/apis/a/deployments/d/artifacts/a",
 				"projects/p/locations/global/apis/a/versions/v",
 				"projects/p/locations/global/apis/a/versions/v/specs/s",
 				"projects/p/locations/global/apis/a/versions/v/specs/s/artifacts/a",
@@ -160,6 +183,48 @@ func TestSeedRegistry(t *testing.T) {
 				"projects/p/locations/global/apis/a/versions/v/specs/s",
 				"projects/p/locations/global/apis/a/versions/v/specs/s@first-tag",
 				"projects/p/locations/global/apis/a/versions/v/specs/s@second-tag",
+			},
+		},
+		{
+			desc: "deployment revisions can be created when attributes change",
+			seed: []RegistryResource{
+				&rpc.ApiDeployment{
+					Name:            "projects/p/locations/global/apis/a/deployments/d",
+					ApiSpecRevision: "first",
+				},
+				&rpc.ApiDeployment{
+					Name:            "projects/p/locations/global/apis/a/deployments/d",
+					ApiSpecRevision: "first",
+				},
+				&rpc.ApiDeployment{
+					Name:            "projects/p/locations/global/apis/a/deployments/d",
+					ApiSpecRevision: "second",
+				},
+			},
+			want: []string{
+				"projects/p",
+				"projects/p/locations/global/apis/a",
+				"projects/p/locations/global/apis/a/deployments/d",
+				"projects/p/locations/global/apis/a/deployments/d",
+			},
+		},
+		{
+			desc: "deployment revision tags can be created",
+			seed: []RegistryResource{
+				&rpc.ApiDeployment{
+					Name: "projects/p/locations/global/apis/a/deployments/d",
+					RevisionTags: []string{
+						"first-tag",
+						"second-tag",
+					},
+				},
+			},
+			want: []string{
+				"projects/p",
+				"projects/p/locations/global/apis/a",
+				"projects/p/locations/global/apis/a/deployments/d",
+				"projects/p/locations/global/apis/a/deployments/d@first-tag",
+				"projects/p/locations/global/apis/a/deployments/d@second-tag",
 			},
 		},
 	}

@@ -457,7 +457,7 @@ func TestUpdateApiSpecRevisions(t *testing.T) {
 		}
 
 		if !cmp.Equal(want, got, opts) {
-			t.Errorf("TagApiSpecRevision(%+v) returned unexpected diff (-want +got):\n%s", req, cmp.Diff(want, got, opts))
+			t.Errorf("UpdateApiSpec(%+v) returned unexpected diff (-want +got):\n%s", req, cmp.Diff(want, got, opts))
 		}
 
 		if got.GetRevisionId() == created.GetRevisionId() {

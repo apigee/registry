@@ -163,9 +163,16 @@ func isInt64Artifact(artifact *rpc.Artifact) bool {
 
 func getVocabulary(artifact *rpc.Artifact) (*metrics.Vocabulary, error) {
 	messageType, err := core.MessageTypeForMimeType(artifact.GetMimeType())
-	if err == nil && messageType == "gnostic.metrics.Vocabulary" {
+	if err == nil && strings.HasPrefix(messageType, "gnostic.metrics.Vocabulary") {
 		vocab := &metrics.Vocabulary{}
-		err := proto.Unmarshal(artifact.GetContents(), vocab)
+		contents := artifact.GetContents()
+		if core.IsGZipCompressed(artifact.GetMimeType()) {
+			contents, err = core.GUnzippedBytes(contents)
+			if err != nil {
+				return nil, err
+			}
+		}
+		err := proto.Unmarshal(contents, vocab)
 		return vocab, err
 	}
 	return nil, fmt.Errorf("not a vocabulary: %s", artifact.Name)
