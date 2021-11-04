@@ -16,15 +16,14 @@ package bulk
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/apex/log"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
-	"github.com/nsf/jsondiff"
 	"github.com/spf13/cobra"
-	"google.golang.org/protobuf/types/known/fieldmaskpb"
 
 	discovery "github.com/google/gnostic/discovery"
 )
@@ -86,10 +85,10 @@ func (task *uploadDiscoveryTask) String() string {
 
 func (task *uploadDiscoveryTask) Run(ctx context.Context) error {
 	log.Infof("Uploading apis/%s/versions/%s/specs/%s", task.apiID, task.versionID, task.specID)
-	// Fetch (and compress) the contents of the discovery doc.
-	// Do this first in case the doc URL is invalid; we ignore these errors.
+	// Fetch the contents of the discovery doc.
+	// Do this first in case the doc URL is invalid; we skip APIs with these errors.
 	if err := task.fetchDiscoveryDoc(); err != nil {
-		log.WithError(err).Warn("Failed to download discovery doc")
+		log.WithError(err).Error("Failed to download discovery doc")
 		return nil
 	}
 	// If the API does not exist, create it.
@@ -100,32 +99,24 @@ func (task *uploadDiscoveryTask) Run(ctx context.Context) error {
 	if err := task.createVersion(ctx); err != nil {
 		return err
 	}
-	// If the API spec does not exist, create it.
-	if err := task.createSpec(ctx); err != nil {
+	// Create or update the spec as needed.
+	if err := task.createOrUpdateSpec(ctx); err != nil {
 		return err
 	}
-	// If the API spec needs a new revision, create it.
-	return task.updateSpec(ctx)
+	return nil
 }
 
 func (task *uploadDiscoveryTask) createAPI(ctx context.Context) error {
-	if _, err := task.client.GetApi(ctx, &rpc.GetApiRequest{
-		Name: task.apiName(),
-	}); !core.NotFound(err) {
-		return err // Returns nil when API is found without error.
-	}
-
-	response, err := task.client.CreateApi(ctx, &rpc.CreateApiRequest{
-		Parent: task.projectName() + "/locations/global",
-		ApiId:  task.apiID,
+	// Create an API if needed (or update an existing one)
+	response, err := task.client.UpdateApi(ctx, &rpc.UpdateApiRequest{
 		Api: &rpc.Api{
+			Name:        task.apiName(),
 			DisplayName: task.apiID,
 		},
+		AllowMissing: true,
 	})
 	if err == nil {
 		log.Debugf("Created %s", response.Name)
-	} else if core.AlreadyExists(err) {
-		log.Debugf("Found %s", task.apiName())
 	} else {
 		log.WithError(err).Debugf("Failed to create API %s", task.apiName())
 		return fmt.Errorf("Failed to create %s, %s", task.apiName(), err)
@@ -135,16 +126,12 @@ func (task *uploadDiscoveryTask) createAPI(ctx context.Context) error {
 }
 
 func (task *uploadDiscoveryTask) createVersion(ctx context.Context) error {
-	if _, err := task.client.GetApiVersion(ctx, &rpc.GetApiVersionRequest{
-		Name: task.versionName(),
-	}); !core.NotFound(err) {
-		return err // Returns nil when version is found without error.
-	}
-
-	response, err := task.client.CreateApiVersion(ctx, &rpc.CreateApiVersionRequest{
-		Parent:       task.apiName(),
-		ApiVersionId: task.versionID,
-		ApiVersion:   &rpc.ApiVersion{},
+	// Create an API version if needed (or update an existing one)
+	response, err := task.client.UpdateApiVersion(ctx, &rpc.UpdateApiVersionRequest{
+		ApiVersion: &rpc.ApiVersion{
+			Name: task.versionName(),
+		},
+		AllowMissing: true,
 	})
 	if err != nil {
 		log.WithError(err).Debugf("Failed to create version %s", task.versionName())
@@ -155,71 +142,41 @@ func (task *uploadDiscoveryTask) createVersion(ctx context.Context) error {
 	return nil
 }
 
-func (task *uploadDiscoveryTask) createSpec(ctx context.Context) error {
-	if _, err := task.client.GetApiSpec(ctx, &rpc.GetApiSpecRequest{
+func (task *uploadDiscoveryTask) createOrUpdateSpec(ctx context.Context) error {
+	// Use the spec size and hash to avoid unnecessary uploads.
+	if spec, err := task.client.GetApiSpec(ctx, &rpc.GetApiSpecRequest{
 		Name: task.specName(),
-	}); !core.NotFound(err) {
-		return err // Returns nil when spec is found without error.
+	}); err == nil {
+		if int(spec.GetSizeBytes()) == len(task.contents) {
+			hash := hashForBytes(task.contents)
+			if spec.GetHash() == hash {
+				log.Debugf("Matched existing spec %s", task.specName())
+				return nil // this spec is already uploaded
+			}
+		}
 	}
 
-	response, err := task.client.CreateApiSpec(ctx, &rpc.CreateApiSpecRequest{
-		Parent:    task.versionName(),
-		ApiSpecId: task.specID,
+	gzippedContents, err := core.GZippedBytes(task.contents)
+	if err != nil {
+		return err
+	}
+
+	request := &rpc.UpdateApiSpecRequest{
 		ApiSpec: &rpc.ApiSpec{
+			Name:      task.specName(),
 			MimeType:  core.DiscoveryMimeType("+gzip"),
 			Filename:  "discovery.json",
-			Contents:  task.contents,
+			Contents:  gzippedContents,
 			SourceUri: task.path,
 		},
-	})
+		AllowMissing: true,
+	}
+
+	response, err := task.client.UpdateApiSpec(ctx, request)
 	if err != nil {
 		log.WithError(err).Debugf("Error %s [contents-length: %d]", task.specName(), len(task.contents))
 	} else {
 		log.Debugf("Created %s", response.Name)
-	}
-
-	return nil
-}
-
-func (task *uploadDiscoveryTask) updateSpec(ctx context.Context) error {
-	refSpec, err := task.client.GetApiSpec(ctx, &rpc.GetApiSpecRequest{
-		Name: task.specName(),
-	})
-	if err != nil && !core.NotFound(err) {
-		return err
-	}
-
-	refBytes, err := core.GetBytesForSpec(ctx, task.client, refSpec)
-	if err != nil {
-		return nil
-	}
-
-	docBytes, err := discovery.FetchDocumentBytes(task.path)
-	if err != nil {
-		return err
-	}
-
-	opts := jsondiff.DefaultJSONOptions()
-	if diff, _ := jsondiff.Compare(refBytes, docBytes, &opts); diff == jsondiff.FullMatch {
-		return nil
-	}
-
-	docZipped, err := core.GZippedBytes(docBytes)
-	if err != nil {
-		return err
-	}
-
-	response, err := task.client.UpdateApiSpec(ctx, &rpc.UpdateApiSpecRequest{
-		ApiSpec: &rpc.ApiSpec{
-			Name:     task.specName(),
-			Contents: docZipped,
-		},
-		UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"contents"}},
-	})
-	if err != nil {
-		log.WithError(err).Debugf("Error %s [contents-length: %d]", task.specName(), len(docZipped))
-	} else if response.RevisionId != refSpec.RevisionId {
-		log.Debugf("Updated %s", response.Name)
 	}
 
 	return nil
@@ -246,6 +203,18 @@ func (task *uploadDiscoveryTask) fetchDiscoveryDoc() error {
 	if err != nil {
 		return err
 	}
-	task.contents, err = core.GZippedBytes(bytes)
-	return err
+
+	// normalize the doc to produce consistent hashes
+	var m interface{}
+	err = json.Unmarshal(bytes, &m)
+	if err != nil {
+		return err
+	}
+	normalized, err := json.MarshalIndent(m, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	task.contents = []byte(normalized)
+	return nil
 }
