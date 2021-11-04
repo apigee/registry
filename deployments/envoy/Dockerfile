@@ -18,6 +18,7 @@ RUN make protos
 FROM envoyproxy/envoy:${ENVOY_VERSION}
 ENV REGISTRY_SERVER_HOST=127.0.0.1
 ENV REGISTRY_SERVER_PORT=8080
+ENV PORT=9999
 
 RUN apt-get update -y && apt-get install gettext -y
 
