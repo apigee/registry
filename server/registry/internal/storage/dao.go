@@ -52,17 +52,6 @@ func NewClient(ctx context.Context, driver, dsn string) (*Client, error) {
 	}, nil
 }
 
-func NewClientEnsuringTables(ctx context.Context, driver, dsn string) (*Client, error) {
-	gc, err := gorm.NewClientEnsuringTables(ctx, driver, dsn)
-	if err != nil {
-		return nil, err
-	}
-
-	return &Client{
-		Client: gc,
-	}, nil
-}
-
 // token contains information to share between sequential page iterators.
 type token struct {
 	// Offset is the number of resources that should be skipped before the page begins.
