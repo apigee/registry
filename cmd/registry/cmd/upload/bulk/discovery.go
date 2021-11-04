@@ -119,6 +119,9 @@ func (task *uploadDiscoveryTask) createAPI(ctx context.Context) error {
 		log.Debugf("Created %s", response.Name)
 	} else {
 		log.WithError(err).Debugf("Failed to create API %s", task.apiName())
+		// Returning this error ends all tasks, which seems appropriate to
+		// handle situations where all might fail due to a common problem
+		// (a missing project or incorrect project-id).
 		return fmt.Errorf("Failed to create %s, %s", task.apiName(), err)
 	}
 
