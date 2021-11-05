@@ -22,7 +22,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/apex/log"
+	"github.com/apigee/registry/log"
+	"github.com/apigee/registry/log/interceptor"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry"
 	"github.com/spf13/pflag"
@@ -93,30 +94,37 @@ func main() {
 	pflag.StringVarP(&configPath, "configuration", "c", "", "The server configuration file to load.")
 	pflag.Parse()
 
+	bootLogger := log.NewLogger()
 	if configPath != "" {
-		log.Infof("Loading configuration from %s", configPath)
+		bootLogger.Infof("Loading configuration from %s", configPath)
 		raw, err := ioutil.ReadFile(configPath)
 		if err != nil {
-			log.Fatalf("Failed to open config file: %s", err)
+			bootLogger.Fatalf("Failed to open config file: %s", err)
 		}
-		// expand environment variables before unmarshaling
+		// Expand environment variables before unmarshaling.
 		expanded := []byte(os.ExpandEnv(string(raw)))
 		err = yaml.Unmarshal(expanded, &config)
 		if err != nil {
-			log.Fatalf("Failed to read config file: %s", err)
+			bootLogger.Fatalf("Failed to read config file: %s", err)
 		}
 	}
 
 	if err := validateConfig(); err != nil {
-		log.Fatalf("Invalid configuration: %s", err)
+		bootLogger.Fatalf("Invalid configuration: %s", err)
 	}
 
-	log.Infof("Configured port %d", config.Port)
+	var (
+		logOpts        = loggerOptions(config.Logging)
+		logger         = log.NewLogger(logOpts...)
+		logInterceptor = interceptor.CallLogger(logOpts...)
+	)
+
+	logger.Infof("Configured port %d", config.Port)
 	listener, err := net.ListenTCP("tcp", &net.TCPAddr{
 		Port: config.Port,
 	})
 	if err != nil {
-		log.Fatalf("Failed to create TCP listener: %s", err)
+		logger.Fatalf("Failed to create TCP listener: %s", err)
 	}
 	defer listener.Close()
 
@@ -129,11 +137,7 @@ func main() {
 		ProjectID: config.Pubsub.Project,
 	})
 
-	var (
-		logInterceptor = grpc.UnaryInterceptor(registryServer.LoggingInterceptor)
-		grpcServer     = grpc.NewServer(logInterceptor)
-	)
-
+	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(logInterceptor))
 	reflection.Register(grpcServer)
 	rpc.RegisterRegistryServer(grpcServer, registryServer)
 	rpc.RegisterAdminServer(grpcServer, registryServer)
@@ -141,7 +145,7 @@ func main() {
 	go func() {
 		_ = grpcServer.Serve(listener)
 	}()
-	log.Infof("Listening on %s", listener.Addr())
+	logger.Infof("Listening on %s", listener.Addr())
 
 	// Wait for an interruption signal.
 	done := make(chan os.Signal, 1)
@@ -177,4 +181,29 @@ func validateConfig() error {
 	}
 
 	return nil
+}
+
+func loggerOptions(conf LoggingConfig) []log.Option {
+	opts := make([]log.Option, 0, 2)
+	switch conf.Level {
+	case "debug":
+		opts = append(opts, log.DebugLevel)
+	case "info":
+		opts = append(opts, log.InfoLevel)
+	case "warn":
+		opts = append(opts, log.WarnLevel)
+	case "error":
+		opts = append(opts, log.ErrorLevel)
+	case "fatal":
+		opts = append(opts, log.FatalLevel)
+	}
+
+	switch conf.Format {
+	case "json":
+		opts = append(opts, log.JSONFormat(os.Stderr))
+	case "text":
+		opts = append(opts, log.TextFormat(os.Stderr))
+	}
+
+	return opts
 }
