@@ -18,9 +18,9 @@ import (
 	"context"
 	"strings"
 
-	"github.com/apex/log"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"github.com/spf13/cobra"
@@ -56,17 +56,17 @@ func collectInputVocabularies(ctx context.Context, client connection.Client, arg
 					vocab := &metrics.Vocabulary{}
 					err := proto.Unmarshal(artifact.GetContents(), vocab)
 					if err != nil {
-						log.WithError(err).Debug("Failed to unmarshal contents")
+						log.FromContext(ctx).WithError(err).Debug("Failed to unmarshal contents")
 					} else {
 						inputNames = append(inputNames, artifact.Name)
 						inputs = append(inputs, vocab)
 					}
 				} else {
-					log.Debugf("Skipping, not a vocabulary: %s", artifact.Name)
+					log.Debugf(ctx, "Skipping, not a vocabulary: %s", artifact.Name)
 				}
 			})
 			if err != nil {
-				log.WithError(err).Fatal("Failed to list artifacts")
+				log.FromContext(ctx).WithError(err).Fatal("Failed to list artifacts")
 			}
 		}
 	}
@@ -81,9 +81,9 @@ func setVocabularyToArtifact(ctx context.Context, client connection.Client, outp
 	var err error
 	messageData, err = core.GZippedBytes(messageData)
 	if err != nil {
-		log.WithError(err).Fatal("Failed to compress artifact")
+		log.FromContext(ctx).WithError(err).Fatal("Failed to compress artifact")
 	}
-	log.Debugf("Saving vocabulary data (%d bytes)", len(messageData))
+	log.Debugf(ctx, "Saving vocabulary data (%d bytes)", len(messageData))
 	artifact := &rpc.Artifact{
 		Name:     subject + "/artifacts/" + relation,
 		MimeType: core.MimeTypeForMessageType("gnostic.metrics.Vocabulary+gzip"),
@@ -91,7 +91,7 @@ func setVocabularyToArtifact(ctx context.Context, client connection.Client, outp
 	}
 	err = core.SetArtifact(ctx, client, artifact)
 	if err != nil {
-		log.WithError(err).Fatal("Failed to save artifact")
+		log.FromContext(ctx).WithError(err).Fatal("Failed to save artifact")
 	}
 }
 
@@ -107,6 +107,6 @@ func setVersionHistoryToArtifact(ctx context.Context, client connection.Client, 
 	}
 	err := core.SetArtifact(ctx, client, artifact)
 	if err != nil {
-		log.WithError(err).Fatal("Failed to save artifact")
+		log.FromContext(ctx).WithError(err).Fatal("Failed to save artifact")
 	}
 }

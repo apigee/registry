@@ -19,8 +19,8 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"github.com/apex/log"
 	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
 )
 
@@ -156,8 +156,11 @@ func (*concreteApiLinterRunner) Run(specPath string) ([]*rpc.LintProblem, error)
 		return parseLinterOutput(data)
 	}
 
+	// TODO: Replace this new instance with a logger inherited from the context.
+	logger := log.NewLogger()
+
 	// Unpack api-common-protos and try again if failure occurred
-	log.Info("API-linter failed due to an import error, unpacking API common protos and retrying.")
+	logger.Info("API-linter failed due to an import error, unpacking API common protos and retrying.")
 	if err = unpackApiCommonProtos(specDirectory); err == nil {
 		data, err = createAndRunApiLinterCommand(specDirectory, specName)
 		if err == nil {
@@ -165,7 +168,7 @@ func (*concreteApiLinterRunner) Run(specPath string) ([]*rpc.LintProblem, error)
 		}
 	}
 
-	log.Info("API-linter failed due to an import error, unpacking GoogleAPIs and retrying.")
+	logger.Info("API-linter failed due to an import error, unpacking GoogleAPIs and retrying.")
 	if err = unpackGoogleApisProtos(specDirectory); err == nil {
 		data, err = createAndRunApiLinterCommand(specDirectory, specName)
 		if err == nil {

@@ -18,10 +18,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/apex/log"
 	"github.com/apigee/registry/cmd/registry/controller"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
 	"github.com/google/uuid"
 	"github.com/spf13/cobra"
@@ -61,46 +61,46 @@ func Command(ctx context.Context) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			manifestName := args[0]
 			if manifestName == "" {
-				log.Fatal("Please provide the manifest resource name")
+				log.Fatal(ctx, "Please provide the manifest resource name")
 			}
 
 			client, err := connection.NewClient(ctx)
 			if err != nil {
-				log.WithError(err).Fatal("Failed to get client")
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
 
 			manifest, err := fetchManifest(ctx, client, manifestName)
 			if err != nil {
-				log.WithError(err).Fatal("Failed to fetch manifest")
+				log.FromContext(ctx).WithError(err).Fatal("Failed to fetch manifest")
 			}
 
 			projectID, err := core.ProjectID(manifestName)
 			if err != nil {
-				log.WithError(err).Fatal("Failed to extract project ID")
+				log.FromContext(ctx).WithError(err).Fatal("Failed to extract project ID")
 			}
 
-			log.Debug("Generating the list of actions...")
+			log.Debug(ctx, "Generating the list of actions...")
 			actions := controller.ProcessManifest(ctx, client, projectID, manifest)
 
 			// The monitoring metrics/dashboards are built on top of the format of the log messages here.
 			// Check the metric filters before making any changes to the format.
 			// Location: registry/deployments/controller/dashboard/*
 			if len(actions) == 0 {
-				log.Debug("Generated 0 actions. The registry is already in a resolved state.")
+				log.Debug(ctx, "Generated 0 actions. The registry is already in a resolved state.")
 				return
 			}
 
-			log.Debugf("Generated %d actions.", len(actions))
+			log.Debugf(ctx, "Generated %d actions.", len(actions))
 
 			// If dry_run is set to true, print the generated actions and exit
 			if dryRun {
 				for _, a := range actions {
-					log.Debugf("Action: %q", a.Command)
+					log.Debugf(ctx, "Action: %q", a.Command)
 				}
 				return
 			}
 
-			log.Debug("Starting execution...")
+			log.Debug(ctx, "Starting execution...")
 			taskQueue, wait := core.WorkerPool(ctx, 64)
 			defer wait()
 			// Submit tasks to taskQueue

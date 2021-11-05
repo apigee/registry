@@ -18,7 +18,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/apex/log"
+	"github.com/apigee/registry/log"
 )
 
 // Task is a generic interface for a runnable operation
@@ -58,7 +58,7 @@ func worker(ctx context.Context, wg *sync.WaitGroup, taskQueue <-chan Task) {
 			return
 		default:
 			if err := task.Run(ctx); err != nil {
-				log.WithError(err).Fatalf("Task failed: %s", task)
+				log.FromContext(ctx).WithError(err).Fatalf("Task failed: %s", task)
 			}
 		}
 	}

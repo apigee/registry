@@ -18,9 +18,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/apex/log"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"github.com/spf13/cobra"
@@ -36,12 +36,12 @@ func lintCommand(ctx context.Context) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			filter, err := cmd.Flags().GetString("filter")
 			if err != nil {
-				log.WithError(err).Fatal("Failed to get filter from flags")
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get filter from flags")
 			}
 
 			client, err := connection.NewClient(ctx)
 			if err != nil {
-				log.WithError(err).Fatal("Failed to get client")
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
 			// Initialize task queue.
 			taskQueue, wait := core.WorkerPool(ctx, 16)
@@ -59,7 +59,7 @@ func lintCommand(ctx context.Context) *cobra.Command {
 					}
 				})
 				if err != nil {
-					log.WithError(err).Fatal("Failed to list specs")
+					log.FromContext(ctx).WithError(err).Fatal("Failed to list specs")
 				}
 			}
 		},
@@ -103,7 +103,7 @@ func (task *computeLintTask) Run(ctx context.Context) error {
 			task.linter = "gnostic"
 		}
 		relation = lintRelation(task.linter)
-		log.Debugf("Computing %s/artifacts/%s", spec.Name, relation)
+		log.Debugf(ctx, "Computing %s/artifacts/%s", spec.Name, relation)
 		lint, err = core.NewLintFromOpenAPI(spec.Name, data, task.linter)
 		if err != nil {
 			return fmt.Errorf("error processing OpenAPI: %s (%s)", spec.Name, err.Error())
@@ -116,7 +116,7 @@ func (task *computeLintTask) Run(ctx context.Context) error {
 			task.linter = "aip"
 		}
 		relation = lintRelation(task.linter)
-		log.Debugf("Computing %s/artifacts/%s", spec.Name, relation)
+		log.Debugf(ctx, "Computing %s/artifacts/%s", spec.Name, relation)
 		lint, err = core.NewLintFromZippedProtos(spec.Name, data)
 		if err != nil {
 			return fmt.Errorf("error processing protos: %s (%s)", spec.Name, err.Error())

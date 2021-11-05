@@ -23,9 +23,9 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/apex/log"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc/codes"
@@ -44,17 +44,17 @@ func csvCommand(ctx context.Context) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(delimiter) != 1 {
-				log.Fatalf("Invalid delimiter %q: must be exactly one character", delimiter)
+				log.Fatalf(ctx, "Invalid delimiter %q: must be exactly one character", delimiter)
 			}
 
 			client, err := connection.NewClient(ctx)
 			if err != nil {
-				log.WithError(err).Fatal("Failed to get client")
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
 
 			adminClient, err := connection.NewAdminClient(ctx)
 			if err != nil {
-				log.WithError(err).Fatal("Failed to get client")
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
 
 			core.EnsureProjectExists(ctx, adminClient, projectID)
@@ -64,7 +64,7 @@ func csvCommand(ctx context.Context) *cobra.Command {
 
 			file, err := os.Open(args[0])
 			if err != nil {
-				log.WithError(err).Fatal("Failed to open file")
+				log.FromContext(ctx).WithError(err).Fatal("Failed to open file")
 			}
 			defer file.Close()
 
@@ -75,7 +75,7 @@ func csvCommand(ctx context.Context) *cobra.Command {
 
 			for row, err := r.Read(); err != io.EOF; row, err = r.Read() {
 				if err != nil {
-					log.WithError(err).Fatal("Failed to read row from file")
+					log.FromContext(ctx).WithError(err).Fatal("Failed to read row from file")
 				}
 
 				taskQueue <- &uploadSpecTask{
@@ -186,7 +186,7 @@ func (t uploadSpecTask) Run(ctx context.Context) error {
 
 	switch status.Code(err) {
 	case codes.OK:
-		log.Debugf("Created API: %s", api.GetName())
+		log.Debugf(ctx, "Created API: %s", api.GetName())
 	case codes.AlreadyExists:
 		api = &rpc.Api{
 			Name: fmt.Sprintf("projects/%s/locations/global/apis/%s", t.projectID, t.apiID),
@@ -203,7 +203,7 @@ func (t uploadSpecTask) Run(ctx context.Context) error {
 
 	switch status.Code(err) {
 	case codes.OK:
-		log.Debugf("Created API version: %s", version.GetName())
+		log.Debugf(ctx, "Created API version: %s", version.GetName())
 	case codes.AlreadyExists:
 		version = &rpc.ApiVersion{
 			Name: fmt.Sprintf("projects/%s/apis/%s/versions/%s", t.projectID, t.apiID, t.versionID),
@@ -234,7 +234,7 @@ func (t uploadSpecTask) Run(ctx context.Context) error {
 
 	switch status.Code(err) {
 	case codes.OK:
-		log.Debugf("Created API spec: %s", spec.GetName())
+		log.Debugf(ctx, "Created API spec: %s", spec.GetName())
 	case codes.AlreadyExists:
 		// When the spec already exists we can silently continue.
 	default:

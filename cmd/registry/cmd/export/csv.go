@@ -19,9 +19,9 @@ import (
 	"encoding/csv"
 	"fmt"
 
-	"github.com/apex/log"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"github.com/spf13/cobra"
@@ -51,20 +51,20 @@ func csvCommand(ctx context.Context) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			client, err := connection.NewClient(ctx)
 			if err != nil {
-				log.WithError(err).Fatal("Failed to get client")
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
 
 			rows := make([]exportCSVRow, 0)
 			for _, parent := range args {
 				version, err := names.ParseVersion(parent)
 				if err != nil {
-					log.Debugf("Failed to parse version name %q: skipping spec row", parent)
+					log.Debugf(ctx, "Failed to parse version name %q: skipping spec row", parent)
 					return
 				}
 				err = core.ListSpecs(ctx, client, version.Spec(""), filter, func(spec *rpc.ApiSpec) {
 					specName, err := names.ParseSpec(spec.GetName())
 					if err != nil {
-						log.Debugf("Failed to parse spec name %q: skipping spec row", spec.GetName())
+						log.Debugf(ctx, "Failed to parse spec name %q: skipping spec row", spec.GetName())
 						return
 					}
 					rows = append(rows, exportCSVRow{
@@ -75,24 +75,24 @@ func csvCommand(ctx context.Context) *cobra.Command {
 					})
 				})
 				if err != nil {
-					log.WithError(err).Fatalf("Failed to list specs")
+					log.FromContext(ctx).WithError(err).Fatalf("Failed to list specs")
 				}
 			}
 
 			w := csv.NewWriter(cmd.OutOrStdout())
 			if err := w.Write([]string{"api_id", "version_id", "spec_id", "contents_path"}); err != nil {
-				log.WithError(err).Fatalf("Failed to write CSV header")
+				log.FromContext(ctx).WithError(err).Fatalf("Failed to write CSV header")
 			}
 
 			for _, row := range rows {
 				if err := w.Write([]string{row.ApiID, row.VersionID, row.SpecID, row.ContentsPath}); err != nil {
-					log.WithError(err).Fatalf("Failed to write CSV row %v", row)
+					log.FromContext(ctx).WithError(err).Fatalf("Failed to write CSV row %v", row)
 				}
 			}
 
 			w.Flush()
 			if err := w.Error(); err != nil {
-				log.WithError(err).Fatalf("Failed to flush writes to output")
+				log.FromContext(ctx).WithError(err).Fatalf("Failed to flush writes to output")
 			}
 		},
 	}

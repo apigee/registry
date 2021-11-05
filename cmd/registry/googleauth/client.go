@@ -24,7 +24,7 @@ import (
 	"os/user"
 	"path/filepath"
 
-	"github.com/apex/log"
+	"github.com/apigee/registry/log"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 )
@@ -42,8 +42,7 @@ func GetAuthenticatedClient(ctx context.Context) (*http.Client, error) {
 	}
 	// Create configuration for specified scopes.
 	// If you modify these scopes, delete your previously saved token.
-	config, err := google.ConfigFromJSON(b,
-		"https://www.googleapis.com/auth/spreadsheets")
+	config, err := google.ConfigFromJSON(b, "https://www.googleapis.com/auth/spreadsheets")
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +52,9 @@ func GetAuthenticatedClient(ctx context.Context) (*http.Client, error) {
 	token, err := readTokenFromFile(tokenFile)
 	if err != nil {
 		token = getTokenFromBrowser(ctx, config)
-		saveTokenToFile(tokenFile, token)
+		if err := saveTokenToFile(tokenFile, token); err != nil {
+			log.FromContext(ctx).WithError(err).Fatalf("Unable to cache oauth token")
+		}
 	}
 	return config.Client(ctx, token), nil
 }
@@ -66,12 +67,12 @@ func getTokenFromBrowser(ctx context.Context, config *oauth2.Config) *oauth2.Tok
 
 	var authCode string
 	if _, err := fmt.Scan(&authCode); err != nil {
-		log.WithError(err).Fatalf("Unable to read authorization code")
+		log.FromContext(ctx).WithError(err).Fatalf("Unable to read authorization code")
 	}
 
 	tok, err := config.Exchange(ctx, authCode)
 	if err != nil {
-		log.WithError(err).Fatalf("Unable to retrieve token from web")
+		log.FromContext(ctx).WithError(err).Fatalf("Unable to retrieve token from web")
 	}
 	return tok
 }
@@ -89,12 +90,12 @@ func readTokenFromFile(file string) (*oauth2.Token, error) {
 }
 
 // Saves a token to a file path.
-func saveTokenToFile(path string, token *oauth2.Token) {
+func saveTokenToFile(path string, token *oauth2.Token) error {
 	fmt.Printf("Saving credential file to: %s\n", path)
 	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
-		log.WithError(err).Fatalf("Unable to cache oauth token")
+		return err
 	}
 	defer f.Close()
-	_ = json.NewEncoder(f).Encode(token)
+	return json.NewEncoder(f).Encode(token)
 }

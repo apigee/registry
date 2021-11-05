@@ -23,9 +23,9 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/apex/log"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -40,12 +40,12 @@ func openAPICommand(ctx context.Context) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			projectID, err := cmd.Flags().GetString("project-id")
 			if err != nil {
-				log.WithError(err).Fatal("Failed to get project-id from flags")
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get project-id from flags")
 			}
 
 			client, err := connection.NewClient(ctx)
 			if err != nil {
-				log.WithError(err).Fatal("Failed to get client")
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
 
 			for _, arg := range args {
@@ -88,7 +88,7 @@ func scanDirectoryForOpenAPI(ctx context.Context, client connection.Client, proj
 
 		return nil
 	}); err != nil {
-		log.WithError(err).Debug("Failed to walk directory")
+		log.FromContext(ctx).WithError(err).Debug("Failed to walk directory")
 	}
 }
 
@@ -128,7 +128,7 @@ func (task *uploadOpenAPITask) Run(ctx context.Context) error {
 	if err := task.populateFields(); err != nil {
 		return err
 	}
-	log.Infof("Uploading apis/%s/versions/%s/specs/%s", task.apiID, task.versionID, task.specID)
+	log.Infof(ctx, "Uploading apis/%s/versions/%s/specs/%s", task.apiID, task.versionID, task.specID)
 
 	// If the API does not exist, create it.
 	if err := task.createAPI(ctx); err != nil {
@@ -180,11 +180,11 @@ func (task *uploadOpenAPITask) createAPI(ctx context.Context) error {
 		},
 	})
 	if err == nil {
-		log.Debugf("Created %s", response.Name)
+		log.Debugf(ctx, "Created %s", response.Name)
 	} else if core.AlreadyExists(err) {
-		log.Debugf("Found %s", task.apiName())
+		log.Debugf(ctx, "Found %s", task.apiName())
 	} else {
-		log.WithError(err).Debugf("Failed to create API %s", task.apiName())
+		log.FromContext(ctx).WithError(err).Debugf("Failed to create API %s", task.apiName())
 		return fmt.Errorf("Failed to create %s, %s", task.apiName(), err)
 	}
 
@@ -204,9 +204,9 @@ func (task *uploadOpenAPITask) createVersion(ctx context.Context) error {
 		ApiVersion:   &rpc.ApiVersion{},
 	})
 	if err != nil {
-		log.WithError(err).Debugf("Failed to create version %s", task.versionName())
+		log.FromContext(ctx).WithError(err).Debugf("Failed to create version %s", task.versionName())
 	} else {
-		log.Debugf("Created %s", response.Name)
+		log.Debugf(ctx, "Created %s", response.Name)
 	}
 
 	return nil
@@ -239,9 +239,9 @@ func (task *uploadOpenAPITask) createSpec(ctx context.Context) error {
 
 	response, err := task.client.CreateApiSpec(ctx, request)
 	if err != nil {
-		log.WithError(err).Debugf("Error %s [contents-length: %d]", task.specName(), len(contents))
+		log.FromContext(ctx).WithError(err).Debugf("Error %s [contents-length: %d]", task.specName(), len(contents))
 	} else {
-		log.Debugf("Created %s", response.Name)
+		log.Debugf(ctx, "Created %s", response.Name)
 	}
 
 	return nil
@@ -270,9 +270,9 @@ func (task *uploadOpenAPITask) updateSpec(ctx context.Context) error {
 
 	response, err := task.client.UpdateApiSpec(ctx, request)
 	if err != nil {
-		log.WithError(err).Debugf("Error %s [contents-length: %d]", request.ApiSpec.Name, len(contents))
+		log.FromContext(ctx).WithError(err).Debugf("Error %s [contents-length: %d]", request.ApiSpec.Name, len(contents))
 	} else if response.RevisionId != spec.RevisionId {
-		log.Debugf("Updated %s", response.Name)
+		log.Debugf(ctx, "Updated %s", response.Name)
 	}
 
 	return nil
