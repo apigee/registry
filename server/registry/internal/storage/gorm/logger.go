@@ -18,13 +18,13 @@ import (
 	"context"
 	"time"
 
-	"github.com/apex/log"
+	"github.com/apigee/registry/log"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
 
 type gormLogger struct {
-	Logger        log.Interface
+	Logger        log.Logger
 	SlowThreshold time.Duration
 }
 
@@ -53,16 +53,16 @@ func (l gormLogger) Error(context.Context, string, ...interface{}) {
 
 func (l gormLogger) Trace(ctx context.Context, begin time.Time, fc func() (sql string, rowsAffected int64), err error) {
 	sql, _ := fc()
-	entry := l.Logger.WithFields(log.Fields{
+	logger := l.Logger.WithFields(map[string]interface{}{
 		"query":    sql,
 		"duration": time.Since(begin),
 	})
 
 	if err != nil && err != gorm.ErrRecordNotFound {
-		entry.WithError(err).Error("Failed database operation.")
+		logger.WithError(err).Error("Failed database operation.")
 	} else if time.Since(begin) > l.SlowThreshold {
-		entry.Warn("Slow database operation.")
+		logger.Warn("Slow database operation.")
 	} else {
-		entry.Debug("Database operation.")
+		logger.Debug("Database operation.")
 	}
 }

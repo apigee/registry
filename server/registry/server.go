@@ -17,7 +17,6 @@ package registry
 import (
 	"context"
 
-	"github.com/apex/log"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/internal/storage"
 
@@ -40,8 +39,6 @@ type RegistryServer struct {
 	database      string
 	dbConfig      string
 	notifyEnabled bool
-	loggingLevel  string
-	loggingFormat string
 	projectID     string
 
 	rpc.UnimplementedRegistryServer
@@ -52,8 +49,6 @@ func New(config Config) *RegistryServer {
 	s := &RegistryServer{
 		database:      config.Database,
 		dbConfig:      config.DBConfig,
-		loggingLevel:  config.LogLevel,
-		loggingFormat: config.LogFormat,
 		notifyEnabled: config.Notify,
 		projectID:     config.ProjectID,
 	}
@@ -68,10 +63,6 @@ func New(config Config) *RegistryServer {
 
 func (s *RegistryServer) getStorageClient(ctx context.Context) (*storage.Client, error) {
 	return storage.NewClient(ctx, s.database, s.dbConfig)
-}
-
-func (s *RegistryServer) logger(ctx context.Context) log.Interface {
-	return log.FromContext(ctx)
 }
 
 func isNotFound(err error) bool {
