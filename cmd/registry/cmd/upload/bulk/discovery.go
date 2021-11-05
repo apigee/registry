@@ -116,7 +116,7 @@ func (task *uploadDiscoveryTask) createAPI(ctx context.Context) error {
 		AllowMissing: true,
 	})
 	if err == nil {
-		log.Debugf("Created %s", response.Name)
+		log.Debugf("Updated %s", response.Name)
 	} else {
 		log.WithError(err).Debugf("Failed to create API %s", task.apiName())
 		// Returning this error ends all tasks, which seems appropriate to
@@ -139,7 +139,7 @@ func (task *uploadDiscoveryTask) createVersion(ctx context.Context) error {
 	if err != nil {
 		log.WithError(err).Debugf("Failed to create version %s", task.versionName())
 	} else {
-		log.Debugf("Created %s", response.Name)
+		log.Debugf("Updated %s", response.Name)
 	}
 
 	return nil
@@ -179,7 +179,7 @@ func (task *uploadDiscoveryTask) createOrUpdateSpec(ctx context.Context) error {
 	if err != nil {
 		log.WithError(err).Debugf("Error %s [contents-length: %d]", task.specName(), len(task.contents))
 	} else {
-		log.Debugf("Created %s", response.Name)
+		log.Debugf("Updated %s", response.Name)
 	}
 
 	return nil
