@@ -27,7 +27,7 @@ func init() {
 
 	ReplaceArtifactCmd.Flags().StringVar(&ReplaceArtifactInput.Artifact.MimeType, "artifact.mime_type", "", "A content type specifier for the artifact. ...")
 
-	ReplaceArtifactCmd.Flags().BytesHexVar(&ReplaceArtifactInput.Artifact.Contents, "artifact.contents", []byte{}, "The contents of the artifact.  Provided by API...")
+	ReplaceArtifactCmd.Flags().BytesHexVar(&ReplaceArtifactInput.Artifact.Contents, "artifact.contents", []byte{}, "Input only. The contents of the artifact. ...")
 
 	ReplaceArtifactCmd.Flags().StringVar(&ReplaceArtifactFromFile, "from_file", "", "Absolute path to JSON file containing request payload")
 
@@ -65,6 +65,9 @@ var ReplaceArtifactCmd = &cobra.Command{
 			printVerboseInput("Registry", "ReplaceArtifact", &ReplaceArtifactInput)
 		}
 		resp, err := RegistryClient.ReplaceArtifact(ctx, &ReplaceArtifactInput)
+		if err != nil {
+			return err
+		}
 
 		if Verbose {
 			fmt.Print("Output: ")

@@ -23,14 +23,14 @@ import (
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
-	"github.com/googleapis/gnostic/metrics/vocabulary"
+	"github.com/google/gnostic/metrics/vocabulary"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/proto"
 
-	discovery "github.com/googleapis/gnostic/discovery"
-	metrics "github.com/googleapis/gnostic/metrics"
-	oas2 "github.com/googleapis/gnostic/openapiv2"
-	oas3 "github.com/googleapis/gnostic/openapiv3"
+	discovery "github.com/google/gnostic/discovery"
+	metrics "github.com/google/gnostic/metrics"
+	oas2 "github.com/google/gnostic/openapiv2"
+	oas3 "github.com/google/gnostic/openapiv3"
 )
 
 func vocabularyCommand(ctx context.Context) *cobra.Command {
@@ -53,9 +53,9 @@ func vocabularyCommand(ctx context.Context) *cobra.Command {
 			defer wait()
 			// Generate tasks.
 			name := args[0]
-			if m := names.SpecRegexp().FindStringSubmatch(name); m != nil {
+			if spec, err := names.ParseSpec(name); err == nil {
 				// Iterate through a collection of specs and summarize each.
-				err = core.ListSpecs(ctx, client, m, filter, func(spec *rpc.ApiSpec) {
+				err = core.ListSpecs(ctx, client, spec, filter, func(spec *rpc.ApiSpec) {
 					taskQueue <- &computeVocabularyTask{
 						client:   client,
 						specName: spec.Name,
@@ -96,7 +96,8 @@ func (task *computeVocabularyTask) Run(ctx context.Context) error {
 		}
 		document, err := oas2.ParseDocument(data)
 		if err != nil {
-			return fmt.Errorf("invalid OpenAPI: %s", spec.Name)
+			log.WithError(err).Errorf("Invalid OpenAPI: %s", spec.Name)
+			return nil
 		}
 		vocab = vocabulary.NewVocabularyFromOpenAPIv2(document)
 	} else if core.IsOpenAPIv3(spec.GetMimeType()) {
@@ -106,7 +107,8 @@ func (task *computeVocabularyTask) Run(ctx context.Context) error {
 		}
 		document, err := oas3.ParseDocument(data)
 		if err != nil {
-			return fmt.Errorf("invalid OpenAPI: %s", spec.Name)
+			log.WithError(err).Errorf("Invalid OpenAPI: %s", spec.Name)
+			return nil
 		}
 		vocab = vocabulary.NewVocabularyFromOpenAPIv3(document)
 	} else if core.IsDiscovery(spec.GetMimeType()) {
@@ -116,7 +118,8 @@ func (task *computeVocabularyTask) Run(ctx context.Context) error {
 		}
 		document, err := discovery.ParseDocument(data)
 		if err != nil {
-			return fmt.Errorf("invalid Discovery: %s", spec.Name)
+			log.WithError(err).Errorf("Invalid Discovery: %s", spec.Name)
+			return nil
 		}
 		vocab = vocabulary.NewVocabularyFromDiscovery(document)
 	} else if core.IsProto(spec.GetMimeType()) && core.IsZipArchive(spec.GetMimeType()) {
@@ -126,7 +129,8 @@ func (task *computeVocabularyTask) Run(ctx context.Context) error {
 		}
 		vocab, err = core.NewVocabularyFromZippedProtos(data)
 		if err != nil {
-			return fmt.Errorf("error processing protos: %s", spec.Name)
+			log.WithError(err).Errorf("Error processing protos: %s", spec.Name)
+			return nil
 		}
 	} else {
 		return fmt.Errorf("we don't know how to summarize %s", spec.Name)

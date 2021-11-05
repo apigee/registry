@@ -45,8 +45,8 @@ message ConformanceReport {
 // GuidelineReport describes how well an API Spec or a series of
 // API Specs conform to a guideline within an API Style Guide.
 message GuidelineReport {
-    // Name of the guideline that this report pertains to.
-    string guideline_name = 1 [
+    // ID of the guideline that this report pertains to.
+    string guideline_id = 1 [
         (google.api.field_behavior) = REQUIRED
     ];
 
@@ -57,8 +57,8 @@ message GuidelineReport {
 // RuleReport provides information and feedback on a rule that 
 // a spec breaches within a guideline on an API Style Guide.
 message RuleReport {
-    // Name of the rule that the spec breaches.
-    string rule_name = 1 [
+    // ID of the rule that the spec breaches.
+    string rule_id = 1 [
         (google.api.field_behavior) = REQUIRED
     ];
 
@@ -67,11 +67,16 @@ message RuleReport {
         (google.api.field_behavior) = REQUIRED
     ];
 
+    // File name of the spec that the rule was breached on.
+    string file_name = 3 [
+        (google.api.field_behavior) = REQUIRED
+    ];
+
     // A suggestion for resolving the problem.
-    string suggestion = 3;
+    string suggestion = 4;
 
     // The location of the problem in the spec file.
-    LintLocation location = 4;
+    LintLocation location = 5;
 }
 
 // GuidelineReportGroup is an abstraction that maps status

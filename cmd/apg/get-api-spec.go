@@ -21,7 +21,7 @@ var GetApiSpecFromFile string
 func init() {
 	RegistryServiceCmd.AddCommand(GetApiSpecCmd)
 
-	GetApiSpecCmd.Flags().StringVar(&GetApiSpecInput.Name, "name", "", "Required. The name of the spec to retrieve.  Format:...")
+	GetApiSpecCmd.Flags().StringVar(&GetApiSpecInput.Name, "name", "", "Required. The name of the spec to retrieve. ...")
 
 	GetApiSpecCmd.Flags().StringVar(&GetApiSpecFromFile, "from_file", "", "Absolute path to JSON file containing request payload")
 
@@ -61,6 +61,9 @@ var GetApiSpecCmd = &cobra.Command{
 			printVerboseInput("Registry", "GetApiSpec", &GetApiSpecInput)
 		}
 		resp, err := RegistryClient.GetApiSpec(ctx, &GetApiSpecInput)
+		if err != nil {
+			return err
+		}
 
 		if Verbose {
 			fmt.Print("Output: ")

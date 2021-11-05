@@ -23,7 +23,7 @@ import (
 	"github.com/apigee/registry/rpc"
 	"google.golang.org/protobuf/proto"
 
-	linter "github.com/googleapis/gnostic/metrics/lint"
+	linter "github.com/google/gnostic/metrics/lint"
 	yaml "gopkg.in/yaml.v3"
 )
 

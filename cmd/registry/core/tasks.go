@@ -58,7 +58,7 @@ func worker(ctx context.Context, wg *sync.WaitGroup, taskQueue <-chan Task) {
 			return
 		default:
 			if err := task.Run(ctx); err != nil {
-				log.WithError(err).Debugf("Task failed: %s", task)
+				log.WithError(err).Fatalf("Task failed: %s", task)
 			}
 		}
 	}

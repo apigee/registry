@@ -31,11 +31,19 @@ protoc ${SERVICE_PROTOS[*]} \
 	--go_gapic_opt='module=github.com/apigee/registry' \
 	--go_gapic_out='.'
 
-# Add an accessor for the underlying gRPC client of the GAPIC client.
+# Add an accessor for the underlying gRPC client of the Registry GAPIC client.
 cat >> gapic/registry_client.go <<END
 
 func (c *RegistryClient) GrpcClient() rpcpb.RegistryClient {
 	return c.internalClient.(*registryGRPCClient).registryClient
+}
+END
+
+# Add an accessor for the underlying gRPC client of the Admin GAPIC client.
+cat >> gapic/admin_client.go <<END
+
+func (c *AdminClient) GrpcClient() rpcpb.AdminClient {
+	return c.internalClient.(*adminGRPCClient).adminClient
 }
 END
 

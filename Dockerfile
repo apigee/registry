@@ -1,1 +1,0 @@
-containers/registry-server/Dockerfile

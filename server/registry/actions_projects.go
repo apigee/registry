@@ -16,6 +16,7 @@ package registry
 
 import (
 	"context"
+	"sync"
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/internal/storage"
@@ -28,17 +29,20 @@ import (
 
 // CreateProject handles the corresponding API request.
 func (s *RegistryServer) CreateProject(ctx context.Context, req *rpc.CreateProjectRequest) (*rpc.Project, error) {
+	if req.GetProject() == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid project %+v: body must be provided", req.GetProject())
+	}
+
+	return s.createProject(ctx, names.Project{ProjectID: req.GetProjectId()}, req.GetProject())
+}
+
+func (s *RegistryServer) createProject(ctx context.Context, name names.Project, body *rpc.Project) (*rpc.Project, error) {
 	db, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 	defer db.Close()
 
-	if req.GetProject() == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid project %+v: body must be provided", req.GetProject())
-	}
-
-	name := names.Project{ProjectID: req.GetProjectId()}
 	if _, err := db.GetProject(ctx, name); err == nil {
 		return nil, status.Errorf(codes.AlreadyExists, "project %q already exists", name)
 	} else if !isNotFound(err) {
@@ -49,7 +53,7 @@ func (s *RegistryServer) CreateProject(ctx context.Context, req *rpc.CreateProje
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	project := models.NewProject(name, req.GetProject())
+	project := models.NewProject(name, body)
 	if err := db.SaveProject(ctx, project); err != nil {
 		return nil, err
 	}
@@ -142,6 +146,8 @@ func (s *RegistryServer) ListProjects(ctx context.Context, req *rpc.ListProjects
 	return response, nil
 }
 
+var updateProjectMutex sync.Mutex
+
 // UpdateProject handles the corresponding API request.
 func (s *RegistryServer) UpdateProject(ctx context.Context, req *rpc.UpdateProjectRequest) (*rpc.Project, error) {
 	db, err := s.getStorageClient(ctx)
@@ -161,8 +167,21 @@ func (s *RegistryServer) UpdateProject(ctx context.Context, req *rpc.UpdateProje
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
+	if req.GetAllowMissing() {
+		// Prevent a race condition that can occur when two updates are made
+		// to the same non-existent resource. The db.Get...() call returns
+		// NotFound for both updates, and after one creates the resource,
+		// the other creation fails. The lock() prevents this by serializing
+		// the get and create operations. Future updates could improve this
+		// with improvements closer to the database level.
+		updateProjectMutex.Lock()
+		defer updateProjectMutex.Unlock()
+	}
+
 	project, err := db.GetProject(ctx, name)
-	if err != nil {
+	if req.GetAllowMissing() && isNotFound(err) {
+		return s.createProject(ctx, name, req.GetProject())
+	} else if err != nil {
 		return nil, err
 	}
 

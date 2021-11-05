@@ -43,7 +43,7 @@ func init() {
 
 	UpdateApiSpecCmd.Flags().StringVar(&UpdateApiSpecInput.ApiSpec.SourceUri, "api_spec.source_uri", "", "The original source URI of the spec (if one...")
 
-	UpdateApiSpecCmd.Flags().BytesHexVar(&UpdateApiSpecInput.ApiSpec.Contents, "api_spec.contents", []byte{}, "The contents of the spec.  Provided by API...")
+	UpdateApiSpecCmd.Flags().BytesHexVar(&UpdateApiSpecInput.ApiSpec.Contents, "api_spec.contents", []byte{}, "Input only. The contents of the spec.  Provided...")
 
 	UpdateApiSpecCmd.Flags().StringArrayVar(&UpdateApiSpecInputApiSpecLabels, "api_spec.labels", []string{}, "key=value pairs. Labels attach identifying metadata to resources....")
 
@@ -115,6 +115,9 @@ var UpdateApiSpecCmd = &cobra.Command{
 			printVerboseInput("Registry", "UpdateApiSpec", &UpdateApiSpecInput)
 		}
 		resp, err := RegistryClient.UpdateApiSpec(ctx, &UpdateApiSpecInput)
+		if err != nil {
+			return err
+		}
 
 		if Verbose {
 			fmt.Print("Output: ")

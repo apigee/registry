@@ -19,6 +19,9 @@ protos:
 	./tools/GENERATE-GAPIC.sh
 	./tools/GENERATE-ENVOY-DESCRIPTORS.sh
 
+lintfix:
+	golangci-lint run --fix
+
 test:
 	go clean -testcache
 	go test ./...

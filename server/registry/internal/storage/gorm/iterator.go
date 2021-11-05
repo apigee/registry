@@ -75,6 +75,15 @@ func (it *Iterator) Next(v interface{}) (*Key, error) {
 			return it.Client.NewKey("Spec", x.Key), nil
 		}
 		return nil, iterator.Done
+	case *models.Deployment:
+		values := it.Values.([]models.Deployment)
+		if it.Index < len(values) {
+			*x = values[it.Index]
+			it.Cursor = x.Key
+			it.Index++
+			return it.Client.NewKey("Deployment", x.Key), nil
+		}
+		return nil, iterator.Done
 	case *models.Blob:
 		values := it.Values.([]models.Blob)
 		if it.Index < len(values) {
@@ -100,6 +109,15 @@ func (it *Iterator) Next(v interface{}) (*Key, error) {
 			it.Cursor = x.Key
 			it.Index++
 			return it.Client.NewKey("SpecRevisionTag", x.Key), nil
+		}
+		return nil, iterator.Done
+	case *models.DeploymentRevisionTag:
+		values := it.Values.([]models.DeploymentRevisionTag)
+		if it.Index < len(values) {
+			*x = values[it.Index]
+			it.Cursor = x.Key
+			it.Index++
+			return it.Client.NewKey("DeploymentRevisionTag", x.Key), nil
 		}
 		return nil, iterator.Done
 	default:

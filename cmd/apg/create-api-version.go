@@ -29,7 +29,7 @@ func init() {
 
 	CreateApiVersionInput.ApiVersion = new(rpcpb.ApiVersion)
 
-	CreateApiVersionCmd.Flags().StringVar(&CreateApiVersionInput.Parent, "parent", "", "Required. The parent, which owns this collection of...")
+	CreateApiVersionCmd.Flags().StringVar(&CreateApiVersionInput.Parent, "parent", "", "Required. The parent, which owns this collection...")
 
 	CreateApiVersionCmd.Flags().StringVar(&CreateApiVersionInput.ApiVersion.Name, "api_version.name", "", "Resource name.")
 
@@ -43,7 +43,7 @@ func init() {
 
 	CreateApiVersionCmd.Flags().StringArrayVar(&CreateApiVersionInputApiVersionAnnotations, "api_version.annotations", []string{}, "key=value pairs. Annotations attach non-identifying metadata to...")
 
-	CreateApiVersionCmd.Flags().StringVar(&CreateApiVersionInput.ApiVersionId, "api_version_id", "", "The ID to use for the version, which will become...")
+	CreateApiVersionCmd.Flags().StringVar(&CreateApiVersionInput.ApiVersionId, "api_version_id", "", "Required. The ID to use for the version, which...")
 
 	CreateApiVersionCmd.Flags().StringVar(&CreateApiVersionFromFile, "from_file", "", "Absolute path to JSON file containing request payload")
 
@@ -58,6 +58,8 @@ var CreateApiVersionCmd = &cobra.Command{
 		if CreateApiVersionFromFile == "" {
 
 			cmd.MarkFlagRequired("parent")
+
+			cmd.MarkFlagRequired("api_version_id")
 
 		}
 
@@ -109,6 +111,9 @@ var CreateApiVersionCmd = &cobra.Command{
 			printVerboseInput("Registry", "CreateApiVersion", &CreateApiVersionInput)
 		}
 		resp, err := RegistryClient.CreateApiVersion(ctx, &CreateApiVersionInput)
+		if err != nil {
+			return err
+		}
 
 		if Verbose {
 			fmt.Print("Output: ")

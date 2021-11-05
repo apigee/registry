@@ -4,6 +4,7 @@ package rpc
 
 import (
 	context "context"
+
 	httpbody "google.golang.org/genproto/googleapis/api/httpbody"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
@@ -50,8 +51,6 @@ type RegistryClient interface {
 	// If specs are stored with GZip compression, the default behavior
 	// is to return the spec uncompressed (the mime_type response field
 	// indicates the exact format returned).
-	// (-- api-linter: core::0131::response-message-name=disabled
-	//     aip.dev/not-precedent: Responses are arbitrary blobs of data. --)
 	GetApiSpecContents(ctx context.Context, in *GetApiSpecContentsRequest, opts ...grpc.CallOption) (*httpbody.HttpBody, error)
 	// CreateApiSpec creates a specified spec.
 	CreateApiSpec(ctx context.Context, in *CreateApiSpecRequest, opts ...grpc.CallOption) (*ApiSpec, error)
@@ -70,6 +69,28 @@ type RegistryClient interface {
 	RollbackApiSpec(ctx context.Context, in *RollbackApiSpecRequest, opts ...grpc.CallOption) (*ApiSpec, error)
 	// DeleteApiSpecRevision deletes a revision of a spec.
 	DeleteApiSpecRevision(ctx context.Context, in *DeleteApiSpecRevisionRequest, opts ...grpc.CallOption) (*ApiSpec, error)
+	// ListApiDeployments returns matching deployments.
+	ListApiDeployments(ctx context.Context, in *ListApiDeploymentsRequest, opts ...grpc.CallOption) (*ListApiDeploymentsResponse, error)
+	// GetApiDeployment returns a specified deployment.
+	GetApiDeployment(ctx context.Context, in *GetApiDeploymentRequest, opts ...grpc.CallOption) (*ApiDeployment, error)
+	// CreateApiDeployment creates a specified deployment.
+	CreateApiDeployment(ctx context.Context, in *CreateApiDeploymentRequest, opts ...grpc.CallOption) (*ApiDeployment, error)
+	// UpdateApiDeployment can be used to modify a specified deployment.
+	UpdateApiDeployment(ctx context.Context, in *UpdateApiDeploymentRequest, opts ...grpc.CallOption) (*ApiDeployment, error)
+	// DeleteApiDeployment removes a specified deployment, all revisions, and all
+	// child resources (e.g. artifacts).
+	DeleteApiDeployment(ctx context.Context, in *DeleteApiDeploymentRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// TagApiDeploymentRevision adds a tag to a specified revision of a
+	// deployment.
+	TagApiDeploymentRevision(ctx context.Context, in *TagApiDeploymentRevisionRequest, opts ...grpc.CallOption) (*ApiDeployment, error)
+	// ListApiDeploymentRevisions lists all revisions of a deployment.
+	// Revisions are returned in descending order of revision creation time.
+	ListApiDeploymentRevisions(ctx context.Context, in *ListApiDeploymentRevisionsRequest, opts ...grpc.CallOption) (*ListApiDeploymentRevisionsResponse, error)
+	// RollbackApiDeployment sets the current revision to a specified prior
+	// revision. Note that this creates a new revision with a new revision ID.
+	RollbackApiDeployment(ctx context.Context, in *RollbackApiDeploymentRequest, opts ...grpc.CallOption) (*ApiDeployment, error)
+	// DeleteApiDeploymentRevision deletes a revision of a deployment.
+	DeleteApiDeploymentRevision(ctx context.Context, in *DeleteApiDeploymentRevisionRequest, opts ...grpc.CallOption) (*ApiDeployment, error)
 	// ListArtifacts returns matching artifacts.
 	ListArtifacts(ctx context.Context, in *ListArtifactsRequest, opts ...grpc.CallOption) (*ListArtifactsResponse, error)
 	// GetArtifact returns a specified artifact.
@@ -78,8 +99,6 @@ type RegistryClient interface {
 	// If artifacts are stored with GZip compression, the default behavior
 	// is to return the artifact uncompressed (the mime_type response field
 	// indicates the exact format returned).
-	// (-- api-linter: core::0131::response-message-name=disabled
-	//     aip.dev/not-precedent: Responses are arbitrary blobs of data. --)
 	GetArtifactContents(ctx context.Context, in *GetArtifactContentsRequest, opts ...grpc.CallOption) (*httpbody.HttpBody, error)
 	// CreateArtifact creates a specified artifact.
 	CreateArtifact(ctx context.Context, in *CreateArtifactRequest, opts ...grpc.CallOption) (*Artifact, error)
@@ -277,6 +296,87 @@ func (c *registryClient) DeleteApiSpecRevision(ctx context.Context, in *DeleteAp
 	return out, nil
 }
 
+func (c *registryClient) ListApiDeployments(ctx context.Context, in *ListApiDeploymentsRequest, opts ...grpc.CallOption) (*ListApiDeploymentsResponse, error) {
+	out := new(ListApiDeploymentsResponse)
+	err := c.cc.Invoke(ctx, "/google.cloud.apigeeregistry.v1.Registry/ListApiDeployments", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *registryClient) GetApiDeployment(ctx context.Context, in *GetApiDeploymentRequest, opts ...grpc.CallOption) (*ApiDeployment, error) {
+	out := new(ApiDeployment)
+	err := c.cc.Invoke(ctx, "/google.cloud.apigeeregistry.v1.Registry/GetApiDeployment", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *registryClient) CreateApiDeployment(ctx context.Context, in *CreateApiDeploymentRequest, opts ...grpc.CallOption) (*ApiDeployment, error) {
+	out := new(ApiDeployment)
+	err := c.cc.Invoke(ctx, "/google.cloud.apigeeregistry.v1.Registry/CreateApiDeployment", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *registryClient) UpdateApiDeployment(ctx context.Context, in *UpdateApiDeploymentRequest, opts ...grpc.CallOption) (*ApiDeployment, error) {
+	out := new(ApiDeployment)
+	err := c.cc.Invoke(ctx, "/google.cloud.apigeeregistry.v1.Registry/UpdateApiDeployment", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *registryClient) DeleteApiDeployment(ctx context.Context, in *DeleteApiDeploymentRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, "/google.cloud.apigeeregistry.v1.Registry/DeleteApiDeployment", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *registryClient) TagApiDeploymentRevision(ctx context.Context, in *TagApiDeploymentRevisionRequest, opts ...grpc.CallOption) (*ApiDeployment, error) {
+	out := new(ApiDeployment)
+	err := c.cc.Invoke(ctx, "/google.cloud.apigeeregistry.v1.Registry/TagApiDeploymentRevision", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *registryClient) ListApiDeploymentRevisions(ctx context.Context, in *ListApiDeploymentRevisionsRequest, opts ...grpc.CallOption) (*ListApiDeploymentRevisionsResponse, error) {
+	out := new(ListApiDeploymentRevisionsResponse)
+	err := c.cc.Invoke(ctx, "/google.cloud.apigeeregistry.v1.Registry/ListApiDeploymentRevisions", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *registryClient) RollbackApiDeployment(ctx context.Context, in *RollbackApiDeploymentRequest, opts ...grpc.CallOption) (*ApiDeployment, error) {
+	out := new(ApiDeployment)
+	err := c.cc.Invoke(ctx, "/google.cloud.apigeeregistry.v1.Registry/RollbackApiDeployment", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *registryClient) DeleteApiDeploymentRevision(ctx context.Context, in *DeleteApiDeploymentRevisionRequest, opts ...grpc.CallOption) (*ApiDeployment, error) {
+	out := new(ApiDeployment)
+	err := c.cc.Invoke(ctx, "/google.cloud.apigeeregistry.v1.Registry/DeleteApiDeploymentRevision", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *registryClient) ListArtifacts(ctx context.Context, in *ListArtifactsRequest, opts ...grpc.CallOption) (*ListArtifactsResponse, error) {
 	out := new(ListArtifactsResponse)
 	err := c.cc.Invoke(ctx, "/google.cloud.apigeeregistry.v1.Registry/ListArtifacts", in, out, opts...)
@@ -365,8 +465,6 @@ type RegistryServer interface {
 	// If specs are stored with GZip compression, the default behavior
 	// is to return the spec uncompressed (the mime_type response field
 	// indicates the exact format returned).
-	// (-- api-linter: core::0131::response-message-name=disabled
-	//     aip.dev/not-precedent: Responses are arbitrary blobs of data. --)
 	GetApiSpecContents(context.Context, *GetApiSpecContentsRequest) (*httpbody.HttpBody, error)
 	// CreateApiSpec creates a specified spec.
 	CreateApiSpec(context.Context, *CreateApiSpecRequest) (*ApiSpec, error)
@@ -385,6 +483,28 @@ type RegistryServer interface {
 	RollbackApiSpec(context.Context, *RollbackApiSpecRequest) (*ApiSpec, error)
 	// DeleteApiSpecRevision deletes a revision of a spec.
 	DeleteApiSpecRevision(context.Context, *DeleteApiSpecRevisionRequest) (*ApiSpec, error)
+	// ListApiDeployments returns matching deployments.
+	ListApiDeployments(context.Context, *ListApiDeploymentsRequest) (*ListApiDeploymentsResponse, error)
+	// GetApiDeployment returns a specified deployment.
+	GetApiDeployment(context.Context, *GetApiDeploymentRequest) (*ApiDeployment, error)
+	// CreateApiDeployment creates a specified deployment.
+	CreateApiDeployment(context.Context, *CreateApiDeploymentRequest) (*ApiDeployment, error)
+	// UpdateApiDeployment can be used to modify a specified deployment.
+	UpdateApiDeployment(context.Context, *UpdateApiDeploymentRequest) (*ApiDeployment, error)
+	// DeleteApiDeployment removes a specified deployment, all revisions, and all
+	// child resources (e.g. artifacts).
+	DeleteApiDeployment(context.Context, *DeleteApiDeploymentRequest) (*emptypb.Empty, error)
+	// TagApiDeploymentRevision adds a tag to a specified revision of a
+	// deployment.
+	TagApiDeploymentRevision(context.Context, *TagApiDeploymentRevisionRequest) (*ApiDeployment, error)
+	// ListApiDeploymentRevisions lists all revisions of a deployment.
+	// Revisions are returned in descending order of revision creation time.
+	ListApiDeploymentRevisions(context.Context, *ListApiDeploymentRevisionsRequest) (*ListApiDeploymentRevisionsResponse, error)
+	// RollbackApiDeployment sets the current revision to a specified prior
+	// revision. Note that this creates a new revision with a new revision ID.
+	RollbackApiDeployment(context.Context, *RollbackApiDeploymentRequest) (*ApiDeployment, error)
+	// DeleteApiDeploymentRevision deletes a revision of a deployment.
+	DeleteApiDeploymentRevision(context.Context, *DeleteApiDeploymentRevisionRequest) (*ApiDeployment, error)
 	// ListArtifacts returns matching artifacts.
 	ListArtifacts(context.Context, *ListArtifactsRequest) (*ListArtifactsResponse, error)
 	// GetArtifact returns a specified artifact.
@@ -393,8 +513,6 @@ type RegistryServer interface {
 	// If artifacts are stored with GZip compression, the default behavior
 	// is to return the artifact uncompressed (the mime_type response field
 	// indicates the exact format returned).
-	// (-- api-linter: core::0131::response-message-name=disabled
-	//     aip.dev/not-precedent: Responses are arbitrary blobs of data. --)
 	GetArtifactContents(context.Context, *GetArtifactContentsRequest) (*httpbody.HttpBody, error)
 	// CreateArtifact creates a specified artifact.
 	CreateArtifact(context.Context, *CreateArtifactRequest) (*Artifact, error)
@@ -468,6 +586,33 @@ func (UnimplementedRegistryServer) RollbackApiSpec(context.Context, *RollbackApi
 }
 func (UnimplementedRegistryServer) DeleteApiSpecRevision(context.Context, *DeleteApiSpecRevisionRequest) (*ApiSpec, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteApiSpecRevision not implemented")
+}
+func (UnimplementedRegistryServer) ListApiDeployments(context.Context, *ListApiDeploymentsRequest) (*ListApiDeploymentsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListApiDeployments not implemented")
+}
+func (UnimplementedRegistryServer) GetApiDeployment(context.Context, *GetApiDeploymentRequest) (*ApiDeployment, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetApiDeployment not implemented")
+}
+func (UnimplementedRegistryServer) CreateApiDeployment(context.Context, *CreateApiDeploymentRequest) (*ApiDeployment, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateApiDeployment not implemented")
+}
+func (UnimplementedRegistryServer) UpdateApiDeployment(context.Context, *UpdateApiDeploymentRequest) (*ApiDeployment, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateApiDeployment not implemented")
+}
+func (UnimplementedRegistryServer) DeleteApiDeployment(context.Context, *DeleteApiDeploymentRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteApiDeployment not implemented")
+}
+func (UnimplementedRegistryServer) TagApiDeploymentRevision(context.Context, *TagApiDeploymentRevisionRequest) (*ApiDeployment, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method TagApiDeploymentRevision not implemented")
+}
+func (UnimplementedRegistryServer) ListApiDeploymentRevisions(context.Context, *ListApiDeploymentRevisionsRequest) (*ListApiDeploymentRevisionsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListApiDeploymentRevisions not implemented")
+}
+func (UnimplementedRegistryServer) RollbackApiDeployment(context.Context, *RollbackApiDeploymentRequest) (*ApiDeployment, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RollbackApiDeployment not implemented")
+}
+func (UnimplementedRegistryServer) DeleteApiDeploymentRevision(context.Context, *DeleteApiDeploymentRevisionRequest) (*ApiDeployment, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteApiDeploymentRevision not implemented")
 }
 func (UnimplementedRegistryServer) ListArtifacts(context.Context, *ListArtifactsRequest) (*ListArtifactsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListArtifacts not implemented")
@@ -860,6 +1005,168 @@ func _Registry_DeleteApiSpecRevision_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Registry_ListApiDeployments_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListApiDeploymentsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RegistryServer).ListApiDeployments(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/google.cloud.apigeeregistry.v1.Registry/ListApiDeployments",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RegistryServer).ListApiDeployments(ctx, req.(*ListApiDeploymentsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Registry_GetApiDeployment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetApiDeploymentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RegistryServer).GetApiDeployment(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/google.cloud.apigeeregistry.v1.Registry/GetApiDeployment",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RegistryServer).GetApiDeployment(ctx, req.(*GetApiDeploymentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Registry_CreateApiDeployment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateApiDeploymentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RegistryServer).CreateApiDeployment(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/google.cloud.apigeeregistry.v1.Registry/CreateApiDeployment",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RegistryServer).CreateApiDeployment(ctx, req.(*CreateApiDeploymentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Registry_UpdateApiDeployment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateApiDeploymentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RegistryServer).UpdateApiDeployment(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/google.cloud.apigeeregistry.v1.Registry/UpdateApiDeployment",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RegistryServer).UpdateApiDeployment(ctx, req.(*UpdateApiDeploymentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Registry_DeleteApiDeployment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteApiDeploymentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RegistryServer).DeleteApiDeployment(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/google.cloud.apigeeregistry.v1.Registry/DeleteApiDeployment",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RegistryServer).DeleteApiDeployment(ctx, req.(*DeleteApiDeploymentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Registry_TagApiDeploymentRevision_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TagApiDeploymentRevisionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RegistryServer).TagApiDeploymentRevision(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/google.cloud.apigeeregistry.v1.Registry/TagApiDeploymentRevision",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RegistryServer).TagApiDeploymentRevision(ctx, req.(*TagApiDeploymentRevisionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Registry_ListApiDeploymentRevisions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListApiDeploymentRevisionsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RegistryServer).ListApiDeploymentRevisions(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/google.cloud.apigeeregistry.v1.Registry/ListApiDeploymentRevisions",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RegistryServer).ListApiDeploymentRevisions(ctx, req.(*ListApiDeploymentRevisionsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Registry_RollbackApiDeployment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RollbackApiDeploymentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RegistryServer).RollbackApiDeployment(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/google.cloud.apigeeregistry.v1.Registry/RollbackApiDeployment",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RegistryServer).RollbackApiDeployment(ctx, req.(*RollbackApiDeploymentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Registry_DeleteApiDeploymentRevision_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteApiDeploymentRevisionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RegistryServer).DeleteApiDeploymentRevision(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/google.cloud.apigeeregistry.v1.Registry/DeleteApiDeploymentRevision",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RegistryServer).DeleteApiDeploymentRevision(ctx, req.(*DeleteApiDeploymentRevisionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Registry_ListArtifacts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListArtifactsRequest)
 	if err := dec(in); err != nil {
@@ -1054,6 +1361,42 @@ var Registry_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteApiSpecRevision",
 			Handler:    _Registry_DeleteApiSpecRevision_Handler,
+		},
+		{
+			MethodName: "ListApiDeployments",
+			Handler:    _Registry_ListApiDeployments_Handler,
+		},
+		{
+			MethodName: "GetApiDeployment",
+			Handler:    _Registry_GetApiDeployment_Handler,
+		},
+		{
+			MethodName: "CreateApiDeployment",
+			Handler:    _Registry_CreateApiDeployment_Handler,
+		},
+		{
+			MethodName: "UpdateApiDeployment",
+			Handler:    _Registry_UpdateApiDeployment_Handler,
+		},
+		{
+			MethodName: "DeleteApiDeployment",
+			Handler:    _Registry_DeleteApiDeployment_Handler,
+		},
+		{
+			MethodName: "TagApiDeploymentRevision",
+			Handler:    _Registry_TagApiDeploymentRevision_Handler,
+		},
+		{
+			MethodName: "ListApiDeploymentRevisions",
+			Handler:    _Registry_ListApiDeploymentRevisions_Handler,
+		},
+		{
+			MethodName: "RollbackApiDeployment",
+			Handler:    _Registry_RollbackApiDeployment_Handler,
+		},
+		{
+			MethodName: "DeleteApiDeploymentRevision",
+			Handler:    _Registry_DeleteApiDeploymentRevision_Handler,
 		},
 		{
 			MethodName: "ListArtifacts",

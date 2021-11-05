@@ -16,6 +16,7 @@ package registry
 
 import (
 	"context"
+	"sync"
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/internal/storage"
@@ -28,27 +29,25 @@ import (
 
 // CreateApi handles the corresponding API request.
 func (s *RegistryServer) CreateApi(ctx context.Context, req *rpc.CreateApiRequest) (*rpc.Api, error) {
+	parent, err := names.ParseProjectWithLocation(req.GetParent())
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	if req.GetApi() == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid api %+v: body must be provided", req.GetApi())
+	}
+
+	return s.createApi(ctx, parent.Api(req.GetApiId()), req.GetApi())
+}
+
+func (s *RegistryServer) createApi(ctx context.Context, name names.Api, body *rpc.Api) (*rpc.Api, error) {
 	db, err := s.getStorageClient(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 	defer db.Close()
 
-	if req.GetApi() == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid api %+v: body must be provided", req.GetApi())
-	}
-
-	parent, err := names.ParseProjectWithLocation(req.GetParent())
-	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
-	}
-
-	// Creation should only succeed when the parent exists.
-	if _, err := db.GetProject(ctx, parent); err != nil {
-		return nil, err
-	}
-
-	name := parent.Api(req.GetApiId())
 	if _, err := db.GetApi(ctx, name); err == nil {
 		return nil, status.Errorf(codes.AlreadyExists, "API %q already exists", name)
 	} else if !isNotFound(err) {
@@ -59,7 +58,12 @@ func (s *RegistryServer) CreateApi(ctx context.Context, req *rpc.CreateApiReques
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	api, err := models.NewApi(name, req.GetApi())
+	// Creation should only succeed when the parent exists.
+	if _, err := db.GetProject(ctx, name.Project()); err != nil {
+		return nil, err
+	}
+
+	api, err := models.NewApi(name, body)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -174,6 +178,8 @@ func (s *RegistryServer) ListApis(ctx context.Context, req *rpc.ListApisRequest)
 	return response, nil
 }
 
+var updateApiMutex sync.Mutex
+
 // UpdateApi handles the corresponding API request.
 func (s *RegistryServer) UpdateApi(ctx context.Context, req *rpc.UpdateApiRequest) (*rpc.Api, error) {
 	db, err := s.getStorageClient(ctx)
@@ -193,8 +199,21 @@ func (s *RegistryServer) UpdateApi(ctx context.Context, req *rpc.UpdateApiReques
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
+	if req.GetAllowMissing() {
+		// Prevent a race condition that can occur when two updates are made
+		// to the same non-existent resource. The db.Get...() call returns
+		// NotFound for both updates, and after one creates the resource,
+		// the other creation fails. The lock() prevents this by serializing
+		// the get and create operations. Future updates could improve this
+		// with improvements closer to the database level.
+		updateApiMutex.Lock()
+		defer updateApiMutex.Unlock()
+	}
+
 	api, err := db.GetApi(ctx, name)
-	if err != nil {
+	if req.GetAllowMissing() && isNotFound(err) {
+		return s.createApi(ctx, name, req.GetApi())
+	} else if err != nil {
 		return nil, err
 	}
 

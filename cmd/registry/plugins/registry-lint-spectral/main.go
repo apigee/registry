@@ -20,6 +20,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	lint "github.com/apigee/registry/cmd/registry/plugins/linter"
 	"github.com/apigee/registry/rpc"
@@ -75,6 +76,8 @@ func (linter *spectralLinterRunner) RunImpl(
 	req *rpc.LinterRequest,
 	executer spectralLintCommandExecuter,
 ) (*rpc.LinterResponse, error) {
+	lintFiles := make([]*rpc.LintFile, 0)
+
 	// Create a temporary directory to store the configuration.
 	root, err := ioutil.TempDir("", "spectral-config-")
 	if err != nil {
@@ -90,30 +93,47 @@ func (linter *spectralLinterRunner) RunImpl(
 		return nil, err
 	}
 
-	// Execute the spectral linter.
-	lintResults, err := executer.Execute(req.GetSpecPath(), configPath)
+	// Traverse the files in the directory
+	err = filepath.Walk(req.GetSpecDirectory(), func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		// Async API and Open API specs are YAML files
+		if !strings.HasSuffix(path, ".yaml") && !strings.HasSuffix(path, ".yml") {
+			return nil
+		}
+
+		// Execute the spectral linter.
+		lintResults, err := executer.Execute(path, configPath)
+		if err != nil {
+			return err
+		}
+
+		// Get the lint results as a LintFile object from the spectral output file
+		lintProblems, err := getLintProblemsFromSpectralResults(lintResults)
+		if err != nil {
+			return err
+		}
+
+		// Formulate the response.
+		lintFile := &rpc.LintFile{
+			FilePath: path,
+			Problems: lintProblems,
+		}
+
+		lintFiles = append(lintFiles, lintFile)
+		return nil
+	})
+
 	if err != nil {
 		return nil, err
-	}
-
-	// Get the lint results as a LintFile object from the spectral output file
-	lintProblems, err := getLintProblemsFromSpectralResults(lintResults)
-	if err != nil {
-		return nil, err
-	}
-
-	// Formulate the response.
-	lintFile := &rpc.LintFile{
-		FilePath: req.GetSpecPath(),
-		Problems: lintProblems,
 	}
 
 	return &rpc.LinterResponse{
 		Lint: &rpc.Lint{
-			Name: "registry-lint-sample",
-			Files: []*rpc.LintFile{
-				lintFile,
-			},
+			Name:  "registry-lint-spectral",
+			Files: lintFiles,
 		},
 	}, nil
 }

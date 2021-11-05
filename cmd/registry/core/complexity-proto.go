@@ -22,7 +22,7 @@ import (
 
 	"github.com/yoheimuta/go-protoparser/v4/parser"
 
-	metrics "github.com/googleapis/gnostic/metrics"
+	metrics "github.com/google/gnostic/metrics"
 	protoparser "github.com/yoheimuta/go-protoparser/v4"
 )
 

@@ -14,5 +14,7 @@
 
 steps:
 - name: 'gcr.io/cloud-builders/docker'
-  args: [ 'build', '-t', 'gcr.io/${_REGISTRY_PROJECT_IDENTIFIER}/registry-backend', '.']
-images: ['gcr.io/${_REGISTRY_PROJECT_IDENTIFIER}/registry-backend']
+  args: [ 'build', '-t', 'gcr.io/${PROJECT_ID}/registry-server', '-f', 'containers/registry-server/Dockerfile', '.']
+- name: 'gcr.io/cloud-builders/docker'
+  args: [ 'build', '-t', 'gcr.io/${PROJECT_ID}/registry-envoy', '-f', 'deployments/envoy/Dockerfile', '.' ]
+images: ['gcr.io/${PROJECT_ID}/registry-server', 'gcr.io/${PROJECT_ID}/registry-envoy']
