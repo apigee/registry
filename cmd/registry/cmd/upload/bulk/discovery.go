@@ -207,17 +207,17 @@ func (task *uploadDiscoveryTask) fetchDiscoveryDoc() error {
 		return err
 	}
 
-	// normalize the doc to produce consistent hashes
-	var m interface{}
-	err = json.Unmarshal(bytes, &m)
-	if err != nil {
-		return err
-	}
-	normalized, err := json.MarshalIndent(m, "", "  ")
-	if err != nil {
-		return err
-	}
+	task.contents, err = normalizeJSON(bytes)
+	return err
+}
 
-	task.contents = []byte(normalized)
-	return nil
+// Normalize JSON documents by remarshalling them to
+// ensure that their keys are sorted alphabetically.
+// For readability, marshalled docs are indented.
+func normalizeJSON(bytes []byte) ([]byte, error) {
+	var m interface{}
+	if err := json.Unmarshal(bytes, &m); err != nil {
+		return nil, err
+	}
+	return json.MarshalIndent(m, "", "  ")
 }
