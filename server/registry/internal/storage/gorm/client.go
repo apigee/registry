@@ -93,11 +93,6 @@ func NewClient(ctx context.Context, driver, dsn string) (*Client, error) {
 	}
 }
 
-// EnsureTables ensures that all necessary tables exist in the database.
-func (db *Client) EnsureTables() error {
-	return db.ensureTables()
-}
-
 // Close closes a database session.
 func (c *Client) Close() {
 	lock()
@@ -121,7 +116,8 @@ func (c *Client) ensureTable(v interface{}) error {
 	return nil
 }
 
-func (c *Client) ensureTables() error {
+// EnsureTables ensures that all necessary tables exist in the database.
+func (c *Client) EnsureTables() error {
 	entities := []interface{}{
 		&models.Project{},
 		&models.Api{},
