@@ -216,8 +216,8 @@ func (task *uploadOpenAPITask) createOrUpdateSpec(ctx context.Context) error {
 		if int(spec.GetSizeBytes()) == len(contents) {
 			hash := hashForBytes(contents)
 			if spec.GetHash() == hash {
-				log.Debugf("Matched existing spec %s", task.specName())
-				return nil // this spec is already uploaded
+				log.Debugf("Matched already uploaded spec %s", task.specName())
+				return nil
 			}
 		}
 	}
