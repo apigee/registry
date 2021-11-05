@@ -182,6 +182,16 @@ func (task *uploadProtoTask) createOrUpdateSpec(ctx context.Context) error {
 	}
 
 	// Use the spec size and hash to avoid unnecessary uploads.
+	spec, err := task.client.GetApiSpec(ctx, &rpc.GetApiSpecRequest{
+		Name: task.specName(),
+	})
+
+	if err == nil && int(spec.GetSizeBytes()) == len(contents) && spec.GetHash() == hashForBytes(contents) {
+		log.Debugf("Matched already uploaded spec %s", task.specName())
+		return nil
+	}
+
+	// Use the spec size and hash to avoid unnecessary uploads.
 	if spec, err := task.client.GetApiSpec(ctx, &rpc.GetApiSpecRequest{
 		Name: task.specName(),
 	}); err == nil {

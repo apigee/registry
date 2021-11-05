@@ -147,16 +147,13 @@ func (task *uploadDiscoveryTask) createVersion(ctx context.Context) error {
 
 func (task *uploadDiscoveryTask) createOrUpdateSpec(ctx context.Context) error {
 	// Use the spec size and hash to avoid unnecessary uploads.
-	if spec, err := task.client.GetApiSpec(ctx, &rpc.GetApiSpecRequest{
+	spec, err := task.client.GetApiSpec(ctx, &rpc.GetApiSpecRequest{
 		Name: task.specName(),
-	}); err == nil {
-		if int(spec.GetSizeBytes()) == len(task.contents) {
-			hash := hashForBytes(task.contents)
-			if spec.GetHash() == hash {
-				log.Debugf("Matched already uploaded spec %s", task.specName())
-				return nil
-			}
-		}
+	})
+
+	if err == nil && int(spec.GetSizeBytes()) == len(task.contents) && spec.GetHash() == hashForBytes(task.contents) {
+		log.Debugf("Matched already uploaded spec %s", task.specName())
+		return nil
 	}
 
 	gzippedContents, err := core.GZippedBytes(task.contents)
