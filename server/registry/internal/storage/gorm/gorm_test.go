@@ -33,6 +33,9 @@ func TestFieldClearing(t *testing.T) {
 		t.Fatalf("NewClient returned error: %s", err)
 	}
 	defer c.Close()
+	if err := c.EnsureTables(); err != nil {
+		t.Fatalf("EnsureTables returned error: %s", err)
+	}
 
 	original := &models.Project{
 		ProjectID:   "my-project",
@@ -66,8 +69,14 @@ func TestFieldClearing(t *testing.T) {
 func TestCRUD(t *testing.T) {
 	ctx := context.Background()
 
-	c, _ := NewClient(ctx, "sqlite3", t.TempDir()+"/testing.db")
+	c, err := NewClient(ctx, "sqlite3", t.TempDir()+"/testing.db")
+	if err != nil {
+		t.Fatalf("NewClient returned error: %s", err)
+	}
 	defer c.Close()
+	if err := c.EnsureTables(); err != nil {
+		t.Fatalf("EnsureTables returned error: %s", err)
+	}
 
 	now := time.Now()
 	project := &models.Project{
@@ -80,8 +89,7 @@ func TestCRUD(t *testing.T) {
 	k := c.NewKey("Project", "projects/demo")
 
 	// Create a project.
-	_, err := c.Put(ctx, k, project)
-	if err != nil {
+	if _, err := c.Put(ctx, k, project); err != nil {
 		t.Errorf(err.Error())
 	}
 
@@ -127,8 +135,14 @@ func TestLoad(t *testing.T) {
 	ctx := context.Background()
 
 	db := t.TempDir() + "/testing.db"
-	c, _ := NewClient(ctx, "sqlite3", db)
-	c.Close()
+	c, err := NewClient(ctx, "sqlite3", db)
+	if err != nil {
+		t.Fatalf("NewClient returned error: %s", err)
+	}
+	defer c.Close()
+	if err := c.EnsureTables(); err != nil {
+		t.Fatalf("EnsureTables returned error: %s", err)
+	}
 
 	for i := 0; i < 99; i++ {
 		c, err := NewClient(ctx, "sqlite3", db)

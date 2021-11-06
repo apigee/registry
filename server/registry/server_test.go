@@ -43,20 +43,28 @@ func defaultTestServer(t *testing.T) *RegistryServer {
 	t.Helper()
 
 	if !usePostgres {
-		return serverWithSQLite(t)
+		if server, err := serverWithSQLite(t); err != nil {
+			t.Fatalf("Setup: failed to get server with SQLite: %s", err)
+		} else {
+			return server
+		}
 	}
 
 	server, err := serverWithPostgres(t)
 	if err != nil {
 		t.Errorf("Setup: failed to get server with postgres: %s", err)
 		t.Log("Falling back to server with SQLite storage")
-		return serverWithSQLite(t)
+		if server, err := serverWithSQLite(t); err != nil {
+			t.Fatalf("Setup: failed to get server with SQLite: %s", err)
+		} else {
+			return server
+		}
 	}
 
 	return server
 }
 
-func serverWithSQLite(t *testing.T) *RegistryServer {
+func serverWithSQLite(t *testing.T) (*RegistryServer, error) {
 	return New(Config{
 		Database: "sqlite3",
 		DBConfig: fmt.Sprintf("%s/registry.db", t.TempDir()),
@@ -74,7 +82,7 @@ func serverWithPostgres(t *testing.T) (*RegistryServer, error) {
 	return New(Config{
 		Database: postgresDriver,
 		DBConfig: postgresDBConfig,
-	}), nil
+	})
 }
 
 func resetPostgres() error {
