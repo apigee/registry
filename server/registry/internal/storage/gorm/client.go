@@ -68,9 +68,7 @@ func NewClient(ctx context.Context, driver, dsn string) (*Client, error) {
 		// empirically, it does not seem safe to disable the mutex for sqlite3,
 		// which might make sense since sqlite database access is in-process.
 		disableMutex = false
-		c := &Client{db: db}
-		c.ensure()
-		return c, nil
+		return &Client{db: db}, nil
 	case "postgres", "cloudsqlpostgres":
 		db, err := gorm.Open(postgres.New(postgres.Config{
 			DriverName: driver,
@@ -88,9 +86,7 @@ func NewClient(ctx context.Context, driver, dsn string) (*Client, error) {
 		// postgres runs in a separate process and seems to have no problems
 		// with concurrent access and modifications.
 		disableMutex = true
-		c := &Client{db: db}
-		c.ensure()
-		return c, nil
+		return &Client{db: db}, nil
 	default:
 		unlock()
 		return nil, fmt.Errorf("unsupported database %s", driver)
@@ -109,24 +105,36 @@ func (c *Client) close() {
 	sqlDB.Close()
 }
 
-func (c *Client) ensureTable(v interface{}) {
+func (c *Client) ensureTable(v interface{}) error {
 	lock()
 	defer unlock()
 	if !c.db.Migrator().HasTable(v) {
-		_ = c.db.Migrator().CreateTable(v)
+		if err := c.db.Migrator().CreateTable(v); err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
-func (c *Client) ensure() {
-	c.ensureTable(&models.Project{})
-	c.ensureTable(&models.Api{})
-	c.ensureTable(&models.Version{})
-	c.ensureTable(&models.Spec{})
-	c.ensureTable(&models.SpecRevisionTag{})
-	c.ensureTable(&models.Deployment{})
-	c.ensureTable(&models.DeploymentRevisionTag{})
-	c.ensureTable(&models.Artifact{})
-	c.ensureTable(&models.Blob{})
+// EnsureTables ensures that all necessary tables exist in the database.
+func (c *Client) EnsureTables() error {
+	entities := []interface{}{
+		&models.Project{},
+		&models.Api{},
+		&models.Version{},
+		&models.Spec{},
+		&models.SpecRevisionTag{},
+		&models.Deployment{},
+		&models.DeploymentRevisionTag{},
+		&models.Artifact{},
+		&models.Blob{},
+	}
+	for _, entity := range entities {
+		if err := c.ensureTable(entity); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // IsNotFound returns true if an error is due to an entity not being found.
