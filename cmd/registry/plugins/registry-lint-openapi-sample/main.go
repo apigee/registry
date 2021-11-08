@@ -28,8 +28,8 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// spectralLintCommandExecuter is an interface through which the Spectral command executes.
-type spectralLintCommandExecuter interface {
+// sampleOpenApiLintCommandExecuter is an interface through which the Spectral command executes.
+type sampleOpenApiLintCommandExecuter interface {
 	// Runs the spectral linter with a provided spec and configuration path
 	Execute(specPath string, ruleIds []string) ([]*rpc.LintProblem, error)
 }
@@ -43,7 +43,7 @@ type DescriptionField struct {
 // sampleOpenApiLinterRunner implements the LinterRunner interface for the Spectral linter.
 type sampleOpenApiLinterRunner struct{}
 
-// concreteSampleOpenApiLintCommandExecuter implements the spectralLintCommandExecuter interface
+// concreteSampleOpenApiLintCommandExecuter implements the sampleOpenApiLintCommandExecuter interface
 // for the Spectral linter.
 type concreteSampleOpenApiLintCommandExecuter struct{}
 
@@ -57,7 +57,7 @@ func (linter *sampleOpenApiLinterRunner) Run(req *rpc.LinterRequest) (*rpc.Linte
 
 func (linter *sampleOpenApiLinterRunner) RunImpl(
 	req *rpc.LinterRequest,
-	executer spectralLintCommandExecuter,
+	executer sampleOpenApiLintCommandExecuter,
 ) (*rpc.LinterResponse, error) {
 	lintFiles := make([]*rpc.LintFile, 0)
 
