@@ -151,7 +151,7 @@ func getDescriptionsFromSpecHelper(node *yaml.Node, results *[]*DescriptionField
 func enforceDescriptionLessThan1000Chars(descriptions *[]*DescriptionField) []*rpc.LintProblem {
 	problems := make([]*rpc.LintProblem, 0)
 	for _, description := range *descriptions {
-		if len(description.Description) >= 100 {
+		if len(description.Description) >= 1000 {
 			problems = append(problems, &rpc.LintProblem{
 				Message: fmt.Sprintf(
 					"Description field should be less than 1000 chars, currently it is\n %s\n",
