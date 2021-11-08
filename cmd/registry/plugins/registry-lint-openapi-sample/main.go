@@ -28,9 +28,9 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// sampleOpenApiLintCommandExecuter is an interface through which the Spectral command executes.
+// sampleOpenApiLintCommandExecuter is an interface through which the Sample OpenAPI linter executes.
 type sampleOpenApiLintCommandExecuter interface {
-	// Runs the spectral linter with a provided spec and configuration path
+	// Runs the sample OpenAPI linter with a provided spec and configuration path
 	Execute(specPath string, ruleIds []string) ([]*rpc.LintProblem, error)
 }
 
@@ -40,18 +40,17 @@ type DescriptionField struct {
 	Description  string
 }
 
-// sampleOpenApiLinterRunner implements the LinterRunner interface for the Spectral linter.
+// sampleOpenApiLinterRunner implements the LinterRunner interface for the sample OpenAPI linter.
 type sampleOpenApiLinterRunner struct{}
 
 // concreteSampleOpenApiLintCommandExecuter implements the sampleOpenApiLintCommandExecuter interface
-// for the Spectral linter.
+// for the sample OpenAPI linter.
 type concreteSampleOpenApiLintCommandExecuter struct{}
 
 const descriptionLessThan1000CharsRuleId = "description-less-than-1000-chars"
 const descriptionContainsNoTagsRuleId = "description-contains-no-tags"
 
 func (linter *sampleOpenApiLinterRunner) Run(req *rpc.LinterRequest) (*rpc.LinterResponse, error) {
-	log.Info("Running")
 	return linter.RunImpl(req, &concreteSampleOpenApiLintCommandExecuter{})
 }
 
@@ -72,7 +71,7 @@ func (linter *sampleOpenApiLinterRunner) RunImpl(
 			return nil
 		}
 
-		// Execute the spectral linter.
+		// Execute the linter.
 		problems, err := executer.Execute(path, req.GetRuleIds())
 		if err != nil {
 			return err
@@ -93,21 +92,13 @@ func (linter *sampleOpenApiLinterRunner) RunImpl(
 
 	return &rpc.LinterResponse{
 		Lint: &rpc.Lint{
-			Name:  "registry-lint-spectral",
+			Name:  "registry-lint-openapi-sample",
 			Files: lintFiles,
 		},
 	}, nil
 }
 
 func (*concreteSampleOpenApiLintCommandExecuter) Execute(specPath string, ruleIds []string) ([]*rpc.LintProblem, error) {
-	// Create a temporary destination directory to store the output.
-	root, err := ioutil.TempDir("", "spectral-output-")
-	if err != nil {
-		return nil, err
-	}
-	defer os.RemoveAll(root)
-
-	log.Info(specPath)
 	specFile, err := ioutil.ReadFile(specPath)
 	if err != nil {
 		return nil, err
