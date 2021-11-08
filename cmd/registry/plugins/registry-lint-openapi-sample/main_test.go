@@ -25,7 +25,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-// mockSampleOpenApiExecuter implements the spectral runner interface.
+// mockSampleOpenApiExecuter implements the Sample OpenAPI runner interface.
 // It returns mock results according to data provided in tests.
 type mockSampleOpenApiExecuter struct {
 	mock.Mock
@@ -63,7 +63,7 @@ func setupFakeSpec() (path string, err error) {
 	return f.Name(), err
 }
 
-func TestSpectralPluginLintSpec(t *testing.T) {
+func TestRunImpl(t *testing.T) {
 	specDirectory, err := setupFakeSpec()
 	defer os.RemoveAll(specDirectory)
 	assert.Equal(t, err, nil)
