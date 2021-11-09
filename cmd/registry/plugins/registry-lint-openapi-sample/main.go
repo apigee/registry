@@ -28,12 +28,6 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// sampleOpenApiLintCommandExecuter is an interface through which the Sample OpenAPI linter executes.
-type sampleOpenApiLintCommandExecuter interface {
-	// Runs the sample OpenAPI linter with a provided spec and configuration path
-	Execute(specPath string, ruleIds []string) ([]*rpc.LintProblem, error)
-}
-
 type DescriptionField struct {
 	LineNumber   int
 	ColumnNumber int
@@ -43,21 +37,10 @@ type DescriptionField struct {
 // sampleOpenApiLinterRunner implements the LinterRunner interface for the sample OpenAPI linter.
 type sampleOpenApiLinterRunner struct{}
 
-// concreteSampleOpenApiLintCommandExecuter implements the sampleOpenApiLintCommandExecuter interface
-// for the sample OpenAPI linter.
-type concreteSampleOpenApiLintCommandExecuter struct{}
-
 const descriptionLessThan1000CharsRuleId = "description-less-than-1000-chars"
 const descriptionContainsNoTagsRuleId = "description-contains-no-tags"
 
 func (linter *sampleOpenApiLinterRunner) Run(req *rpc.LinterRequest) (*rpc.LinterResponse, error) {
-	return linter.RunImpl(req, &concreteSampleOpenApiLintCommandExecuter{})
-}
-
-func (linter *sampleOpenApiLinterRunner) RunImpl(
-	req *rpc.LinterRequest,
-	executer sampleOpenApiLintCommandExecuter,
-) (*rpc.LinterResponse, error) {
 	lintFiles := make([]*rpc.LintFile, 0)
 
 	// Traverse the files in the directory
@@ -72,7 +55,7 @@ func (linter *sampleOpenApiLinterRunner) RunImpl(
 		}
 
 		// Execute the linter.
-		problems, err := executer.Execute(path, req.GetRuleIds())
+		problems, err := lintFile(path, req.GetRuleIds())
 		if err != nil {
 			return err
 		}
@@ -98,7 +81,7 @@ func (linter *sampleOpenApiLinterRunner) RunImpl(
 	}, nil
 }
 
-func (*concreteSampleOpenApiLintCommandExecuter) Execute(specPath string, ruleIds []string) ([]*rpc.LintProblem, error) {
+func lintFile(specPath string, ruleIds []string) ([]*rpc.LintProblem, error) {
 	specFile, err := ioutil.ReadFile(specPath)
 	if err != nil {
 		return nil, err
@@ -116,6 +99,10 @@ func (*concreteSampleOpenApiLintCommandExecuter) Execute(specPath string, ruleId
 		if err != nil {
 			log.Errorf("Error while linting %s", err)
 			continue
+		}
+
+		for _, problem := range lintProblems {
+			log.Infof("PROBLEM: %s", problem.Message)
 		}
 		problems = append(problems, lintProblems...)
 	}
@@ -153,10 +140,7 @@ func enforceDescriptionLessThan1000Chars(descriptions *[]*DescriptionField) []*r
 	for _, description := range *descriptions {
 		if len(description.Description) >= 1000 {
 			problems = append(problems, &rpc.LintProblem{
-				Message: fmt.Sprintf(
-					"Description field should be less than 1000 chars, currently it is\n %s\n",
-					description.Description,
-				),
+				Message:    "Description field should be less than 1000 chars.",
 				RuleId:     descriptionLessThan1000CharsRuleId,
 				Suggestion: "Ensure that your description field is less than 1000 chars in length.",
 				Location: &rpc.LintLocation{
@@ -180,10 +164,7 @@ func enforceDescriptionContainsNoTagsRuleId(descriptions *[]*DescriptionField) [
 		}
 		if r.MatchString(description.Description) {
 			problems = append(problems, &rpc.LintProblem{
-				Message: fmt.Sprintf(
-					"Description field should not contain any tags, currently it is\n %s\n",
-					description.Description,
-				),
+				Message:    "Description field should not contain any tags.",
 				RuleId:     descriptionContainsNoTagsRuleId,
 				Suggestion: "Ensure that your description field does not contain any tags (regex <[^>]*>)",
 				Location: &rpc.LintLocation{

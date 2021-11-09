@@ -15,126 +15,147 @@
 package main
 
 import (
-	"errors"
 	"io/ioutil"
 	"os"
 	"testing"
 
 	"github.com/apigee/registry/rpc"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
 
-// mockSampleOpenApiExecuter implements the Sample OpenAPI runner interface.
-// It returns mock results according to data provided in tests.
-type mockSampleOpenApiExecuter struct {
-	mock.Mock
-	results []*rpc.LintProblem
-	err     error
-}
-
-func (runner *mockSampleOpenApiExecuter) Execute(
-	spec string,
-	ruleIds []string,
-) ([]*rpc.LintProblem, error) {
-	return runner.results, runner.err
-}
-
-func NewMockSampleOpenAPIExecuter(
-	results []*rpc.LintProblem,
-	err error,
-) sampleOpenApiLintCommandExecuter {
-	return &mockSampleOpenApiExecuter{
-		results: results,
-		err:     err,
-	}
-}
-
-func setupFakeSpec() (path string, err error) {
+func setupFakeSpec(contents string) (dirPath, specFilePath string, err error) {
 	tempDir, err := ioutil.TempDir("", "")
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	f, err := ioutil.TempFile(tempDir, "*.yaml")
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
-	return f.Name(), err
+
+	err = ioutil.WriteFile(f.Name(), []byte(contents), 0644)
+	if err != nil {
+		return "", "", err
+	}
+
+	return tempDir, f.Name(), nil
 }
 
-func TestRunImpl(t *testing.T) {
-	specDirectory, err := setupFakeSpec()
+func TestRunDescriptionContainsNoTagsRule(t *testing.T) {
+	contents := `
+        openapi: "3.0.2"
+        info:
+            title: "Swagger Petstore <script></script> with eval("
+        servers:
+            - url: http://petstore.swagger.io/v1
+        paths:
+            /pets:
+                get:
+                description: Gets a <list> of all pets
+    `
+	specDirectory, specFilePath, err := setupFakeSpec(contents)
 	defer os.RemoveAll(specDirectory)
 	assert.Equal(t, err, nil)
-	lintSpecTests := []struct {
-		linter           *sampleOpenApiLinterRunner
-		request          *rpc.LinterRequest
-		executer         sampleOpenApiLintCommandExecuter
-		expectedResponse *rpc.LinterResponse
-		expectedError    error
-	}{
-		{
-			&sampleOpenApiLinterRunner{},
-			&rpc.LinterRequest{
-				SpecDirectory: specDirectory,
-			},
-			NewMockSampleOpenAPIExecuter(
-				[]*rpc.LintProblem{
-					{
-						Message: "test",
-						RuleId:  "test",
-						Location: &rpc.LintLocation{
-							StartPosition: &rpc.LintPosition{
-								LineNumber:   1,
-								ColumnNumber: 1,
-							},
-						},
-					},
-				},
-				nil,
-			),
-			&rpc.LinterResponse{
-				Lint: &rpc.Lint{
-					Name: "registry-lint-openapi-sample",
-					Files: []*rpc.LintFile{
+	linter := &sampleOpenApiLinterRunner{}
+	request := &rpc.LinterRequest{
+		SpecDirectory: specDirectory,
+		RuleIds:       []string{"description-contains-no-tags"},
+	}
+	expectedResponse := &rpc.LinterResponse{
+		Lint: &rpc.Lint{
+			Name: "registry-lint-openapi-sample",
+			Files: []*rpc.LintFile{
+				{
+					FilePath: specFilePath,
+					Problems: []*rpc.LintProblem{
 						{
-							FilePath: specDirectory,
-							Problems: []*rpc.LintProblem{
-								{
-									Message: "test",
-									RuleId:  "test",
-									Location: &rpc.LintLocation{
-										StartPosition: &rpc.LintPosition{
-											LineNumber:   1,
-											ColumnNumber: 1,
-										},
-									},
+							Message:    "Description field should not contain any tags.",
+							RuleId:     "description-contains-no-tags",
+							Suggestion: "Ensure that your description field does not contain any tags (regex <[^>]*>)",
+							Location: &rpc.LintLocation{
+								StartPosition: &rpc.LintPosition{
+									LineNumber:   10,
+									ColumnNumber: 30,
 								},
 							},
 						},
 					},
 				},
 			},
-			nil,
-		},
-		{
-			&sampleOpenApiLinterRunner{},
-			&rpc.LinterRequest{
-				SpecDirectory: specDirectory,
-			},
-			NewMockSampleOpenAPIExecuter(
-				[]*rpc.LintProblem{},
-				errors.New("test"),
-			),
-			nil,
-			errors.New("test"),
 		},
 	}
 
-	for _, tt := range lintSpecTests {
-		response, err := tt.linter.RunImpl(tt.request, tt.executer)
-		assert.Equal(t, tt.expectedError, err)
-		assert.EqualValues(t, tt.expectedResponse, response)
+	response, err := linter.Run(request)
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, expectedResponse, response)
+}
+
+func TestRunDescriptionLessThan1000CharsRule(t *testing.T) {
+	contents := `
+        openapi: "3.0.2"
+        info:
+            title: "Swagger Petstore <script></script> with eval("
+        servers:
+            - url: http://petstore.swagger.io/v1
+        paths:
+            /pets:
+                get:
+                description: >
+                    eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+                    eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+                    eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+                    eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+                    eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+                    eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+                    eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+                    eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+                    eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+                    eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+                    eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+                    eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+                    eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+                    eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+                    eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+                    eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+                    eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+                    eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+                    eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+                    eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+    `
+	specDirectory, specFilePath, err := setupFakeSpec(contents)
+	defer os.RemoveAll(specDirectory)
+	assert.Equal(t, err, nil)
+	linter := &sampleOpenApiLinterRunner{}
+	request := &rpc.LinterRequest{
+		SpecDirectory: specDirectory,
+		RuleIds:       []string{"description-less-than-1000-chars"},
 	}
+	expectedResponse := &rpc.LinterResponse{
+		Lint: &rpc.Lint{
+			Name: "registry-lint-openapi-sample",
+			Files: []*rpc.LintFile{
+				{
+					FilePath: specFilePath,
+					Problems: []*rpc.LintProblem{
+						{
+							Message:    "Description field should be less than 1000 chars.",
+							RuleId:     "description-less-than-1000-chars",
+							Suggestion: "Ensure that your description field is less than 1000 chars in length.",
+							Location: &rpc.LintLocation{
+								StartPosition: &rpc.LintPosition{
+									LineNumber:   10,
+									ColumnNumber: 30,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	response, err := linter.Run(request)
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, expectedResponse, response)
 }
