@@ -100,18 +100,18 @@ func main() {
 		bootLogger.Infof("Loading configuration from %s", configPath)
 		raw, err := ioutil.ReadFile(configPath)
 		if err != nil {
-			bootLogger.Fatalf("Failed to open config file: %s", err)
+			bootLogger.WithError(err).Fatal("Failed to open config file")
 		}
 		// Expand environment variables before unmarshaling.
 		expanded := []byte(os.ExpandEnv(string(raw)))
 		err = yaml.Unmarshal(expanded, &config)
 		if err != nil {
-			bootLogger.Fatalf("Failed to read config file: %s", err)
+			bootLogger.WithError(err).Fatalf("Failed to read config file")
 		}
 	}
 
 	if err := validateConfig(); err != nil {
-		bootLogger.Fatalf("Invalid configuration: %s", err)
+		bootLogger.WithError(err).Fatalf("Invalid configuration")
 	}
 
 	// Use logging options from the server config.
@@ -126,7 +126,7 @@ func main() {
 		Port: config.Port,
 	})
 	if err != nil {
-		logger.Fatalf("Failed to create TCP listener: %s", err)
+		logger.WithError(err).Fatalf("Failed to create TCP listener")
 	}
 	defer listener.Close()
 
@@ -139,7 +139,7 @@ func main() {
 		ProjectID: config.Pubsub.Project,
 	})
 	if err != nil {
-		logger.Fatalf("Failed to create registry server: %s", err)
+		logger.WithError(err).Fatalf("Failed to create registry server")
 	}
 
 	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(logInterceptor))
