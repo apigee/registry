@@ -42,7 +42,8 @@ func GetAuthenticatedClient(ctx context.Context) (*http.Client, error) {
 	}
 	// Create configuration for specified scopes.
 	// If you modify these scopes, delete your previously saved token.
-	config, err := google.ConfigFromJSON(b, "https://www.googleapis.com/auth/spreadsheets")
+	config, err := google.ConfigFromJSON(b,
+		"https://www.googleapis.com/auth/spreadsheets")
 	if err != nil {
 		return nil, err
 	}
