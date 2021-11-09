@@ -16,6 +16,7 @@ package bulk
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -28,7 +29,6 @@ import (
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
-	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
 func openAPICommand(ctx context.Context) *cobra.Command {
@@ -138,12 +138,11 @@ func (task *uploadOpenAPITask) Run(ctx context.Context) error {
 	if err := task.createVersion(ctx); err != nil {
 		return err
 	}
-	// If the API spec does not exist, create it.
-	if err := task.createSpec(ctx); err != nil {
+	// Create or update the spec as needed.
+	if err := task.createOrUpdateSpec(ctx); err != nil {
 		return err
 	}
-	// If the API spec needs a new revision, create it.
-	return task.updateSpec(ctx)
+	return nil
 }
 
 func (task *uploadOpenAPITask) populateFields() error {
@@ -166,25 +165,21 @@ func (task *uploadOpenAPITask) populateFields() error {
 }
 
 func (task *uploadOpenAPITask) createAPI(ctx context.Context) error {
-	if _, err := task.client.GetApi(ctx, &rpc.GetApiRequest{
-		Name: task.apiName(),
-	}); !core.NotFound(err) {
-		return err // Returns nil when API is found without error.
-	}
-
-	response, err := task.client.CreateApi(ctx, &rpc.CreateApiRequest{
-		Parent: task.projectName() + "/locations/global",
-		ApiId:  task.apiID,
+	// Create an API if needed (or update an existing one)
+	response, err := task.client.UpdateApi(ctx, &rpc.UpdateApiRequest{
 		Api: &rpc.Api{
+			Name:        task.apiName(),
 			DisplayName: task.apiID,
 		},
+		AllowMissing: true,
 	})
 	if err == nil {
-		log.Debugf(ctx, "Created %s", response.Name)
-	} else if core.AlreadyExists(err) {
-		log.Debugf(ctx, "Found %s", task.apiName())
+		log.Debugf(ctx, "Updated %s", response.Name)
 	} else {
 		log.FromContext(ctx).WithError(err).Debugf("Failed to create API %s", task.apiName())
+		// Returning this error ends all tasks, which seems appropriate to
+		// handle situations where all might fail due to a common problem
+		// (a missing project or incorrect project-id).
 		return fmt.Errorf("Failed to create %s, %s", task.apiName(), err)
 	}
 
@@ -192,86 +187,60 @@ func (task *uploadOpenAPITask) createAPI(ctx context.Context) error {
 }
 
 func (task *uploadOpenAPITask) createVersion(ctx context.Context) error {
-	if _, err := task.client.GetApiVersion(ctx, &rpc.GetApiVersionRequest{
-		Name: task.versionName(),
-	}); !core.NotFound(err) {
-		return err // Returns nil when version is found without error.
-	}
-
-	response, err := task.client.CreateApiVersion(ctx, &rpc.CreateApiVersionRequest{
-		Parent:       task.apiName(),
-		ApiVersionId: task.versionID,
-		ApiVersion:   &rpc.ApiVersion{},
-	})
-	if err != nil {
-		log.FromContext(ctx).WithError(err).Debugf("Failed to create version %s", task.versionName())
-	} else {
-		log.Debugf(ctx, "Created %s", response.Name)
-	}
-
-	return nil
-}
-
-func (task *uploadOpenAPITask) createSpec(ctx context.Context) error {
-	contents, err := task.gzipContents()
-	if err != nil {
-		return err
-	}
-
-	if _, err = task.client.GetApiSpec(ctx, &rpc.GetApiSpecRequest{
-		Name: task.specName(),
-	}); !core.NotFound(err) {
-		return err // Returns nil when spec is found without error.
-	}
-
-	request := &rpc.CreateApiSpecRequest{
-		Parent:    task.versionName(),
-		ApiSpecId: task.fileName(),
-		ApiSpec: &rpc.ApiSpec{
-			MimeType: core.OpenAPIMimeType("+gzip", task.version),
-			Filename: task.fileName(),
-			Contents: contents,
+	// Create an API version if needed (or update an existing one)
+	response, err := task.client.UpdateApiVersion(ctx, &rpc.UpdateApiVersionRequest{
+		ApiVersion: &rpc.ApiVersion{
+			Name: task.versionName(),
 		},
-	}
-	if task.baseURI != "" {
-		request.ApiSpec.SourceUri = fmt.Sprintf("%s/%s", task.baseURI, task.apiPath())
-	}
-
-	response, err := task.client.CreateApiSpec(ctx, request)
-	if err != nil {
-		log.FromContext(ctx).WithError(err).Debugf("Error %s [contents-length: %d]", task.specName(), len(contents))
+		AllowMissing: true,
+	})
+	if err == nil {
+		log.Debugf(ctx, "Updated %s", response.Name)
 	} else {
-		log.Debugf(ctx, "Created %s", response.Name)
+		log.FromContext(ctx).WithError(err).Debugf("Failed to create version %s", task.versionName())
 	}
 
 	return nil
 }
 
-func (task *uploadOpenAPITask) updateSpec(ctx context.Context) error {
-	contents, err := task.gzipContents()
+func (task *uploadOpenAPITask) createOrUpdateSpec(ctx context.Context) error {
+	contents, err := ioutil.ReadFile(task.path)
 	if err != nil {
 		return err
 	}
 
+	// Use the spec size and hash to avoid unnecessary uploads.
 	spec, err := task.client.GetApiSpec(ctx, &rpc.GetApiSpecRequest{
 		Name: task.specName(),
 	})
-	if err != nil && !core.NotFound(err) {
+
+	if err == nil && int(spec.GetSizeBytes()) == len(contents) && spec.GetHash() == hashForBytes(contents) {
+		log.Debugf(ctx, "Matched already uploaded spec %s", task.specName())
+		return nil
+	}
+
+	gzippedContents, err := core.GZippedBytes(contents)
+	if err != nil {
 		return err
 	}
 
 	request := &rpc.UpdateApiSpecRequest{
 		ApiSpec: &rpc.ApiSpec{
 			Name:     task.specName(),
-			Contents: contents,
+			MimeType: core.OpenAPIMimeType("+gzip", task.version),
+			Filename: task.fileName(),
+			Contents: gzippedContents,
 		},
-		UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"contents"}},
+		AllowMissing: true,
+	}
+	if task.baseURI != "" {
+		request.ApiSpec.SourceUri = fmt.Sprintf("%s/%s", task.baseURI, task.apiPath())
 	}
 
 	response, err := task.client.UpdateApiSpec(ctx, request)
 	if err != nil {
-		log.FromContext(ctx).WithError(err).Debugf("Error %s [contents-length: %d]", request.ApiSpec.Name, len(contents))
-	} else if response.RevisionId != spec.RevisionId {
+		log.FromContext(ctx).WithError(err).Debugf("Error %s [contents-length: %d]", task.specName(), len(contents))
+	} else {
 		log.Debugf(ctx, "Updated %s", response.Name)
 	}
 
@@ -303,11 +272,9 @@ func (task *uploadOpenAPITask) fileName() string {
 	return filepath.Base(task.path)
 }
 
-func (task *uploadOpenAPITask) gzipContents() ([]byte, error) {
-	bytes, err := ioutil.ReadFile(task.path)
-	if err != nil {
-		return nil, err
-	}
-
-	return core.GZippedBytes(bytes)
+func hashForBytes(b []byte) string {
+	h := sha256.New()
+	_, _ = h.Write(b)
+	bs := h.Sum(nil)
+	return fmt.Sprintf("%x", bs)
 }

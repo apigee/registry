@@ -130,7 +130,7 @@ func main() {
 	}
 	defer listener.Close()
 
-	registryServer := registry.New(registry.Config{
+	registryServer, err := registry.New(registry.Config{
 		Database:  config.Database.Driver,
 		DBConfig:  config.Database.Config,
 		LogLevel:  config.Logging.Level,
@@ -138,6 +138,9 @@ func main() {
 		Notify:    config.Pubsub.Enable,
 		ProjectID: config.Pubsub.Project,
 	})
+	if err != nil {
+		logger.Fatalf("Failed to create registry server: %s", err)
+	}
 
 	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(logInterceptor))
 	reflection.Register(grpcServer)

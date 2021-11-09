@@ -45,7 +45,7 @@ type RegistryServer struct {
 	rpc.UnimplementedAdminServer
 }
 
-func New(config Config) *RegistryServer {
+func New(config Config) (*RegistryServer, error) {
 	s := &RegistryServer{
 		database:      config.Database,
 		dbConfig:      config.DBConfig,
@@ -58,7 +58,15 @@ func New(config Config) *RegistryServer {
 		s.dbConfig = "/tmp/registry.db"
 	}
 
-	return s
+	db, err := storage.NewClient(context.Background(), s.database, s.dbConfig)
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+	if err := db.EnsureTables(); err != nil {
+		return nil, err
+	}
+	return s, nil
 }
 
 func (s *RegistryServer) getStorageClient(ctx context.Context) (*storage.Client, error) {
