@@ -29,9 +29,11 @@ import (
 )
 
 type DescriptionField struct {
-	LineNumber   int
-	ColumnNumber int
-	Description  string
+	StartLineNumber   int
+	StartColumnNumber int
+	EndLineNumber     int
+	EndColumnNumber   int
+	Description       string
 }
 
 // sampleOpenApiLinterRunner implements the LinterRunner interface for the sample OpenAPI linter.
@@ -101,9 +103,6 @@ func lintFile(specPath string, ruleIds []string) ([]*rpc.LintProblem, error) {
 			continue
 		}
 
-		for _, problem := range lintProblems {
-			log.Infof("PROBLEM: %s", problem.Message)
-		}
 		problems = append(problems, lintProblems...)
 	}
 
@@ -117,21 +116,29 @@ func getDescriptionsFromSpec(node *yaml.Node) []*DescriptionField {
 }
 
 func getDescriptionsFromSpecHelper(node *yaml.Node, results *[]*DescriptionField) {
-	var prev *yaml.Node = nil
-	for _, child := range node.Content {
-		if prev != nil && prev.Kind == yaml.ScalarNode && prev.Value == "description" {
+	contentLength := len(node.Content)
+	for i := 0; i < contentLength; i++ {
+		child := node.Content[i]
+		if i-1 >= 0 && node.Content[i-1].Kind == yaml.ScalarNode && node.Content[i-1].Value == "description" {
+			endLineNumber := child.Line + 1
+			endLineColumn := 0
+			if i+1 < contentLength {
+				endLineNumber = node.Content[i+1].Line
+				endLineColumn = node.Content[i+1].Column
+			}
+
 			*results = append(*results, &DescriptionField{
-				LineNumber:   child.Line,
-				ColumnNumber: child.Column,
-				Description:  child.Value,
+				StartLineNumber:   child.Line,
+				StartColumnNumber: child.Column,
+				EndLineNumber:     endLineNumber,
+				EndColumnNumber:   endLineColumn,
+				Description:       child.Value,
 			})
 		}
 
 		if child.Kind != yaml.ScalarNode {
 			getDescriptionsFromSpecHelper(child, results)
 		}
-
-		prev = child
 	}
 }
 
@@ -145,8 +152,12 @@ func enforceDescriptionLessThan1000Chars(descriptions *[]*DescriptionField) []*r
 				Suggestion: "Ensure that your description field is less than 1000 chars in length.",
 				Location: &rpc.LintLocation{
 					StartPosition: &rpc.LintPosition{
-						LineNumber:   int32(description.LineNumber),
-						ColumnNumber: int32(description.ColumnNumber),
+						LineNumber:   int32(description.StartLineNumber),
+						ColumnNumber: int32(description.StartColumnNumber),
+					},
+					EndPosition: &rpc.LintPosition{
+						LineNumber:   int32(description.EndLineNumber),
+						ColumnNumber: int32(description.EndColumnNumber),
 					},
 				},
 			})
@@ -169,8 +180,12 @@ func enforceDescriptionContainsNoTagsRuleId(descriptions *[]*DescriptionField) [
 				Suggestion: "Ensure that your description field does not contain any tags (regex <[^>]*>)",
 				Location: &rpc.LintLocation{
 					StartPosition: &rpc.LintPosition{
-						LineNumber:   int32(description.LineNumber),
-						ColumnNumber: int32(description.ColumnNumber),
+						LineNumber:   int32(description.StartLineNumber),
+						ColumnNumber: int32(description.StartColumnNumber),
+					},
+					EndPosition: &rpc.LintPosition{
+						LineNumber:   int32(description.EndLineNumber),
+						ColumnNumber: int32(description.EndColumnNumber),
 					},
 				},
 			})

@@ -78,6 +78,10 @@ func TestRunDescriptionContainsNoTagsRule(t *testing.T) {
 									LineNumber:   10,
 									ColumnNumber: 30,
 								},
+								EndPosition: &rpc.LintPosition{
+									LineNumber:   11,
+									ColumnNumber: 0,
+								},
 							},
 						},
 					},
@@ -146,6 +150,10 @@ func TestRunDescriptionLessThan1000CharsRule(t *testing.T) {
 								StartPosition: &rpc.LintPosition{
 									LineNumber:   10,
 									ColumnNumber: 30,
+								},
+								EndPosition: &rpc.LintPosition{
+									LineNumber:   11,
+									ColumnNumber: 0,
 								},
 							},
 						},
