@@ -19,8 +19,8 @@ import (
 	"compress/gzip"
 	"context"
 
-	"github.com/apex/log"
 	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
 	"google.golang.org/protobuf/proto"
 )
@@ -50,10 +50,10 @@ func UploadBytesForSpec(ctx context.Context, client connection.Client, parent, s
 	var buf bytes.Buffer
 	zw, _ := gzip.NewWriterLevel(&buf, gzip.BestCompression)
 	if _, err := zw.Write(messageData); err != nil {
-		log.WithError(err).Fatal("Failed to gzip spec contents")
+		log.FromContext(ctx).WithError(err).Fatal("Failed to gzip spec contents")
 	}
 	if err := zw.Close(); err != nil {
-		log.WithError(err).Fatal("Failed to finish gzipping spec contents")
+		log.FromContext(ctx).WithError(err).Fatal("Failed to finish gzipping spec contents")
 	}
 
 	request := &rpc.UpdateApiSpecRequest{

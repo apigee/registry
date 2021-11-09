@@ -18,9 +18,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/apex/log"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"github.com/spf13/cobra"
@@ -39,12 +39,12 @@ func descriptorCommand(ctx context.Context) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			filter, err := cmd.Flags().GetString("filter")
 			if err != nil {
-				log.WithError(err).Fatal("Failed to get filter from flags")
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get filter from flags")
 			}
 
 			client, err := connection.NewClient(ctx)
 			if err != nil {
-				log.WithError(err).Fatal("Failed to get client")
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
 			// Initialize task queue.
 			taskQueue, wait := core.WorkerPool(ctx, 64)
@@ -59,7 +59,7 @@ func descriptorCommand(ctx context.Context) *cobra.Command {
 					}
 				})
 				if err != nil {
-					log.WithError(err).Fatal("Failed to list specs")
+					log.FromContext(ctx).WithError(err).Fatal("Failed to list specs")
 				}
 			}
 		},
@@ -85,7 +85,7 @@ func (task *computeDescriptorTask) Run(ctx context.Context) error {
 	}
 	name := spec.GetName()
 	relation := "descriptor"
-	log.Debugf("Computing %s/artifacts/%s", name, relation)
+	log.Debugf(ctx, "Computing %s/artifacts/%s", name, relation)
 	data, err := core.GetBytesForSpec(ctx, task.client, spec)
 	if err != nil {
 		return nil

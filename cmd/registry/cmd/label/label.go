@@ -19,10 +19,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/apex/log"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/gapic"
+	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"github.com/spf13/cobra"
@@ -42,7 +42,7 @@ func Command(ctx context.Context) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			client, err := connection.NewClient(ctx)
 			if err != nil {
-				log.WithError(err).Fatal("Failed to get client")
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
 
 			taskQueue, wait := core.WorkerPool(ctx, 64)
@@ -56,10 +56,10 @@ func Command(ctx context.Context) *cobra.Command {
 				} else {
 					pair := strings.Split(operation, "=")
 					if len(pair) != 2 {
-						log.Fatalf("%q must have the form \"key=value\" (value can be empty) or \"key-\" (to remove the key)", operation)
+						log.Fatalf(ctx, "%q must have the form \"key=value\" (value can be empty) or \"key-\" (to remove the key)", operation)
 					}
 					if pair[0] == "" {
-						log.Fatalf("%q is invalid because it specifies an empty key", operation)
+						log.Fatalf(ctx, "%q is invalid because it specifies an empty key", operation)
 					}
 					valuesToSet[pair[0]] = pair[1]
 				}
@@ -68,7 +68,7 @@ func Command(ctx context.Context) *cobra.Command {
 
 			err = matchAndHandleLabelCmd(ctx, client, taskQueue, args[0], filter, labeling)
 			if err != nil {
-				log.WithError(err).Fatal("Failed to match or handle command")
+				log.FromContext(ctx).WithError(err).Fatal("Failed to match or handle command")
 			}
 		},
 	}
@@ -168,7 +168,7 @@ func (task *labelApiTask) Run(ctx context.Context) error {
 	var err error
 	task.api.Labels, err = task.labeling.Apply(task.api.Labels)
 	if err != nil {
-		log.WithError(err).Errorf("Invalid labelling")
+		log.FromContext(ctx).WithError(err).Errorf("Invalid labelling")
 		return nil
 	}
 	_, err = task.client.UpdateApi(ctx,
@@ -195,7 +195,7 @@ func (task *labelVersionTask) Run(ctx context.Context) error {
 	var err error
 	task.version.Labels, err = task.labeling.Apply(task.version.Labels)
 	if err != nil {
-		log.WithError(err).Errorf("Invalid labelling")
+		log.FromContext(ctx).WithError(err).Errorf("Invalid labelling")
 		return nil
 	}
 	_, err = task.client.UpdateApiVersion(ctx,
@@ -222,7 +222,7 @@ func (task *labelSpecTask) Run(ctx context.Context) error {
 	var err error
 	task.spec.Labels, err = task.labeling.Apply(task.spec.Labels)
 	if err != nil {
-		log.WithError(err).Errorf("Invalid labelling")
+		log.FromContext(ctx).WithError(err).Errorf("Invalid labelling")
 		return nil
 	}
 	_, err = task.client.UpdateApiSpec(ctx,

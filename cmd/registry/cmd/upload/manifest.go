@@ -19,10 +19,10 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/apex/log"
 	"github.com/apigee/registry/cmd/registry/controller"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
 	"github.com/ghodss/yaml"
 	"github.com/spf13/cobra"
@@ -57,30 +57,30 @@ func manifestCommand(ctx context.Context) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			manifestPath := args[0]
 			if manifestPath == "" {
-				log.Fatal("Please provide manifest-path")
+				log.Fatal(ctx, "Please provide manifest-path")
 			}
 
 			manifest, err := readManifestProto(manifestPath)
 			if err != nil {
-				log.WithError(err).Fatal("Failed to read manifest")
+				log.FromContext(ctx).WithError(err).Fatal("Failed to read manifest")
 			}
 
 			// validate the manifest
 			isValid := true
 			for _, resource := range manifest.GeneratedResources {
 				if err := controller.ValidateResourceEntry(resource); err != nil {
-					log.WithError(err).Errorf("Invalid manifest entry %v", resource)
+					log.FromContext(ctx).WithError(err).Errorf("Invalid manifest entry %v", resource)
 					isValid = false
 				}
 			}
 			if !isValid {
-				log.Fatal("Manifest definition contains errors")
+				log.Fatal(ctx, "Manifest definition contains errors")
 			}
 
 			manifestData, _ := proto.Marshal(manifest)
 			client, err := connection.NewClient(ctx)
 			if err != nil {
-				log.WithError(err).Fatal("Failed to get client")
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
 
 			artifact := &rpc.Artifact{
@@ -88,10 +88,10 @@ func manifestCommand(ctx context.Context) *cobra.Command {
 				MimeType: core.MimeTypeForMessageType("google.cloud.apigeeregistry.v1.controller.Manifest"),
 				Contents: manifestData,
 			}
-			log.Debugf("Uploading %s", artifact.Name)
+			log.Debugf(ctx, "Uploading %s", artifact.Name)
 			err = core.SetArtifact(ctx, client, artifact)
 			if err != nil {
-				log.WithError(err).Fatal("Failed to save artifact")
+				log.FromContext(ctx).WithError(err).Fatal("Failed to save artifact")
 			}
 		},
 	}

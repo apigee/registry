@@ -24,9 +24,9 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/apex/log"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"github.com/spf13/cobra"
@@ -43,12 +43,12 @@ func conformanceCommand(ctx context.Context) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			filter, err := cmd.Flags().GetString("filter")
 			if err != nil {
-				log.WithError(err).Fatal("Failed to get filter from flags")
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get filter from flags")
 			}
 
 			client, err := connection.NewClient(ctx)
 			if err != nil {
-				log.WithError(err).Fatal("Failed to get client")
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
 
 			name := args[0]
@@ -56,19 +56,19 @@ func conformanceCommand(ctx context.Context) *cobra.Command {
 			// Ensure that the provided argument is a spec.
 			spec, err := names.ParseSpec(name)
 			if err != nil {
-				log.WithError(err).Fatalf("The provided argument %s does not match the regex of a spec", name)
+				log.FromContext(ctx).WithError(err).Fatalf("The provided argument %s does not match the regex of a spec", name)
 			}
 
 			artifact, err := names.ParseArtifact(fmt.Sprintf("projects/%s/locations/%s/artifacts/-", spec.ProjectID, names.Location))
 			if err != nil {
-				log.WithError(err).Fatal("Invalid project")
+				log.FromContext(ctx).WithError(err).Fatal("Invalid project")
 			}
 
 			err = core.ListArtifacts(ctx, client, artifact, filter, true, func(artifact *rpc.Artifact) {
 				// Only consider artifacts which have the styleguide mimetype.
 				messageType, err := core.MessageTypeForMimeType(artifact.GetMimeType())
 				if err != nil {
-					log.WithError(err).Debugf("Failed to get message type for MIME type %q", artifact.GetMimeType())
+					log.FromContext(ctx).WithError(err).Debugf("Failed to get message type for MIME type %q", artifact.GetMimeType())
 					return
 				}
 
@@ -81,7 +81,7 @@ func conformanceCommand(ctx context.Context) *cobra.Command {
 				styleguide := &rpc.StyleGuide{}
 				err = proto.Unmarshal(artifact.GetContents(), styleguide)
 				if err != nil {
-					log.WithError(err).Debugf("Unmarshal() to StyleGuide failed on artifact of type %s", messageType)
+					log.FromContext(ctx).WithError(err).Debugf("Unmarshal() to StyleGuide failed on artifact of type %s", messageType)
 					return
 				}
 
@@ -89,7 +89,7 @@ func conformanceCommand(ctx context.Context) *cobra.Command {
 			})
 
 			if err != nil {
-				log.WithError(err).Fatal("Failed to list artifacts")
+				log.FromContext(ctx).WithError(err).Fatal("Failed to list artifacts")
 			}
 		},
 	}
@@ -154,7 +154,7 @@ func computeConformanceForStyleGuideWithPlugin(ctx context.Context,
 		}
 	})
 	if err != nil {
-		log.WithError(err).Fatal("Failed to list specs")
+		log.FromContext(ctx).WithError(err).Fatal("Failed to list specs")
 	}
 }
 
@@ -182,7 +182,7 @@ func (task *computeConformanceTask) String() string {
 }
 
 func (task *computeConformanceTask) Run(ctx context.Context) error {
-	log.Debugf("Computing conformance report for spec: %s", task.spec.GetName())
+	log.Debugf(ctx, "Computing conformance report for spec: %s", task.spec.GetName())
 	// Get the spec's bytes
 	data, err := core.GetBytesForSpec(ctx, task.client, task.spec)
 	if err != nil {
@@ -214,7 +214,7 @@ func (task *computeConformanceTask) Run(ctx context.Context) error {
 	guidelineIdToGuidelineReport := make(map[string]*rpc.GuidelineReport)
 	err = task.computeConformanceReport(ctx, root, conformanceReport, guidelineIdToGuidelineReport)
 	if err != nil {
-		log.Errorf(
+		log.Errorf(ctx,
 			"Failed to compute the conformance for spec %s: %s",
 			task.spec.GetName(),
 			err,
@@ -264,17 +264,17 @@ func (task *computeConformanceTask) computeConformanceReport(
 		// discard the conformance report for this spec. We should log but still continue, because there
 		// may still be useful information from other linters that we may be discarding.
 		if err != nil {
-			log.Errorf("Running the plugin %s return error: %s", executableName, err)
+			log.Errorf(ctx, "Running the plugin %s return error: %s", executableName, err)
 		}
 
 		pluginElapsedTime := time.Since(pluginStartTime)
-		log.Debugf("Plugin %s ran in time %s", executableName, pluginElapsedTime)
+		log.Debugf(ctx, "Plugin %s ran in time %s", executableName, pluginElapsedTime)
 
 		// Unmarshal the output bytes into a response object. If there's a failure, log and continue.
 		linterResponse := &rpc.LinterResponse{}
 		err = proto.Unmarshal(output, linterResponse)
 		if err != nil {
-			log.Errorf(
+			log.Errorf(ctx,
 				"Invalid plugin response (plugins must write log messages to stderr, not stdout) : %s",
 				err,
 			)
@@ -284,7 +284,7 @@ func (task *computeConformanceTask) computeConformanceReport(
 		// Check if there was any errors with the plugin.
 		if len(linterResponse.GetErrors()) > 0 {
 			for _, err := range linterResponse.GetErrors() {
-				log.Errorf(err)
+				log.Errorf(ctx, err)
 			}
 			continue
 		}

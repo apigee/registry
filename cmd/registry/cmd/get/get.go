@@ -17,9 +17,9 @@ package get
 import (
 	"context"
 
-	"github.com/apex/log"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/server/registry/names"
 	"github.com/spf13/cobra"
 )
@@ -33,11 +33,11 @@ func Command(ctx context.Context) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			client, err := connection.NewClient(ctx)
 			if err != nil {
-				log.WithError(err).Fatal("Failed to get client")
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
 			adminClient, err := connection.NewAdminClient(ctx)
 			if err != nil {
-				log.WithError(err).Fatal("Failed to get client")
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
 
 			var name string
@@ -65,10 +65,10 @@ func Command(ctx context.Context) *cobra.Command {
 					_, err2 = core.GetArtifact(ctx, client, artifact, getContents, core.PrintArtifactDetail)
 				}
 			} else {
-				log.Debugf("Unsupported entity %+v", args)
+				log.Debugf(ctx, "Unsupported entity %+v", args)
 			}
 			if err2 != nil {
-				log.WithError(err2).Debugf("Failed to get resource")
+				log.FromContext(ctx).WithError(err2).Debugf("Failed to get resource")
 			}
 		},
 	}

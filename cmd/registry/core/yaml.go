@@ -20,8 +20,8 @@ import (
 	"path"
 	"time"
 
-	"github.com/apex/log"
 	"github.com/apigee/registry/gapic"
+	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"gopkg.in/yaml.v3"
@@ -29,22 +29,22 @@ import (
 
 // ExportYAMLForProject writes a project as a YAML file.
 func ExportYAMLForProject(ctx context.Context, client *gapic.RegistryClient, adminClient *gapic.AdminClient, message *rpc.Project) {
-	printDocAsYaml(docForMapping(exportProject(ctx, client, adminClient, message)))
+	printDocAsYaml(ctx, docForMapping(exportProject(ctx, client, adminClient, message)))
 }
 
 // ExportYAMLForAPI writes a project as a YAML file.
 func ExportYAMLForAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api) {
-	printDocAsYaml(docForMapping(exportAPI(ctx, client, message)))
+	printDocAsYaml(ctx, docForMapping(exportAPI(ctx, client, message)))
 }
 
 // ExportYAMLForVersion writes a project as a YAML file.
 func ExportYAMLForVersion(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiVersion) {
-	printDocAsYaml(docForMapping(exportVersion(ctx, client, message)))
+	printDocAsYaml(ctx, docForMapping(exportVersion(ctx, client, message)))
 }
 
 // ExportYAMLForSpec writes a project as a YAML file.
 func ExportYAMLForSpec(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiSpec) {
-	printDocAsYaml(docForMapping(exportSpec(ctx, client, message)))
+	printDocAsYaml(ctx, docForMapping(exportSpec(ctx, client, message)))
 }
 
 func exportProject(ctx context.Context, client *gapic.RegistryClient, adminClient *gapic.AdminClient, message *rpc.Project) []*yaml.Node {
@@ -59,7 +59,7 @@ func exportProject(ctx context.Context, client *gapic.RegistryClient, adminClien
 		apisMapContent = appendPair(apisMapContent, path.Base(message.Name), nodeForMapping(apiMapContent))
 	})
 	if err != nil {
-		log.WithError(err).Fatal("Failed to list APIs")
+		log.FromContext(ctx).WithError(err).Fatal("Failed to list APIs")
 	}
 	projectMapContent = appendPair(projectMapContent, "apis", nodeForMapping(apisMapContent))
 	return projectMapContent
@@ -80,7 +80,7 @@ func exportAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.A
 		versionsMapContent = appendPair(versionsMapContent, path.Base(message.Name), nodeForMapping(versionMapContent))
 	})
 	if err != nil {
-		log.WithError(err).Fatal("Failed to list versions")
+		log.FromContext(ctx).WithError(err).Fatal("Failed to list versions")
 	}
 	apiMapContent = appendPair(apiMapContent, "versions", nodeForMapping(versionsMapContent))
 	artifactsMapContent := nodeSlice()
@@ -109,7 +109,7 @@ func exportVersion(ctx context.Context, client *gapic.RegistryClient, message *r
 		specsMapContent = appendPair(specsMapContent, path.Base(message.Name), nodeForMapping(specMapContent))
 		specName, err := names.ParseSpec(message.Name)
 		if err != nil {
-			log.WithError(err).Fatalf("Failed to parse spec name %s", message.Name)
+			log.FromContext(ctx).WithError(err).Fatalf("Failed to parse spec name %s", message.Name)
 			return
 		}
 		err = ListSpecRevisions(ctx, client, specName, "", func(message *rpc.ApiSpec) {
@@ -117,11 +117,11 @@ func exportVersion(ctx context.Context, client *gapic.RegistryClient, message *r
 			specsMapContent = appendPair(specsMapContent, path.Base(message.Name), nodeForMapping(specMapContent))
 		})
 		if err != nil {
-			log.WithError(err).Fatal("Failed to list spec revisions")
+			log.FromContext(ctx).WithError(err).Fatal("Failed to list spec revisions")
 		}
 	})
 	if err != nil {
-		log.WithError(err).Fatal("Failed to list specs")
+		log.FromContext(ctx).WithError(err).Fatal("Failed to list specs")
 	}
 	versionMapContent = appendPair(versionMapContent, "specs", nodeForMapping(specsMapContent))
 	artifactsMapContent := nodeSlice()
@@ -204,10 +204,10 @@ func docForMapping(nodes []*yaml.Node) *yaml.Node {
 	}
 }
 
-func printDocAsYaml(doc *yaml.Node) {
+func printDocAsYaml(ctx context.Context, doc *yaml.Node) {
 	b, err := yaml.Marshal(doc)
 	if err != nil {
-		log.WithError(err).Fatal("Failed to marshal doc as YAML")
+		log.FromContext(ctx).WithError(err).Fatal("Failed to marshal doc as YAML")
 	}
 	fmt.Println(string(b))
 }

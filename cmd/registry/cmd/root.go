@@ -16,11 +16,8 @@ package cmd
 
 import (
 	"context"
-
 	"fmt"
 
-	"github.com/apex/log"
-	"github.com/apex/log/handlers/text"
 	"github.com/apigee/registry/cmd/registry/cmd/annotate"
 	"github.com/apigee/registry/cmd/registry/cmd/compute"
 	"github.com/apigee/registry/cmd/registry/cmd/delete"
@@ -32,27 +29,22 @@ import (
 	"github.com/apigee/registry/cmd/registry/cmd/resolve"
 	"github.com/apigee/registry/cmd/registry/cmd/upload"
 	"github.com/apigee/registry/cmd/registry/cmd/vocabulary"
+	"github.com/apigee/registry/log"
 	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 )
 
 func Command(ctx context.Context) *cobra.Command {
-	var logID string
 	var cmd = &cobra.Command{
 		Use:   "registry",
 		Short: "A simple and eclectic utility for working with the API Registry",
-		PersistentPreRun: func(cmd *cobra.Command, args []string) {
-			// Initialize global default logger with unique process identifier.
-			if len(logID) == 0 {
-				logID = fmt.Sprintf("[ %.8s ] ", uuid.New())
-			}
-			logger := &log.Logger{
-				Level:   log.DebugLevel,
-				Handler: text.Default,
-			}
-			log.Log = logger.WithField("uid", logID)
-		},
 	}
+
+	// Bind a logger instance to the local context with metadata for outbound requests.
+	logger := log.NewLogger(log.DebugLevel)
+	ctx = log.NewOutboundContext(log.NewContext(ctx, logger), log.Metadata{
+		UID: fmt.Sprintf("%.8s", uuid.New()),
+	})
 
 	cmd.AddCommand(annotate.Command(ctx))
 	cmd.AddCommand(compute.Command(ctx))
@@ -66,6 +58,5 @@ func Command(ctx context.Context) *cobra.Command {
 	cmd.AddCommand(upload.Command(ctx))
 	cmd.AddCommand(vocabulary.Command(ctx))
 
-	cmd.PersistentFlags().StringVar(&logID, "log-id", "", "Assign an ID which gets attached to the log produced")
 	return cmd
 }

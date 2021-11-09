@@ -21,9 +21,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/apex/log"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"github.com/spf13/cobra"
@@ -46,7 +46,7 @@ func sheetCommand(ctx context.Context) *cobra.Command {
 			var path string
 			client, err := connection.NewClient(ctx)
 			if err != nil {
-				log.WithError(err).Fatal("Failed to get client")
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
 			inputNames, inputs := collectInputArtifacts(ctx, client, args, filter)
 			if len(inputs) == 0 {
@@ -56,45 +56,45 @@ func sheetCommand(ctx context.Context) *cobra.Command {
 				title := "artifacts/" + filepath.Base(inputs[0].GetName())
 				path, err = core.ExportInt64ToSheet(ctx, title, inputs)
 				if err != nil {
-					log.WithError(err).Debugf("Failed to export int64 %+v", inputs)
+					log.FromContext(ctx).WithError(err).Debugf("Failed to export int64 %+v", inputs)
 					return
 				}
-				log.Debugf("Exported int64 %+v to %s", inputs, path)
+				log.Debugf(ctx, "Exported int64 %+v to %s", inputs, path)
 				_ = saveSheetPath(ctx, client, path, artifact)
 				return
 			}
 			messageType, err := core.MessageTypeForMimeType(inputs[0].GetMimeType())
 			if err != nil {
-				log.Fatalf("Not a message type: %s", inputs[0].GetMimeType())
+				log.Fatalf(ctx, "Not a message type: %s", inputs[0].GetMimeType())
 			} else if messageType == "gnostic.metrics.Vocabulary" {
 				if len(inputs) != 1 {
-					log.Fatalf("%d artifacts matched. Please specify exactly one for export.", len(inputs))
+					log.Fatalf(ctx, "%d artifacts matched. Please specify exactly one for export.", len(inputs))
 				}
 				vocabulary, err := getVocabulary(inputs[0])
 				if err != nil {
-					log.WithError(err).Fatal("Failed to get vocabulary")
+					log.FromContext(ctx).WithError(err).Fatal("Failed to get vocabulary")
 				}
 				path, err = core.ExportVocabularyToSheet(ctx, inputs[0].Name, vocabulary)
 				if err != nil {
-					log.WithError(err).Debugf("Failed to export vocabulary %s", inputs[0].Name)
+					log.FromContext(ctx).WithError(err).Debugf("Failed to export vocabulary %s", inputs[0].Name)
 					return
 				}
-				log.Debugf("Exported vocabulary %s to %s", inputs[0].Name, path)
+				log.Debugf(ctx, "Exported vocabulary %s to %s", inputs[0].Name, path)
 				if artifact == "" {
 					artifact = inputs[0].Name + "-sheet"
 				}
 				_ = saveSheetPath(ctx, client, path, artifact)
 			} else if messageType == "gnostic.metrics.VersionHistory" {
 				if len(inputs) != 1 {
-					log.Fatalf("Please specify exactly one version history to export")
+					log.Fatalf(ctx, "Please specify exactly one version history to export")
 					return
 				}
 				path, err = core.ExportVersionHistoryToSheet(ctx, inputNames[0], inputs[0])
 				if err != nil {
-					log.WithError(err).Debugf("Failed to export version history %s", inputs[0].Name)
+					log.FromContext(ctx).WithError(err).Debugf("Failed to export version history %s", inputs[0].Name)
 					return
 				}
-				log.Debugf("Exported version history %s to %s", inputs[0].Name, path)
+				log.Debugf(ctx, "Exported version history %s to %s", inputs[0].Name, path)
 				if artifact == "" {
 					artifact = inputs[0].Name + "-sheet"
 				}
@@ -102,31 +102,31 @@ func sheetCommand(ctx context.Context) *cobra.Command {
 			} else if messageType == "gnostic.metrics.Complexity" {
 				path, err = core.ExportComplexityToSheet(ctx, "Complexity", inputs)
 				if err != nil {
-					log.WithError(err).Debugf("Failed to export complexity")
+					log.FromContext(ctx).WithError(err).Debugf("Failed to export complexity")
 					return
 				}
-				log.Debugf("Exported complexity to %s", path)
+				log.Debugf(ctx, "Exported complexity to %s", path)
 				_ = saveSheetPath(ctx, client, path, artifact)
 			} else if messageType == "google.cloud.apigeeregistry.applications.v1alpha1.Index" {
 				if len(inputs) != 1 {
-					log.Fatalf("%d artifacts matched. Please specify exactly one for export.", len(inputs))
+					log.Fatalf(ctx, "%d artifacts matched. Please specify exactly one for export.", len(inputs))
 				}
 				index, err := getIndex(inputs[0])
 				if err != nil {
-					log.WithError(err).Fatal("Failed to get index")
+					log.FromContext(ctx).WithError(err).Fatal("Failed to get index")
 				}
 				path, err = core.ExportIndexToSheet(ctx, inputs[0].Name, index)
 				if err != nil {
-					log.WithError(err).Debugf("Failed to export index %+v", inputs[0].Name)
+					log.FromContext(ctx).WithError(err).Debugf("Failed to export index %+v", inputs[0].Name)
 					return
 				}
-				log.Debugf("Exported index %s to %s", inputs[0].Name, path)
+				log.Debugf(ctx, "Exported index %s to %s", inputs[0].Name, path)
 				if artifact == "" {
 					artifact = inputs[0].Name + "-sheet"
 				}
 				_ = saveSheetPath(ctx, client, path, artifact)
 			} else {
-				log.Fatalf("Unknown message type: %s", messageType)
+				log.Fatalf(ctx, "Unknown message type: %s", messageType)
 			}
 		},
 	}
@@ -146,7 +146,7 @@ func collectInputArtifacts(ctx context.Context, client connection.Client, args [
 				inputs = append(inputs, artifact)
 			})
 			if err != nil {
-				log.WithError(err).Fatal("Failed to list artifacts")
+				log.FromContext(ctx).WithError(err).Fatal("Failed to list artifacts")
 			}
 		}
 	}

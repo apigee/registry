@@ -22,16 +22,16 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/apex/log"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
 	"google.golang.org/protobuf/proto"
 )
 
 // Implement io.Writer interface https://pkg.go.dev/io#Writer
 type logWriter struct {
-	logger *log.Entry
+	logger log.Logger
 }
 
 func (w logWriter) Write(p []byte) (n int, err error) {
@@ -52,7 +52,7 @@ func (task *ExecCommandTask) Run(ctx context.Context) error {
 	// The monitoring metrics/dashboards are built on top of the format of the log messages here.
 	// Check the metric filters before making any changes to the format.
 	// Location: registry/deployments/controller/dashboard/*
-	logger := log.WithFields(log.Fields{
+	logger := log.FromContext(ctx).WithFields(map[string]interface{}{
 		"action": fmt.Sprintf("{%s}", task.Action.Command),
 		"taskID": fmt.Sprintf("{%s}", task.TaskID),
 	})
@@ -64,7 +64,7 @@ func (task *ExecCommandTask) Run(ctx context.Context) error {
 
 	// first party registry commands
 	if strings.HasPrefix(task.Action.Command, "registry") {
-		fullCmd := append(strings.Fields(task.Action.Command), fmt.Sprintf("--log-id=%s", task.TaskID))
+		fullCmd := strings.Fields(task.Action.Command)
 
 		cmd := exec.Command(fullCmd[0], fullCmd[1:]...)
 		cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
@@ -76,9 +76,7 @@ func (task *ExecCommandTask) Run(ctx context.Context) error {
 	} else { //third party commands
 		fullCmd := strings.Fields(task.Action.Command)
 		cmdLogger := &logWriter{
-			logger: log.WithFields(log.Fields{
-				"uid": task.TaskID,
-			}),
+			logger: logger,
 		}
 
 		cmd := exec.Command(fullCmd[0], fullCmd[1:]...)
@@ -105,7 +103,7 @@ func (task *ExecCommandTask) Run(ctx context.Context) error {
 func touchArtifact(ctx context.Context, artifactName, action string) error {
 	client, err := connection.NewClient(ctx)
 	if err != nil {
-		log.WithError(err).Fatal("Failed to get client")
+		log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 	}
 
 	messageData, _ := proto.Marshal(&rpc.Receipt{Action: action})

@@ -19,9 +19,9 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/apex/log"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
 	"github.com/ghodss/yaml"
 	"github.com/spf13/cobra"
@@ -60,21 +60,21 @@ func styleGuideCommand(ctx context.Context) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			styleGuidePath := args[0]
 			if styleGuidePath == "" {
-				log.Fatal("Please provide style guide path")
+				log.Fatal(ctx, "Please provide style guide path")
 			}
 
 			styleGuide, err := readStyleGuideProto(styleGuidePath)
 			if err != nil {
-				log.WithError(err).Fatal("Failed to read style guide")
+				log.FromContext(ctx).WithError(err).Fatal("Failed to read style guide")
 			}
 			styleGuideMarshalled, err := proto.Marshal(styleGuide)
 			if err != nil {
-				log.WithError(err).Fatal("Failed to encode style guide")
+				log.FromContext(ctx).WithError(err).Fatal("Failed to encode style guide")
 			}
 
 			client, err := connection.NewClient(ctx)
 			if err != nil {
-				log.WithError(err).Fatal("Failed to get client")
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
 
 			artifact := &rpc.Artifact{
@@ -87,10 +87,10 @@ func styleGuideCommand(ctx context.Context) *cobra.Command {
 				),
 				Contents: styleGuideMarshalled,
 			}
-			log.Debugf("Uploading %s", artifact.Name)
+			log.Debugf(ctx, "Uploading %s", artifact.Name)
 			err = core.SetArtifact(ctx, client, artifact)
 			if err != nil {
-				log.WithError(err).Fatal("Failed to save artifact")
+				log.FromContext(ctx).WithError(err).Fatal("Failed to save artifact")
 			}
 		},
 	}

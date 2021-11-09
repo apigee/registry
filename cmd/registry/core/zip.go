@@ -22,8 +22,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/apex/log"
 )
 
 // UnzipArchiveToPath will decompress a zip archive, writing all files and folders
@@ -86,7 +84,6 @@ func ZipArchiveOfPath(path, prefix string) (buf bytes.Buffer, err error) {
 			return nil
 		}
 		if err = addFileToZip(zipWriter, p, prefix); err != nil {
-			log.WithError(err).Debugf("Failed to add file to zip")
 			return err
 		}
 		return nil
