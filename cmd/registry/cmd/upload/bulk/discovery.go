@@ -16,15 +16,14 @@ package bulk
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
-	"github.com/apex/log"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
-	"github.com/nsf/jsondiff"
 	"github.com/spf13/cobra"
-	"google.golang.org/protobuf/types/known/fieldmaskpb"
 
 	discovery "github.com/google/gnostic/discovery"
 )
@@ -36,12 +35,12 @@ func discoveryCommand(ctx context.Context) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			projectID, err := cmd.Flags().GetString("project-id")
 			if err != nil {
-				log.WithError(err).Fatal("Failed to get project-id from flags")
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get project-id from flags")
 			}
 
 			client, err := connection.NewClient(ctx)
 			if err != nil {
-				log.WithError(err).Fatal("Failed to get client")
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
 
 			// create a queue for upload tasks and wait for the workers to finish after filling it.
@@ -50,7 +49,7 @@ func discoveryCommand(ctx context.Context) *cobra.Command {
 
 			discoveryResponse, err := discovery.FetchList()
 			if err != nil {
-				log.WithError(err).Fatal("Failed to fetch discovery list")
+				log.FromContext(ctx).WithError(err).Fatal("Failed to fetch discovery list")
 			}
 
 			// Create an upload job for each API.
@@ -85,11 +84,11 @@ func (task *uploadDiscoveryTask) String() string {
 }
 
 func (task *uploadDiscoveryTask) Run(ctx context.Context) error {
-	log.Infof("Uploading apis/%s/versions/%s/specs/%s", task.apiID, task.versionID, task.specID)
-	// Fetch (and compress) the contents of the discovery doc.
-	// Do this first in case the doc URL is invalid; we ignore these errors.
+	log.Infof(ctx, "Uploading apis/%s/versions/%s/specs/%s", task.apiID, task.versionID, task.specID)
+	// Fetch the contents of the discovery doc.
+	// Do this first in case the doc URL is invalid; we skip APIs with these errors.
 	if err := task.fetchDiscoveryDoc(); err != nil {
-		log.WithError(err).Warn("Failed to download discovery doc")
+		log.FromContext(ctx).WithError(err).Error("Failed to download discovery doc")
 		return nil
 	}
 	// If the API does not exist, create it.
@@ -100,34 +99,29 @@ func (task *uploadDiscoveryTask) Run(ctx context.Context) error {
 	if err := task.createVersion(ctx); err != nil {
 		return err
 	}
-	// If the API spec does not exist, create it.
-	if err := task.createSpec(ctx); err != nil {
+	// Create or update the spec as needed.
+	if err := task.createOrUpdateSpec(ctx); err != nil {
 		return err
 	}
-	// If the API spec needs a new revision, create it.
-	return task.updateSpec(ctx)
+	return nil
 }
 
 func (task *uploadDiscoveryTask) createAPI(ctx context.Context) error {
-	if _, err := task.client.GetApi(ctx, &rpc.GetApiRequest{
-		Name: task.apiName(),
-	}); !core.NotFound(err) {
-		return err // Returns nil when API is found without error.
-	}
-
-	response, err := task.client.CreateApi(ctx, &rpc.CreateApiRequest{
-		Parent: task.projectName() + "/locations/global",
-		ApiId:  task.apiID,
+	// Create an API if needed (or update an existing one)
+	response, err := task.client.UpdateApi(ctx, &rpc.UpdateApiRequest{
 		Api: &rpc.Api{
+			Name:        task.apiName(),
 			DisplayName: task.apiID,
 		},
+		AllowMissing: true,
 	})
 	if err == nil {
-		log.Debugf("Created %s", response.Name)
-	} else if core.AlreadyExists(err) {
-		log.Debugf("Found %s", task.apiName())
+		log.Debugf(ctx, "Updated %s", response.Name)
 	} else {
-		log.WithError(err).Debugf("Failed to create API %s", task.apiName())
+		log.FromContext(ctx).WithError(err).Debugf("Failed to create API %s", task.apiName())
+		// Returning this error ends all tasks, which seems appropriate to
+		// handle situations where all might fail due to a common problem
+		// (a missing project or incorrect project-id).
 		return fmt.Errorf("Failed to create %s, %s", task.apiName(), err)
 	}
 
@@ -135,91 +129,54 @@ func (task *uploadDiscoveryTask) createAPI(ctx context.Context) error {
 }
 
 func (task *uploadDiscoveryTask) createVersion(ctx context.Context) error {
-	if _, err := task.client.GetApiVersion(ctx, &rpc.GetApiVersionRequest{
-		Name: task.versionName(),
-	}); !core.NotFound(err) {
-		return err // Returns nil when version is found without error.
-	}
-
-	response, err := task.client.CreateApiVersion(ctx, &rpc.CreateApiVersionRequest{
-		Parent:       task.apiName(),
-		ApiVersionId: task.versionID,
-		ApiVersion:   &rpc.ApiVersion{},
+	// Create an API version if needed (or update an existing one)
+	response, err := task.client.UpdateApiVersion(ctx, &rpc.UpdateApiVersionRequest{
+		ApiVersion: &rpc.ApiVersion{
+			Name: task.versionName(),
+		},
+		AllowMissing: true,
 	})
 	if err != nil {
-		log.WithError(err).Debugf("Failed to create version %s", task.versionName())
+		log.FromContext(ctx).WithError(err).Debugf("Failed to create version %s", task.versionName())
 	} else {
-		log.Debugf("Created %s", response.Name)
+		log.Debugf(ctx, "Updated %s", response.Name)
 	}
 
 	return nil
 }
 
-func (task *uploadDiscoveryTask) createSpec(ctx context.Context) error {
-	if _, err := task.client.GetApiSpec(ctx, &rpc.GetApiSpecRequest{
+func (task *uploadDiscoveryTask) createOrUpdateSpec(ctx context.Context) error {
+	// Use the spec size and hash to avoid unnecessary uploads.
+	spec, err := task.client.GetApiSpec(ctx, &rpc.GetApiSpecRequest{
 		Name: task.specName(),
-	}); !core.NotFound(err) {
-		return err // Returns nil when spec is found without error.
+	})
+
+	if err == nil && int(spec.GetSizeBytes()) == len(task.contents) && spec.GetHash() == hashForBytes(task.contents) {
+		log.Debugf(ctx, "Matched already uploaded spec %s", task.specName())
+		return nil
 	}
 
-	response, err := task.client.CreateApiSpec(ctx, &rpc.CreateApiSpecRequest{
-		Parent:    task.versionName(),
-		ApiSpecId: task.specID,
+	gzippedContents, err := core.GZippedBytes(task.contents)
+	if err != nil {
+		return err
+	}
+
+	request := &rpc.UpdateApiSpecRequest{
 		ApiSpec: &rpc.ApiSpec{
+			Name:      task.specName(),
 			MimeType:  core.DiscoveryMimeType("+gzip"),
 			Filename:  "discovery.json",
-			Contents:  task.contents,
+			Contents:  gzippedContents,
 			SourceUri: task.path,
 		},
-	})
+		AllowMissing: true,
+	}
+
+	response, err := task.client.UpdateApiSpec(ctx, request)
 	if err != nil {
-		log.WithError(err).Debugf("Error %s [contents-length: %d]", task.specName(), len(task.contents))
+		log.FromContext(ctx).WithError(err).Debugf("Error %s [contents-length: %d]", task.specName(), len(task.contents))
 	} else {
-		log.Debugf("Created %s", response.Name)
-	}
-
-	return nil
-}
-
-func (task *uploadDiscoveryTask) updateSpec(ctx context.Context) error {
-	refSpec, err := task.client.GetApiSpec(ctx, &rpc.GetApiSpecRequest{
-		Name: task.specName(),
-	})
-	if err != nil && !core.NotFound(err) {
-		return err
-	}
-
-	refBytes, err := core.GetBytesForSpec(ctx, task.client, refSpec)
-	if err != nil {
-		return nil
-	}
-
-	docBytes, err := discovery.FetchDocumentBytes(task.path)
-	if err != nil {
-		return err
-	}
-
-	opts := jsondiff.DefaultJSONOptions()
-	if diff, _ := jsondiff.Compare(refBytes, docBytes, &opts); diff == jsondiff.FullMatch {
-		return nil
-	}
-
-	docZipped, err := core.GZippedBytes(docBytes)
-	if err != nil {
-		return err
-	}
-
-	response, err := task.client.UpdateApiSpec(ctx, &rpc.UpdateApiSpecRequest{
-		ApiSpec: &rpc.ApiSpec{
-			Name:     task.specName(),
-			Contents: docZipped,
-		},
-		UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"contents"}},
-	})
-	if err != nil {
-		log.WithError(err).Debugf("Error %s [contents-length: %d]", task.specName(), len(docZipped))
-	} else if response.RevisionId != refSpec.RevisionId {
-		log.Debugf("Updated %s", response.Name)
+		log.Debugf(ctx, "Updated %s", response.Name)
 	}
 
 	return nil
@@ -246,6 +203,18 @@ func (task *uploadDiscoveryTask) fetchDiscoveryDoc() error {
 	if err != nil {
 		return err
 	}
-	task.contents, err = core.GZippedBytes(bytes)
+
+	task.contents, err = normalizeJSON(bytes)
 	return err
+}
+
+// Normalize JSON documents by remarshalling them to
+// ensure that their keys are sorted alphabetically.
+// For readability, marshalled docs are indented.
+func normalizeJSON(bytes []byte) ([]byte, error) {
+	var m interface{}
+	if err := json.Unmarshal(bytes, &m); err != nil {
+		return nil, err
+	}
+	return json.MarshalIndent(m, "", "  ")
 }

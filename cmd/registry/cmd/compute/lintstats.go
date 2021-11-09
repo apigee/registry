@@ -19,10 +19,10 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/apex/log"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/gapic"
+	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"github.com/spf13/cobra"
@@ -44,17 +44,17 @@ func lintStatsCommand(ctx context.Context) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			filter, err := cmd.Flags().GetString("filter")
 			if err != nil {
-				log.WithError(err).Fatal("Failed to get filter from flags")
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get filter from flags")
 			}
 
 			client, err := connection.NewClient(ctx)
 			if err != nil {
-				log.WithError(err).Fatal("Failed to get client")
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
 
 			adminClient, err := connection.NewAdminClient(ctx)
 			if err != nil {
-				log.WithError(err).Fatal("Failed to get client")
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
 
 			// Generate tasks.
@@ -62,7 +62,7 @@ func lintStatsCommand(ctx context.Context) *cobra.Command {
 
 			err = matchAndHandleLintStatsCmd(ctx, client, adminClient, name, filter, linter)
 			if err != nil {
-				log.WithError(err).Fatal("Failed to match or handle command")
+				log.FromContext(ctx).WithError(err).Fatal("Failed to match or handle command")
 			}
 		},
 	}
@@ -109,7 +109,7 @@ func computeLintStatsSpecs(ctx context.Context,
 
 	return core.ListSpecs(ctx, client, spec, filter, func(spec *rpc.ApiSpec) {
 		// Iterate through a collection of specs and evaluate each.
-		log.Debug(spec.GetName())
+		log.Debug(ctx, spec.GetName())
 		// get the lint results
 		request := rpc.GetArtifactContentsRequest{
 			Name: spec.Name + "/artifacts/" + lintRelation(linter),
@@ -177,7 +177,7 @@ func computeLintStatsProjects(ctx context.Context,
 		}
 		// Store the aggregate stats on this project
 		_ = storeLintStatsArtifact(ctx, client, project.GetName()+"/locations/global", linter, project_stats)
-		log.Debug(project.GetName())
+		log.Debug(ctx, project.GetName())
 	})
 }
 
@@ -197,7 +197,7 @@ func computeLintStatsAPIs(ctx context.Context,
 		}
 		// Store the aggregate stats on this api
 		_ = storeLintStatsArtifact(ctx, client, api.GetName(), linter, api_stats)
-		log.Debug(api.GetName())
+		log.Debug(ctx, api.GetName())
 	})
 }
 
@@ -217,7 +217,7 @@ func computeLintStatsVersions(ctx context.Context,
 		}
 		// Store the aggregate stats on this version
 		_ = storeLintStatsArtifact(ctx, client, version.GetName(), linter, version_stats)
-		log.Debug(version.GetName())
+		log.Debug(ctx, version.GetName())
 	})
 }
 

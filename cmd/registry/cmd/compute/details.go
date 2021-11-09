@@ -19,9 +19,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/apex/log"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"github.com/spf13/cobra"
@@ -40,12 +40,12 @@ func detailsCommand(ctx context.Context) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			filter, err := cmd.Flags().GetString("filter")
 			if err != nil {
-				log.WithError(err).Fatal("Failed to get filter from flags")
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get filter from flags")
 			}
 
 			client, err := connection.NewClient(ctx)
 			if err != nil {
-				log.WithError(err).Fatal("Failed to get client")
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
 			// Initialize task queue.
 			taskQueue, wait := core.WorkerPool(ctx, 64)
@@ -61,7 +61,7 @@ func detailsCommand(ctx context.Context) *cobra.Command {
 					}
 				})
 				if err != nil {
-					log.WithError(err).Debugf("Failed to list APIs")
+					log.FromContext(ctx).WithError(err).Debugf("Failed to list APIs")
 				}
 			}
 		},
@@ -109,7 +109,7 @@ func (task *computeDetailsTask) Run(ctx context.Context) error {
 		}
 		document, err := oas2.ParseDocument(data)
 		if document == nil && err != nil {
-			log.WithError(err).Errorf("Invalid OpenAPI: %s", spec.Name)
+			log.FromContext(ctx).WithError(err).Errorf("Invalid OpenAPI: %s", spec.Name)
 			return nil
 		}
 		if document.Info != nil {
@@ -136,7 +136,7 @@ func (task *computeDetailsTask) Run(ctx context.Context) error {
 		}
 		document, err := oas3.ParseDocument(data)
 		if document == nil && err != nil {
-			log.WithError(err).Errorf("Invalid OpenAPI: %s", spec.Name)
+			log.FromContext(ctx).WithError(err).Errorf("Invalid OpenAPI: %s", spec.Name)
 			return nil
 		}
 		if document.Info != nil {
@@ -163,7 +163,7 @@ func (task *computeDetailsTask) Run(ctx context.Context) error {
 		}
 		document, err := discovery.ParseDocument(data)
 		if document == nil && err != nil {
-			log.WithError(err).Errorf("Invalid Discovery document: %s", spec.Name)
+			log.FromContext(ctx).WithError(err).Errorf("Invalid Discovery document: %s", spec.Name)
 			return nil
 		}
 		title := document.Title
@@ -183,10 +183,10 @@ func (task *computeDetailsTask) Run(ctx context.Context) error {
 		}
 
 	} else if core.IsProto(spec.GetMimeType()) && core.IsZipArchive(spec.GetMimeType()) {
-		log.Debug(spec.Name)
-		details, err := core.NewDetailsFromZippedProtos(spec.GetContents())
+		log.Debug(ctx, spec.Name)
+		details, err := core.NewDetailsFromZippedProtos(ctx, spec.GetContents())
 		if err != nil {
-			log.WithError(err).Errorf("Error processing protos: %s", spec.Name)
+			log.FromContext(ctx).WithError(err).Errorf("Error processing protos: %s", spec.Name)
 			return nil
 		}
 		if details != nil {
@@ -214,13 +214,13 @@ func (task *computeDetailsTask) Run(ctx context.Context) error {
 			}
 		}
 	} else {
-		log.Errorf("We don't know how to compute the title of %s", task.apiName)
+		log.Errorf(ctx, "We don't know how to compute the title of %s", task.apiName)
 		return nil
 	}
 	if request != nil {
 		_, err = task.client.UpdateApi(ctx, request)
 		if err != nil {
-			log.WithError(err).Errorf("Error updating API: %s", task.apiName)
+			log.FromContext(ctx).WithError(err).Errorf("Error updating API: %s", task.apiName)
 			return nil
 		}
 	}

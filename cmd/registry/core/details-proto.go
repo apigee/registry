@@ -15,13 +15,14 @@
 package core
 
 import (
+	"context"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 
-	"github.com/apex/log"
+	"github.com/apigee/registry/log"
 	"github.com/yoheimuta/go-protoparser/v4/parser"
 
 	protoparser "github.com/yoheimuta/go-protoparser/v4"
@@ -35,7 +36,7 @@ type Details struct {
 }
 
 // NewDetailsFromZippedProtos returns a Details structure describing a spec.
-func NewDetailsFromZippedProtos(b []byte) (*Details, error) {
+func NewDetailsFromZippedProtos(ctx context.Context, b []byte) (*Details, error) {
 	// create a tmp directory
 	dname, err := ioutil.TempDir("", "registry-protos-")
 	if err != nil {
@@ -64,7 +65,7 @@ func NewDetailsFromZippedProtos(b []byte) (*Details, error) {
 			return nil
 		})
 	if err != nil {
-		log.WithError(err).Debug("Failed to walk directory")
+		log.FromContext(ctx).WithError(err).Debug("Failed to walk directory")
 	}
 	if len(details) == 1 {
 		return details[0], nil

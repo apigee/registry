@@ -18,9 +18,9 @@ import (
 	"context"
 	"strings"
 
-	"github.com/apex/log"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/log"
 	"github.com/google/gnostic/metrics/vocabulary"
 	"github.com/spf13/cobra"
 )
@@ -33,15 +33,15 @@ func versionsCommand(ctx context.Context) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			filter, err := cmd.Flags().GetString("filter")
 			if err != nil {
-				log.WithError(err).Fatal("Failed to get filter from flags")
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get filter from flags")
 			}
 			output, err := cmd.Flags().GetString("output")
 			if err != nil {
-				log.WithError(err).Fatal("Failed to get output from flags")
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get output from flags")
 			}
 			client, err := connection.NewClient(ctx)
 			if err != nil {
-				log.WithError(err).Fatal("Failed to get client")
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
 			names, inputs := collectInputVocabularies(ctx, client, args, filter)
 

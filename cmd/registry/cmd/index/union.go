@@ -17,9 +17,9 @@ package index
 import (
 	"context"
 
-	"github.com/apex/log"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/log"
 	"github.com/spf13/cobra"
 )
 
@@ -36,12 +36,12 @@ func unionCommand(ctx context.Context) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			filter, err := cmd.Flags().GetString("filter")
 			if err != nil {
-				log.WithError(err).Fatal("Failed to get filter from flags")
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get filter from flags")
 			}
 
 			client, err := connection.NewClient(ctx)
 			if err != nil {
-				log.WithError(err).Fatal("Failed to get client")
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
 			_, inputs := collectInputIndexes(ctx, client, args, filter)
 			index := core.IndexUnion(inputs)

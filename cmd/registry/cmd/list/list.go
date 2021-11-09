@@ -18,9 +18,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/apex/log"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/server/registry/names"
 	"github.com/spf13/cobra"
 )
@@ -34,15 +34,15 @@ func Command(ctx context.Context) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			client, err := connection.NewClient(ctx)
 			if err != nil {
-				log.WithError(err).Fatal("Failed to get client")
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
 			adminClient, err := connection.NewAdminClient(ctx)
 			if err != nil {
-				log.WithError(err).Fatal("Failed to get client")
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
 			err = matchAndHandleListCmd(ctx, client, adminClient, args[0], filter)
 			if err != nil {
-				log.WithError(err).Fatal("Failed to match or handle command")
+				log.FromContext(ctx).WithError(err).Fatal("Failed to match or handle command")
 			}
 		},
 	}

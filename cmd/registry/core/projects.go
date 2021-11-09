@@ -17,8 +17,8 @@ package core
 import (
 	"context"
 
-	"github.com/apex/log"
 	"github.com/apigee/registry/gapic"
+	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
 )
 
@@ -31,9 +31,9 @@ func EnsureProjectExists(ctx context.Context, client *gapic.AdminClient, project
 		}
 
 		if _, err := client.CreateProject(ctx, req); err != nil {
-			log.WithError(err).Fatal("Failed to create project")
+			log.FromContext(ctx).WithError(err).Fatal("Failed to create project")
 		}
 	} else if err != nil {
-		log.WithError(err).Fatal("GetProject returned error during project existence check")
+		log.FromContext(ctx).WithError(err).Fatal("GetProject returned error during project existence check")
 	}
 }

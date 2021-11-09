@@ -19,9 +19,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/apex/log"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/log"
 	"github.com/google/gnostic/metrics/vocabulary"
 	"github.com/spf13/cobra"
 )
@@ -35,16 +35,16 @@ func uniqueCommand(ctx context.Context) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			filter, err := cmd.Flags().GetString("filter")
 			if err != nil {
-				log.WithError(err).Fatal("Failed to get filter from flags")
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get filter from flags")
 			}
 
 			if strings.Contains(outputID, "/") {
-				log.Fatal("output-id must specify an artifact id (final segment only) and not a full name.")
+				log.Fatal(ctx, "output-id must specify an artifact id (final segment only) and not a full name.")
 			}
 
 			client, err := connection.NewClient(ctx)
 			if err != nil {
-				log.WithError(err).Fatal("Failed to get client")
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
 			names, inputs := collectInputVocabularies(ctx, client, args, filter)
 			list := vocabulary.FilterCommon(inputs)

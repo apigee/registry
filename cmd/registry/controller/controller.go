@@ -19,8 +19,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/apex/log"
 	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
 )
 
@@ -38,17 +38,17 @@ func ProcessManifest(
 
 	var actions []*Action
 	for _, resource := range manifest.GeneratedResources {
-		log.Debugf("Processing entry: %v", resource)
+		log.Debugf(ctx, "Processing entry: %v", resource)
 
 		err := ValidateResourceEntry(resource)
 		if err != nil {
-			log.WithError(err).Debugf("Skipping resource: %q invalid resource pattern", resource)
+			log.FromContext(ctx).WithError(err).Debugf("Skipping resource: %q invalid resource pattern", resource)
 			continue
 		}
 
 		newActions, err := processManifestResource(ctx, client, projectID, resource)
 		if err != nil {
-			log.WithError(err).Debugf("Skipping resource: %q", resource)
+			log.FromContext(ctx).WithError(err).Debugf("Skipping resource: %q", resource)
 			continue
 		}
 		actions = append(actions, newActions...)
@@ -227,7 +227,7 @@ func generateActions(
 				resourceName, err := resourceNameFromGroupKey(
 					resourcePattern, groupKey)
 				if err != nil {
-					log.Debugf("skipping entry for %q, cannot derive target resource name for pattern: %q", groupKey, resourcePattern)
+					log.Debugf(ctx, "skipping entry for %q, cannot derive target resource name for pattern: %q", groupKey, resourcePattern)
 					continue
 				}
 				cmd, err := generateCommand(generatedResource.Action, resourceName)

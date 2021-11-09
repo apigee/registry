@@ -18,9 +18,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/apex/log"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"github.com/spf13/cobra"
@@ -36,7 +36,7 @@ func versionsCommand(ctx context.Context) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			client, err := connection.NewClient(ctx)
 			if err != nil {
-				log.WithError(err).Fatal("Failed to get client")
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
 			// Initialize task queue.
 			taskQueue, wait := core.WorkerPool(ctx, 64)
@@ -52,7 +52,7 @@ func versionsCommand(ctx context.Context) *cobra.Command {
 					}
 				})
 				if err != nil {
-					log.WithError(err).Fatal("Failed to list APIs")
+					log.FromContext(ctx).WithError(err).Fatal("Failed to list APIs")
 				}
 			}
 		},
@@ -87,7 +87,7 @@ func (task *countVersionsTask) Run(ctx context.Context) error {
 			return err
 		}
 	}
-	log.Debugf("%d\t%s", count, task.apiName)
+	log.Debugf(ctx, "%d\t%s", count, task.apiName)
 	subject := task.apiName
 	relation := "versionCount"
 	artifact := &rpc.Artifact{
