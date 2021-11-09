@@ -94,6 +94,7 @@ func main() {
 	pflag.StringVarP(&configPath, "configuration", "c", "", "The server configuration file to load.")
 	pflag.Parse()
 
+	// Use a default logger configuration until we load the server config.
 	bootLogger := log.NewLogger()
 	if configPath != "" {
 		bootLogger.Infof("Loading configuration from %s", configPath)
@@ -113,6 +114,7 @@ func main() {
 		bootLogger.Fatalf("Invalid configuration: %s", err)
 	}
 
+	// Use logging options from the server config.
 	var (
 		logOpts        = loggerOptions(config.Logging)
 		logger         = log.NewLogger(logOpts...)
