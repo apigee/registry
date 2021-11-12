@@ -17,6 +17,7 @@ package bulk
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -28,6 +29,7 @@ import (
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
 )
 
 func protosCommand(ctx context.Context) *cobra.Command {
@@ -63,23 +65,48 @@ func scanDirectoryForProtos(ctx context.Context, client connection.Client, proje
 	defer wait()
 
 	dirPattern := regexp.MustCompile("v.*[1-9]+.*")
-	if err := filepath.Walk(directory, func(filepath string, info os.FileInfo, err error) error {
+	if err := filepath.Walk(directory, func(fullname string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 
 		// Skip non-matching directories.
-		filename := path.Base(filepath)
+		filename := path.Base(fullname)
 		if !info.IsDir() || !dirPattern.MatchString(filename) {
 			return nil
 		}
 
+		// The API Service Configuration contains important API properties.
+		serviceConfig := readServiceConfig(fullname)
+
+		// Skip APIs without service configurations.
+		if serviceConfig == nil || serviceConfig.Type != "google.api.Service" {
+			return nil
+		}
+
+		// Skip APIs with incomplete service configurations.
+		if serviceConfig.Title == "" || serviceConfig.Name == "" {
+			return nil
+		}
+
+		// Remove a Google-specific suffix from API IDs.
+		apiID := serviceConfig.Name
+		suffix := ".googleapis.com"
+		if strings.HasSuffix(apiID, suffix) {
+			apiID = strings.TrimSuffix(apiID, suffix)
+		}
+
+		apiDescription := strings.ReplaceAll(serviceConfig.Documentation.Summary, "\n", " ")
+
 		taskQueue <- &uploadProtoTask{
-			client:    client,
-			baseURI:   baseURI,
-			projectID: projectID,
-			path:      filepath,
-			directory: directory,
+			client:         client,
+			baseURI:        baseURI,
+			projectID:      projectID,
+			apiID:          apiID,
+			apiTitle:       serviceConfig.Title,
+			apiDescription: apiDescription,
+			path:           fullname,
+			directory:      directory,
 		}
 
 		return nil
@@ -89,14 +116,16 @@ func scanDirectoryForProtos(ctx context.Context, client connection.Client, proje
 }
 
 type uploadProtoTask struct {
-	client    connection.Client
-	baseURI   string
-	projectID string
-	path      string
-	directory string
-	apiID     string // computed at runtime
-	versionID string // computed at runtime
-	specID    string // computed at runtime
+	client         connection.Client
+	baseURI        string
+	projectID      string
+	path           string
+	directory      string
+	apiID          string
+	apiTitle       string
+	apiDescription string
+	versionID      string // computed at runtime
+	specID         string // computed at runtime
 }
 
 func (task *uploadProtoTask) String() string {
@@ -125,9 +154,6 @@ func (task *uploadProtoTask) Run(ctx context.Context) error {
 
 func (task *uploadProtoTask) populateFields() {
 	parts := strings.Split(task.apiPath(), "/")
-	apiParts := parts[0 : len(parts)-1]
-	apiPart := strings.ReplaceAll(strings.Join(apiParts, "-"), "/", "-")
-	task.apiID = sanitize(apiPart)
 
 	versionPart := parts[len(parts)-1]
 	task.versionID = sanitize(versionPart)
@@ -141,7 +167,8 @@ func (task *uploadProtoTask) createAPI(ctx context.Context) error {
 	response, err := task.client.UpdateApi(ctx, &rpc.UpdateApiRequest{
 		Api: &rpc.Api{
 			Name:        task.apiName(),
-			DisplayName: task.apiID,
+			DisplayName: task.apiTitle,
+			Description: task.apiDescription,
 		},
 		AllowMissing: true,
 	})
@@ -236,7 +263,8 @@ func (task *uploadProtoTask) apiPath() string {
 }
 
 func (task *uploadProtoTask) fileName() string {
-	return "protos.zip"
+	parts := strings.Split(task.apiPath(), "/")
+	return strings.Join(parts, "-") + ".zip"
 }
 
 func (task *uploadProtoTask) zipContents() ([]byte, error) {
@@ -247,4 +275,41 @@ func (task *uploadProtoTask) zipContents() ([]byte, error) {
 	}
 
 	return contents.Bytes(), nil
+}
+
+type ServiceConfig struct {
+	Type          string          `yaml:"type"`
+	Name          string          `yaml:"name"`
+	Title         string          `yaml:"title"`
+	Documentation SCDocumentation `yaml:"documentation"`
+}
+
+type SCDocumentation struct {
+	Summary string `yaml:"summary"`
+}
+
+func readServiceConfig(directory string) *ServiceConfig {
+	var serviceConfig *ServiceConfig
+	yamlPattern := regexp.MustCompile(".*\\.yaml")
+	filepath.Walk(directory, func(fullname string, info os.FileInfo, err error) error {
+		// Skip everything that's not a YAML file.
+		filename := path.Base(fullname)
+		if info.IsDir() || !yamlPattern.MatchString(filename) {
+			return nil
+		}
+		bytes, err := ioutil.ReadFile(fullname)
+		if err != nil {
+			return err
+		}
+		sc := &ServiceConfig{}
+		err = yaml.Unmarshal(bytes, sc)
+		if err != nil {
+			return err
+		}
+		if sc.Type == "google.api.Service" {
+			serviceConfig = sc
+		}
+		return nil
+	})
+	return serviceConfig
 }
