@@ -25,6 +25,33 @@ import (
 
 const resourceKW = "$resource"
 
+func parsePattern(resourcePattern string) (ResourceName, error) {
+	// Parses a pattern and returns a ResourceName object
+
+	if api, err := names.ParseApiCollection(resourcePattern); err == nil {
+		return ApiName{Api: api}, nil
+	} else if version, err := names.ParseVersionCollection(resourcePattern); err == nil {
+		return VersionName{Version: version}, nil
+	} else if spec, err := names.ParseSpecCollection(resourcePattern); err == nil {
+		return SpecName{Spec: spec}, nil
+	} else if artifact, err := names.ParseArtifactCollection(resourcePattern); err == nil {
+		return ArtifactName{Artifact: artifact}, nil
+	}
+
+	// Then try to match resource names.
+	if api, err := names.ParseApi(resourcePattern); err == nil {
+		return ApiName{Api: api}, nil
+	} else if version, err := names.ParseVersion(resourcePattern); err == nil {
+		return VersionName{Version: version}, nil
+	} else if spec, err := names.ParseSpec(resourcePattern); err == nil {
+		return SpecName{Spec: spec}, nil
+	} else if artifact, err := names.ParseArtifact(resourcePattern); err == nil {
+		return ArtifactName{Artifact: artifact}, nil
+	}
+
+	return nil, fmt.Errorf("invalid resourcePattern: %s", resourcePattern)
+}
+
 func extendDependencyPattern(
 	resourcePattern string,
 	dependencyPattern string,
@@ -39,33 +66,38 @@ func extendDependencyPattern(
 	// dependencyPattern: "$resource.api/versions/-"
 	// Returns "projects/demo/locations/global/apis/-/versions/-"
 
+	// If there is no $resource prefix, prepend project name and return
 	if !strings.HasPrefix(dependencyPattern, resourceKW) {
 		return fmt.Sprintf("projects/%s/locations/global/%s", projectID, dependencyPattern), nil
 	}
 
-	entityRegex := regexp.MustCompile(fmt.Sprintf(`(\%s\.(api|version|spec|artifact))(/|$)`, resourceKW))
-	matches := entityRegex.FindStringSubmatch(dependencyPattern)
+	// Extract the $resource reference
+	// Example result for the following regex
 	// dependencyPattern: "$resource.api/artifacts/score"
 	// matches: ["$resource.api/", "$resource.api", "api"]
+	entityRegex := regexp.MustCompile(fmt.Sprintf(`(\%s\.(api|version|spec|artifact))(/|$)`, resourceKW))
+	matches := entityRegex.FindStringSubmatch(dependencyPattern)
 	if len(matches) <= 2 {
 		return "", fmt.Errorf("invalid dependency pattern: %s", dependencyPattern)
+	}
+
+	// Convert resourcePattern to resourceName to extract entity values (api, spec, version,artifact)
+	resourceName, err := parsePattern(resourcePattern)
+	if err != nil {
+		return "", err
 	}
 
 	entity, entityType := matches[1], matches[2]
 	entityVal := ""
 	switch entityType {
 	case "api":
-		re := regexp.MustCompile(`.*/apis/[^/]*`)
-		entityVal = re.FindString(resourcePattern)
+		entityVal = resourceName.GetApi()
 	case "version":
-		re := regexp.MustCompile(`.*/versions/[^/]*`)
-		entityVal = re.FindString(resourcePattern)
+		entityVal = resourceName.GetVersion()
 	case "spec":
-		re := regexp.MustCompile(`.*/specs/[^/]*`)
-		entityVal = re.FindString(resourcePattern)
+		entityVal = resourceName.GetSpec()
 	case "artifact":
-		re := regexp.MustCompile(`.*/artifacts/[^/]*`)
-		entityVal = re.FindString(resourcePattern)
+		entityVal = resourceName.GetArtifact()
 	default:
 		return "", fmt.Errorf("invalid combination resourcePattern: %q dependencyPattern: %q", resourcePattern, dependencyPattern)
 	}
@@ -78,39 +110,51 @@ func extendDependencyPattern(
 
 }
 
+// This function is used in case of receipt artifacts where the name of the target resource to create is not known
 func resourceNameFromGroupKey(
 	resourcePattern string,
 	groupKey string) (string, error) {
-	// Derives the resource name from the provided resourcePattern and dependencyName.
+	// Derives the resource name from the provided resourcePattern and groupKey.
 	// Example:
 	// 1) resourcePattern: projects/demo/locations/global/apis/-/versions/-/specs/-
-	//    dependencyName: projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity
+	//    groupKey: projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity
 	//    returns projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml
 	// 2) resourcePattern: projects/demo/locations/global/apis/petstore/versions/-/specs/-/artifacts/custom-artifact
-	//    dependencyName: projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity
+	//    groupKey: projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity
 	//    returns projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/custom-artifact
 
-	// Replace apis/- pattern with the corresponding name and so on.
-	// dependency.GetApi() returns the full api name projects/demo/locations/global/apis/petstore
-	// We use stringsSplit()[-1] to extract only the API name
-	// apiPattern := regexp.MustCompile(`/apis/-`)
-	apiName := strings.Split(extractEntityName(groupKey, "api"), "/")
-	resourceName := strings.ReplaceAll(resourcePattern, "/apis/-",
-		fmt.Sprintf("/apis/%s", apiName[len(apiName)-1]))
+	groupName, err := parsePattern(groupKey)
+	resourceName := resourcePattern
 
-	versionName := strings.Split(extractEntityName(groupKey, "version"), "/")
-	resourceName = strings.ReplaceAll(resourceName, "/versions/-",
-		fmt.Sprintf("/versions/%s", versionName[len(versionName)-1]))
+	if err == nil {
+		// Replace `apis/-` pattern with the corresponding name.
+		// groupName.GetApi() returns the full api name projects/demo/locations/global/apis/petstore
+		// We use stringsSplit()[-1] to extract only the API name
+		apiName := strings.Split(groupName.GetApi(), "/")
+		if len(apiName) > 0 {
+			resourceName = strings.ReplaceAll(resourceName, "/apis/-",
+				fmt.Sprintf("/apis/%s", apiName[len(apiName)-1]))
+		}
 
-	specName := strings.Split(extractEntityName(groupKey, "spec"), "/")
-	resourceName = strings.ReplaceAll(resourceName, "/specs/-",
-		fmt.Sprintf("/specs/%s", specName[len(specName)-1]))
+		versionName := strings.Split(groupName.GetVersion(), "/")
+		if len(versionName) > 0 {
+			resourceName = strings.ReplaceAll(resourceName, "/versions/-",
+				fmt.Sprintf("/versions/%s", versionName[len(versionName)-1]))
+		}
 
-	artifactName := strings.Split(extractEntityName(groupKey, "artifact"), "/")
-	resourceName = strings.ReplaceAll(resourceName, "/artifacts/-",
-		fmt.Sprintf("/artifacts/%s", artifactName[len(artifactName)-1]))
+		specName := strings.Split(groupName.GetSpec(), "/")
+		if len(specName) > 0 {
+			resourceName = strings.ReplaceAll(resourceName, "/specs/-",
+				fmt.Sprintf("/specs/%s", specName[len(specName)-1]))
+		}
 
-	//Validate resourceName
+		artifactName := strings.Split(groupName.GetArtifact(), "/")
+		if len(artifactName) > 0 {
+			resourceName = strings.ReplaceAll(resourceName, "/artifacts/-",
+				fmt.Sprintf("/artifacts/%s", artifactName[len(artifactName)-1]))
+		}
+	}
+	//Validate generated resourceName
 	if _, err := names.ParseProject(resourceName); err == nil {
 		return resourceName, nil
 	} else if _, err := names.ParseApi(resourceName); err == nil {
@@ -146,7 +190,7 @@ func ValidateResourceEntry(resource *rpc.GeneratedResource) error {
 
 	// Validate that the action contains reference to valid entities.
 	// Same as the group entity
-	entity, entityType, err := getCommandEntitity(resource.Action)
+	entity, entityType, err := getCommandEntity(resource.Action)
 	if err != nil {
 		return err
 	}
@@ -185,8 +229,8 @@ func getGroupEntity(pattern string) (string, error) {
 	return matches[1], nil
 }
 
-func getGroupKey(pattern string, resource Resource) (string, error) {
-	// Reads the sourcePattern, finds out group by entity type and returns the group value
+func getGroupKey(pattern string, resource ResourceInstance) (string, error) {
+	// Reads the pattern and returns the group value for the resource
 	// Example:
 	// pattern: $resource.api/versions/-/specs/-
 	// resource: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml"
@@ -214,7 +258,7 @@ func getGroupKey(pattern string, resource Resource) (string, error) {
 
 }
 
-func getCommandEntitity(action string) (string, string, error) {
+func getCommandEntity(action string) (string, string, error) {
 	// Check if there is a reference to $n in the action
 	isMatch, err := regexp.MatchString(fmt.Sprintf(`\%s`, resourceKW), action)
 	if err != nil {
@@ -250,7 +294,7 @@ func getCommandEntitity(action string) (string, string, error) {
 
 func generateCommand(action string, resourceName string) (string, error) {
 
-	entity, entityType, err := getCommandEntitity(action)
+	entity, entityType, err := getCommandEntity(action)
 	if err != nil {
 		return "", err
 	}
@@ -260,7 +304,24 @@ func generateCommand(action string, resourceName string) (string, error) {
 		return action, nil
 	}
 
-	entityVal := extractEntityName(resourceName, entityType)
+	resource, err := parsePattern(resourceName)
+	if err != nil {
+		return "", fmt.Errorf("error generating command, invalid resourceName: %s", resourceName)
+	}
+
+	entityVal := ""
+	switch entityType {
+	case "api":
+		entityVal = resource.GetApi()
+	case "version":
+		entityVal = resource.GetVersion()
+	case "spec":
+		entityVal = resource.GetSpec()
+	case "artifact":
+		entityVal = resource.GetArtifact()
+	default:
+		entityVal = ""
+	}
 
 	if len(entityVal) == 0 {
 		return "", fmt.Errorf("error generating command, cannot derive args for action. Invalid action: %s", action)
@@ -268,10 +329,4 @@ func generateCommand(action string, resourceName string) (string, error) {
 	action = strings.ReplaceAll(action, entity, entityVal)
 
 	return action, nil
-}
-
-func extractEntityName(name string, group_name string) string {
-	re := regexp.MustCompile(fmt.Sprintf(".*\\/%ss\\/[^\\/]*", group_name))
-	group := re.FindString(name)
-	return group
 }
