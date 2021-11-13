@@ -26,26 +26,19 @@ import (
 	"github.com/apigee/registry/rpc"
 )
 
-// apiLinterCommandExecuter is an interface through which the API Linter command executes.
-type apiLinterCommandExecuter interface {
-	// Runs the API linter with a provided spec path
-	Execute(specPath string) ([]*rpc.LintProblem, error)
-}
+// Runs the API linter with a provided spec path
+type runLinter func(specPath string) ([]*rpc.LintProblem, error)
 
 // apiLinterRunner implements the LinterRunner interface for the API linter.
 type apiLinterRunner struct{}
 
-// concreteApiLinterLintCommandExecuter implements the spectralLintCommandExecuter interface
-// for the Spectral linter.
-type concreteApiLinterLintCommandExecuter struct{}
-
 func (linter *apiLinterRunner) Run(req *rpc.LinterRequest) (*rpc.LinterResponse, error) {
-	return linter.RunImpl(req, &concreteApiLinterLintCommandExecuter{})
+	return linter.RunImpl(req, runApiLinter)
 }
 
 func (linter *apiLinterRunner) RunImpl(
 	req *rpc.LinterRequest,
-	executer apiLinterCommandExecuter,
+	runLinter runLinter,
 ) (*rpc.LinterResponse, error) {
 
 	lintFiles := make([]*rpc.LintFile, 0)
@@ -62,7 +55,7 @@ func (linter *apiLinterRunner) RunImpl(
 		}
 
 		// Execute the API linter.
-		lintProblems, err := executer.Execute(path)
+		lintProblems, err := runLinter(path)
 		if err != nil {
 			return err
 		}
@@ -90,7 +83,7 @@ func (linter *apiLinterRunner) RunImpl(
 	}, nil
 }
 
-func (*concreteApiLinterLintCommandExecuter) Execute(specPath string) ([]*rpc.LintProblem, error) {
+func runApiLinter(specPath string) ([]*rpc.LintProblem, error) {
 	// API-linter necessitates being ran on specs in the CWD to avoid many import errors,
 	// so we change the directory of the command to the directory of the spec.
 	specDirectory := filepath.Dir(specPath)
