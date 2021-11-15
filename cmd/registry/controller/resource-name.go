@@ -111,42 +111,52 @@ func (ar ArtifactName) GetArtifact() string {
 }
 
 func (ar ArtifactName) GetSpec() string {
-	specName := names.Spec{
+	specPattern := names.Spec{
 		ProjectID: ar.Artifact.ProjectID(),
 		ApiID:     ar.Artifact.ApiID(),
 		VersionID: ar.Artifact.VersionID(),
 		SpecID:    ar.Artifact.SpecID(),
 	}
-	// if err := specName.Validate(); err != nil {
-	// 	return ""
-	// }
 
-	return specName.String()
+	// Validate the generated name
+	if spec, err := names.ParseSpec(specPattern.String()); err == nil {
+		return spec.String()
+	} else if _, err := names.ParseSpecCollection(specPattern.String()); err == nil {
+		return spec.String()
+	}
+
+	return ""
 }
 
 func (ar ArtifactName) GetVersion() string {
-	versionName := names.Version{
+	versionPattern := names.Version{
 		ProjectID: ar.Artifact.ProjectID(),
 		ApiID:     ar.Artifact.ApiID(),
 		VersionID: ar.Artifact.VersionID(),
 	}
-	// if err := versionName.Validate(); err != nil {
-	// 	return ""
-	// }
+	// Validate the generated name
+	if version, err := names.ParseVersion(versionPattern.String()); err == nil {
+		return version.String()
+	} else if _, err := names.ParseVersionCollection(versionPattern.String()); err == nil {
+		return version.String()
+	}
 
-	return versionName.String()
+	return ""
 }
 
 func (ar ArtifactName) GetApi() string {
-	apiName := names.Api{
+	apiPattern := names.Api{
 		ProjectID: ar.Artifact.ProjectID(),
 		ApiID:     ar.Artifact.ApiID(),
 	}
-	// if err := apiName.Validate(); err != nil {
-	// 	return ""
-	// }
+	// Validate the generated name
+	if _, err := names.ParseApi(apiPattern.String()); err == nil {
+		return apiPattern.String()
+	} else if _, err := names.ParseApiCollection(apiPattern.String()); err == nil {
+		return apiPattern.String()
+	}
 
-	return apiName.String()
+	return ""
 }
 
 func (ar ArtifactName) GetName() string {
