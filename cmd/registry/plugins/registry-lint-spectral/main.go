@@ -55,26 +55,19 @@ type spectralLintLocation struct {
 	Character int32 `json:"character"`
 }
 
-// spectralLintCommandExecuter is an interface through which the Spectral command executes.
-type spectralLintCommandExecuter interface {
-	// Runs the spectral linter with a provided spec and configuration path
-	Execute(specPath, configPath string) ([]*spectralLintResult, error)
-}
+// Runs the spectral linter with a provided spec and configuration path
+type runLinter func(specPath, configPath string) ([]*spectralLintResult, error)
 
 // spectralLinterRunner implements the LinterRunner interface for the Spectral linter.
 type spectralLinterRunner struct{}
 
-// concreteSpectralLintCommandExecuter implements the spectralLintCommandExecuter interface
-// for the Spectral linter.
-type concreteSpectralLintCommandExecuter struct{}
-
 func (linter *spectralLinterRunner) Run(req *rpc.LinterRequest) (*rpc.LinterResponse, error) {
-	return linter.RunImpl(req, &concreteSpectralLintCommandExecuter{})
+	return linter.RunImpl(req, runSpectralLinter)
 }
 
 func (linter *spectralLinterRunner) RunImpl(
 	req *rpc.LinterRequest,
-	executer spectralLintCommandExecuter,
+	runLinter runLinter,
 ) (*rpc.LinterResponse, error) {
 	lintFiles := make([]*rpc.LintFile, 0)
 
@@ -105,7 +98,7 @@ func (linter *spectralLinterRunner) RunImpl(
 		}
 
 		// Execute the spectral linter.
-		lintResults, err := executer.Execute(path, configPath)
+		lintResults, err := runLinter(path, configPath)
 		if err != nil {
 			return err
 		}
@@ -188,7 +181,7 @@ func getLintProblemsFromSpectralResults(
 	return problems, nil
 }
 
-func (*concreteSpectralLintCommandExecuter) Execute(specPath, configPath string) ([]*spectralLintResult, error) {
+func runSpectralLinter(specPath, configPath string) ([]*spectralLintResult, error) {
 	// Create a temporary destination directory to store the output.
 	root, err := ioutil.TempDir("", "spectral-output-")
 	if err != nil {
