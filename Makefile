@@ -33,7 +33,7 @@ build:
 ifndef REGISTRY_PROJECT_IDENTIFIER
 	@echo "Error! REGISTRY_PROJECT_IDENTIFIER must be set."; exit 1
 endif
-	gcloud builds submit . --substitutions _REGISTRY_PROJECT_IDENTIFIER="${REGISTRY_PROJECT_IDENTIFIER}"
+	gcloud builds submit .
 
 deploy:
 ifndef REGISTRY_PROJECT_IDENTIFIER
