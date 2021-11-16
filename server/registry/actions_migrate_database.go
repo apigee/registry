@@ -19,10 +19,10 @@ import (
 	"fmt"
 
 	"github.com/apigee/registry/rpc"
-	"github.com/golang/protobuf/ptypes"
 	"google.golang.org/genproto/googleapis/longrunning"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/anypb"
 )
 
 // MigrateDatabase handles the corresponding API request.
@@ -37,9 +37,12 @@ func (s *RegistryServer) MigrateDatabase(ctx context.Context, req *rpc.MigrateDa
 	defer db.Close()
 
 	err = db.Migrate(req.Kind)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
 
-	metadata, _ := ptypes.MarshalAny(&rpc.MigrateDatabaseMetadata{})
-	response, _ := ptypes.MarshalAny(&rpc.MigrateDatabaseResponse{
+	metadata, _ := anypb.New(&rpc.MigrateDatabaseMetadata{})
+	response, _ := anypb.New(&rpc.MigrateDatabaseResponse{
 		Message: "OK",
 	})
 	return &longrunning.Operation{
