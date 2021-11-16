@@ -79,7 +79,7 @@ func scanDirectoryForProtos(ctx context.Context, client connection.Client, proje
 		// The API Service Configuration contains important API properties.
 		serviceConfig := readServiceConfig(fullname)
 
-		// Skip APIs with missing or incomplete service configurations 
+		// Skip APIs with missing or incomplete service configurations
 		if serviceConfig == nil || serviceConfig.Title == "" || serviceConfig.Name == "" {
 			return nil
 		}

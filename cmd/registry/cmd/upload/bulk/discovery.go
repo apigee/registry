@@ -24,6 +24,7 @@ import (
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
 
 	discovery "github.com/google/gnostic/discovery"
 )
@@ -77,6 +78,7 @@ type uploadDiscoveryTask struct {
 	versionID string
 	specID    string
 	contents  []byte
+	info      *DiscoveryInfo
 }
 
 func (task *uploadDiscoveryTask) String() string {
@@ -111,7 +113,8 @@ func (task *uploadDiscoveryTask) createAPI(ctx context.Context) error {
 	response, err := task.client.UpdateApi(ctx, &rpc.UpdateApiRequest{
 		Api: &rpc.Api{
 			Name:        task.apiName(),
-			DisplayName: task.apiID,
+			DisplayName: task.info.Title,
+			Description: task.info.Description,
 		},
 		AllowMissing: true,
 	})
@@ -205,7 +208,16 @@ func (task *uploadDiscoveryTask) fetchDiscoveryDoc() error {
 	}
 
 	task.contents, err = normalizeJSON(bytes)
-	return err
+	if err != nil {
+		return err
+	}
+
+	task.info, err = parseDiscoveryInfo(task.contents)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Normalize JSON documents by remarshalling them to
@@ -217,4 +229,21 @@ func normalizeJSON(bytes []byte) ([]byte, error) {
 		return nil, err
 	}
 	return json.MarshalIndent(m, "", "  ")
+}
+
+// A subset of the discovery document useful for adding an API to the registry
+type DiscoveryInfo struct {
+	Name        string `yaml:"name"`
+	Title       string `yaml:"title"`
+	Version     string `yaml:"version"`
+	Description string `yaml:"description"`
+}
+
+func parseDiscoveryInfo(bytes []byte) (*DiscoveryInfo, error) {
+	info := &DiscoveryInfo{}
+	err := yaml.Unmarshal(bytes, info)
+	if err != nil {
+		return nil, err
+	}
+	return info, nil
 }
