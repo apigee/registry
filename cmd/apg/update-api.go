@@ -43,11 +43,15 @@ func init() {
 
 	UpdateApiCmd.Flags().StringVar(&UpdateApiInput.Api.RecommendedVersion, "api.recommended_version", "", "The recommended version of the API.  Format:...")
 
+	UpdateApiCmd.Flags().StringVar(&UpdateApiInput.Api.RecommendedDeployment, "api.recommended_deployment", "", "The recommended deployment of the API.  Format:...")
+
 	UpdateApiCmd.Flags().StringArrayVar(&UpdateApiInputApiLabels, "api.labels", []string{}, "key=value pairs. Labels attach identifying metadata to resources....")
 
 	UpdateApiCmd.Flags().StringArrayVar(&UpdateApiInputApiAnnotations, "api.annotations", []string{}, "key=value pairs. Annotations attach non-identifying metadata to...")
 
 	UpdateApiCmd.Flags().StringSliceVar(&UpdateApiInput.UpdateMask.Paths, "update_mask.paths", []string{}, "The set of field mask paths.")
+
+	UpdateApiCmd.Flags().BoolVar(&UpdateApiInput.AllowMissing, "allow_missing", false, "If set to true, and the api is not found, a new...")
 
 	UpdateApiCmd.Flags().StringVar(&UpdateApiFromFile, "from_file", "", "Absolute path to JSON file containing request payload")
 
