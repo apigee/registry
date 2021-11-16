@@ -21,6 +21,7 @@ import "google/api/client.proto";
 import "google/api/field_behavior.proto";
 import "google/api/resource.proto";
 import "google/cloud/apigeeregistry/v1/admin_models.proto";
+import "google/longrunning/operations.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/field_mask.proto";
 
@@ -44,6 +45,17 @@ service Admin {
   rpc GetStatus(protobuf.Empty) returns (Status) {
     option (google.api.http) = {
       get: "/v1/status"
+    };
+  }
+
+  // MigrateDatabase attempts to migrate the database to the current schema.
+  rpc MigrateDatabase(MigrateDatabaseRequest) returns (google.longrunning.Operation) {
+    option (google.api.http) = {
+      post: "/v1/migrate"
+    };
+    option (google.longrunning.operation_info) = {
+      response_type : "MigrateDatabaseResponse",
+      metadata_type : "MigrateDatabaseMetadata"
     };
   }
 
@@ -102,6 +114,23 @@ service Admin {
 // GetStatus is not included in hosted versions of the API.
 message Status {
   // A string describing the status.
+  string message = 1;
+}
+
+// Request message for MigrateDatabase.
+message MigrateDatabaseRequest {
+  // A string describing the kind of migration to perform.
+  // Currently only "auto" is recognized (and is the default if omitted).
+  string kind = 1;
+}
+
+// Metadata message for MigrateDatabase.
+message MigrateDatabaseMetadata {
+}
+
+// Response message for MigrateDatabase.
+message MigrateDatabaseResponse {
+  // A string describing the result of the migration.
   string message = 1;
 }
 
