@@ -35,6 +35,8 @@ func init() {
 
 	UpdateProjectCmd.Flags().StringSliceVar(&UpdateProjectInput.UpdateMask.Paths, "update_mask.paths", []string{}, "The set of field mask paths.")
 
+	UpdateProjectCmd.Flags().BoolVar(&UpdateProjectInput.AllowMissing, "allow_missing", false, "If set to true, and the project is not found, a...")
+
 	UpdateProjectCmd.Flags().StringVar(&UpdateProjectFromFile, "from_file", "", "Absolute path to JSON file containing request payload")
 
 }

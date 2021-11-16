@@ -47,6 +47,8 @@ func init() {
 
 	UpdateApiVersionCmd.Flags().StringSliceVar(&UpdateApiVersionInput.UpdateMask.Paths, "update_mask.paths", []string{}, "The set of field mask paths.")
 
+	UpdateApiVersionCmd.Flags().BoolVar(&UpdateApiVersionInput.AllowMissing, "allow_missing", false, "If set to true, and the version is not found, a...")
+
 	UpdateApiVersionCmd.Flags().StringVar(&UpdateApiVersionFromFile, "from_file", "", "Absolute path to JSON file containing request payload")
 
 }
