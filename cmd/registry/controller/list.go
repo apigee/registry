@@ -58,7 +58,10 @@ func ListResources(ctx context.Context, client connection.Client, pattern, filte
 
 func generateApiHandler(result *[]ResourceInstance) func(*rpc.Api) {
 	return func(api *rpc.Api) {
-		apiName, _ := names.ParseApi(api.GetName())
+		apiName, err := names.ParseApi(api.GetName())
+		if err != nil {
+			panic(err)
+		}
 		resource := ApiResource{
 			ApiName:         ApiName{Api: apiName},
 			UpdateTimestamp: api.UpdateTime.AsTime(),
@@ -69,7 +72,10 @@ func generateApiHandler(result *[]ResourceInstance) func(*rpc.Api) {
 
 func generateVersionHandler(result *[]ResourceInstance) func(*rpc.ApiVersion) {
 	return func(version *rpc.ApiVersion) {
-		versionName, _ := names.ParseVersion(version.GetName())
+		versionName, err := names.ParseVersion(version.GetName())
+		if err != nil {
+			panic(err)
+		}
 		resource := VersionResource{
 			VersionName:     VersionName{Version: versionName},
 			UpdateTimestamp: version.UpdateTime.AsTime(),
@@ -80,7 +86,10 @@ func generateVersionHandler(result *[]ResourceInstance) func(*rpc.ApiVersion) {
 
 func generateSpecHandler(result *[]ResourceInstance) func(*rpc.ApiSpec) {
 	return func(spec *rpc.ApiSpec) {
-		specName, _ := names.ParseSpec(spec.GetName())
+		specName, err := names.ParseSpec(spec.GetName())
+		if err != nil {
+			panic(err)
+		}
 		resource := SpecResource{
 			SpecName:        SpecName{Spec: specName},
 			UpdateTimestamp: spec.RevisionUpdateTime.AsTime(),
@@ -91,7 +100,10 @@ func generateSpecHandler(result *[]ResourceInstance) func(*rpc.ApiSpec) {
 
 func generateArtifactHandler(result *[]ResourceInstance) func(*rpc.Artifact) {
 	return func(artifact *rpc.Artifact) {
-		artifactName, _ := names.ParseArtifact(artifact.GetName())
+		artifactName, err := names.ParseArtifact(artifact.GetName())
+		if err != nil {
+			panic(err)
+		}
 		resource := ArtifactResource{
 			ArtifactName:    ArtifactName{Artifact: artifactName},
 			UpdateTimestamp: artifact.UpdateTime.AsTime(),

@@ -25,9 +25,7 @@ import (
 
 const resourceKW = "$resource"
 
-func parsePattern(resourcePattern string) (ResourceName, error) {
-	// Parses a pattern and returns a ResourceName object
-
+func parseResourceCollection(resourcePattern string) (ResourceName, error) {
 	if api, err := names.ParseApiCollection(resourcePattern); err == nil {
 		return ApiName{Api: api}, nil
 	} else if version, err := names.ParseVersionCollection(resourcePattern); err == nil {
@@ -38,7 +36,10 @@ func parsePattern(resourcePattern string) (ResourceName, error) {
 		return ArtifactName{Artifact: artifact}, nil
 	}
 
-	// Then try to match resource names.
+	return nil, fmt.Errorf("invalid resourcePattern: %s", resourcePattern)
+}
+
+func parseResource(resourcePattern string) (ResourceName, error) {
 	if api, err := names.ParseApi(resourcePattern); err == nil {
 		return ApiName{Api: api}, nil
 	} else if version, err := names.ParseVersion(resourcePattern); err == nil {
@@ -47,6 +48,23 @@ func parsePattern(resourcePattern string) (ResourceName, error) {
 		return SpecName{Spec: spec}, nil
 	} else if artifact, err := names.ParseArtifact(resourcePattern); err == nil {
 		return ArtifactName{Artifact: artifact}, nil
+	}
+
+	return nil, fmt.Errorf("invalid resourcePattern: %s", resourcePattern)
+}
+
+func parseResourcePattern(resourcePattern string) (ResourceName, error) {
+
+	// First try to match resource collections.
+	resource, err := parseResourceCollection(resourcePattern)
+	if err == nil {
+		return resource, nil
+	}
+
+	// Then try to match resource names.
+	resource, err = parseResource(resourcePattern)
+	if err == nil {
+		return resource, nil
 	}
 
 	return nil, fmt.Errorf("invalid resourcePattern: %s", resourcePattern)
@@ -82,7 +100,7 @@ func extendDependencyPattern(
 	}
 
 	// Convert resourcePattern to resourceName to extract entity values (api, spec, version,artifact)
-	resourceName, err := parsePattern(resourcePattern)
+	resourceName, err := parseResourcePattern(resourcePattern)
 	if err != nil {
 		return "", err
 	}
@@ -123,7 +141,7 @@ func resourceNameFromGroupKey(
 	//    groupKey: projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity
 	//    returns projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/custom-artifact
 
-	groupName, err := parsePattern(groupKey)
+	groupName, err := parseResource(groupKey)
 	resourceName := resourcePattern
 
 	if err == nil {
@@ -304,7 +322,7 @@ func generateCommand(action string, resourceName string) (string, error) {
 		return action, nil
 	}
 
-	resource, err := parsePattern(resourceName)
+	resource, err := parseResource(resourceName)
 	if err != nil {
 		return "", fmt.Errorf("error generating command, invalid resourceName: %s", resourceName)
 	}
