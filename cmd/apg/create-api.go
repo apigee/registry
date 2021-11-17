@@ -41,6 +41,8 @@ func init() {
 
 	CreateApiCmd.Flags().StringVar(&CreateApiInput.Api.RecommendedVersion, "api.recommended_version", "", "The recommended version of the API.  Format:...")
 
+	CreateApiCmd.Flags().StringVar(&CreateApiInput.Api.RecommendedDeployment, "api.recommended_deployment", "", "The recommended deployment of the API.  Format:...")
+
 	CreateApiCmd.Flags().StringArrayVar(&CreateApiInputApiLabels, "api.labels", []string{}, "key=value pairs. Labels attach identifying metadata to resources....")
 
 	CreateApiCmd.Flags().StringArrayVar(&CreateApiInputApiAnnotations, "api.annotations", []string{}, "key=value pairs. Annotations attach non-identifying metadata to...")
