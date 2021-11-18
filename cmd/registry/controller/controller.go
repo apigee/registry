@@ -144,7 +144,7 @@ func generateActions(
 	ctx context.Context,
 	client connection.Client,
 	resourcePattern string,
-	resourceList []Resource,
+	resourceList []ResourceInstance,
 	dependencyMaps []map[string]time.Time,
 	generatedResource *rpc.GeneratedResource) ([]*Action, error) {
 
