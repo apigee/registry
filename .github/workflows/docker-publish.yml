@@ -23,7 +23,7 @@ on:
   schedule:
     - cron: '40 15 * * *'
   push:
-    branches: [ main, registry-cicd ]
+    branches: [ main ]
     # Publish semver tags as releases.
     tags: [ 'v*.*.*' ]
   pull_request:
