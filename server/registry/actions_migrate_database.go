@@ -16,7 +16,6 @@ package registry
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/apigee/registry/rpc"
 	"google.golang.org/genproto/googleapis/longrunning"
@@ -28,7 +27,7 @@ import (
 // MigrateDatabase handles the corresponding API request.
 func (s *RegistryServer) MigrateDatabase(ctx context.Context, req *rpc.MigrateDatabaseRequest) (*longrunning.Operation, error) {
 	if req.Kind != "" && req.Kind != "auto" {
-		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("Unsupported migration kind '%s'", req.Kind))
+		return nil, status.Errorf(codes.InvalidArgument, "unsupported migration kind %q", req.Kind)
 	}
 	db, err := s.getStorageClient(ctx)
 	if err != nil {
