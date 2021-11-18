@@ -159,6 +159,8 @@ func (d *Client) DeleteApi(ctx context.Context, name names.Api) error {
 		gorm.VersionEntityName,
 		gorm.SpecEntityName,
 		gorm.SpecRevisionTagEntityName,
+		gorm.DeploymentEntityName,
+		gorm.DeploymentRevisionTagEntityName,
 		gorm.ArtifactEntityName,
 		gorm.BlobEntityName,
 	} {
