@@ -51,7 +51,7 @@ service Admin {
   // MigrateDatabase attempts to migrate the database to the current schema.
   rpc MigrateDatabase(MigrateDatabaseRequest) returns (google.longrunning.Operation) {
     option (google.api.http) = {
-      post: "/v1/migrate"
+      post: "/v1/migrateDatabase"
     };
     option (google.longrunning.operation_info) = {
       response_type : "MigrateDatabaseResponse",
