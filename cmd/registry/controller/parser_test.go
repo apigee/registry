@@ -18,8 +18,27 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/apigee/registry/rpc"
+	// "github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/server/registry/names"
 )
+
+func generateSpec(t *testing.T, specName string) names.Spec {
+	t.Helper()
+	spec, err := names.ParseSpec(specName)
+	if err != nil {
+		t.Fatalf("Failed generateSpec(%s): %s", specName, err.Error())
+	}
+	return spec
+}
+
+func generateArtifact(t *testing.T, artifactName string) names.Artifact {
+	t.Helper()
+	artifact, err := names.ParseArtifact(artifactName)
+	if err != nil {
+		t.Fatalf("Failed generateSpec(%s): %s", artifactName, err.Error())
+	}
+	return artifact
+}
 
 func TestExtendDependencyPattern(t *testing.T) {
 	tests := []struct {
@@ -188,15 +207,14 @@ func TestGetGroupKey(t *testing.T) {
 	tests := []struct {
 		desc     string
 		pattern  string
-		resource Resource
+		resource ResourceInstance
 		want     string
 	}{
 		{
 			desc:    "api group",
 			pattern: "$resource.api/versions/-/specs/-",
 			resource: SpecResource{
-				Spec: &rpc.ApiSpec{
-					Name: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml"},
+				SpecName: SpecName{Spec: generateSpec(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml")},
 			},
 			want: "projects/demo/locations/global/apis/petstore",
 		},
@@ -204,8 +222,7 @@ func TestGetGroupKey(t *testing.T) {
 			desc:    "version group",
 			pattern: "$resource.version/specs/-",
 			resource: SpecResource{
-				Spec: &rpc.ApiSpec{
-					Name: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml"},
+				SpecName: SpecName{Spec: generateSpec(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml")},
 			},
 			want: "projects/demo/locations/global/apis/petstore/versions/1.0.0",
 		},
@@ -213,8 +230,7 @@ func TestGetGroupKey(t *testing.T) {
 			desc:    "spec group",
 			pattern: "$resource.spec",
 			resource: SpecResource{
-				Spec: &rpc.ApiSpec{
-					Name: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml"},
+				SpecName: SpecName{Spec: generateSpec(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml")},
 			},
 			want: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 		},
@@ -222,8 +238,7 @@ func TestGetGroupKey(t *testing.T) {
 			desc:    "artifact group",
 			pattern: "$resource.artifact",
 			resource: ArtifactResource{
-				Artifact: &rpc.Artifact{
-					Name: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic"},
+				ArtifactName: ArtifactName{Artifact: generateArtifact(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic")},
 			},
 			want: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic",
 		},
@@ -231,8 +246,7 @@ func TestGetGroupKey(t *testing.T) {
 			desc:    "no group",
 			pattern: "apis/-/versions/-/specs/-",
 			resource: ArtifactResource{
-				Artifact: &rpc.Artifact{
-					Name: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic"},
+				ArtifactName: ArtifactName{Artifact: generateArtifact(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic")},
 			},
 			want: "default",
 		},
@@ -255,30 +269,27 @@ func TestGetGroupKeyError(t *testing.T) {
 	tests := []struct {
 		desc     string
 		pattern  string
-		resource Resource
+		resource ResourceInstance
 	}{
 		{
 			desc:    "typo",
 			pattern: "$resource.apis/versions/-/specs/-",
 			resource: SpecResource{
-				Spec: &rpc.ApiSpec{
-					Name: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml"},
+				SpecName: SpecName{Spec: generateSpec(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml")},
 			},
 		},
 		{
 			desc:    "incorrect reference",
 			pattern: "$resource.name/versions/-/specs/-",
 			resource: SpecResource{
-				Spec: &rpc.ApiSpec{
-					Name: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml"},
+				SpecName: SpecName{Spec: generateSpec(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml")},
 			},
 		},
 		{
 			desc:    "incorrect resourceKW",
 			pattern: "$resources.api/versions/-/specs/-",
 			resource: SpecResource{
-				Spec: &rpc.ApiSpec{
-					Name: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml"},
+				SpecName: SpecName{Spec: generateSpec(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml")},
 			},
 		},
 	}
