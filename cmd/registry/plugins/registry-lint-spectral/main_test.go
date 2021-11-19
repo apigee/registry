@@ -22,33 +22,7 @@ import (
 
 	"github.com/apigee/registry/rpc"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
-
-// mockSpectralExecuter implements the spectral runner interface.
-// It returns mock results according to data provided in tests.
-type mockSpectralExecuter struct {
-	mock.Mock
-	results []*spectralLintResult
-	err     error
-}
-
-func (runner *mockSpectralExecuter) Execute(
-	spec,
-	config string,
-) ([]*spectralLintResult, error) {
-	return runner.results, runner.err
-}
-
-func NewMockSpectralExecuter(
-	results []*spectralLintResult,
-	err error,
-) spectralLintCommandExecuter {
-	return &mockSpectralExecuter{
-		results: results,
-		err:     err,
-	}
-}
 
 func setupFakeSpec() (path string, err error) {
 	tempDir, err := ioutil.TempDir("", "")
@@ -69,34 +43,34 @@ func TestSpectralPluginLintSpec(t *testing.T) {
 	assert.Equal(t, err, nil)
 	lintSpecTests := []struct {
 		linter           *spectralLinterRunner
+		runLinter        runLinter
 		request          *rpc.LinterRequest
-		executer         spectralLintCommandExecuter
 		expectedResponse *rpc.LinterResponse
 		expectedError    error
 	}{
 		{
 			&spectralLinterRunner{},
-			&rpc.LinterRequest{
-				SpecDirectory: specDirectory,
-			},
-			NewMockSpectralExecuter(
-				[]*spectralLintResult{
+			func(specPath, configPath string) ([]*spectralLintResult, error) {
+				return []*spectralLintResult{
 					{
 						Code:    "test",
 						Message: "test",
 						Source:  "test",
 						Range: spectralLintRange{
 							Start: spectralLintLocation{
-								Line: 0, Character: 0,
-							},
+								Line:      0,
+								Character: 0},
 							End: spectralLintLocation{
-								Line: 2, Character: 10,
+								Line:      2,
+								Character: 10,
 							},
 						},
 					},
-				},
-				nil,
-			),
+				}, nil
+			},
+			&rpc.LinterRequest{
+				SpecDirectory: specDirectory,
+			},
 			&rpc.LinterResponse{
 				Lint: &rpc.Lint{
 					Name: "registry-lint-spectral",
@@ -128,20 +102,19 @@ func TestSpectralPluginLintSpec(t *testing.T) {
 		},
 		{
 			&spectralLinterRunner{},
+			func(specPath, configPath string) ([]*spectralLintResult, error) {
+				return nil, errors.New("test")
+			},
 			&rpc.LinterRequest{
 				SpecDirectory: specDirectory,
 			},
-			NewMockSpectralExecuter(
-				[]*spectralLintResult{},
-				errors.New("test"),
-			),
 			nil,
 			errors.New("test"),
 		},
 	}
 
 	for _, tt := range lintSpecTests {
-		response, err := tt.linter.RunImpl(tt.request, tt.executer)
+		response, err := tt.linter.RunImpl(tt.request, tt.runLinter)
 		assert.Equal(t, tt.expectedError, err)
 		assert.EqualValues(t, tt.expectedResponse, response)
 	}
