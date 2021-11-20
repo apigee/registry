@@ -77,7 +77,10 @@ func scanDirectoryForProtos(ctx context.Context, client connection.Client, proje
 		}
 
 		// The API Service Configuration contains important API properties.
-		serviceConfig := readServiceConfig(fullname)
+		serviceConfig, err := readServiceConfig(fullname)
+		if err != nil {
+			return err
+		}
 
 		// Skip APIs with missing or incomplete service configurations
 		if serviceConfig == nil || serviceConfig.Title == "" || serviceConfig.Name == "" {
@@ -85,12 +88,7 @@ func scanDirectoryForProtos(ctx context.Context, client connection.Client, proje
 		}
 
 		// Remove a Google-specific suffix from API IDs.
-		apiID := serviceConfig.Name
-		suffix := ".googleapis.com"
-		if strings.HasSuffix(apiID, suffix) {
-			apiID = strings.TrimSuffix(apiID, suffix)
-		}
-
+		apiID := strings.TrimSuffix(serviceConfig.Name, ".googleapis.com")
 		apiDescription := strings.ReplaceAll(serviceConfig.Documentation.Summary, "\n", " ")
 
 		taskQueue <- &uploadProtoTask{
@@ -283,10 +281,13 @@ type SCDocumentation struct {
 	Summary string `yaml:"summary"`
 }
 
-func readServiceConfig(directory string) *ServiceConfig {
+func readServiceConfig(directory string) (*ServiceConfig, error) {
 	var serviceConfig *ServiceConfig
-	yamlPattern := regexp.MustCompile(".*\\.yaml")
-	filepath.Walk(directory, func(fullname string, info os.FileInfo, err error) error {
+	yamlPattern := regexp.MustCompile(`.*\.yaml`)
+	err := filepath.Walk(directory, func(fullname string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
 		// Skip everything that's not a YAML file.
 		filename := path.Base(fullname)
 		if info.IsDir() || !yamlPattern.MatchString(filename) {
@@ -306,5 +307,8 @@ func readServiceConfig(directory string) *ServiceConfig {
 		}
 		return nil
 	})
-	return serviceConfig
+	if err != nil {
+		return nil, err
+	}
+	return serviceConfig, nil
 }
