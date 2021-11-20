@@ -46,12 +46,6 @@ registry upload bulk protos \
 	--project-id $PROJECT ~/Desktop/googleapis \
 	--base-uri https://github.com/googleapis/googleapis/blob/$COMMIT 
 
-# Now compute summary details of all of the APIs in the project. 
-# This will log errors if any of the API specs can't be parsed,
-# but for every spec that is parsed, this will set the display name
-# and description of the corresponding API from the values in the specs.
-registry compute details projects/$PROJECT/locations/global/apis/-
-
 # The `registry upload bulk protos` subcommand automatically generated API ids
 # from the path to the protos in the repo. List the APIs with the following command:
 registry list projects/$PROJECT/locations/global/apis
