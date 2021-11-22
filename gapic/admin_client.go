@@ -21,13 +21,17 @@ import (
 	"fmt"
 	"math"
 	"net/url"
+	"time"
 
+	"cloud.google.com/go/longrunning"
+	lroauto "cloud.google.com/go/longrunning/autogen"
 	rpcpb "github.com/apigee/registry/rpc"
 	gax "github.com/googleapis/gax-go/v2"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 	"google.golang.org/api/option/internaloption"
 	gtransport "google.golang.org/api/transport/grpc"
+	longrunningpb "google.golang.org/genproto/googleapis/longrunning"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/proto"
@@ -38,12 +42,13 @@ var newAdminClientHook clientHook
 
 // AdminCallOptions contains the retry settings for each method of AdminClient.
 type AdminCallOptions struct {
-	GetStatus     []gax.CallOption
-	ListProjects  []gax.CallOption
-	GetProject    []gax.CallOption
-	CreateProject []gax.CallOption
-	UpdateProject []gax.CallOption
-	DeleteProject []gax.CallOption
+	GetStatus       []gax.CallOption
+	MigrateDatabase []gax.CallOption
+	ListProjects    []gax.CallOption
+	GetProject      []gax.CallOption
+	CreateProject   []gax.CallOption
+	UpdateProject   []gax.CallOption
+	DeleteProject   []gax.CallOption
 }
 
 func defaultAdminGRPCClientOptions() []option.ClientOption {
@@ -60,12 +65,13 @@ func defaultAdminGRPCClientOptions() []option.ClientOption {
 
 func defaultAdminCallOptions() *AdminCallOptions {
 	return &AdminCallOptions{
-		GetStatus:     []gax.CallOption{},
-		ListProjects:  []gax.CallOption{},
-		GetProject:    []gax.CallOption{},
-		CreateProject: []gax.CallOption{},
-		UpdateProject: []gax.CallOption{},
-		DeleteProject: []gax.CallOption{},
+		GetStatus:       []gax.CallOption{},
+		MigrateDatabase: []gax.CallOption{},
+		ListProjects:    []gax.CallOption{},
+		GetProject:      []gax.CallOption{},
+		CreateProject:   []gax.CallOption{},
+		UpdateProject:   []gax.CallOption{},
+		DeleteProject:   []gax.CallOption{},
 	}
 }
 
@@ -75,6 +81,8 @@ type internalAdminClient interface {
 	setGoogleClientInfo(...string)
 	Connection() *grpc.ClientConn
 	GetStatus(context.Context, *emptypb.Empty, ...gax.CallOption) (*rpcpb.Status, error)
+	MigrateDatabase(context.Context, *rpcpb.MigrateDatabaseRequest, ...gax.CallOption) (*MigrateDatabaseOperation, error)
+	MigrateDatabaseOperation(name string) *MigrateDatabaseOperation
 	ListProjects(context.Context, *rpcpb.ListProjectsRequest, ...gax.CallOption) *ProjectIterator
 	GetProject(context.Context, *rpcpb.GetProjectRequest, ...gax.CallOption) (*rpcpb.Project, error)
 	CreateProject(context.Context, *rpcpb.CreateProjectRequest, ...gax.CallOption) (*rpcpb.Project, error)
@@ -93,6 +101,11 @@ type AdminClient struct {
 
 	// The call options for this service.
 	CallOptions *AdminCallOptions
+
+	// LROClient is used internally to handle long-running operations.
+	// It is exposed so that its CallOptions can be modified if required.
+	// Users should not Close this client.
+	LROClient *lroauto.OperationsClient
 }
 
 // Wrapper methods routed to the internal client.
@@ -126,6 +139,17 @@ func (c *AdminClient) Connection() *grpc.ClientConn {
 // aip.dev/not-precedent (at http://aip.dev/not-precedent): Not in the official API. –)
 func (c *AdminClient) GetStatus(ctx context.Context, req *emptypb.Empty, opts ...gax.CallOption) (*rpcpb.Status, error) {
 	return c.internalClient.GetStatus(ctx, req, opts...)
+}
+
+// MigrateDatabase migrateDatabase attempts to migrate the database to the current schema.
+func (c *AdminClient) MigrateDatabase(ctx context.Context, req *rpcpb.MigrateDatabaseRequest, opts ...gax.CallOption) (*MigrateDatabaseOperation, error) {
+	return c.internalClient.MigrateDatabase(ctx, req, opts...)
+}
+
+// MigrateDatabaseOperation returns a new MigrateDatabaseOperation from a given name.
+// The name must be that of a previously created MigrateDatabaseOperation, possibly from a different process.
+func (c *AdminClient) MigrateDatabaseOperation(name string) *MigrateDatabaseOperation {
+	return c.internalClient.MigrateDatabaseOperation(name)
 }
 
 // ListProjects listProjects returns matching projects.
@@ -178,6 +202,11 @@ type adminGRPCClient struct {
 	// The gRPC API client.
 	adminClient rpcpb.AdminClient
 
+	// LROClient is used internally to handle long-running operations.
+	// It is exposed so that its CallOptions can be modified if required.
+	// Users should not Close this client.
+	LROClient **lroauto.OperationsClient
+
 	// The x-goog-* metadata to be sent with each request.
 	xGoogMetadata metadata.MD
 }
@@ -218,6 +247,17 @@ func NewAdminClient(ctx context.Context, opts ...option.ClientOption) (*AdminCli
 
 	client.internalClient = c
 
+	client.LROClient, err = lroauto.NewOperationsClient(ctx, gtransport.WithConnPool(connPool))
+	if err != nil {
+		// This error "should not happen", since we are just reusing old connection pool
+		// and never actually need to dial.
+		// If this does happen, we could leak connp. However, we cannot close conn:
+		// If the user invoked the constructor with option.WithGRPCConn,
+		// we would close a connection that's still in use.
+		// TODO: investigate error conditions.
+		return nil, err
+	}
+	c.LROClient = &client.LROClient
 	return &client, nil
 }
 
@@ -256,6 +296,23 @@ func (c *adminGRPCClient) GetStatus(ctx context.Context, req *emptypb.Empty, opt
 		return nil, err
 	}
 	return resp, nil
+}
+
+func (c *adminGRPCClient) MigrateDatabase(ctx context.Context, req *rpcpb.MigrateDatabaseRequest, opts ...gax.CallOption) (*MigrateDatabaseOperation, error) {
+	ctx = insertMetadata(ctx, c.xGoogMetadata)
+	opts = append((*c.CallOptions).MigrateDatabase[0:len((*c.CallOptions).MigrateDatabase):len((*c.CallOptions).MigrateDatabase)], opts...)
+	var resp *longrunningpb.Operation
+	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
+		var err error
+		resp, err = c.adminClient.MigrateDatabase(ctx, req, settings.GRPC...)
+		return err
+	}, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &MigrateDatabaseOperation{
+		lro: longrunning.InternalNewOperation(*c.LROClient, resp),
+	}, nil
 }
 
 func (c *adminGRPCClient) ListProjects(ctx context.Context, req *rpcpb.ListProjectsRequest, opts ...gax.CallOption) *ProjectIterator {
@@ -358,6 +415,75 @@ func (c *adminGRPCClient) DeleteProject(ctx context.Context, req *rpcpb.DeletePr
 		return err
 	}, opts...)
 	return err
+}
+
+// MigrateDatabaseOperation manages a long-running operation from MigrateDatabase.
+type MigrateDatabaseOperation struct {
+	lro *longrunning.Operation
+}
+
+// MigrateDatabaseOperation returns a new MigrateDatabaseOperation from a given name.
+// The name must be that of a previously created MigrateDatabaseOperation, possibly from a different process.
+func (c *adminGRPCClient) MigrateDatabaseOperation(name string) *MigrateDatabaseOperation {
+	return &MigrateDatabaseOperation{
+		lro: longrunning.InternalNewOperation(*c.LROClient, &longrunningpb.Operation{Name: name}),
+	}
+}
+
+// Wait blocks until the long-running operation is completed, returning the response and any errors encountered.
+//
+// See documentation of Poll for error-handling information.
+func (op *MigrateDatabaseOperation) Wait(ctx context.Context, opts ...gax.CallOption) (*rpcpb.MigrateDatabaseResponse, error) {
+	var resp rpcpb.MigrateDatabaseResponse
+	if err := op.lro.WaitWithInterval(ctx, &resp, time.Minute, opts...); err != nil {
+		return nil, err
+	}
+	return &resp, nil
+}
+
+// Poll fetches the latest state of the long-running operation.
+//
+// Poll also fetches the latest metadata, which can be retrieved by Metadata.
+//
+// If Poll fails, the error is returned and op is unmodified. If Poll succeeds and
+// the operation has completed with failure, the error is returned and op.Done will return true.
+// If Poll succeeds and the operation has completed successfully,
+// op.Done will return true, and the response of the operation is returned.
+// If Poll succeeds and the operation has not completed, the returned response and error are both nil.
+func (op *MigrateDatabaseOperation) Poll(ctx context.Context, opts ...gax.CallOption) (*rpcpb.MigrateDatabaseResponse, error) {
+	var resp rpcpb.MigrateDatabaseResponse
+	if err := op.lro.Poll(ctx, &resp, opts...); err != nil {
+		return nil, err
+	}
+	if !op.Done() {
+		return nil, nil
+	}
+	return &resp, nil
+}
+
+// Metadata returns metadata associated with the long-running operation.
+// Metadata itself does not contact the server, but Poll does.
+// To get the latest metadata, call this method after a successful call to Poll.
+// If the metadata is not available, the returned metadata and error are both nil.
+func (op *MigrateDatabaseOperation) Metadata() (*rpcpb.MigrateDatabaseMetadata, error) {
+	var meta rpcpb.MigrateDatabaseMetadata
+	if err := op.lro.Metadata(&meta); err == longrunning.ErrNoMetadata {
+		return nil, nil
+	} else if err != nil {
+		return nil, err
+	}
+	return &meta, nil
+}
+
+// Done reports whether the long-running operation has completed.
+func (op *MigrateDatabaseOperation) Done() bool {
+	return op.lro.Done()
+}
+
+// Name returns the name of the long-running operation.
+// The name is assigned by the server and is unique within the service from which the operation is created.
+func (op *MigrateDatabaseOperation) Name() string {
+	return op.lro.Name()
 }
 
 // ProjectIterator manages a stream of *rpcpb.Project.

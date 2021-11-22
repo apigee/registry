@@ -57,6 +57,31 @@ func ExampleAdminClient_GetStatus() {
 	_ = resp
 }
 
+func ExampleAdminClient_MigrateDatabase() {
+	ctx := context.Background()
+	c, err := gapic.NewAdminClient(ctx)
+	if err != nil {
+		// TODO: Handle error.
+	}
+	defer c.Close()
+
+	req := &rpcpb.MigrateDatabaseRequest{
+		// TODO: Fill request struct fields.
+		// See https://pkg.go.dev/github.com/apigee/registry/rpc#MigrateDatabaseRequest.
+	}
+	op, err := c.MigrateDatabase(ctx, req)
+	if err != nil {
+		// TODO: Handle error.
+	}
+
+	resp, err := op.Wait(ctx)
+	if err != nil {
+		// TODO: Handle error.
+	}
+	// TODO: Use resp.
+	_ = resp
+}
+
 func ExampleAdminClient_ListProjects() {
 	ctx := context.Background()
 	c, err := gapic.NewAdminClient(ctx)
