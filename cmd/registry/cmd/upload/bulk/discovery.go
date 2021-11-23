@@ -80,7 +80,7 @@ type uploadDiscoveryTask struct {
 	versionID string
 	specID    string
 	contents  []byte
-	info      *DiscoveryInfo
+	info      DiscoveryInfo
 }
 
 func (task *uploadDiscoveryTask) String() string {
@@ -216,12 +216,7 @@ func (task *uploadDiscoveryTask) fetchDiscoveryDoc() error {
 		return err
 	}
 
-	task.info, err = parseDiscoveryInfo(task.contents)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return yaml.Unmarshal(task.contents, &task.info)
 }
 
 // Normalize JSON documents by remarshalling them to
@@ -241,13 +236,4 @@ type DiscoveryInfo struct {
 	Title       string `yaml:"title"`
 	Version     string `yaml:"version"`
 	Description string `yaml:"description"`
-}
-
-func parseDiscoveryInfo(bytes []byte) (*DiscoveryInfo, error) {
-	info := &DiscoveryInfo{}
-	err := yaml.Unmarshal(bytes, info)
-	if err != nil {
-		return nil, err
-	}
-	return info, nil
 }

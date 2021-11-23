@@ -93,17 +93,13 @@ func scanDirectoryForProtos(ctx context.Context, client connection.Client, proje
 			return nil
 		}
 
-		// Remove a Google-specific suffix from API IDs.
-		apiID := strings.TrimSuffix(serviceConfig.Name, ".googleapis.com")
-		apiDescription := strings.ReplaceAll(serviceConfig.Documentation.Summary, "\n", " ")
-
 		taskQueue <- &uploadProtoTask{
 			client:         client,
 			baseURI:        baseURI,
 			projectID:      projectID,
-			apiID:          apiID,
+			apiID:          strings.TrimSuffix(serviceConfig.Name, ".googleapis.com"),
 			apiTitle:       serviceConfig.Title,
-			apiDescription: apiDescription,
+			apiDescription: strings.ReplaceAll(serviceConfig.Documentation.Summary, "\n", " "),
 			path:           fullname,
 			directory:      directory,
 		}
@@ -279,16 +275,20 @@ func (task *uploadProtoTask) zipContents() ([]byte, error) {
 }
 
 type ServiceConfig struct {
-	Type          string          `yaml:"type"`
-	Name          string          `yaml:"name"`
-	Title         string          `yaml:"title"`
-	Documentation SCDocumentation `yaml:"documentation"`
+	Type          string `yaml:"type"`
+	Name          string `yaml:"name"`
+	Title         string `yaml:"title"`
+	Documentation struct {
+		Summary string `yaml:"summary"`
+	} `yaml:"documentation"`
 }
 
-type SCDocumentation struct {
-	Summary string `yaml:"summary"`
-}
-
+// readServiceConfig scans a directory for a YAML file containing
+// Google Service Configuration. Often other YAML files are present;
+// these are ignored, and the Service Configuration file is recognized
+// by the presence of a "type" field containing "google.api.Service".
+// This expects (but does not verify) that there is only one such file
+// in the directory.
 func readServiceConfig(directory string) (*ServiceConfig, error) {
 	var serviceConfig *ServiceConfig
 	yamlPattern := regexp.MustCompile(`.*\.yaml`)
