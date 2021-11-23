@@ -63,22 +63,22 @@ registry list projects/$PROJECT/locations/global/apis/-/versions
 registry list projects/$PROJECT/locations/global/apis/-/versions/-/specs
 
 # To see more about an individual spec, use the `registry get` command:
-registry get projects/$PROJECT/locations/global/apis/google-cloud-translate/versions/v3/specs/protos.zip
+registry get projects/$PROJECT/locations/global/apis/translate/versions/v3/specs/google-cloud-translate-v3.zip
 
 # You can also get this with the automatically-generated `apg` command line tool:
-apg registry get-api-spec --name projects/$PROJECT/locations/global/apis/google-cloud-translate/versions/v3/specs/protos.zip
+apg registry get-api-spec --name projects/$PROJECT/locations/global/apis/translate/versions/v3/specs/google-cloud-translate-v3.zip
 
 # Add the `--json` flag to get this as JSON:
-apg registry get-api-spec --name projects/$PROJECT/locations/global/apis/google-cloud-translate/versions/v3/specs/protos.zip --json
+apg registry get-api-spec --name projects/$PROJECT/locations/global/apis/translate/versions/v3/specs/google-cloud-translate-v3.zip --json
 
 # You might notice that that didn't return the actual spec. That's because the spec contents
 # are accessed through a separate method that (when transcoded to HTTP) allows direct download
 # of spec contents.
-apg registry get-api-spec-contents --name projects/$PROJECT/locations/global/apis/google-cloud-translate/versions/v3/specs/protos.zip
+apg registry get-api-spec-contents --name projects/$PROJECT/locations/global/apis/translate/versions/v3/specs/google-cloud-translate-v3.zip
 
 # An easier way to get the bytes of the spec is to use `registry get` with the `--contents` flag.
 # This writes the bytes to stdout, so you probably want to redirect this to a file, as follows:
-registry get projects/$PROJECT/locations/global/apis/google-cloud-translate/versions/v3/specs/protos.zip \
+registry get projects/$PROJECT/locations/global/apis/translate/versions/v3/specs/google-cloud-translate-v3.zip \
 	--contents > protos.zip
 
 # When you unzip this file, you'll find a directory hierarchy suitable for compiling with `protoc`.
@@ -93,7 +93,7 @@ registry compute complexity projects/$PROJECT/locations/global/apis/-/versions/-
 registry list projects/$PROJECT/locations/global/apis/-/versions/-/specs/-/artifacts/complexity
 
 # We can use the `registry get` subcommand to read individual complexity records.
-registry get projects/$PROJECT/locations/global/apis/google-cloud-translate/versions/v3/specs/protos.zip/artifacts/complexity
+registry get projects/$PROJECT/locations/global/apis/translate/versions/v3/specs/google-cloud-translate-v3.zip/artifacts/complexity
 
 # The registry tool also supports exporting all of the complexity results to a Google sheet.
 # (The following command expects OAuth client credentials with access to the
@@ -105,7 +105,7 @@ registry export sheet projects/$PROJECT/locations/global/apis/-/versions/-/specs
 registry compute vocabulary projects/$PROJECT/locations/global/apis/-/versions/-/specs/-
 
 # Vocabularies are also stored as artifacts associated with API specs.
-registry get projects/$PROJECT/locations/global/apis/google-cloud-translate/versions/v3/specs/protos.zip/artifacts/vocabulary
+registry get projects/$PROJECT/locations/global/apis/translate/versions/v3/specs/google-cloud-translate-v3.zip/artifacts/vocabulary
 
 # The registry command can perform set operations on vocabularies.
 # To find common terms in all Google speech-related APIs, use the following:
@@ -139,5 +139,3 @@ registry export sheet projects/$PROJECT/locations/global/artifacts/vocabulary
 registry compute lint projects/$PROJECT/locations/global/apis/-/versions/-/specs/-
 registry compute lintstats projects/$PROJECT/locations/global/apis/-/versions/-/specs/- --linter aip
 registry compute lintstats projects/$PROJECT --linter aip
-
-
