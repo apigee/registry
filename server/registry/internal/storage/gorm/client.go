@@ -26,6 +26,20 @@ import (
 	"gorm.io/gorm"
 )
 
+// A complete list of entities used by the storage system
+// and managed using gorm features.
+var entities = []interface{}{
+	&models.Project{},
+	&models.Api{},
+	&models.Version{},
+	&models.Spec{},
+	&models.SpecRevisionTag{},
+	&models.Deployment{},
+	&models.DeploymentRevisionTag{},
+	&models.Artifact{},
+	&models.Blob{},
+}
+
 // Client represents a connection to a storage provider.
 type Client struct {
 	db *gorm.DB
@@ -118,17 +132,6 @@ func (c *Client) ensureTable(v interface{}) error {
 
 // EnsureTables ensures that all necessary tables exist in the database.
 func (c *Client) EnsureTables() error {
-	entities := []interface{}{
-		&models.Project{},
-		&models.Api{},
-		&models.Version{},
-		&models.Spec{},
-		&models.SpecRevisionTag{},
-		&models.Deployment{},
-		&models.DeploymentRevisionTag{},
-		&models.Artifact{},
-		&models.Blob{},
-	}
 	for _, entity := range entities {
 		if err := c.ensureTable(entity); err != nil {
 			return err
@@ -341,4 +344,8 @@ func (c *Client) GetRecentDeploymentRevisions(ctx context.Context, offset int32,
 	var v []models.Deployment
 	_ = op.Scan(&v).Error
 	return &Iterator{Client: c, Values: v, Index: 0}
+}
+
+func (c *Client) Migrate(kind string) error {
+	return c.db.AutoMigrate(entities...)
 }

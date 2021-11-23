@@ -5,6 +5,7 @@ package rpc
 import (
 	context "context"
 
+	longrunning "google.golang.org/genproto/googleapis/longrunning"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -28,6 +29,8 @@ type AdminClient interface {
 	// (-- api-linter: core::0131::http-uri-name=disabled
 	//     aip.dev/not-precedent: Not in the official API. --)
 	GetStatus(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*Status, error)
+	// MigrateDatabase attempts to migrate the database to the current schema.
+	MigrateDatabase(ctx context.Context, in *MigrateDatabaseRequest, opts ...grpc.CallOption) (*longrunning.Operation, error)
 	// ListProjects returns matching projects.
 	// (-- api-linter: standard-methods=disabled --)
 	// (-- api-linter: core::0132::method-signature=disabled
@@ -60,6 +63,15 @@ func NewAdminClient(cc grpc.ClientConnInterface) AdminClient {
 func (c *adminClient) GetStatus(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*Status, error) {
 	out := new(Status)
 	err := c.cc.Invoke(ctx, "/google.cloud.apigeeregistry.v1.Admin/GetStatus", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminClient) MigrateDatabase(ctx context.Context, in *MigrateDatabaseRequest, opts ...grpc.CallOption) (*longrunning.Operation, error) {
+	out := new(longrunning.Operation)
+	err := c.cc.Invoke(ctx, "/google.cloud.apigeeregistry.v1.Admin/MigrateDatabase", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -123,6 +135,8 @@ type AdminServer interface {
 	// (-- api-linter: core::0131::http-uri-name=disabled
 	//     aip.dev/not-precedent: Not in the official API. --)
 	GetStatus(context.Context, *emptypb.Empty) (*Status, error)
+	// MigrateDatabase attempts to migrate the database to the current schema.
+	MigrateDatabase(context.Context, *MigrateDatabaseRequest) (*longrunning.Operation, error)
 	// ListProjects returns matching projects.
 	// (-- api-linter: standard-methods=disabled --)
 	// (-- api-linter: core::0132::method-signature=disabled
@@ -151,6 +165,9 @@ type UnimplementedAdminServer struct {
 
 func (UnimplementedAdminServer) GetStatus(context.Context, *emptypb.Empty) (*Status, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetStatus not implemented")
+}
+func (UnimplementedAdminServer) MigrateDatabase(context.Context, *MigrateDatabaseRequest) (*longrunning.Operation, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MigrateDatabase not implemented")
 }
 func (UnimplementedAdminServer) ListProjects(context.Context, *ListProjectsRequest) (*ListProjectsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListProjects not implemented")
@@ -194,6 +211,24 @@ func _Admin_GetStatus_Handler(srv interface{}, ctx context.Context, dec func(int
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AdminServer).GetStatus(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Admin_MigrateDatabase_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MigrateDatabaseRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServer).MigrateDatabase(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/google.cloud.apigeeregistry.v1.Admin/MigrateDatabase",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServer).MigrateDatabase(ctx, req.(*MigrateDatabaseRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -298,6 +333,10 @@ var Admin_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetStatus",
 			Handler:    _Admin_GetStatus_Handler,
+		},
+		{
+			MethodName: "MigrateDatabase",
+			Handler:    _Admin_MigrateDatabase_Handler,
 		},
 		{
 			MethodName: "ListProjects",

@@ -17,6 +17,7 @@ package bulk
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -28,6 +29,9 @@ import (
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"gopkg.in/yaml.v2"
 )
 
 func protosCommand(ctx context.Context) *cobra.Command {
@@ -48,7 +52,11 @@ func protosCommand(ctx context.Context) *cobra.Command {
 			}
 
 			for _, arg := range args {
-				scanDirectoryForProtos(ctx, client, projectID, baseURI, arg)
+				path, err := filepath.Abs(arg)
+				if err != nil {
+					log.FromContext(ctx).WithError(err).Fatal("Invalid path")
+				}
+				scanDirectoryForProtos(ctx, client, projectID, baseURI, path)
 			}
 		},
 	}
@@ -63,23 +71,37 @@ func scanDirectoryForProtos(ctx context.Context, client connection.Client, proje
 	defer wait()
 
 	dirPattern := regexp.MustCompile("v.*[1-9]+.*")
-	if err := filepath.Walk(directory, func(filepath string, info os.FileInfo, err error) error {
+	if err := filepath.Walk(directory, func(fullname string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 
 		// Skip non-matching directories.
-		filename := path.Base(filepath)
+		filename := path.Base(fullname)
 		if !info.IsDir() || !dirPattern.MatchString(filename) {
 			return nil
 		}
 
+		// The API Service Configuration contains important API properties.
+		serviceConfig, err := readServiceConfig(fullname)
+		if err != nil {
+			return err
+		}
+
+		// Skip APIs with missing or incomplete service configurations
+		if serviceConfig == nil || serviceConfig.Title == "" || serviceConfig.Name == "" {
+			return nil
+		}
+
 		taskQueue <- &uploadProtoTask{
-			client:    client,
-			baseURI:   baseURI,
-			projectID: projectID,
-			path:      filepath,
-			directory: directory,
+			client:         client,
+			baseURI:        baseURI,
+			projectID:      projectID,
+			apiID:          strings.TrimSuffix(serviceConfig.Name, ".googleapis.com"),
+			apiTitle:       serviceConfig.Title,
+			apiDescription: strings.ReplaceAll(serviceConfig.Documentation.Summary, "\n", " "),
+			path:           fullname,
+			directory:      directory,
 		}
 
 		return nil
@@ -89,14 +111,16 @@ func scanDirectoryForProtos(ctx context.Context, client connection.Client, proje
 }
 
 type uploadProtoTask struct {
-	client    connection.Client
-	baseURI   string
-	projectID string
-	path      string
-	directory string
-	apiID     string // computed at runtime
-	versionID string // computed at runtime
-	specID    string // computed at runtime
+	client         connection.Client
+	baseURI        string
+	projectID      string
+	path           string
+	directory      string
+	apiID          string
+	apiTitle       string
+	apiDescription string
+	versionID      string // computed at runtime
+	specID         string // computed at runtime
 }
 
 func (task *uploadProtoTask) String() string {
@@ -125,9 +149,6 @@ func (task *uploadProtoTask) Run(ctx context.Context) error {
 
 func (task *uploadProtoTask) populateFields() {
 	parts := strings.Split(task.apiPath(), "/")
-	apiParts := parts[0 : len(parts)-1]
-	apiPart := strings.ReplaceAll(strings.Join(apiParts, "-"), "/", "-")
-	task.apiID = sanitize(apiPart)
 
 	versionPart := parts[len(parts)-1]
 	task.versionID = sanitize(versionPart)
@@ -141,12 +162,15 @@ func (task *uploadProtoTask) createAPI(ctx context.Context) error {
 	response, err := task.client.UpdateApi(ctx, &rpc.UpdateApiRequest{
 		Api: &rpc.Api{
 			Name:        task.apiName(),
-			DisplayName: task.apiID,
+			DisplayName: task.apiTitle,
+			Description: task.apiDescription,
 		},
 		AllowMissing: true,
 	})
 	if err == nil {
 		log.Debugf(ctx, "Updated %s", response.Name)
+	} else if status.Code(err) == codes.AlreadyExists {
+		log.Debugf(ctx, "Found %s", task.apiName())
 	} else {
 		log.FromContext(ctx).WithError(err).Debugf("Failed to create API %s", task.apiName())
 		// Returning this error ends all tasks, which seems appropriate to
@@ -236,7 +260,8 @@ func (task *uploadProtoTask) apiPath() string {
 }
 
 func (task *uploadProtoTask) fileName() string {
-	return "protos.zip"
+	parts := strings.Split(task.apiPath(), "/")
+	return strings.Join(parts, "-") + ".zip"
 }
 
 func (task *uploadProtoTask) zipContents() ([]byte, error) {
@@ -247,4 +272,51 @@ func (task *uploadProtoTask) zipContents() ([]byte, error) {
 	}
 
 	return contents.Bytes(), nil
+}
+
+type ServiceConfig struct {
+	Type          string `yaml:"type"`
+	Name          string `yaml:"name"`
+	Title         string `yaml:"title"`
+	Documentation struct {
+		Summary string `yaml:"summary"`
+	} `yaml:"documentation"`
+}
+
+// readServiceConfig scans a directory for a YAML file containing
+// Google Service Configuration. Often other YAML files are present;
+// these are ignored, and the Service Configuration file is recognized
+// by the presence of a "type" field containing "google.api.Service".
+// This expects (but does not verify) that there is only one such file
+// in the directory.
+func readServiceConfig(directory string) (*ServiceConfig, error) {
+	var serviceConfig *ServiceConfig
+	yamlPattern := regexp.MustCompile(`.*\.yaml`)
+	err := filepath.Walk(directory, func(fullname string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		// Skip everything that's not a YAML file.
+		filename := path.Base(fullname)
+		if info.IsDir() || !yamlPattern.MatchString(filename) {
+			return nil
+		}
+		bytes, err := ioutil.ReadFile(fullname)
+		if err != nil {
+			return err
+		}
+		sc := &ServiceConfig{}
+		err = yaml.Unmarshal(bytes, sc)
+		if err != nil {
+			return err
+		}
+		if sc.Type == "google.api.Service" {
+			serviceConfig = sc
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return serviceConfig, nil
 }
