@@ -48,7 +48,7 @@ jobs:
         context: .
         file: containers/registry-server/Dockerfile
 
-  build-registry-tool:
+  build-registry-tools:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repository
@@ -58,13 +58,13 @@ jobs:
         registry: ${{ env.REGISTRY }}
         username: ${{ env.USERNAME }}
         password: ${{ env.PASSWORD }}
-        image: ${{ env.DOCKER_REPOSITORY_OWNER }}/registry-tool
+        image: ${{ env.DOCKER_REPOSITORY_OWNER }}/registry-tools
         context: .
-        file: containers/registry-tool/Dockerfile
+        file: containers/registry-tools/Dockerfile
 
   build-registry-linter:
     runs-on: ubuntu-latest
-    needs: build-registry-tool
+    needs: build-registry-tools
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
