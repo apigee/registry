@@ -29,6 +29,8 @@ import (
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func openAPICommand(ctx context.Context) *cobra.Command {
@@ -49,7 +51,11 @@ func openAPICommand(ctx context.Context) *cobra.Command {
 			}
 
 			for _, arg := range args {
-				scanDirectoryForOpenAPI(ctx, client, projectID, baseURI, arg)
+				path, err := filepath.Abs(arg)
+				if err != nil {
+					log.FromContext(ctx).WithError(err).Fatal("Invalid path")
+				}
+				scanDirectoryForOpenAPI(ctx, client, projectID, baseURI, path)
 			}
 		},
 	}
@@ -175,6 +181,8 @@ func (task *uploadOpenAPITask) createAPI(ctx context.Context) error {
 	})
 	if err == nil {
 		log.Debugf(ctx, "Updated %s", response.Name)
+	} else if status.Code(err) == codes.AlreadyExists {
+		log.Debugf(ctx, "Found %s", task.apiName())
 	} else {
 		log.FromContext(ctx).WithError(err).Debugf("Failed to create API %s", task.apiName())
 		// Returning this error ends all tasks, which seems appropriate to

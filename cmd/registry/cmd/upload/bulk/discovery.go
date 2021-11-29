@@ -24,6 +24,9 @@ import (
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"gopkg.in/yaml.v2"
 
 	discovery "github.com/google/gnostic/discovery"
 )
@@ -77,6 +80,7 @@ type uploadDiscoveryTask struct {
 	versionID string
 	specID    string
 	contents  []byte
+	info      DiscoveryInfo
 }
 
 func (task *uploadDiscoveryTask) String() string {
@@ -111,12 +115,15 @@ func (task *uploadDiscoveryTask) createAPI(ctx context.Context) error {
 	response, err := task.client.UpdateApi(ctx, &rpc.UpdateApiRequest{
 		Api: &rpc.Api{
 			Name:        task.apiName(),
-			DisplayName: task.apiID,
+			DisplayName: task.info.Title,
+			Description: task.info.Description,
 		},
 		AllowMissing: true,
 	})
 	if err == nil {
 		log.Debugf(ctx, "Updated %s", response.Name)
+	} else if status.Code(err) == codes.AlreadyExists {
+		log.Debugf(ctx, "Found %s", task.apiName())
 	} else {
 		log.FromContext(ctx).WithError(err).Debugf("Failed to create API %s", task.apiName())
 		// Returning this error ends all tasks, which seems appropriate to
@@ -205,7 +212,11 @@ func (task *uploadDiscoveryTask) fetchDiscoveryDoc() error {
 	}
 
 	task.contents, err = normalizeJSON(bytes)
-	return err
+	if err != nil {
+		return err
+	}
+
+	return yaml.Unmarshal(task.contents, &task.info)
 }
 
 // Normalize JSON documents by remarshalling them to
@@ -217,4 +228,12 @@ func normalizeJSON(bytes []byte) ([]byte, error) {
 		return nil, err
 	}
 	return json.MarshalIndent(m, "", "  ")
+}
+
+// A subset of the discovery document useful for adding an API to the registry
+type DiscoveryInfo struct {
+	Name        string `yaml:"name"`
+	Title       string `yaml:"title"`
+	Version     string `yaml:"version"`
+	Description string `yaml:"description"`
 }

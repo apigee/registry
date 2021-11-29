@@ -19,29 +19,34 @@ import (
 
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 )
 
-func ListResources(ctx context.Context, client connection.Client, pattern, filter string) ([]Resource, error) {
-	var result []Resource
+func ListResources(ctx context.Context, client connection.Client, pattern, filter string) ([]ResourceInstance, error) {
+	var result []ResourceInstance
 	var err2 error
 
 	// First try to match collection names.
 	if api, err := names.ParseApiCollection(pattern); err == nil {
-		err2 = core.ListAPIs(ctx, client, api, filter, GenerateApiHandler(&result))
+		err2 = core.ListAPIs(ctx, client, api, filter, generateApiHandler(&result))
+	} else if version, err := names.ParseVersionCollection(pattern); err == nil {
+		err2 = core.ListVersions(ctx, client, version, filter, generateVersionHandler(&result))
 	} else if spec, err := names.ParseSpecCollection(pattern); err == nil {
-		err2 = core.ListSpecs(ctx, client, spec, filter, GenerateSpecHandler(&result))
+		err2 = core.ListSpecs(ctx, client, spec, filter, generateSpecHandler(&result))
 	} else if artifact, err := names.ParseArtifactCollection(pattern); err == nil {
-		err2 = core.ListArtifacts(ctx, client, artifact, filter, false, GenerateArtifactHandler(&result))
+		err2 = core.ListArtifacts(ctx, client, artifact, filter, false, generateArtifactHandler(&result))
 	}
 
 	// Then try to match resource names.
 	if api, err := names.ParseApi(pattern); err == nil {
-		err2 = core.ListAPIs(ctx, client, api, filter, GenerateApiHandler(&result))
+		err2 = core.ListAPIs(ctx, client, api, filter, generateApiHandler(&result))
+	} else if version, err := names.ParseVersion(pattern); err == nil {
+		err2 = core.ListVersions(ctx, client, version, filter, generateVersionHandler(&result))
 	} else if spec, err := names.ParseSpec(pattern); err == nil {
-		err2 = core.ListSpecs(ctx, client, spec, filter, GenerateSpecHandler(&result))
+		err2 = core.ListSpecs(ctx, client, spec, filter, generateSpecHandler(&result))
 	} else if artifact, err := names.ParseArtifact(pattern); err == nil {
-		err2 = core.ListArtifacts(ctx, client, artifact, filter, false, GenerateArtifactHandler(&result))
+		err2 = core.ListArtifacts(ctx, client, artifact, filter, false, generateArtifactHandler(&result))
 	}
 
 	if err2 != nil {
@@ -49,4 +54,60 @@ func ListResources(ctx context.Context, client connection.Client, pattern, filte
 	}
 
 	return result, nil
+}
+
+func generateApiHandler(result *[]ResourceInstance) func(*rpc.Api) {
+	return func(api *rpc.Api) {
+		apiName, err := names.ParseApi(api.GetName())
+		if err != nil {
+			panic(err)
+		}
+		resource := ApiResource{
+			ApiName:         ApiName{Api: apiName},
+			UpdateTimestamp: api.UpdateTime.AsTime(),
+		}
+		(*result) = append((*result), resource)
+	}
+}
+
+func generateVersionHandler(result *[]ResourceInstance) func(*rpc.ApiVersion) {
+	return func(version *rpc.ApiVersion) {
+		versionName, err := names.ParseVersion(version.GetName())
+		if err != nil {
+			panic(err)
+		}
+		resource := VersionResource{
+			VersionName:     VersionName{Version: versionName},
+			UpdateTimestamp: version.UpdateTime.AsTime(),
+		}
+		(*result) = append((*result), resource)
+	}
+}
+
+func generateSpecHandler(result *[]ResourceInstance) func(*rpc.ApiSpec) {
+	return func(spec *rpc.ApiSpec) {
+		specName, err := names.ParseSpec(spec.GetName())
+		if err != nil {
+			panic(err)
+		}
+		resource := SpecResource{
+			SpecName:        SpecName{Spec: specName},
+			UpdateTimestamp: spec.RevisionUpdateTime.AsTime(),
+		}
+		(*result) = append((*result), resource)
+	}
+}
+
+func generateArtifactHandler(result *[]ResourceInstance) func(*rpc.Artifact) {
+	return func(artifact *rpc.Artifact) {
+		artifactName, err := names.ParseArtifact(artifact.GetName())
+		if err != nil {
+			panic(err)
+		}
+		resource := ArtifactResource{
+			ArtifactName:    ArtifactName{Artifact: artifactName},
+			UpdateTimestamp: artifact.UpdateTime.AsTime(),
+		}
+		(*result) = append((*result), resource)
+	}
 }
