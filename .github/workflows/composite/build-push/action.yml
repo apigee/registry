@@ -18,7 +18,7 @@ inputs:
   registry:
     description: 'Image registry to use'
     required: true
-    default: 'gchr.io'
+    default: 'ghcr.io'
   username:
     description: 'Username to the image registry'
     required: true

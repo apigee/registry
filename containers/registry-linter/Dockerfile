@@ -18,7 +18,7 @@
 # Make sure REGISTRY_PROJECT_IDENTIFIER is set
 
 # Build stage
-ARG REGISTRY_TOOL_IMAGE="gchr.io/apigee/registry-tools:latest"
+ARG REGISTRY_TOOL_IMAGE="ghcr.io/apigee/registry-tools:latest"
 
 FROM golang:alpine as builder
 
