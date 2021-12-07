@@ -36,12 +36,12 @@ var (
 func TestCreateArtifact(t *testing.T) {
 	tests := []struct {
 		desc string
-		seed *rpc.Project
+		seed seeder.RegistryResource
 		req  *rpc.CreateArtifactRequest
 		want *rpc.Artifact
 	}{
 		{
-			desc: "fully populated resource",
+			desc: "create project artifact",
 			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.CreateArtifactRequest{
 				Parent:     "projects/my-project/locations/global",
@@ -60,13 +60,93 @@ func TestCreateArtifact(t *testing.T) {
 				Hash:      sha256hash(artifactContents),
 			},
 		},
+		{
+			desc: "create api artifact",
+			seed: &rpc.Api{Name: "projects/my-project/locations/global/apis/my-api"},
+			req: &rpc.CreateArtifactRequest{
+				Parent:     "projects/my-project/locations/global/apis/my-api",
+				ArtifactId: "my-artifact",
+				Artifact: &rpc.Artifact{
+					MimeType:  "application/json",
+					SizeBytes: int32(len(artifactContents)),
+					Hash:      sha256hash(artifactContents),
+					Contents:  artifactContents,
+				},
+			},
+			want: &rpc.Artifact{
+				Name:      "projects/my-project/locations/global/apis/my-api/artifacts/my-artifact",
+				MimeType:  "application/json",
+				SizeBytes: int32(len(artifactContents)),
+				Hash:      sha256hash(artifactContents),
+			},
+		},
+		{
+			desc: "create version artifact",
+			seed: &rpc.ApiVersion{Name: "projects/my-project/locations/global/apis/my-api/versions/my-version"},
+			req: &rpc.CreateArtifactRequest{
+				Parent:     "projects/my-project/locations/global/apis/my-api/versions/my-version",
+				ArtifactId: "my-artifact",
+				Artifact: &rpc.Artifact{
+					MimeType:  "application/json",
+					SizeBytes: int32(len(artifactContents)),
+					Hash:      sha256hash(artifactContents),
+					Contents:  artifactContents,
+				},
+			},
+			want: &rpc.Artifact{
+				Name:      "projects/my-project/locations/global/apis/my-api/versions/my-version/artifacts/my-artifact",
+				MimeType:  "application/json",
+				SizeBytes: int32(len(artifactContents)),
+				Hash:      sha256hash(artifactContents),
+			},
+		},
+		{
+			desc: "create deployment artifact",
+			seed: &rpc.ApiDeployment{Name: "projects/my-project/locations/global/apis/my-api/deployments/my-deployment"},
+			req: &rpc.CreateArtifactRequest{
+				Parent:     "projects/my-project/locations/global/apis/my-api/deployments/my-deployment",
+				ArtifactId: "my-artifact",
+				Artifact: &rpc.Artifact{
+					MimeType:  "application/json",
+					SizeBytes: int32(len(artifactContents)),
+					Hash:      sha256hash(artifactContents),
+					Contents:  artifactContents,
+				},
+			},
+			want: &rpc.Artifact{
+				Name:      "projects/my-project/locations/global/apis/my-api/deployments/my-deployment/artifacts/my-artifact",
+				MimeType:  "application/json",
+				SizeBytes: int32(len(artifactContents)),
+				Hash:      sha256hash(artifactContents),
+			},
+		},
+		{
+			desc: "create spec artifact",
+			seed: &rpc.ApiSpec{Name: "projects/my-project/locations/global/apis/my-api/versions/my-version/specs/my-spec"},
+			req: &rpc.CreateArtifactRequest{
+				Parent:     "projects/my-project/locations/global/apis/my-api/versions/my-version/specs/my-spec",
+				ArtifactId: "my-artifact",
+				Artifact: &rpc.Artifact{
+					MimeType:  "application/json",
+					SizeBytes: int32(len(artifactContents)),
+					Hash:      sha256hash(artifactContents),
+					Contents:  artifactContents,
+				},
+			},
+			want: &rpc.Artifact{
+				Name:      "projects/my-project/locations/global/apis/my-api/versions/my-version/specs/my-spec/artifacts/my-artifact",
+				MimeType:  "application/json",
+				SizeBytes: int32(len(artifactContents)),
+				Hash:      sha256hash(artifactContents),
+			},
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			if err := seeder.SeedProjects(ctx, server, test.seed); err != nil {
+			if err := seeder.SeedRegistry(ctx, server, test.seed); err != nil {
 				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
 			}
 
