@@ -43,10 +43,3 @@ export APG_REGISTRY_TOKEN=$(gcloud auth print-identity-token ${APG_REGISTRY_CLIE
 
 # Calls don't use an API key.
 unset APG_REGISTRY_API_KEY
-
-# Duplicate the client configuration for the Admin service.
-export APG_ADMIN_ADDRESS=$APG_REGISTRY_ADDRESS
-export APG_ADMIN_AUDIENCES=$APG_REGISTRY_AUDIENCES
-export APG_ADMIN_INSECURE=$APG_REGISTRY_INSECURE
-export APG_ADMIN_TOKEN=$APG_REGISTRY_TOKEN
-unset APG_ADMIN_API_KEY
