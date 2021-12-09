@@ -630,6 +630,25 @@ func TestListArtifacts(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "artifacts owned by a deployment",
+			seed: []*rpc.Artifact{
+				{Name: "projects/my-project/locations/global/apis/my-api/deployments/d1/artifacts/artifact1"},
+				{Name: "projects/my-project/locations/global/apis/my-api/deployments/d1/artifacts/artifact2"},
+				{Name: "projects/my-project/locations/global/apis/my-api/deployments/d1/artifacts/artifact3"},
+				{Name: "projects/my-project/locations/global/apis/my-api/deployments/d2/artifacts/artifact4"},
+			},
+			req: &rpc.ListArtifactsRequest{
+				Parent: "projects/my-project/locations/global/apis/my-api/deployments/d1",
+			},
+			want: &rpc.ListArtifactsResponse{
+				Artifacts: []*rpc.Artifact{
+					{Name: "projects/my-project/locations/global/apis/my-api/deployments/d1/artifacts/artifact1"},
+					{Name: "projects/my-project/locations/global/apis/my-api/deployments/d1/artifacts/artifact2"},
+					{Name: "projects/my-project/locations/global/apis/my-api/deployments/d1/artifacts/artifact3"},
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {

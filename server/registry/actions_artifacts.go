@@ -235,6 +235,12 @@ func (s *RegistryServer) ListArtifacts(ctx context.Context, req *rpc.ListArtifac
 			Filter: req.GetFilter(),
 			Token:  req.GetPageToken(),
 		})
+	case names.Deployment:
+		listing, err = db.ListDeploymentArtifacts(ctx, parent, storage.PageOptions{
+			Size:   req.GetPageSize(),
+			Filter: req.GetFilter(),
+			Token:  req.GetPageToken(),
+		})
 	}
 	if err != nil {
 		return nil, err
