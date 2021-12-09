@@ -94,6 +94,10 @@ func (s *RegistryServer) CreateArtifact(ctx context.Context, req *rpc.CreateArti
 		if _, err := db.GetSpec(ctx, parent); err != nil {
 			return nil, err
 		}
+	case names.Deployment:
+		if _, err := db.GetDeployment(ctx, parent); err != nil {
+			return nil, err
+		}
 	}
 
 	artifact, err := models.NewArtifact(name, req.GetArtifact())

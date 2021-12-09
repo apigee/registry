@@ -197,10 +197,50 @@ func TestCreateArtifactResponseCodes(t *testing.T) {
 		want codes.Code
 	}{
 		{
-			desc: "parent not found",
+			desc: "parent project not found",
 			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.CreateArtifactRequest{
 				Parent:     "projects/other-project/locations/global",
+				ArtifactId: "valid-id",
+				Artifact:   &rpc.Artifact{},
+			},
+			want: codes.NotFound,
+		},
+		{
+			desc: "parent api not found",
+			seed: &rpc.Project{Name: "projects/my-project"},
+			req: &rpc.CreateArtifactRequest{
+				Parent:     "projects/other-project/locations/global/apis/a",
+				ArtifactId: "valid-id",
+				Artifact:   &rpc.Artifact{},
+			},
+			want: codes.NotFound,
+		},
+		{
+			desc: "parent version not found",
+			seed: &rpc.Project{Name: "projects/my-project"},
+			req: &rpc.CreateArtifactRequest{
+				Parent:     "projects/other-project/locations/global/apis/a/versions/v",
+				ArtifactId: "valid-id",
+				Artifact:   &rpc.Artifact{},
+			},
+			want: codes.NotFound,
+		},
+		{
+			desc: "parent spec not found",
+			seed: &rpc.Project{Name: "projects/my-project"},
+			req: &rpc.CreateArtifactRequest{
+				Parent:     "projects/other-project/locations/global/apis/a/versions/v/specs/s",
+				ArtifactId: "valid-id",
+				Artifact:   &rpc.Artifact{},
+			},
+			want: codes.NotFound,
+		},
+		{
+			desc: "parent deployment not found",
+			seed: &rpc.Project{Name: "projects/my-project"},
+			req: &rpc.CreateArtifactRequest{
+				Parent:     "projects/other-project/locations/global/apis/a/deployments/d",
 				ArtifactId: "valid-id",
 				Artifact:   &rpc.Artifact{},
 			},
