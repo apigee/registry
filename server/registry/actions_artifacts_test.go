@@ -192,15 +192,15 @@ func TestCreateArtifact(t *testing.T) {
 func TestCreateArtifactResponseCodes(t *testing.T) {
 	tests := []struct {
 		desc string
-		seed *rpc.Project
+		seed seeder.RegistryResource
 		req  *rpc.CreateArtifactRequest
 		want codes.Code
 	}{
 		{
 			desc: "parent project not found",
-			seed: &rpc.Project{Name: "projects/my-project"},
+			seed: &rpc.Project{Name: "projects/other-project"},
 			req: &rpc.CreateArtifactRequest{
-				Parent:     "projects/other-project/locations/global",
+				Parent:     "projects/my-project/locations/global",
 				ArtifactId: "valid-id",
 				Artifact:   &rpc.Artifact{},
 			},
@@ -210,7 +210,7 @@ func TestCreateArtifactResponseCodes(t *testing.T) {
 			desc: "parent api not found",
 			seed: &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.CreateArtifactRequest{
-				Parent:     "projects/other-project/locations/global/apis/a",
+				Parent:     "projects/my-project/locations/global/apis/a",
 				ArtifactId: "valid-id",
 				Artifact:   &rpc.Artifact{},
 			},
@@ -218,9 +218,9 @@ func TestCreateArtifactResponseCodes(t *testing.T) {
 		},
 		{
 			desc: "parent version not found",
-			seed: &rpc.Project{Name: "projects/my-project"},
+			seed: &rpc.Api{Name: "projects/my-project/locations/global/apis/a"},
 			req: &rpc.CreateArtifactRequest{
-				Parent:     "projects/other-project/locations/global/apis/a/versions/v",
+				Parent:     "projects/my-project/locations/global/apis/a/versions/v",
 				ArtifactId: "valid-id",
 				Artifact:   &rpc.Artifact{},
 			},
@@ -228,9 +228,9 @@ func TestCreateArtifactResponseCodes(t *testing.T) {
 		},
 		{
 			desc: "parent spec not found",
-			seed: &rpc.Project{Name: "projects/my-project"},
+			seed: &rpc.ApiVersion{Name: "projects/my-project/locations/global/apis/a/versions/v"},
 			req: &rpc.CreateArtifactRequest{
-				Parent:     "projects/other-project/locations/global/apis/a/versions/v/specs/s",
+				Parent:     "projects/my-project/locations/global/apis/a/versions/v/specs/s",
 				ArtifactId: "valid-id",
 				Artifact:   &rpc.Artifact{},
 			},
@@ -238,9 +238,9 @@ func TestCreateArtifactResponseCodes(t *testing.T) {
 		},
 		{
 			desc: "parent deployment not found",
-			seed: &rpc.Project{Name: "projects/my-project"},
+			seed: &rpc.Api{Name: "projects/my-project/locations/global/apis/a"},
 			req: &rpc.CreateArtifactRequest{
-				Parent:     "projects/other-project/locations/global/apis/a/deployments/d",
+				Parent:     "projects/my-project/locations/global/apis/a/deployments/d",
 				ArtifactId: "valid-id",
 				Artifact:   &rpc.Artifact{},
 			},
@@ -332,7 +332,7 @@ func TestCreateArtifactResponseCodes(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			if err := seeder.SeedProjects(ctx, server, test.seed); err != nil {
+			if err := seeder.SeedRegistry(ctx, server, test.seed); err != nil {
 				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
 			}
 
