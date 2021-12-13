@@ -94,6 +94,10 @@ func (s *RegistryServer) CreateArtifact(ctx context.Context, req *rpc.CreateArti
 		if _, err := db.GetSpec(ctx, parent); err != nil {
 			return nil, err
 		}
+	case names.Deployment:
+		if _, err := db.GetDeployment(ctx, parent); err != nil {
+			return nil, err
+		}
 	}
 
 	artifact, err := models.NewArtifact(name, req.GetArtifact())
@@ -231,6 +235,12 @@ func (s *RegistryServer) ListArtifacts(ctx context.Context, req *rpc.ListArtifac
 		})
 	case names.Spec:
 		listing, err = db.ListSpecArtifacts(ctx, parent, storage.PageOptions{
+			Size:   req.GetPageSize(),
+			Filter: req.GetFilter(),
+			Token:  req.GetPageToken(),
+		})
+	case names.Deployment:
+		listing, err = db.ListDeploymentArtifacts(ctx, parent, storage.PageOptions{
 			Size:   req.GetPageSize(),
 			Filter: req.GetFilter(),
 			Token:  req.GetPageToken(),

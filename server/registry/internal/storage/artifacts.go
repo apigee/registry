@@ -143,6 +143,53 @@ func (d *Client) ListVersionArtifacts(ctx context.Context, parent names.Version,
 	})
 }
 
+func (d *Client) ListDeploymentArtifacts(ctx context.Context, parent names.Deployment, opts PageOptions) (ArtifactList, error) {
+	q := d.NewQuery(gorm.ArtifactEntityName)
+	q = q.Require("SpecID", "")
+	q = q.Require("VersionID", "")
+
+	token, err := decodeToken(opts.Token)
+	if err != nil {
+		return ArtifactList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
+	}
+
+	if err := token.ValidateFilter(opts.Filter); err != nil {
+		return ArtifactList{}, status.Errorf(codes.InvalidArgument, "invalid filter %q: %s", opts.Filter, err)
+	} else {
+		token.Filter = opts.Filter
+	}
+
+	q = q.ApplyOffset(token.Offset)
+
+	if id := parent.ProjectID; id != "-" {
+		q = q.Require("ProjectID", id)
+	}
+	if id := parent.ApiID; id != "-" {
+		q = q.Require("ApiID", id)
+	}
+	if id := parent.DeploymentID; id != "-" {
+		q = q.Require("DeploymentID", id)
+	}
+
+	if parent.ProjectID != "-" && parent.ApiID != "-" && parent.DeploymentID != "-" {
+		if _, err := d.GetDeployment(ctx, parent); err != nil {
+			return ArtifactList{}, err
+		}
+	} else if parent.ProjectID != "-" && parent.ApiID != "-" && parent.DeploymentID == "-" {
+		if _, err := d.GetApi(ctx, parent.Api()); err != nil {
+			return ArtifactList{}, err
+		}
+	} else if parent.ProjectID != "-" && parent.ApiID == "-" && parent.DeploymentID == "-" {
+		if _, err := d.GetProject(ctx, parent.Project()); err != nil {
+			return ArtifactList{}, err
+		}
+	}
+
+	return d.listArtifacts(ctx, d.Run(ctx, q), opts, func(a *models.Artifact) bool {
+		return a.ProjectID != "" && a.ApiID != "" && a.DeploymentID != ""
+	})
+}
+
 func (d *Client) ListApiArtifacts(ctx context.Context, parent names.Api, opts PageOptions) (ArtifactList, error) {
 	q := d.NewQuery(gorm.ArtifactEntityName)
 	q = q.Require("VersionID", "")
