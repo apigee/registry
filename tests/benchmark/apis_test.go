@@ -39,9 +39,13 @@ func BenchmarkCreateApi(b *testing.B) {
 		b.Fatalf("Setup: Failed to create client: %s", err)
 	}
 
-	reqs := make([]*rpc.CreateApiRequest, b.N)
+	var (
+		creates = make([]*rpc.CreateApiRequest, b.N)
+		deletes = make([]*rpc.DeleteApiRequest, b.N)
+	)
+
 	for i := 0; i < b.N; i++ {
-		reqs[i] = &rpc.CreateApiRequest{
+		creates[i] = &rpc.CreateApiRequest{
 			Parent: rootResource,
 			ApiId:  uniqueID(),
 			Api:    &rpc.Api{},
@@ -50,8 +54,20 @@ func BenchmarkCreateApi(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		if _, err := client.CreateApi(ctx, reqs[i]); err != nil {
-			b.Errorf("CreateApi(%+v) returned unexpected error: %s", reqs[i], err)
+		resp, err := client.CreateApi(ctx, creates[i])
+		if err != nil {
+			b.Errorf("CreateApi(%+v) returned unexpected error: %s", creates[i], err)
+		}
+
+		deletes[i] = &rpc.DeleteApiRequest{
+			Name: resp.GetName(),
+		}
+	}
+	b.StopTimer()
+
+	for i := 0; i < b.N; i++ {
+		if err := client.DeleteApi(ctx, deletes[i]); err != nil {
+			b.Errorf("Cleanup: DeleteApi(%q) returned unexpected error: %s", deletes[i].GetName(), err)
 		}
 	}
 }
@@ -63,7 +79,11 @@ func BenchmarkGetApi(b *testing.B) {
 		b.Fatalf("Setup: Failed to create client: %s", err)
 	}
 
-	reqs := make([]*rpc.GetApiRequest, b.N)
+	var (
+		gets    = make([]*rpc.GetApiRequest, b.N)
+		deletes = make([]*rpc.DeleteApiRequest, b.N)
+	)
+
 	for i := 0; i < b.N; i++ {
 		api, err := client.CreateApi(ctx, &rpc.CreateApiRequest{
 			Parent: rootResource,
@@ -74,15 +94,26 @@ func BenchmarkGetApi(b *testing.B) {
 			b.Fatalf("Setup: Failed to create API: %s", err)
 		}
 
-		reqs[i] = &rpc.GetApiRequest{
+		gets[i] = &rpc.GetApiRequest{
+			Name: api.GetName(),
+		}
+
+		deletes[i] = &rpc.DeleteApiRequest{
 			Name: api.GetName(),
 		}
 	}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		if _, err := client.GetApi(ctx, reqs[i]); err != nil {
-			b.Errorf("GetApi(%q) returned unexpected error: %s", reqs[i].GetName(), err)
+		if _, err := client.GetApi(ctx, gets[i]); err != nil {
+			b.Errorf("GetApi(%q) returned unexpected error: %s", gets[i].GetName(), err)
+		}
+	}
+	b.StopTimer()
+
+	for i := 0; i < b.N; i++ {
+		if err := client.DeleteApi(ctx, deletes[i]); err != nil {
+			b.Errorf("Cleanup: DeleteApi(%q) returned unexpected error: %s", deletes[i].GetName(), err)
 		}
 	}
 }
@@ -98,7 +129,11 @@ func BenchmarkUpdateApi(b *testing.B) {
 		b.Fatalf("Setup: Failed to create client: %s", err)
 	}
 
-	reqs := make([]*rpc.UpdateApiRequest, b.N)
+	var (
+		updates = make([]*rpc.UpdateApiRequest, b.N)
+		deletes = make([]*rpc.DeleteApiRequest, b.N)
+	)
+
 	for i := 0; i < b.N; i++ {
 		api, err := client.CreateApi(ctx, &rpc.CreateApiRequest{
 			Parent: rootResource,
@@ -109,18 +144,29 @@ func BenchmarkUpdateApi(b *testing.B) {
 			b.Fatalf("Setup: Failed to create API: %s", err)
 		}
 
-		reqs[i] = &rpc.UpdateApiRequest{
+		updates[i] = &rpc.UpdateApiRequest{
 			Api: &rpc.Api{
 				Name:        api.GetName(),
 				Description: uniqueID(),
 			},
 		}
+
+		deletes[i] = &rpc.DeleteApiRequest{
+			Name: api.GetName(),
+		}
 	}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		if _, err := client.UpdateApi(ctx, reqs[i]); err != nil {
-			b.Errorf("UpdateApi(%+v) returned unexpected error: %s", reqs[i], err)
+		if _, err := client.UpdateApi(ctx, updates[i]); err != nil {
+			b.Errorf("UpdateApi(%+v) returned unexpected error: %s", updates[i], err)
+		}
+	}
+	b.StopTimer()
+
+	for i := 0; i < b.N; i++ {
+		if err := client.DeleteApi(ctx, deletes[i]); err != nil {
+			b.Errorf("Cleanup: DeleteApi(%q) returned unexpected error: %s", deletes[i].GetName(), err)
 		}
 	}
 }
@@ -132,7 +178,7 @@ func BenchmarkDeleteApi(b *testing.B) {
 		b.Fatalf("Setup: Failed to create client: %s", err)
 	}
 
-	reqs := make([]*rpc.DeleteApiRequest, b.N)
+	deletes := make([]*rpc.DeleteApiRequest, b.N)
 	for i := 0; i < b.N; i++ {
 		api, err := client.CreateApi(ctx, &rpc.CreateApiRequest{
 			Parent: rootResource,
@@ -143,15 +189,15 @@ func BenchmarkDeleteApi(b *testing.B) {
 			b.Fatalf("Setup: Failed to create API: %s", err)
 		}
 
-		reqs[i] = &rpc.DeleteApiRequest{
+		deletes[i] = &rpc.DeleteApiRequest{
 			Name: api.GetName(),
 		}
 	}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		if err := client.DeleteApi(ctx, reqs[i]); err != nil {
-			b.Errorf("DeleteApi(%q) returned unexpected error: %s", reqs[i].GetName(), err)
+		if err := client.DeleteApi(ctx, deletes[i]); err != nil {
+			b.Errorf("DeleteApi(%q) returned unexpected error: %s", deletes[i].GetName(), err)
 		}
 	}
 }
