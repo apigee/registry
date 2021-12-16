@@ -30,3 +30,16 @@ protoc ${SERVICE_PROTOS[*]} \
   	--go_cli_opt='root=apg' \
   	--go_cli_opt='gapic=github.com/apigee/registry/gapic' \
   	--go_cli_out='cmd/apg'
+
+# Patch the generated CLI to use "APG_REGISTRY" as the prefix for
+# Admin service configuration variables. This causes the Admin service
+# client to be configured with the same variables that configure the
+# Registry service client.
+FILE=cmd/apg/admin_service.go
+sed -i.bak "s/APG_ADMIN/APG_REGISTRY/" "${FILE}"
+rm "${FILE}.bak"
+gofmt -w "${FILE}"
+if grep --quiet APG_ADMIN "${FILE}"; then
+  echo "Patching APG tool failed."
+  exit 1
+fi

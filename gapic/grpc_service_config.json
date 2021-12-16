@@ -6,15 +6,17 @@
             "service": "google.cloud.apigeeregistry.v1.Registry"
           }
         ],
-        "timeout": "10s",
+        "timeout": "20s",
         "retryPolicy": {
           "initialBackoff": "0.200s",
           "maxBackoff": "10s",
           "backoffMultiplier": 1.3,
           "retryableStatusCodes": [
+            "ABORTED",
+            "CANCELLED",
             "UNAVAILABLE"
           ]
         }
-      }     
-    ]     
+      }
+    ]
   }

@@ -37,6 +37,5 @@ func Command(ctx context.Context) *cobra.Command {
 	cmd.AddCommand(vocabularyCommand(ctx))
 
 	cmd.PersistentFlags().String("filter", "", "Filter selected resources")
-	cmd.PersistentFlags().String("something", "", "desc")
 	return cmd
 }
