@@ -51,12 +51,20 @@ func protosCommand(ctx context.Context) *cobra.Command {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
 
+			// create a queue for upload tasks and wait for the workers to finish after filling it.
+			jobs, err := cmd.Flags().GetInt("jobs")
+			if err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get jobs from flags")
+			}
+			taskQueue, wait := core.WorkerPool(ctx, jobs)
+			defer wait()
+
 			for _, arg := range args {
 				path, err := filepath.Abs(arg)
 				if err != nil {
 					log.FromContext(ctx).WithError(err).Fatal("Invalid path")
 				}
-				scanDirectoryForProtos(ctx, client, projectID, baseURI, path)
+				scanDirectoryForProtos(ctx, client, projectID, baseURI, path, taskQueue)
 			}
 		},
 	}
@@ -65,11 +73,7 @@ func protosCommand(ctx context.Context) *cobra.Command {
 	return cmd
 }
 
-func scanDirectoryForProtos(ctx context.Context, client connection.Client, projectID, baseURI, directory string) {
-	// create a queue for upload tasks and wait for the workers to finish after filling it.
-	taskQueue, wait := core.WorkerPool(ctx, 64)
-	defer wait()
-
+func scanDirectoryForProtos(ctx context.Context, client connection.Client, projectID, baseURI, directory string, taskQueue chan<- core.Task) {
 	dirPattern := regexp.MustCompile("v.*[1-9]+.*")
 	if err := filepath.Walk(directory, func(fullname string, info os.FileInfo, err error) error {
 		if err != nil {
