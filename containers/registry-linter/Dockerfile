@@ -18,6 +18,8 @@
 # Make sure REGISTRY_PROJECT_IDENTIFIER is set
 
 # Build stage
+ARG REGISTRY_TOOL_IMAGE="ghcr.io/apigee/registry-tools:latest"
+
 FROM golang:alpine as builder
 
 # Copy some commonly-needed tools into the image.
@@ -34,7 +36,8 @@ RUN git clone https://github.com/google/gnostic
 RUN cd gnostic && go install ./...
 
 # Final image
-FROM gcr.io/$REGISTRY_PROJECT_IDENTIFIER/registry-tools:latest
+FROM $REGISTRY_TOOL_IMAGE
+ARG REGISTRY_TOOL_IMAGE
 
 # Install spectral linter
 RUN apk add --no-cache nodejs npm

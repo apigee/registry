@@ -47,7 +47,11 @@ func discoveryCommand(ctx context.Context) *cobra.Command {
 			}
 
 			// create a queue for upload tasks and wait for the workers to finish after filling it.
-			taskQueue, wait := core.WorkerPool(ctx, 64)
+			jobs, err := cmd.Flags().GetInt("jobs")
+			if err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get jobs from flags")
+			}
+			taskQueue, wait := core.WorkerPool(ctx, jobs)
 			defer wait()
 
 			discoveryResponse, err := discovery.FetchList()

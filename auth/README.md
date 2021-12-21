@@ -15,3 +15,5 @@ the `registry-server`.
 - [GKE.sh](GKE.sh) configures clients to work with a `registry-server` deployed
   to GKE. For more details about GKE deployments, please refer to
   [deployments/gke/README.md](../deployments/gke/README.md).
+- [HOSTED.sh](HOSTED.sh) configures clients to work with a `registry-server`
+  hosted on Google Cloud.

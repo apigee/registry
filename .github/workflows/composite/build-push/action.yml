@@ -1,0 +1,70 @@
+# Copyright 2021 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: 'Build and Push image'
+description: 'Composite action to generate registry images'
+inputs:
+  registry:
+    description: 'Image registry to use'
+    required: true
+    default: 'ghcr.io'
+  username:
+    description: 'Username to the image registry'
+    required: true
+  password:
+    description: 'Password for the image registry'
+    required: true
+  image:
+    description: 'Docker image to build'
+    required: true
+  context:
+    description: 'Context to docker build'
+    required: true
+    default: "."
+  file:
+    description: 'Path to the docker file relative to context'
+    required: true
+  build-args:
+    description: 'Build arguments for docker'
+    required: false
+runs:
+  using: "composite"
+  steps:
+    - name: Log into registry ${{ env.REGISTRY }}
+      if: github.event_name != 'pull_request'
+      uses: docker/login-action@28218f9b04b4f3f62068d7b6ce6ca5b26e35336c
+      with:
+        registry: ${{ inputs.registry }}
+        username: ${{ inputs.username }}
+        password: ${{ inputs.password }}
+    - name: Extract Docker metadata
+      id: meta
+      uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
+      with:
+        images: ${{ inputs.registry }}/${{ inputs.image }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=tag
+          type=schedule,pattern=nightly
+          type=raw,latest
+
+    - name: Build and push registry-server Docker image
+      uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
+      with:
+        context: ${{ inputs.context }}
+        file: ${{ inputs.file }}
+        push: ${{ github.event_name != 'pull_request' }}
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        build-args: ${{ inputs.build-args }}

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright 2020 Google LLC. All Rights Reserved.
+# Copyright 2021 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,30 +16,26 @@
 #
 
 #
-# Configure an environment to run Registry clients with a local server through a local Envoy proxy.
+# Configure an environment to run Apigee Registry clients with a Google-hosted service.
+#
+# The following assumes you have run `gcloud auth login` and that the current
+# gcloud project is the one with your Apigee Registry instance.
 #
 
 if ! [ -x "$(command -v gcloud)" ]; then
   echo 'ERROR: This script requires the gcloud command. Please install it to continue.' >&2; return
 fi
 
-### SERVER CONFIGURATION
+# Calls to the hosted service are secure.
+unset APG_REGISTRY_INSECURE
 
-# This assumes that the current gcloud project is the one where the Cloud PubSub API is enabled and intended for use.
-export REGISTRY_PROJECT_IDENTIFIER=$(gcloud config list --format 'value(core.project)')
-
-### CLIENT CONFIGURATION
-
-# Be sure that the port setting below is correct. 9999 is the default.
-export APG_REGISTRY_ADDRESS=localhost:9999
-export APG_REGISTRY_AUDIENCES=http://localhost:9999
-
-# Local calls don't use TLS.
-export APG_REGISTRY_INSECURE=1
+# Get the service address.
+export APG_REGISTRY_AUDIENCES=https://apigeeregistry.googleapis.com
+export APG_REGISTRY_ADDRESS=apigeeregistry.googleapis.com:443
 
 # The auth token is generated for the gcloud logged-in user.
 export APG_REGISTRY_CLIENT_EMAIL=$(gcloud config list account --format "value(core.account)")
-export APG_REGISTRY_TOKEN=$(gcloud auth print-identity-token ${APG_REGISTRY_CLIENT_EMAIL})
+export APG_REGISTRY_TOKEN=$(gcloud auth print-access-token ${APG_REGISTRY_CLIENT_EMAIL})
 
 # Calls don't use an API key.
 unset APG_REGISTRY_API_KEY
