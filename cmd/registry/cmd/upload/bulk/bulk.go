@@ -32,5 +32,7 @@ func Command(ctx context.Context) *cobra.Command {
 
 	cmd.PersistentFlags().String("project-id", "", "Project ID to use for each upload")
 	_ = cmd.MarkFlagRequired("project-id")
+
+	cmd.PersistentFlags().Int("jobs", 10, "Number of upload jobs to run simultaneously")
 	return cmd
 }

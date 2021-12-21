@@ -50,12 +50,20 @@ func openAPICommand(ctx context.Context) *cobra.Command {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
 
+			// create a queue for upload tasks and wait for the workers to finish after filling it.
+			jobs, err := cmd.Flags().GetInt("jobs")
+			if err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get jobs from flags")
+			}
+			taskQueue, wait := core.WorkerPool(ctx, jobs)
+			defer wait()
+
 			for _, arg := range args {
 				path, err := filepath.Abs(arg)
 				if err != nil {
 					log.FromContext(ctx).WithError(err).Fatal("Invalid path")
 				}
-				scanDirectoryForOpenAPI(ctx, client, projectID, baseURI, path)
+				scanDirectoryForOpenAPI(ctx, client, projectID, baseURI, path, taskQueue)
 			}
 		},
 	}
@@ -64,11 +72,7 @@ func openAPICommand(ctx context.Context) *cobra.Command {
 	return cmd
 }
 
-func scanDirectoryForOpenAPI(ctx context.Context, client connection.Client, projectID, baseURI, directory string) {
-	// create a queue for upload tasks and wait for the workers to finish after filling it.
-	taskQueue, wait := core.WorkerPool(ctx, 64)
-	defer wait()
-
+func scanDirectoryForOpenAPI(ctx context.Context, client connection.Client, projectID, baseURI, directory string, taskQueue chan<- core.Task) {
 	// walk a directory hierarchy, uploading every API spec that matches a set of expected file names.
 	if err := filepath.Walk(directory, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
