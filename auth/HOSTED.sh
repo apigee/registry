@@ -31,7 +31,7 @@ unset APG_REGISTRY_INSECURE
 
 # Get the service address.
 export APG_REGISTRY_AUDIENCES=https://apigeeregistry.googleapis.com
-export APG_REGISTRY_ADDRESS=${APG_REGISTRY_AUDIENCES#https://}:443
+export APG_REGISTRY_ADDRESS=apigeeregistry.googleapis.com:443
 
 # The auth token is generated for the gcloud logged-in user.
 export APG_REGISTRY_CLIENT_EMAIL=$(gcloud config list account --format "value(core.account)")
