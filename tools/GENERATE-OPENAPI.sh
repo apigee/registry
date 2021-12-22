@@ -22,5 +22,5 @@ clone_common_protos
 
 go install github.com/google/gnostic/apps/protoc-gen-openapi@latest
 
-echo "Generating OpenAPI spec for ${SERVICE_PROTOS[@]}"
-protoc ${SERVICE_PROTOS[*]} --proto_path='.' --proto_path=$COMMON_PROTOS_PATH --openapi_out='.'
+echo "Generating OpenAPI spec for ${HOSTED_PROTOS[@]}"
+protoc ${HOSTED_PROTOS[*]} --proto_path='.' --proto_path=$COMMON_PROTOS_PATH --openapi_out='.'
