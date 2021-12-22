@@ -309,7 +309,7 @@ func (task *computeConformanceTask) computeConformanceReport(
 				// Check if the guideline report for the guideline which contains this rule
 				// has already been initialized. If it hasn't then create one.
 				if _, ok := guidelineIdToGuidelineReport[guideline.GetId()]; !ok {
-					report := task.initializeGuidelineReport()
+					report := task.initializeGuidelineReport(guideline.GetId())
 					guidelineIdToGuidelineReport[guideline.GetId()] = report
 
 					conformanceReport.GuidelineReportGroups[guideline.Status].GuidelineReports =
@@ -355,9 +355,9 @@ func (task *computeConformanceTask) initializeConformanceReport() *rpc.Conforman
 	return conformanceReport
 }
 
-func (task *computeConformanceTask) initializeGuidelineReport() *rpc.GuidelineReport {
+func (task *computeConformanceTask) initializeGuidelineReport(guidelineID string) *rpc.GuidelineReport {
 	// Create an empty guideline report.
-	guidelineReport := &rpc.GuidelineReport{}
+	guidelineReport := &rpc.GuidelineReport{GuidelineId: guidelineID}
 
 	// Initialize rule report groups.
 	ruleSeverity := rpc.Rule_Severity(0)
