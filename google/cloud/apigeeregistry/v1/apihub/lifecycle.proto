@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+// (-- api-linter: core::0215::versioned-packages=disabled
+//     aip.dev/not-precedent: Support protos for the apigeeregistry.v1 API. --)
+package google.cloud.apigeeregistry.v1.apihub;
+
+option java_package = "com.google.cloud.apigeeregistry.v1.apihub";
+option java_multiple_files = true;
+option java_outer_classname = "ApiHubLifecycleModelsProto";
+option go_package = "github.com/apigee/registry/rpc;rpc";
+
+// A lifecycle represents a series of stages that an API typically moves through
+// in its lifetime. Lifecycles are usually organization-specific, so rather than
+// force a fixed set of stages, we allow them to be specified in this project-
+// level artifact.
+message Lifecycle {
+  // Artifact identifier. May be used in YAML representations to indicate the id
+  // to be used to attach the artifact.
+  string id = 1;
+
+  // Artifact kind. May be used in YAML representations to identify the type of
+  // this artifact.
+  string kind = 2;
+
+  // A human-friendly name for the lifecycle.
+  string display_name = 3;
+
+  // A more detailed description of the lifecycle.
+  string description = 4;
+
+  // Stages represent distinct stages in an API lifecycle, e.g. concept,
+  // design, development, testing, preview, available, deprecated, disabled.
+  message Stage {
+    // Lifecycle stage identifier.
+    string id = 1;
+
+    // A human-friendly name of the lifecycle stage.
+    string display_name = 2;
+
+    // A detailed description of the lifecycle stage.
+    string description = 3;
+
+    // An optional link to more information about the lifecycle stage.
+    string url = 4;
+
+    // An ordering value used to configure display of the lifecycle stage.
+    int32 display_order = 5;
+  }
+
+  // The stages of an API lifecycle.
+  repeated Stage stages = 5;
+}

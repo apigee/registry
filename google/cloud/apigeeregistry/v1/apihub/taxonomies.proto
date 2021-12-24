@@ -1,0 +1,78 @@
+syntax = "proto3";
+
+// (-- api-linter: core::0215::versioned-packages=disabled
+//     aip.dev/not-precedent: Support protos for the apigeeregistry.v1 API. --)
+package google.cloud.apigeeregistry.v1.apihub;
+
+option java_package = "com.google.cloud.apigeeregistry.v1.apihub";
+option java_multiple_files = true;
+option java_outer_classname = "ApiHubTaxonomyModelsProto";
+option go_package = "github.com/apigee/registry/rpc;rpc";
+
+// A TaxonomyList message contains a list of taxonomies that can be used to
+// classify resources in the registry. Typically all of the system-managed
+// taxonomies would be stored in a registry as a single TaxonomyList artifact.
+message TaxonomyList {
+  // Artifact identifier. May be used in YAML representations to indicate the id
+  // to be used to attach the artifact.
+  string id = 1;
+
+  // Artifact kind. May be used in YAML representations to identify the type of
+  // this artifact.
+  string kind = 2;
+
+  // A human-friendly name for the taxonomy list.
+  string display_name = 3;
+
+  // A more detailed description of the taxonomy list.
+  string description = 4;
+
+  // A Taxonomy specifies a list of values that can be associated with an item
+  // in a registry, typically an API. There may be multiple taxonomies, each
+  // representing a different aspect or dimension of the item being labelled.
+  message Taxonomy {
+    // Taxonomy identifier.
+    string id = 1;
+
+    // A human-friendly name of the taxonomy.
+    string display_name = 2;
+
+    // A detailed description of the taxonomy.
+    string description = 3;
+
+    // If true, this taxonomy is applied by admins only.
+    bool admin_applied = 4;
+
+    // If true, this taxonomy only allows one of its members to be associated
+    // with an item (multiple selection is disallowed).
+    bool single_selection = 5;
+
+    // If true, this taxonomy is not included in search indexes.
+    bool search_excluded = 6;
+
+    // If true, this taxonomy is a system-managed taxonomy.
+    bool system_managed = 7;
+
+    // An ordering value used to configure display of the taxonomy.
+    int32 display_order = 8;
+
+    // An element in a taxonomy represents one of the values that can be used
+    // to label an item.
+    message Element {
+      // Element identifier.
+      string id = 1;
+
+      // A human-friendly name of the element.
+      string display_name = 2;
+
+      // A detailed description of the element.
+      string description = 3;
+    }
+
+    // The elements of the taxonomy.
+    repeated Element elements = 9;
+  }
+
+  // The taxonomies in the list.
+  repeated Taxonomy taxonomies = 5;
+}
