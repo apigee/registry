@@ -20,6 +20,7 @@ import (
 
 type ProjectHandler func(*rpc.Project)
 type ApiHandler func(*rpc.Api)
+type DeploymentHandler func(*rpc.ApiDeployment)
 type VersionHandler func(*rpc.ApiVersion)
 type SpecHandler func(*rpc.ApiSpec)
 type ArtifactHandler func(*rpc.Artifact)
