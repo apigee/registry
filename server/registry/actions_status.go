@@ -18,13 +18,17 @@ import (
 	"context"
 
 	"github.com/apigee/registry/rpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 // GetStatus handles the corresponding API request.
 func (s *RegistryServer) GetStatus(ctx context.Context, req *emptypb.Empty) (*rpc.Status, error) {
-	status := &rpc.Status{
-		Message: "running",
+	db, err := s.getStorageClient(ctx)
+	if err != nil {
+		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	return status, nil
+	defer db.Close()
+	return db.GetStatus()
 }

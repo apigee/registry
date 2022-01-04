@@ -17,9 +17,11 @@ package gorm
 import (
 	"context"
 	"fmt"
+	"sort"
 	"sync"
 
 	_ "github.com/GoogleCloudPlatform/cloudsql-proxy/proxy/dialers/postgres"
+	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/internal/storage/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
@@ -82,6 +84,7 @@ func NewClient(ctx context.Context, driver, dsn string) (*Client, error) {
 		// empirically, it does not seem safe to disable the mutex for sqlite3,
 		// which might make sense since sqlite database access is in-process.
 		disableMutex = false
+		fmt.Printf("DATABASE %+v\n", db.Name())
 		return &Client{db: db}, nil
 	case "postgres", "cloudsqlpostgres":
 		db, err := gorm.Open(postgres.New(postgres.Config{
@@ -100,6 +103,7 @@ func NewClient(ctx context.Context, driver, dsn string) (*Client, error) {
 		// postgres runs in a separate process and seems to have no problems
 		// with concurrent access and modifications.
 		disableMutex = true
+		fmt.Printf("DATABASE %+v\n", db.Name())
 		return &Client{db: db}, nil
 	default:
 		unlock()
@@ -348,4 +352,50 @@ func (c *Client) GetRecentDeploymentRevisions(ctx context.Context, offset int32,
 
 func (c *Client) Migrate(kind string) error {
 	return c.db.AutoMigrate(entities...)
+}
+
+func (c *Client) GetStatus() (*rpc.Status, error) {
+	var dbSize int64
+	if c.db.Name() == "postgres" {
+		c.db.Raw("SELECT pg_database_size(current_database())").Scan(&dbSize)
+	} else if c.db.Name() == "sqlite" {
+		c.db.Raw("SELECT SUM(pgsize) FROM dbstat").Scan(&dbSize)
+	}
+	var tableNames []string
+	if c.db.Name() == "postgres" {
+		if err := c.db.Table("information_schema.tables").Where("table_schema = ?", "public").Pluck("table_name", &tableNames).Error; err != nil {
+			panic(err)
+		}
+	} else if c.db.Name() == "sqlite" {
+		if err := c.db.Table("sqlite_schema").Where("type = 'table' AND name NOT LIKE 'sqlite_%'").Pluck("name", &tableNames).Error; err != nil {
+			panic(err)
+		}
+	}
+	sort.Strings(tableNames)
+	tables := make([]*rpc.Status_Table, 0)
+	for _, tableName := range tableNames {
+		var entityCount int64
+		err := c.db.Table(tableName).Count(&entityCount).Error
+		if err != nil {
+			return nil, err
+		}
+		var tableSize int64
+		if c.db.Name() == "postgres" {
+			c.db.Raw("SELECT pg_total_relation_size(?)", tableName).Scan(&tableSize)
+		} else if c.db.Name() == "sqlite" {
+			c.db.Raw("SELECT SUM(pgsize) FROM dbstat WHERE name = ?", tableName).Scan(&tableSize)
+		}
+		tables = append(tables,
+			&rpc.Status_Table{
+				Name:        tableName,
+				EntityCount: entityCount,
+				SizeBytes:   tableSize,
+			},
+		)
+	}
+	return &rpc.Status{
+		Message:   "running",
+		SizeBytes: dbSize,
+		Tables:    tables,
+	}, nil
 }

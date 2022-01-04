@@ -110,13 +110,6 @@ service Admin {
   }
 }
 
-// Response message for GetStatus.
-// GetStatus is not included in hosted versions of the API.
-message Status {
-  // A string describing the status.
-  string message = 1;
-}
-
 // Request message for MigrateDatabase.
 message MigrateDatabaseRequest {
   // A string describing the kind of migration to perform.
