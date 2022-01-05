@@ -23,5 +23,8 @@ import (
 
 // GetStatus handles the corresponding API request.
 func (s *RegistryServer) GetStatus(ctx context.Context, req *emptypb.Empty) (*rpc.Status, error) {
-	return &rpc.Status{Message: "running"}, nil
+	status := &rpc.Status{
+		Message: "running",
+	}
+	return status, nil
 }
