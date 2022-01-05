@@ -23,6 +23,8 @@ import (
 	_ "github.com/GoogleCloudPlatform/cloudsql-proxy/proxy/dialers/postgres"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/internal/storage/models"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -364,7 +366,7 @@ func (c *Client) GetStorage() (*rpc.Storage, error) {
 			return nil, err
 		}
 	default:
-		return nil, fmt.Errorf("unsupported database name: %s", c.db.Name())
+		return nil, status.Errorf(codes.Internal, "unsupported database %s", c.db.Name())
 	}
 	sort.Strings(tableNames)
 	collections := make([]*rpc.Storage_Collection, 0)
