@@ -48,6 +48,19 @@ service Admin {
     };
   }
 
+  // GetStorage returns information about the storage used by the service.
+  // (-- api-linter: core::0131::request-message-name=disabled
+  //     aip.dev/not-precedent: Not in the official API. --)
+  // (-- api-linter: core::0131::method-signature=disabled
+  //     aip.dev/not-precedent: Not in the official API. --)
+  // (-- api-linter: core::0131::http-uri-name=disabled
+  //     aip.dev/not-precedent: Not in the official API. --)
+  rpc GetStorage(protobuf.Empty) returns (Storage) {
+    option (google.api.http) = {
+      get: "/v1/storage"
+    };
+  }
+
   // MigrateDatabase attempts to migrate the database to the current schema.
   rpc MigrateDatabase(MigrateDatabaseRequest) returns (google.longrunning.Operation) {
     option (google.api.http) = {

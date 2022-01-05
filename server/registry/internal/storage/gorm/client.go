@@ -84,7 +84,6 @@ func NewClient(ctx context.Context, driver, dsn string) (*Client, error) {
 		// empirically, it does not seem safe to disable the mutex for sqlite3,
 		// which might make sense since sqlite database access is in-process.
 		disableMutex = false
-		fmt.Printf("DATABASE %+v\n", db.Name())
 		return &Client{db: db}, nil
 	case "postgres", "cloudsqlpostgres":
 		db, err := gorm.Open(postgres.New(postgres.Config{
@@ -103,7 +102,6 @@ func NewClient(ctx context.Context, driver, dsn string) (*Client, error) {
 		// postgres runs in a separate process and seems to have no problems
 		// with concurrent access and modifications.
 		disableMutex = true
-		fmt.Printf("DATABASE %+v\n", db.Name())
 		return &Client{db: db}, nil
 	default:
 		unlock()
@@ -354,48 +352,37 @@ func (c *Client) Migrate(kind string) error {
 	return c.db.AutoMigrate(entities...)
 }
 
-func (c *Client) GetStatus() (*rpc.Status, error) {
-	var dbSize int64
-	if c.db.Name() == "postgres" {
-		c.db.Raw("SELECT pg_database_size(current_database())").Scan(&dbSize)
-	} else if c.db.Name() == "sqlite" {
-		c.db.Raw("SELECT SUM(pgsize) FROM dbstat").Scan(&dbSize)
-	}
+func (c *Client) GetStorage() (*rpc.Storage, error) {
 	var tableNames []string
-	if c.db.Name() == "postgres" {
+	switch c.db.Name() {
+	case "postgres":
 		if err := c.db.Table("information_schema.tables").Where("table_schema = ?", "public").Pluck("table_name", &tableNames).Error; err != nil {
-			panic(err)
+			return nil, err
 		}
-	} else if c.db.Name() == "sqlite" {
+	case "sqlite":
 		if err := c.db.Table("sqlite_schema").Where("type = 'table' AND name NOT LIKE 'sqlite_%'").Pluck("name", &tableNames).Error; err != nil {
-			panic(err)
+			return nil, err
 		}
+	default:
+		return nil, fmt.Errorf("unsupported database name: %s", c.db.Name())
 	}
 	sort.Strings(tableNames)
-	tables := make([]*rpc.Status_Table, 0)
+	collections := make([]*rpc.Storage_Collection, 0)
 	for _, tableName := range tableNames {
-		var entityCount int64
-		err := c.db.Table(tableName).Count(&entityCount).Error
+		var count int64
+		err := c.db.Table(tableName).Count(&count).Error
 		if err != nil {
 			return nil, err
 		}
-		var tableSize int64
-		if c.db.Name() == "postgres" {
-			c.db.Raw("SELECT pg_total_relation_size(?)", tableName).Scan(&tableSize)
-		} else if c.db.Name() == "sqlite" {
-			c.db.Raw("SELECT SUM(pgsize) FROM dbstat WHERE name = ?", tableName).Scan(&tableSize)
-		}
-		tables = append(tables,
-			&rpc.Status_Table{
-				Name:        tableName,
-				EntityCount: entityCount,
-				SizeBytes:   tableSize,
+		collections = append(collections,
+			&rpc.Storage_Collection{
+				Name:  tableName,
+				Count: count,
 			},
 		)
 	}
-	return &rpc.Status{
-		Message:   "running",
-		SizeBytes: dbSize,
-		Tables:    tables,
+	return &rpc.Storage{
+		Description: c.db.Name(),
+		Collections: collections,
 	}, nil
 }

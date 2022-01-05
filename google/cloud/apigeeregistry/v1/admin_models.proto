@@ -25,29 +25,28 @@ option java_multiple_files = true;
 option java_outer_classname = "AdminModelsProto";
 option go_package = "github.com/apigee/registry/rpc;rpc";
 
-
-// Response message for GetStatus.
+// Status represents the status of the service.
 message Status {
   // A string describing the status.
   string message = 1;
+}
 
-  // A description of a table in the registry database.
-  message Table {
-    // The name of the database table.
+// Storage describes the data stored by the service.
+message Storage {
+  // A string describing the storage backend.
+  string description = 1;
+
+  // A description of a collection in the backend database.
+  message Collection {
+    // The name of the collection.
     string name = 1;
 
-    // The number of entities in the database table.
-    int64 entity_count = 2;
-
-    // The number of bytes of storage used by the database table.
-    int64 size_bytes = 3;
+    // The number of entries in the collection. 
+    int64 count = 2;
   }
 
-  // A list of tables stored in the database.
-  repeated Table tables = 2;
-
-  // The number of bytes of storage used by the database.
-  int64 size_bytes = 3;
+  // A list of collections in the storage backend.
+  repeated Collection collections = 2;
 }
 
 // A Project is a top-level description of a collection of APIs.

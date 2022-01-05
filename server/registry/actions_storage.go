@@ -1,4 +1,4 @@
-// Copyright 2020 Google LLC. All Rights Reserved.
+// Copyright 2021 Google LLC. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,10 +18,17 @@ import (
 	"context"
 
 	"github.com/apigee/registry/rpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-// GetStatus handles the corresponding API request.
-func (s *RegistryServer) GetStatus(ctx context.Context, req *emptypb.Empty) (*rpc.Status, error) {
-	return &rpc.Status{Message: "running"}, nil
+// GetStorage handles the corresponding API request.
+func (s *RegistryServer) GetStorage(ctx context.Context, req *emptypb.Empty) (*rpc.Storage, error) {
+	db, err := s.getStorageClient(ctx)
+	if err != nil {
+		return nil, status.Error(codes.Unavailable, err.Error())
+	}
+	defer db.Close()
+	return db.GetStorage()
 }

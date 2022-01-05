@@ -57,6 +57,26 @@ func ExampleAdminClient_GetStatus() {
 	_ = resp
 }
 
+func ExampleAdminClient_GetStorage() {
+	ctx := context.Background()
+	c, err := gapic.NewAdminClient(ctx)
+	if err != nil {
+		// TODO: Handle error.
+	}
+	defer c.Close()
+
+	req := &emptypb.Empty{
+		// TODO: Fill request struct fields.
+		// See https://pkg.go.dev/google.golang.org/protobuf/types/known/emptypb#Empty.
+	}
+	resp, err := c.GetStorage(ctx, req)
+	if err != nil {
+		// TODO: Handle error.
+	}
+	// TODO: Use resp.
+	_ = resp
+}
+
 func ExampleAdminClient_MigrateDatabase() {
 	ctx := context.Background()
 	c, err := gapic.NewAdminClient(ctx)

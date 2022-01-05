@@ -33,6 +33,14 @@ type AdminClient interface {
 	// (-- api-linter: core::0131::http-uri-name=disabled
 	//     aip.dev/not-precedent: Not in the official API. --)
 	GetStatus(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*Status, error)
+	// GetStorage returns information about the storage used by the service.
+	// (-- api-linter: core::0131::request-message-name=disabled
+	//     aip.dev/not-precedent: Not in the official API. --)
+	// (-- api-linter: core::0131::method-signature=disabled
+	//     aip.dev/not-precedent: Not in the official API. --)
+	// (-- api-linter: core::0131::http-uri-name=disabled
+	//     aip.dev/not-precedent: Not in the official API. --)
+	GetStorage(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*Storage, error)
 	// MigrateDatabase attempts to migrate the database to the current schema.
 	MigrateDatabase(ctx context.Context, in *MigrateDatabaseRequest, opts ...grpc.CallOption) (*longrunning.Operation, error)
 	// ListProjects returns matching projects.
@@ -67,6 +75,15 @@ func NewAdminClient(cc grpc.ClientConnInterface) AdminClient {
 func (c *adminClient) GetStatus(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*Status, error) {
 	out := new(Status)
 	err := c.cc.Invoke(ctx, "/google.cloud.apigeeregistry.v1.Admin/GetStatus", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminClient) GetStorage(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*Storage, error) {
+	out := new(Storage)
+	err := c.cc.Invoke(ctx, "/google.cloud.apigeeregistry.v1.Admin/GetStorage", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -139,6 +156,14 @@ type AdminServer interface {
 	// (-- api-linter: core::0131::http-uri-name=disabled
 	//     aip.dev/not-precedent: Not in the official API. --)
 	GetStatus(context.Context, *emptypb.Empty) (*Status, error)
+	// GetStorage returns information about the storage used by the service.
+	// (-- api-linter: core::0131::request-message-name=disabled
+	//     aip.dev/not-precedent: Not in the official API. --)
+	// (-- api-linter: core::0131::method-signature=disabled
+	//     aip.dev/not-precedent: Not in the official API. --)
+	// (-- api-linter: core::0131::http-uri-name=disabled
+	//     aip.dev/not-precedent: Not in the official API. --)
+	GetStorage(context.Context, *emptypb.Empty) (*Storage, error)
 	// MigrateDatabase attempts to migrate the database to the current schema.
 	MigrateDatabase(context.Context, *MigrateDatabaseRequest) (*longrunning.Operation, error)
 	// ListProjects returns matching projects.
@@ -169,6 +194,9 @@ type UnimplementedAdminServer struct {
 
 func (UnimplementedAdminServer) GetStatus(context.Context, *emptypb.Empty) (*Status, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetStatus not implemented")
+}
+func (UnimplementedAdminServer) GetStorage(context.Context, *emptypb.Empty) (*Storage, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetStorage not implemented")
 }
 func (UnimplementedAdminServer) MigrateDatabase(context.Context, *MigrateDatabaseRequest) (*longrunning.Operation, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method MigrateDatabase not implemented")
@@ -215,6 +243,24 @@ func _Admin_GetStatus_Handler(srv interface{}, ctx context.Context, dec func(int
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AdminServer).GetStatus(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Admin_GetStorage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServer).GetStorage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/google.cloud.apigeeregistry.v1.Admin/GetStorage",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServer).GetStorage(ctx, req.(*emptypb.Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -337,6 +383,10 @@ var Admin_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetStatus",
 			Handler:    _Admin_GetStatus_Handler,
+		},
+		{
+			MethodName: "GetStorage",
+			Handler:    _Admin_GetStorage_Handler,
 		},
 		{
 			MethodName: "MigrateDatabase",
