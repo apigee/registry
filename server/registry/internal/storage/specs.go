@@ -164,23 +164,7 @@ func (d *Client) GetSpec(ctx context.Context, name names.Spec) (*models.Spec, er
 }
 
 func (d *Client) DeleteSpec(ctx context.Context, name names.Spec) error {
-	for _, entityName := range []string{
-		gorm.SpecEntityName,
-		gorm.SpecRevisionTagEntityName,
-		gorm.ArtifactEntityName,
-		gorm.BlobEntityName,
-	} {
-		q := d.NewQuery(entityName)
-		q = q.Require("ProjectID", name.ProjectID)
-		q = q.Require("ApiID", name.ApiID)
-		q = q.Require("VersionID", name.VersionID)
-		q = q.Require("SpecID", name.SpecID)
-		if err := d.Delete(ctx, q); err != nil {
-			return status.Error(codes.Internal, err.Error())
-		}
-	}
-
-	return nil
+	return d.Client.DeleteSpec(ctx, name)
 }
 
 func (d *Client) GetSpecTags(ctx context.Context, name names.Spec) ([]*models.SpecRevisionTag, error) {

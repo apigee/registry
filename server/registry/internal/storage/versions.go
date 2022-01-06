@@ -162,21 +162,5 @@ func (d *Client) SaveVersion(ctx context.Context, version *models.Version) error
 }
 
 func (d *Client) DeleteVersion(ctx context.Context, name names.Version) error {
-	for _, entityName := range []string{
-		gorm.VersionEntityName,
-		gorm.SpecEntityName,
-		gorm.SpecRevisionTagEntityName,
-		gorm.ArtifactEntityName,
-		gorm.BlobEntityName,
-	} {
-		q := d.NewQuery(entityName)
-		q = q.Require("ProjectID", name.ProjectID)
-		q = q.Require("ApiID", name.ApiID)
-		q = q.Require("VersionID", name.VersionID)
-		if err := d.Delete(ctx, q); err != nil {
-			return status.Error(codes.Internal, err.Error())
-		}
-	}
-
-	return nil
+	return d.Client.DeleteVersion(ctx, name)
 }

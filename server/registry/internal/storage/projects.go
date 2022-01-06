@@ -129,21 +129,5 @@ func (d *Client) SaveProject(ctx context.Context, project *models.Project) error
 }
 
 func (d *Client) DeleteProject(ctx context.Context, name names.Project) error {
-	for _, entityName := range []string{
-		gorm.ProjectEntityName,
-		gorm.ApiEntityName,
-		gorm.VersionEntityName,
-		gorm.SpecEntityName,
-		gorm.SpecRevisionTagEntityName,
-		gorm.ArtifactEntityName,
-		gorm.BlobEntityName,
-	} {
-		q := d.NewQuery(entityName)
-		q = q.Require("ProjectID", name.ProjectID)
-		if err := d.Delete(ctx, q); err != nil {
-			return status.Error(codes.Internal, err.Error())
-		}
-	}
-
-	return nil
+	return d.Client.DeleteProject(ctx, name)
 }

@@ -200,35 +200,6 @@ func (c *Client) Put(ctx context.Context, k *Key, v interface{}) (*Key, error) {
 	return k, nil
 }
 
-// Delete deletes all entities matching a query.
-func (c *Client) Delete(ctx context.Context, q *Query) error {
-	op := c.db
-	for _, r := range q.Requirements {
-		op = op.Where(r.Name+" = ?", r.Value)
-	}
-	switch q.Kind {
-	case "Project":
-		return op.Delete(models.Project{}).Error
-	case "Api":
-		return op.Delete(models.Api{}).Error
-	case "Version":
-		return op.Delete(models.Version{}).Error
-	case "Spec":
-		return op.Delete(models.Spec{}).Error
-	case "SpecRevisionTag":
-		return op.Delete(models.SpecRevisionTag{}).Error
-	case "Deployment":
-		return op.Delete(models.Deployment{}).Error
-	case "DeploymentRevisionTag":
-		return op.Delete(models.DeploymentRevisionTag{}).Error
-	case "Artifact":
-		return op.Delete(models.Artifact{}).Error
-	case "Blob":
-		return op.Delete(models.Blob{}).Error
-	}
-	return nil
-}
-
 // Run runs a query using the storage client, returning an iterator.
 func (c *Client) Run(ctx context.Context, q *Query) *Iterator {
 	lock()

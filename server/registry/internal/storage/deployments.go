@@ -160,22 +160,7 @@ func (d *Client) GetDeployment(ctx context.Context, name names.Deployment) (*mod
 }
 
 func (d *Client) DeleteDeployment(ctx context.Context, name names.Deployment) error {
-	for _, entityName := range []string{
-		gorm.DeploymentEntityName,
-		gorm.DeploymentRevisionTagEntityName,
-		gorm.ArtifactEntityName,
-		gorm.BlobEntityName,
-	} {
-		q := d.NewQuery(entityName)
-		q = q.Require("ProjectID", name.ProjectID)
-		q = q.Require("ApiID", name.ApiID)
-		q = q.Require("DeploymentID", name.DeploymentID)
-		if err := d.Delete(ctx, q); err != nil {
-			return status.Error(codes.Internal, err.Error())
-		}
-	}
-
-	return nil
+	return d.Client.DeleteDeployment(ctx, name)
 }
 
 func (d *Client) GetDeploymentTags(ctx context.Context, name names.Deployment) ([]*models.DeploymentRevisionTag, error) {

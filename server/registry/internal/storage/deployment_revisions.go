@@ -103,21 +103,7 @@ func (d *Client) DeleteDeploymentRevision(ctx context.Context, name names.Deploy
 		return err
 	}
 
-	for _, entityName := range []string{
-		gorm.DeploymentEntityName,
-		gorm.DeploymentRevisionTagEntityName,
-	} {
-		q := d.NewQuery(entityName)
-		q = q.Require("ProjectID", name.ProjectID)
-		q = q.Require("ApiID", name.ApiID)
-		q = q.Require("DeploymentID", name.DeploymentID)
-		q = q.Require("RevisionID", name.RevisionID)
-		if err := d.Delete(ctx, q); err != nil {
-			return status.Error(codes.Internal, err.Error())
-		}
-	}
-
-	return nil
+	return d.Client.DeleteDeploymentRevision(ctx, name)
 }
 
 func (d *Client) SaveDeploymentRevisionTag(ctx context.Context, tag *models.DeploymentRevisionTag) error {

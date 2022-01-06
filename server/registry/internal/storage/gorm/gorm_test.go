@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/apigee/registry/server/registry/internal/storage/models"
+	"github.com/apigee/registry/server/registry/names"
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/testing/protocmp"
 )
@@ -117,8 +118,7 @@ func TestCRUD(t *testing.T) {
 	}
 
 	// Delete the project.
-	q := c.NewQuery("Project").Require("ProjectID", project.ProjectID)
-	err = c.Delete(ctx, q)
+	err = c.DeleteProject(ctx, names.Project{ProjectID: project.ProjectID})
 	if err != nil {
 		t.Errorf(err.Error())
 	}

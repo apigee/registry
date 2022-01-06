@@ -375,20 +375,5 @@ func (d *Client) GetArtifactContents(ctx context.Context, name names.Artifact) (
 }
 
 func (d *Client) DeleteArtifact(ctx context.Context, name names.Artifact) error {
-	for _, entityName := range []string{
-		gorm.ArtifactEntityName,
-		gorm.BlobEntityName,
-	} {
-		q := d.NewQuery(entityName)
-		q = q.Require("ProjectID", name.ProjectID())
-		q = q.Require("ApiID", name.ApiID())
-		q = q.Require("VersionID", name.VersionID())
-		q = q.Require("SpecID", name.SpecID())
-		q = q.Require("ArtifactID", name.ArtifactID())
-		if err := d.Delete(ctx, q); err != nil {
-			return status.Error(codes.Internal, err.Error())
-		}
-	}
-
-	return nil
+	return d.Client.DeleteArtifact(ctx, name)
 }

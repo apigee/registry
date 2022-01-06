@@ -154,23 +154,5 @@ func (d *Client) SaveApi(ctx context.Context, api *models.Api) error {
 }
 
 func (d *Client) DeleteApi(ctx context.Context, name names.Api) error {
-	for _, entityName := range []string{
-		gorm.ApiEntityName,
-		gorm.VersionEntityName,
-		gorm.SpecEntityName,
-		gorm.SpecRevisionTagEntityName,
-		gorm.DeploymentEntityName,
-		gorm.DeploymentRevisionTagEntityName,
-		gorm.ArtifactEntityName,
-		gorm.BlobEntityName,
-	} {
-		q := d.NewQuery(entityName)
-		q = q.Require("ProjectID", name.ProjectID)
-		q = q.Require("ApiID", name.ApiID)
-		if err := d.Delete(ctx, q); err != nil {
-			return status.Error(codes.Internal, err.Error())
-		}
-	}
-
-	return nil
+	return d.Client.DeleteApi(ctx, name)
 }

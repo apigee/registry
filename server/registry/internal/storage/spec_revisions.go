@@ -131,23 +131,7 @@ func (d *Client) DeleteSpecRevision(ctx context.Context, name names.SpecRevision
 		return err
 	}
 
-	for _, entityName := range []string{
-		gorm.SpecEntityName,
-		gorm.SpecRevisionTagEntityName,
-		gorm.BlobEntityName,
-	} {
-		q := d.NewQuery(entityName)
-		q = q.Require("ProjectID", name.ProjectID)
-		q = q.Require("ApiID", name.ApiID)
-		q = q.Require("VersionID", name.VersionID)
-		q = q.Require("SpecID", name.SpecID)
-		q = q.Require("RevisionID", name.RevisionID)
-		if err := d.Delete(ctx, q); err != nil {
-			return status.Error(codes.Internal, err.Error())
-		}
-	}
-
-	return nil
+	return d.Client.DeleteSpecRevision(ctx, name)
 }
 
 func (d *Client) SaveSpecRevisionTag(ctx context.Context, tag *models.SpecRevisionTag) error {
