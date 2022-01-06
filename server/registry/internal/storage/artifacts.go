@@ -145,8 +145,6 @@ func (d *Client) ListVersionArtifacts(ctx context.Context, parent names.Version,
 
 func (d *Client) ListDeploymentArtifacts(ctx context.Context, parent names.Deployment, opts PageOptions) (ArtifactList, error) {
 	q := d.NewQuery(gorm.ArtifactEntityName)
-	q = q.Require("SpecID", "")
-	q = q.Require("VersionID", "")
 
 	token, err := decodeToken(opts.Token)
 	if err != nil {
@@ -192,8 +190,8 @@ func (d *Client) ListDeploymentArtifacts(ctx context.Context, parent names.Deplo
 
 func (d *Client) ListApiArtifacts(ctx context.Context, parent names.Api, opts PageOptions) (ArtifactList, error) {
 	q := d.NewQuery(gorm.ArtifactEntityName)
+	q = q.Require("DeploymentID", "")
 	q = q.Require("VersionID", "")
-	q = q.Require("SpecID", "")
 
 	token, err := decodeToken(opts.Token)
 	if err != nil {
@@ -233,8 +231,6 @@ func (d *Client) ListApiArtifacts(ctx context.Context, parent names.Api, opts Pa
 func (d *Client) ListProjectArtifacts(ctx context.Context, parent names.Project, opts PageOptions) (ArtifactList, error) {
 	q := d.NewQuery(gorm.ArtifactEntityName)
 	q = q.Require("ApiID", "")
-	q = q.Require("VersionID", "")
-	q = q.Require("SpecID", "")
 
 	token, err := decodeToken(opts.Token)
 	if err != nil {
