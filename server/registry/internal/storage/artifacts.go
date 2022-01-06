@@ -332,22 +332,11 @@ func artifactMap(artifact models.Artifact) (map[string]interface{}, error) {
 }
 
 func (d *Client) SaveArtifact(ctx context.Context, artifact *models.Artifact) error {
-	k := d.NewKey(gorm.ArtifactEntityName, artifact.Name())
-	if _, err := d.Put(ctx, k, artifact); err != nil {
-		return status.Error(codes.Internal, err.Error())
-	}
-
-	return nil
+	return d.Client.SaveArtifact(ctx, artifact)
 }
 
 func (d *Client) SaveArtifactContents(ctx context.Context, artifact *models.Artifact, contents []byte) error {
-	blob := models.NewBlobForArtifact(artifact, contents)
-	k := d.NewKey(gorm.BlobEntityName, artifact.Name())
-	if _, err := d.Put(ctx, k, blob); err != nil {
-		return status.Error(codes.Internal, err.Error())
-	}
-
-	return nil
+	return d.Client.SaveArtifactContents(ctx, artifact, contents)
 }
 
 func (d *Client) GetArtifact(ctx context.Context, name names.Artifact) (*models.Artifact, error) {

@@ -72,12 +72,7 @@ func (d *Client) ListDeploymentRevisions(ctx context.Context, parent names.Deplo
 }
 
 func (d *Client) SaveDeploymentRevision(ctx context.Context, revision *models.Deployment) error {
-	k := d.NewKey(gorm.DeploymentEntityName, revision.RevisionName())
-	if _, err := d.Put(ctx, k, revision); err != nil {
-		return status.Error(codes.Internal, err.Error())
-	}
-
-	return nil
+	return d.Client.SaveDeploymentRevision(ctx, revision)
 }
 
 func (d *Client) GetDeploymentRevision(ctx context.Context, name names.DeploymentRevision) (*models.Deployment, error) {
@@ -107,12 +102,7 @@ func (d *Client) DeleteDeploymentRevision(ctx context.Context, name names.Deploy
 }
 
 func (d *Client) SaveDeploymentRevisionTag(ctx context.Context, tag *models.DeploymentRevisionTag) error {
-	k := d.NewKey(gorm.DeploymentRevisionTagEntityName, tag.String())
-	if _, err := d.Put(ctx, k, tag); err != nil {
-		return status.Error(codes.Internal, err.Error())
-	}
-
-	return nil
+	return d.Client.SaveDeploymentRevisionTag(ctx, tag)
 }
 
 func (d *Client) unwrapDeploymentRevisionTag(ctx context.Context, name names.DeploymentRevision) (names.DeploymentRevision, error) {

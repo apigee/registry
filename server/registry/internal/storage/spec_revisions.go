@@ -73,22 +73,11 @@ func (d *Client) ListSpecRevisions(ctx context.Context, parent names.Spec, opts 
 }
 
 func (d *Client) SaveSpecRevision(ctx context.Context, revision *models.Spec) error {
-	k := d.NewKey(gorm.SpecEntityName, revision.RevisionName())
-	if _, err := d.Put(ctx, k, revision); err != nil {
-		return status.Error(codes.Internal, err.Error())
-	}
-
-	return nil
+	return d.Client.SaveSpecRevision(ctx, revision)
 }
 
 func (d *Client) SaveSpecRevisionContents(ctx context.Context, spec *models.Spec, contents []byte) error {
-	blob := models.NewBlobForSpec(spec, contents)
-	k := d.NewKey(gorm.BlobEntityName, spec.RevisionName())
-	if _, err := d.Put(ctx, k, blob); err != nil {
-		return status.Error(codes.Internal, err.Error())
-	}
-
-	return nil
+	return d.Client.SaveSpecRevisionContents(ctx, spec, contents)
 }
 
 func (d *Client) GetSpecRevision(ctx context.Context, name names.SpecRevision) (*models.Spec, error) {
@@ -135,12 +124,7 @@ func (d *Client) DeleteSpecRevision(ctx context.Context, name names.SpecRevision
 }
 
 func (d *Client) SaveSpecRevisionTag(ctx context.Context, tag *models.SpecRevisionTag) error {
-	k := d.NewKey(gorm.SpecRevisionTagEntityName, tag.String())
-	if _, err := d.Put(ctx, k, tag); err != nil {
-		return status.Error(codes.Internal, err.Error())
-	}
-
-	return nil
+	return d.Client.SaveSpecRevisionTag(ctx, tag)
 }
 
 func (d *Client) unwrapSpecRevisionTag(ctx context.Context, name names.SpecRevision) (names.SpecRevision, error) {

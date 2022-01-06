@@ -153,12 +153,7 @@ func (d *Client) GetVersion(ctx context.Context, name names.Version) (*models.Ve
 }
 
 func (d *Client) SaveVersion(ctx context.Context, version *models.Version) error {
-	k := d.NewKey(gorm.VersionEntityName, version.Name())
-	if _, err := d.Put(ctx, k, version); err != nil {
-		return status.Error(codes.Internal, err.Error())
-	}
-
-	return nil
+	return d.Client.SaveVersion(ctx, version)
 }
 
 func (d *Client) DeleteVersion(ctx context.Context, name names.Version) error {

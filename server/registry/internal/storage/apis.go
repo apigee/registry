@@ -145,12 +145,7 @@ func (d *Client) GetApi(ctx context.Context, name names.Api) (*models.Api, error
 }
 
 func (d *Client) SaveApi(ctx context.Context, api *models.Api) error {
-	k := d.NewKey(gorm.ApiEntityName, api.Name())
-	if _, err := d.Put(ctx, k, api); err != nil {
-		return status.Error(codes.Internal, err.Error())
-	}
-
-	return nil
+	return d.Client.SaveApi(ctx, api)
 }
 
 func (d *Client) DeleteApi(ctx context.Context, name names.Api) error {

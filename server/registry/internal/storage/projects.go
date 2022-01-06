@@ -120,12 +120,7 @@ func (d *Client) GetProject(ctx context.Context, name names.Project) (*models.Pr
 }
 
 func (d *Client) SaveProject(ctx context.Context, project *models.Project) error {
-	k := d.NewKey(gorm.ProjectEntityName, project.Name())
-	if _, err := d.Put(ctx, k, project); err != nil {
-		return status.Error(codes.Internal, err.Error())
-	}
-
-	return nil
+	return d.Client.SaveProject(ctx, project)
 }
 
 func (d *Client) DeleteProject(ctx context.Context, name names.Project) error {
