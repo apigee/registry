@@ -19,7 +19,7 @@ import (
 	"fmt"
 
 	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/server/registry/internal/storage"
+	"github.com/apigee/registry/server/registry/internal/storage/gorm"
 	"github.com/apigee/registry/server/registry/internal/storage/models"
 	"github.com/apigee/registry/server/registry/names"
 	"google.golang.org/genproto/googleapis/api/httpbody"
@@ -213,34 +213,34 @@ func (s *RegistryServer) ListArtifacts(ctx context.Context, req *rpc.ListArtifac
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	var listing storage.ArtifactList
+	var listing gorm.ArtifactList
 	switch parent := parent.(type) {
 	case names.Project:
-		listing, err = db.ListProjectArtifacts(ctx, parent, storage.PageOptions{
+		listing, err = db.ListProjectArtifacts(ctx, parent, gorm.PageOptions{
 			Size:   req.GetPageSize(),
 			Filter: req.GetFilter(),
 			Token:  req.GetPageToken(),
 		})
 	case names.Api:
-		listing, err = db.ListApiArtifacts(ctx, parent, storage.PageOptions{
+		listing, err = db.ListApiArtifacts(ctx, parent, gorm.PageOptions{
 			Size:   req.GetPageSize(),
 			Filter: req.GetFilter(),
 			Token:  req.GetPageToken(),
 		})
 	case names.Version:
-		listing, err = db.ListVersionArtifacts(ctx, parent, storage.PageOptions{
+		listing, err = db.ListVersionArtifacts(ctx, parent, gorm.PageOptions{
 			Size:   req.GetPageSize(),
 			Filter: req.GetFilter(),
 			Token:  req.GetPageToken(),
 		})
 	case names.Spec:
-		listing, err = db.ListSpecArtifacts(ctx, parent, storage.PageOptions{
+		listing, err = db.ListSpecArtifacts(ctx, parent, gorm.PageOptions{
 			Size:   req.GetPageSize(),
 			Filter: req.GetFilter(),
 			Token:  req.GetPageToken(),
 		})
 	case names.Deployment:
-		listing, err = db.ListDeploymentArtifacts(ctx, parent, storage.PageOptions{
+		listing, err = db.ListDeploymentArtifacts(ctx, parent, gorm.PageOptions{
 			Size:   req.GetPageSize(),
 			Filter: req.GetFilter(),
 			Token:  req.GetPageToken(),

@@ -17,119 +17,13 @@ package storage
 import (
 	"context"
 
-	"github.com/apigee/registry/server/registry/internal/storage/filtering"
 	"github.com/apigee/registry/server/registry/internal/storage/gorm"
 	"github.com/apigee/registry/server/registry/internal/storage/models"
 	"github.com/apigee/registry/server/registry/names"
-	"google.golang.org/api/iterator"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
-// ApiList contains a page of api resources.
-type ApiList struct {
-	Apis  []models.Api
-	Token string
-}
-
-var apiFields = []filtering.Field{
-	{Name: "name", Type: filtering.String},
-	{Name: "project_id", Type: filtering.String},
-	{Name: "api_id", Type: filtering.String},
-	{Name: "display_name", Type: filtering.String},
-	{Name: "description", Type: filtering.String},
-	{Name: "create_time", Type: filtering.Timestamp},
-	{Name: "update_time", Type: filtering.Timestamp},
-	{Name: "availability", Type: filtering.String},
-	{Name: "recommended_version", Type: filtering.String},
-	{Name: "labels", Type: filtering.StringMap},
-}
-
-func (d *Client) ListApis(ctx context.Context, parent names.Project, opts PageOptions) (ApiList, error) {
-	q := d.NewQuery(gorm.ApiEntityName)
-
-	token, err := decodeToken(opts.Token)
-	if err != nil {
-		return ApiList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
-	}
-
-	if err := token.ValidateFilter(opts.Filter); err != nil {
-		return ApiList{}, status.Errorf(codes.InvalidArgument, "invalid filter %q: %s", opts.Filter, err)
-	} else {
-		token.Filter = opts.Filter
-	}
-
-	q = q.ApplyOffset(token.Offset)
-
-	if parent.ProjectID != "-" {
-		q = q.Require("ProjectID", parent.ProjectID)
-		if _, err := d.GetProject(ctx, parent); err != nil {
-			return ApiList{}, err
-		}
-	}
-
-	filter, err := filtering.NewFilter(opts.Filter, apiFields)
-	if err != nil {
-		return ApiList{}, err
-	}
-
-	it := d.Run(ctx, q)
-	response := ApiList{
-		Apis: make([]models.Api, 0, opts.Size),
-	}
-
-	api := new(models.Api)
-	for _, err = it.Next(api); err == nil; _, err = it.Next(api) {
-		apiMap, err := apiMap(*api)
-		if err != nil {
-			return response, status.Error(codes.Internal, err.Error())
-		}
-
-		match, err := filter.Matches(apiMap)
-		if err != nil {
-			return response, err
-		} else if !match {
-			token.Offset++
-			continue
-		} else if len(response.Apis) == int(opts.Size) {
-			break
-		}
-
-		response.Apis = append(response.Apis, *api)
-		token.Offset++
-	}
-	if err != nil && err != iterator.Done {
-		return response, status.Error(codes.Internal, err.Error())
-	}
-
-	if err == nil {
-		response.Token, err = encodeToken(token)
-		if err != nil {
-			return response, status.Error(codes.Internal, err.Error())
-		}
-	}
-
-	return response, nil
-}
-
-func apiMap(api models.Api) (map[string]interface{}, error) {
-	labels, err := api.LabelsMap()
-	if err != nil {
-		return nil, err
-	}
-
-	return map[string]interface{}{
-		"name":                api.Name(),
-		"project_id":          api.ProjectID,
-		"api_id":              api.ApiID,
-		"display_name":        api.DisplayName,
-		"description":         api.Description,
-		"create_time":         api.CreateTime,
-		"update_time":         api.UpdateTime,
-		"availability":        api.Availability,
-		"recommended_version": api.RecommendedVersion,
-		"labels":              labels,
-	}, nil
+func (d *Client) ListApis(ctx context.Context, parent names.Project, opts gorm.PageOptions) (gorm.ApiList, error) {
+	return d.Client.ListApis(ctx, parent, opts)
 }
 
 func (d *Client) GetApi(ctx context.Context, name names.Api) (*models.Api, error) {

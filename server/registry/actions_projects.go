@@ -19,7 +19,7 @@ import (
 	"sync"
 
 	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/server/registry/internal/storage"
+	"github.com/apigee/registry/server/registry/internal/storage/gorm"
 	"github.com/apigee/registry/server/registry/internal/storage/models"
 	"github.com/apigee/registry/server/registry/names"
 	"google.golang.org/grpc/codes"
@@ -125,7 +125,7 @@ func (s *RegistryServer) ListProjects(ctx context.Context, req *rpc.ListProjects
 		req.PageSize = 50
 	}
 
-	listing, err := db.ListProjects(ctx, storage.PageOptions{
+	listing, err := db.ListProjects(ctx, gorm.PageOptions{
 		Size:   req.GetPageSize(),
 		Filter: req.GetFilter(),
 		Token:  req.GetPageToken(),

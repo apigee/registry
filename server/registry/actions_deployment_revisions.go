@@ -18,7 +18,7 @@ import (
 	"context"
 
 	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/server/registry/internal/storage"
+	"github.com/apigee/registry/server/registry/internal/storage/gorm"
 	"github.com/apigee/registry/server/registry/internal/storage/models"
 	"github.com/apigee/registry/server/registry/names"
 	"google.golang.org/grpc/codes"
@@ -46,7 +46,7 @@ func (s *RegistryServer) ListApiDeploymentRevisions(ctx context.Context, req *rp
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	listing, err := db.ListDeploymentRevisions(ctx, parent, storage.PageOptions{
+	listing, err := db.ListDeploymentRevisions(ctx, parent, gorm.PageOptions{
 		Size:  req.GetPageSize(),
 		Token: req.GetPageToken(),
 	})
