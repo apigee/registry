@@ -81,43 +81,17 @@ func (d *Client) SaveSpecRevisionContents(ctx context.Context, spec *models.Spec
 }
 
 func (d *Client) GetSpecRevision(ctx context.Context, name names.SpecRevision) (*models.Spec, error) {
-	name, err := d.unwrapSpecRevisionTag(ctx, name)
-	if err != nil {
-		return nil, err
-	}
-
 	return d.Client.GetSpecRevision(ctx, name)
 }
 
 func (d *Client) GetSpecRevisionContents(ctx context.Context, name names.SpecRevision) (*models.Blob, error) {
-	name, err := d.unwrapSpecRevisionTag(ctx, name)
-	if err != nil {
-		return nil, err
-	}
-
 	return d.Client.GetSpecRevisionContents(ctx, name)
 }
 
 func (d *Client) DeleteSpecRevision(ctx context.Context, name names.SpecRevision) error {
-	name, err := d.unwrapSpecRevisionTag(ctx, name)
-	if err != nil {
-		return err
-	}
-
 	return d.Client.DeleteSpecRevision(ctx, name)
 }
 
 func (d *Client) SaveSpecRevisionTag(ctx context.Context, tag *models.SpecRevisionTag) error {
 	return d.Client.SaveSpecRevisionTag(ctx, tag)
-}
-
-func (d *Client) unwrapSpecRevisionTag(ctx context.Context, name names.SpecRevision) (names.SpecRevision, error) {
-	tag := new(models.SpecRevisionTag)
-	if err := d.Get(ctx, d.NewKey(gorm.SpecRevisionTagEntityName, name.String()), tag); d.IsNotFound(err) {
-		return name, nil
-	} else if err != nil {
-		return names.SpecRevision{}, status.Error(codes.Internal, err.Error())
-	}
-
-	return name.Spec().Revision(tag.RevisionID), nil
 }

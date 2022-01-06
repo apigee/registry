@@ -77,6 +77,11 @@ func (c *Client) GetSpec(ctx context.Context, name names.Spec) (*models.Spec, er
 }
 
 func (c *Client) GetSpecRevision(ctx context.Context, name names.SpecRevision) (*models.Spec, error) {
+	name, err := c.unwrapSpecRevisionTag(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+
 	v := new(models.Spec)
 	if err := c.db.First(v, "key = ?", name.String()).Error; err == gorm.ErrRecordNotFound {
 		return nil, status.Errorf(codes.NotFound, "%q not found in database", name)
@@ -88,6 +93,11 @@ func (c *Client) GetSpecRevision(ctx context.Context, name names.SpecRevision) (
 }
 
 func (c *Client) GetSpecRevisionContents(ctx context.Context, name names.SpecRevision) (*models.Blob, error) {
+	name, err := c.unwrapSpecRevisionTag(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+
 	v := new(models.Blob)
 	if err := c.db.First(v, "key = ?", name.String()).Error; err == gorm.ErrRecordNotFound {
 		return nil, status.Errorf(codes.NotFound, "%q not found in database", name)
@@ -117,6 +127,11 @@ func (c *Client) GetDeployment(ctx context.Context, name names.Deployment) (*mod
 }
 
 func (c *Client) GetDeploymentRevision(ctx context.Context, name names.DeploymentRevision) (*models.Deployment, error) {
+	name, err := c.unwrapDeploymentRevisionTag(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+
 	v := new(models.Deployment)
 	if err := c.db.First(v, "key = ?", name.String()).Error; err == gorm.ErrRecordNotFound {
 		return nil, status.Errorf(codes.NotFound, "%q not found in database", name)

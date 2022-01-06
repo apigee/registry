@@ -104,6 +104,11 @@ func (c *Client) DeleteSpec(ctx context.Context, name names.Spec) error {
 }
 
 func (c *Client) DeleteSpecRevision(ctx context.Context, name names.SpecRevision) error {
+	name, err := c.unwrapSpecRevisionTag(ctx, name)
+	if err != nil {
+		return err
+	}
+
 	for _, model := range []interface{}{
 		models.Spec{},
 		models.SpecRevisionTag{},
@@ -140,6 +145,11 @@ func (c *Client) DeleteDeployment(ctx context.Context, name names.Deployment) er
 }
 
 func (c *Client) DeleteDeploymentRevision(ctx context.Context, name names.DeploymentRevision) error {
+	name, err := c.unwrapDeploymentRevisionTag(ctx, name)
+	if err != nil {
+		return err
+	}
+
 	for _, model := range []interface{}{
 		models.Deployment{},
 		models.DeploymentRevisionTag{},

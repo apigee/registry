@@ -76,34 +76,13 @@ func (d *Client) SaveDeploymentRevision(ctx context.Context, revision *models.De
 }
 
 func (d *Client) GetDeploymentRevision(ctx context.Context, name names.DeploymentRevision) (*models.Deployment, error) {
-	name, err := d.unwrapDeploymentRevisionTag(ctx, name)
-	if err != nil {
-		return nil, err
-	}
-
 	return d.Client.GetDeploymentRevision(ctx, name)
 }
 
 func (d *Client) DeleteDeploymentRevision(ctx context.Context, name names.DeploymentRevision) error {
-	name, err := d.unwrapDeploymentRevisionTag(ctx, name)
-	if err != nil {
-		return err
-	}
-
 	return d.Client.DeleteDeploymentRevision(ctx, name)
 }
 
 func (d *Client) SaveDeploymentRevisionTag(ctx context.Context, tag *models.DeploymentRevisionTag) error {
 	return d.Client.SaveDeploymentRevisionTag(ctx, tag)
-}
-
-func (d *Client) unwrapDeploymentRevisionTag(ctx context.Context, name names.DeploymentRevision) (names.DeploymentRevision, error) {
-	tag := new(models.DeploymentRevisionTag)
-	if err := d.Get(ctx, d.NewKey(gorm.DeploymentRevisionTagEntityName, name.String()), tag); d.IsNotFound(err) {
-		return name, nil
-	} else if err != nil {
-		return names.DeploymentRevision{}, status.Error(codes.Internal, err.Error())
-	}
-
-	return name.Deployment().Revision(tag.RevisionID), nil
 }
