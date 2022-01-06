@@ -146,21 +146,7 @@ func specMap(spec models.Spec) (map[string]interface{}, error) {
 }
 
 func (d *Client) GetSpec(ctx context.Context, name names.Spec) (*models.Spec, error) {
-	normal := name.Normal()
-	q := d.NewQuery(gorm.SpecEntityName)
-	q = q.Require("ProjectID", normal.ProjectID)
-	q = q.Require("ApiID", normal.ApiID)
-	q = q.Require("VersionID", normal.VersionID)
-	q = q.Require("SpecID", normal.SpecID)
-	q = q.Descending("RevisionCreateTime")
-
-	it := d.Run(ctx, q)
-	spec := &models.Spec{}
-	if _, err := it.Next(spec); err != nil {
-		return nil, status.Error(codes.NotFound, err.Error())
-	}
-
-	return spec, nil
+	return d.Client.GetSpec(ctx, name)
 }
 
 func (d *Client) DeleteSpec(ctx context.Context, name names.Spec) error {

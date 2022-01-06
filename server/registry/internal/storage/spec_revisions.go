@@ -86,15 +86,7 @@ func (d *Client) GetSpecRevision(ctx context.Context, name names.SpecRevision) (
 		return nil, err
 	}
 
-	spec := new(models.Spec)
-	k := d.NewKey(gorm.SpecEntityName, name.String())
-	if err := d.Get(ctx, k, spec); d.IsNotFound(err) {
-		return nil, status.Errorf(codes.NotFound, "spec revision %q not found", name)
-	} else if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	return spec, nil
+	return d.Client.GetSpecRevision(ctx, name)
 }
 
 func (d *Client) GetSpecRevisionContents(ctx context.Context, name names.SpecRevision) (*models.Blob, error) {
@@ -103,15 +95,7 @@ func (d *Client) GetSpecRevisionContents(ctx context.Context, name names.SpecRev
 		return nil, err
 	}
 
-	blob := new(models.Blob)
-	k := d.NewKey(gorm.BlobEntityName, name.String())
-	if err := d.Get(ctx, k, blob); d.IsNotFound(err) {
-		return nil, status.Errorf(codes.NotFound, "spec revision contents %q not found", name)
-	} else if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	return blob, nil
+	return d.Client.GetSpecRevisionContents(ctx, name)
 }
 
 func (d *Client) DeleteSpecRevision(ctx context.Context, name names.SpecRevision) error {

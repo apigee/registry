@@ -133,15 +133,7 @@ func apiMap(api models.Api) (map[string]interface{}, error) {
 }
 
 func (d *Client) GetApi(ctx context.Context, name names.Api) (*models.Api, error) {
-	api := new(models.Api)
-	k := d.NewKey(gorm.ApiEntityName, name.String())
-	if err := d.Get(ctx, k, api); d.IsNotFound(err) {
-		return nil, status.Errorf(codes.NotFound, "api %q not found in database", name)
-	} else if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	return api, nil
+	return d.Client.GetApi(ctx, name)
 }
 
 func (d *Client) SaveApi(ctx context.Context, api *models.Api) error {

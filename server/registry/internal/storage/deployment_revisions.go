@@ -81,15 +81,7 @@ func (d *Client) GetDeploymentRevision(ctx context.Context, name names.Deploymen
 		return nil, err
 	}
 
-	deployment := new(models.Deployment)
-	k := d.NewKey(gorm.DeploymentEntityName, name.String())
-	if err := d.Get(ctx, k, deployment); d.IsNotFound(err) {
-		return nil, status.Errorf(codes.NotFound, "deployment revision %q not found", name)
-	} else if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	return deployment, nil
+	return d.Client.GetDeploymentRevision(ctx, name)
 }
 
 func (d *Client) DeleteDeploymentRevision(ctx context.Context, name names.DeploymentRevision) error {

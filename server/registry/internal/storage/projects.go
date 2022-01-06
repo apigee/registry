@@ -108,15 +108,7 @@ func projectMap(p models.Project) map[string]interface{} {
 }
 
 func (d *Client) GetProject(ctx context.Context, name names.Project) (*models.Project, error) {
-	project := new(models.Project)
-	k := d.NewKey(gorm.ProjectEntityName, name.String())
-	if err := d.Get(ctx, k, project); d.IsNotFound(err) {
-		return nil, status.Errorf(codes.NotFound, "project %q not found in database", name)
-	} else if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	return project, nil
+	return d.Client.GetProject(ctx, name)
 }
 
 func (d *Client) SaveProject(ctx context.Context, project *models.Project) error {

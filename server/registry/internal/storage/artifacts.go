@@ -340,27 +340,11 @@ func (d *Client) SaveArtifactContents(ctx context.Context, artifact *models.Arti
 }
 
 func (d *Client) GetArtifact(ctx context.Context, name names.Artifact) (*models.Artifact, error) {
-	artifact := new(models.Artifact)
-	k := d.NewKey(gorm.ArtifactEntityName, name.String())
-	if err := d.Get(ctx, k, artifact); d.IsNotFound(err) {
-		return nil, status.Errorf(codes.NotFound, "artifact %q not found in database", name)
-	} else if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	return artifact, nil
+	return d.Client.GetArtifact(ctx, name)
 }
 
 func (d *Client) GetArtifactContents(ctx context.Context, name names.Artifact) (*models.Blob, error) {
-	blob := new(models.Blob)
-	k := d.NewKey(gorm.BlobEntityName, name.String())
-	if err := d.Get(ctx, k, blob); d.IsNotFound(err) {
-		return nil, status.Errorf(codes.NotFound, "artifact contents %q not found", name)
-	} else if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	return blob, nil
+	return d.Client.GetArtifactContents(ctx, name)
 }
 
 func (d *Client) DeleteArtifact(ctx context.Context, name names.Artifact) error {

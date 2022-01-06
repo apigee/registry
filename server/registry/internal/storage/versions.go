@@ -141,15 +141,7 @@ func versionMap(version models.Version) (map[string]interface{}, error) {
 }
 
 func (d *Client) GetVersion(ctx context.Context, name names.Version) (*models.Version, error) {
-	version := new(models.Version)
-	k := d.NewKey(gorm.VersionEntityName, name.String())
-	if err := d.Get(ctx, k, version); d.IsNotFound(err) {
-		return nil, status.Errorf(codes.NotFound, "api version %q not found in database", name)
-	} else if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	return version, nil
+	return d.Client.GetVersion(ctx, name)
 }
 
 func (d *Client) SaveVersion(ctx context.Context, version *models.Version) error {

@@ -143,20 +143,7 @@ func deploymentMap(deployment models.Deployment) (map[string]interface{}, error)
 }
 
 func (d *Client) GetDeployment(ctx context.Context, name names.Deployment) (*models.Deployment, error) {
-	normal := name.Normal()
-	q := d.NewQuery(gorm.DeploymentEntityName)
-	q = q.Require("ProjectID", normal.ProjectID)
-	q = q.Require("ApiID", normal.ApiID)
-	q = q.Require("DeploymentID", normal.DeploymentID)
-	q = q.Descending("RevisionCreateTime")
-
-	it := d.Run(ctx, q)
-	deployment := &models.Deployment{}
-	if _, err := it.Next(deployment); err != nil {
-		return nil, status.Error(codes.NotFound, err.Error())
-	}
-
-	return deployment, nil
+	return d.Client.GetDeployment(ctx, name)
 }
 
 func (d *Client) DeleteDeployment(ctx context.Context, name names.Deployment) error {
