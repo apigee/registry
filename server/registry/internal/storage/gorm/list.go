@@ -66,7 +66,7 @@ func (c *Client) ListProjects(ctx context.Context, opts PageOptions) (ProjectLis
 	}
 
 	project := new(models.Project)
-	for _, err = it.Next(project); err == nil; _, err = it.Next(project) {
+	for err = it.Next(project); err == nil; err = it.Next(project) {
 		match, err := filter.Matches(projectMap(*project))
 		if err != nil {
 			return response, err
@@ -156,7 +156,7 @@ func (c *Client) ListApis(ctx context.Context, parent names.Project, opts PageOp
 	}
 
 	api := new(models.Api)
-	for _, err = it.Next(api); err == nil; _, err = it.Next(api) {
+	for err = it.Next(api); err == nil; err = it.Next(api) {
 		apiMap, err := apiMap(*api)
 		if err != nil {
 			return response, status.Error(codes.Internal, err.Error())
@@ -269,7 +269,7 @@ func (c *Client) ListVersions(ctx context.Context, parent names.Api, opts PageOp
 	}
 
 	version := new(models.Version)
-	for _, err = it.Next(version); err == nil; _, err = it.Next(version) {
+	for err = it.Next(version); err == nil; err = it.Next(version) {
 		versionMap, err := versionMap(*version)
 		if err != nil {
 			return response, status.Error(codes.Internal, err.Error())
@@ -381,7 +381,7 @@ func (c *Client) ListSpecs(ctx context.Context, parent names.Version, opts PageO
 	}
 
 	spec := new(models.Spec)
-	for _, err = it.Next(spec); err == nil; _, err = it.Next(spec) {
+	for err = it.Next(spec); err == nil; err = it.Next(spec) {
 		specMap, err := specMap(*spec)
 		if err != nil {
 			return response, status.Error(codes.Internal, err.Error())
@@ -500,7 +500,7 @@ func (c *Client) ListSpecRevisions(ctx context.Context, parent names.Spec, opts 
 	}
 
 	revision := new(models.Spec)
-	for _, err = it.Next(revision); err == nil; _, err = it.Next(revision) {
+	for err = it.Next(revision); err == nil; err = it.Next(revision) {
 		token.Offset++
 
 		response.Specs = append(response.Specs, *revision)
@@ -579,7 +579,7 @@ func (c *Client) ListDeployments(ctx context.Context, parent names.Api, opts Pag
 	}
 
 	deployment := new(models.Deployment)
-	for _, err = it.Next(deployment); err == nil; _, err = it.Next(deployment) {
+	for err = it.Next(deployment); err == nil; err = it.Next(deployment) {
 		deploymentMap, err := deploymentMap(*deployment)
 		if err != nil {
 			return response, status.Error(codes.Internal, err.Error())
@@ -693,7 +693,7 @@ func (c *Client) ListDeploymentRevisions(ctx context.Context, parent names.Deplo
 	}
 
 	revision := new(models.Deployment)
-	for _, err = it.Next(revision); err == nil; _, err = it.Next(revision) {
+	for err = it.Next(revision); err == nil; err = it.Next(revision) {
 		token.Offset++
 
 		response.Deployments = append(response.Deployments, *revision)
@@ -967,7 +967,7 @@ func (c *Client) listArtifacts(ctx context.Context, it *Iterator, opts PageOptio
 	}
 
 	artifact := new(models.Artifact)
-	for _, err = it.Next(artifact); err == nil; _, err = it.Next(artifact) {
+	for err = it.Next(artifact); err == nil; err = it.Next(artifact) {
 		artifactMap, err := artifactMap(*artifact)
 		if err != nil {
 			return response, status.Error(codes.Internal, err.Error())
@@ -1031,7 +1031,7 @@ func (c *Client) GetSpecTags(ctx context.Context, name names.Spec) ([]*models.Sp
 	)
 
 	it := c.Run(ctx, q)
-	for _, err = it.Next(tag); err == nil; _, err = it.Next(tag) {
+	for err = it.Next(tag); err == nil; err = it.Next(tag) {
 		tags = append(tags, tag)
 	}
 	if err != nil && err != iterator.Done {
@@ -1056,7 +1056,7 @@ func (c *Client) GetDeploymentTags(ctx context.Context, name names.Deployment) (
 	)
 
 	it := c.Run(ctx, q)
-	for _, err = it.Next(tag); err == nil; _, err = it.Next(tag) {
+	for err = it.Next(tag); err == nil; err = it.Next(tag) {
 		tags = append(tags, tag)
 	}
 	if err != nil && err != iterator.Done {

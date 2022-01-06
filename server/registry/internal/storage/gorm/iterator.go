@@ -28,81 +28,81 @@ type Iterator struct {
 }
 
 // Next gets the next value from the iterator.
-func (it *Iterator) Next(v interface{}) (*Key, error) {
+func (it *Iterator) Next(v interface{}) error {
 	switch x := v.(type) {
 	case *models.Project:
 		values := it.Values.([]models.Project)
 		if it.Index < len(values) {
 			*x = values[it.Index]
 			it.Index++
-			return nil, nil
+			return nil
 		}
-		return nil, iterator.Done
+		return iterator.Done
 	case *models.Api:
 		values := it.Values.([]models.Api)
 		if it.Index < len(values) {
 			*x = values[it.Index]
 			it.Index++
-			return nil, nil
+			return nil
 		}
-		return nil, iterator.Done
+		return iterator.Done
 	case *models.Version:
 		values := it.Values.([]models.Version)
 		if it.Index < len(values) {
 			*x = values[it.Index]
 			it.Index++
-			return nil, nil
+			return nil
 		}
-		return nil, iterator.Done
+		return iterator.Done
 	case *models.Spec:
 		values := it.Values.([]models.Spec)
 		if it.Index < len(values) {
 			*x = values[it.Index]
 			it.Index++
-			return nil, nil
+			return nil
 		}
-		return nil, iterator.Done
+		return iterator.Done
 	case *models.Deployment:
 		values := it.Values.([]models.Deployment)
 		if it.Index < len(values) {
 			*x = values[it.Index]
 			it.Index++
-			return nil, nil
+			return nil
 		}
-		return nil, iterator.Done
+		return iterator.Done
 	case *models.Blob:
 		values := it.Values.([]models.Blob)
 		if it.Index < len(values) {
 			*x = values[it.Index]
 			it.Index++
-			return nil, nil
+			return nil
 		}
-		return nil, iterator.Done
+		return iterator.Done
 	case *models.Artifact:
 		values := it.Values.([]models.Artifact)
 		if it.Index < len(values) {
 			*x = values[it.Index]
 			it.Index++
-			return nil, nil
+			return nil
 		}
-		return nil, iterator.Done
+		return iterator.Done
 	case *models.SpecRevisionTag:
 		values := it.Values.([]models.SpecRevisionTag)
 		if it.Index < len(values) {
 			*x = values[it.Index]
 			it.Index++
-			return nil, nil
+			return nil
 		}
-		return nil, iterator.Done
+		return iterator.Done
 	case *models.DeploymentRevisionTag:
 		values := it.Values.([]models.DeploymentRevisionTag)
 		if it.Index < len(values) {
 			*x = values[it.Index]
 			it.Index++
-			return nil, nil
+			return nil
 		}
-		return nil, iterator.Done
+		return iterator.Done
 	default:
-		return nil, fmt.Errorf("unsupported iterator type: %t", v)
+		return fmt.Errorf("unsupported iterator type: %t", v)
 	}
 }

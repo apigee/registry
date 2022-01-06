@@ -142,64 +142,6 @@ func (c *Client) EnsureTables() error {
 	return nil
 }
 
-// IsNotFound returns true if an error is due to an entity not being found.
-func (c *Client) IsNotFound(err error) bool {
-	return err == gorm.ErrRecordNotFound
-}
-
-// Get gets an entity using the storage client.
-func (c *Client) Get(ctx context.Context, k *Key, v interface{}) error {
-	lock()
-	defer unlock()
-	return c.db.Where("key = ?", k.Name).First(v).Error
-}
-
-// Put puts an entity using the storage client.
-func (c *Client) Put(ctx context.Context, k *Key, v interface{}) (*Key, error) {
-	lock()
-	defer unlock()
-	switch r := v.(type) {
-	case *models.Project:
-		r.Key = k.Name
-	case *models.Api:
-		r.Key = k.Name
-	case *models.Version:
-		r.Key = k.Name
-	case *models.Spec:
-		r.Key = k.Name
-	case *models.SpecRevisionTag:
-		r.Key = k.Name
-	case *models.Deployment:
-		r.Key = k.Name
-	case *models.DeploymentRevisionTag:
-		r.Key = k.Name
-	case *models.Artifact:
-		r.Key = k.Name
-	case *models.Blob:
-		r.Key = k.Name
-	}
-	err := c.db.Transaction(func(tx *gorm.DB) error {
-		// Update all fields from model: https://gorm.io/docs/update.html#Update-Selected-Fields
-		got := tx.Model(v).Select("*").Where("key = ?", k.Name).Updates(v)
-		if err := got.Error; err != nil {
-			return got.Error
-		}
-
-		if got.RowsAffected == 0 {
-			if err := tx.Create(v).Error; err != nil {
-				return err
-			}
-		}
-
-		return nil
-	})
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	return k, nil
-}
-
 // Run runs a query using the storage client, returning an iterator.
 func (c *Client) Run(ctx context.Context, q *Query) *Iterator {
 	lock()
