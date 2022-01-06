@@ -15,7 +15,6 @@
 package gorm
 
 import (
-	"encoding/base64"
 	"fmt"
 
 	"github.com/apigee/registry/server/registry/internal/storage/models"
@@ -24,16 +23,8 @@ import (
 
 // Iterator can be used to iterate through results of a query.
 type Iterator struct {
-	Client *Client
 	Values interface{}
 	Index  int
-	Cursor string
-}
-
-// GetCursor gets the cursor for the next page of results.
-func (it *Iterator) GetCursor() (string, error) {
-	encodedCursor := base64.StdEncoding.EncodeToString([]byte(it.Cursor))
-	return encodedCursor, nil
 }
 
 // Next gets the next value from the iterator.
@@ -43,81 +34,72 @@ func (it *Iterator) Next(v interface{}) (*Key, error) {
 		values := it.Values.([]models.Project)
 		if it.Index < len(values) {
 			*x = values[it.Index]
-			it.Cursor = x.Key
 			it.Index++
-			return it.Client.NewKey("Project", x.Key), nil
+			return nil, nil
 		}
 		return nil, iterator.Done
 	case *models.Api:
 		values := it.Values.([]models.Api)
 		if it.Index < len(values) {
 			*x = values[it.Index]
-			it.Cursor = x.Key
 			it.Index++
-			return it.Client.NewKey("Api", x.Key), nil
+			return nil, nil
 		}
 		return nil, iterator.Done
 	case *models.Version:
 		values := it.Values.([]models.Version)
 		if it.Index < len(values) {
 			*x = values[it.Index]
-			it.Cursor = x.Key
 			it.Index++
-			return it.Client.NewKey("Version", x.Key), nil
+			return nil, nil
 		}
 		return nil, iterator.Done
 	case *models.Spec:
 		values := it.Values.([]models.Spec)
 		if it.Index < len(values) {
 			*x = values[it.Index]
-			it.Cursor = x.Key
 			it.Index++
-			return it.Client.NewKey("Spec", x.Key), nil
+			return nil, nil
 		}
 		return nil, iterator.Done
 	case *models.Deployment:
 		values := it.Values.([]models.Deployment)
 		if it.Index < len(values) {
 			*x = values[it.Index]
-			it.Cursor = x.Key
 			it.Index++
-			return it.Client.NewKey("Deployment", x.Key), nil
+			return nil, nil
 		}
 		return nil, iterator.Done
 	case *models.Blob:
 		values := it.Values.([]models.Blob)
 		if it.Index < len(values) {
 			*x = values[it.Index]
-			it.Cursor = x.Key
 			it.Index++
-			return it.Client.NewKey("Blob", x.Key), nil
+			return nil, nil
 		}
 		return nil, iterator.Done
 	case *models.Artifact:
 		values := it.Values.([]models.Artifact)
 		if it.Index < len(values) {
 			*x = values[it.Index]
-			it.Cursor = x.Key
 			it.Index++
-			return it.Client.NewKey("Artifact", x.Key), nil
+			return nil, nil
 		}
 		return nil, iterator.Done
 	case *models.SpecRevisionTag:
 		values := it.Values.([]models.SpecRevisionTag)
 		if it.Index < len(values) {
 			*x = values[it.Index]
-			it.Cursor = x.Key
 			it.Index++
-			return it.Client.NewKey("SpecRevisionTag", x.Key), nil
+			return nil, nil
 		}
 		return nil, iterator.Done
 	case *models.DeploymentRevisionTag:
 		values := it.Values.([]models.DeploymentRevisionTag)
 		if it.Index < len(values) {
 			*x = values[it.Index]
-			it.Cursor = x.Key
 			it.Index++
-			return it.Client.NewKey("DeploymentRevisionTag", x.Key), nil
+			return nil, nil
 		}
 		return nil, iterator.Done
 	default:

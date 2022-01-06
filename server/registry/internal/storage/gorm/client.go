@@ -225,39 +225,39 @@ func (c *Client) Run(ctx context.Context, q *Query) *Iterator {
 	case "Project":
 		var v []models.Project
 		_ = op.Find(&v).Error
-		return &Iterator{Client: c, Values: v, Index: 0}
+		return &Iterator{Values: v, Index: 0}
 	case "Api":
 		var v []models.Api
 		_ = op.Find(&v).Error
-		return &Iterator{Client: c, Values: v, Index: 0}
+		return &Iterator{Values: v, Index: 0}
 	case "Version":
 		var v []models.Version
 		_ = op.Find(&v).Error
-		return &Iterator{Client: c, Values: v, Index: 0}
+		return &Iterator{Values: v, Index: 0}
 	case "Spec":
 		var v []models.Spec
 		_ = op.Find(&v).Error
-		return &Iterator{Client: c, Values: v, Index: 0}
+		return &Iterator{Values: v, Index: 0}
 	case "SpecRevisionTag":
 		var v []models.SpecRevisionTag
 		_ = op.Find(&v).Error
-		return &Iterator{Client: c, Values: v, Index: 0}
+		return &Iterator{Values: v, Index: 0}
 	case "Deployment":
 		var v []models.Deployment
 		_ = op.Find(&v).Error
-		return &Iterator{Client: c, Values: v, Index: 0}
+		return &Iterator{Values: v, Index: 0}
 	case "DeploymentRevisionTag":
 		var v []models.DeploymentRevisionTag
 		_ = op.Find(&v).Error
-		return &Iterator{Client: c, Values: v, Index: 0}
+		return &Iterator{Values: v, Index: 0}
 	case "Blob":
 		var v []models.Blob
 		_ = op.Find(&v).Error
-		return &Iterator{Client: c, Values: v, Index: 0}
+		return &Iterator{Values: v, Index: 0}
 	case "Artifact":
 		var v []models.Artifact
 		_ = op.Find(&v).Error
-		return &Iterator{Client: c, Values: v, Index: 0}
+		return &Iterator{Values: v, Index: 0}
 	default:
 		return nil
 	}
@@ -295,7 +295,7 @@ func (c *Client) GetRecentSpecRevisions(ctx context.Context, offset int32, proje
 
 	var v []models.Spec
 	_ = op.Scan(&v).Error
-	return &Iterator{Client: c, Values: v, Index: 0}
+	return &Iterator{Values: v, Index: 0}
 }
 
 func (c *Client) GetRecentDeploymentRevisions(ctx context.Context, offset int32, projectID, apiID string) *Iterator {
@@ -327,7 +327,7 @@ func (c *Client) GetRecentDeploymentRevisions(ctx context.Context, offset int32,
 
 	var v []models.Deployment
 	_ = op.Scan(&v).Error
-	return &Iterator{Client: c, Values: v, Index: 0}
+	return &Iterator{Values: v, Index: 0}
 }
 
 func (c *Client) Migrate(kind string) error {
