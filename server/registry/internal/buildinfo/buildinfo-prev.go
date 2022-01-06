@@ -12,21 +12,40 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package registry
+// +build !go1.18
+
+package buildinfo
 
 import (
-	"context"
+	"runtime/debug"
 
 	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/server/registry/internal/buildinfo"
-	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-// GetStatus handles the corresponding API request.
-func (s *RegistryServer) GetStatus(ctx context.Context, req *emptypb.Empty) (*rpc.Status, error) {
-	status := &rpc.Status{
-		Message:   "running",
-		Buildinfo: buildinfo.BuildInfo(),
+func Module(m *debug.Module) *rpc.BuildInfo_Module {
+	if m == nil {
+		return nil
 	}
-	return status, nil
+	return &rpc.BuildInfo_Module{
+		Path:        m.Path,
+		Version:     m.Version,
+		Sum:         m.Sum,
+		Replacement: Module(m.Replace),
+	}
+}
+
+func BuildInfo() *rpc.BuildInfo {
+	info, ok := debug.ReadBuildInfo()
+	if !ok {
+		return nil
+	}
+	dependencies := make([]*rpc.BuildInfo_Module, 0)
+	for _, dep := range info.Deps {
+		dependencies = append(dependencies, Module(dep))
+	}
+	return &rpc.BuildInfo{
+		Path:         info.Path,
+		Main:         Module(&info.Main),
+		Dependencies: dependencies,
+	}
 }
