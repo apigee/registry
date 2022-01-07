@@ -56,6 +56,23 @@ func GetAPI(ctx context.Context,
 	return api, nil
 }
 
+func GetDeployment(ctx context.Context,
+	client *gapic.RegistryClient,
+	name names.Deployment,
+	handler DeploymentHandler) (*rpc.ApiDeployment, error) {
+	request := &rpc.GetApiDeploymentRequest{
+		Name: name.String(),
+	}
+	deployment, err := client.GetApiDeployment(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+	if handler != nil {
+		handler(deployment)
+	}
+	return deployment, nil
+}
+
 func GetVersion(ctx context.Context,
 	client *gapic.RegistryClient,
 	name names.Version,
