@@ -18,18 +18,19 @@ import "time"
 
 // Blob is the storage-side representation of a blob.
 type Blob struct {
-	Key         string    `gorm:"primaryKey"`
-	ProjectID   string    // Uniquely identifies a project.
-	ApiID       string    // Uniquely identifies an api within a project.
-	VersionID   string    // Uniquely identifies a version within a api.
-	SpecID      string    // Uniquely identifies a spec within a version.
-	RevisionID  string    // Uniquely identifies a revision of a spec.
-	ArtifactID  string    // Uniquely identifies an artifact on a resource.
-	Hash        string    // Hash of the blob contents.
-	SizeInBytes int32     // Size of the blob contents.
-	Contents    []byte    // The contents of the blob.
-	CreateTime  time.Time // Creation time.
-	UpdateTime  time.Time // Time of last change.
+	Key          string    `gorm:"primaryKey"`
+	ProjectID    string    // Uniquely identifies a project.
+	ApiID        string    // Uniquely identifies an API within a project.
+	VersionID    string    // Uniquely identifies a version of an API.
+	SpecID       string    // Uniquely identifies a spec of a version.
+	RevisionID   string    // Uniquely identifies a revision of a spec.
+	DeploymentID string    // Uniquely identifies a deployment of an API.
+	ArtifactID   string    // Uniquely identifies an artifact on a resource.
+	Hash         string    // Hash of the blob contents.
+	SizeInBytes  int32     // Size of the blob contents.
+	Contents     []byte    // The contents of the blob.
+	CreateTime   time.Time // Creation time.
+	UpdateTime   time.Time // Time of last change.
 }
 
 // NewBlobForSpec creates a new Blob object to store spec contents.
@@ -53,15 +54,16 @@ func NewBlobForSpec(spec *Spec, contents []byte) *Blob {
 func NewBlobForArtifact(artifact *Artifact, contents []byte) *Blob {
 	now := time.Now().Round(time.Microsecond)
 	return &Blob{
-		ProjectID:   artifact.ProjectID,
-		ApiID:       artifact.ApiID,
-		VersionID:   artifact.VersionID,
-		SpecID:      artifact.SpecID,
-		ArtifactID:  artifact.ArtifactID,
-		Hash:        artifact.Hash,
-		SizeInBytes: artifact.SizeInBytes,
-		Contents:    contents,
-		CreateTime:  now,
-		UpdateTime:  now,
+		ProjectID:    artifact.ProjectID,
+		ApiID:        artifact.ApiID,
+		VersionID:    artifact.VersionID,
+		SpecID:       artifact.SpecID,
+		DeploymentID: artifact.DeploymentID,
+		ArtifactID:   artifact.ArtifactID,
+		Hash:         artifact.Hash,
+		SizeInBytes:  artifact.SizeInBytes,
+		Contents:     contents,
+		CreateTime:   now,
+		UpdateTime:   now,
 	}
 }
