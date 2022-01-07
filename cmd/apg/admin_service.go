@@ -18,6 +18,7 @@ var AdminConfig *viper.Viper
 var AdminClient *gapic.AdminClient
 var AdminSubCommands []string = []string{
 	"get-status",
+	"get-storage",
 	"migrate-database",
 	"poll-migrate-database", "list-projects",
 	"get-project",

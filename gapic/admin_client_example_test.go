@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC
+// Copyright 2022 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -50,6 +50,26 @@ func ExampleAdminClient_GetStatus() {
 		// See https://pkg.go.dev/google.golang.org/protobuf/types/known/emptypb#Empty.
 	}
 	resp, err := c.GetStatus(ctx, req)
+	if err != nil {
+		// TODO: Handle error.
+	}
+	// TODO: Use resp.
+	_ = resp
+}
+
+func ExampleAdminClient_GetStorage() {
+	ctx := context.Background()
+	c, err := gapic.NewAdminClient(ctx)
+	if err != nil {
+		// TODO: Handle error.
+	}
+	defer c.Close()
+
+	req := &emptypb.Empty{
+		// TODO: Fill request struct fields.
+		// See https://pkg.go.dev/google.golang.org/protobuf/types/known/emptypb#Empty.
+	}
+	resp, err := c.GetStorage(ctx, req)
 	if err != nil {
 		// TODO: Handle error.
 	}

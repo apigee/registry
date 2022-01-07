@@ -37,6 +37,113 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// Status represents the status of the service.
+type Status struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// A string describing the status.
+	Message string `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
+}
+
+func (x *Status) Reset() {
+	*x = Status{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_google_cloud_apigeeregistry_v1_admin_models_proto_msgTypes[0]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *Status) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Status) ProtoMessage() {}
+
+func (x *Status) ProtoReflect() protoreflect.Message {
+	mi := &file_google_cloud_apigeeregistry_v1_admin_models_proto_msgTypes[0]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Status.ProtoReflect.Descriptor instead.
+func (*Status) Descriptor() ([]byte, []int) {
+	return file_google_cloud_apigeeregistry_v1_admin_models_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *Status) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+// Storage describes the data stored by the service.
+type Storage struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// A string describing the storage backend.
+	Description string `protobuf:"bytes,1,opt,name=description,proto3" json:"description,omitempty"`
+	// A list of collections in the storage backend.
+	Collections []*Storage_Collection `protobuf:"bytes,2,rep,name=collections,proto3" json:"collections,omitempty"`
+}
+
+func (x *Storage) Reset() {
+	*x = Storage{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_google_cloud_apigeeregistry_v1_admin_models_proto_msgTypes[1]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *Storage) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Storage) ProtoMessage() {}
+
+func (x *Storage) ProtoReflect() protoreflect.Message {
+	mi := &file_google_cloud_apigeeregistry_v1_admin_models_proto_msgTypes[1]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Storage.ProtoReflect.Descriptor instead.
+func (*Storage) Descriptor() ([]byte, []int) {
+	return file_google_cloud_apigeeregistry_v1_admin_models_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *Storage) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+func (x *Storage) GetCollections() []*Storage_Collection {
+	if x != nil {
+		return x.Collections
+	}
+	return nil
+}
+
 // A Project is a top-level description of a collection of APIs.
 // Typically there would be one project for an entire organization.
 // Note: in a Google Cloud deployment, this resource and associated methods
@@ -62,7 +169,7 @@ type Project struct {
 func (x *Project) Reset() {
 	*x = Project{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_google_cloud_apigeeregistry_v1_admin_models_proto_msgTypes[0]
+		mi := &file_google_cloud_apigeeregistry_v1_admin_models_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -75,7 +182,7 @@ func (x *Project) String() string {
 func (*Project) ProtoMessage() {}
 
 func (x *Project) ProtoReflect() protoreflect.Message {
-	mi := &file_google_cloud_apigeeregistry_v1_admin_models_proto_msgTypes[0]
+	mi := &file_google_cloud_apigeeregistry_v1_admin_models_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -88,7 +195,7 @@ func (x *Project) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Project.ProtoReflect.Descriptor instead.
 func (*Project) Descriptor() ([]byte, []int) {
-	return file_google_cloud_apigeeregistry_v1_admin_models_proto_rawDescGZIP(), []int{0}
+	return file_google_cloud_apigeeregistry_v1_admin_models_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *Project) GetName() string {
@@ -126,6 +233,64 @@ func (x *Project) GetUpdateTime() *timestamppb.Timestamp {
 	return nil
 }
 
+// A description of a collection in the backend database.
+type Storage_Collection struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// The name of the collection.
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// The number of entries in the collection.
+	Count int64 `protobuf:"varint,2,opt,name=count,proto3" json:"count,omitempty"`
+}
+
+func (x *Storage_Collection) Reset() {
+	*x = Storage_Collection{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_google_cloud_apigeeregistry_v1_admin_models_proto_msgTypes[3]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *Storage_Collection) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Storage_Collection) ProtoMessage() {}
+
+func (x *Storage_Collection) ProtoReflect() protoreflect.Message {
+	mi := &file_google_cloud_apigeeregistry_v1_admin_models_proto_msgTypes[3]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Storage_Collection.ProtoReflect.Descriptor instead.
+func (*Storage_Collection) Descriptor() ([]byte, []int) {
+	return file_google_cloud_apigeeregistry_v1_admin_models_proto_rawDescGZIP(), []int{1, 0}
+}
+
+func (x *Storage_Collection) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *Storage_Collection) GetCount() int64 {
+	if x != nil {
+		return x.Count
+	}
+	return 0
+}
+
 var File_google_cloud_apigeeregistry_v1_admin_models_proto protoreflect.FileDescriptor
 
 var file_google_cloud_apigeeregistry_v1_admin_models_proto_rawDesc = []byte{
@@ -140,6 +305,20 @@ var file_google_cloud_apigeeregistry_v1_admin_models_proto_rawDesc = []byte{
 	0x2f, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a,
 	0x1f, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66,
 	0x2f, 0x74, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f,
+	0x22, 0x22, 0x0a, 0x06, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x18, 0x0a, 0x07, 0x6d, 0x65,
+	0x73, 0x73, 0x61, 0x67, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x6d, 0x65, 0x73,
+	0x73, 0x61, 0x67, 0x65, 0x22, 0xb9, 0x01, 0x0a, 0x07, 0x53, 0x74, 0x6f, 0x72, 0x61, 0x67, 0x65,
+	0x12, 0x20, 0x0a, 0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69,
+	0x6f, 0x6e, 0x12, 0x54, 0x0a, 0x0b, 0x63, 0x6f, 0x6c, 0x6c, 0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e,
+	0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x32, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65,
+	0x2e, 0x63, 0x6c, 0x6f, 0x75, 0x64, 0x2e, 0x61, 0x70, 0x69, 0x67, 0x65, 0x65, 0x72, 0x65, 0x67,
+	0x69, 0x73, 0x74, 0x72, 0x79, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x74, 0x6f, 0x72, 0x61, 0x67, 0x65,
+	0x2e, 0x43, 0x6f, 0x6c, 0x6c, 0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x0b, 0x63, 0x6f, 0x6c,
+	0x6c, 0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x1a, 0x36, 0x0a, 0x0a, 0x43, 0x6f, 0x6c, 0x6c,
+	0x65, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x63, 0x6f,
+	0x75, 0x6e, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x03, 0x52, 0x05, 0x63, 0x6f, 0x75, 0x6e, 0x74,
 	0x22, 0xa6, 0x02, 0x0a, 0x07, 0x50, 0x72, 0x6f, 0x6a, 0x65, 0x63, 0x74, 0x12, 0x12, 0x0a, 0x04,
 	0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65,
 	0x12, 0x21, 0x0a, 0x0c, 0x64, 0x69, 0x73, 0x70, 0x6c, 0x61, 0x79, 0x5f, 0x6e, 0x61, 0x6d, 0x65,
@@ -179,19 +358,23 @@ func file_google_cloud_apigeeregistry_v1_admin_models_proto_rawDescGZIP() []byte
 	return file_google_cloud_apigeeregistry_v1_admin_models_proto_rawDescData
 }
 
-var file_google_cloud_apigeeregistry_v1_admin_models_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_google_cloud_apigeeregistry_v1_admin_models_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_google_cloud_apigeeregistry_v1_admin_models_proto_goTypes = []interface{}{
-	(*Project)(nil),               // 0: google.cloud.apigeeregistry.v1.Project
-	(*timestamppb.Timestamp)(nil), // 1: google.protobuf.Timestamp
+	(*Status)(nil),                // 0: google.cloud.apigeeregistry.v1.Status
+	(*Storage)(nil),               // 1: google.cloud.apigeeregistry.v1.Storage
+	(*Project)(nil),               // 2: google.cloud.apigeeregistry.v1.Project
+	(*Storage_Collection)(nil),    // 3: google.cloud.apigeeregistry.v1.Storage.Collection
+	(*timestamppb.Timestamp)(nil), // 4: google.protobuf.Timestamp
 }
 var file_google_cloud_apigeeregistry_v1_admin_models_proto_depIdxs = []int32{
-	1, // 0: google.cloud.apigeeregistry.v1.Project.create_time:type_name -> google.protobuf.Timestamp
-	1, // 1: google.cloud.apigeeregistry.v1.Project.update_time:type_name -> google.protobuf.Timestamp
-	2, // [2:2] is the sub-list for method output_type
-	2, // [2:2] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	3, // 0: google.cloud.apigeeregistry.v1.Storage.collections:type_name -> google.cloud.apigeeregistry.v1.Storage.Collection
+	4, // 1: google.cloud.apigeeregistry.v1.Project.create_time:type_name -> google.protobuf.Timestamp
+	4, // 2: google.cloud.apigeeregistry.v1.Project.update_time:type_name -> google.protobuf.Timestamp
+	3, // [3:3] is the sub-list for method output_type
+	3, // [3:3] is the sub-list for method input_type
+	3, // [3:3] is the sub-list for extension type_name
+	3, // [3:3] is the sub-list for extension extendee
+	0, // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_google_cloud_apigeeregistry_v1_admin_models_proto_init() }
@@ -201,7 +384,43 @@ func file_google_cloud_apigeeregistry_v1_admin_models_proto_init() {
 	}
 	if !protoimpl.UnsafeEnabled {
 		file_google_cloud_apigeeregistry_v1_admin_models_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*Status); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_google_cloud_apigeeregistry_v1_admin_models_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*Storage); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_google_cloud_apigeeregistry_v1_admin_models_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Project); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_google_cloud_apigeeregistry_v1_admin_models_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*Storage_Collection); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -219,7 +438,7 @@ func file_google_cloud_apigeeregistry_v1_admin_models_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_google_cloud_apigeeregistry_v1_admin_models_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   1,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
