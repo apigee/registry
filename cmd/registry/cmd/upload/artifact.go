@@ -30,62 +30,10 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-type ArtifactHeader struct {
-	Id   string `yaml:"id"`
-	Kind string `yaml:"kind"`
-}
-
-func readArtifact(ctx context.Context, filename string) (*rpc.Artifact, string, error) {
-
-	yamlBytes, err := ioutil.ReadFile(filename)
-	if err != nil {
-		return nil, "", err
-	}
-
-	// get the kind and id from the yaml
-	var header ArtifactHeader
-	err = yaml.Unmarshal(yamlBytes, &header)
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Printf("header: %+v\n", header)
-
-	jsonBytes, _ := yaml.YAMLToJSON(yamlBytes)
-	artifact := &rpc.Artifact{}
-	switch header.Kind {
-	case "Manifest", "google.cloud.apigeeregistry.v1.controller.Manifest":
-		m := &rpc.Manifest{}
-		err = protojson.Unmarshal(jsonBytes, m)
-		// validate the manifest
-		isValid := true
-		for _, resource := range m.GeneratedResources {
-			if err := controller.ValidateResourceEntry(resource); err != nil {
-				log.FromContext(ctx).WithError(err).Errorf("Invalid manifest entry %v", resource)
-				isValid = false
-			}
-			if err != nil {
-				return nil, "", fmt.Errorf("in file %q: %v", filename, err)
-			}
-		}
-		if !isValid {
-			log.Fatal(ctx, "Manifest definition contains errors")
-		}
-		artifact.Contents, _ = proto.Marshal(m)
-		artifact.MimeType = core.MimeTypeForMessageType("google.cloud.apigeeregistry.v1.controller.Manifest")
-	case "TaxonomyList", "google.cloud.apigeeregistry.v1.apihub.TaxonomyList":
-
-	case "Lifecycle", "google.cloud.apigeeregistry.v1.apihub.Lifecycle":
-
-	default:
-	}
-	return artifact, header.Id, nil
-}
-
 func artifactCommand(ctx context.Context) *cobra.Command {
-	var projectID string
+	var parent string
 	cmd := &cobra.Command{
-		Use:   "artifact FILE_PATH --project-id=value",
+		Use:   "artifact FILE_PATH --parent=value",
 		Short: "Upload an artifact",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
@@ -95,13 +43,13 @@ func artifactCommand(ctx context.Context) *cobra.Command {
 			}
 			artifact, artifactID, err := readArtifact(ctx, artifactPath)
 			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to read manifest")
+				log.FromContext(ctx).WithError(err).Fatal("Failed to read artifact")
 			}
 			client, err := connection.NewClient(ctx)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
-			artifact.Name = "projects/" + projectID + "/locations/global/artifacts/" + artifactID
+			artifact.Name = fmt.Sprintf("%s/artifacts/%s", parent, artifactID)
 			log.Debugf(ctx, "Uploading %s", artifact.Name)
 			err = core.SetArtifact(ctx, client, artifact)
 			if err != nil {
@@ -109,8 +57,110 @@ func artifactCommand(ctx context.Context) *cobra.Command {
 			}
 		},
 	}
-
-	cmd.Flags().StringVar(&projectID, "project-id", "", "Project ID to use when saving the artifact")
-	_ = cmd.MarkFlagRequired("project-id")
+	cmd.Flags().StringVar(&parent, "parent", "", "Parent resource for the artifact")
+	_ = cmd.MarkFlagRequired("parent")
 	return cmd
+}
+
+func readArtifact(ctx context.Context, filename string) (*rpc.Artifact, string, error) {
+	yamlBytes, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, "", err
+	}
+
+	// get the kind and id from the YAML
+	type ArtifactHeader struct {
+		Id   string `yaml:"id"`
+		Kind string `yaml:"kind"`
+	}
+	var header ArtifactHeader
+	err = yaml.Unmarshal(yamlBytes, &header)
+	if err != nil {
+		return nil, "", err
+	}
+
+	// read the specified artifact type
+	jsonBytes, _ := yaml.YAMLToJSON(yamlBytes) // to use protojson.Unmarshal()
+	var artifact *rpc.Artifact
+	switch header.Kind {
+	case "Manifest", "google.cloud.apigeeregistry.v1.controller.Manifest":
+		artifact, err = readManifest(ctx, jsonBytes)
+	case "TaxonomyList", "google.cloud.apigeeregistry.v1.apihub.TaxonomyList":
+		artifact, err = readTaxonomyList(ctx, jsonBytes)
+	case "Lifecycle", "google.cloud.apigeeregistry.v1.apihub.Lifecycle":
+		artifact, err = readLifecycle(ctx, jsonBytes)
+	default:
+		err = fmt.Errorf("unsupported artifact type %s", header.Kind)
+	}
+
+	if err != nil {
+		return nil, header.Id, err
+	}
+	return artifact, header.Id, nil
+}
+
+func readManifest(ctx context.Context, jsonBytes []byte) (*rpc.Artifact, error) {
+	m := &rpc.Manifest{}
+	err := protojson.Unmarshal(jsonBytes, m)
+	if err != nil {
+		return nil, err
+	}
+	err = validateManifest(ctx, m)
+	if err != nil {
+		return nil, err
+	}
+	artifactBytes, err := proto.Marshal(m)
+	if err != nil {
+		return nil, err
+	}
+	return &rpc.Artifact{
+		Contents: artifactBytes,
+		MimeType: core.MimeTypeForMessageType("google.cloud.apigeeregistry.v1.controller.Manifest"),
+	}, nil
+}
+
+func validateManifest(ctx context.Context, m *rpc.Manifest) error {
+	isValid := true
+	for _, resource := range m.GeneratedResources {
+		if err := controller.ValidateResourceEntry(resource); err != nil {
+			log.FromContext(ctx).WithError(err).Errorf("Invalid manifest entry %v", resource)
+			isValid = false
+		}
+	}
+	if !isValid {
+		return fmt.Errorf("manifest contains errors")
+	}
+	return nil
+}
+
+func readTaxonomyList(ctx context.Context, jsonBytes []byte) (*rpc.Artifact, error) {
+	m := &rpc.TaxonomyList{}
+	err := protojson.Unmarshal(jsonBytes, m)
+	if err != nil {
+		return nil, err
+	}
+	artifactBytes, err := proto.Marshal(m)
+	if err != nil {
+		return nil, err
+	}
+	return &rpc.Artifact{
+		Contents: artifactBytes,
+		MimeType: core.MimeTypeForMessageType("google.cloud.apigeeregistry.v1.controller.TaxonomyList"),
+	}, nil
+}
+
+func readLifecycle(ctx context.Context, jsonBytes []byte) (*rpc.Artifact, error) {
+	m := &rpc.Lifecycle{}
+	err := protojson.Unmarshal(jsonBytes, m)
+	if err != nil {
+		return nil, err
+	}
+	artifactBytes, err := proto.Marshal(m)
+	if err != nil {
+		return nil, err
+	}
+	return &rpc.Artifact{
+		Contents: artifactBytes,
+		MimeType: core.MimeTypeForMessageType("google.cloud.apigeeregistry.v1.controller.Lifecycle"),
+	}, nil
 }
