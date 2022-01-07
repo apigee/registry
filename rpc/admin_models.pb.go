@@ -189,6 +189,7 @@ type Storage struct {
 	// A string describing the storage backend.
 	Description string `protobuf:"bytes,1,opt,name=description,proto3" json:"description,omitempty"`
 	// A list of collections in the storage backend.
+	// Collections are listed in alphabetical order.
 	Collections []*Storage_Collection `protobuf:"bytes,2,rep,name=collections,proto3" json:"collections,omitempty"`
 }
 

@@ -30,5 +30,25 @@ func (s *RegistryServer) GetStorage(ctx context.Context, req *emptypb.Empty) (*r
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 	defer db.Close()
-	return db.GetStorage()
+	tableNames, err := db.TableNames()
+	if err != nil {
+		return nil, err
+	}
+	collections := make([]*rpc.Storage_Collection, 0)
+	for _, tableName := range tableNames {
+		count, err := db.RowCount(tableName)
+		if err != nil {
+			return nil, err
+		}
+		collections = append(collections,
+			&rpc.Storage_Collection{
+				Name:  tableName,
+				Count: count,
+			},
+		)
+	}
+	return &rpc.Storage{
+		Description: db.DatabaseName(),
+		Collections: collections,
+	}, nil
 }

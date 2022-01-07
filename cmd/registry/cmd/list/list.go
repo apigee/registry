@@ -64,6 +64,8 @@ func matchAndHandleListCmd(
 		return core.ListProjects(ctx, adminClient, project, filter, core.PrintProject)
 	} else if api, err := names.ParseApiCollection(name); err == nil {
 		return core.ListAPIs(ctx, client, api, filter, core.PrintAPI)
+	} else if deployment, err := names.ParseDeploymentCollection(name); err == nil {
+		return core.ListDeployments(ctx, client, deployment, filter, core.PrintDeployment)
 	} else if version, err := names.ParseVersionCollection(name); err == nil {
 		return core.ListVersions(ctx, client, version, filter, core.PrintVersion)
 	} else if spec, err := names.ParseSpecCollection(name); err == nil {
@@ -77,6 +79,8 @@ func matchAndHandleListCmd(
 		return core.ListProjects(ctx, adminClient, project, filter, core.PrintProject)
 	} else if api, err := names.ParseApi(name); err == nil {
 		return core.ListAPIs(ctx, client, api, filter, core.PrintAPI)
+	} else if deployment, err := names.ParseDeployment(name); err == nil {
+		return core.ListDeployments(ctx, client, deployment, filter, core.PrintDeployment)
 	} else if version, err := names.ParseVersion(name); err == nil {
 		return core.ListVersions(ctx, client, version, filter, core.PrintVersion)
 	} else if spec, err := names.ParseSpec(name); err == nil {
