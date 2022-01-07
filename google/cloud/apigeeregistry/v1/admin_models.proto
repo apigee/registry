@@ -61,7 +61,7 @@ message Status {
   string message = 1;
 
   // Information about the build of the server.
-  BuildInfo buildinfo = 2;
+  BuildInfo build = 2;
 }
 
 // Storage describes the data stored by the service.
