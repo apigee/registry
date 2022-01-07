@@ -23,7 +23,7 @@ import (
 	"github.com/apigee/registry/rpc"
 )
 
-func Module(m *debug.Module) *rpc.BuildInfo_Module {
+func module(m *debug.Module) *rpc.BuildInfo_Module {
 	if m == nil {
 		return nil
 	}
@@ -31,7 +31,7 @@ func Module(m *debug.Module) *rpc.BuildInfo_Module {
 		Path:        m.Path,
 		Version:     m.Version,
 		Sum:         m.Sum,
-		Replacement: Module(m.Replace),
+		Replacement: module(m.Replace),
 	}
 }
 
@@ -46,12 +46,12 @@ func BuildInfo() *rpc.BuildInfo {
 	}
 	dependencies := make([]*rpc.BuildInfo_Module, 0)
 	for _, dep := range info.Deps {
-		dependencies = append(dependencies, Module(dep))
+		dependencies = append(dependencies, module(dep))
 	}
 	return &rpc.BuildInfo{
 		GoVersion:    info.GoVersion,
 		Path:         info.Path,
-		Main:         Module(&info.Main),
+		Main:         module(&info.Main),
 		Dependencies: dependencies,
 		Settings:     settings,
 	}
