@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC
+// Copyright 2022 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -96,14 +96,7 @@ func insertMetadata(ctx context.Context, mds ...metadata.MD) context.Context {
 			out[k] = append(out[k], v...)
 		}
 	}
-
-	insecure := os.Getenv("APG_REGISTRY_INSECURE")
-	token := os.Getenv("APG_REGISTRY_TOKEN")
-	if insecure == "1" && token != "" {
-		out["authorization"] = append(out["authorization"], "Bearer "+token)
-	}
 	return metadata.NewOutgoingContext(ctx, out)
-
 }
 
 func checkDisableDeadlines() (bool, error) {
@@ -118,7 +111,9 @@ func checkDisableDeadlines() (bool, error) {
 
 // DefaultAuthScopes reports the default set of authentication scopes to use with this package.
 func DefaultAuthScopes() []string {
-	return []string{}
+	return []string{
+		"",
+	}
 }
 
 // versionGo returns the Go runtime version. The returned string
