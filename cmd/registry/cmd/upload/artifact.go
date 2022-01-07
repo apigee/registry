@@ -41,7 +41,7 @@ func artifactCommand(ctx context.Context) *cobra.Command {
 			if artifactPath == "" {
 				log.Fatal(ctx, "Please provide a FILE_PATH for an artifact")
 			}
-			artifact, artifactID, err := readArtifact(ctx, artifactPath)
+			artifact, artifactID, err := buildArtifact(ctx, artifactPath)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to read artifact")
 			}
@@ -62,7 +62,7 @@ func artifactCommand(ctx context.Context) *cobra.Command {
 	return cmd
 }
 
-func readArtifact(ctx context.Context, filename string) (*rpc.Artifact, string, error) {
+func buildArtifact(ctx context.Context, filename string) (*rpc.Artifact, string, error) {
 	yamlBytes, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, "", err
@@ -84,11 +84,11 @@ func readArtifact(ctx context.Context, filename string) (*rpc.Artifact, string, 
 	var artifact *rpc.Artifact
 	switch header.Kind {
 	case "Manifest", "google.cloud.apigeeregistry.v1.controller.Manifest":
-		artifact, err = readManifest(ctx, jsonBytes)
+		artifact, err = buildManifestArtifact(ctx, jsonBytes)
 	case "TaxonomyList", "google.cloud.apigeeregistry.v1.apihub.TaxonomyList":
-		artifact, err = readTaxonomyList(ctx, jsonBytes)
+		artifact, err = buildTaxonomyListArtifact(ctx, jsonBytes)
 	case "Lifecycle", "google.cloud.apigeeregistry.v1.apihub.Lifecycle":
-		artifact, err = readLifecycle(ctx, jsonBytes)
+		artifact, err = buildLifecycleArtifact(ctx, jsonBytes)
 	default:
 		err = fmt.Errorf("unsupported artifact type %s", header.Kind)
 	}
@@ -99,7 +99,7 @@ func readArtifact(ctx context.Context, filename string) (*rpc.Artifact, string, 
 	return artifact, header.Id, nil
 }
 
-func readManifest(ctx context.Context, jsonBytes []byte) (*rpc.Artifact, error) {
+func buildManifestArtifact(ctx context.Context, jsonBytes []byte) (*rpc.Artifact, error) {
 	m := &rpc.Manifest{}
 	err := protojson.Unmarshal(jsonBytes, m)
 	if err != nil {
@@ -133,7 +133,7 @@ func validateManifest(ctx context.Context, m *rpc.Manifest) error {
 	return nil
 }
 
-func readTaxonomyList(ctx context.Context, jsonBytes []byte) (*rpc.Artifact, error) {
+func buildTaxonomyListArtifact(ctx context.Context, jsonBytes []byte) (*rpc.Artifact, error) {
 	m := &rpc.TaxonomyList{}
 	err := protojson.Unmarshal(jsonBytes, m)
 	if err != nil {
@@ -149,7 +149,7 @@ func readTaxonomyList(ctx context.Context, jsonBytes []byte) (*rpc.Artifact, err
 	}, nil
 }
 
-func readLifecycle(ctx context.Context, jsonBytes []byte) (*rpc.Artifact, error) {
+func buildLifecycleArtifact(ctx context.Context, jsonBytes []byte) (*rpc.Artifact, error) {
 	m := &rpc.Lifecycle{}
 	err := protojson.Unmarshal(jsonBytes, m)
 	if err != nil {
