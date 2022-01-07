@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC
+// Copyright 2022 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ var newAdminClientHook clientHook
 // AdminCallOptions contains the retry settings for each method of AdminClient.
 type AdminCallOptions struct {
 	GetStatus       []gax.CallOption
+	GetStorage      []gax.CallOption
 	MigrateDatabase []gax.CallOption
 	ListProjects    []gax.CallOption
 	GetProject      []gax.CallOption
@@ -66,6 +67,7 @@ func defaultAdminGRPCClientOptions() []option.ClientOption {
 func defaultAdminCallOptions() *AdminCallOptions {
 	return &AdminCallOptions{
 		GetStatus:       []gax.CallOption{},
+		GetStorage:      []gax.CallOption{},
 		MigrateDatabase: []gax.CallOption{},
 		ListProjects:    []gax.CallOption{},
 		GetProject:      []gax.CallOption{},
@@ -81,6 +83,7 @@ type internalAdminClient interface {
 	setGoogleClientInfo(...string)
 	Connection() *grpc.ClientConn
 	GetStatus(context.Context, *emptypb.Empty, ...gax.CallOption) (*rpcpb.Status, error)
+	GetStorage(context.Context, *emptypb.Empty, ...gax.CallOption) (*rpcpb.Storage, error)
 	MigrateDatabase(context.Context, *rpcpb.MigrateDatabaseRequest, ...gax.CallOption) (*MigrateDatabaseOperation, error)
 	MigrateDatabaseOperation(name string) *MigrateDatabaseOperation
 	ListProjects(context.Context, *rpcpb.ListProjectsRequest, ...gax.CallOption) *ProjectIterator
@@ -139,6 +142,17 @@ func (c *AdminClient) Connection() *grpc.ClientConn {
 // aip.dev/not-precedent (at http://aip.dev/not-precedent): Not in the official API. –)
 func (c *AdminClient) GetStatus(ctx context.Context, req *emptypb.Empty, opts ...gax.CallOption) (*rpcpb.Status, error) {
 	return c.internalClient.GetStatus(ctx, req, opts...)
+}
+
+// GetStorage getStorage returns information about the storage used by the service.
+// (– api-linter: core::0131::request-message-name=disabled
+// aip.dev/not-precedent (at http://aip.dev/not-precedent): Not in the official API. –)
+// (– api-linter: core::0131::method-signature=disabled
+// aip.dev/not-precedent (at http://aip.dev/not-precedent): Not in the official API. –)
+// (– api-linter: core::0131::http-uri-name=disabled
+// aip.dev/not-precedent (at http://aip.dev/not-precedent): Not in the official API. –)
+func (c *AdminClient) GetStorage(ctx context.Context, req *emptypb.Empty, opts ...gax.CallOption) (*rpcpb.Storage, error) {
+	return c.internalClient.GetStorage(ctx, req, opts...)
 }
 
 // MigrateDatabase migrateDatabase attempts to migrate the database to the current schema.
@@ -290,6 +304,21 @@ func (c *adminGRPCClient) GetStatus(ctx context.Context, req *emptypb.Empty, opt
 	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
 		var err error
 		resp, err = c.adminClient.GetStatus(ctx, req, settings.GRPC...)
+		return err
+	}, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+func (c *adminGRPCClient) GetStorage(ctx context.Context, req *emptypb.Empty, opts ...gax.CallOption) (*rpcpb.Storage, error) {
+	ctx = insertMetadata(ctx, c.xGoogMetadata)
+	opts = append((*c.CallOptions).GetStorage[0:len((*c.CallOptions).GetStorage):len((*c.CallOptions).GetStorage)], opts...)
+	var resp *rpcpb.Storage
+	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
+		var err error
+		resp, err = c.adminClient.GetStorage(ctx, req, settings.GRPC...)
 		return err
 	}, opts...)
 	if err != nil {

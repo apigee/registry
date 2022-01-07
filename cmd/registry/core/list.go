@@ -80,6 +80,35 @@ func ListAPIs(ctx context.Context,
 	return nil
 }
 
+func ListDeployments(ctx context.Context,
+	client *gapic.RegistryClient,
+	name names.Deployment,
+	filterFlag string,
+	handler DeploymentHandler) error {
+	request := &rpc.ListApiDeploymentsRequest{
+		Parent: name.Parent(),
+	}
+	filter := filterFlag
+	deploymentID := name.DeploymentID
+	if deploymentID != "" && deploymentID != "-" {
+		filter = "deployment_id == '" + deploymentID + "'"
+	}
+	if filter != "" {
+		request.Filter = filter
+	}
+	it := client.ListApiDeployments(ctx, request)
+	for {
+		deployment, err := it.Next()
+		if err == iterator.Done {
+			break
+		} else if err != nil {
+			return err
+		}
+		handler(deployment)
+	}
+	return nil
+}
+
 func ListVersions(ctx context.Context,
 	client *gapic.RegistryClient,
 	name names.Version,
