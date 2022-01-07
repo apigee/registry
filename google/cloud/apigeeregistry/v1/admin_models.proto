@@ -46,6 +46,7 @@ message Storage {
   }
 
   // A list of collections in the storage backend.
+  // Collections are listed in alphabetical order.
   repeated Collection collections = 2;
 }
 

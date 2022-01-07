@@ -17,11 +17,9 @@ package gorm
 import (
 	"context"
 	"fmt"
-	"sort"
 	"sync"
 
 	_ "github.com/GoogleCloudPlatform/cloudsql-proxy/proxy/dialers/postgres"
-	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/internal/storage/models"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -354,37 +352,29 @@ func (c *Client) Migrate(kind string) error {
 	return c.db.AutoMigrate(entities...)
 }
 
-func (c *Client) GetStorage() (*rpc.Storage, error) {
+func (c *Client) DatabaseName() string {
+	return c.db.Name()
+}
+
+func (c *Client) TableNames() ([]string, error) {
 	var tableNames []string
 	switch c.db.Name() {
 	case "postgres":
-		if err := c.db.Table("information_schema.tables").Where("table_schema = ?", "public").Pluck("table_name", &tableNames).Error; err != nil {
+		if err := c.db.Table("information_schema.tables").Where("table_schema = ?", "public").Order("table_name").Pluck("table_name", &tableNames).Error; err != nil {
 			return nil, err
 		}
 	case "sqlite":
-		if err := c.db.Table("sqlite_schema").Where("type = 'table' AND name NOT LIKE 'sqlite_%'").Pluck("name", &tableNames).Error; err != nil {
+		if err := c.db.Table("sqlite_schema").Where("type = 'table' AND name NOT LIKE 'sqlite_%'").Order("name").Pluck("name", &tableNames).Error; err != nil {
 			return nil, err
 		}
 	default:
 		return nil, status.Errorf(codes.Internal, "unsupported database %s", c.db.Name())
 	}
-	sort.Strings(tableNames)
-	collections := make([]*rpc.Storage_Collection, 0)
-	for _, tableName := range tableNames {
-		var count int64
-		err := c.db.Table(tableName).Count(&count).Error
-		if err != nil {
-			return nil, err
-		}
-		collections = append(collections,
-			&rpc.Storage_Collection{
-				Name:  tableName,
-				Count: count,
-			},
-		)
-	}
-	return &rpc.Storage{
-		Description: c.db.Name(),
-		Collections: collections,
-	}, nil
+	return tableNames, nil
+}
+
+func (c *Client) RowCount(tableName string) (int64, error) {
+	var count int64
+	err := c.db.Table(tableName).Count(&count).Error
+	return count, err
 }
