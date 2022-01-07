@@ -51,16 +51,8 @@ message BuildInfo {
   // The dependencies of the build.
   repeated Module dependencies = 4;
 
-  // A setting (key-value pair) associated with the build.
-  message Setting {
-    // The key used to store the setting.
-    string key = 1;
-    // The value of the setting.
-    string value = 2;
-  }
-
   // Settings associated with the build.
-  repeated Setting settings = 5;
+  map<string,string> settings = 5;
 }
 
 // Status represents the status of the service.

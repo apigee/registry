@@ -40,12 +40,9 @@ func BuildInfo() *rpc.BuildInfo {
 	if !ok {
 		return nil
 	}
-	settings := make([]*rpc.BuildInfo_Setting, 0)
+	settings := make(map[string]string, 0)
 	for _, setting := range info.Settings {
-		settings = append(settings, &rpc.BuildInfo_Setting{
-			Key:   setting.Key,
-			Value: setting.Value,
-		})
+		settings[setting.Key] = setting.Value
 	}
 	dependencies := make([]*rpc.BuildInfo_Module, 0)
 	for _, dep := range info.Deps {
