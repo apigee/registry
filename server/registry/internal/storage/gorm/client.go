@@ -21,6 +21,8 @@ import (
 
 	_ "github.com/GoogleCloudPlatform/cloudsql-proxy/proxy/dialers/postgres"
 	"github.com/apigee/registry/server/registry/internal/storage/models"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -348,4 +350,31 @@ func (c *Client) GetRecentDeploymentRevisions(ctx context.Context, offset int32,
 
 func (c *Client) Migrate(kind string) error {
 	return c.db.AutoMigrate(entities...)
+}
+
+func (c *Client) DatabaseName() string {
+	return c.db.Name()
+}
+
+func (c *Client) TableNames() ([]string, error) {
+	var tableNames []string
+	switch c.db.Name() {
+	case "postgres":
+		if err := c.db.Table("information_schema.tables").Where("table_schema = ?", "public").Order("table_name").Pluck("table_name", &tableNames).Error; err != nil {
+			return nil, err
+		}
+	case "sqlite":
+		if err := c.db.Table("sqlite_schema").Where("type = 'table' AND name NOT LIKE 'sqlite_%'").Order("name").Pluck("name", &tableNames).Error; err != nil {
+			return nil, err
+		}
+	default:
+		return nil, status.Errorf(codes.Internal, "unsupported database %s", c.db.Name())
+	}
+	return tableNames, nil
+}
+
+func (c *Client) RowCount(tableName string) (int64, error) {
+	var count int64
+	err := c.db.Table(tableName).Count(&count).Error
+	return count, err
 }

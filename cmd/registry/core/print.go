@@ -44,6 +44,14 @@ func PrintAPIDetail(message *rpc.Api) {
 	PrintMessage(message)
 }
 
+func PrintDeployment(deployment *rpc.ApiDeployment) {
+	fmt.Println(deployment.Name)
+}
+
+func PrintDeploymentDetail(message *rpc.ApiDeployment) {
+	PrintMessage(message)
+}
+
 func PrintVersion(version *rpc.ApiVersion) {
 	fmt.Println(version.Name)
 }

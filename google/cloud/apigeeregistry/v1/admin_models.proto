@@ -25,6 +25,31 @@ option java_multiple_files = true;
 option java_outer_classname = "AdminModelsProto";
 option go_package = "github.com/apigee/registry/rpc;rpc";
 
+// Status represents the status of the service.
+message Status {
+  // A string describing the status.
+  string message = 1;
+}
+
+// Storage describes the data stored by the service.
+message Storage {
+  // A string describing the storage backend.
+  string description = 1;
+
+  // A description of a collection in the backend database.
+  message Collection {
+    // The name of the collection.
+    string name = 1;
+
+    // The number of entries in the collection. 
+    int64 count = 2;
+  }
+
+  // A list of collections in the storage backend.
+  // Collections are listed in alphabetical order.
+  repeated Collection collections = 2;
+}
+
 // A Project is a top-level description of a collection of APIs.
 // Typically there would be one project for an entire organization.
 // Note: in a Google Cloud deployment, this resource and associated methods
