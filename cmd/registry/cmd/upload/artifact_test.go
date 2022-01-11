@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC
+// Copyright 2022 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -101,9 +101,15 @@ func TestManifestArtifactUpload(t *testing.T) {
 			}
 
 			manifest := &rpc.Manifest{}
-			body, _ := client.GetArtifactContents(ctx, req)
+			body, err := client.GetArtifactContents(ctx, req)
+			if err != nil {
+				t.Fatalf("GetArtifactContents() returned error: %s", err)
+			}
 			contents := body.GetData()
-			_ = proto.Unmarshal(contents, manifest)
+			err = proto.Unmarshal(contents, manifest)
+			if err != nil {
+				t.Fatalf("proto.Unmarshal() returned error: %s", err)
+			}
 
 			// Verify the manifest definition is correct
 			opts := cmp.Options{

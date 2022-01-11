@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC
+// Copyright 2022 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -35,13 +35,13 @@ func artifactCommand(ctx context.Context) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "artifact FILE_PATH --parent=value",
 		Short: "Upload an artifact",
-		Args:  cobra.MinimumNArgs(1),
+		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			artifactFilePath := args[0]
 			if artifactFilePath == "" {
 				log.Fatal(ctx, "Please provide a FILE_PATH for an artifact")
 			}
-			artifact, artifactID, err := buildArtifact(ctx, artifactFilePath)
+			artifact, err := buildArtifact(ctx, parent, artifactFilePath)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to read artifact")
 			}
@@ -49,7 +49,6 @@ func artifactCommand(ctx context.Context) *cobra.Command {
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
-			artifact.Name = fmt.Sprintf("%s/artifacts/%s", parent, artifactID)
 			log.Debugf(ctx, "Uploading %s", artifact.Name)
 			err = core.SetArtifact(ctx, client, artifact)
 			if err != nil {
@@ -62,13 +61,13 @@ func artifactCommand(ctx context.Context) *cobra.Command {
 	return cmd
 }
 
-func buildArtifact(ctx context.Context, filename string) (*rpc.Artifact, string, error) {
+func buildArtifact(ctx context.Context, parent string, filename string) (*rpc.Artifact, error) {
 	yamlBytes, err := ioutil.ReadFile(filename)
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
 
-	// get the kind and id from the YAML
+	// get the id and kind of artifact from the YAML elements common to all artifacts
 	type ArtifactHeader struct {
 		Id   string `yaml:"id"`
 		Kind string `yaml:"kind"`
@@ -76,10 +75,10 @@ func buildArtifact(ctx context.Context, filename string) (*rpc.Artifact, string,
 	var header ArtifactHeader
 	err = yaml.Unmarshal(yamlBytes, &header)
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
 
-	// read the specified artifact type
+	// read the specified kind of artifact
 	jsonBytes, _ := yaml.YAMLToJSON(yamlBytes) // to use protojson.Unmarshal()
 	var artifact *rpc.Artifact
 	switch header.Kind {
@@ -92,11 +91,13 @@ func buildArtifact(ctx context.Context, filename string) (*rpc.Artifact, string,
 	default:
 		err = fmt.Errorf("unsupported artifact type %s", header.Kind)
 	}
-
 	if err != nil {
-		return nil, header.Id, err
+		return nil, err
 	}
-	return artifact, header.Id, nil
+
+	// set the artifact name before returning
+	artifact.Name = fmt.Sprintf("%s/artifacts/%s", parent, header.Id)
+	return artifact, nil
 }
 
 func buildManifestArtifact(ctx context.Context, jsonBytes []byte) (*rpc.Artifact, error) {
