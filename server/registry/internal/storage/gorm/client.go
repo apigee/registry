@@ -142,69 +142,6 @@ func (c *Client) EnsureTables() error {
 	return nil
 }
 
-// Run runs a query using the storage client, returning an iterator.
-func (c *Client) Run(ctx context.Context, q *Query) *Iterator {
-	lock()
-	defer unlock()
-
-	// Filtering is currently implemented by skipping iterator elements that
-	// don't match the filter criteria, and expects to only reach the end of
-	// the iterator if there are no more resources to consider. Previously,
-	// the entire table would be read into memory. This limit should maintain
-	// that behavior until we improve our iterator implementation.
-	op := c.db.Offset(q.Offset).Limit(100000)
-	for _, r := range q.Requirements {
-		op = op.Where(r.Name+" = ?", r.Value)
-	}
-
-	if order := q.Order; order != "" {
-		op = op.Order(order)
-	} else {
-		op = op.Order("key")
-	}
-
-	switch q.Kind {
-	case "Project":
-		var v []models.Project
-		_ = op.Find(&v).Error
-		return &Iterator{values: v}
-	case "Api":
-		var v []models.Api
-		_ = op.Find(&v).Error
-		return &Iterator{values: v}
-	case "Version":
-		var v []models.Version
-		_ = op.Find(&v).Error
-		return &Iterator{values: v}
-	case "Spec":
-		var v []models.Spec
-		_ = op.Find(&v).Error
-		return &Iterator{values: v}
-	case "SpecRevisionTag":
-		var v []models.SpecRevisionTag
-		_ = op.Find(&v).Error
-		return &Iterator{values: v}
-	case "Deployment":
-		var v []models.Deployment
-		_ = op.Find(&v).Error
-		return &Iterator{values: v}
-	case "DeploymentRevisionTag":
-		var v []models.DeploymentRevisionTag
-		_ = op.Find(&v).Error
-		return &Iterator{values: v}
-	case "Blob":
-		var v []models.Blob
-		_ = op.Find(&v).Error
-		return &Iterator{values: v}
-	case "Artifact":
-		var v []models.Artifact
-		_ = op.Find(&v).Error
-		return &Iterator{values: v}
-	default:
-		return nil
-	}
-}
-
 func (c *Client) Migrate(kind string) error {
 	return c.db.AutoMigrate(entities...)
 }

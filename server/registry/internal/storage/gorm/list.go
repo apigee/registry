@@ -23,6 +23,7 @@ import (
 	"google.golang.org/api/iterator"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"gorm.io/gorm"
 )
 
 // ProjectList contains a page of project resources.
@@ -57,10 +58,16 @@ func (c *Client) ListProjects(ctx context.Context, opts PageOptions) (ProjectLis
 		return ProjectList{}, err
 	}
 
-	q := c.NewQuery(ProjectEntityName)
-	q = q.ApplyOffset(token.Offset)
+	lock()
+	var v []models.Project
+	_ = c.db.
+		Order("key").
+		Offset(token.Offset).
+		Limit(100000).
+		Find(&v).Error
+	unlock()
 
-	it := c.Run(ctx, q)
+	it := &Iterator{values: v}
 	response := ProjectList{
 		Projects: make([]models.Project, 0, opts.Size),
 	}
@@ -136,10 +143,13 @@ func (c *Client) ListApis(ctx context.Context, parent names.Project, opts PageOp
 		token.Filter = opts.Filter
 	}
 
-	q := c.NewQuery(ApiEntityName)
-	q = q.ApplyOffset(token.Offset)
+	op := c.db.
+		Order("key").
+		Offset(token.Offset).
+		Limit(100000)
+
 	if parent.ProjectID != "-" {
-		q = q.Require("ProjectID", parent.ProjectID)
+		op = op.Where("project_id = ?", parent.ProjectID)
 		if _, err := c.GetProject(ctx, parent); err != nil {
 			return ApiList{}, err
 		}
@@ -150,7 +160,12 @@ func (c *Client) ListApis(ctx context.Context, parent names.Project, opts PageOp
 		return ApiList{}, err
 	}
 
-	it := c.Run(ctx, q)
+	lock()
+	var v []models.Api
+	_ = op.Find(&v).Error
+	unlock()
+
+	it := &Iterator{values: v}
 	response := ApiList{
 		Apis: make([]models.Api, 0, opts.Size),
 	}
@@ -240,13 +255,16 @@ func (c *Client) ListVersions(ctx context.Context, parent names.Api, opts PageOp
 		token.Filter = opts.Filter
 	}
 
-	q := c.NewQuery(VersionEntityName)
-	q = q.ApplyOffset(token.Offset)
+	op := c.db.
+		Order("key").
+		Offset(token.Offset).
+		Limit(100000)
+
 	if parent.ProjectID != "-" {
-		q = q.Require("ProjectID", parent.ProjectID)
+		op = op.Where("project_id = ?", parent.ProjectID)
 	}
 	if parent.ApiID != "-" {
-		q = q.Require("ApiID", parent.ApiID)
+		op = op.Where("api_id = ?", parent.ApiID)
 	}
 	if parent.ProjectID != "-" && parent.ApiID != "-" {
 		if _, err := c.GetApi(ctx, parent); err != nil {
@@ -263,7 +281,12 @@ func (c *Client) ListVersions(ctx context.Context, parent names.Api, opts PageOp
 		return VersionList{}, err
 	}
 
-	it := c.Run(ctx, q)
+	lock()
+	var v []models.Version
+	_ = op.Find(&v).Error
+	unlock()
+
+	it := &Iterator{values: v}
 	response := VersionList{
 		Versions: make([]models.Version, 0, opts.Size),
 	}
@@ -476,13 +499,6 @@ func specMap(spec models.Spec) (map[string]interface{}, error) {
 }
 
 func (c *Client) ListSpecRevisions(ctx context.Context, parent names.Spec, opts PageOptions) (SpecList, error) {
-	q := c.NewQuery(SpecEntityName)
-	q = q.Require("ProjectID", parent.ProjectID)
-	q = q.Require("ApiID", parent.ApiID)
-	q = q.Require("VersionID", parent.VersionID)
-	q = q.Require("SpecID", parent.SpecID)
-	q = q.Descending("RevisionCreateTime")
-
 	token, err := decodeToken(opts.Token)
 	if err != nil {
 		return SpecList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
@@ -492,9 +508,20 @@ func (c *Client) ListSpecRevisions(ctx context.Context, parent names.Spec, opts 
 		return SpecList{}, status.Errorf(codes.InvalidArgument, "invalid filter %q: %s", opts.Filter, err)
 	}
 
-	q = q.ApplyOffset(token.Offset)
+	lock()
+	var v []models.Spec
+	_ = c.db.
+		Where("project_id = ?", parent.ProjectID).
+		Where("api_id = ?", parent.ApiID).
+		Where("version_id = ?", parent.VersionID).
+		Where("spec_id = ?", parent.SpecID).
+		Order("revision_create_time desc").
+		Offset(token.Offset).
+		Limit(100000).
+		Find(&v).Error
+	unlock()
 
-	it := c.Run(ctx, q)
+	it := &Iterator{values: v}
 	response := SpecList{
 		Specs: make([]models.Spec, 0, opts.Size),
 	}
@@ -680,14 +707,19 @@ func (c *Client) ListDeploymentRevisions(ctx context.Context, parent names.Deplo
 		return DeploymentList{}, status.Errorf(codes.InvalidArgument, "invalid filter %q: %s", opts.Filter, err)
 	}
 
-	q := c.NewQuery(DeploymentEntityName)
-	q = q.Require("ProjectID", parent.ProjectID)
-	q = q.Require("ApiID", parent.ApiID)
-	q = q.Require("DeploymentID", parent.DeploymentID)
-	q = q.Descending("RevisionCreateTime")
-	q = q.ApplyOffset(token.Offset)
+	lock()
+	var v []models.Deployment
+	_ = c.db.
+		Where("project_id = ?", parent.ProjectID).
+		Where("api_id = ?", parent.ApiID).
+		Where("deployment_id = ?", parent.DeploymentID).
+		Order("revision_create_time desc").
+		Offset(token.Offset).
+		Limit(100000).
+		Find(&v).Error
+	unlock()
 
-	it := c.Run(ctx, q)
+	it := &Iterator{values: v}
 	response := DeploymentList{
 		Deployments: make([]models.Deployment, 0, opts.Size),
 	}
@@ -746,23 +778,6 @@ func (c *Client) ListSpecArtifacts(ctx context.Context, parent names.Spec, opts 
 		token.Filter = opts.Filter
 	}
 
-	q := c.NewQuery(ArtifactEntityName)
-	q = q.ApplyOffset(token.Offset)
-	q = q.Require("DeploymentID", "")
-
-	if id := parent.ProjectID; id != "-" {
-		q = q.Require("ProjectID", id)
-	}
-	if id := parent.ApiID; id != "-" {
-		q = q.Require("ApiID", id)
-	}
-	if id := parent.VersionID; id != "-" {
-		q = q.Require("VersionID", id)
-	}
-	if id := parent.SpecID; id != "-" {
-		q = q.Require("SpecID", id)
-	}
-
 	if parent.ProjectID != "-" && parent.ApiID != "-" && parent.VersionID != "-" && parent.SpecID != "-" {
 		if _, err := c.GetSpec(ctx, parent); err != nil {
 			return ArtifactList{}, err
@@ -781,7 +796,21 @@ func (c *Client) ListSpecArtifacts(ctx context.Context, parent names.Spec, opts 
 		}
 	}
 
-	return c.listArtifacts(ctx, c.Run(ctx, q), opts, func(a *models.Artifact) bool {
+	op := c.db.Where(`deployment_id = ''`)
+	if id := parent.ProjectID; id != "-" {
+		op = op.Where("project_id = ?", id)
+	}
+	if id := parent.ApiID; id != "-" {
+		op = op.Where("api_id = ?", id)
+	}
+	if id := parent.VersionID; id != "-" {
+		op = op.Where("version_id = ?", id)
+	}
+	if id := parent.SpecID; id != "-" {
+		op = op.Where("spec_id = ?", id)
+	}
+
+	return c.listArtifacts(ctx, op, opts, func(a *models.Artifact) bool {
 		return a.ProjectID != "" && a.ApiID != "" && a.VersionID != "" && a.SpecID != ""
 	})
 }
@@ -798,21 +827,6 @@ func (c *Client) ListVersionArtifacts(ctx context.Context, parent names.Version,
 		token.Filter = opts.Filter
 	}
 
-	q := c.NewQuery(ArtifactEntityName)
-	q = q.ApplyOffset(token.Offset)
-
-	q = q.Require("SpecID", "")
-	q = q.Require("DeploymentID", "")
-	if id := parent.ProjectID; id != "-" {
-		q = q.Require("ProjectID", id)
-	}
-	if id := parent.ApiID; id != "-" {
-		q = q.Require("ApiID", id)
-	}
-	if id := parent.VersionID; id != "-" {
-		q = q.Require("VersionID", id)
-	}
-
 	if parent.ProjectID != "-" && parent.ApiID != "-" && parent.VersionID != "-" {
 		if _, err := c.GetVersion(ctx, parent); err != nil {
 			return ArtifactList{}, err
@@ -827,7 +841,19 @@ func (c *Client) ListVersionArtifacts(ctx context.Context, parent names.Version,
 		}
 	}
 
-	return c.listArtifacts(ctx, c.Run(ctx, q), opts, func(a *models.Artifact) bool {
+	op := c.db.Where(`deployment_id = ''`).
+		Where(`spec_id = ''`)
+	if id := parent.ProjectID; id != "-" {
+		op = op.Where("project_id = ?", id)
+	}
+	if id := parent.ApiID; id != "-" {
+		op = op.Where("api_id = ?", id)
+	}
+	if id := parent.VersionID; id != "-" {
+		op = op.Where("version_id = ?", id)
+	}
+
+	return c.listArtifacts(ctx, op, opts, func(a *models.Artifact) bool {
 		return a.ProjectID != "" && a.ApiID != "" && a.VersionID != ""
 	})
 }
@@ -844,21 +870,6 @@ func (c *Client) ListDeploymentArtifacts(ctx context.Context, parent names.Deplo
 		token.Filter = opts.Filter
 	}
 
-	q := c.NewQuery(ArtifactEntityName)
-	q = q.ApplyOffset(token.Offset)
-
-	q = q.Require("SpecID", "")
-	q = q.Require("VersionID", "")
-	if id := parent.ProjectID; id != "-" {
-		q = q.Require("ProjectID", id)
-	}
-	if id := parent.ApiID; id != "-" {
-		q = q.Require("ApiID", id)
-	}
-	if id := parent.DeploymentID; id != "-" {
-		q = q.Require("DeploymentID", id)
-	}
-
 	if parent.ProjectID != "-" && parent.ApiID != "-" && parent.DeploymentID != "-" {
 		if _, err := c.GetDeployment(ctx, parent); err != nil {
 			return ArtifactList{}, err
@@ -873,7 +884,19 @@ func (c *Client) ListDeploymentArtifacts(ctx context.Context, parent names.Deplo
 		}
 	}
 
-	return c.listArtifacts(ctx, c.Run(ctx, q), opts, func(a *models.Artifact) bool {
+	op := c.db.Where(`version_id = ''`).
+		Where(`spec_id = ''`)
+	if id := parent.ProjectID; id != "-" {
+		op = op.Where("project_id = ?", id)
+	}
+	if id := parent.ApiID; id != "-" {
+		op = op.Where("api_id = ?", id)
+	}
+	if id := parent.DeploymentID; id != "-" {
+		op = op.Where("deployment_id = ?", id)
+	}
+
+	return c.listArtifacts(ctx, op, opts, func(a *models.Artifact) bool {
 		return a.ProjectID != "" && a.ApiID != "" && a.DeploymentID != ""
 	})
 }
@@ -890,19 +913,6 @@ func (c *Client) ListApiArtifacts(ctx context.Context, parent names.Api, opts Pa
 		token.Filter = opts.Filter
 	}
 
-	q := c.NewQuery(ArtifactEntityName)
-	q = q.ApplyOffset(token.Offset)
-
-	q = q.Require("DeploymentID", "")
-	q = q.Require("VersionID", "")
-	q = q.Require("SpecID", "")
-	if id := parent.ProjectID; id != "-" {
-		q = q.Require("ProjectID", id)
-	}
-	if id := parent.ApiID; id != "-" {
-		q = q.Require("ApiID", id)
-	}
-
 	if parent.ProjectID != "-" && parent.ApiID != "-" {
 		if _, err := c.GetApi(ctx, parent); err != nil {
 			return ArtifactList{}, err
@@ -913,7 +923,17 @@ func (c *Client) ListApiArtifacts(ctx context.Context, parent names.Api, opts Pa
 		}
 	}
 
-	return c.listArtifacts(ctx, c.Run(ctx, q), opts, func(a *models.Artifact) bool {
+	op := c.db.Where(`deployment_id = ''`).
+		Where(`version_id = ''`).
+		Where(`spec_id = ''`)
+	if id := parent.ProjectID; id != "-" {
+		op = op.Where("project_id = ?", id)
+	}
+	if id := parent.ApiID; id != "-" {
+		op = op.Where("api_id = ?", id)
+	}
+
+	return c.listArtifacts(ctx, op, opts, func(a *models.Artifact) bool {
 		return a.ProjectID != "" && a.ApiID != ""
 	})
 }
@@ -930,26 +950,23 @@ func (c *Client) ListProjectArtifacts(ctx context.Context, parent names.Project,
 		token.Filter = opts.Filter
 	}
 
-	q := c.NewQuery(ArtifactEntityName)
-	q = q.ApplyOffset(token.Offset)
-
-	q = q.Require("ApiID", "")
-	q = q.Require("DeploymentID", "")
-	q = q.Require("VersionID", "")
-	q = q.Require("SpecID", "")
+	op := c.db.Where(`api_id = ''`).
+		Where(`deployment_id = ''`).
+		Where(`version_id = ''`).
+		Where(`spec_id = ''`)
 	if id := parent.ProjectID; id != "-" {
-		q = q.Require("ProjectID", id)
+		op = op.Where("project_id = ?", id)
 		if _, err := c.GetProject(ctx, parent); err != nil {
 			return ArtifactList{}, err
 		}
 	}
 
-	return c.listArtifacts(ctx, c.Run(ctx, q), opts, func(a *models.Artifact) bool {
+	return c.listArtifacts(ctx, op, opts, func(a *models.Artifact) bool {
 		return a.ProjectID != ""
 	})
 }
 
-func (c *Client) listArtifacts(ctx context.Context, it *Iterator, opts PageOptions, include func(*models.Artifact) bool) (ArtifactList, error) {
+func (c *Client) listArtifacts(ctx context.Context, op *gorm.DB, opts PageOptions, include func(*models.Artifact) bool) (ArtifactList, error) {
 	token, err := decodeToken(opts.Token)
 	if err != nil {
 		return ArtifactList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
@@ -962,6 +979,15 @@ func (c *Client) listArtifacts(ctx context.Context, it *Iterator, opts PageOptio
 		return ArtifactList{}, err
 	}
 
+	lock()
+	var v []models.Artifact
+	_ = op.
+		Offset(token.Offset).
+		Limit(100000).
+		Find(&v).Error
+	unlock()
+
+	it := &Iterator{values: v}
 	response := ArtifactList{
 		Artifacts: make([]models.Artifact, 0, opts.Size),
 	}
@@ -1016,13 +1042,18 @@ func artifactMap(artifact models.Artifact) (map[string]interface{}, error) {
 }
 
 func (c *Client) GetSpecTags(ctx context.Context, name names.Spec) ([]*models.SpecRevisionTag, error) {
-	q := c.NewQuery(SpecRevisionTagEntityName)
-	q = q.Require("ProjectID", name.ProjectID)
-	q = q.Require("ApiID", name.ApiID)
-	q = q.Require("VersionID", name.VersionID)
+	op := c.db.Where("project_id = ?", name.ProjectID).
+		Where("api_id = ?", name.ApiID).
+		Where("version_id = ?", name.VersionID)
 	if name.SpecID != "-" {
-		q = q.Require("SpecID", name.SpecID)
+		op = op.Where("spec_id = ?", name.SpecID)
 	}
+
+	lock()
+	var v []models.SpecRevisionTag
+	_ = op.Limit(100000).
+		Find(&v)
+	unlock()
 
 	var (
 		tags = make([]*models.SpecRevisionTag, 0)
@@ -1030,7 +1061,7 @@ func (c *Client) GetSpecTags(ctx context.Context, name names.Spec) ([]*models.Sp
 		err  error
 	)
 
-	it := c.Run(ctx, q)
+	it := &Iterator{values: v}
 	for err = it.Next(tag); err == nil; err = it.Next(tag) {
 		tags = append(tags, tag)
 	}
@@ -1042,12 +1073,17 @@ func (c *Client) GetSpecTags(ctx context.Context, name names.Spec) ([]*models.Sp
 }
 
 func (c *Client) GetDeploymentTags(ctx context.Context, name names.Deployment) ([]*models.DeploymentRevisionTag, error) {
-	q := c.NewQuery(DeploymentRevisionTagEntityName)
-	q = q.Require("ProjectID", name.ProjectID)
-	q = q.Require("ApiID", name.ApiID)
+	op := c.db.Where("project_id = ?", name.ProjectID).
+		Where("api_id = ?", name.ApiID)
 	if name.DeploymentID != "-" {
-		q = q.Require("DeploymentID", name.DeploymentID)
+		op = op.Where("deployment_id = ?", name.DeploymentID)
 	}
+
+	lock()
+	var v []models.DeploymentRevisionTag
+	_ = op.Limit(100000).
+		Find(&v)
+	unlock()
 
 	var (
 		tags = make([]*models.DeploymentRevisionTag, 0)
@@ -1055,7 +1091,7 @@ func (c *Client) GetDeploymentTags(ctx context.Context, name names.Deployment) (
 		err  error
 	)
 
-	it := c.Run(ctx, q)
+	it := &Iterator{values: v}
 	for err = it.Next(tag); err == nil; err = it.Next(tag) {
 		tags = append(tags, tag)
 	}
