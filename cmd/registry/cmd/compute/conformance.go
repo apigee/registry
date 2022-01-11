@@ -41,10 +41,10 @@ func conformanceCommand(ctx context.Context) *cobra.Command {
 		Short: "Compute lint results for API specs",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			filter, err := cmd.Flags().GetString("filter")
-			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to get filter from flags")
-			}
+			// specFilter, err := cmd.Flags().GetString("filter")
+			// if err != nil {
+			// 	log.FromContext(ctx).WithError(err).Fatal("Failed to get filter from flags")
+			// }
 
 			client, err := connection.NewClient(ctx)
 			if err != nil {
@@ -54,42 +54,35 @@ func conformanceCommand(ctx context.Context) *cobra.Command {
 			name := args[0]
 
 			// Ensure that the provided argument is a spec.
-			spec, err := names.ParseSpec(name)
+			specName, err := names.ParseSpec(name)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatalf("The provided argument %s does not match the regex of a spec", name)
 			}
 
-			artifact, err := names.ParseArtifact(fmt.Sprintf("projects/%s/locations/%s/artifacts/-", spec.ProjectID, names.Location))
+			artifactName, err := names.ParseArtifact(fmt.Sprintf("projects/%s/locations/%s/artifacts/-", specName.ProjectID, names.Location))
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Invalid project")
 			}
 
-			err = core.ListArtifacts(ctx, client, artifact, filter, true, func(artifact *rpc.Artifact) {
-				// Only consider artifacts which have the styleguide mimetype.
-				messageType, err := core.MessageTypeForMimeType(artifact.GetMimeType())
-				if err != nil {
-					log.FromContext(ctx).WithError(err).Debugf("Failed to get message type for MIME type %q", artifact.GetMimeType())
-					return
-				}
-
-				if messageType != "google.cloud.apigeeregistry.applications.v1alpha1.StyleGuide" {
-					// Ignore any artifact that isn't a style guide.
-					return
-				}
+			// List all the styleGuide artifacts in the registry
+			artifactFilter := "mime_type.contains('google.cloud.apigeeregistry.applications.v1alpha1.StyleGuide')"
+			err = core.ListArtifacts(ctx, client, artifactName, artifactFilter, true, func(artifact *rpc.Artifact) {
 
 				// Unmarshal the contents of the artifact into a style guide
 				styleguide := &rpc.StyleGuide{}
 				err = proto.Unmarshal(artifact.GetContents(), styleguide)
 				if err != nil {
-					log.FromContext(ctx).WithError(err).Debugf("Unmarshal() to StyleGuide failed on artifact of type %s", messageType)
+					log.FromContext(ctx).WithError(err).Debugf("Unmarshal() to StyleGuide failed on artifact: %s", artifact.GetName())
 					return
 				}
 
-				computeConformanceForStyleGuideWithPlugin(ctx, client, styleguide, spec, filter)
+				log.Debugf(ctx, "Processing styleguide: %s", styleguide.GetId())
+
+				processStyleGuide(ctx, client, styleguide, specName, filter)
 			})
 
 			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to list artifacts")
+				log.FromContext(ctx).WithError(err).Fatal("Failed to list styleguide artifacts")
 			}
 		},
 	}
@@ -98,9 +91,9 @@ func conformanceCommand(ctx context.Context) *cobra.Command {
 	return cmd
 }
 
-// computeConformanceForStyleGuide computes and attaches conformance reports as
+// processStyleGuide computes and attaches conformance reports as
 // artifacts to a spec or a collection of specs.
-func computeConformanceForStyleGuideWithPlugin(ctx context.Context,
+func processStyleGuide(ctx context.Context,
 	client connection.Client,
 	styleguide *rpc.StyleGuide,
 	spec names.Spec,
@@ -142,16 +135,22 @@ func computeConformanceForStyleGuideWithPlugin(ctx context.Context,
 
 	// Generate tasks.
 	err := core.ListSpecs(ctx, client, spec, filter, func(spec *rpc.ApiSpec) {
-		// Delegate the task of computing the conformance report for this spec
-		// to the worker pool.
-		taskQueue <- &computeConformanceTask{
-			client:              client,
-			spec:                spec,
-			linterNameToRules:   linterNameToRules,
-			styleguideId:        styleguide.GetId(),
-			ruleNameToGuideline: ruleNameToGuideline,
-			ruleNameToRule:      ruleNameToRule,
-		}
+		// Check if the styleguide definition contains the mime_type of the spec
+		for _, supportedType := range styleguide.GetMimeTypes() {
+			if supportedType == spec.GetMimeType() {
+				// Delegate the task of computing the conformance report for this spec
+				// to the worker pool.
+				taskQueue <- &computeConformanceTask{
+					client:              client,
+					spec:                spec,
+					linterNameToRules:   linterNameToRules,
+					styleguideId:        styleguide.GetId(),
+					ruleNameToGuideline: ruleNameToGuideline,
+					ruleNameToRule:      ruleNameToRule,
+				}
+				break
+			}
+		}	
 	})
 	if err != nil {
 		log.FromContext(ctx).WithError(err).Fatal("Failed to list specs")
@@ -298,12 +297,13 @@ func (task *computeConformanceTask) computeConformanceReport(
 			// Iterate over the list of problems returned by the linter.
 			for _, problem := range lintProblems {
 				normalizedRuleName := canonicalizeRuleName(linterName, problem.GetRuleId())
-				if _, ok := task.ruleNameToGuideline[normalizedRuleName]; !ok {
+				guideline, ok := task.ruleNameToGuideline[normalizedRuleName]
+				if !ok {
 					// If a problem the linter returned isn't one that we expect
 					// then we should ignore it
 					continue
 				}
-				guideline := task.ruleNameToGuideline[normalizedRuleName]
+				
 				rule := task.ruleNameToRule[normalizedRuleName]
 
 				// Check if the guideline report for the guideline which contains this rule
