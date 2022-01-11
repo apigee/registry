@@ -164,8 +164,8 @@ func canonicalizeRuleName(linterName string, ruleName string) string {
 	return fmt.Sprintf("%s_%s", linterName, ruleName)
 }
 
-func conformanceRelation(styleguideName string) string {
-	return "conformance-" + styleguideName
+func conformanceReportName(specName string, styleguideName string) string {
+	return fmt.Sprintf("%s/artifacts/conformance-%s", specName, styleguideName)
 }
 
 type computeConformanceTask struct {
@@ -178,11 +178,11 @@ type computeConformanceTask struct {
 }
 
 func (task *computeConformanceTask) String() string {
-	return fmt.Sprintf("compute %s/artifacts/conformance-%s", task.spec.GetName(), task.styleguideId)
+	return fmt.Sprintf("compute %s", conformanceReportName(task.spec.GetName(), task.styleguideId))
 }
 
 func (task *computeConformanceTask) Run(ctx context.Context) error {
-	log.Debugf(ctx, "Computing conformance report for spec: %s", task.spec.GetName())
+	log.Debugf(ctx, "Computing conformance report %s", conformanceReportName(task.spec.GetName(), task.styleguideId))
 	// Get the spec's bytes
 	data, err := core.GetBytesForSpec(ctx, task.client, task.spec)
 	if err != nil {
@@ -337,7 +337,7 @@ func (task *computeConformanceTask) computeConformanceReport(
 func (task *computeConformanceTask) initializeConformanceReport() *rpc.ConformanceReport {
 	// Create an empty conformance report.
 	conformanceReport := &rpc.ConformanceReport{
-		Name:           task.spec.GetName() + "/artifacts/" + conformanceRelation(task.styleguideId),
+		Name:           conformanceReportName(task.spec.GetName(), task.styleguideId),
 		StyleguideName: task.styleguideId,
 	}
 
@@ -377,14 +377,13 @@ func (task *computeConformanceTask) storeConformanceReport(
 	ctx context.Context,
 	conformanceReport *rpc.ConformanceReport) error {
 	// Store the conformance report.
-	subject := task.spec.GetName()
 	messageData, err := proto.Marshal(conformanceReport)
 	if err != nil {
 		return err
 	}
 
 	artifact := &rpc.Artifact{
-		Name:     subject + "/artifacts/" + conformanceRelation(task.styleguideId),
+		Name:     conformanceReportName(task.spec.GetName(), task.styleguideId),
 		MimeType: core.MimeTypeForMessageType("google.cloud.apigeeregistry.applications.v1alpha1.ConformanceReport"),
 		Contents: messageData,
 	}

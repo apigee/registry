@@ -47,6 +47,7 @@ var artifactFields = []filtering.Field{
 
 func (d *Client) ListSpecArtifacts(ctx context.Context, parent names.Spec, opts PageOptions) (ArtifactList, error) {
 	q := d.NewQuery(gorm.ArtifactEntityName)
+	q = q.Require("DeploymentID", "")
 
 	token, err := decodeToken(opts.Token)
 	if err != nil {
@@ -100,6 +101,7 @@ func (d *Client) ListSpecArtifacts(ctx context.Context, parent names.Spec, opts 
 func (d *Client) ListVersionArtifacts(ctx context.Context, parent names.Version, opts PageOptions) (ArtifactList, error) {
 	q := d.NewQuery(gorm.ArtifactEntityName)
 	q = q.Require("SpecID", "")
+	q = q.Require("DeploymentID", "")
 
 	token, err := decodeToken(opts.Token)
 	if err != nil {
@@ -192,6 +194,7 @@ func (d *Client) ListDeploymentArtifacts(ctx context.Context, parent names.Deplo
 
 func (d *Client) ListApiArtifacts(ctx context.Context, parent names.Api, opts PageOptions) (ArtifactList, error) {
 	q := d.NewQuery(gorm.ArtifactEntityName)
+	q = q.Require("DeploymentID", "")
 	q = q.Require("VersionID", "")
 	q = q.Require("SpecID", "")
 
@@ -233,6 +236,7 @@ func (d *Client) ListApiArtifacts(ctx context.Context, parent names.Api, opts Pa
 func (d *Client) ListProjectArtifacts(ctx context.Context, parent names.Project, opts PageOptions) (ArtifactList, error) {
 	q := d.NewQuery(gorm.ArtifactEntityName)
 	q = q.Require("ApiID", "")
+	q = q.Require("DeploymentID", "")
 	q = q.Require("VersionID", "")
 	q = q.Require("SpecID", "")
 
