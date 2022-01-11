@@ -1,0 +1,15 @@
+id: openapitest-default
+mime_types:
+  - application/x.openapi+gzip;version=2
+guidelines:
+  - id: refproperties
+    display_name: Govern Ref Properties
+    description: This guideline governs properties for ref fields on specs.
+    rules:
+      - id: norefsiblings
+        description: An object exposing a $ref property cannot be further extended with additional properties.
+        linter: sample
+        linter_rulename: no-$ref-siblings
+linters:
+  - name: sample
+    uri: https://sample/url
