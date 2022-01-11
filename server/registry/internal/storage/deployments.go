@@ -34,6 +34,6 @@ func (d *Client) DeleteDeployment(ctx context.Context, name names.Deployment) er
 	return d.Client.DeleteDeployment(ctx, name)
 }
 
-func (d *Client) GetDeploymentTags(ctx context.Context, name names.Deployment) ([]*models.DeploymentRevisionTag, error) {
+func (d *Client) GetDeploymentTags(ctx context.Context, name names.Deployment) ([]models.DeploymentRevisionTag, error) {
 	return d.Client.GetDeploymentTags(ctx, name)
 }

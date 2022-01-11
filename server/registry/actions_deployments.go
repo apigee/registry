@@ -300,7 +300,7 @@ func deploymentRevisionTags(ctx context.Context, db *storage.Client, name names.
 	return tags, nil
 }
 
-func deploymentTagsByRevision(tags []*models.DeploymentRevisionTag) map[string][]string {
+func deploymentTagsByRevision(tags []models.DeploymentRevisionTag) map[string][]string {
 	revTags := make(map[string][]string, len(tags))
 	for _, tag := range tags {
 		rev := names.DeploymentRevision{

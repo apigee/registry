@@ -34,6 +34,6 @@ func (d *Client) DeleteSpec(ctx context.Context, name names.Spec) error {
 	return d.Client.DeleteSpec(ctx, name)
 }
 
-func (d *Client) GetSpecTags(ctx context.Context, name names.Spec) ([]*models.SpecRevisionTag, error) {
+func (d *Client) GetSpecTags(ctx context.Context, name names.Spec) ([]models.SpecRevisionTag, error) {
 	return d.Client.GetSpecTags(ctx, name)
 }

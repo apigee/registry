@@ -504,8 +504,11 @@ func (c *Client) ListSpecRevisions(ctx context.Context, parent names.Spec, opts 
 		return SpecList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
 	}
 
+	response := SpecList{
+		Specs: make([]models.Spec, 0, opts.Size),
+	}
+
 	lock()
-	var v []models.Spec
 	_ = c.db.
 		Where("project_id = ?", parent.ProjectID).
 		Where("api_id = ?", parent.ApiID).
@@ -513,29 +516,14 @@ func (c *Client) ListSpecRevisions(ctx context.Context, parent names.Spec, opts 
 		Where("spec_id = ?", parent.SpecID).
 		Order("revision_create_time desc").
 		Offset(token.Offset).
-		Limit(100000).
-		Find(&v).Error
+		Limit(int(opts.Size) + 1).
+		Find(&response.Specs).Error
 	unlock()
 
-	it := &Iterator{values: v}
-	response := SpecList{
-		Specs: make([]models.Spec, 0, opts.Size),
-	}
-
-	revision := new(models.Spec)
-	for err = it.Next(revision); err == nil; err = it.Next(revision) {
-		token.Offset++
-
-		response.Specs = append(response.Specs, *revision)
-		if len(response.Specs) == int(opts.Size) {
-			break
-		}
-	}
-	if err != nil && err != iterator.Done {
-		return response, status.Error(codes.Internal, err.Error())
-	}
-
-	if err == nil {
+	// Trim the response and return a page token if too many resources were found.
+	if len(response.Specs) > int(opts.Size) {
+		token.Offset += int(opts.Size)
+		response.Specs = response.Specs[:opts.Size]
 		response.Token, err = encodeToken(token)
 		if err != nil {
 			return response, status.Error(codes.Internal, err.Error())
@@ -699,37 +687,25 @@ func (c *Client) ListDeploymentRevisions(ctx context.Context, parent names.Deplo
 		return DeploymentList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
 	}
 
+	response := DeploymentList{
+		Deployments: make([]models.Deployment, 0, opts.Size),
+	}
+
 	lock()
-	var v []models.Deployment
 	_ = c.db.
 		Where("project_id = ?", parent.ProjectID).
 		Where("api_id = ?", parent.ApiID).
 		Where("deployment_id = ?", parent.DeploymentID).
 		Order("revision_create_time desc").
 		Offset(token.Offset).
-		Limit(100000).
-		Find(&v).Error
+		Limit(int(opts.Size) + 1).
+		Find(&response.Deployments).Error
 	unlock()
 
-	it := &Iterator{values: v}
-	response := DeploymentList{
-		Deployments: make([]models.Deployment, 0, opts.Size),
-	}
-
-	revision := new(models.Deployment)
-	for err = it.Next(revision); err == nil; err = it.Next(revision) {
-		token.Offset++
-
-		response.Deployments = append(response.Deployments, *revision)
-		if len(response.Deployments) == int(opts.Size) {
-			break
-		}
-	}
-	if err != nil && err != iterator.Done {
-		return response, status.Error(codes.Internal, err.Error())
-	}
-
-	if err == nil {
+	// Trim the response and return a page token if too many resources were found.
+	if len(response.Deployments) > int(opts.Size) {
+		token.Offset += int(opts.Size)
+		response.Deployments = response.Deployments[:opts.Size]
 		response.Token, err = encodeToken(token)
 		if err != nil {
 			return response, status.Error(codes.Internal, err.Error())
@@ -1033,7 +1009,7 @@ func artifactMap(artifact models.Artifact) (map[string]interface{}, error) {
 	}, nil
 }
 
-func (c *Client) GetSpecTags(ctx context.Context, name names.Spec) ([]*models.SpecRevisionTag, error) {
+func (c *Client) GetSpecTags(ctx context.Context, name names.Spec) ([]models.SpecRevisionTag, error) {
 	op := c.db.Where("project_id = ?", name.ProjectID).
 		Where("api_id = ?", name.ApiID).
 		Where("version_id = ?", name.VersionID)
@@ -1042,29 +1018,14 @@ func (c *Client) GetSpecTags(ctx context.Context, name names.Spec) ([]*models.Sp
 	}
 
 	lock()
-	var v []models.SpecRevisionTag
-	_ = op.Limit(100000).
-		Find(&v)
-	unlock()
+	defer unlock()
 
-	var (
-		tags = make([]*models.SpecRevisionTag, 0)
-		tag  = new(models.SpecRevisionTag)
-		err  error
-	)
-
-	it := &Iterator{values: v}
-	for err = it.Next(tag); err == nil; err = it.Next(tag) {
-		tags = append(tags, tag)
-	}
-	if err != nil && err != iterator.Done {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
+	tags := make([]models.SpecRevisionTag, 0)
+	_ = op.Limit(100000).Find(&tags)
 	return tags, nil
 }
 
-func (c *Client) GetDeploymentTags(ctx context.Context, name names.Deployment) ([]*models.DeploymentRevisionTag, error) {
+func (c *Client) GetDeploymentTags(ctx context.Context, name names.Deployment) ([]models.DeploymentRevisionTag, error) {
 	op := c.db.Where("project_id = ?", name.ProjectID).
 		Where("api_id = ?", name.ApiID)
 	if name.DeploymentID != "-" {
@@ -1072,24 +1033,9 @@ func (c *Client) GetDeploymentTags(ctx context.Context, name names.Deployment) (
 	}
 
 	lock()
-	var v []models.DeploymentRevisionTag
-	_ = op.Limit(100000).
-		Find(&v)
-	unlock()
-
-	var (
-		tags = make([]*models.DeploymentRevisionTag, 0)
-		tag  = new(models.DeploymentRevisionTag)
-		err  error
-	)
-
-	it := &Iterator{values: v}
-	for err = it.Next(tag); err == nil; err = it.Next(tag) {
-		tags = append(tags, tag)
-	}
-	if err != nil && err != iterator.Done {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
+	defer unlock()
+	tags := make([]models.DeploymentRevisionTag, 0)
+	_ = op.Limit(100000).Find(&tags)
 
 	return tags, nil
 }
