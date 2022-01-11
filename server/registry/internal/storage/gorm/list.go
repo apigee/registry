@@ -504,10 +504,6 @@ func (c *Client) ListSpecRevisions(ctx context.Context, parent names.Spec, opts 
 		return SpecList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
 	}
 
-	if err := token.ValidateFilter(opts.Filter); err != nil {
-		return SpecList{}, status.Errorf(codes.InvalidArgument, "invalid filter %q: %s", opts.Filter, err)
-	}
-
 	lock()
 	var v []models.Spec
 	_ = c.db.
@@ -701,10 +697,6 @@ func (c *Client) ListDeploymentRevisions(ctx context.Context, parent names.Deplo
 	token, err := decodeToken(opts.Token)
 	if err != nil {
 		return DeploymentList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
-	}
-
-	if err := token.ValidateFilter(opts.Filter); err != nil {
-		return DeploymentList{}, status.Errorf(codes.InvalidArgument, "invalid filter %q: %s", opts.Filter, err)
 	}
 
 	lock()
