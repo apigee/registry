@@ -167,39 +167,39 @@ func (c *Client) Run(ctx context.Context, q *Query) *Iterator {
 	case "Project":
 		var v []models.Project
 		_ = op.Find(&v).Error
-		return &Iterator{Values: v, Index: 0}
+		return &Iterator{values: v}
 	case "Api":
 		var v []models.Api
 		_ = op.Find(&v).Error
-		return &Iterator{Values: v, Index: 0}
+		return &Iterator{values: v}
 	case "Version":
 		var v []models.Version
 		_ = op.Find(&v).Error
-		return &Iterator{Values: v, Index: 0}
+		return &Iterator{values: v}
 	case "Spec":
 		var v []models.Spec
 		_ = op.Find(&v).Error
-		return &Iterator{Values: v, Index: 0}
+		return &Iterator{values: v}
 	case "SpecRevisionTag":
 		var v []models.SpecRevisionTag
 		_ = op.Find(&v).Error
-		return &Iterator{Values: v, Index: 0}
+		return &Iterator{values: v}
 	case "Deployment":
 		var v []models.Deployment
 		_ = op.Find(&v).Error
-		return &Iterator{Values: v, Index: 0}
+		return &Iterator{values: v}
 	case "DeploymentRevisionTag":
 		var v []models.DeploymentRevisionTag
 		_ = op.Find(&v).Error
-		return &Iterator{Values: v, Index: 0}
+		return &Iterator{values: v}
 	case "Blob":
 		var v []models.Blob
 		_ = op.Find(&v).Error
-		return &Iterator{Values: v, Index: 0}
+		return &Iterator{values: v}
 	case "Artifact":
 		var v []models.Artifact
 		_ = op.Find(&v).Error
-		return &Iterator{Values: v, Index: 0}
+		return &Iterator{values: v}
 	default:
 		return nil
 	}

@@ -446,7 +446,7 @@ func (c *Client) getRecentSpecRevisions(ctx context.Context, offset int32, proje
 
 	var v []models.Spec
 	_ = op.Scan(&v).Error
-	return &Iterator{Values: v, Index: 0}
+	return &Iterator{values: v, index: 0}
 }
 
 func specMap(spec models.Spec) (map[string]interface{}, error) {
@@ -641,7 +641,7 @@ func (c *Client) getRecentDeploymentRevisions(ctx context.Context, offset int32,
 
 	var v []models.Deployment
 	_ = op.Scan(&v).Error
-	return &Iterator{Values: v, Index: 0}
+	return &Iterator{values: v, index: 0}
 }
 
 func deploymentMap(deployment models.Deployment) (map[string]interface{}, error) {
