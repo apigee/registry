@@ -18,6 +18,7 @@ import (
 	"context"
 
 	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/server/registry/internal/buildinfo"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -25,6 +26,7 @@ import (
 func (s *RegistryServer) GetStatus(ctx context.Context, req *emptypb.Empty) (*rpc.Status, error) {
 	status := &rpc.Status{
 		Message: "running",
+		Build:   buildinfo.BuildInfo(),
 	}
 	return status, nil
 }
