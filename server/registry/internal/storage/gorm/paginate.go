@@ -38,7 +38,7 @@ type PageOptions struct {
 type token struct {
 	// Offset is the number of resources that should be skipped before the page begins.
 	// It should be set to the number of resources already returned.
-	Offset int32
+	Offset int
 	// Filter is the filter string for this listing request. It should be consistent between sequential pages.
 	Filter string
 }

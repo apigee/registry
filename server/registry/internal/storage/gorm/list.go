@@ -414,7 +414,7 @@ func (c *Client) ListSpecs(ctx context.Context, parent names.Version, opts PageO
 	return response, nil
 }
 
-func (c *Client) getRecentSpecRevisions(ctx context.Context, offset int32, projectID, apiID, versionID string) *Iterator {
+func (c *Client) getRecentSpecRevisions(ctx context.Context, offset int, projectID, apiID, versionID string) *Iterator {
 	lock()
 	defer unlock()
 
@@ -431,7 +431,7 @@ func (c *Client) getRecentSpecRevisions(ctx context.Context, offset int32, proje
 				Table("specs").
 				Group("project_id, api_id, version_id, spec_id")).
 		Order("key").
-		Offset(int(offset)).
+		Offset(offset).
 		Limit(100000)
 
 	if projectID != "-" {
@@ -612,7 +612,7 @@ func (c *Client) ListDeployments(ctx context.Context, parent names.Api, opts Pag
 	return response, nil
 }
 
-func (c *Client) getRecentDeploymentRevisions(ctx context.Context, offset int32, projectID, apiID string) *Iterator {
+func (c *Client) getRecentDeploymentRevisions(ctx context.Context, offset int, projectID, apiID string) *Iterator {
 	lock()
 	defer unlock()
 
@@ -629,7 +629,7 @@ func (c *Client) getRecentDeploymentRevisions(ctx context.Context, offset int32,
 				Table("deployments").
 				Group("project_id, api_id, deployment_id")).
 		Order("key").
-		Offset(int(offset)).
+		Offset(offset).
 		Limit(100000)
 
 	if projectID != "-" {

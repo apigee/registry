@@ -66,7 +66,7 @@ func (q *Query) Descending(field string) *Query {
 	return q
 }
 
-func (q *Query) ApplyOffset(offset int32) *Query {
+func (q *Query) ApplyOffset(offset int) *Query {
 	q.Offset = int(offset)
 	return q
 }
