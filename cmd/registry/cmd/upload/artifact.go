@@ -37,11 +37,11 @@ func artifactCommand(ctx context.Context) *cobra.Command {
 		Short: "Upload an artifact",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			artifactPath := args[0]
-			if artifactPath == "" {
+			artifactFilePath := args[0]
+			if artifactFilePath == "" {
 				log.Fatal(ctx, "Please provide a FILE_PATH for an artifact")
 			}
-			artifact, artifactID, err := buildArtifact(ctx, artifactPath)
+			artifact, artifactID, err := buildArtifact(ctx, artifactFilePath)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to read artifact")
 			}
