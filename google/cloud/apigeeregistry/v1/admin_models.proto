@@ -25,10 +25,43 @@ option java_multiple_files = true;
 option java_outer_classname = "AdminModelsProto";
 option go_package = "github.com/apigee/registry/rpc;rpc";
 
+// BuildInfo describes a server build.
+message BuildInfo {
+  // Version of Go that produced this binary.
+  string go_version = 1;
+
+  // The main package path.
+  string path = 2;
+
+  // A module used to create the build.
+  message Module {
+    // The module path.
+    string path = 1;
+    // The module version.
+    string version = 2;
+    // The module checksum.
+    string sum = 3;
+    // An optional replacement for the module
+    Module replacement = 4;
+  }
+
+  // The main module.
+  Module main = 3;
+
+  // The dependencies of the build.
+  repeated Module dependencies = 4;
+
+  // Settings associated with the build.
+  map<string,string> settings = 5;
+}
+
 // Status represents the status of the service.
 message Status {
   // A string describing the status.
   string message = 1;
+
+  // Information about the build of the server.
+  BuildInfo build = 2;
 }
 
 // Storage describes the data stored by the service.
