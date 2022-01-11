@@ -50,6 +50,8 @@ func Command(ctx context.Context) *cobra.Command {
 				_, err2 = core.GetProject(ctx, adminClient, project, core.PrintProjectDetail)
 			} else if api, err := names.ParseApi(name); err == nil {
 				_, err2 = core.GetAPI(ctx, client, api, core.PrintAPIDetail)
+			} else if deployment, err := names.ParseDeployment(name); err == nil {
+				_, err2 = core.GetDeployment(ctx, client, deployment, core.PrintDeploymentDetail)
 			} else if version, err := names.ParseVersion(name); err == nil {
 				_, err2 = core.GetVersion(ctx, client, version, core.PrintVersionDetail)
 			} else if spec, err := names.ParseSpec(name); err == nil {

@@ -25,6 +25,64 @@ option java_multiple_files = true;
 option java_outer_classname = "AdminModelsProto";
 option go_package = "github.com/apigee/registry/rpc;rpc";
 
+// BuildInfo describes a server build.
+message BuildInfo {
+  // Version of Go that produced this binary.
+  string go_version = 1;
+
+  // The main package path.
+  string path = 2;
+
+  // A module used to create the build.
+  message Module {
+    // The module path.
+    string path = 1;
+    // The module version.
+    string version = 2;
+    // The module checksum.
+    string sum = 3;
+    // An optional replacement for the module
+    Module replacement = 4;
+  }
+
+  // The main module.
+  Module main = 3;
+
+  // The dependencies of the build.
+  repeated Module dependencies = 4;
+
+  // Settings associated with the build.
+  map<string,string> settings = 5;
+}
+
+// Status represents the status of the service.
+message Status {
+  // A string describing the status.
+  string message = 1;
+
+  // Information about the build of the server.
+  BuildInfo build = 2;
+}
+
+// Storage describes the data stored by the service.
+message Storage {
+  // A string describing the storage backend.
+  string description = 1;
+
+  // A description of a collection in the backend database.
+  message Collection {
+    // The name of the collection.
+    string name = 1;
+
+    // The number of entries in the collection. 
+    int64 count = 2;
+  }
+
+  // A list of collections in the storage backend.
+  // Collections are listed in alphabetical order.
+  repeated Collection collections = 2;
+}
+
 // A Project is a top-level description of a collection of APIs.
 // Typically there would be one project for an entire organization.
 // Note: in a Google Cloud deployment, this resource and associated methods
