@@ -20,7 +20,6 @@ import (
 	"github.com/apigee/registry/server/registry/internal/storage/filtering"
 	"github.com/apigee/registry/server/registry/internal/storage/models"
 	"github.com/apigee/registry/server/registry/names"
-	"google.golang.org/api/iterator"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
@@ -59,43 +58,38 @@ func (c *Client) ListProjects(ctx context.Context, opts PageOptions) (ProjectLis
 	}
 
 	lock()
-	var v []models.Project
+	var projects []models.Project
 	_ = c.db.
 		Order("key").
 		Offset(token.Offset).
 		Limit(100000).
-		Find(&v).Error
+		Find(&projects).Error
 	unlock()
 
-	it := &Iterator{values: v}
 	response := ProjectList{
 		Projects: make([]models.Project, 0, opts.Size),
 	}
 
-	project := new(models.Project)
-	for err = it.Next(project); err == nil; err = it.Next(project) {
-		match, err := filter.Matches(projectMap(*project))
+	for _, project := range projects {
+		match, err := filter.Matches(projectMap(project))
 		if err != nil {
 			return response, err
 		} else if !match {
 			token.Offset++
 			continue
+		}
+
+		if len(response.Projects) < int(opts.Size) {
+			response.Projects = append(response.Projects, project)
+			token.Offset++
 		} else if len(response.Projects) == int(opts.Size) {
+			response.Token, err = encodeToken(token)
+			if err != nil {
+				return response, status.Error(codes.Internal, err.Error())
+			}
 			break
 		}
 
-		response.Projects = append(response.Projects, *project)
-		token.Offset++
-	}
-	if err != nil && err != iterator.Done {
-		return response, status.Error(codes.Internal, err.Error())
-	}
-
-	if err == nil {
-		response.Token, err = encodeToken(token)
-		if err != nil {
-			return response, status.Error(codes.Internal, err.Error())
-		}
 	}
 
 	return response, nil
@@ -161,18 +155,16 @@ func (c *Client) ListApis(ctx context.Context, parent names.Project, opts PageOp
 	}
 
 	lock()
-	var v []models.Api
-	_ = op.Find(&v).Error
+	var apis []models.Api
+	_ = op.Find(&apis).Error
 	unlock()
 
-	it := &Iterator{values: v}
 	response := ApiList{
 		Apis: make([]models.Api, 0, opts.Size),
 	}
 
-	api := new(models.Api)
-	for err = it.Next(api); err == nil; err = it.Next(api) {
-		apiMap, err := apiMap(*api)
+	for _, api := range apis {
+		apiMap, err := apiMap(api)
 		if err != nil {
 			return response, status.Error(codes.Internal, err.Error())
 		}
@@ -183,22 +175,19 @@ func (c *Client) ListApis(ctx context.Context, parent names.Project, opts PageOp
 		} else if !match {
 			token.Offset++
 			continue
+		}
+
+		if len(response.Apis) < int(opts.Size) {
+			response.Apis = append(response.Apis, api)
+			token.Offset++
 		} else if len(response.Apis) == int(opts.Size) {
+			response.Token, err = encodeToken(token)
+			if err != nil {
+				return response, status.Error(codes.Internal, err.Error())
+			}
 			break
 		}
 
-		response.Apis = append(response.Apis, *api)
-		token.Offset++
-	}
-	if err != nil && err != iterator.Done {
-		return response, status.Error(codes.Internal, err.Error())
-	}
-
-	if err == nil {
-		response.Token, err = encodeToken(token)
-		if err != nil {
-			return response, status.Error(codes.Internal, err.Error())
-		}
 	}
 
 	return response, nil
@@ -255,17 +244,6 @@ func (c *Client) ListVersions(ctx context.Context, parent names.Api, opts PageOp
 		token.Filter = opts.Filter
 	}
 
-	op := c.db.
-		Order("key").
-		Offset(token.Offset).
-		Limit(100000)
-
-	if parent.ProjectID != "-" {
-		op = op.Where("project_id = ?", parent.ProjectID)
-	}
-	if parent.ApiID != "-" {
-		op = op.Where("api_id = ?", parent.ApiID)
-	}
 	if parent.ProjectID != "-" && parent.ApiID != "-" {
 		if _, err := c.GetApi(ctx, parent); err != nil {
 			return VersionList{}, err
@@ -281,19 +259,29 @@ func (c *Client) ListVersions(ctx context.Context, parent names.Api, opts PageOp
 		return VersionList{}, err
 	}
 
+	op := c.db.
+		Order("key").
+		Offset(token.Offset).
+		Limit(100000)
+
+	if parent.ProjectID != "-" {
+		op = op.Where("project_id = ?", parent.ProjectID)
+	}
+	if parent.ApiID != "-" {
+		op = op.Where("api_id = ?", parent.ApiID)
+	}
+
 	lock()
-	var v []models.Version
-	_ = op.Find(&v).Error
+	var versions []models.Version
+	_ = op.Find(&versions).Error
 	unlock()
 
-	it := &Iterator{values: v}
 	response := VersionList{
 		Versions: make([]models.Version, 0, opts.Size),
 	}
 
-	version := new(models.Version)
-	for err = it.Next(version); err == nil; err = it.Next(version) {
-		versionMap, err := versionMap(*version)
+	for _, version := range versions {
+		versionMap, err := versionMap(version)
 		if err != nil {
 			return response, status.Error(codes.Internal, err.Error())
 		}
@@ -304,21 +292,17 @@ func (c *Client) ListVersions(ctx context.Context, parent names.Api, opts PageOp
 		} else if !match {
 			token.Offset++
 			continue
-		} else if len(response.Versions) == int(opts.Size) {
-			break
 		}
 
-		response.Versions = append(response.Versions, *version)
-		token.Offset++
-	}
-	if err != nil && err != iterator.Done {
-		return response, status.Error(codes.Internal, err.Error())
-	}
-
-	if err == nil {
-		response.Token, err = encodeToken(token)
-		if err != nil {
-			return response, status.Error(codes.Internal, err.Error())
+		if len(response.Versions) < int(opts.Size) {
+			response.Versions = append(response.Versions, version)
+			token.Offset++
+		} else if len(response.Versions) == int(opts.Size) {
+			response.Token, err = encodeToken(token)
+			if err != nil {
+				return response, status.Error(codes.Internal, err.Error())
+			}
+			break
 		}
 	}
 
@@ -398,49 +382,6 @@ func (c *Client) ListSpecs(ctx context.Context, parent names.Version, opts PageO
 		return SpecList{}, err
 	}
 
-	it := c.getRecentSpecRevisions(ctx, token.Offset, parent.ProjectID, parent.ApiID, parent.VersionID)
-	response := SpecList{
-		Specs: make([]models.Spec, 0, opts.Size),
-	}
-
-	spec := new(models.Spec)
-	for err = it.Next(spec); err == nil; err = it.Next(spec) {
-		specMap, err := specMap(*spec)
-		if err != nil {
-			return response, status.Error(codes.Internal, err.Error())
-		}
-
-		match, err := filter.Matches(specMap)
-		if err != nil {
-			return response, err
-		} else if !match {
-			token.Offset++
-			continue
-		} else if len(response.Specs) == int(opts.Size) {
-			break
-		}
-
-		response.Specs = append(response.Specs, *spec)
-		token.Offset++
-	}
-	if err != nil && err != iterator.Done {
-		return response, status.Error(codes.Internal, err.Error())
-	}
-
-	if err == nil {
-		response.Token, err = encodeToken(token)
-		if err != nil {
-			return response, status.Error(codes.Internal, err.Error())
-		}
-	}
-
-	return response, nil
-}
-
-func (c *Client) getRecentSpecRevisions(ctx context.Context, offset int, projectID, apiID, versionID string) *Iterator {
-	lock()
-	defer unlock()
-
 	// Select all columns from `specs` table specifically.
 	// We do not want to select duplicates from the joined subquery result.
 	op := c.db.Select("specs.*").
@@ -454,22 +395,55 @@ func (c *Client) getRecentSpecRevisions(ctx context.Context, offset int, project
 				Table("specs").
 				Group("project_id, api_id, version_id, spec_id")).
 		Order("key").
-		Offset(offset).
+		Offset(token.Offset).
 		Limit(100000)
 
-	if projectID != "-" {
-		op = op.Where("specs.project_id = ?", projectID)
+	if parent.ProjectID != "-" {
+		op = op.Where("specs.project_id = ?", parent.ProjectID)
 	}
-	if apiID != "-" {
-		op = op.Where("specs.api_id = ?", apiID)
+	if parent.ApiID != "-" {
+		op = op.Where("specs.api_id = ?", parent.ApiID)
 	}
-	if versionID != "-" {
-		op = op.Where("specs.version_id = ?", versionID)
+	if parent.VersionID != "-" {
+		op = op.Where("specs.version_id = ?", parent.VersionID)
 	}
 
-	var v []models.Spec
-	_ = op.Scan(&v).Error
-	return &Iterator{values: v, index: 0}
+	lock()
+	var specs []models.Spec
+	_ = op.Scan(&specs).Error
+	unlock()
+
+	response := SpecList{
+		Specs: make([]models.Spec, 0, opts.Size),
+	}
+
+	for _, spec := range specs {
+		specMap, err := specMap(spec)
+		if err != nil {
+			return response, status.Error(codes.Internal, err.Error())
+		}
+
+		match, err := filter.Matches(specMap)
+		if err != nil {
+			return response, err
+		} else if !match {
+			token.Offset++
+			continue
+		}
+
+		if len(response.Specs) < int(opts.Size) {
+			response.Specs = append(response.Specs, spec)
+			token.Offset++
+		} else if len(response.Specs) == int(opts.Size) {
+			response.Token, err = encodeToken(token)
+			if err != nil {
+				return response, status.Error(codes.Internal, err.Error())
+			}
+			break
+		}
+	}
+
+	return response, nil
 }
 
 func specMap(spec models.Spec) (map[string]interface{}, error) {
@@ -584,49 +558,6 @@ func (c *Client) ListDeployments(ctx context.Context, parent names.Api, opts Pag
 		return DeploymentList{}, err
 	}
 
-	it := c.getRecentDeploymentRevisions(ctx, token.Offset, parent.ProjectID, parent.ApiID)
-	response := DeploymentList{
-		Deployments: make([]models.Deployment, 0, opts.Size),
-	}
-
-	deployment := new(models.Deployment)
-	for err = it.Next(deployment); err == nil; err = it.Next(deployment) {
-		deploymentMap, err := deploymentMap(*deployment)
-		if err != nil {
-			return response, status.Error(codes.Internal, err.Error())
-		}
-
-		match, err := filter.Matches(deploymentMap)
-		if err != nil {
-			return response, err
-		} else if !match {
-			token.Offset++
-			continue
-		} else if len(response.Deployments) == int(opts.Size) {
-			break
-		}
-
-		response.Deployments = append(response.Deployments, *deployment)
-		token.Offset++
-	}
-	if err != nil && err != iterator.Done {
-		return response, status.Error(codes.Internal, err.Error())
-	}
-
-	if err == nil {
-		response.Token, err = encodeToken(token)
-		if err != nil {
-			return response, status.Error(codes.Internal, err.Error())
-		}
-	}
-
-	return response, nil
-}
-
-func (c *Client) getRecentDeploymentRevisions(ctx context.Context, offset int, projectID, apiID string) *Iterator {
-	lock()
-	defer unlock()
-
 	// Select all columns from `deployments` table specifically.
 	// We do not want to select duplicates from the joined subquery result.
 	op := c.db.Select("deployments.*").
@@ -640,19 +571,52 @@ func (c *Client) getRecentDeploymentRevisions(ctx context.Context, offset int, p
 				Table("deployments").
 				Group("project_id, api_id, deployment_id")).
 		Order("key").
-		Offset(offset).
+		Offset(token.Offset).
 		Limit(100000)
 
-	if projectID != "-" {
-		op = op.Where("deployments.project_id = ?", projectID)
+	if parent.ProjectID != "-" {
+		op = op.Where("deployments.project_id = ?", parent.ProjectID)
 	}
-	if apiID != "-" {
-		op = op.Where("deployments.api_id = ?", apiID)
+	if parent.ApiID != "-" {
+		op = op.Where("deployments.api_id = ?", parent.ApiID)
 	}
 
-	var v []models.Deployment
-	_ = op.Scan(&v).Error
-	return &Iterator{values: v, index: 0}
+	lock()
+	var deployments []models.Deployment
+	_ = op.Scan(&deployments).Error
+	unlock()
+
+	response := DeploymentList{
+		Deployments: make([]models.Deployment, 0, opts.Size),
+	}
+
+	for _, deployment := range deployments {
+		deploymentMap, err := deploymentMap(deployment)
+		if err != nil {
+			return response, status.Error(codes.Internal, err.Error())
+		}
+
+		match, err := filter.Matches(deploymentMap)
+		if err != nil {
+			return response, err
+		} else if !match {
+			token.Offset++
+			continue
+		}
+
+		if len(response.Deployments) < int(opts.Size) {
+			response.Deployments = append(response.Deployments, deployment)
+			token.Offset++
+		} else if len(response.Deployments) == int(opts.Size) {
+			response.Token, err = encodeToken(token)
+			if err != nil {
+				return response, status.Error(codes.Internal, err.Error())
+			}
+			break
+		}
+	}
+
+	return response, nil
 }
 
 func deploymentMap(deployment models.Deployment) (map[string]interface{}, error) {
@@ -948,21 +912,18 @@ func (c *Client) listArtifacts(ctx context.Context, op *gorm.DB, opts PageOption
 	}
 
 	lock()
-	var v []models.Artifact
-	_ = op.
-		Offset(token.Offset).
+	var artifacts []models.Artifact
+	_ = op.Offset(token.Offset).
 		Limit(100000).
-		Find(&v).Error
+		Find(&artifacts).Error
 	unlock()
 
-	it := &Iterator{values: v}
 	response := ArtifactList{
 		Artifacts: make([]models.Artifact, 0, opts.Size),
 	}
 
-	artifact := new(models.Artifact)
-	for err = it.Next(artifact); err == nil; err = it.Next(artifact) {
-		artifactMap, err := artifactMap(*artifact)
+	for _, artifact := range artifacts {
+		artifactMap, err := artifactMap(artifact)
 		if err != nil {
 			return response, status.Error(codes.Internal, err.Error())
 		}
@@ -970,24 +931,20 @@ func (c *Client) listArtifacts(ctx context.Context, op *gorm.DB, opts PageOption
 		match, err := filter.Matches(artifactMap)
 		if err != nil {
 			return response, err
-		} else if !match || !include(artifact) {
+		} else if !match || !include(&artifact) {
 			token.Offset++
 			continue
-		} else if len(response.Artifacts) == int(opts.Size) {
-			break
 		}
 
-		response.Artifacts = append(response.Artifacts, *artifact)
-		token.Offset++
-	}
-	if err != nil && err != iterator.Done {
-		return response, status.Error(codes.Internal, err.Error())
-	}
-
-	if err == nil {
-		response.Token, err = encodeToken(token)
-		if err != nil {
-			return response, status.Error(codes.Internal, err.Error())
+		if len(response.Artifacts) < int(opts.Size) {
+			response.Artifacts = append(response.Artifacts, artifact)
+			token.Offset++
+		} else if len(response.Artifacts) == int(opts.Size) {
+			response.Token, err = encodeToken(token)
+			if err != nil {
+				return response, status.Error(codes.Internal, err.Error())
+			}
+			break
 		}
 	}
 
@@ -1034,8 +991,8 @@ func (c *Client) GetDeploymentTags(ctx context.Context, name names.Deployment) (
 
 	lock()
 	defer unlock()
+
 	tags := make([]models.DeploymentRevisionTag, 0)
 	_ = op.Limit(100000).Find(&tags)
-
 	return tags, nil
 }
