@@ -46,22 +46,3 @@ func (c *AdminClient) GrpcClient() rpcpb.AdminClient {
 	return c.internalClient.(*adminGRPCClient).adminClient
 }
 END
-
-# Patch the generated GAPIC to send Authorization tokens with insecure requests.
-# This allows the registry command line tools to test container builds.
-FILE=gapic/doc.go
-PATCH='\
-insecure := os.Getenv("APG_REGISTRY_INSECURE")\
-token := os.Getenv("APG_REGISTRY_TOKEN")\
-if insecure == "1" \&\& token != "" {\
-  out["authorization"] = append(out["authorization"], "Bearer "+token)\
-}\
-return metadata.NewOutgoingContext(ctx, out)\
-' # No ' or / in the patch; escape & and newlines.
-sed -i.bak "s/return metadata.NewOutgoingContext(ctx, out)/${PATCH}/" "${FILE}"
-rm "${FILE}.bak"
-gofmt -w "${FILE}"
-if ! grep --quiet APG_REGISTRY_INSECURE "${FILE}"; then
-  echo "Patching GAPIC library failed."
-  exit 1
-fi

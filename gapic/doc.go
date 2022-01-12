@@ -96,14 +96,7 @@ func insertMetadata(ctx context.Context, mds ...metadata.MD) context.Context {
 			out[k] = append(out[k], v...)
 		}
 	}
-
-	insecure := os.Getenv("APG_REGISTRY_INSECURE")
-	token := os.Getenv("APG_REGISTRY_TOKEN")
-	if insecure == "1" && token != "" {
-		out["authorization"] = append(out["authorization"], "Bearer "+token)
-	}
 	return metadata.NewOutgoingContext(ctx, out)
-
 }
 
 func checkDisableDeadlines() (bool, error) {
@@ -118,7 +111,9 @@ func checkDisableDeadlines() (bool, error) {
 
 // DefaultAuthScopes reports the default set of authentication scopes to use with this package.
 func DefaultAuthScopes() []string {
-	return []string{}
+	return []string{
+		"",
+	}
 }
 
 // versionGo returns the Go runtime version. The returned string
