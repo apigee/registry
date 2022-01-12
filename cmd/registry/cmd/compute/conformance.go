@@ -41,10 +41,6 @@ func conformanceCommand(ctx context.Context) *cobra.Command {
 		Short: "Compute lint results for API specs",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			// specFilter, err := cmd.Flags().GetString("filter")
-			// if err != nil {
-			// 	log.FromContext(ctx).WithError(err).Fatal("Failed to get filter from flags")
-			// }
 
 			client, err := connection.NewClient(ctx)
 			if err != nil {
