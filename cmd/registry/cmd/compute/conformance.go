@@ -150,7 +150,7 @@ func processStyleGuide(ctx context.Context,
 				}
 				break
 			}
-		}	
+		}
 	})
 	if err != nil {
 		log.FromContext(ctx).WithError(err).Fatal("Failed to list specs")
@@ -303,7 +303,7 @@ func (task *computeConformanceTask) computeConformanceReport(
 					// then we should ignore it
 					continue
 				}
-				
+
 				rule := task.ruleNameToRule[normalizedRuleName]
 
 				// Check if the guideline report for the guideline which contains this rule
