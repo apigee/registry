@@ -27,6 +27,7 @@ func Command(ctx context.Context) *cobra.Command {
 		Short: "Upload information to the API Registry",
 	}
 
+	cmd.AddCommand(artifactCommand(ctx))
 	cmd.AddCommand(bulk.Command(ctx))
 	cmd.AddCommand(csvCommand(ctx))
 	cmd.AddCommand(manifestCommand(ctx))
