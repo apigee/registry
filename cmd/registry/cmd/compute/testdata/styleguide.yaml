@@ -14,7 +14,7 @@
 
 id: openapitest
 mime_types:
-  - application/x.openapi+gzip;version=3
+  - application/x.openapi+gzip;version=3.0.0
 guidelines:
   - id: refproperties
     display_name: Govern Ref Properties
