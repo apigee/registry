@@ -21,6 +21,8 @@ func init() {
 
 	DeleteProjectCmd.Flags().StringVar(&DeleteProjectInput.Name, "name", "", "Required. The name of the project to delete.  Format:...")
 
+	DeleteProjectCmd.Flags().BoolVar(&DeleteProjectInput.Force, "force", false, "If set to true, any child resources will also be...")
+
 	DeleteProjectCmd.Flags().StringVar(&DeleteProjectFromFile, "from_file", "", "Absolute path to JSON file containing request payload")
 
 }

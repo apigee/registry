@@ -21,6 +21,8 @@ func init() {
 
 	DeleteApiCmd.Flags().StringVar(&DeleteApiInput.Name, "name", "", "Required. The name of the API to delete.  Format:...")
 
+	DeleteApiCmd.Flags().BoolVar(&DeleteApiInput.Force, "force", false, "If set to true, any child resources will also be...")
+
 	DeleteApiCmd.Flags().StringVar(&DeleteApiFromFile, "from_file", "", "Absolute path to JSON file containing request payload")
 
 }

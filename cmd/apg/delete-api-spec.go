@@ -21,6 +21,8 @@ func init() {
 
 	DeleteApiSpecCmd.Flags().StringVar(&DeleteApiSpecInput.Name, "name", "", "Required. The name of the spec to delete. ...")
 
+	DeleteApiSpecCmd.Flags().BoolVar(&DeleteApiSpecInput.Force, "force", false, "If set to true, any child resources will also be...")
+
 	DeleteApiSpecCmd.Flags().StringVar(&DeleteApiSpecFromFile, "from_file", "", "Absolute path to JSON file containing request payload")
 
 }
