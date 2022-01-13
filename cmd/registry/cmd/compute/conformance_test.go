@@ -39,23 +39,23 @@ func initReport(t *testing.T) *rpc.ConformanceReport {
 	t.Helper()
 	return &rpc.ConformanceReport{
 		GuidelineReportGroups: []*rpc.GuidelineReportGroup{
-			&rpc.GuidelineReportGroup{
+			{
 				Status:           rpc.Guideline_STATUS_UNSPECIFIED,
 				GuidelineReports: []*rpc.GuidelineReport{},
 			},
-			&rpc.GuidelineReportGroup{
+			{
 				Status:           rpc.Guideline_PROPOSED,
 				GuidelineReports: []*rpc.GuidelineReport{},
 			},
-			&rpc.GuidelineReportGroup{
+			{
 				Status:           rpc.Guideline_ACTIVE,
 				GuidelineReports: []*rpc.GuidelineReport{},
 			},
-			&rpc.GuidelineReportGroup{
+			{
 				Status:           rpc.Guideline_DEPRECATED,
 				GuidelineReports: []*rpc.GuidelineReport{},
 			},
-			&rpc.GuidelineReportGroup{
+			{
 				Status:           rpc.Guideline_DISABLED,
 				GuidelineReports: []*rpc.GuidelineReport{},
 			},
@@ -66,23 +66,23 @@ func initReport(t *testing.T) *rpc.ConformanceReport {
 func initRuleReportGroups(t *testing.T) []*rpc.RuleReportGroup {
 	t.Helper()
 	return []*rpc.RuleReportGroup{
-		&rpc.RuleReportGroup{
+		{
 			Severity:    rpc.Rule_SEVERITY_UNSPECIFIED,
 			RuleReports: []*rpc.RuleReport{},
 		},
-		&rpc.RuleReportGroup{
+		{
 			Severity:    rpc.Rule_ERROR,
 			RuleReports: []*rpc.RuleReport{},
 		},
-		&rpc.RuleReportGroup{
+		{
 			Severity:    rpc.Rule_WARNING,
 			RuleReports: []*rpc.RuleReport{},
 		},
-		&rpc.RuleReportGroup{
+		{
 			Severity:    rpc.Rule_INFO,
 			RuleReports: []*rpc.RuleReport{},
 		},
-		&rpc.RuleReportGroup{
+		{
 			Severity:    rpc.Rule_HINT,
 			RuleReports: []*rpc.RuleReport{},
 		},
@@ -125,7 +125,7 @@ func TestConformance(t *testing.T) {
 
 				// Populate the expected severity entry
 				ruleReportGroups[rpc.Rule_ERROR].RuleReports = []*rpc.RuleReport{
-					&rpc.RuleReport{
+					{
 						RuleId:   "norefsiblings",
 						SpecName: "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 					},
@@ -133,7 +133,7 @@ func TestConformance(t *testing.T) {
 
 				//Populate the expected guideline reports
 				guidelineReports := []*rpc.GuidelineReport{
-					&rpc.GuidelineReport{
+					{
 						GuidelineId:      "refproperties",
 						RuleReportGroups: ruleReportGroups,
 					},
@@ -159,7 +159,7 @@ func TestConformance(t *testing.T) {
 
 				// Populate the expected severity entry
 				ruleReportGroups[rpc.Rule_SEVERITY_UNSPECIFIED].RuleReports = []*rpc.RuleReport{
-					&rpc.RuleReport{
+					{
 						RuleId:   "norefsiblings",
 						SpecName: "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 					},
@@ -167,7 +167,7 @@ func TestConformance(t *testing.T) {
 
 				//Populate the expected guideline reports
 				guidelineReports := []*rpc.GuidelineReport{
-					&rpc.GuidelineReport{
+					{
 						GuidelineId:      "refproperties",
 						RuleReportGroups: ruleReportGroups,
 					},
@@ -193,21 +193,21 @@ func TestConformance(t *testing.T) {
 
 				// Populate the expected severity entry
 				ruleReportGroups[rpc.Rule_INFO].RuleReports = []*rpc.RuleReport{
-					&rpc.RuleReport{
+					{
 						RuleId:   "openapitags",
 						SpecName: "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 					},
-					&rpc.RuleReport{
+					{
 						RuleId:   "openapitagsalphabetical",
 						SpecName: "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 					},
 				}
 				ruleReportGroups[rpc.Rule_ERROR].RuleReports = []*rpc.RuleReport{
-					&rpc.RuleReport{
+					{
 						RuleId:   "operationtags",
 						SpecName: "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 					},
-					&rpc.RuleReport{
+					{
 						RuleId:   "operationtagdefined",
 						SpecName: "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 					},
@@ -215,7 +215,7 @@ func TestConformance(t *testing.T) {
 
 				//Populate the expected guideline reports
 				guidelineReports := []*rpc.GuidelineReport{
-					&rpc.GuidelineReport{
+					{
 						GuidelineId:      "tagproperties",
 						RuleReportGroups: ruleReportGroups,
 					},
@@ -242,7 +242,7 @@ func TestConformance(t *testing.T) {
 
 				// Populate the expected severity entry
 				ruleReportGroups[rpc.Rule_ERROR].RuleReports = []*rpc.RuleReport{
-					&rpc.RuleReport{
+					{
 						RuleId:   "norefsiblings",
 						SpecName: "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 					},
@@ -250,7 +250,7 @@ func TestConformance(t *testing.T) {
 
 				//Populate the expected guideline reports
 				guidelineReports := []*rpc.GuidelineReport{
-					&rpc.GuidelineReport{
+					{
 						GuidelineId:      "refproperties",
 						RuleReportGroups: ruleReportGroups,
 					},
@@ -264,13 +264,13 @@ func TestConformance(t *testing.T) {
 
 				// Populate the expected severity entry
 				ruleReportGroups[rpc.Rule_INFO].RuleReports = []*rpc.RuleReport{
-					&rpc.RuleReport{
+					{
 						RuleId:   "openapitags",
 						SpecName: "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 					},
 				}
 				ruleReportGroups[rpc.Rule_ERROR].RuleReports = []*rpc.RuleReport{
-					&rpc.RuleReport{
+					{
 						RuleId:   "operationtags",
 						SpecName: "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 					},
@@ -278,7 +278,7 @@ func TestConformance(t *testing.T) {
 
 				//Populate the expected guideline reports
 				guidelineReports = []*rpc.GuidelineReport{
-					&rpc.GuidelineReport{
+					{
 						GuidelineId:      "tagproperties",
 						RuleReportGroups: ruleReportGroups,
 					},
@@ -305,7 +305,7 @@ func TestConformance(t *testing.T) {
 
 				// Populate the expected severity entry
 				ruleReportGroups[rpc.Rule_ERROR].RuleReports = []*rpc.RuleReport{
-					&rpc.RuleReport{
+					{
 						RuleId:   "norefsiblings",
 						SpecName: "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 					},
@@ -313,7 +313,7 @@ func TestConformance(t *testing.T) {
 
 				//Populate the expected guideline reports
 				guidelineReports := []*rpc.GuidelineReport{
-					&rpc.GuidelineReport{
+					{
 						GuidelineId:      "refproperties",
 						RuleReportGroups: ruleReportGroups,
 					},
@@ -327,24 +327,24 @@ func TestConformance(t *testing.T) {
 
 				// Populate the expected severity entry
 				ruleReportGroups[rpc.Rule_INFO].RuleReports = []*rpc.RuleReport{
-					&rpc.RuleReport{
+					{
 						RuleId:   "tagdescription",
 						SpecName: "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 					},
 				}
 				ruleReportGroups[rpc.Rule_ERROR].RuleReports = []*rpc.RuleReport{
-					&rpc.RuleReport{
+					{
 						RuleId:   "operationdescription",
 						SpecName: "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 					},
-					&rpc.RuleReport{
+					{
 						RuleId:   "infodescription",
 						SpecName: "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 					},
 				}
 
 				ruleReportGroups[rpc.Rule_WARNING].RuleReports = []*rpc.RuleReport{
-					&rpc.RuleReport{
+					{
 						RuleId:   "descriptiontags",
 						SpecName: "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 					},
@@ -352,7 +352,7 @@ func TestConformance(t *testing.T) {
 
 				//Populate the expected guideline reports
 				guidelineReports = []*rpc.GuidelineReport{
-					&rpc.GuidelineReport{
+					{
 						GuidelineId:      "descriptionproperties",
 						RuleReportGroups: ruleReportGroups,
 					},
