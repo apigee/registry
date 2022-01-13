@@ -13,15 +13,14 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-
 type ruleMetadata struct {
-	guidelineRule *rpc.Rule //Rule object associated with the linter-rule
-	guideline *rpc.Guideline //Guideline object associated with the linter-rule
+	guidelineRule *rpc.Rule      //Rule object associated with the linter-rule
+	guideline     *rpc.Guideline //Guideline object associated with the linter-rule
 }
 
 type linterMetadata struct {
-	name string
-	rules []string
+	name          string
+	rules         []string
 	rulesMetadata map[string]*ruleMetadata
 }
 
@@ -44,8 +43,8 @@ func GenerateLinterMetadata(styleguide *rpc.StyleGuide) (map[string]*linterMetad
 			metadata, ok := linterNameToMetadata[linterName]
 			if !ok {
 				metadata = &linterMetadata{
-					name: linterName,
-					rules: make([]string, 0),
+					name:          linterName,
+					rules:         make([]string, 0),
 					rulesMetadata: make(map[string]*ruleMetadata),
 				}
 				linterNameToMetadata[linterName] = metadata
@@ -53,7 +52,7 @@ func GenerateLinterMetadata(styleguide *rpc.StyleGuide) (map[string]*linterMetad
 
 			//Populate required metadata
 			metadata.rules = append(metadata.rules, rule.GetLinterRulename())
-			
+
 			if _, ok := metadata.rulesMetadata[rule.GetLinterRulename()]; !ok {
 				metadata.rulesMetadata[rule.GetLinterRulename()] = &ruleMetadata{}
 			}
@@ -64,15 +63,15 @@ func GenerateLinterMetadata(styleguide *rpc.StyleGuide) (map[string]*linterMetad
 
 	if len(linterNameToMetadata) == 0 {
 		return nil, fmt.Errorf("Empty linter metadata")
-	}  
+	}
 	return linterNameToMetadata, nil
 }
 
 func invokeLinter(
 	ctx context.Context,
 	specDirectory string,
-	metadata *linterMetadata) (*rpc.LinterResponse, error){
-	
+	metadata *linterMetadata) (*rpc.LinterResponse, error) {
+
 	// Formulate the request.
 	requestBytes, err := proto.Marshal(&rpc.LinterRequest{
 		SpecDirectory: specDirectory,
@@ -86,7 +85,6 @@ func invokeLinter(
 	cmd := exec.Command(executableName)
 	cmd.Stdin = bytes.NewReader(requestBytes)
 	cmd.Stderr = os.Stderr
-	
 
 	pluginStartTime := time.Now()
 	// Run the linter.
@@ -106,12 +104,8 @@ func invokeLinter(
 	}
 
 	// Check if there were any errors in the plugin.
-	pluginErrors := make([]string, 0)
 	if len(linterResponse.GetErrors()) > 0 {
-		for _, err := range linterResponse.GetErrors() {
-			pluginErrors = append(pluginErrors, err)
-		}
-		return nil, fmt.Errorf("Plugin %s encountered errors: %v", executableName, pluginErrors)
+		return nil, fmt.Errorf("Plugin %s encountered errors: %v", executableName, linterResponse.GetErrors())
 	}
 
 	return linterResponse, nil

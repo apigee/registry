@@ -18,8 +18,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/cmd/registry/conformance"
+	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
@@ -49,11 +49,10 @@ func conformanceCommand(ctx context.Context) *cobra.Command {
 				log.FromContext(ctx).WithError(err).Fatalf("The provided argument %s does not match the regex of a spec", name)
 			}
 
-
 			// List all the styleGuide artifacts in the registry
 			artifactName, err := names.ParseArtifact(fmt.Sprintf("projects/%s/locations/%s/artifacts/-", specName.ProjectID, names.Location))
 			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatalf("Invalid project %q",  specName.ProjectID)
+				log.FromContext(ctx).WithError(err).Fatalf("Invalid project %q", specName.ProjectID)
 			}
 
 			artifactFilter := "mime_type.contains('google.cloud.apigeeregistry.applications.v1alpha1.StyleGuide')"
@@ -108,10 +107,10 @@ func processStyleGuide(ctx context.Context,
 				// Delegate the task of computing the conformance report for this spec
 				// to the worker pool.
 				taskQueue <- &conformance.ComputeConformanceTask{
-					Client:              client,
-					Spec:                spec,
+					Client:          client,
+					Spec:            spec,
 					LintersMetadata: linterNameToMetadata,
-					StyleguideId:        styleguide.GetId(),
+					StyleguideId:    styleguide.GetId(),
 				}
 				break
 			}

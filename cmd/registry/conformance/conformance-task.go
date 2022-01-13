@@ -14,7 +14,6 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-
 func conformanceReportName(specName string, styleguideName string) string {
 	return fmt.Sprintf("%s/artifacts/conformance-%s", specName, styleguideName)
 }
@@ -61,8 +60,8 @@ func initializeGuidelineReport(guidelineID string) *rpc.GuidelineReport {
 }
 
 type ComputeConformanceTask struct {
-	Client              connection.Client
-	Spec                *rpc.ApiSpec
+	Client          connection.Client
+	Spec            *rpc.ApiSpec
 	LintersMetadata map[string]*linterMetadata
 	StyleguideId    string
 }
@@ -73,7 +72,7 @@ func (task *ComputeConformanceTask) String() string {
 
 func (task *ComputeConformanceTask) Run(ctx context.Context) error {
 	log.Debugf(ctx, "Computing conformance report %s", conformanceReportName(task.Spec.GetName(), task.StyleguideId))
-	
+
 	// Download spec
 
 	data, err := core.GetBytesForSpec(ctx, task.Client, task.Spec)
