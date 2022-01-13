@@ -522,6 +522,10 @@ message DeleteApiRequest {
       type: "apigeeregistry.googleapis.com/Api"
     }
   ];
+
+  // If set to true, any child resources will also be deleted.
+  // (Otherwise, the request will only work if there are no child resources.)
+  bool force = 2;
 }
 
 // Request message for ListApiVersions.
@@ -628,6 +632,10 @@ message DeleteApiVersionRequest {
       type: "apigeeregistry.googleapis.com/ApiVersion"
     }
   ];
+
+  // If set to true, any child resources will also be deleted.
+  // (Otherwise, the request will only work if there are no child resources.)
+  bool force = 2;
 }
 
 // Request message for ListApiSpecs.
@@ -746,6 +754,10 @@ message DeleteApiSpecRequest {
       type: "apigeeregistry.googleapis.com/ApiSpec"
     }
   ];
+
+  // If set to true, any child resources will also be deleted.
+  // (Otherwise, the request will only work if there are no child resources.)
+  bool force = 2;
 }
 
 // Request message for TagApiSpecRevision.
@@ -927,6 +939,10 @@ message DeleteApiDeploymentRequest {
       type: "apigeeregistry.googleapis.com/ApiDeployment"
     }
   ];
+
+  // If set to true, any child resources will also be deleted.
+  // (Otherwise, the request will only work if there are no child resources.)
+  bool force = 2;
 }
 
 // Request message for TagApiDeploymentRevision.
