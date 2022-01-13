@@ -178,14 +178,25 @@ func (c *Client) Put(ctx context.Context, k *Key, v interface{}) (*Key, error) {
 	case *models.Blob:
 		r.Key = k.Name
 	}
-	_ = c.db.Transaction(func(tx *gorm.DB) error {
+	err := c.db.Transaction(func(tx *gorm.DB) error {
 		// Update all fields from model: https://gorm.io/docs/update.html#Update-Selected-Fields
-		rowsAffected := tx.Model(v).Select("*").Where("key = ?", k.Name).Updates(v).RowsAffected
-		if rowsAffected == 0 {
-			tx.Create(v)
+		got := tx.Model(v).Select("*").Where("key = ?", k.Name).Updates(v)
+		if err := got.Error; err != nil {
+			return got.Error
 		}
+
+		if got.RowsAffected == 0 {
+			if err := tx.Create(v).Error; err != nil {
+				return err
+			}
+		}
+
 		return nil
 	})
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
 	return k, nil
 }
 

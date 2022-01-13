@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC
+// Copyright 2022 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@ package upload
 
 import (
 	"context"
+	"fmt"
 	"path/filepath"
 	"testing"
 
@@ -28,8 +29,7 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 )
 
-func TestManifestUpload(t *testing.T) {
-
+func TestManifestArtifactUpload(t *testing.T) {
 	tests := []struct {
 		desc     string
 		project  string
@@ -37,8 +37,8 @@ func TestManifestUpload(t *testing.T) {
 		want     *rpc.Manifest
 	}{
 		{
-			desc:     "simple manifest upload",
-			project:  "upload-manifest-demo",
+			desc:     "simple manifest artifact upload",
+			project:  "upload-manifest-artifact-demo",
 			filePath: filepath.Join("testdata", "manifest.yaml"),
 			want: &rpc.Manifest{
 				Id:   "test-manifest",
@@ -90,7 +90,7 @@ func TestManifestUpload(t *testing.T) {
 			}
 
 			cmd := Command(ctx)
-			args := []string{"manifest", test.filePath, "--project-id", test.project}
+			args := []string{"artifact", test.filePath, "--parent", fmt.Sprintf("projects/%s/locations/global", test.project)}
 			cmd.SetArgs(args)
 			if err = cmd.Execute(); err != nil {
 				t.Fatalf("Execute() with args %v returned error: %s", args, err)
@@ -101,9 +101,15 @@ func TestManifestUpload(t *testing.T) {
 			}
 
 			manifest := &rpc.Manifest{}
-			body, _ := client.GetArtifactContents(ctx, req)
+			body, err := client.GetArtifactContents(ctx, req)
+			if err != nil {
+				t.Fatalf("GetArtifactContents() returned error: %s", err)
+			}
 			contents := body.GetData()
-			_ = proto.Unmarshal(contents, manifest)
+			err = proto.Unmarshal(contents, manifest)
+			if err != nil {
+				t.Fatalf("proto.Unmarshal() returned error: %s", err)
+			}
 
 			// Verify the manifest definition is correct
 			opts := cmp.Options{
@@ -115,5 +121,4 @@ func TestManifestUpload(t *testing.T) {
 			}
 		})
 	}
-
 }
