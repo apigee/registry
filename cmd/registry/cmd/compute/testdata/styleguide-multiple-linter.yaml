@@ -1,0 +1,56 @@
+# Copyright 2022 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+id: openapitest-multiple-linter
+mime_types:
+  - application/x.openapi+gzip;version=3
+guidelines:
+  - id: refproperties
+    display_name: Govern Ref Properties
+    description: This guideline governs properties for ref fields on specs.
+    rules:
+      - id: norefsiblings
+        description: An object exposing a $ref property cannot be further extended with additional properties.
+        linter: sample
+        linter_rulename: no-$ref-siblings
+        severity: ERROR
+    status:  ACTIVE
+  - id: descriptionproperties
+    display_name: Description Properties
+    description: This guideline specifies rules for different tags.
+    rules:
+      - id: tagdescription
+        description: Tags alone are not very descriptive. Give folks a bit more information to work with.
+        linter: sample
+        linter_rulename: tag-description
+        severity: INFO
+      - id: operationdescription
+        description: Operation should have non-empty description.
+        linter: sample
+        linter_rulename: operation-description
+        severity: ERROR
+      - id: infodescription
+        description: OpenAPI object info description must be present and non-empty string.
+        linter: sample
+        linter_rulename: info-description
+        severity: ERROR
+      - id: descriptiontags
+        description: Ensures that description fields in the OpenAPI spec contain no tags (such as HTML tags).
+        linter: openapi-sample
+        linter_rulename: description-contains-no-tags
+        severity: WARNING 
+    status: PROPOSED
+linters:
+  - name: sample
+    uri: https://sample/url
