@@ -21,86 +21,171 @@ import (
 	"github.com/apigee/registry/server/registry/names"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"gorm.io/gorm"
 )
 
-func (c *Client) DeleteProject(ctx context.Context, name names.Project) error {
-	for _, model := range []interface{}{
-		models.Project{},
-		models.Api{},
-		models.Deployment{},
-		models.DeploymentRevisionTag{},
-		models.Version{},
-		models.Spec{},
-		models.SpecRevisionTag{},
-		models.Blob{},
-		models.Artifact{},
-	} {
-		op := c.db.Where("project_id = ?", name.ProjectID)
-		if err := op.Delete(model).Error; err != nil {
-			return status.Error(codes.Internal, err.Error())
-		}
-	}
+func (c *Client) DeleteProject(ctx context.Context, name names.Project, cascade bool) error {
+	err := c.db.Transaction(func(tx *gorm.DB) error {
+		var count int64
+		for _, model := range []interface{}{
+			models.Project{},
+			models.Api{},
+			models.Deployment{},
+			models.DeploymentRevisionTag{},
+			models.Version{},
+			models.Spec{},
+			models.SpecRevisionTag{},
+			models.Blob{},
+			models.Artifact{},
+		} {
+			op := tx.Where("project_id = ?", name.ProjectID)
+			if err := op.Delete(model).Error; err != nil {
+				return err
+			}
 
-	return nil
+			count += op.RowsAffected
+		}
+
+		if count > 1 && !cascade {
+			return status.Errorf(codes.FailedPrecondition, "cannot delete child resources in non-cascading mode")
+		}
+
+		return nil
+	})
+
+	switch status.Code(err) {
+	case codes.OK:
+		return nil
+	case codes.FailedPrecondition:
+		return err
+	default:
+		return status.Error(codes.Internal, err.Error())
+	}
 }
 
-func (c *Client) DeleteApi(ctx context.Context, name names.Api) error {
-	for _, model := range []interface{}{
-		models.Api{},
-		models.Deployment{},
-		models.DeploymentRevisionTag{},
-		models.Version{},
-		models.Spec{},
-		models.SpecRevisionTag{},
-		models.Blob{},
-		models.Artifact{},
-	} {
-		op := c.db.Where("project_id = ?", name.ProjectID).
-			Where("api_id = ?", name.ApiID)
-		if err := op.Delete(model).Error; err != nil {
-			return status.Error(codes.Internal, err.Error())
-		}
-	}
+func (c *Client) DeleteApi(ctx context.Context, name names.Api, cascade bool) error {
+	err := c.db.Transaction(func(tx *gorm.DB) error {
+		var count int64
+		for _, model := range []interface{}{
+			models.Api{},
+			models.Deployment{},
+			models.DeploymentRevisionTag{},
+			models.Version{},
+			models.Spec{},
+			models.SpecRevisionTag{},
+			models.Blob{},
+			models.Artifact{},
+		} {
+			op := tx.Where("project_id = ?", name.ProjectID).
+				Where("api_id = ?", name.ApiID)
+			if err := op.Delete(model).Error; err != nil {
+				return err
+			}
 
-	return nil
+			count += op.RowsAffected
+		}
+
+		if count > 1 && !cascade {
+			return status.Errorf(codes.FailedPrecondition, "cannot delete child resources in non-cascading mode")
+		}
+
+		return nil
+	})
+
+	switch status.Code(err) {
+	case codes.OK:
+		return nil
+	case codes.FailedPrecondition:
+		return err
+	default:
+		return status.Error(codes.Internal, err.Error())
+	}
 }
 
-func (c *Client) DeleteVersion(ctx context.Context, name names.Version) error {
-	for _, model := range []interface{}{
-		models.Version{},
-		models.Spec{},
-		models.SpecRevisionTag{},
-		models.Blob{},
-		models.Artifact{},
-	} {
-		op := c.db.Where("project_id = ?", name.ProjectID).
-			Where("api_id = ?", name.ApiID).
-			Where("version_id = ?", name.VersionID)
-		if err := op.Delete(model).Error; err != nil {
-			return status.Error(codes.Internal, err.Error())
-		}
-	}
+func (c *Client) DeleteVersion(ctx context.Context, name names.Version, cascade bool) error {
+	err := c.db.Transaction(func(tx *gorm.DB) error {
+		var count int64
+		for _, model := range []interface{}{
+			models.Version{},
+			models.Spec{},
+			models.SpecRevisionTag{},
+			models.Blob{},
+			models.Artifact{},
+		} {
+			op := tx.Where("project_id = ?", name.ProjectID).
+				Where("api_id = ?", name.ApiID).
+				Where("version_id = ?", name.VersionID)
+			if err := op.Delete(model).Error; err != nil {
+				return err
+			}
 
-	return nil
+			count += op.RowsAffected
+		}
+
+		if count > 1 && !cascade {
+			return status.Errorf(codes.FailedPrecondition, "cannot delete child resources in non-cascading mode")
+		}
+
+		return nil
+	})
+
+	switch status.Code(err) {
+	case codes.OK:
+		return nil
+	case codes.FailedPrecondition:
+		return err
+	default:
+		return status.Error(codes.Internal, err.Error())
+	}
 }
 
-func (c *Client) DeleteSpec(ctx context.Context, name names.Spec) error {
-	for _, model := range []interface{}{
-		models.Spec{},
-		models.SpecRevisionTag{},
-		models.Blob{},
-		models.Artifact{},
-	} {
-		op := c.db.Where("project_id = ?", name.ProjectID).
-			Where("api_id = ?", name.ApiID).
-			Where("version_id = ?", name.VersionID).
-			Where("spec_id = ?", name.SpecID)
-		if err := op.Delete(model).Error; err != nil {
-			return status.Error(codes.Internal, err.Error())
+func (c *Client) DeleteSpec(ctx context.Context, name names.Spec, cascade bool) error {
+	err := c.db.Transaction(func(tx *gorm.DB) error {
+		for _, model := range []interface{}{
+			models.Spec{},
+			models.SpecRevisionTag{},
+			models.Blob{},
+		} {
+			op := tx.Where("project_id = ?", name.ProjectID).
+				Where("api_id = ?", name.ApiID).
+				Where("version_id = ?", name.VersionID).
+				Where("spec_id = ?", name.SpecID)
+			if err := op.Delete(model).Error; err != nil {
+				return err
+			}
 		}
-	}
 
-	return nil
+		var childCount int64
+		for _, model := range []interface{}{
+			models.Artifact{},
+			models.Blob{},
+		} {
+			op := tx.Where("project_id = ?", name.ProjectID).
+				Where("api_id = ?", name.ApiID).
+				Where("version_id = ?", name.VersionID).
+				Where("spec_id = ?", name.SpecID)
+			if err := op.Delete(model).Error; err != nil {
+				return err
+			}
+
+			childCount += op.RowsAffected
+		}
+
+		if childCount > 0 && !cascade {
+			return status.Errorf(codes.FailedPrecondition, "cannot delete child resources in non-cascading mode")
+		}
+
+		return nil
+	})
+
+	switch status.Code(err) {
+	case codes.OK:
+		return nil
+	case codes.FailedPrecondition:
+		return err
+	default:
+		return status.Error(codes.Internal, err.Error())
+	}
 }
 
 func (c *Client) DeleteSpecRevision(ctx context.Context, name names.SpecRevision) error {
@@ -126,22 +211,50 @@ func (c *Client) DeleteSpecRevision(ctx context.Context, name names.SpecRevision
 	return nil
 }
 
-func (c *Client) DeleteDeployment(ctx context.Context, name names.Deployment) error {
-	for _, model := range []interface{}{
-		models.Deployment{},
-		models.DeploymentRevisionTag{},
-		models.Blob{},
-		models.Artifact{},
-	} {
-		op := c.db.Where("project_id = ?", name.ProjectID).
-			Where("api_id = ?", name.ApiID).
-			Where("deployment_id = ?", name.DeploymentID)
-		if err := op.Delete(model).Error; err != nil {
-			return status.Error(codes.Internal, err.Error())
+func (c *Client) DeleteDeployment(ctx context.Context, name names.Deployment, cascade bool) error {
+	err := c.db.Transaction(func(tx *gorm.DB) error {
+		for _, model := range []interface{}{
+			models.Deployment{},
+			models.DeploymentRevisionTag{},
+		} {
+			op := tx.Where("project_id = ?", name.ProjectID).
+				Where("api_id = ?", name.ApiID).
+				Where("deployment_id = ?", name.DeploymentID)
+			if err := op.Delete(model).Error; err != nil {
+				return err
+			}
 		}
-	}
 
-	return nil
+		var childCount int64
+		for _, model := range []interface{}{
+			models.Artifact{},
+			models.Blob{},
+		} {
+			op := tx.Where("project_id = ?", name.ProjectID).
+				Where("api_id = ?", name.ApiID).
+				Where("deployment_id = ?", name.DeploymentID)
+			if err := op.Delete(model).Error; err != nil {
+				return err
+			}
+
+			childCount += op.RowsAffected
+		}
+
+		if childCount > 0 && !cascade {
+			return status.Errorf(codes.FailedPrecondition, "cannot delete child resources in non-cascading mode")
+		}
+
+		return nil
+	})
+
+	switch status.Code(err) {
+	case codes.OK:
+		return nil
+	case codes.FailedPrecondition:
+		return err
+	default:
+		return status.Error(codes.Internal, err.Error())
+	}
 }
 
 func (c *Client) DeleteDeploymentRevision(ctx context.Context, name names.DeploymentRevision) error {
