@@ -28,3 +28,4 @@ linters:
   # Additional linters.
   enable:
     - goimports
+    - gofmt
