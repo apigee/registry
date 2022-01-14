@@ -881,6 +881,7 @@ func TestDeleteProject(t *testing.T) {
 func TestDeleteProjectResponseCodes(t *testing.T) {
 	tests := []struct {
 		desc string
+		seed *rpc.Artifact
 		req  *rpc.DeleteProjectRequest
 		want codes.Code
 	}{
@@ -891,16 +892,67 @@ func TestDeleteProjectResponseCodes(t *testing.T) {
 			},
 			want: codes.NotFound,
 		},
+		{
+			desc: "resource has children",
+			seed: &rpc.Artifact{
+				Name: "projects/my-project/locations/global/artifacts/my-artifact",
+			},
+			req: &rpc.DeleteProjectRequest{
+				Name: "projects/my-project",
+			},
+			want: codes.FailedPrecondition,
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
+			if err := seeder.SeedArtifacts(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			if _, err := server.DeleteProject(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("DeleteProject(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
 			}
 		})
+	}
+}
+
+func TestDeleteProjectCascading(t *testing.T) {
+	var (
+		ctx    = context.Background()
+		server = defaultTestServer(t)
+		api    = &rpc.Api{
+			Name: "projects/my-project/locations/global/apis/my-api",
+		}
+		artifact = &rpc.Artifact{
+			Name: "projects/my-project/locations/global/artifacts/my-artifact",
+		}
+	)
+
+	if err := seeder.SeedRegistry(ctx, server, api, artifact); err != nil {
+		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+	}
+
+	req := &rpc.DeleteProjectRequest{
+		Name:  "projects/my-project",
+		Force: true,
+	}
+
+	if _, err := server.DeleteProject(ctx, req); err != nil {
+		t.Errorf("DeleteProject(%+v) returned error: %s", req, err)
+	}
+
+	if _, err := server.GetProject(ctx, &rpc.GetProjectRequest{Name: req.GetName()}); status.Code(err) != codes.NotFound {
+		t.Errorf("GetProject(%q) returned status code %q, want %q: %s", req.GetName(), status.Code(err), codes.NotFound, err)
+	}
+
+	if _, err := server.GetApi(ctx, &rpc.GetApiRequest{Name: api.GetName()}); status.Code(err) != codes.NotFound {
+		t.Errorf("GetApi(%q) returned status code %q, want %q: %s", api.GetName(), status.Code(err), codes.NotFound, err)
+	}
+
+	if _, err := server.GetArtifact(ctx, &rpc.GetArtifactRequest{Name: artifact.GetName()}); status.Code(err) != codes.NotFound {
+		t.Errorf("GetArtifact(%q) returned status code %q, want %q: %s", artifact.GetName(), status.Code(err), codes.NotFound, err)
 	}
 }

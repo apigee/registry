@@ -80,7 +80,7 @@ func (s *RegistryServer) DeleteProject(ctx context.Context, req *rpc.DeleteProje
 		return nil, err
 	}
 
-	if err := db.DeleteProject(ctx, name); err != nil {
+	if err := db.DeleteProject(ctx, name, req.GetForce()); err != nil {
 		return nil, err
 	}
 

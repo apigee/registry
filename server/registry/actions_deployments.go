@@ -99,7 +99,7 @@ func (s *RegistryServer) DeleteApiDeployment(ctx context.Context, req *rpc.Delet
 		return nil, err
 	}
 
-	if err := db.DeleteDeployment(ctx, name); err != nil {
+	if err := db.DeleteDeployment(ctx, name, req.GetForce()); err != nil {
 		return nil, err
 	}
 

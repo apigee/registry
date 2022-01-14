@@ -1074,6 +1074,7 @@ func TestDeleteApiDeployment(t *testing.T) {
 func TestDeleteApiDeploymentResponseCodes(t *testing.T) {
 	tests := []struct {
 		desc string
+		seed *rpc.Artifact
 		req  *rpc.DeleteApiDeploymentRequest
 		want codes.Code
 	}{
@@ -1091,16 +1092,60 @@ func TestDeleteApiDeploymentResponseCodes(t *testing.T) {
 			},
 			want: codes.InvalidArgument,
 		},
+		{
+			desc: "resource has children",
+			seed: &rpc.Artifact{
+				Name: "projects/my-project/locations/global/apis/my-api/deployments/my-deployment/artifacts/my-artifact",
+			},
+			req: &rpc.DeleteApiDeploymentRequest{
+				Name: "projects/my-project/locations/global/apis/my-api/deployments/my-deployment",
+			},
+			want: codes.FailedPrecondition,
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
+			if err := seeder.SeedArtifacts(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			if _, err := server.DeleteApiDeployment(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("DeleteApiDeployment(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
 			}
 		})
+	}
+}
+
+func TestDeleteApiDeploymentCascading(t *testing.T) {
+	var (
+		ctx      = context.Background()
+		server   = defaultTestServer(t)
+		artifact = &rpc.Artifact{
+			Name: "projects/my-project/locations/global/apis/my-api/deployments/my-deployment/artifacts/my-artifact",
+		}
+	)
+
+	if err := seeder.SeedArtifacts(ctx, server, artifact); err != nil {
+		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+	}
+
+	req := &rpc.DeleteApiDeploymentRequest{
+		Name:  "projects/my-project/locations/global/apis/my-api/deployments/my-deployment",
+		Force: true,
+	}
+
+	if _, err := server.DeleteApiDeployment(ctx, req); err != nil {
+		t.Errorf("DeleteApiDeployment(%+v) returned error: %s", req, err)
+	}
+
+	if _, err := server.GetApiDeployment(ctx, &rpc.GetApiDeploymentRequest{Name: req.GetName()}); status.Code(err) != codes.NotFound {
+		t.Errorf("GetApiDeployment(%q) returned status code %q, want %q: %s", req.GetName(), status.Code(err), codes.NotFound, err)
+	}
+
+	if _, err := server.GetArtifact(ctx, &rpc.GetArtifactRequest{Name: artifact.GetName()}); status.Code(err) != codes.NotFound {
+		t.Errorf("GetArtifact(%q) returned status code %q, want %q: %s", artifact.GetName(), status.Code(err), codes.NotFound, err)
 	}
 }

@@ -106,7 +106,7 @@ func (s *RegistryServer) DeleteApiSpec(ctx context.Context, req *rpc.DeleteApiSp
 		return nil, err
 	}
 
-	if err := db.DeleteSpec(ctx, name); err != nil {
+	if err := db.DeleteSpec(ctx, name, req.GetForce()); err != nil {
 		return nil, err
 	}
 
