@@ -93,7 +93,8 @@ func TestFilters(t *testing.T) {
 	// Clear the filters project.
 	{
 		req := &rpc.DeleteProjectRequest{
-			Name: "projects/filters",
+			Name:  "projects/filters",
+			Force: true,
 		}
 		err = adminClient.DeleteProject(ctx, req)
 		if status.Code(err) != codes.NotFound {
@@ -249,7 +250,8 @@ func TestFilters(t *testing.T) {
 	}
 	// Delete the test project.
 	req := &rpc.DeleteProjectRequest{
-		Name: "projects/filters",
+		Name:  "projects/filters",
+		Force: true,
 	}
 	err = adminClient.DeleteProject(ctx, req)
 	check(t, "Failed to delete filters project: %+v", err)
