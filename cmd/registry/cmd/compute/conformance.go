@@ -28,6 +28,8 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+const styleguideFilter = "mime_type.contains('google.cloud.apigeeregistry.applications.v1alpha1.StyleGuide')"
+
 func conformanceCommand(ctx context.Context) *cobra.Command {
 	var filter string
 
@@ -55,8 +57,7 @@ func conformanceCommand(ctx context.Context) *cobra.Command {
 				log.FromContext(ctx).WithError(err).Fatalf("Invalid project %q", specName.ProjectID)
 			}
 
-			artifactFilter := "mime_type.contains('google.cloud.apigeeregistry.applications.v1alpha1.StyleGuide')"
-			err = core.ListArtifacts(ctx, client, artifactName, artifactFilter, true, func(artifact *rpc.Artifact) {
+			err = core.ListArtifacts(ctx, client, artifactName, styleguideFilter, true, func(artifact *rpc.Artifact) {
 
 				// Unmarshal the contents of the artifact into a style guide
 				styleguide := &rpc.StyleGuide{}
@@ -104,8 +105,7 @@ func processStyleGuide(ctx context.Context,
 		// Check if the styleguide definition contains the mime_type of the spec
 		for _, supportedType := range styleguide.GetMimeTypes() {
 			if supportedType == spec.GetMimeType() {
-				// Delegate the task of computing the conformance report for this spec
-				// to the worker pool.
+				// Delegate the task of computing the conformance report for this spec to the worker pool.
 				taskQueue <- &conformance.ComputeConformanceTask{
 					Client:          client,
 					Spec:            spec,

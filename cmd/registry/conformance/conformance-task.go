@@ -28,13 +28,11 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func conformanceReportName(specName string, styleguideName string) string {
+func conformanceReportName(specName, styleguideName string) string {
 	return fmt.Sprintf("%s/artifacts/conformance-%s", specName, styleguideName)
 }
 
-func initializeConformanceReport(
-	specName string,
-	styleguideId string) *rpc.ConformanceReport {
+func initializeConformanceReport(specName string, styleguideId string) *rpc.ConformanceReport {
 	// Create an empty conformance report.
 	conformanceReport := &rpc.ConformanceReport{
 		Name:           conformanceReportName(specName, styleguideId),
@@ -86,8 +84,6 @@ func (task *ComputeConformanceTask) String() string {
 
 func (task *ComputeConformanceTask) Run(ctx context.Context) error {
 	log.Debugf(ctx, "Computing conformance report %s", conformanceReportName(task.Spec.GetName(), task.StyleguideId))
-
-	// Download spec
 
 	data, err := core.GetBytesForSpec(ctx, task.Client, task.Spec)
 	if err != nil {
@@ -169,13 +165,13 @@ func (task *ComputeConformanceTask) computeConformanceReport(
 				guidelineReport, ok := guidelineReportsMap[guideline.GetId()]
 				if !ok {
 					guidelineReport = initializeGuidelineReport(guideline.GetId())
-
 					guidelineReportsMap[guideline.GetId()] = guidelineReport
-					conformanceReport.GuidelineReportGroups[guideline.Status].GuidelineReports =
-						append(conformanceReport.GuidelineReportGroups[guideline.Status].GuidelineReports, guidelineReport)
+
+					// Create a new entry in the conformance report
+					guidelineGroup := conformanceReport.GuidelineReportGroups[guideline.Status]
+					guidelineGroup.GuidelineReports = append(guidelineGroup.GuidelineReports, guidelineReport)
 				}
 
-				// Add the rule report to the appropriate guideline report.
 				ruleReport := &rpc.RuleReport{
 					RuleId:     guidelineRule.GetId(),
 					SpecName:   task.Spec.GetName(),
@@ -183,8 +179,9 @@ func (task *ComputeConformanceTask) computeConformanceReport(
 					Suggestion: problem.Suggestion,
 					Location:   problem.Location,
 				}
-				guidelineReport.RuleReportGroups[guidelineRule.Severity].RuleReports =
-					append(guidelineReport.RuleReportGroups[guidelineRule.Severity].RuleReports, ruleReport)
+				// Add the rule report to the appropriate guideline report.
+				ruleGroup := guidelineReport.RuleReportGroups[guidelineRule.Severity]
+				ruleGroup.RuleReports = append(ruleGroup.RuleReports, ruleReport)
 			}
 		}
 	}

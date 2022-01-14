@@ -28,8 +28,8 @@ import (
 )
 
 type ruleMetadata struct {
-	guidelineRule *rpc.Rule      //Rule object associated with the linter-rule
-	guideline     *rpc.Guideline //Guideline object associated with the linter-rule
+	guidelineRule *rpc.Rule      // Rule object associated with the linter-rule.
+	guideline     *rpc.Guideline // Guideline object associated with the linter-rule.
 }
 
 type linterMetadata struct {
