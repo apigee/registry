@@ -49,7 +49,8 @@ func TestExportCSV(t *testing.T) {
 
 	// Setup
 	err = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{
-		Name: "projects/" + projectID,
+		Name:  "projects/" + projectID,
+		Force: true,
 	})
 	if err != nil && status.Code(err) != codes.NotFound {
 		t.Fatalf("Setup: Failed to delete test project: %s", err)

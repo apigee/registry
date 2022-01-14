@@ -128,7 +128,8 @@ func TestUploadCSV(t *testing.T) {
 			}
 
 			err = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{
-				Name: "projects/" + testProject,
+				Name:  "projects/" + testProject,
+				Force: true,
 			})
 			if err != nil && status.Code(err) != codes.NotFound {
 				t.Fatalf("Setup: Failed to delete test project: %s", err)

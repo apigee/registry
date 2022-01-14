@@ -381,7 +381,8 @@ func TestConformance(t *testing.T) {
 			testProject := "conformance-test"
 
 			err = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{
-				Name: "projects/" + testProject,
+				Name:  "projects/" + testProject,
+				Force: true,
 			})
 			if err != nil && status.Code(err) != codes.NotFound {
 				t.Fatalf("Setup: Failed to delete test project: %s", err)
@@ -493,7 +494,8 @@ func TestConformance(t *testing.T) {
 
 			// Delete the demo project
 			err = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{
-				Name: "projects/" + testProject,
+				Name:  "projects/" + testProject,
+				Force: true,
 			})
 			if err != nil && status.Code(err) != codes.NotFound {
 				t.Fatalf("Setup: Failed to delete test project: %s", err)
