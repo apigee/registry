@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,20 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Reference
-# https://golangci-lint.run/usage/configuration/#config-file
-
-run:
-  # Don't ignore "default" directories.
-  skip-dirs-use-default: false
-  # Ignore generated code.
-  skip-dirs:
-    - ^cmd/apg$
-    - ^gapic$
-    - ^rpc$
-
+id: openapitest-default
+mime_types:
+  - application/x.openapi+gzip;version=2
+guidelines:
+  - id: refproperties
+    display_name: Govern Ref Properties
+    description: This guideline governs properties for ref fields on specs.
+    rules:
+      - id: norefsiblings
+        description: An object exposing a $ref property cannot be further extended with additional properties.
+        linter: sample
+        linter_rulename: no-$ref-siblings
 linters:
-  # Additional linters.
-  enable:
-    - goimports
-    - gofmt
+  - name: sample
+    uri: https://sample/url
