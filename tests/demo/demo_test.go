@@ -130,7 +130,8 @@ func TestDemo(t *testing.T) {
 	// Clear the demo project.
 	{
 		req := &rpc.DeleteProjectRequest{
-			Name: "projects/demo",
+			Name:  "projects/demo",
+			Force: true,
 		}
 		err = adminClient.DeleteProject(ctx, req)
 		if status.Code(err) != codes.NotFound {
@@ -386,7 +387,8 @@ func TestDemo(t *testing.T) {
 	// Delete the demo project.
 	{
 		req := &rpc.DeleteProjectRequest{
-			Name: "projects/demo",
+			Name:  "projects/demo",
+			Force: true,
 		}
 		err = adminClient.DeleteProject(ctx, req)
 		check(t, "Failed to delete demo project: %+v", err)

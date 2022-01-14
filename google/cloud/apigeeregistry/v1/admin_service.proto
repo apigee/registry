@@ -227,4 +227,8 @@ message DeleteProjectRequest {
       type: "apigeeregistry.googleapis.com/Project"
     }
   ];
+
+  // If set to true, any child resources will also be deleted.
+  // (Otherwise, the request will only work if there are no child resources.)
+  bool force = 2;
 }

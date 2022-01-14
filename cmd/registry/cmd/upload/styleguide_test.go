@@ -84,7 +84,8 @@ func TestStyleGuideUpload(t *testing.T) {
 				t.Fatalf("Setup: Failed to create client: %s", err)
 			}
 			err = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{
-				Name: "projects/" + test.project,
+				Name:  "projects/" + test.project,
+				Force: true,
 			})
 			if err != nil && status.Code(err) != codes.NotFound {
 				t.Fatalf("Setup: Failed to delete test project: %s", err)

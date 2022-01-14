@@ -85,7 +85,8 @@ func TestCRUD(t *testing.T) {
 	// Clear the test project.
 	{
 		req := &rpc.DeleteProjectRequest{
-			Name: "projects/test",
+			Name:  "projects/test",
+			Force: true,
 		}
 		err = adminClient.DeleteProject(ctx, req)
 		if status.Code(err) != codes.NotFound {
@@ -272,7 +273,8 @@ func TestCRUD(t *testing.T) {
 	// Delete the test project.
 	{
 		req := &rpc.DeleteProjectRequest{
-			Name: "projects/test",
+			Name:  "projects/test",
+			Force: true,
 		}
 		err = adminClient.DeleteProject(ctx, req)
 		check(t, "Failed to delete test project: %+v", err)

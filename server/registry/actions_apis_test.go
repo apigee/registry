@@ -992,6 +992,7 @@ func TestDeleteApi(t *testing.T) {
 func TestDeleteApiResponseCodes(t *testing.T) {
 	tests := []struct {
 		desc string
+		seed *rpc.Artifact
 		req  *rpc.DeleteApiRequest
 		want codes.Code
 	}{
@@ -1002,16 +1003,74 @@ func TestDeleteApiResponseCodes(t *testing.T) {
 			},
 			want: codes.NotFound,
 		},
+		{
+			desc: "resource has children",
+			seed: &rpc.Artifact{
+				Name: "projects/my-project/locations/global/apis/my-api/artifacts/my-artifact",
+			},
+			req: &rpc.DeleteApiRequest{
+				Name: "projects/my-project/locations/global/apis/my-api",
+			},
+			want: codes.FailedPrecondition,
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
+			if err := seeder.SeedArtifacts(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			if _, err := server.DeleteApi(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("DeleteApi(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
 			}
 		})
+	}
+}
+
+func TestDeleteApiCascading(t *testing.T) {
+	var (
+		ctx     = context.Background()
+		server  = defaultTestServer(t)
+		version = &rpc.ApiVersion{
+			Name: "projects/my-project/locations/global/apis/my-api/versions/my-version",
+		}
+		deployment = &rpc.ApiDeployment{
+			Name: "projects/my-project/locations/global/apis/my-api/deployments/my-deployment",
+		}
+		artifact = &rpc.Artifact{
+			Name: "projects/my-project/locations/global/apis/my-api/artifacts/my-artifact",
+		}
+	)
+
+	if err := seeder.SeedRegistry(ctx, server, version, deployment, artifact); err != nil {
+		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+	}
+
+	req := &rpc.DeleteApiRequest{
+		Name:  "projects/my-project/locations/global/apis/my-api",
+		Force: true,
+	}
+
+	if _, err := server.DeleteApi(ctx, req); err != nil {
+		t.Errorf("DeleteApi(%+v) returned error: %s", req, err)
+	}
+
+	if _, err := server.GetApi(ctx, &rpc.GetApiRequest{Name: req.GetName()}); status.Code(err) != codes.NotFound {
+		t.Errorf("GetApi(%q) returned status code %q, want %q: %s", req.GetName(), status.Code(err), codes.NotFound, err)
+	}
+
+	if _, err := server.GetApiVersion(ctx, &rpc.GetApiVersionRequest{Name: version.GetName()}); status.Code(err) != codes.NotFound {
+		t.Errorf("GetApiVersion(%q) returned status code %q, want %q: %s", version.GetName(), status.Code(err), codes.NotFound, err)
+	}
+
+	if _, err := server.GetApiDeployment(ctx, &rpc.GetApiDeploymentRequest{Name: deployment.GetName()}); status.Code(err) != codes.NotFound {
+		t.Errorf("GetApiDeployment(%q) returned status code %q, want %q: %s", deployment.GetName(), status.Code(err), codes.NotFound, err)
+	}
+
+	if _, err := server.GetArtifact(ctx, &rpc.GetArtifactRequest{Name: artifact.GetName()}); status.Code(err) != codes.NotFound {
+		t.Errorf("GetArtifact(%q) returned status code %q, want %q: %s", artifact.GetName(), status.Code(err), codes.NotFound, err)
 	}
 }

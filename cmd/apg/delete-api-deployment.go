@@ -21,6 +21,8 @@ func init() {
 
 	DeleteApiDeploymentCmd.Flags().StringVar(&DeleteApiDeploymentInput.Name, "name", "", "Required. The name of the deployment to delete. ...")
 
+	DeleteApiDeploymentCmd.Flags().BoolVar(&DeleteApiDeploymentInput.Force, "force", false, "If set to true, any child resources will also be...")
+
 	DeleteApiDeploymentCmd.Flags().StringVar(&DeleteApiDeploymentFromFile, "from_file", "", "Absolute path to JSON file containing request payload")
 
 }

@@ -21,6 +21,8 @@ func init() {
 
 	DeleteApiVersionCmd.Flags().StringVar(&DeleteApiVersionInput.Name, "name", "", "Required. The name of the version to delete. ...")
 
+	DeleteApiVersionCmd.Flags().BoolVar(&DeleteApiVersionInput.Force, "force", false, "If set to true, any child resources will also be...")
+
 	DeleteApiVersionCmd.Flags().StringVar(&DeleteApiVersionFromFile, "from_file", "", "Absolute path to JSON file containing request payload")
 
 }
