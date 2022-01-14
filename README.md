@@ -70,7 +70,7 @@ The entry point for the Registry API server itself is
 The following tools are needed to build this software:
 
 - Go 1.17 (recommended) or later.
-- protoc, the Protocol Buffer Compiler, version 3.18.1.
+- protoc, the Protocol Buffer Compiler, version 3.19.3.
 - make, git, and other elements of common unix build environments.
 
 This repository contains a Makefile that downloads all other dependencies and
