@@ -357,7 +357,7 @@ func revisionTags(ctx context.Context, db *storage.Client, name names.SpecRevisi
 	return tags, nil
 }
 
-func specTagsByRevision(tags []*models.SpecRevisionTag) map[string][]string {
+func specTagsByRevision(tags []models.SpecRevisionTag) map[string][]string {
 	revTags := make(map[string][]string, len(tags))
 	for _, tag := range tags {
 		rev := names.SpecRevision{
