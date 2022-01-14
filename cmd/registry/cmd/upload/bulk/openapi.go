@@ -31,6 +31,7 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"gopkg.in/yaml.v3"
 )
 
 func openAPICommand(ctx context.Context) *cobra.Command {
@@ -127,6 +128,8 @@ type uploadOpenAPITask struct {
 	apiID     string // computed at runtime
 	versionID string // computed at runtime
 	specID    string // computed at runtime
+	contents  []byte
+	document  PartialOpenAPIDocument
 }
 
 func (task *uploadOpenAPITask) String() string {
@@ -136,7 +139,8 @@ func (task *uploadOpenAPITask) String() string {
 func (task *uploadOpenAPITask) Run(ctx context.Context) error {
 	// Populate API path fields using the file's path.
 	if err := task.populateFields(); err != nil {
-		return err
+		log.FromContext(ctx).WithError(err).Debugf("Failed to import API %s", task.apiName())
+		return nil
 	}
 	log.Infof(ctx, "Uploading apis/%s/versions/%s/specs/%s", task.apiID, task.versionID, task.specID)
 
@@ -171,7 +175,12 @@ func (task *uploadOpenAPITask) populateFields() error {
 	specPart := parts[len(parts)-1]
 	task.specID = sanitize(specPart)
 
-	return nil
+	var err error
+	task.contents, err = ioutil.ReadFile(task.path)
+	if err != nil {
+		return err
+	}
+	return yaml.Unmarshal(task.contents, &(task.document))
 }
 
 func (task *uploadOpenAPITask) createAPI(ctx context.Context) error {
@@ -180,6 +189,7 @@ func (task *uploadOpenAPITask) createAPI(ctx context.Context) error {
 		Api: &rpc.Api{
 			Name:        task.apiName(),
 			DisplayName: task.apiID,
+			Description: task.document.Info.Title,
 		},
 		AllowMissing: true,
 	})
@@ -216,22 +226,17 @@ func (task *uploadOpenAPITask) createVersion(ctx context.Context) error {
 }
 
 func (task *uploadOpenAPITask) createOrUpdateSpec(ctx context.Context) error {
-	contents, err := ioutil.ReadFile(task.path)
-	if err != nil {
-		return err
-	}
-
 	// Use the spec size and hash to avoid unnecessary uploads.
 	spec, err := task.client.GetApiSpec(ctx, &rpc.GetApiSpecRequest{
 		Name: task.specName(),
 	})
 
-	if err == nil && int(spec.GetSizeBytes()) == len(contents) && spec.GetHash() == hashForBytes(contents) {
+	if err == nil && int(spec.GetSizeBytes()) == len(task.contents) && spec.GetHash() == hashForBytes(task.contents) {
 		log.Debugf(ctx, "Matched already uploaded spec %s", task.specName())
 		return nil
 	}
 
-	gzippedContents, err := core.GZippedBytes(contents)
+	gzippedContents, err := core.GZippedBytes(task.contents)
 	if err != nil {
 		return err
 	}
@@ -251,7 +256,7 @@ func (task *uploadOpenAPITask) createOrUpdateSpec(ctx context.Context) error {
 
 	response, err := task.client.UpdateApiSpec(ctx, request)
 	if err != nil {
-		log.FromContext(ctx).WithError(err).Debugf("Error %s [contents-length: %d]", task.specName(), len(contents))
+		log.FromContext(ctx).WithError(err).Debugf("Error %s [contents-length: %d]", task.specName(), len(task.contents))
 	} else {
 		log.Debugf(ctx, "Updated %s", response.Name)
 	}
@@ -289,4 +294,16 @@ func hashForBytes(b []byte) string {
 	_, _ = h.Write(b)
 	bs := h.Sum(nil)
 	return fmt.Sprintf("%x", bs)
+}
+
+// A subset of the OpenAPI document useful for adding an API to the registry
+type PartialOpenAPIDocument struct {
+	Swagger string             `yaml:"swagger"`
+	OpenAPI string             `yaml:"openapi"`
+	Info    PartialOpenAPIInfo `yaml:"info"`
+}
+
+// A subset of the OpenAPI info structure useful for adding an API to the registry
+type PartialOpenAPIInfo struct {
+	Title string `yaml:"title"`
 }
