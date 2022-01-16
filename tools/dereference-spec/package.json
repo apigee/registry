@@ -1,0 +1,23 @@
+{
+    "name": "cli-deref",
+    "version": "1.0.0",
+    "description": "A CLI to manage a TODO list",
+    "main": "index.js",
+    "scripts": {
+        "start": "node index.js"
+    },
+    "keywords": [
+        "MIT"
+    ],
+    "author": "Elie Perelman",
+    "license": "MIT",
+    "dependencies": {
+        "@apidevtools/swagger-parser": "^10.0.3",
+        "chalk": "^4.1.0",
+        "commander": "^7.2.0",
+        "conf": "^9.0.2"
+    },
+    "bin": {
+        "oapi-deref": "index.js"
+    }
+}
