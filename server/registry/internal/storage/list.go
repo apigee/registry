@@ -59,12 +59,16 @@ func (c *Client) ListProjects(ctx context.Context, opts PageOptions) (ProjectLis
 
 	lock()
 	var projects []models.Project
-	_ = c.db.
+	err = c.db.
 		Order("key").
 		Offset(token.Offset).
 		Limit(100000).
 		Find(&projects).Error
 	unlock()
+
+	if err != nil {
+		return ProjectList{}, status.Error(codes.Internal, err.Error())
+	}
 
 	response := ProjectList{
 		Projects: make([]models.Project, 0, opts.Size),
@@ -158,6 +162,10 @@ func (c *Client) ListApis(ctx context.Context, parent names.Project, opts PageOp
 	var apis []models.Api
 	_ = op.Find(&apis).Error
 	unlock()
+
+	if err != nil {
+		return ApiList{}, status.Error(codes.Internal, err.Error())
+	}
 
 	response := ApiList{
 		Apis: make([]models.Api, 0, opts.Size),
@@ -275,6 +283,10 @@ func (c *Client) ListVersions(ctx context.Context, parent names.Api, opts PageOp
 	var versions []models.Version
 	_ = op.Find(&versions).Error
 	unlock()
+
+	if err != nil {
+		return VersionList{}, status.Error(codes.Internal, err.Error())
+	}
 
 	response := VersionList{
 		Versions: make([]models.Version, 0, opts.Size),
@@ -413,6 +425,10 @@ func (c *Client) ListSpecs(ctx context.Context, parent names.Version, opts PageO
 	_ = op.Scan(&specs).Error
 	unlock()
 
+	if err != nil {
+		return SpecList{}, status.Error(codes.Internal, err.Error())
+	}
+
 	response := SpecList{
 		Specs: make([]models.Spec, 0, opts.Size),
 	}
@@ -483,7 +499,7 @@ func (c *Client) ListSpecRevisions(ctx context.Context, parent names.Spec, opts 
 	}
 
 	lock()
-	_ = c.db.
+	err = c.db.
 		Where("project_id = ?", parent.ProjectID).
 		Where("api_id = ?", parent.ApiID).
 		Where("version_id = ?", parent.VersionID).
@@ -493,6 +509,10 @@ func (c *Client) ListSpecRevisions(ctx context.Context, parent names.Spec, opts 
 		Limit(int(opts.Size) + 1).
 		Find(&response.Specs).Error
 	unlock()
+
+	if err != nil {
+		return SpecList{}, status.Error(codes.Internal, err.Error())
+	}
 
 	// Trim the response and return a page token if too many resources were found.
 	if len(response.Specs) > int(opts.Size) {
@@ -586,6 +606,10 @@ func (c *Client) ListDeployments(ctx context.Context, parent names.Api, opts Pag
 	_ = op.Scan(&deployments).Error
 	unlock()
 
+	if err != nil {
+		return DeploymentList{}, status.Error(codes.Internal, err.Error())
+	}
+
 	response := DeploymentList{
 		Deployments: make([]models.Deployment, 0, opts.Size),
 	}
@@ -656,7 +680,7 @@ func (c *Client) ListDeploymentRevisions(ctx context.Context, parent names.Deplo
 	}
 
 	lock()
-	_ = c.db.
+	err = c.db.
 		Where("project_id = ?", parent.ProjectID).
 		Where("api_id = ?", parent.ApiID).
 		Where("deployment_id = ?", parent.DeploymentID).
@@ -665,6 +689,10 @@ func (c *Client) ListDeploymentRevisions(ctx context.Context, parent names.Deplo
 		Limit(int(opts.Size) + 1).
 		Find(&response.Deployments).Error
 	unlock()
+
+	if err != nil {
+		return DeploymentList{}, status.Error(codes.Internal, err.Error())
+	}
 
 	// Trim the response and return a page token if too many resources were found.
 	if len(response.Deployments) > int(opts.Size) {
@@ -918,6 +946,10 @@ func (c *Client) listArtifacts(ctx context.Context, op *gorm.DB, opts PageOption
 		Find(&artifacts).Error
 	unlock()
 
+	if err != nil {
+		return ArtifactList{}, status.Error(codes.Internal, err.Error())
+	}
+
 	response := ArtifactList{
 		Artifacts: make([]models.Artifact, 0, opts.Size),
 	}
@@ -978,7 +1010,11 @@ func (c *Client) GetSpecTags(ctx context.Context, name names.Spec) ([]models.Spe
 	defer unlock()
 
 	tags := make([]models.SpecRevisionTag, 0)
-	_ = op.Limit(100000).Find(&tags)
+	err := op.Limit(100000).Find(&tags).Error
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
 	return tags, nil
 }
 
@@ -993,6 +1029,10 @@ func (c *Client) GetDeploymentTags(ctx context.Context, name names.Deployment) (
 	defer unlock()
 
 	tags := make([]models.DeploymentRevisionTag, 0)
-	_ = op.Limit(100000).Find(&tags)
+	err := op.Limit(100000).Find(&tags).Error
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
 	return tags, nil
 }
