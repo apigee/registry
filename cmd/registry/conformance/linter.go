@@ -15,16 +15,9 @@
 package conformance
 
 import (
-	"bytes"
-	"context"
 	"fmt"
-	"os"
-	"os/exec"
-	"time"
 
-	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
-	"google.golang.org/protobuf/proto"
 )
 
 type ruleMetadata struct {
@@ -53,6 +46,9 @@ func GenerateLinterMetadata(styleguide *rpc.StyleGuide) (map[string]*linterMetad
 		for _, rule := range guideline.GetRules() {
 			// Get the name of the linter associated with the rule.
 			linterName := rule.GetLinter()
+			if len(linterName) == 0 {
+				continue
+			}
 
 			metadata, ok := linterNameToMetadata[linterName]
 			if !ok {
@@ -64,14 +60,19 @@ func GenerateLinterMetadata(styleguide *rpc.StyleGuide) (map[string]*linterMetad
 				linterNameToMetadata[linterName] = metadata
 			}
 
-			//Populate required metadata
-			metadata.rules = append(metadata.rules, rule.GetLinterRulename())
-
-			if _, ok := metadata.rulesMetadata[rule.GetLinterRulename()]; !ok {
-				metadata.rulesMetadata[rule.GetLinterRulename()] = &ruleMetadata{}
+			linterRuleName := rule.GetLinterRulename()
+			if len(linterRuleName) == 0 {
+				continue
 			}
-			metadata.rulesMetadata[rule.GetLinterRulename()].guideline = guideline
-			metadata.rulesMetadata[rule.GetLinterRulename()].guidelineRule = rule
+
+			//Populate required metadata
+			metadata.rules = append(metadata.rules, linterRuleName)
+
+			if _, ok := metadata.rulesMetadata[linterRuleName]; !ok {
+				metadata.rulesMetadata[linterRuleName] = &ruleMetadata{}
+			}
+			metadata.rulesMetadata[linterRuleName].guideline = guideline
+			metadata.rulesMetadata[linterRuleName].guidelineRule = rule
 		}
 	}
 
@@ -79,48 +80,4 @@ func GenerateLinterMetadata(styleguide *rpc.StyleGuide) (map[string]*linterMetad
 		return nil, fmt.Errorf("Empty linter metadata")
 	}
 	return linterNameToMetadata, nil
-}
-
-func invokeLinter(
-	ctx context.Context,
-	specDirectory string,
-	metadata *linterMetadata) (*rpc.LinterResponse, error) {
-
-	// Formulate the request.
-	requestBytes, err := proto.Marshal(&rpc.LinterRequest{
-		SpecDirectory: specDirectory,
-		RuleIds:       metadata.rules,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("Failed marshaling linterRequest, Error: %s ", err)
-	}
-
-	executableName := getLinterBinaryName(metadata.name)
-	cmd := exec.Command(executableName)
-	cmd.Stdin = bytes.NewReader(requestBytes)
-	cmd.Stderr = os.Stderr
-
-	pluginStartTime := time.Now()
-	// Run the linter.
-	output, err := cmd.Output()
-	if err != nil {
-		return nil, fmt.Errorf("Running the plugin %s return error: %s", executableName, err)
-	}
-
-	pluginElapsedTime := time.Since(pluginStartTime)
-	log.Debugf(ctx, "Plugin %s ran in time %s", executableName, pluginElapsedTime)
-
-	// Unmarshal the output bytes into a response object. If there's a failure, log and continue.
-	linterResponse := &rpc.LinterResponse{}
-	err = proto.Unmarshal(output, linterResponse)
-	if err != nil {
-		return nil, fmt.Errorf("Failed unmarshaling LinterResponse (plugins must write log messages to stderr, not stdout): %s", err)
-	}
-
-	// Check if there were any errors in the plugin.
-	if len(linterResponse.GetErrors()) > 0 {
-		return nil, fmt.Errorf("Plugin %s encountered errors: %v", executableName, linterResponse.GetErrors())
-	}
-
-	return linterResponse, nil
 }
