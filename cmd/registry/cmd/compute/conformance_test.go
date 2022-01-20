@@ -23,6 +23,7 @@ import (
 	"testing"
 
 	"github.com/apigee/registry/cmd/registry/cmd/upload"
+	"github.com/apigee/registry/cmd/registry/conformance"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
@@ -34,60 +35,6 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
 )
-
-func initReport(t *testing.T) *rpc.ConformanceReport {
-	t.Helper()
-	return &rpc.ConformanceReport{
-		GuidelineReportGroups: []*rpc.GuidelineReportGroup{
-			{
-				Status:           rpc.Guideline_STATUS_UNSPECIFIED,
-				GuidelineReports: []*rpc.GuidelineReport{},
-			},
-			{
-				Status:           rpc.Guideline_PROPOSED,
-				GuidelineReports: []*rpc.GuidelineReport{},
-			},
-			{
-				Status:           rpc.Guideline_ACTIVE,
-				GuidelineReports: []*rpc.GuidelineReport{},
-			},
-			{
-				Status:           rpc.Guideline_DEPRECATED,
-				GuidelineReports: []*rpc.GuidelineReport{},
-			},
-			{
-				Status:           rpc.Guideline_DISABLED,
-				GuidelineReports: []*rpc.GuidelineReport{},
-			},
-		},
-	}
-}
-
-func initRuleReportGroups(t *testing.T) []*rpc.RuleReportGroup {
-	t.Helper()
-	return []*rpc.RuleReportGroup{
-		{
-			Severity:    rpc.Rule_SEVERITY_UNSPECIFIED,
-			RuleReports: []*rpc.RuleReport{},
-		},
-		{
-			Severity:    rpc.Rule_ERROR,
-			RuleReports: []*rpc.RuleReport{},
-		},
-		{
-			Severity:    rpc.Rule_WARNING,
-			RuleReports: []*rpc.RuleReport{},
-		},
-		{
-			Severity:    rpc.Rule_INFO,
-			RuleReports: []*rpc.RuleReport{},
-		},
-		{
-			Severity:    rpc.Rule_HINT,
-			RuleReports: []*rpc.RuleReport{},
-		},
-	}
-}
 
 func readAndGZipFile(t *testing.T, filename string) (*bytes.Buffer, error) {
 	t.Helper()
@@ -117,11 +64,11 @@ func TestConformance(t *testing.T) {
 			conformancePath: filepath.Join("testdata", "styleguide.yaml"),
 			getPattern:      "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/conformance-openapitest",
 			wantProto: func() *rpc.ConformanceReport {
-				conformance := initReport(t)
-				conformance.Name = "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/conformance-openapitest"
-				conformance.StyleguideName = "openapitest"
+				report := conformance.InitReport(t)
+				report.Name = "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/conformance-openapitest"
+				report.StyleguideName = "openapitest"
 
-				ruleReportGroups := initRuleReportGroups(t)
+				ruleReportGroups := conformance.InitRuleReportGroups(t)
 
 				// Populate the expected severity entry
 				ruleReportGroups[rpc.Rule_ERROR].RuleReports = []*rpc.RuleReport{
@@ -140,9 +87,9 @@ func TestConformance(t *testing.T) {
 				}
 
 				//Populate the expected status entry
-				conformance.GuidelineReportGroups[rpc.Guideline_ACTIVE].GuidelineReports = guidelineReports
+				report.GuidelineReportGroups[rpc.Guideline_ACTIVE].GuidelineReports = guidelineReports
 
-				return conformance
+				return report
 			}(),
 		},
 		//Tests if default status and severity values are assigned properly in the absence of defined values
@@ -151,11 +98,11 @@ func TestConformance(t *testing.T) {
 			conformancePath: filepath.Join("testdata", "styleguide-default.yaml"),
 			getPattern:      "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/conformance-openapitest-default",
 			wantProto: func() *rpc.ConformanceReport {
-				conformance := initReport(t)
-				conformance.Name = "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/conformance-openapitest-default"
-				conformance.StyleguideName = "openapitest-default"
+				report := conformance.InitReport(t)
+				report.Name = "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/conformance-openapitest-default"
+				report.StyleguideName = "openapitest-default"
 
-				ruleReportGroups := initRuleReportGroups(t)
+				ruleReportGroups := conformance.InitRuleReportGroups(t)
 
 				// Populate the expected severity entry
 				ruleReportGroups[rpc.Rule_SEVERITY_UNSPECIFIED].RuleReports = []*rpc.RuleReport{
@@ -174,9 +121,9 @@ func TestConformance(t *testing.T) {
 				}
 
 				//Populate the expected status entry
-				conformance.GuidelineReportGroups[rpc.Guideline_STATUS_UNSPECIFIED].GuidelineReports = guidelineReports
+				report.GuidelineReportGroups[rpc.Guideline_STATUS_UNSPECIFIED].GuidelineReports = guidelineReports
 
-				return conformance
+				return report
 			}(),
 		},
 		//Tests if multiple severity levels are populated correctly in severity report
@@ -185,11 +132,11 @@ func TestConformance(t *testing.T) {
 			conformancePath: filepath.Join("testdata", "styleguide-multiple-severity.yaml"),
 			getPattern:      "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/conformance-openapitest-multiple-severity",
 			wantProto: func() *rpc.ConformanceReport {
-				conformance := initReport(t)
-				conformance.Name = "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/conformance-openapitest-multiple-severity"
-				conformance.StyleguideName = "openapitest-multiple-severity"
+				report := conformance.InitReport(t)
+				report.Name = "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/conformance-openapitest-multiple-severity"
+				report.StyleguideName = "openapitest-multiple-severity"
 
-				ruleReportGroups := initRuleReportGroups(t)
+				ruleReportGroups := conformance.InitRuleReportGroups(t)
 
 				// Populate the expected severity entry
 				ruleReportGroups[rpc.Rule_INFO].RuleReports = []*rpc.RuleReport{
@@ -222,9 +169,9 @@ func TestConformance(t *testing.T) {
 				}
 
 				//Populate the expected status entry
-				conformance.GuidelineReportGroups[rpc.Guideline_ACTIVE].GuidelineReports = guidelineReports
+				report.GuidelineReportGroups[rpc.Guideline_ACTIVE].GuidelineReports = guidelineReports
 
-				return conformance
+				return report
 			}(),
 		},
 		//Tests if multiple status entries are populated correctly in severity report
@@ -233,12 +180,12 @@ func TestConformance(t *testing.T) {
 			conformancePath: filepath.Join("testdata", "styleguide-multiple-status.yaml"),
 			getPattern:      "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/conformance-openapitest-multiple-status",
 			wantProto: func() *rpc.ConformanceReport {
-				conformance := initReport(t)
-				conformance.Name = "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/conformance-openapitest-multiple-status"
-				conformance.StyleguideName = "openapitest-multiple-status"
+				report := conformance.InitReport(t)
+				report.Name = "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/conformance-openapitest-multiple-status"
+				report.StyleguideName = "openapitest-multiple-status"
 
 				// EXPECTED RULE REPORTS FOR STATUS = "ACTIVE"
-				ruleReportGroups := initRuleReportGroups(t)
+				ruleReportGroups := conformance.InitRuleReportGroups(t)
 
 				// Populate the expected severity entry
 				ruleReportGroups[rpc.Rule_ERROR].RuleReports = []*rpc.RuleReport{
@@ -257,10 +204,10 @@ func TestConformance(t *testing.T) {
 				}
 
 				//Populate the expected status entry
-				conformance.GuidelineReportGroups[rpc.Guideline_ACTIVE].GuidelineReports = guidelineReports
+				report.GuidelineReportGroups[rpc.Guideline_ACTIVE].GuidelineReports = guidelineReports
 
 				//EXPECTED RULE REPORTS FOR STATUS = "PROPOSED"
-				ruleReportGroups = initRuleReportGroups(t)
+				ruleReportGroups = conformance.InitRuleReportGroups(t)
 
 				// Populate the expected severity entry
 				ruleReportGroups[rpc.Rule_INFO].RuleReports = []*rpc.RuleReport{
@@ -285,9 +232,9 @@ func TestConformance(t *testing.T) {
 				}
 
 				//Populate the expected status entry
-				conformance.GuidelineReportGroups[rpc.Guideline_PROPOSED].GuidelineReports = guidelineReports
+				report.GuidelineReportGroups[rpc.Guideline_PROPOSED].GuidelineReports = guidelineReports
 
-				return conformance
+				return report
 			}(),
 		},
 		//Tests a guideline which defines rules from multiple linters
@@ -296,12 +243,12 @@ func TestConformance(t *testing.T) {
 			conformancePath: filepath.Join("testdata", "styleguide-multiple-linter.yaml"),
 			getPattern:      "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/conformance-openapitest-multiple-linter",
 			wantProto: func() *rpc.ConformanceReport {
-				conformance := initReport(t)
-				conformance.Name = "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/conformance-openapitest-multiple-linter"
-				conformance.StyleguideName = "openapitest-multiple-linter"
+				report := conformance.InitReport(t)
+				report.Name = "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/conformance-openapitest-multiple-linter"
+				report.StyleguideName = "openapitest-multiple-linter"
 
 				// EXPECTED RULE REPORTS FOR STATUS = "ACTIVE"
-				ruleReportGroups := initRuleReportGroups(t)
+				ruleReportGroups := conformance.InitRuleReportGroups(t)
 
 				// Populate the expected severity entry
 				ruleReportGroups[rpc.Rule_ERROR].RuleReports = []*rpc.RuleReport{
@@ -320,10 +267,10 @@ func TestConformance(t *testing.T) {
 				}
 
 				//Populate the expected status entry
-				conformance.GuidelineReportGroups[rpc.Guideline_ACTIVE].GuidelineReports = guidelineReports
+				report.GuidelineReportGroups[rpc.Guideline_ACTIVE].GuidelineReports = guidelineReports
 
 				//EXPECTED RULE REPORTS FOR STATUS = "PROPOSED"
-				ruleReportGroups = initRuleReportGroups(t)
+				ruleReportGroups = conformance.InitRuleReportGroups(t)
 
 				// Populate the expected severity entry
 				ruleReportGroups[rpc.Rule_INFO].RuleReports = []*rpc.RuleReport{
@@ -359,9 +306,9 @@ func TestConformance(t *testing.T) {
 				}
 
 				//Populate the expected status entry
-				conformance.GuidelineReportGroups[rpc.Guideline_PROPOSED].GuidelineReports = guidelineReports
+				report.GuidelineReportGroups[rpc.Guideline_PROPOSED].GuidelineReports = guidelineReports
 
-				return conformance
+				return report
 			}(),
 		},
 	}
