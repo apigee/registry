@@ -463,16 +463,10 @@ func TestConformance(t *testing.T) {
 			}
 
 			// List all the artifacts
-			// got := make([]string, 0)
 			artifactName, err := names.ParseArtifact(test.getPattern)
 			if err != nil {
 				t.Fatalf("Invalid artifact pattern: %s", test.getPattern)
 			}
-			// _ = core.ListArtifacts(ctx, client, artifact, "", false,
-			// 	func(artifact *rpc.Artifact) {
-			// 		got = append(got, artifact.Name)
-			// 	},
-			// )
 
 			artifact, err := core.GetArtifact(ctx, client, artifactName, true, nil)
 			if err != nil {
