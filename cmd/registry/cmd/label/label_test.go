@@ -51,7 +51,8 @@ func TestLabel(t *testing.T) {
 	defer adminClient.Close()
 	// Clear the test project.
 	err = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{
-		Name: projectName,
+		Name:  projectName,
+		Force: true,
 	})
 	if err != nil && status.Code(err) != codes.NotFound {
 		t.Fatalf("Error deleting test project: %+v", err)
@@ -171,7 +172,8 @@ func TestLabel(t *testing.T) {
 	// Delete the test project.
 	if false {
 		req := &rpc.DeleteProjectRequest{
-			Name: projectName,
+			Name:  projectName,
+			Force: true,
 		}
 		err = adminClient.DeleteProject(ctx, req)
 		if err != nil {

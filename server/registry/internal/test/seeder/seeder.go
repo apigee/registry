@@ -112,7 +112,9 @@ func SeedRegistry(ctx context.Context, s RegistryImp, resources ...RegistryResou
 func SeedProjects(ctx context.Context, s RegistryImp, projects ...*rpc.Project) error {
 	resources := make([]RegistryResource, 0, len(projects))
 	for _, r := range projects {
-		resources = append(resources, r)
+		if r != nil {
+			resources = append(resources, r)
+		}
 	}
 	return SeedRegistry(ctx, s, resources...)
 }
@@ -121,7 +123,9 @@ func SeedProjects(ctx context.Context, s RegistryImp, projects ...*rpc.Project) 
 func SeedApis(ctx context.Context, s RegistryImp, apis ...*rpc.Api) error {
 	resources := make([]RegistryResource, 0, len(apis))
 	for _, r := range apis {
-		resources = append(resources, r)
+		if r != nil {
+			resources = append(resources, r)
+		}
 	}
 	return SeedRegistry(ctx, s, resources...)
 }
@@ -130,7 +134,9 @@ func SeedApis(ctx context.Context, s RegistryImp, apis ...*rpc.Api) error {
 func SeedVersions(ctx context.Context, s RegistryImp, versions ...*rpc.ApiVersion) error {
 	resources := make([]RegistryResource, 0, len(versions))
 	for _, r := range versions {
-		resources = append(resources, r)
+		if r != nil {
+			resources = append(resources, r)
+		}
 	}
 	return SeedRegistry(ctx, s, resources...)
 }
@@ -139,7 +145,9 @@ func SeedVersions(ctx context.Context, s RegistryImp, versions ...*rpc.ApiVersio
 func SeedSpecs(ctx context.Context, s RegistryImp, specs ...*rpc.ApiSpec) error {
 	resources := make([]RegistryResource, 0, len(specs))
 	for _, r := range specs {
-		resources = append(resources, r)
+		if r != nil {
+			resources = append(resources, r)
+		}
 	}
 	return SeedRegistry(ctx, s, resources...)
 }
@@ -148,7 +156,9 @@ func SeedSpecs(ctx context.Context, s RegistryImp, specs ...*rpc.ApiSpec) error 
 func SeedDeployments(ctx context.Context, s RegistryImp, deployments ...*rpc.ApiDeployment) error {
 	resources := make([]RegistryResource, 0, len(deployments))
 	for _, r := range deployments {
-		resources = append(resources, r)
+		if r != nil {
+			resources = append(resources, r)
+		}
 	}
 	return SeedRegistry(ctx, s, resources...)
 }
@@ -157,7 +167,9 @@ func SeedDeployments(ctx context.Context, s RegistryImp, deployments ...*rpc.Api
 func SeedArtifacts(ctx context.Context, s RegistryImp, artifacts ...*rpc.Artifact) error {
 	resources := make([]RegistryResource, 0, len(artifacts))
 	for _, r := range artifacts {
-		resources = append(resources, r)
+		if r != nil {
+			resources = append(resources, r)
+		}
 	}
 	return SeedRegistry(ctx, s, resources...)
 }

@@ -99,7 +99,7 @@ func (s *RegistryServer) DeleteApiVersion(ctx context.Context, req *rpc.DeleteAp
 		return nil, err
 	}
 
-	if err := db.DeleteVersion(ctx, name); err != nil {
+	if err := db.DeleteVersion(ctx, name, req.GetForce()); err != nil {
 		return nil, err
 	}
 

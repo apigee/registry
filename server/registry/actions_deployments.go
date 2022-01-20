@@ -99,7 +99,7 @@ func (s *RegistryServer) DeleteApiDeployment(ctx context.Context, req *rpc.Delet
 		return nil, err
 	}
 
-	if err := db.DeleteDeployment(ctx, name); err != nil {
+	if err := db.DeleteDeployment(ctx, name, req.GetForce()); err != nil {
 		return nil, err
 	}
 
@@ -299,7 +299,7 @@ func deploymentRevisionTags(ctx context.Context, db *storage.Client, name names.
 	return tags, nil
 }
 
-func deploymentTagsByRevision(tags []*models.DeploymentRevisionTag) map[string][]string {
+func deploymentTagsByRevision(tags []models.DeploymentRevisionTag) map[string][]string {
 	revTags := make(map[string][]string, len(tags))
 	for _, tag := range tags {
 		rev := names.DeploymentRevision{

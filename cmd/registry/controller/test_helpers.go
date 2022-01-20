@@ -36,7 +36,8 @@ func deleteProject(
 	projectID string) {
 	t.Helper()
 	req := &rpc.DeleteProjectRequest{
-		Name: "projects/" + projectID,
+		Name:  "projects/" + projectID,
+		Force: true,
 	}
 	err := client.DeleteProject(ctx, req)
 	if err != nil && status.Code(err) != codes.NotFound {

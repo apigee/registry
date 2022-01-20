@@ -106,7 +106,7 @@ func (s *RegistryServer) DeleteApiSpec(ctx context.Context, req *rpc.DeleteApiSp
 		return nil, err
 	}
 
-	if err := db.DeleteSpec(ctx, name); err != nil {
+	if err := db.DeleteSpec(ctx, name, req.GetForce()); err != nil {
 		return nil, err
 	}
 
@@ -357,7 +357,7 @@ func revisionTags(ctx context.Context, db *storage.Client, name names.SpecRevisi
 	return tags, nil
 }
 
-func specTagsByRevision(tags []*models.SpecRevisionTag) map[string][]string {
+func specTagsByRevision(tags []models.SpecRevisionTag) map[string][]string {
 	revTags := make(map[string][]string, len(tags))
 	for _, tag := range tags {
 		rev := names.SpecRevision{

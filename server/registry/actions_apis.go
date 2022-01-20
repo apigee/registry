@@ -99,7 +99,7 @@ func (s *RegistryServer) DeleteApi(ctx context.Context, req *rpc.DeleteApiReques
 		return nil, err
 	}
 
-	if err := db.DeleteApi(ctx, name); err != nil {
+	if err := db.DeleteApi(ctx, name, req.GetForce()); err != nil {
 		return nil, err
 	}
 

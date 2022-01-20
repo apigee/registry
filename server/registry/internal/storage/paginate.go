@@ -1,4 +1,4 @@
-// Copyright 2020 Google LLC. All Rights Reserved.
+// Copyright 2022 Google LLC. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,12 +16,9 @@ package storage
 
 import (
 	"bytes"
-	"context"
 	"encoding/base64"
 	"encoding/gob"
 	"fmt"
-
-	"github.com/apigee/registry/server/registry/internal/storage/gorm"
 )
 
 // PageOptions contains custom arguments for listing requests.
@@ -37,26 +34,11 @@ type PageOptions struct {
 	Token string
 }
 
-type Client struct {
-	*gorm.Client
-}
-
-func NewClient(ctx context.Context, driver, dsn string) (*Client, error) {
-	gc, err := gorm.NewClient(ctx, driver, dsn)
-	if err != nil {
-		return nil, err
-	}
-
-	return &Client{
-		Client: gc,
-	}, nil
-}
-
 // token contains information to share between sequential page iterators.
 type token struct {
 	// Offset is the number of resources that should be skipped before the page begins.
 	// It should be set to the number of resources already returned.
-	Offset int32
+	Offset int
 	// Filter is the filter string for this listing request. It should be consistent between sequential pages.
 	Filter string
 }
