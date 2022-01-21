@@ -239,7 +239,7 @@ message ApiSpec {
 // endpoint address changes.
 message ApiDeployment {
   option (google.api.resource) = {
-    type: "registry.googleapis.com/ApiDeployment"
+    type: "apigeeregistry.googleapis.com/ApiDeployment"
     pattern: "projects/{project}/locations/{location}/apis/{api}/deployments/{deployment}"
   };
 
