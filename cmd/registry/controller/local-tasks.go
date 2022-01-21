@@ -19,7 +19,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"os/exec"
 	"strings"
 
 	"github.com/apigee/registry/cmd/registry/core"
@@ -42,6 +41,7 @@ func (w logWriter) Write(p []byte) (n int, err error) {
 type ExecCommandTask struct {
 	Action *Action
 	TaskID string
+	CreateCommand core.CommandGenerator
 }
 
 func (task *ExecCommandTask) String() string {
@@ -57,56 +57,67 @@ func (task *ExecCommandTask) Run(ctx context.Context) error {
 		"taskID": fmt.Sprintf("{%s}", task.TaskID),
 	})
 
-	if strings.HasPrefix(task.Action.Command, "registry resolve") {
-		logger.Debug("Failed Execution: 'registry resolve' not allowed in action")
-		return errors.New("'registry resolve' not allowed in action")
-	}
-
-	// first party registry commands
-	if strings.HasPrefix(task.Action.Command, "registry") {
-		fullCmd := strings.Fields(task.Action.Command)
-
-		cmd := exec.Command(fullCmd[0], fullCmd[1:]...)
-		cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
-
-		if err := cmd.Run(); err != nil {
-			logger.WithError(err).Debug("Failed Execution: failed running command")
-			return errors.New("failed running command")
-		}
-	} else { //third party commands
-		fullCmd := strings.Fields(task.Action.Command)
-		cmdLogger := &logWriter{
-			logger: logger,
-		}
-
-		cmd := exec.Command(fullCmd[0], fullCmd[1:]...)
-		// redirect the output of the subcommands to the logger
-		cmd.Stdout, cmd.Stderr = cmdLogger, cmdLogger
-
-		if err := cmd.Run(); err != nil {
-			logger.WithError(err).Debug("Failed Execution: failed running command")
-			return errors.New("failed running command")
-		}
-	}
-
-	if task.Action.RequiresReceipt {
-		if err := touchArtifact(ctx, task.Action.GeneratedResource, task.Action.Command); err != nil {
-			logger.WithError(err).Debug("Failed Execution: failed uploading receipt")
-			return errors.New("failed uploading receipt")
-		}
+	err := task.ExcecuteCommand(ctx, logger)
+	if err != nil {
+		return err
 	}
 
 	logger.Debug("Successful Execution:")
 	return nil
 }
 
-func touchArtifact(ctx context.Context, artifactName, action string) error {
+func (task *ExecCommandTask) ExcecuteCommand(ctx context.Context, logger log.Logger) error {
+
+	if strings.HasPrefix(task.Action.Command, "registry resolve") {
+		logger.Debug("Failed Execution: 'registry resolve' not allowed in action")
+		return errors.New("'registry resolve' not allowed in action")
+	}
+
+	if task.CreateCommand == nil {
+		task.CreateCommand = core.GetCommandGenerator()
+	}
+
+	fullCmd := strings.Fields(task.Action.Command)
+	cmd := task.CreateCommand(fullCmd[0], fullCmd[1:]...)
+
+	// Route the output appropriately for registry tool and third party commands
+
+	// first party registry commands
+	if strings.HasPrefix(task.Action.Command, "registry") {
+		
+		cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
+
+	} else { //third party commands
+		// redirect the output of the subcommands to the logger
+		cmdLogger := &logWriter{logger: logger}
+		cmd.Stdout, cmd.Stderr = cmdLogger, cmdLogger
+	}
+
+	if err := cmd.Run(); err != nil {
+		logger.WithError(err).Debug("Failed Execution: failed running command")
+		return errors.New("failed running command")
+	}
+
+	if task.Action.RequiresReceipt {
+		if err := task.touchArtifact(ctx, task.Action.GeneratedResource, task.Action.Command); err != nil {
+			logger.WithError(err).Debug("Failed Execution: finished executing command, failed uploading receipt")
+			return errors.New("executed command, failed uploading receipt")
+		}
+	}
+
+	return nil
+}
+
+func (task *ExecCommandTask) touchArtifact(ctx context.Context, artifactName, action string) error {
 	client, err := connection.NewClient(ctx)
 	if err != nil {
 		log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 	}
 
-	messageData, _ := proto.Marshal(&rpc.Receipt{Action: action})
+	messageData, err := proto.Marshal(&rpc.Receipt{Action: action})
+	if err != nil {
+		return err
+	}
 	return core.SetArtifact(ctx, client, &rpc.Artifact{
 		Name:     artifactName,
 		MimeType: core.MimeTypeForMessageType("google.cloud.apigeeregistry.v1.controller.Receipt"),
