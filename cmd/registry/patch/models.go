@@ -30,7 +30,7 @@ type Metadata struct {
 
 type Project struct {
 	Header `yaml:",inline"`
-	Spec   struct {
+	Body   struct {
 		DisplayName string      `yaml:"displayName,omitempty"`
 		Description string      `yaml:"description,omitempty"`
 		APIs        []*API      `yaml:"apis,omitempty"`
@@ -40,7 +40,7 @@ type Project struct {
 
 type API struct {
 	Header `yaml:",inline"`
-	Spec   struct {
+	Body   struct {
 		DisplayName           string           `yaml:"displayName,omitempty"`
 		Description           string           `yaml:"description,omitempty"`
 		Availability          string           `yaml:"availability,omitempty"`
@@ -54,7 +54,7 @@ type API struct {
 
 type APIVersion struct {
 	Header `yaml:",inline"`
-	Spec   struct {
+	Body   struct {
 		DisplayName string      `yaml:"displayName,omitempty"`
 		Description string      `yaml:"description,omitempty"`
 		APISpecs    []*APISpec  `yaml:"specs,omitempty"`
@@ -64,7 +64,7 @@ type APIVersion struct {
 
 type APISpec struct {
 	Header `yaml:",inline"`
-	Spec   struct {
+	Body   struct {
 		FileName    string      `yaml:"fileName,omitempty"`
 		Description string      `yaml:"description,omitempty"`
 		MimeType    string      `yaml:"mimeType,omitempty"`
@@ -75,7 +75,7 @@ type APISpec struct {
 
 type APIDeployment struct {
 	Header `yaml:",inline"`
-	Spec   struct {
+	Body   struct {
 		DisplayName string      `yaml:"displayName,omitempty"`
 		Description string      `yaml:"description,omitempty"`
 		Artifacts   []*Artifact `yaml:"artifacts,omitempty"`
@@ -84,7 +84,7 @@ type APIDeployment struct {
 
 type Artifact struct {
 	Header `yaml:",inline"`
-	Spec   struct {
+	Body   struct {
 		MimeType string `yaml:"mimeType,omitempty"`
 	} `yaml:"body"`
 }

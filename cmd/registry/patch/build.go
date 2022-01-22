@@ -39,18 +39,18 @@ func buildAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.Ap
 			},
 		},
 	}
-	api.Spec.DisplayName = message.DisplayName
-	api.Spec.Description = message.Description
-	api.Spec.Availability = message.Availability
-	api.Spec.RecommendedVersion = message.RecommendedVersion
-	api.Spec.RecommendedDeployment = message.RecommendedDeployment
+	api.Body.DisplayName = message.DisplayName
+	api.Body.Description = message.Description
+	api.Body.Availability = message.Availability
+	api.Body.RecommendedVersion = message.RecommendedVersion
+	api.Body.RecommendedDeployment = message.RecommendedDeployment
 	core.ListVersions(ctx, client, apiName.Version(""), "", func(message *rpc.ApiVersion) {
 		version, err2 := buildAPIVersion(ctx, client, message)
 		// unset these because they can be inferred
 		version.APIVersion = ""
 		version.Kind = ""
 		if err2 == nil {
-			api.Spec.APIVersions = append(api.Spec.APIVersions, version)
+			api.Body.APIVersions = append(api.Body.APIVersions, version)
 		} else {
 			err = err2
 		}
@@ -61,7 +61,7 @@ func buildAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.Ap
 		deployment.APIVersion = ""
 		deployment.Kind = ""
 		if err2 == nil {
-			api.Spec.APIDeployments = append(api.Spec.APIDeployments, deployment)
+			api.Body.APIDeployments = append(api.Body.APIDeployments, deployment)
 		} else {
 			err = err2
 		}
@@ -85,15 +85,15 @@ func buildAPIVersion(ctx context.Context, client *gapic.RegistryClient, message 
 			},
 		},
 	}
-	version.Spec.DisplayName = message.DisplayName
-	version.Spec.Description = message.Description
+	version.Body.DisplayName = message.DisplayName
+	version.Body.Description = message.Description
 	core.ListSpecs(ctx, client, versionName.Spec(""), "", func(message *rpc.ApiSpec) {
 		spec, err2 := buildAPISpec(ctx, client, message)
 		// unset these because they can be inferred
 		spec.APIVersion = ""
 		spec.Kind = ""
 		if err2 == nil {
-			version.Spec.APISpecs = append(version.Spec.APISpecs, spec)
+			version.Body.APISpecs = append(version.Body.APISpecs, spec)
 		} else {
 			err = err2
 		}
@@ -117,10 +117,10 @@ func buildAPISpec(ctx context.Context, client *gapic.RegistryClient, message *rp
 			},
 		},
 	}
-	spec.Spec.FileName = message.Filename
-	spec.Spec.Description = message.Description
-	spec.Spec.MimeType = message.MimeType
-	spec.Spec.SourceURI = message.SourceUri
+	spec.Body.FileName = message.Filename
+	spec.Body.Description = message.Description
+	spec.Body.MimeType = message.MimeType
+	spec.Body.SourceURI = message.SourceUri
 	return spec, nil
 }
 
@@ -140,8 +140,8 @@ func buildAPIDeployment(ctx context.Context, client *gapic.RegistryClient, messa
 			},
 		},
 	}
-	deployment.Spec.DisplayName = message.DisplayName
-	deployment.Spec.Description = message.Description
+	deployment.Body.DisplayName = message.DisplayName
+	deployment.Body.Description = message.Description
 	return deployment, nil
 }
 
