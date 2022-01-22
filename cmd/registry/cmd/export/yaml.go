@@ -60,27 +60,6 @@ func yamlCommand(ctx context.Context) *cobra.Command {
 				if err != nil {
 					log.FromContext(ctx).WithError(err).Fatal("Failed to export API YAML")
 				}
-			} else if version, err := names.ParseVersion(name); err == nil {
-				_, err = core.GetVersion(ctx, client, version, func(message *rpc.ApiVersion) {
-					patch.ExportAPIVersion(ctx, client, message)
-				})
-				if err != nil {
-					log.FromContext(ctx).WithError(err).Fatal("Failed to export version YAML")
-				}
-			} else if spec, err := names.ParseSpec(name); err == nil {
-				_, err = core.GetSpec(ctx, client, spec, false, func(message *rpc.ApiSpec) {
-					patch.ExportAPISpec(ctx, client, message)
-				})
-				if err != nil {
-					log.FromContext(ctx).WithError(err).Fatal("Failed to export spec YAML")
-				}
-			} else if deployment, err := names.ParseDeployment(name); err == nil {
-				_, err = core.GetDeployment(ctx, client, deployment, func(message *rpc.ApiDeployment) {
-					patch.ExportAPIDeployment(ctx, client, message)
-				})
-				if err != nil {
-					log.FromContext(ctx).WithError(err).Fatal("Failed to export deployment YAML")
-				}
 			} else if artifact, err := names.ParseArtifact(name); err == nil {
 				_, err = core.GetArtifact(ctx, client, artifact, false, func(message *rpc.Artifact) {
 					patch.ExportArtifact(ctx, client, message)

@@ -17,13 +17,15 @@ package patch
 const REGISTRY_V1 = "registry/v1"
 
 type Header struct {
-	APIVersion string   `yaml:"apiVersion"`
-	Kind       string   `yaml:"kind"`
+	APIVersion string   `yaml:"apiVersion,omitempty"`
+	Kind       string   `yaml:"kind,omitempty"`
 	Metadata   Metadata `yaml:"metadata"`
 }
 
 type Metadata struct {
-	Name string `yaml:"name"`
+	Name        string            `yaml:"name"`
+	Labels      map[string]string `yaml:"labels,omitempty"`
+	Annotations map[string]string `yaml:"annotations,omitempty"`
 }
 
 type Project struct {
@@ -33,7 +35,7 @@ type Project struct {
 		Description string      `yaml:"description,omitempty"`
 		APIs        []*API      `yaml:"apis,omitempty"`
 		Artifacts   []*Artifact `yaml:"artifacts,omitempty"`
-	} `yaml:"spec"`
+	} `yaml:"body"`
 }
 
 type API struct {
@@ -47,7 +49,7 @@ type API struct {
 		APIVersions           []*APIVersion    `yaml:"versions,omitempty"`
 		APIDeployments        []*APIDeployment `yaml:"deployments,omitempty"`
 		Artifacts             []*Artifact      `yaml:"artifacts,omitempty"`
-	} `yaml:"spec"`
+	} `yaml:"body"`
 }
 
 type APIVersion struct {
@@ -57,7 +59,7 @@ type APIVersion struct {
 		Description string      `yaml:"description,omitempty"`
 		APISpecs    []*APISpec  `yaml:"specs,omitempty"`
 		Artifacts   []*Artifact `yaml:"artifacts,omitempty"`
-	} `yaml:"spec"`
+	} `yaml:"body"`
 }
 
 type APISpec struct {
@@ -68,7 +70,7 @@ type APISpec struct {
 		MimeType    string      `yaml:"mimeType,omitempty"`
 		SourceURI   string      `yaml:"sourceURI,omitempty"`
 		Artifacts   []*Artifact `yaml:"artifacts,omitempty"`
-	} `yaml:"spec"`
+	} `yaml:"body"`
 }
 
 type APIDeployment struct {
@@ -77,12 +79,12 @@ type APIDeployment struct {
 		DisplayName string      `yaml:"displayName,omitempty"`
 		Description string      `yaml:"description,omitempty"`
 		Artifacts   []*Artifact `yaml:"artifacts,omitempty"`
-	} `yaml:"spec"`
+	} `yaml:"body"`
 }
 
 type Artifact struct {
 	Header `yaml:",inline"`
 	Spec   struct {
 		MimeType string `yaml:"mimeType,omitempty"`
-	} `yaml:"spec"`
+	} `yaml:"body"`
 }

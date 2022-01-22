@@ -17,6 +17,7 @@ package patch
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/gapic"
@@ -26,32 +27,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-func exportProject(ctx context.Context, client *gapic.RegistryClient, name string) (*Project, error) {
-	projectName, err := names.ParseProject(name)
-	if err != nil {
-		return nil, err
-	}
-	project := &Project{
-		Header: Header{
-			APIVersion: REGISTRY_V1,
-			Kind:       "Project",
-			Metadata: Metadata{
-				Name: projectName.ProjectID,
-			},
-		},
-	}
-	core.ListAPIs(ctx, client, projectName.Api(""), "", func(message *rpc.Api) {
-		api, err2 := exportAPI(ctx, client, message)
-		if err2 == nil {
-			project.Spec.APIs = append(project.Spec.APIs, api)
-		} else {
-			err = err2
-		}
-	})
-	return project, err
-}
-
-func exportAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api) (*API, error) {
+func buildAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api) (*API, error) {
 	apiName, err := names.ParseApi(message.Name)
 	if err != nil {
 		return nil, err
@@ -61,7 +37,9 @@ func exportAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.A
 			APIVersion: REGISTRY_V1,
 			Kind:       "API",
 			Metadata: Metadata{
-				Name: apiName.ApiID,
+				Name:        apiName.ApiID,
+				Labels:      message.Labels,
+				Annotations: message.Annotations,
 			},
 		},
 	}
@@ -71,7 +49,10 @@ func exportAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.A
 	api.Spec.RecommendedVersion = message.RecommendedVersion
 	api.Spec.RecommendedDeployment = message.RecommendedDeployment
 	core.ListVersions(ctx, client, apiName.Version(""), "", func(message *rpc.ApiVersion) {
-		version, err2 := exportAPIVersion(ctx, client, message)
+		version, err2 := buildAPIVersion(ctx, client, message)
+		// unset these because they can be inferred
+		version.APIVersion = ""
+		version.Kind = ""
 		if err2 == nil {
 			api.Spec.APIVersions = append(api.Spec.APIVersions, version)
 		} else {
@@ -79,7 +60,10 @@ func exportAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.A
 		}
 	})
 	core.ListDeployments(ctx, client, apiName.Deployment(""), "", func(message *rpc.ApiDeployment) {
-		deployment, err2 := exportAPIDeployment(ctx, client, message)
+		deployment, err2 := buildAPIDeployment(ctx, client, message)
+		// unset these because they can be inferred
+		deployment.APIVersion = ""
+		deployment.Kind = ""
 		if err2 == nil {
 			api.Spec.APIDeployments = append(api.Spec.APIDeployments, deployment)
 		} else {
@@ -89,7 +73,7 @@ func exportAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.A
 	return api, err
 }
 
-func exportAPIVersion(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiVersion) (*APIVersion, error) {
+func buildAPIVersion(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiVersion) (*APIVersion, error) {
 	versionName, err := names.ParseVersion(message.Name)
 	if err != nil {
 		return nil, err
@@ -99,15 +83,20 @@ func exportAPIVersion(ctx context.Context, client *gapic.RegistryClient, message
 			APIVersion: REGISTRY_V1,
 			Kind:       "APIVersion",
 			Metadata: Metadata{
-				Name: versionName.VersionID,
+				Name:        versionName.VersionID,
+				Labels:      message.Labels,
+				Annotations: message.Annotations,
 			},
 		},
 	}
 	version.Spec.DisplayName = message.DisplayName
 	version.Spec.Description = message.Description
 	core.ListSpecs(ctx, client, versionName.Spec(""), "", func(message *rpc.ApiSpec) {
-		spec, err2 := exportAPISpec(ctx, client, message)
-		if err2 != nil {
+		spec, err2 := buildAPISpec(ctx, client, message)
+		// unset these because they can be inferred
+		spec.APIVersion = ""
+		spec.Kind = ""
+		if err2 == nil {
 			version.Spec.APISpecs = append(version.Spec.APISpecs, spec)
 		} else {
 			err = err2
@@ -116,7 +105,7 @@ func exportAPIVersion(ctx context.Context, client *gapic.RegistryClient, message
 	return version, err
 }
 
-func exportAPISpec(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiSpec) (*APISpec, error) {
+func buildAPISpec(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiSpec) (*APISpec, error) {
 	specName, err := names.ParseSpec(message.Name)
 	if err != nil {
 		return nil, err
@@ -126,7 +115,9 @@ func exportAPISpec(ctx context.Context, client *gapic.RegistryClient, message *r
 			APIVersion: REGISTRY_V1,
 			Kind:       "APISpec",
 			Metadata: Metadata{
-				Name: specName.SpecID,
+				Name:        specName.SpecID,
+				Labels:      message.Labels,
+				Annotations: message.Annotations,
 			},
 		},
 	}
@@ -137,7 +128,7 @@ func exportAPISpec(ctx context.Context, client *gapic.RegistryClient, message *r
 	return spec, nil
 }
 
-func exportAPIDeployment(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiDeployment) (*APIDeployment, error) {
+func buildAPIDeployment(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiDeployment) (*APIDeployment, error) {
 	deploymentName, err := names.ParseDeployment(message.Name)
 	if err != nil {
 		return nil, err
@@ -147,7 +138,9 @@ func exportAPIDeployment(ctx context.Context, client *gapic.RegistryClient, mess
 			APIVersion: REGISTRY_V1,
 			Kind:       "APIDeployment",
 			Metadata: Metadata{
-				Name: deploymentName.DeploymentID,
+				Name:        deploymentName.DeploymentID,
+				Labels:      message.Labels,
+				Annotations: message.Annotations,
 			},
 		},
 	}
@@ -156,7 +149,7 @@ func exportAPIDeployment(ctx context.Context, client *gapic.RegistryClient, mess
 	return deployment, nil
 }
 
-func exportArtifact(message *rpc.Artifact) (*Artifact, error) {
+func buildArtifact(message *rpc.Artifact) (*Artifact, error) {
 	artifactName, err := names.ParseArtifact(message.Name)
 	if err != nil {
 		return nil, err
@@ -175,20 +168,37 @@ func exportArtifact(message *rpc.Artifact) (*Artifact, error) {
 
 // ExportProject writes a project as a YAML file.
 func ExportProject(ctx context.Context, client *gapic.RegistryClient, adminClient *gapic.AdminClient, message *rpc.Project) {
-	project, err := exportProject(ctx, client, message.Name)
+	projectName, err := names.ParseProject(message.Name)
 	if err != nil {
-		log.FromContext(ctx).WithError(err).Fatal("Failed to export project")
+		log.FromContext(ctx).WithError(err).Fatal("Failed to parse project name")
 	}
-	b, err := yaml.Marshal(project)
+	apisdir := "apis"
+	err = os.MkdirAll(apisdir, 0777)
 	if err != nil {
-		log.FromContext(ctx).WithError(err).Fatal("Failed to marshal doc as YAML")
+		log.FromContext(ctx).WithError(err).Fatal("Failed to create output directory")
 	}
-	fmt.Println(string(b))
+	core.ListAPIs(ctx, client, projectName.Api(""), "", func(message *rpc.Api) {
+		api, err := buildAPI(ctx, client, message)
+		if err != nil {
+			log.FromContext(ctx).WithError(err).Fatal("Failed to export api as YAML")
+			return
+		}
+		b, err := yaml.Marshal(api)
+		if err != nil {
+			log.FromContext(ctx).WithError(err).Fatal("Failed to marshal api as YAML")
+			return
+		}
+		filename := fmt.Sprintf("%s/%s.yaml", apisdir, api.Header.Metadata.Name)
+		err = os.WriteFile(filename, b, 0644)
+		if err != nil {
+			log.FromContext(ctx).WithError(err).Fatal("Failed to write output YAML")
+		}
+	})
 }
 
 // ExportAPI writes an API as a YAML file.
 func ExportAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api) {
-	api, err := exportAPI(ctx, client, message)
+	api, err := buildAPI(ctx, client, message)
 	if err != nil {
 		log.FromContext(ctx).WithError(err).Fatal("Failed to export api")
 	}
@@ -199,48 +209,9 @@ func ExportAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.A
 	fmt.Println(string(b))
 }
 
-// ExportAPIVersion writes an API version as a YAML file.
-func ExportAPIVersion(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiVersion) {
-	version, err := exportAPIVersion(ctx, client, message)
-	if err != nil {
-		log.FromContext(ctx).WithError(err).Fatal("Failed to export version")
-	}
-	b, err := yaml.Marshal(version)
-	if err != nil {
-		log.FromContext(ctx).WithError(err).Fatal("Failed to marshal doc as YAML")
-	}
-	fmt.Println(string(b))
-}
-
-// ExportAPISpec writes an API spec as a YAML file.
-func ExportAPISpec(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiSpec) {
-	spec, err := exportAPISpec(ctx, client, message)
-	if err != nil {
-		log.FromContext(ctx).WithError(err).Fatal("Failed to export spec")
-	}
-	b, err := yaml.Marshal(spec)
-	if err != nil {
-		log.FromContext(ctx).WithError(err).Fatal("Failed to marshal doc as YAML")
-	}
-	fmt.Println(string(b))
-}
-
-// ExportAPIDeployment writes an API deployment as a YAML file.
-func ExportAPIDeployment(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiDeployment) {
-	deployment, err := exportAPIDeployment(ctx, client, message)
-	if err != nil {
-		log.FromContext(ctx).WithError(err).Fatal("Failed to export deployment")
-	}
-	b, err := yaml.Marshal(deployment)
-	if err != nil {
-		log.FromContext(ctx).WithError(err).Fatal("Failed to marshal doc as YAML")
-	}
-	fmt.Println(string(b))
-}
-
 // ExportArtifact writes an artifact as a YAML file.
 func ExportArtifact(ctx context.Context, client *gapic.RegistryClient, message *rpc.Artifact) {
-	artifact, err := exportArtifact(message)
+	artifact, err := buildArtifact(message)
 	if err != nil {
 		log.FromContext(ctx).WithError(err).Fatal("Failed to export artifact")
 	}

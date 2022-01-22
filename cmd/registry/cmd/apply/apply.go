@@ -56,7 +56,7 @@ func Command(ctx context.Context) *cobra.Command {
 			if header.APIVersion != "registry/v1" {
 				log.FromContext(ctx).Fatalf("Unsupported API version: %s", header.APIVersion)
 			}
-			if header.Kind == "Api" {
+			if header.Kind == "API" {
 				var api patch.API
 				err = yaml.Unmarshal(bytes, &api)
 				if err != nil {
