@@ -16,6 +16,7 @@ package export
 
 import (
 	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/cmd/registry/patch"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
@@ -47,28 +48,28 @@ func yamlCommand(ctx context.Context) *cobra.Command {
 
 			if project, err := names.ParseProject(name); err == nil {
 				_, err := core.GetProject(ctx, adminClient, project, func(message *rpc.Project) {
-					core.ExportYAMLForProject(ctx, client, adminClient, message)
+					patch.ExportProject(ctx, client, adminClient, message)
 				})
 				if err != nil {
 					log.FromContext(ctx).WithError(err).Fatal("Failed to export project YAML")
 				}
 			} else if api, err := names.ParseApi(name); err == nil {
 				_, err = core.GetAPI(ctx, client, api, func(message *rpc.Api) {
-					core.ExportYAMLForAPI(ctx, client, message)
+					patch.ExportAPI(ctx, client, message)
 				})
 				if err != nil {
 					log.FromContext(ctx).WithError(err).Fatal("Failed to export API YAML")
 				}
 			} else if version, err := names.ParseVersion(name); err == nil {
 				_, err = core.GetVersion(ctx, client, version, func(message *rpc.ApiVersion) {
-					core.ExportYAMLForVersion(ctx, client, message)
+					patch.ExportAPIVersion(ctx, client, message)
 				})
 				if err != nil {
 					log.FromContext(ctx).WithError(err).Fatal("Failed to export version YAML")
 				}
 			} else if spec, err := names.ParseSpec(name); err == nil {
 				_, err = core.GetSpec(ctx, client, spec, false, func(message *rpc.ApiSpec) {
-					core.ExportYAMLForSpec(ctx, client, message)
+					patch.ExportAPISpec(ctx, client, message)
 				})
 				if err != nil {
 					log.FromContext(ctx).WithError(err).Fatal("Failed to export spec YAML")
