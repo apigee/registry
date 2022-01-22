@@ -64,7 +64,7 @@ func Command(ctx context.Context) *cobra.Command {
 				}
 				log.FromContext(ctx).Infof("%+v", api)
 
-				err = applyApiPatch(ctx, client, api, parent)
+				err = applyApiPatch(ctx, client, &api, parent)
 				if err != nil {
 					log.FromContext(ctx).WithError(err).Fatal("Failed to apply patch")
 				}
@@ -81,7 +81,7 @@ func Command(ctx context.Context) *cobra.Command {
 func applyApiPatch(
 	ctx context.Context,
 	client connection.Client,
-	api patch.API,
+	api *patch.API,
 	parent string) error {
 	name := fmt.Sprintf("%s/apis/%s", parent, api.Metadata.Name)
 	req := &rpc.UpdateApiRequest{
@@ -114,7 +114,7 @@ func applyApiPatch(
 func applyApiVersionPatch(
 	ctx context.Context,
 	client connection.Client,
-	version patch.APIVersion,
+	version *patch.APIVersion,
 	parent string) error {
 	name := fmt.Sprintf("%s/versions/%s", parent, version.Metadata.Name)
 	req := &rpc.UpdateApiVersionRequest{
@@ -141,7 +141,7 @@ func applyApiVersionPatch(
 func applyApiSpecPatch(
 	ctx context.Context,
 	client connection.Client,
-	spec patch.APISpec,
+	spec *patch.APISpec,
 	parent string) error {
 	name := fmt.Sprintf("%s/specs/%s", parent, spec.Metadata.Name)
 	req := &rpc.UpdateApiSpecRequest{
@@ -159,7 +159,7 @@ func applyApiSpecPatch(
 func applyApiDeploymentPatch(
 	ctx context.Context,
 	client connection.Client,
-	deployment patch.APIDeployment,
+	deployment *patch.APIDeployment,
 	parent string) error {
 	name := fmt.Sprintf("%s/deployments/%s", parent, deployment.Metadata.Name)
 	req := &rpc.UpdateApiDeploymentRequest{

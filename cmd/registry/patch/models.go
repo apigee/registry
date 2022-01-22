@@ -14,62 +14,75 @@
 
 package patch
 
+const REGISTRY_V1 = "registry/v1"
+
 type Header struct {
-	APIVersion string `yaml:"apiVersion"`
-	Kind       string `yaml:"kind"`
-	Metadata   struct {
-		Name string `yaml:"name"`
-	} `yaml:"metadata"`
+	APIVersion string   `yaml:"apiVersion"`
+	Kind       string   `yaml:"kind"`
+	Metadata   Metadata `yaml:"metadata"`
+}
+
+type Metadata struct {
+	Name string `yaml:"name"`
 }
 
 type Project struct {
 	Header `yaml:",inline"`
 	Spec   struct {
-		DisplayName string     `yaml:"displayName"`
-		Description string     `yaml:"description"`
-		APIs        []API      `yaml:"apis"`
-		Artifacts   []Artifact `yaml:"artifacts"`
+		DisplayName string      `yaml:"displayName,omitempty"`
+		Description string      `yaml:"description,omitempty"`
+		APIs        []*API      `yaml:"apis,omitempty"`
+		Artifacts   []*Artifact `yaml:"artifacts,omitempty"`
 	} `yaml:"spec"`
 }
 
 type API struct {
 	Header `yaml:",inline"`
 	Spec   struct {
-		DisplayName    string          `yaml:"displayName"`
-		Description    string          `yaml:"description"`
-		APIVersions    []APIVersion    `yaml:"versions"`
-		APIDeployments []APIDeployment `yaml:"deployments"`
+		DisplayName           string           `yaml:"displayName,omitempty"`
+		Description           string           `yaml:"description,omitempty"`
+		Availability          string           `yaml:"availability,omitempty"`
+		RecommendedVersion    string           `yaml:"recommendedVersion,omitempty"`
+		RecommendedDeployment string           `yaml:"recommendedDeployment,omitempty"`
+		APIVersions           []*APIVersion    `yaml:"versions,omitempty"`
+		APIDeployments        []*APIDeployment `yaml:"deployments,omitempty"`
+		Artifacts             []*Artifact      `yaml:"artifacts,omitempty"`
 	} `yaml:"spec"`
 }
 
 type APIVersion struct {
 	Header `yaml:",inline"`
 	Spec   struct {
-		DisplayName string    `yaml:"displayName"`
-		Description string    `yaml:"description"`
-		APISpecs    []APISpec `yaml:"specs"`
+		DisplayName string      `yaml:"displayName,omitempty"`
+		Description string      `yaml:"description,omitempty"`
+		APISpecs    []*APISpec  `yaml:"specs,omitempty"`
+		Artifacts   []*Artifact `yaml:"artifacts,omitempty"`
 	} `yaml:"spec"`
 }
 
 type APISpec struct {
 	Header `yaml:",inline"`
 	Spec   struct {
-		FileName    string `yaml:"fileName"`
-		Description string `yaml:"description"`
+		FileName    string      `yaml:"fileName,omitempty"`
+		Description string      `yaml:"description,omitempty"`
+		MimeType    string      `yaml:"mimeType,omitempty"`
+		SourceURI   string      `yaml:"sourceURI,omitempty"`
+		Artifacts   []*Artifact `yaml:"artifacts,omitempty"`
 	} `yaml:"spec"`
 }
 
 type APIDeployment struct {
 	Header `yaml:",inline"`
 	Spec   struct {
-		DisplayName string `yaml:"displayName"`
-		Description string `yaml:"description"`
+		DisplayName string      `yaml:"displayName,omitempty"`
+		Description string      `yaml:"description,omitempty"`
+		Artifacts   []*Artifact `yaml:"artifacts,omitempty"`
 	} `yaml:"spec"`
 }
 
 type Artifact struct {
 	Header `yaml:",inline"`
 	Spec   struct {
-		MimeType string `yaml:"mimeType"`
+		MimeType string `yaml:"mimeType,omitempty"`
 	} `yaml:"spec"`
 }
