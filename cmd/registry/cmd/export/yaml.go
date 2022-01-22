@@ -74,6 +74,20 @@ func yamlCommand(ctx context.Context) *cobra.Command {
 				if err != nil {
 					log.FromContext(ctx).WithError(err).Fatal("Failed to export spec YAML")
 				}
+			} else if deployment, err := names.ParseDeployment(name); err == nil {
+				_, err = core.GetDeployment(ctx, client, deployment, func(message *rpc.ApiDeployment) {
+					patch.ExportAPIDeployment(ctx, client, message)
+				})
+				if err != nil {
+					log.FromContext(ctx).WithError(err).Fatal("Failed to export spec YAML")
+				}
+			} else if artifact, err := names.ParseArtifact(name); err == nil {
+				_, err = core.GetArtifact(ctx, client, artifact, false, func(message *rpc.Artifact) {
+					patch.ExportArtifact(ctx, client, message)
+				})
+				if err != nil {
+					log.FromContext(ctx).WithError(err).Fatal("Failed to export spec YAML")
+				}
 			} else {
 				log.Fatalf(ctx, "Unsupported entity %+s", name)
 			}
