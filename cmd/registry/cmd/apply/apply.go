@@ -18,6 +18,8 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"os"
+	"path/filepath"
 
 	"github.com/apigee/registry/cmd/registry/patch"
 	"github.com/apigee/registry/connection"
@@ -35,47 +37,76 @@ func Command(ctx context.Context) *cobra.Command {
 		Short: "Apply patches that add content to the API Registry",
 		Args:  cobra.ExactArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
-
 			client, err := connection.NewClient(ctx)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
-
-			bytes, err := ioutil.ReadFile(fileName)
+			fileInfo, err := os.Stat(fileName)
 			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to read file")
+				log.FromContext(ctx).WithError(err).Fatal("Failed to find file")
 			}
-
-			// get the id and kind of artifact from the YAML elements common to all artifacts
-			var header patch.Header
-			err = yaml.Unmarshal(bytes, &header)
-			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to parse YAML")
-			}
-			log.FromContext(ctx).Infof("%+v", header)
-			if header.APIVersion != "registry/v1" {
-				log.FromContext(ctx).Fatalf("Unsupported API version: %s", header.APIVersion)
-			}
-			if header.Kind == "API" {
-				var api patch.API
-				err = yaml.Unmarshal(bytes, &api)
+			if fileInfo.IsDir() {
+				err := filepath.Walk(fileName,
+					func(path string, info os.FileInfo, err error) error {
+						if err != nil {
+							return err
+						}
+						if info.IsDir() {
+							return nil
+						}
+						return applyFile(ctx, client, path, parent)
+					})
 				if err != nil {
-					log.FromContext(ctx).WithError(err).Fatal("Failed to parse YAML")
-				}
-				log.FromContext(ctx).Infof("%+v", api)
-
-				err = applyApiPatch(ctx, client, &api, parent)
-				if err != nil {
-					log.FromContext(ctx).WithError(err).Fatal("Failed to apply patch")
+					log.FromContext(ctx).WithError(err).Fatal("Failed to apply directory")
 				}
 			} else {
-				log.FromContext(ctx).Fatalf("Unsupported kind: %s", header.Kind)
+				err = applyFile(ctx, client, fileName, parent)
+				if err != nil {
+					log.FromContext(ctx).WithError(err).Fatal("Failed to apply file")
+				}
 			}
+
 		},
 	}
 	cmd.Flags().StringVarP(&fileName, "file", "f", "", "File containing the patch to apply")
 	cmd.Flags().StringVar(&parent, "parent", "", "Parent resource for the patch")
 	return cmd
+}
+
+func applyFile(
+	ctx context.Context,
+	client connection.Client,
+	fileName string,
+	parent string) error {
+	bytes, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		log.FromContext(ctx).WithError(err).Fatal("Failed to read file")
+	}
+
+	// get the id and kind of artifact from the YAML elements common to all artifacts
+	var header patch.Header
+	err = yaml.Unmarshal(bytes, &header)
+	if err != nil {
+		log.FromContext(ctx).WithError(err).Fatal("Failed to parse YAML")
+	}
+	if header.APIVersion != "registry/v1" {
+		log.FromContext(ctx).Fatalf("Unsupported API version: %s", header.APIVersion)
+	}
+	if header.Kind == "API" {
+		log.FromContext(ctx).Infof("applying %s", fileName)
+		var api patch.API
+		err = yaml.Unmarshal(bytes, &api)
+		if err != nil {
+			log.FromContext(ctx).WithError(err).Fatal("Failed to parse YAML")
+		}
+		err = applyApiPatch(ctx, client, &api, parent)
+		if err != nil {
+			log.FromContext(ctx).WithError(err).Fatal("Failed to apply patch")
+		}
+	} else {
+		log.FromContext(ctx).Fatalf("Unsupported kind: %s", header.Kind)
+	}
+	return nil
 }
 
 func applyApiPatch(
