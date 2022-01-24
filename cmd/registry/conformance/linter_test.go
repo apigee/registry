@@ -1,3 +1,17 @@
+// Copyright 2022 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package conformance
 
 import (
@@ -32,10 +46,10 @@ var rules = []*rpc.Rule{
 
 func TestGenerateLinterMetadata(t *testing.T) {
 	tests := []struct {
-		desc         string
-		styleguide   *rpc.StyleGuide
-		wantMetadata map[string]*linterMetadata
-		wantErr      bool
+		desc       string
+		styleguide *rpc.StyleGuide
+		want       map[string]*linterMetadata
+		wantErr    bool
 	}{
 		{
 			desc: "Normal case",
@@ -50,7 +64,7 @@ func TestGenerateLinterMetadata(t *testing.T) {
 					},
 				},
 			},
-			wantMetadata: map[string]*linterMetadata{
+			want: map[string]*linterMetadata{
 				"sample": {
 					name:  "sample",
 					rules: []string{rules[0].GetLinterRulename()},
@@ -80,7 +94,7 @@ func TestGenerateLinterMetadata(t *testing.T) {
 					},
 				},
 			},
-			wantMetadata: map[string]*linterMetadata{
+			want: map[string]*linterMetadata{
 				"sample": {
 					name:  "sample",
 					rules: []string{rules[0].GetLinterRulename()},
@@ -129,7 +143,7 @@ func TestGenerateLinterMetadata(t *testing.T) {
 					},
 				},
 			},
-			wantMetadata: map[string]*linterMetadata{
+			want: map[string]*linterMetadata{
 				"sample": {
 					name:  "sample",
 					rules: []string{rules[0].GetLinterRulename()},
@@ -181,8 +195,8 @@ func TestGenerateLinterMetadata(t *testing.T) {
 					},
 				},
 			},
-			wantMetadata: nil,
-			wantErr:      true,
+			want:    nil,
+			wantErr: true,
 		},
 		{
 			desc: "Missing linterName",
@@ -203,8 +217,8 @@ func TestGenerateLinterMetadata(t *testing.T) {
 					},
 				},
 			},
-			wantMetadata: nil,
-			wantErr:      true,
+			want:    nil,
+			wantErr: true,
 		},
 		{
 			desc: "Missing linterRuleName",
@@ -226,7 +240,7 @@ func TestGenerateLinterMetadata(t *testing.T) {
 					},
 				},
 			},
-			wantMetadata: map[string]*linterMetadata{
+			want: map[string]*linterMetadata{
 				"spectral": {
 					name:  "spectral",
 					rules: []string{rules[1].GetLinterRulename()},
@@ -255,16 +269,12 @@ func TestGenerateLinterMetadata(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 
-			gotMetadata, err := GenerateLinterMetadata(test.styleguide)
+			got, err := GenerateLinterMetadata(test.styleguide)
 
-			if test.wantErr {
-				if err == nil {
-					t.Errorf("Expected GenerateLinterMetadata() to return an error")
-				}
-			} else {
-				if err != nil {
-					t.Errorf("Unexpected error from GenerateLinterMetadata(): %s", err)
-				}
+			if test.wantErr && err == nil {
+				t.Errorf("Expected GenerateLinterMetadata() to return an error")
+			} else if !test.wantErr && err != nil {
+				t.Errorf("Unexpected error from GenerateLinterMetadata(): %s", err)
 			}
 
 			opts := cmp.Options{
@@ -274,8 +284,8 @@ func TestGenerateLinterMetadata(t *testing.T) {
 				cmp.AllowUnexported(ruleMetadata{}),
 				cmpopts.SortMaps(func(a, b string) bool { return a < b }),
 			}
-			if !cmp.Equal(test.wantMetadata, gotMetadata, opts) {
-				t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(test.wantMetadata, gotMetadata, opts))
+			if !cmp.Equal(test.want, got, opts) {
+				t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(test.want, got, opts))
 			}
 		})
 	}
