@@ -155,40 +155,45 @@ func TestComputeConformanceReport(t *testing.T) {
 					},
 				},
 			},
-			wantReport: func() *rpc.ConformanceReport {
-				conformance := InitReport(t)
-				conformance.Name = fmt.Sprintf("%s/artifacts/conformance-%s", specName, styleguideId)
-				conformance.StyleguideName = styleguideId
-
-				ruleReportGroups := InitRuleReportGroups(t)
-
-				// Populate the expected severity entry
-				ruleReportGroups[rpc.Rule_ERROR].RuleReports = []*rpc.RuleReport{
+			wantReport: &rpc.ConformanceReport{
+				Name:           fmt.Sprintf("%s/artifacts/conformance-%s", specName, styleguideId),
+				StyleguideName: styleguideId,
+				GuidelineReportGroups: []*rpc.GuidelineReportGroup{
+					{Status: rpc.Guideline_STATUS_UNSPECIFIED},
+					{Status: rpc.Guideline_PROPOSED},
 					{
-						RuleId:     "norefsiblings",
-						SpecName:   specName,
-						FileName:   "test-result-file",
-						Suggestion: "fix no-$ref-siblings",
-						Location: &rpc.LintLocation{
-							StartPosition: &rpc.LintPosition{LineNumber: 11, ColumnNumber: 25},
-							EndPosition:   &rpc.LintPosition{LineNumber: 11, ColumnNumber: 32},
+						Status: rpc.Guideline_ACTIVE,
+						GuidelineReports: []*rpc.GuidelineReport{
+							{
+								GuidelineId: "refproperties",
+								RuleReportGroups: []*rpc.RuleReportGroup{
+									{Severity: rpc.Rule_SEVERITY_UNSPECIFIED},
+									{
+										Severity: rpc.Rule_ERROR,
+										RuleReports: []*rpc.RuleReport{
+											{
+												RuleId:     "norefsiblings",
+												SpecName:   specName,
+												FileName:   "test-result-file",
+												Suggestion: "fix no-$ref-siblings",
+												Location: &rpc.LintLocation{
+													StartPosition: &rpc.LintPosition{LineNumber: 11, ColumnNumber: 25},
+													EndPosition:   &rpc.LintPosition{LineNumber: 11, ColumnNumber: 32},
+												},
+											},
+										},
+									},
+									{Severity: rpc.Rule_WARNING},
+									{Severity: rpc.Rule_INFO},
+									{Severity: rpc.Rule_HINT},
+								},
+							},
 						},
 					},
-				}
-
-				//Populate the expected guideline reports
-				guidelineReports := []*rpc.GuidelineReport{
-					{
-						GuidelineId:      "refproperties",
-						RuleReportGroups: ruleReportGroups,
-					},
-				}
-
-				//Populate the expected status entry
-				conformance.GuidelineReportGroups[rpc.Guideline_ACTIVE].GuidelineReports = guidelineReports
-
-				return conformance
-			}(),
+					{Status: rpc.Guideline_DEPRECATED},
+					{Status: rpc.Guideline_DISABLED},
+				},
+			},
 		},
 		// Test: LinterResponse includes multiple rule violations. Validate that only the once configured in the styleguide show up in the final conformance report.
 		{
@@ -231,36 +236,41 @@ func TestComputeConformanceReport(t *testing.T) {
 					},
 				},
 			},
-			wantReport: func() *rpc.ConformanceReport {
-				conformance := InitReport(t)
-				conformance.Name = fmt.Sprintf("%s/artifacts/conformance-%s", specName, styleguideId)
-				conformance.StyleguideName = styleguideId
-
-				ruleReportGroups := InitRuleReportGroups(t)
-
-				// Populate the expected severity entry
-				ruleReportGroups[rpc.Rule_ERROR].RuleReports = []*rpc.RuleReport{
+			wantReport: &rpc.ConformanceReport{
+				Name:           fmt.Sprintf("%s/artifacts/conformance-%s", specName, styleguideId),
+				StyleguideName: styleguideId,
+				GuidelineReportGroups: []*rpc.GuidelineReportGroup{
+					{Status: rpc.Guideline_STATUS_UNSPECIFIED},
+					{Status: rpc.Guideline_PROPOSED},
 					{
-						RuleId:     "operationdescription",
-						SpecName:   specName,
-						FileName:   "test-result-file",
-						Suggestion: "fix operation-description",
+						Status: rpc.Guideline_ACTIVE,
+						GuidelineReports: []*rpc.GuidelineReport{
+							{
+								GuidelineId: "descriptionproperties",
+								RuleReportGroups: []*rpc.RuleReportGroup{
+									{Severity: rpc.Rule_SEVERITY_UNSPECIFIED},
+									{
+										Severity: rpc.Rule_ERROR,
+										RuleReports: []*rpc.RuleReport{
+											{
+												RuleId:     "operationdescription",
+												SpecName:   specName,
+												FileName:   "test-result-file",
+												Suggestion: "fix operation-description",
+											},
+										},
+									},
+									{Severity: rpc.Rule_WARNING},
+									{Severity: rpc.Rule_INFO},
+									{Severity: rpc.Rule_HINT},
+								},
+							},
+						},
 					},
-				}
-
-				//Populate the expected guideline reports
-				guidelineReports := []*rpc.GuidelineReport{
-					{
-						GuidelineId:      "descriptionproperties",
-						RuleReportGroups: ruleReportGroups,
-					},
-				}
-
-				//Populate the expected status entry
-				conformance.GuidelineReportGroups[rpc.Guideline_ACTIVE].GuidelineReports = guidelineReports
-
-				return conformance
-			}(),
+					{Status: rpc.Guideline_DEPRECATED},
+					{Status: rpc.Guideline_DISABLED},
+				},
+			},
 		},
 		// Test: Multiple rules are defined in multiple guidelines, check conformance report gets generated accurately.
 		{
@@ -348,73 +358,81 @@ func TestComputeConformanceReport(t *testing.T) {
 					},
 				},
 			},
-			wantReport: func() *rpc.ConformanceReport {
-				conformance := InitReport(t)
-				conformance.Name = fmt.Sprintf("%s/artifacts/conformance-%s", specName, styleguideId)
-				conformance.StyleguideName = styleguideId
-
-				ruleReportGroups := InitRuleReportGroups(t)
-
-				// Populate the expected severity entries
-				ruleReportGroups[rpc.Rule_ERROR].RuleReports = []*rpc.RuleReport{
+			wantReport: &rpc.ConformanceReport{
+				Name:           fmt.Sprintf("%s/artifacts/conformance-%s", specName, styleguideId),
+				StyleguideName: styleguideId,
+				GuidelineReportGroups: []*rpc.GuidelineReportGroup{
+					{Status: rpc.Guideline_STATUS_UNSPECIFIED},
 					{
-						RuleId:     "operationdescription",
-						SpecName:   specName,
-						FileName:   "test-result-file",
-						Suggestion: "fix operation-description",
+						Status: rpc.Guideline_PROPOSED,
+						GuidelineReports: []*rpc.GuidelineReport{
+							{
+								GuidelineId: "refproperties",
+								RuleReportGroups: []*rpc.RuleReportGroup{
+									{Severity: rpc.Rule_SEVERITY_UNSPECIFIED},
+									{
+										Severity: rpc.Rule_ERROR,
+										RuleReports: []*rpc.RuleReport{
+											{
+												RuleId:     "norefsiblings",
+												SpecName:   specName,
+												FileName:   "test-result-file",
+												Suggestion: "fix no-$ref-siblings",
+											},
+										},
+									},
+									{Severity: rpc.Rule_WARNING},
+									{Severity: rpc.Rule_INFO},
+									{Severity: rpc.Rule_HINT},
+								},
+							},
+						},
 					},
-				}
-
-				ruleReportGroups[rpc.Rule_WARNING].RuleReports = []*rpc.RuleReport{
 					{
-						RuleId:     "tagdescription",
-						SpecName:   specName,
-						FileName:   "test-result-file",
-						Suggestion: "fix tag-description",
+						Status: rpc.Guideline_ACTIVE,
+						GuidelineReports: []*rpc.GuidelineReport{
+							{
+								GuidelineId: "descriptionproperties",
+								RuleReportGroups: []*rpc.RuleReportGroup{
+									{Severity: rpc.Rule_SEVERITY_UNSPECIFIED},
+									{
+										Severity: rpc.Rule_ERROR,
+										RuleReports: []*rpc.RuleReport{
+											{
+												RuleId:     "operationdescription",
+												SpecName:   specName,
+												FileName:   "test-result-file",
+												Suggestion: "fix operation-description",
+											},
+										},
+									},
+									{
+										Severity: rpc.Rule_WARNING,
+										RuleReports: []*rpc.RuleReport{
+											{
+												RuleId:     "tagdescription",
+												SpecName:   specName,
+												FileName:   "test-result-file",
+												Suggestion: "fix tag-description",
+											},
+											{
+												RuleId:     "infodescription",
+												SpecName:   specName,
+												FileName:   "test-result-file",
+												Suggestion: "fix info-description",
+											},
+										},
+									},
+									{Severity: rpc.Rule_INFO},
+									{Severity: rpc.Rule_HINT},
+								},
+							},
+						},
 					},
-					{
-						RuleId:     "infodescription",
-						SpecName:   specName,
-						FileName:   "test-result-file",
-						Suggestion: "fix info-description",
-					},
-				}
-
-				//Populate the expected guideline reports
-				guidelineReports := []*rpc.GuidelineReport{
-					{
-						GuidelineId:      "descriptionproperties",
-						RuleReportGroups: ruleReportGroups,
-					},
-				}
-				//Populate the expected status entry
-				conformance.GuidelineReportGroups[rpc.Guideline_ACTIVE].GuidelineReports = guidelineReports
-
-				ruleReportGroups = InitRuleReportGroups(t)
-
-				// Populate the expected severity entry
-				ruleReportGroups[rpc.Rule_ERROR].RuleReports = []*rpc.RuleReport{
-					{
-						RuleId:     "norefsiblings",
-						SpecName:   specName,
-						FileName:   "test-result-file",
-						Suggestion: "fix no-$ref-siblings",
-					},
-				}
-
-				//Populate the expected guideline reports
-				guidelineReports = []*rpc.GuidelineReport{
-					{
-						GuidelineId:      "refproperties",
-						RuleReportGroups: ruleReportGroups,
-					},
-				}
-
-				//Populate the expected status entry
-				conformance.GuidelineReportGroups[rpc.Guideline_PROPOSED].GuidelineReports = guidelineReports
-
-				return conformance
-			}(),
+					{Status: rpc.Guideline_DEPRECATED},
+					{Status: rpc.Guideline_DISABLED},
+				},
+			},
 		},
 	}
 
@@ -480,78 +498,87 @@ func TestPreExistingConformanceReport(t *testing.T) {
 		},
 	}
 
-	preexistingReport := func() *rpc.ConformanceReport {
-		conformance := InitReport(t)
-		conformance.Name = fmt.Sprintf("%s/artifacts/conformance-%s", specName, styleguideId)
-		conformance.StyleguideName = styleguideId
-
-		// Populate the preexisting data
-		ruleReportGroups := InitRuleReportGroups(t)
-
-		// Populate the expected severity entry
-		ruleReportGroups[rpc.Rule_ERROR].RuleReports = []*rpc.RuleReport{
+	preexistingReport := &rpc.ConformanceReport{
+		Name:           fmt.Sprintf("%s/artifacts/conformance-%s", specName, styleguideId),
+		StyleguideName: styleguideId,
+		GuidelineReportGroups: []*rpc.GuidelineReportGroup{
+			{Status: rpc.Guideline_STATUS_UNSPECIFIED},
+			{Status: rpc.Guideline_PROPOSED},
 			{
-				RuleId:     "tagdescription",
-				SpecName:   specName,
-				FileName:   "test-result-file",
-				Suggestion: "fix tag-description",
+				Status: rpc.Guideline_ACTIVE,
+				GuidelineReports: []*rpc.GuidelineReport{
+					{
+						GuidelineId: "descriptionproperties",
+						RuleReportGroups: []*rpc.RuleReportGroup{
+							{Severity: rpc.Rule_SEVERITY_UNSPECIFIED},
+							{
+								Severity: rpc.Rule_ERROR,
+								RuleReports: []*rpc.RuleReport{
+									{
+										RuleId:     "tagdescription",
+										SpecName:   specName,
+										FileName:   "test-result-file",
+										Suggestion: "fix tag-description",
+									},
+								},
+							},
+							{Severity: rpc.Rule_WARNING},
+							{Severity: rpc.Rule_INFO},
+							{Severity: rpc.Rule_HINT},
+						},
+					},
+				},
 			},
-		}
-
-		//Populate the expected guideline reports
-		guidelineReports := []*rpc.GuidelineReport{
-			{
-				GuidelineId:      "descriptionproperties",
-				RuleReportGroups: ruleReportGroups,
-			},
-		}
-
-		//Populate the expected status entry
-		conformance.GuidelineReportGroups[rpc.Guideline_ACTIVE].GuidelineReports = guidelineReports
-
-		return conformance
-	}()
+			{Status: rpc.Guideline_DEPRECATED},
+			{Status: rpc.Guideline_DISABLED},
+		},
+	}
 
 	guidelineReportsMap := map[string]int{
 		"descriptionproperties": 0,
 	}
 
-	wantReport := func() *rpc.ConformanceReport {
-		conformance := InitReport(t)
-		conformance.Name = fmt.Sprintf("%s/artifacts/conformance-%s", specName, styleguideId)
-		conformance.StyleguideName = styleguideId
-
-		ruleReportGroups := InitRuleReportGroups(t)
-
-		// Populate the expected severity entry
-		ruleReportGroups[rpc.Rule_ERROR].RuleReports = []*rpc.RuleReport{
+	wantReport := &rpc.ConformanceReport{
+		Name:           fmt.Sprintf("%s/artifacts/conformance-%s", specName, styleguideId),
+		StyleguideName: styleguideId,
+		GuidelineReportGroups: []*rpc.GuidelineReportGroup{
+			{Status: rpc.Guideline_STATUS_UNSPECIFIED},
+			{Status: rpc.Guideline_PROPOSED},
 			{
-				RuleId:     "tagdescription",
-				SpecName:   specName,
-				FileName:   "test-result-file",
-				Suggestion: "fix tag-description",
+				Status: rpc.Guideline_ACTIVE,
+				GuidelineReports: []*rpc.GuidelineReport{
+					{
+						GuidelineId: "descriptionproperties",
+						RuleReportGroups: []*rpc.RuleReportGroup{
+							{Severity: rpc.Rule_SEVERITY_UNSPECIFIED},
+							{
+								Severity: rpc.Rule_ERROR,
+								RuleReports: []*rpc.RuleReport{
+									{
+										RuleId:     "tagdescription",
+										SpecName:   specName,
+										FileName:   "test-result-file",
+										Suggestion: "fix tag-description",
+									},
+									{
+										RuleId:     "operationdescription",
+										SpecName:   specName,
+										FileName:   "test-result-file",
+										Suggestion: "fix operation-description",
+									},
+								},
+							},
+							{Severity: rpc.Rule_WARNING},
+							{Severity: rpc.Rule_INFO},
+							{Severity: rpc.Rule_HINT},
+						},
+					},
+				},
 			},
-			{
-				RuleId:     "operationdescription",
-				SpecName:   specName,
-				FileName:   "test-result-file",
-				Suggestion: "fix operation-description",
-			},
-		}
-
-		//Populate the expected guideline reports
-		guidelineReports := []*rpc.GuidelineReport{
-			{
-				GuidelineId:      "descriptionproperties",
-				RuleReportGroups: ruleReportGroups,
-			},
-		}
-
-		//Populate the expected status entry
-		conformance.GuidelineReportGroups[rpc.Guideline_ACTIVE].GuidelineReports = guidelineReports
-
-		return conformance
-	}()
+			{Status: rpc.Guideline_DEPRECATED},
+			{Status: rpc.Guideline_DISABLED},
+		},
+	}
 
 	ctx := context.Background()
 
