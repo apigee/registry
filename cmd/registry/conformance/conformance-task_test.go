@@ -30,8 +30,6 @@ const styleguideId = "openapi-test"
 
 // This test will catch any changes made to the original status values.
 func TestInitializeConformanceReport(t *testing.T) {
-	specName := specName
-	styleguideId := styleguideId
 	want := &rpc.ConformanceReport{
 		Name:           fmt.Sprintf("%s/artifacts/conformance-%s", specName, styleguideId),
 		StyleguideName: styleguideId,
@@ -71,9 +69,8 @@ func TestInitializeConformanceReport(t *testing.T) {
 
 // This test will catch any changes made to the original severity values.
 func TestInitializeGuidelineReport(t *testing.T) {
-	guidelineId := styleguideId
 	want := &rpc.GuidelineReport{
-		GuidelineId: guidelineId,
+		GuidelineId: styleguideId,
 		RuleReportGroups: []*rpc.RuleReportGroup{
 			{
 				Severity:    rpc.Rule_SEVERITY_UNSPECIFIED,
@@ -98,7 +95,7 @@ func TestInitializeGuidelineReport(t *testing.T) {
 		},
 	}
 
-	got := initializeGuidelineReport(guidelineId)
+	got := initializeGuidelineReport(styleguideId)
 	opts := cmp.Options{
 		protocmp.Transform(),
 		cmpopts.SortSlices(func(a, b string) bool { return a < b }),
