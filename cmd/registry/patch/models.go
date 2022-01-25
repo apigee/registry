@@ -88,3 +88,59 @@ type Artifact struct {
 		MimeType string `yaml:"mimeType,omitempty"`
 	} `yaml:"body"`
 }
+
+type Manifest struct {
+	Header `yaml:",inline"`
+	Body   struct {
+		DisplayName        string `yaml:"displayName,omitempty"`
+		Description        string `yaml:"description,omitempty"`
+		GeneratedResources []struct {
+			Pattern      string `yaml:"pattern"`
+			Filter       string `yaml:"filter,omitempty"`
+			Receipt      bool   `yaml:"receipt,omitempty"`
+			Dependencies struct {
+				Pattern string `yaml:"pattern"`
+				Filter  string `yaml:"filter,omitempty"`
+			} `yaml:"dependencies"`
+			Action string `yaml:"action"`
+		} `yaml:"generatedResources"`
+	} `yaml:"body"`
+}
+
+type Lifecycle struct {
+	Header `yaml:",inline"`
+	Body   struct {
+		DisplayName string `yaml:"displayName,omitempty"`
+		Description string `yaml:"description,omitempty"`
+		Stages      []struct {
+			ID           string `yaml:"id"`
+			DisplayName  string `yaml:"displayName,omitempty"`
+			Description  string `yaml:"description,omitempty"`
+			URL          string `yaml:"url,omitempty"`
+			DisplayOrder int    `yaml:"displayOrder,omitempty"`
+		} `yaml:"stages"`
+	} `yaml:"body"`
+}
+
+type Taxonomies struct {
+	Header `yaml:",inline"`
+	Body   struct {
+		DisplayName string `yaml:"displayName,omitempty"`
+		Description string `yaml:"description,omitempty"`
+		Taxonomy    []struct {
+			ID              string `yaml:"id"`
+			DisplayName     string `yaml:"displayName,omitempty"`
+			Description     string `yaml:"description,omitempty"`
+			AdminApplied    bool   `yaml:"adminApplied,omitempty"`
+			SingleSelection bool   `yaml:"singleSelection,omitempty"`
+			SearchExcluded  bool   `yaml:"searchExcluded,omitempty"`
+			SystemManaged   bool   `yaml:"systemManaged,omitempty"`
+			DisplayOrder    int    `yaml:"displayOrder,omitempty"`
+			Elements        []struct {
+				ID          string `yaml:"id"`
+				DisplayName string `yaml:"displayName,omitempty"`
+				Description string `yaml:"description,omitempty"`
+			} `yaml:"elements"`
+		} `yaml:"taxonomies"`
+	} `yaml:"body"`
+}
