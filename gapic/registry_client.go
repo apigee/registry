@@ -96,6 +96,7 @@ func defaultRegistryCallOptions() *RegistryCallOptions {
 				return gax.OnCodes([]codes.Code{
 					codes.Aborted,
 					codes.Canceled,
+					codes.DeadlineExceeded,
 					codes.Unavailable,
 				}, gax.Backoff{
 					Initial:    200 * time.Millisecond,
@@ -109,6 +110,7 @@ func defaultRegistryCallOptions() *RegistryCallOptions {
 				return gax.OnCodes([]codes.Code{
 					codes.Aborted,
 					codes.Canceled,
+					codes.DeadlineExceeded,
 					codes.Unavailable,
 				}, gax.Backoff{
 					Initial:    200 * time.Millisecond,
@@ -122,6 +124,7 @@ func defaultRegistryCallOptions() *RegistryCallOptions {
 				return gax.OnCodes([]codes.Code{
 					codes.Aborted,
 					codes.Canceled,
+					codes.DeadlineExceeded,
 					codes.Unavailable,
 				}, gax.Backoff{
 					Initial:    200 * time.Millisecond,
@@ -135,6 +138,7 @@ func defaultRegistryCallOptions() *RegistryCallOptions {
 				return gax.OnCodes([]codes.Code{
 					codes.Aborted,
 					codes.Canceled,
+					codes.DeadlineExceeded,
 					codes.Unavailable,
 				}, gax.Backoff{
 					Initial:    200 * time.Millisecond,
@@ -148,6 +152,7 @@ func defaultRegistryCallOptions() *RegistryCallOptions {
 				return gax.OnCodes([]codes.Code{
 					codes.Aborted,
 					codes.Canceled,
+					codes.DeadlineExceeded,
 					codes.Unavailable,
 				}, gax.Backoff{
 					Initial:    200 * time.Millisecond,
@@ -161,6 +166,7 @@ func defaultRegistryCallOptions() *RegistryCallOptions {
 				return gax.OnCodes([]codes.Code{
 					codes.Aborted,
 					codes.Canceled,
+					codes.DeadlineExceeded,
 					codes.Unavailable,
 				}, gax.Backoff{
 					Initial:    200 * time.Millisecond,
@@ -174,6 +180,7 @@ func defaultRegistryCallOptions() *RegistryCallOptions {
 				return gax.OnCodes([]codes.Code{
 					codes.Aborted,
 					codes.Canceled,
+					codes.DeadlineExceeded,
 					codes.Unavailable,
 				}, gax.Backoff{
 					Initial:    200 * time.Millisecond,
@@ -187,6 +194,7 @@ func defaultRegistryCallOptions() *RegistryCallOptions {
 				return gax.OnCodes([]codes.Code{
 					codes.Aborted,
 					codes.Canceled,
+					codes.DeadlineExceeded,
 					codes.Unavailable,
 				}, gax.Backoff{
 					Initial:    200 * time.Millisecond,
@@ -200,6 +208,7 @@ func defaultRegistryCallOptions() *RegistryCallOptions {
 				return gax.OnCodes([]codes.Code{
 					codes.Aborted,
 					codes.Canceled,
+					codes.DeadlineExceeded,
 					codes.Unavailable,
 				}, gax.Backoff{
 					Initial:    200 * time.Millisecond,
@@ -213,6 +222,7 @@ func defaultRegistryCallOptions() *RegistryCallOptions {
 				return gax.OnCodes([]codes.Code{
 					codes.Aborted,
 					codes.Canceled,
+					codes.DeadlineExceeded,
 					codes.Unavailable,
 				}, gax.Backoff{
 					Initial:    200 * time.Millisecond,
@@ -226,6 +236,7 @@ func defaultRegistryCallOptions() *RegistryCallOptions {
 				return gax.OnCodes([]codes.Code{
 					codes.Aborted,
 					codes.Canceled,
+					codes.DeadlineExceeded,
 					codes.Unavailable,
 				}, gax.Backoff{
 					Initial:    200 * time.Millisecond,
@@ -239,6 +250,7 @@ func defaultRegistryCallOptions() *RegistryCallOptions {
 				return gax.OnCodes([]codes.Code{
 					codes.Aborted,
 					codes.Canceled,
+					codes.DeadlineExceeded,
 					codes.Unavailable,
 				}, gax.Backoff{
 					Initial:    200 * time.Millisecond,
@@ -252,6 +264,7 @@ func defaultRegistryCallOptions() *RegistryCallOptions {
 				return gax.OnCodes([]codes.Code{
 					codes.Aborted,
 					codes.Canceled,
+					codes.DeadlineExceeded,
 					codes.Unavailable,
 				}, gax.Backoff{
 					Initial:    200 * time.Millisecond,
@@ -265,6 +278,7 @@ func defaultRegistryCallOptions() *RegistryCallOptions {
 				return gax.OnCodes([]codes.Code{
 					codes.Aborted,
 					codes.Canceled,
+					codes.DeadlineExceeded,
 					codes.Unavailable,
 				}, gax.Backoff{
 					Initial:    200 * time.Millisecond,
@@ -278,6 +292,7 @@ func defaultRegistryCallOptions() *RegistryCallOptions {
 				return gax.OnCodes([]codes.Code{
 					codes.Aborted,
 					codes.Canceled,
+					codes.DeadlineExceeded,
 					codes.Unavailable,
 				}, gax.Backoff{
 					Initial:    200 * time.Millisecond,
@@ -291,6 +306,7 @@ func defaultRegistryCallOptions() *RegistryCallOptions {
 				return gax.OnCodes([]codes.Code{
 					codes.Aborted,
 					codes.Canceled,
+					codes.DeadlineExceeded,
 					codes.Unavailable,
 				}, gax.Backoff{
 					Initial:    200 * time.Millisecond,
@@ -304,6 +320,7 @@ func defaultRegistryCallOptions() *RegistryCallOptions {
 				return gax.OnCodes([]codes.Code{
 					codes.Aborted,
 					codes.Canceled,
+					codes.DeadlineExceeded,
 					codes.Unavailable,
 				}, gax.Backoff{
 					Initial:    200 * time.Millisecond,
@@ -317,6 +334,7 @@ func defaultRegistryCallOptions() *RegistryCallOptions {
 				return gax.OnCodes([]codes.Code{
 					codes.Aborted,
 					codes.Canceled,
+					codes.DeadlineExceeded,
 					codes.Unavailable,
 				}, gax.Backoff{
 					Initial:    200 * time.Millisecond,
@@ -330,6 +348,7 @@ func defaultRegistryCallOptions() *RegistryCallOptions {
 				return gax.OnCodes([]codes.Code{
 					codes.Aborted,
 					codes.Canceled,
+					codes.DeadlineExceeded,
 					codes.Unavailable,
 				}, gax.Backoff{
 					Initial:    200 * time.Millisecond,
@@ -343,6 +362,7 @@ func defaultRegistryCallOptions() *RegistryCallOptions {
 				return gax.OnCodes([]codes.Code{
 					codes.Aborted,
 					codes.Canceled,
+					codes.DeadlineExceeded,
 					codes.Unavailable,
 				}, gax.Backoff{
 					Initial:    200 * time.Millisecond,
@@ -356,6 +376,7 @@ func defaultRegistryCallOptions() *RegistryCallOptions {
 				return gax.OnCodes([]codes.Code{
 					codes.Aborted,
 					codes.Canceled,
+					codes.DeadlineExceeded,
 					codes.Unavailable,
 				}, gax.Backoff{
 					Initial:    200 * time.Millisecond,
@@ -369,6 +390,7 @@ func defaultRegistryCallOptions() *RegistryCallOptions {
 				return gax.OnCodes([]codes.Code{
 					codes.Aborted,
 					codes.Canceled,
+					codes.DeadlineExceeded,
 					codes.Unavailable,
 				}, gax.Backoff{
 					Initial:    200 * time.Millisecond,
@@ -382,6 +404,7 @@ func defaultRegistryCallOptions() *RegistryCallOptions {
 				return gax.OnCodes([]codes.Code{
 					codes.Aborted,
 					codes.Canceled,
+					codes.DeadlineExceeded,
 					codes.Unavailable,
 				}, gax.Backoff{
 					Initial:    200 * time.Millisecond,
@@ -395,6 +418,7 @@ func defaultRegistryCallOptions() *RegistryCallOptions {
 				return gax.OnCodes([]codes.Code{
 					codes.Aborted,
 					codes.Canceled,
+					codes.DeadlineExceeded,
 					codes.Unavailable,
 				}, gax.Backoff{
 					Initial:    200 * time.Millisecond,
@@ -408,6 +432,7 @@ func defaultRegistryCallOptions() *RegistryCallOptions {
 				return gax.OnCodes([]codes.Code{
 					codes.Aborted,
 					codes.Canceled,
+					codes.DeadlineExceeded,
 					codes.Unavailable,
 				}, gax.Backoff{
 					Initial:    200 * time.Millisecond,
@@ -421,6 +446,7 @@ func defaultRegistryCallOptions() *RegistryCallOptions {
 				return gax.OnCodes([]codes.Code{
 					codes.Aborted,
 					codes.Canceled,
+					codes.DeadlineExceeded,
 					codes.Unavailable,
 				}, gax.Backoff{
 					Initial:    200 * time.Millisecond,
@@ -434,6 +460,7 @@ func defaultRegistryCallOptions() *RegistryCallOptions {
 				return gax.OnCodes([]codes.Code{
 					codes.Aborted,
 					codes.Canceled,
+					codes.DeadlineExceeded,
 					codes.Unavailable,
 				}, gax.Backoff{
 					Initial:    200 * time.Millisecond,
@@ -447,6 +474,7 @@ func defaultRegistryCallOptions() *RegistryCallOptions {
 				return gax.OnCodes([]codes.Code{
 					codes.Aborted,
 					codes.Canceled,
+					codes.DeadlineExceeded,
 					codes.Unavailable,
 				}, gax.Backoff{
 					Initial:    200 * time.Millisecond,
@@ -460,6 +488,7 @@ func defaultRegistryCallOptions() *RegistryCallOptions {
 				return gax.OnCodes([]codes.Code{
 					codes.Aborted,
 					codes.Canceled,
+					codes.DeadlineExceeded,
 					codes.Unavailable,
 				}, gax.Backoff{
 					Initial:    200 * time.Millisecond,
@@ -473,6 +502,7 @@ func defaultRegistryCallOptions() *RegistryCallOptions {
 				return gax.OnCodes([]codes.Code{
 					codes.Aborted,
 					codes.Canceled,
+					codes.DeadlineExceeded,
 					codes.Unavailable,
 				}, gax.Backoff{
 					Initial:    200 * time.Millisecond,
@@ -486,6 +516,7 @@ func defaultRegistryCallOptions() *RegistryCallOptions {
 				return gax.OnCodes([]codes.Code{
 					codes.Aborted,
 					codes.Canceled,
+					codes.DeadlineExceeded,
 					codes.Unavailable,
 				}, gax.Backoff{
 					Initial:    200 * time.Millisecond,
@@ -499,6 +530,7 @@ func defaultRegistryCallOptions() *RegistryCallOptions {
 				return gax.OnCodes([]codes.Code{
 					codes.Aborted,
 					codes.Canceled,
+					codes.DeadlineExceeded,
 					codes.Unavailable,
 				}, gax.Backoff{
 					Initial:    200 * time.Millisecond,
@@ -512,6 +544,7 @@ func defaultRegistryCallOptions() *RegistryCallOptions {
 				return gax.OnCodes([]codes.Code{
 					codes.Aborted,
 					codes.Canceled,
+					codes.DeadlineExceeded,
 					codes.Unavailable,
 				}, gax.Backoff{
 					Initial:    200 * time.Millisecond,
@@ -525,6 +558,7 @@ func defaultRegistryCallOptions() *RegistryCallOptions {
 				return gax.OnCodes([]codes.Code{
 					codes.Aborted,
 					codes.Canceled,
+					codes.DeadlineExceeded,
 					codes.Unavailable,
 				}, gax.Backoff{
 					Initial:    200 * time.Millisecond,
@@ -538,6 +572,7 @@ func defaultRegistryCallOptions() *RegistryCallOptions {
 				return gax.OnCodes([]codes.Code{
 					codes.Aborted,
 					codes.Canceled,
+					codes.DeadlineExceeded,
 					codes.Unavailable,
 				}, gax.Backoff{
 					Initial:    200 * time.Millisecond,
