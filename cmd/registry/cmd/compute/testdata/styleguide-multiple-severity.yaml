@@ -14,7 +14,7 @@
 
 id: openapitest-multiple-severity
 mime_types:
-  - application/x.openapi+gzip;version=2
+  - application/x.openapi+gzip;version=3.0.0
 guidelines:
   - id: tagproperties
     display_name: Tag Properties

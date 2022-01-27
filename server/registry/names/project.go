@@ -69,7 +69,7 @@ func projectRegexp() *regexp.Regexp {
 
 // projectWithLocationRegexp returns a regular expression that matches a project resource name followed by a location.
 func projectWithLocationRegexp() *regexp.Regexp {
-	return regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s$", identifier, identifier))
+	return regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s$", identifier, Location))
 }
 
 // ParseProject parses the name of a project.
