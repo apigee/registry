@@ -24,7 +24,6 @@ import (
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
-	"gopkg.in/yaml.v2"
 )
 
 // ExportProject writes a project as a YAML file.
@@ -33,30 +32,24 @@ func ExportProject(ctx context.Context, client *gapic.RegistryClient, adminClien
 	if err != nil {
 		log.FromContext(ctx).WithError(err).Fatal("Failed to parse project name")
 	}
-	apisdir := "apis"
-	err = os.MkdirAll(apisdir, 0777)
+	apisDir := "apis"
+	err = os.MkdirAll(apisDir, 0777)
 	if err != nil {
 		log.FromContext(ctx).WithError(err).Fatal("Failed to create output directory")
 	}
 	core.ListAPIs(ctx, client, projectName.Api(""), "", func(message *rpc.Api) {
-		api, err := buildAPI(ctx, client, message)
+		bytes, header, err := exportAPI(ctx, client, message)
 		if err != nil {
-			log.FromContext(ctx).WithError(err).Fatal("Failed to export api as YAML")
-			return
+			log.FromContext(ctx).WithError(err).Fatal("Failed to export artifact")
 		}
-		b, err := yaml.Marshal(api)
-		if err != nil {
-			log.FromContext(ctx).WithError(err).Fatal("Failed to marshal api as YAML")
-			return
-		}
-		filename := fmt.Sprintf("%s/%s.yaml", apisdir, api.Header.Metadata.Name)
-		err = os.WriteFile(filename, b, 0644)
+		filename := fmt.Sprintf("%s/%s.yaml", apisDir, header.Metadata.Name)
+		err = os.WriteFile(filename, bytes, 0644)
 		if err != nil {
 			log.FromContext(ctx).WithError(err).Fatal("Failed to write output YAML")
 		}
 	})
-	artifactsdir := "artifacts"
-	err = os.MkdirAll(artifactsdir, 0777)
+	artifactsDir := "artifacts"
+	err = os.MkdirAll(artifactsDir, 0777)
 	if err != nil {
 		log.FromContext(ctx).WithError(err).Fatal("Failed to create output directory")
 	}
@@ -65,7 +58,7 @@ func ExportProject(ctx context.Context, client *gapic.RegistryClient, adminClien
 		if err != nil {
 			log.FromContext(ctx).WithError(err).Fatal("Failed to export artifact")
 		}
-		filename := fmt.Sprintf("%s/%s.yaml", artifactsdir, header.Metadata.Name)
+		filename := fmt.Sprintf("%s/%s.yaml", artifactsDir, header.Metadata.Name)
 		err = os.WriteFile(filename, bytes, 0644)
 		if err != nil {
 			log.FromContext(ctx).WithError(err).Fatal("Failed to write output YAML")

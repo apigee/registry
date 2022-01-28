@@ -70,7 +70,7 @@ type APIDeployment struct {
 	} `yaml:"body"`
 }
 
-func buildAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api) (*API, error) {
+func newAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api) (*API, error) {
 	apiName, err := names.ParseApi(message.Name)
 	if err != nil {
 		return nil, err
@@ -92,7 +92,7 @@ func buildAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.Ap
 	api.Body.RecommendedVersion = message.RecommendedVersion
 	api.Body.RecommendedDeployment = message.RecommendedDeployment
 	core.ListVersions(ctx, client, apiName.Version(""), "", func(message *rpc.ApiVersion) {
-		version, err2 := buildAPIVersion(ctx, client, message)
+		version, err2 := newAPIVersion(ctx, client, message)
 		// unset these because they can be inferred
 		version.APIVersion = ""
 		version.Kind = ""
@@ -103,7 +103,7 @@ func buildAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.Ap
 		}
 	})
 	core.ListDeployments(ctx, client, apiName.Deployment(""), "", func(message *rpc.ApiDeployment) {
-		deployment, err2 := buildAPIDeployment(ctx, client, message)
+		deployment, err2 := newAPIDeployment(ctx, client, message)
 		// unset these because they can be inferred
 		deployment.APIVersion = ""
 		deployment.Kind = ""
@@ -116,7 +116,7 @@ func buildAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.Ap
 	return api, err
 }
 
-func buildAPIVersion(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiVersion) (*APIVersion, error) {
+func newAPIVersion(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiVersion) (*APIVersion, error) {
 	versionName, err := names.ParseVersion(message.Name)
 	if err != nil {
 		return nil, err
@@ -135,7 +135,7 @@ func buildAPIVersion(ctx context.Context, client *gapic.RegistryClient, message 
 	version.Body.DisplayName = message.DisplayName
 	version.Body.Description = message.Description
 	core.ListSpecs(ctx, client, versionName.Spec(""), "", func(message *rpc.ApiSpec) {
-		spec, err2 := buildAPISpec(ctx, client, message)
+		spec, err2 := newAPISpec(ctx, client, message)
 		// unset these because they can be inferred
 		spec.APIVersion = ""
 		spec.Kind = ""
@@ -148,7 +148,7 @@ func buildAPIVersion(ctx context.Context, client *gapic.RegistryClient, message 
 	return version, err
 }
 
-func buildAPISpec(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiSpec) (*APISpec, error) {
+func newAPISpec(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiSpec) (*APISpec, error) {
 	specName, err := names.ParseSpec(message.Name)
 	if err != nil {
 		return nil, err
@@ -171,7 +171,7 @@ func buildAPISpec(ctx context.Context, client *gapic.RegistryClient, message *rp
 	return spec, nil
 }
 
-func buildAPIDeployment(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiDeployment) (*APIDeployment, error) {
+func newAPIDeployment(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiDeployment) (*APIDeployment, error) {
 	deploymentName, err := names.ParseDeployment(message.Name)
 	if err != nil {
 		return nil, err
@@ -194,13 +194,22 @@ func buildAPIDeployment(ctx context.Context, client *gapic.RegistryClient, messa
 
 // ExportAPI writes an API as a YAML file.
 func ExportAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api) {
-	api, err := buildAPI(ctx, client, message)
+	bytes, _, err := exportAPI(ctx, client, message)
 	if err != nil {
-		log.FromContext(ctx).WithError(err).Fatal("Failed to export api")
+		log.FromContext(ctx).WithError(err).Fatal("Failed to export artifact")
+	} else {
+		fmt.Println(string(bytes))
+	}
+}
+
+func exportAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api) ([]byte, *Header, error) {
+	api, err := newAPI(ctx, client, message)
+	if err != nil {
+		return nil, nil, err
 	}
 	b, err := yaml.Marshal(api)
 	if err != nil {
-		log.FromContext(ctx).WithError(err).Fatal("Failed to marshal doc as YAML")
+		return nil, nil, err
 	}
-	fmt.Println(string(b))
+	return b, &api.Header, nil
 }

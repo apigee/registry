@@ -44,6 +44,7 @@ type Manifest struct {
 	} `yaml:"body"`
 }
 
+// Message returns the rpc representation of the manifest.
 func (m *Manifest) Message() *rpc.Manifest {
 	return &rpc.Manifest{
 		Id:                 m.Header.Metadata.Name,
@@ -77,6 +78,7 @@ func (m *Manifest) dependencies(g *ManifestGeneratedResource) []*rpc.Dependency 
 	return v
 }
 
+// newManifest creates a Manifest from an rpc representation.
 func newManifest(message *rpc.Artifact) (*Manifest, error) {
 	artifactName, err := names.ParseArtifact(message.Name)
 	if err != nil {

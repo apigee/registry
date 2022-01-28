@@ -32,7 +32,7 @@ type Artifact struct {
 	} `yaml:"body"`
 }
 
-func buildArtifact(message *rpc.Artifact) (*Artifact, error) {
+func newArtifact(message *rpc.Artifact) (*Artifact, error) {
 	artifactName, err := names.ParseArtifact(message.Name)
 	if err != nil {
 		return nil, err
@@ -82,7 +82,7 @@ func exportArtifact(ctx context.Context, client *gapic.RegistryClient, message *
 		}
 		return b, &manifest.Header, nil
 	default:
-		artifact, err := buildArtifact(message)
+		artifact, err := newArtifact(message)
 		if err != nil {
 			return nil, nil, err
 		}
