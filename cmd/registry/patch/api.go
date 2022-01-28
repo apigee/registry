@@ -16,12 +16,59 @@ package patch
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/gapic"
+	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
+	"gopkg.in/yaml.v2"
 )
+
+type API struct {
+	Header `yaml:",inline"`
+	Body   struct {
+		DisplayName           string           `yaml:"displayName,omitempty"`
+		Description           string           `yaml:"description,omitempty"`
+		Availability          string           `yaml:"availability,omitempty"`
+		RecommendedVersion    string           `yaml:"recommendedVersion,omitempty"`
+		RecommendedDeployment string           `yaml:"recommendedDeployment,omitempty"`
+		APIVersions           []*APIVersion    `yaml:"versions,omitempty"`
+		APIDeployments        []*APIDeployment `yaml:"deployments,omitempty"`
+		Artifacts             []*Artifact      `yaml:"artifacts,omitempty"`
+	} `yaml:"body"`
+}
+
+type APIVersion struct {
+	Header `yaml:",inline"`
+	Body   struct {
+		DisplayName string      `yaml:"displayName,omitempty"`
+		Description string      `yaml:"description,omitempty"`
+		APISpecs    []*APISpec  `yaml:"specs,omitempty"`
+		Artifacts   []*Artifact `yaml:"artifacts,omitempty"`
+	} `yaml:"body"`
+}
+
+type APISpec struct {
+	Header `yaml:",inline"`
+	Body   struct {
+		FileName    string      `yaml:"fileName,omitempty"`
+		Description string      `yaml:"description,omitempty"`
+		MimeType    string      `yaml:"mimeType,omitempty"`
+		SourceURI   string      `yaml:"sourceURI,omitempty"`
+		Artifacts   []*Artifact `yaml:"artifacts,omitempty"`
+	} `yaml:"body"`
+}
+
+type APIDeployment struct {
+	Header `yaml:",inline"`
+	Body   struct {
+		DisplayName string      `yaml:"displayName,omitempty"`
+		Description string      `yaml:"description,omitempty"`
+		Artifacts   []*Artifact `yaml:"artifacts,omitempty"`
+	} `yaml:"body"`
+}
 
 func buildAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api) (*API, error) {
 	apiName, err := names.ParseApi(message.Name)
@@ -145,19 +192,15 @@ func buildAPIDeployment(ctx context.Context, client *gapic.RegistryClient, messa
 	return deployment, nil
 }
 
-func buildArtifact(message *rpc.Artifact) (*Artifact, error) {
-	artifactName, err := names.ParseArtifact(message.Name)
+// ExportAPI writes an API as a YAML file.
+func ExportAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api) {
+	api, err := buildAPI(ctx, client, message)
 	if err != nil {
-		return nil, err
+		log.FromContext(ctx).WithError(err).Fatal("Failed to export api")
 	}
-	artifact := &Artifact{
-		Header: Header{
-			APIVersion: REGISTRY_V1,
-			Kind:       "Artifact",
-			Metadata: Metadata{
-				Name: artifactName.ArtifactID(),
-			},
-		},
+	b, err := yaml.Marshal(api)
+	if err != nil {
+		log.FromContext(ctx).WithError(err).Fatal("Failed to marshal doc as YAML")
 	}
-	return artifact, nil
+	fmt.Println(string(b))
 }
