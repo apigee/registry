@@ -28,8 +28,8 @@ import (
 )
 
 // ExportProject writes a project as a YAML file.
-func ExportProject(ctx context.Context, client *gapic.RegistryClient, adminClient *gapic.AdminClient, message *rpc.Project) {
-	projectName, err := names.ParseProject(message.Name)
+func ExportProject(ctx context.Context, client *gapic.RegistryClient, adminClient *gapic.AdminClient, name string) {
+	projectName, err := names.ParseProject(name)
 	if err != nil {
 		log.FromContext(ctx).WithError(err).Fatal("Failed to parse project name")
 	}
@@ -55,6 +55,22 @@ func ExportProject(ctx context.Context, client *gapic.RegistryClient, adminClien
 			log.FromContext(ctx).WithError(err).Fatal("Failed to write output YAML")
 		}
 	})
+	artifactsdir := "artifacts"
+	err = os.MkdirAll(artifactsdir, 0777)
+	if err != nil {
+		log.FromContext(ctx).WithError(err).Fatal("Failed to create output directory")
+	}
+	core.ListArtifacts(ctx, client, projectName.Artifact(""), "", false, func(message *rpc.Artifact) {
+		bytes, header, err := exportArtifact(ctx, client, message)
+		if err != nil {
+			log.FromContext(ctx).WithError(err).Fatal("Failed to export artifact")
+		}
+		filename := fmt.Sprintf("%s/%s.yaml", artifactsdir, header.Metadata.Name)
+		err = os.WriteFile(filename, bytes, 0644)
+		if err != nil {
+			log.FromContext(ctx).WithError(err).Fatal("Failed to write output YAML")
+		}
+	})
 }
 
 // ExportAPI writes an API as a YAML file.
@@ -72,13 +88,45 @@ func ExportAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.A
 
 // ExportArtifact writes an artifact as a YAML file.
 func ExportArtifact(ctx context.Context, client *gapic.RegistryClient, message *rpc.Artifact) {
-	artifact, err := buildArtifact(message)
+	bytes, _, err := exportArtifact(ctx, client, message)
 	if err != nil {
 		log.FromContext(ctx).WithError(err).Fatal("Failed to export artifact")
+	} else {
+		fmt.Println(string(bytes))
 	}
-	b, err := yaml.Marshal(artifact)
-	if err != nil {
-		log.FromContext(ctx).WithError(err).Fatal("Failed to marshal doc as YAML")
+}
+
+func exportArtifact(ctx context.Context, client *gapic.RegistryClient, message *rpc.Artifact) ([]byte, *Header, error) {
+	if message.Contents == nil {
+		req := &rpc.GetArtifactContentsRequest{
+			Name: message.Name,
+		}
+		body, err := client.GetArtifactContents(ctx, req)
+		if err != nil {
+			return nil, nil, err
+		}
+		message.Contents = body.Data
 	}
-	fmt.Println(string(b))
+	switch message.GetMimeType() {
+	case "application/octet-stream;type=google.cloud.apigeeregistry.v1.controller.Manifest":
+		manifest, err := buildManifest(message)
+		if err != nil {
+			return nil, nil, err
+		}
+		b, err := yaml.Marshal(manifest)
+		if err != nil {
+			return nil, nil, err
+		}
+		return b, &manifest.Header, nil
+	default:
+		artifact, err := buildArtifact(message)
+		if err != nil {
+			return nil, nil, err
+		}
+		b, err := yaml.Marshal(artifact)
+		if err != nil {
+			return nil, nil, err
+		}
+		return b, &artifact.Header, nil
+	}
 }

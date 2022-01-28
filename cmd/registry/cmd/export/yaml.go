@@ -46,10 +46,8 @@ func yamlCommand(ctx context.Context) *cobra.Command {
 				name = args[0]
 			}
 
-			if project, err := names.ParseProject(name); err == nil {
-				_, err := core.GetProject(ctx, adminClient, project, func(message *rpc.Project) {
-					patch.ExportProject(ctx, client, adminClient, message)
-				})
+			if _, err := names.ParseProject(name); err == nil {
+				patch.ExportProject(ctx, client, adminClient, name)
 				if err != nil {
 					log.FromContext(ctx).WithError(err).Fatal("Failed to export project YAML")
 				}

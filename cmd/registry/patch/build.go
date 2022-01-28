@@ -21,6 +21,7 @@ import (
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
+	"google.golang.org/protobuf/proto"
 )
 
 func buildAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api) (*API, error) {
@@ -160,4 +161,46 @@ func buildArtifact(message *rpc.Artifact) (*Artifact, error) {
 		},
 	}
 	return artifact, nil
+}
+
+func buildManifest(message *rpc.Artifact) (*Manifest, error) {
+	artifactName, err := names.ParseArtifact(message.Name)
+	if err != nil {
+		return nil, err
+	}
+	value := &rpc.Manifest{}
+	err = proto.Unmarshal(message.Contents, value)
+	if err != nil {
+		return nil, err
+	}
+	manifest := &Manifest{
+		Header: Header{
+			APIVersion: REGISTRY_V1,
+			Kind:       "Manifest",
+			Metadata: Metadata{
+				Name: artifactName.ArtifactID(),
+			},
+		},
+	}
+
+	for _, g := range value.GeneratedResources {
+		dependencies := make([]*ManifestDependency, 0)
+		for _, d := range g.Dependencies {
+			dependencies = append(dependencies,
+				&ManifestDependency{
+					Pattern: d.Pattern,
+					Filter:  d.Filter,
+				})
+		}
+		manifest.Body.GeneratedResources = append(
+			manifest.Body.GeneratedResources,
+			&ManifestGeneratedResource{
+				Pattern:      g.Pattern,
+				Filter:       g.Filter,
+				Receipt:      g.Receipt,
+				Dependencies: dependencies,
+				Action:       g.Action,
+			})
+	}
+	return manifest, nil
 }

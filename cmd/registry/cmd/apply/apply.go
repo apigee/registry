@@ -26,6 +26,7 @@ import (
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
+	"google.golang.org/protobuf/proto"
 	"gopkg.in/yaml.v2"
 )
 
@@ -93,13 +94,22 @@ func applyFile(
 		log.FromContext(ctx).Fatalf("Unsupported API version: %s", header.APIVersion)
 	}
 	if header.Kind == "API" {
-		log.FromContext(ctx).Infof("applying %s", fileName)
 		var api patch.API
 		err = yaml.Unmarshal(bytes, &api)
 		if err != nil {
 			log.FromContext(ctx).WithError(err).Fatal("Failed to parse YAML")
 		}
 		err = applyApiPatch(ctx, client, &api, parent)
+		if err != nil {
+			log.FromContext(ctx).WithError(err).Fatal("Failed to apply patch")
+		}
+	} else if header.Kind == "Manifest" {
+		var manifest patch.Manifest
+		err = yaml.Unmarshal(bytes, &manifest)
+		if err != nil {
+			log.FromContext(ctx).WithError(err).Fatal("Failed to parse YAML")
+		}
+		err = applyManifestPatch(ctx, client, &manifest, parent)
 		if err != nil {
 			log.FromContext(ctx).WithError(err).Fatal("Failed to apply patch")
 		}
@@ -202,5 +212,34 @@ func applyApiDeploymentPatch(
 		AllowMissing: true,
 	}
 	_, err := client.UpdateApiDeployment(ctx, req)
+	return err
+}
+
+func applyManifestPatch(
+	ctx context.Context,
+	client connection.Client,
+	manifest *patch.Manifest,
+	parent string) error {
+	bytes, err := proto.Marshal(manifest.Message())
+	if err != nil {
+		return err
+	}
+	artifact := &rpc.Artifact{
+		Name:     fmt.Sprintf("%s/artifacts/%s", parent, manifest.Metadata.Name),
+		MimeType: patch.ManifestType,
+		Contents: bytes,
+	}
+	req := &rpc.CreateArtifactRequest{
+		Parent:     parent,
+		ArtifactId: manifest.Metadata.Name,
+		Artifact:   artifact,
+	}
+	_, err = client.CreateArtifact(ctx, req)
+	if err != nil {
+		req := &rpc.ReplaceArtifactRequest{
+			Artifact: artifact,
+		}
+		_, err = client.ReplaceArtifact(ctx, req)
+	}
 	return err
 }
