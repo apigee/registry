@@ -108,8 +108,8 @@ func exportArtifact(ctx context.Context, client *gapic.RegistryClient, message *
 		message.Contents = body.Data
 	}
 	switch message.GetMimeType() {
-	case "application/octet-stream;type=google.cloud.apigeeregistry.v1.controller.Manifest":
-		manifest, err := buildManifest(message)
+	case ManifestMimeType:
+		manifest, err := newManifest(message)
 		if err != nil {
 			return nil, nil, err
 		}

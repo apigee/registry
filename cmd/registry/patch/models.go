@@ -16,8 +16,6 @@ package patch
 
 const REGISTRY_V1 = "registry/v1"
 
-const ManifestType = "application/octet-stream;type=google.cloud.apigeeregistry.v1.controller.Manifest"
-
 type Header struct {
 	APIVersion string   `yaml:"apiVersion,omitempty"`
 	Kind       string   `yaml:"kind,omitempty"`
@@ -88,28 +86,6 @@ type Artifact struct {
 	Header `yaml:",inline"`
 	Body   struct {
 		MimeType string `yaml:"mimeType,omitempty"`
-	} `yaml:"body"`
-}
-
-type ManifestDependency struct {
-	Pattern string `yaml:"pattern"`
-	Filter  string `yaml:"filter,omitempty"`
-}
-
-type ManifestGeneratedResource struct {
-	Pattern      string                `yaml:"pattern"`
-	Filter       string                `yaml:"filter,omitempty"`
-	Receipt      bool                  `yaml:"receipt,omitempty"`
-	Dependencies []*ManifestDependency `yaml:"dependencies"`
-	Action       string                `yaml:"action"`
-}
-
-type Manifest struct {
-	Header `yaml:",inline"`
-	Body   struct {
-		DisplayName        string                       `yaml:"displayName,omitempty"`
-		Description        string                       `yaml:"description,omitempty"`
-		GeneratedResources []*ManifestGeneratedResource `yaml:"generatedResources"`
 	} `yaml:"body"`
 }
 

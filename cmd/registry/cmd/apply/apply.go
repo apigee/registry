@@ -226,7 +226,7 @@ func applyManifestPatch(
 	}
 	artifact := &rpc.Artifact{
 		Name:     fmt.Sprintf("%s/artifacts/%s", parent, manifest.Metadata.Name),
-		MimeType: patch.ManifestType,
+		MimeType: patch.ManifestMimeType,
 		Contents: bytes,
 	}
 	req := &rpc.CreateArtifactRequest{
