@@ -103,6 +103,26 @@ func applyFile(
 		if err != nil {
 			log.FromContext(ctx).WithError(err).Fatal("Failed to apply patch")
 		}
+	} else if header.Kind == "TaxonomyList" {
+		var taxonomyList patch.TaxonomyList
+		err = yaml.Unmarshal(bytes, &taxonomyList)
+		if err != nil {
+			log.FromContext(ctx).WithError(err).Fatal("Failed to parse YAML")
+		}
+		err = applyTaxonomyListPatch(ctx, client, &taxonomyList, parent)
+		if err != nil {
+			log.FromContext(ctx).WithError(err).Fatal("Failed to apply patch")
+		}
+	} else if header.Kind == "Lifecycle" {
+		var lifecycle patch.Lifecycle
+		err = yaml.Unmarshal(bytes, &lifecycle)
+		if err != nil {
+			log.FromContext(ctx).WithError(err).Fatal("Failed to parse YAML")
+		}
+		err = applyLifecyclePatch(ctx, client, &lifecycle, parent)
+		if err != nil {
+			log.FromContext(ctx).WithError(err).Fatal("Failed to apply patch")
+		}
 	} else if header.Kind == "Manifest" {
 		var manifest patch.Manifest
 		err = yaml.Unmarshal(bytes, &manifest)
@@ -218,20 +238,78 @@ func applyApiDeploymentPatch(
 func applyManifestPatch(
 	ctx context.Context,
 	client connection.Client,
-	manifest *patch.Manifest,
+	content *patch.Manifest,
 	parent string) error {
-	bytes, err := proto.Marshal(manifest.Message())
+	bytes, err := proto.Marshal(content.Message())
 	if err != nil {
 		return err
 	}
 	artifact := &rpc.Artifact{
-		Name:     fmt.Sprintf("%s/artifacts/%s", parent, manifest.Metadata.Name),
+		Name:     fmt.Sprintf("%s/artifacts/%s", parent, content.Metadata.Name),
 		MimeType: patch.ManifestMimeType,
 		Contents: bytes,
 	}
 	req := &rpc.CreateArtifactRequest{
 		Parent:     parent,
-		ArtifactId: manifest.Metadata.Name,
+		ArtifactId: content.Metadata.Name,
+		Artifact:   artifact,
+	}
+	_, err = client.CreateArtifact(ctx, req)
+	if err != nil {
+		req := &rpc.ReplaceArtifactRequest{
+			Artifact: artifact,
+		}
+		_, err = client.ReplaceArtifact(ctx, req)
+	}
+	return err
+}
+
+func applyLifecyclePatch(
+	ctx context.Context,
+	client connection.Client,
+	content *patch.Lifecycle,
+	parent string) error {
+	bytes, err := proto.Marshal(content.Message())
+	if err != nil {
+		return err
+	}
+	artifact := &rpc.Artifact{
+		Name:     fmt.Sprintf("%s/artifacts/%s", parent, content.Metadata.Name),
+		MimeType: patch.ManifestMimeType,
+		Contents: bytes,
+	}
+	req := &rpc.CreateArtifactRequest{
+		Parent:     parent,
+		ArtifactId: content.Metadata.Name,
+		Artifact:   artifact,
+	}
+	_, err = client.CreateArtifact(ctx, req)
+	if err != nil {
+		req := &rpc.ReplaceArtifactRequest{
+			Artifact: artifact,
+		}
+		_, err = client.ReplaceArtifact(ctx, req)
+	}
+	return err
+}
+
+func applyTaxonomyListPatch(
+	ctx context.Context,
+	client connection.Client,
+	content *patch.TaxonomyList,
+	parent string) error {
+	bytes, err := proto.Marshal(content.Message())
+	if err != nil {
+		return err
+	}
+	artifact := &rpc.Artifact{
+		Name:     fmt.Sprintf("%s/artifacts/%s", parent, content.Metadata.Name),
+		MimeType: patch.ManifestMimeType,
+		Contents: bytes,
+	}
+	req := &rpc.CreateArtifactRequest{
+		Parent:     parent,
+		ArtifactId: content.Metadata.Name,
 		Artifact:   artifact,
 	}
 	_, err = client.CreateArtifact(ctx, req)

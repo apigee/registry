@@ -71,16 +71,36 @@ func exportArtifact(ctx context.Context, client *gapic.RegistryClient, message *
 		message.Contents = body.Data
 	}
 	switch message.GetMimeType() {
+	case LifecycleMimeType:
+		content, err := newLifecycle(message)
+		if err != nil {
+			return nil, nil, err
+		}
+		b, err := yaml.Marshal(content)
+		if err != nil {
+			return nil, nil, err
+		}
+		return b, &content.Header, nil
 	case ManifestMimeType:
-		manifest, err := newManifest(message)
+		content, err := newManifest(message)
 		if err != nil {
 			return nil, nil, err
 		}
-		b, err := yaml.Marshal(manifest)
+		b, err := yaml.Marshal(content)
 		if err != nil {
 			return nil, nil, err
 		}
-		return b, &manifest.Header, nil
+		return b, &content.Header, nil
+	case TaxonomyListMimeType:
+		content, err := newTaxonomyList(message)
+		if err != nil {
+			return nil, nil, err
+		}
+		b, err := yaml.Marshal(content)
+		if err != nil {
+			return nil, nil, err
+		}
+		return b, &content.Header, nil
 	default:
 		artifact, err := newArtifact(message)
 		if err != nil {

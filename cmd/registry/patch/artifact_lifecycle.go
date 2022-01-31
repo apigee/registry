@@ -14,17 +14,87 @@
 
 package patch
 
+import (
+	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/server/registry/names"
+	"google.golang.org/protobuf/proto"
+)
+
+const LifecycleMimeType = "application/octet-stream;type=google.cloud.apigeeregistry.v1.apihub.Lifecycle"
+
+type LifecycleStage struct {
+	ID           string `yaml:"id"`
+	DisplayName  string `yaml:"displayName,omitempty"`
+	Description  string `yaml:"description,omitempty"`
+	URL          string `yaml:"url,omitempty"`
+	DisplayOrder int    `yaml:"displayOrder,omitempty"`
+}
+
 type Lifecycle struct {
 	Header `yaml:",inline"`
 	Body   struct {
-		DisplayName string `yaml:"displayName,omitempty"`
-		Description string `yaml:"description,omitempty"`
-		Stages      []struct {
-			ID           string `yaml:"id"`
-			DisplayName  string `yaml:"displayName,omitempty"`
-			Description  string `yaml:"description,omitempty"`
-			URL          string `yaml:"url,omitempty"`
-			DisplayOrder int    `yaml:"displayOrder,omitempty"`
-		} `yaml:"stages"`
+		DisplayName string            `yaml:"displayName,omitempty"`
+		Description string            `yaml:"description,omitempty"`
+		Stages      []*LifecycleStage `yaml:"stages"`
 	} `yaml:"body"`
+}
+
+// Message returns the rpc representation of the lifecycle.
+func (l *Lifecycle) Message() *rpc.Lifecycle {
+	return &rpc.Lifecycle{
+		Id:     l.Header.Metadata.Name,
+		Kind:   LifecycleMimeType,
+		Stages: l.stages(),
+	}
+}
+
+func (l *Lifecycle) stages() []*rpc.Lifecycle_Stage {
+	stages := make([]*rpc.Lifecycle_Stage, 0)
+	for _, s := range l.Body.Stages {
+		stages = append(stages, &rpc.Lifecycle_Stage{
+			Id:           s.ID,
+			DisplayName:  s.DisplayName,
+			Description:  s.Description,
+			Url:          s.URL,
+			DisplayOrder: int32(s.DisplayOrder),
+		})
+	}
+	return stages
+}
+
+// newLifecycle creates a Lifecycle from an rpc representation.
+func newLifecycle(message *rpc.Artifact) (*Lifecycle, error) {
+	artifactName, err := names.ParseArtifact(message.Name)
+	if err != nil {
+		return nil, err
+	}
+	value := &rpc.Lifecycle{}
+	err = proto.Unmarshal(message.Contents, value)
+	if err != nil {
+		return nil, err
+	}
+	lifecycle := &Lifecycle{
+		Header: Header{
+			APIVersion: REGISTRY_V1,
+			Kind:       "Lifecycle",
+			Metadata: Metadata{
+				Name: artifactName.ArtifactID(),
+			},
+		},
+	}
+	lifecycle.Body.DisplayName = value.DisplayName
+	lifecycle.Body.Description = value.Description
+	for _, s := range value.Stages {
+		lifecycle.Body.Stages = append(
+			lifecycle.Body.Stages,
+			&LifecycleStage{
+				ID:           s.Id,
+				DisplayName:  s.DisplayName,
+				Description:  s.Description,
+				URL:          s.Url,
+				DisplayOrder: int(s.DisplayOrder),
+			})
+	}
+	return lifecycle, nil
+
 }

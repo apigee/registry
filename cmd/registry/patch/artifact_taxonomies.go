@@ -14,25 +14,127 @@
 
 package patch
 
-type Taxonomies struct {
+import (
+	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/server/registry/names"
+	"google.golang.org/protobuf/proto"
+)
+
+const TaxonomyListMimeType = "application/octet-stream;type=google.cloud.apigeeregistry.v1.apihub.TaxonomyList"
+
+type TaxonomyList struct {
 	Header `yaml:",inline"`
 	Body   struct {
-		DisplayName string `yaml:"displayName,omitempty"`
-		Description string `yaml:"description,omitempty"`
-		Taxonomy    []struct {
-			ID              string `yaml:"id"`
-			DisplayName     string `yaml:"displayName,omitempty"`
-			Description     string `yaml:"description,omitempty"`
-			AdminApplied    bool   `yaml:"adminApplied,omitempty"`
-			SingleSelection bool   `yaml:"singleSelection,omitempty"`
-			SearchExcluded  bool   `yaml:"searchExcluded,omitempty"`
-			SystemManaged   bool   `yaml:"systemManaged,omitempty"`
-			DisplayOrder    int    `yaml:"displayOrder,omitempty"`
-			Elements        []struct {
-				ID          string `yaml:"id"`
-				DisplayName string `yaml:"displayName,omitempty"`
-				Description string `yaml:"description,omitempty"`
-			} `yaml:"elements"`
-		} `yaml:"taxonomies"`
+		DisplayName string     `yaml:"displayName,omitempty"`
+		Description string     `yaml:"description,omitempty"`
+		Taxonomies  []Taxonomy `yaml:"taxonomies"`
 	} `yaml:"body"`
+}
+
+type Taxonomy struct {
+	ID              string            `yaml:"id"`
+	DisplayName     string            `yaml:"displayName,omitempty"`
+	Description     string            `yaml:"description,omitempty"`
+	AdminApplied    bool              `yaml:"adminApplied,omitempty"`
+	SingleSelection bool              `yaml:"singleSelection,omitempty"`
+	SearchExcluded  bool              `yaml:"searchExcluded,omitempty"`
+	SystemManaged   bool              `yaml:"systemManaged,omitempty"`
+	DisplayOrder    int               `yaml:"displayOrder,omitempty"`
+	Elements        []TaxonomyElement `yaml:"elements"`
+}
+
+type TaxonomyElement struct {
+	ID          string `yaml:"id"`
+	DisplayName string `yaml:"displayName,omitempty"`
+	Description string `yaml:"description,omitempty"`
+}
+
+// Message returns the rpc representation of the taxonomies.
+func (l *TaxonomyList) Message() *rpc.TaxonomyList {
+	return &rpc.TaxonomyList{
+		Id:         l.Header.Metadata.Name,
+		Kind:       TaxonomyListMimeType,
+		Taxonomies: l.taxonomies(),
+	}
+}
+
+func (l *TaxonomyList) taxonomies() []*rpc.TaxonomyList_Taxonomy {
+	taxonomies := make([]*rpc.TaxonomyList_Taxonomy, 0)
+	for _, t := range l.Body.Taxonomies {
+		taxonomies = append(taxonomies,
+			&rpc.TaxonomyList_Taxonomy{
+				Id:              t.ID,
+				DisplayName:     t.DisplayName,
+				Description:     t.Description,
+				AdminApplied:    t.AdminApplied,
+				SingleSelection: t.SingleSelection,
+				SearchExcluded:  t.SearchExcluded,
+				SystemManaged:   t.SystemManaged,
+				DisplayOrder:    int32(t.DisplayOrder),
+				Elements:        t.elements(),
+			},
+		)
+	}
+	return taxonomies
+}
+
+func (t *Taxonomy) elements() []*rpc.TaxonomyList_Taxonomy_Element {
+	elements := make([]*rpc.TaxonomyList_Taxonomy_Element, 0)
+	for _, e := range t.Elements {
+		elements = append(elements, &rpc.TaxonomyList_Taxonomy_Element{
+			Id:          e.ID,
+			DisplayName: e.DisplayName,
+			Description: e.Description,
+		})
+	}
+	return elements
+}
+
+// newTaxonomyList creates a TaxonomyList object from an rpc representation.
+func newTaxonomyList(message *rpc.Artifact) (*TaxonomyList, error) {
+	artifactName, err := names.ParseArtifact(message.Name)
+	if err != nil {
+		return nil, err
+	}
+	value := &rpc.TaxonomyList{}
+	err = proto.Unmarshal(message.Contents, value)
+	if err != nil {
+		return nil, err
+	}
+	taxonomyList := &TaxonomyList{
+		Header: Header{
+			APIVersion: REGISTRY_V1,
+			Kind:       "TaxonomyList",
+			Metadata: Metadata{
+				Name: artifactName.ArtifactID(),
+			},
+		},
+	}
+	taxonomyList.Body.DisplayName = value.DisplayName
+	taxonomyList.Body.Description = value.Description
+
+	for _, t := range value.Taxonomies {
+		elements := make([]TaxonomyElement, 0)
+		for _, e := range t.Elements {
+			elements = append(elements,
+				TaxonomyElement{
+					ID:          e.Id,
+					DisplayName: e.DisplayName,
+					Description: e.Description,
+				})
+		}
+		taxonomy := Taxonomy{
+			ID:              t.Id,
+			DisplayName:     t.DisplayName,
+			Description:     t.Description,
+			AdminApplied:    t.AdminApplied,
+			SingleSelection: t.SingleSelection,
+			SearchExcluded:  t.SearchExcluded,
+			SystemManaged:   t.SystemManaged,
+			DisplayOrder:    int(t.DisplayOrder),
+			Elements:        elements,
+		}
+		taxonomyList.Body.Taxonomies = append(taxonomyList.Body.Taxonomies, taxonomy)
+	}
+	return taxonomyList, nil
 }
