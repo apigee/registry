@@ -8,9 +8,9 @@ import (
 
 type UnknownArtifact struct {
 	Header `yaml:",inline"`
-	Body   struct {
+	Data   struct {
 		MimeType string `yaml:"mimeType,omitempty"`
-	} `yaml:"body"`
+	} `yaml:"data"`
 }
 
 func (a *UnknownArtifact) GetHeader() *Header {

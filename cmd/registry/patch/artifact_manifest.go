@@ -37,11 +37,11 @@ type ManifestGeneratedResource struct {
 
 type Manifest struct {
 	Header `yaml:",inline"`
-	Body   struct {
+	Data   struct {
 		DisplayName        string                       `yaml:"displayName,omitempty"`
 		Description        string                       `yaml:"description,omitempty"`
 		GeneratedResources []*ManifestGeneratedResource `yaml:"generatedResources"`
-	} `yaml:"body"`
+	} `yaml:"data"`
 }
 
 func (a *Manifest) GetHeader() *Header {
@@ -59,7 +59,7 @@ func (m *Manifest) GetMessage() proto.Message {
 
 func (m *Manifest) generatedResources() []*rpc.GeneratedResource {
 	v := make([]*rpc.GeneratedResource, 0)
-	for _, g := range m.Body.GeneratedResources {
+	for _, g := range m.Data.GeneratedResources {
 		v = append(v, &rpc.GeneratedResource{
 			Pattern:      g.Pattern,
 			Filter:       g.Filter,
@@ -111,8 +111,8 @@ func newManifest(message *rpc.Artifact) (*Manifest, error) {
 					Filter:  d.Filter,
 				})
 		}
-		manifest.Body.GeneratedResources = append(
-			manifest.Body.GeneratedResources,
+		manifest.Data.GeneratedResources = append(
+			manifest.Data.GeneratedResources,
 			&ManifestGeneratedResource{
 				Pattern:      g.Pattern,
 				Filter:       g.Filter,

@@ -24,11 +24,11 @@ const TaxonomyListMimeType = "application/octet-stream;type=google.cloud.apigeer
 
 type TaxonomyList struct {
 	Header `yaml:",inline"`
-	Body   struct {
+	Data   struct {
 		DisplayName string     `yaml:"displayName,omitempty"`
 		Description string     `yaml:"description,omitempty"`
 		Taxonomies  []Taxonomy `yaml:"taxonomies"`
-	} `yaml:"body"`
+	} `yaml:"data"`
 }
 
 func (a *TaxonomyList) GetHeader() *Header {
@@ -64,7 +64,7 @@ func (l *TaxonomyList) GetMessage() proto.Message {
 
 func (l *TaxonomyList) taxonomies() []*rpc.TaxonomyList_Taxonomy {
 	taxonomies := make([]*rpc.TaxonomyList_Taxonomy, 0)
-	for _, t := range l.Body.Taxonomies {
+	for _, t := range l.Data.Taxonomies {
 		taxonomies = append(taxonomies,
 			&rpc.TaxonomyList_Taxonomy{
 				Id:              t.ID,
@@ -114,8 +114,8 @@ func newTaxonomyList(message *rpc.Artifact) (*TaxonomyList, error) {
 			},
 		},
 	}
-	taxonomyList.Body.DisplayName = value.DisplayName
-	taxonomyList.Body.Description = value.Description
+	taxonomyList.Data.DisplayName = value.DisplayName
+	taxonomyList.Data.Description = value.Description
 
 	for _, t := range value.Taxonomies {
 		elements := make([]TaxonomyElement, 0)
@@ -138,7 +138,7 @@ func newTaxonomyList(message *rpc.Artifact) (*TaxonomyList, error) {
 			DisplayOrder:    int(t.DisplayOrder),
 			Elements:        elements,
 		}
-		taxonomyList.Body.Taxonomies = append(taxonomyList.Body.Taxonomies, taxonomy)
+		taxonomyList.Data.Taxonomies = append(taxonomyList.Data.Taxonomies, taxonomy)
 	}
 	return taxonomyList, nil
 }

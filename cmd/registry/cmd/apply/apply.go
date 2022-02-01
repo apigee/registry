@@ -149,8 +149,8 @@ func applyApiPatch(
 	req := &rpc.UpdateApiRequest{
 		Api: &rpc.Api{
 			Name:        name,
-			DisplayName: api.Body.DisplayName,
-			Description: api.Body.Description,
+			DisplayName: api.Data.DisplayName,
+			Description: api.Data.Description,
 		},
 		AllowMissing: true,
 	}
@@ -158,13 +158,13 @@ func applyApiPatch(
 	if err != nil {
 		return err
 	}
-	for _, versionPatch := range api.Body.APIVersions {
+	for _, versionPatch := range api.Data.APIVersions {
 		err := applyApiVersionPatch(ctx, client, versionPatch, name)
 		if err != nil {
 			return err
 		}
 	}
-	for _, deploymentPatch := range api.Body.APIDeployments {
+	for _, deploymentPatch := range api.Data.APIDeployments {
 		err := applyApiDeploymentPatch(ctx, client, deploymentPatch, name)
 		if err != nil {
 			return err
@@ -182,8 +182,8 @@ func applyApiVersionPatch(
 	req := &rpc.UpdateApiVersionRequest{
 		ApiVersion: &rpc.ApiVersion{
 			Name:        name,
-			DisplayName: version.Body.DisplayName,
-			Description: version.Body.Description,
+			DisplayName: version.Data.DisplayName,
+			Description: version.Data.Description,
 		},
 		AllowMissing: true,
 	}
@@ -191,7 +191,7 @@ func applyApiVersionPatch(
 	if err != nil {
 		return err
 	}
-	for _, specPatch := range version.Body.APISpecs {
+	for _, specPatch := range version.Data.APISpecs {
 		err := applyApiSpecPatch(ctx, client, specPatch, name)
 		if err != nil {
 			return err
@@ -209,8 +209,8 @@ func applyApiSpecPatch(
 	req := &rpc.UpdateApiSpecRequest{
 		ApiSpec: &rpc.ApiSpec{
 			Name:        name,
-			Filename:    spec.Body.FileName,
-			Description: spec.Body.Description,
+			Filename:    spec.Data.FileName,
+			Description: spec.Data.Description,
 		},
 		AllowMissing: true,
 	}
@@ -227,8 +227,8 @@ func applyApiDeploymentPatch(
 	req := &rpc.UpdateApiDeploymentRequest{
 		ApiDeployment: &rpc.ApiDeployment{
 			Name:        name,
-			DisplayName: deployment.Body.DisplayName,
-			Description: deployment.Body.Description,
+			DisplayName: deployment.Data.DisplayName,
+			Description: deployment.Data.Description,
 		},
 		AllowMissing: true,
 	}

@@ -28,7 +28,7 @@ import (
 
 type API struct {
 	Header `yaml:",inline"`
-	Body   struct {
+	Data   struct {
 		DisplayName           string           `yaml:"displayName,omitempty"`
 		Description           string           `yaml:"description,omitempty"`
 		Availability          string           `yaml:"availability,omitempty"`
@@ -37,37 +37,37 @@ type API struct {
 		APIVersions           []*APIVersion    `yaml:"versions,omitempty"`
 		APIDeployments        []*APIDeployment `yaml:"deployments,omitempty"`
 		Artifacts             []*Artifact      `yaml:"artifacts,omitempty"`
-	} `yaml:"body"`
+	} `yaml:"data"`
 }
 
 type APIVersion struct {
 	Header `yaml:",inline"`
-	Body   struct {
+	Data   struct {
 		DisplayName string      `yaml:"displayName,omitempty"`
 		Description string      `yaml:"description,omitempty"`
 		APISpecs    []*APISpec  `yaml:"specs,omitempty"`
 		Artifacts   []*Artifact `yaml:"artifacts,omitempty"`
-	} `yaml:"body"`
+	} `yaml:"data"`
 }
 
 type APISpec struct {
 	Header `yaml:",inline"`
-	Body   struct {
+	Data   struct {
 		FileName    string      `yaml:"fileName,omitempty"`
 		Description string      `yaml:"description,omitempty"`
 		MimeType    string      `yaml:"mimeType,omitempty"`
 		SourceURI   string      `yaml:"sourceURI,omitempty"`
 		Artifacts   []*Artifact `yaml:"artifacts,omitempty"`
-	} `yaml:"body"`
+	} `yaml:"data"`
 }
 
 type APIDeployment struct {
 	Header `yaml:",inline"`
-	Body   struct {
+	Data   struct {
 		DisplayName string      `yaml:"displayName,omitempty"`
 		Description string      `yaml:"description,omitempty"`
 		Artifacts   []*Artifact `yaml:"artifacts,omitempty"`
-	} `yaml:"body"`
+	} `yaml:"data"`
 }
 
 func newAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api) (*API, error) {
@@ -86,18 +86,18 @@ func newAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api)
 			},
 		},
 	}
-	api.Body.DisplayName = message.DisplayName
-	api.Body.Description = message.Description
-	api.Body.Availability = message.Availability
-	api.Body.RecommendedVersion = message.RecommendedVersion
-	api.Body.RecommendedDeployment = message.RecommendedDeployment
+	api.Data.DisplayName = message.DisplayName
+	api.Data.Description = message.Description
+	api.Data.Availability = message.Availability
+	api.Data.RecommendedVersion = message.RecommendedVersion
+	api.Data.RecommendedDeployment = message.RecommendedDeployment
 	core.ListVersions(ctx, client, apiName.Version(""), "", func(message *rpc.ApiVersion) {
 		version, err2 := newAPIVersion(ctx, client, message)
 		// unset these because they can be inferred
 		version.APIVersion = ""
 		version.Kind = ""
 		if err2 == nil {
-			api.Body.APIVersions = append(api.Body.APIVersions, version)
+			api.Data.APIVersions = append(api.Data.APIVersions, version)
 		} else {
 			err = err2
 		}
@@ -108,7 +108,7 @@ func newAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api)
 		deployment.APIVersion = ""
 		deployment.Kind = ""
 		if err2 == nil {
-			api.Body.APIDeployments = append(api.Body.APIDeployments, deployment)
+			api.Data.APIDeployments = append(api.Data.APIDeployments, deployment)
 		} else {
 			err = err2
 		}
@@ -132,15 +132,15 @@ func newAPIVersion(ctx context.Context, client *gapic.RegistryClient, message *r
 			},
 		},
 	}
-	version.Body.DisplayName = message.DisplayName
-	version.Body.Description = message.Description
+	version.Data.DisplayName = message.DisplayName
+	version.Data.Description = message.Description
 	core.ListSpecs(ctx, client, versionName.Spec(""), "", func(message *rpc.ApiSpec) {
 		spec, err2 := newAPISpec(ctx, client, message)
 		// unset these because they can be inferred
 		spec.APIVersion = ""
 		spec.Kind = ""
 		if err2 == nil {
-			version.Body.APISpecs = append(version.Body.APISpecs, spec)
+			version.Data.APISpecs = append(version.Data.APISpecs, spec)
 		} else {
 			err = err2
 		}
@@ -164,10 +164,10 @@ func newAPISpec(ctx context.Context, client *gapic.RegistryClient, message *rpc.
 			},
 		},
 	}
-	spec.Body.FileName = message.Filename
-	spec.Body.Description = message.Description
-	spec.Body.MimeType = message.MimeType
-	spec.Body.SourceURI = message.SourceUri
+	spec.Data.FileName = message.Filename
+	spec.Data.Description = message.Description
+	spec.Data.MimeType = message.MimeType
+	spec.Data.SourceURI = message.SourceUri
 	return spec, nil
 }
 
@@ -187,8 +187,8 @@ func newAPIDeployment(ctx context.Context, client *gapic.RegistryClient, message
 			},
 		},
 	}
-	deployment.Body.DisplayName = message.DisplayName
-	deployment.Body.Description = message.Description
+	deployment.Data.DisplayName = message.DisplayName
+	deployment.Data.Description = message.Description
 	return deployment, nil
 }
 

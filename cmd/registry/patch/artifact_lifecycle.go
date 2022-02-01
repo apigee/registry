@@ -32,11 +32,11 @@ type LifecycleStage struct {
 
 type Lifecycle struct {
 	Header `yaml:",inline"`
-	Body   struct {
+	Data   struct {
 		DisplayName string            `yaml:"displayName,omitempty"`
 		Description string            `yaml:"description,omitempty"`
 		Stages      []*LifecycleStage `yaml:"stages"`
-	} `yaml:"body"`
+	} `yaml:"data"`
 }
 
 func (a *Lifecycle) GetHeader() *Header {
@@ -54,7 +54,7 @@ func (l *Lifecycle) GetMessage() proto.Message {
 
 func (l *Lifecycle) stages() []*rpc.Lifecycle_Stage {
 	stages := make([]*rpc.Lifecycle_Stage, 0)
-	for _, s := range l.Body.Stages {
+	for _, s := range l.Data.Stages {
 		stages = append(stages, &rpc.Lifecycle_Stage{
 			Id:           s.ID,
 			DisplayName:  s.DisplayName,
@@ -86,11 +86,11 @@ func newLifecycle(message *rpc.Artifact) (*Lifecycle, error) {
 			},
 		},
 	}
-	lifecycle.Body.DisplayName = value.DisplayName
-	lifecycle.Body.Description = value.Description
+	lifecycle.Data.DisplayName = value.DisplayName
+	lifecycle.Data.Description = value.Description
 	for _, s := range value.Stages {
-		lifecycle.Body.Stages = append(
-			lifecycle.Body.Stages,
+		lifecycle.Data.Stages = append(
+			lifecycle.Data.Stages,
 			&LifecycleStage{
 				ID:           s.Id,
 				DisplayName:  s.DisplayName,
