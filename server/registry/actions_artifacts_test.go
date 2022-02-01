@@ -480,6 +480,69 @@ func TestGetArtifactResponseCodes(t *testing.T) {
 	}
 }
 
+func TestGetArtifactContents(t *testing.T) {
+	tests := []struct {
+		desc string
+		seed *rpc.Artifact
+		req  *rpc.GetArtifactContentsRequest
+		want codes.Code
+	}{
+		{
+			desc: "resource not found",
+			seed: &rpc.Artifact{Name: "projects/my-project/locations/global/artifacts/my-artifact"},
+			req: &rpc.GetArtifactContentsRequest{
+				Name: "projects/my-project/locations/global/artifacts/doesnt-exist",
+			},
+			want: codes.NotFound,
+		},
+		{
+			desc: "case insensitive identifiers",
+			seed: &rpc.Artifact{Name: "projects/my-project/locations/global/artifacts/my-artifact"},
+			req: &rpc.GetArtifactContentsRequest{
+				Name: "projects/My-Project/locations/global/artifacts/My-Artifact",
+			},
+			want: codes.OK,
+		},
+		{
+			desc: "inappropriate contents suffix in resource name",
+			seed: &rpc.Artifact{
+				Name:     "projects/my-project/locations/global/artifacts/my-artifact",
+				Contents: []byte{},
+			},
+			req: &rpc.GetArtifactContentsRequest{
+				Name: "projects/my-project/locations/global/artifacts/my-artifact/contents",
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "gzip mimetype with empty contents",
+			seed: &rpc.Artifact{
+				Name:     "projects/my-project/locations/global/artifacts/my-artifact",
+				MimeType: "application/x.openapi+gzip;version=3.0.0",
+				Contents: []byte{},
+			},
+			req: &rpc.GetArtifactContentsRequest{
+				Name: "projects/my-project/locations/global/artifacts/my-artifact",
+			},
+			want: codes.FailedPrecondition,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			ctx := context.Background()
+			server := defaultTestServer(t)
+			if err := seeder.SeedArtifacts(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
+
+			if _, err := server.GetArtifactContents(ctx, test.req); status.Code(err) != test.want {
+				t.Errorf("GetArtifactContents(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
+			}
+		})
+	}
+}
+
 func TestListArtifacts(t *testing.T) {
 	tests := []struct {
 		desc      string

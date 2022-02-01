@@ -17,6 +17,7 @@ package registry
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/internal/storage"
@@ -184,6 +185,14 @@ func (s *RegistryServer) GetArtifactContents(ctx context.Context, req *rpc.GetAr
 	blob, err := db.GetArtifactContents(ctx, name)
 	if err != nil {
 		return nil, err
+	}
+
+	if strings.Contains(artifact.MimeType, "+gzip") {
+		artifact.MimeType = strings.ReplaceAll(artifact.MimeType, "+gzip", "")
+		blob.Contents, err = models.GUnzippedBytes(blob.Contents)
+		if err != nil {
+			return nil, status.Errorf(codes.FailedPrecondition, "failed to unzip contents with gzip MIME type: %s", err)
+		}
 	}
 
 	return &httpbody.HttpBody{
