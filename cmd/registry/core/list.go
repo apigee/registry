@@ -16,7 +16,6 @@ package core
 
 import (
 	"context"
-	"log"
 
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/rpc"
@@ -199,7 +198,6 @@ func ListArtifacts(ctx context.Context,
 	}
 	filter := filterFlag
 	artifactID := name.ArtifactID()
-	log.Printf("ARTIFACT ID %s", artifactID)
 	if artifactID != "" && artifactID != "-" {
 		if filter != "" {
 			filter += " && "

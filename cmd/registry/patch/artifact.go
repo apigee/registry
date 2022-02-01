@@ -28,6 +28,7 @@ import (
 type Artifact interface {
 	GetHeader() *Header
 	GetMessage() proto.Message
+	GetMimeType() string
 }
 
 // ExportArtifact writes an artifact as a YAML file.

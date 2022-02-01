@@ -6,11 +6,17 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+const UnknownArtifactMimeType = "application/octet-stream"
+
 type UnknownArtifact struct {
 	Header `yaml:",inline"`
 	Data   struct {
 		MimeType string `yaml:"mimeType,omitempty"`
 	} `yaml:"data"`
+}
+
+func (a *UnknownArtifact) GetMimeType() string {
+	return UnknownArtifactMimeType
 }
 
 func (a *UnknownArtifact) GetHeader() *Header {

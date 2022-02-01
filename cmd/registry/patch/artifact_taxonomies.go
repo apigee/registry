@@ -31,6 +31,10 @@ type TaxonomyList struct {
 	} `yaml:"data"`
 }
 
+func (a *TaxonomyList) GetMimeType() string {
+	return TaxonomyListMimeType
+}
+
 func (a *TaxonomyList) GetHeader() *Header {
 	return &a.Header
 }
@@ -56,9 +60,11 @@ type TaxonomyElement struct {
 // Message returns the rpc representation of the taxonomies.
 func (l *TaxonomyList) GetMessage() proto.Message {
 	return &rpc.TaxonomyList{
-		Id:         l.Header.Metadata.Name,
-		Kind:       TaxonomyListMimeType,
-		Taxonomies: l.taxonomies(),
+		Id:          l.Header.Metadata.Name,
+		Kind:        TaxonomyListMimeType,
+		DisplayName: l.Data.DisplayName,
+		Description: l.Data.Description,
+		Taxonomies:  l.taxonomies(),
 	}
 }
 

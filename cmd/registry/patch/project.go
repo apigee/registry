@@ -27,12 +27,12 @@ import (
 )
 
 // ExportProject writes a project as a YAML file.
-func ExportProject(ctx context.Context, client *gapic.RegistryClient, adminClient *gapic.AdminClient, name string) {
+func ExportProject(ctx context.Context, client *gapic.RegistryClient, name string) {
 	projectName, err := names.ParseProject(name)
 	if err != nil {
 		log.FromContext(ctx).WithError(err).Fatal("Failed to parse project name")
 	}
-	apisDir := "apis"
+	apisDir := fmt.Sprintf("%s/apis", projectName.ProjectID)
 	err = os.MkdirAll(apisDir, 0777)
 	if err != nil {
 		log.FromContext(ctx).WithError(err).Fatal("Failed to create output directory")
@@ -48,7 +48,7 @@ func ExportProject(ctx context.Context, client *gapic.RegistryClient, adminClien
 			log.FromContext(ctx).WithError(err).Fatal("Failed to write output YAML")
 		}
 	})
-	artifactsDir := "artifacts"
+	artifactsDir := fmt.Sprintf("%s/artifacts", projectName.ProjectID)
 	err = os.MkdirAll(artifactsDir, 0777)
 	if err != nil {
 		log.FromContext(ctx).WithError(err).Fatal("Failed to create output directory")

@@ -44,6 +44,10 @@ type Manifest struct {
 	} `yaml:"data"`
 }
 
+func (a *Manifest) GetMimeType() string {
+	return ManifestMimeType
+}
+
 func (a *Manifest) GetHeader() *Header {
 	return &a.Header
 }
@@ -53,6 +57,8 @@ func (m *Manifest) GetMessage() proto.Message {
 	return &rpc.Manifest{
 		Id:                 m.Header.Metadata.Name,
 		Kind:               ManifestMimeType,
+		DisplayName:        m.Data.DisplayName,
+		Description:        m.Data.Description,
 		GeneratedResources: m.generatedResources(),
 	}
 }

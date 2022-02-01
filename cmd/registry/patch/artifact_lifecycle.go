@@ -39,6 +39,10 @@ type Lifecycle struct {
 	} `yaml:"data"`
 }
 
+func (a *Lifecycle) GetMimeType() string {
+	return LifecycleMimeType
+}
+
 func (a *Lifecycle) GetHeader() *Header {
 	return &a.Header
 }
@@ -46,9 +50,11 @@ func (a *Lifecycle) GetHeader() *Header {
 // Message returns the rpc representation of the lifecycle.
 func (l *Lifecycle) GetMessage() proto.Message {
 	return &rpc.Lifecycle{
-		Id:     l.Header.Metadata.Name,
-		Kind:   LifecycleMimeType,
-		Stages: l.stages(),
+		Id:          l.Header.Metadata.Name,
+		Kind:        LifecycleMimeType,
+		DisplayName: l.Data.DisplayName,
+		Description: l.Data.Description,
+		Stages:      l.stages(),
 	}
 }
 

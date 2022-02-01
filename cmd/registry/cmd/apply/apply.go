@@ -90,7 +90,7 @@ func applyFile(
 	if err != nil {
 		log.FromContext(ctx).WithError(err).Fatal("Failed to parse YAML")
 	}
-	if header.APIVersion != "registry/v1" {
+	if header.APIVersion != "apigeeregistry/v1" {
 		log.FromContext(ctx).Fatalf("Unsupported API version: %s", header.APIVersion)
 	}
 	if header.Kind == "API" {
@@ -247,7 +247,7 @@ func applyArtifactPatch(
 	}
 	artifact := &rpc.Artifact{
 		Name:     fmt.Sprintf("%s/artifacts/%s", parent, content.GetHeader().Metadata.Name),
-		MimeType: patch.ManifestMimeType,
+		MimeType: content.GetMimeType(),
 		Contents: bytes,
 	}
 	req := &rpc.CreateArtifactRequest{
