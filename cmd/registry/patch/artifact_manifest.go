@@ -44,8 +44,12 @@ type Manifest struct {
 	} `yaml:"body"`
 }
 
+func (a *Manifest) GetHeader() *Header {
+	return &a.Header
+}
+
 // Message returns the rpc representation of the manifest.
-func (m *Manifest) Message() *rpc.Manifest {
+func (m *Manifest) GetMessage() proto.Message {
 	return &rpc.Manifest{
 		Id:                 m.Header.Metadata.Name,
 		Kind:               ManifestMimeType,
@@ -60,14 +64,14 @@ func (m *Manifest) generatedResources() []*rpc.GeneratedResource {
 			Pattern:      g.Pattern,
 			Filter:       g.Filter,
 			Receipt:      g.Receipt,
-			Dependencies: m.dependencies(g),
+			Dependencies: g.dependencies(),
 			Action:       g.Action,
 		})
 	}
 	return v
 }
 
-func (m *Manifest) dependencies(g *ManifestGeneratedResource) []*rpc.Dependency {
+func (g *ManifestGeneratedResource) dependencies() []*rpc.Dependency {
 	v := make([]*rpc.Dependency, 0)
 	for _, d := range g.Dependencies {
 		v = append(v, &rpc.Dependency{
@@ -98,7 +102,6 @@ func newManifest(message *rpc.Artifact) (*Manifest, error) {
 			},
 		},
 	}
-
 	for _, g := range value.GeneratedResources {
 		dependencies := make([]*ManifestDependency, 0)
 		for _, d := range g.Dependencies {

@@ -39,8 +39,12 @@ type Lifecycle struct {
 	} `yaml:"body"`
 }
 
+func (a *Lifecycle) GetHeader() *Header {
+	return &a.Header
+}
+
 // Message returns the rpc representation of the lifecycle.
-func (l *Lifecycle) Message() *rpc.Lifecycle {
+func (l *Lifecycle) GetMessage() proto.Message {
 	return &rpc.Lifecycle{
 		Id:     l.Header.Metadata.Name,
 		Kind:   LifecycleMimeType,
@@ -96,5 +100,4 @@ func newLifecycle(message *rpc.Artifact) (*Lifecycle, error) {
 			})
 	}
 	return lifecycle, nil
-
 }

@@ -21,32 +21,13 @@ import (
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/server/registry/names"
+	"google.golang.org/protobuf/proto"
 	"gopkg.in/yaml.v2"
 )
 
-type Artifact struct {
-	Header `yaml:",inline"`
-	Body   struct {
-		MimeType string `yaml:"mimeType,omitempty"`
-	} `yaml:"body"`
-}
-
-func newArtifact(message *rpc.Artifact) (*Artifact, error) {
-	artifactName, err := names.ParseArtifact(message.Name)
-	if err != nil {
-		return nil, err
-	}
-	artifact := &Artifact{
-		Header: Header{
-			APIVersion: REGISTRY_V1,
-			Kind:       "Artifact",
-			Metadata: Metadata{
-				Name: artifactName.ArtifactID(),
-			},
-		},
-	}
-	return artifact, nil
+type Artifact interface {
+	GetHeader() *Header
+	GetMessage() proto.Message
 }
 
 // ExportArtifact writes an artifact as a YAML file.
@@ -70,46 +51,24 @@ func exportArtifact(ctx context.Context, client *gapic.RegistryClient, message *
 		}
 		message.Contents = body.Data
 	}
+	var artifact Artifact
+	var err error
 	switch message.GetMimeType() {
 	case LifecycleMimeType:
-		content, err := newLifecycle(message)
-		if err != nil {
-			return nil, nil, err
-		}
-		b, err := yaml.Marshal(content)
-		if err != nil {
-			return nil, nil, err
-		}
-		return b, &content.Header, nil
+		artifact, err = newLifecycle(message)
 	case ManifestMimeType:
-		content, err := newManifest(message)
-		if err != nil {
-			return nil, nil, err
-		}
-		b, err := yaml.Marshal(content)
-		if err != nil {
-			return nil, nil, err
-		}
-		return b, &content.Header, nil
+		artifact, err = newManifest(message)
 	case TaxonomyListMimeType:
-		content, err := newTaxonomyList(message)
-		if err != nil {
-			return nil, nil, err
-		}
-		b, err := yaml.Marshal(content)
-		if err != nil {
-			return nil, nil, err
-		}
-		return b, &content.Header, nil
+		artifact, err = newTaxonomyList(message)
 	default:
-		artifact, err := newArtifact(message)
-		if err != nil {
-			return nil, nil, err
-		}
-		b, err := yaml.Marshal(artifact)
-		if err != nil {
-			return nil, nil, err
-		}
-		return b, &artifact.Header, nil
+		artifact, err = newUnknownArtifact(message)
 	}
+	if err != nil {
+		return nil, nil, err
+	}
+	b, err := yaml.Marshal(artifact)
+	if err != nil {
+		return nil, nil, err
+	}
+	return b, artifact.GetHeader(), nil
 }
