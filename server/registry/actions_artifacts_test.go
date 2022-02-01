@@ -514,6 +514,18 @@ func TestGetArtifactContents(t *testing.T) {
 			},
 			want: codes.InvalidArgument,
 		},
+		{
+			desc: "gzip mimetype with empty contents",
+			seed: &rpc.Artifact{
+				Name:     "projects/my-project/locations/global/artifacts/my-artifact",
+				MimeType: "application/x.openapi+gzip;version=3.0.0",
+				Contents: []byte{},
+			},
+			req: &rpc.GetArtifactContentsRequest{
+				Name: "projects/my-project/locations/global/artifacts/my-artifact",
+			},
+			want: codes.FailedPrecondition,
+		},
 	}
 
 	for _, test := range tests {
