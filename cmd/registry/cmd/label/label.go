@@ -68,7 +68,7 @@ func Command(ctx context.Context) *cobra.Command {
 
 			err = matchAndHandleLabelCmd(ctx, client, taskQueue, args[0], filter, labeling)
 			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to match or handle command")
+				log.FromContext(ctx).WithError(err).Fatal("Failed to handle command")
 			}
 		},
 	}
