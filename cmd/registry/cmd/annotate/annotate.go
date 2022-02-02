@@ -93,6 +93,8 @@ func matchAndHandleAnnotateCmd(
 		return annotateVersions(ctx, client, version, filter, labeling, taskQueue)
 	} else if spec, err := names.ParseSpecCollection(name); err == nil {
 		return annotateSpecs(ctx, client, spec, filter, labeling, taskQueue)
+	} else if deployment, err := names.ParseDeploymentCollection(name); err == nil {
+		return annotateDeployments(ctx, client, deployment, filter, labeling, taskQueue)
 	}
 
 	// Then try to match resource names.
@@ -102,6 +104,8 @@ func matchAndHandleAnnotateCmd(
 		return annotateVersions(ctx, client, version, filter, labeling, taskQueue)
 	} else if spec, err := names.ParseSpec(name); err == nil {
 		return annotateSpecs(ctx, client, spec, filter, labeling, taskQueue)
+	} else if deployment, err := names.ParseDeployment(name); err == nil {
+		return annotateDeployments(ctx, client, deployment, filter, labeling, taskQueue)
 	} else {
 		return fmt.Errorf("unsupported resource name %s", name)
 	}
@@ -150,6 +154,21 @@ func annotateSpecs(
 			client:   client,
 			spec:     spec,
 			labeling: labeling,
+		}
+	})
+}
+func annotateDeployments(
+	ctx context.Context,
+	client *gapic.RegistryClient,
+	deployment names.Deployment,
+	filterFlag string,
+	labeling *core.Labeling,
+	taskQueue chan<- core.Task) error {
+	return core.ListDeployments(ctx, client, deployment, filterFlag, func(deployment *rpc.ApiDeployment) {
+		taskQueue <- &annotateDeploymentTask{
+			client:     client,
+			deployment: deployment,
+			labeling:   labeling,
 		}
 	})
 }
@@ -228,6 +247,33 @@ func (task *annotateSpecTask) Run(ctx context.Context) error {
 	_, err = task.client.UpdateApiSpec(ctx,
 		&rpc.UpdateApiSpecRequest{
 			ApiSpec: task.spec,
+			UpdateMask: &field_mask.FieldMask{
+				Paths: []string{"annotations"},
+			},
+		})
+	return err
+}
+
+type annotateDeploymentTask struct {
+	client     connection.Client
+	deployment *rpc.ApiDeployment
+	labeling   *core.Labeling
+}
+
+func (task *annotateDeploymentTask) String() string {
+	return "annotate " + task.deployment.Name
+}
+
+func (task *annotateDeploymentTask) Run(ctx context.Context) error {
+	var err error
+	task.deployment.Annotations, err = task.labeling.Apply(task.deployment.Annotations)
+	if err != nil {
+		log.FromContext(ctx).WithError(err).Errorf("Invalid annotation")
+		return nil
+	}
+	_, err = task.client.UpdateApiDeployment(ctx,
+		&rpc.UpdateApiDeploymentRequest{
+			ApiDeployment: task.deployment,
 			UpdateMask: &field_mask.FieldMask{
 				Paths: []string{"annotations"},
 			},
