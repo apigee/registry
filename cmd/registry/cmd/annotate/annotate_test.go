@@ -27,14 +27,16 @@ import (
 
 func TestAnnotate(t *testing.T) {
 	const (
-		projectID   = "annotate-test"
-		projectName = "projects/" + projectID
-		apiID       = "sample"
-		apiName     = projectName + "/locations/global/apis/" + apiID
-		versionID   = "1.0.0"
-		versionName = apiName + "/versions/" + versionID
-		specID      = "openapi.json"
-		specName    = versionName + "/specs/" + specID
+		projectID      = "annotate-test"
+		projectName    = "projects/" + projectID
+		apiID          = "sample"
+		apiName        = projectName + "/locations/global/apis/" + apiID
+		versionID      = "1.0.0"
+		versionName    = apiName + "/versions/" + versionID
+		specID         = "openapi.json"
+		specName       = versionName + "/specs/" + specID
+		deploymentId   = "deployment1"
+		deploymentName = apiName + "/deployments/" + deploymentId
 	)
 
 	// Create a registry client.
@@ -97,6 +99,15 @@ func TestAnnotate(t *testing.T) {
 	})
 	if err != nil {
 		t.Fatalf("Error creating spec %s", err)
+	}
+	// Create a sample deployment.
+	_, err = registryClient.CreateApiDeployment(ctx, &rpc.CreateApiDeploymentRequest{
+		Parent:          apiName,
+		ApiDeploymentId: deploymentId,
+		ApiDeployment:   &rpc.ApiDeployment{},
+	})
+	if err != nil {
+		t.Fatalf("Error creating deployment %s", err)
 	}
 
 	testCases := []struct {
@@ -168,7 +179,24 @@ func TestAnnotate(t *testing.T) {
 			}
 		}
 	}
-
+	// test annotations for Deployments.
+	for _, tc := range testCases {
+		cmd := Command(ctx)
+		cmd.SetArgs(append([]string{deploymentName}, tc.args...))
+		if err := cmd.Execute(); err != nil {
+			t.Fatalf("Execute() with args %+v returned error: %s", tc.args, err)
+		}
+		deployment, err := registryClient.GetApiDeployment(ctx, &rpc.GetApiDeploymentRequest{
+			Name: deploymentName,
+		})
+		if err != nil {
+			t.Errorf("Error getting deployment %s", err)
+		} else {
+			if diff := cmp.Diff(deployment.Annotations, tc.expected); diff != "" {
+				t.Errorf("Annotations were incorrectly set %+v", deployment.Annotations)
+			}
+		}
+	}
 	// Delete the test project.
 	{
 		req := &rpc.DeleteProjectRequest{
