@@ -38,6 +38,7 @@ func ExportProject(ctx context.Context, client *gapic.RegistryClient, name strin
 		log.FromContext(ctx).WithError(err).Fatal("Failed to create output directory")
 	}
 	core.ListAPIs(ctx, client, projectName.Api(""), "", func(message *rpc.Api) {
+		log.FromContext(ctx).Infof("Exporting %s", message.Name)
 		bytes, header, err := exportAPI(ctx, client, message)
 		if err != nil {
 			log.FromContext(ctx).WithError(err).Fatal("Failed to export artifact")
@@ -54,6 +55,7 @@ func ExportProject(ctx context.Context, client *gapic.RegistryClient, name strin
 		log.FromContext(ctx).WithError(err).Fatal("Failed to create output directory")
 	}
 	core.ListArtifacts(ctx, client, projectName.Artifact(""), "", false, func(message *rpc.Artifact) {
+		log.FromContext(ctx).Infof("Exporting %s", message.Name)
 		bytes, header, err := exportArtifact(ctx, client, message)
 		if err != nil {
 			log.FromContext(ctx).WithError(err).Fatal("Failed to export artifact")

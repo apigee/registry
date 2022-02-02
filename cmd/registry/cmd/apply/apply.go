@@ -18,9 +18,12 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
+	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/cmd/registry/patch"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/log"
@@ -211,8 +214,30 @@ func applyApiSpecPatch(
 			Name:        name,
 			Filename:    spec.Data.FileName,
 			Description: spec.Data.Description,
+			SourceUri:   spec.Data.SourceURI,
 		},
 		AllowMissing: true,
+	}
+	// TODO: add support for multi-file specs
+	// TODO: add support for local file import (maybe?)
+	// TODO: verify mime type
+	if spec.Data.SourceURI != "" {
+		resp, err := http.Get(spec.Data.SourceURI)
+		if err != nil {
+			return err
+		}
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return err
+		}
+		if strings.HasSuffix(spec.Data.MimeType, "+gzip") {
+			body, err = core.GZippedBytes(body)
+			if err != nil {
+				return err
+			}
+		}
+		req.ApiSpec.MimeType = spec.Data.MimeType
+		req.ApiSpec.Contents = body
 	}
 	_, err := client.UpdateApiSpec(ctx, req)
 	return err
