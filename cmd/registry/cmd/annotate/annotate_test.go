@@ -33,7 +33,7 @@ func TestAnnotate(t *testing.T) {
 		apiName        = projectName + "/locations/global/apis/" + apiID
 		versionID      = "1.0.0"
 		versionName    = apiName + "/versions/" + versionID
-		specID      	 = "openapi.json"
+		specID         = "openapi.json"
 		specName       = versionName + "/specs/" + specID
 		deploymentId   = "deployment1"
 		deploymentName = apiName + "/deployments/" + deploymentId
@@ -102,9 +102,9 @@ func TestAnnotate(t *testing.T) {
 	}
 	// Create a sample deployment.
 	_, err = registryClient.CreateApiDeployment(ctx, &rpc.CreateApiDeploymentRequest{
-		Parent:    apiName,
+		Parent:          apiName,
 		ApiDeploymentId: deploymentId,
-		ApiDeployment: &rpc.ApiDeployment{},
+		ApiDeployment:   &rpc.ApiDeployment{},
 	})
 	if err != nil {
 		t.Fatalf("Error creating deployment %s", err)

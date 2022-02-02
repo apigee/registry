@@ -158,12 +158,12 @@ func annotateSpecs(
 	})
 }
 func annotateDeployments(
-		ctx context.Context,
-		client *gapic.RegistryClient,
-		deployment names.Deployment,
-		filterFlag string,
-		labeling *core.Labeling,
-		taskQueue chan<- core.Task) error {
+	ctx context.Context,
+	client *gapic.RegistryClient,
+	deployment names.Deployment,
+	filterFlag string,
+	labeling *core.Labeling,
+	taskQueue chan<- core.Task) error {
 	return core.ListDeployments(ctx, client, deployment, filterFlag, func(deployment *rpc.ApiDeployment) {
 		taskQueue <- &annotateDeploymentTask{
 			client:     client,
@@ -254,11 +254,10 @@ func (task *annotateSpecTask) Run(ctx context.Context) error {
 	return err
 }
 
-
 type annotateDeploymentTask struct {
-	client   			 connection.Client
-	deployment     *rpc.ApiDeployment
-	labeling 			 *core.Labeling
+	client     connection.Client
+	deployment *rpc.ApiDeployment
+	labeling   *core.Labeling
 }
 
 func (task *annotateDeploymentTask) String() string {
