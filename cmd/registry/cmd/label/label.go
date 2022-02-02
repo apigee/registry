@@ -93,6 +93,8 @@ func matchAndHandleLabelCmd(
 		return labelVersions(ctx, client, version, filter, labeling, taskQueue)
 	} else if spec, err := names.ParseSpecCollection(name); err == nil {
 		return labelSpecs(ctx, client, spec, filter, labeling, taskQueue)
+	} else if deployment, err := names.ParseDeploymentCollection(name); err == nil {
+		return labelDeployments(ctx, client, deployment, filter, labeling, taskQueue)
 	}
 
 	// Then try to match resource names.
@@ -102,6 +104,8 @@ func matchAndHandleLabelCmd(
 		return labelVersions(ctx, client, version, filter, labeling, taskQueue)
 	} else if spec, err := names.ParseSpec(name); err == nil {
 		return labelSpecs(ctx, client, spec, filter, labeling, taskQueue)
+	} else if deployment, err := names.ParseDeployment(name); err == nil {
+		return labelDeployments(ctx, client, deployment, filter, labeling, taskQueue)
 	} else {
 		return fmt.Errorf("unsupported resource name %s", name)
 	}
@@ -150,6 +154,22 @@ func labelSpecs(
 			client:   client,
 			spec:     spec,
 			labeling: labeling,
+		}
+	})
+}
+
+func labelDeployments(
+	ctx context.Context,
+	client *gapic.RegistryClient,
+	deployment names.Deployment,
+	filterFlag string,
+	labeling *core.Labeling,
+	taskQueue chan<- core.Task) error {
+	return core.ListDeployments(ctx, client, deployment, filterFlag, func(deployment *rpc.ApiDeployment) {
+		taskQueue <- &labelDeploymentTask{
+			client:     client,
+			deployment: deployment,
+			labeling:   labeling,
 		}
 	})
 }
@@ -228,6 +248,33 @@ func (task *labelSpecTask) Run(ctx context.Context) error {
 	_, err = task.client.UpdateApiSpec(ctx,
 		&rpc.UpdateApiSpecRequest{
 			ApiSpec: task.spec,
+			UpdateMask: &field_mask.FieldMask{
+				Paths: []string{"labels"},
+			},
+		})
+	return err
+}
+
+type labelDeploymentTask struct {
+	client     connection.Client
+	deployment *rpc.ApiDeployment
+	labeling   *core.Labeling
+}
+
+func (task *labelDeploymentTask) String() string {
+	return "label " + task.deployment.Name
+}
+
+func (task *labelDeploymentTask) Run(ctx context.Context) error {
+	var err error
+	task.deployment.Labels, err = task.labeling.Apply(task.deployment.Labels)
+	if err != nil {
+		log.FromContext(ctx).WithError(err).Errorf("Invalid labelling")
+		return nil
+	}
+	_, err = task.client.UpdateApiDeployment(ctx,
+		&rpc.UpdateApiDeploymentRequest{
+			ApiDeployment: task.deployment,
 			UpdateMask: &field_mask.FieldMask{
 				Paths: []string{"labels"},
 			},

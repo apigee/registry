@@ -109,6 +109,7 @@ func TestAnnotate(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error creating deployment %s", err)
 	}
+
 	testCases := []struct {
 		comment  string
 		args     []string
