@@ -25,31 +25,33 @@ import (
 
 // Api is the storage-side representation of an API.
 type Api struct {
-	Key                string    `gorm:"primaryKey"`
-	ProjectID          string    // Uniquely identifies a project.
-	ApiID              string    // Uniquely identifies an api within a project.
-	DisplayName        string    // A human-friendly name.
-	Description        string    // A detailed description.
-	CreateTime         time.Time // Creation time.
-	UpdateTime         time.Time // Time of last change.
-	Availability       string    // Availability of the API.
-	RecommendedVersion string    // Recommended API version.
-	Labels             []byte    // Serialized labels.
-	Annotations        []byte    // Serialized annotations.
+	Key                   string    `gorm:"primaryKey"`
+	ProjectID             string    // Uniquely identifies a project.
+	ApiID                 string    // Uniquely identifies an api within a project.
+	DisplayName           string    // A human-friendly name.
+	Description           string    // A detailed description.
+	CreateTime            time.Time // Creation time.
+	UpdateTime            time.Time // Time of last change.
+	Availability          string    // Availability of the API.
+	RecommendedVersion    string    // Recommended API version.
+	RecommendedDeployment string    // Recommended API deployment.
+	Labels                []byte    // Serialized labels.
+	Annotations           []byte    // Serialized annotations.
 }
 
 // NewApi initializes a new resource.
 func NewApi(name names.Api, body *rpc.Api) (api *Api, err error) {
 	now := time.Now().Round(time.Microsecond)
 	api = &Api{
-		ProjectID:          name.ProjectID,
-		ApiID:              name.ApiID,
-		Description:        body.GetDescription(),
-		DisplayName:        body.GetDisplayName(),
-		Availability:       body.GetAvailability(),
-		RecommendedVersion: body.GetRecommendedVersion(),
-		CreateTime:         now,
-		UpdateTime:         now,
+		ProjectID:             name.ProjectID,
+		ApiID:                 name.ApiID,
+		Description:           body.GetDescription(),
+		DisplayName:           body.GetDisplayName(),
+		Availability:          body.GetAvailability(),
+		RecommendedVersion:    body.GetRecommendedVersion(),
+		RecommendedDeployment: body.GetRecommendedDeployment(),
+		CreateTime:            now,
+		UpdateTime:            now,
 	}
 
 	api.Labels, err = bytesForMap(body.GetLabels())
@@ -76,13 +78,14 @@ func (api *Api) Name() string {
 // Message returns a message representing an api.
 func (api *Api) Message() (message *rpc.Api, err error) {
 	message = &rpc.Api{
-		Name:               api.Name(),
-		DisplayName:        api.DisplayName,
-		Description:        api.Description,
-		Availability:       api.Availability,
-		RecommendedVersion: api.RecommendedVersion,
-		CreateTime:         timestamppb.New(api.CreateTime),
-		UpdateTime:         timestamppb.New(api.UpdateTime),
+		Name:                  api.Name(),
+		DisplayName:           api.DisplayName,
+		Description:           api.Description,
+		Availability:          api.Availability,
+		RecommendedVersion:    api.RecommendedVersion,
+		RecommendedDeployment: api.RecommendedDeployment,
+		CreateTime:            timestamppb.New(api.CreateTime),
+		UpdateTime:            timestamppb.New(api.UpdateTime),
 	}
 
 	message.Labels, err = api.LabelsMap()
@@ -111,6 +114,8 @@ func (api *Api) Update(message *rpc.Api, mask *fieldmaskpb.FieldMask) error {
 			api.Availability = message.GetAvailability()
 		case "recommended_version":
 			api.RecommendedVersion = message.GetRecommendedVersion()
+		case "recommended_deployment":
+			api.RecommendedDeployment = message.GetRecommendedDeployment()
 		case "labels":
 			var err error
 			if api.Labels, err = bytesForMap(message.GetLabels()); err != nil {

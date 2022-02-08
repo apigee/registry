@@ -126,6 +126,7 @@ var apiFields = []filtering.Field{
 	{Name: "update_time", Type: filtering.Timestamp},
 	{Name: "availability", Type: filtering.String},
 	{Name: "recommended_version", Type: filtering.String},
+	{Name: "recommended_deployment", Type: filtering.String},
 	{Name: "labels", Type: filtering.StringMap},
 }
 
