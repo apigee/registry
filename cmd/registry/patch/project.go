@@ -37,7 +37,7 @@ func ExportProject(ctx context.Context, client *gapic.RegistryClient, name strin
 	if err != nil {
 		log.FromContext(ctx).WithError(err).Fatal("Failed to create output directory")
 	}
-	core.ListAPIs(ctx, client, projectName.Api(""), "", func(message *rpc.Api) {
+	err = core.ListAPIs(ctx, client, projectName.Api(""), "", func(message *rpc.Api) {
 		log.FromContext(ctx).Infof("Exporting %s", message.Name)
 		bytes, header, err := exportAPI(ctx, client, message)
 		if err != nil {
@@ -49,12 +49,15 @@ func ExportProject(ctx context.Context, client *gapic.RegistryClient, name strin
 			log.FromContext(ctx).WithError(err).Fatal("Failed to write output YAML")
 		}
 	})
+	if err != nil {
+		log.FromContext(ctx).WithError(err).Fatalf("Failed to list APIs: %s", err)
+	}
 	artifactsDir := fmt.Sprintf("%s/artifacts", projectName.ProjectID)
 	err = os.MkdirAll(artifactsDir, 0777)
 	if err != nil {
 		log.FromContext(ctx).WithError(err).Fatal("Failed to create output directory")
 	}
-	core.ListArtifacts(ctx, client, projectName.Artifact(""), "", false, func(message *rpc.Artifact) {
+	err = core.ListArtifacts(ctx, client, projectName.Artifact(""), "", false, func(message *rpc.Artifact) {
 		log.FromContext(ctx).Infof("Exporting %s", message.Name)
 		bytes, header, err := exportArtifact(ctx, client, message)
 		if err != nil {
@@ -66,4 +69,7 @@ func ExportProject(ctx context.Context, client *gapic.RegistryClient, name strin
 			log.FromContext(ctx).WithError(err).Fatal("Failed to write output YAML")
 		}
 	})
+	if err != nil {
+		log.FromContext(ctx).WithError(err).Fatalf("Failed to list artifacts: %s", err)
+	}
 }

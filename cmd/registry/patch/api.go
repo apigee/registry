@@ -91,7 +91,7 @@ func newAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api)
 	api.Data.Availability = message.Availability
 	api.Data.RecommendedVersion = message.RecommendedVersion
 	api.Data.RecommendedDeployment = message.RecommendedDeployment
-	core.ListVersions(ctx, client, apiName.Version(""), "", func(message *rpc.ApiVersion) {
+	err = core.ListVersions(ctx, client, apiName.Version(""), "", func(message *rpc.ApiVersion) {
 		version, err2 := newAPIVersion(ctx, client, message)
 		// unset these because they can be inferred
 		version.APIVersion = ""
@@ -102,7 +102,10 @@ func newAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api)
 			err = err2
 		}
 	})
-	core.ListDeployments(ctx, client, apiName.Deployment(""), "", func(message *rpc.ApiDeployment) {
+	if err != nil {
+		return nil, err
+	}
+	err = core.ListDeployments(ctx, client, apiName.Deployment(""), "", func(message *rpc.ApiDeployment) {
 		deployment, err2 := newAPIDeployment(ctx, client, message)
 		// unset these because they can be inferred
 		deployment.APIVersion = ""
@@ -134,7 +137,7 @@ func newAPIVersion(ctx context.Context, client *gapic.RegistryClient, message *r
 	}
 	version.Data.DisplayName = message.DisplayName
 	version.Data.Description = message.Description
-	core.ListSpecs(ctx, client, versionName.Spec(""), "", func(message *rpc.ApiSpec) {
+	err = core.ListSpecs(ctx, client, versionName.Spec(""), "", func(message *rpc.ApiSpec) {
 		spec, err2 := newAPISpec(ctx, client, message)
 		// unset these because they can be inferred
 		spec.APIVersion = ""
