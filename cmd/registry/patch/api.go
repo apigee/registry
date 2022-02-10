@@ -45,6 +45,7 @@ type APIVersion struct {
 	Data   struct {
 		DisplayName string      `yaml:"displayName,omitempty"`
 		Description string      `yaml:"description,omitempty"`
+		State       string      `yaml:"state, omitempty"`
 		APISpecs    []*APISpec  `yaml:"specs,omitempty"`
 		Artifacts   []*Artifact `yaml:"artifacts,omitempty"`
 	} `yaml:"data"`
@@ -137,6 +138,7 @@ func newAPIVersion(ctx context.Context, client *gapic.RegistryClient, message *r
 	}
 	version.Data.DisplayName = message.DisplayName
 	version.Data.Description = message.Description
+	version.Data.State = message.State
 	err = core.ListSpecs(ctx, client, versionName.Spec(""), "", func(message *rpc.ApiSpec) {
 		spec, err2 := newAPISpec(ctx, client, message)
 		// unset these because they can be inferred

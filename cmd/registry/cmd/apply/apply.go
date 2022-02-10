@@ -154,6 +154,8 @@ func applyApiPatch(
 			Name:        name,
 			DisplayName: api.Data.DisplayName,
 			Description: api.Data.Description,
+			Labels:      api.Metadata.Labels,
+			Annotations: api.Metadata.Annotations,
 		},
 		AllowMissing: true,
 	}
@@ -187,6 +189,8 @@ func applyApiVersionPatch(
 			Name:        name,
 			DisplayName: version.Data.DisplayName,
 			Description: version.Data.Description,
+			Labels:      version.Metadata.Labels,
+			Annotations: version.Metadata.Annotations,
 		},
 		AllowMissing: true,
 	}
@@ -215,6 +219,8 @@ func applyApiSpecPatch(
 			Filename:    spec.Data.FileName,
 			Description: spec.Data.Description,
 			SourceUri:   spec.Data.SourceURI,
+			Labels:      spec.Metadata.Labels,
+			Annotations: spec.Metadata.Annotations,
 		},
 		AllowMissing: true,
 	}
@@ -230,7 +236,7 @@ func applyApiSpecPatch(
 		if err != nil {
 			return err
 		}
-		if strings.HasSuffix(spec.Data.MimeType, "+gzip") {
+		if strings.Contains(spec.Data.MimeType, "+gzip") {
 			body, err = core.GZippedBytes(body)
 			if err != nil {
 				return err
@@ -254,6 +260,8 @@ func applyApiDeploymentPatch(
 			Name:        name,
 			DisplayName: deployment.Data.DisplayName,
 			Description: deployment.Data.Description,
+			Labels:      deployment.Metadata.Labels,
+			Annotations: deployment.Metadata.Annotations,
 		},
 		AllowMissing: true,
 	}
