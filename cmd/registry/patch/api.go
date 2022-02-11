@@ -19,8 +19,8 @@ import (
 	"fmt"
 
 	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/gapic"
-	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"gopkg.in/yaml.v2"
@@ -37,37 +37,6 @@ type API struct {
 		APIVersions           []*APIVersion    `yaml:"versions,omitempty"`
 		APIDeployments        []*APIDeployment `yaml:"deployments,omitempty"`
 		Artifacts             []*Artifact      `yaml:"artifacts,omitempty"`
-	} `yaml:"data"`
-}
-
-type APIVersion struct {
-	Header `yaml:",inline"`
-	Data   struct {
-		DisplayName string      `yaml:"displayName,omitempty"`
-		Description string      `yaml:"description,omitempty"`
-		State       string      `yaml:"state, omitempty"`
-		APISpecs    []*APISpec  `yaml:"specs,omitempty"`
-		Artifacts   []*Artifact `yaml:"artifacts,omitempty"`
-	} `yaml:"data"`
-}
-
-type APISpec struct {
-	Header `yaml:",inline"`
-	Data   struct {
-		FileName    string      `yaml:"fileName,omitempty"`
-		Description string      `yaml:"description,omitempty"`
-		MimeType    string      `yaml:"mimeType,omitempty"`
-		SourceURI   string      `yaml:"sourceURI,omitempty"`
-		Artifacts   []*Artifact `yaml:"artifacts,omitempty"`
-	} `yaml:"data"`
-}
-
-type APIDeployment struct {
-	Header `yaml:",inline"`
-	Data   struct {
-		DisplayName string      `yaml:"displayName,omitempty"`
-		Description string      `yaml:"description,omitempty"`
-		Artifacts   []*Artifact `yaml:"artifacts,omitempty"`
 	} `yaml:"data"`
 }
 
@@ -120,94 +89,8 @@ func newAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api)
 	return api, err
 }
 
-func newAPIVersion(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiVersion) (*APIVersion, error) {
-	versionName, err := names.ParseVersion(message.Name)
-	if err != nil {
-		return nil, err
-	}
-	version := &APIVersion{
-		Header: Header{
-			APIVersion: REGISTRY_V1,
-			Kind:       "APIVersion",
-			Metadata: Metadata{
-				Name:        versionName.VersionID,
-				Labels:      message.Labels,
-				Annotations: message.Annotations,
-			},
-		},
-	}
-	version.Data.DisplayName = message.DisplayName
-	version.Data.Description = message.Description
-	version.Data.State = message.State
-	err = core.ListSpecs(ctx, client, versionName.Spec(""), "", func(message *rpc.ApiSpec) {
-		spec, err2 := newAPISpec(ctx, client, message)
-		// unset these because they can be inferred
-		spec.APIVersion = ""
-		spec.Kind = ""
-		if err2 == nil {
-			version.Data.APISpecs = append(version.Data.APISpecs, spec)
-		} else {
-			err = err2
-		}
-	})
-	return version, err
-}
-
-func newAPISpec(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiSpec) (*APISpec, error) {
-	specName, err := names.ParseSpec(message.Name)
-	if err != nil {
-		return nil, err
-	}
-	spec := &APISpec{
-		Header: Header{
-			APIVersion: REGISTRY_V1,
-			Kind:       "APISpec",
-			Metadata: Metadata{
-				Name:        specName.SpecID,
-				Labels:      message.Labels,
-				Annotations: message.Annotations,
-			},
-		},
-	}
-	spec.Data.FileName = message.Filename
-	spec.Data.Description = message.Description
-	spec.Data.MimeType = message.MimeType
-	spec.Data.SourceURI = message.SourceUri
-	return spec, nil
-}
-
-func newAPIDeployment(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiDeployment) (*APIDeployment, error) {
-	deploymentName, err := names.ParseDeployment(message.Name)
-	if err != nil {
-		return nil, err
-	}
-	deployment := &APIDeployment{
-		Header: Header{
-			APIVersion: REGISTRY_V1,
-			Kind:       "APIDeployment",
-			Metadata: Metadata{
-				Name:        deploymentName.DeploymentID,
-				Labels:      message.Labels,
-				Annotations: message.Annotations,
-			},
-		},
-	}
-	deployment.Data.DisplayName = message.DisplayName
-	deployment.Data.Description = message.Description
-	return deployment, nil
-}
-
-// ExportAPI writes an API as a YAML file.
-func ExportAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api) {
-	bytes, _, err := exportAPI(ctx, client, message)
-	if err != nil {
-		log.FromContext(ctx).WithError(err).Fatal("Failed to export artifact")
-	} else {
-		fmt.Println(string(bytes))
-	}
-}
-
-func exportAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api) ([]byte, *Header, error) {
+// ExportAPI allows an API to be individually exported as a YAML file.
+func ExportAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api) ([]byte, *Header, error) {
 	api, err := newAPI(ctx, client, message)
 	if err != nil {
 		return nil, nil, err
@@ -217,4 +100,42 @@ func exportAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.A
 		return nil, nil, err
 	}
 	return b, &api.Header, nil
+}
+
+func applyApiPatch(
+	ctx context.Context,
+	client connection.Client,
+	api *API,
+	parent string) error {
+	name := fmt.Sprintf("%s/apis/%s", parent, api.Metadata.Name)
+	req := &rpc.UpdateApiRequest{
+		Api: &rpc.Api{
+			Name:                  name,
+			DisplayName:           api.Data.DisplayName,
+			Description:           api.Data.Description,
+			Availability:          api.Data.Availability,
+			RecommendedVersion:    api.Data.RecommendedVersion,
+			RecommendedDeployment: api.Data.RecommendedDeployment,
+			Labels:                api.Metadata.Labels,
+			Annotations:           api.Metadata.Annotations,
+		},
+		AllowMissing: true,
+	}
+	_, err := client.UpdateApi(ctx, req)
+	if err != nil {
+		return err
+	}
+	for _, versionPatch := range api.Data.APIVersions {
+		err := applyApiVersionPatch(ctx, client, versionPatch, name)
+		if err != nil {
+			return err
+		}
+	}
+	for _, deploymentPatch := range api.Data.APIDeployments {
+		err := applyApiDeploymentPatch(ctx, client, deploymentPatch, name)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

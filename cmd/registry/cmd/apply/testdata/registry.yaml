@@ -7,39 +7,37 @@ metadata:
   annotations:
     apihub-score: "99"
 data:
-  displayName: "Apigee Registry API"
-  description: "The Registry API allows teams to track and manage machine-readable descriptions of APIs."
+  displayName: Apigee Registry API
+  description: The Registry API allows teams to track and manage machine-readable
+    descriptions of APIs.
   availability: Preview
   recommendedVersion: v1
   recommendedDeployment: prod
   versions:
-  - kind: Version
-    metadata:
+  - metadata:
       name: v1
       labels:
         apihub-team: Apigee
       annotations:
-        release-date: "2022-01-01"
+        release-date: "2021-12-15"
     data:
-      displayName: "v1"
-      description: "New in 2022"
+      displayName: v1
+      description: New in 2022
       state: Staging
       specs:
-      - kind: Spec
-        metadata:
-          name: "openapi.yaml"
+      - metadata:
+          name: openapi.yaml
           labels:
-            openapi-verified: true
+            openapi-verified: "true"
           annotations:
             linters: spectral,gnostic
         data:
-          filename: "openapi.yaml"
-          mimeType: application/x.openapi+gzip;version=3
+          filename: openapi.yaml
           description: OpenAPI description of the Registry API
+          mimeType: application/x.openapi+gzip;version=3
           sourceURI: https://raw.githubusercontent.com/apigee/registry/main/openapi.yaml
   deployments:
-  - kind: ApiDeployment
-    metadata:
+  - metadata:
       name: prod
       labels:
         platform: Google
@@ -47,9 +45,9 @@ data:
         region: us-central1
     data:
       displayName: Production
-      description: The hosted deployment of the Registry API 
+      description: The hosted deployment of the Registry API
       apiSpecRevision: versions/v1/specs/openapi.yaml@latest
       endpointURI: https://apigeeregistry.googleapis.com
-      externalChannelURI: https://apigee.github.io/registry/ 
+      externalChannelURI: https://apigee.github.io/registry/
       intendedAudience: Public
-      accessGuidance: "See https://github.com/apigee/registry for tools and usage information."
+      accessGuidance: See https://github.com/apigee/registry for tools and usage information.

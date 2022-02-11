@@ -18,8 +18,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/gapic"
-	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
 	"google.golang.org/protobuf/proto"
 	"gopkg.in/yaml.v2"
@@ -31,17 +31,8 @@ type Artifact interface {
 	GetMimeType() string
 }
 
-// ExportArtifact writes an artifact as a YAML file.
-func ExportArtifact(ctx context.Context, client *gapic.RegistryClient, message *rpc.Artifact) {
-	bytes, _, err := exportArtifact(ctx, client, message)
-	if err != nil {
-		log.FromContext(ctx).WithError(err).Fatal("Failed to export artifact")
-	} else {
-		fmt.Println(string(bytes))
-	}
-}
-
-func exportArtifact(ctx context.Context, client *gapic.RegistryClient, message *rpc.Artifact) ([]byte, *Header, error) {
+// ExportArtifact allows an artifact to be individually exported as a YAML file.
+func ExportArtifact(ctx context.Context, client *gapic.RegistryClient, message *rpc.Artifact) ([]byte, *Header, error) {
 	if message.Contents == nil {
 		req := &rpc.GetArtifactContentsRequest{
 			Name: message.Name,
@@ -72,4 +63,33 @@ func exportArtifact(ctx context.Context, client *gapic.RegistryClient, message *
 		return nil, nil, err
 	}
 	return b, artifact.GetHeader(), nil
+}
+
+func applyArtifactPatch(
+	ctx context.Context,
+	client connection.Client,
+	content Artifact,
+	parent string) error {
+	bytes, err := proto.Marshal(content.GetMessage())
+	if err != nil {
+		return err
+	}
+	artifact := &rpc.Artifact{
+		Name:     fmt.Sprintf("%s/artifacts/%s", parent, content.GetHeader().Metadata.Name),
+		MimeType: content.GetMimeType(),
+		Contents: bytes,
+	}
+	req := &rpc.CreateArtifactRequest{
+		Parent:     parent,
+		ArtifactId: content.GetHeader().Metadata.Name,
+		Artifact:   artifact,
+	}
+	_, err = client.CreateArtifact(ctx, req)
+	if err != nil {
+		req := &rpc.ReplaceArtifactRequest{
+			Artifact: artifact,
+		}
+		_, err = client.ReplaceArtifact(ctx, req)
+	}
+	return err
 }

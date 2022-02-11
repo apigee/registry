@@ -15,6 +15,8 @@
 package export
 
 import (
+	"fmt"
+
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/cmd/registry/patch"
 	"github.com/apigee/registry/connection"
@@ -48,14 +50,24 @@ func yamlCommand(ctx context.Context) *cobra.Command {
 				}
 			} else if api, err := names.ParseApi(name); err == nil {
 				_, err = core.GetAPI(ctx, client, api, func(message *rpc.Api) {
-					patch.ExportAPI(ctx, client, message)
+					bytes, _, err := patch.ExportAPI(ctx, client, message)
+					if err != nil {
+						log.FromContext(ctx).WithError(err).Fatal("Failed to export artifact")
+					} else {
+						fmt.Println(string(bytes))
+					}
 				})
 				if err != nil {
 					log.FromContext(ctx).WithError(err).Fatal("Failed to export API YAML")
 				}
 			} else if artifact, err := names.ParseArtifact(name); err == nil {
 				_, err = core.GetArtifact(ctx, client, artifact, false, func(message *rpc.Artifact) {
-					patch.ExportArtifact(ctx, client, message)
+					bytes, _, err := patch.ExportArtifact(ctx, client, message)
+					if err != nil {
+						log.FromContext(ctx).WithError(err).Fatal("Failed to export artifact")
+					} else {
+						fmt.Println(string(bytes))
+					}
 				})
 				if err != nil {
 					log.FromContext(ctx).WithError(err).Fatal("Failed to export artifact YAML")
