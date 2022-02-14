@@ -35,6 +35,7 @@ func TestApply(t *testing.T) {
 	const (
 		projectID   = "apply-test"
 		projectName = "projects/" + projectID
+		parent      = projectName + "/locations/global"
 	)
 
 	// Create a registry client.
@@ -68,34 +69,62 @@ func TestApply(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error creating project %s", err)
 	}
-	cmd := Command(ctx)
-	cmd.SetArgs([]string{"-f", "testdata/registry.yaml", "--parent", "projects/apply-test/locations/global"})
-	if err := cmd.Execute(); err != nil {
-		t.Fatalf("Execute() with args %+v returned error: %s", cmd.Args, err)
-	}
-
-	expected, err := ioutil.ReadFile("testdata/registry.yaml")
-	if err != nil {
-		t.Fatalf("failed to read testdata/registry.yaml")
-	}
-
-	client, err := connection.NewClient(ctx)
-
-	if api, err := names.ParseApi("projects/apply-test/locations/global/apis/registry"); err == nil {
-		_, err = core.GetAPI(ctx, client, api, func(message *rpc.Api) {
-			actual, _, err := patch.ExportAPI(ctx, client, message)
-			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to export artifact")
-			} else {
-				if diff := cmp.Diff(actual, expected); diff != "" {
-					t.Errorf("API mismatch %+v", api)
-					fmt.Printf("expected %d %s", len(expected), string(expected))
-					fmt.Printf("actual %d %s", len(actual), string(actual))
+	// Test API creation and export.
+	{
+		apiname := "registry"
+		filename := fmt.Sprintf("testdata/%s.yaml", apiname)
+		cmd := Command(ctx)
+		cmd.SetArgs([]string{"-f", filename, "--parent", parent})
+		if err := cmd.Execute(); err != nil {
+			t.Fatalf("Execute() with args %+v returned error: %s", cmd.Args, err)
+		}
+		expected, err := ioutil.ReadFile(filename)
+		if err != nil {
+			t.Fatalf("failed to read %s", filename)
+		}
+		client, err := connection.NewClient(ctx)
+		if api, err := names.ParseApi(fmt.Sprintf("%s/apis/%s", parent, "registry")); err == nil {
+			_, err = core.GetAPI(ctx, client, api, func(message *rpc.Api) {
+				actual, _, err := patch.ExportAPI(ctx, client, message)
+				if err != nil {
+					log.FromContext(ctx).WithError(err).Fatal("Failed to export api")
+				} else {
+					if diff := cmp.Diff(actual, expected); diff != "" {
+						t.Errorf("API mismatch %+v", api)
+					}
 				}
-			}
-		})
+			})
+		}
 	}
-
+	// Test artifact creation and export.
+	artifacts := []string{"lifecycle", "manifest", "taxonomies"}
+	for _, a := range artifacts {
+		filename := fmt.Sprintf("testdata/%s.yaml", a)
+		cmd := Command(ctx)
+		cmd.SetArgs([]string{"-f", filename, "--parent", parent})
+		if err := cmd.Execute(); err != nil {
+			t.Fatalf("Execute() with args %+v returned error: %s", cmd.Args, err)
+		}
+		expected, err := ioutil.ReadFile(filename)
+		if err != nil {
+			t.Fatalf("failed to read %s", filename)
+		}
+		client, err := connection.NewClient(ctx)
+		if artifact, err := names.ParseArtifact(fmt.Sprintf("%s/artifacts/%s", parent, a)); err == nil {
+			_, err = core.GetArtifact(ctx, client, artifact, true, func(message *rpc.Artifact) {
+				actual, _, err := patch.ExportArtifact(ctx, client, message)
+				if err != nil {
+					log.FromContext(ctx).WithError(err).Fatal("Failed to export artifact")
+				} else {
+					if diff := cmp.Diff(actual, expected); diff != "" {
+						t.Errorf("Artifact mismatch %+v", artifact)
+						fmt.Printf("expected %d %s", len(expected), string(expected))
+						fmt.Printf("actual %d %s", len(actual), string(actual))
+					}
+				}
+			})
+		}
+	}
 	// Delete the test project.
 	{
 		req := &rpc.DeleteProjectRequest{

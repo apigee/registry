@@ -1,0 +1,24 @@
+apiVersion: apigeeregistry/v1
+kind: Manifest
+metadata:
+  name: manifest
+data:
+  generatedResources:
+  - pattern: apis/-/versions/-/specs/-/artifacts/lint-spectral
+    dependencies:
+    - pattern: $resource.spec
+      filter: mime_type.contains('openapi')
+    action: registry compute lint $resource.spec --linter spectral
+  - pattern: apis/-/versions/-/specs/-/artifacts/lintstats-spectral
+    dependencies:
+    - pattern: $resource.spec/artifacts/lint-spectral
+    - pattern: $resource.spec/artifacts/complexity
+    action: registry compute lintstats $resource.spec --linter spectral
+  - pattern: apis/-/versions/-/specs/-/artifacts/vocabulary
+    dependencies:
+    - pattern: $resource.spec
+    action: registry compute vocabulary $resource.spec
+  - pattern: apis/-/versions/-/specs/-/artifacts/complexity
+    dependencies:
+    - pattern: $resource.spec
+    action: registry compute complexity $resource.spec

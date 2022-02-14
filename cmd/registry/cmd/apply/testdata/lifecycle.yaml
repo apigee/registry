@@ -1,0 +1,36 @@
+apiVersion: apigeeregistry/v1
+kind: Lifecycle
+metadata:
+  name: lifecycle
+data:
+  displayName: Lifecycle
+  description: A series of stages that an API typically moves through in its lifetime
+  stages:
+  - id: concept
+    displayName: Concept
+    description: Description of the business case and user needs for why an API should
+      exist
+  - id: design
+    displayName: Design
+    description: Definition of the interface details and proposal of the API contract
+    displayOrder: 1
+  - id: develop
+    displayName: Develop
+    description: Implementation of the service and its API
+    displayOrder: 2
+  - id: preview
+    displayName: Preview
+    description: Staging of implementations in the pre-production phase
+    displayOrder: 3
+  - id: production
+    displayName: Production
+    description: API available for production workloads
+    displayOrder: 4
+  - id: deprecated
+    displayName: Deprecated
+    description: API not recommended for new consumers
+    displayOrder: 5
+  - id: retired
+    displayName: Retired
+    description: API no longer available for use
+    displayOrder: 6
