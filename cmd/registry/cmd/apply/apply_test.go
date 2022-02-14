@@ -80,9 +80,12 @@ func TestApply(t *testing.T) {
 		}
 		expected, err := ioutil.ReadFile(filename)
 		if err != nil {
-			t.Fatalf("failed to read %s", filename)
+			t.Fatalf("failed to read %s: %s", filename, err)
 		}
 		client, err := connection.NewClient(ctx)
+		if err != nil {
+			t.Fatalf("failed to connect to database: %s", err)
+		}
 		if api, err := names.ParseApi(fmt.Sprintf("%s/apis/%s", parent, "registry")); err == nil {
 			_, err = core.GetAPI(ctx, client, api, func(message *rpc.Api) {
 				actual, _, err := patch.ExportAPI(ctx, client, message)
@@ -94,6 +97,9 @@ func TestApply(t *testing.T) {
 					}
 				}
 			})
+			if err != nil {
+				t.Fatalf("failed to get api: %s", err)
+			}
 		}
 	}
 	// Test artifact creation and export.
@@ -110,6 +116,9 @@ func TestApply(t *testing.T) {
 			t.Fatalf("failed to read %s", filename)
 		}
 		client, err := connection.NewClient(ctx)
+		if err != nil {
+			t.Fatalf("failed to connect to database: %s", err)
+		}
 		if artifact, err := names.ParseArtifact(fmt.Sprintf("%s/artifacts/%s", parent, a)); err == nil {
 			_, err = core.GetArtifact(ctx, client, artifact, true, func(message *rpc.Artifact) {
 				actual, _, err := patch.ExportArtifact(ctx, client, message)
@@ -123,6 +132,9 @@ func TestApply(t *testing.T) {
 					}
 				}
 			})
+			if err != nil {
+				t.Fatalf("failed to get artifact: %s", err)
+			}
 		}
 	}
 	// Delete the test project.
