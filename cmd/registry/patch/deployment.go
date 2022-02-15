@@ -2,7 +2,7 @@ package patch
 
 import (
 	"context"
-	"fmt"
+	"strings"
 
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/gapic"
@@ -24,6 +24,22 @@ type APIDeployment struct {
 	} `yaml:"data"`
 }
 
+// relativeSpecRevisionName returns the versionid+specid if the spec is within the specified API
+func relativeSpecRevisionName(apiName names.Api, spec string) (string, error) {
+	if strings.HasPrefix(spec, apiName.String()) {
+		return strings.TrimPrefix(spec, apiName.String()+"/versions/"), nil
+	}
+	return spec, nil
+}
+
+// optionalSpecRevisionName returns a spec revision name if the subpath is not empty
+func optionalSpecRevisionName(deploymentName names.Deployment, subpath string) string {
+	if subpath == "" {
+		return ""
+	}
+	return deploymentName.Api().String() + "/versions/" + subpath
+}
+
 func newAPIDeployment(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiDeployment) (*APIDeployment, error) {
 	deploymentName, err := names.ParseDeployment(message.Name)
 	if err != nil {
@@ -42,7 +58,10 @@ func newAPIDeployment(ctx context.Context, client *gapic.RegistryClient, message
 	}
 	deployment.Data.DisplayName = message.DisplayName
 	deployment.Data.Description = message.Description
-	deployment.Data.APISpecRevision = message.ApiSpecRevision
+	deployment.Data.APISpecRevision, err = relativeSpecRevisionName(deploymentName.Api(), message.ApiSpecRevision)
+	if err != nil {
+		return nil, err
+	}
 	deployment.Data.EndpointURI = message.EndpointUri
 	deployment.Data.ExternalChannelURI = message.ExternalChannelUri
 	deployment.Data.IntendedAudience = message.IntendedAudience
@@ -55,13 +74,16 @@ func applyApiDeploymentPatch(
 	client connection.Client,
 	deployment *APIDeployment,
 	parent string) error {
-	name := fmt.Sprintf("%s/deployments/%s", parent, deployment.Metadata.Name)
+	apiName, err := names.ParseApi(parent)
+	if err != nil {
+		return err
+	}
+	deploymentName := apiName.Deployment(deployment.Metadata.Name)
 	req := &rpc.UpdateApiDeploymentRequest{
 		ApiDeployment: &rpc.ApiDeployment{
-			Name:               name,
+			Name:               deploymentName.String(),
 			DisplayName:        deployment.Data.DisplayName,
 			Description:        deployment.Data.Description,
-			ApiSpecRevision:    deployment.Data.APISpecRevision,
 			EndpointUri:        deployment.Data.EndpointURI,
 			ExternalChannelUri: deployment.Data.ExternalChannelURI,
 			IntendedAudience:   deployment.Data.IntendedAudience,
@@ -71,6 +93,10 @@ func applyApiDeploymentPatch(
 		},
 		AllowMissing: true,
 	}
-	_, err := client.UpdateApiDeployment(ctx, req)
+	req.ApiDeployment.ApiSpecRevision = optionalSpecRevisionName(deploymentName, deployment.Data.APISpecRevision)
+	if err != nil {
+		return err
+	}
+	_, err = client.UpdateApiDeployment(ctx, req)
 	return err
 }

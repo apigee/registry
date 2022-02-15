@@ -94,6 +94,8 @@ func TestApply(t *testing.T) {
 				} else {
 					if diff := cmp.Diff(actual, expected); diff != "" {
 						t.Errorf("API mismatch %+v", api)
+						fmt.Printf("expected %d %s", len(expected), string(expected))
+						fmt.Printf("actual %d %s", len(actual), string(actual))
 					}
 				}
 			})

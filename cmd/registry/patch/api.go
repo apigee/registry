@@ -16,7 +16,6 @@ package patch
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
@@ -59,8 +58,14 @@ func newAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api)
 	api.Data.DisplayName = message.DisplayName
 	api.Data.Description = message.Description
 	api.Data.Availability = message.Availability
-	api.Data.RecommendedVersion = message.RecommendedVersion
-	api.Data.RecommendedDeployment = message.RecommendedDeployment
+	api.Data.RecommendedVersion, err = relativeVersionName(apiName, message.RecommendedVersion)
+	if err != nil {
+		return nil, err
+	}
+	api.Data.RecommendedDeployment, err = relativeDeploymentName(apiName, message.RecommendedDeployment)
+	if err != nil {
+		return nil, err
+	}
 	err = core.ListVersions(ctx, client, apiName.Version(""), "", func(message *rpc.ApiVersion) {
 		version, err2 := newAPIVersion(ctx, client, message)
 		// unset these because they can be inferred
@@ -102,37 +107,81 @@ func ExportAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.A
 	return b, &api.Header, nil
 }
 
+// relativeVersionName returns the version id if the version is within the specified API
+func relativeVersionName(apiName names.Api, version string) (string, error) {
+	versionName, err := names.ParseVersion(version)
+	if err != nil {
+		return "", err
+	}
+	if versionName.Api().String() == apiName.String() {
+		return versionName.VersionID, nil
+	}
+	return version, nil
+}
+
+// relativeDeploymentName returns the deployment id if the deployment is within the specified API
+func relativeDeploymentName(apiName names.Api, deployment string) (string, error) {
+	deploymentName, err := names.ParseDeployment(deployment)
+	if err != nil {
+		return "", err
+	}
+	if deploymentName.Api().String() == apiName.String() {
+		return deploymentName.DeploymentID, nil
+	}
+	return deployment, nil
+}
+
+// optionalVersionName returns a version name if the id is not empty
+func optionalVersionName(apiName names.Api, versionID string) string {
+	if versionID == "" {
+		return ""
+	}
+	return apiName.Version(versionID).String()
+}
+
+// optionalDeploymentName returns a deployment name if the id is not empty
+func optionalDeploymentName(apiName names.Api, deploymentID string) string {
+	if deploymentID == "" {
+		return ""
+	}
+	return apiName.Deployment(deploymentID).String()
+}
+
 func applyApiPatch(
 	ctx context.Context,
 	client connection.Client,
 	api *API,
 	parent string) error {
-	name := fmt.Sprintf("%s/apis/%s", parent, api.Metadata.Name)
+	projectName, err := names.ParseProjectWithLocation(parent)
+	if err != nil {
+		return err
+	}
+	apiName := projectName.Api(api.Metadata.Name)
 	req := &rpc.UpdateApiRequest{
 		Api: &rpc.Api{
-			Name:                  name,
+			Name:                  apiName.String(),
 			DisplayName:           api.Data.DisplayName,
 			Description:           api.Data.Description,
 			Availability:          api.Data.Availability,
-			RecommendedVersion:    api.Data.RecommendedVersion,
-			RecommendedDeployment: api.Data.RecommendedDeployment,
+			RecommendedVersion:    optionalVersionName(apiName, api.Data.RecommendedVersion),
+			RecommendedDeployment: optionalDeploymentName(apiName, api.Data.RecommendedDeployment),
 			Labels:                api.Metadata.Labels,
 			Annotations:           api.Metadata.Annotations,
 		},
 		AllowMissing: true,
 	}
-	_, err := client.UpdateApi(ctx, req)
+	_, err = client.UpdateApi(ctx, req)
 	if err != nil {
 		return err
 	}
 	for _, versionPatch := range api.Data.APIVersions {
-		err := applyApiVersionPatch(ctx, client, versionPatch, name)
+		err := applyApiVersionPatch(ctx, client, versionPatch, apiName.String())
 		if err != nil {
 			return err
 		}
 	}
 	for _, deploymentPatch := range api.Data.APIDeployments {
-		err := applyApiDeploymentPatch(ctx, client, deploymentPatch, name)
+		err := applyApiDeploymentPatch(ctx, client, deploymentPatch, apiName.String())
 		if err != nil {
 			return err
 		}

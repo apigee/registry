@@ -46,7 +46,7 @@ data:
     data:
       displayName: Production
       description: The hosted deployment of the Registry API
-      apiSpecRevision: versions/v1/specs/openapi.yaml@latest
+      apiSpecRevision: v1/specs/openapi.yaml@latest
       endpointURI: https://apigeeregistry.googleapis.com
       externalChannelURI: https://apigee.github.io/registry/
       intendedAudience: Public
