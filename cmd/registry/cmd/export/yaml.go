@@ -52,7 +52,7 @@ func yamlCommand(ctx context.Context) *cobra.Command {
 				_, err = core.GetAPI(ctx, client, api, func(message *rpc.Api) {
 					bytes, _, err := patch.ExportAPI(ctx, client, message)
 					if err != nil {
-						log.FromContext(ctx).WithError(err).Fatal("Failed to export artifact")
+						log.FromContext(ctx).WithError(err).Fatal("Failed to export API")
 					} else {
 						fmt.Println(string(bytes))
 					}

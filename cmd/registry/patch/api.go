@@ -109,6 +109,9 @@ func ExportAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.A
 
 // relativeVersionName returns the version id if the version is within the specified API
 func relativeVersionName(apiName names.Api, version string) (string, error) {
+	if version == "" {
+		return "", nil
+	}
 	versionName, err := names.ParseVersion(version)
 	if err != nil {
 		return "", err
@@ -121,6 +124,9 @@ func relativeVersionName(apiName names.Api, version string) (string, error) {
 
 // relativeDeploymentName returns the deployment id if the deployment is within the specified API
 func relativeDeploymentName(apiName names.Api, deployment string) (string, error) {
+	if deployment == "" {
+		return "", nil
+	}
 	deploymentName, err := names.ParseDeployment(deployment)
 	if err != nil {
 		return "", err

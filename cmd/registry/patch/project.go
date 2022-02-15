@@ -41,7 +41,7 @@ func ExportProject(ctx context.Context, client *gapic.RegistryClient, name strin
 		log.FromContext(ctx).Infof("Exporting %s", message.Name)
 		bytes, header, err := ExportAPI(ctx, client, message)
 		if err != nil {
-			log.FromContext(ctx).WithError(err).Fatal("Failed to export artifact")
+			log.FromContext(ctx).WithError(err).Fatal("Failed to export API")
 		}
 		filename := fmt.Sprintf("%s/%s.yaml", apisDir, header.Metadata.Name)
 		err = os.WriteFile(filename, bytes, 0644)

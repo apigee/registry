@@ -40,6 +40,9 @@ type APIDeployment struct {
 
 // relativeSpecRevisionName returns the versionid+specid if the spec is within the specified API
 func relativeSpecRevisionName(apiName names.Api, spec string) (string, error) {
+	if spec == "" {
+		return "", nil
+	}
 	if strings.HasPrefix(spec, apiName.String()) {
 		return strings.TrimPrefix(spec, apiName.String()+"/versions/"), nil
 	}
