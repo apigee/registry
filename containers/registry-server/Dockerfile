@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@
 # https://hub.docker.com/_/golang
 FROM golang:1.17 as builder
 RUN apt-get update
-RUN apt-get install unzip
+RUN apt-get -y install unzip
 
 # Create and change to the app directory.
 WORKDIR /app
@@ -37,11 +37,19 @@ RUN ./tools/FETCH-PROTOC.sh && make protos
 # Build registry-server.
 RUN CGO_ENABLED=0 GOOS=linux go build -v -o registry-server ./cmd/registry-server
 
-# Use the official Alpine image for a lean production container.
-# https://hub.docker.com/_/alpine
-# https://docs.docker.com/develop/develop-images/multistage-build/#use-multi-stage-builds
-FROM alpine:3
-RUN apk add --no-cache ca-certificates
+# Prepare bash dependencies for the final image.
+RUN apt-get -y install wget bash-static \
+    && wget -q http://landley.net/toybox/bin/toybox-x86_64 \
+               -O /usr/local/bin/toybox \
+           && chmod 755 /usr/local/bin/toybox \
+           && cd /usr/local/bin; for i in $(./toybox); do ln -s toybox $i; done
+
+FROM gcr.io/distroless/static:latest
+# Copy bash dependencies.
+COPY --from=builder /usr/local/bin /usr/local/bin
+COPY --from=builder /bin/bash-static /bin/bash
+RUN [ "/usr/local/bin/toybox", "ln", "-s", "/bin/bash", "/bin/sh" ]
+RUN chmod -R 755 /usr/local/bin
 
 # Copy the binary to the production image from the builder stage.
 COPY --from=builder /app/registry-server /registry-server
