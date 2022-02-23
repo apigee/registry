@@ -32,8 +32,6 @@ RUN go mod download
 # Copy local code to the container image.
 COPY . ./
 
-RUN ./tools/FETCH-PROTOC.sh && make protos
-
 # Build registry-server.
 RUN CGO_ENABLED=0 GOOS=linux go build -v -o registry-server ./cmd/registry-server
 
@@ -45,7 +43,6 @@ RUN apk add --no-cache ca-certificates
 
 # Copy the binary to the production image from the builder stage.
 COPY --from=builder /app/registry-server /registry-server
-COPY --from=builder /app/deployments/envoy/proto.pb /proto.pb
 
 # Copy the standard registry configuration from the builder image.
 COPY config/registry-server.yaml /registry-server.yaml
