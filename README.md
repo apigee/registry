@@ -1,8 +1,8 @@
 [![Go Actions Status](https://github.com/apigee/registry/workflows/Go/badge.svg)](https://github.com/apigee/registry/actions)
 
-# Registry API Reference Implementation
+# Registry API Core Implementation
 
-This repository contains a reference implementation of the Registry API.
+This repository contains the core implementation of the Registry API.
 
 ## The Registry API
 
@@ -27,8 +27,8 @@ tell us about your experience if you use it.
 
 ## This Implementation
 
-This reference implementation is a [gRPC](https://grpc.io) service written in
-Go. It can be run locally or deployed in a container using services including
+This implementation is a [gRPC](https://grpc.io) service written in Go. It can
+be run locally or deployed in a container using services including
 [Google Cloud Run](https://cloud.google.com/run). It stores data using a
 configurable relational interface layer that currently supports
 [PostgreSQL](https://www.postgresql.org/) and
