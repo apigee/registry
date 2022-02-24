@@ -127,7 +127,7 @@ func TestExtendDependencyPatternError(t *testing.T) {
 	}
 }
 
-func TestResourceNameFromGroupKey(t *testing.T) {
+func TestResourceNameFromEntityKey(t *testing.T) {
 	tests := []struct {
 		desc            string
 		resourcePattern string
@@ -162,19 +162,19 @@ func TestResourceNameFromGroupKey(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			got, err := resourceNameFromGroupKey(test.resourcePattern, test.groupKey)
+			got, err := resourceNameFromEntityKey(test.resourcePattern, test.groupKey)
 			if err != nil {
-				t.Errorf("resourceNameFromGroupKey returned unexpected error: %s", err)
+				t.Errorf("resourceNameFromEntityKey returned unexpected error: %s", err)
 			}
 			if got != test.want {
-				t.Errorf("resourceNameFromGroupKey returned unexpected value want: %q got:%q", test.want, got)
+				t.Errorf("resourceNameFromEntityKey returned unexpected value want: %q got:%q", test.want, got)
 			}
 		})
 	}
 
 }
 
-func TestResourceNameFromGroupKeyError(t *testing.T) {
+func TestResourceNameFromEntityKeyError(t *testing.T) {
 	tests := []struct {
 		desc            string
 		resourcePattern string
@@ -194,16 +194,16 @@ func TestResourceNameFromGroupKeyError(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			got, err := resourceNameFromGroupKey(test.resourcePattern, test.groupKey)
+			got, err := resourceNameFromEntityKey(test.resourcePattern, test.groupKey)
 			if err == nil {
-				t.Errorf("expected resourceNameFromGroupKey to return error, got: %q", got)
+				t.Errorf("expected resourceNameFromEntityKey to return error, got: %q", got)
 			}
 		})
 	}
 
 }
 
-func TestGetGroupKey(t *testing.T) {
+func TestGetEntityKey(t *testing.T) {
 	tests := []struct {
 		desc     string
 		pattern  string
@@ -248,24 +248,24 @@ func TestGetGroupKey(t *testing.T) {
 			resource: ArtifactResource{
 				ArtifactName: ArtifactName{Artifact: generateArtifact(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic")},
 			},
-			want: "default",
+			want: "",
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			got, err := getGroupKey(test.pattern, test.resource)
+			got, err := getEntityKey(test.pattern, test.resource)
 			if err != nil {
-				t.Errorf("getGroupKey returned unexpected error: %s", err)
+				t.Errorf("getEntityKey returned unexpected error: %s", err)
 			}
 			if got != test.want {
-				t.Errorf("getGroupKey returned unexpected value want: %q got:%q", test.want, got)
+				t.Errorf("getEntityKey returned unexpected value want: %q got:%q", test.want, got)
 			}
 		})
 	}
 }
 
-func TestGetGroupKeyError(t *testing.T) {
+func TestGetEntityKeyError(t *testing.T) {
 	tests := []struct {
 		desc     string
 		pattern  string
@@ -296,9 +296,9 @@ func TestGetGroupKeyError(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			got, err := getGroupKey(test.pattern, test.resource)
+			got, err := getEntityKey(test.pattern, test.resource)
 			if err == nil {
-				t.Errorf("expected getGroupKey to return error, got: %q", got)
+				t.Errorf("expected getEntityKey to return error, got: %q", got)
 			}
 		})
 	}

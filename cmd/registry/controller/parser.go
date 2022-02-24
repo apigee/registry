@@ -129,44 +129,44 @@ func extendDependencyPattern(
 }
 
 // This function is used in case of receipt artifacts where the name of the target resource to create is not known
-func resourceNameFromGroupKey(
+func resourceNameFromEntityKey(
 	resourcePattern string,
-	groupKey string) (string, error) {
-	// Derives the resource name from the provided resourcePattern and groupKey.
+	entityKey string) (string, error) {
+	// Derives the resource name from the provided resourcePattern and entityKey.
 	// Example:
 	// 1) resourcePattern: projects/demo/locations/global/apis/-/versions/-/specs/-
-	//    groupKey: projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity
+	//    entityKey: projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity
 	//    returns projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml
 	// 2) resourcePattern: projects/demo/locations/global/apis/petstore/versions/-/specs/-/artifacts/custom-artifact
-	//    groupKey: projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity
+	//    entityKey: projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity
 	//    returns projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/custom-artifact
 
-	groupName, err := parseResource(groupKey)
+	entityName, err := parseResource(entityKey)
 	resourceName := resourcePattern
 
 	if err == nil {
 		// Replace `apis/-` pattern with the corresponding name.
 		// groupName.GetApi() returns the full api name projects/demo/locations/global/apis/petstore
 		// We use stringsSplit()[-1] to extract only the API name
-		apiName := strings.Split(groupName.GetApi(), "/")
+		apiName := strings.Split(entityName.GetApi(), "/")
 		if len(apiName) > 0 {
 			resourceName = strings.ReplaceAll(resourceName, "/apis/-",
 				fmt.Sprintf("/apis/%s", apiName[len(apiName)-1]))
 		}
 
-		versionName := strings.Split(groupName.GetVersion(), "/")
+		versionName := strings.Split(entityName.GetVersion(), "/")
 		if len(versionName) > 0 {
 			resourceName = strings.ReplaceAll(resourceName, "/versions/-",
 				fmt.Sprintf("/versions/%s", versionName[len(versionName)-1]))
 		}
 
-		specName := strings.Split(groupName.GetSpec(), "/")
+		specName := strings.Split(entityName.GetSpec(), "/")
 		if len(specName) > 0 {
 			resourceName = strings.ReplaceAll(resourceName, "/specs/-",
 				fmt.Sprintf("/specs/%s", specName[len(specName)-1]))
 		}
 
-		artifactName := strings.Split(groupName.GetArtifact(), "/")
+		artifactName := strings.Split(entityName.GetArtifact(), "/")
 		if len(artifactName) > 0 {
 			resourceName = strings.ReplaceAll(resourceName, "/artifacts/-",
 				fmt.Sprintf("/artifacts/%s", artifactName[len(artifactName)-1]))
@@ -185,52 +185,84 @@ func resourceNameFromGroupKey(
 		return resourceName, nil
 	}
 
-	return "", fmt.Errorf("invalid pattern: %q cannot derive GeneratedResource name from groupKey %s", resourcePattern, groupKey)
+	return "", fmt.Errorf("invalid pattern: %q cannot derive GeneratedResource name from entityKey %s", resourcePattern, entityKey)
 }
 
-func ValidateResourceEntry(resource *rpc.GeneratedResource) error {
-	var group string
+func compareEntities(e1, e2 string) int {
+	order := map[string]int{
+		"artifact": 0,
+		"spec":     1,
+		"version":  2,
+		"api":      3,
+		"":         4,
+	}
 
-	for _, dependency := range resource.Dependencies {
-		// Validate that all the dependencies are grouped at the same level
-		groupEntity, err := getGroupEntity(dependency.Pattern)
+	return order[e1] - order[e2]
+}
+
+func minRefIndexFromDependency(generatedResource *rpc.GeneratedResource) (string, int, error) {
+	// Find the lowest entity reference in the dependencies
+	// ""(no $resource) > $resource.api > $resource.version > $resource.spec > $resource.artifact
+	minDepEntityType := ""
+	minIndex := -1
+	for i, dependency := range generatedResource.Dependencies {
+		extractedEntity, err := getReferenceFromDependency(dependency.Pattern)
 		if err != nil {
-			return err
+			return "", -1, err
 		}
-		if len(group) == 0 {
-			group = groupEntity
-		} else {
-			if groupEntity != group {
-				return fmt.Errorf("invalid matching: all the dependencies should be matched at the same level from $resource")
-			}
+		if compareEntities(extractedEntity, minDepEntityType) <= 0 {
+			minDepEntityType = extractedEntity
+			minIndex = i
 		}
 	}
 
-	// Validate that the action contains reference to valid entities.
-	// Same as the group entity
-	entity, entityType, err := getCommandEntity(resource.Action)
+	return minDepEntityType, minIndex, nil
+}
+
+func ValidateResourceEntry(resource *rpc.GeneratedResource) error {
+
+	// Find the lowest entity reference in the dependencies
+	// ""(no $resource) > $resource.api > $resource.version > $resource.spec > $resource.artifact
+	minDepEntityType, _, err := minRefIndexFromDependency(resource)
+	if err != nil {
+		return err
+	}
+
+	// Find the lowest entity reference in the action string
+	// ""(no $resource) > $resource.api > $resource.version > $resource.spec > $resource.artifact
+	references, err := getReferencesFromAction(resource.Action)
 	if err != nil {
 		return err
 	}
 	// no $resource reference present
-	if len(entity) == 0 {
+	if len(references) == 0 {
 		return nil
 	}
-	if entityType != group {
-		return fmt.Errorf("invalid reference ($resource.entity) in %q , entity should be same as the match in the dependencies", resource.Action)
+
+	minActionEntityType := ""
+	for _, r := range references {
+		if compareEntities(r.entityType, minActionEntityType) < 0 {
+			minActionEntityType = r.entityType
+		}
+	}
+
+	// Check if minDepEntityType and minActionEntityType are same
+	if minDepEntityType != minActionEntityType {
+		return fmt.Errorf("Invalid $resource references: The The lowest entity reference %q in dependencies is not same as the lowest entity reference in the action string %q.",
+			minDepEntityType, minActionEntityType)
 	}
 
 	return nil
 }
 
-func getGroupEntity(pattern string) (string, error) {
-	// Reads the sourcePattern, finds out group by entity type
+func getReferenceFromDependency(pattern string) (string, error) {
+	// Reads the sourcePattern, finds out entity type in the reference
 	// Example:
 	// pattern: $resource.api/versions/-/specs/-
-	// returns "api", default if no group is present
+	// returns "api", "" if no group is present
 
 	if !strings.HasPrefix(pattern, resourceKW) {
-		return "default", nil
+		return "", nil
 	}
 
 	// Example:
@@ -241,20 +273,20 @@ func getGroupEntity(pattern string) (string, error) {
 
 	matches := re.FindStringSubmatch(pattern)
 	if len(matches) <= 1 {
-		return "", fmt.Errorf("invalid pattern: Cannot extract group from pattern %s", pattern)
+		return "", fmt.Errorf("invalid pattern: Cannot extract referenced entity from pattern %s", pattern)
 	}
 
 	return matches[1], nil
 }
 
-func getGroupKey(pattern string, resource ResourceInstance) (string, error) {
-	// Reads the pattern and returns the group value for the resource
+func getEntityKey(pattern string, resource ResourceInstance) (string, error) {
+	// Reads the pattern and returns the entity value for the resource
 	// Example:
 	// pattern: $resource.api/versions/-/specs/-
 	// resource: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml"
 	// returns "projects/demo/locations/global/apis/petstore"
 
-	entityType, err := getGroupEntity(pattern)
+	entityType, err := getReferenceFromDependency(pattern)
 	if err != nil {
 		return "", err
 	}
@@ -268,23 +300,30 @@ func getGroupKey(pattern string, resource ResourceInstance) (string, error) {
 		return resource.GetSpec(), nil
 	case "artifact":
 		return resource.GetArtifact(), nil
-	case "default":
-		return "default", nil
+	case "":
+		return "", nil
 	default:
-		return "", fmt.Errorf("invalid pattern: Cannot extract group from pattern %s", pattern)
+		return "", fmt.Errorf("invalid pattern: Cannot extract entity from pattern %s", pattern)
 	}
 
 }
 
-func getCommandEntity(action string) (string, string, error) {
-	// Check if there is a reference to $n in the action
+type reference struct {
+	entity     string
+	entityType string
+}
+
+func getReferencesFromAction(action string) ([]reference, error) {
+	references := make([]reference, 0)
+
+	// Check if there is a reference to $resource in the action
 	isMatch, err := regexp.MatchString(fmt.Sprintf(`\%s`, resourceKW), action)
 	if err != nil {
-		return "", "", err
+		return nil, err
 	}
 	// No $resource references in the action string
 	if !isMatch {
-		return "", "", nil
+		return references, nil
 	}
 
 	// Extract the $resource patterns from action
@@ -293,32 +332,29 @@ func getCommandEntity(action string) (string, string, error) {
 	re := regexp.MustCompile(fmt.Sprintf(`\%s(\.api|\.version|\.spec|\.artifact)($|/| )`, resourceKW))
 	match := re.FindAllString(action, -1)
 	if len(match) == 0 {
-		return "", "", fmt.Errorf("invalid action: %s missing or incorrect entity in the reference", action)
+		return nil, fmt.Errorf("invalid action: %s missing or incorrect entity in the reference", action)
 	}
 
-	// Check if all the references are at the same level
-	entity := strings.TrimRight(match[0], " /")
+	// Construct a list of entity: entityType for all the references
 	for _, m := range match {
-		if strings.Trim(m, " /") != entity {
-			return "", "", fmt.Errorf("invalid action: %s All the $resource references must be at the same level", action)
-		}
+		// entity = $resource.api, extract the entityType as "api"
+		entity := strings.TrimRight(m, " /")
+		entityType := entity[len(resourceKW)+1:]
+		references = append(references, reference{entity: entity, entityType: entityType})
 	}
 
-	// entity = $resource.api, extract the  entityType as "api"
-	entityType := entity[len(resourceKW)+1:]
-
-	return entity, entityType, nil
+	return references, nil
 }
 
 func generateCommand(action string, resourceName string) (string, error) {
 
-	entity, entityType, err := getCommandEntity(action)
+	references, err := getReferencesFromAction(action)
 	if err != nil {
 		return "", err
 	}
 
 	// no $resource reference, return the original action
-	if len(entity) == 0 {
+	if len(references) == 0 {
 		return action, nil
 	}
 
@@ -327,24 +363,25 @@ func generateCommand(action string, resourceName string) (string, error) {
 		return "", fmt.Errorf("error generating command, invalid resourceName: %s", resourceName)
 	}
 
-	entityVal := ""
-	switch entityType {
-	case "api":
-		entityVal = resource.GetApi()
-	case "version":
-		entityVal = resource.GetVersion()
-	case "spec":
-		entityVal = resource.GetSpec()
-	case "artifact":
-		entityVal = resource.GetArtifact()
-	default:
-		entityVal = ""
+	for _, r := range references {
+		entityVal := ""
+		switch r.entityType {
+		case "api":
+			entityVal = resource.GetApi()
+		case "version":
+			entityVal = resource.GetVersion()
+		case "spec":
+			entityVal = resource.GetSpec()
+		case "artifact":
+			entityVal = resource.GetArtifact()
+		default:
+			entityVal = ""
+		}
+		if len(entityVal) == 0 {
+			return "", fmt.Errorf("error generating command, cannot derive args for action. Invalid action: %s", action)
+		}
+		action = strings.ReplaceAll(action, r.entity, entityVal)
 	}
-
-	if len(entityVal) == 0 {
-		return "", fmt.Errorf("error generating command, cannot derive args for action. Invalid action: %s", action)
-	}
-	action = strings.ReplaceAll(action, entity, entityVal)
 
 	return action, nil
 }

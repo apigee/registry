@@ -1,0 +1,16 @@
+id: apihub-styleguide
+mime_types:
+  - application/x.openapi+gzip;version=3.0.0
+guidelines:
+  - id: Operation
+    display_name: Govern properties of Operations
+    rules:
+      - id: OperationIdValidInURL
+        description: >
+          Seeing as operationId is often used for unique URLs in
+          documentation systems, it's a good idea to avoid non-URL
+          safe characters."
+        linter: spectral
+        linter_rulename: operation-operationId-valid-in-url
+        severity: WARNING
+        doc_uri: https://meta.stoplight.io/docs/spectral/ZG9jOjExNw-open-api-rules#operation-operationid-valid-in-url

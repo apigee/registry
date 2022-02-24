@@ -85,6 +85,20 @@ func TestResolve(t *testing.T) {
 			listPattern:  "projects/controller-demo/locations/global/apis/petstore/versions/-/specs/-/artifacts/-",
 			want:         []string{},
 		},
+		{
+			desc:         "multiple references",
+			manifestPath: filepath.Join("testdata", "manifest_multiple_refs.yaml"),
+			dryRun:       false,
+			listPattern:  "projects/controller-demo/locations/global/apis/petstore/versions/-/specs/-/artifacts/-",
+			want: []string{
+				"projects/controller-demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/conformance-receipt",
+				"projects/controller-demo/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/conformance-receipt",
+				"projects/controller-demo/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/conformance-receipt",
+				"projects/controller-demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/conformance-apihub-styleguide",
+				"projects/controller-demo/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/conformance-apihub-styleguide",
+				"projects/controller-demo/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/conformance-apihub-styleguide",
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -236,6 +250,14 @@ func TestResolve(t *testing.T) {
 			uploadCmd.SetArgs(args)
 			if err = uploadCmd.Execute(); err != nil {
 				t.Fatalf("Failed to upload the manifest: %s", err)
+			}
+
+			// Upload the styleguide definition to registry
+			args = []string{"styleguide", filepath.Join("testdata", "apihub-styleguide.yaml"), "--project-id=" + testProject}
+			uploadCmd = upload.Command(ctx)
+			uploadCmd.SetArgs(args)
+			if err = uploadCmd.Execute(); err != nil {
+				t.Errorf("Failed to upload the styleguide: %s", err)
 			}
 
 			resolveCmd := Command(ctx)

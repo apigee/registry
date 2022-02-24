@@ -1,0 +1,8 @@
+id: "test-manifest"
+generated_resources:
+  - pattern: "apis/-/versions/-/specs/-/artifacts/conformance-receipt"
+    receipt: true
+    dependencies:
+    - pattern: "$resource.spec"
+    - pattern: "artifacts/apihub-styleguide"
+    action: "registry compute conformance $resource.spec"
