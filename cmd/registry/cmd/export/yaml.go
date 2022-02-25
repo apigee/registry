@@ -44,7 +44,7 @@ func yamlCommand(ctx context.Context) *cobra.Command {
 			}
 
 			if _, err := names.ParseProject(name); err == nil {
-				patch.ExportProject(ctx, client, name)
+				err = patch.ExportProject(ctx, client, name)
 				if err != nil {
 					log.FromContext(ctx).WithError(err).Fatal("Failed to export project YAML")
 				}

@@ -16,12 +16,12 @@ package patch
 
 import (
 	"context"
+	"fmt"
 	"io/fs"
 	"io/ioutil"
 	"path/filepath"
 
 	"github.com/apigee/registry/connection"
-	"github.com/apigee/registry/log"
 	"gopkg.in/yaml.v2"
 )
 
@@ -53,17 +53,17 @@ func applyFile(
 	parent string) error {
 	bytes, err := ioutil.ReadFile(fileName)
 	if err != nil {
-		log.FromContext(ctx).WithError(err).Fatal("Failed to read file")
+		return err
 	}
 
 	// get the id and kind of artifact from the YAML elements common to all artifacts
 	var header Header
 	err = yaml.Unmarshal(bytes, &header)
 	if err != nil {
-		log.FromContext(ctx).WithError(err).Fatal("Failed to parse YAML")
+		return err
 	}
 	if header.APIVersion != RegistryV1 {
-		log.FromContext(ctx).Fatalf("Unsupported API version: %s", header.APIVersion)
+		return fmt.Errorf("Unsupported API version: %s", header.APIVersion)
 	}
 	switch header.Kind {
 	case "API":
@@ -75,7 +75,6 @@ func applyFile(
 	case "TaxonomyList":
 		return applyTaxonomyListArtifactPatch(ctx, client, bytes, parent)
 	default:
-		log.FromContext(ctx).Fatalf("Unsupported kind: %s", header.Kind)
+		return fmt.Errorf("Unsupported kind: %s", header.Kind)
 	}
-	return nil
 }
