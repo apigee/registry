@@ -27,6 +27,7 @@ import (
 func Command(ctx context.Context) *cobra.Command {
 	var fileName string
 	var parent string
+	var recursive bool
 	cmd := &cobra.Command{
 		Use:   "apply",
 		Short: "Apply patches that add content to the API Registry",
@@ -41,7 +42,7 @@ func Command(ctx context.Context) *cobra.Command {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to find file")
 			}
 			if fileInfo.IsDir() {
-				err = patch.ApplyDirectory(ctx, client, fileName, parent)
+				err = patch.ApplyDirectory(ctx, client, fileName, recursive, parent)
 				if err != nil {
 					log.FromContext(ctx).WithError(err).Fatal("Failed to apply directory")
 				}
@@ -56,5 +57,7 @@ func Command(ctx context.Context) *cobra.Command {
 	}
 	cmd.Flags().StringVarP(&fileName, "file", "f", "", "File or directory containing the patch(es) to apply")
 	cmd.Flags().StringVar(&parent, "parent", "", "Parent resource for the patch")
+	cmd.Flags().BoolVarP(&recursive, "recursive", "R", false,
+		"Process the directory used in -f, --file recursively. Useful when you want to manage related manifests organized within the same directory")
 	return cmd
 }

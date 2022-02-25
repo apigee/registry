@@ -29,6 +29,7 @@ func ApplyDirectory(
 	ctx context.Context,
 	client connection.Client,
 	fileName string,
+	recursive bool,
 	parent string) error {
 	return filepath.WalkDir(fileName,
 		func(path string, entry fs.DirEntry, err error) error {
@@ -36,6 +37,9 @@ func ApplyDirectory(
 				return err
 			}
 			if entry.IsDir() {
+				if !recursive {
+					return filepath.SkipDir
+				}
 				return nil
 			}
 			return ApplyFile(ctx, client, path, parent)
