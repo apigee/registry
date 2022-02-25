@@ -16,8 +16,8 @@ package patch
 
 import (
 	"context"
+	"io/fs"
 	"io/ioutil"
-	"os"
 	"path/filepath"
 
 	"github.com/apigee/registry/connection"
@@ -30,12 +30,12 @@ func ApplyDirectory(
 	client connection.Client,
 	fileName string,
 	parent string) error {
-	return filepath.Walk(fileName,
-		func(path string, info os.FileInfo, err error) error {
+	return filepath.WalkDir(fileName,
+		func(path string, entry fs.DirEntry, err error) error {
 			if err != nil {
 				return err
 			}
-			if info.IsDir() {
+			if entry.IsDir() {
 				return nil
 			}
 			return ApplyFile(ctx, client, path, parent)
