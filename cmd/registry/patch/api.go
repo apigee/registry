@@ -153,11 +153,12 @@ func optionalDeploymentName(apiName names.Api, deploymentID string) string {
 	return apiName.Deployment(deploymentID).String()
 }
 
-func applyApiPatch(
-	ctx context.Context,
-	client connection.Client,
-	api *API,
-	parent string) error {
+func applyApiPatch(ctx context.Context, client connection.Client, bytes []byte, parent string) error {
+	var api API
+	err := yaml.Unmarshal(bytes, &api)
+	if err != nil {
+		return err
+	}
 	projectName, err := names.ParseProjectWithLocation(parent)
 	if err != nil {
 		return err

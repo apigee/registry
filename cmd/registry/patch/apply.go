@@ -67,45 +67,13 @@ func applyFile(
 	}
 	switch header.Kind {
 	case "API":
-		var api API
-		err = yaml.Unmarshal(bytes, &api)
-		if err != nil {
-			log.FromContext(ctx).WithError(err).Fatal("Failed to parse YAML")
-		}
-		err = applyApiPatch(ctx, client, &api, parent)
-		if err != nil {
-			log.FromContext(ctx).WithError(err).Fatal("Failed to apply patch")
-		}
+		return applyApiPatch(ctx, client, bytes, parent)
 	case "Lifecycle":
-		var lifecycle Lifecycle
-		err = yaml.Unmarshal(bytes, &lifecycle)
-		if err != nil {
-			log.FromContext(ctx).WithError(err).Fatal("Failed to parse YAML")
-		}
-		err = applyArtifactPatch(ctx, client, &lifecycle, parent)
-		if err != nil {
-			log.FromContext(ctx).WithError(err).Fatal("Failed to apply patch")
-		}
+		return applyLifecycleArtifactPatch(ctx, client, bytes, parent)
 	case "Manifest":
-		var manifest Manifest
-		err = yaml.Unmarshal(bytes, &manifest)
-		if err != nil {
-			log.FromContext(ctx).WithError(err).Fatal("Failed to parse YAML")
-		}
-		err = applyArtifactPatch(ctx, client, &manifest, parent)
-		if err != nil {
-			log.FromContext(ctx).WithError(err).Fatal("Failed to apply patch")
-		}
+		return applyManifestArtifactPatch(ctx, client, bytes, parent)
 	case "TaxonomyList":
-		var taxonomyList TaxonomyList
-		err = yaml.Unmarshal(bytes, &taxonomyList)
-		if err != nil {
-			log.FromContext(ctx).WithError(err).Fatal("Failed to parse YAML")
-		}
-		err = applyArtifactPatch(ctx, client, &taxonomyList, parent)
-		if err != nil {
-			log.FromContext(ctx).WithError(err).Fatal("Failed to apply patch")
-		}
+		return applyTaxonomyListArtifactPatch(ctx, client, bytes, parent)
 	default:
 		log.FromContext(ctx).Fatalf("Unsupported kind: %s", header.Kind)
 	}

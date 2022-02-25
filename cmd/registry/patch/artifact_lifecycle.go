@@ -15,9 +15,13 @@
 package patch
 
 import (
+	"context"
+
+	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"google.golang.org/protobuf/proto"
+	"gopkg.in/yaml.v2"
 )
 
 const LifecycleMimeType = "application/octet-stream;type=google.cloud.apigeeregistry.v1.apihub.Lifecycle"
@@ -106,4 +110,13 @@ func newLifecycle(message *rpc.Artifact) (*Lifecycle, error) {
 			})
 	}
 	return lifecycle, nil
+}
+
+func applyLifecycleArtifactPatch(ctx context.Context, client connection.Client, bytes []byte, parent string) error {
+	var lifecycle Lifecycle
+	err := yaml.Unmarshal(bytes, &lifecycle)
+	if err != nil {
+		return err
+	}
+	return applyArtifactPatch(ctx, client, &lifecycle, parent)
 }

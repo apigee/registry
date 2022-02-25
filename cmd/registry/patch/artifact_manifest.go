@@ -15,9 +15,13 @@
 package patch
 
 import (
+	"context"
+
+	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"google.golang.org/protobuf/proto"
+	"gopkg.in/yaml.v2"
 )
 
 const ManifestMimeType = "application/octet-stream;type=google.cloud.apigeeregistry.v1.controller.Manifest"
@@ -128,4 +132,13 @@ func newManifest(message *rpc.Artifact) (*Manifest, error) {
 			})
 	}
 	return manifest, nil
+}
+
+func applyManifestArtifactPatch(ctx context.Context, client connection.Client, bytes []byte, parent string) error {
+	var manifest Manifest
+	err := yaml.Unmarshal(bytes, &manifest)
+	if err != nil {
+		return err
+	}
+	return applyArtifactPatch(ctx, client, &manifest, parent)
 }

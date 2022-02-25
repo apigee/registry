@@ -15,9 +15,13 @@
 package patch
 
 import (
+	"context"
+
+	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"google.golang.org/protobuf/proto"
+	"gopkg.in/yaml.v2"
 )
 
 const TaxonomyListMimeType = "application/octet-stream;type=google.cloud.apigeeregistry.v1.apihub.TaxonomyList"
@@ -147,4 +151,13 @@ func newTaxonomyList(message *rpc.Artifact) (*TaxonomyList, error) {
 		taxonomyList.Data.Taxonomies = append(taxonomyList.Data.Taxonomies, taxonomy)
 	}
 	return taxonomyList, nil
+}
+
+func applyTaxonomyListArtifactPatch(ctx context.Context, client connection.Client, bytes []byte, parent string) error {
+	var taxonomyList TaxonomyList
+	err := yaml.Unmarshal(bytes, &taxonomyList)
+	if err != nil {
+		return err
+	}
+	return applyArtifactPatch(ctx, client, &taxonomyList, parent)
 }
