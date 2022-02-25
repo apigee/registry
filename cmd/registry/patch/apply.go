@@ -25,7 +25,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-func ApplyDirectory(
+func Apply(
 	ctx context.Context,
 	client connection.Client,
 	fileName string,
@@ -42,11 +42,11 @@ func ApplyDirectory(
 				}
 				return nil
 			}
-			return ApplyFile(ctx, client, path, parent)
+			return applyFile(ctx, client, path, parent)
 		})
 }
 
-func ApplyFile(
+func applyFile(
 	ctx context.Context,
 	client connection.Client,
 	fileName string,

@@ -16,7 +16,8 @@ package apply
 
 import (
 	"context"
-	"os"
+	"errors"
+	"io/fs"
 
 	"github.com/apigee/registry/cmd/registry/patch"
 	"github.com/apigee/registry/connection"
@@ -37,22 +38,12 @@ func Command(ctx context.Context) *cobra.Command {
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
-			fileInfo, err := os.Stat(fileName)
-			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to find file")
+			err = patch.Apply(ctx, client, fileName, recursive, parent)
+			if errors.Is(err, fs.ErrNotExist) {
+				log.FromContext(ctx).WithError(err).Fatalf("File %q doesn't exist", fileName)
+			} else if err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Unknown error")
 			}
-			if fileInfo.IsDir() {
-				err = patch.ApplyDirectory(ctx, client, fileName, recursive, parent)
-				if err != nil {
-					log.FromContext(ctx).WithError(err).Fatal("Failed to apply directory")
-				}
-			} else {
-				err = patch.ApplyFile(ctx, client, fileName, parent)
-				if err != nil {
-					log.FromContext(ctx).WithError(err).Fatal("Failed to apply file")
-				}
-			}
-
 		},
 	}
 	cmd.Flags().StringVarP(&fileName, "file", "f", "", "File or directory containing the patch(es) to apply")
