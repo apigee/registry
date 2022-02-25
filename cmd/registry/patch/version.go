@@ -43,7 +43,7 @@ func newAPIVersion(ctx context.Context, client *gapic.RegistryClient, message *r
 	}
 	version := &APIVersion{
 		Header: Header{
-			APIVersion: REGISTRY_V1,
+			APIVersion: RegistryV1,
 			Kind:       "APIVersion",
 			Metadata: Metadata{
 				Name:        versionName.VersionID,

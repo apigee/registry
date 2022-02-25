@@ -62,7 +62,7 @@ func applyFile(
 	if err != nil {
 		log.FromContext(ctx).WithError(err).Fatal("Failed to parse YAML")
 	}
-	if header.APIVersion != REGISTRY_V1 {
+	if header.APIVersion != RegistryV1 {
 		log.FromContext(ctx).Fatalf("Unsupported API version: %s", header.APIVersion)
 	}
 	switch header.Kind {

@@ -48,7 +48,7 @@ func newUnknownArtifact(message *rpc.Artifact) (*UnknownArtifact, error) {
 	}
 	artifact := &UnknownArtifact{
 		Header: Header{
-			APIVersion: REGISTRY_V1,
+			APIVersion: RegistryV1,
 			Kind:       "Artifact",
 			Metadata: Metadata{
 				Name: artifactName.ArtifactID(),

@@ -113,7 +113,7 @@ func newTaxonomyList(message *rpc.Artifact) (*TaxonomyList, error) {
 	}
 	taxonomyList := &TaxonomyList{
 		Header: Header{
-			APIVersion: REGISTRY_V1,
+			APIVersion: RegistryV1,
 			Kind:       "TaxonomyList",
 			Metadata: Metadata{
 				Name: artifactName.ArtifactID(),

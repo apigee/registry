@@ -101,7 +101,7 @@ func newManifest(message *rpc.Artifact) (*Manifest, error) {
 	}
 	manifest := &Manifest{
 		Header: Header{
-			APIVersion: REGISTRY_V1,
+			APIVersion: RegistryV1,
 			Kind:       "Manifest",
 			Metadata: Metadata{
 				Name: artifactName.ArtifactID(),

@@ -46,7 +46,7 @@ func newAPISpec(ctx context.Context, client *gapic.RegistryClient, message *rpc.
 	}
 	spec := &APISpec{
 		Header: Header{
-			APIVersion: REGISTRY_V1,
+			APIVersion: RegistryV1,
 			Kind:       "APISpec",
 			Metadata: Metadata{
 				Name:        specName.SpecID,

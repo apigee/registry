@@ -64,7 +64,7 @@ func newAPIDeployment(ctx context.Context, client *gapic.RegistryClient, message
 	}
 	deployment := &APIDeployment{
 		Header: Header{
-			APIVersion: REGISTRY_V1,
+			APIVersion: RegistryV1,
 			Kind:       "APIDeployment",
 			Metadata: Metadata{
 				Name:        deploymentName.DeploymentID,

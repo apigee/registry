@@ -14,7 +14,7 @@
 
 package patch
 
-const REGISTRY_V1 = "apigeeregistry/v1"
+const RegistryV1 = "apigeeregistry/v1"
 
 type Header struct {
 	APIVersion string   `yaml:"apiVersion,omitempty"`

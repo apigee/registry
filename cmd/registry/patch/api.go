@@ -46,7 +46,7 @@ func newAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api)
 	}
 	api := &API{
 		Header: Header{
-			APIVersion: REGISTRY_V1,
+			APIVersion: RegistryV1,
 			Kind:       "API",
 			Metadata: Metadata{
 				Name:        apiName.ApiID,
