@@ -23,7 +23,7 @@ import (
 const RegistryV1 = "apigeeregistry/v1"
 
 type Header struct {
-	APIVersion string   `yaml:"apiVersion,omitempty"`
+	ApiVersion string   `yaml:"apiVersion,omitempty"`
 	Kind       string   `yaml:"kind,omitempty"`
 	Metadata   Metadata `yaml:"metadata"`
 }
@@ -40,8 +40,8 @@ func readHeader(bytes []byte) (Header, error) {
 	if err != nil {
 		return header, err
 	}
-	if header.APIVersion != RegistryV1 {
-		return header, fmt.Errorf("Unsupported API version: %s", header.APIVersion)
+	if header.ApiVersion != RegistryV1 {
+		return header, fmt.Errorf("Unsupported API version: %s", header.ApiVersion)
 	}
 	return header, nil
 }

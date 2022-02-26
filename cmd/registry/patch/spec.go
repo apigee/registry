@@ -28,7 +28,7 @@ import (
 	"github.com/apigee/registry/server/registry/names"
 )
 
-type APISpec struct {
+type ApiSpec struct {
 	Header `yaml:",inline"`
 	Data   struct {
 		FileName    string      `yaml:"filename,omitempty"`
@@ -39,15 +39,15 @@ type APISpec struct {
 	} `yaml:"data"`
 }
 
-func newAPISpec(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiSpec) (*APISpec, error) {
+func newApiSpec(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiSpec) (*ApiSpec, error) {
 	specName, err := names.ParseSpec(message.Name)
 	if err != nil {
 		return nil, err
 	}
-	spec := &APISpec{
+	spec := &ApiSpec{
 		Header: Header{
-			APIVersion: RegistryV1,
-			Kind:       "APISpec",
+			ApiVersion: RegistryV1,
+			Kind:       "ApiSpec",
 			Metadata: Metadata{
 				Name:        specName.SpecID,
 				Labels:      message.Labels,
@@ -65,7 +65,7 @@ func newAPISpec(ctx context.Context, client *gapic.RegistryClient, message *rpc.
 func applyApiSpecPatch(
 	ctx context.Context,
 	client connection.Client,
-	spec *APISpec,
+	spec *ApiSpec,
 	parent string) error {
 	name := fmt.Sprintf("%s/specs/%s", parent, spec.Metadata.Name)
 	req := &rpc.UpdateApiSpecRequest{

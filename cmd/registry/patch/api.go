@@ -25,7 +25,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-type API struct {
+type Api struct {
 	Header `yaml:",inline"`
 	Data   struct {
 		DisplayName           string           `yaml:"displayName,omitempty"`
@@ -33,20 +33,20 @@ type API struct {
 		Availability          string           `yaml:"availability,omitempty"`
 		RecommendedVersion    string           `yaml:"recommendedVersion,omitempty"`
 		RecommendedDeployment string           `yaml:"recommendedDeployment,omitempty"`
-		APIVersions           []*APIVersion    `yaml:"versions,omitempty"`
-		APIDeployments        []*APIDeployment `yaml:"deployments,omitempty"`
+		ApiVersions           []*ApiVersion    `yaml:"versions,omitempty"`
+		ApiDeployments        []*ApiDeployment `yaml:"deployments,omitempty"`
 		Artifacts             []*Artifact      `yaml:"artifacts,omitempty"`
 	} `yaml:"data"`
 }
 
-func newAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api) (*API, error) {
+func newApi(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api) (*Api, error) {
 	apiName, err := names.ParseApi(message.Name)
 	if err != nil {
 		return nil, err
 	}
-	api := &API{
+	api := &Api{
 		Header: Header{
-			APIVersion: RegistryV1,
+			ApiVersion: RegistryV1,
 			Kind:       "API",
 			Metadata: Metadata{
 				Name:        apiName.ApiID,
@@ -67,12 +67,12 @@ func newAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api)
 		return nil, err
 	}
 	err = core.ListVersions(ctx, client, apiName.Version(""), "", func(message *rpc.ApiVersion) {
-		version, err2 := newAPIVersion(ctx, client, message)
+		version, err2 := newApiVersion(ctx, client, message)
 		// unset these because they can be inferred
-		version.APIVersion = ""
+		version.ApiVersion = ""
 		version.Kind = ""
 		if err2 == nil {
-			api.Data.APIVersions = append(api.Data.APIVersions, version)
+			api.Data.ApiVersions = append(api.Data.ApiVersions, version)
 		} else {
 			err = err2
 		}
@@ -81,12 +81,12 @@ func newAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api)
 		return nil, err
 	}
 	err = core.ListDeployments(ctx, client, apiName.Deployment(""), "", func(message *rpc.ApiDeployment) {
-		deployment, err2 := newAPIDeployment(ctx, client, message)
+		deployment, err2 := newApiDeployment(ctx, client, message)
 		// unset these because they can be inferred
-		deployment.APIVersion = ""
+		deployment.ApiVersion = ""
 		deployment.Kind = ""
 		if err2 == nil {
-			api.Data.APIDeployments = append(api.Data.APIDeployments, deployment)
+			api.Data.ApiDeployments = append(api.Data.ApiDeployments, deployment)
 		} else {
 			err = err2
 		}
@@ -96,7 +96,7 @@ func newAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api)
 
 // ExportAPI allows an API to be individually exported as a YAML file.
 func ExportAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api) ([]byte, *Header, error) {
-	api, err := newAPI(ctx, client, message)
+	api, err := newApi(ctx, client, message)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -154,7 +154,7 @@ func optionalDeploymentName(apiName names.Api, deploymentID string) string {
 }
 
 func applyApiPatch(ctx context.Context, client connection.Client, bytes []byte, parent string) error {
-	var api API
+	var api Api
 	err := yaml.Unmarshal(bytes, &api)
 	if err != nil {
 		return err
@@ -181,13 +181,13 @@ func applyApiPatch(ctx context.Context, client connection.Client, bytes []byte, 
 	if err != nil {
 		return err
 	}
-	for _, versionPatch := range api.Data.APIVersions {
+	for _, versionPatch := range api.Data.ApiVersions {
 		err := applyApiVersionPatch(ctx, client, versionPatch, apiName.String())
 		if err != nil {
 			return err
 		}
 	}
-	for _, deploymentPatch := range api.Data.APIDeployments {
+	for _, deploymentPatch := range api.Data.ApiDeployments {
 		err := applyApiDeploymentPatch(ctx, client, deploymentPatch, apiName.String())
 		if err != nil {
 			return err

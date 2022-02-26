@@ -24,12 +24,12 @@ import (
 	"github.com/apigee/registry/server/registry/names"
 )
 
-type APIDeployment struct {
+type ApiDeployment struct {
 	Header `yaml:",inline"`
 	Data   struct {
 		DisplayName        string      `yaml:"displayName,omitempty"`
 		Description        string      `yaml:"description,omitempty"`
-		APISpecRevision    string      `yaml:"apiSpecRevision,omitempty"`
+		ApiSpecRevision    string      `yaml:"apiSpecRevision,omitempty"`
 		EndpointURI        string      `yaml:"endpointURI,omitempty"`
 		ExternalChannelURI string      `yaml:"externalChannelURI,omitempty"`
 		IntendedAudience   string      `yaml:"intendedAudience,omitempty"`
@@ -57,15 +57,15 @@ func optionalSpecRevisionName(deploymentName names.Deployment, subpath string) s
 	return deploymentName.Api().String() + "/versions/" + subpath
 }
 
-func newAPIDeployment(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiDeployment) (*APIDeployment, error) {
+func newApiDeployment(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiDeployment) (*ApiDeployment, error) {
 	deploymentName, err := names.ParseDeployment(message.Name)
 	if err != nil {
 		return nil, err
 	}
-	deployment := &APIDeployment{
+	deployment := &ApiDeployment{
 		Header: Header{
-			APIVersion: RegistryV1,
-			Kind:       "APIDeployment",
+			ApiVersion: RegistryV1,
+			Kind:       "ApiDeployment",
 			Metadata: Metadata{
 				Name:        deploymentName.DeploymentID,
 				Labels:      message.Labels,
@@ -75,7 +75,7 @@ func newAPIDeployment(ctx context.Context, client *gapic.RegistryClient, message
 	}
 	deployment.Data.DisplayName = message.DisplayName
 	deployment.Data.Description = message.Description
-	deployment.Data.APISpecRevision, err = relativeSpecRevisionName(deploymentName.Api(), message.ApiSpecRevision)
+	deployment.Data.ApiSpecRevision, err = relativeSpecRevisionName(deploymentName.Api(), message.ApiSpecRevision)
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +89,7 @@ func newAPIDeployment(ctx context.Context, client *gapic.RegistryClient, message
 func applyApiDeploymentPatch(
 	ctx context.Context,
 	client connection.Client,
-	deployment *APIDeployment,
+	deployment *ApiDeployment,
 	parent string) error {
 	apiName, err := names.ParseApi(parent)
 	if err != nil {
@@ -110,7 +110,7 @@ func applyApiDeploymentPatch(
 		},
 		AllowMissing: true,
 	}
-	req.ApiDeployment.ApiSpecRevision = optionalSpecRevisionName(deploymentName, deployment.Data.APISpecRevision)
+	req.ApiDeployment.ApiSpecRevision = optionalSpecRevisionName(deploymentName, deployment.Data.ApiSpecRevision)
 	if err != nil {
 		return err
 	}

@@ -25,26 +25,26 @@ import (
 	"github.com/apigee/registry/server/registry/names"
 )
 
-type APIVersion struct {
+type ApiVersion struct {
 	Header `yaml:",inline"`
 	Data   struct {
 		DisplayName string      `yaml:"displayName,omitempty"`
 		Description string      `yaml:"description,omitempty"`
 		State       string      `yaml:"state,omitempty"`
-		APISpecs    []*APISpec  `yaml:"specs,omitempty"`
+		ApiSpecs    []*ApiSpec  `yaml:"specs,omitempty"`
 		Artifacts   []*Artifact `yaml:"artifacts,omitempty"`
 	} `yaml:"data"`
 }
 
-func newAPIVersion(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiVersion) (*APIVersion, error) {
+func newApiVersion(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiVersion) (*ApiVersion, error) {
 	versionName, err := names.ParseVersion(message.Name)
 	if err != nil {
 		return nil, err
 	}
-	version := &APIVersion{
+	version := &ApiVersion{
 		Header: Header{
-			APIVersion: RegistryV1,
-			Kind:       "APIVersion",
+			ApiVersion: RegistryV1,
+			Kind:       "ApiVersion",
 			Metadata: Metadata{
 				Name:        versionName.VersionID,
 				Labels:      message.Labels,
@@ -56,12 +56,12 @@ func newAPIVersion(ctx context.Context, client *gapic.RegistryClient, message *r
 	version.Data.Description = message.Description
 	version.Data.State = message.State
 	err = core.ListSpecs(ctx, client, versionName.Spec(""), "", func(message *rpc.ApiSpec) {
-		spec, err2 := newAPISpec(ctx, client, message)
+		spec, err2 := newApiSpec(ctx, client, message)
 		// unset these because they can be inferred
-		spec.APIVersion = ""
+		spec.ApiVersion = ""
 		spec.Kind = ""
 		if err2 == nil {
-			version.Data.APISpecs = append(version.Data.APISpecs, spec)
+			version.Data.ApiSpecs = append(version.Data.ApiSpecs, spec)
 		} else {
 			err = err2
 		}
@@ -72,7 +72,7 @@ func newAPIVersion(ctx context.Context, client *gapic.RegistryClient, message *r
 func applyApiVersionPatch(
 	ctx context.Context,
 	client connection.Client,
-	version *APIVersion,
+	version *ApiVersion,
 	parent string) error {
 	name := fmt.Sprintf("%s/versions/%s", parent, version.Metadata.Name)
 	req := &rpc.UpdateApiVersionRequest{
@@ -90,7 +90,7 @@ func applyApiVersionPatch(
 	if err != nil {
 		return err
 	}
-	for _, specPatch := range version.Data.APISpecs {
+	for _, specPatch := range version.Data.ApiSpecs {
 		err := applyApiSpecPatch(ctx, client, specPatch, name)
 		if err != nil {
 			return err

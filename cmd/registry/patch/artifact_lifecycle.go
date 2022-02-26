@@ -89,7 +89,7 @@ func newLifecycle(message *rpc.Artifact) (*Lifecycle, error) {
 	}
 	lifecycle := &Lifecycle{
 		Header: Header{
-			APIVersion: RegistryV1,
+			ApiVersion: RegistryV1,
 			Kind:       "Lifecycle",
 			Metadata: Metadata{
 				Name: artifactName.ArtifactID(),
