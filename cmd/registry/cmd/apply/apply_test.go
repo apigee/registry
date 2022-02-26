@@ -23,7 +23,6 @@ import (
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/cmd/registry/patch"
 	"github.com/apigee/registry/connection"
-	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"github.com/google/go-cmp/cmp"
@@ -32,47 +31,39 @@ import (
 )
 
 func TestApply(t *testing.T) {
-	const (
-		projectID   = "apply-test"
-		projectName = "projects/" + projectID
-		parent      = projectName + "/locations/global"
-	)
+	project := names.Project{ProjectID: "apply-test"}
+	parent := project.String() + "/locations/global"
 
-	// Create a registry client.
 	ctx := context.Background()
-	registryClient, err := connection.NewClient(ctx)
-	if err != nil {
-		t.Fatalf("Error creating client: %+v", err)
-	}
-	defer registryClient.Close()
 	adminClient, err := connection.NewAdminClient(ctx)
 	if err != nil {
-		t.Fatalf("Error creating client: %+v", err)
+		t.Fatalf("Setup: failed to create client: %+v", err)
 	}
 	defer adminClient.Close()
-	// Clear the test project.
-	err = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{
-		Name:  projectName,
+
+	if err = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{
+		Name:  project.String(),
 		Force: true,
-	})
-	if err != nil && status.Code(err) != codes.NotFound {
-		t.Fatalf("Error deleting test project: %+v", err)
+	}); err != nil && status.Code(err) != codes.NotFound {
+		t.Errorf("Setup: failed to delete test project: %s", err)
 	}
-	// Create the test project.
-	_, err = adminClient.CreateProject(ctx, &rpc.CreateProjectRequest{
-		ProjectId: projectID,
-		Project: &rpc.Project{
-			DisplayName: "Test",
-			Description: "A test catalog",
-		},
-	})
+
+	if _, err := adminClient.CreateProject(ctx, &rpc.CreateProjectRequest{
+		ProjectId: project.ProjectID,
+		Project:   &rpc.Project{},
+	}); err != nil {
+		t.Fatalf("Setup: Failed to create test project: %s", err)
+	}
+
+	registryClient, err := connection.NewClient(ctx)
 	if err != nil {
-		t.Fatalf("Error creating project %s", err)
+		t.Fatalf("Setup: Failed to create registry client: %s", err)
 	}
+	defer registryClient.Close()
+
 	// Test API creation and export.
 	{
-		apiname := "registry"
-		filename := fmt.Sprintf("testdata/%s.yaml", apiname)
+		const filename = "testdata/registry.yaml"
 		cmd := Command(ctx)
 		cmd.SetArgs([]string{"-f", filename, "--parent", parent})
 		if err := cmd.Execute(); err != nil {
@@ -82,28 +73,22 @@ func TestApply(t *testing.T) {
 		if err != nil {
 			t.Fatalf("failed to read %s: %s", filename, err)
 		}
-		client, err := connection.NewClient(ctx)
-		if err != nil {
-			t.Fatalf("failed to connect to database: %s", err)
-		}
-		if api, err := names.ParseApi(fmt.Sprintf("%s/apis/%s", parent, "registry")); err == nil {
-			_, err = core.GetAPI(ctx, client, api, func(message *rpc.Api) {
-				actual, _, err := patch.ExportAPI(ctx, client, message)
-				if err != nil {
-					log.FromContext(ctx).WithError(err).Fatal("Failed to export api")
-				} else {
-					if diff := cmp.Diff(actual, expected); diff != "" {
-						t.Errorf("API mismatch %+v", api)
-						fmt.Printf("expected %d %s", len(expected), string(expected))
-						fmt.Printf("actual %d %s", len(actual), string(actual))
-					}
-				}
-			})
+		api := project.Api("registry")
+		_, err = core.GetAPI(ctx, registryClient, api, func(message *rpc.Api) {
+			actual, _, err := patch.ExportAPI(ctx, registryClient, message)
 			if err != nil {
-				t.Fatalf("failed to get api: %s", err)
+				t.Fatalf("ExportApi(%+v) returned an error: %s", message, err)
 			}
+			if diff := cmp.Diff(actual, expected); diff != "" {
+				t.Errorf("GetApi(%q) returned unexpected diff: (-want +got):\n%s", message, diff)
+			}
+		})
+		if err != nil {
+			t.Fatalf("failed to get api: %s", err)
 		}
+
 	}
+
 	// Test artifact creation and export.
 	artifacts := []string{"lifecycle", "manifest", "taxonomies"}
 	for _, a := range artifacts {
@@ -117,37 +102,25 @@ func TestApply(t *testing.T) {
 		if err != nil {
 			t.Fatalf("failed to read %s", filename)
 		}
-		client, err := connection.NewClient(ctx)
-		if err != nil {
-			t.Fatalf("failed to connect to database: %s", err)
-		}
-		if artifact, err := names.ParseArtifact(fmt.Sprintf("%s/artifacts/%s", parent, a)); err == nil {
-			_, err = core.GetArtifact(ctx, client, artifact, true, func(message *rpc.Artifact) {
-				actual, _, err := patch.ExportArtifact(ctx, client, message)
-				if err != nil {
-					log.FromContext(ctx).WithError(err).Fatal("Failed to export artifact")
-				} else {
-					if diff := cmp.Diff(actual, expected); diff != "" {
-						t.Errorf("Artifact mismatch %+v", artifact)
-						fmt.Printf("expected %d %s", len(expected), string(expected))
-						fmt.Printf("actual %d %s", len(actual), string(actual))
-					}
-				}
-			})
+		artifact := project.Artifact(a)
+		_, err = core.GetArtifact(ctx, registryClient, artifact, true, func(message *rpc.Artifact) {
+			actual, _, err := patch.ExportArtifact(ctx, registryClient, message)
 			if err != nil {
-				t.Fatalf("failed to get artifact: %s", err)
+				t.Fatalf("ExportArtifact(%+v) returned an error: %s", message, err)
 			}
+			if diff := cmp.Diff(actual, expected); diff != "" {
+				t.Errorf("GetArtifact(%q) returned unexpected diff: (-want +got):\n%s", message, diff)
+			}
+		})
+		if err != nil {
+			t.Fatalf("failed to get artifact: %s", err)
 		}
 	}
-	// Delete the test project.
-	{
-		req := &rpc.DeleteProjectRequest{
-			Name:  projectName,
-			Force: true,
-		}
-		err = adminClient.DeleteProject(ctx, req)
-		if err != nil {
-			t.Fatalf("Failed to delete test project: %s", err)
-		}
+
+	if err := adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{
+		Name:  project.String(),
+		Force: true,
+	}); err != nil {
+		t.Logf("Cleanup: Failed to delete test project: %s", err)
 	}
 }
