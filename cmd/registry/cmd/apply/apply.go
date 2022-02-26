@@ -38,7 +38,7 @@ func Command(ctx context.Context) *cobra.Command {
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
-			err = patch.Apply(ctx, client, fileName, recursive, parent)
+			err = patch.Apply(ctx, client, fileName, parent, recursive)
 			if errors.Is(err, fs.ErrNotExist) {
 				log.FromContext(ctx).WithError(err).Fatalf("File %q doesn't exist", fileName)
 			} else if err != nil {

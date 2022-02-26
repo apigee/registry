@@ -24,12 +24,7 @@ import (
 	"github.com/apigee/registry/connection"
 )
 
-func Apply(
-	ctx context.Context,
-	client connection.Client,
-	fileName string,
-	recursive bool,
-	parent string) error {
+func Apply(ctx context.Context, client connection.Client, fileName, parent string, recursive bool) error {
 	return filepath.WalkDir(fileName,
 		func(path string, entry fs.DirEntry, err error) error {
 			if err != nil {
@@ -45,17 +40,11 @@ func Apply(
 		})
 }
 
-func applyFile(
-	ctx context.Context,
-	client connection.Client,
-	fileName string,
-	parent string) error {
+func applyFile(ctx context.Context, client connection.Client, fileName, parent string) error {
 	bytes, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		return err
 	}
-
-	// get the id and kind of artifact from the YAML elements common to all artifacts
 	header, err := readHeader(bytes)
 	if err != nil {
 		return err
