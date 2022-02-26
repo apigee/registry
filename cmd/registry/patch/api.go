@@ -25,18 +25,20 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+type ApiData struct {
+	DisplayName           string           `yaml:"displayName,omitempty"`
+	Description           string           `yaml:"description,omitempty"`
+	Availability          string           `yaml:"availability,omitempty"`
+	RecommendedVersion    string           `yaml:"recommendedVersion,omitempty"`
+	RecommendedDeployment string           `yaml:"recommendedDeployment,omitempty"`
+	ApiVersions           []*ApiVersion    `yaml:"versions,omitempty"`
+	ApiDeployments        []*ApiDeployment `yaml:"deployments,omitempty"`
+	Artifacts             []*Artifact      `yaml:"artifacts,omitempty"`
+}
+
 type Api struct {
 	Header `yaml:",inline"`
-	Data   struct {
-		DisplayName           string           `yaml:"displayName,omitempty"`
-		Description           string           `yaml:"description,omitempty"`
-		Availability          string           `yaml:"availability,omitempty"`
-		RecommendedVersion    string           `yaml:"recommendedVersion,omitempty"`
-		RecommendedDeployment string           `yaml:"recommendedDeployment,omitempty"`
-		ApiVersions           []*ApiVersion    `yaml:"versions,omitempty"`
-		ApiDeployments        []*ApiDeployment `yaml:"deployments,omitempty"`
-		Artifacts             []*Artifact      `yaml:"artifacts,omitempty"`
-	} `yaml:"data"`
+	Data   ApiData `yaml:"data"`
 }
 
 func newApi(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api) (*Api, error) {

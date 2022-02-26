@@ -39,13 +39,15 @@ type ManifestGeneratedResource struct {
 	Action       string                `yaml:"action"`
 }
 
+type ManifestData struct {
+	DisplayName        string                       `yaml:"displayName,omitempty"`
+	Description        string                       `yaml:"description,omitempty"`
+	GeneratedResources []*ManifestGeneratedResource `yaml:"generatedResources"`
+}
+
 type Manifest struct {
 	Header `yaml:",inline"`
-	Data   struct {
-		DisplayName        string                       `yaml:"displayName,omitempty"`
-		Description        string                       `yaml:"description,omitempty"`
-		GeneratedResources []*ManifestGeneratedResource `yaml:"generatedResources"`
-	} `yaml:"data"`
+	Data   ManifestData `yaml:"data"`
 }
 
 func (a *Manifest) GetMimeType() string {

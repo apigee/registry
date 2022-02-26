@@ -25,15 +25,17 @@ import (
 	"github.com/apigee/registry/server/registry/names"
 )
 
+type ApiVersionData struct {
+	DisplayName string      `yaml:"displayName,omitempty"`
+	Description string      `yaml:"description,omitempty"`
+	State       string      `yaml:"state,omitempty"`
+	ApiSpecs    []*ApiSpec  `yaml:"specs,omitempty"`
+	Artifacts   []*Artifact `yaml:"artifacts,omitempty"`
+}
+
 type ApiVersion struct {
 	Header `yaml:",inline"`
-	Data   struct {
-		DisplayName string      `yaml:"displayName,omitempty"`
-		Description string      `yaml:"description,omitempty"`
-		State       string      `yaml:"state,omitempty"`
-		ApiSpecs    []*ApiSpec  `yaml:"specs,omitempty"`
-		Artifacts   []*Artifact `yaml:"artifacts,omitempty"`
-	} `yaml:"data"`
+	Data   ApiVersionData `yaml:"data"`
 }
 
 func newApiVersion(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiVersion) (*ApiVersion, error) {

@@ -24,18 +24,20 @@ import (
 	"github.com/apigee/registry/server/registry/names"
 )
 
+type ApiDeploymentData struct {
+	DisplayName        string      `yaml:"displayName,omitempty"`
+	Description        string      `yaml:"description,omitempty"`
+	ApiSpecRevision    string      `yaml:"apiSpecRevision,omitempty"`
+	EndpointURI        string      `yaml:"endpointURI,omitempty"`
+	ExternalChannelURI string      `yaml:"externalChannelURI,omitempty"`
+	IntendedAudience   string      `yaml:"intendedAudience,omitempty"`
+	AccessGuidance     string      `yaml:"accessGuidance,omitempty"`
+	Artifacts          []*Artifact `yaml:"artifacts,omitempty"`
+}
+
 type ApiDeployment struct {
 	Header `yaml:",inline"`
-	Data   struct {
-		DisplayName        string      `yaml:"displayName,omitempty"`
-		Description        string      `yaml:"description,omitempty"`
-		ApiSpecRevision    string      `yaml:"apiSpecRevision,omitempty"`
-		EndpointURI        string      `yaml:"endpointURI,omitempty"`
-		ExternalChannelURI string      `yaml:"externalChannelURI,omitempty"`
-		IntendedAudience   string      `yaml:"intendedAudience,omitempty"`
-		AccessGuidance     string      `yaml:"accessGuidance,omitempty"`
-		Artifacts          []*Artifact `yaml:"artifacts,omitempty"`
-	} `yaml:"data"`
+	Data   ApiDeploymentData `yaml:"data"`
 }
 
 // relativeSpecRevisionName returns the versionid+specid if the spec is within the specified API

@@ -26,13 +26,15 @@ import (
 
 const TaxonomyListMimeType = "application/octet-stream;type=google.cloud.apigeeregistry.v1.apihub.TaxonomyList"
 
+type TaxonomyListData struct {
+	DisplayName string     `yaml:"displayName,omitempty"`
+	Description string     `yaml:"description,omitempty"`
+	Taxonomies  []Taxonomy `yaml:"taxonomies"`
+}
+
 type TaxonomyList struct {
 	Header `yaml:",inline"`
-	Data   struct {
-		DisplayName string     `yaml:"displayName,omitempty"`
-		Description string     `yaml:"description,omitempty"`
-		Taxonomies  []Taxonomy `yaml:"taxonomies"`
-	} `yaml:"data"`
+	Data   TaxonomyListData `yaml:"data"`
 }
 
 func (a *TaxonomyList) GetMimeType() string {

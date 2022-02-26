@@ -28,15 +28,17 @@ import (
 	"github.com/apigee/registry/server/registry/names"
 )
 
+type ApiSpecData struct {
+	FileName    string      `yaml:"filename,omitempty"`
+	Description string      `yaml:"description,omitempty"`
+	MimeType    string      `yaml:"mimeType,omitempty"`
+	SourceURI   string      `yaml:"sourceURI,omitempty"`
+	Artifacts   []*Artifact `yaml:"artifacts,omitempty"`
+}
+
 type ApiSpec struct {
 	Header `yaml:",inline"`
-	Data   struct {
-		FileName    string      `yaml:"filename,omitempty"`
-		Description string      `yaml:"description,omitempty"`
-		MimeType    string      `yaml:"mimeType,omitempty"`
-		SourceURI   string      `yaml:"sourceURI,omitempty"`
-		Artifacts   []*Artifact `yaml:"artifacts,omitempty"`
-	} `yaml:"data"`
+	Data   ApiSpecData `yaml:"data"`
 }
 
 func newApiSpec(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiSpec) (*ApiSpec, error) {

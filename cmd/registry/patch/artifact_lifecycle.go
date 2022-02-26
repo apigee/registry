@@ -34,13 +34,15 @@ type LifecycleStage struct {
 	DisplayOrder int    `yaml:"displayOrder,omitempty"`
 }
 
+type LifecycleData struct {
+	DisplayName string            `yaml:"displayName,omitempty"`
+	Description string            `yaml:"description,omitempty"`
+	Stages      []*LifecycleStage `yaml:"stages"`
+}
+
 type Lifecycle struct {
 	Header `yaml:",inline"`
-	Data   struct {
-		DisplayName string            `yaml:"displayName,omitempty"`
-		Description string            `yaml:"description,omitempty"`
-		Stages      []*LifecycleStage `yaml:"stages"`
-	} `yaml:"data"`
+	Data   LifecycleData `yaml:"data"`
 }
 
 func (a *Lifecycle) GetMimeType() string {
