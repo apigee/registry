@@ -30,7 +30,7 @@ type UnknownArtifact struct {
 }
 
 func (a *UnknownArtifact) GetMimeType() string {
-	return UnknownArtifactMimeType
+	return a.Data.MimeType
 }
 
 func (a *UnknownArtifact) GetHeader() *Header {
