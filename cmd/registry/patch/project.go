@@ -17,6 +17,7 @@ package patch
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	"os"
 
 	"github.com/apigee/registry/cmd/registry/core"
@@ -67,7 +68,7 @@ func ExportProject(ctx context.Context, client *gapic.RegistryClient, name strin
 			log.FromContext(ctx).WithError(err).Fatal("Failed to export artifact")
 		}
 		filename := fmt.Sprintf("%s/%s.yaml", artifactsDir, header.Metadata.Name)
-		err = os.WriteFile(filename, bytes, 0644)
+		err = os.WriteFile(filename, bytes, fs.ModePerm)
 		if err != nil {
 			// TODO: this should return an error instead of logging (requires ListArtifacts modification)
 			log.FromContext(ctx).WithError(err).Fatal("Failed to write output YAML")
