@@ -53,9 +53,8 @@ func yamlCommand(ctx context.Context) *cobra.Command {
 					bytes, _, err := patch.ExportAPI(ctx, client, message)
 					if err != nil {
 						log.FromContext(ctx).WithError(err).Fatal("Failed to export API")
-					} else {
-						fmt.Println(string(bytes))
 					}
+					fmt.Println(string(bytes))
 				})
 				if err != nil {
 					log.FromContext(ctx).WithError(err).Fatal("Failed to export API YAML")
