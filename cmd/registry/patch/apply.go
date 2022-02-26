@@ -22,7 +22,6 @@ import (
 	"path/filepath"
 
 	"github.com/apigee/registry/connection"
-	"gopkg.in/yaml.v2"
 )
 
 func Apply(
@@ -57,13 +56,9 @@ func applyFile(
 	}
 
 	// get the id and kind of artifact from the YAML elements common to all artifacts
-	var header Header
-	err = yaml.Unmarshal(bytes, &header)
+	header, err := readHeader(bytes)
 	if err != nil {
 		return err
-	}
-	if header.APIVersion != RegistryV1 {
-		return fmt.Errorf("Unsupported API version: %s", header.APIVersion)
 	}
 	switch header.Kind {
 	case "API":

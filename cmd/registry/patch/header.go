@@ -14,6 +14,12 @@
 
 package patch
 
+import (
+	"fmt"
+
+	"gopkg.in/yaml.v2"
+)
+
 const RegistryV1 = "apigeeregistry/v1"
 
 type Header struct {
@@ -26,4 +32,16 @@ type Metadata struct {
 	Name        string            `yaml:"name"`
 	Labels      map[string]string `yaml:"labels,omitempty"`
 	Annotations map[string]string `yaml:"annotations,omitempty"`
+}
+
+func readHeader(bytes []byte) (Header, error) {
+	var header Header
+	err := yaml.Unmarshal(bytes, &header)
+	if err != nil {
+		return header, err
+	}
+	if header.APIVersion != RegistryV1 {
+		return header, fmt.Errorf("Unsupported API version: %s", header.APIVersion)
+	}
+	return header, nil
 }
