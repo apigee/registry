@@ -28,13 +28,9 @@ import (
 )
 
 // ExportProject writes a project into a directory of YAML files.
-func ExportProject(ctx context.Context, client *gapic.RegistryClient, name string) error {
-	projectName, err := names.ParseProject(name)
-	if err != nil {
-		return err
-	}
+func ExportProject(ctx context.Context, client *gapic.RegistryClient, projectName names.Project) error {
 	apisDir := fmt.Sprintf("%s/apis", projectName.ProjectID)
-	err = os.MkdirAll(apisDir, 0777)
+	err := os.MkdirAll(apisDir, 0777)
 	if err != nil {
 		return err
 	}
