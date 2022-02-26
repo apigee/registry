@@ -53,7 +53,7 @@ type Taxonomy struct {
 	SingleSelection bool              `yaml:"singleSelection,omitempty"`
 	SearchExcluded  bool              `yaml:"searchExcluded,omitempty"`
 	SystemManaged   bool              `yaml:"systemManaged,omitempty"`
-	DisplayOrder    int               `yaml:"displayOrder,omitempty"`
+	DisplayOrder    int               `yaml:"displayOrder"`
 	Elements        []TaxonomyElement `yaml:"elements"`
 }
 

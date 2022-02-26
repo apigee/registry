@@ -11,6 +11,7 @@ data:
     displayName: Target users
     description: The intended users (consumers) of an API
     systemManaged: true
+    displayOrder: 0
     elements:
     - id: team
       displayName: Team

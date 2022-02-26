@@ -10,6 +10,7 @@ data:
     displayName: Concept
     description: Description of the business case and user needs for why an API should
       exist
+    displayOrder: 0
   - id: design
     displayName: Design
     description: Definition of the interface details and proposal of the API contract

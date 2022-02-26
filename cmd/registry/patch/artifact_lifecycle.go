@@ -31,7 +31,7 @@ type LifecycleStage struct {
 	DisplayName  string `yaml:"displayName,omitempty"`
 	Description  string `yaml:"description,omitempty"`
 	URL          string `yaml:"url,omitempty"`
-	DisplayOrder int    `yaml:"displayOrder,omitempty"`
+	DisplayOrder int    `yaml:"displayOrder"`
 }
 
 type LifecycleData struct {
