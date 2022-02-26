@@ -120,6 +120,14 @@ func ExportAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.A
 	return b, &api.Header, nil
 }
 
+// TODO: These functions assume that their arguments are valid names and fail the export if they aren't.
+// They are used to replace the absolute resource names stored by the API with more reusable relative
+// resource names that allow the exported files to be applied to arbitrary projects. This more
+// concise form is also more convenient for users to specify. But it requires additional validation.
+// Either we 1) only allow relative names in these fields in the YAML representation or
+// 2) allow both absolute and relative names in these fields and handle them appropriately.
+// We should probably support only one output format; for this, relative names seem preferable.
+
 // relativeVersionName returns the version id if the version is within the specified API
 func relativeVersionName(apiName names.Api, version string) (string, error) {
 	if version == "" {
@@ -149,6 +157,11 @@ func relativeDeploymentName(apiName names.Api, deployment string) (string, error
 	}
 	return deployment, nil
 }
+
+// TODO: The following functions assume that their arguments are truly an ID,
+// but there's there's no validation (here or in the caller) to prevent a full
+// resource name from being passed in. Users specifying a full resource name will
+// end up with a malformed name being stored.
 
 // optionalVersionName returns a version name if the id is not empty
 func optionalVersionName(apiName names.Api, versionID string) string {
