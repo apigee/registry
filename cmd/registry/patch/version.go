@@ -57,7 +57,7 @@ func newApiVersion(ctx context.Context, client *gapic.RegistryClient, message *r
 	version.Data.DisplayName = message.DisplayName
 	version.Data.Description = message.Description
 	version.Data.State = message.State
-	err = core.ListSpecs(ctx, client, versionName.Spec(""), "", func(message *rpc.ApiSpec) {
+	err = core.ListSpecs(ctx, client, versionName.Spec("-"), "", func(message *rpc.ApiSpec) {
 		spec, err2 := newApiSpec(ctx, client, message)
 		// unset these because they can be inferred
 		spec.ApiVersion = ""

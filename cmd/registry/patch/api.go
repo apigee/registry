@@ -68,7 +68,7 @@ func newApi(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api)
 	if err != nil {
 		return nil, err
 	}
-	err = core.ListVersions(ctx, client, apiName.Version(""), "", func(message *rpc.ApiVersion) {
+	err = core.ListVersions(ctx, client, apiName.Version("-"), "", func(message *rpc.ApiVersion) {
 		version, err2 := newApiVersion(ctx, client, message)
 		// unset these because they can be inferred
 		version.ApiVersion = ""
@@ -82,7 +82,7 @@ func newApi(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api)
 	if err != nil {
 		return nil, err
 	}
-	err = core.ListDeployments(ctx, client, apiName.Deployment(""), "", func(message *rpc.ApiDeployment) {
+	err = core.ListDeployments(ctx, client, apiName.Deployment("-"), "", func(message *rpc.ApiDeployment) {
 		deployment, err2 := newApiDeployment(ctx, client, message)
 		// unset these because they can be inferred
 		deployment.ApiVersion = ""
