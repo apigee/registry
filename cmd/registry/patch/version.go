@@ -57,17 +57,20 @@ func newApiVersion(ctx context.Context, client *gapic.RegistryClient, message *r
 	version.Data.DisplayName = message.DisplayName
 	version.Data.Description = message.Description
 	version.Data.State = message.State
+	var innerErr error // TODO: remove when ListSpecs accepts a handler that returns errors
 	err = core.ListSpecs(ctx, client, versionName.Spec("-"), "", func(message *rpc.ApiSpec) {
-		spec, err2 := newApiSpec(ctx, client, message)
-		// unset these because they can be inferred
-		spec.ApiVersion = ""
-		spec.Kind = ""
-		if err2 == nil {
+		var spec *ApiSpec
+		spec, innerErr = newApiSpec(ctx, client, message)
+		if innerErr == nil {
+			// unset these because they can be inferred
+			spec.ApiVersion = ""
+			spec.Kind = ""
 			version.Data.ApiSpecs = append(version.Data.ApiSpecs, spec)
-		} else {
-			err = err2
 		}
 	})
+	if innerErr != nil {
+		return nil, innerErr
+	}
 	return version, err
 }
 

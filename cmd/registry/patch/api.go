@@ -68,31 +68,42 @@ func newApi(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api)
 	if err != nil {
 		return nil, err
 	}
+	var innerErr error // TODO: remove when ListVersions accepts a handler that returns errors
 	err = core.ListVersions(ctx, client, apiName.Version("-"), "", func(message *rpc.ApiVersion) {
-		version, err2 := newApiVersion(ctx, client, message)
-		// unset these because they can be inferred
-		version.ApiVersion = ""
-		version.Kind = ""
-		if err2 == nil {
+		if innerErr != nil {
+			return
+		}
+		var version *ApiVersion
+		version, innerErr = newApiVersion(ctx, client, message)
+		if innerErr == nil {
+			// unset these because they can be inferred
+			version.ApiVersion = ""
+			version.Kind = ""
 			api.Data.ApiVersions = append(api.Data.ApiVersions, version)
-		} else {
-			err = err2
 		}
 	})
+	if innerErr != nil {
+		return nil, innerErr
+	}
 	if err != nil {
 		return nil, err
 	}
 	err = core.ListDeployments(ctx, client, apiName.Deployment("-"), "", func(message *rpc.ApiDeployment) {
-		deployment, err2 := newApiDeployment(ctx, client, message)
-		// unset these because they can be inferred
-		deployment.ApiVersion = ""
-		deployment.Kind = ""
-		if err2 == nil {
+		if innerErr != nil {
+			return
+		}
+		var deployment *ApiDeployment
+		deployment, innerErr = newApiDeployment(ctx, client, message)
+		if innerErr == nil {
+			// unset these because they can be inferred
+			deployment.ApiVersion = ""
+			deployment.Kind = ""
 			api.Data.ApiDeployments = append(api.Data.ApiDeployments, deployment)
-		} else {
-			err = err2
 		}
 	})
+	if innerErr != nil {
+		return nil, innerErr
+	}
 	return api, err
 }
 
