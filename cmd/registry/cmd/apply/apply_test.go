@@ -62,6 +62,9 @@ func TestApply(t *testing.T) {
 	defer registryClient.Close()
 
 	// Test API creation and export.
+	// TODO: This should be split into two parts: 1) testing API creation, and 2) testing API export.
+	// When API creation breaks we want to see something like FAIL: TestApply/Create_API or
+	// FAIL: TestApplyAPIs/Create, not FAIL: TestApply/Create_and_Export_API, or worse FAIL: TestApply.
 	{
 		const filename = "testdata/registry.yaml"
 		cmd := Command(ctx)
@@ -74,6 +77,7 @@ func TestApply(t *testing.T) {
 			t.Fatalf("failed to read %s: %s", filename, err)
 		}
 		api := project.Api("registry")
+		// TODO: Prefer using the API client directly instead of relying on application code that isn't directly related to this test.
 		_, err = core.GetAPI(ctx, registryClient, api, func(message *rpc.Api) {
 			actual, _, err := patch.ExportAPI(ctx, registryClient, message)
 			if err != nil {
@@ -90,6 +94,9 @@ func TestApply(t *testing.T) {
 	}
 
 	// Test artifact creation and export.
+	// TODO: These should run as separate subtests to make it clear exactly which artifact types are failing.
+	// Creation and export should also be separated ideally. The error message should at least make it
+	// clear whether create or export is failing.
 	artifacts := []string{"lifecycle", "manifest", "taxonomies"}
 	for _, a := range artifacts {
 		filename := fmt.Sprintf("testdata/%s.yaml", a)
@@ -103,6 +110,9 @@ func TestApply(t *testing.T) {
 			t.Fatalf("failed to read %s", filename)
 		}
 		artifact := project.Artifact(a)
+		// TODO: This subtly determines that we're testing ExportArtifact with messages that have
+		// preloaded contents. Loading the contents directly using the client will make it clear
+		// that's part of the test, and will provide a good place to write a comment about that choice.
 		_, err = core.GetArtifact(ctx, registryClient, artifact, true, func(message *rpc.Artifact) {
 			actual, _, err := patch.ExportArtifact(ctx, registryClient, message)
 			if err != nil {
