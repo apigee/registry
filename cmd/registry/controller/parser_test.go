@@ -409,7 +409,7 @@ func TestValidateResourceEntry(t *testing.T) {
 			generatedResource: &rpc.GeneratedResource{
 				Pattern: "apis/-/versions/-/specs/-/artifacts/complexity",
 				Dependencies: []*rpc.Dependency{
-					&rpc.Dependency{
+					{
 						Pattern: "$resource.spec",
 					},
 				},
@@ -421,7 +421,7 @@ func TestValidateResourceEntry(t *testing.T) {
 			generatedResource: &rpc.GeneratedResource{
 				Pattern: "artifacts/summary",
 				Dependencies: []*rpc.Dependency{
-					&rpc.Dependency{
+					{
 						Pattern: "apis/-/versions/-/specs/-",
 					},
 				},
@@ -433,10 +433,10 @@ func TestValidateResourceEntry(t *testing.T) {
 			generatedResource: &rpc.GeneratedResource{
 				Pattern: "apis/-/versions/-/specs/-/artifacts/conformance-apihub-styleguide",
 				Dependencies: []*rpc.Dependency{
-					&rpc.Dependency{
+					{
 						Pattern: "$resource.spec",
 					},
-					&rpc.Dependency{
+					{
 						Pattern: "artifacts/apihub-styleguide",
 					},
 				},
@@ -465,10 +465,10 @@ func TestValidateResourceEntryError(t *testing.T) {
 			generatedResource: &rpc.GeneratedResource{
 				Pattern: "apis/-/versions/-/artifacts/version-summary",
 				Dependencies: []*rpc.Dependency{
-					&rpc.Dependency{
+					{
 						Pattern: "$resource.version",
 					},
-					&rpc.Dependency{
+					{
 						Pattern: "$resource.spec", // Correct pattern: $resource.version/specs/-
 					},
 				},
@@ -480,13 +480,13 @@ func TestValidateResourceEntryError(t *testing.T) {
 			generatedResource: &rpc.GeneratedResource{
 				Pattern: "apis/-/versions/-/artifacts/version-summary",
 				Dependencies: []*rpc.Dependency{
-					&rpc.Dependency{
+					{
 						Pattern: "$resource.api/versions/-", // Correct pattern: $resource.version
 					},
-					&rpc.Dependency{
+					{
 						Pattern: "$resource.api/artifacts/prod-version-metadata",
 					},
-					&rpc.Dependency{
+					{
 						Pattern: "artifacts/summary-config",
 					},
 				},
@@ -498,13 +498,13 @@ func TestValidateResourceEntryError(t *testing.T) {
 			generatedResource: &rpc.GeneratedResource{
 				Pattern: "apis/-/versions/-/specs/-/artifacts/conformance-apihub-styleguide",
 				Dependencies: []*rpc.Dependency{
-					&rpc.Dependency{
+					{
 						Pattern: "$resource.spec",
 					},
-					&rpc.Dependency{
+					{
 						Pattern: "$resource.artifact", // Invalid dependency
 					},
-					&rpc.Dependency{
+					{
 						Pattern: "artifacts/apihub-styleguide",
 					},
 				},
