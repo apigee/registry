@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"testing"
 
-	// "github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 )
 
@@ -343,6 +343,12 @@ func TestGenerateCommand(t *testing.T) {
 			resourceName: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 			want:         "compute score projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity",
 		},
+		{
+			desc:         "multiple reference entities",
+			action:       "compute compliance $resource.spec --policy=$resource.api/artifacts/design-policy",
+			resourceName: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+			want:         "compute compliance projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml --policy=projects/demo/locations/global/apis/petstore/artifacts/design-policy",
+		},
 	}
 
 	for _, test := range tests {
@@ -391,4 +397,128 @@ func TestGenerateCommandError(t *testing.T) {
 		})
 	}
 
+}
+
+func TestValidateResourceEntry(t *testing.T) {
+	tests := []struct {
+		desc              string
+		generatedResource *rpc.GeneratedResource
+	}{
+		{
+			desc: "single entity reference",
+			generatedResource: &rpc.GeneratedResource{
+				Pattern: "apis/-/versions/-/specs/-/artifacts/complexity",
+				Dependencies: []*rpc.Dependency{
+					&rpc.Dependency{
+						Pattern: "$resource.spec",
+					},
+				},
+				Action: "registry compute complexity $resource.spec",
+			},
+		},
+		{
+			desc: "no entity reference",
+			generatedResource: &rpc.GeneratedResource{
+				Pattern: "artifacts/summary",
+				Dependencies: []*rpc.Dependency{
+					&rpc.Dependency{
+						Pattern: "apis/-/versions/-/specs/-",
+					},
+				},
+				Action: "registry compute summary apis/-/versions/-/specs/-",
+			},
+		},
+		{
+			desc: "multiple entity references",
+			generatedResource: &rpc.GeneratedResource{
+				Pattern: "apis/-/versions/-/specs/-/artifacts/conformance-apihub-styleguide",
+				Dependencies: []*rpc.Dependency{
+					&rpc.Dependency{
+						Pattern: "$resource.spec",
+					},
+					&rpc.Dependency{
+						Pattern: "artifacts/apihub-styleguide",
+					},
+				},
+				Action: "registry compute conformance $resource.spec",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			err := ValidateResourceEntry(test.generatedResource)
+			if err != nil {
+				t.Errorf("ValidateResourceEntry() generated unexpected error: %s", err)
+			}
+		})
+	}
+}
+
+func TestValidateResourceEntryError(t *testing.T) {
+	tests := []struct {
+		desc              string
+		generatedResource *rpc.GeneratedResource
+	}{
+		{
+			desc: "invalid entity reference",
+			generatedResource: &rpc.GeneratedResource{
+				Pattern: "apis/-/versions/-/artifacts/version-summary",
+				Dependencies: []*rpc.Dependency{
+					&rpc.Dependency{
+						Pattern: "$resource.version",
+					},
+					&rpc.Dependency{
+						Pattern: "$resource.spec", // Correct pattern: $resource.version/specs/-
+					},
+				},
+				Action: "registry generate summary $resource.version",
+			},
+		},
+		{
+			desc: "lower entity in action",
+			generatedResource: &rpc.GeneratedResource{
+				Pattern: "apis/-/versions/-/artifacts/version-summary",
+				Dependencies: []*rpc.Dependency{
+					&rpc.Dependency{
+						Pattern: "$resource.api/versions/-", // Correct pattern: $resource.version
+					},
+					&rpc.Dependency{
+						Pattern: "$resource.api/artifacts/prod-version-metadata",
+					},
+					&rpc.Dependency{
+						Pattern: "artifacts/summary-config",
+					},
+				},
+				Action: "registry generate summary $resource.version",
+			},
+		},
+		{
+			desc: "lower enity in deps",
+			generatedResource: &rpc.GeneratedResource{
+				Pattern: "apis/-/versions/-/specs/-/artifacts/conformance-apihub-styleguide",
+				Dependencies: []*rpc.Dependency{
+					&rpc.Dependency{
+						Pattern: "$resource.spec",
+					},
+					&rpc.Dependency{
+						Pattern: "$resource.artifact", // Invalid dependency
+					},
+					&rpc.Dependency{
+						Pattern: "artifacts/apihub-styleguide",
+					},
+				},
+				Action: "registry compute conformance $resource.spec",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			err := ValidateResourceEntry(test.generatedResource)
+			if err == nil {
+				t.Errorf("Expected ValidateResourceEntry() to fail, unexpected success")
+			}
+		})
+	}
 }

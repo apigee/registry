@@ -106,6 +106,24 @@ func TestControllerErrors(t *testing.T) {
 			},
 		},
 		{
+			desc: "Invalid multiple entities",
+			generatedResource: &rpc.GeneratedResource{
+				Pattern: "apis/-/versions/-/artifacts/version-summary",
+				Dependencies: []*rpc.Dependency{
+					{
+						Pattern: "$resource.api/versions/-", // Correct pattern should be: $resource.version
+					},
+					{
+						Pattern: "$resource.api/artifacts/prod-version-metadata",
+					},
+					{
+						Pattern: "artifacts/summary-config",
+					},
+				},
+				Action: "registry generate summary $resource.version",
+			},
+		},
+		{
 			desc: "Incorrect action reference",
 			generatedResource: &rpc.GeneratedResource{
 				Pattern: "apis/-/versions/-/artifacts/score",

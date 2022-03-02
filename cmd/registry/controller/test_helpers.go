@@ -24,6 +24,7 @@ import (
 	"github.com/apigee/registry/rpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
@@ -160,5 +161,28 @@ func createUpdateArtifact(
 	err := core.SetArtifact(ctx, client, artifact)
 	if err != nil {
 		t.Fatalf("Failed SetArtifact(%v): %s", artifact, err.Error())
+	}
+}
+
+func uploadStyleguide(
+	ctx context.Context,
+	client connection.Client,
+	t *testing.T,
+	projectID string,
+	styleguide *rpc.StyleGuide) {
+	t.Helper()
+	// Upload the styleguide definition to registry
+	styleGuideMarshalled, err := proto.Marshal(styleguide)
+	if err != nil {
+		t.Fatal("Failed to encode style guide")
+	}
+
+	err = core.SetArtifact(ctx, client, &rpc.Artifact{
+		Name:     fmt.Sprintf("projects/%s/locations/global/artifacts/%s", projectID, styleguide.GetId()),
+		MimeType: core.MimeTypeForMessageType("google.cloud.apigeeregistry.applications.v1alpha1.StyleGuide"),
+		Contents: styleGuideMarshalled,
+	})
+	if err != nil {
+		t.Fatalf("Failed to upload styleguide")
 	}
 }
