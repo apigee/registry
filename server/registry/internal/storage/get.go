@@ -64,10 +64,10 @@ func (c *Client) GetSpec(ctx context.Context, name names.Spec) (*models.Spec, er
 		Where("api_id = ?", name.ApiID).
 		Where("version_id = ?", name.VersionID).
 		Where("spec_id = ?", name.SpecID).
-		Order("revision_create_time")
+		Order("revision_create_time desc")
 
 	v := new(models.Spec)
-	if err := op.Last(v).Error; err == gorm.ErrRecordNotFound {
+	if err := op.First(v).Error; err == gorm.ErrRecordNotFound {
 		return nil, status.Errorf(codes.NotFound, "%q not found in database", name)
 	} else if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -114,10 +114,10 @@ func (c *Client) GetDeployment(ctx context.Context, name names.Deployment) (*mod
 		Where("project_id = ?", name.ProjectID).
 		Where("api_id = ?", name.ApiID).
 		Where("deployment_id = ?", name.DeploymentID).
-		Order("revision_create_time")
+		Order("revision_create_time desc")
 
 	v := new(models.Deployment)
-	if err := op.Last(v).Error; err == gorm.ErrRecordNotFound {
+	if err := op.First(v).Error; err == gorm.ErrRecordNotFound {
 		return nil, status.Errorf(codes.NotFound, "%q not found in database", name)
 	} else if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
