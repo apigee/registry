@@ -15,19 +15,25 @@
 package core
 
 import (
+	"archive/zip"
+	"bytes"
 	"context"
 	"io/ioutil"
-	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 
-	"github.com/apigee/registry/log"
 	"github.com/yoheimuta/go-protoparser/v4/parser"
 
 	protoparser "github.com/yoheimuta/go-protoparser/v4"
 	yaml "gopkg.in/yaml.v3"
 )
+
+// The API Service Configuration contains important API properties.
+type ServiceConfig struct {
+	Type  string `yaml:"type"`
+	Title string `yaml:"title"`
+}
 
 // Details contains details about a spec.
 type Details struct {
@@ -37,106 +43,78 @@ type Details struct {
 
 // NewDetailsFromZippedProtos returns a Details structure describing a spec.
 func NewDetailsFromZippedProtos(ctx context.Context, b []byte) (*Details, error) {
-	// create a tmp directory
-	dname, err := ioutil.TempDir("", "registry-protos-")
+	r, err := zip.NewReader(bytes.NewReader(b), int64(len(b)))
 	if err != nil {
 		return nil, err
 	}
-	// whenever we finish, delete the tmp directory
-	defer os.RemoveAll(dname)
-	// unzip the protos to the temp directory
-	_, err = UnzipArchiveToPath(b, dname)
-	if err != nil {
-		return nil, err
-	}
-	// visit all the files in the temp directory
-	details := make([]*Details, 0)
-	err = filepath.Walk(dname,
-		func(path string, info os.FileInfo, err error) error {
-			if err != nil {
-				return err
-			}
-			if strings.HasSuffix(path, ".proto") {
-				details = append(details, analyzeProto(path))
-			}
-			if strings.HasSuffix(path, ".yaml") && !strings.Contains(path, "gapic") {
-				details = append(details, analyzeYaml(path))
-			}
-			return nil
-		})
-	if err != nil {
-		log.FromContext(ctx).WithError(err).Debug("Failed to walk directory")
-	}
-	if len(details) == 1 {
-		return details[0], nil
-	}
-	if len(details) > 1 {
-		summary := &Details{
-			Title:    details[0].Title,
-			Services: details[0].Services,
-		}
-		for i, d := range details {
-			if i > 0 && d != nil {
-				if d.Title != "" {
-					summary.Title = d.Title
-				}
-				summary.Services = append(summary.Services, d.Services...)
-			}
-		}
-		sort.Strings(summary.Services)
-		return summary, nil
-	}
+
 	return &Details{
-		Title:    "",
-		Services: nil,
+		Title:    protoTitle(r.File),
+		Services: protoServices(r.File),
 	}, nil
 }
 
-func analyzeYaml(filename string) *Details {
-	var err error
-	bytes, err := ioutil.ReadFile(filename)
-	if err != nil {
-		return nil
-	}
-	var info map[string]interface{}
-	err = yaml.Unmarshal(bytes, &info)
-	if err != nil {
-		return nil
-	}
-	documentType := info["type"]
-	if documentType == nil {
-		return nil
-	}
-	if documentType.(string) != "google.api.Service" {
-		return nil
-	}
-	title := info["title"].(string)
-	return &Details{Title: title}
-}
+func protoTitle(files []*zip.File) string {
+	for _, f := range files {
+		if !strings.HasSuffix(f.Name, ".yaml") || strings.Contains(f.Name, "gapic") {
+			continue
+		}
 
-func analyzeProto(filename string) *Details {
-	reader, err := os.Open(filename)
-	if err != nil {
-		return nil
-	}
-	defer reader.Close()
-	p, err := protoparser.Parse(
-		reader,
-		protoparser.WithDebug(false),
-		protoparser.WithPermissive(true),
-		protoparser.WithFilename(filepath.Base(filename)),
-	)
-	if err != nil {
-		return nil
-	}
-	details := &Details{}
-	for _, x := range p.ProtoBody {
-		switch m := x.(type) {
-		case *parser.Service:
-			details.Services = append(details.Services, m.ServiceName)
-		default:
-			// fmt.Printf("IGNORED %+v\n", v)
+		r, err := f.Open()
+		if err != nil {
+			continue
+		}
+		defer r.Close()
+
+		bytes, err := ioutil.ReadAll(r)
+		if err != nil {
+			continue
+		}
+
+		info := new(ServiceConfig)
+		if err := yaml.Unmarshal(bytes, &info); err != nil {
+			continue
+		}
+
+		if info.Type == "google.api.Service" {
+			return info.Title
 		}
 	}
-	return details
+
+	return ""
+}
+
+func protoServices(files []*zip.File) []string {
+	services := make([]string, 0)
+	for _, f := range files {
+		if !strings.HasSuffix(f.Name, ".proto") {
+			continue
+		}
+
+		r, err := f.Open()
+		if err != nil {
+			continue
+		}
+		defer r.Close()
+
+		opts := []protoparser.Option{
+			protoparser.WithDebug(false),
+			protoparser.WithPermissive(true),
+			protoparser.WithFilename(filepath.Base(f.Name)),
+		}
+
+		p, err := protoparser.Parse(r, opts...)
+		if err != nil {
+			continue
+		}
+
+		for _, x := range p.ProtoBody {
+			if m, ok := x.(*parser.Service); ok {
+				services = append(services, m.ServiceName)
+			}
+		}
+	}
+
+	sort.Strings(services)
+	return services
 }
