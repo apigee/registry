@@ -83,7 +83,7 @@ func buildArtifact(ctx context.Context, parent string, filename string) (*rpc.Ar
 	var artifact *rpc.Artifact
 	switch header.Kind {
 	case "Manifest", "google.cloud.apigeeregistry.v1.controller.Manifest":
-		artifact, err = buildManifestArtifact(ctx, jsonBytes)
+		artifact, err = buildManifestArtifact(ctx, parent, jsonBytes)
 	case "TaxonomyList", "google.cloud.apigeeregistry.v1.apihub.TaxonomyList":
 		artifact, err = buildTaxonomyListArtifact(ctx, jsonBytes)
 	case "Lifecycle", "google.cloud.apigeeregistry.v1.apihub.Lifecycle":
@@ -100,16 +100,17 @@ func buildArtifact(ctx context.Context, parent string, filename string) (*rpc.Ar
 	return artifact, nil
 }
 
-func buildManifestArtifact(ctx context.Context, jsonBytes []byte) (*rpc.Artifact, error) {
+func buildManifestArtifact(ctx context.Context, parent string, jsonBytes []byte) (*rpc.Artifact, error) {
 	m := &rpc.Manifest{}
 	err := protojson.Unmarshal(jsonBytes, m)
 	if err != nil {
 		return nil, err
 	}
-	err = validateManifest(ctx, m)
-	if err != nil {
-		return nil, err
+	isValid := controller.ValidateManifest(ctx, parent, m)
+	if !isValid {
+		return nil, fmt.Errorf("Manifest definition contains errors")
 	}
+
 	artifactBytes, err := proto.Marshal(m)
 	if err != nil {
 		return nil, err
@@ -118,20 +119,6 @@ func buildManifestArtifact(ctx context.Context, jsonBytes []byte) (*rpc.Artifact
 		Contents: artifactBytes,
 		MimeType: core.MimeTypeForMessageType("google.cloud.apigeeregistry.v1.controller.Manifest"),
 	}, nil
-}
-
-func validateManifest(ctx context.Context, m *rpc.Manifest) error {
-	isValid := true
-	for _, resource := range m.GeneratedResources {
-		if err := controller.ValidateResourceEntry(resource); err != nil {
-			log.FromContext(ctx).WithError(err).Errorf("Invalid manifest entry %v", resource)
-			isValid = false
-		}
-	}
-	if !isValid {
-		return fmt.Errorf("manifest contains errors")
-	}
-	return nil
 }
 
 func buildTaxonomyListArtifact(ctx context.Context, jsonBytes []byte) (*rpc.Artifact, error) {
