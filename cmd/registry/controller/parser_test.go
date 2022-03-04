@@ -141,30 +141,30 @@ func TestResourceNameFromParent(t *testing.T) {
 		desc            string
 		resourcePattern string
 		parent          string
-		want            ResourceName
+		want            resourceName
 	}{
 		{
 			desc:            "version pattern",
 			resourcePattern: "projects/demo/locations/global/apis/-/versions/1.0.0",
 			parent:          "projects/demo/locations/global/apis/petstore",
-			want: VersionName{
-				Version: generateVersion(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0"),
+			want: versionName{
+				version: generateVersion(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0"),
 			},
 		},
 		{
 			desc:            "spec pattern",
 			resourcePattern: "projects/demo/locations/global/apis/-/versions/-/specs/openapi.yaml",
 			parent:          "projects/demo/locations/global/apis/petstore/versions/1.0.0",
-			want: SpecName{
-				Spec: generateSpec(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml"),
+			want: specName{
+				spec: generateSpec(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml"),
 			},
 		},
 		{
 			desc:            "artifact pattern",
 			resourcePattern: "projects/demo/locations/global/apis/-/versions/-/specs/-/artifacts/complexity",
 			parent:          "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
-			want: ArtifactName{
-				Artifact: generateArtifact(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity"),
+			want: artifactName{
+				artifact: generateArtifact(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity"),
 			},
 		},
 	}
@@ -216,46 +216,46 @@ func TestGetEntityKey(t *testing.T) {
 	tests := []struct {
 		desc     string
 		pattern  string
-		resource ResourceInstance
+		resource resourceInstance
 		want     string
 	}{
 		{
 			desc:    "api group",
 			pattern: "$resource.api/versions/-/specs/-",
-			resource: SpecResource{
-				SpecName: SpecName{Spec: generateSpec(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml")},
+			resource: specResource{
+				specName: specName{spec: generateSpec(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml")},
 			},
 			want: "projects/demo/locations/global/apis/petstore",
 		},
 		{
 			desc:    "version group",
 			pattern: "$resource.version/specs/-",
-			resource: SpecResource{
-				SpecName: SpecName{Spec: generateSpec(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml")},
+			resource: specResource{
+				specName: specName{spec: generateSpec(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml")},
 			},
 			want: "projects/demo/locations/global/apis/petstore/versions/1.0.0",
 		},
 		{
 			desc:    "spec group",
 			pattern: "$resource.spec",
-			resource: SpecResource{
-				SpecName: SpecName{Spec: generateSpec(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml")},
+			resource: specResource{
+				specName: specName{spec: generateSpec(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml")},
 			},
 			want: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 		},
 		{
 			desc:    "artifact group",
 			pattern: "$resource.artifact",
-			resource: ArtifactResource{
-				ArtifactName: ArtifactName{Artifact: generateArtifact(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic")},
+			resource: artifactResource{
+				artifactName: artifactName{artifact: generateArtifact(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic")},
 			},
 			want: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic",
 		},
 		{
 			desc:    "no group",
 			pattern: "apis/-/versions/-/specs/-",
-			resource: ArtifactResource{
-				ArtifactName: ArtifactName{Artifact: generateArtifact(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic")},
+			resource: artifactResource{
+				artifactName: artifactName{artifact: generateArtifact(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic")},
 			},
 			want: "default",
 		},
@@ -263,7 +263,7 @@ func TestGetEntityKey(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			got, err := getEntityKey(test.pattern, test.resource.GetResourceName())
+			got, err := getEntityKey(test.pattern, test.resource.getResourceName())
 			if err != nil {
 				t.Errorf("getEntityKey returned unexpected error: %s", err)
 			}
@@ -278,34 +278,34 @@ func TestGetEntityKeyError(t *testing.T) {
 	tests := []struct {
 		desc     string
 		pattern  string
-		resource ResourceInstance
+		resource resourceInstance
 	}{
 		{
 			desc:    "typo",
 			pattern: "$resource.apis/versions/-/specs/-",
-			resource: SpecResource{
-				SpecName: SpecName{Spec: generateSpec(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml")},
+			resource: specResource{
+				specName: specName{spec: generateSpec(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml")},
 			},
 		},
 		{
 			desc:    "incorrect reference",
 			pattern: "$resource.name/versions/-/specs/-",
-			resource: SpecResource{
-				SpecName: SpecName{Spec: generateSpec(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml")},
+			resource: specResource{
+				specName: specName{spec: generateSpec(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml")},
 			},
 		},
 		{
 			desc:    "incorrect resourceKW",
 			pattern: "$resources.api/versions/-/specs/-",
-			resource: SpecResource{
-				SpecName: SpecName{Spec: generateSpec(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml")},
+			resource: specResource{
+				specName: specName{spec: generateSpec(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml")},
 			},
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			got, err := getEntityKey(test.pattern, test.resource.GetResourceName())
+			got, err := getEntityKey(test.pattern, test.resource.getResourceName())
 			if err == nil {
 				t.Errorf("expected getEntityKey to return error, got: %q", got)
 			}
@@ -476,7 +476,7 @@ func TestValidateGeneratedResourceEntry(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			gotErrs := ValidateGeneratedResourceEntry("projects/demo/locations/global", test.generatedResource)
+			gotErrs := validateGeneratedResourceEntry("projects/demo/locations/global", test.generatedResource)
 			if len(gotErrs) > 0 {
 				t.Errorf("ValidateGeneratedResourceEntry() returned unexpected errors: %s", gotErrs)
 			}
@@ -550,7 +550,7 @@ func TestValidateGeneratedResourceEntryError(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			gotErrs := ValidateGeneratedResourceEntry("projects/demo/locations/global", test.generatedResource)
+			gotErrs := validateGeneratedResourceEntry("projects/demo/locations/global", test.generatedResource)
 			if len(gotErrs) == 0 {
 				t.Errorf("Expected ValidateGeneratedResourceEntry() to return errors")
 			}
