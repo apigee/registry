@@ -17,6 +17,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/apigee/registry/connection"
@@ -61,11 +62,11 @@ func processManifestResource(
 	ctx context.Context,
 	client connection.Client,
 	projectID string,
-	resource *rpc.GeneratedResource) ([]*Action, error) {
+	generatedResource *rpc.GeneratedResource) ([]*Action, error) {
 	// Generate dependency map
-	resourcePattern := fmt.Sprintf("projects/%s/locations/global/%s", projectID, resource.Pattern)
-	dependencyMaps := make([]map[string]time.Time, 0, len(resource.Dependencies))
-	for _, dependency := range resource.Dependencies {
+	resourcePattern := fmt.Sprintf("projects/%s/locations/global/%s", projectID, generatedResource.Pattern)
+	dependencyMaps := make([]map[string]time.Time, 0, len(generatedResource.Dependencies))
+	for _, dependency := range generatedResource.Dependencies {
 		dMap, err := generateDependencyMap(ctx, client, resourcePattern, dependency, projectID)
 		if err != nil {
 			return nil, fmt.Errorf("error while generating dependency map for %v: %s", dependency, err)
@@ -73,18 +74,9 @@ func processManifestResource(
 		dependencyMaps = append(dependencyMaps, dMap)
 	}
 
-	// Generate resource list
-	resourceList, err := ListResources(ctx, client, resourcePattern, resource.Filter)
-	if err != nil {
-		return nil, err
-	}
-
-	// Generate actions to update target resources
-	actions, err := generateActions(
-		ctx, client, resourcePattern, resourceList, dependencyMaps, resource)
-	if err != nil {
-		return nil, err
-	}
+	// Generate actions to create and update target resources
+	actions := generateActions(
+		ctx, client, resourcePattern, generatedResource.Filter, dependencyMaps, generatedResource)
 
 	return actions, nil
 }
@@ -120,7 +112,7 @@ func generateDependencyMap(
 	}
 
 	for _, source := range sourceList {
-		group, err := getGroupKey(dependency.Pattern, source)
+		group, err := getEntityKey(dependency.Pattern, source.GetResourceName())
 		if err != nil {
 			return nil, err
 		}
@@ -144,107 +136,218 @@ func generateActions(
 	ctx context.Context,
 	client connection.Client,
 	resourcePattern string,
-	resourceList []ResourceInstance,
+	filter string,
 	dependencyMaps []map[string]time.Time,
-	generatedResource *rpc.GeneratedResource) ([]*Action, error) {
+	generatedResource *rpc.GeneratedResource) []*Action {
+	actions := make([]*Action, 0)
 
+	// Calculate actions only if dependencies are non-empty
+	if len(dependencyMaps) > 0 {
+		updateActions, visited, err := generateUpdateActions(ctx, client, resourcePattern, filter, dependencyMaps, generatedResource)
+		if err != nil {
+			log.Errorf(ctx, "Error while generating UpdateActions: %s", err)
+		}
+		actions = append(actions, updateActions...)
+
+		createActions, err := generateCreateActions(ctx, client, resourcePattern, dependencyMaps, generatedResource, visited)
+		if err != nil {
+			log.Errorf(ctx, "Error while generating CreateActions: %s", err)
+		}
+		actions = append(actions, createActions...)
+	}
+
+	return actions
+
+}
+
+// Go over the list of existing target resources to figure out which ones need an update.
+func generateUpdateActions(
+	ctx context.Context,
+	client connection.Client,
+	resourcePattern string,
+	filter string,
+	dependencyMaps []map[string]time.Time,
+	generatedResource *rpc.GeneratedResource) ([]*Action, map[string]bool, error) {
+
+	// Visited tracks the parents of target resources which were already generated.
 	visited := make(map[string]bool)
 	actions := make([]*Action, 0)
 
-	for _, resource := range resourceList {
-		resourceTime := resource.GetUpdateTimestamp()
-
-		takeAction := false
-
-		// Evaluate this resource against each dependency source pattern
-		for i, dependency := range generatedResource.Dependencies {
-			dMap := dependencyMaps[i]
-			// Get the group to look for in dependencyMap
-			group, err := getGroupKey(dependency.Pattern, resource)
-			if err != nil {
-				return nil, fmt.Errorf("cannot match resource with dependency. Error: %s", err.Error())
-			}
-
-			if maxUpdateTime, ok := dMap[group]; ok {
-				// Take action if dependency timestamp is later than resource timestamp
-				if maxUpdateTime.After(resourceTime) {
-					takeAction = true
-				}
-				visited[group] = true
-			} else {
-				// For a given resource, each of it's defined dependency group should be present.
-				// If any one of the dependency groups is missing, avoid calculating any action for the resource
-				takeAction = false
-				break
-			}
-		}
-
-		if takeAction {
-			cmd, err := generateCommand(generatedResource.Action, resource.GetName())
-			if err != nil {
-				return nil, err
-			}
-			action := &Action{
-				Command:           cmd,
-				GeneratedResource: resource.GetName(),
-				RequiresReceipt:   generatedResource.Receipt,
-			}
-			actions = append(actions, action)
-		}
+	// Generate resource list
+	resourceList, err := ListResources(ctx, client, resourcePattern, filter)
+	if err != nil {
+		return nil, nil, err
 	}
 
-	// Check patterns where resources do not exist in the registry. Here new resources will be generated
-	// for the dependencies which were not visited in the above loop.
-	// Iterate over first dependency source and evaluate that against remaining dependencies
-	if len(dependencyMaps) > 0 {
-		dMap0 := dependencyMaps[0]
-		for groupKey := range dMap0 {
-			takeAction := true
-			if _, ok := visited[groupKey]; !ok {
-				for _, dMap := range dependencyMaps {
-					// in a particular group resources for each dependencyPattern must exist
-					// for the controller to generate new targeted resource.
-					// Example:
-					// generated_resource: apis/-/artifacts/summary
-					// - dependencies:
-					//   - pattern: $resource.api/artifacts/complexity
-					//   - pattern: $resource.api/artifacts/vocabulary
-					// for a particular api group, "petstore"
-					// both apis/petstore/artifacts/complexity and apis/petstore/artifacts/vocabulary should be present
-					_, dependencyExists := dMap[groupKey]
-					if !dependencyExists {
-						takeAction = false
-						break
-					}
-				}
-			} else {
-				takeAction = false
+	// Iterate over a list of existing target resources to generate update actions
+	for _, targetResource := range resourceList {
+		visited[targetResource.GetResourceName().GetParent()] = true
+
+		a, err := evaluateAction(
+			targetResource.GetResourceName(),
+			targetResource.GetUpdateTimestamp(),
+			dependencyMaps,
+			generatedResource,
+			false,
+		)
+
+		if err != nil {
+			log.Errorf(ctx, "%s", err)
+		}
+
+		if a != nil {
+			actions = append(actions, a)
+		}
+
+	}
+
+	return actions, visited, nil
+}
+
+// For the target resources which do not exist in the registry yet,
+//we will use the parent resources to derive which new target resources should be created.
+func generateCreateActions(
+	ctx context.Context,
+	client connection.Client,
+	resourcePattern string,
+	dependencyMaps []map[string]time.Time,
+	generatedResource *rpc.GeneratedResource,
+	visited map[string]bool) ([]*Action, error) {
+
+	actions := make([]*Action, 0)
+
+	parsedResourcePattern, err := parseResourcePattern(resourcePattern)
+	if err != nil {
+		return nil, fmt.Errorf("Invalid resourcePattern, cannot parse.")
+	}
+
+	parentName := parsedResourcePattern.GetParent()
+
+	// If parent is a project, we can't list projects since this is registry client command.
+	// Since the manifest definition is scoped  only for a particular project,
+	// there will be only one target resource in this case.
+	// There are two cases where this might happen:
+	// 1. Target resource is a project level artifact "projects/demo/locations/global/artifacts/serach-index"
+	//    extracted parent will be "projects/demo/locations/global"
+	// 1. Target resource is an api "projects/demo/locations/global/apis/petstore"
+	//    extracted parent will be "projects/demo/locations/global"
+	if strings.HasSuffix(parentName, "locations/global") {
+		// Return if this parent was already visited.
+		if visited[parentName] {
+			return actions, nil
+		}
+
+		// Since the GeneratedResource is non-existent here,
+		// we will have to derive the exact name of the target resource.
+		targetResourceName, err := resourceNameFromParent(resourcePattern, parentName)
+		if err != nil {
+			return nil, fmt.Errorf("Cannot generate target resourceName to be created. Error: %s", err)
+		}
+
+		a, err := evaluateAction(
+			targetResourceName,
+			time.Time{},
+			dependencyMaps,
+			generatedResource,
+			true,
+		)
+
+		if err != nil {
+			log.Errorf(ctx, "%s", err)
+		}
+
+		if a != nil {
+			actions = append(actions, a)
+		}
+
+		return actions, nil
+	}
+
+	// If parent resource is not a project, then go through all the non-visited parents.
+	// We don't pass the filter here because the filter is for the target resource and not it's parent.
+	parentList, err := ListResources(ctx, client, parentName, "")
+	if err != nil {
+		return nil, err
+	}
+
+	for _, parent := range parentList {
+		// Skip if this parent was already visited.
+		if visited[parent.GetResourceName().String()] {
+			continue
+		} else {
+			// Since the GeneratedResource is non-existent here,
+			// we will have to derive the exact name of the target resource
+			targetResourceName, err := resourceNameFromParent(resourcePattern, parent.GetResourceName().String())
+			if err != nil {
+				log.Errorf(ctx, "Cannot generate target resourceName to be created. Error: %s", err)
+				continue
 			}
 
-			if takeAction {
-				// Since the GeneratedResource is non-existent here,
-				// we will have to derive the exact name of the target resourc
-				resourceName, err := resourceNameFromGroupKey(
-					resourcePattern, groupKey)
-				if err != nil {
-					log.Debugf(ctx, "skipping entry for %q, cannot derive target resource name for pattern: %q", groupKey, resourcePattern)
-					continue
-				}
-				cmd, err := generateCommand(generatedResource.Action, resourceName)
-				if err != nil {
-					return nil, err
-				}
+			a, err := evaluateAction(
+				targetResourceName,
+				time.Time{},
+				dependencyMaps,
+				generatedResource,
+				true,
+			)
 
-				action := &Action{
-					Command:           cmd,
-					GeneratedResource: resourceName,
-					RequiresReceipt:   generatedResource.Receipt,
-				}
-				actions = append(actions, action)
+			if err != nil {
+				log.Errorf(ctx, "%s", err)
+			}
+
+			if a != nil {
+				actions = append(actions, a)
 			}
 
 		}
 	}
 
 	return actions, nil
+}
+
+func evaluateAction(
+	targetResourceName ResourceName,
+	targetResourceTime time.Time,
+	dependencyMaps []map[string]time.Time,
+	generatedResource *rpc.GeneratedResource,
+	createMode bool) (*Action, error) {
+	takeAction := false
+	//Check if all the dependencies exist in the map.
+	for i, dependency := range generatedResource.Dependencies {
+		dMap := dependencyMaps[i]
+		// Get the entity to look for in dependencyMap
+		entityKey, err := getEntityKey(dependency.Pattern, targetResourceName)
+		if err != nil {
+			// This means that there is error in the pattern definition, hence return
+			return nil, fmt.Errorf("cannot match resource with dependency. Error: %s", err.Error())
+		}
+
+		// All the dependencies should be present to generate an action.
+		if maxUpdateTime, ok := dMap[entityKey]; ok {
+			if createMode {
+				// No need to compare timestamps in create mode. Always take action if dependencies are present
+				takeAction = true
+			} else if maxUpdateTime.After(targetResourceTime) { // Take action if dependency timestamp is later than resource timestamp
+				takeAction = true
+			}
+		} else {
+			takeAction = false
+			break
+		}
+	}
+
+	if takeAction {
+		cmd, err := generateCommand(generatedResource.Action, targetResourceName.String())
+		if err != nil {
+			return nil, fmt.Errorf("Cannot generate command: %s", err)
+		}
+		action := &Action{
+			Command:           cmd,
+			GeneratedResource: targetResourceName.String(),
+			RequiresReceipt:   generatedResource.Receipt,
+		}
+		return action, nil
+	}
+
+	return nil, nil
 }
