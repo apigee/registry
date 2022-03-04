@@ -34,6 +34,7 @@ func TestGetStatus(t *testing.T) {
 	}
 
 	got, err := server.GetStatus(ctx, req)
+	got.Build = nil // remove values that are not returned by server builds < Go 1.18
 	if err != nil {
 		t.Fatalf("GetStatus(%+v) returned error: %s", req, err)
 	}
