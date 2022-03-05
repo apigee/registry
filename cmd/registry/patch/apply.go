@@ -29,12 +29,10 @@ func Apply(ctx context.Context, client connection.Client, fileName, parent strin
 		func(path string, entry fs.DirEntry, err error) error {
 			if err != nil {
 				return err
-			}
-			if entry.IsDir() {
-				if !recursive {
-					return filepath.SkipDir
-				}
-				return nil
+			} else if entry.IsDir() && recursive {
+				return nil // Do nothing for the directory, but still walk its contents.
+			} else if entry.IsDir() {
+				return filepath.SkipDir // Skip the directory and contents.
 			}
 			return applyFile(ctx, client, path, parent)
 		})
