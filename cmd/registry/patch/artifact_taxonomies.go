@@ -125,10 +125,11 @@ func newTaxonomyList(message *rpc.Artifact) (*TaxonomyList, error) {
 				Name: artifactName.ArtifactID(),
 			},
 		},
+		Data: TaxonomyListData{
+			DisplayName: value.DisplayName,
+			Description: value.Description,
+		},
 	}
-	taxonomyList.Data.DisplayName = value.DisplayName
-	taxonomyList.Data.Description = value.Description
-
 	for _, t := range value.Taxonomies {
 		elements := make([]TaxonomyElement, 0)
 		for _, e := range t.Elements {

@@ -113,6 +113,10 @@ func newManifest(message *rpc.Artifact) (*Manifest, error) {
 				Name: artifactName.ArtifactID(),
 			},
 		},
+		Data: ManifestData{
+			DisplayName: value.DisplayName,
+			Description: value.Description,
+		},
 	}
 	for _, g := range value.GeneratedResources {
 		dependencies := make([]*ManifestDependency, 0)

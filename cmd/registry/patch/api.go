@@ -56,10 +56,12 @@ func newApi(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api)
 				Annotations: message.Annotations,
 			},
 		},
+		Data: ApiData{
+			DisplayName:  message.DisplayName,
+			Description:  message.Description,
+			Availability: message.Availability,
+		},
 	}
-	api.Data.DisplayName = message.DisplayName
-	api.Data.Description = message.Description
-	api.Data.Availability = message.Availability
 	api.Data.RecommendedVersion, err = relativeVersionName(apiName, message.RecommendedVersion)
 	if err != nil {
 		return nil, err

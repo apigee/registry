@@ -74,17 +74,19 @@ func newApiDeployment(ctx context.Context, client *gapic.RegistryClient, message
 				Annotations: message.Annotations,
 			},
 		},
+		Data: ApiDeploymentData{
+			DisplayName:        message.DisplayName,
+			Description:        message.Description,
+			EndpointURI:        message.EndpointUri,
+			ExternalChannelURI: message.ExternalChannelUri,
+			IntendedAudience:   message.IntendedAudience,
+			AccessGuidance:     message.AccessGuidance,
+		},
 	}
-	deployment.Data.DisplayName = message.DisplayName
-	deployment.Data.Description = message.Description
 	deployment.Data.ApiSpecRevision, err = relativeSpecRevisionName(deploymentName.Api(), message.ApiSpecRevision)
 	if err != nil {
 		return nil, err
 	}
-	deployment.Data.EndpointURI = message.EndpointUri
-	deployment.Data.ExternalChannelURI = message.ExternalChannelUri
-	deployment.Data.IntendedAudience = message.IntendedAudience
-	deployment.Data.AccessGuidance = message.AccessGuidance
 	return deployment, nil
 }
 

@@ -97,9 +97,11 @@ func newLifecycle(message *rpc.Artifact) (*Lifecycle, error) {
 				Name: artifactName.ArtifactID(),
 			},
 		},
+		Data: LifecycleData{
+			DisplayName: value.DisplayName,
+			Description: value.Description,
+		},
 	}
-	lifecycle.Data.DisplayName = value.DisplayName
-	lifecycle.Data.Description = value.Description
 	for _, s := range value.Stages {
 		lifecycle.Data.Stages = append(
 			lifecycle.Data.Stages,

@@ -56,11 +56,13 @@ func newApiSpec(ctx context.Context, client *gapic.RegistryClient, message *rpc.
 				Annotations: message.Annotations,
 			},
 		},
+		Data: ApiSpecData{
+			FileName:    message.Filename,
+			Description: message.Description,
+			MimeType:    message.MimeType,
+			SourceURI:   message.SourceUri,
+		},
 	}
-	spec.Data.FileName = message.Filename
-	spec.Data.Description = message.Description
-	spec.Data.MimeType = message.MimeType
-	spec.Data.SourceURI = message.SourceUri
 	return spec, nil
 }
 
