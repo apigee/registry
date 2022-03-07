@@ -15,7 +15,10 @@
 package export
 
 import (
+	"fmt"
+
 	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/cmd/registry/patch"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
@@ -35,43 +38,38 @@ func yamlCommand(ctx context.Context) *cobra.Command {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
 
-			adminClient, err := connection.NewAdminClient(ctx)
-			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
-			}
-
 			var name string
 			if len(args) > 0 {
 				name = args[0]
 			}
 
 			if project, err := names.ParseProject(name); err == nil {
-				_, err := core.GetProject(ctx, adminClient, project, func(message *rpc.Project) {
-					core.ExportYAMLForProject(ctx, client, adminClient, message)
-				})
+				err = patch.ExportProject(ctx, client, project)
 				if err != nil {
 					log.FromContext(ctx).WithError(err).Fatal("Failed to export project YAML")
 				}
 			} else if api, err := names.ParseApi(name); err == nil {
 				_, err = core.GetAPI(ctx, client, api, func(message *rpc.Api) {
-					core.ExportYAMLForAPI(ctx, client, message)
+					bytes, _, err := patch.ExportAPI(ctx, client, message)
+					if err != nil {
+						log.FromContext(ctx).WithError(err).Fatal("Failed to export API")
+					}
+					fmt.Println(string(bytes))
 				})
 				if err != nil {
 					log.FromContext(ctx).WithError(err).Fatal("Failed to export API YAML")
 				}
-			} else if version, err := names.ParseVersion(name); err == nil {
-				_, err = core.GetVersion(ctx, client, version, func(message *rpc.ApiVersion) {
-					core.ExportYAMLForVersion(ctx, client, message)
+			} else if artifact, err := names.ParseArtifact(name); err == nil {
+				_, err = core.GetArtifact(ctx, client, artifact, false, func(message *rpc.Artifact) {
+					bytes, _, err := patch.ExportArtifact(ctx, client, message)
+					if err != nil {
+						log.FromContext(ctx).WithError(err).Fatal("Failed to export artifact")
+					} else {
+						fmt.Println(string(bytes))
+					}
 				})
 				if err != nil {
-					log.FromContext(ctx).WithError(err).Fatal("Failed to export version YAML")
-				}
-			} else if spec, err := names.ParseSpec(name); err == nil {
-				_, err = core.GetSpec(ctx, client, spec, false, func(message *rpc.ApiSpec) {
-					core.ExportYAMLForSpec(ctx, client, message)
-				})
-				if err != nil {
-					log.FromContext(ctx).WithError(err).Fatal("Failed to export spec YAML")
+					log.FromContext(ctx).WithError(err).Fatal("Failed to export artifact YAML")
 				}
 			} else {
 				log.Fatalf(ctx, "Unsupported entity %+s", name)
