@@ -19,6 +19,7 @@ import (
 	"fmt"
 
 	"github.com/apigee/registry/cmd/registry/cmd/annotate"
+	"github.com/apigee/registry/cmd/registry/cmd/apply"
 	"github.com/apigee/registry/cmd/registry/cmd/compute"
 	"github.com/apigee/registry/cmd/registry/cmd/delete"
 	"github.com/apigee/registry/cmd/registry/cmd/export"
@@ -47,6 +48,7 @@ func Command(ctx context.Context) *cobra.Command {
 	})
 
 	cmd.AddCommand(annotate.Command(ctx))
+	cmd.AddCommand(apply.Command(ctx))
 	cmd.AddCommand(compute.Command(ctx))
 	cmd.AddCommand(resolve.Command(ctx))
 	cmd.AddCommand(delete.Command(ctx))

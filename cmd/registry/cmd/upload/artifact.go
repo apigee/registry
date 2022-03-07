@@ -21,6 +21,7 @@ import (
 
 	"github.com/apigee/registry/cmd/registry/controller"
 	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/cmd/registry/patch"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
@@ -82,7 +83,7 @@ func buildArtifact(ctx context.Context, parent string, filename string) (*rpc.Ar
 	jsonBytes, _ := yaml.YAMLToJSON(yamlBytes) // to use protojson.Unmarshal()
 	var artifact *rpc.Artifact
 	switch header.Kind {
-	case "Manifest", "google.cloud.apigeeregistry.v1.controller.Manifest":
+	case "Manifest", patch.ManifestMimeType:
 		artifact, err = buildManifestArtifact(ctx, jsonBytes)
 	case "TaxonomyList", "google.cloud.apigeeregistry.v1.apihub.TaxonomyList":
 		artifact, err = buildTaxonomyListArtifact(ctx, jsonBytes)
