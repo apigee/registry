@@ -28,9 +28,6 @@ func Command(ctx context.Context) *cobra.Command {
 
 	cmd.AddCommand(conformanceCommand(ctx))
 	cmd.AddCommand(complexityCommand(ctx))
-	cmd.AddCommand(descriptorCommand(ctx))
-	cmd.AddCommand(detailsCommand(ctx))
-	cmd.AddCommand(indexCommand(ctx))
 	cmd.AddCommand(lintCommand(ctx))
 	cmd.AddCommand(lintStatsCommand(ctx))
 	cmd.AddCommand(referencesCommand(ctx))
