@@ -1,0 +1,71 @@
+# Copyright 2022 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: 'Run Benchmark'
+description: 'Composite action to Run Benchmark'
+inputs:
+  api_count:
+    description: 'api count'
+    required: true
+    default: 10
+  version_count:
+    description: 'version count'
+    required: true
+    default: 1
+  dbconnection:
+    description: 'Database connection string'
+    required: false
+    default: 'host=localhost port=5432 user=postgres dbname=registry_tester password=postgres sslmode=disable'
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Go 1.x
+      uses: actions/setup-go@v2
+      with:
+        go-version: ^1.17
+
+    - name: Install
+      run: go install ./...
+      shell: bash
+
+    - name: Start the Registry Server with Postgres
+      run: registry-server &
+      shell: bash
+      env:
+        REGISTRY_DATABASE_CONFIG: ${{ inputs.dbconnection }}
+
+    - name: Benchmark test with ${{ inputs.count }} apis
+      shell: bash
+      env:
+        APG_ADMIN_ADDRESS: localhost:8080
+        APG_ADMIN_AUDIENCES: http://localhost:8080
+        APG_REGISTRY_ADDRESS: localhost:8080
+        APG_REGISTRY_AUDIENCES: http://localhost:8080
+        APG_REGISTRY_INSECURE: 1
+      run: |
+        export ITERATION_SIZE=${{ inputs.api_count }}
+        export REGISTRY_PROJECT_IDENTIFIER=bench${ITERATION_SIZE}
+        export REGISTRY_VERSION_COUNT=${{ inputs.version_count }}
+        apg admin create-project --project_id=$REGISTRY_PROJECT_IDENTIFIER
+        go test --bench=Create ./tests/benchmark --benchtime=${ITERATION_SIZE}x --timeout=0
+        sleep 10
+        go test --bench=Update ./tests/benchmark --benchtime=${ITERATION_SIZE}x  --timeout=0
+        sleep 10
+        go test --bench=Get ./tests/benchmark --benchtime=${ITERATION_SIZE}x  --timeout=0
+        sleep 10
+        go test --bench=List ./tests/benchmark --benchtime=${ITERATION_SIZE}x  --timeout=0
+        sleep 10
+        go test --bench=Delete ./tests/benchmark --benchtime=${ITERATION_SIZE}x  --timeout=0
+        sleep 10
+        apg admin delete-project --name=projects/$REGISTRY_PROJECT_IDENTIFIER --force

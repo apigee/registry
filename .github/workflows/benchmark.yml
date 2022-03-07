@@ -1,0 +1,256 @@
+# Copyright 2021 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: Benchmark testing
+
+on:
+  push:
+    branches:
+    - main
+  pull_request:
+    branches:
+    - main
+jobs:
+  benchmark-100apis-1version:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres
+        env:
+          # Define a super user. Password for super user is required.
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          # Allow other connections without a password.
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: registry_tester
+        # Set health checks to wait until postgres has started.
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+        # Map tcp service container port 5432 to the host.
+        - 5432:5432
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+    - uses: ./.github/workflows/composite/benchmark
+      with:
+        api_count: 100
+        version_count: 1
+
+  benchmark-100apis-5versions:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres
+        env:
+          # Define a super user. Password for super user is required.
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          # Allow other connections without a password.
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: registry_tester
+        # Set health checks to wait until postgres has started.
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+        # Map tcp service container port 5432 to the host.
+        - 5432:5432
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+    - uses: ./.github/workflows/composite/benchmark
+      with:
+        api_count: 100
+        version_count: 5
+
+  benchmark-500apis-1version:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres
+        env:
+          # Define a super user. Password for super user is required.
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          # Allow other connections without a password.
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: registry_tester
+        # Set health checks to wait until postgres has started.
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+        # Map tcp service container port 5432 to the host.
+        - 5432:5432
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+    - uses: ./.github/workflows/composite/benchmark
+      with:
+        api_count: 500
+        version_count: 1
+
+  benchmark-500apis-5versions:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres
+        env:
+          # Define a super user. Password for super user is required.
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          # Allow other connections without a password.
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: registry_tester
+        # Set health checks to wait until postgres has started.
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+        # Map tcp service container port 5432 to the host.
+        - 5432:5432
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+    - uses: ./.github/workflows/composite/benchmark
+      with:
+        api_count: 500
+        version_count: 5
+
+  benchmark-1000apis-1version:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres
+        env:
+          # Define a super user. Password for super user is required.
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          # Allow other connections without a password.
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: registry_tester
+        # Set health checks to wait until postgres has started.
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+        # Map tcp service container port 5432 to the host.
+        - 5432:5432
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+    - uses: ./.github/workflows/composite/benchmark
+      with:
+        api_count: 1000
+        version_count: 1
+
+  benchmark-1000apis-5versions:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres
+        env:
+          # Define a super user. Password for super user is required.
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          # Allow other connections without a password.
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: registry_tester
+        # Set health checks to wait until postgres has started.
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+        # Map tcp service container port 5432 to the host.
+        - 5432:5432
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+    - uses: ./.github/workflows/composite/benchmark
+      with:
+        api_count: 1000
+        version_count: 5
+
+
+  benchmark-2000apis-1version:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres
+        env:
+          # Define a super user. Password for super user is required.
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          # Allow other connections without a password.
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: registry_tester
+        # Set health checks to wait until postgres has started.
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+        # Map tcp service container port 5432 to the host.
+        - 5432:5432
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+    - uses: ./.github/workflows/composite/benchmark
+      with:
+        api_count: 2000
+        version_count: 1
+
+  benchmark-2000apis-5versions:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres
+        env:
+          # Define a super user. Password for super user is required.
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          # Allow other connections without a password.
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: registry_tester
+        # Set health checks to wait until postgres has started.
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+        # Map tcp service container port 5432 to the host.
+        - 5432:5432
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+    - uses: ./.github/workflows/composite/benchmark
+      with:
+        api_count: 2000
+        version_count: 5
