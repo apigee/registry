@@ -224,13 +224,10 @@ func generateCreateActions(
 	generatedResource *rpc.GeneratedResource,
 	visited map[string]bool) ([]*Action, error) {
 
-	actions := make([]*Action, 0)
-
 	parsedResourcePattern, err := parseResourcePattern(resourcePattern)
 	if err != nil {
 		return nil, err
 	}
-
 	parentName := parsedResourcePattern.GetParent()
 
 	// If parent is a project, we can't list projects since this is registry client command.
@@ -244,7 +241,7 @@ func generateCreateActions(
 	if strings.HasSuffix(parentName, "locations/global") {
 		// Return if this parent was already visited.
 		if visited[parentName] {
-			return actions, nil
+			return nil, nil //[]*Action{}, nil
 		}
 
 		// Since the GeneratedResource is non-existent here,
@@ -261,24 +258,23 @@ func generateCreateActions(
 		)
 
 		if err != nil {
-			log.Errorf(ctx, "%s", err)
-			return actions, err
+			return nil, err
+		} else if !takeAction {
+			return nil, nil //[]*Action{}, nil
 		}
 
-		if takeAction {
-			cmd, err := generateCommand(generatedResource.Action, targetResourceName.String())
-			if err != nil {
-				return nil, fmt.Errorf("Cannot generate command: %s", err)
-			}
-			a := &Action{
+		cmd, err := generateCommand(generatedResource.Action, targetResourceName.String())
+		if err != nil {
+			return nil, fmt.Errorf("Cannot generate command: %s", err)
+		}
+
+		return []*Action{
+			{
 				Command:           cmd,
 				GeneratedResource: targetResourceName.String(),
 				RequiresReceipt:   generatedResource.Receipt,
-			}
-			actions = append(actions, a)
-		}
-
-		return actions, nil
+			},
+		}, nil
 	}
 
 	// If parent resource is not a project, then go through all the non-visited parents.
@@ -287,6 +283,8 @@ func generateCreateActions(
 	if err != nil {
 		return nil, err
 	}
+
+	actions := make([]*Action, 0)
 
 	for _, parent := range parentList {
 		// Skip if this parent was already visited.
@@ -310,20 +308,20 @@ func generateCreateActions(
 		if err != nil {
 			log.Errorf(ctx, "%s", err)
 			continue
+		} else if !takeAction {
+			continue
 		}
 
-		if takeAction {
-			cmd, err := generateCommand(generatedResource.Action, targetResourceName.String())
-			if err != nil {
-				return nil, fmt.Errorf("Cannot generate command: %s", err)
-			}
-			a := &Action{
-				Command:           cmd,
-				GeneratedResource: targetResourceName.String(),
-				RequiresReceipt:   generatedResource.Receipt,
-			}
-			actions = append(actions, a)
+		cmd, err := generateCommand(generatedResource.Action, targetResourceName.String())
+		if err != nil {
+			return nil, fmt.Errorf("Cannot generate command: %s", err)
 		}
+		a := &Action{
+			Command:           cmd,
+			GeneratedResource: targetResourceName.String(),
+			RequiresReceipt:   generatedResource.Receipt,
+		}
+		actions = append(actions, a)
 	}
 
 	return actions, nil
@@ -335,7 +333,6 @@ func needsUpdate(
 	dependencyMaps []map[string]time.Time,
 	generatedResource *rpc.GeneratedResource,
 	createMode bool) (bool, error) {
-	takeAction := false
 	//Check if all the dependencies exist in the map.
 	for i, dependency := range generatedResource.Dependencies {
 		dMap := dependencyMaps[i]
@@ -347,16 +344,16 @@ func needsUpdate(
 		}
 
 		// All the dependencies should be present to generate an action.
-		if maxUpdateTime, ok := dMap[entityKey]; ok {
-			if maxUpdateTime.After(targetResourceTime) {
-				takeAction = true // Take action if dependency timestamp is later than resource timestamp
-			}
-		} else {
-			takeAction = false
-			break
+		maxUpdateTime, ok := dMap[entityKey]
+		if !ok {
+			return false, nil
+		}
+
+		if maxUpdateTime.After(targetResourceTime) {
+			return true, nil // Take action if atleast one dependency timestamp is later than resource timestamp
 		}
 	}
-	return takeAction, nil
+	return false, nil
 }
 
 func needsCreate(
