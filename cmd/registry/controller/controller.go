@@ -183,7 +183,7 @@ func generateUpdateActions(
 	for _, targetResource := range resourceList {
 		visited[targetResource.GetResourceName().GetParent()] = true
 
-		a, err := evaluateAction(
+		takeAction, err := needsUpdate(
 			targetResource.GetResourceName(),
 			targetResource.GetUpdateTimestamp(),
 			dependencyMaps,
@@ -193,9 +193,19 @@ func generateUpdateActions(
 
 		if err != nil {
 			log.Errorf(ctx, "%s", err)
+			continue
 		}
 
-		if a != nil {
+		if takeAction {
+			cmd, err := generateCommand(generatedResource.Action, targetResource.GetResourceName().String())
+			if err != nil {
+				return nil, nil, fmt.Errorf("Cannot generate command: %s", err)
+			}
+			a := &Action{
+				Command:           cmd,
+				GeneratedResource: targetResource.GetResourceName().String(),
+				RequiresReceipt:   generatedResource.Receipt,
+			}
 			actions = append(actions, a)
 		}
 
@@ -218,7 +228,7 @@ func generateCreateActions(
 
 	parsedResourcePattern, err := parseResourcePattern(resourcePattern)
 	if err != nil {
-		return nil, fmt.Errorf("Invalid resourcePattern, cannot parse.")
+		return nil, err
 	}
 
 	parentName := parsedResourcePattern.GetParent()
@@ -244,19 +254,27 @@ func generateCreateActions(
 			return nil, fmt.Errorf("Cannot generate target resourceName to be created. Error: %s", err)
 		}
 
-		a, err := evaluateAction(
+		takeAction, err := needsCreate(
 			targetResourceName,
-			time.Time{},
 			dependencyMaps,
 			generatedResource,
-			true,
 		)
 
 		if err != nil {
 			log.Errorf(ctx, "%s", err)
+			return actions, err
 		}
 
-		if a != nil {
+		if takeAction {
+			cmd, err := generateCommand(generatedResource.Action, targetResourceName.String())
+			if err != nil {
+				return nil, fmt.Errorf("Cannot generate command: %s", err)
+			}
+			a := &Action{
+				Command:           cmd,
+				GeneratedResource: targetResourceName.String(),
+				RequiresReceipt:   generatedResource.Receipt,
+			}
 			actions = append(actions, a)
 		}
 
@@ -274,43 +292,49 @@ func generateCreateActions(
 		// Skip if this parent was already visited.
 		if visited[parent.GetResourceName().String()] {
 			continue
-		} else {
-			// Since the GeneratedResource is non-existent here,
-			// we will have to derive the exact name of the target resource
-			targetResourceName, err := resourceNameFromParent(resourcePattern, parent.GetResourceName().String())
+		}
+		// Since the GeneratedResource is non-existent here,
+		// we will have to derive the exact name of the target resource
+		targetResourceName, err := resourceNameFromParent(resourcePattern, parent.GetResourceName().String())
+		if err != nil {
+			log.FromContext(ctx).WithError(err).Error("Cannot generate target resourceName to be created.")
+			continue
+		}
+
+		takeAction, err := needsCreate(
+			targetResourceName,
+			dependencyMaps,
+			generatedResource,
+		)
+
+		if err != nil {
+			log.Errorf(ctx, "%s", err)
+			continue
+		}
+
+		if takeAction {
+			cmd, err := generateCommand(generatedResource.Action, targetResourceName.String())
 			if err != nil {
-				log.Errorf(ctx, "Cannot generate target resourceName to be created. Error: %s", err)
-				continue
+				return nil, fmt.Errorf("Cannot generate command: %s", err)
 			}
-
-			a, err := evaluateAction(
-				targetResourceName,
-				time.Time{},
-				dependencyMaps,
-				generatedResource,
-				true,
-			)
-
-			if err != nil {
-				log.Errorf(ctx, "%s", err)
+			a := &Action{
+				Command:           cmd,
+				GeneratedResource: targetResourceName.String(),
+				RequiresReceipt:   generatedResource.Receipt,
 			}
-
-			if a != nil {
-				actions = append(actions, a)
-			}
-
+			actions = append(actions, a)
 		}
 	}
 
 	return actions, nil
 }
 
-func evaluateAction(
+func needsUpdate(
 	targetResourceName ResourceName,
 	targetResourceTime time.Time,
 	dependencyMaps []map[string]time.Time,
 	generatedResource *rpc.GeneratedResource,
-	createMode bool) (*Action, error) {
+	createMode bool) (bool, error) {
 	takeAction := false
 	//Check if all the dependencies exist in the map.
 	for i, dependency := range generatedResource.Dependencies {
@@ -319,35 +343,42 @@ func evaluateAction(
 		entityKey, err := getEntityKey(dependency.Pattern, targetResourceName)
 		if err != nil {
 			// This means that there is error in the pattern definition, hence return
-			return nil, fmt.Errorf("cannot match resource with dependency. Error: %s", err.Error())
+			return false, fmt.Errorf("cannot match resource with dependency. Error: %s", err.Error())
 		}
 
 		// All the dependencies should be present to generate an action.
 		if maxUpdateTime, ok := dMap[entityKey]; ok {
-			if createMode {
-				// No need to compare timestamps in create mode. Always take action if dependencies are present
-				takeAction = true
-			} else if maxUpdateTime.After(targetResourceTime) { // Take action if dependency timestamp is later than resource timestamp
-				takeAction = true
+			if maxUpdateTime.After(targetResourceTime) {
+				takeAction = true // Take action if dependency timestamp is later than resource timestamp
 			}
 		} else {
 			takeAction = false
 			break
 		}
 	}
+	return takeAction, nil
+}
 
-	if takeAction {
-		cmd, err := generateCommand(generatedResource.Action, targetResourceName.String())
+func needsCreate(
+	targetResourceName ResourceName,
+	dependencyMaps []map[string]time.Time,
+	generatedResource *rpc.GeneratedResource) (bool, error) {
+	takeAction := true
+	//Check if all the dependencies exist in the map.
+	for i, dependency := range generatedResource.Dependencies {
+		dMap := dependencyMaps[i]
+		// Get the entity to look for in dependencyMap
+		entityKey, err := getEntityKey(dependency.Pattern, targetResourceName)
 		if err != nil {
-			return nil, fmt.Errorf("Cannot generate command: %s", err)
+			// This means that there is error in the pattern definition, hence return
+			return false, fmt.Errorf("cannot match resource with dependency. Error: %s", err.Error())
 		}
-		action := &Action{
-			Command:           cmd,
-			GeneratedResource: targetResourceName.String(),
-			RequiresReceipt:   generatedResource.Receipt,
-		}
-		return action, nil
-	}
 
-	return nil, nil
+		// All the dependencies should be present to generate an action.
+		if _, ok := dMap[entityKey]; !ok {
+			takeAction = false
+			break
+		}
+	}
+	return takeAction, nil
 }
