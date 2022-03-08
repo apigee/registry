@@ -241,7 +241,7 @@ func generateCreateActions(
 	if strings.HasSuffix(parentName, "locations/global") {
 		// Return if this parent was already visited.
 		if visited[parentName] {
-			return nil, nil //[]*Action{}, nil
+			return nil, nil
 		}
 
 		// Since the GeneratedResource is non-existent here,
@@ -260,7 +260,7 @@ func generateCreateActions(
 		if err != nil {
 			return nil, err
 		} else if !takeAction {
-			return nil, nil //[]*Action{}, nil
+			return nil, nil
 		}
 
 		cmd, err := generateCommand(generatedResource.Action, targetResourceName.String())
@@ -295,8 +295,7 @@ func generateCreateActions(
 		// we will have to derive the exact name of the target resource
 		targetResourceName, err := resourceNameFromParent(resourcePattern, parent.GetResourceName().String())
 		if err != nil {
-			log.FromContext(ctx).WithError(err).Error("Cannot generate target resourceName to be created.")
-			continue
+			return nil, err
 		}
 
 		takeAction, err := needsCreate(
@@ -306,8 +305,7 @@ func generateCreateActions(
 		)
 
 		if err != nil {
-			log.Errorf(ctx, "%s", err)
-			continue
+			return nil, err
 		} else if !takeAction {
 			continue
 		}
@@ -333,7 +331,6 @@ func needsUpdate(
 	dependencyMaps []map[string]time.Time,
 	generatedResource *rpc.GeneratedResource,
 	createMode bool) (bool, error) {
-	//Check if all the dependencies exist in the map.
 	for i, dependency := range generatedResource.Dependencies {
 		dMap := dependencyMaps[i]
 		// Get the entity to look for in dependencyMap
@@ -360,8 +357,6 @@ func needsCreate(
 	targetResourceName ResourceName,
 	dependencyMaps []map[string]time.Time,
 	generatedResource *rpc.GeneratedResource) (bool, error) {
-	takeAction := true
-	//Check if all the dependencies exist in the map.
 	for i, dependency := range generatedResource.Dependencies {
 		dMap := dependencyMaps[i]
 		// Get the entity to look for in dependencyMap
@@ -373,9 +368,8 @@ func needsCreate(
 
 		// All the dependencies should be present to generate an action.
 		if _, ok := dMap[entityKey]; !ok {
-			takeAction = false
-			break
+			return false, nil
 		}
 	}
-	return takeAction, nil
+	return true, nil
 }
