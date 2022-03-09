@@ -26,6 +26,7 @@ func Command(ctx context.Context) *cobra.Command {
 		Short: "Count quantities in the API Registry",
 	}
 
+	cmd.AddCommand(revisionsCommand(ctx))
 	cmd.AddCommand(versionsCommand(ctx))
 
 	return cmd

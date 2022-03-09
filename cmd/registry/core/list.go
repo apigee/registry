@@ -108,6 +108,27 @@ func ListDeployments(ctx context.Context,
 	return nil
 }
 
+func ListDeploymentRevisions(ctx context.Context,
+	client *gapic.RegistryClient,
+	name names.Deployment,
+	filterFlag string,
+	handler DeploymentHandler) error {
+	request := &rpc.ListApiDeploymentRevisionsRequest{
+		Name: name.String(),
+	}
+	it := client.ListApiDeploymentRevisions(ctx, request)
+	for {
+		spec, err := it.Next()
+		if err == iterator.Done {
+			break
+		} else if err != nil {
+			return err
+		}
+		handler(spec)
+	}
+	return nil
+}
+
 func ListVersions(ctx context.Context,
 	client *gapic.RegistryClient,
 	name names.Version,
