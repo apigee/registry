@@ -45,13 +45,7 @@ registry upload bulk openapi \
 	--project-id $PROJECT ~/Desktop/openapi-directory/APIs \
 	--base-uri https://github.com/APIs-guru/openapi-directory/blob/$COMMIT/APIs 
 
-# Now compute summary details of all of the APIs in the project. 
-# This will log errors if any of the API specs can't be parsed,
-# but for every spec that is parsed, this will set the display name
-# and description of the corresponding API from the values in the specs.
-registry compute details projects/$PROJECT/locations/global/apis/-
-
-# Verify this for one of the APIs.
+# Get one of the APIs.
 registry get projects/$PROJECT/locations/global/apis/wordnik.com
 
 # You can also get this API with the lower-level apg command.
