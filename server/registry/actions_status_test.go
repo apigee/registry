@@ -45,6 +45,6 @@ func TestGetStatus(t *testing.T) {
 	}
 
 	if !cmp.Equal(want, got, opts) {
-		t.Errorf("GetStatus(%+v) returned unexpected diff (-want +got):\n%s", req, cmp.Diff(want, got, protocmp.Transform()))
+		t.Errorf("GetStatus(%+v) returned unexpected diff (-want +got):\n%s", req, cmp.Diff(want, got, opts))
 	}
 }
