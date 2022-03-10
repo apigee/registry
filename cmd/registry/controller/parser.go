@@ -25,35 +25,35 @@ import (
 
 const resourceKW = "$resource"
 
-func parseResourceCollection(resourcePattern string) (ResourceName, error) {
+func parseResourceCollection(resourcePattern string) (resourceName, error) {
 	if api, err := names.ParseApiCollection(resourcePattern); err == nil {
-		return ApiName{Api: api}, nil
+		return apiName{api: api}, nil
 	} else if version, err := names.ParseVersionCollection(resourcePattern); err == nil {
-		return VersionName{Version: version}, nil
+		return versionName{version: version}, nil
 	} else if spec, err := names.ParseSpecCollection(resourcePattern); err == nil {
-		return SpecName{Spec: spec}, nil
+		return specName{spec: spec}, nil
 	} else if artifact, err := names.ParseArtifactCollection(resourcePattern); err == nil {
-		return ArtifactName{Artifact: artifact}, nil
+		return artifactName{artifact: artifact}, nil
 	}
 
 	return nil, fmt.Errorf("invalid resourcePattern: %s", resourcePattern)
 }
 
-func parseResource(resourcePattern string) (ResourceName, error) {
+func parseResource(resourcePattern string) (resourceName, error) {
 	if api, err := names.ParseApi(resourcePattern); err == nil {
-		return ApiName{Api: api}, nil
+		return apiName{api: api}, nil
 	} else if version, err := names.ParseVersion(resourcePattern); err == nil {
-		return VersionName{Version: version}, nil
+		return versionName{version: version}, nil
 	} else if spec, err := names.ParseSpec(resourcePattern); err == nil {
-		return SpecName{Spec: spec}, nil
+		return specName{spec: spec}, nil
 	} else if artifact, err := names.ParseArtifact(resourcePattern); err == nil {
-		return ArtifactName{Artifact: artifact}, nil
+		return artifactName{artifact: artifact}, nil
 	}
 
 	return nil, fmt.Errorf("invalid resourcePattern: %s", resourcePattern)
 }
 
-func parseResourcePattern(resourcePattern string) (ResourceName, error) {
+func parseResourcePattern(resourcePattern string) (resourceName, error) {
 
 	// First try to match resource collections.
 	resource, err := parseResourceCollection(resourcePattern)
@@ -109,13 +109,13 @@ func extendDependencyPattern(
 	entityVal := ""
 	switch entityType {
 	case "api":
-		entityVal = resourceName.GetApi()
+		entityVal = resourceName.getApi()
 	case "version":
-		entityVal = resourceName.GetVersion()
+		entityVal = resourceName.getVersion()
 	case "spec":
-		entityVal = resourceName.GetSpec()
+		entityVal = resourceName.getSpec()
 	case "artifact":
-		entityVal = resourceName.GetArtifact()
+		entityVal = resourceName.getArtifact()
 	default:
 		return "", fmt.Errorf("invalid combination resourcePattern: %q dependencyPattern: %q", resourcePattern, dependencyPattern)
 	}
@@ -130,7 +130,7 @@ func extendDependencyPattern(
 
 func resourceNameFromParent(
 	resourcePattern string,
-	parent string) (ResourceName, error) {
+	parent string) (resourceName, error) {
 	// Derives the resource name from the provided resourcePattern and it's parent.
 	// Example:
 	// 1) resourcePattern: projects/demo/locations/global/apis/-/versions/-/specs/openapi.yaml
@@ -146,7 +146,7 @@ func resourceNameFromParent(
 	}
 
 	// Replace the parent pattern in the resourcePattern with the supplied pattern name
-	resourceName := strings.Replace(resourcePattern, parsedResourcePattern.GetParent(), parent, 1)
+	resourceName := strings.Replace(resourcePattern, parsedResourcePattern.getParent(), parent, 1)
 
 	//Validate generated resourceName
 	resource, err := parseResource(resourceName)
@@ -170,27 +170,27 @@ func validateGeneratedResourceEntry(parent string, generatedResource *rpc.Genera
 	}
 	// Check that generatedResource pattern doesn't end with a "-".
 	// We require a name for the target resource.
-	if strings.HasSuffix(parsedTargetResource.String(), "/-") {
+	if strings.HasSuffix(parsedTargetResource.string(), "/-") {
 		totalErrors = append(totalErrors, fmt.Errorf("Invalid generatedResource pattern: %q, it should end with a name and not a \"-\"", generatedResource.Pattern))
 		return totalErrors
 	}
 
-	validateEntityReference := func(resourceName ResourceName, entityType string) bool {
+	validateEntityReference := func(resourceName resourceName, entityType string) bool {
 		switch entityType {
 		case "api":
-			if resourceName.GetApi() == "" {
+			if resourceName.getApi() == "" {
 				return false
 			}
 		case "version":
-			if resourceName.GetVersion() == "" {
+			if resourceName.getVersion() == "" {
 				return false
 			}
 		case "spec":
-			if resourceName.GetSpec() == "" {
+			if resourceName.getSpec() == "" {
 				return false
 			}
 		case "artifact":
-			if resourceName.GetArtifact() == "" {
+			if resourceName.getArtifact() == "" {
 				return false
 			}
 		}
@@ -252,7 +252,7 @@ func getEntityType(sourcePattern string) (string, error) {
 	return matches[1], nil
 }
 
-func getEntityKey(sourcePattern string, resource ResourceName) (string, error) {
+func getEntityKey(sourcePattern string, resource resourceName) (string, error) {
 	// Reads the sourcePattern and returns the entity value for the $resource reference
 	// Example:
 	// pattern: $resource.api/versions/-/specs/-
@@ -266,13 +266,13 @@ func getEntityKey(sourcePattern string, resource ResourceName) (string, error) {
 
 	switch entityType {
 	case "api":
-		return resource.GetApi(), nil
+		return resource.getApi(), nil
 	case "version":
-		return resource.GetVersion(), nil
+		return resource.getVersion(), nil
 	case "spec":
-		return resource.GetSpec(), nil
+		return resource.getSpec(), nil
 	case "artifact":
-		return resource.GetArtifact(), nil
+		return resource.getArtifact(), nil
 	case "default":
 		return "default", nil
 	default:
@@ -340,13 +340,13 @@ func generateCommand(action string, resourceName string) (string, error) {
 		entityVal := ""
 		switch r.entityType {
 		case "api":
-			entityVal = resource.GetApi()
+			entityVal = resource.getApi()
 		case "version":
-			entityVal = resource.GetVersion()
+			entityVal = resource.getVersion()
 		case "spec":
-			entityVal = resource.GetSpec()
+			entityVal = resource.getSpec()
 		case "artifact":
-			entityVal = resource.GetArtifact()
+			entityVal = resource.getArtifact()
 		default:
 			entityVal = ""
 		}

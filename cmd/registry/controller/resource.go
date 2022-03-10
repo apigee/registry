@@ -20,59 +20,59 @@ import (
 
 // This interface is used to describe resource instances
 // ResourceName is embeded, the only additional field is the UpdateTimestamp
-type ResourceInstance interface {
-	GetResourceName() ResourceName
-	GetUpdateTimestamp() time.Time
+type resourceInstance interface {
+	getResourceName() resourceName
+	getUpdateTimestamp() time.Time
 }
 
-type SpecResource struct {
-	SpecName        ResourceName
-	UpdateTimestamp time.Time
+type specResource struct {
+	specName        resourceName
+	updateTimestamp time.Time
 }
 
-func (s SpecResource) GetUpdateTimestamp() time.Time {
-	return s.UpdateTimestamp
+func (s specResource) getUpdateTimestamp() time.Time {
+	return s.updateTimestamp
 }
 
-func (s SpecResource) GetResourceName() ResourceName {
-	return s.SpecName
+func (s specResource) getResourceName() resourceName {
+	return s.specName
 }
 
-type VersionResource struct {
-	VersionName     ResourceName
-	UpdateTimestamp time.Time
+type versionResource struct {
+	versionName     resourceName
+	updateTimestamp time.Time
 }
 
-func (v VersionResource) GetUpdateTimestamp() time.Time {
-	return v.UpdateTimestamp
+func (v versionResource) getUpdateTimestamp() time.Time {
+	return v.updateTimestamp
 }
 
-func (v VersionResource) GetResourceName() ResourceName {
-	return v.VersionName
+func (v versionResource) getResourceName() resourceName {
+	return v.versionName
 }
 
-type ApiResource struct {
-	ApiName         ResourceName
-	UpdateTimestamp time.Time
+type apiResource struct {
+	apiName         resourceName
+	updateTimestamp time.Time
 }
 
-func (a ApiResource) GetUpdateTimestamp() time.Time {
-	return a.UpdateTimestamp
+func (a apiResource) getUpdateTimestamp() time.Time {
+	return a.updateTimestamp
 }
 
-func (a ApiResource) GetResourceName() ResourceName {
-	return a.ApiName
+func (a apiResource) getResourceName() resourceName {
+	return a.apiName
 }
 
-type ArtifactResource struct {
-	ArtifactName    ResourceName
-	UpdateTimestamp time.Time
+type artifactResource struct {
+	artifactName    resourceName
+	updateTimestamp time.Time
 }
 
-func (ar ArtifactResource) GetUpdateTimestamp() time.Time {
-	return ar.UpdateTimestamp
+func (ar artifactResource) getUpdateTimestamp() time.Time {
+	return ar.updateTimestamp
 }
 
-func (ar ArtifactResource) GetResourceName() ResourceName {
-	return ar.ArtifactName
+func (ar artifactResource) getResourceName() resourceName {
+	return ar.artifactName
 }
