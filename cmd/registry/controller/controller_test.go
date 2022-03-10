@@ -26,6 +26,24 @@ import (
 )
 
 var sortActions = cmpopts.SortSlices(func(a, b *Action) bool { return a.Command < b.Command })
+var styleguide = &rpc.StyleGuide{
+	Id:        "registry-styleguide",
+	MimeTypes: []string{gzipOpenAPIv3},
+	Guidelines: []*rpc.Guideline{
+		{
+			Id: "Operation",
+			Rules: []*rpc.Rule{
+				{
+					Id:             "OperationIdValidInURL",
+					Linter:         "spectral",
+					LinterRulename: "operation-operationId-valid-in-url",
+					Severity:       rpc.Rule_WARNING,
+				},
+			},
+			Status: rpc.Guideline_ACTIVE,
+		},
+	},
+}
 
 // Tests for artifacts as resources and specs as dependencies
 func TestArtifacts(t *testing.T) {
@@ -683,6 +701,174 @@ func TestReceiptAggArtifacts(t *testing.T) {
 							},
 						},
 						Action: "registry compute search-index projects/controller-test/locations/global/apis/-/versions/-/specs/-",
+					},
+				},
+			}
+			actions := ProcessManifest(ctx, registryClient, projectID, manifest)
+
+			if diff := cmp.Diff(test.want, actions, sortActions); diff != "" {
+				t.Errorf("ProcessManifest(%+v) returned unexpected diff (-want +got):\n%s", manifest, diff)
+			}
+
+			deleteProject(ctx, adminClient, t, "controller-test")
+		})
+	}
+
+}
+
+// Tests for manifest with multiple entity references
+func TestMultipleEntitiesArtifacts(t *testing.T) {
+	tests := []struct {
+		desc  string
+		setup func(context.Context, connection.Client, connection.AdminClient)
+		want  []*Action
+	}{
+		{
+			desc: "create artifacts",
+			setup: func(ctx context.Context, client connection.Client, adminClient connection.AdminClient) {
+				deleteProject(ctx, adminClient, t, "controller-test")
+				createProject(ctx, adminClient, t, "controller-test")
+
+				uploadStyleguide(ctx, client, t, "controller-test", styleguide)
+
+				createApi(ctx, client, t, "projects/controller-test/locations/global", "petstore")
+				// Version 1.0.0
+				createVersion(ctx, client, t, "projects/controller-test/locations/global/apis/petstore", "1.0.0")
+				createSpec(ctx, client, t, "projects/controller-test/locations/global/apis/petstore/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
+				// Version 1.0.1
+				createVersion(ctx, client, t, "projects/controller-test/locations/global/apis/petstore", "1.0.1")
+				createSpec(ctx, client, t, "projects/controller-test/locations/global/apis/petstore/versions/1.0.1", "openapi.yaml", gzipOpenAPIv3)
+				// Version 1.1.0
+				createVersion(ctx, client, t, "projects/controller-test/locations/global/apis/petstore", "1.1.0")
+				createSpec(ctx, client, t, "projects/controller-test/locations/global/apis/petstore/versions/1.1.0", "openapi.yaml", gzipOpenAPIv3)
+			},
+			want: []*Action{
+				{
+					Command:           "registry compute conformance projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/conformance-registry-styleguide",
+					RequiresReceipt:   true,
+				},
+				{
+					Command:           "registry compute conformance projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/conformance-registry-styleguide",
+					RequiresReceipt:   true,
+				},
+				{
+					Command:           "registry compute conformance projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/conformance-registry-styleguide",
+					RequiresReceipt:   true,
+				},
+			},
+		},
+		{
+			desc: "outdated artifacts",
+			setup: func(ctx context.Context, client connection.Client, adminClient connection.AdminClient) {
+				deleteProject(ctx, adminClient, t, "controller-test")
+				createProject(ctx, adminClient, t, "controller-test")
+				createApi(ctx, client, t, "projects/controller-test/locations/global", "petstore")
+
+				// Version 1.0.0
+				createVersion(ctx, client, t, "projects/controller-test/locations/global/apis/petstore", "1.0.0")
+				createSpec(ctx, client, t, "projects/controller-test/locations/global/apis/petstore/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
+				createUpdateArtifact(ctx, client, t, "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/conformance-registry-styleguide")
+				// Version 1.0.1
+				createVersion(ctx, client, t, "projects/controller-test/locations/global/apis/petstore", "1.0.1")
+				createSpec(ctx, client, t, "projects/controller-test/locations/global/apis/petstore/versions/1.0.1", "openapi.yaml", gzipOpenAPIv3)
+				createUpdateArtifact(ctx, client, t, "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/conformance-registry-styleguide")
+				// Version 1.1.0
+				createVersion(ctx, client, t, "projects/controller-test/locations/global/apis/petstore", "1.1.0")
+				createSpec(ctx, client, t, "projects/controller-test/locations/global/apis/petstore/versions/1.1.0", "openapi.yaml", gzipOpenAPIv3)
+				createUpdateArtifact(ctx, client, t, "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/conformance-registry-styleguide")
+
+				//Update styleguide definition to make sure conformance artifacts are outdated
+				uploadStyleguide(ctx, client, t, "controller-test", styleguide)
+			},
+			want: []*Action{
+				{
+					Command:           "registry compute conformance projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/conformance-registry-styleguide",
+					RequiresReceipt:   true,
+				},
+				{
+					Command:           "registry compute conformance projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/conformance-registry-styleguide",
+					RequiresReceipt:   true,
+				},
+				{
+					Command:           "registry compute conformance projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/conformance-registry-styleguide",
+					RequiresReceipt:   true,
+				},
+			},
+		},
+		{
+			desc: "missing dependencies",
+			setup: func(ctx context.Context, client connection.Client, adminClient connection.AdminClient) {
+				deleteProject(ctx, adminClient, t, "controller-test")
+				createProject(ctx, adminClient, t, "controller-test")
+				createApi(ctx, client, t, "projects/controller-test/locations/global", "petstore")
+
+				uploadStyleguide(ctx, client, t, "controller-test", styleguide)
+
+				// Version 1.0.0
+				createVersion(ctx, client, t, "projects/controller-test/locations/global/apis/petstore", "1.0.0")
+				createSpec(ctx, client, t, "projects/controller-test/locations/global/apis/petstore/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
+				// Version 1.0.1
+				createVersion(ctx, client, t, "projects/controller-test/locations/global/apis/petstore", "1.0.1")
+				// Version 1.1.0
+				createVersion(ctx, client, t, "projects/controller-test/locations/global/apis/petstore", "1.1.0")
+				createSpec(ctx, client, t, "projects/controller-test/locations/global/apis/petstore/versions/1.1.0", "openapi.yaml", gzipOpenAPIv3)
+
+			},
+			want: []*Action{
+				{
+					Command:           "registry compute conformance projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/conformance-registry-styleguide",
+					RequiresReceipt:   true,
+				},
+				{
+					Command:           "registry compute conformance projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/conformance-registry-styleguide",
+					RequiresReceipt:   true,
+				},
+			},
+		},
+	}
+
+	const projectID = "controller-test"
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			ctx := context.Background()
+			registryClient, err := connection.NewClient(ctx)
+			if err != nil {
+				t.Logf("Failed to create client: %+v", err)
+				t.FailNow()
+			}
+			defer registryClient.Close()
+			adminClient, err := connection.NewAdminClient(ctx)
+			if err != nil {
+				t.Logf("Failed to create client: %+v", err)
+				t.FailNow()
+			}
+			defer adminClient.Close()
+
+			test.setup(ctx, registryClient, adminClient)
+
+			manifest := &rpc.Manifest{
+				Id: "controller-test",
+				GeneratedResources: []*rpc.GeneratedResource{
+					{
+						Pattern: "apis/-/versions/-/specs/-/artifacts/conformance-registry-styleguide",
+						Receipt: true,
+						Dependencies: []*rpc.Dependency{
+							{
+								Pattern: "$resource.spec",
+							},
+							{
+								Pattern: "artifacts/registry-styleguide",
+							},
+						},
+						Action: "registry compute conformance $resource.spec",
 					},
 				},
 			}

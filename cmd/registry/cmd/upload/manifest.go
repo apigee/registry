@@ -66,13 +66,7 @@ func manifestCommand(ctx context.Context) *cobra.Command {
 			}
 
 			// validate the manifest
-			isValid := true
-			for _, resource := range manifest.GeneratedResources {
-				if err := controller.ValidateResourceEntry(resource); err != nil {
-					log.FromContext(ctx).WithError(err).Errorf("Invalid manifest entry %v", resource)
-					isValid = false
-				}
-			}
+			isValid := controller.ValidateManifest(ctx, fmt.Sprintf("projects/%s/locations/global", projectID), manifest)
 			if !isValid {
 				log.Fatal(ctx, "Manifest definition contains errors")
 			}

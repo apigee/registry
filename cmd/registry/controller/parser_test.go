@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 )
 
@@ -399,4 +400,154 @@ func TestGenerateCommandError(t *testing.T) {
 		})
 	}
 
+}
+
+func TestValidateGeneratedResourceEntry(t *testing.T) {
+	tests := []struct {
+		desc              string
+		generatedResource *rpc.GeneratedResource
+	}{
+		{
+			desc: "single entity reference",
+			generatedResource: &rpc.GeneratedResource{
+				Pattern: "apis/-/versions/-/specs/-/artifacts/complexity",
+				Dependencies: []*rpc.Dependency{
+					{
+						Pattern: "$resource.spec",
+					},
+				},
+				Action: "registry compute complexity $resource.spec",
+			},
+		},
+		{
+			desc: "multiple entity reference",
+			generatedResource: &rpc.GeneratedResource{
+				Pattern: "apis/-/versions/-/artifacts/compliance",
+				Dependencies: []*rpc.Dependency{
+					{
+						Pattern: "$resource.version",
+					},
+					{
+						Pattern: "$resource.api/artifacts/recommended-version",
+					},
+				},
+				Action: "registry compute compliance $resource.version $resource.api/artifacts/recommended-version",
+			},
+		},
+		{
+			desc: "present/absent entity reference",
+			generatedResource: &rpc.GeneratedResource{
+				Pattern: "apis/-/versions/-/specs/-/artifacts/conformance",
+				Dependencies: []*rpc.Dependency{
+					{
+						Pattern: "$resource.spec",
+					},
+					{
+						Pattern: "artifacts/registry-styleguide",
+					},
+				},
+				Action: "registry compute conformance $resource.spec",
+			},
+		},
+		{
+			desc: "present/absent entity and multiple reference",
+			generatedResource: &rpc.GeneratedResource{
+				Pattern: "apis/-/versions/-/artifacts/version-summary",
+				Dependencies: []*rpc.Dependency{
+					{
+						Pattern: "$resource.api/versions/-",
+					},
+					{
+						Pattern: "$resource.api/artifacts/prod-version-metadata",
+					},
+					{
+						Pattern: "artifacts/summary-config",
+					},
+				},
+				Action: "registry generate summary $resource.version",
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			gotErrs := validateGeneratedResourceEntry("projects/demo/locations/global", test.generatedResource)
+			if len(gotErrs) > 0 {
+				t.Errorf("ValidateGeneratedResourceEntry() returned unexpected errors: %s", gotErrs)
+			}
+		})
+	}
+}
+
+func TestValidateGeneratedResourceEntryError(t *testing.T) {
+	tests := []struct {
+		desc              string
+		generatedResource *rpc.GeneratedResource
+	}{
+		{
+			desc: "invalid target pattern",
+			generatedResource: &rpc.GeneratedResource{
+				Pattern: "apis/-/versions/-/specs/-/complexity", // Correct pattern: apis/-/versions/-/specs/-/artifacts/complexity
+				Dependencies: []*rpc.Dependency{
+					{
+						Pattern: "$resource.spec",
+					},
+				},
+				Action: "registry compute complexity $resource.spec",
+			},
+		},
+		{
+			desc: "no target resource name",
+			generatedResource: &rpc.GeneratedResource{
+				Pattern: "apis/-/versions/-/specs/-", // Correct pattern: apis/-/versions/-/specs/openapi.yaml
+				Dependencies: []*rpc.Dependency{
+					{
+						Pattern: "$resource.spec",
+						Filter:  "mime_type.contains('openapi')",
+					},
+				},
+				Action: "registry generate openapispec $resource.spec",
+			},
+		},
+		{
+			desc: "invalid reference in deps",
+			generatedResource: &rpc.GeneratedResource{
+				Pattern: "apis/-/versions/-/artifacts/version-summary",
+				Dependencies: []*rpc.Dependency{
+					{
+						Pattern: "$resource.version",
+					},
+					{
+						Pattern: "$resource.spec", // Correct pattern: $resource.version/specs/-
+					},
+				},
+				Action: "registry compute conformance $resource.spec",
+			},
+		},
+		{
+			desc: "invalid reference in action",
+			generatedResource: &rpc.GeneratedResource{
+				Pattern: "apis/-/versions/-/artifacts/version-summary",
+				Dependencies: []*rpc.Dependency{
+					{
+						Pattern: "$resource.api/versions/-",
+					},
+					{
+						Pattern: "$resource.api/artifacts/prod-version-metadata",
+					},
+					{
+						Pattern: "artifacts/summary-config",
+					},
+				},
+				Action: "registry generate summary $resource.spec", // Correct pattern: registry generate summary $resource.version
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			gotErrs := validateGeneratedResourceEntry("projects/demo/locations/global", test.generatedResource)
+			if len(gotErrs) == 0 {
+				t.Errorf("Expected ValidateGeneratedResourceEntry() to return errors")
+			}
+		})
+	}
 }

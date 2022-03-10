@@ -31,6 +31,20 @@ type Action struct {
 	RequiresReceipt   bool
 }
 
+func ValidateManifest(ctx context.Context, parent string, manifest *rpc.Manifest) bool {
+	isValid := true
+	for _, resource := range manifest.GeneratedResources {
+		log.FromContext(ctx).Debugf("Validating entry: %v", resource)
+		if errs := validateGeneratedResourceEntry(parent, resource); errs != nil {
+			for _, err := range errs {
+				log.FromContext(ctx).WithError(err).Errorf("Invalid manifest entry")
+			}
+			isValid = false
+		}
+	}
+	return isValid
+}
+
 func ProcessManifest(
 	ctx context.Context,
 	client connection.Client,
@@ -41,9 +55,9 @@ func ProcessManifest(
 	for _, resource := range manifest.GeneratedResources {
 		log.Debugf(ctx, "Processing entry: %v", resource)
 
-		err := ValidateResourceEntry(resource)
-		if err != nil {
-			log.FromContext(ctx).WithError(err).Debugf("Skipping resource: %q invalid resource pattern", resource)
+		errs := validateGeneratedResourceEntry(fmt.Sprintf("projects/%s/locations/global", projectID), resource)
+		if len(errs) > 0 {
+			log.FromContext(ctx).Debugf("Skipping generatedResource: %q invalid definition", resource)
 			continue
 		}
 
