@@ -41,7 +41,7 @@ ARG REGISTRY_TOOL_IMAGE
 
 # Install spectral linter
 RUN apk add --no-cache nodejs npm
-RUN npm install -g @stoplight/spectral
+RUN npm install -g @stoplight/spectral@5.9.2
 
 # Copy other linter binaries
 COPY --from=builder /go/bin/api-linter /bin/

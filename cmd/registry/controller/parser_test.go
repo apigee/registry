@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"testing"
 
-	// "github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 )
 
@@ -29,6 +28,15 @@ func generateSpec(t *testing.T, specName string) names.Spec {
 		t.Fatalf("Failed generateSpec(%s): %s", specName, err.Error())
 	}
 	return spec
+}
+
+func generateVersion(t *testing.T, versionName string) names.Version {
+	t.Helper()
+	version, err := names.ParseVersion(versionName)
+	if err != nil {
+		t.Fatalf("Failed generateSpec(%s): %s", versionName, err.Error())
+	}
+	return version
 }
 
 func generateArtifact(t *testing.T, artifactName string) names.Artifact {
@@ -127,83 +135,83 @@ func TestExtendDependencyPatternError(t *testing.T) {
 	}
 }
 
-func TestResourceNameFromGroupKey(t *testing.T) {
+func TestResourceNameFromParent(t *testing.T) {
 	tests := []struct {
 		desc            string
 		resourcePattern string
-		groupKey        string
-		want            string
+		parent          string
+		want            ResourceName
 	}{
 		{
-			desc:            "api pattern",
-			resourcePattern: "projects/demo/locations/global/apis/-",
-			groupKey:        "projects/demo/locations/global/apis/petstore",
-			want:            "projects/demo/locations/global/apis/petstore",
-		},
-		{
 			desc:            "version pattern",
-			resourcePattern: "projects/demo/locations/global/apis/-/versions/-",
-			groupKey:        "projects/demo/locations/global/apis/petstore/versions/1.0.0",
-			want:            "projects/demo/locations/global/apis/petstore/versions/1.0.0",
+			resourcePattern: "projects/demo/locations/global/apis/-/versions/1.0.0",
+			parent:          "projects/demo/locations/global/apis/petstore",
+			want: VersionName{
+				Version: generateVersion(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0"),
+			},
 		},
 		{
 			desc:            "spec pattern",
-			resourcePattern: "projects/demo/locations/global/apis/petstore/versions/-/specs/-/artifacts/complexity",
-			groupKey:        "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
-			want:            "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity",
+			resourcePattern: "projects/demo/locations/global/apis/-/versions/-/specs/openapi.yaml",
+			parent:          "projects/demo/locations/global/apis/petstore/versions/1.0.0",
+			want: SpecName{
+				Spec: generateSpec(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml"),
+			},
 		},
 		{
 			desc:            "artifact pattern",
-			resourcePattern: "projects/demo/locations/global/apis/-/versions/-/specs/-/artifacts/-",
-			groupKey:        "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity",
-			want:            "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity",
+			resourcePattern: "projects/demo/locations/global/apis/-/versions/-/specs/-/artifacts/complexity",
+			parent:          "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+			want: ArtifactName{
+				Artifact: generateArtifact(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity"),
+			},
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			got, err := resourceNameFromGroupKey(test.resourcePattern, test.groupKey)
+			got, err := resourceNameFromParent(test.resourcePattern, test.parent)
 			if err != nil {
-				t.Errorf("resourceNameFromGroupKey returned unexpected error: %s", err)
+				t.Errorf("resourceNameFromEntityKey returned unexpected error: %s", err)
 			}
 			if got != test.want {
-				t.Errorf("resourceNameFromGroupKey returned unexpected value want: %q got:%q", test.want, got)
+				t.Errorf("resourceNameFromEntityKey returned unexpected value want: %q got:%q", test.want, got)
 			}
 		})
 	}
 
 }
 
-func TestResourceNameFromGroupKeyError(t *testing.T) {
+func TestResourceNameFromParentError(t *testing.T) {
 	tests := []struct {
 		desc            string
 		resourcePattern string
-		groupKey        string
+		parent          string
 	}{
 		{
 			desc:            "incorrect keywords",
 			resourcePattern: "projects/demo/locations/global/apis/-/versions/-/apispecs/-",
-			groupKey:        "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+			parent:          "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 		},
 		{
 			desc:            "incorrect pattern",
 			resourcePattern: "projects/demo/locations/global/apis/-/specs/-",
-			groupKey:        "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+			parent:          "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			got, err := resourceNameFromGroupKey(test.resourcePattern, test.groupKey)
+			got, err := resourceNameFromParent(test.resourcePattern, test.parent)
 			if err == nil {
-				t.Errorf("expected resourceNameFromGroupKey to return error, got: %q", got)
+				t.Errorf("expected resourceNameFromEntityKey to return error, got: %q", got)
 			}
 		})
 	}
 
 }
 
-func TestGetGroupKey(t *testing.T) {
+func TestGetEntityKey(t *testing.T) {
 	tests := []struct {
 		desc     string
 		pattern  string
@@ -254,18 +262,18 @@ func TestGetGroupKey(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			got, err := getGroupKey(test.pattern, test.resource)
+			got, err := getEntityKey(test.pattern, test.resource.GetResourceName())
 			if err != nil {
-				t.Errorf("getGroupKey returned unexpected error: %s", err)
+				t.Errorf("getEntityKey returned unexpected error: %s", err)
 			}
 			if got != test.want {
-				t.Errorf("getGroupKey returned unexpected value want: %q got:%q", test.want, got)
+				t.Errorf("getEntityKey returned unexpected value want: %q got:%q", test.want, got)
 			}
 		})
 	}
 }
 
-func TestGetGroupKeyError(t *testing.T) {
+func TestGetEntityKeyError(t *testing.T) {
 	tests := []struct {
 		desc     string
 		pattern  string
@@ -296,9 +304,9 @@ func TestGetGroupKeyError(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			got, err := getGroupKey(test.pattern, test.resource)
+			got, err := getEntityKey(test.pattern, test.resource.GetResourceName())
 			if err == nil {
-				t.Errorf("expected getGroupKey to return error, got: %q", got)
+				t.Errorf("expected getEntityKey to return error, got: %q", got)
 			}
 		})
 	}
