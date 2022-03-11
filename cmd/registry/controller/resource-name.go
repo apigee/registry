@@ -27,7 +27,8 @@ type ResourceName interface {
 	GetSpec() string
 	GetVersion() string
 	GetApi() string
-	GetName() string
+	String() string
+	GetParent() string
 }
 
 type SpecName struct {
@@ -50,8 +51,12 @@ func (s SpecName) GetApi() string {
 	return s.Spec.Api().String()
 }
 
-func (s SpecName) GetName() string {
+func (s SpecName) String() string {
 	return s.Spec.String()
+}
+
+func (s SpecName) GetParent() string {
+	return s.Spec.Parent()
 }
 
 type VersionName struct {
@@ -74,8 +79,12 @@ func (v VersionName) GetApi() string {
 	return v.Version.Api().String()
 }
 
-func (v VersionName) GetName() string {
+func (v VersionName) String() string {
 	return v.Version.String()
+}
+
+func (v VersionName) GetParent() string {
+	return v.Version.Parent()
 }
 
 type ApiName struct {
@@ -98,8 +107,12 @@ func (a ApiName) GetApi() string {
 	return a.Api.String()
 }
 
-func (a ApiName) GetName() string {
+func (a ApiName) String() string {
 	return a.Api.String()
+}
+
+func (a ApiName) GetParent() string {
+	return a.Api.Parent()
 }
 
 type ArtifactName struct {
@@ -159,6 +172,10 @@ func (ar ArtifactName) GetApi() string {
 	return ""
 }
 
-func (ar ArtifactName) GetName() string {
+func (ar ArtifactName) String() string {
 	return ar.Artifact.String()
+}
+
+func (ar ArtifactName) GetParent() string {
+	return ar.Artifact.Parent()
 }
