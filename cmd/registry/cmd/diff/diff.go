@@ -18,7 +18,9 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
@@ -63,11 +65,7 @@ func Command(ctx context.Context) *cobra.Command {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to match or handle command")
 			}
 			if spec1 != nil && spec2 != nil {
-				s1 := string(spec1.Contents)
-				s2 := string(spec2.Contents)
-				edits := myers.ComputeEdits(span.URIFromPath(args[0]), s1, s2)
-				diff := fmt.Sprint(gotextdiff.ToUnified(args[0], args[1], s1, edits))
-				fmt.Println(diff)
+				printDiff(spec1, spec2)
 			}
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to match or handle command")
@@ -119,4 +117,64 @@ func resolveSpecRevision(ctx context.Context,
 		return names.SpecRevision{}, fmt.Errorf("%s is not a valid revision reference", suffix)
 	}
 	return names.SpecRevision{}, fmt.Errorf("%s is not a valid revision reference", suffix)
+}
+
+func printDiff(spec1, spec2 *rpc.ApiSpec) error {
+	if spec1.MimeType != spec2.MimeType {
+		return fmt.Errorf("incomparable content types (%s, %s)", spec1.MimeType, spec2.MimeType)
+	}
+	if strings.Contains(spec1.MimeType, "+zip") {
+		// read both zip archives into a map
+		map1, err := core.UnzipArchiveToMap(spec1.Contents)
+		if err != nil {
+			return err
+		}
+		map2, err := core.UnzipArchiveToMap(spec2.Contents)
+		if err != nil {
+			return err
+		}
+		keys1 := make([]string, 0, len(map1))
+		for k := range map1 {
+			keys1 = append(keys1, k)
+		}
+		sort.Strings(keys1)
+		for _, k1 := range keys1 {
+			if v2, ok := map2[k1]; ok {
+				diff := computeDiff(
+					map1[k1],
+					v2,
+					spec1.Name+"/"+k1,
+					spec2.Name+"/"+k1,
+				)
+				if len(diff) > 0 {
+					fmt.Println(diff)
+				}
+			} else {
+				fmt.Printf("--- %s/%s\n", spec1.Name, k1)
+			}
+		}
+		keys2 := make([]string, 0, len(map2))
+		for k := range map2 {
+			keys2 = append(keys2, k)
+		}
+		sort.Strings(keys2)
+		for _, k2 := range keys2 {
+			if _, ok := map1[k2]; !ok {
+				fmt.Printf("+++ %s/%s\n", spec2.Name, k2)
+			}
+		}
+	} else {
+		diff := computeDiff(spec1.Contents, spec2.Contents, spec1.Name, spec2.Name)
+		if len(diff) > 0 {
+			fmt.Println(diff)
+		}
+	}
+	return nil
+}
+
+func computeDiff(b1, b2 []byte, n1, n2 string) string {
+	s1 := string(b1)
+	s2 := string(b2)
+	edits := myers.ComputeEdits(span.URIFromPath(n1), s1, s2)
+	return fmt.Sprint(gotextdiff.ToUnified(n1, n2, s1, edits))
 }
