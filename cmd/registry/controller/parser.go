@@ -128,64 +128,33 @@ func extendDependencyPattern(
 
 }
 
-// This function is used in case of receipt artifacts where the name of the target resource to create is not known
-func resourceNameFromGroupKey(
+func resourceNameFromParent(
 	resourcePattern string,
-	groupKey string) (string, error) {
-	// Derives the resource name from the provided resourcePattern and groupKey.
+	parent string) (ResourceName, error) {
+	// Derives the resource name from the provided resourcePattern and it's parent.
 	// Example:
-	// 1) resourcePattern: projects/demo/locations/global/apis/-/versions/-/specs/-
-	//    groupKey: projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity
+	// 1) resourcePattern: projects/demo/locations/global/apis/-/versions/-/specs/openapi.yaml
+	//    parent: projects/demo/locations/global/apis/petstore/versions/1.0.0
 	//    returns projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml
 	// 2) resourcePattern: projects/demo/locations/global/apis/petstore/versions/-/specs/-/artifacts/custom-artifact
-	//    groupKey: projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity
+	//    parent: projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml
 	//    returns projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/custom-artifact
 
-	groupName, err := parseResource(groupKey)
-	resourceName := resourcePattern
-
-	if err == nil {
-		// Replace `apis/-` pattern with the corresponding name.
-		// groupName.GetApi() returns the full api name projects/demo/locations/global/apis/petstore
-		// We use stringsSplit()[-1] to extract only the API name
-		apiName := strings.Split(groupName.GetApi(), "/")
-		if len(apiName) > 0 {
-			resourceName = strings.ReplaceAll(resourceName, "/apis/-",
-				fmt.Sprintf("/apis/%s", apiName[len(apiName)-1]))
-		}
-
-		versionName := strings.Split(groupName.GetVersion(), "/")
-		if len(versionName) > 0 {
-			resourceName = strings.ReplaceAll(resourceName, "/versions/-",
-				fmt.Sprintf("/versions/%s", versionName[len(versionName)-1]))
-		}
-
-		specName := strings.Split(groupName.GetSpec(), "/")
-		if len(specName) > 0 {
-			resourceName = strings.ReplaceAll(resourceName, "/specs/-",
-				fmt.Sprintf("/specs/%s", specName[len(specName)-1]))
-		}
-
-		artifactName := strings.Split(groupName.GetArtifact(), "/")
-		if len(artifactName) > 0 {
-			resourceName = strings.ReplaceAll(resourceName, "/artifacts/-",
-				fmt.Sprintf("/artifacts/%s", artifactName[len(artifactName)-1]))
-		}
+	parsedResourcePattern, err := parseResourcePattern(resourcePattern)
+	if err != nil {
+		return nil, fmt.Errorf("Invalid target Pattern: %s", err)
 	}
+
+	// Replace the parent pattern in the resourcePattern with the supplied pattern name
+	resourceName := strings.Replace(resourcePattern, parsedResourcePattern.GetParent(), parent, 1)
+
 	//Validate generated resourceName
-	if _, err := names.ParseProject(resourceName); err == nil {
-		return resourceName, nil
-	} else if _, err := names.ParseApi(resourceName); err == nil {
-		return resourceName, nil
-	} else if _, err := names.ParseVersion(resourceName); err == nil {
-		return resourceName, nil
-	} else if _, err := names.ParseSpec(resourceName); err == nil {
-		return resourceName, nil
-	} else if _, err := names.ParseArtifact(resourceName); err == nil {
-		return resourceName, nil
+	resource, err := parseResource(resourceName)
+	if err != nil {
+		return nil, fmt.Errorf("invalid pattern: %q cannot derive GeneratedResource name from parent %s", resourcePattern, parent)
 	}
 
-	return "", fmt.Errorf("invalid pattern: %q cannot derive GeneratedResource name from groupKey %s", resourcePattern, groupKey)
+	return resource, nil
 }
 
 func ValidateResourceEntry(resource *rpc.GeneratedResource) error {
@@ -193,7 +162,7 @@ func ValidateResourceEntry(resource *rpc.GeneratedResource) error {
 
 	for _, dependency := range resource.Dependencies {
 		// Validate that all the dependencies are grouped at the same level
-		groupEntity, err := getGroupEntity(dependency.Pattern)
+		groupEntity, err := getEntityType(dependency.Pattern)
 		if err != nil {
 			return err
 		}
@@ -223,13 +192,13 @@ func ValidateResourceEntry(resource *rpc.GeneratedResource) error {
 	return nil
 }
 
-func getGroupEntity(pattern string) (string, error) {
-	// Reads the sourcePattern, finds out group by entity type
+func getEntityType(sourcePattern string) (string, error) {
+	// Reads the sourcePattern, finds out entity type in the $resource refernce
 	// Example:
 	// pattern: $resource.api/versions/-/specs/-
-	// returns "api", default if no group is present
+	// returns "api", default if no reference is present
 
-	if !strings.HasPrefix(pattern, resourceKW) {
+	if !strings.HasPrefix(sourcePattern, resourceKW) {
 		return "default", nil
 	}
 
@@ -239,22 +208,22 @@ func getGroupEntity(pattern string) (string, error) {
 	// ["$resource.api", "api"]
 	re := regexp.MustCompile(fmt.Sprintf(`\%s\.(api|version|spec|artifact)(/|$)`, resourceKW))
 
-	matches := re.FindStringSubmatch(pattern)
+	matches := re.FindStringSubmatch(sourcePattern)
 	if len(matches) <= 1 {
-		return "", fmt.Errorf("invalid pattern: Cannot extract group from pattern %s", pattern)
+		return "", fmt.Errorf("invalid pattern: Cannot extract entityType from pattern %s", sourcePattern)
 	}
 
 	return matches[1], nil
 }
 
-func getGroupKey(pattern string, resource ResourceInstance) (string, error) {
-	// Reads the pattern and returns the group value for the resource
+func getEntityKey(sourcePattern string, resource ResourceName) (string, error) {
+	// Reads the sourcePattern and returns the entity value for the $resource reference
 	// Example:
 	// pattern: $resource.api/versions/-/specs/-
 	// resource: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml"
 	// returns "projects/demo/locations/global/apis/petstore"
 
-	entityType, err := getGroupEntity(pattern)
+	entityType, err := getEntityType(sourcePattern)
 	if err != nil {
 		return "", err
 	}
@@ -271,7 +240,7 @@ func getGroupKey(pattern string, resource ResourceInstance) (string, error) {
 	case "default":
 		return "default", nil
 	default:
-		return "", fmt.Errorf("invalid pattern: Cannot extract group from pattern %s", pattern)
+		return "", fmt.Errorf("invalid pattern: Cannot extract entity from sourcePattern %s", sourcePattern)
 	}
 
 }

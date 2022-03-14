@@ -38,7 +38,13 @@ func TestGetStatus(t *testing.T) {
 		t.Fatalf("GetStatus(%+v) returned error: %s", req, err)
 	}
 
-	if !cmp.Equal(want, got, protocmp.Transform()) {
-		t.Errorf("GetStatus(%+v) returned unexpected diff (-want +got):\n%s", req, cmp.Diff(want, got, protocmp.Transform()))
+	opts := cmp.Options{
+		protocmp.Transform(),
+		// Ignore fields that are build-dependent or excluded from Go 	< 1.18.
+		protocmp.IgnoreFields(&rpc.Status{}, "build"),
+	}
+
+	if !cmp.Equal(want, got, opts) {
+		t.Errorf("GetStatus(%+v) returned unexpected diff (-want +got):\n%s", req, cmp.Diff(want, got, opts))
 	}
 }
