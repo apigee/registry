@@ -110,7 +110,7 @@ func applyApiSpecPatch(
 			req.ApiSpec.Contents = body
 		} else if u.Scheme == "file" {
 			// remove leading slash from path; we load from paths relative to the working directory
-			path := strings.TrimLeft(u.Path, "/")
+			path := strings.TrimPrefix(u.Path, "/")
 			info, err := os.Stat(path)
 			if err != nil {
 				return err
