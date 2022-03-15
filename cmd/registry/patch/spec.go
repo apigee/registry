@@ -92,7 +92,8 @@ func applyApiSpecPatch(
 		if err != nil {
 			return err
 		}
-		if u.Scheme == "http" || u.Scheme == "https" {
+		switch u.Scheme {
+		case "http", "https":
 			resp, err := http.Get(spec.Data.SourceURI)
 			if err != nil {
 				return err
@@ -108,8 +109,10 @@ func applyApiSpecPatch(
 				}
 			}
 			req.ApiSpec.Contents = body
-		} else if u.Scheme == "file" {
-			// remove leading slash from path; we load from paths relative to the working directory
+		case "file":
+			// Remove leading slash from path.
+			// We expect to load from paths relative to the working directory,
+			// but users can add an additional slash to specify a global path.
 			path := strings.TrimPrefix(u.Path, "/")
 			info, err := os.Stat(path)
 			if err != nil {
