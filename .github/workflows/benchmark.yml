@@ -16,9 +16,13 @@ name: Benchmark testing
 
 on:
   push:
+    paths:
+    - 'server/**'
     branches:
     - main
   pull_request:
+    paths:
+    - 'server/**'
     branches:
     - main
 jobs:
