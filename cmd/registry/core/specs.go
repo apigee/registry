@@ -15,14 +15,10 @@
 package core
 
 import (
-	"bytes"
-	"compress/gzip"
 	"context"
 
 	"github.com/apigee/registry/connection"
-	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
-	"google.golang.org/protobuf/proto"
 )
 
 func GetBytesForSpec(ctx context.Context, client connection.Client, spec *rpc.ApiSpec) ([]byte, error) {
@@ -32,32 +28,4 @@ func GetBytesForSpec(ctx context.Context, client connection.Client, spec *rpc.Ap
 		return nil, err
 	}
 	return contents.Data, nil
-}
-
-func UploadBytesForSpec(ctx context.Context, client connection.Client, parent, specID, style string, document proto.Message) error {
-	// gzip the spec before uploading it
-	messageData, _ := proto.Marshal(document)
-	var buf bytes.Buffer
-	zw, _ := gzip.NewWriterLevel(&buf, gzip.BestCompression)
-	if _, err := zw.Write(messageData); err != nil {
-		log.FromContext(ctx).WithError(err).Fatal("Failed to gzip spec contents")
-	}
-	if err := zw.Close(); err != nil {
-		log.FromContext(ctx).WithError(err).Fatal("Failed to finish gzipping spec contents")
-	}
-
-	request := &rpc.UpdateApiSpecRequest{
-		AllowMissing: true,
-		ApiSpec: &rpc.ApiSpec{
-			Name:     parent + "/specs/" + specID,
-			MimeType: style,
-			Contents: buf.Bytes(),
-		},
-	}
-
-	if _, err := client.UpdateApiSpec(ctx, request); err != nil {
-		return err
-	}
-
-	return nil
 }
