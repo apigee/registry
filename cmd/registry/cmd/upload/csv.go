@@ -27,6 +27,7 @@ import (
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/server/registry/names"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -57,7 +58,14 @@ func csvCommand(ctx context.Context) *cobra.Command {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
 
-			core.EnsureProjectExists(ctx, adminClient, projectID)
+			if _, err := adminClient.UpdateProject(ctx, &rpc.UpdateProjectRequest{
+				Project: &rpc.Project{
+					Name: names.Project{ProjectID: projectID}.String(),
+				},
+				AllowMissing: true,
+			}); err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Failed to ensure project exists")
+			}
 
 			taskQueue, wait := core.WorkerPool(ctx, 64)
 			defer wait()
