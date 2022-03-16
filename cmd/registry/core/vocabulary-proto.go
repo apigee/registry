@@ -116,8 +116,6 @@ func (vocab *Vocabulary) fillVocabularyFromProto(filename string) error {
 			vocab.fillVocabularyFromMessage(m)
 		case *parser.Service:
 			vocab.fillVocabularyFromService(m)
-		default:
-			// fmt.Printf("IGNORED %+v\n", v)
 		}
 	}
 	return nil
@@ -127,22 +125,16 @@ func (vocab *Vocabulary) fillVocabularyFromMessage(m *parser.Message) {
 	vocab.Schemas[m.MessageName]++
 
 	for _, x := range m.MessageBody {
-		switch v := x.(type) {
-		case *parser.Field:
+		if v, ok := x.(*parser.Field); ok {
 			vocab.Properties[v.FieldName]++
-		default:
-			// fmt.Printf("IGNORED %+v\n", v)
 		}
 	}
 }
 
 func (vocab *Vocabulary) fillVocabularyFromService(m *parser.Service) {
 	for _, x := range m.ServiceBody {
-		switch v := x.(type) {
-		case *parser.RPC:
+		if v, ok := x.(*parser.RPC); ok {
 			vocab.Operations[v.RPCName]++
-		default:
-			// fmt.Printf("IGNORED %+v\n", v)
 		}
 	}
 }

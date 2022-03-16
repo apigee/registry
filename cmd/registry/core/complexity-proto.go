@@ -92,8 +92,6 @@ func fillComplexityFromProto(c *metrics.Complexity, filename string) error {
 			fillComplexityFromMessage(c, m)
 		case *parser.Service:
 			fillComplexityFromService(c, m)
-		default:
-			// fmt.Printf("IGNORED %+v\n", v)
 		}
 	}
 	return nil
@@ -102,22 +100,16 @@ func fillComplexityFromProto(c *metrics.Complexity, filename string) error {
 func fillComplexityFromMessage(c *metrics.Complexity, m *parser.Message) {
 	c.SchemaCount++
 	for _, x := range m.MessageBody {
-		switch x.(type) {
-		case *parser.Field:
+		if _, ok := x.(*parser.Field); ok {
 			c.SchemaPropertyCount++
-		default:
-			// fmt.Printf("IGNORED %+v\n", v)
 		}
 	}
 }
 
 func fillComplexityFromService(c *metrics.Complexity, m *parser.Service) {
 	for _, x := range m.ServiceBody {
-		switch x.(type) {
-		case *parser.RPC:
+		if _, ok := x.(*parser.RPC); ok {
 			c.PathCount++
-		default:
-			// fmt.Printf("IGNORED %+v\n", v)
 		}
 	}
 }
