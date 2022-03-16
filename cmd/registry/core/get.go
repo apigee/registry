@@ -25,90 +25,85 @@ import (
 func GetProject(ctx context.Context,
 	client *gapic.AdminClient,
 	name names.Project,
-	handler ProjectHandler) (*rpc.Project, error) {
-	request := &rpc.GetProjectRequest{
+	handler ProjectHandler) error {
+	project, err := client.GetProject(ctx, &rpc.GetProjectRequest{
 		Name: name.String(),
-	}
-	project, err := client.GetProject(ctx, request)
+	})
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if handler != nil {
 		handler(project)
 	}
-	return project, nil
+	return nil
 }
 
 func GetAPI(ctx context.Context,
 	client *gapic.RegistryClient,
 	name names.Api,
-	handler ApiHandler) (*rpc.Api, error) {
-	request := &rpc.GetApiRequest{
+	handler ApiHandler) error {
+	api, err := client.GetApi(ctx, &rpc.GetApiRequest{
 		Name: name.String(),
-	}
-	api, err := client.GetApi(ctx, request)
+	})
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if handler != nil {
 		handler(api)
 	}
-	return api, nil
+	return nil
 }
 
 func GetDeployment(ctx context.Context,
 	client *gapic.RegistryClient,
 	name names.Deployment,
-	handler DeploymentHandler) (*rpc.ApiDeployment, error) {
-	request := &rpc.GetApiDeploymentRequest{
+	handler DeploymentHandler) error {
+	deployment, err := client.GetApiDeployment(ctx, &rpc.GetApiDeploymentRequest{
 		Name: name.String(),
-	}
-	deployment, err := client.GetApiDeployment(ctx, request)
+	})
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if handler != nil {
 		handler(deployment)
 	}
-	return deployment, nil
+	return nil
 }
 
 func GetVersion(ctx context.Context,
 	client *gapic.RegistryClient,
 	name names.Version,
-	handler VersionHandler) (*rpc.ApiVersion, error) {
+	handler VersionHandler) error {
 	request := &rpc.GetApiVersionRequest{
 		Name: name.String(),
 	}
 	version, err := client.GetApiVersion(ctx, request)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if handler != nil {
 		handler(version)
 	}
-	return version, nil
+	return nil
 }
 
 func GetSpec(ctx context.Context,
 	client *gapic.RegistryClient,
 	name names.Spec,
 	getContents bool,
-	handler SpecHandler) (*rpc.ApiSpec, error) {
-	request := &rpc.GetApiSpecRequest{
+	handler SpecHandler) error {
+	spec, err := client.GetApiSpec(ctx, &rpc.GetApiSpecRequest{
 		Name: name.String(),
-	}
-	spec, err := client.GetApiSpec(ctx, request)
+	})
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if getContents {
-		request := &rpc.GetApiSpecContentsRequest{
+		contents, err := client.GetApiSpecContents(ctx, &rpc.GetApiSpecContentsRequest{
 			Name: spec.GetName(),
-		}
-		contents, err := client.GetApiSpecContents(ctx, request)
+		})
 		if err != nil {
-			return nil, err
+			return err
 		}
 		spec.Contents = contents.GetData()
 		spec.MimeType = contents.GetContentType()
@@ -116,28 +111,26 @@ func GetSpec(ctx context.Context,
 	if handler != nil {
 		handler(spec)
 	}
-	return spec, nil
+	return nil
 }
 
 func GetArtifact(ctx context.Context,
 	client *gapic.RegistryClient,
 	name names.Artifact,
 	getContents bool,
-	handler ArtifactHandler) (*rpc.Artifact, error) {
-	request := &rpc.GetArtifactRequest{
+	handler ArtifactHandler) error {
+	artifact, err := client.GetArtifact(ctx, &rpc.GetArtifactRequest{
 		Name: name.String(),
-	}
-	artifact, err := client.GetArtifact(ctx, request)
+	})
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if getContents {
-		request := &rpc.GetArtifactContentsRequest{
+		contents, err := client.GetArtifactContents(ctx, &rpc.GetArtifactContentsRequest{
 			Name: artifact.GetName(),
-		}
-		contents, err := client.GetArtifactContents(ctx, request)
+		})
 		if err != nil {
-			return nil, err
+			return err
 		}
 		artifact.Contents = contents.GetData()
 		artifact.MimeType = contents.GetContentType()
@@ -145,5 +138,5 @@ func GetArtifact(ctx context.Context,
 	if handler != nil {
 		handler(artifact)
 	}
-	return artifact, nil
+	return nil
 }

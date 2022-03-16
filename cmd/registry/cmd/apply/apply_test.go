@@ -78,7 +78,7 @@ func TestApply(t *testing.T) {
 		}
 		api := project.Api("registry")
 		// TODO: Prefer using the API client directly instead of relying on application code that isn't directly related to this test.
-		_, err = core.GetAPI(ctx, registryClient, api, func(message *rpc.Api) {
+		err = core.GetAPI(ctx, registryClient, api, func(message *rpc.Api) {
 			actual, _, err := patch.ExportAPI(ctx, registryClient, message)
 			if err != nil {
 				t.Fatalf("ExportApi(%+v) returned an error: %s", message, err)
@@ -113,7 +113,7 @@ func TestApply(t *testing.T) {
 		// TODO: This subtly determines that we're testing ExportArtifact with messages that have
 		// preloaded contents. Loading the contents directly using the client will make it clear
 		// that's part of the test, and will provide a good place to write a comment about that choice.
-		_, err = core.GetArtifact(ctx, registryClient, artifact, true, func(message *rpc.Artifact) {
+		err = core.GetArtifact(ctx, registryClient, artifact, true, func(message *rpc.Artifact) {
 			actual, _, err := patch.ExportArtifact(ctx, registryClient, message)
 			if err != nil {
 				t.Fatalf("ExportArtifact(%+v) returned an error: %s", message, err)

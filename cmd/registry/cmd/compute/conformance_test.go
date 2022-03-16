@@ -23,10 +23,8 @@ import (
 	"testing"
 
 	"github.com/apigee/registry/cmd/registry/cmd/upload"
-	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/server/registry/names"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"google.golang.org/grpc/codes"
@@ -438,21 +436,18 @@ func TestConformance(t *testing.T) {
 				t.Fatalf("Execute() with args %v returned error: %s", args, err)
 			}
 
-			// List all the artifacts
-			artifactName, err := names.ParseArtifact(test.getPattern)
+			contents, err := client.GetArtifactContents(ctx, &rpc.GetArtifactContentsRequest{
+				Name: test.getPattern,
+			})
 			if err != nil {
-				t.Fatalf("Invalid artifact pattern: %s", test.getPattern)
+				t.Fatalf("Failed getting artifact %s: %s", test.getPattern, err)
 			}
 
-			artifact, err := core.GetArtifact(ctx, client, artifactName, true, nil)
-			if err != nil {
-				t.Fatalf("Failed getting artifact %s: %s", artifactName, err)
-			}
 			gotProto := &rpc.ConformanceReport{}
-			err = proto.Unmarshal(artifact.GetContents(), gotProto)
-			if err != nil {
+			if err := proto.Unmarshal(contents.GetData(), gotProto); err != nil {
 				t.Fatalf("Failed to unmarshal artifact: %s", err)
 			}
+
 			opts := cmp.Options{
 				protocmp.IgnoreFields(&rpc.RuleReport{}, "file_name", "suggestion", "location"),
 				protocmp.Transform(),

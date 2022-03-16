@@ -47,24 +47,24 @@ func Command(ctx context.Context) *cobra.Command {
 
 			var err2 error
 			if project, err := names.ParseProject(name); err == nil {
-				_, err2 = core.GetProject(ctx, adminClient, project, core.PrintProjectDetail)
+				err2 = core.GetProject(ctx, adminClient, project, core.PrintProjectDetail)
 			} else if api, err := names.ParseApi(name); err == nil {
-				_, err2 = core.GetAPI(ctx, client, api, core.PrintAPIDetail)
+				err2 = core.GetAPI(ctx, client, api, core.PrintAPIDetail)
 			} else if deployment, err := names.ParseDeployment(name); err == nil {
-				_, err2 = core.GetDeployment(ctx, client, deployment, core.PrintDeploymentDetail)
+				err2 = core.GetDeployment(ctx, client, deployment, core.PrintDeploymentDetail)
 			} else if version, err := names.ParseVersion(name); err == nil {
-				_, err2 = core.GetVersion(ctx, client, version, core.PrintVersionDetail)
+				err2 = core.GetVersion(ctx, client, version, core.PrintVersionDetail)
 			} else if spec, err := names.ParseSpec(name); err == nil {
 				if getContents {
-					_, err2 = core.GetSpec(ctx, client, spec, getContents, core.PrintSpecContents)
+					err2 = core.GetSpec(ctx, client, spec, getContents, core.PrintSpecContents)
 				} else {
-					_, err2 = core.GetSpec(ctx, client, spec, getContents, core.PrintSpecDetail)
+					err2 = core.GetSpec(ctx, client, spec, getContents, core.PrintSpecDetail)
 				}
 			} else if artifact, err := names.ParseArtifact(name); err == nil {
 				if getContents {
-					_, err2 = core.GetArtifact(ctx, client, artifact, getContents, core.PrintArtifactContents)
+					err2 = core.GetArtifact(ctx, client, artifact, getContents, core.PrintArtifactContents)
 				} else {
-					_, err2 = core.GetArtifact(ctx, client, artifact, getContents, core.PrintArtifactDetail)
+					err2 = core.GetArtifact(ctx, client, artifact, getContents, core.PrintArtifactDetail)
 				}
 			} else {
 				log.Debugf(ctx, "Unsupported entity %+v", args)

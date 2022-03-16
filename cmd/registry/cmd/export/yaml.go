@@ -49,7 +49,7 @@ func yamlCommand(ctx context.Context) *cobra.Command {
 					log.FromContext(ctx).WithError(err).Fatal("Failed to export project YAML")
 				}
 			} else if api, err := names.ParseApi(name); err == nil {
-				_, err = core.GetAPI(ctx, client, api, func(message *rpc.Api) {
+				err = core.GetAPI(ctx, client, api, func(message *rpc.Api) {
 					bytes, _, err := patch.ExportAPI(ctx, client, message)
 					if err != nil {
 						log.FromContext(ctx).WithError(err).Fatal("Failed to export API")
@@ -60,7 +60,7 @@ func yamlCommand(ctx context.Context) *cobra.Command {
 					log.FromContext(ctx).WithError(err).Fatal("Failed to export API YAML")
 				}
 			} else if artifact, err := names.ParseArtifact(name); err == nil {
-				_, err = core.GetArtifact(ctx, client, artifact, false, func(message *rpc.Artifact) {
+				err = core.GetArtifact(ctx, client, artifact, false, func(message *rpc.Artifact) {
 					bytes, _, err := patch.ExportArtifact(ctx, client, message)
 					if err != nil {
 						log.FromContext(ctx).WithError(err).Fatal("Failed to export artifact")
