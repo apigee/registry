@@ -31,11 +31,10 @@ import (
 )
 
 type ApiSpecData struct {
-	FileName    string      `yaml:"filename,omitempty"`
-	Description string      `yaml:"description,omitempty"`
-	MimeType    string      `yaml:"mimeType,omitempty"`
-	SourceURI   string      `yaml:"sourceURI,omitempty"`
-	Artifacts   []*Artifact `yaml:"artifacts,omitempty"`
+	FileName    string `yaml:"filename,omitempty"`
+	Description string `yaml:"description,omitempty"`
+	MimeType    string `yaml:"mimeType,omitempty"`
+	SourceURI   string `yaml:"sourceURI,omitempty"`
 }
 
 type ApiSpec struct {

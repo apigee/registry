@@ -25,14 +25,13 @@ import (
 )
 
 type ApiDeploymentData struct {
-	DisplayName        string      `yaml:"displayName,omitempty"`
-	Description        string      `yaml:"description,omitempty"`
-	ApiSpecRevision    string      `yaml:"apiSpecRevision,omitempty"`
-	EndpointURI        string      `yaml:"endpointURI,omitempty"`
-	ExternalChannelURI string      `yaml:"externalChannelURI,omitempty"`
-	IntendedAudience   string      `yaml:"intendedAudience,omitempty"`
-	AccessGuidance     string      `yaml:"accessGuidance,omitempty"`
-	Artifacts          []*Artifact `yaml:"artifacts,omitempty"`
+	DisplayName        string `yaml:"displayName,omitempty"`
+	Description        string `yaml:"description,omitempty"`
+	ApiSpecRevision    string `yaml:"apiSpecRevision,omitempty"`
+	EndpointURI        string `yaml:"endpointURI,omitempty"`
+	ExternalChannelURI string `yaml:"externalChannelURI,omitempty"`
+	IntendedAudience   string `yaml:"intendedAudience,omitempty"`
+	AccessGuidance     string `yaml:"accessGuidance,omitempty"`
 }
 
 type ApiDeployment struct {
