@@ -15,8 +15,6 @@
 package core
 
 import (
-	"bufio"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -25,7 +23,6 @@ import (
 	"strings"
 
 	"github.com/apigee/registry/rpc"
-	"github.com/gogo/protobuf/jsonpb"
 	"github.com/yoheimuta/go-protoparser/v4/interpret/unordered"
 	"github.com/yoheimuta/go-protoparser/v4/parser"
 
@@ -248,68 +245,4 @@ func removeRequestAndResponseSchemas(index *rpc.Index) {
 		}
 	}
 	index.Schemas = filteredSchemas
-}
-
-// ExportSchemas writes an index of Schemas as a CSV
-func ExportSchemas(index *rpc.Index) error {
-	f, err := os.Create("schemas.csv")
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	w := bufio.NewWriter(f)
-	for _, schema := range index.Schemas {
-		fmt.Fprintf(w, "%s,%s,%s,%s\n",
-			schema.Name, schema.Resource, schema.Type, schema.File)
-	}
-	w.Flush()
-	return nil
-}
-
-// ExportOperations writes an index of Operations as a CSV
-func ExportOperations(index *rpc.Index) error {
-	f, err := os.Create("operations.csv")
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	w := bufio.NewWriter(f)
-	for _, op := range index.Operations {
-		fmt.Fprintf(w, "%s,%s,%s,%s,%s\n",
-			op.Name, op.Service, op.Verb, op.Path, op.File)
-	}
-	w.Flush()
-	return nil
-}
-
-// ExportFields writes an index of Fields as a CSV
-func ExportFields(index *rpc.Index) error {
-	f, err := os.Create("fields.csv")
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	w := bufio.NewWriter(f)
-	for _, field := range index.Fields {
-		fmt.Fprintf(w, "%s,%s,%s\n",
-			field.Name, field.Schema, field.File)
-	}
-	w.Flush()
-	return nil
-}
-
-// ExportAsJSON writes a index as a JSON file
-func ExportAsJSON(index *rpc.Index) error {
-	f, err := os.Create("index.json")
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	w := bufio.NewWriter(f)
-	m := &jsonpb.Marshaler{
-		Indent: "  ",
-	}
-	err = m.Marshal(w, index)
-	w.Flush()
-	return err
 }
