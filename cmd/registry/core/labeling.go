@@ -47,27 +47,3 @@ func (l *Labeling) Apply(m map[string]string) (map[string]string, error) {
 	}
 	return m, nil
 }
-
-// UpdateMap updates a map containing labels or annotations to be modified.
-func UpdateMap(m map[string]string,
-	keyOverwrite bool,
-	keysToSet map[string]string,
-	keysToClear []string) (map[string]string, error) {
-	if m == nil {
-		m = make(map[string]string)
-	}
-	if !keyOverwrite {
-		for k := range keysToSet {
-			if v, ok := m[k]; ok {
-				return nil, fmt.Errorf("%q already has a value (%s), and --overwrite is false", k, v)
-			}
-		}
-	}
-	for _, k := range keysToClear {
-		delete(m, k)
-	}
-	for k, v := range keysToSet {
-		m[k] = v
-	}
-	return m, nil
-}
