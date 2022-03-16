@@ -166,27 +166,6 @@ func ListSpecs(ctx context.Context,
 	return nil
 }
 
-func ListSpecRevisions(ctx context.Context,
-	client *gapic.RegistryClient,
-	name names.Spec,
-	filterFlag string,
-	handler SpecHandler) error {
-	request := &rpc.ListApiSpecRevisionsRequest{
-		Name: name.String(),
-	}
-	it := client.ListApiSpecRevisions(ctx, request)
-	for {
-		spec, err := it.Next()
-		if err == iterator.Done {
-			break
-		} else if err != nil {
-			return err
-		}
-		handler(spec)
-	}
-	return nil
-}
-
 func ListArtifacts(ctx context.Context,
 	client *gapic.RegistryClient,
 	name names.Artifact,
@@ -224,26 +203,6 @@ func ListArtifacts(ctx context.Context,
 				return err
 			}
 			artifact.Contents = resp.GetData()
-		}
-		handler(artifact)
-	}
-	return nil
-}
-
-func ListArtifactsForParent(ctx context.Context,
-	client *gapic.RegistryClient,
-	parent names.Name,
-	handler ArtifactHandler) error {
-	request := &rpc.ListArtifactsRequest{
-		Parent: parent.String(),
-	}
-	it := client.ListArtifacts(ctx, request)
-	for {
-		artifact, err := it.Next()
-		if err == iterator.Done {
-			break
-		} else if err != nil {
-			return err
 		}
 		handler(artifact)
 	}
