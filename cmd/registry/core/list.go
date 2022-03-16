@@ -16,6 +16,7 @@ package core
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/rpc"
@@ -28,16 +29,19 @@ func ListProjects(ctx context.Context,
 	name names.Project,
 	filter string,
 	handler ProjectHandler) error {
+	if id := name.ProjectID; id != "" && id != "-" {
+		if len(filter) > 0 {
+			filter += " && "
+		}
+		filter += fmt.Sprintf("project_id == '%s'", id)
+	}
+
 	it := client.ListProjects(ctx, &rpc.ListProjectsRequest{
 		Filter: filter,
 	})
 	for r, err := it.Next(); err != iterator.Done; r, err = it.Next() {
 		if err != nil {
 			return err
-		}
-
-		if id := name.ProjectID; r.GetName() != name.String() && id != "" && id != "-" {
-			continue
 		}
 
 		handler(r)
@@ -50,6 +54,13 @@ func ListAPIs(ctx context.Context,
 	name names.Api,
 	filter string,
 	handler ApiHandler) error {
+	if id := name.ApiID; id != "" && id != "-" {
+		if len(filter) > 0 {
+			filter += " && "
+		}
+		filter += fmt.Sprintf("api_id == '%s'", id)
+	}
+
 	it := client.ListApis(ctx, &rpc.ListApisRequest{
 		Parent: name.Parent(),
 		Filter: filter,
@@ -57,10 +68,6 @@ func ListAPIs(ctx context.Context,
 	for r, err := it.Next(); err != iterator.Done; r, err = it.Next() {
 		if err != nil {
 			return err
-		}
-
-		if id := name.ApiID; r.GetName() != name.String() && id != "" && id != "-" {
-			continue
 		}
 
 		handler(r)
@@ -73,6 +80,13 @@ func ListDeployments(ctx context.Context,
 	name names.Deployment,
 	filter string,
 	handler DeploymentHandler) error {
+	if id := name.DeploymentID; id != "" && id != "-" {
+		if len(filter) > 0 {
+			filter += " && "
+		}
+		filter += fmt.Sprintf("deployment_id == '%s'", id)
+	}
+
 	it := client.ListApiDeployments(ctx, &rpc.ListApiDeploymentsRequest{
 		Parent: name.Parent(),
 		Filter: filter,
@@ -80,10 +94,6 @@ func ListDeployments(ctx context.Context,
 	for r, err := it.Next(); err != iterator.Done; r, err = it.Next() {
 		if err != nil {
 			return err
-		}
-
-		if id := name.DeploymentID; r.GetName() != name.String() && id != "" && id != "-" {
-			continue
 		}
 
 		handler(r)
@@ -96,6 +106,13 @@ func ListVersions(ctx context.Context,
 	name names.Version,
 	filter string,
 	handler VersionHandler) error {
+	if id := name.VersionID; id != "" && id != "-" {
+		if len(filter) > 0 {
+			filter += " && "
+		}
+		filter += fmt.Sprintf("version_id == '%s'", id)
+	}
+
 	it := client.ListApiVersions(ctx, &rpc.ListApiVersionsRequest{
 		Parent: name.Parent(),
 		Filter: filter,
@@ -103,10 +120,6 @@ func ListVersions(ctx context.Context,
 	for r, err := it.Next(); err != iterator.Done; r, err = it.Next() {
 		if err != nil {
 			return err
-		}
-
-		if id := name.VersionID; r.GetName() != name.String() && id != "" && id != "-" {
-			continue
 		}
 
 		handler(r)
@@ -119,6 +132,13 @@ func ListSpecs(ctx context.Context,
 	name names.Spec,
 	filter string,
 	handler SpecHandler) error {
+	if id := name.SpecID; id != "" && id != "-" {
+		if len(filter) > 0 {
+			filter += " && "
+		}
+		filter += fmt.Sprintf("spec_id == '%s'", id)
+	}
+
 	it := client.ListApiSpecs(ctx, &rpc.ListApiSpecsRequest{
 		Parent: name.Parent(),
 		Filter: filter,
@@ -126,10 +146,6 @@ func ListSpecs(ctx context.Context,
 	for r, err := it.Next(); err != iterator.Done; r, err = it.Next() {
 		if err != nil {
 			return err
-		}
-
-		if id := name.SpecID; r.GetName() != name.String() && id != "" && id != "-" {
-			continue
 		}
 
 		handler(r)
@@ -143,6 +159,13 @@ func ListArtifacts(ctx context.Context,
 	filter string,
 	getContents bool,
 	handler ArtifactHandler) error {
+	if id := name.ArtifactID(); id != "" && id != "-" {
+		if len(filter) > 0 {
+			filter += " && "
+		}
+		filter += fmt.Sprintf("artifact_id == '%s'", id)
+	}
+
 	it := client.ListArtifacts(ctx, &rpc.ListArtifactsRequest{
 		Parent: name.Parent(),
 		Filter: filter,
