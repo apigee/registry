@@ -25,16 +25,6 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func ResourceNameOfSpec(segments []string) string {
-	if len(segments) == 4 {
-		return "projects/" + segments[0] +
-			"/apis/" + segments[1] +
-			"/versions/" + segments[2] +
-			"/specs/" + segments[3]
-	}
-	return ""
-}
-
 func GetBytesForSpec(ctx context.Context, client connection.Client, spec *rpc.ApiSpec) ([]byte, error) {
 	request := &rpc.GetApiSpecContentsRequest{Name: spec.GetName()}
 	contents, err := client.GetApiSpecContents(ctx, request)
