@@ -33,10 +33,8 @@ func GetProject(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	if handler != nil {
-		handler(project)
-	}
-	return project, nil
+
+	return project, handler(project)
 }
 
 func GetAPI(ctx context.Context,
@@ -50,10 +48,8 @@ func GetAPI(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	if handler != nil {
-		handler(api)
-	}
-	return api, nil
+
+	return api, handler(api)
 }
 
 func GetDeployment(ctx context.Context,
@@ -67,10 +63,8 @@ func GetDeployment(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	if handler != nil {
-		handler(deployment)
-	}
-	return deployment, nil
+
+	return deployment, handler(deployment)
 }
 
 func GetVersion(ctx context.Context,
@@ -84,10 +78,8 @@ func GetVersion(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	if handler != nil {
-		handler(version)
-	}
-	return version, nil
+
+	return version, handler(version)
 }
 
 func GetSpec(ctx context.Context,
@@ -113,10 +105,8 @@ func GetSpec(ctx context.Context,
 		spec.Contents = contents.GetData()
 		spec.MimeType = contents.GetContentType()
 	}
-	if handler != nil {
-		handler(spec)
-	}
-	return spec, nil
+
+	return spec, handler(spec)
 }
 
 func GetArtifact(ctx context.Context,
@@ -142,8 +132,6 @@ func GetArtifact(ctx context.Context,
 		artifact.Contents = contents.GetData()
 		artifact.MimeType = contents.GetContentType()
 	}
-	if handler != nil {
-		handler(artifact)
-	}
-	return artifact, nil
+
+	return artifact, handler(artifact)
 }

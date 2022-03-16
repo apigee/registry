@@ -42,25 +42,30 @@ func collectInputIndexes(ctx context.Context, client connection.Client, args []s
 	inputNames := make([]string, 0)
 	inputs := make([]*rpc.Index, 0)
 	for _, name := range args {
-		if artifact, err := names.ParseArtifact(name); err == nil {
-			err := core.ListArtifacts(ctx, client, artifact, filter, true, func(artifact *rpc.Artifact) {
-				messageType, err := core.MessageTypeForMimeType(artifact.GetMimeType())
-				if err == nil && messageType == "google.cloud.apigeeregistry.applications.v1alpha1.Index" {
-					vocab := &rpc.Index{}
-					err := proto.Unmarshal(artifact.GetContents(), vocab)
-					if err != nil {
-						log.FromContext(ctx).WithError(err).Debug("Failed to unmarshal contents")
-					} else {
-						inputNames = append(inputNames, artifact.Name)
-						inputs = append(inputs, vocab)
-					}
-				} else {
-					log.Debugf(ctx, "Skipping, not an index: %s", artifact.Name)
-				}
-			})
-			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to list artifacts")
+		artifact, err := names.ParseArtifact(name)
+		if err != nil {
+			continue
+		}
+
+		err = core.ListArtifacts(ctx, client, artifact, filter, true, func(artifact *rpc.Artifact) error {
+			messageType, err := core.MessageTypeForMimeType(artifact.GetMimeType())
+			if err != nil || messageType != "google.cloud.apigeeregistry.applications.v1alpha1.Index" {
+				log.Debugf(ctx, "Skipping, not an index: %s", artifact.Name)
+				return nil
 			}
+
+			vocab := &rpc.Index{}
+			if err := proto.Unmarshal(artifact.GetContents(), vocab); err != nil {
+				log.FromContext(ctx).WithError(err).Debug("Failed to unmarshal contents")
+				return nil
+			}
+
+			inputNames = append(inputNames, artifact.Name)
+			inputs = append(inputs, vocab)
+			return nil
+		})
+		if err != nil {
+			log.FromContext(ctx).WithError(err).Fatal("Failed to list artifacts")
 		}
 	}
 	return inputNames, inputs

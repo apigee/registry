@@ -117,12 +117,13 @@ func annotateAPIs(ctx context.Context,
 	filterFlag string,
 	labeling *core.Labeling,
 	taskQueue chan<- core.Task) error {
-	return core.ListAPIs(ctx, client, api, filterFlag, func(api *rpc.Api) {
+	return core.ListAPIs(ctx, client, api, filterFlag, func(api *rpc.Api) error {
 		taskQueue <- &annotateApiTask{
 			client:   client,
 			api:      api,
 			labeling: labeling,
 		}
+		return nil
 	})
 }
 
@@ -133,12 +134,13 @@ func annotateVersions(
 	filterFlag string,
 	labeling *core.Labeling,
 	taskQueue chan<- core.Task) error {
-	return core.ListVersions(ctx, client, version, filterFlag, func(version *rpc.ApiVersion) {
+	return core.ListVersions(ctx, client, version, filterFlag, func(version *rpc.ApiVersion) error {
 		taskQueue <- &annotateVersionTask{
 			client:   client,
 			version:  version,
 			labeling: labeling,
 		}
+		return nil
 	})
 }
 
@@ -149,14 +151,16 @@ func annotateSpecs(
 	filterFlag string,
 	labeling *core.Labeling,
 	taskQueue chan<- core.Task) error {
-	return core.ListSpecs(ctx, client, spec, filterFlag, func(spec *rpc.ApiSpec) {
+	return core.ListSpecs(ctx, client, spec, filterFlag, func(spec *rpc.ApiSpec) error {
 		taskQueue <- &annotateSpecTask{
 			client:   client,
 			spec:     spec,
 			labeling: labeling,
 		}
+		return nil
 	})
 }
+
 func annotateDeployments(
 	ctx context.Context,
 	client *gapic.RegistryClient,
@@ -164,12 +168,13 @@ func annotateDeployments(
 	filterFlag string,
 	labeling *core.Labeling,
 	taskQueue chan<- core.Task) error {
-	return core.ListDeployments(ctx, client, deployment, filterFlag, func(deployment *rpc.ApiDeployment) {
+	return core.ListDeployments(ctx, client, deployment, filterFlag, func(deployment *rpc.ApiDeployment) error {
 		taskQueue <- &annotateDeploymentTask{
 			client:     client,
 			deployment: deployment,
 			labeling:   labeling,
 		}
+		return nil
 	})
 }
 

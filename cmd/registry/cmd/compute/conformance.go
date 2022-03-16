@@ -57,19 +57,20 @@ func conformanceCommand(ctx context.Context) *cobra.Command {
 				log.FromContext(ctx).WithError(err).Fatalf("Invalid project %q", specName.ProjectID)
 			}
 
-			err = core.ListArtifacts(ctx, client, artifactName, styleguideFilter, true, func(artifact *rpc.Artifact) {
+			err = core.ListArtifacts(ctx, client, artifactName, styleguideFilter, true, func(artifact *rpc.Artifact) error {
 
 				// Unmarshal the contents of the artifact into a style guide
 				styleguide := &rpc.StyleGuide{}
 				err = proto.Unmarshal(artifact.GetContents(), styleguide)
 				if err != nil {
 					log.FromContext(ctx).WithError(err).Debugf("Unmarshal() to StyleGuide failed on artifact: %s", artifact.GetName())
-					return
+					return nil
 				}
 
 				log.Debugf(ctx, "Processing styleguide: %s", styleguide.GetId())
 
 				processStyleGuide(ctx, client, styleguide, specName, filter)
+				return nil
 			})
 
 			if err != nil {
@@ -101,20 +102,23 @@ func processStyleGuide(ctx context.Context,
 	defer wait()
 
 	// Generate tasks.
-	err = core.ListSpecs(ctx, client, spec, filter, func(spec *rpc.ApiSpec) {
+	err = core.ListSpecs(ctx, client, spec, filter, func(spec *rpc.ApiSpec) error {
 		// Check if the styleguide definition contains the mime_type of the spec
 		for _, supportedType := range styleguide.GetMimeTypes() {
-			if supportedType == spec.GetMimeType() {
-				// Delegate the task of computing the conformance report for this spec to the worker pool.
-				taskQueue <- &conformance.ComputeConformanceTask{
-					Client:          client,
-					Spec:            spec,
-					LintersMetadata: linterNameToMetadata,
-					StyleguideId:    styleguide.GetId(),
-				}
-				break
+			if supportedType != spec.GetMimeType() {
+				continue
 			}
+
+			// Delegate the task of computing the conformance report for this spec to the worker pool.
+			taskQueue <- &conformance.ComputeConformanceTask{
+				Client:          client,
+				Spec:            spec,
+				LintersMetadata: linterNameToMetadata,
+				StyleguideId:    styleguide.GetId(),
+			}
+			return nil
 		}
+		return nil
 	})
 	if err != nil {
 		log.FromContext(ctx).WithError(err).Fatal("Failed to list specs")

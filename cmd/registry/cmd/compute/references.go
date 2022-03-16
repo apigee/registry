@@ -45,19 +45,22 @@ func referencesCommand(ctx context.Context) *cobra.Command {
 			// Initialize task queue.
 			taskQueue, wait := core.WorkerPool(ctx, 64)
 			defer wait()
-			// Generate tasks.
-			name := args[0]
-			if spec, err := names.ParseSpec(name); err == nil {
-				// Iterate through a collection of specs and compute references for each
-				err = core.ListSpecs(ctx, client, spec, filter, func(spec *rpc.ApiSpec) {
-					taskQueue <- &computeReferencesTask{
-						client:   client,
-						specName: spec.Name,
-					}
-				})
-				if err != nil {
-					log.FromContext(ctx).WithError(err).Fatal("Failed to list specs")
+
+			spec, err := names.ParseSpec(args[0])
+			if err != nil {
+				return // TODO: Log an error.
+			}
+
+			// Iterate through a collection of specs and compute references for each
+			err = core.ListSpecs(ctx, client, spec, filter, func(spec *rpc.ApiSpec) error {
+				taskQueue <- &computeReferencesTask{
+					client:   client,
+					specName: spec.Name,
 				}
+				return nil
+			})
+			if err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Failed to list specs")
 			}
 		},
 	}

@@ -61,18 +61,21 @@ func csvCommand(ctx context.Context) *cobra.Command {
 					log.Debugf(ctx, "Failed to parse version name %q: skipping spec row", parent)
 					return
 				}
-				err = core.ListSpecs(ctx, client, version.Spec(""), filter, func(spec *rpc.ApiSpec) {
-					specName, err := names.ParseSpec(spec.GetName())
+
+				err = core.ListSpecs(ctx, client, version.Spec(""), filter, func(spec *rpc.ApiSpec) error {
+					name, err := names.ParseSpec(spec.GetName())
 					if err != nil {
 						log.Debugf(ctx, "Failed to parse spec name %q: skipping spec row", spec.GetName())
-						return
+						return nil
 					}
+
 					rows = append(rows, exportCSVRow{
-						ApiID:        specName.ApiID,
-						VersionID:    specName.VersionID,
-						SpecID:       specName.SpecID,
+						ApiID:        name.ApiID,
+						VersionID:    name.VersionID,
+						SpecID:       name.SpecID,
 						ContentsPath: fmt.Sprintf("$APG_REGISTRY_ADDRESS/%s", spec.GetName()),
 					})
+					return nil
 				})
 				if err != nil {
 					log.FromContext(ctx).WithError(err).Fatalf("Failed to list specs")
