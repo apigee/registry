@@ -15,10 +15,12 @@
 package controller
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"strings"
 
+	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 )
@@ -157,55 +159,64 @@ func resourceNameFromParent(
 	return resource, nil
 }
 
+func ValidateManifest(ctx context.Context, parent string, manifest *rpc.Manifest) bool {
+	isValid := true
+	for _, resource := range manifest.GeneratedResources {
+		log.FromContext(ctx).Debugf("Validating entry: %v", resource)
+		if errs := validateGeneratedResourceEntry(parent, resource); len(errs) != 0 {
+			for _, err := range errs {
+				log.FromContext(ctx).WithError(err).Errorf("Invalid manifest entry")
+			}
+			isValid = false
+		}
+	}
+	return isValid
+}
+
 func validateGeneratedResourceEntry(parent string, generatedResource *rpc.GeneratedResource) []error {
-	totalErrors := make([]error, 0)
+	errs := make([]error, 0)
 	parsedTargetResource, err := parseResourcePattern(
 		fmt.Sprintf("%s/%s", parent, generatedResource.Pattern))
 
-	// Check that the target resource pattern should be a valid pattern and  not end with a "-".
-	// Return for errors in target resource pattern since we caan't verify action and dependencies baased off an incorrect pattern.
+	// Check that the target resource pattern should be a valid pattern.
+	// Return for errors in target resource pattern since we caan't verify action and dependencies based off an incorrect pattern.
 	if err != nil {
-		totalErrors = append(totalErrors, fmt.Errorf("Invalid pattern for generatedResource, error: %s", generatedResource.Pattern))
-		return totalErrors
+		errs = append(errs, fmt.Errorf("Invalid pattern for generatedResource %v, %s", generatedResource.Pattern, err))
+		return errs
 	}
 	// Check that generatedResource pattern doesn't end with a "-".
 	// We require a name for the target resource.
 	if strings.HasSuffix(parsedTargetResource.string(), "/-") {
-		totalErrors = append(totalErrors, fmt.Errorf("Invalid generatedResource pattern: %q, it should end with a name and not a \"-\"", generatedResource.Pattern))
-		return totalErrors
+		errs = append(errs, fmt.Errorf("Invalid generatedResource pattern: %q, it should end with a name and not a \"-\"", generatedResource.Pattern))
+		return errs
 	}
 
 	validateEntityReference := func(resourceName resourceName, entityType string) bool {
 		switch entityType {
 		case "api":
-			if resourceName.getApi() == "" {
-				return false
-			}
+			return resourceName.getApi() != ""
 		case "version":
-			if resourceName.getVersion() == "" {
-				return false
-			}
+			return resourceName.getVersion() != ""
 		case "spec":
-			if resourceName.getSpec() == "" {
-				return false
-			}
+			return resourceName.getSpec() != ""
 		case "artifact":
-			if resourceName.getArtifact() == "" {
-				return false
-			}
+			return resourceName.getArtifact() != ""
+		case "default":
+			return true
+		default:
+			return false
 		}
-		return true
 	}
 
 	for _, dependency := range generatedResource.Dependencies {
 		// Validate that all the dependencies have valid $resource references.
 		entityType, err := getEntityType(dependency.Pattern)
 		if err != nil {
-			totalErrors = append(totalErrors, fmt.Errorf("Invalid dependency pattern: %s", dependency.Pattern))
+			errs = append(errs, fmt.Errorf("invalid dependency pattern %s: %s", dependency.Pattern, err))
 		}
 
 		if !validateEntityReference(parsedTargetResource, entityType) {
-			totalErrors = append(totalErrors, fmt.Errorf("Invalid reference in dependency pattern: %s", dependency.Pattern))
+			errs = append(errs, fmt.Errorf("invalid reference in dependency pattern: %s", dependency.Pattern))
 		}
 
 	}
@@ -213,19 +224,19 @@ func validateGeneratedResourceEntry(parent string, generatedResource *rpc.Genera
 	//Validate that all the action References are valid
 	references, err := getReferencesFromAction(generatedResource.Action)
 	if err != nil {
-		totalErrors = append(totalErrors, err)
+		errs = append(errs, err)
 	}
 	for _, r := range references {
 		if !validateEntityReference(parsedTargetResource, r.entityType) {
-			totalErrors = append(totalErrors, fmt.Errorf("Invalid reference in action: %s", generatedResource.Action))
+			errs = append(errs, fmt.Errorf("invalid reference in action: %s", generatedResource.Action))
 		}
 	}
 
-	if len(totalErrors) == 0 {
+	if len(errs) == 0 {
 		return nil
 	}
 
-	return totalErrors
+	return errs
 }
 
 func getEntityType(sourcePattern string) (string, error) {
@@ -302,7 +313,7 @@ func getReferencesFromAction(action string) ([]*reference, error) {
 	// Extract the $resource patterns from action
 	// action = "compute lintstats $resource.spec"
 	// This expression will match $resource.spec
-	re := regexp.MustCompile(fmt.Sprintf(`\%s(\.api|\.version|\.spec|\.artifact)($|/| )`, resourceKW))
+	re := regexp.MustCompile(fmt.Sprintf(`\%s\.(api|version|spec|artifact)($|/| )`, resourceKW))
 	match := re.FindAllString(action, -1)
 	if len(match) == 0 {
 		return nil, fmt.Errorf("invalid action: %s missing or incorrect entity in the reference", action)
@@ -347,8 +358,6 @@ func generateCommand(action string, resourceName string) (string, error) {
 			entityVal = resource.getSpec()
 		case "artifact":
 			entityVal = resource.getArtifact()
-		default:
-			entityVal = ""
 		}
 
 		if len(entityVal) == 0 {

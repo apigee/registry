@@ -109,7 +109,7 @@ func buildManifestArtifact(ctx context.Context, parent string, jsonBytes []byte)
 	}
 	isValid := controller.ValidateManifest(ctx, parent, m)
 	if !isValid {
-		return nil, fmt.Errorf("Manifest definition contains errors")
+		return nil, fmt.Errorf("manifest definition contains errors")
 	}
 
 	artifactBytes, err := proto.Marshal(m)

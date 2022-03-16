@@ -31,20 +31,6 @@ type Action struct {
 	RequiresReceipt   bool
 }
 
-func ValidateManifest(ctx context.Context, parent string, manifest *rpc.Manifest) bool {
-	isValid := true
-	for _, resource := range manifest.GeneratedResources {
-		log.FromContext(ctx).Debugf("Validating entry: %v", resource)
-		if errs := validateGeneratedResourceEntry(parent, resource); errs != nil {
-			for _, err := range errs {
-				log.FromContext(ctx).WithError(err).Errorf("Invalid manifest entry")
-			}
-			isValid = false
-		}
-	}
-	return isValid
-}
-
 func ProcessManifest(
 	ctx context.Context,
 	client connection.Client,
