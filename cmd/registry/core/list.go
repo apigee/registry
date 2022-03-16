@@ -26,26 +26,21 @@ import (
 func ListProjects(ctx context.Context,
 	client *gapic.AdminClient,
 	name names.Project,
-	filterFlag string,
+	filter string,
 	handler ProjectHandler) error {
-	request := &rpc.ListProjectsRequest{}
-	filter := filterFlag
-	projectID := name.ProjectID
-	if projectID != "" && projectID != "-" {
-		filter = "project_id == '" + projectID + "'"
-	}
-	if filter != "" {
-		request.Filter = filter
-	}
-	it := client.ListProjects(ctx, request)
-	for {
-		project, err := it.Next()
-		if err == iterator.Done {
-			break
-		} else if err != nil {
+	it := client.ListProjects(ctx, &rpc.ListProjectsRequest{
+		Filter: filter,
+	})
+	for r, err := it.Next(); err != iterator.Done; r, err = it.Next() {
+		if err != nil {
 			return err
 		}
-		handler(project)
+
+		if id := name.ProjectID; r.GetName() != name.String() && id != "" && id != "-" {
+			continue
+		}
+
+		handler(r)
 	}
 	return nil
 }
@@ -53,28 +48,22 @@ func ListProjects(ctx context.Context,
 func ListAPIs(ctx context.Context,
 	client *gapic.RegistryClient,
 	name names.Api,
-	filterFlag string,
+	filter string,
 	handler ApiHandler) error {
-	request := &rpc.ListApisRequest{
+	it := client.ListApis(ctx, &rpc.ListApisRequest{
 		Parent: name.Parent(),
-	}
-	filter := filterFlag
-	apiID := name.ApiID
-	if apiID != "" && apiID != "-" {
-		filter = "api_id == '" + apiID + "'"
-	}
-	if filter != "" {
-		request.Filter = filter
-	}
-	it := client.ListApis(ctx, request)
-	for {
-		api, err := it.Next()
-		if err == iterator.Done {
-			break
-		} else if err != nil {
+		Filter: filter,
+	})
+	for r, err := it.Next(); err != iterator.Done; r, err = it.Next() {
+		if err != nil {
 			return err
 		}
-		handler(api)
+
+		if id := name.ApiID; r.GetName() != name.String() && id != "" && id != "-" {
+			continue
+		}
+
+		handler(r)
 	}
 	return nil
 }
@@ -82,28 +71,22 @@ func ListAPIs(ctx context.Context,
 func ListDeployments(ctx context.Context,
 	client *gapic.RegistryClient,
 	name names.Deployment,
-	filterFlag string,
+	filter string,
 	handler DeploymentHandler) error {
-	request := &rpc.ListApiDeploymentsRequest{
+	it := client.ListApiDeployments(ctx, &rpc.ListApiDeploymentsRequest{
 		Parent: name.Parent(),
-	}
-	filter := filterFlag
-	deploymentID := name.DeploymentID
-	if deploymentID != "" && deploymentID != "-" {
-		filter = "deployment_id == '" + deploymentID + "'"
-	}
-	if filter != "" {
-		request.Filter = filter
-	}
-	it := client.ListApiDeployments(ctx, request)
-	for {
-		deployment, err := it.Next()
-		if err == iterator.Done {
-			break
-		} else if err != nil {
+		Filter: filter,
+	})
+	for r, err := it.Next(); err != iterator.Done; r, err = it.Next() {
+		if err != nil {
 			return err
 		}
-		handler(deployment)
+
+		if id := name.DeploymentID; r.GetName() != name.String() && id != "" && id != "-" {
+			continue
+		}
+
+		handler(r)
 	}
 	return nil
 }
@@ -111,28 +94,22 @@ func ListDeployments(ctx context.Context,
 func ListVersions(ctx context.Context,
 	client *gapic.RegistryClient,
 	name names.Version,
-	filterFlag string,
+	filter string,
 	handler VersionHandler) error {
-	request := &rpc.ListApiVersionsRequest{
+	it := client.ListApiVersions(ctx, &rpc.ListApiVersionsRequest{
 		Parent: name.Parent(),
-	}
-	filter := filterFlag
-	versionID := name.VersionID
-	if versionID != "" && versionID != "-" {
-		filter = "version_id == '" + versionID + "'"
-	}
-	if filter != "" {
-		request.Filter = filter
-	}
-	it := client.ListApiVersions(ctx, request)
-	for {
-		version, err := it.Next()
-		if err == iterator.Done {
-			break
-		} else if err != nil {
+		Filter: filter,
+	})
+	for r, err := it.Next(); err != iterator.Done; r, err = it.Next() {
+		if err != nil {
 			return err
 		}
-		handler(version)
+
+		if id := name.VersionID; r.GetName() != name.String() && id != "" && id != "-" {
+			continue
+		}
+
+		handler(r)
 	}
 	return nil
 }
@@ -140,49 +117,22 @@ func ListVersions(ctx context.Context,
 func ListSpecs(ctx context.Context,
 	client *gapic.RegistryClient,
 	name names.Spec,
-	filterFlag string,
+	filter string,
 	handler SpecHandler) error {
-	request := &rpc.ListApiSpecsRequest{
+	it := client.ListApiSpecs(ctx, &rpc.ListApiSpecsRequest{
 		Parent: name.Parent(),
-	}
-	filter := filterFlag
-	specID := name.SpecID
-	if specID != "" && specID != "-" {
-		filter = "spec_id == '" + specID + "'"
-	}
-	if filter != "" {
-		request.Filter = filter
-	}
-	it := client.ListApiSpecs(ctx, request)
-	for {
-		spec, err := it.Next()
-		if err == iterator.Done {
-			break
-		} else if err != nil {
+		Filter: filter,
+	})
+	for r, err := it.Next(); err != iterator.Done; r, err = it.Next() {
+		if err != nil {
 			return err
 		}
-		handler(spec)
-	}
-	return nil
-}
 
-func ListSpecRevisions(ctx context.Context,
-	client *gapic.RegistryClient,
-	name names.Spec,
-	filterFlag string,
-	handler SpecHandler) error {
-	request := &rpc.ListApiSpecRevisionsRequest{
-		Name: name.String(),
-	}
-	it := client.ListApiSpecRevisions(ctx, request)
-	for {
-		spec, err := it.Next()
-		if err == iterator.Done {
-			break
-		} else if err != nil {
-			return err
+		if id := name.SpecID; r.GetName() != name.String() && id != "" && id != "-" {
+			continue
 		}
-		handler(spec)
+
+		handler(r)
 	}
 	return nil
 }
@@ -190,62 +140,29 @@ func ListSpecRevisions(ctx context.Context,
 func ListArtifacts(ctx context.Context,
 	client *gapic.RegistryClient,
 	name names.Artifact,
-	filterFlag string,
+	filter string,
 	getContents bool,
 	handler ArtifactHandler) error {
-	request := &rpc.ListArtifactsRequest{
+	it := client.ListArtifacts(ctx, &rpc.ListArtifactsRequest{
 		Parent: name.Parent(),
-	}
-	filter := filterFlag
-	artifactID := name.ArtifactID()
-	if artifactID != "" && artifactID != "-" {
-		if filter != "" {
-			filter += " && "
-		}
-		filter += "artifact_id == '" + artifactID + "'"
-	}
-	if filter != "" {
-		request.Filter = filter
-	}
-	it := client.ListArtifacts(ctx, request)
-	for {
-		artifact, err := it.Next()
-		if err == iterator.Done {
-			break
-		} else if err != nil {
+		Filter: filter,
+	})
+	for r, err := it.Next(); err != iterator.Done; r, err = it.Next() {
+		if err != nil {
 			return err
 		}
+
 		if getContents {
-			req := &rpc.GetArtifactContentsRequest{
-				Name: artifact.GetName(),
-			}
-			resp, err := client.GetArtifactContents(ctx, req)
+			resp, err := client.GetArtifactContents(ctx, &rpc.GetArtifactContentsRequest{
+				Name: r.GetName(),
+			})
 			if err != nil {
 				return err
 			}
-			artifact.Contents = resp.GetData()
+			r.Contents = resp.GetData()
 		}
-		handler(artifact)
-	}
-	return nil
-}
 
-func ListArtifactsForParent(ctx context.Context,
-	client *gapic.RegistryClient,
-	parent names.Name,
-	handler ArtifactHandler) error {
-	request := &rpc.ListArtifactsRequest{
-		Parent: parent.String(),
-	}
-	it := client.ListArtifacts(ctx, request)
-	for {
-		artifact, err := it.Next()
-		if err == iterator.Done {
-			break
-		} else if err != nil {
-			return err
-		}
-		handler(artifact)
+		handler(r)
 	}
 	return nil
 }
