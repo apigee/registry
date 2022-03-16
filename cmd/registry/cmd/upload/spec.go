@@ -28,6 +28,8 @@ import (
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func specCommand(ctx context.Context) *cobra.Command {
@@ -104,7 +106,7 @@ func uploadSpecDirectory(ctx context.Context, dirname string, client *gapic.Regi
 	response, err := client.CreateApiSpec(ctx, request)
 	if err == nil {
 		log.Debugf(ctx, "Created %s", response.Name)
-	} else if core.AlreadyExists(err) {
+	} else if status.Code(err) == codes.AlreadyExists {
 		log.Debugf(ctx, "Found %s/specs/%s", request.Parent, request.ApiSpecId)
 	} else {
 		log.FromContext(ctx).WithError(err).Debugf("Error %s/specs/%s [contents-length %d]", request.Parent, request.ApiSpecId, len(request.ApiSpec.Contents))
