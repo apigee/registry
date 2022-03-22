@@ -17,8 +17,9 @@ package controller
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
+
+	"encoding/json"
 
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/log"
@@ -189,7 +190,7 @@ func generateUpdateActions(
 
 	// Iterate over a list of existing target resources to generate update actions
 	for _, targetResource := range resourceList {
-		visited[targetResource.ResourceName().Parent()] = true
+		visited[targetResource.ResourceName().ParentName().String()] = true
 
 		takeAction, err := needsUpdate(
 			targetResource.ResourceName(),
@@ -223,7 +224,7 @@ func generateUpdateActions(
 }
 
 // For the target resources which do not exist in the registry yet,
-//we will use the parent resources to derive which new target resources should be created.
+// we will use the parent resources to derive which new target resources should be created.
 func generateCreateActions(
 	ctx context.Context,
 	client connection.Client,
@@ -232,73 +233,51 @@ func generateCreateActions(
 	generatedResource *rpc.GeneratedResource,
 	visited map[string]bool) ([]*Action, error) {
 
+	var parentList []resourceInstance
+
 	parsedResourcePattern, err := parseResourcePattern(resourcePattern)
 	if err != nil {
 		return nil, err
 	}
-	parentName := parsedResourcePattern.Parent()
 
-	// If parent is a project, we can't list projects since this is registry client command.
-	// Since the manifest definition is scoped  only for a particular project,
-	// there will be only one target resource in this case.
-	// There are two cases where this might happen:
-	// 1. Target resource is a project level artifact "projects/demo/locations/global/artifacts/serach-index"
-	//    extracted parent will be "projects/demo/locations/global"
-	// 1. Target resource is an api "projects/demo/locations/global/apis/petstore"
-	//    extracted parent will be "projects/demo/locations/global"
-	if strings.HasSuffix(parentName, "locations/global") {
+	parentName := parsedResourcePattern.ParentName()
+	switch parentName.(type) {
+	case projectName:
+		// If parent is a project, we can't list projects since this is registry client command.
+		// Since the manifest definition is scoped  only for a particular project,
+		// there will be only one target resource in this case.
+		// There are two cases where this might happen:
+		// 1. Target resource is a project level artifact "projects/demo/locations/global/artifacts/serach-index"
+		//    extracted parent will be "projects/demo/locations/global"
+		// 1. Target resource is an api "projects/demo/locations/global/apis/petstore"
+		//    extracted parent will be "projects/demo/locations/global"
 		// Return if this parent was already visited.
-		if visited[parentName] {
+		if visited[parentName.String()] {
 			return nil, nil
 		}
-
-		// Since the GeneratedResource is non-existent here,
-		// we will have to derive the exact name of the target resource.
-		targetResourceName, err := resourceNameFromParent(resourcePattern, parentName)
-		if err != nil {
-			return nil, fmt.Errorf("Cannot generate target resourceName to be created. Error: %s", err)
+		parentList = []resourceInstance{
+			projectResource{
+				projectName: parentName,
+			},
 		}
 
-		takeAction, err := needsCreate(
-			targetResourceName,
-			dependencyMaps,
-			generatedResource,
-		)
-
+	default:
+		// If parent resource is not a project, then go through all the non-visited parents.
+		visited_json, err := json.Marshal(visited)
+		if err != nil {
+			return nil, fmt.Errorf("Internal error: Invalid visited map, %s", err)
+		}
+		// Construct a filter to fetch only non-visited parents.
+		filter := fmt.Sprintf("%s.all(n, !(name.contains(n)))", visited_json)
+		parentList, err = listResources(ctx, client, parentName.String(), filter)
 		if err != nil {
 			return nil, err
-		} else if !takeAction {
-			return nil, nil
 		}
-
-		cmd, err := generateCommand(generatedResource.Action, targetResourceName.String())
-		if err != nil {
-			return nil, fmt.Errorf("Cannot generate command: %s", err)
-		}
-
-		return []*Action{
-			{
-				Command:           cmd,
-				GeneratedResource: targetResourceName.String(),
-				RequiresReceipt:   generatedResource.Receipt,
-			},
-		}, nil
-	}
-
-	// If parent resource is not a project, then go through all the non-visited parents.
-	// We don't pass the filter here because the filter is for the target resource and not it's parent.
-	parentList, err := listResources(ctx, client, parentName, "")
-	if err != nil {
-		return nil, err
 	}
 
 	actions := make([]*Action, 0)
 
 	for _, parent := range parentList {
-		// Skip if this parent was already visited.
-		if visited[parent.ResourceName().String()] {
-			continue
-		}
 		// Since the GeneratedResource is non-existent here,
 		// we will have to derive the exact name of the target resource
 		targetResourceName, err := resourceNameFromParent(resourcePattern, parent.ResourceName().String())
