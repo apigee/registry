@@ -20,7 +20,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 )
@@ -111,13 +110,13 @@ func extendDependencyPattern(
 	entityVal := ""
 	switch entityType {
 	case "api":
-		entityVal = resourceName.getApi()
+		entityVal = resourceName.Api()
 	case "version":
-		entityVal = resourceName.getVersion()
+		entityVal = resourceName.Version()
 	case "spec":
-		entityVal = resourceName.getSpec()
+		entityVal = resourceName.Spec()
 	case "artifact":
-		entityVal = resourceName.getArtifact()
+		entityVal = resourceName.Artifact()
 	default:
 		return "", fmt.Errorf("invalid combination resourcePattern: %q dependencyPattern: %q", resourcePattern, dependencyPattern)
 	}
@@ -148,7 +147,7 @@ func resourceNameFromParent(
 	}
 
 	// Replace the parent pattern in the resourcePattern with the supplied pattern name
-	resourceName := strings.Replace(resourcePattern, parsedResourcePattern.getParent(), parent, 1)
+	resourceName := strings.Replace(resourcePattern, parsedResourcePattern.Parent(), parent, 1)
 
 	//Validate generated resourceName
 	resource, err := parseResource(resourceName)
@@ -159,18 +158,16 @@ func resourceNameFromParent(
 	return resource, nil
 }
 
-func ValidateManifest(ctx context.Context, parent string, manifest *rpc.Manifest) bool {
-	isValid := true
+func ValidateManifest(ctx context.Context, parent string, manifest *rpc.Manifest) []error {
+	totalErrors := make([]error, 0)
 	for _, resource := range manifest.GeneratedResources {
-		log.FromContext(ctx).Debugf("Validating entry: %v", resource)
 		if errs := validateGeneratedResourceEntry(parent, resource); len(errs) != 0 {
 			for _, err := range errs {
-				log.FromContext(ctx).WithError(err).Errorf("Invalid manifest entry")
+				totalErrors = append(totalErrors, fmt.Errorf("invalid entry: %v, %s", resource, err))
 			}
-			isValid = false
 		}
 	}
-	return isValid
+	return totalErrors
 }
 
 func validateGeneratedResourceEntry(parent string, generatedResource *rpc.GeneratedResource) []error {
@@ -181,26 +178,26 @@ func validateGeneratedResourceEntry(parent string, generatedResource *rpc.Genera
 	// Check that the target resource pattern should be a valid pattern.
 	// Return for errors in target resource pattern since we caan't verify action and dependencies based off an incorrect pattern.
 	if err != nil {
-		errs = append(errs, fmt.Errorf("Invalid pattern for generatedResource %v, %s", generatedResource.Pattern, err))
+		errs = append(errs, fmt.Errorf("invalid pattern for generatedResource %v, %s", generatedResource.Pattern, err))
 		return errs
 	}
 	// Check that generatedResource pattern doesn't end with a "-".
 	// We require a name for the target resource.
-	if strings.HasSuffix(parsedTargetResource.string(), "/-") {
-		errs = append(errs, fmt.Errorf("Invalid generatedResource pattern: %q, it should end with a name and not a \"-\"", generatedResource.Pattern))
+	if strings.HasSuffix(parsedTargetResource.String(), "/-") {
+		errs = append(errs, fmt.Errorf("invalid generatedResource pattern: %q, it should end with a name and not a \"-\"", generatedResource.Pattern))
 		return errs
 	}
 
 	validateEntityReference := func(resourceName resourceName, entityType string) bool {
 		switch entityType {
 		case "api":
-			return resourceName.getApi() != ""
+			return resourceName.Api() != ""
 		case "version":
-			return resourceName.getVersion() != ""
+			return resourceName.Version() != ""
 		case "spec":
-			return resourceName.getSpec() != ""
+			return resourceName.Spec() != ""
 		case "artifact":
-			return resourceName.getArtifact() != ""
+			return resourceName.Artifact() != ""
 		case "default":
 			return true
 		default:
@@ -230,10 +227,6 @@ func validateGeneratedResourceEntry(parent string, generatedResource *rpc.Genera
 		if !validateEntityReference(parsedTargetResource, r.entityType) {
 			errs = append(errs, fmt.Errorf("invalid reference in action: %s", generatedResource.Action))
 		}
-	}
-
-	if len(errs) == 0 {
-		return nil
 	}
 
 	return errs
@@ -277,13 +270,13 @@ func getEntityKey(sourcePattern string, resource resourceName) (string, error) {
 
 	switch entityType {
 	case "api":
-		return resource.getApi(), nil
+		return resource.Api(), nil
 	case "version":
-		return resource.getVersion(), nil
+		return resource.Version(), nil
 	case "spec":
-		return resource.getSpec(), nil
+		return resource.Spec(), nil
 	case "artifact":
-		return resource.getArtifact(), nil
+		return resource.Artifact(), nil
 	case "default":
 		return "default", nil
 	default:
@@ -351,13 +344,13 @@ func generateCommand(action string, resourceName string) (string, error) {
 		entityVal := ""
 		switch r.entityType {
 		case "api":
-			entityVal = resource.getApi()
+			entityVal = resource.Api()
 		case "version":
-			entityVal = resource.getVersion()
+			entityVal = resource.Version()
 		case "spec":
-			entityVal = resource.getSpec()
+			entityVal = resource.Spec()
 		case "artifact":
-			entityVal = resource.getArtifact()
+			entityVal = resource.Artifact()
 		}
 
 		if len(entityVal) == 0 {

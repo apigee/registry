@@ -38,12 +38,20 @@ func ProcessManifest(
 	manifest *rpc.Manifest) []*Action {
 
 	var actions []*Action
+	//Check for errors in manifest
+	errs := ValidateManifest(ctx, fmt.Sprintf("projects/%s", projectID), manifest)
+	if len(errs) > 0 {
+		for _, err := range errs {
+			log.FromContext(ctx).WithError(err).Debugf("Error in manifest")
+		}
+	}
+
 	for _, resource := range manifest.GeneratedResources {
 		log.Debugf(ctx, "Processing entry: %v", resource)
 
 		errs := validateGeneratedResourceEntry(fmt.Sprintf("projects/%s/locations/global", projectID), resource)
 		if len(errs) > 0 {
-			log.FromContext(ctx).Debugf("Skipping generatedResource: %q invalid definition", resource)
+			log.FromContext(ctx).Debugf("Skipping resource: %q", resource)
 			continue
 		}
 
@@ -112,12 +120,12 @@ func generateDependencyMap(
 	}
 
 	for _, source := range sourceList {
-		group, err := getEntityKey(dependency.Pattern, source.getResourceName())
+		group, err := getEntityKey(dependency.Pattern, source.ResourceName())
 		if err != nil {
 			return nil, err
 		}
 
-		sourceTime := source.getUpdateTimestamp()
+		sourceTime := source.UpdateTimestamp()
 		maxUpdateTime, exists := sourceMap[group]
 		if !exists || maxUpdateTime.Before(sourceTime) {
 			sourceMap[group] = sourceTime
@@ -181,11 +189,11 @@ func generateUpdateActions(
 
 	// Iterate over a list of existing target resources to generate update actions
 	for _, targetResource := range resourceList {
-		visited[targetResource.getResourceName().getParent()] = true
+		visited[targetResource.ResourceName().Parent()] = true
 
 		takeAction, err := needsUpdate(
-			targetResource.getResourceName(),
-			targetResource.getUpdateTimestamp(),
+			targetResource.ResourceName(),
+			targetResource.UpdateTimestamp(),
 			dependencyMaps,
 			generatedResource,
 			false,
@@ -197,13 +205,13 @@ func generateUpdateActions(
 		}
 
 		if takeAction {
-			cmd, err := generateCommand(generatedResource.Action, targetResource.getResourceName().string())
+			cmd, err := generateCommand(generatedResource.Action, targetResource.ResourceName().String())
 			if err != nil {
 				return nil, nil, fmt.Errorf("Cannot generate command: %s", err)
 			}
 			a := &Action{
 				Command:           cmd,
-				GeneratedResource: targetResource.getResourceName().string(),
+				GeneratedResource: targetResource.ResourceName().String(),
 				RequiresReceipt:   generatedResource.Receipt,
 			}
 			actions = append(actions, a)
@@ -228,7 +236,7 @@ func generateCreateActions(
 	if err != nil {
 		return nil, err
 	}
-	parentName := parsedResourcePattern.getParent()
+	parentName := parsedResourcePattern.Parent()
 
 	// If parent is a project, we can't list projects since this is registry client command.
 	// Since the manifest definition is scoped  only for a particular project,
@@ -263,7 +271,7 @@ func generateCreateActions(
 			return nil, nil
 		}
 
-		cmd, err := generateCommand(generatedResource.Action, targetResourceName.string())
+		cmd, err := generateCommand(generatedResource.Action, targetResourceName.String())
 		if err != nil {
 			return nil, fmt.Errorf("Cannot generate command: %s", err)
 		}
@@ -271,7 +279,7 @@ func generateCreateActions(
 		return []*Action{
 			{
 				Command:           cmd,
-				GeneratedResource: targetResourceName.string(),
+				GeneratedResource: targetResourceName.String(),
 				RequiresReceipt:   generatedResource.Receipt,
 			},
 		}, nil
@@ -288,12 +296,12 @@ func generateCreateActions(
 
 	for _, parent := range parentList {
 		// Skip if this parent was already visited.
-		if visited[parent.getResourceName().string()] {
+		if visited[parent.ResourceName().String()] {
 			continue
 		}
 		// Since the GeneratedResource is non-existent here,
 		// we will have to derive the exact name of the target resource
-		targetResourceName, err := resourceNameFromParent(resourcePattern, parent.getResourceName().string())
+		targetResourceName, err := resourceNameFromParent(resourcePattern, parent.ResourceName().String())
 		if err != nil {
 			return nil, err
 		}
@@ -310,13 +318,13 @@ func generateCreateActions(
 			continue
 		}
 
-		cmd, err := generateCommand(generatedResource.Action, targetResourceName.string())
+		cmd, err := generateCommand(generatedResource.Action, targetResourceName.String())
 		if err != nil {
 			return nil, fmt.Errorf("Cannot generate command: %s", err)
 		}
 		a := &Action{
 			Command:           cmd,
-			GeneratedResource: targetResourceName.string(),
+			GeneratedResource: targetResourceName.String(),
 			RequiresReceipt:   generatedResource.Receipt,
 		}
 		actions = append(actions, a)

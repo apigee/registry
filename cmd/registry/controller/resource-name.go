@@ -23,39 +23,39 @@ import (
 // projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml
 // projects/demo/locations/global/apis/-/versions/-/specs/-/artifacts/-
 type resourceName interface {
-	getArtifact() string
-	getSpec() string
-	getVersion() string
-	getApi() string
-	string() string
-	getParent() string
+	Artifact() string
+	Spec() string
+	Version() string
+	Api() string
+	String() string
+	Parent() string
 }
 
 type specName struct {
 	spec names.Spec
 }
 
-func (s specName) getArtifact() string {
+func (s specName) Artifact() string {
 	return ""
 }
 
-func (s specName) getSpec() string {
+func (s specName) Spec() string {
 	return s.spec.String()
 }
 
-func (s specName) getVersion() string {
+func (s specName) Version() string {
 	return s.spec.Version().String()
 }
 
-func (s specName) getApi() string {
+func (s specName) Api() string {
 	return s.spec.Api().String()
 }
 
-func (s specName) string() string {
+func (s specName) String() string {
 	return s.spec.String()
 }
 
-func (s specName) getParent() string {
+func (s specName) Parent() string {
 	return s.spec.Parent()
 }
 
@@ -63,27 +63,27 @@ type versionName struct {
 	version names.Version
 }
 
-func (v versionName) getArtifact() string {
+func (v versionName) Artifact() string {
 	return ""
 }
 
-func (v versionName) getSpec() string {
+func (v versionName) Spec() string {
 	return ""
 }
 
-func (v versionName) getVersion() string {
+func (v versionName) Version() string {
 	return v.version.String()
 }
 
-func (v versionName) getApi() string {
+func (v versionName) Api() string {
 	return v.version.Api().String()
 }
 
-func (v versionName) string() string {
+func (v versionName) String() string {
 	return v.version.String()
 }
 
-func (v versionName) getParent() string {
+func (v versionName) Parent() string {
 	return v.version.Parent()
 }
 
@@ -91,27 +91,27 @@ type apiName struct {
 	api names.Api
 }
 
-func (a apiName) getArtifact() string {
+func (a apiName) Artifact() string {
 	return ""
 }
 
-func (a apiName) getSpec() string {
+func (a apiName) Spec() string {
 	return ""
 }
 
-func (a apiName) getVersion() string {
+func (a apiName) Version() string {
 	return ""
 }
 
-func (a apiName) getApi() string {
+func (a apiName) Api() string {
 	return a.api.String()
 }
 
-func (a apiName) string() string {
+func (a apiName) String() string {
 	return a.api.String()
 }
 
-func (a apiName) getParent() string {
+func (a apiName) Parent() string {
 	return a.api.Parent()
 }
 
@@ -119,11 +119,11 @@ type artifactName struct {
 	artifact names.Artifact
 }
 
-func (ar artifactName) getArtifact() string {
+func (ar artifactName) Artifact() string {
 	return ar.artifact.String()
 }
 
-func (ar artifactName) getSpec() string {
+func (ar artifactName) Spec() string {
 	specPattern := names.Spec{
 		ProjectID: ar.artifact.ProjectID(),
 		ApiID:     ar.artifact.ApiID(),
@@ -141,7 +141,7 @@ func (ar artifactName) getSpec() string {
 	return ""
 }
 
-func (ar artifactName) getVersion() string {
+func (ar artifactName) Version() string {
 	versionPattern := names.Version{
 		ProjectID: ar.artifact.ProjectID(),
 		ApiID:     ar.artifact.ApiID(),
@@ -157,7 +157,7 @@ func (ar artifactName) getVersion() string {
 	return ""
 }
 
-func (ar artifactName) getApi() string {
+func (ar artifactName) Api() string {
 	apiPattern := names.Api{
 		ProjectID: ar.artifact.ProjectID(),
 		ApiID:     ar.artifact.ApiID(),
@@ -172,10 +172,10 @@ func (ar artifactName) getApi() string {
 	return ""
 }
 
-func (ar artifactName) string() string {
+func (ar artifactName) String() string {
 	return ar.artifact.String()
 }
 
-func (ar artifactName) getParent() string {
+func (ar artifactName) Parent() string {
 	return ar.artifact.Parent()
 }

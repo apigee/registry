@@ -21,8 +21,8 @@ import (
 // This interface is used to describe resource instances
 // ResourceName is embeded, the only additional field is the UpdateTimestamp
 type resourceInstance interface {
-	getResourceName() resourceName
-	getUpdateTimestamp() time.Time
+	ResourceName() resourceName
+	UpdateTimestamp() time.Time
 }
 
 type specResource struct {
@@ -30,11 +30,11 @@ type specResource struct {
 	updateTimestamp time.Time
 }
 
-func (s specResource) getUpdateTimestamp() time.Time {
+func (s specResource) UpdateTimestamp() time.Time {
 	return s.updateTimestamp
 }
 
-func (s specResource) getResourceName() resourceName {
+func (s specResource) ResourceName() resourceName {
 	return s.specName
 }
 
@@ -43,11 +43,11 @@ type versionResource struct {
 	updateTimestamp time.Time
 }
 
-func (v versionResource) getUpdateTimestamp() time.Time {
+func (v versionResource) UpdateTimestamp() time.Time {
 	return v.updateTimestamp
 }
 
-func (v versionResource) getResourceName() resourceName {
+func (v versionResource) ResourceName() resourceName {
 	return v.versionName
 }
 
@@ -56,11 +56,11 @@ type apiResource struct {
 	updateTimestamp time.Time
 }
 
-func (a apiResource) getUpdateTimestamp() time.Time {
+func (a apiResource) UpdateTimestamp() time.Time {
 	return a.updateTimestamp
 }
 
-func (a apiResource) getResourceName() resourceName {
+func (a apiResource) ResourceName() resourceName {
 	return a.apiName
 }
 
@@ -69,10 +69,10 @@ type artifactResource struct {
 	updateTimestamp time.Time
 }
 
-func (ar artifactResource) getUpdateTimestamp() time.Time {
+func (ar artifactResource) UpdateTimestamp() time.Time {
 	return ar.updateTimestamp
 }
 
-func (ar artifactResource) getResourceName() resourceName {
+func (ar artifactResource) ResourceName() resourceName {
 	return ar.artifactName
 }

@@ -263,7 +263,7 @@ func TestGetEntityKey(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			got, err := getEntityKey(test.pattern, test.resource.getResourceName())
+			got, err := getEntityKey(test.pattern, test.resource.ResourceName())
 			if err != nil {
 				t.Errorf("getEntityKey returned unexpected error: %s", err)
 			}
@@ -305,7 +305,7 @@ func TestGetEntityKeyError(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			got, err := getEntityKey(test.pattern, test.resource.getResourceName())
+			got, err := getEntityKey(test.pattern, test.resource.ResourceName())
 			if err == nil {
 				t.Errorf("expected getEntityKey to return error, got: %q", got)
 			}
