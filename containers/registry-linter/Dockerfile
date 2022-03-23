@@ -28,7 +28,7 @@ RUN apk add --no-cache bash git
 
 #Install api-linter
 WORKDIR /api-linter
-RUN GO111MODULE=on go get github.com/googleapis/api-linter/cmd/api-linter
+RUN go install github.com/googleapis/api-linter/cmd/api-linter@latest
 
 # Install gnostic linter
 WORKDIR /gnostic-linter
