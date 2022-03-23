@@ -18,7 +18,6 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"strings"
 
 	"github.com/apigee/registry/cmd/registry/controller"
 	"github.com/apigee/registry/cmd/registry/core"
@@ -109,12 +108,11 @@ func buildManifestArtifact(ctx context.Context, parent string, jsonBytes []byte)
 		return nil, err
 	}
 	errs := controller.ValidateManifest(ctx, parent, m)
-	if len(errs) > 0 {
-		errStrings := make([]string, 0)
+	if count := len(errs); count > 0 {
 		for _, err = range errs {
-			errStrings = append(errStrings, err.Error())
+			log.FromContext(ctx).WithError(err).Error("Manifest error")
 		}
-		return nil, fmt.Errorf("manifest definition contains errors: %s", strings.Join(errStrings, "\n"))
+		return nil, fmt.Errorf("manifest definition contains %d error(s): see logs for details", count)
 	}
 
 	artifactBytes, err := proto.Marshal(m)

@@ -129,9 +129,7 @@ func extendDependencyPattern(
 
 }
 
-func resourceNameFromParent(
-	resourcePattern string,
-	parent string) (resourceName, error) {
+func resourceNameFromParent(resourcePattern string, parent string) (resourceName, error) {
 	// Derives the resource name from the provided resourcePattern and it's parent.
 	// Example:
 	// 1) resourcePattern: projects/demo/locations/global/apis/-/versions/-/specs/openapi.yaml
@@ -161,31 +159,31 @@ func resourceNameFromParent(
 func ValidateManifest(ctx context.Context, parent string, manifest *rpc.Manifest) []error {
 	totalErrors := make([]error, 0)
 	for _, resource := range manifest.GeneratedResources {
-		if errs := validateGeneratedResourceEntry(parent, resource); len(errs) != 0 {
-			for _, err := range errs {
-				totalErrors = append(totalErrors, fmt.Errorf("invalid entry: %v, %s", resource, err))
-			}
+		errs := validateGeneratedResourceEntry(parent, resource)
+		for _, err := range errs {
+			totalErrors = append(totalErrors, fmt.Errorf("invalid entry: %v, %s", resource, err))
 		}
 	}
 	return totalErrors
 }
 
 func validateGeneratedResourceEntry(parent string, generatedResource *rpc.GeneratedResource) []error {
-	errs := make([]error, 0)
 	parsedTargetResource, err := parseResourcePattern(
 		fmt.Sprintf("%s/%s", parent, generatedResource.Pattern))
 
 	// Check that the target resource pattern should be a valid pattern.
-	// Return for errors in target resource pattern since we caan't verify action and dependencies based off an incorrect pattern.
+	// Return for errors in target resource pattern since we can't verify action and dependencies based off an incorrect pattern.
 	if err != nil {
-		errs = append(errs, fmt.Errorf("invalid pattern for generatedResource %v, %s", generatedResource.Pattern, err))
-		return errs
+		return []error{
+			fmt.Errorf("invalid pattern for generatedResource %v, %s", generatedResource.Pattern, err),
+		}
 	}
 	// Check that generatedResource pattern doesn't end with a "-".
 	// We require a name for the target resource.
 	if strings.HasSuffix(parsedTargetResource.String(), "/-") {
-		errs = append(errs, fmt.Errorf("invalid generatedResource pattern: %q, it should end with a name and not a \"-\"", generatedResource.Pattern))
-		return errs
+		return []error{
+			fmt.Errorf("invalid generatedResource pattern: %q, it should end with a name and not a \"-\"", generatedResource.Pattern),
+		}
 	}
 
 	validateEntityReference := func(resourceName resourceName, entityType string) bool {
@@ -205,6 +203,7 @@ func validateGeneratedResourceEntry(parent string, generatedResource *rpc.Genera
 		}
 	}
 
+	errs := make([]error, 0)
 	for _, dependency := range generatedResource.Dependencies {
 		// Validate that all the dependencies have valid $resource references.
 		entityType, err := getEntityType(dependency.Pattern)
