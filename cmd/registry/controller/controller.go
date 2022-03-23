@@ -247,7 +247,7 @@ func generateCreateActions(
 		// Since the manifest definition is scoped  only for a particular project,
 		// there will be only one target resource in this case.
 		// There are two cases where this might happen:
-		// 1. Target resource is a project level artifact "projects/demo/locations/global/artifacts/serach-index"
+		// 1. Target resource is a project level artifact "projects/demo/locations/global/artifact/search-index"
 		//    extracted parent will be "projects/demo/locations/global"
 		// 1. Target resource is an api "projects/demo/locations/global/apis/petstore"
 		//    extracted parent will be "projects/demo/locations/global"
@@ -263,12 +263,25 @@ func generateCreateActions(
 
 	default:
 		// If parent resource is not a project, then go through all the non-visited parents.
-		visited_json, err := json.Marshal(visited)
+		visitedJSON, err := json.Marshal(visited)
 		if err != nil {
-			return nil, fmt.Errorf("Internal error: Invalid visited map, %s", err)
+			return nil, fmt.Errorf("internal error: Invalid visited map, %s", err)
 		}
 		// Construct a filter to fetch only non-visited parents.
-		filter := fmt.Sprintf("%s.all(n, !(name.contains(n)))", visited_json)
+		// Check that the "name" of the resource is not in the visited list of parents.
+		// Example:
+		// Consider a visited map of parents which are apis:
+		// Visited: {
+		//	"projects/demo/locations/global/apis/example-api1": true,
+		//  "projects/demo/locations/global/apis/example-api2": true,
+		// }
+		// We make use of `e.all(x,p)` macro as defined here: https://github.com/google/cel-spec/blob/master/doc/langdef.md#macros
+		// The CEL filter for listing non-visited parents will be as follows:
+		// '{
+		//	"projects/demo/locations/global/apis/example-api1": true,
+		//  "projects/demo/locations/global/apis/example-api2": true,
+		// }.all(n, !(name.contains(n)))'
+		filter := fmt.Sprintf("%s.all(n, !(name.contains(n)))", visitedJSON)
 		parentList, err = listResources(ctx, client, parentName.String(), filter)
 		if err != nil {
 			return nil, err
@@ -299,7 +312,7 @@ func generateCreateActions(
 
 		cmd, err := generateCommand(generatedResource.Action, targetResourceName.String())
 		if err != nil {
-			return nil, fmt.Errorf("Cannot generate command: %s", err)
+			return nil, fmt.Errorf("cannot generate command: %s", err)
 		}
 		a := &Action{
 			Command:           cmd,
