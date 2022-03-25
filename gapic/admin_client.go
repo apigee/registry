@@ -297,7 +297,7 @@ func (c *adminGRPCClient) Connection() *grpc.ClientConn {
 // use by Google-written clients.
 func (c *adminGRPCClient) setGoogleClientInfo(keyval ...string) {
 	kv := append([]string{"gl-go", versionGo()}, keyval...)
-	kv = append(kv, "gapic", versionClient, "gax", gax.Version, "grpc", grpc.Version)
+	kv = append(kv, "gapic", getVersionClient(), "gax", gax.Version, "grpc", grpc.Version)
 	c.xGoogMetadata = metadata.Pairs("x-goog-api-client", gax.XGoogHeader(kv...))
 }
 
@@ -399,6 +399,7 @@ func (c *adminGRPCClient) ListProjects(ctx context.Context, req *rpcpb.ListProje
 
 func (c *adminGRPCClient) GetProject(ctx context.Context, req *rpcpb.GetProjectRequest, opts ...gax.CallOption) (*rpcpb.Project, error) {
 	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "name", url.QueryEscape(req.GetName())))
+
 	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append((*c.CallOptions).GetProject[0:len((*c.CallOptions).GetProject):len((*c.CallOptions).GetProject)], opts...)
 	var resp *rpcpb.Project
@@ -430,6 +431,7 @@ func (c *adminGRPCClient) CreateProject(ctx context.Context, req *rpcpb.CreatePr
 
 func (c *adminGRPCClient) UpdateProject(ctx context.Context, req *rpcpb.UpdateProjectRequest, opts ...gax.CallOption) (*rpcpb.Project, error) {
 	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "project.name", url.QueryEscape(req.GetProject().GetName())))
+
 	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append((*c.CallOptions).UpdateProject[0:len((*c.CallOptions).UpdateProject):len((*c.CallOptions).UpdateProject)], opts...)
 	var resp *rpcpb.Project
@@ -446,6 +448,7 @@ func (c *adminGRPCClient) UpdateProject(ctx context.Context, req *rpcpb.UpdatePr
 
 func (c *adminGRPCClient) DeleteProject(ctx context.Context, req *rpcpb.DeleteProjectRequest, opts ...gax.CallOption) error {
 	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "name", url.QueryEscape(req.GetName())))
+
 	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append((*c.CallOptions).DeleteProject[0:len((*c.CallOptions).DeleteProject):len((*c.CallOptions).DeleteProject)], opts...)
 	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {

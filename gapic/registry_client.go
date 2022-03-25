@@ -922,7 +922,7 @@ func (c *registryGRPCClient) Connection() *grpc.ClientConn {
 // use by Google-written clients.
 func (c *registryGRPCClient) setGoogleClientInfo(keyval ...string) {
 	kv := append([]string{"gl-go", versionGo()}, keyval...)
-	kv = append(kv, "gapic", versionClient, "gax", gax.Version, "grpc", grpc.Version)
+	kv = append(kv, "gapic", getVersionClient(), "gax", gax.Version, "grpc", grpc.Version)
 	c.xGoogMetadata = metadata.Pairs("x-goog-api-client", gax.XGoogHeader(kv...))
 }
 
@@ -934,6 +934,7 @@ func (c *registryGRPCClient) Close() error {
 
 func (c *registryGRPCClient) ListApis(ctx context.Context, req *rpcpb.ListApisRequest, opts ...gax.CallOption) *ApiIterator {
 	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "parent", url.QueryEscape(req.GetParent())))
+
 	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append((*c.CallOptions).ListApis[0:len((*c.CallOptions).ListApis):len((*c.CallOptions).ListApis)], opts...)
 	it := &ApiIterator{}
@@ -983,6 +984,7 @@ func (c *registryGRPCClient) GetApi(ctx context.Context, req *rpcpb.GetApiReques
 		ctx = cctx
 	}
 	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "name", url.QueryEscape(req.GetName())))
+
 	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append((*c.CallOptions).GetApi[0:len((*c.CallOptions).GetApi):len((*c.CallOptions).GetApi)], opts...)
 	var resp *rpcpb.Api
@@ -1004,6 +1006,7 @@ func (c *registryGRPCClient) CreateApi(ctx context.Context, req *rpcpb.CreateApi
 		ctx = cctx
 	}
 	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "parent", url.QueryEscape(req.GetParent())))
+
 	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append((*c.CallOptions).CreateApi[0:len((*c.CallOptions).CreateApi):len((*c.CallOptions).CreateApi)], opts...)
 	var resp *rpcpb.Api
@@ -1025,6 +1028,7 @@ func (c *registryGRPCClient) UpdateApi(ctx context.Context, req *rpcpb.UpdateApi
 		ctx = cctx
 	}
 	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "api.name", url.QueryEscape(req.GetApi().GetName())))
+
 	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append((*c.CallOptions).UpdateApi[0:len((*c.CallOptions).UpdateApi):len((*c.CallOptions).UpdateApi)], opts...)
 	var resp *rpcpb.Api
@@ -1046,6 +1050,7 @@ func (c *registryGRPCClient) DeleteApi(ctx context.Context, req *rpcpb.DeleteApi
 		ctx = cctx
 	}
 	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "name", url.QueryEscape(req.GetName())))
+
 	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append((*c.CallOptions).DeleteApi[0:len((*c.CallOptions).DeleteApi):len((*c.CallOptions).DeleteApi)], opts...)
 	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
@@ -1058,6 +1063,7 @@ func (c *registryGRPCClient) DeleteApi(ctx context.Context, req *rpcpb.DeleteApi
 
 func (c *registryGRPCClient) ListApiVersions(ctx context.Context, req *rpcpb.ListApiVersionsRequest, opts ...gax.CallOption) *ApiVersionIterator {
 	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "parent", url.QueryEscape(req.GetParent())))
+
 	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append((*c.CallOptions).ListApiVersions[0:len((*c.CallOptions).ListApiVersions):len((*c.CallOptions).ListApiVersions)], opts...)
 	it := &ApiVersionIterator{}
@@ -1107,6 +1113,7 @@ func (c *registryGRPCClient) GetApiVersion(ctx context.Context, req *rpcpb.GetAp
 		ctx = cctx
 	}
 	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "name", url.QueryEscape(req.GetName())))
+
 	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append((*c.CallOptions).GetApiVersion[0:len((*c.CallOptions).GetApiVersion):len((*c.CallOptions).GetApiVersion)], opts...)
 	var resp *rpcpb.ApiVersion
@@ -1128,6 +1135,7 @@ func (c *registryGRPCClient) CreateApiVersion(ctx context.Context, req *rpcpb.Cr
 		ctx = cctx
 	}
 	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "parent", url.QueryEscape(req.GetParent())))
+
 	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append((*c.CallOptions).CreateApiVersion[0:len((*c.CallOptions).CreateApiVersion):len((*c.CallOptions).CreateApiVersion)], opts...)
 	var resp *rpcpb.ApiVersion
@@ -1149,6 +1157,7 @@ func (c *registryGRPCClient) UpdateApiVersion(ctx context.Context, req *rpcpb.Up
 		ctx = cctx
 	}
 	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "api_version.name", url.QueryEscape(req.GetApiVersion().GetName())))
+
 	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append((*c.CallOptions).UpdateApiVersion[0:len((*c.CallOptions).UpdateApiVersion):len((*c.CallOptions).UpdateApiVersion)], opts...)
 	var resp *rpcpb.ApiVersion
@@ -1170,6 +1179,7 @@ func (c *registryGRPCClient) DeleteApiVersion(ctx context.Context, req *rpcpb.De
 		ctx = cctx
 	}
 	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "name", url.QueryEscape(req.GetName())))
+
 	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append((*c.CallOptions).DeleteApiVersion[0:len((*c.CallOptions).DeleteApiVersion):len((*c.CallOptions).DeleteApiVersion)], opts...)
 	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
@@ -1182,6 +1192,7 @@ func (c *registryGRPCClient) DeleteApiVersion(ctx context.Context, req *rpcpb.De
 
 func (c *registryGRPCClient) ListApiSpecs(ctx context.Context, req *rpcpb.ListApiSpecsRequest, opts ...gax.CallOption) *ApiSpecIterator {
 	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "parent", url.QueryEscape(req.GetParent())))
+
 	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append((*c.CallOptions).ListApiSpecs[0:len((*c.CallOptions).ListApiSpecs):len((*c.CallOptions).ListApiSpecs)], opts...)
 	it := &ApiSpecIterator{}
@@ -1231,6 +1242,7 @@ func (c *registryGRPCClient) GetApiSpec(ctx context.Context, req *rpcpb.GetApiSp
 		ctx = cctx
 	}
 	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "name", url.QueryEscape(req.GetName())))
+
 	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append((*c.CallOptions).GetApiSpec[0:len((*c.CallOptions).GetApiSpec):len((*c.CallOptions).GetApiSpec)], opts...)
 	var resp *rpcpb.ApiSpec
@@ -1252,6 +1264,7 @@ func (c *registryGRPCClient) GetApiSpecContents(ctx context.Context, req *rpcpb.
 		ctx = cctx
 	}
 	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "name", url.QueryEscape(req.GetName())))
+
 	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append((*c.CallOptions).GetApiSpecContents[0:len((*c.CallOptions).GetApiSpecContents):len((*c.CallOptions).GetApiSpecContents)], opts...)
 	var resp *httpbodypb.HttpBody
@@ -1273,6 +1286,7 @@ func (c *registryGRPCClient) CreateApiSpec(ctx context.Context, req *rpcpb.Creat
 		ctx = cctx
 	}
 	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "parent", url.QueryEscape(req.GetParent())))
+
 	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append((*c.CallOptions).CreateApiSpec[0:len((*c.CallOptions).CreateApiSpec):len((*c.CallOptions).CreateApiSpec)], opts...)
 	var resp *rpcpb.ApiSpec
@@ -1294,6 +1308,7 @@ func (c *registryGRPCClient) UpdateApiSpec(ctx context.Context, req *rpcpb.Updat
 		ctx = cctx
 	}
 	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "api_spec.name", url.QueryEscape(req.GetApiSpec().GetName())))
+
 	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append((*c.CallOptions).UpdateApiSpec[0:len((*c.CallOptions).UpdateApiSpec):len((*c.CallOptions).UpdateApiSpec)], opts...)
 	var resp *rpcpb.ApiSpec
@@ -1315,6 +1330,7 @@ func (c *registryGRPCClient) DeleteApiSpec(ctx context.Context, req *rpcpb.Delet
 		ctx = cctx
 	}
 	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "name", url.QueryEscape(req.GetName())))
+
 	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append((*c.CallOptions).DeleteApiSpec[0:len((*c.CallOptions).DeleteApiSpec):len((*c.CallOptions).DeleteApiSpec)], opts...)
 	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
@@ -1332,6 +1348,7 @@ func (c *registryGRPCClient) TagApiSpecRevision(ctx context.Context, req *rpcpb.
 		ctx = cctx
 	}
 	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "name", url.QueryEscape(req.GetName())))
+
 	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append((*c.CallOptions).TagApiSpecRevision[0:len((*c.CallOptions).TagApiSpecRevision):len((*c.CallOptions).TagApiSpecRevision)], opts...)
 	var resp *rpcpb.ApiSpec
@@ -1348,6 +1365,7 @@ func (c *registryGRPCClient) TagApiSpecRevision(ctx context.Context, req *rpcpb.
 
 func (c *registryGRPCClient) ListApiSpecRevisions(ctx context.Context, req *rpcpb.ListApiSpecRevisionsRequest, opts ...gax.CallOption) *ApiSpecIterator {
 	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "name", url.QueryEscape(req.GetName())))
+
 	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append((*c.CallOptions).ListApiSpecRevisions[0:len((*c.CallOptions).ListApiSpecRevisions):len((*c.CallOptions).ListApiSpecRevisions)], opts...)
 	it := &ApiSpecIterator{}
@@ -1397,6 +1415,7 @@ func (c *registryGRPCClient) RollbackApiSpec(ctx context.Context, req *rpcpb.Rol
 		ctx = cctx
 	}
 	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "name", url.QueryEscape(req.GetName())))
+
 	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append((*c.CallOptions).RollbackApiSpec[0:len((*c.CallOptions).RollbackApiSpec):len((*c.CallOptions).RollbackApiSpec)], opts...)
 	var resp *rpcpb.ApiSpec
@@ -1418,6 +1437,7 @@ func (c *registryGRPCClient) DeleteApiSpecRevision(ctx context.Context, req *rpc
 		ctx = cctx
 	}
 	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "name", url.QueryEscape(req.GetName())))
+
 	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append((*c.CallOptions).DeleteApiSpecRevision[0:len((*c.CallOptions).DeleteApiSpecRevision):len((*c.CallOptions).DeleteApiSpecRevision)], opts...)
 	var resp *rpcpb.ApiSpec
@@ -1434,6 +1454,7 @@ func (c *registryGRPCClient) DeleteApiSpecRevision(ctx context.Context, req *rpc
 
 func (c *registryGRPCClient) ListApiDeployments(ctx context.Context, req *rpcpb.ListApiDeploymentsRequest, opts ...gax.CallOption) *ApiDeploymentIterator {
 	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "parent", url.QueryEscape(req.GetParent())))
+
 	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append((*c.CallOptions).ListApiDeployments[0:len((*c.CallOptions).ListApiDeployments):len((*c.CallOptions).ListApiDeployments)], opts...)
 	it := &ApiDeploymentIterator{}
@@ -1483,6 +1504,7 @@ func (c *registryGRPCClient) GetApiDeployment(ctx context.Context, req *rpcpb.Ge
 		ctx = cctx
 	}
 	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "name", url.QueryEscape(req.GetName())))
+
 	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append((*c.CallOptions).GetApiDeployment[0:len((*c.CallOptions).GetApiDeployment):len((*c.CallOptions).GetApiDeployment)], opts...)
 	var resp *rpcpb.ApiDeployment
@@ -1504,6 +1526,7 @@ func (c *registryGRPCClient) CreateApiDeployment(ctx context.Context, req *rpcpb
 		ctx = cctx
 	}
 	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "parent", url.QueryEscape(req.GetParent())))
+
 	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append((*c.CallOptions).CreateApiDeployment[0:len((*c.CallOptions).CreateApiDeployment):len((*c.CallOptions).CreateApiDeployment)], opts...)
 	var resp *rpcpb.ApiDeployment
@@ -1525,6 +1548,7 @@ func (c *registryGRPCClient) UpdateApiDeployment(ctx context.Context, req *rpcpb
 		ctx = cctx
 	}
 	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "api_deployment.name", url.QueryEscape(req.GetApiDeployment().GetName())))
+
 	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append((*c.CallOptions).UpdateApiDeployment[0:len((*c.CallOptions).UpdateApiDeployment):len((*c.CallOptions).UpdateApiDeployment)], opts...)
 	var resp *rpcpb.ApiDeployment
@@ -1546,6 +1570,7 @@ func (c *registryGRPCClient) DeleteApiDeployment(ctx context.Context, req *rpcpb
 		ctx = cctx
 	}
 	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "name", url.QueryEscape(req.GetName())))
+
 	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append((*c.CallOptions).DeleteApiDeployment[0:len((*c.CallOptions).DeleteApiDeployment):len((*c.CallOptions).DeleteApiDeployment)], opts...)
 	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
@@ -1563,6 +1588,7 @@ func (c *registryGRPCClient) TagApiDeploymentRevision(ctx context.Context, req *
 		ctx = cctx
 	}
 	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "name", url.QueryEscape(req.GetName())))
+
 	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append((*c.CallOptions).TagApiDeploymentRevision[0:len((*c.CallOptions).TagApiDeploymentRevision):len((*c.CallOptions).TagApiDeploymentRevision)], opts...)
 	var resp *rpcpb.ApiDeployment
@@ -1579,6 +1605,7 @@ func (c *registryGRPCClient) TagApiDeploymentRevision(ctx context.Context, req *
 
 func (c *registryGRPCClient) ListApiDeploymentRevisions(ctx context.Context, req *rpcpb.ListApiDeploymentRevisionsRequest, opts ...gax.CallOption) *ApiDeploymentIterator {
 	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "name", url.QueryEscape(req.GetName())))
+
 	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append((*c.CallOptions).ListApiDeploymentRevisions[0:len((*c.CallOptions).ListApiDeploymentRevisions):len((*c.CallOptions).ListApiDeploymentRevisions)], opts...)
 	it := &ApiDeploymentIterator{}
@@ -1628,6 +1655,7 @@ func (c *registryGRPCClient) RollbackApiDeployment(ctx context.Context, req *rpc
 		ctx = cctx
 	}
 	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "name", url.QueryEscape(req.GetName())))
+
 	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append((*c.CallOptions).RollbackApiDeployment[0:len((*c.CallOptions).RollbackApiDeployment):len((*c.CallOptions).RollbackApiDeployment)], opts...)
 	var resp *rpcpb.ApiDeployment
@@ -1649,6 +1677,7 @@ func (c *registryGRPCClient) DeleteApiDeploymentRevision(ctx context.Context, re
 		ctx = cctx
 	}
 	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "name", url.QueryEscape(req.GetName())))
+
 	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append((*c.CallOptions).DeleteApiDeploymentRevision[0:len((*c.CallOptions).DeleteApiDeploymentRevision):len((*c.CallOptions).DeleteApiDeploymentRevision)], opts...)
 	var resp *rpcpb.ApiDeployment
@@ -1665,6 +1694,7 @@ func (c *registryGRPCClient) DeleteApiDeploymentRevision(ctx context.Context, re
 
 func (c *registryGRPCClient) ListArtifacts(ctx context.Context, req *rpcpb.ListArtifactsRequest, opts ...gax.CallOption) *ArtifactIterator {
 	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "parent", url.QueryEscape(req.GetParent())))
+
 	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append((*c.CallOptions).ListArtifacts[0:len((*c.CallOptions).ListArtifacts):len((*c.CallOptions).ListArtifacts)], opts...)
 	it := &ArtifactIterator{}
@@ -1714,6 +1744,7 @@ func (c *registryGRPCClient) GetArtifact(ctx context.Context, req *rpcpb.GetArti
 		ctx = cctx
 	}
 	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "name", url.QueryEscape(req.GetName())))
+
 	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append((*c.CallOptions).GetArtifact[0:len((*c.CallOptions).GetArtifact):len((*c.CallOptions).GetArtifact)], opts...)
 	var resp *rpcpb.Artifact
@@ -1735,6 +1766,7 @@ func (c *registryGRPCClient) GetArtifactContents(ctx context.Context, req *rpcpb
 		ctx = cctx
 	}
 	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "name", url.QueryEscape(req.GetName())))
+
 	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append((*c.CallOptions).GetArtifactContents[0:len((*c.CallOptions).GetArtifactContents):len((*c.CallOptions).GetArtifactContents)], opts...)
 	var resp *httpbodypb.HttpBody
@@ -1756,6 +1788,7 @@ func (c *registryGRPCClient) CreateArtifact(ctx context.Context, req *rpcpb.Crea
 		ctx = cctx
 	}
 	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "parent", url.QueryEscape(req.GetParent())))
+
 	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append((*c.CallOptions).CreateArtifact[0:len((*c.CallOptions).CreateArtifact):len((*c.CallOptions).CreateArtifact)], opts...)
 	var resp *rpcpb.Artifact
@@ -1777,6 +1810,7 @@ func (c *registryGRPCClient) ReplaceArtifact(ctx context.Context, req *rpcpb.Rep
 		ctx = cctx
 	}
 	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "artifact.name", url.QueryEscape(req.GetArtifact().GetName())))
+
 	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append((*c.CallOptions).ReplaceArtifact[0:len((*c.CallOptions).ReplaceArtifact):len((*c.CallOptions).ReplaceArtifact)], opts...)
 	var resp *rpcpb.Artifact
@@ -1798,6 +1832,7 @@ func (c *registryGRPCClient) DeleteArtifact(ctx context.Context, req *rpcpb.Dele
 		ctx = cctx
 	}
 	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "name", url.QueryEscape(req.GetName())))
+
 	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append((*c.CallOptions).DeleteArtifact[0:len((*c.CallOptions).DeleteArtifact):len((*c.CallOptions).DeleteArtifact)], opts...)
 	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
