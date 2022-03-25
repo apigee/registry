@@ -106,8 +106,12 @@ func PrintArtifactContents(artifact *rpc.Artifact) {
 		unmarshalAndPrint(artifact.GetContents(), &rpc.Index{})
 	case "google.cloud.apigeeregistry.applications.v1alpha1.Lint":
 		unmarshalAndPrint(artifact.GetContents(), &rpc.Lint{})
+	case "google.cloud.apigeeregistry.v1.apihub.DisplaySettings":
+		unmarshalAndPrint(artifact.GetContents(), &rpc.DisplaySettings{})
 	case "google.cloud.apigeeregistry.v1.apihub.Lifecycle":
 		unmarshalAndPrint(artifact.GetContents(), &rpc.Lifecycle{})
+	case "google.cloud.apigeeregistry.v1.apihub.ReferenceList":
+		unmarshalAndPrint(artifact.GetContents(), &rpc.ReferenceList{})
 	case "google.cloud.apigeeregistry.v1.apihub.TaxonomyList":
 		unmarshalAndPrint(artifact.GetContents(), &rpc.TaxonomyList{})
 	case "google.cloud.apigeeregistry.v1.controller.Manifest":
