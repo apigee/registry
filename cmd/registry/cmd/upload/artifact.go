@@ -83,12 +83,16 @@ func buildArtifact(ctx context.Context, parent string, filename string) (*rpc.Ar
 	jsonBytes, _ := yaml.YAMLToJSON(yamlBytes) // to use protojson.Unmarshal()
 	var artifact *rpc.Artifact
 	switch header.Kind {
-	case "Manifest", patch.ManifestMimeType:
-		artifact, err = buildManifestArtifact(ctx, parent, jsonBytes)
-	case "TaxonomyList", "google.cloud.apigeeregistry.v1.apihub.TaxonomyList":
-		artifact, err = buildTaxonomyListArtifact(ctx, jsonBytes)
+	case "DisplaySettings", "google.cloud.apigeeregistry.v1.apihub.DisplaySettings":
+		artifact, err = buildDisplaySettingsArtifact(ctx, jsonBytes)
 	case "Lifecycle", "google.cloud.apigeeregistry.v1.apihub.Lifecycle":
 		artifact, err = buildLifecycleArtifact(ctx, jsonBytes)
+	case "Manifest", patch.ManifestMimeType:
+		artifact, err = buildManifestArtifact(ctx, parent, jsonBytes)
+	case "ReferenceList", "google.cloud.apigeeregistry.v1.apihub.ReferenceList":
+		artifact, err = buildReferenceListArtifact(ctx, jsonBytes)
+	case "TaxonomyList", "google.cloud.apigeeregistry.v1.apihub.TaxonomyList":
+		artifact, err = buildTaxonomyListArtifact(ctx, jsonBytes)
 	default:
 		err = fmt.Errorf("unsupported artifact type %s", header.Kind)
 	}
@@ -99,6 +103,40 @@ func buildArtifact(ctx context.Context, parent string, filename string) (*rpc.Ar
 	// set the artifact name before returning
 	artifact.Name = fmt.Sprintf("%s/artifacts/%s", parent, header.Id)
 	return artifact, nil
+}
+
+
+func buildDisplaySettingsArtifact(ctx context.Context, jsonBytes []byte) (*rpc.Artifact, error) {
+	m := &rpc.DisplaySettings{}
+	err := protojson.Unmarshal(jsonBytes, m)
+	if err != nil {
+		return nil, err
+	}
+	artifactBytes, err := proto.Marshal(m)
+	if err != nil {
+		return nil, err
+	}
+	return &rpc.Artifact{
+		Contents: artifactBytes,
+		MimeType: core.MimeTypeForMessageType("google.cloud.apigeeregistry.v1.controller.DisplaySettings"),
+	}, nil
+}
+
+
+func buildLifecycleArtifact(ctx context.Context, jsonBytes []byte) (*rpc.Artifact, error) {
+	m := &rpc.Lifecycle{}
+	err := protojson.Unmarshal(jsonBytes, m)
+	if err != nil {
+		return nil, err
+	}
+	artifactBytes, err := proto.Marshal(m)
+	if err != nil {
+		return nil, err
+	}
+	return &rpc.Artifact{
+		Contents: artifactBytes,
+		MimeType: core.MimeTypeForMessageType("google.cloud.apigeeregistry.v1.controller.Lifecycle"),
+	}, nil
 }
 
 func buildManifestArtifact(ctx context.Context, parent string, jsonBytes []byte) (*rpc.Artifact, error) {
@@ -125,6 +163,22 @@ func buildManifestArtifact(ctx context.Context, parent string, jsonBytes []byte)
 	}, nil
 }
 
+func buildReferenceListArtifact(ctx context.Context, jsonBytes []byte) (*rpc.Artifact, error) {
+	m := &rpc.ReferenceList{}
+	err := protojson.Unmarshal(jsonBytes, m)
+	if err != nil {
+		return nil, err
+	}
+	artifactBytes, err := proto.Marshal(m)
+	if err != nil {
+		return nil, err
+	}
+	return &rpc.Artifact{
+		Contents: artifactBytes,
+		MimeType: core.MimeTypeForMessageType("google.cloud.apigeeregistry.v1.controller.ReferenceList"),
+	}, nil
+}
+
 func buildTaxonomyListArtifact(ctx context.Context, jsonBytes []byte) (*rpc.Artifact, error) {
 	m := &rpc.TaxonomyList{}
 	err := protojson.Unmarshal(jsonBytes, m)
@@ -138,21 +192,5 @@ func buildTaxonomyListArtifact(ctx context.Context, jsonBytes []byte) (*rpc.Arti
 	return &rpc.Artifact{
 		Contents: artifactBytes,
 		MimeType: core.MimeTypeForMessageType("google.cloud.apigeeregistry.v1.controller.TaxonomyList"),
-	}, nil
-}
-
-func buildLifecycleArtifact(ctx context.Context, jsonBytes []byte) (*rpc.Artifact, error) {
-	m := &rpc.Lifecycle{}
-	err := protojson.Unmarshal(jsonBytes, m)
-	if err != nil {
-		return nil, err
-	}
-	artifactBytes, err := proto.Marshal(m)
-	if err != nil {
-		return nil, err
-	}
-	return &rpc.Artifact{
-		Contents: artifactBytes,
-		MimeType: core.MimeTypeForMessageType("google.cloud.apigeeregistry.v1.controller.Lifecycle"),
 	}, nil
 }
