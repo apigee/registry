@@ -50,12 +50,16 @@ func applyFile(ctx context.Context, client connection.Client, fileName, parent s
 	switch header.Kind {
 	case "API":
 		return applyApiPatch(ctx, client, bytes, parent)
+	case "DisplaySettings":
+		return applyArtifactPatchBytes(ctx, client, bytes, parent)
 	case "Lifecycle":
-		return applyLifecycleArtifactPatch(ctx, client, bytes, parent)
+		return applyArtifactPatchBytes(ctx, client, bytes, parent)
 	case "Manifest":
-		return applyManifestArtifactPatch(ctx, client, bytes, parent)
+		return applyArtifactPatchBytes(ctx, client, bytes, parent)
+	case "ReferenceList":
+		return applyArtifactPatchBytes(ctx, client, bytes, parent)
 	case "TaxonomyList":
-		return applyTaxonomyListArtifactPatch(ctx, client, bytes, parent)
+		return applyArtifactPatchBytes(ctx, client, bytes, parent)
 	default:
 		return fmt.Errorf("Unsupported kind: %s", header.Kind)
 	}

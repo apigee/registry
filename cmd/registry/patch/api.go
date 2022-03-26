@@ -22,7 +22,7 @@ import (
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 type ApiData struct {
@@ -106,6 +106,21 @@ func newApi(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api)
 	if innerErr != nil {
 		return nil, innerErr
 	}
+	err = core.ListArtifacts(ctx, client, apiName.Artifact("-"), "", true, func(message *rpc.Artifact) {
+		if innerErr != nil {
+			return
+		}
+		var artifact *Artifact
+		artifact, innerErr = newArtifact(message)
+		if innerErr == nil {
+			// skip unsupported artifact types
+			if artifact.Kind != "Artifact" {
+				// unset this because it can be inferred
+				artifact.ApiVersion = ""
+				api.Data.Artifacts = append(api.Data.Artifacts, artifact)
+			}
+		}
+	})
 	return api, err
 }
 
@@ -217,6 +232,12 @@ func applyApiPatch(ctx context.Context, client connection.Client, bytes []byte, 
 	}
 	for _, deploymentPatch := range api.Data.ApiDeployments {
 		err := applyApiDeploymentPatch(ctx, client, deploymentPatch, apiName.String())
+		if err != nil {
+			return err
+		}
+	}
+	for _, artifactPatch := range api.Data.Artifacts {
+		err = applyArtifactPatch(ctx, client, artifactPatch, apiName.String())
 		if err != nil {
 			return err
 		}

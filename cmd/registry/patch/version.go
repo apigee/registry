@@ -26,11 +26,10 @@ import (
 )
 
 type ApiVersionData struct {
-	DisplayName string      `yaml:"displayName,omitempty"`
-	Description string      `yaml:"description,omitempty"`
-	State       string      `yaml:"state,omitempty"`
-	ApiSpecs    []*ApiSpec  `yaml:"specs,omitempty"`
-	Artifacts   []*Artifact `yaml:"artifacts,omitempty"`
+	DisplayName string     `yaml:"displayName,omitempty"`
+	Description string     `yaml:"description,omitempty"`
+	State       string     `yaml:"state,omitempty"`
+	ApiSpecs    []*ApiSpec `yaml:"specs,omitempty"`
 }
 
 type ApiVersion struct {

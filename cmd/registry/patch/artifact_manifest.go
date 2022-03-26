@@ -15,13 +15,9 @@
 package patch
 
 import (
-	"context"
-
-	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"google.golang.org/protobuf/proto"
-	"gopkg.in/yaml.v2"
 )
 
 const ManifestMimeType = "application/octet-stream;type=google.cloud.apigeeregistry.v1.controller.Manifest"
@@ -45,33 +41,21 @@ type ManifestData struct {
 	GeneratedResources []*ManifestGeneratedResource `yaml:"generatedResources"`
 }
 
-type Manifest struct {
-	Header `yaml:",inline"`
-	Data   ManifestData `yaml:"data"`
-}
-
-func (a *Manifest) GetMimeType() string {
+func (a *ManifestData) GetMimeType() string {
 	return ManifestMimeType
 }
 
-func (a *Manifest) GetHeader() *Header {
-	return &a.Header
-}
-
-// Message returns the rpc representation of the manifest.
-func (m *Manifest) GetMessage() proto.Message {
+func (m *ManifestData) GetMessage() proto.Message {
 	return &rpc.Manifest{
-		Id:                 m.Header.Metadata.Name,
-		Kind:               ManifestMimeType,
-		DisplayName:        m.Data.DisplayName,
-		Description:        m.Data.Description,
+		DisplayName:        m.DisplayName,
+		Description:        m.Description,
 		GeneratedResources: m.generatedResources(),
 	}
 }
 
-func (m *Manifest) generatedResources() []*rpc.GeneratedResource {
+func (m *ManifestData) generatedResources() []*rpc.GeneratedResource {
 	v := make([]*rpc.GeneratedResource, 0)
-	for _, g := range m.Data.GeneratedResources {
+	for _, g := range m.GeneratedResources {
 		v = append(v, &rpc.GeneratedResource{
 			Pattern:      g.Pattern,
 			Filter:       g.Filter,
@@ -94,8 +78,7 @@ func (g *ManifestGeneratedResource) dependencies() []*rpc.Dependency {
 	return v
 }
 
-// newManifest creates a Manifest from an rpc representation.
-func newManifest(message *rpc.Artifact) (*Manifest, error) {
+func newManifest(message *rpc.Artifact) (*Artifact, error) {
 	artifactName, err := names.ParseArtifact(message.Name)
 	if err != nil {
 		return nil, err
@@ -105,7 +88,11 @@ func newManifest(message *rpc.Artifact) (*Manifest, error) {
 	if err != nil {
 		return nil, err
 	}
-	manifest := &Manifest{
+	manifestData := &ManifestData{
+		DisplayName: value.DisplayName,
+		Description: value.Description,
+	}
+	manifest := &Artifact{
 		Header: Header{
 			ApiVersion: RegistryV1,
 			Kind:       "Manifest",
@@ -113,10 +100,7 @@ func newManifest(message *rpc.Artifact) (*Manifest, error) {
 				Name: artifactName.ArtifactID(),
 			},
 		},
-		Data: ManifestData{
-			DisplayName: value.DisplayName,
-			Description: value.Description,
-		},
+		Data: manifestData,
 	}
 	for _, g := range value.GeneratedResources {
 		dependencies := make([]*ManifestDependency, 0)
@@ -127,8 +111,8 @@ func newManifest(message *rpc.Artifact) (*Manifest, error) {
 					Filter:  d.Filter,
 				})
 		}
-		manifest.Data.GeneratedResources = append(
-			manifest.Data.GeneratedResources,
+		manifestData.GeneratedResources = append(
+			manifestData.GeneratedResources,
 			&ManifestGeneratedResource{
 				Pattern:      g.Pattern,
 				Filter:       g.Filter,
@@ -138,13 +122,4 @@ func newManifest(message *rpc.Artifact) (*Manifest, error) {
 			})
 	}
 	return manifest, nil
-}
-
-func applyManifestArtifactPatch(ctx context.Context, client connection.Client, bytes []byte, parent string) error {
-	var manifest Manifest
-	err := yaml.Unmarshal(bytes, &manifest)
-	if err != nil {
-		return err
-	}
-	return applyArtifactPatch(ctx, client, &manifest, parent)
 }
