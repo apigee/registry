@@ -15,8 +15,8 @@
 package core
 
 import (
-	"io/ioutil"
-	"os"
+	"archive/zip"
+	"bytes"
 	"path/filepath"
 	"strings"
 
@@ -26,90 +26,72 @@ import (
 	protoparser "github.com/yoheimuta/go-protoparser/v4"
 )
 
-func NewComplexityFromZippedProtos(b []byte) (*metrics.Complexity, error) {
-	// create a tmp directory
-	dname, err := ioutil.TempDir("", "registry-protos-")
+func SummarizeZippedProtos(b []byte) (*metrics.Complexity, error) {
+	r, err := zip.NewReader(bytes.NewReader(b), int64(len(b)))
 	if err != nil {
 		return nil, err
 	}
-	// whenever we finish, delete the tmp directory
-	defer os.RemoveAll(dname)
-	// unzip the protos to the temp directory
-	_, err = UnzipArchiveToPath(b, dname)
-	if err != nil {
-		return nil, err
-	}
-	// process the directory
-	return complexityForPath(dname)
-}
 
-func complexityForPath(path string) (*metrics.Complexity, error) {
 	c := &metrics.Complexity{}
-	err := fillComplexityFromPath(c, path)
-	if err != nil {
-		return nil, err
+	for _, f := range r.File {
+		if !strings.HasSuffix(f.Name, ".proto") {
+			continue
+		}
+
+		r, err := f.Open()
+		if err != nil {
+			return nil, err
+		}
+		defer r.Close()
+
+		opts := []protoparser.Option{
+			protoparser.WithDebug(false),
+			protoparser.WithPermissive(true),
+			protoparser.WithFilename(filepath.Base(f.Name)),
+		}
+
+		p, err := protoparser.Parse(r, opts...)
+		if err != nil {
+			return nil, err
+		}
+
+		c.SchemaCount += messageCount(p)
+		for _, x := range p.ProtoBody {
+			switch t := x.(type) {
+			case *parser.Message:
+				c.SchemaPropertyCount += fieldCount(t)
+			case *parser.Service:
+				c.PathCount += rpcCount(t)
+			}
+		}
 	}
+
 	return c, nil
 }
 
-func fillComplexityFromPath(c *metrics.Complexity, path string) error {
-	err := filepath.Walk(path,
-		func(path string, info os.FileInfo, err error) error {
-			if err != nil {
-				return err
-			}
-			if strings.HasSuffix(path, ".proto") {
-				err := fillComplexityFromProto(c, path)
-				if err != nil {
-					return err
-				}
-			}
-			return nil
-		})
-	return err
-}
-
-func fillComplexityFromProto(c *metrics.Complexity, filename string) error {
-	reader, err := os.Open(filename)
-	if err != nil {
-		return err
-	}
-	defer reader.Close()
-
-	p, err := protoparser.Parse(
-		reader,
-		protoparser.WithDebug(false),
-		protoparser.WithPermissive(true),
-		protoparser.WithFilename(filepath.Base(filename)),
-	)
-	if err != nil {
-		return err
-	}
-
+func messageCount(p *parser.Proto) (count int32) {
 	for _, x := range p.ProtoBody {
-		switch m := x.(type) {
-		case *parser.Message:
-			fillComplexityFromMessage(c, m)
-		case *parser.Service:
-			fillComplexityFromService(c, m)
+		if _, ok := x.(*parser.Message); ok {
+			count++
 		}
 	}
-	return nil
+	return
 }
 
-func fillComplexityFromMessage(c *metrics.Complexity, m *parser.Message) {
-	c.SchemaCount++
+func fieldCount(m *parser.Message) (count int32) {
 	for _, x := range m.MessageBody {
 		if _, ok := x.(*parser.Field); ok {
-			c.SchemaPropertyCount++
+			count++
 		}
 	}
+	return
 }
 
-func fillComplexityFromService(c *metrics.Complexity, m *parser.Service) {
-	for _, x := range m.ServiceBody {
+func rpcCount(s *parser.Service) (count int32) {
+	for _, x := range s.ServiceBody {
 		if _, ok := x.(*parser.RPC); ok {
-			c.PathCount++
+			count++
 		}
 	}
+	return
 }
