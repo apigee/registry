@@ -33,6 +33,7 @@ type ApiData struct {
 	RecommendedDeployment string           `yaml:"recommendedDeployment,omitempty"`
 	ApiVersions           []*ApiVersion    `yaml:"versions,omitempty"`
 	ApiDeployments        []*ApiDeployment `yaml:"deployments,omitempty"`
+	Artifacts             []*Artifact      `yaml:"artifacts,omitempty"`
 }
 
 type Api struct {
