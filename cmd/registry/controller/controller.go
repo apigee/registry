@@ -17,9 +17,10 @@ package controller
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
-	"encoding/json"
+	// "encoding/json"
 
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/log"
@@ -223,6 +224,29 @@ func generateUpdateActions(
 	return actions, visited, nil
 }
 
+// Constructs a CEL filter to exclude resources with visited parents.
+// Makes use of `e.all(x,p)` macro as defined here: https://github.com/google/cel-spec/blob/master/doc/langdef.md#macros
+// The filter excludes resources whose `name` property is equal to any of the visited parent names.
+//
+// For example, consider a visited map of parents which are apis:
+// {
+//     "projects/demo/locations/global/apis/example-api1": true,
+//     "projects/demo/locations/global/apis/example-api2": true,
+// }
+//
+// The resulting CEL filter will be:
+// ["projects/demo/locations/global/apis/example-api1","projects/demo/locations/global/apis/example-api2"].all(parent, !(name==parent))
+//
+// Note: The `bool` values in the input map are ignored. The filter will use every map key.
+func excludeVisitedParents(v map[string]bool) string {
+	// Wrap each string with quotes and join them with commas to build a JSON string array.
+	jsonStrings := make([]string, 0, len(v))
+	for parent := range v {
+		jsonStrings = append(jsonStrings, fmt.Sprintf("%q", parent))
+	}
+	return fmt.Sprintf("[%s].all(parent, !(name==parent))", strings.Join(jsonStrings, ","))
+}
+
 // For the target resources which do not exist in the registry yet,
 // we will use the parent resources to derive which new target resources should be created.
 func generateCreateActions(
@@ -262,26 +286,7 @@ func generateCreateActions(
 		}
 
 	default:
-		// If parent resource is not a project, then go through all the non-visited parents.
-		visitedJSON, err := json.Marshal(visited)
-		if err != nil {
-			return nil, fmt.Errorf("internal error: Invalid visited map, %s", err)
-		}
-		// Construct a filter to fetch only non-visited parents.
-		// Check that the "name" of the resource is not in the visited list of parents.
-		// Example:
-		// Consider a visited map of parents which are apis:
-		// Visited: {
-		//	"projects/demo/locations/global/apis/example-api1": true,
-		//  "projects/demo/locations/global/apis/example-api2": true,
-		// }
-		// We make use of `e.all(x,p)` macro as defined here: https://github.com/google/cel-spec/blob/master/doc/langdef.md#macros
-		// The CEL filter for listing non-visited parents will be as follows:
-		// '{
-		//	"projects/demo/locations/global/apis/example-api1": true,
-		//  "projects/demo/locations/global/apis/example-api2": true,
-		// }.all(n, !(name.contains(n)))'
-		filter := fmt.Sprintf("%s.all(n, !(name.contains(n)))", visitedJSON)
+		filter := excludeVisitedParents(visited)
 		parentList, err = listResources(ctx, client, parentName.String(), filter)
 		if err != nil {
 			return nil, err
