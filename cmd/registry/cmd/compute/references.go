@@ -76,38 +76,31 @@ func (task *computeReferencesTask) String() string {
 }
 
 func (task *computeReferencesTask) Run(ctx context.Context) error {
-	request := &rpc.GetApiSpecRequest{
+	contents, err := task.client.GetApiSpecContents(ctx, &rpc.GetApiSpecContentsRequest{
 		Name: task.specName,
-	}
-	spec, err := task.client.GetApiSpec(ctx, request)
+	})
 	if err != nil {
 		return err
 	}
-	relation := "references"
-	log.Debugf(ctx, "Computing %s/artifacts/%s", spec.Name, relation)
+
+	log.Debugf(ctx, "Computing %s/artifacts/references", task.specName)
+
 	var references *rpc.References
-	if core.IsProto(spec.MimeType) && core.IsZipArchive(spec.MimeType) {
-		data, err := core.GetBytesForSpec(ctx, task.client, spec)
+	if core.IsProto(contents.GetContentType()) && core.IsZipArchive(contents.GetContentType()) {
+		references, err = core.NewReferencesFromZippedProtos(contents.GetData())
 		if err != nil {
-			return nil
-		}
-		references, err = core.NewReferencesFromZippedProtos(data)
-		if err != nil {
-			return fmt.Errorf("error processing protos: %s", spec.Name)
+			return fmt.Errorf("error processing protos: %s", task.specName)
 		}
 	} else {
-		return fmt.Errorf("we don't know how to compute references for %s of type %s", spec.Name, spec.MimeType)
+		return fmt.Errorf("we don't know how to compute references for %s of type %s", task.specName, contents.GetContentType())
 	}
-	subject := spec.Name
+
 	messageData, _ := proto.Marshal(references)
 	artifact := &rpc.Artifact{
-		Name:     subject + "/artifacts/" + relation,
+		Name:     task.specName + "/artifacts/references",
 		MimeType: core.MimeTypeForMessageType("google.cloud.apigeeregistry.applications.v1alpha1.References"),
 		Contents: messageData,
 	}
-	err = core.SetArtifact(ctx, task.client, artifact)
-	if err != nil {
-		return err
-	}
-	return nil
+
+	return core.SetArtifact(ctx, task.client, artifact)
 }

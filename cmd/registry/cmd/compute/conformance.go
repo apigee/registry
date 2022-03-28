@@ -16,7 +16,6 @@ package compute
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/apigee/registry/cmd/registry/conformance"
 	"github.com/apigee/registry/cmd/registry/core"
@@ -43,38 +42,35 @@ func conformanceCommand(ctx context.Context) *cobra.Command {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
 
-			name := args[0]
-
-			// Ensure that the provided argument is a spec.
-			specName, err := names.ParseSpec(name)
+			name, err := names.ParseSpec(args[0])
 			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatalf("The provided argument %s does not match the regex of a spec", name)
+				log.FromContext(ctx).WithError(err).Fatal("Invalid Argument: must specify one or more API specs")
 			}
 
-			// List all the styleGuide artifacts in the registry
-			artifactName, err := names.ParseArtifact(fmt.Sprintf("projects/%s/locations/%s/artifacts/-", specName.ProjectID, names.Location))
-			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatalf("Invalid project %q", specName.ProjectID)
+			specs := make([]*rpc.ApiSpec, 0)
+			if err := core.ListSpecs(ctx, client, name, filter, func(spec *rpc.ApiSpec) error {
+				specs = append(specs, spec)
+				return nil
+			}); err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Failed to list specs")
 			}
 
-			err = core.ListArtifacts(ctx, client, artifactName, styleguideFilter, true, func(artifact *rpc.Artifact) error {
-
-				// Unmarshal the contents of the artifact into a style guide
-				styleguide := &rpc.StyleGuide{}
-				err = proto.Unmarshal(artifact.GetContents(), styleguide)
-				if err != nil {
+			guides := make([]*rpc.StyleGuide, 0)
+			if err := core.ListArtifacts(ctx, client, name.Project().Artifact("-"), styleguideFilter, true, func(artifact *rpc.Artifact) error {
+				guide := new(rpc.StyleGuide)
+				if err := proto.Unmarshal(artifact.GetContents(), guide); err != nil {
 					log.FromContext(ctx).WithError(err).Debugf("Unmarshal() to StyleGuide failed on artifact: %s", artifact.GetName())
 					return nil
 				}
-
-				log.Debugf(ctx, "Processing styleguide: %s", styleguide.GetId())
-
-				processStyleGuide(ctx, client, styleguide, specName, filter)
+				guides = append(guides, guide)
 				return nil
-			})
-
-			if err != nil {
+			}); err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to list styleguide artifacts")
+			}
+
+			for _, guide := range guides {
+				log.Debugf(ctx, "Processing styleguide: %s", guide.GetId())
+				processStyleGuide(ctx, client, guide, specs)
 			}
 		},
 	}
@@ -85,28 +81,27 @@ func conformanceCommand(ctx context.Context) *cobra.Command {
 
 // processStyleGuide computes and attaches conformance reports as
 // artifacts to a spec or a collection of specs.
-func processStyleGuide(ctx context.Context,
-	client connection.Client,
-	styleguide *rpc.StyleGuide,
-	spec names.Spec,
-	filter string) {
-
+func processStyleGuide(ctx context.Context, client connection.Client, styleguide *rpc.StyleGuide, specs []*rpc.ApiSpec) {
 	linterNameToMetadata, err := conformance.GenerateLinterMetadata(styleguide)
 	if err != nil {
 		log.Errorf(ctx, "Failed generating linter metadata, check styleguide definition, Error: %s", err)
 		return
 	}
 
-	// Initialize task queue.
 	taskQueue, wait := core.WorkerPool(ctx, 16)
 	defer wait()
 
-	// Generate tasks.
-	err = core.ListSpecs(ctx, client, spec, filter, func(spec *rpc.ApiSpec) error {
-		// Check if the styleguide definition contains the mime_type of the spec
+	for _, spec := range specs {
 		for _, supportedType := range styleguide.GetMimeTypes() {
 			if supportedType != spec.GetMimeType() {
-				continue
+				continue // Only compute matching style guides.
+			}
+
+			taskQueue <- &conformance.ComputeConformanceTask{
+				Client:          client,
+				Spec:            spec,
+				LintersMetadata: linterNameToMetadata,
+				StyleguideId:    styleguide.GetId(),
 			}
 
 			// Delegate the task of computing the conformance report for this spec to the worker pool.
@@ -116,11 +111,6 @@ func processStyleGuide(ctx context.Context,
 				LintersMetadata: linterNameToMetadata,
 				StyleguideId:    styleguide.GetId(),
 			}
-			return nil
 		}
-		return nil
-	})
-	if err != nil {
-		log.FromContext(ctx).WithError(err).Fatal("Failed to list specs")
 	}
 }
