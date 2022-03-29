@@ -440,7 +440,7 @@ func TestConformance(t *testing.T) {
 				Name: test.getPattern,
 			})
 			if err != nil {
-				t.Fatalf("Failed getting artifact %s: %s", test.getPattern, err)
+				t.Fatalf("Failed getting artifact contents %s: %s", test.getPattern, err)
 			}
 
 			gotProto := &rpc.ConformanceReport{}

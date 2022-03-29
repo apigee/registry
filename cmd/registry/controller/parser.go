@@ -27,7 +27,9 @@ import (
 const resourceKW = "$resource"
 
 func parseResourceCollection(resourcePattern string) (resourceName, error) {
-	if api, err := names.ParseApiCollection(resourcePattern); err == nil {
+	if project, err := names.ParseProjectCollection(resourcePattern); err == nil {
+		return projectName{project: project}, nil
+	} else if api, err := names.ParseApiCollection(resourcePattern); err == nil {
 		return apiName{api: api}, nil
 	} else if version, err := names.ParseVersionCollection(resourcePattern); err == nil {
 		return versionName{version: version}, nil
@@ -41,7 +43,11 @@ func parseResourceCollection(resourcePattern string) (resourceName, error) {
 }
 
 func parseResource(resourcePattern string) (resourceName, error) {
-	if api, err := names.ParseApi(resourcePattern); err == nil {
+	if project, err := names.ParseProject(resourcePattern); err == nil {
+		return projectName{project: project}, nil
+	} else if project, err := names.ParseProjectWithLocation(resourcePattern); err == nil {
+		return projectName{project: project}, nil
+	} else if api, err := names.ParseApi(resourcePattern); err == nil {
 		return apiName{api: api}, nil
 	} else if version, err := names.ParseVersion(resourcePattern); err == nil {
 		return versionName{version: version}, nil
@@ -145,7 +151,7 @@ func resourceNameFromParent(resourcePattern string, parent string) (resourceName
 	}
 
 	// Replace the parent pattern in the resourcePattern with the supplied pattern name
-	resourceName := strings.Replace(resourcePattern, parsedResourcePattern.Parent(), parent, 1)
+	resourceName := strings.Replace(resourcePattern, parsedResourcePattern.ParentName().String(), parent, 1)
 
 	//Validate generated resourceName
 	resource, err := parseResource(resourceName)

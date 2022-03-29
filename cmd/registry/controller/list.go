@@ -56,58 +56,66 @@ func listResources(ctx context.Context, client connection.Client, pattern, filte
 	return result, nil
 }
 
-func generateApiHandler(result *[]resourceInstance) func(*rpc.Api) {
-	return func(api *rpc.Api) {
-		parsedApiName, err := names.ParseApi(api.GetName())
+func generateApiHandler(result *[]resourceInstance) func(*rpc.Api) error {
+	return func(api *rpc.Api) error {
+		name, err := names.ParseApi(api.GetName())
 		if err != nil {
-			panic(err)
+			return err
 		}
-		resource := apiResource{
-			apiName:         apiName{api: parsedApiName},
+
+		(*result) = append((*result), apiResource{
+			apiName:         apiName{api: name},
 			updateTimestamp: api.UpdateTime.AsTime(),
-		}
-		(*result) = append((*result), resource)
+		})
+
+		return nil
 	}
 }
 
-func generateVersionHandler(result *[]resourceInstance) func(*rpc.ApiVersion) {
-	return func(version *rpc.ApiVersion) {
-		parsedVersionName, err := names.ParseVersion(version.GetName())
+func generateVersionHandler(result *[]resourceInstance) func(*rpc.ApiVersion) error {
+	return func(version *rpc.ApiVersion) error {
+		name, err := names.ParseVersion(version.GetName())
 		if err != nil {
-			panic(err)
+			return err
 		}
-		resource := versionResource{
-			versionName:     versionName{version: parsedVersionName},
+
+		(*result) = append((*result), versionResource{
+			versionName:     versionName{version: name},
 			updateTimestamp: version.UpdateTime.AsTime(),
-		}
-		(*result) = append((*result), resource)
+		})
+
+		return nil
 	}
 }
 
-func generateSpecHandler(result *[]resourceInstance) func(*rpc.ApiSpec) {
-	return func(spec *rpc.ApiSpec) {
-		parsedSpecName, err := names.ParseSpec(spec.GetName())
+func generateSpecHandler(result *[]resourceInstance) func(*rpc.ApiSpec) error {
+	return func(spec *rpc.ApiSpec) error {
+		name, err := names.ParseSpec(spec.GetName())
 		if err != nil {
-			panic(err)
+			return err
 		}
-		resource := specResource{
-			specName:        specName{spec: parsedSpecName},
+
+		(*result) = append((*result), specResource{
+			specName:        specName{spec: name},
 			updateTimestamp: spec.RevisionUpdateTime.AsTime(),
-		}
-		(*result) = append((*result), resource)
+		})
+
+		return nil
 	}
 }
 
-func generateArtifactHandler(result *[]resourceInstance) func(*rpc.Artifact) {
-	return func(artifact *rpc.Artifact) {
-		parsedArtifactName, err := names.ParseArtifact(artifact.GetName())
+func generateArtifactHandler(result *[]resourceInstance) func(*rpc.Artifact) error {
+	return func(artifact *rpc.Artifact) error {
+		name, err := names.ParseArtifact(artifact.GetName())
 		if err != nil {
-			panic(err)
+			return err
 		}
-		resource := artifactResource{
-			artifactName:    artifactName{artifact: parsedArtifactName},
+
+		(*result) = append((*result), artifactResource{
+			artifactName:    artifactName{artifact: name},
 			updateTimestamp: artifact.UpdateTime.AsTime(),
-		}
-		(*result) = append((*result), resource)
+		})
+
+		return nil
 	}
 }

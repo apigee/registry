@@ -64,6 +64,19 @@ func (a apiResource) ResourceName() resourceName {
 	return a.apiName
 }
 
+type projectResource struct {
+	projectName     resourceName
+	updateTimestamp time.Time
+}
+
+func (p projectResource) UpdateTimestamp() time.Time {
+	return p.updateTimestamp
+}
+
+func (p projectResource) ResourceName() resourceName {
+	return p.projectName
+}
+
 type artifactResource struct {
 	artifactName    resourceName
 	updateTimestamp time.Time

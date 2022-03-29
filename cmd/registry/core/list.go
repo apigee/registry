@@ -44,7 +44,9 @@ func ListProjects(ctx context.Context,
 			return err
 		}
 
-		handler(r)
+		if err := handler(r); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -70,7 +72,9 @@ func ListAPIs(ctx context.Context,
 			return err
 		}
 
-		handler(r)
+		if err := handler(r); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -96,7 +100,9 @@ func ListDeployments(ctx context.Context,
 			return err
 		}
 
-		handler(r)
+		if err := handler(r); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -122,7 +128,9 @@ func ListVersions(ctx context.Context,
 			return err
 		}
 
-		handler(r)
+		if err := handler(r); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -148,7 +156,9 @@ func ListSpecs(ctx context.Context,
 			return err
 		}
 
-		handler(r)
+		if err := handler(r); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -185,7 +195,9 @@ func ListArtifacts(ctx context.Context,
 			r.Contents = resp.GetData()
 		}
 
-		handler(r)
+		if err := handler(r); err != nil {
+			return err
+		}
 	}
 	return nil
 }

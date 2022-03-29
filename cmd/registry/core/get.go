@@ -32,10 +32,8 @@ func GetProject(ctx context.Context,
 	if err != nil {
 		return err
 	}
-	if handler != nil {
-		handler(project)
-	}
-	return nil
+
+	return handler(project)
 }
 
 func GetAPI(ctx context.Context,
@@ -48,10 +46,8 @@ func GetAPI(ctx context.Context,
 	if err != nil {
 		return err
 	}
-	if handler != nil {
-		handler(api)
-	}
-	return nil
+
+	return handler(api)
 }
 
 func GetDeployment(ctx context.Context,
@@ -64,27 +60,22 @@ func GetDeployment(ctx context.Context,
 	if err != nil {
 		return err
 	}
-	if handler != nil {
-		handler(deployment)
-	}
-	return nil
+
+	return handler(deployment)
 }
 
 func GetVersion(ctx context.Context,
 	client *gapic.RegistryClient,
 	name names.Version,
 	handler VersionHandler) error {
-	request := &rpc.GetApiVersionRequest{
+	version, err := client.GetApiVersion(ctx, &rpc.GetApiVersionRequest{
 		Name: name.String(),
-	}
-	version, err := client.GetApiVersion(ctx, request)
+	})
 	if err != nil {
 		return err
 	}
-	if handler != nil {
-		handler(version)
-	}
-	return nil
+
+	return handler(version)
 }
 
 func GetSpec(ctx context.Context,
@@ -108,10 +99,8 @@ func GetSpec(ctx context.Context,
 		spec.Contents = contents.GetData()
 		spec.MimeType = contents.GetContentType()
 	}
-	if handler != nil {
-		handler(spec)
-	}
-	return nil
+
+	return handler(spec)
 }
 
 func GetArtifact(ctx context.Context,
@@ -135,8 +124,6 @@ func GetArtifact(ctx context.Context,
 		artifact.Contents = contents.GetData()
 		artifact.MimeType = contents.GetContentType()
 	}
-	if handler != nil {
-		handler(artifact)
-	}
-	return nil
+
+	return handler(artifact)
 }

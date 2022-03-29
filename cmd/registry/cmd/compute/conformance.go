@@ -48,20 +48,22 @@ func conformanceCommand(ctx context.Context) *cobra.Command {
 			}
 
 			specs := make([]*rpc.ApiSpec, 0)
-			if err := core.ListSpecs(ctx, client, name, filter, func(spec *rpc.ApiSpec) {
+			if err := core.ListSpecs(ctx, client, name, filter, func(spec *rpc.ApiSpec) error {
 				specs = append(specs, spec)
+				return nil
 			}); err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to list specs")
 			}
 
 			guides := make([]*rpc.StyleGuide, 0)
-			if err := core.ListArtifacts(ctx, client, name.Project().Artifact("-"), styleguideFilter, true, func(artifact *rpc.Artifact) {
+			if err := core.ListArtifacts(ctx, client, name.Project().Artifact("-"), styleguideFilter, true, func(artifact *rpc.Artifact) error {
 				guide := new(rpc.StyleGuide)
 				if err := proto.Unmarshal(artifact.GetContents(), guide); err != nil {
 					log.FromContext(ctx).WithError(err).Debugf("Unmarshal() to StyleGuide failed on artifact: %s", artifact.GetName())
-					return
+					return nil
 				}
 				guides = append(guides, guide)
+				return nil
 			}); err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to list styleguide artifacts")
 			}
@@ -95,6 +97,14 @@ func processStyleGuide(ctx context.Context, client connection.Client, styleguide
 				continue // Only compute matching style guides.
 			}
 
+			taskQueue <- &conformance.ComputeConformanceTask{
+				Client:          client,
+				Spec:            spec,
+				LintersMetadata: linterNameToMetadata,
+				StyleguideId:    styleguide.GetId(),
+			}
+
+			// Delegate the task of computing the conformance report for this spec to the worker pool.
 			taskQueue <- &conformance.ComputeConformanceTask{
 				Client:          client,
 				Spec:            spec,

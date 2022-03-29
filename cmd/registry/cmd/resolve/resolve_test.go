@@ -23,12 +23,11 @@ import (
 	"testing"
 
 	"github.com/apigee/registry/cmd/registry/cmd/upload"
-	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/server/registry/names"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"google.golang.org/api/iterator"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -53,14 +52,14 @@ func TestResolve(t *testing.T) {
 		desc         string
 		manifestPath string
 		dryRun       bool
-		listPattern  string
+		listParent   string
 		want         []string
 	}{
 		{
 			desc:         "normal case",
 			manifestPath: filepath.Join("testdata", "manifest.yaml"),
 			dryRun:       false,
-			listPattern:  "projects/controller-demo/locations/global/apis/petstore/versions/-/specs/-/artifacts/-",
+			listParent:   "projects/controller-demo/locations/global/apis/petstore/versions/-/specs/-",
 			want: []string{
 				"projects/controller-demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity",
 				"projects/controller-demo/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/complexity",
@@ -71,7 +70,7 @@ func TestResolve(t *testing.T) {
 			desc:         "receipt artifact",
 			manifestPath: filepath.Join("testdata", "manifest_receipt.yaml"),
 			dryRun:       false,
-			listPattern:  "projects/controller-demo/locations/global/apis/petstore/versions/-/specs/-/artifacts/-",
+			listParent:   "projects/controller-demo/locations/global/apis/petstore/versions/-/specs/-",
 			want: []string{
 				"projects/controller-demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/test-receipt-artifact",
 				"projects/controller-demo/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/test-receipt-artifact",
@@ -82,7 +81,7 @@ func TestResolve(t *testing.T) {
 			desc:         "dry run",
 			manifestPath: filepath.Join("testdata", "manifest.yaml"),
 			dryRun:       true,
-			listPattern:  "projects/controller-demo/locations/global/apis/petstore/versions/-/specs/-/artifacts/-",
+			listParent:   "projects/controller-demo/locations/global/apis/petstore/versions/-/specs/-",
 			want:         []string{},
 		},
 	}
@@ -251,16 +250,18 @@ func TestResolve(t *testing.T) {
 			}
 
 			// List all the artifacts
+			it := client.ListArtifacts(ctx, &rpc.ListArtifactsRequest{
+				Parent: test.listParent,
+			})
+
 			got := make([]string, 0)
-			artifact, err := names.ParseArtifact(test.listPattern)
-			if err != nil {
-				t.Fatalf("Invalid artifact %s", test.listPattern)
+			for artifact, err := it.Next(); err != iterator.Done; artifact, err = it.Next() {
+				if err != nil {
+					continue // TODO: Handle errors.
+				}
+
+				got = append(got, artifact.Name)
 			}
-			_ = core.ListArtifacts(ctx, client, artifact, "", false,
-				func(artifact *rpc.Artifact) {
-					got = append(got, artifact.Name)
-				},
-			)
 
 			sortStrings := cmpopts.SortSlices(func(a, b string) bool { return a < b })
 			if diff := cmp.Diff(test.want, got, sortStrings); diff != "" {

@@ -70,43 +70,37 @@ func newApi(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api)
 	if err != nil {
 		return nil, err
 	}
-	var innerErr error // TODO: remove when ListVersions accepts a handler that returns errors
-	err = core.ListVersions(ctx, client, apiName.Version("-"), "", func(message *rpc.ApiVersion) {
-		if innerErr != nil {
-			return
-		}
+
+	err = core.ListVersions(ctx, client, apiName.Version("-"), "", func(message *rpc.ApiVersion) error {
 		var version *ApiVersion
-		version, innerErr = newApiVersion(ctx, client, message)
-		if innerErr == nil {
-			// unset these because they can be inferred
-			version.ApiVersion = ""
-			version.Kind = ""
-			api.Data.ApiVersions = append(api.Data.ApiVersions, version)
+		version, err := newApiVersion(ctx, client, message)
+		if err != nil {
+			return err
 		}
+
+		// unset these because they can be inferred
+		version.ApiVersion = ""
+		version.Kind = ""
+		api.Data.ApiVersions = append(api.Data.ApiVersions, version)
+		return nil
 	})
-	if innerErr != nil {
-		return nil, innerErr
-	}
 	if err != nil {
 		return nil, err
 	}
-	err = core.ListDeployments(ctx, client, apiName.Deployment("-"), "", func(message *rpc.ApiDeployment) {
-		if innerErr != nil {
-			return
-		}
+
+	return api, core.ListDeployments(ctx, client, apiName.Deployment("-"), "", func(message *rpc.ApiDeployment) error {
 		var deployment *ApiDeployment
-		deployment, innerErr = newApiDeployment(ctx, client, message)
-		if innerErr == nil {
-			// unset these because they can be inferred
-			deployment.ApiVersion = ""
-			deployment.Kind = ""
-			api.Data.ApiDeployments = append(api.Data.ApiDeployments, deployment)
+		deployment, err = newApiDeployment(ctx, client, message)
+		if err != nil {
+			return err
 		}
+
+		// unset these because they can be inferred
+		deployment.ApiVersion = ""
+		deployment.Kind = ""
+		api.Data.ApiDeployments = append(api.Data.ApiDeployments, deployment)
+		return nil
 	})
-	if innerErr != nil {
-		return nil, innerErr
-	}
-	return api, err
 }
 
 // ExportAPI allows an API to be individually exported as a YAML file.

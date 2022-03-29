@@ -20,7 +20,6 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/cmd/registry/patch"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
@@ -76,21 +75,22 @@ func TestApply(t *testing.T) {
 		if err != nil {
 			t.Fatalf("failed to read %s: %s", filename, err)
 		}
-		api := project.Api("registry")
-		// TODO: Prefer using the API client directly instead of relying on application code that isn't directly related to this test.
-		err = core.GetAPI(ctx, registryClient, api, func(message *rpc.Api) {
-			actual, _, err := patch.ExportAPI(ctx, registryClient, message)
-			if err != nil {
-				t.Fatalf("ExportApi(%+v) returned an error: %s", message, err)
-			}
-			if diff := cmp.Diff(actual, expected); diff != "" {
-				t.Errorf("GetApi(%q) returned unexpected diff: (-want +got):\n%s", message, diff)
-			}
+
+		got, err := registryClient.GetApi(ctx, &rpc.GetApiRequest{
+			Name: project.Api("registry").String(),
 		})
 		if err != nil {
 			t.Fatalf("failed to get api: %s", err)
 		}
 
+		actual, _, err := patch.ExportAPI(ctx, registryClient, got)
+		if err != nil {
+			t.Fatalf("ExportApi(%+v) returned an error: %s", got, err)
+		}
+
+		if diff := cmp.Diff(actual, expected); diff != "" {
+			t.Errorf("GetApi(%q) returned unexpected diff: (-want +got):\n%s", got, diff)
+		}
 	}
 
 	// Test artifact creation and export.
@@ -109,21 +109,21 @@ func TestApply(t *testing.T) {
 		if err != nil {
 			t.Fatalf("failed to read %s", filename)
 		}
-		artifact := project.Artifact(a)
-		// TODO: This subtly determines that we're testing ExportArtifact with messages that have
-		// preloaded contents. Loading the contents directly using the client will make it clear
-		// that's part of the test, and will provide a good place to write a comment about that choice.
-		err = core.GetArtifact(ctx, registryClient, artifact, true, func(message *rpc.Artifact) {
-			actual, _, err := patch.ExportArtifact(ctx, registryClient, message)
-			if err != nil {
-				t.Fatalf("ExportArtifact(%+v) returned an error: %s", message, err)
-			}
-			if diff := cmp.Diff(actual, expected); diff != "" {
-				t.Errorf("GetArtifact(%q) returned unexpected diff: (-want +got):\n%s", message, diff)
-			}
+
+		message, err := registryClient.GetArtifact(ctx, &rpc.GetArtifactRequest{
+			Name: project.Artifact(a).String(),
 		})
 		if err != nil {
 			t.Fatalf("failed to get artifact: %s", err)
+		}
+
+		actual, _, err := patch.ExportArtifact(ctx, registryClient, message)
+		if err != nil {
+			t.Fatalf("ExportArtifact(%+v) returned an error: %s", message, err)
+		}
+
+		if diff := cmp.Diff(actual, expected); diff != "" {
+			t.Errorf("GetArtifact(%q) returned unexpected diff: (-want +got):\n%s", message, diff)
 		}
 	}
 
