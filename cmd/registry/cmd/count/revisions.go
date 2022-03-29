@@ -83,27 +83,20 @@ func (task *countSpecRevisionsTask) String() string {
 }
 
 func (task *countSpecRevisionsTask) Run(ctx context.Context) error {
-	count := 0
-	it := task.client.ListApiSpecRevisions(ctx,
-		&rpc.ListApiSpecRevisionsRequest{
-			Name: task.spec.Name,
-		})
-	for {
-		_, err := it.Next()
-		if err == iterator.Done {
-			break
-		} else if err == nil {
-			count++
-		} else {
-			return err
-		}
+	name, err := names.ParseSpec(task.spec.Name)
+	if err != nil {
+		return err
 	}
+	count := 0
+	core.ListSpecRevisions(ctx, task.client, name, "", func(*rpc.ApiSpec) {
+		count++
+	})
 	log.Debugf(ctx, "%d\t%s", count, task.spec.Name)
 	if task.spec.Labels == nil {
 		task.spec.Labels = make(map[string]string, 0)
 	}
 	task.spec.Labels["revisions"] = fmt.Sprintf("%d", count)
-	_, err := task.client.UpdateApiSpec(ctx,
+	_, err = task.client.UpdateApiSpec(ctx,
 		&rpc.UpdateApiSpecRequest{
 			ApiSpec: task.spec,
 			UpdateMask: &field_mask.FieldMask{
