@@ -46,7 +46,7 @@ func NewReferencesFromZippedProtos(b []byte) (*rpc.References, error) {
 	}
 
 	refs := make([]string, 0)
-	refSet := make(map[string]bool, 0)
+	refSet := make(map[string]bool)
 	for _, f := range r.File {
 		if !strings.HasSuffix(f.Name, ".proto") {
 			continue
