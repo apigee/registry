@@ -30,45 +30,35 @@ import (
 // ExportProject writes a project into a directory of YAML files.
 func ExportProject(ctx context.Context, client *gapic.RegistryClient, projectName names.Project) error {
 	apisDir := fmt.Sprintf("%s/apis", projectName.ProjectID)
-	err := os.MkdirAll(apisDir, 0777)
-	if err != nil {
+	if err := os.MkdirAll(apisDir, 0777); err != nil {
 		return err
 	}
-	err = core.ListAPIs(ctx, client, projectName.Api(""), "", func(message *rpc.Api) {
+
+	err := core.ListAPIs(ctx, client, projectName.Api(""), "", func(message *rpc.Api) error {
 		log.FromContext(ctx).Infof("Exporting %s", message.Name)
 		bytes, header, err := ExportAPI(ctx, client, message)
 		if err != nil {
-			// TODO: this should return an error instead of logging (requires ListAPIs modification)
-			log.FromContext(ctx).WithError(err).Fatal("Failed to export API")
+			return err
 		}
 		filename := fmt.Sprintf("%s/%s.yaml", apisDir, header.Metadata.Name)
-		err = os.WriteFile(filename, bytes, 0644)
-		if err != nil {
-			// TODO: this should return an error instead of logging (requires ListAPIs modification)
-			log.FromContext(ctx).WithError(err).Fatal("Failed to write output YAML")
-		}
+		return os.WriteFile(filename, bytes, 0644)
 	})
 	if err != nil {
 		return err
 	}
+
 	artifactsDir := fmt.Sprintf("%s/artifacts", projectName.ProjectID)
-	err = os.MkdirAll(artifactsDir, 0777)
-	if err != nil {
+	if err := os.MkdirAll(artifactsDir, 0777); err != nil {
 		return err
 	}
-	err = core.ListArtifacts(ctx, client, projectName.Artifact(""), "", false, func(message *rpc.Artifact) {
+
+	return core.ListArtifacts(ctx, client, projectName.Artifact(""), "", false, func(message *rpc.Artifact) error {
 		log.FromContext(ctx).Infof("Exporting %s", message.Name)
 		bytes, header, err := ExportArtifact(ctx, client, message)
 		if err != nil {
-			// TODO: this should return an error instead of logging (requires ListArtifacts modification)
-			log.FromContext(ctx).WithError(err).Fatal("Failed to export artifact")
+			return err
 		}
 		filename := fmt.Sprintf("%s/%s.yaml", artifactsDir, header.Metadata.Name)
-		err = os.WriteFile(filename, bytes, fs.ModePerm)
-		if err != nil {
-			// TODO: this should return an error instead of logging (requires ListArtifacts modification)
-			log.FromContext(ctx).WithError(err).Fatal("Failed to write output YAML")
-		}
+		return os.WriteFile(filename, bytes, fs.ModePerm)
 	})
-	return err
 }
