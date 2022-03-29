@@ -33,7 +33,7 @@ func revisionsCommand(ctx context.Context) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "revisions",
 		Short: "Count the number of revisions of specified resources",
-		Args:  cobra.MinimumNArgs(1),
+		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			client, err := connection.NewClient(ctx)
 			if err != nil {
