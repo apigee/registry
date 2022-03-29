@@ -51,7 +51,7 @@ func ExportArtifact(ctx context.Context, client *gapic.RegistryClient, message *
 	if err != nil {
 		return nil, nil, err
 	}
-	b, err := yaml.Marshal(artifact)
+	b, err := marshalYAML(artifact)
 	if err != nil {
 		return nil, nil, err
 	}

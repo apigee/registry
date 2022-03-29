@@ -133,7 +133,7 @@ func ExportAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.A
 	if err != nil {
 		return nil, nil, err
 	}
-	b, err := yaml.Marshal(api)
+	b, err := marshalYAML(api)
 	if err != nil {
 		return nil, nil, err
 	}
