@@ -70,61 +70,53 @@ func newApi(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api)
 	if err != nil {
 		return nil, err
 	}
-	var innerErr error // TODO: remove when ListVersions accepts a handler that returns errors
-	err = core.ListVersions(ctx, client, apiName.Version("-"), "", func(message *rpc.ApiVersion) {
-		if innerErr != nil {
-			return
-		}
+
+	err = core.ListVersions(ctx, client, apiName.Version("-"), "", func(message *rpc.ApiVersion) error {
 		var version *ApiVersion
-		version, innerErr = newApiVersion(ctx, client, message)
-		if innerErr == nil {
-			// unset these because they can be inferred
-			version.ApiVersion = ""
-			version.Kind = ""
-			api.Data.ApiVersions = append(api.Data.ApiVersions, version)
+		version, err := newApiVersion(ctx, client, message)
+		if err != nil {
+			return err
 		}
+
+		// unset these because they can be inferred
+		version.ApiVersion = ""
+		version.Kind = ""
+		api.Data.ApiVersions = append(api.Data.ApiVersions, version)
+		return nil
 	})
-	if innerErr != nil {
-		return nil, innerErr
-	}
 	if err != nil {
 		return nil, err
 	}
-	err = core.ListDeployments(ctx, client, apiName.Deployment("-"), "", func(message *rpc.ApiDeployment) {
-		if innerErr != nil {
-			return
-		}
+
+	err = core.ListDeployments(ctx, client, apiName.Deployment("-"), "", func(message *rpc.ApiDeployment) error {
 		var deployment *ApiDeployment
-		deployment, innerErr = newApiDeployment(ctx, client, message)
-		if innerErr == nil {
-			// unset these because they can be inferred
-			deployment.ApiVersion = ""
-			deployment.Kind = ""
-			api.Data.ApiDeployments = append(api.Data.ApiDeployments, deployment)
+		deployment, err = newApiDeployment(ctx, client, message)
+		if err != nil {
+			return err
 		}
+
+		// unset these because they can be inferred
+		deployment.ApiVersion = ""
+		deployment.Kind = ""
+		api.Data.ApiDeployments = append(api.Data.ApiDeployments, deployment)
+		return nil
 	})
 	if err != nil {
 		return nil, err
 	}
-	if innerErr != nil {
-		return nil, innerErr
-	}
-	err = core.ListArtifacts(ctx, client, apiName.Artifact("-"), "", true, func(message *rpc.Artifact) {
-		if innerErr != nil {
-			return
-		}
+	return api, core.ListArtifacts(ctx, client, apiName.Artifact("-"), "", true, func(message *rpc.Artifact) error {
 		var artifact *Artifact
-		artifact, innerErr = newArtifact(message)
-		if innerErr == nil {
-			// skip unsupported artifact types
-			if artifact.Kind != "Artifact" {
-				// unset this because it can be inferred
-				artifact.ApiVersion = ""
-				api.Data.Artifacts = append(api.Data.Artifacts, artifact)
-			}
+		artifact, err = newArtifact(message)
+		if err != nil {
+			return err
 		}
+		// skip unsupported artifact types, "Artifact" is the generic type
+		if artifact.Kind != "Artifact" {
+			artifact.ApiVersion = ""
+			api.Data.Artifacts = append(api.Data.Artifacts, artifact)
+		}
+		return nil
 	})
-	return api, err
 }
 
 // ExportAPI allows an API to be individually exported as a YAML file.

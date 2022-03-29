@@ -117,12 +117,13 @@ func labelAPIs(ctx context.Context,
 	filterFlag string,
 	labeling *core.Labeling,
 	taskQueue chan<- core.Task) error {
-	return core.ListAPIs(ctx, client, api, filterFlag, func(api *rpc.Api) {
+	return core.ListAPIs(ctx, client, api, filterFlag, func(api *rpc.Api) error {
 		taskQueue <- &labelApiTask{
 			client:   client,
 			api:      api,
 			labeling: labeling,
 		}
+		return nil
 	})
 }
 
@@ -133,12 +134,13 @@ func labelVersions(
 	filterFlag string,
 	labeling *core.Labeling,
 	taskQueue chan<- core.Task) error {
-	return core.ListVersions(ctx, client, version, filterFlag, func(version *rpc.ApiVersion) {
+	return core.ListVersions(ctx, client, version, filterFlag, func(version *rpc.ApiVersion) error {
 		taskQueue <- &labelVersionTask{
 			client:   client,
 			version:  version,
 			labeling: labeling,
 		}
+		return nil
 	})
 }
 
@@ -149,12 +151,13 @@ func labelSpecs(
 	filterFlag string,
 	labeling *core.Labeling,
 	taskQueue chan<- core.Task) error {
-	return core.ListSpecs(ctx, client, spec, filterFlag, func(spec *rpc.ApiSpec) {
+	return core.ListSpecs(ctx, client, spec, filterFlag, func(spec *rpc.ApiSpec) error {
 		taskQueue <- &labelSpecTask{
 			client:   client,
 			spec:     spec,
 			labeling: labeling,
 		}
+		return nil
 	})
 }
 
@@ -165,12 +168,13 @@ func labelDeployments(
 	filterFlag string,
 	labeling *core.Labeling,
 	taskQueue chan<- core.Task) error {
-	return core.ListDeployments(ctx, client, deployment, filterFlag, func(deployment *rpc.ApiDeployment) {
+	return core.ListDeployments(ctx, client, deployment, filterFlag, func(deployment *rpc.ApiDeployment) error {
 		taskQueue <- &labelDeploymentTask{
 			client:     client,
 			deployment: deployment,
 			labeling:   labeling,
 		}
+		return nil
 	})
 }
 

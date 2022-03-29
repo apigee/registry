@@ -51,19 +51,21 @@ func vocabularyCommand(ctx context.Context) *cobra.Command {
 			// Initialize task queue.
 			taskQueue, wait := core.WorkerPool(ctx, 64)
 			defer wait()
-			// Generate tasks.
-			name := args[0]
-			if spec, err := names.ParseSpec(name); err == nil {
-				// Iterate through a collection of specs and summarize each.
-				err = core.ListSpecs(ctx, client, spec, filter, func(spec *rpc.ApiSpec) {
-					taskQueue <- &computeVocabularyTask{
-						client:   client,
-						specName: spec.Name,
-					}
-				})
-				if err != nil {
-					log.FromContext(ctx).WithError(err).Fatal("Failed to list specs")
+
+			spec, err := names.ParseSpec(args[0])
+			if err != nil {
+				return // TODO: Log an error.
+			}
+
+			// Iterate through a collection of specs and summarize each.
+			if err := core.ListSpecs(ctx, client, spec, filter, func(spec *rpc.ApiSpec) error {
+				taskQueue <- &computeVocabularyTask{
+					client:   client,
+					specName: spec.GetName(),
 				}
+				return nil
+			}); err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Failed to list specs")
 			}
 		},
 	}
@@ -79,72 +81,55 @@ func (task *computeVocabularyTask) String() string {
 }
 
 func (task *computeVocabularyTask) Run(ctx context.Context) error {
-	request := &rpc.GetApiSpecRequest{
+	contents, err := task.client.GetApiSpecContents(ctx, &rpc.GetApiSpecContentsRequest{
 		Name: task.specName,
-	}
-	spec, err := task.client.GetApiSpec(ctx, request)
+	})
 	if err != nil {
 		return err
 	}
-	relation := "vocabulary"
-	log.Debugf(ctx, "Computing %s/artifacts/%s", spec.Name, relation)
+
+	log.Debugf(ctx, "Computing %s/artifacts/vocabulary", task.specName)
 	var vocab *metrics.Vocabulary
-	if core.IsOpenAPIv2(spec.GetMimeType()) {
-		data, err := core.GetBytesForSpec(ctx, task.client, spec)
+
+	if core.IsOpenAPIv2(contents.GetContentType()) {
+		document, err := oas2.ParseDocument(contents.GetData())
 		if err != nil {
-			return nil
-		}
-		document, err := oas2.ParseDocument(data)
-		if err != nil {
-			log.FromContext(ctx).WithError(err).Errorf("Invalid OpenAPI: %s", spec.Name)
+			log.FromContext(ctx).WithError(err).Errorf("Invalid OpenAPI: %s", task.specName)
 			return nil
 		}
 		vocab = vocabulary.NewVocabularyFromOpenAPIv2(document)
-	} else if core.IsOpenAPIv3(spec.GetMimeType()) {
-		data, err := core.GetBytesForSpec(ctx, task.client, spec)
+	} else if core.IsOpenAPIv3(contents.GetContentType()) {
+		document, err := oas3.ParseDocument(contents.GetData())
 		if err != nil {
-			return nil
-		}
-		document, err := oas3.ParseDocument(data)
-		if err != nil {
-			log.FromContext(ctx).WithError(err).Errorf("Invalid OpenAPI: %s", spec.Name)
+			log.FromContext(ctx).WithError(err).Errorf("Invalid OpenAPI: %s", task.specName)
 			return nil
 		}
 		vocab = vocabulary.NewVocabularyFromOpenAPIv3(document)
-	} else if core.IsDiscovery(spec.GetMimeType()) {
-		data, err := core.GetBytesForSpec(ctx, task.client, spec)
+	} else if core.IsDiscovery(contents.GetContentType()) {
+		document, err := discovery.ParseDocument(contents.GetData())
 		if err != nil {
-			return nil
-		}
-		document, err := discovery.ParseDocument(data)
-		if err != nil {
-			log.FromContext(ctx).WithError(err).Errorf("Invalid Discovery: %s", spec.Name)
+			log.FromContext(ctx).WithError(err).Errorf("Invalid Discovery: %s", task.specName)
 			return nil
 		}
 		vocab = vocabulary.NewVocabularyFromDiscovery(document)
-	} else if core.IsProto(spec.GetMimeType()) && core.IsZipArchive(spec.GetMimeType()) {
-		data, err := core.GetBytesForSpec(ctx, task.client, spec)
+	} else if core.IsProto(contents.GetContentType()) && core.IsZipArchive(contents.GetContentType()) {
+		vocab, err = core.NewVocabularyFromZippedProtos(contents.GetData())
 		if err != nil {
-			return nil
-		}
-		vocab, err = core.NewVocabularyFromZippedProtos(data)
-		if err != nil {
-			log.FromContext(ctx).WithError(err).Errorf("Error processing protos: %s", spec.Name)
+			log.FromContext(ctx).WithError(err).Errorf("Error processing protos: %s", task.specName)
 			return nil
 		}
 	} else {
-		return fmt.Errorf("we don't know how to summarize %s", spec.Name)
+		return fmt.Errorf("we don't know how to summarize %s", task.specName)
 	}
-	subject := spec.GetName()
-	messageData, _ := proto.Marshal(vocab)
-	artifact := &rpc.Artifact{
-		Name:     subject + "/artifacts/" + relation,
-		MimeType: core.MimeTypeForMessageType("gnostic.metrics.Vocabulary"),
-		Contents: messageData,
-	}
-	err = core.SetArtifact(ctx, task.client, artifact)
+
+	messageData, err := proto.Marshal(vocab)
 	if err != nil {
 		return err
 	}
-	return nil
+
+	return core.SetArtifact(ctx, task.client, &rpc.Artifact{
+		Name:     task.specName + "/artifacts/vocabulary",
+		MimeType: core.MimeTypeForMessageType("gnostic.metrics.Vocabulary"),
+		Contents: messageData,
+	})
 }

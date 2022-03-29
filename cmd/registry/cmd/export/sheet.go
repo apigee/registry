@@ -140,16 +140,21 @@ func collectInputArtifacts(ctx context.Context, client connection.Client, args [
 	inputNames := make([]string, 0)
 	inputs := make([]*rpc.Artifact, 0)
 	for _, name := range args {
-		if artifact, err := names.ParseArtifact(name); err == nil {
-			err := core.ListArtifacts(ctx, client, artifact, filter, true, func(artifact *rpc.Artifact) {
-				inputNames = append(inputNames, artifact.Name)
-				inputs = append(inputs, artifact)
-			})
-			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to list artifacts")
-			}
+		artifact, err := names.ParseArtifact(name)
+		if err != nil {
+			continue
+		}
+
+		err = core.ListArtifacts(ctx, client, artifact, filter, true, func(artifact *rpc.Artifact) error {
+			inputNames = append(inputNames, artifact.Name)
+			inputs = append(inputs, artifact)
+			return nil
+		})
+		if err != nil {
+			log.FromContext(ctx).WithError(err).Fatal("Failed to list artifacts")
 		}
 	}
+
 	return inputNames, inputs
 }
 

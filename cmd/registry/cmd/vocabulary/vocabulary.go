@@ -49,27 +49,33 @@ func collectInputVocabularies(ctx context.Context, client connection.Client, arg
 	inputNames := make([]string, 0)
 	inputs := make([]*metrics.Vocabulary, 0)
 	for _, name := range args {
-		if artifact, err := names.ParseArtifact(name); err == nil {
-			err := core.ListArtifacts(ctx, client, artifact, filter, true, func(artifact *rpc.Artifact) {
-				messageType, err := core.MessageTypeForMimeType(artifact.GetMimeType())
-				if err == nil && messageType == "gnostic.metrics.Vocabulary" {
-					vocab := &metrics.Vocabulary{}
-					err := proto.Unmarshal(artifact.GetContents(), vocab)
-					if err != nil {
-						log.FromContext(ctx).WithError(err).Debug("Failed to unmarshal contents")
-					} else {
-						inputNames = append(inputNames, artifact.Name)
-						inputs = append(inputs, vocab)
-					}
-				} else {
-					log.Debugf(ctx, "Skipping, not a vocabulary: %s", artifact.Name)
-				}
-			})
-			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to list artifacts")
+		artifact, err := names.ParseArtifact(name)
+		if err != nil {
+			continue
+		}
+
+		err = core.ListArtifacts(ctx, client, artifact, filter, true, func(artifact *rpc.Artifact) error {
+			messageType, err := core.MessageTypeForMimeType(artifact.GetMimeType())
+			if err != nil || messageType != "gnostic.metrics.Vocabulary" {
+				log.Debugf(ctx, "Skipping, not a vocabulary: %s", artifact.Name)
+				return nil
 			}
+
+			vocab := &metrics.Vocabulary{}
+			if err := proto.Unmarshal(artifact.GetContents(), vocab); err != nil {
+				log.FromContext(ctx).WithError(err).Debug("Failed to unmarshal contents")
+				return nil
+			}
+
+			inputNames = append(inputNames, artifact.Name)
+			inputs = append(inputs, vocab)
+			return nil
+		})
+		if err != nil {
+			log.FromContext(ctx).WithError(err).Fatal("Failed to list artifacts")
 		}
 	}
+
 	return inputNames, inputs
 }
 
