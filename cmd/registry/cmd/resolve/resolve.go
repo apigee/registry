@@ -23,6 +23,7 @@ import (
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/server/registry/names"
 	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/proto"
@@ -59,9 +60,9 @@ func Command(ctx context.Context) *cobra.Command {
 		Short: "resolve the dependencies and update the registry state (experimental)",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			manifestName := args[0]
-			if manifestName == "" {
-				log.Fatal(ctx, "Please provide the manifest resource name")
+			name, err := names.ParseArtifact(args[0])
+			if err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Invalid manifest resource name")
 			}
 
 			client, err := connection.NewClient(ctx)
@@ -69,18 +70,13 @@ func Command(ctx context.Context) *cobra.Command {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
 
-			manifest, err := fetchManifest(ctx, client, manifestName)
+			manifest, err := fetchManifest(ctx, client, name.String())
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to fetch manifest")
 			}
 
-			projectID, err := core.ProjectID(manifestName)
-			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to extract project ID")
-			}
-
 			log.Debug(ctx, "Generating the list of actions...")
-			actions := controller.ProcessManifest(ctx, client, projectID, manifest)
+			actions := controller.ProcessManifest(ctx, client, name.ProjectID(), manifest)
 
 			// The monitoring metrics/dashboards are built on top of the format of the log messages here.
 			// Check the metric filters before making any changes to the format.

@@ -92,8 +92,7 @@ func (vocab *Vocabulary) fillVocabularyFromMessage(m *parser.Message) {
 	vocab.Schemas[m.MessageName]++
 
 	for _, x := range m.MessageBody {
-		switch v := x.(type) {
-		case *parser.Field:
+		if v, ok := x.(*parser.Field); ok {
 			vocab.Properties[v.FieldName]++
 		}
 	}
@@ -101,8 +100,7 @@ func (vocab *Vocabulary) fillVocabularyFromMessage(m *parser.Message) {
 
 func (vocab *Vocabulary) fillVocabularyFromService(m *parser.Service) {
 	for _, x := range m.ServiceBody {
-		switch v := x.(type) {
-		case *parser.RPC:
+		if v, ok := x.(*parser.RPC); ok {
 			vocab.Operations[v.RPCName]++
 		}
 	}

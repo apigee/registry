@@ -35,14 +35,6 @@ func ProtobufMimeType(compression string) string {
 	return fmt.Sprintf("application/x.protobuf%s", compression)
 }
 
-// TODO: tighten these up, possibly using regular expressions.
-
-// IsAsyncAPIv2 returns true if a MIME type represents an AsyncAPI v2 spec.
-func IsAsyncAPIv2(mimeType string) bool {
-	return strings.Contains(mimeType, "asyncapi") &&
-		strings.Contains(mimeType, "version=2")
-}
-
 // IsOpenAPIv2 returns true if a MIME type represents an OpenAPI v2 spec.
 func IsOpenAPIv2(mimeType string) bool {
 	return strings.Contains(mimeType, "openapi") &&

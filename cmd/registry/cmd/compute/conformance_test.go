@@ -444,10 +444,10 @@ func TestConformance(t *testing.T) {
 			}
 
 			gotProto := &rpc.ConformanceReport{}
-			err = proto.Unmarshal(contents.GetData(), gotProto)
-			if err != nil {
+			if err := proto.Unmarshal(contents.GetData(), gotProto); err != nil {
 				t.Fatalf("Failed to unmarshal artifact: %s", err)
 			}
+
 			opts := cmp.Options{
 				protocmp.IgnoreFields(&rpc.RuleReport{}, "file_name", "suggestion", "location"),
 				protocmp.Transform(),
