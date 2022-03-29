@@ -28,7 +28,7 @@ type resourceName interface {
 	Version() string
 	Api() string
 	String() string
-	Parent() string
+	ParentName() resourceName
 }
 
 type specName struct {
@@ -55,8 +55,18 @@ func (s specName) String() string {
 	return s.spec.String()
 }
 
-func (s specName) Parent() string {
-	return s.spec.Parent()
+func (s specName) ParentName() resourceName {
+	// Validate the parent name aand return
+	if version, err := names.ParseVersion(s.spec.Parent()); err == nil {
+		return versionName{
+			version: version,
+		}
+	} else if version, err := names.ParseVersionCollection(s.spec.Parent()); err == nil {
+		return versionName{
+			version: version,
+		}
+	}
+	return versionName{}
 }
 
 type versionName struct {
@@ -83,8 +93,19 @@ func (v versionName) String() string {
 	return v.version.String()
 }
 
-func (v versionName) Parent() string {
-	return v.version.Parent()
+func (v versionName) ParentName() resourceName {
+	// Validate the parent name aand return
+	if api, err := names.ParseApi(v.version.Parent()); err == nil {
+		return apiName{
+			api: api,
+		}
+	} else if api, err := names.ParseApiCollection(v.version.Parent()); err == nil {
+		return apiName{
+			api: api,
+		}
+	}
+
+	return apiName{}
 }
 
 type apiName struct {
@@ -111,8 +132,51 @@ func (a apiName) String() string {
 	return a.api.String()
 }
 
-func (a apiName) Parent() string {
-	return a.api.Parent()
+func (a apiName) ParentName() resourceName {
+	// Validate the parent name aand return
+	if project, err := names.ParseProject(a.api.Parent()); err == nil {
+		return projectName{
+			project: project,
+		}
+	} else if project, err := names.ParseProjectWithLocation(a.api.Parent()); err == nil {
+		return projectName{
+			project: project,
+		}
+	} else if project, err := names.ParseProjectCollection(a.api.Parent()); err == nil {
+		return projectName{
+			project: project,
+		}
+	}
+
+	return projectName{}
+}
+
+type projectName struct {
+	project names.Project
+}
+
+func (p projectName) Artifact() string {
+	return ""
+}
+
+func (p projectName) Spec() string {
+	return ""
+}
+
+func (p projectName) Version() string {
+	return ""
+}
+
+func (p projectName) Api() string {
+	return ""
+}
+
+func (p projectName) String() string {
+	return p.project.String()
+}
+
+func (p projectName) ParentName() resourceName {
+	return nil
 }
 
 type artifactName struct {
@@ -176,6 +240,49 @@ func (ar artifactName) String() string {
 	return ar.artifact.String()
 }
 
-func (ar artifactName) Parent() string {
-	return ar.artifact.Parent()
+func (ar artifactName) ParentName() resourceName {
+	parent := ar.artifact.Parent()
+	// First try to match collection names.
+	if project, err := names.ParseProjectCollection(parent); err == nil {
+		return projectName{
+			project: project,
+		}
+	} else if api, err := names.ParseApiCollection(parent); err == nil {
+		return apiName{
+			api: api,
+		}
+	} else if version, err := names.ParseVersionCollection(parent); err == nil {
+		return versionName{
+			version: version,
+		}
+	} else if spec, err := names.ParseSpecCollection(parent); err == nil {
+		return specName{
+			spec: spec,
+		}
+	}
+
+	// Then try to match resource names.
+	if project, err := names.ParseProject(parent); err == nil {
+		return projectName{
+			project: project,
+		}
+	} else if project, err := names.ParseProjectWithLocation(parent); err == nil {
+		return projectName{
+			project: project,
+		}
+	} else if api, err := names.ParseApi(parent); err == nil {
+		return apiName{
+			api: api,
+		}
+	} else if version, err := names.ParseVersion(parent); err == nil {
+		return versionName{
+			version: version,
+		}
+	} else if spec, err := names.ParseSpec(parent); err == nil {
+		return specName{
+			spec: spec,
+		}
+	}
+
+	return nil
 }
