@@ -103,6 +103,9 @@ func newApi(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api)
 			api.Data.ApiDeployments = append(api.Data.ApiDeployments, deployment)
 		}
 	})
+	if err != nil {
+		return nil, err
+	}
 	if innerErr != nil {
 		return nil, innerErr
 	}
