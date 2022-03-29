@@ -131,7 +131,7 @@ func (task *countDeploymentRevisionsTask) Run(ctx context.Context) error {
 			return err
 		}
 	}
-	log.Debugf(ctx, "%d\t%s", count, task.deployment.Name)
+	log.Debugf(ctx, "%-7d %s", count, task.deployment.Name)
 	if task.deployment.Labels == nil {
 		task.deployment.Labels = make(map[string]string, 0)
 	}
