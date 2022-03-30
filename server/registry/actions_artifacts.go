@@ -222,34 +222,34 @@ func (s *RegistryServer) ListArtifacts(ctx context.Context, req *rpc.ListArtifac
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	var listing storage.ArtifactList
+	var resp *rpc.ListArtifactsResponse
 	switch parent := parent.(type) {
 	case names.Project:
-		listing, err = db.ListProjectArtifacts(ctx, parent, storage.PageOptions{
+		resp, err = db.ListProjectArtifacts(ctx, parent, storage.PageOptions{
 			Size:   req.GetPageSize(),
 			Filter: req.GetFilter(),
 			Token:  req.GetPageToken(),
 		})
 	case names.Api:
-		listing, err = db.ListApiArtifacts(ctx, parent, storage.PageOptions{
+		resp, err = db.ListApiArtifacts(ctx, parent, storage.PageOptions{
 			Size:   req.GetPageSize(),
 			Filter: req.GetFilter(),
 			Token:  req.GetPageToken(),
 		})
 	case names.Version:
-		listing, err = db.ListVersionArtifacts(ctx, parent, storage.PageOptions{
+		resp, err = db.ListVersionArtifacts(ctx, parent, storage.PageOptions{
 			Size:   req.GetPageSize(),
 			Filter: req.GetFilter(),
 			Token:  req.GetPageToken(),
 		})
 	case names.Spec:
-		listing, err = db.ListSpecArtifacts(ctx, parent, storage.PageOptions{
+		resp, err = db.ListSpecArtifacts(ctx, parent, storage.PageOptions{
 			Size:   req.GetPageSize(),
 			Filter: req.GetFilter(),
 			Token:  req.GetPageToken(),
 		})
 	case names.Deployment:
-		listing, err = db.ListDeploymentArtifacts(ctx, parent, storage.PageOptions{
+		resp, err = db.ListDeploymentArtifacts(ctx, parent, storage.PageOptions{
 			Size:   req.GetPageSize(),
 			Filter: req.GetFilter(),
 			Token:  req.GetPageToken(),
@@ -259,16 +259,7 @@ func (s *RegistryServer) ListArtifacts(ctx context.Context, req *rpc.ListArtifac
 		return nil, err
 	}
 
-	response := &rpc.ListArtifactsResponse{
-		Artifacts:     make([]*rpc.Artifact, len(listing.Artifacts)),
-		NextPageToken: listing.Token,
-	}
-
-	for i, artifact := range listing.Artifacts {
-		response.Artifacts[i] = artifact.Message()
-	}
-
-	return response, nil
+	return resp, nil
 }
 
 // ReplaceArtifact handles the corresponding API request.

@@ -17,6 +17,7 @@ package storage
 import (
 	"context"
 
+	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/internal/storage/filtering"
 	"github.com/apigee/registry/server/registry/internal/storage/models"
 	"github.com/apigee/registry/server/registry/names"
@@ -24,12 +25,6 @@ import (
 	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
 )
-
-// ProjectList contains a page of project resources.
-type ProjectList struct {
-	Projects []models.Project
-	Token    string
-}
 
 var projectFields = []filtering.Field{
 	{Name: "name", Type: filtering.String},
@@ -40,63 +35,63 @@ var projectFields = []filtering.Field{
 	{Name: "update_time", Type: filtering.Timestamp},
 }
 
-func (c *Client) ListProjects(ctx context.Context, opts PageOptions) (ProjectList, error) {
+func (c *Client) ListProjects(ctx context.Context, opts PageOptions) (*rpc.ListProjectsResponse, error) {
 	token, err := decodeToken(opts.Token)
 	if err != nil {
-		return ProjectList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err)
 	}
 
 	if err := token.ValidateFilter(opts.Filter); err != nil {
-		return ProjectList{}, status.Errorf(codes.InvalidArgument, "invalid filter %q: %s", opts.Filter, err)
+		return nil, status.Errorf(codes.InvalidArgument, "invalid filter %q: %s", opts.Filter, err)
 	} else {
 		token.Filter = opts.Filter
 	}
 
 	filter, err := filtering.NewFilter(opts.Filter, projectFields)
 	if err != nil {
-		return ProjectList{}, err
+		return nil, err
 	}
 
-	lock()
-	var projects []models.Project
-	err = c.db.
-		Order("key").
-		Offset(token.Offset).
-		Limit(100000).
-		Find(&projects).Error
-	unlock()
-
-	if err != nil {
-		return ProjectList{}, status.Error(codes.Internal, err.Error())
+	resp := &rpc.ListProjectsResponse{
+		Projects: make([]*rpc.Project, 0, opts.Size),
 	}
 
-	response := ProjectList{
-		Projects: make([]models.Project, 0, opts.Size),
-	}
+	for {
+		lock()
+		var page []models.Project
+		op := c.db.Order("key").Limit(int(opts.Size))
+		err := op.Offset(token.Offset).Find(&page).Error
+		unlock()
 
-	for _, project := range projects {
-		match, err := filter.Matches(projectMap(project))
 		if err != nil {
-			return response, err
-		} else if !match {
-			token.Offset++
-			continue
-		}
-
-		if len(response.Projects) < int(opts.Size) {
-			response.Projects = append(response.Projects, project)
-			token.Offset++
-		} else if len(response.Projects) == int(opts.Size) {
-			response.Token, err = encodeToken(token)
-			if err != nil {
-				return response, status.Error(codes.Internal, err.Error())
-			}
+			return nil, status.Error(codes.Internal, err.Error())
+		} else if len(page) == 0 {
 			break
 		}
 
+		for _, v := range page {
+			match, err := filter.Matches(projectMap(v))
+			if err != nil {
+				return nil, err
+			} else if !match {
+				token.Offset++
+				continue
+			}
+
+			if len(resp.Projects) == int(opts.Size) {
+				resp.NextPageToken, err = encodeToken(token)
+				if err != nil {
+					return nil, status.Error(codes.Internal, err.Error())
+				}
+				return resp, nil
+			}
+
+			token.Offset++
+			resp.Projects = append(resp.Projects, v.Message())
+		}
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 func projectMap(p models.Project) map[string]interface{} {
@@ -108,12 +103,6 @@ func projectMap(p models.Project) map[string]interface{} {
 		"create_time":  p.CreateTime,
 		"update_time":  p.UpdateTime,
 	}
-}
-
-// ApiList contains a page of api resources.
-type ApiList struct {
-	Apis  []models.Api
-	Token string
 }
 
 var apiFields = []filtering.Field{
@@ -130,76 +119,80 @@ var apiFields = []filtering.Field{
 	{Name: "labels", Type: filtering.StringMap},
 }
 
-func (c *Client) ListApis(ctx context.Context, parent names.Project, opts PageOptions) (ApiList, error) {
+func (c *Client) ListApis(ctx context.Context, parent names.Project, opts PageOptions) (*rpc.ListApisResponse, error) {
 	token, err := decodeToken(opts.Token)
 	if err != nil {
-		return ApiList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
 	}
 
 	if err := token.ValidateFilter(opts.Filter); err != nil {
-		return ApiList{}, status.Errorf(codes.InvalidArgument, "invalid filter %q: %s", opts.Filter, err)
+		return nil, status.Errorf(codes.InvalidArgument, "invalid filter %q: %s", opts.Filter, err)
 	} else {
 		token.Filter = opts.Filter
 	}
 
-	op := c.db.
-		Order("key").
-		Offset(token.Offset).
-		Limit(100000)
-
+	op := c.db.Order("key").Limit(int(opts.Size))
 	if parent.ProjectID != "-" {
 		op = op.Where("project_id = ?", parent.ProjectID)
 		if _, err := c.GetProject(ctx, parent); err != nil {
-			return ApiList{}, err
+			return nil, err
 		}
 	}
 
 	filter, err := filtering.NewFilter(opts.Filter, apiFields)
 	if err != nil {
-		return ApiList{}, err
+		return nil, err
 	}
 
-	lock()
-	var apis []models.Api
-	_ = op.Find(&apis).Error
-	unlock()
-
-	if err != nil {
-		return ApiList{}, status.Error(codes.Internal, err.Error())
+	resp := &rpc.ListApisResponse{
+		Apis: make([]*rpc.Api, 0, opts.Size),
 	}
 
-	response := ApiList{
-		Apis: make([]models.Api, 0, opts.Size),
-	}
+	for {
+		lock()
+		var page []models.Api
+		err := op.Offset(token.Offset).Find(&page).Error
+		unlock()
 
-	for _, api := range apis {
-		apiMap, err := apiMap(api)
 		if err != nil {
-			return response, status.Error(codes.Internal, err.Error())
-		}
-
-		match, err := filter.Matches(apiMap)
-		if err != nil {
-			return response, err
-		} else if !match {
-			token.Offset++
-			continue
-		}
-
-		if len(response.Apis) < int(opts.Size) {
-			response.Apis = append(response.Apis, api)
-			token.Offset++
-		} else if len(response.Apis) == int(opts.Size) {
-			response.Token, err = encodeToken(token)
-			if err != nil {
-				return response, status.Error(codes.Internal, err.Error())
-			}
+			return nil, status.Error(codes.Internal, err.Error())
+		} else if len(page) == 0 {
 			break
 		}
 
+		for _, v := range page {
+			m, err := apiMap(v)
+			if err != nil {
+				return nil, status.Error(codes.Internal, err.Error())
+			}
+
+			match, err := filter.Matches(m)
+			if err != nil {
+				return nil, err
+			} else if !match {
+				token.Offset++
+				continue
+			}
+
+			if len(resp.Apis) == int(opts.Size) {
+				resp.NextPageToken, err = encodeToken(token)
+				if err != nil {
+					return nil, status.Error(codes.Internal, err.Error())
+				}
+				return resp, nil
+			}
+
+			message, err := v.Message()
+			if err != nil {
+				return nil, status.Error(codes.Internal, err.Error())
+			}
+
+			token.Offset++
+			resp.Apis = append(resp.Apis, message)
+		}
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 func apiMap(api models.Api) (map[string]interface{}, error) {
@@ -241,38 +234,34 @@ var versionFields = []filtering.Field{
 	{Name: "labels", Type: filtering.StringMap},
 }
 
-func (c *Client) ListVersions(ctx context.Context, parent names.Api, opts PageOptions) (VersionList, error) {
+func (c *Client) ListVersions(ctx context.Context, parent names.Api, opts PageOptions) (*rpc.ListApiVersionsResponse, error) {
 	token, err := decodeToken(opts.Token)
 	if err != nil {
-		return VersionList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
 	}
 
 	if err := token.ValidateFilter(opts.Filter); err != nil {
-		return VersionList{}, status.Errorf(codes.InvalidArgument, "invalid filter %q: %s", opts.Filter, err)
+		return nil, status.Errorf(codes.InvalidArgument, "invalid filter %q: %s", opts.Filter, err)
 	} else {
 		token.Filter = opts.Filter
 	}
 
 	if parent.ProjectID != "-" && parent.ApiID != "-" {
 		if _, err := c.GetApi(ctx, parent); err != nil {
-			return VersionList{}, err
+			return nil, err
 		}
 	} else if parent.ProjectID != "-" && parent.ApiID == "-" {
 		if _, err := c.GetProject(ctx, parent.Project()); err != nil {
-			return VersionList{}, err
+			return nil, err
 		}
 	}
 
 	filter, err := filtering.NewFilter(opts.Filter, versionFields)
 	if err != nil {
-		return VersionList{}, err
+		return nil, err
 	}
 
-	op := c.db.
-		Order("key").
-		Offset(token.Offset).
-		Limit(100000)
-
+	op := c.db.Order("key").Limit(int(opts.Size))
 	if parent.ProjectID != "-" {
 		op = op.Where("project_id = ?", parent.ProjectID)
 	}
@@ -280,46 +269,55 @@ func (c *Client) ListVersions(ctx context.Context, parent names.Api, opts PageOp
 		op = op.Where("api_id = ?", parent.ApiID)
 	}
 
-	lock()
-	var versions []models.Version
-	_ = op.Find(&versions).Error
-	unlock()
-
-	if err != nil {
-		return VersionList{}, status.Error(codes.Internal, err.Error())
+	resp := &rpc.ListApiVersionsResponse{
+		ApiVersions: make([]*rpc.ApiVersion, 0, opts.Size),
 	}
 
-	response := VersionList{
-		Versions: make([]models.Version, 0, opts.Size),
-	}
+	for {
+		lock()
+		var page []models.Version
+		err := op.Offset(token.Offset).Find(&page).Error
+		unlock()
 
-	for _, version := range versions {
-		versionMap, err := versionMap(version)
 		if err != nil {
-			return response, status.Error(codes.Internal, err.Error())
-		}
-
-		match, err := filter.Matches(versionMap)
-		if err != nil {
-			return response, err
-		} else if !match {
-			token.Offset++
-			continue
-		}
-
-		if len(response.Versions) < int(opts.Size) {
-			response.Versions = append(response.Versions, version)
-			token.Offset++
-		} else if len(response.Versions) == int(opts.Size) {
-			response.Token, err = encodeToken(token)
-			if err != nil {
-				return response, status.Error(codes.Internal, err.Error())
-			}
+			return nil, status.Error(codes.Internal, err.Error())
+		} else if len(page) == 0 {
 			break
 		}
+
+		for _, v := range page {
+			m, err := versionMap(v)
+			if err != nil {
+				return nil, status.Error(codes.Internal, err.Error())
+			}
+
+			match, err := filter.Matches(m)
+			if err != nil {
+				return nil, err
+			} else if !match {
+				token.Offset++
+				continue
+			}
+
+			if len(resp.ApiVersions) == int(opts.Size) {
+				resp.NextPageToken, err = encodeToken(token)
+				if err != nil {
+					return nil, status.Error(codes.Internal, err.Error())
+				}
+				return resp, nil
+			}
+
+			message, err := v.Message()
+			if err != nil {
+				return nil, status.Error(codes.Internal, err.Error())
+			}
+
+			token.Offset++
+			resp.ApiVersions = append(resp.ApiVersions, message)
+		}
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 func versionMap(version models.Version) (map[string]interface{}, error) {
@@ -341,12 +339,6 @@ func versionMap(version models.Version) (map[string]interface{}, error) {
 	}, nil
 }
 
-// SpecList contains a page of spec resources.
-type SpecList struct {
-	Specs []models.Spec
-	Token string
-}
-
 var specFields = []filtering.Field{
 	{Name: "name", Type: filtering.String},
 	{Name: "project_id", Type: filtering.String},
@@ -364,35 +356,35 @@ var specFields = []filtering.Field{
 	{Name: "labels", Type: filtering.StringMap},
 }
 
-func (c *Client) ListSpecs(ctx context.Context, parent names.Version, opts PageOptions) (SpecList, error) {
+func (c *Client) ListSpecs(ctx context.Context, parent names.Version, opts PageOptions) (*rpc.ListApiSpecsResponse, error) {
 	token, err := decodeToken(opts.Token)
 	if err != nil {
-		return SpecList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
 	}
 
 	if err := token.ValidateFilter(opts.Filter); err != nil {
-		return SpecList{}, status.Errorf(codes.InvalidArgument, "invalid filter %q: %s", opts.Filter, err)
+		return nil, status.Errorf(codes.InvalidArgument, "invalid filter %q: %s", opts.Filter, err)
 	} else {
 		token.Filter = opts.Filter
 	}
 
 	if parent.ProjectID != "-" && parent.ApiID != "-" && parent.VersionID != "-" {
 		if _, err := c.GetVersion(ctx, parent); err != nil {
-			return SpecList{}, err
+			return nil, err
 		}
 	} else if parent.ProjectID != "-" && parent.ApiID != "-" && parent.VersionID == "-" {
 		if _, err := c.GetApi(ctx, parent.Api()); err != nil {
-			return SpecList{}, err
+			return nil, err
 		}
 	} else if parent.ProjectID != "-" && parent.ApiID == "-" && parent.VersionID == "-" {
 		if _, err := c.GetProject(ctx, parent.Project()); err != nil {
-			return SpecList{}, err
+			return nil, err
 		}
 	}
 
 	filter, err := filtering.NewFilter(opts.Filter, specFields)
 	if err != nil {
-		return SpecList{}, err
+		return nil, err
 	}
 
 	// Select all columns from `specs` table specifically.
@@ -408,8 +400,7 @@ func (c *Client) ListSpecs(ctx context.Context, parent names.Version, opts PageO
 				Table("specs").
 				Group("project_id, api_id, version_id, spec_id")).
 		Order("key").
-		Offset(token.Offset).
-		Limit(100000)
+		Limit(int(opts.Size))
 
 	if parent.ProjectID != "-" {
 		op = op.Where("specs.project_id = ?", parent.ProjectID)
@@ -421,46 +412,55 @@ func (c *Client) ListSpecs(ctx context.Context, parent names.Version, opts PageO
 		op = op.Where("specs.version_id = ?", parent.VersionID)
 	}
 
-	lock()
-	var specs []models.Spec
-	_ = op.Scan(&specs).Error
-	unlock()
-
-	if err != nil {
-		return SpecList{}, status.Error(codes.Internal, err.Error())
+	resp := &rpc.ListApiSpecsResponse{
+		ApiSpecs: make([]*rpc.ApiSpec, 0, opts.Size),
 	}
 
-	response := SpecList{
-		Specs: make([]models.Spec, 0, opts.Size),
-	}
+	for {
+		lock()
+		var page []models.Spec
+		err := op.Offset(token.Offset).Find(&page).Error
+		unlock()
 
-	for _, spec := range specs {
-		specMap, err := specMap(spec)
 		if err != nil {
-			return response, status.Error(codes.Internal, err.Error())
-		}
-
-		match, err := filter.Matches(specMap)
-		if err != nil {
-			return response, err
-		} else if !match {
-			token.Offset++
-			continue
-		}
-
-		if len(response.Specs) < int(opts.Size) {
-			response.Specs = append(response.Specs, spec)
-			token.Offset++
-		} else if len(response.Specs) == int(opts.Size) {
-			response.Token, err = encodeToken(token)
-			if err != nil {
-				return response, status.Error(codes.Internal, err.Error())
-			}
+			return nil, status.Error(codes.Internal, err.Error())
+		} else if len(page) == 0 {
 			break
 		}
+
+		for _, v := range page {
+			m, err := specMap(v)
+			if err != nil {
+				return nil, status.Error(codes.Internal, err.Error())
+			}
+
+			match, err := filter.Matches(m)
+			if err != nil {
+				return nil, err
+			} else if !match {
+				token.Offset++
+				continue
+			}
+
+			if len(resp.ApiSpecs) == int(opts.Size) {
+				resp.NextPageToken, err = encodeToken(token)
+				if err != nil {
+					return nil, status.Error(codes.Internal, err.Error())
+				}
+				return resp, nil
+			}
+
+			message, err := v.BasicMessage(v.Name(), nil)
+			if err != nil {
+				return nil, status.Error(codes.Internal, err.Error())
+			}
+
+			token.Offset++
+			resp.ApiSpecs = append(resp.ApiSpecs, message)
+		}
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 func specMap(spec models.Spec) (map[string]interface{}, error) {
@@ -489,17 +489,14 @@ func specMap(spec models.Spec) (map[string]interface{}, error) {
 	}, nil
 }
 
-func (c *Client) ListSpecRevisions(ctx context.Context, parent names.Spec, opts PageOptions) (SpecList, error) {
+func (c *Client) ListSpecRevisions(ctx context.Context, parent names.Spec, opts PageOptions) (*rpc.ListApiSpecRevisionsResponse, error) {
 	token, err := decodeToken(opts.Token)
 	if err != nil {
-		return SpecList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
-	}
-
-	response := SpecList{
-		Specs: make([]models.Spec, 0, opts.Size),
+		return nil, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
 	}
 
 	lock()
+	var page []models.Spec
 	err = c.db.
 		Where("project_id = ?", parent.ProjectID).
 		Where("api_id = ?", parent.ApiID).
@@ -508,30 +505,36 @@ func (c *Client) ListSpecRevisions(ctx context.Context, parent names.Spec, opts 
 		Order("revision_create_time desc").
 		Offset(token.Offset).
 		Limit(int(opts.Size) + 1).
-		Find(&response.Specs).Error
+		Find(&page).Error
 	unlock()
 
 	if err != nil {
-		return SpecList{}, status.Error(codes.Internal, err.Error())
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	// Trim the response and return a page token if too many resources were found.
-	if len(response.Specs) > int(opts.Size) {
-		token.Offset += int(opts.Size)
-		response.Specs = response.Specs[:opts.Size]
-		response.Token, err = encodeToken(token)
+	resp := &rpc.ListApiSpecRevisionsResponse{
+		ApiSpecs: make([]*rpc.ApiSpec, 0, opts.Size),
+	}
+
+	for _, v := range page {
+		message, err := v.BasicMessage(v.RevisionName(), nil)
 		if err != nil {
-			return response, status.Error(codes.Internal, err.Error())
+			return nil, status.Error(codes.Internal, err.Error())
+		}
+		resp.ApiSpecs = append(resp.ApiSpecs, message)
+	}
+
+	// Trim the resp and return a page token if too many resources were found.
+	if len(page) > int(opts.Size) {
+		token.Offset += int(opts.Size)
+		resp.ApiSpecs = resp.ApiSpecs[:opts.Size]
+		resp.NextPageToken, err = encodeToken(token)
+		if err != nil {
+			return nil, status.Error(codes.Internal, err.Error())
 		}
 	}
 
-	return response, nil
-}
-
-// DeploymentList contains a page of deployment resources.
-type DeploymentList struct {
-	Deployments []models.Deployment
-	Token       string
+	return resp, nil
 }
 
 var deploymentFields = []filtering.Field{
@@ -552,31 +555,31 @@ var deploymentFields = []filtering.Field{
 	{Name: "labels", Type: filtering.StringMap},
 }
 
-func (c *Client) ListDeployments(ctx context.Context, parent names.Api, opts PageOptions) (DeploymentList, error) {
+func (c *Client) ListDeployments(ctx context.Context, parent names.Api, opts PageOptions) (*rpc.ListApiDeploymentsResponse, error) {
 	token, err := decodeToken(opts.Token)
 	if err != nil {
-		return DeploymentList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
 	}
 
 	if err := token.ValidateFilter(opts.Filter); err != nil {
-		return DeploymentList{}, status.Errorf(codes.InvalidArgument, "invalid filter %q: %s", opts.Filter, err)
+		return nil, status.Errorf(codes.InvalidArgument, "invalid filter %q: %s", opts.Filter, err)
 	} else {
 		token.Filter = opts.Filter
 	}
 
 	if parent.ProjectID != "-" && parent.ApiID != "-" {
 		if _, err := c.GetApi(ctx, parent); err != nil {
-			return DeploymentList{}, err
+			return nil, err
 		}
 	} else if parent.ProjectID != "-" && parent.ApiID == "-" {
 		if _, err := c.GetProject(ctx, parent.Project()); err != nil {
-			return DeploymentList{}, err
+			return nil, err
 		}
 	}
 
 	filter, err := filtering.NewFilter(opts.Filter, deploymentFields)
 	if err != nil {
-		return DeploymentList{}, err
+		return nil, err
 	}
 
 	// Select all columns from `deployments` table specifically.
@@ -592,8 +595,7 @@ func (c *Client) ListDeployments(ctx context.Context, parent names.Api, opts Pag
 				Table("deployments").
 				Group("project_id, api_id, deployment_id")).
 		Order("key").
-		Offset(token.Offset).
-		Limit(100000)
+		Limit(int(opts.Size))
 
 	if parent.ProjectID != "-" {
 		op = op.Where("deployments.project_id = ?", parent.ProjectID)
@@ -602,46 +604,55 @@ func (c *Client) ListDeployments(ctx context.Context, parent names.Api, opts Pag
 		op = op.Where("deployments.api_id = ?", parent.ApiID)
 	}
 
-	lock()
-	var deployments []models.Deployment
-	_ = op.Scan(&deployments).Error
-	unlock()
-
-	if err != nil {
-		return DeploymentList{}, status.Error(codes.Internal, err.Error())
+	resp := &rpc.ListApiDeploymentsResponse{
+		ApiDeployments: make([]*rpc.ApiDeployment, 0, opts.Size),
 	}
 
-	response := DeploymentList{
-		Deployments: make([]models.Deployment, 0, opts.Size),
-	}
+	for {
+		lock()
+		var page []models.Deployment
+		err := op.Offset(token.Offset).Find(&page).Error
+		unlock()
 
-	for _, deployment := range deployments {
-		deploymentMap, err := deploymentMap(deployment)
 		if err != nil {
-			return response, status.Error(codes.Internal, err.Error())
-		}
-
-		match, err := filter.Matches(deploymentMap)
-		if err != nil {
-			return response, err
-		} else if !match {
-			token.Offset++
-			continue
-		}
-
-		if len(response.Deployments) < int(opts.Size) {
-			response.Deployments = append(response.Deployments, deployment)
-			token.Offset++
-		} else if len(response.Deployments) == int(opts.Size) {
-			response.Token, err = encodeToken(token)
-			if err != nil {
-				return response, status.Error(codes.Internal, err.Error())
-			}
+			return nil, status.Error(codes.Internal, err.Error())
+		} else if len(page) == 0 {
 			break
 		}
+
+		for _, v := range page {
+			m, err := deploymentMap(v)
+			if err != nil {
+				return nil, status.Error(codes.Internal, err.Error())
+			}
+
+			match, err := filter.Matches(m)
+			if err != nil {
+				return nil, err
+			} else if !match {
+				token.Offset++
+				continue
+			}
+
+			if len(resp.ApiDeployments) == int(opts.Size) {
+				resp.NextPageToken, err = encodeToken(token)
+				if err != nil {
+					return nil, status.Error(codes.Internal, err.Error())
+				}
+				return resp, nil
+			}
+
+			message, err := v.BasicMessage(v.Name(), nil)
+			if err != nil {
+				return nil, status.Error(codes.Internal, err.Error())
+			}
+
+			token.Offset++
+			resp.ApiDeployments = append(resp.ApiDeployments, message)
+		}
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 func deploymentMap(deployment models.Deployment) (map[string]interface{}, error) {
@@ -670,17 +681,14 @@ func deploymentMap(deployment models.Deployment) (map[string]interface{}, error)
 	}, nil
 }
 
-func (c *Client) ListDeploymentRevisions(ctx context.Context, parent names.Deployment, opts PageOptions) (DeploymentList, error) {
+func (c *Client) ListDeploymentRevisions(ctx context.Context, parent names.Deployment, opts PageOptions) (*rpc.ListApiDeploymentRevisionsResponse, error) {
 	token, err := decodeToken(opts.Token)
 	if err != nil {
-		return DeploymentList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
-	}
-
-	response := DeploymentList{
-		Deployments: make([]models.Deployment, 0, opts.Size),
+		return nil, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
 	}
 
 	lock()
+	var page []models.Deployment
 	err = c.db.
 		Where("project_id = ?", parent.ProjectID).
 		Where("api_id = ?", parent.ApiID).
@@ -688,30 +696,36 @@ func (c *Client) ListDeploymentRevisions(ctx context.Context, parent names.Deplo
 		Order("revision_create_time desc").
 		Offset(token.Offset).
 		Limit(int(opts.Size) + 1).
-		Find(&response.Deployments).Error
+		Find(&page).Error
 	unlock()
 
 	if err != nil {
-		return DeploymentList{}, status.Error(codes.Internal, err.Error())
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	// Trim the response and return a page token if too many resources were found.
-	if len(response.Deployments) > int(opts.Size) {
-		token.Offset += int(opts.Size)
-		response.Deployments = response.Deployments[:opts.Size]
-		response.Token, err = encodeToken(token)
+	resp := &rpc.ListApiDeploymentRevisionsResponse{
+		ApiDeployments: make([]*rpc.ApiDeployment, 0, opts.Size),
+	}
+
+	for _, v := range page {
+		message, err := v.BasicMessage(v.RevisionName(), nil)
 		if err != nil {
-			return response, status.Error(codes.Internal, err.Error())
+			return nil, status.Error(codes.Internal, err.Error())
+		}
+		resp.ApiDeployments = append(resp.ApiDeployments, message)
+	}
+
+	// Trim the resp and return a page token if too many resources were found.
+	if len(resp.ApiDeployments) > int(opts.Size) {
+		token.Offset += int(opts.Size)
+		resp.ApiDeployments = resp.ApiDeployments[:opts.Size]
+		resp.NextPageToken, err = encodeToken(token)
+		if err != nil {
+			return nil, status.Error(codes.Internal, err.Error())
 		}
 	}
 
-	return response, nil
-}
-
-// ArtifactList contains a page of artifact resources.
-type ArtifactList struct {
-	Artifacts []models.Artifact
-	Token     string
+	return resp, nil
 }
 
 var artifactFields = []filtering.Field{
@@ -727,33 +741,33 @@ var artifactFields = []filtering.Field{
 	{Name: "size_bytes", Type: filtering.Int},
 }
 
-func (c *Client) ListSpecArtifacts(ctx context.Context, parent names.Spec, opts PageOptions) (ArtifactList, error) {
+func (c *Client) ListSpecArtifacts(ctx context.Context, parent names.Spec, opts PageOptions) (*rpc.ListArtifactsResponse, error) {
 	token, err := decodeToken(opts.Token)
 	if err != nil {
-		return ArtifactList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
 	}
 
 	if err := token.ValidateFilter(opts.Filter); err != nil {
-		return ArtifactList{}, status.Errorf(codes.InvalidArgument, "invalid filter %q: %s", opts.Filter, err)
+		return nil, status.Errorf(codes.InvalidArgument, "invalid filter %q: %s", opts.Filter, err)
 	} else {
 		token.Filter = opts.Filter
 	}
 
 	if parent.ProjectID != "-" && parent.ApiID != "-" && parent.VersionID != "-" && parent.SpecID != "-" {
 		if _, err := c.GetSpec(ctx, parent); err != nil {
-			return ArtifactList{}, err
+			return nil, err
 		}
 	} else if parent.ProjectID != "-" && parent.ApiID != "-" && parent.VersionID != "-" && parent.SpecID == "-" {
 		if _, err := c.GetVersion(ctx, parent.Version()); err != nil {
-			return ArtifactList{}, err
+			return nil, err
 		}
 	} else if parent.ProjectID != "-" && parent.ApiID != "-" && parent.VersionID == "-" && parent.SpecID == "-" {
 		if _, err := c.GetApi(ctx, parent.Api()); err != nil {
-			return ArtifactList{}, err
+			return nil, err
 		}
 	} else if parent.ProjectID != "-" && parent.ApiID == "-" && parent.VersionID == "-" && parent.SpecID == "-" {
 		if _, err := c.GetProject(ctx, parent.Project()); err != nil {
-			return ArtifactList{}, err
+			return nil, err
 		}
 	}
 
@@ -776,29 +790,29 @@ func (c *Client) ListSpecArtifacts(ctx context.Context, parent names.Spec, opts 
 	})
 }
 
-func (c *Client) ListVersionArtifacts(ctx context.Context, parent names.Version, opts PageOptions) (ArtifactList, error) {
+func (c *Client) ListVersionArtifacts(ctx context.Context, parent names.Version, opts PageOptions) (*rpc.ListArtifactsResponse, error) {
 	token, err := decodeToken(opts.Token)
 	if err != nil {
-		return ArtifactList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
 	}
 
 	if err := token.ValidateFilter(opts.Filter); err != nil {
-		return ArtifactList{}, status.Errorf(codes.InvalidArgument, "invalid filter %q: %s", opts.Filter, err)
+		return nil, status.Errorf(codes.InvalidArgument, "invalid filter %q: %s", opts.Filter, err)
 	} else {
 		token.Filter = opts.Filter
 	}
 
 	if parent.ProjectID != "-" && parent.ApiID != "-" && parent.VersionID != "-" {
 		if _, err := c.GetVersion(ctx, parent); err != nil {
-			return ArtifactList{}, err
+			return nil, err
 		}
 	} else if parent.ProjectID != "-" && parent.ApiID != "-" && parent.VersionID == "-" {
 		if _, err := c.GetApi(ctx, parent.Api()); err != nil {
-			return ArtifactList{}, err
+			return nil, err
 		}
 	} else if parent.ProjectID != "-" && parent.ApiID == "-" && parent.VersionID == "-" {
 		if _, err := c.GetProject(ctx, parent.Project()); err != nil {
-			return ArtifactList{}, err
+			return nil, err
 		}
 	}
 
@@ -819,29 +833,29 @@ func (c *Client) ListVersionArtifacts(ctx context.Context, parent names.Version,
 	})
 }
 
-func (c *Client) ListDeploymentArtifacts(ctx context.Context, parent names.Deployment, opts PageOptions) (ArtifactList, error) {
+func (c *Client) ListDeploymentArtifacts(ctx context.Context, parent names.Deployment, opts PageOptions) (*rpc.ListArtifactsResponse, error) {
 	token, err := decodeToken(opts.Token)
 	if err != nil {
-		return ArtifactList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
 	}
 
 	if err := token.ValidateFilter(opts.Filter); err != nil {
-		return ArtifactList{}, status.Errorf(codes.InvalidArgument, "invalid filter %q: %s", opts.Filter, err)
+		return nil, status.Errorf(codes.InvalidArgument, "invalid filter %q: %s", opts.Filter, err)
 	} else {
 		token.Filter = opts.Filter
 	}
 
 	if parent.ProjectID != "-" && parent.ApiID != "-" && parent.DeploymentID != "-" {
 		if _, err := c.GetDeployment(ctx, parent); err != nil {
-			return ArtifactList{}, err
+			return nil, err
 		}
 	} else if parent.ProjectID != "-" && parent.ApiID != "-" && parent.DeploymentID == "-" {
 		if _, err := c.GetApi(ctx, parent.Api()); err != nil {
-			return ArtifactList{}, err
+			return nil, err
 		}
 	} else if parent.ProjectID != "-" && parent.ApiID == "-" && parent.DeploymentID == "-" {
 		if _, err := c.GetProject(ctx, parent.Project()); err != nil {
-			return ArtifactList{}, err
+			return nil, err
 		}
 	}
 
@@ -862,25 +876,25 @@ func (c *Client) ListDeploymentArtifacts(ctx context.Context, parent names.Deplo
 	})
 }
 
-func (c *Client) ListApiArtifacts(ctx context.Context, parent names.Api, opts PageOptions) (ArtifactList, error) {
+func (c *Client) ListApiArtifacts(ctx context.Context, parent names.Api, opts PageOptions) (*rpc.ListArtifactsResponse, error) {
 	token, err := decodeToken(opts.Token)
 	if err != nil {
-		return ArtifactList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
 	}
 
 	if err := token.ValidateFilter(opts.Filter); err != nil {
-		return ArtifactList{}, status.Errorf(codes.InvalidArgument, "invalid filter %q: %s", opts.Filter, err)
+		return nil, status.Errorf(codes.InvalidArgument, "invalid filter %q: %s", opts.Filter, err)
 	} else {
 		token.Filter = opts.Filter
 	}
 
 	if parent.ProjectID != "-" && parent.ApiID != "-" {
 		if _, err := c.GetApi(ctx, parent); err != nil {
-			return ArtifactList{}, err
+			return nil, err
 		}
 	} else if parent.ProjectID != "-" && parent.ApiID == "-" {
 		if _, err := c.GetProject(ctx, parent.Project()); err != nil {
-			return ArtifactList{}, err
+			return nil, err
 		}
 	}
 
@@ -899,14 +913,14 @@ func (c *Client) ListApiArtifacts(ctx context.Context, parent names.Api, opts Pa
 	})
 }
 
-func (c *Client) ListProjectArtifacts(ctx context.Context, parent names.Project, opts PageOptions) (ArtifactList, error) {
+func (c *Client) ListProjectArtifacts(ctx context.Context, parent names.Project, opts PageOptions) (*rpc.ListArtifactsResponse, error) {
 	token, err := decodeToken(opts.Token)
 	if err != nil {
-		return ArtifactList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
 	}
 
 	if err := token.ValidateFilter(opts.Filter); err != nil {
-		return ArtifactList{}, status.Errorf(codes.InvalidArgument, "invalid filter %q: %s", opts.Filter, err)
+		return nil, status.Errorf(codes.InvalidArgument, "invalid filter %q: %s", opts.Filter, err)
 	} else {
 		token.Filter = opts.Filter
 	}
@@ -918,7 +932,7 @@ func (c *Client) ListProjectArtifacts(ctx context.Context, parent names.Project,
 	if id := parent.ProjectID; id != "-" {
 		op = op.Where("project_id = ?", id)
 		if _, err := c.GetProject(ctx, parent); err != nil {
-			return ArtifactList{}, err
+			return nil, err
 		}
 	}
 
@@ -927,61 +941,64 @@ func (c *Client) ListProjectArtifacts(ctx context.Context, parent names.Project,
 	})
 }
 
-func (c *Client) listArtifacts(ctx context.Context, op *gorm.DB, opts PageOptions, include func(*models.Artifact) bool) (ArtifactList, error) {
+func (c *Client) listArtifacts(ctx context.Context, op *gorm.DB, opts PageOptions, include func(*models.Artifact) bool) (*rpc.ListArtifactsResponse, error) {
 	token, err := decodeToken(opts.Token)
 	if err != nil {
-		return ArtifactList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
 	} else {
 		token.Filter = opts.Filter
 	}
 
 	filter, err := filtering.NewFilter(opts.Filter, artifactFields)
 	if err != nil {
-		return ArtifactList{}, err
+		return nil, err
 	}
 
-	lock()
-	var artifacts []models.Artifact
-	_ = op.Offset(token.Offset).
-		Limit(100000).
-		Find(&artifacts).Error
-	unlock()
-
-	if err != nil {
-		return ArtifactList{}, status.Error(codes.Internal, err.Error())
+	resp := &rpc.ListArtifactsResponse{
+		Artifacts: make([]*rpc.Artifact, 0, opts.Size),
 	}
 
-	response := ArtifactList{
-		Artifacts: make([]models.Artifact, 0, opts.Size),
-	}
+	for {
+		lock()
+		var page []models.Artifact
+		op = op.Order("key").Limit(int(opts.Size))
+		err := op.Offset(token.Offset).Find(&page).Error
+		unlock()
 
-	for _, artifact := range artifacts {
-		artifactMap, err := artifactMap(artifact)
 		if err != nil {
-			return response, status.Error(codes.Internal, err.Error())
-		}
-
-		match, err := filter.Matches(artifactMap)
-		if err != nil {
-			return response, err
-		} else if !match || !include(&artifact) {
-			token.Offset++
-			continue
-		}
-
-		if len(response.Artifacts) < int(opts.Size) {
-			response.Artifacts = append(response.Artifacts, artifact)
-			token.Offset++
-		} else if len(response.Artifacts) == int(opts.Size) {
-			response.Token, err = encodeToken(token)
-			if err != nil {
-				return response, status.Error(codes.Internal, err.Error())
-			}
+			return nil, status.Error(codes.Internal, err.Error())
+		} else if len(page) == 0 {
 			break
 		}
+
+		for _, v := range page {
+			m, err := artifactMap(v)
+			if err != nil {
+				return nil, status.Error(codes.Internal, err.Error())
+			}
+
+			match, err := filter.Matches(m)
+			if err != nil {
+				return nil, err
+			} else if !match || !include(&v) {
+				token.Offset++
+				continue
+			}
+
+			if len(resp.Artifacts) == int(opts.Size) {
+				resp.NextPageToken, err = encodeToken(token)
+				if err != nil {
+					return nil, status.Error(codes.Internal, err.Error())
+				}
+				return resp, nil
+			}
+
+			token.Offset++
+			resp.Artifacts = append(resp.Artifacts, v.Message())
+		}
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 func artifactMap(artifact models.Artifact) (map[string]interface{}, error) {

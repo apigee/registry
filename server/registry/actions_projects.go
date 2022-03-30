@@ -125,7 +125,7 @@ func (s *RegistryServer) ListProjects(ctx context.Context, req *rpc.ListProjects
 		req.PageSize = 50
 	}
 
-	listing, err := db.ListProjects(ctx, storage.PageOptions{
+	resp, err := db.ListProjects(ctx, storage.PageOptions{
 		Size:   req.GetPageSize(),
 		Filter: req.GetFilter(),
 		Token:  req.GetPageToken(),
@@ -134,16 +134,7 @@ func (s *RegistryServer) ListProjects(ctx context.Context, req *rpc.ListProjects
 		return nil, err
 	}
 
-	response := &rpc.ListProjectsResponse{
-		Projects:      make([]*rpc.Project, len(listing.Projects)),
-		NextPageToken: listing.Token,
-	}
-
-	for i, project := range listing.Projects {
-		response.Projects[i] = project.Message()
-	}
-
-	return response, nil
+	return resp, nil
 }
 
 var updateProjectMutex sync.Mutex

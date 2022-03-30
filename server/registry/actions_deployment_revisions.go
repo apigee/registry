@@ -46,7 +46,7 @@ func (s *RegistryServer) ListApiDeploymentRevisions(ctx context.Context, req *rp
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	listing, err := db.ListDeploymentRevisions(ctx, parent, storage.PageOptions{
+	resp, err := db.ListDeploymentRevisions(ctx, parent, storage.PageOptions{
 		Size:  req.GetPageSize(),
 		Token: req.GetPageToken(),
 	})
@@ -54,25 +54,7 @@ func (s *RegistryServer) ListApiDeploymentRevisions(ctx context.Context, req *rp
 		return nil, err
 	}
 
-	response := &rpc.ListApiDeploymentRevisionsResponse{
-		ApiDeployments: make([]*rpc.ApiDeployment, len(listing.Deployments)),
-		NextPageToken:  listing.Token,
-	}
-
-	tags, err := db.GetDeploymentTags(ctx, parent)
-	if err != nil {
-		return nil, err
-	}
-
-	tagsByRev := deploymentTagsByRevision(tags)
-	for i, deployment := range listing.Deployments {
-		response.ApiDeployments[i], err = deployment.BasicMessage(deployment.RevisionName(), tagsByRev[deployment.RevisionName()])
-		if err != nil {
-			return nil, status.Error(codes.Internal, err.Error())
-		}
-	}
-
-	return response, nil
+	return resp, nil
 }
 
 // DeleteApiDeploymentRevision handles the corresponding API request.

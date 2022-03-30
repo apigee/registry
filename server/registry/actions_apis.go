@@ -154,7 +154,7 @@ func (s *RegistryServer) ListApis(ctx context.Context, req *rpc.ListApisRequest)
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	listing, err := db.ListApis(ctx, parent, storage.PageOptions{
+	resp, err := db.ListApis(ctx, parent, storage.PageOptions{
 		Size:   req.GetPageSize(),
 		Filter: req.GetFilter(),
 		Token:  req.GetPageToken(),
@@ -163,19 +163,7 @@ func (s *RegistryServer) ListApis(ctx context.Context, req *rpc.ListApisRequest)
 		return nil, err
 	}
 
-	response := &rpc.ListApisResponse{
-		Apis:          make([]*rpc.Api, len(listing.Apis)),
-		NextPageToken: listing.Token,
-	}
-
-	for i, api := range listing.Apis {
-		response.Apis[i], err = api.Message()
-		if err != nil {
-			return nil, status.Error(codes.Internal, err.Error())
-		}
-	}
-
-	return response, nil
+	return resp, nil
 }
 
 var updateApiMutex sync.Mutex
