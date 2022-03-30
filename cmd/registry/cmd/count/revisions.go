@@ -45,21 +45,23 @@ func revisionsCommand(ctx context.Context) *cobra.Command {
 			// Generate tasks.
 			name := args[0]
 			if spec, err := names.ParseSpec(name); err == nil {
-				err = core.ListSpecs(ctx, client, spec, filter, func(spec *rpc.ApiSpec) {
+				err = core.ListSpecs(ctx, client, spec, filter, func(spec *rpc.ApiSpec) error {
 					taskQueue <- &countSpecRevisionsTask{
 						client: client,
 						spec:   spec,
 					}
+					return nil
 				})
 				if err != nil {
 					log.FromContext(ctx).WithError(err).Fatal("Failed to list API specs")
 				}
 			} else if deployment, err := names.ParseDeployment(name); err == nil {
-				err = core.ListDeployments(ctx, client, deployment, filter, func(deployment *rpc.ApiDeployment) {
+				err = core.ListDeployments(ctx, client, deployment, filter, func(deployment *rpc.ApiDeployment) error {
 					taskQueue <- &countDeploymentRevisionsTask{
 						client:     client,
 						deployment: deployment,
 					}
+					return nil
 				})
 				if err != nil {
 					log.FromContext(ctx).WithError(err).Fatal("Failed to list API deployments")
@@ -88,9 +90,13 @@ func (task *countSpecRevisionsTask) Run(ctx context.Context) error {
 		return err
 	}
 	count := 0
-	core.ListSpecRevisions(ctx, task.client, name, "", func(*rpc.ApiSpec) {
+	err = core.ListSpecRevisions(ctx, task.client, name, "", func(*rpc.ApiSpec) error {
 		count++
+		return nil
 	})
+	if err != nil {
+		return err
+	}
 	log.Debugf(ctx, "%d\t%s", count, task.spec.Name)
 	if task.spec.Labels == nil {
 		task.spec.Labels = make(map[string]string, 0)

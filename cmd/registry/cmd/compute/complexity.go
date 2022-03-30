@@ -50,19 +50,22 @@ func complexityCommand(ctx context.Context) *cobra.Command {
 			// Initialize task queue.
 			taskQueue, wait := core.WorkerPool(ctx, 64)
 			defer wait()
-			// Generate tasks.
-			name := args[0]
-			if spec, err := names.ParseSpec(name); err == nil {
-				// Iterate through a collection of specs and summarize each.
-				err = core.ListSpecs(ctx, client, spec, filter, func(spec *rpc.ApiSpec) {
-					taskQueue <- &computeComplexityTask{
-						client:   client,
-						specName: spec.Name,
-					}
-				})
-				if err != nil {
-					log.FromContext(ctx).WithError(err).Fatal("Failed to list specs")
+
+			spec, err := names.ParseSpec(args[0])
+			if err != nil {
+				return // TODO: Log an error.
+			}
+
+			// Iterate through a collection of specs and summarize each.
+			err = core.ListSpecs(ctx, client, spec, filter, func(spec *rpc.ApiSpec) error {
+				taskQueue <- &computeComplexityTask{
+					client:   client,
+					specName: spec.Name,
 				}
+				return nil
+			})
+			if err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Failed to list specs")
 			}
 		},
 	}
@@ -78,63 +81,47 @@ func (task *computeComplexityTask) String() string {
 }
 
 func (task *computeComplexityTask) Run(ctx context.Context) error {
-	request := &rpc.GetApiSpecRequest{
+	request := &rpc.GetApiSpecContentsRequest{
 		Name: task.specName,
 	}
-	spec, err := task.client.GetApiSpec(ctx, request)
+	spec, err := task.client.GetApiSpecContents(ctx, request)
 	if err != nil {
 		return err
 	}
 	relation := "complexity"
-	log.Debugf(ctx, "Computing %s/artifacts/%s", spec.Name, relation)
+	log.Debugf(ctx, "Computing %s/artifacts/%s", task.specName, relation)
 	var complexity *metrics.Complexity
-	if core.IsOpenAPIv2(spec.GetMimeType()) {
-		data, err := core.GetBytesForSpec(ctx, task.client, spec)
+	if core.IsOpenAPIv2(spec.GetContentType()) {
+		document, err := oas2.ParseDocument(spec.GetData())
 		if err != nil {
-			return nil
-		}
-		document, err := oas2.ParseDocument(data)
-		if err != nil {
-			log.FromContext(ctx).WithError(err).Errorf("Invalid OpenAPI: %s", spec.Name)
+			log.FromContext(ctx).WithError(err).Errorf("Invalid OpenAPI: %s", task.specName)
 			return nil
 		}
 		complexity = core.SummarizeOpenAPIv2Document(document)
-	} else if core.IsOpenAPIv3(spec.GetMimeType()) {
-		data, err := core.GetBytesForSpec(ctx, task.client, spec)
+	} else if core.IsOpenAPIv3(spec.GetContentType()) {
+		document, err := oas3.ParseDocument(spec.GetData())
 		if err != nil {
-			return nil
-		}
-		document, err := oas3.ParseDocument(data)
-		if err != nil {
-			log.FromContext(ctx).WithError(err).Errorf("Invalid OpenAPI: %s", spec.Name)
+			log.FromContext(ctx).WithError(err).Errorf("Invalid OpenAPI: %s", task.specName)
 			return nil
 		}
 		complexity = core.SummarizeOpenAPIv3Document(document)
-	} else if core.IsDiscovery(spec.GetMimeType()) {
-		data, err := core.GetBytesForSpec(ctx, task.client, spec)
+	} else if core.IsDiscovery(spec.GetContentType()) {
+		document, err := discovery.ParseDocument(spec.GetData())
 		if err != nil {
-			return nil
-		}
-		document, err := discovery.ParseDocument(data)
-		if err != nil {
-			log.FromContext(ctx).WithError(err).Errorf("Invalid Discovery: %s", spec.Name)
+			log.FromContext(ctx).WithError(err).Errorf("Invalid Discovery: %s", task.specName)
 			return nil
 		}
 		complexity = core.SummarizeDiscoveryDocument(document)
-	} else if core.IsProto(spec.GetMimeType()) && core.IsZipArchive(spec.GetMimeType()) {
-		data, err := core.GetBytesForSpec(ctx, task.client, spec)
+	} else if core.IsProto(spec.GetContentType()) && core.IsZipArchive(spec.GetContentType()) {
+		complexity, err = core.SummarizeZippedProtos(spec.GetData())
 		if err != nil {
-			return nil
-		}
-		complexity, err = core.NewComplexityFromZippedProtos(data)
-		if err != nil {
-			log.FromContext(ctx).WithError(err).Errorf("Error processing protos: %s", spec.Name)
+			log.FromContext(ctx).WithError(err).Errorf("Error processing protos: %s", task.specName)
 			return nil
 		}
 	} else {
-		return fmt.Errorf("we don't know how to summarize %s", spec.Name)
+		return fmt.Errorf("we don't know how to summarize %s", task.specName)
 	}
-	subject := spec.GetName()
+	subject := task.specName
 	messageData, _ := proto.Marshal(complexity)
 	artifact := &rpc.Artifact{
 		Name:     subject + "/artifacts/" + relation,

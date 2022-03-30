@@ -48,24 +48,54 @@ func Command(ctx context.Context) *cobra.Command {
 			var spec1, spec2 *rpc.ApiSpec
 			var path1 string
 			if name1, err := names.ParseSpec(args[0]); err == nil {
-				spec1, err = core.GetSpec(ctx, client, name1, true, nil)
+				err = core.GetSpec(ctx, client, name1, true, func(s *rpc.ApiSpec) error {
+					spec1 = s
+					return nil
+				})
+				if err != nil {
+					log.FromContext(ctx).WithError(err).Fatal("Failed to compare resources")
+				}
 				path1 = name1.String()
 			} else if name1, err := names.ParseSpecRevision(args[0]); err == nil {
-				spec1, err = core.GetSpecRevision(ctx, client, name1, true, nil)
+				err = core.GetSpecRevision(ctx, client, name1, true, func(s *rpc.ApiSpec) error {
+					spec1 = s
+					return nil
+				})
+				if err != nil {
+					log.FromContext(ctx).WithError(err).Fatal("Failed to compare resources")
+				}
 				path1 = name1.Spec().String()
 			}
 
 			if name2, err := names.ParseSpec(args[1]); err == nil {
-				spec2, err = core.GetSpec(ctx, client, name2, true, nil)
+				err = core.GetSpec(ctx, client, name2, true, func(s *rpc.ApiSpec) error {
+					spec2 = s
+					return nil
+				})
+				if err != nil {
+					log.FromContext(ctx).WithError(err).Fatal("Failed to compare resources")
+				}
 			} else if name2, err := names.ParseSpecRevision(args[1]); err == nil {
-				spec2, err = core.GetSpecRevision(ctx, client, name2, true, nil)
+				err = core.GetSpecRevision(ctx, client, name2, true, func(s *rpc.ApiSpec) error {
+					spec2 = s
+					return nil
+				})
+				if err != nil {
+					log.FromContext(ctx).WithError(err).Fatal("Failed to compare resources")
+				}
 			} else if name2, err := resolveSpecRevision(ctx, client, path1, args[1]); err == nil {
-				spec2, err = core.GetSpecRevision(ctx, client, name2, true, nil)
+				err = core.GetSpecRevision(ctx, client, name2, true, func(s *rpc.ApiSpec) error {
+					spec2 = s
+					return nil
+				})
+				if err != nil {
+					log.FromContext(ctx).WithError(err).Fatal("Failed to compare resources")
+				}
 			} else {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to match or handle command")
 			}
 			if spec1 != nil && spec2 != nil {
-				printDiff(spec1, spec2)
+				err = printDiff(spec1, spec2)
 			}
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to match or handle command")

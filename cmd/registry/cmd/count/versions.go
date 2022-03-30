@@ -42,19 +42,22 @@ func versionsCommand(ctx context.Context) *cobra.Command {
 			// Initialize task queue.
 			taskQueue, wait := core.WorkerPool(ctx, 64)
 			defer wait()
-			// Generate tasks.
-			name := args[0]
-			if api, err := names.ParseApi(name); err == nil {
-				// Iterate through a collection of APIs and count the number of versions of each.
-				err = core.ListAPIs(ctx, client, api, filter, func(api *rpc.Api) {
-					taskQueue <- &countApiVersionsTask{
-						client: client,
-						api:    api,
-					}
-				})
-				if err != nil {
-					log.FromContext(ctx).WithError(err).Fatal("Failed to list APIs")
+
+			api, err := names.ParseApi(args[0])
+			if err != nil {
+				return // TODO: Log an error.
+			}
+
+			// Iterate through a collection of APIs and count the number of versions of each.
+			err = core.ListAPIs(ctx, client, api, filter, func(api *rpc.Api) error {
+				taskQueue <- &countApiVersionsTask{
+					client: client,
+					api:    api,
 				}
+				return nil
+			})
+			if err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Failed to list APIs")
 			}
 		},
 	}

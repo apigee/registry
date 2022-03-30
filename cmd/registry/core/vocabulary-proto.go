@@ -15,8 +15,8 @@
 package core
 
 import (
-	"io/ioutil"
-	"os"
+	"archive/zip"
+	"bytes"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -28,28 +28,50 @@ import (
 )
 
 func NewVocabularyFromZippedProtos(b []byte) (*metrics.Vocabulary, error) {
-	// create a tmp directory
-	dname, err := ioutil.TempDir("", "registry-protos-")
+	r, err := zip.NewReader(bytes.NewReader(b), int64(len(b)))
 	if err != nil {
 		return nil, err
 	}
-	// whenever we finish, delete the tmp directory
-	defer os.RemoveAll(dname)
-	// unzip the protos to the temp directory
-	_, err = UnzipArchiveToPath(b, dname)
-	if err != nil {
-		return nil, err
-	}
-	// process the directory
-	return vocabularyForPath(dname)
-}
 
-func vocabularyForPath(path string) (*metrics.Vocabulary, error) {
-	v := NewVocabulary()
-	err := v.fillVocabularyFromPath(path)
-	if err != nil {
-		return nil, err
+	v := &Vocabulary{
+		Schemas:    make(map[string]int),
+		Operations: make(map[string]int),
+		Parameters: make(map[string]int),
+		Properties: make(map[string]int),
 	}
+
+	for _, f := range r.File {
+		if strings.HasSuffix(f.Name, ".proto") {
+			continue
+		}
+
+		r, err := f.Open()
+		if err != nil {
+			return nil, err
+		}
+		defer r.Close()
+
+		opts := []protoparser.Option{
+			protoparser.WithDebug(false),
+			protoparser.WithPermissive(true),
+			protoparser.WithFilename(filepath.Base(f.Name)),
+		}
+
+		p, err := protoparser.Parse(r, opts...)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, x := range p.ProtoBody {
+			switch m := x.(type) {
+			case *parser.Message:
+				v.fillVocabularyFromMessage(m)
+			case *parser.Service:
+				v.fillVocabularyFromService(m)
+			}
+		}
+	}
+
 	return &metrics.Vocabulary{
 		Properties: fillProtoStructure(v.Properties),
 		Schemas:    fillProtoStructure(v.Schemas),
@@ -66,83 +88,20 @@ type Vocabulary struct {
 	Properties map[string]int
 }
 
-// NewVocabulary creates a new Vocabulary object.
-func NewVocabulary() *Vocabulary {
-	return &Vocabulary{
-		Schemas:    make(map[string]int),
-		Operations: make(map[string]int),
-		Parameters: make(map[string]int),
-		Properties: make(map[string]int),
-	}
-}
-
-func (vocab *Vocabulary) fillVocabularyFromPath(path string) error {
-	err := filepath.Walk(path,
-		func(path string, info os.FileInfo, err error) error {
-			if err != nil {
-				return err
-			}
-			if strings.HasSuffix(path, ".proto") {
-				err := vocab.fillVocabularyFromProto(path)
-				if err != nil {
-					return err
-				}
-			}
-			return nil
-		})
-	return err
-}
-
-func (vocab *Vocabulary) fillVocabularyFromProto(filename string) error {
-	reader, err := os.Open(filename)
-	if err != nil {
-		return err
-	}
-	defer reader.Close()
-
-	p, err := protoparser.Parse(
-		reader,
-		protoparser.WithDebug(false),
-		protoparser.WithPermissive(true),
-		protoparser.WithFilename(filepath.Base(filename)),
-	)
-	if err != nil {
-		return err
-	}
-
-	for _, x := range p.ProtoBody {
-		switch m := x.(type) {
-		case *parser.Message:
-			vocab.fillVocabularyFromMessage(m)
-		case *parser.Service:
-			vocab.fillVocabularyFromService(m)
-		default:
-			// fmt.Printf("IGNORED %+v\n", v)
-		}
-	}
-	return nil
-}
-
 func (vocab *Vocabulary) fillVocabularyFromMessage(m *parser.Message) {
 	vocab.Schemas[m.MessageName]++
 
 	for _, x := range m.MessageBody {
-		switch v := x.(type) {
-		case *parser.Field:
+		if v, ok := x.(*parser.Field); ok {
 			vocab.Properties[v.FieldName]++
-		default:
-			// fmt.Printf("IGNORED %+v\n", v)
 		}
 	}
 }
 
 func (vocab *Vocabulary) fillVocabularyFromService(m *parser.Service) {
 	for _, x := range m.ServiceBody {
-		switch v := x.(type) {
-		case *parser.RPC:
+		if v, ok := x.(*parser.RPC); ok {
 			vocab.Operations[v.RPCName]++
-		default:
-			// fmt.Printf("IGNORED %+v\n", v)
 		}
 	}
 }

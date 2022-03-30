@@ -18,9 +18,9 @@ import (
 	"github.com/apigee/registry/rpc"
 )
 
-type ProjectHandler func(*rpc.Project)
-type ApiHandler func(*rpc.Api)
-type DeploymentHandler func(*rpc.ApiDeployment)
-type VersionHandler func(*rpc.ApiVersion)
-type SpecHandler func(*rpc.ApiSpec)
-type ArtifactHandler func(*rpc.Artifact)
+type ProjectHandler func(*rpc.Project) error
+type ApiHandler func(*rpc.Api) error
+type DeploymentHandler func(*rpc.ApiDeployment) error
+type VersionHandler func(*rpc.ApiVersion) error
+type SpecHandler func(*rpc.ApiSpec) error
+type ArtifactHandler func(*rpc.Artifact) error

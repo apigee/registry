@@ -15,8 +15,8 @@
 package core
 
 import (
-	"io/ioutil"
-	"os"
+	"archive/zip"
+	"bytes"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -29,88 +29,67 @@ import (
 
 // NewReferencesFromZippedProtos computes references of a Protobuf spec.
 func NewReferencesFromZippedProtos(b []byte) (*rpc.References, error) {
-	// create a tmp directory
-	dname, err := ioutil.TempDir("", "registry-protos-")
+	r, err := zip.NewReader(bytes.NewReader(b), int64(len(b)))
 	if err != nil {
 		return nil, err
 	}
-	// whenever we finish, delete the tmp directory
-	defer os.RemoveAll(dname)
-	// unzip the protos to the temp directory
-	_, err = UnzipArchiveToPath(b, dname)
-	if err != nil {
-		return nil, err
-	}
-	// process the directory
-	references, files, err := collectReferencesAndFilesForPath(dname)
-	references = filterFilesAndDuplicatesFromReferences(files, references)
-	sort.Strings(files)
-	sort.Strings(references)
-	return &rpc.References{AvailableReferences: files, ExternalReferences: references}, err
-}
 
-// collectReferencesAndFilesForPath builds lists of external references and internal
-// files for a set of files in a directory corresponding to a protobuf API spec.
-func collectReferencesAndFilesForPath(root string) ([]string, []string, error) {
-	references := []string{}
-	files := []string{}
-	err := filepath.Walk(root,
-		func(path string, info os.FileInfo, err error) error {
-			if err != nil {
-				return err
-			}
-			if strings.HasSuffix(path, ".proto") {
-				name := strings.TrimPrefix(path, root+"/")
-				files = append(files, name)
-				references, err = collectReferencesForProto(references, path)
-				if err != nil {
-					return err
+	files := make([]string, 0)
+	fileSet := make(map[string]bool)
+	for _, f := range r.File {
+		if !strings.HasSuffix(f.Name, ".proto") {
+			continue
+		}
+
+		fileSet[f.Name] = true
+		files = append(files, f.Name)
+	}
+
+	refs := make([]string, 0)
+	refSet := make(map[string]bool)
+	for _, f := range r.File {
+		if !strings.HasSuffix(f.Name, ".proto") {
+			continue
+		}
+
+		r, err := f.Open()
+		if err != nil {
+			return nil, err
+		}
+		defer r.Close()
+
+		opts := []protoparser.Option{
+			protoparser.WithDebug(false),
+			protoparser.WithPermissive(true),
+			protoparser.WithFilename(filepath.Base(f.Name)),
+		}
+
+		p, err := protoparser.Parse(r, opts...)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, x := range p.ProtoBody {
+			if ref, ok := x.(*parser.Import); ok {
+				ref := strings.Trim(ref.Location, "\"") // Remove quotation marks from references.
+				if _, ok := refSet[ref]; ok {
+					continue // Ignore references we've already listed.
 				}
+
+				if _, ok := fileSet[ref]; ok {
+					continue // Ignore references to other files in the spec.
+				}
+
+				refSet[ref] = true
+				refs = append(refs, ref)
 			}
-			return nil
-		})
-	return references, files, err
-}
-
-// collectReferencesForProto fills a slice with references found in the import statements in a proto file.
-func collectReferencesForProto(references []string, filename string) ([]string, error) {
-	reader, err := os.Open(filename)
-	if err != nil {
-		return nil, err
-	}
-	defer reader.Close()
-
-	p, err := protoparser.Parse(
-		reader,
-		protoparser.WithDebug(false),
-		protoparser.WithPermissive(true),
-		protoparser.WithFilename(filepath.Base(filename)),
-	)
-	if err != nil {
-		return references, err
-	}
-
-	for _, x := range p.ProtoBody {
-		if m, ok := x.(*parser.Import); ok {
-			references = append(references, strings.Trim(m.Location, "\""))
 		}
 	}
-	return references, nil
-}
 
-// filterFilesAndDuplicatesFromReferences removes internal references
-// (other files in the same spec) and duplicates from the list of externals.
-func filterFilesAndDuplicatesFromReferences(files, references []string) []string {
-	keys := make(map[string]bool)
-	list := []string{}
-	for _, e := range files {
-		keys[e] = true
-	}
-	for _, d := range references {
-		if !keys[d] {
-			keys[d] = true
-			list = append(list, d)
-		}
-	}
-	return list
+	sort.Strings(files)
+	sort.Strings(refs)
+	return &rpc.References{
+		AvailableReferences: files,
+		ExternalReferences:  refs,
+	}, err
 }
