@@ -26,6 +26,18 @@ import (
 	"gorm.io/gorm"
 )
 
+// limit returns the database page size to use for a listing request.
+func limit(opts PageOptions) int {
+	// Without filters, read exactly enough rows to fill the page,
+	// plus an extra row to check if another page exists.
+	if opts.Filter == "" {
+		return int(opts.Size) + 1
+	}
+
+	// When filters are present, we should read larger pages.
+	return 500
+}
+
 var projectFields = []filtering.Field{
 	{Name: "name", Type: filtering.String},
 	{Name: "project_id", Type: filtering.String},
@@ -59,7 +71,7 @@ func (c *Client) ListProjects(ctx context.Context, opts PageOptions) (*rpc.ListP
 	for {
 		lock()
 		var page []models.Project
-		op := c.db.Order("key").Limit(int(opts.Size))
+		op := c.db.Order("key").Limit(limit(opts))
 		err := op.Offset(token.Offset).Find(&page).Error
 		unlock()
 
@@ -131,7 +143,7 @@ func (c *Client) ListApis(ctx context.Context, parent names.Project, opts PageOp
 		token.Filter = opts.Filter
 	}
 
-	op := c.db.Order("key").Limit(int(opts.Size))
+	op := c.db.Order("key").Limit(limit(opts))
 	if parent.ProjectID != "-" {
 		op = op.Where("project_id = ?", parent.ProjectID)
 		if _, err := c.GetProject(ctx, parent); err != nil {
@@ -261,7 +273,7 @@ func (c *Client) ListVersions(ctx context.Context, parent names.Api, opts PageOp
 		return nil, err
 	}
 
-	op := c.db.Order("key").Limit(int(opts.Size))
+	op := c.db.Order("key").Limit(limit(opts))
 	if parent.ProjectID != "-" {
 		op = op.Where("project_id = ?", parent.ProjectID)
 	}
@@ -400,7 +412,7 @@ func (c *Client) ListSpecs(ctx context.Context, parent names.Version, opts PageO
 				Table("specs").
 				Group("project_id, api_id, version_id, spec_id")).
 		Order("key").
-		Limit(int(opts.Size))
+		Limit(limit(opts))
 
 	if parent.ProjectID != "-" {
 		op = op.Where("specs.project_id = ?", parent.ProjectID)
@@ -595,7 +607,7 @@ func (c *Client) ListDeployments(ctx context.Context, parent names.Api, opts Pag
 				Table("deployments").
 				Group("project_id, api_id, deployment_id")).
 		Order("key").
-		Limit(int(opts.Size))
+		Limit(limit(opts))
 
 	if parent.ProjectID != "-" {
 		op = op.Where("deployments.project_id = ?", parent.ProjectID)
@@ -961,7 +973,7 @@ func (c *Client) listArtifacts(ctx context.Context, op *gorm.DB, opts PageOption
 	for {
 		lock()
 		var page []models.Artifact
-		op = op.Order("key").Limit(int(opts.Size))
+		op = op.Order("key").Limit(limit(opts))
 		err := op.Offset(token.Offset).Find(&page).Error
 		unlock()
 
