@@ -57,23 +57,6 @@ func (s *RegistryServer) ListApiSpecRevisions(ctx context.Context, req *rpc.List
 	return resp, nil
 }
 
-func specTagsByRevision(tags []models.SpecRevisionTag) map[string][]string {
-	revTags := make(map[string][]string, len(tags))
-	for _, tag := range tags {
-		rev := names.SpecRevision{
-			ProjectID:  tag.ProjectID,
-			ApiID:      tag.ApiID,
-			VersionID:  tag.VersionID,
-			SpecID:     tag.SpecID,
-			RevisionID: tag.RevisionID,
-		}.String()
-
-		revTags[rev] = append(revTags[rev], tag.Tag)
-	}
-
-	return revTags
-}
-
 // DeleteApiSpecRevision handles the corresponding API request.
 func (s *RegistryServer) DeleteApiSpecRevision(ctx context.Context, req *rpc.DeleteApiSpecRevisionRequest) (*rpc.ApiSpec, error) {
 	db, err := s.getStorageClient(ctx)

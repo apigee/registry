@@ -280,19 +280,3 @@ func deploymentRevisionTags(ctx context.Context, db *storage.Client, name names.
 
 	return tags, nil
 }
-
-func deploymentTagsByRevision(tags []models.DeploymentRevisionTag) map[string][]string {
-	revTags := make(map[string][]string, len(tags))
-	for _, tag := range tags {
-		rev := names.DeploymentRevision{
-			ProjectID:    tag.ProjectID,
-			ApiID:        tag.ApiID,
-			DeploymentID: tag.DeploymentID,
-			RevisionID:   tag.RevisionID,
-		}.String()
-
-		revTags[rev] = append(revTags[rev], tag.Tag)
-	}
-
-	return revTags
-}
