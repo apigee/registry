@@ -47,8 +47,9 @@ func revisionsCommand(ctx context.Context) *cobra.Command {
 			if spec, err := names.ParseSpec(name); err == nil {
 				err = core.ListSpecs(ctx, client, spec, filter, func(spec *rpc.ApiSpec) error {
 					taskQueue <- &countSpecRevisionsTask{
-						client: client,
-						spec:   spec,
+						client:     client,
+						specName:   spec.Name,
+						specLabels: spec.Labels,
 					}
 					return nil
 				})
@@ -58,8 +59,9 @@ func revisionsCommand(ctx context.Context) *cobra.Command {
 			} else if deployment, err := names.ParseDeployment(name); err == nil {
 				err = core.ListDeployments(ctx, client, deployment, filter, func(deployment *rpc.ApiDeployment) error {
 					taskQueue <- &countDeploymentRevisionsTask{
-						client:     client,
-						deployment: deployment,
+						client:           client,
+						deploymentName:   deployment.Name,
+						deploymentLabels: deployment.Labels,
 					}
 					return nil
 				})
@@ -76,16 +78,17 @@ func revisionsCommand(ctx context.Context) *cobra.Command {
 }
 
 type countSpecRevisionsTask struct {
-	client connection.Client
-	spec   *rpc.ApiSpec
+	client     connection.Client
+	specName   string
+	specLabels map[string]string
 }
 
 func (task *countSpecRevisionsTask) String() string {
-	return "count revisions " + task.spec.Name
+	return "count revisions " + task.specName
 }
 
 func (task *countSpecRevisionsTask) Run(ctx context.Context) error {
-	name, err := names.ParseSpec(task.spec.Name)
+	name, err := names.ParseSpec(task.specName)
 	if err != nil {
 		return err
 	}
@@ -97,14 +100,17 @@ func (task *countSpecRevisionsTask) Run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	log.Debugf(ctx, "%d\t%s", count, task.spec.Name)
-	if task.spec.Labels == nil {
-		task.spec.Labels = make(map[string]string, 0)
+	log.Debugf(ctx, "%d\t%s", count, task.specName)
+	if task.specLabels == nil {
+		task.specLabels = make(map[string]string, 0)
 	}
-	task.spec.Labels["revisions"] = fmt.Sprintf("%d", count)
+	task.specLabels["revisions"] = fmt.Sprintf("%d", count)
 	_, err = task.client.UpdateApiSpec(ctx,
 		&rpc.UpdateApiSpecRequest{
-			ApiSpec: task.spec,
+			ApiSpec: &rpc.ApiSpec{
+				Name:   task.specName,
+				Labels: task.specLabels,
+			},
 			UpdateMask: &field_mask.FieldMask{
 				Paths: []string{"labels"},
 			},
@@ -113,19 +119,20 @@ func (task *countSpecRevisionsTask) Run(ctx context.Context) error {
 }
 
 type countDeploymentRevisionsTask struct {
-	client     connection.Client
-	deployment *rpc.ApiDeployment
+	client           connection.Client
+	deploymentName   string
+	deploymentLabels map[string]string
 }
 
 func (task *countDeploymentRevisionsTask) String() string {
-	return "count revisions " + task.deployment.Name
+	return "count revisions " + task.deploymentName
 }
 
 func (task *countDeploymentRevisionsTask) Run(ctx context.Context) error {
 	count := 0
 	it := task.client.ListApiDeploymentRevisions(ctx,
 		&rpc.ListApiDeploymentRevisionsRequest{
-			Name: task.deployment.Name,
+			Name: task.deploymentName,
 		})
 	for {
 		_, err := it.Next()
@@ -137,14 +144,17 @@ func (task *countDeploymentRevisionsTask) Run(ctx context.Context) error {
 			return err
 		}
 	}
-	log.Debugf(ctx, "%-7d %s", count, task.deployment.Name)
-	if task.deployment.Labels == nil {
-		task.deployment.Labels = make(map[string]string, 0)
+	log.Debugf(ctx, "%-7d %s", count, task.deploymentName)
+	if task.deploymentLabels == nil {
+		task.deploymentLabels = make(map[string]string, 0)
 	}
-	task.deployment.Labels["revisions"] = fmt.Sprintf("%d", count)
+	task.deploymentLabels["revisions"] = fmt.Sprintf("%d", count)
 	_, err := task.client.UpdateApiDeployment(ctx,
 		&rpc.UpdateApiDeploymentRequest{
-			ApiDeployment: task.deployment,
+			ApiDeployment: &rpc.ApiDeployment{
+				Name:   task.deploymentName,
+				Labels: task.deploymentLabels,
+			},
 			UpdateMask: &field_mask.FieldMask{
 				Paths: []string{"labels"},
 			},
