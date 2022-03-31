@@ -261,25 +261,12 @@ func seedSpec(ctx context.Context, s RegistryImp, spec *rpc.ApiSpec, history map
 		return err
 	}
 
-	created, err := s.UpdateApiSpec(ctx, &rpc.UpdateApiSpecRequest{
+	if _, err := s.UpdateApiSpec(ctx, &rpc.UpdateApiSpecRequest{
 		ApiSpec:      spec,
 		UpdateMask:   &fieldmaskpb.FieldMask{Paths: []string{"*"}},
 		AllowMissing: true,
-	})
-
-	if err != nil {
+	}); err != nil {
 		return err
-	}
-
-	for _, tag := range spec.RevisionTags {
-		_, err := s.TagApiSpecRevision(ctx, &rpc.TagApiSpecRevisionRequest{
-			Name: name.Revision(created.GetRevisionId()).String(),
-			Tag:  tag,
-		})
-
-		if err != nil {
-			return err
-		}
 	}
 
 	return nil
@@ -306,25 +293,12 @@ func seedDeployment(ctx context.Context, s RegistryImp, deployment *rpc.ApiDeplo
 		return err
 	}
 
-	created, err := s.UpdateApiDeployment(ctx, &rpc.UpdateApiDeploymentRequest{
+	if _, err := s.UpdateApiDeployment(ctx, &rpc.UpdateApiDeploymentRequest{
 		ApiDeployment: deployment,
 		UpdateMask:    &fieldmaskpb.FieldMask{Paths: []string{"*"}},
 		AllowMissing:  true,
-	})
-
-	if err != nil {
+	}); err != nil {
 		return err
-	}
-
-	for _, tag := range deployment.RevisionTags {
-		_, err := s.TagApiDeploymentRevision(ctx, &rpc.TagApiDeploymentRevisionRequest{
-			Name: name.Revision(created.GetRevisionId()).String(),
-			Tag:  tag,
-		})
-
-		if err != nil {
-			return err
-		}
 	}
 
 	return nil

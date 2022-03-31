@@ -207,8 +207,8 @@ message ApiSpec {
   // To access the contents of a spec, use GetApiSpecContents.
   bytes contents = 12 [(google.api.field_behavior) = INPUT_ONLY];
 
-  // Output only. The revision tags associated with this revision.
-  repeated string revision_tags = 13 [(google.api.field_behavior) = OUTPUT_ONLY];
+  reserved "revision_tags";
+  reserved 13;
 
   // Labels attach identifying metadata to resources. Identifying metadata can
   // be used to filter list operations.
@@ -292,8 +292,8 @@ message ApiDeployment {
   // will not affect the revision.
   string access_guidance = 12;
 
-  // Output only. The revision tags associated with this revision.
-  repeated string revision_tags = 13 [(google.api.field_behavior) = OUTPUT_ONLY];
+  reserved "revision_tags";
+  reserved 13;
 
   // Labels attach identifying metadata to resources. Identifying metadata can
   // be used to filter list operations.
