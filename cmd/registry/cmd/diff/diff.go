@@ -17,9 +17,7 @@ package diff
 import (
 	"context"
 	"fmt"
-	"regexp"
 	"sort"
-	"strconv"
 	"strings"
 
 	"github.com/apigee/registry/cmd/registry/core"
@@ -118,33 +116,30 @@ func resolveSpecRevision(ctx context.Context,
 	// which points to the Nth revision back.
 	// NOTE: This should probably be implemented in the server
 	// and removed when that is available.
-	re := regexp.MustCompile(`@\{\-(\d+)\}`)
-	m := re.FindStringSubmatch(suffix)
-	if m != nil {
-		it := client.ListApiSpecRevisions(ctx,
-			&rpc.ListApiSpecRevisionsRequest{
-				Name: base,
-			})
-		i, err := strconv.Atoi(m[1])
-		if err != nil {
-			return names.SpecRevision{}, fmt.Errorf("%s is not a valid revision reference", suffix)
+	var revIndex int
+	if _, err := fmt.Sscanf(suffix, "@{-%d}", &revIndex); err != nil {
+		return names.SpecRevision{}, fmt.Errorf("%s is not a valid revision reference", suffix)
+	} else if revIndex <= 0 {
+		return names.SpecRevision{}, fmt.Errorf("%d is not a valid revision index", -revIndex)
+	}
+	it := client.ListApiSpecRevisions(ctx,
+		&rpc.ListApiSpecRevisionsRequest{
+			Name: base,
+		})
+	for i := revIndex; i >= 0; i -= 1 {
+		spec, err := it.Next()
+		if err == iterator.Done {
+			break
+		} else if err != nil {
+			return names.SpecRevision{}, err
 		}
-		for ; i >= 0; i -= 1 {
-			spec, err := it.Next()
-			if err == iterator.Done {
-				break
-			} else if err != nil {
+		if i == 0 {
+			n, err := names.ParseSpecRevision(spec.Name)
+			if err != nil {
 				return names.SpecRevision{}, err
 			}
-			if i == 0 {
-				n, err := names.ParseSpecRevision(spec.Name)
-				if err != nil {
-					return names.SpecRevision{}, err
-				}
-				return n, nil
-			}
+			return n, nil
 		}
-		return names.SpecRevision{}, fmt.Errorf("%s is not a valid revision reference", suffix)
 	}
 	return names.SpecRevision{}, fmt.Errorf("%s is not a valid revision reference", suffix)
 }
