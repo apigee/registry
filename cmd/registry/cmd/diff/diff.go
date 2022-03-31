@@ -134,11 +134,7 @@ func resolveSpecRevision(ctx context.Context,
 			return names.SpecRevision{}, err
 		}
 		if i == -revIndex {
-			n, err := names.ParseSpecRevision(spec.Name)
-			if err != nil {
-				return names.SpecRevision{}, err
-			}
-			return n, nil
+			return names.ParseSpecRevision(spec.Name)
 		}
 	}
 	return names.SpecRevision{}, fmt.Errorf("%s is not a valid revision reference", suffix)
