@@ -15,248 +15,81 @@
 name: Benchmark testing
 
 on:
-  schedule:
-  - cron: '0 1 * * 6'
   push:
-    paths:
-    - 'server/**'
     branches:
-    - main
   pull_request:
     paths:
     - 'server/**'
     branches:
     - main
+
+permissions:
+  deployments: write
+  contents: write
+
 jobs:
-  benchmark-100apis-1version:
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres
-        env:
-          # Define a super user. Password for super user is required.
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          # Allow other connections without a password.
-          POSTGRES_HOST_AUTH_METHOD: trust
-          POSTGRES_DB: registry_tester
-        # Set health checks to wait until postgres has started.
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-        # Map tcp service container port 5432 to the host.
-        - 5432:5432
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
-    - uses: ./.github/workflows/composite/benchmark
-      with:
-        api_count: 100
-        version_count: 1
 
-  benchmark-100apis-5versions:
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres
-        env:
-          # Define a super user. Password for super user is required.
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          # Allow other connections without a password.
-          POSTGRES_HOST_AUTH_METHOD: trust
-          POSTGRES_DB: registry_tester
-        # Set health checks to wait until postgres has started.
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-        # Map tcp service container port 5432 to the host.
-        - 5432:5432
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
-    - uses: ./.github/workflows/composite/benchmark
-      with:
-        api_count: 100
-        version_count: 5
+  run-benchmark-tests-100apis-1version:
+    uses: ./.github/workflows/benchmark_workflow.yml
+    with:
+      api_count: 100
+      version_count: 1
+    secrets:
+      token: ${{ secrets.GITHUB_TOKEN }}
 
-  benchmark-500apis-1version:
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres
-        env:
-          # Define a super user. Password for super user is required.
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          # Allow other connections without a password.
-          POSTGRES_HOST_AUTH_METHOD: trust
-          POSTGRES_DB: registry_tester
-        # Set health checks to wait until postgres has started.
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-        # Map tcp service container port 5432 to the host.
-        - 5432:5432
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
-    - uses: ./.github/workflows/composite/benchmark
-      with:
-        api_count: 500
-        version_count: 1
+  run-benchmark-tests-100apis-5version:
+    uses: ./.github/workflows/benchmark_workflow.yml
+    with:
+      api_count: 100
+      version_count: 5
+    secrets:
+      token: ${{ secrets.GITHUB_TOKEN }}
 
-  benchmark-500apis-5versions:
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres
-        env:
-          # Define a super user. Password for super user is required.
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          # Allow other connections without a password.
-          POSTGRES_HOST_AUTH_METHOD: trust
-          POSTGRES_DB: registry_tester
-        # Set health checks to wait until postgres has started.
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-        # Map tcp service container port 5432 to the host.
-        - 5432:5432
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
-    - uses: ./.github/workflows/composite/benchmark
-      with:
-        api_count: 500
-        version_count: 5
+  run-benchmark-tests-500apis-1version:
+    uses: ./.github/workflows/benchmark_workflow.yml
+    with:
+      api_count: 500
+      version_count: 1
+    secrets:
+      token: ${{ secrets.GITHUB_TOKEN }}
 
-  benchmark-1000apis-1version:
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres
-        env:
-          # Define a super user. Password for super user is required.
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          # Allow other connections without a password.
-          POSTGRES_HOST_AUTH_METHOD: trust
-          POSTGRES_DB: registry_tester
-        # Set health checks to wait until postgres has started.
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-        # Map tcp service container port 5432 to the host.
-        - 5432:5432
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
-    - uses: ./.github/workflows/composite/benchmark
-      with:
-        api_count: 1000
-        version_count: 1
+  run-benchmark-tests-500apis-5version:
+    uses: ./.github/workflows/benchmark_workflow.yml
+    with:
+      api_count: 500
+      version_count: 5
+    secrets:
+      token: ${{ secrets.GITHUB_TOKEN }}
 
-  benchmark-1000apis-5versions:
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres
-        env:
-          # Define a super user. Password for super user is required.
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          # Allow other connections without a password.
-          POSTGRES_HOST_AUTH_METHOD: trust
-          POSTGRES_DB: registry_tester
-        # Set health checks to wait until postgres has started.
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-        # Map tcp service container port 5432 to the host.
-        - 5432:5432
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
-    - uses: ./.github/workflows/composite/benchmark
-      with:
-        api_count: 1000
-        version_count: 5
+  run-benchmark-tests-1000apis-1version:
+    uses: ./.github/workflows/benchmark_workflow.yml
+    with:
+      api_count: 1000
+      version_count: 1
+    secrets:
+      token: ${{ secrets.GITHUB_TOKEN }}
 
+  run-benchmark-tests-1000apis-5version:
+    uses: ./.github/workflows/benchmark_workflow.yml
+    with:
+      api_count: 1000
+      version_count: 5
+    secrets:
+      token: ${{ secrets.GITHUB_TOKEN }}
 
-  benchmark-2000apis-1version:
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres
-        env:
-          # Define a super user. Password for super user is required.
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          # Allow other connections without a password.
-          POSTGRES_HOST_AUTH_METHOD: trust
-          POSTGRES_DB: registry_tester
-        # Set health checks to wait until postgres has started.
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-        # Map tcp service container port 5432 to the host.
-        - 5432:5432
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
-    - uses: ./.github/workflows/composite/benchmark
-      with:
-        api_count: 2000
-        version_count: 1
+  run-benchmark-tests-2000apis-1version:
+    uses: ./.github/workflows/benchmark_workflow.yml
+    with:
+      api_count: 2000
+      version_count: 1
+    secrets:
+      token: ${{ secrets.GITHUB_TOKEN }}
 
-  benchmark-2000apis-5versions:
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres
-        env:
-          # Define a super user. Password for super user is required.
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          # Allow other connections without a password.
-          POSTGRES_HOST_AUTH_METHOD: trust
-          POSTGRES_DB: registry_tester
-        # Set health checks to wait until postgres has started.
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-        # Map tcp service container port 5432 to the host.
-        - 5432:5432
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
-    - uses: ./.github/workflows/composite/benchmark
-      with:
-        api_count: 2000
-        version_count: 5
+  run-benchmark-tests-2000apis-5version:
+    uses: ./.github/workflows/benchmark_workflow.yml
+    with:
+      api_count: 2000
+      version_count: 5
+    secrets:
+      token: ${{ secrets.GITHUB_TOKEN }}
+

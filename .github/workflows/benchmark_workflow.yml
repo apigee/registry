@@ -1,0 +1,107 @@
+# Copyright 2021 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: Benchmark Workflow
+
+on:
+  workflow_call:
+    inputs:
+      api_count:
+        description: 'api count'
+        required: true
+        type: string
+        default: "10"
+      version_count:
+        description: 'version count'
+        required: true
+        type: string
+        default: "1"
+    secrets:
+      token:
+        required: true
+permissions:
+  deployments: write
+  contents: write
+
+jobs:
+  benchmark:
+    name: Run Benchmark tests for ${{inputs.api_count}} apis for ${{inputs.version_count}} version(s)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres
+        env:
+          # Define a super user. Password for super user is required.
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          # Allow other connections without a password.
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: registry_tester
+        # Set health checks to wait until postgres has started.
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+        # Map tcp service container port 5432 to the host.
+        - 5432:5432
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Go 1.x
+      uses: actions/setup-go@v2
+      with:
+        go-version: ^1.17
+
+    - name: Install
+      run: go install ./...
+      shell: bash
+
+    - name: Start the Registry Server with Postgres
+      run: registry-server &
+      shell: bash
+      env:
+        REGISTRY_DATABASE_CONFIG: 'host=localhost port=5432 user=postgres dbname=registry_tester password=postgres sslmode=disable'
+
+    - name: Run Benchmark tests
+      shell: bash
+      env:
+        APG_ADMIN_ADDRESS: localhost:8080
+        APG_ADMIN_AUDIENCES: http://localhost:8080
+        APG_REGISTRY_ADDRESS: localhost:8080
+        APG_REGISTRY_AUDIENCES: http://localhost:8080
+        APG_REGISTRY_INSECURE: 1
+      run: |
+        export ITERATION_SIZE=${{ inputs.api_count }}
+        export REGISTRY_PROJECT_IDENTIFIER=bench${ITERATION_SIZE}
+        export REGISTRY_VERSION_COUNT=${{ inputs.version_count }}
+        apg admin create-project --project_id=$REGISTRY_PROJECT_IDENTIFIER
+        go test --bench=. ./tests/benchmark --benchtime=${ITERATION_SIZE}x --timeout=0 | tee output.txt
+        apg admin delete-project --name=projects/$REGISTRY_PROJECT_IDENTIFIER --force
+
+    - name: Store benchmark result for Get
+      if:  ${{ github.event_name != 'pull_request' }}
+      uses: benchmark-action/github-action-benchmark@v1
+      with:
+        name: ${{ inputs.api_count }} APIs ${{ inputs.version_count }} version(s)
+        tool: 'go'
+        output-file-path: output.txt
+        # Access token to deploy GitHub Pages branch
+        github-token: ${{ secrets.token }}
+        # Push and deploy GitHub pages branch automatically
+        auto-push: true
+        comment-on-alert: true
+        benchmark-data-dir-path: "docs/dev/bench"
