@@ -91,9 +91,9 @@ func matchAndHandleListCmd(
 	}
 
 	// Then try to match resources with revisions.
-	// "@" signals that we want to list revisions.
-	if strings.HasSuffix(name, "@") {
-		name := strings.TrimSuffix(name, "@")
+	// "@-" signals that we want to list revisions.
+	if strings.HasSuffix(name, "@-") {
+		name := strings.TrimSuffix(name, "@-")
 		if deployment, err := names.ParseDeployment(name); err == nil {
 			return core.ListDeploymentRevisions(ctx, client, deployment, filter, core.PrintDeployment)
 		} else if spec, err := names.ParseSpec(name); err == nil {
