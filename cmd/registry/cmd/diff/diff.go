@@ -129,7 +129,7 @@ func resolveSpecRevision(ctx context.Context,
 	for i := revIndex; i >= 0; i -= 1 {
 		spec, err := it.Next()
 		if err == iterator.Done {
-			break
+			return names.SpecRevision{}, fmt.Errorf("no revision exists for index %d", -revIndex)
 		} else if err != nil {
 			return names.SpecRevision{}, err
 		}
