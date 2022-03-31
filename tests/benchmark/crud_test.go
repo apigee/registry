@@ -31,38 +31,50 @@ import (
 	"google.golang.org/genproto/protobuf/field_mask"
 )
 
-func getRootResource() string {
-	registryProject, valueExists := os.LookupEnv("REGISTRY_PROJECT_IDENTIFIER")
-	if valueExists {
-		return fmt.Sprintf("projects/%s/locations/global", registryProject)
+func getRootResource(b *testing.B) string {
+	b.Helper()
+
+	p, ok := os.LookupEnv("REGISTRY_PROJECT_IDENTIFIER")
+	if !ok || p == "" {
+		p = "bench"
 	}
-	return "projects/bench/locations/global"
+	return fmt.Sprintf("projects/%s/locations/global", p)
 }
 
-func getNumberOfVersions() int {
-	strNumberOfVersions, exists := os.LookupEnv("REGISTRY_VERSION_COUNT")
-	numberOfVersions, err := strconv.Atoi(strNumberOfVersions)
-	if err != nil || !exists {
-		numberOfVersions = 1
+func loadVersionCount(b *testing.B) int {
+	b.Helper()
+
+	s, ok := os.LookupEnv("REGISTRY_VERSION_COUNT")
+	if !ok {
+		return 1
 	}
-	return numberOfVersions
+
+	c, err := strconv.Atoi(s)
+	if err != nil {
+		b.Fatalf("Setup: Invalid REGISTRY_VERSION_COUNT %q: count must be an integer", s)
+	}
+
+	return c
 }
 
-func getApiName(i int) string {
-	apiNamePrefix, valueExists := os.LookupEnv("API_NAME_PREFIX")
-	if !valueExists {
-		apiNamePrefix = "benchtest"
+func getApiName(i int, b *testing.B) string {
+	b.Helper()
+
+	prefix, ok := os.LookupEnv("API_NAME_PREFIX")
+	if !ok {
+		prefix = "benchtest"
 	}
-	apiNameStartOffset, valueExists := os.LookupEnv("API_NAME_START_OFFSET")
-	if valueExists {
-		intVar, _ := strconv.Atoi(apiNameStartOffset)
-		i += intVar
+	s, ok := os.LookupEnv("API_NAME_START_OFFSET")
+	if ok {
+		offset, err := strconv.Atoi(s)
+		if err != nil {
+			b.Fatalf("Setup: Invalid API_NAME_START_OFFSET %q: offset must be an integer", s)
+		}
+		i += offset
 	}
 
-	return fmt.Sprintf("%s-%d", apiNamePrefix, i)
+	return fmt.Sprintf("%s-%d", prefix, i)
 }
-
-var rootResource = getRootResource()
 
 func readAndGZipFile(filename string) (*bytes.Buffer, error) {
 	fileBytes, _ := ioutil.ReadFile(filename)
@@ -77,8 +89,19 @@ func readAndGZipFile(filename string) (*bytes.Buffer, error) {
 	}
 	return &buf, nil
 }
+func pauseAfter1000Iterations(i int) {
+	if i%1000 == 0 {
+		/*
+			Pause 5 seconds every 1000 iterations to reduce chances of failure on
+			CREATE, UPDATE, DELETE
+		*/
+		time.Sleep(5 * time.Second)
+	}
+}
 
 func BenchmarkCreateApi(b *testing.B) {
+
+	rootResource := getRootResource(b)
 	ctx := context.Background()
 	gapicClient, err := connection.NewClient(ctx)
 	if err != nil {
@@ -87,12 +110,10 @@ func BenchmarkCreateApi(b *testing.B) {
 	client := gapicClient.GrpcClient()
 
 	for i := 1; i <= b.N; i++ {
-		if i%1000 == 0 {
-			//Sleep 10s every 1000 iterations to reduce server load
-			time.Sleep(10 * time.Second)
-		}
+		pauseAfter1000Iterations(i)
 
-		apiId := getApiName(i)
+		apiId := getApiName(i, b)
+
 		req := &rpc.CreateApiRequest{
 			Parent: rootResource,
 			ApiId:  apiId,
@@ -115,6 +136,8 @@ func BenchmarkCreateApi(b *testing.B) {
 }
 
 func BenchmarkCreateApiVersion(b *testing.B) {
+	rootResource := getRootResource(b)
+
 	ctx := context.Background()
 	gapicClient, err := connection.NewClient(ctx)
 	if err != nil {
@@ -126,13 +149,11 @@ func BenchmarkCreateApiVersion(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 1; i <= b.N; i++ {
-		if i%1000 == 0 {
-			//Sleep 10s every 1000 iterations to reduce server load
-			time.Sleep(10 * time.Second)
-		}
+		pauseAfter1000Iterations(i)
 
-		apiId := getApiName(i)
-		for j := 1; j <= getNumberOfVersions(); j++ {
+		apiId := getApiName(i, b)
+
+		for j := 1; j <= loadVersionCount(b); j++ {
 			req := &rpc.CreateApiVersionRequest{
 				Parent: fmt.Sprintf("%s/apis/%s", rootResource, apiId),
 				ApiVersion: &rpc.ApiVersion{
@@ -157,6 +178,8 @@ func BenchmarkCreateApiVersion(b *testing.B) {
 }
 
 func BenchmarkCreateApiSpec(b *testing.B) {
+	rootResource := getRootResource(b)
+
 	ctx := context.Background()
 	gapicClient, err := connection.NewClient(ctx)
 	if err != nil {
@@ -166,26 +189,23 @@ func BenchmarkCreateApiSpec(b *testing.B) {
 
 	b.StopTimer()
 	b.ResetTimer()
+	buf, err := readAndGZipFile(filepath.Join("testdata", "openapi1.yaml"))
+	if err != nil {
+		b.Errorf("BenchmarkCreateApiSpec could not read openapi1.yaml : %s", err)
+	} else {
+		contents := buf.Bytes()
+		for i := 1; i <= b.N; i++ {
+			pauseAfter1000Iterations(i)
 
-	for i := 1; i <= b.N; i++ {
-		if i%1000 == 0 {
-			//Sleep 10s every 1000 iterations to reduce server load
-			time.Sleep(10 * time.Second)
-		}
+			apiId := getApiName(i, b)
 
-		apiId := getApiName(i)
+			for j := 1; j <= loadVersionCount(b); j++ {
 
-		for j := 1; j <= getNumberOfVersions(); j++ {
-
-			buf, err := readAndGZipFile(filepath.Join("testdata", "openapi1.yaml"))
-			if err != nil {
-				b.Errorf("BenchmarkCreateApiSpec could not read openapi1.yaml : %s", err)
-			} else {
 				req := &rpc.CreateApiSpecRequest{
 					Parent: fmt.Sprintf("%s/apis/%s/versions/v%d", rootResource, apiId, j),
 					ApiSpec: &rpc.ApiSpec{
 						MimeType:    "application/x.openapi+gzip;version=3.0.0",
-						Contents:    buf.Bytes(),
+						Contents:    contents,
 						Filename:    fmt.Sprintf("openapi-%s-v%d-spec.yaml", apiId, j),
 						Description: fmt.Sprintf("Spec for api[%s] version[v%d]", apiId, j),
 					},
@@ -208,6 +228,8 @@ func BenchmarkCreateApiSpec(b *testing.B) {
 }
 
 func BenchmarkCreateArtifact(b *testing.B) {
+	rootResource := getRootResource(b)
+
 	ctx := context.Background()
 	gapicClient, err := connection.NewClient(ctx)
 	if err != nil {
@@ -219,14 +241,11 @@ func BenchmarkCreateArtifact(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 1; i <= b.N; i++ {
-		if i%1000 == 0 {
-			//Sleep 10s every 1000 iterations to reduce server load
-			time.Sleep(10 * time.Second)
-		}
+		pauseAfter1000Iterations(i)
 
-		apiId := getApiName(i)
+		apiId := getApiName(i, b)
 
-		for j := 1; j <= getNumberOfVersions(); j++ {
+		for j := 1; j <= loadVersionCount(b); j++ {
 			artifactParent := fmt.Sprintf("%s/apis/%s/versions/v%d/specs/spec-%d", rootResource, apiId, j, j)
 
 			messageContents := []byte(artifactParent)
@@ -257,6 +276,8 @@ func BenchmarkCreateArtifact(b *testing.B) {
 }
 
 func BenchmarkUpdateApi(b *testing.B) {
+	rootResource := getRootResource(b)
+
 	ctx := context.Background()
 	gapicClient, err := connection.NewClient(ctx)
 	if err != nil {
@@ -265,12 +286,10 @@ func BenchmarkUpdateApi(b *testing.B) {
 	client := gapicClient.GrpcClient()
 
 	for i := 1; i <= b.N; i++ {
-		if i%1000 == 0 {
-			//Sleep 10s every 1000 iterations to reduce server load
-			time.Sleep(10 * time.Second)
-		}
+		pauseAfter1000Iterations(i)
 
-		apiId := getApiName(i)
+		apiId := getApiName(i, b)
+
 		req := &rpc.GetApiRequest{
 			Name: fmt.Sprintf("%s/apis/%s", rootResource, apiId),
 		}
@@ -300,6 +319,8 @@ func BenchmarkUpdateApi(b *testing.B) {
 }
 
 func BenchmarkUpdateApiVersion(b *testing.B) {
+	rootResource := getRootResource(b)
+
 	ctx := context.Background()
 	gapicClient, err := connection.NewClient(ctx)
 	if err != nil {
@@ -311,13 +332,11 @@ func BenchmarkUpdateApiVersion(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 1; i <= b.N; i++ {
-		if i%1000 == 0 {
-			//Sleep 10s every 1000 iterations to reduce server load
-			time.Sleep(10 * time.Second)
-		}
+		pauseAfter1000Iterations(i)
 
-		apiId := getApiName(i)
-		for j := 1; j <= getNumberOfVersions(); j++ {
+		apiId := getApiName(i, b)
+
+		for j := 1; j <= loadVersionCount(b); j++ {
 			req := &rpc.UpdateApiVersionRequest{
 				ApiVersion: &rpc.ApiVersion{
 					Name:        fmt.Sprintf("%s/apis/%s/versions/v%d", rootResource, apiId, j),
@@ -345,6 +364,8 @@ func BenchmarkUpdateApiVersion(b *testing.B) {
 }
 
 func BenchmarkUpdateApiSpecVersion(b *testing.B) {
+	rootResource := getRootResource(b)
+
 	ctx := context.Background()
 	gapicClient, err := connection.NewClient(ctx)
 	if err != nil {
@@ -356,13 +377,11 @@ func BenchmarkUpdateApiSpecVersion(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 1; i <= b.N; i++ {
-		if i%1000 == 0 {
-			//Sleep 10s every 1000 iterations to reduce server load
-			time.Sleep(10 * time.Second)
-		}
+		pauseAfter1000Iterations(i)
 
-		apiId := getApiName(i)
-		for j := 1; j <= getNumberOfVersions(); j++ {
+		apiId := getApiName(i, b)
+
+		for j := 1; j <= loadVersionCount(b); j++ {
 			req := &rpc.UpdateApiSpecRequest{
 				ApiSpec: &rpc.ApiSpec{
 					Name:        fmt.Sprintf("%s/apis/%s/versions/v%d/specs/spec-%d", rootResource, apiId, j, j),
@@ -388,6 +407,8 @@ func BenchmarkUpdateApiSpecVersion(b *testing.B) {
 }
 
 func BenchmarkUpdateArtifact(b *testing.B) {
+	rootResource := getRootResource(b)
+
 	ctx := context.Background()
 	gapicClient, err := connection.NewClient(ctx)
 	if err != nil {
@@ -399,14 +420,11 @@ func BenchmarkUpdateArtifact(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 1; i <= b.N; i++ {
-		if i%1000 == 0 {
-			//Sleep 10s every 1000 iterations to reduce server load
-			time.Sleep(10 * time.Second)
-		}
+		pauseAfter1000Iterations(i)
 
-		apiId := getApiName(i)
+		apiId := getApiName(i, b)
 
-		for j := 1; j <= getNumberOfVersions(); j++ {
+		for j := 1; j <= loadVersionCount(b); j++ {
 			messageMimeType := "text/plain"
 			artifactId := "self-parent-link"
 			messageContents := []byte(fmt.Sprintf("Updated - %s", artifactId))
@@ -433,6 +451,8 @@ func BenchmarkUpdateArtifact(b *testing.B) {
 }
 
 func BenchmarkGetApi(b *testing.B) {
+	rootResource := getRootResource(b)
+
 	ctx := context.Background()
 	gapicClient, err := connection.NewClient(ctx)
 	if err != nil {
@@ -443,12 +463,10 @@ func BenchmarkGetApi(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 1; i <= b.N; i++ {
-		if i%1000 == 0 {
-			//Sleep 10s every 1000 iterations to reduce server load
-			time.Sleep(10 * time.Second)
-		}
+		pauseAfter1000Iterations(i)
 
-		apiId := getApiName(i)
+		apiId := getApiName(i, b)
+
 		req := &rpc.GetApiRequest{
 			Name: fmt.Sprintf("%s/apis/%s", rootResource, apiId),
 		}
@@ -462,6 +480,8 @@ func BenchmarkGetApi(b *testing.B) {
 }
 
 func BenchmarkGetApiVersion(b *testing.B) {
+	rootResource := getRootResource(b)
+
 	ctx := context.Background()
 	gapicClient, err := connection.NewClient(ctx)
 	if err != nil {
@@ -473,14 +493,11 @@ func BenchmarkGetApiVersion(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 1; i <= b.N; i++ {
-		if i%1000 == 0 {
-			//Sleep 10s every 1000 iterations to reduce server load
-			time.Sleep(10 * time.Second)
-		}
+		pauseAfter1000Iterations(i)
 
-		apiId := getApiName(i)
+		apiId := getApiName(i, b)
 
-		for j := 1; j <= getNumberOfVersions(); j++ {
+		for j := 1; j <= loadVersionCount(b); j++ {
 			versionName := fmt.Sprintf("%s/apis/%s/versions/v%d", rootResource, apiId, j)
 			req := &rpc.GetApiVersionRequest{
 				Name: versionName,
@@ -501,6 +518,8 @@ func BenchmarkGetApiVersion(b *testing.B) {
 }
 
 func BenchmarkGetApiSpec(b *testing.B) {
+	rootResource := getRootResource(b)
+
 	ctx := context.Background()
 	gapicClient, err := connection.NewClient(ctx)
 	if err != nil {
@@ -512,14 +531,11 @@ func BenchmarkGetApiSpec(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 1; i <= b.N; i++ {
-		if i%1000 == 0 {
-			//Sleep 10s every 1000 iterations to reduce server load
-			time.Sleep(10 * time.Second)
-		}
+		pauseAfter1000Iterations(i)
 
-		apiId := getApiName(i)
+		apiId := getApiName(i, b)
 
-		for j := 1; j <= getNumberOfVersions(); j++ {
+		for j := 1; j <= loadVersionCount(b); j++ {
 
 			req := &rpc.GetApiSpecRequest{
 				Name: fmt.Sprintf("%s/apis/%s/versions/v%d/specs/spec-%d", rootResource, apiId, j, j),
@@ -539,6 +555,8 @@ func BenchmarkGetApiSpec(b *testing.B) {
 	}
 }
 func BenchmarkGetApiSpecContents(b *testing.B) {
+	rootResource := getRootResource(b)
+
 	ctx := context.Background()
 	gapicClient, err := connection.NewClient(ctx)
 	if err != nil {
@@ -550,14 +568,11 @@ func BenchmarkGetApiSpecContents(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 1; i <= b.N; i++ {
-		if i%1000 == 0 {
-			//Sleep 10s every 1000 iterations to reduce server load
-			time.Sleep(10 * time.Second)
-		}
+		pauseAfter1000Iterations(i)
 
-		apiId := getApiName(i)
+		apiId := getApiName(i, b)
 
-		for j := 1; j <= getNumberOfVersions(); j++ {
+		for j := 1; j <= loadVersionCount(b); j++ {
 
 			req := &rpc.GetApiSpecContentsRequest{
 				Name: fmt.Sprintf("%s/apis/%s/versions/v%d/specs/spec-%d", rootResource, apiId, j, j),
@@ -577,6 +592,8 @@ func BenchmarkGetApiSpecContents(b *testing.B) {
 	}
 }
 func BenchmarkGetArtifact(b *testing.B) {
+	rootResource := getRootResource(b)
+
 	ctx := context.Background()
 	gapicClient, err := connection.NewClient(ctx)
 	if err != nil {
@@ -587,14 +604,11 @@ func BenchmarkGetArtifact(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 1; i <= b.N; i++ {
-		if i%1000 == 0 {
-			//Sleep 10s every 1000 iterations to reduce server load
-			time.Sleep(10 * time.Second)
-		}
+		pauseAfter1000Iterations(i)
 
-		apiId := getApiName(i)
+		apiId := getApiName(i, b)
 
-		for j := 1; j <= getNumberOfVersions(); j++ {
+		for j := 1; j <= loadVersionCount(b); j++ {
 			artifactName := fmt.Sprintf("%s/apis/%s/versions/v%d/specs/spec-%d/artifacts/self-parent-link", rootResource, apiId, j, j)
 			req := &rpc.GetArtifactRequest{
 				Name: artifactName,
@@ -615,6 +629,8 @@ func BenchmarkGetArtifact(b *testing.B) {
 }
 
 func BenchmarkDeleteArtifact(b *testing.B) {
+	rootResource := getRootResource(b)
+
 	ctx := context.Background()
 	gapicClient, err := connection.NewClient(ctx)
 	if err != nil {
@@ -625,14 +641,11 @@ func BenchmarkDeleteArtifact(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 1; i <= b.N; i++ {
-		if i%1000 == 0 {
-			//Sleep 10s every 1000 iterations to reduce server load
-			time.Sleep(10 * time.Second)
-		}
+		pauseAfter1000Iterations(i)
 
-		apiId := getApiName(i)
+		apiId := getApiName(i, b)
 
-		for j := 1; j <= getNumberOfVersions(); j++ {
+		for j := 1; j <= loadVersionCount(b); j++ {
 			artifactName := fmt.Sprintf("%s/apis/%s/versions/v%d/specs/spec-%d/artifacts/self-parent-link", rootResource, apiId, j, j)
 			req := &rpc.DeleteArtifactRequest{
 				Name: artifactName,
@@ -653,6 +666,8 @@ func BenchmarkDeleteArtifact(b *testing.B) {
 }
 
 func BenchmarkDeleteApiSpec(b *testing.B) {
+	rootResource := getRootResource(b)
+
 	ctx := context.Background()
 	gapicClient, err := connection.NewClient(ctx)
 	if err != nil {
@@ -664,14 +679,11 @@ func BenchmarkDeleteApiSpec(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 1; i <= b.N; i++ {
-		if i%1000 == 0 {
-			//Sleep 10s every 1000 iterations to reduce server load
-			time.Sleep(10 * time.Second)
-		}
+		pauseAfter1000Iterations(i)
 
-		apiId := getApiName(i)
+		apiId := getApiName(i, b)
 
-		for j := 1; j <= getNumberOfVersions(); j++ {
+		for j := 1; j <= loadVersionCount(b); j++ {
 			specName := fmt.Sprintf("%s/apis/%s/versions/v%d/specs/spec-%d", rootResource, apiId, j, j)
 			req := &rpc.DeleteApiSpecRequest{
 				Name:  specName,
@@ -694,6 +706,8 @@ func BenchmarkDeleteApiSpec(b *testing.B) {
 }
 
 func BenchmarkDeleteApiVersion(b *testing.B) {
+	rootResource := getRootResource(b)
+
 	ctx := context.Background()
 	gapicClient, err := connection.NewClient(ctx)
 	if err != nil {
@@ -704,13 +718,11 @@ func BenchmarkDeleteApiVersion(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 1; i <= b.N; i++ {
-		if i%1000 == 0 {
-			//Sleep 10s every 1000 iterations to reduce server load
-			time.Sleep(10 * time.Second)
-		}
+		pauseAfter1000Iterations(i)
 
-		apiId := getApiName(i)
-		for j := 1; j <= getNumberOfVersions(); j++ {
+		apiId := getApiName(i, b)
+
+		for j := 1; j <= loadVersionCount(b); j++ {
 			versionName := fmt.Sprintf("%s/apis/%s/versions/v%d", rootResource, apiId, j)
 			req := &rpc.DeleteApiVersionRequest{
 				Name:  versionName,
@@ -732,6 +744,8 @@ func BenchmarkDeleteApiVersion(b *testing.B) {
 }
 
 func BenchmarkDeleteApi(b *testing.B) {
+	rootResource := getRootResource(b)
+
 	ctx := context.Background()
 	gapicClient, err := connection.NewClient(ctx)
 	if err != nil {
@@ -740,12 +754,10 @@ func BenchmarkDeleteApi(b *testing.B) {
 	client := gapicClient.GrpcClient()
 
 	for i := 1; i <= b.N; i++ {
-		if i%1000 == 0 {
-			//Sleep 10s every 1000 iterations to reduce server load
-			time.Sleep(10 * time.Second)
-		}
+		pauseAfter1000Iterations(i)
 
-		apiId := getApiName(i)
+		apiId := getApiName(i, b)
+
 		apiName := fmt.Sprintf("%s/apis/%s", rootResource, apiId)
 		req := &rpc.DeleteApiRequest{Name: apiName}
 		b.StartTimer()
@@ -759,6 +771,8 @@ func BenchmarkDeleteApi(b *testing.B) {
 }
 
 func BenchmarkListApis_Pagination(b *testing.B) {
+	rootResource := getRootResource(b)
+
 	ctx := context.Background()
 	gapicClient, err := connection.NewClient(ctx)
 	if err != nil {
@@ -789,6 +803,8 @@ func BenchmarkListApis_Pagination(b *testing.B) {
 }
 
 func BenchmarkListApis_Filter(b *testing.B) {
+	rootResource := getRootResource(b)
+
 	ctx := context.Background()
 	gapicClient, err := connection.NewClient(ctx)
 	if err != nil {
@@ -797,11 +813,11 @@ func BenchmarkListApis_Filter(b *testing.B) {
 	client := gapicClient.GrpcClient()
 
 	for i := 1; i <= b.N; i++ {
-
+		apiId := getApiName(i, b)
 		req := &rpc.ListApisRequest{
 			Parent:   rootResource,
 			PageSize: 20,
-			Filter:   fmt.Sprintf("name.startsWith('%s/apis/%s')", rootResource, getApiName(i)),
+			Filter:   fmt.Sprintf("name.startsWith('%s/apis/%s')", rootResource, apiId),
 		}
 		b.StartTimer()
 		_, err := client.ListApis(ctx, req)
@@ -817,6 +833,8 @@ func BenchmarkListApis_Filter(b *testing.B) {
 }
 
 func BenchmarkListApiVersions(b *testing.B) {
+	rootResource := getRootResource(b)
+
 	ctx := context.Background()
 	gapicClient, err := connection.NewClient(ctx)
 	if err != nil {
@@ -825,7 +843,8 @@ func BenchmarkListApiVersions(b *testing.B) {
 	client := gapicClient.GrpcClient()
 
 	for i := 1; i <= b.N; i++ {
-		apiId := getApiName(i)
+		apiId := getApiName(i, b)
+
 		req := &rpc.ListApiVersionsRequest{
 			Parent: fmt.Sprintf("%s/apis/%s", rootResource, apiId),
 		}
@@ -843,6 +862,8 @@ func BenchmarkListApiVersions(b *testing.B) {
 }
 
 func BenchmarkListApiSpecs(b *testing.B) {
+	rootResource := getRootResource(b)
+
 	ctx := context.Background()
 	gapicClient, err := connection.NewClient(ctx)
 	if err != nil {
@@ -851,7 +872,8 @@ func BenchmarkListApiSpecs(b *testing.B) {
 	client := gapicClient.GrpcClient()
 
 	for i := 1; i <= b.N; i++ {
-		apiId := getApiName(i)
+		apiId := getApiName(i, b)
+
 		req := &rpc.ListApiSpecsRequest{
 			Parent: fmt.Sprintf("%s/apis/%s/versions/v%d", rootResource, apiId, 1),
 		}
@@ -869,6 +891,8 @@ func BenchmarkListApiSpecs(b *testing.B) {
 }
 
 func BenchmarkListApiSpecArtifacts(b *testing.B) {
+	rootResource := getRootResource(b)
+
 	ctx := context.Background()
 	gapicClient, err := connection.NewClient(ctx)
 	if err != nil {
@@ -877,7 +901,8 @@ func BenchmarkListApiSpecArtifacts(b *testing.B) {
 	client := gapicClient.GrpcClient()
 
 	for i := 1; i <= b.N; i++ {
-		apiId := getApiName(i)
+		apiId := getApiName(i, b)
+
 		req := &rpc.ListArtifactsRequest{
 			Parent: fmt.Sprintf("%s/apis/%s/versions/v%d/specs/spec-%d", rootResource, apiId, 1, 1),
 		}
