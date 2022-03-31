@@ -69,6 +69,35 @@ func UnzipArchiveToPath(b []byte, dest string) ([]string, error) {
 	return filenames, nil
 }
 
+// UnzipArchiveToMap will decompress a zip archive to a map.
+// May be memory intensive for large zip archives.
+func UnzipArchiveToMap(b []byte) (map[string][]byte, error) {
+	contents := make(map[string][]byte, 0)
+	r, err := zip.NewReader(bytes.NewReader(b), int64(len(b)))
+	if err != nil {
+		return contents, err
+	}
+	for _, f := range r.File {
+		if f.FileInfo().IsDir() {
+			continue
+		}
+		rc, err := f.Open()
+		if err != nil {
+			return contents, err
+		}
+		bytes, err := io.ReadAll(rc)
+		if err != nil {
+			return contents, err
+		}
+		// Close the file without defer to close before next iteration of loop
+		if err = rc.Close(); err != nil {
+			return contents, err
+		}
+		contents[f.Name] = bytes
+	}
+	return contents, nil
+}
+
 // ZipArchiveOfPath reads the contents of a path into a zip archive.
 // The specified prefix is stripped from file names in the archive.
 // Based on an example published at https://golangcode.com/create-zip-files-in-go/
