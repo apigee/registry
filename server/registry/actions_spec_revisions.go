@@ -46,7 +46,7 @@ func (s *RegistryServer) ListApiSpecRevisions(ctx context.Context, req *rpc.List
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	resp, err := db.ListSpecRevisions(ctx, parent, storage.PageOptions{
+	listing, err := db.ListSpecRevisions(ctx, parent, storage.PageOptions{
 		Size:  req.GetPageSize(),
 		Token: req.GetPageToken(),
 	})
@@ -54,7 +54,25 @@ func (s *RegistryServer) ListApiSpecRevisions(ctx context.Context, req *rpc.List
 		return nil, err
 	}
 
-	return resp, nil
+	response := &rpc.ListApiSpecRevisionsResponse{
+		ApiSpecs:      make([]*rpc.ApiSpec, len(listing.Specs)),
+		NextPageToken: listing.Token,
+	}
+
+	tags, err := db.GetSpecTags(ctx, parent)
+	if err != nil {
+		return nil, err
+	}
+
+	tagsByRev := specTagsByRevision(tags)
+	for i, spec := range listing.Specs {
+		response.ApiSpecs[i], err = spec.BasicMessage(spec.RevisionName(), tagsByRev[spec.RevisionName()])
+		if err != nil {
+			return nil, status.Error(codes.Internal, err.Error())
+		}
+	}
+
+	return response, nil
 }
 
 // DeleteApiSpecRevision handles the corresponding API request.

@@ -189,7 +189,7 @@ func (s *RegistryServer) ListApiDeployments(ctx context.Context, req *rpc.ListAp
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	resp, err := db.ListDeployments(ctx, parent, storage.PageOptions{
+	listing, err := db.ListDeployments(ctx, parent, storage.PageOptions{
 		Size:   req.GetPageSize(),
 		Filter: req.GetFilter(),
 		Token:  req.GetPageToken(),
@@ -198,7 +198,25 @@ func (s *RegistryServer) ListApiDeployments(ctx context.Context, req *rpc.ListAp
 		return nil, err
 	}
 
-	return resp, nil
+	response := &rpc.ListApiDeploymentsResponse{
+		ApiDeployments: make([]*rpc.ApiDeployment, len(listing.Deployments)),
+		NextPageToken:  listing.Token,
+	}
+
+	tags, err := db.GetDeploymentTags(ctx, parent.Deployment("-"))
+	if err != nil {
+		return nil, err
+	}
+
+	tagsByRev := deploymentTagsByRevision(tags)
+	for i, deployment := range listing.Deployments {
+		response.ApiDeployments[i], err = deployment.BasicMessage(deployment.Name(), tagsByRev[deployment.RevisionName()])
+		if err != nil {
+			return nil, status.Error(codes.Internal, err.Error())
+		}
+	}
+
+	return response, nil
 }
 
 var updateDeploymentMutex sync.Mutex
@@ -279,4 +297,20 @@ func deploymentRevisionTags(ctx context.Context, db *storage.Client, name names.
 	}
 
 	return tags, nil
+}
+
+func deploymentTagsByRevision(tags []models.DeploymentRevisionTag) map[string][]string {
+	revTags := make(map[string][]string, len(tags))
+	for _, tag := range tags {
+		rev := names.DeploymentRevision{
+			ProjectID:    tag.ProjectID,
+			ApiID:        tag.ApiID,
+			DeploymentID: tag.DeploymentID,
+			RevisionID:   tag.RevisionID,
+		}.String()
+
+		revTags[rev] = append(revTags[rev], tag.Tag)
+	}
+
+	return revTags
 }

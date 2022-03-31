@@ -154,7 +154,7 @@ func (s *RegistryServer) ListApiVersions(ctx context.Context, req *rpc.ListApiVe
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	resp, err := db.ListVersions(ctx, parent, storage.PageOptions{
+	listing, err := db.ListVersions(ctx, parent, storage.PageOptions{
 		Size:   req.GetPageSize(),
 		Filter: req.GetFilter(),
 		Token:  req.GetPageToken(),
@@ -163,7 +163,19 @@ func (s *RegistryServer) ListApiVersions(ctx context.Context, req *rpc.ListApiVe
 		return nil, err
 	}
 
-	return resp, nil
+	response := &rpc.ListApiVersionsResponse{
+		ApiVersions:   make([]*rpc.ApiVersion, len(listing.Versions)),
+		NextPageToken: listing.Token,
+	}
+
+	for i, version := range listing.Versions {
+		response.ApiVersions[i], err = version.Message()
+		if err != nil {
+			return nil, status.Error(codes.Internal, err.Error())
+		}
+	}
+
+	return response, nil
 }
 
 var updateVersionMutex sync.Mutex
