@@ -643,7 +643,7 @@ func BenchmarkListApis_Pagination(b *testing.B) {
 	for i := 1; i <= b.N; i++ {
 		req := &rpc.ListApisRequest{
 			Parent:    rootResource,
-			PageSize:  int32(b.N / 10),
+			PageSize:  20,
 			PageToken: pageToken,
 		}
 		b.StartTimer()
