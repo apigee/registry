@@ -53,7 +53,6 @@ func ExportProject(ctx context.Context, client *gapic.RegistryClient, projectNam
 	}
 
 	return core.ListArtifacts(ctx, client, projectName.Artifact(""), "", false, func(message *rpc.Artifact) error {
-		log.FromContext(ctx).Infof("Exporting %s", message.Name)
 		bytes, header, err := ExportArtifact(ctx, client, message)
 		if header.Kind == "Artifact" {
 			log.FromContext(ctx).Warnf("Skipping %s", message.Name)
