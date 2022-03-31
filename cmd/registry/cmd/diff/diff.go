@@ -126,14 +126,14 @@ func resolveSpecRevision(ctx context.Context,
 		&rpc.ListApiSpecRevisionsRequest{
 			Name: base,
 		})
-	for i := revIndex; i >= 0; i -= 1 {
+	for i := 0; i >= -revIndex; i -= 1 {
 		spec, err := it.Next()
 		if err == iterator.Done {
 			return names.SpecRevision{}, fmt.Errorf("no revision exists for index %d", -revIndex)
 		} else if err != nil {
 			return names.SpecRevision{}, err
 		}
-		if i == 0 {
+		if i == -revIndex {
 			n, err := names.ParseSpecRevision(spec.Name)
 			if err != nil {
 				return names.SpecRevision{}, err
