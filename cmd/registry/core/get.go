@@ -64,6 +64,21 @@ func GetDeployment(ctx context.Context,
 	return handler(deployment)
 }
 
+func GetDeploymentRevision(ctx context.Context,
+	client *gapic.RegistryClient,
+	name names.DeploymentRevision,
+	handler DeploymentHandler) error {
+	request := &rpc.GetApiDeploymentRequest{
+		Name: name.String(),
+	}
+	deployment, err := client.GetApiDeployment(ctx, request)
+	if err != nil {
+		return err
+	}
+
+	return handler(deployment)
+}
+
 func GetVersion(ctx context.Context,
 	client *gapic.RegistryClient,
 	name names.Version,
@@ -100,6 +115,32 @@ func GetSpec(ctx context.Context,
 		spec.MimeType = contents.GetContentType()
 	}
 
+	return handler(spec)
+}
+
+func GetSpecRevision(ctx context.Context,
+	client *gapic.RegistryClient,
+	name names.SpecRevision,
+	getContents bool,
+	handler SpecHandler) error {
+	request := &rpc.GetApiSpecRequest{
+		Name: name.String(),
+	}
+	spec, err := client.GetApiSpec(ctx, request)
+	if err != nil {
+		return err
+	}
+	if getContents {
+		request := &rpc.GetApiSpecContentsRequest{
+			Name: spec.GetName(),
+		}
+		contents, err := client.GetApiSpecContents(ctx, request)
+		if err != nil {
+			return err
+		}
+		spec.Contents = contents.GetData()
+		spec.MimeType = contents.GetContentType()
+	}
 	return handler(spec)
 }
 
