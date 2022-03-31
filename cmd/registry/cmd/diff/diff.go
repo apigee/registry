@@ -110,7 +110,7 @@ func resolveSpecRevision(ctx context.Context,
 	base string,
 	suffix string) (names.SpecRevision, error) {
 	// First try to treat the raw suffix as revision name.
-	name, err := names.ParseSpecRevision(fmt.Sprintf("%s%s", base, suffix))
+	name, err := names.ParseSpecRevision(base + suffix)
 	if err == nil {
 		return name, nil
 	}
