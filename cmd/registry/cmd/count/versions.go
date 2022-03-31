@@ -25,6 +25,7 @@ import (
 	"github.com/apigee/registry/server/registry/names"
 	"github.com/spf13/cobra"
 	"google.golang.org/api/iterator"
+	"google.golang.org/genproto/protobuf/field_mask"
 )
 
 func versionsCommand(ctx context.Context) *cobra.Command {
@@ -49,9 +50,9 @@ func versionsCommand(ctx context.Context) *cobra.Command {
 
 			// Iterate through a collection of APIs and count the number of versions of each.
 			err = core.ListAPIs(ctx, client, api, filter, func(api *rpc.Api) error {
-				taskQueue <- &countVersionsTask{
-					client:  client,
-					apiName: api.Name,
+				taskQueue <- &countApiVersionsTask{
+					client: client,
+					api:    api,
 				}
 				return nil
 			})
@@ -65,19 +66,19 @@ func versionsCommand(ctx context.Context) *cobra.Command {
 	return cmd
 }
 
-type countVersionsTask struct {
-	client  connection.Client
-	apiName string
+type countApiVersionsTask struct {
+	client connection.Client
+	api    *rpc.Api
 }
 
-func (task *countVersionsTask) String() string {
-	return "count versions " + task.apiName
+func (task *countApiVersionsTask) String() string {
+	return "count versions " + task.api.Name
 }
 
-func (task *countVersionsTask) Run(ctx context.Context) error {
+func (task *countApiVersionsTask) Run(ctx context.Context) error {
 	count := 0
 	request := &rpc.ListApiVersionsRequest{
-		Parent: task.apiName,
+		Parent: task.api.Name,
 	}
 	it := task.client.ListApiVersions(ctx, request)
 	for {
@@ -90,17 +91,17 @@ func (task *countVersionsTask) Run(ctx context.Context) error {
 			return err
 		}
 	}
-	log.Debugf(ctx, "%d\t%s", count, task.apiName)
-	subject := task.apiName
-	relation := "versionCount"
-	artifact := &rpc.Artifact{
-		Name:     subject + "/artifacts/" + relation,
-		MimeType: "text/plain",
-		Contents: []byte(fmt.Sprintf("%d", count)),
+	log.Debugf(ctx, "%d\t%s", count, task.api.Name)
+	if task.api.Labels == nil {
+		task.api.Labels = make(map[string]string, 0)
 	}
-	err := core.SetArtifact(ctx, task.client, artifact)
-	if err != nil {
-		return err
-	}
-	return nil
+	task.api.Labels["versions"] = fmt.Sprintf("%d", count)
+	_, err := task.client.UpdateApi(ctx,
+		&rpc.UpdateApiRequest{
+			Api: task.api,
+			UpdateMask: &field_mask.FieldMask{
+				Paths: []string{"labels"},
+			},
+		})
+	return err
 }

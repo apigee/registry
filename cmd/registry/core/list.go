@@ -107,6 +107,25 @@ func ListDeployments(ctx context.Context,
 	return nil
 }
 
+func ListDeploymentRevisions(ctx context.Context,
+	client *gapic.RegistryClient,
+	name names.Deployment,
+	filterFlag string,
+	handler DeploymentHandler) error {
+	it := client.ListApiDeploymentRevisions(ctx, &rpc.ListApiDeploymentRevisionsRequest{
+		Name: name.String(),
+	})
+	for r, err := it.Next(); err != iterator.Done; r, err = it.Next() {
+		if err != nil {
+			return err
+		}
+		if err := handler(r); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func ListVersions(ctx context.Context,
 	client *gapic.RegistryClient,
 	name names.Version,
@@ -150,6 +169,26 @@ func ListSpecs(ctx context.Context,
 	it := client.ListApiSpecs(ctx, &rpc.ListApiSpecsRequest{
 		Parent: name.Parent(),
 		Filter: filter,
+	})
+	for r, err := it.Next(); err != iterator.Done; r, err = it.Next() {
+		if err != nil {
+			return err
+		}
+
+		if err := handler(r); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func ListSpecRevisions(ctx context.Context,
+	client *gapic.RegistryClient,
+	name names.Spec,
+	filterFlag string,
+	handler SpecHandler) error {
+	it := client.ListApiSpecRevisions(ctx, &rpc.ListApiSpecRevisionsRequest{
+		Name: name.String(),
 	})
 	for r, err := it.Next(); err != iterator.Done; r, err = it.Next() {
 		if err != nil {
