@@ -15,11 +15,9 @@
 name: Benchmark testing
 
 on:
+  schedule:
+  - cron: '0 1 * * 6'
   push:
-    branches:
-  pull_request:
-    paths:
-    - 'server/**'
     branches:
     - main
 
