@@ -38,7 +38,7 @@ func Command(ctx context.Context) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "diff",
 		Short: "Compare resources in the registry",
-		Args:  cobra.MinimumNArgs(2),
+		Args:  cobra.ExactArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
 			client, err := connection.NewClient(ctx)
 			if err != nil {
