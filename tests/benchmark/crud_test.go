@@ -628,148 +628,6 @@ func BenchmarkGetArtifact(b *testing.B) {
 	}
 }
 
-func BenchmarkDeleteArtifact(b *testing.B) {
-	rootResource := getRootResource(b)
-
-	ctx := context.Background()
-	gapicClient, err := connection.NewClient(ctx)
-	if err != nil {
-		b.Fatalf("Setup: Failed to create client: %s", err)
-	}
-	client := gapicClient.GrpcClient()
-	b.StopTimer()
-	b.ResetTimer()
-
-	for i := 1; i <= b.N; i++ {
-		pauseAfter1000Iterations(i)
-
-		apiId := getApiName(i, b)
-
-		for j := 1; j <= loadVersionCount(b); j++ {
-			artifactName := fmt.Sprintf("%s/apis/%s/versions/v%d/specs/spec-%d/artifacts/self-parent-link", rootResource, apiId, j, j)
-			req := &rpc.DeleteArtifactRequest{
-				Name: artifactName,
-			}
-			// Only take reading for the first version
-			if j == 1 {
-				b.StartTimer()
-			}
-			_, err := client.DeleteArtifact(ctx, req)
-			if j == 1 {
-				b.StopTimer()
-			}
-			if i > 1 && err != nil {
-				b.Errorf("DeleteArtifact(%+v) returned unexpected error: %s", req, err)
-			}
-		}
-	}
-}
-
-func BenchmarkDeleteApiSpec(b *testing.B) {
-	rootResource := getRootResource(b)
-
-	ctx := context.Background()
-	gapicClient, err := connection.NewClient(ctx)
-	if err != nil {
-		b.Fatalf("Setup: Failed to create client: %s", err)
-	}
-	client := gapicClient.GrpcClient()
-
-	b.StopTimer()
-	b.ResetTimer()
-
-	for i := 1; i <= b.N; i++ {
-		pauseAfter1000Iterations(i)
-
-		apiId := getApiName(i, b)
-
-		for j := 1; j <= loadVersionCount(b); j++ {
-			specName := fmt.Sprintf("%s/apis/%s/versions/v%d/specs/spec-%d", rootResource, apiId, j, j)
-			req := &rpc.DeleteApiSpecRequest{
-				Name:  specName,
-				Force: true,
-			}
-			// Only take reading for the first version
-			if j == 1 {
-				b.StartTimer()
-			}
-			_, err := client.DeleteApiSpec(ctx, req)
-			// Only take reading for the first version
-			if j == 1 {
-				b.StopTimer()
-			}
-			if i > 1 && err != nil {
-				b.Errorf("DeleteApiSpec(%+v) returned unexpected error: %s", req, err)
-			}
-		}
-	}
-}
-
-func BenchmarkDeleteApiVersion(b *testing.B) {
-	rootResource := getRootResource(b)
-
-	ctx := context.Background()
-	gapicClient, err := connection.NewClient(ctx)
-	if err != nil {
-		b.Fatalf("Setup: Failed to create client: %s", err)
-	}
-	client := gapicClient.GrpcClient()
-	b.StopTimer()
-	b.ResetTimer()
-
-	for i := 1; i <= b.N; i++ {
-		pauseAfter1000Iterations(i)
-
-		apiId := getApiName(i, b)
-
-		for j := 1; j <= loadVersionCount(b); j++ {
-			versionName := fmt.Sprintf("%s/apis/%s/versions/v%d", rootResource, apiId, j)
-			req := &rpc.DeleteApiVersionRequest{
-				Name:  versionName,
-				Force: true,
-			}
-			// Only take reading for the first version
-			if j == 1 {
-				b.StartTimer()
-			}
-			_, err = client.DeleteApiVersion(ctx, req)
-			if j == 1 {
-				b.StopTimer()
-			}
-			if i > 1 && err != nil {
-				b.Errorf("DeleteApiVersion(%+v) returned unexpected error: %s", req, err)
-			}
-		}
-	}
-}
-
-func BenchmarkDeleteApi(b *testing.B) {
-	rootResource := getRootResource(b)
-
-	ctx := context.Background()
-	gapicClient, err := connection.NewClient(ctx)
-	if err != nil {
-		b.Fatalf("Setup: Failed to create client: %s", err)
-	}
-	client := gapicClient.GrpcClient()
-
-	for i := 1; i <= b.N; i++ {
-		pauseAfter1000Iterations(i)
-
-		apiId := getApiName(i, b)
-
-		apiName := fmt.Sprintf("%s/apis/%s", rootResource, apiId)
-		req := &rpc.DeleteApiRequest{Name: apiName}
-		b.StartTimer()
-		_, err := client.DeleteApi(ctx, req)
-		b.StopTimer()
-		if i > 1 && err != nil {
-			b.Errorf("DeleteApi(%+v) returned unexpected error: %s", req, err)
-		}
-
-	}
-}
-
 func BenchmarkListApis_Pagination(b *testing.B) {
 	rootResource := getRootResource(b)
 
@@ -916,5 +774,147 @@ func BenchmarkListApiSpecArtifacts(b *testing.B) {
 		if i > 1 && err != nil {
 			b.Errorf("ListArtifacts(%+v) returned unexpected error: %s", req, err)
 		}
+	}
+}
+
+func BenchmarkDeleteArtifact(b *testing.B) {
+	rootResource := getRootResource(b)
+
+	ctx := context.Background()
+	gapicClient, err := connection.NewClient(ctx)
+	if err != nil {
+		b.Fatalf("Setup: Failed to create client: %s", err)
+	}
+	client := gapicClient.GrpcClient()
+	b.StopTimer()
+	b.ResetTimer()
+
+	for i := 1; i <= b.N; i++ {
+		pauseAfter1000Iterations(i)
+
+		apiId := getApiName(i, b)
+
+		for j := 1; j <= loadVersionCount(b); j++ {
+			artifactName := fmt.Sprintf("%s/apis/%s/versions/v%d/specs/spec-%d/artifacts/self-parent-link", rootResource, apiId, j, j)
+			req := &rpc.DeleteArtifactRequest{
+				Name: artifactName,
+			}
+			// Only take reading for the first version
+			if j == 1 {
+				b.StartTimer()
+			}
+			_, err := client.DeleteArtifact(ctx, req)
+			if j == 1 {
+				b.StopTimer()
+			}
+			if i > 1 && err != nil {
+				b.Errorf("DeleteArtifact(%+v) returned unexpected error: %s", req, err)
+			}
+		}
+	}
+}
+
+func BenchmarkDeleteApiSpec(b *testing.B) {
+	rootResource := getRootResource(b)
+
+	ctx := context.Background()
+	gapicClient, err := connection.NewClient(ctx)
+	if err != nil {
+		b.Fatalf("Setup: Failed to create client: %s", err)
+	}
+	client := gapicClient.GrpcClient()
+
+	b.StopTimer()
+	b.ResetTimer()
+
+	for i := 1; i <= b.N; i++ {
+		pauseAfter1000Iterations(i)
+
+		apiId := getApiName(i, b)
+
+		for j := 1; j <= loadVersionCount(b); j++ {
+			specName := fmt.Sprintf("%s/apis/%s/versions/v%d/specs/spec-%d", rootResource, apiId, j, j)
+			req := &rpc.DeleteApiSpecRequest{
+				Name:  specName,
+				Force: true,
+			}
+			// Only take reading for the first version
+			if j == 1 {
+				b.StartTimer()
+			}
+			_, err := client.DeleteApiSpec(ctx, req)
+			// Only take reading for the first version
+			if j == 1 {
+				b.StopTimer()
+			}
+			if i > 1 && err != nil {
+				b.Errorf("DeleteApiSpec(%+v) returned unexpected error: %s", req, err)
+			}
+		}
+	}
+}
+
+func BenchmarkDeleteApiVersion(b *testing.B) {
+	rootResource := getRootResource(b)
+
+	ctx := context.Background()
+	gapicClient, err := connection.NewClient(ctx)
+	if err != nil {
+		b.Fatalf("Setup: Failed to create client: %s", err)
+	}
+	client := gapicClient.GrpcClient()
+	b.StopTimer()
+	b.ResetTimer()
+
+	for i := 1; i <= b.N; i++ {
+		pauseAfter1000Iterations(i)
+
+		apiId := getApiName(i, b)
+
+		for j := 1; j <= loadVersionCount(b); j++ {
+			versionName := fmt.Sprintf("%s/apis/%s/versions/v%d", rootResource, apiId, j)
+			req := &rpc.DeleteApiVersionRequest{
+				Name:  versionName,
+				Force: true,
+			}
+			// Only take reading for the first version
+			if j == 1 {
+				b.StartTimer()
+			}
+			_, err = client.DeleteApiVersion(ctx, req)
+			if j == 1 {
+				b.StopTimer()
+			}
+			if i > 1 && err != nil {
+				b.Errorf("DeleteApiVersion(%+v) returned unexpected error: %s", req, err)
+			}
+		}
+	}
+}
+
+func BenchmarkDeleteApi(b *testing.B) {
+	rootResource := getRootResource(b)
+
+	ctx := context.Background()
+	gapicClient, err := connection.NewClient(ctx)
+	if err != nil {
+		b.Fatalf("Setup: Failed to create client: %s", err)
+	}
+	client := gapicClient.GrpcClient()
+
+	for i := 1; i <= b.N; i++ {
+		pauseAfter1000Iterations(i)
+
+		apiId := getApiName(i, b)
+
+		apiName := fmt.Sprintf("%s/apis/%s", rootResource, apiId)
+		req := &rpc.DeleteApiRequest{Name: apiName}
+		b.StartTimer()
+		_, err := client.DeleteApi(ctx, req)
+		b.StopTimer()
+		if i > 1 && err != nil {
+			b.Errorf("DeleteApi(%+v) returned unexpected error: %s", req, err)
+		}
+
 	}
 }
