@@ -22,7 +22,7 @@ import (
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 type ApiData struct {
@@ -109,7 +109,7 @@ func ExportAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.A
 	if err != nil {
 		return nil, nil, err
 	}
-	b, err := yaml.Marshal(api)
+	b, err := marshalYAML(api)
 	if err != nil {
 		return nil, nil, err
 	}

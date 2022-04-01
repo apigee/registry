@@ -22,7 +22,6 @@ import (
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/rpc"
 	"google.golang.org/protobuf/proto"
-	"gopkg.in/yaml.v2"
 )
 
 type Artifact interface {
@@ -58,7 +57,7 @@ func ExportArtifact(ctx context.Context, client *gapic.RegistryClient, message *
 	if err != nil {
 		return nil, nil, err
 	}
-	b, err := yaml.Marshal(artifact)
+	b, err := marshalYAML(artifact)
 	if err != nil {
 		return nil, nil, err
 	}
