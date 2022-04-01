@@ -52,6 +52,8 @@ func Command(ctx context.Context) *cobra.Command {
 				err2 = core.GetAPI(ctx, client, api, core.PrintAPIDetail)
 			} else if deployment, err := names.ParseDeployment(name); err == nil {
 				err2 = core.GetDeployment(ctx, client, deployment, core.PrintDeploymentDetail)
+			} else if deployment, err := names.ParseDeploymentRevision(name); err == nil {
+				err2 = core.GetDeploymentRevision(ctx, client, deployment, core.PrintDeploymentDetail)
 			} else if version, err := names.ParseVersion(name); err == nil {
 				err2 = core.GetVersion(ctx, client, version, core.PrintVersionDetail)
 			} else if spec, err := names.ParseSpec(name); err == nil {
@@ -59,6 +61,12 @@ func Command(ctx context.Context) *cobra.Command {
 					err2 = core.GetSpec(ctx, client, spec, getContents, core.PrintSpecContents)
 				} else {
 					err2 = core.GetSpec(ctx, client, spec, getContents, core.PrintSpecDetail)
+				}
+			} else if spec, err := names.ParseSpecRevision(name); err == nil {
+				if getContents {
+					err2 = core.GetSpecRevision(ctx, client, spec, getContents, core.PrintSpecContents)
+				} else {
+					err2 = core.GetSpecRevision(ctx, client, spec, getContents, core.PrintSpecDetail)
 				}
 			} else if artifact, err := names.ParseArtifact(name); err == nil {
 				if getContents {
