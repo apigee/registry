@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes" />
+    <style>
+      html {
+        font-family: BlinkMacSystemFont,-apple-system,"Segoe UI",Roboto,Oxygen,Ubuntu,Cantarell,"Fira Sans","Droid Sans","Helvetica Neue",Helvetica,Arial,sans-serif;
+        -webkit-font-smoothing: antialiased;
+        background-color: #fff;
+        font-size: 16px;
+      }
+      body {
+        color: #4a4a4a;
+        margin: 8px;
+        font-size: 1em;
+        font-weight: 400;
+      }
+      header {
+        margin-bottom: 8px;
+        display: flex;
+        flex-direction: column;
+      }
+      main {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+      }
+      a {
+        color: #3273dc;
+        cursor: pointer;
+        text-decoration: none;
+      }
+      a:hover {
+        color: #000;
+      }
+      button {
+        color: #fff;
+        background-color: #3298dc;
+        border-color: transparent;
+        cursor: pointer;
+        text-align: center;
+      }
+      button:hover {
+        background-color: #2793da;
+        flex: none;
+      }
+      .spacer {
+        flex: auto;
+      }
+      .small {
+        font-size: 0.75rem;
+      }
+      footer {
+        margin-top: 16px;
+        display: flex;
+        align-items: center;
+      }
+      .header-label {
+        margin-right: 4px;
+      }
+      .benchmark-set {
+        margin: 8px 0;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+      }
+      .benchmark-title {
+        font-size: 3rem;
+        font-weight: 600;
+        word-break: break-word;
+        text-align: center;
+      }
+      .benchmark-graphs {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-around;
+        align-items: center;
+        flex-wrap: wrap;
+        width: 100%;
+      }
+      .benchmark-chart {
+        max-width: 1000px;
+      }
+    </style>
+    <title>Benchmarks</title>
+  </head>
+
+  <body>
+    <header id="header">
+      <div class="header-item">
+        <strong class="header-label">Last Update:</strong>
+        <span id="last-update"></span>
+      </div>
+      <div class="header-item">
+        <strong class="header-label">Repository:</strong>
+        <a id="repository-link" rel="noopener"></a>
+      </div>
+    </header>
+    <main id="main"></main>
+    <footer>
+      <button id="dl-button">Download data as JSON</button>
+      <div class="spacer"></div>
+      <div class="small">Powered by <a rel="noopener" href="https://github.com/marketplace/actions/continuous-benchmark">github-action-benchmark</a></div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.2/dist/Chart.min.js"></script>
+    <script src="dev/bench/data.js"></script>
+    <script id="main-script">
+      'use strict';
+      (function() {
+        // Colors from https://github.com/github/linguist/blob/master/lib/linguist/languages.yml
+        const toolColors = [
+          '#dea584',
+          '#00add8',
+          '#f1e05a',
+          '#3572a5',
+          '#f34b7d',
+          '#f34b7d',
+          '#a270ba',
+          '#178600',
+          '#38ff38',
+          '#ff3838',
+          '#59807f'
+        ];
+
+        let colorAssignments = [];
+
+        function init() {
+          function collectBenchesPerTestCase(entries) {
+            const map = new Map();
+            for (const entry of entries) {
+              const {commit, date, tool, benches} = entry;
+              for (const bench of benches) {
+                const result = { commit, date, tool, bench };
+                const arr = map.get(bench.name);
+                if (arr === undefined) {
+                  map.set(bench.name, [result]);
+                } else {
+                  arr.push(result);
+                }
+              }
+            }
+            return map;
+          }
+
+          const data = window.BENCHMARK_DATA;
+          let newEntries = []
+          Object.keys(data.entries).forEach(key => {
+            if(!colorAssignments[key]) {
+              colorAssignments[key] = toolColors.pop();
+            }
+            data.entries[key].forEach(entry => {
+              entry.benches.forEach(bench=> {
+                if(!newEntries[bench.name]) {
+                  newEntries[bench.name] = [];
+                }
+                if(!newEntries[bench.name][entry.commit.id]) {
+                  newEntries[bench.name][entry.commit.id] = {
+                    commit: entry.commit,
+                    date: entry.date,
+                    tool: entry.tool,
+                    benches: []
+                  };
+                }
+                var newbench = { ...bench };
+                newbench.name = key;
+                if(!newEntries[bench.name][entry.commit.id]['benches'][newbench.name] ||
+                    newEntries[bench.name][entry.commit.id]['benches'][newbench.name].date < newbench.date) {
+                  newEntries[bench.name][entry.commit.id]['benches'][newbench.name] = newbench
+                }
+              })
+            })
+          });
+          console.log(colorAssignments);
+          var finalEntries=[];
+          Object.keys(newEntries).forEach((key=>{
+            if(!finalEntries[key]) {
+              finalEntries[key] = [];
+            }
+            Object.keys(newEntries[key]).forEach(commit_id=>{
+              newEntries[key][commit_id].benches = Object.values(newEntries[key][commit_id].benches);
+            })
+            finalEntries[key] = Object.values(newEntries[key]);
+          }))
+          // Render header
+          document.getElementById('last-update').textContent = new Date(data.lastUpdate).toString();
+          const repoLink = document.getElementById('repository-link');
+          repoLink.href = data.repoUrl;
+          repoLink.textContent = data.repoUrl;
+
+          // Render footer
+          document.getElementById('dl-button').onclick = () => {
+            const dataUrl = 'data:,' + JSON.stringify(data, null, 2);
+            const a = document.createElement('a');
+            a.href = dataUrl;
+            a.download = 'benchmark_data.json';
+            a.click();
+          };
+          // Prepare data points for charts
+          return Object.keys(finalEntries).map(name => ({
+            name,
+            dataSet: collectBenchesPerTestCase(finalEntries[name]),
+          }));
+        }
+
+        function renderAllChars(dataSets) {
+
+          function renderGraph(parent, name, dataset) {
+            const canvas = document.createElement('canvas');
+            canvas.className = 'benchmark-chart';
+            parent.appendChild(canvas);
+            // const color = toolColors[dataset.length > 0 ? dataset[0].tool : '_'];
+            var data = {
+              labels: [],
+              datasets: [],
+            };
+            Object.keys(dataset).forEach(commit_id => {
+              data.labels.push(commit_id);
+              Object.values(dataset[commit_id]).forEach(entry=> {
+                if(!data.datasets[entry.bench.name]){
+                  data.datasets[entry.bench.name] = {
+                    label: entry.bench.name,
+                    data: [],
+                    borderColor: colorAssignments[entry.bench.name],
+                    backgroundColor: colorAssignments[entry.bench.name] + '60', // Add alpha for #rrggbbaa
+                  }
+                }
+                data.datasets[entry.bench.name].data[commit_id] = entry.bench.value;
+              })
+              Object.keys(data.datasets).forEach(key=>{
+                data.datasets[key].data = Object.values(data.datasets[key].data);
+              });
+            });
+            data.datasets = Object.values(data.datasets);
+
+            const options = {
+              scales: {
+                xAxes: [
+                  {
+                    scaleLabel: {
+                      display: true,
+                      labelString: 'commit',
+                    },
+                  }
+                ],
+                yAxes: [
+                  {
+                    scaleLabel: {
+                      display: true,
+                      labelString: dataset.length > 0 ? dataset[0].bench.unit : '',
+                    },
+                    ticks: {
+                      beginAtZero: true,
+                      callback: function(value, index, ticks) {
+                        return value/1000000 + ' ms/op';
+                      }
+                    }
+                  }
+                ],
+              },
+              // tooltips: {
+              //   callbacks: {
+              //     afterTitle: items => {
+              //       const {index} = items[0];
+              //       const data = dataset[index];
+              //       return '\n' + data.commit.message + '\n\n' + data.commit.timestamp + ' committed by @' + data.commit.committer.username + '\n';
+              //     },
+              //     label: item => {
+              //       let label = item.value;
+              //       const { range, unit } = dataset[item.index].bench;
+              //       label += ' ' + unit;
+              //       if (range) {
+              //         label += ' (' + range + ')';
+              //       }
+              //       return label;
+              //     },
+              //     afterLabel: item => {
+              //       const { extra } = dataset[item.index].bench;
+              //       return extra ? '\n' + extra : '';
+              //     }
+              //   }
+              // },
+              onClick: (_mouseEvent, activeElems) => {
+                if (activeElems.length === 0) {
+                  return;
+                }
+                // XXX: Undocumented. How can we know the index?
+                const index = activeElems[0]._index;
+                const url = dataset[index].commit.url;
+                window.open(url, '_blank');
+              },
+            };
+
+            new Chart(canvas, {
+              type: 'bar',
+              grouped: true,
+              data,
+              options,
+            });
+          }
+
+          function renderBenchSet(name, benchSet, main) {
+            const setElem = document.createElement('div');
+            setElem.className = 'benchmark-set';
+            main.appendChild(setElem);
+
+            const nameElem = document.createElement('h1');
+            nameElem.className = 'benchmark-title';
+            nameElem.textContent = name;
+            setElem.appendChild(nameElem);
+
+            const graphsElem = document.createElement('div');
+            graphsElem.className = 'benchmark-graphs';
+            setElem.appendChild(graphsElem);
+
+            // for (const [benchName, benches] of benchSet.entries()) {
+            var benches=[];
+            benchSet.forEach(value=> {
+              value.forEach(element => {
+                if(!benches[element.commit.id]) {
+                  benches[element.commit.id]=[];
+                }
+                benches[element.commit.id].push(element);
+              })
+            })
+              renderGraph(graphsElem, name, benches);
+            // }
+          }
+
+          const main = document.getElementById('main');
+          for (const {name, dataSet} of dataSets) {
+            renderBenchSet(name, dataSet, main);
+          }
+        }
+
+        renderAllChars(init()); // Start
+      })();
+    </script>
+  </body>
+</html>
