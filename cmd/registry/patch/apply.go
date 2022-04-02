@@ -20,8 +20,10 @@ import (
 	"io/fs"
 	"io/ioutil"
 	"path/filepath"
+	"strings"
 
 	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/log"
 )
 
 func Apply(ctx context.Context, client connection.Client, fileName, parent string, recursive bool) error {
@@ -39,6 +41,10 @@ func Apply(ctx context.Context, client connection.Client, fileName, parent strin
 }
 
 func applyFile(ctx context.Context, client connection.Client, fileName, parent string) error {
+	if !strings.HasSuffix(fileName, ".yaml") {
+		return nil
+	}
+	log.FromContext(ctx).Infof("Importing %s", fileName)
 	bytes, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		return err
