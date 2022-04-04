@@ -72,7 +72,7 @@ func (s *RegistryServer) createDeployment(ctx context.Context, name names.Deploy
 		return nil, err
 	}
 
-	message, err := deployment.BasicMessage(name.String(), []string{})
+	message, err := deployment.BasicMessage(name.String())
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -130,12 +130,7 @@ func (s *RegistryServer) getApiDeployment(ctx context.Context, name names.Deploy
 		return nil, err
 	}
 
-	tags, err := deploymentRevisionTags(ctx, db, name.Revision(deployment.RevisionID))
-	if err != nil {
-		return nil, err
-	}
-
-	message, err := deployment.BasicMessage(name.String(), tags)
+	message, err := deployment.BasicMessage(name.String())
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -155,12 +150,7 @@ func (s *RegistryServer) getApiDeploymentRevision(ctx context.Context, name name
 		return nil, err
 	}
 
-	tags, err := deploymentRevisionTags(ctx, db, name)
-	if err != nil {
-		return nil, err
-	}
-
-	message, err := revision.BasicMessage(name.String(), tags)
+	message, err := revision.BasicMessage(name.String())
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -203,14 +193,8 @@ func (s *RegistryServer) ListApiDeployments(ctx context.Context, req *rpc.ListAp
 		NextPageToken:  listing.Token,
 	}
 
-	tags, err := db.GetDeploymentTags(ctx, parent.Deployment("-"))
-	if err != nil {
-		return nil, err
-	}
-
-	tagsByRev := deploymentTagsByRevision(tags)
 	for i, deployment := range listing.Deployments {
-		response.ApiDeployments[i], err = deployment.BasicMessage(deployment.Name(), tagsByRev[deployment.RevisionName()])
+		response.ApiDeployments[i], err = deployment.BasicMessage(deployment.Name())
 		if err != nil {
 			return nil, status.Error(codes.Internal, err.Error())
 		}
@@ -269,48 +253,11 @@ func (s *RegistryServer) UpdateApiDeployment(ctx context.Context, req *rpc.Updat
 		return nil, err
 	}
 
-	tags, err := deploymentRevisionTags(ctx, db, name.Revision(deployment.RevisionID))
-	if err != nil {
-		return nil, err
-	}
-
-	message, err := deployment.BasicMessage(name.String(), tags)
+	message, err := deployment.BasicMessage(name.String())
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	s.notify(ctx, rpc.Notification_UPDATED, deployment.RevisionName())
 	return message, nil
-}
-
-func deploymentRevisionTags(ctx context.Context, db *storage.Client, name names.DeploymentRevision) ([]string, error) {
-	allTags, err := db.GetDeploymentTags(ctx, name.Deployment())
-	if err != nil {
-		return nil, err
-	}
-
-	tags := make([]string, 0)
-	for _, tag := range allTags {
-		if tag.RevisionID == name.RevisionID {
-			tags = append(tags, tag.Tag)
-		}
-	}
-
-	return tags, nil
-}
-
-func deploymentTagsByRevision(tags []models.DeploymentRevisionTag) map[string][]string {
-	revTags := make(map[string][]string, len(tags))
-	for _, tag := range tags {
-		rev := names.DeploymentRevision{
-			ProjectID:    tag.ProjectID,
-			ApiID:        tag.ApiID,
-			DeploymentID: tag.DeploymentID,
-			RevisionID:   tag.RevisionID,
-		}.String()
-
-		revTags[rev] = append(revTags[rev], tag.Tag)
-	}
-
-	return revTags
 }

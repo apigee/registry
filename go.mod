@@ -8,7 +8,6 @@ require (
 	github.com/apex/log v1.9.0
 	github.com/getkin/kin-openapi v0.77.0
 	github.com/ghodss/yaml v1.0.0
-	github.com/gogo/protobuf v1.3.2
 	github.com/google/cel-go v0.8.0
 	github.com/google/gnostic v0.5.7
 	github.com/google/go-cmp v0.5.6
@@ -26,7 +25,6 @@ require (
 	google.golang.org/genproto v0.0.0-20211007155348-82e027067bd4
 	google.golang.org/grpc v1.41.0
 	google.golang.org/protobuf v1.27.1
-	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 	gorm.io/driver/postgres v1.1.0
 	gorm.io/driver/sqlite v1.1.4
@@ -44,6 +42,7 @@ require (
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/subosito/gotenv v1.2.0 // indirect
 	gopkg.in/ini.v1 v1.62.0 // indirect
+	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
 
 require (
