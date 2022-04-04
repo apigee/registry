@@ -15,6 +15,7 @@
 package patch
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 
@@ -57,11 +58,12 @@ func ExportArtifact(ctx context.Context, client *gapic.RegistryClient, message *
 	if err != nil {
 		return nil, nil, err
 	}
-	b, err := marshalYAML(artifact)
+	var b bytes.Buffer
+	err = yamlEncoder(&b).Encode(artifact)
 	if err != nil {
 		return nil, nil, err
 	}
-	return b, artifact.GetHeader(), nil
+	return b.Bytes(), artifact.GetHeader(), nil
 }
 
 func applyArtifactPatch(

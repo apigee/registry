@@ -15,16 +15,14 @@
 package patch
 
 import (
-	"bytes"
+	"io"
 
 	"gopkg.in/yaml.v3"
 )
 
-// Prefer this to yaml.Marshal because it uses tighter 2-space indentation.
-func marshalYAML(a interface{}) ([]byte, error) {
-	var b bytes.Buffer
-	yamlEncoder := yaml.NewEncoder(&b)
-	yamlEncoder.SetIndent(2)
-	err := yamlEncoder.Encode(a)
-	return b.Bytes(), err
+// Prefer this encoder because it uses tighter 2-space indentation.
+func yamlEncoder(dst io.Writer) *yaml.Encoder {
+	enc := yaml.NewEncoder(dst)
+	enc.SetIndent(2)
+	return enc
 }
