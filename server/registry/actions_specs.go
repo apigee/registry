@@ -79,7 +79,7 @@ func (s *RegistryServer) createSpec(ctx context.Context, name names.Spec, body *
 		return nil, err
 	}
 
-	message, err := spec.BasicMessage(name.String(), []string{})
+	message, err := spec.BasicMessage(name.String())
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -137,12 +137,7 @@ func (s *RegistryServer) getApiSpec(ctx context.Context, name names.Spec) (*rpc.
 		return nil, err
 	}
 
-	tags, err := revisionTags(ctx, db, name.Revision(spec.RevisionID))
-	if err != nil {
-		return nil, err
-	}
-
-	message, err := spec.BasicMessage(name.String(), tags)
+	message, err := spec.BasicMessage(name.String())
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -162,12 +157,7 @@ func (s *RegistryServer) getApiSpecRevision(ctx context.Context, name names.Spec
 		return nil, err
 	}
 
-	tags, err := revisionTags(ctx, db, name)
-	if err != nil {
-		return nil, err
-	}
-
-	message, err := revision.BasicMessage(name.String(), tags)
+	message, err := revision.BasicMessage(name.String())
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -254,14 +244,8 @@ func (s *RegistryServer) ListApiSpecs(ctx context.Context, req *rpc.ListApiSpecs
 		NextPageToken: listing.Token,
 	}
 
-	tags, err := db.GetSpecTags(ctx, parent.Spec("-"))
-	if err != nil {
-		return nil, err
-	}
-
-	tagsByRev := specTagsByRevision(tags)
 	for i, spec := range listing.Specs {
-		response.ApiSpecs[i], err = spec.BasicMessage(spec.Name(), tagsByRev[spec.RevisionName()])
+		response.ApiSpecs[i], err = spec.BasicMessage(spec.Name())
 		if err != nil {
 			return nil, status.Error(codes.Internal, err.Error())
 		}
@@ -327,49 +311,11 @@ func (s *RegistryServer) UpdateApiSpec(ctx context.Context, req *rpc.UpdateApiSp
 		}
 	}
 
-	tags, err := revisionTags(ctx, db, name.Revision(spec.RevisionID))
-	if err != nil {
-		return nil, err
-	}
-
-	message, err := spec.BasicMessage(name.String(), tags)
+	message, err := spec.BasicMessage(name.String())
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	s.notify(ctx, rpc.Notification_UPDATED, spec.RevisionName())
 	return message, nil
-}
-
-func revisionTags(ctx context.Context, db *storage.Client, name names.SpecRevision) ([]string, error) {
-	allTags, err := db.GetSpecTags(ctx, name.Spec())
-	if err != nil {
-		return nil, err
-	}
-
-	tags := make([]string, 0)
-	for _, tag := range allTags {
-		if tag.RevisionID == name.RevisionID {
-			tags = append(tags, tag.Tag)
-		}
-	}
-
-	return tags, nil
-}
-
-func specTagsByRevision(tags []models.SpecRevisionTag) map[string][]string {
-	revTags := make(map[string][]string, len(tags))
-	for _, tag := range tags {
-		rev := names.SpecRevision{
-			ProjectID:  tag.ProjectID,
-			ApiID:      tag.ApiID,
-			VersionID:  tag.VersionID,
-			SpecID:     tag.SpecID,
-			RevisionID: tag.RevisionID,
-		}.String()
-
-		revTags[rev] = append(revTags[rev], tag.Tag)
-	}
-
-	return revTags
 }

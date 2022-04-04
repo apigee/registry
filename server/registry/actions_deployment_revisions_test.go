@@ -64,7 +64,7 @@ func TestTagApiDeploymentRevision(t *testing.T) {
 
 	opts := cmp.Options{
 		protocmp.Transform(),
-		protocmp.IgnoreFields(revision, "name", "revision_tags"),
+		protocmp.IgnoreFields(revision, "name"),
 	}
 
 	t.Run("response", func(t *testing.T) {
@@ -109,7 +109,7 @@ func TestTagApiDeploymentRevision(t *testing.T) {
 
 		opts := cmp.Options{
 			protocmp.Transform(),
-			protocmp.IgnoreFields(revision, "name", "revision_tags"),
+			protocmp.IgnoreFields(revision, "name"),
 		}
 
 		if !cmp.Equal(revision, got, opts) {
