@@ -15,6 +15,7 @@
 package patch
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 
@@ -22,7 +23,6 @@ import (
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/rpc"
 	"google.golang.org/protobuf/proto"
-	"gopkg.in/yaml.v2"
 )
 
 type Artifact interface {
@@ -58,11 +58,12 @@ func ExportArtifact(ctx context.Context, client *gapic.RegistryClient, message *
 	if err != nil {
 		return nil, nil, err
 	}
-	b, err := yaml.Marshal(artifact)
+	var b bytes.Buffer
+	err = yamlEncoder(&b).Encode(artifact)
 	if err != nil {
 		return nil, nil, err
 	}
-	return b, artifact.GetHeader(), nil
+	return b.Bytes(), artifact.GetHeader(), nil
 }
 
 func applyArtifactPatch(
