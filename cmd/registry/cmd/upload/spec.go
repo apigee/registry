@@ -90,7 +90,7 @@ func uploadSpecDirectory(ctx context.Context, dirname string, client *gapic.Regi
 	prefix := dirname + "/"
 	// build a zip archive with the contents of the path
 	// https://golangcode.com/create-zip-files-in-go/
-	buf, err := core.ZipArchiveOfPath(dirname, prefix)
+	buf, err := core.ZipArchiveOfPath(dirname, prefix, true)
 	if err != nil {
 		return err
 	}

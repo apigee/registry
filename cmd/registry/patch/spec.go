@@ -21,6 +21,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/apigee/registry/cmd/registry/core"
@@ -118,7 +119,15 @@ func applyApiSpecPatch(
 				return err
 			}
 			if info.IsDir() {
-				contents, err := core.ZipArchiveOfPath(path, "")
+				recursive := true
+				d := u.Query()["recursive"]
+				if d != nil && len(d) > 0 {
+					recursive, err = strconv.ParseBool(d[0])
+					if err != nil {
+						return err
+					}
+				}
+				contents, err := core.ZipArchiveOfPath(path, "", recursive)
 				if err != nil {
 					return err
 				}

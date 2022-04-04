@@ -26,17 +26,17 @@ import (
 	"github.com/apigee/registry/log"
 )
 
-func Apply(ctx context.Context, client connection.Client, fileName, parent string, recursive bool) error {
-	return filepath.WalkDir(fileName,
-		func(path string, entry fs.DirEntry, err error) error {
+func Apply(ctx context.Context, client connection.Client, path, parent string, recursive bool) error {
+	return filepath.WalkDir(path,
+		func(p string, entry fs.DirEntry, err error) error {
 			if err != nil {
 				return err
-			} else if entry.IsDir() && recursive {
+			} else if entry.IsDir() && (recursive || (p == path)) {
 				return nil // Do nothing for the directory, but still walk its contents.
 			} else if entry.IsDir() {
 				return filepath.SkipDir // Skip the directory and contents.
 			}
-			return applyFile(ctx, client, path, parent)
+			return applyFile(ctx, client, p, parent)
 		})
 }
 

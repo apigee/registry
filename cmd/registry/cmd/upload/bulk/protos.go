@@ -289,7 +289,7 @@ func (task *uploadProtoTask) fileName() string {
 
 func (task *uploadProtoTask) zipContents() ([]byte, error) {
 	prefix := task.directory + "/"
-	contents, err := core.ZipArchiveOfPath(task.path, prefix)
+	contents, err := core.ZipArchiveOfPath(task.path, prefix, true)
 	if err != nil {
 		return nil, err
 	}
