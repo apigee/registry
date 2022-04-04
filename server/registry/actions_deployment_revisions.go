@@ -59,14 +59,8 @@ func (s *RegistryServer) ListApiDeploymentRevisions(ctx context.Context, req *rp
 		NextPageToken:  listing.Token,
 	}
 
-	tags, err := db.GetDeploymentTags(ctx, parent)
-	if err != nil {
-		return nil, err
-	}
-
-	tagsByRev := deploymentTagsByRevision(tags)
 	for i, deployment := range listing.Deployments {
-		response.ApiDeployments[i], err = deployment.BasicMessage(deployment.RevisionName(), tagsByRev[deployment.RevisionName()])
+		response.ApiDeployments[i], err = deployment.BasicMessage(deployment.RevisionName())
 		if err != nil {
 			return nil, status.Error(codes.Internal, err.Error())
 		}
@@ -153,12 +147,7 @@ func (s *RegistryServer) TagApiDeploymentRevision(ctx context.Context, req *rpc.
 		return nil, err
 	}
 
-	tags, err := deploymentRevisionTags(ctx, db, name)
-	if err != nil {
-		return nil, err
-	}
-
-	message, err := revision.BasicMessage(tag.String(), tags)
+	message, err := revision.BasicMessage(tag.String())
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -197,7 +186,7 @@ func (s *RegistryServer) RollbackApiDeployment(ctx context.Context, req *rpc.Rol
 		return nil, err
 	}
 
-	message, err := rollback.BasicMessage(rollback.RevisionName(), []string{})
+	message, err := rollback.BasicMessage(rollback.RevisionName())
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
