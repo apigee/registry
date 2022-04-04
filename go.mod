@@ -8,7 +8,6 @@ require (
 	github.com/apex/log v1.9.0
 	github.com/getkin/kin-openapi v0.77.0
 	github.com/ghodss/yaml v1.0.0
-	github.com/gogo/protobuf v1.3.2
 	github.com/google/cel-go v0.8.0
 	github.com/google/gnostic v0.5.7
 	github.com/google/go-cmp v0.5.6
