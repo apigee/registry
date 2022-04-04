@@ -115,13 +115,12 @@ func (s *Deployment) RevisionName() string {
 }
 
 // BasicMessage returns the basic view of the deployment resource as an RPC message.
-func (s *Deployment) BasicMessage(name string, tags []string) (message *rpc.ApiDeployment, err error) {
+func (s *Deployment) BasicMessage(name string) (message *rpc.ApiDeployment, err error) {
 	message = &rpc.ApiDeployment{
 		Name:               name,
 		DisplayName:        s.DisplayName,
 		Description:        s.Description,
 		RevisionId:         s.RevisionID,
-		RevisionTags:       tags,
 		CreateTime:         timestamppb.New(s.CreateTime),
 		RevisionCreateTime: timestamppb.New(s.RevisionCreateTime),
 		RevisionUpdateTime: timestamppb.New(s.RevisionUpdateTime),

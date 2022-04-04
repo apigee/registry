@@ -166,26 +166,6 @@ func TestSeedRegistry(t *testing.T) {
 			},
 		},
 		{
-			desc: "spec revision tags can be created",
-			seed: []RegistryResource{
-				&rpc.ApiSpec{
-					Name: "projects/p/locations/global/apis/a/versions/v/specs/s",
-					RevisionTags: []string{
-						"first-tag",
-						"second-tag",
-					},
-				},
-			},
-			want: []string{
-				"projects/p",
-				"projects/p/locations/global/apis/a",
-				"projects/p/locations/global/apis/a/versions/v",
-				"projects/p/locations/global/apis/a/versions/v/specs/s",
-				"projects/p/locations/global/apis/a/versions/v/specs/s@first-tag",
-				"projects/p/locations/global/apis/a/versions/v/specs/s@second-tag",
-			},
-		},
-		{
 			desc: "deployment revisions can be created when attributes change",
 			seed: []RegistryResource{
 				&rpc.ApiDeployment{
@@ -206,25 +186,6 @@ func TestSeedRegistry(t *testing.T) {
 				"projects/p/locations/global/apis/a",
 				"projects/p/locations/global/apis/a/deployments/d",
 				"projects/p/locations/global/apis/a/deployments/d",
-			},
-		},
-		{
-			desc: "deployment revision tags can be created",
-			seed: []RegistryResource{
-				&rpc.ApiDeployment{
-					Name: "projects/p/locations/global/apis/a/deployments/d",
-					RevisionTags: []string{
-						"first-tag",
-						"second-tag",
-					},
-				},
-			},
-			want: []string{
-				"projects/p",
-				"projects/p/locations/global/apis/a",
-				"projects/p/locations/global/apis/a/deployments/d",
-				"projects/p/locations/global/apis/a/deployments/d@first-tag",
-				"projects/p/locations/global/apis/a/deployments/d@second-tag",
 			},
 		},
 	}
