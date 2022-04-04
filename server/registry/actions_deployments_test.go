@@ -53,9 +53,8 @@ func TestCreateApiDeployment(t *testing.T) {
 				},
 			},
 			want: &rpc.ApiDeployment{
-				Name:         "projects/my-project/locations/global/apis/a/deployments/my-deployment",
-				Description:  "My Description",
-				RevisionTags: []string{},
+				Name:        "projects/my-project/locations/global/apis/a/deployments/my-deployment",
+				Description: "My Description",
 				Labels: map[string]string{
 					"label-key": "label-value",
 				},
@@ -310,9 +309,8 @@ func TestGetApiDeployment(t *testing.T) {
 				Name: "projects/my-project/locations/global/apis/a/deployments/d",
 			},
 			want: &rpc.ApiDeployment{
-				Name:         "projects/my-project/locations/global/apis/a/deployments/d",
-				Description:  "My API Deployment",
-				RevisionTags: []string{},
+				Name:        "projects/my-project/locations/global/apis/a/deployments/d",
+				Description: "My API Deployment",
 				Labels: map[string]string{
 					"label-key": "label-value",
 				},
