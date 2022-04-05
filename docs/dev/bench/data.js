@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1649125135017,
+  "lastUpdate": 1649125150474,
   "repoUrl": "https://github.com/giteshk-org/registry",
   "entries": {
     "100 APIs 1 version(s)": [
@@ -314,6 +314,164 @@ window.BENCHMARK_DATA = {
             "value": 2831355,
             "unit": "ns/op",
             "extra": "100 times\n2 procs"
+          }
+        ]
+      }
+    ],
+    "500 APIs 1 version(s)": [
+      {
+        "commit": {
+          "author": {
+            "email": "gkoli@google.com",
+            "name": "Gitesh Koli",
+            "username": "giteshk"
+          },
+          "committer": {
+            "email": "gkoli@google.com",
+            "name": "Gitesh Koli",
+            "username": "giteshk"
+          },
+          "distinct": true,
+          "id": "fc9e86883d20171e429ee707b279bd16dfa758e7",
+          "message": "Store BenchMark results and generate visual graphs",
+          "timestamp": "2022-03-31T11:29:30-04:00",
+          "tree_id": "0be1aac1c9d408603e6a6e10db8b3ace9a9fbf2d",
+          "url": "https://github.com/giteshk-org/registry/commit/fc9e86883d20171e429ee707b279bd16dfa758e7"
+        },
+        "date": 1649125149364,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkCreateApi",
+            "value": 2903489,
+            "unit": "ns/op",
+            "extra": "500 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkCreateApiVersion",
+            "value": 2618248,
+            "unit": "ns/op",
+            "extra": "500 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkCreateApiSpec",
+            "value": 4525762,
+            "unit": "ns/op",
+            "extra": "500 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkCreateArtifact",
+            "value": 5098955,
+            "unit": "ns/op",
+            "extra": "500 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkUpdateApi",
+            "value": 3448155,
+            "unit": "ns/op",
+            "extra": "500 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkUpdateApiVersion",
+            "value": 2404320,
+            "unit": "ns/op",
+            "extra": "500 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkUpdateApiSpecVersion",
+            "value": 2745782,
+            "unit": "ns/op",
+            "extra": "500 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkUpdateArtifact",
+            "value": 3738957,
+            "unit": "ns/op",
+            "extra": "500 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkGetApi",
+            "value": 803756,
+            "unit": "ns/op",
+            "extra": "500 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkGetApiVersion",
+            "value": 894251,
+            "unit": "ns/op",
+            "extra": "500 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkGetApiSpec",
+            "value": 1247325,
+            "unit": "ns/op",
+            "extra": "500 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkGetApiSpecContents",
+            "value": 1469457,
+            "unit": "ns/op",
+            "extra": "500 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkGetArtifact",
+            "value": 781618,
+            "unit": "ns/op",
+            "extra": "500 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkListApis_Pagination",
+            "value": 4787440,
+            "unit": "ns/op",
+            "extra": "500 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkListApis_Filter",
+            "value": 11666225,
+            "unit": "ns/op",
+            "extra": "500 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkListApiVersions",
+            "value": 1133955,
+            "unit": "ns/op",
+            "extra": "500 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkListApiSpecs",
+            "value": 1768021,
+            "unit": "ns/op",
+            "extra": "500 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkListApiSpecArtifacts",
+            "value": 1462327,
+            "unit": "ns/op",
+            "extra": "500 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDeleteArtifact",
+            "value": 4951243,
+            "unit": "ns/op",
+            "extra": "500 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDeleteApiSpec",
+            "value": 3672654,
+            "unit": "ns/op",
+            "extra": "500 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDeleteApiVersion",
+            "value": 2976997,
+            "unit": "ns/op",
+            "extra": "500 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDeleteApi",
+            "value": 3347025,
+            "unit": "ns/op",
+            "extra": "500 times\n2 procs"
           }
         ]
       }
