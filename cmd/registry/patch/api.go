@@ -15,6 +15,7 @@
 package patch
 
 import (
+	"bytes"
 	"context"
 
 	"github.com/apigee/registry/cmd/registry/core"
@@ -22,7 +23,7 @@ import (
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 type ApiData struct {
@@ -109,11 +110,12 @@ func ExportAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.A
 	if err != nil {
 		return nil, nil, err
 	}
-	b, err := yaml.Marshal(api)
+	var b bytes.Buffer
+	err = yamlEncoder(&b).Encode(api)
 	if err != nil {
 		return nil, nil, err
 	}
-	return b, &api.Header, nil
+	return b.Bytes(), &api.Header, nil
 }
 
 // TODO: These functions assume that their arguments are valid names and fail the export if they aren't.
