@@ -121,7 +121,7 @@ func applyApiSpecPatch(
 			if info.IsDir() {
 				recursive := true
 				d := u.Query()["recursive"]
-				if d != nil && len(d) > 0 {
+				if len(d) > 0 {
 					recursive, err = strconv.ParseBool(d[0])
 					if err != nil {
 						return err
