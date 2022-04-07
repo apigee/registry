@@ -31,13 +31,14 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func artifactCommand(ctx context.Context) *cobra.Command {
+func artifactCommand() *cobra.Command {
 	var parent string
 	cmd := &cobra.Command{
 		Use:   "artifact FILE_PATH --parent=value",
 		Short: "Upload an artifact",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
+			ctx := cmd.Context()
 			artifactFilePath := args[0]
 			if artifactFilePath == "" {
 				log.Fatal(ctx, "Please provide a FILE_PATH for an artifact")

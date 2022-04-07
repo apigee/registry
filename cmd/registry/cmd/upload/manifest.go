@@ -15,7 +15,6 @@
 package upload
 
 import (
-	"context"
 	"fmt"
 	"io/ioutil"
 
@@ -48,13 +47,14 @@ func readManifestProto(filename string) (*rpc.Manifest, error) {
 	return m, nil
 }
 
-func manifestCommand(ctx context.Context) *cobra.Command {
+func manifestCommand() *cobra.Command {
 	var projectID string
 	cmd := &cobra.Command{
 		Use:   "manifest FILE_PATH --project-id=value",
 		Short: "Upload a dependency manifest",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
+			ctx := cmd.Context()
 			manifestPath := args[0]
 			if manifestPath == "" {
 				log.Fatal(ctx, "Please provide manifest-path")

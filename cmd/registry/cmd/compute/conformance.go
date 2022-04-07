@@ -29,7 +29,7 @@ import (
 
 const styleguideFilter = "mime_type.contains('google.cloud.apigeeregistry.applications.v1alpha1.StyleGuide')"
 
-func conformanceCommand(ctx context.Context) *cobra.Command {
+func conformanceCommand() *cobra.Command {
 	var filter string
 
 	cmd := &cobra.Command{
@@ -37,6 +37,7 @@ func conformanceCommand(ctx context.Context) *cobra.Command {
 		Short: "Compute lint results for API specs",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
+			ctx := cmd.Context()
 			client, err := connection.NewClient(ctx)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")

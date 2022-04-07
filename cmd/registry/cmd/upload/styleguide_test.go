@@ -101,7 +101,7 @@ func TestStyleGuideUpload(t *testing.T) {
 				t.Fatalf("Failed to create project %s: %s", test.project, err.Error())
 			}
 
-			cmd := Command(ctx)
+			cmd := Command()
 			args := []string{"styleguide", test.filePath, "--project-id", test.project}
 			cmd.SetArgs(args)
 			if err = cmd.Execute(); err != nil {

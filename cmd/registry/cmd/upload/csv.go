@@ -33,7 +33,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func csvCommand(ctx context.Context) *cobra.Command {
+func csvCommand() *cobra.Command {
 	var (
 		projectID string
 		delimiter string
@@ -44,6 +44,7 @@ func csvCommand(ctx context.Context) *cobra.Command {
 		Short: "Upload API specs from a CSV file",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
+			ctx := cmd.Context()
 			if len(delimiter) != 1 {
 				log.Fatalf(ctx, "Invalid delimiter %q: must be exactly one character", delimiter)
 			}

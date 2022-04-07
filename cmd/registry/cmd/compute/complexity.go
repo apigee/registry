@@ -32,12 +32,13 @@ import (
 	oas3 "github.com/google/gnostic/openapiv3"
 )
 
-func complexityCommand(ctx context.Context) *cobra.Command {
+func complexityCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "complexity",
 		Short: "Compute complexity metrics of API specs",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
+			ctx := cmd.Context()
 			filter, err := cmd.Flags().GetString("filter")
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get filter from flags")

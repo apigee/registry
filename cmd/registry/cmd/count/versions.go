@@ -28,13 +28,14 @@ import (
 	"google.golang.org/genproto/protobuf/field_mask"
 )
 
-func versionsCommand(ctx context.Context) *cobra.Command {
+func versionsCommand() *cobra.Command {
 	var filter string
 	cmd := &cobra.Command{
 		Use:   "versions",
 		Short: "Count the number of versions of specified APIs",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
+			ctx := cmd.Context()
 			client, err := connection.NewClient(ctx)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
