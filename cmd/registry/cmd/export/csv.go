@@ -15,7 +15,6 @@
 package export
 
 import (
-	"context"
 	"encoding/csv"
 	"fmt"
 
@@ -34,7 +33,7 @@ type exportCSVRow struct {
 	ContentsPath string
 }
 
-func csvCommand(ctx context.Context) *cobra.Command {
+func csvCommand() *cobra.Command {
 	var filter string
 	cmd := &cobra.Command{
 		Use:   "csv [--filter expression] parent ...",
@@ -49,6 +48,7 @@ func csvCommand(ctx context.Context) *cobra.Command {
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
+			ctx := cmd.Context()
 			client, err := connection.NewClient(ctx)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")

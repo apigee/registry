@@ -421,13 +421,13 @@ func TestConformance(t *testing.T) {
 
 			// Upload the styleguide to registry
 			args := []string{"styleguide", test.conformancePath, "--project-id=" + testProject}
-			uploadCmd := upload.Command(ctx)
+			uploadCmd := upload.Command()
 			uploadCmd.SetArgs(args)
 			if err = uploadCmd.Execute(); err != nil {
 				t.Fatalf("Failed to upload the styleguide: %s", err)
 			}
 
-			conformanceCmd := conformanceCommand(ctx)
+			conformanceCmd := conformanceCommand()
 
 			args = []string{spec.Name}
 			conformanceCmd.SetArgs(args)

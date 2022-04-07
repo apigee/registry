@@ -15,8 +15,6 @@
 package vocabulary
 
 import (
-	"context"
-
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/log"
@@ -24,12 +22,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func differenceCommand(ctx context.Context) *cobra.Command {
+func differenceCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "difference",
 		Short: "Compute the difference of specified API vocabularies",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
+			ctx := cmd.Context()
 			filter, err := cmd.Flags().GetString("filter")
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get filter from flags")

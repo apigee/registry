@@ -231,13 +231,13 @@ func TestResolve(t *testing.T) {
 
 			// Upload the manifest to registry
 			args := []string{"manifest", test.manifestPath, "--project-id=" + testProject}
-			uploadCmd := upload.Command(ctx)
+			uploadCmd := upload.Command()
 			uploadCmd.SetArgs(args)
 			if err = uploadCmd.Execute(); err != nil {
 				t.Fatalf("Failed to upload the manifest: %s", err)
 			}
 
-			resolveCmd := Command(ctx)
+			resolveCmd := Command()
 
 			args = []string{"projects/" + testProject + "/locations/global/artifacts/test-manifest"}
 			if test.dryRun {

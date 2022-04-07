@@ -24,15 +24,15 @@ import (
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"github.com/spf13/cobra"
-	"golang.org/x/net/context"
 )
 
-func yamlCommand(ctx context.Context) *cobra.Command {
+func yamlCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "yaml",
 		Short: "Export a subtree of the registry to a YAML file",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
+			ctx := cmd.Context()
 			client, err := connection.NewClient(ctx)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
