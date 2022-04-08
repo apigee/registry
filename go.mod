@@ -19,7 +19,6 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/tufin/oasdiff v1.0.6
 	github.com/yoheimuta/go-protoparser/v4 v4.4.0
-	golang.org/x/net v0.0.0-20211007125505-59d4e928ea9d
 	golang.org/x/oauth2 v0.0.0-20211005180243-6b3c2da341f1
 	google.golang.org/api v0.58.0
 	google.golang.org/genproto v0.0.0-20211007155348-82e027067bd4
@@ -41,6 +40,7 @@ require (
 	github.com/spf13/cast v1.3.1 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/subosito/gotenv v1.2.0 // indirect
+	golang.org/x/net v0.0.0-20211007125505-59d4e928ea9d // indirect
 	gopkg.in/ini.v1 v1.62.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
