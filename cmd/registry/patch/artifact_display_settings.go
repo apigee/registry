@@ -52,7 +52,7 @@ func newDisplaySettings(message *rpc.Artifact) (*Artifact, error) {
 	if err != nil {
 		return nil, err
 	}
-	referenceList := &Artifact{
+	return &Artifact{
 		Header: Header{
 			ApiVersion: RegistryV1,
 			Kind:       "DisplaySettings",
@@ -66,6 +66,5 @@ func newDisplaySettings(message *rpc.Artifact) (*Artifact, error) {
 			ApiGuideEnabled: value.ApiGuideEnabled,
 			ApiScoreEnabled: value.ApiScoreEnabled,
 		},
-	}
-	return referenceList, nil
+	}, nil
 }

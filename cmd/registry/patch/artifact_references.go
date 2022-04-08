@@ -74,11 +74,17 @@ func newReferenceList(message *rpc.Artifact) (*Artifact, error) {
 	if err != nil {
 		return nil, err
 	}
-	referenceListData := &ReferenceListData{
-		DisplayName: value.DisplayName,
-		Description: value.Description,
+	refs := make([]Reference, len(value.References))
+	for i, ref := range value.References {
+		refs[i] = Reference{
+			ID:          ref.Id,
+			DisplayName: ref.DisplayName,
+			Category:    ref.Category,
+			Resource:    ref.Resource,
+			URI:         ref.Uri,
+		}
 	}
-	referenceList := &Artifact{
+	return &Artifact{
 		Header: Header{
 			ApiVersion: RegistryV1,
 			Kind:       "ReferenceList",
@@ -86,17 +92,10 @@ func newReferenceList(message *rpc.Artifact) (*Artifact, error) {
 				Name: artifactName.ArtifactID(),
 			},
 		},
-		Data: referenceListData,
-	}
-	for _, t := range value.References {
-		reference := Reference{
-			ID:          t.Id,
-			DisplayName: t.DisplayName,
-			Category:    t.Category,
-			Resource:    t.Resource,
-			URI:         t.Uri,
-		}
-		referenceListData.References = append(referenceListData.References, reference)
-	}
-	return referenceList, nil
+		Data: &ReferenceListData{
+			DisplayName: value.DisplayName,
+			Description: value.Description,
+			References:  refs,
+		},
+	}, nil
 }

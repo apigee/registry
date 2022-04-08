@@ -26,7 +26,7 @@ func newUnknownArtifact(message *rpc.Artifact) (*Artifact, error) {
 	if err != nil {
 		return nil, err
 	}
-	artifact := &Artifact{
+	return &Artifact{
 		Header: Header{
 			ApiVersion: RegistryV1,
 			Kind:       "Artifact",
@@ -34,6 +34,5 @@ func newUnknownArtifact(message *rpc.Artifact) (*Artifact, error) {
 				Name: artifactName.ArtifactID(),
 			},
 		},
-	}
-	return artifact, nil
+	}, nil
 }

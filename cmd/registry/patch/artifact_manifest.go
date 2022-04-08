@@ -88,11 +88,24 @@ func newManifest(message *rpc.Artifact) (*Artifact, error) {
 	if err != nil {
 		return nil, err
 	}
-	manifestData := &ManifestData{
-		DisplayName: value.DisplayName,
-		Description: value.Description,
+	generatedResources := make([]*ManifestGeneratedResource, len(value.GeneratedResources))
+	for i, g := range value.GeneratedResources {
+		dependencies := make([]*ManifestDependency, len(g.Dependencies))
+		for j, d := range g.Dependencies {
+			dependencies[j] = &ManifestDependency{
+				Pattern: d.Pattern,
+				Filter:  d.Filter,
+			}
+		}
+		generatedResources[i] = &ManifestGeneratedResource{
+			Pattern:      g.Pattern,
+			Filter:       g.Filter,
+			Receipt:      g.Receipt,
+			Dependencies: dependencies,
+			Action:       g.Action,
+		}
 	}
-	manifest := &Artifact{
+	return &Artifact{
 		Header: Header{
 			ApiVersion: RegistryV1,
 			Kind:       "Manifest",
@@ -100,26 +113,10 @@ func newManifest(message *rpc.Artifact) (*Artifact, error) {
 				Name: artifactName.ArtifactID(),
 			},
 		},
-		Data: manifestData,
-	}
-	for _, g := range value.GeneratedResources {
-		dependencies := make([]*ManifestDependency, 0)
-		for _, d := range g.Dependencies {
-			dependencies = append(dependencies,
-				&ManifestDependency{
-					Pattern: d.Pattern,
-					Filter:  d.Filter,
-				})
-		}
-		manifestData.GeneratedResources = append(
-			manifestData.GeneratedResources,
-			&ManifestGeneratedResource{
-				Pattern:      g.Pattern,
-				Filter:       g.Filter,
-				Receipt:      g.Receipt,
-				Dependencies: dependencies,
-				Action:       g.Action,
-			})
-	}
-	return manifest, nil
+		Data: &ManifestData{
+			DisplayName:        value.DisplayName,
+			Description:        value.Description,
+			GeneratedResources: generatedResources,
+		},
+	}, nil
 }

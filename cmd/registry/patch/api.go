@@ -47,7 +47,61 @@ func newApi(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api)
 	if err != nil {
 		return nil, err
 	}
-	api := &Api{
+	recommendedVersion, err := relativeVersionName(apiName, message.RecommendedVersion)
+	if err != nil {
+		return nil, err
+	}
+	recommendedDeployment, err := relativeDeploymentName(apiName, message.RecommendedDeployment)
+	if err != nil {
+		return nil, err
+	}
+	versions := make([]*ApiVersion, 0)
+	if err = core.ListVersions(ctx, client, apiName.Version("-"), "", func(message *rpc.ApiVersion) error {
+		var version *ApiVersion
+		version, err := newApiVersion(ctx, client, message)
+		if err != nil {
+			return err
+		}
+		// unset these because they can be inferred
+		version.ApiVersion = ""
+		version.Kind = ""
+		versions = append(versions, version)
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	deployments := make([]*ApiDeployment, 0)
+	if err = core.ListDeployments(ctx, client, apiName.Deployment("-"), "", func(message *rpc.ApiDeployment) error {
+		var deployment *ApiDeployment
+		deployment, err = newApiDeployment(ctx, client, message)
+		if err != nil {
+			return err
+		}
+		// unset these because they can be inferred
+		deployment.ApiVersion = ""
+		deployment.Kind = ""
+		deployments = append(deployments, deployment)
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	artifacts := make([]*Artifact, 0)
+	if err = core.ListArtifacts(ctx, client, apiName.Artifact("-"), "", true, func(message *rpc.Artifact) error {
+		var artifact *Artifact
+		artifact, err = newArtifact(message)
+		if err != nil {
+			return err
+		}
+		// skip unsupported artifact types, "Artifact" is the generic type
+		if artifact.Kind != "Artifact" {
+			artifact.ApiVersion = ""
+			artifacts = append(artifacts, artifact)
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	return &Api{
 		Header: Header{
 			ApiVersion: RegistryV1,
 			Kind:       "API",
@@ -58,66 +112,16 @@ func newApi(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api)
 			},
 		},
 		Data: ApiData{
-			DisplayName:  message.DisplayName,
-			Description:  message.Description,
-			Availability: message.Availability,
+			DisplayName:           message.DisplayName,
+			Description:           message.Description,
+			Availability:          message.Availability,
+			RecommendedVersion:    recommendedVersion,
+			RecommendedDeployment: recommendedDeployment,
+			ApiVersions:           versions,
+			ApiDeployments:        deployments,
+			Artifacts:             artifacts,
 		},
-	}
-	api.Data.RecommendedVersion, err = relativeVersionName(apiName, message.RecommendedVersion)
-	if err != nil {
-		return nil, err
-	}
-	api.Data.RecommendedDeployment, err = relativeDeploymentName(apiName, message.RecommendedDeployment)
-	if err != nil {
-		return nil, err
-	}
-
-	err = core.ListVersions(ctx, client, apiName.Version("-"), "", func(message *rpc.ApiVersion) error {
-		var version *ApiVersion
-		version, err := newApiVersion(ctx, client, message)
-		if err != nil {
-			return err
-		}
-
-		// unset these because they can be inferred
-		version.ApiVersion = ""
-		version.Kind = ""
-		api.Data.ApiVersions = append(api.Data.ApiVersions, version)
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	err = core.ListDeployments(ctx, client, apiName.Deployment("-"), "", func(message *rpc.ApiDeployment) error {
-		var deployment *ApiDeployment
-		deployment, err = newApiDeployment(ctx, client, message)
-		if err != nil {
-			return err
-		}
-
-		// unset these because they can be inferred
-		deployment.ApiVersion = ""
-		deployment.Kind = ""
-		api.Data.ApiDeployments = append(api.Data.ApiDeployments, deployment)
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	return api, core.ListArtifacts(ctx, client, apiName.Artifact("-"), "", true, func(message *rpc.Artifact) error {
-		var artifact *Artifact
-		artifact, err = newArtifact(message)
-		if err != nil {
-			return err
-		}
-		// skip unsupported artifact types, "Artifact" is the generic type
-		if artifact.Kind != "Artifact" {
-			artifact.ApiVersion = ""
-			api.Data.Artifacts = append(api.Data.Artifacts, artifact)
-		}
-		return nil
-	})
+	}, err
 }
 
 // ExportAPI allows an API to be individually exported as a YAML file.

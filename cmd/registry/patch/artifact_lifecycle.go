@@ -72,22 +72,17 @@ func newLifecycle(message *rpc.Artifact) (*Artifact, error) {
 	if err != nil {
 		return nil, err
 	}
-	lifecycleData := &LifecycleData{
-		DisplayName: value.DisplayName,
-		Description: value.Description,
+	stages := make([]*LifecycleStage, len(value.Stages))
+	for i, s := range value.Stages {
+		stages[i] = &LifecycleStage{
+			ID:           s.Id,
+			DisplayName:  s.DisplayName,
+			Description:  s.Description,
+			URL:          s.Url,
+			DisplayOrder: int(s.DisplayOrder),
+		}
 	}
-	for _, s := range value.Stages {
-		lifecycleData.Stages = append(
-			lifecycleData.Stages,
-			&LifecycleStage{
-				ID:           s.Id,
-				DisplayName:  s.DisplayName,
-				Description:  s.Description,
-				URL:          s.Url,
-				DisplayOrder: int(s.DisplayOrder),
-			})
-	}
-	lifecycle := &Artifact{
+	return &Artifact{
 		Header: Header{
 			ApiVersion: RegistryV1,
 			Kind:       "Lifecycle",
@@ -95,7 +90,10 @@ func newLifecycle(message *rpc.Artifact) (*Artifact, error) {
 				Name: artifactName.ArtifactID(),
 			},
 		},
-		Data: lifecycleData,
-	}
-	return lifecycle, nil
+		Data: &LifecycleData{
+			DisplayName: value.DisplayName,
+			Description: value.Description,
+			Stages:      stages,
+		},
+	}, nil
 }

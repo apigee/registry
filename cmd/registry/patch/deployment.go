@@ -63,7 +63,11 @@ func newApiDeployment(ctx context.Context, client *gapic.RegistryClient, message
 	if err != nil {
 		return nil, err
 	}
-	deployment := &ApiDeployment{
+	revisionName, err := relativeSpecRevisionName(deploymentName.Api(), message.ApiSpecRevision)
+	if err != nil {
+		return nil, err
+	}
+	return &ApiDeployment{
 		Header: Header{
 			ApiVersion: RegistryV1,
 			Kind:       "ApiDeployment",
@@ -80,13 +84,9 @@ func newApiDeployment(ctx context.Context, client *gapic.RegistryClient, message
 			ExternalChannelURI: message.ExternalChannelUri,
 			IntendedAudience:   message.IntendedAudience,
 			AccessGuidance:     message.AccessGuidance,
+			ApiSpecRevision:    revisionName,
 		},
-	}
-	deployment.Data.ApiSpecRevision, err = relativeSpecRevisionName(deploymentName.Api(), message.ApiSpecRevision)
-	if err != nil {
-		return nil, err
-	}
-	return deployment, nil
+	}, nil
 }
 
 func applyApiDeploymentPatch(

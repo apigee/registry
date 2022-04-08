@@ -48,7 +48,7 @@ func newApiSpec(ctx context.Context, client *gapic.RegistryClient, message *rpc.
 	if err != nil {
 		return nil, err
 	}
-	spec := &ApiSpec{
+	return &ApiSpec{
 		Header: Header{
 			ApiVersion: RegistryV1,
 			Kind:       "ApiSpec",
@@ -64,8 +64,7 @@ func newApiSpec(ctx context.Context, client *gapic.RegistryClient, message *rpc.
 			MimeType:    message.MimeType,
 			SourceURI:   message.SourceUri,
 		},
-	}
-	return spec, nil
+	}, nil
 }
 
 func applyApiSpecPatch(

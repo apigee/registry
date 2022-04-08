@@ -100,31 +100,17 @@ func newTaxonomyList(message *rpc.Artifact) (*Artifact, error) {
 	if err != nil {
 		return nil, err
 	}
-	taxonomyListData := &TaxonomyListData{
-		DisplayName: value.DisplayName,
-		Description: value.Description,
-	}
-	taxonomyList := &Artifact{
-		Header: Header{
-			ApiVersion: RegistryV1,
-			Kind:       "TaxonomyList",
-			Metadata: Metadata{
-				Name: artifactName.ArtifactID(),
-			},
-		},
-		Data: taxonomyListData,
-	}
-	for _, t := range value.Taxonomies {
-		elements := make([]TaxonomyElement, 0)
-		for _, e := range t.Elements {
-			elements = append(elements,
-				TaxonomyElement{
-					ID:          e.Id,
-					DisplayName: e.DisplayName,
-					Description: e.Description,
-				})
+	taxonomies := make([]Taxonomy, len(value.Taxonomies))
+	for i, t := range value.Taxonomies {
+		elements := make([]TaxonomyElement, len(t.Elements))
+		for j, e := range t.Elements {
+			elements[j] = TaxonomyElement{
+				ID:          e.Id,
+				DisplayName: e.DisplayName,
+				Description: e.Description,
+			}
 		}
-		taxonomy := Taxonomy{
+		taxonomies[i] = Taxonomy{
 			ID:              t.Id,
 			DisplayName:     t.DisplayName,
 			Description:     t.Description,
@@ -135,7 +121,19 @@ func newTaxonomyList(message *rpc.Artifact) (*Artifact, error) {
 			DisplayOrder:    int(t.DisplayOrder),
 			Elements:        elements,
 		}
-		taxonomyListData.Taxonomies = append(taxonomyListData.Taxonomies, taxonomy)
 	}
-	return taxonomyList, nil
+	return &Artifact{
+		Header: Header{
+			ApiVersion: RegistryV1,
+			Kind:       "TaxonomyList",
+			Metadata: Metadata{
+				Name: artifactName.ArtifactID(),
+			},
+		},
+		Data: &TaxonomyListData{
+			DisplayName: value.DisplayName,
+			Description: value.Description,
+			Taxonomies:  taxonomies,
+		},
+	}, nil
 }

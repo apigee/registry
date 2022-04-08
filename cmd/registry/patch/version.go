@@ -42,7 +42,23 @@ func newApiVersion(ctx context.Context, client *gapic.RegistryClient, message *r
 	if err != nil {
 		return nil, err
 	}
-	version := &ApiVersion{
+
+	specs := make([]*ApiSpec, 0)
+	if err = core.ListSpecs(ctx, client, versionName.Spec("-"), "", func(message *rpc.ApiSpec) error {
+		spec, err := newApiSpec(ctx, client, message)
+		if err != nil {
+			return err
+		}
+		// unset these because they can be inferred
+		spec.ApiVersion = ""
+		spec.Kind = ""
+		specs = append(specs, spec)
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	return &ApiVersion{
 		Header: Header{
 			ApiVersion: RegistryV1,
 			Kind:       "ApiVersion",
@@ -56,22 +72,9 @@ func newApiVersion(ctx context.Context, client *gapic.RegistryClient, message *r
 			DisplayName: message.DisplayName,
 			Description: message.Description,
 			State:       message.State,
+			ApiSpecs:    specs,
 		},
-	}
-
-	return version, core.ListSpecs(ctx, client, versionName.Spec("-"), "", func(message *rpc.ApiSpec) error {
-		var spec *ApiSpec
-		spec, err = newApiSpec(ctx, client, message)
-		if err != nil {
-			return err
-		}
-
-		// unset these because they can be inferred
-		spec.ApiVersion = ""
-		spec.Kind = ""
-		version.Data.ApiSpecs = append(version.Data.ApiSpecs, spec)
-		return nil
-	})
+	}, nil
 }
 
 func applyApiVersionPatch(
