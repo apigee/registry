@@ -52,8 +52,7 @@ func artifactCommand() *cobra.Command {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
 			log.Debugf(ctx, "Uploading %s", artifact.Name)
-			err = core.SetArtifact(ctx, client, artifact)
-			if err != nil {
+			if err = core.SetArtifact(ctx, client, artifact); err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to save artifact")
 			}
 		},
@@ -75,8 +74,7 @@ func buildArtifact(ctx context.Context, parent string, filename string) (*rpc.Ar
 		Kind string `yaml:"kind"`
 	}
 	var header ArtifactHeader
-	err = yaml.Unmarshal(yamlBytes, &header)
-	if err != nil {
+	if err = yaml.Unmarshal(yamlBytes, &header); err != nil {
 		return nil, err
 	}
 
@@ -108,8 +106,7 @@ func buildArtifact(ctx context.Context, parent string, filename string) (*rpc.Ar
 
 func buildDisplaySettingsArtifact(ctx context.Context, jsonBytes []byte) (*rpc.Artifact, error) {
 	m := &rpc.DisplaySettings{}
-	err := protojson.Unmarshal(jsonBytes, m)
-	if err != nil {
+	if err := protojson.Unmarshal(jsonBytes, m); err != nil {
 		return nil, err
 	}
 	artifactBytes, err := proto.Marshal(m)
@@ -124,8 +121,7 @@ func buildDisplaySettingsArtifact(ctx context.Context, jsonBytes []byte) (*rpc.A
 
 func buildLifecycleArtifact(ctx context.Context, jsonBytes []byte) (*rpc.Artifact, error) {
 	m := &rpc.Lifecycle{}
-	err := protojson.Unmarshal(jsonBytes, m)
-	if err != nil {
+	if err := protojson.Unmarshal(jsonBytes, m); err != nil {
 		return nil, err
 	}
 	artifactBytes, err := proto.Marshal(m)
@@ -140,13 +136,12 @@ func buildLifecycleArtifact(ctx context.Context, jsonBytes []byte) (*rpc.Artifac
 
 func buildManifestArtifact(ctx context.Context, parent string, jsonBytes []byte) (*rpc.Artifact, error) {
 	m := &rpc.Manifest{}
-	err := protojson.Unmarshal(jsonBytes, m)
-	if err != nil {
+	if err := protojson.Unmarshal(jsonBytes, m); err != nil {
 		return nil, err
 	}
 	errs := controller.ValidateManifest(ctx, parent, m)
 	if count := len(errs); count > 0 {
-		for _, err = range errs {
+		for _, err := range errs {
 			log.FromContext(ctx).WithError(err).Error("Manifest error")
 		}
 		return nil, fmt.Errorf("manifest definition contains %d error(s): see logs for details", count)
@@ -163,8 +158,7 @@ func buildManifestArtifact(ctx context.Context, parent string, jsonBytes []byte)
 
 func buildReferenceListArtifact(ctx context.Context, jsonBytes []byte) (*rpc.Artifact, error) {
 	m := &rpc.ReferenceList{}
-	err := protojson.Unmarshal(jsonBytes, m)
-	if err != nil {
+	if err := protojson.Unmarshal(jsonBytes, m); err != nil {
 		return nil, err
 	}
 	artifactBytes, err := proto.Marshal(m)
@@ -179,8 +173,7 @@ func buildReferenceListArtifact(ctx context.Context, jsonBytes []byte) (*rpc.Art
 
 func buildTaxonomyListArtifact(ctx context.Context, jsonBytes []byte) (*rpc.Artifact, error) {
 	m := &rpc.TaxonomyList{}
-	err := protojson.Unmarshal(jsonBytes, m)
-	if err != nil {
+	if err := protojson.Unmarshal(jsonBytes, m); err != nil {
 		return nil, err
 	}
 	artifactBytes, err := proto.Marshal(m)
