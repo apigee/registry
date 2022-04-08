@@ -15,23 +15,21 @@
 package compute
 
 import (
-	"context"
-
 	"github.com/spf13/cobra"
 )
 
-func Command(ctx context.Context) *cobra.Command {
+func Command() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "compute",
 		Short: "Compute properties of resources in the API Registry",
 	}
 
-	cmd.AddCommand(conformanceCommand(ctx))
-	cmd.AddCommand(complexityCommand(ctx))
-	cmd.AddCommand(lintCommand(ctx))
-	cmd.AddCommand(lintStatsCommand(ctx))
-	cmd.AddCommand(referencesCommand(ctx))
-	cmd.AddCommand(vocabularyCommand(ctx))
+	cmd.AddCommand(conformanceCommand())
+	cmd.AddCommand(complexityCommand())
+	cmd.AddCommand(lintCommand())
+	cmd.AddCommand(lintStatsCommand())
+	cmd.AddCommand(referencesCommand())
+	cmd.AddCommand(vocabularyCommand())
 
 	cmd.PersistentFlags().String("filter", "", "Filter selected resources")
 	return cmd

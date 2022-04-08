@@ -15,7 +15,6 @@
 package upload
 
 import (
-	"context"
 	"fmt"
 	"io/ioutil"
 
@@ -51,13 +50,14 @@ func readStyleGuideProto(filename string) (*rpc.StyleGuide, error) {
 	return m, nil
 }
 
-func styleGuideCommand(ctx context.Context) *cobra.Command {
+func styleGuideCommand() *cobra.Command {
 	var projectID string
 	cmd := &cobra.Command{
 		Use:   "styleguide FILE_PATH --project-id=value",
 		Short: "Upload an API style guide",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
+			ctx := cmd.Context()
 			styleGuidePath := args[0]
 			if styleGuidePath == "" {
 				log.Fatal(ctx, "Please provide style guide path")

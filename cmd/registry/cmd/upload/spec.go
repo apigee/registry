@@ -32,7 +32,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func specCommand(ctx context.Context) *cobra.Command {
+func specCommand() *cobra.Command {
 	var (
 		version string
 		style   string
@@ -43,6 +43,7 @@ func specCommand(ctx context.Context) *cobra.Command {
 		Short: "Upload an API spec",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
+			ctx := cmd.Context()
 			client, err := connection.NewClient(ctx)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")

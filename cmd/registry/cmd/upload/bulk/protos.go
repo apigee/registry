@@ -48,13 +48,14 @@ type ServiceConfig struct {
 	} `yaml:"documentation"`
 }
 
-func protosCommand(ctx context.Context) *cobra.Command {
+func protosCommand() *cobra.Command {
 	var baseURI string
 	cmd := &cobra.Command{
 		Use:   "protos",
 		Short: "Bulk-upload Protocol Buffer descriptions from a directory of specs",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
+			ctx := cmd.Context()
 			projectID, err := cmd.Flags().GetString("project-id")
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get project-id from flags")

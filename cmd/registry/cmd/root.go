@@ -15,9 +15,6 @@
 package cmd
 
 import (
-	"context"
-	"fmt"
-
 	"github.com/apigee/registry/cmd/registry/cmd/annotate"
 	"github.com/apigee/registry/cmd/registry/cmd/apply"
 	"github.com/apigee/registry/cmd/registry/cmd/compute"
@@ -32,37 +29,29 @@ import (
 	"github.com/apigee/registry/cmd/registry/cmd/resolve"
 	"github.com/apigee/registry/cmd/registry/cmd/upload"
 	"github.com/apigee/registry/cmd/registry/cmd/vocabulary"
-	"github.com/apigee/registry/log"
-	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 )
 
-func Command(ctx context.Context) *cobra.Command {
+func Command() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "registry",
 		Short: "A simple and eclectic utility for working with the API Registry",
 	}
 
-	// Bind a logger instance to the local context with metadata for outbound requests.
-	logger := log.NewLogger(log.DebugLevel)
-	ctx = log.NewOutboundContext(log.NewContext(ctx, logger), log.Metadata{
-		UID: fmt.Sprintf("%.8s", uuid.New()),
-	})
-
-	cmd.AddCommand(annotate.Command(ctx))
-	cmd.AddCommand(apply.Command(ctx))
-	cmd.AddCommand(compute.Command(ctx))
-	cmd.AddCommand(count.Command(ctx))
-	cmd.AddCommand(resolve.Command(ctx))
-	cmd.AddCommand(delete.Command(ctx))
-	cmd.AddCommand(diff.Command(ctx))
-	cmd.AddCommand(export.Command(ctx))
-	cmd.AddCommand(get.Command(ctx))
-	cmd.AddCommand(index.Command(ctx))
-	cmd.AddCommand(label.Command(ctx))
-	cmd.AddCommand(list.Command(ctx))
-	cmd.AddCommand(upload.Command(ctx))
-	cmd.AddCommand(vocabulary.Command(ctx))
+	cmd.AddCommand(annotate.Command())
+	cmd.AddCommand(apply.Command())
+	cmd.AddCommand(compute.Command())
+	cmd.AddCommand(count.Command())
+	cmd.AddCommand(resolve.Command())
+	cmd.AddCommand(delete.Command())
+	cmd.AddCommand(diff.Command())
+	cmd.AddCommand(export.Command())
+	cmd.AddCommand(get.Command())
+	cmd.AddCommand(index.Command())
+	cmd.AddCommand(label.Command())
+	cmd.AddCommand(list.Command())
+	cmd.AddCommand(upload.Command())
+	cmd.AddCommand(vocabulary.Command())
 
 	return cmd
 }
