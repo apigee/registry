@@ -59,6 +59,6 @@ func applyFile(ctx context.Context, client connection.Client, fileName, parent s
 	case "DisplaySettings", "Lifecycle", "Manifest", "ReferenceList", "TaxonomyList":
 		return applyArtifactPatchBytes(ctx, client, bytes, parent)
 	default:
-		return fmt.Errorf("Unsupported kind: %s", header.Kind)
+		return fmt.Errorf("unsupported kind: %s", header.Kind)
 	}
 }
