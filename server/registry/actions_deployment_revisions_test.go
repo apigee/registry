@@ -17,6 +17,7 @@ package registry
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/apigee/registry/rpc"
@@ -285,6 +286,160 @@ func TestDeleteApiDeploymentRevision(t *testing.T) {
 }
 
 func TestListApiDeploymentRevisions(t *testing.T) {
+	tests := []struct {
+		desc      string
+		seed      []*rpc.ApiDeployment
+		req       *rpc.ListApiDeploymentRevisionsRequest
+		want      *rpc.ListApiDeploymentRevisionsResponse
+		wantToken bool
+	}{
+		{
+			desc: "single deployment",
+			seed: []*rpc.ApiDeployment{
+				{
+					Name: "projects/my-project/locations/global/apis/my-api/deployments/my-dep",
+				},
+				{
+					Name:        "projects/my-project/locations/global/apis/my-api/deployments/my-dep",
+					EndpointUri: "updated",
+				},
+				{
+					Name: "projects/my-project/locations/global/apis/my-api/deployments/other-dep",
+				},
+			},
+			req: &rpc.ListApiDeploymentRevisionsRequest{
+				Name: "projects/my-project/locations/global/apis/my-api/deployments/my-dep",
+			},
+			want: &rpc.ListApiDeploymentRevisionsResponse{
+				ApiDeployments: []*rpc.ApiDeployment{
+					{
+						Name:        "projects/my-project/locations/global/apis/my-api/deployments/my-dep",
+						EndpointUri: "updated",
+					},
+					{
+						Name: "projects/my-project/locations/global/apis/my-api/deployments/my-dep",
+					},
+				},
+			},
+		},
+		{
+			desc: "across multiple deployments",
+			seed: []*rpc.ApiDeployment{
+				{Name: "projects/my-project/locations/global/apis/my-api/deployments/my-dep"},
+				{Name: "projects/my-project/locations/global/apis/my-api/deployments/other-dep"},
+			},
+			req: &rpc.ListApiDeploymentRevisionsRequest{
+				Name: "projects/my-project/locations/global/apis/my-api/deployments/-",
+			},
+			want: &rpc.ListApiDeploymentRevisionsResponse{
+				ApiDeployments: []*rpc.ApiDeployment{
+					{Name: "projects/my-project/locations/global/apis/my-api/deployments/other-dep"},
+					{Name: "projects/my-project/locations/global/apis/my-api/deployments/my-dep"},
+				},
+			},
+		},
+		{
+			desc: "across multiple apis",
+			seed: []*rpc.ApiDeployment{
+				{Name: "projects/my-project/locations/global/apis/my-api/deployments/my-dep"},
+				{Name: "projects/my-project/locations/global/apis/other-api/deployments/my-dep"},
+			},
+			req: &rpc.ListApiDeploymentRevisionsRequest{
+				Name: "projects/my-project/locations/global/apis/-/deployments/my-dep",
+			},
+			want: &rpc.ListApiDeploymentRevisionsResponse{
+				ApiDeployments: []*rpc.ApiDeployment{
+					{Name: "projects/my-project/locations/global/apis/other-api/deployments/my-dep"},
+					{Name: "projects/my-project/locations/global/apis/my-api/deployments/my-dep"},
+				},
+			},
+		},
+		{
+			desc: "across multiple projects",
+			seed: []*rpc.ApiDeployment{
+				{Name: "projects/my-project/locations/global/apis/my-api/deployments/my-dep"},
+				{Name: "projects/other-project/locations/global/apis/my-api/deployments/my-dep"},
+			},
+			req: &rpc.ListApiDeploymentRevisionsRequest{
+				Name: "projects/-/locations/global/apis/my-api/deployments/my-dep",
+			},
+			want: &rpc.ListApiDeploymentRevisionsResponse{
+				ApiDeployments: []*rpc.ApiDeployment{
+					{Name: "projects/other-project/locations/global/apis/my-api/deployments/my-dep"},
+					{Name: "projects/my-project/locations/global/apis/my-api/deployments/my-dep"},
+				},
+			},
+		},
+		{
+			desc: "custom page size",
+			seed: []*rpc.ApiDeployment{
+				{
+					Name: "projects/my-project/locations/global/apis/my-api/deployments/my-dep",
+				},
+				{
+					Name:        "projects/my-project/locations/global/apis/my-api/deployments/my-dep",
+					EndpointUri: "updated",
+				},
+			},
+			req: &rpc.ListApiDeploymentRevisionsRequest{
+				Name:     "projects/my-project/locations/global/apis/my-api/deployments/my-dep",
+				PageSize: 1,
+			},
+			want: &rpc.ListApiDeploymentRevisionsResponse{
+				ApiDeployments: []*rpc.ApiDeployment{
+					{
+						Name:        "projects/my-project/locations/global/apis/my-api/deployments/my-dep",
+						EndpointUri: "updated",
+					},
+				},
+			},
+			wantToken: true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			ctx := context.Background()
+			server := defaultTestServer(t)
+			if err := seeder.SeedDeployments(ctx, server, test.seed...); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
+
+			got, err := server.ListApiDeploymentRevisions(ctx, test.req)
+			if err != nil {
+				t.Fatalf("ListApiDeploymentRevisions(%+v) returned error: %s", test.req, err)
+			}
+
+			opts := cmp.Options{
+				protocmp.Transform(),
+				protocmp.IgnoreFields(new(rpc.ListApiDeploymentRevisionsResponse), "next_page_token"),
+				protocmp.IgnoreFields(new(rpc.ApiDeployment), "name", "revision_id", "create_time", "revision_create_time", "revision_update_time"),
+			}
+
+			if !cmp.Equal(test.want, got, opts) {
+				t.Errorf("ListApiDeploymentRevisions(%+v) returned unexpected diff (-want +got):\n%s", test.req, cmp.Diff(test.want, got, opts))
+			}
+
+			if test.wantToken && got.NextPageToken == "" {
+				t.Errorf("ListApiDeploymentRevisions(%+v) returned empty next_page_token, expected non-empty next_page_token", test.req)
+			} else if !test.wantToken && got.NextPageToken != "" {
+				t.Errorf("ListApiDeploymentRevisions(%+v) returned non-empty next_page_token, expected empty next_page_token: %s", test.req, got.GetNextPageToken())
+			}
+
+			if len(got.ApiDeployments) != len(test.want.ApiDeployments) {
+				t.Fatalf("ListApiDeploymentRevisions(%+v) returned unexpected number of revisions: got %d, want %d", test.req, len(got.ApiDeployments), len(test.want.ApiDeployments))
+			}
+
+			for i, got := range got.ApiDeployments {
+				if want := test.want.ApiDeployments[i]; !strings.HasPrefix(got.GetName(), want.GetName()) {
+					t.Errorf("ListApiDeploymentRevisions(%+v) returned unexpected revision: got %q, want %q", test.req, got.GetName(), want.GetName())
+				}
+			}
+		})
+	}
+}
+
+func TestListApiDeploymentRevisionsSequence(t *testing.T) {
 	ctx := context.Background()
 	server := defaultTestServer(t)
 	if err := seeder.SeedApis(ctx, server, &rpc.Api{Name: "projects/my-project/locations/global/apis/my-api"}); err != nil {
