@@ -109,10 +109,10 @@ func ZipArchiveOfPath(path, prefix string, recursive bool) (buf bytes.Buffer, er
 	err = filepath.WalkDir(path, func(p string, entry fs.DirEntry, err error) error {
 		if err != nil {
 			return err
-		} else if entry.IsDir() && (recursive || (p == path)) {
-			return nil // Do nothing for the directory, but still walk its contents.
-		} else if entry.IsDir() {
+		} else if entry.IsDir() && p != path && !recursive {
 			return filepath.SkipDir // Skip the directory and contents.
+		} else if entry.IsDir() {
+			return nil // Do nothing for the directory, but still walk its contents.
 		}
 		if err = addFileToZip(zipWriter, p, prefix); err != nil {
 			return err
