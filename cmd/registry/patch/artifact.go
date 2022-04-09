@@ -109,6 +109,13 @@ func (a *Artifact) UnmarshalYAML(node *yaml.Node) error {
 }
 
 func (a *Artifact) MarshalYAML() (interface{}, error) {
+	// This struct provides a temporary equivalent Artifact representation with
+	// a YAML struct tag that allows the Data field to be directly exported.
+	// The primary definition (above) has a dash ("-") for this field to defer
+	// unmarshalling until its type is known. But that causes YAML marshalling
+	// to skip the field, and rather than try to tweak the struct tags at
+	// runtime, we instead copy the artifact data into this equivalent
+	// structure that is tagged for direct export.
 	type exportable struct {
 		Header `yaml:",inline"`
 		Data   ArtifactData `yaml:"data"`
