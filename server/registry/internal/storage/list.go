@@ -515,6 +515,7 @@ func (c *Client) ListSpecRevisions(ctx context.Context, parent names.Spec, opts 
 		return SpecList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
 	}
 
+	// Check existence of the deepest fully specified resource in the parent name.
 	if parent.ProjectID != "-" && parent.ApiID != "-" && parent.VersionID != "-" && parent.SpecID != "-" {
 		if _, err := c.GetSpec(ctx, parent); err != nil {
 			return SpecList{}, err
