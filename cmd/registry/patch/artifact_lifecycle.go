@@ -15,13 +15,9 @@
 package patch
 
 import (
-	"context"
-
-	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"google.golang.org/protobuf/proto"
-	"gopkg.in/yaml.v3"
 )
 
 const LifecycleMimeType = "application/octet-stream;type=google.cloud.apigeeregistry.v1.apihub.Lifecycle"
@@ -40,33 +36,21 @@ type LifecycleData struct {
 	Stages      []*LifecycleStage `yaml:"stages"`
 }
 
-type Lifecycle struct {
-	Header `yaml:",inline"`
-	Data   LifecycleData `yaml:"data"`
-}
-
-func (a *Lifecycle) GetMimeType() string {
+func (a *LifecycleData) GetMimeType() string {
 	return LifecycleMimeType
 }
 
-func (a *Lifecycle) GetHeader() *Header {
-	return &a.Header
-}
-
-// Message returns the rpc representation of the lifecycle.
-func (l *Lifecycle) GetMessage() proto.Message {
+func (l *LifecycleData) GetMessage() proto.Message {
 	return &rpc.Lifecycle{
-		Id:          l.Header.Metadata.Name,
-		Kind:        LifecycleMimeType,
-		DisplayName: l.Data.DisplayName,
-		Description: l.Data.Description,
+		DisplayName: l.DisplayName,
+		Description: l.Description,
 		Stages:      l.stages(),
 	}
 }
 
-func (l *Lifecycle) stages() []*rpc.Lifecycle_Stage {
+func (l *LifecycleData) stages() []*rpc.Lifecycle_Stage {
 	stages := make([]*rpc.Lifecycle_Stage, 0)
-	for _, s := range l.Data.Stages {
+	for _, s := range l.Stages {
 		stages = append(stages, &rpc.Lifecycle_Stage{
 			Id:           s.ID,
 			DisplayName:  s.DisplayName,
@@ -78,8 +62,7 @@ func (l *Lifecycle) stages() []*rpc.Lifecycle_Stage {
 	return stages
 }
 
-// newLifecycle creates a Lifecycle from an rpc representation.
-func newLifecycle(message *rpc.Artifact) (*Lifecycle, error) {
+func newLifecycle(message *rpc.Artifact) (*Artifact, error) {
 	artifactName, err := names.ParseArtifact(message.Name)
 	if err != nil {
 		return nil, err
@@ -89,7 +72,17 @@ func newLifecycle(message *rpc.Artifact) (*Lifecycle, error) {
 	if err != nil {
 		return nil, err
 	}
-	lifecycle := &Lifecycle{
+	stages := make([]*LifecycleStage, len(value.Stages))
+	for i, s := range value.Stages {
+		stages[i] = &LifecycleStage{
+			ID:           s.Id,
+			DisplayName:  s.DisplayName,
+			Description:  s.Description,
+			URL:          s.Url,
+			DisplayOrder: int(s.DisplayOrder),
+		}
+	}
+	return &Artifact{
 		Header: Header{
 			ApiVersion: RegistryV1,
 			Kind:       "Lifecycle",
@@ -97,30 +90,10 @@ func newLifecycle(message *rpc.Artifact) (*Lifecycle, error) {
 				Name: artifactName.ArtifactID(),
 			},
 		},
-		Data: LifecycleData{
+		Data: &LifecycleData{
 			DisplayName: value.DisplayName,
 			Description: value.Description,
+			Stages:      stages,
 		},
-	}
-	for _, s := range value.Stages {
-		lifecycle.Data.Stages = append(
-			lifecycle.Data.Stages,
-			&LifecycleStage{
-				ID:           s.Id,
-				DisplayName:  s.DisplayName,
-				Description:  s.Description,
-				URL:          s.Url,
-				DisplayOrder: int(s.DisplayOrder),
-			})
-	}
-	return lifecycle, nil
-}
-
-func applyLifecycleArtifactPatch(ctx context.Context, client connection.Client, bytes []byte, parent string) error {
-	var lifecycle Lifecycle
-	err := yaml.Unmarshal(bytes, &lifecycle)
-	if err != nil {
-		return err
-	}
-	return applyArtifactPatch(ctx, client, &lifecycle, parent)
+	}, nil
 }

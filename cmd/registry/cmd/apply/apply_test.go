@@ -88,7 +88,7 @@ func TestApply(t *testing.T) {
 			t.Fatalf("ExportApi(%+v) returned an error: %s", got, err)
 		}
 
-		if diff := cmp.Diff(actual, expected); diff != "" {
+		if diff := cmp.Diff(expected, actual); diff != "" {
 			t.Errorf("GetApi(%q) returned unexpected diff: (-want +got):\n%s", got, diff)
 		}
 	}
@@ -122,7 +122,7 @@ func TestApply(t *testing.T) {
 			t.Fatalf("ExportArtifact(%+v) returned an error: %s", message, err)
 		}
 
-		if diff := cmp.Diff(actual, expected); diff != "" {
+		if diff := cmp.Diff(expected, actual); diff != "" {
 			t.Errorf("GetArtifact(%q) returned unexpected diff: (-want +got):\n%s", message, diff)
 		}
 	}

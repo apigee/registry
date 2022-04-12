@@ -15,13 +15,9 @@
 package patch
 
 import (
-	"context"
-
-	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"google.golang.org/protobuf/proto"
-	"gopkg.in/yaml.v3"
 )
 
 const TaxonomyListMimeType = "application/octet-stream;type=google.cloud.apigeeregistry.v1.apihub.TaxonomyList"
@@ -32,17 +28,8 @@ type TaxonomyListData struct {
 	Taxonomies  []Taxonomy `yaml:"taxonomies"`
 }
 
-type TaxonomyList struct {
-	Header `yaml:",inline"`
-	Data   TaxonomyListData `yaml:"data"`
-}
-
-func (a *TaxonomyList) GetMimeType() string {
+func (a *TaxonomyListData) GetMimeType() string {
 	return TaxonomyListMimeType
-}
-
-func (a *TaxonomyList) GetHeader() *Header {
-	return &a.Header
 }
 
 type Taxonomy struct {
@@ -63,20 +50,17 @@ type TaxonomyElement struct {
 	Description string `yaml:"description,omitempty"`
 }
 
-// Message returns the rpc representation of the taxonomies.
-func (l *TaxonomyList) GetMessage() proto.Message {
+func (l *TaxonomyListData) GetMessage() proto.Message {
 	return &rpc.TaxonomyList{
-		Id:          l.Header.Metadata.Name,
-		Kind:        TaxonomyListMimeType,
-		DisplayName: l.Data.DisplayName,
-		Description: l.Data.Description,
+		DisplayName: l.DisplayName,
+		Description: l.Description,
 		Taxonomies:  l.taxonomies(),
 	}
 }
 
-func (l *TaxonomyList) taxonomies() []*rpc.TaxonomyList_Taxonomy {
+func (l *TaxonomyListData) taxonomies() []*rpc.TaxonomyList_Taxonomy {
 	taxonomies := make([]*rpc.TaxonomyList_Taxonomy, 0)
-	for _, t := range l.Data.Taxonomies {
+	for _, t := range l.Taxonomies {
 		taxonomies = append(taxonomies,
 			&rpc.TaxonomyList_Taxonomy{
 				Id:              t.ID,
@@ -106,8 +90,7 @@ func (t *Taxonomy) elements() []*rpc.TaxonomyList_Taxonomy_Element {
 	return elements
 }
 
-// newTaxonomyList creates a TaxonomyList object from an rpc representation.
-func newTaxonomyList(message *rpc.Artifact) (*TaxonomyList, error) {
+func newTaxonomyList(message *rpc.Artifact) (*Artifact, error) {
 	artifactName, err := names.ParseArtifact(message.Name)
 	if err != nil {
 		return nil, err
@@ -117,30 +100,17 @@ func newTaxonomyList(message *rpc.Artifact) (*TaxonomyList, error) {
 	if err != nil {
 		return nil, err
 	}
-	taxonomyList := &TaxonomyList{
-		Header: Header{
-			ApiVersion: RegistryV1,
-			Kind:       "TaxonomyList",
-			Metadata: Metadata{
-				Name: artifactName.ArtifactID(),
-			},
-		},
-		Data: TaxonomyListData{
-			DisplayName: value.DisplayName,
-			Description: value.Description,
-		},
-	}
-	for _, t := range value.Taxonomies {
-		elements := make([]TaxonomyElement, 0)
-		for _, e := range t.Elements {
-			elements = append(elements,
-				TaxonomyElement{
-					ID:          e.Id,
-					DisplayName: e.DisplayName,
-					Description: e.Description,
-				})
+	taxonomies := make([]Taxonomy, len(value.Taxonomies))
+	for i, t := range value.Taxonomies {
+		elements := make([]TaxonomyElement, len(t.Elements))
+		for j, e := range t.Elements {
+			elements[j] = TaxonomyElement{
+				ID:          e.Id,
+				DisplayName: e.DisplayName,
+				Description: e.Description,
+			}
 		}
-		taxonomy := Taxonomy{
+		taxonomies[i] = Taxonomy{
 			ID:              t.Id,
 			DisplayName:     t.DisplayName,
 			Description:     t.Description,
@@ -151,16 +121,19 @@ func newTaxonomyList(message *rpc.Artifact) (*TaxonomyList, error) {
 			DisplayOrder:    int(t.DisplayOrder),
 			Elements:        elements,
 		}
-		taxonomyList.Data.Taxonomies = append(taxonomyList.Data.Taxonomies, taxonomy)
 	}
-	return taxonomyList, nil
-}
-
-func applyTaxonomyListArtifactPatch(ctx context.Context, client connection.Client, bytes []byte, parent string) error {
-	var taxonomyList TaxonomyList
-	err := yaml.Unmarshal(bytes, &taxonomyList)
-	if err != nil {
-		return err
-	}
-	return applyArtifactPatch(ctx, client, &taxonomyList, parent)
+	return &Artifact{
+		Header: Header{
+			ApiVersion: RegistryV1,
+			Kind:       "TaxonomyList",
+			Metadata: Metadata{
+				Name: artifactName.ArtifactID(),
+			},
+		},
+		Data: &TaxonomyListData{
+			DisplayName: value.DisplayName,
+			Description: value.Description,
+			Taxonomies:  taxonomies,
+		},
+	}, nil
 }

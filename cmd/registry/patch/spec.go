@@ -21,6 +21,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/apigee/registry/cmd/registry/core"
@@ -31,11 +32,10 @@ import (
 )
 
 type ApiSpecData struct {
-	FileName    string      `yaml:"filename,omitempty"`
-	Description string      `yaml:"description,omitempty"`
-	MimeType    string      `yaml:"mimeType,omitempty"`
-	SourceURI   string      `yaml:"sourceURI,omitempty"`
-	Artifacts   []*Artifact `yaml:"artifacts,omitempty"`
+	FileName    string `yaml:"filename,omitempty"`
+	Description string `yaml:"description,omitempty"`
+	MimeType    string `yaml:"mimeType,omitempty"`
+	SourceURI   string `yaml:"sourceURI,omitempty"`
 }
 
 type ApiSpec struct {
@@ -48,7 +48,7 @@ func newApiSpec(ctx context.Context, client *gapic.RegistryClient, message *rpc.
 	if err != nil {
 		return nil, err
 	}
-	spec := &ApiSpec{
+	return &ApiSpec{
 		Header: Header{
 			ApiVersion: RegistryV1,
 			Kind:       "ApiSpec",
@@ -64,8 +64,7 @@ func newApiSpec(ctx context.Context, client *gapic.RegistryClient, message *rpc.
 			MimeType:    message.MimeType,
 			SourceURI:   message.SourceUri,
 		},
-	}
-	return spec, nil
+	}, nil
 }
 
 func applyApiSpecPatch(
@@ -119,7 +118,15 @@ func applyApiSpecPatch(
 				return err
 			}
 			if info.IsDir() {
-				contents, err := core.ZipArchiveOfPath(path, "")
+				recursive := true
+				d := u.Query()["recursive"]
+				if len(d) > 0 {
+					recursive, err = strconv.ParseBool(d[0])
+					if err != nil {
+						return err
+					}
+				}
+				contents, err := core.ZipArchiveOfPath(path, "", recursive)
 				if err != nil {
 					return err
 				}

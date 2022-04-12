@@ -19,6 +19,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -101,23 +102,24 @@ func UnzipArchiveToMap(b []byte) (map[string][]byte, error) {
 // ZipArchiveOfPath reads the contents of a path into a zip archive.
 // The specified prefix is stripped from file names in the archive.
 // Based on an example published at https://golangcode.com/create-zip-files-in-go/
-func ZipArchiveOfPath(path, prefix string) (buf bytes.Buffer, err error) {
+func ZipArchiveOfPath(path, prefix string, recursive bool) (buf bytes.Buffer, err error) {
 	zipWriter := zip.NewWriter(&buf)
 	defer zipWriter.Close()
 
-	_ = filepath.Walk(path, func(p string, info os.FileInfo, err error) error {
+	err = filepath.WalkDir(path, func(p string, entry fs.DirEntry, err error) error {
 		if err != nil {
 			return err
-		}
-		if info.IsDir() {
-			return nil
+		} else if entry.IsDir() && p != path && !recursive {
+			return filepath.SkipDir // Skip the directory and contents.
+		} else if entry.IsDir() {
+			return nil // Do nothing for the directory, but still walk its contents.
 		}
 		if err = addFileToZip(zipWriter, p, prefix); err != nil {
 			return err
 		}
 		return nil
 	})
-	return buf, nil
+	return buf, err
 }
 
 func addFileToZip(zipWriter *zip.Writer, filename, prefix string) error {
