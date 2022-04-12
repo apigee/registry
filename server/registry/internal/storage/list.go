@@ -515,20 +515,49 @@ func (c *Client) ListSpecRevisions(ctx context.Context, parent names.Spec, opts 
 		return SpecList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
 	}
 
+	// Check existence of the deepest fully specified resource in the parent name.
+	if parent.ProjectID != "-" && parent.ApiID != "-" && parent.VersionID != "-" && parent.SpecID != "-" {
+		if _, err := c.GetSpec(ctx, parent); err != nil {
+			return SpecList{}, err
+		}
+	} else if parent.ProjectID != "-" && parent.ApiID != "-" && parent.VersionID != "-" && parent.SpecID == "-" {
+		if _, err := c.GetVersion(ctx, parent.Version()); err != nil {
+			return SpecList{}, err
+		}
+	} else if parent.ProjectID != "-" && parent.ApiID != "-" && parent.VersionID == "-" && parent.SpecID == "-" {
+		if _, err := c.GetApi(ctx, parent.Api()); err != nil {
+			return SpecList{}, err
+		}
+	} else if parent.ProjectID != "-" && parent.ApiID == "-" && parent.VersionID == "-" && parent.SpecID == "-" {
+		if _, err := c.GetProject(ctx, parent.Project()); err != nil {
+			return SpecList{}, err
+		}
+	}
+
+	op := c.db.
+		Order("revision_create_time desc").
+		Offset(token.Offset).
+		Limit(int(opts.Size) + 1)
+
+	if id := parent.ProjectID; id != "-" {
+		op = op.Where("project_id = ?", id)
+	}
+	if id := parent.ApiID; id != "-" {
+		op = op.Where("api_id = ?", id)
+	}
+	if id := parent.VersionID; id != "-" {
+		op = op.Where("version_id = ?", id)
+	}
+	if id := parent.SpecID; id != "-" {
+		op = op.Where("spec_id = ?", id)
+	}
+
 	response := SpecList{
 		Specs: make([]models.Spec, 0, opts.Size),
 	}
 
 	lock()
-	err = c.db.
-		Where("project_id = ?", parent.ProjectID).
-		Where("api_id = ?", parent.ApiID).
-		Where("version_id = ?", parent.VersionID).
-		Where("spec_id = ?", parent.SpecID).
-		Order("revision_create_time desc").
-		Offset(token.Offset).
-		Limit(int(opts.Size) + 1).
-		Find(&response.Specs).Error
+	err = op.Find(&response.Specs).Error
 	unlock()
 
 	if err != nil {
@@ -699,19 +728,41 @@ func (c *Client) ListDeploymentRevisions(ctx context.Context, parent names.Deplo
 		return DeploymentList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
 	}
 
+	if parent.ProjectID != "-" && parent.ApiID != "-" && parent.DeploymentID != "-" {
+		if _, err := c.GetDeployment(ctx, parent); err != nil {
+			return DeploymentList{}, err
+		}
+	} else if parent.ProjectID != "-" && parent.ApiID != "-" && parent.DeploymentID == "-" {
+		if _, err := c.GetApi(ctx, parent.Api()); err != nil {
+			return DeploymentList{}, err
+		}
+	} else if parent.ProjectID != "-" && parent.ApiID == "-" && parent.DeploymentID == "-" {
+		if _, err := c.GetProject(ctx, parent.Project()); err != nil {
+			return DeploymentList{}, err
+		}
+	}
+
+	op := c.db.
+		Order("revision_create_time desc").
+		Offset(token.Offset).
+		Limit(int(opts.Size) + 1)
+
+	if id := parent.ProjectID; id != "-" {
+		op = op.Where("project_id = ?", id)
+	}
+	if id := parent.ApiID; id != "-" {
+		op = op.Where("api_id = ?", id)
+	}
+	if id := parent.DeploymentID; id != "-" {
+		op = op.Where("deployment_id = ?", id)
+	}
+
 	response := DeploymentList{
 		Deployments: make([]models.Deployment, 0, opts.Size),
 	}
 
 	lock()
-	err = c.db.
-		Where("project_id = ?", parent.ProjectID).
-		Where("api_id = ?", parent.ApiID).
-		Where("deployment_id = ?", parent.DeploymentID).
-		Order("revision_create_time desc").
-		Offset(token.Offset).
-		Limit(int(opts.Size) + 1).
-		Find(&response.Deployments).Error
+	err = op.Find(&response.Deployments).Error
 	unlock()
 
 	if err != nil {
