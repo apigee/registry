@@ -1,0 +1,42 @@
+// Copyright 2022 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+// (-- api-linter: core::0215::versioned-packages=disabled
+//     aip.dev/not-precedent: Support protos for the apigeeregistry.v1 API. --)
+package google.cloud.apigeeregistry.v1.scoring;
+
+option java_package = "com.google.cloud.apigeeregistry.v1.scoring";
+option java_multiple_files = true;
+option java_outer_classname = "ScoringSeverityProto";
+option go_package = "github.com/apigee/registry/rpc;rpc";
+
+// Represents the severity levels to be associated with score values.
+// Severity levels indicates the level of concern for a particular score.
+enum Severity {
+  // This is the default value if the Severity level is not set.
+  SEVERITY_UNSPECIFIED = 0;
+
+  // This level indicates that the value of the score is acceptable.
+  OK = 1;
+
+  // This level indicates that the value of the score is of little concern but
+  // not a red flag. Users can still take action to get to a better level: "OK".
+  WARNING = 2;
+
+  // This level indicates that the value of the score is a major red flag and
+  // ideally users should activaly take actions to get to a WARNING or OK level.
+  ALERT = 3;
+}

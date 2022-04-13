@@ -1,0 +1,265 @@
+// Copyright 2022 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+// (-- api-linter: core::0215::versioned-packages=disabled
+//     aip.dev/not-precedent: Support protos for the apigeeregistry.v1 API. --)
+package google.cloud.apigeeregistry.v1.scoring;
+
+import "google/api/field_behavior.proto";
+import "google/cloud/apigeeregistry/v1/scoring/severity.proto";
+
+option java_package = "com.google.cloud.apigeeregistry.v1.scoring";
+option java_multiple_files = true;
+option java_outer_classname = "ScoringDefinitionProto";
+option go_package = "github.com/apigee/registry/rpc;rpc";
+
+// Stores the definition which will be used to derive scores for the resources
+// stored in registry.
+message ScoreDefinition {
+  // Artifact identifier. May be used in YAML representations to indicate the id
+  // to be used to attach the artifact.
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Artifact kind. May be used in YAML representations to identify the type of
+  // this artifact.
+  string kind = 2;
+
+  // A human-friendly name for the ScoreDefinition.
+  string display_name = 3;
+
+  // A more detailed description of the ScoreDefinition.
+  string description = 4;
+
+  // A Uri which points to an explanation of the scoring logic/tool used here.
+  string uri = 5;
+
+  // A human-friendly name to display the uri.
+  string uri_display_name = 6;
+
+  // A pattern for the target resource on which this definition can be applied.
+  ResourcePattern target_resource = 7 [(google.api.field_behavior) = REQUIRED];
+
+  // Represents how the value of this score will be derived.
+  // A score can be a single score_value or a rollup of multiple score_values.
+  oneof formula {
+    // Represents the formula for a value which is derived from
+    // a single artifact.
+    ScoreFormula score_formula = 8;
+
+    // Represents the formula for a value which is rolled up
+    // from multiple scores.
+    RollUpFormula rollup_formula = 9;
+  }
+
+  // Represents the type and characteristics of the score.
+  oneof type {
+    // Set this if the score value is a percentage.
+    PercentType percent = 10;
+    // Set this if the score value is an integer.
+    IntegerType integer = 11;
+    // Set this if the score value is a boolean.
+    BooleanType boolean = 12;
+  }
+}
+
+// Represents a pattern to identify resources in the registry.
+message ResourcePattern {
+  // A pattern that specifies a resource.
+  // This can specify one particular resource or a group of resources.
+  // Format:
+  //   apis/{api}/versions/{version}/specs/{spec}/artifacts/{artifact}
+  //   apis/-/versions/-/specs/-/artifacts/-
+  string pattern = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // A filter expression that limits the resources that match the pattern.
+  string filter = 2;
+}
+
+// Represents how a score will be derived from the result artifacts.
+message ScoreFormula {
+  // Pattern of the artifact from which the score value will be extracted.
+  // Should start with a $resource reference to make sure artifacts are pulled
+  // out from the correct resource.
+  ResourcePattern pattern = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // A CEL expression which extracts the score value from the artifact.
+  string score_expression = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // Set an ID to reference this value in the rollup formula.
+  string reference_id = 3;
+}
+
+// Represents how multiple scores will be derived from the result artifacts
+// and rolled up into a single value.
+message RollUpFormula {
+  // Extracts scores from multiple artifacts to be rolled up into a single
+  // value. While using this, it is necessary that ScoreFormulas have defined
+  // values for their reference_ids.
+  repeated ScoreFormula score_formulas = 1
+      [(google.api.field_behavior) = REQUIRED];
+
+  // A CEL expression which rolls up all the scores into a single value.
+  // Uses reference_ids of score_expr in the expression.
+  string rollup_expression = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+// Represents a percentage score type.
+message PercentType {
+  // This type of score will range between 0 to 100.
+  // This score type can take float values.
+  // Min and max values are not configurable here.
+
+  // Represents the thresholds for severity of this type of score.
+  // Examples of thresholds:
+  // For scores where low value is of concern.
+  // thresholds = []Threshold{
+  //   {
+  //     severity: Severity.ALERT,
+  //     range: NumberRange{ min: 0, max: 30},
+  //   },
+  //   {
+  //     severity: Severity.WARNING,
+  //     range: NumberRange{ min: 31, max: 70},
+  //   },
+  //   { severity: Severity.OK,
+  //     range: NumberRange{ min: 71, max: 100},
+  //   },
+  // }
+  //
+  // For scores where high value is of concern.
+  // thresholds = []Threshold{
+  //   {
+  //     severity: Severity.ALERT,
+  //     range: NumberRange{ min: 61, max: 100},
+  //   },
+  //   {
+  //     severity: Severity.WARNING,
+  //     range: NumberRange{ min: 31, max: 60},
+  //   },
+  //   { severity: Severity.OK,
+  //     range: NumberRange{ min: 0, max: 30},
+  //   },
+  // }
+  repeated NumberThreshold thresholds = 1;
+}
+
+// Represents an integer score type.
+message IntegerType {
+  // This type of score can take value between "min_value" to "max_value".
+  // This type of score can take only integer values.
+
+  // Represents the minimum value this type of score can take.
+  // Defaults to 0 if not specified.
+  int32 min_value = 1;
+
+  // Represents the maximum value this type of score can take.
+  int32 max_value = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // Represents the thresholds for severity of this type of score.
+  // Examples will be similar to PercentType, except that the limits of the
+  // range will be min_value and max_value.
+  repeated NumberThreshold thresholds = 3;
+}
+
+// Represents a boolean score type.
+message BooleanType {
+  // This type of score can have values from ["true", "false"]
+
+  // A string to display the true value of this type of score in the UI.
+  // Defaults to "true" if not specified.
+  string display_true = 1;
+
+  // A string to display the "false" value of this type of score in the UI.
+  // Defaults to "false" if not specified.
+  string display_false = 2;
+
+  // Represents the thresholds for severity of this type of score.
+  // Examples:
+  // thresholds = []Threshold{
+  //   {
+  //     severity: Severity.ALERT,
+  //     value: false,
+  //   },
+  //   { severity: Severity.OK,
+  //     value: true,
+  //   },
+  // }
+  //
+  // For scores where false value is not an alert but a warning.
+  // thresholds = []Threshold{
+  //   {
+  //     severity: Severity.WARNING,
+  //     value: false,
+  //   },
+  //   { severity: Severity.OK,
+  //     value: true,
+  //   },
+  // }
+  repeated BooleanThreshold thresholds = 3;
+}
+
+// Represents the threshold to associate a numeric score value with
+// a particular severity level.
+message NumberThreshold {
+  // Represents the severity level of the value of the score.
+  Severity severity = 1 [(google.api.field_behavior) = REQUIRED];
+
+  message NumberRange {
+    int32 min = 1 [(google.api.field_behavior) = REQUIRED];
+    int32 max = 2 [(google.api.field_behavior) = REQUIRED];
+  }
+
+  // The boundaries specified in this field will be included in the mentioned
+  // severity level. For examples see: PercentType, IntegerType.
+  NumberRange range = 2;
+}
+
+// Represents the threshold to associate a boolean score value with
+// a particular severity level.
+message BooleanThreshold {
+  // Represents the severity level of the value of the score.
+  Severity severity = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // The value field will be used to determine the severity
+  // level of the generated score.
+  bool value = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+// Stores the definition which will be used to generate scorecards for the
+// resources stored in registry.
+message ScoreCardDefinition {
+  // Artifact identifier. May be used in YAML representations to indicate the id
+  // to be used to attach the artifact.
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Artifact kind. May be used in YAML representations to identify the type of
+  // this artifact.
+  string kind = 2;
+
+  // A human-friendly name for the ScoreCardDefinition.
+  string display_name = 3;
+
+  // A more detailed description of the ScoreCardDefinition.
+  string description = 4;
+
+  // A pattern of target resource on which this definition can be applied.
+  ResourcePattern target = 5 [(google.api.field_behavior) = REQUIRED];
+
+  // Artifact patterns of scores which should be displayed in the ScoreCard.
+  // Should start with a $resource reference to make sure artifacts are
+  // pulled out from the correct resource.
+  repeated string score_patterns = 6 [(google.api.field_behavior) = REQUIRED];
+}
