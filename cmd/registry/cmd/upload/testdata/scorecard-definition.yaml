@@ -1,6 +1,6 @@
 id: "test-scorecard-definition"
 kind: "ScoreCardDefinition"
-target:
+target_resource:
   pattern: "apis/-/versions/-/specs/-"
 score_patterns:
 - "$resource.spec/artifacts/score-security-audit"

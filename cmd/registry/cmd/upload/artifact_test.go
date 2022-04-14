@@ -244,7 +244,7 @@ func TestScoreCardDefinitionArtifactUpload(t *testing.T) {
 				Kind:        "ScoreCardDefinition",
 				DisplayName: "",
 				Description: "",
-				Target: &rpc.ResourcePattern{
+				TargetResource: &rpc.ResourcePattern{
 					Pattern: "apis/-/versions/-/specs/-",
 				},
 				ScorePatterns: []string{
