@@ -256,7 +256,7 @@ message ScoreCardDefinition {
   string description = 4;
 
   // A pattern of target resource on which this definition can be applied.
-  ResourcePattern target = 5 [(google.api.field_behavior) = REQUIRED];
+  ResourcePattern target_resource = 5 [(google.api.field_behavior) = REQUIRED];
 
   // Artifact patterns of scores which should be displayed in the ScoreCard.
   // Should start with a $resource reference to make sure artifacts are
