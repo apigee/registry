@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,11 +15,6 @@
 id: "test-scorecard-definition"
 kind: "ScoreCardDefinition"
 target_resource:
-=======
-id: "test-scorecard-definition"
-kind: "ScoreCardDefinition"
-target:
->>>>>>> 82ce929 (Add artifact upload support for score(card) definitions)
   pattern: "apis/-/versions/-/specs/-"
 score_patterns:
 - "$resource.spec/artifacts/score-security-audit"
