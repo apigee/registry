@@ -1,0 +1,8 @@
+id: "test-score"
+kind: "Score"
+definition_name: "projects/upload-score-artifact-demo/locations/global/artifacts/test-score-definition"
+severity: OK
+integer_value:
+  value: 50
+  min_value: 0
+  max_value: 100

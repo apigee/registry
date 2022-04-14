@@ -1,0 +1,31 @@
+id: "test-scorecard"
+kind: "ScoreCard"
+definition_name: "projects/upload-scorecard-artifact-demo/locations/global/artifacts/test-scorecard-definition"
+scores:
+- id: "score-security-audit"
+  kind: "Score"
+  definition_name: "projects/upload-scorecard-artifact-demo/locations/global/artifacts/definition-security-audit"
+  severity: OK
+  boolean_value:
+    value: true
+    display_value: "Approved"
+- id: "score-lint-error"
+  kind: "Score"
+  definition_name: "projects/upload-scorecard-artifact-demo/locations/global/artifacts/definition-lint-error"
+  severity: OK
+  integer_value:
+    value: 50
+    min_value: 0
+    max_value: 100
+- id: "score-accuracy"
+  kind: "Score"
+  definition_name: "projects/upload-scorecard-artifact-demo/locations/global/artifacts/definition-accuracy"
+  severity: ALERT
+  percent_value:
+    value: 50
+- id: "score-lang-reuse"
+  kind: "Score"
+  definition_name: "projects/upload-scorecard-artifact-demo/locations/global/artifacts/definition-lang-reuse"
+  severity: OK
+  percent_value:
+    value: 70

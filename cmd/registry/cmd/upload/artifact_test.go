@@ -301,3 +301,188 @@ func TestScoreCardDefinitionArtifactUpload(t *testing.T) {
 		})
 	}
 }
+
+func TestScoreArtifactUpload(t *testing.T) {
+	tests := []struct {
+		desc     string
+		project  string
+		filePath string
+		want     *rpc.Score
+	}{
+		{
+			desc:     "simple score artifact upload",
+			project:  "upload-score-artifact-demo",
+			filePath: filepath.Join("testdata", "score.yaml"),
+			want: &rpc.Score{
+				Id:             "test-score",
+				Kind:           "Score",
+				DefinitionName: "projects/upload-score-artifact-demo/locations/global/artifacts/test-score-definition",
+				Severity:       rpc.Severity_OK,
+				Value: &rpc.Score_IntegerValue{
+					IntegerValue: &rpc.IntegerValue{
+						Value:    50,
+						MinValue: 0,
+						MaxValue: 100,
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			ctx := context.Background()
+
+			SetUpProject(ctx, t, test.project)
+
+			client, err := connection.NewClient(ctx)
+			if err != nil {
+				t.Fatalf("Setup: Failed to create client: %s", err)
+			}
+
+			cmd := Command()
+			args := []string{"artifact", test.filePath, "--parent", fmt.Sprintf("projects/%s/locations/global", test.project)}
+			cmd.SetArgs(args)
+			if err = cmd.Execute(); err != nil {
+				t.Fatalf("Execute() with args %v returned error: %s", args, err)
+			}
+
+			req := &rpc.GetArtifactContentsRequest{
+				Name: "projects/" + test.project + "/locations/global/artifacts/test-score",
+			}
+
+			definition := &rpc.Score{}
+			body, err := client.GetArtifactContents(ctx, req)
+			if err != nil {
+				t.Fatalf("GetArtifactContents() returned error: %s", err)
+			}
+			contents := body.GetData()
+			err = proto.Unmarshal(contents, definition)
+			if err != nil {
+				t.Fatalf("proto.Unmarshal() returned error: %s", err)
+			}
+
+			// Verify the manifest definition is correct
+			opts := cmp.Options{
+				protocmp.Transform(),
+			}
+
+			if diff := cmp.Diff(test.want, definition, opts); diff != "" {
+				t.Errorf("GetArtifactContents returned unexpected diff (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestScoreCardArtifactUpload(t *testing.T) {
+	tests := []struct {
+		desc     string
+		project  string
+		filePath string
+		want     *rpc.ScoreCard
+	}{
+		{
+			desc:     "simple scorecard artifact upload",
+			project:  "upload-scorecard-artifact-demo",
+			filePath: filepath.Join("testdata", "scorecard.yaml"),
+			want: &rpc.ScoreCard{
+				Id:             "test-scorecard",
+				Kind:           "ScoreCard",
+				DefinitionName: "projects/upload-scorecard-artifact-demo/locations/global/artifacts/test-scorecard-definition",
+				Scores: []*rpc.Score{
+					{
+						Id:             "score-security-audit",
+						Kind:           "Score",
+						DefinitionName: "projects/upload-scorecard-artifact-demo/locations/global/artifacts/definition-security-audit",
+						Severity:       rpc.Severity_OK,
+						Value: &rpc.Score_BooleanValue{
+							BooleanValue: &rpc.BooleanValue{
+								Value:        true,
+								DisplayValue: "Approved",
+							},
+						},
+					},
+					{
+						Id:             "score-lint-error",
+						Kind:           "Score",
+						DefinitionName: "projects/upload-scorecard-artifact-demo/locations/global/artifacts/definition-lint-error",
+						Severity:       rpc.Severity_OK,
+						Value: &rpc.Score_IntegerValue{
+							IntegerValue: &rpc.IntegerValue{
+								Value:    50,
+								MinValue: 0,
+								MaxValue: 100,
+							},
+						},
+					},
+					{
+						Id:             "score-accuracy",
+						Kind:           "Score",
+						DefinitionName: "projects/upload-scorecard-artifact-demo/locations/global/artifacts/definition-accuracy",
+						Severity:       rpc.Severity_ALERT,
+						Value: &rpc.Score_PercentValue{
+							PercentValue: &rpc.PercentValue{
+								Value: 50,
+							},
+						},
+					},
+					{
+						Id:             "score-lang-reuse",
+						Kind:           "Score",
+						DefinitionName: "projects/upload-scorecard-artifact-demo/locations/global/artifacts/definition-lang-reuse",
+						Severity:       rpc.Severity_OK,
+						Value: &rpc.Score_PercentValue{
+							PercentValue: &rpc.PercentValue{
+								Value: 70,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			ctx := context.Background()
+
+			SetUpProject(ctx, t, test.project)
+
+			client, err := connection.NewClient(ctx)
+			if err != nil {
+				t.Fatalf("Setup: Failed to create client: %s", err)
+			}
+
+			cmd := Command()
+			args := []string{"artifact", test.filePath, "--parent", fmt.Sprintf("projects/%s/locations/global", test.project)}
+			cmd.SetArgs(args)
+			if err = cmd.Execute(); err != nil {
+				t.Fatalf("Execute() with args %v returned error: %s", args, err)
+			}
+
+			req := &rpc.GetArtifactContentsRequest{
+				Name: "projects/" + test.project + "/locations/global/artifacts/test-scorecard",
+			}
+
+			definition := &rpc.ScoreCard{}
+			body, err := client.GetArtifactContents(ctx, req)
+			if err != nil {
+				t.Fatalf("GetArtifactContents() returned error: %s", err)
+			}
+			contents := body.GetData()
+			err = proto.Unmarshal(contents, definition)
+			if err != nil {
+				t.Fatalf("proto.Unmarshal() returned error: %s", err)
+			}
+
+			// Verify the manifest definition is correct
+			opts := cmp.Options{
+				protocmp.Transform(),
+			}
+
+			if diff := cmp.Diff(test.want, definition, opts); diff != "" {
+				t.Errorf("GetArtifactContents returned unexpected diff (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
