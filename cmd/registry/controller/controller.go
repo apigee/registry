@@ -20,8 +20,7 @@ import (
 	"strings"
 	"time"
 
-	// "encoding/json"
-
+	"github.com/apigee/registry/cmd/registry/patterns"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
@@ -109,8 +108,13 @@ func generateDependencyMap(
 
 	sourceMap := make(map[string]time.Time)
 
+	resourceName, err := patterns.ParseResourcePattern(resourcePattern)
+	if err != nil {
+		return nil, err
+	}
+
 	// Extend the dependency pattern if it contains $resource.api like pattern
-	extDependencyQuery, err := extendDependencyPattern(resourcePattern, dependency.Pattern, projectID)
+	extDependencyQuery, err := patterns.SubstitueReferenceEntity(dependency.Pattern, resourceName, projectID)
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +126,7 @@ func generateDependencyMap(
 	}
 
 	for _, source := range sourceList {
-		group, err := getEntityKey(dependency.Pattern, source.ResourceName())
+		group, err := patterns.GetReferenceEntityValue(dependency.Pattern, source.ResourceName())
 		if err != nil {
 			return nil, err
 		}
@@ -257,16 +261,16 @@ func generateCreateActions(
 	generatedResource *rpc.GeneratedResource,
 	visited map[string]bool) ([]*Action, error) {
 
-	var parentList []resourceInstance
+	var parentList []patterns.ResourceInstance
 
-	parsedResourcePattern, err := parseResourcePattern(resourcePattern)
+	parsedResourcePattern, err := patterns.ParseResourcePattern(resourcePattern)
 	if err != nil {
 		return nil, err
 	}
 
 	parentName := parsedResourcePattern.ParentName()
 	switch parentName.(type) {
-	case projectName:
+	case patterns.ProjectName:
 		// If parent is a project, we can't list projects since this is registry client command.
 		// Since the manifest definition is scoped  only for a particular project,
 		// there will be only one target resource in this case.
@@ -279,9 +283,9 @@ func generateCreateActions(
 		if visited[parentName.String()] {
 			return nil, nil
 		}
-		parentList = []resourceInstance{
-			projectResource{
-				projectName: parentName,
+		parentList = []patterns.ResourceInstance{
+			patterns.ProjectResource{
+				ProjectName: parentName,
 			},
 		}
 
@@ -298,7 +302,7 @@ func generateCreateActions(
 	for _, parent := range parentList {
 		// Since the GeneratedResource is non-existent here,
 		// we will have to derive the exact name of the target resource
-		targetResourceName, err := resourceNameFromParent(resourcePattern, parent.ResourceName().String())
+		targetResourceName, err := patterns.FullResourceNameFromParent(resourcePattern, parent.ResourceName().String())
 		if err != nil {
 			return nil, err
 		}
@@ -331,7 +335,7 @@ func generateCreateActions(
 }
 
 func needsUpdate(
-	targetResourceName resourceName,
+	targetResourceName patterns.ResourceName,
 	targetResourceTime time.Time,
 	dependencyMaps []map[string]time.Time,
 	generatedResource *rpc.GeneratedResource,
@@ -339,7 +343,7 @@ func needsUpdate(
 	for i, dependency := range generatedResource.Dependencies {
 		dMap := dependencyMaps[i]
 		// Get the entity to look for in dependencyMap
-		entityKey, err := getEntityKey(dependency.Pattern, targetResourceName)
+		entityKey, err := patterns.GetReferenceEntityValue(dependency.Pattern, targetResourceName)
 		if err != nil {
 			// This means that there is error in the pattern definition, hence return
 			return false, fmt.Errorf("cannot match resource with dependency. Error: %s", err.Error())
@@ -359,20 +363,20 @@ func needsUpdate(
 }
 
 func needsCreate(
-	targetResourceName resourceName,
+	targetResourceName patterns.ResourceName,
 	dependencyMaps []map[string]time.Time,
 	generatedResource *rpc.GeneratedResource) (bool, error) {
 	for i, dependency := range generatedResource.Dependencies {
 		dMap := dependencyMaps[i]
 		// Get the entity to look for in dependencyMap
-		entityKey, err := getEntityKey(dependency.Pattern, targetResourceName)
+		entityVal, err := patterns.GetReferenceEntityValue(dependency.Pattern, targetResourceName)
 		if err != nil {
 			// This means that there is error in the pattern definition, hence return
 			return false, fmt.Errorf("cannot match resource with dependency. Error: %s", err.Error())
 		}
 
 		// All the dependencies should be present to generate an action.
-		if _, ok := dMap[entityKey]; !ok {
+		if _, ok := dMap[entityVal]; !ok {
 			return false, nil
 		}
 	}
