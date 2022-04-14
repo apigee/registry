@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-=======
->>>>>>> 82ce929 (Add artifact upload support for score(card) definitions)
 id: "test-score-definition"
 kind: "ScoreDefinition"
 target_resource:
