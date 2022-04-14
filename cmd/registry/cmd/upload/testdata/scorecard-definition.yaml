@@ -1,0 +1,9 @@
+id: "test-scorecard-definition"
+kind: "ScoreCardDefinition"
+target:
+  pattern: "apis/-/versions/-/specs/-"
+score_patterns:
+- "$resource.spec/artifacts/score-security-audit"
+- "$resource.spec/artifacts/score-lint-error"
+- "$resource.spec/artifacts/score-accuracy"
+- "$resource.spec/artifacts/score-lang-reuse"

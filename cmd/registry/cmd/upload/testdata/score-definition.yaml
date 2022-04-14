@@ -1,0 +1,20 @@
+id: "test-score-definition"
+kind: "ScoreDefinition"
+target_resource:
+  pattern: "apis/-/versions/-/specs/-"
+score_formula:
+  pattern:
+    pattern: "$resource.spec/artifacts/conformance-report"
+  score_expression: "size(conformance.GuidelineReportGroups[2].RuleReportGroups[1])"
+integer: 
+  min_value: 0
+  max_value: 100
+  thresholds:
+  - severity: ALERT
+    range:
+      min: 60
+      max: 100
+  - severity: OK
+    range:
+      min: 0
+      max: 59
