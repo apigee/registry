@@ -28,102 +28,122 @@ import (
 	openapiv3 "github.com/google/gnostic/openapiv3"
 )
 
-func PrintProject(project *rpc.Project) {
+func PrintProject(project *rpc.Project) error {
 	fmt.Println(project.Name)
+	return nil
 }
 
-func PrintProjectDetail(message *rpc.Project) {
+func PrintProjectDetail(message *rpc.Project) error {
 	PrintMessage(message)
+	return nil
 }
 
-func PrintAPI(api *rpc.Api) {
+func PrintAPI(api *rpc.Api) error {
 	fmt.Println(api.Name)
+	return nil
 }
 
-func PrintAPIDetail(message *rpc.Api) {
+func PrintAPIDetail(message *rpc.Api) error {
 	PrintMessage(message)
+	return nil
 }
 
-func PrintDeployment(deployment *rpc.ApiDeployment) {
+func PrintDeployment(deployment *rpc.ApiDeployment) error {
 	fmt.Println(deployment.Name)
+	return nil
 }
 
-func PrintDeploymentDetail(message *rpc.ApiDeployment) {
+func PrintDeploymentDetail(message *rpc.ApiDeployment) error {
 	PrintMessage(message)
+	return nil
 }
 
-func PrintVersion(version *rpc.ApiVersion) {
+func PrintVersion(version *rpc.ApiVersion) error {
 	fmt.Println(version.Name)
+	return nil
 }
 
-func PrintVersionDetail(message *rpc.ApiVersion) {
+func PrintVersionDetail(message *rpc.ApiVersion) error {
 	PrintMessage(message)
+	return nil
 }
 
-func PrintSpec(spec *rpc.ApiSpec) {
+func PrintSpec(spec *rpc.ApiSpec) error {
 	fmt.Println(spec.Name)
+	return nil
 }
 
-func PrintSpecDetail(message *rpc.ApiSpec) {
+func PrintSpecDetail(message *rpc.ApiSpec) error {
 	PrintMessage(message)
+	return nil
 }
 
-func PrintSpecContents(message *rpc.ApiSpec) {
+func PrintSpecContents(message *rpc.ApiSpec) error {
 	contents := message.GetContents()
 	if strings.Contains(message.GetMimeType(), "+gzip") {
 		contents, _ = GUnzippedBytes(contents)
 	}
 	os.Stdout.Write(contents)
+	return nil
 }
 
-func PrintArtifact(artifact *rpc.Artifact) {
+func PrintArtifact(artifact *rpc.Artifact) error {
 	fmt.Println(artifact.Name)
+	return nil
 }
 
-func PrintArtifactDetail(artifact *rpc.Artifact) {
+func PrintArtifactDetail(artifact *rpc.Artifact) error {
 	PrintMessage(artifact)
+	return nil
 }
 
-func PrintArtifactContents(artifact *rpc.Artifact) {
+func PrintArtifactContents(artifact *rpc.Artifact) error {
 	if artifact.GetMimeType() == "text/plain" {
 		fmt.Printf("%s\n", string(artifact.GetContents()))
-		return
+		return nil
 	}
+
 	messageType, err := MessageTypeForMimeType(artifact.GetMimeType())
 	if err != nil {
-		fmt.Println(artifact.Name)
+		return err
 	}
+
 	switch messageType {
 	case "gnostic.metrics.Complexity":
-		unmarshalAndPrint(artifact.GetContents(), &metrics.Complexity{})
+		return unmarshalAndPrint(artifact.GetContents(), &metrics.Complexity{})
 	case "gnostic.metrics.Vocabulary":
-		unmarshalAndPrint(artifact.GetContents(), &metrics.Vocabulary{})
+		return unmarshalAndPrint(artifact.GetContents(), &metrics.Vocabulary{})
 	case "gnostic.metrics.VersionHistory":
-		unmarshalAndPrint(artifact.GetContents(), &metrics.VersionHistory{})
+		return unmarshalAndPrint(artifact.GetContents(), &metrics.VersionHistory{})
 	case "google.cloud.apigeeregistry.applications.v1alpha1.ConformanceReport":
-		unmarshalAndPrint(artifact.GetContents(), &rpc.ConformanceReport{})
+		return unmarshalAndPrint(artifact.GetContents(), &rpc.ConformanceReport{})
 	case "google.cloud.apigeeregistry.applications.v1alpha1.Index":
-		unmarshalAndPrint(artifact.GetContents(), &rpc.Index{})
+		return unmarshalAndPrint(artifact.GetContents(), &rpc.Index{})
 	case "google.cloud.apigeeregistry.applications.v1alpha1.Lint":
-		unmarshalAndPrint(artifact.GetContents(), &rpc.Lint{})
+		return unmarshalAndPrint(artifact.GetContents(), &rpc.Lint{})
+	case "google.cloud.apigeeregistry.v1.apihub.DisplaySettings":
+		return unmarshalAndPrint(artifact.GetContents(), &rpc.DisplaySettings{})
 	case "google.cloud.apigeeregistry.v1.apihub.Lifecycle":
-		unmarshalAndPrint(artifact.GetContents(), &rpc.Lifecycle{})
+		return unmarshalAndPrint(artifact.GetContents(), &rpc.Lifecycle{})
+	case "google.cloud.apigeeregistry.v1.apihub.ReferenceList":
+		return unmarshalAndPrint(artifact.GetContents(), &rpc.ReferenceList{})
 	case "google.cloud.apigeeregistry.v1.apihub.TaxonomyList":
-		unmarshalAndPrint(artifact.GetContents(), &rpc.TaxonomyList{})
+		return unmarshalAndPrint(artifact.GetContents(), &rpc.TaxonomyList{})
 	case "google.cloud.apigeeregistry.v1.controller.Manifest":
-		unmarshalAndPrint(artifact.GetContents(), &rpc.Manifest{})
+		return unmarshalAndPrint(artifact.GetContents(), &rpc.Manifest{})
 	case "google.cloud.apigeeregistry.v1.controller.Receipt":
-		unmarshalAndPrint(artifact.GetContents(), &rpc.Receipt{})
+		return unmarshalAndPrint(artifact.GetContents(), &rpc.Receipt{})
 	case "google.cloud.apigeeregistry.applications.v1alpha1.References":
-		unmarshalAndPrint(artifact.GetContents(), &rpc.References{})
+		return unmarshalAndPrint(artifact.GetContents(), &rpc.References{})
 	case "google.cloud.apigeeregistry.applications.v1alpha1.StyleGuide":
-		unmarshalAndPrint(artifact.GetContents(), &rpc.StyleGuide{})
+		return unmarshalAndPrint(artifact.GetContents(), &rpc.StyleGuide{})
 	case "gnostic.openapiv2.Document":
-		unmarshalAndPrint(artifact.GetContents(), &openapiv2.Document{})
+		return unmarshalAndPrint(artifact.GetContents(), &openapiv2.Document{})
 	case "gnostic.openapiv3.Document":
-		unmarshalAndPrint(artifact.GetContents(), &openapiv3.Document{})
+		return unmarshalAndPrint(artifact.GetContents(), &openapiv3.Document{})
 	default:
 		fmt.Printf("%+v", artifact.GetContents())
+		return nil
 	}
 }
 
@@ -131,11 +151,11 @@ func PrintMessage(message proto.Message) {
 	fmt.Println(protojson.Format(message))
 }
 
-func unmarshalAndPrint(value []byte, message proto.Message) {
-	err := proto.Unmarshal(value, message)
-	if err != nil {
-		fmt.Printf("%+v", err)
-	} else {
-		PrintMessage(message)
+func unmarshalAndPrint(value []byte, message proto.Message) error {
+	if err := proto.Unmarshal(value, message); err != nil {
+		return err
 	}
+
+	PrintMessage(message)
+	return nil
 }

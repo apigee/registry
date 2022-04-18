@@ -28,9 +28,11 @@ import (
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
-func specCommand(ctx context.Context) *cobra.Command {
+func specCommand() *cobra.Command {
 	var (
 		version string
 		style   string
@@ -41,6 +43,7 @@ func specCommand(ctx context.Context) *cobra.Command {
 		Short: "Upload an API spec",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
+			ctx := cmd.Context()
 			client, err := connection.NewClient(ctx)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
@@ -88,7 +91,7 @@ func uploadSpecDirectory(ctx context.Context, dirname string, client *gapic.Regi
 	prefix := dirname + "/"
 	// build a zip archive with the contents of the path
 	// https://golangcode.com/create-zip-files-in-go/
-	buf, err := core.ZipArchiveOfPath(dirname, prefix)
+	buf, err := core.ZipArchiveOfPath(dirname, prefix, true)
 	if err != nil {
 		return err
 	}
@@ -104,7 +107,7 @@ func uploadSpecDirectory(ctx context.Context, dirname string, client *gapic.Regi
 	response, err := client.CreateApiSpec(ctx, request)
 	if err == nil {
 		log.Debugf(ctx, "Created %s", response.Name)
-	} else if core.AlreadyExists(err) {
+	} else if status.Code(err) == codes.AlreadyExists {
 		log.Debugf(ctx, "Found %s/specs/%s", request.Parent, request.ApiSpecId)
 	} else {
 		log.FromContext(ctx).WithError(err).Debugf("Error %s/specs/%s [contents-length %d]", request.Parent, request.ApiSpecId, len(request.ApiSpec.Contents))

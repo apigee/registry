@@ -17,6 +17,7 @@ package bulk
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	"io/ioutil"
 	"os"
 	"path"
@@ -31,16 +32,30 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
-func protosCommand(ctx context.Context) *cobra.Command {
+// The pattern of an API version directory.
+var versionDirectory = regexp.MustCompile("v.*[1-9]+.*")
+
+// The API Service Configuration contains important API properties.
+type ServiceConfig struct {
+	Type          string `yaml:"type"`
+	Name          string `yaml:"name"`
+	Title         string `yaml:"title"`
+	Documentation struct {
+		Summary string `yaml:"summary"`
+	} `yaml:"documentation"`
+}
+
+func protosCommand() *cobra.Command {
 	var baseURI string
 	cmd := &cobra.Command{
 		Use:   "protos",
 		Short: "Bulk-upload Protocol Buffer descriptions from a directory of specs",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
+			ctx := cmd.Context()
 			projectID, err := cmd.Flags().GetString("project-id")
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get project-id from flags")
@@ -64,7 +79,10 @@ func protosCommand(ctx context.Context) *cobra.Command {
 				if err != nil {
 					log.FromContext(ctx).WithError(err).Fatal("Invalid path")
 				}
-				scanDirectoryForProtos(ctx, client, projectID, baseURI, path, taskQueue)
+
+				if err := scanDirectoryForProtos(ctx, client, projectID, baseURI, path, taskQueue); err != nil {
+					log.FromContext(ctx).WithError(err).Debug("Failed to walk directory")
+				}
 			}
 		},
 	}
@@ -73,27 +91,30 @@ func protosCommand(ctx context.Context) *cobra.Command {
 	return cmd
 }
 
-func scanDirectoryForProtos(ctx context.Context, client connection.Client, projectID, baseURI, directory string, taskQueue chan<- core.Task) {
-	dirPattern := regexp.MustCompile("v.*[1-9]+.*")
-	if err := filepath.Walk(directory, func(fullname string, info os.FileInfo, err error) error {
+func scanDirectoryForProtos(ctx context.Context, client connection.Client, projectID, baseURI, root string, taskQueue chan<- core.Task) error {
+	return filepath.Walk(root, func(filepath string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 
-		// Skip non-matching directories.
-		filename := path.Base(fullname)
-		if !info.IsDir() || !dirPattern.MatchString(filename) {
+		// Skip everything that's not a YAML file in a versioned directory.
+		parent := path.Dir(filepath)
+		if info.IsDir() || !strings.HasSuffix(filepath, ".yaml") || !versionDirectory.MatchString(path.Base(parent)) {
 			return nil
 		}
 
-		// The API Service Configuration contains important API properties.
-		serviceConfig, err := readServiceConfig(fullname)
+		bytes, err := ioutil.ReadFile(filepath)
 		if err != nil {
 			return err
 		}
 
-		// Skip APIs with missing or incomplete service configurations
-		if serviceConfig == nil || serviceConfig.Title == "" || serviceConfig.Name == "" {
+		sc := &ServiceConfig{}
+		if err := yaml.Unmarshal(bytes, sc); err != nil {
+			return err
+		}
+
+		// Skip invalid API service configurations.
+		if sc.Type != "google.api.Service" || sc.Title == "" || sc.Name == "" {
 			return nil
 		}
 
@@ -101,17 +122,16 @@ func scanDirectoryForProtos(ctx context.Context, client connection.Client, proje
 			client:         client,
 			baseURI:        baseURI,
 			projectID:      projectID,
-			apiID:          strings.TrimSuffix(serviceConfig.Name, ".googleapis.com"),
-			apiTitle:       serviceConfig.Title,
-			apiDescription: strings.ReplaceAll(serviceConfig.Documentation.Summary, "\n", " "),
-			path:           fullname,
-			directory:      directory,
+			apiID:          strings.TrimSuffix(sc.Name, ".googleapis.com"),
+			apiTitle:       sc.Title,
+			apiDescription: strings.ReplaceAll(sc.Documentation.Summary, "\n", " "),
+			path:           parent,
+			directory:      root,
 		}
 
-		return nil
-	}); err != nil {
-		log.FromContext(ctx).WithError(err).Debug("Failed to walk directory")
-	}
+		// Skip the directory after we find an API service configuration.
+		return fs.SkipDir
+	})
 }
 
 type uploadProtoTask struct {
@@ -270,57 +290,10 @@ func (task *uploadProtoTask) fileName() string {
 
 func (task *uploadProtoTask) zipContents() ([]byte, error) {
 	prefix := task.directory + "/"
-	contents, err := core.ZipArchiveOfPath(task.path, prefix)
+	contents, err := core.ZipArchiveOfPath(task.path, prefix, true)
 	if err != nil {
 		return nil, err
 	}
 
 	return contents.Bytes(), nil
-}
-
-type ServiceConfig struct {
-	Type          string `yaml:"type"`
-	Name          string `yaml:"name"`
-	Title         string `yaml:"title"`
-	Documentation struct {
-		Summary string `yaml:"summary"`
-	} `yaml:"documentation"`
-}
-
-// readServiceConfig scans a directory for a YAML file containing
-// Google Service Configuration. Often other YAML files are present;
-// these are ignored, and the Service Configuration file is recognized
-// by the presence of a "type" field containing "google.api.Service".
-// This expects (but does not verify) that there is only one such file
-// in the directory.
-func readServiceConfig(directory string) (*ServiceConfig, error) {
-	var serviceConfig *ServiceConfig
-	yamlPattern := regexp.MustCompile(`.*\.yaml`)
-	err := filepath.Walk(directory, func(fullname string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		// Skip everything that's not a YAML file.
-		filename := path.Base(fullname)
-		if info.IsDir() || !yamlPattern.MatchString(filename) {
-			return nil
-		}
-		bytes, err := ioutil.ReadFile(fullname)
-		if err != nil {
-			return err
-		}
-		sc := &ServiceConfig{}
-		err = yaml.Unmarshal(bytes, sc)
-		if err != nil {
-			return err
-		}
-		if sc.Type == "google.api.Service" {
-			serviceConfig = sc
-		}
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	return serviceConfig, nil
 }

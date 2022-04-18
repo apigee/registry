@@ -17,7 +17,7 @@ package patch
 import (
 	"fmt"
 
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 const RegistryV1 = "apigeeregistry/v1"
@@ -41,7 +41,7 @@ func readHeader(bytes []byte) (Header, error) {
 		return header, err
 	}
 	if header.ApiVersion != RegistryV1 {
-		return header, fmt.Errorf("Unsupported API version: %s", header.ApiVersion)
+		return header, fmt.Errorf("unsupported API version: %s", header.ApiVersion)
 	}
 	return header, nil
 }

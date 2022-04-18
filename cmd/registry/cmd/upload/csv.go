@@ -27,12 +27,13 @@ import (
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/server/registry/names"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
-func csvCommand(ctx context.Context) *cobra.Command {
+func csvCommand() *cobra.Command {
 	var (
 		projectID string
 		delimiter string
@@ -43,6 +44,7 @@ func csvCommand(ctx context.Context) *cobra.Command {
 		Short: "Upload API specs from a CSV file",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
+			ctx := cmd.Context()
 			if len(delimiter) != 1 {
 				log.Fatalf(ctx, "Invalid delimiter %q: must be exactly one character", delimiter)
 			}
@@ -57,7 +59,14 @@ func csvCommand(ctx context.Context) *cobra.Command {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
 
-			core.EnsureProjectExists(ctx, adminClient, projectID)
+			if _, err := adminClient.UpdateProject(ctx, &rpc.UpdateProjectRequest{
+				Project: &rpc.Project{
+					Name: names.Project{ProjectID: projectID}.String(),
+				},
+				AllowMissing: true,
+			}); err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Failed to ensure project exists")
+			}
 
 			taskQueue, wait := core.WorkerPool(ctx, 64)
 			defer wait()

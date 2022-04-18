@@ -15,20 +15,18 @@
 package bulk
 
 import (
-	"context"
-
 	"github.com/spf13/cobra"
 )
 
-func Command(ctx context.Context) *cobra.Command {
+func Command() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "bulk",
 		Short: "Bulk-upload API specs of selected styles",
 	}
 
-	cmd.AddCommand(discoveryCommand(ctx))
-	cmd.AddCommand(openAPICommand(ctx))
-	cmd.AddCommand(protosCommand(ctx))
+	cmd.AddCommand(discoveryCommand())
+	cmd.AddCommand(openAPICommand())
+	cmd.AddCommand(protosCommand())
 
 	cmd.PersistentFlags().String("project-id", "", "Project ID to use for each upload")
 	_ = cmd.MarkFlagRequired("project-id")

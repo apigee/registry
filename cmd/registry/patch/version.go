@@ -26,11 +26,10 @@ import (
 )
 
 type ApiVersionData struct {
-	DisplayName string      `yaml:"displayName,omitempty"`
-	Description string      `yaml:"description,omitempty"`
-	State       string      `yaml:"state,omitempty"`
-	ApiSpecs    []*ApiSpec  `yaml:"specs,omitempty"`
-	Artifacts   []*Artifact `yaml:"artifacts,omitempty"`
+	DisplayName string     `yaml:"displayName,omitempty"`
+	Description string     `yaml:"description,omitempty"`
+	State       string     `yaml:"state,omitempty"`
+	ApiSpecs    []*ApiSpec `yaml:"specs,omitempty"`
 }
 
 type ApiVersion struct {
@@ -43,7 +42,23 @@ func newApiVersion(ctx context.Context, client *gapic.RegistryClient, message *r
 	if err != nil {
 		return nil, err
 	}
-	version := &ApiVersion{
+
+	specs := make([]*ApiSpec, 0)
+	if err = core.ListSpecs(ctx, client, versionName.Spec("-"), "", func(message *rpc.ApiSpec) error {
+		spec, err := newApiSpec(ctx, client, message)
+		if err != nil {
+			return err
+		}
+		// unset these because they can be inferred
+		spec.ApiVersion = ""
+		spec.Kind = ""
+		specs = append(specs, spec)
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	return &ApiVersion{
 		Header: Header{
 			ApiVersion: RegistryV1,
 			Kind:       "ApiVersion",
@@ -57,24 +72,9 @@ func newApiVersion(ctx context.Context, client *gapic.RegistryClient, message *r
 			DisplayName: message.DisplayName,
 			Description: message.Description,
 			State:       message.State,
+			ApiSpecs:    specs,
 		},
-	}
-
-	var innerErr error // TODO: remove when ListSpecs accepts a handler that returns errors
-	err = core.ListSpecs(ctx, client, versionName.Spec("-"), "", func(message *rpc.ApiSpec) {
-		var spec *ApiSpec
-		spec, innerErr = newApiSpec(ctx, client, message)
-		if innerErr == nil {
-			// unset these because they can be inferred
-			spec.ApiVersion = ""
-			spec.Kind = ""
-			version.Data.ApiSpecs = append(version.Data.ApiSpecs, spec)
-		}
-	})
-	if innerErr != nil {
-		return nil, innerErr
-	}
-	return version, err
+	}, nil
 }
 
 func applyApiVersionPatch(

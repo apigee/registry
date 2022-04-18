@@ -27,13 +27,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func Command(ctx context.Context) *cobra.Command {
+func Command() *cobra.Command {
 	var filter string
 	cmd := &cobra.Command{
 		Use:   "delete",
 		Short: "Delete resources from the API Registry",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
+			ctx := cmd.Context()
 			client, err := connection.NewClient(ctx)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
@@ -106,12 +107,13 @@ func deleteAPIs(
 	api names.Api,
 	filterFlag string,
 	taskQueue chan<- core.Task) error {
-	return core.ListAPIs(ctx, client, api, filterFlag, func(api *rpc.Api) {
+	return core.ListAPIs(ctx, client, api, filterFlag, func(api *rpc.Api) error {
 		taskQueue <- &deleteTask{
 			client:       client,
 			resourceName: api.Name,
 			resourceKind: "api",
 		}
+		return nil
 	})
 }
 
@@ -121,12 +123,13 @@ func deleteVersions(
 	version names.Version,
 	filterFlag string,
 	taskQueue chan<- core.Task) error {
-	return core.ListVersions(ctx, client, version, filterFlag, func(version *rpc.ApiVersion) {
+	return core.ListVersions(ctx, client, version, filterFlag, func(version *rpc.ApiVersion) error {
 		taskQueue <- &deleteTask{
 			client:       client,
 			resourceName: version.Name,
 			resourceKind: "version",
 		}
+		return nil
 	})
 }
 
@@ -136,12 +139,13 @@ func deleteSpecs(
 	spec names.Spec,
 	filterFlag string,
 	taskQueue chan<- core.Task) error {
-	return core.ListSpecs(ctx, client, spec, filterFlag, func(spec *rpc.ApiSpec) {
+	return core.ListSpecs(ctx, client, spec, filterFlag, func(spec *rpc.ApiSpec) error {
 		taskQueue <- &deleteTask{
 			client:       client,
 			resourceName: spec.Name,
 			resourceKind: "spec",
 		}
+		return nil
 	})
 }
 
@@ -151,11 +155,12 @@ func deleteArtifacts(
 	artifact names.Artifact,
 	filterFlag string,
 	taskQueue chan<- core.Task) error {
-	return core.ListArtifacts(ctx, client, artifact, filterFlag, false, func(artifact *rpc.Artifact) {
+	return core.ListArtifacts(ctx, client, artifact, filterFlag, false, func(artifact *rpc.Artifact) error {
 		taskQueue <- &deleteTask{
 			client:       client,
 			resourceName: artifact.Name,
 			resourceKind: "artifact",
 		}
+		return nil
 	})
 }

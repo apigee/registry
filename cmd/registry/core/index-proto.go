@@ -15,17 +15,14 @@
 package core
 
 import (
-	"bufio"
-	"fmt"
-	"io/ioutil"
-	"os"
+	"archive/zip"
+	"bytes"
 	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
 
 	"github.com/apigee/registry/rpc"
-	"github.com/gogo/protobuf/jsonpb"
 	"github.com/yoheimuta/go-protoparser/v4/interpret/unordered"
 	"github.com/yoheimuta/go-protoparser/v4/parser"
 
@@ -33,79 +30,60 @@ import (
 )
 
 func NewIndexFromZippedProtos(b []byte) (*rpc.Index, error) {
-	// create a tmp directory
-	dname, err := ioutil.TempDir("", "registry-protos-")
+	r, err := zip.NewReader(bytes.NewReader(b), int64(len(b)))
 	if err != nil {
 		return nil, err
 	}
-	// whenever we finish, delete the tmp directory
-	defer os.RemoveAll(dname)
-	// unzip the protos to the temp directory
-	_, err = UnzipArchiveToPath(b, dname)
-	if err != nil {
-		return nil, err
-	}
-	// process the directory
-	c, err := indexForRoot(dname)
-	if err != nil {
-		return nil, err
-	}
-	buildIndex(c)
-	removeRequestAndResponseSchemas(c)
-	flattenPaths(c)
-	return c, nil
-}
 
-func indexForRoot(root string) (*rpc.Index, error) {
 	s := &rpc.Index{}
-	err := filepath.Walk(root,
-		func(path string, info os.FileInfo, err error) error {
-			if err != nil {
-				return err
-			}
-			if strings.HasSuffix(path, ".proto") {
-				file, err := fileForProto(path, root+"/")
-				if err != nil {
-					return err
-				}
-				s.Files = append(s.Files, file)
-			}
-			return nil
-		})
-	return s, err
-}
-
-func fileForProto(filename, root string) (*rpc.File, error) {
-	reader, err := os.Open(filename)
-	if err != nil {
-		return nil, err
-	}
-	defer reader.Close()
-	p, err := protoparser.Parse(
-		reader,
-		protoparser.WithDebug(false),
-		protoparser.WithPermissive(true),
-		protoparser.WithFilename(filepath.Base(filename)),
-	)
-	if err != nil {
-		return nil, err
-	}
-	v, err := protoparser.UnorderedInterpret(p)
-	if err != nil {
-		return nil, err
-	}
-	f := &rpc.File{}
-	f.Name = strings.TrimPrefix(filename, root)
-	for _, m := range v.ProtoBody.Messages {
-		f.Schemas = append(f.Schemas, schemaForMessage(m))
-	}
-	for _, s := range v.ProtoBody.Services {
-		serviceName := s.ServiceName
-		for _, rpc := range s.ServiceBody.RPCs {
-			f.Operations = append(f.Operations, operationForRPC(rpc, serviceName))
+	for _, f := range r.File {
+		if !strings.HasSuffix(f.Name, ".proto") {
+			continue
 		}
+
+		r, err := f.Open()
+		if err != nil {
+			return nil, err
+		}
+		defer r.Close()
+
+		opts := []protoparser.Option{
+			protoparser.WithDebug(false),
+			protoparser.WithPermissive(true),
+			protoparser.WithFilename(filepath.Base(f.Name)),
+		}
+
+		p, err := protoparser.Parse(r, opts...)
+		if err != nil {
+			return nil, err
+		}
+
+		v, err := protoparser.UnorderedInterpret(p)
+		if err != nil {
+			return nil, err
+		}
+
+		file := &rpc.File{
+			Name: f.Name,
+		}
+
+		for _, m := range v.ProtoBody.Messages {
+			file.Schemas = append(file.Schemas, schemaForMessage(m))
+		}
+
+		for _, s := range v.ProtoBody.Services {
+			for _, rpc := range s.ServiceBody.RPCs {
+				file.Operations = append(file.Operations, operationForRPC(rpc, s.ServiceName))
+			}
+		}
+
+		s.Files = append(s.Files, file)
 	}
-	return f, nil
+
+	buildIndex(s)
+	removeRequestAndResponseSchemas(s)
+	flattenPaths(s)
+	return s, nil
 }
 
 func schemaForMessage(m *unordered.Message) *rpc.Schema {
@@ -248,68 +226,4 @@ func removeRequestAndResponseSchemas(index *rpc.Index) {
 		}
 	}
 	index.Schemas = filteredSchemas
-}
-
-// ExportSchemas writes an index of Schemas as a CSV
-func ExportSchemas(index *rpc.Index) error {
-	f, err := os.Create("schemas.csv")
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	w := bufio.NewWriter(f)
-	for _, schema := range index.Schemas {
-		fmt.Fprintf(w, "%s,%s,%s,%s\n",
-			schema.Name, schema.Resource, schema.Type, schema.File)
-	}
-	w.Flush()
-	return nil
-}
-
-// ExportOperations writes an index of Operations as a CSV
-func ExportOperations(index *rpc.Index) error {
-	f, err := os.Create("operations.csv")
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	w := bufio.NewWriter(f)
-	for _, op := range index.Operations {
-		fmt.Fprintf(w, "%s,%s,%s,%s,%s\n",
-			op.Name, op.Service, op.Verb, op.Path, op.File)
-	}
-	w.Flush()
-	return nil
-}
-
-// ExportFields writes an index of Fields as a CSV
-func ExportFields(index *rpc.Index) error {
-	f, err := os.Create("fields.csv")
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	w := bufio.NewWriter(f)
-	for _, field := range index.Fields {
-		fmt.Fprintf(w, "%s,%s,%s\n",
-			field.Name, field.Schema, field.File)
-	}
-	w.Flush()
-	return nil
-}
-
-// ExportAsJSON writes a index as a JSON file
-func ExportAsJSON(index *rpc.Index) error {
-	f, err := os.Create("index.json")
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	w := bufio.NewWriter(f)
-	m := &jsonpb.Marshaler{
-		Indent: "  ",
-	}
-	err = m.Marshal(w, index)
-	w.Flush()
-	return err
 }

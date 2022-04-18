@@ -26,16 +26,17 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 
 	discovery "github.com/google/gnostic/discovery"
 )
 
-func discoveryCommand(ctx context.Context) *cobra.Command {
+func discoveryCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "discovery",
 		Short: "Bulk-upload API Discovery documents from the Google API Discovery service",
 		Run: func(cmd *cobra.Command, args []string) {
+			ctx := cmd.Context()
 			projectID, err := cmd.Flags().GetString("project-id")
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get project-id from flags")

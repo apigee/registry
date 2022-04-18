@@ -32,7 +32,7 @@ import (
 	metrics "github.com/google/gnostic/metrics"
 )
 
-func sheetCommand(ctx context.Context) *cobra.Command {
+func sheetCommand() *cobra.Command {
 	var (
 		filter   string
 		artifact string
@@ -43,6 +43,7 @@ func sheetCommand(ctx context.Context) *cobra.Command {
 		Short: "Export a specified artifact to a Google sheet",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
+			ctx := cmd.Context()
 			var path string
 			client, err := connection.NewClient(ctx)
 			if err != nil {
@@ -140,16 +141,21 @@ func collectInputArtifacts(ctx context.Context, client connection.Client, args [
 	inputNames := make([]string, 0)
 	inputs := make([]*rpc.Artifact, 0)
 	for _, name := range args {
-		if artifact, err := names.ParseArtifact(name); err == nil {
-			err := core.ListArtifacts(ctx, client, artifact, filter, true, func(artifact *rpc.Artifact) {
-				inputNames = append(inputNames, artifact.Name)
-				inputs = append(inputs, artifact)
-			})
-			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to list artifacts")
-			}
+		artifact, err := names.ParseArtifact(name)
+		if err != nil {
+			continue
+		}
+
+		err = core.ListArtifacts(ctx, client, artifact, filter, true, func(artifact *rpc.Artifact) error {
+			inputNames = append(inputNames, artifact.Name)
+			inputs = append(inputs, artifact)
+			return nil
+		})
+		if err != nil {
+			log.FromContext(ctx).WithError(err).Fatal("Failed to list artifacts")
 		}
 	}
+
 	return inputNames, inputs
 }
 

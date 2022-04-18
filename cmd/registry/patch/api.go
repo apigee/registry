@@ -15,6 +15,7 @@
 package patch
 
 import (
+	"bytes"
 	"context"
 
 	"github.com/apigee/registry/cmd/registry/core"
@@ -22,7 +23,7 @@ import (
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 type ApiData struct {
@@ -46,7 +47,61 @@ func newApi(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api)
 	if err != nil {
 		return nil, err
 	}
-	api := &Api{
+	recommendedVersion, err := relativeVersionName(apiName, message.RecommendedVersion)
+	if err != nil {
+		return nil, err
+	}
+	recommendedDeployment, err := relativeDeploymentName(apiName, message.RecommendedDeployment)
+	if err != nil {
+		return nil, err
+	}
+	versions := make([]*ApiVersion, 0)
+	if err = core.ListVersions(ctx, client, apiName.Version("-"), "", func(message *rpc.ApiVersion) error {
+		var version *ApiVersion
+		version, err := newApiVersion(ctx, client, message)
+		if err != nil {
+			return err
+		}
+		// unset these because they can be inferred
+		version.ApiVersion = ""
+		version.Kind = ""
+		versions = append(versions, version)
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	deployments := make([]*ApiDeployment, 0)
+	if err = core.ListDeployments(ctx, client, apiName.Deployment("-"), "", func(message *rpc.ApiDeployment) error {
+		var deployment *ApiDeployment
+		deployment, err = newApiDeployment(ctx, client, message)
+		if err != nil {
+			return err
+		}
+		// unset these because they can be inferred
+		deployment.ApiVersion = ""
+		deployment.Kind = ""
+		deployments = append(deployments, deployment)
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	artifacts := make([]*Artifact, 0)
+	if err = core.ListArtifacts(ctx, client, apiName.Artifact("-"), "", true, func(message *rpc.Artifact) error {
+		var artifact *Artifact
+		artifact, err = newArtifact(message)
+		if err != nil {
+			return err
+		}
+		// skip unsupported artifact types, "Artifact" is the generic type
+		if artifact.Kind != "Artifact" {
+			artifact.ApiVersion = ""
+			artifacts = append(artifacts, artifact)
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	return &Api{
 		Header: Header{
 			ApiVersion: RegistryV1,
 			Kind:       "API",
@@ -57,56 +112,16 @@ func newApi(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api)
 			},
 		},
 		Data: ApiData{
-			DisplayName:  message.DisplayName,
-			Description:  message.Description,
-			Availability: message.Availability,
+			DisplayName:           message.DisplayName,
+			Description:           message.Description,
+			Availability:          message.Availability,
+			RecommendedVersion:    recommendedVersion,
+			RecommendedDeployment: recommendedDeployment,
+			ApiVersions:           versions,
+			ApiDeployments:        deployments,
+			Artifacts:             artifacts,
 		},
-	}
-	api.Data.RecommendedVersion, err = relativeVersionName(apiName, message.RecommendedVersion)
-	if err != nil {
-		return nil, err
-	}
-	api.Data.RecommendedDeployment, err = relativeDeploymentName(apiName, message.RecommendedDeployment)
-	if err != nil {
-		return nil, err
-	}
-	var innerErr error // TODO: remove when ListVersions accepts a handler that returns errors
-	err = core.ListVersions(ctx, client, apiName.Version("-"), "", func(message *rpc.ApiVersion) {
-		if innerErr != nil {
-			return
-		}
-		var version *ApiVersion
-		version, innerErr = newApiVersion(ctx, client, message)
-		if innerErr == nil {
-			// unset these because they can be inferred
-			version.ApiVersion = ""
-			version.Kind = ""
-			api.Data.ApiVersions = append(api.Data.ApiVersions, version)
-		}
-	})
-	if innerErr != nil {
-		return nil, innerErr
-	}
-	if err != nil {
-		return nil, err
-	}
-	err = core.ListDeployments(ctx, client, apiName.Deployment("-"), "", func(message *rpc.ApiDeployment) {
-		if innerErr != nil {
-			return
-		}
-		var deployment *ApiDeployment
-		deployment, innerErr = newApiDeployment(ctx, client, message)
-		if innerErr == nil {
-			// unset these because they can be inferred
-			deployment.ApiVersion = ""
-			deployment.Kind = ""
-			api.Data.ApiDeployments = append(api.Data.ApiDeployments, deployment)
-		}
-	})
-	if innerErr != nil {
-		return nil, innerErr
-	}
-	return api, err
+	}, err
 }
 
 // ExportAPI allows an API to be individually exported as a YAML file.
@@ -115,11 +130,12 @@ func ExportAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.A
 	if err != nil {
 		return nil, nil, err
 	}
-	b, err := yaml.Marshal(api)
+	var b bytes.Buffer
+	err = yamlEncoder(&b).Encode(api)
 	if err != nil {
 		return nil, nil, err
 	}
-	return b, &api.Header, nil
+	return b.Bytes(), &api.Header, nil
 }
 
 // TODO: These functions assume that their arguments are valid names and fail the export if they aren't.
@@ -217,6 +233,12 @@ func applyApiPatch(ctx context.Context, client connection.Client, bytes []byte, 
 	}
 	for _, deploymentPatch := range api.Data.ApiDeployments {
 		err := applyApiDeploymentPatch(ctx, client, deploymentPatch, apiName.String())
+		if err != nil {
+			return err
+		}
+	}
+	for _, artifactPatch := range api.Data.Artifacts {
+		err = applyArtifactPatch(ctx, client, artifactPatch, apiName.String())
 		if err != nil {
 			return err
 		}

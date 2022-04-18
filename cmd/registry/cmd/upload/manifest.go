@@ -15,7 +15,6 @@
 package upload
 
 import (
-	"context"
 	"fmt"
 	"io/ioutil"
 
@@ -48,13 +47,14 @@ func readManifestProto(filename string) (*rpc.Manifest, error) {
 	return m, nil
 }
 
-func manifestCommand(ctx context.Context) *cobra.Command {
+func manifestCommand() *cobra.Command {
 	var projectID string
 	cmd := &cobra.Command{
 		Use:   "manifest FILE_PATH --project-id=value",
 		Short: "Upload a dependency manifest",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
+			ctx := cmd.Context()
 			manifestPath := args[0]
 			if manifestPath == "" {
 				log.Fatal(ctx, "Please provide manifest-path")
@@ -66,14 +66,11 @@ func manifestCommand(ctx context.Context) *cobra.Command {
 			}
 
 			// validate the manifest
-			isValid := true
-			for _, resource := range manifest.GeneratedResources {
-				if err := controller.ValidateResourceEntry(resource); err != nil {
-					log.FromContext(ctx).WithError(err).Errorf("Invalid manifest entry %v", resource)
-					isValid = false
+			errs := controller.ValidateManifest(ctx, fmt.Sprintf("projects/%s/locations/global", projectID), manifest)
+			if len(errs) > 0 {
+				for _, err := range errs {
+					log.FromContext(ctx).WithError(err).Errorf("Invalid manifest entry")
 				}
-			}
-			if !isValid {
 				log.Fatal(ctx, "Manifest definition contains errors")
 			}
 

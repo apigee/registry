@@ -48,7 +48,7 @@ RUN apk update && apk upgrade
 RUN apk add --no-cache ca-certificates
 
 # Copy some commonly-needed tools into the image.
-RUN apk add --no-cache bash git
+RUN apk add --no-cache bash git curl jq
 
 # Copy binaries to the production image from the builder stage.
 COPY --from=builder /app/registry /bin/registry

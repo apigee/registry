@@ -35,13 +35,14 @@ func lintStatsRelation(linter string) string {
 	return "lintstats-" + linter
 }
 
-func lintStatsCommand(ctx context.Context) *cobra.Command {
+func lintStatsCommand() *cobra.Command {
 	var linter string
 	cmd := &cobra.Command{
 		Use:   "lintstats",
 		Short: "Compute summaries of linter runs",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
+			ctx := cmd.Context()
 			filter, err := cmd.Flags().GetString("filter")
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get filter from flags")
@@ -57,10 +58,7 @@ func lintStatsCommand(ctx context.Context) *cobra.Command {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
 
-			// Generate tasks.
-			name := args[0]
-
-			err = matchAndHandleLintStatsCmd(ctx, client, adminClient, name, filter, linter)
+			err = matchAndHandleLintStatsCmd(ctx, client, adminClient, args[0], filter, linter)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to match or handle command")
 			}
@@ -107,7 +105,7 @@ func computeLintStatsSpecs(ctx context.Context,
 	filter string,
 	linter string) error {
 
-	return core.ListSpecs(ctx, client, spec, filter, func(spec *rpc.ApiSpec) {
+	return core.ListSpecs(ctx, client, spec, filter, func(spec *rpc.ApiSpec) error {
 		// Iterate through a collection of specs and evaluate each.
 		log.Debug(ctx, spec.GetName())
 		// get the lint results
@@ -116,21 +114,21 @@ func computeLintStatsSpecs(ctx context.Context,
 		}
 		contents, _ := client.GetArtifactContents(ctx, &request)
 		if contents == nil {
-			return // ignore missing results
+			return nil // ignore missing results
 		}
 
 		messageType, err := core.MessageTypeForMimeType(contents.GetContentType())
 		if err != nil {
-			return
+			return nil
 		}
 		if messageType != "google.cloud.apigeeregistry.applications.v1alpha1.Lint" {
-			return // ignore unexpected message types
+			return nil // ignore unexpected message types
 		}
 
 		lint := &rpc.Lint{}
 		err = proto.Unmarshal(contents.GetData(), lint)
 		if err != nil {
-			return
+			return nil
 		}
 
 		// generate the stats from the result by counting problems
@@ -143,12 +141,12 @@ func computeLintStatsSpecs(ctx context.Context,
 			}
 			contents, _ := client.GetArtifactContents(ctx, &request)
 			if contents == nil {
-				return // ignore missing results
+				return nil // ignore missing results
 			}
 			complexity := &metrics.Complexity{}
 			err := proto.Unmarshal(contents.GetData(), complexity)
 			if err != nil {
-				return
+				return nil
 			}
 
 			lintStats.OperationCount = complexity.GetDeleteCount() +
@@ -158,6 +156,7 @@ func computeLintStatsSpecs(ctx context.Context,
 		}
 
 		_ = storeLintStatsArtifact(ctx, client, spec.GetName(), linter, lintStats)
+		return nil
 	})
 }
 
@@ -167,17 +166,19 @@ func computeLintStatsProjects(ctx context.Context,
 	projectName names.Project,
 	filter string,
 	linter string) error {
-	return core.ListProjects(ctx, adminClient, projectName, filter, func(project *rpc.Project) {
+	return core.ListProjects(ctx, adminClient, projectName, filter, func(project *rpc.Project) error {
 		project_stats := &rpc.LintStats{}
 
-		if err := core.ListAPIs(ctx, client, projectName.Api(""), filter, func(api *rpc.Api) {
+		if err := core.ListAPIs(ctx, client, projectName.Api(""), filter, func(api *rpc.Api) error {
 			aggregateLintStats(ctx, client, api.GetName(), linter, project_stats)
+			return nil
 		}); err != nil {
-			return
+			return nil
 		}
 		// Store the aggregate stats on this project
 		_ = storeLintStatsArtifact(ctx, client, project.GetName()+"/locations/global", linter, project_stats)
 		log.Debug(ctx, project.GetName())
+		return nil
 	})
 }
 
@@ -187,17 +188,19 @@ func computeLintStatsAPIs(ctx context.Context,
 	filter string,
 	linter string) error {
 
-	return core.ListAPIs(ctx, client, apiName, filter, func(api *rpc.Api) {
+	return core.ListAPIs(ctx, client, apiName, filter, func(api *rpc.Api) error {
 		api_stats := &rpc.LintStats{}
 
-		if err := core.ListVersions(ctx, client, apiName.Version(""), filter, func(version *rpc.ApiVersion) {
+		if err := core.ListVersions(ctx, client, apiName.Version(""), filter, func(version *rpc.ApiVersion) error {
 			aggregateLintStats(ctx, client, version.GetName(), linter, api_stats)
+			return nil
 		}); err != nil {
-			return
+			return nil
 		}
 		// Store the aggregate stats on this api
 		_ = storeLintStatsArtifact(ctx, client, api.GetName(), linter, api_stats)
 		log.Debug(ctx, api.GetName())
+		return nil
 	})
 }
 
@@ -206,18 +209,18 @@ func computeLintStatsVersions(ctx context.Context,
 	versionName names.Version,
 	filter string,
 	linter string) error {
-
-	return core.ListVersions(ctx, client, versionName, filter, func(version *rpc.ApiVersion) {
-		version_stats := &rpc.LintStats{}
-
-		if err := core.ListSpecs(ctx, client, versionName.Spec(""), filter, func(spec *rpc.ApiSpec) {
-			aggregateLintStats(ctx, client, spec.GetName(), linter, version_stats)
+	return core.ListVersions(ctx, client, versionName, filter, func(version *rpc.ApiVersion) error {
+		stats := &rpc.LintStats{}
+		if err := core.ListSpecs(ctx, client, versionName.Spec(""), filter, func(spec *rpc.ApiSpec) error {
+			aggregateLintStats(ctx, client, spec.GetName(), linter, stats)
+			return nil
 		}); err != nil {
-			return
+			return nil
 		}
 		// Store the aggregate stats on this version
-		_ = storeLintStatsArtifact(ctx, client, version.GetName(), linter, version_stats)
+		_ = storeLintStatsArtifact(ctx, client, version.GetName(), linter, stats)
 		log.Debug(ctx, version.GetName())
+		return nil
 	})
 }
 

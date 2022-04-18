@@ -19,6 +19,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
+	"os"
+	"strconv"
 	"strings"
 
 	"github.com/apigee/registry/cmd/registry/core"
@@ -29,11 +32,10 @@ import (
 )
 
 type ApiSpecData struct {
-	FileName    string      `yaml:"filename,omitempty"`
-	Description string      `yaml:"description,omitempty"`
-	MimeType    string      `yaml:"mimeType,omitempty"`
-	SourceURI   string      `yaml:"sourceURI,omitempty"`
-	Artifacts   []*Artifact `yaml:"artifacts,omitempty"`
+	FileName    string `yaml:"filename,omitempty"`
+	Description string `yaml:"description,omitempty"`
+	MimeType    string `yaml:"mimeType,omitempty"`
+	SourceURI   string `yaml:"sourceURI,omitempty"`
 }
 
 type ApiSpec struct {
@@ -46,7 +48,7 @@ func newApiSpec(ctx context.Context, client *gapic.RegistryClient, message *rpc.
 	if err != nil {
 		return nil, err
 	}
-	spec := &ApiSpec{
+	return &ApiSpec{
 		Header: Header{
 			ApiVersion: RegistryV1,
 			Kind:       "ApiSpec",
@@ -62,8 +64,7 @@ func newApiSpec(ctx context.Context, client *gapic.RegistryClient, message *rpc.
 			MimeType:    message.MimeType,
 			SourceURI:   message.SourceUri,
 		},
-	}
-	return spec, nil
+	}, nil
 }
 
 func applyApiSpecPatch(
@@ -84,26 +85,66 @@ func applyApiSpecPatch(
 		},
 		AllowMissing: true,
 	}
-	// TODO: add support for multi-file specs
-	// TODO: add support for local file import (maybe?)
 	// TODO: verify mime type
 	if spec.Data.SourceURI != "" {
-		resp, err := http.Get(spec.Data.SourceURI)
+		u, err := url.ParseRequestURI(spec.Data.SourceURI)
 		if err != nil {
 			return err
 		}
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			return err
-		}
-		if strings.Contains(spec.Data.MimeType, "+gzip") {
-			body, err = core.GZippedBytes(body)
+		switch u.Scheme {
+		case "http", "https":
+			resp, err := http.Get(spec.Data.SourceURI)
 			if err != nil {
 				return err
 			}
+			body, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				return err
+			}
+			if strings.Contains(spec.Data.MimeType, "+gzip") {
+				body, err = core.GZippedBytes(body)
+				if err != nil {
+					return err
+				}
+			}
+			req.ApiSpec.Contents = body
+		case "file":
+			// Remove leading slash from path.
+			// We expect to load from paths relative to the working directory,
+			// but users can add an additional slash to specify a global path.
+			path := strings.TrimPrefix(u.Path, "/")
+			info, err := os.Stat(path)
+			if err != nil {
+				return err
+			}
+			if info.IsDir() {
+				recursive := true
+				d := u.Query()["recursive"]
+				if len(d) > 0 {
+					recursive, err = strconv.ParseBool(d[0])
+					if err != nil {
+						return err
+					}
+				}
+				contents, err := core.ZipArchiveOfPath(path, "", recursive)
+				if err != nil {
+					return err
+				}
+				req.ApiSpec.Contents = contents.Bytes()
+			} else {
+				body, err := ioutil.ReadFile(path)
+				if err != nil {
+					return err
+				}
+				if strings.Contains(spec.Data.MimeType, "+gzip") {
+					body, err = core.GZippedBytes(body)
+					if err != nil {
+						return err
+					}
+				}
+				req.ApiSpec.Contents = body
+			}
 		}
-		req.ApiSpec.MimeType = spec.Data.MimeType
-		req.ApiSpec.Contents = body
 	}
 	_, err := client.UpdateApiSpec(ctx, req)
 	return err

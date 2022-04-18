@@ -15,7 +15,6 @@
 package vocabulary
 
 import (
-	"context"
 	"path/filepath"
 	"strings"
 
@@ -26,13 +25,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func uniqueCommand(ctx context.Context) *cobra.Command {
+func uniqueCommand() *cobra.Command {
 	var outputID string
 	cmd := &cobra.Command{
 		Use:   "unique",
 		Short: "Compute the unique subsets of each member of specified vocabularies",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
+			ctx := cmd.Context()
 			filter, err := cmd.Flags().GetString("filter")
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get filter from flags")

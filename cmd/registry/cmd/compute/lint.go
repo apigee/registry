@@ -27,13 +27,14 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func lintCommand(ctx context.Context) *cobra.Command {
+func lintCommand() *cobra.Command {
 	var linter string
 	cmd := &cobra.Command{
 		Use:   "lint",
 		Short: "Compute lint results for API specs",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
+			ctx := cmd.Context()
 			filter, err := cmd.Flags().GetString("filter")
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get filter from flags")
@@ -47,20 +48,22 @@ func lintCommand(ctx context.Context) *cobra.Command {
 			taskQueue, wait := core.WorkerPool(ctx, 16)
 			defer wait()
 
-			// Generate tasks.
-			name := args[0]
-			if spec, err := names.ParseSpec(name); err == nil {
-				// Iterate through a collection of specs and evaluate each.
-				err = core.ListSpecs(ctx, client, spec, filter, func(spec *rpc.ApiSpec) {
-					taskQueue <- &computeLintTask{
-						client:   client,
-						specName: spec.Name,
-						linter:   linter,
-					}
-				})
-				if err != nil {
-					log.FromContext(ctx).WithError(err).Fatal("Failed to list specs")
+			spec, err := names.ParseSpec(args[0])
+			if err != nil {
+				return // TODO: Log an error.
+			}
+
+			// Iterate through a collection of specs and evaluate each.
+			err = core.ListSpecs(ctx, client, spec, filter, func(spec *rpc.ApiSpec) error {
+				taskQueue <- &computeLintTask{
+					client:   client,
+					specName: spec.Name,
+					linter:   linter,
 				}
+				return nil
+			})
+			if err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Failed to list specs")
 			}
 		},
 	}

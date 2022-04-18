@@ -17,6 +17,7 @@ package list
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
@@ -25,13 +26,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func Command(ctx context.Context) *cobra.Command {
+func Command() *cobra.Command {
 	var filter string
 	cmd := &cobra.Command{
 		Use:   "list",
 		Short: "List resources in the API Registry",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
+			ctx := cmd.Context()
 			client, err := connection.NewClient(ctx)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
@@ -87,6 +89,17 @@ func matchAndHandleListCmd(
 		return core.ListSpecs(ctx, client, spec, filter, core.PrintSpec)
 	} else if artifact, err := names.ParseArtifact(name); err == nil {
 		return core.ListArtifacts(ctx, client, artifact, filter, false, core.PrintArtifact)
+	}
+
+	// Then try to match resources with revisions.
+	// "@-" signals that we want to list revisions.
+	if strings.HasSuffix(name, "@-") {
+		name := strings.TrimSuffix(name, "@-")
+		if deployment, err := names.ParseDeployment(name); err == nil {
+			return core.ListDeploymentRevisions(ctx, client, deployment, filter, core.PrintDeployment)
+		} else if spec, err := names.ParseSpec(name); err == nil {
+			return core.ListSpecRevisions(ctx, client, spec, filter, core.PrintSpec)
+		}
 	}
 
 	// If nothing matched, return an error.

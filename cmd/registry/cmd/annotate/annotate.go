@@ -29,7 +29,7 @@ import (
 	"google.golang.org/genproto/protobuf/field_mask"
 )
 
-func Command(ctx context.Context) *cobra.Command {
+func Command() *cobra.Command {
 	var (
 		filter    string
 		overwrite bool
@@ -40,6 +40,7 @@ func Command(ctx context.Context) *cobra.Command {
 		Short: "Annotate resources in the API Registry",
 		Args:  cobra.MinimumNArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
+			ctx := cmd.Context()
 			client, err := connection.NewClient(ctx)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
@@ -117,12 +118,13 @@ func annotateAPIs(ctx context.Context,
 	filterFlag string,
 	labeling *core.Labeling,
 	taskQueue chan<- core.Task) error {
-	return core.ListAPIs(ctx, client, api, filterFlag, func(api *rpc.Api) {
+	return core.ListAPIs(ctx, client, api, filterFlag, func(api *rpc.Api) error {
 		taskQueue <- &annotateApiTask{
 			client:   client,
 			api:      api,
 			labeling: labeling,
 		}
+		return nil
 	})
 }
 
@@ -133,12 +135,13 @@ func annotateVersions(
 	filterFlag string,
 	labeling *core.Labeling,
 	taskQueue chan<- core.Task) error {
-	return core.ListVersions(ctx, client, version, filterFlag, func(version *rpc.ApiVersion) {
+	return core.ListVersions(ctx, client, version, filterFlag, func(version *rpc.ApiVersion) error {
 		taskQueue <- &annotateVersionTask{
 			client:   client,
 			version:  version,
 			labeling: labeling,
 		}
+		return nil
 	})
 }
 
@@ -149,14 +152,16 @@ func annotateSpecs(
 	filterFlag string,
 	labeling *core.Labeling,
 	taskQueue chan<- core.Task) error {
-	return core.ListSpecs(ctx, client, spec, filterFlag, func(spec *rpc.ApiSpec) {
+	return core.ListSpecs(ctx, client, spec, filterFlag, func(spec *rpc.ApiSpec) error {
 		taskQueue <- &annotateSpecTask{
 			client:   client,
 			spec:     spec,
 			labeling: labeling,
 		}
+		return nil
 	})
 }
+
 func annotateDeployments(
 	ctx context.Context,
 	client *gapic.RegistryClient,
@@ -164,12 +169,13 @@ func annotateDeployments(
 	filterFlag string,
 	labeling *core.Labeling,
 	taskQueue chan<- core.Task) error {
-	return core.ListDeployments(ctx, client, deployment, filterFlag, func(deployment *rpc.ApiDeployment) {
+	return core.ListDeployments(ctx, client, deployment, filterFlag, func(deployment *rpc.ApiDeployment) error {
 		taskQueue <- &annotateDeploymentTask{
 			client:     client,
 			deployment: deployment,
 			labeling:   labeling,
 		}
+		return nil
 	})
 }
 

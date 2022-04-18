@@ -1,4 +1,4 @@
-// Copyright 2020 Google LLC. All Rights Reserved.
+// Copyright 2022 Google LLC. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,31 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package core
+package patch
 
 import (
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	"io"
+
+	"gopkg.in/yaml.v3"
 )
 
-func NotFound(err error) bool {
-	if err == nil {
-		return false
-	}
-	st, ok := status.FromError(err)
-	if !ok {
-		return false
-	}
-	return st.Code() == codes.NotFound
-}
-
-func AlreadyExists(err error) bool {
-	if err == nil {
-		return false
-	}
-	st, ok := status.FromError(err)
-	if !ok {
-		return false
-	}
-	return st.Code() == codes.AlreadyExists
+// Prefer this encoder because it uses tighter 2-space indentation.
+func yamlEncoder(dst io.Writer) *yaml.Encoder {
+	enc := yaml.NewEncoder(dst)
+	enc.SetIndent(2)
+	return enc
 }

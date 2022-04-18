@@ -15,7 +15,6 @@
 package vocabulary
 
 import (
-	"context"
 	"strings"
 
 	"github.com/apigee/registry/cmd/registry/core"
@@ -25,12 +24,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func versionsCommand(ctx context.Context) *cobra.Command {
+func versionsCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "versions",
 		Short: "Compute the differences in API vocabularies associated with successive API versions",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
+			ctx := cmd.Context()
 			filter, err := cmd.Flags().GetString("filter")
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get filter from flags")
