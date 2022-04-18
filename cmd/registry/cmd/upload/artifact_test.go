@@ -240,10 +240,8 @@ func TestScoreCardDefinitionArtifactUpload(t *testing.T) {
 			project:  "upload-scorecard-definition-artifact-demo",
 			filePath: filepath.Join("testdata", "scorecard-definition.yaml"),
 			want: &rpc.ScoreCardDefinition{
-				Id:          "test-scorecard-definition",
-				Kind:        "ScoreCardDefinition",
-				DisplayName: "",
-				Description: "",
+				Id:   "test-scorecard-definition",
+				Kind: "ScoreCardDefinition",
 				TargetResource: &rpc.ResourcePattern{
 					Pattern: "apis/-/versions/-/specs/-",
 				},
