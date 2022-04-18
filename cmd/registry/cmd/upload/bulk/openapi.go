@@ -34,13 +34,14 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func openAPICommand(ctx context.Context) *cobra.Command {
+func openAPICommand() *cobra.Command {
 	var baseURI string
 	cmd := &cobra.Command{
 		Use:   "openapi",
 		Short: "Bulk-upload OpenAPI descriptions from a directory of specs",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
+			ctx := cmd.Context()
 			projectID, err := cmd.Flags().GetString("project-id")
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get project-id from flags")

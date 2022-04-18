@@ -15,15 +15,13 @@
 package index
 
 import (
-	"context"
-
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/log"
 	"github.com/spf13/cobra"
 )
 
-func unionCommand(ctx context.Context) *cobra.Command {
+func unionCommand() *cobra.Command {
 	var (
 		filter string
 		output string
@@ -34,6 +32,7 @@ func unionCommand(ctx context.Context) *cobra.Command {
 		Short: "Compute the union of specified API indexes",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
+			ctx := cmd.Context()
 			filter, err := cmd.Flags().GetString("filter")
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get filter from flags")

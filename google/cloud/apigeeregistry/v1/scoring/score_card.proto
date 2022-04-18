@@ -1,0 +1,53 @@
+// Copyright 2022 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+// (-- api-linter: core::0215::versioned-packages=disabled
+//     aip.dev/not-precedent: Support protos for the apigeeregistry.v1 API. --)
+package google.cloud.apigeeregistry.v1.scoring;
+
+import "google/api/field_behavior.proto";
+import "google/cloud/apigeeregistry/v1/scoring/score.proto";
+
+option java_package = "com.google.cloud.apigeeregistry.v1.scoring";
+option java_multiple_files = true;
+option java_outer_classname = "ScoringScoreCardProto";
+option go_package = "github.com/apigee/registry/rpc;rpc";
+
+// Stores the scorecard for a resource.
+// Stored as an artifact against the resource whose scorecard it represents.
+message ScoreCard {
+  // Artifact identifier. This will be auto-generated based on the id of the
+  // ScoreCardDefinition used to calculate this.
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Artifact kind. May be used in YAML representations to identify the type of
+  // this artifact.
+  string kind = 2;
+
+  // A human-friendly name for the score (populated from ScoreCardDefinition).
+  string display_name = 3;
+
+  // A more detailed description of the score
+  // (populated from ScoreCardDefinition).
+  string description = 4;
+
+  // Full resource name of the ScoreCardDefinition artifact which was used
+  // to generate this score.
+  string definition_name = 5 [(google.api.field_behavior) = REQUIRED];
+
+  // The Scores which are included in this ScoreCard.
+  repeated Score scores = 6 [(google.api.field_behavior) = REQUIRED];
+}

@@ -1,0 +1,100 @@
+// Copyright 2022 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+// (-- api-linter: core::0215::versioned-packages=disabled
+//     aip.dev/not-precedent: Support protos for the apigeeregistry.v1 API. --)
+package google.cloud.apigeeregistry.v1.scoring;
+
+import "google/api/field_behavior.proto";
+import "google/cloud/apigeeregistry/v1/scoring/severity.proto";
+
+option java_package = "com.google.cloud.apigeeregistry.v1.scoring";
+option java_multiple_files = true;
+option java_outer_classname = "ScoringScoreProto";
+option go_package = "github.com/apigee/registry/rpc;rpc";
+
+// Stores the score for a resource.
+// Stored as an artifact against the resource whose score it represents.
+message Score {
+  // Artifact identifier. This will be auto-generated based on the id of the
+  // ScoreDefinition used to calculate this.
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Artifact kind. May be used in YAML representations to identify the type of
+  // this artifact.
+  string kind = 2;
+
+  // A human-friendly name for the score (populated from ScoreDefinition).
+  string display_name = 3;
+
+  // A more detailed description of the score (populated from ScoreDefinition).
+  string description = 4;
+
+  // A Uri which points to an explanation of the formula used here.
+  string uri = 5;
+
+  // A human-friendly name to display the uri.
+  string uri_display_name = 6;
+
+  // Full resource name of the ScoreDefinition artifact which was used
+  // to generate this score.
+  string definition_name = 7 [(google.api.field_behavior) = REQUIRED];
+
+  // Stores the severity associated with the score value.
+  Severity severity = 8;
+
+  // Stores the actual score of a particular resource.
+  oneof value {
+    // This is set if the score is a percentage.
+    PercentValue percent_value = 9;
+
+    // This is set if the score is an integer.
+    IntegerValue integer_value = 10;
+
+    // This is set if the score is a boolean.
+    BooleanValue boolean_value = 11;
+  }
+}
+
+// Represents the score which is a percentage.
+message PercentValue {
+  // Stores the value of score.
+  float value = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+// Represents the score which is a percentage.
+message IntegerValue {
+  // Stores the value of score.
+  int32 value = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // The following fields will be used to display scores in the UI like "5/10".
+  // Stores the minimum value this score can take.
+  int32 min_value = 2;
+
+  // Stores the minimum value this score can take.
+  int32 max_value = 3;
+}
+
+// Represents the score which is a percentage.
+message BooleanValue {
+  // Stores the value of score.
+  bool value = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Stores the value which should be used to diaply in the UI.
+  // This is derived from "display_true" and "display_false"
+  // fields of BooleanType.
+  string display_value = 2;
+}

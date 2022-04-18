@@ -35,13 +35,14 @@ func lintStatsRelation(linter string) string {
 	return "lintstats-" + linter
 }
 
-func lintStatsCommand(ctx context.Context) *cobra.Command {
+func lintStatsCommand() *cobra.Command {
 	var linter string
 	cmd := &cobra.Command{
 		Use:   "lintstats",
 		Short: "Compute summaries of linter runs",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
+			ctx := cmd.Context()
 			filter, err := cmd.Flags().GetString("filter")
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get filter from flags")

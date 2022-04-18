@@ -27,13 +27,14 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func lintCommand(ctx context.Context) *cobra.Command {
+func lintCommand() *cobra.Command {
 	var linter string
 	cmd := &cobra.Command{
 		Use:   "lint",
 		Short: "Compute lint results for API specs",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
+			ctx := cmd.Context()
 			filter, err := cmd.Flags().GetString("filter")
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get filter from flags")

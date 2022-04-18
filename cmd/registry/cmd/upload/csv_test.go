@@ -137,7 +137,7 @@ func TestUploadCSV(t *testing.T) {
 
 			args := append([]string{"csv"}, test.args...)
 
-			cmd := Command(ctx)
+			cmd := Command()
 			cmd.SetArgs(args)
 			if err := cmd.Execute(); err != nil {
 				t.Fatalf("Execute() with args %v returned error: %s", args, err)

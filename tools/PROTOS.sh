@@ -21,6 +21,7 @@ ALL_PROTOS=(
 	google/cloud/apigeeregistry/v1/*.proto
 	google/cloud/apigeeregistry/v1/controller/*.proto
 	google/cloud/apigeeregistry/v1/apihub/*.proto
+	google/cloud/apigeeregistry/v1/scoring/*.proto
 )
 
 SERVICE_PROTOS=(

@@ -66,7 +66,7 @@ func TestApply(t *testing.T) {
 	// FAIL: TestApplyAPIs/Create, not FAIL: TestApply/Create_and_Export_API, or worse FAIL: TestApply.
 	{
 		const filename = "testdata/registry.yaml"
-		cmd := Command(ctx)
+		cmd := Command()
 		cmd.SetArgs([]string{"-f", filename, "--parent", parent})
 		if err := cmd.Execute(); err != nil {
 			t.Fatalf("Execute() with args %+v returned error: %s", cmd.Args, err)
@@ -88,7 +88,7 @@ func TestApply(t *testing.T) {
 			t.Fatalf("ExportApi(%+v) returned an error: %s", got, err)
 		}
 
-		if diff := cmp.Diff(actual, expected); diff != "" {
+		if diff := cmp.Diff(expected, actual); diff != "" {
 			t.Errorf("GetApi(%q) returned unexpected diff: (-want +got):\n%s", got, diff)
 		}
 	}
@@ -100,7 +100,7 @@ func TestApply(t *testing.T) {
 	artifacts := []string{"lifecycle", "manifest", "taxonomies"}
 	for _, a := range artifacts {
 		filename := fmt.Sprintf("testdata/%s.yaml", a)
-		cmd := Command(ctx)
+		cmd := Command()
 		cmd.SetArgs([]string{"-f", filename, "--parent", parent})
 		if err := cmd.Execute(); err != nil {
 			t.Fatalf("Execute() with args %+v returned error: %s", cmd.Args, err)
@@ -122,7 +122,7 @@ func TestApply(t *testing.T) {
 			t.Fatalf("ExportArtifact(%+v) returned an error: %s", message, err)
 		}
 
-		if diff := cmp.Diff(actual, expected); diff != "" {
+		if diff := cmp.Diff(expected, actual); diff != "" {
 			t.Errorf("GetArtifact(%q) returned unexpected diff: (-want +got):\n%s", message, diff)
 		}
 	}

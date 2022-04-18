@@ -17,6 +17,7 @@ package registry
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/apigee/registry/rpc"
@@ -281,6 +282,178 @@ func TestDeleteApiSpecRevision(t *testing.T) {
 }
 
 func TestListApiSpecRevisions(t *testing.T) {
+	tests := []struct {
+		desc      string
+		seed      []*rpc.ApiSpec
+		req       *rpc.ListApiSpecRevisionsRequest
+		want      *rpc.ListApiSpecRevisionsResponse
+		wantToken bool
+	}{
+		{
+			desc: "single spec",
+			seed: []*rpc.ApiSpec{
+				{
+					Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
+				},
+				{
+					Name:     "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
+					Contents: specContents,
+				},
+				{
+					Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/other-spec",
+				},
+			},
+			req: &rpc.ListApiSpecRevisionsRequest{
+				Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
+			},
+			want: &rpc.ListApiSpecRevisionsResponse{
+				ApiSpecs: []*rpc.ApiSpec{
+					{
+						Name:      "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
+						Hash:      sha256hash(specContents),
+						SizeBytes: int32(len(specContents)),
+					},
+					{
+						Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
+					},
+				},
+			},
+		},
+		{
+			desc: "across multiple specs",
+			seed: []*rpc.ApiSpec{
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/other-spec"},
+			},
+			req: &rpc.ListApiSpecRevisionsRequest{
+				Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/-",
+			},
+			want: &rpc.ListApiSpecRevisionsResponse{
+				ApiSpecs: []*rpc.ApiSpec{
+					{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/other-spec"},
+					{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
+				},
+			},
+		},
+		{
+			desc: "across multiple versions",
+			seed: []*rpc.ApiSpec{
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v2/specs/my-spec"},
+			},
+			req: &rpc.ListApiSpecRevisionsRequest{
+				Name: "projects/my-project/locations/global/apis/my-api/versions/-/specs/my-spec",
+			},
+			want: &rpc.ListApiSpecRevisionsResponse{
+				ApiSpecs: []*rpc.ApiSpec{
+					{Name: "projects/my-project/locations/global/apis/my-api/versions/v2/specs/my-spec"},
+					{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
+				},
+			},
+		},
+		{
+			desc: "across multiple apis",
+			seed: []*rpc.ApiSpec{
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
+				{Name: "projects/my-project/locations/global/apis/other-api/versions/v1/specs/my-spec"},
+			},
+			req: &rpc.ListApiSpecRevisionsRequest{
+				Name: "projects/my-project/locations/global/apis/-/versions/v1/specs/my-spec",
+			},
+			want: &rpc.ListApiSpecRevisionsResponse{
+				ApiSpecs: []*rpc.ApiSpec{
+					{Name: "projects/my-project/locations/global/apis/other-api/versions/v1/specs/my-spec"},
+					{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
+				},
+			},
+		},
+		{
+			desc: "across multiple projects",
+			seed: []*rpc.ApiSpec{
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
+				{Name: "projects/other-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
+			},
+			req: &rpc.ListApiSpecRevisionsRequest{
+				Name: "projects/-/locations/global/apis/my-api/versions/v1/specs/my-spec",
+			},
+			want: &rpc.ListApiSpecRevisionsResponse{
+				ApiSpecs: []*rpc.ApiSpec{
+					{Name: "projects/other-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
+					{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
+				},
+			},
+		},
+		{
+			desc: "custom page size",
+			seed: []*rpc.ApiSpec{
+				{
+					Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
+				},
+				{
+					Name:     "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
+					Contents: specContents,
+				},
+			},
+			req: &rpc.ListApiSpecRevisionsRequest{
+				Name:     "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
+				PageSize: 1,
+			},
+			want: &rpc.ListApiSpecRevisionsResponse{
+				ApiSpecs: []*rpc.ApiSpec{
+					{
+						Name:      "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
+						Hash:      sha256hash(specContents),
+						SizeBytes: int32(len(specContents)),
+					},
+				},
+			},
+			wantToken: true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			ctx := context.Background()
+			server := defaultTestServer(t)
+			if err := seeder.SeedSpecs(ctx, server, test.seed...); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
+
+			got, err := server.ListApiSpecRevisions(ctx, test.req)
+			if err != nil {
+				t.Fatalf("ListApiSpecRevisions(%+v) returned error: %s", test.req, err)
+			}
+
+			opts := cmp.Options{
+				protocmp.Transform(),
+				protocmp.IgnoreFields(new(rpc.ListApiSpecRevisionsResponse), "next_page_token"),
+				protocmp.IgnoreFields(new(rpc.ApiSpec), "name", "revision_id", "create_time", "revision_create_time", "revision_update_time"),
+			}
+
+			if !cmp.Equal(test.want, got, opts) {
+				t.Errorf("ListApiSpecRevisions(%+v) returned unexpected diff (-want +got):\n%s", test.req, cmp.Diff(test.want, got, opts))
+			}
+
+			if test.wantToken && got.NextPageToken == "" {
+				t.Errorf("ListApiSpecRevisions(%+v) returned empty next_page_token, expected non-empty next_page_token", test.req)
+			} else if !test.wantToken && got.NextPageToken != "" {
+				t.Errorf("ListApiSpecRevisions(%+v) returned non-empty next_page_token, expected empty next_page_token: %s", test.req, got.GetNextPageToken())
+			}
+
+			if len(got.ApiSpecs) != len(test.want.ApiSpecs) {
+				t.Fatalf("ListApiSpecRevisions(%+v) returned unexpected number of revisions: got %d, want %d", test.req, len(got.ApiSpecs), len(test.want.ApiSpecs))
+			}
+
+			for i, got := range got.ApiSpecs {
+				if want := test.want.ApiSpecs[i]; !strings.HasPrefix(got.GetName(), want.GetName()) {
+					t.Errorf("ListApiSpecRevisions(%+v) returned unexpected revision: got %q, want %q", test.req, got.GetName(), want.GetName())
+				}
+			}
+		})
+	}
+}
+
+func TestListApiSpecRevisionsSequence(t *testing.T) {
 	ctx := context.Background()
 	server := defaultTestServer(t)
 	if err := seeder.SeedVersions(ctx, server, &rpc.ApiVersion{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"}); err != nil {
