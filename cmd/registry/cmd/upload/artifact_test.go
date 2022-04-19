@@ -151,7 +151,7 @@ func TestScoreDefinitionArtifactUpload(t *testing.T) {
 				},
 				Formula: &rpc.ScoreDefinition_ScoreFormula{
 					ScoreFormula: &rpc.ScoreFormula{
-						Pattern: &rpc.ResourcePattern{
+						Artifact: &rpc.ResourcePattern{
 							Pattern: "$resource.spec/artifacts/conformance-report",
 						},
 						ScoreExpression: "size(conformance.GuidelineReportGroups[2].RuleReportGroups[1])",
