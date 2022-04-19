@@ -163,17 +163,17 @@ func TestScoreDefinitionArtifactUpload(t *testing.T) {
 						MaxValue: 100,
 						Thresholds: []*rpc.NumberThreshold{
 							{
-								Severity: rpc.Severity_ALERT,
-								Range: &rpc.NumberThreshold_NumberRange{
-									Min: 60,
-									Max: 100,
-								},
-							},
-							{
 								Severity: rpc.Severity_OK,
 								Range: &rpc.NumberThreshold_NumberRange{
 									Min: 0,
 									Max: 59,
+								},
+							},
+							{
+								Severity: rpc.Severity_ALERT,
+								Range: &rpc.NumberThreshold_NumberRange{
+									Min: 60,
+									Max: 100,
 								},
 							},
 						},

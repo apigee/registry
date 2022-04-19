@@ -33,7 +33,7 @@ func generateArtifact(t *testing.T, artifactName string) names.Artifact {
 	return artifact
 }
 
-func TestSubstitueReferenceEntity(t *testing.T) {
+func TestSubstituteReferenceEntity(t *testing.T) {
 	tests := []struct {
 		desc              string
 		resourcePattern   string
@@ -79,18 +79,18 @@ func TestSubstitueReferenceEntity(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Error in parsing, %s", err)
 			}
-			got, err := SubstituteReferenceEntity(test.dependencyPattern, resourceName, projectID)
+			got, err := SubstituteReferenceEntity(test.dependencyPattern, resourceName)
 			if err != nil {
 				t.Errorf("SubstituteReferenceEntity returned unexpected error: %s", err)
 			}
-			if got != test.want {
+			if got.String() != test.want {
 				t.Errorf("SubstituteReferenceEntity returned unexpected value want: %q got:%q", test.want, got)
 			}
 		})
 	}
 }
 
-func TestSubstitueReferenceEntityError(t *testing.T) {
+func TestSubstituteReferenceEntityError(t *testing.T) {
 	tests := []struct {
 		desc              string
 		resourcePattern   string
@@ -115,9 +115,9 @@ func TestSubstitueReferenceEntityError(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Error in parsing, %s", err)
 			}
-			got, err := SubstituteReferenceEntity(test.dependencyPattern, resourceName, projectID)
+			got, err := SubstituteReferenceEntity(test.dependencyPattern, resourceName)
 			if err == nil {
-				t.Errorf("expected SubstituteReferenceEntity to return error, got: %q", got)
+				t.Errorf("expected SubstituteReferenceEntity to return error, got: %q", got.String())
 			}
 		})
 	}
