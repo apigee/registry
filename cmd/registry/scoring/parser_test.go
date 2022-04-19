@@ -25,7 +25,7 @@ func TestValidateScoreDefinition(t *testing.T) {
 				},
 				Formula: &rpc.ScoreDefinition_ScoreFormula{
 					ScoreFormula: &rpc.ScoreFormula{
-						Pattern: &rpc.ResourcePattern{
+						Artifact: &rpc.ResourcePattern{
 							Pattern: "$resource.spec/artifacts/conformance-report",
 						},
 						ScoreExpression: "count(errors)",
@@ -68,14 +68,14 @@ func TestValidateScoreDefinition(t *testing.T) {
 					RollupFormula: &rpc.RollUpFormula{
 						ScoreFormulas: []*rpc.ScoreFormula{
 							{
-								Pattern: &rpc.ResourcePattern{
+								Artifact: &rpc.ResourcePattern{
 									Pattern: "$resource.spec/artifacts/conformance-report",
 								},
 								ScoreExpression: "count(errors)",
 								ReferenceId:     "lint_errors",
 							},
 							{
-								Pattern: &rpc.ResourcePattern{
+								Artifact: &rpc.ResourcePattern{
 									Pattern: "$resource.spec/artifacts/conformance-report",
 								},
 								ScoreExpression: "count(warnings)",
@@ -120,7 +120,7 @@ func TestValidateScoreDefinition(t *testing.T) {
 				},
 				Formula: &rpc.ScoreDefinition_ScoreFormula{
 					ScoreFormula: &rpc.ScoreFormula{
-						Pattern: &rpc.ResourcePattern{
+						Artifact: &rpc.ResourcePattern{
 							Pattern: "$resource.spec/artifacts/conformance-report",
 						},
 						ScoreExpression: "count(errors)",
@@ -145,7 +145,7 @@ func TestValidateScoreDefinition(t *testing.T) {
 				},
 				Formula: &rpc.ScoreDefinition_ScoreFormula{
 					ScoreFormula: &rpc.ScoreFormula{
-						Pattern: &rpc.ResourcePattern{
+						Artifact: &rpc.ResourcePattern{
 							Pattern: "$resource.spec/artifacts/conformance-report",
 						},
 						ScoreExpression: "count(errors)",
@@ -186,7 +186,7 @@ func TestValidateScoreDefinitionError(t *testing.T) {
 				},
 				Formula: &rpc.ScoreDefinition_ScoreFormula{
 					ScoreFormula: &rpc.ScoreFormula{
-						Pattern: &rpc.ResourcePattern{
+						Artifact: &rpc.ResourcePattern{
 							Pattern: "$resource.spec/artifacts/conformance-report",
 						},
 						ScoreExpression: "count(errors)",
@@ -211,7 +211,7 @@ func TestValidateScoreDefinitionError(t *testing.T) {
 				},
 				Formula: &rpc.ScoreDefinition_ScoreFormula{
 					ScoreFormula: &rpc.ScoreFormula{
-						Pattern: &rpc.ResourcePattern{
+						Artifact: &rpc.ResourcePattern{
 							Pattern: "$resource.artifact/conformance-report",
 						},
 						ScoreExpression: "count(errors)",
@@ -238,14 +238,14 @@ func TestValidateScoreDefinitionError(t *testing.T) {
 					RollupFormula: &rpc.RollUpFormula{
 						ScoreFormulas: []*rpc.ScoreFormula{
 							{
-								Pattern: &rpc.ResourcePattern{
+								Artifact: &rpc.ResourcePattern{
 									Pattern: "$resource.spec/artifacts/conformance-report",
 								},
 								ScoreExpression: "count(errors)",
 								ReferenceId:     "lint_errors",
 							},
 							{
-								Pattern: &rpc.ResourcePattern{
+								Artifact: &rpc.ResourcePattern{
 									Pattern: "$resource.artifact/conformance-report",
 								},
 								ScoreExpression: "count(warnings)",
@@ -274,7 +274,7 @@ func TestValidateScoreDefinitionError(t *testing.T) {
 				},
 				Formula: &rpc.ScoreDefinition_ScoreFormula{
 					ScoreFormula: &rpc.ScoreFormula{
-						Pattern: &rpc.ResourcePattern{
+						Artifact: &rpc.ResourcePattern{
 							Pattern: "$resource.spec/artifacts/conformance-report",
 						},
 						ScoreExpression: "count(errors)",
@@ -313,7 +313,7 @@ func TestValidateScoreDefinitionError(t *testing.T) {
 				},
 				Formula: &rpc.ScoreDefinition_ScoreFormula{
 					ScoreFormula: &rpc.ScoreFormula{
-						Pattern: &rpc.ResourcePattern{
+						Artifact: &rpc.ResourcePattern{
 							Pattern: "$resource.spec/artifacts/conformance-report",
 						},
 						ScoreExpression: "count(errors)",
@@ -354,7 +354,7 @@ func TestValidateScoreDefinitionError(t *testing.T) {
 				},
 				Formula: &rpc.ScoreDefinition_ScoreFormula{
 					ScoreFormula: &rpc.ScoreFormula{
-						Pattern: &rpc.ResourcePattern{
+						Artifact: &rpc.ResourcePattern{
 							Pattern: "$resource.spec/artifacts/audit-report",
 						},
 						ScoreExpression: "isApproved",
@@ -401,7 +401,7 @@ func TestValidateScoreFormula(t *testing.T) {
 				Pattern: "projects/demo/locations/global/apis/-/versions/-/specs/-",
 			},
 			scoreFormula: &rpc.ScoreFormula{
-				Pattern: &rpc.ResourcePattern{
+				Artifact: &rpc.ResourcePattern{
 					Pattern: "$resource.spec/artifacts/conformance-report",
 				},
 				ScoreExpression: "count(errors)",
@@ -432,7 +432,7 @@ func TestValidateScoreFormulaError(t *testing.T) {
 				Pattern: "projects/demo/locations/global/apis/-/versions/-/specs/-",
 			},
 			scoreFormula: &rpc.ScoreFormula{
-				Pattern: &rpc.ResourcePattern{
+				Artifact: &rpc.ResourcePattern{
 					Pattern: "apis/-/versions/-/specs/-/artifacts/conformance-report",
 				},
 				ScoreExpression: "count(errors)",
@@ -444,7 +444,7 @@ func TestValidateScoreFormulaError(t *testing.T) {
 				Pattern: "projects/demo/locations/global/apis/-/versions/-/specs/-",
 			},
 			scoreFormula: &rpc.ScoreFormula{
-				Pattern: &rpc.ResourcePattern{
+				Artifact: &rpc.ResourcePattern{
 					Pattern: "$resource.specs/artifacts/conformance-report",
 				},
 				ScoreExpression: "count(errors)",
@@ -456,7 +456,7 @@ func TestValidateScoreFormulaError(t *testing.T) {
 				Pattern: "projects/demo/locations/global/apis/-/versions/-",
 			},
 			scoreFormula: &rpc.ScoreFormula{
-				Pattern: &rpc.ResourcePattern{
+				Artifact: &rpc.ResourcePattern{
 					Pattern: "$resource.spec/artifacts/conformance-report",
 				},
 				ScoreExpression: "count(errors)",
@@ -468,7 +468,7 @@ func TestValidateScoreFormulaError(t *testing.T) {
 				Pattern: "projects/demo/locations/global/apis/-/versions/-",
 			},
 			scoreFormula: &rpc.ScoreFormula{
-				Pattern: &rpc.ResourcePattern{
+				Artifact: &rpc.ResourcePattern{
 					Pattern: "$resource.spec/artifacts/-",
 				},
 				ScoreExpression: "count(errors)",
