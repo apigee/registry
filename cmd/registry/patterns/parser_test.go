@@ -79,12 +79,12 @@ func TestSubstitueReferenceEntity(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Error in parsing, %s", err)
 			}
-			got, err := SubstitueReferenceEntity(test.dependencyPattern, resourceName, projectID)
+			got, err := SubstituteReferenceEntity(test.dependencyPattern, resourceName, projectID)
 			if err != nil {
-				t.Errorf("SubstitueReferenceEntity returned unexpected error: %s", err)
+				t.Errorf("SubstituteReferenceEntity returned unexpected error: %s", err)
 			}
 			if got != test.want {
-				t.Errorf("SubstitueReferenceEntity returned unexpected value want: %q got:%q", test.want, got)
+				t.Errorf("SubstituteReferenceEntity returned unexpected value want: %q got:%q", test.want, got)
 			}
 		})
 	}
@@ -115,9 +115,9 @@ func TestSubstitueReferenceEntityError(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Error in parsing, %s", err)
 			}
-			got, err := SubstitueReferenceEntity(test.dependencyPattern, resourceName, projectID)
+			got, err := SubstituteReferenceEntity(test.dependencyPattern, resourceName, projectID)
 			if err == nil {
-				t.Errorf("expected SubstitueReferenceEntity to return error, got: %q", got)
+				t.Errorf("expected SubstituteReferenceEntity to return error, got: %q", got)
 			}
 		})
 	}

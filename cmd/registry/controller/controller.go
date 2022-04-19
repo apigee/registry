@@ -114,7 +114,7 @@ func generateDependencyMap(
 	}
 
 	// Extend the dependency pattern if it contains $resource.api like pattern
-	extDependencyQuery, err := patterns.SubstitueReferenceEntity(dependency.Pattern, resourceName, projectID)
+	extDependencyQuery, err := patterns.SubstituteReferenceEntity(dependency.Pattern, resourceName, projectID)
 	if err != nil {
 		return nil, err
 	}

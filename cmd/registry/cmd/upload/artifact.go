@@ -90,16 +90,16 @@ func buildArtifact(ctx context.Context, parent string, filename string) (*rpc.Ar
 		artifact, err = buildManifestArtifact(ctx, parent, jsonBytes)
 	case "ReferenceList", patch.ReferenceListMimeType:
 		artifact, err = buildReferenceListArtifact(ctx, jsonBytes)
-	case "TaxonomyList", patch.TaxonomyListMimeType:
-		artifact, err = buildTaxonomyListArtifact(ctx, jsonBytes)
-	case "ScoreDefinition", patch.ScoreDefinitionMimeType:
-		artifact, err = buildScoreDefinitionArtifact(ctx, jsonBytes)
-	case "ScoreCardDefinition", patch.ScoreCardDefinitionMimeType:
-		artifact, err = buildScoreCardDefinitionArtifact(ctx, jsonBytes)
 	case "Score", patch.ScoreMimeType:
 		artifact, err = buildScoreArtifact(ctx, jsonBytes)
 	case "ScoreCard", patch.ScoreCardMimeType:
 		artifact, err = buildScoreCardArtifact(ctx, jsonBytes)
+	case "ScoreCardDefinition", patch.ScoreCardDefinitionMimeType:
+		artifact, err = buildScoreCardDefinitionArtifact(ctx, jsonBytes)
+	case "ScoreDefinition", patch.ScoreDefinitionMimeType:
+		artifact, err = buildScoreDefinitionArtifact(ctx, jsonBytes)
+	case "TaxonomyList", patch.TaxonomyListMimeType:
+		artifact, err = buildTaxonomyListArtifact(ctx, jsonBytes)
 	default:
 		err = fmt.Errorf("unsupported artifact type %s", header.Kind)
 	}

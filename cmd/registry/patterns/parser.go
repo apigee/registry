@@ -61,7 +61,7 @@ func ParseResourcePattern(resourcePattern string) (ResourceName, error) {
 	return nil, fmt.Errorf("invalid resourcePattern: %s", resourcePattern)
 }
 
-func SubstitueReferenceEntity(resourcePattern string, referred ResourceName, projectID string) (string, error) {
+func SubstituteReferenceEntity(resourcePattern string, referred ResourceName, projectID string) (string, error) {
 	// Extends the resource pattern by replacing references to $resource
 	// Example:
 	// referred: "projects/demo/locations/global/apis/-/versions/-/specs/-/artifacts/-"
