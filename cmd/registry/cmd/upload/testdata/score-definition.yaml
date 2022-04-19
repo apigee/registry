@@ -17,7 +17,7 @@ kind: "ScoreDefinition"
 target_resource:
   pattern: "apis/-/versions/-/specs/-"
 score_formula:
-  pattern:
+  artifact:
     pattern: "$resource.spec/artifacts/conformance-report"
   score_expression: "size(conformance.GuidelineReportGroups[2].RuleReportGroups[1])"
 integer: 
