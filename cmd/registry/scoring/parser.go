@@ -134,16 +134,16 @@ func validateBooleanThresholds(thresholds []*rpc.BooleanThreshold) []error {
 
 	var isFalseCovered, isTrueCovered bool
 	for _, t := range thresholds {
-		if isFalseCovered && t.GetValue() == false {
+		if isFalseCovered && !t.GetValue() {
 			errs = append(errs, fmt.Errorf("duplicate entries for 'false' value"))
 		}
 
-		if isTrueCovered && t.GetValue() == true {
+		if isTrueCovered && t.GetValue() {
 			errs = append(errs, fmt.Errorf("duplicate entries for 'true' value"))
 		}
 
-		isFalseCovered = t.GetValue() == false || isFalseCovered
-		isTrueCovered = t.GetValue() == true || isTrueCovered
+		isFalseCovered = !t.GetValue() || isFalseCovered
+		isTrueCovered = t.GetValue() || isTrueCovered
 	}
 
 	if !isTrueCovered || !isFalseCovered {

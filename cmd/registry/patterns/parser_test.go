@@ -72,7 +72,6 @@ func TestSubstituteReferenceEntity(t *testing.T) {
 		},
 	}
 
-	const projectID = "demo"
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			resourceName, err := ParseResourcePattern(test.resourcePattern)
@@ -108,7 +107,6 @@ func TestSubstituteReferenceEntityError(t *testing.T) {
 		},
 	}
 
-	const projectID = "demo"
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			resourceName, err := ParseResourcePattern(test.resourcePattern)
