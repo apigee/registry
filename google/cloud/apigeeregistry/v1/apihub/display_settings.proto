@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+// (-- api-linter: core::0215::versioned-packages=disabled
+//     aip.dev/not-precedent: Support protos for the apigeeregistry.v1 API. --)
+package google.cloud.apigeeregistry.v1.apihub;
+
+option java_package = "com.google.cloud.apigeeregistry.v1.apihub";
+option java_multiple_files = true;
+option java_outer_classname = "DisplaySettingsProto";
+option go_package = "github.com/apigee/registry/rpc;rpc";
+
+// Defines display settings for the API hub UI.
+message DisplaySettings {
+  // Artifact identifier. May be used in YAML representations to indicate the id
+  // to be used to attach the artifact.
+  string id = 1;
+
+  // Artifact kind. May be used in YAML representations to identify the type of
+  // this artifact.
+  string kind = 2;
+
+  // A more detailed description of the display settings.
+  string description = 3;
+
+  // The organization name. Displayed in areas throughout the API hub UI to
+  // identify APIs owned by the user's organization.
+  string organization = 4;
+
+  // If true the API guide tab will be displayed in the API detail page; if
+  // false, it will be hidden
+  bool api_guide_enabled = 5;
+
+  // If true the API scores will be displayed on the API list page and API
+  // detail page; if false, they will be hidden
+  bool api_score_enabled = 6;
+}

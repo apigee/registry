@@ -32,7 +32,7 @@ import (
 	metrics "github.com/google/gnostic/metrics"
 )
 
-func sheetCommand(ctx context.Context) *cobra.Command {
+func sheetCommand() *cobra.Command {
 	var (
 		filter   string
 		artifact string
@@ -43,6 +43,7 @@ func sheetCommand(ctx context.Context) *cobra.Command {
 		Short: "Export a specified artifact to a Google sheet",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
+			ctx := cmd.Context()
 			var path string
 			client, err := connection.NewClient(ctx)
 			if err != nil {

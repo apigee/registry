@@ -29,6 +29,34 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 )
 
+func SetUpProject(ctx context.Context, t *testing.T, project string) {
+	t.Helper()
+
+	adminClient, err := connection.NewAdminClient(ctx)
+	if err != nil {
+		t.Fatalf("Setup: Failed to create client: %s", err)
+	}
+
+	err = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{
+		Name:  "projects/" + project,
+		Force: true,
+	})
+	if err != nil && status.Code(err) != codes.NotFound {
+		t.Fatalf("Setup: Failed to delete test project: %s", err)
+	}
+
+	_, err = adminClient.CreateProject(ctx, &rpc.CreateProjectRequest{
+		ProjectId: project,
+		Project: &rpc.Project{
+			DisplayName: "Demo",
+			Description: "A demo catalog",
+		},
+	})
+	if err != nil {
+		t.Fatalf("Failed to create project %s: %s", project, err.Error())
+	}
+}
+
 func TestManifestArtifactUpload(t *testing.T) {
 	tests := []struct {
 		desc     string
@@ -62,35 +90,15 @@ func TestManifestArtifactUpload(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
+
+			SetUpProject(ctx, t, test.project)
+
 			client, err := connection.NewClient(ctx)
 			if err != nil {
 				t.Fatalf("Setup: Failed to create client: %s", err)
 			}
-			adminClient, err := connection.NewAdminClient(ctx)
-			if err != nil {
-				t.Fatalf("Setup: Failed to create client: %s", err)
-			}
 
-			err = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{
-				Name:  "projects/" + test.project,
-				Force: true,
-			})
-			if err != nil && status.Code(err) != codes.NotFound {
-				t.Fatalf("Setup: Failed to delete test project: %s", err)
-			}
-
-			_, err = adminClient.CreateProject(ctx, &rpc.CreateProjectRequest{
-				ProjectId: test.project,
-				Project: &rpc.Project{
-					DisplayName: "Demo",
-					Description: "A demo catalog",
-				},
-			})
-			if err != nil {
-				t.Fatalf("Failed to create project %s: %s", test.project, err.Error())
-			}
-
-			cmd := Command(ctx)
+			cmd := Command()
 			args := []string{"artifact", test.filePath, "--parent", fmt.Sprintf("projects/%s/locations/global", test.project)}
 			cmd.SetArgs(args)
 			if err = cmd.Execute(); err != nil {
@@ -118,6 +126,359 @@ func TestManifestArtifactUpload(t *testing.T) {
 			}
 
 			if diff := cmp.Diff(test.want, manifest, opts); diff != "" {
+				t.Errorf("GetArtifactContents returned unexpected diff (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestScoreDefinitionArtifactUpload(t *testing.T) {
+	tests := []struct {
+		desc     string
+		project  string
+		filePath string
+		want     *rpc.ScoreDefinition
+	}{
+		{
+			desc:     "simple score definition artifact upload",
+			project:  "upload-score-definition-artifact-demo",
+			filePath: filepath.Join("testdata", "score-definition.yaml"),
+			want: &rpc.ScoreDefinition{
+				Id:   "test-score-definition",
+				Kind: "ScoreDefinition",
+				TargetResource: &rpc.ResourcePattern{
+					Pattern: "apis/-/versions/-/specs/-",
+				},
+				Formula: &rpc.ScoreDefinition_ScoreFormula{
+					ScoreFormula: &rpc.ScoreFormula{
+						Pattern: &rpc.ResourcePattern{
+							Pattern: "$resource.spec/artifacts/conformance-report",
+						},
+						ScoreExpression: "size(conformance.GuidelineReportGroups[2].RuleReportGroups[1])",
+					},
+				},
+				Type: &rpc.ScoreDefinition_Integer{
+					Integer: &rpc.IntegerType{
+						MinValue: 0,
+						MaxValue: 100,
+						Thresholds: []*rpc.NumberThreshold{
+							{
+								Severity: rpc.Severity_ALERT,
+								Range: &rpc.NumberThreshold_NumberRange{
+									Min: 60,
+									Max: 100,
+								},
+							},
+							{
+								Severity: rpc.Severity_OK,
+								Range: &rpc.NumberThreshold_NumberRange{
+									Min: 0,
+									Max: 59,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			ctx := context.Background()
+
+			SetUpProject(ctx, t, test.project)
+
+			client, err := connection.NewClient(ctx)
+			if err != nil {
+				t.Fatalf("Setup: Failed to create client: %s", err)
+			}
+
+			cmd := Command()
+			args := []string{"artifact", test.filePath, "--parent", fmt.Sprintf("projects/%s/locations/global", test.project)}
+			cmd.SetArgs(args)
+			if err = cmd.Execute(); err != nil {
+				t.Fatalf("Execute() with args %v returned error: %s", args, err)
+			}
+
+			req := &rpc.GetArtifactContentsRequest{
+				Name: "projects/" + test.project + "/locations/global/artifacts/test-score-definition",
+			}
+
+			definition := &rpc.ScoreDefinition{}
+			body, err := client.GetArtifactContents(ctx, req)
+			if err != nil {
+				t.Fatalf("GetArtifactContents() returned error: %s", err)
+			}
+			contents := body.GetData()
+			err = proto.Unmarshal(contents, definition)
+			if err != nil {
+				t.Fatalf("proto.Unmarshal() returned error: %s", err)
+			}
+
+			// Verify the manifest definition is correct
+			opts := cmp.Options{
+				protocmp.Transform(),
+			}
+
+			if diff := cmp.Diff(test.want, definition, opts); diff != "" {
+				t.Errorf("GetArtifactContents returned unexpected diff (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestScoreCardDefinitionArtifactUpload(t *testing.T) {
+	tests := []struct {
+		desc     string
+		project  string
+		filePath string
+		want     *rpc.ScoreCardDefinition
+	}{
+		{
+			desc:     "simple scorecard definition artifact upload",
+			project:  "upload-scorecard-definition-artifact-demo",
+			filePath: filepath.Join("testdata", "scorecard-definition.yaml"),
+			want: &rpc.ScoreCardDefinition{
+				Id:   "test-scorecard-definition",
+				Kind: "ScoreCardDefinition",
+				TargetResource: &rpc.ResourcePattern{
+					Pattern: "apis/-/versions/-/specs/-",
+				},
+				ScorePatterns: []string{
+					"$resource.spec/artifacts/score-security-audit",
+					"$resource.spec/artifacts/score-lint-error",
+					"$resource.spec/artifacts/score-accuracy",
+					"$resource.spec/artifacts/score-lang-reuse",
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			ctx := context.Background()
+
+			SetUpProject(ctx, t, test.project)
+
+			client, err := connection.NewClient(ctx)
+			if err != nil {
+				t.Fatalf("Setup: Failed to create client: %s", err)
+			}
+
+			cmd := Command()
+			args := []string{"artifact", test.filePath, "--parent", fmt.Sprintf("projects/%s/locations/global", test.project)}
+			cmd.SetArgs(args)
+			if err = cmd.Execute(); err != nil {
+				t.Fatalf("Execute() with args %v returned error: %s", args, err)
+			}
+
+			req := &rpc.GetArtifactContentsRequest{
+				Name: "projects/" + test.project + "/locations/global/artifacts/test-scorecard-definition",
+			}
+
+			definition := &rpc.ScoreCardDefinition{}
+			body, err := client.GetArtifactContents(ctx, req)
+			if err != nil {
+				t.Fatalf("GetArtifactContents() returned error: %s", err)
+			}
+			contents := body.GetData()
+			err = proto.Unmarshal(contents, definition)
+			if err != nil {
+				t.Fatalf("proto.Unmarshal() returned error: %s", err)
+			}
+
+			// Verify the manifest definition is correct
+			opts := cmp.Options{
+				protocmp.Transform(),
+			}
+
+			if diff := cmp.Diff(test.want, definition, opts); diff != "" {
+				t.Errorf("GetArtifactContents returned unexpected diff (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestScoreArtifactUpload(t *testing.T) {
+	tests := []struct {
+		desc     string
+		project  string
+		filePath string
+		want     *rpc.Score
+	}{
+		{
+			desc:     "simple score artifact upload",
+			project:  "upload-score-artifact-demo",
+			filePath: filepath.Join("testdata", "score.yaml"),
+			want: &rpc.Score{
+				Id:             "test-score",
+				Kind:           "Score",
+				DefinitionName: "projects/upload-score-artifact-demo/locations/global/artifacts/test-score-definition",
+				Severity:       rpc.Severity_OK,
+				Value: &rpc.Score_IntegerValue{
+					IntegerValue: &rpc.IntegerValue{
+						Value:    50,
+						MinValue: 0,
+						MaxValue: 100,
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			ctx := context.Background()
+
+			SetUpProject(ctx, t, test.project)
+
+			client, err := connection.NewClient(ctx)
+			if err != nil {
+				t.Fatalf("Setup: Failed to create client: %s", err)
+			}
+
+			cmd := Command()
+			args := []string{"artifact", test.filePath, "--parent", fmt.Sprintf("projects/%s/locations/global", test.project)}
+			cmd.SetArgs(args)
+			if err = cmd.Execute(); err != nil {
+				t.Fatalf("Execute() with args %v returned error: %s", args, err)
+			}
+
+			req := &rpc.GetArtifactContentsRequest{
+				Name: "projects/" + test.project + "/locations/global/artifacts/test-score",
+			}
+
+			definition := &rpc.Score{}
+			body, err := client.GetArtifactContents(ctx, req)
+			if err != nil {
+				t.Fatalf("GetArtifactContents() returned error: %s", err)
+			}
+			contents := body.GetData()
+			err = proto.Unmarshal(contents, definition)
+			if err != nil {
+				t.Fatalf("proto.Unmarshal() returned error: %s", err)
+			}
+
+			// Verify the manifest definition is correct
+			opts := cmp.Options{
+				protocmp.Transform(),
+			}
+
+			if diff := cmp.Diff(test.want, definition, opts); diff != "" {
+				t.Errorf("GetArtifactContents returned unexpected diff (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestScoreCardArtifactUpload(t *testing.T) {
+	tests := []struct {
+		desc     string
+		project  string
+		filePath string
+		want     *rpc.ScoreCard
+	}{
+		{
+			desc:     "simple scorecard artifact upload",
+			project:  "upload-scorecard-artifact-demo",
+			filePath: filepath.Join("testdata", "scorecard.yaml"),
+			want: &rpc.ScoreCard{
+				Id:             "test-scorecard",
+				Kind:           "ScoreCard",
+				DefinitionName: "projects/upload-scorecard-artifact-demo/locations/global/artifacts/test-scorecard-definition",
+				Scores: []*rpc.Score{
+					{
+						Id:             "score-security-audit",
+						Kind:           "Score",
+						DefinitionName: "projects/upload-scorecard-artifact-demo/locations/global/artifacts/definition-security-audit",
+						Severity:       rpc.Severity_OK,
+						Value: &rpc.Score_BooleanValue{
+							BooleanValue: &rpc.BooleanValue{
+								Value:        true,
+								DisplayValue: "Approved",
+							},
+						},
+					},
+					{
+						Id:             "score-lint-error",
+						Kind:           "Score",
+						DefinitionName: "projects/upload-scorecard-artifact-demo/locations/global/artifacts/definition-lint-error",
+						Severity:       rpc.Severity_OK,
+						Value: &rpc.Score_IntegerValue{
+							IntegerValue: &rpc.IntegerValue{
+								Value:    50,
+								MinValue: 0,
+								MaxValue: 100,
+							},
+						},
+					},
+					{
+						Id:             "score-accuracy",
+						Kind:           "Score",
+						DefinitionName: "projects/upload-scorecard-artifact-demo/locations/global/artifacts/definition-accuracy",
+						Severity:       rpc.Severity_ALERT,
+						Value: &rpc.Score_PercentValue{
+							PercentValue: &rpc.PercentValue{
+								Value: 50,
+							},
+						},
+					},
+					{
+						Id:             "score-lang-reuse",
+						Kind:           "Score",
+						DefinitionName: "projects/upload-scorecard-artifact-demo/locations/global/artifacts/definition-lang-reuse",
+						Severity:       rpc.Severity_OK,
+						Value: &rpc.Score_PercentValue{
+							PercentValue: &rpc.PercentValue{
+								Value: 70,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			ctx := context.Background()
+
+			SetUpProject(ctx, t, test.project)
+
+			client, err := connection.NewClient(ctx)
+			if err != nil {
+				t.Fatalf("Setup: Failed to create client: %s", err)
+			}
+
+			cmd := Command()
+			args := []string{"artifact", test.filePath, "--parent", fmt.Sprintf("projects/%s/locations/global", test.project)}
+			cmd.SetArgs(args)
+			if err = cmd.Execute(); err != nil {
+				t.Fatalf("Execute() with args %v returned error: %s", args, err)
+			}
+
+			req := &rpc.GetArtifactContentsRequest{
+				Name: "projects/" + test.project + "/locations/global/artifacts/test-scorecard",
+			}
+
+			definition := &rpc.ScoreCard{}
+			body, err := client.GetArtifactContents(ctx, req)
+			if err != nil {
+				t.Fatalf("GetArtifactContents() returned error: %s", err)
+			}
+			contents := body.GetData()
+			err = proto.Unmarshal(contents, definition)
+			if err != nil {
+				t.Fatalf("proto.Unmarshal() returned error: %s", err)
+			}
+
+			// Verify the manifest definition is correct
+			opts := cmp.Options{
+				protocmp.Transform(),
+			}
+
+			if diff := cmp.Diff(test.want, definition, opts); diff != "" {
 				t.Errorf("GetArtifactContents returned unexpected diff (-want +got):\n%s", diff)
 			}
 		})

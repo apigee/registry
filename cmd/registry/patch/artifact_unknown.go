@@ -17,36 +17,16 @@ package patch
 import (
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
-	"google.golang.org/protobuf/proto"
 )
 
 const UnknownArtifactMimeType = "application/octet-stream"
 
-type UnknownArtifact struct {
-	Header `yaml:",inline"`
-	Data   struct {
-		MimeType string `yaml:"mimeType,omitempty"`
-	} `yaml:"data"`
-}
-
-func (a *UnknownArtifact) GetMimeType() string {
-	return a.Data.MimeType
-}
-
-func (a *UnknownArtifact) GetHeader() *Header {
-	return &a.Header
-}
-
-func (a *UnknownArtifact) GetMessage() proto.Message {
-	return nil
-}
-
-func newUnknownArtifact(message *rpc.Artifact) (*UnknownArtifact, error) {
+func newUnknownArtifact(message *rpc.Artifact) (*Artifact, error) {
 	artifactName, err := names.ParseArtifact(message.Name)
 	if err != nil {
 		return nil, err
 	}
-	artifact := &UnknownArtifact{
+	return &Artifact{
 		Header: Header{
 			ApiVersion: RegistryV1,
 			Kind:       "Artifact",
@@ -54,6 +34,5 @@ func newUnknownArtifact(message *rpc.Artifact) (*UnknownArtifact, error) {
 				Name: artifactName.ArtifactID(),
 			},
 		},
-	}
-	return artifact, nil
+	}, nil
 }

@@ -50,3 +50,18 @@ data:
         externalChannelURI: https://apigee.github.io/registry/
         intendedAudience: Public
         accessGuidance: See https://github.com/apigee/registry for tools and usage information.
+  artifacts:
+    - kind: ReferenceList
+      metadata:
+        name: apihub-related
+      data:
+        description: Defines a list of related resources
+        references:
+          - id: github
+            displayName: GitHub Repo
+            category: apihub-source-code
+            uri: https://github.com/apigee/registry
+          - id: docs
+            displayName: GitHub Documentation
+            category: apihub-other
+            uri: https://apigee.github.io/registry/

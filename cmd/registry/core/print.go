@@ -121,8 +121,12 @@ func PrintArtifactContents(artifact *rpc.Artifact) error {
 		return unmarshalAndPrint(artifact.GetContents(), &rpc.Index{})
 	case "google.cloud.apigeeregistry.applications.v1alpha1.Lint":
 		return unmarshalAndPrint(artifact.GetContents(), &rpc.Lint{})
+	case "google.cloud.apigeeregistry.v1.apihub.DisplaySettings":
+		return unmarshalAndPrint(artifact.GetContents(), &rpc.DisplaySettings{})
 	case "google.cloud.apigeeregistry.v1.apihub.Lifecycle":
 		return unmarshalAndPrint(artifact.GetContents(), &rpc.Lifecycle{})
+	case "google.cloud.apigeeregistry.v1.apihub.ReferenceList":
+		return unmarshalAndPrint(artifact.GetContents(), &rpc.ReferenceList{})
 	case "google.cloud.apigeeregistry.v1.apihub.TaxonomyList":
 		return unmarshalAndPrint(artifact.GetContents(), &rpc.TaxonomyList{})
 	case "google.cloud.apigeeregistry.v1.controller.Manifest":
@@ -131,6 +135,14 @@ func PrintArtifactContents(artifact *rpc.Artifact) error {
 		return unmarshalAndPrint(artifact.GetContents(), &rpc.Receipt{})
 	case "google.cloud.apigeeregistry.applications.v1alpha1.References":
 		return unmarshalAndPrint(artifact.GetContents(), &rpc.References{})
+	case "google.cloud.apigeeregistry.v1.scoring.Score":
+		return unmarshalAndPrint(artifact.GetContents(), &rpc.Score{})
+	case "google.cloud.apigeeregistry.v1.scoring.ScoreCard":
+		return unmarshalAndPrint(artifact.GetContents(), &rpc.ScoreCard{})
+	case "google.cloud.apigeeregistry.v1.scoring.ScoreDefinition":
+		return unmarshalAndPrint(artifact.GetContents(), &rpc.ScoreDefinition{})
+	case "google.cloud.apigeeregistry.v1.scoring.ScoreCardDefinition":
+		return unmarshalAndPrint(artifact.GetContents(), &rpc.ScoreCardDefinition{})
 	case "google.cloud.apigeeregistry.applications.v1alpha1.StyleGuide":
 		return unmarshalAndPrint(artifact.GetContents(), &rpc.StyleGuide{})
 	case "gnostic.openapiv2.Document":

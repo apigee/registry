@@ -20,25 +20,31 @@ import (
 	"io/fs"
 	"io/ioutil"
 	"path/filepath"
+	"strings"
 
 	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/log"
 )
 
-func Apply(ctx context.Context, client connection.Client, fileName, parent string, recursive bool) error {
-	return filepath.WalkDir(fileName,
-		func(path string, entry fs.DirEntry, err error) error {
+func Apply(ctx context.Context, client connection.Client, path, parent string, recursive bool) error {
+	return filepath.WalkDir(path,
+		func(p string, entry fs.DirEntry, err error) error {
 			if err != nil {
 				return err
-			} else if entry.IsDir() && recursive {
-				return nil // Do nothing for the directory, but still walk its contents.
-			} else if entry.IsDir() {
+			} else if entry.IsDir() && p != path && !recursive {
 				return filepath.SkipDir // Skip the directory and contents.
+			} else if entry.IsDir() {
+				return nil // Do nothing for the directory, but still walk its contents.
 			}
-			return applyFile(ctx, client, path, parent)
+			return applyFile(ctx, client, p, parent)
 		})
 }
 
 func applyFile(ctx context.Context, client connection.Client, fileName, parent string) error {
+	if !strings.HasSuffix(fileName, ".yaml") {
+		return nil
+	}
+	log.FromContext(ctx).Infof("Importing %s", fileName)
 	bytes, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		return err
@@ -50,13 +56,9 @@ func applyFile(ctx context.Context, client connection.Client, fileName, parent s
 	switch header.Kind {
 	case "API":
 		return applyApiPatch(ctx, client, bytes, parent)
-	case "Lifecycle":
-		return applyLifecycleArtifactPatch(ctx, client, bytes, parent)
-	case "Manifest":
-		return applyManifestArtifactPatch(ctx, client, bytes, parent)
-	case "TaxonomyList":
-		return applyTaxonomyListArtifactPatch(ctx, client, bytes, parent)
+	case "DisplaySettings", "Lifecycle", "Manifest", "ReferenceList", "TaxonomyList":
+		return applyArtifactPatchBytes(ctx, client, bytes, parent)
 	default:
-		return fmt.Errorf("Unsupported kind: %s", header.Kind)
+		return fmt.Errorf("unsupported kind: %s", header.Kind)
 	}
 }

@@ -28,13 +28,14 @@ import (
 	"google.golang.org/genproto/protobuf/field_mask"
 )
 
-func revisionsCommand(ctx context.Context) *cobra.Command {
+func revisionsCommand() *cobra.Command {
 	var filter string
 	cmd := &cobra.Command{
 		Use:   "revisions",
 		Short: "Count the number of revisions of specified resources",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
+			ctx := cmd.Context()
 			client, err := connection.NewClient(ctx)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")

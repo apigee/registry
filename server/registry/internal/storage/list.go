@@ -25,6 +25,18 @@ import (
 	"gorm.io/gorm"
 )
 
+// limit returns the database page size to use for a listing request.
+func limit(opts PageOptions) int {
+	// Without filters, read exactly enough rows to fill the page,
+	// plus an extra row to check if another page exists.
+	if opts.Filter == "" {
+		return int(opts.Size) + 1
+	}
+
+	// When filters are present, we should read larger pages.
+	return 500
+}
+
 // ProjectList contains a page of project resources.
 type ProjectList struct {
 	Projects []models.Project
@@ -57,43 +69,43 @@ func (c *Client) ListProjects(ctx context.Context, opts PageOptions) (ProjectLis
 		return ProjectList{}, err
 	}
 
-	lock()
-	var projects []models.Project
-	err = c.db.
-		Order("key").
-		Offset(token.Offset).
-		Limit(100000).
-		Find(&projects).Error
-	unlock()
-
-	if err != nil {
-		return ProjectList{}, status.Error(codes.Internal, err.Error())
-	}
-
 	response := ProjectList{
 		Projects: make([]models.Project, 0, opts.Size),
 	}
 
-	for _, project := range projects {
-		match, err := filter.Matches(projectMap(project))
-		if err != nil {
-			return response, err
-		} else if !match {
-			token.Offset++
-			continue
-		}
+	for {
+		lock()
+		var page []models.Project
+		op := c.db.Order("key").Limit(limit(opts))
+		err := op.Offset(token.Offset).Find(&page).Error
+		unlock()
 
-		if len(response.Projects) < int(opts.Size) {
-			response.Projects = append(response.Projects, project)
-			token.Offset++
-		} else if len(response.Projects) == int(opts.Size) {
-			response.Token, err = encodeToken(token)
-			if err != nil {
-				return response, status.Error(codes.Internal, err.Error())
-			}
+		if err != nil {
+			return ProjectList{}, status.Error(codes.Internal, err.Error())
+		} else if len(page) == 0 {
 			break
 		}
 
+		for _, v := range page {
+			match, err := filter.Matches(projectMap(v))
+			if err != nil {
+				return ProjectList{}, err
+			} else if !match {
+				token.Offset++
+				continue
+			}
+
+			if len(response.Projects) == int(opts.Size) {
+				response.Token, err = encodeToken(token)
+				if err != nil {
+					return ProjectList{}, status.Error(codes.Internal, err.Error())
+				}
+				return response, nil
+			}
+
+			token.Offset++
+			response.Projects = append(response.Projects, v)
+		}
 	}
 
 	return response, nil
@@ -144,8 +156,7 @@ func (c *Client) ListApis(ctx context.Context, parent names.Project, opts PageOp
 
 	op := c.db.
 		Order("key").
-		Offset(token.Offset).
-		Limit(100000)
+		Limit(limit(opts))
 
 	if parent.ProjectID != "-" {
 		op = op.Where("project_id = ?", parent.ProjectID)
@@ -159,44 +170,47 @@ func (c *Client) ListApis(ctx context.Context, parent names.Project, opts PageOp
 		return ApiList{}, err
 	}
 
-	lock()
-	var apis []models.Api
-	_ = op.Find(&apis).Error
-	unlock()
-
-	if err != nil {
-		return ApiList{}, status.Error(codes.Internal, err.Error())
-	}
-
 	response := ApiList{
 		Apis: make([]models.Api, 0, opts.Size),
 	}
 
-	for _, api := range apis {
-		apiMap, err := apiMap(api)
-		if err != nil {
-			return response, status.Error(codes.Internal, err.Error())
-		}
+	for {
+		lock()
+		var page []models.Api
+		err := op.Offset(token.Offset).Find(&page).Error
+		unlock()
 
-		match, err := filter.Matches(apiMap)
 		if err != nil {
-			return response, err
-		} else if !match {
-			token.Offset++
-			continue
-		}
-
-		if len(response.Apis) < int(opts.Size) {
-			response.Apis = append(response.Apis, api)
-			token.Offset++
-		} else if len(response.Apis) == int(opts.Size) {
-			response.Token, err = encodeToken(token)
-			if err != nil {
-				return response, status.Error(codes.Internal, err.Error())
-			}
+			return ApiList{}, status.Error(codes.Internal, err.Error())
+		} else if len(page) == 0 {
 			break
 		}
 
+		for _, v := range page {
+			m, err := apiMap(v)
+			if err != nil {
+				return ApiList{}, status.Error(codes.Internal, err.Error())
+			}
+
+			match, err := filter.Matches(m)
+			if err != nil {
+				return ApiList{}, err
+			} else if !match {
+				token.Offset++
+				continue
+			}
+
+			if len(response.Apis) == int(opts.Size) {
+				response.Token, err = encodeToken(token)
+				if err != nil {
+					return ApiList{}, status.Error(codes.Internal, err.Error())
+				}
+				return response, nil
+			}
+
+			token.Offset++
+			response.Apis = append(response.Apis, v)
+		}
 	}
 
 	return response, nil
@@ -270,8 +284,7 @@ func (c *Client) ListVersions(ctx context.Context, parent names.Api, opts PageOp
 
 	op := c.db.
 		Order("key").
-		Offset(token.Offset).
-		Limit(100000)
+		Limit(limit(opts))
 
 	if parent.ProjectID != "-" {
 		op = op.Where("project_id = ?", parent.ProjectID)
@@ -280,42 +293,46 @@ func (c *Client) ListVersions(ctx context.Context, parent names.Api, opts PageOp
 		op = op.Where("api_id = ?", parent.ApiID)
 	}
 
-	lock()
-	var versions []models.Version
-	_ = op.Find(&versions).Error
-	unlock()
-
-	if err != nil {
-		return VersionList{}, status.Error(codes.Internal, err.Error())
-	}
-
 	response := VersionList{
 		Versions: make([]models.Version, 0, opts.Size),
 	}
 
-	for _, version := range versions {
-		versionMap, err := versionMap(version)
-		if err != nil {
-			return response, status.Error(codes.Internal, err.Error())
-		}
+	for {
+		lock()
+		var page []models.Version
+		err := op.Offset(token.Offset).Find(&page).Error
+		unlock()
 
-		match, err := filter.Matches(versionMap)
 		if err != nil {
-			return response, err
-		} else if !match {
-			token.Offset++
-			continue
-		}
-
-		if len(response.Versions) < int(opts.Size) {
-			response.Versions = append(response.Versions, version)
-			token.Offset++
-		} else if len(response.Versions) == int(opts.Size) {
-			response.Token, err = encodeToken(token)
-			if err != nil {
-				return response, status.Error(codes.Internal, err.Error())
-			}
+			return VersionList{}, status.Error(codes.Internal, err.Error())
+		} else if len(page) == 0 {
 			break
+		}
+
+		for _, v := range page {
+			m, err := versionMap(v)
+			if err != nil {
+				return VersionList{}, status.Error(codes.Internal, err.Error())
+			}
+
+			match, err := filter.Matches(m)
+			if err != nil {
+				return VersionList{}, err
+			} else if !match {
+				token.Offset++
+				continue
+			}
+
+			if len(response.Versions) == int(opts.Size) {
+				response.Token, err = encodeToken(token)
+				if err != nil {
+					return VersionList{}, status.Error(codes.Internal, err.Error())
+				}
+				return response, nil
+			}
+
+			token.Offset++
+			response.Versions = append(response.Versions, v)
 		}
 	}
 
@@ -408,8 +425,7 @@ func (c *Client) ListSpecs(ctx context.Context, parent names.Version, opts PageO
 				Table("specs").
 				Group("project_id, api_id, version_id, spec_id")).
 		Order("key").
-		Offset(token.Offset).
-		Limit(100000)
+		Limit(limit(opts))
 
 	if parent.ProjectID != "-" {
 		op = op.Where("specs.project_id = ?", parent.ProjectID)
@@ -421,42 +437,46 @@ func (c *Client) ListSpecs(ctx context.Context, parent names.Version, opts PageO
 		op = op.Where("specs.version_id = ?", parent.VersionID)
 	}
 
-	lock()
-	var specs []models.Spec
-	_ = op.Scan(&specs).Error
-	unlock()
-
-	if err != nil {
-		return SpecList{}, status.Error(codes.Internal, err.Error())
-	}
-
 	response := SpecList{
 		Specs: make([]models.Spec, 0, opts.Size),
 	}
 
-	for _, spec := range specs {
-		specMap, err := specMap(spec)
-		if err != nil {
-			return response, status.Error(codes.Internal, err.Error())
-		}
+	for {
+		lock()
+		var page []models.Spec
+		err := op.Offset(token.Offset).Find(&page).Error
+		unlock()
 
-		match, err := filter.Matches(specMap)
 		if err != nil {
-			return response, err
-		} else if !match {
-			token.Offset++
-			continue
-		}
-
-		if len(response.Specs) < int(opts.Size) {
-			response.Specs = append(response.Specs, spec)
-			token.Offset++
-		} else if len(response.Specs) == int(opts.Size) {
-			response.Token, err = encodeToken(token)
-			if err != nil {
-				return response, status.Error(codes.Internal, err.Error())
-			}
+			return SpecList{}, status.Error(codes.Internal, err.Error())
+		} else if len(page) == 0 {
 			break
+		}
+
+		for _, v := range page {
+			m, err := specMap(v)
+			if err != nil {
+				return SpecList{}, status.Error(codes.Internal, err.Error())
+			}
+
+			match, err := filter.Matches(m)
+			if err != nil {
+				return SpecList{}, err
+			} else if !match {
+				token.Offset++
+				continue
+			}
+
+			if len(response.Specs) == int(opts.Size) {
+				response.Token, err = encodeToken(token)
+				if err != nil {
+					return SpecList{}, status.Error(codes.Internal, err.Error())
+				}
+				return response, nil
+			}
+
+			token.Offset++
+			response.Specs = append(response.Specs, v)
 		}
 	}
 
@@ -495,20 +515,49 @@ func (c *Client) ListSpecRevisions(ctx context.Context, parent names.Spec, opts 
 		return SpecList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
 	}
 
+	// Check existence of the deepest fully specified resource in the parent name.
+	if parent.ProjectID != "-" && parent.ApiID != "-" && parent.VersionID != "-" && parent.SpecID != "-" {
+		if _, err := c.GetSpec(ctx, parent); err != nil {
+			return SpecList{}, err
+		}
+	} else if parent.ProjectID != "-" && parent.ApiID != "-" && parent.VersionID != "-" && parent.SpecID == "-" {
+		if _, err := c.GetVersion(ctx, parent.Version()); err != nil {
+			return SpecList{}, err
+		}
+	} else if parent.ProjectID != "-" && parent.ApiID != "-" && parent.VersionID == "-" && parent.SpecID == "-" {
+		if _, err := c.GetApi(ctx, parent.Api()); err != nil {
+			return SpecList{}, err
+		}
+	} else if parent.ProjectID != "-" && parent.ApiID == "-" && parent.VersionID == "-" && parent.SpecID == "-" {
+		if _, err := c.GetProject(ctx, parent.Project()); err != nil {
+			return SpecList{}, err
+		}
+	}
+
+	op := c.db.
+		Order("revision_create_time desc").
+		Offset(token.Offset).
+		Limit(int(opts.Size) + 1)
+
+	if id := parent.ProjectID; id != "-" {
+		op = op.Where("project_id = ?", id)
+	}
+	if id := parent.ApiID; id != "-" {
+		op = op.Where("api_id = ?", id)
+	}
+	if id := parent.VersionID; id != "-" {
+		op = op.Where("version_id = ?", id)
+	}
+	if id := parent.SpecID; id != "-" {
+		op = op.Where("spec_id = ?", id)
+	}
+
 	response := SpecList{
 		Specs: make([]models.Spec, 0, opts.Size),
 	}
 
 	lock()
-	err = c.db.
-		Where("project_id = ?", parent.ProjectID).
-		Where("api_id = ?", parent.ApiID).
-		Where("version_id = ?", parent.VersionID).
-		Where("spec_id = ?", parent.SpecID).
-		Order("revision_create_time desc").
-		Offset(token.Offset).
-		Limit(int(opts.Size) + 1).
-		Find(&response.Specs).Error
+	err = op.Find(&response.Specs).Error
 	unlock()
 
 	if err != nil {
@@ -592,8 +641,7 @@ func (c *Client) ListDeployments(ctx context.Context, parent names.Api, opts Pag
 				Table("deployments").
 				Group("project_id, api_id, deployment_id")).
 		Order("key").
-		Offset(token.Offset).
-		Limit(100000)
+		Limit(limit(opts))
 
 	if parent.ProjectID != "-" {
 		op = op.Where("deployments.project_id = ?", parent.ProjectID)
@@ -602,42 +650,46 @@ func (c *Client) ListDeployments(ctx context.Context, parent names.Api, opts Pag
 		op = op.Where("deployments.api_id = ?", parent.ApiID)
 	}
 
-	lock()
-	var deployments []models.Deployment
-	_ = op.Scan(&deployments).Error
-	unlock()
-
-	if err != nil {
-		return DeploymentList{}, status.Error(codes.Internal, err.Error())
-	}
-
 	response := DeploymentList{
 		Deployments: make([]models.Deployment, 0, opts.Size),
 	}
 
-	for _, deployment := range deployments {
-		deploymentMap, err := deploymentMap(deployment)
-		if err != nil {
-			return response, status.Error(codes.Internal, err.Error())
-		}
+	for {
+		lock()
+		var page []models.Deployment
+		err := op.Offset(token.Offset).Find(&page).Error
+		unlock()
 
-		match, err := filter.Matches(deploymentMap)
 		if err != nil {
-			return response, err
-		} else if !match {
-			token.Offset++
-			continue
-		}
-
-		if len(response.Deployments) < int(opts.Size) {
-			response.Deployments = append(response.Deployments, deployment)
-			token.Offset++
-		} else if len(response.Deployments) == int(opts.Size) {
-			response.Token, err = encodeToken(token)
-			if err != nil {
-				return response, status.Error(codes.Internal, err.Error())
-			}
+			return DeploymentList{}, status.Error(codes.Internal, err.Error())
+		} else if len(page) == 0 {
 			break
+		}
+
+		for _, v := range page {
+			m, err := deploymentMap(v)
+			if err != nil {
+				return DeploymentList{}, status.Error(codes.Internal, err.Error())
+			}
+
+			match, err := filter.Matches(m)
+			if err != nil {
+				return DeploymentList{}, err
+			} else if !match {
+				token.Offset++
+				continue
+			}
+
+			if len(response.Deployments) == int(opts.Size) {
+				response.Token, err = encodeToken(token)
+				if err != nil {
+					return DeploymentList{}, status.Error(codes.Internal, err.Error())
+				}
+				return response, nil
+			}
+
+			token.Offset++
+			response.Deployments = append(response.Deployments, v)
 		}
 	}
 
@@ -676,19 +728,41 @@ func (c *Client) ListDeploymentRevisions(ctx context.Context, parent names.Deplo
 		return DeploymentList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
 	}
 
+	if parent.ProjectID != "-" && parent.ApiID != "-" && parent.DeploymentID != "-" {
+		if _, err := c.GetDeployment(ctx, parent); err != nil {
+			return DeploymentList{}, err
+		}
+	} else if parent.ProjectID != "-" && parent.ApiID != "-" && parent.DeploymentID == "-" {
+		if _, err := c.GetApi(ctx, parent.Api()); err != nil {
+			return DeploymentList{}, err
+		}
+	} else if parent.ProjectID != "-" && parent.ApiID == "-" && parent.DeploymentID == "-" {
+		if _, err := c.GetProject(ctx, parent.Project()); err != nil {
+			return DeploymentList{}, err
+		}
+	}
+
+	op := c.db.
+		Order("revision_create_time desc").
+		Offset(token.Offset).
+		Limit(int(opts.Size) + 1)
+
+	if id := parent.ProjectID; id != "-" {
+		op = op.Where("project_id = ?", id)
+	}
+	if id := parent.ApiID; id != "-" {
+		op = op.Where("api_id = ?", id)
+	}
+	if id := parent.DeploymentID; id != "-" {
+		op = op.Where("deployment_id = ?", id)
+	}
+
 	response := DeploymentList{
 		Deployments: make([]models.Deployment, 0, opts.Size),
 	}
 
 	lock()
-	err = c.db.
-		Where("project_id = ?", parent.ProjectID).
-		Where("api_id = ?", parent.ApiID).
-		Where("deployment_id = ?", parent.DeploymentID).
-		Order("revision_create_time desc").
-		Offset(token.Offset).
-		Limit(int(opts.Size) + 1).
-		Find(&response.Deployments).Error
+	err = op.Find(&response.Deployments).Error
 	unlock()
 
 	if err != nil {
@@ -940,44 +1014,47 @@ func (c *Client) listArtifacts(ctx context.Context, op *gorm.DB, opts PageOption
 		return ArtifactList{}, err
 	}
 
-	lock()
-	var artifacts []models.Artifact
-	_ = op.Offset(token.Offset).
-		Limit(100000).
-		Find(&artifacts).Error
-	unlock()
-
-	if err != nil {
-		return ArtifactList{}, status.Error(codes.Internal, err.Error())
-	}
-
 	response := ArtifactList{
 		Artifacts: make([]models.Artifact, 0, opts.Size),
 	}
 
-	for _, artifact := range artifacts {
-		artifactMap, err := artifactMap(artifact)
-		if err != nil {
-			return response, status.Error(codes.Internal, err.Error())
-		}
+	for {
+		lock()
+		var page []models.Artifact
+		op = op.Order("key").Limit(limit(opts))
+		err := op.Offset(token.Offset).Find(&page).Error
+		unlock()
 
-		match, err := filter.Matches(artifactMap)
 		if err != nil {
-			return response, err
-		} else if !match || !include(&artifact) {
-			token.Offset++
-			continue
-		}
-
-		if len(response.Artifacts) < int(opts.Size) {
-			response.Artifacts = append(response.Artifacts, artifact)
-			token.Offset++
-		} else if len(response.Artifacts) == int(opts.Size) {
-			response.Token, err = encodeToken(token)
-			if err != nil {
-				return response, status.Error(codes.Internal, err.Error())
-			}
+			return ArtifactList{}, status.Error(codes.Internal, err.Error())
+		} else if len(page) == 0 {
 			break
+		}
+
+		for _, v := range page {
+			m, err := artifactMap(v)
+			if err != nil {
+				return ArtifactList{}, status.Error(codes.Internal, err.Error())
+			}
+
+			match, err := filter.Matches(m)
+			if err != nil {
+				return ArtifactList{}, err
+			} else if !match || !include(&v) {
+				token.Offset++
+				continue
+			}
+
+			if len(response.Artifacts) == int(opts.Size) {
+				response.Token, err = encodeToken(token)
+				if err != nil {
+					return ArtifactList{}, status.Error(codes.Internal, err.Error())
+				}
+				return response, nil
+			}
+
+			token.Offset++
+			response.Artifacts = append(response.Artifacts, v)
 		}
 	}
 

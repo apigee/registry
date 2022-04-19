@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+// (-- api-linter: core::0215::versioned-packages=disabled
+//     aip.dev/not-precedent: Support protos for the apigeeregistry.v1 API. --)
+package google.cloud.apigeeregistry.v1.apihub;
+
+import "google/api/field_behavior.proto";
+
+option java_package = "com.google.cloud.apigeeregistry.v1.apihub";
+option java_multiple_files = true;
+option java_outer_classname = "ReferencesProto";
+option go_package = "github.com/apigee/registry/rpc;rpc";
+
+// A ReferenceList message contains a list of references that are associated
+// with a resource. A Reference is a categorized resource name or URI that
+// points to some internal or external resource, respectivly.
+//
+// ReferenceLists are used to define relationships to things like source code
+// repositories, dependencies, and dependent APIs (inverse relationhip of
+// an API dependency).
+//
+// The ReferenceList is stored as an Artifact attached to a specific resource.
+message ReferenceList {
+  // Artifact identifier. May be used in YAML representations to indicate the id
+  // to be used to attach the artifact.
+  string id = 1;
+
+  // Artifact kind. May be used in YAML representations to identify the type of
+  // this artifact.
+  string kind = 2;
+
+  // A human-friendly name for the reference list.
+  string display_name = 3;
+
+  // A more detailed description of the reference list.
+  string description = 4;
+
+  // Represents a single reference for a resource.
+  message Reference {
+    // The id of the reference.
+    string id = 1 [(google.api.field_behavior) = REQUIRED];
+
+    // A human-friendly name for the reference.
+    string display_name = 2 [(google.api.field_behavior) = OPTIONAL];
+
+    // An optional string used to categorize the reference.
+    string category = 3 [(google.api.field_behavior) = OPTIONAL];
+
+    // A resource name [AIP-122] for the item being referenced.
+    // At least one of resource and uri must be set. Resource takes precedent
+    // over uri in API hub.
+    string resource = 4 [(google.api.field_behavior) = OPTIONAL];
+
+    // A URI [RFC-3986] for the item being referenced.
+    // At least one of resource and uri must be set. Resource takes precedent
+    // over uri in API hub.
+    string uri = 5 [(google.api.field_behavior) = OPTIONAL];
+  }
+
+  // The list of references for the resource.
+  repeated Reference references = 6;
+}

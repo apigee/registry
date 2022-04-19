@@ -27,12 +27,13 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func referencesCommand(ctx context.Context) *cobra.Command {
+func referencesCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "references",
 		Short: "Compute references of API specs",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
+			ctx := cmd.Context()
 			filter, err := cmd.Flags().GetString("filter")
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get filter from flags")

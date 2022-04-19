@@ -25,7 +25,7 @@ import (
 // Test that currently supported commands in the registry tool execute successfully in ExecCommandTask
 func TestCommandCoverage(t *testing.T) {
 	ctx := context.Background()
-	rootCmd := Command(ctx)
+	rootCmd := Command()
 
 	// Submit tasks to taskQueue
 	for i, cmd := range rootCmd.Commands() {
