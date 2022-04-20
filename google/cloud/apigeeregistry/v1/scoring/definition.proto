@@ -224,7 +224,7 @@ message NumberThreshold {
 
   // The boundaries specified in this field will be included in the mentioned
   // severity level. For examples see: PercentType, IntegerType.
-  NumberRange range = 2;
+  NumberRange range = 2 [(google.api.field_behavior) = REQUIRED]; 
 }
 
 // Represents the threshold to associate a boolean score value with
