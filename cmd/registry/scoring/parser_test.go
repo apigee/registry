@@ -137,7 +137,7 @@ func TestValidateScoreDefinition(t *testing.T) {
 			},
 		},
 		{
-			desc:   "no limits",
+			desc:   "only max limit",
 			parent: "projects/demo/locations/global",
 			scoreDefinition: &rpc.ScoreDefinition{
 				Id:   "test-score-definition",
@@ -154,11 +154,12 @@ func TestValidateScoreDefinition(t *testing.T) {
 					},
 				},
 				Type: &rpc.ScoreDefinition_Integer{
-					Integer: &rpc.IntegerType{},
+					Integer: &rpc.IntegerType{
+						MaxValue: 100,
+					},
 				},
 			},
 		},
-
 		// Single errors
 		{
 			desc:   "target pattern error",
@@ -317,6 +318,46 @@ func TestValidateScoreDefinition(t *testing.T) {
 								Severity: rpc.Severity_ALERT,
 								Range: &rpc.NumberThreshold_NumberRange{ //error
 									Min: 62,
+									Max: 100,
+								},
+							},
+							{
+								Severity: rpc.Severity_WARNING,
+								Range: &rpc.NumberThreshold_NumberRange{
+									Min: 0,
+									Max: 60,
+								},
+							},
+						},
+					},
+				},
+			},
+			wantNumErr: 1,
+		},
+		{
+			desc:   "integer threshold no limits",
+			parent: "projects/demo/locations/global",
+			scoreDefinition: &rpc.ScoreDefinition{
+				Id:   "test-score-definition",
+				Kind: "ScoreDefinition",
+				TargetResource: &rpc.ResourcePattern{
+					Pattern: "apis/-/versions/-/specs/-",
+				},
+				Formula: &rpc.ScoreDefinition_ScoreFormula{
+					ScoreFormula: &rpc.ScoreFormula{
+						Artifact: &rpc.ResourcePattern{
+							Pattern: "$resource.spec/artifacts/conformance-report",
+						},
+						ScoreExpression: "count(errors)",
+					},
+				},
+				Type: &rpc.ScoreDefinition_Integer{
+					Integer: &rpc.IntegerType{
+						Thresholds: []*rpc.NumberThreshold{
+							{
+								Severity: rpc.Severity_ALERT,
+								Range: &rpc.NumberThreshold_NumberRange{
+									Min: 61,
 									Max: 100,
 								},
 							},
@@ -496,6 +537,61 @@ func TestValidateScoreDefinition(t *testing.T) {
 			},
 			// This is expected here since it is not possible to validate ScoreFormula patterns if there are errors in the targetResource pattern.
 			wantNumErr: 2,
+		},
+		// Missing oneof components
+		{
+			desc:   "missing formula",
+			parent: "projects/demo/locations/global",
+			scoreDefinition: &rpc.ScoreDefinition{
+				Id:   "test-score-definition",
+				Kind: "ScoreDefinition",
+				TargetResource: &rpc.ResourcePattern{
+					Pattern: "apis/-/versions/specs/-", //error
+				},
+				Type: &rpc.ScoreDefinition_Integer{
+					Integer: &rpc.IntegerType{
+						MinValue: 0,
+						MaxValue: 100,
+						Thresholds: []*rpc.NumberThreshold{
+							{
+								Severity: rpc.Severity_OK,
+								Range: &rpc.NumberThreshold_NumberRange{
+									Min: 0,
+									Max: 59,
+								},
+							},
+							{
+								Severity: rpc.Severity_ALERT,
+								Range: &rpc.NumberThreshold_NumberRange{
+									Min: 60,
+									Max: 100,
+								},
+							},
+						},
+					},
+				},
+			},
+			wantNumErr: 1,
+		},
+		{
+			desc:   "missing type",
+			parent: "projects/demo/locations/global",
+			scoreDefinition: &rpc.ScoreDefinition{
+				Id:   "test-score-definition",
+				Kind: "ScoreDefinition",
+				TargetResource: &rpc.ResourcePattern{
+					Pattern: "apis/-/versions/-/specs/-",
+				},
+				Formula: &rpc.ScoreDefinition_ScoreFormula{
+					ScoreFormula: &rpc.ScoreFormula{
+						Artifact: &rpc.ResourcePattern{
+							Pattern: "$resource.spec/artifacts/conformance-report",
+						},
+						ScoreExpression: "count(errors)",
+					},
+				},
+			},
+			wantNumErr: 1,
 		},
 	}
 
@@ -771,6 +867,28 @@ func TestValidateNumberThresholds(t *testing.T) {
 			},
 		},
 		// single errors
+		{
+			desc:     "range.min greater than range.max",
+			minValue: 0,
+			maxValue: 100,
+			thresholds: []*rpc.NumberThreshold{
+				{
+					Severity: rpc.Severity_ALERT,
+					Range: &rpc.NumberThreshold_NumberRange{
+						Max: 0,
+						Min: 50,
+					},
+				},
+				{
+					Severity: rpc.Severity_OK,
+					Range: &rpc.NumberThreshold_NumberRange{
+						Min: 51,
+						Max: 100,
+					},
+				},
+			},
+			wantNumErr: 2,
+		},
 		{
 			desc:     "out of minValue bound",
 			minValue: 0,

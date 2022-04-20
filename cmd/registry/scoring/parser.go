@@ -34,6 +34,8 @@ func ValidateScoreDefinition(ctx context.Context, parent string, scoreDefinition
 				errs := validateScoreFormula(targetName, scoreFormula)
 				formulaErrs = append(formulaErrs, errs...)
 			}
+		default:
+			formulaErrs = append(formulaErrs, fmt.Errorf("missing formula, either 'score_formula' or 'rollup_formula' should be set"))
 		}
 	}
 
@@ -47,12 +49,21 @@ func ValidateScoreDefinition(ctx context.Context, parent string, scoreDefinition
 		thresholdErrs = append(thresholdErrs, errs...)
 	case *rpc.ScoreDefinition_Integer:
 		// defaults if not set: minValue: 0 maxValue:0
-		// validate that the set thresholds are within these bound
-		errs := validateNumberThresholds(scoreType.Integer.GetThresholds(), scoreType.Integer.GetMinValue(), scoreType.Integer.GetMaxValue())
-		thresholdErrs = append(thresholdErrs, errs...)
+		minValue := scoreType.Integer.GetMinValue()
+		maxValue := scoreType.Integer.GetMaxValue()
+		// if minValue==maxValue, means the score can take only one value, in that case integer is not the correct type.
+		// other types will be supported in the future (enums) to cover this case.
+		if minValue >= maxValue {
+			thresholdErrs = append(thresholdErrs, fmt.Errorf("invalid min_value and max_value, should be: min_value < max_value"))
+		} else { // validate that the set thresholds are within minValue and maxValue limits
+			errs := validateNumberThresholds(scoreType.Integer.GetThresholds(), minValue, maxValue)
+			thresholdErrs = append(thresholdErrs, errs...)
+		}
 	case *rpc.ScoreDefinition_Boolean:
 		errs := validateBooleanThresholds(scoreType.Boolean.GetThresholds())
 		thresholdErrs = append(thresholdErrs, errs...)
+	default:
+		thresholdErrs = append(thresholdErrs, fmt.Errorf("missing type, either of 'percent', 'integer' or 'boolean' should be set"))
 	}
 
 	errs := make([]error, 0, len(patternErrs)+len(formulaErrs)+len(thresholdErrs))
@@ -100,22 +111,32 @@ func validateNumberThresholds(thresholds []*rpc.NumberThreshold, minValue, maxVa
 	// This loop runs a pointer through the sorted ranges and checks for overlaps, missed values or out of bound scenarios.
 	pointer := minValue - 1
 	for i, t := range thresholds {
-		if t.GetRange().GetMin() <= pointer {
+		min := t.GetRange().GetMin()
+		max := t.GetRange().GetMax()
+
+		// min==max is valid here, one specific value can have a dedicated severity.
+		if min > max {
+			// invalid min and max values, skip the remaining validation
+			errs = append(errs, fmt.Errorf("invalid range.min: %d and range.max: %d values, should be range.min <= range.max", min, max))
+			continue
+		}
+
+		if min <= pointer {
 			// overlap with previous range or out of bound of minValue if pointer == minValue - 1
 			errs = append(errs, fmt.Errorf("overlap or out of bounds (<%d) in threshold value: {%v}", minValue, t))
 		}
 
-		if t.GetRange().GetMin() > pointer+1 {
+		if min > pointer+1 {
 			// missed values between current and previous range
 			errs = append(errs, fmt.Errorf("missing coverage for some values in threshold value: {%v}", t))
 		}
 
-		if t.GetRange().GetMax() > maxValue {
+		if max > maxValue {
 			// out of bounds of max value
 			errs = append(errs, fmt.Errorf("out of bounds (>%d) in threshold value: {%v}", maxValue, t))
 		}
 
-		pointer = t.GetRange().GetMax()
+		pointer = max
 
 		// Check if the pointer reaches maxValue in the last iteration
 		if i == len(thresholds)-1 && pointer < maxValue {
