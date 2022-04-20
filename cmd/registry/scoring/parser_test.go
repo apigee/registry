@@ -868,6 +868,17 @@ func TestValidateNumberThresholds(t *testing.T) {
 		},
 		// single errors
 		{
+			desc:     "missing range",
+			minValue: -50,
+			maxValue: 50,
+			thresholds: []*rpc.NumberThreshold{
+				{
+					Severity: rpc.Severity_ALERT,
+				},
+			},
+			wantNumErr: 2,
+		},
+		{
 			desc:     "range.min greater than range.max",
 			minValue: 0,
 			maxValue: 100,
