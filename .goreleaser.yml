@@ -13,33 +13,34 @@
 # limitations under the License.
 
 builds:
-  - id: default
-    dir: cmd/registry
-    main: main.go
-    binary: registry
-    goos:
-      - linux
-      - windows
-      - darwin
-    goarch:
-      - amd64
-    env:
-      - CGO_ENABLED=0
+- id: default
+  dir: cmd/registry
+  main: main.go
+  binary: registry
+  goos:
+  - linux
+  - windows
+  - darwin
+  goarch:
+  - amd64
+  env:
+  - CGO_ENABLED=0
 
 archives:
-  - id: default
-    format: tar.gz
-    replacements:
-      darwin: macOS
-      amd64: 64-bit
-    files:
-      - LICENSE
-      - README.md
-    builds:
-      - default
-    format_overrides:
-    - goos: windows
-      format: zip
+- id: default
+  format: tar.gz
+  replacements:
+    darwin: macOS
+    amd64: 64-bit
+  files:
+  - LICENSE
+  - README.md
+  - auth/HOSTED.sh
+  builds:
+  - default
+  format_overrides:
+  - goos: windows
+    format: zip
 release:
   draft: true
   prerelease: true
