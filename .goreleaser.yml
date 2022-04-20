@@ -35,7 +35,7 @@ archives:
   files:
   - LICENSE
   - src: cmd/registry/APIHUB-README.md
-    dst: README.md
+    dst: .
     strip_parent: true
   - auth/HOSTED.sh
   - auth/HOSTED.bat
