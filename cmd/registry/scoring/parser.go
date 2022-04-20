@@ -108,40 +108,28 @@ func validateNumberThresholds(thresholds []*rpc.NumberThreshold, minValue, maxVa
 		return thresholds[i].GetRange().GetMin() < thresholds[j].GetRange().GetMin()
 	})
 
-	// This loop runs a pointer through the sorted ranges and checks for overlaps, missed values or out of bound scenarios.
-	pointer := minValue - 1
-	for i, t := range thresholds {
-		min := t.GetRange().GetMin()
-		max := t.GetRange().GetMax()
-
+	// Check coverage for minValue
+	if len(thresholds) > 0 && thresholds[0].GetRange().GetMin() != minValue {
+		errs = append(errs, fmt.Errorf("missing coverage for min_value(%d) in threshold value: %q", minValue, thresholds[0]))
+	}
+	// Check coverage for maxValue
+	if len(thresholds) > 0 && thresholds[len(thresholds)-1].GetRange().GetMax() != maxValue {
+		errs = append(errs, fmt.Errorf("missing coverage for max_value(%d) in threshold value: %q", maxValue, thresholds[len(thresholds)-1]))
+	}
+	for i := 0; i < len(thresholds); i++ {
 		// min==max is valid here, one specific value can have a dedicated severity.
-		if min > max {
+		if thresholds[i].GetRange().GetMin() > thresholds[i].GetRange().GetMax() {
 			// invalid min and max values, skip the remaining validation
-			errs = append(errs, fmt.Errorf("invalid range.min: %d and range.max: %d values, should be range.min <= range.max", min, max))
+			errs = append(errs, fmt.Errorf("invalid range.min: %d and range.max: %d values: min>max)", thresholds[i].GetRange().GetMin(), thresholds[i].GetRange().GetMax()))
 			continue
 		}
-
-		if min <= pointer {
-			// overlap with previous range or out of bound of minValue if pointer == minValue - 1
-			errs = append(errs, fmt.Errorf("overlap or out of bounds (<%d) in threshold value: {%v}", minValue, t))
-		}
-
-		if min > pointer+1 {
-			// missed values between current and previous range
-			errs = append(errs, fmt.Errorf("missing coverage for some values in threshold value: {%v}", t))
-		}
-
-		if max > maxValue {
-			// out of bounds of max value
-			errs = append(errs, fmt.Errorf("out of bounds (>%d) in threshold value: {%v}", maxValue, t))
-		}
-
-		pointer = max
-
-		// Check if the pointer reaches maxValue in the last iteration
-		if i == len(thresholds)-1 && pointer < maxValue {
-			// missed values from maxValue
-			errs = append(errs, fmt.Errorf("missing coverage for max_value(%d) in threshold value: {%v}", maxValue, t))
+		if i < len(thresholds)-1 {
+			left, right := thresholds[i].GetRange(), thresholds[i+1].GetRange()
+			if left.GetMax() < right.GetMin()-1 {
+				errs = append(errs, fmt.Errorf("missing coverage for some values in threshold ranges: {%v} and {%v}", left, right))
+			} else if left.GetMax() > right.GetMin()-1 {
+				errs = append(errs, fmt.Errorf("overlapping values in threshold ranges: {%v} and {%v}", left, right))
+			}
 		}
 	}
 
