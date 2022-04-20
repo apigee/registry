@@ -1,7 +1,7 @@
 # BenchMark tests
 
-Following commands help run benchmark tests against 100 apis with 3 versions/api.
-Every version has one api spec.
+Following commands help run benchmark tests against 100 apis with 3
+versions/api. Every version has one api spec.
 
 ```
     export ITERATION_SIZE=10
