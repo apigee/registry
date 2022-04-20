@@ -55,7 +55,7 @@ func ValidateScoreDefinition(ctx context.Context, parent string, scoreDefinition
 		thresholdErrs = append(thresholdErrs, errs...)
 	}
 
-	errs := make([]error, len(patternErrs)+len(formulaErrs)+len(thresholdErrs))
+	errs := make([]error, 0, len(patternErrs)+len(formulaErrs)+len(thresholdErrs))
 	errs = append(errs, patternErrs...)
 	errs = append(errs, formulaErrs...)
 	errs = append(errs, thresholdErrs...)
@@ -73,16 +73,14 @@ func validateScoreFormula(targetName patterns.ResourceName, scoreFormula *rpc.Sc
 	_, entityType, err := patterns.GetReferenceEntityType(pattern)
 	if err != nil {
 		errs = append(errs, fmt.Errorf("invalid score_formula.artifact.pattern: %s", err))
-	}
-	// $resource should have valid entity reference wrt target_resource
-	_, err = patterns.GetReferenceEntityValue(pattern, targetName)
-	if err != nil {
+	} else if entityType == "default" {
+		// pattern should always start with a $resource reference
+		errs = append(errs, fmt.Errorf("invalid score_formula.artifact.pattern: %q, must always start with '$resource.(api|version|spec|artifact)'", pattern))
+	} else if _, err = patterns.GetReferenceEntityValue(pattern, targetName); err != nil {
+		// $resource should have valid entity reference wrt target_resource
 		errs = append(errs, fmt.Errorf("invalid $resource reference in score_formula.artifact.pattern: %s", err))
 	}
-	// pattern should always start with a $resource reference
-	if entityType == "default" {
-		errs = append(errs, fmt.Errorf("invalid score_formula.artifact.pattern: %q, must always start with '$resource.(api|version|spec|artifact)'", pattern))
-	}
+
 	// score_formula.pattern.pattern should not end with a "-"
 	if strings.HasSuffix(scoreFormula.GetArtifact().GetPattern(), "/-") {
 		errs = append(errs, fmt.Errorf("invalid score_formula.artifact.pattern : %q, it should end with a resourceID and not a \"-\"", pattern))
@@ -120,7 +118,7 @@ func validateNumberThresholds(thresholds []*rpc.NumberThreshold, minValue, maxVa
 		pointer = t.GetRange().GetMax()
 
 		// Check if the pointer reaches maxValue in the last iteration
-		if i == len(thresholds)-1 && pointer != maxValue {
+		if i == len(thresholds)-1 && pointer < maxValue {
 			// missed values from maxValue
 			errs = append(errs, fmt.Errorf("missing coverage for max_value(%d) in threshold value: {%v}", maxValue, t))
 		}

@@ -13,7 +13,9 @@ func TestValidateScoreDefinition(t *testing.T) {
 		desc            string
 		parent          string
 		scoreDefinition *rpc.ScoreDefinition
+		wantNumErr      int
 	}{
+		// No errors
 		{
 			desc:   "score formula",
 			parent: "projects/demo/locations/global",
@@ -156,25 +158,8 @@ func TestValidateScoreDefinition(t *testing.T) {
 				},
 			},
 		},
-	}
 
-	for _, test := range tests {
-		t.Run(test.desc, func(t *testing.T) {
-			ctx := context.Background()
-			gotErrs := ValidateScoreDefinition(ctx, test.parent, test.scoreDefinition)
-			if len(gotErrs) > 0 {
-				t.Errorf("ValidateScoreDefinition() returned unexpected errors: %s", gotErrs)
-			}
-		})
-	}
-}
-
-func TestValidateScoreDefinitionError(t *testing.T) {
-	tests := []struct {
-		desc            string
-		parent          string
-		scoreDefinition *rpc.ScoreDefinition
-	}{
+		// Single errors
 		{
 			desc:   "target pattern error",
 			parent: "projects/demo/locations/global",
@@ -182,7 +167,7 @@ func TestValidateScoreDefinitionError(t *testing.T) {
 				Id:   "test-score-definition",
 				Kind: "ScoreDefinition",
 				TargetResource: &rpc.ResourcePattern{
-					Pattern: "apis/-/versions/specs/-",
+					Pattern: "apis/-/versions/specs/-", //error
 				},
 				Formula: &rpc.ScoreDefinition_ScoreFormula{
 					ScoreFormula: &rpc.ScoreFormula{
@@ -199,6 +184,7 @@ func TestValidateScoreDefinitionError(t *testing.T) {
 					},
 				},
 			},
+			wantNumErr: 1,
 		},
 		{
 			desc:   "score formula error",
@@ -212,7 +198,7 @@ func TestValidateScoreDefinitionError(t *testing.T) {
 				Formula: &rpc.ScoreDefinition_ScoreFormula{
 					ScoreFormula: &rpc.ScoreFormula{
 						Artifact: &rpc.ResourcePattern{
-							Pattern: "$resource.artifact/conformance-report",
+							Pattern: "$resource.artifact/conformance-report", //error
 						},
 						ScoreExpression: "count(errors)",
 					},
@@ -224,6 +210,7 @@ func TestValidateScoreDefinitionError(t *testing.T) {
 					},
 				},
 			},
+			wantNumErr: 1,
 		},
 		{
 			desc:   "rollup formula error",
@@ -246,7 +233,7 @@ func TestValidateScoreDefinitionError(t *testing.T) {
 							},
 							{
 								Artifact: &rpc.ResourcePattern{
-									Pattern: "$resource.artifact/conformance-report",
+									Pattern: "$resource.artifact/conformance-report", //error
 								},
 								ScoreExpression: "count(warnings)",
 								ReferenceId:     "lint_warnings",
@@ -262,6 +249,7 @@ func TestValidateScoreDefinitionError(t *testing.T) {
 					},
 				},
 			},
+			wantNumErr: 1,
 		},
 		{
 			desc:   "percent threshold error",
@@ -285,7 +273,7 @@ func TestValidateScoreDefinitionError(t *testing.T) {
 						Thresholds: []*rpc.NumberThreshold{
 							{
 								Severity: rpc.Severity_ALERT,
-								Range: &rpc.NumberThreshold_NumberRange{
+								Range: &rpc.NumberThreshold_NumberRange{ //error
 									Min: 60,
 									Max: 100,
 								},
@@ -301,6 +289,7 @@ func TestValidateScoreDefinitionError(t *testing.T) {
 					},
 				},
 			},
+			wantNumErr: 1,
 		},
 		{
 			desc:   "integer threshold error",
@@ -326,7 +315,7 @@ func TestValidateScoreDefinitionError(t *testing.T) {
 						Thresholds: []*rpc.NumberThreshold{
 							{
 								Severity: rpc.Severity_ALERT,
-								Range: &rpc.NumberThreshold_NumberRange{
+								Range: &rpc.NumberThreshold_NumberRange{ //error
 									Min: 62,
 									Max: 100,
 								},
@@ -342,6 +331,7 @@ func TestValidateScoreDefinitionError(t *testing.T) {
 					},
 				},
 			},
+			wantNumErr: 1,
 		},
 		{
 			desc:   "boolean threshold error",
@@ -362,11 +352,7 @@ func TestValidateScoreDefinitionError(t *testing.T) {
 				},
 				Type: &rpc.ScoreDefinition_Boolean{
 					Boolean: &rpc.BooleanType{
-						Thresholds: []*rpc.BooleanThreshold{
-							{
-								Severity: rpc.Severity_ALERT,
-								Value:    false,
-							},
+						Thresholds: []*rpc.BooleanThreshold{ //error
 							{
 								Severity: rpc.Severity_ALERT,
 								Value:    false,
@@ -375,6 +361,141 @@ func TestValidateScoreDefinitionError(t *testing.T) {
 					},
 				},
 			},
+			wantNumErr: 1,
+		},
+		// Combination errors
+		{
+			desc:   "target pattern and score formula error",
+			parent: "projects/demo/locations/global",
+			scoreDefinition: &rpc.ScoreDefinition{
+				Id:   "test-score-definition",
+				Kind: "ScoreDefinition",
+				TargetResource: &rpc.ResourcePattern{
+					Pattern: "apis/-/versions/specs/-", //error
+				},
+				Formula: &rpc.ScoreDefinition_ScoreFormula{
+					ScoreFormula: &rpc.ScoreFormula{
+						Artifact: &rpc.ResourcePattern{
+							Pattern: "$resource.specs/artifacts/conformance-report", //error
+						},
+						ScoreExpression: "count(errors)",
+					},
+				},
+				Type: &rpc.ScoreDefinition_Integer{
+					Integer: &rpc.IntegerType{
+						MinValue: 0,
+						MaxValue: 100,
+					},
+				},
+			},
+			// This is expected here since it is not possible to validate ScoreFormula patterns if there are errors in the targetResource pattern.
+			wantNumErr: 1,
+		},
+		{
+			desc:   "target pattern and threshold error",
+			parent: "projects/demo/locations/global",
+			scoreDefinition: &rpc.ScoreDefinition{
+				Id:   "test-score-definition",
+				Kind: "ScoreDefinition",
+				TargetResource: &rpc.ResourcePattern{
+					Pattern: "apis/-/versions/specs/-", //error
+				},
+				Formula: &rpc.ScoreDefinition_ScoreFormula{
+					ScoreFormula: &rpc.ScoreFormula{
+						Artifact: &rpc.ResourcePattern{
+							Pattern: "$resource.spec/artifacts/conformance-report",
+						},
+						ScoreExpression: "count(errors)",
+					},
+				},
+				Type: &rpc.ScoreDefinition_Integer{
+					Integer: &rpc.IntegerType{
+						MinValue: 0,
+						MaxValue: 100,
+						Thresholds: []*rpc.NumberThreshold{
+							{
+								Severity: rpc.Severity_ALERT,
+								Range: &rpc.NumberThreshold_NumberRange{ //error
+									Min: 60,
+									Max: 100,
+								},
+							},
+						},
+					},
+				},
+			},
+			wantNumErr: 2,
+		},
+		{
+			desc:   "score formula and threshold error",
+			parent: "projects/demo/locations/global",
+			scoreDefinition: &rpc.ScoreDefinition{
+				Id:   "test-score-definition",
+				Kind: "ScoreDefinition",
+				TargetResource: &rpc.ResourcePattern{
+					Pattern: "apis/-/versions/-/specs/-",
+				},
+				Formula: &rpc.ScoreDefinition_ScoreFormula{
+					ScoreFormula: &rpc.ScoreFormula{
+						Artifact: &rpc.ResourcePattern{
+							Pattern: "$resource.specs/artifacts/conformance-report", //error
+						},
+						ScoreExpression: "count(errors)",
+					},
+				},
+				Type: &rpc.ScoreDefinition_Integer{
+					Integer: &rpc.IntegerType{
+						MinValue: 0,
+						MaxValue: 100,
+						Thresholds: []*rpc.NumberThreshold{
+							{
+								Severity: rpc.Severity_ALERT,
+								Range: &rpc.NumberThreshold_NumberRange{ //error
+									Min: 60,
+									Max: 100,
+								},
+							},
+						},
+					},
+				},
+			},
+			wantNumErr: 2,
+		},
+		{
+			desc:   "error in each component",
+			parent: "projects/demo/locations/global",
+			scoreDefinition: &rpc.ScoreDefinition{
+				Id:   "test-score-definition",
+				Kind: "ScoreDefinition",
+				TargetResource: &rpc.ResourcePattern{
+					Pattern: "apis/-/versions/specs/-", //error
+				},
+				Formula: &rpc.ScoreDefinition_ScoreFormula{
+					ScoreFormula: &rpc.ScoreFormula{
+						Artifact: &rpc.ResourcePattern{
+							Pattern: "$resource.specs/artifacts/conformance-report", //error
+						},
+						ScoreExpression: "count(errors)",
+					},
+				},
+				Type: &rpc.ScoreDefinition_Integer{
+					Integer: &rpc.IntegerType{
+						MinValue: 0,
+						MaxValue: 100,
+						Thresholds: []*rpc.NumberThreshold{
+							{
+								Severity: rpc.Severity_ALERT,
+								Range: &rpc.NumberThreshold_NumberRange{ //error
+									Min: 60,
+									Max: 100,
+								},
+							},
+						},
+					},
+				},
+			},
+			// This is expected here since it is not possible to validate ScoreFormula patterns if there are errors in the targetResource pattern.
+			wantNumErr: 2,
 		},
 	}
 
@@ -382,8 +503,8 @@ func TestValidateScoreDefinitionError(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			gotErrs := ValidateScoreDefinition(ctx, test.parent, test.scoreDefinition)
-			if len(gotErrs) == 0 {
-				t.Errorf("expected ValidateScoreDefinition() to return errors")
+			if len(gotErrs) != test.wantNumErr {
+				t.Errorf("ValidateScoreDefinition() returned unexpected no. of errors: want %d, got %s", test.wantNumErr, gotErrs)
 			}
 		})
 	}
@@ -394,7 +515,9 @@ func TestValidateScoreFormula(t *testing.T) {
 		desc          string
 		targetPattern *rpc.ResourcePattern
 		scoreFormula  *rpc.ScoreFormula
+		wantNumErr    int
 	}{
+		// No errors
 		{
 			desc: "score formula",
 			targetPattern: &rpc.ResourcePattern{
@@ -407,25 +530,7 @@ func TestValidateScoreFormula(t *testing.T) {
 				ScoreExpression: "count(errors)",
 			},
 		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.desc, func(t *testing.T) {
-			targetName, _ := patterns.ParseResourcePattern(test.targetPattern.GetPattern())
-			gotErrs := validateScoreFormula(targetName, test.scoreFormula)
-			if len(gotErrs) > 0 {
-				t.Errorf("validateScoreFormula() returned unexpected errors: %s", gotErrs)
-			}
-		})
-	}
-}
-
-func TestValidateScoreFormulaError(t *testing.T) {
-	tests := []struct {
-		desc          string
-		targetPattern *rpc.ResourcePattern
-		scoreFormula  *rpc.ScoreFormula
-	}{
+		// Single errors
 		{
 			desc: "no $resource reference",
 			targetPattern: &rpc.ResourcePattern{
@@ -433,10 +538,11 @@ func TestValidateScoreFormulaError(t *testing.T) {
 			},
 			scoreFormula: &rpc.ScoreFormula{
 				Artifact: &rpc.ResourcePattern{
-					Pattern: "apis/-/versions/-/specs/-/artifacts/conformance-report",
+					Pattern: "apis/-/versions/-/specs/-/artifacts/conformance-report", //error
 				},
 				ScoreExpression: "count(errors)",
 			},
+			wantNumErr: 1,
 		},
 		{
 			desc: "invalid $resource reference",
@@ -445,10 +551,11 @@ func TestValidateScoreFormulaError(t *testing.T) {
 			},
 			scoreFormula: &rpc.ScoreFormula{
 				Artifact: &rpc.ResourcePattern{
-					Pattern: "$resource.specs/artifacts/conformance-report",
+					Pattern: "$resource.specs/artifacts/conformance-report", //error
 				},
 				ScoreExpression: "count(errors)",
 			},
+			wantNumErr: 1,
 		},
 		{
 			desc: "invalid $resource wrt targetName",
@@ -457,15 +564,56 @@ func TestValidateScoreFormulaError(t *testing.T) {
 			},
 			scoreFormula: &rpc.ScoreFormula{
 				Artifact: &rpc.ResourcePattern{
-					Pattern: "$resource.spec/artifacts/conformance-report",
+					Pattern: "$resource.spec/artifacts/conformance-report", //error
 				},
 				ScoreExpression: "count(errors)",
 			},
+			wantNumErr: 1,
 		},
 		{
 			desc: "missing artifact name",
 			targetPattern: &rpc.ResourcePattern{
-				Pattern: "projects/demo/locations/global/apis/-/versions/-",
+				Pattern: "projects/demo/locations/global/apis/-/versions/-/specs/-",
+			},
+			scoreFormula: &rpc.ScoreFormula{
+				Artifact: &rpc.ResourcePattern{
+					Pattern: "$resource.spec/artifacts/-", //error
+				},
+				ScoreExpression: "count(errors)",
+			},
+			wantNumErr: 1,
+		},
+		// Combination errors
+		{
+			desc: "invalid pattern and missing name",
+			targetPattern: &rpc.ResourcePattern{
+				Pattern: "projects/demo/locations/global/apis/-/versions/-/specs/-",
+			},
+			scoreFormula: &rpc.ScoreFormula{
+				Artifact: &rpc.ResourcePattern{
+					Pattern: "$resource.specs/-/artifacts/-", //error
+				},
+				ScoreExpression: "count(errors)",
+			},
+			wantNumErr: 2,
+		},
+		{
+			desc: "no reference and missing name",
+			targetPattern: &rpc.ResourcePattern{
+				Pattern: "projects/demo/locations/global/apis/-/versions/-/specs/-",
+			},
+			scoreFormula: &rpc.ScoreFormula{
+				Artifact: &rpc.ResourcePattern{
+					Pattern: "apis/-/versions/-/specs/-/artifacts/-", //error
+				},
+				ScoreExpression: "count(errors)",
+			},
+			wantNumErr: 2,
+		},
+		{
+			desc: "invalid reference and missing name",
+			targetPattern: &rpc.ResourcePattern{
+				Pattern: "projects/demo/locations/global/apis/-/versions/-", //error
 			},
 			scoreFormula: &rpc.ScoreFormula{
 				Artifact: &rpc.ResourcePattern{
@@ -473,14 +621,15 @@ func TestValidateScoreFormulaError(t *testing.T) {
 				},
 				ScoreExpression: "count(errors)",
 			},
+			wantNumErr: 2,
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			targetName, _ := patterns.ParseResourcePattern(test.targetPattern.GetPattern())
 			gotErrs := validateScoreFormula(targetName, test.scoreFormula)
-			if len(gotErrs) == 0 {
-				t.Errorf("expected validateScoreFormula() to return errors")
+			if len(gotErrs) != test.wantNumErr {
+				t.Errorf("validateScoreFormula() returned unexpected no. of errors: want %d, got %s", test.wantNumErr, gotErrs)
 			}
 		})
 	}
@@ -492,7 +641,9 @@ func TestValidateNumberThresholds(t *testing.T) {
 		minValue   int32
 		maxValue   int32
 		thresholds []*rpc.NumberThreshold
+		wantNumErr int
 	}{
+		// no errors
 		{
 			desc:     "percentage thresholds",
 			minValue: 0,
@@ -619,25 +770,7 @@ func TestValidateNumberThresholds(t *testing.T) {
 				},
 			},
 		},
-	}
-	for _, test := range tests {
-		t.Run(test.desc, func(t *testing.T) {
-			gotErrs := validateNumberThresholds(test.thresholds, test.minValue, test.maxValue)
-			if len(gotErrs) > 0 {
-				t.Errorf("validateNumberThresholds() returned unexpected errors: %s", gotErrs)
-			}
-		})
-	}
-
-}
-
-func TestValidateNumberThresholdsError(t *testing.T) {
-	tests := []struct {
-		desc       string
-		minValue   int32
-		maxValue   int32
-		thresholds []*rpc.NumberThreshold
-	}{
+		// single errors
 		{
 			desc:     "out of minValue bound",
 			minValue: 0,
@@ -665,6 +798,7 @@ func TestValidateNumberThresholdsError(t *testing.T) {
 					},
 				},
 			},
+			wantNumErr: 1,
 		},
 		{
 			desc:     "out of maxValue bound",
@@ -693,6 +827,7 @@ func TestValidateNumberThresholdsError(t *testing.T) {
 					},
 				},
 			},
+			wantNumErr: 1,
 		},
 		{
 			desc:     "missing coverage for minValue",
@@ -721,6 +856,7 @@ func TestValidateNumberThresholdsError(t *testing.T) {
 					},
 				},
 			},
+			wantNumErr: 1,
 		},
 		{
 			desc:     "missing coverage for maxValue",
@@ -749,6 +885,7 @@ func TestValidateNumberThresholdsError(t *testing.T) {
 					},
 				},
 			},
+			wantNumErr: 1,
 		},
 		{
 			desc:     "missing coverage in between",
@@ -777,6 +914,7 @@ func TestValidateNumberThresholdsError(t *testing.T) {
 					},
 				},
 			},
+			wantNumErr: 2,
 		},
 		{
 			desc:     "overlap",
@@ -805,23 +943,211 @@ func TestValidateNumberThresholdsError(t *testing.T) {
 					},
 				},
 			},
+			wantNumErr: 2,
+		},
+		// Combination errors
+		{
+			desc:     "out of min and max limits",
+			minValue: 0,
+			maxValue: 100,
+			thresholds: []*rpc.NumberThreshold{
+				{
+					Severity: rpc.Severity_ALERT,
+					Range: &rpc.NumberThreshold_NumberRange{
+						Min: -1,
+						Max: 50,
+					},
+				},
+				{
+					Severity: rpc.Severity_OK,
+					Range: &rpc.NumberThreshold_NumberRange{
+						Min: 51,
+						Max: 101,
+					},
+				},
+			},
+			wantNumErr: 2,
+		},
+		{
+			desc:     "out of limits and overlap",
+			minValue: 0,
+			maxValue: 100,
+			thresholds: []*rpc.NumberThreshold{
+				{
+					Severity: rpc.Severity_ALERT,
+					Range: &rpc.NumberThreshold_NumberRange{
+						Min: -1,
+						Max: 50,
+					},
+				},
+				{
+					Severity: rpc.Severity_OK,
+					Range: &rpc.NumberThreshold_NumberRange{
+						Min: 50,
+						Max: 101,
+					},
+				},
+			},
+			wantNumErr: 3,
+		},
+		{
+			desc:     "out of limits and missing coverage",
+			minValue: 0,
+			maxValue: 100,
+			thresholds: []*rpc.NumberThreshold{
+				{
+					Severity: rpc.Severity_ALERT,
+					Range: &rpc.NumberThreshold_NumberRange{
+						Min: -1,
+						Max: 50,
+					},
+				},
+				{
+					Severity: rpc.Severity_OK,
+					Range: &rpc.NumberThreshold_NumberRange{
+						Min: 52,
+						Max: 101,
+					},
+				},
+			},
+			wantNumErr: 3,
+		},
+		{
+			desc:     "missing limits coverage",
+			minValue: 0,
+			maxValue: 100,
+			thresholds: []*rpc.NumberThreshold{
+				{
+					Severity: rpc.Severity_ALERT,
+					Range: &rpc.NumberThreshold_NumberRange{
+						Min: 2,
+						Max: 50,
+					},
+				},
+				{
+					Severity: rpc.Severity_OK,
+					Range: &rpc.NumberThreshold_NumberRange{
+						Min: 51,
+						Max: 99,
+					},
+				},
+			},
+			wantNumErr: 2,
+		},
+		{
+			desc:     "missing limits coverage and overlap",
+			minValue: 0,
+			maxValue: 100,
+			thresholds: []*rpc.NumberThreshold{
+				{
+					Severity: rpc.Severity_ALERT,
+					Range: &rpc.NumberThreshold_NumberRange{
+						Min: 2,
+						Max: 50,
+					},
+				},
+				{
+					Severity: rpc.Severity_OK,
+					Range: &rpc.NumberThreshold_NumberRange{
+						Min: 50,
+						Max: 99,
+					},
+				},
+			},
+			wantNumErr: 3,
+		},
+		{
+			desc:     "missing limits coverage and missing coverage",
+			minValue: 0,
+			maxValue: 100,
+			thresholds: []*rpc.NumberThreshold{
+				{
+					Severity: rpc.Severity_ALERT,
+					Range: &rpc.NumberThreshold_NumberRange{
+						Min: 2,
+						Max: 50,
+					},
+				},
+				{
+					Severity: rpc.Severity_OK,
+					Range: &rpc.NumberThreshold_NumberRange{
+						Min: 52,
+						Max: 99,
+					},
+				},
+			},
+			wantNumErr: 3,
+		},
+		{
+			desc:     "missing min coverage and out of max limit",
+			minValue: 0,
+			maxValue: 100,
+			thresholds: []*rpc.NumberThreshold{
+				{
+					Severity: rpc.Severity_ALERT,
+					Range: &rpc.NumberThreshold_NumberRange{
+						Min: 2,
+						Max: 50,
+					},
+				},
+				{
+					Severity: rpc.Severity_OK,
+					Range: &rpc.NumberThreshold_NumberRange{
+						Min: 51,
+						Max: 101,
+					},
+				},
+			},
+			wantNumErr: 2,
+		},
+		{
+			desc:     "overlap and missing coverage",
+			minValue: 0,
+			maxValue: 100,
+			thresholds: []*rpc.NumberThreshold{
+				{
+					Severity: rpc.Severity_ALERT,
+					Range: &rpc.NumberThreshold_NumberRange{
+						Min: 0,
+						Max: 30,
+					},
+				},
+				{
+					Severity: rpc.Severity_WARNING,
+					Range: &rpc.NumberThreshold_NumberRange{
+						Min: 30,
+						Max: 60,
+					},
+				},
+				{
+					Severity: rpc.Severity_OK,
+					Range: &rpc.NumberThreshold_NumberRange{
+						Min: 62,
+						Max: 100,
+					},
+				},
+			},
+			wantNumErr: 2,
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			gotErrs := validateNumberThresholds(test.thresholds, test.minValue, test.maxValue)
-			if len(gotErrs) == 0 {
-				t.Errorf("expected validateNumberThresholds() to return errors")
+			if len(gotErrs) != test.wantNumErr {
+				t.Errorf("validateNumberThresholds() returned unexpected no. of errors: want %d, got %s", test.wantNumErr, gotErrs)
 			}
 		})
 	}
+
 }
 
 func TestValidateBooleanThresholds(t *testing.T) {
 	tests := []struct {
 		desc       string
 		thresholds []*rpc.BooleanThreshold
+		wantNumErr int
 	}{
+		// no errors
 		{
 			desc: "normal case",
 			thresholds: []*rpc.BooleanThreshold{
@@ -848,22 +1174,7 @@ func TestValidateBooleanThresholds(t *testing.T) {
 				},
 			},
 		},
-	}
-	for _, test := range tests {
-		t.Run(test.desc, func(t *testing.T) {
-			gotErrs := validateBooleanThresholds(test.thresholds)
-			if len(gotErrs) > 0 {
-				t.Errorf("validateBooleanThresholds() returned unexpected errors: %s", gotErrs)
-			}
-		})
-	}
-}
-
-func TestValidateBooleanThresholdsError(t *testing.T) {
-	tests := []struct {
-		desc       string
-		thresholds []*rpc.BooleanThreshold
-	}{
+		// single errors
 		{
 			desc: "missing false",
 			thresholds: []*rpc.BooleanThreshold{
@@ -872,6 +1183,7 @@ func TestValidateBooleanThresholdsError(t *testing.T) {
 					Value:    true,
 				},
 			},
+			wantNumErr: 1,
 		},
 		{
 			desc: "missing true",
@@ -881,6 +1193,7 @@ func TestValidateBooleanThresholdsError(t *testing.T) {
 					Value:    false,
 				},
 			},
+			wantNumErr: 1,
 		},
 		{
 			desc: "duplicate entries",
@@ -898,13 +1211,29 @@ func TestValidateBooleanThresholdsError(t *testing.T) {
 					Value:    false,
 				},
 			},
+			wantNumErr: 1,
+		},
+		// combination errors
+		{
+			desc: "missing and duplicate entries",
+			thresholds: []*rpc.BooleanThreshold{
+				{
+					Severity: rpc.Severity_OK,
+					Value:    true,
+				},
+				{
+					Severity: rpc.Severity_WARNING,
+					Value:    true,
+				},
+			},
+			wantNumErr: 2,
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			gotErrs := validateBooleanThresholds(test.thresholds)
-			if len(gotErrs) == 0 {
-				t.Errorf("expected validateBooleanThresholds() to return errors")
+			if len(gotErrs) != test.wantNumErr {
+				t.Errorf("validateBooleanThresholds() returned unexpected no. of errors: want %d, got %s", test.wantNumErr, gotErrs)
 			}
 		})
 	}
