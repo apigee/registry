@@ -36,6 +36,7 @@ archives:
   - LICENSE
   - README.md
   - auth/HOSTED.sh
+  - auth/HOSTED.sh
   builds:
   - default
   format_overrides:
