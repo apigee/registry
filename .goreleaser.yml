@@ -34,7 +34,7 @@ archives:
     amd64: 64-bit
   files:
   - LICENSE
-  - src: registry/REGISTRY_CMD_APIHUB_README.md
+  - src: cmd/registry/APIHUB-README.md
     dst: README.md
     strip_parent: true
   - auth/HOSTED.sh
