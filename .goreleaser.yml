@@ -34,9 +34,11 @@ archives:
     amd64: 64-bit
   files:
   - LICENSE
-  - README.md
+  - src: registry/REGISTRY_CMD_APIHUB_README.md
+    dst: README.md
+    strip_parent: true
   - auth/HOSTED.sh
-  - auth/HOSTED.sh
+  - auth/HOSTED.bat
   builds:
   - default
   format_overrides:
