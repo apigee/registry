@@ -25,6 +25,8 @@ builds:
   - amd64
   env:
   - CGO_ENABLED=0
+  ldflags:
+  - -s -w -X "cmd.Version={{.Env.VERSION}}"
 
 archives:
 - id: default

@@ -32,10 +32,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var Version = "dev"
+
 func Command() *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "registry",
-		Short: "A simple and eclectic utility for working with the API Registry",
+		Use:     "registry",
+		Version: Version,
+		Short:   "A simple and eclectic utility for working with the API Registry",
 	}
 
 	cmd.AddCommand(annotate.Command())
