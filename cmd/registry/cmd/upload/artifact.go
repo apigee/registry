@@ -96,7 +96,7 @@ func buildArtifact(ctx context.Context, parent string, filename string) (*rpc.Ar
 	case "ScoreCard", patch.ScoreCardMimeType:
 		artifact, err = buildScoreCardArtifact(ctx, jsonBytes)
 	case "ScoreCardDefinition", patch.ScoreCardDefinitionMimeType:
-		artifact, err = buildScoreCardDefinitionArtifact(ctx, jsonBytes)
+		artifact, err = buildScoreCardDefinitionArtifact(ctx, parent, jsonBytes)
 	case "ScoreDefinition", patch.ScoreDefinitionMimeType:
 		artifact, err = buildScoreDefinitionArtifact(ctx, parent, jsonBytes)
 	case "TaxonomyList", patch.TaxonomyListMimeType:
@@ -218,11 +218,19 @@ func buildScoreDefinitionArtifact(ctx context.Context, parent string, jsonBytes 
 	}, nil
 }
 
-func buildScoreCardDefinitionArtifact(ctx context.Context, jsonBytes []byte) (*rpc.Artifact, error) {
+func buildScoreCardDefinitionArtifact(ctx context.Context, parent string, jsonBytes []byte) (*rpc.Artifact, error) {
 	m := &rpc.ScoreCardDefinition{}
 	if err := protojson.Unmarshal(jsonBytes, m); err != nil {
 		return nil, err
 	}
+	errs := scoring.ValidateScoreCardDefinition(ctx, parent, m)
+	if count := len(errs); count > 0 {
+		for _, err := range errs {
+			log.FromContext(ctx).WithError(err).Error("ScoreCardDefinition error")
+		}
+		return nil, fmt.Errorf("ScoreCardDefinition contains %d error(s): see logs for details", count)
+	}
+
 	artifactBytes, err := proto.Marshal(m)
 	if err != nil {
 		return nil, err
