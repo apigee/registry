@@ -119,7 +119,7 @@ func validateNumberThresholds(thresholds []*rpc.NumberThreshold, minValue, maxVa
 
 		// Check for out of limits conditions
 		if rangeMax > maxValue || rangeMax < minValue {
-			errs = append(errs, fmt.Errorf("invalid range.max [%d, %d]: range.max(%d) should be within min_value(%d) and max_value(%d) limits", rangeMin, rangeMax, rangeMax, minValue, maxValue))
+			errs = append(errs, fmt.Errorf("invalid range [%d, %d]: range.max(%d) should be within min_value(%d) and max_value(%d) limits", rangeMin, rangeMax, rangeMax, minValue, maxValue))
 		}
 		if rangeMin < minValue || rangeMin > maxValue {
 			errs = append(errs, fmt.Errorf("invalid range [%d, %d]: range.min(%d) should be within min_value(%d) and max_value(%d) limits", rangeMin, rangeMax, rangeMin, minValue, maxValue))
