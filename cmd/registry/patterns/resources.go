@@ -29,6 +29,7 @@ type ResourceName interface {
 	Spec() string
 	Version() string
 	Api() string
+	Project() string
 	String() string
 	ParentName() ResourceName
 }
@@ -51,6 +52,10 @@ func (s SpecName) Version() string {
 
 func (s SpecName) Api() string {
 	return s.Name.Api().String()
+}
+
+func (s SpecName) Project() string {
+	return s.Name.Project().String()
 }
 
 func (s SpecName) String() string {
@@ -91,6 +96,10 @@ func (v VersionName) Api() string {
 	return v.Name.Api().String()
 }
 
+func (v VersionName) Project() string {
+	return v.Name.Project().String()
+}
+
 func (v VersionName) String() string {
 	return v.Name.String()
 }
@@ -128,6 +137,10 @@ func (a ApiName) Version() string {
 
 func (a ApiName) Api() string {
 	return a.Name.String()
+}
+
+func (a ApiName) Project() string {
+	return a.Name.Project().String()
 }
 
 func (a ApiName) String() string {
@@ -171,6 +184,10 @@ func (p ProjectName) Version() string {
 
 func (p ProjectName) Api() string {
 	return ""
+}
+
+func (p ProjectName) Project() string {
+	return p.Name.String()
 }
 
 func (p ProjectName) String() string {
@@ -233,6 +250,20 @@ func (ar ArtifactName) Api() string {
 		return apiPattern.String()
 	} else if _, err := names.ParseApiCollection(apiPattern.String()); err == nil {
 		return apiPattern.String()
+	}
+
+	return ""
+}
+
+func (ar ArtifactName) Project() string {
+	projectPattern := names.Project{
+		ProjectID: ar.Name.ProjectID(),
+	}
+	// Validate the generated name
+	if _, err := names.ParseProject(projectPattern.String()); err == nil {
+		return projectPattern.String()
+	} else if _, err := names.ParseProjectCollection(projectPattern.String()); err == nil {
+		return projectPattern.String()
 	}
 
 	return ""

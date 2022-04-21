@@ -61,7 +61,7 @@ func ParseResourcePattern(resourcePattern string) (ResourceName, error) {
 	return nil, fmt.Errorf("invalid resourcePattern: %s", resourcePattern)
 }
 
-func SubstituteReferenceEntity(resourcePattern string, referred ResourceName, projectID string) (string, error) {
+func SubstituteReferenceEntity(resourcePattern string, referred ResourceName) (ResourceName, error) {
 	// Extends the resource pattern by replacing references to $resource
 	// Example:
 	// referred: "projects/demo/locations/global/apis/-/versions/-/specs/-/artifacts/-"
@@ -74,21 +74,29 @@ func SubstituteReferenceEntity(resourcePattern string, referred ResourceName, pr
 
 	entity, entityType, err := GetReferenceEntityType(resourcePattern)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	// no $resource reference present
 	// simply prepend the projectname and return full resource name
 	if entityType == "default" {
-		return fmt.Sprintf("projects/%s/locations/global/%s", projectID, resourcePattern), nil
+		resourceName, err := ParseResourcePattern(fmt.Sprintf("%s/locations/global/%s", referred.Project(), resourcePattern))
+		if err != nil {
+			return nil, err
+		}
+		return resourceName, nil
 	}
 
 	entityVal, err := GetReferenceEntityValue(resourcePattern, referred)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return strings.Replace(resourcePattern, entity, entityVal, 1), nil
+	extendedName, err := ParseResourcePattern(strings.Replace(resourcePattern, entity, entityVal, 1))
+	if err != nil {
+		return nil, err
+	}
+	return extendedName, nil
 
 }
 

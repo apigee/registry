@@ -76,7 +76,7 @@ func processManifestResource(
 	resourcePattern := fmt.Sprintf("projects/%s/locations/global/%s", projectID, generatedResource.Pattern)
 	dependencyMaps := make([]map[string]time.Time, 0, len(generatedResource.Dependencies))
 	for _, dependency := range generatedResource.Dependencies {
-		dMap, err := generateDependencyMap(ctx, client, resourcePattern, dependency, projectID)
+		dMap, err := generateDependencyMap(ctx, client, resourcePattern, dependency)
 		if err != nil {
 			return nil, fmt.Errorf("error while generating dependency map for %v: %s", dependency, err)
 		}
@@ -94,8 +94,7 @@ func generateDependencyMap(
 	ctx context.Context,
 	client connection.Client,
 	resourcePattern string,
-	dependency *rpc.Dependency,
-	projectID string) (map[string]time.Time, error) {
+	dependency *rpc.Dependency) (map[string]time.Time, error) {
 	// Creates a map of the resources to group them into corresponding buckets
 	// of match pattern which store the maxTimestamp
 	// An example entry will look like this:
@@ -114,13 +113,13 @@ func generateDependencyMap(
 	}
 
 	// Extend the dependency pattern if it contains $resource.api like pattern
-	extDependencyQuery, err := patterns.SubstituteReferenceEntity(dependency.Pattern, resourceName, projectID)
+	extDependencyName, err := patterns.SubstituteReferenceEntity(dependency.Pattern, resourceName)
 	if err != nil {
 		return nil, err
 	}
 
 	// Fetch resources using the extDependencyQuery
-	sourceList, err := listResources(ctx, client, extDependencyQuery, dependency.Filter)
+	sourceList, err := listResources(ctx, client, extDependencyName.String(), dependency.Filter)
 	if err != nil {
 		return nil, err
 	}
@@ -139,7 +138,7 @@ func generateDependencyMap(
 	}
 
 	if len(sourceMap) == 0 {
-		return nil, fmt.Errorf("no resources found for pattern: %s, filer: %s", extDependencyQuery, dependency.Filter)
+		return nil, fmt.Errorf("no resources found for pattern: %s, filer: %s", extDependencyName.String(), dependency.Filter)
 	}
 
 	return sourceMap, nil
