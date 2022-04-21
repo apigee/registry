@@ -31,8 +31,6 @@ builds:
 archives:
 - id: default
   format: tar.gz
-  replacements:
-    darwin: macOS
   files:
   - LICENSE
   - src: cmd/registry/APIHUB-README.md
