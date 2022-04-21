@@ -22,6 +22,7 @@ import (
 	"github.com/apigee/registry/cmd/registry/controller"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/cmd/registry/patch"
+	"github.com/apigee/registry/cmd/registry/scoring"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
@@ -97,7 +98,7 @@ func buildArtifact(ctx context.Context, parent string, filename string) (*rpc.Ar
 	case "ScoreCardDefinition", patch.ScoreCardDefinitionMimeType:
 		artifact, err = buildScoreCardDefinitionArtifact(ctx, jsonBytes)
 	case "ScoreDefinition", patch.ScoreDefinitionMimeType:
-		artifact, err = buildScoreDefinitionArtifact(ctx, jsonBytes)
+		artifact, err = buildScoreDefinitionArtifact(ctx, parent, jsonBytes)
 	case "TaxonomyList", patch.TaxonomyListMimeType:
 		artifact, err = buildTaxonomyListArtifact(ctx, jsonBytes)
 	default:
@@ -194,11 +195,19 @@ func buildTaxonomyListArtifact(ctx context.Context, jsonBytes []byte) (*rpc.Arti
 	}, nil
 }
 
-func buildScoreDefinitionArtifact(ctx context.Context, jsonBytes []byte) (*rpc.Artifact, error) {
+func buildScoreDefinitionArtifact(ctx context.Context, parent string, jsonBytes []byte) (*rpc.Artifact, error) {
 	m := &rpc.ScoreDefinition{}
 	if err := protojson.Unmarshal(jsonBytes, m); err != nil {
 		return nil, err
 	}
+	errs := scoring.ValidateScoreDefinition(ctx, parent, m)
+	if count := len(errs); count > 0 {
+		for _, err := range errs {
+			log.FromContext(ctx).WithError(err).Error("ScoreDefinition error")
+		}
+		return nil, fmt.Errorf("ScoreDefinition contains %d error(s): see logs for details", count)
+	}
+
 	artifactBytes, err := proto.Marshal(m)
 	if err != nil {
 		return nil, err
