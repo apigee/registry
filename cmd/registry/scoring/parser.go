@@ -12,41 +12,39 @@ import (
 )
 
 func ValidateScoreDefinition(ctx context.Context, parent string, scoreDefinition *rpc.ScoreDefinition) []error {
+	totalErrs := make([]error, 0)
 
-	patternErrs := make([]error, 0)
 	// target_resource.pattern should be a valid resource pattern
 	targetName, err := patterns.ParseResourcePattern(fmt.Sprintf("%s/%s", parent, scoreDefinition.GetTargetResource().GetPattern()))
 	if err != nil {
-		patternErrs = append(patternErrs, err)
+		totalErrs = append(totalErrs, err)
 	}
 
 	// TODO: Check for valid filter in target_resource
 
-	formulaErrs := make([]error, 0)
-	// Validate formula if target_resource.pattern was valid
-	if len(patternErrs) == 0 {
+	// Validate formula if there were no errors in target_resource.pattern
+	if len(totalErrs) == 0 {
 		switch formula := scoreDefinition.GetFormula().(type) {
 		case *rpc.ScoreDefinition_ScoreFormula:
 			errs := validateScoreFormula(targetName, formula.ScoreFormula)
-			formulaErrs = append(formulaErrs, errs...)
+			totalErrs = append(totalErrs, errs...)
 		case *rpc.ScoreDefinition_RollupFormula:
 			for _, scoreFormula := range formula.RollupFormula.GetScoreFormulas() {
 				errs := validateScoreFormula(targetName, scoreFormula)
-				formulaErrs = append(formulaErrs, errs...)
+				totalErrs = append(totalErrs, errs...)
 			}
 		default:
-			formulaErrs = append(formulaErrs, fmt.Errorf("missing formula, either 'score_formula' or 'rollup_formula' should be set"))
+			totalErrs = append(totalErrs, fmt.Errorf("missing formula, either 'score_formula' or 'rollup_formula' should be set"))
 		}
 	}
 
-	thresholdErrs := make([]error, 0)
 	// Validate threshold
 	switch scoreType := scoreDefinition.GetType().(type) {
 	case *rpc.ScoreDefinition_Percent:
 		// minValue: 0 maxValue:100
 		// validate that the set thresholds are within these bounds
 		errs := validateNumberThresholds(scoreType.Percent.GetThresholds(), 0, 100)
-		thresholdErrs = append(thresholdErrs, errs...)
+		totalErrs = append(totalErrs, errs...)
 	case *rpc.ScoreDefinition_Integer:
 		// defaults if not set: minValue: 0 maxValue:0
 		minValue := scoreType.Integer.GetMinValue()
@@ -54,24 +52,19 @@ func ValidateScoreDefinition(ctx context.Context, parent string, scoreDefinition
 		// if minValue==maxValue, means the score can take only one value, in that case integer is not the correct type.
 		// other types will be supported in the future (enums) to cover this case.
 		if minValue >= maxValue {
-			thresholdErrs = append(thresholdErrs, fmt.Errorf("invalid min_value(%d) and max_value(%d), min_value shoud be less than max_value", minValue, maxValue))
+			totalErrs = append(totalErrs, fmt.Errorf("invalid min_value(%d) and max_value(%d), min_value shoud be less than max_value", minValue, maxValue))
 		} else { // validate that the set thresholds are within minValue and maxValue limits
 			errs := validateNumberThresholds(scoreType.Integer.GetThresholds(), minValue, maxValue)
-			thresholdErrs = append(thresholdErrs, errs...)
+			totalErrs = append(totalErrs, errs...)
 		}
 	case *rpc.ScoreDefinition_Boolean:
 		errs := validateBooleanThresholds(scoreType.Boolean.GetThresholds())
-		thresholdErrs = append(thresholdErrs, errs...)
+		totalErrs = append(totalErrs, errs...)
 	default:
-		thresholdErrs = append(thresholdErrs, fmt.Errorf("missing type, either of 'percent', 'integer' or 'boolean' should be set"))
+		totalErrs = append(totalErrs, fmt.Errorf("missing type, either of 'percent', 'integer' or 'boolean' should be set"))
 	}
 
-	errs := make([]error, 0, len(patternErrs)+len(formulaErrs)+len(thresholdErrs))
-	errs = append(errs, patternErrs...)
-	errs = append(errs, formulaErrs...)
-	errs = append(errs, thresholdErrs...)
-
-	return errs
+	return totalErrs
 }
 
 func validateScoreFormula(targetName patterns.ResourceName, scoreFormula *rpc.ScoreFormula) []error {
