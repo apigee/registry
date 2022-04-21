@@ -90,6 +90,14 @@ func buildArtifact(ctx context.Context, parent string, filename string) (*rpc.Ar
 		artifact, err = buildManifestArtifact(ctx, parent, jsonBytes)
 	case "ReferenceList", patch.ReferenceListMimeType:
 		artifact, err = buildReferenceListArtifact(ctx, jsonBytes)
+	case "Score", patch.ScoreMimeType:
+		artifact, err = buildScoreArtifact(ctx, jsonBytes)
+	case "ScoreCard", patch.ScoreCardMimeType:
+		artifact, err = buildScoreCardArtifact(ctx, jsonBytes)
+	case "ScoreCardDefinition", patch.ScoreCardDefinitionMimeType:
+		artifact, err = buildScoreCardDefinitionArtifact(ctx, jsonBytes)
+	case "ScoreDefinition", patch.ScoreDefinitionMimeType:
+		artifact, err = buildScoreDefinitionArtifact(ctx, jsonBytes)
 	case "TaxonomyList", patch.TaxonomyListMimeType:
 		artifact, err = buildTaxonomyListArtifact(ctx, jsonBytes)
 	default:
@@ -183,5 +191,65 @@ func buildTaxonomyListArtifact(ctx context.Context, jsonBytes []byte) (*rpc.Arti
 	return &rpc.Artifact{
 		Contents: artifactBytes,
 		MimeType: patch.TaxonomyListMimeType,
+	}, nil
+}
+
+func buildScoreDefinitionArtifact(ctx context.Context, jsonBytes []byte) (*rpc.Artifact, error) {
+	m := &rpc.ScoreDefinition{}
+	if err := protojson.Unmarshal(jsonBytes, m); err != nil {
+		return nil, err
+	}
+	artifactBytes, err := proto.Marshal(m)
+	if err != nil {
+		return nil, err
+	}
+	return &rpc.Artifact{
+		Contents: artifactBytes,
+		MimeType: patch.ScoreDefinitionMimeType,
+	}, nil
+}
+
+func buildScoreCardDefinitionArtifact(ctx context.Context, jsonBytes []byte) (*rpc.Artifact, error) {
+	m := &rpc.ScoreCardDefinition{}
+	if err := protojson.Unmarshal(jsonBytes, m); err != nil {
+		return nil, err
+	}
+	artifactBytes, err := proto.Marshal(m)
+	if err != nil {
+		return nil, err
+	}
+	return &rpc.Artifact{
+		Contents: artifactBytes,
+		MimeType: patch.ScoreCardDefinitionMimeType,
+	}, nil
+}
+
+func buildScoreArtifact(ctx context.Context, jsonBytes []byte) (*rpc.Artifact, error) {
+	m := &rpc.Score{}
+	if err := protojson.Unmarshal(jsonBytes, m); err != nil {
+		return nil, err
+	}
+	artifactBytes, err := proto.Marshal(m)
+	if err != nil {
+		return nil, err
+	}
+	return &rpc.Artifact{
+		Contents: artifactBytes,
+		MimeType: patch.ScoreMimeType,
+	}, nil
+}
+
+func buildScoreCardArtifact(ctx context.Context, jsonBytes []byte) (*rpc.Artifact, error) {
+	m := &rpc.ScoreCard{}
+	if err := protojson.Unmarshal(jsonBytes, m); err != nil {
+		return nil, err
+	}
+	artifactBytes, err := proto.Marshal(m)
+	if err != nil {
+		return nil, err
+	}
+	return &rpc.Artifact{
+		Contents: artifactBytes,
+		MimeType: patch.ScoreCardMimeType,
 	}, nil
 }

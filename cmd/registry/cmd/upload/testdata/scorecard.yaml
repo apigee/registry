@@ -1,0 +1,45 @@
+# Copyright 2022 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+id: "test-scorecard"
+kind: "ScoreCard"
+definition_name: "projects/upload-scorecard-artifact-demo/locations/global/artifacts/test-scorecard-definition"
+scores:
+- id: "score-security-audit"
+  kind: "Score"
+  definition_name: "projects/upload-scorecard-artifact-demo/locations/global/artifacts/definition-security-audit"
+  severity: OK
+  boolean_value:
+    value: true
+    display_value: "Approved"
+- id: "score-lint-error"
+  kind: "Score"
+  definition_name: "projects/upload-scorecard-artifact-demo/locations/global/artifacts/definition-lint-error"
+  severity: OK
+  integer_value:
+    value: 50
+    min_value: 0
+    max_value: 100
+- id: "score-accuracy"
+  kind: "Score"
+  definition_name: "projects/upload-scorecard-artifact-demo/locations/global/artifacts/definition-accuracy"
+  severity: ALERT
+  percent_value:
+    value: 50
+- id: "score-lang-reuse"
+  kind: "Score"
+  definition_name: "projects/upload-scorecard-artifact-demo/locations/global/artifacts/definition-lang-reuse"
+  severity: OK
+  percent_value:
+    value: 70

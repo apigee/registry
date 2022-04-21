@@ -135,6 +135,14 @@ func PrintArtifactContents(artifact *rpc.Artifact) error {
 		return unmarshalAndPrint(artifact.GetContents(), &rpc.Receipt{})
 	case "google.cloud.apigeeregistry.applications.v1alpha1.References":
 		return unmarshalAndPrint(artifact.GetContents(), &rpc.References{})
+	case "google.cloud.apigeeregistry.v1.scoring.Score":
+		return unmarshalAndPrint(artifact.GetContents(), &rpc.Score{})
+	case "google.cloud.apigeeregistry.v1.scoring.ScoreCard":
+		return unmarshalAndPrint(artifact.GetContents(), &rpc.ScoreCard{})
+	case "google.cloud.apigeeregistry.v1.scoring.ScoreDefinition":
+		return unmarshalAndPrint(artifact.GetContents(), &rpc.ScoreDefinition{})
+	case "google.cloud.apigeeregistry.v1.scoring.ScoreCardDefinition":
+		return unmarshalAndPrint(artifact.GetContents(), &rpc.ScoreCardDefinition{})
 	case "google.cloud.apigeeregistry.applications.v1alpha1.StyleGuide":
 		return unmarshalAndPrint(artifact.GetContents(), &rpc.StyleGuide{})
 	case "gnostic.openapiv2.Document":
