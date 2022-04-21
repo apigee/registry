@@ -54,7 +54,7 @@ func ValidateScoreDefinition(ctx context.Context, parent string, scoreDefinition
 		// if minValue==maxValue, means the score can take only one value, in that case integer is not the correct type.
 		// other types will be supported in the future (enums) to cover this case.
 		if minValue >= maxValue {
-			thresholdErrs = append(thresholdErrs, fmt.Errorf("invalid min_value and max_value, should be: min_value < max_value"))
+			thresholdErrs = append(thresholdErrs, fmt.Errorf("invalid min_value(%d) and max_value(%d), min_value shoud be less than max_value", minValue, maxValue))
 		} else { // validate that the set thresholds are within minValue and maxValue limits
 			errs := validateNumberThresholds(scoreType.Integer.GetThresholds(), minValue, maxValue)
 			thresholdErrs = append(thresholdErrs, errs...)
@@ -101,36 +101,72 @@ func validateScoreFormula(targetName patterns.ResourceName, scoreFormula *rpc.Sc
 }
 
 func validateNumberThresholds(thresholds []*rpc.NumberThreshold, minValue, maxValue int32) []error {
+
+	if len(thresholds) == 0 {
+		// no error returned since thresholds are optional
+		return []error{}
+	}
+
 	errs := make([]error, 0)
+
+	// keep track of the endpoints of the ranges
+	globalRangeMax := minValue
+	globalRangeMin := maxValue
+
+	for _, t := range thresholds {
+		// Check for validity of the range values
+		rangeMin := t.GetRange().GetMin()
+		rangeMax := t.GetRange().GetMax()
+
+		// min==max is valid here, one specific value can have a dedicated severity.
+		if rangeMin > rangeMax {
+			errs = append(errs, fmt.Errorf("invalid range [%d, %d]: range.min cannot be greater than range.max", rangeMin, rangeMax))
+			continue
+		}
+
+		// Check for out of limits conditions
+		if rangeMax > maxValue || rangeMax < minValue {
+			errs = append(errs, fmt.Errorf("invalid range.max [%d, %d]: range.max(%d) should be within min_value(%d) and max_value(%d) limits", rangeMin, rangeMax, rangeMax, minValue, maxValue))
+		}
+		if rangeMin < minValue || rangeMin > maxValue {
+			errs = append(errs, fmt.Errorf("invalid range [%d, %d]: range.min(%d) should be within min_value(%d) and max_value(%d) limits", rangeMin, rangeMax, rangeMin, minValue, maxValue))
+		}
+
+		// Update global min and max
+		if rangeMin <= globalRangeMin {
+			globalRangeMin = rangeMin
+		}
+		if rangeMax >= globalRangeMax {
+			globalRangeMax = rangeMax
+		}
+	}
+
+	// Don't check for missing coverage or threshold overlaps unless all the ranges are valid and in bounds.
+	if len(errs) > 0 {
+		return errs
+	}
 
 	// sort the thresholds based on range.min
 	sort.Slice(thresholds, func(i, j int) bool {
 		return thresholds[i].GetRange().GetMin() < thresholds[j].GetRange().GetMin()
 	})
 
-	// Check coverage for minValue
-	if len(thresholds) > 0 && thresholds[0].GetRange().GetMin() != minValue {
-		errs = append(errs, fmt.Errorf("missing coverage for min_value(%d) in threshold value: %q", minValue, thresholds[0]))
-	}
-	// Check coverage for maxValue
-	if len(thresholds) > 0 && thresholds[len(thresholds)-1].GetRange().GetMax() != maxValue {
-		errs = append(errs, fmt.Errorf("missing coverage for max_value(%d) in threshold value: %q", maxValue, thresholds[len(thresholds)-1]))
-	}
-	for i := 0; i < len(thresholds); i++ {
-		// min==max is valid here, one specific value can have a dedicated severity.
-		if thresholds[i].GetRange().GetMin() > thresholds[i].GetRange().GetMax() {
-			// invalid min and max values, skip the remaining validation
-			errs = append(errs, fmt.Errorf("invalid range.min: %d and range.max: %d values: min>max)", thresholds[i].GetRange().GetMin(), thresholds[i].GetRange().GetMax()))
-			continue
+	// Check for overlaps and gaps
+	for i := 0; i < len(thresholds)-1; i++ {
+		left, right := thresholds[i].GetRange(), thresholds[i+1].GetRange()
+		if left.GetMax() < right.GetMin()-1 {
+			errs = append(errs, fmt.Errorf("incomplete coverage: missing coverage between %d and %d", left.GetMax(), right.GetMin()))
+		} else if left.GetMax() > right.GetMin()-1 {
+			errs = append(errs, fmt.Errorf("invalid thresholds [%d, %d] and [%d, %d]: thresholds must not overlap", left.GetMin(), left.GetMax(), right.GetMin(), right.GetMax()))
 		}
-		if i < len(thresholds)-1 {
-			left, right := thresholds[i].GetRange(), thresholds[i+1].GetRange()
-			if left.GetMax() < right.GetMin()-1 {
-				errs = append(errs, fmt.Errorf("missing coverage for some values in threshold ranges: {%v} and {%v}", left, right))
-			} else if left.GetMax() > right.GetMin()-1 {
-				errs = append(errs, fmt.Errorf("overlapping values in threshold ranges: {%v} and {%v}", left, right))
-			}
-		}
+	}
+
+	// Finally check for gaps at the endpoints
+	if globalRangeMax < maxValue {
+		errs = append(errs, fmt.Errorf("incomplete coverage: missing coverage between %d and %d", maxValue, globalRangeMax))
+	}
+	if globalRangeMin > minValue {
+		errs = append(errs, fmt.Errorf("incomplete coverage: missing coverage between %d and %d", globalRangeMin, minValue))
 	}
 
 	return errs

@@ -898,7 +898,7 @@ func TestValidateNumberThresholds(t *testing.T) {
 					},
 				},
 			},
-			wantNumErr: 2,
+			wantNumErr: 1,
 		},
 		{
 			desc:     "out of minValue bound",
@@ -1117,7 +1117,7 @@ func TestValidateNumberThresholds(t *testing.T) {
 					},
 				},
 			},
-			wantNumErr: 3,
+			wantNumErr: 2,
 		},
 		{
 			desc:     "out of limits and missing coverage",
@@ -1139,7 +1139,7 @@ func TestValidateNumberThresholds(t *testing.T) {
 					},
 				},
 			},
-			wantNumErr: 3,
+			wantNumErr: 2,
 		},
 		{
 			desc:     "missing limits coverage",
@@ -1227,7 +1227,7 @@ func TestValidateNumberThresholds(t *testing.T) {
 					},
 				},
 			},
-			wantNumErr: 2,
+			wantNumErr: 1,
 		},
 		{
 			desc:     "overlap and missing coverage",
@@ -1257,6 +1257,28 @@ func TestValidateNumberThresholds(t *testing.T) {
 				},
 			},
 			wantNumErr: 2,
+		},
+		{
+			desc:     "nested thresholds",
+			minValue: 0,
+			maxValue: 100,
+			thresholds: []*rpc.NumberThreshold{
+				{
+					Severity: rpc.Severity_ALERT,
+					Range: &rpc.NumberThreshold_NumberRange{
+						Min: 0,
+						Max: 100,
+					},
+				},
+				{
+					Severity: rpc.Severity_OK,
+					Range: &rpc.NumberThreshold_NumberRange{
+						Min: 20,
+						Max: 50,
+					},
+				},
+			},
+			wantNumErr: 1,
 		},
 	}
 	for _, test := range tests {
