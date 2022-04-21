@@ -1,5 +1,8 @@
 #Registry tool
 
+To run the binary on MacOS, you will need to unquarantine the binary.
+> xattr -d com.apple.quarantine registry
+
 ###How to use registry command with Apigee API hub instance 
 
 Steps:

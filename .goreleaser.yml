@@ -33,7 +33,6 @@ archives:
   format: tar.gz
   replacements:
     darwin: macOS
-    amd64: 64-bit
   files:
   - LICENSE
   - src: cmd/registry/APIHUB-README.md
