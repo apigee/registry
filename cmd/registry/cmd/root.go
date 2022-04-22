@@ -29,6 +29,9 @@ import (
 	"github.com/apigee/registry/cmd/registry/cmd/resolve"
 	"github.com/apigee/registry/cmd/registry/cmd/upload"
 	"github.com/apigee/registry/cmd/registry/cmd/vocabulary"
+
+	"github.com/apigee/registry/cmd/apg"
+
 	"github.com/spf13/cobra"
 )
 
@@ -57,6 +60,19 @@ func Command() *cobra.Command {
 	cmd.AddCommand(list.Command())
 	cmd.AddCommand(upload.Command())
 	cmd.AddCommand(vocabulary.Command())
+
+	apg.AdminServiceCmd.Use = ".admin"
+	apg.AdminServiceCmd.Short = "Directly call methods of the Admin service"
+	apg.AdminServiceCmd.Hidden = true
+	apg.AdminServiceCmd.PersistentFlags().BoolVarP(&apg.Verbose, "verbose", "v", false, "Print verbose output")
+	apg.AdminServiceCmd.PersistentFlags().BoolVarP(&apg.OutputJSON, "json", "j", false, "Print JSON output")
+	cmd.AddCommand(apg.AdminServiceCmd)
+
+	apg.RegistryServiceCmd.Use = "."
+	apg.RegistryServiceCmd.Short = "Directly call methods of the Registry service"
+	apg.RegistryServiceCmd.PersistentFlags().BoolVarP(&apg.Verbose, "verbose", "v", false, "Print verbose output")
+	apg.RegistryServiceCmd.PersistentFlags().BoolVarP(&apg.OutputJSON, "json", "j", false, "Print JSON output")
+	cmd.AddCommand(apg.RegistryServiceCmd)
 
 	return cmd
 }

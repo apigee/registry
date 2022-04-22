@@ -1,6 +1,6 @@
 // Code generated. DO NOT EDIT.
 
-package main
+package apg
 
 import (
 	"github.com/spf13/cobra"

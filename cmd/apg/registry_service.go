@@ -1,6 +1,6 @@
 // Code generated. DO NOT EDIT.
 
-package main
+package apg
 
 import (
 	"fmt"
@@ -60,22 +60,6 @@ func init() {
 	RegistryConfig = viper.New()
 	RegistryConfig.SetEnvPrefix("APG_REGISTRY")
 	RegistryConfig.AutomaticEnv()
-
-	RegistryServiceCmd.PersistentFlags().Bool("insecure", false, "Make insecure client connection. Or use APG_REGISTRY_INSECURE. Must be used with \"address\" option")
-	RegistryConfig.BindPFlag("insecure", RegistryServiceCmd.PersistentFlags().Lookup("insecure"))
-	RegistryConfig.BindEnv("insecure")
-
-	RegistryServiceCmd.PersistentFlags().String("address", "", "Set API address used by client. Or use APG_REGISTRY_ADDRESS.")
-	RegistryConfig.BindPFlag("address", RegistryServiceCmd.PersistentFlags().Lookup("address"))
-	RegistryConfig.BindEnv("address")
-
-	RegistryServiceCmd.PersistentFlags().String("token", "", "Set Bearer token used by the client. Or use APG_REGISTRY_TOKEN.")
-	RegistryConfig.BindPFlag("token", RegistryServiceCmd.PersistentFlags().Lookup("token"))
-	RegistryConfig.BindEnv("token")
-
-	RegistryServiceCmd.PersistentFlags().String("api_key", "", "Set API Key used by the client. Or use APG_REGISTRY_API_KEY.")
-	RegistryConfig.BindPFlag("api_key", RegistryServiceCmd.PersistentFlags().Lookup("api_key"))
-	RegistryConfig.BindEnv("api_key")
 }
 
 var RegistryServiceCmd = &cobra.Command{

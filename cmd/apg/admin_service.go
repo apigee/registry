@@ -1,6 +1,6 @@
 // Code generated. DO NOT EDIT.
 
-package main
+package apg
 
 import (
 	"fmt"
@@ -33,22 +33,6 @@ func init() {
 	AdminConfig = viper.New()
 	AdminConfig.SetEnvPrefix("APG_REGISTRY")
 	AdminConfig.AutomaticEnv()
-
-	AdminServiceCmd.PersistentFlags().Bool("insecure", false, "Make insecure client connection. Or use APG_REGISTRY_INSECURE. Must be used with \"address\" option")
-	AdminConfig.BindPFlag("insecure", AdminServiceCmd.PersistentFlags().Lookup("insecure"))
-	AdminConfig.BindEnv("insecure")
-
-	AdminServiceCmd.PersistentFlags().String("address", "", "Set API address used by client. Or use APG_REGISTRY_ADDRESS.")
-	AdminConfig.BindPFlag("address", AdminServiceCmd.PersistentFlags().Lookup("address"))
-	AdminConfig.BindEnv("address")
-
-	AdminServiceCmd.PersistentFlags().String("token", "", "Set Bearer token used by the client. Or use APG_REGISTRY_TOKEN.")
-	AdminConfig.BindPFlag("token", AdminServiceCmd.PersistentFlags().Lookup("token"))
-	AdminConfig.BindEnv("token")
-
-	AdminServiceCmd.PersistentFlags().String("api_key", "", "Set API Key used by the client. Or use APG_REGISTRY_API_KEY.")
-	AdminConfig.BindPFlag("api_key", AdminServiceCmd.PersistentFlags().Lookup("api_key"))
-	AdminConfig.BindEnv("api_key")
 }
 
 var AdminServiceCmd = &cobra.Command{

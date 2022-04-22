@@ -1,6 +1,6 @@
 // Code generated. DO NOT EDIT.
 
-package main
+package apg
 
 import (
 	"os"
