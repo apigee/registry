@@ -27,9 +27,9 @@ case "$(arch)" in
   ;;
 esac
 
-export VERSION="3.19.3"
+source tools/PROTOC-VERSION.sh
 
-export SOURCE="https://github.com/protocolbuffers/protobuf/releases/download/v$VERSION/protoc-$VERSION-linux-$ARCH.zip"
+export SOURCE="https://github.com/protocolbuffers/protobuf/releases/download/v$PROTOC_VERSION/protoc-$PROTOC_VERSION-linux-$ARCH.zip"
 
 echo $SOURCE
 
