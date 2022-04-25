@@ -84,10 +84,6 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
-    - name: Set protoc version
-      run: |
-        . tools/PROTOC-VERSION.sh
-        echo "PROTOC_VERSION=${PROTOC_VERSION}" >> $GITHUB_ENV
     - uses: ./.github/workflows/composite/build-push
       with:
         registry: ${{ env.REGISTRY }}
@@ -96,4 +92,3 @@ jobs:
         image: ${{ env.DOCKER_REPOSITORY_OWNER }}/registry-envoy
         context: .
         file: deployments/envoy/Dockerfile
-        build-args: PROTOBUF_VERSION=${{ env.PROTOC_VERSION }}
