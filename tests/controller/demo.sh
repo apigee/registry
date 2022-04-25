@@ -18,7 +18,7 @@
 make deploy-gke
 
 # Setup auth
-source auth/GKE.sh
+. auth/GKE.sh
 
 # Create demo project
 apg admin create-project --project_id demo --json
