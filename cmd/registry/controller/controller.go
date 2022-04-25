@@ -119,7 +119,7 @@ func generateDependencyMap(
 	}
 
 	// Fetch resources using the extDependencyQuery
-	sourceList, err := listResources(ctx, client, extDependencyName.String(), dependency.Filter)
+	sourceList, err := patterns.ListResources(ctx, client, extDependencyName.String(), dependency.Filter)
 	if err != nil {
 		return nil, err
 	}
@@ -187,7 +187,7 @@ func generateUpdateActions(
 	actions := make([]*Action, 0)
 
 	// Generate resource list
-	resourceList, err := listResources(ctx, client, resourcePattern, filter)
+	resourceList, err := patterns.ListResources(ctx, client, resourcePattern, filter)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -290,7 +290,7 @@ func generateCreateActions(
 
 	default:
 		filter := excludeVisitedParents(visited)
-		parentList, err = listResources(ctx, client, parentName.String(), filter)
+		parentList, err = patterns.ListResources(ctx, client, parentName.String(), filter)
 		if err != nil {
 			return nil, err
 		}
