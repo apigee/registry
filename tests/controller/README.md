@@ -67,7 +67,7 @@ for the purpose of this walkthrough.
 
   ```shell
   # Setup auth
-  source auth/GKE.sh
+  . auth/GKE.sh
 
   # Verify the server is running
   apg admin get-status
