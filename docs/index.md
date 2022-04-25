@@ -9,12 +9,17 @@ to have a way to store API-related metadata that doesn't fit well in specs.
 The Registry API ([protocol documentation](/registry/api.html)) presents a
 simple resource hierarchy for API information. All **APIs** are tracked in a
 container called a **project**. APIs contain **versions**, and versions contain
-**specs**. To support this, we use the following convention for naming
-resources:
+**specs**. Information about where API services are hosted is tracked in
+collections of **deployment** resources under **APIs**.
+
+We use the following convention for naming resources:
 
 ```
-projects/{project_id}/locations/global/apis/{api_id}/versions/{version_id}/specs/{spec_id}
+projects/{project_id}/locations/{location_id}/apis/{api_id}/versions/{version_id}/specs/{spec_id}
 ```
+
+The `locations/{location_id}` segment is included to match Google Cloud
+resource naming; currently only the `global` location is supported.
 
 Specs can be of any format, and spec formats are specified with a `mime_type`
 field in the spec record. Metadata can be associated with APIs, versions, and
@@ -30,6 +35,7 @@ projects/{project_id}/locations/global/artifacts/{artifact_id}
 projects/{project_id}/locations/global/apis/{api_id}/artifacts/{artifact_id}
 projects/{project_id}/locations/global/apis/{api_id}/versions/{version_id}/artifacts/{artifact_id}
 projects/{project_id}/locations/global/apis/{api_id}/versions/{version_id}/specs/{spec_id}/artifacts/{artifact_id}
+projects/{project_id}/locations/global/apis/{api_id}/deployments/{deployment_id}
 ```
 
 For more information on `mime_type` values, see [Media Types](/media_types.md).
