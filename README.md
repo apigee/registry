@@ -89,7 +89,7 @@ default, the server is configured to use a SQLite database.
 Next, in a separate terminal, configure your environment to point to this
 server with the following:
 
-`source auth/LOCAL.sh`
+`. auth/LOCAL.sh`
 
 Now you can check your server and configuration with the
 automatically-generated `apg` client:
@@ -120,7 +120,7 @@ configuration settings, see
 
 ### Running the Registry API server
 
-Run `source auth/LOCAL.sh` to configure your environment to run the Registry
+Run `. auth/LOCAL.sh` to configure your environment to run the Registry
 API server locally and for the included clients to call your local instance.
 Start the server by running `registry-server`.
 
@@ -230,7 +230,7 @@ Requirements:
 
 - The Makefile gets your project ID from the `REGISTRY_PROJECT_IDENTIFIER`
   environment variable. This can be set automatically by running
-  `source auth/CLOUDRUN.sh`.
+  `. auth/CLOUDRUN.sh`.
 
 `make build` uses [Google Cloud Build](https://cloud.google.com/cloud-build) to
 build a container containing the API server. The container is stored in
@@ -248,7 +248,7 @@ questions, including this one:
 
 If you answer "y", you will be able to make calls without authentication. This
 is the easiest way to test the API, but it's not necessary - running
-`source auth/CLOUDRUN.sh` configures your environment so that the Registry CLI
+`. auth/CLOUDRUN.sh` configures your environment so that the Registry CLI
 and other tools will authenticate using your user ID.
 
 Important note: If you answer "N" to the above question, Cloud Run will require
@@ -284,7 +284,7 @@ environment variables set by the `auth/*.sh` scripts.
 Auth tokens are short-lived. When your token expires, your calls will return a
 message like this:
 `rpc error: code = Unauthenticated desc = Unauthorized: HTTP status code 401`.
-To generate a new token, rerun `source auth/CLOUDRUN.sh`.
+To generate a new token, rerun `. auth/CLOUDRUN.sh`.
 
 ## Running the Registry API server on GKE
 
@@ -303,7 +303,7 @@ Requirements:
 
 - The Makefile gets your project ID from the `REGISTRY_PROJECT_IDENTIFIER`
   environment variable. This can be set automatically by running
-  `source auth/GKE.sh`.
+  `. auth/GKE.sh`.
 
 For detailed steps on how to deploy to GKE, please refer to
 [deployments/gke/README.md](deployments/gke/README.md).
