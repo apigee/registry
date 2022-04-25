@@ -13,7 +13,7 @@ container called a **project**. APIs contain **versions**, and versions contain
 resources:
 
 ```
-projects/{project_id}/apis/{api_id}/versions/{version_id}/specs/{spec_id}
+projects/{project_id}/locations/global/apis/{api_id}/versions/{version_id}/specs/{spec_id}
 ```
 
 Specs can be of any format, and spec formats are specified with a `mime_type`
@@ -26,10 +26,10 @@ the entities they are associated with, artifacts can have any of the following
 resource names:
 
 ```
-projects/{project_id}/artifacts/{artifact_id}
-projects/{project_id}/apis/{api_id}/artifacts/{artifact_id}
-projects/{project_id}/apis/{api_id}/versions/{version_id}/artifacts/{artifact_id}
-projects/{project_id}/apis/{api_id}/versions/{version_id}/specs/{spec_id}/artifacts/{artifact_id}
+projects/{project_id}/locations/global/artifacts/{artifact_id}
+projects/{project_id}/locations/global/apis/{api_id}/artifacts/{artifact_id}
+projects/{project_id}/locations/global/apis/{api_id}/versions/{version_id}/artifacts/{artifact_id}
+projects/{project_id}/locations/global/apis/{api_id}/versions/{version_id}/specs/{spec_id}/artifacts/{artifact_id}
 ```
 
 For more information on `mime_type` values, see [Media Types](/media_types.md).
