@@ -17,10 +17,10 @@ Configuration for `registry-server` is loaded from a YAML file specified using
 the `--configuration` (`-c`) flag.
 
 Configuration files can contain environment variable references. See
-[config/registry_server.yaml](/config/registry-server.yaml) for an example. When
-that configuration file is specified, the port configuration value can be set
-using the `PORT` environment variable. Other useful environment variables are
-also defined there.
+[config/registry_server.yaml](/config/registry-server.yaml) for an example.
+When that configuration file is specified, the port configuration value can be
+set using the `PORT` environment variable. Other useful environment variables
+are also defined there.
 
 When no configuration is specified, `registry-server` runs on port 8080 using a
 sqlite database stored in a file at `/tmp/registry.db`. For other default
@@ -29,9 +29,9 @@ configuration settings, see
 
 ### Running the Registry API server
 
-Run `. auth/LOCAL.sh` to configure your environment to run the Registry
-API server locally and for the included clients to call your local instance.
-Start the server by running `registry-server`.
+Run `. auth/LOCAL.sh` to configure your environment to run the Registry API
+server locally and for the included clients to call your local instance. Start
+the server by running `registry-server`.
 
 ### Optional: Use a PostgreSQL database on the local machine
 
@@ -123,8 +123,8 @@ verify that your server is configured to accept remote connections (in
 
 The Registry API server can be deployed on
 [Google Cloud Run](https://cloud.google.com/run). To support this, the
-[Makefile](/Makefile) contains targets that build a Docker image and that deploy
-it to Google Cloud Run. Both use the `gcloud` command, which should be
+[Makefile](/Makefile) contains targets that build a Docker image and that
+deploy it to Google Cloud Run. Both use the `gcloud` command, which should be
 authenticated and configured for the project where the services should be run.
 
 Requirements:
@@ -157,12 +157,12 @@ questions, including this one:
 
 If you answer "y", you will be able to make calls without authentication. This
 is the easiest way to test the API, but it's not necessary - running
-`. auth/CLOUDRUN.sh` configures your environment so that the Registry CLI
-and other tools will authenticate using your user ID.
+`. auth/CLOUDRUN.sh` configures your environment so that the Registry CLI and
+other tools will authenticate using your user ID.
 
 Important note: If you answer "N" to the above question, Cloud Run will require
-an auth token for all requests to the server. `. auth/CLOUDRUN.sh` adds
-this token to your environment, but there two possible pitfalls:
+an auth token for all requests to the server. `. auth/CLOUDRUN.sh` adds this
+token to your environment, but there two possible pitfalls:
 
 1. CORS requests will fail if your backend requires authentication
    ([details](https://groups.google.com/g/gce-discussion/c/WQUxKhZORjo)).

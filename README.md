@@ -63,7 +63,8 @@ Two command-line interfaces are included:
   Go GAPIC library to support additional API management tasks.
 
 The entry point for the Registry API server itself is
-[cmd/registry-server](cmd/registry-server).
+[cmd/registry-server](cmd/registry-server). For more on running the server, see
+[cmd/registry-server/README.md](cmd/registry-server/README.md).
 
 ## Build Instructions
 
