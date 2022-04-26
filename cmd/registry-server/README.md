@@ -17,7 +17,7 @@ Configuration for `registry-server` is loaded from a YAML file specified using
 the `--configuration` (`-c`) flag.
 
 Configuration files can contain environment variable references. See
-[config/registry_server.yaml](config/registry_server.yaml) for an example. When
+[config/registry_server.yaml](/config/registry-server.yaml) for an example. When
 that configuration file is specified, the port configuration value can be set
 using the `PORT` environment variable. Other useful environment variables are
 also defined there.
@@ -25,7 +25,7 @@ also defined there.
 When no configuration is specified, `registry-server` runs on port 8080 using a
 sqlite database stored in a file at `/tmp/registry.db`. For other default
 configuration settings, see
-[cmd/registry-server/main.go](cmd/registry-server/main.go).
+[cmd/registry-server/main.go](/cmd/registry-server/main.go).
 
 ### Running the Registry API server
 
@@ -66,9 +66,9 @@ database:
 
 `registry-server` provides a gRPC service only. For a transcoded HTTP/JSON
 interface, run the [Envoy](https://www.envoyproxy.io) proxy locally using the
-configuration in the [deployments/envoy](deployments/envoy) directory. With a
+configuration in the [deployments/envoy](/deployments/envoy) directory. With a
 local installation of Envoy, this can be done by running the following inside
-the [deployments/envoy](deployments/envoy) directory.
+the [deployments/envoy](/deployments/envoy) directory.
 
 `envoy -c envoy.yaml`
 
@@ -123,7 +123,7 @@ verify that your server is configured to accept remote connections (in
 
 The Registry API server can be deployed on
 [Google Cloud Run](https://cloud.google.com/run). To support this, the
-[Makefile](Makefile) contains targets that build a Docker image and that deploy
+[Makefile](/Makefile) contains targets that build a Docker image and that deploy
 it to Google Cloud Run. Both use the `gcloud` command, which should be
 authenticated and configured for the project where the services should be run.
 
@@ -197,7 +197,7 @@ To generate a new token, rerun `source auth/CLOUDRUN.sh`.
 
 ## Running the Registry API server on GKE
 
-The [Makefile](Makefile) contains targets that build a Docker image
+The [Makefile](/Makefile) contains targets that build a Docker image
 (`make build`) and that deploy it to GKE (`make deploy-gke`).
 
 Requirements:
@@ -215,4 +215,4 @@ Requirements:
   `source auth/GKE.sh`.
 
 For detailed steps on how to deploy to GKE, please refer to
-[deployments/gke/README.md](deployments/gke/README.md).
+[deployments/gke/README.md](/deployments/gke/README.md).
