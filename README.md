@@ -89,7 +89,7 @@ default, the server is configured to use a SQLite database.
 Next, in a separate terminal, configure your environment to point to this
 server with the following:
 
-`source auth/LOCAL.sh`
+`. auth/LOCAL.sh`
 
 Now you can check your server and configuration with the
 automatically-generated `apg` client:
