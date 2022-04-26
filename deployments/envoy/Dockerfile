@@ -1,17 +1,13 @@
-ARG PROTOBUF_VERSION=3.19.3
 ARG ENVOY_VERSION=v1.20-latest
 ARG GO_VERSION=1.18
 
 FROM golang:${GO_VERSION} as builder
-ARG PROTOBUF_VERSION
 
 WORKDIR /app
 
-RUN apt-get update -y && apt-get install curl unzip git make -y && \
-    PB_REL="https://github.com/protocolbuffers/protobuf/releases" && \
-    curl -LO $PB_REL/download/v${PROTOBUF_VERSION}/protoc-${PROTOBUF_VERSION}-linux-x86_64.zip && \
-    unzip protoc-${PROTOBUF_VERSION}-linux-x86_64.zip -d /usr/local
+RUN apt-get update -y && apt-get install curl unzip git make -y
 COPY . .
+RUN ./tools/FETCH-PROTOC.sh
 RUN make protos
 
 

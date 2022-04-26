@@ -21,7 +21,7 @@ Following steps assume you're in the root directory.
 
 1. Setup the client authentication. This step differs based on the load
    balancer type you chose in the previous step:
-   - External LB: run `source auth/GKE.sh`.
+   - External LB: run `. auth/GKE.sh`.
    - Internal LB: Usually you can't access services that are behind the
      internal LB from your local. For more details, please check
      [here](https://cloud.google.com/kubernetes-engine/docs/how-to/internal-load-balancing#inspect).
