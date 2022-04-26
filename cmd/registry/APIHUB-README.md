@@ -11,7 +11,7 @@ Steps:
 3. Set you API hub project
     > gcloud config set project $GCP_PROJECT
 4. Generate the token and set it in the environment variable using 
-    > source auth/HOSTED.sh
+    > . auth/HOSTED.sh
   
    >For windows execute the `auth/HOSTED.bat` file
 5. To list all the APIs in your API hub instance run the below command:

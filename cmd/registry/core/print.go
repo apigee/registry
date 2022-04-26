@@ -121,6 +121,8 @@ func PrintArtifactContents(artifact *rpc.Artifact) error {
 		return unmarshalAndPrint(artifact.GetContents(), &rpc.Index{})
 	case "google.cloud.apigeeregistry.applications.v1alpha1.Lint":
 		return unmarshalAndPrint(artifact.GetContents(), &rpc.Lint{})
+	case "google.cloud.apigeeregistry.applications.v1alpha1.LintStats":
+		return unmarshalAndPrint(artifact.GetContents(), &rpc.LintStats{})
 	case "google.cloud.apigeeregistry.v1.apihub.DisplaySettings":
 		return unmarshalAndPrint(artifact.GetContents(), &rpc.DisplaySettings{})
 	case "google.cloud.apigeeregistry.v1.apihub.Lifecycle":
