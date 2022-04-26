@@ -600,7 +600,7 @@ func TestValidateScoreDefinition(t *testing.T) {
 			ctx := context.Background()
 			gotErrs := ValidateScoreDefinition(ctx, test.parent, test.scoreDefinition)
 			if len(gotErrs) != test.wantNumErr {
-				t.Errorf("ValidateScoreDefinition() returned unexpected no. of errors: want %d, got %s", test.wantNumErr, gotErrs)
+				t.Errorf("ValidateScoreDefinition(%s, %v) returned unexpected no. of errors: want %d, got %s", test.parent, test.scoreDefinition, test.wantNumErr, gotErrs)
 			}
 		})
 	}
@@ -645,7 +645,7 @@ func TestValidateReferencesInPattern(t *testing.T) {
 			targetName, _ := patterns.ParseResourcePattern(test.targetPattern)
 			gotErrs := validateReferencesInPattern(targetName, test.pattern)
 			if len(gotErrs) != test.wantNumErr {
-				t.Errorf("validateReferencesInPattern() returned unexpected no. of errors: want %d, got %s", test.wantNumErr, gotErrs)
+				t.Errorf("validateReferencesInPattern(%s, %s) returned unexpected no. of errors: want %d, got %s", targetName, test.pattern, test.wantNumErr, gotErrs)
 			}
 		})
 	}
@@ -744,7 +744,7 @@ func TestValidateScoreFormula(t *testing.T) {
 			targetName, _ := patterns.ParseResourcePattern(test.targetPattern.GetPattern())
 			gotErrs := validateScoreFormula(targetName, test.scoreFormula)
 			if len(gotErrs) != test.wantNumErr {
-				t.Errorf("validateScoreFormula() returned unexpected no. of errors: want %d, got %s", test.wantNumErr, gotErrs)
+				t.Errorf("validateScoreFormula(%s, %v) returned unexpected no. of errors: want %d, got %s", targetName, test.scoreFormula, test.wantNumErr, gotErrs)
 			}
 		})
 	}
@@ -1304,7 +1304,7 @@ func TestValidateNumberThresholds(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			gotErrs := validateNumberThresholds(test.thresholds, test.minValue, test.maxValue)
 			if len(gotErrs) != test.wantNumErr {
-				t.Errorf("validateNumberThresholds() returned unexpected no. of errors: want %d, got %s", test.wantNumErr, gotErrs)
+				t.Errorf("validateNumberThresholds(%v, %d, %d) returned unexpected no. of errors: want %d, got %s", test.thresholds, test.minValue, test.maxValue, test.wantNumErr, gotErrs)
 			}
 		})
 	}
@@ -1403,7 +1403,7 @@ func TestValidateBooleanThresholds(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			gotErrs := validateBooleanThresholds(test.thresholds)
 			if len(gotErrs) != test.wantNumErr {
-				t.Errorf("validateBooleanThresholds() returned unexpected no. of errors: want %d, got %s", test.wantNumErr, gotErrs)
+				t.Errorf("validateBooleanThresholds(%v) returned unexpected no. of errors: want %d, got %s", test.thresholds, test.wantNumErr, gotErrs)
 			}
 		})
 	}
@@ -1537,7 +1537,7 @@ func TestValidateScoreCardDefinition(t *testing.T) {
 			ctx := context.Background()
 			gotErrs := ValidateScoreCardDefinition(ctx, test.parent, test.scoreCardDefinition)
 			if len(gotErrs) != test.wantNumErr {
-				t.Errorf("ValidateScoreCardDefinition() returned unexpected no. of errors: want %d, got %s", test.wantNumErr, gotErrs)
+				t.Errorf("ValidateScoreCardDefinition(%s, %v) returned unexpected no. of errors: want %d, got %s", test.parent, test.scoreCardDefinition, test.wantNumErr, gotErrs)
 			}
 		})
 	}
