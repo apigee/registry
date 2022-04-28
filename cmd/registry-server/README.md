@@ -45,7 +45,7 @@ For example:
 ```
 database:
   driver: postgres
-  config: host=localhost port=<port> user=<dbuser> dbname=<dbname> password=<dbpassword> sslmode=disable
+  config: host=localhost port=<dbport> user=<dbuser> dbname=<dbname> password=<dbpassword> sslmode=disable
 ```
 
 ### Running the Registry API server with a PostgreSQL database on Google Cloud SQL
