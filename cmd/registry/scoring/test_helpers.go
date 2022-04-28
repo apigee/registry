@@ -24,8 +24,6 @@ import (
 	"github.com/apigee/registry/rpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
 const gzipOpenAPIv3 = "application/x.openapi+gzip;version=3.0.0"
@@ -129,25 +127,6 @@ func createSpec(
 	}
 }
 
-func updateSpec(
-	ctx context.Context,
-	client connection.Client,
-	t *testing.T,
-	specName string) {
-	t.Helper()
-	req := &rpc.UpdateApiSpecRequest{
-		ApiSpec: &rpc.ApiSpec{
-			Name:     specName,
-			MimeType: gzipOpenAPIv3,
-		},
-		UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"mime_type"}},
-	}
-	_, err := client.UpdateApiSpec(ctx, req)
-	if err != nil {
-		t.Fatalf("Failed UpdateApiSpec(%v): %s", req, err.Error())
-	}
-}
-
 func createUpdateArtifact(
 	ctx context.Context,
 	client connection.Client,
@@ -165,28 +144,5 @@ func createUpdateArtifact(
 	err := core.SetArtifact(ctx, client, artifact)
 	if err != nil {
 		t.Fatalf("Failed SetArtifact(%v): %s", artifact, err.Error())
-	}
-}
-
-func uploadStyleguide(
-	ctx context.Context,
-	client connection.Client,
-	t *testing.T,
-	projectID string,
-	styleguide *rpc.StyleGuide) {
-	t.Helper()
-	// Upload the styleguide definition to registry
-	styleGuideMarshalled, err := proto.Marshal(styleguide)
-	if err != nil {
-		t.Fatal("Failed to encode style guide")
-	}
-
-	err = core.SetArtifact(ctx, client, &rpc.Artifact{
-		Name:     fmt.Sprintf("projects/%s/locations/global/artifacts/%s", projectID, styleguide.GetId()),
-		MimeType: core.MimeTypeForMessageType("google.cloud.apigeeregistry.applications.v1alpha1.StyleGuide"),
-		Contents: styleGuideMarshalled,
-	})
-	if err != nil {
-		t.Fatalf("Failed to upload styleguide")
 	}
 }
