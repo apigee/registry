@@ -67,26 +67,71 @@ func ValidateScoreDefinition(ctx context.Context, parent string, scoreDefinition
 	return totalErrs
 }
 
+func ValidateScoreCardDefinition(ctx context.Context, parent string, scoreCardDefinition *rpc.ScoreCardDefinition) []error {
+	totalErrs := make([]error, 0)
+
+	// target_resource.pattern should be a valid resource pattern
+	targetName, err := patterns.ParseResourcePattern(fmt.Sprintf("%s/%s", parent, scoreCardDefinition.GetTargetResource().GetPattern()))
+	if err != nil {
+		totalErrs = append(totalErrs, err)
+	}
+
+	scorePatterns := scoreCardDefinition.GetScorePatterns()
+
+	// Check if score_patterns are set
+	if len(scorePatterns) == 0 {
+		totalErrs = append(totalErrs, fmt.Errorf("missing score_patterns"))
+		return totalErrs
+	}
+
+	// Validate score_patterns only if target_resource.pattern is valid
+	if len(totalErrs) == 0 {
+		for _, pattern := range scorePatterns {
+			// Should have valid $resource references
+			errs := validateReferencesInPattern(targetName, pattern)
+			totalErrs = append(totalErrs, errs...)
+
+			// Should not end with a "-"
+			if strings.HasSuffix(pattern, "/-") {
+				totalErrs = append(totalErrs, fmt.Errorf("invalid score_pattern : %q, it should end with a resourceID and not a \"-\"", pattern))
+			}
+
+		}
+	}
+
+	return totalErrs
+}
+
+func validateReferencesInPattern(targetName patterns.ResourceName, pattern string) []error {
+	errs := make([]error, 0)
+
+	// pattern should have a valid $resource reference
+	_, entityType, err := patterns.GetReferenceEntityType(pattern)
+	if err != nil {
+		errs = append(errs, fmt.Errorf("invalid pattern: %q, %s", pattern, err))
+	} else if entityType == "default" {
+		// pattern should always start with a $resource reference
+		errs = append(errs, fmt.Errorf("invalid pattern: %q, must always start with '$resource.(api|version|spec|artifact)'", pattern))
+	} else if _, err = patterns.GetReferenceEntityValue(pattern, targetName); err != nil {
+		// $resource should have valid entity reference wrt target_resource
+		errs = append(errs, fmt.Errorf("invalid pattern %q, invalid $resource reference in pattern: %s", pattern, err))
+	}
+
+	return errs
+}
+
 func validateScoreFormula(targetName patterns.ResourceName, scoreFormula *rpc.ScoreFormula) []error {
 	errs := make([]error, 0)
 
 	// Validation checks for score_formula.artifact.pattern
 	pattern := scoreFormula.GetArtifact().GetPattern()
 
-	// pattern should have a valid $resource pattern
-	_, entityType, err := patterns.GetReferenceEntityType(pattern)
-	if err != nil {
-		errs = append(errs, fmt.Errorf("invalid score_formula.artifact.pattern: %s", err))
-	} else if entityType == "default" {
-		// pattern should always start with a $resource reference
-		errs = append(errs, fmt.Errorf("invalid score_formula.artifact.pattern: %q, must always start with '$resource.(api|version|spec|artifact)'", pattern))
-	} else if _, err = patterns.GetReferenceEntityValue(pattern, targetName); err != nil {
-		// $resource should have valid entity reference wrt target_resource
-		errs = append(errs, fmt.Errorf("invalid $resource reference in score_formula.artifact.pattern: %s", err))
-	}
+	// Should have valid $resource references
+	patternErrs := validateReferencesInPattern(targetName, pattern)
+	errs = append(errs, patternErrs...)
 
-	// score_formula.pattern.pattern should not end with a "-"
-	if strings.HasSuffix(scoreFormula.GetArtifact().GetPattern(), "/-") {
+	// Should not end with a "-"
+	if strings.HasSuffix(pattern, "/-") {
 		errs = append(errs, fmt.Errorf("invalid score_formula.artifact.pattern : %q, it should end with a resourceID and not a \"-\"", pattern))
 	}
 
