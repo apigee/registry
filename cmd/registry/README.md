@@ -24,7 +24,9 @@ in
 **MacOS note:** To run the `registry` tool on MacOS, you will need to
 unquarantine it by running the following on the command line:
 
-> xattr -d com.apple.quarantine registry
+```
+xattr -d com.apple.quarantine registry
+```
 
 ## Running with Apigee API hub
 
@@ -32,16 +34,31 @@ To use the `registry` tool with a hosted instance associated with Apigee API
 hub, please do the following:
 
 1. Make sure you have gcloud command installed.
-2. Set the GCP_PROJECT environment variable to your API hub project name.
+2. Set the `GCP_PROJECT` environment variable to your API hub project name.
 3. Configure `gcloud` to use your project
-   > gcloud config set project \$GCP_PROJECT
+
+```
+gcloud config set project $GCP_PROJECT
+```
+
 4. Run the following script to get an authorization token and set it in your
-   environment.
-   > . auth/HOSTED.sh (On Windows, please use `auth/HOSTED.bat`.)
+   environment (on Windows, please use `auth/HOSTED.bat`).
+
+```
+. auth/HOSTED.sh
+```
+
 5. To list all the APIs in your API hub instance run the following:
-   > registry list projects/\$GCP_PROJECT/locations/global/apis/-
+
+```
+registry list projects/$GCP_PROJECT/locations/global/apis/-
+```
+
 6. To see other supported commands, run the following:
-   > registry help
+
+```
+registry help
+```
 
 ## Importing API information with the Registry tool
 
@@ -55,7 +72,9 @@ become a recommended way to populate an API registry.
   repository. To try it, clone the `openapi-directory` repo, change your
   directory to the repo, and run the following:
 
-  `registry upload bulk openapi APIs --project-id PROJECT_ID`
+  ```
+  registry upload bulk openapi APIs --project-id PROJECT_ID
+  ```
 
   Here `APIs` is a directory in the repo and `PROJECT_ID` should be replaced
   with your registry project id.
@@ -66,7 +85,9 @@ become a recommended way to populate an API registry.
   To try it, clone the `googleapis` repo, change your directory to the root of
   the repo, and run the following:
 
-  `registry upload bulk protos . --project-id PROJECT_ID`
+  ```
+  registry upload bulk protos . --project-id PROJECT_ID
+  ```
 
   As above, `PROJECT_ID` should be replaced with your registry project id.
 
@@ -75,7 +96,9 @@ become a recommended way to populate an API registry.
   reads from an online service, so you can try it by simply running the
   following:
 
-  `registry upload bulk discovery --project-id PROJECT_ID`
+  ```
+  registry upload bulk discovery --project-id PROJECT_ID
+  ```
 
   As above, `PROJECT_ID` should be replaced with your registry project id.
 
@@ -84,4 +107,6 @@ become a recommended way to populate an API registry.
   [this GitHub issue](https://github.com/apigee/registry/issues/450). To try
   it, run the following from the root of the `registry` repo:
 
-  `registry apply -f cmd/registry/cmd/apply/testdata/registry.yaml --parent projects/PROJECT_ID/locations/global`
+  ```
+  registry apply -f cmd/registry/cmd/apply/testdata/registry.yaml --parent projects/PROJECT_ID/locations/global
+  ```
