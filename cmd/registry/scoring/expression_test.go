@@ -69,7 +69,7 @@ func TestGetStructProto(t *testing.T) {
 			}
 			opts := cmp.Options{protocmp.Transform()}
 			if !cmp.Equal(test.wantStruct, gotStruct, opts) {
-				t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(test.wantStruct, gotStruct, opts))
+				t.Errorf("processScoreType returned unexpected response (-want +got):\n%s", cmp.Diff(test.wantStruct, gotStruct, opts))
 			}
 		})
 	}

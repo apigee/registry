@@ -20,6 +20,8 @@ var nativeTypeMap = map[string]reflect.Type{
 }
 
 func evaluateScoreExpression(expression string, mimeType string, contents []byte) (interface{}, error) {
+
+	// https://github.com/google/cel-spec/blob/master/doc/langdef.md#dynamic-values
 	structProto, err := getStructProto(contents, mimeType)
 	if err != nil {
 		return nil, err

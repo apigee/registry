@@ -57,7 +57,7 @@ func matchResourceWithTarget(targetPattern *rpc.ResourcePattern, resourceName pa
 		return err
 	}
 
-	// Check if targetPattern and resourceName match in type (api/version/spec)
+	// Check if targetPattern and resourceName match in type
 	if fmt.Sprintf("%T", targetPatternName) != fmt.Sprintf("%T", resourceName) {
 		return fmt.Errorf("resource %s doesn't match target pattern %v", resourceName.String(), targetPattern)
 	}
@@ -221,7 +221,7 @@ func processScoreType(definition *rpc.ScoreDefinition, scoreValue interface{}, p
 		} else if floatVal, ok := scoreValue.(float64); ok {
 			value = int32(floatVal)
 		} else {
-			return nil, fmt.Errorf("failed typecheck for output: expected either int ot float64 got %s", scoreValue)
+			return nil, fmt.Errorf("failed typecheck for output: expected either int or float64 got %s", scoreValue)
 		}
 
 		// Check that the scoreValue is within min/max limits
@@ -252,7 +252,7 @@ func processScoreType(definition *rpc.ScoreDefinition, scoreValue interface{}, p
 		}
 
 	case *rpc.ScoreDefinition_Percent:
-		// Score proto expects int32 type
+		// Score proto expects float32 type
 		value := float32(0)
 
 		// Convert scoreValue to appropriate type
@@ -263,7 +263,7 @@ func processScoreType(definition *rpc.ScoreDefinition, scoreValue interface{}, p
 		} else if floatVal, ok := scoreValue.(float64); ok {
 			value = float32(floatVal)
 		} else {
-			return nil, fmt.Errorf("failed typecheck for output: expected either int ot float64 got %s", scoreValue)
+			return nil, fmt.Errorf("failed typecheck for output: expected either int or float64 got %s", scoreValue)
 		}
 
 		// Check that the scoreValue is within min/max limits

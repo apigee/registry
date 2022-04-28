@@ -196,7 +196,7 @@ func TestMatchResourceWithTarget(t *testing.T) {
 			resourceName, _ := patterns.ParseResourcePattern(test.resourceName)
 			gotErr := matchResourceWithTarget(test.targetPattern, resourceName, "projects/pattern-test/locations/global")
 			if test.wantErr && gotErr == nil {
-				t.Errorf("matchResourceWithTarget() expected errors")
+				t.Errorf("expected matchResourceWithTarget() to return errors")
 			}
 
 			if !test.wantErr && gotErr != nil {
@@ -309,7 +309,7 @@ func TestProcessScoreFormulaError(t *testing.T) {
 			},
 			formula: &rpc.ScoreFormula{
 				Artifact: &rpc.ResourcePattern{
-					Pattern: "$resource.specs/artifacts/lint-spectral",
+					Pattern: "$resource.specs/artifacts/lint-spectral", //error
 				},
 				ScoreExpression: "size(files[0].problems)",
 			},
@@ -335,7 +335,7 @@ func TestProcessScoreFormulaError(t *testing.T) {
 			},
 			formula: &rpc.ScoreFormula{
 				Artifact: &rpc.ResourcePattern{
-					Pattern: "$resource.spec/artifact/lint-spectral",
+					Pattern: "$resource.spec/artifact/lint-spectral", // error
 				},
 				ScoreExpression: "size(files[0].problems)",
 			},
@@ -571,7 +571,7 @@ func TestProcessScoreType(t *testing.T) {
 
 			opts := cmp.Options{protocmp.Transform()}
 			if !cmp.Equal(test.wantScore, gotScore, opts) {
-				t.Errorf("processScoreType() returned unexpected diff (-want +got):\n%s", cmp.Diff(test.wantScore, gotScore, opts))
+				t.Errorf("processScoreType() returned unexpected response (-want +got):\n%s", cmp.Diff(test.wantScore, gotScore, opts))
 			}
 		})
 	}
