@@ -614,7 +614,52 @@ func TestValidateScoreDefinition(t *testing.T) {
 			ctx := context.Background()
 			gotErrs := ValidateScoreDefinition(ctx, test.parent, test.scoreDefinition)
 			if len(gotErrs) != test.wantNumErr {
-				t.Errorf("ValidateScoreDefinition() returned unexpected no. of errors: want %d, got %s", test.wantNumErr, gotErrs)
+				t.Errorf("ValidateScoreDefinition(%s, %v) returned unexpected no. of errors: want %d, got %s", test.parent, test.scoreDefinition, test.wantNumErr, gotErrs)
+			}
+		})
+	}
+}
+
+func TestValidateReferencesInPattern(t *testing.T) {
+	tests := []struct {
+		desc          string
+		targetPattern string
+		pattern       string
+		wantNumErr    int
+	}{
+		// No errors
+		{
+			desc:          "score formula",
+			targetPattern: "projects/demo/locations/global/apis/-/versions/-/specs/-",
+			pattern:       "$resource.spec/artifacts/conformance-report",
+		},
+		// errors
+		{
+			desc:          "invalid $resource reference",
+			targetPattern: "projects/demo/locations/global/apis/-/versions/-/specs/-",
+			pattern:       "$resource.specs/artifacts/conformance-report", //error
+			wantNumErr:    1,
+		},
+		{
+			desc:          "no $resource reference",
+			targetPattern: "projects/demo/locations/global/apis/-/versions/-/specs/-",
+			pattern:       "apis/-/versions/-/specs/-/artifacts/conformance-report", //error
+			wantNumErr:    1,
+		},
+		{
+			desc:          "invalid $resource wrt targetName",
+			targetPattern: "projects/demo/locations/global/apis/-/versions/-",
+			pattern:       "$resource.spec/artifacts/conformance-report", //error
+			wantNumErr:    1,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			targetName, _ := patterns.ParseResourcePattern(test.targetPattern)
+			gotErrs := validateReferencesInPattern(targetName, test.pattern)
+			if len(gotErrs) != test.wantNumErr {
+				t.Errorf("validateReferencesInPattern(%s, %s) returned unexpected no. of errors: want %d, got %s", targetName, test.pattern, test.wantNumErr, gotErrs)
 			}
 		})
 	}
@@ -642,39 +687,13 @@ func TestValidateScoreFormula(t *testing.T) {
 		},
 		// Single errors
 		{
-			desc: "no $resource reference",
-			targetPattern: &rpc.ResourcePattern{
-				Pattern: "projects/demo/locations/global/apis/-/versions/-/specs/-",
-			},
-			scoreFormula: &rpc.ScoreFormula{
-				Artifact: &rpc.ResourcePattern{
-					Pattern: "apis/-/versions/-/specs/-/artifacts/conformance-report", //error
-				},
-				ScoreExpression: "count(errors)",
-			},
-			wantNumErr: 1,
-		},
-		{
-			desc: "invalid $resource reference",
+			desc: "$resource error",
 			targetPattern: &rpc.ResourcePattern{
 				Pattern: "projects/demo/locations/global/apis/-/versions/-/specs/-",
 			},
 			scoreFormula: &rpc.ScoreFormula{
 				Artifact: &rpc.ResourcePattern{
 					Pattern: "$resource.specs/artifacts/conformance-report", //error
-				},
-				ScoreExpression: "count(errors)",
-			},
-			wantNumErr: 1,
-		},
-		{
-			desc: "invalid $resource wrt targetName",
-			targetPattern: &rpc.ResourcePattern{
-				Pattern: "projects/demo/locations/global/apis/-/versions/-",
-			},
-			scoreFormula: &rpc.ScoreFormula{
-				Artifact: &rpc.ResourcePattern{
-					Pattern: "$resource.spec/artifacts/conformance-report", //error
 				},
 				ScoreExpression: "count(errors)",
 			},
@@ -739,7 +758,7 @@ func TestValidateScoreFormula(t *testing.T) {
 			targetName, _ := patterns.ParseResourcePattern(test.targetPattern.GetPattern())
 			gotErrs := validateScoreFormula(targetName, test.scoreFormula)
 			if len(gotErrs) != test.wantNumErr {
-				t.Errorf("validateScoreFormula() returned unexpected no. of errors: want %d, got %s", test.wantNumErr, gotErrs)
+				t.Errorf("validateScoreFormula(%s, %v) returned unexpected no. of errors: want %d, got %s", targetName, test.scoreFormula, test.wantNumErr, gotErrs)
 			}
 		})
 	}
@@ -1299,7 +1318,7 @@ func TestValidateNumberThresholds(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			gotErrs := validateNumberThresholds(test.thresholds, test.minValue, test.maxValue)
 			if len(gotErrs) != test.wantNumErr {
-				t.Errorf("validateNumberThresholds() returned unexpected no. of errors: want %d, got %s", test.wantNumErr, gotErrs)
+				t.Errorf("validateNumberThresholds(%v, %d, %d) returned unexpected no. of errors: want %d, got %s", test.thresholds, test.minValue, test.maxValue, test.wantNumErr, gotErrs)
 			}
 		})
 	}
@@ -1398,8 +1417,143 @@ func TestValidateBooleanThresholds(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			gotErrs := validateBooleanThresholds(test.thresholds)
 			if len(gotErrs) != test.wantNumErr {
-				t.Errorf("validateBooleanThresholds() returned unexpected no. of errors: want %d, got %s", test.wantNumErr, gotErrs)
+				t.Errorf("validateBooleanThresholds(%v) returned unexpected no. of errors: want %d, got %s", test.thresholds, test.wantNumErr, gotErrs)
 			}
 		})
 	}
+}
+
+func TestValidateScoreCardDefinition(t *testing.T) {
+	tests := []struct {
+		desc                string
+		parent              string
+		scoreCardDefinition *rpc.ScoreCardDefinition
+		wantNumErr          int
+	}{
+		// No errors
+		{
+			desc:   "simple scorecard definition",
+			parent: "projects/demo/locations/global",
+			scoreCardDefinition: &rpc.ScoreCardDefinition{
+				Id:   "test-scorecard-definition",
+				Kind: "ScoreCardDefinition",
+				TargetResource: &rpc.ResourcePattern{
+					Pattern: "apis/-/versions/-/specs/-",
+				},
+				ScorePatterns: []string{
+					"$resource.spec/artifacts/score-lint-error",
+					"$resource.spec/artifacts/score-lang-reuse",
+					"$resource.spec/artifacts/score-security-audit",
+					"$resource.spec/artifacts/score-accuracy",
+				},
+			},
+		},
+		// errors
+		{
+			desc:   "invalid target_resource",
+			parent: "projects/demo/locations/global",
+			scoreCardDefinition: &rpc.ScoreCardDefinition{
+				Id:   "test-scorecard-definition",
+				Kind: "ScoreCardDefinition",
+				TargetResource: &rpc.ResourcePattern{
+					Pattern: "apis/-/versions/specs/-", //error
+				},
+				ScorePatterns: []string{
+					"$resource.spec/artifacts/score-lint-error",
+					"$resource.spec/artifacts/score-lang-reuse",
+					"$resource.spec/artifacts/score-security-audit",
+					"$resource.spec/artifacts/score-accuracy",
+				},
+			},
+			wantNumErr: 1,
+		},
+		{
+			desc:   "missing score_patterns",
+			parent: "projects/demo/locations/global",
+			scoreCardDefinition: &rpc.ScoreCardDefinition{
+				Id:   "test-scorecard-definition",
+				Kind: "ScoreCardDefinition",
+				TargetResource: &rpc.ResourcePattern{
+					Pattern: "apis/-/versions/-/specs/-",
+				},
+				// error
+			},
+			wantNumErr: 1,
+		},
+		{
+			desc:   "invalid target_resource and missing score_patterns",
+			parent: "projects/demo/locations/global",
+			scoreCardDefinition: &rpc.ScoreCardDefinition{
+				Id:   "test-scorecard-definition",
+				Kind: "ScoreCardDefinition",
+				TargetResource: &rpc.ResourcePattern{
+					Pattern: "apis/-/versions/specs/-", //error
+				},
+				//error
+			},
+			wantNumErr: 2,
+		},
+		{
+			desc:   "invalid score_pattern $resource",
+			parent: "projects/demo/locations/global",
+			scoreCardDefinition: &rpc.ScoreCardDefinition{
+				Id:   "test-scorecard-definition",
+				Kind: "ScoreCardDefinition",
+				TargetResource: &rpc.ResourcePattern{
+					Pattern: "apis/-/versions/-/specs/-",
+				},
+				ScorePatterns: []string{
+					"$resource.specs/artifacts/score-lint-error", //error
+					"$resource.spec/artifacts/score-lang-reuse",
+					"$resource.spec/artifacts/score-security-audit",
+					"$resource.spec/artifacts/score-accuracy",
+				},
+			},
+			wantNumErr: 1,
+		},
+		{
+			desc:   "invalid score_pattern no artifactID",
+			parent: "projects/demo/locations/global",
+			scoreCardDefinition: &rpc.ScoreCardDefinition{
+				Id:   "test-scorecard-definition",
+				Kind: "ScoreCardDefinition",
+				TargetResource: &rpc.ResourcePattern{
+					Pattern: "apis/-/versions/-/specs/-",
+				},
+				ScorePatterns: []string{
+					"$resource.spec/artifacts/-", //error
+				},
+			},
+			wantNumErr: 1,
+		},
+		{
+			desc:   "multiple invalid score_pattern",
+			parent: "projects/demo/locations/global",
+			scoreCardDefinition: &rpc.ScoreCardDefinition{
+				Id:   "test-scorecard-definition",
+				Kind: "ScoreCardDefinition",
+				TargetResource: &rpc.ResourcePattern{
+					Pattern: "apis/-/versions/-/specs/-",
+				},
+				ScorePatterns: []string{
+					"$resource.specs/artifacts/score-lint-error",     //error
+					"$resource.specs/artifacts/score-lang-reuse",     //error
+					"$resource.specs/artifacts/score-security-audit", //error
+					"$resource.specs/artifacts/score-accuracy",       //error
+				},
+			},
+			wantNumErr: 4,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			ctx := context.Background()
+			gotErrs := ValidateScoreCardDefinition(ctx, test.parent, test.scoreCardDefinition)
+			if len(gotErrs) != test.wantNumErr {
+				t.Errorf("ValidateScoreCardDefinition(%s, %v) returned unexpected no. of errors: want %d, got %s", test.parent, test.scoreCardDefinition, test.wantNumErr, gotErrs)
+			}
+		})
+	}
+
 }

@@ -11,7 +11,7 @@ Envoy locally alongside a locally-running version of `registry-server`.
    `envoy -c envoy.yaml`.
 
 3. Configure your environment to send Registry requests through Envoy by
-   running `source auth/ENVOY.sh` from the top of this repo.
+   running `. auth/ENVOY.sh` from the top of this repo.
 
 4. Run any of the included tools or examples for accessing your local Registry,
    e.g. `apg admin get-status`.

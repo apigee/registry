@@ -1,19 +1,23 @@
+include tools/PROTOC-VERSION.sh
+export $(shell sed 's/=.*//' tools/PROTOC-VERSION.sh)
+
 lite:
 	go install ./...
 
-all:
-	./tools/GENERATE-RPC.sh
-	./tools/GENERATE-GRPC.sh
-	./tools/GENERATE-GAPIC.sh
+protoc:
+ifeq (, $(shell which protoc))
+	@echo "Error! protoc not found on path, please install version ${PROTOC_VERSION}."; exit 1
+endif
+
+all: protos
 	./tools/GENERATE-APG.sh
-	./tools/GENERATE-ENVOY-DESCRIPTORS.sh
 	go install ./...
 
-apg:
+apg: protoc
 	./tools/GENERATE-APG.sh
 	go install ./cmd/apg
 
-protos:
+protos: protoc
 	./tools/GENERATE-RPC.sh
 	./tools/GENERATE-GRPC.sh
 	./tools/GENERATE-GAPIC.sh

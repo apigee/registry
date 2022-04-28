@@ -24,7 +24,7 @@
 # This includes the registry-server running with a local SQLite database,
 # which can be started by running `registry-server -c config/sqlite.yaml`
 # from the root of the registry repo. To configure clients to call this
-# server, run `source auth/LOCAL.sh` in the shell before running the following
+# server, run `. auth/LOCAL.sh` in the shell before running the following
 # commands.
 
 # A registry exists under a top-level project.
