@@ -36,12 +36,10 @@ func getLinterBinaryName(linterName string) string {
 }
 
 func GenerateLinterMetadata(styleguide *rpc.StyleGuide) (map[string]*linterMetadata, error) {
-
 	linterNameToMetadata := make(map[string]*linterMetadata)
 
 	// Iterate through all the guidelines of the style guide.
 	for _, guideline := range styleguide.GetGuidelines() {
-
 		// Iterate through all the rules of the style guide.
 		for _, rule := range guideline.GetRules() {
 			// Get the name of the linter associated with the rule.

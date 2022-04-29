@@ -165,7 +165,6 @@ func TestFullResourceNameFromParent(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func TestFullResourceNameFromParentError(t *testing.T) {
@@ -194,7 +193,6 @@ func TestFullResourceNameFromParentError(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func TestGetReferenceEntityValue(t *testing.T) {

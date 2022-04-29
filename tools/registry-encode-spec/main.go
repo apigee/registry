@@ -28,7 +28,6 @@ import (
 //  gzip --stdout | xxd -p | tr -d '\n'
 // but with a platform-independent gzip encoding to provide more stable results.
 func main() {
-
 	// gzip the spec
 	var buf bytes.Buffer
 	zw, _ := gzip.NewWriterLevel(&buf, gzip.BestCompression)
