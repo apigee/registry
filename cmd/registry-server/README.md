@@ -25,13 +25,22 @@ port configuration value can be set using the `PORT` environment variable.
 Other useful environment variables are also defined there.
 
 When no configuration is specified, `registry-server` runs in the evaluation
-mode described in the **Usage** section above.
+mode described in the [Usage](#usage) section above.
 
-### Running the Registry API server
+### Running the Registry API server with SQLite
 
-To run `registry-server` in its default evaluation mode, simply start it by
-running `registry-server`. Then run `. auth/LOCAL.sh` to set environment
-variables that configure the included clients to call your local instance.
+To run `registry-server` with a SQLite backend, simply start it by running
+`registry-server`. This creates and users a SQLite database in the default
+location of `/tmp/registry.db`. This can be modified by specifying an alternate
+configuration.
+
+For example:
+
+```
+database:
+  driver: sqlite3
+  config: "data.db"
+```
 
 ### Running the Registry API server with a PostgreSQL database
 
