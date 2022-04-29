@@ -35,7 +35,7 @@ func (s *RegistryServer) MigrateDatabase(ctx context.Context, req *rpc.MigrateDa
 	}
 	defer db.Close()
 
-	err = db.Migrate(req.Kind)
+	err = db.Migrate(ctx, req.Kind)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
