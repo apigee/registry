@@ -234,12 +234,13 @@ func processScoreType(definition *rpc.ScoreDefinition, scoreValue interface{}, p
 		// Convert scoreValue to appropriate type
 		// evaluateScoreExpression can return either a float or int value.
 		// Both are valid for an integer.
-		if intVal, ok := scoreValue.(int64); ok {
-			value = int32(intVal)
-		} else if floatVal, ok := scoreValue.(float64); ok {
-			value = int32(floatVal)
-		} else {
-			return nil, fmt.Errorf("failed typecheck for output: expected either int or float64 got %s (type: %T)", scoreValue, scoreValue)
+		switch v := scoreValue.(type) {
+		case int64:
+			value = int32(v)
+		case float64:
+			value = int32(v)
+		default:
+			return nil, fmt.Errorf("failed typecheck for output: expected either int64 or float64 got %s (type: %T)", v, v)
 		}
 
 		// Check that the scoreValue is within min/max limits
@@ -271,17 +272,18 @@ func processScoreType(definition *rpc.ScoreDefinition, scoreValue interface{}, p
 
 	case *rpc.ScoreDefinition_Percent:
 		// Score proto expects float32 type
-		value := float32(0)
+		var value float32
 
 		// Convert scoreValue to appropriate type
 		// evaluateScoreExpression can return either a float or int value.
 		// Both are valid for an integer.
-		if intVal, ok := scoreValue.(int64); ok {
-			value = float32(intVal)
-		} else if floatVal, ok := scoreValue.(float64); ok {
-			value = float32(floatVal)
-		} else {
-			return nil, fmt.Errorf("failed typecheck for output: expected either int or float64 got %s (type: %T)", scoreValue, scoreValue)
+		switch v := scoreValue.(type) {
+		case int64:
+			value = float32(v)
+		case float64:
+			value = float32(v)
+		default:
+			return nil, fmt.Errorf("failed typecheck for output: expected either int64 or float64 got %s (type: %T)", v, v)
 		}
 
 		// Check that the scoreValue is within min/max limits
