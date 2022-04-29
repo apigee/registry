@@ -40,9 +40,7 @@ automatically published as a JSON REST API using a proxy. Proxies also enable
 [gRPC web](https://github.com/grpc/grpc-web), which allows gRPC calls to be
 directly made from browser-based applications. A configuration for the
 [Envoy](https://www.envoyproxy.io/) proxy is included
-([deployments/envoy/envoy.yaml](deployments/envoy/envoy.yaml)) along with
-scripts to build and deploy the Registry API server and a proxy in a single
-container on Google Cloud Run.
+([deployments/envoy/envoy.yaml](deployments/envoy/envoy.yaml)).
 
 The Registry API protos also include configuration to support
 [generated API clients (GAPICS)](https://googleapis.github.io/gapic-generators/),
@@ -71,14 +69,15 @@ The entry point for the Registry API server itself is
 The following tools are needed to build this software:
 
 - Go 1.18 (recommended) or later.
-- protoc, the Protocol Buffer Compiler, version 3.19.3.
+- protoc, the Protocol Buffer Compiler (see
+  [tools/PROTOC-VERSION.sh](/tools/PROTOC-VERSION.sh) for the currently-used
+  version).
 - make, git, and other elements of common unix build environments.
 
-This repository contains a Makefile that downloads all other dependencies and
-builds this software (`make all`). With dependencies downloaded, subsequent
-builds can be made with `go install ./...` or `make lite`. The Makefile also
-includes targets that build and deploy the API on
-[Google Cloud Run](https://cloud.google.com/run) (see below).
+This repository contains a [Makefile](/Makefile) that downloads all other
+dependencies and builds this software (`make all`). With dependencies
+downloaded, subsequent builds can be made with `go install ./...` or
+`make lite`.
 
 ## Quickstart
 
