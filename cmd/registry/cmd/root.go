@@ -27,6 +27,7 @@ import (
 	"github.com/apigee/registry/cmd/registry/cmd/label"
 	"github.com/apigee/registry/cmd/registry/cmd/list"
 	"github.com/apigee/registry/cmd/registry/cmd/resolve"
+	"github.com/apigee/registry/cmd/registry/cmd/sync"
 	"github.com/apigee/registry/cmd/registry/cmd/upload"
 	"github.com/apigee/registry/cmd/registry/cmd/vocabulary"
 	"github.com/spf13/cobra"
@@ -55,6 +56,7 @@ func Command() *cobra.Command {
 	cmd.AddCommand(index.Command())
 	cmd.AddCommand(label.Command())
 	cmd.AddCommand(list.Command())
+	cmd.AddCommand(sync.Command())
 	cmd.AddCommand(upload.Command())
 	cmd.AddCommand(vocabulary.Command())
 
