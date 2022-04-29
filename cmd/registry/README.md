@@ -35,7 +35,7 @@ hub, please do the following:
 
 1. Make sure you have gcloud command installed.
 2. Set the `GCP_PROJECT` environment variable to your API hub project name.
-3. Configure `gcloud` to use your project
+3. Configure `gcloud` to use your project:
 
 ```
 gcloud config set project $GCP_PROJECT
@@ -70,9 +70,12 @@ become a recommended way to populate an API registry.
   that follows the style of the
   [APIs-guru/openapi-directory](https://github.com/APIs-guru/openapi-directory)
   repository. To try it, clone the `openapi-directory` repo, change your
-  directory to the repo, and run the following:
+  directory to the repo, and run the `registry upload bulk openapi` command as
+  follows:
 
   ```
+  git clone https://github.com/apis-guru/openapi-directory
+  cd openapi-directory
   registry upload bulk openapi APIs --project-id PROJECT_ID
   ```
 
@@ -83,9 +86,11 @@ become a recommended way to populate an API registry.
   directory that follows the style of the
   [googleapis/googleapis](https://github.com/googleapis/googleapis) repository.
   To try it, clone the `googleapis` repo, change your directory to the root of
-  the repo, and run the following:
+  the repo, and run the `registry upload bulk protos` command as follows:
 
   ```
+  git clone https://github.com/googleapis/googleapis
+  cd googleapis
   registry upload bulk protos . --project-id PROJECT_ID
   ```
 
