@@ -42,7 +42,8 @@ gcloud config set project $PROJECT_ID
 ```
 
 4. Run the following script to get an authorization token and set it in your
-   environment (on Windows, please use `auth/HOSTED.bat`).
+   environment as `$APG_REGISTRY_TOKEN` (on Windows, please use
+   `auth/HOSTED.bat`):
 
 ```
 . auth/HOSTED.sh
