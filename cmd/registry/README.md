@@ -21,8 +21,9 @@ Release builds of the `registry` tool are available on GitHub and can be found
 in
 [github.com/apigee/registry/releases](https://github.com/apigee/registry/releases).
 
-**MacOS note:** To run the `registry` tool on MacOS, you will need to
-unquarantine it by running the following on the command line:
+**MacOS note:** To run the `registry` tool on MacOS, you may need to
+[unquarantine](https://discussions.apple.com/thread/3145071) it by running the
+following on the command line:
 
 ```
 xattr -d com.apple.quarantine registry
