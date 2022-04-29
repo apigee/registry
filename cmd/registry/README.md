@@ -34,11 +34,11 @@ To use the `registry` tool with a hosted instance associated with Apigee API
 hub, please do the following:
 
 1. Make sure you have gcloud command installed.
-2. Set the `GCP_PROJECT` environment variable to your API hub project name.
+2. Set the `PROJECT_ID` environment variable to your API hub project name.
 3. Configure `gcloud` to use your project:
 
 ```
-gcloud config set project $GCP_PROJECT
+gcloud config set project $PROJECT_ID
 ```
 
 4. Run the following script to get an authorization token and set it in your
@@ -51,7 +51,7 @@ gcloud config set project $GCP_PROJECT
 5. To list all the APIs in your API hub instance run the following:
 
 ```
-registry list projects/$GCP_PROJECT/locations/global/apis/-
+registry list projects/$PROJECT_ID/locations/global/apis/-
 ```
 
 6. To see other supported commands, run the following:
@@ -63,8 +63,8 @@ registry help
 ## Importing API information with the Registry tool
 
 The `registry` tool currently includes several demonstration subcommands that
-upload API descriptions into a registry and one subcommmand that is likely to
-become a recommended way to populate an API registry.
+upload API descriptions into a registry and one subcommmand (`registry apply`)
+that is likely to become a recommended way to populate an API registry.
 
 - `registry upload bulk openapi` reads OpenAPI descriptions from a directory
   that follows the style of the
@@ -76,11 +76,11 @@ become a recommended way to populate an API registry.
   ```
   git clone https://github.com/apis-guru/openapi-directory
   cd openapi-directory
-  registry upload bulk openapi APIs --project-id PROJECT_ID
+  registry upload bulk openapi APIs --project-id $PROJECT_ID
   ```
 
-  Here `APIs` is a directory in the repo and `PROJECT_ID` should be replaced
-  with your registry project id.
+  Here `APIs` is a directory in the repo and `$PROJECT_ID` should be set to
+  your registry project id.
 
 - `registry upload bulk protos` reads Protocol Buffer API descriptions from a
   directory that follows the style of the
@@ -91,10 +91,10 @@ become a recommended way to populate an API registry.
   ```
   git clone https://github.com/googleapis/googleapis
   cd googleapis
-  registry upload bulk protos . --project-id PROJECT_ID
+  registry upload bulk protos . --project-id $PROJECT_ID
   ```
 
-  As above, `PROJECT_ID` should be replaced with your registry project id.
+  As above, `$PROJECT_ID` should be set to your registry project id.
 
 - `registry upload bulk discovery` reads API descriptions from the
   [Google API Discovery Service](https://developers.google.com/discovery). This
@@ -102,10 +102,10 @@ become a recommended way to populate an API registry.
   following:
 
   ```
-  registry upload bulk discovery --project-id PROJECT_ID
+  registry upload bulk discovery --project-id $PROJECT_ID
   ```
 
-  As above, `PROJECT_ID` should be replaced with your registry project id.
+  As above, `$PROJECT_ID` should be set to your registry project id.
 
 - `registry apply` reads API information from YAML files using a mechanism
   similar to `kubectl apply`. For details, see
@@ -113,5 +113,5 @@ become a recommended way to populate an API registry.
   it, run the following from the root of the `registry` repo:
 
   ```
-  registry apply -f cmd/registry/cmd/apply/testdata/registry.yaml --parent projects/PROJECT_ID/locations/global
+  registry apply -f cmd/registry/cmd/apply/testdata/registry.yaml --parent projects/$PROJECT_ID/locations/global
   ```
