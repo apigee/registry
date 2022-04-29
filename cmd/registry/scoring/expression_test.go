@@ -21,15 +21,14 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/testing/protocmp"
-	"google.golang.org/protobuf/types/known/structpb"
 )
 
-func TestGetStructProto(t *testing.T) {
+func TestGetMap(t *testing.T) {
 	tests := []struct {
 		desc          string
 		contentsProto proto.Message
 		mimeType      string
-		wantStruct    *structpb.Struct
+		wantMap       map[string]interface{}
 	}{
 		{
 			desc: "happy path rpc.Lint",
@@ -47,29 +46,19 @@ func TestGetStructProto(t *testing.T) {
 				},
 			},
 			mimeType: "application/octet-stream;type=google.cloud.apigeeregistry.applications.v1alpha1.Lint",
-			wantStruct: func() *structpb.Struct {
-				problem, _ := structpb.NewStruct(map[string]interface{}{
-					"message": "lint-error",
-				})
-				problemsList, _ := structpb.NewList([]interface{}{
-					problem.AsMap(),
-				})
-				file, _ := structpb.NewStruct(
+			wantMap: map[string]interface{}{
+				"name": "openapi.yaml",
+				"files": []interface{}{
 					map[string]interface{}{
 						"filePath": "openapi.yaml",
-						"problems": problemsList.AsSlice(),
-					})
-				fileList, _ := structpb.NewList(
-					[]interface{}{
-						file.AsMap(),
-					})
-				lint, _ := structpb.NewStruct(
-					map[string]interface{}{
-						"name":  "openapi.yaml",
-						"files": fileList.AsSlice(),
-					})
-				return lint
-			}(),
+						"problems": []interface{}{
+							map[string]interface{}{
+								"message": "lint-error",
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 
@@ -77,19 +66,19 @@ func TestGetStructProto(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			contents, _ := proto.Marshal(test.contentsProto)
 
-			gotStruct, gotErr := getStructProto(contents, test.mimeType)
+			gotMap, gotErr := getMap(contents, test.mimeType)
 			if gotErr != nil {
-				t.Errorf("processScoreType() returned unexpected error: %s", gotErr)
+				t.Errorf("getMap() returned unexpected error: %s", gotErr)
 			}
 			opts := cmp.Options{protocmp.Transform()}
-			if !cmp.Equal(test.wantStruct, gotStruct, opts) {
-				t.Errorf("processScoreType returned unexpected response (-want +got):\n%s", cmp.Diff(test.wantStruct, gotStruct, opts))
+			if !cmp.Equal(test.wantMap, gotMap, opts) {
+				t.Errorf("getMap returned unexpected response (-want +got):\n%s", cmp.Diff(test.wantMap, gotMap, opts))
 			}
 		})
 	}
 }
 
-func TestGetStructProtoError(t *testing.T) {
+func TestGetMapError(t *testing.T) {
 	tests := []struct {
 		desc          string
 		contentsProto proto.Message
@@ -122,9 +111,9 @@ func TestGetStructProtoError(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			contents, _ := proto.Marshal(test.contentsProto)
 
-			_, gotErr := getStructProto(contents, test.mimeType)
+			_, gotErr := getMap(contents, test.mimeType)
 			if gotErr == nil {
-				t.Errorf("expected getStructProto() to return an error")
+				t.Errorf("expected getMap() to return an error")
 			}
 		})
 	}
@@ -155,7 +144,7 @@ func TestEvaluateScoreExpression(t *testing.T) {
 					},
 				},
 			},
-			wantValue: 1,
+			wantValue: int64(1),
 		},
 		{
 			desc:       "double happy path",

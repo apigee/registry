@@ -221,86 +221,70 @@ func TestMatchResourceWithTarget(t *testing.T) {
 }
 
 func TestProcessScoreFormula(t *testing.T) {
-	tests := []struct {
-		desc      string
-		setup     func(context.Context, connection.Client, connection.AdminClient)
-		formula   *rpc.ScoreFormula
-		resource  patterns.ResourceInstance
-		wantValue interface{}
-	}{
-		{
-			desc: "happy path",
-			setup: func(ctx context.Context, client connection.Client, adminClient connection.AdminClient) {
-				deleteProject(ctx, adminClient, t, "score-formula-test")
-				createProject(ctx, adminClient, t, "score-formula-test")
-				createApi(ctx, client, t, "projects/score-formula-test/locations/global", "petstore")
-				createVersion(ctx, client, t, "projects/score-formula-test/locations/global/apis/petstore", "1.0.0")
-				createSpec(ctx, client, t, "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
-				artifactBytes, _ := proto.Marshal(&rpc.Lint{
-					Name: "openapi.yaml",
-					Files: []*rpc.LintFile{
-						{
-							FilePath: "openapi.yaml",
-							Problems: []*rpc.LintProblem{
-								{
-									Message: "lint-error",
-								},
-							},
-						},
-					},
-				})
-				createUpdateArtifact(
-					ctx, client, t,
-					"projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs//openapi.yaml/artifacts/lint-spectral",
-					artifactBytes, "application/octet-stream;type=google.cloud.apigeeregistry.applications.v1alpha1.Lint")
-			},
-			formula: &rpc.ScoreFormula{
-				Artifact: &rpc.ResourcePattern{
-					Pattern: "$resource.spec/artifacts/lint-spectral",
-				},
-				ScoreExpression: "size(files[0].problems)",
-			},
-			resource: patterns.SpecResource{
-				SpecName: patterns.SpecName{
-					Name: names.Spec{
-						ProjectID: "score-formula-test",
-						ApiID:     "petstore",
-						VersionID: "1.0.0",
-						SpecID:    "openapi.yaml",
+	ctx := context.Background()
+	registryClient, err := connection.NewClient(ctx)
+	if err != nil {
+		t.Logf("Failed to create client: %+v", err)
+		t.FailNow()
+	}
+	defer registryClient.Close()
+	adminClient, err := connection.NewAdminClient(ctx)
+	if err != nil {
+		t.Logf("Failed to create client: %+v", err)
+		t.FailNow()
+	}
+	defer adminClient.Close()
+
+	//setup
+	deleteProject(ctx, adminClient, t, "score-formula-test")
+	createProject(ctx, adminClient, t, "score-formula-test")
+	createApi(ctx, registryClient, t, "projects/score-formula-test/locations/global", "petstore")
+	createVersion(ctx, registryClient, t, "projects/score-formula-test/locations/global/apis/petstore", "1.0.0")
+	createSpec(ctx, registryClient, t, "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
+	artifactBytes, _ := proto.Marshal(&rpc.Lint{
+		Name: "openapi.yaml",
+		Files: []*rpc.LintFile{
+			{
+				FilePath: "openapi.yaml",
+				Problems: []*rpc.LintProblem{
+					{
+						Message: "lint-error",
 					},
 				},
 			},
-			wantValue: 1,
+		},
+	})
+	createUpdateArtifact(
+		ctx, registryClient, t,
+		"projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs//openapi.yaml/artifacts/lint-spectral",
+		artifactBytes, "application/octet-stream;type=google.cloud.apigeeregistry.applications.v1alpha1.Lint")
+
+	// arguments
+	formula := &rpc.ScoreFormula{
+		Artifact: &rpc.ResourcePattern{
+			Pattern: "$resource.spec/artifacts/lint-spectral",
+		},
+		ScoreExpression: "size(files[0].problems)",
+	}
+	resource := patterns.SpecResource{
+		SpecName: patterns.SpecName{
+			Name: names.Spec{
+				ProjectID: "score-formula-test",
+				ApiID:     "petstore",
+				VersionID: "1.0.0",
+				SpecID:    "openapi.yaml",
+			},
 		},
 	}
+	gotValue, gotErr := processScoreFormula(ctx, registryClient, formula, resource)
+	if gotErr != nil {
+		t.Errorf("processScoreFormula() returned unexpected error: %s", gotErr)
+	}
 
-	for _, test := range tests {
-		t.Run(test.desc, func(t *testing.T) {
-			ctx := context.Background()
-			registryClient, err := connection.NewClient(ctx)
-			if err != nil {
-				t.Logf("Failed to create client: %+v", err)
-				t.FailNow()
-			}
-			defer registryClient.Close()
-			adminClient, err := connection.NewAdminClient(ctx)
-			if err != nil {
-				t.Logf("Failed to create client: %+v", err)
-				t.FailNow()
-			}
-			defer adminClient.Close()
+	wantValue := int64(1)
 
-			test.setup(ctx, registryClient, adminClient)
-
-			gotValue, gotErr := processScoreFormula(ctx, registryClient, test.formula, test.resource)
-			if gotErr != nil {
-				t.Errorf("processScoreFormula() returned unexpected error: %s", gotErr)
-			}
-
-			if gotValue != nil && test.wantValue != gotValue.(int) {
-				t.Errorf("processScoreFormula() returned unexpected value, want: %v, got: %v", test.wantValue, gotValue)
-			}
-		})
+	if gotValue != nil && wantValue != gotValue {
+		t.Errorf("processScoreFormula() returned unexpected value, want: %v, got: %v", wantValue, gotValue)
 	}
 
 }
@@ -472,7 +456,7 @@ func TestProcessScoreType(t *testing.T) {
 		{
 			desc:       "happy path integer",
 			definition: integerDefinition,
-			scoreValue: 1,
+			scoreValue: int64(1),
 			wantScore: &rpc.Score{
 				Id:             "score-lint-error",
 				Kind:           "Score",
@@ -494,7 +478,7 @@ func TestProcessScoreType(t *testing.T) {
 		{
 			desc:       "happy path integer with float value",
 			definition: integerDefinition,
-			scoreValue: 1.0,
+			scoreValue: float64(1),
 			wantScore: &rpc.Score{
 				Id:             "score-lint-error",
 				Kind:           "Score",
@@ -516,7 +500,7 @@ func TestProcessScoreType(t *testing.T) {
 		{
 			desc:       "happy path percent",
 			definition: percentDefinition,
-			scoreValue: 50.0,
+			scoreValue: float64(50),
 			wantScore: &rpc.Score{
 				Id:             "score-lint-error-percent",
 				Kind:           "Score",
@@ -536,7 +520,7 @@ func TestProcessScoreType(t *testing.T) {
 		{
 			desc:       "happy path percent with integer value",
 			definition: percentDefinition,
-			scoreValue: 50,
+			scoreValue: int64(50),
 			wantScore: &rpc.Score{
 				Id:             "score-lint-error-percent",
 				Kind:           "Score",

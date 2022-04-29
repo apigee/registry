@@ -16,7 +16,7 @@ func scoreCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "score (experimental)",
 		Short: "Compute score from ScoreDefinition",
-		Args:  cobra.MinimumNArgs(1),
+		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := cmd.Context()
 			filter, err := cmd.Flags().GetString("filter")
@@ -71,9 +71,5 @@ func (task *computeScoreTask) String() string {
 }
 
 func (task *computeScoreTask) Run(ctx context.Context) error {
-	err := scoring.CalculateScore(task.ctx, task.client, task.definition, task.resource)
-	if err != nil {
-		return err
-	}
-	return nil
+	return scoring.CalculateScore(task.ctx, task.client, task.definition, task.resource)
 }

@@ -225,12 +225,12 @@ func processScoreType(definition *rpc.ScoreDefinition, scoreValue interface{}, p
 	switch definition.GetType().(type) {
 	case *rpc.ScoreDefinition_Integer:
 		// Score proto expects int32 type
-		value := int32(0)
+		var value int32
 
 		// Convert scoreValue to appropriate type
 		// evaluateScoreExpression can return either a float or int value.
 		// Both are valid for an integer.
-		if intVal, ok := scoreValue.(int); ok {
+		if intVal, ok := scoreValue.(int64); ok {
 			value = int32(intVal)
 		} else if floatVal, ok := scoreValue.(float64); ok {
 			value = int32(floatVal)
@@ -272,7 +272,7 @@ func processScoreType(definition *rpc.ScoreDefinition, scoreValue interface{}, p
 		// Convert scoreValue to appropriate type
 		// evaluateScoreExpression can return either a float or int value.
 		// Both are valid for an integer.
-		if intVal, ok := scoreValue.(int); ok {
+		if intVal, ok := scoreValue.(int64); ok {
 			value = float32(intVal)
 		} else if floatVal, ok := scoreValue.(float64); ok {
 			value = float32(floatVal)
