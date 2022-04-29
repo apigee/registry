@@ -33,7 +33,7 @@ archives:
   format: tar.gz
   files:
   - LICENSE
-  - src: cmd/registry/APIHUB-README.md
+  - src: cmd/registry/README.md
     dst: .
     strip_parent: true
   - auth/HOSTED.sh
