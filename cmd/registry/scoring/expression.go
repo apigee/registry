@@ -95,8 +95,6 @@ func getMap(contents []byte, mimeType string) (map[string]interface{}, error) {
 }
 
 func unmarshalAndMap(contents []byte, message proto.Message) (map[string]interface{}, error) {
-	mapValue := make(map[string]interface{}, 0)
-
 	// Convert to proto
 	err := proto.Unmarshal(contents, message)
 	if err != nil {
@@ -109,6 +107,7 @@ func unmarshalAndMap(contents []byte, message proto.Message) (map[string]interfa
 		return nil, fmt.Errorf("failed converting to json: %s", err)
 	}
 
+	var mapValue map[string]interface{}
 	// Convert json to map
 	err = json.Unmarshal(jsonData, &mapValue)
 	if err != nil {

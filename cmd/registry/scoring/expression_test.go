@@ -70,7 +70,7 @@ func TestGetMap(t *testing.T) {
 			if gotErr != nil {
 				t.Errorf("getMap() returned unexpected error: %s", gotErr)
 			}
-			opts := cmp.Options{protocmp.Transform()}
+			opts := protocmp.Transform()
 			if !cmp.Equal(test.wantMap, gotMap, opts) {
 				t.Errorf("getMap returned unexpected response (-want +got):\n%s", cmp.Diff(test.wantMap, gotMap, opts))
 			}
@@ -113,7 +113,7 @@ func TestGetMapError(t *testing.T) {
 
 			_, gotErr := getMap(contents, test.mimeType)
 			if gotErr == nil {
-				t.Errorf("expected getMap() to return an error")
+				t.Errorf("getMap(%v, %s) did not return an error", test.contentsProto, test.mimeType)
 			}
 		})
 	}
@@ -210,14 +210,15 @@ func TestEvaluateScoreExpressionError(t *testing.T) {
 		contentsProto proto.Message
 	}{
 		{
-			desc:          "error in structProto",
-			expression:    "",
+			desc:       "error in getMap()",
+			expression: "",
+			// getMap() will return an error since ScoreDefinition is an unsupported type
 			mimeType:      "application/octet-stream;type=google.cloud.apigeeregistry.v1.scoring.ScoreDefinition",
 			contentsProto: &rpc.ScoreDefinition{},
 		},
 		{
-			desc:       "error in expression",
-			expression: "size(files.problems)",
+			desc:       "invalid field reference",
+			expression: "size(files.problems)", // correct expression should be "size(files[0].problems)"
 			mimeType:   "application/octet-stream;type=google.cloud.apigeeregistry.applications.v1alpha1.Lint",
 			contentsProto: &rpc.Lint{
 				Name: "openapi.yaml",
@@ -234,7 +235,7 @@ func TestEvaluateScoreExpressionError(t *testing.T) {
 			},
 		},
 		{
-			desc:       "unsupported type",
+			desc:       "unsupported type (list)",
 			expression: "files[0].problems", //this will return a list value
 			mimeType:   "application/octet-stream;type=google.cloud.apigeeregistry.applications.v1alpha1.Lint",
 			contentsProto: &rpc.Lint{
@@ -259,7 +260,7 @@ func TestEvaluateScoreExpressionError(t *testing.T) {
 
 			_, gotErr := evaluateScoreExpression(test.expression, test.mimeType, contents)
 			if gotErr == nil {
-				t.Errorf("expected evaluateScoreExpression() to return an error")
+				t.Errorf("evaluateScoreExpression(%s, %s, %v) did not return an error", test.expression, test.mimeType, test.contentsProto)
 			}
 		})
 	}

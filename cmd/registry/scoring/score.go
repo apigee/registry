@@ -17,6 +17,7 @@ package scoring
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/cmd/registry/patch"
@@ -71,44 +72,47 @@ func matchResourceWithTarget(targetPattern *rpc.ResourcePattern, resourceName pa
 		return err
 	}
 
-	// Check if targetPattern and resourceName match in type
-	if fmt.Sprintf("%T", targetPatternName) != fmt.Sprintf("%T", resourceName) {
-		return fmt.Errorf("resource %s doesn't match target pattern %v", resourceName.String(), targetPattern)
-	}
-
-	// Check if the individual entities match
-	switch targetPatternName.(type) {
+	switch tp := targetPatternName.(type) {
 	case patterns.SpecName:
-		// type casting because we need access to "Name" field of patterns.SpecName to compare specific IDs
-		specPattern := targetPatternName.(patterns.SpecName)
-		specResource := resourceName.(patterns.SpecName)
+		// Check if targetPattern and resourceName match in type
+		r, ok := resourceName.(patterns.SpecName)
+		if !ok {
+			return fmt.Errorf("resource %s doesn't match target pattern %s", r, tp)
+		}
 
-		if specPattern.Name.ApiID != "-" && specPattern.Name.ApiID != specResource.Name.ApiID {
+		// Check if the individual entities match
+		if tp.Name.ApiID != "-" && tp.Name.ApiID != r.Name.ApiID {
 			return fmt.Errorf("api mismatch in resource %s and target pattern %v", resourceName.String(), targetPattern)
 		}
-		if specPattern.Name.VersionID != "-" && specPattern.Name.VersionID != specResource.Name.VersionID {
+		if tp.Name.VersionID != "-" && tp.Name.VersionID != r.Name.VersionID {
 			return fmt.Errorf("version mismatch in resource %s and target pattern %v", resourceName.String(), targetPattern)
 		}
-		if specPattern.Name.SpecID != "-" && specPattern.Name.SpecID != specResource.Name.SpecID {
+		if tp.Name.SpecID != "-" && tp.Name.SpecID != r.Name.SpecID {
 			return fmt.Errorf("spec mismatch in resource %s and target pattern %v", resourceName.String(), targetPattern)
 		}
 	case patterns.VersionName:
-		// type casting because we need access to "Name" field of patterns.VersionName to compare specific IDs
-		versionPattern := targetPatternName.(patterns.VersionName)
-		versionResource := resourceName.(patterns.VersionName)
+		// Check if targetPattern and resourceName match in type
+		r, ok := resourceName.(patterns.VersionName)
+		if !ok {
+			return fmt.Errorf("resource %s doesn't match target pattern %s", r, tp)
+		}
 
-		if versionPattern.Name.ApiID != "-" && versionPattern.Name.ApiID != versionResource.Name.ApiID {
+		// Check if the individual entities match
+		if tp.Name.ApiID != "-" && tp.Name.ApiID != r.Name.ApiID {
 			return fmt.Errorf("api mismatch in resource %s and target pattern %v", resourceName.String(), targetPattern)
 		}
-		if versionPattern.Name.VersionID != "-" && versionPattern.Name.VersionID != versionResource.Name.VersionID {
+		if tp.Name.VersionID != "-" && tp.Name.VersionID != r.Name.VersionID {
 			return fmt.Errorf("version mismatch in resource %s and target pattern %v", resourceName.String(), targetPattern)
 		}
 	case patterns.ApiName:
-		// type casting because we need access to "Name" field of patterns.ApiName to compare specific IDs
-		apiPattern := targetPatternName.(patterns.ApiName)
-		apiResource := resourceName.(patterns.ApiName)
+		// Check if targetPattern and resourceName match in type
+		r, ok := resourceName.(patterns.ApiName)
+		if !ok {
+			return fmt.Errorf("resource %s doesn't match target pattern %s", r, tp)
+		}
 
-		if apiPattern.Name.ApiID != "-" && apiPattern.Name.ApiID != apiResource.Name.ApiID {
+		// Check if the individual entities match
+		if tp.Name.ApiID != "-" && tp.Name.ApiID != r.Name.ApiID {
 			return fmt.Errorf("api mismatch in resource %s and target pattern %v", resourceName.String(), targetPattern)
 		}
 	default:
@@ -235,7 +239,7 @@ func processScoreType(definition *rpc.ScoreDefinition, scoreValue interface{}, p
 		} else if floatVal, ok := scoreValue.(float64); ok {
 			value = int32(floatVal)
 		} else {
-			return nil, fmt.Errorf("failed typecheck for output: expected either int or float64 got %s", scoreValue)
+			return nil, fmt.Errorf("failed typecheck for output: expected either int or float64 got %s (type: %T)", scoreValue, scoreValue)
 		}
 
 		// Check that the scoreValue is within min/max limits
@@ -277,7 +281,7 @@ func processScoreType(definition *rpc.ScoreDefinition, scoreValue interface{}, p
 		} else if floatVal, ok := scoreValue.(float64); ok {
 			value = float32(floatVal)
 		} else {
-			return nil, fmt.Errorf("failed typecheck for output: expected either int or float64 got %s", scoreValue)
+			return nil, fmt.Errorf("failed typecheck for output: expected either int or float64 got %s (type: %T)", scoreValue, scoreValue)
 		}
 
 		// Check that the scoreValue is within min/max limits
@@ -311,20 +315,13 @@ func processScoreType(definition *rpc.ScoreDefinition, scoreValue interface{}, p
 			return nil, fmt.Errorf("failed typecheck for output: expected bool")
 		}
 
-		displayValue := ""
-
-		if boolVal {
-			if configuredDisplay := definition.GetBoolean().GetDisplayTrue(); len(configuredDisplay) > 0 {
-				displayValue = configuredDisplay
-			} else {
-				displayValue = "true"
-			}
+		var displayValue string
+		if t := definition.GetBoolean().GetDisplayTrue(); boolVal && t != "" {
+			displayValue = t
+		} else if f := definition.GetBoolean().GetDisplayFalse(); !boolVal && f != "" {
+			displayValue = f
 		} else {
-			if configuredDisplay := definition.GetBoolean().GetDisplayFalse(); len(configuredDisplay) > 0 {
-				displayValue = configuredDisplay
-			} else {
-				displayValue = "false"
-			}
+			displayValue = strconv.FormatBool(boolVal)
 		}
 
 		// Populate Value field in Score proto
