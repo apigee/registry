@@ -15,7 +15,6 @@
 package controller
 
 import (
-	"context"
 	"fmt"
 	"regexp"
 	"strings"
@@ -24,7 +23,7 @@ import (
 	"github.com/apigee/registry/rpc"
 )
 
-func ValidateManifest(ctx context.Context, parent string, manifest *rpc.Manifest) []error {
+func ValidateManifest(parent string, manifest *rpc.Manifest) []error {
 	totalErrors := make([]error, 0)
 	for _, resource := range manifest.GeneratedResources {
 		errs := validateGeneratedResourceEntry(parent, resource)

@@ -40,7 +40,7 @@ func ProcessManifest(
 
 	var actions []*Action
 	//Check for errors in manifest
-	errs := ValidateManifest(ctx, fmt.Sprintf("projects/%s", projectID), manifest)
+	errs := ValidateManifest(fmt.Sprintf("projects/%s", projectID), manifest)
 	if len(errs) > 0 {
 		for _, err := range errs {
 			log.FromContext(ctx).WithError(err).Debugf("Error in manifest")
@@ -201,7 +201,6 @@ func generateUpdateActions(
 			targetResource.UpdateTimestamp(),
 			dependencyMaps,
 			generatedResource,
-			false,
 		)
 
 		if err != nil {
@@ -337,8 +336,7 @@ func needsUpdate(
 	targetResourceName patterns.ResourceName,
 	targetResourceTime time.Time,
 	dependencyMaps []map[string]time.Time,
-	generatedResource *rpc.GeneratedResource,
-	createMode bool) (bool, error) {
+	generatedResource *rpc.GeneratedResource) (bool, error) {
 	for i, dependency := range generatedResource.Dependencies {
 		dMap := dependencyMaps[i]
 		// Get the entity to look for in dependencyMap

@@ -80,7 +80,7 @@ func protosCommand() *cobra.Command {
 					log.FromContext(ctx).WithError(err).Fatal("Invalid path")
 				}
 
-				if err := scanDirectoryForProtos(ctx, client, projectID, baseURI, path, taskQueue); err != nil {
+				if err := scanDirectoryForProtos(client, projectID, baseURI, path, taskQueue); err != nil {
 					log.FromContext(ctx).WithError(err).Debug("Failed to walk directory")
 				}
 			}
@@ -91,7 +91,7 @@ func protosCommand() *cobra.Command {
 	return cmd
 }
 
-func scanDirectoryForProtos(ctx context.Context, client connection.Client, projectID, baseURI, root string, taskQueue chan<- core.Task) error {
+func scanDirectoryForProtos(client connection.Client, projectID, baseURI, root string, taskQueue chan<- core.Task) error {
 	return filepath.Walk(root, func(filepath string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err

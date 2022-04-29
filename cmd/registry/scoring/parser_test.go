@@ -1,7 +1,6 @@
 package scoring
 
 import (
-	"context"
 	"testing"
 
 	"github.com/apigee/registry/cmd/registry/patterns"
@@ -597,8 +596,7 @@ func TestValidateScoreDefinition(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			ctx := context.Background()
-			gotErrs := ValidateScoreDefinition(ctx, test.parent, test.scoreDefinition)
+			gotErrs := ValidateScoreDefinition(test.parent, test.scoreDefinition)
 			if len(gotErrs) != test.wantNumErr {
 				t.Errorf("ValidateScoreDefinition(%s, %v) returned unexpected no. of errors: want %d, got %s", test.parent, test.scoreDefinition, test.wantNumErr, gotErrs)
 			}
@@ -1534,8 +1532,7 @@ func TestValidateScoreCardDefinition(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			ctx := context.Background()
-			gotErrs := ValidateScoreCardDefinition(ctx, test.parent, test.scoreCardDefinition)
+			gotErrs := ValidateScoreCardDefinition(test.parent, test.scoreCardDefinition)
 			if len(gotErrs) != test.wantNumErr {
 				t.Errorf("ValidateScoreCardDefinition(%s, %v) returned unexpected no. of errors: want %d, got %s", test.parent, test.scoreCardDefinition, test.wantNumErr, gotErrs)
 			}

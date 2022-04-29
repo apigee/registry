@@ -1,7 +1,6 @@
 package scoring
 
 import (
-	"context"
 	"fmt"
 	"sort"
 	"strings"
@@ -11,7 +10,7 @@ import (
 	"github.com/apigee/registry/cmd/registry/patterns"
 )
 
-func ValidateScoreDefinition(ctx context.Context, parent string, scoreDefinition *rpc.ScoreDefinition) []error {
+func ValidateScoreDefinition(parent string, scoreDefinition *rpc.ScoreDefinition) []error {
 	totalErrs := make([]error, 0)
 
 	// target_resource.pattern should be a valid resource pattern
@@ -67,7 +66,7 @@ func ValidateScoreDefinition(ctx context.Context, parent string, scoreDefinition
 	return totalErrs
 }
 
-func ValidateScoreCardDefinition(ctx context.Context, parent string, scoreCardDefinition *rpc.ScoreCardDefinition) []error {
+func ValidateScoreCardDefinition(parent string, scoreCardDefinition *rpc.ScoreCardDefinition) []error {
 	totalErrs := make([]error, 0)
 
 	// target_resource.pattern should be a valid resource pattern
