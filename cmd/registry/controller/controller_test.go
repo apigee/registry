@@ -335,7 +335,6 @@ func TestAggregateArtifacts(t *testing.T) {
 			deleteProject(ctx, adminClient, t, "controller-test")
 		})
 	}
-
 }
 
 // Tests for derived artifacts with artifacts as dependencies
@@ -515,7 +514,6 @@ func TestDerivedArtifacts(t *testing.T) {
 			deleteProject(ctx, adminClient, t, "controller-test")
 		})
 	}
-
 }
 
 // Tests for receipt artifacts as generated resource
@@ -605,7 +603,6 @@ func TestReceiptArtifacts(t *testing.T) {
 			deleteProject(ctx, adminClient, t, "controller-test")
 		})
 	}
-
 }
 
 // Tests for receipt aggregate artifacts as generated resource
@@ -713,7 +710,6 @@ func TestReceiptAggArtifacts(t *testing.T) {
 			deleteProject(ctx, adminClient, t, "controller-test")
 		})
 	}
-
 }
 
 // Tests for manifest with multiple entity references
@@ -818,7 +814,6 @@ func TestMultipleEntitiesArtifacts(t *testing.T) {
 				// Version 1.1.0
 				createVersion(ctx, client, t, "projects/controller-test/locations/global/apis/petstore", "1.1.0")
 				createSpec(ctx, client, t, "projects/controller-test/locations/global/apis/petstore/versions/1.1.0", "openapi.yaml", gzipOpenAPIv3)
-
 			},
 			want: []*Action{
 				{
@@ -881,5 +876,4 @@ func TestMultipleEntitiesArtifacts(t *testing.T) {
 			deleteProject(ctx, adminClient, t, "controller-test")
 		})
 	}
-
 }

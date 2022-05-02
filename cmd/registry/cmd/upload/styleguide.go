@@ -29,7 +29,6 @@ import (
 )
 
 func readStyleGuideProto(filename string) (*rpc.StyleGuide, error) {
-
 	yamlBytes, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err

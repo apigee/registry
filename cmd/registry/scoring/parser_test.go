@@ -1308,7 +1308,6 @@ func TestValidateNumberThresholds(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func TestValidateBooleanThresholds(t *testing.T) {
@@ -1541,5 +1540,4 @@ func TestValidateScoreCardDefinition(t *testing.T) {
 			}
 		})
 	}
-
 }

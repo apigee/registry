@@ -47,7 +47,6 @@ func WorkerPool(ctx context.Context, n int) (chan<- Task, func()) {
 	}
 
 	return taskQueue, wait
-
 }
 
 // Similar to WorkerPool except it creates workers which log task errors as "Warnings"
@@ -65,7 +64,6 @@ func WorkerPoolWithWarnings(ctx context.Context, n int) (chan<- Task, func()) {
 	}
 
 	return taskQueue, wait
-
 }
 
 // A worker which pulls tasks from the taskQueue, executes them and logs errors if any.
