@@ -374,6 +374,37 @@ func TestProcessScoreFormulaError(t *testing.T) {
 			},
 		},
 		{
+			desc: "unsupported artifact type",
+			setup: func(ctx context.Context, client connection.Client, adminClient connection.AdminClient) {
+				deleteProject(ctx, adminClient, t, "score-formula-test")
+				createProject(ctx, adminClient, t, "score-formula-test")
+				createApi(ctx, client, t, "projects/score-formula-test/locations/global", "petstore")
+				createVersion(ctx, client, t, "projects/score-formula-test/locations/global/apis/petstore", "1.0.0")
+				createSpec(ctx, client, t, "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
+				artifactBytes, _ := proto.Marshal(&rpc.ScoreDefinition{
+					Id:             "dummy-score-definition",
+					TargetResource: &rpc.ResourcePattern{},
+					Formula:        nil,
+					Type:           nil,
+				})
+				createUpdateArtifact(
+					ctx, client, t,
+					"projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs//openapi.yaml/artifacts/score-definition",
+					artifactBytes, "application/octet-stream;type=google.cloud.apigeeregistry.applications.v1alpha1.ScoreDefinition")
+			},
+			formula: &rpc.ScoreFormula{},
+			resource: patterns.SpecResource{
+				SpecName: patterns.SpecName{
+					Name: names.Spec{
+						ProjectID: "score-formula-test",
+						ApiID:     "petstore",
+						VersionID: "1.0.0",
+						SpecID:    "openapi.yaml",
+					},
+				},
+			},
+		},
+		{
 			desc: "invalid expression",
 			setup: func(ctx context.Context, client connection.Client, adminClient connection.AdminClient) {
 				deleteProject(ctx, adminClient, t, "score-formula-test")

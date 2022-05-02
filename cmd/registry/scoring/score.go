@@ -198,8 +198,14 @@ func processScoreFormula(
 
 	// TODO: Add timestamp check. Compute the score only if the artifact has an update since the last score calculation
 
+	// Convert artifact contents to map[string]interface{}
+	artifactMap, err := getMap(contents, mimeType)
+	if err != nil {
+		return nil, err
+	}
+
 	// Apply the score_expression
-	value, err := evaluateScoreExpression(formula.GetScoreExpression(), mimeType, contents)
+	value, err := evaluateScoreExpression(formula.GetScoreExpression(), artifactMap)
 	if err != nil {
 		return nil, err
 	}
