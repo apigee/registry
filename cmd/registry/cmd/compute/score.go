@@ -14,8 +14,8 @@ import (
 
 func scoreCommand() *cobra.Command {
 	return &cobra.Command{
-		Use:   "score (experimental)",
-		Short: "Compute score from ScoreDefinition",
+		Use:   "score (wip)",
+		Short: "Compute scores for APIs and API specs",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := cmd.Context()
