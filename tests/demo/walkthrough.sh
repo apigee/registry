@@ -38,7 +38,7 @@ apg registry create-api \
     --parent projects/demo/locations/global \
     --api_id petstore \
     --api.availability GENERAL \
-    --api.recommended_version "1.0.0" \
+    --api.recommended_version "projects/demo/locations/global/apis/petstore/versions/1.0.0" \
     --json
 
 echo
@@ -212,6 +212,6 @@ apg registry create-artifact \
     --json
 
 echo
-echo Export a YAML summary of the demo project.
-registry export yaml projects/demo > demo.yaml
-cat demo.yaml
+echo Export a YAML description of the demo project.
+registry export yaml projects/demo
+cat demo/apis/petstore.yaml
