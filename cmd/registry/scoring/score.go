@@ -43,7 +43,6 @@ func FetchScoreDefinitions(
 	listFilter := fmt.Sprintf("mime_type == %q", patch.ScoreDefinitionMimeType)
 	err = core.ListArtifacts(ctx, client, artifact, listFilter, true,
 		func(artifact *rpc.Artifact) error {
-
 			definition := &rpc.ScoreDefinition{}
 			if err := proto.Unmarshal(artifact.GetContents(), definition); err != nil {
 				return err
@@ -128,7 +127,6 @@ func CalculateScore(
 	client connection.Client,
 	definition *rpc.ScoreDefinition,
 	resource patterns.ResourceInstance) error {
-
 	project := fmt.Sprintf("%s/locations/global", resource.ResourceName().Project())
 
 	// evaluate the expression and return a scoreValue
@@ -151,7 +149,6 @@ func CalculateScore(
 	}
 
 	return nil
-
 }
 
 func processFormula(
@@ -159,7 +156,6 @@ func processFormula(
 	client connection.Client,
 	definition *rpc.ScoreDefinition,
 	resource patterns.ResourceInstance) (interface{}, error) {
-
 	// Apply score formula
 	switch formula := definition.GetFormula().(type) {
 	case *rpc.ScoreDefinition_ScoreFormula:
@@ -179,7 +175,6 @@ func processScoreFormula(
 	client connection.Client,
 	formula *rpc.ScoreFormula,
 	resource patterns.ResourceInstance) (interface{}, error) {
-
 	// Fetch the artifact
 	extendedArtifact, err := patterns.SubstituteReferenceEntity(formula.GetArtifact().GetPattern(), resource.ResourceName())
 	if err != nil {
@@ -213,7 +208,6 @@ func processScoreFormula(
 }
 
 func processScoreType(definition *rpc.ScoreDefinition, scoreValue interface{}, project string) (*rpc.Score, error) {
-
 	// Initialize Score proto
 	score := &rpc.Score{
 		Id:             fmt.Sprintf("score-%s", definition.GetId()),
@@ -303,7 +297,6 @@ func processScoreType(definition *rpc.ScoreDefinition, scoreValue interface{}, p
 
 		// Populate the severity field according to Thresholds
 		for _, t := range definition.GetPercent().GetThresholds() {
-
 			if value >= float32(t.GetRange().GetMin()) && value <= float32(t.GetRange().GetMax()) {
 				score.Severity = t.GetSeverity()
 				break
@@ -346,7 +339,6 @@ func processScoreType(definition *rpc.ScoreDefinition, scoreValue interface{}, p
 }
 
 func uploadScore(ctx context.Context, client connection.Client, resource patterns.ResourceInstance, score *rpc.Score) error {
-
 	artifactBytes, err := proto.Marshal(score)
 	if err != nil {
 		return err

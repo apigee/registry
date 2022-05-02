@@ -27,7 +27,6 @@ import (
 )
 
 func evaluateScoreExpression(expression, mimeType string, contents []byte) (interface{}, error) {
-
 	// https://github.com/google/cel-spec/blob/master/doc/langdef.md#dynamic-values
 	structProto, err := getMap(contents, mimeType)
 	if err != nil {

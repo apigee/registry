@@ -286,7 +286,6 @@ func TestProcessScoreFormula(t *testing.T) {
 	if gotValue != nil && wantValue != gotValue {
 		t.Errorf("processScoreFormula() returned unexpected value, want: %v, got: %v", wantValue, gotValue)
 	}
-
 }
 
 func TestProcessScoreFormulaError(t *testing.T) {
@@ -443,7 +442,6 @@ func TestProcessScoreFormulaError(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func TestProcessScoreType(t *testing.T) {
@@ -561,7 +559,6 @@ func TestProcessScoreType(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-
 			gotScore, gotErr := processScoreType(test.definition, test.scoreValue, "projects/score-type-test/locations/global")
 			if gotErr != nil {
 				t.Errorf("processScoreType() returned unexpected error: %s", gotErr)
@@ -573,7 +570,6 @@ func TestProcessScoreType(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func TestProcessScoreTypeError(t *testing.T) {
@@ -620,13 +616,10 @@ func TestProcessScoreTypeError(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-
 			_, gotErr := processScoreType(test.definition, test.scoreValue, "projects/score-type-test/locations/global")
 			if gotErr == nil {
 				t.Errorf("expected processScoreType() to return an error")
 			}
-
 		})
 	}
-
 }
