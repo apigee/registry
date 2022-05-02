@@ -73,7 +73,6 @@ func TestGenerateCommand(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func TestGenerateCommandError(t *testing.T) {
@@ -107,7 +106,6 @@ func TestGenerateCommandError(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func TestValidateGeneratedResourceEntry(t *testing.T) {

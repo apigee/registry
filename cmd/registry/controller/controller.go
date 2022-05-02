@@ -37,7 +37,6 @@ func ProcessManifest(
 	client connection.Client,
 	projectID string,
 	manifest *rpc.Manifest) []*Action {
-
 	var actions []*Action
 	//Check for errors in manifest
 	errs := ValidateManifest(ctx, fmt.Sprintf("projects/%s", projectID), manifest)
@@ -142,7 +141,6 @@ func generateDependencyMap(
 	}
 
 	return sourceMap, nil
-
 }
 
 func generateActions(
@@ -170,7 +168,6 @@ func generateActions(
 	}
 
 	return actions
-
 }
 
 // Go over the list of existing target resources to figure out which ones need an update.
@@ -181,7 +178,6 @@ func generateUpdateActions(
 	filter string,
 	dependencyMaps []map[string]time.Time,
 	generatedResource *rpc.GeneratedResource) ([]*Action, map[string]bool, error) {
-
 	// Visited tracks the parents of target resources which were already generated.
 	visited := make(map[string]bool)
 	actions := make([]*Action, 0)
@@ -221,7 +217,6 @@ func generateUpdateActions(
 			}
 			actions = append(actions, a)
 		}
-
 	}
 
 	return actions, visited, nil
@@ -259,7 +254,6 @@ func generateCreateActions(
 	dependencyMaps []map[string]time.Time,
 	generatedResource *rpc.GeneratedResource,
 	visited map[string]bool) ([]*Action, error) {
-
 	var parentList []patterns.ResourceInstance
 
 	parsedResourcePattern, err := patterns.ParseResourcePattern(resourcePattern)
