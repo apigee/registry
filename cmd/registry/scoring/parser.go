@@ -43,9 +43,15 @@ func ValidateScoreDefinition(ctx context.Context, parent string, scoreDefinition
 			errs := validateScoreFormula(targetName, formula.ScoreFormula)
 			totalErrs = append(totalErrs, errs...)
 		case *rpc.ScoreDefinition_RollupFormula:
+			if len(formula.RollupFormula.GetScoreFormulas()) == 0 {
+				totalErrs = append(totalErrs, fmt.Errorf("missing rollup_formula.score_formulas"))
+			}
 			for _, scoreFormula := range formula.RollupFormula.GetScoreFormulas() {
 				errs := validateScoreFormula(targetName, scoreFormula)
 				totalErrs = append(totalErrs, errs...)
+			}
+			if formula.RollupFormula.GetRollupExpression() == "" {
+				totalErrs = append(totalErrs, fmt.Errorf("missing rollup_formula.rollup_expression"))
 			}
 		default:
 			totalErrs = append(totalErrs, fmt.Errorf("missing formula, either 'score_formula' or 'rollup_formula' should be set"))
@@ -146,6 +152,10 @@ func validateScoreFormula(targetName patterns.ResourceName, scoreFormula *rpc.Sc
 	// Should not end with a "-"
 	if strings.HasSuffix(pattern, "/-") {
 		errs = append(errs, fmt.Errorf("invalid score_formula.artifact.pattern : %q, it should end with a resourceID and not a \"-\"", pattern))
+	}
+
+	if scoreFormula.GetScoreExpression() == "" {
+		errs = append(errs, fmt.Errorf("missing score_formula.score_expression"))
 	}
 
 	return errs
