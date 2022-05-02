@@ -45,7 +45,6 @@ func parseResource(resourcePattern string) (ResourceName, error) {
 }
 
 func ParseResourcePattern(resourcePattern string) (ResourceName, error) {
-
 	// First try to match resource collections.
 	resource, err := parseResourceCollection(resourcePattern)
 	if err == nil {
@@ -97,7 +96,6 @@ func SubstituteReferenceEntity(resourcePattern string, referred ResourceName) (R
 		return nil, err
 	}
 	return extendedName, nil
-
 }
 
 func GetReferenceEntityType(resourcePattern string) (entity, entityType string, err error) {
@@ -172,7 +170,6 @@ func GetReferenceEntityValue(resourcePattern string, referred ResourceName) (str
 	default:
 		return "", fmt.Errorf("invalid combination referred: %q resourcePattern: %q", referred, resourcePattern)
 	}
-
 }
 
 func FullResourceNameFromParent(resourcePattern string, parent string) (ResourceName, error) {

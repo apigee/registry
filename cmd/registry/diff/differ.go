@@ -165,7 +165,6 @@ func searchMapType(mapNode reflect.Value, diffProto *rpc.Diff, changePath *chang
 		default:
 			return fmt.Errorf("map node key %v is not supported", childNodeKey)
 		}
-
 	}
 	return nil
 }

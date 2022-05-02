@@ -60,7 +60,6 @@ func matchAndHandleListCmd(
 	name string,
 	filter string,
 ) error {
-
 	// First try to match collection names.
 	if project, err := names.ParseProjectCollection(name); err == nil {
 		return core.ListProjects(ctx, adminClient, project, filter, core.PrintProject)

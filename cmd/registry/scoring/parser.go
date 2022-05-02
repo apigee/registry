@@ -94,7 +94,6 @@ func ValidateScoreCardDefinition(parent string, scoreCardDefinition *rpc.ScoreCa
 			if strings.HasSuffix(pattern, "/-") {
 				totalErrs = append(totalErrs, fmt.Errorf("invalid score_pattern : %q, it should end with a resourceID and not a \"-\"", pattern))
 			}
-
 		}
 	}
 
@@ -138,7 +137,6 @@ func validateScoreFormula(targetName patterns.ResourceName, scoreFormula *rpc.Sc
 }
 
 func validateNumberThresholds(thresholds []*rpc.NumberThreshold, minValue, maxValue int32) []error {
-
 	if len(thresholds) == 0 {
 		// no error returned since thresholds are optional
 		return []error{}

@@ -594,5 +594,4 @@ func TestPreExistingConformanceReport(t *testing.T) {
 	if !cmp.Equal(wantReport, preexistingReport, opts) {
 		t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(wantReport, preexistingReport, opts))
 	}
-
 }
