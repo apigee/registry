@@ -23,104 +23,32 @@ import (
 const TaxonomyListMimeType = "application/octet-stream;type=google.cloud.apigeeregistry.v1.apihub.TaxonomyList"
 
 type TaxonomyListData struct {
-	DisplayName string     `yaml:"displayName,omitempty"`
-	Description string     `yaml:"description,omitempty"`
-	Taxonomies  []Taxonomy `yaml:"taxonomies"`
+	DisplayName string      `yaml:"displayName,omitempty"`
+	Description string      `yaml:"description,omitempty"`
+	Taxonomies  []*Taxonomy `yaml:"taxonomies"`
 }
 
-func (a *TaxonomyListData) GetMimeType() string {
+func (d *TaxonomyListData) mimeType() string {
 	return TaxonomyListMimeType
 }
 
-type Taxonomy struct {
-	ID              string            `yaml:"id"`
-	DisplayName     string            `yaml:"displayName,omitempty"`
-	Description     string            `yaml:"description,omitempty"`
-	AdminApplied    bool              `yaml:"adminApplied,omitempty"`
-	SingleSelection bool              `yaml:"singleSelection,omitempty"`
-	SearchExcluded  bool              `yaml:"searchExcluded,omitempty"`
-	SystemManaged   bool              `yaml:"systemManaged,omitempty"`
-	DisplayOrder    int               `yaml:"displayOrder"`
-	Elements        []TaxonomyElement `yaml:"elements"`
-}
-
-type TaxonomyElement struct {
-	ID          string `yaml:"id"`
-	DisplayName string `yaml:"displayName,omitempty"`
-	Description string `yaml:"description,omitempty"`
-}
-
-func (l *TaxonomyListData) GetMessage() proto.Message {
+func (d *TaxonomyListData) buildMessage() proto.Message {
 	return &rpc.TaxonomyList{
-		DisplayName: l.DisplayName,
-		Description: l.Description,
-		Taxonomies:  l.taxonomies(),
+		DisplayName: d.DisplayName,
+		Description: d.Description,
+		Taxonomies:  buildTaxonomiesProto(d),
 	}
 }
 
-func (l *TaxonomyListData) taxonomies() []*rpc.TaxonomyList_Taxonomy {
-	taxonomies := make([]*rpc.TaxonomyList_Taxonomy, 0)
-	for _, t := range l.Taxonomies {
-		taxonomies = append(taxonomies,
-			&rpc.TaxonomyList_Taxonomy{
-				Id:              t.ID,
-				DisplayName:     t.DisplayName,
-				Description:     t.Description,
-				AdminApplied:    t.AdminApplied,
-				SingleSelection: t.SingleSelection,
-				SearchExcluded:  t.SearchExcluded,
-				SystemManaged:   t.SystemManaged,
-				DisplayOrder:    int32(t.DisplayOrder),
-				Elements:        t.elements(),
-			},
-		)
-	}
-	return taxonomies
-}
-
-func (t *Taxonomy) elements() []*rpc.TaxonomyList_Taxonomy_Element {
-	elements := make([]*rpc.TaxonomyList_Taxonomy_Element, 0)
-	for _, e := range t.Elements {
-		elements = append(elements, &rpc.TaxonomyList_Taxonomy_Element{
-			Id:          e.ID,
-			DisplayName: e.DisplayName,
-			Description: e.Description,
-		})
-	}
-	return elements
-}
-
-func newTaxonomyList(message *rpc.Artifact) (*Artifact, error) {
-	artifactName, err := names.ParseArtifact(message.Name)
+func buildTaxonomyListArtifact(a *rpc.Artifact) (*Artifact, error) {
+	artifactName, err := names.ParseArtifact(a.Name)
 	if err != nil {
 		return nil, err
 	}
-	value := &rpc.TaxonomyList{}
-	err = proto.Unmarshal(message.Contents, value)
+	m := &rpc.TaxonomyList{}
+	err = proto.Unmarshal(a.Contents, m)
 	if err != nil {
 		return nil, err
-	}
-	taxonomies := make([]Taxonomy, len(value.Taxonomies))
-	for i, t := range value.Taxonomies {
-		elements := make([]TaxonomyElement, len(t.Elements))
-		for j, e := range t.Elements {
-			elements[j] = TaxonomyElement{
-				ID:          e.Id,
-				DisplayName: e.DisplayName,
-				Description: e.Description,
-			}
-		}
-		taxonomies[i] = Taxonomy{
-			ID:              t.Id,
-			DisplayName:     t.DisplayName,
-			Description:     t.Description,
-			AdminApplied:    t.AdminApplied,
-			SingleSelection: t.SingleSelection,
-			SearchExcluded:  t.SearchExcluded,
-			SystemManaged:   t.SystemManaged,
-			DisplayOrder:    int(t.DisplayOrder),
-			Elements:        elements,
-		}
 	}
 	return &Artifact{
 		Header: Header{
@@ -131,9 +59,87 @@ func newTaxonomyList(message *rpc.Artifact) (*Artifact, error) {
 			},
 		},
 		Data: &TaxonomyListData{
-			DisplayName: value.DisplayName,
-			Description: value.Description,
-			Taxonomies:  taxonomies,
+			DisplayName: m.DisplayName,
+			Description: m.Description,
+			Taxonomies:  buildTaxonomiesData(m),
 		},
 	}, nil
+}
+
+type Taxonomy struct {
+	ID              string             `yaml:"id"`
+	DisplayName     string             `yaml:"displayName,omitempty"`
+	Description     string             `yaml:"description,omitempty"`
+	AdminApplied    bool               `yaml:"adminApplied,omitempty"`
+	SingleSelection bool               `yaml:"singleSelection,omitempty"`
+	SearchExcluded  bool               `yaml:"searchExcluded,omitempty"`
+	SystemManaged   bool               `yaml:"systemManaged,omitempty"`
+	DisplayOrder    int                `yaml:"displayOrder"`
+	Elements        []*TaxonomyElement `yaml:"elements"`
+}
+
+func buildTaxonomiesProto(d *TaxonomyListData) []*rpc.TaxonomyList_Taxonomy {
+	a := make([]*rpc.TaxonomyList_Taxonomy, len(d.Taxonomies))
+	for i, v := range d.Taxonomies {
+		a[i] = &rpc.TaxonomyList_Taxonomy{
+			Id:              v.ID,
+			DisplayName:     v.DisplayName,
+			Description:     v.Description,
+			AdminApplied:    v.AdminApplied,
+			SingleSelection: v.SingleSelection,
+			SearchExcluded:  v.SearchExcluded,
+			SystemManaged:   v.SystemManaged,
+			DisplayOrder:    int32(v.DisplayOrder),
+			Elements:        buildTaxonomyElementsProto(v),
+		}
+	}
+	return a
+}
+
+func buildTaxonomiesData(value *rpc.TaxonomyList) []*Taxonomy {
+	a := make([]*Taxonomy, len(value.Taxonomies))
+	for i, v := range value.Taxonomies {
+		a[i] = &Taxonomy{
+			ID:              v.Id,
+			DisplayName:     v.DisplayName,
+			Description:     v.Description,
+			AdminApplied:    v.AdminApplied,
+			SingleSelection: v.SingleSelection,
+			SearchExcluded:  v.SearchExcluded,
+			SystemManaged:   v.SystemManaged,
+			DisplayOrder:    int(v.DisplayOrder),
+			Elements:        buildTaxonomyElementsData(v),
+		}
+	}
+	return a
+}
+
+type TaxonomyElement struct {
+	ID          string `yaml:"id"`
+	DisplayName string `yaml:"displayName,omitempty"`
+	Description string `yaml:"description,omitempty"`
+}
+
+func buildTaxonomyElementsProto(t *Taxonomy) []*rpc.TaxonomyList_Taxonomy_Element {
+	a := make([]*rpc.TaxonomyList_Taxonomy_Element, len(t.Elements))
+	for i, v := range t.Elements {
+		a[i] = &rpc.TaxonomyList_Taxonomy_Element{
+			Id:          v.ID,
+			DisplayName: v.DisplayName,
+			Description: v.Description,
+		}
+	}
+	return a
+}
+
+func buildTaxonomyElementsData(t *rpc.TaxonomyList_Taxonomy) []*TaxonomyElement {
+	a := make([]*TaxonomyElement, len(t.Elements))
+	for i, v := range t.Elements {
+		a[i] = &TaxonomyElement{
+			ID:          v.Id,
+			DisplayName: v.DisplayName,
+			Description: v.Description,
+		}
+	}
+	return a
 }

@@ -22,88 +22,32 @@ import (
 
 const ManifestMimeType = "application/octet-stream;type=google.cloud.apigeeregistry.v1.controller.Manifest"
 
-type ManifestDependency struct {
-	Pattern string `yaml:"pattern"`
-	Filter  string `yaml:"filter,omitempty"`
-}
-
-type ManifestGeneratedResource struct {
-	Pattern      string                `yaml:"pattern"`
-	Filter       string                `yaml:"filter,omitempty"`
-	Receipt      bool                  `yaml:"receipt,omitempty"`
-	Dependencies []*ManifestDependency `yaml:"dependencies"`
-	Action       string                `yaml:"action"`
-}
-
 type ManifestData struct {
 	DisplayName        string                       `yaml:"displayName,omitempty"`
 	Description        string                       `yaml:"description,omitempty"`
 	GeneratedResources []*ManifestGeneratedResource `yaml:"generatedResources"`
 }
 
-func (a *ManifestData) GetMimeType() string {
+func (d *ManifestData) mimeType() string {
 	return ManifestMimeType
 }
 
-func (m *ManifestData) GetMessage() proto.Message {
+func (d *ManifestData) buildMessage() proto.Message {
 	return &rpc.Manifest{
-		DisplayName:        m.DisplayName,
-		Description:        m.Description,
-		GeneratedResources: m.generatedResources(),
+		DisplayName:        d.DisplayName,
+		Description:        d.Description,
+		GeneratedResources: buildManifestGeneratedResourcesProto(d),
 	}
 }
 
-func (m *ManifestData) generatedResources() []*rpc.GeneratedResource {
-	v := make([]*rpc.GeneratedResource, 0)
-	for _, g := range m.GeneratedResources {
-		v = append(v, &rpc.GeneratedResource{
-			Pattern:      g.Pattern,
-			Filter:       g.Filter,
-			Receipt:      g.Receipt,
-			Dependencies: g.dependencies(),
-			Action:       g.Action,
-		})
-	}
-	return v
-}
-
-func (g *ManifestGeneratedResource) dependencies() []*rpc.Dependency {
-	v := make([]*rpc.Dependency, 0)
-	for _, d := range g.Dependencies {
-		v = append(v, &rpc.Dependency{
-			Pattern: d.Pattern,
-			Filter:  d.Filter,
-		})
-	}
-	return v
-}
-
-func newManifest(message *rpc.Artifact) (*Artifact, error) {
-	artifactName, err := names.ParseArtifact(message.Name)
+func buildManifestArtifact(a *rpc.Artifact) (*Artifact, error) {
+	artifactName, err := names.ParseArtifact(a.Name)
 	if err != nil {
 		return nil, err
 	}
-	value := &rpc.Manifest{}
-	err = proto.Unmarshal(message.Contents, value)
-	if err != nil {
+	m := &rpc.Manifest{}
+	if err = proto.Unmarshal(a.Contents, m); err != nil {
 		return nil, err
-	}
-	generatedResources := make([]*ManifestGeneratedResource, len(value.GeneratedResources))
-	for i, g := range value.GeneratedResources {
-		dependencies := make([]*ManifestDependency, len(g.Dependencies))
-		for j, d := range g.Dependencies {
-			dependencies[j] = &ManifestDependency{
-				Pattern: d.Pattern,
-				Filter:  d.Filter,
-			}
-		}
-		generatedResources[i] = &ManifestGeneratedResource{
-			Pattern:      g.Pattern,
-			Filter:       g.Filter,
-			Receipt:      g.Receipt,
-			Dependencies: dependencies,
-			Action:       g.Action,
-		}
 	}
 	return &Artifact{
 		Header: Header{
@@ -114,9 +58,72 @@ func newManifest(message *rpc.Artifact) (*Artifact, error) {
 			},
 		},
 		Data: &ManifestData{
-			DisplayName:        value.DisplayName,
-			Description:        value.Description,
-			GeneratedResources: generatedResources,
+			DisplayName:        m.DisplayName,
+			Description:        m.Description,
+			GeneratedResources: buildManifestGeneratedResourcesData(m),
 		},
 	}, nil
+}
+
+type ManifestGeneratedResource struct {
+	Pattern      string                `yaml:"pattern"`
+	Filter       string                `yaml:"filter,omitempty"`
+	Receipt      bool                  `yaml:"receipt,omitempty"`
+	Dependencies []*ManifestDependency `yaml:"dependencies"`
+	Action       string                `yaml:"action"`
+}
+
+func buildManifestGeneratedResourcesProto(d *ManifestData) []*rpc.GeneratedResource {
+	a := make([]*rpc.GeneratedResource, len(d.GeneratedResources))
+	for i, v := range d.GeneratedResources {
+		a[i] = &rpc.GeneratedResource{
+			Pattern:      v.Pattern,
+			Filter:       v.Filter,
+			Receipt:      v.Receipt,
+			Dependencies: buildDependenciesProto(v),
+			Action:       v.Action,
+		}
+	}
+	return a
+}
+
+func buildManifestGeneratedResourcesData(m *rpc.Manifest) []*ManifestGeneratedResource {
+	a := make([]*ManifestGeneratedResource, len(m.GeneratedResources))
+	for i, v := range m.GeneratedResources {
+		a[i] = &ManifestGeneratedResource{
+			Pattern:      v.Pattern,
+			Filter:       v.Filter,
+			Receipt:      v.Receipt,
+			Dependencies: buildDependenciesData(v),
+			Action:       v.Action,
+		}
+	}
+	return a
+}
+
+type ManifestDependency struct {
+	Pattern string `yaml:"pattern"`
+	Filter  string `yaml:"filter,omitempty"`
+}
+
+func buildDependenciesProto(d *ManifestGeneratedResource) []*rpc.Dependency {
+	a := make([]*rpc.Dependency, len(d.Dependencies))
+	for i, v := range d.Dependencies {
+		a[i] = &rpc.Dependency{
+			Pattern: v.Pattern,
+			Filter:  v.Filter,
+		}
+	}
+	return a
+}
+
+func buildDependenciesData(m *rpc.GeneratedResource) []*ManifestDependency {
+	a := make([]*ManifestDependency, len(m.Dependencies))
+	for i, v := range m.Dependencies {
+		a[i] = &ManifestDependency{
+			Pattern: v.Pattern,
+			Filter:  v.Filter,
+		}
+	}
+	return a
 }

@@ -23,66 +23,31 @@ import (
 const ReferenceListMimeType = "application/octet-stream;type=google.cloud.apigeeregistry.v1.apihub.ReferenceList"
 
 type ReferenceListData struct {
-	DisplayName string      `yaml:"displayName,omitempty"`
-	Description string      `yaml:"description,omitempty"`
-	References  []Reference `yaml:"references"`
+	DisplayName string       `yaml:"displayName,omitempty"`
+	Description string       `yaml:"description,omitempty"`
+	References  []*Reference `yaml:"references"`
 }
 
-func (l *ReferenceListData) GetMimeType() string {
+func (d *ReferenceListData) mimeType() string {
 	return ReferenceListMimeType
 }
 
-type Reference struct {
-	ID          string `yaml:"id"`
-	DisplayName string `yaml:"displayName,omitempty"`
-	Category    string `yaml:"category,omitempty"`
-	Resource    string `yaml:"resource,omitempty"`
-	URI         string `uri:"displayName,omitempty"`
-}
-
-func (l *ReferenceListData) GetMessage() proto.Message {
+func (d *ReferenceListData) buildMessage() proto.Message {
 	return &rpc.ReferenceList{
-		DisplayName: l.DisplayName,
-		Description: l.Description,
-		References:  l.references(),
+		DisplayName: d.DisplayName,
+		Description: d.Description,
+		References:  buildReferenceListReferencesProto(d),
 	}
 }
 
-func (l *ReferenceListData) references() []*rpc.ReferenceList_Reference {
-	references := make([]*rpc.ReferenceList_Reference, 0)
-	for _, t := range l.References {
-		references = append(references,
-			&rpc.ReferenceList_Reference{
-				Id:          t.ID,
-				DisplayName: t.DisplayName,
-				Category:    t.Category,
-				Resource:    t.Resource,
-				Uri:         t.URI,
-			},
-		)
-	}
-	return references
-}
-
-func newReferenceList(message *rpc.Artifact) (*Artifact, error) {
-	artifactName, err := names.ParseArtifact(message.Name)
+func buildReferenceListArtifact(a *rpc.Artifact) (*Artifact, error) {
+	artifactName, err := names.ParseArtifact(a.Name)
 	if err != nil {
 		return nil, err
 	}
-	value := &rpc.ReferenceList{}
-	err = proto.Unmarshal(message.Contents, value)
-	if err != nil {
+	m := &rpc.ReferenceList{}
+	if err = proto.Unmarshal(a.Contents, m); err != nil {
 		return nil, err
-	}
-	refs := make([]Reference, len(value.References))
-	for i, ref := range value.References {
-		refs[i] = Reference{
-			ID:          ref.Id,
-			DisplayName: ref.DisplayName,
-			Category:    ref.Category,
-			Resource:    ref.Resource,
-			URI:         ref.Uri,
-		}
 	}
 	return &Artifact{
 		Header: Header{
@@ -93,9 +58,45 @@ func newReferenceList(message *rpc.Artifact) (*Artifact, error) {
 			},
 		},
 		Data: &ReferenceListData{
-			DisplayName: value.DisplayName,
-			Description: value.Description,
-			References:  refs,
+			DisplayName: m.DisplayName,
+			Description: m.Description,
+			References:  buildReferenceListReferencesData(m),
 		},
 	}, nil
+}
+
+type Reference struct {
+	ID          string `yaml:"id"`
+	DisplayName string `yaml:"displayName,omitempty"`
+	Category    string `yaml:"category,omitempty"`
+	Resource    string `yaml:"resource,omitempty"`
+	URI         string `uri:"displayName,omitempty"`
+}
+
+func buildReferenceListReferencesProto(d *ReferenceListData) []*rpc.ReferenceList_Reference {
+	a := make([]*rpc.ReferenceList_Reference, len(d.References))
+	for i, v := range d.References {
+		a[i] = &rpc.ReferenceList_Reference{
+			Id:          v.ID,
+			DisplayName: v.DisplayName,
+			Category:    v.Category,
+			Resource:    v.Resource,
+			Uri:         v.URI,
+		}
+	}
+	return a
+}
+
+func buildReferenceListReferencesData(m *rpc.ReferenceList) []*Reference {
+	a := make([]*Reference, len(m.References))
+	for i, v := range m.References {
+		a[i] = &Reference{
+			ID:          v.Id,
+			DisplayName: v.DisplayName,
+			Category:    v.Category,
+			Resource:    v.Resource,
+			URI:         v.Uri,
+		}
+	}
+	return a
 }

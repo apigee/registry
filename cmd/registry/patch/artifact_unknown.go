@@ -21,7 +21,7 @@ import (
 
 const UnknownArtifactMimeType = "application/octet-stream"
 
-func newUnknownArtifact(message *rpc.Artifact) (*Artifact, error) {
+func buildUnknownArtifact(message *rpc.Artifact) (*Artifact, error) {
 	artifactName, err := names.ParseArtifact(message.Name)
 	if err != nil {
 		return nil, err

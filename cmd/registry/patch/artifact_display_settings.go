@@ -29,27 +29,26 @@ type DisplaySettingsData struct {
 	ApiScoreEnabled bool   `yaml:"apiScoreEnabled"`
 }
 
-func (l *DisplaySettingsData) GetMimeType() string {
+func (d *DisplaySettingsData) mimeType() string {
 	return DisplaySettingsMimeType
 }
 
-func (l *DisplaySettingsData) GetMessage() proto.Message {
+func (d *DisplaySettingsData) buildMessage() proto.Message {
 	return &rpc.DisplaySettings{
-		Description:     l.Description,
-		Organization:    l.Organization,
-		ApiGuideEnabled: l.ApiGuideEnabled,
-		ApiScoreEnabled: l.ApiScoreEnabled,
+		Description:     d.Description,
+		Organization:    d.Organization,
+		ApiGuideEnabled: d.ApiGuideEnabled,
+		ApiScoreEnabled: d.ApiScoreEnabled,
 	}
 }
 
-func newDisplaySettings(message *rpc.Artifact) (*Artifact, error) {
-	artifactName, err := names.ParseArtifact(message.Name)
+func buildDisplaySettingsArtifact(a *rpc.Artifact) (*Artifact, error) {
+	artifactName, err := names.ParseArtifact(a.Name)
 	if err != nil {
 		return nil, err
 	}
-	value := &rpc.DisplaySettings{}
-	err = proto.Unmarshal(message.Contents, value)
-	if err != nil {
+	m := &rpc.DisplaySettings{}
+	if err = proto.Unmarshal(a.Contents, m); err != nil {
 		return nil, err
 	}
 	return &Artifact{
@@ -61,10 +60,10 @@ func newDisplaySettings(message *rpc.Artifact) (*Artifact, error) {
 			},
 		},
 		Data: &DisplaySettingsData{
-			Description:     value.Description,
-			Organization:    value.Organization,
-			ApiGuideEnabled: value.ApiGuideEnabled,
-			ApiScoreEnabled: value.ApiScoreEnabled,
+			Description:     m.Description,
+			Organization:    m.Organization,
+			ApiGuideEnabled: m.ApiGuideEnabled,
+			ApiScoreEnabled: m.ApiScoreEnabled,
 		},
 	}, nil
 }

@@ -22,65 +22,32 @@ import (
 
 const LifecycleMimeType = "application/octet-stream;type=google.cloud.apigeeregistry.v1.apihub.Lifecycle"
 
-type LifecycleStage struct {
-	ID           string `yaml:"id"`
-	DisplayName  string `yaml:"displayName,omitempty"`
-	Description  string `yaml:"description,omitempty"`
-	URL          string `yaml:"url,omitempty"`
-	DisplayOrder int    `yaml:"displayOrder"`
-}
-
 type LifecycleData struct {
 	DisplayName string            `yaml:"displayName,omitempty"`
 	Description string            `yaml:"description,omitempty"`
 	Stages      []*LifecycleStage `yaml:"stages"`
 }
 
-func (a *LifecycleData) GetMimeType() string {
+func (d *LifecycleData) mimeType() string {
 	return LifecycleMimeType
 }
 
-func (l *LifecycleData) GetMessage() proto.Message {
+func (d *LifecycleData) buildMessage() proto.Message {
 	return &rpc.Lifecycle{
-		DisplayName: l.DisplayName,
-		Description: l.Description,
-		Stages:      l.stages(),
+		DisplayName: d.DisplayName,
+		Description: d.Description,
+		Stages:      buildLifecycleStagesProto(d),
 	}
 }
 
-func (l *LifecycleData) stages() []*rpc.Lifecycle_Stage {
-	stages := make([]*rpc.Lifecycle_Stage, 0)
-	for _, s := range l.Stages {
-		stages = append(stages, &rpc.Lifecycle_Stage{
-			Id:           s.ID,
-			DisplayName:  s.DisplayName,
-			Description:  s.Description,
-			Url:          s.URL,
-			DisplayOrder: int32(s.DisplayOrder),
-		})
-	}
-	return stages
-}
-
-func newLifecycle(message *rpc.Artifact) (*Artifact, error) {
-	artifactName, err := names.ParseArtifact(message.Name)
+func buildLifecycleArtifact(a *rpc.Artifact) (*Artifact, error) {
+	artifactName, err := names.ParseArtifact(a.Name)
 	if err != nil {
 		return nil, err
 	}
-	value := &rpc.Lifecycle{}
-	err = proto.Unmarshal(message.Contents, value)
-	if err != nil {
+	m := &rpc.Lifecycle{}
+	if err = proto.Unmarshal(a.Contents, m); err != nil {
 		return nil, err
-	}
-	stages := make([]*LifecycleStage, len(value.Stages))
-	for i, s := range value.Stages {
-		stages[i] = &LifecycleStage{
-			ID:           s.Id,
-			DisplayName:  s.DisplayName,
-			Description:  s.Description,
-			URL:          s.Url,
-			DisplayOrder: int(s.DisplayOrder),
-		}
 	}
 	return &Artifact{
 		Header: Header{
@@ -91,9 +58,45 @@ func newLifecycle(message *rpc.Artifact) (*Artifact, error) {
 			},
 		},
 		Data: &LifecycleData{
-			DisplayName: value.DisplayName,
-			Description: value.Description,
-			Stages:      stages,
+			DisplayName: m.DisplayName,
+			Description: m.Description,
+			Stages:      buildLifecycleStagesData(m),
 		},
 	}, nil
+}
+
+type LifecycleStage struct {
+	ID           string `yaml:"id"`
+	DisplayName  string `yaml:"displayName,omitempty"`
+	Description  string `yaml:"description,omitempty"`
+	URL          string `yaml:"url,omitempty"`
+	DisplayOrder int    `yaml:"displayOrder"`
+}
+
+func buildLifecycleStagesProto(d *LifecycleData) []*rpc.Lifecycle_Stage {
+	a := make([]*rpc.Lifecycle_Stage, len(d.Stages))
+	for i, v := range d.Stages {
+		a[i] = &rpc.Lifecycle_Stage{
+			Id:           v.ID,
+			DisplayName:  v.DisplayName,
+			Description:  v.Description,
+			Url:          v.URL,
+			DisplayOrder: int32(v.DisplayOrder),
+		}
+	}
+	return a
+}
+
+func buildLifecycleStagesData(m *rpc.Lifecycle) []*LifecycleStage {
+	a := make([]*LifecycleStage, len(m.Stages))
+	for i, v := range m.Stages {
+		a[i] = &LifecycleStage{
+			ID:           v.Id,
+			DisplayName:  v.DisplayName,
+			Description:  v.Description,
+			URL:          v.Url,
+			DisplayOrder: int(v.DisplayOrder),
+		}
+	}
+	return a
 }

@@ -32,8 +32,8 @@ type Artifact struct {
 }
 
 type ArtifactData interface {
-	GetMessage() proto.Message
-	GetMimeType() string
+	buildMessage() proto.Message
+	mimeType() string
 }
 
 // ExportArtifact allows an artifact to be individually exported as a YAML file.
@@ -65,17 +65,17 @@ func newArtifact(message *rpc.Artifact) (*Artifact, error) {
 	var err error
 	switch message.GetMimeType() {
 	case DisplaySettingsMimeType:
-		artifact, err = newDisplaySettings(message)
+		artifact, err = buildDisplaySettingsArtifact(message)
 	case LifecycleMimeType:
-		artifact, err = newLifecycle(message)
+		artifact, err = buildLifecycleArtifact(message)
 	case ManifestMimeType:
-		artifact, err = newManifest(message)
+		artifact, err = buildManifestArtifact(message)
 	case ReferenceListMimeType:
-		artifact, err = newReferenceList(message)
+		artifact, err = buildReferenceListArtifact(message)
 	case TaxonomyListMimeType:
-		artifact, err = newTaxonomyList(message)
+		artifact, err = buildTaxonomyListArtifact(message)
 	default:
-		artifact, err = newUnknownArtifact(message)
+		artifact, err = buildUnknownArtifact(message)
 	}
 	return artifact, err
 }
@@ -136,13 +136,13 @@ func applyArtifactPatchBytes(ctx context.Context, client connection.Client, byte
 }
 
 func applyArtifactPatch(ctx context.Context, client connection.Client, content *Artifact, parent string) error {
-	bytes, err := proto.Marshal(content.Data.GetMessage())
+	bytes, err := proto.Marshal(content.Data.buildMessage())
 	if err != nil {
 		return err
 	}
 	artifact := &rpc.Artifact{
 		Name:     fmt.Sprintf("%s/artifacts/%s", parent, content.Header.Metadata.Name),
-		MimeType: content.Data.GetMimeType(),
+		MimeType: content.Data.mimeType(),
 		Contents: bytes,
 	}
 	req := &rpc.CreateArtifactRequest{
