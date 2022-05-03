@@ -29,7 +29,6 @@ import (
 )
 
 func TestStyleGuideUpload(t *testing.T) {
-
 	tests := []struct {
 		desc     string
 		project  string
@@ -134,5 +133,4 @@ func TestStyleGuideUpload(t *testing.T) {
 			}
 		})
 	}
-
 }

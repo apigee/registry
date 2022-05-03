@@ -104,7 +104,6 @@ func computeLintStatsSpecs(ctx context.Context,
 	spec names.Spec,
 	filter string,
 	linter string) error {
-
 	return core.ListSpecs(ctx, client, spec, filter, func(spec *rpc.ApiSpec) error {
 		// Iterate through a collection of specs and evaluate each.
 		log.Debug(ctx, spec.GetName())
@@ -187,7 +186,6 @@ func computeLintStatsAPIs(ctx context.Context,
 	apiName names.Api,
 	filter string,
 	linter string) error {
-
 	return core.ListAPIs(ctx, client, apiName, filter, func(api *rpc.Api) error {
 		api_stats := &rpc.LintStats{}
 
@@ -272,7 +270,6 @@ func matchAndHandleLintStatsCmd(
 	filter string,
 	linter string,
 ) error {
-
 	// First try to match collection names, then try to match resource names.
 	if project, err := names.ParseProjectCollection(name); err == nil {
 		return computeLintStatsProjects(ctx, client, adminClient, project, filter, linter)

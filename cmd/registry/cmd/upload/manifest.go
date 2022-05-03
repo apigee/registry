@@ -30,7 +30,6 @@ import (
 )
 
 func readManifestProto(filename string) (*rpc.Manifest, error) {
-
 	yamlBytes, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err

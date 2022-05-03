@@ -29,3 +29,4 @@ linters:
   enable:
     - goimports
     - gofmt
+    - whitespace

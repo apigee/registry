@@ -114,7 +114,6 @@ func (task *ComputeConformanceTask) Run(ctx context.Context) error {
 	conformanceReport := initializeConformanceReport(task.Spec.GetName(), task.StyleguideId)
 	guidelineReportsMap := make(map[string]int)
 	for _, metadata := range task.LintersMetadata {
-
 		linterResponse, err := task.invokeLinter(ctx, root, metadata)
 		// If a linter returned an error, we shouldn't stop linting completely across all linters and
 		// discard the conformance report for this spec. We should log but still continue, because there
@@ -134,7 +133,6 @@ func (task *ComputeConformanceTask) invokeLinter(
 	ctx context.Context,
 	specDirectory string,
 	metadata *linterMetadata) (*rpc.LinterResponse, error) {
-
 	// Formulate the request.
 	requestBytes, err := proto.Marshal(&rpc.LinterRequest{
 		SpecDirectory: specDirectory,
@@ -181,7 +179,6 @@ func (task *ComputeConformanceTask) computeConformanceReport(
 	linterResponse *rpc.LinterResponse,
 	linterMetadata *linterMetadata,
 ) {
-
 	// Process linterResponse to generate conformance report
 	lintFiles := linterResponse.Lint.GetFiles()
 
