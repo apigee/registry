@@ -158,6 +158,10 @@ func validateScoreFormula(targetName patterns.ResourceName, scoreFormula *rpc.Sc
 		errs = append(errs, fmt.Errorf("missing score_formula.score_expression"))
 	}
 
+	if refId := scoreFormula.GetReferenceId(); refId != "" && strings.Contains(refId, "-") {
+		errs = append(errs, fmt.Errorf("invalid score_formula.reference_id: %s, it should not contain hyphens '-'", refId))
+	}
+
 	return errs
 }
 

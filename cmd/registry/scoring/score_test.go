@@ -23,6 +23,7 @@ import (
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"github.com/golang/protobuf/proto"
+	metrics "github.com/google/gnostic/metrics"
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/testing/protocmp"
 )
@@ -447,6 +448,48 @@ func TestProcessScoreFormulaError(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "missing expression",
+			setup: func(ctx context.Context, client connection.Client, adminClient connection.AdminClient) {
+				deleteProject(ctx, adminClient, t, "score-formula-test")
+				createProject(ctx, adminClient, t, "score-formula-test")
+				createApi(ctx, client, t, "projects/score-formula-test/locations/global", "petstore")
+				createVersion(ctx, client, t, "projects/score-formula-test/locations/global/apis/petstore", "1.0.0")
+				createSpec(ctx, client, t, "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
+				artifactBytes, _ := proto.Marshal(&rpc.Lint{
+					Name: "openapi.yaml",
+					Files: []*rpc.LintFile{
+						{
+							FilePath: "openapi.yaml",
+							Problems: []*rpc.LintProblem{
+								{
+									Message: "lint-error",
+								},
+							},
+						},
+					},
+				})
+				createUpdateArtifact(
+					ctx, client, t,
+					"projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs//openapi.yaml/artifacts/lint-spectral",
+					artifactBytes, "application/octet-stream;type=google.cloud.apigeeregistry.applications.v1alpha1.Lint")
+			},
+			formula: &rpc.ScoreFormula{
+				Artifact: &rpc.ResourcePattern{
+					Pattern: "$resource.spec/artifacts/lint-spectral",
+				},
+			},
+			resource: patterns.SpecResource{
+				SpecName: patterns.SpecName{
+					Name: names.Spec{
+						ProjectID: "score-formula-test",
+						ApiID:     "petstore",
+						VersionID: "1.0.0",
+						SpecID:    "openapi.yaml",
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -470,6 +513,315 @@ func TestProcessScoreFormulaError(t *testing.T) {
 			_, gotErr := processScoreFormula(ctx, registryClient, test.formula, test.resource)
 			if gotErr == nil {
 				t.Errorf("expected processScoreFormula() to return an error")
+			}
+		})
+	}
+}
+
+func TestProcessRollUpFormula(t *testing.T) {
+	ctx := context.Background()
+	registryClient, err := connection.NewClient(ctx)
+	if err != nil {
+		t.Logf("Failed to create client: %+v", err)
+		t.FailNow()
+	}
+	defer registryClient.Close()
+	adminClient, err := connection.NewAdminClient(ctx)
+	if err != nil {
+		t.Logf("Failed to create client: %+v", err)
+		t.FailNow()
+	}
+	defer adminClient.Close()
+
+	//setup
+	deleteProject(ctx, adminClient, t, "rollup-formula-test")
+	createProject(ctx, adminClient, t, "rollup-formula-test")
+	createApi(ctx, registryClient, t, "projects/rollup-formula-test/locations/global", "petstore")
+	createVersion(ctx, registryClient, t, "projects/rollup-formula-test/locations/global/apis/petstore", "1.0.0")
+	createSpec(ctx, registryClient, t, "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
+	// create lint artifact
+	lintBytes, _ := proto.Marshal(&rpc.Lint{
+		Name: "openapi.yaml",
+		Files: []*rpc.LintFile{
+			{
+				FilePath: "openapi.yaml",
+				Problems: []*rpc.LintProblem{
+					{
+						Message: "lint-error",
+					},
+					{
+						Message: "lint-error",
+					},
+				},
+			},
+		},
+	})
+	createUpdateArtifact(
+		ctx, registryClient, t,
+		"projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
+		lintBytes, "application/octet-stream;type=google.cloud.apigeeregistry.applications.v1alpha1.Lint")
+	// create complexity artifact
+	complexityBytes, _ := proto.Marshal(&metrics.Complexity{
+		GetCount:    1,
+		PostCount:   1,
+		PutCount:    1,
+		DeleteCount: 1,
+	})
+	createUpdateArtifact(
+		ctx, registryClient, t,
+		"projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity",
+		complexityBytes, "application/octet-stream;type=gnostic.metrics.Complexity")
+
+	// arguments
+	formula := &rpc.RollUpFormula{
+		ScoreFormulas: []*rpc.ScoreFormula{
+			{
+				Artifact: &rpc.ResourcePattern{
+					Pattern: "$resource.spec/artifacts/lint-spectral",
+				},
+				ScoreExpression: "size(files[0].problems)",
+				ReferenceId:     "numErrors",
+			},
+			{
+				Artifact: &rpc.ResourcePattern{
+					Pattern: "$resource.spec/artifacts/complexity",
+				},
+				ScoreExpression: "getCount + postCount + putCount + deleteCount",
+				ReferenceId:     "numOperations",
+			},
+		},
+		RollupExpression: "double(numErrors)/numOperations",
+	}
+	resource := patterns.SpecResource{
+		SpecName: patterns.SpecName{
+			Name: names.Spec{
+				ProjectID: "rollup-formula-test",
+				ApiID:     "petstore",
+				VersionID: "1.0.0",
+				SpecID:    "openapi.yaml",
+			},
+		},
+	}
+	gotValue, gotErr := processRollUpFormula(ctx, registryClient, formula, resource)
+	if gotErr != nil {
+		t.Errorf("processRollUpFormula() returned unexpected error: %s", gotErr)
+	}
+
+	wantValue := float64(0.5)
+
+	if gotValue != nil && wantValue != gotValue {
+		t.Errorf("processRollUpFormula() returned unexpected value, want: %v, got: %v", wantValue, gotValue)
+	}
+}
+
+func TestProcessRollUpFormulaError(t *testing.T) {
+	tests := []struct {
+		desc     string
+		setup    func(context.Context, connection.Client, connection.AdminClient)
+		formula  *rpc.RollUpFormula
+		resource patterns.ResourceInstance
+	}{
+		{
+			desc: "missing score_formulas",
+			setup: func(ctx context.Context, client connection.Client, adminClient connection.AdminClient) {
+				deleteProject(ctx, adminClient, t, "rollup-formula-test")
+				createProject(ctx, adminClient, t, "rollup-formula-test")
+				createApi(ctx, client, t, "projects/rollup-formula-test/locations/global", "petstore")
+				createVersion(ctx, client, t, "projects/rollup-formula-test/locations/global/apis/petstore", "1.0.0")
+				createSpec(ctx, client, t, "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
+			},
+			formula: &rpc.RollUpFormula{
+				RollupExpression: "double(numErrors)/numOperations",
+			},
+			resource: patterns.SpecResource{
+				SpecName: patterns.SpecName{
+					Name: names.Spec{
+						ProjectID: "rollup-formula-test",
+						ApiID:     "petstore",
+						VersionID: "1.0.0",
+						SpecID:    "openapi.yaml",
+					},
+				},
+			},
+		},
+		{
+			desc: "missing rollup_expression",
+			setup: func(ctx context.Context, client connection.Client, adminClient connection.AdminClient) {
+				deleteProject(ctx, adminClient, t, "rollup-formula-test")
+				createProject(ctx, adminClient, t, "rollup-formula-test")
+				createApi(ctx, client, t, "projects/rollup-formula-test/locations/global", "petstore")
+				createVersion(ctx, client, t, "projects/rollup-formula-test/locations/global/apis/petstore", "1.0.0")
+				createSpec(ctx, client, t, "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
+			},
+			formula: &rpc.RollUpFormula{
+				ScoreFormulas: []*rpc.ScoreFormula{
+					{
+						Artifact: &rpc.ResourcePattern{
+							Pattern: "$resource.spec/artifacts/lint-spectral",
+						},
+						ScoreExpression: "size(files[0].problems)",
+						ReferenceId:     "numErrors",
+					},
+					{
+						Artifact: &rpc.ResourcePattern{
+							Pattern: "$resource.spec/artifacts/complexity",
+						},
+						ScoreExpression: "getCount + postCount + putCount + deleteCount",
+						ReferenceId:     "numOperations",
+					},
+				},
+			},
+			resource: patterns.SpecResource{
+				SpecName: patterns.SpecName{
+					Name: names.Spec{
+						ProjectID: "rollup-formula-test",
+						ApiID:     "petstore",
+						VersionID: "1.0.0",
+						SpecID:    "openapi.yaml",
+					},
+				},
+			},
+		},
+		{
+			desc: "invalid score_expression",
+			setup: func(ctx context.Context, client connection.Client, adminClient connection.AdminClient) {
+				deleteProject(ctx, adminClient, t, "rollup-formula-test")
+				createProject(ctx, adminClient, t, "rollup-formula-test")
+				createApi(ctx, client, t, "projects/rollup-formula-test/locations/global", "petstore")
+				createVersion(ctx, client, t, "projects/rollup-formula-test/locations/global/apis/petstore", "1.0.0")
+				createSpec(ctx, client, t, "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
+			},
+			formula: &rpc.RollUpFormula{
+				ScoreFormulas: []*rpc.ScoreFormula{
+					{
+						Artifact: &rpc.ResourcePattern{
+							Pattern: "$resource.spec/artifacts/lint-spectral",
+						},
+						ScoreExpression: "size(files.problems)", // invalid field reference
+						ReferenceId:     "numErrors",
+					},
+					{
+						Artifact: &rpc.ResourcePattern{
+							Pattern: "$resource.spec/artifacts/complexity",
+						},
+						ScoreExpression: "getCount + postCount + putCount + deleteCount",
+						ReferenceId:     "numOperations",
+					},
+				},
+				RollupExpression: "double(numErrors)/numOperations",
+			},
+			resource: patterns.SpecResource{
+				SpecName: patterns.SpecName{
+					Name: names.Spec{
+						ProjectID: "rollup-formula-test",
+						ApiID:     "petstore",
+						VersionID: "1.0.0",
+						SpecID:    "openapi.yaml",
+					},
+				},
+			},
+		},
+		{
+			desc: "invalid rollup_expression",
+			setup: func(ctx context.Context, client connection.Client, adminClient connection.AdminClient) {
+				deleteProject(ctx, adminClient, t, "rollup-formula-test")
+				createProject(ctx, adminClient, t, "rollup-formula-test")
+				createApi(ctx, client, t, "projects/rollup-formula-test/locations/global", "petstore")
+				createVersion(ctx, client, t, "projects/rollup-formula-test/locations/global/apis/petstore", "1.0.0")
+				createSpec(ctx, client, t, "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
+			},
+			formula: &rpc.RollUpFormula{
+				ScoreFormulas: []*rpc.ScoreFormula{
+					{
+						Artifact: &rpc.ResourcePattern{
+							Pattern: "$resource.spec/artifacts/lint-spectral",
+						},
+						ScoreExpression: "size(files[0].problems)",
+						ReferenceId:     "numErrors",
+					},
+					{
+						Artifact: &rpc.ResourcePattern{
+							Pattern: "$resource.spec/artifacts/complexity",
+						},
+						ScoreExpression: "getCount + postCount + putCount + deleteCount",
+						ReferenceId:     "numOperations",
+					},
+				},
+				RollupExpression: "numError/numOperation", // should be numErrors/numOperations
+			},
+			resource: patterns.SpecResource{
+				SpecName: patterns.SpecName{
+					Name: names.Spec{
+						ProjectID: "rollup-formula-test",
+						ApiID:     "petstore",
+						VersionID: "1.0.0",
+						SpecID:    "openapi.yaml",
+					},
+				},
+			},
+		},
+		{
+			desc: "invalid reference_id",
+			setup: func(ctx context.Context, client connection.Client, adminClient connection.AdminClient) {
+				deleteProject(ctx, adminClient, t, "rollup-formula-test")
+				createProject(ctx, adminClient, t, "rollup-formula-test")
+				createApi(ctx, client, t, "projects/rollup-formula-test/locations/global", "petstore")
+				createVersion(ctx, client, t, "projects/rollup-formula-test/locations/global/apis/petstore", "1.0.0")
+				createSpec(ctx, client, t, "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
+			},
+			formula: &rpc.RollUpFormula{
+				ScoreFormulas: []*rpc.ScoreFormula{
+					{
+						Artifact: &rpc.ResourcePattern{
+							Pattern: "$resource.spec/artifacts/lint-spectral",
+						},
+						ScoreExpression: "size(files[0].problems)",
+						ReferenceId:     "num-errors",
+					},
+					{
+						Artifact: &rpc.ResourcePattern{
+							Pattern: "$resource.spec/artifacts/complexity",
+						},
+						ScoreExpression: "getCount + postCount + putCount + deleteCount",
+						ReferenceId:     "num-operations",
+					},
+				},
+				RollupExpression: "num-errors/num-operations",
+			},
+			resource: patterns.SpecResource{
+				SpecName: patterns.SpecName{
+					Name: names.Spec{
+						ProjectID: "rollup-formula-test",
+						ApiID:     "petstore",
+						VersionID: "1.0.0",
+						SpecID:    "openapi.yaml",
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			ctx := context.Background()
+			registryClient, err := connection.NewClient(ctx)
+			if err != nil {
+				t.Logf("Failed to create client: %+v", err)
+				t.FailNow()
+			}
+			defer registryClient.Close()
+			adminClient, err := connection.NewAdminClient(ctx)
+			if err != nil {
+				t.Logf("Failed to create client: %+v", err)
+				t.FailNow()
+			}
+			defer adminClient.Close()
+
+			test.setup(ctx, registryClient, adminClient)
+
+			_, gotErr := processRollUpFormula(ctx, registryClient, test.formula, test.resource)
+			if gotErr == nil {
+				t.Errorf("expected processRollUpFormula() to return an error")
 			}
 		})
 	}

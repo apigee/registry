@@ -844,6 +844,20 @@ func TestValidateScoreFormula(t *testing.T) {
 			},
 			wantNumErr: 1,
 		},
+		{
+			desc: "invalid reference_id",
+			targetPattern: &rpc.ResourcePattern{
+				Pattern: "projects/demo/locations/global/apis/-/versions/-/specs/-",
+			},
+			scoreFormula: &rpc.ScoreFormula{
+				Artifact: &rpc.ResourcePattern{
+					Pattern: "$resource.spec/artifacts/conformance-report",
+				},
+				ScoreExpression: "count(errors)",
+				ReferenceId:     "num-errors",
+			},
+			wantNumErr: 1,
+		},
 		// Combination errors
 		{
 			desc: "invalid pattern and missing name",
