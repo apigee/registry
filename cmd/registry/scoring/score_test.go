@@ -225,14 +225,12 @@ func TestProcessScoreFormula(t *testing.T) {
 	ctx := context.Background()
 	registryClient, err := connection.NewClient(ctx)
 	if err != nil {
-		t.Logf("Failed to create client: %+v", err)
-		t.FailNow()
+		t.Fatalf("Failed to create client: %+v", err)
 	}
 	defer registryClient.Close()
 	adminClient, err := connection.NewAdminClient(ctx)
 	if err != nil {
-		t.Logf("Failed to create client: %+v", err)
-		t.FailNow()
+		t.Fatalf("Failed to create client: %+v", err)
 	}
 	defer adminClient.Close()
 
@@ -497,14 +495,12 @@ func TestProcessScoreFormulaError(t *testing.T) {
 			ctx := context.Background()
 			registryClient, err := connection.NewClient(ctx)
 			if err != nil {
-				t.Logf("Failed to create client: %+v", err)
-				t.FailNow()
+				t.Fatalf("Failed to create client: %+v", err)
 			}
 			defer registryClient.Close()
 			adminClient, err := connection.NewAdminClient(ctx)
 			if err != nil {
-				t.Logf("Failed to create client: %+v", err)
-				t.FailNow()
+				t.Fatalf("Failed to create client: %+v", err)
 			}
 			defer adminClient.Close()
 
@@ -522,14 +518,12 @@ func TestProcessRollUpFormula(t *testing.T) {
 	ctx := context.Background()
 	registryClient, err := connection.NewClient(ctx)
 	if err != nil {
-		t.Logf("Failed to create client: %+v", err)
-		t.FailNow()
+		t.Fatalf("Failed to create client: %+v", err)
 	}
 	defer registryClient.Close()
 	adminClient, err := connection.NewAdminClient(ctx)
 	if err != nil {
-		t.Logf("Failed to create client: %+v", err)
-		t.FailNow()
+		t.Fatalf("Failed to create client: %+v", err)
 	}
 	defer adminClient.Close()
 
@@ -806,14 +800,12 @@ func TestProcessRollUpFormulaError(t *testing.T) {
 			ctx := context.Background()
 			registryClient, err := connection.NewClient(ctx)
 			if err != nil {
-				t.Logf("Failed to create client: %+v", err)
-				t.FailNow()
+				t.Fatalf("Failed to create client: %+v", err)
 			}
 			defer registryClient.Close()
 			adminClient, err := connection.NewAdminClient(ctx)
 			if err != nil {
-				t.Logf("Failed to create client: %+v", err)
-				t.FailNow()
+				t.Fatalf("Failed to create client: %+v", err)
 			}
 			defer adminClient.Close()
 
