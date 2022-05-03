@@ -211,7 +211,7 @@ func TestMatchResourceWithTarget(t *testing.T) {
 			resourceName, _ := patterns.ParseResourcePattern(test.resourceName)
 			gotErr := matchResourceWithTarget(test.targetPattern, resourceName, "projects/pattern-test/locations/global")
 			if test.wantErr && gotErr == nil {
-				t.Errorf("expected matchResourceWithTarget() to return errors")
+				t.Errorf("matchResourceWithTarget(%s, %v, %s) did not return an error", test.targetPattern, resourceName, "projects/pattern-test/locations/global")
 			}
 
 			if !test.wantErr && gotErr != nil {
@@ -512,7 +512,7 @@ func TestProcessScoreFormulaError(t *testing.T) {
 
 			_, gotErr := processScoreFormula(ctx, registryClient, test.formula, test.resource)
 			if gotErr == nil {
-				t.Errorf("expected processScoreFormula() to return an error")
+				t.Errorf("processScoreFormula(ctx, client, %v, %v) did not return an error", test.formula, test.resource)
 			}
 		})
 	}
@@ -821,7 +821,7 @@ func TestProcessRollUpFormulaError(t *testing.T) {
 
 			_, gotErr := processRollUpFormula(ctx, registryClient, test.formula, test.resource)
 			if gotErr == nil {
-				t.Errorf("expected processRollUpFormula() to return an error")
+				t.Errorf("processRollUpFormula(ctx, client, %v, %v) did not return an error", test.formula, test.resource)
 			}
 		})
 	}
@@ -1001,7 +1001,7 @@ func TestProcessScoreTypeError(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			_, gotErr := processScoreType(test.definition, test.scoreValue, "projects/score-type-test/locations/global")
 			if gotErr == nil {
-				t.Errorf("expected processScoreType() to return an error")
+				t.Errorf("processScoreType(%v, %v, %s) did not return an error", test.definition, test.scoreValue, "projects/score-type-test/locations/global")
 			}
 		})
 	}
