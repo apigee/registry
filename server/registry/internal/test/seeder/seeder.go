@@ -25,7 +25,8 @@ import (
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
-type RegistryImp interface {
+// Registry is an interface containing methods necessary for seeding Registry resources.
+type Registry interface {
 	CreateProject(context.Context, *rpc.CreateProjectRequest) (*rpc.Project, error)
 	CreateApi(context.Context, *rpc.CreateApiRequest) (*rpc.Api, error)
 	CreateApiVersion(context.Context, *rpc.CreateApiVersionRequest) (*rpc.ApiVersion, error)
@@ -49,7 +50,7 @@ type RegistryResource interface {
 //
 // Resource names must be unique with the exception of ApiSpec resources.
 // Supported resource types are Project, Api, ApiVersion, ApiSpec, ApiDeployment, and Artifact.
-func SeedRegistry(ctx context.Context, s RegistryImp, resources ...RegistryResource) error {
+func SeedRegistry(ctx context.Context, s Registry, resources ...RegistryResource) error {
 	// All child resources are prefixed with their parent's name, so this sorts resources into hierarchical ordering.
 	// Using a stable sort keeps multiple resources of the same name in their original order.
 	sort.SliceStable(resources, func(i, j int) bool {
@@ -113,7 +114,7 @@ func SeedRegistry(ctx context.Context, s RegistryImp, resources ...RegistryResou
 }
 
 // SeedProjects is a convenience function for calling SeedRegistry with only Project messages.
-func SeedProjects(ctx context.Context, s RegistryImp, projects ...*rpc.Project) error {
+func SeedProjects(ctx context.Context, s Registry, projects ...*rpc.Project) error {
 	resources := make([]RegistryResource, 0, len(projects))
 	for _, r := range projects {
 		if r != nil {
@@ -124,7 +125,7 @@ func SeedProjects(ctx context.Context, s RegistryImp, projects ...*rpc.Project) 
 }
 
 // SeedApis is a convenience function for calling SeedRegistry with only Api messages.
-func SeedApis(ctx context.Context, s RegistryImp, apis ...*rpc.Api) error {
+func SeedApis(ctx context.Context, s Registry, apis ...*rpc.Api) error {
 	resources := make([]RegistryResource, 0, len(apis))
 	for _, r := range apis {
 		if r != nil {
@@ -135,7 +136,7 @@ func SeedApis(ctx context.Context, s RegistryImp, apis ...*rpc.Api) error {
 }
 
 // SeedVersions is a convenience function for calling SeedRegistry with only ApiVersion messages.
-func SeedVersions(ctx context.Context, s RegistryImp, versions ...*rpc.ApiVersion) error {
+func SeedVersions(ctx context.Context, s Registry, versions ...*rpc.ApiVersion) error {
 	resources := make([]RegistryResource, 0, len(versions))
 	for _, r := range versions {
 		if r != nil {
@@ -146,7 +147,7 @@ func SeedVersions(ctx context.Context, s RegistryImp, versions ...*rpc.ApiVersio
 }
 
 // SeedSpecs is a convenience function for calling SeedRegistry with only ApiSpec messages.
-func SeedSpecs(ctx context.Context, s RegistryImp, specs ...*rpc.ApiSpec) error {
+func SeedSpecs(ctx context.Context, s Registry, specs ...*rpc.ApiSpec) error {
 	resources := make([]RegistryResource, 0, len(specs))
 	for _, r := range specs {
 		if r != nil {
@@ -157,7 +158,7 @@ func SeedSpecs(ctx context.Context, s RegistryImp, specs ...*rpc.ApiSpec) error 
 }
 
 // SeedDeployments is a convenience function for calling SeedRegistry with only ApiDeployment messages.
-func SeedDeployments(ctx context.Context, s RegistryImp, deployments ...*rpc.ApiDeployment) error {
+func SeedDeployments(ctx context.Context, s Registry, deployments ...*rpc.ApiDeployment) error {
 	resources := make([]RegistryResource, 0, len(deployments))
 	for _, r := range deployments {
 		if r != nil {
@@ -168,7 +169,7 @@ func SeedDeployments(ctx context.Context, s RegistryImp, deployments ...*rpc.Api
 }
 
 // SeedArtifacts is a convenience function for calling SeedRegistry with only Artifact messages.
-func SeedArtifacts(ctx context.Context, s RegistryImp, artifacts ...*rpc.Artifact) error {
+func SeedArtifacts(ctx context.Context, s Registry, artifacts ...*rpc.Artifact) error {
 	resources := make([]RegistryResource, 0, len(artifacts))
 	for _, r := range artifacts {
 		if r != nil {
@@ -178,7 +179,7 @@ func SeedArtifacts(ctx context.Context, s RegistryImp, artifacts ...*rpc.Artifac
 	return SeedRegistry(ctx, s, resources...)
 }
 
-func seedProject(ctx context.Context, s RegistryImp, p *rpc.Project, history map[string]bool) error {
+func seedProject(ctx context.Context, s Registry, p *rpc.Project, history map[string]bool) error {
 	if id := p.GetName(); history[id] {
 		return nil
 	} else {
@@ -199,7 +200,7 @@ func seedProject(ctx context.Context, s RegistryImp, p *rpc.Project, history map
 	return err
 }
 
-func seedApi(ctx context.Context, s RegistryImp, api *rpc.Api, history map[string]bool) error {
+func seedApi(ctx context.Context, s Registry, api *rpc.Api, history map[string]bool) error {
 	if id := api.GetName(); history[id] {
 		return nil
 	} else {
@@ -224,7 +225,7 @@ func seedApi(ctx context.Context, s RegistryImp, api *rpc.Api, history map[strin
 	return err
 }
 
-func seedVersion(ctx context.Context, s RegistryImp, v *rpc.ApiVersion, history map[string]bool) error {
+func seedVersion(ctx context.Context, s Registry, v *rpc.ApiVersion, history map[string]bool) error {
 	if name := v.GetName(); history[name] {
 		return nil
 	} else {
@@ -249,7 +250,7 @@ func seedVersion(ctx context.Context, s RegistryImp, v *rpc.ApiVersion, history 
 	return err
 }
 
-func seedSpec(ctx context.Context, s RegistryImp, spec *rpc.ApiSpec, history map[string]bool) error {
+func seedSpec(ctx context.Context, s Registry, spec *rpc.ApiSpec, history map[string]bool) error {
 	if id := fmt.Sprintf("%s@%s", spec.GetName(), sha256hash(spec.GetContents())); history[id] {
 		return nil
 	} else {
@@ -280,7 +281,7 @@ func sha256hash(bytes []byte) string {
 	return fmt.Sprintf("%x", sha256.Sum256(bytes))
 }
 
-func seedDeployment(ctx context.Context, s RegistryImp, deployment *rpc.ApiDeployment, history map[string]bool) error {
+func seedDeployment(ctx context.Context, s Registry, deployment *rpc.ApiDeployment, history map[string]bool) error {
 	signature := sha256hash([]byte(fmt.Sprintf("%s:%s", deployment.GetApiSpecRevision(), deployment.GetEndpointUri())))
 	if id := fmt.Sprintf("%s@%s", deployment.GetName(), signature); history[id] {
 		return nil
@@ -308,7 +309,7 @@ func seedDeployment(ctx context.Context, s RegistryImp, deployment *rpc.ApiDeplo
 	return nil
 }
 
-func seedArtifact(ctx context.Context, s RegistryImp, a *rpc.Artifact, history map[string]bool) error {
+func seedArtifact(ctx context.Context, s Registry, a *rpc.Artifact, history map[string]bool) error {
 	if id := a.GetName(); history[id] {
 		return nil
 	} else {
