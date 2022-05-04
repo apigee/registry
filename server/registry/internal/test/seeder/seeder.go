@@ -26,8 +26,12 @@ import (
 )
 
 type RegistryImp interface {
-	rpc.RegistryServer
-	rpc.AdminServer
+	CreateProject(context.Context, *rpc.CreateProjectRequest) (*rpc.Project, error)
+	CreateApi(context.Context, *rpc.CreateApiRequest) (*rpc.Api, error)
+	CreateApiVersion(context.Context, *rpc.CreateApiVersionRequest) (*rpc.ApiVersion, error)
+	UpdateApiSpec(context.Context, *rpc.UpdateApiSpecRequest) (*rpc.ApiSpec, error)
+	UpdateApiDeployment(context.Context, *rpc.UpdateApiDeploymentRequest) (*rpc.ApiDeployment, error)
+	CreateArtifact(context.Context, *rpc.CreateArtifactRequest) (*rpc.Artifact, error)
 }
 
 // RegistryResource is an interface that any seedable resource will implement.
