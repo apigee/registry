@@ -129,6 +129,411 @@ var (
 	}
 )
 
+func TestCalculateScore(t *testing.T) {
+	tests := []struct {
+		desc            string
+		setup           func(context.Context, connection.Client, connection.AdminClient)
+		definitionProto *rpc.ScoreDefinition
+		wantScore       *rpc.Score
+	}{
+		{
+			desc: "non existent score scoreFormula",
+			setup: func(ctx context.Context, registryClient connection.Client, adminClient connection.AdminClient) {
+				deleteProject(ctx, adminClient, t, "score-formula-test")
+				createProject(ctx, adminClient, t, "score-formula-test")
+				createApi(ctx, registryClient, t, "projects/score-formula-test/locations/global", "petstore")
+				createVersion(ctx, registryClient, t, "projects/score-formula-test/locations/global/apis/petstore", "1.0.0")
+				createSpec(ctx, registryClient, t, "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
+				artifactBytes, _ := proto.Marshal(&rpc.Lint{
+					Name: "openapi.yaml",
+					Files: []*rpc.LintFile{
+						{
+							FilePath: "openapi.yaml",
+							Problems: []*rpc.LintProblem{
+								{
+									Message: "lint-error",
+								},
+							},
+						},
+					},
+				})
+				createUpdateArtifact(
+					ctx, registryClient, t,
+					"projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs//openapi.yaml/artifacts/lint-spectral",
+					artifactBytes, "application/octet-stream;type=google.cloud.apigeeregistry.applications.v1alpha1.Lint")
+				defBytes, _ := proto.Marshal(&rpc.ScoreDefinition{
+					Id: "lint-error",
+					TargetResource: &rpc.ResourcePattern{
+						Pattern: "apis/-/versions/-/specs/-",
+					},
+					Formula: &rpc.ScoreDefinition_ScoreFormula{
+						ScoreFormula: &rpc.ScoreFormula{
+							Artifact: &rpc.ResourcePattern{
+								Pattern: "$resource.spec/artifacts/lint-spectral",
+							},
+							ScoreExpression: "size(files[0].problems)",
+						},
+					},
+					Type: &rpc.ScoreDefinition_Integer{
+						Integer: &rpc.IntegerType{
+							MinValue: 0,
+							MaxValue: 10,
+						},
+					},
+				})
+				createUpdateArtifact(
+					ctx, registryClient, t,
+					"projects/score-formula-test/locations/global/artifacts/lint-error",
+					defBytes, "application/octet-stream;type=google.cloud.apigeeregistry.v1.ScoreDefinition")
+			},
+			wantScore: &rpc.Score{
+				Id:             "score-lint-error",
+				Kind:           "Score",
+				DefinitionName: "projects/score-formula-test/locations/global/artifacts/lint-error",
+				Severity:       rpc.Severity_SEVERITY_UNSPECIFIED,
+				Value: &rpc.Score_IntegerValue{
+					IntegerValue: &rpc.IntegerValue{
+						Value:    1,
+						MinValue: 0,
+						MaxValue: 10,
+					},
+				},
+			},
+		},
+		{
+			desc: "existing up-to-date score",
+			setup: func(ctx context.Context, registryClient connection.Client, adminClient connection.AdminClient) {
+				deleteProject(ctx, adminClient, t, "score-formula-test")
+				createProject(ctx, adminClient, t, "score-formula-test")
+				createApi(ctx, registryClient, t, "projects/score-formula-test/locations/global", "petstore")
+				createVersion(ctx, registryClient, t, "projects/score-formula-test/locations/global/apis/petstore", "1.0.0")
+				createSpec(ctx, registryClient, t, "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
+				// create formula artifact
+				artifactBytes, _ := proto.Marshal(&rpc.Lint{
+					Name: "openapi.yaml",
+					Files: []*rpc.LintFile{
+						{
+							FilePath: "openapi.yaml",
+							Problems: []*rpc.LintProblem{
+								{
+									Message: "lint-error",
+								},
+							},
+						},
+					},
+				})
+				createUpdateArtifact(
+					ctx, registryClient, t,
+					"projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs//openapi.yaml/artifacts/lint-spectral",
+					artifactBytes, "application/octet-stream;type=google.cloud.apigeeregistry.applications.v1alpha1.Lint")
+				// create definition artifact
+				defBytes, _ := proto.Marshal(&rpc.ScoreDefinition{
+					Id: "lint-error",
+					TargetResource: &rpc.ResourcePattern{
+						Pattern: "apis/-/versions/-/specs/-",
+					},
+					Formula: &rpc.ScoreDefinition_ScoreFormula{
+						ScoreFormula: &rpc.ScoreFormula{
+							Artifact: &rpc.ResourcePattern{
+								Pattern: "$resource.spec/artifacts/lint-spectral",
+							},
+							ScoreExpression: "size(files[0].problems)",
+						},
+					},
+					Type: &rpc.ScoreDefinition_Integer{
+						Integer: &rpc.IntegerType{
+							MinValue: 0,
+							MaxValue: 10,
+						},
+					},
+				})
+				createUpdateArtifact(
+					ctx, registryClient, t,
+					"projects/score-formula-test/locations/global/artifacts/lint-error",
+					defBytes, "application/octet-stream;type=google.cloud.apigeeregistry.v1.ScoreDefinition")
+				// create score artifact
+				createUpdateArtifact(
+					ctx, registryClient, t,
+					"projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					[]byte{}, "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score")
+			},
+			wantScore: &rpc.Score{},
+		},
+		{
+			desc: "existing score updated definition",
+			setup: func(ctx context.Context, registryClient connection.Client, adminClient connection.AdminClient) {
+				deleteProject(ctx, adminClient, t, "score-formula-test")
+				createProject(ctx, adminClient, t, "score-formula-test")
+				createApi(ctx, registryClient, t, "projects/score-formula-test/locations/global", "petstore")
+				createVersion(ctx, registryClient, t, "projects/score-formula-test/locations/global/apis/petstore", "1.0.0")
+				createSpec(ctx, registryClient, t, "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
+				// create formula artifact
+				artifactBytes, _ := proto.Marshal(&rpc.Lint{
+					Name: "openapi.yaml",
+					Files: []*rpc.LintFile{
+						{
+							FilePath: "openapi.yaml",
+							Problems: []*rpc.LintProblem{
+								{
+									Message: "lint-error",
+								},
+							},
+						},
+					},
+				})
+				createUpdateArtifact(
+					ctx, registryClient, t,
+					"projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs//openapi.yaml/artifacts/lint-spectral",
+					artifactBytes, "application/octet-stream;type=google.cloud.apigeeregistry.applications.v1alpha1.Lint")
+				// create score artifact
+				createUpdateArtifact(
+					ctx, registryClient, t,
+					"projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					[]byte{}, "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score")
+				// create definition artifact
+				defBytes, _ := proto.Marshal(&rpc.ScoreDefinition{
+					Id: "lint-error",
+					TargetResource: &rpc.ResourcePattern{
+						Pattern: "apis/-/versions/-/specs/-",
+					},
+					Formula: &rpc.ScoreDefinition_ScoreFormula{
+						ScoreFormula: &rpc.ScoreFormula{
+							Artifact: &rpc.ResourcePattern{
+								Pattern: "$resource.spec/artifacts/lint-spectral",
+							},
+							ScoreExpression: "size(files[0].problems)",
+						},
+					},
+					Type: &rpc.ScoreDefinition_Integer{
+						Integer: &rpc.IntegerType{
+							MinValue: 0,
+							MaxValue: 10,
+						},
+					},
+				})
+				createUpdateArtifact(
+					ctx, registryClient, t,
+					"projects/score-formula-test/locations/global/artifacts/lint-error",
+					defBytes, "application/octet-stream;type=google.cloud.apigeeregistry.v1.ScoreDefinition")
+			},
+			wantScore: &rpc.Score{
+				Id:             "score-lint-error",
+				Kind:           "Score",
+				DefinitionName: "projects/score-formula-test/locations/global/artifacts/lint-error",
+				Severity:       rpc.Severity_SEVERITY_UNSPECIFIED,
+				Value: &rpc.Score_IntegerValue{
+					IntegerValue: &rpc.IntegerValue{
+						Value:    1,
+						MinValue: 0,
+						MaxValue: 10,
+					},
+				},
+			},
+		},
+		{
+			desc: "existing score updated formula artifact",
+			setup: func(ctx context.Context, registryClient connection.Client, adminClient connection.AdminClient) {
+				deleteProject(ctx, adminClient, t, "score-formula-test")
+				createProject(ctx, adminClient, t, "score-formula-test")
+				createApi(ctx, registryClient, t, "projects/score-formula-test/locations/global", "petstore")
+				createVersion(ctx, registryClient, t, "projects/score-formula-test/locations/global/apis/petstore", "1.0.0")
+				createSpec(ctx, registryClient, t, "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
+				// create definition artifact
+				defBytes, _ := proto.Marshal(&rpc.ScoreDefinition{
+					Id: "lint-error",
+					TargetResource: &rpc.ResourcePattern{
+						Pattern: "apis/-/versions/-/specs/-",
+					},
+					Formula: &rpc.ScoreDefinition_ScoreFormula{
+						ScoreFormula: &rpc.ScoreFormula{
+							Artifact: &rpc.ResourcePattern{
+								Pattern: "$resource.spec/artifacts/lint-spectral",
+							},
+							ScoreExpression: "size(files[0].problems)",
+						},
+					},
+					Type: &rpc.ScoreDefinition_Integer{
+						Integer: &rpc.IntegerType{
+							MinValue: 0,
+							MaxValue: 10,
+						},
+					},
+				})
+				createUpdateArtifact(
+					ctx, registryClient, t,
+					"projects/score-formula-test/locations/global/artifacts/lint-error",
+					defBytes, "application/octet-stream;type=google.cloud.apigeeregistry.v1.ScoreDefinition")
+				// create score artifact
+				createUpdateArtifact(
+					ctx, registryClient, t,
+					"projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					[]byte{}, "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score")
+				// create formula artifact
+				artifactBytes, _ := proto.Marshal(&rpc.Lint{
+					Name: "openapi.yaml",
+					Files: []*rpc.LintFile{
+						{
+							FilePath: "openapi.yaml",
+							Problems: []*rpc.LintProblem{
+								{
+									Message: "lint-error",
+								},
+							},
+						},
+					},
+				})
+				createUpdateArtifact(
+					ctx, registryClient, t,
+					"projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs//openapi.yaml/artifacts/lint-spectral",
+					artifactBytes, "application/octet-stream;type=google.cloud.apigeeregistry.applications.v1alpha1.Lint")
+			},
+			wantScore: &rpc.Score{
+				Id:             "score-lint-error",
+				Kind:           "Score",
+				DefinitionName: "projects/score-formula-test/locations/global/artifacts/lint-error",
+				Severity:       rpc.Severity_SEVERITY_UNSPECIFIED,
+				Value: &rpc.Score_IntegerValue{
+					IntegerValue: &rpc.IntegerValue{
+						Value:    1,
+						MinValue: 0,
+						MaxValue: 10,
+					},
+				},
+			},
+		},
+		{
+			desc: "existing score updated formula artifact and definition",
+			setup: func(ctx context.Context, registryClient connection.Client, adminClient connection.AdminClient) {
+				deleteProject(ctx, adminClient, t, "score-formula-test")
+				createProject(ctx, adminClient, t, "score-formula-test")
+				createApi(ctx, registryClient, t, "projects/score-formula-test/locations/global", "petstore")
+				createVersion(ctx, registryClient, t, "projects/score-formula-test/locations/global/apis/petstore", "1.0.0")
+				createSpec(ctx, registryClient, t, "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
+				// create score artifact
+				createUpdateArtifact(
+					ctx, registryClient, t,
+					"projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					[]byte{}, "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score")
+				// create definition artifact
+				defBytes, _ := proto.Marshal(&rpc.ScoreDefinition{
+					Id: "lint-error",
+					TargetResource: &rpc.ResourcePattern{
+						Pattern: "apis/-/versions/-/specs/-",
+					},
+					Formula: &rpc.ScoreDefinition_ScoreFormula{
+						ScoreFormula: &rpc.ScoreFormula{
+							Artifact: &rpc.ResourcePattern{
+								Pattern: "$resource.spec/artifacts/lint-spectral",
+							},
+							ScoreExpression: "size(files[0].problems)",
+						},
+					},
+					Type: &rpc.ScoreDefinition_Integer{
+						Integer: &rpc.IntegerType{
+							MinValue: 0,
+							MaxValue: 10,
+						},
+					},
+				})
+				createUpdateArtifact(
+					ctx, registryClient, t,
+					"projects/score-formula-test/locations/global/artifacts/lint-error",
+					defBytes, "application/octet-stream;type=google.cloud.apigeeregistry.v1.ScoreDefinition")
+				// create formula artifact
+				artifactBytes, _ := proto.Marshal(&rpc.Lint{
+					Name: "openapi.yaml",
+					Files: []*rpc.LintFile{
+						{
+							FilePath: "openapi.yaml",
+							Problems: []*rpc.LintProblem{
+								{
+									Message: "lint-error",
+								},
+							},
+						},
+					},
+				})
+				createUpdateArtifact(
+					ctx, registryClient, t,
+					"projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs//openapi.yaml/artifacts/lint-spectral",
+					artifactBytes, "application/octet-stream;type=google.cloud.apigeeregistry.applications.v1alpha1.Lint")
+			},
+			wantScore: &rpc.Score{
+				Id:             "score-lint-error",
+				Kind:           "Score",
+				DefinitionName: "projects/score-formula-test/locations/global/artifacts/lint-error",
+				Severity:       rpc.Severity_SEVERITY_UNSPECIFIED,
+				Value: &rpc.Score_IntegerValue{
+					IntegerValue: &rpc.IntegerValue{
+						Value:    1,
+						MinValue: 0,
+						MaxValue: 10,
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			ctx := context.Background()
+			registryClient, err := connection.NewClient(ctx)
+			if err != nil {
+				t.Fatalf("Failed to create client: %+v", err)
+			}
+			defer registryClient.Close()
+			adminClient, err := connection.NewAdminClient(ctx)
+			if err != nil {
+				t.Fatalf("Failed to create client: %+v", err)
+			}
+			defer adminClient.Close()
+
+			test.setup(ctx, registryClient, adminClient)
+
+			resource := patterns.SpecResource{
+				SpecName: patterns.SpecName{
+					Name: names.Spec{
+						ProjectID: "score-formula-test",
+						ApiID:     "petstore",
+						VersionID: "1.0.0",
+						SpecID:    "openapi.yaml",
+					},
+				},
+			}
+
+			//fetch definition artifact
+			defArtifact, err := getArtifact(ctx, registryClient, "projects/score-formula-test/locations/global/artifacts/lint-error", true)
+			if err != nil {
+				t.Errorf("failed to fetch the scoreArtifact from setup: %s", err)
+			}
+
+			gotErr := CalculateScore(ctx, registryClient, defArtifact, resource)
+			if gotErr != nil {
+				t.Errorf("CalculateScore(ctx, client, %v, %v) returned unexpected error: %s", defArtifact, resource, gotErr)
+			}
+
+			//fetch score artifact and check the value
+			scoreArtifact, err := getArtifact(
+				ctx, registryClient,
+				"projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error", true)
+			if err != nil {
+				t.Errorf("failed to get the result scoreArtifact from registry")
+			}
+
+			gotScore := &rpc.Score{}
+			err = proto.Unmarshal(scoreArtifact.GetContents(), gotScore)
+			if err != nil {
+				t.Errorf("failed unmarshalling score artifact from registry: %s", err)
+			}
+
+			opts := cmp.Options{protocmp.Transform()}
+			if !cmp.Equal(test.wantScore, gotScore, opts) {
+				t.Errorf("CalculateScore() returned unexpected response (-want +got):\n%s", cmp.Diff(test.wantScore, gotScore, opts))
+			}
+		})
+	}
+}
+
 func TestMatchResourceWithTarget(t *testing.T) {
 	tests := []struct {
 		desc          string
@@ -275,7 +680,7 @@ func TestProcessScoreFormula(t *testing.T) {
 			},
 		},
 	}
-	gotValue, gotErr := processScoreFormula(ctx, registryClient, formula, resource)
+	gotValue, _, gotErr := processScoreFormula(ctx, registryClient, formula, resource, &rpc.Artifact{}, true)
 	if gotErr != nil {
 		t.Errorf("processScoreFormula() returned unexpected error: %s", gotErr)
 	}
@@ -506,9 +911,252 @@ func TestProcessScoreFormulaError(t *testing.T) {
 
 			test.setup(ctx, registryClient, adminClient)
 
-			_, gotErr := processScoreFormula(ctx, registryClient, test.formula, test.resource)
+			_, _, gotErr := processScoreFormula(ctx, registryClient, test.formula, test.resource, &rpc.Artifact{}, true)
 			if gotErr == nil {
 				t.Errorf("processScoreFormula(ctx, client, %v, %v) did not return an error", test.formula, test.resource)
+			}
+		})
+	}
+}
+
+func TestProcessScoreFormulaTimestamp(t *testing.T) {
+	tests := []struct {
+		desc       string
+		setup      func(context.Context, connection.Client, connection.AdminClient)
+		resource   patterns.ResourceInstance
+		takeAction bool
+		wantValue  interface{}
+		wantUpdate bool
+		wantErr    bool
+	}{
+		// When takeAction is true, the score value should be always updated
+		{
+			desc: "takeAction is true and score is outdated",
+			setup: func(ctx context.Context, client connection.Client, adminClient connection.AdminClient) {
+				deleteProject(ctx, adminClient, t, "score-formula-test")
+				createProject(ctx, adminClient, t, "score-formula-test")
+				createApi(ctx, client, t, "projects/score-formula-test/locations/global", "petstore")
+				createVersion(ctx, client, t, "projects/score-formula-test/locations/global/apis/petstore", "1.0.0")
+				createSpec(ctx, client, t, "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
+				// create score artifact
+				createUpdateArtifact(
+					ctx, client, t,
+					"projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					[]byte{}, "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score")
+				// create formula artifact
+				artifactBytes, _ := proto.Marshal(&rpc.Lint{
+					Name: "openapi.yaml",
+					Files: []*rpc.LintFile{
+						{
+							FilePath: "openapi.yaml",
+							Problems: []*rpc.LintProblem{
+								{
+									Message: "lint-error",
+								},
+							},
+						},
+					},
+				})
+				createUpdateArtifact(
+					ctx, client, t,
+					"projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
+					artifactBytes, "application/octet-stream;type=google.cloud.apigeeregistry.applications.v1alpha1.Lint")
+			},
+			resource: patterns.SpecResource{
+				SpecName: patterns.SpecName{
+					Name: names.Spec{
+						ProjectID: "score-formula-test",
+						ApiID:     "petstore",
+						VersionID: "1.0.0",
+						SpecID:    "openapi.yaml",
+					},
+				},
+			},
+			takeAction: true,
+			wantValue:  int64(1),
+			wantUpdate: true,
+			wantErr:    false,
+		},
+		// When takeAction is true, the score value should be always updated
+		{
+			desc: "takeAction and score is up-to-date",
+			setup: func(ctx context.Context, client connection.Client, adminClient connection.AdminClient) {
+				deleteProject(ctx, adminClient, t, "score-formula-test")
+				createProject(ctx, adminClient, t, "score-formula-test")
+				createApi(ctx, client, t, "projects/score-formula-test/locations/global", "petstore")
+				createVersion(ctx, client, t, "projects/score-formula-test/locations/global/apis/petstore", "1.0.0")
+				createSpec(ctx, client, t, "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
+				// create formula artifact
+				artifactBytes, _ := proto.Marshal(&rpc.Lint{
+					Name: "openapi.yaml",
+					Files: []*rpc.LintFile{
+						{
+							FilePath: "openapi.yaml",
+							Problems: []*rpc.LintProblem{
+								{
+									Message: "lint-error",
+								},
+							},
+						},
+					},
+				})
+				createUpdateArtifact(
+					ctx, client, t,
+					"projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs//openapi.yaml/artifacts/lint-spectral",
+					artifactBytes, "application/octet-stream;type=google.cloud.apigeeregistry.applications.v1alpha1.Lint")
+				// create score artifact
+				createUpdateArtifact(
+					ctx, client, t,
+					"projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					[]byte{}, "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score")
+			},
+			resource: patterns.SpecResource{
+				SpecName: patterns.SpecName{
+					Name: names.Spec{
+						ProjectID: "score-formula-test",
+						ApiID:     "petstore",
+						VersionID: "1.0.0",
+						SpecID:    "openapi.yaml",
+					},
+				},
+			},
+			takeAction: true,
+			wantValue:  int64(1),
+			wantUpdate: true,
+			wantErr:    false,
+		},
+		{
+			desc: "!takeAction and score is outdated",
+			setup: func(ctx context.Context, client connection.Client, adminClient connection.AdminClient) {
+				deleteProject(ctx, adminClient, t, "score-formula-test")
+				createProject(ctx, adminClient, t, "score-formula-test")
+				createApi(ctx, client, t, "projects/score-formula-test/locations/global", "petstore")
+				createVersion(ctx, client, t, "projects/score-formula-test/locations/global/apis/petstore", "1.0.0")
+				createSpec(ctx, client, t, "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
+				// create score artifact
+				createUpdateArtifact(
+					ctx, client, t,
+					"projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					[]byte{}, "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score")
+				// create formula artifact
+				artifactBytes, _ := proto.Marshal(&rpc.Lint{
+					Name: "openapi.yaml",
+					Files: []*rpc.LintFile{
+						{
+							FilePath: "openapi.yaml",
+							Problems: []*rpc.LintProblem{
+								{
+									Message: "lint-error",
+								},
+							},
+						},
+					},
+				})
+				createUpdateArtifact(
+					ctx, client, t,
+					"projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs//openapi.yaml/artifacts/lint-spectral",
+					artifactBytes, "application/octet-stream;type=google.cloud.apigeeregistry.applications.v1alpha1.Lint")
+			},
+			resource: patterns.SpecResource{
+				SpecName: patterns.SpecName{
+					Name: names.Spec{
+						ProjectID: "score-formula-test",
+						ApiID:     "petstore",
+						VersionID: "1.0.0",
+						SpecID:    "openapi.yaml",
+					},
+				},
+			},
+			takeAction: false,
+			wantValue:  int64(1),
+			wantUpdate: true,
+			wantErr:    false,
+		},
+		{
+			desc: "!takeAction and score is up-to-date",
+			setup: func(ctx context.Context, client connection.Client, adminClient connection.AdminClient) {
+				deleteProject(ctx, adminClient, t, "score-formula-test")
+				createProject(ctx, adminClient, t, "score-formula-test")
+				createApi(ctx, client, t, "projects/score-formula-test/locations/global", "petstore")
+				createVersion(ctx, client, t, "projects/score-formula-test/locations/global/apis/petstore", "1.0.0")
+				createSpec(ctx, client, t, "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
+				// create formula artifact
+				artifactBytes, _ := proto.Marshal(&rpc.Lint{
+					Name: "openapi.yaml",
+					Files: []*rpc.LintFile{
+						{
+							FilePath: "openapi.yaml",
+							Problems: []*rpc.LintProblem{
+								{
+									Message: "lint-error",
+								},
+							},
+						},
+					},
+				})
+				createUpdateArtifact(
+					ctx, client, t,
+					"projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs//openapi.yaml/artifacts/lint-spectral",
+					artifactBytes, "application/octet-stream;type=google.cloud.apigeeregistry.applications.v1alpha1.Lint")
+				// create score artifact
+				createUpdateArtifact(
+					ctx, client, t,
+					"projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					[]byte{}, "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score")
+			},
+			resource: patterns.SpecResource{
+				SpecName: patterns.SpecName{
+					Name: names.Spec{
+						ProjectID: "score-formula-test",
+						ApiID:     "petstore",
+						VersionID: "1.0.0",
+						SpecID:    "openapi.yaml",
+					},
+				},
+			},
+			takeAction: false,
+			wantValue:  int64(1),
+			wantUpdate: false,
+			wantErr:    false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			ctx := context.Background()
+			registryClient, err := connection.NewClient(ctx)
+			if err != nil {
+				t.Fatalf("Failed to create client: %+v", err)
+			}
+			defer registryClient.Close()
+			adminClient, err := connection.NewAdminClient(ctx)
+			if err != nil {
+				t.Fatalf("Failed to create client: %+v", err)
+			}
+			defer adminClient.Close()
+
+			test.setup(ctx, registryClient, adminClient)
+
+			//fetch score artifact
+			scoreArtifact, err := getArtifact(ctx, registryClient, "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error", false)
+			if err != nil {
+				t.Errorf("failed to fetch the scoreArtifact from setup: %s", err)
+			}
+
+			formula := &rpc.ScoreFormula{
+				Artifact: &rpc.ResourcePattern{
+					Pattern: "$resource.spec/artifacts/lint-spectral",
+				},
+				ScoreExpression: "size(files[0].problems)",
+			}
+
+			gotValue, gotUpdate, gotErr := processScoreFormula(ctx, registryClient, formula, test.resource, scoreArtifact, test.takeAction)
+			if test.wantErr {
+				if gotErr == nil {
+					t.Errorf("processScoreFormula(ctx, client, %v, %v, %v, %t) did not return an error", formula, test.resource, scoreArtifact, test.takeAction)
+				}
+			} else if gotValue != test.wantValue || gotUpdate != test.wantUpdate {
+				t.Errorf("processScoreFormula() returned unexpected response, want: (%s, %t), got: (%s, %t)", test.wantValue, test.wantUpdate, gotValue, gotUpdate)
 			}
 		})
 	}
@@ -596,7 +1244,7 @@ func TestProcessRollUpFormula(t *testing.T) {
 			},
 		},
 	}
-	gotValue, gotErr := processRollUpFormula(ctx, registryClient, formula, resource)
+	gotValue, _, gotErr := processRollUpFormula(ctx, registryClient, formula, resource, &rpc.Artifact{}, true)
 	if gotErr != nil {
 		t.Errorf("processRollUpFormula() returned unexpected error: %s", gotErr)
 	}
@@ -684,6 +1332,38 @@ func TestProcessRollUpFormulaError(t *testing.T) {
 				createApi(ctx, client, t, "projects/rollup-formula-test/locations/global", "petstore")
 				createVersion(ctx, client, t, "projects/rollup-formula-test/locations/global/apis/petstore", "1.0.0")
 				createSpec(ctx, client, t, "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
+				// create lint artifact
+				lintBytes, _ := proto.Marshal(&rpc.Lint{
+					Name: "openapi.yaml",
+					Files: []*rpc.LintFile{
+						{
+							FilePath: "openapi.yaml",
+							Problems: []*rpc.LintProblem{
+								{
+									Message: "lint-error",
+								},
+								{
+									Message: "lint-error",
+								},
+							},
+						},
+					},
+				})
+				createUpdateArtifact(
+					ctx, client, t,
+					"projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
+					lintBytes, "application/octet-stream;type=google.cloud.apigeeregistry.applications.v1alpha1.Lint")
+				// create complexity artifact
+				complexityBytes, _ := proto.Marshal(&metrics.Complexity{
+					GetCount:    1,
+					PostCount:   1,
+					PutCount:    1,
+					DeleteCount: 1,
+				})
+				createUpdateArtifact(
+					ctx, client, t,
+					"projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity",
+					complexityBytes, "application/octet-stream;type=gnostic.metrics.Complexity")
 			},
 			formula: &rpc.RollUpFormula{
 				ScoreFormulas: []*rpc.ScoreFormula{
@@ -723,6 +1403,38 @@ func TestProcessRollUpFormulaError(t *testing.T) {
 				createApi(ctx, client, t, "projects/rollup-formula-test/locations/global", "petstore")
 				createVersion(ctx, client, t, "projects/rollup-formula-test/locations/global/apis/petstore", "1.0.0")
 				createSpec(ctx, client, t, "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
+				// create lint artifact
+				lintBytes, _ := proto.Marshal(&rpc.Lint{
+					Name: "openapi.yaml",
+					Files: []*rpc.LintFile{
+						{
+							FilePath: "openapi.yaml",
+							Problems: []*rpc.LintProblem{
+								{
+									Message: "lint-error",
+								},
+								{
+									Message: "lint-error",
+								},
+							},
+						},
+					},
+				})
+				createUpdateArtifact(
+					ctx, client, t,
+					"projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
+					lintBytes, "application/octet-stream;type=google.cloud.apigeeregistry.applications.v1alpha1.Lint")
+				// create complexity artifact
+				complexityBytes, _ := proto.Marshal(&metrics.Complexity{
+					GetCount:    1,
+					PostCount:   1,
+					PutCount:    1,
+					DeleteCount: 1,
+				})
+				createUpdateArtifact(
+					ctx, client, t,
+					"projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity",
+					complexityBytes, "application/octet-stream;type=gnostic.metrics.Complexity")
 			},
 			formula: &rpc.RollUpFormula{
 				ScoreFormulas: []*rpc.ScoreFormula{
@@ -811,9 +1523,457 @@ func TestProcessRollUpFormulaError(t *testing.T) {
 
 			test.setup(ctx, registryClient, adminClient)
 
-			_, gotErr := processRollUpFormula(ctx, registryClient, test.formula, test.resource)
+			_, _, gotErr := processRollUpFormula(ctx, registryClient, test.formula, test.resource, &rpc.Artifact{}, true)
 			if gotErr == nil {
 				t.Errorf("processRollUpFormula(ctx, client, %v, %v) did not return an error", test.formula, test.resource)
+			}
+		})
+	}
+}
+
+func TestProcessRollUpFormulaTimestamp(t *testing.T) {
+	tests := []struct {
+		desc       string
+		setup      func(context.Context, connection.Client, connection.AdminClient)
+		resource   patterns.ResourceInstance
+		takeAction bool
+		wantValue  interface{}
+		wantUpdate bool
+		wantErr    bool
+	}{
+		{
+			desc: "takeAction and score completely outdated",
+			setup: func(ctx context.Context, client connection.Client, adminClient connection.AdminClient) {
+				deleteProject(ctx, adminClient, t, "rollup-formula-test")
+				createProject(ctx, adminClient, t, "rollup-formula-test")
+				createApi(ctx, client, t, "projects/rollup-formula-test/locations/global", "petstore")
+				createVersion(ctx, client, t, "projects/rollup-formula-test/locations/global/apis/petstore", "1.0.0")
+				createSpec(ctx, client, t, "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
+
+				// create score artifact
+				createUpdateArtifact(
+					ctx, client, t,
+					"projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					[]byte{}, "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score")
+
+				// create lint artifact
+				lintBytes, _ := proto.Marshal(&rpc.Lint{
+					Name: "openapi.yaml",
+					Files: []*rpc.LintFile{
+						{
+							FilePath: "openapi.yaml",
+							Problems: []*rpc.LintProblem{
+								{
+									Message: "lint-error",
+								},
+								{
+									Message: "lint-error",
+								},
+							},
+						},
+					},
+				})
+				createUpdateArtifact(
+					ctx, client, t,
+					"projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
+					lintBytes, "application/octet-stream;type=google.cloud.apigeeregistry.applications.v1alpha1.Lint")
+				// create complexity artifact
+				complexityBytes, _ := proto.Marshal(&metrics.Complexity{
+					GetCount:    1,
+					PostCount:   1,
+					PutCount:    1,
+					DeleteCount: 1,
+				})
+				createUpdateArtifact(
+					ctx, client, t,
+					"projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity",
+					complexityBytes, "application/octet-stream;type=gnostic.metrics.Complexity")
+			},
+			resource: patterns.SpecResource{
+				SpecName: patterns.SpecName{
+					Name: names.Spec{
+						ProjectID: "rollup-formula-test",
+						ApiID:     "petstore",
+						VersionID: "1.0.0",
+						SpecID:    "openapi.yaml",
+					},
+				},
+			},
+			takeAction: true,
+			wantValue:  float64(0.5),
+			wantUpdate: true,
+			wantErr:    false,
+		},
+		{
+			desc: "takeAction and score partially outdated",
+			setup: func(ctx context.Context, client connection.Client, adminClient connection.AdminClient) {
+				deleteProject(ctx, adminClient, t, "rollup-formula-test")
+				createProject(ctx, adminClient, t, "rollup-formula-test")
+				createApi(ctx, client, t, "projects/rollup-formula-test/locations/global", "petstore")
+				createVersion(ctx, client, t, "projects/rollup-formula-test/locations/global/apis/petstore", "1.0.0")
+				createSpec(ctx, client, t, "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
+
+				// create lint artifact
+				lintBytes, _ := proto.Marshal(&rpc.Lint{
+					Name: "openapi.yaml",
+					Files: []*rpc.LintFile{
+						{
+							FilePath: "openapi.yaml",
+							Problems: []*rpc.LintProblem{
+								{
+									Message: "lint-error",
+								},
+								{
+									Message: "lint-error",
+								},
+							},
+						},
+					},
+				})
+				createUpdateArtifact(
+					ctx, client, t,
+					"projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
+					lintBytes, "application/octet-stream;type=google.cloud.apigeeregistry.applications.v1alpha1.Lint")
+
+				// create score artifact
+				createUpdateArtifact(
+					ctx, client, t,
+					"projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					[]byte{}, "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score")
+
+				// create complexity artifact
+				complexityBytes, _ := proto.Marshal(&metrics.Complexity{
+					GetCount:    1,
+					PostCount:   1,
+					PutCount:    1,
+					DeleteCount: 1,
+				})
+				createUpdateArtifact(
+					ctx, client, t,
+					"projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity",
+					complexityBytes, "application/octet-stream;type=gnostic.metrics.Complexity")
+			},
+			resource: patterns.SpecResource{
+				SpecName: patterns.SpecName{
+					Name: names.Spec{
+						ProjectID: "rollup-formula-test",
+						ApiID:     "petstore",
+						VersionID: "1.0.0",
+						SpecID:    "openapi.yaml",
+					},
+				},
+			},
+			takeAction: true,
+			wantValue:  float64(0.5),
+			wantUpdate: true,
+			wantErr:    false,
+		},
+		{
+			desc: "takeAction and score up-to-date",
+			setup: func(ctx context.Context, client connection.Client, adminClient connection.AdminClient) {
+				deleteProject(ctx, adminClient, t, "rollup-formula-test")
+				createProject(ctx, adminClient, t, "rollup-formula-test")
+				createApi(ctx, client, t, "projects/rollup-formula-test/locations/global", "petstore")
+				createVersion(ctx, client, t, "projects/rollup-formula-test/locations/global/apis/petstore", "1.0.0")
+				createSpec(ctx, client, t, "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
+
+				// create lint artifact
+				lintBytes, _ := proto.Marshal(&rpc.Lint{
+					Name: "openapi.yaml",
+					Files: []*rpc.LintFile{
+						{
+							FilePath: "openapi.yaml",
+							Problems: []*rpc.LintProblem{
+								{
+									Message: "lint-error",
+								},
+								{
+									Message: "lint-error",
+								},
+							},
+						},
+					},
+				})
+				createUpdateArtifact(
+					ctx, client, t,
+					"projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
+					lintBytes, "application/octet-stream;type=google.cloud.apigeeregistry.applications.v1alpha1.Lint")
+
+				// create complexity artifact
+				complexityBytes, _ := proto.Marshal(&metrics.Complexity{
+					GetCount:    1,
+					PostCount:   1,
+					PutCount:    1,
+					DeleteCount: 1,
+				})
+				createUpdateArtifact(
+					ctx, client, t,
+					"projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity",
+					complexityBytes, "application/octet-stream;type=gnostic.metrics.Complexity")
+
+				// create score artifact
+				createUpdateArtifact(
+					ctx, client, t,
+					"projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					[]byte{}, "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score")
+			},
+			resource: patterns.SpecResource{
+				SpecName: patterns.SpecName{
+					Name: names.Spec{
+						ProjectID: "rollup-formula-test",
+						ApiID:     "petstore",
+						VersionID: "1.0.0",
+						SpecID:    "openapi.yaml",
+					},
+				},
+			},
+			takeAction: true,
+			wantValue:  float64(0.5),
+			wantUpdate: true,
+			wantErr:    false,
+		},
+		{
+			desc: "!takeAction and score completely outdated",
+			setup: func(ctx context.Context, client connection.Client, adminClient connection.AdminClient) {
+				deleteProject(ctx, adminClient, t, "rollup-formula-test")
+				createProject(ctx, adminClient, t, "rollup-formula-test")
+				createApi(ctx, client, t, "projects/rollup-formula-test/locations/global", "petstore")
+				createVersion(ctx, client, t, "projects/rollup-formula-test/locations/global/apis/petstore", "1.0.0")
+				createSpec(ctx, client, t, "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
+
+				// create score artifact
+				createUpdateArtifact(
+					ctx, client, t,
+					"projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					[]byte{}, "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score")
+
+				// create lint artifact
+				lintBytes, _ := proto.Marshal(&rpc.Lint{
+					Name: "openapi.yaml",
+					Files: []*rpc.LintFile{
+						{
+							FilePath: "openapi.yaml",
+							Problems: []*rpc.LintProblem{
+								{
+									Message: "lint-error",
+								},
+								{
+									Message: "lint-error",
+								},
+							},
+						},
+					},
+				})
+				createUpdateArtifact(
+					ctx, client, t,
+					"projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
+					lintBytes, "application/octet-stream;type=google.cloud.apigeeregistry.applications.v1alpha1.Lint")
+				// create complexity artifact
+				complexityBytes, _ := proto.Marshal(&metrics.Complexity{
+					GetCount:    1,
+					PostCount:   1,
+					PutCount:    1,
+					DeleteCount: 1,
+				})
+				createUpdateArtifact(
+					ctx, client, t,
+					"projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity",
+					complexityBytes, "application/octet-stream;type=gnostic.metrics.Complexity")
+			},
+			resource: patterns.SpecResource{
+				SpecName: patterns.SpecName{
+					Name: names.Spec{
+						ProjectID: "rollup-formula-test",
+						ApiID:     "petstore",
+						VersionID: "1.0.0",
+						SpecID:    "openapi.yaml",
+					},
+				},
+			},
+			takeAction: false,
+			wantValue:  float64(0.5),
+			wantUpdate: true,
+			wantErr:    false,
+		},
+		{
+			desc: "!takeAction and score partially outdated",
+			setup: func(ctx context.Context, client connection.Client, adminClient connection.AdminClient) {
+				deleteProject(ctx, adminClient, t, "rollup-formula-test")
+				createProject(ctx, adminClient, t, "rollup-formula-test")
+				createApi(ctx, client, t, "projects/rollup-formula-test/locations/global", "petstore")
+				createVersion(ctx, client, t, "projects/rollup-formula-test/locations/global/apis/petstore", "1.0.0")
+				createSpec(ctx, client, t, "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
+
+				// create lint artifact
+				lintBytes, _ := proto.Marshal(&rpc.Lint{
+					Name: "openapi.yaml",
+					Files: []*rpc.LintFile{
+						{
+							FilePath: "openapi.yaml",
+							Problems: []*rpc.LintProblem{
+								{
+									Message: "lint-error",
+								},
+								{
+									Message: "lint-error",
+								},
+							},
+						},
+					},
+				})
+				createUpdateArtifact(
+					ctx, client, t,
+					"projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
+					lintBytes, "application/octet-stream;type=google.cloud.apigeeregistry.applications.v1alpha1.Lint")
+
+				// create score artifact
+				createUpdateArtifact(
+					ctx, client, t,
+					"projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					[]byte{}, "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score")
+
+				// create complexity artifact
+				complexityBytes, _ := proto.Marshal(&metrics.Complexity{
+					GetCount:    1,
+					PostCount:   1,
+					PutCount:    1,
+					DeleteCount: 1,
+				})
+				createUpdateArtifact(
+					ctx, client, t,
+					"projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity",
+					complexityBytes, "application/octet-stream;type=gnostic.metrics.Complexity")
+			},
+			resource: patterns.SpecResource{
+				SpecName: patterns.SpecName{
+					Name: names.Spec{
+						ProjectID: "rollup-formula-test",
+						ApiID:     "petstore",
+						VersionID: "1.0.0",
+						SpecID:    "openapi.yaml",
+					},
+				},
+			},
+			takeAction: false,
+			wantValue:  float64(0.5),
+			wantUpdate: true,
+			wantErr:    false,
+		},
+		{
+			desc: "!takeAction and score up-to-date",
+			setup: func(ctx context.Context, client connection.Client, adminClient connection.AdminClient) {
+				deleteProject(ctx, adminClient, t, "rollup-formula-test")
+				createProject(ctx, adminClient, t, "rollup-formula-test")
+				createApi(ctx, client, t, "projects/rollup-formula-test/locations/global", "petstore")
+				createVersion(ctx, client, t, "projects/rollup-formula-test/locations/global/apis/petstore", "1.0.0")
+				createSpec(ctx, client, t, "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
+
+				// create lint artifact
+				lintBytes, _ := proto.Marshal(&rpc.Lint{
+					Name: "openapi.yaml",
+					Files: []*rpc.LintFile{
+						{
+							FilePath: "openapi.yaml",
+							Problems: []*rpc.LintProblem{
+								{
+									Message: "lint-error",
+								},
+								{
+									Message: "lint-error",
+								},
+							},
+						},
+					},
+				})
+				createUpdateArtifact(
+					ctx, client, t,
+					"projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
+					lintBytes, "application/octet-stream;type=google.cloud.apigeeregistry.applications.v1alpha1.Lint")
+
+				// create complexity artifact
+				complexityBytes, _ := proto.Marshal(&metrics.Complexity{
+					GetCount:    1,
+					PostCount:   1,
+					PutCount:    1,
+					DeleteCount: 1,
+				})
+				createUpdateArtifact(
+					ctx, client, t,
+					"projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity",
+					complexityBytes, "application/octet-stream;type=gnostic.metrics.Complexity")
+
+				// create score artifact
+				createUpdateArtifact(
+					ctx, client, t,
+					"projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
+					[]byte{}, "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score")
+			},
+			resource: patterns.SpecResource{
+				SpecName: patterns.SpecName{
+					Name: names.Spec{
+						ProjectID: "rollup-formula-test",
+						ApiID:     "petstore",
+						VersionID: "1.0.0",
+						SpecID:    "openapi.yaml",
+					},
+				},
+			},
+			takeAction: false,
+			wantValue:  nil,
+			wantUpdate: false,
+			wantErr:    false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			ctx := context.Background()
+			registryClient, err := connection.NewClient(ctx)
+			if err != nil {
+				t.Fatalf("Failed to create client: %+v", err)
+			}
+			defer registryClient.Close()
+			adminClient, err := connection.NewAdminClient(ctx)
+			if err != nil {
+				t.Fatalf("Failed to create client: %+v", err)
+			}
+			defer adminClient.Close()
+
+			test.setup(ctx, registryClient, adminClient)
+
+			//fetch score artifact
+			scoreArtifact, err := getArtifact(ctx, registryClient, "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error", false)
+			if err != nil {
+				t.Errorf("failed to fetch the scoreArtifact from setup: %s", err)
+			}
+
+			formula := &rpc.RollUpFormula{
+				ScoreFormulas: []*rpc.ScoreFormula{
+					{
+						Artifact: &rpc.ResourcePattern{
+							Pattern: "$resource.spec/artifacts/lint-spectral",
+						},
+						ScoreExpression: "size(files[0].problems)",
+						ReferenceId:     "numErrors",
+					},
+					{
+						Artifact: &rpc.ResourcePattern{
+							Pattern: "$resource.spec/artifacts/complexity",
+						},
+						ScoreExpression: "getCount + postCount + putCount + deleteCount",
+						ReferenceId:     "numOperations",
+					},
+				},
+				RollupExpression: "double(numErrors)/numOperations",
+			}
+
+			gotValue, gotUpdate, gotErr := processRollUpFormula(ctx, registryClient, formula, test.resource, scoreArtifact, test.takeAction)
+			if test.wantErr {
+				if gotErr == nil {
+					t.Errorf("processScoreFormula(ctx, client, %v, %v, %v, %t) did not return an error", formula, test.resource, scoreArtifact, test.takeAction)
+				}
+			} else if gotValue != test.wantValue || gotUpdate != test.wantUpdate {
+				t.Errorf("processScoreFormula() returned unexpected response, want: (%s, %t), got: (%s, %t)", test.wantValue, test.wantUpdate, gotValue, gotUpdate)
 			}
 		})
 	}
