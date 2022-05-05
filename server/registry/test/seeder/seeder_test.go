@@ -130,10 +130,6 @@ func TestSeedRegistry(t *testing.T) {
 				},
 				&rpc.ApiSpec{
 					Name:     "projects/p/locations/global/apis/a/versions/v/specs/s",
-					Contents: []byte("first"),
-				},
-				&rpc.ApiSpec{
-					Name:     "projects/p/locations/global/apis/a/versions/v/specs/s",
 					Contents: []byte("second"),
 				},
 			},
@@ -148,10 +144,6 @@ func TestSeedRegistry(t *testing.T) {
 		{
 			desc: "deployment revisions can be created when attributes change",
 			seed: []RegistryResource{
-				&rpc.ApiDeployment{
-					Name:            "projects/p/locations/global/apis/a/deployments/d",
-					ApiSpecRevision: "first",
-				},
 				&rpc.ApiDeployment{
 					Name:            "projects/p/locations/global/apis/a/deployments/d",
 					ApiSpecRevision: "first",
@@ -184,55 +176,6 @@ func TestSeedRegistry(t *testing.T) {
 			sortStrings := cmpopts.SortSlices(func(a, b string) bool { return a < b })
 			if diff := cmp.Diff(test.want, server.Resources, sortStrings); diff != "" {
 				t.Errorf("SeedRegistry(%v) performed unexpected resource creation sequence (-want +got):\n%s", test.seed, diff)
-			}
-		})
-	}
-}
-
-func TestSeedRegistry_Errors(t *testing.T) {
-	tests := []struct {
-		desc string
-		seed []RegistryResource
-	}{
-		{
-			desc: "duplicate projects",
-			seed: []RegistryResource{
-				&rpc.Project{Name: "projects/p"},
-				&rpc.Project{Name: "projects/p"},
-			},
-		},
-		{
-			desc: "duplicate apis",
-			seed: []RegistryResource{
-				&rpc.Api{Name: "projects/p/locations/global/apis/a"},
-				&rpc.Api{Name: "projects/p/locations/global/apis/a"},
-			},
-		},
-		{
-			desc: "duplicate versions",
-			seed: []RegistryResource{
-				&rpc.ApiVersion{Name: "projects/p/locations/global/apis/a/versions/v"},
-				&rpc.ApiVersion{Name: "projects/p/locations/global/apis/a/versions/v"},
-			},
-		},
-		{
-			desc: "duplicate artifacts",
-			seed: []RegistryResource{
-				&rpc.Artifact{Name: "projects/p/locations/global/apis/a/versions/v/specs/s/artifacts/a"},
-				&rpc.Artifact{Name: "projects/p/locations/global/apis/a/versions/v/specs/s/artifacts/a"},
-			},
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.desc, func(t *testing.T) {
-			var (
-				ctx    = context.Background()
-				server = new(fakeServer)
-			)
-
-			if err := SeedRegistry(ctx, server, test.seed...); err == nil {
-				t.Errorf("SeedRegistry(%v) returned without error", test.seed)
 			}
 		})
 	}

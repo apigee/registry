@@ -16,8 +16,8 @@ package seeder
 
 import (
 	"context"
-	"crypto/sha256"
 	"fmt"
+	"strings"
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
@@ -53,26 +53,14 @@ func SeedRegistry(ctx context.Context, s Registry, resources ...RegistryResource
 	for _, resource := range resources {
 		switch r := resource.(type) {
 		case *rpc.Project:
-			if h[r.GetName()] {
-				return fmt.Errorf("cannot seed multiple projects with name %s", r.GetName())
-			}
-
 			if err := seedProject(ctx, s, r, h); err != nil {
 				return err
 			}
 		case *rpc.Api:
-			if h[r.GetName()] {
-				return fmt.Errorf("cannot seed multiple apis with name %s", r.GetName())
-			}
-
 			if err := seedApi(ctx, s, r, h); err != nil {
 				return err
 			}
 		case *rpc.ApiVersion:
-			if h[r.GetName()] {
-				return fmt.Errorf("cannot seed multiple versions with name %s", r.GetName())
-			}
-
 			if err := seedVersion(ctx, s, r, h); err != nil {
 				return err
 			}
@@ -81,18 +69,10 @@ func SeedRegistry(ctx context.Context, s Registry, resources ...RegistryResource
 				return err
 			}
 		case *rpc.ApiDeployment:
-			if h[r.GetName()] {
-				return fmt.Errorf("cannot seed multiple deployments with name %s", r.GetName())
-			}
-
 			if err := seedDeployment(ctx, s, r, h); err != nil {
 				return err
 			}
 		case *rpc.Artifact:
-			if h[r.GetName()] {
-				return fmt.Errorf("cannot seed multiple artifacts with name %s", r.GetName())
-			}
-
 			if err := seedArtifact(ctx, s, r, h); err != nil {
 				return err
 			}
@@ -171,11 +151,7 @@ func SeedArtifacts(ctx context.Context, s Registry, artifacts ...*rpc.Artifact) 
 }
 
 func seedProject(ctx context.Context, s Registry, p *rpc.Project, history map[string]bool) error {
-	if id := p.GetName(); history[id] {
-		return nil
-	} else {
-		history[id] = true
-	}
+	history[p.GetName()] = true
 
 	name, err := names.ParseProject(p.GetName())
 	if err != nil {
@@ -192,19 +168,17 @@ func seedProject(ctx context.Context, s Registry, p *rpc.Project, history map[st
 }
 
 func seedApi(ctx context.Context, s Registry, api *rpc.Api, history map[string]bool) error {
-	if id := api.GetName(); history[id] {
-		return nil
-	} else {
-		history[id] = true
-	}
+	history[api.GetName()] = true
 
 	name, err := names.ParseApi(api.GetName())
 	if err != nil {
 		return err
 	}
 
-	if err := seedProject(ctx, s, &rpc.Project{Name: fmt.Sprintf("projects/%s", name.ProjectID)}, history); err != nil {
-		return err
+	if parent := strings.TrimSuffix(name.Parent(), "/locations/global"); !history[parent] {
+		if err := seedProject(ctx, s, &rpc.Project{Name: fmt.Sprintf("projects/%s", name.ProjectID)}, history); err != nil {
+			return err
+		}
 	}
 
 	_, err = s.CreateApi(ctx, &rpc.CreateApiRequest{
@@ -217,19 +191,17 @@ func seedApi(ctx context.Context, s Registry, api *rpc.Api, history map[string]b
 }
 
 func seedVersion(ctx context.Context, s Registry, v *rpc.ApiVersion, history map[string]bool) error {
-	if name := v.GetName(); history[name] {
-		return nil
-	} else {
-		history[name] = true
-	}
+	history[v.GetName()] = true
 
 	name, err := names.ParseVersion(v.GetName())
 	if err != nil {
 		return err
 	}
 
-	if err := seedApi(ctx, s, &rpc.Api{Name: name.Parent()}, history); err != nil {
-		return err
+	if parent := name.Parent(); !history[parent] {
+		if err := seedApi(ctx, s, &rpc.Api{Name: name.Parent()}, history); err != nil {
+			return err
+		}
 	}
 
 	_, err = s.CreateApiVersion(ctx, &rpc.CreateApiVersionRequest{
@@ -242,19 +214,17 @@ func seedVersion(ctx context.Context, s Registry, v *rpc.ApiVersion, history map
 }
 
 func seedSpec(ctx context.Context, s Registry, spec *rpc.ApiSpec, history map[string]bool) error {
-	if id := fmt.Sprintf("%s@%s", spec.GetName(), sha256hash(spec.GetContents())); history[id] {
-		return nil
-	} else {
-		history[id] = true
-	}
+	history[spec.GetName()] = true
 
 	name, err := names.ParseSpec(spec.GetName())
 	if err != nil {
 		return err
 	}
 
-	if err := seedVersion(ctx, s, &rpc.ApiVersion{Name: name.Parent()}, history); err != nil {
-		return err
+	if parent := name.Parent(); !history[parent] {
+		if err := seedVersion(ctx, s, &rpc.ApiVersion{Name: name.Parent()}, history); err != nil {
+			return err
+		}
 	}
 
 	if _, err := s.UpdateApiSpec(ctx, &rpc.UpdateApiSpecRequest{
@@ -268,25 +238,18 @@ func seedSpec(ctx context.Context, s Registry, spec *rpc.ApiSpec, history map[st
 	return nil
 }
 
-func sha256hash(bytes []byte) string {
-	return fmt.Sprintf("%x", sha256.Sum256(bytes))
-}
-
 func seedDeployment(ctx context.Context, s Registry, deployment *rpc.ApiDeployment, history map[string]bool) error {
-	signature := sha256hash([]byte(fmt.Sprintf("%s:%s", deployment.GetApiSpecRevision(), deployment.GetEndpointUri())))
-	if id := fmt.Sprintf("%s@%s", deployment.GetName(), signature); history[id] {
-		return nil
-	} else {
-		history[id] = true
-	}
+	history[deployment.GetName()] = true
 
 	name, err := names.ParseDeployment(deployment.GetName())
 	if err != nil {
 		return err
 	}
 
-	if err := seedApi(ctx, s, &rpc.Api{Name: name.Parent()}, history); err != nil {
-		return err
+	if parent := name.Parent(); !history[parent] {
+		if err := seedApi(ctx, s, &rpc.Api{Name: name.Parent()}, history); err != nil {
+			return err
+		}
 	}
 
 	if _, err := s.UpdateApiDeployment(ctx, &rpc.UpdateApiDeploymentRequest{
@@ -301,31 +264,29 @@ func seedDeployment(ctx context.Context, s Registry, deployment *rpc.ApiDeployme
 }
 
 func seedArtifact(ctx context.Context, s Registry, a *rpc.Artifact, history map[string]bool) error {
-	if id := a.GetName(); history[id] {
-		return nil
-	} else {
-		history[id] = true
-	}
+	history[a.GetName()] = true
 
 	name, err := names.ParseArtifact(a.GetName())
 	if err != nil {
 		return err
 	}
 
-	if name.SpecID() != "" {
-		err = seedSpec(ctx, s, &rpc.ApiSpec{Name: name.Parent()}, history)
-	} else if name.VersionID() != "" {
-		err = seedVersion(ctx, s, &rpc.ApiVersion{Name: name.Parent()}, history)
-	} else if name.DeploymentID() != "" {
-		err = seedDeployment(ctx, s, &rpc.ApiDeployment{Name: name.Parent()}, history)
-	} else if name.ApiID() != "" {
-		err = seedApi(ctx, s, &rpc.Api{Name: name.Parent()}, history)
-	} else if name.ProjectID() != "" {
-		err = seedProject(ctx, s, &rpc.Project{Name: fmt.Sprintf("projects/%s", name.ProjectID())}, history)
-	}
+	if parent := strings.TrimSuffix(name.Parent(), "/locations/global"); !history[parent] {
+		if name.SpecID() != "" {
+			err = seedSpec(ctx, s, &rpc.ApiSpec{Name: parent}, history)
+		} else if name.VersionID() != "" {
+			err = seedVersion(ctx, s, &rpc.ApiVersion{Name: parent}, history)
+		} else if name.DeploymentID() != "" {
+			err = seedDeployment(ctx, s, &rpc.ApiDeployment{Name: parent}, history)
+		} else if name.ApiID() != "" {
+			err = seedApi(ctx, s, &rpc.Api{Name: parent}, history)
+		} else if name.ProjectID() != "" {
+			err = seedProject(ctx, s, &rpc.Project{Name: parent}, history)
+		}
 
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
 	}
 
 	_, err = s.CreateArtifact(ctx, &rpc.CreateArtifactRequest{
