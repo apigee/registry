@@ -137,7 +137,7 @@ func TestCalculateScore(t *testing.T) {
 		wantScore       *rpc.Score
 	}{
 		{
-			desc: "non existent score scoreFormula",
+			desc: "non existent score ScoreArtifact",
 			setup: func(ctx context.Context, registryClient connection.Client, adminClient connection.AdminClient) {
 				deleteProject(ctx, adminClient, t, "score-formula-test")
 				createProject(ctx, adminClient, t, "score-formula-test")

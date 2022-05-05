@@ -157,7 +157,7 @@ func CalculateScore(
 	}
 
 	// Calculate score if the definition has been updated
-	if scoreArtifact.GetUpdateTime().AsTime().Before(defArtifact.GetUpdateTime().AsTime()) {
+	if scoreArtifact != nil && scoreArtifact.GetUpdateTime().AsTime().Before(defArtifact.GetUpdateTime().AsTime()) {
 		takeAction = true
 	}
 
