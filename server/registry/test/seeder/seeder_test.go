@@ -23,6 +23,7 @@ import (
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry"
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/google/uuid"
 )
 
@@ -121,27 +122,6 @@ func TestSeedRegistry(t *testing.T) {
 			},
 		},
 		{
-			desc: "resources can be created out of order",
-			seed: []RegistryResource{
-				&rpc.Artifact{Name: "projects/p/locations/global/apis/a/deployments/d/artifacts/a"},
-				&rpc.ApiDeployment{Name: "projects/p/locations/global/apis/a/deployments/d"},
-				&rpc.Artifact{Name: "projects/p/locations/global/apis/a/versions/v/specs/s/artifacts/a"},
-				&rpc.ApiSpec{Name: "projects/p/locations/global/apis/a/versions/v/specs/s"},
-				&rpc.ApiVersion{Name: "projects/p/locations/global/apis/a/versions/v"},
-				&rpc.Api{Name: "projects/p/locations/global/apis/a"},
-				&rpc.Project{Name: "projects/p"},
-			},
-			want: []string{
-				"projects/p",
-				"projects/p/locations/global/apis/a",
-				"projects/p/locations/global/apis/a/deployments/d",
-				"projects/p/locations/global/apis/a/deployments/d/artifacts/a",
-				"projects/p/locations/global/apis/a/versions/v",
-				"projects/p/locations/global/apis/a/versions/v/specs/s",
-				"projects/p/locations/global/apis/a/versions/v/specs/s/artifacts/a",
-			},
-		},
-		{
 			desc: "specs revisions can be created when contents change",
 			seed: []RegistryResource{
 				&rpc.ApiSpec{
@@ -201,7 +181,8 @@ func TestSeedRegistry(t *testing.T) {
 				t.Errorf("SeedRegistry(%v) returned error: %s", test.seed, err)
 			}
 
-			if diff := cmp.Diff(test.want, server.Resources); diff != "" {
+			sortStrings := cmpopts.SortSlices(func(a, b string) bool { return a < b })
+			if diff := cmp.Diff(test.want, server.Resources, sortStrings); diff != "" {
 				t.Errorf("SeedRegistry(%v) performed unexpected resource creation sequence (-want +got):\n%s", test.seed, diff)
 			}
 		})

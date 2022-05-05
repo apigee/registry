@@ -18,7 +18,6 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
-	"sort"
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
@@ -43,19 +42,12 @@ type RegistryResource interface {
 
 // SeedRegistry initializes registry with the provided resources.
 // Resources are created implicitly if they are needed but aren't explicitly provided.
-// Resources can be provided in any order. They will be created according to their position in the resource hierarchy.
 //
 // ApiSpecs with the same name can be provided to create multiple revisions of the same spec.
 //
 // Resource names must be unique with the exception of ApiSpec resources.
 // Supported resource types are Project, Api, ApiVersion, ApiSpec, ApiDeployment, and Artifact.
 func SeedRegistry(ctx context.Context, s Registry, resources ...RegistryResource) error {
-	// All child resources are prefixed with their parent's name, so this sorts resources into hierarchical ordering.
-	// Using a stable sort keeps multiple resources of the same name in their original order.
-	sort.SliceStable(resources, func(i, j int) bool {
-		return resources[i].GetName() < resources[j].GetName()
-	})
-
 	// Maintain a history of created resources to skip redundant requests.
 	h := make(map[string]bool, 5*len(resources))
 	for _, resource := range resources {
