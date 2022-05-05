@@ -13,30 +13,3 @@
 // limitations under the License.
 
 package patch
-
-import (
-	"github.com/apigee/registry/rpc"
-	"google.golang.org/protobuf/proto"
-)
-
-const DisplaySettingsMimeType = "application/octet-stream;type=google.cloud.apigeeregistry.v1.apihub.DisplaySettings"
-
-type DisplaySettingsData struct {
-	Description     string `yaml:"description,omitempty"`
-	Organization    string `yaml:"organization"`
-	ApiGuideEnabled bool   `yaml:"apiGuideEnabled"`
-	ApiScoreEnabled bool   `yaml:"apiScoreEnabled"`
-}
-
-func (d *DisplaySettingsData) mimeType() string {
-	return DisplaySettingsMimeType
-}
-
-func (d *DisplaySettingsData) buildMessage() proto.Message {
-	return &rpc.DisplaySettings{
-		Description:     d.Description,
-		Organization:    d.Organization,
-		ApiGuideEnabled: d.ApiGuideEnabled,
-		ApiScoreEnabled: d.ApiScoreEnabled,
-	}
-}

@@ -74,6 +74,7 @@ func readHeader(info *yaml.Node) (*Header, error) {
 			}
 		}
 	}
+	fmt.Printf("HEADER %+v", header)
 	return header, nil
 }
 

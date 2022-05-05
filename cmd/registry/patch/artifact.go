@@ -31,12 +31,7 @@ import (
 
 type Artifact struct {
 	Header `yaml:",inline"`
-	Data   *yaml.Node `yaml:"data"`
-}
-
-type ArtifactData interface {
-	buildMessage() proto.Message
-	mimeType() string
+	Data   yaml.Node `yaml:"data"`
 }
 
 // ExportArtifact allows an artifact to be individually exported as a YAML file.
@@ -63,10 +58,29 @@ func ExportArtifact(ctx context.Context, client *gapic.RegistryClient, message *
 	return b.Bytes(), &artifact.Header, nil
 }
 
-func restyle(node *yaml.Node, style yaml.Style) {
-	node.Style = style
+func styleForYAML(node *yaml.Node) {
+	node.Style = 0
 	for _, n := range node.Content {
-		restyle(n, style)
+		styleForYAML(n)
+	}
+}
+
+func styleForJSON(node *yaml.Node) {
+	switch node.Kind {
+	case yaml.DocumentNode, yaml.SequenceNode, yaml.MappingNode:
+		node.Style = yaml.FlowStyle
+	case yaml.ScalarNode:
+		switch node.Tag {
+		case "!!str":
+			node.Style = yaml.DoubleQuotedStyle
+		default:
+			node.Style = 0
+		}
+	case yaml.AliasNode:
+	default:
+	}
+	for _, n := range node.Content {
+		styleForJSON(n)
 	}
 }
 
@@ -92,7 +106,7 @@ func newArtifact(message *rpc.Artifact) (*Artifact, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	// unmarshal the serialized protobuf containing the artifact content
 	m, err := protoMessageForMimeType(message.MimeType)
 	if err != nil {
 		return nil, err
@@ -100,28 +114,28 @@ func newArtifact(message *rpc.Artifact) (*Artifact, error) {
 	if err = proto.Unmarshal(message.Contents, m); err != nil {
 		return nil, err
 	}
-	// marshal the artifact contents as JSON
-	marshaler := protojson.MarshalOptions{
+	// marshal the artifact content as JSON
+	var s []byte
+	s, err = protojson.MarshalOptions{
 		UseEnumNumbers:  false,
-		EmitUnpopulated: false,
+		EmitUnpopulated: true,
 		Indent:          "  ",
 		UseProtoNames:   false,
-	}
-	var s []byte
-	s, err = marshaler.Marshal(m)
+	}.Marshal(m)
 	if err != nil {
 		return nil, err
 	}
 	// read the JSON with yaml.v3
-	var node yaml.Node
-	err = yaml.Unmarshal([]byte(s), &node)
+	var doc yaml.Node
+	err = yaml.Unmarshal([]byte(s), &doc)
 	if err != nil {
 		return nil, err
 	}
-	doc := node.Content[0]
-	// restyle the doc to be serialized with YAML defaults
-	restyle(doc, 0)
-	doc = removeIdAndKind(doc)
+	// the top-level node is a "document" node that we want to unpack
+	node := doc.Content[0]
+	// restyle the doc so that it will be serialized with YAML defaults
+	styleForYAML(node)
+	node = removeIdAndKind(node)
 	// wrap the artifact for YAML export
 	artifact := &Artifact{
 		Header: Header{
@@ -131,42 +145,12 @@ func newArtifact(message *rpc.Artifact) (*Artifact, error) {
 				Name: artifactName.ArtifactID(),
 			},
 		},
-		Data: doc,
+		Data: *node,
 	}
 	if err != nil {
 		return nil, err
 	}
 	return artifact, nil
-}
-
-func (a *Artifact) UnmarshalYAML(node *yaml.Node) error {
-	// https://stackoverflow.com/questions/66709979/dynamically-parse-yaml-field-to-one-of-a-finite-set-of-structs-in-go
-	type Alias Artifact
-	type Wrapper struct {
-		*Alias `yaml:",inline"`
-		Data   yaml.Node `yaml:"data"`
-	}
-	wrapper := &Wrapper{Alias: (*Alias)(a)}
-	if err := node.Decode(wrapper); err != nil {
-		return err
-	}
-	switch a.Kind {
-	/*
-		case "DisplaySettings":
-			a.Data = new(DisplaySettingsData)
-		case "Lifecycle":
-			a.Data = new(LifecycleData)
-		case "Manifest":
-			a.Data = new(ManifestData)
-		case "ReferenceList":
-			a.Data = new(ReferenceListData)
-		case "TaxonomyList":
-			a.Data = new(TaxonomyListData)
-	*/
-	default:
-		return fmt.Errorf("unable to unmarshal %s", a.Kind)
-	}
-	return wrapper.Data.Decode(a.Data)
 }
 
 func applyArtifactPatchBytes(ctx context.Context, client connection.Client, bytes []byte, parent string) error {
@@ -179,15 +163,32 @@ func applyArtifactPatchBytes(ctx context.Context, client connection.Client, byte
 }
 
 func applyArtifactPatch(ctx context.Context, client connection.Client, content *Artifact, parent string) error {
-	//bytes, err := proto.Marshal(content.Data.buildMessage())
-	//if err != nil {
-	//	return err
-	//}
-	bytes := []byte{}
-	var err error
+	fmt.Printf("\n\nartifact %+v\n", content.Data)
+	styleForJSON(&content.Data)
+	// get json version of artifact
+	j, err := yaml.Marshal(content.Data)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("%s\n", string(j))
+	// read serialized proto from json
+	var m proto.Message
+	m, err = protoMessageForKind(content.Kind)
+	if err != nil {
+		return err
+	}
+	err = protojson.Unmarshal(j, m)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("message %+v\n", m)
+	bytes, err := proto.Marshal(m)
+	if err != nil {
+		return err
+	}
 	artifact := &rpc.Artifact{
 		Name:     fmt.Sprintf("%s/artifacts/%s", parent, content.Header.Metadata.Name),
-		MimeType: "", // content.Data.mimeType(),
+		MimeType: mimeTypeForKind(content.Kind),
 		Contents: bytes,
 	}
 	req := &rpc.CreateArtifactRequest{
@@ -226,6 +227,27 @@ func protoMessageForMimeType(mimeType string) (proto.Message, error) {
 	return m, nil
 }
 
+func protoMessageForKind(kind string) (proto.Message, error) {
+	var m proto.Message
+	switch kind {
+	case "DisplaySettings":
+		m = &rpc.DisplaySettings{}
+	case "Lifecycle":
+		m = &rpc.Lifecycle{}
+	case "Manifest":
+		m = &rpc.Manifest{}
+	case "ReferenceList":
+		m = &rpc.ReferenceList{}
+	case "StyleGuide":
+		m = &rpc.StyleGuide{}
+	case "TaxonomyList":
+		m = &rpc.TaxonomyList{}
+	default:
+		return nil, fmt.Errorf("unsupported type %s", kind)
+	}
+	return m, nil
+}
+
 func kindForMimeType(mimeType string) string {
 	switch mimeType {
 	case DisplaySettingsMimeType:
@@ -244,3 +266,32 @@ func kindForMimeType(mimeType string) string {
 		return ""
 	}
 }
+
+func mimeTypeForKind(kind string) string {
+	switch kind {
+	case "DisplaySettings":
+		return DisplaySettingsMimeType
+	case "Lifecycle":
+		return LifecycleMimeType
+	case "Manifest":
+		return ManifestMimeType
+	case "ReferenceList":
+		return ReferenceListMimeType
+	case "StyleGuide":
+		return core.MimeTypeForMessageType("google.cloud.apigeeregistry.applications.v1alpha1.StyleGuide")
+	case "TaxonomyList":
+		return TaxonomyListMimeType
+	default:
+		return ""
+	}
+}
+
+const DisplaySettingsMimeType = "application/octet-stream;type=google.cloud.apigeeregistry.v1.apihub.DisplaySettings"
+const LifecycleMimeType = "application/octet-stream;type=google.cloud.apigeeregistry.v1.apihub.Lifecycle"
+const ManifestMimeType = "application/octet-stream;type=google.cloud.apigeeregistry.v1.controller.Manifest"
+const ReferenceListMimeType = "application/octet-stream;type=google.cloud.apigeeregistry.v1.apihub.ReferenceList"
+const ScoreDefinitionMimeType = "application/octet-stream;type=google.cloud.apigeeregistry.v1.scoring.ScoreDefinition"
+const ScoreMimeType = "application/octet-stream;type=google.cloud.apigeeregistry.v1.scoring.Score"
+const ScoreCardDefinitionMimeType = "application/octet-stream;type=google.cloud.apigeeregistry.v1.scoring.ScoreCardDefinition"
+const ScoreCardMimeType = "application/octet-stream;type=google.cloud.apigeeregistry.v1.scoring.ScoreCard"
+const TaxonomyListMimeType = "application/octet-stream;type=google.cloud.apigeeregistry.v1.apihub.TaxonomyList"
