@@ -16,7 +16,6 @@ package patch
 
 import (
 	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/server/registry/names"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -40,31 +39,6 @@ func (d *LifecycleData) buildMessage() proto.Message {
 	}
 }
 
-func buildLifecycleArtifact(a *rpc.Artifact) (*Artifact, error) {
-	artifactName, err := names.ParseArtifact(a.Name)
-	if err != nil {
-		return nil, err
-	}
-	m := &rpc.Lifecycle{}
-	if err = proto.Unmarshal(a.Contents, m); err != nil {
-		return nil, err
-	}
-	return &Artifact{
-		Header: Header{
-			ApiVersion: RegistryV1,
-			Kind:       "Lifecycle",
-			Metadata: Metadata{
-				Name: artifactName.ArtifactID(),
-			},
-		},
-		Data: &LifecycleData{
-			DisplayName: m.DisplayName,
-			Description: m.Description,
-			Stages:      buildLifecycleStagesData(m),
-		},
-	}, nil
-}
-
 type LifecycleStage struct {
 	ID           string `yaml:"id"`
 	DisplayName  string `yaml:"displayName,omitempty"`
@@ -82,20 +56,6 @@ func buildLifecycleStagesProto(d *LifecycleData) []*rpc.Lifecycle_Stage {
 			Description:  v.Description,
 			Url:          v.URL,
 			DisplayOrder: int32(v.DisplayOrder),
-		}
-	}
-	return a
-}
-
-func buildLifecycleStagesData(m *rpc.Lifecycle) []*LifecycleStage {
-	a := make([]*LifecycleStage, len(m.Stages))
-	for i, v := range m.Stages {
-		a[i] = &LifecycleStage{
-			ID:           v.Id,
-			DisplayName:  v.DisplayName,
-			Description:  v.Description,
-			URL:          v.Url,
-			DisplayOrder: int(v.DisplayOrder),
 		}
 	}
 	return a

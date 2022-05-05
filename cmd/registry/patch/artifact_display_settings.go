@@ -16,7 +16,6 @@ package patch
 
 import (
 	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/server/registry/names"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -40,30 +39,4 @@ func (d *DisplaySettingsData) buildMessage() proto.Message {
 		ApiGuideEnabled: d.ApiGuideEnabled,
 		ApiScoreEnabled: d.ApiScoreEnabled,
 	}
-}
-
-func buildDisplaySettingsArtifact(a *rpc.Artifact) (*Artifact, error) {
-	artifactName, err := names.ParseArtifact(a.Name)
-	if err != nil {
-		return nil, err
-	}
-	m := &rpc.DisplaySettings{}
-	if err = proto.Unmarshal(a.Contents, m); err != nil {
-		return nil, err
-	}
-	return &Artifact{
-		Header: Header{
-			ApiVersion: RegistryV1,
-			Kind:       "DisplaySettings",
-			Metadata: Metadata{
-				Name: artifactName.ArtifactID(),
-			},
-		},
-		Data: &DisplaySettingsData{
-			Description:     m.Description,
-			Organization:    m.Organization,
-			ApiGuideEnabled: m.ApiGuideEnabled,
-			ApiScoreEnabled: m.ApiScoreEnabled,
-		},
-	}, nil
 }

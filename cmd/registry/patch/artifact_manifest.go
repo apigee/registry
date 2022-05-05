@@ -16,7 +16,6 @@ package patch
 
 import (
 	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/server/registry/names"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -38,31 +37,6 @@ func (d *ManifestData) buildMessage() proto.Message {
 		Description:        d.Description,
 		GeneratedResources: buildManifestGeneratedResourcesProto(d),
 	}
-}
-
-func buildManifestArtifact(a *rpc.Artifact) (*Artifact, error) {
-	artifactName, err := names.ParseArtifact(a.Name)
-	if err != nil {
-		return nil, err
-	}
-	m := &rpc.Manifest{}
-	if err = proto.Unmarshal(a.Contents, m); err != nil {
-		return nil, err
-	}
-	return &Artifact{
-		Header: Header{
-			ApiVersion: RegistryV1,
-			Kind:       "Manifest",
-			Metadata: Metadata{
-				Name: artifactName.ArtifactID(),
-			},
-		},
-		Data: &ManifestData{
-			DisplayName:        m.DisplayName,
-			Description:        m.Description,
-			GeneratedResources: buildManifestGeneratedResourcesData(m),
-		},
-	}, nil
 }
 
 type ManifestGeneratedResource struct {
@@ -87,20 +61,6 @@ func buildManifestGeneratedResourcesProto(d *ManifestData) []*rpc.GeneratedResou
 	return a
 }
 
-func buildManifestGeneratedResourcesData(m *rpc.Manifest) []*ManifestGeneratedResource {
-	a := make([]*ManifestGeneratedResource, len(m.GeneratedResources))
-	for i, v := range m.GeneratedResources {
-		a[i] = &ManifestGeneratedResource{
-			Pattern:      v.Pattern,
-			Filter:       v.Filter,
-			Receipt:      v.Receipt,
-			Dependencies: buildDependenciesData(v),
-			Action:       v.Action,
-		}
-	}
-	return a
-}
-
 type ManifestDependency struct {
 	Pattern string `yaml:"pattern"`
 	Filter  string `yaml:"filter,omitempty"`
@@ -110,17 +70,6 @@ func buildDependenciesProto(d *ManifestGeneratedResource) []*rpc.Dependency {
 	a := make([]*rpc.Dependency, len(d.Dependencies))
 	for i, v := range d.Dependencies {
 		a[i] = &rpc.Dependency{
-			Pattern: v.Pattern,
-			Filter:  v.Filter,
-		}
-	}
-	return a
-}
-
-func buildDependenciesData(m *rpc.GeneratedResource) []*ManifestDependency {
-	a := make([]*ManifestDependency, len(m.Dependencies))
-	for i, v := range m.Dependencies {
-		a[i] = &ManifestDependency{
 			Pattern: v.Pattern,
 			Filter:  v.Filter,
 		}

@@ -16,7 +16,6 @@ package patch
 
 import (
 	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/server/registry/names"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -38,32 +37,6 @@ func (d *TaxonomyListData) buildMessage() proto.Message {
 		Description: d.Description,
 		Taxonomies:  buildTaxonomiesProto(d),
 	}
-}
-
-func buildTaxonomyListArtifact(a *rpc.Artifact) (*Artifact, error) {
-	artifactName, err := names.ParseArtifact(a.Name)
-	if err != nil {
-		return nil, err
-	}
-	m := &rpc.TaxonomyList{}
-	err = proto.Unmarshal(a.Contents, m)
-	if err != nil {
-		return nil, err
-	}
-	return &Artifact{
-		Header: Header{
-			ApiVersion: RegistryV1,
-			Kind:       "TaxonomyList",
-			Metadata: Metadata{
-				Name: artifactName.ArtifactID(),
-			},
-		},
-		Data: &TaxonomyListData{
-			DisplayName: m.DisplayName,
-			Description: m.Description,
-			Taxonomies:  buildTaxonomiesData(m),
-		},
-	}, nil
 }
 
 type Taxonomy struct {
@@ -96,24 +69,6 @@ func buildTaxonomiesProto(d *TaxonomyListData) []*rpc.TaxonomyList_Taxonomy {
 	return a
 }
 
-func buildTaxonomiesData(value *rpc.TaxonomyList) []*Taxonomy {
-	a := make([]*Taxonomy, len(value.Taxonomies))
-	for i, v := range value.Taxonomies {
-		a[i] = &Taxonomy{
-			ID:              v.Id,
-			DisplayName:     v.DisplayName,
-			Description:     v.Description,
-			AdminApplied:    v.AdminApplied,
-			SingleSelection: v.SingleSelection,
-			SearchExcluded:  v.SearchExcluded,
-			SystemManaged:   v.SystemManaged,
-			DisplayOrder:    int(v.DisplayOrder),
-			Elements:        buildTaxonomyElementsData(v),
-		}
-	}
-	return a
-}
-
 type TaxonomyElement struct {
 	ID          string `yaml:"id"`
 	DisplayName string `yaml:"displayName,omitempty"`
@@ -125,18 +80,6 @@ func buildTaxonomyElementsProto(t *Taxonomy) []*rpc.TaxonomyList_Taxonomy_Elemen
 	for i, v := range t.Elements {
 		a[i] = &rpc.TaxonomyList_Taxonomy_Element{
 			Id:          v.ID,
-			DisplayName: v.DisplayName,
-			Description: v.Description,
-		}
-	}
-	return a
-}
-
-func buildTaxonomyElementsData(t *rpc.TaxonomyList_Taxonomy) []*TaxonomyElement {
-	a := make([]*TaxonomyElement, len(t.Elements))
-	for i, v := range t.Elements {
-		a[i] = &TaxonomyElement{
-			ID:          v.Id,
 			DisplayName: v.DisplayName,
 			Description: v.Description,
 		}

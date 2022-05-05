@@ -16,7 +16,6 @@ package patch
 
 import (
 	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/server/registry/names"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -40,31 +39,6 @@ func (d *ReferenceListData) buildMessage() proto.Message {
 	}
 }
 
-func buildReferenceListArtifact(a *rpc.Artifact) (*Artifact, error) {
-	artifactName, err := names.ParseArtifact(a.Name)
-	if err != nil {
-		return nil, err
-	}
-	m := &rpc.ReferenceList{}
-	if err = proto.Unmarshal(a.Contents, m); err != nil {
-		return nil, err
-	}
-	return &Artifact{
-		Header: Header{
-			ApiVersion: RegistryV1,
-			Kind:       "ReferenceList",
-			Metadata: Metadata{
-				Name: artifactName.ArtifactID(),
-			},
-		},
-		Data: &ReferenceListData{
-			DisplayName: m.DisplayName,
-			Description: m.Description,
-			References:  buildReferenceListReferencesData(m),
-		},
-	}, nil
-}
-
 type Reference struct {
 	ID          string `yaml:"id"`
 	DisplayName string `yaml:"displayName,omitempty"`
@@ -82,20 +56,6 @@ func buildReferenceListReferencesProto(d *ReferenceListData) []*rpc.ReferenceLis
 			Category:    v.Category,
 			Resource:    v.Resource,
 			Uri:         v.URI,
-		}
-	}
-	return a
-}
-
-func buildReferenceListReferencesData(m *rpc.ReferenceList) []*Reference {
-	a := make([]*Reference, len(m.References))
-	for i, v := range m.References {
-		a[i] = &Reference{
-			ID:          v.Id,
-			DisplayName: v.DisplayName,
-			Category:    v.Category,
-			Resource:    v.Resource,
-			URI:         v.Uri,
 		}
 	}
 	return a

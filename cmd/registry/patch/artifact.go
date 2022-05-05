@@ -19,16 +19,19 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/server/registry/names"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 	"gopkg.in/yaml.v3"
 )
 
 type Artifact struct {
 	Header `yaml:",inline"`
-	Data   ArtifactData `yaml:"-"`
+	Data   *yaml.Node `yaml:"data"`
 }
 
 type ArtifactData interface {
@@ -60,24 +63,80 @@ func ExportArtifact(ctx context.Context, client *gapic.RegistryClient, message *
 	return b.Bytes(), &artifact.Header, nil
 }
 
-func newArtifact(message *rpc.Artifact) (*Artifact, error) {
-	var artifact *Artifact
-	var err error
-	switch message.GetMimeType() {
-	case DisplaySettingsMimeType:
-		artifact, err = buildDisplaySettingsArtifact(message)
-	case LifecycleMimeType:
-		artifact, err = buildLifecycleArtifact(message)
-	case ManifestMimeType:
-		artifact, err = buildManifestArtifact(message)
-	case ReferenceListMimeType:
-		artifact, err = buildReferenceListArtifact(message)
-	case TaxonomyListMimeType:
-		artifact, err = buildTaxonomyListArtifact(message)
-	default:
-		artifact, err = buildUnknownArtifact(message)
+func restyle(node *yaml.Node, style yaml.Style) {
+	node.Style = style
+	for _, n := range node.Content {
+		restyle(n, style)
 	}
-	return artifact, err
+}
+
+func removeIdAndKind(node *yaml.Node) *yaml.Node {
+	if node.Kind == yaml.MappingNode {
+		content := make([]*yaml.Node, 0)
+		for i := 0; i < len(node.Content); i += 2 {
+			k := node.Content[i]
+			if k.Value == "id" || k.Value == "kind" {
+				// skip
+			} else {
+				content = append(content, node.Content[i])
+				content = append(content, node.Content[i+1])
+			}
+		}
+		node.Content = content
+	}
+	return node
+}
+
+func newArtifact(message *rpc.Artifact) (*Artifact, error) {
+	artifactName, err := names.ParseArtifact(message.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	m, err := protoMessageForMimeType(message.MimeType)
+	if err != nil {
+		return nil, err
+	}
+	if err = proto.Unmarshal(message.Contents, m); err != nil {
+		return nil, err
+	}
+	// marshal the artifact contents as JSON
+	marshaler := protojson.MarshalOptions{
+		UseEnumNumbers:  false,
+		EmitUnpopulated: false,
+		Indent:          "  ",
+		UseProtoNames:   false,
+	}
+	var s []byte
+	s, err = marshaler.Marshal(m)
+	if err != nil {
+		return nil, err
+	}
+	// read the JSON with yaml.v3
+	var node yaml.Node
+	err = yaml.Unmarshal([]byte(s), &node)
+	if err != nil {
+		return nil, err
+	}
+	doc := node.Content[0]
+	// restyle the doc to be serialized with YAML defaults
+	restyle(doc, 0)
+	doc = removeIdAndKind(doc)
+	// wrap the artifact for YAML export
+	artifact := &Artifact{
+		Header: Header{
+			ApiVersion: RegistryV1,
+			Kind:       kindForMimeType(message.MimeType),
+			Metadata: Metadata{
+				Name: artifactName.ArtifactID(),
+			},
+		},
+		Data: doc,
+	}
+	if err != nil {
+		return nil, err
+	}
+	return artifact, nil
 }
 
 func (a *Artifact) UnmarshalYAML(node *yaml.Node) error {
@@ -92,38 +151,22 @@ func (a *Artifact) UnmarshalYAML(node *yaml.Node) error {
 		return err
 	}
 	switch a.Kind {
-	case "DisplaySettings":
-		a.Data = new(DisplaySettingsData)
-	case "Lifecycle":
-		a.Data = new(LifecycleData)
-	case "Manifest":
-		a.Data = new(ManifestData)
-	case "ReferenceList":
-		a.Data = new(ReferenceListData)
-	case "TaxonomyList":
-		a.Data = new(TaxonomyListData)
+	/*
+		case "DisplaySettings":
+			a.Data = new(DisplaySettingsData)
+		case "Lifecycle":
+			a.Data = new(LifecycleData)
+		case "Manifest":
+			a.Data = new(ManifestData)
+		case "ReferenceList":
+			a.Data = new(ReferenceListData)
+		case "TaxonomyList":
+			a.Data = new(TaxonomyListData)
+	*/
 	default:
 		return fmt.Errorf("unable to unmarshal %s", a.Kind)
 	}
 	return wrapper.Data.Decode(a.Data)
-}
-
-func (a *Artifact) MarshalYAML() (interface{}, error) {
-	// This struct provides a temporary equivalent Artifact representation with
-	// a YAML struct tag that allows the Data field to be directly exported.
-	// The primary definition (above) has a dash ("-") for this field to defer
-	// unmarshalling until its type is known. But that causes YAML marshalling
-	// to skip the field, and rather than try to tweak the struct tags at
-	// runtime, we instead copy the artifact data into this equivalent
-	// structure that is tagged for direct export.
-	type exportable struct {
-		Header `yaml:",inline"`
-		Data   ArtifactData `yaml:"data"`
-	}
-	return &exportable{
-		Header: a.Header,
-		Data:   a.Data,
-	}, nil
 }
 
 func applyArtifactPatchBytes(ctx context.Context, client connection.Client, bytes []byte, parent string) error {
@@ -136,13 +179,15 @@ func applyArtifactPatchBytes(ctx context.Context, client connection.Client, byte
 }
 
 func applyArtifactPatch(ctx context.Context, client connection.Client, content *Artifact, parent string) error {
-	bytes, err := proto.Marshal(content.Data.buildMessage())
-	if err != nil {
-		return err
-	}
+	//bytes, err := proto.Marshal(content.Data.buildMessage())
+	//if err != nil {
+	//	return err
+	//}
+	bytes := []byte{}
+	var err error
 	artifact := &rpc.Artifact{
 		Name:     fmt.Sprintf("%s/artifacts/%s", parent, content.Header.Metadata.Name),
-		MimeType: content.Data.mimeType(),
+		MimeType: "", // content.Data.mimeType(),
 		Contents: bytes,
 	}
 	req := &rpc.CreateArtifactRequest{
@@ -158,4 +203,44 @@ func applyArtifactPatch(ctx context.Context, client connection.Client, content *
 		_, err = client.ReplaceArtifact(ctx, req)
 	}
 	return err
+}
+
+func protoMessageForMimeType(mimeType string) (proto.Message, error) {
+	var m proto.Message
+	switch mimeType {
+	case DisplaySettingsMimeType:
+		m = &rpc.DisplaySettings{}
+	case LifecycleMimeType:
+		m = &rpc.Lifecycle{}
+	case ManifestMimeType:
+		m = &rpc.Manifest{}
+	case ReferenceListMimeType:
+		m = &rpc.ReferenceList{}
+	case core.MimeTypeForMessageType("google.cloud.apigeeregistry.applications.v1alpha1.StyleGuide"):
+		m = &rpc.StyleGuide{}
+	case TaxonomyListMimeType:
+		m = &rpc.TaxonomyList{}
+	default:
+		return nil, fmt.Errorf("unsupported type %s", mimeType)
+	}
+	return m, nil
+}
+
+func kindForMimeType(mimeType string) string {
+	switch mimeType {
+	case DisplaySettingsMimeType:
+		return "DisplaySettings"
+	case LifecycleMimeType:
+		return "Lifecycle"
+	case ManifestMimeType:
+		return "Manifest"
+	case ReferenceListMimeType:
+		return "ReferenceList"
+	case core.MimeTypeForMessageType("google.cloud.apigeeregistry.applications.v1alpha1.StyleGuide"):
+		return "StyleGuide"
+	case TaxonomyListMimeType:
+		return "TaxonomyList"
+	default:
+		return ""
+	}
 }
