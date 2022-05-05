@@ -46,7 +46,6 @@ type RegistryResource interface {
 // Resources can be provided in any order. They will be created according to their position in the resource hierarchy.
 //
 // ApiSpecs with the same name can be provided to create multiple revisions of the same spec.
-// Each revision can be tagged by providing a list of tags in the `revision_tags` field.
 //
 // Resource names must be unique with the exception of ApiSpec resources.
 // Supported resource types are Project, Api, ApiVersion, ApiSpec, ApiDeployment, and Artifact.
