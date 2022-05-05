@@ -35,7 +35,6 @@ type Registry interface {
 }
 
 // RegistryResource is an interface that any seedable resource will implement.
-// The resource name is used to determine the hierarchical ordering of resources for seeding.
 type RegistryResource interface {
 	GetName() string
 }
@@ -43,9 +42,6 @@ type RegistryResource interface {
 // SeedRegistry initializes registry with the provided resources.
 // Resources are created implicitly if they are needed but aren't explicitly provided.
 //
-// ApiSpecs with the same name can be provided to create multiple revisions of the same spec.
-//
-// Resource names must be unique with the exception of ApiSpec resources.
 // Supported resource types are Project, Api, ApiVersion, ApiSpec, ApiDeployment, and Artifact.
 func SeedRegistry(ctx context.Context, s Registry, resources ...RegistryResource) error {
 	// Maintain a history of created resources to skip redundant requests.
