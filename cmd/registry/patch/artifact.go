@@ -18,8 +18,8 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"strings"
 
-	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/rpc"
@@ -188,7 +188,7 @@ func applyArtifactPatch(ctx context.Context, client connection.Client, content *
 	}
 	artifact := &rpc.Artifact{
 		Name:     fmt.Sprintf("%s/artifacts/%s", parent, content.Header.Metadata.Name),
-		MimeType: mimeTypeForKind(content.Kind),
+		MimeType: MimeTypeForKind(content.Kind),
 		Contents: bytes,
 	}
 	req := &rpc.CreateArtifactRequest{
@@ -206,92 +206,57 @@ func applyArtifactPatch(ctx context.Context, client connection.Client, content *
 	return err
 }
 
+func kindForMimeType(mimeType string) string {
+	parts := strings.Split(".", mimeType)
+	return parts[len(parts)-1]
+}
+
 func protoMessageForMimeType(mimeType string) (proto.Message, error) {
-	var m proto.Message
-	switch mimeType {
-	case DisplaySettingsMimeType:
-		m = &rpc.DisplaySettings{}
-	case LifecycleMimeType:
-		m = &rpc.Lifecycle{}
-	case ManifestMimeType:
-		m = &rpc.Manifest{}
-	case ReferenceListMimeType:
-		m = &rpc.ReferenceList{}
-	case core.MimeTypeForMessageType("google.cloud.apigeeregistry.applications.v1alpha1.StyleGuide"):
-		m = &rpc.StyleGuide{}
-	case TaxonomyListMimeType:
-		m = &rpc.TaxonomyList{}
-	default:
-		return nil, fmt.Errorf("unsupported type %s", mimeType)
+	messageType := strings.TrimPrefix(mimeType, "application/octet-stream;type=")
+	for k, v := range artifactMessageTypes() {
+		if k == messageType {
+			return v(), nil
+		}
 	}
-	return m, nil
+	return nil, fmt.Errorf("unsupported message type %s", messageType)
 }
 
 func protoMessageForKind(kind string) (proto.Message, error) {
-	var m proto.Message
-	switch kind {
-	case "DisplaySettings":
-		m = &rpc.DisplaySettings{}
-	case "Lifecycle":
-		m = &rpc.Lifecycle{}
-	case "Manifest":
-		m = &rpc.Manifest{}
-	case "ReferenceList":
-		m = &rpc.ReferenceList{}
-	case "StyleGuide":
-		m = &rpc.StyleGuide{}
-	case "TaxonomyList":
-		m = &rpc.TaxonomyList{}
-	default:
-		return nil, fmt.Errorf("unsupported type %s", kind)
+	for k, v := range artifactMessageTypes() {
+		if strings.HasSuffix(k, "."+kind) {
+			return v(), nil
+		}
 	}
-	return m, nil
+	return nil, fmt.Errorf("unsupported kind %s", kind)
 }
 
-func kindForMimeType(mimeType string) string {
-	switch mimeType {
-	case DisplaySettingsMimeType:
-		return "DisplaySettings"
-	case LifecycleMimeType:
-		return "Lifecycle"
-	case ManifestMimeType:
-		return "Manifest"
-	case ReferenceListMimeType:
-		return "ReferenceList"
-	case core.MimeTypeForMessageType("google.cloud.apigeeregistry.applications.v1alpha1.StyleGuide"):
-		return "StyleGuide"
-	case TaxonomyListMimeType:
-		return "TaxonomyList"
-	default:
-		return ""
+func messageTypeForKind(kind string) string {
+	for k, _ := range artifactMessageTypes() {
+		if strings.HasSuffix(k, "."+kind) {
+			return k
+		}
 	}
+	return ""
 }
 
-func mimeTypeForKind(kind string) string {
-	switch kind {
-	case "DisplaySettings":
-		return DisplaySettingsMimeType
-	case "Lifecycle":
-		return LifecycleMimeType
-	case "Manifest":
-		return ManifestMimeType
-	case "ReferenceList":
-		return ReferenceListMimeType
-	case "StyleGuide":
-		return core.MimeTypeForMessageType("google.cloud.apigeeregistry.applications.v1alpha1.StyleGuide")
-	case "TaxonomyList":
-		return TaxonomyListMimeType
-	default:
-		return ""
-	}
+func MimeTypeForKind(kind string) string {
+	return fmt.Sprintf("application/octet-stream;type=%s", messageTypeForKind(kind))
 }
 
-const DisplaySettingsMimeType = "application/octet-stream;type=google.cloud.apigeeregistry.v1.apihub.DisplaySettings"
-const LifecycleMimeType = "application/octet-stream;type=google.cloud.apigeeregistry.v1.apihub.Lifecycle"
-const ManifestMimeType = "application/octet-stream;type=google.cloud.apigeeregistry.v1.controller.Manifest"
-const ReferenceListMimeType = "application/octet-stream;type=google.cloud.apigeeregistry.v1.apihub.ReferenceList"
-const ScoreDefinitionMimeType = "application/octet-stream;type=google.cloud.apigeeregistry.v1.scoring.ScoreDefinition"
-const ScoreMimeType = "application/octet-stream;type=google.cloud.apigeeregistry.v1.scoring.Score"
-const ScoreCardDefinitionMimeType = "application/octet-stream;type=google.cloud.apigeeregistry.v1.scoring.ScoreCardDefinition"
-const ScoreCardMimeType = "application/octet-stream;type=google.cloud.apigeeregistry.v1.scoring.ScoreCard"
-const TaxonomyListMimeType = "application/octet-stream;type=google.cloud.apigeeregistry.v1.apihub.TaxonomyList"
+type MessageFactory func() proto.Message
+
+// This is the source of truth for supported artifact types.
+func artifactMessageTypes() map[string]MessageFactory {
+	return map[string]MessageFactory{
+		"google.cloud.apigeeregistry.applications.v1alpha1.StyleGuide": func() proto.Message { return new(rpc.StyleGuide) },
+		"google.cloud.apigeeregistry.v1.apihub.DisplaySettings":        func() proto.Message { return new(rpc.DisplaySettings) },
+		"google.cloud.apigeeregistry.v1.apihub.Lifecycle":              func() proto.Message { return new(rpc.Lifecycle) },
+		"google.cloud.apigeeregistry.v1.apihub.ReferenceList":          func() proto.Message { return new(rpc.ReferenceList) },
+		"google.cloud.apigeeregistry.v1.apihub.TaxonomyList":           func() proto.Message { return new(rpc.TaxonomyList) },
+		"google.cloud.apigeeregistry.v1.controller.Manifest":           func() proto.Message { return new(rpc.Manifest) },
+		"google.cloud.apigeeregistry.v1.scoring.ScoreDefinition":       func() proto.Message { return new(rpc.ScoreDefinition) },
+		"google.cloud.apigeeregistry.v1.scoring.Score":                 func() proto.Message { return new(rpc.Score) },
+		"google.cloud.apigeeregistry.v1.scoring.ScoreCardDefinition":   func() proto.Message { return new(rpc.ScoreCardDefinition) },
+		"google.cloud.apigeeregistry.v1.scoring.ScoreCard":             func() proto.Message { return new(rpc.ScoreCard) },
+	}
+}
