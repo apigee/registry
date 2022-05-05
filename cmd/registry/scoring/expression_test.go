@@ -121,24 +121,22 @@ func TestGetMapError(t *testing.T) {
 
 func TestEvaluateScoreExpression(t *testing.T) {
 	tests := []struct {
-		desc          string
-		expression    string
-		mimeType      string
-		contentsProto proto.Message
-		wantValue     interface{}
+		desc        string
+		expression  string
+		artifactMap map[string]interface{}
+		wantValue   interface{}
 	}{
 		{
 			desc:       "int happy path",
 			expression: "size(files[0].problems)",
-			mimeType:   "application/octet-stream;type=google.cloud.apigeeregistry.applications.v1alpha1.Lint",
-			contentsProto: &rpc.Lint{
-				Name: "openapi.yaml",
-				Files: []*rpc.LintFile{
+			artifactMap: map[string]interface{}{
+				"name": "openapi.yaml",
+				"files": []map[string]interface{}{
 					{
-						FilePath: "openapi.yaml",
-						Problems: []*rpc.LintProblem{
+						"filePath": "openapi.yaml",
+						"problems": []map[string]interface{}{
 							{
-								Message: "lint-error",
+								"message": "lint-error",
 							},
 						},
 					},
@@ -149,15 +147,14 @@ func TestEvaluateScoreExpression(t *testing.T) {
 		{
 			desc:       "double happy path",
 			expression: "double(size(files[0].problems))",
-			mimeType:   "application/octet-stream;type=google.cloud.apigeeregistry.applications.v1alpha1.Lint",
-			contentsProto: &rpc.Lint{
-				Name: "openapi.yaml",
-				Files: []*rpc.LintFile{
+			artifactMap: map[string]interface{}{
+				"name": "openapi.yaml",
+				"files": []map[string]interface{}{
 					{
-						FilePath: "openapi.yaml",
-						Problems: []*rpc.LintProblem{
+						"filePath": "openapi.yaml",
+						"problems": []map[string]interface{}{
 							{
-								Message: "lint-error",
+								"message": "lint-error",
 							},
 						},
 					},
@@ -168,15 +165,14 @@ func TestEvaluateScoreExpression(t *testing.T) {
 		{
 			desc:       "bool happy path",
 			expression: "size(files[0].problems)>0",
-			mimeType:   "application/octet-stream;type=google.cloud.apigeeregistry.applications.v1alpha1.Lint",
-			contentsProto: &rpc.Lint{
-				Name: "openapi.yaml",
-				Files: []*rpc.LintFile{
+			artifactMap: map[string]interface{}{
+				"name": "openapi.yaml",
+				"files": []map[string]interface{}{
 					{
-						FilePath: "openapi.yaml",
-						Problems: []*rpc.LintProblem{
+						"filePath": "openapi.yaml",
+						"problems": []map[string]interface{}{
 							{
-								Message: "lint-error",
+								"message": "lint-error",
 							},
 						},
 					},
@@ -188,9 +184,7 @@ func TestEvaluateScoreExpression(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			contents, _ := proto.Marshal(test.contentsProto)
-
-			gotValue, gotErr := evaluateScoreExpression(test.expression, test.mimeType, contents)
+			gotValue, gotErr := evaluateScoreExpression(test.expression, test.artifactMap)
 			if gotErr != nil {
 				t.Errorf("evaluateScoreExpression() returned unexpected error: %s", gotErr)
 			}
@@ -204,30 +198,21 @@ func TestEvaluateScoreExpression(t *testing.T) {
 
 func TestEvaluateScoreExpressionError(t *testing.T) {
 	tests := []struct {
-		desc          string
-		expression    string
-		mimeType      string
-		contentsProto proto.Message
+		desc        string
+		expression  string
+		artifactMap map[string]interface{}
 	}{
-		{
-			desc:       "error in getMap()",
-			expression: "",
-			// getMap() will return an error since ScoreDefinition is an unsupported type
-			mimeType:      "application/octet-stream;type=google.cloud.apigeeregistry.v1.scoring.ScoreDefinition",
-			contentsProto: &rpc.ScoreDefinition{},
-		},
 		{
 			desc:       "invalid field reference",
 			expression: "size(files.problems)", // correct expression should be "size(files[0].problems)"
-			mimeType:   "application/octet-stream;type=google.cloud.apigeeregistry.applications.v1alpha1.Lint",
-			contentsProto: &rpc.Lint{
-				Name: "openapi.yaml",
-				Files: []*rpc.LintFile{
+			artifactMap: map[string]interface{}{
+				"name": "openapi.yaml",
+				"files": []map[string]interface{}{
 					{
-						FilePath: "openapi.yaml",
-						Problems: []*rpc.LintProblem{
+						"filePath": "openapi.yaml",
+						"problems": []map[string]interface{}{
 							{
-								Message: "lint-error",
+								"message": "lint-error",
 							},
 						},
 					},
@@ -237,15 +222,14 @@ func TestEvaluateScoreExpressionError(t *testing.T) {
 		{
 			desc:       "unsupported type (list)",
 			expression: "files[0].problems", //this will return a list value
-			mimeType:   "application/octet-stream;type=google.cloud.apigeeregistry.applications.v1alpha1.Lint",
-			contentsProto: &rpc.Lint{
-				Name: "openapi.yaml",
-				Files: []*rpc.LintFile{
+			artifactMap: map[string]interface{}{
+				"name": "openapi.yaml",
+				"files": []map[string]interface{}{
 					{
-						FilePath: "openapi.yaml",
-						Problems: []*rpc.LintProblem{
+						"filePath": "openapi.yaml",
+						"problems": []map[string]interface{}{
 							{
-								Message: "lint-error",
+								"message": "lint-error",
 							},
 						},
 					},
@@ -256,11 +240,9 @@ func TestEvaluateScoreExpressionError(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			contents, _ := proto.Marshal(test.contentsProto)
-
-			_, gotErr := evaluateScoreExpression(test.expression, test.mimeType, contents)
+			_, gotErr := evaluateScoreExpression(test.expression, test.artifactMap)
 			if gotErr == nil {
-				t.Errorf("evaluateScoreExpression(%s, %s, %v) did not return an error", test.expression, test.mimeType, test.contentsProto)
+				t.Errorf("evaluateScoreExpression(%s, %v) did not return an error", test.expression, test.artifactMap)
 			}
 		})
 	}

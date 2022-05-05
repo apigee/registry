@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/cmd/registry/patch"
@@ -159,12 +160,9 @@ func processFormula(
 	// Apply score formula
 	switch formula := definition.GetFormula().(type) {
 	case *rpc.ScoreDefinition_ScoreFormula:
-		scoreValue, err := processScoreFormula(ctx, client, formula.ScoreFormula, resource)
-		if err != nil {
-			return nil, err
-		}
-		return scoreValue, nil
-	// TODO: Add support for rollup_formula
+		return processScoreFormula(ctx, client, formula.ScoreFormula, resource)
+	case *rpc.ScoreDefinition_RollupFormula:
+		return processRollUpFormula(ctx, client, formula.RollupFormula, resource)
 	default:
 		return nil, fmt.Errorf("invalid formula in ScoreDefinition: {%v} ", formula)
 	}
@@ -175,16 +173,19 @@ func processScoreFormula(
 	client connection.Client,
 	formula *rpc.ScoreFormula,
 	resource patterns.ResourceInstance) (interface{}, error) {
-	// Fetch the artifact
 	extendedArtifact, err := patterns.SubstituteReferenceEntity(formula.GetArtifact().GetPattern(), resource.ResourceName())
 	if err != nil {
-		return nil, fmt.Errorf("invalid score_formula.artifact.pattern: %s, %s", formula.GetArtifact().GetPattern(), err)
+		return nil, fmt.Errorf("invalid score_formula.artifact.pattern: %s for {%v}, %s", formula.GetArtifact().GetPattern(), formula, err)
 	}
 	artifactName, err := names.ParseArtifact(extendedArtifact.String())
 	if err != nil {
-		return nil, fmt.Errorf("invalid score_formula.artifact.pattern: %s, %s", formula.GetArtifact().GetPattern(), err)
+		return nil, fmt.Errorf("invalid score_formula.artifact.pattern: %s for {%v}, %s", formula.GetArtifact().GetPattern(), formula, err)
+	}
+	if formula.GetScoreExpression() == "" {
+		return nil, fmt.Errorf("missing score_formula.score_expression for {%v}", formula)
 	}
 
+	// Fetch the artifact
 	var contents []byte
 	var mimeType string
 	err = core.GetArtifact(ctx, client, artifactName, true, func(artifact *rpc.Artifact) error {
@@ -198,13 +199,48 @@ func processScoreFormula(
 
 	// TODO: Add timestamp check. Compute the score only if the artifact has an update since the last score calculation
 
-	// Apply the score_expression
-	value, err := evaluateScoreExpression(formula.GetScoreExpression(), mimeType, contents)
+	// Convert artifact contents to map[string]interface{}
+	artifactMap, err := getMap(contents, mimeType)
 	if err != nil {
 		return nil, err
 	}
 
-	return value, nil
+	// Apply the score_expression
+	return evaluateScoreExpression(formula.GetScoreExpression(), artifactMap)
+}
+
+func processRollUpFormula(
+	ctx context.Context,
+	client connection.Client,
+	formula *rpc.RollUpFormula,
+	resource patterns.ResourceInstance) (interface{}, error) {
+	// Validate required fields
+	if len(formula.GetScoreFormulas()) == 0 {
+		return nil, fmt.Errorf("missing rollup_formula.score_formulas in {%v}", formula)
+	}
+	if formula.GetRollupExpression() == "" {
+		return nil, fmt.Errorf("missing rollup_formula.rollup_expression in {%v}", formula)
+	}
+
+	rollUpMap := make(map[string]interface{}, 0)
+	for _, f := range formula.GetScoreFormulas() {
+		scoreValue, err := processScoreFormula(ctx, client, f, resource)
+		if err != nil {
+			return nil, fmt.Errorf("error processing rollup_formula.score_formulas: %s", err)
+		}
+
+		refId := f.GetReferenceId()
+		if refId == "" {
+			return nil, fmt.Errorf("missing reference_id for score_formula {%v}", f)
+		}
+		if strings.Contains(refId, "-") {
+			return nil, fmt.Errorf("invalid reference_id for score_formula {%v}: cannot contain '-'", f)
+		}
+		rollUpMap[refId] = scoreValue
+	}
+
+	// Apply the rollup_expression
+	return evaluateScoreExpression(formula.GetRollupExpression(), rollUpMap)
 }
 
 func processScoreType(definition *rpc.ScoreDefinition, scoreValue interface{}, project string) (*rpc.Score, error) {
