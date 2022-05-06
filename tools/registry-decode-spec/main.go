@@ -30,7 +30,6 @@ import (
 // to decode specs returned by the apg tool, with an additional effort to
 // handle the hex-encoded inputs produced by registry-encode-spec.
 func main() {
-
 	// decode the spec
 	reader := bufio.NewReader(os.Stdin)
 	s, _ := reader.ReadString('\n')

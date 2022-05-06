@@ -1,3 +1,17 @@
+// Copyright 2022 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package scoring
 
 import (
@@ -538,7 +552,139 @@ func TestValidateScoreDefinition(t *testing.T) {
 			// This is expected here since it is not possible to validate ScoreFormula patterns if there are errors in the targetResource pattern.
 			wantNumErr: 2,
 		},
-		// Missing oneof components
+		// Missing components
+		{
+			desc:   "missing target resource",
+			parent: "projects/demo/locations/global",
+			scoreDefinition: &rpc.ScoreDefinition{
+				Id:   "test-score-definition",
+				Kind: "ScoreDefinition",
+				Formula: &rpc.ScoreDefinition_ScoreFormula{
+					ScoreFormula: &rpc.ScoreFormula{
+						Artifact: &rpc.ResourcePattern{
+							Pattern: "$resource.spec/artifacts/conformance-report",
+						},
+						ScoreExpression: "count(errors)",
+					},
+				},
+				Type: &rpc.ScoreDefinition_Integer{
+					Integer: &rpc.IntegerType{
+						MinValue: 0,
+						MaxValue: 100,
+						Thresholds: []*rpc.NumberThreshold{
+							{
+								Severity: rpc.Severity_OK,
+								Range: &rpc.NumberThreshold_NumberRange{
+									Min: 0,
+									Max: 59,
+								},
+							},
+							{
+								Severity: rpc.Severity_ALERT,
+								Range: &rpc.NumberThreshold_NumberRange{
+									Min: 60,
+									Max: 100,
+								},
+							},
+						},
+					},
+				},
+			},
+			wantNumErr: 1,
+		},
+		{
+			desc:   "missing rollup_formula.rollup_expression",
+			parent: "projects/demo/locations/global",
+			scoreDefinition: &rpc.ScoreDefinition{
+				Id:   "test-score-definition",
+				Kind: "ScoreDefinition",
+				TargetResource: &rpc.ResourcePattern{
+					Pattern: "apis/-/versions/-/specs/-",
+				},
+				Formula: &rpc.ScoreDefinition_RollupFormula{
+					RollupFormula: &rpc.RollUpFormula{
+						ScoreFormulas: []*rpc.ScoreFormula{
+							{
+								Artifact: &rpc.ResourcePattern{
+									Pattern: "$resource.spec/artifacts/conformance-report",
+								},
+								ScoreExpression: "count(errors)",
+								ReferenceId:     "lint_errors",
+							},
+							{
+								Artifact: &rpc.ResourcePattern{
+									Pattern: "$resource.spec/artifacts/conformance-report",
+								},
+								ScoreExpression: "count(warnings)",
+								ReferenceId:     "lint_warnings",
+							},
+						},
+					},
+				},
+				Type: &rpc.ScoreDefinition_Integer{
+					Integer: &rpc.IntegerType{
+						MinValue: 0,
+						MaxValue: 100,
+						Thresholds: []*rpc.NumberThreshold{
+							{
+								Severity: rpc.Severity_ALERT,
+								Range: &rpc.NumberThreshold_NumberRange{
+									Min: 61,
+									Max: 100,
+								},
+							},
+							{
+								Severity: rpc.Severity_WARNING,
+								Range: &rpc.NumberThreshold_NumberRange{
+									Min: 0,
+									Max: 60,
+								},
+							},
+						},
+					},
+				},
+			},
+			wantNumErr: 1,
+		},
+		{
+			desc:   "missing rollup_formula.score_formulas",
+			parent: "projects/demo/locations/global",
+			scoreDefinition: &rpc.ScoreDefinition{
+				Id:   "test-score-definition",
+				Kind: "ScoreDefinition",
+				TargetResource: &rpc.ResourcePattern{
+					Pattern: "apis/-/versions/-/specs/-",
+				},
+				Formula: &rpc.ScoreDefinition_RollupFormula{
+					RollupFormula: &rpc.RollUpFormula{
+						RollupExpression: "lint_errors+lint_warnings",
+					},
+				},
+				Type: &rpc.ScoreDefinition_Integer{
+					Integer: &rpc.IntegerType{
+						MinValue: 0,
+						MaxValue: 100,
+						Thresholds: []*rpc.NumberThreshold{
+							{
+								Severity: rpc.Severity_ALERT,
+								Range: &rpc.NumberThreshold_NumberRange{
+									Min: 61,
+									Max: 100,
+								},
+							},
+							{
+								Severity: rpc.Severity_WARNING,
+								Range: &rpc.NumberThreshold_NumberRange{
+									Min: 0,
+									Max: 60,
+								},
+							},
+						},
+					},
+				},
+			},
+			wantNumErr: 1,
+		},
 		{
 			desc:   "missing formula",
 			parent: "projects/demo/locations/global",
@@ -698,6 +844,20 @@ func TestValidateScoreFormula(t *testing.T) {
 			},
 			wantNumErr: 1,
 		},
+		{
+			desc: "invalid reference_id",
+			targetPattern: &rpc.ResourcePattern{
+				Pattern: "projects/demo/locations/global/apis/-/versions/-/specs/-",
+			},
+			scoreFormula: &rpc.ScoreFormula{
+				Artifact: &rpc.ResourcePattern{
+					Pattern: "$resource.spec/artifacts/conformance-report",
+				},
+				ScoreExpression: "count(errors)",
+				ReferenceId:     "num-errors",
+			},
+			wantNumErr: 1,
+		},
 		// Combination errors
 		{
 			desc: "invalid pattern and missing name",
@@ -737,6 +897,29 @@ func TestValidateScoreFormula(t *testing.T) {
 				ScoreExpression: "count(errors)",
 			},
 			wantNumErr: 2,
+		},
+		// missing components
+		{
+			desc: "missing artifact",
+			targetPattern: &rpc.ResourcePattern{
+				Pattern: "projects/demo/locations/global/apis/-/versions/-/specs/-",
+			},
+			scoreFormula: &rpc.ScoreFormula{
+				ScoreExpression: "count(errors)",
+			},
+			wantNumErr: 1,
+		},
+		{
+			desc: "missing score expression",
+			targetPattern: &rpc.ResourcePattern{
+				Pattern: "projects/demo/locations/global/apis/-/versions/-/specs/-",
+			},
+			scoreFormula: &rpc.ScoreFormula{
+				Artifact: &rpc.ResourcePattern{
+					Pattern: "$resource.spec/artifacts/conformance-report",
+				},
+			},
+			wantNumErr: 1,
 		},
 	}
 	for _, test := range tests {
@@ -1308,7 +1491,6 @@ func TestValidateNumberThresholds(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func TestValidateBooleanThresholds(t *testing.T) {
@@ -1541,5 +1723,4 @@ func TestValidateScoreCardDefinition(t *testing.T) {
 			}
 		})
 	}
-
 }

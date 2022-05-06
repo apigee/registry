@@ -26,7 +26,7 @@ import (
 
 func (c *Client) unwrapSpecRevisionTag(ctx context.Context, name names.SpecRevision) (names.SpecRevision, error) {
 	v := new(models.SpecRevisionTag)
-	if err := c.db.Take(v, "key = ?", name.String()).Error; err == gorm.ErrRecordNotFound {
+	if err := c.db.WithContext(ctx).Take(v, "key = ?", name.String()).Error; err == gorm.ErrRecordNotFound {
 		return name, nil
 	} else if err != nil {
 		return names.SpecRevision{}, status.Error(codes.Internal, err.Error())
@@ -37,7 +37,7 @@ func (c *Client) unwrapSpecRevisionTag(ctx context.Context, name names.SpecRevis
 
 func (c *Client) unwrapDeploymentRevisionTag(ctx context.Context, name names.DeploymentRevision) (names.DeploymentRevision, error) {
 	v := new(models.DeploymentRevisionTag)
-	if err := c.db.Take(v, "key = ?", name.String()).Error; err == gorm.ErrRecordNotFound {
+	if err := c.db.WithContext(ctx).Take(v, "key = ?", name.String()).Error; err == gorm.ErrRecordNotFound {
 		return name, nil
 	} else if err != nil {
 		return names.DeploymentRevision{}, status.Error(codes.Internal, err.Error())
