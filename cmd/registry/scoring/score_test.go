@@ -680,15 +680,18 @@ func TestProcessScoreFormula(t *testing.T) {
 			},
 		},
 	}
-	gotValue, _, gotErr := processScoreFormula(ctx, registryClient, formula, resource, &rpc.Artifact{}, true)
-	if gotErr != nil {
-		t.Errorf("processScoreFormula() returned unexpected error: %s", gotErr)
+
+	wantResult := scoreResult{
+		value:       int64(1),
+		needsUpdate: true,
+		err:         nil,
 	}
 
-	wantValue := int64(1)
+	gotResult := processScoreFormula(ctx, registryClient, formula, resource, &rpc.Artifact{}, true)
 
-	if gotValue != nil && wantValue != gotValue {
-		t.Errorf("processScoreFormula() returned unexpected value, want: %v, got: %v", wantValue, gotValue)
+	opts := cmp.AllowUnexported(scoreResult{})
+	if !cmp.Equal(wantResult, gotResult, opts) {
+		t.Errorf("processScoreFormula() returned unexpected response, (-want +got):\n%s", cmp.Diff(wantResult, gotResult, opts))
 	}
 }
 
@@ -911,8 +914,8 @@ func TestProcessScoreFormulaError(t *testing.T) {
 
 			test.setup(ctx, registryClient, adminClient)
 
-			_, _, gotErr := processScoreFormula(ctx, registryClient, test.formula, test.resource, &rpc.Artifact{}, true)
-			if gotErr == nil {
+			gotResult := processScoreFormula(ctx, registryClient, test.formula, test.resource, &rpc.Artifact{}, true)
+			if gotResult.err == nil {
 				t.Errorf("processScoreFormula(ctx, client, %v, %v) did not return an error", test.formula, test.resource)
 			}
 		})
@@ -925,9 +928,7 @@ func TestProcessScoreFormulaTimestamp(t *testing.T) {
 		setup      func(context.Context, connection.Client, connection.AdminClient)
 		resource   patterns.ResourceInstance
 		takeAction bool
-		wantValue  interface{}
-		wantUpdate bool
-		wantErr    bool
+		wantResult scoreResult
 	}{
 		// When takeAction is true, the score value should be always updated
 		{
@@ -973,9 +974,11 @@ func TestProcessScoreFormulaTimestamp(t *testing.T) {
 				},
 			},
 			takeAction: true,
-			wantValue:  int64(1),
-			wantUpdate: true,
-			wantErr:    false,
+			wantResult: scoreResult{
+				value:       int64(1),
+				needsUpdate: true,
+				err:         nil,
+			},
 		},
 		// When takeAction is true, the score value should be always updated
 		{
@@ -1021,9 +1024,11 @@ func TestProcessScoreFormulaTimestamp(t *testing.T) {
 				},
 			},
 			takeAction: true,
-			wantValue:  int64(1),
-			wantUpdate: true,
-			wantErr:    false,
+			wantResult: scoreResult{
+				value:       int64(1),
+				needsUpdate: true,
+				err:         nil,
+			},
 		},
 		{
 			desc: "!takeAction and score is outdated",
@@ -1068,9 +1073,11 @@ func TestProcessScoreFormulaTimestamp(t *testing.T) {
 				},
 			},
 			takeAction: false,
-			wantValue:  int64(1),
-			wantUpdate: true,
-			wantErr:    false,
+			wantResult: scoreResult{
+				value:       int64(1),
+				needsUpdate: true,
+				err:         nil,
+			},
 		},
 		{
 			desc: "!takeAction and score is up-to-date",
@@ -1115,9 +1122,11 @@ func TestProcessScoreFormulaTimestamp(t *testing.T) {
 				},
 			},
 			takeAction: false,
-			wantValue:  int64(1),
-			wantUpdate: false,
-			wantErr:    false,
+			wantResult: scoreResult{
+				value:       int64(1),
+				needsUpdate: false,
+				err:         nil,
+			},
 		},
 	}
 
@@ -1150,13 +1159,11 @@ func TestProcessScoreFormulaTimestamp(t *testing.T) {
 				ScoreExpression: "size(files[0].problems)",
 			}
 
-			gotValue, gotUpdate, gotErr := processScoreFormula(ctx, registryClient, formula, test.resource, scoreArtifact, test.takeAction)
-			if test.wantErr {
-				if gotErr == nil {
-					t.Errorf("processScoreFormula(ctx, client, %v, %v, %v, %t) did not return an error", formula, test.resource, scoreArtifact, test.takeAction)
-				}
-			} else if gotValue != test.wantValue || gotUpdate != test.wantUpdate {
-				t.Errorf("processScoreFormula() returned unexpected response, want: (%s, %t), got: (%s, %t)", test.wantValue, test.wantUpdate, gotValue, gotUpdate)
+			gotResult := processScoreFormula(ctx, registryClient, formula, test.resource, scoreArtifact, test.takeAction)
+
+			opts := cmp.AllowUnexported(scoreResult{})
+			if !cmp.Equal(test.wantResult, gotResult, opts) {
+				t.Errorf("processScoreFormula() returned unexpected response, (-want, + got):\n%s", cmp.Diff(test.wantResult, gotResult, opts))
 			}
 		})
 	}
@@ -1244,15 +1251,18 @@ func TestProcessRollUpFormula(t *testing.T) {
 			},
 		},
 	}
-	gotValue, _, gotErr := processRollUpFormula(ctx, registryClient, formula, resource, &rpc.Artifact{}, true)
-	if gotErr != nil {
-		t.Errorf("processRollUpFormula() returned unexpected error: %s", gotErr)
+
+	wantResult := scoreResult{
+		value:       float64(0.5),
+		needsUpdate: true,
+		err:         nil,
 	}
 
-	wantValue := float64(0.5)
+	gotResult := processRollUpFormula(ctx, registryClient, formula, resource, &rpc.Artifact{}, true)
 
-	if gotValue != nil && wantValue != gotValue {
-		t.Errorf("processRollUpFormula() returned unexpected value, want: %v, got: %v", wantValue, gotValue)
+	opts := cmp.AllowUnexported(scoreResult{})
+	if !cmp.Equal(wantResult, gotResult, opts) {
+		t.Errorf("processRollUpFormula() returned unexpected value, (-want, +got):\n%s", cmp.Diff(wantResult, gotResult, opts))
 	}
 }
 
@@ -1523,8 +1533,8 @@ func TestProcessRollUpFormulaError(t *testing.T) {
 
 			test.setup(ctx, registryClient, adminClient)
 
-			_, _, gotErr := processRollUpFormula(ctx, registryClient, test.formula, test.resource, &rpc.Artifact{}, true)
-			if gotErr == nil {
+			gotResult := processRollUpFormula(ctx, registryClient, test.formula, test.resource, &rpc.Artifact{}, true)
+			if gotResult.err == nil {
 				t.Errorf("processRollUpFormula(ctx, client, %v, %v) did not return an error", test.formula, test.resource)
 			}
 		})
@@ -1537,9 +1547,7 @@ func TestProcessRollUpFormulaTimestamp(t *testing.T) {
 		setup      func(context.Context, connection.Client, connection.AdminClient)
 		resource   patterns.ResourceInstance
 		takeAction bool
-		wantValue  interface{}
-		wantUpdate bool
-		wantErr    bool
+		wantResult scoreResult
 	}{
 		{
 			desc: "takeAction and score completely outdated",
@@ -1600,9 +1608,11 @@ func TestProcessRollUpFormulaTimestamp(t *testing.T) {
 				},
 			},
 			takeAction: true,
-			wantValue:  float64(0.5),
-			wantUpdate: true,
-			wantErr:    false,
+			wantResult: scoreResult{
+				value:       float64(0.5),
+				needsUpdate: true,
+				err:         nil,
+			},
 		},
 		{
 			desc: "takeAction and score partially outdated",
@@ -1664,9 +1674,11 @@ func TestProcessRollUpFormulaTimestamp(t *testing.T) {
 				},
 			},
 			takeAction: true,
-			wantValue:  float64(0.5),
-			wantUpdate: true,
-			wantErr:    false,
+			wantResult: scoreResult{
+				value:       float64(0.5),
+				needsUpdate: true,
+				err:         nil,
+			},
 		},
 		{
 			desc: "takeAction and score up-to-date",
@@ -1728,9 +1740,11 @@ func TestProcessRollUpFormulaTimestamp(t *testing.T) {
 				},
 			},
 			takeAction: true,
-			wantValue:  float64(0.5),
-			wantUpdate: true,
-			wantErr:    false,
+			wantResult: scoreResult{
+				value:       float64(0.5),
+				needsUpdate: true,
+				err:         nil,
+			},
 		},
 		{
 			desc: "!takeAction and score completely outdated",
@@ -1791,9 +1805,11 @@ func TestProcessRollUpFormulaTimestamp(t *testing.T) {
 				},
 			},
 			takeAction: false,
-			wantValue:  float64(0.5),
-			wantUpdate: true,
-			wantErr:    false,
+			wantResult: scoreResult{
+				value:       float64(0.5),
+				needsUpdate: true,
+				err:         nil,
+			},
 		},
 		{
 			desc: "!takeAction and score partially outdated",
@@ -1855,9 +1871,11 @@ func TestProcessRollUpFormulaTimestamp(t *testing.T) {
 				},
 			},
 			takeAction: false,
-			wantValue:  float64(0.5),
-			wantUpdate: true,
-			wantErr:    false,
+			wantResult: scoreResult{
+				value:       float64(0.5),
+				needsUpdate: true,
+				err:         nil,
+			},
 		},
 		{
 			desc: "!takeAction and score up-to-date",
@@ -1919,9 +1937,11 @@ func TestProcessRollUpFormulaTimestamp(t *testing.T) {
 				},
 			},
 			takeAction: false,
-			wantValue:  nil,
-			wantUpdate: false,
-			wantErr:    false,
+			wantResult: scoreResult{
+				value:       nil,
+				needsUpdate: false,
+				err:         nil,
+			},
 		},
 	}
 
@@ -1967,13 +1987,11 @@ func TestProcessRollUpFormulaTimestamp(t *testing.T) {
 				RollupExpression: "double(numErrors)/numOperations",
 			}
 
-			gotValue, gotUpdate, gotErr := processRollUpFormula(ctx, registryClient, formula, test.resource, scoreArtifact, test.takeAction)
-			if test.wantErr {
-				if gotErr == nil {
-					t.Errorf("processScoreFormula(ctx, client, %v, %v, %v, %t) did not return an error", formula, test.resource, scoreArtifact, test.takeAction)
-				}
-			} else if gotValue != test.wantValue || gotUpdate != test.wantUpdate {
-				t.Errorf("processScoreFormula() returned unexpected response, want: (%s, %t), got: (%s, %t)", test.wantValue, test.wantUpdate, gotValue, gotUpdate)
+			gotResult := processRollUpFormula(ctx, registryClient, formula, test.resource, scoreArtifact, test.takeAction)
+
+			opts := cmp.AllowUnexported(scoreResult{})
+			if !cmp.Equal(test.wantResult, gotResult, opts) {
+				t.Errorf("processScoreFormula() returned unexpected response, (-want, +got):\n%s", cmp.Diff(test.wantResult, gotResult, opts))
 			}
 		})
 	}
