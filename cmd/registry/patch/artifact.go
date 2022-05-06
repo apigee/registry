@@ -228,7 +228,7 @@ func protoMessageForKind(kind string) (proto.Message, error) {
 }
 
 func messageTypeForKind(kind string) string {
-	for k, _ := range artifactMessageTypes() {
+	for k := range artifactMessageTypes() {
 		if strings.HasSuffix(k, "."+kind) {
 			return k
 		}
