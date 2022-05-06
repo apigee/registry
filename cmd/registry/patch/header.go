@@ -15,6 +15,8 @@
 package patch
 
 import (
+	"fmt"
+
 	"gopkg.in/yaml.v3"
 )
 
@@ -32,10 +34,14 @@ type Metadata struct {
 	Annotations map[string]string `yaml:"annotations,omitempty"`
 }
 
-func readHeader(bytes []byte) (*Header, error) {
-	header := &Header{}
-	if err := yaml.Unmarshal(bytes, header); err != nil {
-		return nil, err
+func readHeader(bytes []byte) (Header, error) {
+	var header Header
+	err := yaml.Unmarshal(bytes, &header)
+	if err != nil {
+		return header, err
+	}
+	if header.ApiVersion != RegistryV1 {
+		return header, fmt.Errorf("unsupported API version: %s", header.ApiVersion)
 	}
 	return header, nil
 }

@@ -41,7 +41,7 @@ func FetchScoreDefinitions(
 	if err != nil {
 		return nil, err
 	}
-	listFilter := fmt.Sprintf("mime_type == %q", patch.ScoreDefinitionMimeType)
+	listFilter := fmt.Sprintf("mime_type == %q", patch.MimeTypeForKind("ScoreDefinition"))
 	err = core.ListArtifacts(ctx, client, artifact, listFilter, true,
 		func(artifact *rpc.Artifact) error {
 			definition := &rpc.ScoreDefinition{}
@@ -382,7 +382,7 @@ func uploadScore(ctx context.Context, client connection.Client, resource pattern
 	artifact := &rpc.Artifact{
 		Name:     fmt.Sprintf("%s/artifacts/%s", resource.ResourceName().String(), score.GetId()),
 		Contents: artifactBytes,
-		MimeType: patch.ScoreMimeType,
+		MimeType: patch.MimeTypeForKind("Score"),
 	}
 	log.Debugf(ctx, "Uploading %s", artifact.GetName())
 	if err = core.SetArtifact(ctx, client, artifact); err != nil {
