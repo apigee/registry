@@ -204,7 +204,7 @@ func applyArtifactPatch(ctx context.Context, client connection.Client, content *
 }
 
 func kindForMimeType(mimeType string) string {
-	parts := strings.Split(".", mimeType)
+	parts := strings.Split(mimeType, ".")
 	return parts[len(parts)-1]
 }
 
