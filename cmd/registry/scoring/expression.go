@@ -26,13 +26,8 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func evaluateScoreExpression(expression, mimeType string, contents []byte) (interface{}, error) {
-	// https://github.com/google/cel-spec/blob/master/doc/langdef.md#dynamic-values
-	structProto, err := getMap(contents, mimeType)
-	if err != nil {
-		return nil, err
-	}
-
+// https://github.com/google/cel-spec/blob/master/doc/langdef.md#dynamic-values
+func evaluateScoreExpression(expression string, artifactMap map[string]interface{}) (interface{}, error) {
 	env, err := cel.NewEnv()
 	if err != nil {
 		return nil, fmt.Errorf("error creating CEL environment: %s", err)
@@ -47,7 +42,7 @@ func evaluateScoreExpression(expression, mimeType string, contents []byte) (inte
 		return nil, fmt.Errorf("program construction error, %q: %s", expression, err)
 	}
 
-	out, _, err := prg.Eval(structProto)
+	out, _, err := prg.Eval(artifactMap)
 	if err != nil {
 		return nil, fmt.Errorf("error in evaluating expression %q: %s", expression, err)
 	}
