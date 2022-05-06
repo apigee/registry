@@ -3,22 +3,36 @@ kind: Manifest
 metadata:
   name: manifest
 data:
+  displayName: ""
+  description: ""
   generatedResources:
     - pattern: apis/-/versions/-/specs/-/artifacts/lint-spectral
+      filter: ""
+      receipt: false
       dependencies:
         - pattern: $resource.spec
           filter: mime_type.contains('openapi')
       action: registry compute lint $resource.spec --linter spectral
     - pattern: apis/-/versions/-/specs/-/artifacts/lintstats-spectral
+      filter: ""
+      receipt: false
       dependencies:
         - pattern: $resource.spec/artifacts/lint-spectral
+          filter: ""
         - pattern: $resource.spec/artifacts/complexity
+          filter: ""
       action: registry compute lintstats $resource.spec --linter spectral
     - pattern: apis/-/versions/-/specs/-/artifacts/vocabulary
+      filter: ""
+      receipt: false
       dependencies:
         - pattern: $resource.spec
+          filter: ""
       action: registry compute vocabulary $resource.spec
     - pattern: apis/-/versions/-/specs/-/artifacts/complexity
+      filter: ""
+      receipt: false
       dependencies:
         - pattern: $resource.spec
+          filter: ""
       action: registry compute complexity $resource.spec
