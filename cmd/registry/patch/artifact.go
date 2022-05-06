@@ -163,14 +163,12 @@ func applyArtifactPatchBytes(ctx context.Context, client connection.Client, byte
 }
 
 func applyArtifactPatch(ctx context.Context, client connection.Client, content *Artifact, parent string) error {
-	fmt.Printf("\n\nartifact %+v\n", content.Data)
 	styleForJSON(&content.Data)
 	// get json version of artifact
 	j, err := yaml.Marshal(content.Data)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("%s\n", string(j))
 	// read serialized proto from json
 	var m proto.Message
 	m, err = protoMessageForKind(content.Kind)
@@ -181,7 +179,6 @@ func applyArtifactPatch(ctx context.Context, client connection.Client, content *
 	if err != nil {
 		return err
 	}
-	fmt.Printf("message %+v\n", m)
 	bytes, err := proto.Marshal(m)
 	if err != nil {
 		return err

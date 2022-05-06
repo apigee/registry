@@ -24,7 +24,6 @@ import (
 
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/log"
-	"gopkg.in/yaml.v3"
 )
 
 func Apply(ctx context.Context, client connection.Client, path, parent string, recursive bool) error {
@@ -50,11 +49,7 @@ func applyFile(ctx context.Context, client connection.Client, fileName, parent s
 	if err != nil {
 		return err
 	}
-	var info yaml.Node
-	if err := yaml.Unmarshal(bytes, &info); err != nil {
-		return err
-	}
-	header, err := readHeader(&info)
+	header, err := readHeader(bytes)
 	if err != nil {
 		return err
 	}

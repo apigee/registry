@@ -15,8 +15,6 @@
 package patch
 
 import (
-	"fmt"
-
 	"gopkg.in/yaml.v3"
 )
 
@@ -34,66 +32,10 @@ type Metadata struct {
 	Annotations map[string]string `yaml:"annotations,omitempty"`
 }
 
-func readHeader(info *yaml.Node) (*Header, error) {
+func readHeader(bytes []byte) (*Header, error) {
 	header := &Header{}
-	var err error
-
-	for _, node := range info.Content {
-		if node.Kind == yaml.MappingNode {
-			for i := 0; i < len(node.Content); i += 2 {
-				key := node.Content[i]
-				value := node.Content[i+1]
-				switch key.Value {
-				case "apiVersion":
-					header.ApiVersion = value.Value
-					if header.ApiVersion != RegistryV1 {
-						return header, fmt.Errorf("unsupported API version: %s", header.ApiVersion)
-					}
-				case "kind":
-					header.Kind = value.Value
-				case "metadata":
-					for i := 0; i < len(value.Content); i += 2 {
-						key := node.Content[i]
-						value := node.Content[i+1]
-						switch key.Value {
-						case "name":
-							header.Metadata.Name = value.Value
-						case "labels":
-							header.Metadata.Labels, err = readDictionary(value)
-							if err != nil {
-								return nil, err
-							}
-						case "annotations":
-							header.Metadata.Annotations, err = readDictionary(value)
-							if err != nil {
-								return nil, err
-							}
-						}
-					}
-				}
-			}
-		}
+	if err := yaml.Unmarshal(bytes, header); err != nil {
+		return nil, err
 	}
-	fmt.Printf("HEADER %+v", header)
 	return header, nil
-}
-
-func readDictionary(node *yaml.Node) (map[string]string, error) {
-	if node.Kind == yaml.MappingNode {
-		m := make(map[string]string)
-		for i := 0; i < len(node.Content); i += 2 {
-			k := node.Content[i]
-			if k.Kind != yaml.ScalarNode {
-				return nil, fmt.Errorf("invalid map key (%s)", k.Value)
-			}
-			v := node.Content[i+1]
-			if v.Kind != yaml.ScalarNode {
-				return nil, fmt.Errorf("invalid map value (%s)", v.Value)
-			}
-			m[k.Value] = v.Value
-		}
-		return m, nil
-	} else {
-		return nil, fmt.Errorf("invalid dictionary %s", node.Value)
-	}
 }
