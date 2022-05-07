@@ -17,6 +17,7 @@ package patch
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -58,6 +59,7 @@ func ExportArtifact(ctx context.Context, client *gapic.RegistryClient, message *
 	return b.Bytes(), &artifact.Header, nil
 }
 
+// styleForYAML sets the style field on a tree of yaml.Nodes for YAML export.
 func styleForYAML(node *yaml.Node) {
 	node.Style = 0
 	for _, n := range node.Content {
@@ -65,6 +67,7 @@ func styleForYAML(node *yaml.Node) {
 	}
 }
 
+// styleForYAML sets the style field on a tree of yaml.Nodes for JSON export.
 func styleForJSON(node *yaml.Node) {
 	switch node.Kind {
 	case yaml.DocumentNode, yaml.SequenceNode, yaml.MappingNode:
@@ -89,9 +92,7 @@ func removeIdAndKind(node *yaml.Node) *yaml.Node {
 		content := make([]*yaml.Node, 0)
 		for i := 0; i < len(node.Content); i += 2 {
 			k := node.Content[i]
-			if k.Value == "id" || k.Value == "kind" {
-				// skip
-			} else {
+			if k.Value != "id" && k.Value != "kind" {
 				content = append(content, node.Content[i])
 				content = append(content, node.Content[i+1])
 			}
@@ -106,7 +107,7 @@ func newArtifact(message *rpc.Artifact) (*Artifact, error) {
 	if err != nil {
 		return nil, err
 	}
-	// unmarshal the serialized protobuf containing the artifact content
+	// Unmarshal the serialized protobuf containing the artifact content.
 	m, err := protoMessageForMimeType(message.MimeType)
 	if err != nil {
 		return nil, err
@@ -114,7 +115,7 @@ func newArtifact(message *rpc.Artifact) (*Artifact, error) {
 	if err = proto.Unmarshal(message.Contents, m); err != nil {
 		return nil, err
 	}
-	// marshal the artifact content as JSON
+	// Marshal the artifact content as JSON using the protobuf marshaller.
 	var s []byte
 	s, err = protojson.MarshalOptions{
 		UseEnumNumbers:  false,
@@ -125,19 +126,23 @@ func newArtifact(message *rpc.Artifact) (*Artifact, error) {
 	if err != nil {
 		return nil, err
 	}
-	// read the JSON with yaml.v3
+	// Unmarshal the JSON with yaml.v3 so that we can re-marshal it as YAML.
 	var doc yaml.Node
 	err = yaml.Unmarshal([]byte(s), &doc)
 	if err != nil {
 		return nil, err
 	}
-	// the top-level node is a "document" node that we want to unpack
+	// The top-level node is a "document" node. We need to remove this before marshalling.
+	if doc.Kind != yaml.DocumentNode || len(doc.Content) != 1 {
+		return nil, errors.New("failed to unmarshal artifact")
+	}
 	node := doc.Content[0]
-	// restyle the doc so that it will be serialized with YAML defaults
+	// Restyle the YAML representation so that it will be serialized with YAML defaults.
 	styleForYAML(node)
+	// We exclude the id and kind fields from YAML serializations.
 	node = removeIdAndKind(node)
-	// wrap the artifact for YAML export
-	artifact := &Artifact{
+	// Wrap the artifact for YAML export.
+	return &Artifact{
 		Header: Header{
 			ApiVersion: RegistryV1,
 			Kind:       kindForMimeType(message.MimeType),
@@ -146,11 +151,7 @@ func newArtifact(message *rpc.Artifact) (*Artifact, error) {
 			},
 		},
 		Data: *node,
-	}
-	if err != nil {
-		return nil, err
-	}
-	return artifact, nil
+	}, nil
 }
 
 func applyArtifactPatchBytes(ctx context.Context, client connection.Client, bytes []byte, parent string) error {
@@ -163,13 +164,14 @@ func applyArtifactPatchBytes(ctx context.Context, client connection.Client, byte
 }
 
 func applyArtifactPatch(ctx context.Context, client connection.Client, content *Artifact, parent string) error {
+	// Restyle the YAML representation so that yaml.Marshal will marshal it as JSON.
 	styleForJSON(&content.Data)
-	// get json version of artifact
+	// Marshal the YAML representation into the JSON serialization.
 	j, err := yaml.Marshal(content.Data)
 	if err != nil {
 		return err
 	}
-	// read serialized proto from json
+	// Unmarshal the JSON serialization into the message struct.
 	var m proto.Message
 	m, err = protoMessageForKind(content.Kind)
 	if err != nil {
@@ -179,6 +181,7 @@ func applyArtifactPatch(ctx context.Context, client connection.Client, content *
 	if err != nil {
 		return err
 	}
+	// Marshal the message struct to bytes.
 	bytes, err := proto.Marshal(m)
 	if err != nil {
 		return err
@@ -203,14 +206,16 @@ func applyArtifactPatch(ctx context.Context, client connection.Client, content *
 	return err
 }
 
+// kindForMimeType returns the message name to be used as the "kind" of the artifact.
 func kindForMimeType(mimeType string) string {
 	parts := strings.Split(mimeType, ".")
 	return parts[len(parts)-1]
 }
 
+// protoMessageForMimeType returns an instance of the message that represents the specified type.
 func protoMessageForMimeType(mimeType string) (proto.Message, error) {
 	messageType := strings.TrimPrefix(mimeType, "application/octet-stream;type=")
-	for k, v := range artifactMessageTypes() {
+	for k, v := range artifactMessageTypes {
 		if k == messageType {
 			return v(), nil
 		}
@@ -218,8 +223,9 @@ func protoMessageForMimeType(mimeType string) (proto.Message, error) {
 	return nil, fmt.Errorf("unsupported message type %s", messageType)
 }
 
+// protoMessageForMimeType returns an instance of the message that represents the specified kind.
 func protoMessageForKind(kind string) (proto.Message, error) {
-	for k, v := range artifactMessageTypes() {
+	for k, v := range artifactMessageTypes {
 		if strings.HasSuffix(k, "."+kind) {
 			return v(), nil
 		}
@@ -227,8 +233,9 @@ func protoMessageForKind(kind string) (proto.Message, error) {
 	return nil, fmt.Errorf("unsupported kind %s", kind)
 }
 
+// messageTypeForKind finds the full message type associated with a kind (typically a message name).
 func messageTypeForKind(kind string) string {
-	for k := range artifactMessageTypes() {
+	for k := range artifactMessageTypes {
 		if strings.HasSuffix(k, "."+kind) {
 			return k
 		}
@@ -236,24 +243,28 @@ func messageTypeForKind(kind string) string {
 	return ""
 }
 
+// MimeTypeForKind returns the mime type that corresponds to a kind.
 func MimeTypeForKind(kind string) string {
 	return fmt.Sprintf("application/octet-stream;type=%s", messageTypeForKind(kind))
 }
 
-type MessageFactory func() proto.Message
+// messageFactory represents functions that construct message structs.
+type messageFactory func() proto.Message
 
-// This is the source of truth for supported artifact types.
-func artifactMessageTypes() map[string]MessageFactory {
-	return map[string]MessageFactory{
+// artifactMessageTypes is the single source of truth for artifact types that can be represented in YAML.
+var artifactMessageTypes map[string]messageFactory
+
+func init() {
+	artifactMessageTypes = map[string]messageFactory{
 		"google.cloud.apigeeregistry.applications.v1alpha1.StyleGuide": func() proto.Message { return new(rpc.StyleGuide) },
 		"google.cloud.apigeeregistry.v1.apihub.DisplaySettings":        func() proto.Message { return new(rpc.DisplaySettings) },
 		"google.cloud.apigeeregistry.v1.apihub.Lifecycle":              func() proto.Message { return new(rpc.Lifecycle) },
 		"google.cloud.apigeeregistry.v1.apihub.ReferenceList":          func() proto.Message { return new(rpc.ReferenceList) },
 		"google.cloud.apigeeregistry.v1.apihub.TaxonomyList":           func() proto.Message { return new(rpc.TaxonomyList) },
 		"google.cloud.apigeeregistry.v1.controller.Manifest":           func() proto.Message { return new(rpc.Manifest) },
-		"google.cloud.apigeeregistry.v1.scoring.ScoreDefinition":       func() proto.Message { return new(rpc.ScoreDefinition) },
 		"google.cloud.apigeeregistry.v1.scoring.Score":                 func() proto.Message { return new(rpc.Score) },
-		"google.cloud.apigeeregistry.v1.scoring.ScoreCardDefinition":   func() proto.Message { return new(rpc.ScoreCardDefinition) },
+		"google.cloud.apigeeregistry.v1.scoring.ScoreDefinition":       func() proto.Message { return new(rpc.ScoreDefinition) },
 		"google.cloud.apigeeregistry.v1.scoring.ScoreCard":             func() proto.Message { return new(rpc.ScoreCard) },
+		"google.cloud.apigeeregistry.v1.scoring.ScoreCardDefinition":   func() proto.Message { return new(rpc.ScoreCardDefinition) },
 	}
 }
