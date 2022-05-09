@@ -84,23 +84,23 @@ func buildArtifact(ctx context.Context, parent string, filename string) (*rpc.Ar
 	var artifact *rpc.Artifact
 	switch header.Kind {
 	case "DisplaySettings", patch.DisplaySettingsMimeType:
-		artifact, err = buildDisplaySettingsArtifact(ctx, jsonBytes)
+		artifact, err = buildDisplaySettingsArtifact(jsonBytes)
 	case "Lifecycle", patch.LifecycleMimeType:
-		artifact, err = buildLifecycleArtifact(ctx, jsonBytes)
+		artifact, err = buildLifecycleArtifact(jsonBytes)
 	case "Manifest", patch.ManifestMimeType:
 		artifact, err = buildManifestArtifact(ctx, parent, jsonBytes)
 	case "ReferenceList", patch.ReferenceListMimeType:
-		artifact, err = buildReferenceListArtifact(ctx, jsonBytes)
+		artifact, err = buildReferenceListArtifact(jsonBytes)
 	case "Score", patch.ScoreMimeType:
-		artifact, err = buildScoreArtifact(ctx, jsonBytes)
+		artifact, err = buildScoreArtifact(jsonBytes)
 	case "ScoreCard", patch.ScoreCardMimeType:
-		artifact, err = buildScoreCardArtifact(ctx, jsonBytes)
+		artifact, err = buildScoreCardArtifact(jsonBytes)
 	case "ScoreCardDefinition", patch.ScoreCardDefinitionMimeType:
 		artifact, err = buildScoreCardDefinitionArtifact(ctx, parent, jsonBytes)
 	case "ScoreDefinition", patch.ScoreDefinitionMimeType:
 		artifact, err = buildScoreDefinitionArtifact(ctx, parent, jsonBytes)
 	case "TaxonomyList", patch.TaxonomyListMimeType:
-		artifact, err = buildTaxonomyListArtifact(ctx, jsonBytes)
+		artifact, err = buildTaxonomyListArtifact(jsonBytes)
 	default:
 		err = fmt.Errorf("unsupported artifact type %s", header.Kind)
 	}
@@ -113,7 +113,7 @@ func buildArtifact(ctx context.Context, parent string, filename string) (*rpc.Ar
 	return artifact, nil
 }
 
-func buildDisplaySettingsArtifact(ctx context.Context, jsonBytes []byte) (*rpc.Artifact, error) {
+func buildDisplaySettingsArtifact(jsonBytes []byte) (*rpc.Artifact, error) {
 	m := &rpc.DisplaySettings{}
 	if err := protojson.Unmarshal(jsonBytes, m); err != nil {
 		return nil, err
@@ -128,7 +128,7 @@ func buildDisplaySettingsArtifact(ctx context.Context, jsonBytes []byte) (*rpc.A
 	}, nil
 }
 
-func buildLifecycleArtifact(ctx context.Context, jsonBytes []byte) (*rpc.Artifact, error) {
+func buildLifecycleArtifact(jsonBytes []byte) (*rpc.Artifact, error) {
 	m := &rpc.Lifecycle{}
 	if err := protojson.Unmarshal(jsonBytes, m); err != nil {
 		return nil, err
@@ -148,7 +148,7 @@ func buildManifestArtifact(ctx context.Context, parent string, jsonBytes []byte)
 	if err := protojson.Unmarshal(jsonBytes, m); err != nil {
 		return nil, err
 	}
-	errs := controller.ValidateManifest(ctx, parent, m)
+	errs := controller.ValidateManifest(parent, m)
 	if count := len(errs); count > 0 {
 		for _, err := range errs {
 			log.FromContext(ctx).WithError(err).Error("Manifest error")
@@ -165,7 +165,7 @@ func buildManifestArtifact(ctx context.Context, parent string, jsonBytes []byte)
 	}, nil
 }
 
-func buildReferenceListArtifact(ctx context.Context, jsonBytes []byte) (*rpc.Artifact, error) {
+func buildReferenceListArtifact(jsonBytes []byte) (*rpc.Artifact, error) {
 	m := &rpc.ReferenceList{}
 	if err := protojson.Unmarshal(jsonBytes, m); err != nil {
 		return nil, err
@@ -180,7 +180,7 @@ func buildReferenceListArtifact(ctx context.Context, jsonBytes []byte) (*rpc.Art
 	}, nil
 }
 
-func buildTaxonomyListArtifact(ctx context.Context, jsonBytes []byte) (*rpc.Artifact, error) {
+func buildTaxonomyListArtifact(jsonBytes []byte) (*rpc.Artifact, error) {
 	m := &rpc.TaxonomyList{}
 	if err := protojson.Unmarshal(jsonBytes, m); err != nil {
 		return nil, err
@@ -200,7 +200,7 @@ func buildScoreDefinitionArtifact(ctx context.Context, parent string, jsonBytes 
 	if err := protojson.Unmarshal(jsonBytes, m); err != nil {
 		return nil, err
 	}
-	errs := scoring.ValidateScoreDefinition(ctx, parent, m)
+	errs := scoring.ValidateScoreDefinition(parent, m)
 	if count := len(errs); count > 0 {
 		for _, err := range errs {
 			log.FromContext(ctx).WithError(err).Error("ScoreDefinition error")
@@ -223,7 +223,7 @@ func buildScoreCardDefinitionArtifact(ctx context.Context, parent string, jsonBy
 	if err := protojson.Unmarshal(jsonBytes, m); err != nil {
 		return nil, err
 	}
-	errs := scoring.ValidateScoreCardDefinition(ctx, parent, m)
+	errs := scoring.ValidateScoreCardDefinition(parent, m)
 	if count := len(errs); count > 0 {
 		for _, err := range errs {
 			log.FromContext(ctx).WithError(err).Error("ScoreCardDefinition error")
@@ -241,7 +241,7 @@ func buildScoreCardDefinitionArtifact(ctx context.Context, parent string, jsonBy
 	}, nil
 }
 
-func buildScoreArtifact(ctx context.Context, jsonBytes []byte) (*rpc.Artifact, error) {
+func buildScoreArtifact(jsonBytes []byte) (*rpc.Artifact, error) {
 	m := &rpc.Score{}
 	if err := protojson.Unmarshal(jsonBytes, m); err != nil {
 		return nil, err
@@ -256,7 +256,7 @@ func buildScoreArtifact(ctx context.Context, jsonBytes []byte) (*rpc.Artifact, e
 	}, nil
 }
 
-func buildScoreCardArtifact(ctx context.Context, jsonBytes []byte) (*rpc.Artifact, error) {
+func buildScoreCardArtifact(jsonBytes []byte) (*rpc.Artifact, error) {
 	m := &rpc.ScoreCard{}
 	if err := protojson.Unmarshal(jsonBytes, m); err != nil {
 		return nil, err

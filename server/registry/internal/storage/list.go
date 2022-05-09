@@ -845,7 +845,7 @@ func (c *Client) ListSpecArtifacts(ctx context.Context, parent names.Spec, opts 
 		op = op.Where("spec_id = ?", id)
 	}
 
-	return c.listArtifacts(ctx, op, opts, func(a *models.Artifact) bool {
+	return c.listArtifacts(op, opts, func(a *models.Artifact) bool {
 		return a.ProjectID != "" && a.ApiID != "" && a.VersionID != "" && a.SpecID != ""
 	})
 }
@@ -889,7 +889,7 @@ func (c *Client) ListVersionArtifacts(ctx context.Context, parent names.Version,
 		op = op.Where("version_id = ?", id)
 	}
 
-	return c.listArtifacts(ctx, op, opts, func(a *models.Artifact) bool {
+	return c.listArtifacts(op, opts, func(a *models.Artifact) bool {
 		return a.ProjectID != "" && a.ApiID != "" && a.VersionID != ""
 	})
 }
@@ -933,7 +933,7 @@ func (c *Client) ListDeploymentArtifacts(ctx context.Context, parent names.Deplo
 		op = op.Where("deployment_id = ?", id)
 	}
 
-	return c.listArtifacts(ctx, op, opts, func(a *models.Artifact) bool {
+	return c.listArtifacts(op, opts, func(a *models.Artifact) bool {
 		return a.ProjectID != "" && a.ApiID != "" && a.DeploymentID != ""
 	})
 }
@@ -971,7 +971,7 @@ func (c *Client) ListApiArtifacts(ctx context.Context, parent names.Api, opts Pa
 		op = op.Where("api_id = ?", id)
 	}
 
-	return c.listArtifacts(ctx, op, opts, func(a *models.Artifact) bool {
+	return c.listArtifacts(op, opts, func(a *models.Artifact) bool {
 		return a.ProjectID != "" && a.ApiID != ""
 	})
 }
@@ -1000,12 +1000,12 @@ func (c *Client) ListProjectArtifacts(ctx context.Context, parent names.Project,
 		}
 	}
 
-	return c.listArtifacts(ctx, op, opts, func(a *models.Artifact) bool {
+	return c.listArtifacts(op, opts, func(a *models.Artifact) bool {
 		return a.ProjectID != ""
 	})
 }
 
-func (c *Client) listArtifacts(ctx context.Context, op *gorm.DB, opts PageOptions, include func(*models.Artifact) bool) (ArtifactList, error) {
+func (c *Client) listArtifacts(op *gorm.DB, opts PageOptions, include func(*models.Artifact) bool) (ArtifactList, error) {
 	token, err := decodeToken(opts.Token)
 	if err != nil {
 		return ArtifactList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
@@ -1036,11 +1036,7 @@ func (c *Client) listArtifacts(ctx context.Context, op *gorm.DB, opts PageOption
 		}
 
 		for _, v := range page {
-			m, err := artifactMap(v)
-			if err != nil {
-				return ArtifactList{}, status.Error(codes.Internal, err.Error())
-			}
-
+			m := artifactMap(v)
 			match, err := filter.Matches(m)
 			if err != nil {
 				return ArtifactList{}, err
@@ -1065,7 +1061,7 @@ func (c *Client) listArtifacts(ctx context.Context, op *gorm.DB, opts PageOption
 	return response, nil
 }
 
-func artifactMap(artifact models.Artifact) (map[string]interface{}, error) {
+func artifactMap(artifact models.Artifact) map[string]interface{} {
 	return map[string]interface{}{
 		"name":        artifact.Name(),
 		"project_id":  artifact.ProjectID,
@@ -1077,5 +1073,5 @@ func artifactMap(artifact models.Artifact) (map[string]interface{}, error) {
 		"update_time": artifact.UpdateTime,
 		"mime_type":   artifact.MimeType,
 		"size_bytes":  artifact.SizeInBytes,
-	}, nil
+	}
 }

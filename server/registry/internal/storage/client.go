@@ -142,7 +142,7 @@ func (c *Client) EnsureTables() error {
 	return nil
 }
 
-func (c *Client) Migrate(ctx context.Context, kind string) error {
+func (c *Client) Migrate(ctx context.Context) error {
 	return c.db.WithContext(ctx).AutoMigrate(entities...)
 }
 
