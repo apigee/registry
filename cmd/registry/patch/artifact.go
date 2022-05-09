@@ -252,19 +252,15 @@ func MimeTypeForKind(kind string) string {
 type messageFactory func() proto.Message
 
 // artifactMessageTypes is the single source of truth for artifact types that can be represented in YAML.
-var artifactMessageTypes map[string]messageFactory
-
-func init() {
-	artifactMessageTypes = map[string]messageFactory{
-		"google.cloud.apigeeregistry.applications.v1alpha1.StyleGuide": func() proto.Message { return new(rpc.StyleGuide) },
-		"google.cloud.apigeeregistry.v1.apihub.DisplaySettings":        func() proto.Message { return new(rpc.DisplaySettings) },
-		"google.cloud.apigeeregistry.v1.apihub.Lifecycle":              func() proto.Message { return new(rpc.Lifecycle) },
-		"google.cloud.apigeeregistry.v1.apihub.ReferenceList":          func() proto.Message { return new(rpc.ReferenceList) },
-		"google.cloud.apigeeregistry.v1.apihub.TaxonomyList":           func() proto.Message { return new(rpc.TaxonomyList) },
-		"google.cloud.apigeeregistry.v1.controller.Manifest":           func() proto.Message { return new(rpc.Manifest) },
-		"google.cloud.apigeeregistry.v1.scoring.Score":                 func() proto.Message { return new(rpc.Score) },
-		"google.cloud.apigeeregistry.v1.scoring.ScoreDefinition":       func() proto.Message { return new(rpc.ScoreDefinition) },
-		"google.cloud.apigeeregistry.v1.scoring.ScoreCard":             func() proto.Message { return new(rpc.ScoreCard) },
-		"google.cloud.apigeeregistry.v1.scoring.ScoreCardDefinition":   func() proto.Message { return new(rpc.ScoreCardDefinition) },
-	}
+var artifactMessageTypes map[string]messageFactory = map[string]messageFactory{
+	"google.cloud.apigeeregistry.applications.v1alpha1.StyleGuide": func() proto.Message { return new(rpc.StyleGuide) },
+	"google.cloud.apigeeregistry.v1.apihub.DisplaySettings":        func() proto.Message { return new(rpc.DisplaySettings) },
+	"google.cloud.apigeeregistry.v1.apihub.Lifecycle":              func() proto.Message { return new(rpc.Lifecycle) },
+	"google.cloud.apigeeregistry.v1.apihub.ReferenceList":          func() proto.Message { return new(rpc.ReferenceList) },
+	"google.cloud.apigeeregistry.v1.apihub.TaxonomyList":           func() proto.Message { return new(rpc.TaxonomyList) },
+	"google.cloud.apigeeregistry.v1.controller.Manifest":           func() proto.Message { return new(rpc.Manifest) },
+	"google.cloud.apigeeregistry.v1.scoring.Score":                 func() proto.Message { return new(rpc.Score) },
+	"google.cloud.apigeeregistry.v1.scoring.ScoreDefinition":       func() proto.Message { return new(rpc.ScoreDefinition) },
+	"google.cloud.apigeeregistry.v1.scoring.ScoreCard":             func() proto.Message { return new(rpc.ScoreCard) },
+	"google.cloud.apigeeregistry.v1.scoring.ScoreCardDefinition":   func() proto.Message { return new(rpc.ScoreCardDefinition) },
 }
