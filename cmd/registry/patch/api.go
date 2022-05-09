@@ -73,7 +73,7 @@ func newApi(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api)
 	deployments := make([]*ApiDeployment, 0)
 	if err = core.ListDeployments(ctx, client, apiName.Deployment("-"), "", func(message *rpc.ApiDeployment) error {
 		var deployment *ApiDeployment
-		deployment, err = newApiDeployment(ctx, client, message)
+		deployment, err = newApiDeployment(message)
 		if err != nil {
 			return err
 		}
