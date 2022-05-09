@@ -62,23 +62,6 @@ jobs:
         context: .
         file: containers/registry-tools/Dockerfile
 
-  build-registry-linter:
-    runs-on: ubuntu-latest
-    needs: build-registry-tools
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
-    - uses: ./.github/workflows/composite/build-push
-      with:
-        registry: ${{ env.REGISTRY }}
-        username: ${{ env.USERNAME }}
-        password: ${{ env.PASSWORD }}
-        image: ${{ env.DOCKER_REPOSITORY_OWNER }}/registry-linter
-        context: .
-        file: containers/registry-linter/Dockerfile
-        build-args: |
-          REGISTRY_TOOL_IMAGE=${{ env.REGISTRY }}/${{ env.DOCKER_REPOSITORY_OWNER }}/registry-tools:latest
-
   build-registry-envoy:
     runs-on: ubuntu-latest
     steps:
