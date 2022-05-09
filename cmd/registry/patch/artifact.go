@@ -233,19 +233,14 @@ func protoMessageForKind(kind string) (proto.Message, error) {
 	return nil, fmt.Errorf("unsupported kind %s", kind)
 }
 
-// messageTypeForKind finds the full message type associated with a kind (typically a message name).
-func messageTypeForKind(kind string) string {
-	for k := range artifactMessageTypes {
-		if strings.HasSuffix(k, "."+kind) {
-			return k
-		}
-	}
-	return ""
-}
-
 // MimeTypeForKind returns the mime type that corresponds to a kind.
 func MimeTypeForKind(kind string) string {
-	return fmt.Sprintf("application/octet-stream;type=%s", messageTypeForKind(kind))
+	for k := range artifactMessageTypes {
+		if strings.HasSuffix(k, "."+kind) {
+			return fmt.Sprintf("application/octet-stream;type=%s", k)
+		}
+	}
+	return "application/octet-stream"
 }
 
 // messageFactory represents functions that construct message structs.
