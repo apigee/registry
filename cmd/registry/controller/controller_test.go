@@ -21,6 +21,7 @@ import (
 
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/server/registry/test/seeder"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 )
@@ -48,18 +49,17 @@ var styleguide = &rpc.StyleGuide{
 // Tests for artifacts as resources and specs as dependencies
 func TestArtifacts(t *testing.T) {
 	tests := []struct {
-		desc  string
-		setup func(context.Context, connection.Client, connection.AdminClient)
-		want  []*Action
+		desc string
+		seed []seeder.RegistryResource
+		want []*Action
 	}{
 		{
 			desc: "single spec",
-			setup: func(ctx context.Context, client connection.Client, adminClient connection.AdminClient) {
-				deleteProject(ctx, adminClient, t, "controller-test")
-				createProject(ctx, adminClient, t, "controller-test")
-				createApi(ctx, client, t, "projects/controller-test/locations/global", "petstore")
-				createVersion(ctx, client, t, "projects/controller-test/locations/global/apis/petstore", "1.0.0")
-				createSpec(ctx, client, t, "projects/controller-test/locations/global/apis/petstore/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
+			seed: []seeder.RegistryResource{
+				&rpc.ApiSpec{
+					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					MimeType: gzipOpenAPIv3,
+				},
 			},
 			want: []*Action{
 				{
@@ -70,19 +70,19 @@ func TestArtifacts(t *testing.T) {
 		},
 		{
 			desc: "multiple specs",
-			setup: func(ctx context.Context, client connection.Client, adminClient connection.AdminClient) {
-				deleteProject(ctx, adminClient, t, "controller-test")
-				createProject(ctx, adminClient, t, "controller-test")
-				createApi(ctx, client, t, "projects/controller-test/locations/global", "petstore")
-				// Version 1.0.0
-				createVersion(ctx, client, t, "projects/controller-test/locations/global/apis/petstore", "1.0.0")
-				createSpec(ctx, client, t, "projects/controller-test/locations/global/apis/petstore/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
-				// Version 1.0.1
-				createVersion(ctx, client, t, "projects/controller-test/locations/global/apis/petstore", "1.0.1")
-				createSpec(ctx, client, t, "projects/controller-test/locations/global/apis/petstore/versions/1.0.1", "openapi.yaml", gzipOpenAPIv3)
-				// Version 1.1.0
-				createVersion(ctx, client, t, "projects/controller-test/locations/global/apis/petstore", "1.1.0")
-				createSpec(ctx, client, t, "projects/controller-test/locations/global/apis/petstore/versions/1.1.0", "openapi.yaml", gzipOpenAPIv3)
+			seed: []seeder.RegistryResource{
+				&rpc.ApiSpec{
+					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					MimeType: gzipOpenAPIv3,
+				},
+				&rpc.ApiSpec{
+					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
+					MimeType: gzipOpenAPIv3,
+				},
+				&rpc.ApiSpec{
+					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
+					MimeType: gzipOpenAPIv3,
+				},
 			},
 			want: []*Action{
 				{
@@ -101,20 +101,22 @@ func TestArtifacts(t *testing.T) {
 		},
 		{
 			desc: "partially existing artifacts",
-			setup: func(ctx context.Context, client connection.Client, adminClient connection.AdminClient) {
-				deleteProject(ctx, adminClient, t, "controller-test")
-				createProject(ctx, adminClient, t, "controller-test")
-				createApi(ctx, client, t, "projects/controller-test/locations/global", "petstore")
-				// Version 1.0.0
-				createVersion(ctx, client, t, "projects/controller-test/locations/global/apis/petstore", "1.0.0")
-				createSpec(ctx, client, t, "projects/controller-test/locations/global/apis/petstore/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
-				// Version 1.0.1
-				createVersion(ctx, client, t, "projects/controller-test/locations/global/apis/petstore", "1.0.1")
-				createSpec(ctx, client, t, "projects/controller-test/locations/global/apis/petstore/versions/1.0.1", "openapi.yaml", gzipOpenAPIv3)
-				createUpdateArtifact(ctx, client, t, "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/lint-gnostic")
-				// Version 1.1.0
-				createVersion(ctx, client, t, "projects/controller-test/locations/global/apis/petstore", "1.1.0")
-				createSpec(ctx, client, t, "projects/controller-test/locations/global/apis/petstore/versions/1.1.0", "openapi.yaml", gzipOpenAPIv3)
+			seed: []seeder.RegistryResource{
+				&rpc.ApiSpec{
+					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					MimeType: gzipOpenAPIv3,
+				},
+				&rpc.ApiSpec{
+					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
+					MimeType: gzipOpenAPIv3,
+				},
+				&rpc.Artifact{
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/lint-gnostic",
+				},
+				&rpc.ApiSpec{
+					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
+					MimeType: gzipOpenAPIv3,
+				},
 			},
 			want: []*Action{
 				{
@@ -129,23 +131,29 @@ func TestArtifacts(t *testing.T) {
 		},
 		{
 			desc: "outdated artifacts",
-			setup: func(ctx context.Context, client connection.Client, adminClient connection.AdminClient) {
-				deleteProject(ctx, adminClient, t, "controller-test")
-				createProject(ctx, adminClient, t, "controller-test")
-				createApi(ctx, client, t, "projects/controller-test/locations/global", "petstore")
-				// Version 1.0.0
-				createVersion(ctx, client, t, "projects/controller-test/locations/global/apis/petstore", "1.0.0")
-				createSpec(ctx, client, t, "projects/controller-test/locations/global/apis/petstore/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
-				createUpdateArtifact(ctx, client, t, "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic")
-				// Version 1.0.1
-				createVersion(ctx, client, t, "projects/controller-test/locations/global/apis/petstore", "1.0.1")
-				createSpec(ctx, client, t, "projects/controller-test/locations/global/apis/petstore/versions/1.0.1", "openapi.yaml", gzipOpenAPIv3)
-				createUpdateArtifact(ctx, client, t, "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/lint-gnostic")
-				// Version 1.1.0
-				createVersion(ctx, client, t, "projects/controller-test/locations/global/apis/petstore", "1.1.0")
-				createSpec(ctx, client, t, "projects/controller-test/locations/global/apis/petstore/versions/1.1.0", "openapi.yaml", gzipOpenAPIv3)
-				// Update spec 1.0.1 to make the artifact outdated
-				updateSpec(ctx, client, t, "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml")
+			seed: []seeder.RegistryResource{
+				&rpc.ApiSpec{
+					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					MimeType: gzipOpenAPIv3,
+				},
+				&rpc.Artifact{
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic",
+				},
+				&rpc.ApiSpec{
+					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
+					MimeType: gzipOpenAPIv3,
+				},
+				&rpc.Artifact{
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/lint-gnostic",
+				},
+				&rpc.ApiSpec{
+					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
+					MimeType: gzipOpenAPIv3,
+				},
+				&rpc.ApiSpec{
+					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
+					MimeType: gzipOpenAPIv3,
+				},
 			},
 			want: []*Action{
 				{
@@ -169,15 +177,26 @@ func TestArtifacts(t *testing.T) {
 				t.Logf("Failed to create client: %+v", err)
 				t.FailNow()
 			}
-			defer registryClient.Close()
+			t.Cleanup(func() { registryClient.Close() })
+
 			adminClient, err := connection.NewAdminClient(ctx)
 			if err != nil {
 				t.Logf("Failed to create client: %+v", err)
 				t.FailNow()
 			}
-			defer adminClient.Close()
+			t.Cleanup(func() { adminClient.Close() })
 
-			test.setup(ctx, registryClient, adminClient)
+			deleteProject(ctx, adminClient, t, "controller-test")
+			t.Cleanup(func() { deleteProject(ctx, adminClient, t, "controller-test") })
+
+			client := seeder.Client{
+				RegistryClient: registryClient,
+				AdminClient:    adminClient,
+			}
+
+			if err := seeder.SeedRegistry(ctx, client, test.seed...); err != nil {
+				t.Fatalf("Setup: failed to seed registry: %s", err)
+			}
 
 			manifest := &rpc.Manifest{
 				Id: "controller-test",
@@ -199,8 +218,6 @@ func TestArtifacts(t *testing.T) {
 			if diff := cmp.Diff(test.want, actions, sortActions); diff != "" {
 				t.Errorf("ProcessManifest(%+v) returned unexpected diff (-want +got):\n%s", manifest, diff)
 			}
-
-			deleteProject(ctx, adminClient, t, "controller-test")
 		})
 	}
 }
