@@ -44,14 +44,12 @@ func (s *stack) push(str string) {
 	*s = append(*s, str)
 }
 
-func (s *stack) pop() (string, bool) {
+func (s *stack) pop() {
 	if s.isEmpty() {
-		return "", false
+		return
 	}
 	index := len(*s) - 1
-	element := (*s)[index]
 	*s = (*s)[:index]
-	return element, true
 }
 
 // GetDiff takes two yaml or json Open API 3 Specs and diffs them.

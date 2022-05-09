@@ -104,10 +104,7 @@ func (linter *spectralLinterRunner) RunImpl(
 		}
 
 		// Get the lint results as a LintFile object from the spectral output file
-		lintProblems, err := getLintProblemsFromSpectralResults(lintResults)
-		if err != nil {
-			return err
-		}
+		lintProblems := getLintProblemsFromSpectralResults(lintResults)
 
 		// Formulate the response.
 		lintFile := &rpc.LintFile{
@@ -158,7 +155,7 @@ func (linter *spectralLinterRunner) createConfigurationFile(root string, ruleIds
 
 func getLintProblemsFromSpectralResults(
 	lintResults []*spectralLintResult,
-) ([]*rpc.LintProblem, error) {
+) []*rpc.LintProblem {
 	problems := make([]*rpc.LintProblem, len(lintResults))
 	for i, result := range lintResults {
 		problem := &rpc.LintProblem{
@@ -178,7 +175,7 @@ func getLintProblemsFromSpectralResults(
 		}
 		problems[i] = problem
 	}
-	return problems, nil
+	return problems
 }
 
 func runSpectralLinter(specPath, configPath string) ([]*spectralLintResult, error) {
