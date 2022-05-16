@@ -1,7 +1,20 @@
+// Copyright 2022 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package scoring
 
 import (
-	"context"
 	"fmt"
 	"sort"
 	"strings"
@@ -11,7 +24,7 @@ import (
 	"github.com/apigee/registry/cmd/registry/patterns"
 )
 
-func ValidateScoreDefinition(ctx context.Context, parent string, scoreDefinition *rpc.ScoreDefinition) []error {
+func ValidateScoreDefinition(parent string, scoreDefinition *rpc.ScoreDefinition) []error {
 	totalErrs := make([]error, 0)
 
 	// target_resource.pattern should be a valid resource pattern
@@ -29,9 +42,15 @@ func ValidateScoreDefinition(ctx context.Context, parent string, scoreDefinition
 			errs := validateScoreFormula(targetName, formula.ScoreFormula)
 			totalErrs = append(totalErrs, errs...)
 		case *rpc.ScoreDefinition_RollupFormula:
+			if len(formula.RollupFormula.GetScoreFormulas()) == 0 {
+				totalErrs = append(totalErrs, fmt.Errorf("missing rollup_formula.score_formulas"))
+			}
 			for _, scoreFormula := range formula.RollupFormula.GetScoreFormulas() {
 				errs := validateScoreFormula(targetName, scoreFormula)
 				totalErrs = append(totalErrs, errs...)
+			}
+			if formula.RollupFormula.GetRollupExpression() == "" {
+				totalErrs = append(totalErrs, fmt.Errorf("missing rollup_formula.rollup_expression"))
 			}
 		default:
 			totalErrs = append(totalErrs, fmt.Errorf("missing formula, either 'score_formula' or 'rollup_formula' should be set"))
@@ -67,7 +86,7 @@ func ValidateScoreDefinition(ctx context.Context, parent string, scoreDefinition
 	return totalErrs
 }
 
-func ValidateScoreCardDefinition(ctx context.Context, parent string, scoreCardDefinition *rpc.ScoreCardDefinition) []error {
+func ValidateScoreCardDefinition(parent string, scoreCardDefinition *rpc.ScoreCardDefinition) []error {
 	totalErrs := make([]error, 0)
 
 	// target_resource.pattern should be a valid resource pattern
@@ -95,7 +114,6 @@ func ValidateScoreCardDefinition(ctx context.Context, parent string, scoreCardDe
 			if strings.HasSuffix(pattern, "/-") {
 				totalErrs = append(totalErrs, fmt.Errorf("invalid score_pattern : %q, it should end with a resourceID and not a \"-\"", pattern))
 			}
-
 		}
 	}
 
@@ -135,11 +153,18 @@ func validateScoreFormula(targetName patterns.ResourceName, scoreFormula *rpc.Sc
 		errs = append(errs, fmt.Errorf("invalid score_formula.artifact.pattern : %q, it should end with a resourceID and not a \"-\"", pattern))
 	}
 
+	if scoreFormula.GetScoreExpression() == "" {
+		errs = append(errs, fmt.Errorf("missing score_formula.score_expression"))
+	}
+
+	if refId := scoreFormula.GetReferenceId(); refId != "" && strings.Contains(refId, "-") {
+		errs = append(errs, fmt.Errorf("invalid score_formula.reference_id: %s, it should not contain hyphens '-'", refId))
+	}
+
 	return errs
 }
 
 func validateNumberThresholds(thresholds []*rpc.NumberThreshold, minValue, maxValue int32) []error {
-
 	if len(thresholds) == 0 {
 		// no error returned since thresholds are optional
 		return []error{}

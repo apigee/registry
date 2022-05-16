@@ -45,7 +45,7 @@ func newApiVersion(ctx context.Context, client *gapic.RegistryClient, message *r
 
 	specs := make([]*ApiSpec, 0)
 	if err = core.ListSpecs(ctx, client, versionName.Spec("-"), "", func(message *rpc.ApiSpec) error {
-		spec, err := newApiSpec(ctx, client, message)
+		spec, err := newApiSpec(message)
 		if err != nil {
 			return err
 		}

@@ -60,7 +60,6 @@ func matchAndHandleListCmd(
 	name string,
 	filter string,
 ) error {
-
 	// First try to match collection names.
 	if project, err := names.ParseProjectCollection(name); err == nil {
 		return core.ListProjects(ctx, adminClient, project, filter, core.PrintProject)
@@ -96,9 +95,9 @@ func matchAndHandleListCmd(
 	if strings.HasSuffix(name, "@-") {
 		name := strings.TrimSuffix(name, "@-")
 		if deployment, err := names.ParseDeployment(name); err == nil {
-			return core.ListDeploymentRevisions(ctx, client, deployment, filter, core.PrintDeployment)
+			return core.ListDeploymentRevisions(ctx, client, deployment, core.PrintDeployment)
 		} else if spec, err := names.ParseSpec(name); err == nil {
-			return core.ListSpecRevisions(ctx, client, spec, filter, core.PrintSpec)
+			return core.ListSpecRevisions(ctx, client, spec, core.PrintSpec)
 		}
 	}
 

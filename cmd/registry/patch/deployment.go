@@ -19,7 +19,6 @@ import (
 	"strings"
 
 	"github.com/apigee/registry/connection"
-	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 )
@@ -40,14 +39,14 @@ type ApiDeployment struct {
 }
 
 // relativeSpecRevisionName returns the versionid+specid if the spec is within the specified API
-func relativeSpecRevisionName(apiName names.Api, spec string) (string, error) {
+func relativeSpecRevisionName(apiName names.Api, spec string) string {
 	if spec == "" {
-		return "", nil
+		return ""
 	}
 	if strings.HasPrefix(spec, apiName.String()) {
-		return strings.TrimPrefix(spec, apiName.String()+"/versions/"), nil
+		return strings.TrimPrefix(spec, apiName.String()+"/versions/")
 	}
-	return spec, nil
+	return spec
 }
 
 // optionalSpecRevisionName returns a spec revision name if the subpath is not empty
@@ -58,15 +57,12 @@ func optionalSpecRevisionName(deploymentName names.Deployment, subpath string) s
 	return deploymentName.Api().String() + "/versions/" + subpath
 }
 
-func newApiDeployment(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiDeployment) (*ApiDeployment, error) {
+func newApiDeployment(message *rpc.ApiDeployment) (*ApiDeployment, error) {
 	deploymentName, err := names.ParseDeployment(message.Name)
 	if err != nil {
 		return nil, err
 	}
-	revisionName, err := relativeSpecRevisionName(deploymentName.Api(), message.ApiSpecRevision)
-	if err != nil {
-		return nil, err
-	}
+	revisionName := relativeSpecRevisionName(deploymentName.Api(), message.ApiSpecRevision)
 	return &ApiDeployment{
 		Header: Header{
 			ApiVersion: RegistryV1,

@@ -40,7 +40,6 @@ func (linter *apiLinterRunner) RunImpl(
 	req *rpc.LinterRequest,
 	runLinter runLinter,
 ) (*rpc.LinterResponse, error) {
-
 	lintFiles := make([]*rpc.LintFile, 0)
 
 	// Traverse the files in the directory

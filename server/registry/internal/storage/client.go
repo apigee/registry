@@ -142,23 +142,23 @@ func (c *Client) EnsureTables() error {
 	return nil
 }
 
-func (c *Client) Migrate(kind string) error {
-	return c.db.AutoMigrate(entities...)
+func (c *Client) Migrate(ctx context.Context) error {
+	return c.db.WithContext(ctx).AutoMigrate(entities...)
 }
 
-func (c *Client) DatabaseName() string {
-	return c.db.Name()
+func (c *Client) DatabaseName(ctx context.Context) string {
+	return c.db.WithContext(ctx).Name()
 }
 
-func (c *Client) TableNames() ([]string, error) {
+func (c *Client) TableNames(ctx context.Context) ([]string, error) {
 	var tableNames []string
-	switch c.db.Name() {
+	switch c.db.WithContext(ctx).Name() {
 	case "postgres":
-		if err := c.db.Table("information_schema.tables").Where("table_schema = ?", "public").Order("table_name").Pluck("table_name", &tableNames).Error; err != nil {
+		if err := c.db.WithContext(ctx).Table("information_schema.tables").Where("table_schema = ?", "public").Order("table_name").Pluck("table_name", &tableNames).Error; err != nil {
 			return nil, err
 		}
 	case "sqlite":
-		if err := c.db.Table("sqlite_schema").Where("type = 'table' AND name NOT LIKE 'sqlite_%'").Order("name").Pluck("name", &tableNames).Error; err != nil {
+		if err := c.db.WithContext(ctx).Table("sqlite_schema").Where("type = 'table' AND name NOT LIKE 'sqlite_%'").Order("name").Pluck("name", &tableNames).Error; err != nil {
 			return nil, err
 		}
 	default:
@@ -167,8 +167,8 @@ func (c *Client) TableNames() ([]string, error) {
 	return tableNames, nil
 }
 
-func (c *Client) RowCount(tableName string) (int64, error) {
+func (c *Client) RowCount(ctx context.Context, tableName string) (int64, error) {
 	var count int64
-	err := c.db.Table(tableName).Count(&count).Error
+	err := c.db.WithContext(ctx).Table(tableName).Count(&count).Error
 	return count, err
 }
