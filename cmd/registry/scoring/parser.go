@@ -1,7 +1,20 @@
+// Copyright 2022 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package scoring
 
 import (
-	"context"
 	"fmt"
 	"sort"
 	"strings"
@@ -11,7 +24,7 @@ import (
 	"github.com/apigee/registry/cmd/registry/patterns"
 )
 
-func ValidateScoreDefinition(ctx context.Context, parent string, scoreDefinition *rpc.ScoreDefinition) []error {
+func ValidateScoreDefinition(parent string, scoreDefinition *rpc.ScoreDefinition) []error {
 	totalErrs := make([]error, 0)
 
 	// target_resource.pattern should be a valid resource pattern
@@ -29,9 +42,15 @@ func ValidateScoreDefinition(ctx context.Context, parent string, scoreDefinition
 			errs := validateScoreFormula(targetName, formula.ScoreFormula)
 			totalErrs = append(totalErrs, errs...)
 		case *rpc.ScoreDefinition_RollupFormula:
+			if len(formula.RollupFormula.GetScoreFormulas()) == 0 {
+				totalErrs = append(totalErrs, fmt.Errorf("missing rollup_formula.score_formulas"))
+			}
 			for _, scoreFormula := range formula.RollupFormula.GetScoreFormulas() {
 				errs := validateScoreFormula(targetName, scoreFormula)
 				totalErrs = append(totalErrs, errs...)
+			}
+			if formula.RollupFormula.GetRollupExpression() == "" {
+				totalErrs = append(totalErrs, fmt.Errorf("missing rollup_formula.rollup_expression"))
 			}
 		default:
 			totalErrs = append(totalErrs, fmt.Errorf("missing formula, either 'score_formula' or 'rollup_formula' should be set"))
@@ -67,34 +86,85 @@ func ValidateScoreDefinition(ctx context.Context, parent string, scoreDefinition
 	return totalErrs
 }
 
+func ValidateScoreCardDefinition(parent string, scoreCardDefinition *rpc.ScoreCardDefinition) []error {
+	totalErrs := make([]error, 0)
+
+	// target_resource.pattern should be a valid resource pattern
+	targetName, err := patterns.ParseResourcePattern(fmt.Sprintf("%s/%s", parent, scoreCardDefinition.GetTargetResource().GetPattern()))
+	if err != nil {
+		totalErrs = append(totalErrs, err)
+	}
+
+	scorePatterns := scoreCardDefinition.GetScorePatterns()
+
+	// Check if score_patterns are set
+	if len(scorePatterns) == 0 {
+		totalErrs = append(totalErrs, fmt.Errorf("missing score_patterns"))
+		return totalErrs
+	}
+
+	// Validate score_patterns only if target_resource.pattern is valid
+	if len(totalErrs) == 0 {
+		for _, pattern := range scorePatterns {
+			// Should have valid $resource references
+			errs := validateReferencesInPattern(targetName, pattern)
+			totalErrs = append(totalErrs, errs...)
+
+			// Should not end with a "-"
+			if strings.HasSuffix(pattern, "/-") {
+				totalErrs = append(totalErrs, fmt.Errorf("invalid score_pattern : %q, it should end with a resourceID and not a \"-\"", pattern))
+			}
+		}
+	}
+
+	return totalErrs
+}
+
+func validateReferencesInPattern(targetName patterns.ResourceName, pattern string) []error {
+	errs := make([]error, 0)
+
+	// pattern should have a valid $resource reference
+	_, entityType, err := patterns.GetReferenceEntityType(pattern)
+	if err != nil {
+		errs = append(errs, fmt.Errorf("invalid pattern: %q, %s", pattern, err))
+	} else if entityType == "default" {
+		// pattern should always start with a $resource reference
+		errs = append(errs, fmt.Errorf("invalid pattern: %q, must always start with '$resource.(api|version|spec|artifact)'", pattern))
+	} else if _, err = patterns.GetReferenceEntityValue(pattern, targetName); err != nil {
+		// $resource should have valid entity reference wrt target_resource
+		errs = append(errs, fmt.Errorf("invalid pattern %q, invalid $resource reference in pattern: %s", pattern, err))
+	}
+
+	return errs
+}
+
 func validateScoreFormula(targetName patterns.ResourceName, scoreFormula *rpc.ScoreFormula) []error {
 	errs := make([]error, 0)
 
 	// Validation checks for score_formula.artifact.pattern
 	pattern := scoreFormula.GetArtifact().GetPattern()
 
-	// pattern should have a valid $resource pattern
-	_, entityType, err := patterns.GetReferenceEntityType(pattern)
-	if err != nil {
-		errs = append(errs, fmt.Errorf("invalid score_formula.artifact.pattern: %s", err))
-	} else if entityType == "default" {
-		// pattern should always start with a $resource reference
-		errs = append(errs, fmt.Errorf("invalid score_formula.artifact.pattern: %q, must always start with '$resource.(api|version|spec|artifact)'", pattern))
-	} else if _, err = patterns.GetReferenceEntityValue(pattern, targetName); err != nil {
-		// $resource should have valid entity reference wrt target_resource
-		errs = append(errs, fmt.Errorf("invalid $resource reference in score_formula.artifact.pattern: %s", err))
+	// Should have valid $resource references
+	patternErrs := validateReferencesInPattern(targetName, pattern)
+	errs = append(errs, patternErrs...)
+
+	// Should not end with a "-"
+	if strings.HasSuffix(pattern, "/-") {
+		errs = append(errs, fmt.Errorf("invalid score_formula.artifact.pattern : %q, it should end with a resourceID and not a \"-\"", pattern))
 	}
 
-	// score_formula.pattern.pattern should not end with a "-"
-	if strings.HasSuffix(scoreFormula.GetArtifact().GetPattern(), "/-") {
-		errs = append(errs, fmt.Errorf("invalid score_formula.artifact.pattern : %q, it should end with a resourceID and not a \"-\"", pattern))
+	if scoreFormula.GetScoreExpression() == "" {
+		errs = append(errs, fmt.Errorf("missing score_formula.score_expression"))
+	}
+
+	if refId := scoreFormula.GetReferenceId(); refId != "" && strings.Contains(refId, "-") {
+		errs = append(errs, fmt.Errorf("invalid score_formula.reference_id: %s, it should not contain hyphens '-'", refId))
 	}
 
 	return errs
 }
 
 func validateNumberThresholds(thresholds []*rpc.NumberThreshold, minValue, maxValue int32) []error {
-
 	if len(thresholds) == 0 {
 		// no error returned since thresholds are optional
 		return []error{}

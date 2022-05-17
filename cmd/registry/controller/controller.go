@@ -37,10 +37,9 @@ func ProcessManifest(
 	client connection.Client,
 	projectID string,
 	manifest *rpc.Manifest) []*Action {
-
 	var actions []*Action
 	//Check for errors in manifest
-	errs := ValidateManifest(ctx, fmt.Sprintf("projects/%s", projectID), manifest)
+	errs := ValidateManifest(fmt.Sprintf("projects/%s", projectID), manifest)
 	if len(errs) > 0 {
 		for _, err := range errs {
 			log.FromContext(ctx).WithError(err).Debugf("Error in manifest")
@@ -119,7 +118,7 @@ func generateDependencyMap(
 	}
 
 	// Fetch resources using the extDependencyQuery
-	sourceList, err := listResources(ctx, client, extDependencyName.String(), dependency.Filter)
+	sourceList, err := patterns.ListResources(ctx, client, extDependencyName.String(), dependency.Filter)
 	if err != nil {
 		return nil, err
 	}
@@ -142,7 +141,6 @@ func generateDependencyMap(
 	}
 
 	return sourceMap, nil
-
 }
 
 func generateActions(
@@ -170,7 +168,6 @@ func generateActions(
 	}
 
 	return actions
-
 }
 
 // Go over the list of existing target resources to figure out which ones need an update.
@@ -181,13 +178,12 @@ func generateUpdateActions(
 	filter string,
 	dependencyMaps []map[string]time.Time,
 	generatedResource *rpc.GeneratedResource) ([]*Action, map[string]bool, error) {
-
 	// Visited tracks the parents of target resources which were already generated.
 	visited := make(map[string]bool)
 	actions := make([]*Action, 0)
 
 	// Generate resource list
-	resourceList, err := listResources(ctx, client, resourcePattern, filter)
+	resourceList, err := patterns.ListResources(ctx, client, resourcePattern, filter)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -201,7 +197,6 @@ func generateUpdateActions(
 			targetResource.UpdateTimestamp(),
 			dependencyMaps,
 			generatedResource,
-			false,
 		)
 
 		if err != nil {
@@ -221,7 +216,6 @@ func generateUpdateActions(
 			}
 			actions = append(actions, a)
 		}
-
 	}
 
 	return actions, visited, nil
@@ -259,7 +253,6 @@ func generateCreateActions(
 	dependencyMaps []map[string]time.Time,
 	generatedResource *rpc.GeneratedResource,
 	visited map[string]bool) ([]*Action, error) {
-
 	var parentList []patterns.ResourceInstance
 
 	parsedResourcePattern, err := patterns.ParseResourcePattern(resourcePattern)
@@ -290,7 +283,7 @@ func generateCreateActions(
 
 	default:
 		filter := excludeVisitedParents(visited)
-		parentList, err = listResources(ctx, client, parentName.String(), filter)
+		parentList, err = patterns.ListResources(ctx, client, parentName.String(), filter)
 		if err != nil {
 			return nil, err
 		}
@@ -337,8 +330,7 @@ func needsUpdate(
 	targetResourceName patterns.ResourceName,
 	targetResourceTime time.Time,
 	dependencyMaps []map[string]time.Time,
-	generatedResource *rpc.GeneratedResource,
-	createMode bool) (bool, error) {
+	generatedResource *rpc.GeneratedResource) (bool, error) {
 	for i, dependency := range generatedResource.Dependencies {
 		dMap := dependencyMaps[i]
 		// Get the entity to look for in dependencyMap

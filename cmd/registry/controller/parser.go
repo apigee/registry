@@ -15,7 +15,6 @@
 package controller
 
 import (
-	"context"
 	"fmt"
 	"regexp"
 	"strings"
@@ -24,7 +23,7 @@ import (
 	"github.com/apigee/registry/rpc"
 )
 
-func ValidateManifest(ctx context.Context, parent string, manifest *rpc.Manifest) []error {
+func ValidateManifest(parent string, manifest *rpc.Manifest) []error {
 	totalErrors := make([]error, 0)
 	for _, resource := range manifest.GeneratedResources {
 		errs := validateGeneratedResourceEntry(parent, resource)
@@ -82,7 +81,6 @@ func validateGeneratedResourceEntry(parent string, generatedResource *rpc.Genera
 		if !validateEntityReference(parsedTargetResource, entityType) {
 			errs = append(errs, fmt.Errorf("invalid reference in dependency pattern: %s", dependency.Pattern))
 		}
-
 	}
 
 	//Validate that all the action References are valid
@@ -138,7 +136,6 @@ func getReferencesFromAction(action string) ([]*reference, error) {
 }
 
 func generateCommand(action string, resourceName string) (string, error) {
-
 	references, err := getReferencesFromAction(action)
 	if err != nil {
 		return "", err

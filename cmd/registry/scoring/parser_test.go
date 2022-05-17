@@ -1,7 +1,20 @@
+// Copyright 2022 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package scoring
 
 import (
-	"context"
 	"testing"
 
 	"github.com/apigee/registry/cmd/registry/patterns"
@@ -538,7 +551,139 @@ func TestValidateScoreDefinition(t *testing.T) {
 			// This is expected here since it is not possible to validate ScoreFormula patterns if there are errors in the targetResource pattern.
 			wantNumErr: 2,
 		},
-		// Missing oneof components
+		// Missing components
+		{
+			desc:   "missing target resource",
+			parent: "projects/demo/locations/global",
+			scoreDefinition: &rpc.ScoreDefinition{
+				Id:   "test-score-definition",
+				Kind: "ScoreDefinition",
+				Formula: &rpc.ScoreDefinition_ScoreFormula{
+					ScoreFormula: &rpc.ScoreFormula{
+						Artifact: &rpc.ResourcePattern{
+							Pattern: "$resource.spec/artifacts/conformance-report",
+						},
+						ScoreExpression: "count(errors)",
+					},
+				},
+				Type: &rpc.ScoreDefinition_Integer{
+					Integer: &rpc.IntegerType{
+						MinValue: 0,
+						MaxValue: 100,
+						Thresholds: []*rpc.NumberThreshold{
+							{
+								Severity: rpc.Severity_OK,
+								Range: &rpc.NumberThreshold_NumberRange{
+									Min: 0,
+									Max: 59,
+								},
+							},
+							{
+								Severity: rpc.Severity_ALERT,
+								Range: &rpc.NumberThreshold_NumberRange{
+									Min: 60,
+									Max: 100,
+								},
+							},
+						},
+					},
+				},
+			},
+			wantNumErr: 1,
+		},
+		{
+			desc:   "missing rollup_formula.rollup_expression",
+			parent: "projects/demo/locations/global",
+			scoreDefinition: &rpc.ScoreDefinition{
+				Id:   "test-score-definition",
+				Kind: "ScoreDefinition",
+				TargetResource: &rpc.ResourcePattern{
+					Pattern: "apis/-/versions/-/specs/-",
+				},
+				Formula: &rpc.ScoreDefinition_RollupFormula{
+					RollupFormula: &rpc.RollUpFormula{
+						ScoreFormulas: []*rpc.ScoreFormula{
+							{
+								Artifact: &rpc.ResourcePattern{
+									Pattern: "$resource.spec/artifacts/conformance-report",
+								},
+								ScoreExpression: "count(errors)",
+								ReferenceId:     "lint_errors",
+							},
+							{
+								Artifact: &rpc.ResourcePattern{
+									Pattern: "$resource.spec/artifacts/conformance-report",
+								},
+								ScoreExpression: "count(warnings)",
+								ReferenceId:     "lint_warnings",
+							},
+						},
+					},
+				},
+				Type: &rpc.ScoreDefinition_Integer{
+					Integer: &rpc.IntegerType{
+						MinValue: 0,
+						MaxValue: 100,
+						Thresholds: []*rpc.NumberThreshold{
+							{
+								Severity: rpc.Severity_ALERT,
+								Range: &rpc.NumberThreshold_NumberRange{
+									Min: 61,
+									Max: 100,
+								},
+							},
+							{
+								Severity: rpc.Severity_WARNING,
+								Range: &rpc.NumberThreshold_NumberRange{
+									Min: 0,
+									Max: 60,
+								},
+							},
+						},
+					},
+				},
+			},
+			wantNumErr: 1,
+		},
+		{
+			desc:   "missing rollup_formula.score_formulas",
+			parent: "projects/demo/locations/global",
+			scoreDefinition: &rpc.ScoreDefinition{
+				Id:   "test-score-definition",
+				Kind: "ScoreDefinition",
+				TargetResource: &rpc.ResourcePattern{
+					Pattern: "apis/-/versions/-/specs/-",
+				},
+				Formula: &rpc.ScoreDefinition_RollupFormula{
+					RollupFormula: &rpc.RollUpFormula{
+						RollupExpression: "lint_errors+lint_warnings",
+					},
+				},
+				Type: &rpc.ScoreDefinition_Integer{
+					Integer: &rpc.IntegerType{
+						MinValue: 0,
+						MaxValue: 100,
+						Thresholds: []*rpc.NumberThreshold{
+							{
+								Severity: rpc.Severity_ALERT,
+								Range: &rpc.NumberThreshold_NumberRange{
+									Min: 61,
+									Max: 100,
+								},
+							},
+							{
+								Severity: rpc.Severity_WARNING,
+								Range: &rpc.NumberThreshold_NumberRange{
+									Min: 0,
+									Max: 60,
+								},
+							},
+						},
+					},
+				},
+			},
+			wantNumErr: 1,
+		},
 		{
 			desc:   "missing formula",
 			parent: "projects/demo/locations/global",
@@ -597,10 +742,54 @@ func TestValidateScoreDefinition(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			ctx := context.Background()
-			gotErrs := ValidateScoreDefinition(ctx, test.parent, test.scoreDefinition)
+			gotErrs := ValidateScoreDefinition(test.parent, test.scoreDefinition)
 			if len(gotErrs) != test.wantNumErr {
-				t.Errorf("ValidateScoreDefinition() returned unexpected no. of errors: want %d, got %s", test.wantNumErr, gotErrs)
+				t.Errorf("ValidateScoreDefinition(%s, %v) returned unexpected no. of errors: want %d, got %s", test.parent, test.scoreDefinition, test.wantNumErr, gotErrs)
+			}
+		})
+	}
+}
+
+func TestValidateReferencesInPattern(t *testing.T) {
+	tests := []struct {
+		desc          string
+		targetPattern string
+		pattern       string
+		wantNumErr    int
+	}{
+		// No errors
+		{
+			desc:          "score formula",
+			targetPattern: "projects/demo/locations/global/apis/-/versions/-/specs/-",
+			pattern:       "$resource.spec/artifacts/conformance-report",
+		},
+		// errors
+		{
+			desc:          "invalid $resource reference",
+			targetPattern: "projects/demo/locations/global/apis/-/versions/-/specs/-",
+			pattern:       "$resource.specs/artifacts/conformance-report", //error
+			wantNumErr:    1,
+		},
+		{
+			desc:          "no $resource reference",
+			targetPattern: "projects/demo/locations/global/apis/-/versions/-/specs/-",
+			pattern:       "apis/-/versions/-/specs/-/artifacts/conformance-report", //error
+			wantNumErr:    1,
+		},
+		{
+			desc:          "invalid $resource wrt targetName",
+			targetPattern: "projects/demo/locations/global/apis/-/versions/-",
+			pattern:       "$resource.spec/artifacts/conformance-report", //error
+			wantNumErr:    1,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			targetName, _ := patterns.ParseResourcePattern(test.targetPattern)
+			gotErrs := validateReferencesInPattern(targetName, test.pattern)
+			if len(gotErrs) != test.wantNumErr {
+				t.Errorf("validateReferencesInPattern(%s, %s) returned unexpected no. of errors: want %d, got %s", targetName, test.pattern, test.wantNumErr, gotErrs)
 			}
 		})
 	}
@@ -628,39 +817,13 @@ func TestValidateScoreFormula(t *testing.T) {
 		},
 		// Single errors
 		{
-			desc: "no $resource reference",
-			targetPattern: &rpc.ResourcePattern{
-				Pattern: "projects/demo/locations/global/apis/-/versions/-/specs/-",
-			},
-			scoreFormula: &rpc.ScoreFormula{
-				Artifact: &rpc.ResourcePattern{
-					Pattern: "apis/-/versions/-/specs/-/artifacts/conformance-report", //error
-				},
-				ScoreExpression: "count(errors)",
-			},
-			wantNumErr: 1,
-		},
-		{
-			desc: "invalid $resource reference",
+			desc: "$resource error",
 			targetPattern: &rpc.ResourcePattern{
 				Pattern: "projects/demo/locations/global/apis/-/versions/-/specs/-",
 			},
 			scoreFormula: &rpc.ScoreFormula{
 				Artifact: &rpc.ResourcePattern{
 					Pattern: "$resource.specs/artifacts/conformance-report", //error
-				},
-				ScoreExpression: "count(errors)",
-			},
-			wantNumErr: 1,
-		},
-		{
-			desc: "invalid $resource wrt targetName",
-			targetPattern: &rpc.ResourcePattern{
-				Pattern: "projects/demo/locations/global/apis/-/versions/-",
-			},
-			scoreFormula: &rpc.ScoreFormula{
-				Artifact: &rpc.ResourcePattern{
-					Pattern: "$resource.spec/artifacts/conformance-report", //error
 				},
 				ScoreExpression: "count(errors)",
 			},
@@ -676,6 +839,20 @@ func TestValidateScoreFormula(t *testing.T) {
 					Pattern: "$resource.spec/artifacts/-", //error
 				},
 				ScoreExpression: "count(errors)",
+			},
+			wantNumErr: 1,
+		},
+		{
+			desc: "invalid reference_id",
+			targetPattern: &rpc.ResourcePattern{
+				Pattern: "projects/demo/locations/global/apis/-/versions/-/specs/-",
+			},
+			scoreFormula: &rpc.ScoreFormula{
+				Artifact: &rpc.ResourcePattern{
+					Pattern: "$resource.spec/artifacts/conformance-report",
+				},
+				ScoreExpression: "count(errors)",
+				ReferenceId:     "num-errors",
 			},
 			wantNumErr: 1,
 		},
@@ -719,13 +896,36 @@ func TestValidateScoreFormula(t *testing.T) {
 			},
 			wantNumErr: 2,
 		},
+		// missing components
+		{
+			desc: "missing artifact",
+			targetPattern: &rpc.ResourcePattern{
+				Pattern: "projects/demo/locations/global/apis/-/versions/-/specs/-",
+			},
+			scoreFormula: &rpc.ScoreFormula{
+				ScoreExpression: "count(errors)",
+			},
+			wantNumErr: 1,
+		},
+		{
+			desc: "missing score expression",
+			targetPattern: &rpc.ResourcePattern{
+				Pattern: "projects/demo/locations/global/apis/-/versions/-/specs/-",
+			},
+			scoreFormula: &rpc.ScoreFormula{
+				Artifact: &rpc.ResourcePattern{
+					Pattern: "$resource.spec/artifacts/conformance-report",
+				},
+			},
+			wantNumErr: 1,
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			targetName, _ := patterns.ParseResourcePattern(test.targetPattern.GetPattern())
 			gotErrs := validateScoreFormula(targetName, test.scoreFormula)
 			if len(gotErrs) != test.wantNumErr {
-				t.Errorf("validateScoreFormula() returned unexpected no. of errors: want %d, got %s", test.wantNumErr, gotErrs)
+				t.Errorf("validateScoreFormula(%s, %v) returned unexpected no. of errors: want %d, got %s", targetName, test.scoreFormula, test.wantNumErr, gotErrs)
 			}
 		})
 	}
@@ -1285,11 +1485,10 @@ func TestValidateNumberThresholds(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			gotErrs := validateNumberThresholds(test.thresholds, test.minValue, test.maxValue)
 			if len(gotErrs) != test.wantNumErr {
-				t.Errorf("validateNumberThresholds() returned unexpected no. of errors: want %d, got %s", test.wantNumErr, gotErrs)
+				t.Errorf("validateNumberThresholds(%v, %d, %d) returned unexpected no. of errors: want %d, got %s", test.thresholds, test.minValue, test.maxValue, test.wantNumErr, gotErrs)
 			}
 		})
 	}
-
 }
 
 func TestValidateBooleanThresholds(t *testing.T) {
@@ -1384,7 +1583,140 @@ func TestValidateBooleanThresholds(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			gotErrs := validateBooleanThresholds(test.thresholds)
 			if len(gotErrs) != test.wantNumErr {
-				t.Errorf("validateBooleanThresholds() returned unexpected no. of errors: want %d, got %s", test.wantNumErr, gotErrs)
+				t.Errorf("validateBooleanThresholds(%v) returned unexpected no. of errors: want %d, got %s", test.thresholds, test.wantNumErr, gotErrs)
+			}
+		})
+	}
+}
+
+func TestValidateScoreCardDefinition(t *testing.T) {
+	tests := []struct {
+		desc                string
+		parent              string
+		scoreCardDefinition *rpc.ScoreCardDefinition
+		wantNumErr          int
+	}{
+		// No errors
+		{
+			desc:   "simple scorecard definition",
+			parent: "projects/demo/locations/global",
+			scoreCardDefinition: &rpc.ScoreCardDefinition{
+				Id:   "test-scorecard-definition",
+				Kind: "ScoreCardDefinition",
+				TargetResource: &rpc.ResourcePattern{
+					Pattern: "apis/-/versions/-/specs/-",
+				},
+				ScorePatterns: []string{
+					"$resource.spec/artifacts/score-lint-error",
+					"$resource.spec/artifacts/score-lang-reuse",
+					"$resource.spec/artifacts/score-security-audit",
+					"$resource.spec/artifacts/score-accuracy",
+				},
+			},
+		},
+		// errors
+		{
+			desc:   "invalid target_resource",
+			parent: "projects/demo/locations/global",
+			scoreCardDefinition: &rpc.ScoreCardDefinition{
+				Id:   "test-scorecard-definition",
+				Kind: "ScoreCardDefinition",
+				TargetResource: &rpc.ResourcePattern{
+					Pattern: "apis/-/versions/specs/-", //error
+				},
+				ScorePatterns: []string{
+					"$resource.spec/artifacts/score-lint-error",
+					"$resource.spec/artifacts/score-lang-reuse",
+					"$resource.spec/artifacts/score-security-audit",
+					"$resource.spec/artifacts/score-accuracy",
+				},
+			},
+			wantNumErr: 1,
+		},
+		{
+			desc:   "missing score_patterns",
+			parent: "projects/demo/locations/global",
+			scoreCardDefinition: &rpc.ScoreCardDefinition{
+				Id:   "test-scorecard-definition",
+				Kind: "ScoreCardDefinition",
+				TargetResource: &rpc.ResourcePattern{
+					Pattern: "apis/-/versions/-/specs/-",
+				},
+				// error
+			},
+			wantNumErr: 1,
+		},
+		{
+			desc:   "invalid target_resource and missing score_patterns",
+			parent: "projects/demo/locations/global",
+			scoreCardDefinition: &rpc.ScoreCardDefinition{
+				Id:   "test-scorecard-definition",
+				Kind: "ScoreCardDefinition",
+				TargetResource: &rpc.ResourcePattern{
+					Pattern: "apis/-/versions/specs/-", //error
+				},
+				//error
+			},
+			wantNumErr: 2,
+		},
+		{
+			desc:   "invalid score_pattern $resource",
+			parent: "projects/demo/locations/global",
+			scoreCardDefinition: &rpc.ScoreCardDefinition{
+				Id:   "test-scorecard-definition",
+				Kind: "ScoreCardDefinition",
+				TargetResource: &rpc.ResourcePattern{
+					Pattern: "apis/-/versions/-/specs/-",
+				},
+				ScorePatterns: []string{
+					"$resource.specs/artifacts/score-lint-error", //error
+					"$resource.spec/artifacts/score-lang-reuse",
+					"$resource.spec/artifacts/score-security-audit",
+					"$resource.spec/artifacts/score-accuracy",
+				},
+			},
+			wantNumErr: 1,
+		},
+		{
+			desc:   "invalid score_pattern no artifactID",
+			parent: "projects/demo/locations/global",
+			scoreCardDefinition: &rpc.ScoreCardDefinition{
+				Id:   "test-scorecard-definition",
+				Kind: "ScoreCardDefinition",
+				TargetResource: &rpc.ResourcePattern{
+					Pattern: "apis/-/versions/-/specs/-",
+				},
+				ScorePatterns: []string{
+					"$resource.spec/artifacts/-", //error
+				},
+			},
+			wantNumErr: 1,
+		},
+		{
+			desc:   "multiple invalid score_pattern",
+			parent: "projects/demo/locations/global",
+			scoreCardDefinition: &rpc.ScoreCardDefinition{
+				Id:   "test-scorecard-definition",
+				Kind: "ScoreCardDefinition",
+				TargetResource: &rpc.ResourcePattern{
+					Pattern: "apis/-/versions/-/specs/-",
+				},
+				ScorePatterns: []string{
+					"$resource.specs/artifacts/score-lint-error",     //error
+					"$resource.specs/artifacts/score-lang-reuse",     //error
+					"$resource.specs/artifacts/score-security-audit", //error
+					"$resource.specs/artifacts/score-accuracy",       //error
+				},
+			},
+			wantNumErr: 4,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			gotErrs := ValidateScoreCardDefinition(test.parent, test.scoreCardDefinition)
+			if len(gotErrs) != test.wantNumErr {
+				t.Errorf("ValidateScoreCardDefinition(%s, %v) returned unexpected no. of errors: want %d, got %s", test.parent, test.scoreCardDefinition, test.wantNumErr, gotErrs)
 			}
 		})
 	}

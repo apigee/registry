@@ -24,7 +24,6 @@ func ComputeStats(diffs ...*rpc.ChangeDetails) *rpc.ChangeStats {
 	var nonbreaking int64 = 0
 	var unknown int64 = 0
 	for _, diff := range diffs {
-
 		breaking += int64(len(diff.BreakingChanges.Additions))
 		breaking += int64(len(diff.BreakingChanges.Deletions))
 		breaking += int64(len(diff.BreakingChanges.Modifications))

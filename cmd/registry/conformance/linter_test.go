@@ -268,7 +268,6 @@ func TestGenerateLinterMetadata(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-
 			got, err := GenerateLinterMetadata(test.styleguide)
 
 			if test.wantErr && err == nil {
