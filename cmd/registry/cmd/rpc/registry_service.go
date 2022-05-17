@@ -61,21 +61,6 @@ func init() {
 	RegistryConfig.SetEnvPrefix("APG_REGISTRY")
 	RegistryConfig.AutomaticEnv()
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 }
 
 var RegistryServiceCmd = &cobra.Command{

@@ -38,24 +38,26 @@ find cmd/registry/cmd/rpc -name "*.go" -type f -exec sed -i.bak "s/package main/
 # to avoid confusion. These flags are not supported by the non-generated subcommands
 # of the main tool.
 REGISTRY_SERVICE=cmd/registry/cmd/rpc/registry_service.go
-sed -i.bak "s/^\W*RegistryServiceCmd.PersistentFlags.*$//g" "${REGISTRY_SERVICE}"
-sed -i.bak "s/^\W*RegistryConfig\.Bind.*$//g" "${REGISTRY_SERVICE}"
+sed -i.bak "/RegistryServiceCmd\.PersistentFlags/d" "${REGISTRY_SERVICE}"
+sed -i.bak "/RegistryConfig\.Bind/d" "${REGISTRY_SERVICE}"
 
 # Remove local connection configuration flags from the generated Admin service CLI.
 ADMIN_SERVICE=cmd/registry/cmd/rpc/admin_service.go
-sed -i.bak "s/^\W*AdminServiceCmd.PersistentFlags.*$//g" "${ADMIN_SERVICE}"
-sed -i.bak "s/^\W*AdminConfig\.Bind.*$//g" "${ADMIN_SERVICE}"
+sed -i.bak "/AdminServiceCmd\.PersistentFlags/d" "${ADMIN_SERVICE}"
+sed -i.bak "/AdminConfig\.Bind/d" "${ADMIN_SERVICE}"
 
 # Patch the generated CLI to use "APG_REGISTRY" as the prefix for
 # Admin service configuration variables. This causes the Admin service
 # client to be configured with the same variables that configure the
 # Registry service client.
 sed -i.bak "s/APG_ADMIN/APG_REGISTRY/" "${ADMIN_SERVICE}"
-gofmt -w "${ADMIN_SERVICE}"
 if grep --quiet APG_ADMIN "${ADMIN_SERVICE}"; then
-  echo "Patching APG tool failed."
+  echo "Patching CLI failed."
   exit 1
 fi
 
-# Remove all the sed-generated backup files
+# Format the files with significant patches.
+gofmt -w ${REGISTRY_SERVICE} ${ADMIN_SERVICE}
+
+# Remove all the sed-generated backup files.
 rm cmd/registry/cmd/rpc/*.bak
