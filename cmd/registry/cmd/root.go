@@ -60,19 +60,23 @@ func Command() *cobra.Command {
 	cmd.AddCommand(list.Command())
 	cmd.AddCommand(upload.Command())
 	cmd.AddCommand(vocabulary.Command())
+	cmd.AddCommand(RPCCommand())
+	return cmd
+}
 
-	apg.AdminServiceCmd.Use = ".admin"
-	apg.AdminServiceCmd.Short = "Directly call methods of the Admin service"
+func RPCCommand() *cobra.Command {
+	cmd := apg.RegistryServiceCmd
+	cmd.Use = "rpc"
+	cmd.Short = "Make direct calls to RPC methods"
+	cmd.Long = cmd.Short
+	cmd.PersistentFlags().BoolVarP(&apg.Verbose, "verbose", "v", false, "Print verbose output")
+	cmd.PersistentFlags().BoolVarP(&apg.OutputJSON, "json", "j", false, "Print JSON output")
+
+	apg.AdminServiceCmd.Use = "admin"
+	apg.AdminServiceCmd.Short = "Make direct calls to Admin RPC methods (self-hosted installations only)"
+	apg.AdminServiceCmd.Long = apg.AdminServiceCmd.Short
 	apg.AdminServiceCmd.Hidden = true
-	apg.AdminServiceCmd.PersistentFlags().BoolVarP(&apg.Verbose, "verbose", "v", false, "Print verbose output")
-	apg.AdminServiceCmd.PersistentFlags().BoolVarP(&apg.OutputJSON, "json", "j", false, "Print JSON output")
 	cmd.AddCommand(apg.AdminServiceCmd)
-
-	apg.RegistryServiceCmd.Use = "."
-	apg.RegistryServiceCmd.Short = "Directly call methods of the Registry service"
-	apg.RegistryServiceCmd.PersistentFlags().BoolVarP(&apg.Verbose, "verbose", "v", false, "Print verbose output")
-	apg.RegistryServiceCmd.PersistentFlags().BoolVarP(&apg.OutputJSON, "json", "j", false, "Print JSON output")
-	cmd.AddCommand(apg.RegistryServiceCmd)
 
 	return cmd
 }
