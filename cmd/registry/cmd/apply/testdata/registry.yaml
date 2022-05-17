@@ -3,7 +3,7 @@ kind: API
 metadata:
   name: registry
   labels:
-    apihub-owner: Google
+    apihub-owner: google
   annotations:
     apihub-score: "99"
 data:
@@ -16,7 +16,7 @@ data:
     - metadata:
         name: v1
         labels:
-          apihub-team: Apigee
+          apihub-team: apigee
         annotations:
           release-date: "2021-12-15"
       data:
@@ -39,7 +39,7 @@ data:
     - metadata:
         name: prod
         labels:
-          platform: Google
+          platform: google
         annotations:
           region: us-central1
       data:
