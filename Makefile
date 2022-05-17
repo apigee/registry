@@ -10,12 +10,8 @@ ifeq (, $(shell which protoc))
 endif
 
 all: protos
-	./tools/GENERATE-APG.sh
+	./tools/GENERATE-CLI.sh
 	go install ./...
-
-apg: protoc
-	./tools/GENERATE-APG.sh
-	go install ./cmd/apg
 
 protos: protoc
 	./tools/GENERATE-RPC.sh
