@@ -43,3 +43,13 @@ if grep --quiet APG_ADMIN "${FILE}"; then
   echo "Patching APG tool failed."
   exit 1
 fi
+
+# Perform the same patch as above for the provisioning service. 
+FILE=cmd/apg/provisioning_service.go
+sed -i.bak "s/APG_PROVISIONING/APG_REGISTRY/" "${FILE}"
+rm "${FILE}.bak"
+gofmt -w "${FILE}"
+if grep --quiet APG_PROVISIONING "${FILE}"; then
+  echo "Patching APG tool failed."
+  exit 1
+fi

@@ -29,11 +29,13 @@ SERVICE_PROTOS=(
 	google/cloud/apigeeregistry/v1/registry_service.proto
 	google/cloud/apigeeregistry/v1/admin_models.proto
 	google/cloud/apigeeregistry/v1/admin_service.proto
+	google/cloud/apigeeregistry/v1/provisioning_service.proto
 )
 
 HOSTED_PROTOS=(
 	google/cloud/apigeeregistry/v1/registry_models.proto
 	google/cloud/apigeeregistry/v1/registry_service.proto
+	google/cloud/apigeeregistry/v1/provisioning_service.proto
 )
 
 COMMON_PROTOS_PATH='third_party/api-common-protos'
