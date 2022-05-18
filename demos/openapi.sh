@@ -31,8 +31,8 @@
 PROJECT=openapi
 
 # First, delete and re-create the "openapis" project to get a fresh start.
-apg admin delete-project --name projects/$PROJECT
-apg admin create-project --project_id $PROJECT \
+regctl rpc admin delete-project --name projects/$PROJECT
+regctl rpc admin create-project --project_id $PROJECT \
 	--project.display_name "OpenAPI Directory" \
 	--project.description "APIs collected from the APIs.guru OpenAPI Directory"
 
@@ -41,98 +41,98 @@ export COMMIT=`(cd ~/Desktop/openapi-directory; git rev-parse HEAD)`
 
 # Upload all of the APIs in the OpenAPI directory at once.
 # This happens in parallel and usually takes around 2 minutes.
-registry upload bulk openapi \
+regctl upload bulk openapi \
 	--project-id $PROJECT ~/Desktop/openapi-directory/APIs \
 	--base-uri https://github.com/APIs-guru/openapi-directory/blob/$COMMIT/APIs 
 
 # Get one of the APIs.
-registry get projects/$PROJECT/locations/global/apis/wordnik.com
+regctl get projects/$PROJECT/locations/global/apis/wordnik.com
 
-# You can also get this API with the lower-level apg command.
+# You can also get this API with the lower-level regctl rpc command.
 # Add the --json option to get JSON-formatted output.
-apg registry get-api --name projects/$PROJECT/locations/global/apis/wordnik.com --json
+regctl rpc get-api --name projects/$PROJECT/locations/global/apis/wordnik.com --json
 
 # Get the API spec
-apg registry get-api-spec --name projects/$PROJECT/locations/global/apis/wordnik.com/versions/4.0/specs/openapi.yaml
+regctl rpc get-api-spec --name projects/$PROJECT/locations/global/apis/wordnik.com/versions/4.0/specs/openapi.yaml
 
 # You might notice that that didn't return the actual spec. That's because the spec contents
 # are accessed through a separate method that (when transcoded to HTTP) allows direct download
 # of spec contents.
-apg registry get-api-spec-contents --name projects/$PROJECT/locations/global/apis/wordnik.com/versions/4.0/specs/openapi.yaml
+regctl rpc get-api-spec-contents --name projects/$PROJECT/locations/global/apis/wordnik.com/versions/4.0/specs/openapi.yaml
 
 # If you have jq and the base64 tool installed, you can get the spec contents from the RPC response.
-# apg registry get-api-spec-contents --name projects/$PROJECT/locations/global/apis/wordnik.com/versions/4.0/specs/openapi.yaml --json | jq .data -r | base64 --decode
+# regctl rpc get-api-spec-contents --name projects/$PROJECT/locations/global/apis/wordnik.com/versions/4.0/specs/openapi.yaml --json | jq .data -r | base64 --decode
 
-# Another way to get the bytes of the spec is to use `registry get` with the `--contents` flag.
-registry get projects/$PROJECT/locations/global/apis/wordnik.com --contents
+# Another way to get the bytes of the spec is to use `regctl get` with the `--contents` flag.
+regctl get projects/$PROJECT/locations/global/apis/wordnik.com --contents
 
 # List all of the APIs in the project.
-registry list projects/$PROJECT/locations/global/apis
+regctl list projects/$PROJECT/locations/global/apis
 
 # List all of the versions of an API.
-registry list projects/$PROJECT/locations/global/apis/wordnik.com/versions
+regctl list projects/$PROJECT/locations/global/apis/wordnik.com/versions
 
 # List all of the specs associated with an API version.
-registry list projects/$PROJECT/locations/global/apis/wordnik.com/versions/4.0/specs
+regctl list projects/$PROJECT/locations/global/apis/wordnik.com/versions/4.0/specs
 
 # Following [AIP-159](https://google.aip.dev/159), the list operations support the "-" wildcard.
 # This allows us to list objects across multiple collections.
-registry list projects/$PROJECT/locations/global/apis/wordnik.com/versions/-/specs/-
+regctl list projects/$PROJECT/locations/global/apis/wordnik.com/versions/-/specs/-
 
 # Now let's list all of the specs in the project.
-registry list projects/$PROJECT/locations/global/apis/-/versions/-/specs/-
+regctl list projects/$PROJECT/locations/global/apis/-/versions/-/specs/-
 
 # That's a lot. Let's count them with `wc -l`.
-registry list projects/$PROJECT/locations/global/apis/-/versions/-/specs/- | wc -l
+regctl list projects/$PROJECT/locations/global/apis/-/versions/-/specs/- | wc -l
 
 # Using wildcards, we can list all of the specs with a particular version.
-registry list projects/$PROJECT/locations/global/apis/-/versions/1.0.0/specs/-
+regctl list projects/$PROJECT/locations/global/apis/-/versions/1.0.0/specs/-
 
 # List operations also support filtering by following [AIP-160](https://google.aip.dev/160).
 # Filter functions are evaluated using [CEL](https://github.com/google/cel-spec).
 # Here's an example:
-registry list projects/$PROJECT/locations/global/apis/-/versions/-/specs/- \
+regctl list projects/$PROJECT/locations/global/apis/-/versions/-/specs/- \
   --filter "api_id.startsWith('goog')"
 
 # This is a bit more verbose than glob expressions but much more powerful.
 # You can also refer to other fields in the messages that match the pattern:
-registry list projects/$PROJECT/locations/global/apis/- --filter "description.contains('speech')"
+regctl list projects/$PROJECT/locations/global/apis/- --filter "description.contains('speech')"
 
-# The registry command can also compute some basic API properties.
+# The regctl command can also compute some basic API properties.
 # This computes simple complexity metrics for every spec in the project.
-registry compute complexity projects/$PROJECT/locations/global/apis/-/versions/-/specs/-
+regctl compute complexity projects/$PROJECT/locations/global/apis/-/versions/-/specs/-
 
 # The complexity metrics are stored in artifacts associated with each spec.
 # In this case, the artifacts were stored in a serialized protocol buffer.
 # You can get their values with the "get" subcommand.
-registry get projects/$PROJECT/locations/global/apis/wordnik.com/versions/4.0/specs/openapi.yaml/artifacts/complexity --contents
+regctl get projects/$PROJECT/locations/global/apis/wordnik.com/versions/4.0/specs/openapi.yaml/artifacts/complexity --contents
 
 # It's also possible to export artifacts to a Google sheet.
 # (The following command expects OAuth client credentials with access to the
 # Google Sheets API to be available locally in ~/.credentials/registry.json)
-registry export sheet projects/$PROJECT/locations/global/apis/-/versions/-/specs/-/artifacts/complexity \
+regctl export sheet projects/$PROJECT/locations/global/apis/-/versions/-/specs/-/artifacts/complexity \
 	--as projects/$PROJECT/locations/global/artifacts/complexity-sheet
 
 # Another interesting property that can be computed is the "vocabulary" of an API.
 # The following command computes vocabularies of every API spec in the project.
-registry compute vocabulary projects/$PROJECT/locations/global/apis/-/versions/-/specs/-
+regctl compute vocabulary projects/$PROJECT/locations/global/apis/-/versions/-/specs/-
 
 # Vocabularies are stored in the "vocabulary" property.
-registry get projects/$PROJECT/locations/global/apis/wordnik.com/versions/4.0/specs/openapi.yaml/artifacts/vocabulary --contents
+regctl get projects/$PROJECT/locations/global/apis/wordnik.com/versions/4.0/specs/openapi.yaml/artifacts/vocabulary --contents
 
-# The registry command can perform set operations on vocabularies.
+# The regctl command can perform set operations on vocabularies.
 # To find common terms in all Google APIs, use the following:
-registry vocabulary intersection projects/$PROJECT/locations/global/apis/-/versions/-/specs/-/artifacts/vocabulary \
+regctl vocabulary intersection projects/$PROJECT/locations/global/apis/-/versions/-/specs/-/artifacts/vocabulary \
   --filter "api_id.startsWith('googleapis')"
 
 # We can also save this to a property.
-registry vocabulary intersection projects/$PROJECT/locations/global/apis/-/versions/-/specs/-/artifacts/vocabulary \
+regctl vocabulary intersection projects/$PROJECT/locations/global/apis/-/versions/-/specs/-/artifacts/vocabulary \
   --filter "api_id.startsWith('googleapis')" \
   --output projects/$PROJECT/locations/global/artifacts/google-common
 
 # We can then read it directly or export it to a Google Sheet.
-registry get projects/$PROJECT/locations/global/artifacts/google-common
-registry export sheet projects/$PROJECT/locations/global/artifacts/google-common
+regctl get projects/$PROJECT/locations/global/artifacts/google-common
+regctl export sheet projects/$PROJECT/locations/global/artifacts/google-common
 
 # With vocabulary operations we can discover common terms across groups of APIs,
 # track changes across versions, and find unique terms in APIs that we are reviewing.
