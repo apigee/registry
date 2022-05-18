@@ -60,7 +60,6 @@ func scoreCommand() *cobra.Command {
 				}
 				for _, d := range scoreDefinitions {
 					taskQueue <- &computeScoreTask{
-						ctx:         ctx,
 						client:      client,
 						defArtifact: d,
 						resource:    r,
@@ -74,7 +73,6 @@ func scoreCommand() *cobra.Command {
 }
 
 type computeScoreTask struct {
-	ctx         context.Context
 	client      connection.Client
 	defArtifact *rpc.Artifact
 	resource    patterns.ResourceInstance
@@ -85,5 +83,5 @@ func (task *computeScoreTask) String() string {
 }
 
 func (task *computeScoreTask) Run(ctx context.Context) error {
-	return scoring.CalculateScore(task.ctx, task.client, task.defArtifact, task.resource)
+	return scoring.CalculateScore(ctx, task.client, task.defArtifact, task.resource)
 }

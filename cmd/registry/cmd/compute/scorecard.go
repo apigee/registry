@@ -60,7 +60,6 @@ func scoreCardCommand() *cobra.Command {
 				}
 				for _, d := range scoreCardDefinitions {
 					taskQueue <- &computeScoreCardTask{
-						ctx:         ctx,
 						client:      client,
 						defArtifact: d,
 						resource:    r,
@@ -74,7 +73,6 @@ func scoreCardCommand() *cobra.Command {
 }
 
 type computeScoreCardTask struct {
-	ctx         context.Context
 	client      connection.Client
 	defArtifact *rpc.Artifact
 	resource    patterns.ResourceInstance
@@ -85,5 +83,5 @@ func (task *computeScoreCardTask) String() string {
 }
 
 func (task *computeScoreCardTask) Run(ctx context.Context) error {
-	return scoring.CalculateScoreCard(task.ctx, task.client, task.defArtifact, task.resource)
+	return scoring.CalculateScoreCard(ctx, task.client, task.defArtifact, task.resource)
 }
