@@ -257,3 +257,60 @@ func validateBooleanThresholds(thresholds []*rpc.BooleanThreshold) []error {
 	}
 	return errs
 }
+
+func matchResourceWithTarget(targetPattern *rpc.ResourcePattern, resourceName patterns.ResourceName, project string) error {
+	targetPatternName, err := patterns.ParseResourcePattern(fmt.Sprintf("%s/%s", project, targetPattern.GetPattern()))
+	if err != nil {
+		return err
+	}
+
+	switch tp := targetPatternName.(type) {
+	case patterns.SpecName:
+		// Check if targetPattern and resourceName match in type
+		r, ok := resourceName.(patterns.SpecName)
+		if !ok {
+			return fmt.Errorf("resource %s doesn't match target pattern %s", r, tp)
+		}
+
+		// Check if the individual entities match
+		if tp.Name.ApiID != "-" && tp.Name.ApiID != r.Name.ApiID {
+			return fmt.Errorf("api mismatch in resource %s and target pattern %v", resourceName.String(), targetPattern)
+		}
+		if tp.Name.VersionID != "-" && tp.Name.VersionID != r.Name.VersionID {
+			return fmt.Errorf("version mismatch in resource %s and target pattern %v", resourceName.String(), targetPattern)
+		}
+		if tp.Name.SpecID != "-" && tp.Name.SpecID != r.Name.SpecID {
+			return fmt.Errorf("spec mismatch in resource %s and target pattern %v", resourceName.String(), targetPattern)
+		}
+	case patterns.VersionName:
+		// Check if targetPattern and resourceName match in type
+		r, ok := resourceName.(patterns.VersionName)
+		if !ok {
+			return fmt.Errorf("resource %s doesn't match target pattern %s", r, tp)
+		}
+
+		// Check if the individual entities match
+		if tp.Name.ApiID != "-" && tp.Name.ApiID != r.Name.ApiID {
+			return fmt.Errorf("api mismatch in resource %s and target pattern %v", resourceName.String(), targetPattern)
+		}
+		if tp.Name.VersionID != "-" && tp.Name.VersionID != r.Name.VersionID {
+			return fmt.Errorf("version mismatch in resource %s and target pattern %v", resourceName.String(), targetPattern)
+		}
+	case patterns.ApiName:
+		// Check if targetPattern and resourceName match in type
+		r, ok := resourceName.(patterns.ApiName)
+		if !ok {
+			return fmt.Errorf("resource %s doesn't match target pattern %s", r, tp)
+		}
+
+		// Check if the individual entities match
+		if tp.Name.ApiID != "-" && tp.Name.ApiID != r.Name.ApiID {
+			return fmt.Errorf("api mismatch in resource %s and target pattern %v", resourceName.String(), targetPattern)
+		}
+	default:
+		return fmt.Errorf("unsupported resource type %T", targetPatternName)
+	}
+
+	// TODO: Filter check
+	return nil
+}
