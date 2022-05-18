@@ -12,7 +12,7 @@ data:
       dependencies:
         - pattern: $resource.spec
           filter: mime_type.contains('openapi')
-      action: registry compute lint $resource.spec --linter spectral
+      action: regctl compute lint $resource.spec --linter spectral
     - pattern: apis/-/versions/-/specs/-/artifacts/lintstats-spectral
       filter: ""
       receipt: false
@@ -21,18 +21,18 @@ data:
           filter: ""
         - pattern: $resource.spec/artifacts/complexity
           filter: ""
-      action: registry compute lintstats $resource.spec --linter spectral
+      action: regctl compute lintstats $resource.spec --linter spectral
     - pattern: apis/-/versions/-/specs/-/artifacts/vocabulary
       filter: ""
       receipt: false
       dependencies:
         - pattern: $resource.spec
           filter: ""
-      action: registry compute vocabulary $resource.spec
+      action: regctl compute vocabulary $resource.spec
     - pattern: apis/-/versions/-/specs/-/artifacts/complexity
       filter: ""
       receipt: false
       dependencies:
         - pattern: $resource.spec
           filter: ""
-      action: registry compute complexity $resource.spec
+      action: regctl compute complexity $resource.spec

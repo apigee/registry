@@ -63,7 +63,7 @@ func TestArtifacts(t *testing.T) {
 			},
 			want: []*Action{
 				{
-					Command:           "registry compute lint projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml --linter gnostic",
+					Command:           "regctl compute lint projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml --linter gnostic",
 					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic",
 				},
 			},
@@ -86,15 +86,15 @@ func TestArtifacts(t *testing.T) {
 			},
 			want: []*Action{
 				{
-					Command:           "registry compute lint projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml --linter gnostic",
+					Command:           "regctl compute lint projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml --linter gnostic",
 					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic",
 				},
 				{
-					Command:           "registry compute lint projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml --linter gnostic",
+					Command:           "regctl compute lint projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml --linter gnostic",
 					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/lint-gnostic",
 				},
 				{
-					Command:           "registry compute lint projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml --linter gnostic",
+					Command:           "regctl compute lint projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml --linter gnostic",
 					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/lint-gnostic",
 				},
 			},
@@ -120,11 +120,11 @@ func TestArtifacts(t *testing.T) {
 			},
 			want: []*Action{
 				{
-					Command:           "registry compute lint projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml --linter gnostic",
+					Command:           "regctl compute lint projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml --linter gnostic",
 					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic",
 				},
 				{
-					Command:           "registry compute lint projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml --linter gnostic",
+					Command:           "regctl compute lint projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml --linter gnostic",
 					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/lint-gnostic",
 				},
 			},
@@ -157,11 +157,11 @@ func TestArtifacts(t *testing.T) {
 			},
 			want: []*Action{
 				{
-					Command:           "registry compute lint projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml --linter gnostic",
+					Command:           "regctl compute lint projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml --linter gnostic",
 					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/lint-gnostic",
 				},
 				{
-					Command:           "registry compute lint projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml --linter gnostic",
+					Command:           "regctl compute lint projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml --linter gnostic",
 					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/lint-gnostic",
 				},
 			},
@@ -209,7 +209,7 @@ func TestArtifacts(t *testing.T) {
 								Filter:  "mime_type.contains('openapi')",
 							},
 						},
-						Action: "registry compute lint $resource.spec --linter gnostic",
+						Action: "regctl compute lint $resource.spec --linter gnostic",
 					},
 				},
 			}
@@ -259,11 +259,11 @@ func TestAggregateArtifacts(t *testing.T) {
 			},
 			want: []*Action{
 				{
-					Command:           "registry compute vocabulary projects/controller-test/locations/global/apis/test-api-1",
+					Command:           "regctl compute vocabulary projects/controller-test/locations/global/apis/test-api-1",
 					GeneratedResource: "projects/controller-test/locations/global/apis/test-api-1/artifacts/vocabulary",
 				},
 				{
-					Command:           "registry compute vocabulary projects/controller-test/locations/global/apis/test-api-2",
+					Command:           "regctl compute vocabulary projects/controller-test/locations/global/apis/test-api-2",
 					GeneratedResource: "projects/controller-test/locations/global/apis/test-api-2/artifacts/vocabulary",
 				},
 			},
@@ -302,7 +302,7 @@ func TestAggregateArtifacts(t *testing.T) {
 			},
 			want: []*Action{
 				{
-					Command:           "registry compute vocabulary projects/controller-test/locations/global/apis/test-api-2",
+					Command:           "regctl compute vocabulary projects/controller-test/locations/global/apis/test-api-2",
 					GeneratedResource: "projects/controller-test/locations/global/apis/test-api-2/artifacts/vocabulary",
 				},
 			},
@@ -339,7 +339,7 @@ func TestAggregateArtifacts(t *testing.T) {
 								Pattern: "$resource.api/versions/-/specs/-",
 							},
 						},
-						Action: "registry compute vocabulary $resource.api",
+						Action: "regctl compute vocabulary $resource.api",
 					},
 				},
 			}
@@ -386,21 +386,21 @@ func TestDerivedArtifacts(t *testing.T) {
 			want: []*Action{
 				{
 					Command: fmt.Sprintf(
-						"registry compute summary %s %s",
+						"regctl compute summary %s %s",
 						"projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic",
 						"projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity"),
 					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/summary",
 				},
 				{
 					Command: fmt.Sprintf(
-						"registry compute summary %s %s",
+						"regctl compute summary %s %s",
 						"projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/lint-gnostic",
 						"projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/complexity"),
 					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/summary",
 				},
 				{
 					Command: fmt.Sprintf(
-						"registry compute summary %s %s",
+						"regctl compute summary %s %s",
 						"projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/lint-gnostic",
 						"projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/complexity"),
 					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/summary",
@@ -430,7 +430,7 @@ func TestDerivedArtifacts(t *testing.T) {
 			want: []*Action{
 				{
 					Command: fmt.Sprintf(
-						"registry compute summary %s %s",
+						"regctl compute summary %s %s",
 						"projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/lint-gnostic",
 						"projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/complexity"),
 					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/summary",
@@ -470,14 +470,14 @@ func TestDerivedArtifacts(t *testing.T) {
 			want: []*Action{
 				{
 					Command: fmt.Sprintf(
-						"registry compute summary %s %s",
+						"regctl compute summary %s %s",
 						"projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic",
 						"projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity"),
 					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/summary",
 				},
 				{
 					Command: fmt.Sprintf(
-						"registry compute summary %s %s",
+						"regctl compute summary %s %s",
 						"projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/lint-gnostic",
 						"projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/complexity"),
 					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/summary",
@@ -518,7 +518,7 @@ func TestDerivedArtifacts(t *testing.T) {
 								Pattern: "$resource.spec/artifacts/complexity",
 							},
 						},
-						Action: "registry compute summary $resource.spec/artifacts/lint-gnostic $resource.spec/artifacts/complexity",
+						Action: "regctl compute summary $resource.spec/artifacts/lint-gnostic $resource.spec/artifacts/complexity",
 					},
 				},
 			}
@@ -648,7 +648,7 @@ func TestReceiptAggArtifacts(t *testing.T) {
 			},
 			want: []*Action{
 				{
-					Command:           "registry compute search-index projects/controller-test/locations/global/apis/-/versions/-/specs/-",
+					Command:           "regctl compute search-index projects/controller-test/locations/global/apis/-/versions/-/specs/-",
 					GeneratedResource: "projects/controller-test/locations/global/artifacts/search-index",
 					RequiresReceipt:   true,
 				},
@@ -676,7 +676,7 @@ func TestReceiptAggArtifacts(t *testing.T) {
 			},
 			want: []*Action{
 				{
-					Command:           "registry compute search-index projects/controller-test/locations/global/apis/-/versions/-/specs/-",
+					Command:           "regctl compute search-index projects/controller-test/locations/global/apis/-/versions/-/specs/-",
 					GeneratedResource: "projects/controller-test/locations/global/artifacts/search-index",
 					RequiresReceipt:   true,
 				},
@@ -714,7 +714,7 @@ func TestReceiptAggArtifacts(t *testing.T) {
 								Pattern: "apis/-/versions/-/specs/-",
 							},
 						},
-						Action: "registry compute search-index projects/controller-test/locations/global/apis/-/versions/-/specs/-",
+						Action: "regctl compute search-index projects/controller-test/locations/global/apis/-/versions/-/specs/-",
 					},
 				},
 			}
@@ -757,17 +757,17 @@ func TestMultipleEntitiesArtifacts(t *testing.T) {
 			},
 			want: []*Action{
 				{
-					Command:           "registry compute conformance projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Command:           "regctl compute conformance projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/conformance-registry-styleguide",
 					RequiresReceipt:   true,
 				},
 				{
-					Command:           "registry compute conformance projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
+					Command:           "regctl compute conformance projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
 					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/conformance-registry-styleguide",
 					RequiresReceipt:   true,
 				},
 				{
-					Command:           "registry compute conformance projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
+					Command:           "regctl compute conformance projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
 					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/conformance-registry-styleguide",
 					RequiresReceipt:   true,
 				},
@@ -798,17 +798,17 @@ func TestMultipleEntitiesArtifacts(t *testing.T) {
 			},
 			want: []*Action{
 				{
-					Command:           "registry compute conformance projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Command:           "regctl compute conformance projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/conformance-registry-styleguide",
 					RequiresReceipt:   true,
 				},
 				{
-					Command:           "registry compute conformance projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
+					Command:           "regctl compute conformance projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
 					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/conformance-registry-styleguide",
 					RequiresReceipt:   true,
 				},
 				{
-					Command:           "registry compute conformance projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
+					Command:           "regctl compute conformance projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
 					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/conformance-registry-styleguide",
 					RequiresReceipt:   true,
 				},
@@ -834,12 +834,12 @@ func TestMultipleEntitiesArtifacts(t *testing.T) {
 			},
 			want: []*Action{
 				{
-					Command:           "registry compute conformance projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					Command:           "regctl compute conformance projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/conformance-registry-styleguide",
 					RequiresReceipt:   true,
 				},
 				{
-					Command:           "registry compute conformance projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
+					Command:           "regctl compute conformance projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
 					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/conformance-registry-styleguide",
 					RequiresReceipt:   true,
 				},
@@ -880,7 +880,7 @@ func TestMultipleEntitiesArtifacts(t *testing.T) {
 								Pattern: "artifacts/registry-styleguide",
 							},
 						},
-						Action: "registry compute conformance $resource.spec",
+						Action: "regctl compute conformance $resource.spec",
 					},
 				},
 			}

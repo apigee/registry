@@ -122,7 +122,7 @@ func TestValidateGeneratedResourceEntry(t *testing.T) {
 						Pattern: "$resource.spec",
 					},
 				},
-				Action: "registry compute complexity $resource.spec",
+				Action: "regctl compute complexity $resource.spec",
 			},
 		},
 		{
@@ -137,7 +137,7 @@ func TestValidateGeneratedResourceEntry(t *testing.T) {
 						Pattern: "$resource.api/artifacts/recommended-version",
 					},
 				},
-				Action: "registry compute compliance $resource.version $resource.api/artifacts/recommended-version",
+				Action: "regctl compute compliance $resource.version $resource.api/artifacts/recommended-version",
 			},
 		},
 		{
@@ -152,7 +152,7 @@ func TestValidateGeneratedResourceEntry(t *testing.T) {
 						Pattern: "artifacts/registry-styleguide",
 					},
 				},
-				Action: "registry compute conformance $resource.spec",
+				Action: "regctl compute conformance $resource.spec",
 			},
 		},
 		{
@@ -170,7 +170,7 @@ func TestValidateGeneratedResourceEntry(t *testing.T) {
 						Pattern: "artifacts/summary-config",
 					},
 				},
-				Action: "registry generate summary $resource.version",
+				Action: "regctl generate summary $resource.version",
 			},
 		},
 	}
@@ -198,7 +198,7 @@ func TestValidateGeneratedResourceEntryError(t *testing.T) {
 						Pattern: "$resource.spec",
 					},
 				},
-				Action: "registry compute complexity $resource.spec",
+				Action: "regctl compute complexity $resource.spec",
 			},
 		},
 		{
@@ -211,7 +211,7 @@ func TestValidateGeneratedResourceEntryError(t *testing.T) {
 						Filter:  "mime_type.contains('openapi')",
 					},
 				},
-				Action: "registry generate openapispec $resource.spec",
+				Action: "regctl generate openapispec $resource.spec",
 			},
 		},
 		{
@@ -226,7 +226,7 @@ func TestValidateGeneratedResourceEntryError(t *testing.T) {
 						Pattern: "$resource.spec", // Correct pattern: $resource.version/specs/-
 					},
 				},
-				Action: "registry compute conformance $resource.spec",
+				Action: "regctl compute conformance $resource.spec",
 			},
 		},
 		{
@@ -244,7 +244,7 @@ func TestValidateGeneratedResourceEntryError(t *testing.T) {
 						Pattern: "artifacts/summary-config",
 					},
 				},
-				Action: "registry generate summary $resource.spec", // Correct pattern: registry generate summary $resource.version
+				Action: "regctl generate summary $resource.spec", // Correct pattern: registry generate summary $resource.version
 			},
 		},
 	}

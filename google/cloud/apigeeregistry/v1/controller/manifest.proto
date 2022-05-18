@@ -71,7 +71,7 @@ message GeneratedResource {
 
   // The action used to generate the resource.
   // An action can contain references to both the resource and dependencies
-  // Example: "registry compute complexity $dependency0 $resource"
+  // Example: "regctl compute complexity $dependency0 $resource"
   string action = 5 [(google.api.field_behavior) = REQUIRED];
 }
 

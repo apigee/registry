@@ -149,7 +149,7 @@ type GeneratedResource struct {
 	Dependencies []*Dependency `protobuf:"bytes,4,rep,name=dependencies,proto3" json:"dependencies,omitempty"`
 	// The action used to generate the resource.
 	// An action can contain references to both the resource and dependencies
-	// Example: "registry compute complexity $dependency0 $resource"
+	// Example: "regctl compute complexity $dependency0 $resource"
 	Action string `protobuf:"bytes,5,opt,name=action,proto3" json:"action,omitempty"`
 }
 
