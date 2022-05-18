@@ -60,23 +60,6 @@ func Command() *cobra.Command {
 	cmd.AddCommand(list.Command())
 	cmd.AddCommand(upload.Command())
 	cmd.AddCommand(vocabulary.Command())
-	cmd.AddCommand(RPCCommand())
-	return cmd
-}
-
-func RPCCommand() *cobra.Command {
-	cmd := rpc.RegistryServiceCmd
-	cmd.Use = "rpc"
-	cmd.Short = "Make direct calls to RPC methods"
-	cmd.Long = cmd.Short
-	cmd.PersistentFlags().BoolVarP(&rpc.Verbose, "verbose", "v", false, "Print verbose output")
-	cmd.PersistentFlags().BoolVarP(&rpc.OutputJSON, "json", "j", false, "Print JSON output")
-
-	rpc.AdminServiceCmd.Use = "admin"
-	rpc.AdminServiceCmd.Short = "Make direct calls to Admin RPC methods (self-hosted installations only)"
-	rpc.AdminServiceCmd.Long = rpc.AdminServiceCmd.Short
-	rpc.AdminServiceCmd.Hidden = true
-	cmd.AddCommand(rpc.AdminServiceCmd)
-
+	cmd.AddCommand(rpc.Command())
 	return cmd
 }
