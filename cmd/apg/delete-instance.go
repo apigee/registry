@@ -93,7 +93,9 @@ var DeleteInstanceCmd = &cobra.Command{
 			return err
 		}
 
-	    return resp.Wait(ctx)
+		err = resp.Wait(ctx)
+
+		return err
 	},
 }
 
@@ -112,7 +114,11 @@ var DeleteInstancePollCmd = &cobra.Command{
 			return err
 		}
 
-		fmt.Println(fmt.Sprintf("Operation %s not done", op.Name()))
+		if op.Done() {
+			fmt.Println(fmt.Sprintf("Operation %s is done", op.Name()))
+		} else {
+			fmt.Println(fmt.Sprintf("Operation %s not done", op.Name()))
+		}
 
 		return err
 	},
