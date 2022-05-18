@@ -504,7 +504,7 @@ func TestCalculateScore(t *testing.T) {
 			//fetch definition artifact
 			defArtifact, err := getArtifact(ctx, registryClient, "projects/score-formula-test/locations/global/artifacts/lint-error", true)
 			if err != nil {
-				t.Errorf("failed to fetch the scoreArtifact from setup: %s", err)
+				t.Errorf("failed to fetch the definition Artifact from setup: %s", err)
 			}
 
 			gotErr := CalculateScore(ctx, registryClient, defArtifact, resource)
@@ -529,98 +529,6 @@ func TestCalculateScore(t *testing.T) {
 			opts := cmp.Options{protocmp.Transform()}
 			if !cmp.Equal(test.wantScore, gotScore, opts) {
 				t.Errorf("CalculateScore() returned unexpected response (-want +got):\n%s", cmp.Diff(test.wantScore, gotScore, opts))
-			}
-		})
-	}
-}
-
-func TestMatchResourceWithTarget(t *testing.T) {
-	tests := []struct {
-		desc          string
-		targetPattern *rpc.ResourcePattern
-		resourceName  string
-		wantErr       bool
-	}{
-		{
-			desc: "spec pattern",
-			targetPattern: &rpc.ResourcePattern{
-				Pattern: "apis/-/versions/-/specs/-",
-			},
-			resourceName: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
-		},
-		{
-			desc: "specific api match",
-			targetPattern: &rpc.ResourcePattern{
-				Pattern: "apis/petstore/versions/-/specs/-",
-			},
-			resourceName: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
-		},
-		{
-			desc: "specific api no match",
-			targetPattern: &rpc.ResourcePattern{
-				Pattern: "apis/test/versions/-/specs/-",
-			},
-			resourceName: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
-			wantErr:      true,
-		},
-		{
-			desc: "specific version match",
-			targetPattern: &rpc.ResourcePattern{
-				Pattern: "apis/-/versions/1.0.0/specs/-",
-			},
-			resourceName: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
-		},
-		{
-			desc: "specific version no match",
-			targetPattern: &rpc.ResourcePattern{
-				Pattern: "apis/-/versions/2.0.0/specs/-",
-			},
-			resourceName: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
-			wantErr:      true,
-		},
-		{
-			desc: "specific spec match",
-			targetPattern: &rpc.ResourcePattern{
-				Pattern: "apis/-/versions/-/specs/openapi.yaml",
-			},
-			resourceName: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
-		},
-		{
-			desc: "specific spec no match",
-			targetPattern: &rpc.ResourcePattern{
-				Pattern: "apis/-/versions/-/specs/swagger.yaml",
-			},
-			resourceName: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
-			wantErr:      true,
-		},
-		{
-			desc: "artifact pattern error",
-			targetPattern: &rpc.ResourcePattern{
-				Pattern: "apis/-/versions/-/specs/-/artifacts/lint-spectral",
-			},
-			resourceName: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
-			wantErr:      true,
-		},
-		{
-			desc: "target and resource mismatch",
-			targetPattern: &rpc.ResourcePattern{
-				Pattern: "apis/-/versions/-/specs/-",
-			},
-			resourceName: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0",
-			wantErr:      true,
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.desc, func(t *testing.T) {
-			resourceName, _ := patterns.ParseResourcePattern(test.resourceName)
-			gotErr := matchResourceWithTarget(test.targetPattern, resourceName, "projects/pattern-test/locations/global")
-			if test.wantErr && gotErr == nil {
-				t.Errorf("matchResourceWithTarget(%s, %v, %s) did not return an error", test.targetPattern, resourceName, "projects/pattern-test/locations/global")
-			}
-
-			if !test.wantErr && gotErr != nil {
-				t.Errorf("matchResourceWithTarget() returned unexpected error: %s", gotErr)
 			}
 		})
 	}

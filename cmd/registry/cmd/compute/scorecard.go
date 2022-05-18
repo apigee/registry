@@ -26,10 +26,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func scoreCommand() *cobra.Command {
+func scoreCardCommand() *cobra.Command {
 	return &cobra.Command{
-		Use:   "score",
-		Short: "Compute scores for APIs and API specs",
+		Use:   "scorecard",
+		Short: "Compute score cards for APIs and API specs",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := cmd.Context()
@@ -52,14 +52,14 @@ func scoreCommand() *cobra.Command {
 			}
 
 			for _, r := range resources {
-				// Fetch the ScoreDefinitions which can be applied to this resource
-				scoreDefinitions, err := scoring.FetchScoreDefinitions(ctx, client, r.ResourceName())
+				// Fetch the ScoreCardDefinitions which can be applied to this resource
+				scoreCardDefinitions, err := scoring.FetchScoreCardDefinitions(ctx, client, r.ResourceName())
 				if err != nil {
 					log.FromContext(ctx).WithError(err).Errorf("Skipping resource %q", r.ResourceName())
 					continue
 				}
-				for _, d := range scoreDefinitions {
-					taskQueue <- &computeScoreTask{
+				for _, d := range scoreCardDefinitions {
+					taskQueue <- &computeScoreCardTask{
 						client:      client,
 						defArtifact: d,
 						resource:    r,
@@ -72,16 +72,16 @@ func scoreCommand() *cobra.Command {
 	}
 }
 
-type computeScoreTask struct {
+type computeScoreCardTask struct {
 	client      connection.Client
 	defArtifact *rpc.Artifact
 	resource    patterns.ResourceInstance
 }
 
-func (task *computeScoreTask) String() string {
+func (task *computeScoreCardTask) String() string {
 	return "compute score " + task.resource.ResourceName().String()
 }
 
-func (task *computeScoreTask) Run(ctx context.Context) error {
-	return scoring.CalculateScore(ctx, task.client, task.defArtifact, task.resource)
+func (task *computeScoreCardTask) Run(ctx context.Context) error {
+	return scoring.CalculateScoreCard(ctx, task.client, task.defArtifact, task.resource)
 }
