@@ -34,7 +34,7 @@ func TestCommandCoverage(t *testing.T) {
 		}
 		task := &controller.ExecCommandTask{
 			Action: &controller.Action{
-				Command: fmt.Sprintf("registry %s --help", cmd.Name()),
+				Command: fmt.Sprintf("regctl %s --help", cmd.Name()),
 			},
 			TaskID: fmt.Sprintf("task%d", i),
 		}
