@@ -24,7 +24,7 @@ go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
 go install github.com/googleapis/gapic-generator-go/cmd/protoc-gen-go_cli@latest
 
 # This directory contains the generated CLI
-GENERATED='cmd/registry/cmd/rpc/generated'
+GENERATED='cmd/regctl/cmd/rpc/generated'
 
 echo "Generating Go client CLI for ${SERVICE_PROTOS[@]}"
 protoc ${SERVICE_PROTOS[*]} \

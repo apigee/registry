@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# This Dockerfile builds an image that contains the registry tool.
+# This Dockerfile builds an image that contains regctl.
 
 # Use the official Golang image to create a build artifact.
 # This is based on Debian and sets the GOPATH to /go.
@@ -32,8 +32,8 @@ RUN go mod download
 # Copy local code to the container image.
 COPY . ./
 
-# Build registry.
-RUN CGO_ENABLED=0 GOOS=linux go build -v -o registry ./cmd/registry
+# Build regctl.
+RUN CGO_ENABLED=0 GOOS=linux go build -v -o regctl ./cmd/regctl
 
 # Use the official Alpine image for a lean production container.
 # https://hub.docker.com/_/alpine
@@ -46,4 +46,4 @@ RUN apk add --no-cache ca-certificates
 RUN apk add --no-cache bash git curl jq
 
 # Copy binaries to the production image from the builder stage.
-COPY --from=builder /app/registry /bin/registry
+COPY --from=builder /app/regctl /bin/regctl

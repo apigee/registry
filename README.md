@@ -50,15 +50,9 @@ is generated as part of the build process using
 sample Go GAPIC-based client is in
 [examples/gapic-client](examples/gapic-client).
 
-Two command-line interfaces are included:
-
-- [cmd/apg](cmd/apg), automatically generated from the API description using
-  the
-  [protoc-gen-go_cli](https://github.com/googleapis/gapic-generator-go/tree/master/cmd/protoc-gen-go_cli)
-  tool in
-  [gapic-generator-go](https://github.com/googleapis/gapic-generator-go).
-- [cmd/registry](cmd/registry), a hand-written command-line tool that uses the
-  Go GAPIC library to support additional API management tasks.
+A command-line interface is in [cmd/registry](cmd/registry) and provides a
+mixture of hand-written high-level features and automatically generated
+subcommands that call individual RPC methods of the Registry API.
 
 The entry point for the Registry API server itself is
 [cmd/registry-server](cmd/registry-server). For more on running the server, see
@@ -91,10 +85,9 @@ server with the following:
 
 `. auth/LOCAL.sh`
 
-Now you can check your server and configuration with the
-automatically-generated `apg` client:
+Now you can check your server and configuration with `regctl`:
 
-`apg admin get-status`
+`regctl admin get-status`
 
 Next run a suite of tests with `make test` and see a corresponding walkthrough
 of API features in [tests/demo/walkthrough.sh](tests/demo/walkthrough.sh). For
