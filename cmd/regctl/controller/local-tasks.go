@@ -57,13 +57,19 @@ func (task *ExecCommandTask) Run(ctx context.Context) error {
 		"taskID": fmt.Sprintf("{%s}", task.TaskID),
 	})
 
-	if strings.HasPrefix(task.Action.Command, "registry resolve") {
-		logger.Debug("Failed Execution: 'registry resolve' not allowed in action")
-		return errors.New("'registry resolve' not allowed in action")
+	// Temporarily replace "registry " invocations with "regctl " ones
+	// to allow existing manifests to work with renamed tools.
+	if strings.HasPrefix(task.Action.Command, "registry ") {
+		task.Action.Command = "regctl " + strings.TrimPrefix(task.Action.Command, "registry ")
 	}
 
-	// first party registry commands
-	if strings.HasPrefix(task.Action.Command, "registry") {
+	if strings.HasPrefix(task.Action.Command, "regctl resolve") {
+		logger.Debug("Failed Execution: 'regctl resolve' not allowed in action")
+		return errors.New("'regctl resolve' not allowed in action")
+	}
+
+	// first party regctl commands
+	if strings.HasPrefix(task.Action.Command, "regctl") {
 		fullCmd := strings.Fields(task.Action.Command)
 
 		cmd := exec.Command(fullCmd[0], fullCmd[1:]...)
