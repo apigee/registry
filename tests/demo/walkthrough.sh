@@ -1,4 +1,4 @@
-#!/bin/bash
+et 
 #
 # Copyright 2020 Google LLC. All Rights Reserved.
 #
@@ -28,7 +28,7 @@ PROJECT=demo
 
 echo
 echo Delete everything associated with any preexisting project named $PROJECT.
-registry rpc admin delete-project --name projects/$PROJECT
+registry rpc admin delete-project --name projects/$PROJECT --force
 
 echo
 echo Create a registry project with id $PROJECT.
@@ -205,15 +205,10 @@ registry rpc list-api-specs \
 
 echo
 echo Set some artifacts on entities in the registry.
-# the contents below is the hex-encoding of "https://github.com/OAI/OpenAPI-Specification"
+echo The contents below is the hex-encoding of "https://github.com/OAI/OpenAPI-Specification"
 registry rpc create-artifact \
     --parent projects/$PROJECT/locations/global/apis/petstore \
     --artifact_id source \
     --artifact.mime_type "text/plain" \
     --artifact.contents "68747470733a2f2f6769746875622e636f6d2f4f41492f4f70656e4150492d53706563696669636174696f6e0a" \
     --json
-
-echo
-echo Export a YAML description of the $PROJECT project.
-registry export yaml projects/$PROJECT
-cat $PROJECT/apis/petstore.yaml
