@@ -22,7 +22,7 @@ PROJECT=sample
 # Self-hosted (open source) installations require project creation.
 
 # Delete and re-create the project to get a fresh start.
-registry rpc admin delete-project --name projects/$PROJECT
+registry rpc admin delete-project --name projects/$PROJECT --force
 registry rpc admin create-project --project_id $PROJECT \
 	--project.display_name $PROJECT \
 	--project.description "A registry project"
