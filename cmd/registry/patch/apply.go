@@ -16,7 +16,6 @@ package patch
 
 import (
 	"context"
-	"fmt"
 	"io/fs"
 	"io/ioutil"
 	"path/filepath"
@@ -56,9 +55,7 @@ func applyFile(ctx context.Context, client connection.Client, fileName, parent s
 	switch header.Kind {
 	case "API":
 		return applyApiPatch(ctx, client, bytes, parent)
-	case "DisplaySettings", "Lifecycle", "Manifest", "ReferenceList", "TaxonomyList":
+	default: // for everything else, try an artifact type
 		return applyArtifactPatchBytes(ctx, client, bytes, parent)
-	default:
-		return fmt.Errorf("unsupported kind: %s", header.Kind)
 	}
 }

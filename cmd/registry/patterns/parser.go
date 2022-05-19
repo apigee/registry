@@ -1,3 +1,17 @@
+// Copyright 2022 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package patterns
 
 import (
@@ -45,7 +59,6 @@ func parseResource(resourcePattern string) (ResourceName, error) {
 }
 
 func ParseResourcePattern(resourcePattern string) (ResourceName, error) {
-
 	// First try to match resource collections.
 	resource, err := parseResourceCollection(resourcePattern)
 	if err == nil {
@@ -61,7 +74,7 @@ func ParseResourcePattern(resourcePattern string) (ResourceName, error) {
 	return nil, fmt.Errorf("invalid resourcePattern: %s", resourcePattern)
 }
 
-func SubstituteReferenceEntity(resourcePattern string, referred ResourceName, projectID string) (string, error) {
+func SubstituteReferenceEntity(resourcePattern string, referred ResourceName) (ResourceName, error) {
 	// Extends the resource pattern by replacing references to $resource
 	// Example:
 	// referred: "projects/demo/locations/global/apis/-/versions/-/specs/-/artifacts/-"
@@ -74,22 +87,29 @@ func SubstituteReferenceEntity(resourcePattern string, referred ResourceName, pr
 
 	entity, entityType, err := GetReferenceEntityType(resourcePattern)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	// no $resource reference present
 	// simply prepend the projectname and return full resource name
 	if entityType == "default" {
-		return fmt.Sprintf("projects/%s/locations/global/%s", projectID, resourcePattern), nil
+		resourceName, err := ParseResourcePattern(fmt.Sprintf("%s/locations/global/%s", referred.Project(), resourcePattern))
+		if err != nil {
+			return nil, err
+		}
+		return resourceName, nil
 	}
 
 	entityVal, err := GetReferenceEntityValue(resourcePattern, referred)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return strings.Replace(resourcePattern, entity, entityVal, 1), nil
-
+	extendedName, err := ParseResourcePattern(strings.Replace(resourcePattern, entity, entityVal, 1))
+	if err != nil {
+		return nil, err
+	}
+	return extendedName, nil
 }
 
 func GetReferenceEntityType(resourcePattern string) (entity, entityType string, err error) {
@@ -164,7 +184,6 @@ func GetReferenceEntityValue(resourcePattern string, referred ResourceName) (str
 	default:
 		return "", fmt.Errorf("invalid combination referred: %q resourcePattern: %q", referred, resourcePattern)
 	}
-
 }
 
 func FullResourceNameFromParent(resourcePattern string, parent string) (ResourceName, error) {

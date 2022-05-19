@@ -151,7 +151,7 @@ func TestScoreDefinitionArtifactUpload(t *testing.T) {
 				},
 				Formula: &rpc.ScoreDefinition_ScoreFormula{
 					ScoreFormula: &rpc.ScoreFormula{
-						Pattern: &rpc.ResourcePattern{
+						Artifact: &rpc.ResourcePattern{
 							Pattern: "$resource.spec/artifacts/conformance-report",
 						},
 						ScoreExpression: "size(conformance.GuidelineReportGroups[2].RuleReportGroups[1])",
@@ -163,17 +163,17 @@ func TestScoreDefinitionArtifactUpload(t *testing.T) {
 						MaxValue: 100,
 						Thresholds: []*rpc.NumberThreshold{
 							{
-								Severity: rpc.Severity_ALERT,
-								Range: &rpc.NumberThreshold_NumberRange{
-									Min: 60,
-									Max: 100,
-								},
-							},
-							{
 								Severity: rpc.Severity_OK,
 								Range: &rpc.NumberThreshold_NumberRange{
 									Min: 0,
 									Max: 59,
+								},
+							},
+							{
+								Severity: rpc.Severity_ALERT,
+								Range: &rpc.NumberThreshold_NumberRange{
+									Min: 60,
+									Max: 100,
 								},
 							},
 						},

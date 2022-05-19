@@ -26,7 +26,6 @@ import (
 
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
-	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 )
@@ -43,7 +42,7 @@ type ApiSpec struct {
 	Data   ApiSpecData `yaml:"data"`
 }
 
-func newApiSpec(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiSpec) (*ApiSpec, error) {
+func newApiSpec(message *rpc.ApiSpec) (*ApiSpec, error) {
 	specName, err := names.ParseSpec(message.Name)
 	if err != nil {
 		return nil, err

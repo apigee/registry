@@ -25,7 +25,7 @@ import (
 )
 
 func (c *Client) DeleteProject(ctx context.Context, name names.Project, cascade bool) error {
-	err := c.db.Transaction(func(tx *gorm.DB) error {
+	err := c.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var count int64
 		for _, model := range []interface{}{
 			models.Project{},
@@ -64,7 +64,7 @@ func (c *Client) DeleteProject(ctx context.Context, name names.Project, cascade 
 }
 
 func (c *Client) DeleteApi(ctx context.Context, name names.Api, cascade bool) error {
-	err := c.db.Transaction(func(tx *gorm.DB) error {
+	err := c.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var count int64
 		for _, model := range []interface{}{
 			models.Api{},
@@ -103,7 +103,7 @@ func (c *Client) DeleteApi(ctx context.Context, name names.Api, cascade bool) er
 }
 
 func (c *Client) DeleteVersion(ctx context.Context, name names.Version, cascade bool) error {
-	err := c.db.Transaction(func(tx *gorm.DB) error {
+	err := c.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var count int64
 		for _, model := range []interface{}{
 			models.Version{},
@@ -140,7 +140,7 @@ func (c *Client) DeleteVersion(ctx context.Context, name names.Version, cascade 
 }
 
 func (c *Client) DeleteSpec(ctx context.Context, name names.Spec, cascade bool) error {
-	err := c.db.Transaction(func(tx *gorm.DB) error {
+	err := c.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		for _, model := range []interface{}{
 			models.Spec{},
 			models.SpecRevisionTag{},
@@ -198,7 +198,8 @@ func (c *Client) DeleteSpecRevision(ctx context.Context, name names.SpecRevision
 		models.Spec{},
 		models.SpecRevisionTag{},
 	} {
-		op := c.db.Where("project_id = ?", name.ProjectID).
+		op := c.db.WithContext(ctx).
+			Where("project_id = ?", name.ProjectID).
 			Where("api_id = ?", name.ApiID).
 			Where("version_id = ?", name.VersionID).
 			Where("spec_id = ?", name.SpecID).
@@ -212,7 +213,7 @@ func (c *Client) DeleteSpecRevision(ctx context.Context, name names.SpecRevision
 }
 
 func (c *Client) DeleteDeployment(ctx context.Context, name names.Deployment, cascade bool) error {
-	err := c.db.Transaction(func(tx *gorm.DB) error {
+	err := c.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		for _, model := range []interface{}{
 			models.Deployment{},
 			models.DeploymentRevisionTag{},
@@ -267,7 +268,8 @@ func (c *Client) DeleteDeploymentRevision(ctx context.Context, name names.Deploy
 		models.Deployment{},
 		models.DeploymentRevisionTag{},
 	} {
-		op := c.db.Where("project_id = ?", name.ProjectID).
+		op := c.db.WithContext(ctx).
+			Where("project_id = ?", name.ProjectID).
 			Where("api_id = ?", name.ApiID).
 			Where("deployment_id = ?", name.DeploymentID).
 			Where("revision_id = ?", name.RevisionID)
@@ -284,7 +286,8 @@ func (c *Client) DeleteArtifact(ctx context.Context, name names.Artifact) error 
 		models.Blob{},
 		models.Artifact{},
 	} {
-		op := c.db.Where("project_id = ?", name.ProjectID()).
+		op := c.db.WithContext(ctx).
+			Where("project_id = ?", name.ProjectID()).
 			Where("api_id = ?", name.ApiID()).
 			Where("version_id = ?", name.VersionID()).
 			Where("spec_id = ?", name.SpecID()).

@@ -21,7 +21,6 @@ import (
 
 // Test the error scenario
 func TestErrorCases(t *testing.T) {
-
 	task := &ExecCommandTask{
 		Action: &Action{
 			Command: "resolve projects/demo/artifacts/test-manifest",

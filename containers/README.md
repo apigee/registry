@@ -6,5 +6,5 @@ containers containing `registry-server` and related tools.
 Use `registry-server/Dockerfile` to build a container with `registry-server`
 only.
 
-Use `registry-tools/Dockerfile` to build a container with `apg` and the
-`registry` tool.
+Use `registry-tools/Dockerfile` to build a container with and the `registry`
+tool.

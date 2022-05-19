@@ -37,10 +37,9 @@ func ProcessManifest(
 	client connection.Client,
 	projectID string,
 	manifest *rpc.Manifest) []*Action {
-
 	var actions []*Action
 	//Check for errors in manifest
-	errs := ValidateManifest(ctx, fmt.Sprintf("projects/%s", projectID), manifest)
+	errs := ValidateManifest(fmt.Sprintf("projects/%s", projectID), manifest)
 	if len(errs) > 0 {
 		for _, err := range errs {
 			log.FromContext(ctx).WithError(err).Debugf("Error in manifest")
@@ -76,7 +75,7 @@ func processManifestResource(
 	resourcePattern := fmt.Sprintf("projects/%s/locations/global/%s", projectID, generatedResource.Pattern)
 	dependencyMaps := make([]map[string]time.Time, 0, len(generatedResource.Dependencies))
 	for _, dependency := range generatedResource.Dependencies {
-		dMap, err := generateDependencyMap(ctx, client, resourcePattern, dependency, projectID)
+		dMap, err := generateDependencyMap(ctx, client, resourcePattern, dependency)
 		if err != nil {
 			return nil, fmt.Errorf("error while generating dependency map for %v: %s", dependency, err)
 		}
@@ -94,8 +93,7 @@ func generateDependencyMap(
 	ctx context.Context,
 	client connection.Client,
 	resourcePattern string,
-	dependency *rpc.Dependency,
-	projectID string) (map[string]time.Time, error) {
+	dependency *rpc.Dependency) (map[string]time.Time, error) {
 	// Creates a map of the resources to group them into corresponding buckets
 	// of match pattern which store the maxTimestamp
 	// An example entry will look like this:
@@ -114,13 +112,13 @@ func generateDependencyMap(
 	}
 
 	// Extend the dependency pattern if it contains $resource.api like pattern
-	extDependencyQuery, err := patterns.SubstituteReferenceEntity(dependency.Pattern, resourceName, projectID)
+	extDependencyName, err := patterns.SubstituteReferenceEntity(dependency.Pattern, resourceName)
 	if err != nil {
 		return nil, err
 	}
 
 	// Fetch resources using the extDependencyQuery
-	sourceList, err := listResources(ctx, client, extDependencyQuery, dependency.Filter)
+	sourceList, err := patterns.ListResources(ctx, client, extDependencyName.String(), dependency.Filter)
 	if err != nil {
 		return nil, err
 	}
@@ -139,11 +137,10 @@ func generateDependencyMap(
 	}
 
 	if len(sourceMap) == 0 {
-		return nil, fmt.Errorf("no resources found for pattern: %s, filer: %s", extDependencyQuery, dependency.Filter)
+		return nil, fmt.Errorf("no resources found for pattern: %s, filer: %s", extDependencyName.String(), dependency.Filter)
 	}
 
 	return sourceMap, nil
-
 }
 
 func generateActions(
@@ -171,7 +168,6 @@ func generateActions(
 	}
 
 	return actions
-
 }
 
 // Go over the list of existing target resources to figure out which ones need an update.
@@ -182,13 +178,12 @@ func generateUpdateActions(
 	filter string,
 	dependencyMaps []map[string]time.Time,
 	generatedResource *rpc.GeneratedResource) ([]*Action, map[string]bool, error) {
-
 	// Visited tracks the parents of target resources which were already generated.
 	visited := make(map[string]bool)
 	actions := make([]*Action, 0)
 
 	// Generate resource list
-	resourceList, err := listResources(ctx, client, resourcePattern, filter)
+	resourceList, err := patterns.ListResources(ctx, client, resourcePattern, filter)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -202,7 +197,6 @@ func generateUpdateActions(
 			targetResource.UpdateTimestamp(),
 			dependencyMaps,
 			generatedResource,
-			false,
 		)
 
 		if err != nil {
@@ -222,7 +216,6 @@ func generateUpdateActions(
 			}
 			actions = append(actions, a)
 		}
-
 	}
 
 	return actions, visited, nil
@@ -260,7 +253,6 @@ func generateCreateActions(
 	dependencyMaps []map[string]time.Time,
 	generatedResource *rpc.GeneratedResource,
 	visited map[string]bool) ([]*Action, error) {
-
 	var parentList []patterns.ResourceInstance
 
 	parsedResourcePattern, err := patterns.ParseResourcePattern(resourcePattern)
@@ -291,7 +283,7 @@ func generateCreateActions(
 
 	default:
 		filter := excludeVisitedParents(visited)
-		parentList, err = listResources(ctx, client, parentName.String(), filter)
+		parentList, err = patterns.ListResources(ctx, client, parentName.String(), filter)
 		if err != nil {
 			return nil, err
 		}
@@ -338,8 +330,7 @@ func needsUpdate(
 	targetResourceName patterns.ResourceName,
 	targetResourceTime time.Time,
 	dependencyMaps []map[string]time.Time,
-	generatedResource *rpc.GeneratedResource,
-	createMode bool) (bool, error) {
+	generatedResource *rpc.GeneratedResource) (bool, error) {
 	for i, dependency := range generatedResource.Dependencies {
 		dMap := dependencyMaps[i]
 		// Get the entity to look for in dependencyMap

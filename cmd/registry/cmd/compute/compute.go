@@ -29,6 +29,8 @@ func Command() *cobra.Command {
 	cmd.AddCommand(lintCommand())
 	cmd.AddCommand(lintStatsCommand())
 	cmd.AddCommand(referencesCommand())
+	cmd.AddCommand(scoreCommand())
+	cmd.AddCommand(scoreCardCommand())
 	cmd.AddCommand(vocabularyCommand())
 
 	cmd.PersistentFlags().String("filter", "", "Filter selected resources")
