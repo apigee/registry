@@ -1,4 +1,4 @@
-et 
+#!/bin/bash
 #
 # Copyright 2020 Google LLC. All Rights Reserved.
 #
