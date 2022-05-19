@@ -17,10 +17,10 @@ address of the Registry API server and authentication tokens.
 
 ## Release builds
 
-Release builds of the `regctl` tool are available on GitHub and can be found in
+Release builds of `regctl` are available on GitHub and can be found in
 [github.com/apigee/registry/releases](https://github.com/apigee/registry/releases).
 
-**MacOS note:** To run the `regctl` tool on MacOS, you may need to
+**MacOS note:** To run `regctl` on MacOS, you may need to
 [unquarantine](https://discussions.apple.com/thread/3145071) it by running the
 following on the command line:
 
@@ -30,8 +30,8 @@ xattr -d com.apple.quarantine regctl
 
 ## Running with Apigee API hub
 
-To use the `regctl` tool with a hosted instance associated with Apigee API hub,
-please do the following:
+To use `regctl` with a hosted instance associated with Apigee API hub, please
+do the following:
 
 1. Make sure you have gcloud command installed.
 2. Set the `PROJECT_ID` environment variable to your API hub project name.
@@ -61,11 +61,11 @@ regctl list projects/$PROJECT_ID/locations/global/apis/-
 regctl help
 ```
 
-## Importing API information with the Registry tool
+## Importing API information with regctl
 
-The `regctl` tool currently includes several demonstration subcommands that
-upload API descriptions into a registry and one subcommmand (`regctl apply`)
-that is likely to become a recommended way to populate an API registry.
+`regctl` currently includes several demonstration subcommands that upload API
+descriptions into a registry and one subcommmand (`regctl apply`) that is
+likely to become a recommended way to populate an API registry.
 
 - `regctl upload bulk openapi` reads OpenAPI descriptions from a directory that
   follows the style of the

@@ -50,9 +50,9 @@ is generated as part of the build process using
 sample Go GAPIC-based client is in
 [examples/gapic-client](examples/gapic-client).
 
-A command-line interface is in [cmd/registry](cmd/registry) and provides a
-mixture of hand-written high-level features and automatically generated
-subcommands that call individual RPC methods of the Registry API.
+A command-line interface is in [cmd/regctl](cmd/regctl) and provides a mixture
+of hand-written high-level features and automatically generated subcommands
+that call individual RPC methods of the Registry API.
 
 The entry point for the Registry API server itself is
 [cmd/registry-server](cmd/registry-server). For more on running the server, see

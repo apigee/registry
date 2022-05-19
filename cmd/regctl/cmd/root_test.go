@@ -22,7 +22,7 @@ import (
 	"github.com/apigee/registry/cmd/regctl/controller"
 )
 
-// Test that currently supported commands in the registry tool execute successfully in ExecCommandTask
+// Test that currently supported commands in regctl execute successfully in ExecCommandTask
 func TestCommandCoverage(t *testing.T) {
 	ctx := context.Background()
 	rootCmd := Command()
