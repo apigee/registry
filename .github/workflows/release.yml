@@ -28,6 +28,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Prepare
+        id: prep
+        run: |
+          echo ::set-output name=version::${GITHUB_REF#refs/tags/}
+
       - name: Set up Go 1.x
         uses: actions/setup-go@v2
         with:
@@ -41,3 +46,4 @@ jobs:
           args: release --rm-dist
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_VERSION: ${{ steps.prep.outputs.version }}
