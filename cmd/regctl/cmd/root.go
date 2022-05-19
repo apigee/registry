@@ -41,9 +41,9 @@ var Version = "dev"
 
 func Command() *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:     "registry",
+		Use:     "regctl",
 		Version: Version,
-		Short:   "A simple and eclectic utility for working with the API Registry",
+		Short:   "A tool for working with an API Registry",
 	}
 
 	cmd.AddCommand(annotate.Command())
