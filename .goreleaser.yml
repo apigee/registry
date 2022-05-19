@@ -14,9 +14,9 @@
 
 builds:
 - id: default
-  dir: cmd/registry
+  dir: cmd/regctl
   main: main.go
-  binary: registry
+  binary: regctl
   goos:
   - linux
   - windows
@@ -33,7 +33,7 @@ archives:
   format: tar.gz
   files:
   - LICENSE
-  - src: cmd/registry/README.md
+  - src: cmd/regctl/README.md
     dst: .
     strip_parent: true
   - auth/HOSTED.sh
