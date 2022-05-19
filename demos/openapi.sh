@@ -27,14 +27,7 @@
 # server, run `. auth/LOCAL.sh` in the shell before running the following
 # commands.
 
-# A registry exists under a top-level project.
-PROJECT=openapi
-
-# First, delete and re-create the "openapis" project to get a fresh start.
-apg admin delete-project --name projects/$PROJECT
-apg admin create-project --project_id $PROJECT \
-	--project.display_name "OpenAPI Directory" \
-	--project.description "APIs collected from the APIs.guru OpenAPI Directory"
+# This script assumes that PROJECT is set to the name of your registry project.
 
 # Get the commit hash of the checked-out OpenAPI directory
 export COMMIT=`(cd ~/Desktop/openapi-directory; git rev-parse HEAD)`
@@ -48,20 +41,20 @@ registry upload bulk openapi \
 # Get one of the APIs.
 registry get projects/$PROJECT/locations/global/apis/wordnik.com
 
-# You can also get this API with the lower-level apg command.
+# You can also get this API with direct calls to the registry rpc service.
 # Add the --json option to get JSON-formatted output.
-apg registry get-api --name projects/$PROJECT/locations/global/apis/wordnik.com --json
+registry rpc get-api --name projects/$PROJECT/locations/global/apis/wordnik.com --json
 
 # Get the API spec
-apg registry get-api-spec --name projects/$PROJECT/locations/global/apis/wordnik.com/versions/4.0/specs/openapi.yaml
+registry rpc get-api-spec --name projects/$PROJECT/locations/global/apis/wordnik.com/versions/4.0/specs/openapi.yaml
 
 # You might notice that that didn't return the actual spec. That's because the spec contents
 # are accessed through a separate method that (when transcoded to HTTP) allows direct download
 # of spec contents.
-apg registry get-api-spec-contents --name projects/$PROJECT/locations/global/apis/wordnik.com/versions/4.0/specs/openapi.yaml
+registry rpc get-api-spec-contents --name projects/$PROJECT/locations/global/apis/wordnik.com/versions/4.0/specs/openapi.yaml
 
 # If you have jq and the base64 tool installed, you can get the spec contents from the RPC response.
-# apg registry get-api-spec-contents --name projects/$PROJECT/locations/global/apis/wordnik.com/versions/4.0/specs/openapi.yaml --json | jq .data -r | base64 --decode
+# registry rpc get-api-spec-contents --name projects/$PROJECT/locations/global/apis/wordnik.com/versions/4.0/specs/openapi.yaml --json | jq .data -r | base64 --decode
 
 # Another way to get the bytes of the spec is to use `registry get` with the `--contents` flag.
 registry get projects/$PROJECT/locations/global/apis/wordnik.com --contents

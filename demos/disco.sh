@@ -27,14 +27,7 @@
 # server, run `. auth/LOCAL.sh` in the shell before running the following
 # commands.
 
-# A registry exists under a top-level project.
-PROJECT=disco
-
-# First, delete and re-create the "disco" project to get a fresh start.
-apg admin delete-project --name projects/$PROJECT
-apg admin create-project --project_id $PROJECT \
-	--project.display_name "Discovery" \
-	--project.description "Descriptions of public Google APIs from the API Discovery Service"
+# This script assumes that PROJECT is set to the name of your registry project.
 
 # Upload all of the APIs from the Discovery Service at once.
 # This happens in parallel and usually takes a minute or two.
@@ -59,18 +52,18 @@ registry list projects/$PROJECT/locations/global/apis/-/versions/-/specs
 # To see more about an individual spec, use the `registry get` command:
 registry get projects/$PROJECT/locations/global/apis/translate/versions/v3/specs/discovery.json
 
-# You can also get this with the automatically-generated `apg` command line tool:
-apg registry get-api-spec \
+# You can also get this with direct calls to the registry rpc service:
+registry rpc get-api-spec \
 	--name projects/$PROJECT/locations/global/apis/translate/versions/v3/specs/discovery.json
 
 # Add the `--json` flag to get this as JSON:
-apg registry get-api-spec --json \
+registry rpc get-api-spec --json \
 	--name projects/$PROJECT/locations/global/apis/translate/versions/v3/specs/discovery.json
 
 # You might notice that that didn't return the actual spec. That's because the spec contents
 # are accessed through a separate method that (when transcoded to HTTP) allows direct download
 # of spec contents.
-apg registry get-api-spec-contents \
+registry rpc get-api-spec-contents \
 	--name projects/$PROJECT/locations/global/apis/translate/versions/v3/specs/discovery.json
 
 # Another way to get the bytes of the spec is to use `registry get` with the `--contents` flag.
