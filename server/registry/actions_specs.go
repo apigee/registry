@@ -25,6 +25,7 @@ import (
 	"github.com/apigee/registry/server/registry/names"
 	"google.golang.org/genproto/googleapis/api/httpbody"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -193,7 +194,8 @@ func (s *RegistryServer) GetApiSpecContents(ctx context.Context, req *rpc.GetApi
 	if err != nil {
 		return nil, err
 	}
-	if strings.Contains(spec.MimeType, "+gzip") {
+
+	if strings.Contains(spec.MimeType, "+gzip") && !incomingContextAllowsGZIP(ctx) {
 		contents, err := models.GUnzippedBytes(blob.Contents)
 		if err != nil {
 			return nil, status.Errorf(codes.FailedPrecondition, "failed to unzip contents with gzip MIME type: %s", err)
@@ -318,4 +320,17 @@ func (s *RegistryServer) UpdateApiSpec(ctx context.Context, req *rpc.UpdateApiSp
 
 	s.notify(ctx, rpc.Notification_UPDATED, spec.RevisionName())
 	return message, nil
+}
+
+func incomingContextAllowsGZIP(ctx context.Context) bool {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return false
+	}
+	for _, a := range md["accept-encoding"] {
+		if a == "gzip" {
+			return true
+		}
+	}
+	return false
 }
