@@ -1,8 +1,8 @@
 # registry
 
-`registry` is a handwritten command line interface for the Registry API that
-provides high-level features that are not in the automatically-generated `apg`
-tool.
+`registry` is a line interface for the Registry API that provides a mixture of
+high-level features and automatically-generated subcommands that call methods
+of the Registry API.
 
 ## Usage
 
