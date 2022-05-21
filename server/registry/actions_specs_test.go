@@ -558,6 +558,20 @@ func TestGetApiSpecContentsData(t *testing.T) {
 			wantCode: codes.OK,
 			wantData: specContentsCompressed, // compressed upload, compressed response
 		},
+		{
+			desc: "gzip mimetype with accept-encoding=some-unknown-type",
+			seed: &rpc.ApiSpec{
+				Name:     "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
+				MimeType: "application/x.openapi+gzip;version=3.0.0",
+				Contents: specContentsCompressed,
+			},
+			req: &rpc.GetApiSpecContentsRequest{
+				Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
+			},
+			accept:   "some-unknown-type",
+			wantCode: codes.OK,
+			wantData: specContents, // uncompressed response because we don't support the requested encoding
+		},
 	}
 
 	for _, test := range tests {
