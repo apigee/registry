@@ -136,6 +136,7 @@ func GetSpecRevision(ctx context.Context,
 		request := &rpc.GetApiSpecContentsRequest{
 			Name: spec.GetName(),
 		}
+		ctx := metadata.AppendToOutgoingContext(ctx, "accept-encoding", "gzip")
 		contents, err := client.GetApiSpecContents(ctx, request)
 		if err != nil {
 			return err
