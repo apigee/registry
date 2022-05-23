@@ -615,8 +615,7 @@ func TestProcessScoreFormulaError(t *testing.T) {
 			desc: "invalid reference",
 			seed: []seeder.RegistryResource{
 				&rpc.ApiSpec{
-					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
-					MimeType: gzipOpenAPIv3,
+					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 				},
 			},
 			formula: &rpc.ScoreFormula{
@@ -640,8 +639,7 @@ func TestProcessScoreFormulaError(t *testing.T) {
 			desc: "invalid extended pattern",
 			seed: []seeder.RegistryResource{
 				&rpc.ApiSpec{
-					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
-					MimeType: gzipOpenAPIv3,
+					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 				},
 			},
 			formula: &rpc.ScoreFormula{
@@ -665,8 +663,7 @@ func TestProcessScoreFormulaError(t *testing.T) {
 			desc: "missing artifact",
 			seed: []seeder.RegistryResource{
 				&rpc.ApiSpec{
-					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
-					MimeType: gzipOpenAPIv3,
+					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 				},
 			},
 			formula: &rpc.ScoreFormula{
@@ -1181,8 +1178,7 @@ func TestProcessRollUpFormulaError(t *testing.T) {
 			desc: "missing score_formulas",
 			seed: []seeder.RegistryResource{
 				&rpc.ApiSpec{
-					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
-					MimeType: gzipOpenAPIv3,
+					Name: "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 				},
 			},
 			formula: &rpc.RollUpFormula{
@@ -1203,8 +1199,7 @@ func TestProcessRollUpFormulaError(t *testing.T) {
 			desc: "missing rollup_expression",
 			seed: []seeder.RegistryResource{
 				&rpc.ApiSpec{
-					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
-					MimeType: gzipOpenAPIv3,
+					Name: "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 				},
 			},
 			formula: &rpc.RollUpFormula{
@@ -1372,8 +1367,7 @@ func TestProcessRollUpFormulaError(t *testing.T) {
 			desc: "invalid reference_id",
 			seed: []seeder.RegistryResource{
 				&rpc.ApiSpec{
-					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
-					MimeType: gzipOpenAPIv3,
+					Name: "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 				},
 			},
 			formula: &rpc.RollUpFormula{

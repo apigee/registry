@@ -25,8 +25,6 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-const gzipOpenAPIv3 = "application/x.openapi+gzip;version=3.0.0"
-
 func protoMarshal(m proto.Message) []byte {
 	b, _ := proto.Marshal(m)
 	return b

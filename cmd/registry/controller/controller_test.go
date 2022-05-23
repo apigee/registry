@@ -259,29 +259,23 @@ func TestAggregateArtifacts(t *testing.T) {
 			seed: []seeder.RegistryResource{
 				// test api 1
 				&rpc.ApiSpec{
-					Name:     "projects/controller-test/locations/global/apis/test-api-1/versions/1.0.0/specs/openapi.yaml",
-					MimeType: gzipOpenAPIv3,
+					Name: "projects/controller-test/locations/global/apis/test-api-1/versions/1.0.0/specs/openapi.yaml",
 				},
 				&rpc.ApiSpec{
-					Name:     "projects/controller-test/locations/global/apis/test-api-1/versions/1.1.0/specs/openapi.yaml",
-					MimeType: gzipOpenAPIv3,
+					Name: "projects/controller-test/locations/global/apis/test-api-1/versions/1.1.0/specs/openapi.yaml",
 				},
 				&rpc.ApiSpec{
-					Name:     "projects/controller-test/locations/global/apis/test-api-1/versions/1.0.1/specs/openapi.yaml",
-					MimeType: gzipOpenAPIv3,
+					Name: "projects/controller-test/locations/global/apis/test-api-1/versions/1.0.1/specs/openapi.yaml",
 				},
 				// test api 2
 				&rpc.ApiSpec{
-					Name:     "projects/controller-test/locations/global/apis/test-api-2/versions/1.0.0/specs/openapi.yaml",
-					MimeType: gzipOpenAPIv3,
+					Name: "projects/controller-test/locations/global/apis/test-api-2/versions/1.0.0/specs/openapi.yaml",
 				},
 				&rpc.ApiSpec{
-					Name:     "projects/controller-test/locations/global/apis/test-api-2/versions/1.1.0/specs/openapi.yaml",
-					MimeType: gzipOpenAPIv3,
+					Name: "projects/controller-test/locations/global/apis/test-api-2/versions/1.1.0/specs/openapi.yaml",
 				},
 				&rpc.ApiSpec{
-					Name:     "projects/controller-test/locations/global/apis/test-api-2/versions/1.0.1/specs/openapi.yaml",
-					MimeType: gzipOpenAPIv3,
+					Name: "projects/controller-test/locations/global/apis/test-api-2/versions/1.0.1/specs/openapi.yaml",
 				},
 			},
 			want: []*Action{
@@ -300,40 +294,33 @@ func TestAggregateArtifacts(t *testing.T) {
 			seed: []seeder.RegistryResource{
 				// test api 1
 				&rpc.ApiSpec{
-					Name:     "projects/controller-test/locations/global/apis/test-api-1/versions/1.0.0/specs/openapi.yaml",
-					MimeType: gzipOpenAPIv3,
+					Name: "projects/controller-test/locations/global/apis/test-api-1/versions/1.0.0/specs/openapi.yaml",
 				},
 				&rpc.ApiSpec{
-					Name:     "projects/controller-test/locations/global/apis/test-api-1/versions/1.1.0/specs/openapi.yaml",
-					MimeType: gzipOpenAPIv3,
+					Name: "projects/controller-test/locations/global/apis/test-api-1/versions/1.1.0/specs/openapi.yaml",
 				},
 				&rpc.ApiSpec{
-					Name:     "projects/controller-test/locations/global/apis/test-api-1/versions/1.0.1/specs/openapi.yaml",
-					MimeType: gzipOpenAPIv3,
+					Name: "projects/controller-test/locations/global/apis/test-api-1/versions/1.0.1/specs/openapi.yaml",
 				},
 				&rpc.Artifact{
 					Name: "projects/controller-test/locations/global/apis/test-api-1/artifacts/vocabulary",
 				},
 				// test api 2
 				&rpc.ApiSpec{
-					Name:     "projects/controller-test/locations/global/apis/test-api-2/versions/1.0.0/specs/openapi.yaml",
-					MimeType: gzipOpenAPIv3,
+					Name: "projects/controller-test/locations/global/apis/test-api-2/versions/1.0.0/specs/openapi.yaml",
 				},
 				&rpc.ApiSpec{
-					Name:     "projects/controller-test/locations/global/apis/test-api-2/versions/1.1.0/specs/openapi.yaml",
-					MimeType: gzipOpenAPIv3,
+					Name: "projects/controller-test/locations/global/apis/test-api-2/versions/1.1.0/specs/openapi.yaml",
 				},
 				&rpc.ApiSpec{
-					Name:     "projects/controller-test/locations/global/apis/test-api-2/versions/1.0.1/specs/openapi.yaml",
-					MimeType: gzipOpenAPIv3,
+					Name: "projects/controller-test/locations/global/apis/test-api-2/versions/1.0.1/specs/openapi.yaml",
 				},
 				&rpc.Artifact{
 					Name: "projects/controller-test/locations/global/apis/test-api-2/artifacts/vocabulary",
 				},
 				// Update underlying spec to make artifact outdated
 				&rpc.ApiSpec{
-					Name:     "projects/controller-test/locations/global/apis/test-api-2/versions/1.0.1/specs/openapi.yaml",
-					MimeType: gzipOpenAPIv3,
+					Name: "projects/controller-test/locations/global/apis/test-api-2/versions/1.0.1/specs/openapi.yaml",
 				},
 			},
 			want: []*Action{
@@ -611,16 +598,13 @@ func TestReceiptArtifacts(t *testing.T) {
 			desc: "create artifacts",
 			seed: []seeder.RegistryResource{
 				&rpc.ApiSpec{
-					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
-					MimeType: gzipOpenAPIv3,
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 				},
 				&rpc.ApiSpec{
-					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
-					MimeType: gzipOpenAPIv3,
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
 				},
 				&rpc.ApiSpec{
-					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
-					MimeType: gzipOpenAPIv3,
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
 				},
 			},
 			want: []*Action{
@@ -708,16 +692,13 @@ func TestReceiptAggArtifacts(t *testing.T) {
 			desc: "create artifacts",
 			seed: []seeder.RegistryResource{
 				&rpc.ApiSpec{
-					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
-					MimeType: gzipOpenAPIv3,
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 				},
 				&rpc.ApiSpec{
-					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
-					MimeType: gzipOpenAPIv3,
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
 				},
 				&rpc.ApiSpec{
-					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
-					MimeType: gzipOpenAPIv3,
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
 				},
 			},
 			want: []*Action{
@@ -732,20 +713,17 @@ func TestReceiptAggArtifacts(t *testing.T) {
 			desc: "updated artifacts",
 			seed: []seeder.RegistryResource{
 				&rpc.ApiSpec{
-					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
-					MimeType: gzipOpenAPIv3,
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 				},
 				&rpc.ApiSpec{
-					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
-					MimeType: gzipOpenAPIv3,
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
 				},
 				&rpc.Artifact{
 					Name: "projects/controller-test/locations/global/artifacts/search-index",
 				},
 				// Add a new spec to make the artifact outdated
 				&rpc.ApiSpec{
-					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
-					MimeType: gzipOpenAPIv3,
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
 				},
 			},
 			want: []*Action{
@@ -828,16 +806,13 @@ func TestMultipleEntitiesArtifacts(t *testing.T) {
 					Contents: protoMarshal(styleguide),
 				},
 				&rpc.ApiSpec{
-					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
-					MimeType: gzipOpenAPIv3,
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 				},
 				&rpc.ApiSpec{
-					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
-					MimeType: gzipOpenAPIv3,
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
 				},
 				&rpc.ApiSpec{
-					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
-					MimeType: gzipOpenAPIv3,
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
 				},
 			},
 			want: []*Action{
@@ -904,15 +879,13 @@ func TestMultipleEntitiesArtifacts(t *testing.T) {
 					Contents: protoMarshal(styleguide),
 				},
 				&rpc.ApiSpec{
-					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
-					MimeType: gzipOpenAPIv3,
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 				},
 				&rpc.ApiVersion{
 					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1",
 				},
 				&rpc.ApiSpec{
-					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
-					MimeType: gzipOpenAPIv3,
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
 				},
 			},
 			want: []*Action{
