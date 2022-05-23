@@ -482,8 +482,11 @@ func TestGetApiSpecContents(t *testing.T) {
 
 func gZippedBytes(input []byte) ([]byte, error) {
 	var buf bytes.Buffer
-	zw, _ := gzip.NewWriterLevel(&buf, gzip.BestCompression)
-	_, err := zw.Write(input)
+	zw, err := gzip.NewWriterLevel(&buf, gzip.BestCompression)
+	if err != nil {
+		return nil, err
+	}
+	_, err = zw.Write(input)
 	if err != nil {
 		return nil, err
 	}
@@ -494,8 +497,10 @@ func gZippedBytes(input []byte) ([]byte, error) {
 }
 
 func TestGetApiSpecContentsData(t *testing.T) {
-	specContentsCompressed, _ := gZippedBytes(specContents)
-
+	specContentsCompressed, err := gZippedBytes(specContents)
+	if err != nil {
+		t.Fatalf("Setup/Seeding: Failed to gzip sample spec %s", err)
+	}
 	tests := []struct {
 		desc     string
 		seed     *rpc.ApiSpec
