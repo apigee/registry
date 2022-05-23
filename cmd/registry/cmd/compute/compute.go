@@ -34,5 +34,6 @@ func Command() *cobra.Command {
 	cmd.AddCommand(vocabularyCommand())
 
 	cmd.PersistentFlags().String("filter", "", "Filter selected resources")
+	cmd.PersistentFlags().Bool("dry-run", false, "if set, computation results will only be printed and not uploaded to registry")
 	return cmd
 }
