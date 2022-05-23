@@ -427,7 +427,10 @@ func TestConformance(t *testing.T) {
 				t.Fatalf("Failed to upload the styleguide: %s", err)
 			}
 
+			// setup the command
 			conformanceCmd := conformanceCommand()
+			conformanceCmd.Flags().String("filter", "", "Filter selected resources")
+			conformanceCmd.Flags().Bool("dry-run", false, "if set, computation results will only be printed and not uploaded to registry")
 
 			args = []string{spec.Name}
 			conformanceCmd.SetArgs(args)
