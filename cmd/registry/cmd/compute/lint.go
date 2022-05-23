@@ -39,6 +39,10 @@ func lintCommand() *cobra.Command {
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get filter from flags")
 			}
+			dryRun, err := cmd.Flags().GetBool("dry-run")
+			if err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get fry-run from flags")
+			}
 
 			client, err := connection.NewClient(ctx)
 			if err != nil {
@@ -59,6 +63,7 @@ func lintCommand() *cobra.Command {
 					client:   client,
 					specName: spec.Name,
 					linter:   linter,
+					dryRun:   dryRun,
 				}
 				return nil
 			})
@@ -76,6 +81,7 @@ type computeLintTask struct {
 	client   connection.Client
 	specName string
 	linter   string
+	dryRun   bool
 }
 
 func (task *computeLintTask) String() string {
@@ -127,16 +133,22 @@ func (task *computeLintTask) Run(ctx context.Context) error {
 	} else {
 		return fmt.Errorf("we don't know how to lint %s", spec.Name)
 	}
-	subject := spec.GetName()
-	messageData, _ := proto.Marshal(lint)
-	artifact := &rpc.Artifact{
-		Name:     subject + "/artifacts/" + relation,
-		MimeType: core.MimeTypeForMessageType("google.cloud.apigeeregistry.applications.v1alpha1.Lint"),
-		Contents: messageData,
+
+	if task.dryRun {
+		core.PrintMessage(lint)
+	} else {
+		subject := spec.GetName()
+		messageData, _ := proto.Marshal(lint)
+		artifact := &rpc.Artifact{
+			Name:     subject + "/artifacts/" + relation,
+			MimeType: core.MimeTypeForMessageType("google.cloud.apigeeregistry.applications.v1alpha1.Lint"),
+			Contents: messageData,
+		}
+		err = core.SetArtifact(ctx, task.client, artifact)
+		if err != nil {
+			return err
+		}
 	}
-	err = core.SetArtifact(ctx, task.client, artifact)
-	if err != nil {
-		return err
-	}
+
 	return nil
 }

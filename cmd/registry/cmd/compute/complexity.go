@@ -43,6 +43,10 @@ func complexityCommand() *cobra.Command {
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get filter from flags")
 			}
+			dryRun, err := cmd.Flags().GetBool("dry-run")
+			if err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get dry-run from flags")
+			}
 
 			client, err := connection.NewClient(ctx)
 			if err != nil {
@@ -62,6 +66,7 @@ func complexityCommand() *cobra.Command {
 				taskQueue <- &computeComplexityTask{
 					client:   client,
 					specName: spec.Name,
+					dryRun:   dryRun,
 				}
 				return nil
 			})
@@ -75,6 +80,7 @@ func complexityCommand() *cobra.Command {
 type computeComplexityTask struct {
 	client   connection.Client
 	specName string
+	dryRun   bool
 }
 
 func (task *computeComplexityTask) String() string {
@@ -122,16 +128,22 @@ func (task *computeComplexityTask) Run(ctx context.Context) error {
 	} else {
 		return fmt.Errorf("we don't know how to summarize %s", task.specName)
 	}
-	subject := task.specName
-	messageData, _ := proto.Marshal(complexity)
-	artifact := &rpc.Artifact{
-		Name:     subject + "/artifacts/" + relation,
-		MimeType: core.MimeTypeForMessageType("gnostic.metrics.Complexity"),
-		Contents: messageData,
+
+	if task.dryRun {
+		core.PrintMessage(complexity)
+	} else {
+		subject := task.specName
+		messageData, _ := proto.Marshal(complexity)
+		artifact := &rpc.Artifact{
+			Name:     subject + "/artifacts/" + relation,
+			MimeType: core.MimeTypeForMessageType("gnostic.metrics.Complexity"),
+			Contents: messageData,
+		}
+		err = core.SetArtifact(ctx, task.client, artifact)
+		if err != nil {
+			return err
+		}
 	}
-	err = core.SetArtifact(ctx, task.client, artifact)
-	if err != nil {
-		return err
-	}
+
 	return nil
 }

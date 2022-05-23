@@ -79,6 +79,7 @@ type ComputeConformanceTask struct {
 	Spec            *rpc.ApiSpec
 	LintersMetadata map[string]*linterMetadata
 	StyleguideId    string
+	DryRun          bool
 }
 
 func (task *ComputeConformanceTask) String() string {
@@ -126,7 +127,13 @@ func (task *ComputeConformanceTask) Run(ctx context.Context) error {
 		task.computeConformanceReport(ctx, conformanceReport, guidelineReportsMap, linterResponse, metadata)
 	}
 
-	return task.storeConformanceReport(ctx, conformanceReport)
+	if task.DryRun {
+		core.PrintMessage(conformanceReport)
+	} else {
+		return task.storeConformanceReport(ctx, conformanceReport)
+	}
+
+	return nil
 }
 
 func (task *ComputeConformanceTask) invokeLinter(

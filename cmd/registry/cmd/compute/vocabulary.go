@@ -44,6 +44,10 @@ func vocabularyCommand() *cobra.Command {
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get filter from flags")
 			}
+			dryRun, err := cmd.Flags().GetBool("dry-run")
+			if err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get dry-run from flags")
+			}
 
 			client, err := connection.NewClient(ctx)
 			if err != nil {
@@ -63,6 +67,7 @@ func vocabularyCommand() *cobra.Command {
 				taskQueue <- &computeVocabularyTask{
 					client:   client,
 					specName: spec.GetName(),
+					dryRun:   dryRun,
 				}
 				return nil
 			}); err != nil {
@@ -75,6 +80,7 @@ func vocabularyCommand() *cobra.Command {
 type computeVocabularyTask struct {
 	client   connection.Client
 	specName string
+	dryRun   bool
 }
 
 func (task *computeVocabularyTask) String() string {
@@ -123,14 +129,20 @@ func (task *computeVocabularyTask) Run(ctx context.Context) error {
 		return fmt.Errorf("we don't know how to summarize %s", task.specName)
 	}
 
-	messageData, err := proto.Marshal(vocab)
-	if err != nil {
-		return err
+	if task.dryRun {
+		core.PrintMessage(vocab)
+	} else {
+		messageData, err := proto.Marshal(vocab)
+		if err != nil {
+			return err
+		}
+
+		return core.SetArtifact(ctx, task.client, &rpc.Artifact{
+			Name:     task.specName + "/artifacts/vocabulary",
+			MimeType: core.MimeTypeForMessageType("gnostic.metrics.Vocabulary"),
+			Contents: messageData,
+		})
 	}
 
-	return core.SetArtifact(ctx, task.client, &rpc.Artifact{
-		Name:     task.specName + "/artifacts/vocabulary",
-		MimeType: core.MimeTypeForMessageType("gnostic.metrics.Vocabulary"),
-		Contents: messageData,
-	})
+	return nil
 }

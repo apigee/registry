@@ -38,6 +38,10 @@ func referencesCommand() *cobra.Command {
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get filter from flags")
 			}
+			dryRun, err := cmd.Flags().GetBool("dry-run")
+			if err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get dry-run from flags")
+			}
 
 			client, err := connection.NewClient(ctx)
 			if err != nil {
@@ -57,6 +61,7 @@ func referencesCommand() *cobra.Command {
 				taskQueue <- &computeReferencesTask{
 					client:   client,
 					specName: spec.Name,
+					dryRun:   dryRun,
 				}
 				return nil
 			})
@@ -70,6 +75,7 @@ func referencesCommand() *cobra.Command {
 type computeReferencesTask struct {
 	client   connection.Client
 	specName string
+	dryRun   bool
 }
 
 func (task *computeReferencesTask) String() string {
@@ -96,12 +102,17 @@ func (task *computeReferencesTask) Run(ctx context.Context) error {
 		return fmt.Errorf("we don't know how to compute references for %s of type %s", task.specName, contents.GetContentType())
 	}
 
-	messageData, _ := proto.Marshal(references)
-	artifact := &rpc.Artifact{
-		Name:     task.specName + "/artifacts/references",
-		MimeType: core.MimeTypeForMessageType("google.cloud.apigeeregistry.applications.v1alpha1.References"),
-		Contents: messageData,
-	}
+	if task.dryRun {
+		core.PrintMessage(references)
+	} else {
+		messageData, _ := proto.Marshal(references)
+		artifact := &rpc.Artifact{
+			Name:     task.specName + "/artifacts/references",
+			MimeType: core.MimeTypeForMessageType("google.cloud.apigeeregistry.applications.v1alpha1.References"),
+			Contents: messageData,
+		}
 
-	return core.SetArtifact(ctx, task.client, artifact)
+		return core.SetArtifact(ctx, task.client, artifact)
+	}
+	return nil
 }

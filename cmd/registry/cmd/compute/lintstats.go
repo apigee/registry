@@ -47,6 +47,10 @@ func lintStatsCommand() *cobra.Command {
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get filter from flags")
 			}
+			dryRun, err := cmd.Flags().GetBool("dry-run")
+			if err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get dry-run from flags")
+			}
 
 			client, err := connection.NewClient(ctx)
 			if err != nil {
@@ -58,7 +62,7 @@ func lintStatsCommand() *cobra.Command {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
 
-			err = matchAndHandleLintStatsCmd(ctx, client, adminClient, args[0], filter, linter)
+			err = matchAndHandleLintStatsCmd(ctx, client, adminClient, args[0], filter, linter, dryRun)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to match or handle command")
 			}
@@ -103,7 +107,8 @@ func computeLintStatsSpecs(ctx context.Context,
 	client *gapic.RegistryClient,
 	spec names.Spec,
 	filter string,
-	linter string) error {
+	linter string,
+	dryRun bool) error {
 	return core.ListSpecs(ctx, client, spec, filter, func(spec *rpc.ApiSpec) error {
 		// Iterate through a collection of specs and evaluate each.
 		log.Debug(ctx, spec.GetName())
@@ -154,7 +159,11 @@ func computeLintStatsSpecs(ctx context.Context,
 			lintStats.SchemaCount = complexity.GetSchemaCount()
 		}
 
-		_ = storeLintStatsArtifact(ctx, client, spec.GetName(), linter, lintStats)
+		if dryRun {
+			core.PrintMessage(lintStats)
+		} else {
+			_ = storeLintStatsArtifact(ctx, client, spec.GetName(), linter, lintStats)
+		}
 		return nil
 	})
 }
@@ -164,7 +173,8 @@ func computeLintStatsProjects(ctx context.Context,
 	adminClient *gapic.AdminClient,
 	projectName names.Project,
 	filter string,
-	linter string) error {
+	linter string,
+	dryRun bool) error {
 	return core.ListProjects(ctx, adminClient, projectName, filter, func(project *rpc.Project) error {
 		project_stats := &rpc.LintStats{}
 
@@ -174,9 +184,13 @@ func computeLintStatsProjects(ctx context.Context,
 		}); err != nil {
 			return nil
 		}
-		// Store the aggregate stats on this project
-		_ = storeLintStatsArtifact(ctx, client, project.GetName()+"/locations/global", linter, project_stats)
-		log.Debug(ctx, project.GetName())
+		if dryRun {
+			core.PrintMessage(project_stats)
+		} else {
+			// Store the aggregate stats on this project
+			_ = storeLintStatsArtifact(ctx, client, project.GetName()+"/locations/global", linter, project_stats)
+			log.Debug(ctx, project.GetName())
+		}
 		return nil
 	})
 }
@@ -185,7 +199,8 @@ func computeLintStatsAPIs(ctx context.Context,
 	client *gapic.RegistryClient,
 	apiName names.Api,
 	filter string,
-	linter string) error {
+	linter string,
+	dryRun bool) error {
 	return core.ListAPIs(ctx, client, apiName, filter, func(api *rpc.Api) error {
 		api_stats := &rpc.LintStats{}
 
@@ -195,9 +210,14 @@ func computeLintStatsAPIs(ctx context.Context,
 		}); err != nil {
 			return nil
 		}
-		// Store the aggregate stats on this api
-		_ = storeLintStatsArtifact(ctx, client, api.GetName(), linter, api_stats)
-		log.Debug(ctx, api.GetName())
+
+		if dryRun {
+			core.PrintMessage(api_stats)
+		} else {
+			// Store the aggregate stats on this api
+			_ = storeLintStatsArtifact(ctx, client, api.GetName(), linter, api_stats)
+			log.Debug(ctx, api.GetName())
+		}
 		return nil
 	})
 }
@@ -206,7 +226,8 @@ func computeLintStatsVersions(ctx context.Context,
 	client *gapic.RegistryClient,
 	versionName names.Version,
 	filter string,
-	linter string) error {
+	linter string,
+	dryRun bool) error {
 	return core.ListVersions(ctx, client, versionName, filter, func(version *rpc.ApiVersion) error {
 		stats := &rpc.LintStats{}
 		if err := core.ListSpecs(ctx, client, versionName.Spec(""), filter, func(spec *rpc.ApiSpec) error {
@@ -215,9 +236,14 @@ func computeLintStatsVersions(ctx context.Context,
 		}); err != nil {
 			return nil
 		}
-		// Store the aggregate stats on this version
-		_ = storeLintStatsArtifact(ctx, client, version.GetName(), linter, stats)
-		log.Debug(ctx, version.GetName())
+
+		if dryRun {
+			core.PrintMessage(stats)
+		} else {
+			// Store the aggregate stats on this version
+			_ = storeLintStatsArtifact(ctx, client, version.GetName(), linter, stats)
+			log.Debug(ctx, version.GetName())
+		}
 		return nil
 	})
 }
@@ -269,24 +295,25 @@ func matchAndHandleLintStatsCmd(
 	name string,
 	filter string,
 	linter string,
+	dryRun bool,
 ) error {
 	// First try to match collection names, then try to match resource names.
 	if project, err := names.ParseProjectCollection(name); err == nil {
-		return computeLintStatsProjects(ctx, client, adminClient, project, filter, linter)
+		return computeLintStatsProjects(ctx, client, adminClient, project, filter, linter, dryRun)
 	} else if api, err := names.ParseApiCollection(name); err == nil {
-		return computeLintStatsAPIs(ctx, client, api, filter, linter)
+		return computeLintStatsAPIs(ctx, client, api, filter, linter, dryRun)
 	} else if version, err := names.ParseVersionCollection(name); err == nil {
-		return computeLintStatsVersions(ctx, client, version, filter, linter)
+		return computeLintStatsVersions(ctx, client, version, filter, linter, dryRun)
 	} else if spec, err := names.ParseSpecCollection(name); err == nil {
-		return computeLintStatsSpecs(ctx, client, spec, filter, linter)
+		return computeLintStatsSpecs(ctx, client, spec, filter, linter, dryRun)
 	} else if project, err := names.ParseProject(name); err == nil {
-		return computeLintStatsProjects(ctx, client, adminClient, project, filter, linter)
+		return computeLintStatsProjects(ctx, client, adminClient, project, filter, linter, dryRun)
 	} else if api, err := names.ParseApi(name); err == nil {
-		return computeLintStatsAPIs(ctx, client, api, filter, linter)
+		return computeLintStatsAPIs(ctx, client, api, filter, linter, dryRun)
 	} else if version, err := names.ParseVersion(name); err == nil {
-		return computeLintStatsVersions(ctx, client, version, filter, linter)
+		return computeLintStatsVersions(ctx, client, version, filter, linter, dryRun)
 	} else if spec, err := names.ParseSpec(name); err == nil {
-		return computeLintStatsSpecs(ctx, client, spec, filter, linter)
+		return computeLintStatsSpecs(ctx, client, spec, filter, linter, dryRun)
 	} else {
 		// If nothing matched, return an error.
 		return fmt.Errorf("unsupported argument: %s", name)
