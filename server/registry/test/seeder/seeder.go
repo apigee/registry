@@ -21,17 +21,20 @@ import (
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
 // Registry is an interface containing methods necessary for seeding Registry resources.
 type Registry interface {
 	CreateProject(context.Context, *rpc.CreateProjectRequest) (*rpc.Project, error)
-	CreateApi(context.Context, *rpc.CreateApiRequest) (*rpc.Api, error)
-	CreateApiVersion(context.Context, *rpc.CreateApiVersionRequest) (*rpc.ApiVersion, error)
+	UpdateApi(context.Context, *rpc.UpdateApiRequest) (*rpc.Api, error)
+	UpdateApiVersion(context.Context, *rpc.UpdateApiVersionRequest) (*rpc.ApiVersion, error)
 	UpdateApiSpec(context.Context, *rpc.UpdateApiSpecRequest) (*rpc.ApiSpec, error)
 	UpdateApiDeployment(context.Context, *rpc.UpdateApiDeploymentRequest) (*rpc.ApiDeployment, error)
 	CreateArtifact(context.Context, *rpc.CreateArtifactRequest) (*rpc.Artifact, error)
+	ReplaceArtifact(context.Context, *rpc.ReplaceArtifactRequest) (*rpc.Artifact, error)
 }
 
 // RegistryResource is an interface that any seedable resource will implement.
@@ -177,13 +180,15 @@ func seedApi(ctx context.Context, s Registry, api *rpc.Api, history map[string]b
 		}
 	}
 
-	_, err = s.CreateApi(ctx, &rpc.CreateApiRequest{
-		Parent: name.Parent(),
-		ApiId:  name.ApiID,
-		Api:    api,
-	})
+	if _, err := s.UpdateApi(ctx, &rpc.UpdateApiRequest{
+		Api:          api,
+		UpdateMask:   &fieldmaskpb.FieldMask{Paths: []string{"*"}},
+		AllowMissing: true,
+	}); err != nil {
+		return err
+	}
 
-	return err
+	return nil
 }
 
 func seedVersion(ctx context.Context, s Registry, v *rpc.ApiVersion, history map[string]bool) error {
@@ -200,13 +205,15 @@ func seedVersion(ctx context.Context, s Registry, v *rpc.ApiVersion, history map
 		}
 	}
 
-	_, err = s.CreateApiVersion(ctx, &rpc.CreateApiVersionRequest{
-		Parent:       name.Parent(),
-		ApiVersionId: name.VersionID,
+	if _, err := s.UpdateApiVersion(ctx, &rpc.UpdateApiVersionRequest{
 		ApiVersion:   v,
-	})
+		UpdateMask:   &fieldmaskpb.FieldMask{Paths: []string{"*"}},
+		AllowMissing: true,
+	}); err != nil {
+		return err
+	}
 
-	return err
+	return nil
 }
 
 func seedSpec(ctx context.Context, s Registry, spec *rpc.ApiSpec, history map[string]bool) error {
@@ -290,6 +297,12 @@ func seedArtifact(ctx context.Context, s Registry, a *rpc.Artifact, history map[
 		ArtifactId: name.ArtifactID(),
 		Artifact:   a,
 	})
+
+	if status.Code(err) == codes.AlreadyExists {
+		_, err = s.ReplaceArtifact(ctx, &rpc.ReplaceArtifactRequest{
+			Artifact: a,
+		})
+	}
 
 	return err
 }

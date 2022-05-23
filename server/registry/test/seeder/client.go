@@ -30,12 +30,12 @@ func (c Client) CreateProject(ctx context.Context, req *rpc.CreateProjectRequest
 	return c.AdminClient.CreateProject(ctx, req)
 }
 
-func (c Client) CreateApi(ctx context.Context, req *rpc.CreateApiRequest) (*rpc.Api, error) {
-	return c.RegistryClient.CreateApi(ctx, req)
+func (c Client) UpdateApi(ctx context.Context, req *rpc.UpdateApiRequest) (*rpc.Api, error) {
+	return c.RegistryClient.UpdateApi(ctx, req)
 }
 
-func (c Client) CreateApiVersion(ctx context.Context, req *rpc.CreateApiVersionRequest) (*rpc.ApiVersion, error) {
-	return c.RegistryClient.CreateApiVersion(ctx, req)
+func (c Client) UpdateApiVersion(ctx context.Context, req *rpc.UpdateApiVersionRequest) (*rpc.ApiVersion, error) {
+	return c.RegistryClient.UpdateApiVersion(ctx, req)
 }
 
 func (c Client) UpdateApiSpec(ctx context.Context, req *rpc.UpdateApiSpecRequest) (*rpc.ApiSpec, error) {
@@ -48,4 +48,8 @@ func (c Client) UpdateApiDeployment(ctx context.Context, req *rpc.UpdateApiDeplo
 
 func (c Client) CreateArtifact(ctx context.Context, req *rpc.CreateArtifactRequest) (*rpc.Artifact, error) {
 	return c.RegistryClient.CreateArtifact(ctx, req)
+}
+
+func (c Client) ReplaceArtifact(ctx context.Context, req *rpc.ReplaceArtifactRequest) (*rpc.Artifact, error) {
+	return c.RegistryClient.ReplaceArtifact(ctx, req)
 }
