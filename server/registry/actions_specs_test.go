@@ -15,6 +15,8 @@
 package registry
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
 	"crypto/sha256"
 	"fmt"
@@ -25,6 +27,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -472,6 +475,126 @@ func TestGetApiSpecContents(t *testing.T) {
 
 			if _, err := server.GetApiSpecContents(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("GetApiSpecContents(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
+			}
+		})
+	}
+}
+
+func gZippedBytes(input []byte) ([]byte, error) {
+	var buf bytes.Buffer
+	zw, err := gzip.NewWriterLevel(&buf, gzip.BestCompression)
+	if err != nil {
+		return nil, err
+	}
+	_, err = zw.Write(input)
+	if err != nil {
+		return nil, err
+	}
+	if err := zw.Close(); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+
+func TestGetApiSpecContentsData(t *testing.T) {
+	specContentsCompressed, err := gZippedBytes(specContents)
+	if err != nil {
+		t.Fatalf("Setup/Seeding: Failed to gzip sample spec %s", err)
+	}
+	tests := []struct {
+		desc     string
+		seed     *rpc.ApiSpec
+		req      *rpc.GetApiSpecContentsRequest
+		accept   string
+		wantCode codes.Code
+		wantData []byte
+	}{
+		{
+			desc: "uncompressed mimetype with no accept-encoding header",
+			seed: &rpc.ApiSpec{
+				Name:     "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
+				MimeType: "application/x.openapi;version=3.0.0",
+				Contents: specContents,
+			},
+			req: &rpc.GetApiSpecContentsRequest{
+				Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
+			},
+			wantCode: codes.OK,
+			wantData: specContents, // uncompressed upload, uncompressed response
+		},
+		{
+			desc: "uncompressed mimetype with accept-encoding=gzip",
+			seed: &rpc.ApiSpec{
+				Name:     "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
+				MimeType: "application/x.openapi;version=3.0.0",
+				Contents: specContents,
+			},
+			req: &rpc.GetApiSpecContentsRequest{
+				Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
+			},
+			accept:   "gzip",
+			wantCode: codes.OK,
+			wantData: specContents, // we only return compressed data when it was uploaded by the client
+		},
+		{
+			desc: "gzip mimetype with no accept-encoding header",
+			seed: &rpc.ApiSpec{
+				Name:     "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
+				MimeType: "application/x.openapi+gzip;version=3.0.0",
+				Contents: specContentsCompressed,
+			},
+			req: &rpc.GetApiSpecContentsRequest{
+				Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
+			},
+			wantCode: codes.OK,
+			wantData: specContents, // compressed upload, uncompressed response
+		},
+		{
+			desc: "gzip mimetype with accept-encoding=gzip",
+			seed: &rpc.ApiSpec{
+				Name:     "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
+				MimeType: "application/x.openapi+gzip;version=3.0.0",
+				Contents: specContentsCompressed,
+			},
+			req: &rpc.GetApiSpecContentsRequest{
+				Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
+			},
+			accept:   "gzip",
+			wantCode: codes.OK,
+			wantData: specContentsCompressed, // compressed upload, compressed response
+		},
+		{
+			desc: "gzip mimetype with accept-encoding=some-unknown-type",
+			seed: &rpc.ApiSpec{
+				Name:     "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
+				MimeType: "application/x.openapi+gzip;version=3.0.0",
+				Contents: specContentsCompressed,
+			},
+			req: &rpc.GetApiSpecContentsRequest{
+				Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
+			},
+			accept:   "some-unknown-type",
+			wantCode: codes.OK,
+			wantData: specContents, // uncompressed response because we don't support the requested encoding
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			ctx := context.Background()
+			server := defaultTestServer(t)
+			if err := seeder.SeedSpecs(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
+			if test.accept != "" {
+				ctx = metadata.NewIncomingContext(ctx, metadata.Pairs("accept-encoding", test.accept))
+			}
+			resp, err := server.GetApiSpecContents(ctx, test.req)
+			if status.Code(err) != test.wantCode {
+				t.Errorf("GetApiSpecContents(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.wantCode, err)
+			}
+			if bytes.Compare(resp.Data, test.wantData) != 0 {
+				t.Errorf("GetApiSpecContents(%+v) returned contents %v, want %v: %v", test.req, resp.Data, test.wantData, err)
 			}
 		})
 	}
