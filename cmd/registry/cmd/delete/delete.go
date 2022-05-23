@@ -97,7 +97,7 @@ func matchAndHandleDeleteCmd(
 	} else if artifact, err := names.ParseArtifact(name); err == nil {
 		return deleteArtifacts(ctx, client, artifact, filter, taskQueue)
 	} else {
-		return fmt.Errorf("unsupported resource name: see the 'apg registry delete-' subcommands for alternatives")
+		return fmt.Errorf("unsupported resource name: see the 'registry rpc delete-' subcommands for alternatives")
 	}
 }
 
