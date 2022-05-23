@@ -20,6 +20,7 @@ import (
 
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/server/registry/test/seeder"
 )
 
 // Tests for error paths in the controller
@@ -141,30 +142,43 @@ func TestControllerErrors(t *testing.T) {
 			ctx := context.Background()
 			registryClient, err := connection.NewClient(ctx)
 			if err != nil {
-				t.Logf("Failed to create client: %+v", err)
-				t.FailNow()
+				t.Fatalf("Failed to create client: %+v", err)
 			}
-			defer registryClient.Close()
+			t.Cleanup(func() { registryClient.Close() })
+
 			adminClient, err := connection.NewAdminClient(ctx)
 			if err != nil {
-				t.Logf("Failed to create client: %+v", err)
-				t.FailNow()
+				t.Fatalf("Failed to create client: %+v", err)
 			}
-			defer adminClient.Close()
+			t.Cleanup(func() { adminClient.Close() })
 
 			// Setup
 			deleteProject(ctx, adminClient, t, "controller-test")
-			createProject(ctx, adminClient, t, "controller-test")
-			createApi(ctx, registryClient, t, "projects/controller-test/locations/global", "petstore")
-			// Version 1.0.0
-			createVersion(ctx, registryClient, t, "projects/controller-test/locations/global/apis/petstore", "1.0.0")
-			createSpec(ctx, registryClient, t, "projects/controller-test/locations/global/apis/petstore/versions/1.0.0", "openapi.yaml", gzipOpenAPIv3)
-			// Version 1.0.1
-			createVersion(ctx, registryClient, t, "projects/controller-test/locations/global/apis/petstore", "1.0.1")
-			createSpec(ctx, registryClient, t, "projects/controller-test/locations/global/apis/petstore/versions/1.0.1", "openapi.yaml", gzipOpenAPIv3)
-			// Version 1.1.0
-			createVersion(ctx, registryClient, t, "projects/controller-test/locations/global/apis/petstore", "1.1.0")
-			createSpec(ctx, registryClient, t, "projects/controller-test/locations/global/apis/petstore/versions/1.1.0", "openapi.yaml", gzipOpenAPIv3)
+			t.Cleanup(func() { deleteProject(ctx, adminClient, t, "controller-test") })
+
+			client := seeder.Client{
+				RegistryClient: registryClient,
+				AdminClient:    adminClient,
+			}
+
+			seed := []seeder.RegistryResource{
+				&rpc.ApiSpec{
+					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					MimeType: gzipOpenAPIv3,
+				},
+				&rpc.ApiSpec{
+					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
+					MimeType: gzipOpenAPIv3,
+				},
+				&rpc.ApiSpec{
+					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
+					MimeType: gzipOpenAPIv3,
+				},
+			}
+
+			if err := seeder.SeedRegistry(ctx, client, seed...); err != nil {
+				t.Fatalf("Setup: failed to seed registry: %s", err)
+			}
 
 			// Test GeneratedResource pattern
 			actions, err := processManifestResource(ctx, registryClient, projectID, test.generatedResource)

@@ -37,13 +37,13 @@ func (s *fakeServer) CreateProject(ctx context.Context, req *rpc.CreateProjectRe
 	return nil, nil
 }
 
-func (s *fakeServer) CreateApi(ctx context.Context, req *rpc.CreateApiRequest) (*rpc.Api, error) {
-	s.Resources = append(s.Resources, fmt.Sprintf("%s/apis/%s", req.GetParent(), req.GetApiId()))
+func (s *fakeServer) UpdateApi(ctx context.Context, req *rpc.UpdateApiRequest) (*rpc.Api, error) {
+	s.Resources = append(s.Resources, req.Api.GetName())
 	return nil, nil
 }
 
-func (s *fakeServer) CreateApiVersion(ctx context.Context, req *rpc.CreateApiVersionRequest) (*rpc.ApiVersion, error) {
-	s.Resources = append(s.Resources, fmt.Sprintf("%s/versions/%s", req.GetParent(), req.GetApiVersionId()))
+func (s *fakeServer) UpdateApiVersion(ctx context.Context, req *rpc.UpdateApiVersionRequest) (*rpc.ApiVersion, error) {
+	s.Resources = append(s.Resources, req.ApiVersion.GetName())
 	return nil, nil
 }
 
@@ -77,6 +77,11 @@ func (s *fakeServer) TagApiDeploymentRevision(ctx context.Context, req *rpc.TagA
 
 func (s *fakeServer) CreateArtifact(ctx context.Context, req *rpc.CreateArtifactRequest) (*rpc.Artifact, error) {
 	s.Resources = append(s.Resources, fmt.Sprintf("%s/artifacts/%s", req.GetParent(), req.GetArtifactId()))
+	return nil, nil
+}
+
+func (s *fakeServer) ReplaceArtifact(ctx context.Context, req *rpc.ReplaceArtifactRequest) (*rpc.Artifact, error) {
+	s.Resources = append(s.Resources, req.Artifact.GetName())
 	return nil, nil
 }
 
