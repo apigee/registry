@@ -104,15 +104,15 @@ func (task *computeReferencesTask) Run(ctx context.Context) error {
 
 	if task.dryRun {
 		core.PrintMessage(references)
-	} else {
-		messageData, _ := proto.Marshal(references)
-		artifact := &rpc.Artifact{
-			Name:     task.specName + "/artifacts/references",
-			MimeType: core.MimeTypeForMessageType("google.cloud.apigeeregistry.applications.v1alpha1.References"),
-			Contents: messageData,
-		}
-
-		return core.SetArtifact(ctx, task.client, artifact)
+		return nil
 	}
-	return nil
+
+	messageData, _ := proto.Marshal(references)
+	artifact := &rpc.Artifact{
+		Name:     task.specName + "/artifacts/references",
+		MimeType: core.MimeTypeForMessageType("google.cloud.apigeeregistry.applications.v1alpha1.References"),
+		Contents: messageData,
+	}
+
+	return core.SetArtifact(ctx, task.client, artifact)
 }

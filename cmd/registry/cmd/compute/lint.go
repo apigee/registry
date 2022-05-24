@@ -136,19 +136,15 @@ func (task *computeLintTask) Run(ctx context.Context) error {
 
 	if task.dryRun {
 		core.PrintMessage(lint)
-	} else {
-		subject := spec.GetName()
-		messageData, _ := proto.Marshal(lint)
-		artifact := &rpc.Artifact{
-			Name:     subject + "/artifacts/" + relation,
-			MimeType: core.MimeTypeForMessageType("google.cloud.apigeeregistry.applications.v1alpha1.Lint"),
-			Contents: messageData,
-		}
-		err = core.SetArtifact(ctx, task.client, artifact)
-		if err != nil {
-			return err
-		}
+		return nil
 	}
 
-	return nil
+	subject := spec.GetName()
+	messageData, _ := proto.Marshal(lint)
+	artifact := &rpc.Artifact{
+		Name:     subject + "/artifacts/" + relation,
+		MimeType: core.MimeTypeForMessageType("google.cloud.apigeeregistry.applications.v1alpha1.Lint"),
+		Contents: messageData,
+	}
+	return core.SetArtifact(ctx, task.client, artifact)
 }

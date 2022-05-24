@@ -120,16 +120,12 @@ func CalculateScore(
 
 		if dryRun {
 			core.PrintMessage(score)
-		} else {
-			err = uploadScore(ctx, client, resource, score)
-			if err != nil {
-				return err
-			}
+			return nil
 		}
-	} else {
-		log.Debugf(ctx, "Score %s is already up-to-date.", artifactName)
+		return uploadScore(ctx, client, resource, score)
 	}
 
+	log.Debugf(ctx, "Score %s is already up-to-date.", artifactName)
 	return nil
 }
 

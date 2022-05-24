@@ -129,11 +129,9 @@ func (task *ComputeConformanceTask) Run(ctx context.Context) error {
 
 	if task.DryRun {
 		core.PrintMessage(conformanceReport)
-	} else {
-		return task.storeConformanceReport(ctx, conformanceReport)
+		return nil
 	}
-
-	return nil
+	return task.storeConformanceReport(ctx, conformanceReport)
 }
 
 func (task *ComputeConformanceTask) invokeLinter(

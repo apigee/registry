@@ -131,19 +131,14 @@ func (task *computeComplexityTask) Run(ctx context.Context) error {
 
 	if task.dryRun {
 		core.PrintMessage(complexity)
-	} else {
-		subject := task.specName
-		messageData, _ := proto.Marshal(complexity)
-		artifact := &rpc.Artifact{
-			Name:     subject + "/artifacts/" + relation,
-			MimeType: core.MimeTypeForMessageType("gnostic.metrics.Complexity"),
-			Contents: messageData,
-		}
-		err = core.SetArtifact(ctx, task.client, artifact)
-		if err != nil {
-			return err
-		}
+		return nil
 	}
-
-	return nil
+	subject := task.specName
+	messageData, _ := proto.Marshal(complexity)
+	artifact := &rpc.Artifact{
+		Name:     subject + "/artifacts/" + relation,
+		MimeType: core.MimeTypeForMessageType("gnostic.metrics.Complexity"),
+		Contents: messageData,
+	}
+	return core.SetArtifact(ctx, task.client, artifact)
 }

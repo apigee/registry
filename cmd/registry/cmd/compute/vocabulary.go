@@ -131,18 +131,16 @@ func (task *computeVocabularyTask) Run(ctx context.Context) error {
 
 	if task.dryRun {
 		core.PrintMessage(vocab)
-	} else {
-		messageData, err := proto.Marshal(vocab)
-		if err != nil {
-			return err
-		}
-
-		return core.SetArtifact(ctx, task.client, &rpc.Artifact{
-			Name:     task.specName + "/artifacts/vocabulary",
-			MimeType: core.MimeTypeForMessageType("gnostic.metrics.Vocabulary"),
-			Contents: messageData,
-		})
+		return nil
 	}
 
-	return nil
+	messageData, err := proto.Marshal(vocab)
+	if err != nil {
+		return err
+	}
+	return core.SetArtifact(ctx, task.client, &rpc.Artifact{
+		Name:     task.specName + "/artifacts/vocabulary",
+		MimeType: core.MimeTypeForMessageType("gnostic.metrics.Vocabulary"),
+		Contents: messageData,
+	})
 }

@@ -111,17 +111,13 @@ func CalculateScoreCard(
 	if result.needsUpdate {
 		if dryRun {
 			core.PrintMessage(result.scoreCard)
-		} else {
-			// upload the scoreCard to registry
-			err = uploadScoreCard(ctx, client, resource, result.scoreCard)
-			if err != nil {
-				return err
-			}
+			return nil
 		}
-	} else {
-		log.Debugf(ctx, "ScoreCard %s is already up-to-date.", artifactName)
+		// upload the scoreCard to registry
+		return uploadScoreCard(ctx, client, resource, result.scoreCard)
 	}
 
+	log.Debugf(ctx, "ScoreCard %s is already up-to-date.", artifactName)
 	return nil
 }
 
