@@ -21,6 +21,7 @@ import (
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/gapic"
+	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"gopkg.in/yaml.v3"
@@ -90,13 +91,15 @@ func newApi(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api)
 		var artifact *Artifact
 		artifact, err = newArtifact(message)
 		if err != nil {
-			return err
+			log.FromContext(ctx).Warnf("Skipping %s: %s", message.Name, err)
+			return nil
 		}
-		// skip unsupported artifact types, "Artifact" is the generic type
-		if artifact.Kind != "Artifact" {
-			artifact.ApiVersion = ""
-			artifacts = append(artifacts, artifact)
+		if artifact.Kind == "Artifact" { // "Artifact" is the generic artifact type
+			log.FromContext(ctx).Warnf("Skipping %s", message.Name)
+			return nil
 		}
+		artifact.ApiVersion = ""
+		artifacts = append(artifacts, artifact)
 		return nil
 	}); err != nil {
 		return nil, err

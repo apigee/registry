@@ -54,14 +54,15 @@ func ExportProject(ctx context.Context, client *gapic.RegistryClient, projectNam
 
 	return core.ListArtifacts(ctx, client, projectName.Artifact(""), "", false, func(message *rpc.Artifact) error {
 		bytes, header, err := ExportArtifact(ctx, client, message)
-		if header.Kind == "Artifact" {
+		if err != nil {
+			log.FromContext(ctx).Warnf("Skipping %s: %s", message.Name, err)
+			return nil
+		}
+		if header.Kind == "Artifact" { // "Artifact" is the generic artifact type
 			log.FromContext(ctx).Warnf("Skipping %s", message.Name)
 			return nil
 		}
 		log.FromContext(ctx).Infof("Exporting %s", message.Name)
-		if err != nil {
-			return err
-		}
 		filename := fmt.Sprintf("%s/%s.yaml", artifactsDir, header.Metadata.Name)
 		return os.WriteFile(filename, bytes, fs.ModePerm)
 	})
