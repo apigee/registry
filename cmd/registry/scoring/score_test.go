@@ -498,7 +498,7 @@ func TestCalculateScore(t *testing.T) {
 				t.Errorf("failed to fetch the definition Artifact from setup: %s", err)
 			}
 
-			gotErr := CalculateScore(ctx, registryClient, defArtifact, resource)
+			gotErr := CalculateScore(ctx, registryClient, defArtifact, resource, false)
 			if gotErr != nil {
 				t.Errorf("CalculateScore(ctx, client, %v, %v) returned unexpected error: %s", defArtifact, resource, gotErr)
 			}

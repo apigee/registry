@@ -33,9 +33,14 @@ func scoreCommand() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := cmd.Context()
+
 			filter, err := cmd.Flags().GetString("filter")
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get filter from flags")
+			}
+			dryRun, err := cmd.Flags().GetBool("dry-run")
+			if err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get dry-run from flags")
 			}
 
 			client, err := connection.NewClient(ctx)
@@ -63,6 +68,7 @@ func scoreCommand() *cobra.Command {
 						client:      client,
 						defArtifact: d,
 						resource:    r,
+						dryRun:      dryRun,
 					}
 				}
 			}
@@ -76,6 +82,7 @@ type computeScoreTask struct {
 	client      connection.Client
 	defArtifact *rpc.Artifact
 	resource    patterns.ResourceInstance
+	dryRun      bool
 }
 
 func (task *computeScoreTask) String() string {
@@ -83,5 +90,5 @@ func (task *computeScoreTask) String() string {
 }
 
 func (task *computeScoreTask) Run(ctx context.Context) error {
-	return scoring.CalculateScore(ctx, task.client, task.defArtifact, task.resource)
+	return scoring.CalculateScore(ctx, task.client, task.defArtifact, task.resource, task.dryRun)
 }

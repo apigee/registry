@@ -76,7 +76,8 @@ func CalculateScore(
 	ctx context.Context,
 	client connection.Client,
 	defArtifact *rpc.Artifact,
-	resource patterns.ResourceInstance) error {
+	resource patterns.ResourceInstance,
+	dryRun bool) error {
 	project := fmt.Sprintf("%s/locations/global", resource.ResourceName().Project())
 
 	// Extract definition
@@ -107,7 +108,7 @@ func CalculateScore(
 	// evaluate the expression and return a scoreValue
 	result := processFormula(ctx, client, definition, resource, scoreArtifact, takeAction)
 	if result.err != nil {
-		return err
+		return result.err
 	}
 
 	if result.needsUpdate {
@@ -117,14 +118,14 @@ func CalculateScore(
 			return err
 		}
 
-		// TODO: Add dry_run flag
-
-		err = uploadScore(ctx, client, resource, score)
-		if err != nil {
-			return err
+		if dryRun {
+			core.PrintMessage(score)
+			return nil
 		}
+		return uploadScore(ctx, client, resource, score)
 	}
 
+	log.Debugf(ctx, "Score %s is already up-to-date.", artifactName)
 	return nil
 }
 

@@ -74,7 +74,8 @@ func CalculateScoreCard(
 	ctx context.Context,
 	client connection.Client,
 	defArtifact *rpc.Artifact,
-	resource patterns.ResourceInstance) error {
+	resource patterns.ResourceInstance,
+	dryRun bool) error {
 	project := fmt.Sprintf("%s/locations/global", resource.ResourceName().Project())
 
 	// Extract definition
@@ -108,15 +109,15 @@ func CalculateScoreCard(
 	}
 
 	if result.needsUpdate {
-		// TODO: Add dry_run flag
-
-		// upload the scoreCard to registry
-		err = uploadScoreCard(ctx, client, resource, result.scoreCard)
-		if err != nil {
-			return err
+		if dryRun {
+			core.PrintMessage(result.scoreCard)
+			return nil
 		}
+		// upload the scoreCard to registry
+		return uploadScoreCard(ctx, client, resource, result.scoreCard)
 	}
 
+	log.Debugf(ctx, "ScoreCard %s is already up-to-date.", artifactName)
 	return nil
 }
 

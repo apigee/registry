@@ -37,6 +37,10 @@ func scoreCardCommand() *cobra.Command {
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get filter from flags")
 			}
+			dryRun, err := cmd.Flags().GetBool("dry-run")
+			if err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get dry-run from flags")
+			}
 
 			client, err := connection.NewClient(ctx)
 			if err != nil {
@@ -63,6 +67,7 @@ func scoreCardCommand() *cobra.Command {
 						client:      client,
 						defArtifact: d,
 						resource:    r,
+						dryRun:      dryRun,
 					}
 				}
 			}
@@ -76,6 +81,7 @@ type computeScoreCardTask struct {
 	client      connection.Client
 	defArtifact *rpc.Artifact
 	resource    patterns.ResourceInstance
+	dryRun      bool
 }
 
 func (task *computeScoreCardTask) String() string {
@@ -83,5 +89,5 @@ func (task *computeScoreCardTask) String() string {
 }
 
 func (task *computeScoreCardTask) Run(ctx context.Context) error {
-	return scoring.CalculateScoreCard(ctx, task.client, task.defArtifact, task.resource)
+	return scoring.CalculateScoreCard(ctx, task.client, task.defArtifact, task.resource, task.dryRun)
 }
