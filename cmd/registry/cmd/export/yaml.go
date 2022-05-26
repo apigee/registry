@@ -27,9 +27,10 @@ import (
 )
 
 func yamlCommand() *cobra.Command {
-	return &cobra.Command{
-		Use:   "yaml",
-		Short: "Export a subtree of the registry to a YAML file",
+	var jobs int
+	cmd := &cobra.Command{
+		Use:   "yaml RESOURCE",
+		Short: "Export a subtree of the registry as YAML",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := cmd.Context()
@@ -43,8 +44,11 @@ func yamlCommand() *cobra.Command {
 				name = args[0]
 			}
 
+			taskQueue, wait := core.WorkerPool(ctx, jobs)
+			defer wait()
+
 			if project, err := names.ParseProject(name); err == nil {
-				err = patch.ExportProject(ctx, client, project)
+				err = patch.ExportProject(ctx, client, project, taskQueue)
 				if err != nil {
 					log.FromContext(ctx).WithError(err).Fatal("Failed to export project YAML")
 				}
@@ -78,4 +82,6 @@ func yamlCommand() *cobra.Command {
 			}
 		},
 	}
+	cmd.Flags().IntVarP(&jobs, "jobs", "j", 10, "Number of file exports to perform simultaneously")
+	return cmd
 }
