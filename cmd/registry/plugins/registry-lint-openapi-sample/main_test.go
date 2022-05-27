@@ -29,7 +29,7 @@ func setupFakeSpec(contents string) (dirPath, specFilePath string, err error) {
 		return "", "", err
 	}
 
-	f, err := ioutil.TempFile(tempDir, "*.yaml")
+	f, err := os.CreateTemp(tempDir, "*.yaml")
 	if err != nil {
 		return "", "", err
 	}

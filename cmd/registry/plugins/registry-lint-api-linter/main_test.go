@@ -30,7 +30,7 @@ func setupFakeSpec() (path string, err error) {
 		return "", err
 	}
 
-	f, err := ioutil.TempFile(tempDir, "*.proto")
+	f, err := os.CreateTemp(tempDir, "*.proto")
 	if err != nil {
 		return "", err
 	}
