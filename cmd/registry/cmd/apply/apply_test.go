@@ -29,6 +29,8 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+const sampleDir = "testdata/sample"
+
 func TestApply(t *testing.T) {
 	project := names.Project{ProjectID: "apply-test"}
 	parent := project.String() + "/locations/global"
@@ -65,7 +67,7 @@ func TestApply(t *testing.T) {
 	// When API creation breaks we want to see something like FAIL: TestApply/Create_API or
 	// FAIL: TestApplyAPIs/Create, not FAIL: TestApply/Create_and_Export_API, or worse FAIL: TestApply.
 	{
-		const filename = "testdata/sample/apis/registry.yaml"
+		const filename = sampleDir + "/apis/registry.yaml"
 		cmd := Command()
 		cmd.SetArgs([]string{"-f", filename, "--parent", parent})
 		if err := cmd.Execute(); err != nil {
@@ -99,7 +101,7 @@ func TestApply(t *testing.T) {
 	// clear whether create or export is failing.
 	artifacts := []string{"lifecycle", "manifest", "taxonomies"}
 	for _, a := range artifacts {
-		filename := fmt.Sprintf("testdata/sample/artifacts/%s.yaml", a)
+		filename := fmt.Sprintf("%s/artifacts/%s.yaml", sampleDir, a)
 		cmd := Command()
 		cmd.SetArgs([]string{"-f", filename, "--parent", parent})
 		if err := cmd.Execute(); err != nil {
@@ -166,14 +168,13 @@ func TestApplyProject(t *testing.T) {
 	}
 	defer registryClient.Close()
 
-	const directory = "testdata/sample"
 	cmd := Command()
-	cmd.SetArgs([]string{"-f", directory, "-R", "--parent", parent})
+	cmd.SetArgs([]string{"-f", sampleDir, "-R", "--parent", parent})
 	if err := cmd.Execute(); err != nil {
 		t.Fatalf("Execute() with args %+v returned error: %s", cmd.Args, err)
 	}
 
-	filename := "testdata/sample/apis/registry.yaml"
+	filename := sampleDir + "/apis/registry.yaml"
 	expected, err := ioutil.ReadFile(filename)
 	if err != nil {
 		t.Fatalf("failed to read %s: %s", filename, err)
@@ -197,7 +198,7 @@ func TestApplyProject(t *testing.T) {
 
 	artifacts := []string{"lifecycle", "manifest", "taxonomies"}
 	for _, a := range artifacts {
-		filename := fmt.Sprintf("testdata/sample/artifacts/%s.yaml", a)
+		filename := fmt.Sprintf("%s/artifacts/%s.yaml", sampleDir, a)
 		expected, err := ioutil.ReadFile(filename)
 		if err != nil {
 			t.Fatalf("failed to read %s", filename)
