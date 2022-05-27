@@ -17,7 +17,7 @@ package patch
 import (
 	"context"
 	"io/fs"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -65,7 +65,7 @@ func (task *applyFileTask) String() string {
 
 func (task *applyFileTask) Run(ctx context.Context) error {
 	log.FromContext(ctx).Infof("Applying %s", task.path)
-	bytes, err := ioutil.ReadFile(task.path)
+	bytes, err := os.ReadFile(task.path)
 	if err != nil {
 		return err
 	}

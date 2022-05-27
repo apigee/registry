@@ -17,7 +17,6 @@ package upload
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -135,7 +134,7 @@ func uploadSpecFile(ctx context.Context, filename string, client *gapic.Registry
 	request.Name = version + "/specs/" + specID
 	_, err := client.GetApiSpec(ctx, request)
 	if err != nil { // TODO only do this for NotFound errors
-		bytes, err := ioutil.ReadFile(filename)
+		bytes, err := os.ReadFile(filename)
 		if err != nil {
 			log.FromContext(ctx).WithError(err).Debug("Failed to read file")
 		} else {

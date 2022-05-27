@@ -131,7 +131,7 @@ func applyApiSpecPatch(
 				}
 				req.ApiSpec.Contents = contents.Bytes()
 			} else {
-				body, err := ioutil.ReadFile(path)
+				body, err := os.ReadFile(path)
 				if err != nil {
 					return err
 				}

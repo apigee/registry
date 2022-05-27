@@ -201,7 +201,7 @@ func runSpectralLinter(specPath, configPath string) ([]*spectralLintResult, erro
 	_ = cmd.Run()
 
 	// Read and parse the spectral output.
-	b, err := ioutil.ReadFile(outputPath)
+	b, err := os.ReadFile(outputPath)
 	if err != nil {
 		return nil, err
 	}

@@ -16,7 +16,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net"
 	"os"
 	"os/signal"
@@ -98,7 +97,7 @@ func main() {
 	bootLogger := log.NewLogger()
 	if configPath != "" {
 		bootLogger.Infof("Loading configuration from %s", configPath)
-		raw, err := ioutil.ReadFile(configPath)
+		raw, err := os.ReadFile(configPath)
 		if err != nil {
 			bootLogger.WithError(err).Fatal("Failed to open config file")
 		}

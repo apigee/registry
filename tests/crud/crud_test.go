@@ -20,7 +20,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -53,7 +53,7 @@ func check(t *testing.T, message string, err error) {
 }
 
 func readAndGZipFile(filename string) (*bytes.Buffer, error) {
-	fileBytes, _ := ioutil.ReadFile(filename)
+	fileBytes, _ := os.ReadFile(filename)
 	var buf bytes.Buffer
 	zw, _ := gzip.NewWriterLevel(&buf, gzip.BestCompression)
 	_, err := zw.Write(fileBytes)
@@ -201,7 +201,7 @@ func TestCRUD(t *testing.T) {
 		revision = spec.GetRevisionId()
 	}
 	// Compute some common values for subsequent tests.
-	buf, err := ioutil.ReadFile(filepath.Join("testdata", "openapi.yaml"))
+	buf, err := os.ReadFile(filepath.Join("testdata", "openapi.yaml"))
 	check(t, "error reading spec", err)
 	expectedHash := hashForBytes(buf)
 	expectedContentType := "application/x.openapi;version=3.0.0"
