@@ -17,7 +17,7 @@ package core
 import (
 	"bytes"
 	"compress/gzip"
-	"io/ioutil"
+	"io"
 )
 
 // GZippedBytes compresses a slice of bytes.
@@ -41,5 +41,5 @@ func GUnzippedBytes(input []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return ioutil.ReadAll(zr)
+	return io.ReadAll(zr)
 }
