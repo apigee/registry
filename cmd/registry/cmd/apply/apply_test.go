@@ -142,9 +142,6 @@ func TestApply(t *testing.T) {
 }
 
 func TestApplyProject(t *testing.T) {
-	project := names.Project{ProjectID: "apply-project-test"}
-	parent := project.String() + "/locations/global"
-
 	ctx := context.Background()
 	adminClient, err := connection.NewAdminClient(ctx)
 	if err != nil {
@@ -152,6 +149,7 @@ func TestApplyProject(t *testing.T) {
 	}
 	defer adminClient.Close()
 
+	project := names.Project{ProjectID: "apply-project-test"}
 	if err = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{
 		Name:  project.String(),
 		Force: true,
@@ -173,7 +171,7 @@ func TestApplyProject(t *testing.T) {
 	defer registryClient.Close()
 
 	cmd := Command()
-	cmd.SetArgs([]string{"-f", sampleDir, "-R", "--parent", parent})
+	cmd.SetArgs([]string{"-f", sampleDir, "-R", "--parent", project.String() + "/locations/global"})
 	if err := cmd.Execute(); err != nil {
 		t.Fatalf("Execute() with args %+v returned error: %s", cmd.Args, err)
 	}
