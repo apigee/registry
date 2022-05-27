@@ -18,6 +18,7 @@ import (
 	"errors"
 	"io/fs"
 
+	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/cmd/registry/patch"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/log"
@@ -28,6 +29,7 @@ func Command() *cobra.Command {
 	var fileName string
 	var parent string
 	var recursive bool
+	var jobs int
 	cmd := &cobra.Command{
 		Use:   "apply",
 		Short: "Apply patches that add content to the API Registry",
@@ -38,7 +40,9 @@ func Command() *cobra.Command {
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
-			err = patch.Apply(ctx, client, fileName, parent, recursive)
+			taskQueue, wait := core.WorkerPool(ctx, jobs)
+			defer wait()
+			err = patch.Apply(ctx, client, fileName, parent, recursive, taskQueue)
 			if errors.Is(err, fs.ErrNotExist) {
 				log.FromContext(ctx).WithError(err).Fatalf("File %q doesn't exist", fileName)
 			} else if err != nil {
@@ -50,5 +54,6 @@ func Command() *cobra.Command {
 	cmd.Flags().StringVar(&parent, "parent", "", "Parent resource for the patch")
 	cmd.Flags().BoolVarP(&recursive, "recursive", "R", false,
 		"Process the directory used in -f, --file recursively. Useful when you want to manage related manifests organized within the same directory")
+	cmd.Flags().IntVarP(&jobs, "jobs", "j", 10, "Number of apply operations to perform simultaneously")
 	return cmd
 }
