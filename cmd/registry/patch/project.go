@@ -72,11 +72,11 @@ func (task *exportAPITask) String() string {
 }
 
 func (task *exportAPITask) Run(ctx context.Context) error {
-	log.FromContext(ctx).Infof("Exporting %s", task.message.Name)
 	bytes, header, err := ExportAPI(ctx, task.client, task.message)
 	if err != nil {
 		return err
 	}
+	log.FromContext(ctx).Infof("Exported %s", task.message.Name)
 	filename := fmt.Sprintf("%s/%s.yaml", task.dir, header.Metadata.Name)
 	return os.WriteFile(filename, bytes, 0644)
 }
@@ -94,14 +94,14 @@ func (task *exportArtifactTask) String() string {
 func (task *exportArtifactTask) Run(ctx context.Context) error {
 	bytes, header, err := ExportArtifact(ctx, task.client, task.message)
 	if err != nil {
-		log.FromContext(ctx).Warnf("Skipping %s: %s", task.message.Name, err)
+		log.FromContext(ctx).Warnf("Skipped %s: %s", task.message.Name, err)
 		return nil
 	}
 	if header.Kind == "Artifact" { // "Artifact" is the generic artifact type
-		log.FromContext(ctx).Warnf("Skipping %s", task.message.Name)
+		log.FromContext(ctx).Warnf("Skipped %s", task.message.Name)
 		return nil
 	}
-	log.FromContext(ctx).Infof("Exporting %s", task.message.Name)
+	log.FromContext(ctx).Infof("Exported %s", task.message.Name)
 	filename := fmt.Sprintf("%s/%s.yaml", task.dir, header.Metadata.Name)
 	return os.WriteFile(filename, bytes, fs.ModePerm)
 }
