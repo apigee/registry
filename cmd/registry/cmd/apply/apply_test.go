@@ -17,7 +17,7 @@ package apply
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/apigee/registry/cmd/registry/patch"
@@ -73,16 +73,16 @@ func TestApply(t *testing.T) {
 		if err := cmd.Execute(); err != nil {
 			t.Fatalf("Execute() with args %+v returned error: %s", cmd.Args, err)
 		}
-		expected, err := ioutil.ReadFile(filename)
+		expected, err := os.ReadFile(filename)
 		if err != nil {
-			t.Fatalf("failed to read %s: %s", filename, err)
+			t.Fatalf("Failed to read API YAML: %s", err)
 		}
 
 		got, err := registryClient.GetApi(ctx, &rpc.GetApiRequest{
 			Name: project.Api("registry").String(),
 		})
 		if err != nil {
-			t.Fatalf("failed to get api: %s", err)
+			t.Fatalf("Failed to get api: %s", err)
 		}
 
 		actual, _, err := patch.ExportAPI(ctx, registryClient, got)
@@ -107,16 +107,16 @@ func TestApply(t *testing.T) {
 		if err := cmd.Execute(); err != nil {
 			t.Fatalf("Execute() with args %+v returned error: %s", cmd.Args, err)
 		}
-		expected, err := ioutil.ReadFile(filename)
+		expected, err := os.ReadFile(filename)
 		if err != nil {
-			t.Fatalf("failed to read %s", filename)
+			t.Fatalf("Failed to read artifact YAML %s", err)
 		}
 
 		message, err := registryClient.GetArtifact(ctx, &rpc.GetArtifactRequest{
 			Name: project.Artifact(a).String(),
 		})
 		if err != nil {
-			t.Fatalf("failed to get artifact: %s", err)
+			t.Fatalf("Failed to get artifact: %s", err)
 		}
 
 		actual, _, err := patch.ExportArtifact(ctx, registryClient, message)
@@ -175,9 +175,9 @@ func TestApplyProject(t *testing.T) {
 	}
 
 	filename := sampleDir + "/apis/registry.yaml"
-	expected, err := ioutil.ReadFile(filename)
+	expected, err := os.ReadFile(filename)
 	if err != nil {
-		t.Fatalf("failed to read %s: %s", filename, err)
+		t.Fatalf("Failed to read API YAML: %s", err)
 	}
 
 	got, err := registryClient.GetApi(ctx, &rpc.GetApiRequest{
@@ -199,16 +199,16 @@ func TestApplyProject(t *testing.T) {
 	artifacts := []string{"lifecycle", "manifest", "taxonomies"}
 	for _, a := range artifacts {
 		filename := fmt.Sprintf("%s/artifacts/%s.yaml", sampleDir, a)
-		expected, err := ioutil.ReadFile(filename)
+		expected, err := os.ReadFile(filename)
 		if err != nil {
-			t.Fatalf("failed to read %s", filename)
+			t.Fatalf("Failed to read artifact YAML %s", err)
 		}
 
 		message, err := registryClient.GetArtifact(ctx, &rpc.GetArtifactRequest{
 			Name: project.Artifact(a).String(),
 		})
 		if err != nil {
-			t.Fatalf("failed to get artifact: %s", err)
+			t.Fatalf("Failed to get artifact: %s", err)
 		}
 
 		actual, _, err := patch.ExportArtifact(ctx, registryClient, message)
