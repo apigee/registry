@@ -34,7 +34,7 @@ func NewLintFromOpenAPI(name string, spec []byte, linter string) (*rpc.Lint, err
 	// whenever we finish, delete the tmp directory
 	defer os.RemoveAll(root)
 	// write the file to the temp directory
-	err = ioutil.WriteFile(filepath.Join(root, name), spec, 0644)
+	err = os.WriteFile(filepath.Join(root, name), spec, 0644)
 	if err != nil {
 		return nil, err
 	}

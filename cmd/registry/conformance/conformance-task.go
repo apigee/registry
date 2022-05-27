@@ -105,7 +105,7 @@ func (task *ComputeConformanceTask) Run(ctx context.Context) error {
 		_, err = core.UnzipArchiveToPath(data, root)
 	} else {
 		// Write the file to the temporary directory.
-		err = ioutil.WriteFile(filepath.Join(root, name), data, 0644)
+		err = os.WriteFile(filepath.Join(root, name), data, 0644)
 	}
 	if err != nil {
 		return err

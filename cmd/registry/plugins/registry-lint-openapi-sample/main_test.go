@@ -34,7 +34,7 @@ func setupFakeSpec(contents string) (dirPath, specFilePath string, err error) {
 		return "", "", err
 	}
 
-	err = ioutil.WriteFile(f.Name(), []byte(contents), 0644)
+	err = os.WriteFile(f.Name(), []byte(contents), 0644)
 	if err != nil {
 		return "", "", err
 	}

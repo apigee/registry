@@ -145,7 +145,7 @@ func (linter *spectralLinterRunner) createConfigurationFile(root string, ruleIds
 
 	// Write the configuration to the temporary directory.
 	configPath := filepath.Join(root, "spectral.json")
-	err = ioutil.WriteFile(configPath, file, 0644)
+	err = os.WriteFile(configPath, file, 0644)
 	if err != nil {
 		return "", err
 	}
