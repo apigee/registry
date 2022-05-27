@@ -16,7 +16,6 @@ package main
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -72,7 +71,7 @@ func (linter *spectralLinterRunner) RunImpl(
 	lintFiles := make([]*rpc.LintFile, 0)
 
 	// Create a temporary directory to store the configuration.
-	root, err := ioutil.TempDir("", "spectral-config-")
+	root, err := os.MkdirTemp("", "spectral-config-")
 	if err != nil {
 		return nil, err
 	}
@@ -180,7 +179,7 @@ func getLintProblemsFromSpectralResults(
 
 func runSpectralLinter(specPath, configPath string) ([]*spectralLintResult, error) {
 	// Create a temporary destination directory to store the output.
-	root, err := ioutil.TempDir("", "spectral-output-")
+	root, err := os.MkdirTemp("", "spectral-output-")
 	if err != nil {
 		return nil, err
 	}
