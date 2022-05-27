@@ -81,8 +81,10 @@ func TestApply(t *testing.T) {
 		got, err := registryClient.GetApi(ctx, &rpc.GetApiRequest{
 			Name: project.Api("registry").String(),
 		})
-		if err != nil {
-			t.Fatalf("Failed to get api: %s", err)
+		if status.Code(err) == codes.NotFound {
+			t.Fatalf("Expected API doesn't exist: %s", err)
+		} else if err != nil {
+			t.Fatalf("Failed to verify API existence: %s", err)
 		}
 
 		actual, _, err := patch.ExportAPI(ctx, registryClient, got)
@@ -115,8 +117,10 @@ func TestApply(t *testing.T) {
 		message, err := registryClient.GetArtifact(ctx, &rpc.GetArtifactRequest{
 			Name: project.Artifact(a).String(),
 		})
-		if err != nil {
-			t.Fatalf("Failed to get artifact: %s", err)
+		if status.Code(err) == codes.NotFound {
+			t.Fatalf("Expected artifact doesn't exist: %s", err)
+		} else if err != nil {
+			t.Fatalf("Failed to verify artifact existence: %s", err)
 		}
 
 		actual, _, err := patch.ExportArtifact(ctx, registryClient, message)
@@ -207,8 +211,10 @@ func TestApplyProject(t *testing.T) {
 		message, err := registryClient.GetArtifact(ctx, &rpc.GetArtifactRequest{
 			Name: project.Artifact(a).String(),
 		})
-		if err != nil {
-			t.Fatalf("Failed to get artifact: %s", err)
+		if status.Code(err) == codes.NotFound {
+			t.Fatalf("Expected artifact doesn't exist: %s", err)
+		} else if err != nil {
+			t.Fatalf("Failed to verify artifact existence: %s", err)
 		}
 
 		actual, _, err := patch.ExportArtifact(ctx, registryClient, message)
