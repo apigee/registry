@@ -16,7 +16,6 @@ package core
 
 import (
 	"errors"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -26,7 +25,7 @@ import (
 // NewLintFromOpenAPI runs the API linter and returns the results.
 func NewLintFromOpenAPI(name string, spec []byte, linter string) (*rpc.Lint, error) {
 	// create a tmp directory
-	root, err := ioutil.TempDir("", "registry-openapi-")
+	root, err := os.MkdirTemp("", "registry-openapi-")
 	if err != nil {
 		return nil, err
 	}
@@ -34,7 +33,7 @@ func NewLintFromOpenAPI(name string, spec []byte, linter string) (*rpc.Lint, err
 	// whenever we finish, delete the tmp directory
 	defer os.RemoveAll(root)
 	// write the file to the temp directory
-	err = ioutil.WriteFile(filepath.Join(root, name), spec, 0644)
+	err = os.WriteFile(filepath.Join(root, name), spec, 0644)
 	if err != nil {
 		return nil, err
 	}

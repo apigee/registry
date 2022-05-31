@@ -16,7 +16,6 @@ package main
 
 import (
 	"errors"
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -25,12 +24,12 @@ import (
 )
 
 func setupFakeSpec() (path string, err error) {
-	tempDir, err := ioutil.TempDir("", "")
+	tempDir, err := os.MkdirTemp("", "")
 	if err != nil {
 		return "", err
 	}
 
-	f, err := ioutil.TempFile(tempDir, "*.proto")
+	f, err := os.CreateTemp(tempDir, "*.proto")
 	if err != nil {
 		return "", err
 	}

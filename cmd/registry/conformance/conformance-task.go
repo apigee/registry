@@ -18,7 +18,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -94,7 +93,7 @@ func (task *ComputeConformanceTask) Run(ctx context.Context) error {
 		return err
 	}
 	// Put the spec in a temporary directory.
-	root, err := ioutil.TempDir("", "registry-spec-")
+	root, err := os.MkdirTemp("", "registry-spec-")
 	if err != nil {
 		return err
 	}
@@ -105,7 +104,7 @@ func (task *ComputeConformanceTask) Run(ctx context.Context) error {
 		_, err = core.UnzipArchiveToPath(data, root)
 	} else {
 		// Write the file to the temporary directory.
-		err = ioutil.WriteFile(filepath.Join(root, name), data, 0644)
+		err = os.WriteFile(filepath.Join(root, name), data, 0644)
 	}
 	if err != nil {
 		return err

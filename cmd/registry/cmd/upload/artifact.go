@@ -17,7 +17,7 @@ package upload
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"github.com/apigee/registry/cmd/registry/controller"
 	"github.com/apigee/registry/cmd/registry/core"
@@ -64,7 +64,7 @@ func artifactCommand() *cobra.Command {
 }
 
 func buildArtifact(ctx context.Context, parent string, filename string) (*rpc.Artifact, error) {
-	yamlBytes, err := ioutil.ReadFile(filename)
+	yamlBytes, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}

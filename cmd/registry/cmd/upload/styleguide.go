@@ -16,7 +16,7 @@ package upload
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
@@ -29,7 +29,7 @@ import (
 )
 
 func readStyleGuideProto(filename string) (*rpc.StyleGuide, error) {
-	yamlBytes, err := ioutil.ReadFile(filename)
+	yamlBytes, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
