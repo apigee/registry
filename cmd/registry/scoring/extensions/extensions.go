@@ -8,12 +8,12 @@ import (
 )
 
 func Extensions() cel.EnvOption {
-	return cel.Lib(ExtensionLib{})
+	return cel.Lib(extensionLib{})
 }
 
-type ExtensionLib struct{}
+type extensionLib struct{}
 
-func (ExtensionLib) CompileOptions() []cel.EnvOption {
+func (extensionLib) CompileOptions() []cel.EnvOption {
 	return []cel.EnvOption{
 		cel.Declarations(
 			decls.NewFunction("sum",
@@ -25,7 +25,7 @@ func (ExtensionLib) CompileOptions() []cel.EnvOption {
 	}
 }
 
-func (ExtensionLib) ProgramOptions() []cel.ProgramOption {
+func (extensionLib) ProgramOptions() []cel.ProgramOption {
 	return []cel.ProgramOption{
 		cel.Functions(
 			&functions.Overload{
