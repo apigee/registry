@@ -15,7 +15,7 @@
 package diff
 
 import (
-	"io/ioutil"
+	"os"
 	"reflect"
 	"testing"
 
@@ -103,11 +103,11 @@ func TestDiffProtoStruct(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			baseYaml, err := ioutil.ReadFile(test.baseSpec)
+			baseYaml, err := os.ReadFile(test.baseSpec)
 			if err != nil {
 				t.Fatalf("Failed to get base spec yaml: %s", err)
 			}
-			revisionYaml, err := ioutil.ReadFile(test.revisionSpec)
+			revisionYaml, err := os.ReadFile(test.revisionSpec)
 			if err != nil {
 				t.Fatalf("Failed to get revision spec yaml: %s", err)
 			}

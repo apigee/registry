@@ -18,7 +18,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -35,7 +35,7 @@ import (
 
 func readAndGZipFile(t *testing.T, filename string) (*bytes.Buffer, error) {
 	t.Helper()
-	fileBytes, _ := ioutil.ReadFile(filename)
+	fileBytes, _ := os.ReadFile(filename)
 	var buf bytes.Buffer
 	zw, _ := gzip.NewWriterLevel(&buf, gzip.BestCompression)
 	_, err := zw.Write(fileBytes)

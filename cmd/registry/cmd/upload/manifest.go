@@ -16,7 +16,7 @@ package upload
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"github.com/apigee/registry/cmd/registry/controller"
 	"github.com/apigee/registry/cmd/registry/core"
@@ -30,7 +30,7 @@ import (
 )
 
 func readManifestProto(filename string) (*rpc.Manifest, error) {
-	yamlBytes, err := ioutil.ReadFile(filename)
+	yamlBytes, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}

@@ -17,7 +17,7 @@ package patch
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -96,7 +96,7 @@ func applyApiSpecPatch(
 			if err != nil {
 				return err
 			}
-			body, err := ioutil.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
 			if err != nil {
 				return err
 			}
@@ -131,7 +131,7 @@ func applyApiSpecPatch(
 				}
 				req.ApiSpec.Contents = contents.Bytes()
 			} else {
-				body, err := ioutil.ReadFile(path)
+				body, err := os.ReadFile(path)
 				if err != nil {
 					return err
 				}

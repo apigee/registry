@@ -20,7 +20,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -52,7 +52,7 @@ func check(t *testing.T, message string, err error) {
 }
 
 func readAndGZipFile(filename string) (*bytes.Buffer, error) {
-	fileBytes, _ := ioutil.ReadFile(filename)
+	fileBytes, _ := os.ReadFile(filename)
 	var buf bytes.Buffer
 	zw, _ := gzip.NewWriterLevel(&buf, gzip.BestCompression)
 	_, err := zw.Write(fileBytes)
@@ -260,7 +260,7 @@ func TestDemo(t *testing.T) {
 		check(t, "error getting spec %s", err)
 		// compute the size and hash of the original file
 		fileName := fmt.Sprintf("openapi.yaml@r%d", len(revisionIDs)-i-1)
-		fileBytes, err := ioutil.ReadFile(filepath.Join("testdata", fileName))
+		fileBytes, err := os.ReadFile(filepath.Join("testdata", fileName))
 		check(t, "error reading spec", err)
 		if int(spec.GetSizeBytes()) != len(fileBytes) {
 			t.Errorf("size mismatch %d != %d (%s)", spec.GetSizeBytes(), len(fileBytes), fileName)

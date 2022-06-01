@@ -20,7 +20,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 
 	"github.com/apigee/registry/cmd/registry/core"
@@ -221,7 +220,7 @@ func (t uploadSpecTask) Run(ctx context.Context) error {
 		return fmt.Errorf("failed to ensure API version exists: %s", err)
 	}
 
-	contents, err := ioutil.ReadFile(t.filepath)
+	contents, err := os.ReadFile(t.filepath)
 	if err != nil {
 		return err
 	}

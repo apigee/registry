@@ -15,7 +15,7 @@
 package core
 
 import (
-	"io/ioutil"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
@@ -34,7 +34,7 @@ func lintFileForOpenAPIWithGnostic(path string, root string) (*rpc.LintFile, err
 	if err != nil {
 		return nil, err
 	}
-	b, err := ioutil.ReadFile(filepath.Join(root, "/linter.pb"))
+	b, err := os.ReadFile(filepath.Join(root, "/linter.pb"))
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +78,7 @@ type nodeFinder struct {
 }
 
 func newNodeFinder(filename string) (*nodeFinder, error) {
-	data, _ := ioutil.ReadFile(filename)
+	data, _ := os.ReadFile(filename)
 	var node yaml.Node
 	if err := yaml.Unmarshal(data, &node); err != nil {
 		return nil, err

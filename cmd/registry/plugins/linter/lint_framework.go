@@ -16,7 +16,7 @@ package linter
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 
 	"github.com/apigee/registry/rpc"
@@ -46,7 +46,7 @@ func respondAndExit(response *rpc.LinterResponse) {
 // GetRequest constructs a LinterRequest object from standard input.
 func getRequest() (*rpc.LinterRequest, error) {
 	// Read from stdin.
-	pluginData, err := ioutil.ReadAll(os.Stdin)
+	pluginData, err := io.ReadAll(os.Stdin)
 	if err != nil {
 		return nil, err
 	}

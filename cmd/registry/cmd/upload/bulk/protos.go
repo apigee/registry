@@ -18,7 +18,6 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -103,7 +102,7 @@ func scanDirectoryForProtos(client connection.Client, projectID, baseURI, root s
 			return nil
 		}
 
-		bytes, err := ioutil.ReadFile(filepath)
+		bytes, err := os.ReadFile(filepath)
 		if err != nil {
 			return err
 		}

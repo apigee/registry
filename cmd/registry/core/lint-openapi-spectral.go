@@ -16,7 +16,7 @@ package core
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	"os/exec"
 	"path/filepath"
 
@@ -47,7 +47,7 @@ func lintFileForOpenAPIWithSpectral(path string, root string) (*rpc.LintFile, er
 	cmd.Dir = root
 	// ignore errors from Spectral because Spectral returns an error result when APIs have errors.
 	_ = cmd.Run()
-	b, err := ioutil.ReadFile(filepath.Join(root, "/spectral-lint.json"))
+	b, err := os.ReadFile(filepath.Join(root, "/spectral-lint.json"))
 	if err != nil {
 		return nil, err
 	}
