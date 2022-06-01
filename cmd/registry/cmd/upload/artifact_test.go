@@ -152,9 +152,9 @@ func TestScoreDefinitionArtifactUpload(t *testing.T) {
 				Formula: &rpc.ScoreDefinition_ScoreFormula{
 					ScoreFormula: &rpc.ScoreFormula{
 						Artifact: &rpc.ResourcePattern{
-							Pattern: "$resource.spec/artifacts/conformance-report",
+							Pattern: "$resource.spec/artifacts/conformance-apihub-styleguide",
 						},
-						ScoreExpression: "size(conformance.GuidelineReportGroups[2].RuleReportGroups[1])",
+						ScoreExpression: "sum(guidelineReportGroups[2].guidelineReports.map(r, has(r.ruleReportGroups[1].ruleReports) ? size(r.ruleReportGroups[1].ruleReports) : 0))",
 					},
 				},
 				Type: &rpc.ScoreDefinition_Integer{

@@ -19,6 +19,7 @@ import (
 	"fmt"
 
 	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/cmd/registry/scoring/extensions"
 	"github.com/apigee/registry/rpc"
 	"github.com/google/cel-go/cel"
 	metrics "github.com/google/gnostic/metrics"
@@ -28,7 +29,7 @@ import (
 
 // https://github.com/google/cel-spec/blob/master/doc/langdef.md#dynamic-values
 func evaluateScoreExpression(expression string, artifactMap map[string]interface{}) (interface{}, error) {
-	env, err := cel.NewEnv()
+	env, err := cel.NewEnv(extensions.Extensions())
 	if err != nil {
 		return nil, fmt.Errorf("error creating CEL environment: %s", err)
 	}
