@@ -1,8 +1,8 @@
 # registry
 
-`registry` is a line interface for the Registry API that provides a mixture of
-high-level features and automatically-generated subcommands that call methods
-of the Registry API.
+`registry` is a command-line tool for working with the Registry API that
+provides a mixture of high-level capabilities and automatically-generated
+subcommands that call methods of the Registry API.
 
 ## Usage
 
