@@ -18,8 +18,6 @@ import (
 	"context"
 
 	"github.com/apigee/registry/server/registry/internal/storage/models"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
 )
 
@@ -92,7 +90,7 @@ func (c *Client) save(ctx context.Context, v interface{}) error {
 		return nil
 	})
 	if err != nil {
-		return status.Error(codes.Internal, err.Error())
+		return grpcErrorForDbError(err)
 	}
 
 	return nil
