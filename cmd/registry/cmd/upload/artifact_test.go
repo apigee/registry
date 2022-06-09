@@ -57,6 +57,73 @@ func SetUpProject(ctx context.Context, t *testing.T, project string) {
 	}
 }
 
+func TestApiSpecExtensionListArtifactUpload(t *testing.T) {
+	project := "upload-manifest-artifact-demo"
+
+	ctx := context.Background()
+
+	SetUpProject(ctx, t, project)
+
+	client, err := connection.NewClient(ctx)
+	if err != nil {
+		t.Fatalf("Setup: Failed to create client: %s", err)
+	}
+
+	cmd := Command()
+	args := []string{"artifact", filepath.Join("testdata", "apispec-extension-list.yaml"), "--parent", fmt.Sprintf("projects/%s/locations/global", project)}
+	cmd.SetArgs(args)
+	if err = cmd.Execute(); err != nil {
+		t.Fatalf("Execute() with args %v returned error: %s", args, err)
+	}
+
+	req := &rpc.GetArtifactContentsRequest{
+		Name: "projects/" + project + "/locations/global/artifacts/test-extension-list",
+	}
+
+	extensions := &rpc.ApiSpecExtensionList{}
+	body, err := client.GetArtifactContents(ctx, req)
+	if err != nil {
+		t.Fatalf("GetArtifactContents() returned error: %s", err)
+	}
+	contents := body.GetData()
+	err = proto.Unmarshal(contents, extensions)
+	if err != nil {
+		t.Fatalf("proto.Unmarshal() returned error: %s", err)
+	}
+
+	wantExtensions := &rpc.ApiSpecExtensionList{
+		Id:          "test-extension-list",
+		Kind:        "ApiSpecExtensionList",
+		DisplayName: "Test Extension List",
+		Description: "Artifact to test extension upload",
+		Extensions: []*rpc.ApiSpecExtensionList_ApiSpecExtension{
+			{
+				Id:          "test-extension-1",
+				DisplayName: "Test Extension 1",
+				Description: "Part of test artifact",
+				Filter:      "mime_type.contains('openapi')",
+				UriPattern:  "https://some/url/1",
+			},
+			{
+				Id:          "test-extension-2",
+				DisplayName: "Test Extension 2",
+				Description: "Part of test artifact",
+				Filter:      "mime_type.contains('openapi')",
+				UriPattern:  "https://some/url/2",
+			},
+		},
+	}
+
+	// Verify the manifest definition is correct
+	opts := cmp.Options{
+		protocmp.Transform(),
+	}
+
+	if diff := cmp.Diff(wantExtensions, extensions, opts); diff != "" {
+		t.Errorf("GetArtifactContents returned unexpected diff (-want +got):\n%s", diff)
+	}
+}
+
 func TestManifestArtifactUpload(t *testing.T) {
 	tests := []struct {
 		desc     string
