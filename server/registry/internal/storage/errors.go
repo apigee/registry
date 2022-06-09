@@ -20,8 +20,8 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// grpcErrorForDbError converts recognized database error codes to grpc error codes.
-func grpcErrorForDbError(err error) error {
+// grpcErrorForDBError converts recognized database error codes to grpc error codes.
+func grpcErrorForDBError(err error) error {
 	switch v := err.(type) {
 	case *pq.Error: // Postgres codes are from https://www.postgresql.org/docs/current/errcodes-appendix.html
 		if v.Code == "23505" { // unique_violation

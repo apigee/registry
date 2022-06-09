@@ -90,7 +90,7 @@ func (c *Client) save(ctx context.Context, v interface{}) error {
 		return nil
 	})
 	if err != nil {
-		return grpcErrorForDbError(err)
+		return grpcErrorForDBError(err)
 	}
 
 	return nil
