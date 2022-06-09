@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
@@ -28,6 +29,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/durationpb"
 )
 
 const gzipOpenAPIv3 = "application/x.openapi+gzip;version=3.0.0"
@@ -946,6 +948,164 @@ func TestMultipleEntitiesArtifacts(t *testing.T) {
 							},
 						},
 						Action: "registry compute conformance $resource.spec",
+					},
+				},
+			}
+			actions := ProcessManifest(ctx, registryClient, projectID, manifest)
+
+			if diff := cmp.Diff(test.want, actions, sortActions); diff != "" {
+				t.Errorf("ProcessManifest(%+v) returned unexpected diff (-want +got):\n%s", manifest, diff)
+			}
+
+			deleteProject(ctx, adminClient, t, "controller-test")
+		})
+	}
+}
+
+func TestRefreshArtifacts(t *testing.T) {
+	tests := []struct {
+		desc string
+		seed []seeder.RegistryResource
+		want []*Action
+		wait time.Duration
+	}{
+		{
+			desc: "non-existing artifacts",
+			seed: []seeder.RegistryResource{
+				&rpc.ApiSpec{
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+				},
+				&rpc.ApiSpec{
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
+				},
+				&rpc.ApiSpec{
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
+				},
+			},
+			want: []*Action{
+				{
+					Command:           "registry compute score projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-receipt",
+					RequiresReceipt:   true,
+				},
+				{
+					Command:           "registry compute score projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/score-receipt",
+					RequiresReceipt:   true,
+				},
+				{
+					Command:           "registry compute score projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/score-receipt",
+					RequiresReceipt:   true,
+				},
+			},
+			wait: 0,
+		},
+		{
+			desc: "existing valid artifacts",
+			seed: []seeder.RegistryResource{
+				&rpc.Artifact{
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-receipt",
+				},
+				&rpc.Artifact{
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/score-receipt",
+				},
+				&rpc.Artifact{
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/score-receipt",
+				},
+			},
+			want: nil,
+			wait: 0,
+		},
+		{
+			desc: "existing invalid artifacts",
+			seed: []seeder.RegistryResource{
+				&rpc.Artifact{
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-receipt",
+				},
+				&rpc.Artifact{
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/score-receipt",
+				},
+				&rpc.Artifact{
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/score-receipt",
+				},
+			},
+			want: []*Action{
+				{
+					Command:           "registry compute score projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-receipt",
+					RequiresReceipt:   true,
+				},
+				{
+					Command:           "registry compute score projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/score-receipt",
+					RequiresReceipt:   true,
+				},
+				{
+					Command:           "registry compute score projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/score-receipt",
+					RequiresReceipt:   true,
+				},
+			},
+			wait: 5,
+		},
+		{
+			desc: "existing valid artifacts",
+			seed: []seeder.RegistryResource{
+				&rpc.Artifact{
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-receipt",
+				},
+				&rpc.Artifact{
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/score-receipt",
+				},
+				&rpc.Artifact{
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/score-receipt",
+				},
+			},
+			want: nil,
+		},
+	}
+
+	const projectID = "controller-test"
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			ctx := context.Background()
+			registryClient, err := connection.NewClient(ctx)
+			if err != nil {
+				t.Fatalf("Failed to create client: %+v", err)
+			}
+			t.Cleanup(func() { registryClient.Close() })
+
+			adminClient, err := connection.NewAdminClient(ctx)
+			if err != nil {
+				t.Fatalf("Failed to create client: %+v", err)
+			}
+			t.Cleanup(func() { adminClient.Close() })
+
+			deleteProject(ctx, adminClient, t, "controller-test")
+			t.Cleanup(func() { deleteProject(ctx, adminClient, t, "controller-test") })
+
+			client := seeder.Client{
+				RegistryClient: registryClient,
+				AdminClient:    adminClient,
+			}
+
+			if err := seeder.SeedRegistry(ctx, client, test.seed...); err != nil {
+				t.Fatalf("Setup: failed to seed registry: %s", err)
+			}
+
+			time.Sleep(test.wait * time.Second)
+
+			manifest := &rpc.Manifest{
+				Id: "controller-test",
+				GeneratedResources: []*rpc.GeneratedResource{
+					{
+						Pattern: "apis/-/versions/-/specs/-/artifacts/score-receipt",
+						Receipt: true,
+						Refresh: &durationpb.Duration{
+							Seconds: 2,
+						},
+						Action: "registry compute score $resource.spec",
 					},
 				},
 			}
