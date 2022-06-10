@@ -1,4 +1,7 @@
 [![Go Actions Status](https://github.com/apigee/registry/workflows/Go/badge.svg)](https://github.com/apigee/registry/actions)
+[![Go Report Card](https://goreportcard.com/badge/github.com/apigee/registry)](https://goreportcard.com/report/github.com/apigee/registry)
+[![codecov.io](https://codecov.io/github/apigee/registry/coverage.svg)](https://codecov.io/github/apigee/registry)
+[![In Solidarity](https://github.com/jpoehnelt/in-solidarity-bot/raw/main/static/badge-flat.png)](https://github.com/apps/in-solidarity)
 
 # Registry API Core Implementation
 
