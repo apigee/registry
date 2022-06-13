@@ -24,7 +24,7 @@ import (
 	"github.com/tufin/oasdiff/diff"
 )
 
-// change repersents one change in the diff.
+// change represents one change in the diff.
 type change struct {
 	fieldPath  stack
 	changeType string

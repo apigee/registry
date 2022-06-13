@@ -69,7 +69,7 @@ if grep --quiet APG_PROVISIONING "${PROVISIONING_SERVICE}"; then
 fi
 
 # Format the files with significant patches.
-gofmt -w ${REGISTRY_SERVICE} ${ADMIN_SERVICE} ${PROVISIONING_SERVICE}
+gofmt -s -w ${REGISTRY_SERVICE} ${ADMIN_SERVICE} ${PROVISIONING_SERVICE}
 
 # Remove all the sed backup files.
 rm ${GENERATED}/*.bak
