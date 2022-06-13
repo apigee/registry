@@ -999,7 +999,6 @@ func TestRefreshArtifacts(t *testing.T) {
 					RequiresReceipt:   true,
 				},
 			},
-			wait: 0,
 		},
 		{
 			desc: "existing valid artifacts",
@@ -1015,7 +1014,6 @@ func TestRefreshArtifacts(t *testing.T) {
 				},
 			},
 			want: nil,
-			wait: 0,
 		},
 		{
 			desc: "existing invalid artifacts",
