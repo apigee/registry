@@ -17,6 +17,7 @@ package patch
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -171,6 +172,11 @@ func applyArtifactPatch(ctx context.Context, client connection.Client, content *
 	if err != nil {
 		return err
 	}
+	// Populate Id and Kind fields in the contents of the artifact
+	j, err = populateIdAndKind(j, content.Kind, content.Metadata.Name)
+	if err != nil {
+		return err
+	}
 	// Unmarshal the JSON serialization into the message struct.
 	var m proto.Message
 	m, err = protoMessageForKind(content.Kind)
@@ -204,6 +210,24 @@ func applyArtifactPatch(ctx context.Context, client connection.Client, content *
 		_, err = client.ReplaceArtifact(ctx, req)
 	}
 	return err
+}
+
+// populateIdAndKind inserts the "id" and "kind" fields in the supplied json bytes.
+func populateIdAndKind(bytes []byte, kind, id string) ([]byte, error) {
+	var jsonData map[string]interface{}
+	err := json.Unmarshal(bytes, &jsonData)
+	if err != nil {
+		return nil, err
+	}
+	jsonData["id"] = id
+	jsonData["kind"] = kind
+
+	rBytes, err := json.Marshal(jsonData)
+	if err != nil {
+		return nil, err
+	}
+
+	return rBytes, nil
 }
 
 // kindForMimeType returns the message name to be used as the "kind" of the artifact.
