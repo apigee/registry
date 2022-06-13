@@ -1,0 +1,15 @@
+id: test-extension-list
+kind: "ApiSpecExtensionList"
+display_name: "Test Extension List"
+description: "Artifact to test extension upload"
+extensions:
+- id: test-extension-1
+  display_name: "Test Extension 1"
+  description: "Part of test artifact"
+  filter: mime_type.contains('openapi')
+  uri_pattern: "https://some/url/1"
+- id: test-extension-2
+  display_name: "Test Extension 2"
+  description: "Part of test artifact"
+  filter: mime_type.contains('openapi')
+  uri_pattern: "https://some/url/2"
