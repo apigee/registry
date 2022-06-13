@@ -249,6 +249,7 @@ type messageFactory func() proto.Message
 // artifactMessageTypes is the single source of truth for artifact types that can be represented in YAML.
 var artifactMessageTypes map[string]messageFactory = map[string]messageFactory{
 	"google.cloud.apigeeregistry.applications.v1alpha1.StyleGuide": func() proto.Message { return new(rpc.StyleGuide) },
+	"google.cloud.apigeeregistry.v1.apihub.ApiSpecExtensionList":   func() proto.Message { return new(rpc.ApiSpecExtensionList) },
 	"google.cloud.apigeeregistry.v1.apihub.DisplaySettings":        func() proto.Message { return new(rpc.DisplaySettings) },
 	"google.cloud.apigeeregistry.v1.apihub.Lifecycle":              func() proto.Message { return new(rpc.Lifecycle) },
 	"google.cloud.apigeeregistry.v1.apihub.ReferenceList":          func() proto.Message { return new(rpc.ReferenceList) },

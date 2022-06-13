@@ -83,6 +83,8 @@ func buildArtifact(ctx context.Context, parent string, filename string) (*rpc.Ar
 	jsonBytes, _ := yaml.YAMLToJSON(yamlBytes) // to use protojson.Unmarshal()
 	var artifact *rpc.Artifact
 	switch header.Kind {
+	case "ApiSpecExtensionList":
+		artifact, err = buildApiSpecExtensionListArtifact(jsonBytes)
 	case "DisplaySettings":
 		artifact, err = buildDisplaySettingsArtifact(jsonBytes)
 	case "Lifecycle":
@@ -111,6 +113,21 @@ func buildArtifact(ctx context.Context, parent string, filename string) (*rpc.Ar
 	// set the artifact name before returning
 	artifact.Name = fmt.Sprintf("%s/artifacts/%s", parent, header.Id)
 	return artifact, nil
+}
+
+func buildApiSpecExtensionListArtifact(jsonBytes []byte) (*rpc.Artifact, error) {
+	m := &rpc.ApiSpecExtensionList{}
+	if err := protojson.Unmarshal(jsonBytes, m); err != nil {
+		return nil, err
+	}
+	artifactBytes, err := proto.Marshal(m)
+	if err != nil {
+		return nil, err
+	}
+	return &rpc.Artifact{
+		Contents: artifactBytes,
+		MimeType: patch.MimeTypeForKind("ApiSpecExtensionList"),
+	}, nil
 }
 
 func buildDisplaySettingsArtifact(jsonBytes []byte) (*rpc.Artifact, error) {
