@@ -212,7 +212,7 @@ func applyArtifactPatch(ctx context.Context, client connection.Client, content *
 	return err
 }
 
-// populateIdAndKind inserts the "id" and "kind" in the supplied json bytes
+// populateIdAndKind inserts the "id" and "kind" fields in the supplied json bytes.
 func populateIdAndKind(bytes []byte, kind, id string) ([]byte, error) {
 	var jsonData map[string]interface{}
 	err := json.Unmarshal(bytes, &jsonData)
