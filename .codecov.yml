@@ -1,0 +1,9 @@
+coverage:
+  precision: 2
+  round: down
+  range: 75..90  # yellow range
+  ignore:
+    - "cmd/registry/cmd/rpc/generated"
+    - "gapic"
+    - "rpc"
+    - "server/registry/test"
