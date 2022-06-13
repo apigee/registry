@@ -42,14 +42,14 @@ var newAdminClientHook clientHook
 
 // AdminCallOptions contains the retry settings for each method of AdminClient.
 type AdminCallOptions struct {
-	GetStatus []gax.CallOption
-	GetStorage []gax.CallOption
+	GetStatus       []gax.CallOption
+	GetStorage      []gax.CallOption
 	MigrateDatabase []gax.CallOption
-	ListProjects []gax.CallOption
-	GetProject []gax.CallOption
-	CreateProject []gax.CallOption
-	UpdateProject []gax.CallOption
-	DeleteProject []gax.CallOption
+	ListProjects    []gax.CallOption
+	GetProject      []gax.CallOption
+	CreateProject   []gax.CallOption
+	UpdateProject   []gax.CallOption
+	DeleteProject   []gax.CallOption
 }
 
 func defaultAdminGRPCClientOptions() []option.ClientOption {
@@ -60,28 +60,20 @@ func defaultAdminGRPCClientOptions() []option.ClientOption {
 		internaloption.WithDefaultScopes(DefaultAuthScopes()...),
 		internaloption.EnableJwtWithScope(),
 		option.WithGRPCDialOption(grpc.WithDefaultCallOptions(
-		grpc.MaxCallRecvMsgSize(math.MaxInt32))),
+			grpc.MaxCallRecvMsgSize(math.MaxInt32))),
 	}
 }
 
 func defaultAdminCallOptions() *AdminCallOptions {
 	return &AdminCallOptions{
-		GetStatus: []gax.CallOption{
-		},
-		GetStorage: []gax.CallOption{
-		},
-		MigrateDatabase: []gax.CallOption{
-		},
-		ListProjects: []gax.CallOption{
-		},
-		GetProject: []gax.CallOption{
-		},
-		CreateProject: []gax.CallOption{
-		},
-		UpdateProject: []gax.CallOption{
-		},
-		DeleteProject: []gax.CallOption{
-		},
+		GetStatus:       []gax.CallOption{},
+		GetStorage:      []gax.CallOption{},
+		MigrateDatabase: []gax.CallOption{},
+		ListProjects:    []gax.CallOption{},
+		GetProject:      []gax.CallOption{},
+		CreateProject:   []gax.CallOption{},
+		UpdateProject:   []gax.CallOption{},
+		DeleteProject:   []gax.CallOption{},
 	}
 }
 
@@ -117,7 +109,6 @@ type AdminClient struct {
 	// It is exposed so that its CallOptions can be modified if required.
 	// Users should not Close this client.
 	LROClient *lroauto.OperationsClient
-
 }
 
 // Wrapper methods routed to the internal client.
@@ -261,11 +252,10 @@ func NewAdminClient(ctx context.Context, opts ...option.ClientOption) (*AdminCli
 	client := AdminClient{CallOptions: defaultAdminCallOptions()}
 
 	c := &adminGRPCClient{
-		connPool:    connPool,
+		connPool:         connPool,
 		disableDeadlines: disableDeadlines,
-		adminClient: rpcpb.NewAdminClient(connPool),
-		CallOptions: &client.CallOptions,
-
+		adminClient:      rpcpb.NewAdminClient(connPool),
+		CallOptions:      &client.CallOptions,
 	}
 	c.setGoogleClientInfo()
 
