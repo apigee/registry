@@ -113,7 +113,7 @@ func SubstituteReferenceEntity(resourcePattern string, referred ResourceName) (R
 }
 
 func GetReferenceEntityType(resourcePattern string) (entity, entityType string, err error) {
-	// Reads the resourcePattern, finds out entity type in the $resource refernce
+	// Reads the resourcePattern, finds out entity type in the $resource reference
 	// Example:
 	// pattern: $resource.api/versions/-/specs/-
 	// returns "$resource.api","api"

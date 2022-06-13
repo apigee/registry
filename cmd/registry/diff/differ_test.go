@@ -182,7 +182,7 @@ func TestMaps(t *testing.T) {
 		change := test.change
 		err := searchMapType(val, diffProto, &change)
 		if err != nil {
-			t.Fatalf("Failed to get diff proto, returnd with error: %+v", err)
+			t.Fatalf("Failed to get diff proto, returned with error: %+v", err)
 		}
 		if !cmp.Equal(test.wantProto, diffProto, opts) {
 			t.Errorf("searchMapType function returned unexpected diff (-want +got):\n%s", cmp.Diff(test.wantProto, diffProto, opts))
