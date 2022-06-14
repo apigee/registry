@@ -584,7 +584,7 @@ func defaultRegistryCallOptions() *RegistryCallOptions {
 	}
 }
 
-// internalRegistryClient is an interface that defines the methods availaible from .
+// internalRegistryClient is an interface that defines the methods available from .
 type internalRegistryClient interface {
 	Close() error
 	setGoogleClientInfo(...string)
