@@ -64,7 +64,7 @@ func defaultProvisioningCallOptions() *ProvisioningCallOptions {
 	}
 }
 
-// internalProvisioningClient is an interface that defines the methods availaible from .
+// internalProvisioningClient is an interface that defines the methods available from .
 type internalProvisioningClient interface {
 	Close() error
 	setGoogleClientInfo(...string)
