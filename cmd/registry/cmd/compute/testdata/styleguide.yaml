@@ -25,7 +25,7 @@ guidelines:
         linter: sample
         linter_rulename: no-$ref-siblings
         severity: ERROR
-    status: ACTIVE
+    state: ACTIVE
 linters:
   - name: sample
     uri: https://sample/url

@@ -49,7 +49,7 @@ var styleguide = &rpc.StyleGuide{
 					Severity:       rpc.Rule_WARNING,
 				},
 			},
-			Status: rpc.Guideline_ACTIVE,
+			State: rpc.Guideline_ACTIVE,
 		},
 	},
 }

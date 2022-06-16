@@ -24,30 +24,33 @@ import (
 	"time"
 
 	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/cmd/registry/patch"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/server/registry/names"
 	"google.golang.org/protobuf/proto"
 )
 
-func conformanceReportName(specName, styleguideName string) string {
-	return fmt.Sprintf("%s/artifacts/conformance-%s", specName, styleguideName)
+func conformanceReportId(styleguideId string) string {
+	return fmt.Sprintf("conformance-%s", styleguideId)
 }
 
-func initializeConformanceReport(specName, styleguideId string) *rpc.ConformanceReport {
+func initializeConformanceReport(specName, styleguideId, project string) *rpc.ConformanceReport {
 	// Create an empty conformance report.
 	conformanceReport := &rpc.ConformanceReport{
-		Name:           conformanceReportName(specName, styleguideId),
-		StyleguideName: styleguideId,
+		Id:         conformanceReportId(styleguideId),
+		Kind:       "ConformanceReport",
+		Styleguide: fmt.Sprintf("projects/%s/locations/global/artifacts/%s", project, styleguideId),
 	}
 
 	// Initialize guideline report groups.
-	guidelineStatus := rpc.Guideline_Status(0)
-	numStatuses := guidelineStatus.Descriptor().Values().Len()
-	conformanceReport.GuidelineReportGroups = make([]*rpc.GuidelineReportGroup, numStatuses)
-	for i := 0; i < numStatuses; i++ {
+	guidelineState := rpc.Guideline_State(0)
+	numStates := guidelineState.Descriptor().Values().Len()
+	conformanceReport.GuidelineReportGroups = make([]*rpc.GuidelineReportGroup, numStates)
+	for i := 0; i < numStates; i++ {
 		conformanceReport.GuidelineReportGroups[i] = &rpc.GuidelineReportGroup{
-			Status:           rpc.Guideline_Status(i),
+			State:            rpc.Guideline_State(i),
 			GuidelineReports: make([]*rpc.GuidelineReport, 0),
 		}
 	}
@@ -82,11 +85,11 @@ type ComputeConformanceTask struct {
 }
 
 func (task *ComputeConformanceTask) String() string {
-	return fmt.Sprintf("compute %s", conformanceReportName(task.Spec.GetName(), task.StyleguideId))
+	return fmt.Sprintf("compute %s/artifacts/%s", task.Spec.GetName(), task.StyleguideId)
 }
 
 func (task *ComputeConformanceTask) Run(ctx context.Context) error {
-	log.Debugf(ctx, "Computing conformance report %s", conformanceReportName(task.Spec.GetName(), task.StyleguideId))
+	log.Debugf(ctx, "Computing conformance report %s/artifacts/%s", task.Spec.GetName(), task.StyleguideId)
 
 	data, err := core.GetBytesForSpec(ctx, task.Client, task.Spec)
 	if err != nil {
@@ -110,8 +113,14 @@ func (task *ComputeConformanceTask) Run(ctx context.Context) error {
 		return err
 	}
 
+	// Get project
+	spec, err := names.ParseSpec(task.Spec.GetName())
+	if err != nil {
+		return err
+	}
+
 	// Run the linters and compute conformance report
-	conformanceReport := initializeConformanceReport(task.Spec.GetName(), task.StyleguideId)
+	conformanceReport := initializeConformanceReport(task.Spec.GetName(), task.StyleguideId, spec.ProjectID)
 	guidelineReportsMap := make(map[string]int)
 	for _, metadata := range task.LintersMetadata {
 		linterResponse, err := task.invokeLinter(ctx, root, metadata)
@@ -208,7 +217,7 @@ func (task *ComputeConformanceTask) computeConformanceReport(
 				guidelineReport := initializeGuidelineReport(guideline.GetId())
 
 				// Create a new entry in the conformance report
-				guidelineGroup := conformanceReport.GuidelineReportGroups[guideline.GetStatus()]
+				guidelineGroup := conformanceReport.GuidelineReportGroups[guideline.GetState()]
 				guidelineGroup.GuidelineReports = append(guidelineGroup.GuidelineReports, guidelineReport)
 
 				// Store the index of this new entry in the map
@@ -218,13 +227,13 @@ func (task *ComputeConformanceTask) computeConformanceReport(
 
 			ruleReport := &rpc.RuleReport{
 				RuleId:     guidelineRule.GetId(),
-				SpecName:   task.Spec.GetName(),
-				FileName:   filepath.Base(lintFile.GetFilePath()),
+				Spec:       task.Spec.GetName(),
+				File:       filepath.Base(lintFile.GetFilePath()),
 				Suggestion: problem.Suggestion,
 				Location:   problem.Location,
 			}
 			// Add the rule report to the appropriate guideline report.
-			guidelineGroup := conformanceReport.GuidelineReportGroups[guideline.GetStatus()]
+			guidelineGroup := conformanceReport.GuidelineReportGroups[guideline.GetState()]
 			if reportIndex >= len(guidelineGroup.GuidelineReports) {
 				log.Errorf(ctx, "Incorrect data in conformance report. Cannot attach entry for %s", guideline.GetId())
 				continue
@@ -245,8 +254,8 @@ func (task *ComputeConformanceTask) storeConformanceReport(
 	}
 
 	artifact := &rpc.Artifact{
-		Name:     conformanceReportName(task.Spec.GetName(), task.StyleguideId),
-		MimeType: core.MimeTypeForMessageType("google.cloud.apigeeregistry.applications.v1alpha1.ConformanceReport"),
+		Name:     fmt.Sprintf("%s/artifacts/%s", task.Spec.GetName(), conformanceReportId(task.StyleguideId)),
+		MimeType: patch.MimeTypeForKind("ConformanceReport"),
 		Contents: messageData,
 	}
 	return core.SetArtifact(ctx, task.Client, artifact)

@@ -1,0 +1,85 @@
+syntax = "proto3";
+
+// (-- api-linter: core::0215::versioned-packages=disabled
+//     aip.dev/not-precedent: Support protos for the apigeeregistry.v1 API. --)
+package google.cloud.apigeeregistry.v1.style;
+
+import "google/api/field_behavior.proto";
+import "google/cloud/apigeeregistry/v1/style/styleguide.proto";
+import "google/cloud/apigeeregistry/v1/style/lint.proto";
+
+option java_package = "com.google.cloud.apigeeregistry.v1.style";
+option java_multiple_files = true;
+option java_outer_classname = "ConformanceReportProto";
+option go_package = "github.com/apigee/registry/rpc;rpc";
+
+// ConformanceReport describes how well an API Spec or a series of
+// API Specs conform to a specific API Style guide.
+message ConformanceReport {
+  // Artifact identifier. This will be auto-generated based on the id of the
+  // StyleGuide used to calculate this.
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Artifact kind. May be used in YAML representations to identify the type of
+  // this artifact.
+  string kind = 2;
+
+  // Full resource name of the StyleGuide artifact which was used
+  // to generate this report.
+  string styleguide = 3 [(google.api.field_behavior) = REQUIRED];
+
+  // A list of guideline report groups.
+  repeated GuidelineReportGroup guideline_report_groups = 4;
+}
+
+// GuidelineReport describes how well an API Spec or a series of
+// API Specs conform to a guideline within an API Style Guide.
+message GuidelineReport {
+  // ID of the guideline that this report pertains to.
+  string guideline_id = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // A list of rule report groups.
+  repeated RuleReportGroup rule_report_groups = 2;
+}
+
+// RuleReport provides information and feedback on a rule that
+// a spec breaches within a guideline on an API Style Guide.
+message RuleReport {
+  // ID of the rule that the spec breaches.
+  string rule_id = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Resource name of the spec that the rule was breached on.
+  string spec = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // File name of the spec that the rule was breached on.
+  string file = 3 [(google.api.field_behavior) = REQUIRED];
+
+  // A suggestion for resolving the problem.
+  string suggestion = 4;
+
+  // The location of the problem in the spec file.
+  LintLocation location = 5;
+}
+
+// GuidelineReportGroup is an abstraction that maps state
+// (PROPOSED, ACTIVE, DEPRECATED, DISABLED) to a list of
+// guideline reports for guidelines of that state.
+message GuidelineReportGroup {
+  // State of the guidelines in this report group.
+  Guideline.State state = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // A list of guideline reports.
+  repeated GuidelineReport guideline_reports = 2
+      [(google.api.field_behavior) = REQUIRED];
+}
+
+// RuleReportGroup is an abstraction that maps severity
+// (ERROR WARNING, INFO, HINT) to a list of rule reports for
+// rules of that severity.
+message RuleReportGroup {
+  // Severity of the rules in this report group.
+  Rule.Severity severity = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // A list of rule reports.
+  repeated RuleReport rule_reports = 2 [(google.api.field_behavior) = REQUIRED];
+}

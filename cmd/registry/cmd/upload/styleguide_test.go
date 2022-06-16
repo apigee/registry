@@ -58,7 +58,7 @@ func TestStyleGuideUpload(t *testing.T) {
 								Severity:       rpc.Rule_ERROR,
 							},
 						},
-						Status: rpc.Guideline_ACTIVE,
+						State: rpc.Guideline_ACTIVE,
 					},
 				},
 				Linters: []*rpc.Linter{
