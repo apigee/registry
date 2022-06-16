@@ -325,7 +325,7 @@ func (ar ArtifactName) ParentName() ResourceName {
 }
 
 // This interface is used to describe generic resource instances
-// ResourceName is embeded, the only additional field is the UpdateTimestamp
+// ResourceName is embedded, the only additional field is the UpdateTimestamp
 type ResourceInstance interface {
 	ResourceName() ResourceName
 	UpdateTimestamp() time.Time

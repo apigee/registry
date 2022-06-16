@@ -31,9 +31,9 @@ message Diff {
 
   // ValueChange hold the values of the elements that changed in one diff change.
   message ValueChange {
-    // from repersents the previous value of the element.
+    // from represents the previous value of the element.
     string from = 1;
-    // to repersents the current value of the element.
+    // to represents the current value of the element.
     string to = 2;
   }
   /* modifications holds every modification change in the diff.
@@ -59,11 +59,11 @@ message ChangeDetails {
 
 /* ChangeStats holds information relating to a list of diffs*/
 message ChangeStats {
-  // breaking_change_count repersents the total number of breaking changes.
+  // breaking_change_count represents the total number of breaking changes.
   int64 breaking_change_count = 1;
-  // nonbreaking_change_count repersents the total number of non-breaking changes.
+  // nonbreaking_change_count represents the total number of non-breaking changes.
   int64 nonbreaking_change_count = 2;
-  // diff_count repersents the number of diffs used in this stats
+  // diff_count represents the number of diffs used in this stats
   int64 diff_count = 3;
   }
 

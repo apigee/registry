@@ -41,7 +41,7 @@ var newProvisioningClientHook clientHook
 type ProvisioningCallOptions struct {
 	CreateInstance []gax.CallOption
 	DeleteInstance []gax.CallOption
-	GetInstance []gax.CallOption
+	GetInstance    []gax.CallOption
 }
 
 func defaultProvisioningGRPCClientOptions() []option.ClientOption {
@@ -52,22 +52,19 @@ func defaultProvisioningGRPCClientOptions() []option.ClientOption {
 		internaloption.WithDefaultScopes(DefaultAuthScopes()...),
 		internaloption.EnableJwtWithScope(),
 		option.WithGRPCDialOption(grpc.WithDefaultCallOptions(
-		grpc.MaxCallRecvMsgSize(math.MaxInt32))),
+			grpc.MaxCallRecvMsgSize(math.MaxInt32))),
 	}
 }
 
 func defaultProvisioningCallOptions() *ProvisioningCallOptions {
 	return &ProvisioningCallOptions{
-		CreateInstance: []gax.CallOption{
-		},
-		DeleteInstance: []gax.CallOption{
-		},
-		GetInstance: []gax.CallOption{
-		},
+		CreateInstance: []gax.CallOption{},
+		DeleteInstance: []gax.CallOption{},
+		GetInstance:    []gax.CallOption{},
 	}
 }
 
-// internalProvisioningClient is an interface that defines the methods availaible from .
+// internalProvisioningClient is an interface that defines the methods available from .
 type internalProvisioningClient interface {
 	Close() error
 	setGoogleClientInfo(...string)
@@ -95,7 +92,6 @@ type ProvisioningClient struct {
 	// It is exposed so that its CallOptions can be modified if required.
 	// Users should not Close this client.
 	LROClient *lroauto.OperationsClient
-
 }
 
 // Wrapper methods routed to the internal client.
@@ -199,11 +195,10 @@ func NewProvisioningClient(ctx context.Context, opts ...option.ClientOption) (*P
 	client := ProvisioningClient{CallOptions: defaultProvisioningCallOptions()}
 
 	c := &provisioningGRPCClient{
-		connPool:    connPool,
-		disableDeadlines: disableDeadlines,
+		connPool:           connPool,
+		disableDeadlines:   disableDeadlines,
 		provisioningClient: rpcpb.NewProvisioningClient(connPool),
-		CallOptions: &client.CallOptions,
-
+		CallOptions:        &client.CallOptions,
 	}
 	c.setGoogleClientInfo()
 
