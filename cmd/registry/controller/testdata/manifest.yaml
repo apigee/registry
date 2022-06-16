@@ -14,31 +14,29 @@
 
 id: "test-manifest"
 generated_resources:
-  - pattern: apis/-/versions/-/specs/-/artifacts/lint-gnostic
+  # - pattern: apis/-/versions/-/specs/-/artifacts/score-receipt
+  #   receipt: true
+  #   action: "registry compute score $resource.spec"
+  #   ttl: 5s
+  - pattern: apis/-/versions/-/specs/-/artifacts/complexity
     dependencies:
       - pattern: $resource.spec
-        filter: "mime_type.contains('openapi')"
-    action: "registry compute lint $resource.spec --linter gnostic"
-  - pattern: apis/-/versions/-/specs/-/artifacts/lint-aip
-    dependencies:
-      - pattern: $resource.spec
-        filter: "mime_type.contains('protobuf')"
-    action: "registry compute lint $resource.spec --linter aip"
-  - pattern: apis/-/versions/-/specs/-/artifacts/lintstats-gnostic
-    dependencies:
-      - pattern: $resource.spec/artifacts/lint-gnostic
-      - pattern: $resource.spec/artifacts/complexity
-    action: "registry compute lintstats $resource.spec --linter gnostic"
-  - pattern: apis/-/artifacts/vocabulary
-    dependencies:
-      - pattern: $resource.api/versions/-/specs/-
-    action: "registry compute vocabulary $resource.api"
-  - pattern: apis/-/versions/-/artifacts/vocabulary
-    dependencies:
-      - pattern: $resource.version/-/specs/-
-    action: "registry compute vocabulary $resource.version"
-  - pattern: apis/-/versions/-/specs/-/artifacts/score
-    dependencies:
-      - pattern: $resource.spec/artifacts/lint-gnostic
-      - pattern: $resource.spec/artifacts/complexity
-    action: "registry compute score $resource.spec/artifacts/lint-gnostic $resource.spec/artifacts/complexity"
+    action: "registry compute complexity $resource.spec"
+  # - pattern: apis/-/versions/-/specs/-/artifacts/lintstats-gnostic
+  #   dependencies:
+  #     - pattern: $resource.spec/artifacts/lint-gnostic
+  #     - pattern: $resource.spec/artifacts/complexity
+  #   action: "registry compute lintstats $resource.spec --linter gnostic"
+  # - pattern: apis/-/artifacts/vocabulary
+  #   dependencies:
+  #     - pattern: $resource.api/versions/-/specs/-
+  #   action: "registry compute vocabulary $resource.api"
+  # - pattern: apis/-/versions/-/artifacts/vocabulary
+  #   dependencies:
+  #     - pattern: $resource.version/-/specs/-
+  #   action: "registry compute vocabulary $resource.version"
+  # - pattern: apis/-/versions/-/specs/-/artifacts/score
+  #   dependencies:
+  #     - pattern: $resource.spec/artifacts/lint-gnostic
+  #     - pattern: $resource.spec/artifacts/complexity
+  #   action: "registry compute score $resource.spec/artifacts/lint-gnostic $resource.spec/artifacts/complexity"

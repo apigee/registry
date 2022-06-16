@@ -17,6 +17,7 @@ syntax = "proto3";
 package google.cloud.apigeeregistry.v1.controller;
 
 import "google/api/field_behavior.proto";
+import "google/protobuf/duration.proto";
 
 option java_package = "com.google.cloud.apigeeregistry.v1.controller";
 option java_multiple_files = true;
@@ -67,12 +68,28 @@ message GeneratedResource {
   bool receipt = 3;
 
   // The dependencies of the resource.
+  // The controller checks for any updates in the dependencies and takes an
+  // action if there has been an update in dependencies from the last time
+  // the action was taken.
+  // Check "refresh" field if it is not possible to list out the dependencies.
+  // Either "dependencies" or "refresh" must be set for the controller to work.
   repeated Dependency dependencies = 4;
 
   // The action used to generate the resource.
-  // An action can contain references to both the resource and dependencies
-  // Example: "registry compute complexity $dependency0 $resource"
+  // An action can contain references to $resource
+  // Example: "registry compute complexity $resource"
   string action = 5 [(google.api.field_behavior) = REQUIRED];
+
+  // Refresh interval in seconds (must be >0).
+  // Generated resource should be regenerated after the specified duration.
+  // This field should be used when the dependencies of the generated resources
+  // are dynamic and cannot be listed out in the manifest.
+  // If "refresh" is set, the dependencies are ignored and the
+  // controller will use this field to decide when to take the action.
+  // If refresh=Ns, the controller will wait for at least N seconds
+  // before trying to regenerate the generated resource.
+  // Either "refresh" or "dependencies" must be set for the controller to work.
+  google.protobuf.Duration refresh = 6;
 }
 
 // A dependency of a generated resource is another resource in the registry
