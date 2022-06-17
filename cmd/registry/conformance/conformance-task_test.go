@@ -33,6 +33,7 @@ const styleguideId = "openapi-test"
 func TestInitializeConformanceReport(t *testing.T) {
 	want := &rpc.ConformanceReport{
 		Id:         fmt.Sprintf("conformance-%s", styleguideId),
+		Kind:       "ConformanceReport",
 		Styleguide: fmt.Sprintf("projects/%s/locations/global/artifacts/%s", project, styleguideId),
 		GuidelineReportGroups: []*rpc.GuidelineReportGroup{
 			{
@@ -155,6 +156,7 @@ func TestComputeConformanceReport(t *testing.T) {
 			},
 			wantReport: &rpc.ConformanceReport{
 				Id:         fmt.Sprintf("conformance-%s", styleguideId),
+				Kind:       "ConformanceReport",
 				Styleguide: fmt.Sprintf("projects/%s/locations/global/artifacts/%s", project, styleguideId),
 				GuidelineReportGroups: []*rpc.GuidelineReportGroup{
 					{State: rpc.Guideline_STATE_UNSPECIFIED},
@@ -236,6 +238,7 @@ func TestComputeConformanceReport(t *testing.T) {
 			},
 			wantReport: &rpc.ConformanceReport{
 				Id:         fmt.Sprintf("conformance-%s", styleguideId),
+				Kind:       "ConformanceReport",
 				Styleguide: fmt.Sprintf("projects/%s/locations/global/artifacts/%s", project, styleguideId),
 				GuidelineReportGroups: []*rpc.GuidelineReportGroup{
 					{State: rpc.Guideline_STATE_UNSPECIFIED},
@@ -358,6 +361,7 @@ func TestComputeConformanceReport(t *testing.T) {
 			},
 			wantReport: &rpc.ConformanceReport{
 				Id:         fmt.Sprintf("conformance-%s", styleguideId),
+				Kind:       "ConformanceReport",
 				Styleguide: fmt.Sprintf("projects/%s/locations/global/artifacts/%s", project, styleguideId),
 				GuidelineReportGroups: []*rpc.GuidelineReportGroup{
 					{State: rpc.Guideline_STATE_UNSPECIFIED},
@@ -498,6 +502,7 @@ func TestPreExistingConformanceReport(t *testing.T) {
 
 	preexistingReport := &rpc.ConformanceReport{
 		Id:         fmt.Sprintf("conformance-%s", styleguideId),
+		Kind:       "ConformanceReport",
 		Styleguide: fmt.Sprintf("projects/%s/locations/global/artifacts/%s", project, styleguideId),
 		GuidelineReportGroups: []*rpc.GuidelineReportGroup{
 			{State: rpc.Guideline_STATE_UNSPECIFIED},
@@ -538,6 +543,7 @@ func TestPreExistingConformanceReport(t *testing.T) {
 
 	wantReport := &rpc.ConformanceReport{
 		Id:         fmt.Sprintf("conformance-%s", styleguideId),
+		Kind:       "ConformanceReport",
 		Styleguide: fmt.Sprintf("projects/%s/locations/global/artifacts/%s", project, styleguideId),
 		GuidelineReportGroups: []*rpc.GuidelineReportGroup{
 			{State: rpc.Guideline_STATE_UNSPECIFIED},

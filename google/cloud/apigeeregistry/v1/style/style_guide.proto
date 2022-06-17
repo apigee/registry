@@ -1,4 +1,3 @@
-
 syntax = "proto3";
 
 // (-- api-linter: core::0215::versioned-packages=disabled
@@ -6,6 +5,7 @@ syntax = "proto3";
 package google.cloud.apigeeregistry.v1.style;
 
 import "google/api/field_behavior.proto";
+import "google/cloud/apigeeregistry/v1/style/lint.proto";
 
 option java_package = "com.google.cloud.apigeeregistry.v1.style";
 option java_multiple_files = true;
@@ -114,19 +114,7 @@ message Rule {
 
   // Severity of violating this rule.
   Severity severity = 6;
-
+  
   // A link to additional documentation relating to this rule.
   string doc_uri = 7;
-}
-
-// Linter contains the name and source code / documentation of specific
-// linter that a style guide uses.
-// (-- api-linter: core::0123::resource-annotation=disabled
-//     aip.dev/not-precedent: We need to do this because reasons. --)
-message Linter {
-  // Name of the linter.
-  string name = 1 [(google.api.field_behavior) = REQUIRED];
-  
-  // A uri to the linter source code or documentation.
-  string uri = 2 [(google.api.field_behavior) = REQUIRED];
 }

@@ -2,11 +2,12 @@ syntax = "proto3";
 
 // (-- api-linter: core::0215::versioned-packages=disabled
 //     aip.dev/not-precedent: Support protos for the apigeeregistry.v1 API. --)
+
 package google.cloud.apigeeregistry.v1.style;
 
 import "google/api/field_behavior.proto";
-import "google/cloud/apigeeregistry/v1/style/styleguide.proto";
 import "google/cloud/apigeeregistry/v1/style/lint.proto";
+import "google/cloud/apigeeregistry/v1/style/style_guide.proto";
 
 option java_package = "com.google.cloud.apigeeregistry.v1.style";
 option java_multiple_files = true;
@@ -79,7 +80,7 @@ message GuidelineReportGroup {
 message RuleReportGroup {
   // Severity of the rules in this report group.
   Rule.Severity severity = 1 [(google.api.field_behavior) = REQUIRED];
-
+  
   // A list of rule reports.
   repeated RuleReport rule_reports = 2 [(google.api.field_behavior) = REQUIRED];
 }

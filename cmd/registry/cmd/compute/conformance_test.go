@@ -62,6 +62,7 @@ func TestConformance(t *testing.T) {
 			getPattern:      "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/conformance-openapitest",
 			wantProto: &rpc.ConformanceReport{
 				Id:         "conformance-openapitest",
+				Kind:       "ConformanceReport",
 				Styleguide: "projects/conformance-test/locations/global/artifacts/openapitest",
 				GuidelineReportGroups: []*rpc.GuidelineReportGroup{
 					{State: rpc.Guideline_STATE_UNSPECIFIED},
@@ -101,6 +102,7 @@ func TestConformance(t *testing.T) {
 			getPattern:      "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/conformance-openapitest-default",
 			wantProto: &rpc.ConformanceReport{
 				Id:         "conformance-openapitest-default",
+				Kind:       "ConformanceReport",
 				Styleguide: "projects/conformance-test/locations/global/artifacts/openapitest-default",
 				GuidelineReportGroups: []*rpc.GuidelineReportGroup{
 					{
@@ -140,6 +142,7 @@ func TestConformance(t *testing.T) {
 			getPattern:      "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/conformance-openapitest-multiple-severity",
 			wantProto: &rpc.ConformanceReport{
 				Id:         "conformance-openapitest-multiple-severity",
+				Kind:       "ConformanceReport",
 				Styleguide: "projects/conformance-test/locations/global/artifacts/openapitest-multiple-severity",
 				GuidelineReportGroups: []*rpc.GuidelineReportGroup{
 					{State: rpc.Guideline_STATE_UNSPECIFIED},
@@ -195,6 +198,7 @@ func TestConformance(t *testing.T) {
 			getPattern:      "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/conformance-openapitest-multiple-state",
 			wantProto: &rpc.ConformanceReport{
 				Id:         "conformance-openapitest-multiple-state",
+				Kind:       "ConformanceReport",
 				Styleguide: "projects/conformance-test/locations/global/artifacts/openapitest-multiple-state",
 				GuidelineReportGroups: []*rpc.GuidelineReportGroup{
 					{State: rpc.Guideline_STATE_UNSPECIFIED},
@@ -264,6 +268,7 @@ func TestConformance(t *testing.T) {
 			getPattern:      "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/conformance-openapitest-multiple-linter",
 			wantProto: &rpc.ConformanceReport{
 				Id:         "conformance-openapitest-multiple-linter",
+				Kind:       "ConformanceReport",
 				Styleguide: "projects/conformance-test/locations/global/artifacts/openapitest-multiple-linter",
 				GuidelineReportGroups: []*rpc.GuidelineReportGroup{
 					{State: rpc.Guideline_STATE_UNSPECIFIED},

@@ -4,6 +4,8 @@ syntax = "proto3";
 //     aip.dev/not-precedent: Support protos for the apigeeregistry.v1 API. --)
 package google.cloud.apigeeregistry.v1.style;
 
+import "google/api/field_behavior.proto";
+
 option java_package = "com.google.cloud.apigeeregistry.v1.style";
 option java_multiple_files = true;
 option java_outer_classname = "LintProto";
@@ -87,7 +89,8 @@ message LintStats {
   repeated LintProblemCount problem_counts = 3;
 }
 
-// LintProblemCount represents the number of times a problem was found in linting.
+// LintProblemCount represents the number of times a problem was found in
+// linting.
 // (-- api-linter: core::0123::resource-annotation=disabled
 //     aip.dev/not-precedent: This message is not currently used in an API. --)
 message LintProblemCount {
@@ -115,8 +118,8 @@ message LinterRequest {
   repeated string rule_ids = 2;
 }
 
-// LinterResponse represents a response returned from a linter plugin. It contains a
-// list of problems that were identified by the linter.
+// LinterResponse represents a response returned from a linter plugin. It
+// contains a list of problems that were identified by the linter.
 // (-- api-linter: core::0123::resource-annotation=disabled
 //     aip.dev/not-precedent: This message is not currently used in an API. --)
 message LinterResponse {
@@ -125,11 +128,22 @@ message LinterResponse {
   // an error in this way.
   //
   // This should be used to indicate errors which prevent
-  // the plugin from operating as intended. Errors which indicate a problem in the
-  // linter itself should be reported by writing a message to stderr and exiting
-  // with a non-zero status code.
+  // the plugin from operating as intended. Errors which indicate a problem in
+  // the linter itself should be reported by writing a message to stderr and
+  // exiting with a non-zero status code.
   repeated string errors = 1;
 
   // The problems found when the file was linted.
   Lint lint = 2;
+}
+
+// Linter contains the name and source code / documentation of specific linter.
+// (-- api-linter: core::0123::resource-annotation=disabled
+//     aip.dev/not-precedent: This message is not currently used in an API. --)
+message Linter {
+  // Name of the linter.
+  string name = 1 [(google.api.field_behavior) = REQUIRED];
+  
+  // A uri to the linter source code or documentation.
+  string uri = 2 [(google.api.field_behavior) = REQUIRED];
 }
