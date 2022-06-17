@@ -261,7 +261,7 @@ func TestCreateApiDuplicates(t *testing.T) {
 				ApiId:  "My-Api",
 				Api:    &rpc.Api{},
 			},
-			want: codes.AlreadyExists,
+			want: codes.InvalidArgument,
 		},
 	}
 

@@ -25,7 +25,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func TestDuplicateProjectCreation(t *testing.T) {
+func TestDuplicateCreation(t *testing.T) {
 	ctx := context.Background()
 	server := defaultTestServer(t)
 	db, err := server.getStorageClient(ctx)
@@ -33,13 +33,27 @@ func TestDuplicateProjectCreation(t *testing.T) {
 		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
 	}
 	defer db.Close()
-	// create a project
+
+	// Create a project.
 	project := models.NewProject(names.Project{ProjectID: "duplicate"}, &rpc.Project{})
 	if err := db.CreateProject(ctx, project); err != nil {
 		t.Errorf("error creating project %s", err)
 	}
-	// then create the project again and verify that it already exists
+	// Create the project again and verify that it already exists.
 	if err := db.CreateProject(ctx, project); status.Code(err) != codes.AlreadyExists {
 		t.Errorf("error creating duplicate project, code should be AlreadyExists but is instead %s", err)
+	}
+
+	// Create an API (note that saving to the database does not require that parents exist).
+	api, err := models.NewApi(names.Api{ApiID: "duplicate"}, &rpc.Api{})
+	if err != nil {
+		t.Errorf("error creating api %s", err)
+	}
+	if err := db.CreateApi(ctx, api); err != nil {
+		t.Errorf("error creating api %s", err)
+	}
+	// Create the API again and verify that it already exists.
+	if err := db.CreateApi(ctx, api); status.Code(err) != codes.AlreadyExists {
+		t.Errorf("error creating duplicate api, code should be AlreadyExists but is instead %s", err)
 	}
 }
