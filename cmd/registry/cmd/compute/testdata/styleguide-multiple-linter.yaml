@@ -25,7 +25,7 @@ guidelines:
         linter: sample
         linter_rulename: no-$ref-siblings
         severity: ERROR
-    status:  ACTIVE
+    state:  ACTIVE
   - id: descriptionproperties
     display_name: Description Properties
     description: This guideline specifies rules for different tags.
@@ -50,7 +50,7 @@ guidelines:
         linter: openapi-sample
         linter_rulename: description-contains-no-tags
         severity: WARNING 
-    status: PROPOSED
+    state: PROPOSED
 linters:
   - name: sample
     uri: https://sample/url

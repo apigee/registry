@@ -58,9 +58,9 @@ func TestGenerateLinterMetadata(t *testing.T) {
 				MimeTypes: []string{"application/x.openapi+gzip;version=3.0.0"},
 				Guidelines: []*rpc.Guideline{
 					{
-						Id:     "refproperties",
-						Rules:  []*rpc.Rule{noRefSiblingsRule},
-						Status: rpc.Guideline_ACTIVE,
+						Id:    "refproperties",
+						Rules: []*rpc.Rule{noRefSiblingsRule},
+						State: rpc.Guideline_ACTIVE,
 					},
 				},
 			},
@@ -72,9 +72,9 @@ func TestGenerateLinterMetadata(t *testing.T) {
 						noRefSiblingsRule.GetLinterRulename(): {
 							guidelineRule: noRefSiblingsRule,
 							guideline: &rpc.Guideline{
-								Id:     "refproperties",
-								Rules:  []*rpc.Rule{noRefSiblingsRule},
-								Status: rpc.Guideline_ACTIVE,
+								Id:    "refproperties",
+								Rules: []*rpc.Rule{noRefSiblingsRule},
+								State: rpc.Guideline_ACTIVE,
 							},
 						},
 					},
@@ -88,9 +88,9 @@ func TestGenerateLinterMetadata(t *testing.T) {
 				MimeTypes: []string{"application/x.openapi+gzip;version=3.0.0"},
 				Guidelines: []*rpc.Guideline{
 					{
-						Id:     "descriptionproperties",
-						Rules:  []*rpc.Rule{noRefSiblingsRule, noRefCyclesRule},
-						Status: rpc.Guideline_ACTIVE,
+						Id:    "descriptionproperties",
+						Rules: []*rpc.Rule{noRefSiblingsRule, noRefCyclesRule},
+						State: rpc.Guideline_ACTIVE,
 					},
 				},
 			},
@@ -102,9 +102,9 @@ func TestGenerateLinterMetadata(t *testing.T) {
 						noRefSiblingsRule.GetLinterRulename(): {
 							guidelineRule: noRefSiblingsRule,
 							guideline: &rpc.Guideline{
-								Id:     "descriptionproperties",
-								Rules:  []*rpc.Rule{noRefSiblingsRule, noRefCyclesRule},
-								Status: rpc.Guideline_ACTIVE,
+								Id:    "descriptionproperties",
+								Rules: []*rpc.Rule{noRefSiblingsRule, noRefCyclesRule},
+								State: rpc.Guideline_ACTIVE,
 							},
 						},
 					},
@@ -116,9 +116,9 @@ func TestGenerateLinterMetadata(t *testing.T) {
 						noRefCyclesRule.GetLinterRulename(): {
 							guidelineRule: noRefCyclesRule,
 							guideline: &rpc.Guideline{
-								Id:     "descriptionproperties",
-								Rules:  []*rpc.Rule{noRefSiblingsRule, noRefCyclesRule},
-								Status: rpc.Guideline_ACTIVE,
+								Id:    "descriptionproperties",
+								Rules: []*rpc.Rule{noRefSiblingsRule, noRefCyclesRule},
+								State: rpc.Guideline_ACTIVE,
 							},
 						},
 					},
@@ -132,14 +132,14 @@ func TestGenerateLinterMetadata(t *testing.T) {
 				MimeTypes: []string{"application/x.openapi+gzip;version=3.0.0"},
 				Guidelines: []*rpc.Guideline{
 					{
-						Id:     "refproperties",
-						Rules:  []*rpc.Rule{noRefSiblingsRule, noRefCyclesRule},
-						Status: rpc.Guideline_ACTIVE,
+						Id:    "refproperties",
+						Rules: []*rpc.Rule{noRefSiblingsRule, noRefCyclesRule},
+						State: rpc.Guideline_ACTIVE,
 					},
 					{
-						Id:     "descriptionproperties",
-						Rules:  []*rpc.Rule{operaationDescriptionRule},
-						Status: rpc.Guideline_PROPOSED,
+						Id:    "descriptionproperties",
+						Rules: []*rpc.Rule{operaationDescriptionRule},
+						State: rpc.Guideline_PROPOSED,
 					},
 				},
 			},
@@ -151,9 +151,9 @@ func TestGenerateLinterMetadata(t *testing.T) {
 						noRefSiblingsRule.GetLinterRulename(): {
 							guidelineRule: noRefSiblingsRule,
 							guideline: &rpc.Guideline{
-								Id:     "refproperties",
-								Rules:  []*rpc.Rule{noRefSiblingsRule, noRefCyclesRule},
-								Status: rpc.Guideline_ACTIVE,
+								Id:    "refproperties",
+								Rules: []*rpc.Rule{noRefSiblingsRule, noRefCyclesRule},
+								State: rpc.Guideline_ACTIVE,
 							},
 						},
 					},
@@ -165,17 +165,17 @@ func TestGenerateLinterMetadata(t *testing.T) {
 						noRefCyclesRule.GetLinterRulename(): {
 							guidelineRule: noRefCyclesRule,
 							guideline: &rpc.Guideline{
-								Id:     "refproperties",
-								Rules:  []*rpc.Rule{noRefSiblingsRule, noRefCyclesRule},
-								Status: rpc.Guideline_ACTIVE,
+								Id:    "refproperties",
+								Rules: []*rpc.Rule{noRefSiblingsRule, noRefCyclesRule},
+								State: rpc.Guideline_ACTIVE,
 							},
 						},
 						operaationDescriptionRule.GetLinterRulename(): {
 							guidelineRule: operaationDescriptionRule,
 							guideline: &rpc.Guideline{
-								Id:     "descriptionproperties",
-								Rules:  []*rpc.Rule{operaationDescriptionRule},
-								Status: rpc.Guideline_PROPOSED,
+								Id:    "descriptionproperties",
+								Rules: []*rpc.Rule{operaationDescriptionRule},
+								State: rpc.Guideline_PROPOSED,
 							},
 						},
 					},
@@ -189,9 +189,9 @@ func TestGenerateLinterMetadata(t *testing.T) {
 				MimeTypes: []string{"application/x.openapi+gzip;version=3.0.0"},
 				Guidelines: []*rpc.Guideline{
 					{
-						Id:     "refproperties",
-						Rules:  []*rpc.Rule{},
-						Status: rpc.Guideline_ACTIVE,
+						Id:    "refproperties",
+						Rules: []*rpc.Rule{},
+						State: rpc.Guideline_ACTIVE,
 					},
 				},
 			},
@@ -213,7 +213,7 @@ func TestGenerateLinterMetadata(t *testing.T) {
 								Severity:       rpc.Rule_ERROR,
 							},
 						},
-						Status: rpc.Guideline_ACTIVE,
+						State: rpc.Guideline_ACTIVE,
 					},
 				},
 			},
@@ -236,7 +236,7 @@ func TestGenerateLinterMetadata(t *testing.T) {
 							},
 							noRefCyclesRule,
 						},
-						Status: rpc.Guideline_ACTIVE,
+						State: rpc.Guideline_ACTIVE,
 					},
 				},
 			},
@@ -257,7 +257,7 @@ func TestGenerateLinterMetadata(t *testing.T) {
 									},
 									noRefCyclesRule,
 								},
-								Status: rpc.Guideline_ACTIVE,
+								State: rpc.Guideline_ACTIVE,
 							},
 						},
 					},
