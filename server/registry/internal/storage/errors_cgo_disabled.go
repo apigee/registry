@@ -12,18 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//go:build !cgo
+
 package storage
 
 import (
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	"github.com/lib/pq"
 )
 
-// grpcErrorForDBError converts recognized database error codes to grpc error codes.
-func grpcErrorForDBError(err error) error {
-	if alreadyExists(err) {
-		return status.Error(codes.AlreadyExists, err.Error())
+func alreadyExists(err error) bool {
+	switch v := err.(type) {
+	case *pq.Error:
+		if v.Code.Name() == "unique_violation" {
+			return true
+		}
 	}
-	// All unrecognized codes fall through to become "Internal" errors.
-	return status.Error(codes.Internal, err.Error())
+	return false
 }
