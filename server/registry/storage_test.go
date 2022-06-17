@@ -56,4 +56,17 @@ func TestDuplicateCreation(t *testing.T) {
 	if err := db.CreateApi(ctx, api); status.Code(err) != codes.AlreadyExists {
 		t.Errorf("error creating duplicate api, code should be AlreadyExists but is instead %s", err)
 	}
+
+	// Create an API Version (note that saving to the database does not require that parents exist).
+	version, err := models.NewVersion(names.Version{VersionID: "duplicate"}, &rpc.ApiVersion{})
+	if err != nil {
+		t.Errorf("error creating version %s", err)
+	}
+	if err := db.CreateVersion(ctx, version); err != nil {
+		t.Errorf("error creating version %s", err)
+	}
+	// Create the API again and verify that it already exists.
+	if err := db.CreateVersion(ctx, version); status.Code(err) != codes.AlreadyExists {
+		t.Errorf("error creating duplicate version, code should be AlreadyExists but is instead %s", err)
+	}
 }

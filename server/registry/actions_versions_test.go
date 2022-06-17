@@ -257,7 +257,7 @@ func TestCreateApiVersionDuplicates(t *testing.T) {
 				ApiVersionId: "V1",
 				ApiVersion:   &rpc.ApiVersion{},
 			},
-			want: codes.AlreadyExists,
+			want: codes.InvalidArgument,
 		},
 	}
 
