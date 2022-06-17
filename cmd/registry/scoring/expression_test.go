@@ -45,7 +45,7 @@ func TestGetMap(t *testing.T) {
 					},
 				},
 			},
-			mimeType: "application/octet-stream;type=google.cloud.apigeeregistry.applications.v1alpha1.Lint",
+			mimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
 			wantMap: map[string]interface{}{
 				"name": "openapi.yaml",
 				"files": []interface{}{
