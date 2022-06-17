@@ -95,25 +95,3 @@ func (c *Client) save(ctx context.Context, v interface{}) error {
 
 	return nil
 }
-
-func (c *Client) CreateProject(ctx context.Context, v *models.Project) error {
-	v.Key = v.Name()
-	return c.create(ctx, v)
-}
-
-func (c *Client) CreateApi(ctx context.Context, v *models.Api) error {
-	v.Key = v.Name()
-	return c.create(ctx, v)
-}
-
-func (c *Client) CreateVersion(ctx context.Context, v *models.Version) error {
-	v.Key = v.Name()
-	return c.create(ctx, v)
-}
-
-func (c *Client) create(ctx context.Context, v interface{}) error {
-	if err := c.db.Create(v).Error; err != nil {
-		return grpcErrorForDBError(err)
-	}
-	return nil
-}
