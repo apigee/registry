@@ -203,7 +203,7 @@ func TestCreateProjectDuplicates(t *testing.T) {
 				ProjectId: "My-Project",
 				Project:   &rpc.Project{},
 			},
-			want: codes.AlreadyExists,
+			want: codes.InvalidArgument, // the upper-case characters are invalid; this is discovered before the save
 		},
 	}
 

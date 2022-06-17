@@ -16,10 +16,7 @@ package registry
 
 import (
 	"context"
-	"sync"
-	"time"
 
-	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/internal/storage"
 	"github.com/apigee/registry/server/registry/internal/storage/models"
@@ -45,18 +42,12 @@ func (s *RegistryServer) createProject(ctx context.Context, name names.Project, 
 	}
 	defer db.Close()
 
-	if _, err := db.GetProject(ctx, name); err == nil {
-		return nil, status.Errorf(codes.AlreadyExists, "project %q already exists", name)
-	} else if !isNotFound(err) {
-		return nil, err
-	}
-
 	if err := name.Validate(); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	project := models.NewProject(name, body)
-	if err := db.SaveProject(ctx, project); err != nil {
+	if err := db.CreateProject(ctx, project); err != nil {
 		return nil, err
 	}
 
@@ -148,16 +139,8 @@ func (s *RegistryServer) ListProjects(ctx context.Context, req *rpc.ListProjects
 	return response, nil
 }
 
-var updateProjectMutex sync.Mutex
-
 // UpdateProject handles the corresponding API request.
 func (s *RegistryServer) UpdateProject(ctx context.Context, req *rpc.UpdateProjectRequest) (*rpc.Project, error) {
-	db, err := s.getStorageClient(ctx)
-	if err != nil {
-		return nil, status.Error(codes.Unavailable, err.Error())
-	}
-	defer db.Close()
-
 	if req.GetProject() == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid project %+v: body must be provided", req.GetProject())
 	} else if err := models.ValidateMask(req.GetProject(), req.GetUpdateMask()); err != nil {
@@ -170,25 +153,26 @@ func (s *RegistryServer) UpdateProject(ctx context.Context, req *rpc.UpdateProje
 	}
 
 	if req.GetAllowMissing() {
-		before := time.Now()
-		// Prevent a race condition that can occur when two updates are made
-		// to the same non-existent resource. The db.Get...() call returns
-		// NotFound for both updates, and after one creates the resource,
-		// the other creation fails. The lock() prevents this by serializing
-		// the get and create operations. Future updates could improve this
-		// with improvements closer to the database level.
-		updateProjectMutex.Lock()
-		defer updateProjectMutex.Unlock()
-		log.Debugf(ctx, "Acquired lock after blocking for %v", time.Since(before))
+		// Speculatively create the project. If it already exists, fall through to the update below.
+		project, err := s.createProject(ctx, name, req.GetProject())
+		if err == nil {
+			return project, nil
+		} else if status.Code(err) != codes.AlreadyExists {
+			return nil, err
+		}
 	}
 
+	db, err := s.getStorageClient(ctx)
+	if err != nil {
+		return nil, status.Error(codes.Unavailable, err.Error())
+	}
+	defer db.Close()
+
+	// TODO: the Get/Update/Save calls below should be a transaction.
 	project, err := db.GetProject(ctx, name)
-	if req.GetAllowMissing() && isNotFound(err) {
-		return s.createProject(ctx, name, req.GetProject())
-	} else if err != nil {
+	if err != nil {
 		return nil, err
 	}
-
 	project.Update(req.GetProject(), models.ExpandMask(req.GetProject(), req.GetUpdateMask()))
 	if err := db.SaveProject(ctx, project); err != nil {
 		return nil, err
