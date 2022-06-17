@@ -115,8 +115,6 @@ func PrintArtifactContents(artifact *rpc.Artifact) error {
 		return unmarshalAndPrint(artifact.GetContents(), &metrics.Vocabulary{})
 	case "gnostic.metrics.VersionHistory":
 		return unmarshalAndPrint(artifact.GetContents(), &metrics.VersionHistory{})
-	case "google.cloud.apigeeregistry.applications.v1alpha1.ConformanceReport":
-		return unmarshalAndPrint(artifact.GetContents(), &rpc.ConformanceReport{})
 	case "google.cloud.apigeeregistry.applications.v1alpha1.Index":
 		return unmarshalAndPrint(artifact.GetContents(), &rpc.Index{})
 	case "google.cloud.apigeeregistry.applications.v1alpha1.Lint":
@@ -145,7 +143,9 @@ func PrintArtifactContents(artifact *rpc.Artifact) error {
 		return unmarshalAndPrint(artifact.GetContents(), &rpc.ScoreDefinition{})
 	case "google.cloud.apigeeregistry.v1.scoring.ScoreCardDefinition":
 		return unmarshalAndPrint(artifact.GetContents(), &rpc.ScoreCardDefinition{})
-	case "google.cloud.apigeeregistry.applications.v1alpha1.StyleGuide":
+	case "google.cloud.apigeeregistry.v1.style.ConformanceReport":
+		return unmarshalAndPrint(artifact.GetContents(), &rpc.ConformanceReport{})
+	case "google.cloud.apigeeregistry.v1.style.StyleGuide":
 		return unmarshalAndPrint(artifact.GetContents(), &rpc.StyleGuide{})
 	case "gnostic.openapiv2.Document":
 		return unmarshalAndPrint(artifact.GetContents(), &openapiv2.Document{})
