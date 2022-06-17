@@ -16,9 +16,11 @@ package compute
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/apigee/registry/cmd/registry/conformance"
 	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/cmd/registry/patch"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
@@ -27,7 +29,7 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-const styleguideFilter = "mime_type.contains('google.cloud.apigeeregistry.applications.v1alpha1.StyleGuide')"
+var styleguideFilter = fmt.Sprintf("mime_type.contains('%s')", patch.MimeTypeForKind("StyleGuide"))
 
 func conformanceCommand() *cobra.Command {
 	cmd := &cobra.Command{

@@ -85,11 +85,11 @@ type ComputeConformanceTask struct {
 }
 
 func (task *ComputeConformanceTask) String() string {
-	return fmt.Sprintf("compute %s/artifacts/%s", task.Spec.GetName(), task.StyleguideId)
+	return fmt.Sprintf("compute %s/artifacts/%s", task.Spec.GetName(), conformanceReportId(task.StyleguideId))
 }
 
 func (task *ComputeConformanceTask) Run(ctx context.Context) error {
-	log.Debugf(ctx, "Computing conformance report %s/artifacts/%s", task.Spec.GetName(), task.StyleguideId)
+	log.Debugf(ctx, "Computing conformance report %s/artifacts/%s", task.Spec.GetName(), conformanceReportId(task.StyleguideId))
 
 	data, err := core.GetBytesForSpec(ctx, task.Client, task.Spec)
 	if err != nil {
