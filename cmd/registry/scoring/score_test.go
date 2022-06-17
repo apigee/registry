@@ -142,7 +142,7 @@ func TestCalculateScore(t *testing.T) {
 			seed: []seeder.RegistryResource{
 				&rpc.Artifact{
 					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
-					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.applications.v1alpha1.Lint",
+					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
 					Contents: protoMarshal(&rpc.Lint{
 						Name: "openapi.yaml",
 						Files: []*rpc.LintFile{
@@ -202,7 +202,7 @@ func TestCalculateScore(t *testing.T) {
 				// score formula artifact
 				&rpc.Artifact{
 					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
-					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.applications.v1alpha1.Lint",
+					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
 					Contents: protoMarshal(&rpc.Lint{
 						Name: "openapi.yaml",
 						Files: []*rpc.LintFile{
@@ -257,7 +257,7 @@ func TestCalculateScore(t *testing.T) {
 				// score formula artifact
 				&rpc.Artifact{
 					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
-					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.applications.v1alpha1.Lint",
+					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
 					Contents: protoMarshal(&rpc.Lint{
 						Name: "openapi.yaml",
 						Files: []*rpc.LintFile{
@@ -355,7 +355,7 @@ func TestCalculateScore(t *testing.T) {
 				// score formula artifact
 				&rpc.Artifact{
 					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
-					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.applications.v1alpha1.Lint",
+					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
 					Contents: protoMarshal(&rpc.Lint{
 						Name: "openapi.yaml",
 						Files: []*rpc.LintFile{
@@ -422,7 +422,7 @@ func TestCalculateScore(t *testing.T) {
 				// score formula artifact
 				&rpc.Artifact{
 					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
-					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.applications.v1alpha1.Lint",
+					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
 					Contents: protoMarshal(&rpc.Lint{
 						Name: "openapi.yaml",
 						Files: []*rpc.LintFile{
@@ -550,7 +550,7 @@ func TestProcessScoreFormula(t *testing.T) {
 	seed := []seeder.RegistryResource{
 		&rpc.Artifact{
 			Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
-			MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.applications.v1alpha1.Lint",
+			MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
 			Contents: protoMarshal(&rpc.Lint{
 				Name: "openapi.yaml",
 				Files: []*rpc.LintFile{
@@ -714,7 +714,7 @@ func TestProcessScoreFormulaError(t *testing.T) {
 			seed: []seeder.RegistryResource{
 				&rpc.Artifact{
 					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
-					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.applications.v1alpha1.Lint",
+					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
 					Contents: protoMarshal(&rpc.Lint{
 						Name: "openapi.yaml",
 						Files: []*rpc.LintFile{
@@ -752,7 +752,7 @@ func TestProcessScoreFormulaError(t *testing.T) {
 			seed: []seeder.RegistryResource{
 				&rpc.Artifact{
 					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
-					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.applications.v1alpha1.Lint",
+					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
 					Contents: protoMarshal(&rpc.Lint{
 						Name: "openapi.yaml",
 						Files: []*rpc.LintFile{
@@ -842,7 +842,7 @@ func TestProcessScoreFormulaTimestamp(t *testing.T) {
 				// score  formula artifact
 				&rpc.Artifact{
 					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
-					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.applications.v1alpha1.Lint",
+					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
 					Contents: protoMarshal(&rpc.Lint{
 						Name: "openapi.yaml",
 						Files: []*rpc.LintFile{
@@ -882,7 +882,7 @@ func TestProcessScoreFormulaTimestamp(t *testing.T) {
 				// score formula artifact
 				&rpc.Artifact{
 					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
-					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.applications.v1alpha1.Lint",
+					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
 					Contents: protoMarshal(&rpc.Lint{
 						Name: "openapi.yaml",
 						Files: []*rpc.LintFile{
@@ -932,7 +932,7 @@ func TestProcessScoreFormulaTimestamp(t *testing.T) {
 				// score formula artifact
 				&rpc.Artifact{
 					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
-					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.applications.v1alpha1.Lint",
+					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
 					Contents: protoMarshal(&rpc.Lint{
 						Name: "openapi.yaml",
 						Files: []*rpc.LintFile{
@@ -971,7 +971,7 @@ func TestProcessScoreFormulaTimestamp(t *testing.T) {
 				// score formula artifact
 				&rpc.Artifact{
 					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
-					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.applications.v1alpha1.Lint",
+					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
 					Contents: protoMarshal(&rpc.Lint{
 						Name: "openapi.yaml",
 						Files: []*rpc.LintFile{
@@ -1087,7 +1087,7 @@ func TestProcessRollUpFormula(t *testing.T) {
 		// lint artifact
 		&rpc.Artifact{
 			Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
-			MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.applications.v1alpha1.Lint",
+			MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
 			Contents: protoMarshal(&rpc.Lint{
 				Name: "openapi.yaml",
 				Files: []*rpc.LintFile{
@@ -1237,7 +1237,7 @@ func TestProcessRollUpFormulaError(t *testing.T) {
 				// lint artifact
 				&rpc.Artifact{
 					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
-					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.applications.v1alpha1.Lint",
+					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
 					Contents: protoMarshal(&rpc.Lint{
 						Name: "openapi.yaml",
 						Files: []*rpc.LintFile{
@@ -1303,7 +1303,7 @@ func TestProcessRollUpFormulaError(t *testing.T) {
 				// lint artifact
 				&rpc.Artifact{
 					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
-					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.applications.v1alpha1.Lint",
+					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
 					Contents: protoMarshal(&rpc.Lint{
 						Name: "openapi.yaml",
 						Files: []*rpc.LintFile{
@@ -1456,7 +1456,7 @@ func TestProcessRollUpFormulaTimestamp(t *testing.T) {
 				// lint artifact
 				&rpc.Artifact{
 					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
-					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.applications.v1alpha1.Lint",
+					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
 					Contents: protoMarshal(&rpc.Lint{
 						Name: "openapi.yaml",
 						Files: []*rpc.LintFile{
@@ -1509,7 +1509,7 @@ func TestProcessRollUpFormulaTimestamp(t *testing.T) {
 				// lint artifact
 				&rpc.Artifact{
 					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
-					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.applications.v1alpha1.Lint",
+					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
 					Contents: protoMarshal(&rpc.Lint{
 						Name: "openapi.yaml",
 						Files: []*rpc.LintFile{
@@ -1567,7 +1567,7 @@ func TestProcessRollUpFormulaTimestamp(t *testing.T) {
 				// lint artifact
 				&rpc.Artifact{
 					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
-					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.applications.v1alpha1.Lint",
+					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
 					Contents: protoMarshal(&rpc.Lint{
 						Name: "openapi.yaml",
 						Files: []*rpc.LintFile{
@@ -1630,7 +1630,7 @@ func TestProcessRollUpFormulaTimestamp(t *testing.T) {
 				// lint artifact
 				&rpc.Artifact{
 					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
-					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.applications.v1alpha1.Lint",
+					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
 					Contents: protoMarshal(&rpc.Lint{
 						Name: "openapi.yaml",
 						Files: []*rpc.LintFile{
@@ -1683,7 +1683,7 @@ func TestProcessRollUpFormulaTimestamp(t *testing.T) {
 				// lint artifact
 				&rpc.Artifact{
 					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
-					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.applications.v1alpha1.Lint",
+					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
 					Contents: protoMarshal(&rpc.Lint{
 						Name: "openapi.yaml",
 						Files: []*rpc.LintFile{
@@ -1741,7 +1741,7 @@ func TestProcessRollUpFormulaTimestamp(t *testing.T) {
 				// lint artifact
 				&rpc.Artifact{
 					Name:     "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
-					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.applications.v1alpha1.Lint",
+					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.Lint",
 					Contents: protoMarshal(&rpc.Lint{
 						Name: "openapi.yaml",
 						Files: []*rpc.LintFile{
