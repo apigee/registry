@@ -211,7 +211,7 @@ func uploadScoreCard(ctx context.Context, client connection.Client, resource pat
 	artifact := &rpc.Artifact{
 		Name:     fmt.Sprintf("%s/artifacts/%s", resource.ResourceName().String(), scoreCard.GetId()),
 		Contents: artifactBytes,
-		MimeType: patch.MimeTypeForKind("Score"),
+		MimeType: patch.MimeTypeForKind("ScoreCard"),
 	}
 	log.Debugf(ctx, "Uploading %s", artifact.GetName())
 	if err = core.SetArtifact(ctx, client, artifact); err != nil {
