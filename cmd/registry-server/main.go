@@ -139,8 +139,8 @@ func main() {
 	// Wait for an interruption signal.
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGTERM)
-	server.GracefulStop()
 	<-done
+	server.GracefulStop()
 }
 
 func validateConfig() error {
