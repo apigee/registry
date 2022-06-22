@@ -17,7 +17,6 @@ package storage
 import (
 	"context"
 	"fmt"
-	"sync"
 
 	_ "github.com/GoogleCloudPlatform/cloudsql-proxy/proxy/dialers/postgres"
 	"github.com/apigee/registry/server/registry/internal/storage/models"
@@ -47,28 +46,12 @@ type Client struct {
 	db *gorm.DB
 }
 
-var mutex sync.Mutex
-var disableMutex bool
-
-func lock() {
-	if !disableMutex {
-		mutex.Lock()
-	}
-}
-
-func unlock() {
-	if !disableMutex {
-		mutex.Unlock()
-	}
-}
-
 // NewClient creates a new database session using the provided driver and data source name.
 // Driver must be one of [ sqlite3, postgres, cloudsqlpostgres ]. DSN format varies per database driver.
 //
 // PostgreSQL DSN Reference: See "Connection Strings" at https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING
 // SQLite DSN Reference: See "URI filename examples" at https://www.sqlite.org/c3ref/open.html
 func NewClient(ctx context.Context, driver, dsn string) (*Client, error) {
-	lock()
 	switch driver {
 	case "sqlite3":
 		db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{
@@ -77,13 +60,11 @@ func NewClient(ctx context.Context, driver, dsn string) (*Client, error) {
 		if err != nil {
 			c := &Client{db: db}
 			c.close()
-			unlock()
 			return nil, err
 		}
-		unlock()
 		// empirically, it does not seem safe to disable the mutex for sqlite3,
 		// which might make sense since sqlite database access is in-process.
-		disableMutex = false
+		// disableMutex = false
 		return &Client{db: db}, nil
 	case "postgres", "cloudsqlpostgres":
 		db, err := gorm.Open(postgres.New(postgres.Config{
@@ -95,24 +76,19 @@ func NewClient(ctx context.Context, driver, dsn string) (*Client, error) {
 		if err != nil {
 			c := &Client{db: db}
 			c.close()
-			unlock()
 			return nil, err
 		}
-		unlock()
 		// postgres runs in a separate process and seems to have no problems
 		// with concurrent access and modifications.
-		disableMutex = true
+		// disableMutex = true
 		return &Client{db: db}, nil
 	default:
-		unlock()
 		return nil, fmt.Errorf("unsupported database %s", driver)
 	}
 }
 
 // Close closes a database session.
 func (c *Client) Close() {
-	lock()
-	defer unlock()
 	c.close()
 }
 
@@ -122,8 +98,6 @@ func (c *Client) close() {
 }
 
 func (c *Client) ensureTable(v interface{}) error {
-	lock()
-	defer unlock()
 	if !c.db.Migrator().HasTable(v) {
 		if err := c.db.Migrator().CreateTable(v); err != nil {
 			return err
