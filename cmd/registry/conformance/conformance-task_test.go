@@ -25,39 +25,41 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 )
 
+const project = "demo"
 const specName = "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml"
 const styleguideId = "openapi-test"
 
 // This test will catch any changes made to the original status values.
 func TestInitializeConformanceReport(t *testing.T) {
 	want := &rpc.ConformanceReport{
-		Name:           fmt.Sprintf("%s/artifacts/conformance-%s", specName, styleguideId),
-		StyleguideName: styleguideId,
+		Id:         fmt.Sprintf("conformance-%s", styleguideId),
+		Kind:       "ConformanceReport",
+		Styleguide: fmt.Sprintf("projects/%s/locations/global/artifacts/%s", project, styleguideId),
 		GuidelineReportGroups: []*rpc.GuidelineReportGroup{
 			{
-				Status:           rpc.Guideline_STATUS_UNSPECIFIED,
+				State:            rpc.Guideline_STATE_UNSPECIFIED,
 				GuidelineReports: make([]*rpc.GuidelineReport, 0),
 			},
 			{
-				Status:           rpc.Guideline_PROPOSED,
+				State:            rpc.Guideline_PROPOSED,
 				GuidelineReports: make([]*rpc.GuidelineReport, 0),
 			},
 			{
-				Status:           rpc.Guideline_ACTIVE,
+				State:            rpc.Guideline_ACTIVE,
 				GuidelineReports: make([]*rpc.GuidelineReport, 0),
 			},
 			{
-				Status:           rpc.Guideline_DEPRECATED,
+				State:            rpc.Guideline_DEPRECATED,
 				GuidelineReports: make([]*rpc.GuidelineReport, 0),
 			},
 			{
-				Status:           rpc.Guideline_DISABLED,
+				State:            rpc.Guideline_DISABLED,
 				GuidelineReports: make([]*rpc.GuidelineReport, 0),
 			},
 		},
 	}
 
-	got := initializeConformanceReport(specName, styleguideId)
+	got := initializeConformanceReport(specName, styleguideId, project)
 	opts := cmp.Options{
 		protocmp.Transform(),
 		cmpopts.SortSlices(func(a, b string) bool { return a < b }),
@@ -146,20 +148,21 @@ func TestComputeConformanceReport(t *testing.T) {
 							Severity: rpc.Rule_ERROR,
 						},
 						guideline: &rpc.Guideline{
-							Id:     "refproperties",
-							Status: rpc.Guideline_ACTIVE,
+							Id:    "refproperties",
+							State: rpc.Guideline_ACTIVE,
 						},
 					},
 				},
 			},
 			wantReport: &rpc.ConformanceReport{
-				Name:           fmt.Sprintf("%s/artifacts/conformance-%s", specName, styleguideId),
-				StyleguideName: styleguideId,
+				Id:         fmt.Sprintf("conformance-%s", styleguideId),
+				Kind:       "ConformanceReport",
+				Styleguide: fmt.Sprintf("projects/%s/locations/global/artifacts/%s", project, styleguideId),
 				GuidelineReportGroups: []*rpc.GuidelineReportGroup{
-					{Status: rpc.Guideline_STATUS_UNSPECIFIED},
-					{Status: rpc.Guideline_PROPOSED},
+					{State: rpc.Guideline_STATE_UNSPECIFIED},
+					{State: rpc.Guideline_PROPOSED},
 					{
-						Status: rpc.Guideline_ACTIVE,
+						State: rpc.Guideline_ACTIVE,
 						GuidelineReports: []*rpc.GuidelineReport{
 							{
 								GuidelineId: "refproperties",
@@ -170,8 +173,8 @@ func TestComputeConformanceReport(t *testing.T) {
 										RuleReports: []*rpc.RuleReport{
 											{
 												RuleId:     "norefsiblings",
-												SpecName:   specName,
-												FileName:   "test-result-file",
+												Spec:       specName,
+												File:       "test-result-file",
 												Suggestion: "fix no-$ref-siblings",
 												Location: &rpc.LintLocation{
 													StartPosition: &rpc.LintPosition{LineNumber: 11, ColumnNumber: 25},
@@ -187,8 +190,8 @@ func TestComputeConformanceReport(t *testing.T) {
 							},
 						},
 					},
-					{Status: rpc.Guideline_DEPRECATED},
-					{Status: rpc.Guideline_DISABLED},
+					{State: rpc.Guideline_DEPRECATED},
+					{State: rpc.Guideline_DISABLED},
 				},
 			},
 		},
@@ -227,20 +230,21 @@ func TestComputeConformanceReport(t *testing.T) {
 							Severity: rpc.Rule_ERROR,
 						},
 						guideline: &rpc.Guideline{
-							Id:     "descriptionproperties",
-							Status: rpc.Guideline_ACTIVE,
+							Id:    "descriptionproperties",
+							State: rpc.Guideline_ACTIVE,
 						},
 					},
 				},
 			},
 			wantReport: &rpc.ConformanceReport{
-				Name:           fmt.Sprintf("%s/artifacts/conformance-%s", specName, styleguideId),
-				StyleguideName: styleguideId,
+				Id:         fmt.Sprintf("conformance-%s", styleguideId),
+				Kind:       "ConformanceReport",
+				Styleguide: fmt.Sprintf("projects/%s/locations/global/artifacts/%s", project, styleguideId),
 				GuidelineReportGroups: []*rpc.GuidelineReportGroup{
-					{Status: rpc.Guideline_STATUS_UNSPECIFIED},
-					{Status: rpc.Guideline_PROPOSED},
+					{State: rpc.Guideline_STATE_UNSPECIFIED},
+					{State: rpc.Guideline_PROPOSED},
 					{
-						Status: rpc.Guideline_ACTIVE,
+						State: rpc.Guideline_ACTIVE,
 						GuidelineReports: []*rpc.GuidelineReport{
 							{
 								GuidelineId: "descriptionproperties",
@@ -251,8 +255,8 @@ func TestComputeConformanceReport(t *testing.T) {
 										RuleReports: []*rpc.RuleReport{
 											{
 												RuleId:     "operationdescription",
-												SpecName:   specName,
-												FileName:   "test-result-file",
+												Spec:       specName,
+												File:       "test-result-file",
 												Suggestion: "fix operation-description",
 											},
 										},
@@ -264,8 +268,8 @@ func TestComputeConformanceReport(t *testing.T) {
 							},
 						},
 					},
-					{Status: rpc.Guideline_DEPRECATED},
-					{Status: rpc.Guideline_DISABLED},
+					{State: rpc.Guideline_DEPRECATED},
+					{State: rpc.Guideline_DISABLED},
 				},
 			},
 		},
@@ -319,8 +323,8 @@ func TestComputeConformanceReport(t *testing.T) {
 							Severity: rpc.Rule_ERROR,
 						},
 						guideline: &rpc.Guideline{
-							Id:     "descriptionproperties",
-							Status: rpc.Guideline_ACTIVE,
+							Id:    "descriptionproperties",
+							State: rpc.Guideline_ACTIVE,
 						},
 					},
 					"tag-description": {
@@ -329,8 +333,8 @@ func TestComputeConformanceReport(t *testing.T) {
 							Severity: rpc.Rule_WARNING,
 						},
 						guideline: &rpc.Guideline{
-							Id:     "descriptionproperties",
-							Status: rpc.Guideline_ACTIVE,
+							Id:    "descriptionproperties",
+							State: rpc.Guideline_ACTIVE,
 						},
 					},
 					"info-description": {
@@ -339,8 +343,8 @@ func TestComputeConformanceReport(t *testing.T) {
 							Severity: rpc.Rule_WARNING,
 						},
 						guideline: &rpc.Guideline{
-							Id:     "descriptionproperties",
-							Status: rpc.Guideline_ACTIVE,
+							Id:    "descriptionproperties",
+							State: rpc.Guideline_ACTIVE,
 						},
 					},
 					"no-$ref-siblings": {
@@ -349,19 +353,20 @@ func TestComputeConformanceReport(t *testing.T) {
 							Severity: rpc.Rule_ERROR,
 						},
 						guideline: &rpc.Guideline{
-							Id:     "refproperties",
-							Status: rpc.Guideline_PROPOSED,
+							Id:    "refproperties",
+							State: rpc.Guideline_PROPOSED,
 						},
 					},
 				},
 			},
 			wantReport: &rpc.ConformanceReport{
-				Name:           fmt.Sprintf("%s/artifacts/conformance-%s", specName, styleguideId),
-				StyleguideName: styleguideId,
+				Id:         fmt.Sprintf("conformance-%s", styleguideId),
+				Kind:       "ConformanceReport",
+				Styleguide: fmt.Sprintf("projects/%s/locations/global/artifacts/%s", project, styleguideId),
 				GuidelineReportGroups: []*rpc.GuidelineReportGroup{
-					{Status: rpc.Guideline_STATUS_UNSPECIFIED},
+					{State: rpc.Guideline_STATE_UNSPECIFIED},
 					{
-						Status: rpc.Guideline_PROPOSED,
+						State: rpc.Guideline_PROPOSED,
 						GuidelineReports: []*rpc.GuidelineReport{
 							{
 								GuidelineId: "refproperties",
@@ -372,8 +377,8 @@ func TestComputeConformanceReport(t *testing.T) {
 										RuleReports: []*rpc.RuleReport{
 											{
 												RuleId:     "norefsiblings",
-												SpecName:   specName,
-												FileName:   "test-result-file",
+												Spec:       specName,
+												File:       "test-result-file",
 												Suggestion: "fix no-$ref-siblings",
 											},
 										},
@@ -386,7 +391,7 @@ func TestComputeConformanceReport(t *testing.T) {
 						},
 					},
 					{
-						Status: rpc.Guideline_ACTIVE,
+						State: rpc.Guideline_ACTIVE,
 						GuidelineReports: []*rpc.GuidelineReport{
 							{
 								GuidelineId: "descriptionproperties",
@@ -397,8 +402,8 @@ func TestComputeConformanceReport(t *testing.T) {
 										RuleReports: []*rpc.RuleReport{
 											{
 												RuleId:     "operationdescription",
-												SpecName:   specName,
-												FileName:   "test-result-file",
+												Spec:       specName,
+												File:       "test-result-file",
 												Suggestion: "fix operation-description",
 											},
 										},
@@ -408,14 +413,14 @@ func TestComputeConformanceReport(t *testing.T) {
 										RuleReports: []*rpc.RuleReport{
 											{
 												RuleId:     "tagdescription",
-												SpecName:   specName,
-												FileName:   "test-result-file",
+												Spec:       specName,
+												File:       "test-result-file",
 												Suggestion: "fix tag-description",
 											},
 											{
 												RuleId:     "infodescription",
-												SpecName:   specName,
-												FileName:   "test-result-file",
+												Spec:       specName,
+												File:       "test-result-file",
 												Suggestion: "fix info-description",
 											},
 										},
@@ -426,8 +431,8 @@ func TestComputeConformanceReport(t *testing.T) {
 							},
 						},
 					},
-					{Status: rpc.Guideline_DEPRECATED},
-					{Status: rpc.Guideline_DISABLED},
+					{State: rpc.Guideline_DEPRECATED},
+					{State: rpc.Guideline_DISABLED},
 				},
 			},
 		},
@@ -442,7 +447,7 @@ func TestComputeConformanceReport(t *testing.T) {
 				StyleguideId: styleguideId,
 			}
 
-			gotReport := initializeConformanceReport(task.Spec.GetName(), task.StyleguideId)
+			gotReport := initializeConformanceReport(task.Spec.GetName(), task.StyleguideId, project)
 			guidelineReportsMap := make(map[string]int)
 			task.computeConformanceReport(ctx, gotReport, guidelineReportsMap, test.linterResponse, test.linterMetadata)
 
@@ -488,21 +493,22 @@ func TestPreExistingConformanceReport(t *testing.T) {
 					Severity: rpc.Rule_ERROR,
 				},
 				guideline: &rpc.Guideline{
-					Id:     "descriptionproperties",
-					Status: rpc.Guideline_ACTIVE,
+					Id:    "descriptionproperties",
+					State: rpc.Guideline_ACTIVE,
 				},
 			},
 		},
 	}
 
 	preexistingReport := &rpc.ConformanceReport{
-		Name:           fmt.Sprintf("%s/artifacts/conformance-%s", specName, styleguideId),
-		StyleguideName: styleguideId,
+		Id:         fmt.Sprintf("conformance-%s", styleguideId),
+		Kind:       "ConformanceReport",
+		Styleguide: fmt.Sprintf("projects/%s/locations/global/artifacts/%s", project, styleguideId),
 		GuidelineReportGroups: []*rpc.GuidelineReportGroup{
-			{Status: rpc.Guideline_STATUS_UNSPECIFIED},
-			{Status: rpc.Guideline_PROPOSED},
+			{State: rpc.Guideline_STATE_UNSPECIFIED},
+			{State: rpc.Guideline_PROPOSED},
 			{
-				Status: rpc.Guideline_ACTIVE,
+				State: rpc.Guideline_ACTIVE,
 				GuidelineReports: []*rpc.GuidelineReport{
 					{
 						GuidelineId: "descriptionproperties",
@@ -513,8 +519,8 @@ func TestPreExistingConformanceReport(t *testing.T) {
 								RuleReports: []*rpc.RuleReport{
 									{
 										RuleId:     "tagdescription",
-										SpecName:   specName,
-										FileName:   "test-result-file",
+										Spec:       specName,
+										File:       "test-result-file",
 										Suggestion: "fix tag-description",
 									},
 								},
@@ -526,8 +532,8 @@ func TestPreExistingConformanceReport(t *testing.T) {
 					},
 				},
 			},
-			{Status: rpc.Guideline_DEPRECATED},
-			{Status: rpc.Guideline_DISABLED},
+			{State: rpc.Guideline_DEPRECATED},
+			{State: rpc.Guideline_DISABLED},
 		},
 	}
 
@@ -536,13 +542,14 @@ func TestPreExistingConformanceReport(t *testing.T) {
 	}
 
 	wantReport := &rpc.ConformanceReport{
-		Name:           fmt.Sprintf("%s/artifacts/conformance-%s", specName, styleguideId),
-		StyleguideName: styleguideId,
+		Id:         fmt.Sprintf("conformance-%s", styleguideId),
+		Kind:       "ConformanceReport",
+		Styleguide: fmt.Sprintf("projects/%s/locations/global/artifacts/%s", project, styleguideId),
 		GuidelineReportGroups: []*rpc.GuidelineReportGroup{
-			{Status: rpc.Guideline_STATUS_UNSPECIFIED},
-			{Status: rpc.Guideline_PROPOSED},
+			{State: rpc.Guideline_STATE_UNSPECIFIED},
+			{State: rpc.Guideline_PROPOSED},
 			{
-				Status: rpc.Guideline_ACTIVE,
+				State: rpc.Guideline_ACTIVE,
 				GuidelineReports: []*rpc.GuidelineReport{
 					{
 						GuidelineId: "descriptionproperties",
@@ -553,14 +560,14 @@ func TestPreExistingConformanceReport(t *testing.T) {
 								RuleReports: []*rpc.RuleReport{
 									{
 										RuleId:     "tagdescription",
-										SpecName:   specName,
-										FileName:   "test-result-file",
+										Spec:       specName,
+										File:       "test-result-file",
 										Suggestion: "fix tag-description",
 									},
 									{
 										RuleId:     "operationdescription",
-										SpecName:   specName,
-										FileName:   "test-result-file",
+										Spec:       specName,
+										File:       "test-result-file",
 										Suggestion: "fix operation-description",
 									},
 								},
@@ -572,8 +579,8 @@ func TestPreExistingConformanceReport(t *testing.T) {
 					},
 				},
 			},
-			{Status: rpc.Guideline_DEPRECATED},
-			{Status: rpc.Guideline_DISABLED},
+			{State: rpc.Guideline_DEPRECATED},
+			{State: rpc.Guideline_DISABLED},
 		},
 	}
 

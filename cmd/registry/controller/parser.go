@@ -83,6 +83,16 @@ func validateGeneratedResourceEntry(parent string, generatedResource *rpc.Genera
 		}
 	}
 
+	// Check that either "dependencies" or "refresh" is set and "refresh > 0"
+	if len(generatedResource.Dependencies) == 0 && generatedResource.Refresh == nil {
+		errs = append(errs, fmt.Errorf("either 'dependencies' or 'refresh' must be set for generated resource: %v", generatedResource))
+	}
+
+	// Check that "refresh" > 0
+	if generatedResource.Refresh != nil && generatedResource.Refresh.AsDuration().Seconds() == 0 {
+		errs = append(errs, fmt.Errorf("'refresh' must be >0 for generated resource: %v", generatedResource))
+	}
+
 	//Validate that all the action References are valid
 	references, err := getReferencesFromAction(generatedResource.Action)
 	if err != nil {

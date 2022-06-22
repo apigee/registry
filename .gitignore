@@ -8,3 +8,6 @@ proto.pb
 # IntelliJ
 .idea/
 *.iml
+
+# gofmt
+*.grc.bk

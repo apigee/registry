@@ -18,7 +18,9 @@ import (
 	"context"
 	"strings"
 	"sync"
+	"time"
 
+	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/internal/storage"
 	"github.com/apigee/registry/server/registry/internal/storage/models"
@@ -278,6 +280,7 @@ func (s *RegistryServer) UpdateApiSpec(ctx context.Context, req *rpc.UpdateApiSp
 	}
 
 	if req.GetAllowMissing() {
+		before := time.Now()
 		// Prevent a race condition that can occur when two updates are made
 		// to the same non-existent resource. The db.Get...() call returns
 		// NotFound for both updates, and after one creates the resource,
@@ -286,6 +289,7 @@ func (s *RegistryServer) UpdateApiSpec(ctx context.Context, req *rpc.UpdateApiSp
 		// with improvements closer to the database level.
 		updateSpecMutex.Lock()
 		defer updateSpecMutex.Unlock()
+		log.Debugf(ctx, "Acquired lock after blocking for %v", time.Since(before))
 	}
 
 	spec, err := db.GetSpec(ctx, name)

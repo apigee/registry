@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
@@ -28,6 +29,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/durationpb"
 )
 
 const gzipOpenAPIv3 = "application/x.openapi+gzip;version=3.0.0"
@@ -47,7 +49,7 @@ var styleguide = &rpc.StyleGuide{
 					Severity:       rpc.Rule_WARNING,
 				},
 			},
-			Status: rpc.Guideline_ACTIVE,
+			State: rpc.Guideline_ACTIVE,
 		},
 	},
 }
@@ -802,7 +804,7 @@ func TestMultipleEntitiesArtifacts(t *testing.T) {
 			seed: []seeder.RegistryResource{
 				&rpc.Artifact{
 					Name:     "projects/controller-test/locations/global/artifacts/registry-styleguide",
-					MimeType: core.MimeTypeForMessageType("google.cloud.apigeeregistry.applications.v1alpha1.StyleGuide"),
+					MimeType: core.MimeTypeForMessageType("google.cloud.apigeeregistry.v1.style.StyleGuide"),
 					Contents: protoMarshal(styleguide),
 				},
 				&rpc.ApiSpec{
@@ -848,7 +850,7 @@ func TestMultipleEntitiesArtifacts(t *testing.T) {
 				//Update styleguide definition to make sure conformance artifacts are outdated
 				&rpc.Artifact{
 					Name:     "projects/controller-test/locations/global/artifacts/registry-styleguide",
-					MimeType: core.MimeTypeForMessageType("google.cloud.apigeeregistry.applications.v1alpha1.StyleGuide"),
+					MimeType: core.MimeTypeForMessageType("google.cloud.apigeeregistry.v1.style.StyleGuide"),
 					Contents: protoMarshal(styleguide),
 				},
 			},
@@ -875,7 +877,7 @@ func TestMultipleEntitiesArtifacts(t *testing.T) {
 			seed: []seeder.RegistryResource{
 				&rpc.Artifact{
 					Name:     "projects/controller-test/locations/global/artifacts/registry-styleguide",
-					MimeType: core.MimeTypeForMessageType("google.cloud.apigeeregistry.applications.v1alpha1.StyleGuide"),
+					MimeType: core.MimeTypeForMessageType("google.cloud.apigeeregistry.v1.style.StyleGuide"),
 					Contents: protoMarshal(styleguide),
 				},
 				&rpc.ApiSpec{
@@ -946,6 +948,162 @@ func TestMultipleEntitiesArtifacts(t *testing.T) {
 							},
 						},
 						Action: "registry compute conformance $resource.spec",
+					},
+				},
+			}
+			actions := ProcessManifest(ctx, registryClient, projectID, manifest)
+
+			if diff := cmp.Diff(test.want, actions, sortActions); diff != "" {
+				t.Errorf("ProcessManifest(%+v) returned unexpected diff (-want +got):\n%s", manifest, diff)
+			}
+
+			deleteProject(ctx, adminClient, t, "controller-test")
+		})
+	}
+}
+
+func TestRefreshArtifacts(t *testing.T) {
+	tests := []struct {
+		desc string
+		seed []seeder.RegistryResource
+		want []*Action
+		wait time.Duration
+	}{
+		{
+			desc: "non-existing artifacts",
+			seed: []seeder.RegistryResource{
+				&rpc.ApiSpec{
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+				},
+				&rpc.ApiSpec{
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
+				},
+				&rpc.ApiSpec{
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
+				},
+			},
+			want: []*Action{
+				{
+					Command:           "registry compute score projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-receipt",
+					RequiresReceipt:   true,
+				},
+				{
+					Command:           "registry compute score projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/score-receipt",
+					RequiresReceipt:   true,
+				},
+				{
+					Command:           "registry compute score projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/score-receipt",
+					RequiresReceipt:   true,
+				},
+			},
+		},
+		{
+			desc: "existing valid artifacts",
+			seed: []seeder.RegistryResource{
+				&rpc.Artifact{
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-receipt",
+				},
+				&rpc.Artifact{
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/score-receipt",
+				},
+				&rpc.Artifact{
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/score-receipt",
+				},
+			},
+			want: nil,
+		},
+		{
+			desc: "existing invalid artifacts",
+			seed: []seeder.RegistryResource{
+				&rpc.Artifact{
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-receipt",
+				},
+				&rpc.Artifact{
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/score-receipt",
+				},
+				&rpc.Artifact{
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/score-receipt",
+				},
+			},
+			want: []*Action{
+				{
+					Command:           "registry compute score projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-receipt",
+					RequiresReceipt:   true,
+				},
+				{
+					Command:           "registry compute score projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/score-receipt",
+					RequiresReceipt:   true,
+				},
+				{
+					Command:           "registry compute score projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
+					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/score-receipt",
+					RequiresReceipt:   true,
+				},
+			},
+			wait: 5,
+		},
+		{
+			desc: "existing valid artifacts",
+			seed: []seeder.RegistryResource{
+				&rpc.Artifact{
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-receipt",
+				},
+				&rpc.Artifact{
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/score-receipt",
+				},
+				&rpc.Artifact{
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/score-receipt",
+				},
+			},
+			want: nil,
+		},
+	}
+
+	const projectID = "controller-test"
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			ctx := context.Background()
+			registryClient, err := connection.NewClient(ctx)
+			if err != nil {
+				t.Fatalf("Failed to create client: %+v", err)
+			}
+			t.Cleanup(func() { registryClient.Close() })
+
+			adminClient, err := connection.NewAdminClient(ctx)
+			if err != nil {
+				t.Fatalf("Failed to create client: %+v", err)
+			}
+			t.Cleanup(func() { adminClient.Close() })
+
+			deleteProject(ctx, adminClient, t, "controller-test")
+			t.Cleanup(func() { deleteProject(ctx, adminClient, t, "controller-test") })
+
+			client := seeder.Client{
+				RegistryClient: registryClient,
+				AdminClient:    adminClient,
+			}
+
+			if err := seeder.SeedRegistry(ctx, client, test.seed...); err != nil {
+				t.Fatalf("Setup: failed to seed registry: %s", err)
+			}
+
+			time.Sleep(test.wait * time.Second)
+
+			manifest := &rpc.Manifest{
+				Id: "controller-test",
+				GeneratedResources: []*rpc.GeneratedResource{
+					{
+						Pattern: "apis/-/versions/-/specs/-/artifacts/score-receipt",
+						Receipt: true,
+						Refresh: &durationpb.Duration{
+							Seconds: 2,
+						},
+						Action: "registry compute score $resource.spec",
 					},
 				},
 			}
