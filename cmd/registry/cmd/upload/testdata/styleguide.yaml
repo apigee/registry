@@ -25,7 +25,7 @@ guidelines:
         linter: spectral
         linter_rulename: no-$ref-siblings
         severity: ERROR
-    status: ACTIVE
+    state: ACTIVE
 linters:
   - name: spectral
     uri: https://github.com/stoplightio/spectral

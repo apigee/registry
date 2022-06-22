@@ -110,7 +110,7 @@ func TestApply(t *testing.T) {
 	// TODO: These should run as separate subtests to make it clear exactly which artifact types are failing.
 	// Creation and export should also be separated ideally. The error message should at least make it
 	// clear whether create or export is failing.
-	artifacts := []string{"lifecycle", "manifest", "taxonomies"}
+	artifacts := []string{"lifecycle", "manifest", "taxonomies", "styleguide"}
 	for _, a := range artifacts {
 		filename := fmt.Sprintf("%s/artifacts/%s.yaml", sampleDir, a)
 		cmd := Command()

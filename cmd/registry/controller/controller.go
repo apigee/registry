@@ -39,7 +39,7 @@ func ProcessManifest(
 	manifest *rpc.Manifest) []*Action {
 	var actions []*Action
 	//Check for errors in manifest
-	errs := ValidateManifest(fmt.Sprintf("projects/%s", projectID), manifest)
+	errs := ValidateManifest(fmt.Sprintf("projects/%s/locations/global", projectID), manifest)
 	if len(errs) > 0 {
 		for _, err := range errs {
 			log.FromContext(ctx).WithError(err).Debugf("Error in manifest")
@@ -71,8 +71,8 @@ func processManifestResource(
 	client connection.Client,
 	projectID string,
 	generatedResource *rpc.GeneratedResource) ([]*Action, error) {
-	// Generate dependency map
 	resourcePattern := fmt.Sprintf("projects/%s/locations/global/%s", projectID, generatedResource.Pattern)
+	// Generate dependency map
 	dependencyMaps := make([]map[string]time.Time, 0, len(generatedResource.Dependencies))
 	for _, dependency := range generatedResource.Dependencies {
 		dMap, err := generateDependencyMap(ctx, client, resourcePattern, dependency)
@@ -152,20 +152,17 @@ func generateActions(
 	generatedResource *rpc.GeneratedResource) []*Action {
 	actions := make([]*Action, 0)
 
-	// Calculate actions only if dependencies are non-empty
-	if len(dependencyMaps) > 0 {
-		updateActions, visited, err := generateUpdateActions(ctx, client, resourcePattern, filter, dependencyMaps, generatedResource)
-		if err != nil {
-			log.Errorf(ctx, "Error while generating UpdateActions: %s", err)
-		}
-		actions = append(actions, updateActions...)
-
-		createActions, err := generateCreateActions(ctx, client, resourcePattern, dependencyMaps, generatedResource, visited)
-		if err != nil {
-			log.Errorf(ctx, "Error while generating CreateActions: %s", err)
-		}
-		actions = append(actions, createActions...)
+	updateActions, visited, err := generateUpdateActions(ctx, client, resourcePattern, filter, dependencyMaps, generatedResource)
+	if err != nil {
+		log.Errorf(ctx, "Error while generating UpdateActions: %s", err)
 	}
+	actions = append(actions, updateActions...)
+
+	createActions, err := generateCreateActions(ctx, client, resourcePattern, dependencyMaps, generatedResource, visited)
+	if err != nil {
+		log.Errorf(ctx, "Error while generating CreateActions: %s", err)
+	}
+	actions = append(actions, createActions...)
 
 	return actions
 }
@@ -331,6 +328,11 @@ func needsUpdate(
 	targetResourceTime time.Time,
 	dependencyMaps []map[string]time.Time,
 	generatedResource *rpc.GeneratedResource) (bool, error) {
+	// Check "refresh" first to decide whether to take action or not.
+	if generatedResource.Refresh != nil && targetResourceTime.Add(generatedResource.Refresh.AsDuration()).Before(time.Now()) {
+		return true, nil
+	}
+	// Check for dependencies otherwise
 	for i, dependency := range generatedResource.Dependencies {
 		dMap := dependencyMaps[i]
 		// Get the entity to look for in dependencyMap
@@ -357,6 +359,11 @@ func needsCreate(
 	targetResourceName patterns.ResourceName,
 	dependencyMaps []map[string]time.Time,
 	generatedResource *rpc.GeneratedResource) (bool, error) {
+	// Take action if "refresh" is set and > 0
+	if generatedResource.Refresh != nil && generatedResource.Refresh.AsDuration().Seconds() > 0 {
+		return true, nil
+	}
+	// Check for dependencies otherwise
 	for i, dependency := range generatedResource.Dependencies {
 		dMap := dependencyMaps[i]
 		// Get the entity to look for in dependencyMap

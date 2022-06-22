@@ -77,7 +77,7 @@ func defaultAdminCallOptions() *AdminCallOptions {
 	}
 }
 
-// internalAdminClient is an interface that defines the methods availaible from .
+// internalAdminClient is an interface that defines the methods available from .
 type internalAdminClient interface {
 	Close() error
 	setGoogleClientInfo(...string)

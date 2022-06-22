@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/apigee/registry/rpc"
+	"google.golang.org/protobuf/types/known/durationpb"
 )
 
 func TestGenerateCommand(t *testing.T) {
@@ -173,6 +174,28 @@ func TestValidateGeneratedResourceEntry(t *testing.T) {
 				Action: "registry generate summary $resource.version",
 			},
 		},
+		{
+			desc: "refresh field with missing dependencies",
+			generatedResource: &rpc.GeneratedResource{
+				Pattern: "apis/-/versions/-/artifacts/score-receipt",
+				Receipt: true,
+				Refresh: &durationpb.Duration{
+					Seconds: 5,
+				},
+				Action: "registry generate summary $resource.version",
+			},
+		},
+		{
+			desc: "refresh field (in nanoseconds)",
+			generatedResource: &rpc.GeneratedResource{
+				Pattern: "apis/-/versions/-/artifacts/score-receipt",
+				Receipt: true,
+				Refresh: &durationpb.Duration{
+					Nanos: 5,
+				},
+				Action: "registry generate summary $resource.version",
+			},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
@@ -245,6 +268,25 @@ func TestValidateGeneratedResourceEntryError(t *testing.T) {
 					},
 				},
 				Action: "registry generate summary $resource.spec", // Correct pattern: registry generate summary $resource.version
+			},
+		},
+		{
+			desc: "refresh field equal to 0",
+			generatedResource: &rpc.GeneratedResource{
+				Pattern: "apis/-/versions/-/artifacts/score-receipt",
+				Receipt: true,
+				Refresh: &durationpb.Duration{
+					Seconds: 0,
+				},
+				Action: "registry generate summary $resource.version",
+			},
+		},
+		{
+			desc: "missing dependencies and refresh",
+			generatedResource: &rpc.GeneratedResource{
+				Pattern: "apis/-/versions/-/artifacts/score-receipt",
+				Receipt: true,
+				Action:  "registry generate summary $resource.version",
 			},
 		},
 	}

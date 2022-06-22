@@ -17,7 +17,9 @@ package registry
 import (
 	"context"
 	"sync"
+	"time"
 
+	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/internal/storage"
 	"github.com/apigee/registry/server/registry/internal/storage/models"
@@ -168,6 +170,7 @@ func (s *RegistryServer) UpdateProject(ctx context.Context, req *rpc.UpdateProje
 	}
 
 	if req.GetAllowMissing() {
+		before := time.Now()
 		// Prevent a race condition that can occur when two updates are made
 		// to the same non-existent resource. The db.Get...() call returns
 		// NotFound for both updates, and after one creates the resource,
@@ -176,6 +179,7 @@ func (s *RegistryServer) UpdateProject(ctx context.Context, req *rpc.UpdateProje
 		// with improvements closer to the database level.
 		updateProjectMutex.Lock()
 		defer updateProjectMutex.Unlock()
+		log.Debugf(ctx, "Acquired lock after blocking for %v", time.Since(before))
 	}
 
 	project, err := db.GetProject(ctx, name)

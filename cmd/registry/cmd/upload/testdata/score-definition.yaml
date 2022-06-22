@@ -20,7 +20,7 @@ score_formula:
   artifact:
     pattern: "$resource.spec/artifacts/conformance-apihub-styleguide"
   # number of errors from conformance report
-  score_expression: "sum(guidelineReportGroups[2].guidelineReports.map(r, has(r.ruleReportGroups[1].ruleReports) ? size(r.ruleReportGroups[1].ruleReports) : 0))"
+  score_expression: "has(guidelineReportGroups[2].guidelineReports) ? sum(guidelineReportGroups[2].guidelineReports.map(r, has(r.ruleReportGroups[1].ruleReports) ? size(r.ruleReportGroups[1].ruleReports) : 0)) : 0"
 integer: 
   min_value: 0
   max_value: 100

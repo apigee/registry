@@ -67,11 +67,11 @@ func getMap(contents []byte, mimeType string) (map[string]interface{}, error) {
 		return unmarshalAndMap(contents, &metrics.Complexity{})
 	case "gnostic.metrics.Vocabulary":
 		return unmarshalAndMap(contents, &metrics.Vocabulary{})
-	case "google.cloud.apigeeregistry.applications.v1alpha1.ConformanceReport":
+	case "google.cloud.apigeeregistry.v1.style.ConformanceReport":
 		return unmarshalAndMap(contents, &rpc.ConformanceReport{})
 	case "google.cloud.apigeeregistry.applications.v1alpha1.Index":
 		return unmarshalAndMap(contents, &rpc.Index{})
-	case "google.cloud.apigeeregistry.applications.v1alpha1.Lint":
+	case "google.cloud.apigeeregistry.v1.style.Lint":
 		return unmarshalAndMap(contents, &rpc.Lint{})
 	case "google.cloud.apigeeregistry.v1.apihub.ReferenceList":
 		return unmarshalAndMap(contents, &rpc.ReferenceList{})

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-id: openapitest-multiple-status
+id: openapitest-multiple-state
 mime_types:
   - application/x.openapi+gzip;version=3.0.0
 guidelines:
@@ -25,7 +25,7 @@ guidelines:
         linter: sample
         linter_rulename: no-$ref-siblings
         severity: ERROR
-    status:  ACTIVE
+    state:  ACTIVE
   - id: tagproperties
     display_name: Tag Properties
     description: This guideline specifies rules for different tags.
@@ -40,7 +40,7 @@ guidelines:
         linter: sample
         linter_rulename: operation-tags
         severity: ERROR
-    status: PROPOSED
+    state: PROPOSED
 linters:
   - name: sample
     uri: https://sample/url
