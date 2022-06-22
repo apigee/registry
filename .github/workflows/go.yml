@@ -85,6 +85,9 @@ jobs:
     - name: Compute code coverage
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        APG_REGISTRY_ADDRESS: localhost:8080
+        APG_REGISTRY_AUDIENCES: http://localhost:8080
+        APG_REGISTRY_INSECURE: 1
       run: |
         go clean -testcache
         go test -race -coverprofile=coverage.txt -covermode=atomic ./...
