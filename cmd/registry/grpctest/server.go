@@ -22,10 +22,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
 )
 
 // NewIfNoAddress will create a RegistryServer served by a
@@ -104,22 +102,12 @@ func NewServer(rc registry.Config) (*Server, error) {
 		return nil, err
 	}
 
-	gl.Listener, err = net.Listen("tcp", "localhost:0") // random port
+	gl.Listener, gl.Server, err = rs.ServeGRPC(&net.TCPAddr{
+		IP:   net.IPv4(127, 0, 0, 1),
+		Port: 0}) // random port
 	if err != nil {
-		gl.Close()
 		return nil, err
 	}
-
-	gl.Server = grpc.NewServer()
-	reflection.Register(gl.Server)
-	rpc.RegisterRegistryServer(gl.Server, rs)
-	rpc.RegisterAdminServer(gl.Server, rs)
-
-	go func() {
-		if err := gl.Server.Serve(gl.Listener); err != nil {
-			log.Fatal(err)
-		}
-	}()
 
 	// set for internal client
 	addr := fmt.Sprintf("localhost:%d", gl.Port())
