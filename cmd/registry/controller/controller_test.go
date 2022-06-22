@@ -20,8 +20,8 @@ import (
 	"testing"
 
 	"github.com/apigee/registry/cmd/registry/core"
-	"github.com/apigee/registry/cmd/registry/grpctest"
 	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/connection/grpctest"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry"
 	"github.com/apigee/registry/server/registry/test/seeder"
