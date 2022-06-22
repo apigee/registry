@@ -17,7 +17,9 @@ package registry
 import (
 	"context"
 	"sync"
+	"time"
 
+	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/internal/storage"
 	"github.com/apigee/registry/server/registry/internal/storage/models"
@@ -200,6 +202,7 @@ func (s *RegistryServer) UpdateApiVersion(ctx context.Context, req *rpc.UpdateAp
 	}
 
 	if req.GetAllowMissing() {
+		before := time.Now()
 		// Prevent a race condition that can occur when two updates are made
 		// to the same non-existent resource. The db.Get...() call returns
 		// NotFound for both updates, and after one creates the resource,
@@ -208,6 +211,7 @@ func (s *RegistryServer) UpdateApiVersion(ctx context.Context, req *rpc.UpdateAp
 		// with improvements closer to the database level.
 		updateVersionMutex.Lock()
 		defer updateVersionMutex.Unlock()
+		log.Debugf(ctx, "Acquired lock after blocking for %v", time.Since(before))
 	}
 
 	version, err := db.GetVersion(ctx, name)

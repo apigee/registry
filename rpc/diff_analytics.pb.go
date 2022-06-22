@@ -185,11 +185,11 @@ type ChangeStats struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// breaking_change_count repersents the total number of breaking changes.
+	// breaking_change_count represents the total number of breaking changes.
 	BreakingChangeCount int64 `protobuf:"varint,1,opt,name=breaking_change_count,json=breakingChangeCount,proto3" json:"breaking_change_count,omitempty"`
-	// nonbreaking_change_count repersents the total number of non-breaking changes.
+	// nonbreaking_change_count represents the total number of non-breaking changes.
 	NonbreakingChangeCount int64 `protobuf:"varint,2,opt,name=nonbreaking_change_count,json=nonbreakingChangeCount,proto3" json:"nonbreaking_change_count,omitempty"`
-	// diff_count repersents the number of diffs used in this stats
+	// diff_count represents the number of diffs used in this stats
 	DiffCount int64 `protobuf:"varint,3,opt,name=diff_count,json=diffCount,proto3" json:"diff_count,omitempty"`
 }
 
@@ -316,9 +316,9 @@ type Diff_ValueChange struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// from repersents the previous value of the element.
+	// from represents the previous value of the element.
 	From string `protobuf:"bytes,1,opt,name=from,proto3" json:"from,omitempty"`
-	// to repersents the current value of the element.
+	// to represents the current value of the element.
 	To string `protobuf:"bytes,2,opt,name=to,proto3" json:"to,omitempty"`
 }
 
