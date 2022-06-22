@@ -20,9 +20,11 @@ import (
 	"os"
 	"testing"
 
+	"github.com/apigee/registry/cmd/registry/grpctest"
 	"github.com/apigee/registry/cmd/registry/patch"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/server/registry"
 	"github.com/apigee/registry/server/registry/names"
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/grpc/codes"
@@ -30,6 +32,13 @@ import (
 )
 
 const sampleDir = "testdata/sample"
+
+// TestMain will set up a local RegistryServer and grpc.Server for all
+// tests in this package if APG_REGISTRY_ADDRESS env var is not set
+// for the client.
+func TestMain(m *testing.M) {
+	grpctest.TestMain(m, registry.Config{})
+}
 
 func TestApply(t *testing.T) {
 	project := names.Project{ProjectID: "apply-test"}

@@ -18,12 +18,21 @@ import (
 	"context"
 	"testing"
 
+	"github.com/apigee/registry/cmd/registry/grpctest"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/server/registry"
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
+
+// TestMain will set up a local RegistryServer and grpc.Server for all
+// tests in this package if APG_REGISTRY_ADDRESS env var is not set
+// for the client.
+func TestMain(m *testing.M) {
+	grpctest.TestMain(m, registry.Config{})
+}
 
 func TestAnnotate(t *testing.T) {
 	const (

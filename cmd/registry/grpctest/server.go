@@ -1,3 +1,17 @@
+// Copyright 2022 Google LLC. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//    http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package grpctest
 
 import (
@@ -16,19 +30,36 @@ import (
 
 // NewIfNoAddress will create a RegistryServer served by a
 // basic grpc.Server if env var APG_REGISTRY_ADDRESS is
-// not set, otherwise will simply return a dummy Server
-// assuming the tests will connect to a the remote address.
+// not set, see NewServer() for details. If APG_REGISTRY_ADDRESS
+// is set, returns nil as client will connect to that remote address.
+// Example:
+// func TestXXX(t *testing.T) {
+// 	 l, err := grpctest.NewIfNoAddress(registry.Config{})
+// 	 if err != nil {
+// 		t.Fatal(err)
+// 	 }
+// 	 defer l.Close()
+//   ... run test here ...
+// }
 func NewIfNoAddress(rc registry.Config) (*Server, error) {
 	addr := os.Getenv("APG_REGISTRY_ADDRESS")
 	if addr != "" {
-		return &Server{}, nil
+		log.Printf("Client will use remote database at: %s", addr)
+		return nil, nil
 	}
+	log.Println("Client will use embedded SQLite3 database")
 	return NewServer(registry.Config{})
 }
 
 // TestMain can delegate here in packages that wish to
-// use TestMain for tests using a RegistryServer. This
-// uses NewIfNoAddress() semantics.
+// use TestMain() for tests relying on a RegistryServer.
+// Note: As TestMain() is run once per TestXXX() function,
+// this will create a new database for the function,
+// not per t.Run() within it. See NewIfNoAddress() for details.
+// Example:
+// func TestMain(m *testing.M) {
+// 	grpctest.TestMain(m, registry.Config{})
+// }
 func TestMain(m *testing.M, rc registry.Config) {
 	l, err := NewIfNoAddress(rc)
 	if err != nil {
