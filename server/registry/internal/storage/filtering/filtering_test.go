@@ -17,7 +17,72 @@ package filtering
 import (
 	"testing"
 	"time"
+
+	"google.golang.org/grpc/status"
 )
+
+func TestErrorConditions(t *testing.T) {
+	tests := []struct {
+		desc   string
+		filter string
+		fields []Field
+		model  map[string]interface{}
+	}{
+		{
+			desc:   "bad field type",
+			filter: `k == "match"`,
+			fields: []Field{
+				{
+					Name: "k",
+					Type: 999,
+				},
+			},
+		},
+		{
+			desc:   "bad filter",
+			filter: `k xx "match"`,
+			fields: []Field{},
+		},
+		{
+			desc:   "bad filter result",
+			filter: `k`,
+			fields: []Field{
+				{
+					Name: "k",
+					Type: String,
+				},
+			},
+			model: map[string]interface{}{
+				"k": "match",
+			},
+		},
+		{
+			desc:   "bad model",
+			filter: `k == "k"`,
+			fields: []Field{
+				{
+					Name: "k",
+					Type: String,
+				},
+			},
+			model: nil,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			f, err := NewFilter(test.filter, test.fields)
+			if err == nil {
+				if _, err = f.Matches(test.model); err == nil {
+					t.Errorf("(%q) expected error", test.filter)
+				}
+			}
+			if _, ok := status.FromError(err); !ok {
+				t.Errorf("(%q) expected gRPC status error", test.filter)
+			}
+		})
+	}
+}
 
 func TestFilter_Matches(t *testing.T) {
 	tests := []struct {
@@ -27,6 +92,20 @@ func TestFilter_Matches(t *testing.T) {
 		positive map[string]interface{}
 		negative map[string]interface{}
 	}{
+		{
+			desc:   "empty",
+			filter: ``,
+			fields: []Field{
+				{
+					Name: "k",
+					Type: String,
+				},
+			},
+			positive: map[string]interface{}{
+				"k": "match",
+			},
+			negative: map[string]interface{}{},
+		},
 		{
 			desc:   "equal to String",
 			filter: `k == "match"`,
@@ -208,7 +287,7 @@ func TestFilter_Matches(t *testing.T) {
 
 			if match, err := f.Matches(test.negative); err != nil {
 				t.Fatalf("NewFilter(%q).Matches(%v) returned error: %s", test.filter, test.negative, err)
-			} else if match {
+			} else if match && len(test.negative) > 0 {
 				t.Errorf("NewFilter(%q).Matches(%v) returned unexpected match", test.filter, test.negative)
 			}
 		})
