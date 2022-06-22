@@ -62,9 +62,6 @@ func NewClient(ctx context.Context, driver, dsn string) (*Client, error) {
 			c.close()
 			return nil, err
 		}
-		// empirically, it does not seem safe to disable the mutex for sqlite3,
-		// which might make sense since sqlite database access is in-process.
-		// disableMutex = false
 		return &Client{db: db}, nil
 	case "postgres", "cloudsqlpostgres":
 		db, err := gorm.Open(postgres.New(postgres.Config{
@@ -78,9 +75,6 @@ func NewClient(ctx context.Context, driver, dsn string) (*Client, error) {
 			c.close()
 			return nil, err
 		}
-		// postgres runs in a separate process and seems to have no problems
-		// with concurrent access and modifications.
-		// disableMutex = true
 		return &Client{db: db}, nil
 	default:
 		return nil, fmt.Errorf("unsupported database %s", driver)
