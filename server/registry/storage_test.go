@@ -32,7 +32,6 @@ func TestDuplicateCreation(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
 	}
-	defer db.Close()
 
 	// Create a project.
 	project := models.NewProject(names.Project{ProjectID: "duplicate"}, &rpc.Project{})

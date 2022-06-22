@@ -55,7 +55,8 @@ func NewClient(ctx context.Context, driver, dsn string) (*Client, error) {
 	switch driver {
 	case "sqlite3":
 		db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{
-			Logger: NewGormLogger(ctx),
+			Logger:      NewGormLogger(ctx),
+			PrepareStmt: true,
 		})
 		if err != nil {
 			c := &Client{db: db}

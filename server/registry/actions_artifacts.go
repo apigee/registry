@@ -55,7 +55,6 @@ func (s *RegistryServer) CreateArtifact(ctx context.Context, req *rpc.CreateArti
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer db.Close()
 
 	if req.GetArtifact() == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid artifact %+v: body must be provided", req.GetArtifact())
@@ -123,7 +122,6 @@ func (s *RegistryServer) DeleteArtifact(ctx context.Context, req *rpc.DeleteArti
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer db.Close()
 
 	name, err := names.ParseArtifact(req.GetName())
 	if err != nil {
@@ -149,7 +147,6 @@ func (s *RegistryServer) GetArtifact(ctx context.Context, req *rpc.GetArtifactRe
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer db.Close()
 
 	name, err := names.ParseArtifact(req.GetName())
 	if err != nil {
@@ -170,7 +167,6 @@ func (s *RegistryServer) GetArtifactContents(ctx context.Context, req *rpc.GetAr
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer db.Close()
 
 	name, err := names.ParseArtifact(req.GetName())
 	if err != nil {
@@ -207,7 +203,6 @@ func (s *RegistryServer) ListArtifacts(ctx context.Context, req *rpc.ListArtifac
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer db.Close()
 
 	if req.GetPageSize() < 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid page_size %d: must not be negative", req.GetPageSize())
@@ -277,7 +272,6 @@ func (s *RegistryServer) ReplaceArtifact(ctx context.Context, req *rpc.ReplaceAr
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer db.Close()
 
 	name, err := names.ParseArtifact(req.Artifact.GetName())
 	if err != nil {

@@ -48,7 +48,6 @@ func (s *RegistryServer) createDeployment(ctx context.Context, name names.Deploy
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer db.Close()
 
 	if _, err := db.GetDeployment(ctx, name); err == nil {
 		return nil, status.Errorf(codes.AlreadyExists, "API deployment %q already exists", name)
@@ -89,7 +88,6 @@ func (s *RegistryServer) DeleteApiDeployment(ctx context.Context, req *rpc.Delet
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer db.Close()
 
 	name, err := names.ParseDeployment(req.GetName())
 	if err != nil {
@@ -125,7 +123,6 @@ func (s *RegistryServer) getApiDeployment(ctx context.Context, name names.Deploy
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer db.Close()
 
 	deployment, err := db.GetDeployment(ctx, name)
 	if err != nil {
@@ -145,7 +142,6 @@ func (s *RegistryServer) getApiDeploymentRevision(ctx context.Context, name name
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer db.Close()
 
 	revision, err := db.GetDeploymentRevision(ctx, name)
 	if err != nil {
@@ -166,7 +162,6 @@ func (s *RegistryServer) ListApiDeployments(ctx context.Context, req *rpc.ListAp
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer db.Close()
 
 	if req.GetPageSize() < 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid page_size %d: must not be negative", req.GetPageSize())
@@ -213,7 +208,6 @@ func (s *RegistryServer) UpdateApiDeployment(ctx context.Context, req *rpc.Updat
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer db.Close()
 
 	if req.GetApiDeployment() == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid api_deployment %+v: body must be provided", req.GetApiDeployment())
