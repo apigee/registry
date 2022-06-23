@@ -23,11 +23,9 @@ import (
 
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/log/interceptor"
-	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry"
 	"github.com/spf13/pflag"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
 	"gopkg.in/yaml.v3"
 )
 
@@ -120,15 +118,6 @@ func main() {
 		logInterceptor = interceptor.CallLogger(logOpts...)
 	)
 
-	logger.Infof("Configured port %d", config.Port)
-	listener, err := net.ListenTCP("tcp", &net.TCPAddr{
-		Port: config.Port,
-	})
-	if err != nil {
-		logger.WithError(err).Fatalf("Failed to create TCP listener")
-	}
-	defer listener.Close()
-
 	registryServer, err := registry.New(registry.Config{
 		Database:  config.Database.Driver,
 		DBConfig:  config.Database.Config,
@@ -141,20 +130,17 @@ func main() {
 		logger.WithError(err).Fatalf("Failed to create registry server")
 	}
 
-	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(logInterceptor))
-	reflection.Register(grpcServer)
-	rpc.RegisterRegistryServer(grpcServer, registryServer)
-	rpc.RegisterAdminServer(grpcServer, registryServer)
-
-	go func() {
-		_ = grpcServer.Serve(listener)
-	}()
+	listener, server, err := registryServer.ServeGRPC(&net.TCPAddr{Port: config.Port}, grpc.UnaryInterceptor(logInterceptor))
+	if err != nil {
+		logger.WithError(err).Fatalf("Failed to create TCP listener")
+	}
 	logger.Infof("Listening on %s", listener.Addr())
 
 	// Wait for an interruption signal.
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGTERM)
 	<-done
+	server.GracefulStop()
 }
 
 func validateConfig() error {

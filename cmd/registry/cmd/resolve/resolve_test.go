@@ -24,13 +24,22 @@ import (
 
 	"github.com/apigee/registry/cmd/registry/cmd/upload"
 	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/connection/grpctest"
 	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/server/registry"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"google.golang.org/api/iterator"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
+
+// TestMain will set up a local RegistryServer and grpc.Server for all
+// tests in this package if APG_REGISTRY_ADDRESS env var is not set
+// for the client.
+func TestMain(m *testing.M) {
+	grpctest.TestMain(m, registry.Config{})
+}
 
 func readAndGZipFile(t *testing.T, filename string) (*bytes.Buffer, error) {
 	t.Helper()

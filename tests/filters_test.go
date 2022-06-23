@@ -20,8 +20,10 @@ import (
 	"testing"
 
 	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/connection/grpctest"
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/server/registry"
 	"google.golang.org/api/iterator"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -47,6 +49,13 @@ func check(t *testing.T, message string, err error) {
 	if err != nil {
 		t.Errorf(message, err.Error())
 	}
+}
+
+// TestMain will set up a local RegistryServer and grpc.Server for all
+// tests in this package if APG_REGISTRY_ADDRESS env var is not set
+// for the client.
+func TestMain(m *testing.M) {
+	grpctest.TestMain(m, registry.Config{})
 }
 
 func TestFilters(t *testing.T) {
