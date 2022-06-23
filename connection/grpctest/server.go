@@ -42,10 +42,10 @@ import (
 func NewIfNoAddress(rc registry.Config) (*Server, error) {
 	addr := os.Getenv("APG_REGISTRY_ADDRESS")
 	if addr != "" {
-		log.Printf("Client will use remote database at: %s", addr)
+		log.Printf("Client will use remote registry at: %s", addr)
 		return nil, nil
 	}
-	log.Println("Client will use embedded SQLite3 database")
+	log.Println("Client will use an embedded registry with a SQLite3 database")
 	return NewServer(registry.Config{})
 }
 
