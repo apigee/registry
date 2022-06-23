@@ -233,47 +233,32 @@ func TestCreateApiVersionResponseCodes(t *testing.T) {
 }
 
 func TestCreateApiVersionDuplicates(t *testing.T) {
-	tests := []struct {
+	test := struct {
 		desc string
 		seed *rpc.ApiVersion
 		req  *rpc.CreateApiVersionRequest
 		want codes.Code
 	}{
-		{
-			desc: "case sensitive",
-			seed: &rpc.ApiVersion{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
-			req: &rpc.CreateApiVersionRequest{
-				Parent:       "projects/my-project/locations/global/apis/my-api",
-				ApiVersionId: "v1",
-				ApiVersion:   &rpc.ApiVersion{},
-			},
-			want: codes.AlreadyExists,
+		desc: "case sensitive",
+		seed: &rpc.ApiVersion{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
+		req: &rpc.CreateApiVersionRequest{
+			Parent:       "projects/my-project/locations/global/apis/my-api",
+			ApiVersionId: "v1",
+			ApiVersion:   &rpc.ApiVersion{},
 		},
-		{
-			desc: "case insensitive",
-			seed: &rpc.ApiVersion{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
-			req: &rpc.CreateApiVersionRequest{
-				Parent:       "projects/my-project/locations/global/apis/my-api",
-				ApiVersionId: "V1",
-				ApiVersion:   &rpc.ApiVersion{},
-			},
-			want: codes.AlreadyExists,
-		},
+		want: codes.AlreadyExists,
 	}
+	t.Run(test.desc, func(t *testing.T) {
+		ctx := context.Background()
+		server := defaultTestServer(t)
+		if err := seeder.SeedVersions(ctx, server, test.seed); err != nil {
+			t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+		}
 
-	for _, test := range tests {
-		t.Run(test.desc, func(t *testing.T) {
-			ctx := context.Background()
-			server := defaultTestServer(t)
-			if err := seeder.SeedVersions(ctx, server, test.seed); err != nil {
-				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
-			}
-
-			if _, err := server.CreateApiVersion(ctx, test.req); status.Code(err) != test.want {
-				t.Errorf("CreateApiVersion(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
-			}
-		})
-	}
+		if _, err := server.CreateApiVersion(ctx, test.req); status.Code(err) != test.want {
+			t.Errorf("CreateApiVersion(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
+		}
+	})
 }
 
 func TestGetApiVersion(t *testing.T) {
