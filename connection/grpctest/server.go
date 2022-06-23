@@ -97,12 +97,12 @@ func NewServer(rc registry.Config) (*Server, error) {
 		gl.TmpDir = f.Name()
 	}
 
-	rs, err := registry.New(rc)
+	gl.Registry, err = registry.New(rc)
 	if err != nil {
 		return nil, err
 	}
 
-	gl.Listener, gl.Server, err = rs.ServeGRPC(&net.TCPAddr{
+	gl.Listener, gl.Server, err = gl.Registry.ServeGRPC(&net.TCPAddr{
 		IP:   net.IPv4(127, 0, 0, 1),
 		Port: 0}) // random port
 	if err != nil {
@@ -122,6 +122,7 @@ func NewServer(rc registry.Config) (*Server, error) {
 type Server struct {
 	Server   *grpc.Server
 	Listener net.Listener
+	Registry *registry.RegistryServer
 	TmpDir   string
 }
 
@@ -129,6 +130,9 @@ type Server struct {
 func (g *Server) Close() {
 	if g.Server != nil {
 		g.Server.GracefulStop()
+	}
+	if g.Registry != nil {
+		g.Registry.Close()
 	}
 	if g.TmpDir != "" {
 		os.RemoveAll(g.TmpDir)
