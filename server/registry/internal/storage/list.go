@@ -74,11 +74,9 @@ func (c *Client) ListProjects(ctx context.Context, opts PageOptions) (ProjectLis
 	}
 
 	for {
-		lock()
 		var page []models.Project
 		op := c.db.WithContext(ctx).Order("key").Limit(limit(opts))
 		err := op.Offset(token.Offset).Find(&page).Error
-		unlock()
 
 		if err != nil {
 			return ProjectList{}, status.Error(codes.Internal, err.Error())
@@ -175,10 +173,8 @@ func (c *Client) ListApis(ctx context.Context, parent names.Project, opts PageOp
 	}
 
 	for {
-		lock()
 		var page []models.Api
 		err := op.Offset(token.Offset).Find(&page).Error
-		unlock()
 
 		if err != nil {
 			return ApiList{}, status.Error(codes.Internal, err.Error())
@@ -298,10 +294,8 @@ func (c *Client) ListVersions(ctx context.Context, parent names.Api, opts PageOp
 	}
 
 	for {
-		lock()
 		var page []models.Version
 		err := op.Offset(token.Offset).Find(&page).Error
-		unlock()
 
 		if err != nil {
 			return VersionList{}, status.Error(codes.Internal, err.Error())
@@ -442,10 +436,8 @@ func (c *Client) ListSpecs(ctx context.Context, parent names.Version, opts PageO
 	}
 
 	for {
-		lock()
 		var page []models.Spec
 		err := op.Offset(token.Offset).Find(&page).Error
-		unlock()
 
 		if err != nil {
 			return SpecList{}, status.Error(codes.Internal, err.Error())
@@ -556,9 +548,7 @@ func (c *Client) ListSpecRevisions(ctx context.Context, parent names.Spec, opts 
 		Specs: make([]models.Spec, 0, opts.Size),
 	}
 
-	lock()
 	err = op.Find(&response.Specs).Error
-	unlock()
 
 	if err != nil {
 		return SpecList{}, status.Error(codes.Internal, err.Error())
@@ -655,10 +645,8 @@ func (c *Client) ListDeployments(ctx context.Context, parent names.Api, opts Pag
 	}
 
 	for {
-		lock()
 		var page []models.Deployment
 		err := op.Offset(token.Offset).Find(&page).Error
-		unlock()
 
 		if err != nil {
 			return DeploymentList{}, status.Error(codes.Internal, err.Error())
@@ -761,9 +749,7 @@ func (c *Client) ListDeploymentRevisions(ctx context.Context, parent names.Deplo
 		Deployments: make([]models.Deployment, 0, opts.Size),
 	}
 
-	lock()
 	err = op.Find(&response.Deployments).Error
-	unlock()
 
 	if err != nil {
 		return DeploymentList{}, status.Error(codes.Internal, err.Error())
@@ -1023,11 +1009,9 @@ func (c *Client) listArtifacts(op *gorm.DB, opts PageOptions, include func(*mode
 	}
 
 	for {
-		lock()
 		var page []models.Artifact
 		op = op.Order("key").Limit(limit(opts))
 		err := op.Offset(token.Offset).Find(&page).Error
-		unlock()
 
 		if err != nil {
 			return ArtifactList{}, status.Error(codes.Internal, err.Error())
