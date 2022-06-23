@@ -181,45 +181,31 @@ func TestCreateProjectResponseCodes(t *testing.T) {
 }
 
 func TestCreateProjectDuplicates(t *testing.T) {
-	tests := []struct {
+	test := struct {
 		desc string
 		seed *rpc.Project
 		req  *rpc.CreateProjectRequest
 		want codes.Code
 	}{
-		{
-			desc: "case sensitive",
-			seed: &rpc.Project{Name: "projects/my-project"},
-			req: &rpc.CreateProjectRequest{
-				ProjectId: "my-project",
-				Project:   &rpc.Project{},
-			},
-			want: codes.AlreadyExists,
+		desc: "case sensitive",
+		seed: &rpc.Project{Name: "projects/my-project"},
+		req: &rpc.CreateProjectRequest{
+			ProjectId: "my-project",
+			Project:   &rpc.Project{},
 		},
-		{
-			desc: "case insensitive",
-			seed: &rpc.Project{Name: "projects/my-project"},
-			req: &rpc.CreateProjectRequest{
-				ProjectId: "My-Project",
-				Project:   &rpc.Project{},
-			},
-			want: codes.InvalidArgument, // the upper-case characters are invalid; this is discovered before the save
-		},
+		want: codes.AlreadyExists,
 	}
+	t.Run(test.desc, func(t *testing.T) {
+		ctx := context.Background()
+		server := defaultTestServer(t)
+		if err := seeder.SeedProjects(ctx, server, test.seed); err != nil {
+			t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+		}
 
-	for _, test := range tests {
-		t.Run(test.desc, func(t *testing.T) {
-			ctx := context.Background()
-			server := defaultTestServer(t)
-			if err := seeder.SeedProjects(ctx, server, test.seed); err != nil {
-				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
-			}
-
-			if _, err := server.CreateProject(ctx, test.req); status.Code(err) != test.want {
-				t.Errorf("CreateProject(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
-			}
-		})
-	}
+		if _, err := server.CreateProject(ctx, test.req); status.Code(err) != test.want {
+			t.Errorf("CreateProject(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
+		}
+	})
 }
 
 func TestGetProject(t *testing.T) {
