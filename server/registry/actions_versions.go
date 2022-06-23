@@ -16,10 +16,7 @@ package registry
 
 import (
 	"context"
-	"sync"
-	"time"
 
-	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/internal/storage"
 	"github.com/apigee/registry/server/registry/internal/storage/models"
@@ -50,12 +47,6 @@ func (s *RegistryServer) createApiVersion(ctx context.Context, name names.Versio
 	}
 	defer db.Close()
 
-	if _, err := db.GetVersion(ctx, name); err == nil {
-		return nil, status.Errorf(codes.AlreadyExists, "API version %q already exists", name)
-	} else if !isNotFound(err) {
-		return nil, err
-	}
-
 	if err := name.Validate(); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -70,7 +61,7 @@ func (s *RegistryServer) createApiVersion(ctx context.Context, name names.Versio
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	if err := db.SaveVersion(ctx, version); err != nil {
+	if err := db.CreateVersion(ctx, version); err != nil {
 		return nil, err
 	}
 
@@ -180,16 +171,8 @@ func (s *RegistryServer) ListApiVersions(ctx context.Context, req *rpc.ListApiVe
 	return response, nil
 }
 
-var updateVersionMutex sync.Mutex
-
 // UpdateApiVersion handles the corresponding API request.
 func (s *RegistryServer) UpdateApiVersion(ctx context.Context, req *rpc.UpdateApiVersionRequest) (*rpc.ApiVersion, error) {
-	db, err := s.getStorageClient(ctx)
-	if err != nil {
-		return nil, status.Error(codes.Unavailable, err.Error())
-	}
-	defer db.Close()
-
 	if req.GetApiVersion() == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid api_version %+v: body must be provided", req.GetApiVersion())
 	} else if err := models.ValidateMask(req.GetApiVersion(), req.GetUpdateMask()); err != nil {
@@ -202,29 +185,29 @@ func (s *RegistryServer) UpdateApiVersion(ctx context.Context, req *rpc.UpdateAp
 	}
 
 	if req.GetAllowMissing() {
-		before := time.Now()
-		// Prevent a race condition that can occur when two updates are made
-		// to the same non-existent resource. The db.Get...() call returns
-		// NotFound for both updates, and after one creates the resource,
-		// the other creation fails. The lock() prevents this by serializing
-		// the get and create operations. Future updates could improve this
-		// with improvements closer to the database level.
-		updateVersionMutex.Lock()
-		defer updateVersionMutex.Unlock()
-		log.Debugf(ctx, "Acquired lock after blocking for %v", time.Since(before))
+		// Speculatively create the version. If it already exists, fall through to the update below.
+		version, err := s.createApiVersion(ctx, name, req.GetApiVersion())
+		if err == nil {
+			return version, nil
+		} else if status.Code(err) != codes.AlreadyExists {
+			return nil, err
+		}
 	}
 
+	db, err := s.getStorageClient(ctx)
+	if err != nil {
+		return nil, status.Error(codes.Unavailable, err.Error())
+	}
+	defer db.Close()
+
+	// TODO: the Get/Update/Save calls below should be a transaction.
 	version, err := db.GetVersion(ctx, name)
-	if req.GetAllowMissing() && isNotFound(err) {
-		return s.createApiVersion(ctx, name, req.GetApiVersion())
-	} else if err != nil {
+	if err != nil {
 		return nil, err
 	}
-
 	if err := version.Update(req.GetApiVersion(), models.ExpandMask(req.GetApiVersion(), req.GetUpdateMask())); err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-
 	if err := db.SaveVersion(ctx, version); err != nil {
 		return nil, err
 	}

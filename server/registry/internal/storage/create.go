@@ -15,15 +15,29 @@
 package storage
 
 import (
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	"context"
+
+	"github.com/apigee/registry/server/registry/internal/storage/models"
 )
 
-// grpcErrorForDBError converts recognized database error codes to grpc error codes.
-func grpcErrorForDBError(err error) error {
-	if alreadyExists(err) {
-		return status.Error(codes.AlreadyExists, err.Error())
+func (c *Client) CreateProject(ctx context.Context, v *models.Project) error {
+	v.Key = v.Name()
+	return c.create(ctx, v)
+}
+
+func (c *Client) CreateApi(ctx context.Context, v *models.Api) error {
+	v.Key = v.Name()
+	return c.create(ctx, v)
+}
+
+func (c *Client) CreateVersion(ctx context.Context, v *models.Version) error {
+	v.Key = v.Name()
+	return c.create(ctx, v)
+}
+
+func (c *Client) create(ctx context.Context, v interface{}) error {
+	if err := c.db.Create(v).Error; err != nil {
+		return grpcErrorForDBError(err)
 	}
-	// All unrecognized codes fall through to become "Internal" errors.
-	return status.Error(codes.Internal, err.Error())
+	return nil
 }
