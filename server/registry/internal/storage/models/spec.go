@@ -187,12 +187,12 @@ func (s *Spec) Update(message *rpc.ApiSpec, mask *fieldmaskpb.FieldMask) error {
 		case "labels":
 			var err error
 			if s.Labels, err = bytesForMap(message.GetLabels()); err != nil {
-				return err
+				return status.Error(codes.Internal, err.Error())
 			}
 		case "annotations":
 			var err error
 			if s.Annotations, err = bytesForMap(message.GetAnnotations()); err != nil {
-				return err
+				return status.Error(codes.Internal, err.Error())
 			}
 		}
 	}
