@@ -247,6 +247,19 @@ func TestCreateApiSpecResponseCodes(t *testing.T) {
 			},
 			want: codes.InvalidArgument,
 		},
+		{
+			desc: "invalid contents for gzip mime type",
+			seed: &rpc.ApiVersion{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
+			req: &rpc.CreateApiSpecRequest{
+				Parent:    "projects/my-project/locations/global/apis/my-api/versions/v1",
+				ApiSpecId: "my-spec",
+				ApiSpec: &rpc.ApiSpec{
+					MimeType: "application/x.openapi+gzip",
+					Contents: []byte("these contents are not gzipped"),
+				},
+			},
+			want: codes.InvalidArgument,
+		},
 	}
 
 	for _, test := range tests {
@@ -1281,6 +1294,23 @@ func TestUpdateApiSpecResponseCodes(t *testing.T) {
 					Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
 				},
 				UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"this field does not exist"}},
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "invalid contents for gzip mime type",
+			seed: &rpc.ApiSpec{
+				Name:     "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
+				MimeType: "application/x.openapi",
+				Contents: []byte("these contents are not gzipped"),
+			},
+			req: &rpc.UpdateApiSpecRequest{
+				ApiSpec: &rpc.ApiSpec{
+					Name:     "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
+					MimeType: "application/x.openapi+gzip",
+					Contents: []byte("these contents are not gzipped"),
+				},
+				UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"contents", "mime_type"}},
 			},
 			want: codes.InvalidArgument,
 		},
