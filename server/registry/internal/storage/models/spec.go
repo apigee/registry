@@ -163,6 +163,7 @@ func (s *Spec) BasicMessage(name string) (message *rpc.ApiSpec, err error) {
 // Update modifies a spec using the contents of a message.
 func (s *Spec) Update(message *rpc.ApiSpec, mask *fieldmaskpb.FieldMask) error {
 	s.RevisionUpdateTime = time.Now().Round(time.Microsecond)
+	var hasContents bool
 	for _, field := range mask.Paths {
 		switch field {
 		case "filename":
@@ -170,16 +171,7 @@ func (s *Spec) Update(message *rpc.ApiSpec, mask *fieldmaskpb.FieldMask) error {
 		case "description":
 			s.Description = message.GetDescription()
 		case "contents":
-			contents := message.GetContents()
-			// if contents are gzipped, uncompress before computing size and hash.
-			if strings.Contains(s.MimeType, "+gzip") && len(contents) > 0 {
-				var err error
-				contents, err = GUnzippedBytes(contents)
-				if err != nil {
-					return status.Error(codes.InvalidArgument, err.Error())
-				}
-			}
-			s.updateContents(contents)
+			hasContents = true
 		case "mime_type":
 			s.MimeType = message.GetMimeType()
 		case "source_uri":
@@ -187,20 +179,35 @@ func (s *Spec) Update(message *rpc.ApiSpec, mask *fieldmaskpb.FieldMask) error {
 		case "labels":
 			var err error
 			if s.Labels, err = bytesForMap(message.GetLabels()); err != nil {
-				return err
+				return status.Error(codes.Internal, err.Error())
 			}
 		case "annotations":
 			var err error
 			if s.Annotations, err = bytesForMap(message.GetAnnotations()); err != nil {
-				return err
+				return status.Error(codes.Internal, err.Error())
 			}
 		}
+	}
+
+	// Content updates depend on the current MIME type of the spec, so they
+	// should only happen after we update the MIME type field.
+	if hasContents {
+		return s.updateContents(message.GetContents())
 	}
 
 	return nil
 }
 
-func (s *Spec) updateContents(contents []byte) {
+func (s *Spec) updateContents(contents []byte) error {
+	// Compute size and hash using uncompressed spec.
+	if strings.Contains(s.MimeType, "+gzip") && len(contents) > 0 {
+		var err error
+		contents, err = GUnzippedBytes(contents)
+		if err != nil {
+			return status.Error(codes.InvalidArgument, err.Error())
+		}
+	}
+
 	if hash := hashForBytes(contents); hash != s.Hash {
 		s.Hash = hash
 		s.RevisionID = newRevisionID()
@@ -210,6 +217,8 @@ func (s *Spec) updateContents(contents []byte) {
 		s.RevisionCreateTime = now
 		s.RevisionUpdateTime = now
 	}
+
+	return nil
 }
 
 // LabelsMap returns a map representation of stored labels.
