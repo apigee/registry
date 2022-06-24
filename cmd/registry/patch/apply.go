@@ -16,17 +16,17 @@ package patch
 
 import (
 	"context"
-	"fmt"
 	"io/fs"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/log"
 )
 
-func Apply(ctx context.Context, client connection.Client, path, parent string, recursive bool) error {
+func Apply(ctx context.Context, client connection.Client, path, parent string, recursive bool, taskQueue chan<- core.Task) error {
 	return filepath.WalkDir(path,
 		func(p string, entry fs.DirEntry, err error) error {
 			if err != nil {
@@ -36,16 +36,36 @@ func Apply(ctx context.Context, client connection.Client, path, parent string, r
 			} else if entry.IsDir() {
 				return nil // Do nothing for the directory, but still walk its contents.
 			}
-			return applyFile(ctx, client, p, parent)
+			return applyFile(ctx, client, p, parent, taskQueue)
 		})
 }
 
-func applyFile(ctx context.Context, client connection.Client, fileName, parent string) error {
+func applyFile(ctx context.Context, client connection.Client, fileName, parent string, taskQueue chan<- core.Task) error {
 	if !strings.HasSuffix(fileName, ".yaml") {
 		return nil
 	}
-	log.FromContext(ctx).Infof("Importing %s", fileName)
-	bytes, err := ioutil.ReadFile(fileName)
+	// Create an upload job for each API.
+	taskQueue <- &applyFileTask{
+		client: client,
+		path:   fileName,
+		parent: parent,
+	}
+	return nil
+}
+
+type applyFileTask struct {
+	client connection.Client
+	path   string
+	parent string
+}
+
+func (task *applyFileTask) String() string {
+	return "apply file " + task.path
+}
+
+func (task *applyFileTask) Run(ctx context.Context) error {
+	log.FromContext(ctx).Infof("Applying %s", task.path)
+	bytes, err := os.ReadFile(task.path)
 	if err != nil {
 		return err
 	}
@@ -55,10 +75,8 @@ func applyFile(ctx context.Context, client connection.Client, fileName, parent s
 	}
 	switch header.Kind {
 	case "API":
-		return applyApiPatch(ctx, client, bytes, parent)
-	case "DisplaySettings", "Lifecycle", "Manifest", "ReferenceList", "TaxonomyList":
-		return applyArtifactPatchBytes(ctx, client, bytes, parent)
-	default:
-		return fmt.Errorf("unsupported kind: %s", header.Kind)
+		return applyApiPatch(ctx, task.client, bytes, task.parent)
+	default: // for everything else, try an artifact type
+		return applyArtifactPatchBytes(ctx, task.client, bytes, task.parent)
 	}
 }

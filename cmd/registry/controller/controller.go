@@ -20,8 +20,7 @@ import (
 	"strings"
 	"time"
 
-	// "encoding/json"
-
+	"github.com/apigee/registry/cmd/registry/patterns"
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
@@ -38,10 +37,9 @@ func ProcessManifest(
 	client connection.Client,
 	projectID string,
 	manifest *rpc.Manifest) []*Action {
-
 	var actions []*Action
 	//Check for errors in manifest
-	errs := ValidateManifest(ctx, fmt.Sprintf("projects/%s", projectID), manifest)
+	errs := ValidateManifest(fmt.Sprintf("projects/%s/locations/global", projectID), manifest)
 	if len(errs) > 0 {
 		for _, err := range errs {
 			log.FromContext(ctx).WithError(err).Debugf("Error in manifest")
@@ -73,11 +71,11 @@ func processManifestResource(
 	client connection.Client,
 	projectID string,
 	generatedResource *rpc.GeneratedResource) ([]*Action, error) {
-	// Generate dependency map
 	resourcePattern := fmt.Sprintf("projects/%s/locations/global/%s", projectID, generatedResource.Pattern)
+	// Generate dependency map
 	dependencyMaps := make([]map[string]time.Time, 0, len(generatedResource.Dependencies))
 	for _, dependency := range generatedResource.Dependencies {
-		dMap, err := generateDependencyMap(ctx, client, resourcePattern, dependency, projectID)
+		dMap, err := generateDependencyMap(ctx, client, resourcePattern, dependency)
 		if err != nil {
 			return nil, fmt.Errorf("error while generating dependency map for %v: %s", dependency, err)
 		}
@@ -95,8 +93,7 @@ func generateDependencyMap(
 	ctx context.Context,
 	client connection.Client,
 	resourcePattern string,
-	dependency *rpc.Dependency,
-	projectID string) (map[string]time.Time, error) {
+	dependency *rpc.Dependency) (map[string]time.Time, error) {
 	// Creates a map of the resources to group them into corresponding buckets
 	// of match pattern which store the maxTimestamp
 	// An example entry will look like this:
@@ -109,20 +106,25 @@ func generateDependencyMap(
 
 	sourceMap := make(map[string]time.Time)
 
+	resourceName, err := patterns.ParseResourcePattern(resourcePattern)
+	if err != nil {
+		return nil, err
+	}
+
 	// Extend the dependency pattern if it contains $resource.api like pattern
-	extDependencyQuery, err := extendDependencyPattern(resourcePattern, dependency.Pattern, projectID)
+	extDependencyName, err := patterns.SubstituteReferenceEntity(dependency.Pattern, resourceName)
 	if err != nil {
 		return nil, err
 	}
 
 	// Fetch resources using the extDependencyQuery
-	sourceList, err := listResources(ctx, client, extDependencyQuery, dependency.Filter)
+	sourceList, err := patterns.ListResources(ctx, client, extDependencyName.String(), dependency.Filter)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, source := range sourceList {
-		group, err := getEntityKey(dependency.Pattern, source.ResourceName())
+		group, err := patterns.GetReferenceEntityValue(dependency.Pattern, source.ResourceName())
 		if err != nil {
 			return nil, err
 		}
@@ -135,11 +137,10 @@ func generateDependencyMap(
 	}
 
 	if len(sourceMap) == 0 {
-		return nil, fmt.Errorf("no resources found for pattern: %s, filer: %s", extDependencyQuery, dependency.Filter)
+		return nil, fmt.Errorf("no resources found for pattern: %s, filer: %s", extDependencyName.String(), dependency.Filter)
 	}
 
 	return sourceMap, nil
-
 }
 
 func generateActions(
@@ -151,23 +152,19 @@ func generateActions(
 	generatedResource *rpc.GeneratedResource) []*Action {
 	actions := make([]*Action, 0)
 
-	// Calculate actions only if dependencies are non-empty
-	if len(dependencyMaps) > 0 {
-		updateActions, visited, err := generateUpdateActions(ctx, client, resourcePattern, filter, dependencyMaps, generatedResource)
-		if err != nil {
-			log.Errorf(ctx, "Error while generating UpdateActions: %s", err)
-		}
-		actions = append(actions, updateActions...)
-
-		createActions, err := generateCreateActions(ctx, client, resourcePattern, dependencyMaps, generatedResource, visited)
-		if err != nil {
-			log.Errorf(ctx, "Error while generating CreateActions: %s", err)
-		}
-		actions = append(actions, createActions...)
+	updateActions, visited, err := generateUpdateActions(ctx, client, resourcePattern, filter, dependencyMaps, generatedResource)
+	if err != nil {
+		log.Errorf(ctx, "Error while generating UpdateActions: %s", err)
 	}
+	actions = append(actions, updateActions...)
+
+	createActions, err := generateCreateActions(ctx, client, resourcePattern, dependencyMaps, generatedResource, visited)
+	if err != nil {
+		log.Errorf(ctx, "Error while generating CreateActions: %s", err)
+	}
+	actions = append(actions, createActions...)
 
 	return actions
-
 }
 
 // Go over the list of existing target resources to figure out which ones need an update.
@@ -178,13 +175,12 @@ func generateUpdateActions(
 	filter string,
 	dependencyMaps []map[string]time.Time,
 	generatedResource *rpc.GeneratedResource) ([]*Action, map[string]bool, error) {
-
 	// Visited tracks the parents of target resources which were already generated.
 	visited := make(map[string]bool)
 	actions := make([]*Action, 0)
 
 	// Generate resource list
-	resourceList, err := listResources(ctx, client, resourcePattern, filter)
+	resourceList, err := patterns.ListResources(ctx, client, resourcePattern, filter)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -198,7 +194,6 @@ func generateUpdateActions(
 			targetResource.UpdateTimestamp(),
 			dependencyMaps,
 			generatedResource,
-			false,
 		)
 
 		if err != nil {
@@ -218,7 +213,6 @@ func generateUpdateActions(
 			}
 			actions = append(actions, a)
 		}
-
 	}
 
 	return actions, visited, nil
@@ -256,17 +250,16 @@ func generateCreateActions(
 	dependencyMaps []map[string]time.Time,
 	generatedResource *rpc.GeneratedResource,
 	visited map[string]bool) ([]*Action, error) {
+	var parentList []patterns.ResourceInstance
 
-	var parentList []resourceInstance
-
-	parsedResourcePattern, err := parseResourcePattern(resourcePattern)
+	parsedResourcePattern, err := patterns.ParseResourcePattern(resourcePattern)
 	if err != nil {
 		return nil, err
 	}
 
 	parentName := parsedResourcePattern.ParentName()
 	switch parentName.(type) {
-	case projectName:
+	case patterns.ProjectName:
 		// If parent is a project, we can't list projects since this is registry client command.
 		// Since the manifest definition is scoped  only for a particular project,
 		// there will be only one target resource in this case.
@@ -279,15 +272,15 @@ func generateCreateActions(
 		if visited[parentName.String()] {
 			return nil, nil
 		}
-		parentList = []resourceInstance{
-			projectResource{
-				projectName: parentName,
+		parentList = []patterns.ResourceInstance{
+			patterns.ProjectResource{
+				ProjectName: parentName,
 			},
 		}
 
 	default:
 		filter := excludeVisitedParents(visited)
-		parentList, err = listResources(ctx, client, parentName.String(), filter)
+		parentList, err = patterns.ListResources(ctx, client, parentName.String(), filter)
 		if err != nil {
 			return nil, err
 		}
@@ -298,7 +291,7 @@ func generateCreateActions(
 	for _, parent := range parentList {
 		// Since the GeneratedResource is non-existent here,
 		// we will have to derive the exact name of the target resource
-		targetResourceName, err := resourceNameFromParent(resourcePattern, parent.ResourceName().String())
+		targetResourceName, err := patterns.FullResourceNameFromParent(resourcePattern, parent.ResourceName().String())
 		if err != nil {
 			return nil, err
 		}
@@ -331,15 +324,19 @@ func generateCreateActions(
 }
 
 func needsUpdate(
-	targetResourceName resourceName,
+	targetResourceName patterns.ResourceName,
 	targetResourceTime time.Time,
 	dependencyMaps []map[string]time.Time,
-	generatedResource *rpc.GeneratedResource,
-	createMode bool) (bool, error) {
+	generatedResource *rpc.GeneratedResource) (bool, error) {
+	// Check "refresh" first to decide whether to take action or not.
+	if generatedResource.Refresh != nil && targetResourceTime.Add(generatedResource.Refresh.AsDuration()).Before(time.Now()) {
+		return true, nil
+	}
+	// Check for dependencies otherwise
 	for i, dependency := range generatedResource.Dependencies {
 		dMap := dependencyMaps[i]
 		// Get the entity to look for in dependencyMap
-		entityKey, err := getEntityKey(dependency.Pattern, targetResourceName)
+		entityKey, err := patterns.GetReferenceEntityValue(dependency.Pattern, targetResourceName)
 		if err != nil {
 			// This means that there is error in the pattern definition, hence return
 			return false, fmt.Errorf("cannot match resource with dependency. Error: %s", err.Error())
@@ -359,20 +356,25 @@ func needsUpdate(
 }
 
 func needsCreate(
-	targetResourceName resourceName,
+	targetResourceName patterns.ResourceName,
 	dependencyMaps []map[string]time.Time,
 	generatedResource *rpc.GeneratedResource) (bool, error) {
+	// Take action if "refresh" is set and > 0
+	if generatedResource.Refresh != nil && generatedResource.Refresh.AsDuration().Seconds() > 0 {
+		return true, nil
+	}
+	// Check for dependencies otherwise
 	for i, dependency := range generatedResource.Dependencies {
 		dMap := dependencyMaps[i]
 		// Get the entity to look for in dependencyMap
-		entityKey, err := getEntityKey(dependency.Pattern, targetResourceName)
+		entityVal, err := patterns.GetReferenceEntityValue(dependency.Pattern, targetResourceName)
 		if err != nil {
 			// This means that there is error in the pattern definition, hence return
 			return false, fmt.Errorf("cannot match resource with dependency. Error: %s", err.Error())
 		}
 
 		// All the dependencies should be present to generate an action.
-		if _, ok := dMap[entityKey]; !ok {
+		if _, ok := dMap[entityVal]; !ok {
 			return false, nil
 		}
 	}

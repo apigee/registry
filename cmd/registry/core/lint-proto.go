@@ -15,7 +15,6 @@
 package core
 
 import (
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -28,7 +27,7 @@ import (
 // NewLintFromZippedProtos runs the API linter and returns the results.
 func NewLintFromZippedProtos(name string, b []byte) (*rpc.Lint, error) {
 	// create a tmp directory
-	root, err := ioutil.TempDir("", "registry-protos-")
+	root, err := os.MkdirTemp("", "registry-protos-")
 	if err != nil {
 		return nil, err
 	}

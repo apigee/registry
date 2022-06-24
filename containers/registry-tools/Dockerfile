@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# This Dockerfile builds an image that contains the registry tool and the apg CLI.
+# This Dockerfile builds an image that contains the registry tool.
 
 # Use the official Golang image to create a build artifact.
 # This is based on Debian and sets the GOPATH to /go.
 # https://hub.docker.com/_/golang
-FROM golang:1.17 as builder
+FROM golang:1.18 as builder
 RUN apt-get update
 RUN apt-get install unzip
 
@@ -35,11 +35,6 @@ COPY . ./
 # Build registry.
 RUN CGO_ENABLED=0 GOOS=linux go build -v -o registry ./cmd/registry
 
-# Build apg.
-RUN ./tools/FETCH-PROTOC.sh
-RUN make apg
-RUN CGO_ENABLED=0 GOOS=linux go build -v -o apg ./cmd/apg
-
 # Use the official Alpine image for a lean production container.
 # https://hub.docker.com/_/alpine
 # https://docs.docker.com/develop/develop-images/multistage-build/#use-multi-stage-builds
@@ -52,4 +47,3 @@ RUN apk add --no-cache bash git curl jq
 
 # Copy binaries to the production image from the builder stage.
 COPY --from=builder /app/registry /bin/registry
-COPY --from=builder /app/apg /bin/apg

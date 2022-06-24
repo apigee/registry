@@ -18,7 +18,6 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -177,7 +176,7 @@ func (task *uploadOpenAPITask) populateFields() error {
 	task.specID = sanitize(specPart)
 
 	var err error
-	task.contents, err = ioutil.ReadFile(task.path)
+	task.contents, err = os.ReadFile(task.path)
 	if err != nil {
 		return err
 	}

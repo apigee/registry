@@ -20,16 +20,25 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/connection/grpctest"
 	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/server/registry"
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
+
+// TestMain will set up a local RegistryServer and grpc.Server for all
+// tests in this package if APG_REGISTRY_ADDRESS env var is not set
+// for the client.
+func TestMain(m *testing.M) {
+	grpctest.TestMain(m, registry.Config{})
+}
 
 func unavailable(err error) bool {
 	if err == nil {
@@ -53,7 +62,7 @@ func check(t *testing.T, message string, err error) {
 }
 
 func readAndGZipFile(filename string) (*bytes.Buffer, error) {
-	fileBytes, _ := ioutil.ReadFile(filename)
+	fileBytes, _ := os.ReadFile(filename)
 	var buf bytes.Buffer
 	zw, _ := gzip.NewWriterLevel(&buf, gzip.BestCompression)
 	_, err := zw.Write(fileBytes)
@@ -201,7 +210,7 @@ func TestCRUD(t *testing.T) {
 		revision = spec.GetRevisionId()
 	}
 	// Compute some common values for subsequent tests.
-	buf, err := ioutil.ReadFile(filepath.Join("testdata", "openapi.yaml"))
+	buf, err := os.ReadFile(filepath.Join("testdata", "openapi.yaml"))
 	check(t, "error reading spec", err)
 	expectedHash := hashForBytes(buf)
 	expectedContentType := "application/x.openapi;version=3.0.0"

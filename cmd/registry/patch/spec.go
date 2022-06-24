@@ -17,7 +17,7 @@ package patch
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -26,7 +26,6 @@ import (
 
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/connection"
-	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 )
@@ -43,7 +42,7 @@ type ApiSpec struct {
 	Data   ApiSpecData `yaml:"data"`
 }
 
-func newApiSpec(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiSpec) (*ApiSpec, error) {
+func newApiSpec(message *rpc.ApiSpec) (*ApiSpec, error) {
 	specName, err := names.ParseSpec(message.Name)
 	if err != nil {
 		return nil, err
@@ -97,7 +96,7 @@ func applyApiSpecPatch(
 			if err != nil {
 				return err
 			}
-			body, err := ioutil.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
 			if err != nil {
 				return err
 			}
@@ -132,7 +131,7 @@ func applyApiSpecPatch(
 				}
 				req.ApiSpec.Contents = contents.Bytes()
 			} else {
-				body, err := ioutil.ReadFile(path)
+				body, err := os.ReadFile(path)
 				if err != nil {
 					return err
 				}

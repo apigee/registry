@@ -120,6 +120,7 @@ func checkDisableDeadlines() (bool, error) {
 func DefaultAuthScopes() []string {
 	return []string{
 		"",
+		"https://www.googleapis.com/auth/cloud-platform",
 	}
 }
 
@@ -159,4 +160,3 @@ func versionGo() string {
 	}
 	return "UNKNOWN"
 }
-

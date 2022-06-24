@@ -26,7 +26,7 @@ import (
 
 func (c *Client) GetProject(ctx context.Context, name names.Project) (*models.Project, error) {
 	v := new(models.Project)
-	if err := c.db.Take(v, "key = ?", name.String()).Error; err == gorm.ErrRecordNotFound {
+	if err := c.db.WithContext(ctx).Take(v, "key = ?", name.String()).Error; err == gorm.ErrRecordNotFound {
 		return nil, status.Errorf(codes.NotFound, "%q not found in database", name)
 	} else if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -37,7 +37,7 @@ func (c *Client) GetProject(ctx context.Context, name names.Project) (*models.Pr
 
 func (c *Client) GetApi(ctx context.Context, name names.Api) (*models.Api, error) {
 	v := new(models.Api)
-	if err := c.db.Take(v, "key = ?", name.String()).Error; err == gorm.ErrRecordNotFound {
+	if err := c.db.WithContext(ctx).Take(v, "key = ?", name.String()).Error; err == gorm.ErrRecordNotFound {
 		return nil, status.Errorf(codes.NotFound, "%q not found in database", name)
 	} else if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -48,7 +48,7 @@ func (c *Client) GetApi(ctx context.Context, name names.Api) (*models.Api, error
 
 func (c *Client) GetVersion(ctx context.Context, name names.Version) (*models.Version, error) {
 	v := new(models.Version)
-	if err := c.db.Take(v, "key = ?", name.String()).Error; err == gorm.ErrRecordNotFound {
+	if err := c.db.WithContext(ctx).Take(v, "key = ?", name.String()).Error; err == gorm.ErrRecordNotFound {
 		return nil, status.Errorf(codes.NotFound, "%q not found in database", name)
 	} else if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -59,7 +59,7 @@ func (c *Client) GetVersion(ctx context.Context, name names.Version) (*models.Ve
 
 func (c *Client) GetSpec(ctx context.Context, name names.Spec) (*models.Spec, error) {
 	name = name.Normal()
-	op := c.db.
+	op := c.db.WithContext(ctx).
 		Where("project_id = ?", name.ProjectID).
 		Where("api_id = ?", name.ApiID).
 		Where("version_id = ?", name.VersionID).
@@ -83,7 +83,7 @@ func (c *Client) GetSpecRevision(ctx context.Context, name names.SpecRevision) (
 	}
 
 	v := new(models.Spec)
-	if err := c.db.Take(v, "key = ?", name.String()).Error; err == gorm.ErrRecordNotFound {
+	if err := c.db.WithContext(ctx).Take(v, "key = ?", name.String()).Error; err == gorm.ErrRecordNotFound {
 		return nil, status.Errorf(codes.NotFound, "%q not found in database", name)
 	} else if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -99,7 +99,7 @@ func (c *Client) GetSpecRevisionContents(ctx context.Context, name names.SpecRev
 	}
 
 	v := new(models.Blob)
-	if err := c.db.Take(v, "key = ?", name.String()).Error; err == gorm.ErrRecordNotFound {
+	if err := c.db.WithContext(ctx).Take(v, "key = ?", name.String()).Error; err == gorm.ErrRecordNotFound {
 		return nil, status.Errorf(codes.NotFound, "%q not found in database", name)
 	} else if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -110,7 +110,7 @@ func (c *Client) GetSpecRevisionContents(ctx context.Context, name names.SpecRev
 
 func (c *Client) GetDeployment(ctx context.Context, name names.Deployment) (*models.Deployment, error) {
 	name = name.Normal()
-	op := c.db.
+	op := c.db.WithContext(ctx).
 		Where("project_id = ?", name.ProjectID).
 		Where("api_id = ?", name.ApiID).
 		Where("deployment_id = ?", name.DeploymentID).
@@ -133,7 +133,7 @@ func (c *Client) GetDeploymentRevision(ctx context.Context, name names.Deploymen
 	}
 
 	v := new(models.Deployment)
-	if err := c.db.Take(v, "key = ?", name.String()).Error; err == gorm.ErrRecordNotFound {
+	if err := c.db.WithContext(ctx).Take(v, "key = ?", name.String()).Error; err == gorm.ErrRecordNotFound {
 		return nil, status.Errorf(codes.NotFound, "%q not found in database", name)
 	} else if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -144,7 +144,7 @@ func (c *Client) GetDeploymentRevision(ctx context.Context, name names.Deploymen
 
 func (c *Client) GetArtifact(ctx context.Context, name names.Artifact) (*models.Artifact, error) {
 	v := new(models.Artifact)
-	if err := c.db.Take(v, "key = ?", name.String()).Error; err == gorm.ErrRecordNotFound {
+	if err := c.db.WithContext(ctx).Take(v, "key = ?", name.String()).Error; err == gorm.ErrRecordNotFound {
 		return nil, status.Errorf(codes.NotFound, "%q not found in database", name)
 	} else if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -155,7 +155,7 @@ func (c *Client) GetArtifact(ctx context.Context, name names.Artifact) (*models.
 
 func (c *Client) GetArtifactContents(ctx context.Context, name names.Artifact) (*models.Blob, error) {
 	v := new(models.Blob)
-	if err := c.db.Take(v, "key = ?", name.String()).Error; err == gorm.ErrRecordNotFound {
+	if err := c.db.WithContext(ctx).Take(v, "key = ?", name.String()).Error; err == gorm.ErrRecordNotFound {
 		return nil, status.Errorf(codes.NotFound, "%q not found in database", name)
 	} else if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())

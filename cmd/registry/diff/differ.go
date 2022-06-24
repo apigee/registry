@@ -24,7 +24,7 @@ import (
 	"github.com/tufin/oasdiff/diff"
 )
 
-// change repersents one change in the diff.
+// change represents one change in the diff.
 type change struct {
 	fieldPath  stack
 	changeType string
@@ -44,14 +44,12 @@ func (s *stack) push(str string) {
 	*s = append(*s, str)
 }
 
-func (s *stack) pop() (string, bool) {
+func (s *stack) pop() {
 	if s.isEmpty() {
-		return "", false
+		return
 	}
 	index := len(*s) - 1
-	element := (*s)[index]
 	*s = (*s)[:index]
-	return element, true
 }
 
 // GetDiff takes two yaml or json Open API 3 Specs and diffs them.
@@ -167,7 +165,6 @@ func searchMapType(mapNode reflect.Value, diffProto *rpc.Diff, changePath *chang
 		default:
 			return fmt.Errorf("map node key %v is not supported", childNodeKey)
 		}
-
 	}
 	return nil
 }

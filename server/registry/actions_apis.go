@@ -16,7 +16,6 @@ package registry
 
 import (
 	"context"
-	"sync"
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/internal/storage"
@@ -48,12 +47,6 @@ func (s *RegistryServer) createApi(ctx context.Context, name names.Api, body *rp
 	}
 	defer db.Close()
 
-	if _, err := db.GetApi(ctx, name); err == nil {
-		return nil, status.Errorf(codes.AlreadyExists, "API %q already exists", name)
-	} else if !isNotFound(err) {
-		return nil, err
-	}
-
 	if err := name.Validate(); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -68,7 +61,7 @@ func (s *RegistryServer) createApi(ctx context.Context, name names.Api, body *rp
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	if err := db.SaveApi(ctx, api); err != nil {
+	if err := db.CreateApi(ctx, api); err != nil {
 		return nil, err
 	}
 
@@ -178,16 +171,8 @@ func (s *RegistryServer) ListApis(ctx context.Context, req *rpc.ListApisRequest)
 	return response, nil
 }
 
-var updateApiMutex sync.Mutex
-
 // UpdateApi handles the corresponding API request.
 func (s *RegistryServer) UpdateApi(ctx context.Context, req *rpc.UpdateApiRequest) (*rpc.Api, error) {
-	db, err := s.getStorageClient(ctx)
-	if err != nil {
-		return nil, status.Error(codes.Unavailable, err.Error())
-	}
-	defer db.Close()
-
 	if req.GetApi() == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid api %v: body must be provided", req.GetApi())
 	} else if err := models.ValidateMask(req.GetApi(), req.GetUpdateMask()); err != nil {
@@ -200,27 +185,29 @@ func (s *RegistryServer) UpdateApi(ctx context.Context, req *rpc.UpdateApiReques
 	}
 
 	if req.GetAllowMissing() {
-		// Prevent a race condition that can occur when two updates are made
-		// to the same non-existent resource. The db.Get...() call returns
-		// NotFound for both updates, and after one creates the resource,
-		// the other creation fails. The lock() prevents this by serializing
-		// the get and create operations. Future updates could improve this
-		// with improvements closer to the database level.
-		updateApiMutex.Lock()
-		defer updateApiMutex.Unlock()
+		// Speculatively create the api. If it already exists, fall through to the update below.
+		api, err := s.createApi(ctx, name, req.GetApi())
+		if err == nil {
+			return api, nil
+		} else if status.Code(err) != codes.AlreadyExists {
+			return nil, err
+		}
 	}
 
+	db, err := s.getStorageClient(ctx)
+	if err != nil {
+		return nil, status.Error(codes.Unavailable, err.Error())
+	}
+	defer db.Close()
+
+	// TODO: the Get/Update/Save calls below should be a transaction.
 	api, err := db.GetApi(ctx, name)
-	if req.GetAllowMissing() && isNotFound(err) {
-		return s.createApi(ctx, name, req.GetApi())
-	} else if err != nil {
+	if err != nil {
 		return nil, err
 	}
-
 	if err := api.Update(req.GetApi(), models.ExpandMask(req.GetApi(), req.GetUpdateMask())); err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-
 	if err := db.SaveApi(ctx, api); err != nil {
 		return nil, err
 	}

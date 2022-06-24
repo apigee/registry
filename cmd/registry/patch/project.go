@@ -21,6 +21,7 @@ import (
 	"os"
 
 	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
@@ -28,20 +29,18 @@ import (
 )
 
 // ExportProject writes a project into a directory of YAML files.
-func ExportProject(ctx context.Context, client *gapic.RegistryClient, projectName names.Project) error {
+func ExportProject(ctx context.Context, client *gapic.RegistryClient, projectName names.Project, taskQueue chan<- core.Task) error {
 	apisDir := fmt.Sprintf("%s/apis", projectName.ProjectID)
 	if err := os.MkdirAll(apisDir, 0777); err != nil {
 		return err
 	}
-
 	err := core.ListAPIs(ctx, client, projectName.Api(""), "", func(message *rpc.Api) error {
-		log.FromContext(ctx).Infof("Exporting %s", message.Name)
-		bytes, header, err := ExportAPI(ctx, client, message)
-		if err != nil {
-			return err
+		taskQueue <- &exportAPITask{
+			client:  client,
+			message: message,
+			dir:     apisDir,
 		}
-		filename := fmt.Sprintf("%s/%s.yaml", apisDir, header.Metadata.Name)
-		return os.WriteFile(filename, bytes, 0644)
+		return nil
 	})
 	if err != nil {
 		return err
@@ -53,16 +52,56 @@ func ExportProject(ctx context.Context, client *gapic.RegistryClient, projectNam
 	}
 
 	return core.ListArtifacts(ctx, client, projectName.Artifact(""), "", false, func(message *rpc.Artifact) error {
-		bytes, header, err := ExportArtifact(ctx, client, message)
-		if header.Kind == "Artifact" {
-			log.FromContext(ctx).Warnf("Skipping %s", message.Name)
-			return nil
+		taskQueue <- &exportArtifactTask{
+			client:  client,
+			message: message,
+			dir:     artifactsDir,
 		}
-		log.FromContext(ctx).Infof("Exporting %s", message.Name)
-		if err != nil {
-			return err
-		}
-		filename := fmt.Sprintf("%s/%s.yaml", artifactsDir, header.Metadata.Name)
-		return os.WriteFile(filename, bytes, fs.ModePerm)
+		return nil
 	})
+}
+
+type exportAPITask struct {
+	client  connection.Client
+	message *rpc.Api
+	dir     string
+}
+
+func (task *exportAPITask) String() string {
+	return "export " + task.message.Name
+}
+
+func (task *exportAPITask) Run(ctx context.Context) error {
+	bytes, header, err := ExportAPI(ctx, task.client, task.message)
+	if err != nil {
+		return err
+	}
+	log.FromContext(ctx).Infof("Exported %s", task.message.Name)
+	filename := fmt.Sprintf("%s/%s.yaml", task.dir, header.Metadata.Name)
+	return os.WriteFile(filename, bytes, 0644)
+}
+
+type exportArtifactTask struct {
+	client  connection.Client
+	message *rpc.Artifact
+	dir     string
+}
+
+func (task *exportArtifactTask) String() string {
+	return "export " + task.message.Name
+}
+
+func (task *exportArtifactTask) Run(ctx context.Context) error {
+	bytes, header, err := ExportArtifact(ctx, task.client, task.message)
+	if err != nil {
+		log.FromContext(ctx).Warnf("Skipped %s: %s", task.message.Name, err)
+		return nil
+	}
+	if header.Kind == "Artifact" { // "Artifact" is the generic artifact type
+		log.FromContext(ctx).Warnf("Skipped %s", task.message.Name)
+		return nil
+	}
+	log.FromContext(ctx).Infof("Exported %s", task.message.Name)
+	filename := fmt.Sprintf("%s/%s.yaml", task.dir, header.Metadata.Name)
+	return os.WriteFile(filename, bytes, fs.ModePerm)
 }

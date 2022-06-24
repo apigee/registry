@@ -1,0 +1,46 @@
+# Copyright 2022 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+id: openapitest-multiple-state
+mime_types:
+  - application/x.openapi+gzip;version=3.0.0
+guidelines:
+  - id: refproperties
+    display_name: Govern Ref Properties
+    description: This guideline governs properties for ref fields on specs.
+    rules:
+      - id: norefsiblings
+        description: An object exposing a $ref property cannot be further extended with additional properties.
+        linter: sample
+        linter_rulename: no-$ref-siblings
+        severity: ERROR
+    state:  ACTIVE
+  - id: tagproperties
+    display_name: Tag Properties
+    description: This guideline specifies rules for different tags.
+    rules:
+      - id: openapitags
+        description: OpenAPI object should have non-empty tags array.
+        linter: sample
+        linter_rulename: openapi-tags
+        severity: INFO
+      - id: operationtags
+        description: Operation should have non-empty tags array.
+        linter: sample
+        linter_rulename: operation-tags
+        severity: ERROR
+    state: PROPOSED
+linters:
+  - name: sample
+    uri: https://sample/url

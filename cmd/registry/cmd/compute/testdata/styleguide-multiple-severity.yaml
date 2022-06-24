@@ -40,7 +40,7 @@ guidelines:
         linter: sample
         linter_rulename: operation-tag-defined
         severity: ERROR
-    status: ACTIVE
+    state: ACTIVE
 linters:
   - name: sample
     uri: https://sample/url

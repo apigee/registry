@@ -29,7 +29,6 @@ import (
 )
 
 func TestManifestUpload(t *testing.T) {
-
 	tests := []struct {
 		desc     string
 		project  string
@@ -116,5 +115,4 @@ func TestManifestUpload(t *testing.T) {
 			}
 		})
 	}
-
 }

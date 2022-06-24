@@ -20,6 +20,7 @@ import (
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
+	"google.golang.org/grpc/metadata"
 )
 
 func GetProject(ctx context.Context,
@@ -105,6 +106,7 @@ func GetSpec(ctx context.Context,
 		return err
 	}
 	if getContents {
+		ctx := metadata.AppendToOutgoingContext(ctx, "accept-encoding", "gzip")
 		contents, err := client.GetApiSpecContents(ctx, &rpc.GetApiSpecContentsRequest{
 			Name: spec.GetName(),
 		})
@@ -134,6 +136,7 @@ func GetSpecRevision(ctx context.Context,
 		request := &rpc.GetApiSpecContentsRequest{
 			Name: spec.GetName(),
 		}
+		ctx := metadata.AppendToOutgoingContext(ctx, "accept-encoding", "gzip")
 		contents, err := client.GetApiSpecContents(ctx, request)
 		if err != nil {
 			return err

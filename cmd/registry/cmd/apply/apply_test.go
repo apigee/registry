@@ -17,17 +17,28 @@ package apply
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/apigee/registry/cmd/registry/patch"
 	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/connection/grpctest"
 	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/server/registry"
 	"github.com/apigee/registry/server/registry/names"
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
+
+const sampleDir = "testdata/sample"
+
+// TestMain will set up a local RegistryServer and grpc.Server for all
+// tests in this package if APG_REGISTRY_ADDRESS env var is not set
+// for the client.
+func TestMain(m *testing.M) {
+	grpctest.TestMain(m, registry.Config{})
+}
 
 func TestApply(t *testing.T) {
 	project := names.Project{ProjectID: "apply-test"}
@@ -65,22 +76,24 @@ func TestApply(t *testing.T) {
 	// When API creation breaks we want to see something like FAIL: TestApply/Create_API or
 	// FAIL: TestApplyAPIs/Create, not FAIL: TestApply/Create_and_Export_API, or worse FAIL: TestApply.
 	{
-		const filename = "testdata/registry.yaml"
+		const filename = sampleDir + "/apis/registry.yaml"
 		cmd := Command()
 		cmd.SetArgs([]string{"-f", filename, "--parent", parent})
 		if err := cmd.Execute(); err != nil {
 			t.Fatalf("Execute() with args %+v returned error: %s", cmd.Args, err)
 		}
-		expected, err := ioutil.ReadFile(filename)
+		expected, err := os.ReadFile(filename)
 		if err != nil {
-			t.Fatalf("failed to read %s: %s", filename, err)
+			t.Fatalf("Failed to read API YAML: %s", err)
 		}
 
 		got, err := registryClient.GetApi(ctx, &rpc.GetApiRequest{
 			Name: project.Api("registry").String(),
 		})
-		if err != nil {
-			t.Fatalf("failed to get api: %s", err)
+		if status.Code(err) == codes.NotFound {
+			t.Fatalf("Expected API doesn't exist: %s", err)
+		} else if err != nil {
+			t.Fatalf("Failed to verify API existence: %s", err)
 		}
 
 		actual, _, err := patch.ExportAPI(ctx, registryClient, got)
@@ -97,24 +110,118 @@ func TestApply(t *testing.T) {
 	// TODO: These should run as separate subtests to make it clear exactly which artifact types are failing.
 	// Creation and export should also be separated ideally. The error message should at least make it
 	// clear whether create or export is failing.
-	artifacts := []string{"lifecycle", "manifest", "taxonomies"}
+	artifacts := []string{"lifecycle", "manifest", "taxonomies", "styleguide"}
 	for _, a := range artifacts {
-		filename := fmt.Sprintf("testdata/%s.yaml", a)
+		filename := fmt.Sprintf("%s/artifacts/%s.yaml", sampleDir, a)
 		cmd := Command()
 		cmd.SetArgs([]string{"-f", filename, "--parent", parent})
 		if err := cmd.Execute(); err != nil {
 			t.Fatalf("Execute() with args %+v returned error: %s", cmd.Args, err)
 		}
-		expected, err := ioutil.ReadFile(filename)
+		expected, err := os.ReadFile(filename)
 		if err != nil {
-			t.Fatalf("failed to read %s", filename)
+			t.Fatalf("Failed to read artifact YAML %s", err)
 		}
 
 		message, err := registryClient.GetArtifact(ctx, &rpc.GetArtifactRequest{
 			Name: project.Artifact(a).String(),
 		})
+		if status.Code(err) == codes.NotFound {
+			t.Fatalf("Expected artifact doesn't exist: %s", err)
+		} else if err != nil {
+			t.Fatalf("Failed to verify artifact existence: %s", err)
+		}
+
+		actual, _, err := patch.ExportArtifact(ctx, registryClient, message)
 		if err != nil {
-			t.Fatalf("failed to get artifact: %s", err)
+			t.Fatalf("ExportArtifact(%+v) returned an error: %s", message, err)
+		}
+
+		if diff := cmp.Diff(expected, actual); diff != "" {
+			t.Errorf("GetArtifact(%q) returned unexpected diff: (-want +got):\n%s", message, diff)
+		}
+	}
+
+	if err := adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{
+		Name:  project.String(),
+		Force: true,
+	}); err != nil {
+		t.Logf("Cleanup: Failed to delete test project: %s", err)
+	}
+}
+
+func TestApplyProject(t *testing.T) {
+	ctx := context.Background()
+	adminClient, err := connection.NewAdminClient(ctx)
+	if err != nil {
+		t.Fatalf("Setup: failed to create client: %+v", err)
+	}
+	defer adminClient.Close()
+
+	project := names.Project{ProjectID: "apply-project-test"}
+	if err = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{
+		Name:  project.String(),
+		Force: true,
+	}); err != nil && status.Code(err) != codes.NotFound {
+		t.Errorf("Setup: failed to delete test project: %s", err)
+	}
+
+	if _, err := adminClient.CreateProject(ctx, &rpc.CreateProjectRequest{
+		ProjectId: project.ProjectID,
+		Project:   &rpc.Project{},
+	}); err != nil {
+		t.Fatalf("Setup: Failed to create test project: %s", err)
+	}
+
+	registryClient, err := connection.NewClient(ctx)
+	if err != nil {
+		t.Fatalf("Setup: Failed to create registry client: %s", err)
+	}
+	defer registryClient.Close()
+
+	cmd := Command()
+	cmd.SetArgs([]string{"-f", sampleDir, "-R", "--parent", project.String() + "/locations/global"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("Execute() with args %+v returned error: %s", cmd.Args, err)
+	}
+
+	filename := sampleDir + "/apis/registry.yaml"
+	expected, err := os.ReadFile(filename)
+	if err != nil {
+		t.Fatalf("Failed to read API YAML: %s", err)
+	}
+
+	got, err := registryClient.GetApi(ctx, &rpc.GetApiRequest{
+		Name: project.Api("registry").String(),
+	})
+	if err != nil {
+		t.Fatalf("failed to get api: %s", err)
+	}
+
+	actual, _, err := patch.ExportAPI(ctx, registryClient, got)
+	if err != nil {
+		t.Fatalf("ExportApi(%+v) returned an error: %s", got, err)
+	}
+
+	if diff := cmp.Diff(expected, actual); diff != "" {
+		t.Errorf("GetApi(%q) returned unexpected diff: (-want +got):\n%s", got, diff)
+	}
+
+	artifacts := []string{"lifecycle", "manifest", "taxonomies"}
+	for _, a := range artifacts {
+		filename := fmt.Sprintf("%s/artifacts/%s.yaml", sampleDir, a)
+		expected, err := os.ReadFile(filename)
+		if err != nil {
+			t.Fatalf("Failed to read artifact YAML %s", err)
+		}
+
+		message, err := registryClient.GetArtifact(ctx, &rpc.GetArtifactRequest{
+			Name: project.Artifact(a).String(),
+		})
+		if status.Code(err) == codes.NotFound {
+			t.Fatalf("Expected artifact doesn't exist: %s", err)
+		} else if err != nil {
+			t.Fatalf("Failed to verify artifact existence: %s", err)
 		}
 
 		actual, _, err := patch.ExportArtifact(ctx, registryClient, message)

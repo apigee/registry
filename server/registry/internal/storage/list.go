@@ -74,11 +74,9 @@ func (c *Client) ListProjects(ctx context.Context, opts PageOptions) (ProjectLis
 	}
 
 	for {
-		lock()
 		var page []models.Project
-		op := c.db.Order("key").Limit(limit(opts))
+		op := c.db.WithContext(ctx).Order("key").Limit(limit(opts))
 		err := op.Offset(token.Offset).Find(&page).Error
-		unlock()
 
 		if err != nil {
 			return ProjectList{}, status.Error(codes.Internal, err.Error())
@@ -154,7 +152,7 @@ func (c *Client) ListApis(ctx context.Context, parent names.Project, opts PageOp
 		token.Filter = opts.Filter
 	}
 
-	op := c.db.
+	op := c.db.WithContext(ctx).
 		Order("key").
 		Limit(limit(opts))
 
@@ -175,10 +173,8 @@ func (c *Client) ListApis(ctx context.Context, parent names.Project, opts PageOp
 	}
 
 	for {
-		lock()
 		var page []models.Api
 		err := op.Offset(token.Offset).Find(&page).Error
-		unlock()
 
 		if err != nil {
 			return ApiList{}, status.Error(codes.Internal, err.Error())
@@ -282,7 +278,7 @@ func (c *Client) ListVersions(ctx context.Context, parent names.Api, opts PageOp
 		return VersionList{}, err
 	}
 
-	op := c.db.
+	op := c.db.WithContext(ctx).
 		Order("key").
 		Limit(limit(opts))
 
@@ -298,10 +294,8 @@ func (c *Client) ListVersions(ctx context.Context, parent names.Api, opts PageOp
 	}
 
 	for {
-		lock()
 		var page []models.Version
 		err := op.Offset(token.Offset).Find(&page).Error
-		unlock()
 
 		if err != nil {
 			return VersionList{}, status.Error(codes.Internal, err.Error())
@@ -414,14 +408,14 @@ func (c *Client) ListSpecs(ctx context.Context, parent names.Version, opts PageO
 
 	// Select all columns from `specs` table specifically.
 	// We do not want to select duplicates from the joined subquery result.
-	op := c.db.Select("specs.*").
+	op := c.db.WithContext(ctx).Select("specs.*").
 		Table("specs").
 		// Join missing columns that couldn't be selected in the subquery.
 		Joins("JOIN (?) AS grp ON specs.project_id = grp.project_id AND specs.api_id = grp.api_id AND specs.version_id = grp.version_id AND specs.spec_id = grp.spec_id AND specs.revision_create_time = grp.recent_create_time",
 			// Select spec names and only their most recent revision_create_time
 			// This query cannot select all the columns we want.
 			// See: https://stackoverflow.com/questions/7745609/sql-select-only-rows-with-max-value-on-a-column
-			c.db.Select("project_id, api_id, version_id, spec_id, MAX(revision_create_time) AS recent_create_time").
+			c.db.WithContext(ctx).Select("project_id, api_id, version_id, spec_id, MAX(revision_create_time) AS recent_create_time").
 				Table("specs").
 				Group("project_id, api_id, version_id, spec_id")).
 		Order("key").
@@ -442,10 +436,8 @@ func (c *Client) ListSpecs(ctx context.Context, parent names.Version, opts PageO
 	}
 
 	for {
-		lock()
 		var page []models.Spec
 		err := op.Offset(token.Offset).Find(&page).Error
-		unlock()
 
 		if err != nil {
 			return SpecList{}, status.Error(codes.Internal, err.Error())
@@ -534,7 +526,7 @@ func (c *Client) ListSpecRevisions(ctx context.Context, parent names.Spec, opts 
 		}
 	}
 
-	op := c.db.
+	op := c.db.WithContext(ctx).
 		Order("revision_create_time desc").
 		Offset(token.Offset).
 		Limit(int(opts.Size) + 1)
@@ -556,9 +548,7 @@ func (c *Client) ListSpecRevisions(ctx context.Context, parent names.Spec, opts 
 		Specs: make([]models.Spec, 0, opts.Size),
 	}
 
-	lock()
 	err = op.Find(&response.Specs).Error
-	unlock()
 
 	if err != nil {
 		return SpecList{}, status.Error(codes.Internal, err.Error())
@@ -630,14 +620,14 @@ func (c *Client) ListDeployments(ctx context.Context, parent names.Api, opts Pag
 
 	// Select all columns from `deployments` table specifically.
 	// We do not want to select duplicates from the joined subquery result.
-	op := c.db.Select("deployments.*").
+	op := c.db.WithContext(ctx).Select("deployments.*").
 		Table("deployments").
 		// Join missing columns that couldn't be selected in the subquery.
 		Joins("JOIN (?) AS grp ON deployments.project_id = grp.project_id AND deployments.api_id = grp.api_id AND deployments.deployment_id = grp.deployment_id AND deployments.revision_create_time = grp.recent_create_time",
 			// Select deployment names and only their most recent revision_create_time
 			// This query cannot select all the columns we want.
 			// See: https://stackoverflow.com/questions/7745609/sql-select-only-rows-with-max-value-on-a-column
-			c.db.Select("project_id, api_id, deployment_id, MAX(revision_create_time) AS recent_create_time").
+			c.db.WithContext(ctx).Select("project_id, api_id, deployment_id, MAX(revision_create_time) AS recent_create_time").
 				Table("deployments").
 				Group("project_id, api_id, deployment_id")).
 		Order("key").
@@ -655,10 +645,8 @@ func (c *Client) ListDeployments(ctx context.Context, parent names.Api, opts Pag
 	}
 
 	for {
-		lock()
 		var page []models.Deployment
 		err := op.Offset(token.Offset).Find(&page).Error
-		unlock()
 
 		if err != nil {
 			return DeploymentList{}, status.Error(codes.Internal, err.Error())
@@ -742,7 +730,7 @@ func (c *Client) ListDeploymentRevisions(ctx context.Context, parent names.Deplo
 		}
 	}
 
-	op := c.db.
+	op := c.db.WithContext(ctx).
 		Order("revision_create_time desc").
 		Offset(token.Offset).
 		Limit(int(opts.Size) + 1)
@@ -761,9 +749,7 @@ func (c *Client) ListDeploymentRevisions(ctx context.Context, parent names.Deplo
 		Deployments: make([]models.Deployment, 0, opts.Size),
 	}
 
-	lock()
 	err = op.Find(&response.Deployments).Error
-	unlock()
 
 	if err != nil {
 		return DeploymentList{}, status.Error(codes.Internal, err.Error())
@@ -831,7 +817,7 @@ func (c *Client) ListSpecArtifacts(ctx context.Context, parent names.Spec, opts 
 		}
 	}
 
-	op := c.db.Where(`deployment_id = ''`)
+	op := c.db.WithContext(ctx).Where(`deployment_id = ''`)
 	if id := parent.ProjectID; id != "-" {
 		op = op.Where("project_id = ?", id)
 	}
@@ -845,7 +831,7 @@ func (c *Client) ListSpecArtifacts(ctx context.Context, parent names.Spec, opts 
 		op = op.Where("spec_id = ?", id)
 	}
 
-	return c.listArtifacts(ctx, op, opts, func(a *models.Artifact) bool {
+	return c.listArtifacts(op, opts, func(a *models.Artifact) bool {
 		return a.ProjectID != "" && a.ApiID != "" && a.VersionID != "" && a.SpecID != ""
 	})
 }
@@ -876,7 +862,8 @@ func (c *Client) ListVersionArtifacts(ctx context.Context, parent names.Version,
 		}
 	}
 
-	op := c.db.Where(`deployment_id = ''`).
+	op := c.db.WithContext(ctx).
+		Where(`deployment_id = ''`).
 		Where(`spec_id = ''`)
 	if id := parent.ProjectID; id != "-" {
 		op = op.Where("project_id = ?", id)
@@ -888,7 +875,7 @@ func (c *Client) ListVersionArtifacts(ctx context.Context, parent names.Version,
 		op = op.Where("version_id = ?", id)
 	}
 
-	return c.listArtifacts(ctx, op, opts, func(a *models.Artifact) bool {
+	return c.listArtifacts(op, opts, func(a *models.Artifact) bool {
 		return a.ProjectID != "" && a.ApiID != "" && a.VersionID != ""
 	})
 }
@@ -919,7 +906,8 @@ func (c *Client) ListDeploymentArtifacts(ctx context.Context, parent names.Deplo
 		}
 	}
 
-	op := c.db.Where(`version_id = ''`).
+	op := c.db.WithContext(ctx).
+		Where(`version_id = ''`).
 		Where(`spec_id = ''`)
 	if id := parent.ProjectID; id != "-" {
 		op = op.Where("project_id = ?", id)
@@ -931,7 +919,7 @@ func (c *Client) ListDeploymentArtifacts(ctx context.Context, parent names.Deplo
 		op = op.Where("deployment_id = ?", id)
 	}
 
-	return c.listArtifacts(ctx, op, opts, func(a *models.Artifact) bool {
+	return c.listArtifacts(op, opts, func(a *models.Artifact) bool {
 		return a.ProjectID != "" && a.ApiID != "" && a.DeploymentID != ""
 	})
 }
@@ -958,7 +946,8 @@ func (c *Client) ListApiArtifacts(ctx context.Context, parent names.Api, opts Pa
 		}
 	}
 
-	op := c.db.Where(`deployment_id = ''`).
+	op := c.db.WithContext(ctx).
+		Where(`deployment_id = ''`).
 		Where(`version_id = ''`).
 		Where(`spec_id = ''`)
 	if id := parent.ProjectID; id != "-" {
@@ -968,7 +957,7 @@ func (c *Client) ListApiArtifacts(ctx context.Context, parent names.Api, opts Pa
 		op = op.Where("api_id = ?", id)
 	}
 
-	return c.listArtifacts(ctx, op, opts, func(a *models.Artifact) bool {
+	return c.listArtifacts(op, opts, func(a *models.Artifact) bool {
 		return a.ProjectID != "" && a.ApiID != ""
 	})
 }
@@ -985,7 +974,8 @@ func (c *Client) ListProjectArtifacts(ctx context.Context, parent names.Project,
 		token.Filter = opts.Filter
 	}
 
-	op := c.db.Where(`api_id = ''`).
+	op := c.db.WithContext(ctx).
+		Where(`api_id = ''`).
 		Where(`deployment_id = ''`).
 		Where(`version_id = ''`).
 		Where(`spec_id = ''`)
@@ -996,12 +986,12 @@ func (c *Client) ListProjectArtifacts(ctx context.Context, parent names.Project,
 		}
 	}
 
-	return c.listArtifacts(ctx, op, opts, func(a *models.Artifact) bool {
+	return c.listArtifacts(op, opts, func(a *models.Artifact) bool {
 		return a.ProjectID != ""
 	})
 }
 
-func (c *Client) listArtifacts(ctx context.Context, op *gorm.DB, opts PageOptions, include func(*models.Artifact) bool) (ArtifactList, error) {
+func (c *Client) listArtifacts(op *gorm.DB, opts PageOptions, include func(*models.Artifact) bool) (ArtifactList, error) {
 	token, err := decodeToken(opts.Token)
 	if err != nil {
 		return ArtifactList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
@@ -1019,11 +1009,9 @@ func (c *Client) listArtifacts(ctx context.Context, op *gorm.DB, opts PageOption
 	}
 
 	for {
-		lock()
 		var page []models.Artifact
 		op = op.Order("key").Limit(limit(opts))
 		err := op.Offset(token.Offset).Find(&page).Error
-		unlock()
 
 		if err != nil {
 			return ArtifactList{}, status.Error(codes.Internal, err.Error())
@@ -1032,11 +1020,7 @@ func (c *Client) listArtifacts(ctx context.Context, op *gorm.DB, opts PageOption
 		}
 
 		for _, v := range page {
-			m, err := artifactMap(v)
-			if err != nil {
-				return ArtifactList{}, status.Error(codes.Internal, err.Error())
-			}
-
+			m := artifactMap(v)
 			match, err := filter.Matches(m)
 			if err != nil {
 				return ArtifactList{}, err
@@ -1061,7 +1045,7 @@ func (c *Client) listArtifacts(ctx context.Context, op *gorm.DB, opts PageOption
 	return response, nil
 }
 
-func artifactMap(artifact models.Artifact) (map[string]interface{}, error) {
+func artifactMap(artifact models.Artifact) map[string]interface{} {
 	return map[string]interface{}{
 		"name":        artifact.Name(),
 		"project_id":  artifact.ProjectID,
@@ -1073,5 +1057,5 @@ func artifactMap(artifact models.Artifact) (map[string]interface{}, error) {
 		"update_time": artifact.UpdateTime,
 		"mime_type":   artifact.MimeType,
 		"size_bytes":  artifact.SizeInBytes,
-	}, nil
+	}
 }

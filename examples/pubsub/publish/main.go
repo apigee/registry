@@ -49,7 +49,7 @@ func main() {
 	defer topic.Stop()
 
 	// Publish a sample message.
-	// Ordinarly, we would expect only the server to post on this topic.
+	// Ordinarily, we would expect only the server to post on this topic.
 	var results []*pubsub.PublishResult
 	r := topic.Publish(ctx, &pubsub.Message{
 		Data: []byte("hello world"),

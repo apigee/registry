@@ -17,7 +17,7 @@
 
 set -e
 
-source tools/PROTOS.sh
+. tools/PROTOS.sh
 clone_common_protos
 
 go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest

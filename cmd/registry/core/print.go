@@ -115,12 +115,12 @@ func PrintArtifactContents(artifact *rpc.Artifact) error {
 		return unmarshalAndPrint(artifact.GetContents(), &metrics.Vocabulary{})
 	case "gnostic.metrics.VersionHistory":
 		return unmarshalAndPrint(artifact.GetContents(), &metrics.VersionHistory{})
-	case "google.cloud.apigeeregistry.applications.v1alpha1.ConformanceReport":
-		return unmarshalAndPrint(artifact.GetContents(), &rpc.ConformanceReport{})
 	case "google.cloud.apigeeregistry.applications.v1alpha1.Index":
 		return unmarshalAndPrint(artifact.GetContents(), &rpc.Index{})
 	case "google.cloud.apigeeregistry.applications.v1alpha1.Lint":
 		return unmarshalAndPrint(artifact.GetContents(), &rpc.Lint{})
+	case "google.cloud.apigeeregistry.applications.v1alpha1.LintStats":
+		return unmarshalAndPrint(artifact.GetContents(), &rpc.LintStats{})
 	case "google.cloud.apigeeregistry.v1.apihub.DisplaySettings":
 		return unmarshalAndPrint(artifact.GetContents(), &rpc.DisplaySettings{})
 	case "google.cloud.apigeeregistry.v1.apihub.Lifecycle":
@@ -135,7 +135,17 @@ func PrintArtifactContents(artifact *rpc.Artifact) error {
 		return unmarshalAndPrint(artifact.GetContents(), &rpc.Receipt{})
 	case "google.cloud.apigeeregistry.applications.v1alpha1.References":
 		return unmarshalAndPrint(artifact.GetContents(), &rpc.References{})
-	case "google.cloud.apigeeregistry.applications.v1alpha1.StyleGuide":
+	case "google.cloud.apigeeregistry.v1.scoring.Score":
+		return unmarshalAndPrint(artifact.GetContents(), &rpc.Score{})
+	case "google.cloud.apigeeregistry.v1.scoring.ScoreCard":
+		return unmarshalAndPrint(artifact.GetContents(), &rpc.ScoreCard{})
+	case "google.cloud.apigeeregistry.v1.scoring.ScoreDefinition":
+		return unmarshalAndPrint(artifact.GetContents(), &rpc.ScoreDefinition{})
+	case "google.cloud.apigeeregistry.v1.scoring.ScoreCardDefinition":
+		return unmarshalAndPrint(artifact.GetContents(), &rpc.ScoreCardDefinition{})
+	case "google.cloud.apigeeregistry.v1.style.ConformanceReport":
+		return unmarshalAndPrint(artifact.GetContents(), &rpc.ConformanceReport{})
+	case "google.cloud.apigeeregistry.v1.style.StyleGuide":
 		return unmarshalAndPrint(artifact.GetContents(), &rpc.StyleGuide{})
 	case "gnostic.openapiv2.Document":
 		return unmarshalAndPrint(artifact.GetContents(), &openapiv2.Document{})

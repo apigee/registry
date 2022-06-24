@@ -17,7 +17,7 @@ package upload
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -36,22 +36,22 @@ const (
 )
 
 func TestUploadCSV(t *testing.T) {
-	cloudtasksGA, err := ioutil.ReadFile(filepath.Join("testdata", "cloudtasks", "v2", "openapi.yaml"))
+	cloudtasksGA, err := os.ReadFile(filepath.Join("testdata", "cloudtasks", "v2", "openapi.yaml"))
 	if err != nil {
 		t.Fatalf("Setup: Failed to read spec contents: %s", err)
 	}
 
-	cloudtasksBeta, err := ioutil.ReadFile(filepath.Join("testdata", "cloudtasks", "v2beta2", "openapi.yaml"))
+	cloudtasksBeta, err := os.ReadFile(filepath.Join("testdata", "cloudtasks", "v2beta2", "openapi.yaml"))
 	if err != nil {
 		t.Fatalf("Setup: Failed to read spec contents: %s", err)
 	}
 
-	datastoreGA, err := ioutil.ReadFile(filepath.Join("testdata", "datastore", "v1", "openapi.yaml"))
+	datastoreGA, err := os.ReadFile(filepath.Join("testdata", "datastore", "v1", "openapi.yaml"))
 	if err != nil {
 		t.Fatalf("Setup: Failed to read spec contents: %s", err)
 	}
 
-	datastoreBeta, err := ioutil.ReadFile(filepath.Join("testdata", "datastore", "v1beta1", "openapi.yaml"))
+	datastoreBeta, err := os.ReadFile(filepath.Join("testdata", "datastore", "v1beta1", "openapi.yaml"))
 	if err != nil {
 		t.Fatalf("Setup: Failed to read spec contents: %s", err)
 	}

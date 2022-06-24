@@ -20,7 +20,7 @@ import (
 	"testing"
 
 	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/server/registry/internal/test/seeder"
+	"github.com/apigee/registry/server/registry/test/seeder"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"google.golang.org/grpc/codes"
@@ -237,47 +237,32 @@ func TestCreateApiResponseCodes(t *testing.T) {
 }
 
 func TestCreateApiDuplicates(t *testing.T) {
-	tests := []struct {
+	test := struct {
 		desc string
 		seed *rpc.Api
 		req  *rpc.CreateApiRequest
 		want codes.Code
 	}{
-		{
-			desc: "case sensitive",
-			seed: &rpc.Api{Name: "projects/my-project/locations/global/apis/my-api"},
-			req: &rpc.CreateApiRequest{
-				Parent: "projects/my-project/locations/global",
-				ApiId:  "my-api",
-				Api:    &rpc.Api{},
-			},
-			want: codes.AlreadyExists,
+		desc: "case sensitive",
+		seed: &rpc.Api{Name: "projects/my-project/locations/global/apis/my-api"},
+		req: &rpc.CreateApiRequest{
+			Parent: "projects/my-project/locations/global",
+			ApiId:  "my-api",
+			Api:    &rpc.Api{},
 		},
-		{
-			desc: "case insensitive",
-			seed: &rpc.Api{Name: "projects/my-project/locations/global/apis/my-api"},
-			req: &rpc.CreateApiRequest{
-				Parent: "projects/my-project/locations/global",
-				ApiId:  "My-Api",
-				Api:    &rpc.Api{},
-			},
-			want: codes.AlreadyExists,
-		},
+		want: codes.AlreadyExists,
 	}
+	t.Run(test.desc, func(t *testing.T) {
+		ctx := context.Background()
+		server := defaultTestServer(t)
+		if err := seeder.SeedApis(ctx, server, test.seed); err != nil {
+			t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+		}
 
-	for _, test := range tests {
-		t.Run(test.desc, func(t *testing.T) {
-			ctx := context.Background()
-			server := defaultTestServer(t)
-			if err := seeder.SeedApis(ctx, server, test.seed); err != nil {
-				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
-			}
-
-			if _, err := server.CreateApi(ctx, test.req); status.Code(err) != test.want {
-				t.Errorf("CreateApi(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
-			}
-		})
-	}
+		if _, err := server.CreateApi(ctx, test.req); status.Code(err) != test.want {
+			t.Errorf("CreateApi(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
+		}
+	})
 }
 
 func TestGetApi(t *testing.T) {

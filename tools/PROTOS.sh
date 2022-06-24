@@ -22,6 +22,7 @@ ALL_PROTOS=(
 	google/cloud/apigeeregistry/v1/controller/*.proto
 	google/cloud/apigeeregistry/v1/apihub/*.proto
 	google/cloud/apigeeregistry/v1/scoring/*.proto
+	google/cloud/apigeeregistry/v1/style/*.proto
 )
 
 SERVICE_PROTOS=(
@@ -29,11 +30,13 @@ SERVICE_PROTOS=(
 	google/cloud/apigeeregistry/v1/registry_service.proto
 	google/cloud/apigeeregistry/v1/admin_models.proto
 	google/cloud/apigeeregistry/v1/admin_service.proto
+	google/cloud/apigeeregistry/v1/provisioning_service.proto
 )
 
 HOSTED_PROTOS=(
 	google/cloud/apigeeregistry/v1/registry_models.proto
 	google/cloud/apigeeregistry/v1/registry_service.proto
+	google/cloud/apigeeregistry/v1/provisioning_service.proto
 )
 
 COMMON_PROTOS_PATH='third_party/api-common-protos'
@@ -47,8 +50,8 @@ function clone_common_protos {
 
 # Require a specific version of protoc for generating files.
 # This stabilizes the generated file output, which includes the protoc version.
-PROTOC_VERSION='3.19.3'
+. tools/PROTOC-VERSION.sh
 if [ "$(protoc --version)" != "libprotoc $PROTOC_VERSION" ]; then
-    echo "Please update your protoc to version $PROTOC_VERSION, the current required version as specified in tools/PROTOS.sh"
+    echo "Please update your protoc to version $PROTOC_VERSION, the current required version as specified in tools/PROTOC_VERSION.sh"
     exit
 fi

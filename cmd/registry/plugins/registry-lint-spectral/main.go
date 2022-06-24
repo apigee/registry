@@ -16,7 +16,6 @@ package main
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -72,7 +71,7 @@ func (linter *spectralLinterRunner) RunImpl(
 	lintFiles := make([]*rpc.LintFile, 0)
 
 	// Create a temporary directory to store the configuration.
-	root, err := ioutil.TempDir("", "spectral-config-")
+	root, err := os.MkdirTemp("", "spectral-config-")
 	if err != nil {
 		return nil, err
 	}
@@ -104,10 +103,7 @@ func (linter *spectralLinterRunner) RunImpl(
 		}
 
 		// Get the lint results as a LintFile object from the spectral output file
-		lintProblems, err := getLintProblemsFromSpectralResults(lintResults)
-		if err != nil {
-			return err
-		}
+		lintProblems := getLintProblemsFromSpectralResults(lintResults)
 
 		// Formulate the response.
 		lintFile := &rpc.LintFile{
@@ -148,7 +144,7 @@ func (linter *spectralLinterRunner) createConfigurationFile(root string, ruleIds
 
 	// Write the configuration to the temporary directory.
 	configPath := filepath.Join(root, "spectral.json")
-	err = ioutil.WriteFile(configPath, file, 0644)
+	err = os.WriteFile(configPath, file, 0644)
 	if err != nil {
 		return "", err
 	}
@@ -158,7 +154,7 @@ func (linter *spectralLinterRunner) createConfigurationFile(root string, ruleIds
 
 func getLintProblemsFromSpectralResults(
 	lintResults []*spectralLintResult,
-) ([]*rpc.LintProblem, error) {
+) []*rpc.LintProblem {
 	problems := make([]*rpc.LintProblem, len(lintResults))
 	for i, result := range lintResults {
 		problem := &rpc.LintProblem{
@@ -178,12 +174,12 @@ func getLintProblemsFromSpectralResults(
 		}
 		problems[i] = problem
 	}
-	return problems, nil
+	return problems
 }
 
 func runSpectralLinter(specPath, configPath string) ([]*spectralLintResult, error) {
 	// Create a temporary destination directory to store the output.
-	root, err := ioutil.TempDir("", "spectral-output-")
+	root, err := os.MkdirTemp("", "spectral-output-")
 	if err != nil {
 		return nil, err
 	}
@@ -204,7 +200,7 @@ func runSpectralLinter(specPath, configPath string) ([]*spectralLintResult, erro
 	_ = cmd.Run()
 
 	// Read and parse the spectral output.
-	b, err := ioutil.ReadFile(outputPath)
+	b, err := os.ReadFile(outputPath)
 	if err != nil {
 		return nil, err
 	}

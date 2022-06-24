@@ -1,17 +1,27 @@
-ARG PROTOBUF_VERSION=3.19.3
+# Copyright 2022 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 ARG ENVOY_VERSION=v1.20-latest
-ARG GO_VERSION=1.17
+ARG GO_VERSION=1.18
 
 FROM golang:${GO_VERSION} as builder
-ARG PROTOBUF_VERSION
 
 WORKDIR /app
 
-RUN apt-get update -y && apt-get install curl unzip git make -y && \
-    PB_REL="https://github.com/protocolbuffers/protobuf/releases" && \
-    curl -LO $PB_REL/download/v${PROTOBUF_VERSION}/protoc-${PROTOBUF_VERSION}-linux-x86_64.zip && \
-    unzip protoc-${PROTOBUF_VERSION}-linux-x86_64.zip -d /usr/local
+RUN apt-get update -y && apt-get install curl unzip git make -y
 COPY . .
+RUN ./tools/FETCH-PROTOC.sh
 RUN make protos
 
 
