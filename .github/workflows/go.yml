@@ -90,7 +90,6 @@ jobs:
         PROJECTID: bench
         ITERATIONS: 1
       run: |
-        registry-server &
         registry rpc admin create-project --project_id=$PROJECTID --json
         go test ./tests/benchmark --bench=. --project_id=$PROJECTID --benchtime=${ITERATIONS}x --timeout=0
 
