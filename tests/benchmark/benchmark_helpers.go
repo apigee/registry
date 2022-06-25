@@ -48,11 +48,17 @@ func setup(b *testing.B) (context.Context, connection.Client) {
 		b.Logf("Unable to connect to registry server. Is it running?")
 		b.FailNow()
 	}
-	wipeout.Wipeout(ctx, client, projectID, jobs)
+	if err := wipeout.Wipeout(ctx, client, projectID, jobs); err != nil {
+		b.Logf("Pre-test wipeout failed")
+		b.FailNow()
+	}
 	return ctx, client
 }
 
 func teardown(b *testing.B, ctx context.Context, client connection.Client) {
 	b.Helper()
-	wipeout.Wipeout(ctx, client, projectID, jobs)
+	if err := wipeout.Wipeout(ctx, client, projectID, jobs); err != nil {
+		b.Logf("Post-test wipeout failed")
+		b.FailNow()
+	}
 }
