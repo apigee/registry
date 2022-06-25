@@ -82,6 +82,18 @@ jobs:
     - name: Test registry server with PostgreSQL
       run: go test ./server/registry -postgresql
 
+    - name: Verify that benchmarks run
+      env:
+        APG_REGISTRY_ADDRESS: localhost:8080 
+        APG_REGISTRY_AUDIENCES: http://localhost:8080
+        APG_REGISTRY_INSECURE: 1
+        PROJECTID: bench
+        ITERATIONS: 1
+      run: |
+        registry-server &
+        registry rpc admin create-project --project_id=$PROJECTID --json
+        go test ./tests/benchmark --bench=. --project_id=$PROJECTID --benchtime=${ITERATIONS}x --timeout=0
+
     - name: Compute code coverage
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
