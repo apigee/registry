@@ -295,7 +295,7 @@ func (s *RegistryServer) UpdateApiSpec(ctx context.Context, req *rpc.UpdateApiSp
 	// Apply the update to the spec - possibly changing the revision ID.
 	maskExpansion := models.ExpandMask(req.GetApiSpec(), req.GetUpdateMask())
 	if err := spec.Update(req.GetApiSpec(), maskExpansion); err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, err
 	}
 
 	// Save the updated/current spec. This creates a new revision or updates the previous one.
