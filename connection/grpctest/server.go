@@ -83,7 +83,7 @@ func TestMain(m *testing.M, rc registry.Config) {
 //   ... run test here ...
 // }
 func NewServer(rc registry.Config) (*Server, error) {
-	gl := &Server{}
+	s := &Server{}
 	var err error
 	if rc.Database == "" {
 		rc.Database = "sqlite3"
@@ -94,15 +94,15 @@ func NewServer(rc registry.Config) (*Server, error) {
 			return nil, err
 		}
 		rc.DBConfig = f.Name()
-		gl.TmpDir = f.Name()
+		s.TmpDir = f.Name()
 	}
 
-	gl.Registry, err = registry.New(rc)
+	s.Registry, err = registry.New(rc)
 	if err != nil {
 		return nil, err
 	}
 
-	gl.Listener, gl.Server, err = gl.Registry.ServeGRPC(&net.TCPAddr{
+	s.Listener, s.Server, err = s.Registry.ServeGRPC(&net.TCPAddr{
 		IP:   net.IPv4(127, 0, 0, 1),
 		Port: 0}) // random port
 	if err != nil {
@@ -110,12 +110,12 @@ func NewServer(rc registry.Config) (*Server, error) {
 	}
 
 	// set for internal client
-	addr := fmt.Sprintf("localhost:%d", gl.Port())
+	addr := fmt.Sprintf("localhost:%d", s.Port())
 	os.Setenv("APG_REGISTRY_ADDRESS", addr)
 	os.Setenv("APG_REGISTRY_AUDIENCES", fmt.Sprintf("http://%s", addr))
 	os.Setenv("APG_REGISTRY_INSECURE", "1")
 
-	return gl, nil
+	return s, nil
 }
 
 // Server wraps a gRPC Server for a RegistryServer
@@ -127,31 +127,31 @@ type Server struct {
 }
 
 // Close will gracefully stop the server and remove tmpDir
-func (g *Server) Close() {
-	if g.Server != nil {
-		g.Server.GracefulStop()
+func (s *Server) Close() {
+	if s.Server != nil {
+		s.Server.GracefulStop()
 	}
-	if g.Registry != nil {
-		g.Registry.Close()
+	if s.Registry != nil {
+		s.Registry.Close()
 	}
-	if g.TmpDir != "" {
-		os.RemoveAll(g.TmpDir)
-		g.TmpDir = ""
+	if s.TmpDir != "" {
+		os.RemoveAll(s.TmpDir)
+		s.TmpDir = ""
 	}
 }
 
 // Address returns the address of the listener
-func (g *Server) Address() string {
-	if g.Port() == 0 {
+func (s *Server) Address() string {
+	if s.Port() == 0 {
 		return ""
 	}
-	return fmt.Sprintf("localhost:%d", g.Port())
+	return fmt.Sprintf("localhost:%d", s.Port())
 }
 
 // Port returns the port of the listener
-func (g *Server) Port() int {
-	if g.Listener == nil {
+func (s *Server) Port() int {
+	if s.Listener == nil {
 		return 0
 	}
-	return g.Listener.Addr().(*net.TCPAddr).Port
+	return s.Listener.Addr().(*net.TCPAddr).Port
 }
