@@ -43,6 +43,7 @@ type RegistryServer struct {
 	dbConfig      string
 	notifyEnabled bool
 	projectID     string
+	client        *storage.Client
 
 	rpc.UnimplementedRegistryServer
 	rpc.UnimplementedAdminServer
@@ -61,19 +62,23 @@ func New(config Config) (*RegistryServer, error) {
 		s.dbConfig = "/tmp/registry.db"
 	}
 
-	db, err := storage.NewClient(context.Background(), s.database, s.dbConfig)
+	var err error
+	s.client, err = storage.NewClient(context.Background(), s.database, s.dbConfig)
 	if err != nil {
 		return nil, err
 	}
-	defer db.Close()
-	if err := db.EnsureTables(); err != nil {
+	if err := s.client.EnsureTables(); err != nil {
 		return nil, err
 	}
 	return s, nil
 }
 
 func (s *RegistryServer) getStorageClient(ctx context.Context) (*storage.Client, error) {
-	return storage.NewClient(ctx, s.database, s.dbConfig)
+	return s.client, nil
+}
+
+func (s *RegistryServer) Close() {
+	s.client.Close()
 }
 
 func isNotFound(err error) bool {

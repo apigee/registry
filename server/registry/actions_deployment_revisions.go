@@ -31,7 +31,6 @@ func (s *RegistryServer) ListApiDeploymentRevisions(ctx context.Context, req *rp
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer db.Close()
 
 	if req.GetPageSize() < 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid page_size %d: must not be negative", req.GetPageSize())
@@ -75,7 +74,6 @@ func (s *RegistryServer) DeleteApiDeploymentRevision(ctx context.Context, req *r
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer db.Close()
 
 	name, err := names.ParseDeploymentRevision(req.GetName())
 	if err != nil {
@@ -116,7 +114,6 @@ func (s *RegistryServer) TagApiDeploymentRevision(ctx context.Context, req *rpc.
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer db.Close()
 
 	if req.GetTag() == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid tag %q, must not be empty", req.GetTag())
@@ -162,7 +159,6 @@ func (s *RegistryServer) RollbackApiDeployment(ctx context.Context, req *rpc.Rol
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer db.Close()
 
 	if req.GetRevisionId() == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid revision ID %q, must not be empty", req.GetRevisionId())

@@ -40,7 +40,6 @@ func (s *RegistryServer) createProject(ctx context.Context, name names.Project, 
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer db.Close()
 
 	if err := name.Validate(); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
@@ -61,7 +60,6 @@ func (s *RegistryServer) DeleteProject(ctx context.Context, req *rpc.DeleteProje
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer db.Close()
 
 	name, err := names.ParseProject(req.GetName())
 	if err != nil {
@@ -87,7 +85,6 @@ func (s *RegistryServer) GetProject(ctx context.Context, req *rpc.GetProjectRequ
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer db.Close()
 
 	name, err := names.ParseProject(req.GetName())
 	if err != nil {
@@ -108,7 +105,6 @@ func (s *RegistryServer) ListProjects(ctx context.Context, req *rpc.ListProjects
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer db.Close()
 
 	if req.GetPageSize() < 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid page_size %d: must not be negative", req.GetPageSize())
@@ -166,7 +162,6 @@ func (s *RegistryServer) UpdateProject(ctx context.Context, req *rpc.UpdateProje
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer db.Close()
 
 	// TODO: the Get/Update/Save calls below should be a transaction.
 	project, err := db.GetProject(ctx, name)

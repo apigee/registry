@@ -45,7 +45,6 @@ func (s *RegistryServer) createApi(ctx context.Context, name names.Api, body *rp
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer db.Close()
 
 	if err := name.Validate(); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
@@ -80,7 +79,6 @@ func (s *RegistryServer) DeleteApi(ctx context.Context, req *rpc.DeleteApiReques
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer db.Close()
 
 	name, err := names.ParseApi(req.GetName())
 	if err != nil {
@@ -106,7 +104,6 @@ func (s *RegistryServer) GetApi(ctx context.Context, req *rpc.GetApiRequest) (*r
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer db.Close()
 
 	name, err := names.ParseApi(req.GetName())
 	if err != nil {
@@ -132,7 +129,6 @@ func (s *RegistryServer) ListApis(ctx context.Context, req *rpc.ListApisRequest)
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer db.Close()
 
 	if req.GetPageSize() < 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid page_size %d: must not be negative", req.GetPageSize())
@@ -198,7 +194,6 @@ func (s *RegistryServer) UpdateApi(ctx context.Context, req *rpc.UpdateApiReques
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer db.Close()
 
 	// TODO: the Get/Update/Save calls below should be a transaction.
 	api, err := db.GetApi(ctx, name)

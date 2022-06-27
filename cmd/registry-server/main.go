@@ -141,6 +141,7 @@ func main() {
 	signal.Notify(done, os.Interrupt, syscall.SIGTERM)
 	<-done
 	server.GracefulStop()
+	registryServer.Close()
 }
 
 func validateConfig() error {
