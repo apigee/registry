@@ -16,11 +16,14 @@ package registry
 
 import (
 	"context"
+	"errors"
 	"log"
 	"net"
 
+	"cloud.google.com/go/pubsub"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/internal/storage"
+	"google.golang.org/api/option"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/reflection"
@@ -29,12 +32,13 @@ import (
 
 // Config configures the registry server.
 type Config struct {
-	Database  string
-	DBConfig  string
-	LogLevel  string
-	LogFormat string
-	Notify    bool
-	ProjectID string
+	Database         string
+	DBConfig         string
+	LogLevel         string
+	LogFormat        string
+	Notify           bool
+	ProjectID        string
+	APIClientOptions []option.ClientOption
 }
 
 // RegistryServer implements a Registry server.
@@ -43,7 +47,8 @@ type RegistryServer struct {
 	dbConfig      string
 	notifyEnabled bool
 	projectID     string
-	client        *storage.Client
+	storageClient *storage.Client
+	pubSubClient  *pubsub.Client
 
 	rpc.UnimplementedRegistryServer
 	rpc.UnimplementedAdminServer
@@ -63,22 +68,47 @@ func New(config Config) (*RegistryServer, error) {
 	}
 
 	var err error
-	s.client, err = storage.NewClient(context.Background(), s.database, s.dbConfig)
+	ctx := context.Background()
+	s.storageClient, err = storage.NewClient(ctx, s.database, s.dbConfig)
 	if err != nil {
 		return nil, err
 	}
-	if err := s.client.EnsureTables(); err != nil {
+	if err := s.storageClient.EnsureTables(); err != nil {
 		return nil, err
 	}
+
+	if s.notifyEnabled {
+		s.pubSubClient, err = pubsub.NewClient(ctx, s.projectID, config.APIClientOptions...)
+		if err != nil {
+			return nil, err
+		}
+		if _, err := s.pubSubClient.CreateTopic(ctx, TopicName); err != nil && status.Code(err) != codes.AlreadyExists {
+			return nil, err
+		}
+	}
+
 	return s, nil
 }
 
 func (s *RegistryServer) getStorageClient(ctx context.Context) (*storage.Client, error) {
-	return s.client, nil
+	if s.storageClient == nil {
+		return nil, errors.New("no storageClient")
+	}
+	return s.storageClient, nil
+}
+
+func (s *RegistryServer) getPubSubClient(ctx context.Context) (*pubsub.Client, error) {
+	if s.pubSubClient == nil {
+		return nil, errors.New("no pubSubClient")
+	}
+	return s.pubSubClient, nil
 }
 
 func (s *RegistryServer) Close() {
-	s.client.Close()
+	s.storageClient.Close()
+	if s.pubSubClient != nil {
+		s.pubSubClient.Topic(TopicName).Flush()
+	}
 }
 
 func isNotFound(err error) bool {
