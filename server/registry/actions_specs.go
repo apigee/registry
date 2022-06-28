@@ -52,7 +52,6 @@ func (s *RegistryServer) createSpec(ctx context.Context, name names.Spec, body *
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer db.Close()
 
 	if _, err := db.GetSpec(ctx, name); err == nil {
 		return nil, status.Errorf(codes.AlreadyExists, "API spec %q already exists", name)
@@ -97,7 +96,6 @@ func (s *RegistryServer) DeleteApiSpec(ctx context.Context, req *rpc.DeleteApiSp
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer db.Close()
 
 	name, err := names.ParseSpec(req.GetName())
 	if err != nil {
@@ -133,7 +131,6 @@ func (s *RegistryServer) getApiSpec(ctx context.Context, name names.Spec) (*rpc.
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer db.Close()
 
 	spec, err := db.GetSpec(ctx, name)
 	if err != nil {
@@ -153,7 +150,6 @@ func (s *RegistryServer) getApiSpecRevision(ctx context.Context, name names.Spec
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer db.Close()
 
 	revision, err := db.GetSpecRevision(ctx, name)
 	if err != nil {
@@ -174,7 +170,6 @@ func (s *RegistryServer) GetApiSpecContents(ctx context.Context, req *rpc.GetApi
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer db.Close()
 
 	var specName = req.GetName()
 	var spec *models.Spec
@@ -219,7 +214,6 @@ func (s *RegistryServer) ListApiSpecs(ctx context.Context, req *rpc.ListApiSpecs
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer db.Close()
 
 	if req.GetPageSize() < 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid page_size %d: must not be negative", req.GetPageSize())
@@ -266,7 +260,6 @@ func (s *RegistryServer) UpdateApiSpec(ctx context.Context, req *rpc.UpdateApiSp
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer db.Close()
 
 	if req.GetApiSpec() == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid api_spec %+v: body must be provided", req.GetApiSpec())
