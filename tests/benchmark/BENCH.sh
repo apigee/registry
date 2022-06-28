@@ -18,9 +18,10 @@
 export PROJECTID=bench
 
 # Assume that "bench" is a local project and all other names are hosted.
-if [ "$PROJECTID" == "bench" ]; then
+if [[ "$PROJECTID" == "bench" ]]; then
   source auth/LOCAL.sh
-  registry rpc admin delete-project --name=projects/$PROJECTID --force --json
+  # Redirect the following command to /dev/null to ignore errors due to nonexistent projects.
+  registry rpc admin delete-project --name=projects/$PROJECTID --force --json &> /dev/null
   registry rpc admin create-project --project_id=$PROJECTID --json
 else
   source auth/HOSTED.sh
