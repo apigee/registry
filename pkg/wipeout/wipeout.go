@@ -82,6 +82,9 @@ func Wipeout(ctx context.Context, client connection.Client, projectid string, jo
 		wipeoutApis(ctx, client, taskQueue, project)
 		wait()
 	}
+	if Verbose {
+		log.Infof(ctx, "Wipeout complete with err=%+v", _err)
+	}
 	return _err
 }
 

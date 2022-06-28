@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Copyright 2022 Google LLC. All Rights Reserved.
 #
@@ -19,15 +19,15 @@ export PROJECTID=bench
 
 # Assume that "bench" is a local project and all other names are hosted.
 if [[ "$PROJECTID" == "bench" ]]; then
-  source auth/LOCAL.sh
+  . auth/LOCAL.sh
   # Redirect the following command to /dev/null to ignore errors due to nonexistent projects.
   registry rpc admin delete-project --name=projects/$PROJECTID --force --json &> /dev/null
   registry rpc admin create-project --project_id=$PROJECTID --json
 else
-  source auth/HOSTED.sh
+  . auth/HOSTED.sh
 fi
 
 # Increase this to get better sampling.
 export ITERATIONS=1
 
-go test ./tests/benchmark --bench=. --project_id=$PROJECTID --benchtime=${ITERATIONS}x --timeout=0
+go test ./tests/benchmark -parallel=1 --bench=. --project_id=$PROJECTID --benchtime=${ITERATIONS}x --timeout=0

@@ -33,26 +33,26 @@ func apiName(apiId string) string {
 	return fmt.Sprintf("%s/apis/%s", root(), apiId)
 }
 
-func getApi(b *testing.B, ctx context.Context, client connection.Client, apiId string) {
+func getApi(b *testing.B, ctx context.Context, client connection.Client, apiId string) error {
 	b.Helper()
-	if _, err := client.GetApi(ctx, &rpc.GetApiRequest{Name: apiName(apiId)}); err != nil {
-		b.Errorf("GetApi(%s) returned unexpected error: %s", apiId, err)
-	}
+	_, err := client.GetApi(ctx, &rpc.GetApiRequest{Name: apiName(apiId)})
+	return err
 }
 
-func listApis(b *testing.B, ctx context.Context, client connection.Client) {
+func listApis(b *testing.B, ctx context.Context, client connection.Client) error {
 	b.Helper()
 	it := client.ListApis(ctx, &rpc.ListApisRequest{Parent: root()})
 	for _, err := it.Next(); err != iterator.Done; _, err = it.Next() {
 		if err != nil {
-			b.Errorf("ListApis(%s) returned unexpected error: %s", root(), err)
+			return err
 		}
 	}
+	return nil
 }
 
-func createApi(b *testing.B, ctx context.Context, client connection.Client, apiId string) *rpc.Api {
+func createApi(b *testing.B, ctx context.Context, client connection.Client, apiId string) error {
 	b.Helper()
-	api, err := client.CreateApi(ctx, &rpc.CreateApiRequest{
+	_, err := client.CreateApi(ctx, &rpc.CreateApiRequest{
 		Parent: root(),
 		ApiId:  apiId,
 		Api: &rpc.Api{
@@ -60,43 +60,37 @@ func createApi(b *testing.B, ctx context.Context, client connection.Client, apiI
 			Description: fmt.Sprintf("Description for %s", apiId),
 		},
 	})
-	if err != nil {
-		b.Errorf("CreateApi(%s) returned unexpected error: %s", apiId, err)
-	}
-	return api
+	return err
 }
 
-func updateApi(b *testing.B, ctx context.Context, client connection.Client, apiId string) {
+func updateApi(b *testing.B, ctx context.Context, client connection.Client, apiId string) error {
 	b.Helper()
-	if _, err := client.UpdateApi(ctx, &rpc.UpdateApiRequest{
+	_, err := client.UpdateApi(ctx, &rpc.UpdateApiRequest{
 		Api: &rpc.Api{
 			Name:        apiName(apiId),
 			DisplayName: fmt.Sprintf("Updated %s", apiId),
 		}, UpdateMask: &field_mask.FieldMask{
 			Paths: []string{"display_name"},
 		},
-	}); err != nil {
-		b.Errorf("UpdateApi(%s) returned unexpected error: %s", apiId, err)
-	}
+	})
+	return err
 }
 
-func deleteApi(b *testing.B, ctx context.Context, client connection.Client, apiId string) {
+func deleteApi(b *testing.B, ctx context.Context, client connection.Client, apiId string) error {
 	b.Helper()
-	if err := client.DeleteApi(ctx, &rpc.DeleteApiRequest{Name: apiName(apiId)}); err != nil {
-		b.Errorf("DeleteApi(%s) returned unexpected error: %s", apiId, err)
-	}
+	return client.DeleteApi(ctx, &rpc.DeleteApiRequest{Name: apiName(apiId)})
 }
 
 func BenchmarkGetApi(b *testing.B) {
 	ctx, client := setup(b)
+	if err := createApi(b, ctx, client, apiId(1)); err != nil {
+		b.Fatalf("%s", err)
+	}
 	b.Run("GetApi", func(b *testing.B) {
-		b.StopTimer()
 		for i := 1; i <= b.N; i++ {
-			createApi(b, ctx, client, apiId(i))
-		}
-		b.StartTimer()
-		for i := 1; i <= b.N; i++ {
-			getApi(b, ctx, client, apiId(i))
+			if err := getApi(b, ctx, client, apiId(1)); err != nil {
+				b.Fatalf("%s", err)
+			}
 		}
 	})
 	teardown(b, ctx, client)
@@ -104,14 +98,16 @@ func BenchmarkGetApi(b *testing.B) {
 
 func BenchmarkListApis(b *testing.B) {
 	ctx, client := setup(b)
-	b.Run("ListApis", func(b *testing.B) {
-		b.StopTimer()
-		for i := 1; i <= b.N; i++ {
-			createApi(b, ctx, client, apiId(i))
+	for i := 1; i <= 10; i++ {
+		if err := createApi(b, ctx, client, apiId(i)); err != nil {
+			b.Fatalf("%s", err)
 		}
-		b.StartTimer()
+	}
+	b.Run("ListApis", func(b *testing.B) {
 		for i := 1; i <= b.N; i++ {
-			listApis(b, ctx, client)
+			if err := listApis(b, ctx, client); err != nil {
+				b.Fatalf("%s", err)
+			}
 		}
 	})
 	teardown(b, ctx, client)
@@ -121,22 +117,34 @@ func BenchmarkCreateApi(b *testing.B) {
 	ctx, client := setup(b)
 	b.Run("CreateApi", func(b *testing.B) {
 		for i := 1; i <= b.N; i++ {
-			createApi(b, ctx, client, apiId(i))
+			if err := createApi(b, ctx, client, apiId(i)); err != nil {
+				b.Fatalf("%s", err)
+			}
 		}
+		b.StopTimer()
+		for i := 1; i <= b.N; i++ {
+			if err := deleteApi(b, ctx, client, apiId(i)); err != nil {
+				b.Fatalf("%s", err)
+			}
+		}
+		b.StartTimer()
 	})
+
 	teardown(b, ctx, client)
 }
 
 func BenchmarkUpdateApi(b *testing.B) {
 	ctx, client := setup(b)
-	b.Run("UpdateApi", func(b *testing.B) {
-		b.StopTimer()
-		for i := 1; i <= b.N; i++ {
-			createApi(b, ctx, client, apiId(i))
+	for i := 1; i <= 1; i++ {
+		if err := createApi(b, ctx, client, apiId(i)); err != nil {
+			b.Fatalf("%s", err)
 		}
-		b.StartTimer()
+	}
+	b.Run("UpdateApi", func(b *testing.B) {
 		for i := 1; i <= b.N; i++ {
-			updateApi(b, ctx, client, apiId(i))
+			if err := updateApi(b, ctx, client, apiId(1)); err != nil {
+				b.Fatalf("%s", err)
+			}
 		}
 	})
 	teardown(b, ctx, client)
@@ -147,11 +155,15 @@ func BenchmarkDeleteApi(b *testing.B) {
 	b.Run("DeleteApi", func(b *testing.B) {
 		b.StopTimer()
 		for i := 1; i <= b.N; i++ {
-			createApi(b, ctx, client, apiId(i))
+			if err := createApi(b, ctx, client, apiId(i)); err != nil {
+				b.Fatalf("%s", err)
+			}
 		}
 		b.StartTimer()
 		for i := 1; i <= b.N; i++ {
-			deleteApi(b, ctx, client, apiId(i))
+			if err := deleteApi(b, ctx, client, apiId(i)); err != nil {
+				b.Fatalf("%s", err)
+			}
 		}
 	})
 	teardown(b, ctx, client)
