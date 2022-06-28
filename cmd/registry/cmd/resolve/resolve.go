@@ -54,6 +54,7 @@ func fetchManifest(
 
 func Command() *cobra.Command {
 	var dryRun bool
+	var jobs int
 	cmd := &cobra.Command{
 		Use:   "resolve MANIFEST_RESOURCE",
 		Short: "resolve the dependencies and update the registry state (experimental)",
@@ -97,7 +98,7 @@ func Command() *cobra.Command {
 			}
 
 			log.Debug(ctx, "Starting execution...")
-			taskQueue, wait := core.WorkerPoolWithWarnings(ctx, 64)
+			taskQueue, wait := core.WorkerPoolWithWarnings(ctx, jobs)
 			defer wait()
 			// Submit tasks to taskQueue
 			for _, a := range actions {
@@ -110,5 +111,6 @@ func Command() *cobra.Command {
 	}
 
 	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "if set, actions will only be printed and not executed")
+	cmd.Flags().IntVarP(&jobs, "jobs", "j", 10, "Number of actions to execute simultaneously")
 	return cmd
 }
