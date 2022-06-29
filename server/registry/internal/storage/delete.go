@@ -291,6 +291,7 @@ func (c *Client) DeleteArtifact(ctx context.Context, name names.Artifact) error 
 			Where("api_id = ?", name.ApiID()).
 			Where("version_id = ?", name.VersionID()).
 			Where("spec_id = ?", name.SpecID()).
+			Where("deployment_id = ?", name.DeploymentID()).
 			Where("artifact_id = ?", name.ArtifactID())
 		if err := op.Delete(model).Error; err != nil {
 			return status.Error(codes.Internal, err.Error())
