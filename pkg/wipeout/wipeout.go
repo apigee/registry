@@ -23,9 +23,6 @@ import (
 	"github.com/apigee/registry/rpc"
 )
 
-// Set this global variable in calling code to run verbosely.
-var Verbose bool
-
 // This collects one (arbitrary) error that occurs during wipeout.
 // It's a global and gets assigned from concurrent goroutines,
 // but if it fails, it fails.
@@ -33,15 +30,11 @@ var _err error
 
 // Wipeout deletes all resources in a project using the specified number of parallel worker jobs.
 func Wipeout(ctx context.Context, client connection.Client, projectid string, jobs int) error {
-	if Verbose {
-		log.Infof(ctx, "Deleting everything in project %s", projectid)
-	}
+	log.Infof(ctx, "Deleting everything in project %s", projectid)
 	project := "projects/" + projectid + "/locations/global"
 	// Wipeout resources in groups to ensure that children are deleted before parents.
 	{
-		if Verbose {
-			log.Infof(ctx, "Deleting artifacts")
-		}
+		log.Infof(ctx, "Deleting artifacts")
 		taskQueue, wait := core.WorkerPool(ctx, jobs)
 		wipeoutArtifacts(ctx, client, taskQueue, project+"/apis/-/versions/-/specs/-")
 		wipeoutArtifacts(ctx, client, taskQueue, project+"/apis/-/versions/-")
@@ -51,40 +44,30 @@ func Wipeout(ctx context.Context, client connection.Client, projectid string, jo
 		wait()
 	}
 	{
-		if Verbose {
-			log.Infof(ctx, "Deleting specs")
-		}
+		log.Infof(ctx, "Deleting specs")
 		taskQueue, wait := core.WorkerPool(ctx, jobs)
 		wipeoutApiSpecs(ctx, client, taskQueue, project+"/apis/-/versions/-")
 		wait()
 	}
 	{
-		if Verbose {
-			log.Infof(ctx, "Deleting versions")
-		}
+		log.Infof(ctx, "Deleting versions")
 		taskQueue, wait := core.WorkerPool(ctx, jobs)
 		wipeoutApiVersions(ctx, client, taskQueue, project+"/apis/-")
 		wait()
 	}
 	{
-		if Verbose {
-			log.Infof(ctx, "Deleting deployments")
-		}
+		log.Infof(ctx, "Deleting deployments")
 		taskQueue, wait := core.WorkerPool(ctx, jobs)
 		wipeoutApiDeployments(ctx, client, taskQueue, project+"/apis/-")
 		wait()
 	}
 	{
-		if Verbose {
-			log.Infof(ctx, "Deleting apis")
-		}
+		log.Infof(ctx, "Deleting apis")
 		taskQueue, wait := core.WorkerPool(ctx, jobs)
 		wipeoutApis(ctx, client, taskQueue, project)
 		wait()
 	}
-	if Verbose {
-		log.Infof(ctx, "Wipeout complete with err=%+v", _err)
-	}
+	log.Infof(ctx, "Wipeout complete with err=%+v", _err)
 	return _err
 }
 
@@ -112,34 +95,22 @@ func (task *deleteResourceTask) Run(ctx context.Context) error {
 	var err error
 	switch task.kind {
 	case API:
-		if Verbose {
-			log.Infof(ctx, "Deleting %s", task.name)
-		}
+		log.Infof(ctx, "Deleting %s", task.name)
 		err = task.client.DeleteApi(ctx, &rpc.DeleteApiRequest{Name: task.name})
 	case Version:
-		if Verbose {
-			log.Infof(ctx, "Deleting %s", task.name)
-		}
+		log.Infof(ctx, "Deleting %s", task.name)
 		err = task.client.DeleteApiVersion(ctx, &rpc.DeleteApiVersionRequest{Name: task.name})
 	case Spec:
-		if Verbose {
-			log.Infof(ctx, "Deleting %s", task.name)
-		}
+		log.Infof(ctx, "Deleting %s", task.name)
 		err = task.client.DeleteApiSpec(ctx, &rpc.DeleteApiSpecRequest{Name: task.name})
 	case Deployment:
-		if Verbose {
-			log.Infof(ctx, "Deleting %s", task.name)
-		}
+		log.Infof(ctx, "Deleting %s", task.name)
 		err = task.client.DeleteApiDeployment(ctx, &rpc.DeleteApiDeploymentRequest{Name: task.name})
 	case Artifact:
-		if Verbose {
-			log.Infof(ctx, "Deleting %s", task.name)
-		}
+		log.Infof(ctx, "Deleting %s", task.name)
 		err = task.client.DeleteArtifact(ctx, &rpc.DeleteArtifactRequest{Name: task.name})
 	default:
-		if Verbose {
-			log.Infof(ctx, "Unknown resource type %s", task.name)
-		}
+		log.Infof(ctx, "Unknown resource type %s", task.name)
 	}
 	if err != nil {
 		log.FromContext(ctx).WithError(err).Errorf("Deletion %s failed", task.name)
