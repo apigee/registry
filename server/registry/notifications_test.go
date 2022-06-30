@@ -17,15 +17,14 @@ package registry
 import (
 	"context"
 	"fmt"
+	"os"
 	"testing"
 
 	"cloud.google.com/go/pubsub/pstest"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
 	"github.com/google/go-cmp/cmp"
-	"google.golang.org/api/option"
 	"google.golang.org/genproto/googleapis/pubsub/v1"
-	"google.golang.org/grpc"
 )
 
 func TestNotifications(t *testing.T) {
@@ -34,20 +33,15 @@ func TestNotifications(t *testing.T) {
 	pubSubTest := pstest.NewServer()
 	defer pubSubTest.Close()
 
-	// Connect to the server without using TLS
-	conn, err := grpc.Dial(pubSubTest.Addr, grpc.WithInsecure())
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer conn.Close()
+	// points pubsub client at local emulator
+	os.Setenv("PUBSUB_EMULATOR_HOST", pubSubTest.Addr)
 
 	projectID := "myproject"
 	server, err := New(Config{
-		Database:         "sqlite3",
-		DBConfig:         fmt.Sprintf("%s/registry.db", t.TempDir()),
-		APIClientOptions: []option.ClientOption{option.WithGRPCConn(conn)},
-		ProjectID:        projectID,
-		Notify:           true,
+		Database:  "sqlite3",
+		DBConfig:  fmt.Sprintf("%s/registry.db", t.TempDir()),
+		ProjectID: projectID,
+		Notify:    true,
 	})
 	if err != nil {
 		t.Fatal(err)

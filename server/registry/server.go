@@ -23,7 +23,6 @@ import (
 	"cloud.google.com/go/pubsub"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/internal/storage"
-	"google.golang.org/api/option"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/reflection"
@@ -32,13 +31,12 @@ import (
 
 // Config configures the registry server.
 type Config struct {
-	Database         string
-	DBConfig         string
-	LogLevel         string
-	LogFormat        string
-	Notify           bool
-	ProjectID        string
-	APIClientOptions []option.ClientOption
+	Database  string
+	DBConfig  string
+	LogLevel  string
+	LogFormat string
+	Notify    bool
+	ProjectID string
 }
 
 // RegistryServer implements a Registry server.
@@ -78,7 +76,7 @@ func New(config Config) (*RegistryServer, error) {
 	}
 
 	if s.notifyEnabled {
-		s.pubSubClient, err = pubsub.NewClient(ctx, s.projectID, config.APIClientOptions...)
+		s.pubSubClient, err = pubsub.NewClient(ctx, s.projectID)
 		if err != nil {
 			return nil, err
 		}
