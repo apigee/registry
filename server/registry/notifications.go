@@ -56,15 +56,7 @@ func (s *RegistryServer) notify(ctx context.Context, change rpc.Notification_Cha
 	}
 
 	topic := client.Topic(TopicName)
-	result := topic.Publish(ctx, &pubsub.Message{
+	_ = topic.Publish(ctx, &pubsub.Message{
 		Data: msg,
 	})
-
-	id, err := result.Get(ctx)
-	if err != nil {
-		logger.WithError(err).Error("Failed to publish notification.")
-		return
-	}
-
-	logger.Infof("Published notification with message ID: %s", id)
 }
