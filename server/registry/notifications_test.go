@@ -48,9 +48,6 @@ func TestNotifications(t *testing.T) {
 	}
 	defer server.Close()
 
-	server.notify(ctx, rpc.Notification_CREATED, "resource")
-	pubSubTest.Wait()
-
 	topicName := fmt.Sprintf("projects/%s/topics/%s", projectID, TopicName)
 	topic, err := pubSubTest.GServer.GetTopic(ctx, &pubsub.GetTopicRequest{Topic: topicName})
 	if err != nil {
@@ -59,6 +56,9 @@ func TestNotifications(t *testing.T) {
 	if topic == nil {
 		t.Errorf("Topic %q not found", TopicName)
 	}
+
+	server.notify(ctx, rpc.Notification_CREATED, "resource")
+	pubSubTest.Wait()
 
 	ms := pubSubTest.Messages()
 	if len(ms) != 1 {
