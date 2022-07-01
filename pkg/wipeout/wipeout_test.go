@@ -171,5 +171,4 @@ func TestWipeout(t *testing.T) {
 			t.Errorf("Error: Artifacts found after wipeout")
 		}
 	})
-
 }

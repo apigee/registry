@@ -93,7 +93,7 @@ func BenchmarkGetApi(b *testing.B) {
 			}
 		}
 	})
-	teardown(b, ctx, client)
+	teardown(ctx, b, client)
 }
 
 func BenchmarkListApis(b *testing.B) {
@@ -110,7 +110,7 @@ func BenchmarkListApis(b *testing.B) {
 			}
 		}
 	})
-	teardown(b, ctx, client)
+	teardown(ctx, b, client)
 }
 
 func BenchmarkCreateApi(b *testing.B) {
@@ -129,8 +129,7 @@ func BenchmarkCreateApi(b *testing.B) {
 		}
 		b.StartTimer()
 	})
-
-	teardown(b, ctx, client)
+	teardown(ctx, b, client)
 }
 
 func BenchmarkUpdateApi(b *testing.B) {
@@ -147,7 +146,7 @@ func BenchmarkUpdateApi(b *testing.B) {
 			}
 		}
 	})
-	teardown(b, ctx, client)
+	teardown(ctx, b, client)
 }
 
 func BenchmarkDeleteApi(b *testing.B) {
@@ -166,5 +165,5 @@ func BenchmarkDeleteApi(b *testing.B) {
 			}
 		}
 	})
-	teardown(b, ctx, client)
+	teardown(ctx, b, client)
 }

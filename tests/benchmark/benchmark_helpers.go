@@ -53,7 +53,7 @@ func setup(b *testing.B) (context.Context, connection.Client) {
 	return ctx, client
 }
 
-func teardown(b *testing.B, ctx context.Context, client connection.Client) {
+func teardown(ctx context.Context, b *testing.B, client connection.Client) {
 	b.Helper()
 	if err := wipeout.Wipeout(ctx, client, projectID, jobs); err != nil {
 		b.Fatalf("Post-test wipeout failed")
