@@ -29,9 +29,9 @@ import (
 var _err error
 
 // Wipeout deletes all resources in a project using the specified number of parallel worker jobs.
-func Wipeout(ctx context.Context, client connection.Client, projectid string, jobs int) error {
-	log.Infof(ctx, "Deleting everything in project %s", projectid)
-	project := "projects/" + projectid + "/locations/global"
+func Wipeout(ctx context.Context, client connection.Client, projectID string, jobs int) error {
+	log.Infof(ctx, "Deleting everything in project %s", projectID)
+	project := "projects/" + projectID + "/locations/global"
 	// Wipeout resources in groups to ensure that children are deleted before parents.
 	{
 		log.Infof(ctx, "Deleting artifacts")
