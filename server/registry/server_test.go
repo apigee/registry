@@ -15,11 +15,14 @@
 package registry
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"sync"
 	"testing"
 
+	"github.com/apigee/registry/pkg/remote"
+	"github.com/apigee/registry/rpc"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -33,18 +36,32 @@ const (
 var (
 	sharedStorage sync.Mutex
 	usePostgres   = false
+	useRemote     = false
 )
 
 func init() {
 	flag.BoolVar(&usePostgres, "postgresql", false, "perform server tests using postgresql")
+	flag.BoolVar(&useRemote, "remote", false, "perform server tests using a remote server")
+}
+
+type TestServer interface {
+	rpc.AdminServer
+	rpc.RegistryServer
 }
 
 // defaultTestServer will call server.Close() when test completes
-func defaultTestServer(t *testing.T) *RegistryServer {
+func defaultTestServer(t *testing.T) TestServer {
 	t.Helper()
 	var err error
 	var server *RegistryServer
 
+	if useRemote {
+		p := remote.NewProxy()
+		if err = p.Open(context.Background()); err != nil {
+			t.Fatalf("Fatalf: failed to connect to remote server: %s", err)
+		}
+		return p
+	}
 	if usePostgres {
 		server, err = serverWithPostgres(t)
 		if err != nil {

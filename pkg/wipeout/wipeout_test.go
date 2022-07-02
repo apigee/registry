@@ -36,7 +36,9 @@ func TestWipeout(t *testing.T) {
 
 	ctx := context.Background()
 	server := remote.NewProxy()
-	server.Open(ctx)
+	if err := server.Open(ctx); err != nil {
+		t.Fatalf("Setup: failed to connect to remote server: %s", err)
+	}
 	defer server.Close()
 	var err error
 	if _, err = server.DeleteProject(ctx, &rpc.DeleteProjectRequest{
