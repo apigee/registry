@@ -44,7 +44,7 @@ func TestWipeout(t *testing.T) {
 		Name:  project.String(),
 		Force: true,
 	}); err != nil && status.Code(err) != codes.NotFound {
-		t.Errorf("Setup: failed to delete test project: %s", err)
+		t.Fatalf("Setup: failed to delete test project: %s", err)
 	}
 
 	if _, err := adminClient.CreateProject(ctx, &rpc.CreateProjectRequest{
@@ -59,6 +59,7 @@ func TestWipeout(t *testing.T) {
 		t.Fatalf("Setup: Failed to create registry client: %s", err)
 	}
 	defer registryClient.Close()
+
 	for i := 0; i <= 2; i++ {
 		api, err := registryClient.CreateApi(ctx, &rpc.CreateApiRequest{
 			ApiId:  fmt.Sprintf("a%d", i),
@@ -154,21 +155,30 @@ func TestWipeout(t *testing.T) {
 		}
 	}
 	t.Run("WipeoutProject", func(t *testing.T) {
-		err = Wipeout(ctx, registryClient, projectID, 10)
-		if err != nil {
-			t.Fatalf("Setup: Failed to wipeout project: %s", err)
-		}
-		it := registryClient.ListApis(ctx, &rpc.ListApisRequest{Parent: parent})
-		if _, ok := it.Next(); ok != iterator.Done {
+		Wipeout(ctx, registryClient, projectID, 10)
+		if _, ok := registryClient.ListApis(ctx, &rpc.ListApisRequest{Parent: parent}).Next(); ok != iterator.Done {
 			t.Errorf("Error: APIs found after wipeout")
 		}
-		it2 := registryClient.ListApiVersions(ctx, &rpc.ListApiVersionsRequest{Parent: parentName.Api("-").String()})
-		if _, ok := it2.Next(); ok != iterator.Done {
+		if _, ok := registryClient.ListArtifacts(ctx, &rpc.ListArtifactsRequest{Parent: parentName.Api("-").String()}).Next(); ok != iterator.Done {
+			t.Errorf("Error: API artifacts found after wipeout")
+		}
+		if _, ok := registryClient.ListApiVersions(ctx, &rpc.ListApiVersionsRequest{Parent: parentName.Api("-").String()}).Next(); ok != iterator.Done {
 			t.Errorf("Error: Versions found after wipeout")
 		}
-		it3 := registryClient.ListArtifacts(ctx, &rpc.ListArtifactsRequest{Parent: parentName.Api("-").Version("-").String()})
-		if _, ok := it3.Next(); ok != iterator.Done {
-			t.Errorf("Error: Artifacts found after wipeout")
+		if _, ok := registryClient.ListArtifacts(ctx, &rpc.ListArtifactsRequest{Parent: parentName.Api("-").Version("-").String()}).Next(); ok != iterator.Done {
+			t.Errorf("Error: Version artifacts found after wipeout")
+		}
+		if _, ok := registryClient.ListApiSpecs(ctx, &rpc.ListApiSpecsRequest{Parent: parentName.Api("-").Version("-").String()}).Next(); ok != iterator.Done {
+			t.Errorf("Error: Specs found after wipeout")
+		}
+		if _, ok := registryClient.ListArtifacts(ctx, &rpc.ListArtifactsRequest{Parent: parentName.Api("-").Version("-").Spec("-").String()}).Next(); ok != iterator.Done {
+			t.Errorf("Error: Spec artifacts found after wipeout")
+		}
+		if _, ok := registryClient.ListApiDeployments(ctx, &rpc.ListApiDeploymentsRequest{Parent: parentName.Api("-").String()}).Next(); ok != iterator.Done {
+			t.Errorf("Error: Deployments found after wipeout")
+		}
+		if _, ok := registryClient.ListArtifacts(ctx, &rpc.ListArtifactsRequest{Parent: parentName.Api("-").Deployment("-").String()}).Next(); ok != iterator.Done {
+			t.Errorf("Error: Deployment artifacts found after wipeout")
 		}
 	})
 }
