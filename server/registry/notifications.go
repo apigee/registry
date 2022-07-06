@@ -20,8 +20,6 @@ import (
 	"cloud.google.com/go/pubsub"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -39,15 +37,9 @@ func (s *RegistryServer) notify(ctx context.Context, change rpc.Notification_Cha
 		return
 	}
 
-	client, err := pubsub.NewClient(ctx, s.projectID)
+	client, err := s.getPubSubClient(ctx)
 	if err != nil {
-		logger.WithError(err).Error("Failed to create PubSub client.")
-		return
-	}
-	defer client.Close()
-
-	if _, err := client.CreateTopic(ctx, TopicName); err != nil && status.Code(err) != codes.AlreadyExists {
-		logger.WithError(err).Error("Failed to create PubSub topic.")
+		logger.WithError(err).Error("Failed to get PubSub client.")
 		return
 	}
 
@@ -64,8 +56,6 @@ func (s *RegistryServer) notify(ctx context.Context, change rpc.Notification_Cha
 	}
 
 	topic := client.Topic(TopicName)
-	defer topic.Stop()
-
 	result := topic.Publish(ctx, &pubsub.Message{
 		Data: msg,
 	})
