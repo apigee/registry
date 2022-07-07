@@ -17,7 +17,7 @@ package scoring
 import (
 	"testing"
 
-	"github.com/apigee/registry/connection/grpctest"
+	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/server/registry"
 )
 

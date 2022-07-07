@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/wipeout"
 )
 

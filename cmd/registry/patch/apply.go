@@ -22,8 +22,8 @@ import (
 	"strings"
 
 	"github.com/apigee/registry/cmd/registry/core"
-	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/log"
+	"github.com/apigee/registry/pkg/connection"
 )
 
 func Apply(ctx context.Context, client connection.Client, path, parent string, recursive bool, taskQueue chan<- core.Task) error {

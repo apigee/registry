@@ -18,8 +18,8 @@ import (
 	"context"
 
 	"github.com/apigee/registry/cmd/registry/core"
-	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/log"
+	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
 )
 
