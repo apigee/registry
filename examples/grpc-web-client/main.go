@@ -22,6 +22,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/apigee/registry/rpc"
 	statuspb "google.golang.org/genproto/googleapis/rpc/status"
@@ -106,10 +107,12 @@ func Do(server, service, method string, req, res proto.Message) error {
 }
 
 func main() {
-	server := os.Getenv("APG_REGISTRY_AUDIENCES")
-	if server == "" {
-		check(fmt.Errorf("APG_REGISTRY_AUDIENCES is unset"))
+	prefix := "https://"
+	if insecure, _ := strconv.ParseBool(os.Getenv("APG_REGISTRY_INSECURE")); insecure {
+		prefix = "http://"
 	}
+	server := prefix + os.Getenv("APG_REGISTRY_ADDRESS")
+
 	// Make a sample API call with gRPC Web.
 	req := &rpc.ListProjectsRequest{
 		PageSize: 4,
