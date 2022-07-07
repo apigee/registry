@@ -87,7 +87,7 @@ func newApiDeployment(message *rpc.ApiDeployment) (*ApiDeployment, error) {
 
 func applyApiDeploymentPatch(
 	ctx context.Context,
-	client connection.Client,
+	client connection.RegistryClient,
 	deployment *ApiDeployment,
 	parent string) error {
 	apiName, err := names.ParseApi(parent)

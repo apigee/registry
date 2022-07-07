@@ -38,7 +38,7 @@ func scoreID(definitionID string) string {
 
 func FetchScoreDefinitions(
 	ctx context.Context,
-	client connection.Client,
+	client connection.RegistryClient,
 	resource patterns.ResourceName) ([]*rpc.Artifact, error) {
 	defArtifacts := make([]*rpc.Artifact, 0)
 
@@ -74,7 +74,7 @@ func FetchScoreDefinitions(
 
 func CalculateScore(
 	ctx context.Context,
-	client connection.Client,
+	client connection.RegistryClient,
 	defArtifact *rpc.Artifact,
 	resource patterns.ResourceInstance,
 	dryRun bool) error {
@@ -143,7 +143,7 @@ type scoreResult struct {
 
 func processFormula(
 	ctx context.Context,
-	client connection.Client,
+	client connection.RegistryClient,
 	definition *rpc.ScoreDefinition,
 	resource patterns.ResourceInstance,
 	scoreArtifact *rpc.Artifact,
@@ -165,7 +165,7 @@ func processFormula(
 
 func processScoreFormula(
 	ctx context.Context,
-	client connection.Client,
+	client connection.RegistryClient,
 	formula *rpc.ScoreFormula,
 	resource patterns.ResourceInstance,
 	scoreArtifact *rpc.Artifact,
@@ -230,7 +230,7 @@ func processScoreFormula(
 
 func processRollUpFormula(
 	ctx context.Context,
-	client connection.Client,
+	client connection.RegistryClient,
 	formula *rpc.RollUpFormula,
 	resource patterns.ResourceInstance,
 	scoreArtifact *rpc.Artifact,
@@ -439,7 +439,7 @@ func processScoreType(definition *rpc.ScoreDefinition, scoreValue interface{}, p
 	return score, nil
 }
 
-func uploadScore(ctx context.Context, client connection.Client, resource patterns.ResourceInstance, score *rpc.Score) error {
+func uploadScore(ctx context.Context, client connection.RegistryClient, resource patterns.ResourceInstance, score *rpc.Score) error {
 	artifactBytes, err := proto.Marshal(score)
 	if err != nil {
 		return err
@@ -457,7 +457,7 @@ func uploadScore(ctx context.Context, client connection.Client, resource pattern
 	return nil
 }
 
-func getArtifact(ctx context.Context, client connection.Client, artifactPattern string, getContents bool) (*rpc.Artifact, error) {
+func getArtifact(ctx context.Context, client connection.RegistryClient, artifactPattern string, getContents bool) (*rpc.Artifact, error) {
 	artifactName, err := names.ParseArtifact(artifactPattern)
 	if err != nil {
 		return nil, fmt.Errorf("invalid artifact pattern %q: %s", artifactPattern, err)

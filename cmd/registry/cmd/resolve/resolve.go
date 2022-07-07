@@ -31,7 +31,7 @@ import (
 
 func fetchManifest(
 	ctx context.Context,
-	client connection.Client,
+	client connection.RegistryClient,
 	manifestName string) (*rpc.Manifest, error) {
 	manifest := &rpc.Manifest{}
 	body, err := client.GetArtifactContents(

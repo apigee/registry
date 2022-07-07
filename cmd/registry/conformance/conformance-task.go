@@ -77,7 +77,7 @@ func initializeGuidelineReport(guidelineID string) *rpc.GuidelineReport {
 }
 
 type ComputeConformanceTask struct {
-	Client          connection.Client
+	Client          connection.RegistryClient
 	Spec            *rpc.ApiSpec
 	LintersMetadata map[string]*linterMetadata
 	StyleguideId    string

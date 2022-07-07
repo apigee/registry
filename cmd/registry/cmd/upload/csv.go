@@ -177,7 +177,7 @@ func (r *uploadCSVReader) buildColumnIndex(header []string) error {
 }
 
 type uploadSpecTask struct {
-	client    connection.Client
+	client    connection.RegistryClient
 	projectID string
 	apiID     string
 	versionID string

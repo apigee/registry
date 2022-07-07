@@ -155,7 +155,7 @@ func newArtifact(message *rpc.Artifact) (*Artifact, error) {
 	}, nil
 }
 
-func applyArtifactPatchBytes(ctx context.Context, client connection.Client, bytes []byte, parent string) error {
+func applyArtifactPatchBytes(ctx context.Context, client connection.RegistryClient, bytes []byte, parent string) error {
 	var artifact Artifact
 	err := yaml.Unmarshal(bytes, &artifact)
 	if err != nil {
@@ -164,7 +164,7 @@ func applyArtifactPatchBytes(ctx context.Context, client connection.Client, byte
 	return applyArtifactPatch(ctx, client, &artifact, parent)
 }
 
-func applyArtifactPatch(ctx context.Context, client connection.Client, content *Artifact, parent string) error {
+func applyArtifactPatch(ctx context.Context, client connection.RegistryClient, content *Artifact, parent string) error {
 	// Restyle the YAML representation so that yaml.Marshal will marshal it as JSON.
 	styleForJSON(&content.Data)
 	// Marshal the YAML representation into the JSON serialization.

@@ -265,7 +265,7 @@ func storeLintStatsArtifact(ctx context.Context,
 }
 
 func aggregateLintStats(ctx context.Context,
-	client connection.Client,
+	client connection.RegistryClient,
 	name string,
 	linter string,
 	aggregateStats *rpc.LintStats) {
@@ -290,7 +290,7 @@ func aggregateLintStats(ctx context.Context,
 
 func matchAndHandleLintStatsCmd(
 	ctx context.Context,
-	client connection.Client,
+	client connection.RegistryClient,
 	adminClient connection.AdminClient,
 	name string,
 	filter string,

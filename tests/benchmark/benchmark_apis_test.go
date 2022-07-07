@@ -33,13 +33,13 @@ func apiName(apiId string) string {
 	return fmt.Sprintf("%s/apis/%s", root(), apiId)
 }
 
-func getApi(b *testing.B, ctx context.Context, client connection.Client, apiId string) error {
+func getApi(b *testing.B, ctx context.Context, client connection.RegistryClient, apiId string) error {
 	b.Helper()
 	_, err := client.GetApi(ctx, &rpc.GetApiRequest{Name: apiName(apiId)})
 	return err
 }
 
-func listApis(b *testing.B, ctx context.Context, client connection.Client) error {
+func listApis(b *testing.B, ctx context.Context, client connection.RegistryClient) error {
 	b.Helper()
 	it := client.ListApis(ctx, &rpc.ListApisRequest{Parent: root()})
 	for _, err := it.Next(); err != iterator.Done; _, err = it.Next() {
@@ -50,7 +50,7 @@ func listApis(b *testing.B, ctx context.Context, client connection.Client) error
 	return nil
 }
 
-func createApi(b *testing.B, ctx context.Context, client connection.Client, apiId string) error {
+func createApi(b *testing.B, ctx context.Context, client connection.RegistryClient, apiId string) error {
 	b.Helper()
 	_, err := client.CreateApi(ctx, &rpc.CreateApiRequest{
 		Parent: root(),
@@ -63,7 +63,7 @@ func createApi(b *testing.B, ctx context.Context, client connection.Client, apiI
 	return err
 }
 
-func updateApi(b *testing.B, ctx context.Context, client connection.Client, apiId string) error {
+func updateApi(b *testing.B, ctx context.Context, client connection.RegistryClient, apiId string) error {
 	b.Helper()
 	_, err := client.UpdateApi(ctx, &rpc.UpdateApiRequest{
 		Api: &rpc.Api{
@@ -76,7 +76,7 @@ func updateApi(b *testing.B, ctx context.Context, client connection.Client, apiI
 	return err
 }
 
-func deleteApi(b *testing.B, ctx context.Context, client connection.Client, apiId string) error {
+func deleteApi(b *testing.B, ctx context.Context, client connection.RegistryClient, apiId string) error {
 	b.Helper()
 	return client.DeleteApi(ctx, &rpc.DeleteApiRequest{Name: apiName(apiId)})
 }

@@ -79,7 +79,7 @@ func revisionsCommand() *cobra.Command {
 }
 
 type countSpecRevisionsTask struct {
-	client     connection.Client
+	client     connection.RegistryClient
 	specName   string
 	specLabels map[string]string
 }
@@ -120,7 +120,7 @@ func (task *countSpecRevisionsTask) Run(ctx context.Context) error {
 }
 
 type countDeploymentRevisionsTask struct {
-	client           connection.Client
+	client           connection.RegistryClient
 	deploymentName   string
 	deploymentLabels map[string]string
 }

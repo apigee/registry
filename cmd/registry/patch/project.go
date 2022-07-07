@@ -62,7 +62,7 @@ func ExportProject(ctx context.Context, client *gapic.RegistryClient, projectNam
 }
 
 type exportAPITask struct {
-	client  connection.Client
+	client  connection.RegistryClient
 	message *rpc.Api
 	dir     string
 }
@@ -82,7 +82,7 @@ func (task *exportAPITask) Run(ctx context.Context) error {
 }
 
 type exportArtifactTask struct {
-	client  connection.Client
+	client  connection.RegistryClient
 	message *rpc.Artifact
 	dir     string
 }

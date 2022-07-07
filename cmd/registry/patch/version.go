@@ -79,7 +79,7 @@ func newApiVersion(ctx context.Context, client *gapic.RegistryClient, message *r
 
 func applyApiVersionPatch(
 	ctx context.Context,
-	client connection.Client,
+	client connection.RegistryClient,
 	version *ApiVersion,
 	parent string) error {
 	name := fmt.Sprintf("%s/versions/%s", parent, version.Metadata.Name)

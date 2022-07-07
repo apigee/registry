@@ -36,7 +36,7 @@ func scoreCardID(definitionID string) string {
 
 func FetchScoreCardDefinitions(
 	ctx context.Context,
-	client connection.Client,
+	client connection.RegistryClient,
 	resource patterns.ResourceName) ([]*rpc.Artifact, error) {
 	defArtifacts := make([]*rpc.Artifact, 0)
 
@@ -72,7 +72,7 @@ func FetchScoreCardDefinitions(
 
 func CalculateScoreCard(
 	ctx context.Context,
-	client connection.Client,
+	client connection.RegistryClient,
 	defArtifact *rpc.Artifact,
 	resource patterns.ResourceInstance,
 	dryRun bool) error {
@@ -134,7 +134,7 @@ type scoreCardResult struct {
 
 func processScorePatterns(
 	ctx context.Context,
-	client connection.Client,
+	client connection.RegistryClient,
 	definition *rpc.ScoreCardDefinition,
 	resource patterns.ResourceInstance,
 	scoreCardArtifact *rpc.Artifact,
@@ -203,7 +203,7 @@ func processScorePatterns(
 	}
 }
 
-func uploadScoreCard(ctx context.Context, client connection.Client, resource patterns.ResourceInstance, scoreCard *rpc.ScoreCard) error {
+func uploadScoreCard(ctx context.Context, client connection.RegistryClient, resource patterns.ResourceInstance, scoreCard *rpc.ScoreCard) error {
 	artifactBytes, err := proto.Marshal(scoreCard)
 	if err != nil {
 		return err

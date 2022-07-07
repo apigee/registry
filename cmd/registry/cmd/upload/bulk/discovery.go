@@ -78,7 +78,7 @@ func discoveryCommand() *cobra.Command {
 }
 
 type uploadDiscoveryTask struct {
-	client    connection.Client
+	client    connection.RegistryClient
 	path      string
 	projectID string
 	apiID     string

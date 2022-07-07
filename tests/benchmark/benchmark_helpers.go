@@ -40,7 +40,7 @@ func root() string {
 	return fmt.Sprintf("projects/%s/locations/global", projectID)
 }
 
-func setup(b *testing.B) (context.Context, connection.Client) {
+func setup(b *testing.B) (context.Context, connection.RegistryClient) {
 	b.Helper()
 	ctx := context.Background()
 	client, err := connection.NewClient(ctx)
@@ -51,7 +51,7 @@ func setup(b *testing.B) (context.Context, connection.Client) {
 	return ctx, client
 }
 
-func teardown(ctx context.Context, b *testing.B, client connection.Client) {
+func teardown(ctx context.Context, b *testing.B, client connection.RegistryClient) {
 	b.Helper()
 	wipeout.Wipeout(ctx, client, projectID, jobs)
 }

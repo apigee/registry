@@ -78,7 +78,7 @@ func vocabularyCommand() *cobra.Command {
 }
 
 type computeVocabularyTask struct {
-	client   connection.Client
+	client   connection.RegistryClient
 	specName string
 	dryRun   bool
 }

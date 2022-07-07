@@ -24,11 +24,11 @@ import (
 
 // DeleteApiTask deletes a specified API.
 type DeleteApiTask struct {
-	client connection.Client
+	client connection.RegistryClient
 	name   string
 }
 
-func NewDeleteApiTask(client connection.Client, name string) *DeleteApiTask {
+func NewDeleteApiTask(client connection.RegistryClient, name string) *DeleteApiTask {
 	return &DeleteApiTask{
 		client: client,
 		name:   name,
@@ -46,11 +46,11 @@ func (task *DeleteApiTask) Run(ctx context.Context) error {
 
 // DeleteVersionTask deletes a specified version.
 type DeleteVersionTask struct {
-	client connection.Client
+	client connection.RegistryClient
 	name   string
 }
 
-func NewDeleteVersionTask(client connection.Client, name string) *DeleteVersionTask {
+func NewDeleteVersionTask(client connection.RegistryClient, name string) *DeleteVersionTask {
 	return &DeleteVersionTask{
 		client: client,
 		name:   name,
@@ -68,11 +68,11 @@ func (task *DeleteVersionTask) Run(ctx context.Context) error {
 
 // DeleteSpecTask deletes a specified spec.
 type DeleteSpecTask struct {
-	client connection.Client
+	client connection.RegistryClient
 	name   string
 }
 
-func NewDeleteSpecTask(client connection.Client, name string) *DeleteSpecTask {
+func NewDeleteSpecTask(client connection.RegistryClient, name string) *DeleteSpecTask {
 	return &DeleteSpecTask{
 		client: client,
 		name:   name,
@@ -90,11 +90,11 @@ func (task *DeleteSpecTask) Run(ctx context.Context) error {
 
 // DeleteDeploymentTask deletes a specified deployment.
 type DeleteDeploymentTask struct {
-	client connection.Client
+	client connection.RegistryClient
 	name   string
 }
 
-func NewDeleteDeploymentTask(client connection.Client, name string) *DeleteDeploymentTask {
+func NewDeleteDeploymentTask(client connection.RegistryClient, name string) *DeleteDeploymentTask {
 	return &DeleteDeploymentTask{
 		client: client,
 		name:   name,
@@ -112,11 +112,11 @@ func (task *DeleteDeploymentTask) Run(ctx context.Context) error {
 
 // DeleteArtifactTask deletes a specified artifact.
 type DeleteArtifactTask struct {
-	client connection.Client
+	client connection.RegistryClient
 	name   string
 }
 
-func NewDeleteArtifactTask(client connection.Client, name string) *DeleteArtifactTask {
+func NewDeleteArtifactTask(client connection.RegistryClient, name string) *DeleteArtifactTask {
 	return &DeleteArtifactTask{
 		client: client,
 		name:   name,

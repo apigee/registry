@@ -81,7 +81,7 @@ func Command() *cobra.Command {
 
 func matchAndHandleLabelCmd(
 	ctx context.Context,
-	client connection.Client,
+	client connection.RegistryClient,
 	taskQueue chan<- core.Task,
 	name string,
 	filter string,
@@ -180,7 +180,7 @@ func labelDeployments(
 }
 
 type labelApiTask struct {
-	client   connection.Client
+	client   connection.RegistryClient
 	api      *rpc.Api
 	labeling *core.Labeling
 }
@@ -207,7 +207,7 @@ func (task *labelApiTask) Run(ctx context.Context) error {
 }
 
 type labelVersionTask struct {
-	client   connection.Client
+	client   connection.RegistryClient
 	version  *rpc.ApiVersion
 	labeling *core.Labeling
 }
@@ -234,7 +234,7 @@ func (task *labelVersionTask) Run(ctx context.Context) error {
 }
 
 type labelSpecTask struct {
-	client   connection.Client
+	client   connection.RegistryClient
 	spec     *rpc.ApiSpec
 	labeling *core.Labeling
 }
@@ -261,7 +261,7 @@ func (task *labelSpecTask) Run(ctx context.Context) error {
 }
 
 type labelDeploymentTask struct {
-	client     connection.Client
+	client     connection.RegistryClient
 	deployment *rpc.ApiDeployment
 	labeling   *core.Labeling
 }

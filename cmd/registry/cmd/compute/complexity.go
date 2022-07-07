@@ -78,7 +78,7 @@ func complexityCommand() *cobra.Command {
 }
 
 type computeComplexityTask struct {
-	client   connection.Client
+	client   connection.RegistryClient
 	specName string
 	dryRun   bool
 }

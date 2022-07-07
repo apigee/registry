@@ -21,7 +21,7 @@ import (
 	"github.com/apigee/registry/rpc"
 )
 
-func GetBytesForSpec(ctx context.Context, client connection.Client, spec *rpc.ApiSpec) ([]byte, error) {
+func GetBytesForSpec(ctx context.Context, client connection.RegistryClient, spec *rpc.ApiSpec) ([]byte, error) {
 	request := &rpc.GetApiSpecContentsRequest{Name: spec.GetName()}
 	contents, err := client.GetApiSpecContents(ctx, request)
 	if err != nil {

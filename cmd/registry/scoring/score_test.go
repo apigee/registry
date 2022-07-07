@@ -607,7 +607,7 @@ func TestProcessScoreFormulaError(t *testing.T) {
 	tests := []struct {
 		desc     string
 		seed     []seeder.RegistryResource
-		setup    func(context.Context, connection.Client, connection.AdminClient)
+		setup    func(context.Context, connection.RegistryClient, connection.AdminClient)
 		formula  *rpc.ScoreFormula
 		resource patterns.ResourceInstance
 	}{

@@ -68,7 +68,7 @@ func newApiSpec(message *rpc.ApiSpec) (*ApiSpec, error) {
 
 func applyApiSpecPatch(
 	ctx context.Context,
-	client connection.Client,
+	client connection.RegistryClient,
 	spec *ApiSpec,
 	parent string) error {
 	name := fmt.Sprintf("%s/specs/%s", parent, spec.Metadata.Name)

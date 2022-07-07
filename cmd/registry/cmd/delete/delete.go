@@ -56,7 +56,7 @@ func Command() *cobra.Command {
 }
 
 type deleteTask struct {
-	client       connection.Client
+	client       connection.RegistryClient
 	resourceName string
 	resourceKind string
 }
@@ -83,7 +83,7 @@ func (task *deleteTask) Run(ctx context.Context) error {
 
 func matchAndHandleDeleteCmd(
 	ctx context.Context,
-	client connection.Client,
+	client connection.RegistryClient,
 	taskQueue chan<- core.Task,
 	name string,
 	filter string,

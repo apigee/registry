@@ -73,7 +73,7 @@ func referencesCommand() *cobra.Command {
 }
 
 type computeReferencesTask struct {
-	client   connection.Client
+	client   connection.RegistryClient
 	specName string
 	dryRun   bool
 }

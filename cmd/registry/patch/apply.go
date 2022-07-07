@@ -26,7 +26,7 @@ import (
 	"github.com/apigee/registry/pkg/connection"
 )
 
-func Apply(ctx context.Context, client connection.Client, path, parent string, recursive bool, taskQueue chan<- core.Task) error {
+func Apply(ctx context.Context, client connection.RegistryClient, path, parent string, recursive bool, taskQueue chan<- core.Task) error {
 	return filepath.WalkDir(path,
 		func(p string, entry fs.DirEntry, err error) error {
 			if err != nil {
@@ -40,7 +40,7 @@ func Apply(ctx context.Context, client connection.Client, path, parent string, r
 		})
 }
 
-func applyFile(ctx context.Context, client connection.Client, fileName, parent string, taskQueue chan<- core.Task) error {
+func applyFile(ctx context.Context, client connection.RegistryClient, fileName, parent string, taskQueue chan<- core.Task) error {
 	if !strings.HasSuffix(fileName, ".yaml") {
 		return nil
 	}
@@ -54,7 +54,7 @@ func applyFile(ctx context.Context, client connection.Client, fileName, parent s
 }
 
 type applyFileTask struct {
-	client connection.Client
+	client connection.RegistryClient
 	path   string
 	parent string
 }

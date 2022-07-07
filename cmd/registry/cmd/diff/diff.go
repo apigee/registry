@@ -105,7 +105,7 @@ func Command() *cobra.Command {
 }
 
 func resolveSpecRevision(ctx context.Context,
-	client connection.Client,
+	client connection.RegistryClient,
 	base string,
 	suffix string) (names.SpecRevision, error) {
 	// First try to treat the raw suffix as revision name.

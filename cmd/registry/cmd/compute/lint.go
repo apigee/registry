@@ -78,7 +78,7 @@ func lintCommand() *cobra.Command {
 }
 
 type computeLintTask struct {
-	client   connection.Client
+	client   connection.RegistryClient
 	specName string
 	linter   string
 	dryRun   bool

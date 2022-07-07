@@ -298,7 +298,7 @@ func hashForBytes(b []byte) string {
 }
 
 // testArtifacts verifies artifact operations on a specified entity.
-func testArtifacts(ctx context.Context, registryClient connection.Client, t *testing.T, parent string) {
+func testArtifacts(ctx context.Context, registryClient connection.RegistryClient, t *testing.T, parent string) {
 	messageContents := []byte("hello")
 	messageHash := hashForBytes(messageContents)
 	messageLength := int32(len(messageContents))

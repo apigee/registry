@@ -68,7 +68,7 @@ func versionsCommand() *cobra.Command {
 }
 
 type countApiVersionsTask struct {
-	client connection.Client
+	client connection.RegistryClient
 	api    *rpc.Api
 }
 

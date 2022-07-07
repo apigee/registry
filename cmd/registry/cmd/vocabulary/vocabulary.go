@@ -45,7 +45,7 @@ func Command() *cobra.Command {
 	return cmd
 }
 
-func collectInputVocabularies(ctx context.Context, client connection.Client, args []string, filter string) ([]string, []*metrics.Vocabulary) {
+func collectInputVocabularies(ctx context.Context, client connection.RegistryClient, args []string, filter string) ([]string, []*metrics.Vocabulary) {
 	inputNames := make([]string, 0)
 	inputs := make([]*metrics.Vocabulary, 0)
 	for _, name := range args {
@@ -79,7 +79,7 @@ func collectInputVocabularies(ctx context.Context, client connection.Client, arg
 	return inputNames, inputs
 }
 
-func setVocabularyToArtifact(ctx context.Context, client connection.Client, output *metrics.Vocabulary, outputArtifactName string) {
+func setVocabularyToArtifact(ctx context.Context, client connection.RegistryClient, output *metrics.Vocabulary, outputArtifactName string) {
 	parts := strings.Split(outputArtifactName, "/artifacts/")
 	subject := parts[0]
 	relation := parts[1]
@@ -101,7 +101,7 @@ func setVocabularyToArtifact(ctx context.Context, client connection.Client, outp
 	}
 }
 
-func setVersionHistoryToArtifact(ctx context.Context, client connection.Client, output *metrics.VersionHistory, outputArtifactName string) {
+func setVersionHistoryToArtifact(ctx context.Context, client connection.RegistryClient, output *metrics.VersionHistory, outputArtifactName string) {
 	parts := strings.Split(outputArtifactName, "/artifacts/")
 	subject := parts[0]
 	relation := parts[1]

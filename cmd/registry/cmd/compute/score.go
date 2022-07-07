@@ -79,7 +79,7 @@ func scoreCommand() *cobra.Command {
 }
 
 type computeScoreTask struct {
-	client      connection.Client
+	client      connection.RegistryClient
 	defArtifact *rpc.Artifact
 	resource    patterns.ResourceInstance
 	dryRun      bool

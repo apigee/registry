@@ -55,7 +55,7 @@ func Command() *cobra.Command {
 
 func matchAndHandleListCmd(
 	ctx context.Context,
-	client connection.Client,
+	client connection.RegistryClient,
 	adminClient connection.AdminClient,
 	name string,
 	filter string,
