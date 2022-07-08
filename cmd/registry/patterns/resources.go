@@ -24,6 +24,8 @@ import (
 	"github.com/apigee/registry/server/registry/names"
 )
 
+const ResourceUpdateThresholdSeconds = 2
+
 // This interface is used to describe generic resource names
 // Example:
 // projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml
@@ -396,6 +398,7 @@ func (ar ArtifactResource) ResourceName() ResourceName {
 	return ar.ArtifactName
 }
 
+// TODO: Remove this function after refactoring scoring code to include interfaces.
 func ListResources(ctx context.Context, client connection.Client, pattern, filter string) ([]ResourceInstance, error) {
 	var result []ResourceInstance
 	var err2 error

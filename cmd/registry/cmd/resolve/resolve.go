@@ -76,8 +76,10 @@ func Command() *cobra.Command {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to fetch manifest")
 			}
 
+			lister := &controller.RegistryLister{RegistryClient: client}
+
 			log.Debug(ctx, "Generating the list of actions...")
-			actions := controller.ProcessManifest(ctx, client, name.ProjectID(), manifest)
+			actions := controller.ProcessManifest(ctx, lister, name.ProjectID(), manifest)
 
 			// The monitoring metrics/dashboards are built on top of the format of the log messages here.
 			// Check the metric filters before making any changes to the format.

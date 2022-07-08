@@ -21,7 +21,25 @@ import (
 	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/test/seeder"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
+
+func deleteProject(
+	ctx context.Context,
+	client connection.AdminClient,
+	t *testing.T,
+	projectID string) {
+	t.Helper()
+	req := &rpc.DeleteProjectRequest{
+		Name:  "projects/" + projectID,
+		Force: true,
+	}
+	err := client.DeleteProject(ctx, req)
+	if err != nil && status.Code(err) != codes.NotFound {
+		t.Fatalf("Failed DeleteProject(%v): %s", req, err.Error())
+	}
+}
 
 // Tests for error paths in the controller
 
@@ -180,8 +198,10 @@ func TestControllerErrors(t *testing.T) {
 				t.Fatalf("Setup: failed to seed registry: %s", err)
 			}
 
+			lister := &RegistryLister{RegistryClient: registryClient}
+
 			// Test GeneratedResource pattern
-			actions, err := processManifestResource(ctx, registryClient, projectID, test.generatedResource)
+			actions, err := processManifestResource(ctx, lister, projectID, test.generatedResource)
 			if err == nil {
 				t.Errorf("Expected processManifestResource() to return an error, got: %v", actions)
 			}
