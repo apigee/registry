@@ -19,9 +19,9 @@ import (
 	"context"
 
 	"github.com/apigee/registry/cmd/registry/core"
-	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/log"
+	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"gopkg.in/yaml.v3"
@@ -200,7 +200,7 @@ func optionalDeploymentName(apiName names.Api, deploymentID string) string {
 	return apiName.Deployment(deploymentID).String()
 }
 
-func applyApiPatch(ctx context.Context, client connection.Client, bytes []byte, parent string) error {
+func applyApiPatch(ctx context.Context, client connection.RegistryClient, bytes []byte, parent string) error {
 	var api Api
 	err := yaml.Unmarshal(bytes, &api)
 	if err != nil {

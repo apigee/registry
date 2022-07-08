@@ -21,8 +21,8 @@ import (
 	"github.com/apigee/registry/cmd/registry/conformance"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/cmd/registry/patch"
-	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/log"
+	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"github.com/spf13/cobra"
@@ -90,7 +90,7 @@ func conformanceCommand() *cobra.Command {
 
 // processStyleGuide computes and attaches conformance reports as
 // artifacts to a spec or a collection of specs.
-func processStyleGuide(ctx context.Context, client connection.Client, styleguide *rpc.StyleGuide, specs []*rpc.ApiSpec, dryRun bool) {
+func processStyleGuide(ctx context.Context, client connection.RegistryClient, styleguide *rpc.StyleGuide, specs []*rpc.ApiSpec, dryRun bool) {
 	linterNameToMetadata, err := conformance.GenerateLinterMetadata(styleguide)
 	if err != nil {
 		log.Errorf(ctx, "Failed generating linter metadata, check styleguide definition, Error: %s", err)

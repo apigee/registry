@@ -20,8 +20,8 @@ import (
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/cmd/registry/patterns"
 	"github.com/apigee/registry/cmd/registry/scoring"
-	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/log"
+	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
 )
@@ -78,7 +78,7 @@ func scoreCardCommand() *cobra.Command {
 }
 
 type computeScoreCardTask struct {
-	client      connection.Client
+	client      connection.RegistryClient
 	defArtifact *rpc.Artifact
 	resource    patterns.ResourceInstance
 	dryRun      bool

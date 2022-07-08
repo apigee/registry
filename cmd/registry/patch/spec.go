@@ -25,7 +25,7 @@ import (
 	"strings"
 
 	"github.com/apigee/registry/cmd/registry/core"
-	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 )
@@ -68,7 +68,7 @@ func newApiSpec(message *rpc.ApiSpec) (*ApiSpec, error) {
 
 func applyApiSpecPatch(
 	ctx context.Context,
-	client connection.Client,
+	client connection.RegistryClient,
 	spec *ApiSpec,
 	parent string) error {
 	name := fmt.Sprintf("%s/specs/%s", parent, spec.Metadata.Name)

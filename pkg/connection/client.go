@@ -67,12 +67,11 @@ func clientOptions(settings *Settings) ([]option.ClientOption, error) {
 	return opts, nil
 }
 
-// Client is a client of the Registry API
-// TODO: Rename this to RegistryClient
-type Client = *gapic.RegistryClient
+// RegistryClient is a client of the Registry API
+type RegistryClient = *gapic.RegistryClient
 
 // NewClient creates a new GAPIC client using environment variable settings.
-func NewClient(ctx context.Context) (Client, error) {
+func NewClient(ctx context.Context) (RegistryClient, error) {
 	settings, err := newSettings()
 	if err != nil {
 		return nil, err
@@ -81,7 +80,7 @@ func NewClient(ctx context.Context) (Client, error) {
 }
 
 // NewClientWithSettings creates a GAPIC client with specified settings.
-func NewClientWithSettings(ctx context.Context, settings *Settings) (Client, error) {
+func NewClientWithSettings(ctx context.Context, settings *Settings) (RegistryClient, error) {
 	opts, err := clientOptions(settings)
 	if err != nil {
 		return nil, err

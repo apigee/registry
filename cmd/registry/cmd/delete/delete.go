@@ -19,9 +19,9 @@ import (
 	"fmt"
 
 	"github.com/apigee/registry/cmd/registry/core"
-	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/log"
+	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"github.com/spf13/cobra"
@@ -56,7 +56,7 @@ func Command() *cobra.Command {
 }
 
 type deleteTask struct {
-	client       connection.Client
+	client       connection.RegistryClient
 	resourceName string
 	resourceKind string
 }
@@ -83,7 +83,7 @@ func (task *deleteTask) Run(ctx context.Context) error {
 
 func matchAndHandleDeleteCmd(
 	ctx context.Context,
-	client connection.Client,
+	client connection.RegistryClient,
 	taskQueue chan<- core.Task,
 	name string,
 	filter string,
