@@ -25,8 +25,8 @@ import (
 	"strings"
 
 	"github.com/apigee/registry/cmd/registry/core"
-	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/log"
+	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc/codes"
@@ -90,7 +90,7 @@ func protosCommand() *cobra.Command {
 	return cmd
 }
 
-func scanDirectoryForProtos(client connection.Client, projectID, baseURI, root string, taskQueue chan<- core.Task) error {
+func scanDirectoryForProtos(client connection.RegistryClient, projectID, baseURI, root string, taskQueue chan<- core.Task) error {
 	return filepath.Walk(root, func(filepath string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -134,7 +134,7 @@ func scanDirectoryForProtos(client connection.Client, projectID, baseURI, root s
 }
 
 type uploadProtoTask struct {
-	client         connection.Client
+	client         connection.RegistryClient
 	baseURI        string
 	projectID      string
 	path           string

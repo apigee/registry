@@ -19,8 +19,8 @@ import (
 	"fmt"
 
 	"github.com/apigee/registry/cmd/registry/core"
-	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/gapic"
+	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 )
@@ -79,7 +79,7 @@ func newApiVersion(ctx context.Context, client *gapic.RegistryClient, message *r
 
 func applyApiVersionPatch(
 	ctx context.Context,
-	client connection.Client,
+	client connection.RegistryClient,
 	version *ApiVersion,
 	parent string) error {
 	name := fmt.Sprintf("%s/versions/%s", parent, version.Metadata.Name)

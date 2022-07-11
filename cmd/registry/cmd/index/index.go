@@ -19,8 +19,8 @@ import (
 	"strings"
 
 	"github.com/apigee/registry/cmd/registry/core"
-	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/log"
+	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"github.com/spf13/cobra"
@@ -38,7 +38,7 @@ func Command() *cobra.Command {
 	return cmd
 }
 
-func collectInputIndexes(ctx context.Context, client connection.Client, args []string, filter string) ([]string, []*rpc.Index) {
+func collectInputIndexes(ctx context.Context, client connection.RegistryClient, args []string, filter string) ([]string, []*rpc.Index) {
 	inputNames := make([]string, 0)
 	inputs := make([]*rpc.Index, 0)
 	for _, name := range args {
@@ -71,7 +71,7 @@ func collectInputIndexes(ctx context.Context, client connection.Client, args []s
 	return inputNames, inputs
 }
 
-func setIndexToArtifact(ctx context.Context, client connection.Client, output *rpc.Index, outputArtifactName string) {
+func setIndexToArtifact(ctx context.Context, client connection.RegistryClient, output *rpc.Index, outputArtifactName string) {
 	parts := strings.Split(outputArtifactName, "/artifacts/")
 	subject := parts[0]
 	relation := parts[1]
