@@ -65,7 +65,6 @@ jobs:
       run: registry-server & make test
       env:
         APG_REGISTRY_ADDRESS: localhost:8080 
-        APG_REGISTRY_AUDIENCES: http://localhost:8080
         APG_REGISTRY_INSECURE: 1
 
     - name: Configure PostgreSQL
@@ -85,7 +84,6 @@ jobs:
     - name: Verify that benchmarks run
       env:
         APG_REGISTRY_ADDRESS: localhost:8080 
-        APG_REGISTRY_AUDIENCES: http://localhost:8080
         APG_REGISTRY_INSECURE: 1
         PROJECTID: bench
         ITERATIONS: 1
@@ -97,7 +95,6 @@ jobs:
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         APG_REGISTRY_ADDRESS: localhost:8080 
-        APG_REGISTRY_AUDIENCES: http://localhost:8080
         APG_REGISTRY_INSECURE: 1
       run: |
         go clean -testcache
