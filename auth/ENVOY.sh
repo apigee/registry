@@ -32,7 +32,6 @@ export REGISTRY_PROJECT_IDENTIFIER=$(gcloud config list --format 'value(core.pro
 
 # Be sure that the port setting below is correct. 9999 is the default.
 export APG_REGISTRY_ADDRESS=localhost:9999
-export APG_REGISTRY_AUDIENCES=http://localhost:9999
 
 # Local calls don't use TLS.
 export APG_REGISTRY_INSECURE=1
@@ -40,6 +39,3 @@ export APG_REGISTRY_INSECURE=1
 # The auth token is generated for the gcloud logged-in user.
 export APG_REGISTRY_CLIENT_EMAIL=$(gcloud config list account --format "value(core.account)")
 export APG_REGISTRY_TOKEN=$(gcloud auth print-identity-token ${APG_REGISTRY_CLIENT_EMAIL})
-
-# Calls don't use an API key.
-unset APG_REGISTRY_API_KEY
