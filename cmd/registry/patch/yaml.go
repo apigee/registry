@@ -17,12 +17,12 @@ package patch
 import (
 	"io"
 
-	"gopkg.in/yaml.v3"
+	yamlv3 "gopkg.in/yaml.v3"
 )
 
 // Prefer this encoder because it uses tighter 2-space indentation.
-func yamlEncoder(dst io.Writer) *yaml.Encoder {
-	enc := yaml.NewEncoder(dst)
+func yamlEncoder(dst io.Writer) *yamlv3.Encoder {
+	enc := yamlv3.NewEncoder(dst)
 	enc.SetIndent(2)
 	return enc
 }

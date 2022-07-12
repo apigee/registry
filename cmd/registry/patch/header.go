@@ -17,26 +17,16 @@ package patch
 import (
 	"fmt"
 
-	"gopkg.in/yaml.v3"
+	yamlv3 "gopkg.in/yaml.v3"
+
+	"github.com/apigee/registry/pkg/yaml"
 )
 
 const RegistryV1 = "apigeeregistry/v1"
 
-type Header struct {
-	ApiVersion string   `yaml:"apiVersion,omitempty"`
-	Kind       string   `yaml:"kind,omitempty"`
-	Metadata   Metadata `yaml:"metadata"`
-}
-
-type Metadata struct {
-	Name        string            `yaml:"name"`
-	Labels      map[string]string `yaml:"labels,omitempty"`
-	Annotations map[string]string `yaml:"annotations,omitempty"`
-}
-
-func readHeader(bytes []byte) (Header, error) {
-	var header Header
-	err := yaml.Unmarshal(bytes, &header)
+func readHeader(bytes []byte) (yaml.Header, error) {
+	var header yaml.Header
+	err := yamlv3.Unmarshal(bytes, &header)
 	if err != nil {
 		return header, err
 	}

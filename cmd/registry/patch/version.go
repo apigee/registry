@@ -21,29 +21,18 @@ import (
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/yaml"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 )
 
-type ApiVersionData struct {
-	DisplayName string     `yaml:"displayName,omitempty"`
-	Description string     `yaml:"description,omitempty"`
-	State       string     `yaml:"state,omitempty"`
-	ApiSpecs    []*ApiSpec `yaml:"specs,omitempty"`
-}
-
-type ApiVersion struct {
-	Header `yaml:",inline"`
-	Data   ApiVersionData `yaml:"data"`
-}
-
-func newApiVersion(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiVersion) (*ApiVersion, error) {
+func newApiVersion(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiVersion) (*yaml.ApiVersion, error) {
 	versionName, err := names.ParseVersion(message.Name)
 	if err != nil {
 		return nil, err
 	}
 
-	specs := make([]*ApiSpec, 0)
+	specs := make([]*yaml.ApiSpec, 0)
 	if err = core.ListSpecs(ctx, client, versionName.Spec("-"), "", func(message *rpc.ApiSpec) error {
 		spec, err := newApiSpec(message)
 		if err != nil {
@@ -58,17 +47,17 @@ func newApiVersion(ctx context.Context, client *gapic.RegistryClient, message *r
 		return nil, err
 	}
 
-	return &ApiVersion{
-		Header: Header{
+	return &yaml.ApiVersion{
+		Header: yaml.Header{
 			ApiVersion: RegistryV1,
 			Kind:       "ApiVersion",
-			Metadata: Metadata{
+			Metadata: yaml.Metadata{
 				Name:        versionName.VersionID,
 				Labels:      message.Labels,
 				Annotations: message.Annotations,
 			},
 		},
-		Data: ApiVersionData{
+		Data: yaml.ApiVersionData{
 			DisplayName: message.DisplayName,
 			Description: message.Description,
 			State:       message.State,
@@ -80,7 +69,7 @@ func newApiVersion(ctx context.Context, client *gapic.RegistryClient, message *r
 func applyApiVersionPatch(
 	ctx context.Context,
 	client connection.RegistryClient,
-	version *ApiVersion,
+	version *yaml.ApiVersion,
 	parent string) error {
 	name := fmt.Sprintf("%s/versions/%s", parent, version.Metadata.Name)
 	req := &rpc.UpdateApiVersionRequest{
