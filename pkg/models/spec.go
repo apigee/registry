@@ -12,11 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package yaml
+package models
 
-import "gopkg.in/yaml.v3"
-
-type Artifact struct {
+type ApiSpec struct {
 	Header `yaml:",inline"`
-	Data   yaml.Node `yaml:"data"`
+	Data   ApiSpecData `yaml:"data"`
+}
+
+type ApiSpecData struct {
+	FileName    string `yaml:"filename,omitempty"`
+	Description string `yaml:"description,omitempty"`
+	MimeType    string `yaml:"mimeType,omitempty"`
+	SourceURI   string `yaml:"sourceURI,omitempty"`
 }

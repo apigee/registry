@@ -17,16 +17,15 @@ package patch
 import (
 	"fmt"
 
-	yamlv3 "gopkg.in/yaml.v3"
-
-	"github.com/apigee/registry/pkg/yaml"
+	"github.com/apigee/registry/pkg/models"
+	"gopkg.in/yaml.v3"
 )
 
 const RegistryV1 = "apigeeregistry/v1"
 
-func readHeader(bytes []byte) (yaml.Header, error) {
-	var header yaml.Header
-	err := yamlv3.Unmarshal(bytes, &header)
+func readHeader(bytes []byte) (models.Header, error) {
+	var header models.Header
+	err := yaml.Unmarshal(bytes, &header)
 	if err != nil {
 		return header, err
 	}

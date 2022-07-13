@@ -12,16 +12,5 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package yaml
-
-type Header struct {
-	ApiVersion string   `yaml:"apiVersion,omitempty"`
-	Kind       string   `yaml:"kind,omitempty"`
-	Metadata   Metadata `yaml:"metadata"`
-}
-
-type Metadata struct {
-	Name        string            `yaml:"name"`
-	Labels      map[string]string `yaml:"labels,omitempty"`
-	Annotations map[string]string `yaml:"annotations,omitempty"`
-}
+// Package models provides structs that can be used to serialize YAML files for import with `registry apply`.
+package models

@@ -12,19 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package yaml
+package models
 
-type ApiDeployment struct {
-	Header `yaml:",inline"`
-	Data   ApiDeploymentData `yaml:"data"`
+type Header struct {
+	ApiVersion string   `yaml:"apiVersion,omitempty"`
+	Kind       string   `yaml:"kind,omitempty"`
+	Metadata   Metadata `yaml:"metadata"`
 }
 
-type ApiDeploymentData struct {
-	DisplayName        string `yaml:"displayName,omitempty"`
-	Description        string `yaml:"description,omitempty"`
-	ApiSpecRevision    string `yaml:"apiSpecRevision,omitempty"`
-	EndpointURI        string `yaml:"endpointURI,omitempty"`
-	ExternalChannelURI string `yaml:"externalChannelURI,omitempty"`
-	IntendedAudience   string `yaml:"intendedAudience,omitempty"`
-	AccessGuidance     string `yaml:"accessGuidance,omitempty"`
+type Metadata struct {
+	Name        string            `yaml:"name"`
+	Labels      map[string]string `yaml:"labels,omitempty"`
+	Annotations map[string]string `yaml:"annotations,omitempty"`
 }

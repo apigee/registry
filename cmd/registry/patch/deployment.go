@@ -19,7 +19,7 @@ import (
 	"strings"
 
 	"github.com/apigee/registry/pkg/connection"
-	"github.com/apigee/registry/pkg/yaml"
+	"github.com/apigee/registry/pkg/models"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 )
@@ -43,23 +43,23 @@ func optionalSpecRevisionName(deploymentName names.Deployment, subpath string) s
 	return deploymentName.Api().String() + "/versions/" + subpath
 }
 
-func newApiDeployment(message *rpc.ApiDeployment) (*yaml.ApiDeployment, error) {
+func newApiDeployment(message *rpc.ApiDeployment) (*models.ApiDeployment, error) {
 	deploymentName, err := names.ParseDeployment(message.Name)
 	if err != nil {
 		return nil, err
 	}
 	revisionName := relativeSpecRevisionName(deploymentName.Api(), message.ApiSpecRevision)
-	return &yaml.ApiDeployment{
-		Header: yaml.Header{
+	return &models.ApiDeployment{
+		Header: models.Header{
 			ApiVersion: RegistryV1,
 			Kind:       "ApiDeployment",
-			Metadata: yaml.Metadata{
+			Metadata: models.Metadata{
 				Name:        deploymentName.DeploymentID,
 				Labels:      message.Labels,
 				Annotations: message.Annotations,
 			},
 		},
-		Data: yaml.ApiDeploymentData{
+		Data: models.ApiDeploymentData{
 			DisplayName:        message.DisplayName,
 			Description:        message.Description,
 			EndpointURI:        message.EndpointUri,
@@ -74,7 +74,7 @@ func newApiDeployment(message *rpc.ApiDeployment) (*yaml.ApiDeployment, error) {
 func applyApiDeploymentPatch(
 	ctx context.Context,
 	client connection.RegistryClient,
-	deployment *yaml.ApiDeployment,
+	deployment *models.ApiDeployment,
 	parent string) error {
 	apiName, err := names.ParseApi(parent)
 	if err != nil {

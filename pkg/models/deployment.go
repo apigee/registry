@@ -12,17 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package patch
+package models
 
-import (
-	"io"
+type ApiDeployment struct {
+	Header `yaml:",inline"`
+	Data   ApiDeploymentData `yaml:"data"`
+}
 
-	"gopkg.in/yaml.v3"
-)
-
-// Prefer this encoder because it uses tighter 2-space indentation.
-func yamlEncoder(dst io.Writer) *yaml.Encoder {
-	enc := yaml.NewEncoder(dst)
-	enc.SetIndent(2)
-	return enc
+type ApiDeploymentData struct {
+	DisplayName        string `yaml:"displayName,omitempty"`
+	Description        string `yaml:"description,omitempty"`
+	ApiSpecRevision    string `yaml:"apiSpecRevision,omitempty"`
+	EndpointURI        string `yaml:"endpointURI,omitempty"`
+	ExternalChannelURI string `yaml:"externalChannelURI,omitempty"`
+	IntendedAudience   string `yaml:"intendedAudience,omitempty"`
+	AccessGuidance     string `yaml:"accessGuidance,omitempty"`
 }

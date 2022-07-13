@@ -22,11 +22,11 @@ import (
 	"fmt"
 	"strings"
 
-	yamlv3 "gopkg.in/yaml.v3"
+	"gopkg.in/yaml.v3"
 
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/pkg/connection"
-	"github.com/apigee/registry/pkg/yaml"
+	"github.com/apigee/registry/pkg/models"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -34,7 +34,7 @@ import (
 )
 
 // ExportArtifact allows an artifact to be individually exported as a YAML file.
-func ExportArtifact(ctx context.Context, client *gapic.RegistryClient, message *rpc.Artifact) ([]byte, *yaml.Header, error) {
+func ExportArtifact(ctx context.Context, client *gapic.RegistryClient, message *rpc.Artifact) ([]byte, *models.Header, error) {
 	if message.Contents == nil {
 		req := &rpc.GetArtifactContentsRequest{
 			Name: message.Name,
@@ -57,27 +57,27 @@ func ExportArtifact(ctx context.Context, client *gapic.RegistryClient, message *
 	return b.Bytes(), &artifact.Header, nil
 }
 
-// styleForYAML sets the style field on a tree of yamlv3.Nodes for YAML export.
-func styleForYAML(node *yamlv3.Node) {
+// styleForYAML sets the style field on a tree of yaml.Nodes for YAML export.
+func styleForYAML(node *yaml.Node) {
 	node.Style = 0
 	for _, n := range node.Content {
 		styleForYAML(n)
 	}
 }
 
-// styleForYAML sets the style field on a tree of yamlv3.Nodes for JSON export.
-func styleForJSON(node *yamlv3.Node) {
+// styleForYAML sets the style field on a tree of yaml.Nodes for JSON export.
+func styleForJSON(node *yaml.Node) {
 	switch node.Kind {
-	case yamlv3.DocumentNode, yamlv3.SequenceNode, yamlv3.MappingNode:
-		node.Style = yamlv3.FlowStyle
-	case yamlv3.ScalarNode:
+	case yaml.DocumentNode, yaml.SequenceNode, yaml.MappingNode:
+		node.Style = yaml.FlowStyle
+	case yaml.ScalarNode:
 		switch node.Tag {
 		case "!!str":
-			node.Style = yamlv3.DoubleQuotedStyle
+			node.Style = yaml.DoubleQuotedStyle
 		default:
 			node.Style = 0
 		}
-	case yamlv3.AliasNode:
+	case yaml.AliasNode:
 	default:
 	}
 	for _, n := range node.Content {
@@ -85,9 +85,9 @@ func styleForJSON(node *yamlv3.Node) {
 	}
 }
 
-func removeIdAndKind(node *yamlv3.Node) *yamlv3.Node {
-	if node.Kind == yamlv3.MappingNode {
-		content := make([]*yamlv3.Node, 0)
+func removeIdAndKind(node *yaml.Node) *yaml.Node {
+	if node.Kind == yaml.MappingNode {
+		content := make([]*yaml.Node, 0)
 		for i := 0; i < len(node.Content); i += 2 {
 			k := node.Content[i]
 			if k.Value != "id" && k.Value != "kind" {
@@ -100,7 +100,7 @@ func removeIdAndKind(node *yamlv3.Node) *yamlv3.Node {
 	return node
 }
 
-func newArtifact(message *rpc.Artifact) (*yaml.Artifact, error) {
+func newArtifact(message *rpc.Artifact) (*models.Artifact, error) {
 	artifactName, err := names.ParseArtifact(message.Name)
 	if err != nil {
 		return nil, err
@@ -124,14 +124,14 @@ func newArtifact(message *rpc.Artifact) (*yaml.Artifact, error) {
 	if err != nil {
 		return nil, err
 	}
-	// Unmarshal the JSON with yamlv3.v3 so that we can re-marshal it as YAML.
-	var doc yamlv3.Node
-	err = yamlv3.Unmarshal([]byte(s), &doc)
+	// Unmarshal the JSON with yaml.v3 so that we can re-marshal it as YAML.
+	var doc yaml.Node
+	err = yaml.Unmarshal([]byte(s), &doc)
 	if err != nil {
 		return nil, err
 	}
 	// The top-level node is a "document" node. We need to remove this before marshalling.
-	if doc.Kind != yamlv3.DocumentNode || len(doc.Content) != 1 {
+	if doc.Kind != yaml.DocumentNode || len(doc.Content) != 1 {
 		return nil, errors.New("failed to unmarshal artifact")
 	}
 	node := doc.Content[0]
@@ -140,11 +140,11 @@ func newArtifact(message *rpc.Artifact) (*yaml.Artifact, error) {
 	// We exclude the id and kind fields from YAML serializations.
 	node = removeIdAndKind(node)
 	// Wrap the artifact for YAML export.
-	return &yaml.Artifact{
-		Header: yaml.Header{
+	return &models.Artifact{
+		Header: models.Header{
 			ApiVersion: RegistryV1,
 			Kind:       kindForMimeType(message.MimeType),
-			Metadata: yaml.Metadata{
+			Metadata: models.Metadata{
 				Name: artifactName.ArtifactID(),
 			},
 		},
@@ -153,19 +153,19 @@ func newArtifact(message *rpc.Artifact) (*yaml.Artifact, error) {
 }
 
 func applyArtifactPatchBytes(ctx context.Context, client connection.RegistryClient, bytes []byte, parent string) error {
-	var artifact yaml.Artifact
-	err := yamlv3.Unmarshal(bytes, &artifact)
+	var artifact models.Artifact
+	err := yaml.Unmarshal(bytes, &artifact)
 	if err != nil {
 		return err
 	}
 	return applyArtifactPatch(ctx, client, &artifact, parent)
 }
 
-func applyArtifactPatch(ctx context.Context, client connection.RegistryClient, content *yaml.Artifact, parent string) error {
-	// Restyle the YAML representation so that yamlv3.Marshal will marshal it as JSON.
+func applyArtifactPatch(ctx context.Context, client connection.RegistryClient, content *models.Artifact, parent string) error {
+	// Restyle the YAML representation so that yaml.Marshal will marshal it as JSON.
 	styleForJSON(&content.Data)
 	// Marshal the YAML representation into the JSON serialization.
-	j, err := yamlv3.Marshal(content.Data)
+	j, err := yaml.Marshal(content.Data)
 	if err != nil {
 		return err
 	}

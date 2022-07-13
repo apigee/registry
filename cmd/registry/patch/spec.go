@@ -26,27 +26,27 @@ import (
 
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/pkg/connection"
-	"github.com/apigee/registry/pkg/yaml"
+	"github.com/apigee/registry/pkg/models"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 )
 
-func newApiSpec(message *rpc.ApiSpec) (*yaml.ApiSpec, error) {
+func newApiSpec(message *rpc.ApiSpec) (*models.ApiSpec, error) {
 	specName, err := names.ParseSpec(message.Name)
 	if err != nil {
 		return nil, err
 	}
-	return &yaml.ApiSpec{
-		Header: yaml.Header{
+	return &models.ApiSpec{
+		Header: models.Header{
 			ApiVersion: RegistryV1,
 			Kind:       "ApiSpec",
-			Metadata: yaml.Metadata{
+			Metadata: models.Metadata{
 				Name:        specName.SpecID,
 				Labels:      message.Labels,
 				Annotations: message.Annotations,
 			},
 		},
-		Data: yaml.ApiSpecData{
+		Data: models.ApiSpecData{
 			FileName:    message.Filename,
 			Description: message.Description,
 			MimeType:    message.MimeType,
@@ -58,7 +58,7 @@ func newApiSpec(message *rpc.ApiSpec) (*yaml.ApiSpec, error) {
 func applyApiSpecPatch(
 	ctx context.Context,
 	client connection.RegistryClient,
-	spec *yaml.ApiSpec,
+	spec *models.ApiSpec,
 	parent string) error {
 	name := fmt.Sprintf("%s/specs/%s", parent, spec.Metadata.Name)
 	req := &rpc.UpdateApiSpecRequest{

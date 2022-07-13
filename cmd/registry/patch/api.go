@@ -18,18 +18,17 @@ import (
 	"bytes"
 	"context"
 
-	yamlv3 "gopkg.in/yaml.v3"
-
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
-	"github.com/apigee/registry/pkg/yaml"
+	"github.com/apigee/registry/pkg/models"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
+	"gopkg.in/yaml.v3"
 )
 
-func newApi(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api) (*yaml.Api, error) {
+func newApi(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api) (*models.Api, error) {
 	apiName, err := names.ParseApi(message.Name)
 	if err != nil {
 		return nil, err
@@ -42,9 +41,9 @@ func newApi(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api)
 	if err != nil {
 		return nil, err
 	}
-	versions := make([]*yaml.ApiVersion, 0)
+	versions := make([]*models.ApiVersion, 0)
 	if err = core.ListVersions(ctx, client, apiName.Version("-"), "", func(message *rpc.ApiVersion) error {
-		var version *yaml.ApiVersion
+		var version *models.ApiVersion
 		version, err := newApiVersion(ctx, client, message)
 		if err != nil {
 			return err
@@ -57,9 +56,9 @@ func newApi(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api)
 	}); err != nil {
 		return nil, err
 	}
-	deployments := make([]*yaml.ApiDeployment, 0)
+	deployments := make([]*models.ApiDeployment, 0)
 	if err = core.ListDeployments(ctx, client, apiName.Deployment("-"), "", func(message *rpc.ApiDeployment) error {
-		var deployment *yaml.ApiDeployment
+		var deployment *models.ApiDeployment
 		deployment, err = newApiDeployment(message)
 		if err != nil {
 			return err
@@ -72,9 +71,9 @@ func newApi(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api)
 	}); err != nil {
 		return nil, err
 	}
-	artifacts := make([]*yaml.Artifact, 0)
+	artifacts := make([]*models.Artifact, 0)
 	if err = core.ListArtifacts(ctx, client, apiName.Artifact("-"), "", true, func(message *rpc.Artifact) error {
-		var artifact *yaml.Artifact
+		var artifact *models.Artifact
 		artifact, err = newArtifact(message)
 		if err != nil {
 			log.FromContext(ctx).Warnf("Skipping %s: %s", message.Name, err)
@@ -90,17 +89,17 @@ func newApi(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api)
 	}); err != nil {
 		return nil, err
 	}
-	return &yaml.Api{
-		Header: yaml.Header{
+	return &models.Api{
+		Header: models.Header{
 			ApiVersion: RegistryV1,
 			Kind:       "API",
-			Metadata: yaml.Metadata{
+			Metadata: models.Metadata{
 				Name:        apiName.ApiID,
 				Labels:      message.Labels,
 				Annotations: message.Annotations,
 			},
 		},
-		Data: yaml.ApiData{
+		Data: models.ApiData{
 			DisplayName:           message.DisplayName,
 			Description:           message.Description,
 			Availability:          message.Availability,
@@ -114,7 +113,7 @@ func newApi(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api)
 }
 
 // ExportAPI allows an API to be individually exported as a YAML file.
-func ExportAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api) ([]byte, *yaml.Header, error) {
+func ExportAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api) ([]byte, *models.Header, error) {
 	api, err := newApi(ctx, client, message)
 	if err != nil {
 		return nil, nil, err
@@ -187,8 +186,8 @@ func optionalDeploymentName(apiName names.Api, deploymentID string) string {
 }
 
 func applyApiPatch(ctx context.Context, client connection.RegistryClient, bytes []byte, parent string) error {
-	var api yaml.Api
-	err := yamlv3.Unmarshal(bytes, &api)
+	var api models.Api
+	err := yaml.Unmarshal(bytes, &api)
 	if err != nil {
 		return err
 	}
