@@ -36,6 +36,13 @@ func TestMain(m *testing.M) {
 }
 
 func TestSettingsActive(t *testing.T) {
+	// ensure outside env var doesn't affect this test
+	addrEnv := os.Getenv("APG_REGISTRY_ADDRESS")
+	if err := os.Unsetenv("APG_REGISTRY_ADDRESS"); err != nil {
+		t.Fatal(err)
+	}
+	defer os.Setenv("APG_REGISTRY_ADDRESS", addrEnv)
+
 	// missing active file
 	settings, err := ActiveSettings()
 	if err == nil {
