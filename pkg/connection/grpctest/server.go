@@ -22,6 +22,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/server/registry"
 	"google.golang.org/grpc"
 )
@@ -40,9 +41,9 @@ import (
 //   ... run test here ...
 // }
 func NewIfNoAddress(rc registry.Config) (*Server, error) {
-	addr := os.Getenv("APG_REGISTRY_ADDRESS")
-	if addr != "" {
-		log.Printf("Client will use remote registry at: %s", addr)
+	settings, _ := connection.ReadSettings("")
+	if settings.Address != "" && settings.Validate() == nil {
+		log.Printf("Client will use remote registry at: %s", settings.Address)
 		return nil, nil
 	}
 	log.Println("Client will use an embedded registry with a SQLite3 database")

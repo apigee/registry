@@ -52,7 +52,7 @@ type RegistryClient = *gapic.RegistryClient
 
 // NewClient creates a new GAPIC client using environment variable settings.
 func NewClient(ctx context.Context) (RegistryClient, error) {
-	settings, err := activeSettings()
+	settings, err := ActiveSettings()
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +72,7 @@ type AdminClient = *gapic.AdminClient
 
 // NewAdminClient creates a new GAPIC client using environment variable settings.
 func NewAdminClient(ctx context.Context) (AdminClient, error) {
-	settings, err := activeSettings()
+	settings, err := ActiveSettings()
 	if err != nil {
 		return nil, err
 	}
