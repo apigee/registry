@@ -121,7 +121,9 @@ func ReadValidSettings(name string) (settings Settings, err error) {
 func ReadSettings(name string) (settings Settings, err error) {
 	v := viper.New()
 	v.SetConfigType("yaml")
-	v.BindPFlags(Flags)
+	if err = v.BindPFlags(Flags); err != nil {
+		return
+	}
 	if err = bindEnvs(v); err != nil {
 		return
 	}
