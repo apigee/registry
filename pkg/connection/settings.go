@@ -43,7 +43,7 @@ func init() {
 	Flags = pflag.NewFlagSet("registry", pflag.ExitOnError)
 	Flags.StringP("config", "c", "", "Name of a settings profile or path to config file")
 	Flags.String("registry.address", "", "the server and port of the registry api (eg. localhost:8080)")
-	Flags.Bool("registry.insecure", false, "set to true if client must connect via http (not https)")
+	Flags.Bool("registry.insecure", false, "if specified, client connects via http (not https)")
 	Flags.String("registry.token", "", "the token to use for authorization to registry")
 }
 
