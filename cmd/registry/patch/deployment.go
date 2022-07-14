@@ -19,24 +19,10 @@ import (
 	"strings"
 
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/models"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 )
-
-type ApiDeploymentData struct {
-	DisplayName        string `yaml:"displayName,omitempty"`
-	Description        string `yaml:"description,omitempty"`
-	ApiSpecRevision    string `yaml:"apiSpecRevision,omitempty"`
-	EndpointURI        string `yaml:"endpointURI,omitempty"`
-	ExternalChannelURI string `yaml:"externalChannelURI,omitempty"`
-	IntendedAudience   string `yaml:"intendedAudience,omitempty"`
-	AccessGuidance     string `yaml:"accessGuidance,omitempty"`
-}
-
-type ApiDeployment struct {
-	Header `yaml:",inline"`
-	Data   ApiDeploymentData `yaml:"data"`
-}
 
 // relativeSpecRevisionName returns the versionid+specid if the spec is within the specified API
 func relativeSpecRevisionName(apiName names.Api, spec string) string {
@@ -57,23 +43,23 @@ func optionalSpecRevisionName(deploymentName names.Deployment, subpath string) s
 	return deploymentName.Api().String() + "/versions/" + subpath
 }
 
-func newApiDeployment(message *rpc.ApiDeployment) (*ApiDeployment, error) {
+func newApiDeployment(message *rpc.ApiDeployment) (*models.ApiDeployment, error) {
 	deploymentName, err := names.ParseDeployment(message.Name)
 	if err != nil {
 		return nil, err
 	}
 	revisionName := relativeSpecRevisionName(deploymentName.Api(), message.ApiSpecRevision)
-	return &ApiDeployment{
-		Header: Header{
+	return &models.ApiDeployment{
+		Header: models.Header{
 			ApiVersion: RegistryV1,
 			Kind:       "ApiDeployment",
-			Metadata: Metadata{
+			Metadata: models.Metadata{
 				Name:        deploymentName.DeploymentID,
 				Labels:      message.Labels,
 				Annotations: message.Annotations,
 			},
 		},
-		Data: ApiDeploymentData{
+		Data: models.ApiDeploymentData{
 			DisplayName:        message.DisplayName,
 			Description:        message.Description,
 			EndpointURI:        message.EndpointUri,
@@ -88,7 +74,7 @@ func newApiDeployment(message *rpc.ApiDeployment) (*ApiDeployment, error) {
 func applyApiDeploymentPatch(
 	ctx context.Context,
 	client connection.RegistryClient,
-	deployment *ApiDeployment,
+	deployment *models.ApiDeployment,
 	parent string) error {
 	apiName, err := names.ParseApi(parent)
 	if err != nil {
