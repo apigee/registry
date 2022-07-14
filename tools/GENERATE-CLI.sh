@@ -42,30 +42,29 @@ find $GENERATED -name "*.go" -type f -exec sed -i.bak "s/package main/package ge
 
 REGISTRY_SERVICE=${GENERATED}/registry_service.go
 sed -i.bak "/RegistryServiceCmd\.PersistentFlags/d" "${REGISTRY_SERVICE}"
-sed -i.bak "/RegistryConfig\.Bind/d" "${REGISTRY_SERVICE}"
-sed -i.bak "s/gapic\.NewRegistryClient.*)/connection\.NewClient\(ctx\)/" "${REGISTRY_SERVICE}"
+sed -i.bak "/RegistryConfig/d" "${REGISTRY_SERVICE}"
+sed -i.bak "/fmt/d" "${REGISTRY_SERVICE}"
+sed -i.bak "/viper/,/grpc/d" "${REGISTRY_SERVICE}"
+sed -i.bak "/option\.ClientOption/,/NewRegistryClient/d" "${REGISTRY_SERVICE}"
+sed -i.bak "s/return/RegistryClient, err = connection.NewClient\(ctx\)\n\treturn/" "${REGISTRY_SERVICE}"
 sed -i.bak "s/apigee\/registry\/gapic.*/apigee\/registry\/gapic\"\n\"github\.com\/apigee\/registry\/pkg\/connection\"/" "${REGISTRY_SERVICE}"
 
 ADMIN_SERVICE=${GENERATED}/admin_service.go
 sed -i.bak "/AdminServiceCmd\.PersistentFlags/d" "${ADMIN_SERVICE}"
-sed -i.bak "/AdminConfig\.Bind/d" "${ADMIN_SERVICE}"
-sed -i.bak "s/APG_ADMIN/APG_REGISTRY/" "${ADMIN_SERVICE}"
-if grep --quiet APG_ADMIN "${ADMIN_SERVICE}"; then
-  echo "Patching ${ADMIN_SERVICE} failed."
-  exit 1
-fi
-sed -i.bak "s/gapic\.NewAdminClient.*)/connection\.NewAdminClient\(ctx\)/" "${ADMIN_SERVICE}"
+sed -i.bak "/AdminConfig/d" "${ADMIN_SERVICE}"
+sed -i.bak "/fmt/d" "${ADMIN_SERVICE}"
+sed -i.bak "/viper/,/grpc/d" "${ADMIN_SERVICE}"
+sed -i.bak "/option\.ClientOption/,/NewAdminClient/d" "${ADMIN_SERVICE}"
+sed -i.bak "s/return/AdminClient, err = connection.NewAdminClient\(ctx\)\n\treturn/" "${ADMIN_SERVICE}"
 sed -i.bak "s/apigee\/registry\/gapic.*/apigee\/registry\/gapic\"\n\"github\.com\/apigee\/registry\/pkg\/connection\"/" "${ADMIN_SERVICE}"
 
 PROVISIONING_SERVICE=${GENERATED}/provisioning_service.go
 sed -i.bak "/ProvisioningServiceCmd\.PersistentFlags/d" "${PROVISIONING_SERVICE}"
-sed -i.bak "/ProvisioningConfig\.Bind/d" "${PROVISIONING_SERVICE}"
-sed -i.bak "s/APG_PROVISIONING/APG_REGISTRY/" "${PROVISIONING_SERVICE}"
-if grep --quiet APG_PROVISIONING "${PROVISIONING_SERVICE}"; then
-  echo "Patching ${PROVISIONING_SERVICE} failed."
-  exit 1
-fi
-sed -i.bak "s/gapic\.NewProvisioningClient.*)/connection\.NewProvisioningClient\(ctx\)/" "${PROVISIONING_SERVICE}"
+sed -i.bak "/ProvisioningConfig/d" "${PROVISIONING_SERVICE}"
+sed -i.bak "/fmt/d" "${PROVISIONING_SERVICE}"
+sed -i.bak "/viper/,/grpc/d" "${PROVISIONING_SERVICE}"
+sed -i.bak "/option\.ClientOption/,/NewProvisioningClient/d" "${PROVISIONING_SERVICE}"
+sed -i.bak "s/return/ProvisioningClient, err = connection.NewProvisioningClient\(ctx\)\n\treturn/" "${PROVISIONING_SERVICE}"
 sed -i.bak "s/apigee\/registry\/gapic.*/apigee\/registry\/gapic\"\n\"github\.com\/apigee\/registry\/pkg\/connection\"/" "${PROVISIONING_SERVICE}"
 
 # Format the files with significant patches.
