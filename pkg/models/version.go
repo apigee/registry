@@ -12,25 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package patch
+package models
 
-import (
-	"fmt"
+type ApiVersion struct {
+	Header `yaml:",inline"`
+	Data   ApiVersionData `yaml:"data"`
+}
 
-	"github.com/apigee/registry/pkg/models"
-	"gopkg.in/yaml.v3"
-)
-
-const RegistryV1 = "apigeeregistry/v1"
-
-func readHeader(bytes []byte) (models.Header, error) {
-	var header models.Header
-	err := yaml.Unmarshal(bytes, &header)
-	if err != nil {
-		return header, err
-	}
-	if header.ApiVersion != RegistryV1 {
-		return header, fmt.Errorf("unsupported API version: %s", header.ApiVersion)
-	}
-	return header, nil
+type ApiVersionData struct {
+	DisplayName string     `yaml:"displayName,omitempty"`
+	Description string     `yaml:"description,omitempty"`
+	State       string     `yaml:"state,omitempty"`
+	ApiSpecs    []*ApiSpec `yaml:"specs,omitempty"`
 }
