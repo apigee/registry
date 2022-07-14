@@ -12,6 +12,7 @@ import (
 	"google.golang.org/grpc"
 
 	gapic "github.com/apigee/registry/gapic"
+	"github.com/apigee/registry/pkg/connection"
 )
 
 var RegistryConfig *viper.Viper
@@ -100,7 +101,7 @@ var RegistryServiceCmd = &cobra.Command{
 			opts = append(opts, option.WithAPIKey(key))
 		}
 
-		RegistryClient, err = gapic.NewRegistryClient(ctx, opts...)
+		RegistryClient, err = connection.NewClient(ctx)
 		return
 	},
 }

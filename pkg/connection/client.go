@@ -87,3 +87,23 @@ func NewAdminClientWithSettings(ctx context.Context, settings Settings) (AdminCl
 	}
 	return gapic.NewAdminClient(ctx, opts...)
 }
+
+type ProvisioningClient = *gapic.ProvisioningClient
+
+// NewAdminClient creates a new GAPIC client using environment variable settings.
+func NewProvisioningClient(ctx context.Context) (ProvisioningClient, error) {
+	settings, err := ActiveSettings()
+	if err != nil {
+		return nil, err
+	}
+	return NewProvisioningClientWithSettings(ctx, settings)
+}
+
+// NewAdminClientWithSettings creates a GAPIC client with specified settings.
+func NewProvisioningClientWithSettings(ctx context.Context, settings Settings) (ProvisioningClient, error) {
+	opts, err := clientOptions(settings)
+	if err != nil {
+		return nil, err
+	}
+	return gapic.NewProvisioningClient(ctx, opts...)
+}

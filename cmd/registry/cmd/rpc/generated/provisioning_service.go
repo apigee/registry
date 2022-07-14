@@ -12,6 +12,7 @@ import (
 	"google.golang.org/grpc"
 
 	gapic "github.com/apigee/registry/gapic"
+	"github.com/apigee/registry/pkg/connection"
 )
 
 var ProvisioningConfig *viper.Viper
@@ -68,7 +69,7 @@ var ProvisioningServiceCmd = &cobra.Command{
 			opts = append(opts, option.WithAPIKey(key))
 		}
 
-		ProvisioningClient, err = gapic.NewProvisioningClient(ctx, opts...)
+		ProvisioningClient, err = connection.NewProvisioningClient(ctx)
 		return
 	},
 }

@@ -12,6 +12,7 @@ import (
 	"google.golang.org/grpc"
 
 	gapic "github.com/apigee/registry/gapic"
+	"github.com/apigee/registry/pkg/connection"
 )
 
 var AdminConfig *viper.Viper
@@ -73,7 +74,7 @@ var AdminServiceCmd = &cobra.Command{
 			opts = append(opts, option.WithAPIKey(key))
 		}
 
-		AdminClient, err = gapic.NewAdminClient(ctx, opts...)
+		AdminClient, err = connection.NewAdminClient(ctx)
 		return
 	},
 }

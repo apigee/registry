@@ -37,18 +37,15 @@ protoc ${SERVICE_PROTOS[*]} \
 # Patch the generated CLI to be importable as a module.
 find $GENERATED -name "*.go" -type f -exec sed -i.bak "s/package main/package generated/g" {} \;
 
-# Remove local connection configuration flags from the generated Registry service CLI
-# to avoid confusion. These flags are not supported by the non-generated subcommands
-# of the main tool.
+# Patch the generated CLI cmds to use the `pkg/connection` clients so that
+# we have a consistent story around flags, env vars, and config files.
+
 REGISTRY_SERVICE=${GENERATED}/registry_service.go
 sed -i.bak "/RegistryServiceCmd\.PersistentFlags/d" "${REGISTRY_SERVICE}"
 sed -i.bak "/RegistryConfig\.Bind/d" "${REGISTRY_SERVICE}"
+sed -i.bak "s/gapic\.NewRegistryClient.*)/connection\.NewClient\(ctx\)/" "${REGISTRY_SERVICE}"
+sed -i.bak "s/apigee\/registry\/gapic.*/apigee\/registry\/gapic\"\n\"github\.com\/apigee\/registry\/pkg\/connection\"/" "${REGISTRY_SERVICE}"
 
-# Remove local connection configuration flags from the generated Admin CLI
-# and patch the generated CLI to use "APG_REGISTRY" as the prefix for
-# Admin service configuration variables. This causes the Admin service
-# client to be configured with the same variables that configure the
-# Registry service client.
 ADMIN_SERVICE=${GENERATED}/admin_service.go
 sed -i.bak "/AdminServiceCmd\.PersistentFlags/d" "${ADMIN_SERVICE}"
 sed -i.bak "/AdminConfig\.Bind/d" "${ADMIN_SERVICE}"
@@ -57,8 +54,9 @@ if grep --quiet APG_ADMIN "${ADMIN_SERVICE}"; then
   echo "Patching ${ADMIN_SERVICE} failed."
   exit 1
 fi
+sed -i.bak "s/gapic\.NewAdminClient.*)/connection\.NewAdminClient\(ctx\)/" "${ADMIN_SERVICE}"
+sed -i.bak "s/apigee\/registry\/gapic.*/apigee\/registry\/gapic\"\n\"github\.com\/apigee\/registry\/pkg\/connection\"/" "${ADMIN_SERVICE}"
 
-# Perform the same patches as above for the provisioning service. 
 PROVISIONING_SERVICE=${GENERATED}/provisioning_service.go
 sed -i.bak "/ProvisioningServiceCmd\.PersistentFlags/d" "${PROVISIONING_SERVICE}"
 sed -i.bak "/ProvisioningConfig\.Bind/d" "${PROVISIONING_SERVICE}"
@@ -67,6 +65,8 @@ if grep --quiet APG_PROVISIONING "${PROVISIONING_SERVICE}"; then
   echo "Patching ${PROVISIONING_SERVICE} failed."
   exit 1
 fi
+sed -i.bak "s/gapic\.NewProvisioningClient.*)/connection\.NewProvisioningClient\(ctx\)/" "${PROVISIONING_SERVICE}"
+sed -i.bak "s/apigee\/registry\/gapic.*/apigee\/registry\/gapic\"\n\"github\.com\/apigee\/registry\/pkg\/connection\"/" "${PROVISIONING_SERVICE}"
 
 # Format the files with significant patches.
 gofmt -s -w ${REGISTRY_SERVICE} ${ADMIN_SERVICE} ${PROVISIONING_SERVICE}
