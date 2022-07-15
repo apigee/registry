@@ -96,17 +96,8 @@ func TestMigrateDatabaseKinds(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			_, err := server.MigrateDatabase(ctx, test.req)
-			if test.want == codes.OK {
-				if err != nil {
-					t.Fatalf("MigrateDatabase(%+v) returned error: %s (expected %s)", test.req, err, test.want)
-				}
-			} else {
-				if err == nil {
-					t.Fatalf("MigrateDatabase(%+v) succeeded (expected %s)", test.req, test.want)
-				} else if status.Code(err) != test.want {
-					t.Fatalf("MigrateDatabase(%+v) returned error: %s (expected %s)", test.req, err, test.want)
-				}
+			if _, err := server.MigrateDatabase(ctx, test.req); status.Code(err) != test.want {
+				t.Errorf("MigrateDatabase(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
 			}
 		})
 	}
