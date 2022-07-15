@@ -22,6 +22,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/server/registry"
 	"google.golang.org/grpc"
 )
@@ -40,9 +41,9 @@ import (
 //   ... run test here ...
 // }
 func NewIfNoAddress(rc registry.Config) (*Server, error) {
-	addr := os.Getenv("APG_REGISTRY_ADDRESS")
-	if addr != "" {
-		log.Printf("Client will use remote registry at: %s", addr)
+	settings, _ := connection.ReadSettings("")
+	if settings.Address != "" && settings.Validate() == nil {
+		log.Printf("Client will use remote registry at: %s", settings.Address)
 		return nil, nil
 	}
 	log.Println("Client will use an embedded registry with a SQLite3 database")
@@ -70,7 +71,7 @@ func TestMain(m *testing.M, rc registry.Config) {
 // NewServer creates a RegistryServer served by a basic grpc.Server.
 // If rc.Database and rc.DBConfig are blank, a RegistryServer using
 // sqlite3 on a tmpDir is automatically created.
-// APG_REGISTRY_ADDRESS, APG_REGISTRY_AUDIENCES, and APG_REGISTRY_INSECURE
+// APG_REGISTRY_ADDRESS and APG_REGISTRY_INSECURE
 // env vars are set for the client to connect to the created grpc service.
 // Call Close() when done to close server and clean up tmpDir as needed.
 // Example:
@@ -112,7 +113,6 @@ func NewServer(rc registry.Config) (*Server, error) {
 	// set for internal client
 	addr := fmt.Sprintf("localhost:%d", s.Port())
 	os.Setenv("APG_REGISTRY_ADDRESS", addr)
-	os.Setenv("APG_REGISTRY_AUDIENCES", fmt.Sprintf("http://%s", addr))
 	os.Setenv("APG_REGISTRY_INSECURE", "1")
 
 	return s, nil

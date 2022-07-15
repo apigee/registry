@@ -17,8 +17,6 @@ package connection
 import (
 	"context"
 	"fmt"
-	"os"
-	"strconv"
 
 	"github.com/apigee/registry/gapic"
 	"golang.org/x/oauth2"
@@ -26,25 +24,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-// Settings configure the client.
-type Settings struct {
-	Address  string // service address
-	Insecure bool   // if true, connect over HTTP
-	Token    string // bearer token
-}
-
-func newSettings() (*Settings, error) {
-	settings := &Settings{}
-	settings.Address = os.Getenv("APG_REGISTRY_ADDRESS")
-	if settings.Address == "" {
-		return nil, fmt.Errorf("rpc error: APG_REGISTRY_ADDRESS must be set")
-	}
-	settings.Insecure, _ = strconv.ParseBool(os.Getenv("APG_REGISTRY_INSECURE"))
-	settings.Token = os.Getenv("APG_REGISTRY_TOKEN")
-	return settings, nil
-}
-
-func clientOptions(settings *Settings) ([]option.ClientOption, error) {
+func clientOptions(settings Settings) ([]option.ClientOption, error) {
 	var opts []option.ClientOption
 	if settings.Address == "" {
 		return nil, fmt.Errorf("rpc error: address must be set")
@@ -72,7 +52,7 @@ type RegistryClient = *gapic.RegistryClient
 
 // NewClient creates a new GAPIC client using environment variable settings.
 func NewClient(ctx context.Context) (RegistryClient, error) {
-	settings, err := newSettings()
+	settings, err := ActiveSettings()
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +60,7 @@ func NewClient(ctx context.Context) (RegistryClient, error) {
 }
 
 // NewClientWithSettings creates a GAPIC client with specified settings.
-func NewClientWithSettings(ctx context.Context, settings *Settings) (RegistryClient, error) {
+func NewClientWithSettings(ctx context.Context, settings Settings) (RegistryClient, error) {
 	opts, err := clientOptions(settings)
 	if err != nil {
 		return nil, err
@@ -92,7 +72,7 @@ type AdminClient = *gapic.AdminClient
 
 // NewAdminClient creates a new GAPIC client using environment variable settings.
 func NewAdminClient(ctx context.Context) (AdminClient, error) {
-	settings, err := newSettings()
+	settings, err := ActiveSettings()
 	if err != nil {
 		return nil, err
 	}
@@ -100,10 +80,30 @@ func NewAdminClient(ctx context.Context) (AdminClient, error) {
 }
 
 // NewAdminClientWithSettings creates a GAPIC client with specified settings.
-func NewAdminClientWithSettings(ctx context.Context, settings *Settings) (AdminClient, error) {
+func NewAdminClientWithSettings(ctx context.Context, settings Settings) (AdminClient, error) {
 	opts, err := clientOptions(settings)
 	if err != nil {
 		return nil, err
 	}
 	return gapic.NewAdminClient(ctx, opts...)
+}
+
+type ProvisioningClient = *gapic.ProvisioningClient
+
+// NewAdminClient creates a new GAPIC client using environment variable settings.
+func NewProvisioningClient(ctx context.Context) (ProvisioningClient, error) {
+	settings, err := ActiveSettings()
+	if err != nil {
+		return nil, err
+	}
+	return NewProvisioningClientWithSettings(ctx, settings)
+}
+
+// NewAdminClientWithSettings creates a GAPIC client with specified settings.
+func NewProvisioningClientWithSettings(ctx context.Context, settings Settings) (ProvisioningClient, error) {
+	opts, err := clientOptions(settings)
+	if err != nil {
+		return nil, err
+	}
+	return gapic.NewProvisioningClient(ctx, opts...)
 }
