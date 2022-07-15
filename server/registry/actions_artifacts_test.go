@@ -734,6 +734,82 @@ func TestListArtifacts(t *testing.T) {
 			},
 		},
 		{
+			desc: "artifacts owned by a project",
+			seed: []*rpc.Artifact{
+				{Name: "projects/my-project/locations/global/artifacts/artifact1"},
+				{Name: "projects/my-project/locations/global/artifacts/artifact2"},
+				{Name: "projects/my-project/locations/global/artifacts/artifact3"},
+				{Name: "projects/another-project/locations/global/artifacts/artifact4"},
+			},
+			req: &rpc.ListArtifactsRequest{
+				Parent: "projects/my-project/locations/global",
+			},
+			want: &rpc.ListArtifactsResponse{
+				Artifacts: []*rpc.Artifact{
+					{Name: "projects/my-project/locations/global/artifacts/artifact1"},
+					{Name: "projects/my-project/locations/global/artifacts/artifact2"},
+					{Name: "projects/my-project/locations/global/artifacts/artifact3"},
+				},
+			},
+		},
+		{
+			desc: "artifacts owned by an api",
+			seed: []*rpc.Artifact{
+				{Name: "projects/my-project/locations/global/apis/a1/artifacts/artifact1"},
+				{Name: "projects/my-project/locations/global/apis/a1/artifacts/artifact2"},
+				{Name: "projects/my-project/locations/global/apis/a1/artifacts/artifact3"},
+				{Name: "projects/my-project/locations/global/apis/a2/artifacts/artifact4"},
+			},
+			req: &rpc.ListArtifactsRequest{
+				Parent: "projects/my-project/locations/global/apis/a1",
+			},
+			want: &rpc.ListArtifactsResponse{
+				Artifacts: []*rpc.Artifact{
+					{Name: "projects/my-project/locations/global/apis/a1/artifacts/artifact1"},
+					{Name: "projects/my-project/locations/global/apis/a1/artifacts/artifact2"},
+					{Name: "projects/my-project/locations/global/apis/a1/artifacts/artifact3"},
+				},
+			},
+		},
+		{
+			desc: "artifacts owned by a version",
+			seed: []*rpc.Artifact{
+				{Name: "projects/my-project/locations/global/apis/a1/versions/v1/artifacts/artifact1"},
+				{Name: "projects/my-project/locations/global/apis/a1/versions/v1/artifacts/artifact2"},
+				{Name: "projects/my-project/locations/global/apis/a1/versions/v1/artifacts/artifact3"},
+				{Name: "projects/my-project/locations/global/apis/a1/versions/v2/artifacts/artifact4"},
+			},
+			req: &rpc.ListArtifactsRequest{
+				Parent: "projects/my-project/locations/global/apis/a1/versions/v1",
+			},
+			want: &rpc.ListArtifactsResponse{
+				Artifacts: []*rpc.Artifact{
+					{Name: "projects/my-project/locations/global/apis/a1/versions/v1/artifacts/artifact1"},
+					{Name: "projects/my-project/locations/global/apis/a1/versions/v1/artifacts/artifact2"},
+					{Name: "projects/my-project/locations/global/apis/a1/versions/v1/artifacts/artifact3"},
+				},
+			},
+		},
+		{
+			desc: "artifacts owned by a spec",
+			seed: []*rpc.Artifact{
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/s1/artifacts/artifact1"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/s1/artifacts/artifact2"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/s1/artifacts/artifact3"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/s2/artifacts/artifact4"},
+			},
+			req: &rpc.ListArtifactsRequest{
+				Parent: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/s1",
+			},
+			want: &rpc.ListArtifactsResponse{
+				Artifacts: []*rpc.Artifact{
+					{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/s1/artifacts/artifact1"},
+					{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/s1/artifacts/artifact2"},
+					{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/s1/artifacts/artifact3"},
+				},
+			},
+		},
+		{
 			desc: "artifacts owned by a deployment",
 			seed: []*rpc.Artifact{
 				{Name: "projects/my-project/locations/global/apis/my-api/deployments/d1/artifacts/artifact1"},
