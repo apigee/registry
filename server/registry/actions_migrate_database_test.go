@@ -56,8 +56,6 @@ func TestMigrateDatabase(t *testing.T) {
 
 	opts := cmp.Options{
 		protocmp.Transform(),
-		// Ignore fields that are build-dependent or excluded from Go 	< 1.18.
-		protocmp.IgnoreFields(&rpc.Status{}, "build"),
 	}
 
 	if !cmp.Equal(want, got, opts) {
@@ -75,35 +73,41 @@ func TestMigrateDatabaseKinds(t *testing.T) {
 		want codes.Code
 	}{
 		{
-			req:  &rpc.MigrateDatabaseRequest{Kind: "auto"},
-			want: codes.OK,
-		},
-		{
+			desc: "migrate with kind not specified",
 			req:  &rpc.MigrateDatabaseRequest{Kind: ""},
 			want: codes.OK,
 		},
 		{
+			desc: "migrate with kind auto",
+			req:  &rpc.MigrateDatabaseRequest{Kind: "auto"},
+			want: codes.OK,
+		},
+		{
+			desc: "migrate with kind unsupported",
 			req:  &rpc.MigrateDatabaseRequest{Kind: "unsupported"},
 			want: codes.InvalidArgument,
 		},
 		{
+			desc: "migrate with kind invalid",
 			req:  &rpc.MigrateDatabaseRequest{Kind: "invalid"},
 			want: codes.InvalidArgument,
 		},
 	}
 
 	for _, test := range tests {
-		_, err := server.MigrateDatabase(ctx, test.req)
-		if test.want == codes.OK {
-			if err != nil {
-				t.Fatalf("MigrateDatabase(%+v) returned error: %s (expected %s)", test.req, err, test.want)
+		t.Run(test.desc, func(t *testing.T) {
+			_, err := server.MigrateDatabase(ctx, test.req)
+			if test.want == codes.OK {
+				if err != nil {
+					t.Fatalf("MigrateDatabase(%+v) returned error: %s (expected %s)", test.req, err, test.want)
+				}
+			} else {
+				if err == nil {
+					t.Fatalf("MigrateDatabase(%+v) succeeded (expected %s)", test.req, test.want)
+				} else if status.Code(err) != test.want {
+					t.Fatalf("MigrateDatabase(%+v) returned error: %s (expected %s)", test.req, err, test.want)
+				}
 			}
-		} else {
-			if err == nil {
-				t.Fatalf("MigrateDatabase(%+v) succeeded (expected %s)", test.req, test.want)
-			} else if status.Code(err) != codes.InvalidArgument {
-				t.Fatalf("MigrateDatabase(%+v) returned error: %s (expected %s)", test.req, err, test.want)
-			}
-		}
+		})
 	}
 }
