@@ -16,6 +16,7 @@ package wipeout
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/apigee/registry/pkg/connection"
@@ -57,43 +58,30 @@ func TestWipeout(t *testing.T) {
 		t.Fatalf("Setup: failed to delete test project: %s", err)
 	}
 
-	seed := []*rpc.Artifact{
-		{Name: "projects/wipeout-test/locations/global/apis/a1/artifacts/a1"},
-		{Name: "projects/wipeout-test/locations/global/apis/a1/artifacts/a2"},
-		{Name: "projects/wipeout-test/locations/global/apis/a1/versions/v1/artifacts/a1"},
-		{Name: "projects/wipeout-test/locations/global/apis/a1/versions/v1/artifacts/a2"},
-		{Name: "projects/wipeout-test/locations/global/apis/a1/versions/v1/specs/s1/artifacts/a1"},
-		{Name: "projects/wipeout-test/locations/global/apis/a1/versions/v1/specs/s1/artifacts/a2"},
-		{Name: "projects/wipeout-test/locations/global/apis/a1/versions/v1/specs/s2/artifacts/a1"},
-		{Name: "projects/wipeout-test/locations/global/apis/a1/versions/v1/specs/s2/artifacts/a2"},
-		{Name: "projects/wipeout-test/locations/global/apis/a1/versions/v2/artifacts/a1"},
-		{Name: "projects/wipeout-test/locations/global/apis/a1/versions/v2/artifacts/a2"},
-		{Name: "projects/wipeout-test/locations/global/apis/a1/versions/v2/specs/s1/artifacts/a1"},
-		{Name: "projects/wipeout-test/locations/global/apis/a1/versions/v2/specs/s1/artifacts/a2"},
-		{Name: "projects/wipeout-test/locations/global/apis/a1/versions/v2/specs/s2/artifacts/a1"},
-		{Name: "projects/wipeout-test/locations/global/apis/a1/versions/v2/specs/s2/artifacts/a2"},
-		{Name: "projects/wipeout-test/locations/global/apis/a1/deployments/d1/artifacts/a1"},
-		{Name: "projects/wipeout-test/locations/global/apis/a1/deployments/d1/artifacts/a2"},
-		{Name: "projects/wipeout-test/locations/global/apis/a1/deployments/d2/artifacts/a1"},
-		{Name: "projects/wipeout-test/locations/global/apis/a1/deployments/d2/artifacts/a2"},
-		{Name: "projects/wipeout-test/locations/global/apis/a2/artifacts/a1"},
-		{Name: "projects/wipeout-test/locations/global/apis/a2/artifacts/a2"},
-		{Name: "projects/wipeout-test/locations/global/apis/a2/versions/v1/artifacts/a1"},
-		{Name: "projects/wipeout-test/locations/global/apis/a2/versions/v1/artifacts/a2"},
-		{Name: "projects/wipeout-test/locations/global/apis/a2/versions/v1/specs/s1/artifacts/a1"},
-		{Name: "projects/wipeout-test/locations/global/apis/a2/versions/v1/specs/s1/artifacts/a2"},
-		{Name: "projects/wipeout-test/locations/global/apis/a2/versions/v1/specs/s2/artifacts/a1"},
-		{Name: "projects/wipeout-test/locations/global/apis/a2/versions/v1/specs/s2/artifacts/a2"},
-		{Name: "projects/wipeout-test/locations/global/apis/a2/versions/v2/artifacts/a1"},
-		{Name: "projects/wipeout-test/locations/global/apis/a2/versions/v2/artifacts/a2"},
-		{Name: "projects/wipeout-test/locations/global/apis/a2/versions/v2/specs/s1/artifacts/a1"},
-		{Name: "projects/wipeout-test/locations/global/apis/a2/versions/v2/specs/s1/artifacts/a2"},
-		{Name: "projects/wipeout-test/locations/global/apis/a2/versions/v2/specs/s2/artifacts/a1"},
-		{Name: "projects/wipeout-test/locations/global/apis/a2/versions/v2/specs/s2/artifacts/a2"},
-		{Name: "projects/wipeout-test/locations/global/apis/a2/deployments/d1/artifacts/a1"},
-		{Name: "projects/wipeout-test/locations/global/apis/a2/deployments/d1/artifacts/a2"},
-		{Name: "projects/wipeout-test/locations/global/apis/a2/deployments/d2/artifacts/a1"},
-		{Name: "projects/wipeout-test/locations/global/apis/a2/deployments/d2/artifacts/a2"},
+	seed := []*rpc.Artifact{}
+	for a := 1; a < 2; a++ {
+		api := project.Api(fmt.Sprintf("a%d", a))
+		for x := 1; x < 2; x++ {
+			seed = append(seed, &rpc.Artifact{Name: api.Artifact(fmt.Sprintf("a%d", x)).String()})
+		}
+		for v := 1; v < 2; v++ {
+			version := api.Version(fmt.Sprintf("v%d", v))
+			for x := 1; x < 2; x++ {
+				seed = append(seed, &rpc.Artifact{Name: version.Artifact(fmt.Sprintf("a%d", x)).String()})
+			}
+			for s := 1; s < 2; s++ {
+				spec := version.Spec(fmt.Sprintf("s%d", s))
+				for x := 1; x < 2; x++ {
+					seed = append(seed, &rpc.Artifact{Name: spec.Artifact(fmt.Sprintf("a%d", x)).String()})
+				}
+			}
+		}
+		for d := 1; d < 2; d++ {
+			deployment := api.Deployment(fmt.Sprintf("d%d", d))
+			for x := 1; x < 2; x++ {
+				seed = append(seed, &rpc.Artifact{Name: deployment.Artifact(fmt.Sprintf("a%d", x)).String()})
+			}
+		}
 	}
 	if err := seeder.SeedArtifacts(ctx, server, seed...); err != nil {
 		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
