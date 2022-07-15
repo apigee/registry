@@ -21,6 +21,7 @@ import (
 	"github.com/apigee/registry/rpc"
 	"google.golang.org/api/iterator"
 	"google.golang.org/genproto/googleapis/api/httpbody"
+	"google.golang.org/genproto/googleapis/longrunning"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
@@ -80,6 +81,10 @@ func (p *Proxy) GetStatus(ctx context.Context, req *emptypb.Empty) (*rpc.Status,
 
 func (p *Proxy) GetStorage(ctx context.Context, req *emptypb.Empty) (*rpc.Storage, error) {
 	return p.adminClient.GrpcClient().GetStorage(ctx, req)
+}
+
+func (p *Proxy) MigrateDatabase(ctx context.Context, req *rpc.MigrateDatabaseRequest) (*longrunning.Operation, error) {
+	return p.adminClient.GrpcClient().MigrateDatabase(ctx, req)
 }
 
 // Projects
