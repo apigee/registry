@@ -24,8 +24,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/apigee/registry/connection"
-	"github.com/apigee/registry/connection/grpctest"
+	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry"
 	"google.golang.org/grpc/codes"
@@ -81,7 +81,7 @@ func hashForBytes(b []byte) string {
 	return fmt.Sprintf("%x", bs)
 }
 
-func listAllSpecs(ctx context.Context, registryClient connection.Client) []*rpc.ApiSpec {
+func listAllSpecs(ctx context.Context, registryClient connection.RegistryClient) []*rpc.ApiSpec {
 	specs := make([]*rpc.ApiSpec, 0)
 	req := &rpc.ListApiSpecsRequest{
 		Parent: "projects/demo/locations/global/apis/-/versions/-",
@@ -98,7 +98,7 @@ func listAllSpecs(ctx context.Context, registryClient connection.Client) []*rpc.
 	return specs
 }
 
-func listAllSpecRevisionIDs(ctx context.Context, registryClient connection.Client) []string {
+func listAllSpecRevisionIDs(ctx context.Context, registryClient connection.RegistryClient) []string {
 	revisionIDs := make([]string, 0)
 	req := &rpc.ListApiSpecRevisionsRequest{
 		Name: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",

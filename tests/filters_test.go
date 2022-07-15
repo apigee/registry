@@ -19,9 +19,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/apigee/registry/connection"
-	"github.com/apigee/registry/connection/grpctest"
 	"github.com/apigee/registry/gapic"
+	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry"
 	"google.golang.org/api/iterator"

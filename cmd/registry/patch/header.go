@@ -17,25 +17,14 @@ package patch
 import (
 	"fmt"
 
+	"github.com/apigee/registry/pkg/models"
 	"gopkg.in/yaml.v3"
 )
 
 const RegistryV1 = "apigeeregistry/v1"
 
-type Header struct {
-	ApiVersion string   `yaml:"apiVersion,omitempty"`
-	Kind       string   `yaml:"kind,omitempty"`
-	Metadata   Metadata `yaml:"metadata"`
-}
-
-type Metadata struct {
-	Name        string            `yaml:"name"`
-	Labels      map[string]string `yaml:"labels,omitempty"`
-	Annotations map[string]string `yaml:"annotations,omitempty"`
-}
-
-func readHeader(bytes []byte) (Header, error) {
-	var header Header
+func readHeader(bytes []byte) (models.Header, error) {
+	var header models.Header
 	err := yaml.Unmarshal(bytes, &header)
 	if err != nil {
 		return header, err

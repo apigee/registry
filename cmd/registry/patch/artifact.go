@@ -22,22 +22,19 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/apigee/registry/connection"
+	"gopkg.in/yaml.v3"
+
 	"github.com/apigee/registry/gapic"
+	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/models"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
-	"gopkg.in/yaml.v3"
 )
 
-type Artifact struct {
-	Header `yaml:",inline"`
-	Data   yaml.Node `yaml:"data"`
-}
-
 // ExportArtifact allows an artifact to be individually exported as a YAML file.
-func ExportArtifact(ctx context.Context, client *gapic.RegistryClient, message *rpc.Artifact) ([]byte, *Header, error) {
+func ExportArtifact(ctx context.Context, client *gapic.RegistryClient, message *rpc.Artifact) ([]byte, *models.Header, error) {
 	if message.Contents == nil {
 		req := &rpc.GetArtifactContentsRequest{
 			Name: message.Name,
@@ -103,7 +100,7 @@ func removeIdAndKind(node *yaml.Node) *yaml.Node {
 	return node
 }
 
-func newArtifact(message *rpc.Artifact) (*Artifact, error) {
+func newArtifact(message *rpc.Artifact) (*models.Artifact, error) {
 	artifactName, err := names.ParseArtifact(message.Name)
 	if err != nil {
 		return nil, err
@@ -143,11 +140,11 @@ func newArtifact(message *rpc.Artifact) (*Artifact, error) {
 	// We exclude the id and kind fields from YAML serializations.
 	node = removeIdAndKind(node)
 	// Wrap the artifact for YAML export.
-	return &Artifact{
-		Header: Header{
+	return &models.Artifact{
+		Header: models.Header{
 			ApiVersion: RegistryV1,
 			Kind:       kindForMimeType(message.MimeType),
-			Metadata: Metadata{
+			Metadata: models.Metadata{
 				Name: artifactName.ArtifactID(),
 			},
 		},
@@ -155,8 +152,8 @@ func newArtifact(message *rpc.Artifact) (*Artifact, error) {
 	}, nil
 }
 
-func applyArtifactPatchBytes(ctx context.Context, client connection.Client, bytes []byte, parent string) error {
-	var artifact Artifact
+func applyArtifactPatchBytes(ctx context.Context, client connection.RegistryClient, bytes []byte, parent string) error {
+	var artifact models.Artifact
 	err := yaml.Unmarshal(bytes, &artifact)
 	if err != nil {
 		return err
@@ -164,7 +161,7 @@ func applyArtifactPatchBytes(ctx context.Context, client connection.Client, byte
 	return applyArtifactPatch(ctx, client, &artifact, parent)
 }
 
-func applyArtifactPatch(ctx context.Context, client connection.Client, content *Artifact, parent string) error {
+func applyArtifactPatch(ctx context.Context, client connection.RegistryClient, content *models.Artifact, parent string) error {
 	// Restyle the YAML representation so that yaml.Marshal will marshal it as JSON.
 	styleForJSON(&content.Data)
 	// Marshal the YAML representation into the JSON serialization.

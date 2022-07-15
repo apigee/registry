@@ -19,7 +19,7 @@ import (
 	"testing"
 
 	"github.com/apigee/registry/cmd/registry/patterns"
-	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"github.com/apigee/registry/server/registry/test/seeder"
@@ -607,7 +607,7 @@ func TestProcessScoreFormulaError(t *testing.T) {
 	tests := []struct {
 		desc     string
 		seed     []seeder.RegistryResource
-		setup    func(context.Context, connection.Client, connection.AdminClient)
+		setup    func(context.Context, connection.RegistryClient, connection.AdminClient)
 		formula  *rpc.ScoreFormula
 		resource patterns.ResourceInstance
 	}{

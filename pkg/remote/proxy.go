@@ -17,7 +17,7 @@ package remote
 import (
 	"context"
 
-	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
 	"google.golang.org/api/iterator"
 	"google.golang.org/genproto/googleapis/api/httpbody"
@@ -29,7 +29,7 @@ import (
 // This allows tests written to the generated "RegistryServer" and "AdminServer" interfaces to be run against remote servers.
 type Proxy struct {
 	adminClient    connection.AdminClient
-	registryClient connection.Client
+	registryClient connection.RegistryClient
 
 	rpc.UnimplementedRegistryServer
 	rpc.UnimplementedAdminServer
