@@ -20,10 +20,10 @@ import (
 
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/connection/grpctest"
-	"github.com/apigee/registry/pkg/remote"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry"
 	"github.com/apigee/registry/server/registry/names"
+	"github.com/apigee/registry/server/registry/test/remote"
 	"github.com/apigee/registry/server/registry/test/seeder"
 	"google.golang.org/api/iterator"
 	"google.golang.org/grpc/codes"

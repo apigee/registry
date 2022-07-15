@@ -21,8 +21,8 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/apigee/registry/pkg/remote"
 	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/server/registry/test/remote"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
