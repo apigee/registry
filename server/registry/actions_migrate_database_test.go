@@ -34,13 +34,13 @@ func TestMigrateDatabase(t *testing.T) {
 	req := &rpc.MigrateDatabaseRequest{}
 	metadata, err := anypb.New(&rpc.MigrateDatabaseMetadata{})
 	if err != nil {
-		t.Fatalf("MigrateDatabase(%+v) test failed to build expected metadata: %s", req, err)
+		t.Fatalf("MigrateDatabase(%+v) test failed to build expected response metadata: %s", req, err)
 	}
 	response, err := anypb.New(&rpc.MigrateDatabaseResponse{
 		Message: "OK",
 	})
 	if err != nil {
-		t.Fatalf("MigrateDatabase(%+v) test failed to build expected response: %s", req, err)
+		t.Fatalf("MigrateDatabase(%+v) test failed to build expected response message: %s", req, err)
 	}
 	want := &longrunning.Operation{
 		Name:     "migrate",
