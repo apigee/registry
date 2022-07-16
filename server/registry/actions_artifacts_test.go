@@ -504,7 +504,7 @@ func TestGetArtifactContents(t *testing.T) {
 			desc: "case insensitive identifiers",
 			seed: &rpc.Artifact{Name: "projects/my-project/locations/global/artifacts/my-artifact"},
 			req: &rpc.GetArtifactContentsRequest{
-				Name: "projects/My-Project/locations/global/artifacts/My-Artifact",
+				Name: "projects/my-project/locations/global/artifacts/My-Artifact",
 			},
 			want: codes.OK,
 		},

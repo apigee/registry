@@ -449,7 +449,7 @@ func TestGetApiSpecContents(t *testing.T) {
 			desc: "case insensitive identifiers",
 			seed: &rpc.ApiSpec{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
 			req: &rpc.GetApiSpecContentsRequest{
-				Name: "projects/My-project/locations/global/apis/My-api/versions/V1/specs/My-Spec",
+				Name: "projects/my-project/locations/global/apis/My-api/versions/V1/specs/My-Spec",
 			},
 			want: codes.OK,
 		},

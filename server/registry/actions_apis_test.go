@@ -124,14 +124,16 @@ func TestCreateApi(t *testing.T) {
 
 func TestCreateApiResponseCodes(t *testing.T) {
 	tests := []struct {
-		desc string
-		seed *rpc.Project
-		req  *rpc.CreateApiRequest
-		want codes.Code
+		admin bool
+		desc  string
+		seed  *rpc.Project
+		req   *rpc.CreateApiRequest
+		want  codes.Code
 	}{
 		{
-			desc: "parent not found",
-			seed: &rpc.Project{Name: "projects/my-project"},
+			admin: true,
+			desc:  "parent not found",
+			seed:  &rpc.Project{Name: "projects/my-project"},
 			req: &rpc.CreateApiRequest{
 				Parent: "projects/other-project/locations/global",
 				ApiId:  "valid-id",
@@ -223,6 +225,9 @@ func TestCreateApiResponseCodes(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
+			if test.admin && adminServiceUnavailable() {
+				t.Skip(testRequiresAdminService)
+			}
 			ctx := context.Background()
 			server := defaultTestServer(t)
 			if err := seeder.SeedProjects(ctx, server, test.seed); err != nil {
