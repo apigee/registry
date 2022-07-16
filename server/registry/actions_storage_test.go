@@ -24,6 +24,9 @@ import (
 )
 
 func TestGetStorage(t *testing.T) {
+	if adminServiceUnavailable() {
+		t.Skip(testRequiresAdminService)
+	}
 	ctx := context.Background()
 	server := defaultTestServer(t)
 

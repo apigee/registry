@@ -31,10 +31,8 @@ func (c *Client) DeleteProject(ctx context.Context, name names.Project, cascade 
 			models.Project{},
 			models.Api{},
 			models.Deployment{},
-			models.DeploymentRevisionTag{},
 			models.Version{},
 			models.Spec{},
-			models.SpecRevisionTag{},
 			models.Blob{},
 			models.Artifact{},
 		} {
@@ -47,7 +45,17 @@ func (c *Client) DeleteProject(ctx context.Context, name names.Project, cascade 
 		}
 
 		if count > 1 && !cascade {
-			return status.Errorf(codes.FailedPrecondition, "cannot delete child resources in non-cascading mode")
+			return status.Errorf(codes.FailedPrecondition, "cannot delete child resources of %s in non-cascading mode", name)
+		}
+
+		for _, model := range []interface{}{
+			models.DeploymentRevisionTag{},
+			models.SpecRevisionTag{},
+		} {
+			op := tx.Where("project_id = ?", name.ProjectID)
+			if err := op.Delete(model).Error; err != nil {
+				return err
+			}
 		}
 
 		return nil
@@ -69,10 +77,8 @@ func (c *Client) DeleteApi(ctx context.Context, name names.Api, cascade bool) er
 		for _, model := range []interface{}{
 			models.Api{},
 			models.Deployment{},
-			models.DeploymentRevisionTag{},
 			models.Version{},
 			models.Spec{},
-			models.SpecRevisionTag{},
 			models.Blob{},
 			models.Artifact{},
 		} {
@@ -86,7 +92,18 @@ func (c *Client) DeleteApi(ctx context.Context, name names.Api, cascade bool) er
 		}
 
 		if count > 1 && !cascade {
-			return status.Errorf(codes.FailedPrecondition, "cannot delete child resources in non-cascading mode")
+			return status.Errorf(codes.FailedPrecondition, "cannot delete child resources of %s in non-cascading mode", name)
+		}
+
+		for _, model := range []interface{}{
+			models.DeploymentRevisionTag{},
+			models.SpecRevisionTag{},
+		} {
+			op := tx.Where("project_id = ?", name.ProjectID).
+				Where("api_id = ?", name.ApiID)
+			if err := op.Delete(model).Error; err != nil {
+				return err
+			}
 		}
 
 		return nil
@@ -108,7 +125,6 @@ func (c *Client) DeleteVersion(ctx context.Context, name names.Version, cascade 
 		for _, model := range []interface{}{
 			models.Version{},
 			models.Spec{},
-			models.SpecRevisionTag{},
 			models.Blob{},
 			models.Artifact{},
 		} {
@@ -123,7 +139,18 @@ func (c *Client) DeleteVersion(ctx context.Context, name names.Version, cascade 
 		}
 
 		if count > 1 && !cascade {
-			return status.Errorf(codes.FailedPrecondition, "cannot delete child resources in non-cascading mode")
+			return status.Errorf(codes.FailedPrecondition, "cannot delete child resources of %s in non-cascading mode", name)
+		}
+
+		for _, model := range []interface{}{
+			models.SpecRevisionTag{},
+		} {
+			op := tx.Where("project_id = ?", name.ProjectID).
+				Where("api_id = ?", name.ApiID).
+				Where("version_id = ?", name.VersionID)
+			if err := op.Delete(model).Error; err != nil {
+				return err
+			}
 		}
 
 		return nil
@@ -172,7 +199,7 @@ func (c *Client) DeleteSpec(ctx context.Context, name names.Spec, cascade bool) 
 		}
 
 		if childCount > 0 && !cascade {
-			return status.Errorf(codes.FailedPrecondition, "cannot delete child resources in non-cascading mode")
+			return status.Errorf(codes.FailedPrecondition, "cannot delete child resources of %s in non-cascading mode", name)
 		}
 
 		return nil
@@ -242,7 +269,7 @@ func (c *Client) DeleteDeployment(ctx context.Context, name names.Deployment, ca
 		}
 
 		if childCount > 0 && !cascade {
-			return status.Errorf(codes.FailedPrecondition, "cannot delete child resources in non-cascading mode")
+			return status.Errorf(codes.FailedPrecondition, "cannot delete child resources of %s in non-cascading mode", name)
 		}
 
 		return nil

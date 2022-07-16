@@ -615,6 +615,7 @@ func TestGetApiSpecContentsData(t *testing.T) {
 
 func TestListApiSpecs(t *testing.T) {
 	tests := []struct {
+		admin     bool
 		desc      string
 		seed      []*rpc.ApiSpec
 		req       *rpc.ListApiSpecsRequest
@@ -672,7 +673,8 @@ func TestListApiSpecs(t *testing.T) {
 			},
 		},
 		{
-			desc: "across all versions in a specific project and api",
+			admin: true,
+			desc:  "across all versions in a specific project and api",
 			seed: []*rpc.ApiSpec{
 				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
 				{Name: "projects/my-project/locations/global/apis/my-api/versions/v2/specs/my-spec"},
@@ -689,7 +691,8 @@ func TestListApiSpecs(t *testing.T) {
 			},
 		},
 		{
-			desc: "across all apis and versions in a specific project",
+			admin: true,
+			desc:  "across all apis and versions in a specific project",
 			seed: []*rpc.ApiSpec{
 				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
 				{Name: "projects/my-project/locations/global/apis/other-api/versions/v2/specs/my-spec"},
@@ -706,7 +709,8 @@ func TestListApiSpecs(t *testing.T) {
 			},
 		},
 		{
-			desc: "across all projects, apis, and versions",
+			admin: true,
+			desc:  "across all projects, apis, and versions",
 			seed: []*rpc.ApiSpec{
 				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
 				{Name: "projects/other-project/locations/global/apis/other-api/versions/v2/specs/my-spec"},
@@ -722,7 +726,8 @@ func TestListApiSpecs(t *testing.T) {
 			},
 		},
 		{
-			desc: "in a specific api and version across all projects",
+			admin: true,
+			desc:  "in a specific api and version across all projects",
 			seed: []*rpc.ApiSpec{
 				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
 				{Name: "projects/other-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
@@ -740,7 +745,8 @@ func TestListApiSpecs(t *testing.T) {
 			},
 		},
 		{
-			desc: "in a specific version across all projects and apis",
+			admin: true,
+			desc:  "in a specific version across all projects and apis",
 			seed: []*rpc.ApiSpec{
 				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
 				{Name: "projects/other-project/locations/global/apis/other-api/versions/v1/specs/my-spec"},
@@ -757,7 +763,8 @@ func TestListApiSpecs(t *testing.T) {
 			},
 		},
 		{
-			desc: "in all versions of a specific api across all projects",
+			admin: true,
+			desc:  "in all versions of a specific api across all projects",
 			seed: []*rpc.ApiSpec{
 				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
 				{Name: "projects/other-project/locations/global/apis/my-api/versions/v2/specs/my-spec"},
@@ -837,6 +844,9 @@ func TestListApiSpecs(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
+			if test.admin && adminServiceUnavailable() {
+				t.Skip(testRequiresAdminService)
+			}
 			ctx := context.Background()
 			server := defaultTestServer(t)
 			if err := seeder.SeedSpecs(ctx, server, test.seed...); err != nil {
@@ -873,9 +883,10 @@ func TestListApiSpecs(t *testing.T) {
 
 func TestListApiSpecsResponseCodes(t *testing.T) {
 	tests := []struct {
-		desc string
-		req  *rpc.ListApiSpecsRequest
-		want codes.Code
+		admin bool
+		desc  string
+		req   *rpc.ListApiSpecsRequest
+		want  codes.Code
 	}{
 		{
 			desc: "parent version not found",
@@ -892,7 +903,8 @@ func TestListApiSpecsResponseCodes(t *testing.T) {
 			want: codes.NotFound,
 		},
 		{
-			desc: "parent project not found",
+			admin: true,
+			desc:  "parent project not found",
 			req: &rpc.ListApiSpecsRequest{
 				Parent: "projects/my-project/locations/global/apis/-/versions/-",
 			},
@@ -923,6 +935,9 @@ func TestListApiSpecsResponseCodes(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
+			if test.admin && adminServiceUnavailable() {
+				t.Skip(testRequiresAdminService)
+			}
 			ctx := context.Background()
 			server := defaultTestServer(t)
 

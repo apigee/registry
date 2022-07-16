@@ -16,8 +16,11 @@ package remote
 
 import (
 	"context"
+	"errors"
+	"log"
 
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/wipeout"
 	"github.com/apigee/registry/rpc"
 	"google.golang.org/api/iterator"
 	"google.golang.org/genproto/googleapis/api/httpbody"
@@ -26,9 +29,13 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
+const AdminServiceIsUnavailable = "admin service is unavailable"
+
 // Proxy implements a local proxy for a remote Registry server.
 // This allows tests written to the generated "RegistryServer" and "AdminServer" interfaces to be run against remote servers.
 type Proxy struct {
+	projectID string
+
 	adminClient    connection.AdminClient
 	registryClient connection.RegistryClient
 
@@ -37,6 +44,22 @@ type Proxy struct {
 }
 
 func (p *Proxy) Open(ctx context.Context) error {
+	// If a project ID is set, assume we are connecting to a managed server
+	// that provides a single project and does not support the Admin service.
+	if p.projectID != "" {
+		var err error
+		p.registryClient, err = connection.NewClient(ctx)
+		if err != nil {
+			return err
+		}
+
+		// Delete everything in the remote project to be tested.
+		wipeout.Wipeout(ctx, p.registryClient, p.projectID, 1)
+		return nil
+	}
+
+	// If no project ID is set, assume we are connecting to an unmanaged server
+	// with full support for the Admin service.
 	var err error
 	p.adminClient, err = connection.NewAdminClient(ctx)
 	if err != nil {
@@ -58,7 +81,6 @@ func (p *Proxy) Open(ctx context.Context) error {
 			return err
 		}
 	}
-
 	p.registryClient, err = connection.NewClient(ctx)
 	return err
 }
@@ -73,39 +95,71 @@ func NewProxy() *Proxy {
 	return &Proxy{}
 }
 
-// Admin
+// NewProxyForHostedService creates a proxy with the default configuration for a connection
+// to a remote server with a single project and no Admin service.
+func NewProxyForHostedService(projectID string) *Proxy {
+	return &Proxy{projectID: projectID}
+}
 
 func (p *Proxy) GetStatus(ctx context.Context, req *emptypb.Empty) (*rpc.Status, error) {
+	if p.adminClient == nil {
+		return nil, errors.New(AdminServiceIsUnavailable)
+	}
 	return p.adminClient.GrpcClient().GetStatus(ctx, req)
 }
 
 func (p *Proxy) GetStorage(ctx context.Context, req *emptypb.Empty) (*rpc.Storage, error) {
+	if p.adminClient == nil {
+		return nil, errors.New(AdminServiceIsUnavailable)
+	}
 	return p.adminClient.GrpcClient().GetStorage(ctx, req)
 }
 
 func (p *Proxy) MigrateDatabase(ctx context.Context, req *rpc.MigrateDatabaseRequest) (*longrunning.Operation, error) {
+	if p.adminClient == nil {
+		return nil, errors.New(AdminServiceIsUnavailable)
+	}
 	return p.adminClient.GrpcClient().MigrateDatabase(ctx, req)
 }
 
 // Projects
 
 func (p *Proxy) GetProject(ctx context.Context, req *rpc.GetProjectRequest) (*rpc.Project, error) {
+	if p.adminClient == nil {
+		return nil, errors.New(AdminServiceIsUnavailable)
+	}
 	return p.adminClient.GrpcClient().GetProject(ctx, req)
 }
 
 func (p *Proxy) ListProjects(ctx context.Context, req *rpc.ListProjectsRequest) (*rpc.ListProjectsResponse, error) {
+	if p.adminClient == nil {
+		return nil, errors.New(AdminServiceIsUnavailable)
+	}
 	return p.adminClient.GrpcClient().ListProjects(ctx, req)
 }
 
 func (p *Proxy) CreateProject(ctx context.Context, req *rpc.CreateProjectRequest) (*rpc.Project, error) {
+	if p.adminClient == nil {
+		if req.ProjectId == "my-project" {
+			return &rpc.Project{Name: req.ProjectId}, nil
+		}
+		log.Printf("FIXME CreateProject %+v", req)
+		return nil, errors.New(AdminServiceIsUnavailable)
+	}
 	return p.adminClient.GrpcClient().CreateProject(ctx, req)
 }
 
 func (p *Proxy) UpdateProject(ctx context.Context, req *rpc.UpdateProjectRequest) (*rpc.Project, error) {
+	if p.adminClient == nil {
+		return nil, errors.New(AdminServiceIsUnavailable)
+	}
 	return p.adminClient.GrpcClient().UpdateProject(ctx, req)
 }
 
 func (p *Proxy) DeleteProject(ctx context.Context, req *rpc.DeleteProjectRequest) (*emptypb.Empty, error) {
+	if p.adminClient == nil {
+		return nil, errors.New(AdminServiceIsUnavailable)
+	}
 	return p.adminClient.GrpcClient().DeleteProject(ctx, req)
 }
 

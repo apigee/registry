@@ -29,19 +29,26 @@ import (
 )
 
 const (
-	postgresDriver   = "postgres"
-	postgresDBConfig = "host=localhost port=5432 user=registry_tester dbname=registry_test sslmode=disable"
+	postgresDriver           = "postgres"
+	postgresDBConfig         = "host=localhost port=5432 user=registry_tester dbname=registry_test sslmode=disable"
+	testRequiresAdminService = "test requires admin service, skipping"
 )
 
 var (
 	sharedStorage sync.Mutex
 	usePostgres   = false
 	useRemote     = false
+	hostedProject = ""
 )
+
+func adminServiceUnavailable() bool {
+	return hostedProject != ""
+}
 
 func init() {
 	flag.BoolVar(&usePostgres, "postgresql", false, "perform server tests using postgresql")
 	flag.BoolVar(&useRemote, "remote", false, "perform server tests using a remote server")
+	flag.StringVar(&hostedProject, "hosted", "", "perform server tests using a remote server with the specified project and no Admin service")
 }
 
 type TestServer interface {
@@ -55,6 +62,13 @@ func defaultTestServer(t *testing.T) TestServer {
 	var err error
 	var server *RegistryServer
 
+	if hostedProject != "" {
+		p := remote.NewProxyForHostedService(hostedProject)
+		if err = p.Open(context.Background()); err != nil {
+			t.Fatalf("Fatalf: failed to connect to remote server: %s", err)
+		}
+		return p
+	}
 	if useRemote {
 		p := remote.NewProxy()
 		if err = p.Open(context.Background()); err != nil {

@@ -375,6 +375,7 @@ func TestGetApiResponseCodes(t *testing.T) {
 
 func TestListApis(t *testing.T) {
 	tests := []struct {
+		admin     bool
 		desc      string
 		seed      []*rpc.Api
 		req       *rpc.ListApisRequest
@@ -383,7 +384,8 @@ func TestListApis(t *testing.T) {
 		extraOpts cmp.Option
 	}{
 		{
-			desc: "default parameters",
+			admin: true,
+			desc:  "default parameters",
 			seed: []*rpc.Api{
 				{Name: "projects/my-project/locations/global/apis/api1"},
 				{Name: "projects/my-project/locations/global/apis/api2"},
@@ -402,7 +404,8 @@ func TestListApis(t *testing.T) {
 			},
 		},
 		{
-			desc: "across all projects",
+			admin: true,
+			desc:  "across all projects",
 			seed: []*rpc.Api{
 				{Name: "projects/my-project/locations/global/apis/api1"},
 				{Name: "projects/my-project/locations/global/apis/api2"},
@@ -485,6 +488,9 @@ func TestListApis(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
+			if test.admin && adminServiceUnavailable() {
+				t.Skip(testRequiresAdminService)
+			}
 			ctx := context.Background()
 			server := defaultTestServer(t)
 			if err := seeder.SeedApis(ctx, server, test.seed...); err != nil {
@@ -521,12 +527,14 @@ func TestListApis(t *testing.T) {
 
 func TestListApisResponseCodes(t *testing.T) {
 	tests := []struct {
-		desc string
-		req  *rpc.ListApisRequest
-		want codes.Code
+		admin bool
+		desc  string
+		req   *rpc.ListApisRequest
+		want  codes.Code
 	}{
 		{
-			desc: "parent not found",
+			admin: true,
+			desc:  "parent not found",
 			req: &rpc.ListApisRequest{
 				Parent: "projects/my-project/locations/global",
 			},
@@ -557,6 +565,9 @@ func TestListApisResponseCodes(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
+			if test.admin && adminServiceUnavailable() {
+				t.Skip(testRequiresAdminService)
+			}
 			ctx := context.Background()
 			server := defaultTestServer(t)
 
