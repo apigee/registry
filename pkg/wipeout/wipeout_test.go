@@ -24,8 +24,6 @@ import (
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry"
 	"github.com/apigee/registry/server/registry/names"
-	"github.com/apigee/registry/server/registry/test/remote"
-	"github.com/apigee/registry/server/registry/test/seeder"
 	"google.golang.org/api/iterator"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -45,46 +43,24 @@ func TestWipeout(t *testing.T) {
 	parentName, nil := names.ParseProjectWithLocation(parent)
 
 	ctx := context.Background()
-	server := remote.NewProxy()
-	if err := server.Open(ctx); err != nil {
-		t.Fatalf("Setup: failed to connect to remote server: %s", err)
+	adminClient, err := connection.NewAdminClient(ctx)
+	if err != nil {
+		t.Fatalf("Setup: failed to create client: %+v", err)
 	}
-	defer server.Close()
-	var err error
-	if _, err = server.DeleteProject(ctx, &rpc.DeleteProjectRequest{
+	defer adminClient.Close()
+
+	if err = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{
 		Name:  project.String(),
 		Force: true,
 	}); err != nil && status.Code(err) != codes.NotFound {
-		t.Fatalf("Setup: failed to delete test project: %s", err)
+		t.Errorf("Setup: failed to delete test project: %s", err)
 	}
 
-	seed := []*rpc.Artifact{}
-	for a := 1; a < 2; a++ {
-		api := project.Api(fmt.Sprintf("a%d", a))
-		for x := 1; x < 2; x++ {
-			seed = append(seed, &rpc.Artifact{Name: api.Artifact(fmt.Sprintf("a%d", x)).String()})
-		}
-		for v := 1; v < 2; v++ {
-			version := api.Version(fmt.Sprintf("v%d", v))
-			for x := 1; x < 2; x++ {
-				seed = append(seed, &rpc.Artifact{Name: version.Artifact(fmt.Sprintf("a%d", x)).String()})
-			}
-			for s := 1; s < 2; s++ {
-				spec := version.Spec(fmt.Sprintf("s%d", s))
-				for x := 1; x < 2; x++ {
-					seed = append(seed, &rpc.Artifact{Name: spec.Artifact(fmt.Sprintf("a%d", x)).String()})
-				}
-			}
-		}
-		for d := 1; d < 2; d++ {
-			deployment := api.Deployment(fmt.Sprintf("d%d", d))
-			for x := 1; x < 2; x++ {
-				seed = append(seed, &rpc.Artifact{Name: deployment.Artifact(fmt.Sprintf("a%d", x)).String()})
-			}
-		}
-	}
-	if err := seeder.SeedArtifacts(ctx, server, seed...); err != nil {
-		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+	if _, err := adminClient.CreateProject(ctx, &rpc.CreateProjectRequest{
+		ProjectId: project.ProjectID,
+		Project:   &rpc.Project{},
+	}); err != nil {
+		t.Fatalf("Setup: Failed to create test project: %s", err)
 	}
 
 	registryClient, err := connection.NewClient(ctx)
@@ -92,6 +68,100 @@ func TestWipeout(t *testing.T) {
 		t.Fatalf("Setup: Failed to create registry client: %s", err)
 	}
 	defer registryClient.Close()
+	for i := 0; i <= 2; i++ {
+		api, err := registryClient.CreateApi(ctx, &rpc.CreateApiRequest{
+			ApiId:  fmt.Sprintf("a%d", i),
+			Parent: parent,
+			Api:    &rpc.Api{},
+		})
+		if err != nil {
+			t.Fatalf("Setup: Failed to create test api: %s", err)
+		}
+		apiName, err := names.ParseApi(api.Name)
+		if err != nil {
+			t.Fatalf("Setup: Failed to create test api: %s", err)
+		}
+		for k := 0; k < 2; k++ {
+			_, err := registryClient.CreateArtifact(ctx, &rpc.CreateArtifactRequest{
+				ArtifactId: fmt.Sprintf("a%d", k),
+				Parent:     apiName.String(),
+				Artifact:   &rpc.Artifact{},
+			})
+			if err != nil {
+				t.Fatalf("Setup: Failed to create test artifact: %s", err)
+			}
+		}
+		for j := 0; j < 2; j++ {
+			deployment, err := registryClient.CreateApiDeployment(ctx, &rpc.CreateApiDeploymentRequest{
+				ApiDeploymentId: fmt.Sprintf("d%d", j),
+				Parent:          apiName.String(),
+				ApiDeployment:   &rpc.ApiDeployment{},
+			})
+			if err != nil {
+				t.Fatalf("Setup: Failed to create test deployment: %s", err)
+			}
+			deploymentName, err := names.ParseDeployment(deployment.Name)
+			if err != nil {
+				t.Fatalf("Setup: Failed to create test deployment: %s", err)
+			}
+			for k := 0; k < 2; k++ {
+				_, err := registryClient.CreateArtifact(ctx, &rpc.CreateArtifactRequest{
+					ArtifactId: fmt.Sprintf("a%d", k),
+					Parent:     deploymentName.String(),
+					Artifact:   &rpc.Artifact{},
+				})
+				if err != nil {
+					t.Fatalf("Setup: Failed to create test artifact: %s", err)
+				}
+			}
+			version, err := registryClient.CreateApiVersion(ctx, &rpc.CreateApiVersionRequest{
+				ApiVersionId: fmt.Sprintf("v%d", j),
+				Parent:       apiName.String(),
+				ApiVersion:   &rpc.ApiVersion{},
+			})
+			if err != nil {
+				t.Fatalf("Setup: Failed to create test version: %s", err)
+			}
+			versionName, err := names.ParseVersion(version.Name)
+			if err != nil {
+				t.Fatalf("Setup: Failed to create test version: %s", err)
+			}
+			for k := 0; k < 2; k++ {
+				_, err := registryClient.CreateArtifact(ctx, &rpc.CreateArtifactRequest{
+					ArtifactId: fmt.Sprintf("a%d", k),
+					Parent:     versionName.String(),
+					Artifact:   &rpc.Artifact{},
+				})
+				if err != nil {
+					t.Fatalf("Setup: Failed to create test artifact: %s", err)
+				}
+			}
+			for k := 0; k < 2; k++ {
+				spec, err := registryClient.CreateApiSpec(ctx, &rpc.CreateApiSpecRequest{
+					ApiSpecId: fmt.Sprintf("s%d", k),
+					Parent:    versionName.String(),
+					ApiSpec:   &rpc.ApiSpec{},
+				})
+				if err != nil {
+					t.Fatalf("Setup: Failed to create test spec: %s", err)
+				}
+				specName, err := names.ParseSpec(spec.Name)
+				if err != nil {
+					t.Fatalf("Setup: Failed to create test spec: %s", err)
+				}
+				for l := 0; l < 2; l++ {
+					_, err := registryClient.CreateArtifact(ctx, &rpc.CreateArtifactRequest{
+						ArtifactId: fmt.Sprintf("a%d", l),
+						Parent:     specName.String(),
+						Artifact:   &rpc.Artifact{},
+					})
+					if err != nil {
+						t.Fatalf("Setup: Failed to create test artifact: %s", err)
+					}
+				}
+			}
+		}
+	}
 
 	t.Run("WipeoutProject", func(t *testing.T) {
 		Wipeout(ctx, registryClient, projectID, 10)
