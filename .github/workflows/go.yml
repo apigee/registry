@@ -94,7 +94,7 @@ jobs:
         PROJECTID: hosted
       run: |
         registry rpc admin create-project --project_id=$PROJECTID --json
-	go test ./server/registry -hosted $PROJECTID
+        go test ./server/registry -hosted $PROJECTID
 
     - name: Verify that benchmarks run
       env:
