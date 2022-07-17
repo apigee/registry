@@ -545,13 +545,22 @@ func (p *Proxy) GetArtifactContents(ctx context.Context, req *rpc.GetArtifactCon
 // helpers
 
 func (p *Proxy) hostedResourceName(name string) string {
-	return strings.Replace(name, "projects/my-project", "projects/"+p.projectID, 1)
+	if p.projectID != "" {
+		return strings.Replace(name, "projects/my-project", "projects/"+p.projectID, 1)
+	}
+	return name
 }
 
 func (p *Proxy) hostedFilter(filter string) string {
-	return strings.ReplaceAll(filter, "projects/my-project", "projects/"+p.projectID)
+	if p.projectID != "" {
+		return strings.ReplaceAll(filter, "projects/my-project", "projects/"+p.projectID)
+	}
+	return filter
 }
 
 func (p *Proxy) testResourceName(name string) string {
-	return strings.Replace(name, "projects/"+p.projectID, "projects/my-project", 1)
+	if p.projectID != "" {
+		return strings.Replace(name, "projects/"+p.projectID, "projects/my-project", 1)
+	}
+	return name
 }
