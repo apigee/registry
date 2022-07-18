@@ -19,7 +19,7 @@ import (
 	"time"
 
 	"github.com/apigee/registry/cmd/registry/core"
-	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 )
@@ -398,8 +398,7 @@ func (ar ArtifactResource) ResourceName() ResourceName {
 	return ar.ArtifactName
 }
 
-// TODO: Remove this function after refactoring scoring code to include interfaces.
-func ListResources(ctx context.Context, client connection.Client, pattern, filter string) ([]ResourceInstance, error) {
+func ListResources(ctx context.Context, client connection.RegistryClient, pattern, filter string) ([]ResourceInstance, error) {
 	var result []ResourceInstance
 	var err2 error
 

@@ -21,9 +21,9 @@ import (
 	"os"
 
 	"github.com/apigee/registry/cmd/registry/core"
-	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/log"
+	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 )
@@ -62,7 +62,7 @@ func ExportProject(ctx context.Context, client *gapic.RegistryClient, projectNam
 }
 
 type exportAPITask struct {
-	client  connection.Client
+	client  connection.RegistryClient
 	message *rpc.Api
 	dir     string
 }
@@ -82,7 +82,7 @@ func (task *exportAPITask) Run(ctx context.Context) error {
 }
 
 type exportArtifactTask struct {
-	client  connection.Client
+	client  connection.RegistryClient
 	message *rpc.Artifact
 	dir     string
 }

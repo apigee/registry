@@ -5,7 +5,7 @@ import (
 
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/cmd/registry/patterns"
-	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 )
@@ -18,7 +18,7 @@ type Lister interface {
 }
 
 type RegistryLister struct {
-	RegistryClient connection.Client
+	RegistryClient connection.RegistryClient
 }
 
 func (r *RegistryLister) ListAPIs(ctx context.Context, api names.Api, filter string, handler core.ApiHandler) error {

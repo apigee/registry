@@ -25,39 +25,28 @@ import (
 	"strings"
 
 	"github.com/apigee/registry/cmd/registry/core"
-	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/models"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 )
 
-type ApiSpecData struct {
-	FileName    string `yaml:"filename,omitempty"`
-	Description string `yaml:"description,omitempty"`
-	MimeType    string `yaml:"mimeType,omitempty"`
-	SourceURI   string `yaml:"sourceURI,omitempty"`
-}
-
-type ApiSpec struct {
-	Header `yaml:",inline"`
-	Data   ApiSpecData `yaml:"data"`
-}
-
-func newApiSpec(message *rpc.ApiSpec) (*ApiSpec, error) {
+func newApiSpec(message *rpc.ApiSpec) (*models.ApiSpec, error) {
 	specName, err := names.ParseSpec(message.Name)
 	if err != nil {
 		return nil, err
 	}
-	return &ApiSpec{
-		Header: Header{
+	return &models.ApiSpec{
+		Header: models.Header{
 			ApiVersion: RegistryV1,
 			Kind:       "ApiSpec",
-			Metadata: Metadata{
+			Metadata: models.Metadata{
 				Name:        specName.SpecID,
 				Labels:      message.Labels,
 				Annotations: message.Annotations,
 			},
 		},
-		Data: ApiSpecData{
+		Data: models.ApiSpecData{
 			FileName:    message.Filename,
 			Description: message.Description,
 			MimeType:    message.MimeType,
@@ -68,8 +57,8 @@ func newApiSpec(message *rpc.ApiSpec) (*ApiSpec, error) {
 
 func applyApiSpecPatch(
 	ctx context.Context,
-	client connection.Client,
-	spec *ApiSpec,
+	client connection.RegistryClient,
+	spec *models.ApiSpec,
 	parent string) error {
 	name := fmt.Sprintf("%s/specs/%s", parent, spec.Metadata.Name)
 	req := &rpc.UpdateApiSpecRequest{

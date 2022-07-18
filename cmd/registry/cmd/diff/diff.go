@@ -21,8 +21,8 @@ import (
 	"strings"
 
 	"github.com/apigee/registry/cmd/registry/core"
-	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/log"
+	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"github.com/hexops/gotextdiff"
@@ -105,7 +105,7 @@ func Command() *cobra.Command {
 }
 
 func resolveSpecRevision(ctx context.Context,
-	client connection.Client,
+	client connection.RegistryClient,
 	base string,
 	suffix string) (names.SpecRevision, error) {
 	// First try to treat the raw suffix as revision name.

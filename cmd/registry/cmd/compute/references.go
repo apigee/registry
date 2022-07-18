@@ -19,8 +19,8 @@ import (
 	"fmt"
 
 	"github.com/apigee/registry/cmd/registry/core"
-	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/log"
+	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"github.com/spf13/cobra"
@@ -73,7 +73,7 @@ func referencesCommand() *cobra.Command {
 }
 
 type computeReferencesTask struct {
-	client   connection.Client
+	client   connection.RegistryClient
 	specName string
 	dryRun   bool
 }
