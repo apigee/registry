@@ -43,7 +43,7 @@ func root() string {
 func setup(b *testing.B) (context.Context, connection.RegistryClient) {
 	b.Helper()
 	ctx := context.Background()
-	client, err := connection.NewClient(ctx)
+	client, err := connection.NewRegistryClient(ctx)
 	if err != nil {
 		b.Fatalf("Unable to connect to registry server. Is it running?")
 	}

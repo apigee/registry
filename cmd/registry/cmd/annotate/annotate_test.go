@@ -50,7 +50,7 @@ func TestAnnotate(t *testing.T) {
 
 	// Create a registry client.
 	ctx := context.Background()
-	registryClient, err := connection.NewClient(ctx)
+	registryClient, err := connection.NewRegistryClient(ctx)
 	if err != nil {
 		t.Fatalf("Error creating client: %+v", err)
 	}

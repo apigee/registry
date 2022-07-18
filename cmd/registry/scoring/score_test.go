@@ -457,7 +457,7 @@ func TestCalculateScore(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
-			registryClient, err := connection.NewClient(ctx)
+			registryClient, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				t.Fatalf("Failed to create client: %+v", err)
 			}
@@ -527,7 +527,7 @@ func TestCalculateScore(t *testing.T) {
 
 func TestProcessScoreFormula(t *testing.T) {
 	ctx := context.Background()
-	registryClient, err := connection.NewClient(ctx)
+	registryClient, err := connection.NewRegistryClient(ctx)
 	if err != nil {
 		t.Fatalf("Failed to create client: %+v", err)
 	}
@@ -789,7 +789,7 @@ func TestProcessScoreFormulaError(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
-			registryClient, err := connection.NewClient(ctx)
+			registryClient, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				t.Fatalf("Failed to create client: %+v", err)
 			}
@@ -1014,7 +1014,7 @@ func TestProcessScoreFormulaTimestamp(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
-			registryClient, err := connection.NewClient(ctx)
+			registryClient, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				t.Fatalf("Failed to create client: %+v", err)
 			}
@@ -1063,7 +1063,7 @@ func TestProcessScoreFormulaTimestamp(t *testing.T) {
 
 func TestProcessRollUpFormula(t *testing.T) {
 	ctx := context.Background()
-	registryClient, err := connection.NewClient(ctx)
+	registryClient, err := connection.NewRegistryClient(ctx)
 	if err != nil {
 		t.Fatalf("Failed to create client: %+v", err)
 	}
@@ -1405,7 +1405,7 @@ func TestProcessRollUpFormulaError(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
-			registryClient, err := connection.NewClient(ctx)
+			registryClient, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				t.Fatalf("Failed to create client: %+v", err)
 			}
@@ -1798,7 +1798,7 @@ func TestProcessRollUpFormulaTimestamp(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
-			registryClient, err := connection.NewClient(ctx)
+			registryClient, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				t.Fatalf("Failed to create client: %+v", err)
 			}

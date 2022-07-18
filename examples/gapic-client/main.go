@@ -26,7 +26,7 @@ import (
 
 func main() {
 	ctx := context.Background()
-	client, err := connection.NewClient(ctx)
+	client, err := connection.NewRegistryClient(ctx)
 	if err != nil {
 		log.Fatalf("%s", err.Error())
 	}

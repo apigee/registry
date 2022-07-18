@@ -43,7 +43,7 @@ func referencesCommand() *cobra.Command {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get dry-run from flags")
 			}
 
-			client, err := connection.NewClient(ctx)
+			client, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
