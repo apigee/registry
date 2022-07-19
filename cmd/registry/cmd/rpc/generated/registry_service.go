@@ -59,7 +59,7 @@ var RegistryServiceCmd = &cobra.Command{
 	Long:      "The Registry service allows teams to manage descriptions of APIs.",
 	ValidArgs: RegistrySubCommands,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) (err error) {
-		RegistryClient, err = connection.NewClient(ctx)
+		RegistryClient, err = connection.NewRegistryClient(ctx)
 		return
 	},
 }

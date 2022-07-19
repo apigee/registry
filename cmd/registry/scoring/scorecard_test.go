@@ -492,7 +492,7 @@ func TestCalculateScoreCard(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
-			registryClient, err := connection.NewClient(ctx)
+			registryClient, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				t.Fatalf("Failed to create client: %+v", err)
 			}
@@ -1141,7 +1141,7 @@ func TestProcessScorePatterns(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
-			registryClient, err := connection.NewClient(ctx)
+			registryClient, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				t.Fatalf("Failed to create client: %+v", err)
 			}
@@ -1300,7 +1300,7 @@ func TestProcessScorePatternsError(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
-			registryClient, err := connection.NewClient(ctx)
+			registryClient, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				t.Fatalf("Failed to create client: %+v", err)
 			}

@@ -63,7 +63,7 @@ func TestWipeout(t *testing.T) {
 		t.Fatalf("Setup: Failed to create test project: %s", err)
 	}
 
-	registryClient, err := connection.NewClient(ctx)
+	registryClient, err := connection.NewRegistryClient(ctx)
 	if err != nil {
 		t.Fatalf("Setup: Failed to create registry client: %s", err)
 	}
