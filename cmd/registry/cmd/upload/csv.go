@@ -48,7 +48,7 @@ func csvCommand() *cobra.Command {
 				log.Fatalf(ctx, "Invalid delimiter %q: must be exactly one character", delimiter)
 			}
 
-			client, err := connection.NewClient(ctx)
+			client, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}

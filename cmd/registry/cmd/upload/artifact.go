@@ -48,7 +48,7 @@ func artifactCommand() *cobra.Command {
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to read artifact")
 			}
-			client, err := connection.NewClient(ctx)
+			client, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}

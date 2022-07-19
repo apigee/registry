@@ -210,7 +210,7 @@ func TestArtifacts(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
-			registryClient, err := connection.NewClient(ctx)
+			registryClient, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				t.Fatalf("Failed to create client: %+v", err)
 			}
@@ -347,7 +347,7 @@ func TestAggregateArtifacts(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
-			registryClient, err := connection.NewClient(ctx)
+			registryClient, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				t.Fatalf("Failed to create client: %+v", err)
 			}
@@ -546,7 +546,7 @@ func TestDerivedArtifacts(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
-			registryClient, err := connection.NewClient(ctx)
+			registryClient, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				t.Fatalf("Failed to create client: %+v", err)
 			}
@@ -642,7 +642,7 @@ func TestReceiptArtifacts(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
-			registryClient, err := connection.NewClient(ctx)
+			registryClient, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				t.Fatalf("Failed to create client: %+v", err)
 			}
@@ -751,7 +751,7 @@ func TestReceiptAggArtifacts(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
-			registryClient, err := connection.NewClient(ctx)
+			registryClient, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				t.Fatalf("Failed to create client: %+v", err)
 			}
@@ -918,7 +918,7 @@ func TestMultipleEntitiesArtifacts(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
-			registryClient, err := connection.NewClient(ctx)
+			registryClient, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				t.Fatalf("Failed to create client: %+v", err)
 			}
@@ -1077,7 +1077,7 @@ func TestRefreshArtifacts(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
-			registryClient, err := connection.NewClient(ctx)
+			registryClient, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				t.Fatalf("Failed to create client: %+v", err)
 			}

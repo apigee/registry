@@ -46,7 +46,7 @@ sed -i.bak "/RegistryConfig/d" "${REGISTRY_SERVICE}"
 sed -i.bak "/fmt/d" "${REGISTRY_SERVICE}"
 sed -i.bak "/viper/,/grpc/d" "${REGISTRY_SERVICE}"
 sed -i.bak "/option\.ClientOption/,/NewRegistryClient/d" "${REGISTRY_SERVICE}"
-sed -i.bak "s/return/RegistryClient, err = connection.NewClient\(ctx\)\n\treturn/" "${REGISTRY_SERVICE}"
+sed -i.bak "s/return/RegistryClient, err = connection.NewRegistryClient\(ctx\)\n\treturn/" "${REGISTRY_SERVICE}"
 sed -i.bak "s/apigee\/registry\/gapic.*/apigee\/registry\/gapic\"\n\"github\.com\/apigee\/registry\/pkg\/connection\"/" "${REGISTRY_SERVICE}"
 
 ADMIN_SERVICE=${GENERATED}/admin_service.go

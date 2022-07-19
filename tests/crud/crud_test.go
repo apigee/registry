@@ -78,7 +78,7 @@ func readAndGZipFile(filename string) (*bytes.Buffer, error) {
 func TestCRUD(t *testing.T) {
 	// Create a registry client.
 	ctx := context.Background()
-	registryClient, err := connection.NewClient(ctx)
+	registryClient, err := connection.NewRegistryClient(ctx)
 	if err != nil {
 		t.Logf("Failed to create client: %+v", err)
 		t.FailNow()
