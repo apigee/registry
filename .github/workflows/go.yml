@@ -85,7 +85,7 @@ jobs:
       env:
         APG_REGISTRY_ADDRESS: localhost:8080 
         APG_REGISTRY_INSECURE: 1
-        PROJECTID: hosted
+        PROJECTID: hosted-ci-test
       run: |
         registry rpc admin create-project --project_id=$PROJECTID --json
         go test ./server/registry -hosted $PROJECTID
