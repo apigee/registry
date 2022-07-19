@@ -64,7 +64,7 @@ func TestApiSpecExtensionListArtifactUpload(t *testing.T) {
 
 	SetUpProject(ctx, t, project)
 
-	client, err := connection.NewClient(ctx)
+	client, err := connection.NewRegistryClient(ctx)
 	if err != nil {
 		t.Fatalf("Setup: Failed to create client: %s", err)
 	}
@@ -160,7 +160,7 @@ func TestManifestArtifactUpload(t *testing.T) {
 
 			SetUpProject(ctx, t, test.project)
 
-			client, err := connection.NewClient(ctx)
+			client, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				t.Fatalf("Setup: Failed to create client: %s", err)
 			}
@@ -256,7 +256,7 @@ func TestScoreDefinitionArtifactUpload(t *testing.T) {
 
 			SetUpProject(ctx, t, test.project)
 
-			client, err := connection.NewClient(ctx)
+			client, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				t.Fatalf("Setup: Failed to create client: %s", err)
 			}
@@ -328,7 +328,7 @@ func TestScoreCardDefinitionArtifactUpload(t *testing.T) {
 
 			SetUpProject(ctx, t, test.project)
 
-			client, err := connection.NewClient(ctx)
+			client, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				t.Fatalf("Setup: Failed to create client: %s", err)
 			}
@@ -400,7 +400,7 @@ func TestScoreArtifactUpload(t *testing.T) {
 
 			SetUpProject(ctx, t, test.project)
 
-			client, err := connection.NewClient(ctx)
+			client, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				t.Fatalf("Setup: Failed to create client: %s", err)
 			}
@@ -513,7 +513,7 @@ func TestScoreCardArtifactUpload(t *testing.T) {
 
 			SetUpProject(ctx, t, test.project)
 
-			client, err := connection.NewClient(ctx)
+			client, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				t.Fatalf("Setup: Failed to create client: %s", err)
 			}

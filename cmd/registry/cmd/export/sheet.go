@@ -45,7 +45,7 @@ func sheetCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := cmd.Context()
 			var path string
-			client, err := connection.NewClient(ctx)
+			client, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}

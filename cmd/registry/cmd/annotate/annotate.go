@@ -41,7 +41,7 @@ func Command() *cobra.Command {
 		Args:  cobra.MinimumNArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := cmd.Context()
-			client, err := connection.NewClient(ctx)
+			client, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
