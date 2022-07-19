@@ -50,7 +50,7 @@ func (p *Proxy) Open(ctx context.Context) error {
 	// that provides a single project and does not support the Admin service.
 	if p.projectID != "" {
 		var err error
-		p.registryClient, err = connection.NewClient(ctx)
+		p.registryClient, err = connection.NewRegistryClient(ctx)
 		if err != nil {
 			return err
 		}
@@ -83,7 +83,7 @@ func (p *Proxy) Open(ctx context.Context) error {
 			return err
 		}
 	}
-	p.registryClient, err = connection.NewClient(ctx)
+	p.registryClient, err = connection.NewRegistryClient(ctx)
 	return err
 }
 
