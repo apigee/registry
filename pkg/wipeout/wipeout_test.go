@@ -53,7 +53,7 @@ func TestWipeout(t *testing.T) {
 		Name:  project.String(),
 		Force: true,
 	}); err != nil && status.Code(err) != codes.NotFound {
-		t.Errorf("Setup: failed to delete test project: %s", err)
+		t.Fatalf("Setup: failed to delete test project: %s", err)
 	}
 
 	if _, err := adminClient.CreateProject(ctx, &rpc.CreateProjectRequest{
