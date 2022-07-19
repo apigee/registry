@@ -20,8 +20,10 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 
+	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
@@ -47,6 +49,24 @@ func init() {
 	Flags.String("registry.token", "", "the token to use for authorization to registry")
 }
 
+// TODO: return map name -> Settings?
+func Configurations() ([]string, error) {
+	files, err := ioutil.ReadDir(configPath)
+	if err != nil {
+		return nil, err
+	}
+
+	var configurations []string
+	for _, file := range files {
+		// TODO: check validity?
+		if !file.IsDir() {
+			configurations = append(configurations, file.Name())
+		}
+	}
+
+	return configurations, nil
+}
+
 // Settings configure the client.
 type Settings struct {
 	Address  string `mapstructure:"address"`  // service address
@@ -54,6 +74,7 @@ type Settings struct {
 	Token    string `mapstructure:"token"`    // bearer token
 }
 
+// Validate returns an error if Settings is invalid.
 func (s Settings) Validate() error {
 	if s.Address == "" {
 		return ValidationError{
@@ -63,6 +84,8 @@ func (s Settings) Validate() error {
 	return nil
 }
 
+// Write stores the Settings in the passed file name
+// within the configpath.
 func (s Settings) Write(name string) error {
 	v := viper.New()
 	v.SetConfigType("yaml")
@@ -70,6 +93,49 @@ func (s Settings) Write(name string) error {
 	v.Set("registry.Insecure", s.Insecure)
 	path := filepath.Join(configPath, name)
 	return v.WriteConfigAs(path)
+}
+
+// Names returns the names of the available Settings.
+func (s Settings) Names() []string {
+	var names []string
+	rt := reflect.TypeOf(s)
+	for i := 0; i < rt.NumField(); i++ {
+		t := rt.Field(i)
+		tv, ok := t.Tag.Lookup("mapstructure")
+		if !ok {
+			continue
+		}
+		names = append(names, strings.Split(tv, ",")[0])
+	}
+	return names
+}
+
+// AsMap returns the Settings as a Map.
+func (s Settings) AsMap() (map[string]interface{}, error) {
+	m := make(map[string]interface{})
+	err := mapstructure.Decode(s, &m)
+	return m, err
+
+	// m := make(map[string]interface{})
+	// val := reflect.ValueOf(s).Elem()
+	// rtype := val.Type()
+	// for i := 0; i < rtype.NumField(); i++ {
+	// 	tField := rtype.Field(i)
+	// 	tv, ok := tField.Tag.Lookup("mapstructure")
+	// 	if !ok {
+	// 		continue
+	// 	}
+	// 	k := strings.Split(tv, ",")[0]
+
+	// 	vField := val.Field(i)
+	//     f := vField.Interface()
+	//     v := reflect.ValueOf(f)
+
+	//     m[typeField.Name] = val.String()
+
+	// 	// names = append(names, strings.Split(tv, ",")[0])
+	// }
+	// return m
 }
 
 // ActiveSettings determines the active configuration name,
@@ -80,7 +146,7 @@ func ActiveSettings() (Settings, error) {
 	var err error
 	name, _ := Flags.GetString("config")
 	if name == "" {
-		name, err = readActiveConfig()
+		name, err = ActiveConfigName()
 		if err != nil {
 			return Settings{}, err
 		}
@@ -157,7 +223,7 @@ func ReadSettings(name string) (settings Settings, err error) {
 
 // returns the config file to use from ~/.config/active_config.
 // Returns "" if active_config is not found.
-func readActiveConfig() (string, error) {
+func ActiveConfigName() (string, error) {
 	f := filepath.Join(configPath, activeConfigPointerFilename)
 	bytes, err := ioutil.ReadFile(f)
 	if errors.Is(err, os.ErrNotExist) {
