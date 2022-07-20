@@ -77,6 +77,7 @@ func (p *Proxy) Open(ctx context.Context) error {
 		}
 		projectNames = append(projectNames, p.Name)
 	}
+	// Delete after iteration to avoid corrupting the iteration.
 	for _, n := range projectNames {
 		err = p.adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{Name: n, Force: true})
 		if err != nil {
