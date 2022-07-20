@@ -68,35 +68,55 @@ func Wipeout(ctx context.Context, client connection.RegistryClient, projectID st
 
 func wipeoutArtifacts(ctx context.Context, client connection.RegistryClient, taskQueue chan<- core.Task, parent string) {
 	it := client.ListArtifacts(ctx, &rpc.ListArtifactsRequest{Parent: parent})
+	names := make([]string, 0)
 	for artifact, err := it.Next(); err == nil; artifact, err = it.Next() {
-		taskQueue <- NewDeleteArtifactTask(client, artifact.Name)
+		names = append(names, artifact.Name)
+	}
+	for _, name := range names {
+		taskQueue <- NewDeleteArtifactTask(client, name)
 	}
 }
 
 func wipeoutApiDeployments(ctx context.Context, client connection.RegistryClient, taskQueue chan<- core.Task, parent string) {
 	it := client.ListApiDeployments(ctx, &rpc.ListApiDeploymentsRequest{Parent: parent})
+	names := make([]string, 0)
 	for deployment, err := it.Next(); err == nil; deployment, err = it.Next() {
-		taskQueue <- NewDeleteDeploymentTask(client, deployment.Name)
+		names = append(names, deployment.Name)
+	}
+	for _, name := range names {
+		taskQueue <- NewDeleteDeploymentTask(client, name)
 	}
 }
 
 func wipeoutApiSpecs(ctx context.Context, client connection.RegistryClient, taskQueue chan<- core.Task, parent string) {
 	it := client.ListApiSpecs(ctx, &rpc.ListApiSpecsRequest{Parent: parent})
+	names := make([]string, 0)
 	for spec, err := it.Next(); err == nil; spec, err = it.Next() {
-		taskQueue <- NewDeleteSpecTask(client, spec.Name)
+		names = append(names, spec.Name)
+	}
+	for _, name := range names {
+		taskQueue <- NewDeleteSpecTask(client, name)
 	}
 }
 
 func wipeoutApiVersions(ctx context.Context, client connection.RegistryClient, taskQueue chan<- core.Task, parent string) {
 	it := client.ListApiVersions(ctx, &rpc.ListApiVersionsRequest{Parent: parent})
+	names := make([]string, 0)
 	for version, err := it.Next(); err == nil; version, err = it.Next() {
-		taskQueue <- NewDeleteVersionTask(client, version.Name)
+		names = append(names, version.Name)
+	}
+	for _, name := range names {
+		taskQueue <- NewDeleteVersionTask(client, name)
 	}
 }
 
 func wipeoutApis(ctx context.Context, client connection.RegistryClient, taskQueue chan<- core.Task, parent string) {
 	it := client.ListApis(ctx, &rpc.ListApisRequest{Parent: parent})
+	names := make([]string, 0)
 	for api, err := it.Next(); err == nil; api, err = it.Next() {
-		taskQueue <- NewDeleteApiTask(client, api.Name)
+		names = append(names, api.Name)
+	}
+	for _, name := range names {
+		taskQueue <- NewDeleteApiTask(client, name)
 	}
 }
