@@ -93,6 +93,11 @@ func (p *Proxy) Close() {
 	p.registryClient.Close()
 }
 
+// NewProxy creates a proxy with the default configuration for a remote server connection.
+func NewProxy() *Proxy {
+	return &Proxy{}
+}
+
 // NewProxyForHostedService creates a proxy with the default configuration for a connection
 // to a remote server with a single project and no Admin service.
 func NewProxyForHostedService(projectID string) *Proxy {
