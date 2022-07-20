@@ -31,12 +31,12 @@ func listCommand() *cobra.Command {
 			ctx := cmd.Context()
 			logger := log.FromContext(ctx)
 
-			settings, err := activeConfig()
+			config, err := activeConfig()
 			if err != nil {
 				logger.Fatalf("Cannot read config: %v", err)
 			}
 
-			m, err := settings.AsMap()
+			m, err := config.AsMap()
 			if err != nil {
 				logger.Fatalf("Cannot decode config: %v", err)
 			}
@@ -51,14 +51,14 @@ func listCommand() *cobra.Command {
 }
 
 // read without validating
-func activeConfig() (connection.Settings, error) {
+func activeConfig() (connection.Config, error) {
 	var err error
 	name, _ := connection.Flags.GetString("config")
 	if name == "" {
 		name, err = connection.ActiveConfigName()
 		if err != nil {
-			return connection.Settings{}, err
+			return connection.Config{}, err
 		}
 	}
-	return connection.ReadSettings(name)
+	return connection.ReadConfig(name)
 }

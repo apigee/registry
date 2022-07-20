@@ -34,7 +34,7 @@ func activateCommand() *cobra.Command {
 			name := args[0]
 			ensureValidConfigurationName(name, logger)
 
-			_, err := connection.ReadSettings(name)
+			_, err := connection.ReadConfig(name)
 			if err != nil {
 				logger.Fatalf("Cannot activate configuration %q: %v", name, err)
 			}

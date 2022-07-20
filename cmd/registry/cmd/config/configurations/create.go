@@ -34,11 +34,11 @@ func createCommand() *cobra.Command {
 			name := args[0] // TODO: ensure simple name?
 			ensureValidConfigurationName(name, logger)
 
-			if _, err := connection.ReadSettings(name); err == nil {
+			if _, err := connection.ReadConfig(name); err == nil {
 				logger.Fatalf("Cannot create configuration %q, it already exists.", name)
 			}
 
-			s := connection.Settings{}
+			s := connection.Config{}
 			err := s.Write(name)
 			if err != nil {
 				logger.Fatalf("Cannot create configuration %q: %v", name, err)

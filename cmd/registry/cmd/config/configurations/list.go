@@ -34,7 +34,7 @@ func listCommand() *cobra.Command {
 			ctx := cmd.Context()
 			logger := log.FromContext(ctx)
 
-			allSettings, err := connection.AllSettings()
+			allConfigs, err := connection.AllConfigs()
 			if err != nil {
 				logger.Fatalf("Cannot read configurations: %v", err)
 			}
@@ -44,8 +44,8 @@ func listCommand() *cobra.Command {
 				logger.Fatalf("Cannot read active config: %v", err)
 			}
 
-			sortedNames := make([]string, 0, len(allSettings))
-			for n := range allSettings {
+			sortedNames := make([]string, 0, len(allConfigs))
+			for n := range allConfigs {
 				sortedNames = append(sortedNames, n)
 			}
 			sort.Strings(sortedNames)
@@ -53,8 +53,8 @@ func listCommand() *cobra.Command {
 			w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 			fmt.Fprintln(w, "NAME\tIS_ACTIVE\tADDRESS\tINSECURE")
 			for _, name := range sortedNames {
-				settings := allSettings[name]
-				fmt.Fprintf(w, "%s\t%t\t%s\t%t\n", name, name == activeName, settings.Address, settings.Insecure)
+				config := allConfigs[name]
+				fmt.Fprintf(w, "%s\t%t\t%s\t%t\n", name, name == activeName, config.Address, config.Insecure)
 			}
 			w.Flush()
 		},

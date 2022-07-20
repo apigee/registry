@@ -44,7 +44,7 @@ func TestActiveSettings(t *testing.T) {
 	defer os.Setenv("APG_REGISTRY_ADDRESS", addrEnv)
 
 	// missing active file
-	settings, err := ActiveSettings()
+	config, err := ActiveConfig()
 	if err == nil {
 		t.Errorf("expected error, got nil")
 	}
@@ -55,13 +55,13 @@ func TestActiveSettings(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	settings, err = ActiveSettings()
+	config, err = ActiveConfig()
 	if err == nil {
 		t.Errorf("expected error, got nil")
 	}
 
 	// invalid config file
-	err = Settings{}.Write("invalid")
+	err = Config{}.Write("invalid")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -69,18 +69,18 @@ func TestActiveSettings(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	settings, err = ActiveSettings()
+	config, err = ActiveConfig()
 	if err == nil {
 		t.Errorf("expected error, got nil")
 	}
 
 	// good config file
-	settings = Settings{
+	config = Config{
 		Address:  "localhost:8080",
 		Insecure: true,
 		Token:    "unstored",
 	}
-	err = settings.Write("good")
+	err = config.Write("good")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -88,19 +88,19 @@ func TestActiveSettings(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	got, err := ActiveSettings()
+	got, err := ActiveConfig()
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
-	settings.Token = "" // should not have been stored
-	if diff := cmp.Diff(settings, got); diff != "" {
+	config.Token = "" // should not have been stored
+	if diff := cmp.Diff(config, got); diff != "" {
 		t.Errorf("activeSettings returned unexpected diff: (-want +got):\n%s", diff)
 	}
 }
 
 func TestSettingsEnvVars(t *testing.T) {
 	// no config files
-	want := Settings{
+	want := Config{
 		Address:  "localhost:8080",
 		Insecure: true,
 		Token:    "mytoken",
@@ -112,7 +112,7 @@ func TestSettingsEnvVars(t *testing.T) {
 	os.Setenv("APG_REGISTRY_TOKEN", want.Token)
 	defer os.Unsetenv("APG_REGISTRY_TOKEN")
 
-	got, err := ActiveSettings()
+	got, err := ActiveConfig()
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
@@ -121,7 +121,7 @@ func TestSettingsEnvVars(t *testing.T) {
 	}
 
 	// good config file
-	err = Settings{
+	err = Config{
 		Address: "overridden",
 		Token:   "overridden",
 	}.Write("good")
@@ -138,11 +138,11 @@ func TestSettingsEnvVars(t *testing.T) {
 }
 
 func TestSettingsDirectRead(t *testing.T) {
-	settings := Settings{
+	config := Config{
 		Address:  "localhost:8080",
 		Insecure: true,
 	}
-	err := settings.Write("good")
+	err := config.Write("good")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -156,17 +156,17 @@ func TestSettingsDirectRead(t *testing.T) {
 	}
 	pflag.CommandLine.AddFlagSet(Flags)
 	pflag.Parse()
-	got, err := ActiveSettings()
+	got, err := ActiveConfig()
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}
-	if diff := cmp.Diff(settings, got); diff != "" {
+	if diff := cmp.Diff(config, got); diff != "" {
 		t.Errorf("activeSettings returned unexpected diff: (-want +got):\n%s", diff)
 	}
 }
 
 func TestSettingsFlags(t *testing.T) {
-	want := Settings{
+	want := Config{
 		Address:  "localhost:8080",
 		Insecure: true,
 		Token:    "mytoken",
@@ -181,7 +181,7 @@ func TestSettingsFlags(t *testing.T) {
 	}
 	pflag.CommandLine.AddFlagSet(Flags)
 	pflag.Parse()
-	got, err := ActiveSettings()
+	got, err := ActiveConfig()
 	if err != nil {
 		t.Errorf("unexpected error: %s", err)
 	}

@@ -33,13 +33,13 @@ func describeCommand() *cobra.Command {
 			logger := log.FromContext(ctx)
 
 			name := args[0]
-			s, err := connection.ReadSettings(name)
+			s, err := connection.ReadConfig(name)
 			if err != nil {
-				logger.Fatalf("Cannot read settings %q: %v", name, err)
+				logger.Fatalf("Cannot read config %q: %v", name, err)
 			}
 			settingsMap, err := s.AsMap()
 			if err != nil {
-				logger.Fatalf("Cannot decode settings %q: %v", name, err)
+				logger.Fatalf("Cannot decode config %q: %v", name, err)
 			}
 
 			activeName, err := connection.ActiveConfigName()

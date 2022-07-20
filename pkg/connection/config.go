@@ -44,44 +44,22 @@ func init() {
 	configPath = filepath.Join(home, ".config/registry")
 
 	Flags = pflag.NewFlagSet("registry", pflag.ExitOnError)
-	Flags.StringP("config", "c", "", "Name of a settings profile or path to config file")
+	Flags.StringP("config", "c", "", "Name of a configuration profile or path to config file")
 	Flags.String("registry.address", "", "the server and port of the registry api (eg. localhost:8080)")
 	Flags.Bool("registry.insecure", false, "if specified, client connects via http (not https)")
 	Flags.String("registry.token", "", "the token to use for authorization to registry")
 }
 
-func AllSettings() (map[string]Settings, error) {
-	files, err := ioutil.ReadDir(configPath)
-	if err != nil {
-		return nil, err
-	}
-
-	var errors error
-	allSettings := make(map[string]Settings)
-	for _, file := range files {
-		if !file.IsDir() {
-			s, err := ReadSettings(file.Name())
-			if err != nil {
-				errors = multierr.Append(errors, err)
-				continue
-			}
-			allSettings[file.Name()] = s
-		}
-	}
-
-	return allSettings, nil
-}
-
-// Settings configure the client.
-type Settings struct {
+// Config configure the client.
+type Config struct {
 	Address  string `mapstructure:"address"`  // service address
 	Insecure bool   `mapstructure:"insecure"` // if true, connect over HTTP
 	Token    string `mapstructure:"token"`    // bearer token
 }
 
-// Validate returns an error if Settings is invalid.
-func (s Settings) Validate() error {
-	if s.Address == "" {
+// Validate returns an error if Config is invalid.
+func (c Config) Validate() error {
+	if c.Address == "" {
 		return ValidationError{
 			"registry.address", "required",
 		}
@@ -89,21 +67,21 @@ func (s Settings) Validate() error {
 	return nil
 }
 
-// Write stores the Settings in the passed file name
+// Write stores the Config in the passed file name
 // within the configpath.
-func (s Settings) Write(name string) error {
+func (c Config) Write(name string) error {
 	v := viper.New()
 	v.SetConfigType("yaml")
-	v.Set("registry.Address", s.Address)
-	v.Set("registry.Insecure", s.Insecure)
+	v.Set("registry.Address", c.Address)
+	v.Set("registry.Insecure", c.Insecure)
 	path := filepath.Join(configPath, name)
 	return v.WriteConfigAs(path)
 }
 
-// Names returns the names of the available Settings.
-func (s Settings) Names() []string {
+// Names returns the setting names in a Config.
+func (c Config) Names() []string {
 	var names []string
-	rt := reflect.TypeOf(s)
+	rt := reflect.TypeOf(c)
 	for i := 0; i < rt.NumField(); i++ {
 		t := rt.Field(i)
 		tv, ok := t.Tag.Lookup("mapstructure")
@@ -115,34 +93,56 @@ func (s Settings) Names() []string {
 	return names
 }
 
-// AsMap returns the Settings as a Map.
-func (s Settings) AsMap() (map[string]interface{}, error) {
+// AsMap returns the Config as a Map.
+func (c Config) AsMap() (map[string]interface{}, error) {
 	m := make(map[string]interface{})
-	err := mapstructure.Decode(s, &m)
+	err := mapstructure.Decode(c, &m)
 	return m, err
 }
 
-// ActiveSettings determines the active configuration name,
+func AllConfigs() (map[string]Config, error) {
+	files, err := ioutil.ReadDir(configPath)
+	if err != nil {
+		return nil, err
+	}
+
+	var errors error
+	allConfigs := make(map[string]Config)
+	for _, file := range files {
+		if !file.IsDir() {
+			s, err := ReadConfig(file.Name())
+			if err != nil {
+				errors = multierr.Append(errors, err)
+				continue
+			}
+			allConfigs[file.Name()] = s
+		}
+	}
+
+	return allConfigs, nil
+}
+
+// ActiveConfig determines the active configuration name,
 // reads the configuration, validates it, and returns
-// a valid Settings and possibly an error.
+// a Config and possibly an error.
 // If `config` flag exists, overrides active_config file.
-func ActiveSettings() (Settings, error) {
+func ActiveConfig() (Config, error) {
 	var err error
 	name, _ := Flags.GetString("config")
 	if name == "" {
 		name, err = ActiveConfigName()
 		if err != nil {
-			return Settings{}, err
+			return Config{}, err
 		}
 	}
 
-	return ReadValidSettings(name)
+	return ReadValidConfig(name)
 }
 
 // ActivateConfig sets the active configuration file.
 // Will error if config doesn't exist.
 func ActivateConfig(name string) error {
-	_, err := ReadSettings(name)
+	_, err := ReadConfig(name)
 	if err != nil {
 		return err
 	}
@@ -151,19 +151,19 @@ func ActivateConfig(name string) error {
 	return ioutil.WriteFile(f, []byte(name), os.FileMode(0644)) // rw,r,r
 }
 
-// ReadValidSettings reads the specified configuration
-// and validates it. An error is returned if the Settings could not
-// be read or are not valid. Binds to standard Flags().
-func ReadValidSettings(name string) (settings Settings, err error) {
-	settings, err = ReadSettings(name)
+// ReadValidConfig reads the specified configuration
+// and validates it. An error is returned if the Config could not
+// be read or is not valid. Binds to standard Flags().
+func ReadValidConfig(name string) (config Config, err error) {
+	config, err = ReadConfig(name)
 	if err != nil {
 		return
 	}
-	err = settings.Validate()
-	return settings, err
+	err = config.Validate()
+	return config, err
 }
 
-// ReadSettings loads Settings from yaml file matching `name`. If name
+// ReadConfig loads Config from yaml file matching `name`. If name
 // contains a path, the file will be read from that path, otherwise
 // the path is assumed as: ~/.config/registry.
 // Setting values are prioritized in order from: flags, env vars, file.
@@ -172,7 +172,7 @@ func ReadValidSettings(name string) (settings Settings, err error) {
 // Client can call Flags() to get the standard list.
 // env vars: APG_REGISTRY_ADDRESS, APG_REGISTRY_INSECURE, APG_REGISTRY_TOKEN
 // flag names: registry.address, registry.insecure, registry.token
-func ReadSettings(name string) (settings Settings, err error) {
+func ReadConfig(name string) (config Config, err error) {
 	v := viper.New()
 	v.SetConfigType("yaml")
 	if err = v.BindPFlags(Flags); err != nil {
@@ -200,12 +200,12 @@ func ReadSettings(name string) (settings Settings, err error) {
 
 	// add wrapper "registry.xxx " for unmarshal
 	reg := struct {
-		Settings Settings `mapstructure:"registry"`
+		Config Config `mapstructure:"registry"`
 	}{}
 	if err = v.Unmarshal(&reg); err != nil {
 		return
 	}
-	settings = reg.Settings
+	config = reg.Config
 	return
 }
 
