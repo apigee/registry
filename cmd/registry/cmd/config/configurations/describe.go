@@ -16,47 +16,51 @@ package configurations
 
 import (
 	"fmt"
-	"os"
 	"sort"
-	"text/tabwriter"
 
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/spf13/cobra"
 )
 
-func listCommand() *cobra.Command {
+func describeCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "list",
-		Short: "Lists existing named configurations.",
-		Args:  cobra.NoArgs,
-		Run: func(cmd *cobra.Command, _ []string) {
+		Use:   "describe CONFIGURATION_NAME",
+		Short: "Describes a named configuration by listing its properties.",
+		Args:  cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
 			ctx := cmd.Context()
 			logger := log.FromContext(ctx)
 
-			allSettings, err := connection.AllSettings()
+			name := args[0]
+			s, err := connection.ReadSettings(name)
 			if err != nil {
-				logger.Fatalf("Cannot read configurations: %v", err)
+				logger.Fatalf("Cannot read settings %q: %v", name, err)
+			}
+			settingsMap, err := s.AsMap()
+			if err != nil {
+				logger.Fatalf("Cannot decode settings %q: %v", name, err)
 			}
 
 			activeName, err := connection.ActiveConfigName()
 			if err != nil {
-				logger.Fatalf("Cannot read active config: %v", err)
+				logger.Fatalf("Cannot read active config %q: %v", name, err)
 			}
 
-			sortedNames := make([]string, 0, len(allSettings))
-			for n := range allSettings {
-				sortedNames = append(sortedNames, n)
+			sortedNames := make([]string, 0, len(settingsMap))
+			for n := range settingsMap {
+				if n != "token" {
+					sortedNames = append(sortedNames, n)
+				}
 			}
 			sort.Strings(sortedNames)
 
-			w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-			fmt.Fprintln(w, "NAME\tIS_ACTIVE\tADDRESS\tINSECURE")
+			fmt.Printf("is_active: %v\n", name == activeName)
+			fmt.Printf("name: %v\n", name)
+			fmt.Printf("properties:\n")
 			for _, name := range sortedNames {
-				settings := allSettings[name]
-				fmt.Fprintf(w, "%s\t%t\t%s\t%t\n", name, name == activeName, settings.Address, settings.Insecure)
+				fmt.Printf("  %s: %v\n", name, settingsMap[name])
 			}
-			w.Flush()
 		},
 	}
 	return cmd

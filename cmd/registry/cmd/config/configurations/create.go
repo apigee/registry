@@ -16,47 +16,41 @@ package configurations
 
 import (
 	"fmt"
-	"os"
-	"sort"
-	"text/tabwriter"
 
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/spf13/cobra"
 )
 
-func listCommand() *cobra.Command {
+func createCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "list",
-		Short: "Lists existing named configurations.",
-		Args:  cobra.NoArgs,
-		Run: func(cmd *cobra.Command, _ []string) {
+		Use:   "create CONFIGURATION_NAME",
+		Short: "Creates a new named configuration.",
+		Args:  cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
 			ctx := cmd.Context()
 			logger := log.FromContext(ctx)
 
-			allSettings, err := connection.AllSettings()
+			name := args[0] // TODO: ensure simple name?
+			ensureValidConfigurationName(name, logger)
+
+			if _, err := connection.ReadSettings(name); err == nil {
+				logger.Fatalf("Cannot create configuration %q, it already exists.", name)
+			}
+
+			s := connection.Settings{}
+			err := s.Write(name)
 			if err != nil {
-				logger.Fatalf("Cannot read configurations: %v", err)
+				logger.Fatalf("Cannot create configuration %q: %v", name, err)
 			}
 
-			activeName, err := connection.ActiveConfigName()
+			err = connection.ActivateConfig(name)
 			if err != nil {
-				logger.Fatalf("Cannot read active config: %v", err)
+				logger.Fatalf("Cannot set active configuration %q: %v", name, err)
 			}
 
-			sortedNames := make([]string, 0, len(allSettings))
-			for n := range allSettings {
-				sortedNames = append(sortedNames, n)
-			}
-			sort.Strings(sortedNames)
-
-			w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-			fmt.Fprintln(w, "NAME\tIS_ACTIVE\tADDRESS\tINSECURE")
-			for _, name := range sortedNames {
-				settings := allSettings[name]
-				fmt.Fprintf(w, "%s\t%t\t%s\t%t\n", name, name == activeName, settings.Address, settings.Insecure)
-			}
-			w.Flush()
+			fmt.Printf("Created %q.\n", name)
+			fmt.Printf("Activated %q.\n", name)
 		},
 	}
 	return cmd

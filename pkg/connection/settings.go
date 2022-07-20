@@ -26,9 +26,10 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
+	"go.uber.org/multierr"
 )
 
-// Flags defines Flags that may be bound to the Settings. Use like:
+// Flags defines Flags that may be bound to a Configuration. Use like:
 // `cmd.PersistentFlags().AddFlagSet(connection.Flags)`
 var Flags *pflag.FlagSet
 
@@ -49,22 +50,26 @@ func init() {
 	Flags.String("registry.token", "", "the token to use for authorization to registry")
 }
 
-// TODO: return map name -> Settings?
-func Configurations() ([]string, error) {
+func AllSettings() (map[string]Settings, error) {
 	files, err := ioutil.ReadDir(configPath)
 	if err != nil {
 		return nil, err
 	}
 
-	var configurations []string
+	var errors error
+	allSettings := make(map[string]Settings)
 	for _, file := range files {
-		// TODO: check validity?
 		if !file.IsDir() {
-			configurations = append(configurations, file.Name())
+			s, err := ReadSettings(file.Name())
+			if err != nil {
+				errors = multierr.Append(errors, err)
+				continue
+			}
+			allSettings[file.Name()] = s
 		}
 	}
 
-	return configurations, nil
+	return allSettings, nil
 }
 
 // Settings configure the client.
@@ -115,27 +120,6 @@ func (s Settings) AsMap() (map[string]interface{}, error) {
 	m := make(map[string]interface{})
 	err := mapstructure.Decode(s, &m)
 	return m, err
-
-	// m := make(map[string]interface{})
-	// val := reflect.ValueOf(s).Elem()
-	// rtype := val.Type()
-	// for i := 0; i < rtype.NumField(); i++ {
-	// 	tField := rtype.Field(i)
-	// 	tv, ok := tField.Tag.Lookup("mapstructure")
-	// 	if !ok {
-	// 		continue
-	// 	}
-	// 	k := strings.Split(tv, ",")[0]
-
-	// 	vField := val.Field(i)
-	//     f := vField.Interface()
-	//     v := reflect.ValueOf(f)
-
-	//     m[typeField.Name] = val.String()
-
-	// 	// names = append(names, strings.Split(tv, ",")[0])
-	// }
-	// return m
 }
 
 // ActiveSettings determines the active configuration name,
@@ -155,10 +139,14 @@ func ActiveSettings() (Settings, error) {
 	return ReadValidSettings(name)
 }
 
-// SetActiveConfigFile sets the active configuration file.
-// name is normally a file name with no path.
-// will not error if config file doesn't exist
-func SetActiveConfigFile(name string) error {
+// ActivateConfig sets the active configuration file.
+// Will error if config doesn't exist.
+func ActivateConfig(name string) error {
+	_, err := ReadSettings(name)
+	if err != nil {
+		return err
+	}
+
 	f := filepath.Join(configPath, activeConfigPointerFilename)
 	return ioutil.WriteFile(f, []byte(name), os.FileMode(0644)) // rw,r,r
 }
@@ -219,6 +207,21 @@ func ReadSettings(name string) (settings Settings, err error) {
 	}
 	settings = reg.Settings
 	return
+}
+
+// DeleteConfig deletes a configuration.
+// Will error if active or missing (*os.PathError).
+func DeleteConfig(name string) error {
+	active, err := ActiveConfigName()
+	if err != nil {
+		return err
+	}
+	if name == active {
+		return fmt.Errorf("Cannot delete active configuration")
+	}
+
+	f := filepath.Join(configPath, activeConfigPointerFilename)
+	return os.Remove(f)
 }
 
 // returns the config file to use from ~/.config/active_config.

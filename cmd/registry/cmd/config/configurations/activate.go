@@ -15,29 +15,37 @@
 package configurations
 
 import (
+	"fmt"
+
+	"github.com/apigee/registry/log"
+	"github.com/apigee/registry/pkg/connection"
 	"github.com/spf13/cobra"
 )
 
-func activeCommand() *cobra.Command {
-	// var linter string
+func activateCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "list",
-		Short: "Lists existing named configurations.",
-		// Args:  cobra.MinimumNArgs(1),
+		Use:   "activate CONFIGURATION_NAME",
+		Short: "Activates an existing named configuration.",
+		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			// ctx := cmd.Context()
-			// filter, err := cmd.Flags().GetString("filter")
-			// if err != nil {
-			// 	log.FromContext(ctx).WithError(err).Fatal("Failed to get filter from flags")
-			// }
-			// dryRun, err := cmd.Flags().GetBool("dry-run")
-			// if err != nil {
-			// 	log.FromContext(ctx).WithError(err).Fatal("Failed to get fry-run from flags")
-			// }
+			ctx := cmd.Context()
+			logger := log.FromContext(ctx)
 
+			name := args[0]
+			ensureValidConfigurationName(name, logger)
+
+			_, err := connection.ReadSettings(name)
+			if err != nil {
+				logger.Fatalf("Cannot activate configuration %q: %v", name, err)
+			}
+
+			err = connection.ActivateConfig(name)
+			if err != nil {
+				logger.Fatalf("Cannot activate configuration %q: %v", name, err)
+			}
+
+			fmt.Printf("Activated %q.\n", name)
 		},
 	}
-
-	// cmd.Flags().StringVar(&linter, "linter", "", "The linter to use (aip|spectral|gnostic)")
 	return cmd
 }

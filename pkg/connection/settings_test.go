@@ -35,7 +35,7 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func TestSettingsActive(t *testing.T) {
+func TestActiveSettings(t *testing.T) {
 	// ensure outside env var doesn't affect this test
 	addrEnv := os.Getenv("APG_REGISTRY_ADDRESS")
 	if err := os.Unsetenv("APG_REGISTRY_ADDRESS"); err != nil {
@@ -50,7 +50,8 @@ func TestSettingsActive(t *testing.T) {
 	}
 
 	// missing config file
-	err = SetActiveConfigFile("missing")
+	f := filepath.Join(configPath, activeConfigPointerFilename)
+	err = ioutil.WriteFile(f, []byte("missing"), os.FileMode(0644)) // rw,r,r
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -60,11 +61,11 @@ func TestSettingsActive(t *testing.T) {
 	}
 
 	// invalid config file
-	err = SetActiveConfigFile("invalid")
+	err = Settings{}.Write("invalid")
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = Settings{}.Write("invalid")
+	err = ActivateConfig("invalid")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -74,16 +75,16 @@ func TestSettingsActive(t *testing.T) {
 	}
 
 	// good config file
-	err = SetActiveConfigFile("good")
-	if err != nil {
-		t.Fatal(err)
-	}
 	settings = Settings{
 		Address:  "localhost:8080",
 		Insecure: true,
 		Token:    "unstored",
 	}
 	err = settings.Write("good")
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = ActivateConfig("good")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -120,14 +121,14 @@ func TestSettingsEnvVars(t *testing.T) {
 	}
 
 	// good config file
-	err = SetActiveConfigFile("good")
-	if err != nil {
-		t.Fatal(err)
-	}
 	err = Settings{
 		Address: "overridden",
 		Token:   "overridden",
 	}.Write("good")
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = ActivateConfig("good")
 	if err != nil {
 		t.Fatal(err)
 	}

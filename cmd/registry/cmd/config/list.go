@@ -27,18 +27,18 @@ func listCommand() *cobra.Command {
 		Use:   "list",
 		Short: "List properties for the currently active configuration.",
 		Args:  cobra.NoArgs,
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(cmd *cobra.Command, _ []string) {
 			ctx := cmd.Context()
 			logger := log.FromContext(ctx)
 
-			settings, err := activeSettings()
+			settings, err := activeConfig()
 			if err != nil {
-				logger.Fatalf("reading settings: %v", err)
+				logger.Fatalf("Cannot read config: %v", err)
 			}
 
 			m, err := settings.AsMap()
 			if err != nil {
-				logger.Fatalf("decoding settings: %v", err)
+				logger.Fatalf("Cannot decode config: %v", err)
 			}
 			for k, v := range m {
 				if sv := fmt.Sprintf("%v", v); sv != "" {
@@ -50,7 +50,8 @@ func listCommand() *cobra.Command {
 	return cmd
 }
 
-func activeSettings() (connection.Settings, error) {
+// read without validating
+func activeConfig() (connection.Settings, error) {
 	var err error
 	name, _ := connection.Flags.GetString("config")
 	if name == "" {
@@ -59,6 +60,5 @@ func activeSettings() (connection.Settings, error) {
 			return connection.Settings{}, err
 		}
 	}
-
 	return connection.ReadSettings(name)
 }
