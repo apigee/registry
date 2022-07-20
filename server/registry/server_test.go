@@ -70,7 +70,7 @@ func defaultTestServer(t *testing.T) TestServer {
 		return p
 	}
 	if useRemote {
-		p := remote.NewProxy()
+		p := &remote.Proxy{}
 		if err = p.Open(context.Background()); err != nil {
 			t.Fatalf("Fatalf: failed to connect to remote server: %s", err)
 		}
