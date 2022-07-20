@@ -62,10 +62,7 @@ jobs:
       run: go install ./...
 
     - name: Test everything with SQLite
-      run: registry-server & make test
-      env:
-        APG_REGISTRY_ADDRESS: localhost:8080 
-        APG_REGISTRY_INSECURE: 1
+      run: make test
 
     - name: Configure PostgreSQL
       env:
@@ -81,9 +78,27 @@ jobs:
     - name: Test registry server with PostgreSQL
       run: go test ./server/registry -postgresql
 
-    - name: Verify that benchmarks run
+    - name: Start a standalone registry server for subsequent testing
+      run: registry-server &
+
+    - name: Test a standalone registry server using the remote proxy
       env:
-        APG_REGISTRY_ADDRESS: localhost:8080 
+        APG_REGISTRY_ADDRESS: localhost:8080
+        APG_REGISTRY_INSECURE: 1
+      run: go test ./server/registry -remote
+
+    - name: Test a standalone registry server using the remote proxy in hosted mode
+      env:
+        APG_REGISTRY_ADDRESS: localhost:8080
+        APG_REGISTRY_INSECURE: 1
+        PROJECTID: hosted-ci-test
+      run: |
+        registry rpc admin create-project --project_id=$PROJECTID --json
+        go test ./server/registry -hosted $PROJECTID
+
+    - name: Verify that benchmarks run on a standalone registry server
+      env:
+        APG_REGISTRY_ADDRESS: localhost:8080
         APG_REGISTRY_INSECURE: 1
         PROJECTID: bench
         ITERATIONS: 1
