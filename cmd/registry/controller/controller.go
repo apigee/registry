@@ -33,7 +33,7 @@ type Action struct {
 
 func ProcessManifest(
 	ctx context.Context,
-	listerClient Lister,
+	client lister,
 	projectID string,
 	manifest *rpc.Manifest) []*Action {
 	var actions []*Action
@@ -54,7 +54,7 @@ func ProcessManifest(
 			continue
 		}
 
-		newActions, err := processManifestResource(ctx, listerClient, projectID, resource)
+		newActions, err := processManifestResource(ctx, client, projectID, resource)
 		if err != nil {
 			log.FromContext(ctx).WithError(err).Debugf("Skipping resource: %q", resource)
 			continue
@@ -67,7 +67,7 @@ func ProcessManifest(
 
 func processManifestResource(
 	ctx context.Context,
-	client Lister,
+	client lister,
 	projectID string,
 	generatedResource *rpc.GeneratedResource) ([]*Action, error) {
 	resourcePattern := fmt.Sprintf("projects/%s/locations/global/%s", projectID, generatedResource.Pattern)
@@ -90,7 +90,7 @@ func processManifestResource(
 
 func generateDependencyMap(
 	ctx context.Context,
-	client Lister,
+	client lister,
 	resourcePattern string,
 	dependency *rpc.Dependency) (map[string]time.Time, error) {
 	// Creates a map of the resources to group them into corresponding buckets
@@ -144,7 +144,7 @@ func generateDependencyMap(
 
 func generateActions(
 	ctx context.Context,
-	client Lister,
+	client lister,
 	resourcePattern string,
 	filter string,
 	dependencyMaps []map[string]time.Time,
@@ -169,7 +169,7 @@ func generateActions(
 // Go over the list of existing target resources to figure out which ones need an update.
 func generateUpdateActions(
 	ctx context.Context,
-	client Lister,
+	client lister,
 	resourcePattern string,
 	filter string,
 	dependencyMaps []map[string]time.Time,
@@ -244,7 +244,7 @@ func excludeVisitedParents(v map[string]bool) string {
 // we will use the parent resources to derive which new target resources should be created.
 func generateCreateActions(
 	ctx context.Context,
-	client Lister,
+	client lister,
 	resourcePattern string,
 	dependencyMaps []map[string]time.Time,
 	generatedResource *rpc.GeneratedResource,
@@ -346,10 +346,9 @@ func needsUpdate(
 			return false, nil
 		}
 
-		// Take action if atleast one dependency timestamp is later than resource timestamp
-		// Or if the target resource is less than 2 seconds newer compared to the dependencies.
-		// The second condition is required to avoid this scenario: https://github.com/apigee/registry/issues/641
-		if maxUpdateTime.After(targetResourceTime) || targetResourceTime.Sub(maxUpdateTime).Seconds() < patterns.ResourceUpdateThresholdSeconds {
+		// Take action if the target resource is less than n seconds newer compared to the dependencies, where n=thresholdSeconds.
+		// https://github.com/apigee/registry/issues/641
+		if maxUpdateTime.Add(patterns.ResourceUpdateThresholdSeconds).After(targetResourceTime) {
 			return true, nil
 		}
 	}

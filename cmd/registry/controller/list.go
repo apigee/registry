@@ -10,7 +10,7 @@ import (
 	"github.com/apigee/registry/server/registry/names"
 )
 
-type Lister interface {
+type lister interface {
 	ListAPIs(context.Context, names.Api, string, core.ApiHandler) error
 	ListVersions(context.Context, names.Version, string, core.VersionHandler) error
 	ListSpecs(context.Context, names.Spec, string, core.SpecHandler) error
@@ -37,7 +37,7 @@ func (r *RegistryLister) ListArtifacts(ctx context.Context, artifact names.Artif
 	return core.ListArtifacts(ctx, r.RegistryClient, artifact, filter, contents, handler)
 }
 
-func listResources(ctx context.Context, client Lister, pattern, filter string) ([]patterns.ResourceInstance, error) {
+func listResources(ctx context.Context, client lister, pattern, filter string) ([]patterns.ResourceInstance, error) {
 	var result []patterns.ResourceInstance
 	var err2 error
 
