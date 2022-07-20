@@ -31,7 +31,7 @@ import (
 
 func TestExportCSV(t *testing.T) {
 	ctx := context.Background()
-	client, err := connection.NewClient(ctx)
+	client, err := connection.NewRegistryClient(ctx)
 	if err != nil {
 		t.Fatalf("Setup: Failed to create client: %s", err)
 	}

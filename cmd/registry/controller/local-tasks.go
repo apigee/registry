@@ -101,7 +101,7 @@ func (task *ExecCommandTask) Run(ctx context.Context) error {
 }
 
 func touchArtifact(ctx context.Context, artifactName, action string) error {
-	client, err := connection.NewClient(ctx)
+	client, err := connection.NewRegistryClient(ctx)
 	if err != nil {
 		log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 	}
