@@ -68,7 +68,6 @@ func TestWipeout(t *testing.T) {
 		t.Fatalf("Setup: Failed to create registry client: %s", err)
 	}
 	defer registryClient.Close()
-
 	for i := 0; i <= 2; i++ {
 		api, err := registryClient.CreateApi(ctx, &rpc.CreateApiRequest{
 			ApiId:  fmt.Sprintf("a%d", i),
@@ -163,6 +162,7 @@ func TestWipeout(t *testing.T) {
 			}
 		}
 	}
+
 	t.Run("WipeoutProject", func(t *testing.T) {
 		Wipeout(ctx, registryClient, projectID, 10)
 		if _, ok := registryClient.ListApis(ctx, &rpc.ListApisRequest{Parent: parent}).Next(); ok != iterator.Done {

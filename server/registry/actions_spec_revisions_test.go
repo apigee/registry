@@ -283,6 +283,7 @@ func TestDeleteApiSpecRevision(t *testing.T) {
 
 func TestListApiSpecRevisions(t *testing.T) {
 	tests := []struct {
+		admin     bool
 		desc      string
 		seed      []*rpc.ApiSpec
 		req       *rpc.ListApiSpecRevisionsRequest
@@ -368,7 +369,8 @@ func TestListApiSpecRevisions(t *testing.T) {
 			},
 		},
 		{
-			desc: "across multiple projects",
+			admin: true,
+			desc:  "across multiple projects",
 			seed: []*rpc.ApiSpec{
 				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
 				{Name: "projects/other-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
@@ -413,6 +415,9 @@ func TestListApiSpecRevisions(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
+			if test.admin && adminServiceUnavailable() {
+				t.Skip(testRequiresAdminService)
+			}
 			ctx := context.Background()
 			server := defaultTestServer(t)
 			if err := seeder.SeedSpecs(ctx, server, test.seed...); err != nil {

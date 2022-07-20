@@ -191,14 +191,16 @@ func TestCreateArtifact(t *testing.T) {
 
 func TestCreateArtifactResponseCodes(t *testing.T) {
 	tests := []struct {
-		desc string
-		seed seeder.RegistryResource
-		req  *rpc.CreateArtifactRequest
-		want codes.Code
+		admin bool
+		desc  string
+		seed  seeder.RegistryResource
+		req   *rpc.CreateArtifactRequest
+		want  codes.Code
 	}{
 		{
-			desc: "parent project not found",
-			seed: &rpc.Project{Name: "projects/other-project"},
+			admin: true,
+			desc:  "parent project not found",
+			seed:  &rpc.Project{Name: "projects/other-project"},
 			req: &rpc.CreateArtifactRequest{
 				Parent:     "projects/my-project/locations/global",
 				ArtifactId: "valid-id",
@@ -330,6 +332,9 @@ func TestCreateArtifactResponseCodes(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
+			if test.admin && adminServiceUnavailable() {
+				t.Skip(testRequiresAdminService)
+			}
 			ctx := context.Background()
 			server := defaultTestServer(t)
 			if err := seeder.SeedRegistry(ctx, server, test.seed); err != nil {
@@ -499,7 +504,7 @@ func TestGetArtifactContents(t *testing.T) {
 			desc: "case insensitive identifiers",
 			seed: &rpc.Artifact{Name: "projects/my-project/locations/global/artifacts/my-artifact"},
 			req: &rpc.GetArtifactContentsRequest{
-				Name: "projects/My-Project/locations/global/artifacts/My-Artifact",
+				Name: "projects/my-project/locations/global/artifacts/My-Artifact",
 			},
 			want: codes.OK,
 		},
@@ -545,6 +550,7 @@ func TestGetArtifactContents(t *testing.T) {
 
 func TestListArtifacts(t *testing.T) {
 	tests := []struct {
+		admin     bool
 		desc      string
 		seed      []*rpc.Artifact
 		req       *rpc.ListArtifactsRequest
@@ -572,7 +578,8 @@ func TestListArtifacts(t *testing.T) {
 			},
 		},
 		{
-			desc: "across all version in a artifact project and api",
+			admin: true,
+			desc:  "across all version in a artifact project and api",
 			seed: []*rpc.Artifact{
 				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/my-artifact"},
 				{Name: "projects/my-project/locations/global/apis/my-api/versions/v2/artifacts/my-artifact"},
@@ -589,7 +596,8 @@ func TestListArtifacts(t *testing.T) {
 			},
 		},
 		{
-			desc: "across all apis and version in a artifact project",
+			admin: true,
+			desc:  "across all apis and version in a artifact project",
 			seed: []*rpc.Artifact{
 				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/my-artifact"},
 				{Name: "projects/my-project/locations/global/apis/other-api/versions/v2/artifacts/my-artifact"},
@@ -606,7 +614,8 @@ func TestListArtifacts(t *testing.T) {
 			},
 		},
 		{
-			desc: "across all projects, apis, and version",
+			admin: true,
+			desc:  "across all projects, apis, and version",
 			seed: []*rpc.Artifact{
 				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/my-artifact"},
 				{Name: "projects/other-project/locations/global/apis/other-api/versions/v2/artifacts/my-artifact"},
@@ -622,7 +631,8 @@ func TestListArtifacts(t *testing.T) {
 			},
 		},
 		{
-			desc: "in a artifact api and parent across all projects",
+			admin: true,
+			desc:  "in a artifact api and parent across all projects",
 			seed: []*rpc.Artifact{
 				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/my-artifact"},
 				{Name: "projects/other-project/locations/global/apis/my-api/versions/v1/artifacts/my-artifact"},
@@ -640,7 +650,8 @@ func TestListArtifacts(t *testing.T) {
 			},
 		},
 		{
-			desc: "in a artifact parent across all projects and apis",
+			admin: true,
+			desc:  "in a artifact parent across all projects and apis",
 			seed: []*rpc.Artifact{
 				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/my-artifact"},
 				{Name: "projects/other-project/locations/global/apis/other-api/versions/v1/artifacts/my-artifact"},
@@ -657,7 +668,8 @@ func TestListArtifacts(t *testing.T) {
 			},
 		},
 		{
-			desc: "in all version of a artifact api across all projects",
+			admin: true,
+			desc:  "in all version of a artifact api across all projects",
 			seed: []*rpc.Artifact{
 				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/my-artifact"},
 				{Name: "projects/other-project/locations/global/apis/my-api/versions/v2/artifacts/my-artifact"},
@@ -734,7 +746,8 @@ func TestListArtifacts(t *testing.T) {
 			},
 		},
 		{
-			desc: "artifacts owned by a project",
+			admin: true,
+			desc:  "artifacts owned by a project",
 			seed: []*rpc.Artifact{
 				{Name: "projects/my-project/locations/global/artifacts/artifact1"},
 				{Name: "projects/my-project/locations/global/artifacts/artifact2"},
@@ -832,6 +845,9 @@ func TestListArtifacts(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
+			if test.admin && adminServiceUnavailable() {
+				t.Skip(testRequiresAdminService)
+			}
 			ctx := context.Background()
 			server := defaultTestServer(t)
 			if err := seeder.SeedArtifacts(ctx, server, test.seed...); err != nil {
@@ -868,9 +884,10 @@ func TestListArtifacts(t *testing.T) {
 
 func TestListArtifactsResponseCodes(t *testing.T) {
 	tests := []struct {
-		desc string
-		req  *rpc.ListArtifactsRequest
-		want codes.Code
+		admin bool
+		desc  string
+		req   *rpc.ListArtifactsRequest
+		want  codes.Code
 	}{
 		{
 			desc: "parent parent not found",
@@ -887,7 +904,8 @@ func TestListArtifactsResponseCodes(t *testing.T) {
 			want: codes.NotFound,
 		},
 		{
-			desc: "parent project not found",
+			admin: true,
+			desc:  "parent project not found",
 			req: &rpc.ListArtifactsRequest{
 				Parent: "projects/my-project/locations/global/apis/-/versions/-",
 			},
@@ -918,6 +936,9 @@ func TestListArtifactsResponseCodes(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
+			if test.admin && adminServiceUnavailable() {
+				t.Skip(testRequiresAdminService)
+			}
 			ctx := context.Background()
 			server := defaultTestServer(t)
 
