@@ -48,6 +48,7 @@ func (c *Client) DeleteProject(ctx context.Context, name names.Project, cascade 
 			return status.Errorf(codes.FailedPrecondition, "cannot delete child resources of %s in non-cascading mode", name)
 		}
 
+		// Tags aren't API resources, so they do not block non-cascading deletes.
 		for _, model := range []interface{}{
 			models.DeploymentRevisionTag{},
 			models.SpecRevisionTag{},
