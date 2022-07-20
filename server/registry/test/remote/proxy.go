@@ -31,7 +31,7 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-const AdminServiceIsUnavailable = "admin service is unavailable"
+var ErrAdminServiceUnavailable = errors.New("admin service is unavailable")
 
 // Proxy implements a local proxy for a remote Registry server.
 // This allows tests written to the generated "RegistryServer" and "AdminServer" interfaces to be run against remote servers.
@@ -105,21 +105,21 @@ func NewProxyForHostedService(projectID string) *Proxy {
 
 func (p *Proxy) GetStatus(ctx context.Context, req *emptypb.Empty) (*rpc.Status, error) {
 	if p.adminClient == nil {
-		return nil, errors.New(AdminServiceIsUnavailable)
+		return nil, ErrAdminServiceUnavailable
 	}
 	return p.adminClient.GrpcClient().GetStatus(ctx, req)
 }
 
 func (p *Proxy) GetStorage(ctx context.Context, req *emptypb.Empty) (*rpc.Storage, error) {
 	if p.adminClient == nil {
-		return nil, errors.New(AdminServiceIsUnavailable)
+		return nil, ErrAdminServiceUnavailable
 	}
 	return p.adminClient.GrpcClient().GetStorage(ctx, req)
 }
 
 func (p *Proxy) MigrateDatabase(ctx context.Context, req *rpc.MigrateDatabaseRequest) (*longrunning.Operation, error) {
 	if p.adminClient == nil {
-		return nil, errors.New(AdminServiceIsUnavailable)
+		return nil, ErrAdminServiceUnavailable
 	}
 	return p.adminClient.GrpcClient().MigrateDatabase(ctx, req)
 }
@@ -128,14 +128,14 @@ func (p *Proxy) MigrateDatabase(ctx context.Context, req *rpc.MigrateDatabaseReq
 
 func (p *Proxy) GetProject(ctx context.Context, req *rpc.GetProjectRequest) (*rpc.Project, error) {
 	if p.adminClient == nil {
-		return nil, errors.New(AdminServiceIsUnavailable)
+		return nil, ErrAdminServiceUnavailable
 	}
 	return p.adminClient.GrpcClient().GetProject(ctx, req)
 }
 
 func (p *Proxy) ListProjects(ctx context.Context, req *rpc.ListProjectsRequest) (*rpc.ListProjectsResponse, error) {
 	if p.adminClient == nil {
-		return nil, errors.New(AdminServiceIsUnavailable)
+		return nil, ErrAdminServiceUnavailable
 	}
 	return p.adminClient.GrpcClient().ListProjects(ctx, req)
 }
@@ -146,21 +146,21 @@ func (p *Proxy) CreateProject(ctx context.Context, req *rpc.CreateProjectRequest
 			return &rpc.Project{Name: req.ProjectId}, nil
 		}
 		log.Printf("FIXME CreateProject %+v", req)
-		return nil, errors.New(AdminServiceIsUnavailable)
+		return nil, ErrAdminServiceUnavailable
 	}
 	return p.adminClient.GrpcClient().CreateProject(ctx, req)
 }
 
 func (p *Proxy) UpdateProject(ctx context.Context, req *rpc.UpdateProjectRequest) (*rpc.Project, error) {
 	if p.adminClient == nil {
-		return nil, errors.New(AdminServiceIsUnavailable)
+		return nil, ErrAdminServiceUnavailable
 	}
 	return p.adminClient.GrpcClient().UpdateProject(ctx, req)
 }
 
 func (p *Proxy) DeleteProject(ctx context.Context, req *rpc.DeleteProjectRequest) (*emptypb.Empty, error) {
 	if p.adminClient == nil {
-		return nil, errors.New(AdminServiceIsUnavailable)
+		return nil, ErrAdminServiceUnavailable
 	}
 	return p.adminClient.GrpcClient().DeleteProject(ctx, req)
 }
