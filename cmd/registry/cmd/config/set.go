@@ -21,12 +21,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func listCommand() *cobra.Command {
+func setCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "list",
-		Short: "List properties for the currently active configuration.",
-		Args:  cobra.NoArgs,
-		Run: func(cmd *cobra.Command, _ []string) {
+		Use:   "set PROPERTY VALUE",
+		Short: "Set the value of a property.",
+		Args:  cobra.ExactArgs(2),
+		Run: func(cmd *cobra.Command, args []string) {
 			ctx := cmd.Context()
 			logger := log.FromContext(ctx)
 
@@ -35,20 +35,21 @@ func listCommand() *cobra.Command {
 				logger.Fatalf("Cannot read config: %v", err)
 			}
 
-			m, err := config.AsMap()
-			if err != nil {
-				logger.Fatalf("Cannot decode config: %v", err)
-			}
-			for k, v := range m {
-				if sv := fmt.Sprintf("%v", v); sv != "" {
-					fmt.Println(k, "=", sv)
-				}
+			m := map[string]interface{}{
+				args[0]: args[1],
 			}
 
+			err = config.FromMap(m)
 			if err != nil {
-				logger.Fatalf("Cannot decode config: %v", err)
+				logger.Fatalf("Cannot set value: %v", err)
 			}
-			fmt.Printf("\nYour active configuration is: %q.\n", target)
+
+			err = config.Write(target)
+			if err != nil {
+				logger.Fatalf("Cannot write config: %v", err)
+			}
+
+			fmt.Printf("Updated property %q.\n", m[args[0]])
 		},
 	}
 	return cmd

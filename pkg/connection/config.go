@@ -100,6 +100,20 @@ func (c Config) AsMap() (map[string]interface{}, error) {
 	return m, err
 }
 
+func (c *Config) FromMap(m map[string]interface{}) error {
+	config := &mapstructure.DecoderConfig{
+		WeaklyTypedInput: true,
+		Result:           c,
+	}
+
+	decoder, err := mapstructure.NewDecoder(config)
+	if err != nil {
+		return err
+	}
+
+	return decoder.Decode(m)
+}
+
 func AllConfigs() (map[string]Config, error) {
 	files, err := ioutil.ReadDir(configPath)
 	if err != nil {

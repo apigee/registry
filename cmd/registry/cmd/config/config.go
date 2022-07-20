@@ -16,6 +16,7 @@ package config
 
 import (
 	"github.com/apigee/registry/cmd/registry/cmd/config/configurations"
+	"github.com/apigee/registry/pkg/connection"
 	"github.com/spf13/cobra"
 )
 
@@ -26,17 +27,21 @@ func Command() *cobra.Command {
 	}
 
 	cmd.AddCommand(configurations.Command())
-
-	// TODO
-	// get                     Print the value of a Google Cloud CLI property.
-	// list                    List Google Cloud CLI properties for the currently active configuration.
-	// set                     Set a Google Cloud CLI property.
-	// unset                   Unset a Google Cloud CLI property.
-
-	// cmd.AddCommand(getCommand())
+	cmd.AddCommand(getCommand())
 	cmd.AddCommand(listCommand())
-	// cmd.AddCommand(setCommand())
-	// cmd.AddCommand(unsetCommand())
-
+	cmd.AddCommand(setCommand())
+	cmd.AddCommand(unsetCommand())
 	return cmd
+}
+
+func targetConfig() (name string, config connection.Config, err error) {
+	name, _ = connection.Flags.GetString("config")
+	if name == "" {
+		name, err = connection.ActiveConfigName()
+		if err != nil {
+			return
+		}
+	}
+	config, err = connection.ReadConfig(name)
+	return
 }

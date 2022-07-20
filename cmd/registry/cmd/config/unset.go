@@ -18,15 +18,16 @@ import (
 	"fmt"
 
 	"github.com/apigee/registry/log"
+	"github.com/apigee/registry/pkg/connection"
 	"github.com/spf13/cobra"
 )
 
-func listCommand() *cobra.Command {
+func unsetCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "list",
-		Short: "List properties for the currently active configuration.",
-		Args:  cobra.NoArgs,
-		Run: func(cmd *cobra.Command, _ []string) {
+		Use:   "unset PROPERTY",
+		Short: "Unset the value of a property.",
+		Args:  cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
 			ctx := cmd.Context()
 			logger := log.FromContext(ctx)
 
@@ -39,16 +40,21 @@ func listCommand() *cobra.Command {
 			if err != nil {
 				logger.Fatalf("Cannot decode config: %v", err)
 			}
-			for k, v := range m {
-				if sv := fmt.Sprintf("%v", v); sv != "" {
-					fmt.Println(k, "=", sv)
-				}
+
+			delete(m, args[0])
+
+			config = connection.Config{}
+			err = config.FromMap(m)
+			if err != nil {
+				logger.Fatalf("Cannot encode config: %v", err)
 			}
 
+			err = config.Write(target)
 			if err != nil {
-				logger.Fatalf("Cannot decode config: %v", err)
+				logger.Fatalf("Cannot write config: %v", err)
 			}
-			fmt.Printf("\nYour active configuration is: %q.\n", target)
+
+			fmt.Printf("Unset property %q.\n", args[0])
 		},
 	}
 	return cmd
