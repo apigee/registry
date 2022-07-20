@@ -33,7 +33,7 @@ type Action struct {
 
 func ProcessManifest(
 	ctx context.Context,
-	client lister,
+	client listingClient,
 	projectID string,
 	manifest *rpc.Manifest) []*Action {
 	var actions []*Action
@@ -67,7 +67,7 @@ func ProcessManifest(
 
 func processManifestResource(
 	ctx context.Context,
-	client lister,
+	client listingClient,
 	projectID string,
 	generatedResource *rpc.GeneratedResource) ([]*Action, error) {
 	resourcePattern := fmt.Sprintf("projects/%s/locations/global/%s", projectID, generatedResource.Pattern)
@@ -90,7 +90,7 @@ func processManifestResource(
 
 func generateDependencyMap(
 	ctx context.Context,
-	client lister,
+	client listingClient,
 	resourcePattern string,
 	dependency *rpc.Dependency) (map[string]time.Time, error) {
 	// Creates a map of the resources to group them into corresponding buckets
@@ -144,7 +144,7 @@ func generateDependencyMap(
 
 func generateActions(
 	ctx context.Context,
-	client lister,
+	client listingClient,
 	resourcePattern string,
 	filter string,
 	dependencyMaps []map[string]time.Time,
@@ -169,7 +169,7 @@ func generateActions(
 // Go over the list of existing target resources to figure out which ones need an update.
 func generateUpdateActions(
 	ctx context.Context,
-	client lister,
+	client listingClient,
 	resourcePattern string,
 	filter string,
 	dependencyMaps []map[string]time.Time,
@@ -244,7 +244,7 @@ func excludeVisitedParents(v map[string]bool) string {
 // we will use the parent resources to derive which new target resources should be created.
 func generateCreateActions(
 	ctx context.Context,
-	client lister,
+	client listingClient,
 	resourcePattern string,
 	dependencyMaps []map[string]time.Time,
 	generatedResource *rpc.GeneratedResource,
