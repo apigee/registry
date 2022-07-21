@@ -66,15 +66,17 @@ func Command() *cobra.Command {
 				log.FromContext(ctx).WithError(err).Fatal("Invalid manifest resource name")
 			}
 
-			client, err := connection.NewRegistryClient(ctx)
+			registryClient, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
 
-			manifest, err := fetchManifest(ctx, client, name.String())
+			manifest, err := fetchManifest(ctx, registryClient, name.String())
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to fetch manifest")
 			}
+
+			client := &controller.RegistryLister{RegistryClient: registryClient}
 
 			log.Debug(ctx, "Generating the list of actions...")
 			actions := controller.ProcessManifest(ctx, client, name.ProjectID(), manifest)
