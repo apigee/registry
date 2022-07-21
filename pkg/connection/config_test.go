@@ -22,26 +22,22 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/spf13/pflag"
 )
 
-func TestMain(m *testing.M) {
-	tmpDir, err := ioutil.TempDir("", "registry")
-	if err != nil {
-		panic("can't create temp dir")
+func cleanConfigDir(t *testing.T) func() {
+	t.Helper()
+	tmpDir := t.TempDir()
+	origConfigPath := ConfigPath
+	ConfigPath = tmpDir
+	return func() {
+		ConfigPath = origConfigPath
+		os.RemoveAll(tmpDir)
 	}
-	configPath = tmpDir
-	code := m.Run()
-	os.Exit(code)
 }
 
 func TestActiveSettings(t *testing.T) {
-	// ensure outside env var doesn't affect this test
-	addrEnv := os.Getenv("APG_REGISTRY_ADDRESS")
-	if err := os.Unsetenv("APG_REGISTRY_ADDRESS"); err != nil {
-		t.Fatal(err)
-	}
-	defer os.Setenv("APG_REGISTRY_ADDRESS", addrEnv)
+	defer cleanConfigDir(t)()
+	t.Setenv("APG_REGISTRY_ADDRESS", "")
 
 	// missing active file
 	config, err := ActiveConfig()
@@ -50,7 +46,7 @@ func TestActiveSettings(t *testing.T) {
 	}
 
 	// missing config file
-	f := filepath.Join(configPath, activeConfigPointerFilename)
+	f := filepath.Join(ConfigPath, ActiveConfigPointerFilename)
 	err = ioutil.WriteFile(f, []byte("missing"), os.FileMode(0644)) // rw,r,r
 	if err != nil {
 		t.Fatal(err)
@@ -90,34 +86,32 @@ func TestActiveSettings(t *testing.T) {
 	}
 	got, err := ActiveConfig()
 	if err != nil {
-		t.Errorf("unexpected error: %s", err)
+		t.Fatal(err)
 	}
 	config.Token = "" // should not have been stored
 	if diff := cmp.Diff(config, got); diff != "" {
-		t.Errorf("activeSettings returned unexpected diff: (-want +got):\n%s", diff)
+		t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 	}
 }
 
 func TestSettingsEnvVars(t *testing.T) {
-	// no config files
+	defer cleanConfigDir(t)()
+
 	want := Config{
 		Address:  "localhost:8080",
 		Insecure: true,
 		Token:    "mytoken",
 	}
-	os.Setenv("APG_REGISTRY_ADDRESS", want.Address)
-	defer os.Unsetenv("APG_REGISTRY_ADDRESS")
-	os.Setenv("APG_REGISTRY_INSECURE", strconv.FormatBool(want.Insecure))
-	defer os.Unsetenv("APG_REGISTRY_INSECURE")
-	os.Setenv("APG_REGISTRY_TOKEN", want.Token)
-	defer os.Unsetenv("APG_REGISTRY_TOKEN")
+	t.Setenv("APG_REGISTRY_ADDRESS", want.Address)
+	t.Setenv("APG_REGISTRY_INSECURE", strconv.FormatBool(want.Insecure))
+	t.Setenv("APG_REGISTRY_TOKEN", want.Token)
 
 	got, err := ActiveConfig()
 	if err != nil {
-		t.Errorf("unexpected error: %s", err)
+		t.Fatal(err)
 	}
 	if diff := cmp.Diff(want, got); diff != "" {
-		t.Errorf("activeSettings returned unexpected diff: (-want +got):\n%s", diff)
+		t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 	}
 
 	// good config file
@@ -133,11 +127,13 @@ func TestSettingsEnvVars(t *testing.T) {
 		t.Fatal(err)
 	}
 	if diff := cmp.Diff(want, got); diff != "" {
-		t.Errorf("activeSettings returned unexpected diff: (-want +got):\n%s", diff)
+		t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 	}
 }
 
 func TestSettingsDirectRead(t *testing.T) {
+	defer cleanConfigDir(t)()
+
 	config := Config{
 		Address:  "localhost:8080",
 		Insecure: true,
@@ -146,46 +142,200 @@ func TestSettingsDirectRead(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	configFile := filepath.Join(configPath, "good")
+	configFile := filepath.Join(ConfigPath, "good")
 
-	args := os.Args
-	defer func() { os.Args = args }()
-	os.Args = []string{
+	args := []string{
 		"test",
 		"--config", configFile,
 	}
-	pflag.CommandLine.AddFlagSet(Flags)
-	pflag.Parse()
+	Flags = createFlagSet()
+	defer func() { Flags = createFlagSet() }()
+	err = Flags.Parse(args)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	got, err := ActiveConfig()
 	if err != nil {
-		t.Errorf("unexpected error: %s", err)
+		t.Fatal(err)
 	}
 	if diff := cmp.Diff(config, got); diff != "" {
-		t.Errorf("activeSettings returned unexpected diff: (-want +got):\n%s", diff)
+		t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 	}
 }
 
 func TestSettingsFlags(t *testing.T) {
+	defer cleanConfigDir(t)()
+
 	want := Config{
 		Address:  "localhost:8080",
 		Insecure: true,
 		Token:    "mytoken",
 	}
-	args := os.Args
-	defer func() { os.Args = args }()
-	os.Args = []string{
+	args := []string{
 		"test",
 		"--registry.address", want.Address,
 		"--registry.insecure", strconv.FormatBool(want.Insecure),
 		"--registry.token", want.Token,
 	}
-	pflag.CommandLine.AddFlagSet(Flags)
-	pflag.Parse()
+	Flags = createFlagSet()
+	defer func() { Flags = createFlagSet() }()
+	err := Flags.Parse(args)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	got, err := ActiveConfig()
 	if err != nil {
-		t.Errorf("unexpected error: %s", err)
+		t.Fatal(err)
 	}
 	if diff := cmp.Diff(want, got); diff != "" {
-		t.Errorf("activeSettings returned unexpected diff: (-want +got):\n%s", diff)
+		t.Errorf("unexpected diff: (-want +got):\n%s", diff)
+	}
+
+	// good config file
+	err = Config{
+		Address: "overridden",
+		Token:   "overridden",
+	}.Write("good")
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = ActivateConfig("good")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if diff := cmp.Diff(want, got); diff != "" {
+		t.Errorf("unexpected diff: (-want +got):\n%s", diff)
+	}
+}
+
+func TestMap(t *testing.T) {
+	defer cleanConfigDir(t)()
+
+	c := Config{
+		Address:  "address",
+		Insecure: true,
+		Token:    "token",
+	}
+	want := map[string]interface{}{
+		"address":  "address",
+		"insecure": true,
+		"token":    "token",
+	}
+	m, err := c.AsMap()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if diff := cmp.Diff(want, m); diff != "" {
+		t.Fatalf("unexpected diff: (-want +got):\n%s", diff)
+	}
+
+	c2 := Config{}
+	err = c2.FromMap(m)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if diff := cmp.Diff(c, c2); diff != "" {
+		t.Fatalf("unexpected diff: (-want +got):\n%s", diff)
+	}
+}
+
+func TestAllConfigs(t *testing.T) {
+	defer cleanConfigDir(t)()
+
+	config1 := Config{
+		Address:  "localhost:8080",
+		Insecure: true,
+	}
+	err := config1.Write("config1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = ActivateConfig("config1")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	want := map[string]Config{
+		"config1": config1,
+	}
+	got, err := AllConfigs()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if diff := cmp.Diff(want, got); diff != "" {
+		t.Errorf("unexpected diff: (-want +got):\n%s", diff)
+	}
+
+	config2 := Config{
+		Address:  "remote:8888",
+		Insecure: false,
+	}
+	err = config2.Write("config2")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	want = map[string]Config{
+		"config1": config1,
+		"config2": config2,
+	}
+	got, err = AllConfigs()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if diff := cmp.Diff(want, got); diff != "" {
+		t.Errorf("unexpected diff: (-want +got):\n%s", diff)
+	}
+}
+
+func TestDeleteConfig(t *testing.T) {
+	defer cleanConfigDir(t)()
+
+	config := Config{
+		Address:  "localhost:8080",
+		Insecure: true,
+	}
+	err := config.Write("config1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = config.Write("config2")
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = ActivateConfig("config1")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = DeleteConfig("config1")
+	if err != CannotDeleteActiveError {
+		t.Errorf("expected: %v", CannotDeleteActiveError)
+	}
+
+	err = DeleteConfig("config2")
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+
+	err = DeleteConfig(ActiveConfigPointerFilename)
+	if err != ReservedConfigNameError {
+		t.Errorf("expected error: %v", ReservedConfigNameError)
+	}
+}
+
+func TestWriteInvalidNames(t *testing.T) {
+	defer cleanConfigDir(t)()
+
+	err := Config{}.Write(ActiveConfigPointerFilename)
+	if err != ReservedConfigNameError {
+		t.Errorf("expected error: %v", ReservedConfigNameError)
+	}
+
+	err = Config{}.Write(filepath.Join("foo", "bar"))
+	if err == nil {
+		t.Errorf("expected error: %v", ReservedConfigNameError)
 	}
 }

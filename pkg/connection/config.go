@@ -20,7 +20,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"reflect"
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
@@ -29,25 +28,32 @@ import (
 	"go.uber.org/multierr"
 )
 
+const ActiveConfigPointerFilename = "active_config"
+
 // Flags defines Flags that may be bound to a Configuration. Use like:
 // `cmd.PersistentFlags().AddFlagSet(connection.Flags)`
-var Flags *pflag.FlagSet
+var Flags *pflag.FlagSet = createFlagSet()
 
-var configPath string
-var activeConfigPointerFilename = "active_config"
+// ConfigPath is $HOME/config/registry
+var ConfigPath string
+var CannotDeleteActiveError = fmt.Errorf("Cannot delete active configuration.")
+var ReservedConfigNameError = fmt.Errorf("%q is reserved", ActiveConfigPointerFilename)
 
 func init() {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		panic(err)
 	}
-	configPath = filepath.Join(home, ".config/registry")
+	ConfigPath = filepath.Join(home, ".config/registry")
+}
 
-	Flags = pflag.NewFlagSet("registry", pflag.ExitOnError)
-	Flags.StringP("config", "c", "", "Name of a configuration profile or path to config file")
-	Flags.String("registry.address", "", "the server and port of the registry api (eg. localhost:8080)")
-	Flags.Bool("registry.insecure", false, "if specified, client connects via http (not https)")
-	Flags.String("registry.token", "", "the token to use for authorization to registry")
+func createFlagSet() *pflag.FlagSet {
+	flags := pflag.NewFlagSet("registry", pflag.ExitOnError)
+	flags.StringP("config", "c", "", "Name of a configuration profile or path to config file")
+	flags.String("registry.address", "", "the server and port of the registry api (eg. localhost:8080)")
+	flags.Bool("registry.insecure", false, "if specified, client connects via http (not https)")
+	flags.String("registry.token", "", "the token to use for authorization to registry")
+	return flags
 }
 
 // Config configure the client.
@@ -70,27 +76,16 @@ func (c Config) Validate() error {
 // Write stores the Config in the passed file name
 // within the configpath.
 func (c Config) Write(name string) error {
+	if err := ValidateConfigName(name); err != nil {
+		return err
+	}
+
 	v := viper.New()
 	v.SetConfigType("yaml")
 	v.Set("registry.Address", c.Address)
 	v.Set("registry.Insecure", c.Insecure)
-	path := filepath.Join(configPath, name)
+	path := filepath.Join(ConfigPath, name)
 	return v.WriteConfigAs(path)
-}
-
-// Names returns the setting names in a Config.
-func (c Config) Names() []string {
-	var names []string
-	rt := reflect.TypeOf(c)
-	for i := 0; i < rt.NumField(); i++ {
-		t := rt.Field(i)
-		tv, ok := t.Tag.Lookup("mapstructure")
-		if !ok {
-			continue
-		}
-		names = append(names, strings.Split(tv, ",")[0])
-	}
-	return names
 }
 
 // AsMap returns the Config as a Map.
@@ -100,6 +95,8 @@ func (c Config) AsMap() (map[string]interface{}, error) {
 	return m, err
 }
 
+// FromMap populates a Config from a Map.
+// Existing values are overridden.
 func (c *Config) FromMap(m map[string]interface{}) error {
 	config := &mapstructure.DecoderConfig{
 		WeaklyTypedInput: true,
@@ -115,7 +112,7 @@ func (c *Config) FromMap(m map[string]interface{}) error {
 }
 
 func AllConfigs() (map[string]Config, error) {
-	files, err := ioutil.ReadDir(configPath)
+	files, err := ioutil.ReadDir(ConfigPath)
 	if err != nil {
 		return nil, err
 	}
@@ -123,7 +120,7 @@ func AllConfigs() (map[string]Config, error) {
 	var errors error
 	allConfigs := make(map[string]Config)
 	for _, file := range files {
-		if !file.IsDir() {
+		if !file.IsDir() && file.Name() != ActiveConfigPointerFilename {
 			s, err := ReadConfig(file.Name())
 			if err != nil {
 				errors = multierr.Append(errors, err)
@@ -132,8 +129,22 @@ func AllConfigs() (map[string]Config, error) {
 			allConfigs[file.Name()] = s
 		}
 	}
+	if errors != nil {
+		return nil, errors
+	}
 
 	return allConfigs, nil
+}
+
+func ValidateConfigName(name string) error {
+	if name == ActiveConfigPointerFilename {
+		return ReservedConfigNameError
+	}
+
+	if dir, _ := filepath.Split(name); dir != "" {
+		return fmt.Errorf("%q must not include a path", name)
+	}
+	return nil
 }
 
 // ActiveConfig determines the active configuration name,
@@ -161,7 +172,7 @@ func ActivateConfig(name string) error {
 		return err
 	}
 
-	f := filepath.Join(configPath, activeConfigPointerFilename)
+	f := filepath.Join(ConfigPath, ActiveConfigPointerFilename)
 	return ioutil.WriteFile(f, []byte(name), os.FileMode(0644)) // rw,r,r
 }
 
@@ -201,7 +212,7 @@ func ReadConfig(name string) (config Config, err error) {
 	if dir != "" {
 		v.AddConfigPath(dir)
 	} else {
-		v.AddConfigPath(configPath)
+		v.AddConfigPath(ConfigPath)
 	}
 
 	if err = v.ReadInConfig(); err != nil {
@@ -226,22 +237,26 @@ func ReadConfig(name string) (config Config, err error) {
 // DeleteConfig deletes a configuration.
 // Will error if active or missing (*os.PathError).
 func DeleteConfig(name string) error {
+	if err := ValidateConfigName(name); err != nil {
+		return err
+	}
+
 	active, err := ActiveConfigName()
 	if err != nil {
 		return err
 	}
 	if name == active {
-		return fmt.Errorf("Cannot delete active configuration")
+		return CannotDeleteActiveError
 	}
 
-	f := filepath.Join(configPath, activeConfigPointerFilename)
+	f := filepath.Join(ConfigPath, name)
 	return os.Remove(f)
 }
 
 // returns the config file to use from ~/.config/active_config.
 // Returns "" if active_config is not found.
 func ActiveConfigName() (string, error) {
-	f := filepath.Join(configPath, activeConfigPointerFilename)
+	f := filepath.Join(ConfigPath, ActiveConfigPointerFilename)
 	bytes, err := ioutil.ReadFile(f)
 	if errors.Is(err, os.ErrNotExist) {
 		err = nil
