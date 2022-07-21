@@ -62,10 +62,7 @@ jobs:
       run: go install ./...
 
     - name: Test everything with SQLite
-      run: registry-server & make test
-      env:
-        APG_REGISTRY_ADDRESS: localhost:8080 
-        APG_REGISTRY_INSECURE: 1
+      run: go test ./...
 
     - name: Configure PostgreSQL
       env:
@@ -81,21 +78,9 @@ jobs:
     - name: Test registry server with PostgreSQL
       run: go test ./server/registry -postgresql
 
-    - name: Verify that benchmarks run
-      env:
-        APG_REGISTRY_ADDRESS: localhost:8080 
-        APG_REGISTRY_INSECURE: 1
-        PROJECTID: bench
-        ITERATIONS: 1
-      run: |
-        registry rpc admin create-project --project_id=$PROJECTID --json
-        go test ./tests/benchmark --bench=. --project_id=$PROJECTID --benchtime=${ITERATIONS}x --timeout=0
-
     - name: Compute code coverage
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-        APG_REGISTRY_ADDRESS: localhost:8080 
-        APG_REGISTRY_INSECURE: 1
       run: |
         go clean -testcache
         go test -race -coverprofile=coverage.txt -covermode=atomic ./...
@@ -107,3 +92,31 @@ jobs:
         shasum -a 256 -c codecov.SHA256SUM
         chmod +x codecov
         ./codecov -t ${CODECOV_TOKEN}
+
+    - name: Start a standalone registry server for subsequent testing
+      run: registry-server &
+
+    - name: Test a standalone registry server using the remote proxy
+      env:
+        APG_REGISTRY_ADDRESS: localhost:8080
+        APG_REGISTRY_INSECURE: 1
+      run: go test ./server/registry -remote
+
+    - name: Test a standalone registry server using the remote proxy in hosted mode
+      env:
+        APG_REGISTRY_ADDRESS: localhost:8080
+        APG_REGISTRY_INSECURE: 1
+        PROJECTID: hosted-ci-test
+      run: |
+        registry rpc admin create-project --project_id=$PROJECTID --json
+        go test ./server/registry -hosted $PROJECTID
+
+    - name: Verify that benchmarks run on a standalone registry server
+      env:
+        APG_REGISTRY_ADDRESS: localhost:8080
+        APG_REGISTRY_INSECURE: 1
+        PROJECTID: bench
+        ITERATIONS: 1
+      run: |
+        registry rpc admin create-project --project_id=$PROJECTID --json
+        go test ./tests/benchmark --bench=. --project_id=$PROJECTID --benchtime=${ITERATIONS}x --timeout=0

@@ -30,6 +30,9 @@ import (
 )
 
 func TestCreateProject(t *testing.T) {
+	if adminServiceUnavailable() {
+		t.Skip(testRequiresAdminService)
+	}
 	tests := []struct {
 		desc string
 		req  *rpc.CreateProjectRequest
@@ -97,6 +100,9 @@ func TestCreateProject(t *testing.T) {
 }
 
 func TestCreateProjectResponseCodes(t *testing.T) {
+	if adminServiceUnavailable() {
+		t.Skip(testRequiresAdminService)
+	}
 	tests := []struct {
 		desc string
 		req  *rpc.CreateProjectRequest
@@ -181,6 +187,9 @@ func TestCreateProjectResponseCodes(t *testing.T) {
 }
 
 func TestCreateProjectDuplicates(t *testing.T) {
+	if adminServiceUnavailable() {
+		t.Skip(testRequiresAdminService)
+	}
 	test := struct {
 		desc string
 		seed *rpc.Project
@@ -209,6 +218,9 @@ func TestCreateProjectDuplicates(t *testing.T) {
 }
 
 func TestGetProject(t *testing.T) {
+	if adminServiceUnavailable() {
+		t.Skip(testRequiresAdminService)
+	}
 	tests := []struct {
 		desc string
 		seed *rpc.Project
@@ -259,6 +271,9 @@ func TestGetProject(t *testing.T) {
 }
 
 func TestGetProjectResponseCodes(t *testing.T) {
+	if adminServiceUnavailable() {
+		t.Skip(testRequiresAdminService)
+	}
 	tests := []struct {
 		desc string
 		seed *rpc.Project
@@ -299,6 +314,9 @@ func TestGetProjectResponseCodes(t *testing.T) {
 }
 
 func TestListProjects(t *testing.T) {
+	if adminServiceUnavailable() {
+		t.Skip(testRequiresAdminService)
+	}
 	tests := []struct {
 		desc      string
 		seed      []*rpc.Project
@@ -416,6 +434,9 @@ func TestListProjects(t *testing.T) {
 }
 
 func TestListProjectsResponseCodes(t *testing.T) {
+	if adminServiceUnavailable() {
+		t.Skip(testRequiresAdminService)
+	}
 	tests := []struct {
 		desc string
 		req  *rpc.ListProjectsRequest
@@ -457,6 +478,9 @@ func TestListProjectsResponseCodes(t *testing.T) {
 }
 
 func TestListProjectsSequence(t *testing.T) {
+	if adminServiceUnavailable() {
+		t.Skip(testRequiresAdminService)
+	}
 	ctx := context.Background()
 	server := defaultTestServer(t)
 	seed := []*rpc.Project{
@@ -567,6 +591,9 @@ func TestListProjectsSequence(t *testing.T) {
 // This test prevents the list sequence from ending before a known filter match is listed.
 // For simplicity, it does not guarantee the resource is returned on a later page.
 func TestListProjectsLargeCollectionFiltering(t *testing.T) {
+	if adminServiceUnavailable() {
+		t.Skip(testRequiresAdminService)
+	}
 	ctx := context.Background()
 	server := defaultTestServer(t)
 	seed := make([]*rpc.Project, 0, 100)
@@ -600,6 +627,9 @@ func TestListProjectsLargeCollectionFiltering(t *testing.T) {
 }
 
 func TestUpdateProject(t *testing.T) {
+	if adminServiceUnavailable() {
+		t.Skip(testRequiresAdminService)
+	}
 	tests := []struct {
 		desc string
 		seed *rpc.Project
@@ -764,6 +794,9 @@ func TestUpdateProject(t *testing.T) {
 }
 
 func TestUpdateProjectResponseCodes(t *testing.T) {
+	if adminServiceUnavailable() {
+		t.Skip(testRequiresAdminService)
+	}
 	tests := []struct {
 		desc string
 		seed *rpc.Project
@@ -823,6 +856,9 @@ func TestUpdateProjectResponseCodes(t *testing.T) {
 }
 
 func TestDeleteProject(t *testing.T) {
+	if adminServiceUnavailable() {
+		t.Skip(testRequiresAdminService)
+	}
 	tests := []struct {
 		desc string
 		seed *rpc.Project
@@ -865,6 +901,9 @@ func TestDeleteProject(t *testing.T) {
 }
 
 func TestDeleteProjectResponseCodes(t *testing.T) {
+	if adminServiceUnavailable() {
+		t.Skip(testRequiresAdminService)
+	}
 	tests := []struct {
 		desc string
 		seed *rpc.Artifact
@@ -906,6 +945,9 @@ func TestDeleteProjectResponseCodes(t *testing.T) {
 }
 
 func TestDeleteProjectCascading(t *testing.T) {
+	if adminServiceUnavailable() {
+		t.Skip(testRequiresAdminService)
+	}
 	var (
 		ctx    = context.Background()
 		server = defaultTestServer(t)

@@ -28,6 +28,9 @@ import (
 )
 
 func TestMigrateDatabase(t *testing.T) {
+	if adminServiceUnavailable() {
+		t.Skip(testRequiresAdminService)
+	}
 	ctx := context.Background()
 	server := defaultTestServer(t)
 
@@ -64,6 +67,9 @@ func TestMigrateDatabase(t *testing.T) {
 }
 
 func TestMigrateDatabaseKinds(t *testing.T) {
+	if adminServiceUnavailable() {
+		t.Skip(testRequiresAdminService)
+	}
 	ctx := context.Background()
 	server := defaultTestServer(t)
 

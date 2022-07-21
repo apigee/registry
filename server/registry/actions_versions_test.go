@@ -367,6 +367,7 @@ func TestGetApiVersionResponseCodes(t *testing.T) {
 
 func TestListApiVersions(t *testing.T) {
 	tests := []struct {
+		admin     bool
 		desc      string
 		seed      []*rpc.ApiVersion
 		req       *rpc.ListApiVersionsRequest
@@ -394,7 +395,8 @@ func TestListApiVersions(t *testing.T) {
 			},
 		},
 		{
-			desc: "across all apis in a specific project",
+			admin: true,
+			desc:  "across all apis in a specific project",
 			seed: []*rpc.ApiVersion{
 				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
 				{Name: "projects/my-project/locations/global/apis/other-api/versions/v1"},
@@ -411,7 +413,8 @@ func TestListApiVersions(t *testing.T) {
 			},
 		},
 		{
-			desc: "across all projects and apis",
+			admin: true,
+			desc:  "across all projects and apis",
 			seed: []*rpc.ApiVersion{
 				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
 				{Name: "projects/other-project/locations/global/apis/other-api/versions/v1"},
@@ -427,7 +430,8 @@ func TestListApiVersions(t *testing.T) {
 			},
 		},
 		{
-			desc: "in a specific api across all projects",
+			admin: true,
+			desc:  "in a specific api across all projects",
 			seed: []*rpc.ApiVersion{
 				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
 				{Name: "projects/other-project/locations/global/apis/my-api/versions/v1"},
@@ -507,6 +511,9 @@ func TestListApiVersions(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
+			if test.admin && adminServiceUnavailable() {
+				t.Skip(testRequiresAdminService)
+			}
 			ctx := context.Background()
 			server := defaultTestServer(t)
 			if err := seeder.SeedVersions(ctx, server, test.seed...); err != nil {
@@ -543,9 +550,10 @@ func TestListApiVersions(t *testing.T) {
 
 func TestListApiVersionsResponseCodes(t *testing.T) {
 	tests := []struct {
-		desc string
-		req  *rpc.ListApiVersionsRequest
-		want codes.Code
+		admin bool
+		desc  string
+		req   *rpc.ListApiVersionsRequest
+		want  codes.Code
 	}{
 		{
 			desc: "parent api not found",
@@ -555,7 +563,8 @@ func TestListApiVersionsResponseCodes(t *testing.T) {
 			want: codes.NotFound,
 		},
 		{
-			desc: "parent project not found",
+			admin: true,
+			desc:  "parent project not found",
 			req: &rpc.ListApiVersionsRequest{
 				Parent: "projects/my-project/locations/global/apis/-",
 			},
@@ -586,6 +595,9 @@ func TestListApiVersionsResponseCodes(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
+			if test.admin && adminServiceUnavailable() {
+				t.Skip(testRequiresAdminService)
+			}
 			ctx := context.Background()
 			server := defaultTestServer(t)
 
