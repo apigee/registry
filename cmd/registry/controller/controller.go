@@ -22,7 +22,6 @@ import (
 
 	"github.com/apigee/registry/cmd/registry/patterns"
 	"github.com/apigee/registry/log"
-	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
 )
 
@@ -34,7 +33,7 @@ type Action struct {
 
 func ProcessManifest(
 	ctx context.Context,
-	client connection.RegistryClient,
+	client listingClient,
 	projectID string,
 	manifest *rpc.Manifest) []*Action {
 	var actions []*Action
@@ -68,7 +67,7 @@ func ProcessManifest(
 
 func processManifestResource(
 	ctx context.Context,
-	client connection.RegistryClient,
+	client listingClient,
 	projectID string,
 	generatedResource *rpc.GeneratedResource) ([]*Action, error) {
 	resourcePattern := fmt.Sprintf("projects/%s/locations/global/%s", projectID, generatedResource.Pattern)
@@ -91,7 +90,7 @@ func processManifestResource(
 
 func generateDependencyMap(
 	ctx context.Context,
-	client connection.RegistryClient,
+	client listingClient,
 	resourcePattern string,
 	dependency *rpc.Dependency) (map[string]time.Time, error) {
 	// Creates a map of the resources to group them into corresponding buckets
@@ -118,7 +117,7 @@ func generateDependencyMap(
 	}
 
 	// Fetch resources using the extDependencyQuery
-	sourceList, err := patterns.ListResources(ctx, client, extDependencyName.String(), dependency.Filter)
+	sourceList, err := listResources(ctx, client, extDependencyName.String(), dependency.Filter)
 	if err != nil {
 		return nil, err
 	}
@@ -145,7 +144,7 @@ func generateDependencyMap(
 
 func generateActions(
 	ctx context.Context,
-	client connection.RegistryClient,
+	client listingClient,
 	resourcePattern string,
 	filter string,
 	dependencyMaps []map[string]time.Time,
@@ -170,7 +169,7 @@ func generateActions(
 // Go over the list of existing target resources to figure out which ones need an update.
 func generateUpdateActions(
 	ctx context.Context,
-	client connection.RegistryClient,
+	client listingClient,
 	resourcePattern string,
 	filter string,
 	dependencyMaps []map[string]time.Time,
@@ -180,7 +179,7 @@ func generateUpdateActions(
 	actions := make([]*Action, 0)
 
 	// Generate resource list
-	resourceList, err := patterns.ListResources(ctx, client, resourcePattern, filter)
+	resourceList, err := listResources(ctx, client, resourcePattern, filter)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -245,7 +244,7 @@ func excludeVisitedParents(v map[string]bool) string {
 // we will use the parent resources to derive which new target resources should be created.
 func generateCreateActions(
 	ctx context.Context,
-	client connection.RegistryClient,
+	client listingClient,
 	resourcePattern string,
 	dependencyMaps []map[string]time.Time,
 	generatedResource *rpc.GeneratedResource,
@@ -280,14 +279,13 @@ func generateCreateActions(
 
 	default:
 		filter := excludeVisitedParents(visited)
-		parentList, err = patterns.ListResources(ctx, client, parentName.String(), filter)
+		parentList, err = listResources(ctx, client, parentName.String(), filter)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	actions := make([]*Action, 0)
-
 	for _, parent := range parentList {
 		// Since the GeneratedResource is non-existent here,
 		// we will have to derive the exact name of the target resource
@@ -348,8 +346,10 @@ func needsUpdate(
 			return false, nil
 		}
 
-		if maxUpdateTime.After(targetResourceTime) {
-			return true, nil // Take action if atleast one dependency timestamp is later than resource timestamp
+		// Take action if the target resource is less than n seconds newer compared to the dependencies, where n=thresholdSeconds.
+		// https://github.com/apigee/registry/issues/641
+		if maxUpdateTime.Add(patterns.ResourceUpdateThresholdSeconds).After(targetResourceTime) {
+			return true, nil
 		}
 	}
 	return false, nil

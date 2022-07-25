@@ -18,7 +18,6 @@ import (
 	"context"
 	"fmt"
 	"testing"
-	"time"
 
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/pkg/connection"
@@ -28,10 +27,7 @@ import (
 	"github.com/apigee/registry/server/registry/test/seeder"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/durationpb"
 )
 
 // TestMain will set up a local RegistryServer and grpc.Server for all
@@ -66,22 +62,6 @@ var styleguide = &rpc.StyleGuide{
 func protoMarshal(m proto.Message) []byte {
 	b, _ := proto.Marshal(m)
 	return b
-}
-
-func deleteProject(
-	ctx context.Context,
-	client connection.AdminClient,
-	t *testing.T,
-	projectID string) {
-	t.Helper()
-	req := &rpc.DeleteProjectRequest{
-		Name:  "projects/" + projectID,
-		Force: true,
-	}
-	err := client.DeleteProject(ctx, req)
-	if err != nil && status.Code(err) != codes.NotFound {
-		t.Fatalf("Failed DeleteProject(%v): %s", req, err.Error())
-	}
 }
 
 // Tests for artifacts as resources and specs as dependencies
@@ -137,73 +117,6 @@ func TestArtifacts(t *testing.T) {
 				},
 			},
 		},
-		{
-			desc: "partially existing artifacts",
-			seed: []seeder.RegistryResource{
-				&rpc.ApiSpec{
-					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
-					MimeType: gzipOpenAPIv3,
-				},
-				&rpc.ApiSpec{
-					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
-					MimeType: gzipOpenAPIv3,
-				},
-				&rpc.Artifact{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/lint-gnostic",
-				},
-				&rpc.ApiSpec{
-					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
-					MimeType: gzipOpenAPIv3,
-				},
-			},
-			want: []*Action{
-				{
-					Command:           "registry compute lint projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml --linter gnostic",
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic",
-				},
-				{
-					Command:           "registry compute lint projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml --linter gnostic",
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/lint-gnostic",
-				},
-			},
-		},
-		{
-			desc: "outdated artifacts",
-			seed: []seeder.RegistryResource{
-				&rpc.ApiSpec{
-					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
-					MimeType: gzipOpenAPIv3,
-				},
-				&rpc.Artifact{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic",
-				},
-				&rpc.ApiSpec{
-					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
-					MimeType: gzipOpenAPIv3,
-				},
-				&rpc.Artifact{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/lint-gnostic",
-				},
-				&rpc.ApiSpec{
-					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
-					MimeType: gzipOpenAPIv3,
-				},
-				&rpc.ApiSpec{
-					Name:     "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
-					MimeType: gzipOpenAPIv3,
-				},
-			},
-			want: []*Action{
-				{
-					Command:           "registry compute lint projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml --linter gnostic",
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/lint-gnostic",
-				},
-				{
-					Command:           "registry compute lint projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml --linter gnostic",
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/lint-gnostic",
-				},
-			},
-		},
 	}
 
 	const projectID = "controller-test"
@@ -229,6 +142,7 @@ func TestArtifacts(t *testing.T) {
 				RegistryClient: registryClient,
 				AdminClient:    adminClient,
 			}
+			lister := &RegistryLister{RegistryClient: registryClient}
 
 			if err := seeder.SeedRegistry(ctx, client, test.seed...); err != nil {
 				t.Fatalf("Setup: failed to seed registry: %s", err)
@@ -249,7 +163,7 @@ func TestArtifacts(t *testing.T) {
 					},
 				},
 			}
-			actions := ProcessManifest(ctx, registryClient, projectID, manifest)
+			actions := ProcessManifest(ctx, lister, projectID, manifest)
 
 			if diff := cmp.Diff(test.want, actions, sortActions); diff != "" {
 				t.Errorf("ProcessManifest(%+v) returned unexpected diff (-want +got):\n%s", manifest, diff)
@@ -300,47 +214,6 @@ func TestAggregateArtifacts(t *testing.T) {
 				},
 			},
 		},
-		{
-			desc: "outdated arttifacts",
-			seed: []seeder.RegistryResource{
-				// test api 1
-				&rpc.ApiSpec{
-					Name: "projects/controller-test/locations/global/apis/test-api-1/versions/1.0.0/specs/openapi.yaml",
-				},
-				&rpc.ApiSpec{
-					Name: "projects/controller-test/locations/global/apis/test-api-1/versions/1.1.0/specs/openapi.yaml",
-				},
-				&rpc.ApiSpec{
-					Name: "projects/controller-test/locations/global/apis/test-api-1/versions/1.0.1/specs/openapi.yaml",
-				},
-				&rpc.Artifact{
-					Name: "projects/controller-test/locations/global/apis/test-api-1/artifacts/vocabulary",
-				},
-				// test api 2
-				&rpc.ApiSpec{
-					Name: "projects/controller-test/locations/global/apis/test-api-2/versions/1.0.0/specs/openapi.yaml",
-				},
-				&rpc.ApiSpec{
-					Name: "projects/controller-test/locations/global/apis/test-api-2/versions/1.1.0/specs/openapi.yaml",
-				},
-				&rpc.ApiSpec{
-					Name: "projects/controller-test/locations/global/apis/test-api-2/versions/1.0.1/specs/openapi.yaml",
-				},
-				&rpc.Artifact{
-					Name: "projects/controller-test/locations/global/apis/test-api-2/artifacts/vocabulary",
-				},
-				// Update underlying spec to make artifact outdated
-				&rpc.ApiSpec{
-					Name: "projects/controller-test/locations/global/apis/test-api-2/versions/1.0.1/specs/openapi.yaml",
-				},
-			},
-			want: []*Action{
-				{
-					Command:           "registry compute vocabulary projects/controller-test/locations/global/apis/test-api-2",
-					GeneratedResource: "projects/controller-test/locations/global/apis/test-api-2/artifacts/vocabulary",
-				},
-			},
-		},
 	}
 
 	const projectID = "controller-test"
@@ -366,6 +239,7 @@ func TestAggregateArtifacts(t *testing.T) {
 				RegistryClient: registryClient,
 				AdminClient:    adminClient,
 			}
+			lister := &RegistryLister{RegistryClient: registryClient}
 
 			if err := seeder.SeedRegistry(ctx, client, test.seed...); err != nil {
 				t.Fatalf("Setup: failed to seed registry: %s", err)
@@ -386,13 +260,11 @@ func TestAggregateArtifacts(t *testing.T) {
 					},
 				},
 			}
-			actions := ProcessManifest(ctx, registryClient, projectID, manifest)
+			actions := ProcessManifest(ctx, lister, projectID, manifest)
 
 			if diff := cmp.Diff(test.want, actions, sortActions); diff != "" {
 				t.Errorf("ProcessManifest(%+v) returned unexpected diff (-want +got):\n%s", manifest, diff)
 			}
-
-			deleteProject(ctx, adminClient, t, "controller-test")
 		})
 	}
 }
@@ -482,64 +354,6 @@ func TestDerivedArtifacts(t *testing.T) {
 				},
 			},
 		},
-		{
-			desc: "outdated artifacts",
-			seed: []seeder.RegistryResource{
-				// version 1.0.0
-				&rpc.Artifact{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic",
-				},
-				&rpc.Artifact{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity",
-				},
-				&rpc.Artifact{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/summary",
-				},
-				// version 1.0.1
-				&rpc.Artifact{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/lint-gnostic",
-				},
-				&rpc.Artifact{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/complexity",
-				},
-				&rpc.Artifact{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/summary",
-				},
-				// version 1.1.0
-				&rpc.Artifact{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/lint-gnostic",
-				},
-				&rpc.Artifact{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/complexity",
-				},
-				&rpc.Artifact{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/summary",
-				},
-				// Make some artifacts outdated from the above setup
-				&rpc.Artifact{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic",
-				},
-				&rpc.Artifact{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/complexity",
-				},
-			},
-			want: []*Action{
-				{
-					Command: fmt.Sprintf(
-						"registry compute summary %s %s",
-						"projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic",
-						"projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity"),
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/summary",
-				},
-				{
-					Command: fmt.Sprintf(
-						"registry compute summary %s %s",
-						"projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/lint-gnostic",
-						"projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/complexity"),
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/summary",
-				},
-			},
-		},
 	}
 
 	const projectID = "controller-test"
@@ -565,6 +379,7 @@ func TestDerivedArtifacts(t *testing.T) {
 				RegistryClient: registryClient,
 				AdminClient:    adminClient,
 			}
+			lister := &RegistryLister{RegistryClient: registryClient}
 
 			if err := seeder.SeedRegistry(ctx, client, test.seed...); err != nil {
 				t.Fatalf("Setup: failed to seed registry: %s", err)
@@ -587,13 +402,11 @@ func TestDerivedArtifacts(t *testing.T) {
 					},
 				},
 			}
-			actions := ProcessManifest(ctx, registryClient, projectID, manifest)
+			actions := ProcessManifest(ctx, lister, projectID, manifest)
 
 			if diff := cmp.Diff(test.want, actions, sortActions); diff != "" {
 				t.Errorf("ProcessManifest(%+v) returned unexpected diff (-want +got):\n%s", manifest, diff)
 			}
-
-			deleteProject(ctx, adminClient, t, "controller-test")
 		})
 	}
 }
@@ -661,6 +474,7 @@ func TestReceiptArtifacts(t *testing.T) {
 				RegistryClient: registryClient,
 				AdminClient:    adminClient,
 			}
+			lister := &RegistryLister{RegistryClient: registryClient}
 
 			if err := seeder.SeedRegistry(ctx, client, test.seed...); err != nil {
 				t.Fatalf("Setup: failed to seed registry: %s", err)
@@ -681,13 +495,11 @@ func TestReceiptArtifacts(t *testing.T) {
 					},
 				},
 			}
-			actions := ProcessManifest(ctx, registryClient, projectID, manifest)
+			actions := ProcessManifest(ctx, lister, projectID, manifest)
 
 			if diff := cmp.Diff(test.want, actions, sortActions); diff != "" {
 				t.Errorf("ProcessManifest(%+v) returned unexpected diff (-want +got):\n%s", manifest, diff)
 			}
-
-			deleteProject(ctx, adminClient, t, "controller-test")
 		})
 	}
 }
@@ -770,6 +582,7 @@ func TestReceiptAggArtifacts(t *testing.T) {
 				RegistryClient: registryClient,
 				AdminClient:    adminClient,
 			}
+			lister := &RegistryLister{RegistryClient: registryClient}
 
 			if err := seeder.SeedRegistry(ctx, client, test.seed...); err != nil {
 				t.Fatalf("Setup: failed to seed registry: %s", err)
@@ -790,13 +603,11 @@ func TestReceiptAggArtifacts(t *testing.T) {
 					},
 				},
 			}
-			actions := ProcessManifest(ctx, registryClient, projectID, manifest)
+			actions := ProcessManifest(ctx, lister, projectID, manifest)
 
 			if diff := cmp.Diff(test.want, actions, sortActions); diff != "" {
 				t.Errorf("ProcessManifest(%+v) returned unexpected diff (-want +got):\n%s", manifest, diff)
 			}
-
-			deleteProject(ctx, adminClient, t, "controller-test")
 		})
 	}
 }
@@ -937,6 +748,7 @@ func TestMultipleEntitiesArtifacts(t *testing.T) {
 				RegistryClient: registryClient,
 				AdminClient:    adminClient,
 			}
+			lister := &RegistryLister{RegistryClient: registryClient}
 
 			if err := seeder.SeedRegistry(ctx, client, test.seed...); err != nil {
 				t.Fatalf("Setup: failed to seed registry: %s", err)
@@ -960,169 +772,11 @@ func TestMultipleEntitiesArtifacts(t *testing.T) {
 					},
 				},
 			}
-			actions := ProcessManifest(ctx, registryClient, projectID, manifest)
+			actions := ProcessManifest(ctx, lister, projectID, manifest)
 
 			if diff := cmp.Diff(test.want, actions, sortActions); diff != "" {
 				t.Errorf("ProcessManifest(%+v) returned unexpected diff (-want +got):\n%s", manifest, diff)
 			}
-
-			deleteProject(ctx, adminClient, t, "controller-test")
-		})
-	}
-}
-
-func TestRefreshArtifacts(t *testing.T) {
-	tests := []struct {
-		desc string
-		seed []seeder.RegistryResource
-		want []*Action
-		wait time.Duration
-	}{
-		{
-			desc: "non-existing artifacts",
-			seed: []seeder.RegistryResource{
-				&rpc.ApiSpec{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
-				},
-				&rpc.ApiSpec{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
-				},
-				&rpc.ApiSpec{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
-				},
-			},
-			want: []*Action{
-				{
-					Command:           "registry compute score projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-receipt",
-					RequiresReceipt:   true,
-				},
-				{
-					Command:           "registry compute score projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/score-receipt",
-					RequiresReceipt:   true,
-				},
-				{
-					Command:           "registry compute score projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/score-receipt",
-					RequiresReceipt:   true,
-				},
-			},
-		},
-		{
-			desc: "existing valid artifacts",
-			seed: []seeder.RegistryResource{
-				&rpc.Artifact{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-receipt",
-				},
-				&rpc.Artifact{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/score-receipt",
-				},
-				&rpc.Artifact{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/score-receipt",
-				},
-			},
-			want: nil,
-		},
-		{
-			desc: "existing invalid artifacts",
-			seed: []seeder.RegistryResource{
-				&rpc.Artifact{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-receipt",
-				},
-				&rpc.Artifact{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/score-receipt",
-				},
-				&rpc.Artifact{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/score-receipt",
-				},
-			},
-			want: []*Action{
-				{
-					Command:           "registry compute score projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-receipt",
-					RequiresReceipt:   true,
-				},
-				{
-					Command:           "registry compute score projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/score-receipt",
-					RequiresReceipt:   true,
-				},
-				{
-					Command:           "registry compute score projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
-					GeneratedResource: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/score-receipt",
-					RequiresReceipt:   true,
-				},
-			},
-			wait: 5,
-		},
-		{
-			desc: "existing valid artifacts",
-			seed: []seeder.RegistryResource{
-				&rpc.Artifact{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-receipt",
-				},
-				&rpc.Artifact{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/score-receipt",
-				},
-				&rpc.Artifact{
-					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/score-receipt",
-				},
-			},
-			want: nil,
-		},
-	}
-
-	const projectID = "controller-test"
-	for _, test := range tests {
-		t.Run(test.desc, func(t *testing.T) {
-			ctx := context.Background()
-			registryClient, err := connection.NewRegistryClient(ctx)
-			if err != nil {
-				t.Fatalf("Failed to create client: %+v", err)
-			}
-			t.Cleanup(func() { registryClient.Close() })
-
-			adminClient, err := connection.NewAdminClient(ctx)
-			if err != nil {
-				t.Fatalf("Failed to create client: %+v", err)
-			}
-			t.Cleanup(func() { adminClient.Close() })
-
-			deleteProject(ctx, adminClient, t, "controller-test")
-			t.Cleanup(func() { deleteProject(ctx, adminClient, t, "controller-test") })
-
-			client := seeder.Client{
-				RegistryClient: registryClient,
-				AdminClient:    adminClient,
-			}
-
-			if err := seeder.SeedRegistry(ctx, client, test.seed...); err != nil {
-				t.Fatalf("Setup: failed to seed registry: %s", err)
-			}
-
-			time.Sleep(test.wait * time.Second)
-
-			manifest := &rpc.Manifest{
-				Id: "controller-test",
-				GeneratedResources: []*rpc.GeneratedResource{
-					{
-						Pattern: "apis/-/versions/-/specs/-/artifacts/score-receipt",
-						Receipt: true,
-						Refresh: &durationpb.Duration{
-							Seconds: 2,
-						},
-						Action: "registry compute score $resource.spec",
-					},
-				},
-			}
-			actions := ProcessManifest(ctx, registryClient, projectID, manifest)
-
-			if diff := cmp.Diff(test.want, actions, sortActions); diff != "" {
-				t.Errorf("ProcessManifest(%+v) returned unexpected diff (-want +got):\n%s", manifest, diff)
-			}
-
-			deleteProject(ctx, adminClient, t, "controller-test")
 		})
 	}
 }
