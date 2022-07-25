@@ -841,6 +841,117 @@ func TestListArtifacts(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "ordered by mime_type",
+			seed: []*rpc.Artifact{
+				{
+					Name:     "projects/my-project/locations/global/artifacts/artifact1",
+					MimeType: "111: this should be returned first",
+				},
+				{
+					Name:     "projects/my-project/locations/global/artifacts/artifact2",
+					MimeType: "333: this should be returned third",
+				},
+				{
+					Name:     "projects/my-project/locations/global/artifacts/artifact3",
+					MimeType: "222: this should be returned second",
+				},
+			},
+			req: &rpc.ListArtifactsRequest{
+				Parent:  "projects/my-project/locations/global",
+				OrderBy: "mime_type",
+			},
+			want: &rpc.ListArtifactsResponse{
+				Artifacts: []*rpc.Artifact{
+					{
+						Name:     "projects/my-project/locations/global/artifacts/artifact1",
+						MimeType: "111: this should be returned first",
+					},
+					{
+						Name:     "projects/my-project/locations/global/artifacts/artifact3",
+						MimeType: "222: this should be returned second",
+					},
+					{
+						Name:     "projects/my-project/locations/global/artifacts/artifact2",
+						MimeType: "333: this should be returned third",
+					},
+				},
+			},
+		},
+		{
+			desc: "ordered by mime_type descending",
+			seed: []*rpc.Artifact{
+				{
+					Name:     "projects/my-project/locations/global/artifacts/artifact1",
+					MimeType: "111: this should be returned third",
+				},
+				{
+					Name:     "projects/my-project/locations/global/artifacts/artifact2",
+					MimeType: "333: this should be returned first",
+				},
+				{
+					Name:     "projects/my-project/locations/global/artifacts/artifact3",
+					MimeType: "222: this should be returned second",
+				},
+			},
+			req: &rpc.ListArtifactsRequest{
+				Parent:  "projects/my-project/locations/global",
+				OrderBy: "mime_type desc",
+			},
+			want: &rpc.ListArtifactsResponse{
+				Artifacts: []*rpc.Artifact{
+					{
+						Name:     "projects/my-project/locations/global/artifacts/artifact2",
+						MimeType: "333: this should be returned first",
+					},
+					{
+						Name:     "projects/my-project/locations/global/artifacts/artifact3",
+						MimeType: "222: this should be returned second",
+					},
+					{
+						Name:     "projects/my-project/locations/global/artifacts/artifact1",
+						MimeType: "111: this should be returned third",
+					},
+				},
+			},
+		},
+		{
+			desc: "ordered by mime_type then by name",
+			seed: []*rpc.Artifact{
+				{
+					Name:     "projects/my-project/locations/global/artifacts/artifact1",
+					MimeType: "222: this should be returned second or third (the name is the tie-breaker)",
+				},
+				{
+					Name:     "projects/my-project/locations/global/artifacts/artifact3",
+					MimeType: "111: this should be returned first",
+				},
+				{
+					Name:     "projects/my-project/locations/global/artifacts/artifact2",
+					MimeType: "222: this should be returned second or third (the name is the tie-breaker)",
+				},
+			},
+			req: &rpc.ListArtifactsRequest{
+				Parent:  "projects/my-project/locations/global",
+				OrderBy: "mime_type,name",
+			},
+			want: &rpc.ListArtifactsResponse{
+				Artifacts: []*rpc.Artifact{
+					{
+						Name:     "projects/my-project/locations/global/artifacts/artifact3",
+						MimeType: "111: this should be returned first",
+					},
+					{
+						Name:     "projects/my-project/locations/global/artifacts/artifact1",
+						MimeType: "222: this should be returned second or third (the name is the tie-breaker)",
+					},
+					{
+						Name:     "projects/my-project/locations/global/artifacts/artifact2",
+						MimeType: "222: this should be returned second or third (the name is the tie-breaker)",
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -863,9 +974,6 @@ func TestListArtifacts(t *testing.T) {
 				protocmp.Transform(),
 				protocmp.IgnoreFields(new(rpc.ListArtifactsResponse), "next_page_token"),
 				protocmp.IgnoreFields(new(rpc.Artifact), "create_time", "update_time"),
-				protocmp.SortRepeated(func(a, b *rpc.Artifact) bool {
-					return a.GetName() < b.GetName()
-				}),
 				test.extraOpts,
 			}
 
@@ -886,6 +994,7 @@ func TestListArtifactsResponseCodes(t *testing.T) {
 	tests := []struct {
 		admin bool
 		desc  string
+		seed  *rpc.Artifact
 		req   *rpc.ListArtifactsRequest
 		want  codes.Code
 	}{
@@ -932,6 +1041,42 @@ func TestListArtifactsResponseCodes(t *testing.T) {
 			},
 			want: codes.InvalidArgument,
 		},
+		{
+			desc: "invalid ordering by unknown field",
+			seed: &rpc.Artifact{Name: "projects/my-project/locations/global/artifacts/my-artifact"},
+			req: &rpc.ListArtifactsRequest{
+				Parent:  "projects/my-project/locations/global",
+				OrderBy: "something",
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "invalid ordering by private field",
+			seed: &rpc.Artifact{Name: "projects/my-project/locations/global/artifacts/my-artifact"},
+			req: &rpc.ListArtifactsRequest{
+				Parent:  "projects/my-project/locations/global",
+				OrderBy: "key",
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "invalid ordering direction",
+			seed: &rpc.Artifact{Name: "projects/my-project/locations/global/artifacts/my-artifact"},
+			req: &rpc.ListArtifactsRequest{
+				Parent:  "projects/my-project/locations/global",
+				OrderBy: "description asc",
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "invalid ordering format",
+			seed: &rpc.Artifact{Name: "projects/my-project/locations/global/artifacts/my-artifact"},
+			req: &rpc.ListArtifactsRequest{
+				Parent:  "projects/my-project/locations/global",
+				OrderBy: "description,",
+			},
+			want: codes.InvalidArgument,
+		},
 	}
 
 	for _, test := range tests {
@@ -941,6 +1086,9 @@ func TestListArtifactsResponseCodes(t *testing.T) {
 			}
 			ctx := context.Background()
 			server := defaultTestServer(t)
+			if err := seeder.SeedArtifacts(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			if _, err := server.ListArtifacts(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("ListArtifacts(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)

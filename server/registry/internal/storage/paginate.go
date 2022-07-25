@@ -19,6 +19,8 @@ import (
 	"encoding/base64"
 	"encoding/gob"
 	"fmt"
+
+	"github.com/apigee/registry/server/registry/internal/storage/filtering"
 )
 
 // PageOptions contains custom arguments for listing requests.
@@ -28,6 +30,8 @@ type PageOptions struct {
 	Size int32
 	// Filter is the filter string for this listing request, as described at https://google.aip.dev/160.
 	Filter string
+	// Order is the sorting order for this listing request, as described at https://google.aip.dev/132#ordering.
+	Order string
 	// Token is a value returned from with a previous page in a series of listing requests.
 	// If specified, listing will continue from the end of the previous page. Otherwise,
 	// the first page in a listing series will be returned.
@@ -41,6 +45,8 @@ type token struct {
 	Offset int
 	// Filter is the filter string for this listing request. It should be consistent between sequential pages.
 	Filter string
+	// Order is the sorting order for this listing request. It should be consistent between sequential pages.
+	Order string
 }
 
 // ValidateFilter returns an error if the new filter doesn't match the token's encoded filter.
@@ -48,6 +54,17 @@ type token struct {
 func (t token) ValidateFilter(newFilter string) error {
 	if t.Offset > 0 && newFilter != t.Filter {
 		return fmt.Errorf("new filter does not match previous filter %q", t.Filter)
+	}
+
+	return nil
+}
+
+// ValidateOrder returns an error if the new order doesn't match the token's encoded order, or
+// if the format of the ordering string is invalid.
+// When the token represents the first page, any order is valid and no error will be returned.
+func (t token) ValidateOrder(newOrder string, fields map[string]filtering.FieldType) error {
+	if t.Offset > 0 && newOrder != t.Order {
+		return fmt.Errorf("new order does not match previous order %q", t.Order)
 	}
 
 	return nil

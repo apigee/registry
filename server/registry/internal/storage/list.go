@@ -16,6 +16,7 @@ package storage
 
 import (
 	"context"
+	"strings"
 
 	"github.com/apigee/registry/server/registry/internal/storage/filtering"
 	"github.com/apigee/registry/server/registry/internal/storage/models"
@@ -24,6 +25,51 @@ import (
 	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
 )
+
+func gormOrdering(ordering string, fields map[string]filtering.FieldType) (string, error) {
+	if ordering == "" {
+		return "key", nil
+	}
+
+	clauses := make([]string, 0)
+	for _, v := range strings.Split(ordering, ",") {
+		v = strings.TrimSpace(v)
+
+		// Check if the field is specified in descending order and trim it from the string.
+		// After this point only the field name should remain.
+		descending := strings.HasSuffix(v, " desc")
+		v = strings.TrimSuffix(v, "desc")
+		v = strings.TrimSpace(v)
+
+		if strings.Contains(v, " ") {
+			return "", status.Errorf(codes.InvalidArgument, "invalid order_by field %q: too many parts", v)
+		} else if len(v) == 0 {
+			return "", status.Errorf(codes.InvalidArgument, "invalid order_by field %q: missing field name", v)
+		}
+
+		// Check if the field is valid for this model type and replace it with the internal name if needed.
+		// After this point, the clause should contain an internal field name.
+		var clause string
+		for field := range fields {
+			if field == v && field == "name" {
+				clause = "key"
+			} else if field == v {
+				clause = field
+			}
+		}
+		if len(clause) == 0 {
+			return ordering, status.Errorf(codes.InvalidArgument, "unknown field name %q", v)
+		}
+
+		if descending {
+			clauses = append(clauses, clause+" desc")
+		} else {
+			clauses = append(clauses, clause)
+		}
+	}
+
+	return strings.Join(clauses, ","), nil
+}
 
 // limit returns the database page size to use for a listing request.
 func limit(opts PageOptions) int {
@@ -43,13 +89,13 @@ type ProjectList struct {
 	Token    string
 }
 
-var projectFields = []filtering.Field{
-	{Name: "name", Type: filtering.String},
-	{Name: "project_id", Type: filtering.String},
-	{Name: "display_name", Type: filtering.String},
-	{Name: "description", Type: filtering.String},
-	{Name: "create_time", Type: filtering.Timestamp},
-	{Name: "update_time", Type: filtering.Timestamp},
+var projectFields = map[string]filtering.FieldType{
+	"name":         filtering.String,
+	"project_id":   filtering.String,
+	"display_name": filtering.String,
+	"description":  filtering.String,
+	"create_time":  filtering.Timestamp,
+	"update_time":  filtering.Timestamp,
 }
 
 func (c *Client) ListProjects(ctx context.Context, opts PageOptions) (ProjectList, error) {
@@ -64,7 +110,18 @@ func (c *Client) ListProjects(ctx context.Context, opts PageOptions) (ProjectLis
 		token.Filter = opts.Filter
 	}
 
+	if err := token.ValidateOrder(opts.Order, projectFields); err != nil {
+		return ProjectList{}, status.Errorf(codes.InvalidArgument, "invalid order_by %q: %s", opts.Order, err)
+	} else {
+		token.Order = opts.Order
+	}
+
 	filter, err := filtering.NewFilter(opts.Filter, projectFields)
+	if err != nil {
+		return ProjectList{}, err
+	}
+
+	order, err := gormOrdering(opts.Order, projectFields)
 	if err != nil {
 		return ProjectList{}, err
 	}
@@ -75,7 +132,7 @@ func (c *Client) ListProjects(ctx context.Context, opts PageOptions) (ProjectLis
 
 	for {
 		var page []models.Project
-		op := c.db.WithContext(ctx).Order("key").Limit(limit(opts))
+		op := c.db.WithContext(ctx).Order(order).Limit(limit(opts))
 		err := op.Offset(token.Offset).Find(&page).Error
 
 		if err != nil {
@@ -126,18 +183,18 @@ type ApiList struct {
 	Token string
 }
 
-var apiFields = []filtering.Field{
-	{Name: "name", Type: filtering.String},
-	{Name: "project_id", Type: filtering.String},
-	{Name: "api_id", Type: filtering.String},
-	{Name: "display_name", Type: filtering.String},
-	{Name: "description", Type: filtering.String},
-	{Name: "create_time", Type: filtering.Timestamp},
-	{Name: "update_time", Type: filtering.Timestamp},
-	{Name: "availability", Type: filtering.String},
-	{Name: "recommended_version", Type: filtering.String},
-	{Name: "recommended_deployment", Type: filtering.String},
-	{Name: "labels", Type: filtering.StringMap},
+var apiFields = map[string]filtering.FieldType{
+	"name":                   filtering.String,
+	"project_id":             filtering.String,
+	"api_id":                 filtering.String,
+	"display_name":           filtering.String,
+	"description":            filtering.String,
+	"create_time":            filtering.Timestamp,
+	"update_time":            filtering.Timestamp,
+	"availability":           filtering.String,
+	"recommended_version":    filtering.String,
+	"recommended_deployment": filtering.String,
+	"labels":                 filtering.StringMap,
 }
 
 func (c *Client) ListApis(ctx context.Context, parent names.Project, opts PageOptions) (ApiList, error) {
@@ -152,8 +209,13 @@ func (c *Client) ListApis(ctx context.Context, parent names.Project, opts PageOp
 		token.Filter = opts.Filter
 	}
 
+	if err := token.ValidateOrder(opts.Order, apiFields); err != nil {
+		return ApiList{}, status.Errorf(codes.InvalidArgument, "invalid order_by %q: %s", opts.Order, err)
+	} else {
+		token.Order = opts.Order
+	}
+
 	op := c.db.WithContext(ctx).
-		Order("key").
 		Limit(limit(opts))
 
 	if parent.ProjectID != "-" {
@@ -166,6 +228,12 @@ func (c *Client) ListApis(ctx context.Context, parent names.Project, opts PageOp
 	filter, err := filtering.NewFilter(opts.Filter, apiFields)
 	if err != nil {
 		return ApiList{}, err
+	}
+
+	if order, err := gormOrdering(opts.Order, apiFields); err != nil {
+		return ApiList{}, err
+	} else {
+		op = op.Order(order)
 	}
 
 	response := ApiList{
@@ -238,17 +306,17 @@ type VersionList struct {
 	Token    string
 }
 
-var versionFields = []filtering.Field{
-	{Name: "name", Type: filtering.String},
-	{Name: "project_id", Type: filtering.String},
-	{Name: "api_id", Type: filtering.String},
-	{Name: "version_id", Type: filtering.String},
-	{Name: "display_name", Type: filtering.String},
-	{Name: "description", Type: filtering.String},
-	{Name: "create_time", Type: filtering.Timestamp},
-	{Name: "update_time", Type: filtering.Timestamp},
-	{Name: "state", Type: filtering.String},
-	{Name: "labels", Type: filtering.StringMap},
+var versionFields = map[string]filtering.FieldType{
+	"name":         filtering.String,
+	"project_id":   filtering.String,
+	"api_id":       filtering.String,
+	"version_id":   filtering.String,
+	"display_name": filtering.String,
+	"description":  filtering.String,
+	"create_time":  filtering.Timestamp,
+	"update_time":  filtering.Timestamp,
+	"state":        filtering.String,
+	"labels":       filtering.StringMap,
 }
 
 func (c *Client) ListVersions(ctx context.Context, parent names.Api, opts PageOptions) (VersionList, error) {
@@ -261,6 +329,12 @@ func (c *Client) ListVersions(ctx context.Context, parent names.Api, opts PageOp
 		return VersionList{}, status.Errorf(codes.InvalidArgument, "invalid filter %q: %s", opts.Filter, err)
 	} else {
 		token.Filter = opts.Filter
+	}
+
+	if err := token.ValidateOrder(opts.Order, versionFields); err != nil {
+		return VersionList{}, status.Errorf(codes.InvalidArgument, "invalid order_by %q: %s", opts.Order, err)
+	} else {
+		token.Order = opts.Order
 	}
 
 	if parent.ProjectID != "-" && parent.ApiID != "-" {
@@ -278,15 +352,18 @@ func (c *Client) ListVersions(ctx context.Context, parent names.Api, opts PageOp
 		return VersionList{}, err
 	}
 
-	op := c.db.WithContext(ctx).
-		Order("key").
-		Limit(limit(opts))
-
+	op := c.db.WithContext(ctx).Limit(limit(opts))
 	if parent.ProjectID != "-" {
 		op = op.Where("project_id = ?", parent.ProjectID)
 	}
 	if parent.ApiID != "-" {
 		op = op.Where("api_id = ?", parent.ApiID)
+	}
+
+	if order, err := gormOrdering(opts.Order, versionFields); err != nil {
+		return VersionList{}, err
+	} else {
+		op = op.Order(order)
 	}
 
 	response := VersionList{
@@ -358,21 +435,21 @@ type SpecList struct {
 	Token string
 }
 
-var specFields = []filtering.Field{
-	{Name: "name", Type: filtering.String},
-	{Name: "project_id", Type: filtering.String},
-	{Name: "api_id", Type: filtering.String},
-	{Name: "version_id", Type: filtering.String},
-	{Name: "spec_id", Type: filtering.String},
-	{Name: "filename", Type: filtering.String},
-	{Name: "description", Type: filtering.String},
-	{Name: "create_time", Type: filtering.Timestamp},
-	{Name: "revision_create_time", Type: filtering.Timestamp},
-	{Name: "revision_update_time", Type: filtering.Timestamp},
-	{Name: "mime_type", Type: filtering.String},
-	{Name: "size_bytes", Type: filtering.Int},
-	{Name: "source_uri", Type: filtering.String},
-	{Name: "labels", Type: filtering.StringMap},
+var specFields = map[string]filtering.FieldType{
+	"name":                 filtering.String,
+	"project_id":           filtering.String,
+	"api_id":               filtering.String,
+	"version_id":           filtering.String,
+	"spec_id":              filtering.String,
+	"filename":             filtering.String,
+	"description":          filtering.String,
+	"create_time":          filtering.Timestamp,
+	"revision_create_time": filtering.Timestamp,
+	"revision_update_time": filtering.Timestamp,
+	"mime_type":            filtering.String,
+	"size_bytes":           filtering.Int,
+	"source_uri":           filtering.String,
+	"labels":               filtering.StringMap,
 }
 
 func (c *Client) ListSpecs(ctx context.Context, parent names.Version, opts PageOptions) (SpecList, error) {
@@ -385,6 +462,12 @@ func (c *Client) ListSpecs(ctx context.Context, parent names.Version, opts PageO
 		return SpecList{}, status.Errorf(codes.InvalidArgument, "invalid filter %q: %s", opts.Filter, err)
 	} else {
 		token.Filter = opts.Filter
+	}
+
+	if err := token.ValidateOrder(opts.Order, specFields); err != nil {
+		return SpecList{}, status.Errorf(codes.InvalidArgument, "invalid order_by %q: %s", opts.Order, err)
+	} else {
+		token.Order = opts.Order
 	}
 
 	if parent.ProjectID != "-" && parent.ApiID != "-" && parent.VersionID != "-" {
@@ -418,7 +501,6 @@ func (c *Client) ListSpecs(ctx context.Context, parent names.Version, opts PageO
 			c.db.WithContext(ctx).Select("project_id, api_id, version_id, spec_id, MAX(revision_create_time) AS recent_create_time").
 				Table("specs").
 				Group("project_id, api_id, version_id, spec_id")).
-		Order("key").
 		Limit(limit(opts))
 
 	if parent.ProjectID != "-" {
@@ -429,6 +511,12 @@ func (c *Client) ListSpecs(ctx context.Context, parent names.Version, opts PageO
 	}
 	if parent.VersionID != "-" {
 		op = op.Where("specs.version_id = ?", parent.VersionID)
+	}
+
+	if order, err := gormOrdering(opts.Order, specFields); err != nil {
+		return SpecList{}, err
+	} else {
+		op = op.Order(order)
 	}
 
 	response := SpecList{
@@ -573,22 +661,22 @@ type DeploymentList struct {
 	Token       string
 }
 
-var deploymentFields = []filtering.Field{
-	{Name: "name", Type: filtering.String},
-	{Name: "project_id", Type: filtering.String},
-	{Name: "api_id", Type: filtering.String},
-	{Name: "deployment_id", Type: filtering.String},
-	{Name: "display_name", Type: filtering.String},
-	{Name: "description", Type: filtering.String},
-	{Name: "create_time", Type: filtering.Timestamp},
-	{Name: "revision_create_time", Type: filtering.Timestamp},
-	{Name: "revision_update_time", Type: filtering.Timestamp},
-	{Name: "api_spec_revision", Type: filtering.String},
-	{Name: "endpoint_uri", Type: filtering.String},
-	{Name: "external_channel_uri", Type: filtering.String},
-	{Name: "intended_audience", Type: filtering.String},
-	{Name: "access_guidance", Type: filtering.String},
-	{Name: "labels", Type: filtering.StringMap},
+var deploymentFields = map[string]filtering.FieldType{
+	"name":                 filtering.String,
+	"project_id":           filtering.String,
+	"api_id":               filtering.String,
+	"deployment_id":        filtering.String,
+	"display_name":         filtering.String,
+	"description":          filtering.String,
+	"create_time":          filtering.Timestamp,
+	"revision_create_time": filtering.Timestamp,
+	"revision_update_time": filtering.Timestamp,
+	"api_spec_revision":    filtering.String,
+	"endpoint_uri":         filtering.String,
+	"external_channel_uri": filtering.String,
+	"intended_audience":    filtering.String,
+	"access_guidance":      filtering.String,
+	"labels":               filtering.StringMap,
 }
 
 func (c *Client) ListDeployments(ctx context.Context, parent names.Api, opts PageOptions) (DeploymentList, error) {
@@ -601,6 +689,12 @@ func (c *Client) ListDeployments(ctx context.Context, parent names.Api, opts Pag
 		return DeploymentList{}, status.Errorf(codes.InvalidArgument, "invalid filter %q: %s", opts.Filter, err)
 	} else {
 		token.Filter = opts.Filter
+	}
+
+	if err := token.ValidateOrder(opts.Order, deploymentFields); err != nil {
+		return DeploymentList{}, status.Errorf(codes.InvalidArgument, "invalid order_by %q: %s", opts.Order, err)
+	} else {
+		token.Order = opts.Order
 	}
 
 	if parent.ProjectID != "-" && parent.ApiID != "-" {
@@ -630,7 +724,6 @@ func (c *Client) ListDeployments(ctx context.Context, parent names.Api, opts Pag
 			c.db.WithContext(ctx).Select("project_id, api_id, deployment_id, MAX(revision_create_time) AS recent_create_time").
 				Table("deployments").
 				Group("project_id, api_id, deployment_id")).
-		Order("key").
 		Limit(limit(opts))
 
 	if parent.ProjectID != "-" {
@@ -638,6 +731,12 @@ func (c *Client) ListDeployments(ctx context.Context, parent names.Api, opts Pag
 	}
 	if parent.ApiID != "-" {
 		op = op.Where("deployments.api_id = ?", parent.ApiID)
+	}
+
+	if order, err := gormOrdering(opts.Order, deploymentFields); err != nil {
+		return DeploymentList{}, err
+	} else {
+		op = op.Order(order)
 	}
 
 	response := DeploymentList{
@@ -774,17 +873,17 @@ type ArtifactList struct {
 	Token     string
 }
 
-var artifactFields = []filtering.Field{
-	{Name: "name", Type: filtering.String},
-	{Name: "project_id", Type: filtering.String},
-	{Name: "api_id", Type: filtering.String},
-	{Name: "version_id", Type: filtering.String},
-	{Name: "spec_id", Type: filtering.String},
-	{Name: "artifact_id", Type: filtering.String},
-	{Name: "create_time", Type: filtering.Timestamp},
-	{Name: "update_time", Type: filtering.Timestamp},
-	{Name: "mime_type", Type: filtering.String},
-	{Name: "size_bytes", Type: filtering.Int},
+var artifactFields = map[string]filtering.FieldType{
+	"name":        filtering.String,
+	"project_id":  filtering.String,
+	"api_id":      filtering.String,
+	"version_id":  filtering.String,
+	"spec_id":     filtering.String,
+	"artifact_id": filtering.String,
+	"create_time": filtering.Timestamp,
+	"update_time": filtering.Timestamp,
+	"mime_type":   filtering.String,
+	"size_bytes":  filtering.Int,
 }
 
 func (c *Client) ListSpecArtifacts(ctx context.Context, parent names.Spec, opts PageOptions) (ArtifactList, error) {
@@ -797,6 +896,12 @@ func (c *Client) ListSpecArtifacts(ctx context.Context, parent names.Spec, opts 
 		return ArtifactList{}, status.Errorf(codes.InvalidArgument, "invalid filter %q: %s", opts.Filter, err)
 	} else {
 		token.Filter = opts.Filter
+	}
+
+	if err := token.ValidateOrder(opts.Order, artifactFields); err != nil {
+		return ArtifactList{}, status.Errorf(codes.InvalidArgument, "invalid order_by %q: %s", opts.Order, err)
+	} else {
+		token.Order = opts.Order
 	}
 
 	if parent.ProjectID != "-" && parent.ApiID != "-" && parent.VersionID != "-" && parent.SpecID != "-" {
@@ -848,6 +953,12 @@ func (c *Client) ListVersionArtifacts(ctx context.Context, parent names.Version,
 		token.Filter = opts.Filter
 	}
 
+	if err := token.ValidateOrder(opts.Order, artifactFields); err != nil {
+		return ArtifactList{}, status.Errorf(codes.InvalidArgument, "invalid order_by %q: %s", opts.Order, err)
+	} else {
+		token.Order = opts.Order
+	}
+
 	if parent.ProjectID != "-" && parent.ApiID != "-" && parent.VersionID != "-" {
 		if _, err := c.GetVersion(ctx, parent); err != nil {
 			return ArtifactList{}, err
@@ -890,6 +1001,12 @@ func (c *Client) ListDeploymentArtifacts(ctx context.Context, parent names.Deplo
 		return ArtifactList{}, status.Errorf(codes.InvalidArgument, "invalid filter %q: %s", opts.Filter, err)
 	} else {
 		token.Filter = opts.Filter
+	}
+
+	if err := token.ValidateOrder(opts.Order, artifactFields); err != nil {
+		return ArtifactList{}, status.Errorf(codes.InvalidArgument, "invalid order_by %q: %s", opts.Order, err)
+	} else {
+		token.Order = opts.Order
 	}
 
 	if parent.ProjectID != "-" && parent.ApiID != "-" && parent.DeploymentID != "-" {
@@ -936,6 +1053,12 @@ func (c *Client) ListApiArtifacts(ctx context.Context, parent names.Api, opts Pa
 		token.Filter = opts.Filter
 	}
 
+	if err := token.ValidateOrder(opts.Order, artifactFields); err != nil {
+		return ArtifactList{}, status.Errorf(codes.InvalidArgument, "invalid order_by %q: %s", opts.Order, err)
+	} else {
+		token.Order = opts.Order
+	}
+
 	if parent.ProjectID != "-" && parent.ApiID != "-" {
 		if _, err := c.GetApi(ctx, parent); err != nil {
 			return ArtifactList{}, err
@@ -974,6 +1097,12 @@ func (c *Client) ListProjectArtifacts(ctx context.Context, parent names.Project,
 		token.Filter = opts.Filter
 	}
 
+	if err := token.ValidateOrder(opts.Order, artifactFields); err != nil {
+		return ArtifactList{}, status.Errorf(codes.InvalidArgument, "invalid order_by %q: %s", opts.Order, err)
+	} else {
+		token.Order = opts.Order
+	}
+
 	op := c.db.WithContext(ctx).
 		Where(`api_id = ''`).
 		Where(`deployment_id = ''`).
@@ -1002,6 +1131,12 @@ func (c *Client) listArtifacts(op *gorm.DB, opts PageOptions, include func(*mode
 	filter, err := filtering.NewFilter(opts.Filter, artifactFields)
 	if err != nil {
 		return ArtifactList{}, err
+	}
+
+	if order, err := gormOrdering(opts.Order, artifactFields); err != nil {
+		return ArtifactList{}, err
+	} else {
+		op = op.Order(order)
 	}
 
 	response := ArtifactList{
