@@ -20,6 +20,8 @@ import (
 )
 
 func TestClientBadConfig(t *testing.T) {
+	defer cleanConfigDir(t)()
+
 	_, err := NewRegistryClient(context.Background())
 	if err == nil {
 		t.Errorf("expected error")

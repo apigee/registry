@@ -260,7 +260,7 @@ func TestAllConfigs(t *testing.T) {
 	want := map[string]Config{
 		"config1": config1,
 	}
-	got, err := AllConfigs()
+	got, err := Configs()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -281,7 +281,7 @@ func TestAllConfigs(t *testing.T) {
 		"config1": config1,
 		"config2": config2,
 	}
-	got, err = AllConfigs()
+	got, err = Configs()
 	if err != nil {
 		t.Fatal(err)
 	}

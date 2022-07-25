@@ -17,7 +17,6 @@ package configurations
 import (
 	"fmt"
 
-	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/spf13/cobra"
 )
@@ -27,30 +26,30 @@ func createCommand() *cobra.Command {
 		Use:   "create CONFIGURATION_NAME",
 		Short: "Creates a new named configuration.",
 		Args:  cobra.ExactArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
-			ctx := cmd.Context()
-			logger := log.FromContext(ctx)
-
-			name := args[0] // TODO: ensure simple name?
-			ensureValidConfigurationName(name, logger)
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cmd.SilenceUsage = true
+			name := args[0]
+			if err := connection.ValidateConfigName(name); err != nil {
+				return err
+			}
 
 			if _, err := connection.ReadConfig(name); err == nil {
-				logger.Fatalf("Cannot create configuration %q, it already exists.", name)
+				return fmt.Errorf("Cannot create config %q, it already exists.", name)
 			}
 
 			s := connection.Config{}
 			err := s.Write(name)
 			if err != nil {
-				logger.Fatalf("Cannot create configuration %q: %v", name, err)
+				return fmt.Errorf("Cannot create config %q: %v", name, err)
 			}
+			fmt.Printf("Created %q.\n", name)
 
 			err = connection.ActivateConfig(name)
 			if err != nil {
-				logger.Fatalf("Cannot set active configuration %q: %v", name, err)
+				return fmt.Errorf("Cannot activate config %q: %v", name, err)
 			}
-
-			fmt.Printf("Created %q.\n", name)
 			fmt.Printf("Activated %q.\n", name)
+			return nil
 		},
 	}
 	return cmd

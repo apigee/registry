@@ -17,7 +17,6 @@ package config
 import (
 	"fmt"
 
-	"github.com/apigee/registry/log"
 	"github.com/spf13/cobra"
 )
 
@@ -26,21 +25,25 @@ func getCommand() *cobra.Command {
 		Use:   "get PROPERTY",
 		Short: "Print the value of a property.",
 		Args:  cobra.ExactArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
-			ctx := cmd.Context()
-			logger := log.FromContext(ctx)
-
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cmd.SilenceUsage = true
 			_, config, err := targetConfig()
 			if err != nil {
-				logger.Fatalf("Cannot read config: %v", err)
+				return fmt.Errorf("Cannot read config: %v", err)
+			}
+
+			name := args[0]
+			if !contains(config.Properties(), name) {
+				return fmt.Errorf("Config has no property %q.", name)
 			}
 
 			m, err := config.AsMap()
 			if err != nil {
-				logger.Fatalf("Cannot decode config: %v", err)
+				return fmt.Errorf("Cannot decode config: %v", err)
 			}
 
-			fmt.Println(m[args[0]])
+			fmt.Println(m[name])
+			return nil
 		},
 	}
 	return cmd

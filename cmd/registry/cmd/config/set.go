@@ -17,7 +17,6 @@ package config
 import (
 	"fmt"
 
-	"github.com/apigee/registry/log"
 	"github.com/spf13/cobra"
 )
 
@@ -26,31 +25,41 @@ func setCommand() *cobra.Command {
 		Use:   "set PROPERTY VALUE",
 		Short: "Set the value of a property.",
 		Args:  cobra.ExactArgs(2),
-		Run: func(cmd *cobra.Command, args []string) {
-			ctx := cmd.Context()
-			logger := log.FromContext(ctx)
-
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cmd.SilenceUsage = true
 			target, config, err := targetConfig()
 			if err != nil {
-				logger.Fatalf("Cannot read config: %v", err)
+				return fmt.Errorf("Cannot read config: %v", err)
 			}
 
-			m := map[string]interface{}{
-				args[0]: args[1],
+			name, value := args[0], args[1]
+			if !contains(config.Properties(), name) {
+				return fmt.Errorf("Config has no property %q.", name)
 			}
 
-			err = config.FromMap(m)
+			err = config.FromMap(map[string]interface{}{
+				name: value,
+			})
 			if err != nil {
-				logger.Fatalf("Cannot set value: %v", err)
+				return fmt.Errorf("Cannot set value: %v", err)
 			}
 
-			err = config.Write(target)
-			if err != nil {
-				logger.Fatalf("Cannot write config: %v", err)
+			if err = config.Write(target); err != nil {
+				return fmt.Errorf("Cannot write config: %v", err)
 			}
 
-			fmt.Printf("Updated property %q.\n", m[args[0]])
+			fmt.Printf("Updated property %q.\n", name)
+			return nil
 		},
 	}
 	return cmd
+}
+
+func contains[T comparable](arr []T, x T) bool {
+	for _, v := range arr {
+		if v == x {
+			return true
+		}
+	}
+	return false
 }

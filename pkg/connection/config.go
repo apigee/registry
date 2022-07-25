@@ -20,6 +20,8 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"reflect"
+	"sort"
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
@@ -36,7 +38,7 @@ var Flags *pflag.FlagSet = createFlagSet()
 
 // ConfigPath is $HOME/config/registry
 var ConfigPath string
-var CannotDeleteActiveError = fmt.Errorf("Cannot delete active configuration.")
+var CannotDeleteActiveError = fmt.Errorf("Cannot delete active configuration")
 var ReservedConfigNameError = fmt.Errorf("%q is reserved", ActiveConfigPointerFilename)
 
 func init() {
@@ -88,6 +90,22 @@ func (c Config) Write(name string) error {
 	return v.WriteConfigAs(path)
 }
 
+// Names returns a sorted list of all valid property names.
+func (c Config) Properties() []string {
+	var props []string
+	rt := reflect.TypeOf(c)
+	for i := 0; i < rt.NumField(); i++ {
+		t := rt.Field(i)
+		tv, ok := t.Tag.Lookup("mapstructure")
+		if !ok {
+			continue
+		}
+		props = append(props, strings.Split(tv, ",")[0])
+	}
+	sort.Strings(props)
+	return props
+}
+
 // AsMap returns the Config as a Map.
 func (c Config) AsMap() (map[string]interface{}, error) {
 	m := make(map[string]interface{})
@@ -111,14 +129,14 @@ func (c *Config) FromMap(m map[string]interface{}) error {
 	return decoder.Decode(m)
 }
 
-func AllConfigs() (map[string]Config, error) {
+func Configs() (map[string]Config, error) {
 	files, err := ioutil.ReadDir(ConfigPath)
 	if err != nil {
 		return nil, err
 	}
 
 	var errors error
-	allConfigs := make(map[string]Config)
+	configs := make(map[string]Config)
 	for _, file := range files {
 		if !file.IsDir() && file.Name() != ActiveConfigPointerFilename {
 			s, err := ReadConfig(file.Name())
@@ -126,14 +144,14 @@ func AllConfigs() (map[string]Config, error) {
 				errors = multierr.Append(errors, err)
 				continue
 			}
-			allConfigs[file.Name()] = s
+			configs[file.Name()] = s
 		}
 	}
 	if errors != nil {
 		return nil, errors
 	}
 
-	return allConfigs, nil
+	return configs, nil
 }
 
 func ValidateConfigName(name string) error {

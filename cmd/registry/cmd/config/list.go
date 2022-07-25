@@ -17,7 +17,6 @@ package config
 import (
 	"fmt"
 
-	"github.com/apigee/registry/log"
 	"github.com/spf13/cobra"
 )
 
@@ -26,29 +25,25 @@ func listCommand() *cobra.Command {
 		Use:   "list",
 		Short: "List properties for the currently active configuration.",
 		Args:  cobra.NoArgs,
-		Run: func(cmd *cobra.Command, _ []string) {
-			ctx := cmd.Context()
-			logger := log.FromContext(ctx)
-
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			cmd.SilenceUsage = true
 			target, config, err := targetConfig()
 			if err != nil {
-				logger.Fatalf("Cannot read config: %v", err)
+				return fmt.Errorf("Cannot read config: %v", err)
 			}
 
 			m, err := config.AsMap()
 			if err != nil {
-				logger.Fatalf("Cannot decode config: %v", err)
+				return fmt.Errorf("Cannot decode config: %v", err)
 			}
-			for k, v := range m {
-				if sv := fmt.Sprintf("%v", v); sv != "" {
-					fmt.Println(k, "=", sv)
+			for _, p := range config.Properties() {
+				if sv := fmt.Sprintf("%v", m[p]); sv != "" {
+					fmt.Println(p, "=", sv)
 				}
 			}
 
-			if err != nil {
-				logger.Fatalf("Cannot decode config: %v", err)
-			}
 			fmt.Printf("\nYour active configuration is: %q.\n", target)
+			return nil
 		},
 	}
 	return cmd

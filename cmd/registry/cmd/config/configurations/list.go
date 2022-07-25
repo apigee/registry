@@ -20,7 +20,6 @@ import (
 	"sort"
 	"text/tabwriter"
 
-	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/spf13/cobra"
 )
@@ -28,35 +27,34 @@ import (
 func listCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list",
-		Short: "Lists existing named configurations.",
+		Short: "Lists existing named configs.",
 		Args:  cobra.NoArgs,
-		Run: func(cmd *cobra.Command, _ []string) {
-			ctx := cmd.Context()
-			logger := log.FromContext(ctx)
-
-			allConfigs, err := connection.AllConfigs()
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			cmd.SilenceUsage = true
+			configs, err := connection.Configs()
 			if err != nil {
-				logger.Fatalf("Cannot read configurations: %v", err)
+				return fmt.Errorf("Cannot read configs: %v", err)
 			}
 
 			activeName, err := connection.ActiveConfigName()
 			if err != nil {
-				logger.Fatalf("Cannot read active config: %v", err)
+				return fmt.Errorf("Cannot read active config: %v", err)
 			}
 
-			sortedNames := make([]string, 0, len(allConfigs))
-			for n := range allConfigs {
-				sortedNames = append(sortedNames, n)
+			names := make([]string, 0, len(configs))
+			for n := range configs {
+				names = append(names, n)
 			}
-			sort.Strings(sortedNames)
+			sort.Strings(names)
 
 			w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 			fmt.Fprintln(w, "NAME\tIS_ACTIVE\tADDRESS\tINSECURE")
-			for _, name := range sortedNames {
-				config := allConfigs[name]
+			for _, name := range names {
+				config := configs[name]
 				fmt.Fprintf(w, "%s\t%t\t%s\t%t\n", name, name == activeName, config.Address, config.Insecure)
 			}
 			w.Flush()
+			return nil
 		},
 	}
 	return cmd

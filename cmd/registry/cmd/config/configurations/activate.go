@@ -17,7 +17,6 @@ package configurations
 import (
 	"fmt"
 
-	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/spf13/cobra"
 )
@@ -27,24 +26,25 @@ func activateCommand() *cobra.Command {
 		Use:   "activate CONFIGURATION_NAME",
 		Short: "Activates an existing named configuration.",
 		Args:  cobra.ExactArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
-			ctx := cmd.Context()
-			logger := log.FromContext(ctx)
-
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cmd.SilenceUsage = true
 			name := args[0]
-			ensureValidConfigurationName(name, logger)
+			if err := connection.ValidateConfigName(name); err != nil {
+				return err
+			}
 
 			_, err := connection.ReadConfig(name)
 			if err != nil {
-				logger.Fatalf("Cannot activate configuration %q: %v", name, err)
+				return fmt.Errorf("Cannot read config %q: %v", name, err)
 			}
 
 			err = connection.ActivateConfig(name)
 			if err != nil {
-				logger.Fatalf("Cannot activate configuration %q: %v", name, err)
+				return fmt.Errorf("Cannot activate config %q: %v", name, err)
 			}
 
 			fmt.Printf("Activated %q.\n", name)
+			return nil
 		},
 	}
 	return cmd

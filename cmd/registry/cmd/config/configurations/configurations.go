@@ -15,9 +15,6 @@
 package configurations
 
 import (
-	"path/filepath"
-
-	"github.com/apigee/registry/log"
 	"github.com/spf13/cobra"
 )
 
@@ -33,10 +30,4 @@ func Command() *cobra.Command {
 	cmd.AddCommand(describeCommand())
 	cmd.AddCommand(listCommand())
 	return cmd
-}
-
-func ensureValidConfigurationName(name string, logger log.Logger) {
-	if dir, _ := filepath.Split(name); dir != "" {
-		logger.Fatalf("Invalid configuration name: %q must not include a path", name)
-	}
 }

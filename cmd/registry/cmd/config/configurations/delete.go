@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/spf13/cobra"
 )
@@ -28,15 +27,15 @@ func deleteCommand() *cobra.Command {
 		Use:   "delete CONFIGURATION_NAME [CONFIGURATION_NAME ...]",
 		Short: "Deletes a named configuration.",
 		Args:  cobra.MinimumNArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
-			ctx := cmd.Context()
-			logger := log.FromContext(ctx)
-
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cmd.SilenceUsage = true
 			for _, name := range args {
-				ensureValidConfigurationName(name, logger)
+				if err := connection.ValidateConfigName(name); err != nil {
+					return err
+				}
 			}
 
-			fmt.Println("The following configurations will be deleted:")
+			fmt.Println("The following configs will be deleted:")
 			for _, name := range args {
 				fmt.Printf(" - %s\n", name)
 			}
@@ -48,7 +47,7 @@ func deleteCommand() *cobra.Command {
 				if yn == "" || yn == "y" || yn == "yes" {
 					break
 				} else if yn == "n" || yn == "no" {
-					logger.Fatalf("Aborted by user.")
+					return fmt.Errorf("Aborted by user.")
 				}
 				fmt.Print("Please enter 'y' or 'n': ")
 			}
@@ -56,10 +55,11 @@ func deleteCommand() *cobra.Command {
 			for _, name := range args {
 				err := connection.DeleteConfig(name)
 				if err != nil {
-					logger.Fatalf("Cannot delete configuration %q: %v.\n", name, err)
+					return fmt.Errorf("Cannot delete config %q: %v.", name, err)
 				}
 				fmt.Printf("Deleted %q.\n", name)
 			}
+			return nil
 		},
 	}
 	return cmd
