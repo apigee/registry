@@ -150,5 +150,4 @@ Your active configuration is: "active".
 	if diff := cmp.Diff(want, string(got)); diff != "" {
 		t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 	}
-
 }
