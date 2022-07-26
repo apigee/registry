@@ -48,12 +48,12 @@ func listCommand() *cobra.Command {
 			sort.Strings(names)
 
 			w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+			defer w.Flush()
 			fmt.Fprintln(w, "NAME\tIS_ACTIVE\tADDRESS\tINSECURE")
 			for _, name := range names {
 				config := configs[name]
 				fmt.Fprintf(w, "%s\t%t\t%s\t%t\n", name, name == activeName, config.Address, config.Insecure)
 			}
-			w.Flush()
 			return nil
 		},
 	}

@@ -36,7 +36,7 @@ func cleanConfigDir(t *testing.T) func() {
 }
 
 func TestActiveSettings(t *testing.T) {
-	defer cleanConfigDir(t)()
+	t.Cleanup(cleanConfigDir(t))
 	t.Setenv("APG_REGISTRY_ADDRESS", "")
 
 	// missing active file
@@ -95,7 +95,7 @@ func TestActiveSettings(t *testing.T) {
 }
 
 func TestSettingsEnvVars(t *testing.T) {
-	defer cleanConfigDir(t)()
+	t.Cleanup(cleanConfigDir(t))
 
 	want := Config{
 		Address:  "localhost:8080",
@@ -132,7 +132,7 @@ func TestSettingsEnvVars(t *testing.T) {
 }
 
 func TestSettingsDirectRead(t *testing.T) {
-	defer cleanConfigDir(t)()
+	t.Cleanup(cleanConfigDir(t))
 
 	config := Config{
 		Address:  "localhost:8080",
@@ -165,7 +165,7 @@ func TestSettingsDirectRead(t *testing.T) {
 }
 
 func TestSettingsFlags(t *testing.T) {
-	defer cleanConfigDir(t)()
+	t.Cleanup(cleanConfigDir(t))
 
 	want := Config{
 		Address:  "localhost:8080",
@@ -211,7 +211,7 @@ func TestSettingsFlags(t *testing.T) {
 }
 
 func TestMap(t *testing.T) {
-	defer cleanConfigDir(t)()
+	t.Cleanup(cleanConfigDir(t))
 
 	c := Config{
 		Address:  "address",
@@ -242,7 +242,7 @@ func TestMap(t *testing.T) {
 }
 
 func TestAllConfigs(t *testing.T) {
-	defer cleanConfigDir(t)()
+	t.Cleanup(cleanConfigDir(t))
 
 	config1 := Config{
 		Address:  "localhost:8080",
@@ -291,7 +291,7 @@ func TestAllConfigs(t *testing.T) {
 }
 
 func TestDeleteConfig(t *testing.T) {
-	defer cleanConfigDir(t)()
+	t.Cleanup(cleanConfigDir(t))
 
 	config := Config{
 		Address:  "localhost:8080",
@@ -327,7 +327,7 @@ func TestDeleteConfig(t *testing.T) {
 }
 
 func TestWriteInvalidNames(t *testing.T) {
-	defer cleanConfigDir(t)()
+	t.Cleanup(cleanConfigDir(t))
 
 	err := Config{}.Write(ActiveConfigPointerFilename)
 	if err != ReservedConfigNameError {

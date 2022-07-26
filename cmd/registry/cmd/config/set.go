@@ -55,7 +55,7 @@ func setCommand() *cobra.Command {
 	return cmd
 }
 
-func contains[T comparable](arr []T, x T) bool {
+func contains(arr []string, x string) bool {
 	for _, v := range arr {
 		if v == x {
 			return true

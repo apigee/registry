@@ -277,7 +277,9 @@ func ActiveConfigName() (string, error) {
 	f := filepath.Join(ConfigPath, ActiveConfigPointerFilename)
 	bytes, err := ioutil.ReadFile(f)
 	if errors.Is(err, os.ErrNotExist) {
-		err = nil
+		return "", nil
+	} else if err != nil {
+		return "", err
 	}
 	return strings.TrimSpace(string(bytes)), err
 }

@@ -41,6 +41,7 @@ import (
 //   ... run test here ...
 // }
 func NewIfNoAddress(rc registry.Config) (*Server, error) {
+	// error doesn't matter here as the point is to allow fallback
 	config, _ := connection.ReadConfig("")
 	if config.Address != "" && config.Validate() == nil {
 		log.Printf("Client will use remote registry at: %s", config.Address)
