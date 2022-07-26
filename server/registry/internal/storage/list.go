@@ -57,15 +57,15 @@ func gormOrdering(ordering string, fields map[string]filtering.FieldType) (strin
 				clause = field
 			}
 		}
-		if len(clause) == 0 {
+		if clause == "" {
 			return ordering, status.Errorf(codes.InvalidArgument, "unknown field name %q", v)
 		}
 
 		if descending {
-			clauses = append(clauses, clause+" desc")
-		} else {
-			clauses = append(clauses, clause)
+			clause += " desc"
 		}
+
+		clauses = append(clauses, clause)
 	}
 
 	return strings.Join(clauses, ","), nil
