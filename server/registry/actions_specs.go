@@ -66,11 +66,6 @@ func (s *RegistryServer) createSpec(ctx context.Context, db *storage.Client, nam
 		return nil, err
 	}
 
-	// Creation should only succeed when the parent exists.
-	if _, err := db.GetVersion(ctx, name.Version()); err != nil {
-		return nil, err
-	}
-
 	spec, err := models.NewSpec(name, body)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())

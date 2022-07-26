@@ -36,6 +36,8 @@ type Version struct {
 	State       string    // Lifecycle stage.
 	Labels      []byte    // Serialized labels.
 	Annotations []byte    // Serialized annotations.
+	ParentKey   string
+	Parent      *Api `gorm:"foreignKey:ParentKey;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 }
 
 // NewVersion initializes a new resource.
@@ -50,6 +52,7 @@ func NewVersion(name names.Version, body *rpc.ApiVersion) (version *Version, err
 		State:       body.GetState(),
 		CreateTime:  now,
 		UpdateTime:  now,
+		ParentKey:   name.Api().String(),
 	}
 
 	version.Labels, err = bytesForMap(body.GetLabels())

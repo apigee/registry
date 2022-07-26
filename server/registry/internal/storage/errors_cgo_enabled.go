@@ -47,6 +47,9 @@ func grpcErrorForSQLite3Error(ctx context.Context, err error) error {
 			v.Code == sqlite3.ErrNo(sqlite3.ErrReadonly) {
 			return status.Error(codes.Unavailable, err.Error())
 		}
+		if v.Code == sqlite3.ErrConstraint && v.ExtendedCode == sqlite3.ErrConstraintForeignKey {
+			return status.Error(codes.NotFound, v.ExtendedCode.Error())
+		}
 		log.Infof(ctx, "Unhandled %T %+v code=%d extended=%d", v, v, v.Code, v.ExtendedCode)
 	}
 	return nil

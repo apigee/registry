@@ -43,6 +43,8 @@ type Deployment struct {
 	AccessGuidance     string    // A brief description of how to access the endpoint.
 	Labels             []byte    // Serialized labels.
 	Annotations        []byte    // Serialized annotations.
+	ParentKey          string
+	Parent             *Api `gorm:"foreignKey:ParentKey;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 }
 
 // NewDeployment initializes a new resource.
@@ -63,6 +65,7 @@ func NewDeployment(name names.Deployment, body *rpc.ApiDeployment) (deployment *
 		ExternalChannelURI: body.GetExternalChannelUri(),
 		IntendedAudience:   body.GetIntendedAudience(),
 		AccessGuidance:     body.GetAccessGuidance(),
+		ParentKey:          name.Api().String(),
 	}
 
 	deployment.Labels, err = bytesForMap(body.GetLabels())
@@ -96,6 +99,7 @@ func (s *Deployment) NewRevision() *Deployment {
 		ExternalChannelURI: s.ExternalChannelURI,
 		IntendedAudience:   s.IntendedAudience,
 		AccessGuidance:     s.AccessGuidance,
+		ParentKey:          s.ParentKey,
 	}
 }
 
@@ -207,6 +211,8 @@ type DeploymentRevisionTag struct {
 	Tag          string    // The tag to use for the revision.
 	CreateTime   time.Time // Creation time.
 	UpdateTime   time.Time // Time of last change.
+	ParentKey    string
+	Parent       *Deployment `gorm:"foreignKey:ParentKey;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 }
 
 // NewDeploymentRevisionTag initializes a new revision tag from a given revision name and tag string.
@@ -220,6 +226,7 @@ func NewDeploymentRevisionTag(name names.DeploymentRevision, tag string) *Deploy
 		Tag:          tag,
 		CreateTime:   now,
 		UpdateTime:   now,
+		ParentKey:    name.String(),
 	}
 }
 

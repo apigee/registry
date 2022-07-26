@@ -37,6 +37,8 @@ type Api struct {
 	RecommendedDeployment string    // Recommended API deployment.
 	Labels                []byte    // Serialized labels.
 	Annotations           []byte    // Serialized annotations.
+	ParentKey             string
+	Parent                *Project `gorm:"foreignKey:ParentKey;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 }
 
 // NewApi initializes a new resource.
@@ -52,6 +54,7 @@ func NewApi(name names.Api, body *rpc.Api) (api *Api, err error) {
 		RecommendedDeployment: body.GetRecommendedDeployment(),
 		CreateTime:            now,
 		UpdateTime:            now,
+		ParentKey:             name.Project().String(),
 	}
 
 	api.Labels, err = bytesForMap(body.GetLabels())
