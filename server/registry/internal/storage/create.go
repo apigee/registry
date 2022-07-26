@@ -51,5 +51,10 @@ func (c *Client) CreateSpecRevision(ctx context.Context, v *models.Spec) error {
 }
 
 func (c *Client) create(ctx context.Context, v interface{}) error {
-	return grpcErrorForDBError(ctx, c.db.WithContext(ctx).Create(v).Error)
+	return grpcErrorForDBError(ctx,
+		c.db.
+			WithContext(ctx).
+			Omit("Parent.Key"). // don't create parent
+			Create(v).
+			Error)
 }

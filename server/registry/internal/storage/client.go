@@ -63,6 +63,7 @@ func NewClient(ctx context.Context, driver, dsn string) (*Client, error) {
 			c.close()
 			return nil, grpcErrorForDBError(ctx, err)
 		}
+		db.Exec("PRAGMA foreign_keys = ON")
 		return &Client{db: db}, nil
 	case "postgres", "cloudsqlpostgres":
 		db, err := gorm.Open(postgres.New(postgres.Config{

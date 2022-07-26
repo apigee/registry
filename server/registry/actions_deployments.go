@@ -62,11 +62,6 @@ func (s *RegistryServer) createDeployment(ctx context.Context, db *storage.Clien
 		return nil, err
 	}
 
-	// Creation should only succeed when the parent exists.
-	if _, err := db.GetApi(ctx, name.Api()); err != nil {
-		return nil, err
-	}
-
 	deployment, err := models.NewDeployment(name, body)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())

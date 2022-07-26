@@ -48,6 +48,8 @@ type Spec struct {
 	SourceURI          string    // The original source URI of the spec.
 	Labels             []byte    // Serialized labels.
 	Annotations        []byte    // Serialized annotations.
+	ParentKey          string
+	Parent             *Version `gorm:"foreignKey:ParentKey;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 }
 
 // NewSpec initializes a new resource.
@@ -66,6 +68,7 @@ func NewSpec(name names.Spec, body *rpc.ApiSpec) (spec *Spec, err error) {
 		RevisionCreateTime: now,
 		RevisionUpdateTime: now,
 		RevisionID:         newRevisionID(),
+		ParentKey:          name.Version().String(),
 	}
 
 	spec.Labels, err = bytesForMap(body.GetLabels())
@@ -112,6 +115,7 @@ func (s *Spec) NewRevision() *Spec {
 		RevisionCreateTime: now,
 		RevisionUpdateTime: now,
 		RevisionID:         newRevisionID(),
+		ParentKey:          s.ParentKey,
 	}
 }
 
@@ -253,6 +257,8 @@ type SpecRevisionTag struct {
 	Tag        string    // The tag to use for the revision.
 	CreateTime time.Time // Creation time.
 	UpdateTime time.Time // Time of last change.
+	ParentKey  string
+	Parent     *Spec `gorm:"foreignKey:ParentKey;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 }
 
 // NewSpecRevisionTag initializes a new revision tag from a given revision name and tag string.
@@ -267,6 +273,7 @@ func NewSpecRevisionTag(name names.SpecRevision, tag string) *SpecRevisionTag {
 		Tag:        tag,
 		CreateTime: now,
 		UpdateTime: now,
+		ParentKey:  name.String(),
 	}
 }
 
