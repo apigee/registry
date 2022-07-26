@@ -33,11 +33,6 @@ const (
 	StringMap FieldType = iota
 )
 
-type Field struct {
-	Name string
-	Type FieldType
-}
-
 type Filter struct {
 	program cel.Program
 }
