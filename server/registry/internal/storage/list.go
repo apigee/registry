@@ -110,7 +110,7 @@ func (c *Client) ListProjects(ctx context.Context, opts PageOptions) (ProjectLis
 		token.Filter = opts.Filter
 	}
 
-	if err := token.ValidateOrder(opts.Order, projectFields); err != nil {
+	if err := token.ValidateOrder(opts.Order); err != nil {
 		return ProjectList{}, status.Errorf(codes.InvalidArgument, "invalid order_by %q: %s", opts.Order, err)
 	} else {
 		token.Order = opts.Order
@@ -209,7 +209,7 @@ func (c *Client) ListApis(ctx context.Context, parent names.Project, opts PageOp
 		token.Filter = opts.Filter
 	}
 
-	if err := token.ValidateOrder(opts.Order, apiFields); err != nil {
+	if err := token.ValidateOrder(opts.Order); err != nil {
 		return ApiList{}, status.Errorf(codes.InvalidArgument, "invalid order_by %q: %s", opts.Order, err)
 	} else {
 		token.Order = opts.Order
@@ -331,7 +331,7 @@ func (c *Client) ListVersions(ctx context.Context, parent names.Api, opts PageOp
 		token.Filter = opts.Filter
 	}
 
-	if err := token.ValidateOrder(opts.Order, versionFields); err != nil {
+	if err := token.ValidateOrder(opts.Order); err != nil {
 		return VersionList{}, status.Errorf(codes.InvalidArgument, "invalid order_by %q: %s", opts.Order, err)
 	} else {
 		token.Order = opts.Order
@@ -464,7 +464,7 @@ func (c *Client) ListSpecs(ctx context.Context, parent names.Version, opts PageO
 		token.Filter = opts.Filter
 	}
 
-	if err := token.ValidateOrder(opts.Order, specFields); err != nil {
+	if err := token.ValidateOrder(opts.Order); err != nil {
 		return SpecList{}, status.Errorf(codes.InvalidArgument, "invalid order_by %q: %s", opts.Order, err)
 	} else {
 		token.Order = opts.Order
@@ -691,7 +691,7 @@ func (c *Client) ListDeployments(ctx context.Context, parent names.Api, opts Pag
 		token.Filter = opts.Filter
 	}
 
-	if err := token.ValidateOrder(opts.Order, deploymentFields); err != nil {
+	if err := token.ValidateOrder(opts.Order); err != nil {
 		return DeploymentList{}, status.Errorf(codes.InvalidArgument, "invalid order_by %q: %s", opts.Order, err)
 	} else {
 		token.Order = opts.Order
@@ -898,7 +898,7 @@ func (c *Client) ListSpecArtifacts(ctx context.Context, parent names.Spec, opts 
 		token.Filter = opts.Filter
 	}
 
-	if err := token.ValidateOrder(opts.Order, artifactFields); err != nil {
+	if err := token.ValidateOrder(opts.Order); err != nil {
 		return ArtifactList{}, status.Errorf(codes.InvalidArgument, "invalid order_by %q: %s", opts.Order, err)
 	} else {
 		token.Order = opts.Order
@@ -953,7 +953,7 @@ func (c *Client) ListVersionArtifacts(ctx context.Context, parent names.Version,
 		token.Filter = opts.Filter
 	}
 
-	if err := token.ValidateOrder(opts.Order, artifactFields); err != nil {
+	if err := token.ValidateOrder(opts.Order); err != nil {
 		return ArtifactList{}, status.Errorf(codes.InvalidArgument, "invalid order_by %q: %s", opts.Order, err)
 	} else {
 		token.Order = opts.Order
@@ -1003,7 +1003,7 @@ func (c *Client) ListDeploymentArtifacts(ctx context.Context, parent names.Deplo
 		token.Filter = opts.Filter
 	}
 
-	if err := token.ValidateOrder(opts.Order, artifactFields); err != nil {
+	if err := token.ValidateOrder(opts.Order); err != nil {
 		return ArtifactList{}, status.Errorf(codes.InvalidArgument, "invalid order_by %q: %s", opts.Order, err)
 	} else {
 		token.Order = opts.Order
@@ -1053,7 +1053,7 @@ func (c *Client) ListApiArtifacts(ctx context.Context, parent names.Api, opts Pa
 		token.Filter = opts.Filter
 	}
 
-	if err := token.ValidateOrder(opts.Order, artifactFields); err != nil {
+	if err := token.ValidateOrder(opts.Order); err != nil {
 		return ArtifactList{}, status.Errorf(codes.InvalidArgument, "invalid order_by %q: %s", opts.Order, err)
 	} else {
 		token.Order = opts.Order
@@ -1097,7 +1097,7 @@ func (c *Client) ListProjectArtifacts(ctx context.Context, parent names.Project,
 		token.Filter = opts.Filter
 	}
 
-	if err := token.ValidateOrder(opts.Order, artifactFields); err != nil {
+	if err := token.ValidateOrder(opts.Order); err != nil {
 		return ArtifactList{}, status.Errorf(codes.InvalidArgument, "invalid order_by %q: %s", opts.Order, err)
 	} else {
 		token.Order = opts.Order

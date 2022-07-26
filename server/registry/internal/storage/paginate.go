@@ -19,8 +19,6 @@ import (
 	"encoding/base64"
 	"encoding/gob"
 	"fmt"
-
-	"github.com/apigee/registry/server/registry/internal/storage/filtering"
 )
 
 // PageOptions contains custom arguments for listing requests.
@@ -62,7 +60,7 @@ func (t token) ValidateFilter(newFilter string) error {
 // ValidateOrder returns an error if the new order doesn't match the token's encoded order, or
 // if the format of the ordering string is invalid.
 // When the token represents the first page, any order is valid and no error will be returned.
-func (t token) ValidateOrder(newOrder string, fields map[string]filtering.FieldType) error {
+func (t token) ValidateOrder(newOrder string) error {
 	if t.Offset > 0 && newOrder != t.Order {
 		return fmt.Errorf("new order does not match previous order %q", t.Order)
 	}
