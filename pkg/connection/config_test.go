@@ -17,6 +17,7 @@ package connection
 import (
 	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 	"strconv"
 	"testing"
@@ -31,7 +32,16 @@ func cleanConfigDir(t *testing.T) func() {
 	ConfigPath = tmpDir
 	return func() {
 		ConfigPath = origConfigPath
-		os.RemoveAll(tmpDir)
+	}
+}
+
+func TestMissingDirectory(t *testing.T) {
+	t.Cleanup(cleanConfigDir(t))
+
+	ConfigPath = path.Join(ConfigPath, "test")
+	c := Config{}
+	if err := c.Write("foo"); err != nil {
+		t.Fatalf("unexpected error on write: %s", err)
 	}
 }
 

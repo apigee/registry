@@ -87,6 +87,9 @@ func (c Config) Write(name string) error {
 	v.Set("registry.Address", c.Address)
 	v.Set("registry.Insecure", c.Insecure)
 	path := filepath.Join(ConfigPath, name)
+	if err := os.MkdirAll(ConfigPath, os.FileMode(0755)); err != nil { // rwx,rx,rx
+		return err
+	}
 	return v.WriteConfigAs(path)
 }
 
