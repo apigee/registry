@@ -26,6 +26,90 @@ import (
 	"gorm.io/gorm"
 )
 
+var projectFields = map[string]filtering.FieldType{
+	"name":         filtering.String,
+	"project_id":   filtering.String,
+	"display_name": filtering.String,
+	"description":  filtering.String,
+	"create_time":  filtering.Timestamp,
+	"update_time":  filtering.Timestamp,
+}
+
+var apiFields = map[string]filtering.FieldType{
+	"name":                   filtering.String,
+	"project_id":             filtering.String,
+	"api_id":                 filtering.String,
+	"display_name":           filtering.String,
+	"description":            filtering.String,
+	"create_time":            filtering.Timestamp,
+	"update_time":            filtering.Timestamp,
+	"availability":           filtering.String,
+	"recommended_version":    filtering.String,
+	"recommended_deployment": filtering.String,
+	"labels":                 filtering.StringMap,
+}
+
+var versionFields = map[string]filtering.FieldType{
+	"name":         filtering.String,
+	"project_id":   filtering.String,
+	"api_id":       filtering.String,
+	"version_id":   filtering.String,
+	"display_name": filtering.String,
+	"description":  filtering.String,
+	"create_time":  filtering.Timestamp,
+	"update_time":  filtering.Timestamp,
+	"state":        filtering.String,
+	"labels":       filtering.StringMap,
+}
+
+var specFields = map[string]filtering.FieldType{
+	"name":                 filtering.String,
+	"project_id":           filtering.String,
+	"api_id":               filtering.String,
+	"version_id":           filtering.String,
+	"spec_id":              filtering.String,
+	"filename":             filtering.String,
+	"description":          filtering.String,
+	"create_time":          filtering.Timestamp,
+	"revision_create_time": filtering.Timestamp,
+	"revision_update_time": filtering.Timestamp,
+	"mime_type":            filtering.String,
+	"size_bytes":           filtering.Int,
+	"source_uri":           filtering.String,
+	"labels":               filtering.StringMap,
+}
+
+var deploymentFields = map[string]filtering.FieldType{
+	"name":                 filtering.String,
+	"project_id":           filtering.String,
+	"api_id":               filtering.String,
+	"deployment_id":        filtering.String,
+	"display_name":         filtering.String,
+	"description":          filtering.String,
+	"create_time":          filtering.Timestamp,
+	"revision_create_time": filtering.Timestamp,
+	"revision_update_time": filtering.Timestamp,
+	"api_spec_revision":    filtering.String,
+	"endpoint_uri":         filtering.String,
+	"external_channel_uri": filtering.String,
+	"intended_audience":    filtering.String,
+	"access_guidance":      filtering.String,
+	"labels":               filtering.StringMap,
+}
+
+var artifactFields = map[string]filtering.FieldType{
+	"name":        filtering.String,
+	"project_id":  filtering.String,
+	"api_id":      filtering.String,
+	"version_id":  filtering.String,
+	"spec_id":     filtering.String,
+	"artifact_id": filtering.String,
+	"create_time": filtering.Timestamp,
+	"update_time": filtering.Timestamp,
+	"mime_type":   filtering.String,
+	"size_bytes":  filtering.Int,
+}
+
 func gormOrdering(ordering string, fields map[string]filtering.FieldType) (string, error) {
 	if ordering == "" {
 		return "key", nil
@@ -87,15 +171,6 @@ func limit(opts PageOptions) int {
 type ProjectList struct {
 	Projects []models.Project
 	Token    string
-}
-
-var projectFields = map[string]filtering.FieldType{
-	"name":         filtering.String,
-	"project_id":   filtering.String,
-	"display_name": filtering.String,
-	"description":  filtering.String,
-	"create_time":  filtering.Timestamp,
-	"update_time":  filtering.Timestamp,
 }
 
 func (c *Client) ListProjects(ctx context.Context, opts PageOptions) (ProjectList, error) {
@@ -181,20 +256,6 @@ func projectMap(p models.Project) map[string]interface{} {
 type ApiList struct {
 	Apis  []models.Api
 	Token string
-}
-
-var apiFields = map[string]filtering.FieldType{
-	"name":                   filtering.String,
-	"project_id":             filtering.String,
-	"api_id":                 filtering.String,
-	"display_name":           filtering.String,
-	"description":            filtering.String,
-	"create_time":            filtering.Timestamp,
-	"update_time":            filtering.Timestamp,
-	"availability":           filtering.String,
-	"recommended_version":    filtering.String,
-	"recommended_deployment": filtering.String,
-	"labels":                 filtering.StringMap,
 }
 
 func (c *Client) ListApis(ctx context.Context, parent names.Project, opts PageOptions) (ApiList, error) {
@@ -304,19 +365,6 @@ func apiMap(api models.Api) (map[string]interface{}, error) {
 type VersionList struct {
 	Versions []models.Version
 	Token    string
-}
-
-var versionFields = map[string]filtering.FieldType{
-	"name":         filtering.String,
-	"project_id":   filtering.String,
-	"api_id":       filtering.String,
-	"version_id":   filtering.String,
-	"display_name": filtering.String,
-	"description":  filtering.String,
-	"create_time":  filtering.Timestamp,
-	"update_time":  filtering.Timestamp,
-	"state":        filtering.String,
-	"labels":       filtering.StringMap,
 }
 
 func (c *Client) ListVersions(ctx context.Context, parent names.Api, opts PageOptions) (VersionList, error) {
@@ -433,23 +481,6 @@ func versionMap(version models.Version) (map[string]interface{}, error) {
 type SpecList struct {
 	Specs []models.Spec
 	Token string
-}
-
-var specFields = map[string]filtering.FieldType{
-	"name":                 filtering.String,
-	"project_id":           filtering.String,
-	"api_id":               filtering.String,
-	"version_id":           filtering.String,
-	"spec_id":              filtering.String,
-	"filename":             filtering.String,
-	"description":          filtering.String,
-	"create_time":          filtering.Timestamp,
-	"revision_create_time": filtering.Timestamp,
-	"revision_update_time": filtering.Timestamp,
-	"mime_type":            filtering.String,
-	"size_bytes":           filtering.Int,
-	"source_uri":           filtering.String,
-	"labels":               filtering.StringMap,
 }
 
 func (c *Client) ListSpecs(ctx context.Context, parent names.Version, opts PageOptions) (SpecList, error) {
@@ -661,24 +692,6 @@ type DeploymentList struct {
 	Token       string
 }
 
-var deploymentFields = map[string]filtering.FieldType{
-	"name":                 filtering.String,
-	"project_id":           filtering.String,
-	"api_id":               filtering.String,
-	"deployment_id":        filtering.String,
-	"display_name":         filtering.String,
-	"description":          filtering.String,
-	"create_time":          filtering.Timestamp,
-	"revision_create_time": filtering.Timestamp,
-	"revision_update_time": filtering.Timestamp,
-	"api_spec_revision":    filtering.String,
-	"endpoint_uri":         filtering.String,
-	"external_channel_uri": filtering.String,
-	"intended_audience":    filtering.String,
-	"access_guidance":      filtering.String,
-	"labels":               filtering.StringMap,
-}
-
 func (c *Client) ListDeployments(ctx context.Context, parent names.Api, opts PageOptions) (DeploymentList, error) {
 	token, err := decodeToken(opts.Token)
 	if err != nil {
@@ -871,19 +884,6 @@ func (c *Client) ListDeploymentRevisions(ctx context.Context, parent names.Deplo
 type ArtifactList struct {
 	Artifacts []models.Artifact
 	Token     string
-}
-
-var artifactFields = map[string]filtering.FieldType{
-	"name":        filtering.String,
-	"project_id":  filtering.String,
-	"api_id":      filtering.String,
-	"version_id":  filtering.String,
-	"spec_id":     filtering.String,
-	"artifact_id": filtering.String,
-	"create_time": filtering.Timestamp,
-	"update_time": filtering.Timestamp,
-	"mime_type":   filtering.String,
-	"size_bytes":  filtering.Int,
 }
 
 func (c *Client) ListSpecArtifacts(ctx context.Context, parent names.Spec, opts PageOptions) (ArtifactList, error) {
