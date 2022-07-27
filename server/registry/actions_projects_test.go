@@ -398,6 +398,114 @@ func TestListProjects(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "ordered by description",
+			seed: []*rpc.Project{
+				{
+					Name:        "projects/project1",
+					Description: "111: this should be returned first",
+				},
+				{
+					Name:        "projects/project2",
+					Description: "333: this should be returned third",
+				},
+				{
+					Name:        "projects/project3",
+					Description: "222: this should be returned second",
+				},
+			},
+			req: &rpc.ListProjectsRequest{
+				OrderBy: "description",
+			},
+			want: &rpc.ListProjectsResponse{
+				Projects: []*rpc.Project{
+					{
+						Name:        "projects/project1",
+						Description: "111: this should be returned first",
+					},
+					{
+						Name:        "projects/project3",
+						Description: "222: this should be returned second",
+					},
+					{
+						Name:        "projects/project2",
+						Description: "333: this should be returned third",
+					},
+				},
+			},
+		},
+		{
+			desc: "ordered by description descending",
+			seed: []*rpc.Project{
+				{
+					Name:        "projects/project1",
+					Description: "111: this should be returned third",
+				},
+				{
+					Name:        "projects/project2",
+					Description: "333: this should be returned first",
+				},
+				{
+					Name:        "projects/project3",
+					Description: "222: this should be returned second",
+				},
+			},
+			req: &rpc.ListProjectsRequest{
+				OrderBy: "description desc",
+			},
+			want: &rpc.ListProjectsResponse{
+				Projects: []*rpc.Project{
+					{
+						Name:        "projects/project2",
+						Description: "333: this should be returned first",
+					},
+					{
+						Name:        "projects/project3",
+						Description: "222: this should be returned second",
+					},
+					{
+						Name:        "projects/project1",
+						Description: "111: this should be returned third",
+					},
+				},
+			},
+		},
+		{
+			desc: "ordered by description then by name",
+			seed: []*rpc.Project{
+				{
+					Name:        "projects/project1",
+					Description: "222: this should be returned second or third (the name is the tie-breaker)",
+				},
+				{
+					Name:        "projects/project3",
+					Description: "111: this should be returned first",
+				},
+				{
+					Name:        "projects/project2",
+					Description: "222: this should be returned second or third (the name is the tie-breaker)",
+				},
+			},
+			req: &rpc.ListProjectsRequest{
+				OrderBy: "description,name",
+			},
+			want: &rpc.ListProjectsResponse{
+				Projects: []*rpc.Project{
+					{
+						Name:        "projects/project3",
+						Description: "111: this should be returned first",
+					},
+					{
+						Name:        "projects/project1",
+						Description: "222: this should be returned second or third (the name is the tie-breaker)",
+					},
+					{
+						Name:        "projects/project2",
+						Description: "222: this should be returned second or third (the name is the tie-breaker)",
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -460,6 +568,34 @@ func TestListProjectsResponseCodes(t *testing.T) {
 			desc: "invalid page token",
 			req: &rpc.ListProjectsRequest{
 				PageToken: "this token is not valid",
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "invalid ordering by unknown field",
+			req: &rpc.ListProjectsRequest{
+				OrderBy: "something",
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "invalid ordering by private field",
+			req: &rpc.ListProjectsRequest{
+				OrderBy: "key",
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "invalid ordering direction",
+			req: &rpc.ListProjectsRequest{
+				OrderBy: "description asc",
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "invalid ordering format",
+			req: &rpc.ListProjectsRequest{
+				OrderBy: "description,",
 			},
 			want: codes.InvalidArgument,
 		},

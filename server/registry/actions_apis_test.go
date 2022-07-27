@@ -489,6 +489,117 @@ func TestListApis(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "ordered by description",
+			seed: []*rpc.Api{
+				{
+					Name:        "projects/my-project/locations/global/apis/api1",
+					Description: "111: this should be returned first",
+				},
+				{
+					Name:        "projects/my-project/locations/global/apis/api2",
+					Description: "333: this should be returned third",
+				},
+				{
+					Name:        "projects/my-project/locations/global/apis/api3",
+					Description: "222: this should be returned second",
+				},
+			},
+			req: &rpc.ListApisRequest{
+				Parent:  "projects/my-project/locations/global",
+				OrderBy: "description",
+			},
+			want: &rpc.ListApisResponse{
+				Apis: []*rpc.Api{
+					{
+						Name:        "projects/my-project/locations/global/apis/api1",
+						Description: "111: this should be returned first",
+					},
+					{
+						Name:        "projects/my-project/locations/global/apis/api3",
+						Description: "222: this should be returned second",
+					},
+					{
+						Name:        "projects/my-project/locations/global/apis/api2",
+						Description: "333: this should be returned third",
+					},
+				},
+			},
+		},
+		{
+			desc: "ordered by description descending",
+			seed: []*rpc.Api{
+				{
+					Name:        "projects/my-project/locations/global/apis/api1",
+					Description: "111: this should be returned third",
+				},
+				{
+					Name:        "projects/my-project/locations/global/apis/api2",
+					Description: "333: this should be returned first",
+				},
+				{
+					Name:        "projects/my-project/locations/global/apis/api3",
+					Description: "222: this should be returned second",
+				},
+			},
+			req: &rpc.ListApisRequest{
+				Parent:  "projects/my-project/locations/global",
+				OrderBy: "description desc",
+			},
+			want: &rpc.ListApisResponse{
+				Apis: []*rpc.Api{
+					{
+						Name:        "projects/my-project/locations/global/apis/api2",
+						Description: "333: this should be returned first",
+					},
+					{
+						Name:        "projects/my-project/locations/global/apis/api3",
+						Description: "222: this should be returned second",
+					},
+					{
+						Name:        "projects/my-project/locations/global/apis/api1",
+						Description: "111: this should be returned third",
+					},
+				},
+			},
+		},
+		{
+			desc: "ordered by description then by name",
+			seed: []*rpc.Api{
+				{
+					Name:        "projects/my-project/locations/global/apis/api1",
+					Description: "222: this should be returned second or third (the name is the tie-breaker)",
+				},
+				{
+					Name:        "projects/my-project/locations/global/apis/api3",
+					Description: "111: this should be returned first",
+				},
+				{
+					Name:        "projects/my-project/locations/global/apis/api2",
+					Description: "222: this should be returned second or third (the name is the tie-breaker)",
+				},
+			},
+			req: &rpc.ListApisRequest{
+				Parent:  "projects/my-project/locations/global",
+				OrderBy: "description,name",
+			},
+			want: &rpc.ListApisResponse{
+				Apis: []*rpc.Api{
+					{
+						Name:        "projects/my-project/locations/global/apis/api3",
+						Description: "111: this should be returned first",
+					},
+					{
+						Name:        "projects/my-project/locations/global/apis/api1",
+						Description: "222: this should be returned second or third (the name is the tie-breaker)",
+					},
+					{
+						Name:        "projects/my-project/locations/global/apis/api2",
+						Description: "222: this should be returned second or third (the name is the tie-breaker)",
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -511,9 +622,6 @@ func TestListApis(t *testing.T) {
 				protocmp.Transform(),
 				protocmp.IgnoreFields(new(rpc.ListApisResponse), "next_page_token"),
 				protocmp.IgnoreFields(new(rpc.Api), "create_time", "update_time"),
-				protocmp.SortRepeated(func(a, b *rpc.Api) bool {
-					return a.GetName() < b.GetName()
-				}),
 				test.extraOpts,
 			}
 
@@ -534,6 +642,7 @@ func TestListApisResponseCodes(t *testing.T) {
 	tests := []struct {
 		admin bool
 		desc  string
+		seed  *rpc.Api
 		req   *rpc.ListApisRequest
 		want  codes.Code
 	}{
@@ -566,6 +675,42 @@ func TestListApisResponseCodes(t *testing.T) {
 			},
 			want: codes.InvalidArgument,
 		},
+		{
+			desc: "invalid ordering by unknown field",
+			seed: &rpc.Api{Name: "projects/my-project/locations/global/apis/my-api"},
+			req: &rpc.ListApisRequest{
+				Parent:  "projects/my-project/locations/global",
+				OrderBy: "something",
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "invalid ordering by private field",
+			seed: &rpc.Api{Name: "projects/my-project/locations/global/apis/my-api"},
+			req: &rpc.ListApisRequest{
+				Parent:  "projects/my-project/locations/global",
+				OrderBy: "key",
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "invalid ordering direction",
+			seed: &rpc.Api{Name: "projects/my-project/locations/global/apis/my-api"},
+			req: &rpc.ListApisRequest{
+				Parent:  "projects/my-project/locations/global",
+				OrderBy: "description asc",
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "invalid ordering format",
+			seed: &rpc.Api{Name: "projects/my-project/locations/global/apis/my-api"},
+			req: &rpc.ListApisRequest{
+				Parent:  "projects/my-project/locations/global",
+				OrderBy: "description,",
+			},
+			want: codes.InvalidArgument,
+		},
 	}
 
 	for _, test := range tests {
@@ -575,6 +720,9 @@ func TestListApisResponseCodes(t *testing.T) {
 			}
 			ctx := context.Background()
 			server := defaultTestServer(t)
+			if err := seeder.SeedApis(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			if _, err := server.ListApis(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("ListApis(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)

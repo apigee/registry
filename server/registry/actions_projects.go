@@ -117,6 +117,7 @@ func (s *RegistryServer) ListProjects(ctx context.Context, req *rpc.ListProjects
 	listing, err := db.ListProjects(ctx, storage.PageOptions{
 		Size:   req.GetPageSize(),
 		Filter: req.GetFilter(),
+		Order:  req.GetOrderBy(),
 		Token:  req.GetPageToken(),
 	})
 	if err != nil {

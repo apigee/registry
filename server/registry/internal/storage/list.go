@@ -16,6 +16,7 @@ package storage
 
 import (
 	"context"
+	"strings"
 
 	"github.com/apigee/registry/server/registry/internal/storage/filtering"
 	"github.com/apigee/registry/server/registry/internal/storage/models"
@@ -109,6 +110,54 @@ var artifactFields = map[string]filtering.FieldType{
 	"size_bytes":  filtering.Int,
 }
 
+// gormOrdering accepts a user-specified order_by string and returns a gorm-compatible equivalent.
+// For example, the user-specified string `name,description` returns `key,description`.
+// An error is returned if the string is invalid or refers to a field that isn't included in the provided `fields` map.
+func gormOrdering(ordering string, fields map[string]filtering.FieldType) (string, error) {
+	if ordering == "" {
+		return "key", nil
+	}
+
+	clauses := make([]string, 0)
+	for _, v := range strings.Split(ordering, ",") {
+		v = strings.TrimSpace(v)
+
+		// Check if the field is specified in descending order and trim it from the string.
+		// After this point only the field name should remain.
+		descending := strings.HasSuffix(v, " desc")
+		v = strings.TrimSuffix(v, "desc")
+		v = strings.TrimSpace(v)
+
+		if strings.Contains(v, " ") {
+			return "", status.Errorf(codes.InvalidArgument, "invalid order_by field %q: too many parts", v)
+		} else if len(v) == 0 {
+			return "", status.Errorf(codes.InvalidArgument, "invalid order_by field %q: missing field name", v)
+		}
+
+		// Check if the field is valid for this model type and replace it with the internal name if needed.
+		// After this point, the clause should contain an internal field name.
+		var clause string
+		for field := range fields {
+			if field == v && field == "name" {
+				clause = "key"
+			} else if field == v {
+				clause = field
+			}
+		}
+		if clause == "" {
+			return ordering, status.Errorf(codes.InvalidArgument, "unknown field name %q", v)
+		}
+
+		if descending {
+			clause += " desc"
+		}
+
+		clauses = append(clauses, clause)
+	}
+
+	return strings.Join(clauses, ","), nil
+}
+
 // limit returns the database page size to use for a listing request.
 func limit(opts PageOptions) int {
 	// Without filters, read exactly enough rows to fill the page,
@@ -139,7 +188,18 @@ func (c *Client) ListProjects(ctx context.Context, opts PageOptions) (ProjectLis
 		token.Filter = opts.Filter
 	}
 
+	if err := token.ValidateOrder(opts.Order); err != nil {
+		return ProjectList{}, status.Errorf(codes.InvalidArgument, "invalid order_by %q: %s", opts.Order, err)
+	} else {
+		token.Order = opts.Order
+	}
+
 	filter, err := filtering.NewFilter(opts.Filter, projectFields)
+	if err != nil {
+		return ProjectList{}, err
+	}
+
+	order, err := gormOrdering(opts.Order, projectFields)
 	if err != nil {
 		return ProjectList{}, err
 	}
@@ -150,7 +210,7 @@ func (c *Client) ListProjects(ctx context.Context, opts PageOptions) (ProjectLis
 
 	for {
 		var page []models.Project
-		op := c.db.WithContext(ctx).Order("key").Limit(limit(opts))
+		op := c.db.WithContext(ctx).Order(order).Limit(limit(opts))
 		err := op.Offset(token.Offset).Find(&page).Error
 
 		if err != nil {
@@ -213,8 +273,13 @@ func (c *Client) ListApis(ctx context.Context, parent names.Project, opts PageOp
 		token.Filter = opts.Filter
 	}
 
+	if err := token.ValidateOrder(opts.Order); err != nil {
+		return ApiList{}, status.Errorf(codes.InvalidArgument, "invalid order_by %q: %s", opts.Order, err)
+	} else {
+		token.Order = opts.Order
+	}
+
 	op := c.db.WithContext(ctx).
-		Order("key").
 		Limit(limit(opts))
 
 	if parent.ProjectID != "-" {
@@ -227,6 +292,12 @@ func (c *Client) ListApis(ctx context.Context, parent names.Project, opts PageOp
 	filter, err := filtering.NewFilter(opts.Filter, apiFields)
 	if err != nil {
 		return ApiList{}, err
+	}
+
+	if order, err := gormOrdering(opts.Order, apiFields); err != nil {
+		return ApiList{}, err
+	} else {
+		op = op.Order(order)
 	}
 
 	response := ApiList{
@@ -311,6 +382,12 @@ func (c *Client) ListVersions(ctx context.Context, parent names.Api, opts PageOp
 		token.Filter = opts.Filter
 	}
 
+	if err := token.ValidateOrder(opts.Order); err != nil {
+		return VersionList{}, status.Errorf(codes.InvalidArgument, "invalid order_by %q: %s", opts.Order, err)
+	} else {
+		token.Order = opts.Order
+	}
+
 	if parent.ProjectID != "-" && parent.ApiID != "-" {
 		if _, err := c.GetApi(ctx, parent); err != nil {
 			return VersionList{}, err
@@ -326,15 +403,18 @@ func (c *Client) ListVersions(ctx context.Context, parent names.Api, opts PageOp
 		return VersionList{}, err
 	}
 
-	op := c.db.WithContext(ctx).
-		Order("key").
-		Limit(limit(opts))
-
+	op := c.db.WithContext(ctx).Limit(limit(opts))
 	if parent.ProjectID != "-" {
 		op = op.Where("project_id = ?", parent.ProjectID)
 	}
 	if parent.ApiID != "-" {
 		op = op.Where("api_id = ?", parent.ApiID)
+	}
+
+	if order, err := gormOrdering(opts.Order, versionFields); err != nil {
+		return VersionList{}, err
+	} else {
+		op = op.Order(order)
 	}
 
 	response := VersionList{
@@ -418,6 +498,12 @@ func (c *Client) ListSpecs(ctx context.Context, parent names.Version, opts PageO
 		token.Filter = opts.Filter
 	}
 
+	if err := token.ValidateOrder(opts.Order); err != nil {
+		return SpecList{}, status.Errorf(codes.InvalidArgument, "invalid order_by %q: %s", opts.Order, err)
+	} else {
+		token.Order = opts.Order
+	}
+
 	if parent.ProjectID != "-" && parent.ApiID != "-" && parent.VersionID != "-" {
 		if _, err := c.GetVersion(ctx, parent); err != nil {
 			return SpecList{}, err
@@ -449,7 +535,6 @@ func (c *Client) ListSpecs(ctx context.Context, parent names.Version, opts PageO
 			c.db.WithContext(ctx).Select("project_id, api_id, version_id, spec_id, MAX(revision_create_time) AS recent_create_time").
 				Table("specs").
 				Group("project_id, api_id, version_id, spec_id")).
-		Order("key").
 		Limit(limit(opts))
 
 	if parent.ProjectID != "-" {
@@ -460,6 +545,12 @@ func (c *Client) ListSpecs(ctx context.Context, parent names.Version, opts PageO
 	}
 	if parent.VersionID != "-" {
 		op = op.Where("specs.version_id = ?", parent.VersionID)
+	}
+
+	if order, err := gormOrdering(opts.Order, specFields); err != nil {
+		return SpecList{}, err
+	} else {
+		op = op.Order(order)
 	}
 
 	response := SpecList{
@@ -616,6 +707,12 @@ func (c *Client) ListDeployments(ctx context.Context, parent names.Api, opts Pag
 		token.Filter = opts.Filter
 	}
 
+	if err := token.ValidateOrder(opts.Order); err != nil {
+		return DeploymentList{}, status.Errorf(codes.InvalidArgument, "invalid order_by %q: %s", opts.Order, err)
+	} else {
+		token.Order = opts.Order
+	}
+
 	if parent.ProjectID != "-" && parent.ApiID != "-" {
 		if _, err := c.GetApi(ctx, parent); err != nil {
 			return DeploymentList{}, err
@@ -643,7 +740,6 @@ func (c *Client) ListDeployments(ctx context.Context, parent names.Api, opts Pag
 			c.db.WithContext(ctx).Select("project_id, api_id, deployment_id, MAX(revision_create_time) AS recent_create_time").
 				Table("deployments").
 				Group("project_id, api_id, deployment_id")).
-		Order("key").
 		Limit(limit(opts))
 
 	if parent.ProjectID != "-" {
@@ -651,6 +747,12 @@ func (c *Client) ListDeployments(ctx context.Context, parent names.Api, opts Pag
 	}
 	if parent.ApiID != "-" {
 		op = op.Where("deployments.api_id = ?", parent.ApiID)
+	}
+
+	if order, err := gormOrdering(opts.Order, deploymentFields); err != nil {
+		return DeploymentList{}, err
+	} else {
+		op = op.Order(order)
 	}
 
 	response := DeploymentList{
@@ -799,6 +901,12 @@ func (c *Client) ListSpecArtifacts(ctx context.Context, parent names.Spec, opts 
 		token.Filter = opts.Filter
 	}
 
+	if err := token.ValidateOrder(opts.Order); err != nil {
+		return ArtifactList{}, status.Errorf(codes.InvalidArgument, "invalid order_by %q: %s", opts.Order, err)
+	} else {
+		token.Order = opts.Order
+	}
+
 	if parent.ProjectID != "-" && parent.ApiID != "-" && parent.VersionID != "-" && parent.SpecID != "-" {
 		if _, err := c.GetSpec(ctx, parent); err != nil {
 			return ArtifactList{}, err
@@ -848,6 +956,12 @@ func (c *Client) ListVersionArtifacts(ctx context.Context, parent names.Version,
 		token.Filter = opts.Filter
 	}
 
+	if err := token.ValidateOrder(opts.Order); err != nil {
+		return ArtifactList{}, status.Errorf(codes.InvalidArgument, "invalid order_by %q: %s", opts.Order, err)
+	} else {
+		token.Order = opts.Order
+	}
+
 	if parent.ProjectID != "-" && parent.ApiID != "-" && parent.VersionID != "-" {
 		if _, err := c.GetVersion(ctx, parent); err != nil {
 			return ArtifactList{}, err
@@ -890,6 +1004,12 @@ func (c *Client) ListDeploymentArtifacts(ctx context.Context, parent names.Deplo
 		return ArtifactList{}, status.Errorf(codes.InvalidArgument, "invalid filter %q: %s", opts.Filter, err)
 	} else {
 		token.Filter = opts.Filter
+	}
+
+	if err := token.ValidateOrder(opts.Order); err != nil {
+		return ArtifactList{}, status.Errorf(codes.InvalidArgument, "invalid order_by %q: %s", opts.Order, err)
+	} else {
+		token.Order = opts.Order
 	}
 
 	if parent.ProjectID != "-" && parent.ApiID != "-" && parent.DeploymentID != "-" {
@@ -936,6 +1056,12 @@ func (c *Client) ListApiArtifacts(ctx context.Context, parent names.Api, opts Pa
 		token.Filter = opts.Filter
 	}
 
+	if err := token.ValidateOrder(opts.Order); err != nil {
+		return ArtifactList{}, status.Errorf(codes.InvalidArgument, "invalid order_by %q: %s", opts.Order, err)
+	} else {
+		token.Order = opts.Order
+	}
+
 	if parent.ProjectID != "-" && parent.ApiID != "-" {
 		if _, err := c.GetApi(ctx, parent); err != nil {
 			return ArtifactList{}, err
@@ -974,6 +1100,12 @@ func (c *Client) ListProjectArtifacts(ctx context.Context, parent names.Project,
 		token.Filter = opts.Filter
 	}
 
+	if err := token.ValidateOrder(opts.Order); err != nil {
+		return ArtifactList{}, status.Errorf(codes.InvalidArgument, "invalid order_by %q: %s", opts.Order, err)
+	} else {
+		token.Order = opts.Order
+	}
+
 	op := c.db.WithContext(ctx).
 		Where(`api_id = ''`).
 		Where(`deployment_id = ''`).
@@ -1002,6 +1134,12 @@ func (c *Client) listArtifacts(op *gorm.DB, opts PageOptions, include func(*mode
 	filter, err := filtering.NewFilter(opts.Filter, artifactFields)
 	if err != nil {
 		return ArtifactList{}, err
+	}
+
+	if order, err := gormOrdering(opts.Order, artifactFields); err != nil {
+		return ArtifactList{}, err
+	} else {
+		op = op.Order(order)
 	}
 
 	response := ArtifactList{
