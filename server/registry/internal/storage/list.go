@@ -110,6 +110,9 @@ var artifactFields = map[string]filtering.FieldType{
 	"size_bytes":  filtering.Int,
 }
 
+// gormOrdering accepts a user-specified order_by string and returns a gorm-compatible equivalent.
+// For example, the user-specified string `name,description` returns `key,description`.
+// An error is returned if the string is invalid or refers to a field that isn't included in the provided `fields` map.
 func gormOrdering(ordering string, fields map[string]filtering.FieldType) (string, error) {
 	if ordering == "" {
 		return "key", nil
