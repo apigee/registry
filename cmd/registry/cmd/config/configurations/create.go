@@ -42,13 +42,13 @@ func createCommand() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("Cannot create config %q: %v", name, err)
 			}
-			fmt.Printf("Created %q.\n", name)
+			cmd.Printf("Created %q.\n", name)
 
 			err = connection.ActivateConfig(name)
 			if err != nil {
 				return fmt.Errorf("Cannot activate config %q: %v", name, err)
 			}
-			fmt.Printf("Activated %q.\n", name)
+			cmd.Printf("Activated %q.\n", name)
 			return nil
 		},
 	}

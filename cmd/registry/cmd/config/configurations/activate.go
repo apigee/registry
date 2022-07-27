@@ -43,7 +43,7 @@ func activateCommand() *cobra.Command {
 				return fmt.Errorf("Cannot activate config %q: %v", name, err)
 			}
 
-			fmt.Printf("Activated %q.\n", name)
+			cmd.Printf("Activated %q.\n", name)
 			return nil
 		},
 	}

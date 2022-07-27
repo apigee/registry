@@ -22,33 +22,29 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// Capture captures stdin / stdout for a command. Input can provided
-// to the cmd if there are user inputs, the output is returned.
+// Capture sets input and output streams on a command, streams the
+// input to the command (similar to a response file), and captures
+// the standard output of the command as a string.
 func Capture(cmd *cobra.Command, input string) (string, error) {
 	if input != "" {
 		r, w, err := os.Pipe()
 		if err != nil {
 			return "", err
 		}
-		os.Stdout = w
 
 		_, err = io.WriteString(w, input)
 		if err != nil {
 			return "", err
 		}
 
-		origStdin := os.Stdin
-		defer func() { os.Stdin = origStdin }()
-		os.Stdin = r
+		cmd.SetIn(r)
 	}
 
-	origStdout := os.Stdout
-	defer func() { os.Stdout = origStdout }()
 	r, w, err := os.Pipe()
 	if err != nil {
 		return "", err
 	}
-	os.Stdout = w
+	cmd.SetOut(w)
 
 	err = cmd.Execute()
 	if err != nil {

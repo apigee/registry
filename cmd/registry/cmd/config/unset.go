@@ -51,7 +51,7 @@ func unsetCommand() *cobra.Command {
 				return fmt.Errorf("Cannot write config: %v", err)
 			}
 
-			fmt.Printf("Unset property %q.\n", args[0])
+			cmd.Printf("Unset property %q.\n", args[0])
 			return nil
 		},
 	}

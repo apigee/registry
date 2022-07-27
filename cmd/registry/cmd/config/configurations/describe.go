@@ -52,11 +52,11 @@ func describeCommand() *cobra.Command {
 			}
 			sort.Strings(sortedNames)
 
-			fmt.Printf("is_active: %v\n", name == activeName)
-			fmt.Printf("name: %v\n", name)
-			fmt.Printf("properties:\n")
+			cmd.Printf("is_active: %v\n", name == activeName)
+			cmd.Printf("name: %v\n", name)
+			cmd.Printf("properties:\n")
 			for _, name := range sortedNames {
-				fmt.Printf("  %s: %v\n", name, settingsMap[name])
+				cmd.Printf("  %s: %v\n", name, settingsMap[name])
 			}
 			return nil
 		},

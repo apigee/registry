@@ -48,7 +48,7 @@ func setCommand() *cobra.Command {
 				return fmt.Errorf("Cannot write config: %v", err)
 			}
 
-			fmt.Printf("Updated property %q.\n", name)
+			cmd.Printf("Updated property %q.\n", name)
 			return nil
 		},
 	}

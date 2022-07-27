@@ -42,7 +42,7 @@ func getCommand() *cobra.Command {
 				return fmt.Errorf("Cannot decode config: %v", err)
 			}
 
-			fmt.Println(m[name])
+			cmd.Println(m[name])
 			return nil
 		},
 	}

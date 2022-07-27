@@ -38,11 +38,11 @@ func listCommand() *cobra.Command {
 			}
 			for _, p := range config.Properties() {
 				if sv := fmt.Sprintf("%v", m[p]); sv != "" {
-					fmt.Println(p, "=", sv)
+					cmd.Println(p, "=", sv)
 				}
 			}
 
-			fmt.Printf("\nYour active configuration is: %q.\n", target)
+			cmd.Printf("\nYour active configuration is: %q.\n", target)
 			return nil
 		},
 	}

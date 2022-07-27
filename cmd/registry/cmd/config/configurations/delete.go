@@ -35,21 +35,21 @@ func deleteCommand() *cobra.Command {
 				}
 			}
 
-			fmt.Println("The following configs will be deleted:")
+			cmd.Println("The following configs will be deleted:")
 			for _, name := range args {
-				fmt.Printf(" - %s\n", name)
+				cmd.Printf(" - %s\n", name)
 			}
-			fmt.Print("Do you want to continue (Y/n)? ")
+			cmd.Print("Do you want to continue (Y/n)? ")
 			for {
 				var yn string
-				fmt.Scanln(&yn)
+				fmt.Fscanln(cmd.InOrStdin(), &yn)
 				yn = strings.ToLower(yn)
 				if yn == "" || yn == "y" || yn == "yes" {
 					break
 				} else if yn == "n" || yn == "no" {
 					return fmt.Errorf("Aborted by user.")
 				}
-				fmt.Print("Please enter 'y' or 'n': ")
+				cmd.Print("Please enter 'y' or 'n': ")
 			}
 
 			for _, name := range args {
@@ -57,7 +57,7 @@ func deleteCommand() *cobra.Command {
 				if err != nil {
 					return fmt.Errorf("Cannot delete config %q: %v.", name, err)
 				}
-				fmt.Printf("Deleted %q.\n", name)
+				cmd.Printf("Deleted %q.\n", name)
 			}
 			return nil
 		},

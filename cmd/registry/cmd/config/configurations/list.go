@@ -16,7 +16,6 @@ package configurations
 
 import (
 	"fmt"
-	"os"
 	"sort"
 	"text/tabwriter"
 
@@ -47,7 +46,7 @@ func listCommand() *cobra.Command {
 			}
 			sort.Strings(names)
 
-			w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+			w := tabwriter.NewWriter(cmd.OutOrStdout(), 0, 0, 2, ' ', 0)
 			defer w.Flush()
 			fmt.Fprintln(w, "NAME\tIS_ACTIVE\tADDRESS\tINSECURE")
 			for _, name := range names {
