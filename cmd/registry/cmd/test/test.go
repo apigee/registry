@@ -15,9 +15,8 @@
 package test
 
 import (
-	"io"
-	"io/ioutil"
-	"os"
+	"bytes"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -26,35 +25,13 @@ import (
 // input to the command (similar to a response file), and captures
 // the standard output of the command as a string.
 func Capture(cmd *cobra.Command, input string) (string, error) {
-	if input != "" {
-		r, w, err := os.Pipe()
-		if err != nil {
-			return "", err
-		}
+	var out bytes.Buffer
+	cmd.SetOut(&out)
+	cmd.SetIn(strings.NewReader(input))
 
-		_, err = io.WriteString(w, input)
-		if err != nil {
-			return "", err
-		}
-
-		cmd.SetIn(r)
-	}
-
-	r, w, err := os.Pipe()
-	if err != nil {
+	if err := cmd.Execute(); err != nil {
 		return "", err
 	}
-	cmd.SetOut(w)
 
-	err = cmd.Execute()
-	if err != nil {
-		return "", err
-	}
-	_ = w.Close()
-	got, err := ioutil.ReadAll(r)
-	_ = r.Close()
-	if err != nil {
-		return "", err
-	}
-	return string(got), err
+	return out.String(), nil
 }
