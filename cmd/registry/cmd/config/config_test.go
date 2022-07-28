@@ -16,6 +16,7 @@ package config
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"testing"
@@ -99,14 +100,13 @@ func TestConfig(t *testing.T) {
 
 	cmd := setCommand()
 	cmd.SetArgs([]string{"test", "test"})
-	want := `Config has no property "test".`
-	if err := cmd.Execute(); err.Error() != want {
-		t.Errorf("expected missing property: %q", "test")
+	if err := cmd.Execute(); !errors.Is(err, UnknownPropertyError{"test"}) {
+		t.Errorf("expected UnknownPropertyError")
 	}
 
 	cmd = setCommand()
 	cmd.SetArgs([]string{"address", "test"})
-	want = "Updated property \"address\".\n"
+	want := "Updated property \"address\".\n"
 	out := new(bytes.Buffer)
 	cmd.SetOut(out)
 	if err = cmd.Execute(); err != nil {
@@ -130,9 +130,8 @@ func TestConfig(t *testing.T) {
 
 	cmd = getCommand()
 	cmd.SetArgs([]string{"test"})
-	want = `Config has no property "test".`
-	if err := cmd.Execute(); err.Error() != want {
-		t.Errorf("expected missing property: %q", "test")
+	if err := cmd.Execute(); !errors.Is(err, UnknownPropertyError{"test"}) {
+		t.Errorf("expected UnknownPropertyError")
 	}
 
 	cmd = getCommand()

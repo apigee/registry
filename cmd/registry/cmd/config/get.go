@@ -35,7 +35,7 @@ func getCommand() *cobra.Command {
 
 			name := args[0]
 			if !contains(config.Properties(), name) {
-				return fmt.Errorf("Config has no property %q.", name)
+				return UnknownPropertyError{name}
 			}
 
 			m, err := config.AsMap()

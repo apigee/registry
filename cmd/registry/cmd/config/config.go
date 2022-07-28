@@ -54,3 +54,11 @@ func targetConfig() (name string, config connection.Config, err error) {
 	config, err = connection.ReadConfig(name)
 	return
 }
+
+type UnknownPropertyError struct {
+	property string
+}
+
+func (n UnknownPropertyError) Error() string {
+	return fmt.Sprintf("Unknown property: %q.", n.property)
+}
