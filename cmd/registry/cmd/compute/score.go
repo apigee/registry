@@ -56,16 +56,18 @@ func scoreCommand() *cobra.Command {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to list resources")
 			}
 
+			artifactClient := &scoring.RegistryArtifactClient{RegistryClient: client}
+
 			for _, r := range resources {
 				// Fetch the ScoreDefinitions which can be applied to this resource
-				scoreDefinitions, err := scoring.FetchScoreDefinitions(ctx, client, r.ResourceName())
+				scoreDefinitions, err := scoring.FetchScoreDefinitions(ctx, artifactClient, r.ResourceName())
 				if err != nil {
 					log.FromContext(ctx).WithError(err).Errorf("Skipping resource %q", r.ResourceName())
 					continue
 				}
 				for _, d := range scoreDefinitions {
 					taskQueue <- &computeScoreTask{
-						client:      client,
+						client:      artifactClient,
 						defArtifact: d,
 						resource:    r,
 						dryRun:      dryRun,
@@ -79,7 +81,7 @@ func scoreCommand() *cobra.Command {
 }
 
 type computeScoreTask struct {
-	client      connection.RegistryClient
+	client      *scoring.RegistryArtifactClient
 	defArtifact *rpc.Artifact
 	resource    patterns.ResourceInstance
 	dryRun      bool

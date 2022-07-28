@@ -24,7 +24,6 @@ import (
 	"github.com/apigee/registry/cmd/registry/patch"
 	"github.com/apigee/registry/cmd/registry/patterns"
 	"github.com/apigee/registry/log"
-	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"google.golang.org/grpc/codes"
@@ -38,7 +37,7 @@ func scoreID(definitionID string) string {
 
 func FetchScoreDefinitions(
 	ctx context.Context,
-	client connection.RegistryClient,
+	client artifactClient,
 	resource patterns.ResourceName) ([]*rpc.Artifact, error) {
 	defArtifacts := make([]*rpc.Artifact, 0)
 
@@ -48,7 +47,7 @@ func FetchScoreDefinitions(
 		return nil, err
 	}
 	listFilter := fmt.Sprintf("mime_type == %q", patch.MimeTypeForKind("ScoreDefinition"))
-	err = core.ListArtifacts(ctx, client, artifact, listFilter, true,
+	err = client.ListArtifacts(ctx, artifact, listFilter, true,
 		func(artifact *rpc.Artifact) error {
 			definition := &rpc.ScoreDefinition{}
 			if err := proto.Unmarshal(artifact.GetContents(), definition); err != nil {
@@ -74,7 +73,7 @@ func FetchScoreDefinitions(
 
 func CalculateScore(
 	ctx context.Context,
-	client connection.RegistryClient,
+	client artifactClient,
 	defArtifact *rpc.Artifact,
 	resource patterns.ResourceInstance,
 	dryRun bool) error {
@@ -101,7 +100,8 @@ func CalculateScore(
 	}
 
 	// Calculate score if the definition has been updated
-	if scoreArtifact != nil && scoreArtifact.GetUpdateTime().AsTime().Before(defArtifact.GetUpdateTime().AsTime()) {
+	// This condition is required to avoid the scenario mentioned here: https://github.com/apigee/registry/issues/641
+	if scoreArtifact != nil && defArtifact.GetUpdateTime().AsTime().Add(patterns.ResourceUpdateThresholdSeconds).After(scoreArtifact.GetUpdateTime().AsTime()) {
 		takeAction = true
 	}
 
@@ -143,7 +143,7 @@ type scoreResult struct {
 
 func processFormula(
 	ctx context.Context,
-	client connection.RegistryClient,
+	client artifactClient,
 	definition *rpc.ScoreDefinition,
 	resource patterns.ResourceInstance,
 	scoreArtifact *rpc.Artifact,
@@ -165,7 +165,7 @@ func processFormula(
 
 func processScoreFormula(
 	ctx context.Context,
-	client connection.RegistryClient,
+	client artifactClient,
 	formula *rpc.ScoreFormula,
 	resource patterns.ResourceInstance,
 	scoreArtifact *rpc.Artifact,
@@ -197,7 +197,8 @@ func processScoreFormula(
 	}
 
 	// Update required tells the calling function if the score artifact needs to be updated
-	updateRequired := takeAction || scoreArtifact.GetUpdateTime().AsTime().Before(artifact.GetUpdateTime().AsTime())
+	// This condition is required to avoid the scenario mentioned here: https://github.com/apigee/registry/issues/641
+	updateRequired := takeAction || artifact.GetUpdateTime().AsTime().Add(patterns.ResourceUpdateThresholdSeconds).After(scoreArtifact.GetUpdateTime().AsTime())
 
 	// Apply the scoreExpression by default. This value will be required by the rollup_formula in the case where
 	// another formula from rollup_formula.score_formulas makes the score outdated.
@@ -230,7 +231,7 @@ func processScoreFormula(
 
 func processRollUpFormula(
 	ctx context.Context,
-	client connection.RegistryClient,
+	client artifactClient,
 	formula *rpc.RollUpFormula,
 	resource patterns.ResourceInstance,
 	scoreArtifact *rpc.Artifact,
@@ -439,7 +440,7 @@ func processScoreType(definition *rpc.ScoreDefinition, scoreValue interface{}, p
 	return score, nil
 }
 
-func uploadScore(ctx context.Context, client connection.RegistryClient, resource patterns.ResourceInstance, score *rpc.Score) error {
+func uploadScore(ctx context.Context, client artifactClient, resource patterns.ResourceInstance, score *rpc.Score) error {
 	artifactBytes, err := proto.Marshal(score)
 	if err != nil {
 		return err
@@ -450,21 +451,21 @@ func uploadScore(ctx context.Context, client connection.RegistryClient, resource
 		MimeType: patch.MimeTypeForKind("Score"),
 	}
 	log.Debugf(ctx, "Uploading %s", artifact.GetName())
-	if err = core.SetArtifact(ctx, client, artifact); err != nil {
+	if err = client.SetArtifact(ctx, artifact); err != nil {
 		return fmt.Errorf("failed to save artifact %s: %s", artifact.GetName(), err)
 	}
 
 	return nil
 }
 
-func getArtifact(ctx context.Context, client connection.RegistryClient, artifactPattern string, getContents bool) (*rpc.Artifact, error) {
+func getArtifact(ctx context.Context, client artifactClient, artifactPattern string, getContents bool) (*rpc.Artifact, error) {
 	artifactName, err := names.ParseArtifact(artifactPattern)
 	if err != nil {
 		return nil, fmt.Errorf("invalid artifact pattern %q: %s", artifactPattern, err)
 	}
 
 	gotArtifact := &rpc.Artifact{}
-	err = core.GetArtifact(ctx, client, artifactName, true, func(artifact *rpc.Artifact) error {
+	err = client.GetArtifact(ctx, artifactName, true, func(artifact *rpc.Artifact) error {
 		gotArtifact = artifact
 		return nil
 	})
