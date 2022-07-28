@@ -18,7 +18,6 @@ import (
 	"bytes"
 	"fmt"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/apigee/registry/pkg/connection"
@@ -212,16 +211,4 @@ Your active configuration is: "active".
 	if diff := cmp.Diff(want, out.String()); diff != "" {
 		t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 	}
-}
-
-func capture(cmd *cobra.Command, input string) (string, error) {
-	var out bytes.Buffer
-	cmd.SetOut(&out)
-	cmd.SetIn(strings.NewReader(input))
-
-	if err := cmd.Execute(); err != nil {
-		return "", err
-	}
-
-	return out.String(), nil
 }
