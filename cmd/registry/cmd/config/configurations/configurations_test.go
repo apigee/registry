@@ -22,7 +22,6 @@ import (
 
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/google/go-cmp/cmp"
-	"github.com/spf13/cobra"
 )
 
 func TestCommand(t *testing.T) {
@@ -47,23 +46,25 @@ func TestNoConfigurations(t *testing.T) {
 	// missing directory
 	connection.ConfigPath = filepath.Join(connection.ConfigPath, "test")
 	cmd := listCommand()
-	got, err := capture(cmd, "")
-	if err != nil {
-		t.Fatal(err)
-	}
 	want := "You don't have any configurations. Run 'registry config configurations create' to create a configuration.\n"
-	if diff := cmp.Diff(want, string(got)); diff != "" {
+	out := new(bytes.Buffer)
+	cmd.SetOut(out)
+	if err := cmd.Execute(); err != nil {
+		t.Fatal()
+	}
+	if diff := cmp.Diff(want, out.String()); diff != "" {
 		t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 	}
 
 	// empty list
 	connection.ConfigPath = t.TempDir()
-	got, err = capture(cmd, "")
-	if err != nil {
-		t.Fatal(err)
-	}
 	want = "You don't have any configurations. Run 'registry config configurations create' to create a configuration.\n"
-	if diff := cmp.Diff(want, string(got)); diff != "" {
+	out = new(bytes.Buffer)
+	cmd.SetOut(out)
+	if err := cmd.Execute(); err != nil {
+		t.Fatal()
+	}
+	if diff := cmp.Diff(want, out.String()); diff != "" {
 		t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 	}
 }
@@ -73,26 +74,28 @@ func TestConfigurations(t *testing.T) {
 
 	cmd := createCommand()
 	cmd.SetArgs([]string{"config1"})
-	got, err := capture(cmd, "")
-	if err != nil {
-		t.Fatal(err)
-	}
 	want := `Created "config1".
 Activated "config1".
 `
-	if diff := cmp.Diff(want, string(got)); diff != "" {
+	out := new(bytes.Buffer)
+	cmd.SetOut(out)
+	if err := cmd.Execute(); err != nil {
+		t.Fatal()
+	}
+	if diff := cmp.Diff(want, out.String()); diff != "" {
 		t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 	}
 
 	cmd.SetArgs([]string{"config2"})
-	got, err = capture(cmd, "")
-	if err != nil {
-		t.Fatal(err)
-	}
 	want = `Created "config2".
 Activated "config2".
 `
-	if diff := cmp.Diff(want, string(got)); diff != "" {
+	out = new(bytes.Buffer)
+	cmd.SetOut(out)
+	if err := cmd.Execute(); err != nil {
+		t.Fatal()
+	}
+	if diff := cmp.Diff(want, out.String()); diff != "" {
 		t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 	}
 
@@ -106,13 +109,14 @@ Activated "config2".
 
 	cmd = activateCommand()
 	cmd.SetArgs([]string{"config1"})
-	got, err = capture(cmd, "")
-	if err != nil {
-		t.Fatal(err)
-	}
 	want = `Activated "config1".
 `
-	if diff := cmp.Diff(want, string(got)); diff != "" {
+	out = new(bytes.Buffer)
+	cmd.SetOut(out)
+	if err = cmd.Execute(); err != nil {
+		t.Fatal()
+	}
+	if diff := cmp.Diff(want, out.String()); diff != "" {
 		t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 	}
 
@@ -127,76 +131,65 @@ Activated "config2".
 
 	cmd = listCommand()
 	cmd.SetArgs([]string{})
-	got, err = capture(cmd, "")
-	if err != nil {
-		t.Fatal(err)
-	}
 	want = `NAME     IS_ACTIVE  ADDRESS  INSECURE
 config1  true                false
 config2  false      foo      true
 `
-	if diff := cmp.Diff(want, string(got)); diff != "" {
+	out = new(bytes.Buffer)
+	cmd.SetOut(out)
+	if err = cmd.Execute(); err != nil {
+		t.Fatal()
+	}
+	if diff := cmp.Diff(want, out.String()); diff != "" {
 		t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 	}
 
 	cmd = describeCommand()
 	cmd.SetArgs([]string{"config2"})
-	got, err = capture(cmd, "")
-	if err != nil {
-		t.Fatal(err)
-	}
 	want = `is_active: false
 name: config2
 properties:
   address: foo
   insecure: true
 `
-	if diff := cmp.Diff(want, string(got)); diff != "" {
+	out = new(bytes.Buffer)
+	cmd.SetOut(out)
+	if err = cmd.Execute(); err != nil {
+		t.Fatal()
+	}
+	if diff := cmp.Diff(want, out.String()); diff != "" {
 		t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 	}
 
 	cmd = deleteCommand()
 	cmd.SetArgs([]string{"config1"})
-	input := "Y\n"
-	_, err = capture(cmd, input)
+	cmd.SetIn(strings.NewReader("Y\n"))
 	want = "Cannot delete config \"config1\": Cannot delete active configuration."
-	if err == nil && err.Error() != want {
+	if err = cmd.Execute(); err == nil || err.Error() != want {
 		t.Errorf("expected error: %s", want)
 	}
 
 	cmd = deleteCommand()
 	cmd.SetArgs([]string{"config2"})
-	input = "N\n"
-	_, err = capture(cmd, input)
+	cmd.SetIn(strings.NewReader("N\n"))
 	want = "Aborted by user."
-	if err != nil && err.Error() != want {
+	if err = cmd.Execute(); err == nil || err.Error() != want {
 		t.Errorf("expected error: %s", want)
 	}
 
 	cmd = deleteCommand()
 	cmd.SetArgs([]string{"config2"})
-	input = "Y\n"
-	got, err = capture(cmd, input)
-	if err != nil {
-		t.Fatal(err)
-	}
+	cmd.SetIn(strings.NewReader("Y\n"))
+	out = new(bytes.Buffer)
+	cmd.SetOut(out)
 	want = `The following configs will be deleted:
  - config2
 Do you want to continue (Y/n)? Deleted "config2".
 `
-	if diff := cmp.Diff(want, string(got)); diff != "" {
+	if err = cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+	if diff := cmp.Diff(want, out.String()); diff != "" {
 		t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 	}
-}
-
-func capture(cmd *cobra.Command, input string) (string, error) {
-	var out bytes.Buffer
-	cmd.SetOut(&out)
-	cmd.SetIn(strings.NewReader(input))
-
-	if err := cmd.Execute(); err != nil {
-		return "", err
-	}
-
-	return out.String(), nil
 }

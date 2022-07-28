@@ -100,108 +100,116 @@ func TestConfig(t *testing.T) {
 
 	cmd := setCommand()
 	cmd.SetArgs([]string{"test", "test"})
-	_, err = capture(cmd, "")
-	if err.Error() != `Config has no property "test".` {
+	want := `Config has no property "test".`
+	if err := cmd.Execute(); err.Error() != want {
 		t.Errorf("expected missing property: %q", "test")
 	}
 
 	cmd = setCommand()
 	cmd.SetArgs([]string{"address", "test"})
-	got, err := capture(cmd, "")
-	want := "Updated property \"address\".\n"
-	if err != nil {
-		t.Fatal(err)
+	want = "Updated property \"address\".\n"
+	out := new(bytes.Buffer)
+	cmd.SetOut(out)
+	if err = cmd.Execute(); err != nil {
+		t.Fatal()
 	}
-	if diff := cmp.Diff(want, string(got)); diff != "" {
+	if diff := cmp.Diff(want, out.String()); diff != "" {
 		t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 	}
 
 	cmd = setCommand()
 	cmd.SetArgs([]string{"insecure", "true"})
-	got, err = capture(cmd, "")
 	want = "Updated property \"insecure\".\n"
-	if err != nil {
-		t.Fatal(err)
+	out = new(bytes.Buffer)
+	cmd.SetOut(out)
+	if err = cmd.Execute(); err != nil {
+		t.Fatal()
 	}
-	if diff := cmp.Diff(want, string(got)); diff != "" {
+	if diff := cmp.Diff(want, out.String()); diff != "" {
 		t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 	}
 
 	cmd = getCommand()
 	cmd.SetArgs([]string{"test"})
-	_, err = capture(cmd, "")
-	if err.Error() != `Config has no property "test".` {
+	want = `Config has no property "test".`
+	if err := cmd.Execute(); err.Error() != want {
 		t.Errorf("expected missing property: %q", "test")
 	}
 
 	cmd = getCommand()
 	cmd.SetArgs([]string{"address"})
-	got, err = capture(cmd, "")
 	want = "test\n"
-	if err != nil {
-		t.Fatal(err)
+	out = new(bytes.Buffer)
+	cmd.SetOut(out)
+	if err = cmd.Execute(); err != nil {
+		t.Fatal()
 	}
-	if diff := cmp.Diff(want, string(got)); diff != "" {
+	if diff := cmp.Diff(want, out.String()); diff != "" {
 		t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 	}
 
 	cmd = getCommand()
 	cmd.SetArgs([]string{"insecure"})
-	got, err = capture(cmd, "")
 	want = "true\n"
-	if err != nil {
-		t.Fatal(err)
+	out = new(bytes.Buffer)
+	cmd.SetOut(out)
+	if err = cmd.Execute(); err != nil {
+		t.Fatal()
 	}
-	if diff := cmp.Diff(want, string(got)); diff != "" {
+	if diff := cmp.Diff(want, out.String()); diff != "" {
 		t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 	}
 
 	cmd = listCommand()
-	got, err = capture(cmd, "")
 	want = `address = test
 insecure = true
 
 Your active configuration is: "active".
 `
-	if err != nil {
-		t.Fatal(err)
+	out = new(bytes.Buffer)
+	cmd.SetOut(out)
+	if err = cmd.Execute(); err != nil {
+		t.Fatal()
 	}
-	if diff := cmp.Diff(want, string(got)); diff != "" {
+	if diff := cmp.Diff(want, out.String()); diff != "" {
 		t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 	}
 
 	cmd = unsetCommand()
 	cmd.SetArgs([]string{"address"})
-	got, err = capture(cmd, "")
 	want = "Unset property \"address\".\n"
-	if err != nil {
-		t.Fatal(err)
+	out = new(bytes.Buffer)
+	cmd.SetOut(out)
+	if err = cmd.Execute(); err != nil {
+		t.Fatal()
 	}
-	if diff := cmp.Diff(want, string(got)); diff != "" {
+	if diff := cmp.Diff(want, out.String()); diff != "" {
 		t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 	}
 
 	cmd = unsetCommand()
 	cmd.SetArgs([]string{"insecure"})
-	got, err = capture(cmd, "")
 	want = "Unset property \"insecure\".\n"
-	if err != nil {
-		t.Fatal(err)
+	out = new(bytes.Buffer)
+	cmd.SetOut(out)
+	if err = cmd.Execute(); err != nil {
+		t.Fatal()
 	}
-	if diff := cmp.Diff(want, string(got)); diff != "" {
+	if diff := cmp.Diff(want, out.String()); diff != "" {
 		t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 	}
 
 	cmd = listCommand()
-	got, err = capture(cmd, "")
 	want = `insecure = false
 
 Your active configuration is: "active".
 `
-	if err != nil {
-		t.Fatal(err)
+	out = new(bytes.Buffer)
+	cmd.SetOut(out)
+	if err = cmd.Execute(); err != nil {
+		t.Fatal()
 	}
-	if diff := cmp.Diff(want, string(got)); diff != "" {
+	if diff := cmp.Diff(want, out.String()); diff != "" {
 		t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 	}
 }
