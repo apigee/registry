@@ -15,6 +15,7 @@
 package configurations
 
 import (
+	"path/filepath"
 	"testing"
 
 	"github.com/apigee/registry/cmd/registry/cmd/test"
@@ -28,11 +29,45 @@ func TestCommand(t *testing.T) {
 	}
 }
 
-func TestConfigurations(t *testing.T) {
+func cleanConfigDir(t *testing.T) func() {
+	t.Helper()
 	tmpDir := t.TempDir()
 	origConfigPath := connection.ConfigPath
 	connection.ConfigPath = tmpDir
-	defer func() { connection.ConfigPath = origConfigPath }()
+	return func() {
+		connection.ConfigPath = origConfigPath
+	}
+}
+
+func TestNoConfigurations(t *testing.T) {
+	t.Cleanup(cleanConfigDir(t))
+
+	// missing directory
+	connection.ConfigPath = filepath.Join(connection.ConfigPath, "test")
+	cmd := listCommand()
+	got, err := test.Capture(cmd, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := "You don't have any configurations. Run 'registry config configurations create' to create a configuration.\n"
+	if diff := cmp.Diff(want, string(got)); diff != "" {
+		t.Errorf("unexpected diff: (-want +got):\n%s", diff)
+	}
+
+	// empty list
+	connection.ConfigPath = t.TempDir()
+	got, err = test.Capture(cmd, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	want = "You don't have any configurations. Run 'registry config configurations create' to create a configuration.\n"
+	if diff := cmp.Diff(want, string(got)); diff != "" {
+		t.Errorf("unexpected diff: (-want +got):\n%s", diff)
+	}
+}
+
+func TestConfigurations(t *testing.T) {
+	t.Cleanup(cleanConfigDir(t))
 
 	cmd := createCommand()
 	cmd.SetArgs([]string{"config1"})

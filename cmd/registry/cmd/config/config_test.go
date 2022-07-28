@@ -15,11 +15,14 @@
 package config
 
 import (
+	"fmt"
+	"path/filepath"
 	"testing"
 
 	"github.com/apigee/registry/cmd/registry/cmd/test"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/google/go-cmp/cmp"
+	"github.com/spf13/cobra"
 )
 
 func TestCommand(t *testing.T) {
@@ -28,11 +31,61 @@ func TestCommand(t *testing.T) {
 	}
 }
 
-func TestConfig(t *testing.T) {
+func cleanConfigDir(t *testing.T) func() {
+	t.Helper()
 	tmpDir := t.TempDir()
 	origConfigPath := connection.ConfigPath
 	connection.ConfigPath = tmpDir
-	defer func() { connection.ConfigPath = origConfigPath }()
+	return func() {
+		connection.ConfigPath = origConfigPath
+	}
+}
+
+func TestNoActiveConfig(t *testing.T) {
+	t.Cleanup(cleanConfigDir(t))
+
+	checkErr := func(err error) {
+		want := fmt.Errorf(`Cannot read config: No active config. Use 'registry config configurations' to manage.`)
+		if err == nil {
+			t.Errorf("expected error: %s", want)
+		} else if diff := cmp.Diff(want.Error(), err.Error()); diff != "" {
+			t.Errorf("unexpected diff: (-want +got):\n%s", diff)
+		}
+	}
+
+	for _, e := range []struct {
+		name string
+		cmd  *cobra.Command
+		args []string
+	}{
+		{"get", getCommand(), []string{"x"}},
+		{"list", listCommand(), nil},
+		{"set", setCommand(), []string{"x", "y"}},
+		{"unset", unsetCommand(), []string{"x"}},
+	} {
+		t.Run(e.name, func(t *testing.T) {
+			e.cmd.SetArgs(e.args)
+
+			// missing directory
+			connection.ConfigPath = filepath.Join(connection.ConfigPath, "test")
+			checkErr(e.cmd.Execute())
+
+			// empty list
+			connection.ConfigPath = t.TempDir()
+			checkErr(e.cmd.Execute())
+
+			// no active
+			c := connection.Config{}
+			if err := c.Write("test"); err != nil {
+				t.Fatal(err)
+			}
+			checkErr(e.cmd.Execute())
+		})
+	}
+}
+
+func TestConfig(t *testing.T) {
+	t.Cleanup(cleanConfigDir(t))
 
 	s := connection.Config{}
 	err := s.Write("active")

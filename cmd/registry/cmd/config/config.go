@@ -15,10 +15,14 @@
 package config
 
 import (
+	"fmt"
+
 	"github.com/apigee/registry/cmd/registry/cmd/config/configurations"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/spf13/cobra"
 )
+
+var NoActiveConfigurationError = fmt.Errorf(`No active config. Use 'registry config configurations' to manage.`)
 
 func Command() *cobra.Command {
 	cmd := &cobra.Command{
@@ -41,7 +45,12 @@ func targetConfig() (name string, config connection.Config, err error) {
 		if err != nil {
 			return
 		}
+		if name == "" {
+			err = NoActiveConfigurationError
+			return
+		}
 	}
+
 	config, err = connection.ReadConfig(name)
 	return
 }

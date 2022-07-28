@@ -29,6 +29,7 @@ func deleteCommand() *cobra.Command {
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cmd.SilenceUsage = true
+			cmd.SilenceErrors = true
 			for _, name := range args {
 				if err := connection.ValidateConfigName(name); err != nil {
 					return err

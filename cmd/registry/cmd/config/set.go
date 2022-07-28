@@ -27,6 +27,7 @@ func setCommand() *cobra.Command {
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cmd.SilenceUsage = true
+			cmd.SilenceErrors = true
 			target, config, err := targetConfig()
 			if err != nil {
 				return fmt.Errorf("Cannot read config: %v", err)

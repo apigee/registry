@@ -29,6 +29,7 @@ func describeCommand() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cmd.SilenceUsage = true
+			cmd.SilenceErrors = true
 			name := args[0]
 			s, err := connection.ReadConfig(name)
 			if err != nil {

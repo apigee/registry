@@ -15,7 +15,9 @@
 package configurations
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
 	"sort"
 	"text/tabwriter"
 
@@ -30,8 +32,12 @@ func listCommand() *cobra.Command {
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			cmd.SilenceUsage = true
+			cmd.SilenceErrors = true
 			configs, err := connection.Configs()
-			if err != nil {
+			if errors.Is(err, fs.ErrNotExist) || len(configs) == 0 {
+				cmd.Println("You don't have any configurations. Run 'registry config configurations create' to create a configuration.")
+				return nil
+			} else if err != nil {
 				return fmt.Errorf("Cannot read configs: %v", err)
 			}
 

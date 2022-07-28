@@ -158,6 +158,9 @@ func Configs() (map[string]Config, error) {
 }
 
 func ValidateConfigName(name string) error {
+	if name == "" {
+		return fmt.Errorf("name cannot be empty")
+	}
 	if name == ActiveConfigPointerFilename {
 		return ReservedConfigNameError
 	}
