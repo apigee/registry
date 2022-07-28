@@ -146,6 +146,7 @@ func (s *RegistryServer) ListApiVersions(ctx context.Context, req *rpc.ListApiVe
 	listing, err := db.ListVersions(ctx, parent, storage.PageOptions{
 		Size:   req.GetPageSize(),
 		Filter: req.GetFilter(),
+		Order:  req.GetOrderBy(),
 		Token:  req.GetPageToken(),
 	})
 	if err != nil {

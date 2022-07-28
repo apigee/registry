@@ -557,6 +557,117 @@ func TestListApiDeployments(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "ordered by description",
+			seed: []*rpc.ApiDeployment{
+				{
+					Name:        "projects/my-project/locations/global/apis/my-api/deployments/d1",
+					Description: "111: this should be returned first",
+				},
+				{
+					Name:        "projects/my-project/locations/global/apis/my-api/deployments/d2",
+					Description: "333: this should be returned third",
+				},
+				{
+					Name:        "projects/my-project/locations/global/apis/my-api/deployments/d3",
+					Description: "222: this should be returned second",
+				},
+			},
+			req: &rpc.ListApiDeploymentsRequest{
+				Parent:  "projects/my-project/locations/global/apis/my-api",
+				OrderBy: "description",
+			},
+			want: &rpc.ListApiDeploymentsResponse{
+				ApiDeployments: []*rpc.ApiDeployment{
+					{
+						Name:        "projects/my-project/locations/global/apis/my-api/deployments/d1",
+						Description: "111: this should be returned first",
+					},
+					{
+						Name:        "projects/my-project/locations/global/apis/my-api/deployments/d3",
+						Description: "222: this should be returned second",
+					},
+					{
+						Name:        "projects/my-project/locations/global/apis/my-api/deployments/d2",
+						Description: "333: this should be returned third",
+					},
+				},
+			},
+		},
+		{
+			desc: "ordered by description descending",
+			seed: []*rpc.ApiDeployment{
+				{
+					Name:        "projects/my-project/locations/global/apis/my-api/deployments/d1",
+					Description: "111: this should be returned third",
+				},
+				{
+					Name:        "projects/my-project/locations/global/apis/my-api/deployments/d2",
+					Description: "333: this should be returned first",
+				},
+				{
+					Name:        "projects/my-project/locations/global/apis/my-api/deployments/d3",
+					Description: "222: this should be returned second",
+				},
+			},
+			req: &rpc.ListApiDeploymentsRequest{
+				Parent:  "projects/my-project/locations/global/apis/my-api",
+				OrderBy: "description desc",
+			},
+			want: &rpc.ListApiDeploymentsResponse{
+				ApiDeployments: []*rpc.ApiDeployment{
+					{
+						Name:        "projects/my-project/locations/global/apis/my-api/deployments/d2",
+						Description: "333: this should be returned first",
+					},
+					{
+						Name:        "projects/my-project/locations/global/apis/my-api/deployments/d3",
+						Description: "222: this should be returned second",
+					},
+					{
+						Name:        "projects/my-project/locations/global/apis/my-api/deployments/d1",
+						Description: "111: this should be returned third",
+					},
+				},
+			},
+		},
+		{
+			desc: "ordered by description then by name",
+			seed: []*rpc.ApiDeployment{
+				{
+					Name:        "projects/my-project/locations/global/apis/my-api/deployments/d1",
+					Description: "222: this should be returned second or third (the name is the tie-breaker)",
+				},
+				{
+					Name:        "projects/my-project/locations/global/apis/my-api/deployments/d3",
+					Description: "111: this should be returned first",
+				},
+				{
+					Name:        "projects/my-project/locations/global/apis/my-api/deployments/d2",
+					Description: "222: this should be returned second or third (the name is the tie-breaker)",
+				},
+			},
+			req: &rpc.ListApiDeploymentsRequest{
+				Parent:  "projects/my-project/locations/global/apis/my-api",
+				OrderBy: "description,name",
+			},
+			want: &rpc.ListApiDeploymentsResponse{
+				ApiDeployments: []*rpc.ApiDeployment{
+					{
+						Name:        "projects/my-project/locations/global/apis/my-api/deployments/d3",
+						Description: "111: this should be returned first",
+					},
+					{
+						Name:        "projects/my-project/locations/global/apis/my-api/deployments/d1",
+						Description: "222: this should be returned second or third (the name is the tie-breaker)",
+					},
+					{
+						Name:        "projects/my-project/locations/global/apis/my-api/deployments/d2",
+						Description: "222: this should be returned second or third (the name is the tie-breaker)",
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -579,9 +690,6 @@ func TestListApiDeployments(t *testing.T) {
 				protocmp.Transform(),
 				protocmp.IgnoreFields(new(rpc.ListApiDeploymentsResponse), "next_page_token"),
 				protocmp.IgnoreFields(new(rpc.ApiDeployment), "revision_id", "create_time", "revision_create_time", "revision_update_time"),
-				protocmp.SortRepeated(func(a, b *rpc.ApiDeployment) bool {
-					return a.GetName() < b.GetName()
-				}),
 				test.extraOpts,
 			}
 
@@ -602,6 +710,7 @@ func TestListApiDeploymentsResponseCodes(t *testing.T) {
 	tests := []struct {
 		admin bool
 		desc  string
+		seed  *rpc.ApiDeployment
 		req   *rpc.ListApiDeploymentsRequest
 		want  codes.Code
 	}{
@@ -641,6 +750,42 @@ func TestListApiDeploymentsResponseCodes(t *testing.T) {
 			},
 			want: codes.InvalidArgument,
 		},
+		{
+			desc: "invalid ordering by unknown field",
+			seed: &rpc.ApiDeployment{Name: "projects/my-project/locations/global/apis/my-api/deployments/my-deployment"},
+			req: &rpc.ListApiDeploymentsRequest{
+				Parent:  "projects/my-project/locations/global/apis/my-api",
+				OrderBy: "something",
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "invalid ordering by private field",
+			seed: &rpc.ApiDeployment{Name: "projects/my-project/locations/global/apis/my-api/deployments/my-deployment"},
+			req: &rpc.ListApiDeploymentsRequest{
+				Parent:  "projects/my-project/locations/global/apis/my-api",
+				OrderBy: "key",
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "invalid ordering direction",
+			seed: &rpc.ApiDeployment{Name: "projects/my-project/locations/global/apis/my-api/deployments/my-deployment"},
+			req: &rpc.ListApiDeploymentsRequest{
+				Parent:  "projects/my-project/locations/global/apis/my-api",
+				OrderBy: "description asc",
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "invalid ordering format",
+			seed: &rpc.ApiDeployment{Name: "projects/my-project/locations/global/apis/my-api/deployments/my-deployment"},
+			req: &rpc.ListApiDeploymentsRequest{
+				Parent:  "projects/my-project/locations/global/apis/my-api",
+				OrderBy: "description,",
+			},
+			want: codes.InvalidArgument,
+		},
 	}
 
 	for _, test := range tests {
@@ -650,6 +795,9 @@ func TestListApiDeploymentsResponseCodes(t *testing.T) {
 			}
 			ctx := context.Background()
 			server := defaultTestServer(t)
+			if err := seeder.SeedDeployments(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			if _, err := server.ListApiDeployments(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("ListApiDeployments(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
