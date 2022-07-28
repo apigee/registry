@@ -24,23 +24,23 @@ import (
 	"google.golang.org/grpc"
 )
 
-func clientOptions(settings Settings) ([]option.ClientOption, error) {
+func clientOptions(config Config) ([]option.ClientOption, error) {
 	var opts []option.ClientOption
-	if settings.Address == "" {
+	if config.Address == "" {
 		return nil, fmt.Errorf("rpc error: address must be set")
 	}
-	opts = append(opts, option.WithEndpoint(settings.Address))
-	if settings.Insecure {
-		conn, err := grpc.Dial(settings.Address, grpc.WithInsecure())
+	opts = append(opts, option.WithEndpoint(config.Address))
+	if config.Insecure {
+		conn, err := grpc.Dial(config.Address, grpc.WithInsecure())
 		if err != nil {
 			return nil, err
 		}
 		opts = append(opts, option.WithGRPCConn(conn))
 	}
-	if settings.Token != "" {
+	if config.Token != "" {
 		opts = append(opts, option.WithTokenSource(oauth2.StaticTokenSource(
 			&oauth2.Token{
-				AccessToken: settings.Token,
+				AccessToken: config.Token,
 				TokenType:   "Bearer",
 			})))
 	}
@@ -50,18 +50,18 @@ func clientOptions(settings Settings) ([]option.ClientOption, error) {
 // RegistryClient is a client of the Registry API
 type RegistryClient = *gapic.RegistryClient
 
-// NewRegistryClient creates a new GAPIC client using environment variable settings.
+// NewRegistryClient creates a new client using the active Config.
 func NewRegistryClient(ctx context.Context) (RegistryClient, error) {
-	settings, err := ActiveSettings()
+	config, err := ActiveConfig()
 	if err != nil {
 		return nil, err
 	}
-	return NewRegistryClientWithSettings(ctx, settings)
+	return NewRegistryClientWithSettings(ctx, config)
 }
 
-// NewRegistryClientWithSettings creates a GAPIC client with specified settings.
-func NewRegistryClientWithSettings(ctx context.Context, settings Settings) (RegistryClient, error) {
-	opts, err := clientOptions(settings)
+// NewRegistryClientWithSettings creates a client with specified Config.
+func NewRegistryClientWithSettings(ctx context.Context, config Config) (RegistryClient, error) {
+	opts, err := clientOptions(config)
 	if err != nil {
 		return nil, err
 	}
@@ -70,18 +70,18 @@ func NewRegistryClientWithSettings(ctx context.Context, settings Settings) (Regi
 
 type AdminClient = *gapic.AdminClient
 
-// NewAdminClient creates a new GAPIC client using environment variable settings.
+// NewAdminClient creates a new client using the active Config.
 func NewAdminClient(ctx context.Context) (AdminClient, error) {
-	settings, err := ActiveSettings()
+	config, err := ActiveConfig()
 	if err != nil {
 		return nil, err
 	}
-	return NewAdminClientWithSettings(ctx, settings)
+	return NewAdminClientWithSettings(ctx, config)
 }
 
-// NewAdminClientWithSettings creates a GAPIC client with specified settings.
-func NewAdminClientWithSettings(ctx context.Context, settings Settings) (AdminClient, error) {
-	opts, err := clientOptions(settings)
+// NewAdminClientWithSettings creates a client with specified Config.
+func NewAdminClientWithSettings(ctx context.Context, config Config) (AdminClient, error) {
+	opts, err := clientOptions(config)
 	if err != nil {
 		return nil, err
 	}
@@ -90,18 +90,18 @@ func NewAdminClientWithSettings(ctx context.Context, settings Settings) (AdminCl
 
 type ProvisioningClient = *gapic.ProvisioningClient
 
-// NewAdminClient creates a new GAPIC client using environment variable settings.
+// NewAdminClient creates a new client using the active Config.
 func NewProvisioningClient(ctx context.Context) (ProvisioningClient, error) {
-	settings, err := ActiveSettings()
+	config, err := ActiveConfig()
 	if err != nil {
 		return nil, err
 	}
-	return NewProvisioningClientWithSettings(ctx, settings)
+	return NewProvisioningClientWithSettings(ctx, config)
 }
 
-// NewAdminClientWithSettings creates a GAPIC client with specified settings.
-func NewProvisioningClientWithSettings(ctx context.Context, settings Settings) (ProvisioningClient, error) {
-	opts, err := clientOptions(settings)
+// NewAdminClientWithSettings creates a GAPIC client with specified Config.
+func NewProvisioningClientWithSettings(ctx context.Context, config Config) (ProvisioningClient, error) {
+	opts, err := clientOptions(config)
 	if err != nil {
 		return nil, err
 	}

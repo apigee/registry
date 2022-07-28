@@ -41,13 +41,14 @@ import (
 //   ... run test here ...
 // }
 func NewIfNoAddress(rc registry.Config) (*Server, error) {
-	settings, _ := connection.ReadSettings("")
-	if settings.Address != "" && settings.Validate() == nil {
-		log.Printf("Client will use remote registry at: %s", settings.Address)
+	// error doesn't matter here as the point is to allow fallback
+	config, _ := connection.ReadConfig("")
+	if config.Address != "" && config.Validate() == nil {
+		log.Printf("Client will use remote registry at: %s", config.Address)
 		return nil, nil
 	}
 	log.Println("Client will use an embedded registry with a SQLite3 database")
-	return NewServer(registry.Config{})
+	return NewServer(rc)
 }
 
 // TestMain can delegate here in packages that wish to
