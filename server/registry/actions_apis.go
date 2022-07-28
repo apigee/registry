@@ -146,6 +146,7 @@ func (s *RegistryServer) ListApis(ctx context.Context, req *rpc.ListApisRequest)
 	listing, err := db.ListApis(ctx, parent, storage.PageOptions{
 		Size:   req.GetPageSize(),
 		Filter: req.GetFilter(),
+		Order:  req.GetOrderBy(),
 		Token:  req.GetPageToken(),
 	})
 	if err != nil {

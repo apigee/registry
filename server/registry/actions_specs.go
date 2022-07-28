@@ -231,6 +231,7 @@ func (s *RegistryServer) ListApiSpecs(ctx context.Context, req *rpc.ListApiSpecs
 	listing, err := db.ListSpecs(ctx, parent, storage.PageOptions{
 		Size:   req.GetPageSize(),
 		Filter: req.GetFilter(),
+		Order:  req.GetOrderBy(),
 		Token:  req.GetPageToken(),
 	})
 	if err != nil {

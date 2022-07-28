@@ -33,11 +33,6 @@ const (
 	StringMap FieldType = iota
 )
 
-type Field struct {
-	Name string
-	Type FieldType
-}
-
 type Filter struct {
 	program cel.Program
 }
@@ -60,22 +55,22 @@ func (f *Filter) Matches(model map[string]interface{}) (bool, error) {
 	return match, nil
 }
 
-func NewFilter(filter string, fields []Field) (Filter, error) {
+func NewFilter(filter string, fields map[string]FieldType) (Filter, error) {
 	if filter == "" {
 		return Filter{}, nil
 	}
 
 	declarations := make([]*exprpb.Decl, 0)
-	for _, field := range fields {
-		switch field.Type {
+	for name, fieldType := range fields {
+		switch fieldType {
 		case String:
-			declarations = append(declarations, decls.NewConst(field.Name, decls.String, nil))
+			declarations = append(declarations, decls.NewConst(name, decls.String, nil))
 		case Int:
-			declarations = append(declarations, decls.NewConst(field.Name, decls.Int, nil))
+			declarations = append(declarations, decls.NewConst(name, decls.Int, nil))
 		case Timestamp:
-			declarations = append(declarations, decls.NewConst(field.Name, decls.Timestamp, nil))
+			declarations = append(declarations, decls.NewConst(name, decls.Timestamp, nil))
 		case StringMap:
-			declarations = append(declarations, decls.NewConst(field.Name, decls.NewMapType(decls.String, decls.String), nil))
+			declarations = append(declarations, decls.NewConst(name, decls.NewMapType(decls.String, decls.String), nil))
 		default:
 			return Filter{}, status.Errorf(codes.InvalidArgument, "unknown filter argument type")
 		}

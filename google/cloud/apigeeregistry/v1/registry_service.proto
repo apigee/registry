@@ -445,6 +445,10 @@ message ListApisRequest {
   // An expression that can be used to filter the list. Filters use the Common
   // Expression Language and can refer to all message fields.
   string filter = 4;
+
+  // A comma-separated list of fields, e.g. "foo,bar"
+  // Fields can be sorted in descending order using the "desc" identifier, e.g. "foo desc,bar"
+  string order_by = 5;
 }
 
 // Response message for ListApis.
@@ -555,6 +559,10 @@ message ListApiVersionsRequest {
   // An expression that can be used to filter the list. Filters use the Common
   // Expression Language and can refer to all message fields.
   string filter = 4;
+
+  // A comma-separated list of fields, e.g. "foo,bar"
+  // Fields can be sorted in descending order using the "desc" identifier, e.g. "foo desc,bar"
+  string order_by = 5;
 }
 
 // Response message for ListApiVersions.
@@ -665,6 +673,10 @@ message ListApiSpecsRequest {
   // An expression that can be used to filter the list. Filters use the Common
   // Expression Language and can refer to all message fields except contents.
   string filter = 4;
+
+  // A comma-separated list of fields, e.g. "foo,bar"
+  // Fields can be sorted in descending order using the "desc" identifier, e.g. "foo desc,bar"
+  string order_by = 5;
 }
 
 // Response message for ListApiSpecs.
@@ -862,6 +874,10 @@ message ListApiDeploymentsRequest {
   // An expression that can be used to filter the list. Filters use the Common
   // Expression Language and can refer to all message fields.
   string filter = 4;
+
+  // A comma-separated list of fields, e.g. "foo,bar"
+  // Fields can be sorted in descending order using the "desc" identifier, e.g. "foo desc,bar"
+  string order_by = 5;
 }
 
 // Response message for ListApiDeployments.
@@ -1047,6 +1063,10 @@ message ListArtifactsRequest {
   // An expression that can be used to filter the list. Filters use the Common
   // Expression Language and can refer to all message fields except contents.
   string filter = 4;
+
+  // A comma-separated list of fields, e.g. "foo,bar"
+  // Fields can be sorted in descending order using the "desc" identifier, e.g. "foo desc,bar"
+  string order_by = 5;
 }
 
 // Response message for ListArtifacts.

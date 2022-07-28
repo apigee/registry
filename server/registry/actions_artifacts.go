@@ -223,30 +223,35 @@ func (s *RegistryServer) ListArtifacts(ctx context.Context, req *rpc.ListArtifac
 		listing, err = db.ListProjectArtifacts(ctx, parent, storage.PageOptions{
 			Size:   req.GetPageSize(),
 			Filter: req.GetFilter(),
+			Order:  req.GetOrderBy(),
 			Token:  req.GetPageToken(),
 		})
 	case names.Api:
 		listing, err = db.ListApiArtifacts(ctx, parent, storage.PageOptions{
 			Size:   req.GetPageSize(),
 			Filter: req.GetFilter(),
+			Order:  req.GetOrderBy(),
 			Token:  req.GetPageToken(),
 		})
 	case names.Version:
 		listing, err = db.ListVersionArtifacts(ctx, parent, storage.PageOptions{
 			Size:   req.GetPageSize(),
 			Filter: req.GetFilter(),
+			Order:  req.GetOrderBy(),
 			Token:  req.GetPageToken(),
 		})
 	case names.Spec:
 		listing, err = db.ListSpecArtifacts(ctx, parent, storage.PageOptions{
 			Size:   req.GetPageSize(),
 			Filter: req.GetFilter(),
+			Order:  req.GetOrderBy(),
 			Token:  req.GetPageToken(),
 		})
 	case names.Deployment:
 		listing, err = db.ListDeploymentArtifacts(ctx, parent, storage.PageOptions{
 			Size:   req.GetPageSize(),
 			Filter: req.GetFilter(),
+			Order:  req.GetOrderBy(),
 			Token:  req.GetPageToken(),
 		})
 	}
