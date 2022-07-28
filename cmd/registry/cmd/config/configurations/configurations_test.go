@@ -15,12 +15,14 @@
 package configurations
 
 import (
+	"bytes"
 	"path/filepath"
+	"strings"
 	"testing"
 
-	"github.com/apigee/registry/cmd/registry/cmd/test"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/google/go-cmp/cmp"
+	"github.com/spf13/cobra"
 )
 
 func TestCommand(t *testing.T) {
@@ -45,7 +47,7 @@ func TestNoConfigurations(t *testing.T) {
 	// missing directory
 	connection.ConfigPath = filepath.Join(connection.ConfigPath, "test")
 	cmd := listCommand()
-	got, err := test.Capture(cmd, "")
+	got, err := capture(cmd, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -56,7 +58,7 @@ func TestNoConfigurations(t *testing.T) {
 
 	// empty list
 	connection.ConfigPath = t.TempDir()
-	got, err = test.Capture(cmd, "")
+	got, err = capture(cmd, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -71,7 +73,7 @@ func TestConfigurations(t *testing.T) {
 
 	cmd := createCommand()
 	cmd.SetArgs([]string{"config1"})
-	got, err := test.Capture(cmd, "")
+	got, err := capture(cmd, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -83,7 +85,7 @@ Activated "config1".
 	}
 
 	cmd.SetArgs([]string{"config2"})
-	got, err = test.Capture(cmd, "")
+	got, err = capture(cmd, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -104,7 +106,7 @@ Activated "config2".
 
 	cmd = activateCommand()
 	cmd.SetArgs([]string{"config1"})
-	got, err = test.Capture(cmd, "")
+	got, err = capture(cmd, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -125,7 +127,7 @@ Activated "config2".
 
 	cmd = listCommand()
 	cmd.SetArgs([]string{})
-	got, err = test.Capture(cmd, "")
+	got, err = capture(cmd, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -139,7 +141,7 @@ config2  false      foo      true
 
 	cmd = describeCommand()
 	cmd.SetArgs([]string{"config2"})
-	got, err = test.Capture(cmd, "")
+	got, err = capture(cmd, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -156,7 +158,7 @@ properties:
 	cmd = deleteCommand()
 	cmd.SetArgs([]string{"config1"})
 	input := "Y\n"
-	_, err = test.Capture(cmd, input)
+	_, err = capture(cmd, input)
 	want = "Cannot delete config \"config1\": Cannot delete active configuration."
 	if err == nil && err.Error() != want {
 		t.Errorf("expected error: %s", want)
@@ -165,7 +167,7 @@ properties:
 	cmd = deleteCommand()
 	cmd.SetArgs([]string{"config2"})
 	input = "N\n"
-	_, err = test.Capture(cmd, input)
+	_, err = capture(cmd, input)
 	want = "Aborted by user."
 	if err != nil && err.Error() != want {
 		t.Errorf("expected error: %s", want)
@@ -174,7 +176,7 @@ properties:
 	cmd = deleteCommand()
 	cmd.SetArgs([]string{"config2"})
 	input = "Y\n"
-	got, err = test.Capture(cmd, input)
+	got, err = capture(cmd, input)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -185,4 +187,16 @@ Do you want to continue (Y/n)? Deleted "config2".
 	if diff := cmp.Diff(want, string(got)); diff != "" {
 		t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 	}
+}
+
+func capture(cmd *cobra.Command, input string) (string, error) {
+	var out bytes.Buffer
+	cmd.SetOut(&out)
+	cmd.SetIn(strings.NewReader(input))
+
+	if err := cmd.Execute(); err != nil {
+		return "", err
+	}
+
+	return out.String(), nil
 }

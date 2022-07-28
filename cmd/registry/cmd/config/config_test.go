@@ -15,11 +15,12 @@
 package config
 
 import (
+	"bytes"
 	"fmt"
 	"path/filepath"
+	"strings"
 	"testing"
 
-	"github.com/apigee/registry/cmd/registry/cmd/test"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/google/go-cmp/cmp"
 	"github.com/spf13/cobra"
@@ -99,14 +100,14 @@ func TestConfig(t *testing.T) {
 
 	cmd := setCommand()
 	cmd.SetArgs([]string{"test", "test"})
-	_, err = test.Capture(cmd, "")
+	_, err = capture(cmd, "")
 	if err.Error() != `Config has no property "test".` {
 		t.Errorf("expected missing property: %q", "test")
 	}
 
 	cmd = setCommand()
 	cmd.SetArgs([]string{"address", "test"})
-	got, err := test.Capture(cmd, "")
+	got, err := capture(cmd, "")
 	want := "Updated property \"address\".\n"
 	if err != nil {
 		t.Fatal(err)
@@ -117,7 +118,7 @@ func TestConfig(t *testing.T) {
 
 	cmd = setCommand()
 	cmd.SetArgs([]string{"insecure", "true"})
-	got, err = test.Capture(cmd, "")
+	got, err = capture(cmd, "")
 	want = "Updated property \"insecure\".\n"
 	if err != nil {
 		t.Fatal(err)
@@ -128,14 +129,14 @@ func TestConfig(t *testing.T) {
 
 	cmd = getCommand()
 	cmd.SetArgs([]string{"test"})
-	_, err = test.Capture(cmd, "")
+	_, err = capture(cmd, "")
 	if err.Error() != `Config has no property "test".` {
 		t.Errorf("expected missing property: %q", "test")
 	}
 
 	cmd = getCommand()
 	cmd.SetArgs([]string{"address"})
-	got, err = test.Capture(cmd, "")
+	got, err = capture(cmd, "")
 	want = "test\n"
 	if err != nil {
 		t.Fatal(err)
@@ -146,7 +147,7 @@ func TestConfig(t *testing.T) {
 
 	cmd = getCommand()
 	cmd.SetArgs([]string{"insecure"})
-	got, err = test.Capture(cmd, "")
+	got, err = capture(cmd, "")
 	want = "true\n"
 	if err != nil {
 		t.Fatal(err)
@@ -156,7 +157,7 @@ func TestConfig(t *testing.T) {
 	}
 
 	cmd = listCommand()
-	got, err = test.Capture(cmd, "")
+	got, err = capture(cmd, "")
 	want = `address = test
 insecure = true
 
@@ -171,7 +172,7 @@ Your active configuration is: "active".
 
 	cmd = unsetCommand()
 	cmd.SetArgs([]string{"address"})
-	got, err = test.Capture(cmd, "")
+	got, err = capture(cmd, "")
 	want = "Unset property \"address\".\n"
 	if err != nil {
 		t.Fatal(err)
@@ -182,7 +183,7 @@ Your active configuration is: "active".
 
 	cmd = unsetCommand()
 	cmd.SetArgs([]string{"insecure"})
-	got, err = test.Capture(cmd, "")
+	got, err = capture(cmd, "")
 	want = "Unset property \"insecure\".\n"
 	if err != nil {
 		t.Fatal(err)
@@ -192,7 +193,7 @@ Your active configuration is: "active".
 	}
 
 	cmd = listCommand()
-	got, err = test.Capture(cmd, "")
+	got, err = capture(cmd, "")
 	want = `insecure = false
 
 Your active configuration is: "active".
@@ -203,4 +204,16 @@ Your active configuration is: "active".
 	if diff := cmp.Diff(want, string(got)); diff != "" {
 		t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 	}
+}
+
+func capture(cmd *cobra.Command, input string) (string, error) {
+	var out bytes.Buffer
+	cmd.SetOut(&out)
+	cmd.SetIn(strings.NewReader(input))
+
+	if err := cmd.Execute(); err != nil {
+		return "", err
+	}
+
+	return out.String(), nil
 }
