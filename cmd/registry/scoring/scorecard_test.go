@@ -527,20 +527,22 @@ func TestCalculateScoreCard(t *testing.T) {
 				},
 			}
 
+			artifactClient := &RegistryArtifactClient{RegistryClient: registryClient}
+
 			//fetch definition artifact
-			defArtifact, err := getArtifact(ctx, registryClient, "projects/score-card-test/locations/global/artifacts/quality", true)
+			defArtifact, err := getArtifact(ctx, artifactClient, "projects/score-card-test/locations/global/artifacts/quality", true)
 			if err != nil {
 				t.Errorf("failed to fetch the definition Artifact from setup: %s", err)
 			}
 
-			gotErr := CalculateScoreCard(ctx, registryClient, defArtifact, resource, false)
+			gotErr := CalculateScoreCard(ctx, artifactClient, defArtifact, resource, false)
 			if gotErr != nil {
 				t.Errorf("CalculateScore(ctx, client, %v, %v) returned unexpected error: %s", defArtifact, resource, gotErr)
 			}
 
 			//fetch score artifact and check the value
 			scoreCardArtifact, err := getArtifact(
-				ctx, registryClient,
+				ctx, artifactClient,
 				"projects/score-card-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/scorecard-quality", true)
 			if err != nil {
 				t.Errorf("failed to get the result scoreCardArtifact from registry")
@@ -806,95 +808,6 @@ func TestProcessScorePatterns(t *testing.T) {
 					},
 				},
 				needsUpdate: true,
-				err:         nil,
-			},
-		},
-		{
-			desc: "!takeAction and scoreCard is up-to-date",
-			seed: []seeder.RegistryResource{
-				// Score lint-error
-				&rpc.Artifact{
-					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lint-error",
-					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
-					Contents: protoMarshal(&rpc.Score{
-						Id:             "score-lint-error",
-						Kind:           "Score",
-						DefinitionName: "projects/score-patterns-test/locations/global/artifacts/lint-error",
-						Severity:       rpc.Severity_ALERT,
-						Value: &rpc.Score_PercentValue{
-							PercentValue: &rpc.PercentValue{
-								Value: 60,
-							},
-						},
-					}),
-				},
-				// Score lang-reuse
-				&rpc.Artifact{
-					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score-lang-reuse",
-					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.Score",
-					Contents: protoMarshal(&rpc.Score{
-						Id:             "score-lang-reuse",
-						Kind:           "Score",
-						DefinitionName: "projects/score-patterns-test/locations/global/artifacts/lang-reuse",
-						Severity:       rpc.Severity_OK,
-						Value: &rpc.Score_PercentValue{
-							PercentValue: &rpc.PercentValue{
-								Value: 70,
-							},
-						},
-					}),
-				},
-				// ScoreCard artifact
-				&rpc.Artifact{
-					Name:     "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/scorecard-quality",
-					MimeType: "application/octet-stream;type=google.cloud.apigeeregistry.v1.ScoreCard",
-					Contents: protoMarshal(&rpc.ScoreCard{
-						Id:             "scorecard-quality",
-						Kind:           "ScoreCard",
-						DisplayName:    "Quality",
-						Description:    "Quality ScoreCard",
-						DefinitionName: "projects/score-patterns-test/locations/global/artifacts/quality",
-						Scores: []*rpc.Score{
-							{
-								Id:             "score-lint-error",
-								Kind:           "Score",
-								DefinitionName: "projects/score-patterns-test/locations/global/artifacts/lint-error",
-								Severity:       rpc.Severity_ALERT,
-								Value: &rpc.Score_PercentValue{
-									PercentValue: &rpc.PercentValue{
-										Value: 50,
-									},
-								},
-							},
-							{
-								Id:             "score-lang-reuse",
-								Kind:           "Score",
-								DefinitionName: "projects/score-patterns-test/locations/global/artifacts/lang-reuse",
-								Severity:       rpc.Severity_OK,
-								Value: &rpc.Score_PercentValue{
-									PercentValue: &rpc.PercentValue{
-										Value: 60,
-									},
-								},
-							},
-						},
-					}),
-				},
-			},
-			resource: patterns.SpecResource{
-				SpecName: patterns.SpecName{
-					Name: names.Spec{
-						ProjectID: "score-patterns-test",
-						ApiID:     "petstore",
-						VersionID: "1.0.0",
-						SpecID:    "openapi.yaml",
-					},
-				},
-			},
-			takeAction: false,
-			wantResult: scoreCardResult{
-				scoreCard:   nil,
-				needsUpdate: false,
 				err:         nil,
 			},
 		},
@@ -1179,13 +1092,15 @@ func TestProcessScorePatterns(t *testing.T) {
 				},
 			}
 
+			artifactClient := &RegistryArtifactClient{RegistryClient: registryClient}
+
 			//fetch the ScoreCard artifact
-			scoreCardArtifact, err := getArtifact(ctx, registryClient, "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/scorecard-quality", false)
+			scoreCardArtifact, err := getArtifact(ctx, artifactClient, "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/scorecard-quality", false)
 			if err != nil {
 				t.Errorf("failed to fetch the scoreCardArtifact from setup: %s", err)
 			}
 
-			gotResult := processScorePatterns(ctx, registryClient, definition, test.resource, scoreCardArtifact, test.takeAction, "projects/score-patterns-test/locations/global")
+			gotResult := processScorePatterns(ctx, artifactClient, definition, test.resource, scoreCardArtifact, test.takeAction, "projects/score-patterns-test/locations/global")
 
 			opts := cmp.Options{
 				cmp.AllowUnexported(scoreCardResult{}),
@@ -1335,7 +1250,9 @@ func TestProcessScorePatternsError(t *testing.T) {
 				},
 			}
 
-			gotResult := processScorePatterns(ctx, registryClient, test.definition, resource, &rpc.Artifact{}, test.takeAction, "projects/score-patterns-test/locations/global")
+			artifactClient := &RegistryArtifactClient{RegistryClient: registryClient}
+
+			gotResult := processScorePatterns(ctx, artifactClient, test.definition, resource, &rpc.Artifact{}, test.takeAction, "projects/score-patterns-test/locations/global")
 
 			if gotResult.err == nil {
 				t.Errorf("processScorePatterns(ctx, client, %v, %v) did not return an error", test.definition, resource)
