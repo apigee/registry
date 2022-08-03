@@ -18,6 +18,7 @@ import (
 	"github.com/apigee/registry/cmd/registry/cmd/annotate"
 	"github.com/apigee/registry/cmd/registry/cmd/apply"
 	"github.com/apigee/registry/cmd/registry/cmd/compute"
+	"github.com/apigee/registry/cmd/registry/cmd/config"
 	"github.com/apigee/registry/cmd/registry/cmd/count"
 	"github.com/apigee/registry/cmd/registry/cmd/delete"
 	"github.com/apigee/registry/cmd/registry/cmd/diff"
@@ -49,6 +50,7 @@ func Command() *cobra.Command {
 	cmd.AddCommand(annotate.Command())
 	cmd.AddCommand(apply.Command())
 	cmd.AddCommand(compute.Command())
+	cmd.AddCommand(config.Command())
 	cmd.AddCommand(count.Command())
 	cmd.AddCommand(resolve.Command())
 	cmd.AddCommand(delete.Command())
