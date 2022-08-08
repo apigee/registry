@@ -226,11 +226,13 @@ func (task *ComputeConformanceTask) computeConformanceReport(
 			}
 
 			ruleReport := &rpc.RuleReport{
-				RuleId:     guidelineRule.GetId(),
-				Spec:       task.Spec.GetName(),
-				File:       filepath.Base(lintFile.GetFilePath()),
-				Suggestion: problem.Suggestion,
-				Location:   problem.Location,
+				RuleId:      guidelineRule.GetId(),
+				Spec:        fmt.Sprintf("%s@%s", task.Spec.GetName(), task.Spec.GetRevisionId()),
+				File:        filepath.Base(lintFile.GetFilePath()),
+				Suggestion:  problem.Suggestion,
+				Location:    problem.Location,
+				DisplayName: guidelineRule.GetDisplayName(),
+				Description: guidelineRule.GetDescription(),
 			}
 			// Add the rule report to the appropriate guideline report.
 			guidelineGroup := conformanceReport.GuidelineReportGroups[guideline.GetState()]

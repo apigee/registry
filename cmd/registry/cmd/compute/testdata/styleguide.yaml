@@ -21,6 +21,7 @@ guidelines:
     description: This guideline governs properties for ref fields on specs.
     rules:
       - id: norefsiblings
+        display_name: No $ref siblings
         description: An object exposing a $ref property cannot be further extended with additional properties.
         linter: sample
         linter_rulename: no-$ref-siblings

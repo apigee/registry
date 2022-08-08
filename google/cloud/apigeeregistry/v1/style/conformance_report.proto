@@ -74,6 +74,12 @@ message RuleReport {
 
   // The location of the problem in the spec file.
   LintLocation location = 5;
+
+  // Human-meaningful name of the breached rule.
+  string display_name = 6;
+
+  // A detailed description of the breached rule.
+  string description = 7;
 }
 
 // GuidelineReportGroup is an abstraction that maps state
