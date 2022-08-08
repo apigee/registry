@@ -233,6 +233,7 @@ func (task *ComputeConformanceTask) computeConformanceReport(
 				Location:    problem.Location,
 				DisplayName: guidelineRule.GetDisplayName(),
 				Description: guidelineRule.GetDescription(),
+				DocUri:      guidelineRule.GetDocUri(),
 			}
 			// Add the rule report to the appropriate guideline report.
 			guidelineGroup := conformanceReport.GuidelineReportGroups[guideline.GetState()]

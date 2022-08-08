@@ -83,6 +83,7 @@ func TestConformance(t *testing.T) {
 												Spec:        "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 												DisplayName: "No $ref siblings",
 												Description: "An object exposing a $ref property cannot be further extended with additional properties.",
+												DocUri:      "https://meta.stoplight.io/docs/spectral/4dec24461f3af-open-api-rules#no-ref-siblings",
 											},
 										},
 									},
