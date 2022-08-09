@@ -27,6 +27,7 @@ import (
 
 const project = "demo"
 const specName = "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml"
+const revisionId = "abcdef"
 const styleguideId = "openapi-test"
 
 // This test will catch any changes made to the original status values.
@@ -173,7 +174,7 @@ func TestComputeConformanceReport(t *testing.T) {
 										RuleReports: []*rpc.RuleReport{
 											{
 												RuleId:     "norefsiblings",
-												Spec:       specName,
+												Spec:       fmt.Sprintf("%s@%s", specName, revisionId),
 												File:       "test-result-file",
 												Suggestion: "fix no-$ref-siblings",
 												Location: &rpc.LintLocation{
@@ -255,7 +256,7 @@ func TestComputeConformanceReport(t *testing.T) {
 										RuleReports: []*rpc.RuleReport{
 											{
 												RuleId:     "operationdescription",
-												Spec:       specName,
+												Spec:       fmt.Sprintf("%s@%s", specName, revisionId),
 												File:       "test-result-file",
 												Suggestion: "fix operation-description",
 											},
@@ -377,7 +378,7 @@ func TestComputeConformanceReport(t *testing.T) {
 										RuleReports: []*rpc.RuleReport{
 											{
 												RuleId:     "norefsiblings",
-												Spec:       specName,
+												Spec:       fmt.Sprintf("%s@%s", specName, revisionId),
 												File:       "test-result-file",
 												Suggestion: "fix no-$ref-siblings",
 											},
@@ -402,7 +403,7 @@ func TestComputeConformanceReport(t *testing.T) {
 										RuleReports: []*rpc.RuleReport{
 											{
 												RuleId:     "operationdescription",
-												Spec:       specName,
+												Spec:       fmt.Sprintf("%s@%s", specName, revisionId),
 												File:       "test-result-file",
 												Suggestion: "fix operation-description",
 											},
@@ -413,13 +414,13 @@ func TestComputeConformanceReport(t *testing.T) {
 										RuleReports: []*rpc.RuleReport{
 											{
 												RuleId:     "tagdescription",
-												Spec:       specName,
+												Spec:       fmt.Sprintf("%s@%s", specName, revisionId),
 												File:       "test-result-file",
 												Suggestion: "fix tag-description",
 											},
 											{
 												RuleId:     "infodescription",
-												Spec:       specName,
+												Spec:       fmt.Sprintf("%s@%s", specName, revisionId),
 												File:       "test-result-file",
 												Suggestion: "fix info-description",
 											},
@@ -443,7 +444,10 @@ func TestComputeConformanceReport(t *testing.T) {
 			ctx := context.Background()
 
 			task := &ComputeConformanceTask{
-				Spec:         &rpc.ApiSpec{Name: specName},
+				Spec: &rpc.ApiSpec{
+					Name:       specName,
+					RevisionId: "abcdef",
+				},
 				StyleguideId: styleguideId,
 			}
 
@@ -519,7 +523,7 @@ func TestPreExistingConformanceReport(t *testing.T) {
 								RuleReports: []*rpc.RuleReport{
 									{
 										RuleId:     "tagdescription",
-										Spec:       specName,
+										Spec:       fmt.Sprintf("%s@%s", specName, revisionId),
 										File:       "test-result-file",
 										Suggestion: "fix tag-description",
 									},
@@ -560,13 +564,13 @@ func TestPreExistingConformanceReport(t *testing.T) {
 								RuleReports: []*rpc.RuleReport{
 									{
 										RuleId:     "tagdescription",
-										Spec:       specName,
+										Spec:       fmt.Sprintf("%s@%s", specName, revisionId),
 										File:       "test-result-file",
 										Suggestion: "fix tag-description",
 									},
 									{
 										RuleId:     "operationdescription",
-										Spec:       specName,
+										Spec:       fmt.Sprintf("%s@%s", specName, revisionId),
 										File:       "test-result-file",
 										Suggestion: "fix operation-description",
 									},
@@ -587,7 +591,10 @@ func TestPreExistingConformanceReport(t *testing.T) {
 	ctx := context.Background()
 
 	task := &ComputeConformanceTask{
-		Spec:         &rpc.ApiSpec{Name: specName},
+		Spec: &rpc.ApiSpec{
+			Name:       specName,
+			RevisionId: revisionId,
+		},
 		StyleguideId: styleguideId,
 	}
 
