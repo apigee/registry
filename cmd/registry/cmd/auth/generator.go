@@ -19,9 +19,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func execCommand() *cobra.Command {
+func generatorCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "exec COMMAND",
+		Use:   "generator COMMAND",
 		Short: "Set the shell command that generates an auth token.",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -43,7 +43,7 @@ func execCommand() *cobra.Command {
 				return err
 			}
 
-			cmd.Println("Updated auth exec command.")
+			cmd.Println("Updated auth generator command.")
 			cmd.Printf("Command output: %q\n", token)
 			return nil
 		},
