@@ -28,7 +28,7 @@ func setCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cmd.SilenceUsage = true
 			cmd.SilenceErrors = true
-			target, config, err := targetConfig()
+			target, config, err := targetConfiguration()
 			if err != nil {
 				return fmt.Errorf("Cannot read config: %v", err)
 			}
@@ -38,10 +38,7 @@ func setCommand() *cobra.Command {
 				return UnknownPropertyError{name}
 			}
 
-			err = config.FromMap(map[string]interface{}{
-				name: value,
-			})
-			if err != nil {
+			if err = config.Set(name, value); err != nil {
 				return fmt.Errorf("Cannot set value: %v", err)
 			}
 

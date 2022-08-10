@@ -18,7 +18,7 @@ import (
 	"fmt"
 
 	"github.com/apigee/registry/cmd/registry/cmd/config/configurations"
-	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/config"
 	"github.com/spf13/cobra"
 )
 
@@ -38,20 +38,20 @@ func Command() *cobra.Command {
 	return cmd
 }
 
-func targetConfig() (name string, config connection.Config, err error) {
-	name, _ = connection.Flags.GetString("config")
+func targetConfiguration() (name string, c config.Configuration, err error) {
+	if name, err = config.Flags.GetString("config"); err != nil {
+		return
+	}
 	if name == "" {
-		name, err = connection.ActiveConfigName()
-		if err != nil {
+		if name, err = config.ActiveName(); err != nil {
 			return
 		}
 		if name == "" {
-			err = NoActiveConfigurationError
-			return
+			return name, config.Configuration{}, NoActiveConfigurationError
 		}
 	}
 
-	config, err = connection.ReadConfig(name)
+	c, err = config.Read(name)
 	return
 }
 

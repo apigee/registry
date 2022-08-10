@@ -12,40 +12,39 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package config
+package auth
 
 import (
-	"fmt"
-
+	"github.com/apigee/registry/pkg/config"
 	"github.com/spf13/cobra"
 )
 
-func listCommand() *cobra.Command {
+func execCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "list",
-		Short: "List properties for the currently active configuration.",
-		Args:  cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, _ []string) error {
+		Use:   "exec COMMAND",
+		Short: "Set the shell command that generates an auth token.",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
 			cmd.SilenceUsage = true
 			cmd.SilenceErrors = true
-			target, config, err := targetConfiguration()
+
+			name, c, err := config.ActiveRaw()
 			if err != nil {
-				return fmt.Errorf("Cannot read config: %v", err)
+				return err
 			}
 
-			m, err := config.FlatMap()
+			token, err := genToken(args[0])
 			if err != nil {
-				return fmt.Errorf("Cannot decode config: %v", err)
-			}
-			for _, p := range config.Properties() {
-				if m[p] != nil {
-					if sv := fmt.Sprintf("%v", m[p]); sv != "" {
-						cmd.Println(p, "=", sv)
-					}
-				}
+				return err
 			}
 
-			cmd.Printf("\nYour active configuration is: %q.\n", target)
+			c.TokenCmd = args[0]
+			if err := c.Write(name); err != nil {
+				return err
+			}
+
+			cmd.Println("Updated auth exec command.")
+			cmd.Printf("Command output: %q\n", token)
 			return nil
 		},
 	}

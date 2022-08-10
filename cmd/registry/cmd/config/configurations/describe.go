@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/config"
 	"github.com/spf13/cobra"
 )
 
@@ -31,23 +31,23 @@ func describeCommand() *cobra.Command {
 			cmd.SilenceUsage = true
 			cmd.SilenceErrors = true
 			name := args[0]
-			s, err := connection.ReadConfig(name)
+			s, err := config.Read(name)
 			if err != nil {
 				return fmt.Errorf("Cannot read config %q: %v", name, err)
 			}
-			settingsMap, err := s.AsMap()
+			settingsMap, err := s.FlatMap()
 			if err != nil {
 				return fmt.Errorf("Cannot decode config %q: %v", name, err)
 			}
 
-			activeName, err := connection.ActiveConfigName()
+			activeName, err := config.ActiveName()
 			if err != nil {
 				return fmt.Errorf("Cannot read active config %q: %v", name, err)
 			}
 
 			sortedNames := make([]string, 0, len(settingsMap))
 			for n := range settingsMap {
-				if n != "token" {
+				if n != "registry.token" {
 					sortedNames = append(sortedNames, n)
 				}
 			}
@@ -57,7 +57,9 @@ func describeCommand() *cobra.Command {
 			cmd.Printf("name: %v\n", name)
 			cmd.Printf("properties:\n")
 			for _, name := range sortedNames {
-				cmd.Printf("  %s: %v\n", name, settingsMap[name])
+				if settingsMap[name] != "" {
+					cmd.Printf("  %s: %v\n", name, settingsMap[name])
+				}
 			}
 			return nil
 		},

@@ -17,7 +17,7 @@ package configurations
 import (
 	"fmt"
 
-	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/config"
 	"github.com/spf13/cobra"
 )
 
@@ -30,22 +30,22 @@ func createCommand() *cobra.Command {
 			cmd.SilenceUsage = true
 			cmd.SilenceErrors = true
 			name := args[0]
-			if err := connection.ValidateConfigName(name); err != nil {
+			if err := config.ValidateName(name); err != nil {
 				return err
 			}
 
-			if _, err := connection.ReadConfig(name); err == nil {
+			if _, err := config.Read(name); err == nil {
 				return fmt.Errorf("Cannot create config %q, it already exists.", name)
 			}
 
-			s := connection.Config{}
+			s := config.Configuration{}
 			err := s.Write(name)
 			if err != nil {
 				return fmt.Errorf("Cannot create config %q: %v", name, err)
 			}
 			cmd.Printf("Created %q.\n", name)
 
-			err = connection.ActivateConfig(name)
+			err = config.Activate(name)
 			if err != nil {
 				return fmt.Errorf("Cannot activate config %q: %v", name, err)
 			}

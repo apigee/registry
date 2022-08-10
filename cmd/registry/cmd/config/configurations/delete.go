@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/config"
 	"github.com/spf13/cobra"
 )
 
@@ -31,7 +31,7 @@ func deleteCommand() *cobra.Command {
 			cmd.SilenceUsage = true
 			cmd.SilenceErrors = true
 			for _, name := range args {
-				if err := connection.ValidateConfigName(name); err != nil {
+				if err := config.ValidateName(name); err != nil {
 					return err
 				}
 			}
@@ -54,7 +54,7 @@ func deleteCommand() *cobra.Command {
 			}
 
 			for _, name := range args {
-				err := connection.DeleteConfig(name)
+				err := config.Delete(name)
 				if err != nil {
 					return fmt.Errorf("Cannot delete config %q: %v.", name, err)
 				}

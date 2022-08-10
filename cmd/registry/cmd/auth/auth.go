@@ -12,40 +12,32 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package config
+package auth
 
 import (
-	"fmt"
+	"os/exec"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
 
-func getCommand() *cobra.Command {
+func Command() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "get PROPERTY",
-		Short: "Print the value of a property.",
-		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cmd.SilenceUsage = true
-			cmd.SilenceErrors = true
-			_, config, err := targetConfiguration()
-			if err != nil {
-				return fmt.Errorf("Cannot read config: %v", err)
-			}
-
-			name := args[0]
-			if !contains(config.Properties(), name) {
-				return UnknownPropertyError{name}
-			}
-
-			m, err := config.FlatMap()
-			if err != nil {
-				return fmt.Errorf("Cannot decode config: %v", err)
-			}
-
-			cmd.Println(m[name])
-			return nil
-		},
+		Use:   "auth",
+		Short: "Set and view registry CLI authenticatation.",
 	}
+
+	cmd.AddCommand(execCommand())
+	cmd.AddCommand(tokenCommand())
 	return cmd
+}
+
+func genToken(command string) (string, error) {
+	cmdArgs := strings.Split(command, " ")
+	execCmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
+	out, err := execCmd.Output()
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(string(out)), nil
 }
