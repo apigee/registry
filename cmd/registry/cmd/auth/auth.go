@@ -24,7 +24,7 @@ import (
 func Command() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "auth",
-		Short: "Set and view registry CLI authenticatation.",
+		Short: "Set and view registry CLI authentication.",
 	}
 
 	cmd.AddCommand(execCommand())
