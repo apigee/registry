@@ -40,14 +40,14 @@ func TestAuth(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	cmd := execCommand()
+	cmd := generatorCommand()
 	cmd.SetArgs([]string{`echo test`})
 	out := new(bytes.Buffer)
 	cmd.SetOut(out)
 	if err := cmd.Execute(); err != nil {
 		t.Fatal(err)
 	}
-	want := `Updated auth exec command.
+	want := `Updated auth generator command.
 Command output: "test"
 `
 	if diff := cmp.Diff(want, out.String()); diff != "" {
