@@ -24,7 +24,7 @@ import (
 func tokenCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "token",
-		Short: "Generate and print an auth token. See `auth exec`.",
+		Short: "Generate and print an auth token.",
 		Args:  cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cmd.SilenceUsage = true
@@ -36,7 +36,7 @@ func tokenCommand() *cobra.Command {
 			}
 
 			if c.TokenCmd == "" {
-				return fmt.Errorf("Use `auth exec` to define a token generator.")
+				return fmt.Errorf("No token generator found. Use `registry auth generator` to define.")
 			}
 
 			token, err := genToken(c.TokenCmd)
