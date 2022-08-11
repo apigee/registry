@@ -17,7 +17,7 @@ package auth
 import (
 	"fmt"
 
-	"github.com/apigee/registry/pkg/config"
+	"github.com/apigee/registry/cmd/registry/cmd/util"
 	"github.com/spf13/cobra"
 )
 
@@ -30,16 +30,16 @@ func tokenCommand() *cobra.Command {
 			cmd.SilenceUsage = true
 			cmd.SilenceErrors = true
 
-			_, c, err := config.ActiveRaw()
+			_, config, err := util.TargetConfiguration()
 			if err != nil {
 				return err
 			}
 
-			if c.TokenCmd == "" {
+			if config.TokenCmd == "" {
 				return fmt.Errorf("No token generator found. Use `registry auth generator` to define.")
 			}
 
-			token, err := genToken(c.TokenCmd)
+			token, err := genToken(config.TokenCmd)
 			if err != nil {
 				return err
 			}

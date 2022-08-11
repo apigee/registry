@@ -15,7 +15,7 @@
 package auth
 
 import (
-	"github.com/apigee/registry/pkg/config"
+	"github.com/apigee/registry/cmd/registry/cmd/util"
 	"github.com/spf13/cobra"
 )
 
@@ -28,7 +28,7 @@ func generatorCommand() *cobra.Command {
 			cmd.SilenceUsage = true
 			cmd.SilenceErrors = true
 
-			name, c, err := config.ActiveRaw()
+			target, config, err := util.TargetConfiguration()
 			if err != nil {
 				return err
 			}
@@ -38,8 +38,8 @@ func generatorCommand() *cobra.Command {
 				return err
 			}
 
-			c.TokenCmd = args[0]
-			if err := c.Write(name); err != nil {
+			config.TokenCmd = args[0]
+			if err := config.Write(target); err != nil {
 				return err
 			}
 

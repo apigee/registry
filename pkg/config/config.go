@@ -114,6 +114,7 @@ func Active() (c Configuration, err error) {
 	return ReadValid(name)
 }
 
+// ActiveRaw reads the active file without env or flag bindings.
 func ActiveRaw() (name string, c Configuration, err error) {
 	name, _ = Flags.GetString("config")
 	if name == "" {
@@ -149,12 +150,11 @@ func Activate(name string) error {
 // See CreateFlagSet() and bindEnvs().
 func ReadValid(name string) (c Configuration, err error) {
 	dir, file := filepath.Split(name)
-	if dir == "" {
-		name = filepath.Join(Directory, file)
-	}
-
 	var r io.Reader = &bytes.Buffer{}
-	if name != "" {
+	if file != "" {
+		if dir == "" {
+			name = filepath.Join(Directory, file)
+		}
 		r, err = os.Open(name)
 		if err != nil {
 			return
@@ -193,18 +193,19 @@ func ReadValid(name string) (c Configuration, err error) {
 // See also: ReadValid()
 func Read(name string) (c Configuration, err error) {
 	dir, file := filepath.Split(name)
+	if file == "" {
+		return c, fmt.Errorf("Configuration name cannot be empty.")
+	}
+
 	if dir == "" {
 		name = filepath.Join(Directory, file)
 	}
-
-	var r io.Reader = &bytes.Buffer{}
-	if name != "" {
-		r, err = os.Open(name)
-		if err != nil {
-			return
-		}
-		defer r.(*os.File).Close()
+	var r io.Reader
+	if r, err = os.Open(name); err != nil {
+		return
 	}
+	defer r.(*os.File).Close()
+
 	v := viper.New()
 	v.SetConfigType("yaml")
 	if err = v.ReadConfig(r); err != nil {

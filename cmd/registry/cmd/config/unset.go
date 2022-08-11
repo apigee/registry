@@ -17,6 +17,7 @@ package config
 import (
 	"fmt"
 
+	"github.com/apigee/registry/cmd/registry/cmd/util"
 	"github.com/spf13/cobra"
 )
 
@@ -28,18 +29,16 @@ func unsetCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cmd.SilenceUsage = true
 			cmd.SilenceErrors = true
-			target, config, err := targetConfiguration()
+			target, config, err := util.TargetConfiguration()
 			if err != nil {
 				return fmt.Errorf("Cannot read config: %v", err)
 			}
 
-			err = config.Unset(args[0])
-			if err != nil {
+			if err = config.Unset(args[0]); err != nil {
 				return fmt.Errorf("Cannot unset property: %v", err)
 			}
 
-			err = config.Write(target)
-			if err != nil {
+			if err = config.Write(target); err != nil {
 				return fmt.Errorf("Cannot write config: %v", err)
 			}
 

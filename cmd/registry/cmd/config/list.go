@@ -17,6 +17,7 @@ package config
 import (
 	"fmt"
 
+	"github.com/apigee/registry/cmd/registry/cmd/util"
 	"github.com/spf13/cobra"
 )
 
@@ -28,7 +29,7 @@ func listCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			cmd.SilenceUsage = true
 			cmd.SilenceErrors = true
-			target, config, err := targetConfiguration()
+			target, config, err := util.TargetConfiguration()
 			if err != nil {
 				return fmt.Errorf("Cannot read config: %v", err)
 			}
