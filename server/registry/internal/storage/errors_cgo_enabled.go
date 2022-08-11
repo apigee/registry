@@ -17,8 +17,15 @@
 package storage
 
 import (
+	"context"
+	"net"
+	"os"
+
+	"github.com/apigee/registry/log"
 	"github.com/lib/pq"
 	"github.com/mattn/go-sqlite3"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func alreadyExists(err error) bool {
@@ -33,4 +40,53 @@ func alreadyExists(err error) bool {
 		}
 	}
 	return false
+}
+
+// grpcErrorForDBError converts recognized database error codes to grpc error codes.
+func grpcErrorForDBError(err error) error {
+	if _, ok := status.FromError(err); ok {
+		return err
+	}
+	switch v := err.(type) {
+	case *pq.Error:
+		if v.Code.Name() == "unique_violation" {
+			return status.Error(codes.AlreadyExists, err.Error())
+		} else if v.Code.Name() == "too_many_connections" {
+			return status.Error(codes.Unavailable, err.Error())
+		}
+		log.Infof(context.TODO(), "Unhandled %T %+v code=%s name=%s", v, v, v.Code, v.Code.Name())
+	case sqlite3.Error:
+		if v.Code == sqlite3.ErrNo(sqlite3.ErrConstraint) && v.ExtendedCode == sqlite3.ErrConstraintPrimaryKey {
+			return status.Error(codes.AlreadyExists, err.Error())
+		}
+		if v.Code == sqlite3.ErrNo(sqlite3.ErrBusy) ||
+			v.Code == sqlite3.ErrNo(sqlite3.ErrCantOpen) ||
+			v.Code == sqlite3.ErrNo(sqlite3.ErrReadonly) {
+			return status.Error(codes.Unavailable, err.Error())
+		}
+		log.Infof(context.TODO(), "Unhandled %T %+v code=%d extended=%d", v, v, v.Code, v.ExtendedCode)
+	case *net.OpError:
+		switch vv := v.Unwrap().(type) {
+		case *os.SyscallError:
+			if vv.Syscall == "dial" {
+				return status.Error(codes.Unavailable, err.Error())
+			}
+			if vv.Syscall == "socket" {
+				return status.Error(codes.Unavailable, err.Error())
+			}
+			log.Infof(context.TODO(), "Unhandled %T %+v %s", vv, vv, vv.Syscall)
+		case *net.DNSError:
+			return status.Error(codes.Unavailable, err.Error())
+		default:
+			log.Infof(context.TODO(), "Unhandled %T %+v", vv, vv)
+		}
+	default:
+		if err.Error() == "sql: statement is closed" {
+			return status.Error(codes.Unavailable, err.Error())
+		}
+		log.Infof(context.TODO(), "Unhandled %T %+v", err, err)
+	}
+
+	// All unrecognized codes fall through to become "Internal" errors.
+	return status.Error(codes.Internal, err.Error())
 }

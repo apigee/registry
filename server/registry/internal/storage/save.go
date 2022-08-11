@@ -89,9 +89,5 @@ func (c *Client) save(ctx context.Context, v interface{}) error {
 
 		return nil
 	})
-	if err != nil {
-		return grpcErrorForDBError(err)
-	}
-
-	return nil
+	return grpcErrorForDBError(err)
 }

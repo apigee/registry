@@ -88,6 +88,8 @@ func CallLogger(opts ...log.Option) grpc.UnaryServerInterceptor {
 			logger.Error("Unknown error.")
 		case codes.NotFound:
 			logger.Info("Not found.")
+		case codes.Unavailable:
+			logger.Info("Unavailable.")
 		default:
 			logger.Info("User error.")
 		}

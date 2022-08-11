@@ -36,8 +36,5 @@ func (c *Client) CreateVersion(ctx context.Context, v *models.Version) error {
 }
 
 func (c *Client) create(ctx context.Context, v interface{}) error {
-	if err := c.db.Create(v).Error; err != nil {
-		return grpcErrorForDBError(err)
-	}
-	return nil
+	return grpcErrorForDBError(c.db.Create(v).Error)
 }

@@ -19,8 +19,6 @@ import (
 
 	"github.com/apigee/registry/server/registry/internal/storage/models"
 	"github.com/apigee/registry/server/registry/names"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
 )
 
@@ -29,7 +27,7 @@ func (c *Client) unwrapSpecRevisionTag(ctx context.Context, name names.SpecRevis
 	if err := c.db.WithContext(ctx).Take(v, "key = ?", name.String()).Error; err == gorm.ErrRecordNotFound {
 		return name, nil
 	} else if err != nil {
-		return names.SpecRevision{}, status.Error(codes.Internal, err.Error())
+		return names.SpecRevision{}, grpcErrorForDBError(err)
 	}
 
 	return name.Spec().Revision(v.RevisionID), nil
@@ -40,7 +38,7 @@ func (c *Client) unwrapDeploymentRevisionTag(ctx context.Context, name names.Dep
 	if err := c.db.WithContext(ctx).Take(v, "key = ?", name.String()).Error; err == gorm.ErrRecordNotFound {
 		return name, nil
 	} else if err != nil {
-		return names.DeploymentRevision{}, status.Error(codes.Internal, err.Error())
+		return names.DeploymentRevision{}, grpcErrorForDBError(err)
 	}
 
 	return name.Deployment().Revision(v.RevisionID), nil
