@@ -52,11 +52,11 @@ type RegistryClient = *gapic.RegistryClient
 
 // NewRegistryClient creates a new client using the active Config.
 func NewRegistryClient(ctx context.Context) (RegistryClient, error) {
-	config, err := ActiveConfig()
+	c, err := ActiveConfig()
 	if err != nil {
 		return nil, err
 	}
-	return NewRegistryClientWithSettings(ctx, config)
+	return NewRegistryClientWithSettings(ctx, c)
 }
 
 // NewRegistryClientWithSettings creates a client with specified Config.
@@ -72,11 +72,11 @@ type AdminClient = *gapic.AdminClient
 
 // NewAdminClient creates a new client using the active Config.
 func NewAdminClient(ctx context.Context) (AdminClient, error) {
-	config, err := ActiveConfig()
+	c, err := ActiveConfig()
 	if err != nil {
 		return nil, err
 	}
-	return NewAdminClientWithSettings(ctx, config)
+	return NewAdminClientWithSettings(ctx, c)
 }
 
 // NewAdminClientWithSettings creates a client with specified Config.
@@ -92,11 +92,11 @@ type ProvisioningClient = *gapic.ProvisioningClient
 
 // NewAdminClient creates a new client using the active Config.
 func NewProvisioningClient(ctx context.Context) (ProvisioningClient, error) {
-	config, err := ActiveConfig()
+	c, err := ActiveConfig()
 	if err != nil {
 		return nil, err
 	}
-	return NewProvisioningClientWithSettings(ctx, config)
+	return NewProvisioningClientWithSettings(ctx, c)
 }
 
 // NewAdminClientWithSettings creates a GAPIC client with specified Config.

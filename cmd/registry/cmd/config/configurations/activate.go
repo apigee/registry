@@ -17,7 +17,7 @@ package configurations
 import (
 	"fmt"
 
-	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/config"
 	"github.com/spf13/cobra"
 )
 
@@ -30,16 +30,16 @@ func activateCommand() *cobra.Command {
 			cmd.SilenceUsage = true
 			cmd.SilenceErrors = true
 			name := args[0]
-			if err := connection.ValidateConfigName(name); err != nil {
+			if err := config.ValidateName(name); err != nil {
 				return err
 			}
 
-			_, err := connection.ReadConfig(name)
+			_, err := config.Read(name)
 			if err != nil {
 				return fmt.Errorf("Cannot read config %q: %v", name, err)
 			}
 
-			err = connection.ActivateConfig(name)
+			err = config.Activate(name)
 			if err != nil {
 				return fmt.Errorf("Cannot activate config %q: %v", name, err)
 			}

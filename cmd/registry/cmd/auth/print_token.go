@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package config
+package auth
 
 import (
 	"fmt"
@@ -21,44 +21,35 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func setCommand() *cobra.Command {
+func printTokenCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "set PROPERTY VALUE",
-		Short: "Set the value of a property.",
-		Args:  cobra.ExactArgs(2),
+		Use:   "print-token",
+		Short: "Invoke token source and print token.",
+		Args:  cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cmd.SilenceUsage = true
 			cmd.SilenceErrors = true
-			target, config, err := util.TargetConfiguration()
+
+			_, config, err := util.TargetConfiguration()
 			if err != nil {
-				return fmt.Errorf("Cannot read config: %v", err)
+				return err
+			}
+			err = config.Resolve()
+			if err != nil {
+				return err
 			}
 
-			name, value := args[0], args[1]
-			if !contains(config.Properties(), name) {
-				return UnknownPropertyError{name}
+			if config.TokenSource == "" {
+				return fmt.Errorf("No token source found. Use `registry config set token-source` to define.")
 			}
 
-			if err = config.Set(name, value); err != nil {
-				return fmt.Errorf("Cannot set value: %v", err)
+			token, err := genToken(config.TokenSource)
+			if err != nil {
+				return err
 			}
-
-			if err = config.Write(target); err != nil {
-				return fmt.Errorf("Cannot write config: %v", err)
-			}
-
-			cmd.Printf("Updated property %q.\n", name)
+			cmd.Printf(token)
 			return nil
 		},
 	}
 	return cmd
-}
-
-func contains(arr []string, x string) bool {
-	for _, v := range arr {
-		if v == x {
-			return true
-		}
-	}
-	return false
 }

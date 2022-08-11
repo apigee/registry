@@ -17,10 +17,12 @@ package connection
 import (
 	"context"
 	"testing"
+
+	"github.com/apigee/registry/pkg/config/test"
 )
 
 func TestClientBadConfig(t *testing.T) {
-	t.Cleanup(cleanConfigDir(t))
+	t.Cleanup(test.CleanConfigDir(t))
 
 	_, err := NewRegistryClient(context.Background())
 	if err == nil {
@@ -52,6 +54,7 @@ func TestClientBadConfig(t *testing.T) {
 }
 
 func TestClientGoodConfig(t *testing.T) {
+	t.Cleanup(test.CleanConfigDir(t))
 	t.Setenv("APG_REGISTRY_ADDRESS", "localhost:8080")
 	t.Setenv("APG_REGISTRY_INSECURE", "true")
 

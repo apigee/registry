@@ -12,33 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package config
+package auth
 
 import (
-	"fmt"
+	"os/exec"
+	"strings"
 
-	"github.com/apigee/registry/cmd/registry/cmd/config/configurations"
 	"github.com/spf13/cobra"
 )
 
 func Command() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "config",
-		Short: "Set, view, and unset properties used by Registry CLI.",
+		Use:   "auth",
+		Short: "Manage registry CLI authentication.",
 	}
 
-	cmd.AddCommand(configurations.Command())
-	cmd.AddCommand(getCommand())
-	cmd.AddCommand(listCommand())
-	cmd.AddCommand(setCommand())
-	cmd.AddCommand(unsetCommand())
+	cmd.AddCommand(printTokenCommand())
 	return cmd
 }
 
-type UnknownPropertyError struct {
-	property string
-}
-
-func (n UnknownPropertyError) Error() string {
-	return fmt.Sprintf("Unknown property: %q.", n.property)
+func genToken(command string) (string, error) {
+	cmdArgs := strings.Split(command, " ")
+	execCmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
+	out, err := execCmd.Output()
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(string(out)), nil
 }

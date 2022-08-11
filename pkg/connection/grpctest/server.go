@@ -22,6 +22,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/apigee/registry/pkg/config"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/server/registry"
 	"google.golang.org/grpc"
@@ -42,9 +43,9 @@ import (
 // }
 func NewIfNoAddress(rc registry.Config) (*Server, error) {
 	// error doesn't matter here as the point is to allow fallback
-	config, _ := connection.ReadConfig("")
-	if config.Address != "" && config.Validate() == nil {
-		log.Printf("Client will use remote registry at: %s", config.Address)
+	c, _ := connection.ReadConfig("")
+	if c.Address != "" {
+		log.Printf("Client will use remote registry at: %s", c.Address)
 		return nil, nil
 	}
 	log.Println("Client will use an embedded registry with a SQLite3 database")
@@ -66,6 +67,16 @@ func TestMain(m *testing.M, rc registry.Config) {
 		log.Fatal(err)
 	}
 	defer l.Close()
+
+	// ensure tests don't use local config files
+	tmpDir, err := os.MkdirTemp("", "")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer os.RemoveAll(tmpDir)
+	origConfigPath := config.Directory
+	config.Directory = tmpDir
+	defer func() { config.Directory = origConfigPath }()
 	os.Exit(m.Run())
 }
 

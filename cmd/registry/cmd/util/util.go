@@ -12,33 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package config
+package util
 
 import (
 	"fmt"
 
-	"github.com/apigee/registry/cmd/registry/cmd/config/configurations"
-	"github.com/spf13/cobra"
+	"github.com/apigee/registry/pkg/config"
 )
 
-func Command() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "config",
-		Short: "Set, view, and unset properties used by Registry CLI.",
+var NoActiveConfigurationError = fmt.Errorf(`No active configuration. Use 'registry config configurations' to manage.`)
+
+func TargetConfiguration() (name string, c config.Configuration, err error) {
+	name, c, err = config.ActiveRaw()
+	if name == "" {
+		return name, config.Configuration{}, NoActiveConfigurationError
 	}
 
-	cmd.AddCommand(configurations.Command())
-	cmd.AddCommand(getCommand())
-	cmd.AddCommand(listCommand())
-	cmd.AddCommand(setCommand())
-	cmd.AddCommand(unsetCommand())
-	return cmd
-}
-
-type UnknownPropertyError struct {
-	property string
-}
-
-func (n UnknownPropertyError) Error() string {
-	return fmt.Sprintf("Unknown property: %q.", n.property)
+	return
 }

@@ -17,7 +17,7 @@ package config
 import (
 	"fmt"
 
-	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/cmd/registry/cmd/util"
 	"github.com/spf13/cobra"
 )
 
@@ -29,26 +29,16 @@ func unsetCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cmd.SilenceUsage = true
 			cmd.SilenceErrors = true
-			target, config, err := targetConfig()
+			target, config, err := util.TargetConfiguration()
 			if err != nil {
 				return fmt.Errorf("Cannot read config: %v", err)
 			}
 
-			m, err := config.AsMap()
-			if err != nil {
-				return fmt.Errorf("Cannot decode config: %v", err)
+			if err = config.Unset(args[0]); err != nil {
+				return fmt.Errorf("Cannot unset property: %v", err)
 			}
 
-			delete(m, args[0])
-
-			config = connection.Config{}
-			err = config.FromMap(m)
-			if err != nil {
-				return fmt.Errorf("Cannot encode config: %v", err)
-			}
-
-			err = config.Write(target)
-			if err != nil {
+			if err = config.Write(target); err != nil {
 				return fmt.Errorf("Cannot write config: %v", err)
 			}
 

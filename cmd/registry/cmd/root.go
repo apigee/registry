@@ -17,6 +17,7 @@ package cmd
 import (
 	"github.com/apigee/registry/cmd/registry/cmd/annotate"
 	"github.com/apigee/registry/cmd/registry/cmd/apply"
+	"github.com/apigee/registry/cmd/registry/cmd/auth"
 	"github.com/apigee/registry/cmd/registry/cmd/compute"
 	"github.com/apigee/registry/cmd/registry/cmd/config"
 	"github.com/apigee/registry/cmd/registry/cmd/count"
@@ -31,7 +32,7 @@ import (
 	"github.com/apigee/registry/cmd/registry/cmd/rpc"
 	"github.com/apigee/registry/cmd/registry/cmd/upload"
 	"github.com/apigee/registry/cmd/registry/cmd/vocabulary"
-	"github.com/apigee/registry/pkg/connection"
+	pkgconf "github.com/apigee/registry/pkg/config"
 	"github.com/spf13/cobra"
 )
 
@@ -45,10 +46,11 @@ func Command() *cobra.Command {
 		Version: Version,
 		Short:   "A simple and eclectic utility for working with the API Registry",
 	}
-	cmd.PersistentFlags().AddFlagSet(connection.Flags)
+	cmd.PersistentFlags().AddFlagSet(pkgconf.Flags)
 
 	cmd.AddCommand(annotate.Command())
 	cmd.AddCommand(apply.Command())
+	cmd.AddCommand(auth.Command())
 	cmd.AddCommand(compute.Command())
 	cmd.AddCommand(config.Command())
 	cmd.AddCommand(count.Command())
