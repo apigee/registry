@@ -25,6 +25,7 @@ type Config struct {
 	Token    string `mapstructure:"token"`    // bearer token
 }
 
+// ActiveConfig returns the active config.
 func ActiveConfig() (Config, error) {
 	name, err := config.ActiveName()
 	if err != nil {
