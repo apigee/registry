@@ -19,9 +19,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func generatorCommand() *cobra.Command {
+func tokenSourceCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "generator COMMAND",
+		Use:   "token-source COMMAND",
 		Short: "Set the shell command that generates an auth token.",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -38,12 +38,12 @@ func generatorCommand() *cobra.Command {
 				return err
 			}
 
-			config.TokenCmd = args[0]
+			config.TokenSource = args[0]
 			if err := config.Write(target); err != nil {
 				return err
 			}
 
-			cmd.Println("Updated auth generator command.")
+			cmd.Println("Updated token-source.")
 			cmd.Printf("Command output: %q\n", token)
 			return nil
 		},

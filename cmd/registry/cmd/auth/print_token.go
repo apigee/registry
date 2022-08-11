@@ -21,10 +21,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func tokenCommand() *cobra.Command {
+func printTokenCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "token",
-		Short: "Invoke the generator to print an auth token. See: `registry auth generator`.",
+		Use:   "print-token",
+		Short: "Invoke token source and print token. See: `registry auth token-source`.",
 		Args:  cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cmd.SilenceUsage = true
@@ -34,12 +34,16 @@ func tokenCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-
-			if config.TokenCmd == "" {
-				return fmt.Errorf("No token generator found. Use `registry auth generator` to define.")
+			err = config.Resolve()
+			if err != nil {
+				return err
 			}
 
-			token, err := genToken(config.TokenCmd)
+			if config.TokenSource == "" {
+				return fmt.Errorf("No token source found. Use `registry auth token-source` to define.")
+			}
+
+			token, err := genToken(config.TokenSource)
 			if err != nil {
 				return err
 			}

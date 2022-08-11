@@ -27,8 +27,8 @@ func Command() *cobra.Command {
 		Short: "Set and view registry CLI authentication.",
 	}
 
-	cmd.AddCommand(generatorCommand())
-	cmd.AddCommand(tokenCommand())
+	cmd.AddCommand(tokenSourceCommand())
+	cmd.AddCommand(printTokenCommand())
 	return cmd
 }
 

@@ -28,14 +28,14 @@ import (
 
 // File is an on-disk configuration of a Config.
 type Configuration struct {
-	Registry Registry `mapstructure:"registry"`
-	TokenCmd string   `mapstructure:"token_cmd" yaml:"token_cmd"` // run in shell to generate token
+	Registry    Registry `mapstructure:"registry"`
+	TokenSource string   `mapstructure:"token_source" yaml:"token_source"` // run in shell to generate token
 }
 
 type Registry struct {
 	Address  string `mapstructure:"address" yaml:"address"`   // service address
 	Insecure bool   `mapstructure:"insecure" yaml:"insecure"` // if true, connect over HTTP
-	Token    string `mapstructure:"token" yaml:"-"`           // generated from TokenCmd
+	Token    string `mapstructure:"token" yaml:"-"`           // generated from TokenSource
 }
 
 // Write stores the Configuration in the passed file name.
@@ -115,10 +115,10 @@ func (c *Configuration) FromMap(m map[string]interface{}) error {
 	return decoder.Decode(m)
 }
 
-// Resolve derived values (eg. Registry.Token from Registry.TokenCmd)
+// Resolve derived values (eg. Registry.Token from Registry.TokenSource)
 func (c *Configuration) Resolve() error {
-	if c.Registry.Token == "" && c.TokenCmd != "" {
-		shellArgs := strings.Split(c.TokenCmd, " ")
+	if c.Registry.Token == "" && c.TokenSource != "" {
+		shellArgs := strings.Split(c.TokenSource, " ")
 		execCmd := exec.Command(shellArgs[0], shellArgs[1:]...)
 		out, err := execCmd.Output()
 		if err != nil {
