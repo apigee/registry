@@ -26,10 +26,10 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// File is an on-disk configuration of a Config.
+// Configuration is stored and loaded as yaml.
 type Configuration struct {
 	Registry    Registry `mapstructure:"registry"`
-	TokenSource string   `mapstructure:"token_source" yaml:"token_source"` // run in shell to generate token
+	TokenSource string   `mapstructure:"token-source" yaml:"token-source"` // runs in shell to generate token
 }
 
 type Registry struct {

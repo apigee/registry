@@ -24,7 +24,7 @@ import (
 func printTokenCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "print-token",
-		Short: "Invoke token source and print token. See: `registry auth token-source`.",
+		Short: "Invoke token source and print token.",
 		Args:  cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cmd.SilenceUsage = true
@@ -40,7 +40,7 @@ func printTokenCommand() *cobra.Command {
 			}
 
 			if config.TokenSource == "" {
-				return fmt.Errorf("No token source found. Use `registry auth token-source` to define.")
+				return fmt.Errorf("No token source found. Use `registry config set token-source` to define.")
 			}
 
 			token, err := genToken(config.TokenSource)

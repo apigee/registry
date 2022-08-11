@@ -32,7 +32,9 @@ func TestCommand(t *testing.T) {
 func TestAuth(t *testing.T) {
 	t.Cleanup(test.CleanConfigDir(t))
 
-	c := config.Configuration{}
+	c := config.Configuration{
+		TokenSource: "echo test",
+	}
 	if err := c.Write("active"); err != nil {
 		t.Fatal(err)
 	}
@@ -40,28 +42,14 @@ func TestAuth(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	cmd := tokenSourceCommand()
-	cmd.SetArgs([]string{`echo test`})
+	cmd := printTokenCommand()
+	cmd.SetArgs([]string{})
 	out := new(bytes.Buffer)
 	cmd.SetOut(out)
 	if err := cmd.Execute(); err != nil {
 		t.Fatal(err)
 	}
-	want := `Updated token-source.
-Command output: "test"
-`
-	if diff := cmp.Diff(want, out.String()); diff != "" {
-		t.Errorf("unexpected diff: (-want +got):\n%s", diff)
-	}
-
-	cmd = printTokenCommand()
-	cmd.SetArgs([]string{})
-	out = new(bytes.Buffer)
-	cmd.SetOut(out)
-	if err := cmd.Execute(); err != nil {
-		t.Fatal(err)
-	}
-	want = `test`
+	want := `test`
 	if diff := cmp.Diff(want, out.String()); diff != "" {
 		t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 	}

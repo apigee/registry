@@ -234,7 +234,7 @@ func TestManipulations(t *testing.T) {
 		"registry.address":  c.Registry.Address,
 		"registry.insecure": c.Registry.Insecure,
 		"registry.token":    c.Registry.Token,
-		"token_source":      "",
+		"token-source":      "",
 	}
 	m, err := c.FlatMap()
 	if err != nil {
