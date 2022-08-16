@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/apigee/registry/cmd/registry/cmd/util"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/log"
@@ -41,6 +42,12 @@ func Command() *cobra.Command {
 		Args:  cobra.MinimumNArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := cmd.Context()
+			c, err := connection.ActiveConfig()
+			if err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get config")
+			}
+			args[0] = util.FQName(c, args[0])
+
 			client, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")

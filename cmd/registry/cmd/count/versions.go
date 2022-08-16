@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/apigee/registry/cmd/registry/cmd/util"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
@@ -33,9 +34,15 @@ func versionsCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "versions",
 		Short: "Count the number of versions of specified APIs",
-		Args:  cobra.MinimumNArgs(1),
+		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := cmd.Context()
+			c, err := connection.ActiveConfig()
+			if err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get config")
+			}
+			args[0] = util.FQName(c, args[0])
+
 			client, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
@@ -46,7 +53,7 @@ func versionsCommand() *cobra.Command {
 
 			api, err := names.ParseApi(args[0])
 			if err != nil {
-				return // TODO: Log an error.
+				log.FromContext(ctx).WithError(err).Fatal("Failed parse")
 			}
 
 			// Iterate through a collection of APIs and count the number of versions of each.

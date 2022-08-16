@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/apigee/registry/cmd/registry/cmd/util"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
@@ -36,6 +37,12 @@ func revisionsCommand() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := cmd.Context()
+			c, err := connection.ActiveConfig()
+			if err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get config")
+			}
+			args[0] = util.FQName(c, args[0])
+
 			client, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
@@ -44,8 +51,7 @@ func revisionsCommand() *cobra.Command {
 			taskQueue, wait := core.WorkerPool(ctx, 64)
 			defer wait()
 			// Generate tasks.
-			name := args[0]
-			if spec, err := names.ParseSpec(name); err == nil {
+			if spec, err := names.ParseSpec(args[0]); err == nil {
 				err = core.ListSpecs(ctx, client, spec, filter, func(spec *rpc.ApiSpec) error {
 					taskQueue <- &countSpecRevisionsTask{
 						client:     client,
@@ -57,7 +63,7 @@ func revisionsCommand() *cobra.Command {
 				if err != nil {
 					log.FromContext(ctx).WithError(err).Fatal("Failed to list API specs")
 				}
-			} else if deployment, err := names.ParseDeployment(name); err == nil {
+			} else if deployment, err := names.ParseDeployment(args[0]); err == nil {
 				err = core.ListDeployments(ctx, client, deployment, filter, func(deployment *rpc.ApiDeployment) error {
 					taskQueue <- &countDeploymentRevisionsTask{
 						client:           client,

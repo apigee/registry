@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/apigee/registry/cmd/registry/cmd/util"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/log"
@@ -40,9 +41,15 @@ func lintStatsCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "lintstats",
 		Short: "Compute summaries of linter runs",
-		Args:  cobra.MinimumNArgs(1),
+		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := cmd.Context()
+			c, err := connection.ActiveConfig()
+			if err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get config")
+			}
+			args[0] = util.FQName(c, args[0])
+
 			filter, err := cmd.Flags().GetString("filter")
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get filter from flags")

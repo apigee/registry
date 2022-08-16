@@ -35,7 +35,9 @@ type Configuration struct {
 type Registry struct {
 	Address  string `mapstructure:"address" yaml:"address"`   // service address
 	Insecure bool   `mapstructure:"insecure" yaml:"insecure"` // if true, connect over HTTP
-	Token    string `mapstructure:"token" yaml:"-"`           // generated from TokenSource
+	Location string `mapstructure:"location" yaml:"location"`
+	Project  string `mapstructure:"project" yaml:"project"`
+	Token    string `mapstructure:"token" yaml:"-"` // generated from TokenSource
 }
 
 // Write stores the Configuration in the passed file name.

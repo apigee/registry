@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/apigee/registry/cmd/registry/cmd/util"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
@@ -36,9 +37,15 @@ func complexityCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "complexity",
 		Short: "Compute complexity metrics of API specs",
-		Args:  cobra.MinimumNArgs(1),
+		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := cmd.Context()
+			c, err := connection.ActiveConfig()
+			if err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get config")
+			}
+			args[0] = util.FQName(c, args[0])
+
 			filter, err := cmd.Flags().GetString("filter")
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get filter from flags")
@@ -58,7 +65,7 @@ func complexityCommand() *cobra.Command {
 
 			spec, err := names.ParseSpec(args[0])
 			if err != nil {
-				return // TODO: Log an error.
+				log.FromContext(ctx).WithError(err).Fatal("Failed parse")
 			}
 
 			// Iterate through a collection of specs and summarize each.

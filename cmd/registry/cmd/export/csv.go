@@ -18,6 +18,7 @@ import (
 	"encoding/csv"
 	"fmt"
 
+	"github.com/apigee/registry/cmd/registry/cmd/util"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
@@ -39,7 +40,12 @@ func csvCommand() *cobra.Command {
 		Use:   "csv [--filter expression] parent ...",
 		Short: "Export API specs to a CSV file",
 		Args: func(cmd *cobra.Command, args []string) error {
+			c, err := connection.ActiveConfig()
+			if err != nil {
+				return fmt.Errorf("Failed to get config: %s", err)
+			}
 			for _, parent := range args {
+				parent = util.FQName(c, parent)
 				if _, err := names.ParseVersion(parent); err != nil {
 					return fmt.Errorf("invalid parent argument %q", parent)
 				}

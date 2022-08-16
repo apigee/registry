@@ -22,6 +22,8 @@ import (
 type Config struct {
 	Address  string `mapstructure:"address"`  // service address
 	Insecure bool   `mapstructure:"insecure"` // if true, connect over HTTP
+	Location string `mapstructure:"location"` // optional
+	Project  string `mapstructure:"project"`  // optional
 	Token    string `mapstructure:"token"`    // bearer token
 }
 
@@ -43,11 +45,12 @@ func ReadConfig(name string) (Config, error) {
 		return Config{}, err
 	}
 
-	reg := c.Registry
 	config := Config{
-		Address:  reg.Address,
-		Insecure: reg.Insecure,
-		Token:    reg.Token,
+		Address:  c.Registry.Address,
+		Insecure: c.Registry.Insecure,
+		Location: c.Registry.Location,
+		Project:  c.Registry.Project,
+		Token:    c.Registry.Token,
 	}
 
 	return config, err
