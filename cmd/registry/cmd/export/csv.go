@@ -39,7 +39,12 @@ func csvCommand() *cobra.Command {
 		Use:   "csv [--filter expression] parent ...",
 		Short: "Export API specs to a CSV file",
 		Args: func(cmd *cobra.Command, args []string) error {
+			c, err := connection.ActiveConfig()
+			if err != nil {
+				return fmt.Errorf("Failed to get config: %s", err)
+			}
 			for _, parent := range args {
+				parent = c.FQName(parent)
 				if _, err := names.ParseVersion(parent); err != nil {
 					return fmt.Errorf("invalid parent argument %q", parent)
 				}

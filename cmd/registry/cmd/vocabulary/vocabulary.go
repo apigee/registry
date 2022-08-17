@@ -46,9 +46,15 @@ func Command() *cobra.Command {
 }
 
 func collectInputVocabularies(ctx context.Context, client connection.RegistryClient, args []string, filter string) ([]string, []*metrics.Vocabulary) {
+	c, err := connection.ActiveConfig()
+	if err != nil {
+		log.FromContext(ctx).WithError(err).Fatal("Failed to get config")
+	}
+
 	inputNames := make([]string, 0)
 	inputs := make([]*metrics.Vocabulary, 0)
 	for _, name := range args {
+		name = c.FQName(name)
 		artifact, err := names.ParseArtifact(name)
 		if err != nil {
 			continue

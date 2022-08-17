@@ -31,9 +31,15 @@ func Command() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list",
 		Short: "List resources in the API Registry",
-		Args:  cobra.MinimumNArgs(1),
+		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := cmd.Context()
+			c, err := connection.ActiveConfig()
+			if err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get config")
+			}
+			args[0] = c.FQName(args[0])
+
 			client, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
@@ -76,7 +82,7 @@ func matchAndHandleListCmd(
 	}
 
 	// Then try to match resource names.
-	if project, err := names.ParseProjectCollection(name); err == nil {
+	if project, err := names.ParseProject(name); err == nil {
 		return core.ListProjects(ctx, adminClient, project, filter, core.PrintProject)
 	} else if api, err := names.ParseApi(name); err == nil {
 		return core.ListAPIs(ctx, client, api, filter, core.PrintAPI)

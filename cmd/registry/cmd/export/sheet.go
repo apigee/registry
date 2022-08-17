@@ -44,6 +44,14 @@ func sheetCommand() *cobra.Command {
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := cmd.Context()
+			c, err := connection.ActiveConfig()
+			if err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get config")
+			}
+			for i := range args {
+				args[i] = c.FQName(args[i])
+			}
+
 			var path string
 			client, err := connection.NewRegistryClient(ctx)
 			if err != nil {
