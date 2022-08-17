@@ -48,19 +48,26 @@ func grpcErrorForDBError(err error) error {
 			return status.Error(codes.AlreadyExists, err.Error())
 		} else if v.Code.Name() == "too_many_connections" {
 			return status.Error(codes.Unavailable, err.Error())
+		} else if v.Code.Name() == "cannot_connect_now" {
+			return status.Error(codes.FailedPrecondition, err.Error())
 		}
 		log.Infof(context.TODO(), "Unhandled %T %+v code=%s name=%s", v, v, v.Code, v.Code.Name())
 	case *net.OpError:
 		switch vv := v.Unwrap().(type) {
 		case *os.SyscallError:
-			if vv.Syscall == "dial" {
+			if vv.Syscall == "connect" {
+				// The database is not running.
+				return status.Error(codes.FailedPrecondition, err.Error())
+			} else if vv.Syscall == "dial" {
+				// The database is overloaded.
 				return status.Error(codes.Unavailable, err.Error())
-			}
-			if vv.Syscall == "socket" {
+			} else if vv.Syscall == "socket" {
+				// The database is overloaded.
 				return status.Error(codes.Unavailable, err.Error())
 			}
 			log.Infof(context.TODO(), "Unhandled %T %+v %s", vv, vv, vv.Syscall)
 		case *net.DNSError:
+			// DNS is overloaded.
 			return status.Error(codes.Unavailable, err.Error())
 		default:
 			log.Infof(context.TODO(), "Unhandled %T %+v", vv, vv)
