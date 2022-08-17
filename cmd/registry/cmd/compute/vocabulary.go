@@ -40,6 +40,12 @@ func vocabularyCommand() *cobra.Command {
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := cmd.Context()
+			c, err := connection.ActiveConfig()
+			if err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get config")
+			}
+			path := c.FQName(args[0])
+
 			filter, err := cmd.Flags().GetString("filter")
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get filter from flags")
@@ -57,9 +63,9 @@ func vocabularyCommand() *cobra.Command {
 			taskQueue, wait := core.WorkerPool(ctx, 64)
 			defer wait()
 
-			spec, err := names.ParseSpec(args[0])
+			spec, err := names.ParseSpec(path)
 			if err != nil {
-				return // TODO: Log an error.
+				log.FromContext(ctx).WithError(err).Fatal("Failed parse")
 			}
 
 			// Iterate through a collection of specs and summarize each.

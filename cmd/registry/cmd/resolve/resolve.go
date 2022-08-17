@@ -58,9 +58,15 @@ func Command() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "resolve MANIFEST_RESOURCE",
 		Short: "resolve the dependencies and update the registry state (experimental)",
-		Args:  cobra.MinimumNArgs(1),
+		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := cmd.Context()
+			c, err := connection.ActiveConfig()
+			if err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get config")
+			}
+			args[0] = c.FQName(args[0])
+
 			name, err := names.ParseArtifact(args[0])
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Invalid manifest resource name")

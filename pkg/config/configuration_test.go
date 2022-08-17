@@ -143,6 +143,8 @@ func TestSettingsDirectRead(t *testing.T) {
 		Registry: config.Registry{
 			Address:  "localhost:8080",
 			Insecure: true,
+			Location: "location",
+			Project:  "project",
 		},
 	}
 	err := c.Write("good")
@@ -178,6 +180,8 @@ func TestSettingsFlags(t *testing.T) {
 		Registry: config.Registry{
 			Address:  "localhost:8080",
 			Insecure: true,
+			Location: "location",
+			Project:  "project",
 			Token:    "token",
 		},
 	}
@@ -185,6 +189,8 @@ func TestSettingsFlags(t *testing.T) {
 		"test",
 		"--registry.address", want.Registry.Address,
 		"--registry.insecure", strconv.FormatBool(want.Registry.Insecure),
+		"--registry.location", want.Registry.Location,
+		"--registry.project", want.Registry.Project,
 		"--registry.token", want.Registry.Token,
 	}
 	config.Flags = config.CreateFlagSet()
@@ -227,12 +233,16 @@ func TestManipulations(t *testing.T) {
 		Registry: config.Registry{
 			Address:  "address",
 			Insecure: true,
+			Location: "location",
+			Project:  "project",
 			Token:    "token",
 		},
 	}
 	want := map[string]interface{}{
 		"registry.address":  c.Registry.Address,
 		"registry.insecure": c.Registry.Insecure,
+		"registry.location": c.Registry.Location,
+		"registry.project":  c.Registry.Project,
 		"registry.token":    c.Registry.Token,
 		"token-source":      "",
 	}

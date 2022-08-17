@@ -31,28 +31,29 @@ func yamlCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "yaml RESOURCE",
 		Short: "Export a subtree of the registry as YAML",
-		Args:  cobra.MinimumNArgs(1),
+		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := cmd.Context()
+			c, err := connection.ActiveConfig()
+			if err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get config")
+			}
+			args[0] = c.FQName(args[0])
+
 			client, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
 
-			var name string
-			if len(args) > 0 {
-				name = args[0]
-			}
-
 			taskQueue, wait := core.WorkerPool(ctx, jobs)
 			defer wait()
 
-			if project, err := names.ParseProject(name); err == nil {
+			if project, err := names.ParseProject(args[0]); err == nil {
 				err = patch.ExportProject(ctx, client, project, taskQueue)
 				if err != nil {
 					log.FromContext(ctx).WithError(err).Fatal("Failed to export project YAML")
 				}
-			} else if api, err := names.ParseApi(name); err == nil {
+			} else if api, err := names.ParseApi(c.FQName(args[0])); err == nil {
 				err = core.GetAPI(ctx, client, api, func(message *rpc.Api) error {
 					bytes, _, err := patch.ExportAPI(ctx, client, message)
 					if err != nil {
@@ -64,7 +65,7 @@ func yamlCommand() *cobra.Command {
 				if err != nil {
 					log.FromContext(ctx).WithError(err).Fatal("Failed to export API YAML")
 				}
-			} else if artifact, err := names.ParseArtifact(name); err == nil {
+			} else if artifact, err := names.ParseArtifact(c.FQName(args[0])); err == nil {
 				err = core.GetArtifact(ctx, client, artifact, false, func(message *rpc.Artifact) error {
 					bytes, _, err := patch.ExportArtifact(ctx, client, message)
 					if err != nil {
@@ -78,7 +79,7 @@ func yamlCommand() *cobra.Command {
 					log.FromContext(ctx).WithError(err).Fatal("Failed to export artifact YAML")
 				}
 			} else {
-				log.Fatalf(ctx, "Unsupported entity %+s", name)
+				log.Fatalf(ctx, "Unsupported entity %+s", args[0])
 			}
 		},
 	}

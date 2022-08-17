@@ -41,7 +41,13 @@ func Command() *cobra.Command {
 func collectInputIndexes(ctx context.Context, client connection.RegistryClient, args []string, filter string) ([]string, []*rpc.Index) {
 	inputNames := make([]string, 0)
 	inputs := make([]*rpc.Index, 0)
+	c, err := connection.ActiveConfig()
+	if err != nil {
+		log.FromContext(ctx).WithError(err).Fatal("Failed to get config")
+	}
+
 	for _, name := range args {
+		name = c.FQName(name)
 		artifact, err := names.ParseArtifact(name)
 		if err != nil {
 			continue

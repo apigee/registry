@@ -39,6 +39,14 @@ func Command() *cobra.Command {
 		Args:  cobra.ExactArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := cmd.Context()
+			c, err := connection.ActiveConfig()
+			if err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get config")
+			}
+			for i := range args {
+				args[i] = c.FQName(args[i])
+			}
+
 			client, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
