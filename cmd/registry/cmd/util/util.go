@@ -16,11 +16,8 @@ package util
 
 import (
 	"fmt"
-	"path"
-	"strings"
 
 	"github.com/apigee/registry/pkg/config"
-	"github.com/apigee/registry/pkg/connection"
 )
 
 var NoActiveConfigurationError = fmt.Errorf(`No active configuration. Use 'registry config configurations' to manage.`)
@@ -32,18 +29,4 @@ func TargetConfiguration() (name string, c config.Configuration, err error) {
 	}
 
 	return
-}
-
-// FQName ensures the project and location, if available,
-// are properly included in the resource name.
-func FQName(c connection.Config, name string) string {
-	name = strings.TrimPrefix(name, "/")
-	if !strings.HasPrefix(name, "projects") && c.Project != "" {
-		if strings.HasPrefix(name, "locations") {
-			name = path.Join("projects", c.Project, name)
-		} else if c.Location != "" {
-			name = path.Join("projects", c.Project, "locations", c.Location, name)
-		}
-	}
-	return name
 }

@@ -15,6 +15,9 @@
 package connection
 
 import (
+	"path"
+	"strings"
+
 	"github.com/apigee/registry/pkg/config"
 )
 
@@ -54,4 +57,19 @@ func ReadConfig(name string) (Config, error) {
 	}
 
 	return config, err
+}
+
+// FQName ensures the project and location, if available,
+// are properly included to make ensure the resource name
+// is fully qualified.
+func (c Config) FQName(name string) string {
+	name = strings.TrimPrefix(name, "/")
+	if !strings.HasPrefix(name, "projects") && c.Project != "" {
+		if strings.HasPrefix(name, "locations") {
+			name = path.Join("projects", c.Project, name)
+		} else if c.Location != "" {
+			name = path.Join("projects", c.Project, "locations", c.Location, name)
+		}
+	}
+	return name
 }

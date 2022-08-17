@@ -18,7 +18,6 @@ import (
 	"encoding/csv"
 	"fmt"
 
-	"github.com/apigee/registry/cmd/registry/cmd/util"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
@@ -45,7 +44,7 @@ func csvCommand() *cobra.Command {
 				return fmt.Errorf("Failed to get config: %s", err)
 			}
 			for _, parent := range args {
-				parent = util.FQName(c, parent)
+				parent = c.FQName(parent)
 				if _, err := names.ParseVersion(parent); err != nil {
 					return fmt.Errorf("invalid parent argument %q", parent)
 				}

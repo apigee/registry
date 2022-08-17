@@ -18,7 +18,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/apigee/registry/cmd/registry/cmd/util"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
@@ -45,7 +44,7 @@ func vocabularyCommand() *cobra.Command {
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get config")
 			}
-			path := util.FQName(c, args[0])
+			path := c.FQName(args[0])
 
 			filter, err := cmd.Flags().GetString("filter")
 			if err != nil {

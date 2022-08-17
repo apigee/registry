@@ -18,7 +18,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/apigee/registry/cmd/registry/cmd/util"
 	"github.com/apigee/registry/cmd/registry/conformance"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/cmd/registry/patch"
@@ -43,7 +42,7 @@ func conformanceCommand() *cobra.Command {
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get config")
 			}
-			args[0] = util.FQName(c, args[0])
+			args[0] = c.FQName(args[0])
 
 			filter, err := cmd.Flags().GetString("filter")
 			if err != nil {

@@ -12,12 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package util
+package connection
 
 import (
 	"testing"
-
-	"github.com/apigee/registry/pkg/connection"
 )
 
 func TestFQNamePartialConfig(t *testing.T) {
@@ -33,12 +31,12 @@ func TestFQNamePartialConfig(t *testing.T) {
 		{"/apis/foo", "apis/foo"},
 	}
 
-	c := connection.Config{
+	c := Config{
 		Location: "location",
 	}
 	for _, d := range data {
 		t.Run(d.input, func(t *testing.T) {
-			got := FQName(c, d.input)
+			got := c.FQName(d.input)
 			if d.want != got {
 				t.Errorf("want: %q, got: %q", d.want, got)
 			}
@@ -61,12 +59,12 @@ func TestFQNameFullConfig(t *testing.T) {
 		{"/apis/foo", "projects/project1/locations/location1/apis/foo"},
 	}
 
-	c := connection.Config{
+	c := Config{
 		Project:  "project1",
 		Location: "location1",
 	}
 	for _, d := range data {
-		got := FQName(c, d.input)
+		got := c.FQName(d.input)
 		if d.want != got {
 			t.Errorf("for: %q, want: %q, got: %q", d.input, d.want, got)
 		}

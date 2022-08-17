@@ -18,7 +18,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/apigee/registry/cmd/registry/cmd/util"
 	"github.com/apigee/registry/cmd/registry/controller"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/log"
@@ -66,7 +65,7 @@ func Command() *cobra.Command {
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get config")
 			}
-			args[0] = util.FQName(c, args[0])
+			args[0] = c.FQName(args[0])
 
 			name, err := names.ParseArtifact(args[0])
 			if err != nil {

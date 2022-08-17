@@ -18,7 +18,6 @@ import (
 	"context"
 	"strings"
 
-	"github.com/apigee/registry/cmd/registry/cmd/util"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
@@ -55,7 +54,7 @@ func collectInputVocabularies(ctx context.Context, client connection.RegistryCli
 	inputNames := make([]string, 0)
 	inputs := make([]*metrics.Vocabulary, 0)
 	for _, name := range args {
-		name = util.FQName(c, name)
+		name = c.FQName(name)
 		artifact, err := names.ParseArtifact(name)
 		if err != nil {
 			continue

@@ -17,7 +17,6 @@ package export
 import (
 	"fmt"
 
-	"github.com/apigee/registry/cmd/registry/cmd/util"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/cmd/registry/patch"
 	"github.com/apigee/registry/log"
@@ -39,7 +38,7 @@ func yamlCommand() *cobra.Command {
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get config")
 			}
-			args[0] = util.FQName(c, args[0])
+			args[0] = c.FQName(args[0])
 
 			client, err := connection.NewRegistryClient(ctx)
 			if err != nil {
@@ -54,7 +53,7 @@ func yamlCommand() *cobra.Command {
 				if err != nil {
 					log.FromContext(ctx).WithError(err).Fatal("Failed to export project YAML")
 				}
-			} else if api, err := names.ParseApi(util.FQName(c, args[0])); err == nil {
+			} else if api, err := names.ParseApi(c.FQName(args[0])); err == nil {
 				err = core.GetAPI(ctx, client, api, func(message *rpc.Api) error {
 					bytes, _, err := patch.ExportAPI(ctx, client, message)
 					if err != nil {
@@ -66,7 +65,7 @@ func yamlCommand() *cobra.Command {
 				if err != nil {
 					log.FromContext(ctx).WithError(err).Fatal("Failed to export API YAML")
 				}
-			} else if artifact, err := names.ParseArtifact(util.FQName(c, args[0])); err == nil {
+			} else if artifact, err := names.ParseArtifact(c.FQName(args[0])); err == nil {
 				err = core.GetArtifact(ctx, client, artifact, false, func(message *rpc.Artifact) error {
 					bytes, _, err := patch.ExportArtifact(ctx, client, message)
 					if err != nil {

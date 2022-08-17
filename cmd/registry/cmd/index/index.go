@@ -18,7 +18,6 @@ import (
 	"context"
 	"strings"
 
-	"github.com/apigee/registry/cmd/registry/cmd/util"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
@@ -48,7 +47,7 @@ func collectInputIndexes(ctx context.Context, client connection.RegistryClient, 
 	}
 
 	for _, name := range args {
-		name = util.FQName(c, name)
+		name = c.FQName(name)
 		artifact, err := names.ParseArtifact(name)
 		if err != nil {
 			continue
