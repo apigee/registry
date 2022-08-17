@@ -291,6 +291,8 @@ func TestManipulations(t *testing.T) {
 
 func TestAllConfigs(t *testing.T) {
 	t.Cleanup(test.CleanConfigDir(t))
+	t.Setenv("APG_REGISTRY_ADDRESS", "")
+	t.Setenv("APG_REGISTRY_INSECURE", "")
 
 	config1 := config.Configuration{
 		Registry: config.Registry{
