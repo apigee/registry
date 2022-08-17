@@ -20,7 +20,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/config"
+	"github.com/apigee/registry/pkg/config/test"
 	"github.com/google/go-cmp/cmp"
 )
 
@@ -30,39 +31,29 @@ func TestCommand(t *testing.T) {
 	}
 }
 
-func cleanConfigDir(t *testing.T) func() {
-	t.Helper()
-	tmpDir := t.TempDir()
-	origConfigPath := connection.ConfigPath
-	connection.ConfigPath = tmpDir
-	return func() {
-		connection.ConfigPath = origConfigPath
-	}
-}
-
 func TestNoConfigurations(t *testing.T) {
-	t.Cleanup(cleanConfigDir(t))
+	t.Cleanup(test.CleanConfigDir(t))
 
 	// missing directory
-	connection.ConfigPath = filepath.Join(connection.ConfigPath, "test")
+	config.Directory = filepath.Join(config.Directory, "test")
 	cmd := listCommand()
 	want := "You don't have any configurations. Run 'registry config configurations create' to create a configuration.\n"
 	out := new(bytes.Buffer)
 	cmd.SetOut(out)
 	if err := cmd.Execute(); err != nil {
-		t.Fatal()
+		t.Fatal(err)
 	}
 	if diff := cmp.Diff(want, out.String()); diff != "" {
 		t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 	}
 
 	// empty list
-	connection.ConfigPath = t.TempDir()
+	config.Directory = t.TempDir()
 	want = "You don't have any configurations. Run 'registry config configurations create' to create a configuration.\n"
 	out = new(bytes.Buffer)
 	cmd.SetOut(out)
 	if err := cmd.Execute(); err != nil {
-		t.Fatal()
+		t.Fatal(err)
 	}
 	if diff := cmp.Diff(want, out.String()); diff != "" {
 		t.Errorf("unexpected diff: (-want +got):\n%s", diff)
@@ -70,7 +61,7 @@ func TestNoConfigurations(t *testing.T) {
 }
 
 func TestConfigurations(t *testing.T) {
-	t.Cleanup(cleanConfigDir(t))
+	t.Cleanup(test.CleanConfigDir(t))
 
 	cmd := createCommand()
 	cmd.SetArgs([]string{"config1"})
@@ -80,7 +71,7 @@ Activated "config1".
 	out := new(bytes.Buffer)
 	cmd.SetOut(out)
 	if err := cmd.Execute(); err != nil {
-		t.Fatal()
+		t.Fatal(err)
 	}
 	if diff := cmp.Diff(want, out.String()); diff != "" {
 		t.Errorf("unexpected diff: (-want +got):\n%s", diff)
@@ -93,13 +84,13 @@ Activated "config2".
 	out = new(bytes.Buffer)
 	cmd.SetOut(out)
 	if err := cmd.Execute(); err != nil {
-		t.Fatal()
+		t.Fatal(err)
 	}
 	if diff := cmp.Diff(want, out.String()); diff != "" {
 		t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 	}
 
-	name, err := connection.ActiveConfigName()
+	name, err := config.ActiveName()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -114,15 +105,17 @@ Activated "config2".
 	out = new(bytes.Buffer)
 	cmd.SetOut(out)
 	if err = cmd.Execute(); err != nil {
-		t.Fatal()
+		t.Fatal(err)
 	}
 	if diff := cmp.Diff(want, out.String()); diff != "" {
 		t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 	}
 
-	config := connection.Config{
-		Address:  "foo",
-		Insecure: true,
+	config := config.Configuration{
+		Registry: config.Registry{
+			Address:  "foo",
+			Insecure: true,
+		},
 	}
 	err = config.Write("config2")
 	if err != nil {
@@ -138,7 +131,7 @@ config2  false      foo      true
 	out = new(bytes.Buffer)
 	cmd.SetOut(out)
 	if err = cmd.Execute(); err != nil {
-		t.Fatal()
+		t.Fatal(err)
 	}
 	if diff := cmp.Diff(want, out.String()); diff != "" {
 		t.Errorf("unexpected diff: (-want +got):\n%s", diff)
@@ -149,13 +142,13 @@ config2  false      foo      true
 	want = `is_active: false
 name: config2
 properties:
-  address: foo
-  insecure: true
+  registry.address: foo
+  registry.insecure: true
 `
 	out = new(bytes.Buffer)
 	cmd.SetOut(out)
 	if err = cmd.Execute(); err != nil {
-		t.Fatal()
+		t.Fatal(err)
 	}
 	if diff := cmp.Diff(want, out.String()); diff != "" {
 		t.Errorf("unexpected diff: (-want +got):\n%s", diff)

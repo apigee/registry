@@ -21,7 +21,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/config"
+	"github.com/apigee/registry/pkg/config/test"
 	"github.com/google/go-cmp/cmp"
 	"github.com/spf13/cobra"
 )
@@ -32,21 +33,11 @@ func TestCommand(t *testing.T) {
 	}
 }
 
-func cleanConfigDir(t *testing.T) func() {
-	t.Helper()
-	tmpDir := t.TempDir()
-	origConfigPath := connection.ConfigPath
-	connection.ConfigPath = tmpDir
-	return func() {
-		connection.ConfigPath = origConfigPath
-	}
-}
-
 func TestNoActiveConfig(t *testing.T) {
-	t.Cleanup(cleanConfigDir(t))
+	t.Cleanup(test.CleanConfigDir(t))
 
 	checkErr := func(err error) {
-		want := fmt.Errorf(`Cannot read config: No active config. Use 'registry config configurations' to manage.`)
+		want := fmt.Errorf(`Cannot read config: No active configuration. Use 'registry config configurations' to manage.`)
 		if err == nil {
 			t.Errorf("expected error: %s", want)
 		} else if diff := cmp.Diff(want.Error(), err.Error()); diff != "" {
@@ -68,15 +59,15 @@ func TestNoActiveConfig(t *testing.T) {
 			e.cmd.SetArgs(e.args)
 
 			// missing directory
-			connection.ConfigPath = filepath.Join(connection.ConfigPath, "test")
+			config.Directory = filepath.Join(config.Directory, "test")
 			checkErr(e.cmd.Execute())
 
 			// empty list
-			connection.ConfigPath = t.TempDir()
+			config.Directory = t.TempDir()
 			checkErr(e.cmd.Execute())
 
 			// no active
-			c := connection.Config{}
+			c := config.Configuration{}
 			if err := c.Write("test"); err != nil {
 				t.Fatal(err)
 			}
@@ -86,14 +77,14 @@ func TestNoActiveConfig(t *testing.T) {
 }
 
 func TestConfig(t *testing.T) {
-	t.Cleanup(cleanConfigDir(t))
+	t.Cleanup(test.CleanConfigDir(t))
 
-	s := connection.Config{}
-	err := s.Write("active")
+	c := config.Configuration{}
+	err := c.Write("active")
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = connection.ActivateConfig("active")
+	err = config.Activate("active")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -105,24 +96,24 @@ func TestConfig(t *testing.T) {
 	}
 
 	cmd = setCommand()
-	cmd.SetArgs([]string{"address", "test"})
-	want := "Updated property \"address\".\n"
+	cmd.SetArgs([]string{"registry.address", "test"})
+	want := "Updated property \"registry.address\".\n"
 	out := new(bytes.Buffer)
 	cmd.SetOut(out)
 	if err = cmd.Execute(); err != nil {
-		t.Fatal()
+		t.Fatal(err)
 	}
 	if diff := cmp.Diff(want, out.String()); diff != "" {
 		t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 	}
 
 	cmd = setCommand()
-	cmd.SetArgs([]string{"insecure", "true"})
-	want = "Updated property \"insecure\".\n"
+	cmd.SetArgs([]string{"registry.insecure", "true"})
+	want = "Updated property \"registry.insecure\".\n"
 	out = new(bytes.Buffer)
 	cmd.SetOut(out)
 	if err = cmd.Execute(); err != nil {
-		t.Fatal()
+		t.Fatal(err)
 	}
 	if diff := cmp.Diff(want, out.String()); diff != "" {
 		t.Errorf("unexpected diff: (-want +got):\n%s", diff)
@@ -135,77 +126,79 @@ func TestConfig(t *testing.T) {
 	}
 
 	cmd = getCommand()
-	cmd.SetArgs([]string{"address"})
+	cmd.SetArgs([]string{"registry.address"})
 	want = "test\n"
 	out = new(bytes.Buffer)
 	cmd.SetOut(out)
 	if err = cmd.Execute(); err != nil {
-		t.Fatal()
+		t.Fatal(err)
 	}
 	if diff := cmp.Diff(want, out.String()); diff != "" {
 		t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 	}
 
 	cmd = getCommand()
-	cmd.SetArgs([]string{"insecure"})
+	cmd.SetArgs([]string{"registry.insecure"})
 	want = "true\n"
 	out = new(bytes.Buffer)
 	cmd.SetOut(out)
 	if err = cmd.Execute(); err != nil {
-		t.Fatal()
+		t.Fatal(err)
 	}
 	if diff := cmp.Diff(want, out.String()); diff != "" {
 		t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 	}
 
 	cmd = listCommand()
-	want = `address = test
-insecure = true
+	cmd.SetArgs([]string{})
+	want = `registry.address = test
+registry.insecure = true
 
 Your active configuration is: "active".
 `
 	out = new(bytes.Buffer)
 	cmd.SetOut(out)
 	if err = cmd.Execute(); err != nil {
-		t.Fatal()
+		t.Fatal(err)
 	}
 	if diff := cmp.Diff(want, out.String()); diff != "" {
 		t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 	}
 
 	cmd = unsetCommand()
-	cmd.SetArgs([]string{"address"})
-	want = "Unset property \"address\".\n"
+	cmd.SetArgs([]string{"registry.address"})
+	want = "Unset property \"registry.address\".\n"
 	out = new(bytes.Buffer)
 	cmd.SetOut(out)
 	if err = cmd.Execute(); err != nil {
-		t.Fatal()
+		t.Fatal(err)
 	}
 	if diff := cmp.Diff(want, out.String()); diff != "" {
 		t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 	}
 
 	cmd = unsetCommand()
-	cmd.SetArgs([]string{"insecure"})
-	want = "Unset property \"insecure\".\n"
+	cmd.SetArgs([]string{"registry.insecure"})
+	want = "Unset property \"registry.insecure\".\n"
 	out = new(bytes.Buffer)
 	cmd.SetOut(out)
 	if err = cmd.Execute(); err != nil {
-		t.Fatal()
+		t.Fatal(err)
 	}
 	if diff := cmp.Diff(want, out.String()); diff != "" {
 		t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 	}
 
 	cmd = listCommand()
-	want = `insecure = false
+	cmd.SetArgs([]string{})
+	want = `registry.insecure = false
 
 Your active configuration is: "active".
 `
 	out = new(bytes.Buffer)
 	cmd.SetOut(out)
 	if err = cmd.Execute(); err != nil {
-		t.Fatal()
+		t.Fatal(err)
 	}
 	if diff := cmp.Diff(want, out.String()); diff != "" {
 		t.Errorf("unexpected diff: (-want +got):\n%s", diff)
