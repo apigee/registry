@@ -18,67 +18,14 @@ package storage
 
 import (
 	"context"
-	"net"
-	"os"
-
-	"github.com/apigee/registry/log"
-	"github.com/lib/pq"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
-func alreadyExists(err error) bool {
-	switch v := err.(type) {
-	case *pq.Error:
-		if v.Code.Name() == "unique_violation" {
-			return true
-		}
-	}
+// This build does not support sqlite3, so this always returns false.
+func isSQLite3ErrorAlreadyExists(err error) bool {
 	return false
 }
 
-// grpcErrorForDBError converts recognized database error codes to grpc error codes.
-func grpcErrorForDBError(err error) error {
-	if _, ok := status.FromError(err); ok {
-		return err
-	}
-	switch v := err.(type) {
-	case *pq.Error:
-		if v.Code.Name() == "unique_violation" {
-			return status.Error(codes.AlreadyExists, err.Error())
-		} else if v.Code.Name() == "too_many_connections" {
-			return status.Error(codes.Unavailable, err.Error())
-		} else if v.Code.Name() == "cannot_connect_now" {
-			return status.Error(codes.FailedPrecondition, err.Error())
-		}
-		log.Infof(context.TODO(), "Unhandled %T %+v code=%s name=%s", v, v, v.Code, v.Code.Name())
-	case *net.OpError:
-		switch vv := v.Unwrap().(type) {
-		case *os.SyscallError:
-			if vv.Syscall == "connect" {
-				// The database is not running.
-				return status.Error(codes.FailedPrecondition, err.Error())
-			} else if vv.Syscall == "dial" {
-				// The database is overloaded.
-				return status.Error(codes.Unavailable, err.Error())
-			} else if vv.Syscall == "socket" {
-				// The database is overloaded.
-				return status.Error(codes.Unavailable, err.Error())
-			}
-			log.Infof(context.TODO(), "Unhandled %T %+v %s", vv, vv, vv.Syscall)
-		case *net.DNSError:
-			// DNS is overloaded.
-			return status.Error(codes.Unavailable, err.Error())
-		default:
-			log.Infof(context.TODO(), "Unhandled %T %+v", vv, vv)
-		}
-	default:
-		if err.Error() == "sql: statement is closed" {
-			return status.Error(codes.Unavailable, err.Error())
-		}
-		log.Infof(context.TODO(), "Unhandled %T %+v", err, err)
-	}
-
-	// All unrecognized codes fall through to become "Internal" errors.
-	return status.Error(codes.Internal, err.Error())
+// This build does not support sqlite3, so this always returns nil.
+func grpcErrorForSQLite3Error(ctx context.Context, err error) error {
+	return nil
 }
