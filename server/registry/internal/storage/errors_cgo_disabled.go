@@ -17,15 +17,15 @@
 package storage
 
 import (
-	"github.com/lib/pq"
+	"context"
 )
 
-func alreadyExists(err error) bool {
-	switch v := err.(type) {
-	case *pq.Error:
-		if v.Code.Name() == "unique_violation" {
-			return true
-		}
-	}
+// This build does not support sqlite3, so this always returns false.
+func isSQLite3ErrorAlreadyExists(err error) bool {
 	return false
+}
+
+// This build does not support sqlite3, so this always returns nil.
+func grpcErrorForSQLite3Error(ctx context.Context, err error) error {
+	return nil
 }

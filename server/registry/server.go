@@ -71,7 +71,7 @@ func New(config Config) (*RegistryServer, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err := s.storageClient.EnsureTables(); err != nil {
+	if err := s.storageClient.EnsureTables(ctx); err != nil {
 		return nil, err
 	}
 

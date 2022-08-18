@@ -29,7 +29,7 @@ func (c *Client) GetProject(ctx context.Context, name names.Project) (*models.Pr
 	if err := c.db.WithContext(ctx).Take(v, "key = ?", name.String()).Error; err == gorm.ErrRecordNotFound {
 		return nil, status.Errorf(codes.NotFound, "%q not found in database", name)
 	} else if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, grpcErrorForDBError(ctx, err)
 	}
 
 	return v, nil
@@ -40,7 +40,7 @@ func (c *Client) GetApi(ctx context.Context, name names.Api) (*models.Api, error
 	if err := c.db.WithContext(ctx).Take(v, "key = ?", name.String()).Error; err == gorm.ErrRecordNotFound {
 		return nil, status.Errorf(codes.NotFound, "%q not found in database", name)
 	} else if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, grpcErrorForDBError(ctx, err)
 	}
 
 	return v, nil
@@ -51,7 +51,7 @@ func (c *Client) GetVersion(ctx context.Context, name names.Version) (*models.Ve
 	if err := c.db.WithContext(ctx).Take(v, "key = ?", name.String()).Error; err == gorm.ErrRecordNotFound {
 		return nil, status.Errorf(codes.NotFound, "%q not found in database", name)
 	} else if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, grpcErrorForDBError(ctx, err)
 	}
 
 	return v, nil
@@ -70,7 +70,7 @@ func (c *Client) GetSpec(ctx context.Context, name names.Spec) (*models.Spec, er
 	if err := op.First(v).Error; err == gorm.ErrRecordNotFound {
 		return nil, status.Errorf(codes.NotFound, "%q not found in database", name)
 	} else if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, grpcErrorForDBError(ctx, err)
 	}
 
 	return v, nil
@@ -86,7 +86,7 @@ func (c *Client) GetSpecRevision(ctx context.Context, name names.SpecRevision) (
 	if err := c.db.WithContext(ctx).Take(v, "key = ?", name.String()).Error; err == gorm.ErrRecordNotFound {
 		return nil, status.Errorf(codes.NotFound, "%q not found in database", name)
 	} else if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, grpcErrorForDBError(ctx, err)
 	}
 
 	return v, nil
@@ -102,7 +102,7 @@ func (c *Client) GetSpecRevisionContents(ctx context.Context, name names.SpecRev
 	if err := c.db.WithContext(ctx).Take(v, "key = ?", name.String()).Error; err == gorm.ErrRecordNotFound {
 		return nil, status.Errorf(codes.NotFound, "%q not found in database", name)
 	} else if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, grpcErrorForDBError(ctx, err)
 	}
 
 	return v, nil
@@ -120,7 +120,7 @@ func (c *Client) GetDeployment(ctx context.Context, name names.Deployment) (*mod
 	if err := op.First(v).Error; err == gorm.ErrRecordNotFound {
 		return nil, status.Errorf(codes.NotFound, "%q not found in database", name)
 	} else if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, grpcErrorForDBError(ctx, err)
 	}
 
 	return v, nil
@@ -136,7 +136,7 @@ func (c *Client) GetDeploymentRevision(ctx context.Context, name names.Deploymen
 	if err := c.db.WithContext(ctx).Take(v, "key = ?", name.String()).Error; err == gorm.ErrRecordNotFound {
 		return nil, status.Errorf(codes.NotFound, "%q not found in database", name)
 	} else if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, grpcErrorForDBError(ctx, err)
 	}
 
 	return v, nil
@@ -147,7 +147,7 @@ func (c *Client) GetArtifact(ctx context.Context, name names.Artifact) (*models.
 	if err := c.db.WithContext(ctx).Take(v, "key = ?", name.String()).Error; err == gorm.ErrRecordNotFound {
 		return nil, status.Errorf(codes.NotFound, "%q not found in database", name)
 	} else if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, grpcErrorForDBError(ctx, err)
 	}
 
 	return v, nil
@@ -158,7 +158,7 @@ func (c *Client) GetArtifactContents(ctx context.Context, name names.Artifact) (
 	if err := c.db.WithContext(ctx).Take(v, "key = ?", name.String()).Error; err == gorm.ErrRecordNotFound {
 		return nil, status.Errorf(codes.NotFound, "%q not found in database", name)
 	} else if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, grpcErrorForDBError(ctx, err)
 	}
 
 	return v, nil

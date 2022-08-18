@@ -17,20 +17,37 @@
 package storage
 
 import (
-	"github.com/lib/pq"
+	"context"
+
+	"github.com/apigee/registry/log"
 	"github.com/mattn/go-sqlite3"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
-func alreadyExists(err error) bool {
+// returns true if the error is from sqlite3 and represents an "already exists" error.
+func isSQLite3ErrorAlreadyExists(err error) bool {
 	switch v := err.(type) {
-	case *pq.Error:
-		if v.Code.Name() == "unique_violation" {
-			return true
-		}
+	case sqlite3.Error:
+		return v.Code == sqlite3.ErrNo(sqlite3.ErrConstraint) && v.ExtendedCode == sqlite3.ErrConstraintPrimaryKey
+	default:
+		return false
+	}
+}
+
+// returns an appropriate gRPC error code for a sqlite3 error.
+func grpcErrorForSQLite3Error(ctx context.Context, err error) error {
+	switch v := err.(type) {
 	case sqlite3.Error:
 		if v.Code == sqlite3.ErrNo(sqlite3.ErrConstraint) && v.ExtendedCode == sqlite3.ErrConstraintPrimaryKey {
-			return true
+			return status.Error(codes.AlreadyExists, err.Error())
 		}
+		if v.Code == sqlite3.ErrNo(sqlite3.ErrBusy) ||
+			v.Code == sqlite3.ErrNo(sqlite3.ErrCantOpen) ||
+			v.Code == sqlite3.ErrNo(sqlite3.ErrReadonly) {
+			return status.Error(codes.Unavailable, err.Error())
+		}
+		log.Infof(ctx, "Unhandled %T %+v code=%d extended=%d", v, v, v.Code, v.ExtendedCode)
 	}
-	return false
+	return nil
 }

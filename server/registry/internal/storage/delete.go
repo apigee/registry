@@ -87,7 +87,7 @@ func (c *Client) DeleteProject(ctx context.Context, name names.Project, cascade 
 	case codes.FailedPrecondition:
 		return err
 	default:
-		return status.Error(codes.Internal, err.Error())
+		return grpcErrorForDBError(ctx, err)
 	}
 }
 
@@ -135,7 +135,7 @@ func (c *Client) DeleteApi(ctx context.Context, name names.Api, cascade bool) er
 	case codes.FailedPrecondition:
 		return err
 	default:
-		return status.Error(codes.Internal, err.Error())
+		return grpcErrorForDBError(ctx, err)
 	}
 }
 
@@ -182,7 +182,7 @@ func (c *Client) DeleteVersion(ctx context.Context, name names.Version, cascade 
 	case codes.FailedPrecondition:
 		return err
 	default:
-		return status.Error(codes.Internal, err.Error())
+		return grpcErrorForDBError(ctx, err)
 	}
 }
 
@@ -231,7 +231,7 @@ func (c *Client) DeleteSpec(ctx context.Context, name names.Spec, cascade bool) 
 	case codes.FailedPrecondition:
 		return err
 	default:
-		return status.Error(codes.Internal, err.Error())
+		return grpcErrorForDBError(ctx, err)
 	}
 }
 
@@ -252,7 +252,7 @@ func (c *Client) DeleteSpecRevision(ctx context.Context, name names.SpecRevision
 			Where("spec_id = ?", name.SpecID).
 			Where("revision_id = ?", name.RevisionID)
 		if err := op.Delete(model).Error; err != nil {
-			return status.Error(codes.Internal, err.Error())
+			return grpcErrorForDBError(ctx, err)
 		}
 	}
 
@@ -302,7 +302,7 @@ func (c *Client) DeleteDeployment(ctx context.Context, name names.Deployment, ca
 	case codes.FailedPrecondition:
 		return err
 	default:
-		return status.Error(codes.Internal, err.Error())
+		return grpcErrorForDBError(ctx, err)
 	}
 }
 
@@ -322,7 +322,7 @@ func (c *Client) DeleteDeploymentRevision(ctx context.Context, name names.Deploy
 			Where("deployment_id = ?", name.DeploymentID).
 			Where("revision_id = ?", name.RevisionID)
 		if err := op.Delete(model).Error; err != nil {
-			return status.Error(codes.Internal, err.Error())
+			return grpcErrorForDBError(ctx, err)
 		}
 	}
 
@@ -342,7 +342,7 @@ func (c *Client) DeleteArtifact(ctx context.Context, name names.Artifact) error 
 			Where("deployment_id = ?", name.DeploymentID()).
 			Where("artifact_id = ?", name.ArtifactID())
 		if err := op.Delete(model).Error; err != nil {
-			return status.Error(codes.Internal, err.Error())
+			return grpcErrorForDBError(ctx, err)
 		}
 	}
 
