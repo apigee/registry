@@ -36,8 +36,9 @@ func TestCommand(t *testing.T) {
 func TestNoActiveConfig(t *testing.T) {
 	t.Cleanup(test.CleanConfigDir(t))
 
-	checkErr := func(err error) {
-		want := fmt.Errorf(`Cannot read config: No active configuration. Use 'registry config configurations' to manage.`)
+	checkErr := func(t *testing.T, err error) {
+		t.Helper()
+		want := fmt.Errorf(`No active configuration. Use 'registry config configurations' to manage.`)
 		if err == nil {
 			t.Errorf("expected error: %s", want)
 		} else if diff := cmp.Diff(want.Error(), err.Error()); diff != "" {
@@ -60,18 +61,18 @@ func TestNoActiveConfig(t *testing.T) {
 
 			// missing directory
 			config.Directory = filepath.Join(config.Directory, "test")
-			checkErr(e.cmd.Execute())
+			checkErr(t, e.cmd.Execute())
 
 			// empty list
 			config.Directory = t.TempDir()
-			checkErr(e.cmd.Execute())
+			checkErr(t, e.cmd.Execute())
 
 			// no active
 			c := config.Configuration{}
 			if err := c.Write("test"); err != nil {
 				t.Fatal(err)
 			}
-			checkErr(e.cmd.Execute())
+			checkErr(t, e.cmd.Execute())
 		})
 	}
 }

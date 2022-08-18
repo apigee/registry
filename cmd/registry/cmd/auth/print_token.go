@@ -17,7 +17,7 @@ package auth
 import (
 	"fmt"
 
-	"github.com/apigee/registry/cmd/registry/cmd/util"
+	"github.com/apigee/registry/pkg/config"
 	"github.com/spf13/cobra"
 )
 
@@ -30,20 +30,23 @@ func printTokenCommand() *cobra.Command {
 			cmd.SilenceUsage = true
 			cmd.SilenceErrors = true
 
-			_, config, err := util.TargetConfiguration()
+			_, c, err := config.ActiveRaw()
 			if err != nil {
+				if err == config.NoActiveConfigurationError {
+					return fmt.Errorf(`No active configuration. Use 'registry config configurations' to manage.`)
+				}
 				return err
 			}
-			err = config.Resolve()
+			err = c.Resolve()
 			if err != nil {
 				return err
 			}
 
-			if config.TokenSource == "" {
+			if c.TokenSource == "" {
 				return fmt.Errorf("No token source found. Use `registry config set token-source` to define.")
 			}
 
-			token, err := genToken(config.TokenSource)
+			token, err := genToken(c.TokenSource)
 			if err != nil {
 				return err
 			}

@@ -17,7 +17,7 @@ package config
 import (
 	"fmt"
 
-	"github.com/apigee/registry/cmd/registry/cmd/util"
+	"github.com/apigee/registry/pkg/config"
 	"github.com/spf13/cobra"
 )
 
@@ -29,22 +29,24 @@ func getCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cmd.SilenceUsage = true
 			cmd.SilenceErrors = true
-			_, config, err := util.TargetConfiguration()
+			_, c, err := config.ActiveRaw()
 			if err != nil {
+				if err == config.NoActiveConfigurationError {
+					return fmt.Errorf(`No active configuration. Use 'registry config configurations' to manage.`)
+				}
 				return fmt.Errorf("Cannot read config: %v", err)
 			}
 
-			name := args[0]
-			if !contains(config.Properties(), name) {
-				return UnknownPropertyError{name}
+			if !contains(c.Properties(), args[0]) {
+				return UnknownPropertyError{args[0]}
 			}
 
-			m, err := config.FlatMap()
+			m, err := c.FlatMap()
 			if err != nil {
 				return fmt.Errorf("Cannot decode config: %v", err)
 			}
 
-			cmd.Println(m[name])
+			cmd.Println(m[args[0]])
 			return nil
 		},
 	}
