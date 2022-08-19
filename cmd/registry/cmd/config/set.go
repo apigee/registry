@@ -17,7 +17,7 @@ package config
 import (
 	"fmt"
 
-	"github.com/apigee/registry/cmd/registry/cmd/util"
+	"github.com/apigee/registry/pkg/config"
 	"github.com/spf13/cobra"
 )
 
@@ -29,21 +29,24 @@ func setCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cmd.SilenceUsage = true
 			cmd.SilenceErrors = true
-			target, config, err := util.TargetConfiguration()
+			target, c, err := config.ActiveRaw()
 			if err != nil {
+				if err == config.NoActiveConfigurationError {
+					return fmt.Errorf(`No active configuration. Use 'registry config configurations' to manage.`)
+				}
 				return fmt.Errorf("Cannot read config: %v", err)
 			}
 
 			name, value := args[0], args[1]
-			if !contains(config.Properties(), name) {
+			if !contains(c.Properties(), name) {
 				return UnknownPropertyError{name}
 			}
 
-			if err = config.Set(name, value); err != nil {
+			if err = c.Set(name, value); err != nil {
 				return fmt.Errorf("Cannot set value: %v", err)
 			}
 
-			if err = config.Write(target); err != nil {
+			if err = c.Write(target); err != nil {
 				return fmt.Errorf("Cannot write config: %v", err)
 			}
 

@@ -31,6 +31,8 @@ import (
 
 const ActivePointerFilename = "active_config"
 
+var NoActiveConfigurationError = fmt.Errorf("No active configuration.")
+
 // Flags defines Flags that may be bound to a Configuration. Use like:
 // `cmd.PersistentFlags().AddFlagSet(connection.Flags)`
 var Flags *pflag.FlagSet = CreateFlagSet()
@@ -124,6 +126,9 @@ func ActiveRaw() (name string, c Configuration, err error) {
 		if err != nil {
 			return name, Configuration{}, err
 		}
+	}
+	if name == "" {
+		return name, Configuration{}, NoActiveConfigurationError
 	}
 
 	c, err = Read(name)
