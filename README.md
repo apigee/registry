@@ -96,6 +96,42 @@ Next run a suite of tests with `make test` and see a corresponding walkthrough
 of API features in [tests/demo/walkthrough.sh](tests/demo/walkthrough.sh). For
 more demonstrations, see the [demos](demos) directory.
 
+## Tests
+
+This repository includes tests that verify `registry-server`. These server
+tests focus on correctness at the API level and compliance with the API design
+guidelines described at [aip.dev](https://aip.dev). Server tests are included
+in runs of `make test` and `go test ./...`, and the server tests can be run by
+themselves with `go test ./server/registry`. By default, server tests
+verify the local code in `./server/registry`, but to allow **API conformance
+testing**, the tests can be run to verify remote servers using the following
+options:
+
+- With the `-remote` flag, tests are run against a remote server according to
+  the configuration used by the `registry` tool. This runs the entire suite of
+  tests. **WARNING**: These tests are destructive and will overwrite everything
+  in the remote server.
+- With the `-hosted PROJECT_ID` flag, tests are run against a remote server in
+  a hosted environment within a single project that is expected to already
+  exist. The server is identified and authenticated with the configuration used
+  by the `registry` tool. Only the methods of the Registry service are tested
+  (Admin service methods are excluded). **WARNING**: These tests are
+  destructive and will overwrite everything in the specified project.
+
+A small set of **performance benchmarks** is in
+[tests/benchmark](/tests/benchmark). These tests run against remote servers
+specified by the `registry` tool configuration and test a single project that
+is expected to already exist. **WARNING**: These tests are destructive and will
+overwrite everyhing in the specified project. Benchmarks can be run with the
+following invocation:
+
+```
+go test ./tests/benchmark --bench=. --project_id=$PROJECTID --benchtime=${ITERATIONS}x --timeout=0
+```
+
+All of the test configurations described above are verified in this
+repository's [CI tests](.github/workflows/go.yml).
+
 ## License
 
 This software is licensed under the Apache License, Version 2.0. See
