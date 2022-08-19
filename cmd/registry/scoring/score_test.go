@@ -1204,6 +1204,50 @@ func TestProcessScoreType(t *testing.T) {
 			},
 		},
 		{
+			desc:       "greater than max integer",
+			definition: integerDefinition,
+			scoreValue: int64(11),
+			wantScore: &rpc.Score{
+				Id:             "score-lint-error",
+				Kind:           "Score",
+				DisplayName:    "Lint Error",
+				Description:    "Number of errors found by linter",
+				Uri:            "http://some/test/uri",
+				UriDisplayName: "Test URI",
+				DefinitionName: "projects/score-type-test/locations/global/artifacts/lint-error",
+				Severity:       rpc.Severity_ALERT,
+				Value: &rpc.Score_IntegerValue{
+					IntegerValue: &rpc.IntegerValue{
+						Value:    11,
+						MinValue: 0,
+						MaxValue: 10,
+					},
+				},
+			},
+		},
+		{
+			desc:       "less than min integer",
+			definition: integerDefinition,
+			scoreValue: int64(-1),
+			wantScore: &rpc.Score{
+				Id:             "score-lint-error",
+				Kind:           "Score",
+				DisplayName:    "Lint Error",
+				Description:    "Number of errors found by linter",
+				Uri:            "http://some/test/uri",
+				UriDisplayName: "Test URI",
+				DefinitionName: "projects/score-type-test/locations/global/artifacts/lint-error",
+				Severity:       rpc.Severity_ALERT,
+				Value: &rpc.Score_IntegerValue{
+					IntegerValue: &rpc.IntegerValue{
+						Value:    -1,
+						MinValue: 0,
+						MaxValue: 10,
+					},
+				},
+			},
+		},
+		{
 			desc:       "happy path percent",
 			definition: percentDefinition,
 			scoreValue: float64(50),
@@ -1239,6 +1283,46 @@ func TestProcessScoreType(t *testing.T) {
 				Value: &rpc.Score_PercentValue{
 					PercentValue: &rpc.PercentValue{
 						Value: 50,
+					},
+				},
+			},
+		},
+		{
+			desc:       "greater than max percent",
+			definition: percentDefinition,
+			scoreValue: int64(101),
+			wantScore: &rpc.Score{
+				Id:             "score-lint-error-percent",
+				Kind:           "Score",
+				DisplayName:    "Lint Error Percentage",
+				Description:    "Percentage errors found by linter",
+				Uri:            "http://some/test/uri",
+				UriDisplayName: "Test URI",
+				DefinitionName: "projects/score-type-test/locations/global/artifacts/lint-error-percent",
+				Severity:       rpc.Severity_ALERT,
+				Value: &rpc.Score_PercentValue{
+					PercentValue: &rpc.PercentValue{
+						Value: 101,
+					},
+				},
+			},
+		},
+		{
+			desc:       "less than min percent",
+			definition: percentDefinition,
+			scoreValue: int64(-1),
+			wantScore: &rpc.Score{
+				Id:             "score-lint-error-percent",
+				Kind:           "Score",
+				DisplayName:    "Lint Error Percentage",
+				Description:    "Percentage errors found by linter",
+				Uri:            "http://some/test/uri",
+				UriDisplayName: "Test URI",
+				DefinitionName: "projects/score-type-test/locations/global/artifacts/lint-error-percent",
+				Severity:       rpc.Severity_ALERT,
+				Value: &rpc.Score_PercentValue{
+					PercentValue: &rpc.PercentValue{
+						Value: -1,
 					},
 				},
 			},
@@ -1292,34 +1376,14 @@ func TestProcessScoreTypeError(t *testing.T) {
 			scoreValue: true,
 		},
 		{
-			desc:       "greater than max integer",
-			definition: integerDefinition,
-			scoreValue: 11,
-		},
-		{
-			desc:       "less than min integer",
-			definition: integerDefinition,
-			scoreValue: -1,
-		},
-		{
 			desc:       "type mismatch percent",
 			definition: percentDefinition,
 			scoreValue: false,
 		},
 		{
-			desc:       "greater than max percent",
-			definition: integerDefinition,
-			scoreValue: 101,
-		},
-		{
-			desc:       "less than min percent",
-			definition: integerDefinition,
-			scoreValue: -1,
-		},
-		{
 			desc:       "type mismatch boolean",
 			definition: booleanDefinition,
-			scoreValue: 1,
+			scoreValue: int64(1),
 		},
 	}
 	for _, test := range tests {
