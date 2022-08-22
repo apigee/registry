@@ -339,15 +339,8 @@ func processScoreType(definition *rpc.ScoreDefinition, scoreValue interface{}, p
 			return nil, fmt.Errorf("failed typecheck for output: expected either int64 or float64 got %s (type: %T)", v, v)
 		}
 
-		// Check that the scoreValue is within min/max limits
 		configuredMin := definition.GetInteger().GetMinValue() // 0 if not set
 		configuredMax := definition.GetInteger().GetMaxValue() // 0 if not set
-		if value < configuredMin {
-			return nil, fmt.Errorf("evaluated score value(%d) cannot be less than the configured min_value (%d)", value, configuredMin)
-		}
-		if value > configuredMax {
-			return nil, fmt.Errorf("evaluated score value(%d) cannot be greater than the configured max_value (%d)", value, configuredMax)
-		}
 
 		// Populate Value field in Score proto
 		score.Value = &rpc.Score_IntegerValue{
@@ -356,6 +349,12 @@ func processScoreType(definition *rpc.ScoreDefinition, scoreValue interface{}, p
 				MinValue: configuredMin,
 				MaxValue: configuredMax,
 			},
+		}
+
+		// Check that the scoreValue is within min/max limits and assign default ALERT Severity
+		if value < configuredMin || value > configuredMax {
+			score.Severity = rpc.Severity_ALERT
+			break
 		}
 
 		// Populate the severity field according to Thresholds
@@ -382,19 +381,17 @@ func processScoreType(definition *rpc.ScoreDefinition, scoreValue interface{}, p
 			return nil, fmt.Errorf("failed typecheck for output: expected either int64 or float64 got %s (type: %T)", v, v)
 		}
 
-		// Check that the scoreValue is within min/max limits
-		if value < 0 {
-			return nil, fmt.Errorf("evaluated score value(%f) cannot be less than 0", value)
-		}
-		if value > 100 {
-			return nil, fmt.Errorf("evaluated score value(%f) cannot be greater than 100", value)
-		}
-
 		// Populate Value field in Score proto
 		score.Value = &rpc.Score_PercentValue{
 			PercentValue: &rpc.PercentValue{
 				Value: value,
 			},
+		}
+
+		// Check that the scoreValue is within min/max limits and assign default ALERT Severity
+		if value < 0 || value > 100 {
+			score.Severity = rpc.Severity_ALERT
+			break
 		}
 
 		// Populate the severity field according to Thresholds
