@@ -267,7 +267,7 @@ func TestCreateApiDeploymentDuplicates(t *testing.T) {
 				ApiDeploymentId: "My-Deployment",
 				ApiDeployment:   &rpc.ApiDeployment{},
 			},
-			want: codes.AlreadyExists,
+			want: codes.InvalidArgument,
 		},
 	}
 

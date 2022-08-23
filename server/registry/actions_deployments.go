@@ -49,14 +49,15 @@ func (s *RegistryServer) createDeployment(ctx context.Context, name names.Deploy
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 
+	if err := name.Validate(); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	// SDG: can we get the create to do this check?
 	if _, err := db.GetDeployment(ctx, name); err == nil {
 		return nil, status.Errorf(codes.AlreadyExists, "API deployment %q already exists", name)
 	} else if !isNotFound(err) {
 		return nil, err
-	}
-
-	if err := name.Validate(); err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	// Creation should only succeed when the parent exists.
@@ -69,7 +70,7 @@ func (s *RegistryServer) createDeployment(ctx context.Context, name names.Deploy
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	if err := db.SaveDeploymentRevision(ctx, deployment); err != nil {
+	if err := db.CreateDeploymentRevision(ctx, deployment); err != nil {
 		return nil, err
 	}
 

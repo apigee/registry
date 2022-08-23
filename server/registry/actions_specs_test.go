@@ -302,7 +302,7 @@ func TestCreateApiSpecDuplicates(t *testing.T) {
 				ApiSpecId: "My-Spec",
 				ApiSpec:   &rpc.ApiSpec{},
 			},
-			want: codes.AlreadyExists,
+			want: codes.InvalidArgument,
 		},
 	}
 
@@ -606,7 +606,7 @@ func TestGetApiSpecContentsData(t *testing.T) {
 			if status.Code(err) != test.wantCode {
 				t.Errorf("GetApiSpecContents(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.wantCode, err)
 			}
-			if bytes.Compare(resp.Data, test.wantData) != 0 {
+			if !bytes.Equal(resp.Data, test.wantData) {
 				t.Errorf("GetApiSpecContents(%+v) returned contents %v, want %v: %v", test.req, resp.Data, test.wantData, err)
 			}
 		})

@@ -373,7 +373,7 @@ func TestCreateArtifactDuplicates(t *testing.T) {
 				ArtifactId: "My-Artifact",
 				Artifact:   &rpc.Artifact{},
 			},
-			want: codes.AlreadyExists,
+			want: codes.InvalidArgument,
 		},
 	}
 
