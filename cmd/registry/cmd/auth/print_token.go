@@ -24,7 +24,7 @@ import (
 func printTokenCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "print-token",
-		Short: "Invoke token source and print token.",
+		Short: "Invoke token-source to print a token.",
 		Args:  cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cmd.SilenceUsage = true
