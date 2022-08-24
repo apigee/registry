@@ -24,7 +24,7 @@ import (
 func unsetCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "unset PROPERTY",
-		Short: "Unset the value of a property.",
+		Short: "Clear the property value from the active configuration.",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cmd.SilenceUsage = true
