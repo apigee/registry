@@ -186,3 +186,56 @@ Do you want to continue (Y/n)? Deleted "config2".
 		t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 	}
 }
+
+func TestCreateConfiguration(t *testing.T) {
+	t.Cleanup(test.CleanConfigDir(t))
+
+	want := config.Configuration{
+		Registry: config.Registry{
+			Address:  "address",
+			Insecure: true,
+		},
+	}
+
+	cmd := createCommand()
+	cmd.PersistentFlags().AddFlagSet(config.Flags)
+	// cmd.PersistentFlags().AddFlagSet(config.CreateFlagSet())
+	cmd.SetArgs([]string{"config1", "--registry.address=address", "--registry.insecure=true"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+	c, err := config.Read("config1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if diff := cmp.Diff(want, c); diff != "" {
+		t.Errorf("unexpected diff: (-want +got):\n%s", diff)
+	}
+
+	cmd = createCommand()
+	cmd.PersistentFlags().AddFlagSet(config.Flags)
+	cmd.SetArgs([]string{"config2"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+	if c, err = config.Read("config2"); err != nil {
+		t.Fatal(err)
+	}
+	if diff := cmp.Diff(want, c); diff != "" {
+		t.Errorf("unexpected diff: (-want +got):\n%s", diff)
+	}
+
+	cmd = createCommand()
+	cmd.PersistentFlags().AddFlagSet(config.Flags)
+	cmd.SetArgs([]string{"config3", "--registry.location", "location"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+	if c, err = config.Read("config3"); err != nil {
+		t.Fatal(err)
+	}
+	want.Registry.Location = "location"
+	if diff := cmp.Diff(want, c); diff != "" {
+		t.Errorf("unexpected diff: (-want +got):\n%s", diff)
+	}
+}

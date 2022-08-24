@@ -38,8 +38,15 @@ func createCommand() *cobra.Command {
 				return fmt.Errorf("Cannot create config %q, it already exists.", name)
 			}
 
-			s := config.Configuration{}
-			err := s.Write(name)
+			// attempt to clone the active config or at least the current flags
+			s, err := config.Active()
+			if err != nil {
+				if s, err = config.ReadValid(""); err != nil {
+					s = config.Configuration{}
+				}
+			}
+
+			err = s.Write(name)
 			if err != nil {
 				return fmt.Errorf("Cannot create config %q: %v", name, err)
 			}
