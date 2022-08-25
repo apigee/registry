@@ -35,6 +35,21 @@ func (c *Client) CreateVersion(ctx context.Context, v *models.Version) error {
 	return c.create(ctx, v)
 }
 
+func (c *Client) CreateArtifact(ctx context.Context, v *models.Artifact) error {
+	v.Key = v.Name()
+	return c.create(ctx, v)
+}
+
+func (c *Client) CreateDeploymentRevision(ctx context.Context, v *models.Deployment) error {
+	v.Key = v.RevisionName()
+	return c.create(ctx, v)
+}
+
+func (c *Client) CreateSpecRevision(ctx context.Context, v *models.Spec) error {
+	v.Key = v.RevisionName()
+	return c.create(ctx, v)
+}
+
 func (c *Client) create(ctx context.Context, v interface{}) error {
-	return grpcErrorForDBError(ctx, c.db.Create(v).Error, "create.go-1")
+	return grpcErrorForDBError(ctx, c.db.WithContext(ctx).Create(v).Error, "create.go-1")
 }

@@ -53,14 +53,15 @@ func (s *RegistryServer) createSpec(ctx context.Context, name names.Spec, body *
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 
+	if err := name.Validate(); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	// Necessary because revisions
 	if _, err := db.GetSpec(ctx, name); err == nil {
 		return nil, status.Errorf(codes.AlreadyExists, "API spec %q already exists", name)
 	} else if !isNotFound(err) {
 		return nil, err
-	}
-
-	if err := name.Validate(); err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	// Creation should only succeed when the parent exists.
@@ -73,7 +74,7 @@ func (s *RegistryServer) createSpec(ctx context.Context, name names.Spec, body *
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	if err := db.SaveSpecRevision(ctx, spec); err != nil {
+	if err := db.CreateSpecRevision(ctx, spec); err != nil {
 		return nil, err
 	}
 
