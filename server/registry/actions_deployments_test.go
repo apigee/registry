@@ -259,16 +259,6 @@ func TestCreateApiDeploymentDuplicates(t *testing.T) {
 			},
 			want: codes.AlreadyExists,
 		},
-		{
-			desc: "case insensitive",
-			seed: &rpc.ApiDeployment{Name: "projects/my-project/locations/global/apis/a/deployments/my-deployment"},
-			req: &rpc.CreateApiDeploymentRequest{
-				Parent:          "projects/my-project/locations/global/apis/a",
-				ApiDeploymentId: "My-Deployment",
-				ApiDeployment:   &rpc.ApiDeployment{},
-			},
-			want: codes.InvalidArgument,
-		},
 	}
 
 	for _, test := range tests {

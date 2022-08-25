@@ -365,16 +365,6 @@ func TestCreateArtifactDuplicates(t *testing.T) {
 			},
 			want: codes.AlreadyExists,
 		},
-		{
-			desc: "case insensitive",
-			seed: &rpc.Artifact{Name: "projects/my-project/locations/global/artifacts/my-artifact"},
-			req: &rpc.CreateArtifactRequest{
-				Parent:     "projects/my-project/locations/global",
-				ArtifactId: "My-Artifact",
-				Artifact:   &rpc.Artifact{},
-			},
-			want: codes.InvalidArgument,
-		},
 	}
 
 	for _, test := range tests {
