@@ -171,7 +171,6 @@ func (s *RegistryServer) UpdateProject(ctx context.Context, req *rpc.UpdateProje
 			return db.CreateProject(ctx, project)
 		}
 		return err
-
 	})
 	if err != nil {
 		return nil, err

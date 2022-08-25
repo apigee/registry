@@ -181,14 +181,8 @@ func (s *RegistryServer) UpdateApi(ctx context.Context, req *rpc.UpdateApiReques
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	if req.GetAllowMissing() {
-		// Speculatively create the api. If it already exists, fall through to the update below.
-		api, err := s.createApi(ctx, name, req.GetApi())
-		if err == nil {
-			return api, nil
-		} else if status.Code(err) != codes.AlreadyExists {
-			return nil, err
-		}
+	if err := name.Validate(); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	db, err := s.getStorageClient(ctx)
@@ -196,15 +190,26 @@ func (s *RegistryServer) UpdateApi(ctx context.Context, req *rpc.UpdateApiReques
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 
-	// TODO: the Get/Update/Save calls below should be a transaction.
-	api, err := db.GetApi(ctx, name)
+	var api *models.Api
+	err = db.Transaction(ctx, func(ctx context.Context, db *storage.Client) error {
+		var err error
+		api, err = db.GetApi(ctx, name)
+		if err == nil {
+			if err := api.Update(req.GetApi(), models.ExpandMask(req.GetApi(), req.GetUpdateMask())); err != nil {
+				return status.Error(codes.Internal, err.Error())
+			}
+			return db.SaveApi(ctx, api)
+		}
+		if status.Code(err) == codes.NotFound && req.GetAllowMissing() {
+			api, err = models.NewApi(name, req.Api)
+			if err != nil {
+				return status.Error(codes.Internal, err.Error())
+			}
+			return db.CreateApi(ctx, api)
+		}
+		return err
+	})
 	if err != nil {
-		return nil, err
-	}
-	if err := api.Update(req.GetApi(), models.ExpandMask(req.GetApi(), req.GetUpdateMask())); err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-	if err := db.SaveApi(ctx, api); err != nil {
 		return nil, err
 	}
 

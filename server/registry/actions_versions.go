@@ -181,14 +181,8 @@ func (s *RegistryServer) UpdateApiVersion(ctx context.Context, req *rpc.UpdateAp
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	if req.GetAllowMissing() {
-		// Speculatively create the version. If it already exists, fall through to the update below.
-		version, err := s.createApiVersion(ctx, name, req.GetApiVersion())
-		if err == nil {
-			return version, nil
-		} else if status.Code(err) != codes.AlreadyExists {
-			return nil, err
-		}
+	if err := name.Validate(); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	db, err := s.getStorageClient(ctx)
@@ -196,15 +190,26 @@ func (s *RegistryServer) UpdateApiVersion(ctx context.Context, req *rpc.UpdateAp
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 
-	// TODO: the Get/Update/Save calls below should be a transaction.
-	version, err := db.GetVersion(ctx, name)
+	var version *models.Version
+	err = db.Transaction(ctx, func(ctx context.Context, db *storage.Client) error {
+		var err error
+		version, err = db.GetVersion(ctx, name)
+		if err == nil {
+			if err := version.Update(req.GetApiVersion(), models.ExpandMask(req.GetApiVersion(), req.GetUpdateMask())); err != nil {
+				return status.Error(codes.Internal, err.Error())
+			}
+			return db.SaveVersion(ctx, version)
+		}
+		if status.Code(err) == codes.NotFound && req.GetAllowMissing() {
+			version, err = models.NewVersion(name, req.ApiVersion)
+			if err != nil {
+				return status.Error(codes.Internal, err.Error())
+			}
+			return db.CreateVersion(ctx, version)
+		}
+		return err
+	})
 	if err != nil {
-		return nil, err
-	}
-	if err := version.Update(req.GetApiVersion(), models.ExpandMask(req.GetApiVersion(), req.GetUpdateMask())); err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-	if err := db.SaveVersion(ctx, version); err != nil {
 		return nil, err
 	}
 
