@@ -93,7 +93,7 @@ func (s *RegistryServer) DeleteApiSpecRevision(ctx context.Context, req *rpc.Del
 	}
 
 	if err := db.DeleteSpecRevision(ctx, name); err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, err
 	}
 
 	s.notify(ctx, rpc.Notification_DELETED, name.String())

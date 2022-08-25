@@ -24,8 +24,11 @@ import (
 func createCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create CONFIGURATION_NAME",
-		Short: "Creates a new named configuration.",
-		Args:  cobra.ExactArgs(1),
+		Short: "Creates and activates a new named configuration.",
+		Long: "Creates and activates a new named configuration. Values will be populated from active " +
+			"configuration (if any) and any passed property flags.",
+		Example: "registry config configurations create localhost --registry.address='locahost:8080'",
+		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cmd.SilenceUsage = true
 			cmd.SilenceErrors = true
@@ -38,8 +41,15 @@ func createCommand() *cobra.Command {
 				return fmt.Errorf("Cannot create config %q, it already exists.", name)
 			}
 
-			s := config.Configuration{}
-			err := s.Write(name)
+			// attempt to clone the active config or at least the current flags
+			s, err := config.Active()
+			if err != nil {
+				if s, err = config.ReadValid(""); err != nil {
+					s = config.Configuration{}
+				}
+			}
+
+			err = s.Write(name)
 			if err != nil {
 				return fmt.Errorf("Cannot create config %q: %v", name, err)
 			}

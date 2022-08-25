@@ -24,7 +24,11 @@ import (
 func Command() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "config",
-		Short: "Set, view, and unset properties used by Registry CLI.",
+		Short: "Maintain properties in the active configuration.",
+		Long: "Configurations manage sets of properties used when connecting to the registry. " +
+			"These commands manipulate the property values in the active configuration. " +
+			"See `config configurations --help` for information on how to manage configurations. " +
+			"See `config set --help` for the list of properties available.",
 	}
 
 	cmd.AddCommand(configurations.Command())

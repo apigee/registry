@@ -21,7 +21,12 @@ import (
 func Command() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "configurations",
-		Short: "Maintain configuration profiles",
+		Short: "Maintain named configurations of properties",
+		Long: "Configurations manage sets of properties used when connecting to the registry. " +
+			"These commands manipulate named sets of these properties, called 'configurations'. " +
+			"When a configuration is 'active', it's properties are automatically loaded and used " +
+			"by registry commands. See `registry config` for manipulating the properties themselves. " +
+			"Configuration files are stored in the $HOME/.config/registry folder.",
 	}
 
 	cmd.AddCommand(activateCommand())
