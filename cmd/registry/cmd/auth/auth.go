@@ -24,7 +24,14 @@ import (
 func Command() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "auth",
-		Short: "Manage registry CLI authentication.",
+		Short: "Manage authentication to the registry.",
+		Long: "Authentication to the registry is via tokens. These tokens can be provided " +
+			"directly by using '--registry.token' in any command, or can be generated as needed " +
+			"by setting the token-source property in a configuration. The token-source can be set " +
+			"to any executable command that prints a registry token by using the 'config set token-source'. " +
+			"Once set, the command will be executed before a registry command is run and the output used " +
+			"as the token passed to the registry. The output can be verified by 'auth print-token'.",
+		Example: "config set token-source 'gcloud auth print-access-token email@example.com'",
 	}
 
 	cmd.AddCommand(printTokenCommand())
