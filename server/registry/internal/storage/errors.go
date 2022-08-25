@@ -40,9 +40,22 @@ func alreadyExists(err error) bool {
 }
 
 // grpcErrorForDBError converts recognized database error codes to grpc error codes.
-func grpcErrorForDBError(ctx context.Context, err error) error {
+func grpcErrorForDBError(ctx context.Context, err error, label string) error {
+	if err == nil {
+		return nil
+	}
+	log.Debugf(ctx, "PAIR HANDLING (%s) %T %v", label, err, err)
+	err = internalGrpcErrorForDBError(ctx, err, label)
+	log.Debugf(ctx, "PAIR RETURNING (%s) %T %v", label, err, err)
+	return err
+}
+
+func internalGrpcErrorForDBError(ctx context.Context, err error, label string) error {
 	// if this error already has a gRPC status code, just return it
-	if _, ok := status.FromError(err); ok {
+	if s, ok := status.FromError(err); ok {
+		if s.Code() == codes.Unknown {
+			log.Infof(ctx, "Unknown %T %+v", err, err)
+		}
 		return err
 	}
 	// handle sqlite3 errors separately so their support can be conditionally compiled.
@@ -61,6 +74,10 @@ func grpcErrorForDBError(ctx context.Context, err error) error {
 		}
 		log.Infof(ctx, "Unhandled %T %+v code=%s name=%s", v, v, v.Code, v.Code.Name())
 	case *net.OpError:
+		if v.Op == "dial" {
+			// The database is overloaded.
+			return status.Error(codes.Unavailable, err.Error())
+		}
 		switch vv := v.Unwrap().(type) {
 		case *os.SyscallError:
 			if vv.Syscall == "connect" {
@@ -72,6 +89,9 @@ func grpcErrorForDBError(ctx context.Context, err error) error {
 			} else if vv.Syscall == "socket" {
 				// The database is overloaded.
 				return status.Error(codes.Unavailable, err.Error())
+			} else if vv.Syscall == "read" {
+				// The connection was reset by peer.
+				return status.Error(codes.Unavailable, err.Error())
 			}
 			log.Infof(ctx, "Unhandled %T %+v %s", vv, vv, vv.Syscall)
 		case *net.DNSError:
@@ -81,12 +101,18 @@ func grpcErrorForDBError(ctx context.Context, err error) error {
 			log.Infof(ctx, "Unhandled %T %+v", vv, vv)
 		}
 	default:
+		if err.Error() == "EOF" {
+			return status.Error(codes.Unavailable, err.Error())
+		}
+		if err.Error() == "driver: bad connection" {
+			return status.Error(codes.Unavailable, err.Error())
+		}
 		if err.Error() == "sql: statement is closed" {
 			return status.Error(codes.Unavailable, err.Error())
 		}
-		log.Infof(ctx, "Unhandled %T %+v", err, err)
+		log.Infof(ctx, "Unhandled %T %+v (%s)", err, err, label)
 	}
 
 	// All unrecognized codes fall through to become "Internal" errors.
-	return status.Error(codes.Internal, err.Error())
+	return status.Error(codes.Internal, err.Error()+" ("+label+")")
 }

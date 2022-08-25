@@ -149,14 +149,8 @@ func (s *RegistryServer) UpdateProject(ctx context.Context, req *rpc.UpdateProje
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	if req.GetAllowMissing() {
-		// Speculatively create the project. If it already exists, fall through to the update below.
-		project, err := s.createProject(ctx, name, req.GetProject())
-		if err == nil {
-			return project, nil
-		} else if status.Code(err) != codes.AlreadyExists {
-			return nil, err
-		}
+	if err := name.Validate(); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	db, err := s.getStorageClient(ctx)
@@ -164,13 +158,22 @@ func (s *RegistryServer) UpdateProject(ctx context.Context, req *rpc.UpdateProje
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 
-	// TODO: the Get/Update/Save calls below should be a transaction.
-	project, err := db.GetProject(ctx, name)
+	var project *models.Project
+	err = db.Transaction(ctx, func(ctx context.Context, db *storage.Client) error {
+		var err error
+		project, err = db.GetProject(ctx, name)
+		if err == nil {
+			project.Update(req.GetProject(), models.ExpandMask(req.GetProject(), req.GetUpdateMask()))
+			return db.SaveProject(ctx, project)
+		}
+		if status.Code(err) == codes.NotFound && req.GetAllowMissing() {
+			project = models.NewProject(name, req.Project)
+			return db.CreateProject(ctx, project)
+		}
+		return err
+
+	})
 	if err != nil {
-		return nil, err
-	}
-	project.Update(req.GetProject(), models.ExpandMask(req.GetProject(), req.GetUpdateMask()))
-	if err := db.SaveProject(ctx, project); err != nil {
 		return nil, err
 	}
 

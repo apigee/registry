@@ -61,7 +61,7 @@ func NewClient(ctx context.Context, driver, dsn string) (*Client, error) {
 		if err != nil {
 			c := &Client{db: db}
 			c.close()
-			return nil, err
+			return nil, grpcErrorForDBError(ctx, err, "client.go-1")
 		}
 		return &Client{db: db}, nil
 	case "postgres", "cloudsqlpostgres":
@@ -74,7 +74,7 @@ func NewClient(ctx context.Context, driver, dsn string) (*Client, error) {
 		if err != nil {
 			c := &Client{db: db}
 			c.close()
-			return nil, err
+			return nil, grpcErrorForDBError(ctx, err, "client.go-2")
 		}
 		return &Client{db: db}, nil
 	default:
@@ -95,7 +95,7 @@ func (c *Client) close() {
 func (c *Client) ensureTable(ctx context.Context, v interface{}) error {
 	if !c.db.Migrator().HasTable(v) {
 		if err := c.db.Migrator().CreateTable(v); err != nil {
-			return grpcErrorForDBError(ctx, err)
+			return grpcErrorForDBError(ctx, err, "client.go-3")
 		}
 	}
 	return nil
@@ -112,7 +112,7 @@ func (c *Client) EnsureTables(ctx context.Context) error {
 }
 
 func (c *Client) Migrate(ctx context.Context) error {
-	return grpcErrorForDBError(ctx, c.db.WithContext(ctx).AutoMigrate(entities...))
+	return grpcErrorForDBError(ctx, c.db.WithContext(ctx).AutoMigrate(entities...), "client.go-4")
 }
 
 func (c *Client) DatabaseName(ctx context.Context) string {
@@ -124,11 +124,11 @@ func (c *Client) TableNames(ctx context.Context) ([]string, error) {
 	switch c.db.WithContext(ctx).Name() {
 	case "postgres":
 		if err := c.db.WithContext(ctx).Table("information_schema.tables").Where("table_schema = ?", "public").Order("table_name").Pluck("table_name", &tableNames).Error; err != nil {
-			return nil, grpcErrorForDBError(ctx, err)
+			return nil, grpcErrorForDBError(ctx, err, "client.go-5")
 		}
 	case "sqlite":
 		if err := c.db.WithContext(ctx).Table("sqlite_schema").Where("type = 'table' AND name NOT LIKE 'sqlite_%'").Order("name").Pluck("name", &tableNames).Error; err != nil {
-			return nil, grpcErrorForDBError(ctx, err)
+			return nil, grpcErrorForDBError(ctx, err, "client.go-6")
 		}
 	default:
 		return nil, status.Errorf(codes.Internal, "unsupported database %s", c.db.Name())
@@ -139,5 +139,11 @@ func (c *Client) TableNames(ctx context.Context) ([]string, error) {
 func (c *Client) RowCount(ctx context.Context, tableName string) (int64, error) {
 	var count int64
 	err := c.db.WithContext(ctx).Table(tableName).Count(&count).Error
-	return count, grpcErrorForDBError(ctx, err)
+	return count, grpcErrorForDBError(ctx, err, "client.go-7")
+}
+
+func (c *Client) Transaction(ctx context.Context, fn func(context.Context, *Client) error) error {
+	return c.db.Transaction(func(tx *gorm.DB) error {
+		return fn(ctx, &Client{db: tx})
+	})
 }
