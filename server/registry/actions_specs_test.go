@@ -294,16 +294,6 @@ func TestCreateApiSpecDuplicates(t *testing.T) {
 			},
 			want: codes.AlreadyExists,
 		},
-		{
-			desc: "case insensitive",
-			seed: &rpc.ApiSpec{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
-			req: &rpc.CreateApiSpecRequest{
-				Parent:    "projects/my-project/locations/global/apis/my-api/versions/v1",
-				ApiSpecId: "My-Spec",
-				ApiSpec:   &rpc.ApiSpec{},
-			},
-			want: codes.AlreadyExists,
-		},
 	}
 
 	for _, test := range tests {
