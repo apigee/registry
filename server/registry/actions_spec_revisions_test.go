@@ -235,11 +235,17 @@ func TestDeleteApiSpecRevision(t *testing.T) {
 		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
 	}
 
-	t.Run("only remaining revision", func(t *testing.T) {
-		t.Skip("not yet supported")
+	getReq := &rpc.GetApiSpecRequest{
+		Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
+	}
+	firstRevision, err := server.GetApiSpec(ctx, getReq)
+	if err != nil {
+		t.Fatalf("Setup: GetApiSpecRequest(%+v) returned error: %s", getReq, err)
+	}
 
+	t.Run("only remaining revision", func(t *testing.T) {
 		req := &rpc.DeleteApiSpecRevisionRequest{
-			Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
+			Name: fmt.Sprintf("projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec@%s", firstRevision.GetRevisionId()),
 		}
 
 		if _, err := server.DeleteApiSpecRevision(ctx, req); status.Code(err) != codes.FailedPrecondition {
