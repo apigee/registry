@@ -18,7 +18,7 @@ import (
 	"context"
 
 	"github.com/apigee/registry/server/registry/internal/storage/models"
-	"gorm.io/gorm/clause"
+	"gorm.io/gorm"
 )
 
 func (c *Client) SaveProject(ctx context.Context, v *models.Project) error {
@@ -74,9 +74,20 @@ func (c *Client) SaveArtifactContents(ctx context.Context, artifact *models.Arti
 }
 
 func (c *Client) save(ctx context.Context, v interface{}) error {
-	// update if exists or create as needed
-	err := c.db.WithContext(ctx).Clauses(clause.OnConflict{
-		UpdateAll: true,
-	}).Create(v).Error
+	err := c.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		// Update all fields from model: https://gorm.io/docs/update.html#Update-Selected-Fields
+		got := tx.Model(v).Select("*").Updates(v)
+		if err := got.Error; err != nil {
+			return got.Error
+		}
+
+		if got.RowsAffected == 0 {
+			if err := tx.Create(v).Error; err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
 	return grpcErrorForDBError(ctx, err)
 }
