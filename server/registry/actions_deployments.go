@@ -53,7 +53,7 @@ func (s *RegistryServer) createDeployment(ctx context.Context, name names.Deploy
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	// SDG: can we get the create to do this check?
+	// Necessary because revisions
 	if _, err := db.GetDeployment(ctx, name); err == nil {
 		return nil, status.Errorf(codes.AlreadyExists, "API deployment %q already exists", name)
 	} else if !isNotFound(err) {
