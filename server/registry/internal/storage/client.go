@@ -143,7 +143,8 @@ func (c *Client) RowCount(ctx context.Context, tableName string) (int64, error) 
 }
 
 func (c *Client) Transaction(ctx context.Context, fn func(context.Context, *Client) error) error {
-	return c.db.Transaction(func(tx *gorm.DB) error {
+	err := c.db.Transaction(func(tx *gorm.DB) error {
 		return fn(ctx, &Client{db: tx})
 	})
+	return grpcErrorForDBError(ctx, err, "transaction")
 }

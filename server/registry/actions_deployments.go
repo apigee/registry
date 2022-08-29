@@ -16,10 +16,7 @@ package registry
 
 import (
 	"context"
-	"sync"
-	"time"
 
-	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/internal/storage"
 	"github.com/apigee/registry/server/registry/internal/storage/models"
@@ -53,27 +50,35 @@ func (s *RegistryServer) createDeployment(ctx context.Context, name names.Deploy
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	// Necessary because revisions
-	if _, err := db.GetDeployment(ctx, name); err == nil {
-		return nil, status.Errorf(codes.AlreadyExists, "API deployment %q already exists", name)
-	} else if !isNotFound(err) {
-		return nil, err
-	}
+	var deployment *models.Deployment
+	err = db.Transaction(ctx, func(ctx context.Context, db *storage.Client) error {
+		var err error
 
-	// Creation should only succeed when the parent exists.
-	if _, err := db.GetApi(ctx, name.Api()); err != nil {
-		return nil, err
-	}
+		// The deployment should not already exist.
+		if _, err := db.GetDeployment(ctx, name); err == nil {
+			return status.Errorf(codes.AlreadyExists, "API deployment %q already exists", name)
+		} else if !isNotFound(err) {
+			return err
+		}
 
-	deployment, err := models.NewDeployment(name, body)
+		// Creation should only succeed when the parent exists.
+		if _, err := db.GetApi(ctx, name.Api()); err != nil {
+			return err
+		}
+
+		deployment, err = models.NewDeployment(name, body)
+		if err != nil {
+			return status.Error(codes.InvalidArgument, err.Error())
+		}
+
+		if err := db.CreateDeploymentRevision(ctx, deployment); err != nil {
+			return err
+		}
+		return nil
+	})
 	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
-	}
-
-	if err := db.CreateDeploymentRevision(ctx, deployment); err != nil {
 		return nil, err
 	}
-
 	message, err := deployment.BasicMessage(name.String())
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -202,54 +207,65 @@ func (s *RegistryServer) ListApiDeployments(ctx context.Context, req *rpc.ListAp
 	return response, nil
 }
 
-var updateDeploymentMutex sync.Mutex
-
 // UpdateApiDeployment handles the corresponding API request.
 func (s *RegistryServer) UpdateApiDeployment(ctx context.Context, req *rpc.UpdateApiDeploymentRequest) (*rpc.ApiDeployment, error) {
-	db, err := s.getStorageClient(ctx)
-	if err != nil {
-		return nil, status.Error(codes.Unavailable, err.Error())
-	}
-
-	if req.GetApiDeployment() == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid api_deployment %+v: body must be provided", req.GetApiDeployment())
-	} else if err := models.ValidateMask(req.GetApiDeployment(), req.GetUpdateMask()); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid update_mask %v: %s", req.GetUpdateMask(), err)
-	}
 
 	name, err := names.ParseDeployment(req.ApiDeployment.GetName())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	if req.GetAllowMissing() {
-		before := time.Now()
-		// Prevent a race condition that can occur when two updates are made
-		// to the same non-existent resource. The db.Get...() call returns
-		// NotFound for both updates, and after one creates the resource,
-		// the other creation fails. The lock() prevents this by serializing
-		// the get and create operations. Future updates could improve this
-		// with improvements closer to the database level.
-		updateDeploymentMutex.Lock()
-		defer updateDeploymentMutex.Unlock()
-		log.Debugf(ctx, "Acquired lock after blocking for %v", time.Since(before))
+	db, err := s.getStorageClient(ctx)
+	if err != nil {
+		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 
-	deployment, err := db.GetDeployment(ctx, name)
-	if req.GetAllowMissing() && isNotFound(err) {
-		return s.createDeployment(ctx, name, req.GetApiDeployment())
-	} else if err != nil {
-		return nil, err
-	}
+	var deployment *models.Deployment
+	err = db.Transaction(ctx, func(ctx context.Context, db *storage.Client) error {
+		var err error
 
-	// Apply the update to the deployment - possibly changing the revision ID.
-	maskExpansion := models.ExpandMask(req.GetApiDeployment(), req.GetUpdateMask())
-	if err := deployment.Update(req.GetApiDeployment(), maskExpansion); err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
+		if req.GetApiDeployment() == nil {
+			return status.Errorf(codes.InvalidArgument, "invalid api_deployment %+v: body must be provided", req.GetApiDeployment())
+		} else if err := models.ValidateMask(req.GetApiDeployment(), req.GetUpdateMask()); err != nil {
+			return status.Errorf(codes.InvalidArgument, "invalid update_mask %v: %s", req.GetUpdateMask(), err)
+		}
 
-	// Save the updated/current deployment. This creates a new revision or updates the previous one.
-	if err := db.SaveDeploymentRevision(ctx, deployment); err != nil {
+		deployment, err = db.GetDeployment(ctx, name)
+		if req.GetAllowMissing() && isNotFound(err) {
+			body := req.GetApiDeployment()
+
+			// Creation should only succeed when the parent exists.
+			if _, err := db.GetApi(ctx, name.Api()); err != nil {
+				return err
+			}
+
+			deployment, err = models.NewDeployment(name, body)
+			if err != nil {
+				return status.Error(codes.InvalidArgument, err.Error())
+			}
+
+			if err := db.CreateDeploymentRevision(ctx, deployment); err != nil {
+				return err
+			}
+
+			return nil
+		} else if err != nil {
+			return err
+		}
+
+		// Apply the update to the deployment - possibly changing the revision ID.
+		maskExpansion := models.ExpandMask(req.GetApiDeployment(), req.GetUpdateMask())
+		if err := deployment.Update(req.GetApiDeployment(), maskExpansion); err != nil {
+			return status.Error(codes.Internal, err.Error())
+		}
+
+		// Save the updated/current deployment. This creates a new revision or updates the previous one.
+		if err := db.SaveDeploymentRevision(ctx, deployment); err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
 		return nil, err
 	}
 
