@@ -16,7 +16,7 @@
 #
 
 #
-# Configure an environment to run Registry clients with a local server.
+# Create a configuration to run Registry clients against a local server.
 #
 
 ### SERVER CONFIGURATION
@@ -37,10 +37,17 @@ fi
 ### CLIENT CONFIGURATION
 
 # Be sure that the port setting below is correct. 8080 is the default.
-export APG_REGISTRY_ADDRESS=localhost:8080
+APG_REGISTRY_ADDRESS="localhost:8080"
 
 # Local calls don't use TLS.
-export APG_REGISTRY_INSECURE=1
+APG_REGISTRY_INSECURE="true"
 
-# Local calls don't need authentication.
-unset APG_REGISTRY_TOKEN
+APG_REGISTRY_PROJECT="${REGISTRY_PROJECT_IDENTIFIER}"
+APG_REGISTRY_LOCATION="global"
+CLIENT_EMAIL=$(gcloud config list account --format "value(core.account)")
+
+registry config configurations create local \
+  --registry.insecure="${APG_REGISTRY_INSECURE}" \
+  --registry.address="${APG_REGISTRY_ADDRESS}" \
+  --registry.project="${REGISTRY_PROJECT_IDENTIFIER}" \
+  --registry.location="${APG_REGISTRY_LOCATION}"
