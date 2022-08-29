@@ -209,7 +209,6 @@ func (s *RegistryServer) ListApiDeployments(ctx context.Context, req *rpc.ListAp
 
 // UpdateApiDeployment handles the corresponding API request.
 func (s *RegistryServer) UpdateApiDeployment(ctx context.Context, req *rpc.UpdateApiDeploymentRequest) (*rpc.ApiDeployment, error) {
-
 	name, err := names.ParseDeployment(req.ApiDeployment.GetName())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())

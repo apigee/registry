@@ -283,7 +283,6 @@ func (s *RegistryServer) UpdateApiSpec(ctx context.Context, req *rpc.UpdateApiSp
 
 		spec, err = db.GetSpec(ctx, name)
 		if req.GetAllowMissing() && isNotFound(err) {
-
 			if err := name.Validate(); err != nil {
 				return status.Error(codes.InvalidArgument, err.Error())
 			}
