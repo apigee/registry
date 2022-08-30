@@ -13,19 +13,19 @@ Each script should only be run once to create and activate a configuration. Once
 created, the configurations can be selected be using the registry commands. For
 example:
 
-$ registry config configurations activate local
+    $ registry config configurations activate local
 
 Custom configurations can also be created:
 
-$ registry config configurations create custom --registry.address='myaddress' [etc...]
+    $ registry config configurations create custom --registry.address='myaddress' [etc...]
 
 And any active configuration can be viewed and manipulated. Examples:
 
-$ registry config list
-$ registry config set registry.address="myaddress"
-$ registry config get registry.address
+    $ registry config list
+    $ registry config set registry.address="myaddress"
+    $ registry config get registry.address
 
 See for more details on creating and manipulating configurations:
 
-registry config --help
-registry config configurations --help
+    $ registry config --help
+    $ registry config configurations --help
