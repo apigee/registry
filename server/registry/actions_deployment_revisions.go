@@ -90,12 +90,12 @@ func (s *RegistryServer) DeleteApiDeploymentRevision(ctx context.Context, req *r
 			return status.Error(codes.InvalidArgument, err.Error())
 		}
 		if err := db.DeleteDeploymentRevision(ctx, name); err != nil {
-			return status.Error(codes.Internal, err.Error())
+			return err
 		}
 		// return the latest revision of the current deployment
 		response, err = s.getApiDeployment(ctx, name.Deployment())
 		if err != nil {
-			// The get will fail if we are deleting the only revision of this deployment.
+			// The get will fail if we are deleting the only revision.
 			// Returning this error will cancel the transaction.
 			return err
 		}
@@ -148,7 +148,7 @@ func (s *RegistryServer) TagApiDeploymentRevision(ctx context.Context, req *rpc.
 		revisionName = name.String()
 		return nil
 	}); err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, err
 	}
 	s.notify(ctx, rpc.Notification_UPDATED, revisionName)
 	return response, nil
@@ -181,7 +181,7 @@ func (s *RegistryServer) RollbackApiDeployment(ctx context.Context, req *rpc.Rol
 		}
 		response, err = rollback.BasicMessage(rollback.RevisionName())
 		if err != nil {
-			return status.Error(codes.Internal, err.Error())
+			return err
 		}
 		revisionName = rollback.RevisionName()
 		return nil
