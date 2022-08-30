@@ -28,88 +28,75 @@ import (
 
 // CreateApiDeployment handles the corresponding API request.
 func (s *RegistryServer) CreateApiDeployment(ctx context.Context, req *rpc.CreateApiDeploymentRequest) (*rpc.ApiDeployment, error) {
+	// Parent name must be valid.
 	parent, err := names.ParseApi(req.GetParent())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-
+	// Deployment body must be nonempty.
 	if req.GetApiDeployment() == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid api_deployment %+v: body must be provided", req.GetApiDeployment())
 	}
-
-	return s.createDeployment(ctx, parent.Deployment(req.GetApiDeploymentId()), req.GetApiDeployment())
-}
-
-func (s *RegistryServer) createDeployment(ctx context.Context, name names.Deployment, body *rpc.ApiDeployment) (*rpc.ApiDeployment, error) {
-	db, err := s.getStorageClient(ctx)
-	if err != nil {
-		return nil, status.Error(codes.Unavailable, err.Error())
-	}
-
+	// Deployment name must be valid.
+	name := parent.Deployment(req.GetApiDeploymentId())
 	if err := name.Validate(); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-
-	var deployment *models.Deployment
-	err = db.Transaction(ctx, func(ctx context.Context, db *storage.Client) error {
+	var response *rpc.ApiDeployment
+	if err := s.runWithTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
 		var err error
-
-		// The deployment should not already exist.
-		if _, err := db.GetDeployment(ctx, name); err == nil {
-			return status.Errorf(codes.AlreadyExists, "API deployment %q already exists", name)
-		} else if !isNotFound(err) {
-			return err
-		}
-
-		// Creation should only succeed when the parent exists.
-		if _, err := db.GetApi(ctx, name.Api()); err != nil {
-			return err
-		}
-
-		deployment, err = models.NewDeployment(name, body)
-		if err != nil {
-			return status.Error(codes.InvalidArgument, err.Error())
-		}
-
-		if err := db.CreateDeploymentRevision(ctx, deployment); err != nil {
-			return err
-		}
-		return nil
-	})
-	if err != nil {
+		response, err = s.createDeployment(ctx, db, name, req.GetApiDeployment())
+		return err
+	}); err != nil {
 		return nil, err
 	}
-	message, err := deployment.BasicMessage(name.String())
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+	s.notify(ctx, rpc.Notification_CREATED, response.GetName())
+	return response, nil
+}
+
+func (s *RegistryServer) createDeployment(ctx context.Context, db *storage.Client, name names.Deployment, body *rpc.ApiDeployment) (*rpc.ApiDeployment, error) {
+	// The deployment must not already exist.
+	if _, err := db.GetDeployment(ctx, name); err == nil {
+		return nil, status.Errorf(codes.AlreadyExists, "API deployment %q already exists", name)
+	} else if !isNotFound(err) {
+		return nil, err
 	}
 
-	s.notify(ctx, rpc.Notification_CREATED, deployment.RevisionName())
-	return message, nil
+	// Creation should only succeed when the parent exists.
+	if _, err := db.GetApi(ctx, name.Api()); err != nil {
+		return nil, err
+	}
+
+	deployment, err := models.NewDeployment(name, body)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	if err := db.CreateDeploymentRevision(ctx, deployment); err != nil {
+		return nil, err
+	}
+
+	return deployment.BasicMessage(name.String())
 }
 
 // DeleteApiDeployment handles the corresponding API request.
 func (s *RegistryServer) DeleteApiDeployment(ctx context.Context, req *rpc.DeleteApiDeploymentRequest) (*emptypb.Empty, error) {
-	db, err := s.getStorageClient(ctx)
-	if err != nil {
-		return nil, status.Error(codes.Unavailable, err.Error())
-	}
-
+	// Deployment name must be valid.
 	name, err := names.ParseDeployment(req.GetName())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	// Deletion should only succeed on API deployments that currently exist.
-	if _, err := db.GetDeployment(ctx, name); err != nil {
+	if err := s.runWithTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
+		// Deletion should only succeed on API deployments that currently exist.
+		if _, err := db.GetDeployment(ctx, name); err != nil {
+			return err
+		}
+		return db.DeleteDeployment(ctx, name, req.GetForce())
+	}); err != nil {
 		return nil, err
 	}
-
-	if err := db.DeleteDeployment(ctx, name, req.GetForce()); err != nil {
-		return nil, err
-	}
-
-	s.notify(ctx, rpc.Notification_DELETED, name.String())
+	s.notify(ctx, rpc.Notification_DELETED, req.GetName())
 	return &emptypb.Empty{}, nil
 }
 
@@ -209,70 +196,43 @@ func (s *RegistryServer) ListApiDeployments(ctx context.Context, req *rpc.ListAp
 
 // UpdateApiDeployment handles the corresponding API request.
 func (s *RegistryServer) UpdateApiDeployment(ctx context.Context, req *rpc.UpdateApiDeploymentRequest) (*rpc.ApiDeployment, error) {
+	// Deployment name must be valid.
 	name, err := names.ParseDeployment(req.ApiDeployment.GetName())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-
-	db, err := s.getStorageClient(ctx)
-	if err != nil {
-		return nil, status.Error(codes.Unavailable, err.Error())
+	// Deployment body must be valid.
+	if req.GetApiDeployment() == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid api_deployment %+v: body must be provided", req.GetApiDeployment())
 	}
-
-	var deployment *models.Deployment
-	err = db.Transaction(ctx, func(ctx context.Context, db *storage.Client) error {
-		var err error
-
-		if req.GetApiDeployment() == nil {
-			return status.Errorf(codes.InvalidArgument, "invalid api_deployment %+v: body must be provided", req.GetApiDeployment())
-		} else if err := models.ValidateMask(req.GetApiDeployment(), req.GetUpdateMask()); err != nil {
-			return status.Errorf(codes.InvalidArgument, "invalid update_mask %v: %s", req.GetUpdateMask(), err)
-		}
-
-		deployment, err = db.GetDeployment(ctx, name)
-		if req.GetAllowMissing() && isNotFound(err) {
-			body := req.GetApiDeployment()
-
-			// Creation should only succeed when the parent exists.
-			if _, err := db.GetApi(ctx, name.Api()); err != nil {
+	// Update mask must be valid.
+	if err := models.ValidateMask(req.GetApiDeployment(), req.GetUpdateMask()); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid update_mask %v: %s", req.GetUpdateMask(), err)
+	}
+	var response *rpc.ApiDeployment
+	if err = s.runWithTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
+		deployment, err := db.GetDeployment(ctx, name)
+		if err == nil {
+			// Apply the update to the deployment - possibly changing the revision ID.
+			maskExpansion := models.ExpandMask(req.GetApiDeployment(), req.GetUpdateMask())
+			if err := deployment.Update(req.GetApiDeployment(), maskExpansion); err != nil {
+				return status.Error(codes.Internal, err.Error())
+			}
+			// Save the updated/current deployment. This creates a new revision or updates the previous one.
+			if err := db.SaveDeploymentRevision(ctx, deployment); err != nil {
 				return err
 			}
-
-			deployment, err = models.NewDeployment(name, body)
-			if err != nil {
-				return status.Error(codes.InvalidArgument, err.Error())
-			}
-
-			if err := db.CreateDeploymentRevision(ctx, deployment); err != nil {
-				return err
-			}
-
-			return nil
-		} else if err != nil {
+			response, err = deployment.BasicMessage(name.String())
+			return err
+		} else if status.Code(err) == codes.NotFound && req.GetAllowMissing() {
+			response, err = s.createDeployment(ctx, db, name, req.GetApiDeployment())
+			return err
+		} else {
 			return err
 		}
-
-		// Apply the update to the deployment - possibly changing the revision ID.
-		maskExpansion := models.ExpandMask(req.GetApiDeployment(), req.GetUpdateMask())
-		if err := deployment.Update(req.GetApiDeployment(), maskExpansion); err != nil {
-			return status.Error(codes.Internal, err.Error())
-		}
-
-		// Save the updated/current deployment. This creates a new revision or updates the previous one.
-		if err := db.SaveDeploymentRevision(ctx, deployment); err != nil {
-			return err
-		}
-		return nil
-	})
-	if err != nil {
+	}); err != nil {
 		return nil, err
 	}
-
-	message, err := deployment.BasicMessage(name.String())
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	s.notify(ctx, rpc.Notification_UPDATED, deployment.RevisionName())
-	return message, nil
+	s.notify(ctx, rpc.Notification_UPDATED, response.GetName())
+	return response, nil
 }
