@@ -50,7 +50,7 @@ func (s *RegistryServer) CreateApi(ctx context.Context, req *rpc.CreateApiReques
 	}); err != nil {
 		return nil, err
 	}
-	s.notify(ctx, rpc.Notification_CREATED, response.Name)
+	s.notify(ctx, rpc.Notification_CREATED, response.GetName())
 	return response, nil
 }
 
@@ -198,6 +198,6 @@ func (s *RegistryServer) UpdateApi(ctx context.Context, req *rpc.UpdateApiReques
 	}); err != nil {
 		return nil, err
 	}
-	s.notify(ctx, rpc.Notification_UPDATED, response.Name)
+	s.notify(ctx, rpc.Notification_UPDATED, response.GetName())
 	return response, nil
 }

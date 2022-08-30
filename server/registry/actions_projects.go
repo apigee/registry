@@ -45,7 +45,7 @@ func (s *RegistryServer) CreateProject(ctx context.Context, req *rpc.CreateProje
 	}); err != nil {
 		return nil, err
 	}
-	s.notify(ctx, rpc.Notification_CREATED, response.Name)
+	s.notify(ctx, rpc.Notification_CREATED, response.GetName())
 	return response, nil
 }
 
@@ -75,7 +75,7 @@ func (s *RegistryServer) DeleteProject(ctx context.Context, req *rpc.DeleteProje
 	}); err != nil {
 		return nil, err
 	}
-	s.notify(ctx, rpc.Notification_DELETED, name.String())
+	s.notify(ctx, rpc.Notification_DELETED, req.GetName())
 	return &emptypb.Empty{}, nil
 }
 
@@ -170,6 +170,6 @@ func (s *RegistryServer) UpdateProject(ctx context.Context, req *rpc.UpdateProje
 	}); err != nil {
 		return nil, err
 	}
-	s.notify(ctx, rpc.Notification_UPDATED, name.String())
+	s.notify(ctx, rpc.Notification_UPDATED, response.GetName())
 	return response, nil
 }

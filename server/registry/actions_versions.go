@@ -28,28 +28,33 @@ import (
 
 // CreateApiVersion handles the corresponding API request.
 func (s *RegistryServer) CreateApiVersion(ctx context.Context, req *rpc.CreateApiVersionRequest) (*rpc.ApiVersion, error) {
+	// Parent name must be valid.
 	parent, err := names.ParseApi(req.GetParent())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-
+	// Version body must be nonempty.
 	if req.GetApiVersion() == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid api_version %+v: body must be provided", req.GetApiVersion())
 	}
-
-	return s.createApiVersion(ctx, parent.Version(req.GetApiVersionId()), req.GetApiVersion())
-}
-
-func (s *RegistryServer) createApiVersion(ctx context.Context, name names.Version, body *rpc.ApiVersion) (*rpc.ApiVersion, error) {
-	db, err := s.getStorageClient(ctx)
-	if err != nil {
-		return nil, status.Error(codes.Unavailable, err.Error())
-	}
-
+	// Version name must be valid.
+	name := parent.Version(req.GetApiVersionId())
 	if err := name.Validate(); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
+	var response *rpc.ApiVersion
+	if err := s.runWithTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
+		var err error
+		response, err = s.createApiVersion(ctx, db, name, req.GetApiVersion())
+		return err
+	}); err != nil {
+		return nil, err
+	}
+	s.notify(ctx, rpc.Notification_CREATED, response.GetName())
+	return response, nil
+}
 
+func (s *RegistryServer) createApiVersion(ctx context.Context, db *storage.Client, name names.Version, body *rpc.ApiVersion) (*rpc.ApiVersion, error) {
 	// Creation should only succeed when the parent exists.
 	if _, err := db.GetApi(ctx, name.Api()); err != nil {
 		return nil, err
@@ -64,37 +69,26 @@ func (s *RegistryServer) createApiVersion(ctx context.Context, name names.Versio
 		return nil, err
 	}
 
-	message, err := version.Message()
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	s.notify(ctx, rpc.Notification_CREATED, name.String())
-	return message, nil
+	return version.Message()
 }
 
 // DeleteApiVersion handles the corresponding API request.
 func (s *RegistryServer) DeleteApiVersion(ctx context.Context, req *rpc.DeleteApiVersionRequest) (*emptypb.Empty, error) {
-	db, err := s.getStorageClient(ctx)
-	if err != nil {
-		return nil, status.Error(codes.Unavailable, err.Error())
-	}
-
+	// Version name must be valid.
 	name, err := names.ParseVersion(req.GetName())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-
-	// Deletion should only succeed on API versions that currently exist.
-	if _, err := db.GetVersion(ctx, name); err != nil {
+	if err := s.runWithTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
+		// Deletion should only succeed on API versions that currently exist.
+		if _, err := db.GetVersion(ctx, name); err != nil {
+			return err
+		}
+		return db.DeleteVersion(ctx, name, req.GetForce())
+	}); err != nil {
 		return nil, err
 	}
-
-	if err := db.DeleteVersion(ctx, name, req.GetForce()); err != nil {
-		return nil, err
-	}
-
-	s.notify(ctx, rpc.Notification_DELETED, name.String())
+	s.notify(ctx, rpc.Notification_DELETED, req.GetName())
 	return &emptypb.Empty{}, nil
 }
 
@@ -170,54 +164,40 @@ func (s *RegistryServer) ListApiVersions(ctx context.Context, req *rpc.ListApiVe
 
 // UpdateApiVersion handles the corresponding API request.
 func (s *RegistryServer) UpdateApiVersion(ctx context.Context, req *rpc.UpdateApiVersionRequest) (*rpc.ApiVersion, error) {
-	if req.GetApiVersion() == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid api_version %+v: body must be provided", req.GetApiVersion())
-	} else if err := models.ValidateMask(req.GetApiVersion(), req.GetUpdateMask()); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid update_mask %v: %s", req.GetUpdateMask(), err)
-	}
-
+	// Version name must be valid.
 	name, err := names.ParseVersion(req.ApiVersion.GetName())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-
-	if err := name.Validate(); err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+	// Version body must be valid
+	if req.GetApiVersion() == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid api_version %+v: body must be provided", req.GetApiVersion())
 	}
-
-	db, err := s.getStorageClient(ctx)
-	if err != nil {
-		return nil, status.Error(codes.Unavailable, err.Error())
+	// Update mask must be valid.
+	if err := models.ValidateMask(req.GetApiVersion(), req.GetUpdateMask()); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid update_mask %v: %s", req.GetUpdateMask(), err)
 	}
-
-	var version *models.Version
-	err = db.Transaction(ctx, func(ctx context.Context, db *storage.Client) error {
-		var err error
-		version, err = db.GetVersion(ctx, name)
+	var response *rpc.ApiVersion
+	if err = s.runWithTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
+		version, err := db.GetVersion(ctx, name)
 		if err == nil {
 			if err := version.Update(req.GetApiVersion(), models.ExpandMask(req.GetApiVersion(), req.GetUpdateMask())); err != nil {
 				return status.Error(codes.Internal, err.Error())
 			}
-			return db.SaveVersion(ctx, version)
-		}
-		if status.Code(err) == codes.NotFound && req.GetAllowMissing() {
-			version, err = models.NewVersion(name, req.ApiVersion)
-			if err != nil {
-				return status.Error(codes.Internal, err.Error())
+			if err := db.SaveVersion(ctx, version); err != nil {
+				return err
 			}
-			return db.CreateVersion(ctx, version)
+			response, err = version.Message()
+			return err
+		} else if status.Code(err) == codes.NotFound && req.GetAllowMissing() {
+			response, err = s.createApiVersion(ctx, db, name, req.GetApiVersion())
+			return err
+		} else {
+			return err
 		}
-		return err
-	})
-	if err != nil {
+	}); err != nil {
 		return nil, err
 	}
-
-	message, err := version.Message()
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	s.notify(ctx, rpc.Notification_UPDATED, name.String())
-	return message, nil
+	s.notify(ctx, rpc.Notification_UPDATED, response.GetName())
+	return response, nil
 }
