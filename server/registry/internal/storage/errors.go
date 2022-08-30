@@ -42,10 +42,7 @@ func alreadyExists(err error) bool {
 // grpcErrorForDBError converts recognized database error codes to grpc error codes.
 func grpcErrorForDBError(ctx context.Context, err error) error {
 	// if this error already has a gRPC status code, just return it
-	if s, ok := status.FromError(err); ok {
-		if s.Code() == codes.Unknown {
-			log.Infof(ctx, "Unknown %T %+v", err, err)
-		}
+	if _, ok := status.FromError(err); ok {
 		return err
 	}
 	// handle sqlite3 errors separately so their support can be conditionally compiled.
