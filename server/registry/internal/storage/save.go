@@ -78,5 +78,5 @@ func (c *Client) save(ctx context.Context, v interface{}) error {
 	err := c.db.WithContext(ctx).Clauses(clause.OnConflict{
 		UpdateAll: true,
 	}).Create(v).Error
-	return grpcErrorForDBError(ctx, err, "save.go-1")
+	return grpcErrorForDBError(ctx, err)
 }

@@ -40,17 +40,7 @@ func alreadyExists(err error) bool {
 }
 
 // grpcErrorForDBError converts recognized database error codes to grpc error codes.
-func grpcErrorForDBError(ctx context.Context, err error, label string) error {
-	if err == nil {
-		return nil
-	}
-	log.Debugf(ctx, "PAIR HANDLING (%s) %T %v", label, err, err)
-	err = internalGrpcErrorForDBError(ctx, err, label)
-	log.Debugf(ctx, "PAIR RETURNING (%s) %T %v", label, err, err)
-	return err
-}
-
-func internalGrpcErrorForDBError(ctx context.Context, err error, label string) error {
+func grpcErrorForDBError(ctx context.Context, err error) error {
 	// if this error already has a gRPC status code, just return it
 	if s, ok := status.FromError(err); ok {
 		if s.Code() == codes.Unknown {
@@ -110,9 +100,9 @@ func internalGrpcErrorForDBError(ctx context.Context, err error, label string) e
 		if err.Error() == "sql: statement is closed" {
 			return status.Error(codes.Unavailable, err.Error())
 		}
-		log.Infof(ctx, "Unhandled %T %+v (%s)", err, err, label)
+		log.Infof(ctx, "Unhandled %T %+v", err, err)
 	}
 
 	// All unrecognized codes fall through to become "Internal" errors.
-	return status.Error(codes.Internal, err.Error()+" ("+label+")")
+	return status.Error(codes.Internal, err.Error())
 }

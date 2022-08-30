@@ -201,43 +201,29 @@ func (c *Client) DeleteSpecRevision(ctx context.Context, name names.SpecRevision
 		models.Spec{},
 		models.SpecRevisionTag{},
 	} {
-		err := c.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-			op := tx.
-				Where("project_id = ?", name.ProjectID).
-				Where("api_id = ?", name.ApiID).
-				Where("version_id = ?", name.VersionID).
-				Where("spec_id = ?", name.SpecID).
-				Where("revision_id = ?", name.RevisionID)
-			if err := op.Delete(model).Error; err != nil {
-				return grpcErrorForDBError(ctx, err, "delete.go-5")
-			}
-
-			// if we deleted the last revision, abort
-			op = tx.
-				Where("project_id = ?", name.ProjectID).
-				Where("api_id = ?", name.ApiID).
-				Where("version_id = ?", name.VersionID).
-				Where("spec_id = ?", name.SpecID).
-				Order("revision_create_time desc")
-
-			v := new(models.Spec)
-			if err := op.First(v).Error; err == gorm.ErrRecordNotFound {
-				return status.Errorf(codes.FailedPrecondition, "cannot delete the only revision: %s", name)
-			} else if err != nil {
-				return grpcErrorForDBError(ctx, err, "delete.go-6")
-			}
-
-			return nil
-		})
-
-		switch status.Code(err) {
-		case codes.OK:
-			return nil
-		case codes.FailedPrecondition:
-			return err
-		default:
-			return grpcErrorForDBError(ctx, err, "delete.go-7")
+		op := c.db.WithContext(ctx).
+			Where("project_id = ?", name.ProjectID).
+			Where("api_id = ?", name.ApiID).
+			Where("version_id = ?", name.VersionID).
+			Where("spec_id = ?", name.SpecID).
+			Where("revision_id = ?", name.RevisionID)
+		if err := op.Delete(model).Error; err != nil {
+			return grpcErrorForDBError(ctx, err)
 		}
+	}
+
+	// if we deleted the last revision, return an error to cancel the transaction
+	op := c.db.WithContext(ctx).
+		Where("project_id = ?", name.ProjectID).
+		Where("api_id = ?", name.ApiID).
+		Where("version_id = ?", name.VersionID).
+		Where("spec_id = ?", name.SpecID).
+		Order("revision_create_time desc")
+	v := new(models.Spec)
+	if err := op.First(v).Error; err == gorm.ErrRecordNotFound {
+		return status.Errorf(codes.FailedPrecondition, "cannot delete the only revision: %s", name)
+	} else if err != nil {
+		return grpcErrorForDBError(ctx, err)
 	}
 
 	return nil
@@ -295,7 +281,7 @@ func (c *Client) DeleteDeploymentRevision(ctx context.Context, name names.Deploy
 			Where("deployment_id = ?", name.DeploymentID).
 			Where("revision_id = ?", name.RevisionID)
 		if err := op.Delete(model).Error; err != nil {
-			return grpcErrorForDBError(ctx, err, "delete.go-9")
+			return grpcErrorForDBError(ctx, err)
 		}
 	}
 
@@ -315,7 +301,7 @@ func (c *Client) DeleteArtifact(ctx context.Context, name names.Artifact) error 
 			Where("deployment_id = ?", name.DeploymentID()).
 			Where("artifact_id = ?", name.ArtifactID())
 		if err := op.Delete(model).Error; err != nil {
-			return grpcErrorForDBError(ctx, err, "delete.go-10")
+			return grpcErrorForDBError(ctx, err)
 		}
 	}
 

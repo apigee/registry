@@ -214,7 +214,7 @@ func (c *Client) ListProjects(ctx context.Context, opts PageOptions) (ProjectLis
 		err := op.Offset(token.Offset).Find(&page).Error
 
 		if err != nil {
-			return ProjectList{}, grpcErrorForDBError(ctx, err, "list.go-1")
+			return ProjectList{}, grpcErrorForDBError(ctx, err)
 		} else if len(page) == 0 {
 			break
 		}
@@ -309,7 +309,7 @@ func (c *Client) ListApis(ctx context.Context, parent names.Project, opts PageOp
 		err := op.Offset(token.Offset).Find(&page).Error
 
 		if err != nil {
-			return ApiList{}, grpcErrorForDBError(ctx, err, "list.go-2")
+			return ApiList{}, grpcErrorForDBError(ctx, err)
 		} else if len(page) == 0 {
 			break
 		}
@@ -426,7 +426,7 @@ func (c *Client) ListVersions(ctx context.Context, parent names.Api, opts PageOp
 		err := op.Offset(token.Offset).Find(&page).Error
 
 		if err != nil {
-			return VersionList{}, grpcErrorForDBError(ctx, err, "list.go-3")
+			return VersionList{}, grpcErrorForDBError(ctx, err)
 		} else if len(page) == 0 {
 			break
 		}
@@ -562,7 +562,7 @@ func (c *Client) ListSpecs(ctx context.Context, parent names.Version, opts PageO
 		err := op.Offset(token.Offset).Find(&page).Error
 
 		if err != nil {
-			return SpecList{}, grpcErrorForDBError(ctx, err, "list.go-4")
+			return SpecList{}, grpcErrorForDBError(ctx, err)
 		} else if len(page) == 0 {
 			break
 		}
@@ -673,7 +673,7 @@ func (c *Client) ListSpecRevisions(ctx context.Context, parent names.Spec, opts 
 	err = op.Find(&response.Specs).Error
 
 	if err != nil {
-		return SpecList{}, grpcErrorForDBError(ctx, err, "list.go-5")
+		return SpecList{}, grpcErrorForDBError(ctx, err)
 	}
 
 	// Trim the response and return a page token if too many resources were found.
@@ -764,7 +764,7 @@ func (c *Client) ListDeployments(ctx context.Context, parent names.Api, opts Pag
 		err := op.Offset(token.Offset).Find(&page).Error
 
 		if err != nil {
-			return DeploymentList{}, grpcErrorForDBError(ctx, err, "list.go-6")
+			return DeploymentList{}, grpcErrorForDBError(ctx, err)
 		} else if len(page) == 0 {
 			break
 		}
@@ -867,7 +867,7 @@ func (c *Client) ListDeploymentRevisions(ctx context.Context, parent names.Deplo
 	err = op.Find(&response.Deployments).Error
 
 	if err != nil {
-		return DeploymentList{}, grpcErrorForDBError(ctx, err, "list.go-7")
+		return DeploymentList{}, grpcErrorForDBError(ctx, err)
 	}
 
 	// Trim the response and return a page token if too many resources were found.
@@ -1152,7 +1152,7 @@ func (c *Client) listArtifacts(ctx context.Context, op *gorm.DB, opts PageOption
 		err := op.Offset(token.Offset).Find(&page).Error
 
 		if err != nil {
-			return ArtifactList{}, grpcErrorForDBError(ctx, err, "list.go-8")
+			return ArtifactList{}, grpcErrorForDBError(ctx, err)
 		} else if len(page) == 0 {
 			break
 		}

@@ -27,7 +27,7 @@ func (c *Client) unwrapSpecRevisionTag(ctx context.Context, name names.SpecRevis
 	if err := c.db.WithContext(ctx).Take(v, "key = ?", name.String()).Error; err == gorm.ErrRecordNotFound {
 		return name, nil
 	} else if err != nil {
-		return names.SpecRevision{}, grpcErrorForDBError(ctx, err, "tag.go-1")
+		return names.SpecRevision{}, grpcErrorForDBError(ctx, err)
 	}
 
 	return name.Spec().Revision(v.RevisionID), nil
@@ -38,7 +38,7 @@ func (c *Client) unwrapDeploymentRevisionTag(ctx context.Context, name names.Dep
 	if err := c.db.WithContext(ctx).Take(v, "key = ?", name.String()).Error; err == gorm.ErrRecordNotFound {
 		return name, nil
 	} else if err != nil {
-		return names.DeploymentRevision{}, grpcErrorForDBError(ctx, err, "tag.go-2")
+		return names.DeploymentRevision{}, grpcErrorForDBError(ctx, err)
 	}
 
 	return name.Deployment().Revision(v.RevisionID), nil
