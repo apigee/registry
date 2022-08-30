@@ -76,7 +76,6 @@ func (s *RegistryServer) DeleteApiSpecRevision(ctx context.Context, req *rpc.Del
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	var response *rpc.ApiSpec
-	var revisionName string
 	if err := s.runWithTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
 		// The revision to be deleted must exist.
 		revision, err := db.GetSpecRevision(ctx, name)
@@ -92,19 +91,17 @@ func (s *RegistryServer) DeleteApiSpecRevision(ctx context.Context, req *rpc.Del
 		if err := db.DeleteSpecRevision(ctx, name); err != nil {
 			return err
 		}
-		// return the latest revision of the current spec
-		response, err = s.getApiSpec(ctx, name.Spec())
-		if err != nil {
-			// The get will fail if we are deleting the only revision.
-			// Returning this error will cancel the transaction.
-			return err
-		}
-		revisionName = name.String()
 		return nil
 	}); err != nil {
 		return nil, err
 	}
-	s.notify(ctx, rpc.Notification_DELETED, revisionName)
+	// return the latest revision of the current spec
+	response, err = s.getApiSpec(ctx, name.Spec())
+	if err != nil {
+		// The get will fail if we are deleting the only revision.
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	s.notify(ctx, rpc.Notification_DELETED, name.String())
 	return response, nil
 }
 
