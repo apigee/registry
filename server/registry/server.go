@@ -95,6 +95,14 @@ func (s *RegistryServer) getStorageClient(ctx context.Context) (*storage.Client,
 	return s.storageClient, nil
 }
 
+func (s *RegistryServer) runWithTransaction(ctx context.Context, fn func(ctx context.Context, db *storage.Client) error) error {
+	db, err := s.getStorageClient(ctx)
+	if err != nil {
+		return status.Error(codes.Unavailable, err.Error())
+	}
+	return db.Transaction(ctx, fn)
+}
+
 func (s *RegistryServer) getPubSubClient(ctx context.Context) (*pubsub.Client, error) {
 	if s.pubSubClient == nil {
 		return nil, errors.New("no pubSubClient")
