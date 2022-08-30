@@ -28,19 +28,23 @@ import (
 
 // CreateApi handles the corresponding API request.
 func (s *RegistryServer) CreateApi(ctx context.Context, req *rpc.CreateApiRequest) (*rpc.Api, error) {
+	// Parent name must be valid.
 	parent, err := names.ParseProjectWithLocation(req.GetParent())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
+	// API body must be nonempty.
 	if req.GetApi() == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid api %+v: body must be provided", req.GetApi())
 	}
+	// API name must be valid.
 	name := parent.Api(req.GetApiId())
 	if err := name.Validate(); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	var response *rpc.Api
 	if err := s.runWithTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
+		var err error
 		response, err = s.createApi(ctx, db, name, req.GetApi())
 		return err
 	}); err != nil {
@@ -70,6 +74,7 @@ func (s *RegistryServer) createApi(ctx context.Context, db *storage.Client, name
 
 // DeleteApi handles the corresponding API request.
 func (s *RegistryServer) DeleteApi(ctx context.Context, req *rpc.DeleteApiRequest) (*emptypb.Empty, error) {
+	// API name must be valid.
 	name, err := names.ParseApi(req.GetName())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
@@ -159,13 +164,16 @@ func (s *RegistryServer) ListApis(ctx context.Context, req *rpc.ListApisRequest)
 
 // UpdateApi handles the corresponding API request.
 func (s *RegistryServer) UpdateApi(ctx context.Context, req *rpc.UpdateApiRequest) (*rpc.Api, error) {
+	// API name must be valid.
 	name, err := names.ParseApi(req.Api.GetName())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
+	// API body must be nonempty.
 	if req.GetApi() == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid api %v: body must be provided", req.GetApi())
 	}
+	// Update mask must be valid.
 	if err := models.ValidateMask(req.GetApi(), req.GetUpdateMask()); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid update_mask %v: %s", req.GetUpdateMask(), err)
 	}

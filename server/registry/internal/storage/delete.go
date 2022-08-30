@@ -44,51 +44,40 @@ func reason(counts []int64, tables []interface{}) string {
 }
 
 func (c *Client) DeleteProject(ctx context.Context, name names.Project, cascade bool) error {
-	err := c.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		tables := []interface{}{
-			models.Project{},
-			models.Api{},
-			models.Deployment{},
-			models.Version{},
-			models.Spec{},
-			models.Blob{},
-			models.Artifact{},
-		}
-		counts := make([]int64, len(tables))
-		for i, model := range tables {
-			op := tx.Where("project_id = ?", name.ProjectID)
-			if err := op.Delete(model).Error; err != nil {
-				return err
-			}
-			counts[i] = op.RowsAffected
-		}
-
-		if sum(counts) > 1 && !cascade {
-			return status.Errorf(codes.FailedPrecondition, "cannot delete child resources of %s in non-cascading mode", name)
-		}
-
-		// Tags aren't API resources, so they do not block non-cascading deletes.
-		for _, model := range []interface{}{
-			models.DeploymentRevisionTag{},
-			models.SpecRevisionTag{},
-		} {
-			op := tx.Where("project_id = ?", name.ProjectID)
-			if err := op.Delete(model).Error; err != nil {
-				return err
-			}
-		}
-
-		return nil
-	})
-
-	switch status.Code(err) {
-	case codes.OK:
-		return nil
-	case codes.FailedPrecondition:
-		return err
-	default:
-		return grpcErrorForDBError(ctx, err, "delete.go-1")
+	tables := []interface{}{
+		models.Project{},
+		models.Api{},
+		models.Deployment{},
+		models.Version{},
+		models.Spec{},
+		models.Blob{},
+		models.Artifact{},
 	}
+	counts := make([]int64, len(tables))
+	for i, model := range tables {
+		op := c.db.Where("project_id = ?", name.ProjectID)
+		if err := op.Delete(model).Error; err != nil {
+			return err
+		}
+		counts[i] = op.RowsAffected
+	}
+
+	if sum(counts) > 1 && !cascade {
+		return status.Errorf(codes.FailedPrecondition, "cannot delete child resources of %s in non-cascading mode", name)
+	}
+
+	// Tags aren't API resources, so they do not block non-cascading deletes.
+	for _, model := range []interface{}{
+		models.DeploymentRevisionTag{},
+		models.SpecRevisionTag{},
+	} {
+		op := c.db.Where("project_id = ?", name.ProjectID)
+		if err := op.Delete(model).Error; err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (c *Client) DeleteApi(ctx context.Context, name names.Api, cascade bool) error {

@@ -28,53 +28,53 @@ import (
 
 // CreateProject handles the corresponding API request.
 func (s *RegistryServer) CreateProject(ctx context.Context, req *rpc.CreateProjectRequest) (*rpc.Project, error) {
+	// Project body must be nonempty.
 	if req.GetProject() == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid project %+v: body must be provided", req.GetProject())
 	}
-
-	return s.createProject(ctx, names.Project{ProjectID: req.GetProjectId()}, req.GetProject())
-}
-
-func (s *RegistryServer) createProject(ctx context.Context, name names.Project, body *rpc.Project) (*rpc.Project, error) {
-	db, err := s.getStorageClient(ctx)
-	if err != nil {
-		return nil, status.Error(codes.Unavailable, err.Error())
-	}
-
+	// Project name must be valid.
+	name := names.Project{ProjectID: req.GetProjectId()}
 	if err := name.Validate(); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
+	var response *rpc.Project
+	if err := s.runWithTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
+		var err error
+		response, err = s.createProject(ctx, db, name, req.GetProject())
+		return err
+	}); err != nil {
+		return nil, err
+	}
+	s.notify(ctx, rpc.Notification_CREATED, response.Name)
+	return response, nil
+}
 
+func (s *RegistryServer) createProject(ctx context.Context, db *storage.Client, name names.Project, body *rpc.Project) (*rpc.Project, error) {
 	project := models.NewProject(name, body)
+
 	if err := db.CreateProject(ctx, project); err != nil {
 		return nil, err
 	}
 
-	s.notify(ctx, rpc.Notification_CREATED, name.String())
 	return project.Message(), nil
 }
 
 // DeleteProject handles the corresponding API request.
 func (s *RegistryServer) DeleteProject(ctx context.Context, req *rpc.DeleteProjectRequest) (*emptypb.Empty, error) {
-	db, err := s.getStorageClient(ctx)
-	if err != nil {
-		return nil, status.Error(codes.Unavailable, err.Error())
-	}
-
+	// Project name must be valid.
 	name, err := names.ParseProject(req.GetName())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-
-	// Deletion should only succeed on projects that currently exist.
-	if _, err := db.GetProject(ctx, name); err != nil {
+	if err := s.runWithTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
+		// Deletion should only succeed on projects that currently exist.
+		if _, err := db.GetProject(ctx, name); err != nil {
+			return err
+		}
+		return db.DeleteProject(ctx, name, req.GetForce())
+	}); err != nil {
 		return nil, err
 	}
-
-	if err := db.DeleteProject(ctx, name, req.GetForce()); err != nil {
-		return nil, err
-	}
-
 	s.notify(ctx, rpc.Notification_DELETED, name.String())
 	return &emptypb.Empty{}, nil
 }
@@ -138,44 +138,38 @@ func (s *RegistryServer) ListProjects(ctx context.Context, req *rpc.ListProjects
 
 // UpdateProject handles the corresponding API request.
 func (s *RegistryServer) UpdateProject(ctx context.Context, req *rpc.UpdateProjectRequest) (*rpc.Project, error) {
-	if req.GetProject() == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid project %+v: body must be provided", req.GetProject())
-	} else if err := models.ValidateMask(req.GetProject(), req.GetUpdateMask()); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid update_mask %v: %s", req.GetUpdateMask(), err)
-	}
-
+	// Project name must be valid.
 	name, err := names.ParseProject(req.GetProject().GetName())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-
-	if err := name.Validate(); err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+	// Project body must be nonempty.
+	if req.GetProject() == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid project %+v: body must be provided", req.GetProject())
 	}
-
-	db, err := s.getStorageClient(ctx)
-	if err != nil {
-		return nil, status.Error(codes.Unavailable, err.Error())
+	// Update mask must be valid.
+	if err := models.ValidateMask(req.GetProject(), req.GetUpdateMask()); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid update_mask %v: %s", req.GetUpdateMask(), err)
 	}
-
-	var project *models.Project
-	err = db.Transaction(ctx, func(ctx context.Context, db *storage.Client) error {
-		var err error
-		project, err = db.GetProject(ctx, name)
+	var response *rpc.Project
+	if err := s.runWithTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
+		project, err := db.GetProject(ctx, name)
 		if err == nil {
 			project.Update(req.GetProject(), models.ExpandMask(req.GetProject(), req.GetUpdateMask()))
-			return db.SaveProject(ctx, project)
+			if err := db.SaveProject(ctx, project); err != nil {
+				return err
+			}
+			response = project.Message()
+			return nil
+		} else if status.Code(err) == codes.NotFound && req.GetAllowMissing() {
+			response, err = s.createProject(ctx, db, name, req.GetProject())
+			return err
+		} else {
+			return err
 		}
-		if status.Code(err) == codes.NotFound && req.GetAllowMissing() {
-			project = models.NewProject(name, req.Project)
-			return db.CreateProject(ctx, project)
-		}
-		return err
-	})
-	if err != nil {
+	}); err != nil {
 		return nil, err
 	}
-
 	s.notify(ctx, rpc.Notification_UPDATED, name.String())
-	return project.Message(), nil
+	return response, nil
 }
