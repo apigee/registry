@@ -154,52 +154,41 @@ func (c *Client) DeleteVersion(ctx context.Context, name names.Version, cascade 
 }
 
 func (c *Client) DeleteSpec(ctx context.Context, name names.Spec, cascade bool) error {
-	err := c.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		for _, model := range []interface{}{
-			models.Spec{},
-			models.SpecRevisionTag{},
-			models.Blob{},
-		} {
-			op := tx.Where("project_id = ?", name.ProjectID).
-				Where("api_id = ?", name.ApiID).
-				Where("version_id = ?", name.VersionID).
-				Where("spec_id = ?", name.SpecID)
-			if err := op.Delete(model).Error; err != nil {
-				return err
-			}
+	for _, model := range []interface{}{
+		models.Spec{},
+		models.SpecRevisionTag{},
+		models.Blob{},
+	} {
+		op := c.db.Where("project_id = ?", name.ProjectID).
+			Where("api_id = ?", name.ApiID).
+			Where("version_id = ?", name.VersionID).
+			Where("spec_id = ?", name.SpecID)
+		if err := op.Delete(model).Error; err != nil {
+			return err
 		}
-
-		tables := []interface{}{
-			models.Artifact{},
-			models.Blob{},
-		}
-		counts := make([]int64, len(tables))
-		for i, model := range tables {
-			op := tx.Where("project_id = ?", name.ProjectID).
-				Where("api_id = ?", name.ApiID).
-				Where("version_id = ?", name.VersionID).
-				Where("spec_id = ?", name.SpecID)
-			if err := op.Delete(model).Error; err != nil {
-				return err
-			}
-			counts[i] = op.RowsAffected
-		}
-
-		if sum(counts) > 0 && !cascade {
-			return status.Errorf(codes.FailedPrecondition, "cannot delete child resources of %s in non-cascading mode: %s", name, reason(counts, tables))
-		}
-
-		return nil
-	})
-
-	switch status.Code(err) {
-	case codes.OK:
-		return nil
-	case codes.FailedPrecondition:
-		return err
-	default:
-		return grpcErrorForDBError(ctx, err, "delete.go-4")
 	}
+
+	tables := []interface{}{
+		models.Artifact{},
+		models.Blob{},
+	}
+	counts := make([]int64, len(tables))
+	for i, model := range tables {
+		op := c.db.Where("project_id = ?", name.ProjectID).
+			Where("api_id = ?", name.ApiID).
+			Where("version_id = ?", name.VersionID).
+			Where("spec_id = ?", name.SpecID)
+		if err := op.Delete(model).Error; err != nil {
+			return err
+		}
+		counts[i] = op.RowsAffected
+	}
+
+	if sum(counts) > 0 && !cascade {
+		return status.Errorf(codes.FailedPrecondition, "cannot delete child resources of %s in non-cascading mode: %s", name, reason(counts, tables))
+	}
+
+	return nil
 }
 
 func (c *Client) DeleteSpecRevision(ctx context.Context, name names.SpecRevision) error {
