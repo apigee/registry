@@ -45,6 +45,9 @@ func grpcErrorForDBError(ctx context.Context, err error) error {
 	if _, ok := status.FromError(err); ok {
 		return err
 	}
+	if err == context.DeadlineExceeded {
+		return status.Error(codes.DeadlineExceeded, err.Error())
+	}
 	// handle sqlite3 errors separately so their support can be conditionally compiled.
 	if err2 := grpcErrorForSQLite3Error(ctx, err); err2 != nil {
 		return err2
@@ -58,6 +61,8 @@ func grpcErrorForDBError(ctx context.Context, err error) error {
 			return status.Error(codes.Unavailable, err.Error())
 		} else if v.Code.Name() == "cannot_connect_now" {
 			return status.Error(codes.FailedPrecondition, err.Error())
+		} else if v.Code.Name() == "query_canceled" {
+			return status.Error(codes.Canceled, err.Error())
 		}
 		log.Infof(ctx, "Unhandled %T %+v code=%s name=%s", v, v, v.Code, v.Code.Name())
 	case *net.OpError:
@@ -96,6 +101,9 @@ func grpcErrorForDBError(ctx context.Context, err error) error {
 		}
 		if err.Error() == "sql: statement is closed" {
 			return status.Error(codes.Unavailable, err.Error())
+		}
+		if err.Error() == "context canceled" {
+			return status.Error(codes.Canceled, err.Error())
 		}
 		log.Infof(ctx, "Unhandled %T %+v", err, err)
 	}
