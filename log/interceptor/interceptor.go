@@ -82,14 +82,38 @@ func CallLogger(opts ...log.Option) grpc.UnaryServerInterceptor {
 		switch status.Code(err) {
 		case codes.OK:
 			logger.Info("Success.")
-		case codes.Internal:
-			logger.Error("Internal error.")
+		case codes.Canceled:
+			logger.Info("Canceled.")
 		case codes.Unknown:
 			logger.Error("Unknown error.")
+		case codes.InvalidArgument:
+			logger.Error("Invalid argument.")
+		case codes.DeadlineExceeded:
+			logger.Error("Deadline exceeded.")
 		case codes.NotFound:
 			logger.Info("Not found.")
+		case codes.AlreadyExists:
+			logger.Error("Already exists.")
+		case codes.PermissionDenied:
+			logger.Error("Permission denied.")
+		case codes.ResourceExhausted:
+			logger.Error("Resource exhausted.")
+		case codes.FailedPrecondition:
+			logger.Error("Failed precondition.")
+		case codes.Aborted:
+			logger.Error("Aborted.")
+		case codes.OutOfRange:
+			logger.Error("Out of range.")
+		case codes.Unimplemented:
+			logger.Error("Unimplemented.")
+		case codes.Internal:
+			logger.Error("Internal error.")
 		case codes.Unavailable:
 			logger.Info("Unavailable.")
+		case codes.DataLoss:
+			logger.Info("Data loss.")
+		case codes.Unauthenticated:
+			logger.Info("Unauthenticated.")
 		default:
 			logger.Info("User error.")
 		}
