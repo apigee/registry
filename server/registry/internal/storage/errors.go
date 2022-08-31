@@ -25,7 +25,13 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func alreadyExists(err error) bool {
+func AlreadyExists(err error) bool {
+	if err == nil {
+		return false
+	}
+	if status.Code(err) == codes.AlreadyExists {
+		return true
+	}
 	// handle sqlite3 errors separately so their support can be conditionally compiled.
 	if isSQLite3ErrorAlreadyExists(err) {
 		return true

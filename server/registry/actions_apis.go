@@ -191,6 +191,9 @@ func (s *RegistryServer) UpdateApi(ctx context.Context, req *rpc.UpdateApiReques
 			return err
 		} else if status.Code(err) == codes.NotFound && req.GetAllowMissing() {
 			response, err = s.createApi(ctx, db, name, req.GetApi())
+			if storage.AlreadyExists(err) { // The API was created between the get and the create.
+				return status.Errorf(codes.Aborted, "update conflict, please retry")
+			}
 			return err
 		} else {
 			return err

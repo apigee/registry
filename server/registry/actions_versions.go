@@ -191,6 +191,9 @@ func (s *RegistryServer) UpdateApiVersion(ctx context.Context, req *rpc.UpdateAp
 			return err
 		} else if status.Code(err) == codes.NotFound && req.GetAllowMissing() {
 			response, err = s.createApiVersion(ctx, db, name, req.GetApiVersion())
+			if storage.AlreadyExists(err) { // The version was created between the get and the create.
+				return status.Errorf(codes.Aborted, "update conflict, please retry")
+			}
 			return err
 		} else {
 			return err
