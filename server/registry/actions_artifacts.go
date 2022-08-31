@@ -68,29 +68,22 @@ func (s *RegistryServer) CreateArtifact(ctx context.Context, req *rpc.CreateArti
 	var response *rpc.Artifact
 	if err := s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
 		// Creation should only succeed when the parent exists.
+		var err error
 		switch parent := parent.(type) {
 		case names.Project:
-			if _, err := db.GetProject(ctx, parent); err != nil {
-				return err
-			}
+			_, err = db.GetProject(ctx, parent)
 		case names.Api:
-			if _, err := db.GetApi(ctx, parent); err != nil {
-				return err
-			}
+			_, err = db.GetApi(ctx, parent)
 		case names.Version:
-			if _, err := db.GetVersion(ctx, parent); err != nil {
-				return err
-			}
+			_, err = db.GetVersion(ctx, parent)
 		case names.Spec:
-			if _, err := db.GetSpec(ctx, parent); err != nil {
-				return err
-			}
+			_, err = db.GetSpec(ctx, parent)
 		case names.Deployment:
-			if _, err := db.GetDeployment(ctx, parent); err != nil {
-				return err
-			}
+			_, err = db.GetDeployment(ctx, parent)
 		}
-		var err error
+		if err != nil {
+			return err
+		}
 		artifact, err := models.NewArtifact(name, req.GetArtifact())
 		if err != nil {
 			return err
