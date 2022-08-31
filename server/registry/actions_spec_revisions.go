@@ -76,7 +76,7 @@ func (s *RegistryServer) DeleteApiSpecRevision(ctx context.Context, req *rpc.Del
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	var response *rpc.ApiSpec
-	if err := s.runWithTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
+	if err := s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
 		// The revision to be deleted must exist.
 		revision, err := db.GetSpecRevision(ctx, name)
 		if err != nil {
@@ -122,7 +122,7 @@ func (s *RegistryServer) TagApiSpecRevision(ctx context.Context, req *rpc.TagApi
 	}
 	var response *rpc.ApiSpec
 	var revisionName string
-	if err := s.runWithTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
+	if err := s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
 		// The revision to be tagged must exist.
 		revision, err := db.GetSpecRevision(ctx, name)
 		if err != nil {
@@ -164,7 +164,7 @@ func (s *RegistryServer) RollbackApiSpec(ctx context.Context, req *rpc.RollbackA
 	}
 	var response *rpc.ApiSpec
 	var revisionName string
-	if err := s.runWithTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
+	if err := s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
 		// Get the target spec revision to use as a base for the new rollback revision.
 		name := parent.Revision(req.GetRevisionId())
 		target, err := db.GetSpecRevision(ctx, name)

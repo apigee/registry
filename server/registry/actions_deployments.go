@@ -43,7 +43,7 @@ func (s *RegistryServer) CreateApiDeployment(ctx context.Context, req *rpc.Creat
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	var response *rpc.ApiDeployment
-	if err := s.runWithTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
+	if err := s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
 		var err error
 		response, err = s.createDeployment(ctx, db, name, req.GetApiDeployment())
 		return err
@@ -87,7 +87,7 @@ func (s *RegistryServer) DeleteApiDeployment(ctx context.Context, req *rpc.Delet
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	if err := s.runWithTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
+	if err := s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
 		// Deletion should only succeed on API deployments that currently exist.
 		if _, err := db.GetDeployment(ctx, name); err != nil {
 			return err
@@ -210,7 +210,7 @@ func (s *RegistryServer) UpdateApiDeployment(ctx context.Context, req *rpc.Updat
 		return nil, status.Errorf(codes.InvalidArgument, "invalid update_mask %v: %s", req.GetUpdateMask(), err)
 	}
 	var response *rpc.ApiDeployment
-	if err = s.runWithTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
+	if err = s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
 		deployment, err := db.GetDeployment(ctx, name)
 		if err == nil {
 			// Apply the update to the deployment - possibly changing the revision ID.

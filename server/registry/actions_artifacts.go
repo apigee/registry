@@ -66,7 +66,7 @@ func (s *RegistryServer) CreateArtifact(ctx context.Context, req *rpc.CreateArti
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	var response *rpc.Artifact
-	if err := s.runWithTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
+	if err := s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
 		// Creation should only succeed when the parent exists.
 		switch parent := parent.(type) {
 		case names.Project:
@@ -118,7 +118,7 @@ func (s *RegistryServer) DeleteArtifact(ctx context.Context, req *rpc.DeleteArti
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-	if err := s.runWithTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
+	if err := s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
 		// Deletion should only succeed on artifacts that currently exist.
 		if _, err := db.GetArtifact(ctx, name); err != nil {
 			return err

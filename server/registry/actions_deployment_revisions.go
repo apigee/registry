@@ -76,7 +76,7 @@ func (s *RegistryServer) DeleteApiDeploymentRevision(ctx context.Context, req *r
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	var response *rpc.ApiDeployment
-	if err := s.runWithTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
+	if err := s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
 		// The revision to be deleted must exist.
 		revision, err := db.GetDeploymentRevision(ctx, name)
 		if err != nil {
@@ -122,7 +122,7 @@ func (s *RegistryServer) TagApiDeploymentRevision(ctx context.Context, req *rpc.
 	}
 	var response *rpc.ApiDeployment
 	var revisionName string
-	if err := s.runWithTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
+	if err := s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
 		// The revision to be tagged must exist.
 		revision, err := db.GetDeploymentRevision(ctx, name)
 		if err != nil {
@@ -164,7 +164,7 @@ func (s *RegistryServer) RollbackApiDeployment(ctx context.Context, req *rpc.Rol
 	}
 	var response *rpc.ApiDeployment
 	var revisionName string
-	if err := s.runWithTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
+	if err := s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
 		// Get the target deployment revision to use as a base for the new rollback revision.
 		name := parent.Revision(req.GetRevisionId())
 		target, err := db.GetDeploymentRevision(ctx, name)

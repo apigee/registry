@@ -43,7 +43,7 @@ func (s *RegistryServer) CreateApiVersion(ctx context.Context, req *rpc.CreateAp
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	var response *rpc.ApiVersion
-	if err := s.runWithTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
+	if err := s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
 		var err error
 		response, err = s.createApiVersion(ctx, db, name, req.GetApiVersion())
 		return err
@@ -79,7 +79,7 @@ func (s *RegistryServer) DeleteApiVersion(ctx context.Context, req *rpc.DeleteAp
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-	if err := s.runWithTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
+	if err := s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
 		// Deletion should only succeed on API versions that currently exist.
 		if _, err := db.GetVersion(ctx, name); err != nil {
 			return err
@@ -178,7 +178,7 @@ func (s *RegistryServer) UpdateApiVersion(ctx context.Context, req *rpc.UpdateAp
 		return nil, status.Errorf(codes.InvalidArgument, "invalid update_mask %v: %s", req.GetUpdateMask(), err)
 	}
 	var response *rpc.ApiVersion
-	if err = s.runWithTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
+	if err = s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
 		version, err := db.GetVersion(ctx, name)
 		if err == nil {
 			if err := version.Update(req.GetApiVersion(), models.ExpandMask(req.GetApiVersion(), req.GetUpdateMask())); err != nil {

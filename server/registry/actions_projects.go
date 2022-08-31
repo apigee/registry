@@ -38,7 +38,7 @@ func (s *RegistryServer) CreateProject(ctx context.Context, req *rpc.CreateProje
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	var response *rpc.Project
-	if err := s.runWithTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
+	if err := s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
 		var err error
 		response, err = s.createProject(ctx, db, name, req.GetProject())
 		return err
@@ -66,7 +66,7 @@ func (s *RegistryServer) DeleteProject(ctx context.Context, req *rpc.DeleteProje
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-	if err := s.runWithTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
+	if err := s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
 		// Deletion should only succeed on projects that currently exist.
 		if _, err := db.GetProject(ctx, name); err != nil {
 			return err
@@ -152,7 +152,7 @@ func (s *RegistryServer) UpdateProject(ctx context.Context, req *rpc.UpdateProje
 		return nil, status.Errorf(codes.InvalidArgument, "invalid update_mask %v: %s", req.GetUpdateMask(), err)
 	}
 	var response *rpc.Project
-	if err := s.runWithTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
+	if err := s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
 		project, err := db.GetProject(ctx, name)
 		if err == nil {
 			project.Update(req.GetProject(), models.ExpandMask(req.GetProject(), req.GetUpdateMask()))

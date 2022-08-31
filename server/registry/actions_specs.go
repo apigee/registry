@@ -47,7 +47,7 @@ func (s *RegistryServer) CreateApiSpec(ctx context.Context, req *rpc.CreateApiSp
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	var response *rpc.ApiSpec
-	if err := s.runWithTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
+	if err := s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
 		var err error
 		response, err = s.createSpec(ctx, db, name, req.GetApiSpec())
 		return err
@@ -95,7 +95,7 @@ func (s *RegistryServer) DeleteApiSpec(ctx context.Context, req *rpc.DeleteApiSp
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	if err := s.runWithTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
+	if err := s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
 		// Deletion should only succeed on API specs that currently exist.
 		if _, err := db.GetSpec(ctx, name); err != nil {
 			return err
@@ -262,7 +262,7 @@ func (s *RegistryServer) UpdateApiSpec(ctx context.Context, req *rpc.UpdateApiSp
 		return nil, status.Errorf(codes.InvalidArgument, "invalid update_mask %v: %s", req.GetUpdateMask(), err)
 	}
 	var response *rpc.ApiSpec
-	if err = s.runWithTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
+	if err = s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
 		spec, err := db.GetSpec(ctx, name)
 		if err == nil {
 			// Apply the update to the spec - possibly changing the revision ID.
