@@ -61,7 +61,7 @@ func NewClient(ctx context.Context, driver, dsn string) (*Client, error) {
 		if err != nil {
 			c := &Client{db: db}
 			c.close()
-			return nil, err
+			return nil, grpcErrorForDBError(ctx, err)
 		}
 		return &Client{db: db}, nil
 	case "postgres", "cloudsqlpostgres":
@@ -74,7 +74,7 @@ func NewClient(ctx context.Context, driver, dsn string) (*Client, error) {
 		if err != nil {
 			c := &Client{db: db}
 			c.close()
-			return nil, err
+			return nil, grpcErrorForDBError(ctx, err)
 		}
 		return &Client{db: db}, nil
 	default:
@@ -140,4 +140,11 @@ func (c *Client) RowCount(ctx context.Context, tableName string) (int64, error) 
 	var count int64
 	err := c.db.WithContext(ctx).Table(tableName).Count(&count).Error
 	return count, grpcErrorForDBError(ctx, err)
+}
+
+func (c *Client) Transaction(ctx context.Context, fn func(context.Context, *Client) error) error {
+	err := c.db.Transaction(func(tx *gorm.DB) error {
+		return fn(ctx, &Client{db: tx})
+	})
+	return grpcErrorForDBError(ctx, err)
 }

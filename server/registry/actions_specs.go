@@ -17,10 +17,7 @@ package registry
 import (
 	"context"
 	"strings"
-	"sync"
-	"time"
 
-	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/internal/storage"
 	"github.com/apigee/registry/server/registry/internal/storage/models"
@@ -35,29 +32,34 @@ import (
 
 // CreateApiSpec handles the corresponding API request.
 func (s *RegistryServer) CreateApiSpec(ctx context.Context, req *rpc.CreateApiSpecRequest) (*rpc.ApiSpec, error) {
+	// Parent name must be valid.
 	parent, err := names.ParseVersion(req.GetParent())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-
+	// Spec body must be nonempty.
 	if req.GetApiSpec() == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid api_spec %+v: body must be provided", req.GetApiSpec())
 	}
-
-	return s.createSpec(ctx, parent.Spec(req.GetApiSpecId()), req.GetApiSpec())
-}
-
-func (s *RegistryServer) createSpec(ctx context.Context, name names.Spec, body *rpc.ApiSpec) (*rpc.ApiSpec, error) {
-	db, err := s.getStorageClient(ctx)
-	if err != nil {
-		return nil, status.Error(codes.Unavailable, err.Error())
-	}
-
+	// Spec name must be valid.
+	name := parent.Spec(req.GetApiSpecId())
 	if err := name.Validate(); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
+	var response *rpc.ApiSpec
+	if err := s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
+		var err error
+		response, err = s.createSpec(ctx, db, name, req.GetApiSpec())
+		return err
+	}); err != nil {
+		return nil, err
+	}
+	s.notify(ctx, rpc.Notification_CREATED, response.GetName())
+	return response, nil
+}
 
-	// Necessary because revisions
+func (s *RegistryServer) createSpec(ctx context.Context, db *storage.Client, name names.Spec, body *rpc.ApiSpec) (*rpc.ApiSpec, error) {
+	// The spec must not already exist.
 	if _, err := db.GetSpec(ctx, name); err == nil {
 		return nil, status.Errorf(codes.AlreadyExists, "API spec %q already exists", name)
 	} else if !isNotFound(err) {
@@ -82,37 +84,27 @@ func (s *RegistryServer) createSpec(ctx context.Context, name names.Spec, body *
 		return nil, err
 	}
 
-	message, err := spec.BasicMessage(name.String())
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	s.notify(ctx, rpc.Notification_CREATED, spec.RevisionName())
-	return message, nil
+	return spec.BasicMessage(name.String())
 }
 
 // DeleteApiSpec handles the corresponding API request.
 func (s *RegistryServer) DeleteApiSpec(ctx context.Context, req *rpc.DeleteApiSpecRequest) (*emptypb.Empty, error) {
-	db, err := s.getStorageClient(ctx)
-	if err != nil {
-		return nil, status.Error(codes.Unavailable, err.Error())
-	}
-
+	// Spec name must be valid.
 	name, err := names.ParseSpec(req.GetName())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	// Deletion should only succeed on API specs that currently exist.
-	if _, err := db.GetSpec(ctx, name); err != nil {
+	if err := s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
+		// Deletion should only succeed on API specs that currently exist.
+		if _, err := db.GetSpec(ctx, name); err != nil {
+			return err
+		}
+		return db.DeleteSpec(ctx, name, req.GetForce())
+	}); err != nil {
 		return nil, err
 	}
-
-	if err := db.DeleteSpec(ctx, name, req.GetForce()); err != nil {
-		return nil, err
-	}
-
-	s.notify(ctx, rpc.Notification_DELETED, name.String())
+	s.notify(ctx, rpc.Notification_DELETED, req.GetName())
 	return &emptypb.Empty{}, nil
 }
 
@@ -254,71 +246,53 @@ func (s *RegistryServer) ListApiSpecs(ctx context.Context, req *rpc.ListApiSpecs
 	return response, nil
 }
 
-var updateSpecMutex sync.Mutex
-
 // UpdateApiSpec handles the corresponding API request.
 func (s *RegistryServer) UpdateApiSpec(ctx context.Context, req *rpc.UpdateApiSpecRequest) (*rpc.ApiSpec, error) {
-	db, err := s.getStorageClient(ctx)
-	if err != nil {
-		return nil, status.Error(codes.Unavailable, err.Error())
-	}
-
-	if req.GetApiSpec() == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid api_spec %+v: body must be provided", req.GetApiSpec())
-	} else if err := models.ValidateMask(req.GetApiSpec(), req.GetUpdateMask()); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid update_mask %v: %s", req.GetUpdateMask(), err)
-	}
-
+	// Spec name must be valid.
 	name, err := names.ParseSpec(req.ApiSpec.GetName())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-
-	if req.GetAllowMissing() {
-		before := time.Now()
-		// Prevent a race condition that can occur when two updates are made
-		// to the same non-existent resource. The db.Get...() call returns
-		// NotFound for both updates, and after one creates the resource,
-		// the other creation fails. The lock() prevents this by serializing
-		// the get and create operations. Future updates could improve this
-		// with improvements closer to the database level.
-		updateSpecMutex.Lock()
-		defer updateSpecMutex.Unlock()
-		log.Debugf(ctx, "Acquired lock after blocking for %v", time.Since(before))
+	// Spec body must be valid.
+	if req.GetApiSpec() == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid api_spec %+v: body must be provided", req.GetApiSpec())
 	}
-
-	spec, err := db.GetSpec(ctx, name)
-	if req.GetAllowMissing() && isNotFound(err) {
-		return s.createSpec(ctx, name, req.GetApiSpec())
-	} else if err != nil {
-		return nil, err
+	// Update mask must be valid.
+	if err := models.ValidateMask(req.GetApiSpec(), req.GetUpdateMask()); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid update_mask %v: %s", req.GetUpdateMask(), err)
 	}
-
-	// Apply the update to the spec - possibly changing the revision ID.
-	maskExpansion := models.ExpandMask(req.GetApiSpec(), req.GetUpdateMask())
-	if err := spec.Update(req.GetApiSpec(), maskExpansion); err != nil {
-		return nil, err
-	}
-
-	// Save the updated/current spec. This creates a new revision or updates the previous one.
-	if err := db.SaveSpecRevision(ctx, spec); err != nil {
-		return nil, err
-	}
-
-	// If the spec contents were updated, save a new blob.
-	if len(fieldmaskpb.Intersect(maskExpansion, &fieldmaskpb.FieldMask{Paths: []string{"contents"}}).GetPaths()) > 0 {
-		if err := db.SaveSpecRevisionContents(ctx, spec, req.ApiSpec.GetContents()); err != nil {
-			return nil, err
+	var response *rpc.ApiSpec
+	if err = s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
+		spec, err := db.GetSpec(ctx, name)
+		if err == nil {
+			// Apply the update to the spec - possibly changing the revision ID.
+			maskExpansion := models.ExpandMask(req.GetApiSpec(), req.GetUpdateMask())
+			if err := spec.Update(req.GetApiSpec(), maskExpansion); err != nil {
+				return err
+			}
+			// Save the updated/current spec. This creates a new revision or updates the previous one.
+			if err := db.SaveSpecRevision(ctx, spec); err != nil {
+				return err
+			}
+			// If the spec contents were updated, save a new blob.
+			if len(fieldmaskpb.Intersect(maskExpansion, &fieldmaskpb.FieldMask{Paths: []string{"contents"}}).GetPaths()) > 0 {
+				if err := db.SaveSpecRevisionContents(ctx, spec, req.ApiSpec.GetContents()); err != nil {
+					return err
+				}
+			}
+			response, err = spec.BasicMessage(name.String())
+			return err
+		} else if status.Code(err) == codes.NotFound && req.GetAllowMissing() {
+			response, err = s.createSpec(ctx, db, name, req.GetApiSpec())
+			return err
+		} else {
+			return err
 		}
+	}); err != nil {
+		return nil, err
 	}
-
-	message, err := spec.BasicMessage(name.String())
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	s.notify(ctx, rpc.Notification_UPDATED, spec.RevisionName())
-	return message, nil
+	s.notify(ctx, rpc.Notification_UPDATED, response.GetName())
+	return response, nil
 }
 
 func incomingContextAllowsGZIP(ctx context.Context) bool {
