@@ -55,6 +55,7 @@ func fetchManifest(
 func Command() *cobra.Command {
 	var dryRun bool
 	var jobs int
+	var maxActions int
 	cmd := &cobra.Command{
 		Use:   "resolve MANIFEST_RESOURCE",
 		Short: "resolve the dependencies and update the registry state (experimental)",
@@ -85,7 +86,7 @@ func Command() *cobra.Command {
 			client := &controller.RegistryLister{RegistryClient: registryClient}
 
 			log.Debug(ctx, "Generating the list of actions...")
-			actions := controller.ProcessManifest(ctx, client, name.ProjectID(), manifest)
+			actions := controller.ProcessManifest(ctx, client, name.ProjectID(), manifest, maxActions)
 
 			// The monitoring metrics/dashboards are built on top of the format of the log messages here.
 			// Check the metric filters before making any changes to the format.
@@ -109,9 +110,9 @@ func Command() *cobra.Command {
 			taskQueue, wait := core.WorkerPoolWithWarnings(ctx, jobs)
 			defer wait()
 			// Submit tasks to taskQueue
-			for _, a := range actions {
+			for i := 0; i < len(actions) && i < maxActions; i++ {
 				taskQueue <- &controller.ExecCommandTask{
-					Action: a,
+					Action: actions[i],
 					TaskID: fmt.Sprintf("%.8s", uuid.New()),
 				}
 			}
@@ -120,5 +121,6 @@ func Command() *cobra.Command {
 
 	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "if set, actions will only be printed and not executed")
 	cmd.Flags().IntVarP(&jobs, "jobs", "j", 10, "Number of actions to execute simultaneously")
+	cmd.Flags().IntVarP(&maxActions, "max-actions", "a", 100, "Maximum number of actions to execute")
 	return cmd
 }
