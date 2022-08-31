@@ -19,8 +19,8 @@ import (
 	"fmt"
 
 	"github.com/apigee/registry/cmd/registry/core"
-	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/log"
+	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"github.com/spf13/cobra"
@@ -39,7 +39,12 @@ func csvCommand() *cobra.Command {
 		Use:   "csv [--filter expression] parent ...",
 		Short: "Export API specs to a CSV file",
 		Args: func(cmd *cobra.Command, args []string) error {
+			c, err := connection.ActiveConfig()
+			if err != nil {
+				return fmt.Errorf("Failed to get config: %s", err)
+			}
 			for _, parent := range args {
+				parent = c.FQName(parent)
 				if _, err := names.ParseVersion(parent); err != nil {
 					return fmt.Errorf("invalid parent argument %q", parent)
 				}
@@ -49,7 +54,7 @@ func csvCommand() *cobra.Command {
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := cmd.Context()
-			client, err := connection.NewClient(ctx)
+			client, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}

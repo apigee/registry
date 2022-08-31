@@ -3,18 +3,12 @@
 package generated
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-	"golang.org/x/oauth2"
-	"google.golang.org/api/option"
-	"google.golang.org/grpc"
 
 	gapic "github.com/apigee/registry/gapic"
+	"github.com/apigee/registry/pkg/connection"
 )
 
-var RegistryConfig *viper.Viper
 var RegistryClient *gapic.RegistryClient
 var RegistrySubCommands []string = []string{
 	"list-apis",
@@ -57,10 +51,6 @@ var RegistrySubCommands []string = []string{
 func init() {
 	rootCmd.AddCommand(RegistryServiceCmd)
 
-	RegistryConfig = viper.New()
-	RegistryConfig.SetEnvPrefix("APG_REGISTRY")
-	RegistryConfig.AutomaticEnv()
-
 }
 
 var RegistryServiceCmd = &cobra.Command{
@@ -69,38 +59,7 @@ var RegistryServiceCmd = &cobra.Command{
 	Long:      "The Registry service allows teams to manage descriptions of APIs.",
 	ValidArgs: RegistrySubCommands,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) (err error) {
-		var opts []option.ClientOption
-
-		address := RegistryConfig.GetString("address")
-		if address != "" {
-			opts = append(opts, option.WithEndpoint(address))
-		}
-
-		if RegistryConfig.GetBool("insecure") {
-			if address == "" {
-				return fmt.Errorf("Missing address to use with insecure connection")
-			}
-
-			conn, err := grpc.Dial(address, grpc.WithInsecure())
-			if err != nil {
-				return err
-			}
-			opts = append(opts, option.WithGRPCConn(conn))
-		}
-
-		if token := RegistryConfig.GetString("token"); token != "" {
-			opts = append(opts, option.WithTokenSource(oauth2.StaticTokenSource(
-				&oauth2.Token{
-					AccessToken: token,
-					TokenType:   "Bearer",
-				})))
-		}
-
-		if key := RegistryConfig.GetString("api_key"); key != "" {
-			opts = append(opts, option.WithAPIKey(key))
-		}
-
-		RegistryClient, err = gapic.NewRegistryClient(ctx, opts...)
+		RegistryClient, err = connection.NewRegistryClient(ctx)
 		return
 	},
 }

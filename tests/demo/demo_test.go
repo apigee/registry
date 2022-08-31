@@ -20,15 +20,24 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"testing"
 
-	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/server/registry"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
+
+// TestMain will set up a local RegistryServer and grpc.Server for all
+// tests in this package if APG_REGISTRY_ADDRESS env var is not set
+// for the client.
+func TestMain(m *testing.M) {
+	grpctest.TestMain(m, registry.Config{})
+}
 
 func unavailable(err error) bool {
 	if err == nil {
@@ -52,7 +61,7 @@ func check(t *testing.T, message string, err error) {
 }
 
 func readAndGZipFile(filename string) (*bytes.Buffer, error) {
-	fileBytes, _ := ioutil.ReadFile(filename)
+	fileBytes, _ := os.ReadFile(filename)
 	var buf bytes.Buffer
 	zw, _ := gzip.NewWriterLevel(&buf, gzip.BestCompression)
 	_, err := zw.Write(fileBytes)
@@ -72,7 +81,7 @@ func hashForBytes(b []byte) string {
 	return fmt.Sprintf("%x", bs)
 }
 
-func listAllSpecs(ctx context.Context, registryClient connection.Client) []*rpc.ApiSpec {
+func listAllSpecs(ctx context.Context, registryClient connection.RegistryClient) []*rpc.ApiSpec {
 	specs := make([]*rpc.ApiSpec, 0)
 	req := &rpc.ListApiSpecsRequest{
 		Parent: "projects/demo/locations/global/apis/-/versions/-",
@@ -89,7 +98,7 @@ func listAllSpecs(ctx context.Context, registryClient connection.Client) []*rpc.
 	return specs
 }
 
-func listAllSpecRevisionIDs(ctx context.Context, registryClient connection.Client) []string {
+func listAllSpecRevisionIDs(ctx context.Context, registryClient connection.RegistryClient) []string {
 	revisionIDs := make([]string, 0)
 	req := &rpc.ListApiSpecRevisionsRequest{
 		Name: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
@@ -114,7 +123,7 @@ func TestDemo(t *testing.T) {
 
 	// Create a registry client.
 	ctx := context.Background()
-	registryClient, err := connection.NewClient(ctx)
+	registryClient, err := connection.NewRegistryClient(ctx)
 	if err != nil {
 		t.Logf("Failed to create client: %+v", err)
 		t.FailNow()
@@ -260,7 +269,7 @@ func TestDemo(t *testing.T) {
 		check(t, "error getting spec %s", err)
 		// compute the size and hash of the original file
 		fileName := fmt.Sprintf("openapi.yaml@r%d", len(revisionIDs)-i-1)
-		fileBytes, err := ioutil.ReadFile(filepath.Join("testdata", fileName))
+		fileBytes, err := os.ReadFile(filepath.Join("testdata", fileName))
 		check(t, "error reading spec", err)
 		if int(spec.GetSizeBytes()) != len(fileBytes) {
 			t.Errorf("size mismatch %d != %d (%s)", spec.GetSizeBytes(), len(fileBytes), fileName)

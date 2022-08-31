@@ -16,11 +16,12 @@ package upload
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"github.com/apigee/registry/cmd/registry/core"
-	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/cmd/registry/patch"
 	"github.com/apigee/registry/log"
+	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/ghodss/yaml"
 	"github.com/spf13/cobra"
@@ -29,7 +30,7 @@ import (
 )
 
 func readStyleGuideProto(filename string) (*rpc.StyleGuide, error) {
-	yamlBytes, err := ioutil.ReadFile(filename)
+	yamlBytes, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +72,7 @@ func styleGuideCommand() *cobra.Command {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to encode style guide")
 			}
 
-			client, err := connection.NewClient(ctx)
+			client, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
@@ -81,9 +82,7 @@ func styleGuideCommand() *cobra.Command {
 					projectID +
 					"/locations/global/artifacts/" +
 					styleGuide.GetId(),
-				MimeType: core.MimeTypeForMessageType(
-					"google.cloud.apigeeregistry.applications.v1alpha1.StyleGuide",
-				),
+				MimeType: patch.MimeTypeForKind("StyleGuide"),
 				Contents: styleGuideMarshalled,
 			}
 			log.Debugf(ctx, "Uploading %s", artifact.Name)

@@ -233,47 +233,32 @@ func TestCreateApiVersionResponseCodes(t *testing.T) {
 }
 
 func TestCreateApiVersionDuplicates(t *testing.T) {
-	tests := []struct {
+	test := struct {
 		desc string
 		seed *rpc.ApiVersion
 		req  *rpc.CreateApiVersionRequest
 		want codes.Code
 	}{
-		{
-			desc: "case sensitive",
-			seed: &rpc.ApiVersion{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
-			req: &rpc.CreateApiVersionRequest{
-				Parent:       "projects/my-project/locations/global/apis/my-api",
-				ApiVersionId: "v1",
-				ApiVersion:   &rpc.ApiVersion{},
-			},
-			want: codes.AlreadyExists,
+		desc: "case sensitive",
+		seed: &rpc.ApiVersion{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
+		req: &rpc.CreateApiVersionRequest{
+			Parent:       "projects/my-project/locations/global/apis/my-api",
+			ApiVersionId: "v1",
+			ApiVersion:   &rpc.ApiVersion{},
 		},
-		{
-			desc: "case insensitive",
-			seed: &rpc.ApiVersion{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
-			req: &rpc.CreateApiVersionRequest{
-				Parent:       "projects/my-project/locations/global/apis/my-api",
-				ApiVersionId: "V1",
-				ApiVersion:   &rpc.ApiVersion{},
-			},
-			want: codes.AlreadyExists,
-		},
+		want: codes.AlreadyExists,
 	}
+	t.Run(test.desc, func(t *testing.T) {
+		ctx := context.Background()
+		server := defaultTestServer(t)
+		if err := seeder.SeedVersions(ctx, server, test.seed); err != nil {
+			t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+		}
 
-	for _, test := range tests {
-		t.Run(test.desc, func(t *testing.T) {
-			ctx := context.Background()
-			server := defaultTestServer(t)
-			if err := seeder.SeedVersions(ctx, server, test.seed); err != nil {
-				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
-			}
-
-			if _, err := server.CreateApiVersion(ctx, test.req); status.Code(err) != test.want {
-				t.Errorf("CreateApiVersion(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
-			}
-		})
-	}
+		if _, err := server.CreateApiVersion(ctx, test.req); status.Code(err) != test.want {
+			t.Errorf("CreateApiVersion(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
+		}
+	})
 }
 
 func TestGetApiVersion(t *testing.T) {
@@ -382,6 +367,7 @@ func TestGetApiVersionResponseCodes(t *testing.T) {
 
 func TestListApiVersions(t *testing.T) {
 	tests := []struct {
+		admin     bool
 		desc      string
 		seed      []*rpc.ApiVersion
 		req       *rpc.ListApiVersionsRequest
@@ -409,7 +395,8 @@ func TestListApiVersions(t *testing.T) {
 			},
 		},
 		{
-			desc: "across all apis in a specific project",
+			admin: true,
+			desc:  "across all apis in a specific project",
 			seed: []*rpc.ApiVersion{
 				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
 				{Name: "projects/my-project/locations/global/apis/other-api/versions/v1"},
@@ -426,7 +413,8 @@ func TestListApiVersions(t *testing.T) {
 			},
 		},
 		{
-			desc: "across all projects and apis",
+			admin: true,
+			desc:  "across all projects and apis",
 			seed: []*rpc.ApiVersion{
 				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
 				{Name: "projects/other-project/locations/global/apis/other-api/versions/v1"},
@@ -442,7 +430,8 @@ func TestListApiVersions(t *testing.T) {
 			},
 		},
 		{
-			desc: "in a specific api across all projects",
+			admin: true,
+			desc:  "in a specific api across all projects",
 			seed: []*rpc.ApiVersion{
 				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
 				{Name: "projects/other-project/locations/global/apis/my-api/versions/v1"},
@@ -518,10 +507,124 @@ func TestListApiVersions(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "ordered by description",
+			seed: []*rpc.ApiVersion{
+				{
+					Name:        "projects/my-project/locations/global/apis/my-api/versions/v1",
+					Description: "111: this should be returned first",
+				},
+				{
+					Name:        "projects/my-project/locations/global/apis/my-api/versions/v2",
+					Description: "333: this should be returned third",
+				},
+				{
+					Name:        "projects/my-project/locations/global/apis/my-api/versions/v3",
+					Description: "222: this should be returned second",
+				},
+			},
+			req: &rpc.ListApiVersionsRequest{
+				Parent:  "projects/my-project/locations/global/apis/my-api",
+				OrderBy: "description",
+			},
+			want: &rpc.ListApiVersionsResponse{
+				ApiVersions: []*rpc.ApiVersion{
+					{
+						Name:        "projects/my-project/locations/global/apis/my-api/versions/v1",
+						Description: "111: this should be returned first",
+					},
+					{
+						Name:        "projects/my-project/locations/global/apis/my-api/versions/v3",
+						Description: "222: this should be returned second",
+					},
+					{
+						Name:        "projects/my-project/locations/global/apis/my-api/versions/v2",
+						Description: "333: this should be returned third",
+					},
+				},
+			},
+		},
+		{
+			desc: "ordered by description descending",
+			seed: []*rpc.ApiVersion{
+				{
+					Name:        "projects/my-project/locations/global/apis/my-api/versions/v1",
+					Description: "111: this should be returned third",
+				},
+				{
+					Name:        "projects/my-project/locations/global/apis/my-api/versions/v2",
+					Description: "333: this should be returned first",
+				},
+				{
+					Name:        "projects/my-project/locations/global/apis/my-api/versions/v3",
+					Description: "222: this should be returned second",
+				},
+			},
+			req: &rpc.ListApiVersionsRequest{
+				Parent:  "projects/my-project/locations/global/apis/my-api",
+				OrderBy: "description desc",
+			},
+			want: &rpc.ListApiVersionsResponse{
+				ApiVersions: []*rpc.ApiVersion{
+					{
+						Name:        "projects/my-project/locations/global/apis/my-api/versions/v2",
+						Description: "333: this should be returned first",
+					},
+					{
+						Name:        "projects/my-project/locations/global/apis/my-api/versions/v3",
+						Description: "222: this should be returned second",
+					},
+					{
+						Name:        "projects/my-project/locations/global/apis/my-api/versions/v1",
+						Description: "111: this should be returned third",
+					},
+				},
+			},
+		},
+		{
+			desc: "ordered by description then by name",
+			seed: []*rpc.ApiVersion{
+				{
+					Name:        "projects/my-project/locations/global/apis/my-api/versions/v1",
+					Description: "222: this should be returned second or third (the name is the tie-breaker)",
+				},
+				{
+					Name:        "projects/my-project/locations/global/apis/my-api/versions/v3",
+					Description: "111: this should be returned first",
+				},
+				{
+					Name:        "projects/my-project/locations/global/apis/my-api/versions/v2",
+					Description: "222: this should be returned second or third (the name is the tie-breaker)",
+				},
+			},
+			req: &rpc.ListApiVersionsRequest{
+				Parent:  "projects/my-project/locations/global/apis/my-api",
+				OrderBy: "description,name",
+			},
+			want: &rpc.ListApiVersionsResponse{
+				ApiVersions: []*rpc.ApiVersion{
+					{
+						Name:        "projects/my-project/locations/global/apis/my-api/versions/v3",
+						Description: "111: this should be returned first",
+					},
+					{
+						Name:        "projects/my-project/locations/global/apis/my-api/versions/v1",
+						Description: "222: this should be returned second or third (the name is the tie-breaker)",
+					},
+					{
+						Name:        "projects/my-project/locations/global/apis/my-api/versions/v2",
+						Description: "222: this should be returned second or third (the name is the tie-breaker)",
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
+			if test.admin && adminServiceUnavailable() {
+				t.Skip(testRequiresAdminService)
+			}
 			ctx := context.Background()
 			server := defaultTestServer(t)
 			if err := seeder.SeedVersions(ctx, server, test.seed...); err != nil {
@@ -537,9 +640,6 @@ func TestListApiVersions(t *testing.T) {
 				protocmp.Transform(),
 				protocmp.IgnoreFields(new(rpc.ListApiVersionsResponse), "next_page_token"),
 				protocmp.IgnoreFields(new(rpc.ApiVersion), "create_time", "update_time"),
-				protocmp.SortRepeated(func(a, b *rpc.ApiVersion) bool {
-					return a.GetName() < b.GetName()
-				}),
 				test.extraOpts,
 			}
 
@@ -558,9 +658,11 @@ func TestListApiVersions(t *testing.T) {
 
 func TestListApiVersionsResponseCodes(t *testing.T) {
 	tests := []struct {
-		desc string
-		req  *rpc.ListApiVersionsRequest
-		want codes.Code
+		admin bool
+		desc  string
+		seed  *rpc.ApiVersion
+		req   *rpc.ListApiVersionsRequest
+		want  codes.Code
 	}{
 		{
 			desc: "parent api not found",
@@ -570,7 +672,8 @@ func TestListApiVersionsResponseCodes(t *testing.T) {
 			want: codes.NotFound,
 		},
 		{
-			desc: "parent project not found",
+			admin: true,
+			desc:  "parent project not found",
 			req: &rpc.ListApiVersionsRequest{
 				Parent: "projects/my-project/locations/global/apis/-",
 			},
@@ -597,12 +700,54 @@ func TestListApiVersionsResponseCodes(t *testing.T) {
 			},
 			want: codes.InvalidArgument,
 		},
+		{
+			desc: "invalid ordering by unknown field",
+			seed: &rpc.ApiVersion{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
+			req: &rpc.ListApiVersionsRequest{
+				Parent:  "projects/my-project/locations/global/apis/my-api",
+				OrderBy: "something",
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "invalid ordering by private field",
+			seed: &rpc.ApiVersion{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
+			req: &rpc.ListApiVersionsRequest{
+				Parent:  "projects/my-project/locations/global/apis/my-api",
+				OrderBy: "key",
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "invalid ordering direction",
+			seed: &rpc.ApiVersion{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
+			req: &rpc.ListApiVersionsRequest{
+				Parent:  "projects/my-project/locations/global/apis/my-api",
+				OrderBy: "description asc",
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "invalid ordering format",
+			seed: &rpc.ApiVersion{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
+			req: &rpc.ListApiVersionsRequest{
+				Parent:  "projects/my-project/locations/global/apis/my-api",
+				OrderBy: "description,",
+			},
+			want: codes.InvalidArgument,
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
+			if test.admin && adminServiceUnavailable() {
+				t.Skip(testRequiresAdminService)
+			}
 			ctx := context.Background()
 			server := defaultTestServer(t)
+			if err := seeder.SeedVersions(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			if _, err := server.ListApiVersions(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("ListApiVersions(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)

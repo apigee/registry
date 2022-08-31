@@ -15,7 +15,6 @@
 package main
 
 import (
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -24,17 +23,17 @@ import (
 )
 
 func setupFakeSpec(contents string) (dirPath, specFilePath string, err error) {
-	tempDir, err := ioutil.TempDir("", "")
+	tempDir, err := os.MkdirTemp("", "")
 	if err != nil {
 		return "", "", err
 	}
 
-	f, err := ioutil.TempFile(tempDir, "*.yaml")
+	f, err := os.CreateTemp(tempDir, "*.yaml")
 	if err != nil {
 		return "", "", err
 	}
 
-	err = ioutil.WriteFile(f.Name(), []byte(contents), 0644)
+	err = os.WriteFile(f.Name(), []byte(contents), 0644)
 	if err != nil {
 		return "", "", err
 	}

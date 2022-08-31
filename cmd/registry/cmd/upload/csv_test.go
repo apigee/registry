@@ -17,11 +17,11 @@ package upload
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"testing"
 
-	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -36,22 +36,22 @@ const (
 )
 
 func TestUploadCSV(t *testing.T) {
-	cloudtasksGA, err := ioutil.ReadFile(filepath.Join("testdata", "cloudtasks", "v2", "openapi.yaml"))
+	cloudtasksGA, err := os.ReadFile(filepath.Join("testdata", "cloudtasks", "v2", "openapi.yaml"))
 	if err != nil {
 		t.Fatalf("Setup: Failed to read spec contents: %s", err)
 	}
 
-	cloudtasksBeta, err := ioutil.ReadFile(filepath.Join("testdata", "cloudtasks", "v2beta2", "openapi.yaml"))
+	cloudtasksBeta, err := os.ReadFile(filepath.Join("testdata", "cloudtasks", "v2beta2", "openapi.yaml"))
 	if err != nil {
 		t.Fatalf("Setup: Failed to read spec contents: %s", err)
 	}
 
-	datastoreGA, err := ioutil.ReadFile(filepath.Join("testdata", "datastore", "v1", "openapi.yaml"))
+	datastoreGA, err := os.ReadFile(filepath.Join("testdata", "datastore", "v1", "openapi.yaml"))
 	if err != nil {
 		t.Fatalf("Setup: Failed to read spec contents: %s", err)
 	}
 
-	datastoreBeta, err := ioutil.ReadFile(filepath.Join("testdata", "datastore", "v1beta1", "openapi.yaml"))
+	datastoreBeta, err := os.ReadFile(filepath.Join("testdata", "datastore", "v1beta1", "openapi.yaml"))
 	if err != nil {
 		t.Fatalf("Setup: Failed to read spec contents: %s", err)
 	}
@@ -118,7 +118,7 @@ func TestUploadCSV(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
-			client, err := connection.NewClient(ctx)
+			client, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				t.Fatalf("Setup: Failed to create client: %s", err)
 			}

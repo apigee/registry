@@ -18,13 +18,16 @@ import (
 	"context"
 	"strings"
 	"sync"
+	"time"
 
+	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/internal/storage"
 	"github.com/apigee/registry/server/registry/internal/storage/models"
 	"github.com/apigee/registry/server/registry/names"
 	"google.golang.org/genproto/googleapis/api/httpbody"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -49,16 +52,16 @@ func (s *RegistryServer) createSpec(ctx context.Context, name names.Spec, body *
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer db.Close()
 
+	if err := name.Validate(); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	// Necessary because revisions
 	if _, err := db.GetSpec(ctx, name); err == nil {
 		return nil, status.Errorf(codes.AlreadyExists, "API spec %q already exists", name)
 	} else if !isNotFound(err) {
 		return nil, err
-	}
-
-	if err := name.Validate(); err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	// Creation should only succeed when the parent exists.
@@ -71,7 +74,7 @@ func (s *RegistryServer) createSpec(ctx context.Context, name names.Spec, body *
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	if err := db.SaveSpecRevision(ctx, spec); err != nil {
+	if err := db.CreateSpecRevision(ctx, spec); err != nil {
 		return nil, err
 	}
 
@@ -94,7 +97,6 @@ func (s *RegistryServer) DeleteApiSpec(ctx context.Context, req *rpc.DeleteApiSp
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer db.Close()
 
 	name, err := names.ParseSpec(req.GetName())
 	if err != nil {
@@ -130,7 +132,6 @@ func (s *RegistryServer) getApiSpec(ctx context.Context, name names.Spec) (*rpc.
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer db.Close()
 
 	spec, err := db.GetSpec(ctx, name)
 	if err != nil {
@@ -150,7 +151,6 @@ func (s *RegistryServer) getApiSpecRevision(ctx context.Context, name names.Spec
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer db.Close()
 
 	revision, err := db.GetSpecRevision(ctx, name)
 	if err != nil {
@@ -171,7 +171,6 @@ func (s *RegistryServer) GetApiSpecContents(ctx context.Context, req *rpc.GetApi
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer db.Close()
 
 	var specName = req.GetName()
 	var spec *models.Spec
@@ -193,7 +192,8 @@ func (s *RegistryServer) GetApiSpecContents(ctx context.Context, req *rpc.GetApi
 	if err != nil {
 		return nil, err
 	}
-	if strings.Contains(spec.MimeType, "+gzip") {
+
+	if strings.Contains(spec.MimeType, "+gzip") && !incomingContextAllowsGZIP(ctx) {
 		contents, err := models.GUnzippedBytes(blob.Contents)
 		if err != nil {
 			return nil, status.Errorf(codes.FailedPrecondition, "failed to unzip contents with gzip MIME type: %s", err)
@@ -215,7 +215,6 @@ func (s *RegistryServer) ListApiSpecs(ctx context.Context, req *rpc.ListApiSpecs
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer db.Close()
 
 	if req.GetPageSize() < 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid page_size %d: must not be negative", req.GetPageSize())
@@ -233,6 +232,7 @@ func (s *RegistryServer) ListApiSpecs(ctx context.Context, req *rpc.ListApiSpecs
 	listing, err := db.ListSpecs(ctx, parent, storage.PageOptions{
 		Size:   req.GetPageSize(),
 		Filter: req.GetFilter(),
+		Order:  req.GetOrderBy(),
 		Token:  req.GetPageToken(),
 	})
 	if err != nil {
@@ -262,7 +262,6 @@ func (s *RegistryServer) UpdateApiSpec(ctx context.Context, req *rpc.UpdateApiSp
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer db.Close()
 
 	if req.GetApiSpec() == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid api_spec %+v: body must be provided", req.GetApiSpec())
@@ -276,6 +275,7 @@ func (s *RegistryServer) UpdateApiSpec(ctx context.Context, req *rpc.UpdateApiSp
 	}
 
 	if req.GetAllowMissing() {
+		before := time.Now()
 		// Prevent a race condition that can occur when two updates are made
 		// to the same non-existent resource. The db.Get...() call returns
 		// NotFound for both updates, and after one creates the resource,
@@ -284,6 +284,7 @@ func (s *RegistryServer) UpdateApiSpec(ctx context.Context, req *rpc.UpdateApiSp
 		// with improvements closer to the database level.
 		updateSpecMutex.Lock()
 		defer updateSpecMutex.Unlock()
+		log.Debugf(ctx, "Acquired lock after blocking for %v", time.Since(before))
 	}
 
 	spec, err := db.GetSpec(ctx, name)
@@ -296,7 +297,7 @@ func (s *RegistryServer) UpdateApiSpec(ctx context.Context, req *rpc.UpdateApiSp
 	// Apply the update to the spec - possibly changing the revision ID.
 	maskExpansion := models.ExpandMask(req.GetApiSpec(), req.GetUpdateMask())
 	if err := spec.Update(req.GetApiSpec(), maskExpansion); err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, err
 	}
 
 	// Save the updated/current spec. This creates a new revision or updates the previous one.
@@ -318,4 +319,17 @@ func (s *RegistryServer) UpdateApiSpec(ctx context.Context, req *rpc.UpdateApiSp
 
 	s.notify(ctx, rpc.Notification_UPDATED, spec.RevisionName())
 	return message, nil
+}
+
+func incomingContextAllowsGZIP(ctx context.Context) bool {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return false
+	}
+	for _, a := range md["accept-encoding"] {
+		if a == "gzip" {
+			return true
+		}
+	}
+	return false
 }

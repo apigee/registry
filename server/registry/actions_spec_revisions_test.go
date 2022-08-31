@@ -235,11 +235,17 @@ func TestDeleteApiSpecRevision(t *testing.T) {
 		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
 	}
 
-	t.Run("only remaining revision", func(t *testing.T) {
-		t.Skip("not yet supported")
+	getReq := &rpc.GetApiSpecRequest{
+		Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
+	}
+	firstRevision, err := server.GetApiSpec(ctx, getReq)
+	if err != nil {
+		t.Fatalf("Setup: GetApiSpecRequest(%+v) returned error: %s", getReq, err)
+	}
 
+	t.Run("only remaining revision", func(t *testing.T) {
 		req := &rpc.DeleteApiSpecRevisionRequest{
-			Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
+			Name: fmt.Sprintf("projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec@%s", firstRevision.GetRevisionId()),
 		}
 
 		if _, err := server.DeleteApiSpecRevision(ctx, req); status.Code(err) != codes.FailedPrecondition {
@@ -283,6 +289,7 @@ func TestDeleteApiSpecRevision(t *testing.T) {
 
 func TestListApiSpecRevisions(t *testing.T) {
 	tests := []struct {
+		admin     bool
 		desc      string
 		seed      []*rpc.ApiSpec
 		req       *rpc.ListApiSpecRevisionsRequest
@@ -368,7 +375,8 @@ func TestListApiSpecRevisions(t *testing.T) {
 			},
 		},
 		{
-			desc: "across multiple projects",
+			admin: true,
+			desc:  "across multiple projects",
 			seed: []*rpc.ApiSpec{
 				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
 				{Name: "projects/other-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
@@ -413,6 +421,9 @@ func TestListApiSpecRevisions(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
+			if test.admin && adminServiceUnavailable() {
+				t.Skip(testRequiresAdminService)
+			}
 			ctx := context.Background()
 			server := defaultTestServer(t)
 			if err := seeder.SeedSpecs(ctx, server, test.seed...); err != nil {

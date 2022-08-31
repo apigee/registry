@@ -11,3 +11,13 @@ Registry API.
 - [protos.sh](protos.sh) builds and analyzes a collection of APIs described by
   Protocol Buffer files distributed with the
   [googleapis](https://github.com/googleapis/googleapis) repo.
+
+These scripts expect that the `PROJECT` is set to the id of the registry
+project. For self-hosted (open source) installations, you can set this variable
+by sourcing [setup-project.sh](setup-project.sh) as follows:
+
+```
+. setup-project.sh
+```
+
+This creates a project named `sample`.

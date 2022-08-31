@@ -15,6 +15,8 @@
 package registry
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
 	"crypto/sha256"
 	"fmt"
@@ -25,6 +27,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -244,6 +247,19 @@ func TestCreateApiSpecResponseCodes(t *testing.T) {
 			},
 			want: codes.InvalidArgument,
 		},
+		{
+			desc: "invalid contents for gzip mime type",
+			seed: &rpc.ApiVersion{Name: "projects/my-project/locations/global/apis/my-api/versions/v1"},
+			req: &rpc.CreateApiSpecRequest{
+				Parent:    "projects/my-project/locations/global/apis/my-api/versions/v1",
+				ApiSpecId: "my-spec",
+				ApiSpec: &rpc.ApiSpec{
+					MimeType: "application/x.openapi+gzip",
+					Contents: []byte("these contents are not gzipped"),
+				},
+			},
+			want: codes.InvalidArgument,
+		},
 	}
 
 	for _, test := range tests {
@@ -274,16 +290,6 @@ func TestCreateApiSpecDuplicates(t *testing.T) {
 			req: &rpc.CreateApiSpecRequest{
 				Parent:    "projects/my-project/locations/global/apis/my-api/versions/v1",
 				ApiSpecId: "my-spec",
-				ApiSpec:   &rpc.ApiSpec{},
-			},
-			want: codes.AlreadyExists,
-		},
-		{
-			desc: "case insensitive",
-			seed: &rpc.ApiSpec{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
-			req: &rpc.CreateApiSpecRequest{
-				Parent:    "projects/my-project/locations/global/apis/my-api/versions/v1",
-				ApiSpecId: "My-Spec",
 				ApiSpec:   &rpc.ApiSpec{},
 			},
 			want: codes.AlreadyExists,
@@ -433,7 +439,7 @@ func TestGetApiSpecContents(t *testing.T) {
 			desc: "case insensitive identifiers",
 			seed: &rpc.ApiSpec{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
 			req: &rpc.GetApiSpecContentsRequest{
-				Name: "projects/My-project/locations/global/apis/My-api/versions/V1/specs/My-Spec",
+				Name: "projects/my-project/locations/global/apis/My-api/versions/V1/specs/My-Spec",
 			},
 			want: codes.OK,
 		},
@@ -477,8 +483,129 @@ func TestGetApiSpecContents(t *testing.T) {
 	}
 }
 
+func gZippedBytes(input []byte) ([]byte, error) {
+	var buf bytes.Buffer
+	zw, err := gzip.NewWriterLevel(&buf, gzip.BestCompression)
+	if err != nil {
+		return nil, err
+	}
+	_, err = zw.Write(input)
+	if err != nil {
+		return nil, err
+	}
+	if err := zw.Close(); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+
+func TestGetApiSpecContentsData(t *testing.T) {
+	specContentsCompressed, err := gZippedBytes(specContents)
+	if err != nil {
+		t.Fatalf("Setup/Seeding: Failed to gzip sample spec %s", err)
+	}
+	tests := []struct {
+		desc     string
+		seed     *rpc.ApiSpec
+		req      *rpc.GetApiSpecContentsRequest
+		accept   string
+		wantCode codes.Code
+		wantData []byte
+	}{
+		{
+			desc: "uncompressed mimetype with no accept-encoding header",
+			seed: &rpc.ApiSpec{
+				Name:     "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
+				MimeType: "application/x.openapi;version=3.0.0",
+				Contents: specContents,
+			},
+			req: &rpc.GetApiSpecContentsRequest{
+				Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
+			},
+			wantCode: codes.OK,
+			wantData: specContents, // uncompressed upload, uncompressed response
+		},
+		{
+			desc: "uncompressed mimetype with accept-encoding=gzip",
+			seed: &rpc.ApiSpec{
+				Name:     "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
+				MimeType: "application/x.openapi;version=3.0.0",
+				Contents: specContents,
+			},
+			req: &rpc.GetApiSpecContentsRequest{
+				Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
+			},
+			accept:   "gzip",
+			wantCode: codes.OK,
+			wantData: specContents, // we only return compressed data when it was uploaded by the client
+		},
+		{
+			desc: "gzip mimetype with no accept-encoding header",
+			seed: &rpc.ApiSpec{
+				Name:     "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
+				MimeType: "application/x.openapi+gzip;version=3.0.0",
+				Contents: specContentsCompressed,
+			},
+			req: &rpc.GetApiSpecContentsRequest{
+				Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
+			},
+			wantCode: codes.OK,
+			wantData: specContents, // compressed upload, uncompressed response
+		},
+		{
+			desc: "gzip mimetype with accept-encoding=gzip",
+			seed: &rpc.ApiSpec{
+				Name:     "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
+				MimeType: "application/x.openapi+gzip;version=3.0.0",
+				Contents: specContentsCompressed,
+			},
+			req: &rpc.GetApiSpecContentsRequest{
+				Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
+			},
+			accept:   "gzip",
+			wantCode: codes.OK,
+			wantData: specContentsCompressed, // compressed upload, compressed response
+		},
+		{
+			desc: "gzip mimetype with accept-encoding=some-unknown-type",
+			seed: &rpc.ApiSpec{
+				Name:     "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
+				MimeType: "application/x.openapi+gzip;version=3.0.0",
+				Contents: specContentsCompressed,
+			},
+			req: &rpc.GetApiSpecContentsRequest{
+				Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
+			},
+			accept:   "some-unknown-type",
+			wantCode: codes.OK,
+			wantData: specContents, // uncompressed response because we don't support the requested encoding
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			ctx := context.Background()
+			server := defaultTestServer(t)
+			if err := seeder.SeedSpecs(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
+			if test.accept != "" {
+				ctx = metadata.NewIncomingContext(ctx, metadata.Pairs("accept-encoding", test.accept))
+			}
+			resp, err := server.GetApiSpecContents(ctx, test.req)
+			if status.Code(err) != test.wantCode {
+				t.Errorf("GetApiSpecContents(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.wantCode, err)
+			}
+			if !bytes.Equal(resp.Data, test.wantData) {
+				t.Errorf("GetApiSpecContents(%+v) returned contents %v, want %v: %v", test.req, resp.Data, test.wantData, err)
+			}
+		})
+	}
+}
+
 func TestListApiSpecs(t *testing.T) {
 	tests := []struct {
+		admin     bool
 		desc      string
 		seed      []*rpc.ApiSpec
 		req       *rpc.ListApiSpecsRequest
@@ -536,7 +663,8 @@ func TestListApiSpecs(t *testing.T) {
 			},
 		},
 		{
-			desc: "across all versions in a specific project and api",
+			admin: true,
+			desc:  "across all versions in a specific project and api",
 			seed: []*rpc.ApiSpec{
 				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
 				{Name: "projects/my-project/locations/global/apis/my-api/versions/v2/specs/my-spec"},
@@ -553,7 +681,8 @@ func TestListApiSpecs(t *testing.T) {
 			},
 		},
 		{
-			desc: "across all apis and versions in a specific project",
+			admin: true,
+			desc:  "across all apis and versions in a specific project",
 			seed: []*rpc.ApiSpec{
 				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
 				{Name: "projects/my-project/locations/global/apis/other-api/versions/v2/specs/my-spec"},
@@ -570,7 +699,8 @@ func TestListApiSpecs(t *testing.T) {
 			},
 		},
 		{
-			desc: "across all projects, apis, and versions",
+			admin: true,
+			desc:  "across all projects, apis, and versions",
 			seed: []*rpc.ApiSpec{
 				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
 				{Name: "projects/other-project/locations/global/apis/other-api/versions/v2/specs/my-spec"},
@@ -586,7 +716,8 @@ func TestListApiSpecs(t *testing.T) {
 			},
 		},
 		{
-			desc: "in a specific api and version across all projects",
+			admin: true,
+			desc:  "in a specific api and version across all projects",
 			seed: []*rpc.ApiSpec{
 				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
 				{Name: "projects/other-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
@@ -604,7 +735,8 @@ func TestListApiSpecs(t *testing.T) {
 			},
 		},
 		{
-			desc: "in a specific version across all projects and apis",
+			admin: true,
+			desc:  "in a specific version across all projects and apis",
 			seed: []*rpc.ApiSpec{
 				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
 				{Name: "projects/other-project/locations/global/apis/other-api/versions/v1/specs/my-spec"},
@@ -621,7 +753,8 @@ func TestListApiSpecs(t *testing.T) {
 			},
 		},
 		{
-			desc: "in all versions of a specific api across all projects",
+			admin: true,
+			desc:  "in all versions of a specific api across all projects",
 			seed: []*rpc.ApiSpec{
 				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
 				{Name: "projects/other-project/locations/global/apis/my-api/versions/v2/specs/my-spec"},
@@ -697,10 +830,124 @@ func TestListApiSpecs(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "ordered by description",
+			seed: []*rpc.ApiSpec{
+				{
+					Name:        "projects/my-project/locations/global/apis/my-api/versions/v1/specs/spec1",
+					Description: "111: this should be returned first",
+				},
+				{
+					Name:        "projects/my-project/locations/global/apis/my-api/versions/v1/specs/spec2",
+					Description: "333: this should be returned third",
+				},
+				{
+					Name:        "projects/my-project/locations/global/apis/my-api/versions/v1/specs/spec3",
+					Description: "222: this should be returned second",
+				},
+			},
+			req: &rpc.ListApiSpecsRequest{
+				Parent:  "projects/my-project/locations/global/apis/my-api/versions/v1",
+				OrderBy: "description",
+			},
+			want: &rpc.ListApiSpecsResponse{
+				ApiSpecs: []*rpc.ApiSpec{
+					{
+						Name:        "projects/my-project/locations/global/apis/my-api/versions/v1/specs/spec1",
+						Description: "111: this should be returned first",
+					},
+					{
+						Name:        "projects/my-project/locations/global/apis/my-api/versions/v1/specs/spec3",
+						Description: "222: this should be returned second",
+					},
+					{
+						Name:        "projects/my-project/locations/global/apis/my-api/versions/v1/specs/spec2",
+						Description: "333: this should be returned third",
+					},
+				},
+			},
+		},
+		{
+			desc: "ordered by description descending",
+			seed: []*rpc.ApiSpec{
+				{
+					Name:        "projects/my-project/locations/global/apis/my-api/versions/v1/specs/spec1",
+					Description: "111: this should be returned third",
+				},
+				{
+					Name:        "projects/my-project/locations/global/apis/my-api/versions/v1/specs/spec2",
+					Description: "333: this should be returned first",
+				},
+				{
+					Name:        "projects/my-project/locations/global/apis/my-api/versions/v1/specs/spec3",
+					Description: "222: this should be returned second",
+				},
+			},
+			req: &rpc.ListApiSpecsRequest{
+				Parent:  "projects/my-project/locations/global/apis/my-api/versions/v1",
+				OrderBy: "description desc",
+			},
+			want: &rpc.ListApiSpecsResponse{
+				ApiSpecs: []*rpc.ApiSpec{
+					{
+						Name:        "projects/my-project/locations/global/apis/my-api/versions/v1/specs/spec2",
+						Description: "333: this should be returned first",
+					},
+					{
+						Name:        "projects/my-project/locations/global/apis/my-api/versions/v1/specs/spec3",
+						Description: "222: this should be returned second",
+					},
+					{
+						Name:        "projects/my-project/locations/global/apis/my-api/versions/v1/specs/spec1",
+						Description: "111: this should be returned third",
+					},
+				},
+			},
+		},
+		{
+			desc: "ordered by description then by name",
+			seed: []*rpc.ApiSpec{
+				{
+					Name:        "projects/my-project/locations/global/apis/my-api/versions/v1/specs/spec1",
+					Description: "222: this should be returned second or third (the name is the tie-breaker)",
+				},
+				{
+					Name:        "projects/my-project/locations/global/apis/my-api/versions/v1/specs/spec3",
+					Description: "111: this should be returned first",
+				},
+				{
+					Name:        "projects/my-project/locations/global/apis/my-api/versions/v1/specs/spec2",
+					Description: "222: this should be returned second or third (the name is the tie-breaker)",
+				},
+			},
+			req: &rpc.ListApiSpecsRequest{
+				Parent:  "projects/my-project/locations/global/apis/my-api/versions/v1",
+				OrderBy: "description,name",
+			},
+			want: &rpc.ListApiSpecsResponse{
+				ApiSpecs: []*rpc.ApiSpec{
+					{
+						Name:        "projects/my-project/locations/global/apis/my-api/versions/v1/specs/spec3",
+						Description: "111: this should be returned first",
+					},
+					{
+						Name:        "projects/my-project/locations/global/apis/my-api/versions/v1/specs/spec1",
+						Description: "222: this should be returned second or third (the name is the tie-breaker)",
+					},
+					{
+						Name:        "projects/my-project/locations/global/apis/my-api/versions/v1/specs/spec2",
+						Description: "222: this should be returned second or third (the name is the tie-breaker)",
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
+			if test.admin && adminServiceUnavailable() {
+				t.Skip(testRequiresAdminService)
+			}
 			ctx := context.Background()
 			server := defaultTestServer(t)
 			if err := seeder.SeedSpecs(ctx, server, test.seed...); err != nil {
@@ -716,9 +963,6 @@ func TestListApiSpecs(t *testing.T) {
 				protocmp.Transform(),
 				protocmp.IgnoreFields(new(rpc.ListApiSpecsResponse), "next_page_token"),
 				protocmp.IgnoreFields(new(rpc.ApiSpec), "revision_id", "create_time", "revision_create_time", "revision_update_time"),
-				protocmp.SortRepeated(func(a, b *rpc.ApiSpec) bool {
-					return a.GetName() < b.GetName()
-				}),
 				test.extraOpts,
 			}
 
@@ -737,9 +981,11 @@ func TestListApiSpecs(t *testing.T) {
 
 func TestListApiSpecsResponseCodes(t *testing.T) {
 	tests := []struct {
-		desc string
-		req  *rpc.ListApiSpecsRequest
-		want codes.Code
+		admin bool
+		desc  string
+		seed  *rpc.ApiSpec
+		req   *rpc.ListApiSpecsRequest
+		want  codes.Code
 	}{
 		{
 			desc: "parent version not found",
@@ -756,7 +1002,8 @@ func TestListApiSpecsResponseCodes(t *testing.T) {
 			want: codes.NotFound,
 		},
 		{
-			desc: "parent project not found",
+			admin: true,
+			desc:  "parent project not found",
 			req: &rpc.ListApiSpecsRequest{
 				Parent: "projects/my-project/locations/global/apis/-/versions/-",
 			},
@@ -783,12 +1030,54 @@ func TestListApiSpecsResponseCodes(t *testing.T) {
 			},
 			want: codes.InvalidArgument,
 		},
+		{
+			desc: "invalid ordering by unknown field",
+			seed: &rpc.ApiSpec{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
+			req: &rpc.ListApiSpecsRequest{
+				Parent:  "projects/my-project/locations/global/apis/my-api/versions/v1",
+				OrderBy: "something",
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "invalid ordering by private field",
+			seed: &rpc.ApiSpec{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
+			req: &rpc.ListApiSpecsRequest{
+				Parent:  "projects/my-project/locations/global/apis/my-api/versions/v1",
+				OrderBy: "key",
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "invalid ordering direction",
+			seed: &rpc.ApiSpec{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
+			req: &rpc.ListApiSpecsRequest{
+				Parent:  "projects/my-project/locations/global/apis/my-api/versions/v1",
+				OrderBy: "description asc",
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "invalid ordering format",
+			seed: &rpc.ApiSpec{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
+			req: &rpc.ListApiSpecsRequest{
+				Parent:  "projects/my-project/locations/global/apis/my-api/versions/v1",
+				OrderBy: "description,",
+			},
+			want: codes.InvalidArgument,
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
+			if test.admin && adminServiceUnavailable() {
+				t.Skip(testRequiresAdminService)
+			}
 			ctx := context.Background()
 			server := defaultTestServer(t)
+			if err := seeder.SeedSpecs(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			if _, err := server.ListApiSpecs(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("ListApiSpecs(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
@@ -1158,6 +1447,23 @@ func TestUpdateApiSpecResponseCodes(t *testing.T) {
 					Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
 				},
 				UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"this field does not exist"}},
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "invalid contents for gzip mime type",
+			seed: &rpc.ApiSpec{
+				Name:     "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
+				MimeType: "application/x.openapi",
+				Contents: []byte("these contents are not gzipped"),
+			},
+			req: &rpc.UpdateApiSpecRequest{
+				ApiSpec: &rpc.ApiSpec{
+					Name:     "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
+					MimeType: "application/x.openapi+gzip",
+					Contents: []byte("these contents are not gzipped"),
+				},
+				UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"contents", "mime_type"}},
 			},
 			want: codes.InvalidArgument,
 		},

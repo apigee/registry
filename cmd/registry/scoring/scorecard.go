@@ -21,7 +21,6 @@ import (
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/cmd/registry/patch"
 	"github.com/apigee/registry/cmd/registry/patterns"
-	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
@@ -36,7 +35,7 @@ func scoreCardID(definitionID string) string {
 
 func FetchScoreCardDefinitions(
 	ctx context.Context,
-	client connection.Client,
+	client artifactClient,
 	resource patterns.ResourceName) ([]*rpc.Artifact, error) {
 	defArtifacts := make([]*rpc.Artifact, 0)
 
@@ -46,7 +45,7 @@ func FetchScoreCardDefinitions(
 		return nil, err
 	}
 	listFilter := fmt.Sprintf("mime_type == %q", patch.MimeTypeForKind("ScoreCardDefinition"))
-	err = core.ListArtifacts(ctx, client, artifact, listFilter, true,
+	err = client.ListArtifacts(ctx, artifact, listFilter, true,
 		func(artifact *rpc.Artifact) error {
 			definition := &rpc.ScoreCardDefinition{}
 			if err := proto.Unmarshal(artifact.GetContents(), definition); err != nil {
@@ -72,9 +71,10 @@ func FetchScoreCardDefinitions(
 
 func CalculateScoreCard(
 	ctx context.Context,
-	client connection.Client,
+	client artifactClient,
 	defArtifact *rpc.Artifact,
-	resource patterns.ResourceInstance) error {
+	resource patterns.ResourceInstance,
+	dryRun bool) error {
 	project := fmt.Sprintf("%s/locations/global", resource.ResourceName().Project())
 
 	// Extract definition
@@ -98,7 +98,8 @@ func CalculateScoreCard(
 	}
 
 	// Generate ScoreCard if the definition has been updated
-	if scoreCardArtifact != nil && scoreCardArtifact.GetUpdateTime().AsTime().Before(defArtifact.GetUpdateTime().AsTime()) {
+	// This condition is required to avoid the scenario mentioned here: https://github.com/apigee/registry/issues/641
+	if scoreCardArtifact != nil && defArtifact.GetUpdateTime().AsTime().Add(patterns.ResourceUpdateThresholdSeconds).After(scoreCardArtifact.GetUpdateTime().AsTime()) {
 		takeAction = true
 	}
 
@@ -108,15 +109,15 @@ func CalculateScoreCard(
 	}
 
 	if result.needsUpdate {
-		// TODO: Add dry_run flag
-
-		// upload the scoreCard to registry
-		err = uploadScoreCard(ctx, client, resource, result.scoreCard)
-		if err != nil {
-			return err
+		if dryRun {
+			core.PrintMessage(result.scoreCard)
+			return nil
 		}
+		// upload the scoreCard to registry
+		return uploadScoreCard(ctx, client, resource, result.scoreCard)
 	}
 
+	log.Debugf(ctx, "ScoreCard %s is already up-to-date.", artifactName)
 	return nil
 }
 
@@ -133,7 +134,7 @@ type scoreCardResult struct {
 
 func processScorePatterns(
 	ctx context.Context,
-	client connection.Client,
+	client artifactClient,
 	definition *rpc.ScoreCardDefinition,
 	resource patterns.ResourceInstance,
 	scoreCardArtifact *rpc.Artifact,
@@ -163,7 +164,8 @@ func processScorePatterns(
 		}
 
 		// needsUpdate tells the calling function if the ScoreCard artifact needs to be updated
-		needsUpdate = needsUpdate || takeAction || scoreCardArtifact.GetUpdateTime().AsTime().Before(artifact.GetUpdateTime().AsTime())
+		// This condition is required to avoid the scenario mentioned here: https://github.com/apigee/registry/issues/641
+		needsUpdate = needsUpdate || takeAction || artifact.GetUpdateTime().AsTime().Add(patterns.ResourceUpdateThresholdSeconds).After(scoreCardArtifact.GetUpdateTime().AsTime())
 		// Extract Score from the fetched artifact
 		score := &rpc.Score{}
 		if err := proto.Unmarshal(artifact.GetContents(), score); err != nil {
@@ -202,7 +204,7 @@ func processScorePatterns(
 	}
 }
 
-func uploadScoreCard(ctx context.Context, client connection.Client, resource patterns.ResourceInstance, scoreCard *rpc.ScoreCard) error {
+func uploadScoreCard(ctx context.Context, client artifactClient, resource patterns.ResourceInstance, scoreCard *rpc.ScoreCard) error {
 	artifactBytes, err := proto.Marshal(scoreCard)
 	if err != nil {
 		return err
@@ -210,10 +212,10 @@ func uploadScoreCard(ctx context.Context, client connection.Client, resource pat
 	artifact := &rpc.Artifact{
 		Name:     fmt.Sprintf("%s/artifacts/%s", resource.ResourceName().String(), scoreCard.GetId()),
 		Contents: artifactBytes,
-		MimeType: patch.MimeTypeForKind("Score"),
+		MimeType: patch.MimeTypeForKind("ScoreCard"),
 	}
 	log.Debugf(ctx, "Uploading %s", artifact.GetName())
-	if err = core.SetArtifact(ctx, client, artifact); err != nil {
+	if err = client.SetArtifact(ctx, artifact); err != nil {
 		return fmt.Errorf("failed to save artifact %s: %s", artifact.GetName(), err)
 	}
 

@@ -20,9 +20,9 @@ import (
 	"strings"
 
 	"github.com/apigee/registry/cmd/registry/core"
-	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/log"
+	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"github.com/spf13/cobra"
@@ -41,7 +41,13 @@ func Command() *cobra.Command {
 		Args:  cobra.MinimumNArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := cmd.Context()
-			client, err := connection.NewClient(ctx)
+			c, err := connection.ActiveConfig()
+			if err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get config")
+			}
+			args[0] = c.FQName(args[0])
+
+			client, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
@@ -81,7 +87,7 @@ func Command() *cobra.Command {
 
 func matchAndHandleLabelCmd(
 	ctx context.Context,
-	client connection.Client,
+	client connection.RegistryClient,
 	taskQueue chan<- core.Task,
 	name string,
 	filter string,
@@ -180,7 +186,7 @@ func labelDeployments(
 }
 
 type labelApiTask struct {
-	client   connection.Client
+	client   connection.RegistryClient
 	api      *rpc.Api
 	labeling *core.Labeling
 }
@@ -207,7 +213,7 @@ func (task *labelApiTask) Run(ctx context.Context) error {
 }
 
 type labelVersionTask struct {
-	client   connection.Client
+	client   connection.RegistryClient
 	version  *rpc.ApiVersion
 	labeling *core.Labeling
 }
@@ -234,7 +240,7 @@ func (task *labelVersionTask) Run(ctx context.Context) error {
 }
 
 type labelSpecTask struct {
-	client   connection.Client
+	client   connection.RegistryClient
 	spec     *rpc.ApiSpec
 	labeling *core.Labeling
 }
@@ -261,7 +267,7 @@ func (task *labelSpecTask) Run(ctx context.Context) error {
 }
 
 type labelDeploymentTask struct {
-	client     connection.Client
+	client     connection.RegistryClient
 	deployment *rpc.ApiDeployment
 	labeling   *core.Labeling
 }

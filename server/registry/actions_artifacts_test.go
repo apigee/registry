@@ -191,14 +191,16 @@ func TestCreateArtifact(t *testing.T) {
 
 func TestCreateArtifactResponseCodes(t *testing.T) {
 	tests := []struct {
-		desc string
-		seed seeder.RegistryResource
-		req  *rpc.CreateArtifactRequest
-		want codes.Code
+		admin bool
+		desc  string
+		seed  seeder.RegistryResource
+		req   *rpc.CreateArtifactRequest
+		want  codes.Code
 	}{
 		{
-			desc: "parent project not found",
-			seed: &rpc.Project{Name: "projects/other-project"},
+			admin: true,
+			desc:  "parent project not found",
+			seed:  &rpc.Project{Name: "projects/other-project"},
 			req: &rpc.CreateArtifactRequest{
 				Parent:     "projects/my-project/locations/global",
 				ArtifactId: "valid-id",
@@ -330,6 +332,9 @@ func TestCreateArtifactResponseCodes(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
+			if test.admin && adminServiceUnavailable() {
+				t.Skip(testRequiresAdminService)
+			}
 			ctx := context.Background()
 			server := defaultTestServer(t)
 			if err := seeder.SeedRegistry(ctx, server, test.seed); err != nil {
@@ -356,16 +361,6 @@ func TestCreateArtifactDuplicates(t *testing.T) {
 			req: &rpc.CreateArtifactRequest{
 				Parent:     "projects/my-project/locations/global",
 				ArtifactId: "my-artifact",
-				Artifact:   &rpc.Artifact{},
-			},
-			want: codes.AlreadyExists,
-		},
-		{
-			desc: "case insensitive",
-			seed: &rpc.Artifact{Name: "projects/my-project/locations/global/artifacts/my-artifact"},
-			req: &rpc.CreateArtifactRequest{
-				Parent:     "projects/my-project/locations/global",
-				ArtifactId: "My-Artifact",
 				Artifact:   &rpc.Artifact{},
 			},
 			want: codes.AlreadyExists,
@@ -499,7 +494,7 @@ func TestGetArtifactContents(t *testing.T) {
 			desc: "case insensitive identifiers",
 			seed: &rpc.Artifact{Name: "projects/my-project/locations/global/artifacts/my-artifact"},
 			req: &rpc.GetArtifactContentsRequest{
-				Name: "projects/My-Project/locations/global/artifacts/My-Artifact",
+				Name: "projects/my-project/locations/global/artifacts/My-Artifact",
 			},
 			want: codes.OK,
 		},
@@ -545,6 +540,7 @@ func TestGetArtifactContents(t *testing.T) {
 
 func TestListArtifacts(t *testing.T) {
 	tests := []struct {
+		admin     bool
 		desc      string
 		seed      []*rpc.Artifact
 		req       *rpc.ListArtifactsRequest
@@ -572,7 +568,8 @@ func TestListArtifacts(t *testing.T) {
 			},
 		},
 		{
-			desc: "across all version in a artifact project and api",
+			admin: true,
+			desc:  "across all version in a artifact project and api",
 			seed: []*rpc.Artifact{
 				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/my-artifact"},
 				{Name: "projects/my-project/locations/global/apis/my-api/versions/v2/artifacts/my-artifact"},
@@ -589,7 +586,8 @@ func TestListArtifacts(t *testing.T) {
 			},
 		},
 		{
-			desc: "across all apis and version in a artifact project",
+			admin: true,
+			desc:  "across all apis and version in a artifact project",
 			seed: []*rpc.Artifact{
 				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/my-artifact"},
 				{Name: "projects/my-project/locations/global/apis/other-api/versions/v2/artifacts/my-artifact"},
@@ -606,7 +604,8 @@ func TestListArtifacts(t *testing.T) {
 			},
 		},
 		{
-			desc: "across all projects, apis, and version",
+			admin: true,
+			desc:  "across all projects, apis, and version",
 			seed: []*rpc.Artifact{
 				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/my-artifact"},
 				{Name: "projects/other-project/locations/global/apis/other-api/versions/v2/artifacts/my-artifact"},
@@ -622,7 +621,8 @@ func TestListArtifacts(t *testing.T) {
 			},
 		},
 		{
-			desc: "in a artifact api and parent across all projects",
+			admin: true,
+			desc:  "in a artifact api and parent across all projects",
 			seed: []*rpc.Artifact{
 				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/my-artifact"},
 				{Name: "projects/other-project/locations/global/apis/my-api/versions/v1/artifacts/my-artifact"},
@@ -640,7 +640,8 @@ func TestListArtifacts(t *testing.T) {
 			},
 		},
 		{
-			desc: "in a artifact parent across all projects and apis",
+			admin: true,
+			desc:  "in a artifact parent across all projects and apis",
 			seed: []*rpc.Artifact{
 				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/my-artifact"},
 				{Name: "projects/other-project/locations/global/apis/other-api/versions/v1/artifacts/my-artifact"},
@@ -657,7 +658,8 @@ func TestListArtifacts(t *testing.T) {
 			},
 		},
 		{
-			desc: "in all version of a artifact api across all projects",
+			admin: true,
+			desc:  "in all version of a artifact api across all projects",
 			seed: []*rpc.Artifact{
 				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/artifacts/my-artifact"},
 				{Name: "projects/other-project/locations/global/apis/my-api/versions/v2/artifacts/my-artifact"},
@@ -734,6 +736,83 @@ func TestListArtifacts(t *testing.T) {
 			},
 		},
 		{
+			admin: true,
+			desc:  "artifacts owned by a project",
+			seed: []*rpc.Artifact{
+				{Name: "projects/my-project/locations/global/artifacts/artifact1"},
+				{Name: "projects/my-project/locations/global/artifacts/artifact2"},
+				{Name: "projects/my-project/locations/global/artifacts/artifact3"},
+				{Name: "projects/another-project/locations/global/artifacts/artifact4"},
+			},
+			req: &rpc.ListArtifactsRequest{
+				Parent: "projects/my-project/locations/global",
+			},
+			want: &rpc.ListArtifactsResponse{
+				Artifacts: []*rpc.Artifact{
+					{Name: "projects/my-project/locations/global/artifacts/artifact1"},
+					{Name: "projects/my-project/locations/global/artifacts/artifact2"},
+					{Name: "projects/my-project/locations/global/artifacts/artifact3"},
+				},
+			},
+		},
+		{
+			desc: "artifacts owned by an api",
+			seed: []*rpc.Artifact{
+				{Name: "projects/my-project/locations/global/apis/a1/artifacts/artifact1"},
+				{Name: "projects/my-project/locations/global/apis/a1/artifacts/artifact2"},
+				{Name: "projects/my-project/locations/global/apis/a1/artifacts/artifact3"},
+				{Name: "projects/my-project/locations/global/apis/a2/artifacts/artifact4"},
+			},
+			req: &rpc.ListArtifactsRequest{
+				Parent: "projects/my-project/locations/global/apis/a1",
+			},
+			want: &rpc.ListArtifactsResponse{
+				Artifacts: []*rpc.Artifact{
+					{Name: "projects/my-project/locations/global/apis/a1/artifacts/artifact1"},
+					{Name: "projects/my-project/locations/global/apis/a1/artifacts/artifact2"},
+					{Name: "projects/my-project/locations/global/apis/a1/artifacts/artifact3"},
+				},
+			},
+		},
+		{
+			desc: "artifacts owned by a version",
+			seed: []*rpc.Artifact{
+				{Name: "projects/my-project/locations/global/apis/a1/versions/v1/artifacts/artifact1"},
+				{Name: "projects/my-project/locations/global/apis/a1/versions/v1/artifacts/artifact2"},
+				{Name: "projects/my-project/locations/global/apis/a1/versions/v1/artifacts/artifact3"},
+				{Name: "projects/my-project/locations/global/apis/a1/versions/v2/artifacts/artifact4"},
+			},
+			req: &rpc.ListArtifactsRequest{
+				Parent: "projects/my-project/locations/global/apis/a1/versions/v1",
+			},
+			want: &rpc.ListArtifactsResponse{
+				Artifacts: []*rpc.Artifact{
+					{Name: "projects/my-project/locations/global/apis/a1/versions/v1/artifacts/artifact1"},
+					{Name: "projects/my-project/locations/global/apis/a1/versions/v1/artifacts/artifact2"},
+					{Name: "projects/my-project/locations/global/apis/a1/versions/v1/artifacts/artifact3"},
+				},
+			},
+		},
+		{
+			desc: "artifacts owned by a spec",
+			seed: []*rpc.Artifact{
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/s1/artifacts/artifact1"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/s1/artifacts/artifact2"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/s1/artifacts/artifact3"},
+				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/s2/artifacts/artifact4"},
+			},
+			req: &rpc.ListArtifactsRequest{
+				Parent: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/s1",
+			},
+			want: &rpc.ListArtifactsResponse{
+				Artifacts: []*rpc.Artifact{
+					{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/s1/artifacts/artifact1"},
+					{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/s1/artifacts/artifact2"},
+					{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/s1/artifacts/artifact3"},
+				},
+			},
+		},
+		{
 			desc: "artifacts owned by a deployment",
 			seed: []*rpc.Artifact{
 				{Name: "projects/my-project/locations/global/apis/my-api/deployments/d1/artifacts/artifact1"},
@@ -752,10 +831,124 @@ func TestListArtifacts(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "ordered by mime_type",
+			seed: []*rpc.Artifact{
+				{
+					Name:     "projects/my-project/locations/global/artifacts/artifact1",
+					MimeType: "111: this should be returned first",
+				},
+				{
+					Name:     "projects/my-project/locations/global/artifacts/artifact2",
+					MimeType: "333: this should be returned third",
+				},
+				{
+					Name:     "projects/my-project/locations/global/artifacts/artifact3",
+					MimeType: "222: this should be returned second",
+				},
+			},
+			req: &rpc.ListArtifactsRequest{
+				Parent:  "projects/my-project/locations/global",
+				OrderBy: "mime_type",
+			},
+			want: &rpc.ListArtifactsResponse{
+				Artifacts: []*rpc.Artifact{
+					{
+						Name:     "projects/my-project/locations/global/artifacts/artifact1",
+						MimeType: "111: this should be returned first",
+					},
+					{
+						Name:     "projects/my-project/locations/global/artifacts/artifact3",
+						MimeType: "222: this should be returned second",
+					},
+					{
+						Name:     "projects/my-project/locations/global/artifacts/artifact2",
+						MimeType: "333: this should be returned third",
+					},
+				},
+			},
+		},
+		{
+			desc: "ordered by mime_type descending",
+			seed: []*rpc.Artifact{
+				{
+					Name:     "projects/my-project/locations/global/artifacts/artifact1",
+					MimeType: "111: this should be returned third",
+				},
+				{
+					Name:     "projects/my-project/locations/global/artifacts/artifact2",
+					MimeType: "333: this should be returned first",
+				},
+				{
+					Name:     "projects/my-project/locations/global/artifacts/artifact3",
+					MimeType: "222: this should be returned second",
+				},
+			},
+			req: &rpc.ListArtifactsRequest{
+				Parent:  "projects/my-project/locations/global",
+				OrderBy: "mime_type desc",
+			},
+			want: &rpc.ListArtifactsResponse{
+				Artifacts: []*rpc.Artifact{
+					{
+						Name:     "projects/my-project/locations/global/artifacts/artifact2",
+						MimeType: "333: this should be returned first",
+					},
+					{
+						Name:     "projects/my-project/locations/global/artifacts/artifact3",
+						MimeType: "222: this should be returned second",
+					},
+					{
+						Name:     "projects/my-project/locations/global/artifacts/artifact1",
+						MimeType: "111: this should be returned third",
+					},
+				},
+			},
+		},
+		{
+			desc: "ordered by mime_type then by name",
+			seed: []*rpc.Artifact{
+				{
+					Name:     "projects/my-project/locations/global/artifacts/artifact1",
+					MimeType: "222: this should be returned second or third (the name is the tie-breaker)",
+				},
+				{
+					Name:     "projects/my-project/locations/global/artifacts/artifact3",
+					MimeType: "111: this should be returned first",
+				},
+				{
+					Name:     "projects/my-project/locations/global/artifacts/artifact2",
+					MimeType: "222: this should be returned second or third (the name is the tie-breaker)",
+				},
+			},
+			req: &rpc.ListArtifactsRequest{
+				Parent:  "projects/my-project/locations/global",
+				OrderBy: "mime_type,name",
+			},
+			want: &rpc.ListArtifactsResponse{
+				Artifacts: []*rpc.Artifact{
+					{
+						Name:     "projects/my-project/locations/global/artifacts/artifact3",
+						MimeType: "111: this should be returned first",
+					},
+					{
+						Name:     "projects/my-project/locations/global/artifacts/artifact1",
+						MimeType: "222: this should be returned second or third (the name is the tie-breaker)",
+					},
+					{
+						Name:     "projects/my-project/locations/global/artifacts/artifact2",
+						MimeType: "222: this should be returned second or third (the name is the tie-breaker)",
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
+			if test.admin && adminServiceUnavailable() {
+				t.Skip(testRequiresAdminService)
+			}
 			ctx := context.Background()
 			server := defaultTestServer(t)
 			if err := seeder.SeedArtifacts(ctx, server, test.seed...); err != nil {
@@ -771,9 +964,6 @@ func TestListArtifacts(t *testing.T) {
 				protocmp.Transform(),
 				protocmp.IgnoreFields(new(rpc.ListArtifactsResponse), "next_page_token"),
 				protocmp.IgnoreFields(new(rpc.Artifact), "create_time", "update_time"),
-				protocmp.SortRepeated(func(a, b *rpc.Artifact) bool {
-					return a.GetName() < b.GetName()
-				}),
 				test.extraOpts,
 			}
 
@@ -792,9 +982,11 @@ func TestListArtifacts(t *testing.T) {
 
 func TestListArtifactsResponseCodes(t *testing.T) {
 	tests := []struct {
-		desc string
-		req  *rpc.ListArtifactsRequest
-		want codes.Code
+		admin bool
+		desc  string
+		seed  *rpc.Artifact
+		req   *rpc.ListArtifactsRequest
+		want  codes.Code
 	}{
 		{
 			desc: "parent parent not found",
@@ -811,7 +1003,8 @@ func TestListArtifactsResponseCodes(t *testing.T) {
 			want: codes.NotFound,
 		},
 		{
-			desc: "parent project not found",
+			admin: true,
+			desc:  "parent project not found",
 			req: &rpc.ListArtifactsRequest{
 				Parent: "projects/my-project/locations/global/apis/-/versions/-",
 			},
@@ -838,12 +1031,54 @@ func TestListArtifactsResponseCodes(t *testing.T) {
 			},
 			want: codes.InvalidArgument,
 		},
+		{
+			desc: "invalid ordering by unknown field",
+			seed: &rpc.Artifact{Name: "projects/my-project/locations/global/artifacts/my-artifact"},
+			req: &rpc.ListArtifactsRequest{
+				Parent:  "projects/my-project/locations/global",
+				OrderBy: "something",
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "invalid ordering by private field",
+			seed: &rpc.Artifact{Name: "projects/my-project/locations/global/artifacts/my-artifact"},
+			req: &rpc.ListArtifactsRequest{
+				Parent:  "projects/my-project/locations/global",
+				OrderBy: "key",
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "invalid ordering direction",
+			seed: &rpc.Artifact{Name: "projects/my-project/locations/global/artifacts/my-artifact"},
+			req: &rpc.ListArtifactsRequest{
+				Parent:  "projects/my-project/locations/global",
+				OrderBy: "description asc",
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "invalid ordering format",
+			seed: &rpc.Artifact{Name: "projects/my-project/locations/global/artifacts/my-artifact"},
+			req: &rpc.ListArtifactsRequest{
+				Parent:  "projects/my-project/locations/global",
+				OrderBy: "description,",
+			},
+			want: codes.InvalidArgument,
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
+			if test.admin && adminServiceUnavailable() {
+				t.Skip(testRequiresAdminService)
+			}
 			ctx := context.Background()
 			server := defaultTestServer(t)
+			if err := seeder.SeedArtifacts(ctx, server, test.seed); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
 
 			if _, err := server.ListArtifacts(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("ListArtifacts(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)

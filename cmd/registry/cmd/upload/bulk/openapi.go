@@ -18,15 +18,14 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 
 	"github.com/apigee/registry/cmd/registry/core"
-	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/log"
+	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc/codes"
@@ -47,7 +46,7 @@ func openAPICommand() *cobra.Command {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get project-id from flags")
 			}
 
-			client, err := connection.NewClient(ctx)
+			client, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
@@ -74,7 +73,7 @@ func openAPICommand() *cobra.Command {
 	return cmd
 }
 
-func scanDirectoryForOpenAPI(ctx context.Context, client connection.Client, projectID, baseURI, directory string, taskQueue chan<- core.Task) {
+func scanDirectoryForOpenAPI(ctx context.Context, client connection.RegistryClient, projectID, baseURI, directory string, taskQueue chan<- core.Task) {
 	// walk a directory hierarchy, uploading every API spec that matches a set of expected file names.
 	if err := filepath.Walk(directory, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -120,7 +119,7 @@ func sanitize(name string) string {
 }
 
 type uploadOpenAPITask struct {
-	client    connection.Client
+	client    connection.RegistryClient
 	baseURI   string
 	path      string
 	directory string
@@ -177,7 +176,7 @@ func (task *uploadOpenAPITask) populateFields() error {
 	task.specID = sanitize(specPart)
 
 	var err error
-	task.contents, err = ioutil.ReadFile(task.path)
+	task.contents, err = os.ReadFile(task.path)
 	if err != nil {
 		return err
 	}

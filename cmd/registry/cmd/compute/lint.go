@@ -19,8 +19,8 @@ import (
 	"fmt"
 
 	"github.com/apigee/registry/cmd/registry/core"
-	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/log"
+	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"github.com/spf13/cobra"
@@ -32,15 +32,25 @@ func lintCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "lint",
 		Short: "Compute lint results for API specs",
-		Args:  cobra.MinimumNArgs(1),
+		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := cmd.Context()
+			c, err := connection.ActiveConfig()
+			if err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get config")
+			}
+			args[0] = c.FQName(args[0])
+
 			filter, err := cmd.Flags().GetString("filter")
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get filter from flags")
 			}
+			dryRun, err := cmd.Flags().GetBool("dry-run")
+			if err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get fry-run from flags")
+			}
 
-			client, err := connection.NewClient(ctx)
+			client, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
@@ -50,7 +60,7 @@ func lintCommand() *cobra.Command {
 
 			spec, err := names.ParseSpec(args[0])
 			if err != nil {
-				return // TODO: Log an error.
+				log.FromContext(ctx).WithError(err).Fatal("Failed parse")
 			}
 
 			// Iterate through a collection of specs and evaluate each.
@@ -59,6 +69,7 @@ func lintCommand() *cobra.Command {
 					client:   client,
 					specName: spec.Name,
 					linter:   linter,
+					dryRun:   dryRun,
 				}
 				return nil
 			})
@@ -73,9 +84,10 @@ func lintCommand() *cobra.Command {
 }
 
 type computeLintTask struct {
-	client   connection.Client
+	client   connection.RegistryClient
 	specName string
 	linter   string
+	dryRun   bool
 }
 
 func (task *computeLintTask) String() string {
@@ -127,6 +139,12 @@ func (task *computeLintTask) Run(ctx context.Context) error {
 	} else {
 		return fmt.Errorf("we don't know how to lint %s", spec.Name)
 	}
+
+	if task.dryRun {
+		core.PrintMessage(lint)
+		return nil
+	}
+
 	subject := spec.GetName()
 	messageData, _ := proto.Marshal(lint)
 	artifact := &rpc.Artifact{
@@ -134,9 +152,5 @@ func (task *computeLintTask) Run(ctx context.Context) error {
 		MimeType: core.MimeTypeForMessageType("google.cloud.apigeeregistry.applications.v1alpha1.Lint"),
 		Contents: messageData,
 	}
-	err = core.SetArtifact(ctx, task.client, artifact)
-	if err != nil {
-		return err
-	}
-	return nil
+	return core.SetArtifact(ctx, task.client, artifact)
 }

@@ -16,8 +16,8 @@ package get
 
 import (
 	"github.com/apigee/registry/cmd/registry/core"
-	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/log"
+	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/server/registry/names"
 	"github.com/spf13/cobra"
 )
@@ -27,10 +27,16 @@ func Command() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "get",
 		Short: "Get resources from the API Registry",
-		Args:  cobra.MinimumNArgs(1),
+		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := cmd.Context()
-			client, err := connection.NewClient(ctx)
+			c, err := connection.ActiveConfig()
+			if err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get config")
+			}
+			args[0] = c.FQName(args[0])
+
+			client, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
@@ -39,35 +45,30 @@ func Command() *cobra.Command {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
 
-			var name string
-			if len(args) > 0 {
-				name = args[0]
-			}
-
 			var err2 error
-			if project, err := names.ParseProject(name); err == nil {
+			if project, err := names.ParseProject(args[0]); err == nil {
 				err2 = core.GetProject(ctx, adminClient, project, core.PrintProjectDetail)
-			} else if api, err := names.ParseApi(name); err == nil {
+			} else if api, err := names.ParseApi(args[0]); err == nil {
 				err2 = core.GetAPI(ctx, client, api, core.PrintAPIDetail)
-			} else if deployment, err := names.ParseDeployment(name); err == nil {
+			} else if deployment, err := names.ParseDeployment(args[0]); err == nil {
 				err2 = core.GetDeployment(ctx, client, deployment, core.PrintDeploymentDetail)
-			} else if deployment, err := names.ParseDeploymentRevision(name); err == nil {
+			} else if deployment, err := names.ParseDeploymentRevision(args[0]); err == nil {
 				err2 = core.GetDeploymentRevision(ctx, client, deployment, core.PrintDeploymentDetail)
-			} else if version, err := names.ParseVersion(name); err == nil {
+			} else if version, err := names.ParseVersion(args[0]); err == nil {
 				err2 = core.GetVersion(ctx, client, version, core.PrintVersionDetail)
-			} else if spec, err := names.ParseSpec(name); err == nil {
+			} else if spec, err := names.ParseSpec(args[0]); err == nil {
 				if getContents {
 					err2 = core.GetSpec(ctx, client, spec, getContents, core.PrintSpecContents)
 				} else {
 					err2 = core.GetSpec(ctx, client, spec, getContents, core.PrintSpecDetail)
 				}
-			} else if spec, err := names.ParseSpecRevision(name); err == nil {
+			} else if spec, err := names.ParseSpecRevision(args[0]); err == nil {
 				if getContents {
 					err2 = core.GetSpecRevision(ctx, client, spec, getContents, core.PrintSpecContents)
 				} else {
 					err2 = core.GetSpecRevision(ctx, client, spec, getContents, core.PrintSpecDetail)
 				}
-			} else if artifact, err := names.ParseArtifact(name); err == nil {
+			} else if artifact, err := names.ParseArtifact(args[0]); err == nil {
 				if getContents {
 					err2 = core.GetArtifact(ctx, client, artifact, getContents, core.PrintArtifactContents)
 				} else {

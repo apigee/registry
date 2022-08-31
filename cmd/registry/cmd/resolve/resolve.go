@@ -20,8 +20,8 @@ import (
 
 	"github.com/apigee/registry/cmd/registry/controller"
 	"github.com/apigee/registry/cmd/registry/core"
-	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/log"
+	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"github.com/google/uuid"
@@ -31,7 +31,7 @@ import (
 
 func fetchManifest(
 	ctx context.Context,
-	client connection.Client,
+	client connection.RegistryClient,
 	manifestName string) (*rpc.Manifest, error) {
 	manifest := &rpc.Manifest{}
 	body, err := client.GetArtifactContents(
@@ -54,26 +54,35 @@ func fetchManifest(
 
 func Command() *cobra.Command {
 	var dryRun bool
+	var jobs int
 	cmd := &cobra.Command{
 		Use:   "resolve MANIFEST_RESOURCE",
 		Short: "resolve the dependencies and update the registry state (experimental)",
-		Args:  cobra.MinimumNArgs(1),
+		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := cmd.Context()
+			c, err := connection.ActiveConfig()
+			if err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get config")
+			}
+			args[0] = c.FQName(args[0])
+
 			name, err := names.ParseArtifact(args[0])
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Invalid manifest resource name")
 			}
 
-			client, err := connection.NewClient(ctx)
+			registryClient, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
 
-			manifest, err := fetchManifest(ctx, client, name.String())
+			manifest, err := fetchManifest(ctx, registryClient, name.String())
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to fetch manifest")
 			}
+
+			client := &controller.RegistryLister{RegistryClient: registryClient}
 
 			log.Debug(ctx, "Generating the list of actions...")
 			actions := controller.ProcessManifest(ctx, client, name.ProjectID(), manifest)
@@ -97,7 +106,7 @@ func Command() *cobra.Command {
 			}
 
 			log.Debug(ctx, "Starting execution...")
-			taskQueue, wait := core.WorkerPoolWithWarnings(ctx, 64)
+			taskQueue, wait := core.WorkerPoolWithWarnings(ctx, jobs)
 			defer wait()
 			// Submit tasks to taskQueue
 			for _, a := range actions {
@@ -110,5 +119,6 @@ func Command() *cobra.Command {
 	}
 
 	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "if set, actions will only be printed and not executed")
+	cmd.Flags().IntVarP(&jobs, "jobs", "j", 10, "Number of actions to execute simultaneously")
 	return cmd
 }

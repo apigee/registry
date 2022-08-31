@@ -160,6 +160,10 @@ message ListProjectsRequest {
   // An expression that can be used to filter the list. Filters use the Common
   // Expression Language and can refer to all message fields.
   string filter = 3;
+
+  // A comma-separated list of fields, e.g. "foo,bar"
+  // Fields can be sorted in descending order using the "desc" identifier, e.g. "foo desc,bar"
+  string order_by = 4;
 }
 
 // Response message for ListProjects.

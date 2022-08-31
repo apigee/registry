@@ -1,4 +1,7 @@
 [![Go Actions Status](https://github.com/apigee/registry/workflows/Go/badge.svg)](https://github.com/apigee/registry/actions)
+[![Go Report Card](https://goreportcard.com/badge/github.com/apigee/registry)](https://goreportcard.com/report/github.com/apigee/registry)
+[![codecov](https://codecov.io/gh/apigee/registry/branch/main/graph/badge.svg?token=YX7LGTSYGD)](https://codecov.io/gh/apigee/registry)
+[![In Solidarity](https://github.com/jpoehnelt/in-solidarity-bot/raw/main/static/badge-flat.png)](https://github.com/apps/in-solidarity)
 
 # Registry API Core Implementation
 
@@ -50,15 +53,9 @@ is generated as part of the build process using
 sample Go GAPIC-based client is in
 [examples/gapic-client](examples/gapic-client).
 
-Two command-line interfaces are included:
-
-- [cmd/apg](cmd/apg), automatically generated from the API description using
-  the
-  [protoc-gen-go_cli](https://github.com/googleapis/gapic-generator-go/tree/master/cmd/protoc-gen-go_cli)
-  tool in
-  [gapic-generator-go](https://github.com/googleapis/gapic-generator-go).
-- [cmd/registry](cmd/registry), a hand-written command-line tool that uses the
-  Go GAPIC library to support additional API management tasks.
+A command-line interface is in [cmd/registry](cmd/registry) and provides a
+mixture of hand-written high-level features and automatically generated
+subcommands that call individual RPC methods of the Registry API.
 
 The entry point for the Registry API server itself is
 [cmd/registry-server](cmd/registry-server). For more on running the server, see
@@ -91,14 +88,49 @@ server with the following:
 
 `. auth/LOCAL.sh`
 
-Now you can check your server and configuration with the
-automatically-generated `apg` client:
+Now you can check your server and configuration with the `registry` tool:
 
-`apg admin get-status`
+`registry rpc admin get-status`
 
 Next run a suite of tests with `make test` and see a corresponding walkthrough
 of API features in [tests/demo/walkthrough.sh](tests/demo/walkthrough.sh). For
 more demonstrations, see the [demos](demos) directory.
+
+## Tests
+
+This repository includes tests that verify `registry-server`. These server
+tests focus on correctness at the API level and compliance with the API design
+guidelines described at [aip.dev](https://aip.dev). Server tests are included
+in runs of `make test` and `go test ./...`, and the server tests can be run by
+themselves with `go test ./server/registry`. By default, server tests
+verify the local code in `./server/registry`, but to allow **API conformance
+testing**, the tests can be run to verify remote servers using the following
+options:
+
+- With the `-remote` flag, tests are run against a remote server according to
+  the configuration used by the `registry` tool. This runs the entire suite of
+  tests. **WARNING**: These tests are destructive and will overwrite everything
+  in the remote server.
+- With the `-hosted PROJECT_ID` flag, tests are run against a remote server in
+  a hosted environment within a single project that is expected to already
+  exist. The server is identified and authenticated with the configuration used
+  by the `registry` tool. Only the methods of the Registry service are tested
+  (Admin service methods are excluded). **WARNING**: These tests are
+  destructive and will overwrite everything in the specified project.
+
+A small set of **performance benchmarks** is in
+[tests/benchmark](/tests/benchmark). These tests run against remote servers
+specified by the `registry` tool configuration and test a single project that
+is expected to already exist. **WARNING**: These tests are destructive and will
+overwrite everyhing in the specified project. Benchmarks can be run with the
+following invocation:
+
+```
+go test ./tests/benchmark --bench=. --project_id=$PROJECTID --benchtime=${ITERATIONS}x --timeout=0
+```
+
+All of the test configurations described above are verified in this
+repository's [CI tests](.github/workflows/go.yml).
 
 ## License
 

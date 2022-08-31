@@ -17,14 +17,14 @@ package upload
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"github.com/apigee/registry/cmd/registry/controller"
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/cmd/registry/patch"
 	"github.com/apigee/registry/cmd/registry/scoring"
-	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/log"
+	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/ghodss/yaml"
 	"github.com/spf13/cobra"
@@ -48,7 +48,7 @@ func artifactCommand() *cobra.Command {
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to read artifact")
 			}
-			client, err := connection.NewClient(ctx)
+			client, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
@@ -64,7 +64,7 @@ func artifactCommand() *cobra.Command {
 }
 
 func buildArtifact(ctx context.Context, parent string, filename string) (*rpc.Artifact, error) {
-	yamlBytes, err := ioutil.ReadFile(filename)
+	yamlBytes, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
@@ -83,6 +83,8 @@ func buildArtifact(ctx context.Context, parent string, filename string) (*rpc.Ar
 	jsonBytes, _ := yaml.YAMLToJSON(yamlBytes) // to use protojson.Unmarshal()
 	var artifact *rpc.Artifact
 	switch header.Kind {
+	case "ApiSpecExtensionList":
+		artifact, err = buildApiSpecExtensionListArtifact(jsonBytes)
 	case "DisplaySettings":
 		artifact, err = buildDisplaySettingsArtifact(jsonBytes)
 	case "Lifecycle":
@@ -111,6 +113,21 @@ func buildArtifact(ctx context.Context, parent string, filename string) (*rpc.Ar
 	// set the artifact name before returning
 	artifact.Name = fmt.Sprintf("%s/artifacts/%s", parent, header.Id)
 	return artifact, nil
+}
+
+func buildApiSpecExtensionListArtifact(jsonBytes []byte) (*rpc.Artifact, error) {
+	m := &rpc.ApiSpecExtensionList{}
+	if err := protojson.Unmarshal(jsonBytes, m); err != nil {
+		return nil, err
+	}
+	artifactBytes, err := proto.Marshal(m)
+	if err != nil {
+		return nil, err
+	}
+	return &rpc.Artifact{
+		Contents: artifactBytes,
+		MimeType: patch.MimeTypeForKind("ApiSpecExtensionList"),
+	}, nil
 }
 
 func buildDisplaySettingsArtifact(jsonBytes []byte) (*rpc.Artifact, error) {

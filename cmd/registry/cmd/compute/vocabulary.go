@@ -19,8 +19,8 @@ import (
 	"fmt"
 
 	"github.com/apigee/registry/cmd/registry/core"
-	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/log"
+	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"github.com/google/gnostic/metrics/vocabulary"
@@ -40,12 +40,22 @@ func vocabularyCommand() *cobra.Command {
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := cmd.Context()
+			c, err := connection.ActiveConfig()
+			if err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get config")
+			}
+			path := c.FQName(args[0])
+
 			filter, err := cmd.Flags().GetString("filter")
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get filter from flags")
 			}
+			dryRun, err := cmd.Flags().GetBool("dry-run")
+			if err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get dry-run from flags")
+			}
 
-			client, err := connection.NewClient(ctx)
+			client, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
@@ -53,9 +63,9 @@ func vocabularyCommand() *cobra.Command {
 			taskQueue, wait := core.WorkerPool(ctx, 64)
 			defer wait()
 
-			spec, err := names.ParseSpec(args[0])
+			spec, err := names.ParseSpec(path)
 			if err != nil {
-				return // TODO: Log an error.
+				log.FromContext(ctx).WithError(err).Fatal("Failed parse")
 			}
 
 			// Iterate through a collection of specs and summarize each.
@@ -63,6 +73,7 @@ func vocabularyCommand() *cobra.Command {
 				taskQueue <- &computeVocabularyTask{
 					client:   client,
 					specName: spec.GetName(),
+					dryRun:   dryRun,
 				}
 				return nil
 			}); err != nil {
@@ -73,8 +84,9 @@ func vocabularyCommand() *cobra.Command {
 }
 
 type computeVocabularyTask struct {
-	client   connection.Client
+	client   connection.RegistryClient
 	specName string
+	dryRun   bool
 }
 
 func (task *computeVocabularyTask) String() string {
@@ -123,11 +135,15 @@ func (task *computeVocabularyTask) Run(ctx context.Context) error {
 		return fmt.Errorf("we don't know how to summarize %s", task.specName)
 	}
 
+	if task.dryRun {
+		core.PrintMessage(vocab)
+		return nil
+	}
+
 	messageData, err := proto.Marshal(vocab)
 	if err != nil {
 		return err
 	}
-
 	return core.SetArtifact(ctx, task.client, &rpc.Artifact{
 		Name:     task.specName + "/artifacts/vocabulary",
 		MimeType: core.MimeTypeForMessageType("gnostic.metrics.Vocabulary"),

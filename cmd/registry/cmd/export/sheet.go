@@ -22,8 +22,8 @@ import (
 	"strings"
 
 	"github.com/apigee/registry/cmd/registry/core"
-	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/log"
+	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"github.com/spf13/cobra"
@@ -44,8 +44,16 @@ func sheetCommand() *cobra.Command {
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := cmd.Context()
+			c, err := connection.ActiveConfig()
+			if err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get config")
+			}
+			for i := range args {
+				args[i] = c.FQName(args[i])
+			}
+
 			var path string
-			client, err := connection.NewClient(ctx)
+			client, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
@@ -137,7 +145,7 @@ func sheetCommand() *cobra.Command {
 	return cmd
 }
 
-func collectInputArtifacts(ctx context.Context, client connection.Client, args []string, filter string) ([]string, []*rpc.Artifact) {
+func collectInputArtifacts(ctx context.Context, client connection.RegistryClient, args []string, filter string) ([]string, []*rpc.Artifact) {
 	inputNames := make([]string, 0)
 	inputs := make([]*rpc.Artifact, 0)
 	for _, name := range args {
@@ -202,7 +210,7 @@ func getIndex(artifact *rpc.Artifact) (*rpc.Index, error) {
 	return nil, fmt.Errorf("not a index: %s", artifact.Name)
 }
 
-func saveSheetPath(ctx context.Context, client connection.Client, path string, artifactName string) error {
+func saveSheetPath(ctx context.Context, client connection.RegistryClient, path string, artifactName string) error {
 	if path == "" {
 		return nil
 	}

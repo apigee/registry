@@ -30,6 +30,9 @@ import (
 )
 
 func TestCreateProject(t *testing.T) {
+	if adminServiceUnavailable() {
+		t.Skip(testRequiresAdminService)
+	}
 	tests := []struct {
 		desc string
 		req  *rpc.CreateProjectRequest
@@ -97,6 +100,9 @@ func TestCreateProject(t *testing.T) {
 }
 
 func TestCreateProjectResponseCodes(t *testing.T) {
+	if adminServiceUnavailable() {
+		t.Skip(testRequiresAdminService)
+	}
 	tests := []struct {
 		desc string
 		req  *rpc.CreateProjectRequest
@@ -181,48 +187,40 @@ func TestCreateProjectResponseCodes(t *testing.T) {
 }
 
 func TestCreateProjectDuplicates(t *testing.T) {
-	tests := []struct {
+	if adminServiceUnavailable() {
+		t.Skip(testRequiresAdminService)
+	}
+	test := struct {
 		desc string
 		seed *rpc.Project
 		req  *rpc.CreateProjectRequest
 		want codes.Code
 	}{
-		{
-			desc: "case sensitive",
-			seed: &rpc.Project{Name: "projects/my-project"},
-			req: &rpc.CreateProjectRequest{
-				ProjectId: "my-project",
-				Project:   &rpc.Project{},
-			},
-			want: codes.AlreadyExists,
+		desc: "case sensitive",
+		seed: &rpc.Project{Name: "projects/my-project"},
+		req: &rpc.CreateProjectRequest{
+			ProjectId: "my-project",
+			Project:   &rpc.Project{},
 		},
-		{
-			desc: "case insensitive",
-			seed: &rpc.Project{Name: "projects/my-project"},
-			req: &rpc.CreateProjectRequest{
-				ProjectId: "My-Project",
-				Project:   &rpc.Project{},
-			},
-			want: codes.AlreadyExists,
-		},
+		want: codes.AlreadyExists,
 	}
+	t.Run(test.desc, func(t *testing.T) {
+		ctx := context.Background()
+		server := defaultTestServer(t)
+		if err := seeder.SeedProjects(ctx, server, test.seed); err != nil {
+			t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+		}
 
-	for _, test := range tests {
-		t.Run(test.desc, func(t *testing.T) {
-			ctx := context.Background()
-			server := defaultTestServer(t)
-			if err := seeder.SeedProjects(ctx, server, test.seed); err != nil {
-				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
-			}
-
-			if _, err := server.CreateProject(ctx, test.req); status.Code(err) != test.want {
-				t.Errorf("CreateProject(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
-			}
-		})
-	}
+		if _, err := server.CreateProject(ctx, test.req); status.Code(err) != test.want {
+			t.Errorf("CreateProject(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
+		}
+	})
 }
 
 func TestGetProject(t *testing.T) {
+	if adminServiceUnavailable() {
+		t.Skip(testRequiresAdminService)
+	}
 	tests := []struct {
 		desc string
 		seed *rpc.Project
@@ -273,6 +271,9 @@ func TestGetProject(t *testing.T) {
 }
 
 func TestGetProjectResponseCodes(t *testing.T) {
+	if adminServiceUnavailable() {
+		t.Skip(testRequiresAdminService)
+	}
 	tests := []struct {
 		desc string
 		seed *rpc.Project
@@ -313,6 +314,9 @@ func TestGetProjectResponseCodes(t *testing.T) {
 }
 
 func TestListProjects(t *testing.T) {
+	if adminServiceUnavailable() {
+		t.Skip(testRequiresAdminService)
+	}
 	tests := []struct {
 		desc      string
 		seed      []*rpc.Project
@@ -394,6 +398,114 @@ func TestListProjects(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "ordered by description",
+			seed: []*rpc.Project{
+				{
+					Name:        "projects/project1",
+					Description: "111: this should be returned first",
+				},
+				{
+					Name:        "projects/project2",
+					Description: "333: this should be returned third",
+				},
+				{
+					Name:        "projects/project3",
+					Description: "222: this should be returned second",
+				},
+			},
+			req: &rpc.ListProjectsRequest{
+				OrderBy: "description",
+			},
+			want: &rpc.ListProjectsResponse{
+				Projects: []*rpc.Project{
+					{
+						Name:        "projects/project1",
+						Description: "111: this should be returned first",
+					},
+					{
+						Name:        "projects/project3",
+						Description: "222: this should be returned second",
+					},
+					{
+						Name:        "projects/project2",
+						Description: "333: this should be returned third",
+					},
+				},
+			},
+		},
+		{
+			desc: "ordered by description descending",
+			seed: []*rpc.Project{
+				{
+					Name:        "projects/project1",
+					Description: "111: this should be returned third",
+				},
+				{
+					Name:        "projects/project2",
+					Description: "333: this should be returned first",
+				},
+				{
+					Name:        "projects/project3",
+					Description: "222: this should be returned second",
+				},
+			},
+			req: &rpc.ListProjectsRequest{
+				OrderBy: "description desc",
+			},
+			want: &rpc.ListProjectsResponse{
+				Projects: []*rpc.Project{
+					{
+						Name:        "projects/project2",
+						Description: "333: this should be returned first",
+					},
+					{
+						Name:        "projects/project3",
+						Description: "222: this should be returned second",
+					},
+					{
+						Name:        "projects/project1",
+						Description: "111: this should be returned third",
+					},
+				},
+			},
+		},
+		{
+			desc: "ordered by description then by name",
+			seed: []*rpc.Project{
+				{
+					Name:        "projects/project1",
+					Description: "222: this should be returned second or third (the name is the tie-breaker)",
+				},
+				{
+					Name:        "projects/project3",
+					Description: "111: this should be returned first",
+				},
+				{
+					Name:        "projects/project2",
+					Description: "222: this should be returned second or third (the name is the tie-breaker)",
+				},
+			},
+			req: &rpc.ListProjectsRequest{
+				OrderBy: "description,name",
+			},
+			want: &rpc.ListProjectsResponse{
+				Projects: []*rpc.Project{
+					{
+						Name:        "projects/project3",
+						Description: "111: this should be returned first",
+					},
+					{
+						Name:        "projects/project1",
+						Description: "222: this should be returned second or third (the name is the tie-breaker)",
+					},
+					{
+						Name:        "projects/project2",
+						Description: "222: this should be returned second or third (the name is the tie-breaker)",
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -430,6 +542,9 @@ func TestListProjects(t *testing.T) {
 }
 
 func TestListProjectsResponseCodes(t *testing.T) {
+	if adminServiceUnavailable() {
+		t.Skip(testRequiresAdminService)
+	}
 	tests := []struct {
 		desc string
 		req  *rpc.ListProjectsRequest
@@ -456,6 +571,34 @@ func TestListProjectsResponseCodes(t *testing.T) {
 			},
 			want: codes.InvalidArgument,
 		},
+		{
+			desc: "invalid ordering by unknown field",
+			req: &rpc.ListProjectsRequest{
+				OrderBy: "something",
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "invalid ordering by private field",
+			req: &rpc.ListProjectsRequest{
+				OrderBy: "key",
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "invalid ordering direction",
+			req: &rpc.ListProjectsRequest{
+				OrderBy: "description asc",
+			},
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "invalid ordering format",
+			req: &rpc.ListProjectsRequest{
+				OrderBy: "description,",
+			},
+			want: codes.InvalidArgument,
+		},
 	}
 
 	for _, test := range tests {
@@ -471,6 +614,9 @@ func TestListProjectsResponseCodes(t *testing.T) {
 }
 
 func TestListProjectsSequence(t *testing.T) {
+	if adminServiceUnavailable() {
+		t.Skip(testRequiresAdminService)
+	}
 	ctx := context.Background()
 	server := defaultTestServer(t)
 	seed := []*rpc.Project{
@@ -581,6 +727,9 @@ func TestListProjectsSequence(t *testing.T) {
 // This test prevents the list sequence from ending before a known filter match is listed.
 // For simplicity, it does not guarantee the resource is returned on a later page.
 func TestListProjectsLargeCollectionFiltering(t *testing.T) {
+	if adminServiceUnavailable() {
+		t.Skip(testRequiresAdminService)
+	}
 	ctx := context.Background()
 	server := defaultTestServer(t)
 	seed := make([]*rpc.Project, 0, 100)
@@ -614,6 +763,9 @@ func TestListProjectsLargeCollectionFiltering(t *testing.T) {
 }
 
 func TestUpdateProject(t *testing.T) {
+	if adminServiceUnavailable() {
+		t.Skip(testRequiresAdminService)
+	}
 	tests := []struct {
 		desc string
 		seed *rpc.Project
@@ -778,6 +930,9 @@ func TestUpdateProject(t *testing.T) {
 }
 
 func TestUpdateProjectResponseCodes(t *testing.T) {
+	if adminServiceUnavailable() {
+		t.Skip(testRequiresAdminService)
+	}
 	tests := []struct {
 		desc string
 		seed *rpc.Project
@@ -837,6 +992,9 @@ func TestUpdateProjectResponseCodes(t *testing.T) {
 }
 
 func TestDeleteProject(t *testing.T) {
+	if adminServiceUnavailable() {
+		t.Skip(testRequiresAdminService)
+	}
 	tests := []struct {
 		desc string
 		seed *rpc.Project
@@ -879,6 +1037,9 @@ func TestDeleteProject(t *testing.T) {
 }
 
 func TestDeleteProjectResponseCodes(t *testing.T) {
+	if adminServiceUnavailable() {
+		t.Skip(testRequiresAdminService)
+	}
 	tests := []struct {
 		desc string
 		seed *rpc.Artifact
@@ -920,6 +1081,9 @@ func TestDeleteProjectResponseCodes(t *testing.T) {
 }
 
 func TestDeleteProjectCascading(t *testing.T) {
+	if adminServiceUnavailable() {
+		t.Skip(testRequiresAdminService)
+	}
 	var (
 		ctx    = context.Background()
 		server = defaultTestServer(t)

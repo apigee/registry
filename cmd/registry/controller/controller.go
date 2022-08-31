@@ -21,7 +21,6 @@ import (
 	"time"
 
 	"github.com/apigee/registry/cmd/registry/patterns"
-	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
 )
@@ -34,12 +33,12 @@ type Action struct {
 
 func ProcessManifest(
 	ctx context.Context,
-	client connection.Client,
+	client listingClient,
 	projectID string,
 	manifest *rpc.Manifest) []*Action {
 	var actions []*Action
 	//Check for errors in manifest
-	errs := ValidateManifest(fmt.Sprintf("projects/%s", projectID), manifest)
+	errs := ValidateManifest(fmt.Sprintf("projects/%s/locations/global", projectID), manifest)
 	if len(errs) > 0 {
 		for _, err := range errs {
 			log.FromContext(ctx).WithError(err).Debugf("Error in manifest")
@@ -68,11 +67,11 @@ func ProcessManifest(
 
 func processManifestResource(
 	ctx context.Context,
-	client connection.Client,
+	client listingClient,
 	projectID string,
 	generatedResource *rpc.GeneratedResource) ([]*Action, error) {
-	// Generate dependency map
 	resourcePattern := fmt.Sprintf("projects/%s/locations/global/%s", projectID, generatedResource.Pattern)
+	// Generate dependency map
 	dependencyMaps := make([]map[string]time.Time, 0, len(generatedResource.Dependencies))
 	for _, dependency := range generatedResource.Dependencies {
 		dMap, err := generateDependencyMap(ctx, client, resourcePattern, dependency)
@@ -91,7 +90,7 @@ func processManifestResource(
 
 func generateDependencyMap(
 	ctx context.Context,
-	client connection.Client,
+	client listingClient,
 	resourcePattern string,
 	dependency *rpc.Dependency) (map[string]time.Time, error) {
 	// Creates a map of the resources to group them into corresponding buckets
@@ -118,7 +117,7 @@ func generateDependencyMap(
 	}
 
 	// Fetch resources using the extDependencyQuery
-	sourceList, err := patterns.ListResources(ctx, client, extDependencyName.String(), dependency.Filter)
+	sourceList, err := listResources(ctx, client, extDependencyName.String(), dependency.Filter)
 	if err != nil {
 		return nil, err
 	}
@@ -145,27 +144,24 @@ func generateDependencyMap(
 
 func generateActions(
 	ctx context.Context,
-	client connection.Client,
+	client listingClient,
 	resourcePattern string,
 	filter string,
 	dependencyMaps []map[string]time.Time,
 	generatedResource *rpc.GeneratedResource) []*Action {
 	actions := make([]*Action, 0)
 
-	// Calculate actions only if dependencies are non-empty
-	if len(dependencyMaps) > 0 {
-		updateActions, visited, err := generateUpdateActions(ctx, client, resourcePattern, filter, dependencyMaps, generatedResource)
-		if err != nil {
-			log.Errorf(ctx, "Error while generating UpdateActions: %s", err)
-		}
-		actions = append(actions, updateActions...)
-
-		createActions, err := generateCreateActions(ctx, client, resourcePattern, dependencyMaps, generatedResource, visited)
-		if err != nil {
-			log.Errorf(ctx, "Error while generating CreateActions: %s", err)
-		}
-		actions = append(actions, createActions...)
+	updateActions, visited, err := generateUpdateActions(ctx, client, resourcePattern, filter, dependencyMaps, generatedResource)
+	if err != nil {
+		log.Errorf(ctx, "Error while generating UpdateActions: %s", err)
 	}
+	actions = append(actions, updateActions...)
+
+	createActions, err := generateCreateActions(ctx, client, resourcePattern, dependencyMaps, generatedResource, visited)
+	if err != nil {
+		log.Errorf(ctx, "Error while generating CreateActions: %s", err)
+	}
+	actions = append(actions, createActions...)
 
 	return actions
 }
@@ -173,7 +169,7 @@ func generateActions(
 // Go over the list of existing target resources to figure out which ones need an update.
 func generateUpdateActions(
 	ctx context.Context,
-	client connection.Client,
+	client listingClient,
 	resourcePattern string,
 	filter string,
 	dependencyMaps []map[string]time.Time,
@@ -183,7 +179,7 @@ func generateUpdateActions(
 	actions := make([]*Action, 0)
 
 	// Generate resource list
-	resourceList, err := patterns.ListResources(ctx, client, resourcePattern, filter)
+	resourceList, err := listResources(ctx, client, resourcePattern, filter)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -248,7 +244,7 @@ func excludeVisitedParents(v map[string]bool) string {
 // we will use the parent resources to derive which new target resources should be created.
 func generateCreateActions(
 	ctx context.Context,
-	client connection.Client,
+	client listingClient,
 	resourcePattern string,
 	dependencyMaps []map[string]time.Time,
 	generatedResource *rpc.GeneratedResource,
@@ -283,14 +279,13 @@ func generateCreateActions(
 
 	default:
 		filter := excludeVisitedParents(visited)
-		parentList, err = patterns.ListResources(ctx, client, parentName.String(), filter)
+		parentList, err = listResources(ctx, client, parentName.String(), filter)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	actions := make([]*Action, 0)
-
 	for _, parent := range parentList {
 		// Since the GeneratedResource is non-existent here,
 		// we will have to derive the exact name of the target resource
@@ -331,6 +326,11 @@ func needsUpdate(
 	targetResourceTime time.Time,
 	dependencyMaps []map[string]time.Time,
 	generatedResource *rpc.GeneratedResource) (bool, error) {
+	// Check "refresh" first to decide whether to take action or not.
+	if generatedResource.Refresh != nil && targetResourceTime.Add(generatedResource.Refresh.AsDuration()).Before(time.Now()) {
+		return true, nil
+	}
+	// Check for dependencies otherwise
 	for i, dependency := range generatedResource.Dependencies {
 		dMap := dependencyMaps[i]
 		// Get the entity to look for in dependencyMap
@@ -346,8 +346,10 @@ func needsUpdate(
 			return false, nil
 		}
 
-		if maxUpdateTime.After(targetResourceTime) {
-			return true, nil // Take action if atleast one dependency timestamp is later than resource timestamp
+		// Take action if the target resource is less than n seconds newer compared to the dependencies, where n=thresholdSeconds.
+		// https://github.com/apigee/registry/issues/641
+		if maxUpdateTime.Add(patterns.ResourceUpdateThresholdSeconds).After(targetResourceTime) {
+			return true, nil
 		}
 	}
 	return false, nil
@@ -357,6 +359,11 @@ func needsCreate(
 	targetResourceName patterns.ResourceName,
 	dependencyMaps []map[string]time.Time,
 	generatedResource *rpc.GeneratedResource) (bool, error) {
+	// Take action if "refresh" is set and > 0
+	if generatedResource.Refresh != nil && generatedResource.Refresh.AsDuration().Seconds() > 0 {
+		return true, nil
+	}
+	// Check for dependencies otherwise
 	for i, dependency := range generatedResource.Dependencies {
 		dMap := dependencyMaps[i]
 		// Get the entity to look for in dependencyMap

@@ -20,8 +20,8 @@ import (
 	"fmt"
 
 	"github.com/apigee/registry/cmd/registry/core"
-	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/log"
+	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc/codes"
@@ -42,7 +42,7 @@ func discoveryCommand() *cobra.Command {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get project-id from flags")
 			}
 
-			client, err := connection.NewClient(ctx)
+			client, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
@@ -78,7 +78,7 @@ func discoveryCommand() *cobra.Command {
 }
 
 type uploadDiscoveryTask struct {
-	client    connection.Client
+	client    connection.RegistryClient
 	path      string
 	projectID string
 	apiID     string

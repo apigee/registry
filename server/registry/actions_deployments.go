@@ -17,7 +17,9 @@ package registry
 import (
 	"context"
 	"sync"
+	"time"
 
+	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/internal/storage"
 	"github.com/apigee/registry/server/registry/internal/storage/models"
@@ -46,16 +48,16 @@ func (s *RegistryServer) createDeployment(ctx context.Context, name names.Deploy
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer db.Close()
 
+	if err := name.Validate(); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	// Necessary because revisions
 	if _, err := db.GetDeployment(ctx, name); err == nil {
 		return nil, status.Errorf(codes.AlreadyExists, "API deployment %q already exists", name)
 	} else if !isNotFound(err) {
 		return nil, err
-	}
-
-	if err := name.Validate(); err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	// Creation should only succeed when the parent exists.
@@ -68,7 +70,7 @@ func (s *RegistryServer) createDeployment(ctx context.Context, name names.Deploy
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	if err := db.SaveDeploymentRevision(ctx, deployment); err != nil {
+	if err := db.CreateDeploymentRevision(ctx, deployment); err != nil {
 		return nil, err
 	}
 
@@ -87,7 +89,6 @@ func (s *RegistryServer) DeleteApiDeployment(ctx context.Context, req *rpc.Delet
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer db.Close()
 
 	name, err := names.ParseDeployment(req.GetName())
 	if err != nil {
@@ -123,7 +124,6 @@ func (s *RegistryServer) getApiDeployment(ctx context.Context, name names.Deploy
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer db.Close()
 
 	deployment, err := db.GetDeployment(ctx, name)
 	if err != nil {
@@ -143,7 +143,6 @@ func (s *RegistryServer) getApiDeploymentRevision(ctx context.Context, name name
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer db.Close()
 
 	revision, err := db.GetDeploymentRevision(ctx, name)
 	if err != nil {
@@ -164,7 +163,6 @@ func (s *RegistryServer) ListApiDeployments(ctx context.Context, req *rpc.ListAp
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer db.Close()
 
 	if req.GetPageSize() < 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid page_size %d: must not be negative", req.GetPageSize())
@@ -182,6 +180,7 @@ func (s *RegistryServer) ListApiDeployments(ctx context.Context, req *rpc.ListAp
 	listing, err := db.ListDeployments(ctx, parent, storage.PageOptions{
 		Size:   req.GetPageSize(),
 		Filter: req.GetFilter(),
+		Order:  req.GetOrderBy(),
 		Token:  req.GetPageToken(),
 	})
 	if err != nil {
@@ -211,7 +210,6 @@ func (s *RegistryServer) UpdateApiDeployment(ctx context.Context, req *rpc.Updat
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer db.Close()
 
 	if req.GetApiDeployment() == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid api_deployment %+v: body must be provided", req.GetApiDeployment())
@@ -225,6 +223,7 @@ func (s *RegistryServer) UpdateApiDeployment(ctx context.Context, req *rpc.Updat
 	}
 
 	if req.GetAllowMissing() {
+		before := time.Now()
 		// Prevent a race condition that can occur when two updates are made
 		// to the same non-existent resource. The db.Get...() call returns
 		// NotFound for both updates, and after one creates the resource,
@@ -233,6 +232,7 @@ func (s *RegistryServer) UpdateApiDeployment(ctx context.Context, req *rpc.Updat
 		// with improvements closer to the database level.
 		updateDeploymentMutex.Lock()
 		defer updateDeploymentMutex.Unlock()
+		log.Debugf(ctx, "Acquired lock after blocking for %v", time.Since(before))
 	}
 
 	deployment, err := db.GetDeployment(ctx, name)

@@ -31,6 +31,8 @@ func init() {
 
 	ListArtifactsCmd.Flags().StringVar(&ListArtifactsInput.Filter, "filter", "", "An expression that can be used to filter the...")
 
+	ListArtifactsCmd.Flags().StringVar(&ListArtifactsInput.OrderBy, "order_by", "", "A comma-separated list of fields, e.g. 'foo,bar'")
+
 	ListArtifactsCmd.Flags().StringVar(&ListArtifactsFromFile, "from_file", "", "Absolute path to JSON file containing request payload")
 
 }

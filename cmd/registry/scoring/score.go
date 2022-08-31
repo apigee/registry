@@ -23,7 +23,6 @@ import (
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/cmd/registry/patch"
 	"github.com/apigee/registry/cmd/registry/patterns"
-	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
@@ -38,7 +37,7 @@ func scoreID(definitionID string) string {
 
 func FetchScoreDefinitions(
 	ctx context.Context,
-	client connection.Client,
+	client artifactClient,
 	resource patterns.ResourceName) ([]*rpc.Artifact, error) {
 	defArtifacts := make([]*rpc.Artifact, 0)
 
@@ -48,7 +47,7 @@ func FetchScoreDefinitions(
 		return nil, err
 	}
 	listFilter := fmt.Sprintf("mime_type == %q", patch.MimeTypeForKind("ScoreDefinition"))
-	err = core.ListArtifacts(ctx, client, artifact, listFilter, true,
+	err = client.ListArtifacts(ctx, artifact, listFilter, true,
 		func(artifact *rpc.Artifact) error {
 			definition := &rpc.ScoreDefinition{}
 			if err := proto.Unmarshal(artifact.GetContents(), definition); err != nil {
@@ -74,9 +73,10 @@ func FetchScoreDefinitions(
 
 func CalculateScore(
 	ctx context.Context,
-	client connection.Client,
+	client artifactClient,
 	defArtifact *rpc.Artifact,
-	resource patterns.ResourceInstance) error {
+	resource patterns.ResourceInstance,
+	dryRun bool) error {
 	project := fmt.Sprintf("%s/locations/global", resource.ResourceName().Project())
 
 	// Extract definition
@@ -100,14 +100,15 @@ func CalculateScore(
 	}
 
 	// Calculate score if the definition has been updated
-	if scoreArtifact != nil && scoreArtifact.GetUpdateTime().AsTime().Before(defArtifact.GetUpdateTime().AsTime()) {
+	// This condition is required to avoid the scenario mentioned here: https://github.com/apigee/registry/issues/641
+	if scoreArtifact != nil && defArtifact.GetUpdateTime().AsTime().Add(patterns.ResourceUpdateThresholdSeconds).After(scoreArtifact.GetUpdateTime().AsTime()) {
 		takeAction = true
 	}
 
 	// evaluate the expression and return a scoreValue
 	result := processFormula(ctx, client, definition, resource, scoreArtifact, takeAction)
 	if result.err != nil {
-		return err
+		return result.err
 	}
 
 	if result.needsUpdate {
@@ -117,14 +118,14 @@ func CalculateScore(
 			return err
 		}
 
-		// TODO: Add dry_run flag
-
-		err = uploadScore(ctx, client, resource, score)
-		if err != nil {
-			return err
+		if dryRun {
+			core.PrintMessage(score)
+			return nil
 		}
+		return uploadScore(ctx, client, resource, score)
 	}
 
+	log.Debugf(ctx, "Score %s is already up-to-date.", artifactName)
 	return nil
 }
 
@@ -142,7 +143,7 @@ type scoreResult struct {
 
 func processFormula(
 	ctx context.Context,
-	client connection.Client,
+	client artifactClient,
 	definition *rpc.ScoreDefinition,
 	resource patterns.ResourceInstance,
 	scoreArtifact *rpc.Artifact,
@@ -164,7 +165,7 @@ func processFormula(
 
 func processScoreFormula(
 	ctx context.Context,
-	client connection.Client,
+	client artifactClient,
 	formula *rpc.ScoreFormula,
 	resource patterns.ResourceInstance,
 	scoreArtifact *rpc.Artifact,
@@ -196,7 +197,8 @@ func processScoreFormula(
 	}
 
 	// Update required tells the calling function if the score artifact needs to be updated
-	updateRequired := takeAction || scoreArtifact.GetUpdateTime().AsTime().Before(artifact.GetUpdateTime().AsTime())
+	// This condition is required to avoid the scenario mentioned here: https://github.com/apigee/registry/issues/641
+	updateRequired := takeAction || artifact.GetUpdateTime().AsTime().Add(patterns.ResourceUpdateThresholdSeconds).After(scoreArtifact.GetUpdateTime().AsTime())
 
 	// Apply the scoreExpression by default. This value will be required by the rollup_formula in the case where
 	// another formula from rollup_formula.score_formulas makes the score outdated.
@@ -229,7 +231,7 @@ func processScoreFormula(
 
 func processRollUpFormula(
 	ctx context.Context,
-	client connection.Client,
+	client artifactClient,
 	formula *rpc.RollUpFormula,
 	resource patterns.ResourceInstance,
 	scoreArtifact *rpc.Artifact,
@@ -337,15 +339,8 @@ func processScoreType(definition *rpc.ScoreDefinition, scoreValue interface{}, p
 			return nil, fmt.Errorf("failed typecheck for output: expected either int64 or float64 got %s (type: %T)", v, v)
 		}
 
-		// Check that the scoreValue is within min/max limits
 		configuredMin := definition.GetInteger().GetMinValue() // 0 if not set
 		configuredMax := definition.GetInteger().GetMaxValue() // 0 if not set
-		if value < configuredMin {
-			return nil, fmt.Errorf("evaluated score value(%d) cannot be less than the configured min_value (%d)", value, configuredMin)
-		}
-		if value > configuredMax {
-			return nil, fmt.Errorf("evaluated score value(%d) cannot be greater than the configured max_value (%d)", value, configuredMax)
-		}
 
 		// Populate Value field in Score proto
 		score.Value = &rpc.Score_IntegerValue{
@@ -354,6 +349,12 @@ func processScoreType(definition *rpc.ScoreDefinition, scoreValue interface{}, p
 				MinValue: configuredMin,
 				MaxValue: configuredMax,
 			},
+		}
+
+		// Check that the scoreValue is within min/max limits and assign default ALERT Severity
+		if value < configuredMin || value > configuredMax {
+			score.Severity = rpc.Severity_ALERT
+			break
 		}
 
 		// Populate the severity field according to Thresholds
@@ -380,19 +381,17 @@ func processScoreType(definition *rpc.ScoreDefinition, scoreValue interface{}, p
 			return nil, fmt.Errorf("failed typecheck for output: expected either int64 or float64 got %s (type: %T)", v, v)
 		}
 
-		// Check that the scoreValue is within min/max limits
-		if value < 0 {
-			return nil, fmt.Errorf("evaluated score value(%f) cannot be less than 0", value)
-		}
-		if value > 100 {
-			return nil, fmt.Errorf("evaluated score value(%f) cannot be greater than 100", value)
-		}
-
 		// Populate Value field in Score proto
 		score.Value = &rpc.Score_PercentValue{
 			PercentValue: &rpc.PercentValue{
 				Value: value,
 			},
+		}
+
+		// Check that the scoreValue is within min/max limits and assign default ALERT Severity
+		if value < 0 || value > 100 {
+			score.Severity = rpc.Severity_ALERT
+			break
 		}
 
 		// Populate the severity field according to Thresholds
@@ -438,7 +437,7 @@ func processScoreType(definition *rpc.ScoreDefinition, scoreValue interface{}, p
 	return score, nil
 }
 
-func uploadScore(ctx context.Context, client connection.Client, resource patterns.ResourceInstance, score *rpc.Score) error {
+func uploadScore(ctx context.Context, client artifactClient, resource patterns.ResourceInstance, score *rpc.Score) error {
 	artifactBytes, err := proto.Marshal(score)
 	if err != nil {
 		return err
@@ -449,21 +448,21 @@ func uploadScore(ctx context.Context, client connection.Client, resource pattern
 		MimeType: patch.MimeTypeForKind("Score"),
 	}
 	log.Debugf(ctx, "Uploading %s", artifact.GetName())
-	if err = core.SetArtifact(ctx, client, artifact); err != nil {
+	if err = client.SetArtifact(ctx, artifact); err != nil {
 		return fmt.Errorf("failed to save artifact %s: %s", artifact.GetName(), err)
 	}
 
 	return nil
 }
 
-func getArtifact(ctx context.Context, client connection.Client, artifactPattern string, getContents bool) (*rpc.Artifact, error) {
+func getArtifact(ctx context.Context, client artifactClient, artifactPattern string, getContents bool) (*rpc.Artifact, error) {
 	artifactName, err := names.ParseArtifact(artifactPattern)
 	if err != nil {
 		return nil, fmt.Errorf("invalid artifact pattern %q: %s", artifactPattern, err)
 	}
 
 	gotArtifact := &rpc.Artifact{}
-	err = core.GetArtifact(ctx, client, artifactName, true, func(artifact *rpc.Artifact) error {
+	err = client.GetArtifact(ctx, artifactName, true, func(artifact *rpc.Artifact) error {
 		gotArtifact = artifact
 		return nil
 	})

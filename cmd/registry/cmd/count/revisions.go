@@ -19,8 +19,8 @@ import (
 	"fmt"
 
 	"github.com/apigee/registry/cmd/registry/core"
-	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/log"
+	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"github.com/spf13/cobra"
@@ -36,7 +36,13 @@ func revisionsCommand() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := cmd.Context()
-			client, err := connection.NewClient(ctx)
+			c, err := connection.ActiveConfig()
+			if err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get config")
+			}
+			args[0] = c.FQName(args[0])
+
+			client, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
@@ -44,8 +50,7 @@ func revisionsCommand() *cobra.Command {
 			taskQueue, wait := core.WorkerPool(ctx, 64)
 			defer wait()
 			// Generate tasks.
-			name := args[0]
-			if spec, err := names.ParseSpec(name); err == nil {
+			if spec, err := names.ParseSpec(args[0]); err == nil {
 				err = core.ListSpecs(ctx, client, spec, filter, func(spec *rpc.ApiSpec) error {
 					taskQueue <- &countSpecRevisionsTask{
 						client:     client,
@@ -57,7 +62,7 @@ func revisionsCommand() *cobra.Command {
 				if err != nil {
 					log.FromContext(ctx).WithError(err).Fatal("Failed to list API specs")
 				}
-			} else if deployment, err := names.ParseDeployment(name); err == nil {
+			} else if deployment, err := names.ParseDeployment(args[0]); err == nil {
 				err = core.ListDeployments(ctx, client, deployment, filter, func(deployment *rpc.ApiDeployment) error {
 					taskQueue <- &countDeploymentRevisionsTask{
 						client:           client,
@@ -79,7 +84,7 @@ func revisionsCommand() *cobra.Command {
 }
 
 type countSpecRevisionsTask struct {
-	client     connection.Client
+	client     connection.RegistryClient
 	specName   string
 	specLabels map[string]string
 }
@@ -120,7 +125,7 @@ func (task *countSpecRevisionsTask) Run(ctx context.Context) error {
 }
 
 type countDeploymentRevisionsTask struct {
-	client           connection.Client
+	client           connection.RegistryClient
 	deploymentName   string
 	deploymentLabels map[string]string
 }

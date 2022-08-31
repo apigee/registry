@@ -16,29 +16,44 @@ package compute
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/apigee/registry/cmd/registry/conformance"
 	"github.com/apigee/registry/cmd/registry/core"
-	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/cmd/registry/patch"
 	"github.com/apigee/registry/log"
+	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/proto"
 )
 
-const styleguideFilter = "mime_type.contains('google.cloud.apigeeregistry.applications.v1alpha1.StyleGuide')"
+var styleguideFilter = fmt.Sprintf("mime_type.contains('%s')", patch.MimeTypeForKind("StyleGuide"))
 
 func conformanceCommand() *cobra.Command {
-	var filter string
-
 	cmd := &cobra.Command{
 		Use:   "conformance",
 		Short: "Compute lint results for API specs",
-		Args:  cobra.MinimumNArgs(1),
+		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := cmd.Context()
-			client, err := connection.NewClient(ctx)
+			c, err := connection.ActiveConfig()
+			if err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get config")
+			}
+			args[0] = c.FQName(args[0])
+
+			filter, err := cmd.Flags().GetString("filter")
+			if err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get filter from flags")
+			}
+			dryRun, err := cmd.Flags().GetBool("dry-run")
+			if err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get dry-run from flags")
+			}
+
+			client, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
@@ -71,18 +86,17 @@ func conformanceCommand() *cobra.Command {
 
 			for _, guide := range guides {
 				log.Debugf(ctx, "Processing styleguide: %s", guide.GetId())
-				processStyleGuide(ctx, client, guide, specs)
+				processStyleGuide(ctx, client, guide, specs, dryRun)
 			}
 		},
 	}
 
-	cmd.Flags().StringVar(&filter, "filter", "", "Filter selected resources")
 	return cmd
 }
 
 // processStyleGuide computes and attaches conformance reports as
 // artifacts to a spec or a collection of specs.
-func processStyleGuide(ctx context.Context, client connection.Client, styleguide *rpc.StyleGuide, specs []*rpc.ApiSpec) {
+func processStyleGuide(ctx context.Context, client connection.RegistryClient, styleguide *rpc.StyleGuide, specs []*rpc.ApiSpec, dryRun bool) {
 	linterNameToMetadata, err := conformance.GenerateLinterMetadata(styleguide)
 	if err != nil {
 		log.Errorf(ctx, "Failed generating linter metadata, check styleguide definition, Error: %s", err)
@@ -98,19 +112,13 @@ func processStyleGuide(ctx context.Context, client connection.Client, styleguide
 				continue // Only compute matching style guides.
 			}
 
-			taskQueue <- &conformance.ComputeConformanceTask{
-				Client:          client,
-				Spec:            spec,
-				LintersMetadata: linterNameToMetadata,
-				StyleguideId:    styleguide.GetId(),
-			}
-
 			// Delegate the task of computing the conformance report for this spec to the worker pool.
 			taskQueue <- &conformance.ComputeConformanceTask{
 				Client:          client,
 				Spec:            spec,
 				LintersMetadata: linterNameToMetadata,
 				StyleguideId:    styleguide.GetId(),
+				DryRun:          dryRun,
 			}
 		}
 	}

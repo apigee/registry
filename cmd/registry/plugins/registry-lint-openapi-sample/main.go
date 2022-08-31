@@ -16,7 +16,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -84,7 +83,7 @@ func (linter *sampleOpenApiLinterRunner) Run(req *rpc.LinterRequest) (*rpc.Linte
 }
 
 func lintFile(specPath string, ruleIds []string) ([]*rpc.LintProblem, error) {
-	specFile, err := ioutil.ReadFile(specPath)
+	specFile, err := os.ReadFile(specPath)
 	if err != nil {
 		return nil, err
 	}

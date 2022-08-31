@@ -16,26 +16,33 @@
 #
 
 #
-# Configure an environment to run Apigee Registry clients with a Google-hosted service.
+# Create a configuration to run Apigee Registry clients against a Google-hosted service.
 #
 # The following assumes you have run `gcloud auth login` and that the current
 # gcloud project is the one with your Apigee Registry instance.
 #
 
-if ! [ -x "$(command -v gcloud)" ]; then
-  echo 'ERROR: This script requires the gcloud command. Please install it to continue.' >&2; return
+if ! [ -x "$(command -v registry)" ]; then
+  echo 'ERROR: This script requires the registry command. Please install it to continue.' >&2; exit 1
 fi
 
-# Calls to the hosted service are secure.
-unset APG_REGISTRY_INSECURE
+if ! [ -x "$(command -v gcloud)" ]; then
+  echo 'ERROR: This script requires the gcloud command. Please install it to continue.' >&2; exit 1
+fi
 
-# Get the service address.
-export APG_REGISTRY_AUDIENCES=https://apigeeregistry.googleapis.com
-export APG_REGISTRY_ADDRESS=apigeeregistry.googleapis.com:443
+# Set the service address.
+APG_REGISTRY_ADDRESS="apigeeregistry.googleapis.com:443"
+APG_REGISTRY_INSECURE="false"
 
-# The auth token is generated for the gcloud logged-in user.
-export APG_REGISTRY_CLIENT_EMAIL=$(gcloud config list account --format "value(core.account)")
-export APG_REGISTRY_TOKEN=$(gcloud auth print-access-token ${APG_REGISTRY_CLIENT_EMAIL})
+APG_REGISTRY_PROJECT="$(gcloud config get project)"
+APG_REGISTRY_LOCATION="global"
+CLIENT_EMAIL="$(gcloud config get account)"
+APG_REGISTRY_TOKEN_SOURCE="gcloud auth print-access-token ${APG_REGISTRY_CLIENT_EMAIL}"
 
-# Calls don't use an API key.
-unset APG_REGISTRY_API_KEY
+registry config configurations create hosted \
+  --registry.insecure="${APG_REGISTRY_INSECURE}" \
+  --registry.address="${APG_REGISTRY_ADDRESS}" \
+  --registry.project="${APG_REGISTRY_PROJECT}" \
+  --registry.location="${APG_REGISTRY_LOCATION}" 
+  
+registry config set token-source "${APG_REGISTRY_TOKEN_SOURCE}"

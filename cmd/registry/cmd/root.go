@@ -17,7 +17,9 @@ package cmd
 import (
 	"github.com/apigee/registry/cmd/registry/cmd/annotate"
 	"github.com/apigee/registry/cmd/registry/cmd/apply"
+	"github.com/apigee/registry/cmd/registry/cmd/auth"
 	"github.com/apigee/registry/cmd/registry/cmd/compute"
+	"github.com/apigee/registry/cmd/registry/cmd/config"
 	"github.com/apigee/registry/cmd/registry/cmd/count"
 	"github.com/apigee/registry/cmd/registry/cmd/delete"
 	"github.com/apigee/registry/cmd/registry/cmd/diff"
@@ -27,11 +29,10 @@ import (
 	"github.com/apigee/registry/cmd/registry/cmd/label"
 	"github.com/apigee/registry/cmd/registry/cmd/list"
 	"github.com/apigee/registry/cmd/registry/cmd/resolve"
+	"github.com/apigee/registry/cmd/registry/cmd/rpc"
 	"github.com/apigee/registry/cmd/registry/cmd/upload"
 	"github.com/apigee/registry/cmd/registry/cmd/vocabulary"
-
-	"github.com/apigee/registry/cmd/registry/cmd/rpc"
-
+	pkgconf "github.com/apigee/registry/pkg/config"
 	"github.com/spf13/cobra"
 )
 
@@ -45,10 +46,13 @@ func Command() *cobra.Command {
 		Version: Version,
 		Short:   "A simple and eclectic utility for working with the API Registry",
 	}
+	cmd.PersistentFlags().AddFlagSet(pkgconf.Flags)
 
 	cmd.AddCommand(annotate.Command())
 	cmd.AddCommand(apply.Command())
+	cmd.AddCommand(auth.Command())
 	cmd.AddCommand(compute.Command())
+	cmd.AddCommand(config.Command())
 	cmd.AddCommand(count.Command())
 	cmd.AddCommand(resolve.Command())
 	cmd.AddCommand(delete.Command())

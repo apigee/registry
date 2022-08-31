@@ -29,7 +29,6 @@ func (s *RegistryServer) GetStorage(ctx context.Context, req *emptypb.Empty) (*r
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer db.Close()
 	tableNames, err := db.TableNames(ctx)
 	if err != nil {
 		return nil, err

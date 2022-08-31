@@ -19,10 +19,12 @@ import (
 	"time"
 
 	"github.com/apigee/registry/cmd/registry/core"
-	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 )
+
+const ResourceUpdateThresholdSeconds = time.Second * 2
 
 // This interface is used to describe generic resource names
 // Example:
@@ -325,7 +327,7 @@ func (ar ArtifactName) ParentName() ResourceName {
 }
 
 // This interface is used to describe generic resource instances
-// ResourceName is embeded, the only additional field is the UpdateTimestamp
+// ResourceName is embedded, the only additional field is the UpdateTimestamp
 type ResourceInstance interface {
 	ResourceName() ResourceName
 	UpdateTimestamp() time.Time
@@ -396,7 +398,7 @@ func (ar ArtifactResource) ResourceName() ResourceName {
 	return ar.ArtifactName
 }
 
-func ListResources(ctx context.Context, client connection.Client, pattern, filter string) ([]ResourceInstance, error) {
+func ListResources(ctx context.Context, client connection.RegistryClient, pattern, filter string) ([]ResourceInstance, error) {
 	var result []ResourceInstance
 	var err2 error
 

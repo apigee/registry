@@ -17,26 +17,24 @@ package patch
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
 
-	"github.com/apigee/registry/connection"
+	"gopkg.in/yaml.v3"
+
 	"github.com/apigee/registry/gapic"
+	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/models"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
-	"gopkg.in/yaml.v3"
 )
 
-type Artifact struct {
-	Header `yaml:",inline"`
-	Data   yaml.Node `yaml:"data"`
-}
-
 // ExportArtifact allows an artifact to be individually exported as a YAML file.
-func ExportArtifact(ctx context.Context, client *gapic.RegistryClient, message *rpc.Artifact) ([]byte, *Header, error) {
+func ExportArtifact(ctx context.Context, client *gapic.RegistryClient, message *rpc.Artifact) ([]byte, *models.Header, error) {
 	if message.Contents == nil {
 		req := &rpc.GetArtifactContentsRequest{
 			Name: message.Name,
@@ -102,7 +100,7 @@ func removeIdAndKind(node *yaml.Node) *yaml.Node {
 	return node
 }
 
-func newArtifact(message *rpc.Artifact) (*Artifact, error) {
+func newArtifact(message *rpc.Artifact) (*models.Artifact, error) {
 	artifactName, err := names.ParseArtifact(message.Name)
 	if err != nil {
 		return nil, err
@@ -142,11 +140,11 @@ func newArtifact(message *rpc.Artifact) (*Artifact, error) {
 	// We exclude the id and kind fields from YAML serializations.
 	node = removeIdAndKind(node)
 	// Wrap the artifact for YAML export.
-	return &Artifact{
-		Header: Header{
+	return &models.Artifact{
+		Header: models.Header{
 			ApiVersion: RegistryV1,
 			Kind:       kindForMimeType(message.MimeType),
-			Metadata: Metadata{
+			Metadata: models.Metadata{
 				Name: artifactName.ArtifactID(),
 			},
 		},
@@ -154,8 +152,8 @@ func newArtifact(message *rpc.Artifact) (*Artifact, error) {
 	}, nil
 }
 
-func applyArtifactPatchBytes(ctx context.Context, client connection.Client, bytes []byte, parent string) error {
-	var artifact Artifact
+func applyArtifactPatchBytes(ctx context.Context, client connection.RegistryClient, bytes []byte, parent string) error {
+	var artifact models.Artifact
 	err := yaml.Unmarshal(bytes, &artifact)
 	if err != nil {
 		return err
@@ -163,11 +161,16 @@ func applyArtifactPatchBytes(ctx context.Context, client connection.Client, byte
 	return applyArtifactPatch(ctx, client, &artifact, parent)
 }
 
-func applyArtifactPatch(ctx context.Context, client connection.Client, content *Artifact, parent string) error {
+func applyArtifactPatch(ctx context.Context, client connection.RegistryClient, content *models.Artifact, parent string) error {
 	// Restyle the YAML representation so that yaml.Marshal will marshal it as JSON.
 	styleForJSON(&content.Data)
 	// Marshal the YAML representation into the JSON serialization.
 	j, err := yaml.Marshal(content.Data)
+	if err != nil {
+		return err
+	}
+	// Populate Id and Kind fields in the contents of the artifact
+	j, err = populateIdAndKind(j, content.Kind, content.Metadata.Name)
 	if err != nil {
 		return err
 	}
@@ -204,6 +207,24 @@ func applyArtifactPatch(ctx context.Context, client connection.Client, content *
 		_, err = client.ReplaceArtifact(ctx, req)
 	}
 	return err
+}
+
+// populateIdAndKind inserts the "id" and "kind" fields in the supplied json bytes.
+func populateIdAndKind(bytes []byte, kind, id string) ([]byte, error) {
+	var jsonData map[string]interface{}
+	err := json.Unmarshal(bytes, &jsonData)
+	if err != nil {
+		return nil, err
+	}
+	jsonData["id"] = id
+	jsonData["kind"] = kind
+
+	rBytes, err := json.Marshal(jsonData)
+	if err != nil {
+		return nil, err
+	}
+
+	return rBytes, nil
 }
 
 // kindForMimeType returns the message name to be used as the "kind" of the artifact.
@@ -248,14 +269,17 @@ type messageFactory func() proto.Message
 
 // artifactMessageTypes is the single source of truth for artifact types that can be represented in YAML.
 var artifactMessageTypes map[string]messageFactory = map[string]messageFactory{
-	"google.cloud.apigeeregistry.applications.v1alpha1.StyleGuide": func() proto.Message { return new(rpc.StyleGuide) },
-	"google.cloud.apigeeregistry.v1.apihub.DisplaySettings":        func() proto.Message { return new(rpc.DisplaySettings) },
-	"google.cloud.apigeeregistry.v1.apihub.Lifecycle":              func() proto.Message { return new(rpc.Lifecycle) },
-	"google.cloud.apigeeregistry.v1.apihub.ReferenceList":          func() proto.Message { return new(rpc.ReferenceList) },
-	"google.cloud.apigeeregistry.v1.apihub.TaxonomyList":           func() proto.Message { return new(rpc.TaxonomyList) },
-	"google.cloud.apigeeregistry.v1.controller.Manifest":           func() proto.Message { return new(rpc.Manifest) },
-	"google.cloud.apigeeregistry.v1.scoring.Score":                 func() proto.Message { return new(rpc.Score) },
-	"google.cloud.apigeeregistry.v1.scoring.ScoreDefinition":       func() proto.Message { return new(rpc.ScoreDefinition) },
-	"google.cloud.apigeeregistry.v1.scoring.ScoreCard":             func() proto.Message { return new(rpc.ScoreCard) },
-	"google.cloud.apigeeregistry.v1.scoring.ScoreCardDefinition":   func() proto.Message { return new(rpc.ScoreCardDefinition) },
+	"google.cloud.apigeeregistry.v1.apihub.ApiSpecExtensionList": func() proto.Message { return new(rpc.ApiSpecExtensionList) },
+	"google.cloud.apigeeregistry.v1.apihub.DisplaySettings":      func() proto.Message { return new(rpc.DisplaySettings) },
+	"google.cloud.apigeeregistry.v1.apihub.Lifecycle":            func() proto.Message { return new(rpc.Lifecycle) },
+	"google.cloud.apigeeregistry.v1.apihub.ReferenceList":        func() proto.Message { return new(rpc.ReferenceList) },
+	"google.cloud.apigeeregistry.v1.apihub.TaxonomyList":         func() proto.Message { return new(rpc.TaxonomyList) },
+	"google.cloud.apigeeregistry.v1.controller.Manifest":         func() proto.Message { return new(rpc.Manifest) },
+	"google.cloud.apigeeregistry.v1.scoring.Score":               func() proto.Message { return new(rpc.Score) },
+	"google.cloud.apigeeregistry.v1.scoring.ScoreDefinition":     func() proto.Message { return new(rpc.ScoreDefinition) },
+	"google.cloud.apigeeregistry.v1.scoring.ScoreCard":           func() proto.Message { return new(rpc.ScoreCard) },
+	"google.cloud.apigeeregistry.v1.scoring.ScoreCardDefinition": func() proto.Message { return new(rpc.ScoreCardDefinition) },
+	"google.cloud.apigeeregistry.v1.style.StyleGuide":            func() proto.Message { return new(rpc.StyleGuide) },
+	"google.cloud.apigeeregistry.v1.style.ConformanceReport":     func() proto.Message { return new(rpc.ConformanceReport) },
+	"google.cloud.apigeeregistry.v1.style.Lint":                  func() proto.Message { return new(rpc.Lint) },
 }

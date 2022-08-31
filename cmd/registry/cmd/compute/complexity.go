@@ -19,8 +19,8 @@ import (
 	"fmt"
 
 	"github.com/apigee/registry/cmd/registry/core"
-	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/log"
+	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"github.com/spf13/cobra"
@@ -36,15 +36,25 @@ func complexityCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "complexity",
 		Short: "Compute complexity metrics of API specs",
-		Args:  cobra.MinimumNArgs(1),
+		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := cmd.Context()
+			c, err := connection.ActiveConfig()
+			if err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get config")
+			}
+			args[0] = c.FQName(args[0])
+
 			filter, err := cmd.Flags().GetString("filter")
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get filter from flags")
 			}
+			dryRun, err := cmd.Flags().GetBool("dry-run")
+			if err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get dry-run from flags")
+			}
 
-			client, err := connection.NewClient(ctx)
+			client, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
@@ -54,7 +64,7 @@ func complexityCommand() *cobra.Command {
 
 			spec, err := names.ParseSpec(args[0])
 			if err != nil {
-				return // TODO: Log an error.
+				log.FromContext(ctx).WithError(err).Fatal("Failed parse")
 			}
 
 			// Iterate through a collection of specs and summarize each.
@@ -62,6 +72,7 @@ func complexityCommand() *cobra.Command {
 				taskQueue <- &computeComplexityTask{
 					client:   client,
 					specName: spec.Name,
+					dryRun:   dryRun,
 				}
 				return nil
 			})
@@ -73,8 +84,9 @@ func complexityCommand() *cobra.Command {
 }
 
 type computeComplexityTask struct {
-	client   connection.Client
+	client   connection.RegistryClient
 	specName string
+	dryRun   bool
 }
 
 func (task *computeComplexityTask) String() string {
@@ -122,6 +134,11 @@ func (task *computeComplexityTask) Run(ctx context.Context) error {
 	} else {
 		return fmt.Errorf("we don't know how to summarize %s", task.specName)
 	}
+
+	if task.dryRun {
+		core.PrintMessage(complexity)
+		return nil
+	}
 	subject := task.specName
 	messageData, _ := proto.Marshal(complexity)
 	artifact := &rpc.Artifact{
@@ -129,9 +146,5 @@ func (task *computeComplexityTask) Run(ctx context.Context) error {
 		MimeType: core.MimeTypeForMessageType("gnostic.metrics.Complexity"),
 		Contents: messageData,
 	}
-	err = core.SetArtifact(ctx, task.client, artifact)
-	if err != nil {
-		return err
-	}
-	return nil
+	return core.SetArtifact(ctx, task.client, artifact)
 }

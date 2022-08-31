@@ -18,9 +18,7 @@ import (
 	"context"
 
 	"github.com/apigee/registry/server/registry/internal/storage/models"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 func (c *Client) SaveProject(ctx context.Context, v *models.Project) error {
@@ -76,24 +74,9 @@ func (c *Client) SaveArtifactContents(ctx context.Context, artifact *models.Arti
 }
 
 func (c *Client) save(ctx context.Context, v interface{}) error {
-	err := c.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		// Update all fields from model: https://gorm.io/docs/update.html#Update-Selected-Fields
-		got := tx.Model(v).Select("*").Updates(v)
-		if err := got.Error; err != nil {
-			return got.Error
-		}
-
-		if got.RowsAffected == 0 {
-			if err := tx.Create(v).Error; err != nil {
-				return err
-			}
-		}
-
-		return nil
-	})
-	if err != nil {
-		return status.Error(codes.Internal, err.Error())
-	}
-
-	return nil
+	// Insert or update, see: https://gorm.io/docs/create.html#Upsert-x2F-On-Conflict
+	err := c.db.WithContext(ctx).Clauses(clause.OnConflict{
+		UpdateAll: true,
+	}).Create(v).Error
+	return grpcErrorForDBError(ctx, err)
 }

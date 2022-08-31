@@ -15,62 +15,96 @@
 package registry
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"sync"
 	"testing"
 
+	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/server/registry/test/remote"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
 
 const (
-	postgresDriver   = "postgres"
-	postgresDBConfig = "host=localhost port=5432 user=registry_tester dbname=registry_test sslmode=disable"
+	postgresDriver           = "postgres"
+	postgresDBConfig         = "host=localhost port=5432 user=registry_tester dbname=registry_test sslmode=disable"
+	testRequiresAdminService = "test requires admin service, skipping"
 )
 
 var (
 	sharedStorage sync.Mutex
 	usePostgres   = false
+	useRemote     = false
+	hostedProject = ""
 )
+
+func adminServiceUnavailable() bool {
+	return hostedProject != ""
+}
 
 func init() {
 	flag.BoolVar(&usePostgres, "postgresql", false, "perform server tests using postgresql")
+	flag.BoolVar(&useRemote, "remote", false, "perform server tests using a remote server")
+	flag.StringVar(&hostedProject, "hosted", "", "perform server tests using a remote server with the specified project and no Admin service")
 }
 
-func defaultTestServer(t *testing.T) *RegistryServer {
-	t.Helper()
+type TestServer interface {
+	rpc.AdminServer
+	rpc.RegistryServer
+}
 
-	if !usePostgres {
-		if server, err := serverWithSQLite(t); err != nil {
-			t.Fatalf("Setup: failed to get server with SQLite: %s", err)
-		} else {
-			return server
+// defaultTestServer will call server.Close() when test completes
+func defaultTestServer(t *testing.T) TestServer {
+	t.Helper()
+	var err error
+	var server *RegistryServer
+
+	if hostedProject != "" {
+		p := remote.NewProxyForHostedService(hostedProject)
+		if err = p.Open(context.Background()); err != nil {
+			t.Fatalf("Fatalf: failed to connect to remote server: %s", err)
+		}
+		return p
+	}
+	if useRemote {
+		p := &remote.Proxy{}
+		if err = p.Open(context.Background()); err != nil {
+			t.Fatalf("Fatalf: failed to connect to remote server: %s", err)
+		}
+		return p
+	}
+	if usePostgres {
+		server, err = serverWithPostgres(t)
+		if err != nil {
+			t.Errorf("Setup: failed to get server with postgres: %s", err)
+			t.Log("Falling back to server with SQLite storage")
 		}
 	}
-
-	server, err := serverWithPostgres(t)
-	if err != nil {
-		t.Errorf("Setup: failed to get server with postgres: %s", err)
-		t.Log("Falling back to server with SQLite storage")
-		if server, err := serverWithSQLite(t); err != nil {
+	if server == nil {
+		if server, err = serverWithSQLite(t); err != nil {
 			t.Fatalf("Setup: failed to get server with SQLite: %s", err)
-		} else {
-			return server
 		}
 	}
 
 	return server
 }
 
+// serverWithSQLite will call server.Close() when test completes
 func serverWithSQLite(t *testing.T) (*RegistryServer, error) {
-	return New(Config{
+	server, err := New(Config{
 		Database: "sqlite3",
 		DBConfig: fmt.Sprintf("%s/registry.db", t.TempDir()),
 	})
+	if server != nil {
+		t.Cleanup(server.Close)
+	}
+	return server, err
 }
 
+// serverWithPostgres will call server.Close() when test completes
 func serverWithPostgres(t *testing.T) (*RegistryServer, error) {
 	sharedStorage.Lock()
 	t.Cleanup(sharedStorage.Unlock)
@@ -79,10 +113,14 @@ func serverWithPostgres(t *testing.T) (*RegistryServer, error) {
 		return nil, fmt.Errorf("failed to reset database: %s", err)
 	}
 
-	return New(Config{
+	server, err := New(Config{
 		Database: postgresDriver,
 		DBConfig: postgresDBConfig,
 	})
+	if server != nil {
+		t.Cleanup(server.Close)
+	}
+	return server, err
 }
 
 func resetPostgres() error {

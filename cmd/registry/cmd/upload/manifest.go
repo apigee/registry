@@ -16,12 +16,12 @@ package upload
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"github.com/apigee/registry/cmd/registry/controller"
 	"github.com/apigee/registry/cmd/registry/core"
-	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/log"
+	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/ghodss/yaml"
 	"github.com/spf13/cobra"
@@ -30,7 +30,7 @@ import (
 )
 
 func readManifestProto(filename string) (*rpc.Manifest, error) {
-	yamlBytes, err := ioutil.ReadFile(filename)
+	yamlBytes, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +74,7 @@ func manifestCommand() *cobra.Command {
 			}
 
 			manifestData, _ := proto.Marshal(manifest)
-			client, err := connection.NewClient(ctx)
+			client, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}

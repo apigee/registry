@@ -20,12 +20,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 
 	"github.com/apigee/registry/cmd/registry/core"
-	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/log"
+	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"github.com/spf13/cobra"
@@ -49,7 +48,7 @@ func csvCommand() *cobra.Command {
 				log.Fatalf(ctx, "Invalid delimiter %q: must be exactly one character", delimiter)
 			}
 
-			client, err := connection.NewClient(ctx)
+			client, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
@@ -178,7 +177,7 @@ func (r *uploadCSVReader) buildColumnIndex(header []string) error {
 }
 
 type uploadSpecTask struct {
-	client    connection.Client
+	client    connection.RegistryClient
 	projectID string
 	apiID     string
 	versionID string
@@ -221,7 +220,7 @@ func (t uploadSpecTask) Run(ctx context.Context) error {
 		return fmt.Errorf("failed to ensure API version exists: %s", err)
 	}
 
-	contents, err := ioutil.ReadFile(t.filepath)
+	contents, err := os.ReadFile(t.filepath)
 	if err != nil {
 		return err
 	}

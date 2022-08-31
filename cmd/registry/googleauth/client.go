@@ -18,7 +18,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"os/user"
@@ -36,7 +35,7 @@ func GetAuthenticatedClient(ctx context.Context) (*http.Client, error) {
 		return nil, err
 	}
 	dir := usr.HomeDir
-	b, err := ioutil.ReadFile(filepath.Join(dir, ".credentials/registry.json"))
+	b, err := os.ReadFile(filepath.Join(dir, ".credentials/registry.json"))
 	if err != nil {
 		return nil, err
 	}

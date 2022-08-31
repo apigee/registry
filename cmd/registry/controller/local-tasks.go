@@ -23,8 +23,8 @@ import (
 	"strings"
 
 	"github.com/apigee/registry/cmd/registry/core"
-	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/log"
+	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
 	"google.golang.org/protobuf/proto"
 )
@@ -101,7 +101,7 @@ func (task *ExecCommandTask) Run(ctx context.Context) error {
 }
 
 func touchArtifact(ctx context.Context, artifactName, action string) error {
-	client, err := connection.NewClient(ctx)
+	client, err := connection.NewRegistryClient(ctx)
 	if err != nil {
 		log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 	}

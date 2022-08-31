@@ -20,8 +20,8 @@ import (
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/cmd/registry/patterns"
 	"github.com/apigee/registry/cmd/registry/scoring"
-	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/log"
+	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
 )
@@ -37,8 +37,12 @@ func scoreCardCommand() *cobra.Command {
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get filter from flags")
 			}
+			dryRun, err := cmd.Flags().GetBool("dry-run")
+			if err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get dry-run from flags")
+			}
 
-			client, err := connection.NewClient(ctx)
+			client, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
@@ -51,18 +55,21 @@ func scoreCardCommand() *cobra.Command {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to list resources")
 			}
 
+			artifactClient := &scoring.RegistryArtifactClient{RegistryClient: client}
+
 			for _, r := range resources {
 				// Fetch the ScoreCardDefinitions which can be applied to this resource
-				scoreCardDefinitions, err := scoring.FetchScoreCardDefinitions(ctx, client, r.ResourceName())
+				scoreCardDefinitions, err := scoring.FetchScoreCardDefinitions(ctx, artifactClient, r.ResourceName())
 				if err != nil {
 					log.FromContext(ctx).WithError(err).Errorf("Skipping resource %q", r.ResourceName())
 					continue
 				}
 				for _, d := range scoreCardDefinitions {
 					taskQueue <- &computeScoreCardTask{
-						client:      client,
+						client:      artifactClient,
 						defArtifact: d,
 						resource:    r,
+						dryRun:      dryRun,
 					}
 				}
 			}
@@ -73,9 +80,10 @@ func scoreCardCommand() *cobra.Command {
 }
 
 type computeScoreCardTask struct {
-	client      connection.Client
+	client      *scoring.RegistryArtifactClient
 	defArtifact *rpc.Artifact
 	resource    patterns.ResourceInstance
+	dryRun      bool
 }
 
 func (task *computeScoreCardTask) String() string {
@@ -83,5 +91,5 @@ func (task *computeScoreCardTask) String() string {
 }
 
 func (task *computeScoreCardTask) Run(ctx context.Context) error {
-	return scoring.CalculateScoreCard(ctx, task.client, task.defArtifact, task.resource)
+	return scoring.CalculateScoreCard(ctx, task.client, task.defArtifact, task.resource, task.dryRun)
 }

@@ -21,8 +21,8 @@ import (
 	"strings"
 
 	"github.com/apigee/registry/cmd/registry/core"
-	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/log"
+	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"github.com/hexops/gotextdiff"
@@ -39,7 +39,15 @@ func Command() *cobra.Command {
 		Args:  cobra.ExactArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := cmd.Context()
-			client, err := connection.NewClient(ctx)
+			c, err := connection.ActiveConfig()
+			if err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get config")
+			}
+			for i := range args {
+				args[i] = c.FQName(args[i])
+			}
+
+			client, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
@@ -105,7 +113,7 @@ func Command() *cobra.Command {
 }
 
 func resolveSpecRevision(ctx context.Context,
-	client connection.Client,
+	client connection.RegistryClient,
 	base string,
 	suffix string) (names.SpecRevision, error) {
 	// First try to treat the raw suffix as revision name.

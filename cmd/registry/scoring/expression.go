@@ -19,6 +19,7 @@ import (
 	"fmt"
 
 	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/cmd/registry/scoring/extensions"
 	"github.com/apigee/registry/rpc"
 	"github.com/google/cel-go/cel"
 	metrics "github.com/google/gnostic/metrics"
@@ -28,7 +29,7 @@ import (
 
 // https://github.com/google/cel-spec/blob/master/doc/langdef.md#dynamic-values
 func evaluateScoreExpression(expression string, artifactMap map[string]interface{}) (interface{}, error) {
-	env, err := cel.NewEnv()
+	env, err := cel.NewEnv(extensions.Extensions())
 	if err != nil {
 		return nil, fmt.Errorf("error creating CEL environment: %s", err)
 	}
@@ -66,11 +67,11 @@ func getMap(contents []byte, mimeType string) (map[string]interface{}, error) {
 		return unmarshalAndMap(contents, &metrics.Complexity{})
 	case "gnostic.metrics.Vocabulary":
 		return unmarshalAndMap(contents, &metrics.Vocabulary{})
-	case "google.cloud.apigeeregistry.applications.v1alpha1.ConformanceReport":
+	case "google.cloud.apigeeregistry.v1.style.ConformanceReport":
 		return unmarshalAndMap(contents, &rpc.ConformanceReport{})
 	case "google.cloud.apigeeregistry.applications.v1alpha1.Index":
 		return unmarshalAndMap(contents, &rpc.Index{})
-	case "google.cloud.apigeeregistry.applications.v1alpha1.Lint":
+	case "google.cloud.apigeeregistry.v1.style.Lint":
 		return unmarshalAndMap(contents, &rpc.Lint{})
 	case "google.cloud.apigeeregistry.v1.apihub.ReferenceList":
 		return unmarshalAndMap(contents, &rpc.ReferenceList{})

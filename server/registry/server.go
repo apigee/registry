@@ -16,11 +16,16 @@ package registry
 
 import (
 	"context"
+	"errors"
+	"log"
+	"net"
 
+	"cloud.google.com/go/pubsub"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/internal/storage"
-
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
 )
 
@@ -40,6 +45,8 @@ type RegistryServer struct {
 	dbConfig      string
 	notifyEnabled bool
 	projectID     string
+	storageClient *storage.Client
+	pubSubClient  *pubsub.Client
 
 	rpc.UnimplementedRegistryServer
 	rpc.UnimplementedAdminServer
@@ -58,21 +65,72 @@ func New(config Config) (*RegistryServer, error) {
 		s.dbConfig = "/tmp/registry.db"
 	}
 
-	db, err := storage.NewClient(context.Background(), s.database, s.dbConfig)
+	var err error
+	ctx := context.Background()
+	s.storageClient, err = storage.NewClient(ctx, s.database, s.dbConfig)
 	if err != nil {
 		return nil, err
 	}
-	defer db.Close()
-	if err := db.EnsureTables(); err != nil {
+	if err := s.storageClient.EnsureTables(ctx); err != nil {
 		return nil, err
 	}
+
+	if s.notifyEnabled {
+		s.pubSubClient, err = pubsub.NewClient(ctx, s.projectID)
+		if err != nil {
+			return nil, err
+		}
+		if _, err := s.pubSubClient.CreateTopic(ctx, TopicName); err != nil && status.Code(err) != codes.AlreadyExists {
+			return nil, err
+		}
+	}
+
 	return s, nil
 }
 
 func (s *RegistryServer) getStorageClient(ctx context.Context) (*storage.Client, error) {
-	return storage.NewClient(ctx, s.database, s.dbConfig)
+	if s.storageClient == nil {
+		return nil, errors.New("no storageClient")
+	}
+	return s.storageClient, nil
+}
+
+func (s *RegistryServer) getPubSubClient(ctx context.Context) (*pubsub.Client, error) {
+	if s.pubSubClient == nil {
+		return nil, errors.New("no pubSubClient")
+	}
+	return s.pubSubClient, nil
+}
+
+func (s *RegistryServer) Close() {
+	s.storageClient.Close()
+	if s.pubSubClient != nil {
+		s.pubSubClient.Topic(TopicName).Flush()
+	}
 }
 
 func isNotFound(err error) bool {
 	return status.Code(err) == codes.NotFound
+}
+
+// GRPCListen starts a net.Listener and grpc.Server for this RegistryServer.
+// Caller is responsible for stopping server.
+func (rs *RegistryServer) ServeGRPC(addr *net.TCPAddr, opt ...grpc.ServerOption) (net.Listener, *grpc.Server, error) {
+	l, err := net.ListenTCP("tcp", addr)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	s := grpc.NewServer(opt...)
+	reflection.Register(s)
+	rpc.RegisterRegistryServer(s, rs)
+	rpc.RegisterAdminServer(s, rs)
+
+	go func() {
+		if err := s.Serve(l); err != nil {
+			log.Fatal(err)
+		}
+	}()
+
+	return l, s, err
 }

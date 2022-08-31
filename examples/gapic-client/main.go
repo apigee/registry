@@ -19,14 +19,14 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/apigee/registry/connection"
+	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
 	"google.golang.org/api/iterator"
 )
 
 func main() {
 	ctx := context.Background()
-	client, err := connection.NewClient(ctx)
+	client, err := connection.NewRegistryClient(ctx)
 	if err != nil {
 		log.Fatalf("%s", err.Error())
 	}

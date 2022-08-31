@@ -287,6 +287,7 @@ func TestDeleteApiDeploymentRevision(t *testing.T) {
 
 func TestListApiDeploymentRevisions(t *testing.T) {
 	tests := []struct {
+		admin     bool
 		desc      string
 		seed      []*rpc.ApiDeployment
 		req       *rpc.ListApiDeploymentRevisionsRequest
@@ -355,7 +356,8 @@ func TestListApiDeploymentRevisions(t *testing.T) {
 			},
 		},
 		{
-			desc: "across multiple projects",
+			admin: true,
+			desc:  "across multiple projects",
 			seed: []*rpc.ApiDeployment{
 				{Name: "projects/my-project/locations/global/apis/my-api/deployments/my-dep"},
 				{Name: "projects/other-project/locations/global/apis/my-api/deployments/my-dep"},
@@ -399,6 +401,9 @@ func TestListApiDeploymentRevisions(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
+			if test.admin && adminServiceUnavailable() {
+				t.Skip(testRequiresAdminService)
+			}
 			ctx := context.Background()
 			server := defaultTestServer(t)
 			if err := seeder.SeedDeployments(ctx, server, test.seed...); err != nil {

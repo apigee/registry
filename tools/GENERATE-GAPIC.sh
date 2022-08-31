@@ -46,3 +46,5 @@ func (c *AdminClient) GrpcClient() rpcpb.AdminClient {
 	return c.internalClient.(*adminGRPCClient).adminClient
 }
 END
+
+gofmt -s -w gapic/*.go

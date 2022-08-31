@@ -19,8 +19,8 @@ import (
 	"strings"
 
 	"github.com/apigee/registry/cmd/registry/core"
-	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/log"
+	"github.com/apigee/registry/pkg/connection"
 	"github.com/google/gnostic/metrics/vocabulary"
 	"github.com/spf13/cobra"
 )
@@ -42,7 +42,7 @@ func uniqueCommand() *cobra.Command {
 				log.Fatal(ctx, "output-id must specify an artifact id (final segment only) and not a full name.")
 			}
 
-			client, err := connection.NewClient(ctx)
+			client, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}

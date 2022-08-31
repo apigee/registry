@@ -20,8 +20,8 @@ import (
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/cmd/registry/patterns"
 	"github.com/apigee/registry/cmd/registry/scoring"
-	"github.com/apigee/registry/connection"
 	"github.com/apigee/registry/log"
+	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
 )
@@ -33,12 +33,17 @@ func scoreCommand() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := cmd.Context()
+
 			filter, err := cmd.Flags().GetString("filter")
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get filter from flags")
 			}
+			dryRun, err := cmd.Flags().GetBool("dry-run")
+			if err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get dry-run from flags")
+			}
 
-			client, err := connection.NewClient(ctx)
+			client, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
@@ -51,18 +56,21 @@ func scoreCommand() *cobra.Command {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to list resources")
 			}
 
+			artifactClient := &scoring.RegistryArtifactClient{RegistryClient: client}
+
 			for _, r := range resources {
 				// Fetch the ScoreDefinitions which can be applied to this resource
-				scoreDefinitions, err := scoring.FetchScoreDefinitions(ctx, client, r.ResourceName())
+				scoreDefinitions, err := scoring.FetchScoreDefinitions(ctx, artifactClient, r.ResourceName())
 				if err != nil {
 					log.FromContext(ctx).WithError(err).Errorf("Skipping resource %q", r.ResourceName())
 					continue
 				}
 				for _, d := range scoreDefinitions {
 					taskQueue <- &computeScoreTask{
-						client:      client,
+						client:      artifactClient,
 						defArtifact: d,
 						resource:    r,
+						dryRun:      dryRun,
 					}
 				}
 			}
@@ -73,9 +81,10 @@ func scoreCommand() *cobra.Command {
 }
 
 type computeScoreTask struct {
-	client      connection.Client
+	client      *scoring.RegistryArtifactClient
 	defArtifact *rpc.Artifact
 	resource    patterns.ResourceInstance
+	dryRun      bool
 }
 
 func (task *computeScoreTask) String() string {
@@ -83,5 +92,5 @@ func (task *computeScoreTask) String() string {
 }
 
 func (task *computeScoreTask) Run(ctx context.Context) error {
-	return scoring.CalculateScore(ctx, task.client, task.defArtifact, task.resource)
+	return scoring.CalculateScore(ctx, task.client, task.defArtifact, task.resource, task.dryRun)
 }

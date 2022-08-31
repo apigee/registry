@@ -33,17 +33,22 @@ func (s *RegistryServer) MigrateDatabase(ctx context.Context, req *rpc.MigrateDa
 	if err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
-	defer db.Close()
 
 	err = db.Migrate(ctx)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	metadata, _ := anypb.New(&rpc.MigrateDatabaseMetadata{})
-	response, _ := anypb.New(&rpc.MigrateDatabaseResponse{
+	metadata, err := anypb.New(&rpc.MigrateDatabaseMetadata{})
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	response, err := anypb.New(&rpc.MigrateDatabaseResponse{
 		Message: "OK",
 	})
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
 	return &longrunning.Operation{
 		Name:     "migrate",
 		Metadata: metadata,

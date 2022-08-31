@@ -17,24 +17,95 @@ package filtering
 import (
 	"testing"
 	"time"
+
+	"google.golang.org/grpc/status"
 )
+
+func TestErrorConditions(t *testing.T) {
+	tests := []struct {
+		desc   string
+		filter string
+		fields map[string]FieldType
+		model  map[string]interface{}
+	}{
+		{
+			desc:   "bad field type",
+			filter: `k == "match"`,
+			fields: map[string]FieldType{
+				"k": 999,
+			},
+		},
+		{
+			desc:   "bad field name",
+			filter: `abc == "match"`,
+			fields: map[string]FieldType{
+				"k": 999,
+			},
+		},
+		{
+			desc:   "bad filter",
+			filter: `k xx "match"`,
+			fields: map[string]FieldType{},
+		},
+		{
+			desc:   "bad filter result",
+			filter: `k`,
+			fields: map[string]FieldType{
+				"k": String,
+			},
+			model: map[string]interface{}{
+				"k": "match",
+			},
+		},
+		{
+			desc:   "bad model",
+			filter: `k == "k"`,
+			fields: map[string]FieldType{
+				"k": String,
+			},
+			model: nil,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			f, err := NewFilter(test.filter, test.fields)
+			if err == nil {
+				if _, err = f.Matches(test.model); err == nil {
+					t.Errorf("(%q) expected error", test.filter)
+				}
+			}
+			if _, ok := status.FromError(err); !ok {
+				t.Errorf("(%q) expected gRPC status error", test.filter)
+			}
+		})
+	}
+}
 
 func TestFilter_Matches(t *testing.T) {
 	tests := []struct {
 		desc     string
 		filter   string
-		fields   []Field
+		fields   map[string]FieldType
 		positive map[string]interface{}
 		negative map[string]interface{}
 	}{
 		{
+			desc:   "empty",
+			filter: ``,
+			fields: map[string]FieldType{
+				"k": String,
+			},
+			positive: map[string]interface{}{
+				"k": "match",
+			},
+			negative: map[string]interface{}{},
+		},
+		{
 			desc:   "equal to String",
 			filter: `k == "match"`,
-			fields: []Field{
-				{
-					Name: "k",
-					Type: String,
-				},
+			fields: map[string]FieldType{
+				"k": String,
 			},
 			positive: map[string]interface{}{
 				"k": "match",
@@ -46,11 +117,8 @@ func TestFilter_Matches(t *testing.T) {
 		{
 			desc:   "equal to Int",
 			filter: `k == 123`,
-			fields: []Field{
-				{
-					Name: "k",
-					Type: Int,
-				},
+			fields: map[string]FieldType{
+				"k": Int,
 			},
 			positive: map[string]interface{}{
 				"k": 123,
@@ -62,11 +130,8 @@ func TestFilter_Matches(t *testing.T) {
 		{
 			desc:   "less than Timestamp",
 			filter: `k < timestamp("2021-01-01T00:00:00Z")`,
-			fields: []Field{
-				{
-					Name: "k",
-					Type: Timestamp,
-				},
+			fields: map[string]FieldType{
+				"k": Timestamp,
 			},
 			positive: map[string]interface{}{
 				"k": time.Date(2020, time.January, 1, 0, 0, 0, 0, time.UTC),
@@ -78,11 +143,8 @@ func TestFilter_Matches(t *testing.T) {
 		{
 			desc:   "greater than Timestamp",
 			filter: `k > timestamp("2021-01-01T00:00:00Z")`,
-			fields: []Field{
-				{
-					Name: "k",
-					Type: Timestamp,
-				},
+			fields: map[string]FieldType{
+				"k": Timestamp,
 			},
 			positive: map[string]interface{}{
 				"k": time.Date(2022, time.January, 1, 0, 0, 0, 0, time.UTC),
@@ -94,11 +156,8 @@ func TestFilter_Matches(t *testing.T) {
 		{
 			desc:   "has StringMap key",
 			filter: `has(labels.match)`,
-			fields: []Field{
-				{
-					Name: "labels",
-					Type: StringMap,
-				},
+			fields: map[string]FieldType{
+				"labels": StringMap,
 			},
 			positive: map[string]interface{}{
 				"labels": map[string]string{
@@ -114,11 +173,8 @@ func TestFilter_Matches(t *testing.T) {
 		{
 			desc:   "in StringMap keys",
 			filter: `"match" in labels`,
-			fields: []Field{
-				{
-					Name: "labels",
-					Type: StringMap,
-				},
+			fields: map[string]FieldType{
+				"labels": StringMap,
 			},
 			positive: map[string]interface{}{
 				"labels": map[string]string{
@@ -134,11 +190,8 @@ func TestFilter_Matches(t *testing.T) {
 		{
 			desc:   "equal to StringMap value",
 			filter: `labels["k"] == "match"`,
-			fields: []Field{
-				{
-					Name: "labels",
-					Type: StringMap,
-				},
+			fields: map[string]FieldType{
+				"labels": StringMap,
 			},
 			positive: map[string]interface{}{
 				"labels": map[string]string{
@@ -154,11 +207,8 @@ func TestFilter_Matches(t *testing.T) {
 		{
 			desc:   "substring of StringMap value",
 			filter: `labels.k.contains("substring")`,
-			fields: []Field{
-				{
-					Name: "labels",
-					Type: StringMap,
-				},
+			fields: map[string]FieldType{
+				"labels": StringMap,
 			},
 			positive: map[string]interface{}{
 				"labels": map[string]string{
@@ -174,11 +224,8 @@ func TestFilter_Matches(t *testing.T) {
 		{
 			desc:   "in StringMap value split",
 			filter: `"match" in labels.k.split("_")`,
-			fields: []Field{
-				{
-					Name: "labels",
-					Type: StringMap,
-				},
+			fields: map[string]FieldType{
+				"labels": StringMap,
 			},
 			positive: map[string]interface{}{
 				"labels": map[string]string{
@@ -208,7 +255,7 @@ func TestFilter_Matches(t *testing.T) {
 
 			if match, err := f.Matches(test.negative); err != nil {
 				t.Fatalf("NewFilter(%q).Matches(%v) returned error: %s", test.filter, test.negative, err)
-			} else if match {
+			} else if match && len(test.negative) > 0 {
 				t.Errorf("NewFilter(%q).Matches(%v) returned unexpected match", test.filter, test.negative)
 			}
 		})
