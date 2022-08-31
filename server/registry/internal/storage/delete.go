@@ -55,7 +55,7 @@ func (c *Client) DeleteProject(ctx context.Context, name names.Project, cascade 
 	}
 	counts := make([]int64, len(tables))
 	for i, model := range tables {
-		op := c.db.Where("project_id = ?", name.ProjectID)
+		op := c.db.WithContext(ctx).Where("project_id = ?", name.ProjectID)
 		if err := op.Delete(model).Error; err != nil {
 			return err
 		}
@@ -71,7 +71,7 @@ func (c *Client) DeleteProject(ctx context.Context, name names.Project, cascade 
 		models.DeploymentRevisionTag{},
 		models.SpecRevisionTag{},
 	} {
-		op := c.db.Where("project_id = ?", name.ProjectID)
+		op := c.db.WithContext(ctx).Where("project_id = ?", name.ProjectID)
 		if err := op.Delete(model).Error; err != nil {
 			return err
 		}
@@ -91,7 +91,7 @@ func (c *Client) DeleteApi(ctx context.Context, name names.Api, cascade bool) er
 	}
 	counts := make([]int64, len(tables))
 	for i, model := range tables {
-		op := c.db.Where("project_id = ?", name.ProjectID).
+		op := c.db.WithContext(ctx).Where("project_id = ?", name.ProjectID).
 			Where("api_id = ?", name.ApiID)
 		if err := op.Delete(model).Error; err != nil {
 			return err
@@ -107,7 +107,7 @@ func (c *Client) DeleteApi(ctx context.Context, name names.Api, cascade bool) er
 		models.DeploymentRevisionTag{},
 		models.SpecRevisionTag{},
 	} {
-		op := c.db.Where("project_id = ?", name.ProjectID).
+		op := c.db.WithContext(ctx).Where("project_id = ?", name.ProjectID).
 			Where("api_id = ?", name.ApiID)
 		if err := op.Delete(model).Error; err != nil {
 			return err
@@ -126,7 +126,7 @@ func (c *Client) DeleteVersion(ctx context.Context, name names.Version, cascade 
 	}
 	counts := make([]int64, len(tables))
 	for i, model := range tables {
-		op := c.db.Where("project_id = ?", name.ProjectID).
+		op := c.db.WithContext(ctx).Where("project_id = ?", name.ProjectID).
 			Where("api_id = ?", name.ApiID).
 			Where("version_id = ?", name.VersionID)
 		if err := op.Delete(model).Error; err != nil {
@@ -142,7 +142,7 @@ func (c *Client) DeleteVersion(ctx context.Context, name names.Version, cascade 
 	for _, model := range []interface{}{
 		models.SpecRevisionTag{},
 	} {
-		op := c.db.Where("project_id = ?", name.ProjectID).
+		op := c.db.WithContext(ctx).Where("project_id = ?", name.ProjectID).
 			Where("api_id = ?", name.ApiID).
 			Where("version_id = ?", name.VersionID)
 		if err := op.Delete(model).Error; err != nil {
@@ -159,7 +159,7 @@ func (c *Client) DeleteSpec(ctx context.Context, name names.Spec, cascade bool) 
 		models.SpecRevisionTag{},
 		models.Blob{},
 	} {
-		op := c.db.Where("project_id = ?", name.ProjectID).
+		op := c.db.WithContext(ctx).Where("project_id = ?", name.ProjectID).
 			Where("api_id = ?", name.ApiID).
 			Where("version_id = ?", name.VersionID).
 			Where("spec_id = ?", name.SpecID)
@@ -174,7 +174,7 @@ func (c *Client) DeleteSpec(ctx context.Context, name names.Spec, cascade bool) 
 	}
 	counts := make([]int64, len(tables))
 	for i, model := range tables {
-		op := c.db.Where("project_id = ?", name.ProjectID).
+		op := c.db.WithContext(ctx).Where("project_id = ?", name.ProjectID).
 			Where("api_id = ?", name.ApiID).
 			Where("version_id = ?", name.VersionID).
 			Where("spec_id = ?", name.SpecID)
@@ -234,7 +234,7 @@ func (c *Client) DeleteDeployment(ctx context.Context, name names.Deployment, ca
 		models.Deployment{},
 		models.DeploymentRevisionTag{},
 	} {
-		op := c.db.Where("project_id = ?", name.ProjectID).
+		op := c.db.WithContext(ctx).Where("project_id = ?", name.ProjectID).
 			Where("api_id = ?", name.ApiID).
 			Where("deployment_id = ?", name.DeploymentID)
 		if err := op.Delete(model).Error; err != nil {
@@ -248,7 +248,7 @@ func (c *Client) DeleteDeployment(ctx context.Context, name names.Deployment, ca
 	}
 	counts := make([]int64, len(tables))
 	for i, model := range tables {
-		op := c.db.Where("project_id = ?", name.ProjectID).
+		op := c.db.WithContext(ctx).Where("project_id = ?", name.ProjectID).
 			Where("api_id = ?", name.ApiID).
 			Where("deployment_id = ?", name.DeploymentID)
 		if err := op.Delete(model).Error; err != nil {
