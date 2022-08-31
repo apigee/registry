@@ -163,7 +163,7 @@ func TestArtifacts(t *testing.T) {
 					},
 				},
 			}
-			actions := ProcessManifest(ctx, lister, projectID, manifest)
+			actions := ProcessManifest(ctx, lister, projectID, manifest, 10)
 
 			if diff := cmp.Diff(test.want, actions, sortActions); diff != "" {
 				t.Errorf("ProcessManifest(%+v) returned unexpected diff (-want +got):\n%s", manifest, diff)
@@ -260,7 +260,7 @@ func TestAggregateArtifacts(t *testing.T) {
 					},
 				},
 			}
-			actions := ProcessManifest(ctx, lister, projectID, manifest)
+			actions := ProcessManifest(ctx, lister, projectID, manifest, 10)
 
 			if diff := cmp.Diff(test.want, actions, sortActions); diff != "" {
 				t.Errorf("ProcessManifest(%+v) returned unexpected diff (-want +got):\n%s", manifest, diff)
@@ -402,7 +402,7 @@ func TestDerivedArtifacts(t *testing.T) {
 					},
 				},
 			}
-			actions := ProcessManifest(ctx, lister, projectID, manifest)
+			actions := ProcessManifest(ctx, lister, projectID, manifest, 10)
 
 			if diff := cmp.Diff(test.want, actions, sortActions); diff != "" {
 				t.Errorf("ProcessManifest(%+v) returned unexpected diff (-want +got):\n%s", manifest, diff)
@@ -495,7 +495,7 @@ func TestReceiptArtifacts(t *testing.T) {
 					},
 				},
 			}
-			actions := ProcessManifest(ctx, lister, projectID, manifest)
+			actions := ProcessManifest(ctx, lister, projectID, manifest, 10)
 
 			if diff := cmp.Diff(test.want, actions, sortActions); diff != "" {
 				t.Errorf("ProcessManifest(%+v) returned unexpected diff (-want +got):\n%s", manifest, diff)
@@ -603,7 +603,7 @@ func TestReceiptAggArtifacts(t *testing.T) {
 					},
 				},
 			}
-			actions := ProcessManifest(ctx, lister, projectID, manifest)
+			actions := ProcessManifest(ctx, lister, projectID, manifest, 10)
 
 			if diff := cmp.Diff(test.want, actions, sortActions); diff != "" {
 				t.Errorf("ProcessManifest(%+v) returned unexpected diff (-want +got):\n%s", manifest, diff)
@@ -772,10 +772,99 @@ func TestMultipleEntitiesArtifacts(t *testing.T) {
 					},
 				},
 			}
-			actions := ProcessManifest(ctx, lister, projectID, manifest)
+			actions := ProcessManifest(ctx, lister, projectID, manifest, 10)
 
 			if diff := cmp.Diff(test.want, actions, sortActions); diff != "" {
 				t.Errorf("ProcessManifest(%+v) returned unexpected diff (-want +got):\n%s", manifest, diff)
+			}
+		})
+	}
+}
+
+func TestMaxActions(t *testing.T) {
+	tests := []struct {
+		desc       string
+		seed       []seeder.RegistryResource
+		maxActions int
+	}{
+		{
+			desc: "generated more than maxActions",
+			seed: []seeder.RegistryResource{
+				&rpc.ApiSpec{
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+				},
+				&rpc.ApiSpec{
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
+				},
+				&rpc.ApiSpec{
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
+				},
+			},
+			maxActions: 2,
+		},
+		{
+			desc: "generated less than maxActions",
+			seed: []seeder.RegistryResource{
+				&rpc.ApiSpec{
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+				},
+				&rpc.ApiSpec{
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml",
+				},
+				&rpc.ApiSpec{
+					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml",
+				},
+			},
+			maxActions: 4,
+		},
+	}
+
+	const projectID = "controller-test"
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			ctx := context.Background()
+			registryClient, err := connection.NewRegistryClient(ctx)
+			if err != nil {
+				t.Fatalf("Failed to create client: %+v", err)
+			}
+			t.Cleanup(func() { registryClient.Close() })
+
+			adminClient, err := connection.NewAdminClient(ctx)
+			if err != nil {
+				t.Fatalf("Failed to create client: %+v", err)
+			}
+			t.Cleanup(func() { adminClient.Close() })
+
+			deleteProject(ctx, adminClient, t, "controller-test")
+			t.Cleanup(func() { deleteProject(ctx, adminClient, t, "controller-test") })
+
+			client := seeder.Client{
+				RegistryClient: registryClient,
+				AdminClient:    adminClient,
+			}
+			lister := &RegistryLister{RegistryClient: registryClient}
+
+			if err := seeder.SeedRegistry(ctx, client, test.seed...); err != nil {
+				t.Fatalf("Setup: failed to seed registry: %s", err)
+			}
+
+			manifest := &rpc.Manifest{
+				Id: "controller-test",
+				GeneratedResources: []*rpc.GeneratedResource{
+					{
+						Pattern: "apis/-/versions/-/specs/-/artifacts/vocabulary",
+						Dependencies: []*rpc.Dependency{
+							{
+								Pattern: "$resource.spec",
+							},
+						},
+						Action: "registry compute vocabulary $resource.spec",
+					},
+				},
+			}
+			actions := ProcessManifest(ctx, lister, projectID, manifest, test.maxActions)
+			if len(actions) > test.maxActions {
+				t.Errorf("ProcessManifest(%+v) generated unexpected number of actions, wanted <= %d, got %d", manifest, test.maxActions, len(actions))
 			}
 		})
 	}

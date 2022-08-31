@@ -35,7 +35,8 @@ func ProcessManifest(
 	ctx context.Context,
 	client listingClient,
 	projectID string,
-	manifest *rpc.Manifest) []*Action {
+	manifest *rpc.Manifest,
+	maxActions int) []*Action {
 	var actions []*Action
 	//Check for errors in manifest
 	errs := ValidateManifest(fmt.Sprintf("projects/%s/locations/global", projectID), manifest)
@@ -60,9 +61,19 @@ func ProcessManifest(
 			continue
 		}
 		actions = append(actions, newActions...)
+
+		if len(actions) >= maxActions {
+			log.FromContext(ctx).Debugf("Reached max actions limit %d", maxActions)
+			break
+		}
 	}
 
-	return actions
+	maxLength := len(actions)
+	if maxLength > maxActions {
+		maxLength = maxActions
+	}
+
+	return actions[:maxLength]
 }
 
 func processManifestResource(
