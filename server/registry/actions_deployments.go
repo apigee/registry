@@ -211,6 +211,7 @@ func (s *RegistryServer) UpdateApiDeployment(ctx context.Context, req *rpc.Updat
 	}
 	var response *rpc.ApiDeployment
 	if err = s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
+		db.LockDeployments(ctx)
 		deployment, err := db.GetDeployment(ctx, name)
 		if err == nil {
 			// Apply the update to the deployment - possibly changing the revision ID.
@@ -226,9 +227,6 @@ func (s *RegistryServer) UpdateApiDeployment(ctx context.Context, req *rpc.Updat
 			return err
 		} else if status.Code(err) == codes.NotFound && req.GetAllowMissing() {
 			response, err = s.createDeployment(ctx, db, name, req.GetApiDeployment())
-			if storage.AlreadyExists(err) { // The deployment was created between the get and the create.
-				return status.Errorf(codes.Aborted, "update conflict, please retry")
-			}
 			return err
 		} else {
 			return err
