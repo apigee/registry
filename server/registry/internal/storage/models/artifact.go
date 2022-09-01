@@ -40,9 +40,6 @@ type Artifact struct {
 	MimeType     string    // MIME type of artifact
 	SizeInBytes  int32     // Size of the spec.
 	Hash         string    // A hash of the spec.
-	// SDG: investigate
-	// ParentKey     string
-	// Parent        *interface{} `gorm:"foreignKey:ParentKey"`
 }
 
 // NewArtifact initializes a new resource.

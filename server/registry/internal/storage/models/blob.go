@@ -31,9 +31,6 @@ type Blob struct {
 	Contents     []byte    // The contents of the blob.
 	CreateTime   time.Time // Creation time.
 	UpdateTime   time.Time // Time of last change.
-	// SDG: investigate
-	// ParentKey     string
-	// Parent        *interface{} `gorm:"foreignKey:ParentKey"`
 }
 
 // NewBlobForSpec creates a new Blob object to store spec contents.
