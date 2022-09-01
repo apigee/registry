@@ -179,6 +179,7 @@ func (s *RegistryServer) UpdateApiVersion(ctx context.Context, req *rpc.UpdateAp
 	}
 	var response *rpc.ApiVersion
 	if err = s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
+		db.LockVersions(ctx)
 		version, err := db.GetVersion(ctx, name)
 		if err == nil {
 			if err := version.Update(req.GetApiVersion(), models.ExpandMask(req.GetApiVersion(), req.GetUpdateMask())); err != nil {
@@ -191,9 +192,6 @@ func (s *RegistryServer) UpdateApiVersion(ctx context.Context, req *rpc.UpdateAp
 			return err
 		} else if status.Code(err) == codes.NotFound && req.GetAllowMissing() {
 			response, err = s.createApiVersion(ctx, db, name, req.GetApiVersion())
-			if storage.AlreadyExists(err) { // The version was created between the get and the create.
-				return status.Errorf(codes.Aborted, "update conflict, please retry")
-			}
 			return err
 		} else {
 			return err

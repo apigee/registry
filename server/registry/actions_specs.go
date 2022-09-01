@@ -263,6 +263,7 @@ func (s *RegistryServer) UpdateApiSpec(ctx context.Context, req *rpc.UpdateApiSp
 	}
 	var response *rpc.ApiSpec
 	if err = s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
+		db.LockSpecs(ctx)
 		spec, err := db.GetSpec(ctx, name)
 		if err == nil {
 			// Apply the update to the spec - possibly changing the revision ID.
@@ -284,9 +285,6 @@ func (s *RegistryServer) UpdateApiSpec(ctx context.Context, req *rpc.UpdateApiSp
 			return err
 		} else if status.Code(err) == codes.NotFound && req.GetAllowMissing() {
 			response, err = s.createSpec(ctx, db, name, req.GetApiSpec())
-			if storage.AlreadyExists(err) { // the spec was created between the get and the create.
-				return status.Errorf(codes.Aborted, "update conflict, please retry")
-			}
 			return err
 		} else {
 			return err

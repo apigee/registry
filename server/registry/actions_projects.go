@@ -153,6 +153,7 @@ func (s *RegistryServer) UpdateProject(ctx context.Context, req *rpc.UpdateProje
 	}
 	var response *rpc.Project
 	if err := s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
+		db.LockProjects(ctx)
 		project, err := db.GetProject(ctx, name)
 		if err == nil {
 			project.Update(req.GetProject(), models.ExpandMask(req.GetProject(), req.GetUpdateMask()))
@@ -163,9 +164,6 @@ func (s *RegistryServer) UpdateProject(ctx context.Context, req *rpc.UpdateProje
 			return nil
 		} else if status.Code(err) == codes.NotFound && req.GetAllowMissing() {
 			response, err = s.createProject(ctx, db, name, req.GetProject())
-			if storage.AlreadyExists(err) { // the project was created between the get and the create.
-				return status.Errorf(codes.Aborted, "update conflict, please retry")
-			}
 			return err
 		} else {
 			return err
