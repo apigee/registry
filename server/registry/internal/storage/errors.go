@@ -111,6 +111,9 @@ func grpcErrorForDBError(ctx context.Context, err error) error {
 		if err.Error() == "context canceled" {
 			return status.Error(codes.Canceled, err.Error())
 		}
+		if err.Error() == "pq: Could not complete operation in a failed transaction" {
+			return status.Error(codes.Aborted, err.Error())
+		}
 		log.Infof(ctx, "Unhandled %T %+v", err, err)
 	}
 
