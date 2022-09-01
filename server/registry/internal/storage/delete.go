@@ -285,6 +285,19 @@ func (c *Client) DeleteDeploymentRevision(ctx context.Context, name names.Deploy
 		}
 	}
 
+	// if we deleted the last revision, return an error to cancel the transaction
+	op := c.db.WithContext(ctx).
+		Where("project_id = ?", name.ProjectID).
+		Where("api_id = ?", name.ApiID).
+		Where("deployment_id = ?", name.DeploymentID).
+		Order("revision_create_time desc")
+	v := new(models.Deployment)
+	if err := op.First(v).Error; err == gorm.ErrRecordNotFound {
+		return status.Errorf(codes.FailedPrecondition, "cannot delete the only revision: %s", name)
+	} else if err != nil {
+		return grpcErrorForDBError(ctx, err)
+	}
+
 	return nil
 }
 
