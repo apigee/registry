@@ -1196,6 +1196,9 @@ func TestDeleteApiCascading(t *testing.T) {
 		artifact = &rpc.Artifact{
 			Name: "projects/my-project/locations/global/apis/my-api/artifacts/my-artifact",
 		}
+		spec = &rpc.ApiSpec{
+			Name: "projects/my-project/locations/global/apis/my-api/versions/my-version/specs/my-spec",
+		}
 	)
 
 	if err := seeder.SeedRegistry(ctx, server, version, deployment, artifact); err != nil {
@@ -1225,5 +1228,9 @@ func TestDeleteApiCascading(t *testing.T) {
 
 	if _, err := server.GetArtifact(ctx, &rpc.GetArtifactRequest{Name: artifact.GetName()}); status.Code(err) != codes.NotFound {
 		t.Errorf("GetArtifact(%q) returned status code %q, want %q: %s", artifact.GetName(), status.Code(err), codes.NotFound, err)
+	}
+
+	if _, err := server.GetApiSpec(ctx, &rpc.GetApiSpecRequest{Name: spec.GetName()}); status.Code(err) != codes.NotFound {
+		t.Errorf("GetApiSpec(%q) returned status code %q, want %q: %s", spec.GetName(), status.Code(err), codes.NotFound, err)
 	}
 }
