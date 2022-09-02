@@ -73,7 +73,7 @@ func Command() *cobra.Command {
 				log.FromContext(ctx).WithError(err).Fatal("Invalid manifest resource name")
 			}
 
-			registryClient, err := connection.NewRegistryClient(ctx)
+			registryClient, err := connection.NewRegistryClientWithSettings(ctx, c)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
