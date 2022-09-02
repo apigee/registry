@@ -31,16 +31,22 @@ import (
 
 const ActivePointerFilename = "active_config"
 
-var NoActiveConfigurationError = fmt.Errorf("No active configuration.")
+var (
+	NoActiveConfigurationError = fmt.Errorf("No active configuration.")
 
-// Flags defines Flags that may be bound to a Configuration. Use like:
-// `cmd.PersistentFlags().AddFlagSet(connection.Flags)`
-var Flags *pflag.FlagSet = CreateFlagSet()
+	// Flags defines Flags that may be bound to a Configuration. Use like:
+	// `cmd.PersistentFlags().AddFlagSet(connection.Flags)`
+	Flags *pflag.FlagSet = CreateFlagSet()
 
-// Directory is $HOME/config/registry
-var Directory string
-var CannotDeleteActiveError = fmt.Errorf("Cannot delete active configuration")
-var ReservedConfigNameError = fmt.Errorf("%q is reserved", ActivePointerFilename)
+	// Directory is $HOME/config/registry
+	Directory               string
+	CannotDeleteActiveError = fmt.Errorf("Cannot delete active configuration")
+	ReservedConfigNameError = fmt.Errorf("%q is reserved", ActivePointerFilename)
+
+	envBindings    = []string{"registry.address", "registry.insecure", "registry.token"}
+	envPrefix      = "APG"
+	envKeyReplacer = strings.NewReplacer(".", "_")
+)
 
 func init() {
 	home, err := os.UserHomeDir()
@@ -190,6 +196,16 @@ func ReadValid(name string) (c Configuration, err error) {
 		return
 	}
 
+	for _, env := range envBindings {
+		if v.IsSet(env) {
+			evar := strings.ToUpper(envKeyReplacer.Replace(envPrefix + "." + env))
+			eval, _ := os.LookupEnv(evar)
+			if eval == v.GetString(env) {
+				fmt.Printf("WARN: deprecated env: %s=%q\n", evar, eval)
+			}
+		}
+	}
+
 	return
 }
 
@@ -259,10 +275,9 @@ func ActiveName() (string, error) {
 // Binds environment vars to populate config
 func bindEnvs(v *viper.Viper) error {
 	v.AutomaticEnv()
-	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-	v.SetEnvPrefix("APG")
-	bindings := []string{"registry.address", "registry.insecure", "registry.token"}
-	for _, env := range bindings {
+	v.SetEnvKeyReplacer(envKeyReplacer)
+	v.SetEnvPrefix(envPrefix)
+	for _, env := range envBindings {
 		if err := v.BindEnv(env); err != nil {
 			return err
 		}

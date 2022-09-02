@@ -50,7 +50,7 @@ func lintCommand() *cobra.Command {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get fry-run from flags")
 			}
 
-			client, err := connection.NewRegistryClient(ctx)
+			client, err := connection.NewRegistryClientWithSettings(ctx, c)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
