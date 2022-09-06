@@ -17,6 +17,7 @@ package storage
 import (
 	"context"
 	"fmt"
+	"time"
 
 	_ "github.com/GoogleCloudPlatform/cloudsql-proxy/proxy/dialers/postgres"
 	"github.com/apigee/registry/server/registry/internal/storage/models"
@@ -63,6 +64,11 @@ func NewClient(ctx context.Context, driver, dsn string) (*Client, error) {
 			c.close()
 			return nil, grpcErrorForDBError(ctx, err)
 		}
+		if err := applyConnectionLimits(db); err != nil {
+			c := &Client{db: db}
+			c.close()
+			return nil, grpcErrorForDBError(ctx, err)
+		}
 		return &Client{db: db}, nil
 	case "postgres", "cloudsqlpostgres":
 		db, err := gorm.Open(postgres.New(postgres.Config{
@@ -76,10 +82,28 @@ func NewClient(ctx context.Context, driver, dsn string) (*Client, error) {
 			c.close()
 			return nil, grpcErrorForDBError(ctx, err)
 		}
+		if err := applyConnectionLimits(db); err != nil {
+			c := &Client{db: db}
+			c.close()
+			return nil, grpcErrorForDBError(ctx, err)
+		}
 		return &Client{db: db}, nil
 	default:
 		return nil, fmt.Errorf("unsupported database %s", driver)
 	}
+}
+
+// Applies limits to concurrent connections.
+// Could be made configurable.
+func applyConnectionLimits(db *gorm.DB) error {
+	sqlDB, err := db.DB()
+	if err != nil {
+		return err
+	}
+	sqlDB.SetMaxOpenConns(10)
+	sqlDB.SetMaxIdleConns(10)
+	sqlDB.SetConnMaxLifetime(60 * time.Second)
+	return nil
 }
 
 // Close closes a database session.
