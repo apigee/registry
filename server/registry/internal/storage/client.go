@@ -75,7 +75,8 @@ func NewClient(ctx context.Context, driver, dsn string) (*Client, error) {
 			DriverName: driver,
 			DSN:        dsn,
 		}), &gorm.Config{
-			Logger: NewGormLogger(ctx),
+			Logger:      NewGormLogger(ctx),
+			PrepareStmt: true,
 		})
 		if err != nil {
 			c := &Client{db: db}
