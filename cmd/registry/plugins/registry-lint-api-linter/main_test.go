@@ -50,7 +50,7 @@ func TestApiLinterPluginLintSpec(t *testing.T) {
 	}{
 		{
 			&apiLinterRunner{},
-			func(specPath string) ([]*rpc.LintProblem, error) {
+			func(specPath, specDir string) ([]*rpc.LintProblem, error) {
 				return []*rpc.LintProblem{
 						{
 							Message: "test",
@@ -103,7 +103,7 @@ func TestApiLinterPluginLintSpec(t *testing.T) {
 		},
 		{
 			&apiLinterRunner{},
-			func(specPath string) ([]*rpc.LintProblem, error) {
+			func(specPath, specDir string) ([]*rpc.LintProblem, error) {
 				return []*rpc.LintProblem{}, errors.New("test")
 			},
 			&rpc.LinterRequest{
