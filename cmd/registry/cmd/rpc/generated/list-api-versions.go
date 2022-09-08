@@ -31,7 +31,7 @@ func init() {
 
 	ListApiVersionsCmd.Flags().StringVar(&ListApiVersionsInput.Filter, "filter", "", "An expression that can be used to filter the...")
 
-	ListApiVersionsCmd.Flags().StringVar(&ListApiVersionsInput.OrderBy, "order_by", "", "A comma-separated list of fields, e.g. 'foo,bar'")
+	ListApiVersionsCmd.Flags().StringVar(&ListApiVersionsInput.OrderBy, "order_by", "", "A comma-separated list of fields, e.g. 'foo,bar' ...")
 
 	ListApiVersionsCmd.Flags().StringVar(&ListApiVersionsFromFile, "from_file", "", "Absolute path to JSON file containing request payload")
 
