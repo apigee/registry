@@ -26,6 +26,11 @@ import (
 
 func ExampleNewRegistryClient() {
 	ctx := context.Background()
+	// This snippet has been automatically generated and should be regarded as a code template only.
+	// It will require modifications to work:
+	// - It may require correct/in-range values for request initialization.
+	// - It may require specifying regional endpoints when creating the service client as shown in:
+	//   https://pkg.go.dev/cloud.google.com/go#hdr-Client_Options
 	c, err := gapic.NewRegistryClient(ctx)
 	if err != nil {
 		// TODO: Handle error.
@@ -38,6 +43,11 @@ func ExampleNewRegistryClient() {
 
 func ExampleRegistryClient_ListApis() {
 	ctx := context.Background()
+	// This snippet has been automatically generated and should be regarded as a code template only.
+	// It will require modifications to work:
+	// - It may require correct/in-range values for request initialization.
+	// - It may require specifying regional endpoints when creating the service client as shown in:
+	//   https://pkg.go.dev/cloud.google.com/go#hdr-Client_Options
 	c, err := gapic.NewRegistryClient(ctx)
 	if err != nil {
 		// TODO: Handle error.
@@ -64,6 +74,11 @@ func ExampleRegistryClient_ListApis() {
 
 func ExampleRegistryClient_GetApi() {
 	ctx := context.Background()
+	// This snippet has been automatically generated and should be regarded as a code template only.
+	// It will require modifications to work:
+	// - It may require correct/in-range values for request initialization.
+	// - It may require specifying regional endpoints when creating the service client as shown in:
+	//   https://pkg.go.dev/cloud.google.com/go#hdr-Client_Options
 	c, err := gapic.NewRegistryClient(ctx)
 	if err != nil {
 		// TODO: Handle error.
@@ -84,6 +99,11 @@ func ExampleRegistryClient_GetApi() {
 
 func ExampleRegistryClient_CreateApi() {
 	ctx := context.Background()
+	// This snippet has been automatically generated and should be regarded as a code template only.
+	// It will require modifications to work:
+	// - It may require correct/in-range values for request initialization.
+	// - It may require specifying regional endpoints when creating the service client as shown in:
+	//   https://pkg.go.dev/cloud.google.com/go#hdr-Client_Options
 	c, err := gapic.NewRegistryClient(ctx)
 	if err != nil {
 		// TODO: Handle error.
@@ -104,6 +124,11 @@ func ExampleRegistryClient_CreateApi() {
 
 func ExampleRegistryClient_UpdateApi() {
 	ctx := context.Background()
+	// This snippet has been automatically generated and should be regarded as a code template only.
+	// It will require modifications to work:
+	// - It may require correct/in-range values for request initialization.
+	// - It may require specifying regional endpoints when creating the service client as shown in:
+	//   https://pkg.go.dev/cloud.google.com/go#hdr-Client_Options
 	c, err := gapic.NewRegistryClient(ctx)
 	if err != nil {
 		// TODO: Handle error.
@@ -124,6 +149,11 @@ func ExampleRegistryClient_UpdateApi() {
 
 func ExampleRegistryClient_DeleteApi() {
 	ctx := context.Background()
+	// This snippet has been automatically generated and should be regarded as a code template only.
+	// It will require modifications to work:
+	// - It may require correct/in-range values for request initialization.
+	// - It may require specifying regional endpoints when creating the service client as shown in:
+	//   https://pkg.go.dev/cloud.google.com/go#hdr-Client_Options
 	c, err := gapic.NewRegistryClient(ctx)
 	if err != nil {
 		// TODO: Handle error.
@@ -142,6 +172,11 @@ func ExampleRegistryClient_DeleteApi() {
 
 func ExampleRegistryClient_ListApiVersions() {
 	ctx := context.Background()
+	// This snippet has been automatically generated and should be regarded as a code template only.
+	// It will require modifications to work:
+	// - It may require correct/in-range values for request initialization.
+	// - It may require specifying regional endpoints when creating the service client as shown in:
+	//   https://pkg.go.dev/cloud.google.com/go#hdr-Client_Options
 	c, err := gapic.NewRegistryClient(ctx)
 	if err != nil {
 		// TODO: Handle error.
@@ -168,6 +203,11 @@ func ExampleRegistryClient_ListApiVersions() {
 
 func ExampleRegistryClient_GetApiVersion() {
 	ctx := context.Background()
+	// This snippet has been automatically generated and should be regarded as a code template only.
+	// It will require modifications to work:
+	// - It may require correct/in-range values for request initialization.
+	// - It may require specifying regional endpoints when creating the service client as shown in:
+	//   https://pkg.go.dev/cloud.google.com/go#hdr-Client_Options
 	c, err := gapic.NewRegistryClient(ctx)
 	if err != nil {
 		// TODO: Handle error.
@@ -188,6 +228,11 @@ func ExampleRegistryClient_GetApiVersion() {
 
 func ExampleRegistryClient_CreateApiVersion() {
 	ctx := context.Background()
+	// This snippet has been automatically generated and should be regarded as a code template only.
+	// It will require modifications to work:
+	// - It may require correct/in-range values for request initialization.
+	// - It may require specifying regional endpoints when creating the service client as shown in:
+	//   https://pkg.go.dev/cloud.google.com/go#hdr-Client_Options
 	c, err := gapic.NewRegistryClient(ctx)
 	if err != nil {
 		// TODO: Handle error.
@@ -208,6 +253,11 @@ func ExampleRegistryClient_CreateApiVersion() {
 
 func ExampleRegistryClient_UpdateApiVersion() {
 	ctx := context.Background()
+	// This snippet has been automatically generated and should be regarded as a code template only.
+	// It will require modifications to work:
+	// - It may require correct/in-range values for request initialization.
+	// - It may require specifying regional endpoints when creating the service client as shown in:
+	//   https://pkg.go.dev/cloud.google.com/go#hdr-Client_Options
 	c, err := gapic.NewRegistryClient(ctx)
 	if err != nil {
 		// TODO: Handle error.
@@ -228,6 +278,11 @@ func ExampleRegistryClient_UpdateApiVersion() {
 
 func ExampleRegistryClient_DeleteApiVersion() {
 	ctx := context.Background()
+	// This snippet has been automatically generated and should be regarded as a code template only.
+	// It will require modifications to work:
+	// - It may require correct/in-range values for request initialization.
+	// - It may require specifying regional endpoints when creating the service client as shown in:
+	//   https://pkg.go.dev/cloud.google.com/go#hdr-Client_Options
 	c, err := gapic.NewRegistryClient(ctx)
 	if err != nil {
 		// TODO: Handle error.
@@ -246,6 +301,11 @@ func ExampleRegistryClient_DeleteApiVersion() {
 
 func ExampleRegistryClient_ListApiSpecs() {
 	ctx := context.Background()
+	// This snippet has been automatically generated and should be regarded as a code template only.
+	// It will require modifications to work:
+	// - It may require correct/in-range values for request initialization.
+	// - It may require specifying regional endpoints when creating the service client as shown in:
+	//   https://pkg.go.dev/cloud.google.com/go#hdr-Client_Options
 	c, err := gapic.NewRegistryClient(ctx)
 	if err != nil {
 		// TODO: Handle error.
@@ -272,6 +332,11 @@ func ExampleRegistryClient_ListApiSpecs() {
 
 func ExampleRegistryClient_GetApiSpec() {
 	ctx := context.Background()
+	// This snippet has been automatically generated and should be regarded as a code template only.
+	// It will require modifications to work:
+	// - It may require correct/in-range values for request initialization.
+	// - It may require specifying regional endpoints when creating the service client as shown in:
+	//   https://pkg.go.dev/cloud.google.com/go#hdr-Client_Options
 	c, err := gapic.NewRegistryClient(ctx)
 	if err != nil {
 		// TODO: Handle error.
@@ -292,6 +357,11 @@ func ExampleRegistryClient_GetApiSpec() {
 
 func ExampleRegistryClient_GetApiSpecContents() {
 	ctx := context.Background()
+	// This snippet has been automatically generated and should be regarded as a code template only.
+	// It will require modifications to work:
+	// - It may require correct/in-range values for request initialization.
+	// - It may require specifying regional endpoints when creating the service client as shown in:
+	//   https://pkg.go.dev/cloud.google.com/go#hdr-Client_Options
 	c, err := gapic.NewRegistryClient(ctx)
 	if err != nil {
 		// TODO: Handle error.
@@ -312,6 +382,11 @@ func ExampleRegistryClient_GetApiSpecContents() {
 
 func ExampleRegistryClient_CreateApiSpec() {
 	ctx := context.Background()
+	// This snippet has been automatically generated and should be regarded as a code template only.
+	// It will require modifications to work:
+	// - It may require correct/in-range values for request initialization.
+	// - It may require specifying regional endpoints when creating the service client as shown in:
+	//   https://pkg.go.dev/cloud.google.com/go#hdr-Client_Options
 	c, err := gapic.NewRegistryClient(ctx)
 	if err != nil {
 		// TODO: Handle error.
@@ -332,6 +407,11 @@ func ExampleRegistryClient_CreateApiSpec() {
 
 func ExampleRegistryClient_UpdateApiSpec() {
 	ctx := context.Background()
+	// This snippet has been automatically generated and should be regarded as a code template only.
+	// It will require modifications to work:
+	// - It may require correct/in-range values for request initialization.
+	// - It may require specifying regional endpoints when creating the service client as shown in:
+	//   https://pkg.go.dev/cloud.google.com/go#hdr-Client_Options
 	c, err := gapic.NewRegistryClient(ctx)
 	if err != nil {
 		// TODO: Handle error.
@@ -352,6 +432,11 @@ func ExampleRegistryClient_UpdateApiSpec() {
 
 func ExampleRegistryClient_DeleteApiSpec() {
 	ctx := context.Background()
+	// This snippet has been automatically generated and should be regarded as a code template only.
+	// It will require modifications to work:
+	// - It may require correct/in-range values for request initialization.
+	// - It may require specifying regional endpoints when creating the service client as shown in:
+	//   https://pkg.go.dev/cloud.google.com/go#hdr-Client_Options
 	c, err := gapic.NewRegistryClient(ctx)
 	if err != nil {
 		// TODO: Handle error.
@@ -370,6 +455,11 @@ func ExampleRegistryClient_DeleteApiSpec() {
 
 func ExampleRegistryClient_TagApiSpecRevision() {
 	ctx := context.Background()
+	// This snippet has been automatically generated and should be regarded as a code template only.
+	// It will require modifications to work:
+	// - It may require correct/in-range values for request initialization.
+	// - It may require specifying regional endpoints when creating the service client as shown in:
+	//   https://pkg.go.dev/cloud.google.com/go#hdr-Client_Options
 	c, err := gapic.NewRegistryClient(ctx)
 	if err != nil {
 		// TODO: Handle error.
@@ -390,6 +480,11 @@ func ExampleRegistryClient_TagApiSpecRevision() {
 
 func ExampleRegistryClient_ListApiSpecRevisions() {
 	ctx := context.Background()
+	// This snippet has been automatically generated and should be regarded as a code template only.
+	// It will require modifications to work:
+	// - It may require correct/in-range values for request initialization.
+	// - It may require specifying regional endpoints when creating the service client as shown in:
+	//   https://pkg.go.dev/cloud.google.com/go#hdr-Client_Options
 	c, err := gapic.NewRegistryClient(ctx)
 	if err != nil {
 		// TODO: Handle error.
@@ -416,6 +511,11 @@ func ExampleRegistryClient_ListApiSpecRevisions() {
 
 func ExampleRegistryClient_RollbackApiSpec() {
 	ctx := context.Background()
+	// This snippet has been automatically generated and should be regarded as a code template only.
+	// It will require modifications to work:
+	// - It may require correct/in-range values for request initialization.
+	// - It may require specifying regional endpoints when creating the service client as shown in:
+	//   https://pkg.go.dev/cloud.google.com/go#hdr-Client_Options
 	c, err := gapic.NewRegistryClient(ctx)
 	if err != nil {
 		// TODO: Handle error.
@@ -436,6 +536,11 @@ func ExampleRegistryClient_RollbackApiSpec() {
 
 func ExampleRegistryClient_DeleteApiSpecRevision() {
 	ctx := context.Background()
+	// This snippet has been automatically generated and should be regarded as a code template only.
+	// It will require modifications to work:
+	// - It may require correct/in-range values for request initialization.
+	// - It may require specifying regional endpoints when creating the service client as shown in:
+	//   https://pkg.go.dev/cloud.google.com/go#hdr-Client_Options
 	c, err := gapic.NewRegistryClient(ctx)
 	if err != nil {
 		// TODO: Handle error.
@@ -456,6 +561,11 @@ func ExampleRegistryClient_DeleteApiSpecRevision() {
 
 func ExampleRegistryClient_ListApiDeployments() {
 	ctx := context.Background()
+	// This snippet has been automatically generated and should be regarded as a code template only.
+	// It will require modifications to work:
+	// - It may require correct/in-range values for request initialization.
+	// - It may require specifying regional endpoints when creating the service client as shown in:
+	//   https://pkg.go.dev/cloud.google.com/go#hdr-Client_Options
 	c, err := gapic.NewRegistryClient(ctx)
 	if err != nil {
 		// TODO: Handle error.
@@ -482,6 +592,11 @@ func ExampleRegistryClient_ListApiDeployments() {
 
 func ExampleRegistryClient_GetApiDeployment() {
 	ctx := context.Background()
+	// This snippet has been automatically generated and should be regarded as a code template only.
+	// It will require modifications to work:
+	// - It may require correct/in-range values for request initialization.
+	// - It may require specifying regional endpoints when creating the service client as shown in:
+	//   https://pkg.go.dev/cloud.google.com/go#hdr-Client_Options
 	c, err := gapic.NewRegistryClient(ctx)
 	if err != nil {
 		// TODO: Handle error.
@@ -502,6 +617,11 @@ func ExampleRegistryClient_GetApiDeployment() {
 
 func ExampleRegistryClient_CreateApiDeployment() {
 	ctx := context.Background()
+	// This snippet has been automatically generated and should be regarded as a code template only.
+	// It will require modifications to work:
+	// - It may require correct/in-range values for request initialization.
+	// - It may require specifying regional endpoints when creating the service client as shown in:
+	//   https://pkg.go.dev/cloud.google.com/go#hdr-Client_Options
 	c, err := gapic.NewRegistryClient(ctx)
 	if err != nil {
 		// TODO: Handle error.
@@ -522,6 +642,11 @@ func ExampleRegistryClient_CreateApiDeployment() {
 
 func ExampleRegistryClient_UpdateApiDeployment() {
 	ctx := context.Background()
+	// This snippet has been automatically generated and should be regarded as a code template only.
+	// It will require modifications to work:
+	// - It may require correct/in-range values for request initialization.
+	// - It may require specifying regional endpoints when creating the service client as shown in:
+	//   https://pkg.go.dev/cloud.google.com/go#hdr-Client_Options
 	c, err := gapic.NewRegistryClient(ctx)
 	if err != nil {
 		// TODO: Handle error.
@@ -542,6 +667,11 @@ func ExampleRegistryClient_UpdateApiDeployment() {
 
 func ExampleRegistryClient_DeleteApiDeployment() {
 	ctx := context.Background()
+	// This snippet has been automatically generated and should be regarded as a code template only.
+	// It will require modifications to work:
+	// - It may require correct/in-range values for request initialization.
+	// - It may require specifying regional endpoints when creating the service client as shown in:
+	//   https://pkg.go.dev/cloud.google.com/go#hdr-Client_Options
 	c, err := gapic.NewRegistryClient(ctx)
 	if err != nil {
 		// TODO: Handle error.
@@ -560,6 +690,11 @@ func ExampleRegistryClient_DeleteApiDeployment() {
 
 func ExampleRegistryClient_TagApiDeploymentRevision() {
 	ctx := context.Background()
+	// This snippet has been automatically generated and should be regarded as a code template only.
+	// It will require modifications to work:
+	// - It may require correct/in-range values for request initialization.
+	// - It may require specifying regional endpoints when creating the service client as shown in:
+	//   https://pkg.go.dev/cloud.google.com/go#hdr-Client_Options
 	c, err := gapic.NewRegistryClient(ctx)
 	if err != nil {
 		// TODO: Handle error.
@@ -580,6 +715,11 @@ func ExampleRegistryClient_TagApiDeploymentRevision() {
 
 func ExampleRegistryClient_ListApiDeploymentRevisions() {
 	ctx := context.Background()
+	// This snippet has been automatically generated and should be regarded as a code template only.
+	// It will require modifications to work:
+	// - It may require correct/in-range values for request initialization.
+	// - It may require specifying regional endpoints when creating the service client as shown in:
+	//   https://pkg.go.dev/cloud.google.com/go#hdr-Client_Options
 	c, err := gapic.NewRegistryClient(ctx)
 	if err != nil {
 		// TODO: Handle error.
@@ -606,6 +746,11 @@ func ExampleRegistryClient_ListApiDeploymentRevisions() {
 
 func ExampleRegistryClient_RollbackApiDeployment() {
 	ctx := context.Background()
+	// This snippet has been automatically generated and should be regarded as a code template only.
+	// It will require modifications to work:
+	// - It may require correct/in-range values for request initialization.
+	// - It may require specifying regional endpoints when creating the service client as shown in:
+	//   https://pkg.go.dev/cloud.google.com/go#hdr-Client_Options
 	c, err := gapic.NewRegistryClient(ctx)
 	if err != nil {
 		// TODO: Handle error.
@@ -626,6 +771,11 @@ func ExampleRegistryClient_RollbackApiDeployment() {
 
 func ExampleRegistryClient_DeleteApiDeploymentRevision() {
 	ctx := context.Background()
+	// This snippet has been automatically generated and should be regarded as a code template only.
+	// It will require modifications to work:
+	// - It may require correct/in-range values for request initialization.
+	// - It may require specifying regional endpoints when creating the service client as shown in:
+	//   https://pkg.go.dev/cloud.google.com/go#hdr-Client_Options
 	c, err := gapic.NewRegistryClient(ctx)
 	if err != nil {
 		// TODO: Handle error.
@@ -646,6 +796,11 @@ func ExampleRegistryClient_DeleteApiDeploymentRevision() {
 
 func ExampleRegistryClient_ListArtifacts() {
 	ctx := context.Background()
+	// This snippet has been automatically generated and should be regarded as a code template only.
+	// It will require modifications to work:
+	// - It may require correct/in-range values for request initialization.
+	// - It may require specifying regional endpoints when creating the service client as shown in:
+	//   https://pkg.go.dev/cloud.google.com/go#hdr-Client_Options
 	c, err := gapic.NewRegistryClient(ctx)
 	if err != nil {
 		// TODO: Handle error.
@@ -672,6 +827,11 @@ func ExampleRegistryClient_ListArtifacts() {
 
 func ExampleRegistryClient_GetArtifact() {
 	ctx := context.Background()
+	// This snippet has been automatically generated and should be regarded as a code template only.
+	// It will require modifications to work:
+	// - It may require correct/in-range values for request initialization.
+	// - It may require specifying regional endpoints when creating the service client as shown in:
+	//   https://pkg.go.dev/cloud.google.com/go#hdr-Client_Options
 	c, err := gapic.NewRegistryClient(ctx)
 	if err != nil {
 		// TODO: Handle error.
@@ -692,6 +852,11 @@ func ExampleRegistryClient_GetArtifact() {
 
 func ExampleRegistryClient_GetArtifactContents() {
 	ctx := context.Background()
+	// This snippet has been automatically generated and should be regarded as a code template only.
+	// It will require modifications to work:
+	// - It may require correct/in-range values for request initialization.
+	// - It may require specifying regional endpoints when creating the service client as shown in:
+	//   https://pkg.go.dev/cloud.google.com/go#hdr-Client_Options
 	c, err := gapic.NewRegistryClient(ctx)
 	if err != nil {
 		// TODO: Handle error.
@@ -712,6 +877,11 @@ func ExampleRegistryClient_GetArtifactContents() {
 
 func ExampleRegistryClient_CreateArtifact() {
 	ctx := context.Background()
+	// This snippet has been automatically generated and should be regarded as a code template only.
+	// It will require modifications to work:
+	// - It may require correct/in-range values for request initialization.
+	// - It may require specifying regional endpoints when creating the service client as shown in:
+	//   https://pkg.go.dev/cloud.google.com/go#hdr-Client_Options
 	c, err := gapic.NewRegistryClient(ctx)
 	if err != nil {
 		// TODO: Handle error.
@@ -732,6 +902,11 @@ func ExampleRegistryClient_CreateArtifact() {
 
 func ExampleRegistryClient_ReplaceArtifact() {
 	ctx := context.Background()
+	// This snippet has been automatically generated and should be regarded as a code template only.
+	// It will require modifications to work:
+	// - It may require correct/in-range values for request initialization.
+	// - It may require specifying regional endpoints when creating the service client as shown in:
+	//   https://pkg.go.dev/cloud.google.com/go#hdr-Client_Options
 	c, err := gapic.NewRegistryClient(ctx)
 	if err != nil {
 		// TODO: Handle error.
@@ -752,6 +927,11 @@ func ExampleRegistryClient_ReplaceArtifact() {
 
 func ExampleRegistryClient_DeleteArtifact() {
 	ctx := context.Background()
+	// This snippet has been automatically generated and should be regarded as a code template only.
+	// It will require modifications to work:
+	// - It may require correct/in-range values for request initialization.
+	// - It may require specifying regional endpoints when creating the service client as shown in:
+	//   https://pkg.go.dev/cloud.google.com/go#hdr-Client_Options
 	c, err := gapic.NewRegistryClient(ctx)
 	if err != nil {
 		// TODO: Handle error.
