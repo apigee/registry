@@ -19,9 +19,11 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/apigee/registry/cmd/registry/core"
@@ -31,6 +33,8 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/descriptorpb"
 	"gopkg.in/yaml.v3"
 )
 
@@ -289,10 +293,118 @@ func (task *uploadProtoTask) fileName() string {
 
 func (task *uploadProtoTask) zipContents() ([]byte, error) {
 	prefix := task.directory + "/"
-	contents, err := core.ZipArchiveOfPath(task.path, prefix, true)
+
+	// Get the proto files in the main directory.
+	protos, err := localProtos(task.path, prefix)
+	if err != nil {
+		return nil, err
+	}
+
+	// Compile the listed protos to get their dependencies.
+	count := len(protos)
+	for count > 0 {
+		protos, err = referencedProtos(protos, task.directory)
+		if err != nil {
+			return nil, err
+		}
+		if len(protos) == count {
+			break
+		}
+		count = len(protos)
+	}
+
+	// Get the metadata files in the main directory.
+	metadata, err := localMetadata(task.path, prefix)
+	if err != nil {
+		return nil, err
+	}
+
+	allfiles := append(metadata, protos...)
+
+	// Zip the listed files.
+	contents, err := core.ZipArchiveOfFiles(allfiles, prefix, true)
+
 	if err != nil {
 		return nil, err
 	}
 
 	return contents.Bytes(), nil
+}
+
+// collect the names of all metadata files in an source directory,
+// stripping the prefix
+func localMetadata(source, prefix string) ([]string, error) {
+	filenames := make([]string, 0)
+	err := filepath.WalkDir(source, func(p string, entry fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		} else if entry.IsDir() {
+			return nil // Do nothing for the directory, but still walk its contents.
+		} else if strings.HasSuffix(p, ".json") || strings.HasSuffix(p, ".yaml") {
+			filenames = append(filenames, strings.TrimPrefix(p, prefix))
+		}
+		return nil
+	})
+	return filenames, err
+}
+
+// collect the names of all proto files in an source directory,
+// stripping the prefix
+func localProtos(source, prefix string) ([]string, error) {
+	filenames := make([]string, 0)
+	err := filepath.WalkDir(source, func(p string, entry fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		} else if entry.IsDir() {
+			return nil // Do nothing for the directory, but still walk its contents.
+		} else if strings.HasSuffix(p, ".proto") {
+			filenames = append(filenames, strings.TrimPrefix(p, prefix))
+		}
+		return nil
+	})
+	return filenames, err
+}
+
+func referencedProtos(protos []string, root string) ([]string, error) {
+	tempDir, err := os.MkdirTemp("", "proto-import-")
+	if err != nil {
+		return nil, err
+	}
+	defer os.RemoveAll(tempDir)
+	args := []string{"-o", tempDir + "/proto.pb"}
+	args = append(args, protos...)
+	cmd := exec.Command("protoc", args...)
+	cmd.Dir = root
+	if err := cmd.Run(); err != nil {
+		return nil, err
+	}
+	filenames, err := protosFromFileDescriptorSet(tempDir + "/proto.pb")
+	return filenames, err
+}
+
+func protosFromFileDescriptorSet(filename string) ([]string, error) {
+	bytes, err := os.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+	fds := &descriptorpb.FileDescriptorSet{}
+	err = proto.Unmarshal(bytes, fds)
+	if err != nil {
+		return nil, err
+	}
+	filenameset := make(map[string]bool)
+	for _, file := range fds.File {
+		filenameset[*file.Name] = true
+		for _, dependency := range file.Dependency {
+			if !strings.HasPrefix(dependency, "google/protobuf/") {
+				filenameset[dependency] = true
+			}
+		}
+	}
+	filenames := make([]string, 0)
+	for k := range filenameset {
+		filenames = append(filenames, k)
+	}
+	sort.Strings(filenames)
+	return filenames, nil
 }
