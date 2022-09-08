@@ -29,12 +29,23 @@ func Wipeout(ctx context.Context, client connection.RegistryClient, projectID st
 	log.Debugf(ctx, "Deleting everything in project %s", projectID)
 	project := "projects/" + projectID + "/locations/global"
 
-	log.Debugf(ctx, "Deleting apis")
 	taskQueue, wait := core.WorkerPool(ctx, jobs)
+	wipeoutArtifacts(ctx, client, taskQueue, project)
 	wipeoutApis(ctx, client, taskQueue, project)
 	wait()
 
 	log.Debugf(ctx, "Wipeout complete")
+}
+
+func wipeoutArtifacts(ctx context.Context, client connection.RegistryClient, taskQueue chan<- core.Task, parent string) {
+	it := client.ListArtifacts(ctx, &rpc.ListArtifactsRequest{Parent: parent})
+	names := make([]string, 0)
+	for artifact, err := it.Next(); err == nil; artifact, err = it.Next() {
+		names = append(names, artifact.Name)
+	}
+	for _, name := range names {
+		taskQueue <- NewDeleteArtifactTask(client, name)
+	}
 }
 
 func wipeoutApis(ctx context.Context, client connection.RegistryClient, taskQueue chan<- core.Task, parent string) {
@@ -46,26 +57,4 @@ func wipeoutApis(ctx context.Context, client connection.RegistryClient, taskQueu
 	for _, name := range names {
 		taskQueue <- NewDeleteApiTask(client, name)
 	}
-}
-
-// DeleteApiTask deletes a specified API.
-type DeleteApiTask struct {
-	client connection.RegistryClient
-	name   string
-}
-
-func NewDeleteApiTask(client connection.RegistryClient, name string) *DeleteApiTask {
-	return &DeleteApiTask{
-		client: client,
-		name:   name,
-	}
-}
-
-func (task *DeleteApiTask) String() string {
-	return "delete " + task.name
-}
-
-func (task *DeleteApiTask) Run(ctx context.Context) error {
-	log.Debugf(ctx, "Deleting %s", task.name)
-	return task.client.DeleteApi(ctx, &rpc.DeleteApiRequest{Name: task.name, Force: true})
 }

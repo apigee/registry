@@ -69,6 +69,14 @@ func TestWipeout(t *testing.T) {
 	}
 	defer registryClient.Close()
 	for i := 0; i <= 2; i++ {
+		_, err := registryClient.CreateArtifact(ctx, &rpc.CreateArtifactRequest{
+			ArtifactId: fmt.Sprintf("a%d", i),
+			Parent:     parent,
+			Artifact:   &rpc.Artifact{},
+		})
+		if err != nil {
+			t.Fatalf("Setup: Failed to create test artifact: %s", err)
+		}
 		api, err := registryClient.CreateApi(ctx, &rpc.CreateApiRequest{
 			ApiId:  fmt.Sprintf("a%d", i),
 			Parent: parent,
@@ -165,6 +173,9 @@ func TestWipeout(t *testing.T) {
 
 	t.Run("WipeoutProject", func(t *testing.T) {
 		Wipeout(ctx, registryClient, projectID, 10)
+		if _, ok := registryClient.ListArtifacts(ctx, &rpc.ListArtifactsRequest{Parent: parent}).Next(); ok != iterator.Done {
+			t.Errorf("Error: Project Artifacts found after wipeout")
+		}
 		if _, ok := registryClient.ListApis(ctx, &rpc.ListApisRequest{Parent: parent}).Next(); ok != iterator.Done {
 			t.Errorf("Error: APIs found after wipeout")
 		}
