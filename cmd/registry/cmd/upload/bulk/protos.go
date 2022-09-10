@@ -53,10 +53,11 @@ type ServiceConfig struct {
 
 func protosCommand() *cobra.Command {
 	var baseURI string
+	var root string
 	cmd := &cobra.Command{
-		Use:   "protos",
+		Use:   "protos PATH",
 		Short: "Bulk-upload Protocol Buffer descriptions from a directory of specs",
-		Args:  cobra.MinimumNArgs(1),
+		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := cmd.Context()
 			projectID, err := cmd.Flags().GetString("project-id")
@@ -83,19 +84,29 @@ func protosCommand() *cobra.Command {
 					log.FromContext(ctx).WithError(err).Fatal("Invalid path")
 				}
 
-				if err := scanDirectoryForProtos(client, projectID, baseURI, path, taskQueue); err != nil {
+				if root == "" {
+					root = path
+				}
+				root, err := filepath.Abs(root)
+				if err != nil {
+					log.FromContext(ctx).WithError(err).Fatal("Invalid path")
+				}
+
+				if err := scanDirectoryForProtos(client, projectID, baseURI, path, root, taskQueue); err != nil {
 					log.FromContext(ctx).WithError(err).Debug("Failed to walk directory")
 				}
 			}
 		},
 	}
 
+	cmd.Flags().StringVar(&root, "protoc-root", "", "Root directory to use for proto compilation, defaults to PATH")
+
 	cmd.Flags().StringVar(&baseURI, "base-uri", "", "Prefix to use for the source_uri field of each proto upload")
 	return cmd
 }
 
-func scanDirectoryForProtos(client connection.RegistryClient, projectID, baseURI, root string, taskQueue chan<- core.Task) error {
-	return filepath.Walk(root, func(filepath string, info os.FileInfo, err error) error {
+func scanDirectoryForProtos(client connection.RegistryClient, projectID, baseURI, start, root string, taskQueue chan<- core.Task) error {
+	return filepath.Walk(start, func(filepath string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -376,7 +387,7 @@ func referencedProtos(protos []string, root string) ([]string, error) {
 	cmd := exec.Command("protoc", args...)
 	cmd.Dir = root
 	if err := cmd.Run(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to compile protos with protoc: %s", err)
 	}
 	filenames, err := protosFromFileDescriptorSet(tempDir + "/proto.pb")
 	return filenames, err
