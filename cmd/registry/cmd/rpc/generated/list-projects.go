@@ -29,7 +29,7 @@ func init() {
 
 	ListProjectsCmd.Flags().StringVar(&ListProjectsInput.Filter, "filter", "", "An expression that can be used to filter the...")
 
-	ListProjectsCmd.Flags().StringVar(&ListProjectsInput.OrderBy, "order_by", "", "A comma-separated list of fields, e.g. 'foo,bar'")
+	ListProjectsCmd.Flags().StringVar(&ListProjectsInput.OrderBy, "order_by", "", "A comma-separated list of fields, e.g. 'foo,bar' ...")
 
 	ListProjectsCmd.Flags().StringVar(&ListProjectsFromFile, "from_file", "", "Absolute path to JSON file containing request payload")
 
