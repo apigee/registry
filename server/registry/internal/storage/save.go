@@ -18,6 +18,7 @@ import (
 	"context"
 
 	"github.com/apigee/registry/server/registry/internal/storage/models"
+	"github.com/pkg/errors"
 	"gorm.io/gorm/clause"
 )
 
@@ -78,5 +79,5 @@ func (c *Client) save(ctx context.Context, v interface{}) error {
 	err := c.db.WithContext(ctx).Clauses(clause.OnConflict{
 		UpdateAll: true,
 	}).Create(v).Error
-	return grpcErrorForDBError(ctx, err)
+	return grpcErrorForDBError(ctx, errors.Wrapf(err, "save %#v", v))
 }
