@@ -24,6 +24,9 @@ import (
 
 func Command() *cobra.Command {
 	var getContents bool
+	var getRawContents bool
+	var getPrintedContents bool
+
 	cmd := &cobra.Command{
 		Use:   "get",
 		Short: "Get resources from the API Registry",
@@ -35,6 +38,10 @@ func Command() *cobra.Command {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get config")
 			}
 			args[0] = c.FQName(args[0])
+			if getContents {
+				getPrintedContents = true
+				log.FromContext(ctx).Warn("--contents is deprecated, please use --print or --raw instead.")
+			}
 
 			client, err := connection.NewRegistryClientWithSettings(ctx, c)
 			if err != nil {
@@ -57,22 +64,26 @@ func Command() *cobra.Command {
 			} else if version, err := names.ParseVersion(args[0]); err == nil {
 				err2 = core.GetVersion(ctx, client, version, core.PrintVersionDetail)
 			} else if spec, err := names.ParseSpec(args[0]); err == nil {
-				if getContents {
-					err2 = core.GetSpec(ctx, client, spec, getContents, core.PrintSpecContents)
+				// for specs, these options are synonymous
+				if getPrintedContents || getRawContents {
+					err2 = core.GetSpec(ctx, client, spec, true, core.WriteSpecContents)
 				} else {
-					err2 = core.GetSpec(ctx, client, spec, getContents, core.PrintSpecDetail)
+					err2 = core.GetSpec(ctx, client, spec, false, core.PrintSpecDetail)
 				}
 			} else if spec, err := names.ParseSpecRevision(args[0]); err == nil {
-				if getContents {
-					err2 = core.GetSpecRevision(ctx, client, spec, getContents, core.PrintSpecContents)
+				// for specs, these options are synonymous
+				if getPrintedContents || getRawContents {
+					err2 = core.GetSpecRevision(ctx, client, spec, true, core.WriteSpecContents)
 				} else {
-					err2 = core.GetSpecRevision(ctx, client, spec, getContents, core.PrintSpecDetail)
+					err2 = core.GetSpecRevision(ctx, client, spec, false, core.PrintSpecDetail)
 				}
 			} else if artifact, err := names.ParseArtifact(args[0]); err == nil {
-				if getContents {
-					err2 = core.GetArtifact(ctx, client, artifact, getContents, core.PrintArtifactContents)
+				if getPrintedContents {
+					err2 = core.GetArtifact(ctx, client, artifact, true, core.PrintArtifactContents)
+				} else if getRawContents {
+					err2 = core.GetArtifact(ctx, client, artifact, true, core.WriteArtifactContents)
 				} else {
-					err2 = core.GetArtifact(ctx, client, artifact, getContents, core.PrintArtifactDetail)
+					err2 = core.GetArtifact(ctx, client, artifact, false, core.PrintArtifactDetail)
 				}
 			} else {
 				log.Debugf(ctx, "Unsupported entity %+v", args)
@@ -83,6 +94,8 @@ func Command() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().BoolVar(&getContents, "contents", false, "Include resource contents if available")
+	cmd.Flags().BoolVar(&getContents, "contents", false, "Get resource contents if available (deprecated)")
+	cmd.Flags().BoolVar(&getRawContents, "raw", false, "Get raw resource contents if available")
+	cmd.Flags().BoolVar(&getPrintedContents, "print", false, "Print resource contents if available")
 	return cmd
 }

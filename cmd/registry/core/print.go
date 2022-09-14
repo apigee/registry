@@ -78,7 +78,7 @@ func PrintSpecDetail(message *rpc.ApiSpec) error {
 	return nil
 }
 
-func PrintSpecContents(message *rpc.ApiSpec) error {
+func WriteSpecContents(message *rpc.ApiSpec) error {
 	contents := message.GetContents()
 	if strings.Contains(message.GetMimeType(), "+gzip") {
 		contents, _ = GUnzippedBytes(contents)
@@ -94,6 +94,16 @@ func PrintArtifact(artifact *rpc.Artifact) error {
 
 func PrintArtifactDetail(artifact *rpc.Artifact) error {
 	PrintMessage(artifact)
+	return nil
+}
+
+func WriteArtifactContents(artifact *rpc.Artifact) error {
+	contents := artifact.GetContents()
+	if strings.Contains(artifact.GetMimeType(), "+gzip") {
+		contents, _ = GUnzippedBytes(contents)
+	}
+	os.Stdout.Write(contents)
+	os.Stdout.Write(artifact.GetContents())
 	return nil
 }
 
@@ -151,8 +161,11 @@ func PrintArtifactContents(artifact *rpc.Artifact) error {
 		return unmarshalAndPrint(artifact.GetContents(), &openapiv2.Document{})
 	case "gnostic.openapiv3.Document":
 		return unmarshalAndPrint(artifact.GetContents(), &openapiv3.Document{})
+	case "google.protobuf.FileDescriptorSet":
+		os.Stdout.Write(artifact.GetContents())
+		return nil
 	default:
-		fmt.Printf("%+v", artifact.GetContents())
+		fmt.Printf("Unsupported message type: %s, please use --contents to get raw contents", messageType)
 		return nil
 	}
 }
