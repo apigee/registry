@@ -38,6 +38,9 @@ func Command() *cobra.Command {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get config")
 			}
 			args[0] = c.FQName(args[0])
+			if getContents && getRawContents || getContents && getPrintedContents || getRawContents && getPrintedContents {
+				log.FromContext(ctx).Fatal("Please use at most one of --print, --raw, and --contents.")
+			}
 			if getContents {
 				getPrintedContents = true
 				log.FromContext(ctx).Warn("--contents is deprecated, please use --print or --raw instead.")
