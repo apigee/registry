@@ -15,12 +15,10 @@
 package core
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"strings"
 
-	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
@@ -160,8 +158,7 @@ func PrintArtifactContents(artifact *rpc.Artifact) error {
 		return unmarshalAndPrint(artifact.GetContents(), &openapiv3.Document{})
 	default:
 		// To get a parent context here would require changing the ArtifactHandler type in handlers.go
-		log.FromContext(context.TODO()).Fatalf("Unsupported message type: %s, please use --raw to get raw contents", messageType)
-		return nil
+		return fmt.Errorf("Unsupported message type: %s, please use --raw to get raw contents", messageType)
 	}
 }
 

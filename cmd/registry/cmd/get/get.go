@@ -89,10 +89,10 @@ func Command() *cobra.Command {
 					err2 = core.GetArtifact(ctx, client, artifact, false, core.PrintArtifactDetail)
 				}
 			} else {
-				log.Debugf(ctx, "Unsupported entity %+v", args)
+				log.Errorf(ctx, "Unsupported entity %+v", args)
 			}
 			if err2 != nil {
-				log.FromContext(ctx).WithError(err2).Debugf("Failed to get resource")
+				log.FromContext(ctx).WithError(err2).Errorf("Failed to get resource")
 			}
 		},
 	}
