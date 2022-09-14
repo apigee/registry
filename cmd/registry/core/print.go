@@ -156,9 +156,6 @@ func PrintArtifactContents(artifact *rpc.Artifact) error {
 		return unmarshalAndPrint(artifact.GetContents(), &openapiv2.Document{})
 	case "gnostic.openapiv3.Document":
 		return unmarshalAndPrint(artifact.GetContents(), &openapiv3.Document{})
-	case "google.protobuf.FileDescriptorSet":
-		os.Stdout.Write(artifact.GetContents())
-		return nil
 	default:
 		fmt.Printf("Unsupported message type: %s, please use --contents to get raw contents", messageType)
 		return nil
