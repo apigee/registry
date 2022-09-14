@@ -98,11 +98,6 @@ func PrintArtifactDetail(artifact *rpc.Artifact) error {
 }
 
 func WriteArtifactContents(artifact *rpc.Artifact) error {
-	contents := artifact.GetContents()
-	if strings.Contains(artifact.GetMimeType(), "+gzip") {
-		contents, _ = GUnzippedBytes(contents)
-	}
-	os.Stdout.Write(contents)
 	os.Stdout.Write(artifact.GetContents())
 	return nil
 }
