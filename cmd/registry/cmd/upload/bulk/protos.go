@@ -344,29 +344,27 @@ func (task *uploadProtoTask) zipContents() ([]byte, error) {
 
 // Collect the names of all metadata files in a source directory, stripping the prefix.
 func localMetadata(source, prefix string) ([]string, error) {
-	filenames := make([]string, 0)
-	err := filepath.WalkDir(source, func(p string, entry fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		} else if entry.IsDir() {
-			return nil // Do nothing for the directory, but still walk its contents.
-		} else if strings.HasSuffix(p, ".json") || strings.HasSuffix(p, ".yaml") {
-			filenames = append(filenames, strings.TrimPrefix(p, prefix))
-		}
-		return nil
+	return localFiles(source, prefix, func(name string) bool {
+		return strings.HasSuffix(name, ".json") || strings.HasSuffix(name, ".yaml")
 	})
-	return filenames, err
 }
 
 // Collect the names of all proto files in a source directory, stripping the prefix.
 func localProtos(source, prefix string) ([]string, error) {
+	return localFiles(source, prefix, func(name string) bool {
+		return strings.HasSuffix(name, ".proto")
+	})
+}
+
+// Collect the names of all matching files in a source directory, stripping the prefix.
+func localFiles(source, prefix string, match func(string) bool) ([]string, error) {
 	filenames := make([]string, 0)
 	err := filepath.WalkDir(source, func(p string, entry fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		} else if entry.IsDir() {
 			return nil // Do nothing for the directory, but still walk its contents.
-		} else if strings.HasSuffix(p, ".proto") {
+		} else if match(p) {
 			filenames = append(filenames, strings.TrimPrefix(p, prefix))
 		}
 		return nil
