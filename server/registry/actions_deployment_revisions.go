@@ -77,17 +77,6 @@ func (s *RegistryServer) DeleteApiDeploymentRevision(ctx context.Context, req *r
 	}
 	var response *rpc.ApiDeployment
 	if err := s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
-		// The revision to be deleted must exist.
-		revision, err := db.GetDeploymentRevision(ctx, name)
-		if err != nil {
-			return err
-		}
-		// Parse the retrieved deployment revision name, which has a non-tag revision ID.
-		// This is necessary to ensure the actual revision is deleted.
-		name, err = names.ParseDeploymentRevision(revision.RevisionName())
-		if err != nil {
-			return status.Error(codes.InvalidArgument, err.Error())
-		}
 		if err := db.DeleteDeploymentRevision(ctx, name); err != nil {
 			return err
 		}

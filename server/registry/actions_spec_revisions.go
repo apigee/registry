@@ -77,17 +77,6 @@ func (s *RegistryServer) DeleteApiSpecRevision(ctx context.Context, req *rpc.Del
 	}
 	var response *rpc.ApiSpec
 	if err := s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
-		// The revision to be deleted must exist.
-		revision, err := db.GetSpecRevision(ctx, name)
-		if err != nil {
-			return err
-		}
-		// Parse the retrieved spec revision name, which has a non-tag revision ID.
-		// This is necessary to ensure the actual revision is deleted.
-		name, err = names.ParseSpecRevision(revision.RevisionName())
-		if err != nil {
-			return status.Error(codes.InvalidArgument, err.Error())
-		}
 		if err := db.DeleteSpecRevision(ctx, name); err != nil {
 			return err
 		}
