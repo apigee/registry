@@ -313,16 +313,11 @@ func (task *uploadProtoTask) zipContents() ([]byte, error) {
 	}
 
 	// Compile the listed protos to get their dependencies.
-	count := len(protos)
-	for count > 0 {
+	if len(protos) > 0 {
 		protos, err = referencedProtos(protos, task.directory)
 		if err != nil {
 			return nil, err
 		}
-		if len(protos) == count {
-			break
-		}
-		count = len(protos)
 	}
 
 	// Get the metadata files in the main directory.
