@@ -159,6 +159,7 @@ type uploadProtoTask struct {
 	apiDescription string
 	versionID      string // computed at runtime
 	specID         string // computed at runtime
+	contents       []byte // computed at runtime
 }
 
 func (task *uploadProtoTask) String() string {
@@ -170,6 +171,11 @@ func (task *uploadProtoTask) Run(ctx context.Context) error {
 	task.populateFields()
 	log.Infof(ctx, "Uploading apis/%s/versions/%s/specs/%s", task.apiID, task.versionID, task.specID)
 
+	// Zip up the protos first; if that fails, skip the API.
+	var err error
+	if task.contents, err = task.zipContents(); err != nil {
+		return err
+	}
 	// If the API does not exist, create it.
 	if err := task.createAPI(ctx); err != nil {
 		return err
@@ -238,17 +244,12 @@ func (task *uploadProtoTask) createVersion(ctx context.Context) error {
 }
 
 func (task *uploadProtoTask) createOrUpdateSpec(ctx context.Context) error {
-	contents, err := task.zipContents()
-	if err != nil {
-		return err
-	}
-
 	// Use the spec size and hash to avoid unnecessary uploads.
 	spec, err := task.client.GetApiSpec(ctx, &rpc.GetApiSpecRequest{
 		Name: task.specName(),
 	})
 
-	if err == nil && int(spec.GetSizeBytes()) == len(contents) && spec.GetHash() == hashForBytes(contents) {
+	if err == nil && int(spec.GetSizeBytes()) == len(task.contents) && spec.GetHash() == hashForBytes(task.contents) {
 		log.Debugf(ctx, "Matched already uploaded spec %s", task.specName())
 		return nil
 	}
@@ -258,7 +259,7 @@ func (task *uploadProtoTask) createOrUpdateSpec(ctx context.Context) error {
 			Name:     task.specName(),
 			MimeType: core.ProtobufMimeType("+zip"),
 			Filename: task.fileName(),
-			Contents: contents,
+			Contents: task.contents,
 		},
 		AllowMissing: true,
 	}
@@ -268,7 +269,7 @@ func (task *uploadProtoTask) createOrUpdateSpec(ctx context.Context) error {
 
 	response, err := task.client.UpdateApiSpec(ctx, request)
 	if err != nil {
-		log.FromContext(ctx).WithError(err).Errorf("Error %s [contents-length: %d]", task.specName(), len(contents))
+		log.FromContext(ctx).WithError(err).Errorf("Error %s [contents-length: %d]", task.specName(), len(task.contents))
 	} else {
 		log.Debugf(ctx, "Updated %s", response.Name)
 	}
@@ -334,7 +335,6 @@ func (task *uploadProtoTask) zipContents() ([]byte, error) {
 
 	// Zip the listed files.
 	contents, err := core.ZipArchiveOfFiles(allfiles, prefix, true)
-
 	if err != nil {
 		return nil, err
 	}
@@ -342,8 +342,7 @@ func (task *uploadProtoTask) zipContents() ([]byte, error) {
 	return contents.Bytes(), nil
 }
 
-// collect the names of all metadata files in an source directory,
-// stripping the prefix
+// Collect the names of all metadata files in a source directory, stripping the prefix.
 func localMetadata(source, prefix string) ([]string, error) {
 	filenames := make([]string, 0)
 	err := filepath.WalkDir(source, func(p string, entry fs.DirEntry, err error) error {
@@ -359,8 +358,7 @@ func localMetadata(source, prefix string) ([]string, error) {
 	return filenames, err
 }
 
-// collect the names of all proto files in an source directory,
-// stripping the prefix
+// Collect the names of all proto files in a source directory, stripping the prefix.
 func localProtos(source, prefix string) ([]string, error) {
 	filenames := make([]string, 0)
 	err := filepath.WalkDir(source, func(p string, entry fs.DirEntry, err error) error {
@@ -376,6 +374,7 @@ func localProtos(source, prefix string) ([]string, error) {
 	return filenames, err
 }
 
+// Get all the protos that are referenced in the compilation of a list of protos.
 func referencedProtos(protos []string, root string) ([]string, error) {
 	tempDir, err := os.MkdirTemp("", "proto-import-")
 	if err != nil {
@@ -393,6 +392,7 @@ func referencedProtos(protos []string, root string) ([]string, error) {
 	return filenames, err
 }
 
+// Get all the protos listed as dependencies in a file descriptor set.
 func protosFromFileDescriptorSet(filename string) ([]string, error) {
 	bytes, err := os.ReadFile(filename)
 	if err != nil {
