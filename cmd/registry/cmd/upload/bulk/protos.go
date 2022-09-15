@@ -331,10 +331,8 @@ func (task *uploadProtoTask) zipContents() ([]byte, error) {
 		return nil, err
 	}
 
-	allfiles := append(metadata, protos...)
-
 	// Zip the listed files.
-	contents, err := core.ZipArchiveOfFiles(allfiles, prefix, true)
+	contents, err := core.ZipArchiveOfFiles(append(metadata, protos...), prefix, true)
 	if err != nil {
 		return nil, err
 	}
@@ -386,8 +384,7 @@ func referencedProtos(protos []string, root string) ([]string, error) {
 	if err := cmd.Run(); err != nil {
 		return nil, fmt.Errorf("failed to compile protos with protoc: %s", err)
 	}
-	filenames, err := protosFromFileDescriptorSet(tempDir + "/proto.pb")
-	return filenames, err
+	return protosFromFileDescriptorSet(tempDir + "/proto.pb")
 }
 
 // Get all the protos listed as dependencies in a file descriptor set.
