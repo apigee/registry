@@ -18,55 +18,67 @@ import (
 	"context"
 
 	"github.com/apigee/registry/server/registry/internal/storage/models"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"gorm.io/gorm/clause"
 )
 
-func (c *Client) SaveProject(ctx context.Context, v *models.Project) error {
+// SaveProject will return codes.NotFound if key not found
+func (c *Client) SaveProject(ctx context.Context, v *models.Project, fieldMask []string) error {
 	v.Key = v.Name()
-	return c.save(ctx, v)
+	return c.saveWithMask(ctx, v, fieldMask)
 }
 
-func (c *Client) SaveApi(ctx context.Context, v *models.Api) error {
+// SaveApi will return codes.NotFound if key not found
+func (c *Client) SaveApi(ctx context.Context, v *models.Api, fieldMask []string) error {
 	v.Key = v.Name()
-	return c.save(ctx, v)
+	return c.saveWithMask(ctx, v, fieldMask)
 }
 
-func (c *Client) SaveVersion(ctx context.Context, v *models.Version) error {
+// SaveVersion will return codes.NotFound if key not found
+func (c *Client) SaveVersion(ctx context.Context, v *models.Version, fieldMask []string) error {
 	v.Key = v.Name()
-	return c.save(ctx, v)
+	return c.saveWithMask(ctx, v, fieldMask)
 }
 
+// SaveSpecRevision will upsert if key not found
 func (c *Client) SaveSpecRevision(ctx context.Context, v *models.Spec) error {
 	v.Key = v.RevisionName()
 	return c.save(ctx, v)
 }
 
+// SaveSpecRevisionContents will create a new blob for the spec
 func (c *Client) SaveSpecRevisionContents(ctx context.Context, spec *models.Spec, contents []byte) error {
 	v := models.NewBlobForSpec(spec, contents)
 	v.Key = spec.RevisionName()
 	return c.save(ctx, v)
 }
 
+// SaveSpecRevisionTag will upsert if key not found
 func (c *Client) SaveSpecRevisionTag(ctx context.Context, v *models.SpecRevisionTag) error {
 	v.Key = v.String()
 	return c.save(ctx, v)
 }
 
+// SaveDeploymentRevision will upsert if key not found
 func (c *Client) SaveDeploymentRevision(ctx context.Context, v *models.Deployment) error {
 	v.Key = v.RevisionName()
 	return c.save(ctx, v)
 }
 
+// SaveDeploymentRevisionTag will upsert if key not found
 func (c *Client) SaveDeploymentRevisionTag(ctx context.Context, v *models.DeploymentRevisionTag) error {
 	v.Key = v.String()
 	return c.save(ctx, v)
 }
 
+// SaveArtifact will upsert if key not found
 func (c *Client) SaveArtifact(ctx context.Context, v *models.Artifact) error {
 	v.Key = v.Name()
 	return c.save(ctx, v)
 }
 
+// SaveSpecRevisionContents will create a new blob for the artifact
 func (c *Client) SaveArtifactContents(ctx context.Context, artifact *models.Artifact, contents []byte) error {
 	v := models.NewBlobForArtifact(artifact, contents)
 	v.Key = artifact.Name()
@@ -79,4 +91,24 @@ func (c *Client) save(ctx context.Context, v interface{}) error {
 		UpdateAll: true,
 	}).Create(v).Error
 	return grpcErrorForDBError(ctx, err)
+}
+
+func (c *Client) saveWithMask(ctx context.Context, v interface{}, fieldMask []string) error {
+	op := c.db.WithContext(ctx).
+		Select(fieldMask).
+		Clauses(clause.Returning{})
+	err := op.Save(v).Error
+	if err == nil && op.RowsAffected == 0 {
+		err = status.Errorf(codes.NotFound, "%s not found in database", v)
+	}
+	return grpcErrorForDBError(ctx, err)
+
+	// op := c.db.WithContext(ctx).
+	// 	Select(fieldMask).
+	// 	Clauses(
+	// 		clause.Returning{},
+	// 		clause.OnConflict{UpdateAll: true},
+	// 	)
+	// err := op.Create(v).Error
+	// return grpcErrorForDBError(ctx, err)
 }
