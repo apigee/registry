@@ -180,7 +180,7 @@ func (s *RegistryServer) UpdateApi(ctx context.Context, req *rpc.UpdateApiReques
 		if err != nil {
 			return err
 		}
-		mask := models.ExpandMask(req.GetApi(), req.GetUpdateMask()).GetPaths()
+		mask := models.ExpandMask(req.GetApi(), req.GetUpdateMask())
 		if err := db.SaveApi(ctx, api, mask); err != nil {
 			if status.Code(err) == codes.NotFound && req.GetAllowMissing() {
 				response, err = s.createApi(ctx, db, name, req.GetApi())

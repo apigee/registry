@@ -180,7 +180,7 @@ func (s *RegistryServer) UpdateApiVersion(ctx context.Context, req *rpc.UpdateAp
 		if err != nil {
 			return err
 		}
-		mask := models.ExpandMask(req.GetApiVersion(), req.GetUpdateMask()).GetPaths()
+		mask := models.ExpandMask(req.GetApiVersion(), req.GetUpdateMask())
 		if err := db.SaveVersion(ctx, version, mask); err != nil {
 			if status.Code(err) == codes.NotFound && req.GetAllowMissing() {
 				response, err = s.createApiVersion(ctx, db, name, req.GetApiVersion())

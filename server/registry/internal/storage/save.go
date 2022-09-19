@@ -20,23 +20,24 @@ import (
 	"github.com/apigee/registry/server/registry/internal/storage/models"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	"gorm.io/gorm/clause"
 )
 
 // SaveProject will return codes.NotFound if key not found
-func (c *Client) SaveProject(ctx context.Context, v *models.Project, fieldMask []string) error {
+func (c *Client) SaveProject(ctx context.Context, v *models.Project, fieldMask *fieldmaskpb.FieldMask) error {
 	v.Key = v.Name()
 	return c.saveWithMask(ctx, v, fieldMask)
 }
 
 // SaveApi will return codes.NotFound if key not found
-func (c *Client) SaveApi(ctx context.Context, v *models.Api, fieldMask []string) error {
+func (c *Client) SaveApi(ctx context.Context, v *models.Api, fieldMask *fieldmaskpb.FieldMask) error {
 	v.Key = v.Name()
 	return c.saveWithMask(ctx, v, fieldMask)
 }
 
 // SaveVersion will return codes.NotFound if key not found
-func (c *Client) SaveVersion(ctx context.Context, v *models.Version, fieldMask []string) error {
+func (c *Client) SaveVersion(ctx context.Context, v *models.Version, fieldMask *fieldmaskpb.FieldMask) error {
 	v.Key = v.Name()
 	return c.saveWithMask(ctx, v, fieldMask)
 }
@@ -93,9 +94,9 @@ func (c *Client) save(ctx context.Context, v interface{}) error {
 	return grpcErrorForDBError(ctx, err)
 }
 
-func (c *Client) saveWithMask(ctx context.Context, v interface{}, fieldMask []string) error {
+func (c *Client) saveWithMask(ctx context.Context, v interface{}, fieldMask *fieldmaskpb.FieldMask) error {
 	op := c.db.WithContext(ctx).
-		Select(fieldMask).
+		Select(fieldMask.GetPaths()).
 		Clauses(clause.Returning{})
 	err := op.Save(v).Error
 	if err == nil && op.RowsAffected == 0 {
