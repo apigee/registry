@@ -78,7 +78,7 @@ func PrintSpecDetail(message *rpc.ApiSpec) error {
 	return nil
 }
 
-func PrintSpecContents(message *rpc.ApiSpec) error {
+func WriteSpecContents(message *rpc.ApiSpec) error {
 	contents := message.GetContents()
 	if strings.Contains(message.GetMimeType(), "+gzip") {
 		contents, _ = GUnzippedBytes(contents)
@@ -94,6 +94,11 @@ func PrintArtifact(artifact *rpc.Artifact) error {
 
 func PrintArtifactDetail(artifact *rpc.Artifact) error {
 	PrintMessage(artifact)
+	return nil
+}
+
+func WriteArtifactContents(artifact *rpc.Artifact) error {
+	os.Stdout.Write(artifact.GetContents())
 	return nil
 }
 
@@ -152,8 +157,8 @@ func PrintArtifactContents(artifact *rpc.Artifact) error {
 	case "gnostic.openapiv3.Document":
 		return unmarshalAndPrint(artifact.GetContents(), &openapiv3.Document{})
 	default:
-		fmt.Printf("%+v", artifact.GetContents())
-		return nil
+		// To get a parent context here would require changing the ArtifactHandler type in handlers.go
+		return fmt.Errorf("Unsupported message type: %s, please use --raw to get raw contents", messageType)
 	}
 }
 

@@ -67,10 +67,6 @@ func (s *RegistryServer) DeleteProject(ctx context.Context, req *rpc.DeleteProje
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	if err := s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
-		// Deletion should only succeed on projects that currently exist.
-		if _, err := db.GetProject(ctx, name); err != nil {
-			return err
-		}
 		return db.DeleteProject(ctx, name, req.GetForce())
 	}); err != nil {
 		return nil, err

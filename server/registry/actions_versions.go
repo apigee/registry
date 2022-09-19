@@ -80,10 +80,6 @@ func (s *RegistryServer) DeleteApiVersion(ctx context.Context, req *rpc.DeleteAp
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	if err := s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
-		// Deletion should only succeed on API versions that currently exist.
-		if _, err := db.GetVersion(ctx, name); err != nil {
-			return err
-		}
 		return db.DeleteVersion(ctx, name, req.GetForce())
 	}); err != nil {
 		return nil, err
