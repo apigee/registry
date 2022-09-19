@@ -60,6 +60,9 @@ func (c *Client) DeleteProject(ctx context.Context, name names.Project, cascade 
 		if err := op.Delete(model).Error; err != nil {
 			return err
 		}
+		if _, ok := model.(models.Project); ok && op.RowsAffected == 0 {
+			return status.Errorf(codes.NotFound, "%q not found in database", name)
+		}
 		counts[i] = op.RowsAffected
 	}
 
@@ -90,12 +93,16 @@ func (c *Client) DeleteApi(ctx context.Context, name names.Api, cascade bool) er
 		models.Blob{},
 		models.Artifact{},
 	}
+
 	counts := make([]int64, len(tables))
 	for i, model := range tables {
 		op := c.db.WithContext(ctx).Where("project_id = ?", name.ProjectID).
 			Where("api_id = ?", name.ApiID)
 		if err := op.Delete(model).Error; err != nil {
 			return err
+		}
+		if _, ok := model.(models.Api); ok && op.RowsAffected == 0 {
+			return status.Errorf(codes.NotFound, "%q not found in database", name)
 		}
 		counts[i] = op.RowsAffected
 	}
@@ -133,6 +140,9 @@ func (c *Client) DeleteVersion(ctx context.Context, name names.Version, cascade 
 		if err := op.Delete(model).Error; err != nil {
 			return err
 		}
+		if _, ok := model.(models.Version); ok && op.RowsAffected == 0 {
+			return status.Errorf(codes.NotFound, "%q not found in database", name)
+		}
 		counts[i] = op.RowsAffected
 	}
 
@@ -166,6 +176,9 @@ func (c *Client) DeleteSpec(ctx context.Context, name names.Spec, cascade bool) 
 			Where("spec_id = ?", name.SpecID)
 		if err := op.Delete(model).Error; err != nil {
 			return err
+		}
+		if _, ok := model.(models.Spec); ok && op.RowsAffected == 0 {
+			return status.Errorf(codes.NotFound, "%q not found in database", name)
 		}
 	}
 
@@ -211,6 +224,9 @@ func (c *Client) DeleteSpecRevision(ctx context.Context, name names.SpecRevision
 		if err := op.Delete(model).Error; err != nil {
 			return grpcErrorForDBError(ctx, errors.Wrapf(err, "delete %s", name))
 		}
+		if _, ok := model.(models.Spec); ok && op.RowsAffected == 0 {
+			return status.Errorf(codes.NotFound, "%q not found in database", name)
+		}
 	}
 
 	// if we deleted the last revision, return an error to cancel the transaction
@@ -240,6 +256,9 @@ func (c *Client) DeleteDeployment(ctx context.Context, name names.Deployment, ca
 			Where("deployment_id = ?", name.DeploymentID)
 		if err := op.Delete(model).Error; err != nil {
 			return err
+		}
+		if _, ok := model.(models.Deployment); ok && op.RowsAffected == 0 {
+			return status.Errorf(codes.NotFound, "%q not found in database", name)
 		}
 	}
 
@@ -284,6 +303,9 @@ func (c *Client) DeleteDeploymentRevision(ctx context.Context, name names.Deploy
 		if err := op.Delete(model).Error; err != nil {
 			return grpcErrorForDBError(ctx, errors.Wrapf(err, "delete %s", name))
 		}
+		if _, ok := model.(models.Deployment); ok && op.RowsAffected == 0 {
+			return status.Errorf(codes.NotFound, "%q not found in database", name)
+		}
 	}
 
 	// if we deleted the last revision, return an error to cancel the transaction
@@ -304,8 +326,8 @@ func (c *Client) DeleteDeploymentRevision(ctx context.Context, name names.Deploy
 
 func (c *Client) DeleteArtifact(ctx context.Context, name names.Artifact) error {
 	for _, model := range []interface{}{
-		models.Blob{},
 		models.Artifact{},
+		models.Blob{},
 	} {
 		op := c.db.WithContext(ctx).
 			Where("project_id = ?", name.ProjectID()).
@@ -316,6 +338,9 @@ func (c *Client) DeleteArtifact(ctx context.Context, name names.Artifact) error 
 			Where("artifact_id = ?", name.ArtifactID())
 		if err := op.Delete(model).Error; err != nil {
 			return grpcErrorForDBError(ctx, errors.Wrapf(err, "delete %s", name))
+		}
+		if _, ok := model.(models.Artifact); ok && op.RowsAffected == 0 {
+			return status.Errorf(codes.NotFound, "%q not found in database", name)
 		}
 	}
 

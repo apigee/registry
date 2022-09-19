@@ -367,8 +367,8 @@ func TestDeleteConfig(t *testing.T) {
 	}
 
 	err = config.Delete("config1")
-	if err != config.CannotDeleteActiveError {
-		t.Errorf("expected: %v", config.CannotDeleteActiveError)
+	if err != config.ErrCannotDeleteActive {
+		t.Errorf("expected: %v", config.ErrCannotDeleteActive)
 	}
 
 	err = config.Delete("config2")
@@ -377,8 +377,8 @@ func TestDeleteConfig(t *testing.T) {
 	}
 
 	err = config.Delete(config.ActivePointerFilename)
-	if err != config.ReservedConfigNameError {
-		t.Errorf("expected error: %v", config.ReservedConfigNameError)
+	if err != config.ErrReservedConfigName {
+		t.Errorf("expected error: %v", config.ErrReservedConfigName)
 	}
 }
 
@@ -386,12 +386,12 @@ func TestWriteInvalidNames(t *testing.T) {
 	t.Cleanup(test.CleanConfigDir(t))
 
 	err := config.Configuration{}.Write(config.ActivePointerFilename)
-	if err != config.ReservedConfigNameError {
-		t.Errorf("expected error: %v", config.ReservedConfigNameError)
+	if err != config.ErrReservedConfigName {
+		t.Errorf("expected error: %v", config.ErrReservedConfigName)
 	}
 
 	err = config.Configuration{}.Write(filepath.Join("foo", "bar"))
 	if err == nil {
-		t.Errorf("expected error: %v", config.ReservedConfigNameError)
+		t.Errorf("expected error: %v", config.ErrReservedConfigName)
 	}
 }

@@ -112,10 +112,6 @@ func (s *RegistryServer) DeleteArtifact(ctx context.Context, req *rpc.DeleteArti
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	if err := s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
-		// Deletion should only succeed on artifacts that currently exist.
-		if _, err := db.GetArtifact(ctx, name); err != nil {
-			return err
-		}
 		return db.DeleteArtifact(ctx, name)
 	}); err != nil {
 		return nil, err

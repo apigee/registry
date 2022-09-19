@@ -96,10 +96,6 @@ func (s *RegistryServer) DeleteApiSpec(ctx context.Context, req *rpc.DeleteApiSp
 	}
 
 	if err := s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
-		// Deletion should only succeed on API specs that currently exist.
-		if _, err := db.GetSpec(ctx, name); err != nil {
-			return err
-		}
 		return db.DeleteSpec(ctx, name, req.GetForce())
 	}); err != nil {
 		return nil, err

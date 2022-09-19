@@ -32,16 +32,16 @@ import (
 const ActivePointerFilename = "active_config"
 
 var (
-	NoActiveConfigurationError = fmt.Errorf("No active configuration.")
+	ErrNoActiveConfiguration = fmt.Errorf("No active configuration.")
 
 	// Flags defines Flags that may be bound to a Configuration. Use like:
 	// `cmd.PersistentFlags().AddFlagSet(connection.Flags)`
 	Flags *pflag.FlagSet = CreateFlagSet()
 
 	// Directory is $HOME/config/registry
-	Directory               string
-	CannotDeleteActiveError = fmt.Errorf("Cannot delete active configuration")
-	ReservedConfigNameError = fmt.Errorf("%q is reserved", ActivePointerFilename)
+	Directory             string
+	ErrCannotDeleteActive = fmt.Errorf("Cannot delete active configuration")
+	ErrReservedConfigName = fmt.Errorf("%q is reserved", ActivePointerFilename)
 
 	envBindings    = []string{"registry.address", "registry.insecure", "registry.token"}
 	envPrefix      = "APG"
@@ -99,7 +99,7 @@ func ValidateName(name string) error {
 		return fmt.Errorf("name cannot be empty")
 	}
 	if name == ActivePointerFilename {
-		return ReservedConfigNameError
+		return ErrReservedConfigName
 	}
 
 	if dir, _ := filepath.Split(name); dir != "" {
@@ -134,7 +134,7 @@ func ActiveRaw() (name string, c Configuration, err error) {
 		}
 	}
 	if name == "" {
-		return name, Configuration{}, NoActiveConfigurationError
+		return name, Configuration{}, ErrNoActiveConfiguration
 	}
 
 	c, err = Read(name)
@@ -252,7 +252,7 @@ func Delete(name string) error {
 		return err
 	}
 	if name == active {
-		return CannotDeleteActiveError
+		return ErrCannotDeleteActive
 	}
 
 	f := filepath.Join(Directory, name)

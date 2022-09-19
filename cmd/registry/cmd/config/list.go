@@ -31,7 +31,7 @@ func listCommand() *cobra.Command {
 			cmd.SilenceErrors = true
 			target, c, err := config.ActiveRaw()
 			if err != nil {
-				if err == config.NoActiveConfigurationError {
+				if err == config.ErrNoActiveConfiguration {
 					return fmt.Errorf(`No active configuration. Use 'registry config configurations' to manage.`)
 				}
 				return fmt.Errorf("Cannot read config: %v", err)

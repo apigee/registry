@@ -19,9 +19,11 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/apigee/registry/cmd/registry/core"
@@ -31,6 +33,8 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/descriptorpb"
 	"gopkg.in/yaml.v3"
 )
 
@@ -49,10 +53,11 @@ type ServiceConfig struct {
 
 func protosCommand() *cobra.Command {
 	var baseURI string
+	var root string
 	cmd := &cobra.Command{
-		Use:   "protos",
+		Use:   "protos PATH",
 		Short: "Bulk-upload Protocol Buffer descriptions from a directory of specs",
-		Args:  cobra.MinimumNArgs(1),
+		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := cmd.Context()
 			projectID, err := cmd.Flags().GetString("project-id")
@@ -79,19 +84,29 @@ func protosCommand() *cobra.Command {
 					log.FromContext(ctx).WithError(err).Fatal("Invalid path")
 				}
 
-				if err := scanDirectoryForProtos(client, projectID, baseURI, path, taskQueue); err != nil {
+				if root == "" {
+					root = path
+				}
+				root, err := filepath.Abs(root)
+				if err != nil {
+					log.FromContext(ctx).WithError(err).Fatal("Invalid path")
+				}
+
+				if err := scanDirectoryForProtos(client, projectID, baseURI, path, root, taskQueue); err != nil {
 					log.FromContext(ctx).WithError(err).Debug("Failed to walk directory")
 				}
 			}
 		},
 	}
 
+	cmd.Flags().StringVar(&root, "protoc-root", "", "Root directory to use for proto compilation, defaults to PATH")
+
 	cmd.Flags().StringVar(&baseURI, "base-uri", "", "Prefix to use for the source_uri field of each proto upload")
 	return cmd
 }
 
-func scanDirectoryForProtos(client connection.RegistryClient, projectID, baseURI, root string, taskQueue chan<- core.Task) error {
-	return filepath.Walk(root, func(filepath string, info os.FileInfo, err error) error {
+func scanDirectoryForProtos(client connection.RegistryClient, projectID, baseURI, start, root string, taskQueue chan<- core.Task) error {
+	return filepath.Walk(start, func(filepath string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -144,6 +159,7 @@ type uploadProtoTask struct {
 	apiDescription string
 	versionID      string // computed at runtime
 	specID         string // computed at runtime
+	contents       []byte // computed at runtime
 }
 
 func (task *uploadProtoTask) String() string {
@@ -155,6 +171,11 @@ func (task *uploadProtoTask) Run(ctx context.Context) error {
 	task.populateFields()
 	log.Infof(ctx, "Uploading apis/%s/versions/%s/specs/%s", task.apiID, task.versionID, task.specID)
 
+	// Zip up the protos first; if that fails, skip the API.
+	var err error
+	if task.contents, err = task.zipContents(); err != nil {
+		return err
+	}
 	// If the API does not exist, create it.
 	if err := task.createAPI(ctx); err != nil {
 		return err
@@ -223,17 +244,12 @@ func (task *uploadProtoTask) createVersion(ctx context.Context) error {
 }
 
 func (task *uploadProtoTask) createOrUpdateSpec(ctx context.Context) error {
-	contents, err := task.zipContents()
-	if err != nil {
-		return err
-	}
-
 	// Use the spec size and hash to avoid unnecessary uploads.
 	spec, err := task.client.GetApiSpec(ctx, &rpc.GetApiSpecRequest{
 		Name: task.specName(),
 	})
 
-	if err == nil && int(spec.GetSizeBytes()) == len(contents) && spec.GetHash() == hashForBytes(contents) {
+	if err == nil && int(spec.GetSizeBytes()) == len(task.contents) && spec.GetHash() == hashForBytes(task.contents) {
 		log.Debugf(ctx, "Matched already uploaded spec %s", task.specName())
 		return nil
 	}
@@ -243,7 +259,7 @@ func (task *uploadProtoTask) createOrUpdateSpec(ctx context.Context) error {
 			Name:     task.specName(),
 			MimeType: core.ProtobufMimeType("+zip"),
 			Filename: task.fileName(),
-			Contents: contents,
+			Contents: task.contents,
 		},
 		AllowMissing: true,
 	}
@@ -253,7 +269,7 @@ func (task *uploadProtoTask) createOrUpdateSpec(ctx context.Context) error {
 
 	response, err := task.client.UpdateApiSpec(ctx, request)
 	if err != nil {
-		log.FromContext(ctx).WithError(err).Errorf("Error %s [contents-length: %d]", task.specName(), len(contents))
+		log.FromContext(ctx).WithError(err).Errorf("Error %s [contents-length: %d]", task.specName(), len(task.contents))
 	} else {
 		log.Debugf(ctx, "Updated %s", response.Name)
 	}
@@ -289,10 +305,107 @@ func (task *uploadProtoTask) fileName() string {
 
 func (task *uploadProtoTask) zipContents() ([]byte, error) {
 	prefix := task.directory + "/"
-	contents, err := core.ZipArchiveOfPath(task.path, prefix, true)
+
+	// Get the proto files in the main directory.
+	protos, err := localProtos(task.path, prefix)
+	if err != nil {
+		return nil, err
+	}
+
+	// Compile the listed protos to get their dependencies.
+	if len(protos) > 0 {
+		protos, err = referencedProtos(protos, task.directory)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// Get the metadata files in the main directory.
+	metadata, err := localMetadata(task.path, prefix)
+	if err != nil {
+		return nil, err
+	}
+
+	// Zip the listed files.
+	contents, err := core.ZipArchiveOfFiles(append(metadata, protos...), prefix, true)
 	if err != nil {
 		return nil, err
 	}
 
 	return contents.Bytes(), nil
+}
+
+// Collect the names of all metadata files in a source directory, stripping the prefix.
+func localMetadata(source, prefix string) ([]string, error) {
+	return localFiles(source, prefix, func(name string) bool {
+		return strings.HasSuffix(name, ".json") || strings.HasSuffix(name, ".yaml")
+	})
+}
+
+// Collect the names of all proto files in a source directory, stripping the prefix.
+func localProtos(source, prefix string) ([]string, error) {
+	return localFiles(source, prefix, func(name string) bool {
+		return strings.HasSuffix(name, ".proto")
+	})
+}
+
+// Collect the names of all matching files in a source directory, stripping the prefix.
+func localFiles(source, prefix string, match func(string) bool) ([]string, error) {
+	filenames := make([]string, 0)
+	err := filepath.WalkDir(source, func(p string, entry fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		} else if entry.IsDir() {
+			return nil // Do nothing for the directory, but still walk its contents.
+		} else if match(p) {
+			filenames = append(filenames, strings.TrimPrefix(p, prefix))
+		}
+		return nil
+	})
+	return filenames, err
+}
+
+// Get all the protos that are referenced in the compilation of a list of protos.
+func referencedProtos(protos []string, root string) ([]string, error) {
+	tempDir, err := os.MkdirTemp("", "proto-import-")
+	if err != nil {
+		return nil, err
+	}
+	defer os.RemoveAll(tempDir)
+	args := []string{"-o", tempDir + "/proto.pb"}
+	args = append(args, protos...)
+	cmd := exec.Command("protoc", args...)
+	cmd.Dir = root
+	if err := cmd.Run(); err != nil {
+		return nil, fmt.Errorf("failed to compile protos with protoc: %s", err)
+	}
+	return protosFromFileDescriptorSet(tempDir + "/proto.pb")
+}
+
+// Get all the protos listed as dependencies in a file descriptor set.
+func protosFromFileDescriptorSet(filename string) ([]string, error) {
+	bytes, err := os.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+	fds := &descriptorpb.FileDescriptorSet{}
+	err = proto.Unmarshal(bytes, fds)
+	if err != nil {
+		return nil, err
+	}
+	filenameset := make(map[string]bool)
+	for _, file := range fds.File {
+		filenameset[*file.Name] = true
+		for _, dependency := range file.Dependency {
+			if !strings.HasPrefix(dependency, "google/protobuf/") {
+				filenameset[dependency] = true
+			}
+		}
+	}
+	filenames := make([]string, 0)
+	for k := range filenameset {
+		filenames = append(filenames, k)
+	}
+	sort.Strings(filenames)
+	return filenames, nil
 }

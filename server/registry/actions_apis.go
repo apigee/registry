@@ -80,10 +80,6 @@ func (s *RegistryServer) DeleteApi(ctx context.Context, req *rpc.DeleteApiReques
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	if err := s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
-		// Deletion should only succeed on APIs that currently exist.
-		if _, err := db.GetApi(ctx, name); err != nil {
-			return err
-		}
 		return db.DeleteApi(ctx, name, req.GetForce())
 	}); err != nil {
 		return nil, err
