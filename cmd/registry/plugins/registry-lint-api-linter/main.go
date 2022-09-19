@@ -27,7 +27,7 @@ import (
 )
 
 // Runs the API linter with a provided spec path
-type runLinter func(specPath string) ([]*rpc.LintProblem, error)
+type runLinter func(specPath, specDir string) ([]*rpc.LintProblem, error)
 
 // apiLinterRunner implements the LinterRunner interface for the API linter.
 type apiLinterRunner struct{}
@@ -42,6 +42,7 @@ func (linter *apiLinterRunner) RunImpl(
 ) (*rpc.LinterResponse, error) {
 	lintFiles := make([]*rpc.LintFile, 0)
 
+	//log.Infof(context.TODO(), "REQUEST %+v", req)
 	// Traverse the files in the directory
 	err := filepath.Walk(req.GetSpecDirectory(), func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -53,8 +54,16 @@ func (linter *apiLinterRunner) RunImpl(
 			return nil
 		}
 
+		protoPath := strings.TrimPrefix(path, req.GetSpecDirectory()+"/")
+		if strings.HasPrefix(protoPath, "google/api/") ||
+			strings.HasPrefix(protoPath, "google/longrunning/") ||
+			strings.HasPrefix(protoPath, "google/rpc/") {
+			// Skip common includes.
+			return nil
+		}
+
 		// Execute the API linter.
-		lintProblems, err := runLinter(path)
+		lintProblems, err := runLinter(protoPath, req.GetSpecDirectory())
 		if err != nil {
 			return err
 		}
@@ -82,71 +91,20 @@ func (linter *apiLinterRunner) RunImpl(
 	}, nil
 }
 
-func runApiLinter(specPath string) ([]*rpc.LintProblem, error) {
-	// API-linter necessitates being ran on specs in the CWD to avoid many import errors,
-	// so we change the directory of the command to the directory of the spec.
-	specDirectory := filepath.Dir(specPath)
-	specName := filepath.Base(specPath)
-
-	data, err := createAndRunApiLinterCommand(specDirectory, specName)
-	if err == nil {
-		return parseLinterOutput(data)
-	}
-
+func runApiLinter(specPath, specDirectory string) ([]*rpc.LintProblem, error) {
 	// TODO: Replace this new instance with a logger inherited from the context.
 	logger := log.NewLogger()
+	logger.Infof("Running api-linter on %s", specPath)
 
-	// Unpack api-common-protos and try again if failure occurred
-	logger.Info("API-linter failed due to an import error, unpacking API common protos and retrying.")
-	if err = unpackApiCommonProtos(specDirectory); err == nil {
-		data, err = createAndRunApiLinterCommand(specDirectory, specName)
-		if err == nil {
-			return parseLinterOutput(data)
-		}
+	data, err := createAndRunApiLinterCommand(specDirectory, specPath)
+	if err != nil {
+		return nil, err
 	}
-
-	logger.Info("API-linter failed due to an import error, unpacking GoogleAPIs and retrying.")
-	if err = unpackGoogleApisProtos(specDirectory); err == nil {
-		data, err = createAndRunApiLinterCommand(specDirectory, specName)
-		if err == nil {
-			return parseLinterOutput(data)
-		}
-	}
-
-	return []*rpc.LintProblem{}, nil
+	return parseLinterOutput(data)
 }
 
 func main() {
 	lint.Main(&apiLinterRunner{})
-}
-
-func unpackGoogleApisProtos(rootDir string) error {
-	// Curl the entire folder as a zipped archive from Github (much faster than git checkout).
-	curlCmd := exec.Command("curl", "-L", "https://github.com/googleapis/googleapis/archive/refs/heads/master.zip", "-O")
-	curlCmd.Dir = rootDir
-	err := curlCmd.Run()
-	if err != nil {
-		return err
-	}
-
-	// Unzip the contents of the zipped archive.
-	unzipCmd := exec.Command("unzip", "-q", "master.zip")
-	unzipCmd.Dir = rootDir
-	err = unzipCmd.Run()
-	if err != nil {
-		return err
-	}
-
-	// Move up the google/ directory (the one we're interested in) into the cwd.
-	mvCmd := exec.Command("mv", "googleapis-master/google", "google")
-	mvCmd.Dir = rootDir
-	return mvCmd.Run()
-}
-
-func unpackApiCommonProtos(rootDir string) error {
-	cmd := exec.Command("git", "clone", "https://github.com/googleapis/api-common-protos")
-	cmd.Dir = rootDir
-	return cmd.Run()
 }
 
 func (linter *apiLinterRunner) filterProblems(
@@ -177,8 +135,7 @@ func (linter *apiLinterRunner) filterProblems(
 func createAndRunApiLinterCommand(specDirectory, specName string) ([]byte, error) {
 	cmd := exec.Command("api-linter",
 		specName,
-		"-I", "google",
-		"-I", "api-common-protos",
+		"-I", ".",
 		"--output-format", "json",
 	)
 	cmd.Dir = specDirectory

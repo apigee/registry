@@ -88,10 +88,6 @@ func (s *RegistryServer) DeleteApiDeployment(ctx context.Context, req *rpc.Delet
 	}
 
 	if err := s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
-		// Deletion should only succeed on API deployments that currently exist.
-		if _, err := db.GetDeployment(ctx, name); err != nil {
-			return err
-		}
 		return db.DeleteDeployment(ctx, name, req.GetForce())
 	}); err != nil {
 		return nil, err
