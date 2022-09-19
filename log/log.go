@@ -43,7 +43,7 @@ type Logger interface {
 
 var defaultOptions = []Option{
 	TextFormat(os.Stderr),
-	DebugLevel,
+	InfoLevel,
 }
 
 // NewLogger returns a logger configured with the provided options.

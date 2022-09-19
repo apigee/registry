@@ -102,13 +102,4 @@ func (c *Client) saveWithMask(ctx context.Context, v interface{}, fieldMask []st
 		err = status.Errorf(codes.NotFound, "%s not found in database", v)
 	}
 	return grpcErrorForDBError(ctx, err)
-
-	// op := c.db.WithContext(ctx).
-	// 	Select(fieldMask).
-	// 	Clauses(
-	// 		clause.Returning{},
-	// 		clause.OnConflict{UpdateAll: true},
-	// 	)
-	// err := op.Create(v).Error
-	// return grpcErrorForDBError(ctx, err)
 }
