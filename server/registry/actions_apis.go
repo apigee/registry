@@ -184,7 +184,7 @@ func (s *RegistryServer) UpdateApi(ctx context.Context, req *rpc.UpdateApiReques
 		if err := db.SaveApi(ctx, api, mask); err != nil {
 			if status.Code(err) == codes.NotFound && req.GetAllowMissing() {
 				response, err = s.createApi(ctx, db, name, req.GetApi())
-				if status.Convert(err).Code() == codes.AlreadyExists {
+				if status.Code(err) == codes.AlreadyExists {
 					err = status.Error(codes.Aborted, err.Error())
 				}
 			}
