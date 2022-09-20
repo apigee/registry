@@ -56,7 +56,7 @@ func grpcErrorForDBError(ctx context.Context, err error) error {
 		return cause
 	}
 
-	log.Infof(ctx, "DBError %+v", err) // log the stack trace
+	log.Errorf(ctx, "DBError %+v", err) // log the stack trace
 
 	if cause == context.DeadlineExceeded {
 		return status.Error(codes.DeadlineExceeded, cause.Error())
