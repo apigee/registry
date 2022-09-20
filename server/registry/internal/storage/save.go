@@ -18,6 +18,7 @@ import (
 	"context"
 
 	"github.com/apigee/registry/server/registry/internal/storage/models"
+	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
@@ -91,7 +92,7 @@ func (c *Client) save(ctx context.Context, v interface{}) error {
 	err := c.db.WithContext(ctx).Clauses(clause.OnConflict{
 		UpdateAll: true,
 	}).Create(v).Error
-	return grpcErrorForDBError(ctx, err)
+	return grpcErrorForDBError(ctx, errors.Wrapf(err, "save %#v", v))
 }
 
 func (c *Client) saveWithMask(ctx context.Context, v interface{}, fieldMask *fieldmaskpb.FieldMask) error {

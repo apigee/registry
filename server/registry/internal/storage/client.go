@@ -21,6 +21,7 @@ import (
 
 	_ "github.com/GoogleCloudPlatform/cloudsql-proxy/proxy/dialers/postgres"
 	"github.com/apigee/registry/server/registry/internal/storage/models"
+	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"gorm.io/driver/postgres"
@@ -120,7 +121,7 @@ func (c *Client) close() {
 func (c *Client) ensureTable(ctx context.Context, v interface{}) error {
 	if !c.db.Migrator().HasTable(v) {
 		if err := c.db.Migrator().CreateTable(v); err != nil {
-			return grpcErrorForDBError(ctx, err)
+			return grpcErrorForDBError(ctx, errors.Wrapf(err, "create table %#v", v))
 		}
 	}
 	return nil
@@ -149,11 +150,11 @@ func (c *Client) TableNames(ctx context.Context) ([]string, error) {
 	switch c.db.WithContext(ctx).Name() {
 	case "postgres":
 		if err := c.db.WithContext(ctx).Table("information_schema.tables").Where("table_schema = ?", "public").Order("table_name").Pluck("table_name", &tableNames).Error; err != nil {
-			return nil, grpcErrorForDBError(ctx, err)
+			return nil, grpcErrorForDBError(ctx, errors.Wrap(err, "tables"))
 		}
 	case "sqlite":
 		if err := c.db.WithContext(ctx).Table("sqlite_schema").Where("type = 'table' AND name NOT LIKE 'sqlite_%'").Order("name").Pluck("name", &tableNames).Error; err != nil {
-			return nil, grpcErrorForDBError(ctx, err)
+			return nil, grpcErrorForDBError(ctx, errors.Wrap(err, "tables"))
 		}
 	default:
 		return nil, status.Errorf(codes.Internal, "unsupported database %s", c.db.Name())
@@ -164,7 +165,7 @@ func (c *Client) TableNames(ctx context.Context) ([]string, error) {
 func (c *Client) RowCount(ctx context.Context, tableName string) (int64, error) {
 	var count int64
 	err := c.db.WithContext(ctx).Table(tableName).Count(&count).Error
-	return count, grpcErrorForDBError(ctx, err)
+	return count, grpcErrorForDBError(ctx, errors.Wrapf(err, "count %s", tableName))
 }
 
 func (c *Client) Transaction(ctx context.Context, fn func(context.Context, *Client) error) error {

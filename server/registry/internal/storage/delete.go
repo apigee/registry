@@ -20,6 +20,7 @@ import (
 
 	"github.com/apigee/registry/server/registry/internal/storage/models"
 	"github.com/apigee/registry/server/registry/names"
+	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
@@ -221,7 +222,7 @@ func (c *Client) DeleteSpecRevision(ctx context.Context, name names.SpecRevision
 			Where("spec_id = ?", name.SpecID).
 			Where("revision_id = ?", name.RevisionID)
 		if err := op.Delete(model).Error; err != nil {
-			return grpcErrorForDBError(ctx, err)
+			return grpcErrorForDBError(ctx, errors.Wrapf(err, "delete %s", name))
 		}
 		if _, ok := model.(models.Spec); ok && op.RowsAffected == 0 {
 			return status.Errorf(codes.NotFound, "%q not found in database", name)
@@ -239,7 +240,7 @@ func (c *Client) DeleteSpecRevision(ctx context.Context, name names.SpecRevision
 	if err := op.First(v).Error; err == gorm.ErrRecordNotFound {
 		return status.Errorf(codes.FailedPrecondition, "cannot delete the only revision: %s", name)
 	} else if err != nil {
-		return grpcErrorForDBError(ctx, err)
+		return grpcErrorForDBError(ctx, errors.Wrapf(err, "delete %s", name))
 	}
 
 	return nil
@@ -300,7 +301,7 @@ func (c *Client) DeleteDeploymentRevision(ctx context.Context, name names.Deploy
 			Where("deployment_id = ?", name.DeploymentID).
 			Where("revision_id = ?", name.RevisionID)
 		if err := op.Delete(model).Error; err != nil {
-			return grpcErrorForDBError(ctx, err)
+			return grpcErrorForDBError(ctx, errors.Wrapf(err, "delete %s", name))
 		}
 		if _, ok := model.(models.Deployment); ok && op.RowsAffected == 0 {
 			return status.Errorf(codes.NotFound, "%q not found in database", name)
@@ -317,7 +318,7 @@ func (c *Client) DeleteDeploymentRevision(ctx context.Context, name names.Deploy
 	if err := op.First(v).Error; err == gorm.ErrRecordNotFound {
 		return status.Errorf(codes.FailedPrecondition, "cannot delete the only revision: %s", name)
 	} else if err != nil {
-		return grpcErrorForDBError(ctx, err)
+		return grpcErrorForDBError(ctx, errors.Wrapf(err, "delete %s", name))
 	}
 
 	return nil
@@ -336,7 +337,7 @@ func (c *Client) DeleteArtifact(ctx context.Context, name names.Artifact) error 
 			Where("deployment_id = ?", name.DeploymentID()).
 			Where("artifact_id = ?", name.ArtifactID())
 		if err := op.Delete(model).Error; err != nil {
-			return grpcErrorForDBError(ctx, err)
+			return grpcErrorForDBError(ctx, errors.Wrapf(err, "delete %s", name))
 		}
 		if _, ok := model.(models.Artifact); ok && op.RowsAffected == 0 {
 			return status.Errorf(codes.NotFound, "%q not found in database", name)
