@@ -150,20 +150,19 @@ func (s *RegistryServer) UpdateProject(ctx context.Context, req *rpc.UpdateProje
 	var response *rpc.Project
 	if err := s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
 		db.LockProjects(ctx)
-		project, err := db.GetProject(ctx, name)
-		if err == nil {
-			project.Update(req.GetProject(), models.ExpandMask(req.GetProject(), req.GetUpdateMask()))
-			if err := db.SaveProject(ctx, project); err != nil {
-				return err
+		project := models.NewProject(name, req.GetProject())
+		mask := models.ExpandMask(req.GetProject(), req.GetUpdateMask())
+		if err := db.SaveProject(ctx, project, mask); err != nil {
+			if status.Code(err) == codes.NotFound && req.GetAllowMissing() {
+				response, err = s.createProject(ctx, db, name, req.GetProject())
+				if status.Convert(err).Code() == codes.AlreadyExists {
+					err = status.Error(codes.Aborted, err.Error())
+				}
 			}
-			response = project.Message()
-			return nil
-		} else if status.Code(err) == codes.NotFound && req.GetAllowMissing() {
-			response, err = s.createProject(ctx, db, name, req.GetProject())
-			return err
-		} else {
 			return err
 		}
+		response = project.Message()
+		return err
 	}); err != nil {
 		return nil, err
 	}
