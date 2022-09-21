@@ -55,11 +55,6 @@ func (s *RegistryServer) CreateApi(ctx context.Context, req *rpc.CreateApiReques
 }
 
 func (s *RegistryServer) createApi(ctx context.Context, db *storage.Client, name names.Api, body *rpc.Api) (*rpc.Api, error) {
-	// Creation should only succeed when the parent exists.
-	if _, err := db.GetProject(ctx, name.Project()); err != nil {
-		return nil, err
-	}
-
 	api, err := models.NewApi(name, body)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
