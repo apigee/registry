@@ -1,4 +1,4 @@
-// Copyright 2022 Google LLC. All Rights Reservec.
+// Copyright 2022 Google LLC. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -240,6 +240,9 @@ func (c *Client) ListProjects(ctx context.Context, opts PageOptions) (ProjectLis
 			token.Offset++
 			response.Projects = append(response.Projects, v)
 		}
+		if op.RowsAffected < int64(opts.Size) {
+			break
+		}
 	}
 
 	return response, nil
@@ -339,6 +342,9 @@ func (c *Client) ListApis(ctx context.Context, parent names.Project, opts PageOp
 
 			token.Offset++
 			response.Apis = append(response.Apis, v)
+		}
+		if op.RowsAffected < int64(opts.Size) {
+			break
 		}
 	}
 
@@ -456,6 +462,9 @@ func (c *Client) ListVersions(ctx context.Context, parent names.Api, opts PageOp
 
 			token.Offset++
 			response.Versions = append(response.Versions, v)
+		}
+		if op.RowsAffected < int64(opts.Size) {
+			break
 		}
 	}
 
@@ -592,6 +601,9 @@ func (c *Client) ListSpecs(ctx context.Context, parent names.Version, opts PageO
 
 			token.Offset++
 			response.Specs = append(response.Specs, v)
+		}
+		if op.RowsAffected < int64(opts.Size) {
+			break
 		}
 	}
 
@@ -794,6 +806,9 @@ func (c *Client) ListDeployments(ctx context.Context, parent names.Api, opts Pag
 
 			token.Offset++
 			response.Deployments = append(response.Deployments, v)
+		}
+		if op.RowsAffected < int64(opts.Size) {
+			break
 		}
 	}
 
@@ -1178,6 +1193,9 @@ func (c *Client) listArtifacts(ctx context.Context, op *gorm.DB, opts PageOption
 
 			token.Offset++
 			response.Artifacts = append(response.Artifacts, v)
+		}
+		if op.RowsAffected < int64(opts.Size) {
+			break
 		}
 	}
 
