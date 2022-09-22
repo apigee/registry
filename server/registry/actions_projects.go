@@ -149,7 +149,6 @@ func (s *RegistryServer) UpdateProject(ctx context.Context, req *rpc.UpdateProje
 	}
 	var response *rpc.Project
 	if err := s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
-		db.LockProjects(ctx)
 		project := models.NewProject(name, req.GetProject())
 		mask := models.ExpandMask(req.GetProject(), req.GetUpdateMask())
 		if err := db.SaveProject(ctx, project, mask); err != nil {

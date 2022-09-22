@@ -170,7 +170,6 @@ func (s *RegistryServer) UpdateApiVersion(ctx context.Context, req *rpc.UpdateAp
 	}
 	var response *rpc.ApiVersion
 	if err = s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
-		db.LockVersions(ctx)
 		version, err := models.NewVersion(name, req.GetApiVersion())
 		if err != nil {
 			return err

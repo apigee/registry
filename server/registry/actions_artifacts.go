@@ -264,7 +264,6 @@ func (s *RegistryServer) ReplaceArtifact(ctx context.Context, req *rpc.ReplaceAr
 
 	var artifact *models.Artifact
 	err = db.Transaction(ctx, func(ctx context.Context, db *storage.Client) error {
-		db.LockArtifacts(ctx)
 		// Replacement should only succeed on artifacts that currently exist.
 		if _, err = db.GetArtifact(ctx, name); err != nil {
 			return err

@@ -202,7 +202,6 @@ func (s *RegistryServer) UpdateApiDeployment(ctx context.Context, req *rpc.Updat
 	}
 	var response *rpc.ApiDeployment
 	if err = s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
-		db.LockDeployments(ctx)
 		deployment, err := db.GetDeployment(ctx, name)
 		if err == nil {
 			// Apply the update to the deployment - possibly changing the revision ID.

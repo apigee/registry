@@ -254,7 +254,6 @@ func (s *RegistryServer) UpdateApiSpec(ctx context.Context, req *rpc.UpdateApiSp
 	}
 	var response *rpc.ApiSpec
 	if err = s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
-		db.LockSpecs(ctx)
 		spec, err := db.GetSpec(ctx, name)
 		if err == nil {
 			// Apply the update to the spec - possibly changing the revision ID.

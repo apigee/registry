@@ -170,7 +170,6 @@ func (s *RegistryServer) UpdateApi(ctx context.Context, req *rpc.UpdateApiReques
 	}
 	var response *rpc.Api
 	if err := s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
-		db.LockApis(ctx)
 		api, err := models.NewApi(name, req.GetApi())
 		if err != nil {
 			return err
