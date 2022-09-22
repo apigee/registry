@@ -65,7 +65,8 @@ func NewClient(ctx context.Context, driver, dsn string) (*Client, error) {
 			c.close()
 			return nil, grpcErrorForDBError(ctx, err)
 		}
-		if err := applyConnectionLimits(db); err != nil {
+		// eliminate multithreading contention
+		if err := applyConnectionLimits(db, 1); err != nil {
 			c := &Client{db: db}
 			c.close()
 			return nil, grpcErrorForDBError(ctx, err)
@@ -85,7 +86,7 @@ func NewClient(ctx context.Context, driver, dsn string) (*Client, error) {
 			c.close()
 			return nil, grpcErrorForDBError(ctx, err)
 		}
-		if err := applyConnectionLimits(db); err != nil {
+		if err := applyConnectionLimits(db, 10); err != nil {
 			c := &Client{db: db}
 			c.close()
 			return nil, grpcErrorForDBError(ctx, err)
@@ -97,14 +98,13 @@ func NewClient(ctx context.Context, driver, dsn string) (*Client, error) {
 }
 
 // Applies limits to concurrent connections.
-// Could be made configurable.
-func applyConnectionLimits(db *gorm.DB) error {
+func applyConnectionLimits(db *gorm.DB, n int) error {
 	sqlDB, err := db.DB()
 	if err != nil {
 		return err
 	}
-	sqlDB.SetMaxOpenConns(10)
-	sqlDB.SetMaxIdleConns(10)
+	sqlDB.SetMaxOpenConns(n)
+	sqlDB.SetMaxIdleConns(n)
 	sqlDB.SetConnMaxLifetime(60 * time.Second)
 	return nil
 }
