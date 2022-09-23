@@ -41,7 +41,7 @@ func (task *DeleteApiTask) String() string {
 
 func (task *DeleteApiTask) Run(ctx context.Context) error {
 	log.Debugf(ctx, "Deleting %s", task.name)
-	return task.client.DeleteApi(ctx, &rpc.DeleteApiRequest{Name: task.name})
+	return task.client.DeleteApi(ctx, &rpc.DeleteApiRequest{Name: task.name, Force: true})
 }
 
 // DeleteVersionTask deletes a specified version.

@@ -29,6 +29,8 @@ echo 'ERROR: This script requires the gcloud command. Please install it to conti
 goto :eof
 )
 
+setlocal
+
 :: set the service address.
 set APG_REGISTRY_ADDRESS=apigeeregistry.googleapis.com:443
 set APG_REGISTRY_INSECURE=false
@@ -45,3 +47,5 @@ registry config configurations create hosted ^
   --registry.location=%APG_REGISTRY_LOCATION%
 
 registry config set token-source "%APG_REGISTRY_TOKEN_SOURCE%"
+
+endlocal

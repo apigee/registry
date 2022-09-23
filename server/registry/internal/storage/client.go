@@ -17,9 +17,11 @@ package storage
 import (
 	"context"
 	"fmt"
+	"time"
 
 	_ "github.com/GoogleCloudPlatform/cloudsql-proxy/proxy/dialers/postgres"
 	"github.com/apigee/registry/server/registry/internal/storage/models"
+	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"gorm.io/driver/postgres"
@@ -61,7 +63,12 @@ func NewClient(ctx context.Context, driver, dsn string) (*Client, error) {
 		if err != nil {
 			c := &Client{db: db}
 			c.close()
-			return nil, err
+			return nil, grpcErrorForDBError(ctx, err)
+		}
+		if err := applyConnectionLimits(db); err != nil {
+			c := &Client{db: db}
+			c.close()
+			return nil, grpcErrorForDBError(ctx, err)
 		}
 		return &Client{db: db}, nil
 	case "postgres", "cloudsqlpostgres":
@@ -69,17 +76,36 @@ func NewClient(ctx context.Context, driver, dsn string) (*Client, error) {
 			DriverName: driver,
 			DSN:        dsn,
 		}), &gorm.Config{
-			Logger: NewGormLogger(ctx),
+			Logger:      NewGormLogger(ctx),
+			PrepareStmt: true,
 		})
 		if err != nil {
 			c := &Client{db: db}
 			c.close()
-			return nil, err
+			return nil, grpcErrorForDBError(ctx, err)
+		}
+		if err := applyConnectionLimits(db); err != nil {
+			c := &Client{db: db}
+			c.close()
+			return nil, grpcErrorForDBError(ctx, err)
 		}
 		return &Client{db: db}, nil
 	default:
 		return nil, fmt.Errorf("unsupported database %s", driver)
 	}
+}
+
+// Applies limits to concurrent connections.
+// Could be made configurable.
+func applyConnectionLimits(db *gorm.DB) error {
+	sqlDB, err := db.DB()
+	if err != nil {
+		return err
+	}
+	sqlDB.SetMaxOpenConns(10)
+	sqlDB.SetMaxIdleConns(10)
+	sqlDB.SetConnMaxLifetime(60 * time.Second)
+	return nil
 }
 
 // Close closes a database session.
@@ -95,7 +121,7 @@ func (c *Client) close() {
 func (c *Client) ensureTable(ctx context.Context, v interface{}) error {
 	if !c.db.Migrator().HasTable(v) {
 		if err := c.db.Migrator().CreateTable(v); err != nil {
-			return grpcErrorForDBError(ctx, err)
+			return grpcErrorForDBError(ctx, errors.Wrapf(err, "create table %#v", v))
 		}
 	}
 	return nil
@@ -124,11 +150,11 @@ func (c *Client) TableNames(ctx context.Context) ([]string, error) {
 	switch c.db.WithContext(ctx).Name() {
 	case "postgres":
 		if err := c.db.WithContext(ctx).Table("information_schema.tables").Where("table_schema = ?", "public").Order("table_name").Pluck("table_name", &tableNames).Error; err != nil {
-			return nil, grpcErrorForDBError(ctx, err)
+			return nil, grpcErrorForDBError(ctx, errors.Wrap(err, "tables"))
 		}
 	case "sqlite":
 		if err := c.db.WithContext(ctx).Table("sqlite_schema").Where("type = 'table' AND name NOT LIKE 'sqlite_%'").Order("name").Pluck("name", &tableNames).Error; err != nil {
-			return nil, grpcErrorForDBError(ctx, err)
+			return nil, grpcErrorForDBError(ctx, errors.Wrap(err, "tables"))
 		}
 	default:
 		return nil, status.Errorf(codes.Internal, "unsupported database %s", c.db.Name())
@@ -139,5 +165,12 @@ func (c *Client) TableNames(ctx context.Context) ([]string, error) {
 func (c *Client) RowCount(ctx context.Context, tableName string) (int64, error) {
 	var count int64
 	err := c.db.WithContext(ctx).Table(tableName).Count(&count).Error
-	return count, grpcErrorForDBError(ctx, err)
+	return count, grpcErrorForDBError(ctx, errors.Wrapf(err, "count %s", tableName))
+}
+
+func (c *Client) Transaction(ctx context.Context, fn func(context.Context, *Client) error) error {
+	err := c.db.Transaction(func(tx *gorm.DB) error {
+		return fn(ctx, &Client{db: tx})
+	})
+	return grpcErrorForDBError(ctx, err)
 }

@@ -31,7 +31,7 @@ func init() {
 
 	ListApiSpecsCmd.Flags().StringVar(&ListApiSpecsInput.Filter, "filter", "", "An expression that can be used to filter the...")
 
-	ListApiSpecsCmd.Flags().StringVar(&ListApiSpecsInput.OrderBy, "order_by", "", "A comma-separated list of fields, e.g. 'foo,bar'")
+	ListApiSpecsCmd.Flags().StringVar(&ListApiSpecsInput.OrderBy, "order_by", "", "A comma-separated list of fields, e.g. 'foo,bar' ...")
 
 	ListApiSpecsCmd.Flags().StringVar(&ListApiSpecsFromFile, "from_file", "", "Absolute path to JSON file containing request payload")
 

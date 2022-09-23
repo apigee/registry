@@ -122,6 +122,20 @@ func ZipArchiveOfPath(path, prefix string, recursive bool) (buf bytes.Buffer, er
 	return buf, err
 }
 
+// ZipArchiveOfFiles stores a list of files in a zip archive.
+// The specified prefix is stripped from file names in the archive.
+func ZipArchiveOfFiles(files []string, prefix string, recursive bool) (buf bytes.Buffer, err error) {
+	zipWriter := zip.NewWriter(&buf)
+	defer zipWriter.Close()
+
+	for _, filename := range files {
+		if err = addFileToZip(zipWriter, prefix+filename, prefix); err != nil {
+			return buf, err
+		}
+	}
+	return buf, err
+}
+
 func addFileToZip(zipWriter *zip.Writer, filename, prefix string) error {
 	fileToZip, err := os.Open(filename)
 	if err != nil {

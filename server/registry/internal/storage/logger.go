@@ -58,7 +58,7 @@ func (l gormLogger) Trace(ctx context.Context, begin time.Time, fc func() (sql s
 		"duration": time.Since(begin),
 	})
 
-	if err != nil && err != gorm.ErrRecordNotFound && !alreadyExists(err) {
+	if err != nil && err != gorm.ErrRecordNotFound && !AlreadyExists(err) {
 		logger.WithError(err).Error("Failed database operation.")
 	} else if time.Since(begin) > l.SlowThreshold {
 		logger.Warn("Slow database operation.")
