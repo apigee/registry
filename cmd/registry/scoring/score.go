@@ -101,7 +101,7 @@ func CalculateScore(
 
 	// Calculate score if the definition has been updated
 	// This condition is required to avoid the scenario mentioned here: https://github.com/apigee/registry/issues/641
-	if scoreArtifact != nil && defArtifact.GetUpdateTime().AsTime().Add(patterns.ResourceUpdateThresholdSeconds).After(scoreArtifact.GetUpdateTime().AsTime()) {
+	if scoreArtifact != nil && defArtifact.GetUpdateTime().AsTime().Add(patterns.ResourceUpdateThreshold).After(scoreArtifact.GetUpdateTime().AsTime()) {
 		takeAction = true
 	}
 
@@ -198,7 +198,7 @@ func processScoreFormula(
 
 	// Update required tells the calling function if the score artifact needs to be updated
 	// This condition is required to avoid the scenario mentioned here: https://github.com/apigee/registry/issues/641
-	updateRequired := takeAction || artifact.GetUpdateTime().AsTime().Add(patterns.ResourceUpdateThresholdSeconds).After(scoreArtifact.GetUpdateTime().AsTime())
+	updateRequired := takeAction || artifact.GetUpdateTime().AsTime().Add(patterns.ResourceUpdateThreshold).After(scoreArtifact.GetUpdateTime().AsTime())
 
 	// Apply the scoreExpression by default. This value will be required by the rollup_formula in the case where
 	// another formula from rollup_formula.score_formulas makes the score outdated.

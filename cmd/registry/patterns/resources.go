@@ -24,7 +24,7 @@ import (
 	"github.com/apigee/registry/server/registry/names"
 )
 
-const ResourceUpdateThresholdSeconds = time.Second * 2
+const ResourceUpdateThreshold = time.Second * 2
 
 // This interface is used to describe generic resource names
 // Example:
