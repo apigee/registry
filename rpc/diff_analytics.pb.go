@@ -115,13 +115,13 @@ type ChangeDetails struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// breakingChanges is a Diff proto that only contians the breaking changes
+	// breakingChanges is a Diff proto that only contains the breaking changes
 	//of a diff.
 	BreakingChanges *Diff `protobuf:"bytes,1,opt,name=breaking_changes,json=breakingChanges,proto3" json:"breaking_changes,omitempty"`
-	// nonBreakingChanges is a Diff proto that only contians the non-breaking
+	// nonBreakingChanges is a Diff proto that only contains the non-breaking
 	//changes of a diff.
 	NonBreakingChanges *Diff `protobuf:"bytes,2,opt,name=non_breaking_changes,json=nonBreakingChanges,proto3" json:"non_breaking_changes,omitempty"`
-	// unknownChanges is a Diff proto that contians all the changes that could not
+	// unknownChanges is a Diff proto that contains all the changes that could not
 	//be classified in the other categories.
 	UnknownChanges *Diff `protobuf:"bytes,3,opt,name=unknown_changes,json=unknownChanges,proto3" json:"unknown_changes,omitempty"`
 }

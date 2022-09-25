@@ -46,13 +46,13 @@ message Diff {
 
 /* ChangeDetails classifies changes from diff in to seperate categories. */
 message ChangeDetails {
-  /* breakingChanges is a Diff proto that only contians the breaking changes
+  /* breakingChanges is a Diff proto that only contains the breaking changes
   of a diff.*/
   Diff breaking_changes = 1;
-  /* nonBreakingChanges is a Diff proto that only contians the non-breaking
+  /* nonBreakingChanges is a Diff proto that only contains the non-breaking
   changes of a diff.*/
   Diff non_breaking_changes = 2;
-  /* unknownChanges is a Diff proto that contians all the changes that could not
+  /* unknownChanges is a Diff proto that contains all the changes that could not
   be classified in the other categories.*/
   Diff unknown_changes = 3;
 }
