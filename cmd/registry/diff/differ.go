@@ -87,7 +87,7 @@ func addToDiffProto(diffProto *rpc.Diff, changePath *change) {
 	}
 }
 
-// getChanges creates a protodif report from a diff.Diff struct.
+// getChanges creates a protodiff report from a diff.Diff struct.
 func getChanges(diff *diff.Diff) (*rpc.Diff, error) {
 	diffProto := &rpc.Diff{
 		Additions:     []string{},
