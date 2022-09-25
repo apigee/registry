@@ -39,7 +39,7 @@ message Diff {
   /* modifications holds every modification change in the diff.
      The string key will hold the field path of one modification change in the
      format foo.bar.x.
-     The value of the key will repersent the element that was modified in the
+     The value of the key will represent the element that was modified in the
      field. */
   map <string, ValueChange> modifications = 3;
 }

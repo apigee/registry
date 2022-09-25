@@ -51,7 +51,7 @@ type Diff struct {
 	// modifications holds every modification change in the diff.
 	//The string key will hold the field path of one modification change in the
 	//format foo.bar.x.
-	//The value of the key will repersent the element that was modified in the
+	//The value of the key will represent the element that was modified in the
 	//field.
 	Modifications map[string]*Diff_ValueChange `protobuf:"bytes,3,rep,name=modifications,proto3" json:"modifications,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 }
