@@ -40,7 +40,7 @@ const (
 
 // A ReferenceList message contains a list of references that are associated
 // with a resource. A Reference is a categorized resource name or URI that
-// points to some internal or external resource, respectivly.
+// points to some internal or external resource, respectively.
 //
 // ReferenceLists are used to define relationships to things like source code
 // repositories, dependencies, and dependent APIs (inverse relationship of
