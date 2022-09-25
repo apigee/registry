@@ -16,7 +16,7 @@
 #
 
 # This script uses the [googleapis](https://github.com/googleapis/googleapis)
-# Protocol Buffer descriptions of public Google APIs to build a colllection
+# Protocol Buffer descriptions of public Google APIs to build a collection
 # of API descriptions and them performs some analysis on them.
 # It assumes that the repo has been cloned to the user's Desktop,
 # so that it can be found at `~/Desktop/googleapis`.
