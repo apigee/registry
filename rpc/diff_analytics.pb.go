@@ -109,7 +109,7 @@ func (x *Diff) GetModifications() map[string]*Diff_ValueChange {
 	return nil
 }
 
-// ChangeDetails classifies changes from diff into seperate categories.
+// ChangeDetails classifies changes from diff into separate categories.
 type ChangeDetails struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
