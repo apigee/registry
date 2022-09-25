@@ -50,7 +50,7 @@ const (
 	// not a red flag. Users can still take action to get to a better level: "OK".
 	Severity_WARNING Severity = 2
 	// This level indicates that the value of the score is a major red flag and
-	// ideally users should activaly take actions to get to a WARNING or OK level.
+	// ideally users should actively take actions to get to a WARNING or OK level.
 	Severity_ALERT Severity = 3
 )
 
