@@ -44,7 +44,7 @@ message Diff {
   map <string, ValueChange> modifications = 3;
 }
 
-/* ChangeDetails classifies changes from diff in to seperate categories. */
+/* ChangeDetails classifies changes from diff into seperate categories. */
 message ChangeDetails {
   /* breakingChanges is a Diff proto that only contains the breaking changes
   of a diff.*/
