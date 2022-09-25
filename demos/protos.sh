@@ -64,7 +64,7 @@ registry rpc get-api-spec --name projects/$PROJECT/locations/global/apis/transla
 # Add the `--json` flag to get this as JSON:
 registry rpc get-api-spec --name projects/$PROJECT/locations/global/apis/translate/versions/v3/specs/google-cloud-translate-v3.zip --json
 
-# You might notice that that didn't return the actual spec. That's because the spec contents
+# You might notice that didn't return the actual spec. That's because the spec contents
 # are accessed through a separate method that (when transcoded to HTTP) allows direct download
 # of spec contents.
 registry rpc get-api-spec-contents --name projects/$PROJECT/locations/global/apis/translate/versions/v3/specs/google-cloud-translate-v3.zip > protos-1.zip

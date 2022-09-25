@@ -60,7 +60,7 @@ registry rpc get-api-spec \
 registry rpc get-api-spec --json \
 	--name projects/$PROJECT/locations/global/apis/translate/versions/v3/specs/discovery.json
 
-# You might notice that that didn't return the actual spec. That's because the spec contents
+# You might notice that didn't return the actual spec. That's because the spec contents
 # are accessed through a separate method that (when transcoded to HTTP) allows direct download
 # of spec contents.
 registry rpc get-api-spec-contents \
