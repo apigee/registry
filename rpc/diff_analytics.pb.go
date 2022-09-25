@@ -122,7 +122,7 @@ type ChangeDetails struct {
 	//changes of a diff.
 	NonBreakingChanges *Diff `protobuf:"bytes,2,opt,name=non_breaking_changes,json=nonBreakingChanges,proto3" json:"non_breaking_changes,omitempty"`
 	// unknownChanges is a Diff proto that contians all the changes that could not
-	//be classifed in the other categories.
+	//be classified in the other categories.
 	UnknownChanges *Diff `protobuf:"bytes,3,opt,name=unknown_changes,json=unknownChanges,proto3" json:"unknown_changes,omitempty"`
 }
 

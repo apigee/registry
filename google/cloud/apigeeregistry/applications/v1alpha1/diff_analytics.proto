@@ -53,7 +53,7 @@ message ChangeDetails {
   changes of a diff.*/
   Diff non_breaking_changes = 2;
   /* unknownChanges is a Diff proto that contians all the changes that could not
-  be classifed in the other categories.*/
+  be classified in the other categories.*/
   Diff unknown_changes = 3;
 }
 
