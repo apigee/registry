@@ -43,7 +43,7 @@ const (
 // points to some internal or external resource, respectivly.
 //
 // ReferenceLists are used to define relationships to things like source code
-// repositories, dependencies, and dependent APIs (inverse relationhip of
+// repositories, dependencies, and dependent APIs (inverse relationship of
 // an API dependency).
 //
 // The ReferenceList is stored as an Artifact attached to a specific resource.
