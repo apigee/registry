@@ -174,7 +174,7 @@ func (task *ComputeConformanceTask) invokeLinter(
 	linterResponse := &rpc.LinterResponse{}
 	err = proto.Unmarshal(output, linterResponse)
 	if err != nil {
-		return nil, fmt.Errorf("Failed unmarshaling LinterResponse (plugins must write log messages to stderr, not stdout): %s", err)
+		return nil, fmt.Errorf("Failed unmarshalling LinterResponse (plugins must write log messages to stderr, not stdout): %s", err)
 	}
 
 	// Check if there were any errors in the plugin.
