@@ -37,7 +37,7 @@ var noRefCyclesRule = &rpc.Rule{
 	Severity:       rpc.Rule_ERROR,
 }
 
-var operaationDescriptionRule = &rpc.Rule{
+var operationDescriptionRule = &rpc.Rule{
 	Id:             "operationdescription",
 	Linter:         "spectral",
 	LinterRulename: "operation-description",
@@ -138,7 +138,7 @@ func TestGenerateLinterMetadata(t *testing.T) {
 					},
 					{
 						Id:    "descriptionproperties",
-						Rules: []*rpc.Rule{operaationDescriptionRule},
+						Rules: []*rpc.Rule{operationDescriptionRule},
 						State: rpc.Guideline_PROPOSED,
 					},
 				},
@@ -160,7 +160,7 @@ func TestGenerateLinterMetadata(t *testing.T) {
 				},
 				"spectral": {
 					name:  "spectral",
-					rules: []string{noRefCyclesRule.GetLinterRulename(), operaationDescriptionRule.GetLinterRulename()},
+					rules: []string{noRefCyclesRule.GetLinterRulename(), operationDescriptionRule.GetLinterRulename()},
 					rulesMetadata: map[string]*ruleMetadata{
 						noRefCyclesRule.GetLinterRulename(): {
 							guidelineRule: noRefCyclesRule,
@@ -170,11 +170,11 @@ func TestGenerateLinterMetadata(t *testing.T) {
 								State: rpc.Guideline_ACTIVE,
 							},
 						},
-						operaationDescriptionRule.GetLinterRulename(): {
-							guidelineRule: operaationDescriptionRule,
+						operationDescriptionRule.GetLinterRulename(): {
+							guidelineRule: operationDescriptionRule,
 							guideline: &rpc.Guideline{
 								Id:    "descriptionproperties",
-								Rules: []*rpc.Rule{operaationDescriptionRule},
+								Rules: []*rpc.Rule{operationDescriptionRule},
 								State: rpc.Guideline_PROPOSED,
 							},
 						},
