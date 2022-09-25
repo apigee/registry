@@ -85,7 +85,7 @@ var (
 	}
 )
 
-// GetChangeDetails compares each change in a diff Proto to the relavant change type detection Patterns.
+// GetChangeDetails compares each change in a diff Proto to the relevant change type detection Patterns.
 // Each change is then categorized as breaking, nonbreaking, or unknown.
 func GetChangeDetails(diff *rpc.Diff) *rpc.ChangeDetails {
 	return &rpc.ChangeDetails{
