@@ -87,7 +87,7 @@ func newNodeFinder(filename string) (*nodeFinder, error) {
 }
 
 // FindNode returns a node object pointing to the given token in a yaml file. The node contains
-// information such as the string value, line number, bordering commments, etc.
+// information such as the string value, line number, bordering comments, etc.
 func (nf *nodeFinder) findNode(keys []string) (*yaml.Node, error) {
 	return findNode(nf.node.Content[0], 0, len(keys)-1, keys)
 }
