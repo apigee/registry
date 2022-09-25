@@ -122,7 +122,7 @@ A small set of **performance benchmarks** is in
 [tests/benchmark](/tests/benchmark). These tests run against remote servers
 specified by the `registry` tool configuration and test a single project that
 is expected to already exist. **WARNING**: These tests are destructive and will
-overwrite everyhing in the specified project. Benchmarks can be run with the
+overwrite everything in the specified project. Benchmarks can be run with the
 following invocation:
 
 ```
