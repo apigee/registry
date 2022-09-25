@@ -139,7 +139,7 @@ This software is licensed under the Apache License, Version 2.0. See
 
 ## Disclaimer
 
-This is not an official Google product. Issues filed on Github are not subject
+This is not an official Google product. Issues filed on GitHub are not subject
 to service level agreements (SLAs) and responses should be assumed to be on an
 ad-hoc volunteer basis.
 
