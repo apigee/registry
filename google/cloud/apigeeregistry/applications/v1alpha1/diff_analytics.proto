@@ -70,7 +70,7 @@ message ChangeStats {
 /* ChangeMetrics holds metrics about a list of diffs. Each metric is computed from
 two or more stats. */
 message ChangeMetrics {
-  /* breaking_change_percentage is the precentage of changes that are breaking.
+  /* breaking_change_percentage is the percentage of changes that are breaking.
   It is computed by the equation
   (breaking_change_count / (nonbreaking_change_count + breaking_change_count))*/
   double breaking_change_percentage = 1;

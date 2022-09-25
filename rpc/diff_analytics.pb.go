@@ -253,7 +253,7 @@ type ChangeMetrics struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// breaking_change_percentage is the precentage of changes that are breaking.
+	// breaking_change_percentage is the percentage of changes that are breaking.
 	//It is computed by the equation
 	//(breaking_change_count / (nonbreaking_change_count + breaking_change_count))
 	BreakingChangePercentage float64 `protobuf:"fixed64,1,opt,name=breaking_change_percentage,json=breakingChangePercentage,proto3" json:"breaking_change_percentage,omitempty"`
