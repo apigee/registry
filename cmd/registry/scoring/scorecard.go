@@ -105,7 +105,7 @@ func CalculateScoreCard(
 
 	result := processScorePatterns(ctx, client, definition, resource, scoreCardArtifact, takeAction, project)
 	if result.err != nil {
-		return err
+		return result.err
 	}
 
 	if result.needsUpdate {
