@@ -71,15 +71,15 @@ func (s *RegistryServer) CreateArtifact(ctx context.Context, req *rpc.CreateArti
 		var err error
 		switch parent := parent.(type) {
 		case names.Project:
-			_, err = db.GetProject(ctx, parent)
+			_, err = db.LockProjects(ctx).GetProject(ctx, parent)
 		case names.Api:
-			_, err = db.GetApi(ctx, parent)
+			_, err = db.LockApis(ctx).GetApi(ctx, parent)
 		case names.Version:
-			_, err = db.GetVersion(ctx, parent)
+			_, err = db.LockVersions(ctx).GetVersion(ctx, parent)
 		case names.Spec:
-			_, err = db.GetSpec(ctx, parent)
+			_, err = db.LockSpecs(ctx).GetSpec(ctx, parent)
 		case names.Deployment:
-			_, err = db.GetDeployment(ctx, parent)
+			_, err = db.LockDeployments(ctx).GetDeployment(ctx, parent)
 		}
 		if err != nil {
 			return err
@@ -132,7 +132,7 @@ func (s *RegistryServer) GetArtifact(ctx context.Context, req *rpc.GetArtifactRe
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	artifact, err := db.GetArtifact(ctx, name)
+	artifact, err := db.GetArtifact(ctx, name, false)
 	if err != nil {
 		return nil, err
 	}
@@ -152,7 +152,7 @@ func (s *RegistryServer) GetArtifactContents(ctx context.Context, req *rpc.GetAr
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	artifact, err := db.GetArtifact(ctx, name)
+	artifact, err := db.GetArtifact(ctx, name, false)
 	if err != nil {
 		return nil, err
 	}
@@ -265,7 +265,7 @@ func (s *RegistryServer) ReplaceArtifact(ctx context.Context, req *rpc.ReplaceAr
 	var artifact *models.Artifact
 	err = db.Transaction(ctx, func(ctx context.Context, db *storage.Client) error {
 		// Replacement should only succeed on artifacts that currently exist.
-		if _, err = db.GetArtifact(ctx, name); err != nil {
+		if _, err = db.GetArtifact(ctx, name, true); err != nil {
 			return err
 		}
 		artifact, err = models.NewArtifact(name, req.GetArtifact())

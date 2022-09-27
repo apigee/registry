@@ -67,7 +67,7 @@ func (s *RegistryServer) DeleteProject(ctx context.Context, req *rpc.DeleteProje
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	if err := s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
-		return db.DeleteProject(ctx, name, req.GetForce())
+		return db.LockProjects(ctx).DeleteProject(ctx, name, req.GetForce())
 	}); err != nil {
 		return nil, err
 	}

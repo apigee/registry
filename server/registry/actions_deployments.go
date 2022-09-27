@@ -83,7 +83,7 @@ func (s *RegistryServer) DeleteApiDeployment(ctx context.Context, req *rpc.Delet
 	}
 
 	if err := s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
-		return db.DeleteDeployment(ctx, name, req.GetForce())
+		return db.LockDeployments(ctx).DeleteDeployment(ctx, name, req.GetForce())
 	}); err != nil {
 		return nil, err
 	}

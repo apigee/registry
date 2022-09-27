@@ -75,7 +75,7 @@ func (s *RegistryServer) DeleteApiVersion(ctx context.Context, req *rpc.DeleteAp
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	if err := s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
-		return db.DeleteVersion(ctx, name, req.GetForce())
+		return db.LockVersions(ctx).DeleteVersion(ctx, name, req.GetForce())
 	}); err != nil {
 		return nil, err
 	}

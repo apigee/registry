@@ -91,7 +91,7 @@ func (s *RegistryServer) DeleteApiSpec(ctx context.Context, req *rpc.DeleteApiSp
 	}
 
 	if err := s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
-		return db.DeleteSpec(ctx, name, req.GetForce())
+		return db.LockSpecs(ctx).DeleteSpec(ctx, name, req.GetForce())
 	}); err != nil {
 		return nil, err
 	}
