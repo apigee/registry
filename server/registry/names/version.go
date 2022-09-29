@@ -29,12 +29,16 @@ type Version struct {
 // Validate returns an error if the resource name is invalid.
 // For backward compatibility, names should only be validated at creation time.
 func (v Version) Validate() error {
+	if err := validateID(v.VersionID); err != nil {
+		return err
+	}
+
 	r := versionRegexp()
 	if name := v.String(); !r.MatchString(name) {
 		return fmt.Errorf("invalid version name %q: must match %q", name, r)
 	}
 
-	return validateID(v.VersionID)
+	return nil
 }
 
 // Project returns the parent project for this resource.

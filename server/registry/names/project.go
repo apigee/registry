@@ -27,12 +27,16 @@ type Project struct {
 // Validate returns an error if the resource name is invalid.
 // For backward compatibility, names should only be validated at creation time.
 func (p Project) Validate() error {
+	if err := validateID(p.ProjectID); err != nil {
+		return err
+	}
+
 	r := projectRegexp()
 	if name := p.String(); !r.MatchString(name) {
 		return fmt.Errorf("invalid project name %q: must match %q", name, r)
 	}
 
-	return validateID(p.ProjectID)
+	return nil
 }
 
 // Api returns an API with the provided ID and this resource as its parent.

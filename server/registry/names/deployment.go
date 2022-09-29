@@ -29,12 +29,16 @@ type Deployment struct {
 // Validate returns an error if the resource name is invalid.
 // For backward compatibility, names should only be validated at creation time.
 func (d Deployment) Validate() error {
+	if err := validateID(d.DeploymentID); err != nil {
+		return err
+	}
+
 	r := deploymentRegexp()
 	if name := d.String(); !r.MatchString(name) {
 		return fmt.Errorf("invalid deployment name %q: must match %q", name, r)
 	}
 
-	return validateID(d.DeploymentID)
+	return nil
 }
 
 // Project returns the parent project for this resource.
