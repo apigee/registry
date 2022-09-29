@@ -81,7 +81,7 @@ registry rpc update-api-spec \
     --json
 
 echo
-echo Get the modifed API spec.
+echo Get the modified API spec.
 registry rpc get-api-spec \
     --name projects/$PROJECT/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml \
     --json

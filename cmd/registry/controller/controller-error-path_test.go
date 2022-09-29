@@ -73,7 +73,7 @@ func TestControllerErrors(t *testing.T) {
 			},
 		},
 		{
-			desc: "Non-existent dependency resource",
+			desc: "Nonexistent dependency resource",
 			generatedResource: &rpc.GeneratedResource{
 				Pattern: "apis/-/versions/-/artifacts/lintstats-gnostic",
 				Dependencies: []*rpc.Dependency{

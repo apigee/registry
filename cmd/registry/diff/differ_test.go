@@ -257,7 +257,7 @@ func TestArrays(t *testing.T) {
 		change := test.change
 		err := searchArrayAndSliceType(val, diffProto, &change)
 		if err != nil {
-			t.Fatalf("Failed to get get diff proto: %+v", err)
+			t.Fatalf("Failed to get diff proto: %+v", err)
 		}
 		if !cmp.Equal(test.wantProto, diffProto, opts) {
 			t.Errorf("searchArrayAndSliceType returned unexpected diff (-want +got):\n%s", cmp.Diff(test.wantProto, diffProto, opts))

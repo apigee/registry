@@ -339,7 +339,7 @@ type BooleanValue struct {
 
 	// Stores the value of score.
 	Value bool `protobuf:"varint,1,opt,name=value,proto3" json:"value,omitempty"`
-	// Stores the value which should be used to diaply in the UI.
+	// Stores the value which should be used to display in the UI.
 	// This is derived from "display_true" and "display_false"
 	// fields of BooleanType.
 	DisplayValue string `protobuf:"bytes,2,opt,name=display_value,json=displayValue,proto3" json:"display_value,omitempty"`
