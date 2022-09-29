@@ -28,7 +28,7 @@ type Version struct {
 	Key          string    `gorm:"primaryKey"`
 	ProjectID    string    // Uniquely identifies a project.
 	ApiID        string    // Uniquely identifies an api within a project.
-	VersionID    string    // Uniquely identifies a version wihtin a api.
+	VersionID    string    // Uniquely identifies a version within an api.
 	DisplayName  string    // A human-friendly name.
 	Description  string    // A detailed description.
 	CreateTime   time.Time // Creation time.

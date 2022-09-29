@@ -88,7 +88,7 @@ func apiCollectionRegexp() *regexp.Regexp {
 		identifier, Location))
 }
 
-// apiRegexp returns a regular expression that matches a api resource name.
+// apiRegexp returns a regular expression that matches an api resource name.
 func apiRegexp() *regexp.Regexp {
 	return regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s$",
 		identifier, Location, identifier))

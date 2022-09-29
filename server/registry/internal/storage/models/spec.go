@@ -34,7 +34,7 @@ type Spec struct {
 	Key                string    `gorm:"primaryKey"`
 	ProjectID          string    // Uniquely identifies a project.
 	ApiID              string    // Uniquely identifies an api within a project.
-	VersionID          string    // Uniquely identifies a version within a api.
+	VersionID          string    // Uniquely identifies a version within an api.
 	SpecID             string    // Uniquely identifies a spec within a version.
 	RevisionID         string    // Uniquely identifies a revision of a spec.
 	Description        string    // A detailed description.
@@ -251,7 +251,7 @@ type SpecRevisionTag struct {
 	Key           string    `gorm:"primaryKey"`
 	ProjectID     string    // Uniquely identifies a project.
 	ApiID         string    // Uniquely identifies an api within a project.
-	VersionID     string    // Uniquely identifies a version within a api.
+	VersionID     string    // Uniquely identifies a version within an api.
 	SpecID        string    // Uniquely identifies a spec within a version.
 	RevisionID    string    // Uniquely identifies a revision of a spec.
 	Tag           string    // The tag to use for the revision.
