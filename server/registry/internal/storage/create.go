@@ -18,6 +18,7 @@ import (
 	"context"
 
 	"github.com/apigee/registry/server/registry/internal/storage/models"
+	"github.com/pkg/errors"
 )
 
 func (c *Client) CreateProject(ctx context.Context, v *models.Project) error {
@@ -51,5 +52,6 @@ func (c *Client) CreateSpecRevision(ctx context.Context, v *models.Spec) error {
 }
 
 func (c *Client) create(ctx context.Context, v interface{}) error {
-	return grpcErrorForDBError(ctx, c.db.WithContext(ctx).Create(v).Error)
+	return grpcErrorForDBError(ctx,
+		errors.Wrapf(c.db.WithContext(ctx).Create(v).Error, "create %#v", v))
 }

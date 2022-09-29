@@ -1,4 +1,4 @@
-// Copyright 2022 Google LLC. All Rights Reservec.
+// Copyright 2022 Google LLC. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import (
 	"github.com/apigee/registry/server/registry/internal/storage/filtering"
 	"github.com/apigee/registry/server/registry/internal/storage/models"
 	"github.com/apigee/registry/server/registry/names"
+	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
@@ -214,7 +215,7 @@ func (c *Client) ListProjects(ctx context.Context, opts PageOptions) (ProjectLis
 		err := op.Offset(token.Offset).Find(&page).Error
 
 		if err != nil {
-			return ProjectList{}, grpcErrorForDBError(ctx, err)
+			return ProjectList{}, grpcErrorForDBError(ctx, errors.Wrapf(err, "find %#v", token))
 		} else if len(page) == 0 {
 			break
 		}
@@ -238,6 +239,9 @@ func (c *Client) ListProjects(ctx context.Context, opts PageOptions) (ProjectLis
 
 			token.Offset++
 			response.Projects = append(response.Projects, v)
+		}
+		if op.RowsAffected < int64(opts.Size) {
+			break
 		}
 	}
 
@@ -309,7 +313,7 @@ func (c *Client) ListApis(ctx context.Context, parent names.Project, opts PageOp
 		err := op.Offset(token.Offset).Find(&page).Error
 
 		if err != nil {
-			return ApiList{}, grpcErrorForDBError(ctx, err)
+			return ApiList{}, grpcErrorForDBError(ctx, errors.Wrapf(err, "find %#v", token))
 		} else if len(page) == 0 {
 			break
 		}
@@ -338,6 +342,9 @@ func (c *Client) ListApis(ctx context.Context, parent names.Project, opts PageOp
 
 			token.Offset++
 			response.Apis = append(response.Apis, v)
+		}
+		if op.RowsAffected < int64(opts.Size) {
+			break
 		}
 	}
 
@@ -426,7 +433,7 @@ func (c *Client) ListVersions(ctx context.Context, parent names.Api, opts PageOp
 		err := op.Offset(token.Offset).Find(&page).Error
 
 		if err != nil {
-			return VersionList{}, grpcErrorForDBError(ctx, err)
+			return VersionList{}, grpcErrorForDBError(ctx, errors.Wrapf(err, "find %#v", token))
 		} else if len(page) == 0 {
 			break
 		}
@@ -455,6 +462,9 @@ func (c *Client) ListVersions(ctx context.Context, parent names.Api, opts PageOp
 
 			token.Offset++
 			response.Versions = append(response.Versions, v)
+		}
+		if op.RowsAffected < int64(opts.Size) {
+			break
 		}
 	}
 
@@ -562,7 +572,7 @@ func (c *Client) ListSpecs(ctx context.Context, parent names.Version, opts PageO
 		err := op.Offset(token.Offset).Find(&page).Error
 
 		if err != nil {
-			return SpecList{}, grpcErrorForDBError(ctx, err)
+			return SpecList{}, grpcErrorForDBError(ctx, errors.Wrapf(err, "find %#v", token))
 		} else if len(page) == 0 {
 			break
 		}
@@ -591,6 +601,9 @@ func (c *Client) ListSpecs(ctx context.Context, parent names.Version, opts PageO
 
 			token.Offset++
 			response.Specs = append(response.Specs, v)
+		}
+		if op.RowsAffected < int64(opts.Size) {
+			break
 		}
 	}
 
@@ -673,7 +686,7 @@ func (c *Client) ListSpecRevisions(ctx context.Context, parent names.Spec, opts 
 	err = op.Find(&response.Specs).Error
 
 	if err != nil {
-		return SpecList{}, grpcErrorForDBError(ctx, err)
+		return SpecList{}, grpcErrorForDBError(ctx, errors.Wrapf(err, "find %#v", token))
 	}
 
 	// Trim the response and return a page token if too many resources were found.
@@ -764,7 +777,7 @@ func (c *Client) ListDeployments(ctx context.Context, parent names.Api, opts Pag
 		err := op.Offset(token.Offset).Find(&page).Error
 
 		if err != nil {
-			return DeploymentList{}, grpcErrorForDBError(ctx, err)
+			return DeploymentList{}, grpcErrorForDBError(ctx, errors.Wrapf(err, "find %#v", token))
 		} else if len(page) == 0 {
 			break
 		}
@@ -793,6 +806,9 @@ func (c *Client) ListDeployments(ctx context.Context, parent names.Api, opts Pag
 
 			token.Offset++
 			response.Deployments = append(response.Deployments, v)
+		}
+		if op.RowsAffected < int64(opts.Size) {
+			break
 		}
 	}
 
@@ -867,7 +883,7 @@ func (c *Client) ListDeploymentRevisions(ctx context.Context, parent names.Deplo
 	err = op.Find(&response.Deployments).Error
 
 	if err != nil {
-		return DeploymentList{}, grpcErrorForDBError(ctx, err)
+		return DeploymentList{}, grpcErrorForDBError(ctx, errors.Wrapf(err, "find %#v", token))
 	}
 
 	// Trim the response and return a page token if too many resources were found.
@@ -1152,7 +1168,7 @@ func (c *Client) listArtifacts(ctx context.Context, op *gorm.DB, opts PageOption
 		err := op.Offset(token.Offset).Find(&page).Error
 
 		if err != nil {
-			return ArtifactList{}, grpcErrorForDBError(ctx, err)
+			return ArtifactList{}, grpcErrorForDBError(ctx, errors.Wrapf(err, "find %#v", token))
 		} else if len(page) == 0 {
 			break
 		}
@@ -1177,6 +1193,9 @@ func (c *Client) listArtifacts(ctx context.Context, op *gorm.DB, opts PageOption
 
 			token.Offset++
 			response.Artifacts = append(response.Artifacts, v)
+		}
+		if op.RowsAffected < int64(opts.Size) {
+			break
 		}
 	}
 

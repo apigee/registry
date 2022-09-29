@@ -66,11 +66,6 @@ func (s *RegistryServer) createSpec(ctx context.Context, db *storage.Client, nam
 		return nil, err
 	}
 
-	// Creation should only succeed when the parent exists.
-	if _, err := db.GetVersion(ctx, name.Version()); err != nil {
-		return nil, err
-	}
-
 	spec, err := models.NewSpec(name, body)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
@@ -96,7 +91,7 @@ func (s *RegistryServer) DeleteApiSpec(ctx context.Context, req *rpc.DeleteApiSp
 	}
 
 	if err := s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
-		return db.DeleteSpec(ctx, name, req.GetForce())
+		return db.LockSpecs(ctx).DeleteSpec(ctx, name, req.GetForce())
 	}); err != nil {
 		return nil, err
 	}
@@ -259,7 +254,6 @@ func (s *RegistryServer) UpdateApiSpec(ctx context.Context, req *rpc.UpdateApiSp
 	}
 	var response *rpc.ApiSpec
 	if err = s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
-		db.LockSpecs(ctx)
 		spec, err := db.GetSpec(ctx, name)
 		if err == nil {
 			// Apply the update to the spec - possibly changing the revision ID.

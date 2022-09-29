@@ -55,11 +55,6 @@ func (s *RegistryServer) CreateApiVersion(ctx context.Context, req *rpc.CreateAp
 }
 
 func (s *RegistryServer) createApiVersion(ctx context.Context, db *storage.Client, name names.Version, body *rpc.ApiVersion) (*rpc.ApiVersion, error) {
-	// Creation should only succeed when the parent exists.
-	if _, err := db.GetApi(ctx, name.Api()); err != nil {
-		return nil, err
-	}
-
 	version, err := models.NewVersion(name, body)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
@@ -80,7 +75,7 @@ func (s *RegistryServer) DeleteApiVersion(ctx context.Context, req *rpc.DeleteAp
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	if err := s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
-		return db.DeleteVersion(ctx, name, req.GetForce())
+		return db.LockVersions(ctx).DeleteVersion(ctx, name, req.GetForce())
 	}); err != nil {
 		return nil, err
 	}
@@ -175,7 +170,6 @@ func (s *RegistryServer) UpdateApiVersion(ctx context.Context, req *rpc.UpdateAp
 	}
 	var response *rpc.ApiVersion
 	if err = s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
-		db.LockVersions(ctx)
 		version, err := models.NewVersion(name, req.GetApiVersion())
 		if err != nil {
 			return err

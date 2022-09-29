@@ -20,6 +20,7 @@ import (
 
 	"github.com/apigee/registry/server/registry/internal/storage/models"
 	"github.com/apigee/registry/server/registry/names"
+	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
@@ -46,10 +47,6 @@ func reason(counts []int64, tables []interface{}) string {
 func (c *Client) DeleteProject(ctx context.Context, name names.Project, cascade bool) error {
 	tables := []interface{}{
 		models.Project{},
-		models.Api{},
-		models.Deployment{},
-		models.Version{},
-		models.Spec{},
 		models.Blob{},
 		models.Artifact{},
 	}
@@ -86,9 +83,6 @@ func (c *Client) DeleteProject(ctx context.Context, name names.Project, cascade 
 func (c *Client) DeleteApi(ctx context.Context, name names.Api, cascade bool) error {
 	tables := []interface{}{
 		models.Api{},
-		models.Deployment{},
-		models.Version{},
-		models.Spec{},
 		models.Blob{},
 		models.Artifact{},
 	}
@@ -127,7 +121,6 @@ func (c *Client) DeleteApi(ctx context.Context, name names.Api, cascade bool) er
 func (c *Client) DeleteVersion(ctx context.Context, name names.Version, cascade bool) error {
 	tables := []interface{}{
 		models.Version{},
-		models.Spec{},
 		models.Blob{},
 		models.Artifact{},
 	}
@@ -221,7 +214,7 @@ func (c *Client) DeleteSpecRevision(ctx context.Context, name names.SpecRevision
 			Where("spec_id = ?", name.SpecID).
 			Where("revision_id = ?", name.RevisionID)
 		if err := op.Delete(model).Error; err != nil {
-			return grpcErrorForDBError(ctx, err)
+			return grpcErrorForDBError(ctx, errors.Wrapf(err, "delete %s", name))
 		}
 		if _, ok := model.(models.Spec); ok && op.RowsAffected == 0 {
 			return status.Errorf(codes.NotFound, "%q not found in database", name)
@@ -239,7 +232,7 @@ func (c *Client) DeleteSpecRevision(ctx context.Context, name names.SpecRevision
 	if err := op.First(v).Error; err == gorm.ErrRecordNotFound {
 		return status.Errorf(codes.FailedPrecondition, "cannot delete the only revision: %s", name)
 	} else if err != nil {
-		return grpcErrorForDBError(ctx, err)
+		return grpcErrorForDBError(ctx, errors.Wrapf(err, "delete %s", name))
 	}
 
 	return nil
@@ -300,7 +293,7 @@ func (c *Client) DeleteDeploymentRevision(ctx context.Context, name names.Deploy
 			Where("deployment_id = ?", name.DeploymentID).
 			Where("revision_id = ?", name.RevisionID)
 		if err := op.Delete(model).Error; err != nil {
-			return grpcErrorForDBError(ctx, err)
+			return grpcErrorForDBError(ctx, errors.Wrapf(err, "delete %s", name))
 		}
 		if _, ok := model.(models.Deployment); ok && op.RowsAffected == 0 {
 			return status.Errorf(codes.NotFound, "%q not found in database", name)
@@ -317,7 +310,7 @@ func (c *Client) DeleteDeploymentRevision(ctx context.Context, name names.Deploy
 	if err := op.First(v).Error; err == gorm.ErrRecordNotFound {
 		return status.Errorf(codes.FailedPrecondition, "cannot delete the only revision: %s", name)
 	} else if err != nil {
-		return grpcErrorForDBError(ctx, err)
+		return grpcErrorForDBError(ctx, errors.Wrapf(err, "delete %s", name))
 	}
 
 	return nil
@@ -336,7 +329,7 @@ func (c *Client) DeleteArtifact(ctx context.Context, name names.Artifact) error 
 			Where("deployment_id = ?", name.DeploymentID()).
 			Where("artifact_id = ?", name.ArtifactID())
 		if err := op.Delete(model).Error; err != nil {
-			return grpcErrorForDBError(ctx, err)
+			return grpcErrorForDBError(ctx, errors.Wrapf(err, "delete %s", name))
 		}
 		if _, ok := model.(models.Artifact); ok && op.RowsAffected == 0 {
 			return status.Errorf(codes.NotFound, "%q not found in database", name)

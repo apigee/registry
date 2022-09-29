@@ -67,7 +67,7 @@ func (s *RegistryServer) DeleteProject(ctx context.Context, req *rpc.DeleteProje
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	if err := s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
-		return db.DeleteProject(ctx, name, req.GetForce())
+		return db.LockProjects(ctx).DeleteProject(ctx, name, req.GetForce())
 	}); err != nil {
 		return nil, err
 	}
@@ -149,7 +149,6 @@ func (s *RegistryServer) UpdateProject(ctx context.Context, req *rpc.UpdateProje
 	}
 	var response *rpc.Project
 	if err := s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
-		db.LockProjects(ctx)
 		project := models.NewProject(name, req.GetProject())
 		mask := models.ExpandMask(req.GetProject(), req.GetUpdateMask())
 		if err := db.SaveProject(ctx, project, mask); err != nil {

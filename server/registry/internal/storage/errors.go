@@ -21,6 +21,7 @@ import (
 
 	"github.com/apigee/registry/log"
 	"github.com/lib/pq"
+	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -47,76 +48,84 @@ func AlreadyExists(err error) bool {
 
 // grpcErrorForDBError converts recognized database error codes to grpc error codes.
 func grpcErrorForDBError(ctx context.Context, err error) error {
+	// unwrap err, if wrapped
+	cause := errors.Cause(err)
+
 	// if this error already has a gRPC status code, just return it
-	if _, ok := status.FromError(err); ok {
-		return err
+	if _, ok := status.FromError(cause); ok {
+		return cause
 	}
-	if err == context.DeadlineExceeded {
-		return status.Error(codes.DeadlineExceeded, err.Error())
+
+	log.Debugf(ctx, "DBError %+v", err) // log the stack trace
+
+	if cause == context.DeadlineExceeded {
+		return status.Error(codes.DeadlineExceeded, cause.Error())
 	}
 	// handle sqlite3 errors separately so their support can be conditionally compiled.
-	if err2 := grpcErrorForSQLite3Error(ctx, err); err2 != nil {
+	if err2 := grpcErrorForSQLite3Error(ctx, cause); err2 != nil {
 		return err2
 	}
 	// handle all other known error types.
-	switch v := err.(type) {
+	switch v := cause.(type) {
 	case *pq.Error:
 		if v.Code.Name() == "unique_violation" {
-			return status.Error(codes.AlreadyExists, err.Error())
+			return status.Error(codes.AlreadyExists, cause.Error())
 		} else if v.Code.Name() == "too_many_connections" {
-			return status.Error(codes.Unavailable, err.Error())
+			return status.Error(codes.Unavailable, cause.Error())
 		} else if v.Code.Name() == "cannot_connect_now" {
-			return status.Error(codes.FailedPrecondition, err.Error())
+			return status.Error(codes.FailedPrecondition, cause.Error())
 		} else if v.Code.Name() == "query_canceled" {
-			return status.Error(codes.Canceled, err.Error())
+			return status.Error(codes.Canceled, cause.Error())
+		} else if v.Code.Name() == "foreign_key_violation" {
+			return status.Error(codes.NotFound, cause.Error())
 		}
 		log.Infof(ctx, "Unhandled %T %+v code=%s name=%s", v, v, v.Code, v.Code.Name())
 	case *net.OpError:
 		if v.Op == "dial" {
 			// The database is overloaded.
-			return status.Error(codes.Unavailable, err.Error())
+			return status.Error(codes.Unavailable, cause.Error())
 		}
 		switch vv := v.Unwrap().(type) {
 		case *os.SyscallError:
 			if vv.Syscall == "connect" {
 				// The database is not running.
-				return status.Error(codes.FailedPrecondition, err.Error())
+				return status.Error(codes.FailedPrecondition, cause.Error())
 			} else if vv.Syscall == "dial" {
 				// The database is overloaded.
-				return status.Error(codes.Unavailable, err.Error())
+				return status.Error(codes.Unavailable, cause.Error())
 			} else if vv.Syscall == "socket" {
 				// The database is overloaded.
-				return status.Error(codes.Unavailable, err.Error())
+				return status.Error(codes.Unavailable, cause.Error())
 			} else if vv.Syscall == "read" {
 				// The connection was reset by peer.
-				return status.Error(codes.Unavailable, err.Error())
+				return status.Error(codes.Unavailable, cause.Error())
 			}
 			log.Infof(ctx, "Unhandled %T %+v %s", vv, vv, vv.Syscall)
 		case *net.DNSError:
 			// DNS is overloaded.
-			return status.Error(codes.Unavailable, err.Error())
+			return status.Error(codes.Unavailable, cause.Error())
 		default:
 			log.Infof(ctx, "Unhandled %T %+v", vv, vv)
 		}
 	default:
-		if err.Error() == "EOF" {
-			return status.Error(codes.Unavailable, err.Error())
+		if cause.Error() == "EOF" {
+			return status.Error(codes.Unavailable, cause.Error())
 		}
-		if err.Error() == "driver: bad connection" {
-			return status.Error(codes.Unavailable, err.Error())
+		if cause.Error() == "driver: bad connection" {
+			return status.Error(codes.Unavailable, cause.Error())
 		}
-		if err.Error() == "sql: statement is closed" {
-			return status.Error(codes.Unavailable, err.Error())
+		if cause.Error() == "sql: statement is closed" {
+			return status.Error(codes.Unavailable, cause.Error())
 		}
-		if err.Error() == "context canceled" {
-			return status.Error(codes.Canceled, err.Error())
+		if cause.Error() == "context canceled" {
+			return status.Error(codes.Canceled, cause.Error())
 		}
-		if err.Error() == "pq: Could not complete operation in a failed transaction" {
-			return status.Error(codes.Aborted, err.Error())
+		if cause.Error() == "pq: Could not complete operation in a failed transaction" {
+			return status.Error(codes.Aborted, cause.Error())
 		}
-		log.Infof(ctx, "Unhandled %T %+v", err, err)
+		log.Infof(ctx, "Unhandled %T %+v", cause, cause)
 	}
 
 	// All unrecognized codes fall through to become "Internal" errors.
-	return status.Error(codes.Internal, err.Error())
+	return status.Error(codes.Internal, cause.Error())
 }
