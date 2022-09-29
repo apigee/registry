@@ -104,7 +104,7 @@ func (api *Api) Message() (message *rpc.Api, err error) {
 	return message, nil
 }
 
-// Update modifies a api using the contents of a message.
+// Update modifies an api using the contents of a message.
 func (api *Api) Update(message *rpc.Api, mask *fieldmaskpb.FieldMask) error {
 	api.UpdateTime = time.Now().Round(time.Microsecond)
 	for _, field := range mask.Paths {
