@@ -48,6 +48,8 @@ type Spec struct {
 	SourceURI          string    // The original source URI of the spec.
 	Labels             []byte    // Serialized labels.
 	Annotations        []byte    // Serialized annotations.
+	ParentVersionKey   string
+	ParentVersion      *Version `gorm:"foreignKey:ParentVersionKey;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 }
 
 // NewSpec initializes a new resource.
@@ -66,6 +68,7 @@ func NewSpec(name names.Spec, body *rpc.ApiSpec) (spec *Spec, err error) {
 		RevisionCreateTime: now,
 		RevisionUpdateTime: now,
 		RevisionID:         newRevisionID(),
+		ParentVersionKey:   name.Version().String(),
 	}
 
 	spec.Labels, err = bytesForMap(body.GetLabels())
@@ -112,6 +115,7 @@ func (s *Spec) NewRevision() *Spec {
 		RevisionCreateTime: now,
 		RevisionUpdateTime: now,
 		RevisionID:         newRevisionID(),
+		ParentVersionKey:   s.ParentVersionKey,
 	}
 }
 
@@ -244,29 +248,32 @@ func hashForBytes(b []byte) string {
 
 // SpecRevisionTag is the storage-side representation of a spec revision tag.
 type SpecRevisionTag struct {
-	Key        string    `gorm:"primaryKey"`
-	ProjectID  string    // Uniquely identifies a project.
-	ApiID      string    // Uniquely identifies an api within a project.
-	VersionID  string    // Uniquely identifies a version within a api.
-	SpecID     string    // Uniquely identifies a spec within a version.
-	RevisionID string    // Uniquely identifies a revision of a spec.
-	Tag        string    // The tag to use for the revision.
-	CreateTime time.Time // Creation time.
-	UpdateTime time.Time // Time of last change.
+	Key           string    `gorm:"primaryKey"`
+	ProjectID     string    // Uniquely identifies a project.
+	ApiID         string    // Uniquely identifies an api within a project.
+	VersionID     string    // Uniquely identifies a version within a api.
+	SpecID        string    // Uniquely identifies a spec within a version.
+	RevisionID    string    // Uniquely identifies a revision of a spec.
+	Tag           string    // The tag to use for the revision.
+	CreateTime    time.Time // Creation time.
+	UpdateTime    time.Time // Time of last change.
+	ParentSpecKey string
+	ParentSpec    *Spec `gorm:"foreignKey:ParentSpecKey;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 }
 
 // NewSpecRevisionTag initializes a new revision tag from a given revision name and tag string.
 func NewSpecRevisionTag(name names.SpecRevision, tag string) *SpecRevisionTag {
 	now := time.Now().Round(time.Microsecond)
 	return &SpecRevisionTag{
-		ProjectID:  name.ProjectID,
-		ApiID:      name.ApiID,
-		VersionID:  name.VersionID,
-		SpecID:     name.SpecID,
-		RevisionID: name.RevisionID,
-		Tag:        tag,
-		CreateTime: now,
-		UpdateTime: now,
+		ProjectID:     name.ProjectID,
+		ApiID:         name.ApiID,
+		VersionID:     name.VersionID,
+		SpecID:        name.SpecID,
+		RevisionID:    name.RevisionID,
+		Tag:           tag,
+		CreateTime:    now,
+		UpdateTime:    now,
+		ParentSpecKey: name.String(),
 	}
 }
 
