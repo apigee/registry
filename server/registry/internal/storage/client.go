@@ -65,7 +65,8 @@ func NewClient(ctx context.Context, driver, dsn string) (*Client, error) {
 			c.close()
 			return nil, grpcErrorForDBError(ctx, err)
 		}
-		if err := applyConnectionLimits(db); err != nil {
+		// eliminate multithreading contention
+		if err := applyConnectionLimits(db, 1); err != nil {
 			c := &Client{db: db}
 			c.close()
 			return nil, grpcErrorForDBError(ctx, err)
@@ -85,7 +86,7 @@ func NewClient(ctx context.Context, driver, dsn string) (*Client, error) {
 			c.close()
 			return nil, grpcErrorForDBError(ctx, err)
 		}
-		if err := applyConnectionLimits(db); err != nil {
+		if err := applyConnectionLimits(db, 10); err != nil {
 			c := &Client{db: db}
 			c.close()
 			return nil, grpcErrorForDBError(ctx, err)
@@ -97,14 +98,13 @@ func NewClient(ctx context.Context, driver, dsn string) (*Client, error) {
 }
 
 // Applies limits to concurrent connections.
-// Could be made configurable.
-func applyConnectionLimits(db *gorm.DB) error {
+func applyConnectionLimits(db *gorm.DB, n int) error {
 	sqlDB, err := db.DB()
 	if err != nil {
 		return err
 	}
-	sqlDB.SetMaxOpenConns(10)
-	sqlDB.SetMaxIdleConns(10)
+	sqlDB.SetMaxOpenConns(n)
+	sqlDB.SetMaxIdleConns(n)
 	sqlDB.SetConnMaxLifetime(60 * time.Second)
 	return nil
 }
@@ -139,7 +139,62 @@ func (c *Client) EnsureTables(ctx context.Context) error {
 }
 
 func (c *Client) Migrate(ctx context.Context) error {
-	return grpcErrorForDBError(ctx, c.db.WithContext(ctx).AutoMigrate(entities...))
+	if err := c.db.WithContext(ctx).AutoMigrate(entities...); err != nil {
+		return grpcErrorForDBError(ctx, err)
+	}
+
+	return grpcErrorForDBError(ctx, c.ensureForeignKeys(ctx))
+}
+
+func (c *Client) ensureForeignKeys(ctx context.Context) (err error) {
+	err = c.db.Model(&models.Api{}).
+		Where("parent_project_key is null").
+		Update("parent_project_key",
+			c.db.Model(&models.Project{}).Select("key").
+				Where("apis.project_id = projects.project_id")).Error
+	if err != nil {
+		return err
+	}
+
+	err = c.db.Model(&models.Version{}).
+		Where("parent_api_key is null").
+		Update("parent_api_key",
+			c.db.Model(&models.Api{}).Select("key").
+				Where("versions.project_id = apis.project_id").
+				Where("versions.api_id = apis.api_id")).Error
+	if err != nil {
+		return err
+	}
+
+	err = c.db.Model(&models.Spec{}).
+		Where("parent_version_key is null").
+		Update("parent_version_key",
+			c.db.Model(&models.Version{}).Select("key").
+				Where("specs.project_id = versions.project_id").
+				Where("specs.api_id = versions.api_id").
+				Where("specs.version_id = versions.version_id")).Error
+	if err != nil {
+		return err
+	}
+
+	err = c.db.Model(&models.SpecRevisionTag{}).
+		Where("parent_spec_key is null").
+		Update("parent_spec_key",
+			c.db.Model(&models.Spec{}).Select("key").
+				Where("spec_revision_tags.project_id = specs.project_id").
+				Where("spec_revision_tags.api_id = specs.api_id").
+				Where("spec_revision_tags.version_id = specs.version_id").
+				Where("spec_revision_tags.spec_id = specs.spec_id")).Error
+	if err != nil {
+		return err
+	}
+
+	return c.db.Model(&models.Deployment{}).
+		Where("parent_api_key is null").
+		Update("parent_api_key",
+			c.db.Model(&models.Api{}).Select("key").
+				Where("deployments.project_id = apis.project_id").
+				Where("deployments.api_id = apis.api_id")).Error
 }
 
 func (c *Client) DatabaseName(ctx context.Context) string {

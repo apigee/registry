@@ -47,10 +47,6 @@ func reason(counts []int64, tables []interface{}) string {
 func (c *Client) DeleteProject(ctx context.Context, name names.Project, cascade bool) error {
 	tables := []interface{}{
 		models.Project{},
-		models.Api{},
-		models.Deployment{},
-		models.Version{},
-		models.Spec{},
 		models.Blob{},
 		models.Artifact{},
 	}
@@ -87,9 +83,6 @@ func (c *Client) DeleteProject(ctx context.Context, name names.Project, cascade 
 func (c *Client) DeleteApi(ctx context.Context, name names.Api, cascade bool) error {
 	tables := []interface{}{
 		models.Api{},
-		models.Deployment{},
-		models.Version{},
-		models.Spec{},
 		models.Blob{},
 		models.Artifact{},
 	}
@@ -128,7 +121,6 @@ func (c *Client) DeleteApi(ctx context.Context, name names.Api, cascade bool) er
 func (c *Client) DeleteVersion(ctx context.Context, name names.Version, cascade bool) error {
 	tables := []interface{}{
 		models.Version{},
-		models.Spec{},
 		models.Blob{},
 		models.Artifact{},
 	}

@@ -414,7 +414,7 @@ func TestTimestampAggregateArtifacts(t *testing.T) {
 				},
 				&rpc.Artifact{
 					Name:       "projects/controller-test/locations/global/apis/test-api-1/artifacts/vocabulary",
-					UpdateTime: timestamppb.New(time.Now().Add(time.Second * 1)), // should be atleast 2 seconds newer than dependencies.
+					UpdateTime: timestamppb.New(time.Now().Add(time.Second * 1)), // should be at least 2 seconds newer than dependencies.
 				},
 				// test api 2
 				&rpc.ApiSpec{
@@ -431,7 +431,7 @@ func TestTimestampAggregateArtifacts(t *testing.T) {
 				},
 				&rpc.Artifact{
 					Name:       "projects/controller-test/locations/global/apis/test-api-2/artifacts/vocabulary",
-					UpdateTime: timestamppb.New(time.Now().Add(time.Second * 1)), // should be atleast 2 seconds newer than dependencies.
+					UpdateTime: timestamppb.New(time.Now().Add(time.Second * 1)), // should be at least 2 seconds newer than dependencies.
 				},
 			},
 			want: []*Action{

@@ -43,6 +43,8 @@ type Deployment struct {
 	AccessGuidance     string    // A brief description of how to access the endpoint.
 	Labels             []byte    // Serialized labels.
 	Annotations        []byte    // Serialized annotations.
+	ParentApiKey       string
+	ParentApi          *Api `gorm:"foreignKey:ParentApiKey;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 }
 
 // NewDeployment initializes a new resource.
@@ -63,6 +65,7 @@ func NewDeployment(name names.Deployment, body *rpc.ApiDeployment) (deployment *
 		ExternalChannelURI: body.GetExternalChannelUri(),
 		IntendedAudience:   body.GetIntendedAudience(),
 		AccessGuidance:     body.GetAccessGuidance(),
+		ParentApiKey:       name.Api().String(),
 	}
 
 	deployment.Labels, err = bytesForMap(body.GetLabels())
@@ -96,6 +99,7 @@ func (s *Deployment) NewRevision() *Deployment {
 		ExternalChannelURI: s.ExternalChannelURI,
 		IntendedAudience:   s.IntendedAudience,
 		AccessGuidance:     s.AccessGuidance,
+		ParentApiKey:       s.ParentApiKey,
 	}
 }
 
@@ -199,27 +203,30 @@ func (s *Deployment) LabelsMap() (map[string]string, error) {
 
 // DeploymentRevisionTag is the storage-side representation of a deployment revision tag.
 type DeploymentRevisionTag struct {
-	Key          string    `gorm:"primaryKey"`
-	ProjectID    string    // Uniquely identifies a project.
-	ApiID        string    // Uniquely identifies an api within a project.
-	DeploymentID string    // Uniquely identifies a deployment within an api.
-	RevisionID   string    // Uniquely identifies a revision of a deployment.
-	Tag          string    // The tag to use for the revision.
-	CreateTime   time.Time // Creation time.
-	UpdateTime   time.Time // Time of last change.
+	Key                 string    `gorm:"primaryKey"`
+	ProjectID           string    // Uniquely identifies a project.
+	ApiID               string    // Uniquely identifies an api within a project.
+	DeploymentID        string    // Uniquely identifies a deployment within an api.
+	RevisionID          string    // Uniquely identifies a revision of a deployment.
+	Tag                 string    // The tag to use for the revision.
+	CreateTime          time.Time // Creation time.
+	UpdateTime          time.Time // Time of last change.
+	ParentDeploymentKey string
+	ParentDeployment    *Deployment `gorm:"foreignKey:ParentDeploymentKey;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 }
 
 // NewDeploymentRevisionTag initializes a new revision tag from a given revision name and tag string.
 func NewDeploymentRevisionTag(name names.DeploymentRevision, tag string) *DeploymentRevisionTag {
 	now := time.Now().Round(time.Microsecond)
 	return &DeploymentRevisionTag{
-		ProjectID:    name.ProjectID,
-		ApiID:        name.ApiID,
-		DeploymentID: name.DeploymentID,
-		RevisionID:   name.RevisionID,
-		Tag:          tag,
-		CreateTime:   now,
-		UpdateTime:   now,
+		ProjectID:           name.ProjectID,
+		ApiID:               name.ApiID,
+		DeploymentID:        name.DeploymentID,
+		RevisionID:          name.RevisionID,
+		Tag:                 tag,
+		CreateTime:          now,
+		UpdateTime:          now,
+		ParentDeploymentKey: name.String(),
 	}
 }
 

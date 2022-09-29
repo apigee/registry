@@ -138,7 +138,7 @@ func TestCalculateScore(t *testing.T) {
 		wantScore       *rpc.Score
 	}{
 		{
-			desc: "non existent score ScoreArtifact",
+			desc: "nonexistent score ScoreArtifact",
 			seed: []seeder.RegistryResource{
 				&rpc.Artifact{
 					Name:     "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",

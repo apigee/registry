@@ -298,7 +298,7 @@ func generateCreateActions(
 
 	actions := make([]*Action, 0)
 	for _, parent := range parentList {
-		// Since the GeneratedResource is non-existent here,
+		// Since the GeneratedResource is nonexistent here,
 		// we will have to derive the exact name of the target resource
 		targetResourceName, err := patterns.FullResourceNameFromParent(resourcePattern, parent.ResourceName().String())
 		if err != nil {

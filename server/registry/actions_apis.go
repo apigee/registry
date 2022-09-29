@@ -55,11 +55,6 @@ func (s *RegistryServer) CreateApi(ctx context.Context, req *rpc.CreateApiReques
 }
 
 func (s *RegistryServer) createApi(ctx context.Context, db *storage.Client, name names.Api, body *rpc.Api) (*rpc.Api, error) {
-	// Creation should only succeed when the parent exists.
-	if _, err := db.GetProject(ctx, name.Project()); err != nil {
-		return nil, err
-	}
-
 	api, err := models.NewApi(name, body)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
@@ -80,7 +75,7 @@ func (s *RegistryServer) DeleteApi(ctx context.Context, req *rpc.DeleteApiReques
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	if err := s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
-		return db.DeleteApi(ctx, name, req.GetForce())
+		return db.LockApis(ctx).DeleteApi(ctx, name, req.GetForce())
 	}); err != nil {
 		return nil, err
 	}
@@ -175,7 +170,6 @@ func (s *RegistryServer) UpdateApi(ctx context.Context, req *rpc.UpdateApiReques
 	}
 	var response *rpc.Api
 	if err := s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
-		db.LockApis(ctx)
 		api, err := models.NewApi(name, req.GetApi())
 		if err != nil {
 			return err

@@ -172,7 +172,7 @@ func processScorePatterns(
 			return scoreCardResult{
 				scoreCard:   nil,
 				needsUpdate: false,
-				err:         fmt.Errorf("failed unmarshaling artifact %q into Score proto: %s", artifact.GetName(), err),
+				err:         fmt.Errorf("failed unmarshalling artifact %q into Score proto: %s", artifact.GetName(), err),
 			}
 		}
 

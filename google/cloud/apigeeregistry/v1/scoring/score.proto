@@ -93,7 +93,7 @@ message BooleanValue {
   // Stores the value of score.
   bool value = 1 [(google.api.field_behavior) = REQUIRED];
 
-  // Stores the value which should be used to diaply in the UI.
+  // Stores the value which should be used to display in the UI.
   // This is derived from "display_true" and "display_false"
   // fields of BooleanType.
   string display_value = 2;

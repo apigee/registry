@@ -51,7 +51,7 @@ type Diff struct {
 	// modifications holds every modification change in the diff.
 	//The string key will hold the field path of one modification change in the
 	//format foo.bar.x.
-	//The value of the key will repersent the element that was modified in the
+	//The value of the key will represent the element that was modified in the
 	//field.
 	Modifications map[string]*Diff_ValueChange `protobuf:"bytes,3,rep,name=modifications,proto3" json:"modifications,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 }
@@ -109,20 +109,20 @@ func (x *Diff) GetModifications() map[string]*Diff_ValueChange {
 	return nil
 }
 
-// ChangeDetails classifies changes from diff in to seperate categories.
+// ChangeDetails classifies changes from diff into separate categories.
 type ChangeDetails struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// breakingChanges is a Diff proto that only contians the breaking changes
+	// breakingChanges is a Diff proto that only contains the breaking changes
 	//of a diff.
 	BreakingChanges *Diff `protobuf:"bytes,1,opt,name=breaking_changes,json=breakingChanges,proto3" json:"breaking_changes,omitempty"`
-	// nonBreakingChanges is a Diff proto that only contians the non-breaking
+	// nonBreakingChanges is a Diff proto that only contains the non-breaking
 	//changes of a diff.
 	NonBreakingChanges *Diff `protobuf:"bytes,2,opt,name=non_breaking_changes,json=nonBreakingChanges,proto3" json:"non_breaking_changes,omitempty"`
-	// unknownChanges is a Diff proto that contians all the changes that could not
-	//be classifed in the other categories.
+	// unknownChanges is a Diff proto that contains all the changes that could not
+	//be classified in the other categories.
 	UnknownChanges *Diff `protobuf:"bytes,3,opt,name=unknown_changes,json=unknownChanges,proto3" json:"unknown_changes,omitempty"`
 }
 
@@ -253,7 +253,7 @@ type ChangeMetrics struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// breaking_change_percentage is the precentage of changes that are breaking.
+	// breaking_change_percentage is the percentage of changes that are breaking.
 	//It is computed by the equation
 	//(breaking_change_count / (nonbreaking_change_count + breaking_change_count))
 	BreakingChangePercentage float64 `protobuf:"fixed64,1,opt,name=breaking_change_percentage,json=breakingChangePercentage,proto3" json:"breaking_change_percentage,omitempty"`
