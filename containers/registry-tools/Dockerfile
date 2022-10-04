@@ -36,10 +36,12 @@ COPY . ./
 RUN CGO_ENABLED=0 GOOS=linux go build -v -o registry ./cmd/registry
 
 # Build spectral plugin
-RUN go build -o registry-lint-spectral ./cmd/registry/plugins/registry-lint-spectral
+RUN CGO_ENABLED=0 GOOS=linux go build -o registry-lint-spectral \
+    ./cmd/registry/plugins/registry-lint-spectral
 
 # Build api-linter plugin
-RUN go build -o registry-lint-api-linter ./cmd/registry/plugins/registry-lint-api-linter
+RUN CGO_ENABLED=0 GOOS=linux go build -o registry-lint-api-linter \
+    ./cmd/registry/plugins/registry-lint-api-linter
 
 # Use the official Alpine image for a lean production container.
 # https://hub.docker.com/_/alpine
