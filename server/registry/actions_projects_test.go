@@ -1006,7 +1006,8 @@ func TestDeleteProject(t *testing.T) {
 				Name: "projects/my-project",
 			},
 			req: &rpc.DeleteProjectRequest{
-				Name: "projects/my-project",
+				Name:  "projects/my-project",
+				Force: true,
 			},
 		},
 	}
@@ -1015,7 +1016,11 @@ func TestDeleteProject(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			ctx := context.Background()
 			server := defaultTestServer(t)
-			if err := seeder.SeedProjects(ctx, server, test.seed); err != nil {
+
+			artifact := &rpc.Artifact{
+				Name: "projects/my-project/locations/global/apis/my-api/versions/my-version/specs/my-spec/artifacts/my-artifact",
+			}
+			if err := seeder.SeedArtifacts(ctx, server, artifact); err != nil {
 				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
 			}
 
@@ -1023,15 +1028,13 @@ func TestDeleteProject(t *testing.T) {
 				t.Fatalf("DeleteProject(%+v) returned error: %s", test.req, err)
 			}
 
-			t.Run("GetProject", func(t *testing.T) {
-				req := &rpc.GetProjectRequest{
-					Name: test.req.GetName(),
-				}
+			if _, err := server.GetProject(ctx, &rpc.GetProjectRequest{Name: test.req.GetName()}); status.Code(err) != codes.NotFound {
+				t.Errorf("GetProject(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), codes.NotFound, err)
+			}
 
-				if _, err := server.GetProject(ctx, req); status.Code(err) != codes.NotFound {
-					t.Fatalf("GetProject(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), codes.NotFound, err)
-				}
-			})
+			if _, err := server.GetArtifact(ctx, &rpc.GetArtifactRequest{Name: artifact.GetName()}); status.Code(err) != codes.NotFound {
+				t.Errorf("GetArtifact(%q) returned status code %q, want %q: %s", artifact.GetName(), status.Code(err), codes.NotFound, err)
+			}
 		})
 	}
 }

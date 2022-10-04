@@ -330,7 +330,7 @@ func TestTimestampArtifacts(t *testing.T) {
 					},
 				},
 			}
-			actions := ProcessManifest(ctx, client, projectID, manifest)
+			actions := ProcessManifest(ctx, client, projectID, manifest, 10)
 
 			if diff := cmp.Diff(test.want, actions, sortActions); diff != "" {
 				t.Errorf("ProcessManifest(%+v) returned unexpected diff (-want +got):\n%s", manifest, diff)
@@ -414,7 +414,7 @@ func TestTimestampAggregateArtifacts(t *testing.T) {
 				},
 				&rpc.Artifact{
 					Name:       "projects/controller-test/locations/global/apis/test-api-1/artifacts/vocabulary",
-					UpdateTime: timestamppb.New(time.Now().Add(time.Second * 1)), // should be atleast 2 seconds newer than dependencies.
+					UpdateTime: timestamppb.New(time.Now().Add(time.Second * 1)), // should be at least 2 seconds newer than dependencies.
 				},
 				// test api 2
 				&rpc.ApiSpec{
@@ -431,7 +431,7 @@ func TestTimestampAggregateArtifacts(t *testing.T) {
 				},
 				&rpc.Artifact{
 					Name:       "projects/controller-test/locations/global/apis/test-api-2/artifacts/vocabulary",
-					UpdateTime: timestamppb.New(time.Now().Add(time.Second * 1)), // should be atleast 2 seconds newer than dependencies.
+					UpdateTime: timestamppb.New(time.Now().Add(time.Second * 1)), // should be at least 2 seconds newer than dependencies.
 				},
 			},
 			want: []*Action{
@@ -473,7 +473,7 @@ func TestTimestampAggregateArtifacts(t *testing.T) {
 					},
 				},
 			}
-			actions := ProcessManifest(ctx, client, projectID, manifest)
+			actions := ProcessManifest(ctx, client, projectID, manifest, 10)
 
 			if diff := cmp.Diff(test.want, actions, sortActions); diff != "" {
 				t.Errorf("ProcessManifest(%+v) returned unexpected diff (-want +got):\n%s", manifest, diff)
@@ -655,7 +655,7 @@ func TestTimestampDerivedArtifacts(t *testing.T) {
 					},
 				},
 			}
-			actions := ProcessManifest(ctx, client, projectID, manifest)
+			actions := ProcessManifest(ctx, client, projectID, manifest, 10)
 
 			if diff := cmp.Diff(test.want, actions, sortActions); diff != "" {
 				t.Errorf("ProcessManifest(%+v) returned unexpected diff (-want +got):\n%s", manifest, diff)
@@ -825,7 +825,7 @@ func TestRefreshArtifacts(t *testing.T) {
 					},
 				},
 			}
-			actions := ProcessManifest(ctx, client, projectID, manifest)
+			actions := ProcessManifest(ctx, client, projectID, manifest, 10)
 
 			if diff := cmp.Diff(test.want, actions, sortActions); diff != "" {
 				t.Errorf("ProcessManifest(%+v) returned unexpected diff (-want +got):\n%s", manifest, diff)

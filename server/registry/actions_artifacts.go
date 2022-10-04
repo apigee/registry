@@ -51,88 +51,72 @@ func parseArtifactParent(name string) (artifactParent, error) {
 
 // CreateArtifact handles the corresponding API request.
 func (s *RegistryServer) CreateArtifact(ctx context.Context, req *rpc.CreateArtifactRequest) (*rpc.Artifact, error) {
-	db, err := s.getStorageClient(ctx)
-	if err != nil {
-		return nil, status.Error(codes.Unavailable, err.Error())
-	}
-
-	if req.GetArtifact() == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid artifact %+v: body must be provided", req.GetArtifact())
-	}
-
+	// Parent name must be valid.
 	parent, err := parseArtifactParent(req.GetParent())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-
+	// Artifact body must be nonempty.
+	if req.GetArtifact() == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid artifact %+v: body must be provided", req.GetArtifact())
+	}
+	// Artifact name must be valid.
 	name := parent.Artifact(req.GetArtifactId())
-
 	if err := name.Validate(); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-
-	// Creation should only succeed when the parent exists.
-	switch parent := parent.(type) {
-	case names.Project:
-		if _, err := db.GetProject(ctx, parent); err != nil {
-			return nil, err
+	var response *rpc.Artifact
+	if err := s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
+		// Creation should only succeed when the parent exists.
+		var err error
+		switch parent := parent.(type) {
+		case names.Project:
+			_, err = db.LockProjects(ctx).GetProject(ctx, parent)
+		case names.Api:
+			_, err = db.LockApis(ctx).GetApi(ctx, parent)
+		case names.Version:
+			_, err = db.LockVersions(ctx).GetVersion(ctx, parent)
+		case names.Spec:
+			_, err = db.LockSpecs(ctx).GetSpec(ctx, parent)
+		case names.Deployment:
+			_, err = db.LockDeployments(ctx).GetDeployment(ctx, parent)
 		}
-	case names.Api:
-		if _, err := db.GetApi(ctx, parent); err != nil {
-			return nil, err
+		if err != nil {
+			return err
 		}
-	case names.Version:
-		if _, err := db.GetVersion(ctx, parent); err != nil {
-			return nil, err
+		artifact, err := models.NewArtifact(name, req.GetArtifact())
+		if err != nil {
+			return err
 		}
-	case names.Spec:
-		if _, err := db.GetSpec(ctx, parent); err != nil {
-			return nil, err
+		if err := db.CreateArtifact(ctx, artifact); err != nil {
+			return err
 		}
-	case names.Deployment:
-		if _, err := db.GetDeployment(ctx, parent); err != nil {
-			return nil, err
+		if err := db.SaveArtifactContents(ctx, artifact, req.Artifact.GetContents()); err != nil {
+			return err
 		}
-	}
-
-	artifact, err := models.NewArtifact(name, req.GetArtifact())
-	if err != nil {
+		response = artifact.Message()
+		return nil
+	}); err != nil {
 		return nil, err
 	}
-	if err := db.CreateArtifact(ctx, artifact); err != nil {
-		return nil, err
-	}
 
-	if err := db.SaveArtifactContents(ctx, artifact, req.Artifact.GetContents()); err != nil {
-		return nil, err
-	}
-
-	s.notify(ctx, rpc.Notification_CREATED, name.String())
-	return artifact.Message(), nil
+	s.notify(ctx, rpc.Notification_CREATED, response.GetName())
+	return response, nil
 }
 
 // DeleteArtifact handles the corresponding API request.
 func (s *RegistryServer) DeleteArtifact(ctx context.Context, req *rpc.DeleteArtifactRequest) (*emptypb.Empty, error) {
-	db, err := s.getStorageClient(ctx)
-	if err != nil {
-		return nil, status.Error(codes.Unavailable, err.Error())
-	}
-
+	// Artifact name must be valid.
 	name, err := names.ParseArtifact(req.GetName())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-
-	// Deletion should only succeed on artifacts that currently exist.
-	if _, err := db.GetArtifact(ctx, name); err != nil {
+	if err := s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
+		return db.DeleteArtifact(ctx, name)
+	}); err != nil {
 		return nil, err
 	}
-
-	if err := db.DeleteArtifact(ctx, name); err != nil {
-		return nil, err
-	}
-
-	s.notify(ctx, rpc.Notification_DELETED, name.String())
+	s.notify(ctx, rpc.Notification_DELETED, req.GetName())
 	return &emptypb.Empty{}, nil
 }
 
@@ -148,7 +132,7 @@ func (s *RegistryServer) GetArtifact(ctx context.Context, req *rpc.GetArtifactRe
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	artifact, err := db.GetArtifact(ctx, name)
+	artifact, err := db.GetArtifact(ctx, name, false)
 	if err != nil {
 		return nil, err
 	}
@@ -168,7 +152,7 @@ func (s *RegistryServer) GetArtifactContents(ctx context.Context, req *rpc.GetAr
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	artifact, err := db.GetArtifact(ctx, name)
+	artifact, err := db.GetArtifact(ctx, name, false)
 	if err != nil {
 		return nil, err
 	}
@@ -278,21 +262,23 @@ func (s *RegistryServer) ReplaceArtifact(ctx context.Context, req *rpc.ReplaceAr
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	// Replacement should only succeed on artifacts that currently exist.
-	if _, err := db.GetArtifact(ctx, name); err != nil {
-		return nil, err
-	}
-
-	artifact, err := models.NewArtifact(name, req.GetArtifact())
+	var artifact *models.Artifact
+	err = db.Transaction(ctx, func(ctx context.Context, db *storage.Client) error {
+		// Replacement should only succeed on artifacts that currently exist.
+		if _, err = db.GetArtifact(ctx, name, true); err != nil {
+			return err
+		}
+		artifact, err = models.NewArtifact(name, req.GetArtifact())
+		if err != nil {
+			return err
+		}
+		if err := db.SaveArtifact(ctx, artifact); err != nil {
+			return err
+		}
+		return db.SaveArtifactContents(ctx, artifact, req.Artifact.GetContents())
+	})
 	if err != nil {
 		return nil, err
-	}
-	if err := db.SaveArtifact(ctx, artifact); err != nil {
-		return nil, err
-	}
-
-	if err := db.SaveArtifactContents(ctx, artifact, req.Artifact.GetContents()); err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	s.notify(ctx, rpc.Notification_UPDATED, name.String())

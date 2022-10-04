@@ -17,9 +17,11 @@ package storage
 import (
 	"context"
 	"fmt"
+	"time"
 
 	_ "github.com/GoogleCloudPlatform/cloudsql-proxy/proxy/dialers/postgres"
 	"github.com/apigee/registry/server/registry/internal/storage/models"
+	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"gorm.io/driver/postgres"
@@ -61,25 +63,50 @@ func NewClient(ctx context.Context, driver, dsn string) (*Client, error) {
 		if err != nil {
 			c := &Client{db: db}
 			c.close()
-			return nil, err
+			return nil, grpcErrorForDBError(ctx, err)
 		}
+		// eliminate multithreading contention
+		if err := applyConnectionLimits(db, 1); err != nil {
+			c := &Client{db: db}
+			c.close()
+			return nil, grpcErrorForDBError(ctx, err)
+		}
+		db.Exec("PRAGMA foreign_keys = ON")
 		return &Client{db: db}, nil
 	case "postgres", "cloudsqlpostgres":
 		db, err := gorm.Open(postgres.New(postgres.Config{
 			DriverName: driver,
 			DSN:        dsn,
 		}), &gorm.Config{
-			Logger: NewGormLogger(ctx),
+			Logger:      NewGormLogger(ctx),
+			PrepareStmt: true,
 		})
 		if err != nil {
 			c := &Client{db: db}
 			c.close()
-			return nil, err
+			return nil, grpcErrorForDBError(ctx, err)
+		}
+		if err := applyConnectionLimits(db, 10); err != nil {
+			c := &Client{db: db}
+			c.close()
+			return nil, grpcErrorForDBError(ctx, err)
 		}
 		return &Client{db: db}, nil
 	default:
 		return nil, fmt.Errorf("unsupported database %s", driver)
 	}
+}
+
+// Applies limits to concurrent connections.
+func applyConnectionLimits(db *gorm.DB, n int) error {
+	sqlDB, err := db.DB()
+	if err != nil {
+		return err
+	}
+	sqlDB.SetMaxOpenConns(n)
+	sqlDB.SetMaxIdleConns(n)
+	sqlDB.SetConnMaxLifetime(60 * time.Second)
+	return nil
 }
 
 // Close closes a database session.
@@ -95,7 +122,7 @@ func (c *Client) close() {
 func (c *Client) ensureTable(ctx context.Context, v interface{}) error {
 	if !c.db.Migrator().HasTable(v) {
 		if err := c.db.Migrator().CreateTable(v); err != nil {
-			return grpcErrorForDBError(ctx, err)
+			return grpcErrorForDBError(ctx, errors.Wrapf(err, "create table %#v", v))
 		}
 	}
 	return nil
@@ -112,7 +139,62 @@ func (c *Client) EnsureTables(ctx context.Context) error {
 }
 
 func (c *Client) Migrate(ctx context.Context) error {
-	return grpcErrorForDBError(ctx, c.db.WithContext(ctx).AutoMigrate(entities...))
+	if err := c.db.WithContext(ctx).AutoMigrate(entities...); err != nil {
+		return grpcErrorForDBError(ctx, err)
+	}
+
+	return grpcErrorForDBError(ctx, c.ensureForeignKeys(ctx))
+}
+
+func (c *Client) ensureForeignKeys(ctx context.Context) (err error) {
+	err = c.db.Model(&models.Api{}).
+		Where("parent_project_key is null").
+		Update("parent_project_key",
+			c.db.Model(&models.Project{}).Select("key").
+				Where("apis.project_id = projects.project_id")).Error
+	if err != nil {
+		return err
+	}
+
+	err = c.db.Model(&models.Version{}).
+		Where("parent_api_key is null").
+		Update("parent_api_key",
+			c.db.Model(&models.Api{}).Select("key").
+				Where("versions.project_id = apis.project_id").
+				Where("versions.api_id = apis.api_id")).Error
+	if err != nil {
+		return err
+	}
+
+	err = c.db.Model(&models.Spec{}).
+		Where("parent_version_key is null").
+		Update("parent_version_key",
+			c.db.Model(&models.Version{}).Select("key").
+				Where("specs.project_id = versions.project_id").
+				Where("specs.api_id = versions.api_id").
+				Where("specs.version_id = versions.version_id")).Error
+	if err != nil {
+		return err
+	}
+
+	err = c.db.Model(&models.SpecRevisionTag{}).
+		Where("parent_spec_key is null").
+		Update("parent_spec_key",
+			c.db.Model(&models.Spec{}).Select("key").
+				Where("spec_revision_tags.project_id = specs.project_id").
+				Where("spec_revision_tags.api_id = specs.api_id").
+				Where("spec_revision_tags.version_id = specs.version_id").
+				Where("spec_revision_tags.spec_id = specs.spec_id")).Error
+	if err != nil {
+		return err
+	}
+
+	return c.db.Model(&models.Deployment{}).
+		Where("parent_api_key is null").
+		Update("parent_api_key",
+			c.db.Model(&models.Api{}).Select("key").
+				Where("deployments.project_id = apis.project_id").
+				Where("deployments.api_id = apis.api_id")).Error
 }
 
 func (c *Client) DatabaseName(ctx context.Context) string {
@@ -124,11 +206,11 @@ func (c *Client) TableNames(ctx context.Context) ([]string, error) {
 	switch c.db.WithContext(ctx).Name() {
 	case "postgres":
 		if err := c.db.WithContext(ctx).Table("information_schema.tables").Where("table_schema = ?", "public").Order("table_name").Pluck("table_name", &tableNames).Error; err != nil {
-			return nil, grpcErrorForDBError(ctx, err)
+			return nil, grpcErrorForDBError(ctx, errors.Wrap(err, "tables"))
 		}
 	case "sqlite":
 		if err := c.db.WithContext(ctx).Table("sqlite_schema").Where("type = 'table' AND name NOT LIKE 'sqlite_%'").Order("name").Pluck("name", &tableNames).Error; err != nil {
-			return nil, grpcErrorForDBError(ctx, err)
+			return nil, grpcErrorForDBError(ctx, errors.Wrap(err, "tables"))
 		}
 	default:
 		return nil, status.Errorf(codes.Internal, "unsupported database %s", c.db.Name())
@@ -139,5 +221,12 @@ func (c *Client) TableNames(ctx context.Context) ([]string, error) {
 func (c *Client) RowCount(ctx context.Context, tableName string) (int64, error) {
 	var count int64
 	err := c.db.WithContext(ctx).Table(tableName).Count(&count).Error
-	return count, grpcErrorForDBError(ctx, err)
+	return count, grpcErrorForDBError(ctx, errors.Wrapf(err, "count %s", tableName))
+}
+
+func (c *Client) Transaction(ctx context.Context, fn func(context.Context, *Client) error) error {
+	err := c.db.Transaction(func(tx *gorm.DB) error {
+		return fn(ctx, &Client{db: tx})
+	})
+	return grpcErrorForDBError(ctx, err)
 }

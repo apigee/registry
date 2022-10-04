@@ -39,21 +39,21 @@ message Diff {
   /* modifications holds every modification change in the diff.
      The string key will hold the field path of one modification change in the
      format foo.bar.x.
-     The value of the key will repersent the element that was modified in the
+     The value of the key will represent the element that was modified in the
      field. */
   map <string, ValueChange> modifications = 3;
 }
 
-/* ChangeDetails classifies changes from diff in to seperate categories. */
+/* ChangeDetails classifies changes from diff into separate categories. */
 message ChangeDetails {
-  /* breakingChanges is a Diff proto that only contians the breaking changes
+  /* breakingChanges is a Diff proto that only contains the breaking changes
   of a diff.*/
   Diff breaking_changes = 1;
-  /* nonBreakingChanges is a Diff proto that only contians the non-breaking
+  /* nonBreakingChanges is a Diff proto that only contains the non-breaking
   changes of a diff.*/
   Diff non_breaking_changes = 2;
-  /* unknownChanges is a Diff proto that contians all the changes that could not
-  be classifed in the other categories.*/
+  /* unknownChanges is a Diff proto that contains all the changes that could not
+  be classified in the other categories.*/
   Diff unknown_changes = 3;
 }
 
@@ -70,7 +70,7 @@ message ChangeStats {
 /* ChangeMetrics holds metrics about a list of diffs. Each metric is computed from
 two or more stats. */
 message ChangeMetrics {
-  /* breaking_change_percentage is the precentage of changes that are breaking.
+  /* breaking_change_percentage is the percentage of changes that are breaking.
   It is computed by the equation
   (breaking_change_count / (nonbreaking_change_count + breaking_change_count))*/
   double breaking_change_percentage = 1;

@@ -214,7 +214,7 @@ func (t uploadSpecTask) Run(ctx context.Context) error {
 		log.Debugf(ctx, "Created API version: %s", version.GetName())
 	case codes.AlreadyExists:
 		version = &rpc.ApiVersion{
-			Name: fmt.Sprintf("projects/%s/apis/%s/versions/%s", t.projectID, t.apiID, t.versionID),
+			Name: fmt.Sprintf("projects/%s/locations/global/apis/%s/versions/%s", t.projectID, t.apiID, t.versionID),
 		}
 	default:
 		return fmt.Errorf("failed to ensure API version exists: %s", err)

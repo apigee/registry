@@ -69,7 +69,7 @@ func (s SpecName) String() string {
 }
 
 func (s SpecName) ParentName() ResourceName {
-	// Validate the parent name aand return
+	// Validate the parent name and return
 	if version, err := names.ParseVersion(s.Name.Parent()); err == nil {
 		return VersionName{
 			Name: version,
@@ -111,7 +111,7 @@ func (v VersionName) String() string {
 }
 
 func (v VersionName) ParentName() ResourceName {
-	// Validate the parent name aand return
+	// Validate the parent name and return
 	if api, err := names.ParseApi(v.Name.Parent()); err == nil {
 		return ApiName{
 			Name: api,
@@ -154,7 +154,7 @@ func (a ApiName) String() string {
 }
 
 func (a ApiName) ParentName() ResourceName {
-	// Validate the parent name aand return
+	// Validate the parent name and return
 	if project, err := names.ParseProject(a.Name.Parent()); err == nil {
 		return ProjectName{
 			Name: project,

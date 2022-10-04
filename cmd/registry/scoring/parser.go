@@ -71,7 +71,7 @@ func ValidateScoreDefinition(parent string, scoreDefinition *rpc.ScoreDefinition
 		// if minValue==maxValue, means the score can take only one value, in that case integer is not the correct type.
 		// other types will be supported in the future (enums) to cover this case.
 		if minValue >= maxValue {
-			totalErrs = append(totalErrs, fmt.Errorf("invalid min_value(%d) and max_value(%d), min_value shoud be less than max_value", minValue, maxValue))
+			totalErrs = append(totalErrs, fmt.Errorf("invalid min_value(%d) and max_value(%d), min_value should be less than max_value", minValue, maxValue))
 		} else { // validate that the set thresholds are within minValue and maxValue limits
 			errs := validateNumberThresholds(scoreType.Integer.GetThresholds(), minValue, maxValue)
 			totalErrs = append(totalErrs, errs...)

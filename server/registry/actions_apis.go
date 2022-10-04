@@ -28,33 +28,33 @@ import (
 
 // CreateApi handles the corresponding API request.
 func (s *RegistryServer) CreateApi(ctx context.Context, req *rpc.CreateApiRequest) (*rpc.Api, error) {
+	// Parent name must be valid.
 	parent, err := names.ParseProjectWithLocation(req.GetParent())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-
+	// API body must be nonempty.
 	if req.GetApi() == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid api %+v: body must be provided", req.GetApi())
 	}
-
-	return s.createApi(ctx, parent.Api(req.GetApiId()), req.GetApi())
-}
-
-func (s *RegistryServer) createApi(ctx context.Context, name names.Api, body *rpc.Api) (*rpc.Api, error) {
-	db, err := s.getStorageClient(ctx)
-	if err != nil {
-		return nil, status.Error(codes.Unavailable, err.Error())
-	}
-
+	// API name must be valid.
+	name := parent.Api(req.GetApiId())
 	if err := name.Validate(); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-
-	// Creation should only succeed when the parent exists.
-	if _, err := db.GetProject(ctx, name.Project()); err != nil {
+	var response *rpc.Api
+	if err := s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
+		var err error
+		response, err = s.createApi(ctx, db, name, req.GetApi())
+		return err
+	}); err != nil {
 		return nil, err
 	}
+	s.notify(ctx, rpc.Notification_CREATED, response.GetName())
+	return response, nil
+}
 
+func (s *RegistryServer) createApi(ctx context.Context, db *storage.Client, name names.Api, body *rpc.Api) (*rpc.Api, error) {
 	api, err := models.NewApi(name, body)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
@@ -64,37 +64,22 @@ func (s *RegistryServer) createApi(ctx context.Context, name names.Api, body *rp
 		return nil, err
 	}
 
-	message, err := api.Message()
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	s.notify(ctx, rpc.Notification_CREATED, name.String())
-	return message, nil
+	return api.Message()
 }
 
 // DeleteApi handles the corresponding API request.
 func (s *RegistryServer) DeleteApi(ctx context.Context, req *rpc.DeleteApiRequest) (*emptypb.Empty, error) {
-	db, err := s.getStorageClient(ctx)
-	if err != nil {
-		return nil, status.Error(codes.Unavailable, err.Error())
-	}
-
+	// API name must be valid.
 	name, err := names.ParseApi(req.GetName())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-
-	// Deletion should only succeed on APIs that currently exist.
-	if _, err := db.GetApi(ctx, name); err != nil {
+	if err := s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
+		return db.LockApis(ctx).DeleteApi(ctx, name, req.GetForce())
+	}); err != nil {
 		return nil, err
 	}
-
-	if err := db.DeleteApi(ctx, name, req.GetForce()); err != nil {
-		return nil, err
-	}
-
-	s.notify(ctx, rpc.Notification_DELETED, name.String())
+	s.notify(ctx, rpc.Notification_DELETED, req.GetName())
 	return &emptypb.Empty{}, nil
 }
 
@@ -170,49 +155,40 @@ func (s *RegistryServer) ListApis(ctx context.Context, req *rpc.ListApisRequest)
 
 // UpdateApi handles the corresponding API request.
 func (s *RegistryServer) UpdateApi(ctx context.Context, req *rpc.UpdateApiRequest) (*rpc.Api, error) {
-	if req.GetApi() == nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid api %v: body must be provided", req.GetApi())
-	} else if err := models.ValidateMask(req.GetApi(), req.GetUpdateMask()); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid update_mask %v: %s", req.GetUpdateMask(), err)
-	}
-
+	// API name must be valid.
 	name, err := names.ParseApi(req.Api.GetName())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-
-	if req.GetAllowMissing() {
-		// Speculatively create the api. If it already exists, fall through to the update below.
-		api, err := s.createApi(ctx, name, req.GetApi())
-		if err == nil {
-			return api, nil
-		} else if status.Code(err) != codes.AlreadyExists {
-			return nil, err
+	// API body must be nonempty.
+	if req.GetApi() == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid api %v: body must be provided", req.GetApi())
+	}
+	// Update mask must be valid.
+	if err := models.ValidateMask(req.GetApi(), req.GetUpdateMask()); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid update_mask %v: %s", req.GetUpdateMask(), err)
+	}
+	var response *rpc.Api
+	if err := s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
+		api, err := models.NewApi(name, req.GetApi())
+		if err != nil {
+			return err
 		}
-	}
-
-	db, err := s.getStorageClient(ctx)
-	if err != nil {
-		return nil, status.Error(codes.Unavailable, err.Error())
-	}
-
-	// TODO: the Get/Update/Save calls below should be a transaction.
-	api, err := db.GetApi(ctx, name)
-	if err != nil {
+		mask := models.ExpandMask(req.GetApi(), req.GetUpdateMask())
+		if err := db.SaveApi(ctx, api, mask); err != nil {
+			if status.Code(err) == codes.NotFound && req.GetAllowMissing() {
+				response, err = s.createApi(ctx, db, name, req.GetApi())
+				if status.Code(err) == codes.AlreadyExists {
+					err = status.Error(codes.Aborted, err.Error())
+				}
+			}
+			return err
+		}
+		response, err = api.Message()
+		return err
+	}); err != nil {
 		return nil, err
 	}
-	if err := api.Update(req.GetApi(), models.ExpandMask(req.GetApi(), req.GetUpdateMask())); err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-	if err := db.SaveApi(ctx, api); err != nil {
-		return nil, err
-	}
-
-	message, err := api.Message()
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	s.notify(ctx, rpc.Notification_UPDATED, name.String())
-	return message, nil
+	s.notify(ctx, rpc.Notification_UPDATED, response.GetName())
+	return response, nil
 }

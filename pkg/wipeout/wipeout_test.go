@@ -68,6 +68,18 @@ func TestWipeout(t *testing.T) {
 		t.Fatalf("Setup: Failed to create registry client: %s", err)
 	}
 	defer registryClient.Close()
+
+	for k := 0; k < 2; k++ {
+		_, err := registryClient.CreateArtifact(ctx, &rpc.CreateArtifactRequest{
+			ArtifactId: fmt.Sprintf("a%d", k),
+			Parent:     parent,
+			Artifact:   &rpc.Artifact{},
+		})
+		if err != nil {
+			t.Fatalf("Setup: Failed to create test artifact: %s", err)
+		}
+	}
+
 	for i := 0; i <= 2; i++ {
 		api, err := registryClient.CreateApi(ctx, &rpc.CreateApiRequest{
 			ApiId:  fmt.Sprintf("a%d", i),
@@ -165,6 +177,9 @@ func TestWipeout(t *testing.T) {
 
 	t.Run("WipeoutProject", func(t *testing.T) {
 		Wipeout(ctx, registryClient, projectID, 10)
+		if _, ok := registryClient.ListArtifacts(ctx, &rpc.ListArtifactsRequest{Parent: parent}).Next(); ok != iterator.Done {
+			t.Errorf("Error: Project artifacts found after wipeout")
+		}
 		if _, ok := registryClient.ListApis(ctx, &rpc.ListApisRequest{Parent: parent}).Next(); ok != iterator.Done {
 			t.Errorf("Error: APIs found after wipeout")
 		}

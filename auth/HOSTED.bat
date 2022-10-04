@@ -21,6 +21,7 @@
 :: The following assumes you have run `gcloud auth login` and that the current
 :: gcloud project is the one with your Apigee Registry instance.
 ::
+@echo off
 
 WHERE gcloud  >nul 2>nul
 IF %ERRORLEVEL% NEQ 0 (
@@ -28,12 +29,23 @@ echo 'ERROR: This script requires the gcloud command. Please install it to conti
 goto :eof
 )
 
-:: Calls to the hosted service are secure.
-set APG_REGISTRY_INSECURE=
+setlocal
 
-:: Get the service address.
+:: set the service address.
 set APG_REGISTRY_ADDRESS=apigeeregistry.googleapis.com:443
+set APG_REGISTRY_INSECURE=false
 
-:: The auth token is generated for the gcloud logged-in user.
-FOR /F %%g IN ('gcloud config list account --format "value(core.account)"') DO set APG_REGISTRY_CLIENT_EMAIL=%%g
-FOR /F %%g IN ('gcloud auth print-access-token %APG_REGISTRY_CLIENT_EMAIL%') DO set APG_REGISTRY_TOKEN=%%g
+FOR /F %%g IN ('gcloud config get project') DO set APG_REGISTRY_PROJECT=%%g
+set APG_REGISTRY_LOCATION=global
+FOR /F %%g IN ('gcloud config get account') DO set CLIENT_EMAIL=%%g
+set APG_REGISTRY_TOKEN_SOURCE=gcloud auth print-access-token %CLIENT_EMAIL%
+
+registry config configurations create hosted ^
+  --registry.insecure=%APG_REGISTRY_INSECURE% ^
+  --registry.address=%APG_REGISTRY_ADDRESS% ^
+  --registry.project=%APG_REGISTRY_PROJECT% ^
+  --registry.location=%APG_REGISTRY_LOCATION%
+
+registry config set token-source "%APG_REGISTRY_TOKEN_SOURCE%"
+
+endlocal

@@ -47,7 +47,7 @@ func Command() *cobra.Command {
 				args[i] = c.FQName(args[i])
 			}
 
-			client, err := connection.NewRegistryClient(ctx)
+			client, err := connection.NewRegistryClientWithSettings(ctx, c)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}

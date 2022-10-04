@@ -25,31 +25,34 @@ import (
 
 // Version is the storage-side representation of a version.
 type Version struct {
-	Key         string    `gorm:"primaryKey"`
-	ProjectID   string    // Uniquely identifies a project.
-	ApiID       string    // Uniquely identifies an api within a project.
-	VersionID   string    // Uniquely identifies a version wihtin a api.
-	DisplayName string    // A human-friendly name.
-	Description string    // A detailed description.
-	CreateTime  time.Time // Creation time.
-	UpdateTime  time.Time // Time of last change.
-	State       string    // Lifecycle stage.
-	Labels      []byte    // Serialized labels.
-	Annotations []byte    // Serialized annotations.
+	Key          string    `gorm:"primaryKey"`
+	ProjectID    string    // Uniquely identifies a project.
+	ApiID        string    // Uniquely identifies an api within a project.
+	VersionID    string    // Uniquely identifies a version within an api.
+	DisplayName  string    // A human-friendly name.
+	Description  string    // A detailed description.
+	CreateTime   time.Time // Creation time.
+	UpdateTime   time.Time // Time of last change.
+	State        string    // Lifecycle stage.
+	Labels       []byte    // Serialized labels.
+	Annotations  []byte    // Serialized annotations.
+	ParentApiKey string
+	ParentApi    *Api `gorm:"foreignKey:ParentApiKey;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 }
 
 // NewVersion initializes a new resource.
 func NewVersion(name names.Version, body *rpc.ApiVersion) (version *Version, err error) {
 	now := time.Now().Round(time.Microsecond)
 	version = &Version{
-		ProjectID:   name.ProjectID,
-		ApiID:       name.ApiID,
-		VersionID:   name.VersionID,
-		Description: body.GetDescription(),
-		DisplayName: body.GetDisplayName(),
-		State:       body.GetState(),
-		CreateTime:  now,
-		UpdateTime:  now,
+		ProjectID:    name.ProjectID,
+		ApiID:        name.ApiID,
+		VersionID:    name.VersionID,
+		Description:  body.GetDescription(),
+		DisplayName:  body.GetDisplayName(),
+		State:        body.GetState(),
+		CreateTime:   now,
+		UpdateTime:   now,
+		ParentApiKey: name.Api().String(),
 	}
 
 	version.Labels, err = bytesForMap(body.GetLabels())

@@ -19,7 +19,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 
 	lint "github.com/apigee/registry/cmd/registry/plugins/linter"
 	"github.com/apigee/registry/rpc"
@@ -76,7 +75,7 @@ func (linter *spectralLinterRunner) RunImpl(
 		return nil, err
 	}
 
-	// Defer the deletion of the the temporary directory.
+	// Defer the deletion of the temporary directory.
 	defer os.RemoveAll(root)
 
 	// Create configuration file for Spectral to execute the correct rules
@@ -89,11 +88,6 @@ func (linter *spectralLinterRunner) RunImpl(
 	err = filepath.Walk(req.GetSpecDirectory(), func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
-		}
-
-		// Async API and Open API specs are YAML files
-		if !strings.HasSuffix(path, ".yaml") && !strings.HasSuffix(path, ".yml") {
-			return nil
 		}
 
 		// Execute the spectral linter.

@@ -35,7 +35,8 @@ func ProcessManifest(
 	ctx context.Context,
 	client listingClient,
 	projectID string,
-	manifest *rpc.Manifest) []*Action {
+	manifest *rpc.Manifest,
+	maxActions int) []*Action {
 	var actions []*Action
 	//Check for errors in manifest
 	errs := ValidateManifest(fmt.Sprintf("projects/%s/locations/global", projectID), manifest)
@@ -60,9 +61,19 @@ func ProcessManifest(
 			continue
 		}
 		actions = append(actions, newActions...)
+
+		if len(actions) >= maxActions {
+			log.FromContext(ctx).Debugf("Reached max actions limit %d", maxActions)
+			break
+		}
 	}
 
-	return actions
+	maxLength := len(actions)
+	if maxLength > maxActions {
+		maxLength = maxActions
+	}
+
+	return actions[:maxLength]
 }
 
 func processManifestResource(
@@ -287,7 +298,7 @@ func generateCreateActions(
 
 	actions := make([]*Action, 0)
 	for _, parent := range parentList {
-		// Since the GeneratedResource is non-existent here,
+		// Since the GeneratedResource is nonexistent here,
 		// we will have to derive the exact name of the target resource
 		targetResourceName, err := patterns.FullResourceNameFromParent(resourcePattern, parent.ResourceName().String())
 		if err != nil {

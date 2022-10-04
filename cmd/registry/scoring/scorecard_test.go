@@ -36,7 +36,7 @@ func TestCalculateScoreCard(t *testing.T) {
 		wantScoreCard *rpc.ScoreCard
 	}{
 		{
-			desc: "non existent ScoreCard artifact",
+			desc: "nonexistent ScoreCard artifact",
 			seed: []seeder.RegistryResource{
 				// ScoreCard definition
 				&rpc.Artifact{

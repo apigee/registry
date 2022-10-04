@@ -44,7 +44,7 @@ func Do(server, service, method string, req, res proto.Message) error {
 		return err
 	}
 	buf := new(bytes.Buffer)
-	buf.WriteByte(0x0) // compressed-flag, message is uncompresseed
+	buf.WriteByte(0x0) // compressed-flag, message is uncompressed
 	err = binary.Write(buf, binary.BigEndian, int32(len(reqBytes)))
 	if err != nil {
 		return err
