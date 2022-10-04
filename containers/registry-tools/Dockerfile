@@ -35,15 +35,6 @@ COPY . ./
 # Build registry.
 RUN CGO_ENABLED=0 GOOS=linux go build -v -o registry ./cmd/registry
 
-# Build spectral plugin
-RUN go build -o registry-lint-spectral ./cmd/registry/plugins/registry-lint-spectral
-
-# Install spectral linter
-WORKDIR /spectral-linter
-RUN wget -q https://github.com/stoplightio/spectral/releases/latest/download/spectral-alpine \
-               -O spectral \
-         && chmod 755 spectral
-
 # Use the official Alpine image for a lean production container.
 # https://hub.docker.com/_/alpine
 # https://docs.docker.com/develop/develop-images/multistage-build/#use-multi-stage-builds
@@ -56,9 +47,3 @@ RUN apk add --no-cache bash git curl jq
 
 # Copy binaries to the production image from the builder stage.
 COPY --from=builder /app/registry /bin/registry
-
-# Copy linter plugin
-COPY --from=builder /app/registry-lint-spectral /bin/registry-lint-spectral
-
-# Copy spectral binaries
-COPY --from=builder /spectral-linter/spectral /bin/
