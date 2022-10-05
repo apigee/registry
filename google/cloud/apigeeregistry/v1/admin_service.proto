@@ -199,7 +199,7 @@ message CreateProjectRequest {
   //
   // This value should be at most 80 characters, and valid characters
   // are /[a-z][0-9]-./.
-  string project_id = 2;
+  string project_id = 2 [(google.api.field_behavior) = REQUIRED];
 }
 
 // Request message for UpdateProject.
