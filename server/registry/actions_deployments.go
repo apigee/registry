@@ -217,6 +217,9 @@ func (s *RegistryServer) UpdateApiDeployment(ctx context.Context, req *rpc.Updat
 			return err
 		} else if status.Code(err) == codes.NotFound && req.GetAllowMissing() {
 			response, err = s.createDeployment(ctx, db, name, req.GetApiDeployment())
+			if status.Code(err) == codes.AlreadyExists {
+				err = status.Error(codes.Aborted, err.Error())
+			}
 			return err
 		} else {
 			return err

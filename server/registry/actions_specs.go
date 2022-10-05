@@ -275,6 +275,9 @@ func (s *RegistryServer) UpdateApiSpec(ctx context.Context, req *rpc.UpdateApiSp
 			return err
 		} else if status.Code(err) == codes.NotFound && req.GetAllowMissing() {
 			response, err = s.createSpec(ctx, db, name, req.GetApiSpec())
+			if status.Code(err) == codes.AlreadyExists {
+				err = status.Error(codes.Aborted, err.Error())
+			}
 			return err
 		} else {
 			return err
