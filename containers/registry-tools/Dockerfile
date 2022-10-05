@@ -35,6 +35,14 @@ COPY . ./
 # Build registry.
 RUN CGO_ENABLED=0 GOOS=linux go build -v -o registry ./cmd/registry
 
+# Build spectral plugin
+RUN CGO_ENABLED=0 GOOS=linux go build -o registry-lint-spectral \
+    ./cmd/registry/plugins/registry-lint-spectral
+
+# Build api-linter plugin
+RUN CGO_ENABLED=0 GOOS=linux go build -o registry-lint-api-linter \
+    ./cmd/registry/plugins/registry-lint-api-linter
+
 # Use the official Alpine image for a lean production container.
 # https://hub.docker.com/_/alpine
 # https://docs.docker.com/develop/develop-images/multistage-build/#use-multi-stage-builds
@@ -47,3 +55,9 @@ RUN apk add --no-cache bash git curl jq
 
 # Copy binaries to the production image from the builder stage.
 COPY --from=builder /app/registry /bin/registry
+
+# Copy spectral plugin
+COPY --from=builder /app/registry-lint-spectral /bin/registry-lint-spectral
+
+# Copy api-linter plugin
+COPY --from=builder /app/registry-lint-api-linter /bin/registry-lint-api-linter
