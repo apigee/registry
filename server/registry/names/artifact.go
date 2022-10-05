@@ -205,11 +205,15 @@ type projectArtifact struct {
 }
 
 func (a projectArtifact) Validate() error {
+	if err := validateID(a.ArtifactID); err != nil {
+		return err
+	}
+
 	if name := a.String(); !projectArtifactRegexp.MatchString(name) {
 		return fmt.Errorf("invalid project artifact name %q: must match %q", name, projectArtifactRegexp)
 	}
 
-	return validateID(a.ArtifactID)
+	return nil
 }
 
 func (a projectArtifact) Parent() string {
@@ -256,11 +260,15 @@ type apiArtifact struct {
 }
 
 func (a apiArtifact) Validate() error {
+	if err := validateID(a.ArtifactID); err != nil {
+		return err
+	}
+
 	if name := a.String(); !apiArtifactRegexp.MatchString(name) {
 		return fmt.Errorf("invalid api artifact name %q: must match %q", name, apiArtifactRegexp)
 	}
 
-	return validateID(a.ArtifactID)
+	return nil
 }
 
 func (a apiArtifact) Parent() string {
@@ -313,11 +321,15 @@ type versionArtifact struct {
 }
 
 func (a versionArtifact) Validate() error {
+	if err := validateID(a.ArtifactID); err != nil {
+		return err
+	}
+
 	if name := a.String(); !versionArtifactRegexp.MatchString(name) {
 		return fmt.Errorf("invalid version artifact name %q: must match %q", name, versionArtifactRegexp)
 	}
 
-	return validateID(a.ArtifactID)
+	return nil
 }
 
 func (a versionArtifact) Parent() string {
@@ -374,11 +386,15 @@ type specArtifact struct {
 }
 
 func (a specArtifact) Validate() error {
+	if err := validateID(a.ArtifactID); err != nil {
+		return err
+	}
+
 	if name := a.String(); !specArtifactRegexp.MatchString(name) {
 		return fmt.Errorf("invalid spec artifact name %q: must match %q", name, specArtifactRegexp)
 	}
 
-	return validateID(a.ArtifactID)
+	return nil
 }
 
 func (a specArtifact) Parent() string {
@@ -437,11 +453,15 @@ type deploymentArtifact struct {
 }
 
 func (a deploymentArtifact) Validate() error {
+	if err := validateID(a.ArtifactID); err != nil {
+		return err
+	}
+
 	if name := a.String(); !deploymentArtifactRegexp.MatchString(name) {
 		return fmt.Errorf("invalid version artifact name %q: must match %q", name, deploymentArtifactRegexp)
 	}
 
-	return validateID(a.ArtifactID)
+	return nil
 }
 
 func (a deploymentArtifact) Parent() string {

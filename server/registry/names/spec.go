@@ -35,12 +35,16 @@ type Spec struct {
 // Validate returns an error if the resource name is invalid.
 // For backward compatibility, names should only be validated at creation time.
 func (s Spec) Validate() error {
+	if err := validateID(s.SpecID); err != nil {
+		return err
+	}
+
 	r := specRegexp()
 	if name := s.String(); !r.MatchString(name) {
 		return fmt.Errorf("invalid spec name %q: must match %q", name, r)
 	}
 
-	return validateID(s.SpecID)
+	return nil
 }
 
 // Project returns the parent project for this resource.
