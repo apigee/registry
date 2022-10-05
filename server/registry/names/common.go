@@ -43,7 +43,9 @@ func GenerateID() string {
 
 // validateID returns an error if the provided ID is invalid.
 func validateID(id string) error {
-	if !customIdentifier.MatchString(id) {
+	if "" == id {
+		return fmt.Errorf("invalid identifier %q: identifier must be nonempty", id)
+	} else if !customIdentifier.MatchString(id) {
 		return fmt.Errorf("invalid identifier %q: must match %q", id, customIdentifier)
 	} else if _, err := uuid.Parse(id); err == nil {
 		return fmt.Errorf("invalid identifier %q: must not match UUID format", id)
