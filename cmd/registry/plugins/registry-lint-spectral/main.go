@@ -75,7 +75,7 @@ func (linter *spectralLinterRunner) RunImpl(
 		return nil, err
 	}
 
-	// Defer the deletion of the the temporary directory.
+	// Defer the deletion of the temporary directory.
 	defer os.RemoveAll(root)
 
 	// Create configuration file for Spectral to execute the correct rules

@@ -28,12 +28,16 @@ type Api struct {
 // Validate returns an error if the resource name is invalid.
 // For backward compatibility, names should only be validated at creation time.
 func (a Api) Validate() error {
+	if err := validateID(a.ApiID); err != nil {
+		return err
+	}
+
 	r := apiRegexp()
 	if name := a.String(); !r.MatchString(name) {
 		return fmt.Errorf("invalid API name %q: must match %q", name, r)
 	}
 
-	return validateID(a.ApiID)
+	return nil
 }
 
 // Project returns the name of this resource's parent project.
@@ -88,7 +92,7 @@ func apiCollectionRegexp() *regexp.Regexp {
 		identifier, Location))
 }
 
-// apiRegexp returns a regular expression that matches a api resource name.
+// apiRegexp returns a regular expression that matches an api resource name.
 func apiRegexp() *regexp.Regexp {
 	return regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s$",
 		identifier, Location, identifier))

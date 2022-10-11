@@ -110,7 +110,7 @@ func TestSubstituteReferenceEntityError(t *testing.T) {
 		dependencyPattern string
 	}{
 		{
-			desc:              "non-existent reference",
+			desc:              "nonexistent reference",
 			resourcePattern:   "projects/demo/locations/global/apis/-/versions/-/specs/-",
 			dependencyPattern: "$resource.artifact",
 		},

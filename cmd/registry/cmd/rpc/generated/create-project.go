@@ -29,7 +29,7 @@ func init() {
 
 	CreateProjectCmd.Flags().StringVar(&CreateProjectInput.Project.Description, "project.description", "", "A detailed description.")
 
-	CreateProjectCmd.Flags().StringVar(&CreateProjectInput.ProjectId, "project_id", "", "The ID to use for the project, which will become...")
+	CreateProjectCmd.Flags().StringVar(&CreateProjectInput.ProjectId, "project_id", "", "Required. The ID to use for the project, which will become...")
 
 	CreateProjectCmd.Flags().StringVar(&CreateProjectFromFile, "from_file", "", "Absolute path to JSON file containing request payload")
 
@@ -42,6 +42,8 @@ var CreateProjectCmd = &cobra.Command{
 	PreRun: func(cmd *cobra.Command, args []string) {
 
 		if CreateProjectFromFile == "" {
+
+			cmd.MarkFlagRequired("project_id")
 
 		}
 

@@ -467,7 +467,7 @@ func TestComputeConformanceReport(t *testing.T) {
 	}
 }
 
-// Test the scenario where there are pre-existing entries in the conformance report from other linters.
+// Test the scenario where there are preexisting entries in the conformance report from other linters.
 func TestPreExistingConformanceReport(t *testing.T) {
 	linterResponse := &rpc.LinterResponse{
 		Lint: &rpc.Lint{

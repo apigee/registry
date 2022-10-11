@@ -48,7 +48,7 @@ registry rpc get-api --name projects/$PROJECT/locations/global/apis/wordnik.com 
 # Get the API spec
 registry rpc get-api-spec --name projects/$PROJECT/locations/global/apis/wordnik.com/versions/4.0/specs/openapi.yaml
 
-# You might notice that that didn't return the actual spec. That's because the spec contents
+# You might notice that didn't return the actual spec. That's because the spec contents
 # are accessed through a separate method that (when transcoded to HTTP) allows direct download
 # of spec contents.
 registry rpc get-api-spec-contents --name projects/$PROJECT/locations/global/apis/wordnik.com/versions/4.0/specs/openapi.yaml

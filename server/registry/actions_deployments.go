@@ -62,11 +62,6 @@ func (s *RegistryServer) createDeployment(ctx context.Context, db *storage.Clien
 		return nil, err
 	}
 
-	// Creation should only succeed when the parent exists.
-	if _, err := db.GetApi(ctx, name.Api()); err != nil {
-		return nil, err
-	}
-
 	deployment, err := models.NewDeployment(name, body)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
@@ -88,7 +83,7 @@ func (s *RegistryServer) DeleteApiDeployment(ctx context.Context, req *rpc.Delet
 	}
 
 	if err := s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
-		return db.DeleteDeployment(ctx, name, req.GetForce())
+		return db.LockDeployments(ctx).DeleteDeployment(ctx, name, req.GetForce())
 	}); err != nil {
 		return nil, err
 	}
@@ -207,7 +202,6 @@ func (s *RegistryServer) UpdateApiDeployment(ctx context.Context, req *rpc.Updat
 	}
 	var response *rpc.ApiDeployment
 	if err = s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
-		db.LockDeployments(ctx)
 		deployment, err := db.GetDeployment(ctx, name)
 		if err == nil {
 			// Apply the update to the deployment - possibly changing the revision ID.
@@ -223,6 +217,9 @@ func (s *RegistryServer) UpdateApiDeployment(ctx context.Context, req *rpc.Updat
 			return err
 		} else if status.Code(err) == codes.NotFound && req.GetAllowMissing() {
 			response, err = s.createDeployment(ctx, db, name, req.GetApiDeployment())
+			if status.Code(err) == codes.AlreadyExists {
+				err = status.Error(codes.Aborted, err.Error())
+			}
 			return err
 		} else {
 			return err

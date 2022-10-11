@@ -99,7 +99,7 @@ func main() {
 		if err != nil {
 			bootLogger.WithError(err).Fatal("Failed to open config file")
 		}
-		// Expand environment variables before unmarshaling.
+		// Expand environment variables before unmarshalling.
 		expanded := []byte(os.ExpandEnv(string(raw)))
 		err = yaml.Unmarshal(expanded, &config)
 		if err != nil {

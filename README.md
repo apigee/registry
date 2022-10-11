@@ -122,7 +122,7 @@ A small set of **performance benchmarks** is in
 [tests/benchmark](/tests/benchmark). These tests run against remote servers
 specified by the `registry` tool configuration and test a single project that
 is expected to already exist. **WARNING**: These tests are destructive and will
-overwrite everyhing in the specified project. Benchmarks can be run with the
+overwrite everything in the specified project. Benchmarks can be run with the
 following invocation:
 
 ```
@@ -139,7 +139,7 @@ This software is licensed under the Apache License, Version 2.0. See
 
 ## Disclaimer
 
-This is not an official Google product. Issues filed on Github are not subject
+This is not an official Google product. Issues filed on GitHub are not subject
 to service level agreements (SLAs) and responses should be assumed to be on an
 ad-hoc volunteer basis.
 

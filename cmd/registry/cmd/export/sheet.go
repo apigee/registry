@@ -198,7 +198,7 @@ func getIndex(artifact *rpc.Artifact) (*rpc.Index, error) {
 		index := &rpc.Index{}
 		err := proto.Unmarshal(artifact.GetContents(), index)
 		if err != nil {
-			// try unzipping and unmarshaling
+			// try unzipping and unmarshalling
 			value, err := core.GUnzippedBytes(artifact.GetContents())
 			if err != nil {
 				return nil, err

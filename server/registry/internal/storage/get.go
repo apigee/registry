@@ -23,6 +23,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 func (c *Client) GetProject(ctx context.Context, name names.Project) (*models.Project, error) {
@@ -143,9 +144,13 @@ func (c *Client) GetDeploymentRevision(ctx context.Context, name names.Deploymen
 	return v, nil
 }
 
-func (c *Client) GetArtifact(ctx context.Context, name names.Artifact) (*models.Artifact, error) {
+func (c *Client) GetArtifact(ctx context.Context, name names.Artifact, forUpdate bool) (*models.Artifact, error) {
 	v := new(models.Artifact)
-	if err := c.db.WithContext(ctx).Take(v, "key = ?", name.String()).Error; err == gorm.ErrRecordNotFound {
+	op := c.db.WithContext(ctx)
+	if forUpdate {
+		op.Clauses(clause.Locking{Strength: "UPDATE"})
+	}
+	if err := op.Take(v, "key = ?", name.String()).Error; err == gorm.ErrRecordNotFound {
 		return nil, status.Errorf(codes.NotFound, "%q not found in database", name)
 	} else if err != nil {
 		return nil, grpcErrorForDBError(ctx, errors.Wrapf(err, "get %s", name))
