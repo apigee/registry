@@ -372,7 +372,7 @@ func referencedProtos(protos []string, root string) ([]string, error) {
 		return nil, err
 	}
 	defer os.RemoveAll(tempDir)
-	args := []string{"-o", tempDir + "/proto.pb"}
+	args := []string{"-o", tempDir + "/proto.pb", "--include_imports"}
 	args = append(args, protos...)
 	cmd := exec.Command("protoc", args...)
 	cmd.Dir = root
@@ -395,11 +395,9 @@ func protosFromFileDescriptorSet(filename string) ([]string, error) {
 	}
 	filenameset := make(map[string]bool)
 	for _, file := range fds.File {
-		filenameset[*file.Name] = true
-		for _, dependency := range file.Dependency {
-			if !strings.HasPrefix(dependency, "google/protobuf/") {
-				filenameset[dependency] = true
-			}
+		filename = *file.Name
+		if !strings.HasPrefix(filename, "google/protobuf/") {
+			filenameset[filename] = true
 		}
 	}
 	filenames := make([]string, 0)
