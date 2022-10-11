@@ -18,6 +18,7 @@ import (
 	"context"
 	"log"
 	"sort"
+	"strings"
 	"testing"
 
 	"github.com/apigee/registry/cmd/registry/core"
@@ -41,7 +42,6 @@ func TestProtos(t *testing.T) {
 		projectID   = "protos-test"
 		projectName = "projects/" + projectID
 	)
-
 	// Create a registry client.
 	ctx := context.Background()
 	registryClient, err := connection.NewRegistryClient(ctx)
@@ -79,36 +79,72 @@ func TestProtos(t *testing.T) {
 	if err := cmd.Execute(); err != nil {
 		t.Fatalf("Execute() with args %+v returned error: %s", args, err)
 	}
-	// Get the uploaded spec
-	result, err := registryClient.GetApiSpecContents(ctx, &rpc.GetApiSpecContentsRequest{
-		Name: "projects/" + projectID + "/locations/global/apis/apigeeregistry/versions/v1/specs/google-cloud-apigeeregistry-v1.zip",
-	})
-	if err != nil {
-		t.Fatal("unable to fetch spec")
+	tests := []struct {
+		desc                string
+		spec                string
+		want_proto_count    int
+		want_metadata_count int
+	}{
+		{
+			desc:                "Apigee Registry",
+			spec:                "apis/apigeeregistry/versions/v1/specs/google-cloud-apigeeregistry-v1.zip",
+			want_proto_count:    11,
+			want_metadata_count: 2,
+		},
+		{
+			desc:                "Example Library",
+			spec:                "apis/library-example/versions/v1/specs/google-example-library-v1.zip",
+			want_proto_count:    6,
+			want_metadata_count: 3,
+		},
 	}
-	// Verify the content type.
-	if result.ContentType != "application/x.protobuf+zip" {
-		t.Errorf("Invalid mime type: %s", result.ContentType)
-	}
-	// Verify that the zip contains the expected number of files
-	expectedLength := 13
-	m, err := core.UnzipArchiveToMap(result.Data)
-	if err != nil {
-		t.Fatal("unable to unzip spec")
-	}
-	keys := make([]string, 0)
-	for k := range m {
-		keys = append(keys, k)
-	}
-	if len(keys) != expectedLength {
-		t.Errorf("Archive contains incorrect number of files (%d, expected %d)", len(keys), expectedLength)
-		sort.Strings(keys)
-		for i, s := range keys {
-			log.Printf("%d: %s", i, s)
+	for _, test := range tests {
+		// Get the uploaded spec
+		result, err := registryClient.GetApiSpecContents(ctx, &rpc.GetApiSpecContentsRequest{
+			Name: "projects/" + projectID + "/locations/global/" + test.spec,
+		})
+		if err != nil {
+			t.Fatalf("unable to fetch spec %s", test.spec)
+		}
+		// Verify the content type.
+		if result.ContentType != "application/x.protobuf+zip" {
+			t.Errorf("Invalid mime type for %s: %s", test.spec, result.ContentType)
+		}
+		// Verify that the zip contains the expected number of files
+		m, err := core.UnzipArchiveToMap(result.Data)
+		if err != nil {
+			t.Fatalf("unable to unzip spec %s", test.spec)
+		}
+		proto_filenames := make([]string, 0)
+		metadata_filenames := make([]string, 0)
+		for filename := range m {
+			if strings.HasSuffix(filename, ".proto") {
+				proto_filenames = append(proto_filenames, filename)
+			} else {
+				metadata_filenames = append(metadata_filenames, filename)
+			}
+		}
+		if len(proto_filenames) != test.want_proto_count {
+			t.Errorf("Archive contains incorrect number of proto files (%d, expected %d)",
+				len(proto_filenames),
+				test.want_proto_count)
+			sort.Strings(proto_filenames)
+			for i, s := range proto_filenames {
+				log.Printf("%d: %s", i, s)
+			}
+		}
+		if len(metadata_filenames) != test.want_metadata_count {
+			t.Errorf("Archive contains incorrect number of metadata files (%d, expected %d)",
+				len(metadata_filenames),
+				test.want_metadata_count)
+			sort.Strings(metadata_filenames)
+			for i, s := range metadata_filenames {
+				log.Printf("%d: %s", i, s)
+			}
 		}
 	}
 	// Delete the test project.
-	if false {
+	if true {
 		req := &rpc.DeleteProjectRequest{
 			Name:  projectName,
 			Force: true,
