@@ -16,6 +16,7 @@ package patch
 
 import (
 	"context"
+	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -29,6 +30,7 @@ import (
 func Apply(ctx context.Context, client connection.RegistryClient, path, parent string, recursive bool, taskQueue chan<- core.Task) error {
 	return filepath.WalkDir(path,
 		func(p string, entry fs.DirEntry, err error) error {
+			fmt.Printf("2 - %s\n", p)
 			if err != nil {
 				return err
 			} else if entry.IsDir() && p != path && !recursive {
