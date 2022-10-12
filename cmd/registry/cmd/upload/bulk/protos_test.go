@@ -144,14 +144,12 @@ func TestProtos(t *testing.T) {
 		}
 	}
 	// Delete the test project.
-	if true {
-		req := &rpc.DeleteProjectRequest{
-			Name:  projectName,
-			Force: true,
-		}
-		err = adminClient.DeleteProject(ctx, req)
-		if err != nil {
-			t.Fatalf("Failed to delete test project: %s", err)
-		}
+	req := &rpc.DeleteProjectRequest{
+		Name:  projectName,
+		Force: true,
+	}
+	err = adminClient.DeleteProject(ctx, req)
+	if err != nil {
+		t.Fatalf("Failed to delete test project: %s", err)
 	}
 }
