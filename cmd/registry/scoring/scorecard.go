@@ -99,7 +99,7 @@ func CalculateScoreCard(
 
 	// Generate ScoreCard if the definition has been updated
 	// This condition is required to avoid the scenario mentioned here: https://github.com/apigee/registry/issues/641
-	if scoreCardArtifact != nil && defArtifact.GetUpdateTime().AsTime().Add(patterns.ResourceUpdateThresholdSeconds).After(scoreCardArtifact.GetUpdateTime().AsTime()) {
+	if scoreCardArtifact != nil && defArtifact.GetUpdateTime().AsTime().Add(patterns.ResourceUpdateThreshold).After(scoreCardArtifact.GetUpdateTime().AsTime()) {
 		takeAction = true
 	}
 
@@ -165,7 +165,7 @@ func processScorePatterns(
 
 		// needsUpdate tells the calling function if the ScoreCard artifact needs to be updated
 		// This condition is required to avoid the scenario mentioned here: https://github.com/apigee/registry/issues/641
-		needsUpdate = needsUpdate || takeAction || artifact.GetUpdateTime().AsTime().Add(patterns.ResourceUpdateThresholdSeconds).After(scoreCardArtifact.GetUpdateTime().AsTime())
+		needsUpdate = needsUpdate || takeAction || artifact.GetUpdateTime().AsTime().Add(patterns.ResourceUpdateThreshold).After(scoreCardArtifact.GetUpdateTime().AsTime())
 		// Extract Score from the fetched artifact
 		score := &rpc.Score{}
 		if err := proto.Unmarshal(artifact.GetContents(), score); err != nil {

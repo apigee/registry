@@ -74,8 +74,6 @@ func scoreCommand() *cobra.Command {
 					}
 				}
 			}
-
-			return
 		},
 	}
 }

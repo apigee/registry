@@ -359,7 +359,7 @@ func needsUpdate(
 
 		// Take action if the target resource is less than n seconds newer compared to the dependencies, where n=thresholdSeconds.
 		// https://github.com/apigee/registry/issues/641
-		if maxUpdateTime.Add(patterns.ResourceUpdateThresholdSeconds).After(targetResourceTime) {
+		if maxUpdateTime.Add(patterns.ResourceUpdateThreshold).After(targetResourceTime) {
 			return true, nil
 		}
 	}

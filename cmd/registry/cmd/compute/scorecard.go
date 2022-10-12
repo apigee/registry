@@ -73,8 +73,6 @@ func scoreCardCommand() *cobra.Command {
 					}
 				}
 			}
-
-			return
 		},
 	}
 }
