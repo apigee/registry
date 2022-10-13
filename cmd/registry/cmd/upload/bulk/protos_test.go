@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2022 Google LLC. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -80,22 +80,22 @@ func TestProtos(t *testing.T) {
 		t.Fatalf("Execute() with args %+v returned error: %s", args, err)
 	}
 	tests := []struct {
-		desc                string
-		spec                string
-		want_proto_count    int
-		want_metadata_count int
+		desc              string
+		spec              string
+		wantProtoCount    int
+		wantMetadataCount int
 	}{
 		{
-			desc:                "Apigee Registry",
-			spec:                "apis/apigeeregistry/versions/v1/specs/google-cloud-apigeeregistry-v1.zip",
-			want_proto_count:    11,
-			want_metadata_count: 2,
+			desc:              "Apigee Registry",
+			spec:              "apis/apigeeregistry/versions/v1/specs/google-cloud-apigeeregistry-v1.zip",
+			wantProtoCount:    11,
+			wantMetadataCount: 2,
 		},
 		{
-			desc:                "Example Library",
-			spec:                "apis/library-example/versions/v1/specs/google-example-library-v1.zip",
-			want_proto_count:    6,
-			want_metadata_count: 3,
+			desc:              "Example Library",
+			spec:              "apis/library-example/versions/v1/specs/google-example-library-v1.zip",
+			wantProtoCount:    6,
+			wantMetadataCount: 3,
 		},
 	}
 	for _, test := range tests {
@@ -124,19 +124,19 @@ func TestProtos(t *testing.T) {
 				metadata_filenames = append(metadata_filenames, filename)
 			}
 		}
-		if len(proto_filenames) != test.want_proto_count {
+		if len(proto_filenames) != test.wantProtoCount {
 			t.Errorf("Archive contains incorrect number of proto files (%d, expected %d)",
 				len(proto_filenames),
-				test.want_proto_count)
+				test.wantProtoCount)
 			sort.Strings(proto_filenames)
 			for i, s := range proto_filenames {
 				log.Printf("%d: %s", i, s)
 			}
 		}
-		if len(metadata_filenames) != test.want_metadata_count {
+		if len(metadata_filenames) != test.wantMetadataCount {
 			t.Errorf("Archive contains incorrect number of metadata files (%d, expected %d)",
 				len(metadata_filenames),
-				test.want_metadata_count)
+				test.wantMetadataCount)
 			sort.Strings(metadata_filenames)
 			for i, s := range metadata_filenames {
 				log.Printf("%d: %s", i, s)
