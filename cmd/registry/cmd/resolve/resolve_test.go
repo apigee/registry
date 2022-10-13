@@ -20,6 +20,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/apigee/registry/cmd/registry/cmd/upload"
@@ -70,9 +71,9 @@ func TestResolve(t *testing.T) {
 			dryRun:       false,
 			listParent:   "projects/controller-demo/locations/global/apis/petstore/versions/-/specs/-",
 			want: []string{
-				"projects/controller-demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity",
-				"projects/controller-demo/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/complexity",
-				"projects/controller-demo/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/complexity",
+				"projects/controller-demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml@-s1-/artifacts/complexity",
+				"projects/controller-demo/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml@-s2-/artifacts/complexity",
+				"projects/controller-demo/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml@-s3-/artifacts/complexity",
 			},
 		},
 		{
@@ -81,9 +82,9 @@ func TestResolve(t *testing.T) {
 			dryRun:       false,
 			listParent:   "projects/controller-demo/locations/global/apis/petstore/versions/-/specs/-",
 			want: []string{
-				"projects/controller-demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/test-receipt-artifact",
-				"projects/controller-demo/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml/artifacts/test-receipt-artifact",
-				"projects/controller-demo/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml/artifacts/test-receipt-artifact",
+				"projects/controller-demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml@-s1-/artifacts/test-receipt-artifact",
+				"projects/controller-demo/locations/global/apis/petstore/versions/1.0.1/specs/openapi.yaml@-s2-/artifacts/test-receipt-artifact",
+				"projects/controller-demo/locations/global/apis/petstore/versions/1.1.0/specs/openapi.yaml@-s3-/artifacts/test-receipt-artifact",
 			},
 		},
 		{
@@ -186,7 +187,7 @@ func TestResolve(t *testing.T) {
 					Contents: buf.Bytes(),
 				},
 			}
-			_, err = client.CreateApiSpec(ctx, &rpc.CreateApiSpecRequest{
+			s1, err := client.CreateApiSpec(ctx, &rpc.CreateApiSpecRequest{
 				Parent:    v1.Name,
 				ApiSpecId: "openapi.yaml",
 				ApiSpec: &rpc.ApiSpec{
@@ -206,7 +207,7 @@ func TestResolve(t *testing.T) {
 					Contents: buf.Bytes(),
 				},
 			}
-			_, err = client.CreateApiSpec(ctx, &rpc.CreateApiSpecRequest{
+			s2, err := client.CreateApiSpec(ctx, &rpc.CreateApiSpecRequest{
 				Parent:    v2.Name,
 				ApiSpecId: "openapi.yaml",
 				ApiSpec: &rpc.ApiSpec{
@@ -226,7 +227,7 @@ func TestResolve(t *testing.T) {
 					Contents: buf.Bytes(),
 				},
 			}
-			_, err = client.CreateApiSpec(ctx, &rpc.CreateApiSpecRequest{
+			s3, err := client.CreateApiSpec(ctx, &rpc.CreateApiSpecRequest{
 				Parent:    v3.Name,
 				ApiSpecId: "openapi.yaml",
 				ApiSpec: &rpc.ApiSpec{
@@ -236,6 +237,13 @@ func TestResolve(t *testing.T) {
 			})
 			if err != nil {
 				t.Fatalf("Failed CreateApiSpec(%v): %s", req, err.Error())
+			}
+
+			// inject dynamic spec revisions
+			for i := range test.want {
+				test.want[i] = strings.ReplaceAll(test.want[i], "-s1-", s1.RevisionId)
+				test.want[i] = strings.ReplaceAll(test.want[i], "-s2-", s2.RevisionId)
+				test.want[i] = strings.ReplaceAll(test.want[i], "-s3-", s3.RevisionId)
 			}
 
 			// Upload the manifest to registry
@@ -266,9 +274,8 @@ func TestResolve(t *testing.T) {
 			got := make([]string, 0)
 			for artifact, err := it.Next(); err != iterator.Done; artifact, err = it.Next() {
 				if err != nil {
-					continue // TODO: Handle errors.
+					t.Fatalf("it.Next() returned error: %s", err)
 				}
-
 				got = append(got, artifact.Name)
 			}
 

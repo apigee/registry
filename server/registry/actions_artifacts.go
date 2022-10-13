@@ -36,6 +36,8 @@ type artifactParent interface {
 func parseArtifactParent(name string) (artifactParent, error) {
 	if s, err := names.ParseSpec(name); err == nil {
 		return s, nil
+	} else if v, err := names.ParseSpecRevision(name); err == nil {
+		return v, nil
 	} else if v, err := names.ParseVersion(name); err == nil {
 		return v, nil
 	} else if d, err := names.ParseDeployment(name); err == nil {
@@ -60,30 +62,38 @@ func (s *RegistryServer) CreateArtifact(ctx context.Context, req *rpc.CreateArti
 	if req.GetArtifact() == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid artifact %+v: body must be provided", req.GetArtifact())
 	}
-	// Artifact name must be valid.
-	name := parent.Artifact(req.GetArtifactId())
-	if err := name.Validate(); err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
-	}
 	var response *rpc.Artifact
 	if err := s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
 		// Creation should only succeed when the parent exists.
 		var err error
-		switch parent := parent.(type) {
+		switch typedParent := parent.(type) {
 		case names.Project:
-			_, err = db.LockProjects(ctx).GetProject(ctx, parent)
+			_, err = db.LockProjects(ctx).GetProject(ctx, typedParent)
 		case names.Api:
-			_, err = db.LockApis(ctx).GetApi(ctx, parent)
+			_, err = db.LockApis(ctx).GetApi(ctx, typedParent)
 		case names.Version:
-			_, err = db.LockVersions(ctx).GetVersion(ctx, parent)
+			_, err = db.LockVersions(ctx).GetVersion(ctx, typedParent)
 		case names.Spec:
-			_, err = db.LockSpecs(ctx).GetSpec(ctx, parent)
+			// assign to latest revision
+			var spec *models.Spec
+			spec, err = db.LockSpecs(ctx).GetSpec(ctx, typedParent)
+			if err == nil {
+				parent = parent.(names.Spec).Revision(spec.RevisionID)
+			}
+		case names.SpecRevision:
+			_, err = db.LockSpecs(ctx).GetSpecRevision(ctx, typedParent)
 		case names.Deployment:
-			_, err = db.LockDeployments(ctx).GetDeployment(ctx, parent)
+			_, err = db.LockDeployments(ctx).GetDeployment(ctx, typedParent)
 		}
 		if err != nil {
 			return err
 		}
+		// Artifact name must be valid.
+		name := parent.Artifact(req.GetArtifactId())
+		if err := name.Validate(); err != nil {
+			return status.Error(codes.InvalidArgument, err.Error())
+		}
+
 		artifact, err := models.NewArtifact(name, req.GetArtifact())
 		if err != nil {
 			return err
@@ -221,6 +231,13 @@ func (s *RegistryServer) ListArtifacts(ctx context.Context, req *rpc.ListArtifac
 		})
 	case names.Spec:
 		listing, err = db.ListSpecArtifacts(ctx, parent, storage.PageOptions{
+			Size:   req.GetPageSize(),
+			Filter: req.GetFilter(),
+			Order:  req.GetOrderBy(),
+			Token:  req.GetPageToken(),
+		})
+	case names.SpecRevision:
+		listing, err = db.ListSpecRevisionArtifacts(ctx, parent, storage.PageOptions{
 			Size:   req.GetPageSize(),
 			Filter: req.GetFilter(),
 			Order:  req.GetOrderBy(),

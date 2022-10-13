@@ -82,6 +82,48 @@ func (s SpecName) ParentName() ResourceName {
 	return VersionName{}
 }
 
+type SpecRevisionName struct {
+	Name names.SpecRevision
+}
+
+func (s SpecRevisionName) Artifact() string {
+	return ""
+}
+
+func (s SpecRevisionName) Spec() string {
+	return s.Name.Spec().String()
+}
+
+func (s SpecRevisionName) Version() string {
+	return s.Name.Version().String()
+}
+
+func (s SpecRevisionName) Api() string {
+	return s.Name.Api().String()
+}
+
+func (s SpecRevisionName) Project() string {
+	return s.Name.Project().String()
+}
+
+func (s SpecRevisionName) String() string {
+	return s.Name.String()
+}
+
+func (s SpecRevisionName) ParentName() ResourceName {
+	// Validate the parent name and return
+	if spec, err := names.ParseSpec(s.Name.Parent()); err == nil {
+		return SpecName{
+			Name: spec,
+		}
+	} else if spec, err := names.ParseSpecCollection(s.Name.Parent()); err == nil {
+		return SpecName{
+			Name: spec,
+		}
+	}
+	return VersionName{}
+}
+
 type VersionName struct {
 	Name names.Version
 }
@@ -317,9 +359,9 @@ func (ar ArtifactName) ParentName() ResourceName {
 		return VersionName{
 			Name: version,
 		}
-	} else if spec, err := names.ParseSpec(parent); err == nil {
-		return SpecName{
-			Name: spec,
+	} else if rev, err := names.ParseSpecRevision(parent); err == nil {
+		return SpecRevisionName{
+			Name: rev,
 		}
 	}
 
