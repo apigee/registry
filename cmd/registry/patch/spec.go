@@ -16,7 +16,6 @@ package patch
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -29,6 +28,7 @@ import (
 	"github.com/apigee/registry/pkg/models"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
+	"gopkg.in/yaml.v3"
 )
 
 func newApiSpec(message *rpc.ApiSpec) (*models.ApiSpec, error) {
@@ -55,15 +55,43 @@ func newApiSpec(message *rpc.ApiSpec) (*models.ApiSpec, error) {
 	}, nil
 }
 
+func applyApiSpecPatchBytes(
+	ctx context.Context,
+	client connection.RegistryClient,
+	bytes []byte,
+	parent string) error {
+	var spec models.ApiSpec
+	err := yaml.Unmarshal(bytes, &spec)
+	if err != nil {
+		return err
+	}
+	return applyApiSpecPatch(ctx, client, &spec, parent)
+}
+
+func specName(parentName, localName string) (names.Spec, error) {
+	var s string
+	if !strings.Contains(localName, "/") {
+		// if the name is a single segment, assume it's a spec id
+		s = parentName + "/specs/" + localName
+	} else {
+		// if the name contains multiple segments, assume its root is an API id
+		s = parentName + "/apis/" + localName
+	}
+	return names.ParseSpec(s)
+}
+
 func applyApiSpecPatch(
 	ctx context.Context,
 	client connection.RegistryClient,
 	spec *models.ApiSpec,
 	parent string) error {
-	name := fmt.Sprintf("%s/specs/%s", parent, spec.Metadata.Name)
+	name, err := specName(parent, spec.Metadata.Name)
+	if err != nil {
+		return err
+	}
 	req := &rpc.UpdateApiSpecRequest{
 		ApiSpec: &rpc.ApiSpec{
-			Name:        name,
+			Name:        name.String(),
 			Filename:    spec.Data.FileName,
 			Description: spec.Data.Description,
 			MimeType:    spec.Data.MimeType,
@@ -134,6 +162,6 @@ func applyApiSpecPatch(
 			}
 		}
 	}
-	_, err := client.UpdateApiSpec(ctx, req)
+	_, err = client.UpdateApiSpec(ctx, req)
 	return err
 }

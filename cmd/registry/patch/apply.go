@@ -16,7 +16,6 @@ package patch
 
 import (
 	"context"
-	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -30,7 +29,6 @@ import (
 func Apply(ctx context.Context, client connection.RegistryClient, path, parent string, recursive bool, taskQueue chan<- core.Task) error {
 	return filepath.WalkDir(path,
 		func(p string, entry fs.DirEntry, err error) error {
-			fmt.Printf("2 - %s\n", p)
 			if err != nil {
 				return err
 			} else if entry.IsDir() && p != path && !recursive {
@@ -77,7 +75,13 @@ func (task *applyFileTask) Run(ctx context.Context) error {
 	}
 	switch header.Kind {
 	case "API":
-		return applyApiPatch(ctx, task.client, bytes, task.parent)
+		return applyApiPatchBytes(ctx, task.client, bytes, task.parent)
+	case "Version":
+		return applyApiVersionPatchBytes(ctx, task.client, bytes, task.parent)
+	case "Spec":
+		return applyApiSpecPatchBytes(ctx, task.client, bytes, task.parent)
+	case "Deployment":
+		return applyApiDeploymentPatchBytes(ctx, task.client, bytes, task.parent)
 	default: // for everything else, try an artifact type
 		return applyArtifactPatchBytes(ctx, task.client, bytes, task.parent)
 	}

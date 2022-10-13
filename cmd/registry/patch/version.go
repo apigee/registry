@@ -16,7 +16,7 @@ package patch
 
 import (
 	"context"
-	"fmt"
+	"strings"
 
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/gapic"
@@ -24,6 +24,7 @@ import (
 	"github.com/apigee/registry/pkg/models"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
+	"gopkg.in/yaml.v3"
 )
 
 func newApiVersion(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiVersion) (*models.ApiVersion, error) {
@@ -66,15 +67,43 @@ func newApiVersion(ctx context.Context, client *gapic.RegistryClient, message *r
 	}, nil
 }
 
+func applyApiVersionPatchBytes(
+	ctx context.Context,
+	client connection.RegistryClient,
+	bytes []byte,
+	parent string) error {
+	var version models.ApiVersion
+	err := yaml.Unmarshal(bytes, &version)
+	if err != nil {
+		return err
+	}
+	return applyApiVersionPatch(ctx, client, &version, parent)
+}
+
+func versionName(parentName, localName string) (names.Version, error) {
+	var s string
+	if !strings.Contains(localName, "/") {
+		// if the name is a single segment, assume it's a version id
+		s = parentName + "/versions/" + localName
+	} else {
+		// if the name contains multiple segments, assume its root is an API id
+		s = parentName + "/apis/" + localName
+	}
+	return names.ParseVersion(s)
+}
+
 func applyApiVersionPatch(
 	ctx context.Context,
 	client connection.RegistryClient,
 	version *models.ApiVersion,
 	parent string) error {
-	name := fmt.Sprintf("%s/versions/%s", parent, version.Metadata.Name)
+	name, err := versionName(parent, version.Metadata.Name)
+	if err != nil {
+		return err
+	}
 	req := &rpc.UpdateApiVersionRequest{
 		ApiVersion: &rpc.ApiVersion{
-			Name:        name,
+			Name:        name.String(),
 			DisplayName: version.Data.DisplayName,
 			Description: version.Data.Description,
 			State:       version.Data.State,
@@ -83,12 +112,12 @@ func applyApiVersionPatch(
 		},
 		AllowMissing: true,
 	}
-	_, err := client.UpdateApiVersion(ctx, req)
+	_, err = client.UpdateApiVersion(ctx, req)
 	if err != nil {
 		return err
 	}
 	for _, specPatch := range version.Data.ApiSpecs {
-		err := applyApiSpecPatch(ctx, client, specPatch, name)
+		err := applyApiSpecPatch(ctx, client, specPatch, name.String())
 		if err != nil {
 			return err
 		}

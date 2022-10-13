@@ -22,6 +22,7 @@ import (
 	"github.com/apigee/registry/pkg/models"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
+	"gopkg.in/yaml.v3"
 )
 
 // relativeSpecRevisionName returns the versionid+specid if the spec is within the specified API
@@ -71,19 +72,39 @@ func newApiDeployment(message *rpc.ApiDeployment) (*models.ApiDeployment, error)
 	}, nil
 }
 
+func applyApiDeploymentPatchBytes(ctx context.Context, client connection.RegistryClient, bytes []byte, parent string) error {
+	var deployment models.ApiDeployment
+	err := yaml.Unmarshal(bytes, &deployment)
+	if err != nil {
+		return err
+	}
+	return applyApiDeploymentPatch(ctx, client, &deployment, parent)
+}
+
+func deploymentName(parentName, localName string) (names.Deployment, error) {
+	var s string
+	if !strings.Contains(localName, "/") {
+		// if the name is a single segment, assume it's a deployment id
+		s = parentName + "/deployments/" + localName
+	} else {
+		// if the name contains multiple segments, assume its root is an API id
+		s = parentName + "/apis/" + localName
+	}
+	return names.ParseDeployment(s)
+}
+
 func applyApiDeploymentPatch(
 	ctx context.Context,
 	client connection.RegistryClient,
 	deployment *models.ApiDeployment,
 	parent string) error {
-	apiName, err := names.ParseApi(parent)
+	name, err := deploymentName(parent, deployment.Metadata.Name)
 	if err != nil {
 		return err
 	}
-	deploymentName := apiName.Deployment(deployment.Metadata.Name)
 	req := &rpc.UpdateApiDeploymentRequest{
 		ApiDeployment: &rpc.ApiDeployment{
-			Name:               deploymentName.String(),
+			Name:               name.String(),
 			DisplayName:        deployment.Data.DisplayName,
 			Description:        deployment.Data.Description,
 			EndpointUri:        deployment.Data.EndpointURI,
@@ -95,7 +116,7 @@ func applyApiDeploymentPatch(
 		},
 		AllowMissing: true,
 	}
-	req.ApiDeployment.ApiSpecRevision = optionalSpecRevisionName(deploymentName, deployment.Data.ApiSpecRevision)
+	req.ApiDeployment.ApiSpecRevision = optionalSpecRevisionName(name, deployment.Data.ApiSpecRevision)
 	if err != nil {
 		return err
 	}

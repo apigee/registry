@@ -161,6 +161,18 @@ func applyArtifactPatchBytes(ctx context.Context, client connection.RegistryClie
 	return applyArtifactPatch(ctx, client, &artifact, parent)
 }
 
+func artifactName(parentName, localName string) (names.Artifact, error) {
+	var s string
+	if !strings.Contains(localName, "/") {
+		// if the name is a single segment, assume it's an artifact id
+		s = parentName + "/artifacts/" + localName
+	} else {
+		// if the name contains multiple segments, assume its root is an API id
+		s = parentName + "/apis/" + localName
+	}
+	return names.ParseArtifact(s)
+}
+
 func applyArtifactPatch(ctx context.Context, client connection.RegistryClient, content *models.Artifact, parent string) error {
 	// Restyle the YAML representation so that yaml.Marshal will marshal it as JSON.
 	styleForJSON(&content.Data)
@@ -189,14 +201,18 @@ func applyArtifactPatch(ctx context.Context, client connection.RegistryClient, c
 	if err != nil {
 		return err
 	}
+	name, err := artifactName(parent, content.Header.Metadata.Name)
+	if err != nil {
+		return err
+	}
 	artifact := &rpc.Artifact{
-		Name:     fmt.Sprintf("%s/artifacts/%s", parent, content.Header.Metadata.Name),
+		Name:     name.String(),
 		MimeType: MimeTypeForKind(content.Kind),
 		Contents: bytes,
 	}
 	req := &rpc.CreateArtifactRequest{
-		Parent:     parent,
-		ArtifactId: content.Header.Metadata.Name,
+		Parent:     name.Parent(),
+		ArtifactId: name.ArtifactID(),
 		Artifact:   artifact,
 	}
 	_, err = client.CreateArtifact(ctx, req)
