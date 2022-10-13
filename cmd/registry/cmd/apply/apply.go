@@ -36,6 +36,16 @@ func Command() *cobra.Command {
 		Args:  cobra.ExactArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := cmd.Context()
+			if parent == "" {
+				c, err := connection.ActiveConfig()
+				if err != nil {
+					log.FromContext(ctx).WithError(err).Fatal("Unable to identify parent: please use --parent or registry configuration")
+				}
+				parent, err = c.ProjectWithLocation()
+				if err != nil {
+					log.FromContext(ctx).WithError(err).Fatal("Unable to identify parent: please use --parent or set registy.project in configuration")
+				}
+			}
 			client, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
