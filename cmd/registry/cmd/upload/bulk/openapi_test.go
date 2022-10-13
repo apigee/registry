@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2022 Google LLC. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -76,24 +76,24 @@ func TestOpenAPI(t *testing.T) {
 		t.Fatalf("Execute() with args %+v returned error: %s", args, err)
 	}
 	tests := []struct {
-		desc      string
-		spec      string
-		want_type string
+		desc     string
+		spec     string
+		wantType string
 	}{
 		{
-			desc:      "Apigee Registry",
-			spec:      "apis/apigee-registry/versions/v1/specs/openapi.yaml",
-			want_type: "application/x.openapi;version=3",
+			desc:     "Apigee Registry",
+			spec:     "apis/apigee-registry/versions/v1/specs/openapi.yaml",
+			wantType: "application/x.openapi;version=3",
 		},
 		{
-			desc:      "Petstore OpenAPI",
-			spec:      "apis/petstore/versions/3.0/specs/openapi.yaml",
-			want_type: "application/x.openapi;version=3",
+			desc:     "Petstore OpenAPI",
+			spec:     "apis/petstore/versions/3.0/specs/openapi.yaml",
+			wantType: "application/x.openapi;version=3",
 		},
 		{
-			desc:      "Petstore Swagger",
-			spec:      "apis/petstore/versions/2.0/specs/swagger.yaml",
-			want_type: "application/x.openapi;version=2",
+			desc:     "Petstore Swagger",
+			spec:     "apis/petstore/versions/2.0/specs/swagger.yaml",
+			wantType: "application/x.openapi;version=2",
 		},
 	}
 	for _, test := range tests {
@@ -105,8 +105,8 @@ func TestOpenAPI(t *testing.T) {
 			t.Fatalf("unable to fetch spec %s", test.spec)
 		}
 		// Verify the content type.
-		if result.ContentType != test.want_type {
-			t.Errorf("Invalid mime type for %s: %s (wanted %s)", test.spec, result.ContentType, test.want_type)
+		if result.ContentType != test.wantType {
+			t.Errorf("Invalid mime type for %s: %s (wanted %s)", test.spec, result.ContentType, test.wantType)
 		}
 	}
 	// Delete the test project.
