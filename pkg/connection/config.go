@@ -15,6 +15,7 @@
 package connection
 
 import (
+	"errors"
 	"path"
 	"strings"
 
@@ -72,4 +73,14 @@ func (c Config) FQName(name string) string {
 		}
 	}
 	return name
+}
+
+func (c Config) ProjectWithLocation() (string, error) {
+	if c.Project == "" {
+		return "", errors.New("registry.project is not specified")
+	}
+	if c.Location == "" {
+		return "projects/" + c.Project + "/locations/global", nil
+	}
+	return "projects/" + c.Project + "/locations/" + c.Location, nil
 }
