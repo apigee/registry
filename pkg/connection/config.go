@@ -31,13 +31,39 @@ type Config struct {
 	Token    string `mapstructure:"token"`    // bearer token
 }
 
+// OverrideActiveConfigRegistryProject forces the active configuration to use the specified project.
+func OverrideActiveConfigRegistryProject(project string) {
+	// force the config to be read and cached
+	useCache = true
+	_, err := ActiveConfig()
+	if err == nil && cachedConfig != nil {
+		cachedConfig.Project = project
+	}
+}
+
+var cachedConfig *Config
+var useCache bool
+
+func ClearCachedConfig() {
+	cachedConfig = nil
+}
+
 // ActiveConfig returns the active config.
 func ActiveConfig() (Config, error) {
+	if cachedConfig != nil {
+		return *cachedConfig, nil
+	}
+
 	name, err := config.ActiveName()
 	if err != nil {
 		return Config{}, err
 	}
-	return ReadConfig(name)
+
+	c, err := ReadConfig(name)
+	if useCache {
+		cachedConfig = &c
+	}
+	return c, err
 }
 
 // Reads a Config from a file. If name is empty, no
