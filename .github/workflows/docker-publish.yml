@@ -35,7 +35,7 @@ env:
   DOCKER_REPOSITORY_OWNER: ${{github.repository_owner}}
 jobs:
   build-registry-server:
-    runs-on: ubuntu-2204
+    runs-on: ubuntu-22.04
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
@@ -49,7 +49,7 @@ jobs:
         file: containers/registry-server/Dockerfile
 
   build-registry-tools:
-    runs-on: ubuntu-2204
+    runs-on: ubuntu-22.04
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
@@ -63,7 +63,7 @@ jobs:
         file: containers/registry-tools/Dockerfile
 
   build-registry-envoy:
-    runs-on: ubuntu-2204
+    runs-on: ubuntu-22.04
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
