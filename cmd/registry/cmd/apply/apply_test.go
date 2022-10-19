@@ -174,7 +174,10 @@ func TestApplyProject(t *testing.T) {
 	}
 
 	// set the configured registry.project to the test project
-	config, _ := connection.ActiveConfig()
+	config, err := connection.ActiveConfig()
+	if err != nil {
+		t.Fatalf("Setup: Failed to get registry configuration: %s", err)
+	}
 	config.Project = project.ProjectID
 	connection.SetConfig(config)
 
