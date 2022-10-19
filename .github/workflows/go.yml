@@ -24,7 +24,7 @@ on:
 jobs:
   build:
     name: Build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-2204
     services:
       postgres:
         image: postgres:14.5
