@@ -174,7 +174,9 @@ func TestApplyProject(t *testing.T) {
 	}
 
 	// set the configured registry.project to the test project
-	connection.OverrideActiveConfigRegistryProject(project.ProjectID)
+	config, _ := connection.ActiveConfig()
+	config.Project = project.ProjectID
+	connection.SetConfig(config)
 
 	registryClient, err := connection.NewRegistryClient(ctx)
 	if err != nil {

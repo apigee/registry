@@ -31,27 +31,19 @@ type Config struct {
 	Token    string `mapstructure:"token"`    // bearer token
 }
 
-// OverrideActiveConfigRegistryProject forces the active configuration to use the specified project.
-func OverrideActiveConfigRegistryProject(project string) {
-	// force the config to be read and cached
-	useCache = true
-	_, err := ActiveConfig()
-	if err == nil && cachedConfig != nil {
-		cachedConfig.Project = project
-	}
-}
+// If set, ActiveConfig() returns this configuration.
+// This is intended for use in testing.
+var override *Config
 
-var cachedConfig *Config
-var useCache bool
-
-func ClearCachedConfig() {
-	cachedConfig = nil
+// SetConfig forces the active configuration to use the specified value.
+func SetConfig(config Config) {
+	override = &config
 }
 
 // ActiveConfig returns the active config.
 func ActiveConfig() (Config, error) {
-	if cachedConfig != nil {
-		return *cachedConfig, nil
+	if override != nil {
+		return *override, nil
 	}
 
 	name, err := config.ActiveName()
@@ -59,11 +51,7 @@ func ActiveConfig() (Config, error) {
 		return Config{}, err
 	}
 
-	c, err := ReadConfig(name)
-	if useCache {
-		cachedConfig = &c
-	}
-	return c, err
+	return ReadConfig(name)
 }
 
 // Reads a Config from a file. If name is empty, no
