@@ -15,6 +15,7 @@
 package connection
 
 import (
+	"errors"
 	"path"
 	"strings"
 
@@ -30,12 +31,26 @@ type Config struct {
 	Token    string `mapstructure:"token"`    // bearer token
 }
 
+// If set, ActiveConfig() returns this configuration.
+// This is intended for use in testing.
+var active *Config
+
+// SetConfig forces the active configuration to use the specified value.
+func SetConfig(config Config) {
+	active = &config
+}
+
 // ActiveConfig returns the active config.
 func ActiveConfig() (Config, error) {
+	if active != nil {
+		return *active, nil
+	}
+
 	name, err := config.ActiveName()
 	if err != nil {
 		return Config{}, err
 	}
+
 	return ReadConfig(name)
 }
 
@@ -72,4 +87,14 @@ func (c Config) FQName(name string) string {
 		}
 	}
 	return name
+}
+
+func (c Config) ProjectWithLocation() (string, error) {
+	if c.Project == "" {
+		return "", errors.New("registry.project is not specified")
+	}
+	if c.Location == "" {
+		return "projects/" + c.Project + "/locations/global", nil
+	}
+	return "projects/" + c.Project + "/locations/" + c.Location, nil
 }
