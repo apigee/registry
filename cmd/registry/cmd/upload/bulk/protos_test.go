@@ -29,6 +29,7 @@ import (
 )
 
 func TestProtos(t *testing.T) {
+	t.Skip("temporarily disabled due to flakiness")
 	const (
 		projectID   = "protos-test"
 		projectName = "projects/" + projectID
