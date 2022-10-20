@@ -17,6 +17,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/apigee/registry/cmd/registry/core"
@@ -24,6 +25,7 @@ import (
 	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry"
+	"github.com/apigee/registry/server/registry/names"
 	"github.com/apigee/registry/server/registry/test/seeder"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -615,9 +617,10 @@ func TestReceiptAggArtifacts(t *testing.T) {
 // Tests for manifest with multiple entity references
 func TestMultipleEntitiesArtifacts(t *testing.T) {
 	tests := []struct {
-		desc string
-		seed []seeder.RegistryResource
-		want []*Action
+		desc                              string
+		seed                              []seeder.RegistryResource
+		want                              []*Action
+		generatedResourceRequiresRevision bool
 	}{
 		{
 			desc: "create artifacts",
@@ -691,6 +694,7 @@ func TestMultipleEntitiesArtifacts(t *testing.T) {
 					RequiresReceipt:   true,
 				},
 			},
+			generatedResourceRequiresRevision: true,
 		},
 		{
 			desc: "missing dependencies",
@@ -773,6 +777,30 @@ func TestMultipleEntitiesArtifacts(t *testing.T) {
 				},
 			}
 			actions := ProcessManifest(ctx, lister, projectID, manifest, 10)
+
+			if test.generatedResourceRequiresRevision {
+				for i := range test.want {
+					gr := test.want[i].GeneratedResource
+					a, err := names.ParseArtifact(gr)
+					if err != nil {
+						t.Fatal("Failed to parse GeneratedResource", err)
+					}
+					sr := names.SpecRevision{
+						ProjectID:  a.ProjectID(),
+						ApiID:      a.ApiID(),
+						VersionID:  a.VersionID(),
+						SpecID:     a.SpecID(),
+						RevisionID: a.RevisionID(),
+					}
+					if err := core.GetSpecRevision(ctx, registryClient, sr, false, func(s *rpc.ApiSpec) error {
+						test.want[i].GeneratedResource = strings.ReplaceAll(test.want[i].GeneratedResource,
+							fmt.Sprintf("/%s/", a.SpecID()), fmt.Sprintf("/%s@%s/", a.SpecID(), s.GetRevisionId()))
+						return nil
+					}); err != nil {
+						t.Fatal("Failed GetSpecRevision", err)
+					}
+				}
+			}
 
 			if diff := cmp.Diff(test.want, actions, sortActions); diff != "" {
 				t.Errorf("ProcessManifest(%+v) returned unexpected diff (-want +got):\n%s", manifest, diff)

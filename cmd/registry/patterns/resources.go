@@ -16,6 +16,7 @@ package patterns
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/apigee/registry/cmd/registry/core"
@@ -41,7 +42,8 @@ type ResourceName interface {
 }
 
 type SpecName struct {
-	Name names.Spec
+	Name       names.Spec
+	RevisionID string
 }
 
 func (s SpecName) Artifact() string {
@@ -50,6 +52,10 @@ func (s SpecName) Artifact() string {
 
 func (s SpecName) Spec() string {
 	return s.Name.String()
+}
+
+func (s SpecName) Revision() string {
+	return s.RevisionID
 }
 
 func (s SpecName) Version() string {
@@ -65,7 +71,11 @@ func (s SpecName) Project() string {
 }
 
 func (s SpecName) String() string {
-	return s.Name.String()
+	str := s.Name.String()
+	if s.Revision() != "" {
+		str = fmt.Sprintf("%s@%s", str, s.Revision())
+	}
+	return str
 }
 
 func (s SpecName) ParentName() ResourceName {
@@ -320,6 +330,10 @@ func (ar ArtifactName) ParentName() ResourceName {
 	} else if spec, err := names.ParseSpec(parent); err == nil {
 		return SpecName{
 			Name: spec,
+		}
+	} else if rev, err := names.ParseSpecRevision(parent); err == nil {
+		return SpecName{
+			Name: rev.Spec(),
 		}
 	}
 

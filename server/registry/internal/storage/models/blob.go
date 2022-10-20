@@ -58,6 +58,7 @@ func NewBlobForArtifact(artifact *Artifact, contents []byte) *Blob {
 		ApiID:        artifact.ApiID,
 		VersionID:    artifact.VersionID,
 		SpecID:       artifact.SpecID,
+		RevisionID:   artifact.RevisionID,
 		DeploymentID: artifact.DeploymentID,
 		ArtifactID:   artifact.ArtifactID,
 		Hash:         artifact.Hash,

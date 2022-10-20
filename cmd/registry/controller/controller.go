@@ -233,10 +233,11 @@ func generateUpdateActions(
 // The filter excludes resources whose `name` property is equal to any of the visited parent names.
 //
 // For example, consider a visited map of parents which are apis:
-// {
-//     "projects/demo/locations/global/apis/example-api1": true,
-//     "projects/demo/locations/global/apis/example-api2": true,
-// }
+//
+//	{
+//	    "projects/demo/locations/global/apis/example-api1": true,
+//	    "projects/demo/locations/global/apis/example-api2": true,
+//	}
 //
 // The resulting CEL filter will be:
 // ["projects/demo/locations/global/apis/example-api1","projects/demo/locations/global/apis/example-api2"].all(parent, !(name==parent))
