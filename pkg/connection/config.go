@@ -33,17 +33,17 @@ type Config struct {
 
 // If set, ActiveConfig() returns this configuration.
 // This is intended for use in testing.
-var override *Config
+var active *Config
 
 // SetConfig forces the active configuration to use the specified value.
 func SetConfig(config Config) {
-	override = &config
+	active = &config
 }
 
 // ActiveConfig returns the active config.
 func ActiveConfig() (Config, error) {
-	if override != nil {
-		return *override, nil
+	if active != nil {
+		return *active, nil
 	}
 
 	name, err := config.ActiveName()
