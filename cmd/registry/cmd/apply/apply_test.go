@@ -173,6 +173,14 @@ func TestApplyProject(t *testing.T) {
 		t.Fatalf("Setup: Failed to create test project: %s", err)
 	}
 
+	// set the configured registry.project to the test project
+	config, err := connection.ActiveConfig()
+	if err != nil {
+		t.Fatalf("Setup: Failed to get registry configuration: %s", err)
+	}
+	config.Project = project.ProjectID
+	connection.SetConfig(config)
+
 	registryClient, err := connection.NewRegistryClient(ctx)
 	if err != nil {
 		t.Fatalf("Setup: Failed to create registry client: %s", err)
@@ -180,7 +188,7 @@ func TestApplyProject(t *testing.T) {
 	defer registryClient.Close()
 
 	cmd := Command()
-	cmd.SetArgs([]string{"-f", sampleDir, "-R", "--parent", project.String() + "/locations/global"})
+	cmd.SetArgs([]string{"-f", sampleDir, "-R"})
 	if err := cmd.Execute(); err != nil {
 		t.Fatalf("Execute() with args %+v returned error: %s", cmd.Args, err)
 	}
