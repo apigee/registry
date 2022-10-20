@@ -65,22 +65,21 @@ func defaultTestServer(t *testing.T) TestServer {
 	if hostedProject != "" {
 		p := remote.NewProxyForHostedService(hostedProject)
 		if err = p.Open(context.Background()); err != nil {
-			t.Fatalf("Fatalf: failed to connect to remote server: %s", err)
+			t.Fatalf("Setup: failed to connect to remote server: %s", err)
 		}
 		return p
 	}
 	if useRemote {
 		p := &remote.Proxy{}
 		if err = p.Open(context.Background()); err != nil {
-			t.Fatalf("Fatalf: failed to connect to remote server: %s", err)
+			t.Fatalf("Setup: failed to connect to remote server: %s", err)
 		}
 		return p
 	}
 	if usePostgres {
 		server, err = serverWithPostgres(t)
 		if err != nil {
-			t.Errorf("Setup: failed to get server with postgres: %s", err)
-			t.Log("Falling back to server with SQLite storage")
+			t.Fatalf("Setup: failed to get server with postgres: %s", err)
 		}
 	}
 	if server == nil {
