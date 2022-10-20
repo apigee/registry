@@ -26,6 +26,24 @@ import (
 	"github.com/apigee/registry/pkg/connection"
 )
 
+type PatchGroup struct {
+	apiTasks        []*applyFileTask
+	versionTasks    []*applyFileTask
+	specTasks       []*applyFileTask
+	deploymentTasks []*applyFileTask
+	artifactTasks   []*applyFileTask
+}
+
+func NewPatchGroup() *PatchGroup {
+	return &PatchGroup{
+		apiTasks:        make([]*applyFileTask, 0),
+		versionTasks:    make([]*applyFileTask, 0),
+		specTasks:       make([]*applyFileTask, 0),
+		deploymentTasks: make([]*applyFileTask, 0),
+		artifactTasks:   make([]*applyFileTask, 0),
+	}
+}
+
 func Apply(ctx context.Context, client connection.RegistryClient, path, parent string, recursive bool, taskQueue chan<- core.Task) error {
 	return filepath.WalkDir(path,
 		func(p string, entry fs.DirEntry, err error) error {
