@@ -133,7 +133,7 @@ func TestCreateApiVersionResponseCodes(t *testing.T) {
 				ApiVersionId: "valid-id",
 				ApiVersion:   &rpc.ApiVersion{},
 			},
-			want: codes.NotFound,
+			want: codes.InvalidArgument,
 		},
 		{
 			desc: "missing resource body",

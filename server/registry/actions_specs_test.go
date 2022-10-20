@@ -155,7 +155,7 @@ func TestCreateApiSpecResponseCodes(t *testing.T) {
 				ApiSpecId: "valid-id",
 				ApiSpec:   &rpc.ApiSpec{},
 			},
-			want: codes.NotFound,
+			want: codes.InvalidArgument,
 		},
 		{
 			desc: "missing resource body",
