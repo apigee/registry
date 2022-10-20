@@ -139,7 +139,7 @@ func TestCreateApiResponseCodes(t *testing.T) {
 				ApiId:  "valid-id",
 				Api:    &rpc.Api{},
 			},
-			want: codes.InvalidArgument,
+			want: codes.FailedPrecondition,
 		},
 		{
 			desc: "missing resource body",

@@ -82,6 +82,9 @@ func (s *RegistryServer) CreateArtifact(ctx context.Context, req *rpc.CreateArti
 			_, err = db.LockDeployments(ctx).GetDeployment(ctx, parent)
 		}
 		if err != nil {
+			if isNotFound(err) {
+				return status.Error(codes.FailedPrecondition, err.Error())
+			}
 			return err
 		}
 		artifact, err := models.NewArtifact(name, req.GetArtifact())

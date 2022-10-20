@@ -133,7 +133,7 @@ func TestCreateApiDeploymentResponseCodes(t *testing.T) {
 				ApiDeploymentId: "valid-id",
 				ApiDeployment:   &rpc.ApiDeployment{},
 			},
-			want: codes.InvalidArgument,
+			want: codes.FailedPrecondition,
 		},
 		{
 			desc: "missing resource body",

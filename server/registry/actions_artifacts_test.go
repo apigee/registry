@@ -206,7 +206,7 @@ func TestCreateArtifactResponseCodes(t *testing.T) {
 				ArtifactId: "valid-id",
 				Artifact:   &rpc.Artifact{},
 			},
-			want: codes.NotFound,
+			want: codes.FailedPrecondition,
 		},
 		{
 			desc: "parent api not found",
@@ -216,7 +216,7 @@ func TestCreateArtifactResponseCodes(t *testing.T) {
 				ArtifactId: "valid-id",
 				Artifact:   &rpc.Artifact{},
 			},
-			want: codes.NotFound,
+			want: codes.FailedPrecondition,
 		},
 		{
 			desc: "parent version not found",
@@ -226,7 +226,7 @@ func TestCreateArtifactResponseCodes(t *testing.T) {
 				ArtifactId: "valid-id",
 				Artifact:   &rpc.Artifact{},
 			},
-			want: codes.NotFound,
+			want: codes.FailedPrecondition,
 		},
 		{
 			desc: "parent spec not found",
@@ -236,7 +236,7 @@ func TestCreateArtifactResponseCodes(t *testing.T) {
 				ArtifactId: "valid-id",
 				Artifact:   &rpc.Artifact{},
 			},
-			want: codes.NotFound,
+			want: codes.FailedPrecondition,
 		},
 		{
 			desc: "parent deployment not found",
@@ -246,7 +246,7 @@ func TestCreateArtifactResponseCodes(t *testing.T) {
 				ArtifactId: "valid-id",
 				Artifact:   &rpc.Artifact{},
 			},
-			want: codes.NotFound,
+			want: codes.FailedPrecondition,
 		},
 		{
 			desc: "missing resource body",
