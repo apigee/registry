@@ -77,7 +77,7 @@ func grpcErrorForDBError(ctx context.Context, err error) error {
 		} else if v.Code.Name() == "query_canceled" {
 			return status.Error(codes.Canceled, cause.Error())
 		} else if v.Code.Name() == "foreign_key_violation" {
-			return status.Error(codes.NotFound, cause.Error())
+			return status.Error(codes.InvalidArgument, cause.Error())
 		}
 		log.Infof(ctx, "Unhandled %T %+v code=%s name=%s", v, v, v.Code, v.Code.Name())
 	case *net.OpError:
