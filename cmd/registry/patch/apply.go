@@ -52,11 +52,11 @@ func Apply(ctx context.Context, client connection.RegistryClient, path, parent s
 }
 
 type patchGroup struct {
-	apiTasks        []*applyFileTask
-	versionTasks    []*applyFileTask
-	specTasks       []*applyFileTask
-	deploymentTasks []*applyFileTask
-	artifactTasks   []*applyFileTask
+	apiTasks        []core.Task
+	versionTasks    []core.Task
+	specTasks       []core.Task
+	deploymentTasks []core.Task
+	artifactTasks   []core.Task
 }
 
 func (p *patchGroup) add(task *applyFileTask) error {
@@ -86,7 +86,7 @@ func (p *patchGroup) add(task *applyFileTask) error {
 
 func (p *patchGroup) run(ctx context.Context, jobs int) error {
 	// Apply each resource type independently in order of ownership (parents first).
-	for _, tasks := range [][]*applyFileTask{
+	for _, tasks := range [][]core.Task{
 		p.apiTasks,
 		p.versionTasks,
 		p.specTasks,
