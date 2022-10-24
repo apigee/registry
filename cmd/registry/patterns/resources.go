@@ -54,7 +54,7 @@ func (s SpecName) Spec() string {
 	return s.Name.String()
 }
 
-func (s SpecName) Revision() string {
+func (s SpecName) revision() string {
 	return s.RevisionID
 }
 
@@ -72,8 +72,8 @@ func (s SpecName) Project() string {
 
 func (s SpecName) String() string {
 	str := s.Name.String()
-	if s.Revision() != "" {
-		str = fmt.Sprintf("%s@%s", str, s.Revision())
+	if s.revision() != "" {
+		str = fmt.Sprintf("%s@%s", str, s.revision())
 	}
 	return str
 }
@@ -308,6 +308,11 @@ func (ar ArtifactName) ParentName() ResourceName {
 		return SpecName{
 			Name: spec,
 		}
+	} else if rev, err := names.ParseSpecRevisionCollection(parent); err == nil {
+		return SpecName{
+			Name:       rev.Spec(),
+			RevisionID: rev.RevisionID,
+		}
 	}
 
 	// Then try to match resource names.
@@ -333,7 +338,8 @@ func (ar ArtifactName) ParentName() ResourceName {
 		}
 	} else if rev, err := names.ParseSpecRevision(parent); err == nil {
 		return SpecName{
-			Name: rev.Spec(),
+			Name:       rev.Spec(),
+			RevisionID: rev.RevisionID,
 		}
 	}
 
