@@ -44,8 +44,74 @@ func NewPatchGroup() *PatchGroup {
 	}
 }
 
-func Apply(ctx context.Context, client connection.RegistryClient, path, parent string, recursive bool, taskQueue chan<- core.Task) error {
-	return filepath.WalkDir(path,
+func (p *PatchGroup) add(task *applyFileTask) error {
+	bytes, err := os.ReadFile(task.path)
+	if err != nil {
+		return err
+	}
+	header, err := readHeader(bytes)
+	if err != nil {
+		return err
+	}
+	switch header.Kind {
+	case "API":
+		p.apiTasks = append(p.apiTasks, task)
+	case "Version":
+		p.versionTasks = append(p.versionTasks, task)
+	case "Spec":
+		p.specTasks = append(p.specTasks, task)
+	case "Deployment":
+		p.deploymentTasks = append(p.deploymentTasks, task)
+	default: // for everything else, try an artifact type
+		p.artifactTasks = append(p.artifactTasks, task)
+	}
+	return nil
+}
+
+func (p *PatchGroup) run(ctx context.Context, jobs int) error {
+	log.FromContext(ctx).Infof("Applying Patch Group %+v", p)
+
+	if len(p.apiTasks) > 0 {
+		taskQueue, wait := core.WorkerPool(ctx, 64)
+		for _, task := range p.apiTasks {
+			taskQueue <- task
+			wait()
+		}
+	}
+	if len(p.versionTasks) > 0 {
+		taskQueue, wait := core.WorkerPool(ctx, 64)
+		for _, task := range p.versionTasks {
+			taskQueue <- task
+			wait()
+		}
+	}
+	if len(p.specTasks) > 0 {
+		taskQueue, wait := core.WorkerPool(ctx, 64)
+		for _, task := range p.specTasks {
+			taskQueue <- task
+		}
+		wait()
+	}
+	if len(p.deploymentTasks) > 0 {
+		taskQueue, wait := core.WorkerPool(ctx, 64)
+		for _, task := range p.deploymentTasks {
+			taskQueue <- task
+		}
+		wait()
+	}
+	if len(p.artifactTasks) > 0 {
+		taskQueue, wait := core.WorkerPool(ctx, 64)
+		for _, task := range p.artifactTasks {
+			taskQueue <- task
+		}
+		wait()
+	}
+	return nil
+}
+
+func Apply(ctx context.Context, client connection.RegistryClient, path, parent string, recursive bool, jobs int) error {
+	patches := NewPatchGroup()
+	err := filepath.WalkDir(path,
 		func(p string, entry fs.DirEntry, err error) error {
 			if err != nil {
 				return err
@@ -54,21 +120,23 @@ func Apply(ctx context.Context, client connection.RegistryClient, path, parent s
 			} else if entry.IsDir() {
 				return nil // Do nothing for the directory, but still walk its contents.
 			}
-			return applyFile(ctx, client, p, parent, taskQueue)
+			return applyFile(ctx, client, p, parent, patches)
 		})
+	if err != nil {
+		return err
+	}
+	return patches.run(ctx, jobs)
 }
 
-func applyFile(ctx context.Context, client connection.RegistryClient, fileName, parent string, taskQueue chan<- core.Task) error {
+func applyFile(ctx context.Context, client connection.RegistryClient, fileName, parent string, patches *PatchGroup) error {
 	if !strings.HasSuffix(fileName, ".yaml") {
 		return nil
 	}
-	// Create an upload job for each API.
-	taskQueue <- &applyFileTask{
+	return patches.add(&applyFileTask{
 		client: client,
 		path:   fileName,
 		parent: parent,
-	}
-	return nil
+	})
 }
 
 type applyFileTask struct {

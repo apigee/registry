@@ -32,6 +32,7 @@ import (
 )
 
 const sampleDir = "testdata/sample"
+const unbundledSampleDir = "testdata/unbundled"
 
 // TestMain will set up a local RegistryServer and grpc.Server for all
 // tests in this package if APG_REGISTRY_ADDRESS env var is not set
@@ -189,6 +190,106 @@ func TestApplyProject(t *testing.T) {
 
 	cmd := Command()
 	cmd.SetArgs([]string{"-f", sampleDir, "-R"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("Execute() with args %+v returned error: %s", cmd.Args, err)
+	}
+
+	filename := sampleDir + "/apis/registry.yaml"
+	expected, err := os.ReadFile(filename)
+	if err != nil {
+		t.Fatalf("Failed to read API YAML: %s", err)
+	}
+
+	got, err := registryClient.GetApi(ctx, &rpc.GetApiRequest{
+		Name: project.Api("registry").String(),
+	})
+	if err != nil {
+		t.Fatalf("failed to get api: %s", err)
+	}
+
+	actual, _, err := patch.ExportAPI(ctx, registryClient, got)
+	if err != nil {
+		t.Fatalf("ExportApi(%+v) returned an error: %s", got, err)
+	}
+
+	if diff := cmp.Diff(expected, actual); diff != "" {
+		t.Errorf("GetApi(%q) returned unexpected diff: (-want +got):\n%s", got, diff)
+	}
+
+	artifacts := []string{"lifecycle", "manifest", "taxonomies"}
+	for _, a := range artifacts {
+		filename := fmt.Sprintf("%s/artifacts/%s.yaml", sampleDir, a)
+		expected, err := os.ReadFile(filename)
+		if err != nil {
+			t.Fatalf("Failed to read artifact YAML %s", err)
+		}
+
+		message, err := registryClient.GetArtifact(ctx, &rpc.GetArtifactRequest{
+			Name: project.Artifact(a).String(),
+		})
+		if status.Code(err) == codes.NotFound {
+			t.Fatalf("Expected artifact doesn't exist: %s", err)
+		} else if err != nil {
+			t.Fatalf("Failed to verify artifact existence: %s", err)
+		}
+
+		actual, _, err := patch.ExportArtifact(ctx, registryClient, message)
+		if err != nil {
+			t.Fatalf("ExportArtifact(%+v) returned an error: %s", message, err)
+		}
+
+		if diff := cmp.Diff(expected, actual); diff != "" {
+			t.Errorf("GetArtifact(%q) returned unexpected diff: (-want +got):\n%s", message, diff)
+		}
+	}
+
+	if err := adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{
+		Name:  project.String(),
+		Force: true,
+	}); err != nil {
+		t.Logf("Cleanup: Failed to delete test project: %s", err)
+	}
+}
+
+func TestApplyProjectUnbundled(t *testing.T) {
+	ctx := context.Background()
+	adminClient, err := connection.NewAdminClient(ctx)
+	if err != nil {
+		t.Fatalf("Setup: failed to create client: %+v", err)
+	}
+	defer adminClient.Close()
+
+	project := names.Project{ProjectID: "apply-project-unbundled"}
+	if err = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{
+		Name:  project.String(),
+		Force: true,
+	}); err != nil && status.Code(err) != codes.NotFound {
+		t.Errorf("Setup: failed to delete test project: %s", err)
+	}
+
+	if _, err := adminClient.CreateProject(ctx, &rpc.CreateProjectRequest{
+		ProjectId: project.ProjectID,
+		Project:   &rpc.Project{},
+	}); err != nil {
+		t.Fatalf("Setup: Failed to create test project: %s", err)
+	}
+
+	// set the configured registry.project to the test project
+	config, err := connection.ActiveConfig()
+	if err != nil {
+		t.Fatalf("Setup: Failed to get registry configuration: %s", err)
+	}
+	config.Project = project.ProjectID
+	connection.SetConfig(config)
+
+	registryClient, err := connection.NewRegistryClient(ctx)
+	if err != nil {
+		t.Fatalf("Setup: Failed to create registry client: %s", err)
+	}
+	defer registryClient.Close()
+
+	cmd := Command()
+	cmd.SetArgs([]string{"-f", unbundledSampleDir, "-R"})
 	if err := cmd.Execute(); err != nil {
 		t.Fatalf("Execute() with args %+v returned error: %s", cmd.Args, err)
 	}
