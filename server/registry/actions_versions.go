@@ -170,22 +170,23 @@ func (s *RegistryServer) UpdateApiVersion(ctx context.Context, req *rpc.UpdateAp
 	}
 	var response *rpc.ApiVersion
 	if err = s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
-		version, err := models.NewVersion(name, req.GetApiVersion())
-		if err != nil {
-			return err
-		}
-		mask := models.ExpandMask(req.GetApiVersion(), req.GetUpdateMask())
-		if err := db.SaveVersion(ctx, version, mask); err != nil {
-			if status.Code(err) == codes.NotFound && req.GetAllowMissing() {
-				response, err = s.createApiVersion(ctx, db, name, req.GetApiVersion())
-				if status.Convert(err).Code() == codes.AlreadyExists {
-					err = status.Error(codes.Aborted, err.Error())
-				}
+		db.LockVersions(ctx)
+		version, err := db.GetVersion(ctx, name)
+		if err == nil {
+			if err := version.Update(req.GetApiVersion(), models.ExpandMask(req.GetApiVersion(), req.GetUpdateMask())); err != nil {
+				return status.Error(codes.Internal, err.Error())
 			}
+			if err := db.SaveVersion(ctx, version); err != nil {
+				return err
+			}
+			response, err = version.Message()
+			return err
+		} else if status.Code(err) == codes.NotFound && req.GetAllowMissing() {
+			response, err = s.createApiVersion(ctx, db, name, req.GetApiVersion())
+			return err
+		} else {
 			return err
 		}
-		response, err = version.Message()
-		return err
 	}); err != nil {
 		return nil, err
 	}

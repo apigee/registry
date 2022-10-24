@@ -1125,6 +1125,68 @@ func TestUpdateApiVersionResponseCodes(t *testing.T) {
 	}
 }
 
+func TestUpdateApiVersionSequence(t *testing.T) {
+	tests := []struct {
+		desc string
+		req  *rpc.UpdateApiVersionRequest
+		want codes.Code
+	}{
+		{
+			desc: "create using update with allow_missing=false",
+			req: &rpc.UpdateApiVersionRequest{
+				ApiVersion: &rpc.ApiVersion{
+					Name: "projects/my-project/locations/global/apis/a/versions/v",
+				},
+				AllowMissing: false,
+			},
+			want: codes.NotFound,
+		},
+		{
+			desc: "create using update with allow_missing=true",
+			req: &rpc.UpdateApiVersionRequest{
+				ApiVersion: &rpc.ApiVersion{
+					Name: "projects/my-project/locations/global/apis/a/versions/v",
+				},
+				AllowMissing: true,
+			},
+			want: codes.OK,
+		},
+		{
+			desc: "update existing resource with allow_missing=true",
+			req: &rpc.UpdateApiVersionRequest{
+				ApiVersion: &rpc.ApiVersion{
+					Name: "projects/my-project/locations/global/apis/a/versions/v",
+				},
+				AllowMissing: true,
+			},
+			want: codes.OK,
+		},
+		{
+			desc: "update existing resource with allow_missing=false",
+			req: &rpc.UpdateApiVersionRequest{
+				ApiVersion: &rpc.ApiVersion{
+					Name: "projects/my-project/locations/global/apis/a/versions/v",
+				},
+				AllowMissing: true,
+			},
+			want: codes.OK,
+		},
+	}
+	ctx := context.Background()
+	server := defaultTestServer(t)
+	seed := &rpc.Api{Name: "projects/my-project/locations/global/apis/a"}
+	if err := seeder.SeedApis(ctx, server, seed); err != nil {
+		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+	}
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			if _, err := server.UpdateApiVersion(ctx, test.req); status.Code(err) != test.want {
+				t.Errorf("UpdateApiVersion(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
+			}
+		})
+	}
+}
+
 func TestDeleteApiVersion(t *testing.T) {
 	tests := []struct {
 		desc string
