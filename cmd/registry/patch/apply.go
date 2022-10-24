@@ -26,6 +26,31 @@ import (
 	"github.com/apigee/registry/pkg/connection"
 )
 
+func Apply(ctx context.Context, client connection.RegistryClient, path, parent string, recursive bool, jobs int) error {
+	patches := newPatchGroup()
+	err := filepath.WalkDir(path,
+		func(fileName string, entry fs.DirEntry, err error) error {
+			if err != nil {
+				return err
+			} else if entry.IsDir() && fileName != path && !recursive {
+				return filepath.SkipDir // Skip the directory and contents.
+			} else if entry.IsDir() {
+				return nil // Do nothing for the directory, but still walk its contents.
+			} else if !strings.HasSuffix(fileName, ".yaml") {
+				return nil // Skip everything that's not a YAML file.
+			}
+			return patches.add(&applyFileTask{
+				client: client,
+				path:   fileName,
+				parent: parent,
+			})
+		})
+	if err != nil {
+		return err
+	}
+	return patches.run(ctx, jobs)
+}
+
 type patchGroup struct {
 	apiTasks        []*applyFileTask
 	versionTasks    []*applyFileTask
@@ -108,36 +133,6 @@ func (p *patchGroup) run(ctx context.Context, jobs int) error {
 		wait()
 	}
 	return nil
-}
-
-func Apply(ctx context.Context, client connection.RegistryClient, path, parent string, recursive bool, jobs int) error {
-	patches := newPatchGroup()
-	err := filepath.WalkDir(path,
-		func(p string, entry fs.DirEntry, err error) error {
-			if err != nil {
-				return err
-			} else if entry.IsDir() && p != path && !recursive {
-				return filepath.SkipDir // Skip the directory and contents.
-			} else if entry.IsDir() {
-				return nil // Do nothing for the directory, but still walk its contents.
-			}
-			return applyFile(ctx, client, p, parent, patches)
-		})
-	if err != nil {
-		return err
-	}
-	return patches.run(ctx, jobs)
-}
-
-func applyFile(ctx context.Context, client connection.RegistryClient, fileName, parent string, patches *patchGroup) error {
-	if !strings.HasSuffix(fileName, ".yaml") {
-		return nil
-	}
-	return patches.add(&applyFileTask{
-		client: client,
-		path:   fileName,
-		parent: parent,
-	})
 }
 
 type applyFileTask struct {
