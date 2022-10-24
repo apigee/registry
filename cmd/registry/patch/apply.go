@@ -26,7 +26,7 @@ import (
 	"github.com/apigee/registry/pkg/connection"
 )
 
-type PatchGroup struct {
+type patchGroup struct {
 	apiTasks        []*applyFileTask
 	versionTasks    []*applyFileTask
 	specTasks       []*applyFileTask
@@ -34,8 +34,8 @@ type PatchGroup struct {
 	artifactTasks   []*applyFileTask
 }
 
-func NewPatchGroup() *PatchGroup {
-	return &PatchGroup{
+func newPatchGroup() *patchGroup {
+	return &patchGroup{
 		apiTasks:        make([]*applyFileTask, 0),
 		versionTasks:    make([]*applyFileTask, 0),
 		specTasks:       make([]*applyFileTask, 0),
@@ -44,7 +44,7 @@ func NewPatchGroup() *PatchGroup {
 	}
 }
 
-func (p *PatchGroup) add(task *applyFileTask) error {
+func (p *patchGroup) add(task *applyFileTask) error {
 	bytes, err := os.ReadFile(task.path)
 	if err != nil {
 		return err
@@ -53,7 +53,8 @@ func (p *PatchGroup) add(task *applyFileTask) error {
 	if err != nil {
 		return err
 	}
-	switch header.Kind {
+	task.kind = header.Kind
+	switch task.kind {
 	case "API":
 		p.apiTasks = append(p.apiTasks, task)
 	case "Version":
@@ -68,7 +69,7 @@ func (p *PatchGroup) add(task *applyFileTask) error {
 	return nil
 }
 
-func (p *PatchGroup) run(ctx context.Context, jobs int) error {
+func (p *patchGroup) run(ctx context.Context, jobs int) error {
 	log.FromContext(ctx).Infof("Applying Patch Group %+v", p)
 
 	if len(p.apiTasks) > 0 {
@@ -110,7 +111,7 @@ func (p *PatchGroup) run(ctx context.Context, jobs int) error {
 }
 
 func Apply(ctx context.Context, client connection.RegistryClient, path, parent string, recursive bool, jobs int) error {
-	patches := NewPatchGroup()
+	patches := newPatchGroup()
 	err := filepath.WalkDir(path,
 		func(p string, entry fs.DirEntry, err error) error {
 			if err != nil {
@@ -128,7 +129,7 @@ func Apply(ctx context.Context, client connection.RegistryClient, path, parent s
 	return patches.run(ctx, jobs)
 }
 
-func applyFile(ctx context.Context, client connection.RegistryClient, fileName, parent string, patches *PatchGroup) error {
+func applyFile(ctx context.Context, client connection.RegistryClient, fileName, parent string, patches *patchGroup) error {
 	if !strings.HasSuffix(fileName, ".yaml") {
 		return nil
 	}
@@ -143,6 +144,7 @@ type applyFileTask struct {
 	client connection.RegistryClient
 	path   string
 	parent string
+	kind   string
 }
 
 func (task *applyFileTask) String() string {
@@ -155,11 +157,7 @@ func (task *applyFileTask) Run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	header, err := readHeader(bytes)
-	if err != nil {
-		return err
-	}
-	switch header.Kind {
+	switch task.kind {
 	case "API":
 		return applyApiPatchBytes(ctx, task.client, bytes, task.parent)
 	case "Version":
