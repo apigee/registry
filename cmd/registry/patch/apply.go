@@ -27,7 +27,7 @@ import (
 )
 
 func Apply(ctx context.Context, client connection.RegistryClient, path, parent string, recursive bool, jobs int) error {
-	patches := newPatchGroup()
+	patches := &patchGroup{}
 	err := filepath.WalkDir(path,
 		func(fileName string, entry fs.DirEntry, err error) error {
 			if err != nil {
@@ -57,16 +57,6 @@ type patchGroup struct {
 	specTasks       []*applyFileTask
 	deploymentTasks []*applyFileTask
 	artifactTasks   []*applyFileTask
-}
-
-func newPatchGroup() *patchGroup {
-	return &patchGroup{
-		apiTasks:        make([]*applyFileTask, 0),
-		versionTasks:    make([]*applyFileTask, 0),
-		specTasks:       make([]*applyFileTask, 0),
-		deploymentTasks: make([]*applyFileTask, 0),
-		artifactTasks:   make([]*applyFileTask, 0),
-	}
 }
 
 func (p *patchGroup) add(task *applyFileTask) error {
