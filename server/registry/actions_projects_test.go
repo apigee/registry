@@ -991,6 +991,67 @@ func TestUpdateProjectResponseCodes(t *testing.T) {
 	}
 }
 
+func TestUpdateProjectSequence(t *testing.T) {
+	if adminServiceUnavailable() {
+		t.Skip(testRequiresAdminService)
+	}
+	tests := []struct {
+		desc string
+		req  *rpc.UpdateProjectRequest
+		want codes.Code
+	}{
+		{
+			desc: "create using update with allow_missing=false",
+			req: &rpc.UpdateProjectRequest{
+				Project: &rpc.Project{
+					Name: "projects/my-project",
+				},
+				AllowMissing: false,
+			},
+			want: codes.NotFound,
+		},
+		{
+			desc: "create using update with allow_missing=true",
+			req: &rpc.UpdateProjectRequest{
+				Project: &rpc.Project{
+					Name: "projects/my-project",
+				},
+				AllowMissing: true,
+			},
+			want: codes.OK,
+		},
+		{
+			desc: "update existing resource with allow_missing=true",
+			req: &rpc.UpdateProjectRequest{
+				Project: &rpc.Project{
+					Name: "projects/my-project",
+				},
+				AllowMissing: true,
+			},
+			want: codes.OK,
+		},
+		{
+			desc: "update existing resource with allow_missing=false",
+			req: &rpc.UpdateProjectRequest{
+				Project: &rpc.Project{
+					Name: "projects/my-project",
+				},
+				AllowMissing: true,
+			},
+			want: codes.OK,
+		},
+	}
+	ctx := context.Background()
+	server := defaultTestServer(t)
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			if _, err := server.UpdateProject(ctx, test.req); status.Code(err) != test.want {
+				t.Errorf("UpdateProject(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
+			}
+		})
+	}
+}
+
 func TestDeleteProject(t *testing.T) {
 	if adminServiceUnavailable() {
 		t.Skip(testRequiresAdminService)
