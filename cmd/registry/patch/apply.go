@@ -95,42 +95,21 @@ func (p *patchGroup) add(task *applyFileTask) error {
 }
 
 func (p *patchGroup) run(ctx context.Context, jobs int) error {
-	log.FromContext(ctx).Infof("Applying Patch Group %+v", p)
-
-	if len(p.apiTasks) > 0 {
-		taskQueue, wait := core.WorkerPool(ctx, 64)
-		for _, task := range p.apiTasks {
-			taskQueue <- task
+	// Apply each resource type independently in order of ownership (parents first).
+	for _, tasks := range [][]*applyFileTask{
+		p.apiTasks,
+		p.versionTasks,
+		p.specTasks,
+		p.deploymentTasks,
+		p.artifactTasks,
+	} {
+		if len(tasks) > 0 {
+			taskQueue, wait := core.WorkerPool(ctx, jobs)
+			for _, task := range tasks {
+				taskQueue <- task
+			}
 			wait()
 		}
-	}
-	if len(p.versionTasks) > 0 {
-		taskQueue, wait := core.WorkerPool(ctx, 64)
-		for _, task := range p.versionTasks {
-			taskQueue <- task
-			wait()
-		}
-	}
-	if len(p.specTasks) > 0 {
-		taskQueue, wait := core.WorkerPool(ctx, 64)
-		for _, task := range p.specTasks {
-			taskQueue <- task
-		}
-		wait()
-	}
-	if len(p.deploymentTasks) > 0 {
-		taskQueue, wait := core.WorkerPool(ctx, 64)
-		for _, task := range p.deploymentTasks {
-			taskQueue <- task
-		}
-		wait()
-	}
-	if len(p.artifactTasks) > 0 {
-		taskQueue, wait := core.WorkerPool(ctx, 64)
-		for _, task := range p.artifactTasks {
-			taskQueue <- task
-		}
-		wait()
 	}
 	return nil
 }
