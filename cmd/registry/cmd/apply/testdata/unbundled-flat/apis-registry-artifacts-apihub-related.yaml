@@ -1,0 +1,18 @@
+apiVersion: apigeeregistry/v1
+kind: ReferenceList
+metadata:
+  name: registry/artifacts/apihub-related
+data:
+  displayName: ""
+  description: Defines a list of related resources
+  references:
+    - id: github
+      displayName: GitHub Repo
+      category: apihub-source-code
+      resource: ""
+      uri: https://github.com/apigee/registry
+    - id: docs
+      displayName: GitHub Documentation
+      category: apihub-other
+      resource: ""
+      uri: https://apigee.github.io/registry/
