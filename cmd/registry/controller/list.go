@@ -14,6 +14,7 @@ type listingClient interface {
 	ListAPIs(context.Context, names.Api, string, core.ApiHandler) error
 	ListVersions(context.Context, names.Version, string, core.VersionHandler) error
 	ListSpecs(context.Context, names.Spec, string, core.SpecHandler) error
+	ListSpecRevisions(context.Context, names.SpecRevision, string, core.SpecHandler) error
 	ListArtifacts(context.Context, names.Artifact, string, bool, core.ArtifactHandler) error
 }
 
@@ -33,6 +34,10 @@ func (r *RegistryLister) ListSpecs(ctx context.Context, spec names.Spec, filter 
 	return core.ListSpecs(ctx, r.RegistryClient, spec, filter, handler)
 }
 
+func (r *RegistryLister) ListSpecRevisions(ctx context.Context, rev names.SpecRevision, filter string, handler core.SpecHandler) error {
+	return core.ListSpecRevisions(ctx, r.RegistryClient, rev, filter, handler)
+}
+
 func (r *RegistryLister) ListArtifacts(ctx context.Context, artifact names.Artifact, filter string, contents bool, handler core.ArtifactHandler) error {
 	return core.ListArtifacts(ctx, r.RegistryClient, artifact, filter, contents, handler)
 }
@@ -48,6 +53,8 @@ func listResources(ctx context.Context, client listingClient, pattern, filter st
 		err2 = client.ListVersions(ctx, version, filter, generateVersionHandler(&result))
 	} else if spec, err := names.ParseSpecCollection(pattern); err == nil {
 		err2 = client.ListSpecs(ctx, spec, filter, generateSpecHandler(&result))
+	} else if rev, err := names.ParseSpecRevisionCollection(pattern); err == nil {
+		err2 = client.ListSpecRevisions(ctx, rev, filter, generateSpecHandler(&result))
 	} else if artifact, err := names.ParseArtifactCollection(pattern); err == nil {
 		err2 = client.ListArtifacts(ctx, artifact, filter, false, generateArtifactHandler(&result))
 	}
@@ -59,6 +66,8 @@ func listResources(ctx context.Context, client listingClient, pattern, filter st
 		err2 = client.ListVersions(ctx, version, filter, generateVersionHandler(&result))
 	} else if spec, err := names.ParseSpec(pattern); err == nil {
 		err2 = client.ListSpecs(ctx, spec, filter, generateSpecHandler(&result))
+	} else if rev, err := names.ParseSpecRevision(pattern); err == nil {
+		err2 = client.ListSpecRevisions(ctx, rev, filter, generateSpecHandler(&result))
 	} else if artifact, err := names.ParseArtifact(pattern); err == nil {
 		err2 = client.ListArtifacts(ctx, artifact, filter, false, generateArtifactHandler(&result))
 	}

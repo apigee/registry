@@ -23,6 +23,7 @@ import (
 	"github.com/apigee/registry/cmd/registry/patterns"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/server/registry/names"
 )
 
 type Action struct {
@@ -204,9 +205,13 @@ func generateUpdateActions(
 		// if the pattern doesn't explicitly ask for revisions, ignore them
 		if !includeRevisions {
 			switch r := pn.(type) {
-			case patterns.SpecName:
-				r.RevisionID = ""
-				pn = r
+			case patterns.SpecRevisionName:
+				s, err := names.ParseSpec(r.Spec())
+				if err != nil {
+					log.Errorf(ctx, "%s", err)
+					continue
+				}
+				pn = patterns.SpecName{Name: s}
 			}
 		}
 		visited[pn.String()] = true

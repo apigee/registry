@@ -66,6 +66,20 @@ func (f *fakeLister) ListSpecs(ctx context.Context, spec names.Spec, filter stri
 	return nil
 }
 
+func (f *fakeLister) ListSpecRevisions(ctx context.Context, rev names.SpecRevision, filter string, handler core.SpecHandler) error {
+	for _, s := range f.specs {
+		name, _ := names.ParseSpecRevision(s.GetName())
+		if strings.Contains(filter, name.Parent()) || (rev.RevisionID != "-" && name.RevisionID != rev.RevisionID) {
+			continue
+		}
+
+		if err := handler(s); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (f *fakeLister) ListArtifacts(ctx context.Context, artifact names.Artifact, filter string, contents bool, handler core.ArtifactHandler) error {
 	for _, a := range f.artifacts {
 		name, _ := names.ParseArtifact(a.GetName())

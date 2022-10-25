@@ -623,7 +623,7 @@ func TestMultipleEntitiesArtifacts(t *testing.T) {
 		generatedResourceRequiresRevision bool
 	}{
 		{
-			desc: "create artifacts",
+			desc: "create latest spec revision artifacts",
 			seed: []seeder.RegistryResource{
 				&rpc.Artifact{
 					Name:     "projects/controller-test/locations/global/artifacts/registry-styleguide",
@@ -659,7 +659,7 @@ func TestMultipleEntitiesArtifacts(t *testing.T) {
 			},
 		},
 		{
-			desc: "outdated artifacts",
+			desc: "outdated lastest spec revision artifacts",
 			seed: []seeder.RegistryResource{
 				&rpc.Artifact{
 					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/conformance-registry-styleguide",
@@ -697,7 +697,7 @@ func TestMultipleEntitiesArtifacts(t *testing.T) {
 			generatedResourceRequiresRevision: true,
 		},
 		{
-			desc: "missing dependencies",
+			desc: "missing latest spec revision dependencies",
 			seed: []seeder.RegistryResource{
 				&rpc.Artifact{
 					Name:     "projects/controller-test/locations/global/artifacts/registry-styleguide",
