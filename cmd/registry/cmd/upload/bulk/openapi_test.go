@@ -34,7 +34,6 @@ func TestMain(m *testing.M) {
 }
 
 func TestOpenAPI(t *testing.T) {
-	t.Skip("temporarily disabled due to flakiness")
 	const (
 		projectID   = "openapi-test"
 		projectName = "projects/" + projectID

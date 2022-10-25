@@ -170,22 +170,23 @@ func (s *RegistryServer) UpdateApi(ctx context.Context, req *rpc.UpdateApiReques
 	}
 	var response *rpc.Api
 	if err := s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
-		api, err := models.NewApi(name, req.GetApi())
-		if err != nil {
-			return err
-		}
-		mask := models.ExpandMask(req.GetApi(), req.GetUpdateMask())
-		if err := db.SaveApi(ctx, api, mask); err != nil {
-			if status.Code(err) == codes.NotFound && req.GetAllowMissing() {
-				response, err = s.createApi(ctx, db, name, req.GetApi())
-				if status.Code(err) == codes.AlreadyExists {
-					err = status.Error(codes.Aborted, err.Error())
-				}
+		db.LockApis(ctx)
+		api, err := db.GetApi(ctx, name)
+		if err == nil {
+			if err := api.Update(req.GetApi(), models.ExpandMask(req.GetApi(), req.GetUpdateMask())); err != nil {
+				return err
 			}
+			if err := db.SaveApi(ctx, api); err != nil {
+				return err
+			}
+			response, err = api.Message()
+			return err
+		} else if status.Code(err) == codes.NotFound && req.GetAllowMissing() {
+			response, err = s.createApi(ctx, db, name, req.GetApi())
+			return err
+		} else {
 			return err
 		}
-		response, err = api.Message()
-		return err
 	}); err != nil {
 		return nil, err
 	}
