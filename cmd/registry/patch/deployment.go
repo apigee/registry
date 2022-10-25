@@ -81,16 +81,12 @@ func applyApiDeploymentPatchBytes(ctx context.Context, client connection.Registr
 	return applyApiDeploymentPatch(ctx, client, &deployment, parent)
 }
 
-func deploymentName(parentName, localName string) (names.Deployment, error) {
-	var s string
-	if !strings.Contains(localName, "/") {
-		// if the name is a single segment, assume it's a deployment id
-		s = parentName + "/deployments/" + localName
-	} else {
-		// if the name contains multiple segments, assume its root is an API id
-		s = parentName + "/apis/" + localName
+func deploymentName(parent, deploymentID string) (names.Deployment, error) {
+	api, err := names.ParseApi(parent)
+	if err != nil {
+		return names.Deployment{}, err
 	}
-	return names.ParseDeployment(s)
+	return api.Deployment(deploymentID), nil
 }
 
 func applyApiDeploymentPatch(

@@ -68,16 +68,12 @@ func applyApiSpecPatchBytes(
 	return applyApiSpecPatch(ctx, client, &spec, parent)
 }
 
-func specName(parentName, localName string) (names.Spec, error) {
-	var s string
-	if !strings.Contains(localName, "/") {
-		// if the name is a single segment, assume it's a spec id
-		s = parentName + "/specs/" + localName
-	} else {
-		// if the name contains multiple segments, assume its root is an API id
-		s = parentName + "/apis/" + localName
+func specName(parent, specID string) (names.Spec, error) {
+	version, err := names.ParseVersion(parent)
+	if err != nil {
+		return names.Spec{}, err
 	}
-	return names.ParseSpec(s)
+	return version.Spec(specID), nil
 }
 
 func applyApiSpecPatch(

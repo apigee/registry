@@ -1,7 +1,8 @@
 apiVersion: apigeeregistry/v1
 kind: Spec
 metadata:
-  name: registry/versions/v1/specs/openapi.yaml
+  name: openapi.yaml
+  parent: apis/registry/versions/v1
   labels:
     openapi-verified: "true"
   annotations:

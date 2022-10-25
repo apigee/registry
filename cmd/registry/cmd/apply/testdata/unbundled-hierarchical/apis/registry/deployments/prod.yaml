@@ -1,7 +1,8 @@
 apiVersion: apigeeregistry/v1
 kind: Deployment
 metadata:
-  name: registry/deployments/prod
+  name: prod
+  parent: apis/registry
   labels:
     platform: google
   annotations:

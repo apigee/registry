@@ -16,7 +16,6 @@ package patch
 
 import (
 	"context"
-	"strings"
 
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/gapic"
@@ -80,16 +79,12 @@ func applyApiVersionPatchBytes(
 	return applyApiVersionPatch(ctx, client, &version, parent)
 }
 
-func versionName(parentName, localName string) (names.Version, error) {
-	var s string
-	if !strings.Contains(localName, "/") {
-		// if the name is a single segment, assume it's a version id
-		s = parentName + "/versions/" + localName
-	} else {
-		// if the name contains multiple segments, assume its root is an API id
-		s = parentName + "/apis/" + localName
+func versionName(parent, versionID string) (names.Version, error) {
+	api, err := names.ParseApi(parent)
+	if err != nil {
+		return names.Version{}, err
 	}
-	return names.ParseVersion(s)
+	return api.Version(versionID), nil
 }
 
 func applyApiVersionPatch(

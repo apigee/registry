@@ -1,7 +1,8 @@
 apiVersion: apigeeregistry/v1
 kind: Version
 metadata:
-  name: registry/versions/v1
+  name: v1
+  parent: apis/registry
   labels:
     apihub-team: apigee
   annotations:

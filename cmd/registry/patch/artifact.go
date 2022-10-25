@@ -161,16 +161,8 @@ func applyArtifactPatchBytes(ctx context.Context, client connection.RegistryClie
 	return applyArtifactPatch(ctx, client, &artifact, parent)
 }
 
-func artifactName(parentName, localName string) (names.Artifact, error) {
-	var s string
-	if !strings.Contains(localName, "/") {
-		// if the name is a single segment, assume it's an artifact id
-		s = parentName + "/artifacts/" + localName
-	} else {
-		// if the name contains multiple segments, assume its root is an API id
-		s = parentName + "/apis/" + localName
-	}
-	return names.ParseArtifact(s)
+func artifactName(parent, artifactID string) (names.Artifact, error) {
+	return names.ParseArtifact(parent + "/artifacts/" + artifactID)
 }
 
 func applyArtifactPatch(ctx context.Context, client connection.RegistryClient, content *models.Artifact, parent string) error {

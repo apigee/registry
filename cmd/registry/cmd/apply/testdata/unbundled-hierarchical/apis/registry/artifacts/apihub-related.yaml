@@ -1,7 +1,8 @@
 apiVersion: apigeeregistry/v1
 kind: ReferenceList
 metadata:
-  name: registry/artifacts/apihub-related
+  name: apihub-related
+  parent: apis/registry
 data:
   displayName: ""
   description: Defines a list of related resources
