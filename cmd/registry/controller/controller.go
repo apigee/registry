@@ -195,9 +195,21 @@ func generateUpdateActions(
 		return nil, nil, err
 	}
 
+	includeRevisions := strings.Contains(resourcePattern, "@")
+
 	// Iterate over a list of existing target resources to generate update actions
 	for _, targetResource := range resourceList {
-		visited[targetResource.ResourceName().ParentName().String()] = true
+		pn := targetResource.ResourceName().ParentName()
+
+		// if the pattern doesn't explicitly ask for revisions, ignore them
+		if !includeRevisions {
+			switch r := pn.(type) {
+			case patterns.SpecName:
+				r.RevisionID = ""
+				pn = r
+			}
+		}
+		visited[pn.String()] = true
 
 		takeAction, err := needsUpdate(
 			targetResource.ResourceName(),
