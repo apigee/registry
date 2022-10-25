@@ -22,6 +22,9 @@ import (
 var specRevisionRegexp = regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/versions/%s/specs/%s(?:@%s)?$",
 	identifier, Location, identifier, identifier, identifier, revisionTag))
 
+var specRevisionCollectionRegexp = regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/versions/%s/specs@$",
+	identifier, Location, identifier, identifier))
+
 // SpecRevision represents a resource name for an API spec revision.
 type SpecRevision struct {
 	ProjectID  string
@@ -110,4 +113,23 @@ func ParseSpecRevision(name string) (SpecRevision, error) {
 	}
 
 	return revision, nil
+}
+
+// ParseSpecRevisionCollection parses the name of a spec revision collection.
+func ParseSpecRevisionCollection(name string) (SpecRevision, error) {
+	r := specRevisionCollectionRegexp
+	if !r.MatchString(name) {
+		return SpecRevision{}, fmt.Errorf("invalid spec revision collection name %q: must match %q", name, r)
+	}
+
+	m := r.FindStringSubmatch(name)
+	rev := SpecRevision{
+		ProjectID:  m[1],
+		ApiID:      m[2],
+		VersionID:  m[3],
+		SpecID:     m[4],
+		RevisionID: "-",
+	}
+
+	return rev, nil
 }
