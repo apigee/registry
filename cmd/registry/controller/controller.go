@@ -23,7 +23,6 @@ import (
 	"github.com/apigee/registry/cmd/registry/patterns"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/server/registry/names"
 )
 
 type Action struct {
@@ -196,25 +195,9 @@ func generateUpdateActions(
 		return nil, nil, err
 	}
 
-	includeRevisions := strings.Contains(resourcePattern, "@")
-
 	// Iterate over a list of existing target resources to generate update actions
 	for _, targetResource := range resourceList {
-		pn := targetResource.ResourceName().ParentName()
-
-		// if the pattern doesn't explicitly ask for revisions, ignore them
-		if !includeRevisions {
-			switch r := pn.(type) {
-			case patterns.SpecRevisionName:
-				s, err := names.ParseSpec(r.Spec())
-				if err != nil {
-					log.Errorf(ctx, "%s", err)
-					continue
-				}
-				pn = patterns.SpecName{Name: s}
-			}
-		}
-		visited[pn.String()] = true
+		visited[targetResource.ResourceName().ParentName().String()] = true
 
 		takeAction, err := needsUpdate(
 			targetResource.ResourceName(),
@@ -264,7 +247,8 @@ func excludeVisitedParents(v map[string]bool) string {
 	// Wrap each string with quotes and join them with commas to build a JSON string array.
 	jsonStrings := make([]string, 0, len(v))
 	for parent := range v {
-		jsonStrings = append(jsonStrings, fmt.Sprintf("%q", parent))
+		// filter ignores revisions
+		jsonStrings = append(jsonStrings, fmt.Sprintf("%q", strings.Split(parent, "@")[0]))
 	}
 	return fmt.Sprintf("[%s].all(parent, !(name==parent))", strings.Join(jsonStrings, ","))
 }
