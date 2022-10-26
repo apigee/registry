@@ -533,18 +533,14 @@ func (c *Client) ListSpecs(ctx context.Context, parent names.Version, opts PageO
 		return SpecList{}, err
 	}
 
-	// Select all columns from `specs` table specifically.
-	// We do not want to select duplicates from the joined subquery result.
-	op := c.db.WithContext(ctx).Select("specs.*").
-		Table("specs").
-		// Join missing columns that couldn't be selected in the subquery.
-		Joins("JOIN (?) AS grp ON specs.project_id = grp.project_id AND specs.api_id = grp.api_id AND specs.version_id = grp.version_id AND specs.spec_id = grp.spec_id AND specs.revision_create_time = grp.recent_create_time",
-			// Select spec names and only their most recent revision_create_time
-			// This query cannot select all the columns we want.
-			// See: https://stackoverflow.com/questions/7745609/sql-select-only-rows-with-max-value-on-a-column
-			c.db.WithContext(ctx).Select("project_id, api_id, version_id, spec_id, MAX(revision_create_time) AS recent_create_time").
-				Table("specs").
-				Group("project_id, api_id, version_id, spec_id")).
+	op := c.db.WithContext(ctx).Select("specs.*").Table("specs").
+		// select latest spec revision
+		Joins(`join (?) latest
+		ON specs.project_id = latest.project_id
+		AND specs.api_id = latest.api_id
+		AND specs.version_id = latest.version_id
+		AND specs.spec_id = latest.spec_id
+		AND specs.revision_id = latest.revision_id`, c.latestSpecRevisionsQuery(ctx)).
 		Limit(limit(opts))
 
 	if parent.ProjectID != "-" {
