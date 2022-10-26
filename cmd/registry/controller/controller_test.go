@@ -792,8 +792,10 @@ func TestMultipleEntitiesArtifacts(t *testing.T) {
 						SpecID:    a.SpecID(),
 					}
 					if err := core.GetSpec(ctx, registryClient, sr, false, func(s *rpc.ApiSpec) error {
+						test.want[i].Command = strings.ReplaceAll(test.want[i].Command,
+							fmt.Sprintf("/%s", a.SpecID()), fmt.Sprintf("/%s@%s", a.SpecID(), s.GetRevisionId()))
 						test.want[i].GeneratedResource = strings.ReplaceAll(test.want[i].GeneratedResource,
-							fmt.Sprintf("/%s/", a.SpecID()), fmt.Sprintf("/%s@%s/", a.SpecID(), s.GetRevisionId()))
+							fmt.Sprintf("/%s", a.SpecID()), fmt.Sprintf("/%s@%s", a.SpecID(), s.GetRevisionId()))
 						return nil
 					}); err != nil {
 						t.Fatal("Failed GetSpecRevision", err)

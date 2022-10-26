@@ -171,7 +171,10 @@ func generateCommand(action string, resourceName string) (string, error) {
 		case "version":
 			entityVal = resource.Version()
 		case "spec":
-			entityVal = resource.Spec()
+			entityVal = resource.SpecRevision()
+			if entityVal == "" {
+				entityVal = resource.Spec()
+			}
 		case "artifact":
 			entityVal = resource.Artifact()
 		}
