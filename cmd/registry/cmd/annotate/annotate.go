@@ -100,8 +100,6 @@ func matchAndHandleAnnotateCmd(
 		return annotateVersions(ctx, client, version, filter, labeling, taskQueue)
 	} else if spec, err := names.ParseSpecCollection(name); err == nil {
 		return annotateSpecs(ctx, client, spec, filter, labeling, taskQueue)
-	} else if rev, err := names.ParseSpecRevisionCollection(name); err == nil {
-		return annotateSpecRevisions(ctx, client, rev, filter, labeling, taskQueue)
 	} else if deployment, err := names.ParseDeploymentCollection(name); err == nil {
 		return annotateDeployments(ctx, client, deployment, filter, labeling, taskQueue)
 	}
@@ -161,23 +159,6 @@ func annotateSpecs(
 	labeling *core.Labeling,
 	taskQueue chan<- core.Task) error {
 	return core.ListSpecs(ctx, client, spec, filterFlag, func(spec *rpc.ApiSpec) error {
-		taskQueue <- &annotateSpecTask{
-			client:   client,
-			spec:     spec,
-			labeling: labeling,
-		}
-		return nil
-	})
-}
-
-func annotateSpecRevisions(
-	ctx context.Context,
-	client *gapic.RegistryClient,
-	rev names.SpecRevision,
-	filterFlag string,
-	labeling *core.Labeling,
-	taskQueue chan<- core.Task) error {
-	return core.ListSpecRevisions(ctx, client, rev, filterFlag, func(spec *rpc.ApiSpec) error {
 		taskQueue <- &annotateSpecTask{
 			client:   client,
 			spec:     spec,

@@ -15,6 +15,7 @@
 package controller
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/apigee/registry/rpc"
@@ -28,32 +29,32 @@ func TestGenerateCommand(t *testing.T) {
 		resourceName string
 		want         string
 	}{
-		// {
-		// 	desc:         "api reference",
-		// 	action:       "compute lintstats $resource.api --linter=gnostic",
-		// 	resourceName: "projects/demo/locations/global/apis/petstore/artifacts/lintstats-gnostic",
-		// 	want:         "compute lintstats projects/demo/locations/global/apis/petstore --linter=gnostic",
-		// },
-		// {
-		// 	desc:         "version reference",
-		// 	action:       "compute lintstats $resource.version --linter=gnostic",
-		// 	resourceName: "projects/demo/locations/global/apis/petstore/versions/1.0.0/artifacts/lintstats-gnostic",
-		// 	want:         "compute lintstats projects/demo/locations/global/apis/petstore/versions/1.0.0 --linter=gnostic",
-		// },
-		// {
-		// 	desc:         "spec reference",
-		// 	action:       "compute lint $resource.spec --linter=gnostic",
-		// 	resourceName: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic",
-		// 	want:         "compute lint projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml --linter=gnostic",
-		// },
-		// {
-		// 	desc:         "multiple args",
-		// 	action:       "compute score $resource.spec/artifacts/complexity $resource.spec/artifacts/vocabulary",
-		// 	resourceName: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score",
-		// 	want: fmt.Sprintf("compute score %s %s",
-		// 		"projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity",
-		// 		"projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/vocabulary"),
-		// },
+		{
+			desc:         "api reference",
+			action:       "compute lintstats $resource.api --linter=gnostic",
+			resourceName: "projects/demo/locations/global/apis/petstore/artifacts/lintstats-gnostic",
+			want:         "compute lintstats projects/demo/locations/global/apis/petstore --linter=gnostic",
+		},
+		{
+			desc:         "version reference",
+			action:       "compute lintstats $resource.version --linter=gnostic",
+			resourceName: "projects/demo/locations/global/apis/petstore/versions/1.0.0/artifacts/lintstats-gnostic",
+			want:         "compute lintstats projects/demo/locations/global/apis/petstore/versions/1.0.0 --linter=gnostic",
+		},
+		{
+			desc:         "spec reference",
+			action:       "compute lint $resource.spec --linter=gnostic",
+			resourceName: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-gnostic",
+			want:         "compute lint projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml --linter=gnostic",
+		},
+		{
+			desc:         "multiple args",
+			action:       "compute score $resource.spec/artifacts/complexity $resource.spec/artifacts/vocabulary",
+			resourceName: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/score",
+			want: fmt.Sprintf("compute score %s %s",
+				"projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/complexity",
+				"projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/vocabulary"),
+		},
 		{
 			desc:         "extended reference",
 			action:       "compute score $resource.spec/artifacts/complexity",

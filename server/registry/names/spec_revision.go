@@ -84,7 +84,7 @@ func (s SpecRevision) Artifact(id string) Artifact {
 
 // Parent returns this resource's parent version resource name.
 func (s SpecRevision) Parent() string {
-	return s.Spec().String()
+	return s.Spec().Parent()
 }
 
 func (s SpecRevision) String() string {

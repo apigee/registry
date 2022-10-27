@@ -33,7 +33,6 @@ const ResourceUpdateThreshold = time.Second * 2
 type ResourceName interface {
 	Artifact() string
 	Spec() string
-	SpecRevision() string
 	Version() string
 	Api() string
 	Project() string
@@ -42,7 +41,8 @@ type ResourceName interface {
 }
 
 type SpecName struct {
-	Name names.Spec
+	Name       names.Spec
+	RevisionID string
 }
 
 func (s SpecName) Artifact() string {
@@ -50,11 +50,7 @@ func (s SpecName) Artifact() string {
 }
 
 func (s SpecName) Spec() string {
-	return s.Name.String()
-}
-
-func (s SpecName) SpecRevision() string {
-	return ""
+	return s.String()
 }
 
 func (s SpecName) Version() string {
@@ -70,56 +66,14 @@ func (s SpecName) Project() string {
 }
 
 func (s SpecName) String() string {
-	return s.Name.String()
+	if s.RevisionID == "" {
+		return s.Name.String()
+	} else {
+		return s.Name.String() + "@" + s.RevisionID
+	}
 }
 
 func (s SpecName) ParentName() ResourceName {
-	// Validate the parent name and return
-	if version, err := names.ParseVersion(s.Name.Parent()); err == nil {
-		return VersionName{
-			Name: version,
-		}
-	} else if version, err := names.ParseVersionCollection(s.Name.Parent()); err == nil {
-		return VersionName{
-			Name: version,
-		}
-	}
-	return VersionName{}
-}
-
-type SpecRevisionName struct {
-	Name names.SpecRevision
-}
-
-func (s SpecRevisionName) Artifact() string {
-	return ""
-}
-
-func (s SpecRevisionName) Spec() string {
-	return s.Name.Spec().String()
-}
-
-func (s SpecRevisionName) Version() string {
-	return s.Name.Version().String()
-}
-
-func (s SpecRevisionName) Api() string {
-	return s.Name.Api().String()
-}
-
-func (s SpecRevisionName) Project() string {
-	return s.Name.Project().String()
-}
-
-func (s SpecRevisionName) SpecRevision() string {
-	return s.Name.String()
-}
-
-func (s SpecRevisionName) String() string {
-	return s.Name.String()
-}
-
-func (s SpecRevisionName) ParentName() ResourceName {
 	// Validate the parent name and return
 	if version, err := names.ParseVersion(s.Name.Parent()); err == nil {
 		return VersionName{
@@ -142,10 +96,6 @@ func (v VersionName) Artifact() string {
 }
 
 func (v VersionName) Spec() string {
-	return ""
-}
-
-func (s VersionName) SpecRevision() string {
 	return ""
 }
 
@@ -189,10 +139,6 @@ func (a ApiName) Artifact() string {
 }
 
 func (a ApiName) Spec() string {
-	return ""
-}
-
-func (s ApiName) SpecRevision() string {
 	return ""
 }
 
@@ -243,10 +189,6 @@ func (p ProjectName) Spec() string {
 	return ""
 }
 
-func (s ProjectName) SpecRevision() string {
-	return ""
-}
-
 func (p ProjectName) Version() string {
 	return ""
 }
@@ -276,25 +218,7 @@ func (ar ArtifactName) Artifact() string {
 }
 
 func (ar ArtifactName) Spec() string {
-	specPattern := names.Spec{
-		ProjectID: ar.Name.ProjectID(),
-		ApiID:     ar.Name.ApiID(),
-		VersionID: ar.Name.VersionID(),
-		SpecID:    ar.Name.SpecID(),
-	}
-
-	// Validate the generated name
-	if spec, err := names.ParseSpec(specPattern.String()); err == nil {
-		return spec.String()
-	} else if _, err := names.ParseSpecCollection(specPattern.String()); err == nil {
-		return spec.String()
-	}
-
-	return ""
-}
-
-func (ar ArtifactName) SpecRevision() string {
-	specRevPattern := names.SpecRevision{
+	specPattern := names.SpecRevision{
 		ProjectID:  ar.Name.ProjectID(),
 		ApiID:      ar.Name.ApiID(),
 		VersionID:  ar.Name.VersionID(),
@@ -303,10 +227,10 @@ func (ar ArtifactName) SpecRevision() string {
 	}
 
 	// Validate the generated name
-	if rev, err := names.ParseSpecRevision(specRevPattern.String()); err == nil {
-		return rev.String()
-	} else if _, err := names.ParseSpecRevisionCollection(specRevPattern.String()); err == nil {
-		return rev.String()
+	if spec, err := names.ParseSpecRevision(specPattern.String()); err == nil {
+		return spec.String()
+	} else if _, err := names.ParseSpecRevisionCollection(specPattern.String()); err == nil {
+		return spec.String()
 	}
 
 	return ""
@@ -376,13 +300,10 @@ func (ar ArtifactName) ParentName() ResourceName {
 		return VersionName{
 			Name: version,
 		}
-	} else if spec, err := names.ParseSpecCollection(parent); err == nil {
+	} else if spec, err := names.ParseSpecRevisionCollection(parent); err == nil {
 		return SpecName{
-			Name: spec,
-		}
-	} else if rev, err := names.ParseSpecRevisionCollection(parent); err == nil {
-		return SpecRevisionName{
-			Name: rev,
+			Name:       spec.Spec(),
+			RevisionID: spec.RevisionID,
 		}
 	}
 
@@ -403,13 +324,10 @@ func (ar ArtifactName) ParentName() ResourceName {
 		return VersionName{
 			Name: version,
 		}
-	} else if spec, err := names.ParseSpec(parent); err == nil {
+	} else if spec, err := names.ParseSpecRevision(parent); err == nil {
 		return SpecName{
-			Name: spec,
-		}
-	} else if rev, err := names.ParseSpecRevision(parent); err == nil {
-		return SpecRevisionName{
-			Name: rev,
+			Name:       spec.Spec(),
+			RevisionID: spec.RevisionID,
 		}
 	}
 

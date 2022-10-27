@@ -61,8 +61,6 @@ func validateGeneratedResourceEntry(parent string, generatedResource *rpc.Genera
 			return resourceName.Version() != ""
 		case "spec":
 			return resourceName.Spec() != ""
-		case "specrev":
-			return resourceName.SpecRevision() != ""
 		case "artifact":
 			return resourceName.Artifact() != ""
 		case "default":
@@ -171,10 +169,7 @@ func generateCommand(action string, resourceName string) (string, error) {
 		case "version":
 			entityVal = resource.Version()
 		case "spec":
-			entityVal = resource.SpecRevision()
-			if entityVal == "" {
-				entityVal = resource.Spec()
-			}
+			entityVal = resource.Spec()
 		case "artifact":
 			entityVal = resource.Artifact()
 		}
