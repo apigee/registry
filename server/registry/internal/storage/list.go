@@ -632,15 +632,19 @@ func specMap(spec models.Spec) (map[string]interface{}, error) {
 	}, nil
 }
 
-func (c *Client) ListSpecRevisions(ctx context.Context, parent names.Spec, opts PageOptions) (SpecList, error) {
+func (c *Client) ListSpecRevisions(ctx context.Context, parent names.SpecRevision, opts PageOptions) (SpecList, error) {
 	token, err := decodeToken(opts.Token)
 	if err != nil {
 		return SpecList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
 	}
 
 	// Check existence of the deepest fully specified resource in the parent name.
-	if parent.ProjectID != "-" && parent.ApiID != "-" && parent.VersionID != "-" && parent.SpecID != "-" {
-		if _, err := c.GetSpec(ctx, parent); err != nil {
+	if parent.ProjectID != "-" && parent.ApiID != "-" && parent.VersionID != "-" && parent.SpecID != "-" && parent.RevisionID != "-" {
+		if _, err := c.GetSpecRevision(ctx, parent); err != nil {
+			return SpecList{}, err
+		}
+	} else if parent.ProjectID != "-" && parent.ApiID != "-" && parent.VersionID != "-" && parent.SpecID != "-" {
+		if _, err := c.GetSpec(ctx, parent.Spec()); err != nil {
 			return SpecList{}, err
 		}
 	} else if parent.ProjectID != "-" && parent.ApiID != "-" && parent.VersionID != "-" && parent.SpecID == "-" {
@@ -658,21 +662,33 @@ func (c *Client) ListSpecRevisions(ctx context.Context, parent names.Spec, opts 
 	}
 
 	op := c.db.WithContext(ctx).
-		Order("revision_create_time desc").
+		Order("specs.revision_create_time desc").
 		Offset(token.Offset).
 		Limit(int(opts.Size) + 1)
 
 	if id := parent.ProjectID; id != "-" {
-		op = op.Where("project_id = ?", id)
+		op = op.Where("specs.project_id = ?", id)
 	}
 	if id := parent.ApiID; id != "-" {
-		op = op.Where("api_id = ?", id)
+		op = op.Where("specs.api_id = ?", id)
 	}
 	if id := parent.VersionID; id != "-" {
-		op = op.Where("version_id = ?", id)
+		op = op.Where("specs.version_id = ?", id)
 	}
 	if id := parent.SpecID; id != "-" {
-		op = op.Where("spec_id = ?", id)
+		op = op.Where("specs.spec_id = ?", id)
+	}
+	if id := parent.RevisionID; id != "-" && id != "" { // select specific spec revision
+		op = op.Where("specs.revision_id = ?", id)
+	}
+	if id := parent.RevisionID; id == "" { // select latest spec revision
+		op = op.Model(&models.Spec{}).
+			Joins(`join (?) latest
+			ON specs.project_id = latest.project_id
+			AND specs.api_id = latest.api_id
+			AND specs.version_id = latest.version_id
+			AND specs.spec_id = latest.spec_id
+			AND specs.revision_id = latest.revision_id`, c.latestSpecRevisionsQuery(ctx))
 	}
 
 	response := SpecList{
@@ -680,7 +696,6 @@ func (c *Client) ListSpecRevisions(ctx context.Context, parent names.Spec, opts 
 	}
 
 	err = op.Find(&response.Specs).Error
-
 	if err != nil {
 		return SpecList{}, grpcErrorForDBError(ctx, errors.Wrapf(err, "find %#v", token))
 	}

@@ -40,7 +40,7 @@ func (s *RegistryServer) ListApiSpecRevisions(ctx context.Context, req *rpc.List
 		req.PageSize = 50
 	}
 
-	parent, err := names.ParseSpec(req.GetName())
+	parent, err := names.ParseSpecRevision(req.GetName())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
