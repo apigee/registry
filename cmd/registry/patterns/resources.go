@@ -417,6 +417,8 @@ func ListResources(ctx context.Context, client connection.RegistryClient, patter
 		err2 = core.ListVersions(ctx, client, version, filter, generateVersionHandler(&result))
 	} else if spec, err := names.ParseSpecCollection(pattern); err == nil {
 		err2 = core.ListSpecs(ctx, client, spec, filter, generateSpecHandler(&result))
+	} else if rev, err := names.ParseSpecRevisionCollection(pattern); err == nil {
+		err2 = core.ListSpecRevisions(ctx, client, rev, filter, generateSpecHandler(&result))
 	} else if artifact, err := names.ParseArtifactCollection(pattern); err == nil {
 		err2 = core.ListArtifacts(ctx, client, artifact, filter, false, generateArtifactHandler(&result))
 	}
@@ -428,6 +430,8 @@ func ListResources(ctx context.Context, client connection.RegistryClient, patter
 		err2 = core.ListVersions(ctx, client, version, filter, generateVersionHandler(&result))
 	} else if spec, err := names.ParseSpec(pattern); err == nil {
 		err2 = core.ListSpecs(ctx, client, spec, filter, generateSpecHandler(&result))
+	} else if rev, err := names.ParseSpecRevision(pattern); err == nil {
+		err2 = core.ListSpecRevisions(ctx, client, rev, filter, generateSpecHandler(&result))
 	} else if artifact, err := names.ParseArtifact(pattern); err == nil {
 		err2 = core.ListArtifacts(ctx, client, artifact, filter, false, generateArtifactHandler(&result))
 	}
@@ -473,13 +477,16 @@ func generateVersionHandler(result *[]ResourceInstance) func(*rpc.ApiVersion) er
 
 func generateSpecHandler(result *[]ResourceInstance) func(*rpc.ApiSpec) error {
 	return func(spec *rpc.ApiSpec) error {
-		name, err := names.ParseSpec(spec.GetName())
+		name, err := names.ParseSpecRevision(spec.GetName())
 		if err != nil {
 			return err
 		}
 
 		(*result) = append((*result), SpecResource{
-			SpecName:  SpecName{Name: name},
+			SpecName: SpecName{
+				Name:       name.Spec(),
+				RevisionID: name.RevisionID,
+			},
 			Timestamp: spec.RevisionUpdateTime.AsTime(),
 		})
 
