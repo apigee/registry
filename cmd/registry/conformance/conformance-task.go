@@ -114,7 +114,7 @@ func (task *ComputeConformanceTask) Run(ctx context.Context) error {
 	}
 
 	// Get project
-	spec, err := names.ParseSpec(task.Spec.GetName())
+	spec, err := names.ParseSpecRevision(task.Spec.GetName())
 	if err != nil {
 		return err
 	}
