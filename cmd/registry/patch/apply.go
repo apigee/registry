@@ -96,13 +96,11 @@ func (p *patchGroup) run(ctx context.Context, jobs int) error {
 		p.deploymentTasks,
 		p.artifactTasks,
 	} {
-		if len(tasks) > 0 {
-			taskQueue, wait := core.WorkerPool(ctx, jobs)
-			for _, task := range tasks {
-				taskQueue <- task
-			}
-			wait()
+		taskQueue, wait := core.WorkerPool(ctx, jobs)
+		for _, task := range tasks {
+			taskQueue <- task
 		}
+		wait()
 	}
 	return nil
 }

@@ -32,8 +32,6 @@ import (
 )
 
 const sampleDir = "testdata/sample"
-const unbundledHierarchicalSampleDir = "testdata/unbundled-hierarchical"
-const unbundledFlatSampleDir = "testdata/unbundled-flat"
 
 // TestMain will set up a local RegistryServer and grpc.Server for all
 // tests in this package if APG_REGISTRY_ADDRESS env var is not set
@@ -165,11 +163,11 @@ func TestApplyProject(t *testing.T) {
 		},
 		{
 			desc: "unbundled-hierarchical",
-			root: unbundledHierarchicalSampleDir,
+			root: "testdata/unbundled-hierarchical",
 		},
 		{
 			desc: "unbundled-flat",
-			root: unbundledFlatSampleDir,
+			root: "testdata/unbundled-flat",
 		},
 	}
 	for _, test := range tests {
@@ -225,7 +223,7 @@ func TestApplyProject(t *testing.T) {
 				Name: project.Api("registry").String(),
 			})
 			if err != nil {
-				t.Fatalf("failed to get api: %s", err)
+				t.Fatalf("Failed to get API: %s", err)
 			}
 
 			actual, _, err := patch.ExportAPI(ctx, registryClient, got)
