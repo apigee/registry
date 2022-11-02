@@ -17,13 +17,16 @@ package controller
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry"
+	"github.com/apigee/registry/server/registry/names"
 	"github.com/apigee/registry/server/registry/test/seeder"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -164,6 +167,7 @@ func TestArtifacts(t *testing.T) {
 				},
 			}
 			actions := ProcessManifest(ctx, lister, projectID, manifest, 10)
+			addSpecRevisions(t, ctx, registryClient, test.want)
 
 			if diff := cmp.Diff(test.want, actions, sortActions); diff != "" {
 				t.Errorf("ProcessManifest(%+v) returned unexpected diff (-want +got):\n%s", manifest, diff)
@@ -261,6 +265,7 @@ func TestAggregateArtifacts(t *testing.T) {
 				},
 			}
 			actions := ProcessManifest(ctx, lister, projectID, manifest, 10)
+			addSpecRevisions(t, ctx, registryClient, test.want)
 
 			if diff := cmp.Diff(test.want, actions, sortActions); diff != "" {
 				t.Errorf("ProcessManifest(%+v) returned unexpected diff (-want +got):\n%s", manifest, diff)
@@ -403,6 +408,7 @@ func TestDerivedArtifacts(t *testing.T) {
 				},
 			}
 			actions := ProcessManifest(ctx, lister, projectID, manifest, 10)
+			addSpecRevisions(t, ctx, registryClient, test.want)
 
 			if diff := cmp.Diff(test.want, actions, sortActions); diff != "" {
 				t.Errorf("ProcessManifest(%+v) returned unexpected diff (-want +got):\n%s", manifest, diff)
@@ -496,6 +502,7 @@ func TestReceiptArtifacts(t *testing.T) {
 				},
 			}
 			actions := ProcessManifest(ctx, lister, projectID, manifest, 10)
+			addSpecRevisions(t, ctx, registryClient, test.want)
 
 			if diff := cmp.Diff(test.want, actions, sortActions); diff != "" {
 				t.Errorf("ProcessManifest(%+v) returned unexpected diff (-want +got):\n%s", manifest, diff)
@@ -604,6 +611,7 @@ func TestReceiptAggArtifacts(t *testing.T) {
 				},
 			}
 			actions := ProcessManifest(ctx, lister, projectID, manifest, 10)
+			addSpecRevisions(t, ctx, registryClient, test.want)
 
 			if diff := cmp.Diff(test.want, actions, sortActions); diff != "" {
 				t.Errorf("ProcessManifest(%+v) returned unexpected diff (-want +got):\n%s", manifest, diff)
@@ -620,7 +628,7 @@ func TestMultipleEntitiesArtifacts(t *testing.T) {
 		want []*Action
 	}{
 		{
-			desc: "create artifacts",
+			desc: "create spec artifacts",
 			seed: []seeder.RegistryResource{
 				&rpc.Artifact{
 					Name:     "projects/controller-test/locations/global/artifacts/registry-styleguide",
@@ -656,7 +664,7 @@ func TestMultipleEntitiesArtifacts(t *testing.T) {
 			},
 		},
 		{
-			desc: "outdated artifacts",
+			desc: "outdated spec artifacts",
 			seed: []seeder.RegistryResource{
 				&rpc.Artifact{
 					Name: "projects/controller-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/conformance-registry-styleguide",
@@ -693,7 +701,7 @@ func TestMultipleEntitiesArtifacts(t *testing.T) {
 			},
 		},
 		{
-			desc: "missing dependencies",
+			desc: "missing spec dependencies",
 			seed: []seeder.RegistryResource{
 				&rpc.Artifact{
 					Name:     "projects/controller-test/locations/global/artifacts/registry-styleguide",
@@ -773,11 +781,40 @@ func TestMultipleEntitiesArtifacts(t *testing.T) {
 				},
 			}
 			actions := ProcessManifest(ctx, lister, projectID, manifest, 10)
+			addSpecRevisions(t, ctx, registryClient, test.want)
 
 			if diff := cmp.Diff(test.want, actions, sortActions); diff != "" {
 				t.Errorf("ProcessManifest(%+v) returned unexpected diff (-want +got):\n%s", manifest, diff)
 			}
 		})
+	}
+}
+
+func addSpecRevisions(t *testing.T, ctx context.Context, registryClient *gapic.RegistryClient, actions []*Action) {
+	for _, action := range actions {
+		gr := action.GeneratedResource
+		a, err := names.ParseArtifact(gr)
+		if err != nil {
+			t.Fatal("Failed to parse GeneratedResource", err)
+		}
+		if a.SpecID() == "" {
+			return
+		}
+		sr := names.Spec{
+			ProjectID: a.ProjectID(),
+			ApiID:     a.ApiID(),
+			VersionID: a.VersionID(),
+			SpecID:    a.SpecID(),
+		}
+		if err := core.GetSpec(ctx, registryClient, sr, false, func(s *rpc.ApiSpec) error {
+			action.Command = strings.ReplaceAll(action.Command,
+				fmt.Sprintf("/%s", a.SpecID()), fmt.Sprintf("/%s@%s", a.SpecID(), s.GetRevisionId()))
+			action.GeneratedResource = strings.ReplaceAll(action.GeneratedResource,
+				fmt.Sprintf("/%s", a.SpecID()), fmt.Sprintf("/%s@%s", a.SpecID(), s.GetRevisionId()))
+			return nil
+		}); err != nil {
+			t.Fatal("Failed GetSpecRevision", err)
+		}
 	}
 }
 

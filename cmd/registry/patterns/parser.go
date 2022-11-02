@@ -49,8 +49,8 @@ func parseResource(resourcePattern string) (ResourceName, error) {
 		return ApiName{Name: api}, nil
 	} else if version, err := names.ParseVersion(resourcePattern); err == nil {
 		return VersionName{Name: version}, nil
-	} else if spec, err := names.ParseSpec(resourcePattern); err == nil {
-		return SpecName{Name: spec}, nil
+	} else if spec, err := names.ParseSpecRevision(resourcePattern); err == nil {
+		return SpecName{Name: spec.Spec(), RevisionID: spec.RevisionID}, nil
 	} else if artifact, err := names.ParseArtifact(resourcePattern); err == nil {
 		return ArtifactName{Name: artifact}, nil
 	}

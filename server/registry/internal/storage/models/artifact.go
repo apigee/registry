@@ -33,6 +33,7 @@ type Artifact struct {
 	ApiID        string    // Api associated with artifact (if appropriate).
 	VersionID    string    // Version associated with artifact (if appropriate).
 	SpecID       string    // Spec associated with artifact (if appropriate).
+	RevisionID   string    // Revision associated with parent (if appropriate).
 	DeploymentID string    // Deployment associated with artifact (if appropriate).
 	ArtifactID   string    // Artifact identifier (required).
 	CreateTime   time.Time // Creation time.
@@ -50,6 +51,7 @@ func NewArtifact(name names.Artifact, body *rpc.Artifact) (artifact *Artifact, e
 		ApiID:        name.ApiID(),
 		VersionID:    name.VersionID(),
 		SpecID:       name.SpecID(),
+		RevisionID:   name.RevisionID(),
 		DeploymentID: name.DeploymentID(),
 		ArtifactID:   name.ArtifactID(),
 		CreateTime:   now,
@@ -77,8 +79,8 @@ func NewArtifact(name names.Artifact, body *rpc.Artifact) (artifact *Artifact, e
 func (artifact *Artifact) Name() string {
 	switch {
 	case artifact.SpecID != "":
-		return fmt.Sprintf("projects/%s/locations/%s/apis/%s/versions/%s/specs/%s/artifacts/%s",
-			artifact.ProjectID, names.Location, artifact.ApiID, artifact.VersionID, artifact.SpecID, artifact.ArtifactID)
+		return fmt.Sprintf("projects/%s/locations/%s/apis/%s/versions/%s/specs/%s@%s/artifacts/%s",
+			artifact.ProjectID, names.Location, artifact.ApiID, artifact.VersionID, artifact.SpecID, artifact.RevisionID, artifact.ArtifactID)
 	case artifact.VersionID != "":
 		return fmt.Sprintf("projects/%s/locations/%s/apis/%s/versions/%s/artifacts/%s",
 			artifact.ProjectID, names.Location, artifact.ApiID, artifact.VersionID, artifact.ArtifactID)

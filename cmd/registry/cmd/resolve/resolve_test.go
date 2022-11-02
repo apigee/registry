@@ -18,8 +18,10 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/apigee/registry/cmd/registry/cmd/upload"
@@ -27,6 +29,7 @@ import (
 	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry"
+	"github.com/apigee/registry/server/registry/names"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"google.golang.org/api/iterator"
@@ -186,7 +189,7 @@ func TestResolve(t *testing.T) {
 					Contents: buf.Bytes(),
 				},
 			}
-			_, err = client.CreateApiSpec(ctx, &rpc.CreateApiSpecRequest{
+			s, err := client.CreateApiSpec(ctx, &rpc.CreateApiSpecRequest{
 				Parent:    v1.Name,
 				ApiSpecId: "openapi.yaml",
 				ApiSpec: &rpc.ApiSpec{
@@ -198,6 +201,20 @@ func TestResolve(t *testing.T) {
 				t.Fatalf("Failed CreateApiSpec(%v): %s", req, err.Error())
 			}
 
+			addRevisionToWants := func(s *rpc.ApiSpec) {
+				t.Helper()
+				n, err := names.ParseSpec(s.Name)
+				if err != nil {
+					t.Fatal("ParseSpec", err)
+				}
+				specVer := fmt.Sprintf("%s/specs/%s", n.VersionID, n.SpecID)
+				specRev := fmt.Sprintf("%s/specs/%s@%s", n.VersionID, n.SpecID, s.RevisionId)
+				for i := range test.want { // inject dynamic spec revisions
+					test.want[i] = strings.ReplaceAll(test.want[i], specVer, specRev)
+				}
+			}
+			addRevisionToWants(s)
+
 			req = &rpc.CreateApiSpecRequest{
 				Parent:    v2.Name,
 				ApiSpecId: "openapi.yaml",
@@ -206,7 +223,7 @@ func TestResolve(t *testing.T) {
 					Contents: buf.Bytes(),
 				},
 			}
-			_, err = client.CreateApiSpec(ctx, &rpc.CreateApiSpecRequest{
+			s, err = client.CreateApiSpec(ctx, &rpc.CreateApiSpecRequest{
 				Parent:    v2.Name,
 				ApiSpecId: "openapi.yaml",
 				ApiSpec: &rpc.ApiSpec{
@@ -217,6 +234,7 @@ func TestResolve(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Failed CreateApiSpec(%v): %s", req, err.Error())
 			}
+			addRevisionToWants(s)
 
 			req = &rpc.CreateApiSpecRequest{
 				Parent:    v3.Name,
@@ -226,7 +244,7 @@ func TestResolve(t *testing.T) {
 					Contents: buf.Bytes(),
 				},
 			}
-			_, err = client.CreateApiSpec(ctx, &rpc.CreateApiSpecRequest{
+			s, err = client.CreateApiSpec(ctx, &rpc.CreateApiSpecRequest{
 				Parent:    v3.Name,
 				ApiSpecId: "openapi.yaml",
 				ApiSpec: &rpc.ApiSpec{
@@ -237,6 +255,7 @@ func TestResolve(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Failed CreateApiSpec(%v): %s", req, err.Error())
 			}
+			addRevisionToWants(s)
 
 			// Upload the manifest to registry
 			args := []string{"manifest", test.manifestPath, "--project-id=" + testProject}

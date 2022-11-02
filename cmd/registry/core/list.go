@@ -183,7 +183,8 @@ func ListSpecs(ctx context.Context,
 
 func ListSpecRevisions(ctx context.Context,
 	client *gapic.RegistryClient,
-	name names.Spec,
+	name names.SpecRevision,
+	filter string,
 	handler SpecHandler) error {
 	it := client.ListApiSpecRevisions(ctx, &rpc.ListApiSpecRevisionsRequest{
 		Name: name.String(),
