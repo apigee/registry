@@ -64,7 +64,7 @@ func NewClient(ctx context.Context, driver, dsn string) (*Client, error) {
 			c.close()
 			return nil, grpcErrorForDBError(ctx, err)
 		}
-		// Sets to 1 to disabllow multiple connections on SQLite.
+		// Sets to 1 to disallow multiple connections on SQLite.
 		// Any automatically opened connections, such a connection pool
 		// or SetConnMaxLifetime() will not apply post-connect
 		// PRAGMA commands (eg. "foreign_keys = ON").
