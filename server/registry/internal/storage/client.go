@@ -17,7 +17,6 @@ package storage
 import (
 	"context"
 	"fmt"
-	"time"
 
 	_ "github.com/GoogleCloudPlatform/cloudsql-proxy/proxy/dialers/postgres"
 	"github.com/apigee/registry/server/registry/internal/storage/models"
@@ -65,13 +64,18 @@ func NewClient(ctx context.Context, driver, dsn string) (*Client, error) {
 			c.close()
 			return nil, grpcErrorForDBError(ctx, err)
 		}
-		// eliminate multithreading contention
+		// Sets to 1 to disallow multiple connections on SQLite.
+		// Any automatically opened connections, such a connection pool
+		// or SetConnMaxLifetime() will not apply post-connect
+		// PRAGMA commands (eg. "foreign_keys = ON").
 		if err := applyConnectionLimits(db, 1); err != nil {
 			c := &Client{db: db}
 			c.close()
 			return nil, grpcErrorForDBError(ctx, err)
 		}
-		db.Exec("PRAGMA foreign_keys = ON")
+		if err := db.Exec("PRAGMA foreign_keys = ON").Error; err != nil {
+			return nil, grpcErrorForDBError(ctx, err)
+		}
 		return &Client{db: db}, nil
 	case "postgres", "cloudsqlpostgres":
 		db, err := gorm.Open(postgres.New(postgres.Config{
@@ -105,7 +109,6 @@ func applyConnectionLimits(db *gorm.DB, n int) error {
 	}
 	sqlDB.SetMaxOpenConns(n)
 	sqlDB.SetMaxIdleConns(n)
-	sqlDB.SetConnMaxLifetime(60 * time.Second)
 	return nil
 }
 
