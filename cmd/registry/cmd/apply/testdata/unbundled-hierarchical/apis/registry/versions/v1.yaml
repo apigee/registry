@@ -1,0 +1,14 @@
+apiVersion: apigeeregistry/v1
+kind: Version
+metadata:
+  name: v1
+  parent: apis/registry
+  labels:
+    apihub-team: apigee
+  annotations:
+    release-date: "2021-12-15"
+data:
+  displayName: v1
+  description: New in 2022
+  state: Staging
+        

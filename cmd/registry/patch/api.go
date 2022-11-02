@@ -185,7 +185,7 @@ func optionalDeploymentName(apiName names.Api, deploymentID string) string {
 	return apiName.Deployment(deploymentID).String()
 }
 
-func applyApiPatch(ctx context.Context, client connection.RegistryClient, bytes []byte, parent string) error {
+func applyApiPatchBytes(ctx context.Context, client connection.RegistryClient, bytes []byte, parent string) error {
 	var api models.Api
 	err := yaml.Unmarshal(bytes, &api)
 	if err != nil {

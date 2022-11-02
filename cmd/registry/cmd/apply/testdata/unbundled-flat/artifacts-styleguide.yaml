@@ -1,0 +1,24 @@
+apiVersion: apigeeregistry/v1
+kind: StyleGuide
+metadata:
+  name: styleguide
+data:
+  displayName: StyleGuide
+  mimeTypes:
+    - application/x.openapi+gzip;version=2
+  guidelines:
+    - id: refproperties
+      displayName: Govern Ref Properties
+      description: This guideline governs properties for ref fields on specs.
+      rules:
+        - id: norefsiblings
+          displayName: No Ref Siblings
+          description: An object exposing a $ref property cannot be further extended with additional properties.
+          linter: spectral
+          linterRulename: no-$ref-siblings
+          severity: ERROR
+          docUri: https://meta.stoplight.io/docs/spectral/4dec24461f3af-open-api-rules#no-ref-siblings
+      state: ACTIVE
+  linters:
+    - name: spectral
+      uri: https://github.com/stoplightio/spectral
