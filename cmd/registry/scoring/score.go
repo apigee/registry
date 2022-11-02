@@ -52,6 +52,7 @@ func FetchScoreDefinitions(
 			definition := &rpc.ScoreDefinition{}
 			if err1 := proto.Unmarshal(artifact.GetContents(), definition); err1 != nil {
 				// don't return err, to proccess the rest of the artifacts from the list.
+				log.Debugf(ctx, "Skipping definition %q: %s", artifact.GetName(), err1)
 				return nil
 			}
 
@@ -59,6 +60,7 @@ func FetchScoreDefinitions(
 			err1 := matchResourceWithTarget(definition.GetTargetResource(), resource, project)
 			if err1 != nil {
 				// don't return err, to proccess the rest of the artifacts from the list.
+				log.Debugf(ctx, "Skipping definition %q: %s", artifact.GetName(), err1)
 				return nil
 			}
 
