@@ -533,18 +533,14 @@ func (c *Client) ListSpecs(ctx context.Context, parent names.Version, opts PageO
 		return SpecList{}, err
 	}
 
-	// Select all columns from `specs` table specifically.
-	// We do not want to select duplicates from the joined subquery result.
-	op := c.db.WithContext(ctx).Select("specs.*").
-		Table("specs").
-		// Join missing columns that couldn't be selected in the subquery.
-		Joins("JOIN (?) AS grp ON specs.project_id = grp.project_id AND specs.api_id = grp.api_id AND specs.version_id = grp.version_id AND specs.spec_id = grp.spec_id AND specs.revision_create_time = grp.recent_create_time",
-			// Select spec names and only their most recent revision_create_time
-			// This query cannot select all the columns we want.
-			// See: https://stackoverflow.com/questions/7745609/sql-select-only-rows-with-max-value-on-a-column
-			c.db.WithContext(ctx).Select("project_id, api_id, version_id, spec_id, MAX(revision_create_time) AS recent_create_time").
-				Table("specs").
-				Group("project_id, api_id, version_id, spec_id")).
+	op := c.db.WithContext(ctx).Select("specs.*").Table("specs").
+		// select latest spec revision
+		Joins(`join (?) latest
+		ON specs.project_id = latest.project_id
+		AND specs.api_id = latest.api_id
+		AND specs.version_id = latest.version_id
+		AND specs.spec_id = latest.spec_id
+		AND specs.revision_id = latest.revision_id`, c.latestSpecRevisionsQuery(ctx)).
 		Limit(limit(opts))
 
 	if parent.ProjectID != "-" {
@@ -636,15 +632,19 @@ func specMap(spec models.Spec) (map[string]interface{}, error) {
 	}, nil
 }
 
-func (c *Client) ListSpecRevisions(ctx context.Context, parent names.Spec, opts PageOptions) (SpecList, error) {
+func (c *Client) ListSpecRevisions(ctx context.Context, parent names.SpecRevision, opts PageOptions) (SpecList, error) {
 	token, err := decodeToken(opts.Token)
 	if err != nil {
 		return SpecList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
 	}
 
 	// Check existence of the deepest fully specified resource in the parent name.
-	if parent.ProjectID != "-" && parent.ApiID != "-" && parent.VersionID != "-" && parent.SpecID != "-" {
-		if _, err := c.GetSpec(ctx, parent); err != nil {
+	if parent.ProjectID != "-" && parent.ApiID != "-" && parent.VersionID != "-" && parent.SpecID != "-" && parent.RevisionID != "-" {
+		if _, err := c.GetSpecRevision(ctx, parent); err != nil {
+			return SpecList{}, err
+		}
+	} else if parent.ProjectID != "-" && parent.ApiID != "-" && parent.VersionID != "-" && parent.SpecID != "-" {
+		if _, err := c.GetSpec(ctx, parent.Spec()); err != nil {
 			return SpecList{}, err
 		}
 	} else if parent.ProjectID != "-" && parent.ApiID != "-" && parent.VersionID != "-" && parent.SpecID == "-" {
@@ -662,21 +662,33 @@ func (c *Client) ListSpecRevisions(ctx context.Context, parent names.Spec, opts 
 	}
 
 	op := c.db.WithContext(ctx).
-		Order("revision_create_time desc").
+		Order("specs.revision_create_time desc").
 		Offset(token.Offset).
 		Limit(int(opts.Size) + 1)
 
 	if id := parent.ProjectID; id != "-" {
-		op = op.Where("project_id = ?", id)
+		op = op.Where("specs.project_id = ?", id)
 	}
 	if id := parent.ApiID; id != "-" {
-		op = op.Where("api_id = ?", id)
+		op = op.Where("specs.api_id = ?", id)
 	}
 	if id := parent.VersionID; id != "-" {
-		op = op.Where("version_id = ?", id)
+		op = op.Where("specs.version_id = ?", id)
 	}
 	if id := parent.SpecID; id != "-" {
-		op = op.Where("spec_id = ?", id)
+		op = op.Where("specs.spec_id = ?", id)
+	}
+	if id := parent.RevisionID; id != "-" && id != "" { // select specific spec revision
+		op = op.Where("specs.revision_id = ?", id)
+	}
+	if id := parent.RevisionID; id == "" { // select latest spec revision
+		op = op.Model(&models.Spec{}).
+			Joins(`join (?) latest
+			ON specs.project_id = latest.project_id
+			AND specs.api_id = latest.api_id
+			AND specs.version_id = latest.version_id
+			AND specs.spec_id = latest.spec_id
+			AND specs.revision_id = latest.revision_id`, c.latestSpecRevisionsQuery(ctx))
 	}
 
 	response := SpecList{
@@ -684,7 +696,6 @@ func (c *Client) ListSpecRevisions(ctx context.Context, parent names.Spec, opts 
 	}
 
 	err = op.Find(&response.Specs).Error
-
 	if err != nil {
 		return SpecList{}, grpcErrorForDBError(ctx, errors.Wrapf(err, "find %#v", token))
 	}
@@ -906,6 +917,10 @@ type ArtifactList struct {
 }
 
 func (c *Client) ListSpecArtifacts(ctx context.Context, parent names.Spec, opts PageOptions) (ArtifactList, error) {
+	return c.ListSpecRevisionArtifacts(ctx, parent.Revision(""), opts)
+}
+
+func (c *Client) ListSpecRevisionArtifacts(ctx context.Context, parent names.SpecRevision, opts PageOptions) (ArtifactList, error) {
 	token, err := decodeToken(opts.Token)
 	if err != nil {
 		return ArtifactList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
@@ -923,41 +938,53 @@ func (c *Client) ListSpecArtifacts(ctx context.Context, parent names.Spec, opts 
 		token.Order = opts.Order
 	}
 
-	if parent.ProjectID != "-" && parent.ApiID != "-" && parent.VersionID != "-" && parent.SpecID != "-" {
-		if _, err := c.GetSpec(ctx, parent); err != nil {
-			return ArtifactList{}, err
-		}
-	} else if parent.ProjectID != "-" && parent.ApiID != "-" && parent.VersionID != "-" && parent.SpecID == "-" {
-		if _, err := c.GetVersion(ctx, parent.Version()); err != nil {
-			return ArtifactList{}, err
-		}
-	} else if parent.ProjectID != "-" && parent.ApiID != "-" && parent.VersionID == "-" && parent.SpecID == "-" {
-		if _, err := c.GetApi(ctx, parent.Api()); err != nil {
-			return ArtifactList{}, err
-		}
-	} else if parent.ProjectID != "-" && parent.ApiID == "-" && parent.VersionID == "-" && parent.SpecID == "-" {
-		if _, err := c.GetProject(ctx, parent.Project()); err != nil {
-			return ArtifactList{}, err
-		}
-	}
-
-	op := c.db.WithContext(ctx).Where(`deployment_id = ''`)
+	op := c.db.WithContext(ctx)
 	if id := parent.ProjectID; id != "-" {
-		op = op.Where("project_id = ?", id)
+		op.Where("artifacts.project_id = ?", id)
 	}
 	if id := parent.ApiID; id != "-" {
-		op = op.Where("api_id = ?", id)
+		op = op.Where("artifacts.api_id = ?", id)
 	}
 	if id := parent.VersionID; id != "-" {
-		op = op.Where("version_id = ?", id)
+		op = op.Where("artifacts.version_id = ?", id)
 	}
 	if id := parent.SpecID; id != "-" {
-		op = op.Where("spec_id = ?", id)
+		op = op.Where("artifacts.spec_id = ?", id)
+	}
+	if id := parent.RevisionID; id != "-" && id != "" { // select specific spec revision
+		op = op.Where("artifacts.revision_id = ?", id)
+	}
+	if id := parent.RevisionID; id == "" { // select latest spec revision
+		op = op.Model(&models.Artifact{}).
+			Where(`artifacts.deployment_id = ''`).
+			Joins(`join (?) latest
+			ON artifacts.project_id = latest.project_id
+			AND artifacts.api_id = latest.api_id
+			AND artifacts.version_id = latest.version_id
+			AND artifacts.spec_id = latest.spec_id
+			AND artifacts.revision_id = latest.revision_id`, c.latestSpecRevisionsQuery(ctx))
 	}
 
 	return c.listArtifacts(ctx, op, opts, func(a *models.Artifact) bool {
-		return a.ProjectID != "" && a.ApiID != "" && a.VersionID != "" && a.SpecID != ""
+		return a.ProjectID != "" && a.ApiID != "" && a.VersionID != "" && a.SpecID != "" && a.RevisionID != ""
 	})
+}
+
+// This query only returns the most recent revision rows for each unique spec from the
+// specs table. Additional criteria may be added to restrict this query further and it
+// may be joined with dependant tables (eg. artifacts, blobs) to ensure that only the
+// rows in those tables that are associated with the more recent spec revision are matched.
+func (c *Client) latestSpecRevisionsQuery(ctx context.Context) *gorm.DB {
+	return c.db.WithContext(ctx).
+		Table("specs s").
+		Select("s.*").
+		Joins(`LEFT JOIN specs s2
+		ON s.project_id = s2.project_id
+		AND s.api_id = s2.api_id
+		AND s.version_id = s2.version_id
+		AND s.spec_id = s2.spec_id
+		AND s.revision_create_time < s2.revision_create_time`).
+		Where("s2.key IS NULL")
 }
 
 func (c *Client) ListVersionArtifacts(ctx context.Context, parent names.Version, opts PageOptions) (ArtifactList, error) {
@@ -1155,7 +1182,7 @@ func (c *Client) listArtifacts(ctx context.Context, op *gorm.DB, opts PageOption
 	if order, err := gormOrdering(opts.Order, artifactFields); err != nil {
 		return ArtifactList{}, err
 	} else {
-		op = op.Order(order)
+		op = op.Order("artifacts." + order)
 	}
 
 	response := ArtifactList{
@@ -1164,7 +1191,7 @@ func (c *Client) listArtifacts(ctx context.Context, op *gorm.DB, opts PageOption
 
 	for {
 		var page []models.Artifact
-		op = op.Order("key").Limit(limit(opts))
+		op = op.Order("artifacts.key").Limit(limit(opts))
 		err := op.Offset(token.Offset).Find(&page).Error
 
 		if err != nil {

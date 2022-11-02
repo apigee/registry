@@ -16,6 +16,7 @@ package storage
 
 import (
 	"context"
+	"strings"
 
 	"github.com/apigee/registry/server/registry/internal/storage/models"
 	"github.com/apigee/registry/server/registry/names"
@@ -84,6 +85,10 @@ func (c *Client) GetSpecRevision(ctx context.Context, name names.SpecRevision) (
 		return nil, err
 	}
 
+	if name.RevisionID == "" { // get latest revision
+		return c.GetSpec(ctx, name.Spec())
+	}
+
 	v := new(models.Spec)
 	if err := c.db.WithContext(ctx).Take(v, "key = ?", name.String()).Error; err == gorm.ErrRecordNotFound {
 		return nil, status.Errorf(codes.NotFound, "%q not found in database", name)
@@ -150,7 +155,39 @@ func (c *Client) GetArtifact(ctx context.Context, name names.Artifact, forUpdate
 	if forUpdate {
 		op.Clauses(clause.Locking{Strength: "UPDATE"})
 	}
-	if err := op.Take(v, "key = ?", name.String()).Error; err == gorm.ErrRecordNotFound {
+
+	// if fully specified, just grab via key
+	if name.SpecID() == "" && name.RevisionID() == "" {
+		if err := op.Take(v, "key = ?", name.String()).Error; err == gorm.ErrRecordNotFound {
+			return nil, status.Errorf(codes.NotFound, "%q not found in database", name)
+		} else if err != nil {
+			return nil, grpcErrorForDBError(ctx, errors.Wrapf(err, "get %s", name))
+		}
+
+		return v, nil
+	}
+
+	// otherwise, join to default spec revision
+	op = op.Where("artifacts.project_id = ?", name.ProjectID()).
+		Where("artifacts.api_id = ?", name.ApiID()).
+		Where("artifacts.version_id = ?", name.VersionID()).
+		Where("artifacts.spec_id = ?", name.SpecID()).
+		Where("artifacts.artifact_id = ?", name.ArtifactID())
+
+	if id := name.RevisionID(); id != "" { // select specific spec revision
+		op = op.Where("artifacts.revision_id = ?", id)
+	}
+	if id := name.RevisionID(); id == "" { // select latest spec revision
+		op = op.Model(&models.Artifact{}).
+			Joins(`join (?) latest
+			ON artifacts.project_id = latest.project_id
+			AND artifacts.api_id = latest.api_id
+			AND artifacts.version_id = latest.version_id
+			AND artifacts.spec_id = latest.spec_id
+			AND artifacts.revision_id = latest.revision_id`, c.latestSpecRevisionsQuery(ctx))
+	}
+
+	if err := op.Take(v).Error; err == gorm.ErrRecordNotFound {
 		return nil, status.Errorf(codes.NotFound, "%q not found in database", name)
 	} else if err != nil {
 		return nil, grpcErrorForDBError(ctx, errors.Wrapf(err, "get %s", name))
@@ -161,7 +198,29 @@ func (c *Client) GetArtifact(ctx context.Context, name names.Artifact, forUpdate
 
 func (c *Client) GetArtifactContents(ctx context.Context, name names.Artifact) (*models.Blob, error) {
 	v := new(models.Blob)
-	if err := c.db.WithContext(ctx).Take(v, "key = ?", name.String()).Error; err == gorm.ErrRecordNotFound {
+	op := c.db.WithContext(ctx)
+
+	op = op.Model(&models.Blob{}).
+		Where("blobs.project_id = ?", name.ProjectID()).
+		Where("blobs.api_id = ?", name.ApiID()).
+		Where("blobs.version_id = ?", name.VersionID()).
+		Where("blobs.spec_id = ?", name.SpecID()).
+		Where("blobs.artifact_id = ?", strings.ToLower(name.ArtifactID()))
+
+	if name.SpecID() != "" {
+		if id := name.RevisionID(); id != "" { // select specific spec revision
+			op = op.Where("blobs.revision_id = ?", id)
+		}
+		if id := name.RevisionID(); id == "" { // select latest spec revision
+			op = op.Joins(`join (?) latest
+				ON blobs.project_id = latest.project_id
+				AND blobs.api_id = latest.api_id
+				AND blobs.version_id = latest.version_id
+				AND blobs.spec_id = latest.spec_id
+				AND blobs.revision_id = latest.revision_id`, c.latestSpecRevisionsQuery(ctx))
+		}
+	}
+	if err := op.Take(v).Error; err == gorm.ErrRecordNotFound {
 		return nil, status.Errorf(codes.NotFound, "%q not found in database", name)
 	} else if err != nil {
 		return nil, grpcErrorForDBError(ctx, errors.Wrapf(err, "get %s", name))

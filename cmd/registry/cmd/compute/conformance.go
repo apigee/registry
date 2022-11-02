@@ -58,16 +58,24 @@ func conformanceCommand() *cobra.Command {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
 
-			name, err := names.ParseSpec(args[0])
+			name, err := names.ParseSpecRevision(args[0])
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Invalid Argument: must specify one or more API specs")
 			}
 
 			specs := make([]*rpc.ApiSpec, 0)
-			if err := core.ListSpecs(ctx, client, name, filter, func(spec *rpc.ApiSpec) error {
-				specs = append(specs, spec)
-				return nil
-			}); err != nil {
+			if name.RevisionID == "" {
+				err = core.ListSpecs(ctx, client, name.Spec(), filter, func(spec *rpc.ApiSpec) error {
+					specs = append(specs, spec)
+					return nil
+				})
+			} else {
+				err = core.ListSpecRevisions(ctx, client, name, filter, func(spec *rpc.ApiSpec) error {
+					specs = append(specs, spec)
+					return nil
+				})
+			}
+			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to list specs")
 			}
 

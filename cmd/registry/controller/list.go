@@ -109,7 +109,10 @@ func generateSpecHandler(result *[]patterns.ResourceInstance) func(*rpc.ApiSpec)
 		}
 
 		(*result) = append((*result), patterns.SpecResource{
-			SpecName:  patterns.SpecName{Name: name},
+			SpecName: patterns.SpecName{
+				Name:       name,
+				RevisionID: spec.RevisionId,
+			},
 			Timestamp: spec.RevisionUpdateTime.AsTime(),
 		})
 

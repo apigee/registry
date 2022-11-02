@@ -20,13 +20,16 @@ import (
 	"github.com/apigee/registry/server/registry/names"
 )
 
-func generateSpec(t *testing.T, specName string) names.Spec {
+func generateSpecName(t *testing.T, specName string) SpecName {
 	t.Helper()
-	spec, err := names.ParseSpec(specName)
+	rev, err := names.ParseSpecRevision(specName)
 	if err != nil {
 		t.Fatalf("Failed generateSpec(%s): %s", specName, err.Error())
 	}
-	return spec
+	return SpecName{
+		Name:       rev.Spec(),
+		RevisionID: rev.RevisionID,
+	}
 }
 
 func generateVersion(t *testing.T, versionName string) names.Version {
@@ -65,6 +68,12 @@ func TestSubstituteReferenceEntity(t *testing.T) {
 			resourcePattern:   "projects/demo/locations/global/apis/-/versions/-/specs/-/artifacts/-",
 			dependencyPattern: "$resource.spec",
 			want:              "projects/demo/locations/global/apis/-/versions/-/specs/-",
+		},
+		{
+			desc:              "spec revision reference",
+			resourcePattern:   "projects/demo/locations/global/apis/-/versions/-/specs/-@-/artifacts/-",
+			dependencyPattern: "$resource.spec",
+			want:              "projects/demo/locations/global/apis/-/versions/-/specs/-@-",
 		},
 		{
 			desc:              "version reference",
@@ -115,6 +124,11 @@ func TestSubstituteReferenceEntityError(t *testing.T) {
 			dependencyPattern: "$resource.artifact",
 		},
 		{
+			desc:              "nonexistent specrev reference",
+			resourcePattern:   "projects/demo/locations/global/apis/-/versions/-/specs/-@-",
+			dependencyPattern: "$resource.artifact",
+		},
+		{
 			desc:              "incorrect reference keyword",
 			resourcePattern:   "projects/demo/locations/global/apis/-/versions/-/specs/-",
 			dependencyPattern: "$resource.aip",
@@ -154,9 +168,13 @@ func TestFullResourceNameFromParent(t *testing.T) {
 			desc:            "spec pattern",
 			resourcePattern: "projects/demo/locations/global/apis/-/versions/-/specs/openapi.yaml",
 			parent:          "projects/demo/locations/global/apis/petstore/versions/1.0.0",
-			want: SpecName{
-				Name: generateSpec(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml"),
-			},
+			want:            generateSpecName(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml"),
+		},
+		{
+			desc:            "specrev pattern",
+			resourcePattern: "projects/demo/locations/global/apis/-/versions/-/specs/openapi.yaml@rev",
+			parent:          "projects/demo/locations/global/apis/petstore/versions/1.0.0",
+			want:            generateSpecName(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml@rev"),
 		},
 		{
 			desc:            "artifact pattern",
@@ -219,20 +237,26 @@ func TestGetReferenceEntityValue(t *testing.T) {
 		{
 			desc:            "api group",
 			resourcePattern: "$resource.api/versions/-/specs/-",
-			referred:        SpecName{Name: generateSpec(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml")},
+			referred:        generateSpecName(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml"),
 			want:            "projects/demo/locations/global/apis/petstore",
 		},
 		{
 			desc:            "version group",
 			resourcePattern: "$resource.version/specs/-",
-			referred:        SpecName{Name: generateSpec(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml")},
+			referred:        generateSpecName(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml"),
 			want:            "projects/demo/locations/global/apis/petstore/versions/1.0.0",
 		},
 		{
 			desc:            "spec group",
 			resourcePattern: "$resource.spec",
-			referred:        SpecName{Name: generateSpec(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml")},
+			referred:        generateSpecName(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml"),
 			want:            "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+		},
+		{
+			desc:            "spec revision group",
+			resourcePattern: "$resource.spec",
+			referred:        generateSpecName(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml@rev"),
+			want:            "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml@rev",
 		},
 		{
 			desc:            "artifact group",
@@ -270,17 +294,17 @@ func TestGetReferenceEntityValueError(t *testing.T) {
 		{
 			desc:            "typo",
 			resourcePattern: "$resource.apis/versions/-/specs/-",
-			referred:        SpecName{Name: generateSpec(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml")},
+			referred:        generateSpecName(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml"),
 		},
 		{
 			desc:            "incorrect reference",
 			resourcePattern: "$resource.name/versions/-/specs/-",
-			referred:        SpecName{Name: generateSpec(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml")},
+			referred:        generateSpecName(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml"),
 		},
 		{
 			desc:            "incorrect resourceKW",
 			resourcePattern: "$resources.api/versions/-/specs/-",
-			referred:        SpecName{Name: generateSpec(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml")},
+			referred:        generateSpecName(t, "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml"),
 		},
 	}
 
