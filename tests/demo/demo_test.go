@@ -101,7 +101,7 @@ func listAllSpecs(ctx context.Context, registryClient connection.RegistryClient)
 func listAllSpecRevisionIDs(ctx context.Context, registryClient connection.RegistryClient) []string {
 	revisionIDs := make([]string, 0)
 	req := &rpc.ListApiSpecRevisionsRequest{
-		Name: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+		Name: "projects/demo/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml@-",
 	}
 	it := registryClient.ListApiSpecRevisions(ctx, req)
 	for {

@@ -41,7 +41,8 @@ type ResourceName interface {
 }
 
 type SpecName struct {
-	Name names.Spec
+	Name       names.Spec
+	RevisionID string
 }
 
 func (s SpecName) Artifact() string {
@@ -49,7 +50,7 @@ func (s SpecName) Artifact() string {
 }
 
 func (s SpecName) Spec() string {
-	return s.Name.String()
+	return s.String()
 }
 
 func (s SpecName) Version() string {
@@ -65,7 +66,11 @@ func (s SpecName) Project() string {
 }
 
 func (s SpecName) String() string {
-	return s.Name.String()
+	if s.RevisionID == "" {
+		return s.Name.String()
+	} else {
+		return s.Name.String() + "@" + s.RevisionID
+	}
 }
 
 func (s SpecName) ParentName() ResourceName {
@@ -213,17 +218,18 @@ func (ar ArtifactName) Artifact() string {
 }
 
 func (ar ArtifactName) Spec() string {
-	specPattern := names.Spec{
-		ProjectID: ar.Name.ProjectID(),
-		ApiID:     ar.Name.ApiID(),
-		VersionID: ar.Name.VersionID(),
-		SpecID:    ar.Name.SpecID(),
+	specPattern := names.SpecRevision{
+		ProjectID:  ar.Name.ProjectID(),
+		ApiID:      ar.Name.ApiID(),
+		VersionID:  ar.Name.VersionID(),
+		SpecID:     ar.Name.SpecID(),
+		RevisionID: ar.Name.RevisionID(),
 	}
 
 	// Validate the generated name
-	if spec, err := names.ParseSpec(specPattern.String()); err == nil {
+	if spec, err := names.ParseSpecRevision(specPattern.String()); err == nil {
 		return spec.String()
-	} else if _, err := names.ParseSpecCollection(specPattern.String()); err == nil {
+	} else if _, err := names.ParseSpecRevisionCollection(specPattern.String()); err == nil {
 		return spec.String()
 	}
 
@@ -294,9 +300,10 @@ func (ar ArtifactName) ParentName() ResourceName {
 		return VersionName{
 			Name: version,
 		}
-	} else if spec, err := names.ParseSpecCollection(parent); err == nil {
+	} else if spec, err := names.ParseSpecRevisionCollection(parent); err == nil {
 		return SpecName{
-			Name: spec,
+			Name:       spec.Spec(),
+			RevisionID: spec.RevisionID,
 		}
 	}
 
@@ -317,9 +324,10 @@ func (ar ArtifactName) ParentName() ResourceName {
 		return VersionName{
 			Name: version,
 		}
-	} else if spec, err := names.ParseSpec(parent); err == nil {
+	} else if spec, err := names.ParseSpecRevision(parent); err == nil {
 		return SpecName{
-			Name: spec,
+			Name:       spec.Spec(),
+			RevisionID: spec.RevisionID,
 		}
 	}
 
@@ -414,6 +422,8 @@ func ListResources(ctx context.Context, client connection.RegistryClient, patter
 		err2 = core.ListVersions(ctx, client, version, filter, generateVersionHandler(&result, preserveResource))
 	} else if spec, err := names.ParseSpecCollection(pattern); err == nil {
 		err2 = core.ListSpecs(ctx, client, spec, filter, generateSpecHandler(&result, preserveResource))
+	} else if rev, err := names.ParseSpecRevisionCollection(pattern); err == nil {
+		err2 = core.ListSpecRevisions(ctx, client, rev, filter, generateSpecHandler(&result, preserveResource))
 	} else if artifact, err := names.ParseArtifactCollection(pattern); err == nil {
 		err2 = core.ListArtifacts(ctx, client, artifact, filter, false, generateArtifactHandler(&result, preserveResource))
 	}
@@ -425,6 +435,8 @@ func ListResources(ctx context.Context, client connection.RegistryClient, patter
 		err2 = core.ListVersions(ctx, client, version, filter, generateVersionHandler(&result, preserveResource))
 	} else if spec, err := names.ParseSpec(pattern); err == nil {
 		err2 = core.ListSpecs(ctx, client, spec, filter, generateSpecHandler(&result, preserveResource))
+	} else if rev, err := names.ParseSpecRevision(pattern); err == nil {
+		err2 = core.ListSpecRevisions(ctx, client, rev, filter, generateSpecHandler(&result, preserveResource))
 	} else if artifact, err := names.ParseArtifact(pattern); err == nil {
 		err2 = core.ListArtifacts(ctx, client, artifact, filter, false, generateArtifactHandler(&result, preserveResource))
 	}
@@ -479,12 +491,16 @@ func generateVersionHandler(result *[]ResourceInstance, preserveResource bool) f
 
 func generateSpecHandler(result *[]ResourceInstance, preserveResource bool) func(*rpc.ApiSpec) error {
 	return func(spec *rpc.ApiSpec) error {
-		name, err := names.ParseSpec(spec.GetName())
+		name, err := names.ParseSpecRevision(spec.GetName())
 		if err != nil {
 			return err
 		}
+
 		resource := SpecResource{
-			SpecName:  SpecName{Name: name},
+			SpecName: SpecName{
+				Name:       name.Spec(),
+				RevisionID: name.RevisionID,
+			},
 			Timestamp: spec.RevisionUpdateTime.AsTime(),
 		}
 		if preserveResource {

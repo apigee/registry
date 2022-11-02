@@ -18,7 +18,6 @@ import (
 	"errors"
 	"io/fs"
 
-	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/cmd/registry/patch"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
@@ -50,9 +49,7 @@ func Command() *cobra.Command {
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
-			taskQueue, wait := core.WorkerPool(ctx, jobs)
-			defer wait()
-			err = patch.Apply(ctx, client, fileName, parent, recursive, taskQueue)
+			err = patch.Apply(ctx, client, fileName, parent, recursive, jobs)
 			if errors.Is(err, fs.ErrNotExist) {
 				log.FromContext(ctx).WithError(err).Fatalf("File %q doesn't exist", fileName)
 			} else if err != nil {

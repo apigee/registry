@@ -63,20 +63,32 @@ func vocabularyCommand() *cobra.Command {
 			taskQueue, wait := core.WorkerPool(ctx, 64)
 			defer wait()
 
-			spec, err := names.ParseSpec(path)
+			parsed, err := names.ParseSpecRevision(path)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed parse")
 			}
 
 			// Iterate through a collection of specs and summarize each.
-			if err := core.ListSpecs(ctx, client, spec, filter, func(spec *rpc.ApiSpec) error {
-				taskQueue <- &computeVocabularyTask{
-					client:   client,
-					specName: spec.GetName(),
-					dryRun:   dryRun,
-				}
-				return nil
-			}); err != nil {
+			if parsed.RevisionID == "" {
+				err = core.ListSpecs(ctx, client, parsed.Spec(), filter, func(spec *rpc.ApiSpec) error {
+					taskQueue <- &computeVocabularyTask{
+						client:   client,
+						specName: spec.GetName(),
+						dryRun:   dryRun,
+					}
+					return nil
+				})
+			} else {
+				err = core.ListSpecRevisions(ctx, client, parsed, filter, func(spec *rpc.ApiSpec) error {
+					taskQueue <- &computeVocabularyTask{
+						client:   client,
+						specName: spec.GetName(),
+						dryRun:   dryRun,
+					}
+					return nil
+				})
+			}
+			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to list specs")
 			}
 		},

@@ -19,7 +19,11 @@ import (
 	"regexp"
 )
 
-var specRevisionRegexp = regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/versions/%s/specs/%s@%s$", identifier, Location, identifier, identifier, identifier, revisionTag))
+var specRevisionRegexp = regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/versions/%s/specs/%s(?:@%s)?$",
+	identifier, Location, identifier, identifier, identifier, revisionTag))
+
+var specRevisionCollectionRegexp = regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/versions/%s/specs@$",
+	identifier, Location, identifier, identifier))
 
 // SpecRevision represents a resource name for an API spec revision.
 type SpecRevision struct {
@@ -28,6 +32,30 @@ type SpecRevision struct {
 	VersionID  string
 	SpecID     string
 	RevisionID string
+}
+
+// Project returns the parent project for this resource.
+func (s SpecRevision) Project() Project {
+	return Project{
+		ProjectID: s.ProjectID,
+	}
+}
+
+// Api returns the parent API for this resource.
+func (s SpecRevision) Api() Api {
+	return Api{
+		ProjectID: s.ProjectID,
+		ApiID:     s.ApiID,
+	}
+}
+
+// Version returns the parent API version for this resource.
+func (s SpecRevision) Version() Version {
+	return Version{
+		ProjectID: s.ProjectID,
+		ApiID:     s.ApiID,
+		VersionID: s.VersionID,
+	}
 }
 
 // Spec returns the parent spec for this resource.
@@ -40,9 +68,33 @@ func (s SpecRevision) Spec() Spec {
 	}
 }
 
+// Artifact returns an artifact with the provided ID and this resource as its parent.
+func (s SpecRevision) Artifact(id string) Artifact {
+	return Artifact{
+		name: specArtifact{
+			ProjectID:  s.ProjectID,
+			ApiID:      s.ApiID,
+			VersionID:  s.VersionID,
+			SpecID:     s.SpecID,
+			RevisionID: s.RevisionID,
+			ArtifactID: id,
+		},
+	}
+}
+
+// Parent returns this resource's parent version resource name.
+func (s SpecRevision) Parent() string {
+	return s.Spec().Parent()
+}
+
 func (s SpecRevision) String() string {
-	return normalize(fmt.Sprintf("projects/%s/locations/%s/apis/%s/versions/%s/specs/%s@%s",
-		s.ProjectID, Location, s.ApiID, s.VersionID, s.SpecID, s.RevisionID))
+	if s.RevisionID == "" { // use latest revision
+		return normalize(fmt.Sprintf("projects/%s/locations/%s/apis/%s/versions/%s/specs/%s",
+			s.ProjectID, Location, s.ApiID, s.VersionID, s.SpecID))
+	} else {
+		return normalize(fmt.Sprintf("projects/%s/locations/%s/apis/%s/versions/%s/specs/%s@%s",
+			s.ProjectID, Location, s.ApiID, s.VersionID, s.SpecID, s.RevisionID))
+	}
 }
 
 // ParseSpecRevision parses the name of a spec.
@@ -61,4 +113,23 @@ func ParseSpecRevision(name string) (SpecRevision, error) {
 	}
 
 	return revision, nil
+}
+
+// ParseSpecRevisionCollection parses the name of a spec revision collection.
+func ParseSpecRevisionCollection(name string) (SpecRevision, error) {
+	r := specRevisionCollectionRegexp
+	if !r.MatchString(name) {
+		return SpecRevision{}, fmt.Errorf("invalid spec revision collection name %q: must match %q", name, r)
+	}
+
+	m := r.FindStringSubmatch(name)
+	rev := SpecRevision{
+		ProjectID:  m[1],
+		ApiID:      m[2],
+		VersionID:  m[3],
+		SpecID:     m[4],
+		RevisionID: "-",
+	}
+
+	return rev, nil
 }
