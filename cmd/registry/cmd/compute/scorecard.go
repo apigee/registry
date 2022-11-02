@@ -50,7 +50,7 @@ func scoreCardCommand() *cobra.Command {
 			taskQueue, wait := core.WorkerPool(ctx, 64)
 			defer wait()
 
-			resources, err := patterns.ListResources(ctx, client, args[0], filter)
+			resources, err := patterns.ListResources(ctx, client, args[0], filter, false)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to list resources")
 			}
@@ -59,7 +59,7 @@ func scoreCardCommand() *cobra.Command {
 
 			for _, r := range resources {
 				// Fetch the ScoreCardDefinitions which can be applied to this resource
-				scoreCardDefinitions, err := scoring.FetchScoreCardDefinitions(ctx, artifactClient, r.ResourceName())
+				scoreCardDefinitions, err := scoring.FetchScoreCardDefinitions(ctx, artifactClient, r)
 				if err != nil {
 					log.FromContext(ctx).WithError(err).Errorf("Skipping resource %q", r.ResourceName())
 					continue

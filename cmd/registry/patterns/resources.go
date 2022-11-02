@@ -336,6 +336,7 @@ type ResourceInstance interface {
 type SpecResource struct {
 	SpecName  ResourceName
 	Timestamp time.Time
+	Spec      *rpc.ApiSpec
 }
 
 func (s SpecResource) UpdateTimestamp() time.Time {
@@ -349,6 +350,7 @@ func (s SpecResource) ResourceName() ResourceName {
 type VersionResource struct {
 	VersionName ResourceName
 	Timestamp   time.Time
+	Version     *rpc.ApiVersion
 }
 
 func (v VersionResource) UpdateTimestamp() time.Time {
@@ -362,6 +364,7 @@ func (v VersionResource) ResourceName() ResourceName {
 type ApiResource struct {
 	ApiName   ResourceName
 	Timestamp time.Time
+	Api       *rpc.Api
 }
 
 func (a ApiResource) UpdateTimestamp() time.Time {
@@ -375,6 +378,7 @@ func (a ApiResource) ResourceName() ResourceName {
 type ProjectResource struct {
 	ProjectName ResourceName
 	Timestamp   time.Time
+	Project     *rpc.Project
 }
 
 func (p ProjectResource) UpdateTimestamp() time.Time {
@@ -388,6 +392,7 @@ func (p ProjectResource) ResourceName() ResourceName {
 type ArtifactResource struct {
 	ArtifactName ResourceName
 	Timestamp    time.Time
+	Artifact     *rpc.Artifact
 }
 
 func (ar ArtifactResource) UpdateTimestamp() time.Time {
@@ -398,30 +403,30 @@ func (ar ArtifactResource) ResourceName() ResourceName {
 	return ar.ArtifactName
 }
 
-func ListResources(ctx context.Context, client connection.RegistryClient, pattern, filter string) ([]ResourceInstance, error) {
+func ListResources(ctx context.Context, client connection.RegistryClient, pattern, filter string, preserveResource bool) ([]ResourceInstance, error) {
 	var result []ResourceInstance
 	var err2 error
 
 	// First try to match collection names.
 	if api, err := names.ParseApiCollection(pattern); err == nil {
-		err2 = core.ListAPIs(ctx, client, api, filter, generateApiHandler(&result))
+		err2 = core.ListAPIs(ctx, client, api, filter, generateApiHandler(&result, preserveResource))
 	} else if version, err := names.ParseVersionCollection(pattern); err == nil {
-		err2 = core.ListVersions(ctx, client, version, filter, generateVersionHandler(&result))
+		err2 = core.ListVersions(ctx, client, version, filter, generateVersionHandler(&result, preserveResource))
 	} else if spec, err := names.ParseSpecCollection(pattern); err == nil {
-		err2 = core.ListSpecs(ctx, client, spec, filter, generateSpecHandler(&result))
+		err2 = core.ListSpecs(ctx, client, spec, filter, generateSpecHandler(&result, preserveResource))
 	} else if artifact, err := names.ParseArtifactCollection(pattern); err == nil {
-		err2 = core.ListArtifacts(ctx, client, artifact, filter, false, generateArtifactHandler(&result))
+		err2 = core.ListArtifacts(ctx, client, artifact, filter, false, generateArtifactHandler(&result, preserveResource))
 	}
 
 	// Then try to match resource names.
 	if api, err := names.ParseApi(pattern); err == nil {
-		err2 = core.ListAPIs(ctx, client, api, filter, generateApiHandler(&result))
+		err2 = core.ListAPIs(ctx, client, api, filter, generateApiHandler(&result, preserveResource))
 	} else if version, err := names.ParseVersion(pattern); err == nil {
-		err2 = core.ListVersions(ctx, client, version, filter, generateVersionHandler(&result))
+		err2 = core.ListVersions(ctx, client, version, filter, generateVersionHandler(&result, preserveResource))
 	} else if spec, err := names.ParseSpec(pattern); err == nil {
-		err2 = core.ListSpecs(ctx, client, spec, filter, generateSpecHandler(&result))
+		err2 = core.ListSpecs(ctx, client, spec, filter, generateSpecHandler(&result, preserveResource))
 	} else if artifact, err := names.ParseArtifact(pattern); err == nil {
-		err2 = core.ListArtifacts(ctx, client, artifact, filter, false, generateArtifactHandler(&result))
+		err2 = core.ListArtifacts(ctx, client, artifact, filter, false, generateArtifactHandler(&result, preserveResource))
 	}
 
 	if err2 != nil {
@@ -431,65 +436,82 @@ func ListResources(ctx context.Context, client connection.RegistryClient, patter
 	return result, nil
 }
 
-func generateApiHandler(result *[]ResourceInstance) func(*rpc.Api) error {
+func generateApiHandler(result *[]ResourceInstance, preserveResource bool) func(*rpc.Api) error {
 	return func(api *rpc.Api) error {
 		name, err := names.ParseApi(api.GetName())
 		if err != nil {
 			return err
 		}
 
-		(*result) = append((*result), ApiResource{
+		resource := ApiResource{
 			ApiName:   ApiName{Name: name},
 			Timestamp: api.UpdateTime.AsTime(),
-		})
+		}
+		if preserveResource {
+			resource.Api = api
+		}
+
+		(*result) = append((*result), resource)
 
 		return nil
 	}
 }
 
-func generateVersionHandler(result *[]ResourceInstance) func(*rpc.ApiVersion) error {
+func generateVersionHandler(result *[]ResourceInstance, preserveResource bool) func(*rpc.ApiVersion) error {
 	return func(version *rpc.ApiVersion) error {
 		name, err := names.ParseVersion(version.GetName())
 		if err != nil {
 			return err
 		}
-
-		(*result) = append((*result), VersionResource{
+		resource := VersionResource{
 			VersionName: VersionName{Name: name},
 			Timestamp:   version.UpdateTime.AsTime(),
-		})
+		}
+		if preserveResource {
+			resource.Version = version
+		}
+
+		(*result) = append((*result), resource)
 
 		return nil
 	}
 }
 
-func generateSpecHandler(result *[]ResourceInstance) func(*rpc.ApiSpec) error {
+func generateSpecHandler(result *[]ResourceInstance, preserveResource bool) func(*rpc.ApiSpec) error {
 	return func(spec *rpc.ApiSpec) error {
 		name, err := names.ParseSpec(spec.GetName())
 		if err != nil {
 			return err
 		}
-
-		(*result) = append((*result), SpecResource{
+		resource := SpecResource{
 			SpecName:  SpecName{Name: name},
 			Timestamp: spec.RevisionUpdateTime.AsTime(),
-		})
+		}
+		if preserveResource {
+			resource.Spec = spec
+		}
+
+		(*result) = append((*result), resource)
 
 		return nil
 	}
 }
 
-func generateArtifactHandler(result *[]ResourceInstance) func(*rpc.Artifact) error {
+func generateArtifactHandler(result *[]ResourceInstance, preserveResource bool) func(*rpc.Artifact) error {
 	return func(artifact *rpc.Artifact) error {
 		name, err := names.ParseArtifact(artifact.GetName())
 		if err != nil {
 			return err
 		}
-
-		(*result) = append((*result), ArtifactResource{
+		resource := ArtifactResource{
 			ArtifactName: ArtifactName{Name: name},
 			Timestamp:    artifact.UpdateTime.AsTime(),
-		})
+		}
+		if preserveResource {
+			resource.Artifact = artifact
+		}
+
+		(*result) = append((*result), resource)
 
 		return nil
 	}

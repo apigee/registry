@@ -36,10 +36,10 @@ func scoreCardID(definitionID string) string {
 func FetchScoreCardDefinitions(
 	ctx context.Context,
 	client artifactClient,
-	resource patterns.ResourceName) ([]*rpc.Artifact, error) {
+	resource patterns.ResourceInstance) ([]*rpc.Artifact, error) {
 	defArtifacts := make([]*rpc.Artifact, 0)
 
-	project := fmt.Sprintf("%s/locations/global", resource.Project())
+	project := fmt.Sprintf("%s/locations/global", resource.ResourceName().Project())
 	artifact, err := names.ParseArtifact(fmt.Sprintf("%s/artifacts/-", project))
 	if err != nil {
 		return nil, err

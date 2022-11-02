@@ -20,6 +20,7 @@ import (
 	"strings"
 
 	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/server/registry/filtering"
 
 	"github.com/apigee/registry/cmd/registry/patterns"
 )
@@ -33,9 +34,13 @@ func ValidateScoreDefinition(parent string, scoreDefinition *rpc.ScoreDefinition
 		totalErrs = append(totalErrs, err)
 	}
 
-	// TODO: Check for valid filter in target_resource
+	// target_resource.filter should be a valid filter on the resource
+	err = validateFilter(targetName, scoreDefinition.GetTargetResource().GetFilter())
+	if err != nil {
+		totalErrs = append(totalErrs, err)
+	}
 
-	// Validate formula if there were no errors in target_resource.pattern
+	// Validate formula if there were no errors in target_resource
 	if len(totalErrs) == 0 {
 		switch formula := scoreDefinition.GetFormula().(type) {
 		case *rpc.ScoreDefinition_ScoreFormula:
@@ -95,6 +100,12 @@ func ValidateScoreCardDefinition(parent string, scoreCardDefinition *rpc.ScoreCa
 		totalErrs = append(totalErrs, err)
 	}
 
+	// target_resource.filter should be a valid filter on the resource
+	err = validateFilter(targetName, scoreCardDefinition.GetTargetResource().GetFilter())
+	if err != nil {
+		totalErrs = append(totalErrs, err)
+	}
+
 	scorePatterns := scoreCardDefinition.GetScorePatterns()
 
 	// Check if score_patterns are set
@@ -132,10 +143,36 @@ func validateReferencesInPattern(targetName patterns.ResourceName, pattern strin
 		errs = append(errs, fmt.Errorf("invalid pattern: %q, must always start with '$resource.(api|version|spec|artifact)'", pattern))
 	} else if _, err = patterns.GetReferenceEntityValue(pattern, targetName); err != nil {
 		// $resource should have valid entity reference wrt target_resource
-		errs = append(errs, fmt.Errorf("invalid pattern %q, invalid $resource reference in pattern: %s", pattern, err))
+		errs = append(errs, fmt.Errorf("invalid pattern: %q, invalid $resource reference in pattern: %s", pattern, err))
 	}
 
 	return errs
+}
+
+func validateFilter(targetName patterns.ResourceName, filter string) error {
+	switch targetName.(type) {
+	case patterns.SpecName:
+		_, err := filtering.NewFilter(filter, filtering.SpecFields)
+		if err != nil {
+			return fmt.Errorf("invalid filter: %q, %s", filter, err)
+		}
+	case patterns.VersionName:
+		_, err := filtering.NewFilter(filter, filtering.VersionFields)
+		if err != nil {
+			return fmt.Errorf("invalid filter: %q, %s", filter, err)
+		}
+	case patterns.ApiName:
+		_, err := filtering.NewFilter(filter, filtering.ApiFields)
+		if err != nil {
+			return fmt.Errorf("invalid filter: %q, %s", filter, err)
+		}
+	case patterns.ArtifactName:
+		_, err := filtering.NewFilter(filter, filtering.ArtifactFields)
+		if err != nil {
+			return fmt.Errorf("invalid filter: %q, %s", filter, err)
+		}
+	}
+	return nil
 }
 
 func validateScoreFormula(targetName patterns.ResourceName, scoreFormula *rpc.ScoreFormula) []error {
@@ -258,7 +295,7 @@ func validateBooleanThresholds(thresholds []*rpc.BooleanThreshold) []error {
 	return errs
 }
 
-func matchResourceWithTarget(targetPattern *rpc.ResourcePattern, resourceName patterns.ResourceName, project string) error {
+func matchResourceWithTarget(targetPattern *rpc.ResourcePattern, resourceInstance patterns.ResourceInstance, project string) error {
 	targetPatternName, err := patterns.ParseResourcePattern(fmt.Sprintf("%s/%s", project, targetPattern.GetPattern()))
 	if err != nil {
 		return err
@@ -266,51 +303,139 @@ func matchResourceWithTarget(targetPattern *rpc.ResourcePattern, resourceName pa
 
 	switch tp := targetPatternName.(type) {
 	case patterns.SpecName:
-		// Check if targetPattern and resourceName match in type
-		r, ok := resourceName.(patterns.SpecName)
+		// Check if targetPattern and resource match in type
+		r, ok := resourceInstance.(patterns.SpecResource)
 		if !ok {
-			return fmt.Errorf("resource %s doesn't match target pattern %s", r, tp)
+			return fmt.Errorf("resource %q doesn't match target pattern %q", r, tp)
+		}
+
+		// Convert ResourceName to SpecName
+		rName, ok := resourceInstance.ResourceName().(patterns.SpecName)
+		if !ok {
+			return fmt.Errorf("resourceName %q doesn't match target pattern %q", rName, tp)
 		}
 
 		// Check if the individual entities match
-		if tp.Name.ApiID != "-" && tp.Name.ApiID != r.Name.ApiID {
-			return fmt.Errorf("api mismatch in resource %s and target pattern %v", resourceName.String(), targetPattern)
+		if tp.Name.ApiID != "-" && tp.Name.ApiID != rName.Name.ApiID {
+			return fmt.Errorf("api mismatch in resource %q and target pattern %v", resourceInstance.ResourceName().String(), targetPattern)
 		}
-		if tp.Name.VersionID != "-" && tp.Name.VersionID != r.Name.VersionID {
-			return fmt.Errorf("version mismatch in resource %s and target pattern %v", resourceName.String(), targetPattern)
+		if tp.Name.VersionID != "-" && tp.Name.VersionID != rName.Name.VersionID {
+			return fmt.Errorf("version mismatch in resource %q and target pattern %v", resourceInstance.ResourceName().String(), targetPattern)
 		}
-		if tp.Name.SpecID != "-" && tp.Name.SpecID != r.Name.SpecID {
-			return fmt.Errorf("spec mismatch in resource %s and target pattern %v", resourceName.String(), targetPattern)
+		if tp.Name.SpecID != "-" && tp.Name.SpecID != rName.Name.SpecID {
+			return fmt.Errorf("spec mismatch in resource %q and target pattern %v", resourceInstance.ResourceName().String(), targetPattern)
+		}
+
+		// Check if the filter matches with the resource
+		filterStr := targetPattern.GetFilter()
+		if filterStr != "" {
+			filter, err := filtering.NewFilter(filterStr, filtering.SpecFields)
+			if err != nil {
+				return fmt.Errorf("invalid filter %q: %s", filterStr, err)
+			}
+
+			rMap, err := filtering.SpecMapFromMessage(r.Spec)
+			if err != nil {
+				return fmt.Errorf("internal error while applying filter: %s", err)
+			}
+
+			match, err := filter.Matches(rMap)
+			if err != nil {
+				return fmt.Errorf("failed applying filter %q: %s", filterStr, err)
+			}
+
+			if !match {
+				return fmt.Errorf("target pattern filter %q does not match with resource %q", filterStr, resourceInstance.ResourceName().String())
+			}
 		}
 	case patterns.VersionName:
-		// Check if targetPattern and resourceName match in type
-		r, ok := resourceName.(patterns.VersionName)
+		// Check if targetPattern and resource match in type
+		r, ok := resourceInstance.(patterns.VersionResource)
 		if !ok {
-			return fmt.Errorf("resource %s doesn't match target pattern %s", r, tp)
+			return fmt.Errorf("resource %q doesn't match target pattern %q", r, tp)
+		}
+
+		// Convert ResourceName to VersionName
+		rName, ok := resourceInstance.ResourceName().(patterns.VersionName)
+		if !ok {
+			return fmt.Errorf("resourceName %q doesn't match target pattern %q", rName, tp)
 		}
 
 		// Check if the individual entities match
-		if tp.Name.ApiID != "-" && tp.Name.ApiID != r.Name.ApiID {
-			return fmt.Errorf("api mismatch in resource %s and target pattern %v", resourceName.String(), targetPattern)
+		if tp.Name.ApiID != "-" && tp.Name.ApiID != rName.Name.ApiID {
+			return fmt.Errorf("api mismatch in resource %s and target pattern %v", resourceInstance.ResourceName().String(), targetPattern)
 		}
-		if tp.Name.VersionID != "-" && tp.Name.VersionID != r.Name.VersionID {
-			return fmt.Errorf("version mismatch in resource %s and target pattern %v", resourceName.String(), targetPattern)
+		if tp.Name.VersionID != "-" && tp.Name.VersionID != rName.Name.VersionID {
+			return fmt.Errorf("version mismatch in resource %s and target pattern %v", resourceInstance.ResourceName().String(), targetPattern)
 		}
+
+		// Check if the filter matches with the resource
+		filterStr := targetPattern.GetFilter()
+		if filterStr != "" {
+			filter, err := filtering.NewFilter(filterStr, filtering.VersionFields)
+			if err != nil {
+				return fmt.Errorf("invalid filter %q: %s", filterStr, err)
+			}
+
+			rMap, err := filtering.VersionMapFromMessage(r.Version)
+			if err != nil {
+				return fmt.Errorf("internal error while applying filter: %s", err)
+			}
+
+			match, err := filter.Matches(rMap)
+			if err != nil {
+				return fmt.Errorf("failed applying filter %q: %s", filterStr, err)
+			}
+
+			if !match {
+				return fmt.Errorf("target pattern filter %q does not match with resource %q", filterStr, resourceInstance.ResourceName().String())
+			}
+		}
+
 	case patterns.ApiName:
-		// Check if targetPattern and resourceName match in type
-		r, ok := resourceName.(patterns.ApiName)
+		// Check if targetPattern and resource match in type
+		r, ok := resourceInstance.(patterns.ApiResource)
 		if !ok {
 			return fmt.Errorf("resource %s doesn't match target pattern %s", r, tp)
 		}
 
-		// Check if the individual entities match
-		if tp.Name.ApiID != "-" && tp.Name.ApiID != r.Name.ApiID {
-			return fmt.Errorf("api mismatch in resource %s and target pattern %v", resourceName.String(), targetPattern)
+		// Convert ResourceName to ApiName
+		rName, ok := resourceInstance.ResourceName().(patterns.ApiName)
+		if !ok {
+			return fmt.Errorf("resourceName %q doesn't match target pattern %q", rName, tp)
 		}
+
+		// Check if the individual entities match
+		if tp.Name.ApiID != "-" && tp.Name.ApiID != rName.Name.ApiID {
+			return fmt.Errorf("api mismatch in resource %s and target pattern %v", resourceInstance.ResourceName().String(), targetPattern)
+		}
+
+		// Check if the filter matches with the resource
+		filterStr := targetPattern.GetFilter()
+		if filterStr != "" {
+			filter, err := filtering.NewFilter(filterStr, filtering.ApiFields)
+			if err != nil {
+				return fmt.Errorf("invalid filter %q: %s", filterStr, err)
+			}
+
+			rMap, err := filtering.ApiMapFromMessage(r.Api)
+			if err != nil {
+				return fmt.Errorf("internal error while applying filter: %s", err)
+			}
+
+			match, err := filter.Matches(rMap)
+			if err != nil {
+				return fmt.Errorf("failed applying filter %q: %s", filterStr, err)
+			}
+
+			if !match {
+				return fmt.Errorf("target pattern filter %q does not match with resource %q", filterStr, resourceInstance.ResourceName().String())
+			}
+		}
+
 	default:
 		return fmt.Errorf("unsupported resource type %T", targetPatternName)
 	}
 
-	// TODO: Filter check
 	return nil
 }

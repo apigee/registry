@@ -51,7 +51,7 @@ func scoreCommand() *cobra.Command {
 			taskQueue, wait := core.WorkerPool(ctx, 64)
 			defer wait()
 
-			resources, err := patterns.ListResources(ctx, client, args[0], filter)
+			resources, err := patterns.ListResources(ctx, client, args[0], filter, false)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to list resources")
 			}
@@ -60,7 +60,7 @@ func scoreCommand() *cobra.Command {
 
 			for _, r := range resources {
 				// Fetch the ScoreDefinitions which can be applied to this resource
-				scoreDefinitions, err := scoring.FetchScoreDefinitions(ctx, artifactClient, r.ResourceName())
+				scoreDefinitions, err := scoring.FetchScoreDefinitions(ctx, artifactClient, r)
 				if err != nil {
 					log.FromContext(ctx).WithError(err).Errorf("Skipping resource %q", r.ResourceName())
 					continue
