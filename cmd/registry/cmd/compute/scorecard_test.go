@@ -264,7 +264,6 @@ func TestScoreCard(t *testing.T) {
 			if diff := cmp.Diff(test.want, got, regexComparer); diff != "" {
 				t.Errorf("compute scorecard command returned unexpected diff (-want +got): %s", diff)
 			}
-
 		})
 	}
 }

@@ -334,7 +334,6 @@ func TestScore(t *testing.T) {
 			if diff := cmp.Diff(test.want, got, regexComparer); diff != "" {
 				t.Errorf("compute score command returned unexpected diff (-want +got): %s", diff)
 			}
-
 		})
 	}
 }
