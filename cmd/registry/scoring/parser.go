@@ -328,25 +328,23 @@ func matchResourceWithTarget(targetPattern *rpc.ResourcePattern, resourceInstanc
 
 		// Check if the filter matches with the resource
 		filterStr := targetPattern.GetFilter()
-		if filterStr != "" {
-			filter, err := filtering.NewFilter(filterStr, filtering.SpecFields)
-			if err != nil {
-				return fmt.Errorf("invalid filter %q: %s", filterStr, err)
-			}
+		filter, err := filtering.NewFilter(filterStr, filtering.SpecFields)
+		if err != nil {
+			return fmt.Errorf("invalid filter %q: %s", filterStr, err)
+		}
 
-			rMap, err := filtering.SpecMapFromMessage(r.Spec)
-			if err != nil {
-				return fmt.Errorf("internal error while applying filter: %s", err)
-			}
+		rMap, err := filtering.SpecMapFromMessage(r.Spec)
+		if err != nil {
+			return fmt.Errorf("internal error while applying filter: %s", err)
+		}
 
-			match, err := filter.Matches(rMap)
-			if err != nil {
-				return fmt.Errorf("failed applying filter %q: %s", filterStr, err)
-			}
+		match, err := filter.Matches(rMap)
+		if err != nil {
+			return fmt.Errorf("failed applying filter %q: %s", filterStr, err)
+		}
 
-			if !match {
-				return fmt.Errorf("target pattern filter %q does not match with resource %q", filterStr, resourceInstance.ResourceName().String())
-			}
+		if !match {
+			return fmt.Errorf("target pattern filter %q does not match with resource %q", filterStr, resourceInstance.ResourceName().String())
 		}
 	case patterns.VersionName:
 		// Check if targetPattern and resource match in type
@@ -371,27 +369,24 @@ func matchResourceWithTarget(targetPattern *rpc.ResourcePattern, resourceInstanc
 
 		// Check if the filter matches with the resource
 		filterStr := targetPattern.GetFilter()
-		if filterStr != "" {
-			filter, err := filtering.NewFilter(filterStr, filtering.VersionFields)
-			if err != nil {
-				return fmt.Errorf("invalid filter %q: %s", filterStr, err)
-			}
-
-			rMap, err := filtering.VersionMapFromMessage(r.Version)
-			if err != nil {
-				return fmt.Errorf("internal error while applying filter: %s", err)
-			}
-
-			match, err := filter.Matches(rMap)
-			if err != nil {
-				return fmt.Errorf("failed applying filter %q: %s", filterStr, err)
-			}
-
-			if !match {
-				return fmt.Errorf("target pattern filter %q does not match with resource %q", filterStr, resourceInstance.ResourceName().String())
-			}
+		filter, err := filtering.NewFilter(filterStr, filtering.VersionFields)
+		if err != nil {
+			return fmt.Errorf("invalid filter %q: %s", filterStr, err)
 		}
 
+		rMap, err := filtering.VersionMapFromMessage(r.Version)
+		if err != nil {
+			return fmt.Errorf("internal error while applying filter: %s", err)
+		}
+
+		match, err := filter.Matches(rMap)
+		if err != nil {
+			return fmt.Errorf("failed applying filter %q: %s", filterStr, err)
+		}
+
+		if !match {
+			return fmt.Errorf("target pattern filter %q does not match with resource %q", filterStr, resourceInstance.ResourceName().String())
+		}
 	case patterns.ApiName:
 		// Check if targetPattern and resource match in type
 		r, ok := resourceInstance.(patterns.ApiResource)
@@ -412,27 +407,24 @@ func matchResourceWithTarget(targetPattern *rpc.ResourcePattern, resourceInstanc
 
 		// Check if the filter matches with the resource
 		filterStr := targetPattern.GetFilter()
-		if filterStr != "" {
-			filter, err := filtering.NewFilter(filterStr, filtering.ApiFields)
-			if err != nil {
-				return fmt.Errorf("invalid filter %q: %s", filterStr, err)
-			}
-
-			rMap, err := filtering.ApiMapFromMessage(r.Api)
-			if err != nil {
-				return fmt.Errorf("internal error while applying filter: %s", err)
-			}
-
-			match, err := filter.Matches(rMap)
-			if err != nil {
-				return fmt.Errorf("failed applying filter %q: %s", filterStr, err)
-			}
-
-			if !match {
-				return fmt.Errorf("target pattern filter %q does not match with resource %q", filterStr, resourceInstance.ResourceName().String())
-			}
+		filter, err := filtering.NewFilter(filterStr, filtering.ApiFields)
+		if err != nil {
+			return fmt.Errorf("invalid filter %q: %s", filterStr, err)
 		}
 
+		rMap, err := filtering.ApiMapFromMessage(r.Api)
+		if err != nil {
+			return fmt.Errorf("internal error while applying filter: %s", err)
+		}
+
+		match, err := filter.Matches(rMap)
+		if err != nil {
+			return fmt.Errorf("failed applying filter %q: %s", filterStr, err)
+		}
+
+		if !match {
+			return fmt.Errorf("target pattern filter %q does not match with resource %q", filterStr, resourceInstance.ResourceName().String())
+		}
 	default:
 		return fmt.Errorf("unsupported resource type %T", targetPatternName)
 	}

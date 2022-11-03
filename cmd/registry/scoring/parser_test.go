@@ -1885,6 +1885,9 @@ func TestMatchResourceWithTarget(t *testing.T) {
 						SpecID:    "openapi.yaml",
 					},
 				},
+				Spec: &rpc.ApiSpec{
+					Name: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+				},
 			},
 		},
 		{
@@ -1901,6 +1904,9 @@ func TestMatchResourceWithTarget(t *testing.T) {
 						SpecID:    "openapi.yaml",
 					},
 				},
+				Spec: &rpc.ApiSpec{
+					Name: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+				},
 			},
 		},
 		{
@@ -1916,6 +1922,9 @@ func TestMatchResourceWithTarget(t *testing.T) {
 						VersionID: "1.0.0",
 						SpecID:    "openapi.yaml",
 					},
+				},
+				Spec: &rpc.ApiSpec{
+					Name: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 				},
 			},
 			wantErr: true,
@@ -1934,6 +1943,9 @@ func TestMatchResourceWithTarget(t *testing.T) {
 						SpecID:    "openapi.yaml",
 					},
 				},
+				Spec: &rpc.ApiSpec{
+					Name: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+				},
 			},
 		},
 		{
@@ -1949,6 +1961,9 @@ func TestMatchResourceWithTarget(t *testing.T) {
 						VersionID: "1.0.0",
 						SpecID:    "openapi.yaml",
 					},
+				},
+				Spec: &rpc.ApiSpec{
+					Name: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 				},
 			},
 			wantErr: true,
@@ -1967,6 +1982,9 @@ func TestMatchResourceWithTarget(t *testing.T) {
 						SpecID:    "openapi.yaml",
 					},
 				},
+				Spec: &rpc.ApiSpec{
+					Name: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+				},
 			},
 		},
 		{
@@ -1982,6 +2000,9 @@ func TestMatchResourceWithTarget(t *testing.T) {
 						VersionID: "1.0.0",
 						SpecID:    "openapi.yaml",
 					},
+				},
+				Spec: &rpc.ApiSpec{
+					Name: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 				},
 			},
 			wantErr: true,
@@ -2000,6 +2021,9 @@ func TestMatchResourceWithTarget(t *testing.T) {
 						SpecID:    "openapi.yaml",
 					},
 				},
+				Spec: &rpc.ApiSpec{
+					Name: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+				},
 			},
 			wantErr: true,
 		},
@@ -2015,6 +2039,9 @@ func TestMatchResourceWithTarget(t *testing.T) {
 						ApiID:     "petstore",
 						VersionID: "1.0.0",
 					},
+				},
+				Version: &rpc.ApiVersion{
+					Name: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0",
 				},
 			},
 			wantErr: true,
