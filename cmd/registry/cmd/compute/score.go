@@ -52,7 +52,7 @@ func scoreCommand() *cobra.Command {
 			taskQueue, wait := core.WorkerPoolWithWarnings(ctx, 64)
 			defer wait()
 
-			resources, err := patterns.ListResources(ctx, client, args[0], filter, true)
+			resources, err := patterns.ListResources(ctx, client, args[0], filter)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to list resources")
 			}
