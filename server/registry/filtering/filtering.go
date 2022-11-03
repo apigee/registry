@@ -15,6 +15,8 @@
 package filtering
 
 import (
+	"fmt"
+
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/checker/decls"
 	"github.com/google/cel-go/ext"
@@ -49,7 +51,7 @@ func (f *Filter) Matches(model map[string]interface{}) (bool, error) {
 
 	match, ok := out.Value().(bool)
 	if !ok {
-		return false, status.Errorf(codes.InvalidArgument, "filter expression evaluation returned unexpected type: got %T, want bool", out.Value())
+		return false, fmt.Errorf("filter expression evaluation returned unexpected type: got %T, want bool", out.Value())
 	}
 
 	return match, nil
@@ -72,23 +74,23 @@ func NewFilter(filter string, fields map[string]FieldType) (Filter, error) {
 		case StringMap:
 			declarations = append(declarations, decls.NewConst(name, decls.NewMapType(decls.String, decls.String), nil))
 		default:
-			return Filter{}, status.Errorf(codes.InvalidArgument, "unknown filter argument type")
+			return Filter{}, fmt.Errorf("unknown filter argument type")
 		}
 	}
 
 	env, err := cel.NewEnv(cel.Container("filter"), cel.Declarations(declarations...), ext.Strings())
 	if err != nil {
-		return Filter{}, status.Error(codes.InvalidArgument, err.Error())
+		return Filter{}, err
 	}
 
 	ast, iss := env.Compile(filter)
 	if iss.Err() != nil {
-		return Filter{}, status.Error(codes.InvalidArgument, iss.Err().Error())
+		return Filter{}, iss.Err()
 	}
 
 	prg, err := env.Program(ast)
 	if err != nil {
-		return Filter{}, status.Error(codes.InvalidArgument, err.Error())
+		return Filter{}, err
 	}
 
 	return Filter{program: prg}, nil

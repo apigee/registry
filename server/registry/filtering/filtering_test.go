@@ -17,8 +17,6 @@ package filtering
 import (
 	"testing"
 	"time"
-
-	"google.golang.org/grpc/status"
 )
 
 func TestErrorConditions(t *testing.T) {
@@ -74,9 +72,6 @@ func TestErrorConditions(t *testing.T) {
 				if _, err = f.Matches(test.model); err == nil {
 					t.Errorf("(%q) expected error", test.filter)
 				}
-			}
-			if _, ok := status.FromError(err); !ok {
-				t.Errorf("(%q) expected gRPC status error", test.filter)
 			}
 		})
 	}

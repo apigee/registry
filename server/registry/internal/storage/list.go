@@ -113,7 +113,7 @@ func (c *Client) ListProjects(ctx context.Context, opts PageOptions) (ProjectLis
 
 	filter, err := filtering.NewFilter(opts.Filter, filtering.ProjectFields)
 	if err != nil {
-		return ProjectList{}, err
+		return ProjectList{}, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
 	order, err := gormOrdering(opts.Order, filtering.ProjectFields)
@@ -143,7 +143,7 @@ func (c *Client) ListProjects(ctx context.Context, opts PageOptions) (ProjectLis
 			}
 			match, err := filter.Matches(m)
 			if err != nil {
-				return ProjectList{}, err
+				return ProjectList{}, status.Errorf(codes.InvalidArgument, err.Error())
 			} else if !match {
 				token.Offset++
 				continue
@@ -204,7 +204,7 @@ func (c *Client) ListApis(ctx context.Context, parent names.Project, opts PageOp
 
 	filter, err := filtering.NewFilter(opts.Filter, filtering.ApiFields)
 	if err != nil {
-		return ApiList{}, err
+		return ApiList{}, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
 	if order, err := gormOrdering(opts.Order, filtering.ApiFields); err != nil {
@@ -235,7 +235,7 @@ func (c *Client) ListApis(ctx context.Context, parent names.Project, opts PageOp
 
 			match, err := filter.Matches(m)
 			if err != nil {
-				return ApiList{}, err
+				return ApiList{}, status.Errorf(codes.InvalidArgument, err.Error())
 			} else if !match {
 				token.Offset++
 				continue
@@ -296,7 +296,7 @@ func (c *Client) ListVersions(ctx context.Context, parent names.Api, opts PageOp
 
 	filter, err := filtering.NewFilter(opts.Filter, filtering.VersionFields)
 	if err != nil {
-		return VersionList{}, err
+		return VersionList{}, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
 	op := c.db.WithContext(ctx).Limit(limit(opts))
@@ -335,7 +335,7 @@ func (c *Client) ListVersions(ctx context.Context, parent names.Api, opts PageOp
 
 			match, err := filter.Matches(m)
 			if err != nil {
-				return VersionList{}, err
+				return VersionList{}, status.Errorf(codes.InvalidArgument, err.Error())
 			} else if !match {
 				token.Offset++
 				continue
@@ -400,7 +400,7 @@ func (c *Client) ListSpecs(ctx context.Context, parent names.Version, opts PageO
 
 	filter, err := filtering.NewFilter(opts.Filter, filtering.SpecFields)
 	if err != nil {
-		return SpecList{}, err
+		return SpecList{}, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
 	op := c.db.WithContext(ctx).Select("specs.*").Table("specs").
@@ -451,7 +451,7 @@ func (c *Client) ListSpecs(ctx context.Context, parent names.Version, opts PageO
 
 			match, err := filter.Matches(m)
 			if err != nil {
-				return SpecList{}, err
+				return SpecList{}, status.Errorf(codes.InvalidArgument, err.Error())
 			} else if !match {
 				token.Offset++
 				continue
@@ -593,7 +593,7 @@ func (c *Client) ListDeployments(ctx context.Context, parent names.Api, opts Pag
 
 	filter, err := filtering.NewFilter(opts.Filter, filtering.DeploymentFields)
 	if err != nil {
-		return DeploymentList{}, err
+		return DeploymentList{}, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
 	// Select all columns from `deployments` table specifically.
@@ -645,7 +645,7 @@ func (c *Client) ListDeployments(ctx context.Context, parent names.Api, opts Pag
 
 			match, err := filter.Matches(m)
 			if err != nil {
-				return DeploymentList{}, err
+				return DeploymentList{}, status.Errorf(codes.InvalidArgument, err.Error())
 			} else if !match {
 				token.Offset++
 				continue
@@ -994,7 +994,7 @@ func (c *Client) listArtifacts(ctx context.Context, op *gorm.DB, opts PageOption
 
 	filter, err := filtering.NewFilter(opts.Filter, filtering.ArtifactFields)
 	if err != nil {
-		return ArtifactList{}, err
+		return ArtifactList{}, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
 	if order, err := gormOrdering(opts.Order, filtering.ArtifactFields); err != nil {
@@ -1025,7 +1025,7 @@ func (c *Client) listArtifacts(ctx context.Context, op *gorm.DB, opts PageOption
 			}
 			match, err := filter.Matches(m)
 			if err != nil {
-				return ArtifactList{}, err
+				return ArtifactList{}, status.Errorf(codes.InvalidArgument, err.Error())
 			} else if !match || !include(&v) {
 				token.Offset++
 				continue
