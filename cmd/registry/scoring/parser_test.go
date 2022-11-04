@@ -19,7 +19,6 @@ import (
 
 	"github.com/apigee/registry/cmd/registry/patterns"
 	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/server/registry/names"
 )
 
 func TestValidateScoreDefinition(t *testing.T) {
@@ -185,33 +184,6 @@ func TestValidateScoreDefinition(t *testing.T) {
 				Kind: "ScoreDefinition",
 				TargetResource: &rpc.ResourcePattern{
 					Pattern: "apis/-/versions/specs/-", //error
-				},
-				Formula: &rpc.ScoreDefinition_ScoreFormula{
-					ScoreFormula: &rpc.ScoreFormula{
-						Artifact: &rpc.ResourcePattern{
-							Pattern: "$resource.spec/artifacts/conformance-report",
-						},
-						ScoreExpression: "count(errors)",
-					},
-				},
-				Type: &rpc.ScoreDefinition_Integer{
-					Integer: &rpc.IntegerType{
-						MinValue: 0,
-						MaxValue: 100,
-					},
-				},
-			},
-			wantNumErr: 1,
-		},
-		{
-			desc:   "target filter error",
-			parent: "projects/demo/locations/global",
-			scoreDefinition: &rpc.ScoreDefinition{
-				Id:   "test-score-definition",
-				Kind: "ScoreDefinition",
-				TargetResource: &rpc.ResourcePattern{
-					Pattern: "apis/-/versions/-",
-					Filter:  "spec_id.contains('openapi.yaml')", // error
 				},
 				Formula: &rpc.ScoreDefinition_ScoreFormula{
 					ScoreFormula: &rpc.ScoreFormula{
@@ -820,98 +792,6 @@ func TestValidateReferencesInPattern(t *testing.T) {
 			gotErrs := validateReferencesInPattern(targetName, test.pattern)
 			if len(gotErrs) != test.wantNumErr {
 				t.Errorf("validateReferencesInPattern(%s, %s) returned unexpected no. of errors: want %d, got %s", targetName, test.pattern, test.wantNumErr, gotErrs)
-			}
-		})
-	}
-}
-
-func TestValidateFilter(t *testing.T) {
-	tests := []struct {
-		desc          string
-		targetPattern *rpc.ResourcePattern
-		wantErr       bool
-	}{
-		// No errors
-		{
-			desc: "spec pattern",
-			targetPattern: &rpc.ResourcePattern{
-				Pattern: "projects/demo/locations/global/apis/-/versions/-/specs/-",
-				Filter:  "mime_type.contains('openapi')",
-			},
-		},
-		{
-			desc: "version pattern",
-			targetPattern: &rpc.ResourcePattern{
-				Pattern: "projects/demo/locations/global/apis/-/versions/-",
-				Filter:  "version_id.contains('v1')",
-			},
-		},
-		{
-			desc: "api pattern",
-			targetPattern: &rpc.ResourcePattern{
-				Pattern: "projects/demo/locations/global/apis/-",
-				Filter:  "name.contains('petstore')",
-			},
-		},
-		{
-			desc: "artifact pattern",
-			targetPattern: &rpc.ResourcePattern{
-				Pattern: "projects/demo/locations/global/apis/-/versions/-/specs/-/artifacts/-",
-				Filter:  "mime_type.contains('ConformanceReport')",
-			},
-		},
-		// errors
-		{
-			desc: "spec pattern error",
-			targetPattern: &rpc.ResourcePattern{
-				Pattern: "projects/demo/locations/global/apis/-/versions/-/specs/-",
-				Filter:  "artifact_id.contains('conformance-report')",
-			},
-			wantErr: true,
-		},
-		{
-			desc: "version pattern error",
-			targetPattern: &rpc.ResourcePattern{
-				Pattern: "projects/demo/locations/global/apis/-/versions/-",
-				Filter:  "spec_id.contains('openapi.yaml')",
-			},
-			wantErr: true,
-		},
-		{
-			desc: "api pattern error",
-			targetPattern: &rpc.ResourcePattern{
-				Pattern: "projects/demo/locations/global/apis/-",
-				Filter:  "version_id.contains('v1')",
-			},
-			wantErr: true,
-		},
-		{
-			desc: "artifact pattern",
-			targetPattern: &rpc.ResourcePattern{
-				Pattern: "projects/demo/locations/global/apis/-/versions/-/specs/-/artifacts/-",
-				Filter:  "source_uri.contains('github')",
-			},
-			wantErr: true,
-		},
-		{
-			desc: "invalid cel",
-			targetPattern: &rpc.ResourcePattern{
-				Pattern: "projects/demo/locations/global/apis/-/versions/-/specs/-",
-				Filter:  "contains(source_uri, 'github')",
-			},
-			wantErr: true,
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.desc, func(t *testing.T) {
-			targetName, _ := patterns.ParseResourcePattern(test.targetPattern.GetPattern())
-			err := validateFilter(targetName, test.targetPattern.GetFilter())
-			if test.wantErr && err == nil {
-				t.Errorf("expected validateFilter(%s, %s) to return error, instead was successful", targetName, test.targetPattern.GetFilter())
-			}
-			if !test.wantErr && err != nil {
-				t.Errorf("validateFilter(%s, %s) returned unexpected error: %s", targetName, test.targetPattern.GetFilter(), err)
 			}
 		})
 	}
@@ -1757,25 +1637,6 @@ func TestValidateScoreCardDefinition(t *testing.T) {
 			wantNumErr: 1,
 		},
 		{
-			desc:   "invalid target_resource filter",
-			parent: "projects/demo/locations/global",
-			scoreCardDefinition: &rpc.ScoreCardDefinition{
-				Id:   "test-scorecard-definition",
-				Kind: "ScoreCardDefinition",
-				TargetResource: &rpc.ResourcePattern{
-					Pattern: "apis/-/versions/-",
-					Filter:  "spec_id.contains('openapi.yaml')", //error
-				},
-				ScorePatterns: []string{
-					"$resource.spec/artifacts/score-lint-error",
-					"$resource.spec/artifacts/score-lang-reuse",
-					"$resource.spec/artifacts/score-security-audit",
-					"$resource.spec/artifacts/score-accuracy",
-				},
-			},
-			wantNumErr: 1,
-		},
-		{
 			desc:   "missing score_patterns",
 			parent: "projects/demo/locations/global",
 			scoreCardDefinition: &rpc.ScoreCardDefinition{
@@ -1864,199 +1725,137 @@ func TestValidateScoreCardDefinition(t *testing.T) {
 	}
 }
 
-func TestMatchResourceWithTarget(t *testing.T) {
+func TestGenerateCombinedPattern(t *testing.T) {
 	tests := []struct {
-		desc             string
-		targetPattern    *rpc.ResourcePattern
-		resourceInstance patterns.ResourceInstance
-		wantErr          bool
+		desc          string
+		targetPattern *rpc.ResourcePattern
+		inputPattern  string
+		wantPattern   string
+		wantErr       bool
 	}{
 		{
-			desc: "spec pattern",
+			desc: "spec pattern spec input",
 			targetPattern: &rpc.ResourcePattern{
 				Pattern: "apis/-/versions/-/specs/-",
 			},
-			resourceInstance: patterns.SpecResource{
-				SpecName: patterns.SpecName{
-					Name: names.Spec{
-						ProjectID: "pattern-test",
-						ApiID:     "petstore",
-						VersionID: "1.0.0",
-						SpecID:    "openapi.yaml",
-					},
-				},
-				Spec: &rpc.ApiSpec{
-					Name: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
-				},
-			},
+			inputPattern: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+			wantPattern:  "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 		},
 		{
-			desc: "specific api match",
+			desc: "spec pattern collection input",
+			targetPattern: &rpc.ResourcePattern{
+				Pattern: "apis/-/versions/-/specs/-",
+			},
+			inputPattern: "projects/pattern-test/locations/global/apis/-/versions/-/specs/-",
+			wantPattern:  "projects/pattern-test/locations/global/apis/-/versions/-/specs/-",
+		},
+		{
+			desc: "specific api match spec input",
 			targetPattern: &rpc.ResourcePattern{
 				Pattern: "apis/petstore/versions/-/specs/-",
 			},
-			resourceInstance: patterns.SpecResource{
-				SpecName: patterns.SpecName{
-					Name: names.Spec{
-						ProjectID: "pattern-test",
-						ApiID:     "petstore",
-						VersionID: "1.0.0",
-						SpecID:    "openapi.yaml",
-					},
-				},
-				Spec: &rpc.ApiSpec{
-					Name: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
-				},
-			},
+			inputPattern: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+			wantPattern:  "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 		},
 		{
-			desc: "specific api no match",
+			desc: "specific api match collection input",
+			targetPattern: &rpc.ResourcePattern{
+				Pattern: "apis/petstore/versions/-/specs/-",
+			},
+			inputPattern: "projects/pattern-test/locations/global/apis/-/versions/-/specs/-",
+			wantPattern:  "projects/pattern-test/locations/global/apis/petstore/versions/-/specs/-",
+		},
+		{
+			desc: "specific api no match spec input",
 			targetPattern: &rpc.ResourcePattern{
 				Pattern: "apis/test/versions/-/specs/-",
 			},
-			resourceInstance: patterns.SpecResource{
-				SpecName: patterns.SpecName{
-					Name: names.Spec{
-						ProjectID: "pattern-test",
-						ApiID:     "petstore",
-						VersionID: "1.0.0",
-						SpecID:    "openapi.yaml",
-					},
-				},
-				Spec: &rpc.ApiSpec{
-					Name: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
-				},
-			},
-			wantErr: true,
+			inputPattern: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+			wantErr:      true,
 		},
 		{
-			desc: "specific version match",
+			desc: "specific version match spec input",
 			targetPattern: &rpc.ResourcePattern{
 				Pattern: "apis/-/versions/1.0.0/specs/-",
 			},
-			resourceInstance: patterns.SpecResource{
-				SpecName: patterns.SpecName{
-					Name: names.Spec{
-						ProjectID: "pattern-test",
-						ApiID:     "petstore",
-						VersionID: "1.0.0",
-						SpecID:    "openapi.yaml",
-					},
-				},
-				Spec: &rpc.ApiSpec{
-					Name: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
-				},
+			inputPattern: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+			wantPattern:  "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+		},
+		{
+			desc: "specific version match collection input",
+			targetPattern: &rpc.ResourcePattern{
+				Pattern: "apis/-/versions/1.0.0/specs/-",
 			},
+			inputPattern: "projects/pattern-test/locations/global/apis/-/versions/-/specs/-",
+			wantPattern:  "projects/pattern-test/locations/global/apis/-/versions/1.0.0/specs/-",
 		},
 		{
 			desc: "specific version no match",
 			targetPattern: &rpc.ResourcePattern{
 				Pattern: "apis/-/versions/2.0.0/specs/-",
 			},
-			resourceInstance: patterns.SpecResource{
-				SpecName: patterns.SpecName{
-					Name: names.Spec{
-						ProjectID: "pattern-test",
-						ApiID:     "petstore",
-						VersionID: "1.0.0",
-						SpecID:    "openapi.yaml",
-					},
-				},
-				Spec: &rpc.ApiSpec{
-					Name: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
-				},
-			},
-			wantErr: true,
+			inputPattern: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+			wantErr:      true,
 		},
 		{
-			desc: "specific spec match",
+			desc: "specific spec match spec input",
 			targetPattern: &rpc.ResourcePattern{
 				Pattern: "apis/-/versions/-/specs/openapi.yaml",
 			},
-			resourceInstance: patterns.SpecResource{
-				SpecName: patterns.SpecName{
-					Name: names.Spec{
-						ProjectID: "pattern-test",
-						ApiID:     "petstore",
-						VersionID: "1.0.0",
-						SpecID:    "openapi.yaml",
-					},
-				},
-				Spec: &rpc.ApiSpec{
-					Name: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
-				},
+			inputPattern: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+			wantPattern:  "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+		},
+		{
+			desc: "specific spec match collection input",
+			targetPattern: &rpc.ResourcePattern{
+				Pattern: "apis/-/versions/-/specs/openapi.yaml",
 			},
+			inputPattern: "projects/pattern-test/locations/global/apis/-/versions/-/specs/-",
+			wantPattern:  "projects/pattern-test/locations/global/apis/-/versions/-/specs/openapi.yaml",
 		},
 		{
 			desc: "specific spec no match",
 			targetPattern: &rpc.ResourcePattern{
 				Pattern: "apis/-/versions/-/specs/swagger.yaml",
 			},
-			resourceInstance: patterns.SpecResource{
-				SpecName: patterns.SpecName{
-					Name: names.Spec{
-						ProjectID: "pattern-test",
-						ApiID:     "petstore",
-						VersionID: "1.0.0",
-						SpecID:    "openapi.yaml",
-					},
-				},
-				Spec: &rpc.ApiSpec{
-					Name: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
-				},
-			},
-			wantErr: true,
+			inputPattern: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+			wantErr:      true,
 		},
 		{
 			desc: "artifact pattern error",
 			targetPattern: &rpc.ResourcePattern{
 				Pattern: "apis/-/versions/-/specs/-/artifacts/lint-spectral",
 			},
-			resourceInstance: patterns.SpecResource{
-				SpecName: patterns.SpecName{
-					Name: names.Spec{
-						ProjectID: "pattern-test",
-						ApiID:     "petstore",
-						VersionID: "1.0.0",
-						SpecID:    "openapi.yaml",
-					},
-				},
-				Spec: &rpc.ApiSpec{
-					Name: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
-				},
-			},
-			wantErr: true,
+			inputPattern: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+			wantErr:      true,
 		},
 		{
 			desc: "target and resource mismatch",
 			targetPattern: &rpc.ResourcePattern{
 				Pattern: "apis/-/versions/-/specs/-",
 			},
-			resourceInstance: patterns.VersionResource{
-				VersionName: patterns.VersionName{
-					Name: names.Version{
-						ProjectID: "pattern-test",
-						ApiID:     "petstore",
-						VersionID: "1.0.0",
-					},
-				},
-				Version: &rpc.ApiVersion{
-					Name: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0",
-				},
-			},
-			wantErr: true,
+			inputPattern: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0",
+			wantErr:      true,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			gotErr := matchResourceWithTarget(test.targetPattern, test.resourceInstance, "projects/pattern-test/locations/global")
+			inputPatternName, err := patterns.ParseResourcePattern(test.inputPattern)
+			if err != nil {
+				t.Errorf("invalid test.inputPattern %q", test.inputPattern)
+			}
+			gotPattern, _, gotErr := GenerateCombinedPattern(test.targetPattern, inputPatternName, "")
+			if gotPattern != test.wantPattern {
+				t.Errorf("GenerateCombinedPattern(%s, %s,\"\") returned unexpected output, want: %q, got: %q ", test.targetPattern, inputPatternName.String(), test.wantPattern, gotPattern)
+			}
+
 			if test.wantErr && gotErr == nil {
-				t.Errorf("matchResourceWithTarget(%s, %v, %s) did not return an error", test.targetPattern, test.resourceInstance.ResourceName(), "projects/pattern-test/locations/global")
+				t.Errorf("GenerateCombinedPattern(%s, %s, \"\") did not return an error", test.targetPattern, inputPatternName.String())
 			}
 
 			if !test.wantErr && gotErr != nil {
-				t.Errorf("matchResourceWithTarget() returned unexpected error: %s", gotErr)
+				t.Errorf("GenerateCombinedPattern() returned unexpected error: %s", gotErr)
 			}
 		})
 	}
@@ -2064,265 +1863,72 @@ func TestMatchResourceWithTarget(t *testing.T) {
 
 func TestMatchResourceWithTargetFilters(t *testing.T) {
 	tests := []struct {
-		desc             string
-		targetPattern    *rpc.ResourcePattern
-		resourceInstance patterns.ResourceInstance
-		wantErr          bool
+		desc          string
+		targetPattern *rpc.ResourcePattern
+		inputPattern  string
+		inputFilter   string
+		wantFilter    string
 	}{
-		// no errors
 		{
-			desc: "spec filter match",
+			desc: "input filter only",
+			targetPattern: &rpc.ResourcePattern{
+				Pattern: "apis/-/versions/-/specs/-",
+			},
+			inputPattern: "projects/pattern-test/locations/global/apis/-/versions/-/specs/-",
+			inputFilter:  "mime_type.contains('openapi')",
+			wantFilter:   "mime_type.contains('openapi')",
+		},
+		{
+			desc: "target filter only",
 			targetPattern: &rpc.ResourcePattern{
 				Pattern: "apis/-/versions/-/specs/-",
 				Filter:  "mime_type.contains('openapi')",
 			},
-			resourceInstance: patterns.SpecResource{
-				SpecName: patterns.SpecName{
-					Name: names.Spec{
-						ProjectID: "pattern-test",
-						ApiID:     "petstore",
-						VersionID: "1.0.0",
-						SpecID:    "openapi.yaml",
-					},
-				},
-				Spec: &rpc.ApiSpec{
-					Name:     "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
-					MimeType: "application/x.openapi+gzip;version=3",
-				},
-			},
+			inputPattern: "projects/pattern-test/locations/global/apis/-/versions/-/specs/-",
+			inputFilter:  "",
+			wantFilter:   "mime_type.contains('openapi')",
 		},
 		{
-			desc: "version filter match",
-			targetPattern: &rpc.ResourcePattern{
-				Pattern: "apis/-/versions/-",
-				Filter:  "version_id.contains('1.0.0')",
-			},
-			resourceInstance: patterns.VersionResource{
-				VersionName: patterns.VersionName{
-					Name: names.Version{
-						ProjectID: "pattern-test",
-						ApiID:     "petstore",
-						VersionID: "1.0.0",
-					},
-				},
-				Version: &rpc.ApiVersion{
-					Name: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0",
-				},
-			},
-		},
-		{
-			desc: "api filter match",
-			targetPattern: &rpc.ResourcePattern{
-				Pattern: "apis/-",
-				Filter:  "api_id.contains('petstore')",
-			},
-			resourceInstance: patterns.ApiResource{
-				ApiName: patterns.ApiName{
-					Name: names.Api{
-						ProjectID: "pattern-test",
-						ApiID:     "petstore",
-					},
-				},
-				Api: &rpc.Api{
-					Name: "projects/pattern-test/locations/global/apis/petstore",
-				},
-			},
-		},
-		// filter mismatch
-		{
-			desc: "spec filter mismatch",
-			targetPattern: &rpc.ResourcePattern{
-				Pattern: "apis/-/versions/-/specs/-",
-				Filter:  "mime_type.contains('protobuf')",
-			},
-			resourceInstance: patterns.SpecResource{
-				SpecName: patterns.SpecName{
-					Name: names.Spec{
-						ProjectID: "pattern-test",
-						ApiID:     "petstore",
-						VersionID: "1.0.0",
-						SpecID:    "openapi.yaml",
-					},
-				},
-				Spec: &rpc.ApiSpec{
-					Name:     "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
-					MimeType: "application/x.openapi+gzip;version=3",
-				},
-			},
-			wantErr: true,
-		},
-		{
-			desc: "version filter mismatch",
-			targetPattern: &rpc.ResourcePattern{
-				Pattern: "apis/-/versions/-",
-				Filter:  "version_id.contains('2.0.0')",
-			},
-			resourceInstance: patterns.VersionResource{
-				VersionName: patterns.VersionName{
-					Name: names.Version{
-						ProjectID: "pattern-test",
-						ApiID:     "petstore",
-						VersionID: "1.0.0",
-					},
-				},
-				Version: &rpc.ApiVersion{
-					Name: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0",
-				},
-			},
-			wantErr: true,
-		},
-		{
-			desc: "api filter mismatch",
-			targetPattern: &rpc.ResourcePattern{
-				Pattern: "apis/-",
-				Filter:  "api_id.contains('apigeeregistry')",
-			},
-			resourceInstance: patterns.ApiResource{
-				ApiName: patterns.ApiName{
-					Name: names.Api{
-						ProjectID: "pattern-test",
-						ApiID:     "petstore",
-					},
-				},
-				Api: &rpc.Api{
-					Name: "projects/pattern-test/locations/global/apis/petstore",
-				},
-			},
-			wantErr: true,
-		},
-		// errors
-		{
-			desc: "invalid filter spec",
-			targetPattern: &rpc.ResourcePattern{
-				Pattern: "apis/-/versions/-/specs/-",
-				Filter:  "contains(mime_type, 'openapi')", //error
-			},
-			resourceInstance: patterns.SpecResource{
-				SpecName: patterns.SpecName{
-					Name: names.Spec{
-						ProjectID: "pattern-test",
-						ApiID:     "petstore",
-						VersionID: "1.0.0",
-						SpecID:    "openapi.yaml",
-					},
-				},
-				Spec: &rpc.ApiSpec{
-					Name: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/opennapi.yaml",
-				},
-			},
-			wantErr: true,
-		},
-		{
-			desc: "internal error spec",
+			desc: "target and input filter identical",
 			targetPattern: &rpc.ResourcePattern{
 				Pattern: "apis/-/versions/-/specs/-",
 				Filter:  "mime_type.contains('openapi')",
 			},
-			resourceInstance: patterns.SpecResource{
-				SpecName: patterns.SpecName{
-					Name: names.Spec{
-						ProjectID: "pattern-test",
-						ApiID:     "petstore",
-						VersionID: "1.0.0",
-						SpecID:    "openapi.yaml",
-					},
-				},
-				Spec: &rpc.ApiSpec{
-					Name:     "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/conformance-apihub-styleguide", //error
-					MimeType: "application/x.openapi+gzip;version=3",
-				},
-			},
-			wantErr: true,
+			inputPattern: "projects/pattern-test/locations/global/apis/-/versions/-/specs/-",
+			inputFilter:  "mime_type.contains('openapi')",
+			wantFilter:   "mime_type.contains('openapi')",
 		},
 		{
-			desc: "invalid filter version",
-			targetPattern: &rpc.ResourcePattern{
-				Pattern: "apis/-/versions/-",
-				Filter:  "contains(version_id, '1.0.0')", //error
-			},
-			resourceInstance: patterns.VersionResource{
-				VersionName: patterns.VersionName{
-					Name: names.Version{
-						ProjectID: "pattern-test",
-						ApiID:     "petstore",
-						VersionID: "1.0.0",
-					},
-				},
-				Version: &rpc.ApiVersion{
-					Name: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0",
-				},
-			},
-			wantErr: true,
-		},
-		{
-			desc: "internal error version",
+			desc: "target and input filter empty",
 			targetPattern: &rpc.ResourcePattern{
 				Pattern: "apis/-/versions/-/specs/-",
-				Filter:  "version_id.contains('1.0.0')",
+				Filter:  "",
 			},
-			resourceInstance: patterns.VersionResource{
-				VersionName: patterns.VersionName{
-					Name: names.Version{
-						ProjectID: "pattern-test",
-						ApiID:     "petstore",
-						VersionID: "1.0.0",
-					},
-				},
-				Version: &rpc.ApiVersion{
-					Name: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml", //error
-				},
-			},
-			wantErr: true,
+			inputPattern: "projects/pattern-test/locations/global/apis/-/versions/-/specs/-",
+			inputFilter:  "",
+			wantFilter:   "",
 		},
 		{
-			desc: "invalid filter api",
+			desc: "target and input filter different",
 			targetPattern: &rpc.ResourcePattern{
-				Pattern: "apis/-",
-				Filter:  "contains(api_id, 'petstore')", //error
+				Pattern: "apis/-/versions/-/specs/-",
+				Filter:  "mime_type.contains('openapi')",
 			},
-			resourceInstance: patterns.ApiResource{
-				ApiName: patterns.ApiName{
-					Name: names.Api{
-						ProjectID: "pattern-test",
-						ApiID:     "petstore",
-					},
-				},
-				Api: &rpc.Api{
-					Name: "projects/pattern-test/locations/global/apis/petstore",
-				},
-			},
-			wantErr: true,
-		},
-		{
-			desc: "internal error api",
-			targetPattern: &rpc.ResourcePattern{
-				Pattern: "apis/-",
-				Filter:  "api_id.contains('petstore')",
-			},
-			resourceInstance: patterns.ApiResource{
-				ApiName: patterns.ApiName{
-					Name: names.Api{
-						ProjectID: "pattern-test",
-						ApiID:     "petstore",
-					},
-				},
-				Api: &rpc.Api{
-					Name: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0", //error
-				},
-			},
-			wantErr: true,
+			inputPattern: "projects/pattern-test/locations/global/apis/-/versions/-/specs/-",
+			inputFilter:  "mime_type.contains('protobuf')",
+			wantFilter:   "(mime_type.contains('openapi')) && (mime_type.contains('protobuf'))",
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			gotErr := matchResourceWithTarget(test.targetPattern, test.resourceInstance, "projects/pattern-test/locations/global")
-			if test.wantErr && gotErr == nil {
-				t.Errorf("matchResourceWithTarget(%s, %v, %s) did not return an error", test.targetPattern, test.resourceInstance.ResourceName(), "projects/pattern-test/locations/global")
+			inputPatternName, err := patterns.ParseResourcePattern(test.inputPattern)
+			if err != nil {
+				t.Errorf("invalid test.inputPattern %q", test.inputPattern)
 			}
-
-			if !test.wantErr && gotErr != nil {
-				t.Errorf("matchResourceWithTarget() returned unexpected error: %s", gotErr)
+			_, gotFilter, _ := GenerateCombinedPattern(test.targetPattern, inputPatternName, test.inputFilter)
+			if gotFilter != test.wantFilter {
+				t.Errorf("GenerateCombinedPattern(%s, %s,\"\") returned unexpected output, want: %q, got: %q ", test.targetPattern, inputPatternName.String(), test.wantFilter, gotFilter)
 			}
 		})
 	}

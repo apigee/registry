@@ -18,7 +18,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/apigee/registry/server/registry/filtering"
+	"github.com/apigee/registry/server/registry/internal/storage/filtering"
 	"github.com/apigee/registry/server/registry/internal/storage/models"
 	"github.com/apigee/registry/server/registry/names"
 	"github.com/pkg/errors"
@@ -26,6 +26,90 @@ import (
 	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
 )
+
+var projectFields = map[string]filtering.FieldType{
+	"name":         filtering.String,
+	"project_id":   filtering.String,
+	"display_name": filtering.String,
+	"description":  filtering.String,
+	"create_time":  filtering.Timestamp,
+	"update_time":  filtering.Timestamp,
+}
+
+var apiFields = map[string]filtering.FieldType{
+	"name":                   filtering.String,
+	"project_id":             filtering.String,
+	"api_id":                 filtering.String,
+	"display_name":           filtering.String,
+	"description":            filtering.String,
+	"create_time":            filtering.Timestamp,
+	"update_time":            filtering.Timestamp,
+	"availability":           filtering.String,
+	"recommended_version":    filtering.String,
+	"recommended_deployment": filtering.String,
+	"labels":                 filtering.StringMap,
+}
+
+var versionFields = map[string]filtering.FieldType{
+	"name":         filtering.String,
+	"project_id":   filtering.String,
+	"api_id":       filtering.String,
+	"version_id":   filtering.String,
+	"display_name": filtering.String,
+	"description":  filtering.String,
+	"create_time":  filtering.Timestamp,
+	"update_time":  filtering.Timestamp,
+	"state":        filtering.String,
+	"labels":       filtering.StringMap,
+}
+
+var specFields = map[string]filtering.FieldType{
+	"name":                 filtering.String,
+	"project_id":           filtering.String,
+	"api_id":               filtering.String,
+	"version_id":           filtering.String,
+	"spec_id":              filtering.String,
+	"filename":             filtering.String,
+	"description":          filtering.String,
+	"create_time":          filtering.Timestamp,
+	"revision_create_time": filtering.Timestamp,
+	"revision_update_time": filtering.Timestamp,
+	"mime_type":            filtering.String,
+	"size_bytes":           filtering.Int,
+	"source_uri":           filtering.String,
+	"labels":               filtering.StringMap,
+}
+
+var deploymentFields = map[string]filtering.FieldType{
+	"name":                 filtering.String,
+	"project_id":           filtering.String,
+	"api_id":               filtering.String,
+	"deployment_id":        filtering.String,
+	"display_name":         filtering.String,
+	"description":          filtering.String,
+	"create_time":          filtering.Timestamp,
+	"revision_create_time": filtering.Timestamp,
+	"revision_update_time": filtering.Timestamp,
+	"api_spec_revision":    filtering.String,
+	"endpoint_uri":         filtering.String,
+	"external_channel_uri": filtering.String,
+	"intended_audience":    filtering.String,
+	"access_guidance":      filtering.String,
+	"labels":               filtering.StringMap,
+}
+
+var artifactFields = map[string]filtering.FieldType{
+	"name":        filtering.String,
+	"project_id":  filtering.String,
+	"api_id":      filtering.String,
+	"version_id":  filtering.String,
+	"spec_id":     filtering.String,
+	"artifact_id": filtering.String,
+	"create_time": filtering.Timestamp,
+	"update_time": filtering.Timestamp,
+	"mime_type":   filtering.String,
+	"size_bytes":  filtering.Int,
+}
 
 // gormOrdering accepts a user-specified order_by string and returns a gorm-compatible equivalent.
 // For example, the user-specified string `name,description` returns `key,description`.
@@ -111,12 +195,12 @@ func (c *Client) ListProjects(ctx context.Context, opts PageOptions) (ProjectLis
 		token.Order = opts.Order
 	}
 
-	filter, err := filtering.NewFilter(opts.Filter, filtering.ProjectFields)
+	filter, err := filtering.NewFilter(opts.Filter, projectFields)
 	if err != nil {
-		return ProjectList{}, status.Errorf(codes.InvalidArgument, err.Error())
+		return ProjectList{}, err
 	}
 
-	order, err := gormOrdering(opts.Order, filtering.ProjectFields)
+	order, err := gormOrdering(opts.Order, projectFields)
 	if err != nil {
 		return ProjectList{}, err
 	}
@@ -137,13 +221,9 @@ func (c *Client) ListProjects(ctx context.Context, opts PageOptions) (ProjectLis
 		}
 
 		for _, v := range page {
-			m, err := filtering.ProjectMap(v)
+			match, err := filter.Matches(projectMap(v))
 			if err != nil {
-				return ProjectList{}, status.Error(codes.Internal, err.Error())
-			}
-			match, err := filter.Matches(m)
-			if err != nil {
-				return ProjectList{}, status.Errorf(codes.InvalidArgument, err.Error())
+				return ProjectList{}, err
 			} else if !match {
 				token.Offset++
 				continue
@@ -166,6 +246,17 @@ func (c *Client) ListProjects(ctx context.Context, opts PageOptions) (ProjectLis
 	}
 
 	return response, nil
+}
+
+func projectMap(p models.Project) map[string]interface{} {
+	return map[string]interface{}{
+		"name":         p.Name(),
+		"project_id":   p.ProjectID,
+		"display_name": p.DisplayName,
+		"description":  p.Description,
+		"create_time":  p.CreateTime,
+		"update_time":  p.UpdateTime,
+	}
 }
 
 // ApiList contains a page of api resources.
@@ -202,12 +293,12 @@ func (c *Client) ListApis(ctx context.Context, parent names.Project, opts PageOp
 		}
 	}
 
-	filter, err := filtering.NewFilter(opts.Filter, filtering.ApiFields)
+	filter, err := filtering.NewFilter(opts.Filter, apiFields)
 	if err != nil {
-		return ApiList{}, status.Errorf(codes.InvalidArgument, err.Error())
+		return ApiList{}, err
 	}
 
-	if order, err := gormOrdering(opts.Order, filtering.ApiFields); err != nil {
+	if order, err := gormOrdering(opts.Order, apiFields); err != nil {
 		return ApiList{}, err
 	} else {
 		op = op.Order(order)
@@ -228,14 +319,14 @@ func (c *Client) ListApis(ctx context.Context, parent names.Project, opts PageOp
 		}
 
 		for _, v := range page {
-			m, err := filtering.ApiMap(v)
+			m, err := apiMap(v)
 			if err != nil {
 				return ApiList{}, status.Error(codes.Internal, err.Error())
 			}
 
 			match, err := filter.Matches(m)
 			if err != nil {
-				return ApiList{}, status.Errorf(codes.InvalidArgument, err.Error())
+				return ApiList{}, err
 			} else if !match {
 				token.Offset++
 				continue
@@ -258,6 +349,26 @@ func (c *Client) ListApis(ctx context.Context, parent names.Project, opts PageOp
 	}
 
 	return response, nil
+}
+
+func apiMap(api models.Api) (map[string]interface{}, error) {
+	labels, err := api.LabelsMap()
+	if err != nil {
+		return nil, err
+	}
+
+	return map[string]interface{}{
+		"name":                api.Name(),
+		"project_id":          api.ProjectID,
+		"api_id":              api.ApiID,
+		"display_name":        api.DisplayName,
+		"description":         api.Description,
+		"create_time":         api.CreateTime,
+		"update_time":         api.UpdateTime,
+		"availability":        api.Availability,
+		"recommended_version": api.RecommendedVersion,
+		"labels":              labels,
+	}, nil
 }
 
 // VersionList contains a page of version resources.
@@ -294,9 +405,9 @@ func (c *Client) ListVersions(ctx context.Context, parent names.Api, opts PageOp
 		}
 	}
 
-	filter, err := filtering.NewFilter(opts.Filter, filtering.VersionFields)
+	filter, err := filtering.NewFilter(opts.Filter, versionFields)
 	if err != nil {
-		return VersionList{}, status.Errorf(codes.InvalidArgument, err.Error())
+		return VersionList{}, err
 	}
 
 	op := c.db.WithContext(ctx).Limit(limit(opts))
@@ -307,7 +418,7 @@ func (c *Client) ListVersions(ctx context.Context, parent names.Api, opts PageOp
 		op = op.Where("api_id = ?", parent.ApiID)
 	}
 
-	if order, err := gormOrdering(opts.Order, filtering.VersionFields); err != nil {
+	if order, err := gormOrdering(opts.Order, versionFields); err != nil {
 		return VersionList{}, err
 	} else {
 		op = op.Order(order)
@@ -328,14 +439,14 @@ func (c *Client) ListVersions(ctx context.Context, parent names.Api, opts PageOp
 		}
 
 		for _, v := range page {
-			m, err := filtering.VersionMap(v)
+			m, err := versionMap(v)
 			if err != nil {
 				return VersionList{}, status.Error(codes.Internal, err.Error())
 			}
 
 			match, err := filter.Matches(m)
 			if err != nil {
-				return VersionList{}, status.Errorf(codes.InvalidArgument, err.Error())
+				return VersionList{}, err
 			} else if !match {
 				token.Offset++
 				continue
@@ -358,6 +469,25 @@ func (c *Client) ListVersions(ctx context.Context, parent names.Api, opts PageOp
 	}
 
 	return response, nil
+}
+
+func versionMap(version models.Version) (map[string]interface{}, error) {
+	labels, err := version.LabelsMap()
+	if err != nil {
+		return nil, err
+	}
+
+	return map[string]interface{}{
+		"name":         version.Name(),
+		"project_id":   version.ProjectID,
+		"version_id":   version.VersionID,
+		"display_name": version.DisplayName,
+		"description":  version.Description,
+		"create_time":  version.CreateTime,
+		"update_time":  version.UpdateTime,
+		"state":        version.State,
+		"labels":       labels,
+	}, nil
 }
 
 // SpecList contains a page of spec resources.
@@ -398,9 +528,9 @@ func (c *Client) ListSpecs(ctx context.Context, parent names.Version, opts PageO
 		}
 	}
 
-	filter, err := filtering.NewFilter(opts.Filter, filtering.SpecFields)
+	filter, err := filtering.NewFilter(opts.Filter, specFields)
 	if err != nil {
-		return SpecList{}, status.Errorf(codes.InvalidArgument, err.Error())
+		return SpecList{}, err
 	}
 
 	op := c.db.WithContext(ctx).Select("specs.*").Table("specs").
@@ -423,7 +553,7 @@ func (c *Client) ListSpecs(ctx context.Context, parent names.Version, opts PageO
 		op = op.Where("specs.version_id = ?", parent.VersionID)
 	}
 
-	if order, err := gormOrdering(opts.Order, filtering.SpecFields); err != nil {
+	if order, err := gormOrdering(opts.Order, specFields); err != nil {
 		return SpecList{}, err
 	} else {
 		op = op.Order(order)
@@ -444,14 +574,14 @@ func (c *Client) ListSpecs(ctx context.Context, parent names.Version, opts PageO
 		}
 
 		for _, v := range page {
-			m, err := filtering.SpecMap(v)
+			m, err := specMap(v)
 			if err != nil {
 				return SpecList{}, status.Error(codes.Internal, err.Error())
 			}
 
 			match, err := filter.Matches(m)
 			if err != nil {
-				return SpecList{}, status.Errorf(codes.InvalidArgument, err.Error())
+				return SpecList{}, err
 			} else if !match {
 				token.Offset++
 				continue
@@ -474,6 +604,32 @@ func (c *Client) ListSpecs(ctx context.Context, parent names.Version, opts PageO
 	}
 
 	return response, nil
+}
+
+func specMap(spec models.Spec) (map[string]interface{}, error) {
+	labels, err := spec.LabelsMap()
+	if err != nil {
+		return nil, err
+	}
+
+	return map[string]interface{}{
+		"name":                 spec.Name(),
+		"project_id":           spec.ProjectID,
+		"api_id":               spec.ApiID,
+		"version_id":           spec.VersionID,
+		"spec_id":              spec.SpecID,
+		"filename":             spec.FileName,
+		"description":          spec.Description,
+		"revision_id":          spec.RevisionID,
+		"create_time":          spec.CreateTime,
+		"revision_create_time": spec.RevisionCreateTime,
+		"revision_update_time": spec.RevisionUpdateTime,
+		"mime_type":            spec.MimeType,
+		"size_bytes":           spec.SizeInBytes,
+		"hash":                 spec.Hash,
+		"source_uri":           spec.SourceURI,
+		"labels":               labels,
+	}, nil
 }
 
 func (c *Client) ListSpecRevisions(ctx context.Context, parent names.SpecRevision, opts PageOptions) (SpecList, error) {
@@ -591,9 +747,9 @@ func (c *Client) ListDeployments(ctx context.Context, parent names.Api, opts Pag
 		}
 	}
 
-	filter, err := filtering.NewFilter(opts.Filter, filtering.DeploymentFields)
+	filter, err := filtering.NewFilter(opts.Filter, deploymentFields)
 	if err != nil {
-		return DeploymentList{}, status.Errorf(codes.InvalidArgument, err.Error())
+		return DeploymentList{}, err
 	}
 
 	// Select all columns from `deployments` table specifically.
@@ -617,7 +773,7 @@ func (c *Client) ListDeployments(ctx context.Context, parent names.Api, opts Pag
 		op = op.Where("deployments.api_id = ?", parent.ApiID)
 	}
 
-	if order, err := gormOrdering(opts.Order, filtering.DeploymentFields); err != nil {
+	if order, err := gormOrdering(opts.Order, deploymentFields); err != nil {
 		return DeploymentList{}, err
 	} else {
 		op = op.Order(order)
@@ -638,14 +794,14 @@ func (c *Client) ListDeployments(ctx context.Context, parent names.Api, opts Pag
 		}
 
 		for _, v := range page {
-			m, err := filtering.DeploymentMap(v)
+			m, err := deploymentMap(v)
 			if err != nil {
 				return DeploymentList{}, status.Error(codes.Internal, err.Error())
 			}
 
 			match, err := filter.Matches(m)
 			if err != nil {
-				return DeploymentList{}, status.Errorf(codes.InvalidArgument, err.Error())
+				return DeploymentList{}, err
 			} else if !match {
 				token.Offset++
 				continue
@@ -668,6 +824,32 @@ func (c *Client) ListDeployments(ctx context.Context, parent names.Api, opts Pag
 	}
 
 	return response, nil
+}
+
+func deploymentMap(deployment models.Deployment) (map[string]interface{}, error) {
+	labels, err := deployment.LabelsMap()
+	if err != nil {
+		return nil, err
+	}
+
+	return map[string]interface{}{
+		"name":                 deployment.Name(),
+		"project_id":           deployment.ProjectID,
+		"api_id":               deployment.ApiID,
+		"deployment_id":        deployment.DeploymentID,
+		"revision_id":          deployment.RevisionID,
+		"display_name":         deployment.DisplayName,
+		"description":          deployment.Description,
+		"create_time":          deployment.CreateTime,
+		"revision_create_time": deployment.RevisionCreateTime,
+		"revision_update_time": deployment.RevisionUpdateTime,
+		"api_spec_revision":    deployment.ApiSpecRevision,
+		"endpoint_uri":         deployment.EndpointURI,
+		"external_channel_uri": deployment.ExternalChannelURI,
+		"intended_audience":    deployment.IntendedAudience,
+		"access_guidance":      deployment.AccessGuidance,
+		"labels":               labels,
+	}, nil
 }
 
 func (c *Client) ListDeploymentRevisions(ctx context.Context, parent names.Deployment, opts PageOptions) (DeploymentList, error) {
@@ -992,12 +1174,12 @@ func (c *Client) listArtifacts(ctx context.Context, op *gorm.DB, opts PageOption
 		token.Filter = opts.Filter
 	}
 
-	filter, err := filtering.NewFilter(opts.Filter, filtering.ArtifactFields)
+	filter, err := filtering.NewFilter(opts.Filter, artifactFields)
 	if err != nil {
-		return ArtifactList{}, status.Errorf(codes.InvalidArgument, err.Error())
+		return ArtifactList{}, err
 	}
 
-	if order, err := gormOrdering(opts.Order, filtering.ArtifactFields); err != nil {
+	if order, err := gormOrdering(opts.Order, artifactFields); err != nil {
 		return ArtifactList{}, err
 	} else {
 		op = op.Order("artifacts." + order)
@@ -1019,13 +1201,10 @@ func (c *Client) listArtifacts(ctx context.Context, op *gorm.DB, opts PageOption
 		}
 
 		for _, v := range page {
-			m, err := filtering.ArtifactMap(v)
-			if err != nil {
-				return ArtifactList{}, status.Error(codes.Internal, err.Error())
-			}
+			m := artifactMap(v)
 			match, err := filter.Matches(m)
 			if err != nil {
-				return ArtifactList{}, status.Errorf(codes.InvalidArgument, err.Error())
+				return ArtifactList{}, err
 			} else if !match || !include(&v) {
 				token.Offset++
 				continue
@@ -1048,4 +1227,19 @@ func (c *Client) listArtifacts(ctx context.Context, op *gorm.DB, opts PageOption
 	}
 
 	return response, nil
+}
+
+func artifactMap(artifact models.Artifact) map[string]interface{} {
+	return map[string]interface{}{
+		"name":        artifact.Name(),
+		"project_id":  artifact.ProjectID,
+		"api_id":      artifact.ApiID,
+		"version_id":  artifact.VersionID,
+		"spec_id":     artifact.SpecID,
+		"artifact_id": artifact.ArtifactID,
+		"create_time": artifact.CreateTime,
+		"update_time": artifact.UpdateTime,
+		"mime_type":   artifact.MimeType,
+		"size_bytes":  artifact.SizeInBytes,
+	}
 }

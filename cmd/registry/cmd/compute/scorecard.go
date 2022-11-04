@@ -24,6 +24,7 @@ import (
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/spf13/cobra"
+	"google.golang.org/protobuf/proto"
 )
 
 func scoreCardCommand() *cobra.Command {
@@ -46,25 +47,43 @@ func scoreCardCommand() *cobra.Command {
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
+
 			// Initialize task queue.
-			taskQueue, wait := core.WorkerPool(ctx, 64)
+			// Use the warnings queue to make sure that failure in one score calculation task doesn't abort the whole queue.
+			taskQueue, wait := core.WorkerPoolWithWarnings(ctx, 64)
 			defer wait()
 
-			resources, err := patterns.ListResources(ctx, client, args[0], filter)
+			inputPattern, err := patterns.ParseResourcePattern(args[0])
 			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to list resources")
+				log.FromContext(ctx).WithError(err).Fatal("invalid pattern supplied in the args")
 			}
-
 			artifactClient := &scoring.RegistryArtifactClient{RegistryClient: client}
 
-			for _, r := range resources {
-				// Fetch the ScoreCardDefinitions which can be applied to this resource
-				scoreCardDefinitions, err := scoring.FetchScoreCardDefinitions(ctx, artifactClient, r)
-				if err != nil {
-					log.FromContext(ctx).WithError(err).Errorf("Skipping resource %q", r.ResourceName())
+			scoreCardDefinitions, err := scoring.FetchScoreCardDefinitions(ctx, artifactClient, inputPattern.Project())
+			if err != nil {
+				log.FromContext(ctx).WithError(err).Fatalf("Failed to get ScoreCardDefinitions")
+			}
+			// List resources based on the retrieved definitions
+			for _, d := range scoreCardDefinitions {
+				// Extract definition
+				definition := &rpc.ScoreCardDefinition{}
+				if err := proto.Unmarshal(d.GetContents(), definition); err != nil {
+					log.FromContext(ctx).WithError(err).Errorf("Failed to unmarshal ScoreCardDefinition: %q", d.GetName())
 					continue
 				}
-				for _, d := range scoreCardDefinitions {
+				mergedPattern, mergedFilter, err := scoring.GenerateCombinedPattern(definition.GetTargetResource(), inputPattern, filter)
+				if err != nil {
+					log.FromContext(ctx).WithError(err).Errorf("Skipping definition %q", d.GetName())
+					continue
+				}
+
+				resources, err := patterns.ListResources(ctx, client, mergedPattern, mergedFilter)
+				if err != nil || len(resources) == 0 {
+					log.FromContext(ctx).WithError(err).Errorf("Skipping definition %q", d.GetName())
+					continue
+				}
+
+				for _, r := range resources {
 					taskQueue <- &computeScoreCardTask{
 						client:      artifactClient,
 						defArtifact: d,
