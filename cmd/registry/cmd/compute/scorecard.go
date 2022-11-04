@@ -50,7 +50,11 @@ func scoreCardCommand() *cobra.Command {
 
 			// Initialize task queue.
 			// Use the warnings queue to make sure that failure in one score calculation task doesn't abort the whole queue.
-			taskQueue, wait := core.WorkerPoolWithWarnings(ctx, 64)
+			jobs, err := cmd.Flags().GetInt("jobs")
+			if err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get jobs from flags")
+			}
+			taskQueue, wait := core.WorkerPoolWithWarnings(ctx, jobs)
 			defer wait()
 
 			inputPattern, err := patterns.ParseResourcePattern(args[0])
