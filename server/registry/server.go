@@ -99,27 +99,25 @@ func (s *RegistryServer) getStorageClient(ctx context.Context) (*storage.Client,
 var mutex sync.Mutex
 
 func (s *RegistryServer) runInTransaction(ctx context.Context, fn func(ctx context.Context, db *storage.Client) error) error {
+	s.begin()
+	defer s.end()
 	db, err := s.getStorageClient(ctx)
 	if err != nil {
 		return status.Error(codes.Unavailable, err.Error())
-	}
-	if db.DatabaseName(ctx) == "sqlite" {
-		mutex.Lock()
-		defer mutex.Unlock()
 	}
 	return db.Transaction(ctx, fn)
 }
 
-func (s *RegistryServer) runWithoutTransaction(ctx context.Context, fn func(ctx context.Context, db *storage.Client) error) error {
-	db, err := s.getStorageClient(ctx)
-	if err != nil {
-		return status.Error(codes.Unavailable, err.Error())
-	}
-	if db.DatabaseName(ctx) == "sqlite" {
+func (s *RegistryServer) begin() {
+	if s.database == "sqlite3" {
 		mutex.Lock()
-		defer mutex.Unlock()
 	}
-	return fn(ctx, db)
+}
+
+func (s *RegistryServer) end() {
+	if s.database == "sqlite3" {
+		mutex.Unlock()
+	}
 }
 
 func (s *RegistryServer) getPubSubClient(ctx context.Context) (*pubsub.Client, error) {

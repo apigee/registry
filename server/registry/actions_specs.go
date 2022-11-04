@@ -101,26 +101,15 @@ func (s *RegistryServer) DeleteApiSpec(ctx context.Context, req *rpc.DeleteApiSp
 
 // GetApiSpec handles the corresponding API request.
 func (s *RegistryServer) GetApiSpec(ctx context.Context, req *rpc.GetApiSpecRequest) (*rpc.ApiSpec, error) {
-	var response *rpc.ApiSpec
-	if err := s.runWithoutTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
-		if name, err := names.ParseSpec(req.GetName()); err == nil {
-			response, err = s.getApiSpec(ctx, name)
-			if err != nil {
-				return err
-			}
-		} else if name, err := names.ParseSpecRevision(req.GetName()); err == nil {
-			response, err = s.getApiSpecRevision(ctx, name)
-			if err != nil {
-				return err
-			}
-		} else {
-			return status.Errorf(codes.InvalidArgument, "invalid resource name %q, must be an API spec or revision", req.GetName())
-		}
-		return nil
-	}); err != nil {
-		return nil, err
+	s.begin()
+	defer s.end()
+	if name, err := names.ParseSpec(req.GetName()); err == nil {
+		return s.getApiSpec(ctx, name)
+	} else if name, err := names.ParseSpecRevision(req.GetName()); err == nil {
+		return s.getApiSpecRevision(ctx, name)
 	}
-	return response, nil
+
+	return nil, status.Errorf(codes.InvalidArgument, "invalid resource name %q, must be an API spec or revision", req.GetName())
 }
 
 func (s *RegistryServer) getApiSpec(ctx context.Context, name names.Spec) (*rpc.ApiSpec, error) {
