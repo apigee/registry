@@ -37,7 +37,6 @@ func TestValidateScoreDefinition(t *testing.T) {
 				Kind: "ScoreDefinition",
 				TargetResource: &rpc.ResourcePattern{
 					Pattern: "apis/-/versions/-/specs/-",
-					Filter:  "name.contains('openapi.yaml')",
 				},
 				Formula: &rpc.ScoreDefinition_ScoreFormula{
 					ScoreFormula: &rpc.ScoreFormula{
@@ -79,7 +78,6 @@ func TestValidateScoreDefinition(t *testing.T) {
 				Kind: "ScoreDefinition",
 				TargetResource: &rpc.ResourcePattern{
 					Pattern: "apis/-/versions/-/specs/-",
-					Filter:  "name.contains('openapi.yaml')",
 				},
 				Formula: &rpc.ScoreDefinition_RollupFormula{
 					RollupFormula: &rpc.RollUpFormula{
@@ -1861,7 +1859,7 @@ func TestGenerateCombinedPattern(t *testing.T) {
 	}
 }
 
-func TestMatchResourceWithTargetFilters(t *testing.T) {
+func TestGenerateCombinedPatternFilters(t *testing.T) {
 	tests := []struct {
 		desc          string
 		targetPattern *rpc.ResourcePattern

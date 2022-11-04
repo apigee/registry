@@ -302,11 +302,8 @@ func TestScore(t *testing.T) {
 			}
 
 			// setup the score command
-			scoreCmd := scoreCommand()
-			scoreCmd.Flags().String("filter", "", "Filter selected resources")
-			scoreCmd.Flags().Bool("dry-run", false, "if set, computation results will only be printed and not uploaded to registry")
-
-			args := []string{"projects/score-test/locations/global/apis/-/versions/-/specs/-"}
+			scoreCmd := Command()
+			args := []string{"score", "projects/score-test/locations/global/apis/-/versions/-/specs/-"}
 			scoreCmd.SetArgs(args)
 
 			if err = scoreCmd.Execute(); err != nil {

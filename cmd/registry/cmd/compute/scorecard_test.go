@@ -232,11 +232,8 @@ func TestScoreCard(t *testing.T) {
 			}
 
 			// setup the score command
-			scoreCardCmd := scoreCardCommand()
-			scoreCardCmd.Flags().String("filter", "", "Filter selected resources")
-			scoreCardCmd.Flags().Bool("dry-run", false, "if set, computation results will only be printed and not uploaded to registry")
-
-			args := []string{"projects/scorecard-test/locations/global/apis/-/versions/-/specs/-"}
+			scoreCardCmd := Command()
+			args := []string{"scorecard", "projects/scorecard-test/locations/global/apis/-/versions/-/specs/-"}
 			scoreCardCmd.SetArgs(args)
 
 			if err = scoreCardCmd.Execute(); err != nil {

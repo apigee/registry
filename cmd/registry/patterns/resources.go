@@ -344,7 +344,6 @@ type ResourceInstance interface {
 type SpecResource struct {
 	SpecName  ResourceName
 	Timestamp time.Time
-	Spec      *rpc.ApiSpec
 }
 
 func (s SpecResource) UpdateTimestamp() time.Time {
@@ -358,7 +357,6 @@ func (s SpecResource) ResourceName() ResourceName {
 type VersionResource struct {
 	VersionName ResourceName
 	Timestamp   time.Time
-	Version     *rpc.ApiVersion
 }
 
 func (v VersionResource) UpdateTimestamp() time.Time {
@@ -372,7 +370,6 @@ func (v VersionResource) ResourceName() ResourceName {
 type ApiResource struct {
 	ApiName   ResourceName
 	Timestamp time.Time
-	Api       *rpc.Api
 }
 
 func (a ApiResource) UpdateTimestamp() time.Time {
@@ -386,7 +383,6 @@ func (a ApiResource) ResourceName() ResourceName {
 type ProjectResource struct {
 	ProjectName ResourceName
 	Timestamp   time.Time
-	Project     *rpc.Project
 }
 
 func (p ProjectResource) UpdateTimestamp() time.Time {
@@ -400,7 +396,6 @@ func (p ProjectResource) ResourceName() ResourceName {
 type ArtifactResource struct {
 	ArtifactName ResourceName
 	Timestamp    time.Time
-	Artifact     *rpc.Artifact
 }
 
 func (ar ArtifactResource) UpdateTimestamp() time.Time {
@@ -458,7 +453,6 @@ func generateApiHandler(result *[]ResourceInstance) func(*rpc.Api) error {
 		(*result) = append((*result), ApiResource{
 			ApiName:   ApiName{Name: name},
 			Timestamp: api.UpdateTime.AsTime(),
-			Api:       api,
 		})
 		return nil
 	}
@@ -473,7 +467,6 @@ func generateVersionHandler(result *[]ResourceInstance) func(*rpc.ApiVersion) er
 		(*result) = append((*result), VersionResource{
 			VersionName: VersionName{Name: name},
 			Timestamp:   version.UpdateTime.AsTime(),
-			Version:     version,
 		})
 		return nil
 	}
@@ -492,7 +485,6 @@ func generateSpecHandler(result *[]ResourceInstance) func(*rpc.ApiSpec) error {
 				RevisionID: name.RevisionID,
 			},
 			Timestamp: spec.RevisionUpdateTime.AsTime(),
-			Spec:      spec,
 		})
 		return nil
 	}
@@ -507,7 +499,6 @@ func generateArtifactHandler(result *[]ResourceInstance) func(*rpc.Artifact) err
 		(*result) = append((*result), ArtifactResource{
 			ArtifactName: ArtifactName{Name: name},
 			Timestamp:    artifact.UpdateTime.AsTime(),
-			Artifact:     artifact,
 		})
 		return nil
 	}
