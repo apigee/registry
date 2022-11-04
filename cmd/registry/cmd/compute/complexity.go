@@ -17,6 +17,7 @@ package compute
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/log"
@@ -109,57 +110,64 @@ func (task *computeComplexityTask) String() string {
 }
 
 func (task *computeComplexityTask) Run(ctx context.Context) error {
-	request := &rpc.GetApiSpecContentsRequest{
-		Name: task.specName,
-	}
-	spec, err := task.client.GetApiSpecContents(ctx, request)
+	specName, err := names.ParseSpecRevision(task.specName)
 	if err != nil {
 		return err
 	}
-	relation := "complexity"
-	log.Debugf(ctx, "Computing %s/artifacts/%s", task.specName, relation)
-	var complexity *metrics.Complexity
-	if core.IsOpenAPIv2(spec.GetContentType()) {
-		document, err := oas2.ParseDocument(spec.GetData())
-		if err != nil {
-			log.FromContext(ctx).WithError(err).Errorf("Invalid OpenAPI: %s", task.specName)
-			return nil
-		}
-		complexity = core.SummarizeOpenAPIv2Document(document)
-	} else if core.IsOpenAPIv3(spec.GetContentType()) {
-		document, err := oas3.ParseDocument(spec.GetData())
-		if err != nil {
-			log.FromContext(ctx).WithError(err).Errorf("Invalid OpenAPI: %s", task.specName)
-			return nil
-		}
-		complexity = core.SummarizeOpenAPIv3Document(document)
-	} else if core.IsDiscovery(spec.GetContentType()) {
-		document, err := discovery.ParseDocument(spec.GetData())
-		if err != nil {
-			log.FromContext(ctx).WithError(err).Errorf("Invalid Discovery: %s", task.specName)
-			return nil
-		}
-		complexity = core.SummarizeDiscoveryDocument(document)
-	} else if core.IsProto(spec.GetContentType()) && core.IsZipArchive(spec.GetContentType()) {
-		complexity, err = core.SummarizeZippedProtos(spec.GetData())
-		if err != nil {
-			log.FromContext(ctx).WithError(err).Errorf("Error processing protos: %s", task.specName)
-			return nil
-		}
-	} else {
-		return fmt.Errorf("we don't know how to summarize %s", task.specName)
-	}
+	return core.GetSpecRevision(ctx, task.client, specName, true,
+		func(spec *rpc.ApiSpec) error {
+			relation := "complexity"
+			log.Debugf(ctx, "Computing %s/artifacts/%s", task.specName, relation)
+			contents := spec.GetContents()
+			if strings.Contains(spec.GetMimeType(), "+gzip") {
+				if contents, err = core.GUnzippedBytes(contents); err != nil {
+					return err
+				}
+			}
+			var complexity *metrics.Complexity
+			if core.IsOpenAPIv2(spec.GetMimeType()) {
+				document, err := oas2.ParseDocument(contents)
+				if err != nil {
+					log.FromContext(ctx).WithError(err).Errorf("Invalid OpenAPI: %s", task.specName)
+					return nil
+				}
+				complexity = core.SummarizeOpenAPIv2Document(document)
+			} else if core.IsOpenAPIv3(spec.GetMimeType()) {
+				document, err := oas3.ParseDocument(contents)
+				if err != nil {
+					log.FromContext(ctx).WithError(err).Errorf("Invalid OpenAPI: %s", task.specName)
+					return nil
+				}
+				complexity = core.SummarizeOpenAPIv3Document(document)
+			} else if core.IsDiscovery(spec.GetMimeType()) {
+				document, err := discovery.ParseDocument(contents)
+				if err != nil {
+					log.FromContext(ctx).WithError(err).Errorf("Invalid Discovery: %s", task.specName)
+					return nil
+				}
+				complexity = core.SummarizeDiscoveryDocument(document)
+			} else if core.IsProto(spec.GetMimeType()) && core.IsZipArchive(spec.GetMimeType()) {
+				complexity, err = core.SummarizeZippedProtos(spec.GetContents())
+				if err != nil {
+					log.FromContext(ctx).WithError(err).Errorf("Error processing protos: %s", task.specName)
+					return nil
+				}
+			} else {
+				return fmt.Errorf("we don't know how to summarize %s", task.specName)
+			}
 
-	if task.dryRun {
-		core.PrintMessage(complexity)
-		return nil
-	}
-	subject := task.specName
-	messageData, _ := proto.Marshal(complexity)
-	artifact := &rpc.Artifact{
-		Name:     subject + "/artifacts/" + relation,
-		MimeType: core.MimeTypeForMessageType("gnostic.metrics.Complexity"),
-		Contents: messageData,
-	}
-	return core.SetArtifact(ctx, task.client, artifact)
+			if task.dryRun {
+				core.PrintMessage(complexity)
+				return nil
+			}
+			subject := task.specName
+			messageData, _ := proto.Marshal(complexity)
+			artifact := &rpc.Artifact{
+				Name:     subject + "/artifacts/" + relation,
+				MimeType: core.MimeTypeForMessageType("gnostic.metrics.Complexity"),
+				Contents: messageData,
+			}
+			return core.SetArtifact(ctx, task.client, artifact)
+		},
+	)
 }
