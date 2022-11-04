@@ -463,11 +463,11 @@ func TestConformance(t *testing.T) {
 			}
 
 			// setup the command
-			conformanceCmd := conformanceCommand()
+			conformanceCmd := Command()
 			conformanceCmd.Flags().String("filter", "", "Filter selected resources")
 			conformanceCmd.Flags().Bool("dry-run", false, "if set, computation results will only be printed and not uploaded to registry")
 
-			args = []string{spec.Name}
+			args = []string{"conformance", spec.Name}
 			conformanceCmd.SetArgs(args)
 
 			if err = conformanceCmd.Execute(); err != nil {
