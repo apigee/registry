@@ -27,5 +27,6 @@ func Command() *cobra.Command {
 	cmd.AddCommand(revisionsCommand())
 	cmd.AddCommand(versionsCommand())
 
+	cmd.PersistentFlags().Int("jobs", 10, "Number of actions to perform concurrently")
 	return cmd
 }
