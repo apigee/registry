@@ -110,6 +110,18 @@ func (s *RegistryServer) runInTransaction(ctx context.Context, fn func(ctx conte
 	return db.Transaction(ctx, fn)
 }
 
+func (s *RegistryServer) runWithoutTransaction(ctx context.Context, fn func(ctx context.Context, db *storage.Client) error) error {
+	db, err := s.getStorageClient(ctx)
+	if err != nil {
+		return status.Error(codes.Unavailable, err.Error())
+	}
+	if db.DatabaseName(ctx) == "sqlite" {
+		mutex.Lock()
+		defer mutex.Unlock()
+	}
+	return fn(ctx, db)
+}
+
 func (s *RegistryServer) getPubSubClient(ctx context.Context) (*pubsub.Client, error) {
 	if s.pubSubClient == nil {
 		return nil, errors.New("no pubSubClient")
