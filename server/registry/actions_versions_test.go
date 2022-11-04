@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/test/seeder"
@@ -1178,10 +1179,28 @@ func TestUpdateApiVersionSequence(t *testing.T) {
 	if err := seeder.SeedApis(ctx, server, seed); err != nil {
 		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
 	}
-	for _, test := range tests {
+	var createTime time.Time
+	var updateTime time.Time
+	for i, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			if _, err := server.UpdateApiVersion(ctx, test.req); status.Code(err) != test.want {
+			var result *rpc.ApiVersion
+			var err error
+			if result, err = server.UpdateApiVersion(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("UpdateApiVersion(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
+			}
+			if result != nil {
+				if i == 1 {
+					createTime = result.CreateTime.AsTime()
+					updateTime = result.UpdateTime.AsTime()
+				} else {
+					if (!createTime.Equal(result.CreateTime.AsTime())) {
+						t.Errorf("UpdateApiVersion create time changed after update (%v %v)", createTime, result.CreateTime.AsTime())
+					}
+					if (!updateTime.Before(result.UpdateTime.AsTime())) {
+						t.Errorf("UpdateApiVersion update time did not increase after update (%v %v)", updateTime, result.UpdateTime.AsTime())
+					}
+					updateTime = result.UpdateTime.AsTime()
+				}
 			}
 		})
 	}
