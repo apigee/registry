@@ -99,13 +99,13 @@ func (s *RegistryServer) getStorageClient(ctx context.Context) (*storage.Client,
 var mutex sync.Mutex
 
 func (s *RegistryServer) runInTransaction(ctx context.Context, fn func(ctx context.Context, db *storage.Client) error) error {
-	if s.database == "sqlite3" {
-		mutex.Lock()
-		defer mutex.Unlock()
-	}
 	db, err := s.getStorageClient(ctx)
 	if err != nil {
 		return status.Error(codes.Unavailable, err.Error())
+	}
+	if db.DatabaseName(ctx) == "sqlite" {
+		mutex.Lock()
+		defer mutex.Unlock()
 	}
 	return db.Transaction(ctx, fn)
 }
