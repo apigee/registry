@@ -22,7 +22,9 @@ import (
 )
 
 func (c *Client) lockTable(ctx context.Context, name string) *Client {
-	if c.db.WithContext(ctx).Name() != "postgres" {
+	// The LOCK TABLE statement below is unavailable in SQLite.
+	// For SQLite, we instead lock all mutating transactions. See RegistryServer.runInTransaction().
+	if c.DatabaseName(ctx) == "sqlite" {
 		return c
 	}
 	return &Client{db: c.db.Exec(fmt.Sprintf("LOCK TABLE %s IN ACCESS EXCLUSIVE MODE", name))}
