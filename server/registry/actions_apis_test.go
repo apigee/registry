@@ -1168,10 +1168,10 @@ func TestUpdateApiSequence(t *testing.T) {
 					createTime = result.CreateTime.AsTime()
 					updateTime = result.UpdateTime.AsTime()
 				} else {
-					if (!createTime.Equal(result.CreateTime.AsTime())) {
+					if !createTime.Equal(result.CreateTime.AsTime()) {
 						t.Errorf("UpdateApi create time changed after update (%v %v)", createTime, result.CreateTime.AsTime())
 					}
-					if (!updateTime.Before(result.UpdateTime.AsTime())) {
+					if !updateTime.Before(result.UpdateTime.AsTime()) {
 						t.Errorf("UpdateApi update time did not increase after update (%v %v)", updateTime, result.UpdateTime.AsTime())
 					}
 					updateTime = result.UpdateTime.AsTime()
