@@ -101,6 +101,8 @@ func (s *RegistryServer) DeleteApiSpec(ctx context.Context, req *rpc.DeleteApiSp
 
 // GetApiSpec handles the corresponding API request.
 func (s *RegistryServer) GetApiSpec(ctx context.Context, req *rpc.GetApiSpecRequest) (*rpc.ApiSpec, error) {
+	s.begin()
+	defer s.end()
 	if name, err := names.ParseSpec(req.GetName()); err == nil {
 		return s.getApiSpec(ctx, name)
 	} else if name, err := names.ParseSpecRevision(req.GetName()); err == nil {
