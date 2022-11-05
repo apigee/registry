@@ -17,7 +17,6 @@ package storage
 import (
 	"context"
 	"fmt"
-	"time"
 
 	_ "github.com/GoogleCloudPlatform/cloudsql-proxy/proxy/dialers/postgres"
 	"github.com/apigee/registry/server/registry/internal/storage/models"
@@ -65,13 +64,18 @@ func NewClient(ctx context.Context, driver, dsn string) (*Client, error) {
 			c.close()
 			return nil, grpcErrorForDBError(ctx, err)
 		}
-		// eliminate multithreading contention
+		// Sets to 1 to disallow multiple connections on SQLite.
+		// Any automatically opened connections, such a connection pool
+		// or SetConnMaxLifetime() will not apply post-connect
+		// PRAGMA commands (eg. "foreign_keys = ON").
 		if err := applyConnectionLimits(db, 1); err != nil {
 			c := &Client{db: db}
 			c.close()
 			return nil, grpcErrorForDBError(ctx, err)
 		}
-		db.Exec("PRAGMA foreign_keys = ON")
+		if err := db.Exec("PRAGMA foreign_keys = ON").Error; err != nil {
+			return nil, grpcErrorForDBError(ctx, err)
+		}
 		return &Client{db: db}, nil
 	case "postgres", "cloudsqlpostgres":
 		db, err := gorm.Open(postgres.New(postgres.Config{
@@ -105,7 +109,6 @@ func applyConnectionLimits(db *gorm.DB, n int) error {
 	}
 	sqlDB.SetMaxOpenConns(n)
 	sqlDB.SetMaxIdleConns(n)
-	sqlDB.SetConnMaxLifetime(60 * time.Second)
 	return nil
 }
 
@@ -143,7 +146,15 @@ func (c *Client) Migrate(ctx context.Context) error {
 		return grpcErrorForDBError(ctx, err)
 	}
 
-	return grpcErrorForDBError(ctx, c.ensureForeignKeys(ctx))
+	if err := c.ensureForeignKeys(ctx); err != nil {
+		return grpcErrorForDBError(ctx, err)
+	}
+
+	if err := c.migrateArtifactsToRevisions(ctx); err != nil {
+		return grpcErrorForDBError(ctx, err)
+	}
+
+	return nil
 }
 
 func (c *Client) ensureForeignKeys(ctx context.Context) (err error) {
@@ -195,6 +206,22 @@ func (c *Client) ensureForeignKeys(ctx context.Context) (err error) {
 			c.db.Model(&models.Api{}).Select("key").
 				Where("deployments.project_id = apis.project_id").
 				Where("deployments.api_id = apis.api_id")).Error
+}
+
+func (c *Client) migrateArtifactsToRevisions(ctx context.Context) (err error) {
+	return c.db.Model(&models.Artifact{}).
+		Where("revision_id is null and spec_id != ''").
+		Update("revision_id",
+			c.db.Model(&models.Spec{}).Select("revision_id").
+				Where("artifacts.project_id = specs.project_id").
+				Where("artifacts.api_id = specs.api_id").
+				Where("artifacts.version_id = specs.version_id").
+				Where("artifacts.spec_id = specs.spec_id")).Joins(`join (?) latest
+					ON artifacts.project_id = latest.project_id
+					AND artifacts.api_id = latest.api_id
+					AND artifacts.version_id = latest.version_id
+					AND artifacts.spec_id = latest.spec_id
+					AND artifacts.revision_id = latest.revision_id`, c.latestSpecRevisionsQuery(ctx)).Error
 }
 
 func (c *Client) DatabaseName(ctx context.Context) string {

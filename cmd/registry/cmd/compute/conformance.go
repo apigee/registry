@@ -52,22 +52,34 @@ func conformanceCommand() *cobra.Command {
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get dry-run from flags")
 			}
+			jobs, err := cmd.Flags().GetInt("jobs")
+			if err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get jobs from flags")
+			}
 
 			client, err := connection.NewRegistryClientWithSettings(ctx, c)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
 
-			name, err := names.ParseSpec(args[0])
+			name, err := names.ParseSpecRevision(args[0])
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Invalid Argument: must specify one or more API specs")
 			}
 
 			specs := make([]*rpc.ApiSpec, 0)
-			if err := core.ListSpecs(ctx, client, name, filter, func(spec *rpc.ApiSpec) error {
-				specs = append(specs, spec)
-				return nil
-			}); err != nil {
+			if name.RevisionID == "" {
+				err = core.ListSpecs(ctx, client, name.Spec(), filter, func(spec *rpc.ApiSpec) error {
+					specs = append(specs, spec)
+					return nil
+				})
+			} else {
+				err = core.ListSpecRevisions(ctx, client, name, filter, func(spec *rpc.ApiSpec) error {
+					specs = append(specs, spec)
+					return nil
+				})
+			}
+			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to list specs")
 			}
 
@@ -86,7 +98,7 @@ func conformanceCommand() *cobra.Command {
 
 			for _, guide := range guides {
 				log.Debugf(ctx, "Processing styleguide: %s", guide.GetId())
-				processStyleGuide(ctx, client, guide, specs, dryRun)
+				processStyleGuide(ctx, client, guide, specs, dryRun, jobs)
 			}
 		},
 	}
@@ -96,14 +108,14 @@ func conformanceCommand() *cobra.Command {
 
 // processStyleGuide computes and attaches conformance reports as
 // artifacts to a spec or a collection of specs.
-func processStyleGuide(ctx context.Context, client connection.RegistryClient, styleguide *rpc.StyleGuide, specs []*rpc.ApiSpec, dryRun bool) {
+func processStyleGuide(ctx context.Context, client connection.RegistryClient, styleguide *rpc.StyleGuide, specs []*rpc.ApiSpec, dryRun bool, jobs int) {
 	linterNameToMetadata, err := conformance.GenerateLinterMetadata(styleguide)
 	if err != nil {
 		log.Errorf(ctx, "Failed generating linter metadata, check styleguide definition, Error: %s", err)
 		return
 	}
 
-	taskQueue, wait := core.WorkerPool(ctx, 16)
+	taskQueue, wait := core.WorkerPool(ctx, jobs)
 	defer wait()
 
 	for _, spec := range specs {

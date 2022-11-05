@@ -48,7 +48,12 @@ func scoreCommand() *cobra.Command {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
 			// Initialize task queue.
-			taskQueue, wait := core.WorkerPool(ctx, 64)
+			// Use the warnings queue to make sure that failure in one score calculation task doesn't abort the whole queue.
+			jobs, err := cmd.Flags().GetInt("jobs")
+			if err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get jobs from flags")
+			}
+			taskQueue, wait := core.WorkerPoolWithWarnings(ctx, jobs)
 			defer wait()
 
 			resources, err := patterns.ListResources(ctx, client, args[0], filter)

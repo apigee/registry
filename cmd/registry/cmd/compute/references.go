@@ -54,23 +54,38 @@ func referencesCommand() *cobra.Command {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
 			// Initialize task queue.
-			taskQueue, wait := core.WorkerPool(ctx, 64)
+			jobs, err := cmd.Flags().GetInt("jobs")
+			if err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Failed to get jobs from flags")
+			}
+			taskQueue, wait := core.WorkerPool(ctx, jobs)
 			defer wait()
 
-			spec, err := names.ParseSpec(args[0])
+			parsed, err := names.ParseSpecRevision(args[0])
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed parse")
 			}
 
 			// Iterate through a collection of specs and compute references for each
-			err = core.ListSpecs(ctx, client, spec, filter, func(spec *rpc.ApiSpec) error {
-				taskQueue <- &computeReferencesTask{
-					client:   client,
-					specName: spec.Name,
-					dryRun:   dryRun,
-				}
-				return nil
-			})
+			if parsed.RevisionID == "" {
+				err = core.ListSpecs(ctx, client, parsed.Spec(), filter, func(spec *rpc.ApiSpec) error {
+					taskQueue <- &computeReferencesTask{
+						client:   client,
+						specName: spec.Name,
+						dryRun:   dryRun,
+					}
+					return nil
+				})
+			} else {
+				err = core.ListSpecRevisions(ctx, client, parsed, filter, func(spec *rpc.ApiSpec) error {
+					taskQueue <- &computeReferencesTask{
+						client:   client,
+						specName: spec.Name,
+						dryRun:   dryRun,
+					}
+					return nil
+				})
+			}
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to list specs")
 			}

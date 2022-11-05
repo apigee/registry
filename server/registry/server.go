@@ -19,6 +19,7 @@ import (
 	"errors"
 	"log"
 	"net"
+	"sync"
 
 	"cloud.google.com/go/pubsub"
 	"github.com/apigee/registry/rpc"
@@ -95,12 +96,28 @@ func (s *RegistryServer) getStorageClient(ctx context.Context) (*storage.Client,
 	return s.storageClient, nil
 }
 
+var mutex sync.Mutex
+
 func (s *RegistryServer) runInTransaction(ctx context.Context, fn func(ctx context.Context, db *storage.Client) error) error {
+	s.begin()
+	defer s.end()
 	db, err := s.getStorageClient(ctx)
 	if err != nil {
 		return status.Error(codes.Unavailable, err.Error())
 	}
 	return db.Transaction(ctx, fn)
+}
+
+func (s *RegistryServer) begin() {
+	if s.database == "sqlite3" {
+		mutex.Lock()
+	}
+}
+
+func (s *RegistryServer) end() {
+	if s.database == "sqlite3" {
+		mutex.Unlock()
+	}
 }
 
 func (s *RegistryServer) getPubSubClient(ctx context.Context) (*pubsub.Client, error) {
