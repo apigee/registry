@@ -40,12 +40,9 @@ func openAPICommand() *cobra.Command {
 		Short: "Bulk-upload OpenAPI descriptions from a directory of specs",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			ctx := cmd.Context()
-			projectID, err := cmd.Flags().GetString("project-id")
-			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to get project-id from flags")
-			}
+			parent := getParent(cmd)
 
+			ctx := cmd.Context()
 			client, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
@@ -64,7 +61,7 @@ func openAPICommand() *cobra.Command {
 				if err != nil {
 					log.FromContext(ctx).WithError(err).Fatal("Invalid path")
 				}
-				scanDirectoryForOpenAPI(ctx, client, projectID, baseURI, path, taskQueue)
+				scanDirectoryForOpenAPI(ctx, client, parent, baseURI, path, taskQueue)
 			}
 		},
 	}
@@ -73,7 +70,7 @@ func openAPICommand() *cobra.Command {
 	return cmd
 }
 
-func scanDirectoryForOpenAPI(ctx context.Context, client connection.RegistryClient, projectID, baseURI, directory string, taskQueue chan<- core.Task) {
+func scanDirectoryForOpenAPI(ctx context.Context, client connection.RegistryClient, parent, baseURI, directory string, taskQueue chan<- core.Task) {
 	// walk a directory hierarchy, uploading every API spec that matches a set of expected file names.
 	if err := filepath.Walk(directory, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -82,7 +79,7 @@ func scanDirectoryForOpenAPI(ctx context.Context, client connection.RegistryClie
 
 		task := &uploadOpenAPITask{
 			client:    client,
-			projectID: projectID,
+			parent:    parent,
 			baseURI:   baseURI,
 			path:      path,
 			directory: directory,
@@ -124,7 +121,7 @@ type uploadOpenAPITask struct {
 	path      string
 	directory string
 	version   string
-	projectID string
+	parent    string
 	apiID     string // computed at runtime
 	versionID string // computed at runtime
 	specID    string // computed at runtime
@@ -264,12 +261,8 @@ func (task *uploadOpenAPITask) createOrUpdateSpec(ctx context.Context) error {
 	return nil
 }
 
-func (task *uploadOpenAPITask) projectName() string {
-	return fmt.Sprintf("projects/%s", task.projectID)
-}
-
 func (task *uploadOpenAPITask) apiName() string {
-	return fmt.Sprintf("%s/locations/global/apis/%s", task.projectName(), task.apiID)
+	return fmt.Sprintf("%s/apis/%s", task.parent, task.apiID)
 }
 
 func (task *uploadOpenAPITask) versionName() string {

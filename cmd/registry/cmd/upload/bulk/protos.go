@@ -59,12 +59,9 @@ func protosCommand() *cobra.Command {
 		Short: "Bulk-upload Protocol Buffer descriptions from a directory of specs",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			ctx := cmd.Context()
-			projectID, err := cmd.Flags().GetString("project-id")
-			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to get project-id from flags")
-			}
+			parent := getParent(cmd)
 
+			ctx := cmd.Context()
 			client, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
@@ -92,7 +89,7 @@ func protosCommand() *cobra.Command {
 					log.FromContext(ctx).WithError(err).Fatal("Invalid path")
 				}
 
-				if err := scanDirectoryForProtos(client, projectID, baseURI, path, root, taskQueue); err != nil {
+				if err := scanDirectoryForProtos(client, parent, baseURI, path, root, taskQueue); err != nil {
 					log.FromContext(ctx).WithError(err).Debug("Failed to walk directory")
 				}
 			}
@@ -105,15 +102,15 @@ func protosCommand() *cobra.Command {
 	return cmd
 }
 
-func scanDirectoryForProtos(client connection.RegistryClient, projectID, baseURI, start, root string, taskQueue chan<- core.Task) error {
+func scanDirectoryForProtos(client connection.RegistryClient, parent, baseURI, start, root string, taskQueue chan<- core.Task) error {
 	return filepath.Walk(start, func(filepath string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 
 		// Skip everything that's not a YAML file in a versioned directory.
-		parent := path.Dir(filepath)
-		if info.IsDir() || !strings.HasSuffix(filepath, ".yaml") || !versionDirectory.MatchString(path.Base(parent)) {
+		container := path.Dir(filepath)
+		if info.IsDir() || !strings.HasSuffix(filepath, ".yaml") || !versionDirectory.MatchString(path.Base(container)) {
 			return nil
 		}
 
@@ -135,11 +132,11 @@ func scanDirectoryForProtos(client connection.RegistryClient, projectID, baseURI
 		taskQueue <- &uploadProtoTask{
 			client:         client,
 			baseURI:        baseURI,
-			projectID:      projectID,
+			parent:         parent,
 			apiID:          strings.TrimSuffix(sc.Name, ".googleapis.com"),
 			apiTitle:       sc.Title,
 			apiDescription: strings.ReplaceAll(sc.Documentation.Summary, "\n", " "),
-			path:           parent,
+			path:           container,
 			directory:      root,
 		}
 
@@ -151,7 +148,7 @@ func scanDirectoryForProtos(client connection.RegistryClient, projectID, baseURI
 type uploadProtoTask struct {
 	client         connection.RegistryClient
 	baseURI        string
-	projectID      string
+	parent         string
 	path           string
 	directory      string
 	apiID          string
@@ -277,12 +274,8 @@ func (task *uploadProtoTask) createOrUpdateSpec(ctx context.Context) error {
 	return nil
 }
 
-func (task *uploadProtoTask) projectName() string {
-	return fmt.Sprintf("projects/%s", task.projectID)
-}
-
 func (task *uploadProtoTask) apiName() string {
-	return fmt.Sprintf("%s/locations/global/apis/%s", task.projectName(), task.apiID)
+	return fmt.Sprintf("%s/apis/%s", task.parent, task.apiID)
 }
 
 func (task *uploadProtoTask) versionName() string {

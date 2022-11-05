@@ -36,12 +36,9 @@ func discoveryCommand() *cobra.Command {
 		Use:   "discovery",
 		Short: "Bulk-upload API Discovery documents from the Google API Discovery service",
 		Run: func(cmd *cobra.Command, args []string) {
-			ctx := cmd.Context()
-			projectID, err := cmd.Flags().GetString("project-id")
-			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to get project-id from flags")
-			}
+			parent := getParent(cmd)
 
+			ctx := cmd.Context()
 			client, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
@@ -65,7 +62,7 @@ func discoveryCommand() *cobra.Command {
 				taskQueue <- &uploadDiscoveryTask{
 					client:    client,
 					path:      api.DiscoveryRestURL,
-					projectID: projectID,
+					parent:    parent,
 					apiID:     sanitize(api.Name),
 					versionID: sanitize(api.Version),
 					specID:    "discovery.json",
@@ -80,7 +77,7 @@ func discoveryCommand() *cobra.Command {
 type uploadDiscoveryTask struct {
 	client    connection.RegistryClient
 	path      string
-	projectID string
+	parent    string
 	apiID     string
 	versionID string
 	specID    string
@@ -194,12 +191,8 @@ func (task *uploadDiscoveryTask) createOrUpdateSpec(ctx context.Context) error {
 	return nil
 }
 
-func (task *uploadDiscoveryTask) projectName() string {
-	return fmt.Sprintf("projects/%s", task.projectID)
-}
-
 func (task *uploadDiscoveryTask) apiName() string {
-	return fmt.Sprintf("%s/locations/global/apis/%s", task.projectName(), task.apiID)
+	return fmt.Sprintf("%s/apis/%s", task.parent, task.apiID)
 }
 
 func (task *uploadDiscoveryTask) versionName() string {
