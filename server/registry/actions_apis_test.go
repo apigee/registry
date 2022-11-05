@@ -1143,7 +1143,7 @@ func TestUpdateApiSequence(t *testing.T) {
 				Api: &rpc.Api{
 					Name: "projects/my-project/locations/global/apis/a",
 				},
-				AllowMissing: true,
+				AllowMissing: false,
 			},
 			want: codes.OK,
 		},

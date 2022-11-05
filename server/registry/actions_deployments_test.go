@@ -1220,7 +1220,7 @@ func TestUpdateApiDeploymentSequence(t *testing.T) {
 				ApiDeployment: &rpc.ApiDeployment{
 					Name: "projects/my-project/locations/global/apis/a/deployments/d",
 				},
-				AllowMissing: true,
+				AllowMissing: false,
 			},
 			want: codes.OK,
 		},

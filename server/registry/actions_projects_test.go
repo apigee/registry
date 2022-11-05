@@ -1037,7 +1037,7 @@ func TestUpdateProjectSequence(t *testing.T) {
 				Project: &rpc.Project{
 					Name: "projects/my-project",
 				},
-				AllowMissing: true,
+				AllowMissing: false,
 			},
 			want: codes.OK,
 		},

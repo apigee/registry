@@ -1168,7 +1168,7 @@ func TestUpdateApiVersionSequence(t *testing.T) {
 				ApiVersion: &rpc.ApiVersion{
 					Name: "projects/my-project/locations/global/apis/a/versions/v",
 				},
-				AllowMissing: true,
+				AllowMissing: false,
 			},
 			want: codes.OK,
 		},

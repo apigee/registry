@@ -1527,7 +1527,7 @@ func TestUpdateApiSpecSequence(t *testing.T) {
 				ApiSpec: &rpc.ApiSpec{
 					Name: "projects/my-project/locations/global/apis/a/versions/v/specs/s",
 				},
-				AllowMissing: true,
+				AllowMissing: false,
 			},
 			want: codes.OK,
 		},
