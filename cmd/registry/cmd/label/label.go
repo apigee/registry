@@ -33,6 +33,7 @@ func Command() *cobra.Command {
 	var (
 		filter    string
 		overwrite bool
+		jobs      int
 	)
 
 	cmd := &cobra.Command{
@@ -52,7 +53,7 @@ func Command() *cobra.Command {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
 
-			taskQueue, wait := core.WorkerPool(ctx, 64)
+			taskQueue, wait := core.WorkerPool(ctx, jobs)
 			defer wait()
 
 			valuesToClear := make([]string, 0)
@@ -82,6 +83,7 @@ func Command() *cobra.Command {
 
 	cmd.Flags().StringVar(&filter, "filter", "", "Filter selected resources")
 	cmd.Flags().BoolVar(&overwrite, "overwrite", false, "Overwrite existing labels")
+	cmd.Flags().IntVar(&jobs, "jobs", 10, "Number of actions to perform concurrently")
 	return cmd
 }
 
