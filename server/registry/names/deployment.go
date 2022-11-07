@@ -19,6 +19,19 @@ import (
 	"regexp"
 )
 
+// deploymentRegexp is a regular expression that matches a deployment resource name.
+var deploymentRegexp = regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/deployments/%s(@%s)?$",
+	identifier, Location, identifier, identifier, revisionTag))
+
+// deploymentCollectionRegexp is a regular expression that matches a collection of deployments.
+var deploymentCollectionRegexp = regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/deployments$",
+	identifier, Location, identifier))
+
+// simpleDeploymentRegexp is the regex pattern for deployment resource names.
+// Notably, this differs from deploymentRegexp by not accepting revision IDs in the resource name.
+var simpleDeploymentRegexp = regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/deployments/%s$",
+	identifier, Location, identifier, identifier))
+
 // Deployment represents a resource name for an API deployment.
 type Deployment struct {
 	ProjectID    string
@@ -33,7 +46,7 @@ func (d Deployment) Validate() error {
 		return err
 	}
 
-	r := deploymentRegexp()
+	r := deploymentRegexp
 	if name := d.String(); !r.MatchString(name) {
 		return fmt.Errorf("invalid deployment name %q: must match %q", name, r)
 	}
@@ -95,21 +108,9 @@ func (d Deployment) String() string {
 		d.ProjectID, Location, d.ApiID, d.DeploymentID))
 }
 
-// deploymentCollectionRegexp returns a regular expression that matches a collection of deployments.
-func deploymentCollectionRegexp() *regexp.Regexp {
-	return regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/deployments$",
-		identifier, Location, identifier))
-}
-
-// deploymentRegexp returns a regular expression that matches a deployment resource name.
-func deploymentRegexp() *regexp.Regexp {
-	return regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/deployments/%s$",
-		identifier, Location, identifier, identifier))
-}
-
 // ParseDeployment parses the name of a deployment.
 func ParseDeployment(name string) (Deployment, error) {
-	r := deploymentRegexp()
+	r := simpleDeploymentRegexp
 	if !r.MatchString(name) {
 		return Deployment{}, fmt.Errorf("invalid deployment name %q: must match %q", name, r)
 	}
@@ -123,7 +124,7 @@ func ParseDeployment(name string) (Deployment, error) {
 }
 
 func ParseDeploymentCollection(name string) (Deployment, error) {
-	r := deploymentCollectionRegexp()
+	r := deploymentCollectionRegexp
 	if !r.MatchString(name) {
 		return Deployment{}, fmt.Errorf("invalid deployment collection name %q: must match %q", name, r)
 	}

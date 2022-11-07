@@ -1038,6 +1038,10 @@ func (c *Client) ListVersionArtifacts(ctx context.Context, parent names.Version,
 }
 
 func (c *Client) ListDeploymentArtifacts(ctx context.Context, parent names.Deployment, opts PageOptions) (ArtifactList, error) {
+	return c.ListDeploymentRevisionArtifacts(ctx, parent.Revision(""), opts)
+}
+
+func (c *Client) ListDeploymentRevisionArtifacts(ctx context.Context, parent names.DeploymentRevision, opts PageOptions) (ArtifactList, error) {
 	token, err := decodeToken(opts.Token)
 	if err != nil {
 		return ArtifactList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
@@ -1055,36 +1059,48 @@ func (c *Client) ListDeploymentArtifacts(ctx context.Context, parent names.Deplo
 		token.Order = opts.Order
 	}
 
-	if parent.ProjectID != "-" && parent.ApiID != "-" && parent.DeploymentID != "-" {
-		if _, err := c.GetDeployment(ctx, parent); err != nil {
-			return ArtifactList{}, err
-		}
-	} else if parent.ProjectID != "-" && parent.ApiID != "-" && parent.DeploymentID == "-" {
-		if _, err := c.GetApi(ctx, parent.Api()); err != nil {
-			return ArtifactList{}, err
-		}
-	} else if parent.ProjectID != "-" && parent.ApiID == "-" && parent.DeploymentID == "-" {
-		if _, err := c.GetProject(ctx, parent.Project()); err != nil {
-			return ArtifactList{}, err
-		}
-	}
-
-	op := c.db.WithContext(ctx).
-		Where(`version_id = ''`).
-		Where(`spec_id = ''`)
+	op := c.db.WithContext(ctx)
 	if id := parent.ProjectID; id != "-" {
-		op = op.Where("project_id = ?", id)
+		op.Where("artifacts.project_id = ?", id)
 	}
 	if id := parent.ApiID; id != "-" {
-		op = op.Where("api_id = ?", id)
+		op = op.Where("artifacts.api_id = ?", id)
 	}
 	if id := parent.DeploymentID; id != "-" {
-		op = op.Where("deployment_id = ?", id)
+		op = op.Where("artifacts.deployment_id = ?", id)
+	}
+	if id := parent.RevisionID; id != "-" && id != "" { // select specific deployment revision
+		op = op.Where("artifacts.revision_id = ?", id)
+	}
+	if id := parent.RevisionID; id == "" { // select latest deployment revision
+		op = op.Model(&models.Artifact{}).
+			Where(`artifacts.spec_id = ''`).
+			Joins(`join (?) latest
+			ON artifacts.project_id = latest.project_id
+			AND artifacts.api_id = latest.api_id
+			AND artifacts.deployment_id = latest.deployment_id
+			AND artifacts.revision_id = latest.revision_id`, c.latestDeploymentRevisionsQuery(ctx))
 	}
 
 	return c.listArtifacts(ctx, op, opts, func(a *models.Artifact) bool {
-		return a.ProjectID != "" && a.ApiID != "" && a.DeploymentID != ""
+		return a.ProjectID != "" && a.ApiID != "" && a.DeploymentID != "" && a.RevisionID != ""
 	})
+}
+
+// This query only returns the most recent revision rows for each unique deployment from the
+// deployment table. Additional criteria may be added to restrict this query further and it
+// may be joined with dependant tables (eg. artifacts, blobs) to ensure that only the
+// rows in those tables that are associated with the more recent deployment revision are matched.
+func (c *Client) latestDeploymentRevisionsQuery(ctx context.Context) *gorm.DB {
+	return c.db.WithContext(ctx).
+		Table("deployments d").
+		Select("d.*").
+		Joins(`LEFT JOIN deployments d2
+		ON d.project_id = d2.project_id
+		AND d.api_id = d2.api_id
+		AND d.deployment_id = d2.deployment_id
+		AND d.revision_create_time < d2.revision_create_time`).
+		Where("d2.key IS NULL")
 }
 
 func (c *Client) ListApiArtifacts(ctx context.Context, parent names.Api, opts PageOptions) (ArtifactList, error) {

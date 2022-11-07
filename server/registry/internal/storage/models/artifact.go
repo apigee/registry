@@ -85,8 +85,8 @@ func (artifact *Artifact) Name() string {
 		return fmt.Sprintf("projects/%s/locations/%s/apis/%s/versions/%s/artifacts/%s",
 			artifact.ProjectID, names.Location, artifact.ApiID, artifact.VersionID, artifact.ArtifactID)
 	case artifact.DeploymentID != "":
-		return fmt.Sprintf("projects/%s/locations/%s/apis/%s/deployments/%s/artifacts/%s",
-			artifact.ProjectID, names.Location, artifact.ApiID, artifact.DeploymentID, artifact.ArtifactID)
+		return fmt.Sprintf("projects/%s/locations/%s/apis/%s/deployments/%s@%s/artifacts/%s",
+			artifact.ProjectID, names.Location, artifact.ApiID, artifact.DeploymentID, artifact.RevisionID, artifact.ArtifactID)
 	case artifact.ApiID != "":
 		return fmt.Sprintf("projects/%s/locations/%s/apis/%s/artifacts/%s",
 			artifact.ProjectID, names.Location, artifact.ApiID, artifact.ArtifactID)
