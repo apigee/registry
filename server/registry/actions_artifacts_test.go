@@ -1780,7 +1780,7 @@ func TestDeploymentRevisionArtifacts(t *testing.T) {
 				},
 			},
 			{
-				desc: "all revisions of all deployment",
+				desc: "all revisions of all deployments",
 				req: &rpc.ListArtifactsRequest{
 					Parent:  "projects/my-project/locations/global/apis/my-api/deployments/-@-",
 					OrderBy: "create_time",
