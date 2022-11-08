@@ -1605,6 +1605,7 @@ func TestValidateScoreCardDefinition(t *testing.T) {
 				Kind: "ScoreCardDefinition",
 				TargetResource: &rpc.ResourcePattern{
 					Pattern: "apis/-/versions/-/specs/-",
+					Filter:  "name.contains('openapi.yaml')",
 				},
 				ScorePatterns: []string{
 					"$resource.spec/artifacts/score-lint-error",
@@ -1616,7 +1617,7 @@ func TestValidateScoreCardDefinition(t *testing.T) {
 		},
 		// errors
 		{
-			desc:   "invalid target_resource",
+			desc:   "invalid target_resource pattern",
 			parent: "projects/demo/locations/global",
 			scoreCardDefinition: &rpc.ScoreCardDefinition{
 				Id:   "test-scorecard-definition",
@@ -1722,63 +1723,100 @@ func TestValidateScoreCardDefinition(t *testing.T) {
 	}
 }
 
-func TestMatchResourceWithTarget(t *testing.T) {
+func TestGenerateCombinedPattern(t *testing.T) {
 	tests := []struct {
 		desc          string
 		targetPattern *rpc.ResourcePattern
-		resourceName  string
+		inputPattern  string
+		wantPattern   string
 		wantErr       bool
 	}{
 		{
-			desc: "spec pattern",
+			desc: "spec pattern spec input",
 			targetPattern: &rpc.ResourcePattern{
 				Pattern: "apis/-/versions/-/specs/-",
 			},
-			resourceName: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+			inputPattern: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+			wantPattern:  "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 		},
 		{
-			desc: "specific api match",
+			desc: "spec pattern collection input",
+			targetPattern: &rpc.ResourcePattern{
+				Pattern: "apis/-/versions/-/specs/-",
+			},
+			inputPattern: "projects/pattern-test/locations/global/apis/-/versions/-/specs/-",
+			wantPattern:  "projects/pattern-test/locations/global/apis/-/versions/-/specs/-",
+		},
+		{
+			desc: "specific api match spec input",
 			targetPattern: &rpc.ResourcePattern{
 				Pattern: "apis/petstore/versions/-/specs/-",
 			},
-			resourceName: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+			inputPattern: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+			wantPattern:  "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 		},
 		{
-			desc: "specific api no match",
+			desc: "specific api match collection input",
+			targetPattern: &rpc.ResourcePattern{
+				Pattern: "apis/petstore/versions/-/specs/-",
+			},
+			inputPattern: "projects/pattern-test/locations/global/apis/-/versions/-/specs/-",
+			wantPattern:  "projects/pattern-test/locations/global/apis/petstore/versions/-/specs/-",
+		},
+		{
+			desc: "specific api no match spec input",
 			targetPattern: &rpc.ResourcePattern{
 				Pattern: "apis/test/versions/-/specs/-",
 			},
-			resourceName: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+			inputPattern: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 			wantErr:      true,
 		},
 		{
-			desc: "specific version match",
+			desc: "specific version match spec input",
 			targetPattern: &rpc.ResourcePattern{
 				Pattern: "apis/-/versions/1.0.0/specs/-",
 			},
-			resourceName: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+			inputPattern: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+			wantPattern:  "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+		},
+		{
+			desc: "specific version match collection input",
+			targetPattern: &rpc.ResourcePattern{
+				Pattern: "apis/-/versions/1.0.0/specs/-",
+			},
+			inputPattern: "projects/pattern-test/locations/global/apis/-/versions/-/specs/-",
+			wantPattern:  "projects/pattern-test/locations/global/apis/-/versions/1.0.0/specs/-",
 		},
 		{
 			desc: "specific version no match",
 			targetPattern: &rpc.ResourcePattern{
 				Pattern: "apis/-/versions/2.0.0/specs/-",
 			},
-			resourceName: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+			inputPattern: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 			wantErr:      true,
 		},
 		{
-			desc: "specific spec match",
+			desc: "specific spec match spec input",
 			targetPattern: &rpc.ResourcePattern{
 				Pattern: "apis/-/versions/-/specs/openapi.yaml",
 			},
-			resourceName: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+			inputPattern: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+			wantPattern:  "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+		},
+		{
+			desc: "specific spec match collection input",
+			targetPattern: &rpc.ResourcePattern{
+				Pattern: "apis/-/versions/-/specs/openapi.yaml",
+			},
+			inputPattern: "projects/pattern-test/locations/global/apis/-/versions/-/specs/-",
+			wantPattern:  "projects/pattern-test/locations/global/apis/-/versions/-/specs/openapi.yaml",
 		},
 		{
 			desc: "specific spec no match",
 			targetPattern: &rpc.ResourcePattern{
 				Pattern: "apis/-/versions/-/specs/swagger.yaml",
 			},
-			resourceName: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
+			inputPattern: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 			wantErr:      true,
 		},
 		{
@@ -1786,7 +1824,7 @@ func TestMatchResourceWithTarget(t *testing.T) {
 			targetPattern: &rpc.ResourcePattern{
 				Pattern: "apis/-/versions/-/specs/-/artifacts/lint-spectral",
 			},
-			resourceName: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/lint-spectral",
+			inputPattern: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 			wantErr:      true,
 		},
 		{
@@ -1794,21 +1832,101 @@ func TestMatchResourceWithTarget(t *testing.T) {
 			targetPattern: &rpc.ResourcePattern{
 				Pattern: "apis/-/versions/-/specs/-",
 			},
-			resourceName: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0",
+			inputPattern: "projects/pattern-test/locations/global/apis/petstore/versions/1.0.0",
 			wantErr:      true,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			resourceName, _ := patterns.ParseResourcePattern(test.resourceName)
-			gotErr := matchResourceWithTarget(test.targetPattern, resourceName, "projects/pattern-test/locations/global")
+			inputPatternName, err := patterns.ParseResourcePattern(test.inputPattern)
+			if err != nil {
+				t.Errorf("invalid test.inputPattern %q", test.inputPattern)
+			}
+			gotPattern, _, gotErr := GenerateCombinedPattern(test.targetPattern, inputPatternName, "")
+			if gotPattern != test.wantPattern {
+				t.Errorf("GenerateCombinedPattern(%s, %s,\"\") returned unexpected output, want: %q, got: %q ", test.targetPattern, inputPatternName.String(), test.wantPattern, gotPattern)
+			}
+
 			if test.wantErr && gotErr == nil {
-				t.Errorf("matchResourceWithTarget(%s, %v, %s) did not return an error", test.targetPattern, resourceName, "projects/pattern-test/locations/global")
+				t.Errorf("GenerateCombinedPattern(%s, %s, \"\") did not return an error", test.targetPattern, inputPatternName.String())
 			}
 
 			if !test.wantErr && gotErr != nil {
-				t.Errorf("matchResourceWithTarget() returned unexpected error: %s", gotErr)
+				t.Errorf("GenerateCombinedPattern() returned unexpected error: %s", gotErr)
+			}
+		})
+	}
+}
+
+func TestGenerateCombinedPatternFilters(t *testing.T) {
+	tests := []struct {
+		desc          string
+		targetPattern *rpc.ResourcePattern
+		inputPattern  string
+		inputFilter   string
+		wantFilter    string
+	}{
+		{
+			desc: "input filter only",
+			targetPattern: &rpc.ResourcePattern{
+				Pattern: "apis/-/versions/-/specs/-",
+			},
+			inputPattern: "projects/pattern-test/locations/global/apis/-/versions/-/specs/-",
+			inputFilter:  "mime_type.contains('openapi')",
+			wantFilter:   "mime_type.contains('openapi')",
+		},
+		{
+			desc: "target filter only",
+			targetPattern: &rpc.ResourcePattern{
+				Pattern: "apis/-/versions/-/specs/-",
+				Filter:  "mime_type.contains('openapi')",
+			},
+			inputPattern: "projects/pattern-test/locations/global/apis/-/versions/-/specs/-",
+			inputFilter:  "",
+			wantFilter:   "mime_type.contains('openapi')",
+		},
+		{
+			desc: "target and input filter identical",
+			targetPattern: &rpc.ResourcePattern{
+				Pattern: "apis/-/versions/-/specs/-",
+				Filter:  "mime_type.contains('openapi')",
+			},
+			inputPattern: "projects/pattern-test/locations/global/apis/-/versions/-/specs/-",
+			inputFilter:  "mime_type.contains('openapi')",
+			wantFilter:   "mime_type.contains('openapi')",
+		},
+		{
+			desc: "target and input filter empty",
+			targetPattern: &rpc.ResourcePattern{
+				Pattern: "apis/-/versions/-/specs/-",
+				Filter:  "",
+			},
+			inputPattern: "projects/pattern-test/locations/global/apis/-/versions/-/specs/-",
+			inputFilter:  "",
+			wantFilter:   "",
+		},
+		{
+			desc: "target and input filter different",
+			targetPattern: &rpc.ResourcePattern{
+				Pattern: "apis/-/versions/-/specs/-",
+				Filter:  "mime_type.contains('openapi')",
+			},
+			inputPattern: "projects/pattern-test/locations/global/apis/-/versions/-/specs/-",
+			inputFilter:  "mime_type.contains('protobuf')",
+			wantFilter:   "(mime_type.contains('openapi')) && (mime_type.contains('protobuf'))",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			inputPatternName, err := patterns.ParseResourcePattern(test.inputPattern)
+			if err != nil {
+				t.Errorf("invalid test.inputPattern %q", test.inputPattern)
+			}
+			_, gotFilter, _ := GenerateCombinedPattern(test.targetPattern, inputPatternName, test.inputFilter)
+			if gotFilter != test.wantFilter {
+				t.Errorf("GenerateCombinedPattern(%s, %s,\"\") returned unexpected output, want: %q, got: %q ", test.targetPattern, inputPatternName.String(), test.wantFilter, gotFilter)
 			}
 		})
 	}
