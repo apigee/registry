@@ -360,11 +360,9 @@ func GenerateCombinedPattern(targetPattern *rpc.ResourcePattern, inputPatternNam
 func generateCommonFilter(a, b string) string {
 	if a == b {
 		return a
-	}
-	if a != "" && b != "" {
+	} else if a != "" && b != "" {
 		return fmt.Sprintf("(%s) && (%s)", a, b)
-	}
-	if a != "" && b == "" {
+	} else if a != "" {
 		return a
 	}
 	return b
