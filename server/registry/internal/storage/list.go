@@ -27,6 +27,26 @@ import (
 	"gorm.io/gorm"
 )
 
+var tableFieldsLookup = map[string]map[string]filtering.FieldType{
+	"projects":             projectFields,
+	"apis":                 apiFields,
+	"versions":             versionFields,
+	"specs":                specFields,
+	"deployments":          deploymentFields,
+	"artifacts":            artifactFields,
+	"revisioned_artifacts": revisionedArtifactFields,
+}
+
+var defaultOrder = map[string]string{
+	"projects":             "project_id",
+	"apis":                 "project_id, api_id",
+	"deployments":          "project_id, api_id, deployment_id, revision_create_time desc",
+	"versions":             "project_id, api_id, version_id",
+	"specs":                "project_id, api_id, version_id, spec_id, revision_create_time desc",
+	"artifacts":            "project_id, api_id, version_id, spec_id, deployment_id, artifact_id, create_time desc",
+	"revisioned_artifacts": "project_id, api_id, version_id, spec_id, deployment_id, revision_create_time desc, artifact_id",
+}
+
 var projectFields = map[string]filtering.FieldType{
 	"name":         filtering.String,
 	"project_id":   filtering.String,
@@ -99,24 +119,45 @@ var deploymentFields = map[string]filtering.FieldType{
 }
 
 var artifactFields = map[string]filtering.FieldType{
-	"name":        filtering.String,
-	"project_id":  filtering.String,
-	"api_id":      filtering.String,
-	"version_id":  filtering.String,
-	"spec_id":     filtering.String,
-	"artifact_id": filtering.String,
-	"create_time": filtering.Timestamp,
-	"update_time": filtering.Timestamp,
-	"mime_type":   filtering.String,
-	"size_bytes":  filtering.Int,
+	"name":          filtering.String,
+	"project_id":    filtering.String,
+	"api_id":        filtering.String,
+	"version_id":    filtering.String,
+	"spec_id":       filtering.String,
+	"artifact_id":   filtering.String,
+	"deployment_id": filtering.String,
+	"create_time":   filtering.Timestamp,
+	"update_time":   filtering.Timestamp,
+	"mime_type":     filtering.String,
+	"size_bytes":    filtering.Int,
+}
+
+var revisionedArtifactFields = map[string]filtering.FieldType{
+	"name":                 filtering.String,
+	"project_id":           filtering.String,
+	"api_id":               filtering.String,
+	"version_id":           filtering.String,
+	"spec_id":              filtering.String,
+	"artifact_id":          filtering.String,
+	"deployment_id":        filtering.String,
+	"create_time":          filtering.Timestamp,
+	"update_time":          filtering.Timestamp,
+	"mime_type":            filtering.String,
+	"size_bytes":           filtering.Int,
+	"revision_create_time": filtering.Timestamp,
+	"revision_update_time": filtering.Timestamp,
 }
 
 // gormOrdering accepts a user-specified order_by string and returns a gorm-compatible equivalent.
 // For example, the user-specified string `name,description` returns `key,description`.
-// An error is returned if the string is invalid or refers to a field that isn't included in the provided `fields` map.
-func gormOrdering(ordering string, fields map[string]filtering.FieldType) (string, error) {
+// An error is returned if the string is invalid or refers to a field that isn't included in the `fields` map.
+func gormOrdering(ordering, table string) (string, error) {
+	fields, ok := tableFieldsLookup[table]
+	if !ok {
+		return "", status.Errorf(codes.Internal, "unknown order table: %q", table)
+	}
 	if ordering == "" {
-		return "key", nil
+		ordering = defaultOrder[table]
 	}
 
 	clauses := make([]string, 0)
@@ -146,7 +187,7 @@ func gormOrdering(ordering string, fields map[string]filtering.FieldType) (strin
 			}
 		}
 		if clause == "" {
-			return ordering, status.Errorf(codes.InvalidArgument, "unknown field name %q", v)
+			return ordering, status.Errorf(codes.InvalidArgument, "unknown field name %q in %q", v, table)
 		}
 
 		if descending {
@@ -200,7 +241,7 @@ func (c *Client) ListProjects(ctx context.Context, opts PageOptions) (ProjectLis
 		return ProjectList{}, err
 	}
 
-	order, err := gormOrdering(opts.Order, projectFields)
+	order, err := gormOrdering(opts.Order, "projects")
 	if err != nil {
 		return ProjectList{}, err
 	}
@@ -298,7 +339,7 @@ func (c *Client) ListApis(ctx context.Context, parent names.Project, opts PageOp
 		return ApiList{}, err
 	}
 
-	if order, err := gormOrdering(opts.Order, apiFields); err != nil {
+	if order, err := gormOrdering(opts.Order, "apis"); err != nil {
 		return ApiList{}, err
 	} else {
 		op = op.Order(order)
@@ -418,7 +459,7 @@ func (c *Client) ListVersions(ctx context.Context, parent names.Api, opts PageOp
 		op = op.Where("api_id = ?", parent.ApiID)
 	}
 
-	if order, err := gormOrdering(opts.Order, versionFields); err != nil {
+	if order, err := gormOrdering(opts.Order, "versions"); err != nil {
 		return VersionList{}, err
 	} else {
 		op = op.Order(order)
@@ -553,7 +594,7 @@ func (c *Client) ListSpecs(ctx context.Context, parent names.Version, opts PageO
 		op = op.Where("specs.version_id = ?", parent.VersionID)
 	}
 
-	if order, err := gormOrdering(opts.Order, specFields); err != nil {
+	if order, err := gormOrdering(opts.Order, "specs"); err != nil {
 		return SpecList{}, err
 	} else {
 		op = op.Order(order)
@@ -662,7 +703,6 @@ func (c *Client) ListSpecRevisions(ctx context.Context, parent names.SpecRevisio
 	}
 
 	op := c.db.WithContext(ctx).
-		Order("specs.revision_create_time desc").
 		Offset(token.Offset).
 		Limit(int(opts.Size) + 1)
 
@@ -682,13 +722,19 @@ func (c *Client) ListSpecRevisions(ctx context.Context, parent names.SpecRevisio
 		op = op.Where("specs.revision_id = ?", id)
 	}
 	if id := parent.RevisionID; id == "" { // select latest spec revision
-		op = op.Model(&models.Spec{}).
+		op = op.Select("specs.*").Table("specs").
 			Joins(`join (?) latest
 			ON specs.project_id = latest.project_id
 			AND specs.api_id = latest.api_id
 			AND specs.version_id = latest.version_id
 			AND specs.spec_id = latest.spec_id
 			AND specs.revision_id = latest.revision_id`, c.latestSpecRevisionsQuery(ctx))
+	}
+
+	if order, err := gormOrdering(opts.Order, "specs"); err != nil {
+		return SpecList{}, err
+	} else {
+		op = op.Order(order)
 	}
 
 	response := SpecList{
@@ -773,7 +819,7 @@ func (c *Client) ListDeployments(ctx context.Context, parent names.Api, opts Pag
 		op = op.Where("deployments.api_id = ?", parent.ApiID)
 	}
 
-	if order, err := gormOrdering(opts.Order, deploymentFields); err != nil {
+	if order, err := gormOrdering(opts.Order, "deployments"); err != nil {
 		return DeploymentList{}, err
 	} else {
 		op = op.Order(order)
@@ -873,7 +919,6 @@ func (c *Client) ListDeploymentRevisions(ctx context.Context, parent names.Deplo
 	}
 
 	op := c.db.WithContext(ctx).
-		Order("revision_create_time desc").
 		Offset(token.Offset).
 		Limit(int(opts.Size) + 1)
 
@@ -885,6 +930,12 @@ func (c *Client) ListDeploymentRevisions(ctx context.Context, parent names.Deplo
 	}
 	if id := parent.DeploymentID; id != "-" {
 		op = op.Where("deployment_id = ?", id)
+	}
+
+	if order, err := gormOrdering(opts.Order, "deployments"); err != nil {
+		return DeploymentList{}, err
+	} else {
+		op = op.Order(order)
 	}
 
 	response := DeploymentList{
@@ -954,8 +1005,9 @@ func (c *Client) ListSpecRevisionArtifacts(ctx context.Context, parent names.Spe
 	if id := parent.RevisionID; id != "-" && id != "" { // select specific spec revision
 		op = op.Where("artifacts.revision_id = ?", id)
 	}
+	orderTable := "artifacts"
 	if id := parent.RevisionID; id == "" { // select latest spec revision
-		op = op.Model(&models.Artifact{}).
+		op = op.Select("artifacts.*,revision_create_time").Table("artifacts").
 			Where(`artifacts.deployment_id = ''`).
 			Joins(`join (?) latest
 			ON artifacts.project_id = latest.project_id
@@ -963,6 +1015,13 @@ func (c *Client) ListSpecRevisionArtifacts(ctx context.Context, parent names.Spe
 			AND artifacts.version_id = latest.version_id
 			AND artifacts.spec_id = latest.spec_id
 			AND artifacts.revision_id = latest.revision_id`, c.latestSpecRevisionsQuery(ctx))
+		orderTable = "revisioned_artifacts"
+	}
+
+	if order, err := gormOrdering(opts.Order, orderTable); err != nil {
+		return ArtifactList{}, err
+	} else {
+		op = op.Order(order)
 	}
 
 	return c.listArtifacts(ctx, op, opts, func(a *models.Artifact) bool {
@@ -1032,6 +1091,12 @@ func (c *Client) ListVersionArtifacts(ctx context.Context, parent names.Version,
 		op = op.Where("version_id = ?", id)
 	}
 
+	if order, err := gormOrdering(opts.Order, "artifacts"); err != nil {
+		return ArtifactList{}, err
+	} else {
+		op = op.Order(order)
+	}
+
 	return c.listArtifacts(ctx, op, opts, func(a *models.Artifact) bool {
 		return a.ProjectID != "" && a.ApiID != "" && a.VersionID != ""
 	})
@@ -1072,14 +1137,22 @@ func (c *Client) ListDeploymentRevisionArtifacts(ctx context.Context, parent nam
 	if id := parent.RevisionID; id != "-" && id != "" { // select specific deployment revision
 		op = op.Where("artifacts.revision_id = ?", id)
 	}
+	orderTable := "artifacts"
 	if id := parent.RevisionID; id == "" { // select latest deployment revision
-		op = op.Model(&models.Artifact{}).
+		op = op.Select("artifacts.*,revision_create_time").Table("artifacts").
 			Where(`artifacts.spec_id = ''`).
 			Joins(`join (?) latest
 			ON artifacts.project_id = latest.project_id
 			AND artifacts.api_id = latest.api_id
 			AND artifacts.deployment_id = latest.deployment_id
 			AND artifacts.revision_id = latest.revision_id`, c.latestDeploymentRevisionsQuery(ctx))
+		orderTable = "revisioned_artifacts"
+	}
+
+	if order, err := gormOrdering(opts.Order, orderTable); err != nil {
+		return ArtifactList{}, err
+	} else {
+		op = op.Order(order)
 	}
 
 	return c.listArtifacts(ctx, op, opts, func(a *models.Artifact) bool {
@@ -1135,11 +1208,18 @@ func (c *Client) ListApiArtifacts(ctx context.Context, parent names.Api, opts Pa
 		Where(`deployment_id = ''`).
 		Where(`version_id = ''`).
 		Where(`spec_id = ''`)
+
 	if id := parent.ProjectID; id != "-" {
 		op = op.Where("project_id = ?", id)
 	}
 	if id := parent.ApiID; id != "-" {
 		op = op.Where("api_id = ?", id)
+	}
+
+	if order, err := gormOrdering(opts.Order, "artifacts"); err != nil {
+		return ArtifactList{}, err
+	} else {
+		op = op.Order(order)
 	}
 
 	return c.listArtifacts(ctx, op, opts, func(a *models.Artifact) bool {
@@ -1170,11 +1250,18 @@ func (c *Client) ListProjectArtifacts(ctx context.Context, parent names.Project,
 		Where(`deployment_id = ''`).
 		Where(`version_id = ''`).
 		Where(`spec_id = ''`)
+
 	if id := parent.ProjectID; id != "-" {
 		op = op.Where("project_id = ?", id)
 		if _, err := c.GetProject(ctx, parent); err != nil {
 			return ArtifactList{}, err
 		}
+	}
+
+	if order, err := gormOrdering(opts.Order, "artifacts"); err != nil {
+		return ArtifactList{}, err
+	} else {
+		op = op.Order(order)
 	}
 
 	return c.listArtifacts(ctx, op, opts, func(a *models.Artifact) bool {
@@ -1195,19 +1282,13 @@ func (c *Client) listArtifacts(ctx context.Context, op *gorm.DB, opts PageOption
 		return ArtifactList{}, err
 	}
 
-	if order, err := gormOrdering(opts.Order, artifactFields); err != nil {
-		return ArtifactList{}, err
-	} else {
-		op = op.Order("artifacts." + order)
-	}
-
 	response := ArtifactList{
 		Artifacts: make([]models.Artifact, 0, opts.Size),
 	}
 
 	for {
 		var page []models.Artifact
-		op = op.Order("artifacts.key").Limit(limit(opts))
+		op.Limit(limit(opts))
 		err := op.Offset(token.Offset).Find(&page).Error
 
 		if err != nil {

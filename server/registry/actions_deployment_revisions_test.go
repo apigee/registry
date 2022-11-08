@@ -340,8 +340,8 @@ func TestListApiDeploymentRevisions(t *testing.T) {
 			},
 			want: &rpc.ListApiDeploymentRevisionsResponse{
 				ApiDeployments: []*rpc.ApiDeployment{
-					{Name: "projects/my-project/locations/global/apis/my-api/deployments/other-dep"},
 					{Name: "projects/my-project/locations/global/apis/my-api/deployments/my-dep"},
+					{Name: "projects/my-project/locations/global/apis/my-api/deployments/other-dep"},
 				},
 			},
 		},
@@ -356,8 +356,8 @@ func TestListApiDeploymentRevisions(t *testing.T) {
 			},
 			want: &rpc.ListApiDeploymentRevisionsResponse{
 				ApiDeployments: []*rpc.ApiDeployment{
-					{Name: "projects/my-project/locations/global/apis/other-api/deployments/my-dep"},
 					{Name: "projects/my-project/locations/global/apis/my-api/deployments/my-dep"},
+					{Name: "projects/my-project/locations/global/apis/other-api/deployments/my-dep"},
 				},
 			},
 		},
@@ -373,8 +373,8 @@ func TestListApiDeploymentRevisions(t *testing.T) {
 			},
 			want: &rpc.ListApiDeploymentRevisionsResponse{
 				ApiDeployments: []*rpc.ApiDeployment{
-					{Name: "projects/other-project/locations/global/apis/my-api/deployments/my-dep"},
 					{Name: "projects/my-project/locations/global/apis/my-api/deployments/my-dep"},
+					{Name: "projects/other-project/locations/global/apis/my-api/deployments/my-dep"},
 				},
 			},
 		},
