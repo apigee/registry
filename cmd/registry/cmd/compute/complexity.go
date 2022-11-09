@@ -153,7 +153,7 @@ func (task *computeComplexityTask) Run(ctx context.Context) error {
 		}
 		complexity = core.SummarizeDiscoveryDocument(document)
 	} else if core.IsProto(spec.GetMimeType()) && core.IsZipArchive(spec.GetMimeType()) {
-		complexity, err = core.SummarizeZippedProtos(spec.GetContents())
+		complexity, err = core.SummarizeZippedProtos(contents)
 		if err != nil {
 			log.FromContext(ctx).WithError(err).Errorf("Error processing protos: %s", task.specName)
 			return nil
