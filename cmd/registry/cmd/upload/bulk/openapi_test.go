@@ -19,24 +19,16 @@ import (
 	"testing"
 
 	"github.com/apigee/registry/pkg/connection"
-	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/server/registry"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
-
-// TestMain will set up a local RegistryServer and grpc.Server for all
-// tests in this package if APG_REGISTRY_ADDRESS env var is not set
-// for the client.
-func TestMain(m *testing.M) {
-	grpctest.TestMain(m, registry.Config{})
-}
 
 func TestOpenAPI(t *testing.T) {
 	const (
 		projectID   = "openapi-test"
 		projectName = "projects/" + projectID
+		parent      = projectName + "/locations/global"
 	)
 	// Create a registry client.
 	ctx := context.Background()
@@ -70,7 +62,7 @@ func TestOpenAPI(t *testing.T) {
 		t.Fatalf("Error creating project %s", err)
 	}
 	cmd := Command()
-	args := []string{"openapi", "testdata/openapi", "--project-id", projectID}
+	args := []string{"openapi", "testdata/openapi", "--parent", parent}
 	cmd.SetArgs(args)
 	if err := cmd.Execute(); err != nil {
 		t.Fatalf("Execute() with args %+v returned error: %s", args, err)

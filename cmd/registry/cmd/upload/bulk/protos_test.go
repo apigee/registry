@@ -32,6 +32,7 @@ func TestProtos(t *testing.T) {
 	const (
 		projectID   = "protos-test"
 		projectName = "projects/" + projectID
+		parent      = projectName + "/locations/global"
 	)
 	// Create a registry client.
 	ctx := context.Background()
@@ -65,7 +66,7 @@ func TestProtos(t *testing.T) {
 		t.Fatalf("Error creating project %s", err)
 	}
 	cmd := Command()
-	args := []string{"protos", "testdata/protos", "--project-id", projectID}
+	args := []string{"protos", "testdata/protos", "--parent", parent}
 	cmd.SetArgs(args)
 	if err := cmd.Execute(); err != nil {
 		t.Fatalf("Execute() with args %+v returned error: %s", args, err)
