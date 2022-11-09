@@ -65,7 +65,7 @@ func getParent(cmd *cobra.Command) string {
 	}
 	parent, err = c.ProjectWithLocation()
 	if err != nil {
-		log.FromContext(ctx).WithError(err).Fatal("Unable to identify parent: please use --parent or set registy.project in configuration")
+		log.FromContext(ctx).WithError(err).Fatal("Unable to identify parent: please use --parent or set registry.project in configuration")
 	}
 	return parent
 }
