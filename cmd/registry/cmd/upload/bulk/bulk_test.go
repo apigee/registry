@@ -33,7 +33,9 @@ func TestParentFromDeprecatedProjectIdFlag(t *testing.T) {
 	want := "projects/sample/locations/global"
 	cmd := Command()
 	cmd.SetContext(context.Background())
-	cmd.ParseFlags([]string{"--project-id", "sample"})
+	if err := cmd.ParseFlags([]string{"--project-id", "sample"}); err != nil {
+		t.Fatalf("Failed to parse flags")
+	}
 	if parent := getParent(cmd); parent != want {
 		t.Errorf("Get parent failed: wanted %s, got %s", want, parent)
 	}
@@ -43,7 +45,9 @@ func TestParentFromParentFlag(t *testing.T) {
 	want := "projects/sample/locations/global"
 	cmd := Command()
 	cmd.SetContext(context.Background())
-	cmd.ParseFlags([]string{"--parent", want})
+	if err := cmd.ParseFlags([]string{"--parent", want}); err != nil {
+		t.Fatalf("Failed to parse flags")
+	}
 	if parent := getParent(cmd); parent != want {
 		t.Errorf("Get parent failed: wanted %s, got %s", want, parent)
 	}
@@ -80,7 +84,9 @@ func TestParentFromConfiguration(t *testing.T) {
 			connection.SetConfig(config)
 			cmd := Command()
 			cmd.SetContext(context.Background())
-			cmd.ParseFlags([]string{})
+			if err := cmd.ParseFlags([]string{}); err != nil {
+				t.Fatalf("Failed to parse flags")
+			}
 			if parent := getParent(cmd); parent != test.want {
 				t.Errorf("Get parent failed: wanted %s, got %s", test.want, parent)
 			}
