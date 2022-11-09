@@ -304,6 +304,7 @@ func (s *RegistryServer) ReplaceArtifact(ctx context.Context, req *rpc.ReplaceAr
 		if err != nil {
 			return err
 		}
+		artifact.CreateTime = art.CreateTime // preserve creation time
 		artifact.RevisionID = art.RevisionID // revision is optional in request
 		if err := db.SaveArtifact(ctx, artifact); err != nil {
 			return err
