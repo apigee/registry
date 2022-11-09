@@ -1181,6 +1181,9 @@ func TestUpdateApiVersionSequence(t *testing.T) {
 	}
 	var createTime time.Time
 	var updateTime time.Time
+	// NOTE: in the following sequence of tests, each test depends on its predecessor.
+	// Resources are successively created and updated using the "Update" RPC and the
+	// tests verify that CreateTime/UpdateTime fields are modified appropriately.
 	for i, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			var result *rpc.ApiVersion

@@ -1313,7 +1313,9 @@ func TestReplaceArtifactSequence(t *testing.T) {
 	}
 	createTime := a.CreateTime.AsTime()
 	updateTime := a.UpdateTime.AsTime()
-
+	// NOTE: in the following sequence of tests, each test depends on its predecessor.
+	// Resources are successively updated using the "Replace" RPC and the
+	// tests verify that CreateTime/UpdateTime fields are modified appropriately.
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			var result *rpc.Artifact
