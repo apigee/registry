@@ -29,6 +29,7 @@ import (
 
 func Command() *cobra.Command {
 	var filter string
+	var jobs int
 	cmd := &cobra.Command{
 		Use:   "delete",
 		Short: "Delete resources from the API Registry",
@@ -47,7 +48,7 @@ func Command() *cobra.Command {
 			}
 
 			// Initialize task queue.
-			taskQueue, wait := core.WorkerPool(ctx, 64)
+			taskQueue, wait := core.WorkerPool(ctx, jobs)
 			defer wait()
 
 			err = matchAndHandleDeleteCmd(ctx, client, taskQueue, args[0], filter)
@@ -58,6 +59,7 @@ func Command() *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&filter, "filter", "", "Filter selected resources")
+	cmd.Flags().IntVar(&jobs, "jobs", 10, "Number of actions to perform concurrently")
 	return cmd
 }
 
