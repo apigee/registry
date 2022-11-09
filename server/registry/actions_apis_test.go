@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/test/seeder"
@@ -1142,7 +1143,7 @@ func TestUpdateApiSequence(t *testing.T) {
 				Api: &rpc.Api{
 					Name: "projects/my-project/locations/global/apis/a",
 				},
-				AllowMissing: true,
+				AllowMissing: false,
 			},
 			want: codes.OK,
 		},
@@ -1153,10 +1154,31 @@ func TestUpdateApiSequence(t *testing.T) {
 	if err := seeder.SeedProjects(ctx, server, seed); err != nil {
 		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
 	}
-	for _, test := range tests {
+	var createTime time.Time
+	var updateTime time.Time
+	// NOTE: in the following sequence of tests, each test depends on its predecessor.
+	// Resources are successively created and updated using the "Update" RPC and the
+	// tests verify that CreateTime/UpdateTime fields are modified appropriately.
+	for i, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			if _, err := server.UpdateApi(ctx, test.req); status.Code(err) != test.want {
+			var result *rpc.Api
+			var err error
+			if result, err = server.UpdateApi(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("UpdateApi(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
+			}
+			if result != nil {
+				if i == 1 {
+					createTime = result.CreateTime.AsTime()
+					updateTime = result.UpdateTime.AsTime()
+				} else {
+					if !createTime.Equal(result.CreateTime.AsTime()) {
+						t.Errorf("UpdateApi create time changed after update (%v %v)", createTime, result.CreateTime.AsTime())
+					}
+					if !updateTime.Before(result.UpdateTime.AsTime()) {
+						t.Errorf("UpdateApi update time did not increase after update (%v %v)", updateTime, result.UpdateTime.AsTime())
+					}
+					updateTime = result.UpdateTime.AsTime()
+				}
 			}
 		})
 	}
