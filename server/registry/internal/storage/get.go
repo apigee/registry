@@ -139,6 +139,9 @@ func (c *Client) GetDeploymentRevision(ctx context.Context, name names.Deploymen
 		return nil, err
 	}
 
+	if name.RevisionID == "" { // get latest revision
+		return c.GetDeployment(ctx, name.Deployment())
+	}
 	v := new(models.Deployment)
 	if err := c.db.WithContext(ctx).Take(v, "key = ?", name.String()).Error; err == gorm.ErrRecordNotFound {
 		return nil, status.Errorf(codes.NotFound, "%q not found in database", name)
