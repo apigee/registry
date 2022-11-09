@@ -20,6 +20,7 @@ import (
 	"strings"
 
 	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/server/registry/names"
 
 	"github.com/apigee/registry/cmd/registry/patterns"
 )
@@ -33,9 +34,7 @@ func ValidateScoreDefinition(parent string, scoreDefinition *rpc.ScoreDefinition
 		totalErrs = append(totalErrs, err)
 	}
 
-	// TODO: Check for valid filter in target_resource
-
-	// Validate formula if there were no errors in target_resource.pattern
+	// Validate formula if there were no errors in target_resource
 	if len(totalErrs) == 0 {
 		switch formula := scoreDefinition.GetFormula().(type) {
 		case *rpc.ScoreDefinition_ScoreFormula:
@@ -132,7 +131,7 @@ func validateReferencesInPattern(targetName patterns.ResourceName, pattern strin
 		errs = append(errs, fmt.Errorf("invalid pattern: %q, must always start with '$resource.(api|version|spec|artifact)'", pattern))
 	} else if _, err = patterns.GetReferenceEntityValue(pattern, targetName); err != nil {
 		// $resource should have valid entity reference wrt target_resource
-		errs = append(errs, fmt.Errorf("invalid pattern %q, invalid $resource reference in pattern: %s", pattern, err))
+		errs = append(errs, fmt.Errorf("invalid pattern: %q, invalid $resource reference in pattern: %s", pattern, err))
 	}
 
 	return errs
@@ -258,59 +257,129 @@ func validateBooleanThresholds(thresholds []*rpc.BooleanThreshold) []error {
 	return errs
 }
 
-func matchResourceWithTarget(targetPattern *rpc.ResourcePattern, resourceName patterns.ResourceName, project string) error {
-	targetPatternName, err := patterns.ParseResourcePattern(fmt.Sprintf("%s/%s", project, targetPattern.GetPattern()))
+func GenerateCombinedPattern(targetPattern *rpc.ResourcePattern, inputPatternName patterns.ResourceName, inputFilter string) (string, string, error) {
+	projectID := strings.Split(inputPatternName.Project(), "/")[1]
+	// Generate a common list pattern based on the supplied input and the targetPattern in the definition
+	targetPatternName, err := patterns.ParseResourcePattern(fmt.Sprintf("projects/%s/locations/global/%s", projectID, targetPattern.GetPattern()))
 	if err != nil {
-		return err
+		return "", "", fmt.Errorf("invalid targetPattern in ScoreDefinition: %s", err)
 	}
+	fmt.Printf("%s", targetPatternName.String())
 
+	// Merge the two patterns into one
 	switch tp := targetPatternName.(type) {
 	case patterns.SpecName:
-		// Check if targetPattern and resourceName match in type
-		r, ok := resourceName.(patterns.SpecName)
+		// Check if targetPattern and inputPattern match in type
+		ip, ok := inputPatternName.(patterns.SpecName)
 		if !ok {
-			return fmt.Errorf("resource %s doesn't match target pattern %s", r, tp)
+			return "", "", fmt.Errorf("input pattern %q does not match with target pattern %q", ip, tp)
 		}
 
-		// Check if the individual entities match
-		if tp.Name.ApiID != "-" && tp.Name.ApiID != r.Name.ApiID {
-			return fmt.Errorf("api mismatch in resource %s and target pattern %v", resourceName.String(), targetPattern)
+		// Merge the patters together
+		mergedPatternName := patterns.SpecName{
+			Name: names.Spec{
+				ProjectID: projectID,
+			},
 		}
-		if tp.Name.VersionID != "-" && tp.Name.VersionID != r.Name.VersionID {
-			return fmt.Errorf("version mismatch in resource %s and target pattern %v", resourceName.String(), targetPattern)
+		mergedApi, err := findCommonPattern(tp.Name.ApiID, ip.Name.ApiID)
+		if err != nil {
+			return "", "", fmt.Errorf("cannot find common pattern between %q and %q", tp.String(), ip.String())
 		}
-		if tp.Name.SpecID != "-" && tp.Name.SpecID != r.Name.SpecID {
-			return fmt.Errorf("spec mismatch in resource %s and target pattern %v", resourceName.String(), targetPattern)
+		mergedPatternName.Name.ApiID = mergedApi
+		mergedVersion, err := findCommonPattern(tp.Name.VersionID, ip.Name.VersionID)
+		if err != nil {
+			return "", "", fmt.Errorf("cannot find common pattern between %q and %q", tp.String(), ip.String())
 		}
+		mergedPatternName.Name.VersionID = mergedVersion
+		mergedSpec, err := findCommonPattern(tp.Name.SpecID, ip.Name.SpecID)
+		if err != nil {
+			return "", "", fmt.Errorf("cannot find common pattern between %q and %q", tp.String(), ip.String())
+		}
+		mergedPatternName.Name.SpecID = mergedSpec
+
+		// Merge the filters together
+		mergedFilter := generateCommonFilter(targetPattern.GetFilter(), inputFilter)
+
+		return mergedPatternName.String(), mergedFilter, nil
 	case patterns.VersionName:
-		// Check if targetPattern and resourceName match in type
-		r, ok := resourceName.(patterns.VersionName)
+		// Check if targetPattern and inputPattern match in type
+		ip, ok := inputPatternName.(patterns.VersionName)
 		if !ok {
-			return fmt.Errorf("resource %s doesn't match target pattern %s", r, tp)
+			return "", "", fmt.Errorf("input pattern %q does not match with target pattern %q", ip, tp)
 		}
 
-		// Check if the individual entities match
-		if tp.Name.ApiID != "-" && tp.Name.ApiID != r.Name.ApiID {
-			return fmt.Errorf("api mismatch in resource %s and target pattern %v", resourceName.String(), targetPattern)
+		// Merge the patters together
+		mergedPatternName := patterns.VersionName{
+			Name: names.Version{
+				ProjectID: projectID,
+			},
 		}
-		if tp.Name.VersionID != "-" && tp.Name.VersionID != r.Name.VersionID {
-			return fmt.Errorf("version mismatch in resource %s and target pattern %v", resourceName.String(), targetPattern)
+		mergedApi, err := findCommonPattern(tp.Name.ApiID, ip.Name.ApiID)
+		if err != nil {
+			return "", "", fmt.Errorf("cannot find common pattern between %q and %q", tp.String(), ip.String())
 		}
+		mergedPatternName.Name.ApiID = mergedApi
+		mergedVersion, err := findCommonPattern(tp.Name.VersionID, ip.Name.VersionID)
+		if err != nil {
+			return "", "", fmt.Errorf("cannot find common pattern between %q and %q", tp.String(), ip.String())
+		}
+		mergedPatternName.Name.VersionID = mergedVersion
+
+		// Merge the filters together
+		mergedFilter := generateCommonFilter(targetPattern.GetFilter(), inputFilter)
+
+		return mergedPatternName.String(), mergedFilter, nil
 	case patterns.ApiName:
-		// Check if targetPattern and resourceName match in type
-		r, ok := resourceName.(patterns.ApiName)
+		// Check if targetPattern and inputPattern match in type
+		ip, ok := inputPatternName.(patterns.ApiName)
 		if !ok {
-			return fmt.Errorf("resource %s doesn't match target pattern %s", r, tp)
+			return "", "", fmt.Errorf("input pattern %q does not match with target pattern %q", ip, tp)
 		}
 
-		// Check if the individual entities match
-		if tp.Name.ApiID != "-" && tp.Name.ApiID != r.Name.ApiID {
-			return fmt.Errorf("api mismatch in resource %s and target pattern %v", resourceName.String(), targetPattern)
+		// Merge the patters together
+		mergedPatternName := patterns.ApiName{
+			Name: names.Api{
+				ProjectID: projectID,
+			},
 		}
+		mergedApi, err := findCommonPattern(tp.Name.ApiID, ip.Name.ApiID)
+		if err != nil {
+			return "", "", fmt.Errorf("cannot find common pattern between %q and %q", tp.String(), ip.String())
+		}
+		mergedPatternName.Name.ApiID = mergedApi
+
+		// Merge the filters together
+		mergedFilter := generateCommonFilter(targetPattern.GetFilter(), inputFilter)
+
+		return mergedPatternName.String(), mergedFilter, nil
 	default:
-		return fmt.Errorf("unsupported resource type %T", targetPatternName)
+		return "", "", fmt.Errorf("Unsupported pattern in either targetPattern %q or inputPattern %q", targetPatternName.String(), inputPatternName.String())
 	}
+}
 
-	// TODO: Filter check
-	return nil
+func generateCommonFilter(a, b string) string {
+	if a == b {
+		return a
+	} else if a != "" && b != "" {
+		return fmt.Sprintf("(%s) && (%s)", a, b)
+	} else if a != "" {
+		return a
+	}
+	return b
+}
+
+func findCommonPattern(a, b string) (string, error) {
+	if a == "" || b == "" {
+		return "", fmt.Errorf("cannot have empty name")
+	}
+	if a == b {
+		return a, nil
+	}
+	if a == "-" && b != "-" {
+		return b, nil
+	}
+	if a != "-" && b == "-" {
+		return a, nil
+	}
+	return "", fmt.Errorf("Cannot find common pattern")
 }

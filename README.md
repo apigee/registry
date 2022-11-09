@@ -5,7 +5,8 @@
 
 # Registry API Core Implementation
 
-This repository contains the core implementation of the Registry API.
+This repository contains the core implementation of the Registry API. Please 
+see the [wiki](https://github.com/apigee/registry/wiki) for more information.
 
 ## The Registry API
 

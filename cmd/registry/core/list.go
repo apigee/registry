@@ -109,7 +109,8 @@ func ListDeployments(ctx context.Context,
 
 func ListDeploymentRevisions(ctx context.Context,
 	client *gapic.RegistryClient,
-	name names.Deployment,
+	name names.DeploymentRevision,
+	filter string,
 	handler DeploymentHandler) error {
 	it := client.ListApiDeploymentRevisions(ctx, &rpc.ListApiDeploymentRevisionsRequest{
 		Name: name.String(),
