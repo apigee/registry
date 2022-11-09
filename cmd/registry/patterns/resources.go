@@ -454,7 +454,6 @@ func generateApiHandler(result *[]ResourceInstance) func(*rpc.Api) error {
 			ApiName:   ApiName{Name: name},
 			Timestamp: api.UpdateTime.AsTime(),
 		})
-
 		return nil
 	}
 }
@@ -465,12 +464,10 @@ func generateVersionHandler(result *[]ResourceInstance) func(*rpc.ApiVersion) er
 		if err != nil {
 			return err
 		}
-
 		(*result) = append((*result), VersionResource{
 			VersionName: VersionName{Name: name},
 			Timestamp:   version.UpdateTime.AsTime(),
 		})
-
 		return nil
 	}
 }
@@ -489,7 +486,6 @@ func generateSpecHandler(result *[]ResourceInstance) func(*rpc.ApiSpec) error {
 			},
 			Timestamp: spec.RevisionUpdateTime.AsTime(),
 		})
-
 		return nil
 	}
 }
@@ -500,12 +496,10 @@ func generateArtifactHandler(result *[]ResourceInstance) func(*rpc.Artifact) err
 		if err != nil {
 			return err
 		}
-
 		(*result) = append((*result), ArtifactResource{
 			ArtifactName: ArtifactName{Name: name},
 			Timestamp:    artifact.UpdateTime.AsTime(),
 		})
-
 		return nil
 	}
 }
