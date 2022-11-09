@@ -752,18 +752,13 @@ func (c *Client) ListDeployments(ctx context.Context, parent names.Api, opts Pag
 		return DeploymentList{}, err
 	}
 
-	// Select all columns from `deployments` table specifically.
-	// We do not want to select duplicates from the joined subquery result.
-	op := c.db.WithContext(ctx).Select("deployments.*").
-		Table("deployments").
-		// Join missing columns that couldn't be selected in the subquery.
-		Joins("JOIN (?) AS grp ON deployments.project_id = grp.project_id AND deployments.api_id = grp.api_id AND deployments.deployment_id = grp.deployment_id AND deployments.revision_create_time = grp.recent_create_time",
-			// Select deployment names and only their most recent revision_create_time
-			// This query cannot select all the columns we want.
-			// See: https://stackoverflow.com/questions/7745609/sql-select-only-rows-with-max-value-on-a-column
-			c.db.WithContext(ctx).Select("project_id, api_id, deployment_id, MAX(revision_create_time) AS recent_create_time").
-				Table("deployments").
-				Group("project_id, api_id, deployment_id")).
+	op := c.db.WithContext(ctx).Select("deployments.*").Table("deployments").
+		// select latest deployment revision
+		Joins(`join (?) latest
+		ON deployments.project_id = latest.project_id
+		AND deployments.api_id = latest.api_id
+		AND deployments.deployment_id = latest.deployment_id
+		AND deployments.revision_id = latest.revision_id`, c.latestDeploymentRevisionsQuery(ctx)).
 		Limit(limit(opts))
 
 	if parent.ProjectID != "-" {
