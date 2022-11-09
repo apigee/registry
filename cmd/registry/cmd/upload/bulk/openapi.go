@@ -40,9 +40,11 @@ func openAPICommand() *cobra.Command {
 		Short: "Bulk-upload OpenAPI descriptions from a directory of specs",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			parent := getParent(cmd)
-
 			ctx := cmd.Context()
+			parent, err := getParent(cmd)
+			if err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Failed to identify parent project")
+			}
 			client, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")

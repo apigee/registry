@@ -15,6 +15,9 @@
 package bulk
 
 import (
+	"errors"
+	"fmt"
+
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/spf13/cobra"
@@ -36,36 +39,36 @@ func Command() *cobra.Command {
 	return cmd
 }
 
-func getParent(cmd *cobra.Command) string {
+func getParent(cmd *cobra.Command) (string, error) {
 	ctx := cmd.Context()
 
 	parent, err := cmd.Flags().GetString("parent")
 	if err != nil {
-		log.FromContext(ctx).WithError(err).Fatal("Failed to get parent from flags")
+		return "", fmt.Errorf("failed to get parent from flags (%s)", err)
 	}
 	projectID, err := cmd.Flags().GetString("project-id")
 	if err != nil {
-		log.FromContext(ctx).WithError(err).Fatal("Failed to get project-id from flags")
+		return "", fmt.Errorf("failed to get project-id from flags (%s)", err)
 	}
 	if projectID != "" {
 		log.FromContext(ctx).Warn("--project-id is deprecated, please use --parent or configure registry.project")
 	}
 	if projectID != "" && parent != "" {
-		log.FromContext(ctx).WithError(err).Fatal("--project-id cannot be used with --parent")
+		return "", errors.New("--project-id cannot be used with --parent")
 	}
 
 	if parent != "" {
-		return parent
+		return parent, nil
 	} else if projectID != "" {
-		return "projects/" + projectID + "/locations/global"
+		return "projects/" + projectID + "/locations/global", nil
 	}
 	c, err := connection.ActiveConfig()
 	if err != nil {
-		log.FromContext(ctx).WithError(err).Fatal("Unable to identify parent: please use --parent or registry configuration")
+		return "", fmt.Errorf("unable to identify parent: please use --parent or registry configuration (%s)", err)
 	}
 	parent, err = c.ProjectWithLocation()
 	if err != nil {
-		log.FromContext(ctx).WithError(err).Fatal("Unable to identify parent: please use --parent or set registry.project in configuration")
+		return "", fmt.Errorf("unable to identify parent: please use --parent or set registry.project in configuration (%s)", err)
 	}
-	return parent
+	return parent, nil
 }

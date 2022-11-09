@@ -36,9 +36,11 @@ func discoveryCommand() *cobra.Command {
 		Use:   "discovery",
 		Short: "Bulk-upload API Discovery documents from the Google API Discovery service",
 		Run: func(cmd *cobra.Command, args []string) {
-			parent := getParent(cmd)
-
 			ctx := cmd.Context()
+			parent, err := getParent(cmd)
+			if err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Failed to identify parent project")
+			}
 			client, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")

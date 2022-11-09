@@ -36,8 +36,12 @@ func TestParentFromDeprecatedProjectIdFlag(t *testing.T) {
 	if err := cmd.ParseFlags([]string{"--project-id", "sample"}); err != nil {
 		t.Fatalf("Failed to parse flags")
 	}
-	if parent := getParent(cmd); parent != want {
-		t.Errorf("Get parent failed: wanted %s, got %s", want, parent)
+	parent, err := getParent(cmd)
+	if err != nil {
+		t.Errorf("Get parent unexpectedly failed with error: %s", err)
+	}
+	if parent != want {
+		t.Errorf("Get parent: wanted %s, got %s", want, parent)
 	}
 }
 
@@ -48,8 +52,12 @@ func TestParentFromParentFlag(t *testing.T) {
 	if err := cmd.ParseFlags([]string{"--parent", want}); err != nil {
 		t.Fatalf("Failed to parse flags")
 	}
-	if parent := getParent(cmd); parent != want {
-		t.Errorf("Get parent failed: wanted %s, got %s", want, parent)
+	parent, err := getParent(cmd)
+	if err != nil {
+		t.Errorf("Get parent unexpectedly failed with error: %s", err)
+	}
+	if parent != want {
+		t.Errorf("Get parent: wanted %s, got %s", want, parent)
 	}
 }
 
@@ -59,6 +67,7 @@ func TestParentFromConfiguration(t *testing.T) {
 		projectId  string
 		locationId string
 		want       string
+		fails      bool
 	}{
 		{
 			desc:       "configured with specified location",
@@ -71,6 +80,13 @@ func TestParentFromConfiguration(t *testing.T) {
 			projectId:  "sample",
 			locationId: "",
 			want:       "projects/sample/locations/global",
+		},
+		{
+			desc:       "configured with no location",
+			projectId:  "",
+			locationId: "",
+			want:       "",
+			fails:      true,
 		},
 	}
 	for _, test := range tests {
@@ -87,8 +103,13 @@ func TestParentFromConfiguration(t *testing.T) {
 			if err := cmd.ParseFlags([]string{}); err != nil {
 				t.Fatalf("Failed to parse flags")
 			}
-			if parent := getParent(cmd); parent != test.want {
-				t.Errorf("Get parent failed: wanted %s, got %s", test.want, parent)
+			parent, err := getParent(cmd)
+			if test.fails && err == nil {
+				t.Errorf("Get parent was expected to fail and didn't")
+			} else if !test.fails && err != nil {
+				t.Errorf("Get parent unexpectedly failed with error: %s", err)
+			} else if parent != test.want {
+				t.Errorf("Get parent: wanted %s, got %s", test.want, parent)
 			}
 		})
 	}

@@ -59,9 +59,11 @@ func protosCommand() *cobra.Command {
 		Short: "Bulk-upload Protocol Buffer descriptions from a directory of specs",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			parent := getParent(cmd)
-
 			ctx := cmd.Context()
+			parent, err := getParent(cmd)
+			if err != nil {
+				log.FromContext(ctx).WithError(err).Fatal("Failed to identify parent project")
+			}
 			client, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
