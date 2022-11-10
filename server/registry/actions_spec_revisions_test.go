@@ -364,8 +364,8 @@ func TestListApiSpecRevisions(t *testing.T) {
 			},
 			want: &rpc.ListApiSpecRevisionsResponse{
 				ApiSpecs: []*rpc.ApiSpec{
-					{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/other-spec"},
 					{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
+					{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/other-spec"},
 				},
 			},
 		},
@@ -380,8 +380,8 @@ func TestListApiSpecRevisions(t *testing.T) {
 			},
 			want: &rpc.ListApiSpecRevisionsResponse{
 				ApiSpecs: []*rpc.ApiSpec{
-					{Name: "projects/my-project/locations/global/apis/my-api/versions/v2/specs/my-spec"},
 					{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
+					{Name: "projects/my-project/locations/global/apis/my-api/versions/v2/specs/my-spec"},
 				},
 			},
 		},
@@ -396,8 +396,8 @@ func TestListApiSpecRevisions(t *testing.T) {
 			},
 			want: &rpc.ListApiSpecRevisionsResponse{
 				ApiSpecs: []*rpc.ApiSpec{
-					{Name: "projects/my-project/locations/global/apis/other-api/versions/v1/specs/my-spec"},
 					{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
+					{Name: "projects/my-project/locations/global/apis/other-api/versions/v1/specs/my-spec"},
 				},
 			},
 		},
@@ -413,8 +413,8 @@ func TestListApiSpecRevisions(t *testing.T) {
 			},
 			want: &rpc.ListApiSpecRevisionsResponse{
 				ApiSpecs: []*rpc.ApiSpec{
-					{Name: "projects/other-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
 					{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
+					{Name: "projects/other-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
 				},
 			},
 		},
