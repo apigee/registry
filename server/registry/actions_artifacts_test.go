@@ -1274,6 +1274,68 @@ func TestReplaceArtifactResponseCodes(t *testing.T) {
 	}
 }
 
+func TestReplaceArtifactSequence(t *testing.T) {
+	tests := []struct {
+		desc string
+		req  *rpc.ReplaceArtifactRequest
+		want codes.Code
+	}{
+		{
+			desc: "first replacement",
+			req: &rpc.ReplaceArtifactRequest{
+				Artifact: &rpc.Artifact{
+					Name: "projects/my-project/locations/global/artifacts/a",
+				},
+			},
+			want: codes.OK,
+		},
+		{
+			desc: "second replacement",
+			req: &rpc.ReplaceArtifactRequest{
+				Artifact: &rpc.Artifact{
+					Name: "projects/my-project/locations/global/artifacts/a",
+				},
+			},
+			want: codes.OK,
+		},
+	}
+	ctx := context.Background()
+	server := defaultTestServer(t)
+	seed := &rpc.Artifact{Name: "projects/my-project/locations/global/artifacts/a"}
+	if err := seeder.SeedArtifacts(ctx, server, seed); err != nil {
+		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+	}
+	a, err := server.GetArtifact(ctx, &rpc.GetArtifactRequest{
+		Name: "projects/my-project/locations/global/artifacts/a",
+	})
+	if err != nil {
+		t.Fatalf("Setup/Seeding: Failed to get seeded artifact: %s", err)
+	}
+	createTime := a.CreateTime.AsTime()
+	updateTime := a.UpdateTime.AsTime()
+	// NOTE: in the following sequence of tests, each test depends on its predecessor.
+	// Resources are successively updated using the "Replace" RPC and the
+	// tests verify that CreateTime/UpdateTime fields are modified appropriately.
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			var result *rpc.Artifact
+			var err error
+			if result, err = server.ReplaceArtifact(ctx, test.req); status.Code(err) != test.want {
+				t.Errorf("UpdateApi(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
+			}
+			if result != nil {
+				if !createTime.Equal(result.CreateTime.AsTime()) {
+					t.Errorf("ReplaceArtifact create time changed after replace (%v %v)", createTime, result.CreateTime.AsTime())
+				}
+				if !updateTime.Before(result.UpdateTime.AsTime()) {
+					t.Errorf("ReplaceArtifact update time did not increase after replace (%v %v)", updateTime, result.UpdateTime.AsTime())
+				}
+				updateTime = result.UpdateTime.AsTime()
+			}
+		})
+	}
+}
+
 func TestDeleteArtifact(t *testing.T) {
 	tests := []struct {
 		desc string
