@@ -50,21 +50,18 @@ func getParent(cmd *cobra.Command) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to get project-id from flags (%s)", err)
 	}
-	if projectID != "" {
-		log.FromContext(ctx).Warn("--project-id is deprecated, please use --parent or configure registry.project")
-	}
 	if projectID != "" && parent != "" {
 		return "", errors.New("--project-id cannot be used with --parent")
 	}
-
 	if parent != "" {
 		return parent, nil
 	} else if projectID != "" {
+		log.FromContext(ctx).Warn("--project-id is deprecated, please use --parent or configure registry.project")
 		return "projects/" + projectID + "/locations/global", nil
 	}
 	c, err := connection.ActiveConfig()
 	if err != nil {
-		return "", fmt.Errorf("unable to identify parent: please use --parent or registry configuration (%s)", err)
+		return "", fmt.Errorf("unable to identify parent (%s)", err)
 	}
 	parent, err = c.ProjectWithLocation()
 	if err != nil {

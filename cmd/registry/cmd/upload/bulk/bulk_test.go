@@ -29,35 +29,49 @@ func TestMain(m *testing.M) {
 	grpctest.TestMain(m, registry.Config{})
 }
 
-func TestParentFromDeprecatedProjectIdFlag(t *testing.T) {
-	want := "projects/sample/locations/global"
-	cmd := Command()
-	cmd.SetContext(context.Background())
-	if err := cmd.ParseFlags([]string{"--project-id", "sample"}); err != nil {
-		t.Fatalf("Failed to parse flags")
+func TestParentFromFlags(t *testing.T) {
+	tests := []struct {
+		desc  string
+		args  []string
+		want  string
+		fails bool
+	}{
+		{
+			desc: "parent from deprecated projectid flag",
+			args: []string{"--project-id", "sample"},
+			want: "projects/sample/locations/global",
+		},
+		{
+			desc: "parent from parent flag",
+			args: []string{"--parent", "projects/sample/locations/other"},
+			want: "projects/sample/locations/other",
+		},
+		{
+			desc:  "parent from projectid and parent flags",
+			args:  []string{"--parent", "projects/sample/locations/global", "--project-id", "sample"},
+			fails: true,
+		},
 	}
-	parent, err := getParent(cmd)
-	if err != nil {
-		t.Errorf("Get parent unexpectedly failed with error: %s", err)
-	}
-	if parent != want {
-		t.Errorf("Get parent: wanted %s, got %s", want, parent)
-	}
-}
-
-func TestParentFromParentFlag(t *testing.T) {
-	want := "projects/sample/locations/global"
-	cmd := Command()
-	cmd.SetContext(context.Background())
-	if err := cmd.ParseFlags([]string{"--parent", want}); err != nil {
-		t.Fatalf("Failed to parse flags")
-	}
-	parent, err := getParent(cmd)
-	if err != nil {
-		t.Errorf("Get parent unexpectedly failed with error: %s", err)
-	}
-	if parent != want {
-		t.Errorf("Get parent: wanted %s, got %s", want, parent)
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			cmd := Command()
+			cmd.SetContext(context.Background())
+			if err := cmd.ParseFlags(test.args); err != nil {
+				t.Fatalf("Failed to parse flags")
+			}
+			parent, err := getParent(cmd)
+			if err != nil {
+				if !test.fails {
+					t.Errorf("Get parent unexpectedly failed with error: %s", err)
+				}
+			} else {
+				if test.fails {
+					t.Errorf("Get parent unexpectedly succeeded")
+				} else if parent != test.want {
+					t.Errorf("Get parent: wanted %s, got %s", test.want, parent)
+				}
+			}
+		})
 	}
 }
 
@@ -72,8 +86,8 @@ func TestParentFromConfiguration(t *testing.T) {
 		{
 			desc:       "configured with specified location",
 			projectId:  "sample",
-			locationId: "someplace",
-			want:       "projects/sample/locations/someplace",
+			locationId: "other",
+			want:       "projects/sample/locations/other",
 		},
 		{
 			desc:       "configured with default location",
