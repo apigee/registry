@@ -15,6 +15,11 @@
 package bulk
 
 import (
+	"errors"
+	"fmt"
+
+	"github.com/apigee/registry/log"
+	"github.com/apigee/registry/pkg/connection"
 	"github.com/spf13/cobra"
 )
 
@@ -28,9 +33,39 @@ func Command() *cobra.Command {
 	cmd.AddCommand(openAPICommand())
 	cmd.AddCommand(protosCommand())
 
-	cmd.PersistentFlags().String("project-id", "", "Project ID to use for each upload")
-	_ = cmd.MarkFlagRequired("project-id")
-
+	cmd.PersistentFlags().String("project-id", "", "Project ID to use for each upload (deprecated)")
+	cmd.PersistentFlags().String("parent", "", "Parent for the upload (projects/PROJECT/locations/LOCATION)")
 	cmd.PersistentFlags().Int("jobs", 10, "Number of upload jobs to run simultaneously")
 	return cmd
+}
+
+func getParent(cmd *cobra.Command) (string, error) {
+	ctx := cmd.Context()
+
+	parent, err := cmd.Flags().GetString("parent")
+	if err != nil {
+		return "", fmt.Errorf("failed to get parent from flags (%s)", err)
+	}
+	projectID, err := cmd.Flags().GetString("project-id")
+	if err != nil {
+		return "", fmt.Errorf("failed to get project-id from flags (%s)", err)
+	}
+	if projectID != "" && parent != "" {
+		return "", errors.New("--project-id cannot be used with --parent")
+	}
+	if parent != "" {
+		return parent, nil
+	} else if projectID != "" {
+		log.FromContext(ctx).Warn("--project-id is deprecated, please use --parent or configure registry.project")
+		return "projects/" + projectID + "/locations/global", nil
+	}
+	c, err := connection.ActiveConfig()
+	if err != nil {
+		return "", fmt.Errorf("unable to identify parent (%s)", err)
+	}
+	parent, err = c.ProjectWithLocation()
+	if err != nil {
+		return "", fmt.Errorf("unable to identify parent: please use --parent or set registry.project in configuration (%s)", err)
+	}
+	return parent, nil
 }
