@@ -564,7 +564,7 @@ func TestListApiDeploymentRevisionsSequence(t *testing.T) {
 	var nextToken string
 	t.Run("first page", func(t *testing.T) {
 		req := &rpc.ListApiDeploymentRevisionsRequest{
-			Name:     firstRevision.GetName(),
+			Name:     firstRevision.GetName() + "@-",
 			PageSize: 1,
 		}
 
@@ -596,7 +596,7 @@ func TestListApiDeploymentRevisionsSequence(t *testing.T) {
 
 	t.Run("final page", func(t *testing.T) {
 		req := &rpc.ListApiDeploymentRevisionsRequest{
-			Name:      firstRevision.GetName(),
+			Name:      firstRevision.GetName() + "@-",
 			PageToken: nextToken,
 		}
 
