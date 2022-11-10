@@ -433,16 +433,22 @@ func TestListApiDeploymentRevisions(t *testing.T) {
 			desc: "name filtering",
 			seed: []*rpc.ApiDeployment{
 				{Name: "projects/my-project/locations/global/apis/my-api/deployments/dep1"},
-				{Name: "projects/my-project/locations/global/apis/my-api/deployments/dep2"},
+				{
+					Name:        "projects/my-project/locations/global/apis/my-api/deployments/dep2",
+					Description: "match",
+				},
 				{Name: "projects/my-project/locations/global/apis/my-api/deployments/dep3"},
 			},
 			req: &rpc.ListApiDeploymentRevisionsRequest{
 				Name:   "projects/my-project/locations/global/apis/my-api/deployments/-@-",
-				Filter: "name == 'projects/my-project/locations/global/apis/my-api/deployments/dep2'",
+				Filter: "description == 'match'",
 			},
 			want: &rpc.ListApiDeploymentRevisionsResponse{
 				ApiDeployments: []*rpc.ApiDeployment{
-					{Name: "projects/my-project/locations/global/apis/my-api/deployments/dep2"},
+					{
+						Name:        "projects/my-project/locations/global/apis/my-api/deployments/dep2",
+						Description: "match",
+					},
 				},
 			},
 		},

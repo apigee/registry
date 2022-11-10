@@ -448,16 +448,22 @@ func TestListApiSpecRevisions(t *testing.T) {
 			desc: "name filtering",
 			seed: []*rpc.ApiSpec{
 				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/spec1"},
-				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/spec2"},
+				{
+					Name:        "projects/my-project/locations/global/apis/my-api/versions/v1/specs/spec2",
+					Description: "match",
+				},
 				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/spec3"},
 			},
 			req: &rpc.ListApiSpecRevisionsRequest{
 				Name:   "projects/my-project/locations/global/apis/my-api/versions/v1/specs/-@-",
-				Filter: "name == 'projects/my-project/locations/global/apis/my-api/versions/v1/specs/spec2'",
+				Filter: "description == 'match'",
 			},
 			want: &rpc.ListApiSpecRevisionsResponse{
 				ApiSpecs: []*rpc.ApiSpec{
-					{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/spec2"},
+					{
+						Name:        "projects/my-project/locations/global/apis/my-api/versions/v1/specs/spec2",
+						Description: "match",
+					},
 				},
 			},
 		},
