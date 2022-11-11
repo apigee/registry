@@ -58,17 +58,19 @@ func protosCommand() *cobra.Command {
 		Use:   "protos PATH",
 		Short: "Bulk-upload Protocol Buffer descriptions from a directory of specs",
 		Args:  cobra.ExactArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 			parent, err := getParent(cmd)
 			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to identify parent project")
+				return fmt.Errorf("failed to identify parent project (%s)", err)
 			}
 			client, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
-
+			if err := core.VerifyLocation(ctx, client, parent); err != nil {
+				return fmt.Errorf("parent does not exist (%s)", err)
+			}
 			// create a queue for upload tasks and wait for the workers to finish after filling it.
 			jobs, err := cmd.Flags().GetInt("jobs")
 			if err != nil {
@@ -95,6 +97,7 @@ func protosCommand() *cobra.Command {
 					log.FromContext(ctx).WithError(err).Debug("Failed to walk directory")
 				}
 			}
+			return nil
 		},
 	}
 
