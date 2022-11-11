@@ -175,8 +175,7 @@ func TestProtosMissingParent(t *testing.T) {
 			cmd.SilenceUsage = true
 			cmd.SilenceErrors = true
 			cmd.SetArgs(test.args)
-			err := cmd.Execute()
-			if err == nil {
+			if cmd.Execute() == nil {
 				t.Error("expected error, none reported")
 			}
 		})
