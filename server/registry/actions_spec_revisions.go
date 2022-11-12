@@ -46,8 +46,10 @@ func (s *RegistryServer) ListApiSpecRevisions(ctx context.Context, req *rpc.List
 	}
 
 	listing, err := db.ListSpecRevisions(ctx, parent, storage.PageOptions{
-		Size:  req.GetPageSize(),
-		Token: req.GetPageToken(),
+		Size:   req.GetPageSize(),
+		Token:  req.GetPageToken(),
+		Filter: req.GetFilter(),
+		Order:  req.GetOrderBy(),
 	})
 	if err != nil {
 		return nil, err
