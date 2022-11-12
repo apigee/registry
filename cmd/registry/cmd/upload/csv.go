@@ -36,6 +36,7 @@ func csvCommand() *cobra.Command {
 	var (
 		projectID string
 		delimiter string
+		jobs      int
 	)
 
 	cmd := &cobra.Command{
@@ -67,7 +68,7 @@ func csvCommand() *cobra.Command {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to ensure project exists")
 			}
 
-			taskQueue, wait := core.WorkerPool(ctx, 64)
+			taskQueue, wait := core.WorkerPool(ctx, jobs)
 			defer wait()
 
 			file, err := os.Open(args[0])
@@ -101,6 +102,7 @@ func csvCommand() *cobra.Command {
 	cmd.Flags().StringVar(&projectID, "project-id", "", "Project ID to use for each upload")
 	_ = cmd.MarkFlagRequired("project-id")
 	cmd.Flags().StringVar(&delimiter, "delimiter", ",", "Field delimiter for the CSV file")
+	cmd.Flags().IntVar(&jobs, "jobs", 10, "Number of actions to perform concurrently")
 	return cmd
 }
 
