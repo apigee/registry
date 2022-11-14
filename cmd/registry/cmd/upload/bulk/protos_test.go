@@ -32,6 +32,7 @@ func TestProtos(t *testing.T) {
 	const (
 		projectID   = "protos-test"
 		projectName = "projects/" + projectID
+		parent      = projectName + "/locations/global"
 	)
 	// Create a registry client.
 	ctx := context.Background()
@@ -65,7 +66,7 @@ func TestProtos(t *testing.T) {
 		t.Fatalf("Error creating project %s", err)
 	}
 	cmd := Command()
-	args := []string{"protos", "testdata/protos", "--project-id", projectID}
+	args := []string{"protos", "testdata/protos", "--parent", parent}
 	cmd.SetArgs(args)
 	if err := cmd.Execute(); err != nil {
 		t.Fatalf("Execute() with args %+v returned error: %s", args, err)
@@ -142,5 +143,41 @@ func TestProtos(t *testing.T) {
 	err = adminClient.DeleteProject(ctx, req)
 	if err != nil {
 		t.Fatalf("Failed to delete test project: %s", err)
+	}
+}
+
+func TestProtosMissingParent(t *testing.T) {
+	const (
+		projectID   = "missing"
+		projectName = "projects/" + projectID
+		parent      = projectName + "/locations/global"
+	)
+	tests := []struct {
+		desc string
+		args []string
+	}{
+		{
+			desc: "parent",
+			args: []string{"protos", "nonexistent-specs-dir", "--parent", parent},
+		},
+		{
+			desc: "project-id",
+			args: []string{"protos", "nonexistent-specs-dir", "--project-id", projectID},
+		},
+		{
+			desc: "unspecified",
+			args: []string{"protos", "nonexistent-specs-dir"},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			cmd := Command()
+			cmd.SilenceUsage = true
+			cmd.SilenceErrors = true
+			cmd.SetArgs(test.args)
+			if cmd.Execute() == nil {
+				t.Error("expected error, none reported")
+			}
+		})
 	}
 }

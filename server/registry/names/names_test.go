@@ -225,6 +225,10 @@ func TestResourceNames(t *testing.T) {
 				return err == nil
 			}, pass: []string{
 				"projects/google/locations/global/apis/sample/deployments/v1@1234567890abcdef",
+				"projects/google/locations/global/apis/sample/deployments/v1",
+				"projects/-/locations/global/apis/-/deployments/-",
+				"projects/123/locations/global/apis/abc/deployments/123",
+				"projects/1-2-3/locations/global/apis/abc/deployments/123",
 			},
 			fail: []string{
 				"-",
@@ -233,10 +237,6 @@ func TestResourceNames(t *testing.T) {
 				"projects/123/locations/global/apis/",
 				"projects/123/locations/global/invalid/123",
 				"projects/123/locations/global/apis/ 123",
-				"projects/google/locations/global/apis/sample/deployments/v1",
-				"projects/-/locations/global/apis/-/deployments/-",
-				"projects/123/locations/global/apis/abc/deployments/123",
-				"projects/1-2-3/locations/global/apis/abc/deployments/123",
 			},
 		},
 		{
@@ -275,15 +275,17 @@ func TestResourceNames(t *testing.T) {
 		},
 	}
 	for _, g := range groups {
-		for _, path := range g.pass {
-			if !g.check(path) {
-				t.Errorf("failed to match %s: %s", g.name, path)
+		t.Run(g.name, func(t *testing.T) {
+			for _, path := range g.pass {
+				if !g.check(path) {
+					t.Errorf("failed to match: %s", path)
+				}
 			}
-		}
-		for _, path := range g.fail {
-			if g.check(path) {
-				t.Errorf("false match %s: %s", g.name, path)
+			for _, path := range g.fail {
+				if g.check(path) {
+					t.Errorf("false match: %s", path)
+				}
 			}
-		}
+		})
 	}
 }

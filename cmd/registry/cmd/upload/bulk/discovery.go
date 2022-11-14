@@ -35,18 +35,19 @@ func discoveryCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "discovery",
 		Short: "Bulk-upload API Discovery documents from the Google API Discovery service",
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
-			projectID, err := cmd.Flags().GetString("project-id")
+			parent, err := getParent(cmd)
 			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to get project-id from flags")
+				return fmt.Errorf("failed to identify parent project (%s)", err)
 			}
-
 			client, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
-
+			if err := core.VerifyLocation(ctx, client, parent); err != nil {
+				return fmt.Errorf("parent does not exist (%s)", err)
+			}
 			// create a queue for upload tasks and wait for the workers to finish after filling it.
 			jobs, err := cmd.Flags().GetInt("jobs")
 			if err != nil {
@@ -65,12 +66,13 @@ func discoveryCommand() *cobra.Command {
 				taskQueue <- &uploadDiscoveryTask{
 					client:    client,
 					path:      api.DiscoveryRestURL,
-					projectID: projectID,
+					parent:    parent,
 					apiID:     sanitize(api.Name),
 					versionID: sanitize(api.Version),
 					specID:    "discovery.json",
 				}
 			}
+			return nil
 		},
 	}
 
@@ -80,7 +82,7 @@ func discoveryCommand() *cobra.Command {
 type uploadDiscoveryTask struct {
 	client    connection.RegistryClient
 	path      string
-	projectID string
+	parent    string
 	apiID     string
 	versionID string
 	specID    string
@@ -194,12 +196,8 @@ func (task *uploadDiscoveryTask) createOrUpdateSpec(ctx context.Context) error {
 	return nil
 }
 
-func (task *uploadDiscoveryTask) projectName() string {
-	return fmt.Sprintf("projects/%s", task.projectID)
-}
-
 func (task *uploadDiscoveryTask) apiName() string {
-	return fmt.Sprintf("%s/locations/global/apis/%s", task.projectName(), task.apiID)
+	return fmt.Sprintf("%s/apis/%s", task.parent, task.apiID)
 }
 
 func (task *uploadDiscoveryTask) versionName() string {

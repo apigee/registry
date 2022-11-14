@@ -17,7 +17,6 @@ package list
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/log"
@@ -73,6 +72,8 @@ func matchAndHandleListCmd(
 		return core.ListAPIs(ctx, client, api, filter, core.PrintAPI)
 	} else if deployment, err := names.ParseDeploymentCollection(name); err == nil {
 		return core.ListDeployments(ctx, client, deployment, filter, core.PrintDeployment)
+	} else if rev, err := names.ParseDeploymentRevisionCollection(name); err == nil {
+		return core.ListDeploymentRevisions(ctx, client, rev, filter, core.PrintDeployment)
 	} else if version, err := names.ParseVersionCollection(name); err == nil {
 		return core.ListVersions(ctx, client, version, filter, core.PrintVersion)
 	} else if spec, err := names.ParseSpecCollection(name); err == nil {
@@ -90,6 +91,8 @@ func matchAndHandleListCmd(
 		return core.ListAPIs(ctx, client, api, filter, core.PrintAPI)
 	} else if deployment, err := names.ParseDeployment(name); err == nil {
 		return core.ListDeployments(ctx, client, deployment, filter, core.PrintDeployment)
+	} else if rev, err := names.ParseDeploymentRevision(name); err == nil {
+		return core.ListDeploymentRevisions(ctx, client, rev, filter, core.PrintDeployment)
 	} else if version, err := names.ParseVersion(name); err == nil {
 		return core.ListVersions(ctx, client, version, filter, core.PrintVersion)
 	} else if spec, err := names.ParseSpec(name); err == nil {
@@ -98,15 +101,6 @@ func matchAndHandleListCmd(
 		return core.ListSpecRevisions(ctx, client, rev, filter, core.PrintSpec)
 	} else if artifact, err := names.ParseArtifact(name); err == nil {
 		return core.ListArtifacts(ctx, client, artifact, filter, false, core.PrintArtifact)
-	}
-
-	// Then try to match resources with revisions.
-	// "@-" signals that we want to list revisions.
-	if strings.HasSuffix(name, "@-") {
-		name := strings.TrimSuffix(name, "@-")
-		if deployment, err := names.ParseDeployment(name); err == nil {
-			return core.ListDeploymentRevisions(ctx, client, deployment, core.PrintDeployment)
-		}
 	}
 
 	// If nothing matched, return an error.

@@ -24,13 +24,13 @@ var (
 	apiArtifactCollectionRegexp        = regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/artifacts$", identifier, Location, identifier))
 	versionArtifactCollectionRegexp    = regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/versions/%s/artifacts$", identifier, Location, identifier, identifier))
 	specArtifactCollectionRegexp       = regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/versions/%s/specs/%s(?:@%s)?/artifacts$", identifier, Location, identifier, identifier, identifier, revisionTag))
-	deploymentArtifactCollectionRegexp = regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/deployments/%s/artifacts$", identifier, Location, identifier, identifier))
+	deploymentArtifactCollectionRegexp = regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/deployments/%s(?:@%s)?/artifacts$", identifier, Location, identifier, identifier, revisionTag))
 
 	projectArtifactRegexp    = regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/artifacts/%s$", identifier, Location, identifier))
 	apiArtifactRegexp        = regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/artifacts/%s$", identifier, Location, identifier, identifier))
 	versionArtifactRegexp    = regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/versions/%s/artifacts/%s$", identifier, Location, identifier, identifier, identifier))
 	specArtifactRegexp       = regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/versions/%s/specs/%s(?:@%s)?/artifacts/%s$", identifier, Location, identifier, identifier, identifier, revisionTag, identifier))
-	deploymentArtifactRegexp = regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/deployments/%s/artifacts/%s$", identifier, Location, identifier, identifier, identifier))
+	deploymentArtifactRegexp = regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/deployments/%s(?:@%s)?/artifacts/%s$", identifier, Location, identifier, identifier, revisionTag, identifier))
 )
 
 // Artifact represents a resource name for an artifact.
@@ -101,6 +101,8 @@ func (a Artifact) SpecID() string {
 func (a Artifact) RevisionID() string {
 	switch name := a.name.(type) {
 	case specArtifact:
+		return name.RevisionID
+	case deploymentArtifact:
 		return name.RevisionID
 	default:
 		return ""
@@ -468,6 +470,7 @@ type deploymentArtifact struct {
 	ProjectID    string
 	ApiID        string
 	DeploymentID string
+	RevisionID   string
 	ArtifactID   string
 }
 
@@ -484,16 +487,22 @@ func (a deploymentArtifact) Validate() error {
 }
 
 func (a deploymentArtifact) Parent() string {
-	return Deployment{
+	return DeploymentRevision{
 		ProjectID:    a.ProjectID,
 		ApiID:        a.ApiID,
 		DeploymentID: a.DeploymentID,
+		RevisionID:   a.RevisionID,
 	}.String()
 }
 
 func (a deploymentArtifact) String() string {
-	return normalize(fmt.Sprintf("projects/%s/locations/%s/apis/%s/deployments/%s/artifacts/%s",
-		a.ProjectID, Location, a.ApiID, a.DeploymentID, a.ArtifactID))
+	if a.RevisionID == "" { // use latest revision
+		return normalize(fmt.Sprintf("projects/%s/locations/%s/apis/%s/deployments/%s/artifacts/%s",
+			a.ProjectID, Location, a.ApiID, a.DeploymentID, a.ArtifactID))
+	} else {
+		return normalize(fmt.Sprintf("projects/%s/locations/%s/apis/%s/deployments/%s@%s/artifacts/%s",
+			a.ProjectID, Location, a.ApiID, a.DeploymentID, a.RevisionID, a.ArtifactID))
+	}
 }
 
 func parseDeploymentArtifact(name string) (deploymentArtifact, error) {
@@ -506,7 +515,8 @@ func parseDeploymentArtifact(name string) (deploymentArtifact, error) {
 		ProjectID:    m[1],
 		ApiID:        m[2],
 		DeploymentID: m[3],
-		ArtifactID:   m[4],
+		RevisionID:   m[4],
+		ArtifactID:   m[5],
 	}
 
 	return artifact, nil
@@ -522,6 +532,7 @@ func parseDeploymentArtifactCollection(name string) (deploymentArtifact, error) 
 		ProjectID:    m[1],
 		ApiID:        m[2],
 		DeploymentID: m[3],
+		RevisionID:   m[4],
 		ArtifactID:   "",
 	}
 

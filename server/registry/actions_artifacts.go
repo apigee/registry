@@ -36,11 +36,13 @@ type artifactParent interface {
 func parseArtifactParent(name string) (artifactParent, error) {
 	if s, err := names.ParseSpec(name); err == nil {
 		return s, nil
-	} else if v, err := names.ParseSpecRevision(name); err == nil {
-		return v, nil
+	} else if s, err := names.ParseSpecRevision(name); err == nil {
+		return s, nil
 	} else if v, err := names.ParseVersion(name); err == nil {
 		return v, nil
 	} else if d, err := names.ParseDeployment(name); err == nil {
+		return d, nil
+	} else if d, err := names.ParseDeploymentRevision(name); err == nil {
 		return d, nil
 	} else if a, err := names.ParseApi(name); err == nil {
 		return a, nil
@@ -83,7 +85,12 @@ func (s *RegistryServer) CreateArtifact(ctx context.Context, req *rpc.CreateArti
 		case names.SpecRevision:
 			_, err = db.LockSpecs(ctx).GetSpecRevision(ctx, typedParent)
 		case names.Deployment:
-			_, err = db.LockDeployments(ctx).GetDeployment(ctx, typedParent)
+			// assign to latest revision
+			var deployment *models.Deployment
+			deployment, err = db.LockDeployments(ctx).GetDeployment(ctx, typedParent)
+			if err == nil {
+				parent = parent.(names.Deployment).Revision(deployment.RevisionID)
+			}
 		}
 		if err != nil {
 			if isNotFound(err) {
@@ -253,6 +260,13 @@ func (s *RegistryServer) ListArtifacts(ctx context.Context, req *rpc.ListArtifac
 			Order:  req.GetOrderBy(),
 			Token:  req.GetPageToken(),
 		})
+	case names.DeploymentRevision:
+		listing, err = db.ListDeploymentRevisionArtifacts(ctx, parent, storage.PageOptions{
+			Size:   req.GetPageSize(),
+			Filter: req.GetFilter(),
+			Order:  req.GetOrderBy(),
+			Token:  req.GetPageToken(),
+		})
 	}
 	if err != nil {
 		return nil, err
@@ -293,6 +307,7 @@ func (s *RegistryServer) ReplaceArtifact(ctx context.Context, req *rpc.ReplaceAr
 		if err != nil {
 			return err
 		}
+		artifact.CreateTime = art.CreateTime // preserve creation time
 		artifact.RevisionID = art.RevisionID // revision is optional in request
 		if err := db.SaveArtifact(ctx, artifact); err != nil {
 			return err

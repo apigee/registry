@@ -14,4 +14,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-PROTOC_VERSION='21.3'
+PROTOC_VERSION='21.9'

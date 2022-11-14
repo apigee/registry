@@ -27,6 +27,26 @@ import (
 	"gorm.io/gorm"
 )
 
+var tableFieldsLookup = map[string]map[string]filtering.FieldType{
+	"projects":             projectFields,
+	"apis":                 apiFields,
+	"versions":             versionFields,
+	"specs":                specFields,
+	"deployments":          deploymentFields,
+	"artifacts":            artifactFields,
+	"revisioned_artifacts": revisionedArtifactFields,
+}
+
+var defaultOrder = map[string]string{
+	"projects":             "project_id",
+	"apis":                 "project_id, api_id",
+	"deployments":          "project_id, api_id, deployment_id, revision_create_time desc",
+	"versions":             "project_id, api_id, version_id",
+	"specs":                "project_id, api_id, version_id, spec_id, revision_create_time desc",
+	"artifacts":            "project_id, api_id, version_id, spec_id, deployment_id, artifact_id, create_time desc",
+	"revisioned_artifacts": "project_id, api_id, version_id, spec_id, deployment_id, revision_create_time desc, artifact_id",
+}
+
 var projectFields = map[string]filtering.FieldType{
 	"name":         filtering.String,
 	"project_id":   filtering.String,
@@ -99,24 +119,45 @@ var deploymentFields = map[string]filtering.FieldType{
 }
 
 var artifactFields = map[string]filtering.FieldType{
-	"name":        filtering.String,
-	"project_id":  filtering.String,
-	"api_id":      filtering.String,
-	"version_id":  filtering.String,
-	"spec_id":     filtering.String,
-	"artifact_id": filtering.String,
-	"create_time": filtering.Timestamp,
-	"update_time": filtering.Timestamp,
-	"mime_type":   filtering.String,
-	"size_bytes":  filtering.Int,
+	"name":          filtering.String,
+	"project_id":    filtering.String,
+	"api_id":        filtering.String,
+	"version_id":    filtering.String,
+	"spec_id":       filtering.String,
+	"artifact_id":   filtering.String,
+	"deployment_id": filtering.String,
+	"create_time":   filtering.Timestamp,
+	"update_time":   filtering.Timestamp,
+	"mime_type":     filtering.String,
+	"size_bytes":    filtering.Int,
+}
+
+var revisionedArtifactFields = map[string]filtering.FieldType{
+	"name":                 filtering.String,
+	"project_id":           filtering.String,
+	"api_id":               filtering.String,
+	"version_id":           filtering.String,
+	"spec_id":              filtering.String,
+	"artifact_id":          filtering.String,
+	"deployment_id":        filtering.String,
+	"create_time":          filtering.Timestamp,
+	"update_time":          filtering.Timestamp,
+	"mime_type":            filtering.String,
+	"size_bytes":           filtering.Int,
+	"revision_create_time": filtering.Timestamp,
+	"revision_update_time": filtering.Timestamp,
 }
 
 // gormOrdering accepts a user-specified order_by string and returns a gorm-compatible equivalent.
 // For example, the user-specified string `name,description` returns `key,description`.
-// An error is returned if the string is invalid or refers to a field that isn't included in the provided `fields` map.
-func gormOrdering(ordering string, fields map[string]filtering.FieldType) (string, error) {
+// An error is returned if the string is invalid or refers to a field that isn't included in the `fields` map.
+func gormOrdering(ordering, table string) (string, error) {
+	fields, ok := tableFieldsLookup[table]
+	if !ok {
+		return "", status.Errorf(codes.Internal, "unknown order table: %q", table)
+	}
 	if ordering == "" {
-		return "key", nil
+		ordering = defaultOrder[table]
 	}
 
 	clauses := make([]string, 0)
@@ -146,7 +187,7 @@ func gormOrdering(ordering string, fields map[string]filtering.FieldType) (strin
 			}
 		}
 		if clause == "" {
-			return ordering, status.Errorf(codes.InvalidArgument, "unknown field name %q", v)
+			return ordering, status.Errorf(codes.InvalidArgument, "unknown field name %q in %q", v, table)
 		}
 
 		if descending {
@@ -200,7 +241,7 @@ func (c *Client) ListProjects(ctx context.Context, opts PageOptions) (ProjectLis
 		return ProjectList{}, err
 	}
 
-	order, err := gormOrdering(opts.Order, projectFields)
+	order, err := gormOrdering(opts.Order, "projects")
 	if err != nil {
 		return ProjectList{}, err
 	}
@@ -298,7 +339,7 @@ func (c *Client) ListApis(ctx context.Context, parent names.Project, opts PageOp
 		return ApiList{}, err
 	}
 
-	if order, err := gormOrdering(opts.Order, apiFields); err != nil {
+	if order, err := gormOrdering(opts.Order, "apis"); err != nil {
 		return ApiList{}, err
 	} else {
 		op = op.Order(order)
@@ -418,7 +459,7 @@ func (c *Client) ListVersions(ctx context.Context, parent names.Api, opts PageOp
 		op = op.Where("api_id = ?", parent.ApiID)
 	}
 
-	if order, err := gormOrdering(opts.Order, versionFields); err != nil {
+	if order, err := gormOrdering(opts.Order, "versions"); err != nil {
 		return VersionList{}, err
 	} else {
 		op = op.Order(order)
@@ -553,7 +594,7 @@ func (c *Client) ListSpecs(ctx context.Context, parent names.Version, opts PageO
 		op = op.Where("specs.version_id = ?", parent.VersionID)
 	}
 
-	if order, err := gormOrdering(opts.Order, specFields); err != nil {
+	if order, err := gormOrdering(opts.Order, "specs"); err != nil {
 		return SpecList{}, err
 	} else {
 		op = op.Order(order)
@@ -638,6 +679,12 @@ func (c *Client) ListSpecRevisions(ctx context.Context, parent names.SpecRevisio
 		return SpecList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
 	}
 
+	if err := token.ValidateFilter(opts.Filter); err != nil {
+		return SpecList{}, status.Errorf(codes.InvalidArgument, "invalid filter %q: %s", opts.Filter, err)
+	} else {
+		token.Filter = opts.Filter
+	}
+
 	// Check existence of the deepest fully specified resource in the parent name.
 	if parent.ProjectID != "-" && parent.ApiID != "-" && parent.VersionID != "-" && parent.SpecID != "-" && parent.RevisionID != "-" {
 		if _, err := c.GetSpecRevision(ctx, parent); err != nil {
@@ -661,8 +708,12 @@ func (c *Client) ListSpecRevisions(ctx context.Context, parent names.SpecRevisio
 		}
 	}
 
+	filter, err := filtering.NewFilter(opts.Filter, specFields)
+	if err != nil {
+		return SpecList{}, err
+	}
+
 	op := c.db.WithContext(ctx).
-		Order("specs.revision_create_time desc").
 		Offset(token.Offset).
 		Limit(int(opts.Size) + 1)
 
@@ -682,7 +733,7 @@ func (c *Client) ListSpecRevisions(ctx context.Context, parent names.SpecRevisio
 		op = op.Where("specs.revision_id = ?", id)
 	}
 	if id := parent.RevisionID; id == "" { // select latest spec revision
-		op = op.Model(&models.Spec{}).
+		op = op.Select("specs.*").Table("specs").
 			Joins(`join (?) latest
 			ON specs.project_id = latest.project_id
 			AND specs.api_id = latest.api_id
@@ -691,22 +742,53 @@ func (c *Client) ListSpecRevisions(ctx context.Context, parent names.SpecRevisio
 			AND specs.revision_id = latest.revision_id`, c.latestSpecRevisionsQuery(ctx))
 	}
 
+	if order, err := gormOrdering(opts.Order, "specs"); err != nil {
+		return SpecList{}, err
+	} else {
+		op = op.Order(order)
+	}
+
 	response := SpecList{
 		Specs: make([]models.Spec, 0, opts.Size),
 	}
 
-	err = op.Find(&response.Specs).Error
-	if err != nil {
-		return SpecList{}, grpcErrorForDBError(ctx, errors.Wrapf(err, "find %#v", token))
-	}
+	for {
+		var page []models.Spec
+		err := op.Offset(token.Offset).Find(&page).Error
 
-	// Trim the response and return a page token if too many resources were found.
-	if len(response.Specs) > int(opts.Size) {
-		token.Offset += int(opts.Size)
-		response.Specs = response.Specs[:opts.Size]
-		response.Token, err = encodeToken(token)
 		if err != nil {
-			return response, status.Error(codes.Internal, err.Error())
+			return SpecList{}, grpcErrorForDBError(ctx, errors.Wrapf(err, "find %#v", token))
+		} else if len(page) == 0 {
+			break
+		}
+
+		for _, v := range page {
+			m, err := specMap(v)
+			if err != nil {
+				return SpecList{}, status.Error(codes.Internal, err.Error())
+			}
+
+			match, err := filter.Matches(m)
+			if err != nil {
+				return SpecList{}, err
+			} else if !match {
+				token.Offset++
+				continue
+			}
+
+			if len(response.Specs) == int(opts.Size) {
+				response.Token, err = encodeToken(token)
+				if err != nil {
+					return SpecList{}, status.Error(codes.Internal, err.Error())
+				}
+				return response, nil
+			}
+
+			token.Offset++
+			response.Specs = append(response.Specs, v)
+		}
+		if op.RowsAffected < int64(opts.Size) {
+			break
 		}
 	}
 
@@ -752,18 +834,13 @@ func (c *Client) ListDeployments(ctx context.Context, parent names.Api, opts Pag
 		return DeploymentList{}, err
 	}
 
-	// Select all columns from `deployments` table specifically.
-	// We do not want to select duplicates from the joined subquery result.
-	op := c.db.WithContext(ctx).Select("deployments.*").
-		Table("deployments").
-		// Join missing columns that couldn't be selected in the subquery.
-		Joins("JOIN (?) AS grp ON deployments.project_id = grp.project_id AND deployments.api_id = grp.api_id AND deployments.deployment_id = grp.deployment_id AND deployments.revision_create_time = grp.recent_create_time",
-			// Select deployment names and only their most recent revision_create_time
-			// This query cannot select all the columns we want.
-			// See: https://stackoverflow.com/questions/7745609/sql-select-only-rows-with-max-value-on-a-column
-			c.db.WithContext(ctx).Select("project_id, api_id, deployment_id, MAX(revision_create_time) AS recent_create_time").
-				Table("deployments").
-				Group("project_id, api_id, deployment_id")).
+	op := c.db.WithContext(ctx).Select("deployments.*").Table("deployments").
+		// select latest deployment revision
+		Joins(`join (?) latest
+		ON deployments.project_id = latest.project_id
+		AND deployments.api_id = latest.api_id
+		AND deployments.deployment_id = latest.deployment_id
+		AND deployments.revision_id = latest.revision_id`, c.latestDeploymentRevisionsQuery(ctx)).
 		Limit(limit(opts))
 
 	if parent.ProjectID != "-" {
@@ -773,7 +850,7 @@ func (c *Client) ListDeployments(ctx context.Context, parent names.Api, opts Pag
 		op = op.Where("deployments.api_id = ?", parent.ApiID)
 	}
 
-	if order, err := gormOrdering(opts.Order, deploymentFields); err != nil {
+	if order, err := gormOrdering(opts.Order, "deployments"); err != nil {
 		return DeploymentList{}, err
 	} else {
 		op = op.Order(order)
@@ -852,14 +929,25 @@ func deploymentMap(deployment models.Deployment) (map[string]interface{}, error)
 	}, nil
 }
 
-func (c *Client) ListDeploymentRevisions(ctx context.Context, parent names.Deployment, opts PageOptions) (DeploymentList, error) {
+func (c *Client) ListDeploymentRevisions(ctx context.Context, parent names.DeploymentRevision, opts PageOptions) (DeploymentList, error) {
 	token, err := decodeToken(opts.Token)
 	if err != nil {
 		return DeploymentList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
 	}
 
-	if parent.ProjectID != "-" && parent.ApiID != "-" && parent.DeploymentID != "-" {
-		if _, err := c.GetDeployment(ctx, parent); err != nil {
+	if err := token.ValidateFilter(opts.Filter); err != nil {
+		return DeploymentList{}, status.Errorf(codes.InvalidArgument, "invalid filter %q: %s", opts.Filter, err)
+	} else {
+		token.Filter = opts.Filter
+	}
+
+	// Check existence of the deepest fully specified resource in the parent name.
+	if parent.ProjectID != "-" && parent.ApiID != "-" && parent.DeploymentID != "-" && parent.RevisionID != "-" {
+		if _, err := c.GetDeploymentRevision(ctx, parent); err != nil {
+			return DeploymentList{}, err
+		}
+	} else if parent.ProjectID != "-" && parent.ApiID != "-" && parent.DeploymentID != "-" {
+		if _, err := c.GetDeployment(ctx, parent.Deployment()); err != nil {
 			return DeploymentList{}, err
 		}
 	} else if parent.ProjectID != "-" && parent.ApiID != "-" && parent.DeploymentID == "-" {
@@ -872,38 +960,83 @@ func (c *Client) ListDeploymentRevisions(ctx context.Context, parent names.Deplo
 		}
 	}
 
+	filter, err := filtering.NewFilter(opts.Filter, specFields)
+	if err != nil {
+		return DeploymentList{}, err
+	}
+
 	op := c.db.WithContext(ctx).
-		Order("revision_create_time desc").
 		Offset(token.Offset).
 		Limit(int(opts.Size) + 1)
 
 	if id := parent.ProjectID; id != "-" {
-		op = op.Where("project_id = ?", id)
+		op = op.Where("deployments.project_id = ?", id)
 	}
 	if id := parent.ApiID; id != "-" {
-		op = op.Where("api_id = ?", id)
+		op = op.Where("deployments.api_id = ?", id)
 	}
 	if id := parent.DeploymentID; id != "-" {
-		op = op.Where("deployment_id = ?", id)
+		op = op.Where("deployments.deployment_id = ?", id)
+	}
+	if id := parent.RevisionID; id != "-" && id != "" { // select specific spec revision
+		op = op.Where("deployments.revision_id = ?", id)
+	}
+	if id := parent.RevisionID; id == "" { // select latest spec revision
+		op = op.Select("deployments.*").Table("deployments").
+			Joins(`join (?) latest
+			ON deployments.project_id = latest.project_id
+			AND deployments.api_id = latest.api_id
+			AND deployments.deployment_id = latest.deployment_id
+			AND deployments.revision_id = latest.revision_id`, c.latestDeploymentRevisionsQuery(ctx))
+	}
+
+	if order, err := gormOrdering(opts.Order, "deployments"); err != nil {
+		return DeploymentList{}, err
+	} else {
+		op = op.Order(order)
 	}
 
 	response := DeploymentList{
 		Deployments: make([]models.Deployment, 0, opts.Size),
 	}
 
-	err = op.Find(&response.Deployments).Error
+	for {
+		var page []models.Deployment
+		err := op.Offset(token.Offset).Find(&page).Error
 
-	if err != nil {
-		return DeploymentList{}, grpcErrorForDBError(ctx, errors.Wrapf(err, "find %#v", token))
-	}
-
-	// Trim the response and return a page token if too many resources were found.
-	if len(response.Deployments) > int(opts.Size) {
-		token.Offset += int(opts.Size)
-		response.Deployments = response.Deployments[:opts.Size]
-		response.Token, err = encodeToken(token)
 		if err != nil {
-			return response, status.Error(codes.Internal, err.Error())
+			return DeploymentList{}, grpcErrorForDBError(ctx, errors.Wrapf(err, "find %#v", token))
+		} else if len(page) == 0 {
+			break
+		}
+
+		for _, v := range page {
+			m, err := deploymentMap(v)
+			if err != nil {
+				return DeploymentList{}, status.Error(codes.Internal, err.Error())
+			}
+
+			match, err := filter.Matches(m)
+			if err != nil {
+				return DeploymentList{}, err
+			} else if !match {
+				token.Offset++
+				continue
+			}
+
+			if len(response.Deployments) == int(opts.Size) {
+				response.Token, err = encodeToken(token)
+				if err != nil {
+					return DeploymentList{}, status.Error(codes.Internal, err.Error())
+				}
+				return response, nil
+			}
+
+			token.Offset++
+			response.Deployments = append(response.Deployments, v)
+		}
+		if op.RowsAffected < int64(opts.Size) {
+			break
 		}
 	}
 
@@ -954,8 +1087,9 @@ func (c *Client) ListSpecRevisionArtifacts(ctx context.Context, parent names.Spe
 	if id := parent.RevisionID; id != "-" && id != "" { // select specific spec revision
 		op = op.Where("artifacts.revision_id = ?", id)
 	}
+	orderTable := "artifacts"
 	if id := parent.RevisionID; id == "" { // select latest spec revision
-		op = op.Model(&models.Artifact{}).
+		op = op.Select("artifacts.*,revision_create_time").Table("artifacts").
 			Where(`artifacts.deployment_id = ''`).
 			Joins(`join (?) latest
 			ON artifacts.project_id = latest.project_id
@@ -963,6 +1097,13 @@ func (c *Client) ListSpecRevisionArtifacts(ctx context.Context, parent names.Spe
 			AND artifacts.version_id = latest.version_id
 			AND artifacts.spec_id = latest.spec_id
 			AND artifacts.revision_id = latest.revision_id`, c.latestSpecRevisionsQuery(ctx))
+		orderTable = "revisioned_artifacts"
+	}
+
+	if order, err := gormOrdering(opts.Order, orderTable); err != nil {
+		return ArtifactList{}, err
+	} else {
+		op = op.Order(order)
 	}
 
 	return c.listArtifacts(ctx, op, opts, func(a *models.Artifact) bool {
@@ -1032,12 +1173,22 @@ func (c *Client) ListVersionArtifacts(ctx context.Context, parent names.Version,
 		op = op.Where("version_id = ?", id)
 	}
 
+	if order, err := gormOrdering(opts.Order, "artifacts"); err != nil {
+		return ArtifactList{}, err
+	} else {
+		op = op.Order(order)
+	}
+
 	return c.listArtifacts(ctx, op, opts, func(a *models.Artifact) bool {
 		return a.ProjectID != "" && a.ApiID != "" && a.VersionID != ""
 	})
 }
 
 func (c *Client) ListDeploymentArtifacts(ctx context.Context, parent names.Deployment, opts PageOptions) (ArtifactList, error) {
+	return c.ListDeploymentRevisionArtifacts(ctx, parent.Revision(""), opts)
+}
+
+func (c *Client) ListDeploymentRevisionArtifacts(ctx context.Context, parent names.DeploymentRevision, opts PageOptions) (ArtifactList, error) {
 	token, err := decodeToken(opts.Token)
 	if err != nil {
 		return ArtifactList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
@@ -1055,36 +1206,56 @@ func (c *Client) ListDeploymentArtifacts(ctx context.Context, parent names.Deplo
 		token.Order = opts.Order
 	}
 
-	if parent.ProjectID != "-" && parent.ApiID != "-" && parent.DeploymentID != "-" {
-		if _, err := c.GetDeployment(ctx, parent); err != nil {
-			return ArtifactList{}, err
-		}
-	} else if parent.ProjectID != "-" && parent.ApiID != "-" && parent.DeploymentID == "-" {
-		if _, err := c.GetApi(ctx, parent.Api()); err != nil {
-			return ArtifactList{}, err
-		}
-	} else if parent.ProjectID != "-" && parent.ApiID == "-" && parent.DeploymentID == "-" {
-		if _, err := c.GetProject(ctx, parent.Project()); err != nil {
-			return ArtifactList{}, err
-		}
-	}
-
-	op := c.db.WithContext(ctx).
-		Where(`version_id = ''`).
-		Where(`spec_id = ''`)
+	op := c.db.WithContext(ctx)
 	if id := parent.ProjectID; id != "-" {
-		op = op.Where("project_id = ?", id)
+		op.Where("artifacts.project_id = ?", id)
 	}
 	if id := parent.ApiID; id != "-" {
-		op = op.Where("api_id = ?", id)
+		op = op.Where("artifacts.api_id = ?", id)
 	}
 	if id := parent.DeploymentID; id != "-" {
-		op = op.Where("deployment_id = ?", id)
+		op = op.Where("artifacts.deployment_id = ?", id)
+	}
+	if id := parent.RevisionID; id != "-" && id != "" { // select specific deployment revision
+		op = op.Where("artifacts.revision_id = ?", id)
+	}
+	orderTable := "artifacts"
+	if id := parent.RevisionID; id == "" { // select latest deployment revision
+		op = op.Select("artifacts.*,revision_create_time").Table("artifacts").
+			Where(`artifacts.spec_id = ''`).
+			Joins(`join (?) latest
+			ON artifacts.project_id = latest.project_id
+			AND artifacts.api_id = latest.api_id
+			AND artifacts.deployment_id = latest.deployment_id
+			AND artifacts.revision_id = latest.revision_id`, c.latestDeploymentRevisionsQuery(ctx))
+		orderTable = "revisioned_artifacts"
+	}
+
+	if order, err := gormOrdering(opts.Order, orderTable); err != nil {
+		return ArtifactList{}, err
+	} else {
+		op = op.Order(order)
 	}
 
 	return c.listArtifacts(ctx, op, opts, func(a *models.Artifact) bool {
-		return a.ProjectID != "" && a.ApiID != "" && a.DeploymentID != ""
+		return a.ProjectID != "" && a.ApiID != "" && a.DeploymentID != "" && a.RevisionID != ""
 	})
+}
+
+// This query only returns the most recent revision rows for each unique deployment from the
+// deployment table. Additional criteria may be added to restrict this query further and it
+// may be joined with dependant tables (eg. artifacts, blobs) to ensure that only the
+// rows in those tables that are associated with the more recent deployment revision are matched.
+func (c *Client) latestDeploymentRevisionsQuery(ctx context.Context) *gorm.DB {
+	return c.db.WithContext(ctx).
+		Table("deployments d").
+		Select("d.*").
+		Joins(`LEFT JOIN deployments d2
+		ON d.project_id = d2.project_id
+		AND d.api_id = d2.api_id
+		AND d.deployment_id = d2.deployment_id
+		AND d.revision_create_time < d2.revision_create_time`).
+		Where("d2.key IS NULL")
 }
 
 func (c *Client) ListApiArtifacts(ctx context.Context, parent names.Api, opts PageOptions) (ArtifactList, error) {
@@ -1119,11 +1290,18 @@ func (c *Client) ListApiArtifacts(ctx context.Context, parent names.Api, opts Pa
 		Where(`deployment_id = ''`).
 		Where(`version_id = ''`).
 		Where(`spec_id = ''`)
+
 	if id := parent.ProjectID; id != "-" {
 		op = op.Where("project_id = ?", id)
 	}
 	if id := parent.ApiID; id != "-" {
 		op = op.Where("api_id = ?", id)
+	}
+
+	if order, err := gormOrdering(opts.Order, "artifacts"); err != nil {
+		return ArtifactList{}, err
+	} else {
+		op = op.Order(order)
 	}
 
 	return c.listArtifacts(ctx, op, opts, func(a *models.Artifact) bool {
@@ -1154,11 +1332,18 @@ func (c *Client) ListProjectArtifacts(ctx context.Context, parent names.Project,
 		Where(`deployment_id = ''`).
 		Where(`version_id = ''`).
 		Where(`spec_id = ''`)
+
 	if id := parent.ProjectID; id != "-" {
 		op = op.Where("project_id = ?", id)
 		if _, err := c.GetProject(ctx, parent); err != nil {
 			return ArtifactList{}, err
 		}
+	}
+
+	if order, err := gormOrdering(opts.Order, "artifacts"); err != nil {
+		return ArtifactList{}, err
+	} else {
+		op = op.Order(order)
 	}
 
 	return c.listArtifacts(ctx, op, opts, func(a *models.Artifact) bool {
@@ -1179,19 +1364,13 @@ func (c *Client) listArtifacts(ctx context.Context, op *gorm.DB, opts PageOption
 		return ArtifactList{}, err
 	}
 
-	if order, err := gormOrdering(opts.Order, artifactFields); err != nil {
-		return ArtifactList{}, err
-	} else {
-		op = op.Order("artifacts." + order)
-	}
-
 	response := ArtifactList{
 		Artifacts: make([]models.Artifact, 0, opts.Size),
 	}
 
 	for {
 		var page []models.Artifact
-		op = op.Order("artifacts.key").Limit(limit(opts))
+		op.Limit(limit(opts))
 		err := op.Offset(token.Offset).Find(&page).Error
 
 		if err != nil {

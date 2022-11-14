@@ -21,6 +21,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/test/seeder"
@@ -1479,6 +1480,94 @@ func TestUpdateApiSpecResponseCodes(t *testing.T) {
 
 			if _, err := server.UpdateApiSpec(ctx, test.req); status.Code(err) != test.want {
 				t.Errorf("UpdateApiSpec(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
+			}
+		})
+	}
+}
+
+func TestUpdateApiSpecSequence(t *testing.T) {
+	tests := []struct {
+		desc string
+		req  *rpc.UpdateApiSpecRequest
+		want codes.Code
+	}{
+		{
+			desc: "create using update with allow_missing=false",
+			req: &rpc.UpdateApiSpecRequest{
+				ApiSpec: &rpc.ApiSpec{
+					Name: "projects/my-project/locations/global/apis/a/versions/v/specs/s",
+				},
+				AllowMissing: false,
+			},
+			want: codes.NotFound,
+		},
+		{
+			desc: "create using update with allow_missing=true",
+			req: &rpc.UpdateApiSpecRequest{
+				ApiSpec: &rpc.ApiSpec{
+					Name: "projects/my-project/locations/global/apis/a/versions/v/specs/s",
+				},
+				AllowMissing: true,
+			},
+			want: codes.OK,
+		},
+		{
+			desc: "update existing resource with allow_missing=true",
+			req: &rpc.UpdateApiSpecRequest{
+				ApiSpec: &rpc.ApiSpec{
+					Name: "projects/my-project/locations/global/apis/a/versions/v/specs/s",
+				},
+				AllowMissing: true,
+			},
+			want: codes.OK,
+		},
+		{
+			desc: "update existing resource with allow_missing=false",
+			req: &rpc.UpdateApiSpecRequest{
+				ApiSpec: &rpc.ApiSpec{
+					Name: "projects/my-project/locations/global/apis/a/versions/v/specs/s",
+				},
+				AllowMissing: false,
+			},
+			want: codes.OK,
+		},
+	}
+	ctx := context.Background()
+	server := defaultTestServer(t)
+	seed := &rpc.ApiVersion{Name: "projects/my-project/locations/global/apis/a/versions/v"}
+	if err := seeder.SeedVersions(ctx, server, seed); err != nil {
+		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+	}
+	var createTime time.Time
+	var revisionCreateTime time.Time
+	var revisionUpdateTime time.Time
+	// NOTE: in the following sequence of tests, each test depends on its predecessor.
+	// Resources are successively created and updated using the "Update" RPC and the
+	// tests verify that CreateTime/UpdateTime fields are modified appropriately.
+	for i, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			var result *rpc.ApiSpec
+			var err error
+			if result, err = server.UpdateApiSpec(ctx, test.req); status.Code(err) != test.want {
+				t.Errorf("UpdateApiSpec(%+v) returned status code %q, want %q: %v", test.req, status.Code(err), test.want, err)
+			}
+			if result != nil {
+				if i == 1 {
+					createTime = result.CreateTime.AsTime()
+					revisionCreateTime = result.RevisionCreateTime.AsTime()
+					revisionUpdateTime = result.RevisionUpdateTime.AsTime()
+				} else {
+					if !createTime.Equal(result.CreateTime.AsTime()) {
+						t.Errorf("UpdateApiSpec create time changed after update (%v %v)", createTime, result.CreateTime.AsTime())
+					}
+					if !revisionCreateTime.Equal(result.RevisionCreateTime.AsTime()) {
+						t.Errorf("UpdateApiSpec revision create time changed after update (%v %v)", revisionCreateTime, result.RevisionCreateTime.AsTime())
+					}
+					if !revisionUpdateTime.Before(result.RevisionUpdateTime.AsTime()) {
+						t.Errorf("UpdateApiSpec update time did not increase after update (%v %v)", revisionUpdateTime, result.RevisionUpdateTime.AsTime())
+					}
+					revisionUpdateTime = result.RevisionUpdateTime.AsTime()
+				}
 			}
 		})
 	}
