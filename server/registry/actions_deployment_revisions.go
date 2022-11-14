@@ -40,14 +40,16 @@ func (s *RegistryServer) ListApiDeploymentRevisions(ctx context.Context, req *rp
 		req.PageSize = 50
 	}
 
-	parent, err := names.ParseDeployment(req.GetName())
+	parent, err := names.ParseDeploymentRevision(req.GetName())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	listing, err := db.ListDeploymentRevisions(ctx, parent, storage.PageOptions{
-		Size:  req.GetPageSize(),
-		Token: req.GetPageToken(),
+		Size:   req.GetPageSize(),
+		Token:  req.GetPageToken(),
+		Filter: req.GetFilter(),
+		Order:  req.GetOrderBy(),
 	})
 	if err != nil {
 		return nil, err
