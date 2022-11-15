@@ -136,6 +136,13 @@ message ApiVersion {
   // should be generally used for small values of broad interest. Larger, topic-
   // specific metadata should be stored in Artifacts.
   map<string, string> annotations = 8;
+
+  // The primary spec for this version.
+  // Format: specs/{spec}
+  string primary_spec = 9 [(google.api.resource_reference) = {
+                            type: "apigeeregistry.googleapis.com/ApiSpec"
+                          }];
+
 }
 
 // An ApiSpec describes a version of an API in a structured way.
