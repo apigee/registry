@@ -227,8 +227,8 @@ type ApiVersion struct {
 	// should be generally used for small values of broad interest. Larger, topic-
 	// specific metadata should be stored in Artifacts.
 	Annotations map[string]string `protobuf:"bytes,8,rep,name=annotations,proto3" json:"annotations,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	// The resource name of the API Spec that is primary for this version.
-	// Format: specs/{spec}
+	// The primary spec for this version.
+	// Format: projects/{project}/locations/{location}/apis/{api}/versions/{version}/specs/{spec}
 	PrimarySpec string `protobuf:"bytes,9,opt,name=primary_spec,json=primarySpec,proto3" json:"primary_spec,omitempty"`
 }
 

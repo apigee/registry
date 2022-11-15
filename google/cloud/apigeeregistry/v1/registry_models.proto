@@ -138,7 +138,7 @@ message ApiVersion {
   map<string, string> annotations = 8;
 
   // The primary spec for this version.
-  // Format: specs/{spec}
+  // Format: projects/{project}/locations/{location}/apis/{api}/versions/{version}/specs/{spec}
   string primary_spec = 9 [(google.api.resource_reference) = {
                             type: "apigeeregistry.googleapis.com/ApiSpec"
                           }];
