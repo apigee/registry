@@ -130,6 +130,7 @@ var artifactFields = map[string]filtering.FieldType{
 	"update_time":   filtering.Timestamp,
 	"mime_type":     filtering.String,
 	"size_bytes":    filtering.Int,
+	"labels":        filtering.StringMap,
 }
 
 var revisionedArtifactFields = map[string]filtering.FieldType{
