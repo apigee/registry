@@ -160,7 +160,6 @@ func (s *RegistryServer) GetArtifact(ctx context.Context, req *rpc.GetArtifactRe
 	}
 
 	return message, nil
-
 }
 
 // GetArtifactContents handles the corresponding API request.
