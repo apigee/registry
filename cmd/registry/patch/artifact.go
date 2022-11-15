@@ -145,7 +145,9 @@ func newArtifact(message *rpc.Artifact) (*models.Artifact, error) {
 			ApiVersion: RegistryV1,
 			Kind:       kindForMimeType(message.MimeType),
 			Metadata: models.Metadata{
-				Name: artifactName.ArtifactID(),
+				Name:        artifactName.ArtifactID(),
+				Labels:      message.Labels,
+				Annotations: message.Annotations,
 			},
 		},
 		Data: *node,
@@ -198,9 +200,11 @@ func applyArtifactPatch(ctx context.Context, client connection.RegistryClient, c
 		return err
 	}
 	artifact := &rpc.Artifact{
-		Name:     name.String(),
-		MimeType: MimeTypeForKind(content.Kind),
-		Contents: bytes,
+		Name:        name.String(),
+		MimeType:    MimeTypeForKind(content.Kind),
+		Contents:    bytes,
+		Labels:      content.Metadata.Labels,
+		Annotations: content.Metadata.Annotations,
 	}
 	req := &rpc.CreateArtifactRequest{
 		Parent:     name.Parent(),

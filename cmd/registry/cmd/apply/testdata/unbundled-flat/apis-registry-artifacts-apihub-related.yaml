@@ -3,6 +3,10 @@ kind: ReferenceList
 metadata:
   name: apihub-related
   parent: apis/registry
+  labels:
+    label1: label
+  annotations:
+    annotation1: annotation
 data:
   displayName: ""
   description: Defines a list of related resources
