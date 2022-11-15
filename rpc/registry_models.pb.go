@@ -559,7 +559,7 @@ type ApiDeployment struct {
 	RevisionUpdateTime *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=revision_update_time,json=revisionUpdateTime,proto3" json:"revision_update_time,omitempty"`
 	// The full resource name (including revision id) of the spec of the API being
 	// served by the deployment. Changes to this value will update the revision.
-	// Format: apis/{api}/deployments/{deployment}
+	// Format: projects/{project}/locations/{location}/apis/{api}/versions/{version}/specs/{spec@revision}
 	ApiSpecRevision string `protobuf:"bytes,8,opt,name=api_spec_revision,json=apiSpecRevision,proto3" json:"api_spec_revision,omitempty"`
 	// The address where the deployment is serving. Changes to this value will
 	// update the revision.

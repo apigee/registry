@@ -278,7 +278,7 @@ message ApiDeployment {
 
   // The full resource name (including revision id) of the spec of the API being
   // served by the deployment. Changes to this value will update the revision.
-  // Format: apis/{api}/deployments/{deployment}
+  // Format: projects/{project}/locations/{location}/apis/{api}/versions/{version}/specs/{spec@revision}
   string api_spec_revision = 8 [(google.api.resource_reference) = {
                                   type: "apigeeregistry.googleapis.com/ApiSpec"
                                 }];
