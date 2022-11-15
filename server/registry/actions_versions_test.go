@@ -49,6 +49,7 @@ func TestCreateApiVersion(t *testing.T) {
 					DisplayName: "My Display Name",
 					Description: "My Description",
 					State:       "My State",
+					PrimarySpec: "specs/my spec",
 					Labels: map[string]string{
 						"label-key": "label-value",
 					},
@@ -62,6 +63,7 @@ func TestCreateApiVersion(t *testing.T) {
 				DisplayName: "My Display Name",
 				Description: "My Description",
 				State:       "My State",
+				PrimarySpec: "specs/my spec",
 				Labels: map[string]string{
 					"label-key": "label-value",
 				},

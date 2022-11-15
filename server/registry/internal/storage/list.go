@@ -81,6 +81,7 @@ var versionFields = map[string]filtering.FieldType{
 	"update_time":  filtering.Timestamp,
 	"state":        filtering.String,
 	"labels":       filtering.StringMap,
+	"primary_spec": filtering.String,
 }
 
 var specFields = map[string]filtering.FieldType{
@@ -529,6 +530,7 @@ func versionMap(version models.Version) (map[string]interface{}, error) {
 		"update_time":  version.UpdateTime,
 		"state":        version.State,
 		"labels":       labels,
+		"primary_spec": version.PrimarySpec,
 	}, nil
 }
 
