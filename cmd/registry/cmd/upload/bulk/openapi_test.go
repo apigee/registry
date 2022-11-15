@@ -111,3 +111,39 @@ func TestOpenAPI(t *testing.T) {
 		t.Fatalf("Failed to delete test project: %s", err)
 	}
 }
+
+func TestOpenAPIMissingParent(t *testing.T) {
+	const (
+		projectID   = "missing"
+		projectName = "projects/" + projectID
+		parent      = projectName + "/locations/global"
+	)
+	tests := []struct {
+		desc string
+		args []string
+	}{
+		{
+			desc: "parent",
+			args: []string{"openapi", "nonexistent-specs-dir", "--parent", parent},
+		},
+		{
+			desc: "project-id",
+			args: []string{"openapi", "nonexistent-specs-dir", "--project-id", projectID},
+		},
+		{
+			desc: "unspecified",
+			args: []string{"openapi", "nonexistent-specs-dir"},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			cmd := Command()
+			cmd.SilenceUsage = true
+			cmd.SilenceErrors = true
+			cmd.SetArgs(test.args)
+			if cmd.Execute() == nil {
+				t.Error("expected error, none reported")
+			}
+		})
+	}
+}

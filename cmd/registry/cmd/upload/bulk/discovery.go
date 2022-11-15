@@ -35,17 +35,19 @@ func discoveryCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "discovery",
 		Short: "Bulk-upload API Discovery documents from the Google API Discovery service",
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 			parent, err := getParent(cmd)
 			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to identify parent project")
+				return fmt.Errorf("failed to identify parent project (%s)", err)
 			}
 			client, err := connection.NewRegistryClient(ctx)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
 			}
-
+			if err := core.VerifyLocation(ctx, client, parent); err != nil {
+				return fmt.Errorf("parent does not exist (%s)", err)
+			}
 			// create a queue for upload tasks and wait for the workers to finish after filling it.
 			jobs, err := cmd.Flags().GetInt("jobs")
 			if err != nil {
@@ -70,6 +72,7 @@ func discoveryCommand() *cobra.Command {
 					specID:    "discovery.json",
 				}
 			}
+			return nil
 		},
 	}
 
