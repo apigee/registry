@@ -51,6 +51,12 @@ func TestCreateArtifact(t *testing.T) {
 					SizeBytes: int32(len(artifactContents)),
 					Hash:      sha256hash(artifactContents),
 					Contents:  artifactContents,
+					Labels: map[string]string{
+						"label-key": "label-value",
+					},
+					Annotations: map[string]string{
+						"annotation-key": "annotation-value",
+					},
 				},
 			},
 			want: &rpc.Artifact{
@@ -58,6 +64,12 @@ func TestCreateArtifact(t *testing.T) {
 				MimeType:  "application/json",
 				SizeBytes: int32(len(artifactContents)),
 				Hash:      sha256hash(artifactContents),
+				Labels: map[string]string{
+					"label-key": "label-value",
+				},
+				Annotations: map[string]string{
+					"annotation-key": "annotation-value",
+				},
 			},
 		},
 		{
@@ -71,6 +83,12 @@ func TestCreateArtifact(t *testing.T) {
 					SizeBytes: int32(len(artifactContents)),
 					Hash:      sha256hash(artifactContents),
 					Contents:  artifactContents,
+					Labels: map[string]string{
+						"label-key": "label-value",
+					},
+					Annotations: map[string]string{
+						"annotation-key": "annotation-value",
+					},
 				},
 			},
 			want: &rpc.Artifact{
@@ -78,6 +96,12 @@ func TestCreateArtifact(t *testing.T) {
 				MimeType:  "application/json",
 				SizeBytes: int32(len(artifactContents)),
 				Hash:      sha256hash(artifactContents),
+				Labels: map[string]string{
+					"label-key": "label-value",
+				},
+				Annotations: map[string]string{
+					"annotation-key": "annotation-value",
+				},
 			},
 		},
 		{
@@ -91,6 +115,12 @@ func TestCreateArtifact(t *testing.T) {
 					SizeBytes: int32(len(artifactContents)),
 					Hash:      sha256hash(artifactContents),
 					Contents:  artifactContents,
+					Labels: map[string]string{
+						"label-key": "label-value",
+					},
+					Annotations: map[string]string{
+						"annotation-key": "annotation-value",
+					},
 				},
 			},
 			want: &rpc.Artifact{
@@ -98,6 +128,12 @@ func TestCreateArtifact(t *testing.T) {
 				MimeType:  "application/json",
 				SizeBytes: int32(len(artifactContents)),
 				Hash:      sha256hash(artifactContents),
+				Labels: map[string]string{
+					"label-key": "label-value",
+				},
+				Annotations: map[string]string{
+					"annotation-key": "annotation-value",
+				},
 			},
 		},
 	}
