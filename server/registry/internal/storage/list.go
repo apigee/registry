@@ -986,7 +986,7 @@ func (c *Client) ListSpecRevisionArtifacts(ctx context.Context, parent names.Spe
 
 	op := c.db.WithContext(ctx)
 	if id := parent.ProjectID; id != "-" {
-		op.Where("artifacts.project_id = ?", id)
+		op = op.Where("artifacts.project_id = ?", id)
 	}
 	if id := parent.ApiID; id != "-" {
 		op = op.Where("artifacts.api_id = ?", id)
@@ -1121,7 +1121,7 @@ func (c *Client) ListDeploymentRevisionArtifacts(ctx context.Context, parent nam
 
 	op := c.db.WithContext(ctx)
 	if id := parent.ProjectID; id != "-" {
-		op.Where("artifacts.project_id = ?", id)
+		op = op.Where("artifacts.project_id = ?", id)
 	}
 	if id := parent.ApiID; id != "-" {
 		op = op.Where("artifacts.api_id = ?", id)
