@@ -36,6 +36,7 @@ type Version struct {
 	State        string    // Lifecycle stage.
 	Labels       []byte    // Serialized labels.
 	Annotations  []byte    // Serialized annotations.
+	PrimarySpec  string    // Primary Spec for this version.
 	ParentApiKey string
 	ParentApi    *Api `gorm:"foreignKey:ParentApiKey;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 }
@@ -50,6 +51,7 @@ func NewVersion(name names.Version, body *rpc.ApiVersion) (version *Version, err
 		Description:  body.GetDescription(),
 		DisplayName:  body.GetDisplayName(),
 		State:        body.GetState(),
+		PrimarySpec:  body.GetPrimarySpec(),
 		CreateTime:   now,
 		UpdateTime:   now,
 		ParentApiKey: name.Api().String(),
@@ -84,6 +86,7 @@ func (v *Version) Message() (message *rpc.ApiVersion, err error) {
 		DisplayName: v.DisplayName,
 		Description: v.Description,
 		State:       v.State,
+		PrimarySpec: v.PrimarySpec,
 		CreateTime:  timestamppb.New(v.CreateTime),
 		UpdateTime:  timestamppb.New(v.UpdateTime),
 	}
@@ -112,6 +115,8 @@ func (v *Version) Update(message *rpc.ApiVersion, mask *fieldmaskpb.FieldMask) e
 			v.Description = message.GetDescription()
 		case "state":
 			v.State = message.GetState()
+		case "primary_spec":
+			v.PrimarySpec = message.GetPrimarySpec()
 		case "labels":
 			var err error
 			if v.Labels, err = bytesForMap(message.GetLabels()); err != nil {

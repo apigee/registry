@@ -81,6 +81,7 @@ var versionFields = map[string]filtering.FieldType{
 	"update_time":  filtering.Timestamp,
 	"state":        filtering.String,
 	"labels":       filtering.StringMap,
+	"primary_spec": filtering.String,
 }
 
 var specFields = map[string]filtering.FieldType{
@@ -130,6 +131,7 @@ var artifactFields = map[string]filtering.FieldType{
 	"update_time":   filtering.Timestamp,
 	"mime_type":     filtering.String,
 	"size_bytes":    filtering.Int,
+	"labels":        filtering.StringMap,
 }
 
 var revisionedArtifactFields = map[string]filtering.FieldType{
@@ -528,6 +530,7 @@ func versionMap(version models.Version) (map[string]interface{}, error) {
 		"update_time":  version.UpdateTime,
 		"state":        version.State,
 		"labels":       labels,
+		"primary_spec": version.PrimarySpec,
 	}, nil
 }
 
@@ -679,6 +682,12 @@ func (c *Client) ListSpecRevisions(ctx context.Context, parent names.SpecRevisio
 		return SpecList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
 	}
 
+	if err := token.ValidateFilter(opts.Filter); err != nil {
+		return SpecList{}, status.Errorf(codes.InvalidArgument, "invalid filter %q: %s", opts.Filter, err)
+	} else {
+		token.Filter = opts.Filter
+	}
+
 	// Check existence of the deepest fully specified resource in the parent name.
 	if parent.ProjectID != "-" && parent.ApiID != "-" && parent.VersionID != "-" && parent.SpecID != "-" && parent.RevisionID != "-" {
 		if _, err := c.GetSpecRevision(ctx, parent); err != nil {
@@ -700,6 +709,11 @@ func (c *Client) ListSpecRevisions(ctx context.Context, parent names.SpecRevisio
 		if _, err := c.GetProject(ctx, parent.Project()); err != nil {
 			return SpecList{}, err
 		}
+	}
+
+	filter, err := filtering.NewFilter(opts.Filter, specFields)
+	if err != nil {
+		return SpecList{}, err
 	}
 
 	op := c.db.WithContext(ctx).
@@ -741,18 +755,43 @@ func (c *Client) ListSpecRevisions(ctx context.Context, parent names.SpecRevisio
 		Specs: make([]models.Spec, 0, opts.Size),
 	}
 
-	err = op.Find(&response.Specs).Error
-	if err != nil {
-		return SpecList{}, grpcErrorForDBError(ctx, errors.Wrapf(err, "find %#v", token))
-	}
+	for {
+		var page []models.Spec
+		err := op.Offset(token.Offset).Find(&page).Error
 
-	// Trim the response and return a page token if too many resources were found.
-	if len(response.Specs) > int(opts.Size) {
-		token.Offset += int(opts.Size)
-		response.Specs = response.Specs[:opts.Size]
-		response.Token, err = encodeToken(token)
 		if err != nil {
-			return response, status.Error(codes.Internal, err.Error())
+			return SpecList{}, grpcErrorForDBError(ctx, errors.Wrapf(err, "find %#v", token))
+		} else if len(page) == 0 {
+			break
+		}
+
+		for _, v := range page {
+			m, err := specMap(v)
+			if err != nil {
+				return SpecList{}, status.Error(codes.Internal, err.Error())
+			}
+
+			match, err := filter.Matches(m)
+			if err != nil {
+				return SpecList{}, err
+			} else if !match {
+				token.Offset++
+				continue
+			}
+
+			if len(response.Specs) == int(opts.Size) {
+				response.Token, err = encodeToken(token)
+				if err != nil {
+					return SpecList{}, status.Error(codes.Internal, err.Error())
+				}
+				return response, nil
+			}
+
+			token.Offset++
+			response.Specs = append(response.Specs, v)
+		}
+		if op.RowsAffected < int64(opts.Size) {
+			break
 		}
 	}
 
@@ -893,14 +932,25 @@ func deploymentMap(deployment models.Deployment) (map[string]interface{}, error)
 	}, nil
 }
 
-func (c *Client) ListDeploymentRevisions(ctx context.Context, parent names.Deployment, opts PageOptions) (DeploymentList, error) {
+func (c *Client) ListDeploymentRevisions(ctx context.Context, parent names.DeploymentRevision, opts PageOptions) (DeploymentList, error) {
 	token, err := decodeToken(opts.Token)
 	if err != nil {
 		return DeploymentList{}, status.Errorf(codes.InvalidArgument, "invalid page token %q: %s", opts.Token, err.Error())
 	}
 
-	if parent.ProjectID != "-" && parent.ApiID != "-" && parent.DeploymentID != "-" {
-		if _, err := c.GetDeployment(ctx, parent); err != nil {
+	if err := token.ValidateFilter(opts.Filter); err != nil {
+		return DeploymentList{}, status.Errorf(codes.InvalidArgument, "invalid filter %q: %s", opts.Filter, err)
+	} else {
+		token.Filter = opts.Filter
+	}
+
+	// Check existence of the deepest fully specified resource in the parent name.
+	if parent.ProjectID != "-" && parent.ApiID != "-" && parent.DeploymentID != "-" && parent.RevisionID != "-" {
+		if _, err := c.GetDeploymentRevision(ctx, parent); err != nil {
+			return DeploymentList{}, err
+		}
+	} else if parent.ProjectID != "-" && parent.ApiID != "-" && parent.DeploymentID != "-" {
+		if _, err := c.GetDeployment(ctx, parent.Deployment()); err != nil {
 			return DeploymentList{}, err
 		}
 	} else if parent.ProjectID != "-" && parent.ApiID != "-" && parent.DeploymentID == "-" {
@@ -913,18 +963,34 @@ func (c *Client) ListDeploymentRevisions(ctx context.Context, parent names.Deplo
 		}
 	}
 
+	filter, err := filtering.NewFilter(opts.Filter, specFields)
+	if err != nil {
+		return DeploymentList{}, err
+	}
+
 	op := c.db.WithContext(ctx).
 		Offset(token.Offset).
 		Limit(int(opts.Size) + 1)
 
 	if id := parent.ProjectID; id != "-" {
-		op = op.Where("project_id = ?", id)
+		op = op.Where("deployments.project_id = ?", id)
 	}
 	if id := parent.ApiID; id != "-" {
-		op = op.Where("api_id = ?", id)
+		op = op.Where("deployments.api_id = ?", id)
 	}
 	if id := parent.DeploymentID; id != "-" {
-		op = op.Where("deployment_id = ?", id)
+		op = op.Where("deployments.deployment_id = ?", id)
+	}
+	if id := parent.RevisionID; id != "-" && id != "" { // select specific spec revision
+		op = op.Where("deployments.revision_id = ?", id)
+	}
+	if id := parent.RevisionID; id == "" { // select latest spec revision
+		op = op.Select("deployments.*").Table("deployments").
+			Joins(`join (?) latest
+			ON deployments.project_id = latest.project_id
+			AND deployments.api_id = latest.api_id
+			AND deployments.deployment_id = latest.deployment_id
+			AND deployments.revision_id = latest.revision_id`, c.latestDeploymentRevisionsQuery(ctx))
 	}
 
 	if order, err := gormOrdering(opts.Order, "deployments"); err != nil {
@@ -937,19 +1003,43 @@ func (c *Client) ListDeploymentRevisions(ctx context.Context, parent names.Deplo
 		Deployments: make([]models.Deployment, 0, opts.Size),
 	}
 
-	err = op.Find(&response.Deployments).Error
+	for {
+		var page []models.Deployment
+		err := op.Offset(token.Offset).Find(&page).Error
 
-	if err != nil {
-		return DeploymentList{}, grpcErrorForDBError(ctx, errors.Wrapf(err, "find %#v", token))
-	}
-
-	// Trim the response and return a page token if too many resources were found.
-	if len(response.Deployments) > int(opts.Size) {
-		token.Offset += int(opts.Size)
-		response.Deployments = response.Deployments[:opts.Size]
-		response.Token, err = encodeToken(token)
 		if err != nil {
-			return response, status.Error(codes.Internal, err.Error())
+			return DeploymentList{}, grpcErrorForDBError(ctx, errors.Wrapf(err, "find %#v", token))
+		} else if len(page) == 0 {
+			break
+		}
+
+		for _, v := range page {
+			m, err := deploymentMap(v)
+			if err != nil {
+				return DeploymentList{}, status.Error(codes.Internal, err.Error())
+			}
+
+			match, err := filter.Matches(m)
+			if err != nil {
+				return DeploymentList{}, err
+			} else if !match {
+				token.Offset++
+				continue
+			}
+
+			if len(response.Deployments) == int(opts.Size) {
+				response.Token, err = encodeToken(token)
+				if err != nil {
+					return DeploymentList{}, status.Error(codes.Internal, err.Error())
+				}
+				return response, nil
+			}
+
+			token.Offset++
+			response.Deployments = append(response.Deployments, v)
+		}
+		if op.RowsAffected < int64(opts.Size) {
+			break
 		}
 	}
 

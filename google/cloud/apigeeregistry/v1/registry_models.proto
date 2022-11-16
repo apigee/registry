@@ -136,6 +136,13 @@ message ApiVersion {
   // should be generally used for small values of broad interest. Larger, topic-
   // specific metadata should be stored in Artifacts.
   map<string, string> annotations = 8;
+
+  // The primary spec for this version.
+  // Format: projects/{project}/locations/{location}/apis/{api}/versions/{version}/specs/{spec}
+  string primary_spec = 9 [(google.api.resource_reference) = {
+                            type: "apigeeregistry.googleapis.com/ApiSpec"
+                          }];
+
 }
 
 // An ApiSpec describes a version of an API in a structured way.
@@ -271,7 +278,7 @@ message ApiDeployment {
 
   // The full resource name (including revision id) of the spec of the API being
   // served by the deployment. Changes to this value will update the revision.
-  // Format: apis/{api}/deployments/{deployment}
+  // Format: projects/{project}/locations/{location}/apis/{api}/versions/{version}/specs/{spec@revision}
   string api_spec_revision = 8 [(google.api.resource_reference) = {
                                   type: "apigeeregistry.googleapis.com/ApiSpec"
                                 }];
@@ -364,4 +371,25 @@ message Artifact {
   // Provided by API callers when artifacts are created or replaced.
   // To access the contents of an artifact, use GetArtifactContents.
   bytes contents = 7 [(google.api.field_behavior) = INPUT_ONLY];
+
+  // Labels attach identifying metadata to resources. Identifying metadata can
+  // be used to filter list operations.
+  //
+  // Label keys and values can be no longer than 64 characters
+  // (Unicode codepoints), can only contain lowercase letters, numeric
+  // characters, underscores and dashes. International characters are allowed.
+  // No more than 64 user labels can be associated with one resource (System
+  // labels are excluded).
+  //
+  // See https://goo.gl/xmQnxf for more information and examples of labels.
+  // System reserved label keys are prefixed with "registry.googleapis.com/"
+  // and cannot be changed.
+  map<string, string> labels = 8;
+
+  // Annotations attach non-identifying metadata to resources.
+  //
+  // Annotation keys and values are less restricted than those of labels, but
+  // should be generally used for small values of broad interest. Larger, topic-
+  // specific metadata should be stored in Artifacts.
+  map<string, string> annotations = 9;
 }
