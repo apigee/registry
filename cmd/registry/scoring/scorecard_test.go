@@ -21,7 +21,6 @@ import (
 	"github.com/apigee/registry/cmd/registry/patterns"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/server/registry/names"
 	"github.com/apigee/registry/server/registry/test/seeder"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -517,13 +516,8 @@ func TestCalculateScoreCard(t *testing.T) {
 			}
 
 			resource := patterns.SpecResource{
-				SpecName: patterns.SpecName{
-					Name: names.Spec{
-						ProjectID: "score-card-test",
-						ApiID:     "petstore",
-						VersionID: "1.0.0",
-						SpecID:    "openapi.yaml",
-					},
+				Spec: &rpc.ApiSpec{
+					Name: "projects/score-card-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 				},
 			}
 
@@ -646,13 +640,8 @@ func TestProcessScorePatterns(t *testing.T) {
 				},
 			},
 			resource: patterns.SpecResource{
-				SpecName: patterns.SpecName{
-					Name: names.Spec{
-						ProjectID: "score-patterns-test",
-						ApiID:     "petstore",
-						VersionID: "1.0.0",
-						SpecID:    "openapi.yaml",
-					},
+				Spec: &rpc.ApiSpec{
+					Name: "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 				},
 			},
 			takeAction: true,
@@ -765,13 +754,8 @@ func TestProcessScorePatterns(t *testing.T) {
 				},
 			},
 			resource: patterns.SpecResource{
-				SpecName: patterns.SpecName{
-					Name: names.Spec{
-						ProjectID: "score-patterns-test",
-						ApiID:     "petstore",
-						VersionID: "1.0.0",
-						SpecID:    "openapi.yaml",
-					},
+				Spec: &rpc.ApiSpec{
+					Name: "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 				},
 			},
 			takeAction: true,
@@ -884,13 +868,8 @@ func TestProcessScorePatterns(t *testing.T) {
 				},
 			},
 			resource: patterns.SpecResource{
-				SpecName: patterns.SpecName{
-					Name: names.Spec{
-						ProjectID: "score-patterns-test",
-						ApiID:     "petstore",
-						VersionID: "1.0.0",
-						SpecID:    "openapi.yaml",
-					},
+				Spec: &rpc.ApiSpec{
+					Name: "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 				},
 			},
 			takeAction: false,
@@ -1003,13 +982,8 @@ func TestProcessScorePatterns(t *testing.T) {
 				},
 			},
 			resource: patterns.SpecResource{
-				SpecName: patterns.SpecName{
-					Name: names.Spec{
-						ProjectID: "score-patterns-test",
-						ApiID:     "petstore",
-						VersionID: "1.0.0",
-						SpecID:    "openapi.yaml",
-					},
+				Spec: &rpc.ApiSpec{
+					Name: "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 				},
 			},
 			takeAction: false,
@@ -1240,13 +1214,8 @@ func TestProcessScorePatternsError(t *testing.T) {
 			}
 
 			resource := patterns.SpecResource{
-				SpecName: patterns.SpecName{
-					Name: names.Spec{
-						ProjectID: "score-patterns-test",
-						ApiID:     "petstore",
-						VersionID: "1.0.0",
-						SpecID:    "openapi.yaml",
-					},
+				Spec: &rpc.ApiSpec{
+					Name: "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 				},
 			}
 
