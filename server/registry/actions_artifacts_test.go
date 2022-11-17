@@ -1567,9 +1567,10 @@ func TestSpecRevisionArtifacts(t *testing.T) {
 
 	t.Run("list artifacts across", func(t *testing.T) {
 		tests := []struct {
-			desc string
-			req  *rpc.ListArtifactsRequest
-			want *rpc.ListArtifactsResponse
+			admin bool
+			desc  string
+			req   *rpc.ListArtifactsRequest
+			want  *rpc.ListArtifactsResponse
 		}{
 			{
 				desc: "specified spec revision",
@@ -1662,7 +1663,8 @@ func TestSpecRevisionArtifacts(t *testing.T) {
 				},
 			},
 			{
-				desc: "all revisions in all projects",
+				admin: true,
+				desc:  "all revisions in all projects",
 				req: &rpc.ListArtifactsRequest{
 					Parent:  "projects/-/locations/global/apis/-/versions/-/specs/-@-",
 					OrderBy: "create_time",
@@ -1679,6 +1681,9 @@ func TestSpecRevisionArtifacts(t *testing.T) {
 
 		for _, test := range tests {
 			t.Run(test.desc, func(t *testing.T) {
+				if test.admin && adminServiceUnavailable() {
+					t.Skip(testRequiresAdminService)
+				}
 				got, err := server.ListArtifacts(ctx, test.req)
 				if err != nil {
 					t.Fatalf("ListArtifacts(%+v) returned error: %s", test.req, err)
@@ -1825,9 +1830,10 @@ func TestDeploymentRevisionArtifacts(t *testing.T) {
 
 	t.Run("list artifacts across", func(t *testing.T) {
 		tests := []struct {
-			desc string
-			req  *rpc.ListArtifactsRequest
-			want *rpc.ListArtifactsResponse
+			admin bool
+			desc  string
+			req   *rpc.ListArtifactsRequest
+			want  *rpc.ListArtifactsResponse
 		}{
 			{
 				desc: "specified deployment revision",
@@ -1906,7 +1912,8 @@ func TestDeploymentRevisionArtifacts(t *testing.T) {
 				},
 			},
 			{
-				desc: "all revisions in all projects",
+				admin: true,
+				desc:  "all revisions in all projects",
 				req: &rpc.ListArtifactsRequest{
 					Parent:  "projects/-/locations/global/apis/-/deployments/-@-",
 					OrderBy: "create_time",
@@ -1923,6 +1930,9 @@ func TestDeploymentRevisionArtifacts(t *testing.T) {
 
 		for _, test := range tests {
 			t.Run(test.desc, func(t *testing.T) {
+				if test.admin && adminServiceUnavailable() {
+					t.Skip(testRequiresAdminService)
+				}
 				got, err := server.ListArtifacts(ctx, test.req)
 				if err != nil {
 					t.Fatalf("ListArtifacts(%+v) returned error: %s", test.req, err)

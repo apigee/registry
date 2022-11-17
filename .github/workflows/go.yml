@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-22.04
     services:
       postgres:
-        image: postgres:14.5
+        image: postgres:15
         env:
           # Define a super user. Password for super user is required.
           POSTGRES_USER: postgres
@@ -76,7 +76,7 @@ jobs:
         PGUSER: postgres
         PGPASSWORD: postgres
       # Create the database and user required by the PostgreSQL tests.
-      run: psql -c "CREATE DATABASE registry_test" -c "CREATE USER registry_tester"
+      run: psql -c "CREATE USER registry_tester" -c "CREATE DATABASE registry_test WITH OWNER registry_tester" 
 
     - name: Test registry server with PostgreSQL
       run: go test ./server/registry -postgresql
