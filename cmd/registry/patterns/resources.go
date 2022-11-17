@@ -355,7 +355,7 @@ func (s SpecResource) ResourceName() ResourceName {
 		return nil
 	}
 	return SpecName{
-		Name: name.Spec(),
+		Name:       name.Spec(),
 		RevisionID: s.Spec.RevisionId,
 	}
 }
