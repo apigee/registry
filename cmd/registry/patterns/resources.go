@@ -392,16 +392,21 @@ func (a ApiResource) ResourceName() ResourceName {
 	return ApiName{Name: name}
 }
 
+
+// Project is a special resource which is not available through the registry client.
+// Hence we won't store the actual instance of the rpc.Project but instead only store the project name.
+// ProjectResource is mainly used to identify by name when we derive the parents of certain artifacts.
 type ProjectResource struct {
-	Project *rpc.Project
+	ProjectName string
 }
 
+
 func (p ProjectResource) UpdateTimestamp() time.Time {
-	return p.Project.UpdateTime.AsTime()
+	return time.Time{}
 }
 
 func (p ProjectResource) ResourceName() ResourceName {
-	name, err := names.ParseProject(p.Project.GetName())
+	name, err := names.ParseProject(p.ProjectName)
 	if err != nil {
 		return nil
 	}

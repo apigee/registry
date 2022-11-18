@@ -286,7 +286,7 @@ func generateCreateActions(
 		}
 		parentList = []patterns.ResourceInstance{
 			patterns.ProjectResource{
-				Project: &rpc.Project{Name: parentName.String()},
+				ProjectName: parentName.String(),
 			},
 		}
 
