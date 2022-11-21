@@ -60,6 +60,18 @@ func validateID(id string) error {
 	return nil
 }
 
+// ValidateRevisionTag returns an error if the provided revision tag is invalid.
+func ValidateRevisionTag(tag string) error {
+	r := regexp.MustCompile("^" + revisionTag + "$")
+	if !r.MatchString(tag) {
+		return fmt.Errorf("invalid revision tag %q: must contain only lowercase letters, digits, and dashes", tag)
+	} else if tag == "-" {
+		return fmt.Errorf("invalid revision tag %q: must not be a single dash", tag)
+	}
+
+	return nil
+}
+
 // Normalize is an idempotent operation for normalizing resource names and identifiers.
 // Identifiers `a` and `b` should be considered equal if and only if normalize(a) == normalize(b).
 func normalize(identifier string) string {

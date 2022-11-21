@@ -106,6 +106,10 @@ func (s *RegistryServer) TagApiSpecRevision(ctx context.Context, req *rpc.TagApi
 	if len(req.GetTag()) > 40 {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid tag %q, must be 40 characters or less", req.GetTag())
 	}
+	// The tag must match the required format.
+	if err := names.ValidateRevisionTag(req.GetTag()); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "%s", err)
+	}
 	// The requested spec revision name must be valid. It may include a tag name.
 	name, err := names.ParseSpecRevision(req.GetName())
 	if err != nil {

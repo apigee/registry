@@ -162,6 +162,51 @@ func TestTagApiDeploymentRevision(t *testing.T) {
 	})
 }
 
+func TestTagApiDeploymentRevisionResponseCodes(t *testing.T) {
+	tests := []struct {
+		desc string
+		tag  string
+		want codes.Code
+	}{
+		{
+			desc: "contains uppercase leters",
+			tag:  "TestTag",
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "single dash",
+			tag:  "-",
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "valid one-character tag",
+			tag:  "x",
+			want: codes.OK,
+		},
+		{
+			desc: "valid tag",
+			tag:  "latest",
+			want: codes.OK,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			ctx := context.Background()
+			server := defaultTestServer(t)
+			if err := seeder.SeedDeployments(ctx, server, &rpc.ApiDeployment{Name: "projects/my-project/locations/global/apis/a/deployments/d"}); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
+			if _, err := server.TagApiDeploymentRevision(ctx, &rpc.TagApiDeploymentRevisionRequest{
+				Name: "projects/my-project/locations/global/apis/a/deployments/d",
+				Tag:  test.tag,
+			}); status.Code(err) != test.want {
+				t.Errorf("TagApiDeploymentRevision(%+v) returned status code %q, want %q: %v", test.tag, status.Code(err), test.want, err)
+			}
+		})
+	}
+}
+
 func TestRollbackApiDeployment(t *testing.T) {
 	ctx := context.Background()
 	server := defaultTestServer(t)
