@@ -359,7 +359,9 @@ func (p *Proxy) TagApiSpecRevision(ctx context.Context, req *rpc.TagApiSpecRevis
 	req, _ = proto.Clone(req).(*rpc.TagApiSpecRevisionRequest)
 	req.Name = p.hostedResourceName(req.Name)
 	response, err := p.registryClient.GrpcClient().TagApiSpecRevision(ctx, req)
-	response.Name = p.testResourceName(response.Name)
+	if err == nil {
+		response.Name = p.testResourceName(response.Name)
+	}
 	return response, err
 }
 
@@ -454,7 +456,9 @@ func (p *Proxy) TagApiDeploymentRevision(ctx context.Context, req *rpc.TagApiDep
 	req, _ = proto.Clone(req).(*rpc.TagApiDeploymentRevisionRequest)
 	req.Name = p.hostedResourceName(req.Name)
 	response, err := p.registryClient.GrpcClient().TagApiDeploymentRevision(ctx, req)
-	response.Name = p.testResourceName(response.Name)
+	if err == nil {
+		response.Name = p.testResourceName(response.Name)
+	}
 	return response, err
 }
 
