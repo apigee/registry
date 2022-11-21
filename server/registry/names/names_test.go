@@ -289,3 +289,61 @@ func TestResourceNames(t *testing.T) {
 		})
 	}
 }
+
+func TestRevisionTags(t *testing.T) {
+	tests := []struct {
+		desc  string
+		tag   string
+		valid bool
+	}{
+		{
+			desc:  "all letters",
+			tag:   "sample",
+			valid: true,
+		},
+		{
+			desc:  "letters numbers and dashes",
+			tag:   "alpha-1-beta-2-gamma-3",
+			valid: true,
+		},
+		{
+			desc:  "mixed case",
+			tag:   "MixedCase",
+			valid: false,
+		},
+		{
+			desc:  "one letter",
+			tag:   "x",
+			valid: true,
+		},
+		{
+			desc:  "one digit",
+			tag:   "9",
+			valid: true,
+		},
+		{
+			desc:  "one dash",
+			tag:   "-",
+			valid: false,
+		},
+		{
+			desc:  "two dashes",
+			tag:   "--",
+			valid: true,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			err := ValidateRevisionTag(test.tag)
+			if test.valid {
+				if err != nil {
+					t.Errorf("%s should be valid but was rejected with error %s", test.tag, err)
+				}
+			} else {
+				if err == nil {
+					t.Errorf("%s should be invalid but was accepted", test.tag)
+				}
+			}
+		})
+	}
+}
