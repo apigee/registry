@@ -842,12 +842,13 @@ func TestListApisSequence(t *testing.T) {
 	}
 }
 
-// This test prevents the list sequence from ending before a known filter match is listed.
+// This test ensures filtering works correctly with paging and prevents the list
+// sequence from ending before a known filter match is listed.
 // For simplicity, it does not guarantee the resource is returned on a later page.
 func TestListApisLargeCollectionFiltering(t *testing.T) {
 	ctx := context.Background()
 	server := defaultTestServer(t)
-	seed := make([]*rpc.Api, 0, 100)
+	seed := make([]*rpc.Api, 0, 1001)
 	for i := 1; i <= cap(seed); i++ {
 		seed = append(seed, &rpc.Api{
 			Name: fmt.Sprintf("projects/my-project/locations/global/apis/a%03d", i),
@@ -858,23 +859,80 @@ func TestListApisLargeCollectionFiltering(t *testing.T) {
 		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
 	}
 
-	req := &rpc.ListApisRequest{
-		Parent:   "projects/my-project/locations/global",
-		PageSize: 1,
-		Filter:   "name == 'projects/my-project/locations/global/apis/a099'",
+	tests := []struct {
+		desc          string
+		req           *rpc.ListApisRequest
+		wantCount     int
+		wantPageToken bool
+	}{
+		{
+			desc: "single select, single page",
+			req: &rpc.ListApisRequest{
+				Parent:   "projects/my-project/locations/global",
+				PageSize: 1,
+				Filter:   "name == 'projects/my-project/locations/global/apis/a099'",
+			},
+			wantCount:     1,
+			wantPageToken: false,
+		},
+		{
+			desc: "multiple select, single page",
+			req: &rpc.ListApisRequest{
+				Parent:   "projects/my-project/locations/global",
+				PageSize: 1000,
+				Filter:   "name != 'projects/my-project/locations/global/apis/a099'",
+			},
+			wantCount:     1000,
+			wantPageToken: false,
+		},
+		{
+			desc: "multiple select, mutiple pages",
+			req: &rpc.ListApisRequest{
+				Parent:   "projects/my-project/locations/global",
+				PageSize: 10,
+				Filter:   "name != 'projects/my-project/locations/global/apis/a099'",
+			},
+			wantCount:     10,
+			wantPageToken: true,
+		},
+		{
+			desc: "max select, multiple pages",
+			req: &rpc.ListApisRequest{
+				Parent:   "projects/my-project/locations/global",
+				PageSize: 1000,
+				Filter:   "name.contains('global')",
+			},
+			wantCount:     1000,
+			wantPageToken: true,
+		},
+		{
+			desc: "coerced max select, multiple pages",
+			req: &rpc.ListApisRequest{
+				Parent:   "projects/my-project/locations/global",
+				PageSize: 1010,
+				Filter:   "name.contains('global')",
+			},
+			wantCount:     1000,
+			wantPageToken: true,
+		},
 	}
 
-	got, err := server.ListApis(ctx, req)
-	if err != nil {
-		t.Fatalf("ListApis(%+v) returned error: %s", req, err)
-	}
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			got, err := server.ListApis(ctx, test.req)
+			if err != nil {
+				t.Fatalf("ListApis(%+v) returned error: %s", test.req, err)
+			}
 
-	if len(got.GetApis()) == 1 && got.GetNextPageToken() != "" {
-		t.Errorf("ListApis(%+v) returned a page token when the only matching resource has been listed: %+v", req, got)
-	} else if len(got.GetApis()) == 0 && got.GetNextPageToken() == "" {
-		t.Errorf("ListApis(%+v) returned an empty next page token before listing the only matching resource", req)
-	} else if count := len(got.GetApis()); count > 1 {
-		t.Errorf("ListApis(%+v) returned %d projects, expected at most one: %+v", req, count, got.GetApis())
+			if len(got.GetApis()) != test.wantCount {
+				t.Errorf("ListApis(%+v) expected count: %d, got: %d", test.req, test.wantCount, len(got.Apis))
+			}
+			if got.GetNextPageToken() == "" && test.wantPageToken {
+				t.Errorf("ListApis(%+v) did not return expected page token", test.req)
+			} else if got.GetNextPageToken() != "" && !test.wantPageToken {
+				t.Errorf("ListApis(%+v) returned an unexpected page token", test.req)
+			}
+		})
 	}
 }
 
