@@ -210,8 +210,8 @@ func limit(opts PageOptions) int {
 		return int(opts.Size) + 1
 	}
 
-	// When filters are present, we should read larger pages.
-	return 500
+	// When filters are present, read max page size
+	return 1000
 }
 
 // ProjectList contains a page of project resources.
