@@ -21,7 +21,6 @@ import (
 	"github.com/apigee/registry/cmd/registry/patterns"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
-	"github.com/apigee/registry/server/registry/names"
 	"github.com/apigee/registry/server/registry/test/seeder"
 	metrics "github.com/google/gnostic/metrics"
 	"github.com/google/go-cmp/cmp"
@@ -427,13 +426,8 @@ func TestCalculateScore(t *testing.T) {
 			}
 
 			resource := patterns.SpecResource{
-				SpecName: patterns.SpecName{
-					Name: names.Spec{
-						ProjectID: "score-formula-test",
-						ApiID:     "petstore",
-						VersionID: "1.0.0",
-						SpecID:    "openapi.yaml",
-					},
+				Spec: &rpc.ApiSpec{
+					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 				},
 			}
 
@@ -526,13 +520,8 @@ func TestProcessScoreFormula(t *testing.T) {
 		ScoreExpression: "size(files[0].problems)",
 	}
 	resource := patterns.SpecResource{
-		SpecName: patterns.SpecName{
-			Name: names.Spec{
-				ProjectID: "score-formula-test",
-				ApiID:     "petstore",
-				VersionID: "1.0.0",
-				SpecID:    "openapi.yaml",
-			},
+		Spec: &rpc.ApiSpec{
+			Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 		},
 	}
 
@@ -574,13 +563,8 @@ func TestProcessScoreFormulaError(t *testing.T) {
 				ScoreExpression: "size(files[0].problems)",
 			},
 			resource: patterns.SpecResource{
-				SpecName: patterns.SpecName{
-					Name: names.Spec{
-						ProjectID: "score-formula-test",
-						ApiID:     "petstore",
-						VersionID: "1.0.0",
-						SpecID:    "openapi.yaml",
-					},
+				Spec: &rpc.ApiSpec{
+					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 				},
 			},
 		},
@@ -598,13 +582,8 @@ func TestProcessScoreFormulaError(t *testing.T) {
 				ScoreExpression: "size(files[0].problems)",
 			},
 			resource: patterns.SpecResource{
-				SpecName: patterns.SpecName{
-					Name: names.Spec{
-						ProjectID: "score-formula-test",
-						ApiID:     "petstore",
-						VersionID: "1.0.0",
-						SpecID:    "openapi.yaml",
-					},
+				Spec: &rpc.ApiSpec{
+					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 				},
 			},
 		},
@@ -622,13 +601,8 @@ func TestProcessScoreFormulaError(t *testing.T) {
 				ScoreExpression: "size(files[0].problems)",
 			},
 			resource: patterns.SpecResource{
-				SpecName: patterns.SpecName{
-					Name: names.Spec{
-						ProjectID: "score-formula-test",
-						ApiID:     "petstore",
-						VersionID: "1.0.0",
-						SpecID:    "openapi.yaml",
-					},
+				Spec: &rpc.ApiSpec{
+					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 				},
 			},
 		},
@@ -648,13 +622,8 @@ func TestProcessScoreFormulaError(t *testing.T) {
 			},
 			formula: &rpc.ScoreFormula{},
 			resource: patterns.SpecResource{
-				SpecName: patterns.SpecName{
-					Name: names.Spec{
-						ProjectID: "score-formula-test",
-						ApiID:     "petstore",
-						VersionID: "1.0.0",
-						SpecID:    "openapi.yaml",
-					},
+				Spec: &rpc.ApiSpec{
+					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 				},
 			},
 		},
@@ -686,13 +655,8 @@ func TestProcessScoreFormulaError(t *testing.T) {
 				ScoreExpression: "size(files[0].problem)", // invalid expression
 			},
 			resource: patterns.SpecResource{
-				SpecName: patterns.SpecName{
-					Name: names.Spec{
-						ProjectID: "score-formula-test",
-						ApiID:     "petstore",
-						VersionID: "1.0.0",
-						SpecID:    "openapi.yaml",
-					},
+				Spec: &rpc.ApiSpec{
+					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 				},
 			},
 		},
@@ -723,13 +687,8 @@ func TestProcessScoreFormulaError(t *testing.T) {
 				},
 			},
 			resource: patterns.SpecResource{
-				SpecName: patterns.SpecName{
-					Name: names.Spec{
-						ProjectID: "score-formula-test",
-						ApiID:     "petstore",
-						VersionID: "1.0.0",
-						SpecID:    "openapi.yaml",
-					},
+				Spec: &rpc.ApiSpec{
+					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 				},
 			},
 		},
@@ -854,13 +813,8 @@ func TestProcessRollUpFormula(t *testing.T) {
 		RollupExpression: "double(numErrors)/numOperations",
 	}
 	resource := patterns.SpecResource{
-		SpecName: patterns.SpecName{
-			Name: names.Spec{
-				ProjectID: "rollup-formula-test",
-				ApiID:     "petstore",
-				VersionID: "1.0.0",
-				SpecID:    "openapi.yaml",
-			},
+		Spec: &rpc.ApiSpec{
+			Name: "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 		},
 	}
 
@@ -898,13 +852,8 @@ func TestProcessRollUpFormulaError(t *testing.T) {
 				RollupExpression: "double(numErrors)/numOperations",
 			},
 			resource: patterns.SpecResource{
-				SpecName: patterns.SpecName{
-					Name: names.Spec{
-						ProjectID: "rollup-formula-test",
-						ApiID:     "petstore",
-						VersionID: "1.0.0",
-						SpecID:    "openapi.yaml",
-					},
+				Spec: &rpc.ApiSpec{
+					Name: "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 				},
 			},
 		},
@@ -934,13 +883,8 @@ func TestProcessRollUpFormulaError(t *testing.T) {
 				},
 			},
 			resource: patterns.SpecResource{
-				SpecName: patterns.SpecName{
-					Name: names.Spec{
-						ProjectID: "rollup-formula-test",
-						ApiID:     "petstore",
-						VersionID: "1.0.0",
-						SpecID:    "openapi.yaml",
-					},
+				Spec: &rpc.ApiSpec{
+					Name: "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 				},
 			},
 		},
@@ -1000,13 +944,8 @@ func TestProcessRollUpFormulaError(t *testing.T) {
 				RollupExpression: "double(numErrors)/numOperations",
 			},
 			resource: patterns.SpecResource{
-				SpecName: patterns.SpecName{
-					Name: names.Spec{
-						ProjectID: "rollup-formula-test",
-						ApiID:     "petstore",
-						VersionID: "1.0.0",
-						SpecID:    "openapi.yaml",
-					},
+				Spec: &rpc.ApiSpec{
+					Name: "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 				},
 			},
 		},
@@ -1066,13 +1005,8 @@ func TestProcessRollUpFormulaError(t *testing.T) {
 				RollupExpression: "numError/numOperation", // should be numErrors/numOperations
 			},
 			resource: patterns.SpecResource{
-				SpecName: patterns.SpecName{
-					Name: names.Spec{
-						ProjectID: "rollup-formula-test",
-						ApiID:     "petstore",
-						VersionID: "1.0.0",
-						SpecID:    "openapi.yaml",
-					},
+				Spec: &rpc.ApiSpec{
+					Name: "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 				},
 			},
 		},
@@ -1103,13 +1037,8 @@ func TestProcessRollUpFormulaError(t *testing.T) {
 				RollupExpression: "num-errors/num-operations",
 			},
 			resource: patterns.SpecResource{
-				SpecName: patterns.SpecName{
-					Name: names.Spec{
-						ProjectID: "rollup-formula-test",
-						ApiID:     "petstore",
-						VersionID: "1.0.0",
-						SpecID:    "openapi.yaml",
-					},
+				Spec: &rpc.ApiSpec{
+					Name: "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 				},
 			},
 		},
