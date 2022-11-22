@@ -157,6 +157,51 @@ func TestTagApiSpecRevision(t *testing.T) {
 	})
 }
 
+func TestTagApiSpecRevisionResponseCodes(t *testing.T) {
+	tests := []struct {
+		desc string
+		tag  string
+		want codes.Code
+	}{
+		{
+			desc: "contains uppercase leters",
+			tag:  "TestTag",
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "single dash",
+			tag:  "-",
+			want: codes.InvalidArgument,
+		},
+		{
+			desc: "valid one-character tag",
+			tag:  "x",
+			want: codes.OK,
+		},
+		{
+			desc: "valid tag",
+			tag:  "latest",
+			want: codes.OK,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			ctx := context.Background()
+			server := defaultTestServer(t)
+			if err := seeder.SeedSpecs(ctx, server, &rpc.ApiSpec{Name: "projects/my-project/locations/global/apis/a/versions/v/specs/s"}); err != nil {
+				t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+			}
+			if _, err := server.TagApiSpecRevision(ctx, &rpc.TagApiSpecRevisionRequest{
+				Name: "projects/my-project/locations/global/apis/a/versions/v/specs/s",
+				Tag:  test.tag,
+			}); status.Code(err) != test.want {
+				t.Errorf("TagApiSpecRevision(%+v) returned status code %q, want %q: %v", test.tag, status.Code(err), test.want, err)
+			}
+		})
+	}
+}
+
 func TestRollbackApiSpec(t *testing.T) {
 	ctx := context.Background()
 	server := defaultTestServer(t)
