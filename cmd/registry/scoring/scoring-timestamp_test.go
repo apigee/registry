@@ -280,13 +280,8 @@ func TestTimestampCalculateScore(t *testing.T) {
 			}
 
 			resource := patterns.SpecResource{
-				SpecName: patterns.SpecName{
-					Name: names.Spec{
-						ProjectID: "score-formula-test",
-						ApiID:     "petstore",
-						VersionID: "1.0.0",
-						SpecID:    "openapi.yaml",
-					},
+				Spec: &rpc.ApiSpec{
+					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 				},
 			}
 
@@ -361,13 +356,8 @@ func TestProcessScoreFormulaTimestamp(t *testing.T) {
 				},
 			},
 			resource: patterns.SpecResource{
-				SpecName: patterns.SpecName{
-					Name: names.Spec{
-						ProjectID: "score-formula-test",
-						ApiID:     "petstore",
-						VersionID: "1.0.0",
-						SpecID:    "openapi.yaml",
-					},
+				Spec: &rpc.ApiSpec{
+					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 				},
 			},
 			takeAction: true,
@@ -409,13 +399,8 @@ func TestProcessScoreFormulaTimestamp(t *testing.T) {
 				},
 			},
 			resource: patterns.SpecResource{
-				SpecName: patterns.SpecName{
-					Name: names.Spec{
-						ProjectID: "score-formula-test",
-						ApiID:     "petstore",
-						VersionID: "1.0.0",
-						SpecID:    "openapi.yaml",
-					},
+				Spec: &rpc.ApiSpec{
+					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 				},
 			},
 			takeAction: true,
@@ -453,13 +438,8 @@ func TestProcessScoreFormulaTimestamp(t *testing.T) {
 				},
 			},
 			resource: patterns.SpecResource{
-				SpecName: patterns.SpecName{
-					Name: names.Spec{
-						ProjectID: "score-formula-test",
-						ApiID:     "petstore",
-						VersionID: "1.0.0",
-						SpecID:    "openapi.yaml",
-					},
+				Spec: &rpc.ApiSpec{
+					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 				},
 			},
 			takeAction: false,
@@ -499,13 +479,8 @@ func TestProcessScoreFormulaTimestamp(t *testing.T) {
 				},
 			},
 			resource: patterns.SpecResource{
-				SpecName: patterns.SpecName{
-					Name: names.Spec{
-						ProjectID: "score-formula-test",
-						ApiID:     "petstore",
-						VersionID: "1.0.0",
-						SpecID:    "openapi.yaml",
-					},
+				Spec: &rpc.ApiSpec{
+					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 				},
 			},
 			takeAction: false,
@@ -545,13 +520,8 @@ func TestProcessScoreFormulaTimestamp(t *testing.T) {
 				},
 			},
 			resource: patterns.SpecResource{
-				SpecName: patterns.SpecName{
-					Name: names.Spec{
-						ProjectID: "score-formula-test",
-						ApiID:     "petstore",
-						VersionID: "1.0.0",
-						SpecID:    "openapi.yaml",
-					},
+				Spec: &rpc.ApiSpec{
+					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 				},
 			},
 			takeAction: false,
@@ -591,13 +561,8 @@ func TestProcessScoreFormulaTimestamp(t *testing.T) {
 				},
 			},
 			resource: patterns.SpecResource{
-				SpecName: patterns.SpecName{
-					Name: names.Spec{
-						ProjectID: "score-formula-test",
-						ApiID:     "petstore",
-						VersionID: "1.0.0",
-						SpecID:    "openapi.yaml",
-					},
+				Spec: &rpc.ApiSpec{
+					Name: "projects/score-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 				},
 			},
 			takeAction: true,
@@ -691,13 +656,8 @@ func TestProcessRollUpFormulaTimestamp(t *testing.T) {
 				},
 			},
 			resource: patterns.SpecResource{
-				SpecName: patterns.SpecName{
-					Name: names.Spec{
-						ProjectID: "rollup-formula-test",
-						ApiID:     "petstore",
-						VersionID: "1.0.0",
-						SpecID:    "openapi.yaml",
-					},
+				Spec: &rpc.ApiSpec{
+					Name: "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 				},
 			},
 			takeAction: true,
@@ -749,13 +709,8 @@ func TestProcessRollUpFormulaTimestamp(t *testing.T) {
 				},
 			},
 			resource: patterns.SpecResource{
-				SpecName: patterns.SpecName{
-					Name: names.Spec{
-						ProjectID: "rollup-formula-test",
-						ApiID:     "petstore",
-						VersionID: "1.0.0",
-						SpecID:    "openapi.yaml",
-					},
+				Spec: &rpc.ApiSpec{
+					Name: "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 				},
 			},
 			takeAction: true,
@@ -810,13 +765,8 @@ func TestProcessRollUpFormulaTimestamp(t *testing.T) {
 				},
 			},
 			resource: patterns.SpecResource{
-				SpecName: patterns.SpecName{
-					Name: names.Spec{
-						ProjectID: "rollup-formula-test",
-						ApiID:     "petstore",
-						VersionID: "1.0.0",
-						SpecID:    "openapi.yaml",
-					},
+				Spec: &rpc.ApiSpec{
+					Name: "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 				},
 			},
 			takeAction: true,
@@ -868,13 +818,8 @@ func TestProcessRollUpFormulaTimestamp(t *testing.T) {
 				},
 			},
 			resource: patterns.SpecResource{
-				SpecName: patterns.SpecName{
-					Name: names.Spec{
-						ProjectID: "rollup-formula-test",
-						ApiID:     "petstore",
-						VersionID: "1.0.0",
-						SpecID:    "openapi.yaml",
-					},
+				Spec: &rpc.ApiSpec{
+					Name: "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 				},
 			},
 			takeAction: false,
@@ -926,13 +871,8 @@ func TestProcessRollUpFormulaTimestamp(t *testing.T) {
 				},
 			},
 			resource: patterns.SpecResource{
-				SpecName: patterns.SpecName{
-					Name: names.Spec{
-						ProjectID: "rollup-formula-test",
-						ApiID:     "petstore",
-						VersionID: "1.0.0",
-						SpecID:    "openapi.yaml",
-					},
+				Spec: &rpc.ApiSpec{
+					Name: "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 				},
 			},
 			takeAction: false,
@@ -987,13 +927,8 @@ func TestProcessRollUpFormulaTimestamp(t *testing.T) {
 				},
 			},
 			resource: patterns.SpecResource{
-				SpecName: patterns.SpecName{
-					Name: names.Spec{
-						ProjectID: "rollup-formula-test",
-						ApiID:     "petstore",
-						VersionID: "1.0.0",
-						SpecID:    "openapi.yaml",
-					},
+				Spec: &rpc.ApiSpec{
+					Name: "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 				},
 			},
 			takeAction: false,
@@ -1048,13 +983,8 @@ func TestProcessRollUpFormulaTimestamp(t *testing.T) {
 				},
 			},
 			resource: patterns.SpecResource{
-				SpecName: patterns.SpecName{
-					Name: names.Spec{
-						ProjectID: "rollup-formula-test",
-						ApiID:     "petstore",
-						VersionID: "1.0.0",
-						SpecID:    "openapi.yaml",
-					},
+				Spec: &rpc.ApiSpec{
+					Name: "projects/rollup-formula-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 				},
 			},
 			takeAction: false,
@@ -1195,13 +1125,8 @@ func TestProcessScorePatternsTimestamp(t *testing.T) {
 				},
 			},
 			resource: patterns.SpecResource{
-				SpecName: patterns.SpecName{
-					Name: names.Spec{
-						ProjectID: "score-patterns-test",
-						ApiID:     "petstore",
-						VersionID: "1.0.0",
-						SpecID:    "openapi.yaml",
-					},
+				Spec: &rpc.ApiSpec{
+					Name: "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 				},
 			},
 			takeAction: false,
@@ -1287,13 +1212,8 @@ func TestProcessScorePatternsTimestamp(t *testing.T) {
 				},
 			},
 			resource: patterns.SpecResource{
-				SpecName: patterns.SpecName{
-					Name: names.Spec{
-						ProjectID: "score-patterns-test",
-						ApiID:     "petstore",
-						VersionID: "1.0.0",
-						SpecID:    "openapi.yaml",
-					},
+				Spec: &rpc.ApiSpec{
+					Name: "projects/score-patterns-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml",
 				},
 			},
 			takeAction: false,

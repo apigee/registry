@@ -49,7 +49,7 @@ func listResources(ctx context.Context, client listingClient, pattern, filter st
 	} else if spec, err := names.ParseSpecCollection(pattern); err == nil {
 		err2 = client.ListSpecs(ctx, spec, filter, generateSpecHandler(&result))
 	} else if artifact, err := names.ParseArtifactCollection(pattern); err == nil {
-		err2 = client.ListArtifacts(ctx, artifact, filter, false, generateArtifactHandler(&result))
+		err2 = client.ListArtifacts(ctx, artifact, filter, true, generateArtifactHandler(&result))
 	}
 
 	// Then try to match resource names.
@@ -60,7 +60,7 @@ func listResources(ctx context.Context, client listingClient, pattern, filter st
 	} else if spec, err := names.ParseSpec(pattern); err == nil {
 		err2 = client.ListSpecs(ctx, spec, filter, generateSpecHandler(&result))
 	} else if artifact, err := names.ParseArtifact(pattern); err == nil {
-		err2 = client.ListArtifacts(ctx, artifact, filter, false, generateArtifactHandler(&result))
+		err2 = client.ListArtifacts(ctx, artifact, filter, true, generateArtifactHandler(&result))
 	}
 
 	if err2 != nil {
@@ -71,14 +71,8 @@ func listResources(ctx context.Context, client listingClient, pattern, filter st
 
 func generateApiHandler(result *[]patterns.ResourceInstance) func(*rpc.Api) error {
 	return func(api *rpc.Api) error {
-		name, err := names.ParseApi(api.GetName())
-		if err != nil {
-			return err
-		}
-
 		(*result) = append((*result), patterns.ApiResource{
-			ApiName:   patterns.ApiName{Name: name},
-			Timestamp: api.UpdateTime.AsTime(),
+			Api: api,
 		})
 
 		return nil
@@ -87,14 +81,8 @@ func generateApiHandler(result *[]patterns.ResourceInstance) func(*rpc.Api) erro
 
 func generateVersionHandler(result *[]patterns.ResourceInstance) func(*rpc.ApiVersion) error {
 	return func(version *rpc.ApiVersion) error {
-		name, err := names.ParseVersion(version.GetName())
-		if err != nil {
-			return err
-		}
-
 		(*result) = append((*result), patterns.VersionResource{
-			VersionName: patterns.VersionName{Name: name},
-			Timestamp:   version.UpdateTime.AsTime(),
+			Version: version,
 		})
 
 		return nil
@@ -103,17 +91,8 @@ func generateVersionHandler(result *[]patterns.ResourceInstance) func(*rpc.ApiVe
 
 func generateSpecHandler(result *[]patterns.ResourceInstance) func(*rpc.ApiSpec) error {
 	return func(spec *rpc.ApiSpec) error {
-		name, err := names.ParseSpec(spec.GetName())
-		if err != nil {
-			return err
-		}
-
 		(*result) = append((*result), patterns.SpecResource{
-			SpecName: patterns.SpecName{
-				Name:       name,
-				RevisionID: spec.RevisionId,
-			},
-			Timestamp: spec.RevisionUpdateTime.AsTime(),
+			Spec: spec,
 		})
 
 		return nil
@@ -122,14 +101,8 @@ func generateSpecHandler(result *[]patterns.ResourceInstance) func(*rpc.ApiSpec)
 
 func generateArtifactHandler(result *[]patterns.ResourceInstance) func(*rpc.Artifact) error {
 	return func(artifact *rpc.Artifact) error {
-		name, err := names.ParseArtifact(artifact.GetName())
-		if err != nil {
-			return err
-		}
-
 		(*result) = append((*result), patterns.ArtifactResource{
-			ArtifactName: patterns.ArtifactName{Name: name},
-			Timestamp:    artifact.UpdateTime.AsTime(),
+			Artifact: artifact,
 		})
 
 		return nil
