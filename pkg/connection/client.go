@@ -22,6 +22,7 @@ import (
 	"golang.org/x/oauth2"
 	"google.golang.org/api/option"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 func clientOptions(config Config) ([]option.ClientOption, error) {
@@ -31,7 +32,7 @@ func clientOptions(config Config) ([]option.ClientOption, error) {
 	}
 	opts = append(opts, option.WithEndpoint(config.Address))
 	if config.Insecure {
-		conn, err := grpc.Dial(config.Address, grpc.WithInsecure())
+		conn, err := grpc.Dial(config.Address, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			return nil, err
 		}

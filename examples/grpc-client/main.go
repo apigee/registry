@@ -26,6 +26,7 @@ import (
 	"github.com/apigee/registry/rpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -33,9 +34,8 @@ func main() {
 	// This makes a raw gRPC connection.
 	// see the connection package for a simpler way to get a Go client.
 	var opts []grpc.DialOption
-	insecure := os.Getenv("APG_REGISTRY_INSECURE")
-	if insecure != "" {
-		opts = append(opts, grpc.WithInsecure())
+	if os.Getenv("APG_REGISTRY_INSECURE") != "" {
+		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	} else {
 		systemRoots, err := x509.SystemCertPool()
 		if err != nil {
