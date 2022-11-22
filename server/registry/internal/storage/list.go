@@ -27,8 +27,6 @@ import (
 	"gorm.io/gorm"
 )
 
-const PageSizeLimit = 1000
-
 var tableFieldsLookup = map[string]map[string]filtering.FieldType{
 	"projects":             projectFields,
 	"apis":                 apiFields,
