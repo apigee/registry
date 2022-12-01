@@ -66,7 +66,11 @@ func NewRegistryClientWithSettings(ctx context.Context, config Config) (Registry
 	if err != nil {
 		return nil, err
 	}
-	return gapic.NewRegistryClient(ctx, opts...)
+	client, err := gapic.NewRegistryClient(ctx, opts...)
+	if err != nil && !config.Insecure && config.Token == "" {
+		err = fmt.Errorf("registry token missing, attempted gcloud credentials: %w", err)
+	}
+	return client, err
 }
 
 type AdminClient = *gapic.AdminClient
