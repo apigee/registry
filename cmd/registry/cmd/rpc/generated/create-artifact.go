@@ -12,11 +12,17 @@ import (
 	"os"
 
 	rpcpb "github.com/apigee/registry/rpc"
+
+	"strings"
 )
 
 var CreateArtifactInput rpcpb.CreateArtifactRequest
 
 var CreateArtifactFromFile string
+
+var CreateArtifactInputArtifactLabels []string
+
+var CreateArtifactInputArtifactAnnotations []string
 
 func init() {
 	RegistryServiceCmd.AddCommand(CreateArtifactCmd)
@@ -30,6 +36,10 @@ func init() {
 	CreateArtifactCmd.Flags().StringVar(&CreateArtifactInput.Artifact.MimeType, "artifact.mime_type", "", "A content type specifier for the artifact. ...")
 
 	CreateArtifactCmd.Flags().BytesHexVar(&CreateArtifactInput.Artifact.Contents, "artifact.contents", []byte{}, "Input only. The contents of the artifact. ...")
+
+	CreateArtifactCmd.Flags().StringArrayVar(&CreateArtifactInputArtifactLabels, "artifact.labels", []string{}, "key=value pairs. Labels attach identifying metadata to resources....")
+
+	CreateArtifactCmd.Flags().StringArrayVar(&CreateArtifactInputArtifactAnnotations, "artifact.annotations", []string{}, "key=value pairs. Annotations attach non-identifying metadata to...")
 
 	CreateArtifactCmd.Flags().StringVar(&CreateArtifactInput.ArtifactId, "artifact_id", "", "Required. The ID to use for the artifact, which...")
 
@@ -67,6 +77,32 @@ var CreateArtifactCmd = &cobra.Command{
 				return err
 			}
 
+		}
+
+		if len(CreateArtifactInputArtifactLabels) > 0 {
+			CreateArtifactInput.Artifact.Labels = make(map[string]string)
+		}
+		for _, item := range CreateArtifactInputArtifactLabels {
+			split := strings.Split(item, "=")
+			if len(split) < 2 {
+				err = fmt.Errorf("Invalid map item: %q", item)
+				return
+			}
+
+			CreateArtifactInput.Artifact.Labels[split[0]] = split[1]
+		}
+
+		if len(CreateArtifactInputArtifactAnnotations) > 0 {
+			CreateArtifactInput.Artifact.Annotations = make(map[string]string)
+		}
+		for _, item := range CreateArtifactInputArtifactAnnotations {
+			split := strings.Split(item, "=")
+			if len(split) < 2 {
+				err = fmt.Errorf("Invalid map item: %q", item)
+				return
+			}
+
+			CreateArtifactInput.Artifact.Annotations[split[0]] = split[1]
 		}
 
 		if Verbose {
