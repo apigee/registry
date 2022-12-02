@@ -36,8 +36,7 @@ const (
 
 // References represents the external and available references of an API spec.
 // (-- api-linter: core::0123::resource-annotation=disabled
-//
-//	aip.dev/not-precedent: This message is not currently used in an API. --)
+//     aip.dev/not-precedent: This message is not currently used in an API. --)
 type References struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

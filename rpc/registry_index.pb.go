@@ -36,8 +36,7 @@ const (
 
 // An Operation represents an operation in an API.
 // (-- api-linter: core::0123::resource-annotation=disabled
-//
-//	aip.dev/not-precedent: This message is not currently used in an API. --)
+//     aip.dev/not-precedent: This message is not currently used in an API. --)
 type Operation struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -124,8 +123,7 @@ func (x *Operation) GetFile() string {
 
 // A Schema represents an API message structure.
 // (-- api-linter: core::0123::resource-annotation=disabled
-//
-//	aip.dev/not-precedent: This message is not currently used in an API. --)
+//     aip.dev/not-precedent: This message is not currently used in an API. --)
 type Schema struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -212,8 +210,7 @@ func (x *Schema) GetFile() string {
 
 // A Field represents a field in a schema.
 // (-- api-linter: core::0123::resource-annotation=disabled
-//
-//	aip.dev/not-precedent: This message is not currently used in an API. --)
+//     aip.dev/not-precedent: This message is not currently used in an API. --)
 type Field struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -282,8 +279,7 @@ func (x *Field) GetFile() string {
 
 // A File represents a source file of an API description.
 // (-- api-linter: core::0123::resource-annotation=disabled
-//
-//	aip.dev/not-precedent: This message is not currently used in an API. --)
+//     aip.dev/not-precedent: This message is not currently used in an API. --)
 type File struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -352,8 +348,7 @@ func (x *File) GetSchemas() []*Schema {
 
 // An Index lists fields, schemas, and operations with their associated files.
 // (-- api-linter: core::0123::resource-annotation=disabled
-//
-//	aip.dev/not-precedent: This message is not currently used in an API. --)
+//     aip.dev/not-precedent: This message is not currently used in an API. --)
 type Index struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

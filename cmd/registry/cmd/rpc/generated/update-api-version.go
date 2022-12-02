@@ -45,6 +45,8 @@ func init() {
 
 	UpdateApiVersionCmd.Flags().StringArrayVar(&UpdateApiVersionInputApiVersionAnnotations, "api_version.annotations", []string{}, "key=value pairs. Annotations attach non-identifying metadata to...")
 
+	UpdateApiVersionCmd.Flags().StringVar(&UpdateApiVersionInput.ApiVersion.PrimarySpec, "api_version.primary_spec", "", "The primary spec for this version.  Format:...")
+
 	UpdateApiVersionCmd.Flags().StringSliceVar(&UpdateApiVersionInput.UpdateMask.Paths, "update_mask.paths", []string{}, "The set of field mask paths.")
 
 	UpdateApiVersionCmd.Flags().BoolVar(&UpdateApiVersionInput.AllowMissing, "allow_missing", false, "If set to true, and the version is not found, a...")
