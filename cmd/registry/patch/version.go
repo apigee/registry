@@ -34,19 +34,23 @@ func newApiVersion(ctx context.Context, client *gapic.RegistryClient, message *r
 
 	specs := make([]*models.ApiSpec, 0)
 	if err = core.ListSpecs(ctx, client, versionName.Spec("-"), "", func(message *rpc.ApiSpec) error {
-		spec, err := newApiSpec(message)
+		spec, err := newApiSpec(ctx, client, message)
 		if err != nil {
 			return err
 		}
 		// unset these because they can be inferred
 		spec.ApiVersion = ""
 		spec.Kind = ""
+		spec.Metadata.Parent = ""
 		specs = append(specs, spec)
 		return nil
 	}); err != nil {
 		return nil, err
 	}
-
+	artifacts, err := collectChildArtifacts(ctx, client, versionName.Artifact("-"))
+	if err != nil {
+		return nil, err
+	}
 	return &models.ApiVersion{
 		Header: models.Header{
 			ApiVersion: RegistryV1,
@@ -62,6 +66,7 @@ func newApiVersion(ctx context.Context, client *gapic.RegistryClient, message *r
 			Description: message.Description,
 			State:       message.State,
 			ApiSpecs:    specs,
+			Artifacts:   artifacts,
 		},
 	}, nil
 }
@@ -113,6 +118,12 @@ func applyApiVersionPatch(
 	}
 	for _, specPatch := range version.Data.ApiSpecs {
 		err := applyApiSpecPatch(ctx, client, specPatch, name.String())
+		if err != nil {
+			return err
+		}
+	}
+	for _, artifactPatch := range version.Data.Artifacts {
+		err = applyArtifactPatch(ctx, client, artifactPatch, name.String())
 		if err != nil {
 			return err
 		}

@@ -49,7 +49,7 @@ func CallLogger(opts ...log.Option) grpc.UnaryServerInterceptor {
 		}
 
 		if r, ok := req.(collectionOperation); ok {
-			reqInfo["collection"] = r.GetParent()
+			reqInfo["parent"] = r.GetParent()
 		}
 
 		// Bind request-scoped and inbound attributes to the context logger before handling the request.
@@ -61,7 +61,7 @@ func CallLogger(opts ...log.Option) grpc.UnaryServerInterceptor {
 		resp, err := handler(ctx, req)
 
 		respInfo := map[string]interface{}{
-			"duration":    time.Since(start),
+			"runtime":     time.Since(start),
 			"status_code": status.Code(err),
 		}
 

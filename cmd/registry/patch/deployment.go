@@ -18,6 +18,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/models"
 	"github.com/apigee/registry/rpc"
@@ -44,12 +45,16 @@ func optionalSpecRevisionName(deploymentName names.Deployment, subpath string) s
 	return deploymentName.Api().String() + "/versions/" + subpath
 }
 
-func newApiDeployment(message *rpc.ApiDeployment) (*models.ApiDeployment, error) {
+func newApiDeployment(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiDeployment) (*models.ApiDeployment, error) {
 	deploymentName, err := names.ParseDeployment(message.Name)
 	if err != nil {
 		return nil, err
 	}
 	revisionName := relativeSpecRevisionName(deploymentName.Api(), message.ApiSpecRevision)
+	artifacts, err := collectChildArtifacts(ctx, client, deploymentName.Artifact("-"))
+	if err != nil {
+		return nil, err
+	}
 	return &models.ApiDeployment{
 		Header: models.Header{
 			ApiVersion: RegistryV1,
@@ -68,6 +73,7 @@ func newApiDeployment(message *rpc.ApiDeployment) (*models.ApiDeployment, error)
 			IntendedAudience:   message.IntendedAudience,
 			AccessGuidance:     message.AccessGuidance,
 			ApiSpecRevision:    revisionName,
+			Artifacts:          artifacts,
 		},
 	}, nil
 }
@@ -117,5 +123,14 @@ func applyApiDeploymentPatch(
 		return err
 	}
 	_, err = client.UpdateApiDeployment(ctx, req)
-	return err
+	if err != nil {
+		return err
+	}
+	for _, artifactPatch := range deployment.Data.Artifacts {
+		err = applyArtifactPatch(ctx, client, artifactPatch, name.String())
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

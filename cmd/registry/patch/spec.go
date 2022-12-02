@@ -24,6 +24,7 @@ import (
 	"strings"
 
 	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/models"
 	"github.com/apigee/registry/rpc"
@@ -31,8 +32,12 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func newApiSpec(message *rpc.ApiSpec) (*models.ApiSpec, error) {
+func newApiSpec(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiSpec) (*models.ApiSpec, error) {
 	specName, err := names.ParseSpec(message.Name)
+	if err != nil {
+		return nil, err
+	}
+	artifacts, err := collectChildArtifacts(ctx, client, specName.Artifact("-"))
 	if err != nil {
 		return nil, err
 	}
@@ -51,6 +56,7 @@ func newApiSpec(message *rpc.ApiSpec) (*models.ApiSpec, error) {
 			Description: message.Description,
 			MimeType:    message.MimeType,
 			SourceURI:   message.SourceUri,
+			Artifacts:   artifacts,
 		},
 	}, nil
 }
@@ -159,5 +165,14 @@ func applyApiSpecPatch(
 		}
 	}
 	_, err = client.UpdateApiSpec(ctx, req)
-	return err
+	if err != nil {
+		return err
+	}
+	for _, artifactPatch := range spec.Data.Artifacts {
+		err = applyArtifactPatch(ctx, client, artifactPatch, name.String())
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

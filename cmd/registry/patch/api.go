@@ -51,6 +51,7 @@ func newApi(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api)
 		// unset these because they can be inferred
 		version.ApiVersion = ""
 		version.Kind = ""
+		version.Metadata.Parent = ""
 		versions = append(versions, version)
 		return nil
 	}); err != nil {
@@ -59,36 +60,20 @@ func newApi(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api)
 	deployments := make([]*models.ApiDeployment, 0)
 	if err = core.ListDeployments(ctx, client, apiName.Deployment("-"), "", func(message *rpc.ApiDeployment) error {
 		var deployment *models.ApiDeployment
-		deployment, err = newApiDeployment(message)
+		deployment, err = newApiDeployment(ctx, client, message)
 		if err != nil {
 			return err
 		}
 		// unset these because they can be inferred
 		deployment.ApiVersion = ""
 		deployment.Kind = ""
+		deployment.Metadata.Parent = ""
 		deployments = append(deployments, deployment)
 		return nil
 	}); err != nil {
 		return nil, err
 	}
-	artifacts := make([]*models.Artifact, 0)
-	if err = core.ListArtifacts(ctx, client, apiName.Artifact("-"), "", true, func(message *rpc.Artifact) error {
-		var artifact *models.Artifact
-		artifact, err = newArtifact(message)
-		if err != nil {
-			log.FromContext(ctx).Warnf("Skipping %s: %s", message.Name, err)
-			return nil
-		}
-		if artifact.Kind == "Artifact" { // "Artifact" is the generic artifact type
-			log.FromContext(ctx).Warnf("Skipping %s", message.Name)
-			return nil
-		}
-		artifact.ApiVersion = ""
-		artifacts = append(artifacts, artifact)
-		return nil
-	}); err != nil {
-		return nil, err
-	}
+	artifacts, err := collectChildArtifacts(ctx, client, apiName.Artifact("-"))
 	return &models.Api{
 		Header: models.Header{
 			ApiVersion: RegistryV1,
@@ -110,6 +95,29 @@ func newApi(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api)
 			Artifacts:             artifacts,
 		},
 	}, err
+}
+
+func collectChildArtifacts(ctx context.Context, client *gapic.RegistryClient, artifactPattern names.Artifact) ([]*models.Artifact, error) {
+	artifacts := make([]*models.Artifact, 0)
+	if err := core.ListArtifacts(ctx, client, artifactPattern, "", true, func(message *rpc.Artifact) error {
+		artifact, err := newArtifact(message)
+		if err != nil {
+			log.FromContext(ctx).Warnf("Skipping %s: %s", message.Name, err)
+			return nil
+		}
+		if artifact.Kind == "Artifact" { // "Artifact" is the generic artifact type
+			log.FromContext(ctx).Warnf("Skipping %s", message.Name)
+			return nil
+		}
+		// unset these because they can be inferred
+		artifact.ApiVersion = ""
+		artifact.Metadata.Parent = ""
+		artifacts = append(artifacts, artifact)
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	return artifacts, nil
 }
 
 // ExportAPI allows an API to be individually exported as a YAML file.

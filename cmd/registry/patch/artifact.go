@@ -100,6 +100,13 @@ func removeIdAndKind(node *yaml.Node) *yaml.Node {
 	return node
 }
 
+func metadataParentOfArtifact(artifact names.Artifact) string {
+	// first remove the located project
+	parent := strings.TrimPrefix(artifact.Parent(), "projects/"+artifact.ProjectID()+"/locations/global")
+	// if there's anything left, trim the leading slash
+	return strings.TrimPrefix(parent, "/")
+}
+
 func newArtifact(message *rpc.Artifact) (*models.Artifact, error) {
 	artifactName, err := names.ParseArtifact(message.Name)
 	if err != nil {
@@ -146,6 +153,7 @@ func newArtifact(message *rpc.Artifact) (*models.Artifact, error) {
 			Kind:       kindForMimeType(message.MimeType),
 			Metadata: models.Metadata{
 				Name:        artifactName.ArtifactID(),
+				Parent:      metadataParentOfArtifact(artifactName),
 				Labels:      message.Labels,
 				Annotations: message.Annotations,
 			},
