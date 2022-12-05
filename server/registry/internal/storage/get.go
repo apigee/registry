@@ -160,7 +160,7 @@ func (c *Client) GetArtifact(ctx context.Context, name names.Artifact, forUpdate
 	}
 
 	// if fully specified, just grab via key
-	if name.SpecID() == "" || name.DeploymentID() == "" || name.RevisionID() != "" {
+	if !((name.SpecID() != "" || name.DeploymentID() != "") && name.RevisionID() == "") {
 		if err := op.Take(v, "key = ?", name.String()).Error; err == gorm.ErrRecordNotFound {
 			return nil, status.Errorf(codes.NotFound, "%q not found in database", name)
 		} else if err != nil {
@@ -190,7 +190,6 @@ func (c *Client) GetArtifact(ctx context.Context, name names.Artifact, forUpdate
 			Joins(`join (?) latest
 				ON artifacts.project_id = latest.project_id
 				AND artifacts.api_id = latest.api_id
-				AND artifacts.version_id = latest.version_id
 				AND artifacts.deployment_id = latest.deployment_id
 				AND artifacts.revision_id = latest.revision_id`, c.latestDeploymentRevisionsQuery(ctx))
 	}
@@ -229,7 +228,6 @@ func (c *Client) GetArtifactContents(ctx context.Context, name names.Artifact) (
 			op = op.Joins(`join (?) latest
 				ON blobs.project_id = latest.project_id
 				AND blobs.api_id = latest.api_id
-				AND blobs.version_id = latest.version_id
 				AND blobs.deployment_id = latest.deployment_id
 				AND blobs.revision_id = latest.revision_id`, c.latestDeploymentRevisionsQuery(ctx))
 		}
