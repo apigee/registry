@@ -160,7 +160,7 @@ func (c *Client) GetArtifact(ctx context.Context, name names.Artifact, forUpdate
 	}
 
 	// if fully specified, just grab via key
-	if name.SpecID() == "" && name.RevisionID() == "" {
+	if !((name.SpecID() != "" || name.DeploymentID() != "") && name.RevisionID() == "") {
 		if err := op.Take(v, "key = ?", name.String()).Error; err == gorm.ErrRecordNotFound {
 			return nil, status.Errorf(codes.NotFound, "%q not found in database", name)
 		} else if err != nil {
@@ -170,24 +170,28 @@ func (c *Client) GetArtifact(ctx context.Context, name names.Artifact, forUpdate
 		return v, nil
 	}
 
-	// otherwise, join to default spec revision
-	op = op.Where("artifacts.project_id = ?", name.ProjectID()).
+	// otherwise, retrieve by latest revision
+	op = op.Model(&models.Artifact{}).
+		Where("artifacts.project_id = ?", name.ProjectID()).
 		Where("artifacts.api_id = ?", name.ApiID()).
 		Where("artifacts.version_id = ?", name.VersionID()).
-		Where("artifacts.spec_id = ?", name.SpecID()).
 		Where("artifacts.artifact_id = ?", name.ArtifactID())
 
-	if id := name.RevisionID(); id != "" { // select specific spec revision
-		op = op.Where("artifacts.revision_id = ?", id)
-	}
-	if id := name.RevisionID(); id == "" { // select latest spec revision
-		op = op.Model(&models.Artifact{}).
+	if name.SpecID() != "" {
+		op = op.Where("artifacts.spec_id = ?", name.SpecID()).
 			Joins(`join (?) latest
-			ON artifacts.project_id = latest.project_id
-			AND artifacts.api_id = latest.api_id
-			AND artifacts.version_id = latest.version_id
-			AND artifacts.spec_id = latest.spec_id
-			AND artifacts.revision_id = latest.revision_id`, c.latestSpecRevisionsQuery(ctx))
+				ON artifacts.project_id = latest.project_id
+				AND artifacts.api_id = latest.api_id
+				AND artifacts.version_id = latest.version_id
+				AND artifacts.spec_id = latest.spec_id
+				AND artifacts.revision_id = latest.revision_id`, c.latestSpecRevisionsQuery(ctx))
+	} else if name.DeploymentID() != "" {
+		op = op.Where("artifacts.deployment_id = ?", name.DeploymentID()).
+			Joins(`join (?) latest
+				ON artifacts.project_id = latest.project_id
+				AND artifacts.api_id = latest.api_id
+				AND artifacts.deployment_id = latest.deployment_id
+				AND artifacts.revision_id = latest.revision_id`, c.latestDeploymentRevisionsQuery(ctx))
 	}
 
 	if err := op.Take(v).Error; err == gorm.ErrRecordNotFound {
@@ -210,19 +214,25 @@ func (c *Client) GetArtifactContents(ctx context.Context, name names.Artifact) (
 		Where("blobs.spec_id = ?", name.SpecID()).
 		Where("blobs.artifact_id = ?", strings.ToLower(name.ArtifactID()))
 
-	if name.SpecID() != "" {
-		if id := name.RevisionID(); id != "" { // select specific spec revision
-			op = op.Where("blobs.revision_id = ?", id)
-		}
-		if id := name.RevisionID(); id == "" { // select latest spec revision
+	if id := name.RevisionID(); id != "" { // select specific spec revision
+		op = op.Where("blobs.revision_id = ?", id)
+	} else {
+		if name.SpecID() != "" {
 			op = op.Joins(`join (?) latest
 				ON blobs.project_id = latest.project_id
 				AND blobs.api_id = latest.api_id
 				AND blobs.version_id = latest.version_id
 				AND blobs.spec_id = latest.spec_id
 				AND blobs.revision_id = latest.revision_id`, c.latestSpecRevisionsQuery(ctx))
+		} else if name.DeploymentID() != "" {
+			op = op.Joins(`join (?) latest
+				ON blobs.project_id = latest.project_id
+				AND blobs.api_id = latest.api_id
+				AND blobs.deployment_id = latest.deployment_id
+				AND blobs.revision_id = latest.revision_id`, c.latestDeploymentRevisionsQuery(ctx))
 		}
 	}
+
 	if err := op.Take(v).Error; err == gorm.ErrRecordNotFound {
 		return nil, status.Errorf(codes.NotFound, "%q not found in database", name)
 	} else if err != nil {

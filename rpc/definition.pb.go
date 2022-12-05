@@ -65,14 +65,12 @@ type ScoreDefinition struct {
 	// A score can be a single score_value or a rollup of multiple score_values.
 	//
 	// Types that are assignable to Formula:
-	//
 	//	*ScoreDefinition_ScoreFormula
 	//	*ScoreDefinition_RollupFormula
 	Formula isScoreDefinition_Formula `protobuf_oneof:"formula"`
 	// Represents the type and characteristics of the score.
 	//
 	// Types that are assignable to Type:
-	//
 	//	*ScoreDefinition_Percent
 	//	*ScoreDefinition_Integer
 	//	*ScoreDefinition_Boolean
@@ -263,9 +261,8 @@ type ResourcePattern struct {
 	// A pattern that specifies a resource.
 	// This can specify one particular resource or a group of resources.
 	// Format:
-	//
-	//	apis/{api}/versions/{version}/specs/{spec}/artifacts/{artifact}
-	//	apis/-/versions/-/specs/-/artifacts/-
+	//   apis/{api}/versions/{version}/specs/{spec}/artifacts/{artifact}
+	//   apis/-/versions/-/specs/-/artifacts/-
 	Pattern string `protobuf:"bytes,1,opt,name=pattern,proto3" json:"pattern,omitempty"`
 	// A filter expression that limits the resources that match the pattern.
 	Filter string `protobuf:"bytes,2,opt,name=filter,proto3" json:"filter,omitempty"`
@@ -457,36 +454,34 @@ type PercentType struct {
 	// Represents the thresholds for severity of this type of score.
 	// Examples of thresholds:
 	// For scores where low value is of concern.
-	//
-	//	thresholds = []Threshold{
-	//	  {
-	//	    severity: Severity.ALERT,
-	//	    range: NumberRange{ min: 0, max: 30},
-	//	  },
-	//	  {
-	//	    severity: Severity.WARNING,
-	//	    range: NumberRange{ min: 31, max: 70},
-	//	  },
-	//	  { severity: Severity.OK,
-	//	    range: NumberRange{ min: 71, max: 100},
-	//	  },
-	//	}
+	// thresholds = []Threshold{
+	//   {
+	//     severity: Severity.ALERT,
+	//     range: NumberRange{ min: 0, max: 30},
+	//   },
+	//   {
+	//     severity: Severity.WARNING,
+	//     range: NumberRange{ min: 31, max: 70},
+	//   },
+	//   { severity: Severity.OK,
+	//     range: NumberRange{ min: 71, max: 100},
+	//   },
+	// }
 	//
 	// For scores where high value is of concern.
-	//
-	//	thresholds = []Threshold{
-	//	  {
-	//	    severity: Severity.ALERT,
-	//	    range: NumberRange{ min: 61, max: 100},
-	//	  },
-	//	  {
-	//	    severity: Severity.WARNING,
-	//	    range: NumberRange{ min: 31, max: 60},
-	//	  },
-	//	  { severity: Severity.OK,
-	//	    range: NumberRange{ min: 0, max: 30},
-	//	  },
-	//	}
+	// thresholds = []Threshold{
+	//   {
+	//     severity: Severity.ALERT,
+	//     range: NumberRange{ min: 61, max: 100},
+	//   },
+	//   {
+	//     severity: Severity.WARNING,
+	//     range: NumberRange{ min: 31, max: 60},
+	//   },
+	//   { severity: Severity.OK,
+	//     range: NumberRange{ min: 0, max: 30},
+	//   },
+	// }
 	Thresholds []*NumberThreshold `protobuf:"bytes,1,rep,name=thresholds,proto3" json:"thresholds,omitempty"`
 }
 
@@ -613,28 +608,26 @@ type BooleanType struct {
 	DisplayFalse string `protobuf:"bytes,2,opt,name=display_false,json=displayFalse,proto3" json:"display_false,omitempty"`
 	// Represents the thresholds for severity of this type of score.
 	// Examples:
-	//
-	//	thresholds = []Threshold{
-	//	  {
-	//	    severity: Severity.ALERT,
-	//	    value: false,
-	//	  },
-	//	  { severity: Severity.OK,
-	//	    value: true,
-	//	  },
-	//	}
+	// thresholds = []Threshold{
+	//   {
+	//     severity: Severity.ALERT,
+	//     value: false,
+	//   },
+	//   { severity: Severity.OK,
+	//     value: true,
+	//   },
+	// }
 	//
 	// For scores where false value is not an alert but a warning.
-	//
-	//	thresholds = []Threshold{
-	//	  {
-	//	    severity: Severity.WARNING,
-	//	    value: false,
-	//	  },
-	//	  { severity: Severity.OK,
-	//	    value: true,
-	//	  },
-	//	}
+	// thresholds = []Threshold{
+	//   {
+	//     severity: Severity.WARNING,
+	//     value: false,
+	//   },
+	//   { severity: Severity.OK,
+	//     value: true,
+	//   },
+	// }
 	Thresholds []*BooleanThreshold `protobuf:"bytes,3,rep,name=thresholds,proto3" json:"thresholds,omitempty"`
 }
 

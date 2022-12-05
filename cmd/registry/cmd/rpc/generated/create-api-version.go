@@ -43,6 +43,8 @@ func init() {
 
 	CreateApiVersionCmd.Flags().StringArrayVar(&CreateApiVersionInputApiVersionAnnotations, "api_version.annotations", []string{}, "key=value pairs. Annotations attach non-identifying metadata to...")
 
+	CreateApiVersionCmd.Flags().StringVar(&CreateApiVersionInput.ApiVersion.PrimarySpec, "api_version.primary_spec", "", "The primary spec for this version.  Format:...")
+
 	CreateApiVersionCmd.Flags().StringVar(&CreateApiVersionInput.ApiVersionId, "api_version_id", "", "Required. The ID to use for the version, which...")
 
 	CreateApiVersionCmd.Flags().StringVar(&CreateApiVersionFromFile, "from_file", "", "Absolute path to JSON file containing request payload")
