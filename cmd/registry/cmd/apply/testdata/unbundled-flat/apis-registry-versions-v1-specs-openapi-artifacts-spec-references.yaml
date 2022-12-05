@@ -1,0 +1,14 @@
+apiVersion: apigeeregistry/v1
+kind: ReferenceList
+metadata:
+  name: spec-references
+  parent: apis/registry/versions/v1/specs/openapi
+data:
+  displayName: ""
+  description: spec-related references
+  references:
+    - id: github
+      displayName: GitHub Repo
+      category: apihub-source-code
+      resource: ""
+      uri: https://github.com/apigee/registry
