@@ -378,6 +378,7 @@ func TestCreateArtifactDuplicates(t *testing.T) {
 	}
 }
 
+// See also TestSpecRevisionArtifacts and TestDeploymentRevisionArtifacts
 func TestGetArtifact(t *testing.T) {
 	tests := []struct {
 		desc string
@@ -471,6 +472,7 @@ func TestGetArtifactResponseCodes(t *testing.T) {
 	}
 }
 
+// See also TestSpecRevisionArtifacts and TestDeploymentRevisionArtifacts
 func TestGetArtifactContents(t *testing.T) {
 	tests := []struct {
 		desc string
@@ -1484,14 +1486,18 @@ func TestSpecRevisionArtifacts(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Setup: CreateApiSpec(%+v) returned error: %s", createSpec2, err)
 	}
+
+	artifactContentsR1 := []byte(`{"contents": "r1"}`)
+	artifactContentsR2 := []byte(`{"contents": "r2"}`)
+
 	createArtifact := &rpc.CreateArtifactRequest{
 		Parent:     spec2r1.Name,
 		ArtifactId: "my-artifact-r1",
 		Artifact: &rpc.Artifact{
 			MimeType:  "application/json",
-			SizeBytes: int32(len(artifactContents)),
-			Hash:      sha256hash(artifactContents),
-			Contents:  artifactContents,
+			SizeBytes: int32(len(artifactContentsR1)),
+			Hash:      sha256hash(artifactContentsR1),
+			Contents:  artifactContentsR1,
 		},
 	}
 	_, err = server.CreateArtifact(ctx, createArtifact)
@@ -1505,9 +1511,9 @@ func TestSpecRevisionArtifacts(t *testing.T) {
 			ArtifactId: "my-artifact-r2",
 			Artifact: &rpc.Artifact{
 				MimeType:  "application/json",
-				SizeBytes: int32(len(artifactContents)),
-				Hash:      sha256hash(artifactContents),
-				Contents:  artifactContents,
+				SizeBytes: int32(len(artifactContentsR2)),
+				Hash:      sha256hash(artifactContentsR2),
+				Contents:  artifactContentsR2,
 			},
 		}
 		artifact, err := server.CreateArtifact(ctx, createArtifact)
@@ -1518,8 +1524,8 @@ func TestSpecRevisionArtifacts(t *testing.T) {
 		want := &rpc.Artifact{
 			Name:      fmt.Sprintf(createArtifact.Parent+"@%s/artifacts/my-artifact-r2", spec1r2.RevisionId),
 			MimeType:  "application/json",
-			SizeBytes: int32(len(artifactContents)),
-			Hash:      sha256hash(artifactContents),
+			SizeBytes: int32(len(artifactContentsR2)),
+			Hash:      sha256hash(artifactContentsR2),
 		}
 
 		opts := cmp.Options{
@@ -1538,9 +1544,9 @@ func TestSpecRevisionArtifacts(t *testing.T) {
 			ArtifactId: "my-artifact-r1",
 			Artifact: &rpc.Artifact{
 				MimeType:  "application/json",
-				SizeBytes: int32(len(artifactContents)),
-				Hash:      sha256hash(artifactContents),
-				Contents:  artifactContents,
+				SizeBytes: int32(len(artifactContentsR1)),
+				Hash:      sha256hash(artifactContentsR1),
+				Contents:  artifactContentsR1,
 			},
 		}
 		artifact, err := server.CreateArtifact(ctx, createArtifact)
@@ -1551,8 +1557,8 @@ func TestSpecRevisionArtifacts(t *testing.T) {
 		want := &rpc.Artifact{
 			Name:      createArtifact.Parent + "/artifacts/my-artifact-r1",
 			MimeType:  "application/json",
-			SizeBytes: int32(len(artifactContents)),
-			Hash:      sha256hash(artifactContents),
+			SizeBytes: int32(len(artifactContentsR1)),
+			Hash:      sha256hash(artifactContentsR1),
 		}
 
 		opts := cmp.Options{
@@ -1562,6 +1568,51 @@ func TestSpecRevisionArtifacts(t *testing.T) {
 
 		if !cmp.Equal(want, artifact, opts) {
 			t.Errorf("CreateArtifact(%+v) returned unexpected diff (-want +got):\n%s", createArtifact, cmp.Diff(want, artifact, opts))
+		}
+	})
+
+	t.Run("get artifact", func(t *testing.T) {
+		tests := []struct {
+			desc string
+			req  *rpc.GetArtifactRequest
+			want *rpc.Artifact
+		}{
+			{
+				desc: "specified revision",
+				req: &rpc.GetArtifactRequest{
+					Name: "projects/my-project/locations/global/apis/my-api/versions/my-version/specs/my-spec@" + spec1r1.GetRevisionId() + "/artifacts/my-artifact-r1",
+				},
+				want: &rpc.Artifact{
+					Name: "projects/my-project/locations/global/apis/my-api/versions/my-version/specs/my-spec@" + spec1r1.GetRevisionId() + "/artifacts/my-artifact-r1",
+				},
+			},
+			{
+				desc: "latest revision",
+				req: &rpc.GetArtifactRequest{
+					Name: "projects/my-project/locations/global/apis/my-api/versions/my-version/specs/my-spec@" + spec1r2.GetRevisionId() + "/artifacts/my-artifact-r2",
+				},
+				want: &rpc.Artifact{
+					Name: "projects/my-project/locations/global/apis/my-api/versions/my-version/specs/my-spec@" + spec1r2.GetRevisionId() + "/artifacts/my-artifact-r2",
+				},
+			},
+		}
+
+		for _, test := range tests {
+			t.Run(test.desc, func(t *testing.T) {
+				got, err := server.GetArtifact(ctx, test.req)
+				if err != nil {
+					t.Fatalf("GetArtifact(%+v) returned error: %s", test.req, err)
+				}
+
+				opts := cmp.Options{
+					protocmp.Transform(),
+					protocmp.IgnoreFields(new(rpc.Artifact), "create_time", "update_time", "hash", "mime_type", "size_bytes"),
+				}
+
+				if !cmp.Equal(test.want, got, opts) {
+					t.Errorf("GetArtifact(%+v) returned unexpected diff (-want +got):\n%s", test.req, cmp.Diff(test.want, got, opts))
+				}
+			})
 		}
 	})
 
@@ -1701,6 +1752,42 @@ func TestSpecRevisionArtifacts(t *testing.T) {
 			})
 		}
 	})
+
+	t.Run("get contents", func(t *testing.T) {
+		tests := []struct {
+			desc string
+			req  *rpc.GetArtifactContentsRequest
+			want []byte
+		}{
+			{
+				desc: "specified revision",
+				req: &rpc.GetArtifactContentsRequest{
+					Name: "projects/my-project/locations/global/apis/my-api/versions/my-version/specs/my-spec@" + spec1r1.GetRevisionId() + "/artifacts/my-artifact-r1",
+				},
+				want: artifactContentsR1,
+			},
+			{
+				desc: "latest revision",
+				req: &rpc.GetArtifactContentsRequest{
+					Name: "projects/my-project/locations/global/apis/my-api/versions/my-version/specs/my-spec@" + spec1r2.GetRevisionId() + "/artifacts/my-artifact-r2",
+				},
+				want: artifactContentsR2,
+			},
+		}
+
+		for _, test := range tests {
+			t.Run(test.desc, func(t *testing.T) {
+				got, err := server.GetArtifactContents(ctx, test.req)
+				if err != nil {
+					t.Fatalf("GetArtifact(%+v) returned error: %s", test.req, err)
+				}
+
+				if !cmp.Equal(test.want, got.Data, nil) {
+					t.Errorf("GetArtifactContents(%+v) returned unexpected diff (-want +got):\n%s", test.req, cmp.Diff(test.want, got.Data, nil))
+				}
+			})
+		}
+	})
 }
 
 func TestDeploymentRevisionArtifacts(t *testing.T) {
@@ -1747,14 +1834,17 @@ func TestDeploymentRevisionArtifacts(t *testing.T) {
 		t.Fatalf("Setup: CreateApiDeployment(%+v) returned error: %s", createDeployment, err)
 	}
 
+	artifactContentsR1 := []byte(`{"contents": "r1"}`)
+	artifactContentsR2 := []byte(`{"contents": "r2"}`)
+
 	createArtifact := &rpc.CreateArtifactRequest{
 		Parent:     deployment2r1.Name,
 		ArtifactId: "my-artifact-r1",
 		Artifact: &rpc.Artifact{
 			MimeType:  "application/json",
-			SizeBytes: int32(len(artifactContents)),
-			Hash:      sha256hash(artifactContents),
-			Contents:  artifactContents,
+			SizeBytes: int32(len(artifactContentsR1)),
+			Hash:      sha256hash(artifactContentsR1),
+			Contents:  artifactContentsR1,
 		},
 	}
 	_, err = server.CreateArtifact(ctx, createArtifact)
@@ -1768,9 +1858,9 @@ func TestDeploymentRevisionArtifacts(t *testing.T) {
 			ArtifactId: "my-artifact-r2",
 			Artifact: &rpc.Artifact{
 				MimeType:  "application/json",
-				SizeBytes: int32(len(artifactContents)),
-				Hash:      sha256hash(artifactContents),
-				Contents:  artifactContents,
+				SizeBytes: int32(len(artifactContentsR2)),
+				Hash:      sha256hash(artifactContentsR2),
+				Contents:  artifactContentsR2,
 			},
 		}
 		artifact, err := server.CreateArtifact(ctx, createArtifact)
@@ -1781,8 +1871,8 @@ func TestDeploymentRevisionArtifacts(t *testing.T) {
 		want := &rpc.Artifact{
 			Name:      fmt.Sprintf(createArtifact.Parent+"@%s/artifacts/my-artifact-r2", deployment1r2.RevisionId),
 			MimeType:  "application/json",
-			SizeBytes: int32(len(artifactContents)),
-			Hash:      sha256hash(artifactContents),
+			SizeBytes: int32(len(artifactContentsR2)),
+			Hash:      sha256hash(artifactContentsR2),
 		}
 
 		opts := cmp.Options{
@@ -1801,9 +1891,9 @@ func TestDeploymentRevisionArtifacts(t *testing.T) {
 			ArtifactId: "my-artifact-r1",
 			Artifact: &rpc.Artifact{
 				MimeType:  "application/json",
-				SizeBytes: int32(len(artifactContents)),
-				Hash:      sha256hash(artifactContents),
-				Contents:  artifactContents,
+				SizeBytes: int32(len(artifactContentsR1)),
+				Hash:      sha256hash(artifactContentsR1),
+				Contents:  artifactContentsR1,
 			},
 		}
 		artifact, err := server.CreateArtifact(ctx, createArtifact)
@@ -1814,8 +1904,8 @@ func TestDeploymentRevisionArtifacts(t *testing.T) {
 		want := &rpc.Artifact{
 			Name:      createArtifact.Parent + "/artifacts/my-artifact-r1",
 			MimeType:  "application/json",
-			SizeBytes: int32(len(artifactContents)),
-			Hash:      sha256hash(artifactContents),
+			SizeBytes: int32(len(artifactContentsR1)),
+			Hash:      sha256hash(artifactContentsR1),
 		}
 
 		opts := cmp.Options{
@@ -1825,6 +1915,51 @@ func TestDeploymentRevisionArtifacts(t *testing.T) {
 
 		if !cmp.Equal(want, artifact, opts) {
 			t.Errorf("CreateArtifact(%+v) returned unexpected diff (-want +got):\n%s", createArtifact, cmp.Diff(want, artifact, opts))
+		}
+	})
+
+	t.Run("get artifact", func(t *testing.T) {
+		tests := []struct {
+			desc string
+			req  *rpc.GetArtifactRequest
+			want *rpc.Artifact
+		}{
+			{
+				desc: "specified revision",
+				req: &rpc.GetArtifactRequest{
+					Name: "projects/my-project/locations/global/apis/my-api/deployments/my-deployment@" + deployment1r1.GetRevisionId() + "/artifacts/my-artifact-r1",
+				},
+				want: &rpc.Artifact{
+					Name: "projects/my-project/locations/global/apis/my-api/deployments/my-deployment@" + deployment1r1.GetRevisionId() + "/artifacts/my-artifact-r1",
+				},
+			},
+			{
+				desc: "latest revision",
+				req: &rpc.GetArtifactRequest{
+					Name: "projects/my-project/locations/global/apis/my-api/deployments/my-deployment@" + deployment1r2.GetRevisionId() + "/artifacts/my-artifact-r2",
+				},
+				want: &rpc.Artifact{
+					Name: "projects/my-project/locations/global/apis/my-api/deployments/my-deployment@" + deployment1r2.GetRevisionId() + "/artifacts/my-artifact-r2",
+				},
+			},
+		}
+
+		for _, test := range tests {
+			t.Run(test.desc, func(t *testing.T) {
+				got, err := server.GetArtifact(ctx, test.req)
+				if err != nil {
+					t.Fatalf("GetArtifact(%+v) returned error: %s", test.req, err)
+				}
+
+				opts := cmp.Options{
+					protocmp.Transform(),
+					protocmp.IgnoreFields(new(rpc.Artifact), "create_time", "update_time", "hash", "mime_type", "size_bytes"),
+				}
+
+				if !cmp.Equal(test.want, got, opts) {
+					t.Errorf("GetArtifact(%+v) returned unexpected diff (-want +got):\n%s", test.req, cmp.Diff(test.want, got, opts))
+				}
+			})
 		}
 	})
 
@@ -1946,6 +2081,42 @@ func TestDeploymentRevisionArtifacts(t *testing.T) {
 
 				if !cmp.Equal(test.want, got, opts) {
 					t.Errorf("ListArtifacts(%+v) returned unexpected diff (-want +got):\n%s", test.req, cmp.Diff(test.want, got, opts))
+				}
+			})
+		}
+	})
+
+	t.Run("get contents", func(t *testing.T) {
+		tests := []struct {
+			desc string
+			req  *rpc.GetArtifactContentsRequest
+			want []byte
+		}{
+			{
+				desc: "specified revision",
+				req: &rpc.GetArtifactContentsRequest{
+					Name: "projects/my-project/locations/global/apis/my-api/deployments/my-deployment@" + deployment1r1.GetRevisionId() + "/artifacts/my-artifact-r1",
+				},
+				want: artifactContentsR1,
+			},
+			{
+				desc: "latest revision",
+				req: &rpc.GetArtifactContentsRequest{
+					Name: "projects/my-project/locations/global/apis/my-api/deployments/my-deployment@" + deployment1r2.GetRevisionId() + "/artifacts/my-artifact-r2",
+				},
+				want: artifactContentsR2,
+			},
+		}
+
+		for _, test := range tests {
+			t.Run(test.desc, func(t *testing.T) {
+				got, err := server.GetArtifactContents(ctx, test.req)
+				if err != nil {
+					t.Fatalf("GetArtifact(%+v) returned error: %s", test.req, err)
+				}
+
+				if !cmp.Equal(test.want, got.Data, nil) {
+					t.Errorf("GetArtifactContents(%+v) returned unexpected diff (-want +got):\n%s", test.req, cmp.Diff(test.want, got.Data, nil))
 				}
 			})
 		}
