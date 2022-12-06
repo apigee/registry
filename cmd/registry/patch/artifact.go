@@ -104,7 +104,13 @@ func metadataParentOfArtifact(artifact names.Artifact) string {
 	// first remove the located project
 	parent := strings.TrimPrefix(artifact.Parent(), "projects/"+artifact.ProjectID()+"/locations/global")
 	// if there's anything left, trim the leading slash
-	return strings.TrimPrefix(parent, "/")
+	parent = strings.TrimPrefix(parent, "/")
+	// if there's a revision id, remove it (we only export the current revisions)
+	parts := strings.Split(parent, "@")
+	if len(parts) > 1 {
+		parent = parts[0]
+	}
+	return parent
 }
 
 func newArtifact(message *rpc.Artifact) (*models.Artifact, error) {
