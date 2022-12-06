@@ -29,8 +29,8 @@ import (
 )
 
 // ExportAPIVersion allows an API version to be individually exported as a YAML file.
-func ExportAPIVersion(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiVersion, includeChildren bool) ([]byte, *models.Header, error) {
-	api, err := newApiVersion(ctx, client, message, includeChildren)
+func ExportAPIVersion(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiVersion, nested bool) ([]byte, *models.Header, error) {
+	api, err := newApiVersion(ctx, client, message, nested)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -55,7 +55,7 @@ func metadataParentOfVersion(version names.Version) string {
 	return parent
 }
 
-func newApiVersion(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiVersion, includeChildren bool) (*models.ApiVersion, error) {
+func newApiVersion(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiVersion, nested bool) (*models.ApiVersion, error) {
 	versionName, err := names.ParseVersion(message.Name)
 	if err != nil {
 		return nil, err
@@ -63,7 +63,7 @@ func newApiVersion(ctx context.Context, client *gapic.RegistryClient, message *r
 
 	var specs []*models.ApiSpec
 	var artifacts []*models.Artifact
-	if includeChildren {
+	if nested {
 		specs = make([]*models.ApiSpec, 0)
 		if err = core.ListSpecs(ctx, client, versionName.Spec("-"), "", func(message *rpc.ApiSpec) error {
 			spec, err := newApiSpec(ctx, client, message, true)

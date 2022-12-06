@@ -34,8 +34,8 @@ import (
 )
 
 // ExportAPISpec allows an API spec to be individually exported as a YAML file.
-func ExportAPISpec(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiSpec, includeChildren bool) ([]byte, *models.Header, error) {
-	api, err := newApiSpec(ctx, client, message, includeChildren)
+func ExportAPISpec(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiSpec, nested bool) ([]byte, *models.Header, error) {
+	api, err := newApiSpec(ctx, client, message, nested)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -60,13 +60,13 @@ func metadataParentOfSpec(spec names.Spec) string {
 	return parent
 }
 
-func newApiSpec(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiSpec, includeChildren bool) (*models.ApiSpec, error) {
+func newApiSpec(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiSpec, nested bool) (*models.ApiSpec, error) {
 	specName, err := names.ParseSpec(message.Name)
 	if err != nil {
 		return nil, err
 	}
 	var artifacts []*models.Artifact
-	if includeChildren {
+	if nested {
 		artifacts, err = collectChildArtifacts(ctx, client, specName.Artifact("-"))
 		if err != nil {
 			return nil, err

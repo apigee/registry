@@ -28,7 +28,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func newApi(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api, includeChildren bool) (*models.Api, error) {
+func newApi(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api, nested bool) (*models.Api, error) {
 	apiName, err := names.ParseApi(message.Name)
 	if err != nil {
 		return nil, err
@@ -44,7 +44,7 @@ func newApi(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api,
 	var versions []*models.ApiVersion
 	var deployments []*models.ApiDeployment
 	var artifacts []*models.Artifact
-	if includeChildren {
+	if nested {
 		versions = make([]*models.ApiVersion, 0)
 		if err = core.ListVersions(ctx, client, apiName.Version("-"), "", func(message *rpc.ApiVersion) error {
 			var version *models.ApiVersion
@@ -130,8 +130,8 @@ func collectChildArtifacts(ctx context.Context, client *gapic.RegistryClient, ar
 }
 
 // ExportAPI allows an API to be individually exported as a YAML file.
-func ExportAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api, includeChildren bool) ([]byte, *models.Header, error) {
-	api, err := newApi(ctx, client, message, includeChildren)
+func ExportAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api, nested bool) ([]byte, *models.Header, error) {
+	api, err := newApi(ctx, client, message, nested)
 	if err != nil {
 		return nil, nil, err
 	}
