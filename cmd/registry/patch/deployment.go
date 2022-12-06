@@ -15,6 +15,7 @@
 package patch
 
 import (
+	"bytes"
 	"context"
 	"strings"
 
@@ -25,6 +26,20 @@ import (
 	"github.com/apigee/registry/server/registry/names"
 	"gopkg.in/yaml.v3"
 )
+
+// ExportAPIDeployment allows an API deployment to be individually exported as a YAML file.
+func ExportAPIDeployment(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiDeployment, includeChildren bool) ([]byte, *models.Header, error) {
+	api, err := newApiDeployment(ctx, client, message, includeChildren)
+	if err != nil {
+		return nil, nil, err
+	}
+	var b bytes.Buffer
+	err = yamlEncoder(&b).Encode(api)
+	if err != nil {
+		return nil, nil, err
+	}
+	return b.Bytes(), &api.Header, nil
+}
 
 // relativeSpecRevisionName returns the versionid+specid if the spec is within the specified API
 func relativeSpecRevisionName(apiName names.Api, spec string) string {
@@ -45,22 +60,39 @@ func optionalSpecRevisionName(deploymentName names.Deployment, subpath string) s
 	return deploymentName.Api().String() + "/versions/" + subpath
 }
 
-func newApiDeployment(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiDeployment) (*models.ApiDeployment, error) {
+func metadataParentOfDeployment(deployment names.Deployment) string {
+	// first remove the located project
+	parent := strings.TrimPrefix(deployment.Parent(), "projects/"+deployment.ProjectID+"/locations/global")
+	// if there's anything left, trim the leading slash
+	parent = strings.TrimPrefix(parent, "/")
+	// if there's a revision id, remove it (we only export the current revisions)
+	parts := strings.Split(parent, "@")
+	if len(parts) > 1 {
+		parent = parts[0]
+	}
+	return parent
+}
+
+func newApiDeployment(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiDeployment, includeChildren bool) (*models.ApiDeployment, error) {
 	deploymentName, err := names.ParseDeployment(message.Name)
 	if err != nil {
 		return nil, err
 	}
 	revisionName := relativeSpecRevisionName(deploymentName.Api(), message.ApiSpecRevision)
-	artifacts, err := collectChildArtifacts(ctx, client, deploymentName.Artifact("-"))
-	if err != nil {
-		return nil, err
+	var artifacts []*models.Artifact
+	if includeChildren {
+		artifacts, err = collectChildArtifacts(ctx, client, deploymentName.Artifact("-"))
+		if err != nil {
+			return nil, err
+		}
 	}
 	return &models.ApiDeployment{
 		Header: models.Header{
 			ApiVersion: RegistryV1,
-			Kind:       "ApiDeployment",
+			Kind:       "Deployment",
 			Metadata: models.Metadata{
 				Name:        deploymentName.DeploymentID,
+				Parent:      metadataParentOfDeployment(deploymentName),
 				Labels:      message.Labels,
 				Annotations: message.Annotations,
 			},

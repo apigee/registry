@@ -28,7 +28,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func newApi(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api) (*models.Api, error) {
+func newApi(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api, includeChildren bool) (*models.Api, error) {
 	apiName, err := names.ParseApi(message.Name)
 	if err != nil {
 		return nil, err
@@ -41,39 +41,48 @@ func newApi(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api)
 	if err != nil {
 		return nil, err
 	}
-	versions := make([]*models.ApiVersion, 0)
-	if err = core.ListVersions(ctx, client, apiName.Version("-"), "", func(message *rpc.ApiVersion) error {
-		var version *models.ApiVersion
-		version, err := newApiVersion(ctx, client, message)
-		if err != nil {
-			return err
+	var versions []*models.ApiVersion
+	var deployments []*models.ApiDeployment
+	var artifacts []*models.Artifact
+	if includeChildren {
+		versions = make([]*models.ApiVersion, 0)
+		if err = core.ListVersions(ctx, client, apiName.Version("-"), "", func(message *rpc.ApiVersion) error {
+			var version *models.ApiVersion
+			version, err := newApiVersion(ctx, client, message, true)
+			if err != nil {
+				return err
+			}
+			// unset these because they can be inferred
+			version.ApiVersion = ""
+			version.Kind = ""
+			version.Metadata.Parent = ""
+			versions = append(versions, version)
+			return nil
+		}); err != nil {
+			return nil, err
 		}
-		// unset these because they can be inferred
-		version.ApiVersion = ""
-		version.Kind = ""
-		version.Metadata.Parent = ""
-		versions = append(versions, version)
-		return nil
-	}); err != nil {
-		return nil, err
-	}
-	deployments := make([]*models.ApiDeployment, 0)
-	if err = core.ListDeployments(ctx, client, apiName.Deployment("-"), "", func(message *rpc.ApiDeployment) error {
-		var deployment *models.ApiDeployment
-		deployment, err = newApiDeployment(ctx, client, message)
-		if err != nil {
-			return err
+		deployments = make([]*models.ApiDeployment, 0)
+		if err = core.ListDeployments(ctx, client, apiName.Deployment("-"), "", func(message *rpc.ApiDeployment) error {
+			var deployment *models.ApiDeployment
+			deployment, err = newApiDeployment(ctx, client, message, true)
+			if err != nil {
+				return err
+			}
+			// unset these because they can be inferred
+			deployment.ApiVersion = ""
+			deployment.Kind = ""
+			deployment.Metadata.Parent = ""
+			deployments = append(deployments, deployment)
+			return nil
+		}); err != nil {
+			return nil, err
 		}
-		// unset these because they can be inferred
-		deployment.ApiVersion = ""
-		deployment.Kind = ""
-		deployment.Metadata.Parent = ""
-		deployments = append(deployments, deployment)
-		return nil
-	}); err != nil {
-		return nil, err
+		artifacts, err = collectChildArtifacts(ctx, client, apiName.Artifact("-"))
+		if err != nil {
+			return nil, err
+		}
 	}
-	artifacts, err := collectChildArtifacts(ctx, client, apiName.Artifact("-"))
+
 	return &models.Api{
 		Header: models.Header{
 			ApiVersion: RegistryV1,
@@ -121,8 +130,8 @@ func collectChildArtifacts(ctx context.Context, client *gapic.RegistryClient, ar
 }
 
 // ExportAPI allows an API to be individually exported as a YAML file.
-func ExportAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api) ([]byte, *models.Header, error) {
-	api, err := newApi(ctx, client, message)
+func ExportAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api, includeChildren bool) ([]byte, *models.Header, error) {
+	api, err := newApi(ctx, client, message, includeChildren)
 	if err != nil {
 		return nil, nil, err
 	}

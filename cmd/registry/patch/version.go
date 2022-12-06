@@ -15,7 +15,9 @@
 package patch
 
 import (
+	"bytes"
 	"context"
+	"strings"
 
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/gapic"
@@ -26,37 +28,69 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func newApiVersion(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiVersion) (*models.ApiVersion, error) {
+// ExportAPIVersion allows an API version to be individually exported as a YAML file.
+func ExportAPIVersion(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiVersion, includeChildren bool) ([]byte, *models.Header, error) {
+	api, err := newApiVersion(ctx, client, message, includeChildren)
+	if err != nil {
+		return nil, nil, err
+	}
+	var b bytes.Buffer
+	err = yamlEncoder(&b).Encode(api)
+	if err != nil {
+		return nil, nil, err
+	}
+	return b.Bytes(), &api.Header, nil
+}
+
+func metadataParentOfVersion(version names.Version) string {
+	// first remove the located project
+	parent := strings.TrimPrefix(version.Parent(), "projects/"+version.ProjectID+"/locations/global")
+	// if there's anything left, trim the leading slash
+	parent = strings.TrimPrefix(parent, "/")
+	// if there's a revision id, remove it (we only export the current revisions)
+	parts := strings.Split(parent, "@")
+	if len(parts) > 1 {
+		parent = parts[0]
+	}
+	return parent
+}
+
+func newApiVersion(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiVersion, includeChildren bool) (*models.ApiVersion, error) {
 	versionName, err := names.ParseVersion(message.Name)
 	if err != nil {
 		return nil, err
 	}
 
-	specs := make([]*models.ApiSpec, 0)
-	if err = core.ListSpecs(ctx, client, versionName.Spec("-"), "", func(message *rpc.ApiSpec) error {
-		spec, err := newApiSpec(ctx, client, message)
-		if err != nil {
-			return err
+	var specs []*models.ApiSpec
+	var artifacts []*models.Artifact
+	if includeChildren {
+		specs = make([]*models.ApiSpec, 0)
+		if err = core.ListSpecs(ctx, client, versionName.Spec("-"), "", func(message *rpc.ApiSpec) error {
+			spec, err := newApiSpec(ctx, client, message, true)
+			if err != nil {
+				return err
+			}
+			// unset these because they can be inferred
+			spec.ApiVersion = ""
+			spec.Kind = ""
+			spec.Metadata.Parent = ""
+			specs = append(specs, spec)
+			return nil
+		}); err != nil {
+			return nil, err
 		}
-		// unset these because they can be inferred
-		spec.ApiVersion = ""
-		spec.Kind = ""
-		spec.Metadata.Parent = ""
-		specs = append(specs, spec)
-		return nil
-	}); err != nil {
-		return nil, err
-	}
-	artifacts, err := collectChildArtifacts(ctx, client, versionName.Artifact("-"))
-	if err != nil {
-		return nil, err
+		artifacts, err = collectChildArtifacts(ctx, client, versionName.Artifact("-"))
+		if err != nil {
+			return nil, err
+		}
 	}
 	return &models.ApiVersion{
 		Header: models.Header{
 			ApiVersion: RegistryV1,
-			Kind:       "ApiVersion",
+			Kind:       "Version",
 			Metadata: models.Metadata{
 				Name:        versionName.VersionID,
+				Parent:      metadataParentOfVersion(versionName),
 				Labels:      message.Labels,
 				Annotations: message.Annotations,
 			},

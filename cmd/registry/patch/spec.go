@@ -15,6 +15,7 @@
 package patch
 
 import (
+	"bytes"
 	"context"
 	"io"
 	"net/http"
@@ -32,21 +33,52 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func newApiSpec(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiSpec) (*models.ApiSpec, error) {
+// ExportAPISpec allows an API spec to be individually exported as a YAML file.
+func ExportAPISpec(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiSpec, includeChildren bool) ([]byte, *models.Header, error) {
+	api, err := newApiSpec(ctx, client, message, includeChildren)
+	if err != nil {
+		return nil, nil, err
+	}
+	var b bytes.Buffer
+	err = yamlEncoder(&b).Encode(api)
+	if err != nil {
+		return nil, nil, err
+	}
+	return b.Bytes(), &api.Header, nil
+}
+
+func metadataParentOfSpec(spec names.Spec) string {
+	// first remove the located project
+	parent := strings.TrimPrefix(spec.Parent(), "projects/"+spec.ProjectID+"/locations/global")
+	// if there's anything left, trim the leading slash
+	parent = strings.TrimPrefix(parent, "/")
+	// if there's a revision id, remove it (we only export the current revisions)
+	parts := strings.Split(parent, "@")
+	if len(parts) > 1 {
+		parent = parts[0]
+	}
+	return parent
+}
+
+func newApiSpec(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiSpec, includeChildren bool) (*models.ApiSpec, error) {
 	specName, err := names.ParseSpec(message.Name)
 	if err != nil {
 		return nil, err
 	}
-	artifacts, err := collectChildArtifacts(ctx, client, specName.Artifact("-"))
-	if err != nil {
-		return nil, err
+	var artifacts []*models.Artifact
+	if includeChildren {
+		artifacts, err = collectChildArtifacts(ctx, client, specName.Artifact("-"))
+		if err != nil {
+			return nil, err
+		}
 	}
 	return &models.ApiSpec{
 		Header: models.Header{
 			ApiVersion: RegistryV1,
-			Kind:       "ApiSpec",
+			Kind:       "Spec",
 			Metadata: models.Metadata{
 				Name:        specName.SpecID,
+				Parent:      metadataParentOfSpec(specName),
 				Labels:      message.Labels,
 				Annotations: message.Annotations,
 			},

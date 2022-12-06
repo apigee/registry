@@ -55,15 +55,51 @@ func yamlCommand() *cobra.Command {
 				}
 			} else if api, err := names.ParseApi(c.FQName(args[0])); err == nil {
 				err = core.GetAPI(ctx, client, api, func(message *rpc.Api) error {
-					bytes, _, err := patch.ExportAPI(ctx, client, message)
+					bytes, _, err := patch.ExportAPI(ctx, client, message, false)
 					if err != nil {
 						log.FromContext(ctx).WithError(err).Fatal("Failed to export API")
 					}
-					fmt.Println(string(bytes))
+					fmt.Print(string(bytes))
 					return nil
 				})
 				if err != nil {
 					log.FromContext(ctx).WithError(err).Fatal("Failed to export API YAML")
+				}
+			} else if version, err := names.ParseVersion(c.FQName(args[0])); err == nil {
+				err = core.GetVersion(ctx, client, version, func(message *rpc.ApiVersion) error {
+					bytes, _, err := patch.ExportAPIVersion(ctx, client, message, false)
+					if err != nil {
+						log.FromContext(ctx).WithError(err).Fatal("Failed to export API")
+					}
+					fmt.Print(string(bytes))
+					return nil
+				})
+				if err != nil {
+					log.FromContext(ctx).WithError(err).Fatal("Failed to export API YAML")
+				}
+			} else if spec, err := names.ParseSpec(c.FQName(args[0])); err == nil {
+				err = core.GetSpec(ctx, client, spec, false, func(message *rpc.ApiSpec) error {
+					bytes, _, err := patch.ExportAPISpec(ctx, client, message, false)
+					if err != nil {
+						log.FromContext(ctx).WithError(err).Fatal("Failed to export API spec")
+					}
+					fmt.Print(string(bytes))
+					return nil
+				})
+				if err != nil {
+					log.FromContext(ctx).WithError(err).Fatal("Failed to export API spec YAML")
+				}
+			} else if deployment, err := names.ParseDeployment(c.FQName(args[0])); err == nil {
+				err = core.GetDeployment(ctx, client, deployment, func(message *rpc.ApiDeployment) error {
+					bytes, _, err := patch.ExportAPIDeployment(ctx, client, message, false)
+					if err != nil {
+						log.FromContext(ctx).WithError(err).Fatal("Failed to export API deployment")
+					}
+					fmt.Print(string(bytes))
+					return nil
+				})
+				if err != nil {
+					log.FromContext(ctx).WithError(err).Fatal("Failed to export API deployment YAML")
 				}
 			} else if artifact, err := names.ParseArtifact(c.FQName(args[0])); err == nil {
 				err = core.GetArtifact(ctx, client, artifact, false, func(message *rpc.Artifact) error {
@@ -72,7 +108,7 @@ func yamlCommand() *cobra.Command {
 						log.FromContext(ctx).WithError(err).Fatal("Failed to export artifact")
 					}
 
-					fmt.Println(string(bytes))
+					fmt.Print(string(bytes))
 					return nil
 				})
 				if err != nil {
