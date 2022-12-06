@@ -61,7 +61,7 @@ func CallLogger(opts ...log.Option) grpc.UnaryServerInterceptor {
 		resp, err := handler(ctx, req)
 
 		respInfo := map[string]interface{}{
-			"runtime":     time.Since(start),
+			"duration":    time.Since(start),
 			"status_code": status.Code(err),
 		}
 
