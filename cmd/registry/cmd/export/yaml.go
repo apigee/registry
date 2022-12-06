@@ -15,8 +15,6 @@
 package export
 
 import (
-	"fmt"
-
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/cmd/registry/patch"
 	"github.com/apigee/registry/log"
@@ -60,8 +58,8 @@ func yamlCommand() *cobra.Command {
 					if err != nil {
 						log.FromContext(ctx).WithError(err).Fatal("Failed to export API")
 					}
-					fmt.Println(string(bytes))
-					return nil
+					_, err = cmd.OutOrStdout().Write(bytes)
+					return err
 				})
 				if err != nil {
 					log.FromContext(ctx).WithError(err).Fatal("Failed to export API YAML")
@@ -72,8 +70,8 @@ func yamlCommand() *cobra.Command {
 					if err != nil {
 						log.FromContext(ctx).WithError(err).Fatal("Failed to export API")
 					}
-					fmt.Println(string(bytes))
-					return nil
+					_, err = cmd.OutOrStdout().Write(bytes)
+					return err
 				})
 				if err != nil {
 					log.FromContext(ctx).WithError(err).Fatal("Failed to export API YAML")
@@ -84,8 +82,8 @@ func yamlCommand() *cobra.Command {
 					if err != nil {
 						log.FromContext(ctx).WithError(err).Fatal("Failed to export API spec")
 					}
-					fmt.Println(string(bytes))
-					return nil
+					_, err = cmd.OutOrStdout().Write(bytes)
+					return err
 				})
 				if err != nil {
 					log.FromContext(ctx).WithError(err).Fatal("Failed to export API spec YAML")
@@ -96,8 +94,8 @@ func yamlCommand() *cobra.Command {
 					if err != nil {
 						log.FromContext(ctx).WithError(err).Fatal("Failed to export API deployment")
 					}
-					fmt.Println(string(bytes))
-					return nil
+					_, err = cmd.OutOrStdout().Write(bytes)
+					return err
 				})
 				if err != nil {
 					log.FromContext(ctx).WithError(err).Fatal("Failed to export API deployment YAML")
@@ -108,9 +106,8 @@ func yamlCommand() *cobra.Command {
 					if err != nil {
 						log.FromContext(ctx).WithError(err).Fatal("Failed to export artifact")
 					}
-
-					fmt.Println(string(bytes))
-					return nil
+					_, err = cmd.OutOrStdout().Write(bytes)
+					return err
 				})
 				if err != nil {
 					log.FromContext(ctx).WithError(err).Fatal("Failed to export artifact YAML")
