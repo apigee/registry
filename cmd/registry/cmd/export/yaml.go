@@ -60,7 +60,7 @@ func yamlCommand() *cobra.Command {
 					if err != nil {
 						log.FromContext(ctx).WithError(err).Fatal("Failed to export API")
 					}
-					fmt.Print(string(bytes))
+					fmt.Println(string(bytes))
 					return nil
 				})
 				if err != nil {
@@ -72,7 +72,7 @@ func yamlCommand() *cobra.Command {
 					if err != nil {
 						log.FromContext(ctx).WithError(err).Fatal("Failed to export API")
 					}
-					fmt.Print(string(bytes))
+					fmt.Println(string(bytes))
 					return nil
 				})
 				if err != nil {
@@ -84,7 +84,7 @@ func yamlCommand() *cobra.Command {
 					if err != nil {
 						log.FromContext(ctx).WithError(err).Fatal("Failed to export API spec")
 					}
-					fmt.Print(string(bytes))
+					fmt.Println(string(bytes))
 					return nil
 				})
 				if err != nil {
@@ -96,7 +96,7 @@ func yamlCommand() *cobra.Command {
 					if err != nil {
 						log.FromContext(ctx).WithError(err).Fatal("Failed to export API deployment")
 					}
-					fmt.Print(string(bytes))
+					fmt.Println(string(bytes))
 					return nil
 				})
 				if err != nil {
@@ -109,7 +109,7 @@ func yamlCommand() *cobra.Command {
 						log.FromContext(ctx).WithError(err).Fatal("Failed to export artifact")
 					}
 
-					fmt.Print(string(bytes))
+					fmt.Println(string(bytes))
 					return nil
 				})
 				if err != nil {
