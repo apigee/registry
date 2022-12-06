@@ -28,6 +28,7 @@ import (
 
 func yamlCommand() *cobra.Command {
 	var jobs int
+	var nested bool
 	cmd := &cobra.Command{
 		Use:   "yaml RESOURCE",
 		Short: "Export a subtree of the registry as YAML",
@@ -55,7 +56,7 @@ func yamlCommand() *cobra.Command {
 				}
 			} else if api, err := names.ParseApi(c.FQName(args[0])); err == nil {
 				err = core.GetAPI(ctx, client, api, func(message *rpc.Api) error {
-					bytes, _, err := patch.ExportAPI(ctx, client, message, false)
+					bytes, _, err := patch.ExportAPI(ctx, client, message, nested)
 					if err != nil {
 						log.FromContext(ctx).WithError(err).Fatal("Failed to export API")
 					}
@@ -67,7 +68,7 @@ func yamlCommand() *cobra.Command {
 				}
 			} else if version, err := names.ParseVersion(c.FQName(args[0])); err == nil {
 				err = core.GetVersion(ctx, client, version, func(message *rpc.ApiVersion) error {
-					bytes, _, err := patch.ExportAPIVersion(ctx, client, message, false)
+					bytes, _, err := patch.ExportAPIVersion(ctx, client, message, nested)
 					if err != nil {
 						log.FromContext(ctx).WithError(err).Fatal("Failed to export API")
 					}
@@ -79,7 +80,7 @@ func yamlCommand() *cobra.Command {
 				}
 			} else if spec, err := names.ParseSpec(c.FQName(args[0])); err == nil {
 				err = core.GetSpec(ctx, client, spec, false, func(message *rpc.ApiSpec) error {
-					bytes, _, err := patch.ExportAPISpec(ctx, client, message, false)
+					bytes, _, err := patch.ExportAPISpec(ctx, client, message, nested)
 					if err != nil {
 						log.FromContext(ctx).WithError(err).Fatal("Failed to export API spec")
 					}
@@ -91,7 +92,7 @@ func yamlCommand() *cobra.Command {
 				}
 			} else if deployment, err := names.ParseDeployment(c.FQName(args[0])); err == nil {
 				err = core.GetDeployment(ctx, client, deployment, func(message *rpc.ApiDeployment) error {
-					bytes, _, err := patch.ExportAPIDeployment(ctx, client, message, false)
+					bytes, _, err := patch.ExportAPIDeployment(ctx, client, message, nested)
 					if err != nil {
 						log.FromContext(ctx).WithError(err).Fatal("Failed to export API deployment")
 					}
@@ -120,5 +121,6 @@ func yamlCommand() *cobra.Command {
 		},
 	}
 	cmd.Flags().IntVarP(&jobs, "jobs", "j", 10, "Number of file exports to perform simultaneously")
+	cmd.Flags().BoolVarP(&nested, "nested", "n", false, "Nest child resources in parents")
 	return cmd
 }
