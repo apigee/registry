@@ -1,7 +1,6 @@
 package export
 
 import (
-	"bytes"
 	"context"
 	"testing"
 
@@ -56,9 +55,7 @@ func TestExportYAML(t *testing.T) {
 	}
 	for _, r := range resources {
 		cmd := Command()
-		out := bytes.NewBuffer(make([]byte, 0))
 		args := []string{"yaml", r}
-		cmd.SetOutput(out)
 		cmd.SetArgs(args)
 		if err := cmd.Execute(); err != nil {
 			t.Fatalf("Execute() with args %v returned error: %s", args, err)
@@ -68,12 +65,36 @@ func TestExportYAML(t *testing.T) {
 	// Repeat with --nested export enabled.
 	for _, r := range resources {
 		cmd := Command()
-		out := bytes.NewBuffer(make([]byte, 0))
 		args := []string{"yaml", r, "--nested"}
-		cmd.SetOutput(out)
 		cmd.SetArgs(args)
 		if err := cmd.Execute(); err != nil {
 			t.Fatalf("Execute() with args %v returned error: %s", args, err)
+		}
+	}
+
+	// Verify that invalid exports fail.
+	invalid := []string{
+		"projects/my-project/locations/global/artifacts/xx",
+		"projects/my-project/locations/global/apis/a/versions/vv",
+		"projects/my-project/locations/global/apis/a/versions/v/specs/ss",
+		"projects/my-project/locations/global/apis/a/deployments/dd",
+		"projects/my-project/locations/global/apis/aa",
+		"projects/my-project/locations/global/apis/a/versions/vv",
+		"projects/my-project/locations/global/apis/a/versions/v/specs/ss",
+		"projects/my-project/locations/global/apis/a/deployments/dd",
+		"projects/my-project/locations/global/apis/a/artifacts/xx",
+		"projects/my-project/locations/global/apis/a/versions/v/artifacts/xx",
+		"projects/my-project/locations/global/apis/a/versions/v/specs/s/artifacts/xx",
+		"projects/my-project/locations/global/apis/a/deployments/d/artifacts/xx",
+	}
+	for _, r := range invalid {
+		cmd := Command()
+		cmd.SilenceUsage = true
+		cmd.SilenceErrors = true
+		args := []string{"yaml", r}
+		cmd.SetArgs(args)
+		if err := cmd.Execute(); err == nil {
+			t.Fatalf("Execute() with args %v succeeded but should have failed", args)
 		}
 	}
 }
