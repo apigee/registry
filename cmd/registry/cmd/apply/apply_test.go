@@ -327,29 +327,31 @@ func TestUnbundledExport(t *testing.T) {
 		"apis/registry/versions/v1/specs/openapi/artifacts/spec-references",
 	}
 	for _, a := range artifacts {
-		filename := fmt.Sprintf("%s/%s.yaml", sampleDir, strings.ReplaceAll(a, "/", "-"))
-		expected, err := os.ReadFile(filename)
-		if err != nil {
-			t.Fatalf("Failed to read artifact YAML %s", err)
-		}
-		message, err := registryClient.GetArtifact(ctx, &rpc.GetArtifactRequest{
-			Name: "projects/apply-project-test/locations/global/" + a,
+		t.Run("read "+a, func(t *testing.T) {
+			filename := fmt.Sprintf("%s/%s.yaml", sampleDir, strings.ReplaceAll(a, "/", "-"))
+			expected, err := os.ReadFile(filename)
+			if err != nil {
+				t.Fatalf("Failed to read artifact YAML %s", err)
+			}
+			message, err := registryClient.GetArtifact(ctx, &rpc.GetArtifactRequest{
+				Name: "projects/apply-project-test/locations/global/" + a,
+			})
+			if status.Code(err) == codes.NotFound {
+				t.Fatalf("Expected artifact doesn't exist: %s", err)
+			} else if err != nil {
+				t.Fatalf("Failed to verify artifact existence: %s", err)
+			}
+			actual, _, err := patch.ExportArtifact(ctx, registryClient, message)
+			if err != nil {
+				t.Fatalf("ExportArtifact(%+v) returned an error: %s", message, err)
+			}
+			if diff := cmp.Diff(expected, actual); diff != "" {
+				t.Errorf("GetArtifact(%q) returned unexpected diff: (-want +got):\n%s", message, diff)
+			}
 		})
-		if status.Code(err) == codes.NotFound {
-			t.Fatalf("Expected artifact doesn't exist: %s", err)
-		} else if err != nil {
-			t.Fatalf("Failed to verify artifact existence: %s", err)
-		}
-		actual, _, err := patch.ExportArtifact(ctx, registryClient, message)
-		if err != nil {
-			t.Fatalf("ExportArtifact(%+v) returned an error: %s", message, err)
-		}
-		if diff := cmp.Diff(expected, actual); diff != "" {
-			t.Errorf("GetArtifact(%q) returned unexpected diff: (-want +got):\n%s", message, diff)
-		}
 	}
-	{
-		s := "apis/registry/versions/v1/specs/openapi"
+	s := "apis/registry/versions/v1/specs/openapi"
+	t.Run("read "+s, func(t *testing.T) {
 		filename := fmt.Sprintf("%s/%s.yaml", sampleDir, strings.ReplaceAll(s, "/", "-"))
 		expected, err := os.ReadFile(filename)
 		if err != nil {
@@ -370,9 +372,9 @@ func TestUnbundledExport(t *testing.T) {
 		if diff := cmp.Diff(expected, actual); diff != "" {
 			t.Errorf("ExportAPISpec(%q) returned unexpected diff: (-want +got):\n%s", message, diff)
 		}
-	}
-	{
-		v := "apis/registry/versions/v1"
+	})
+	v := "apis/registry/versions/v1"
+	t.Run("read "+v, func(t *testing.T) {
 		filename := fmt.Sprintf("%s/%s.yaml", sampleDir, strings.ReplaceAll(v, "/", "-"))
 		expected, err := os.ReadFile(filename)
 		if err != nil {
@@ -393,9 +395,9 @@ func TestUnbundledExport(t *testing.T) {
 		if diff := cmp.Diff(expected, actual); diff != "" {
 			t.Errorf("ExportAPIVersion(%q) returned unexpected diff: (-want +got):\n%s", message, diff)
 		}
-	}
-	{
-		d := "apis/registry/deployments/prod"
+	})
+	d := "apis/registry/deployments/prod"
+	t.Run("read "+d, func(t *testing.T) {
 		filename := fmt.Sprintf("%s/%s.yaml", sampleDir, strings.ReplaceAll(d, "/", "-"))
 		expected, err := os.ReadFile(filename)
 		if err != nil {
@@ -416,9 +418,9 @@ func TestUnbundledExport(t *testing.T) {
 		if diff := cmp.Diff(expected, actual); diff != "" {
 			t.Errorf("ExportAPIDeployment(%q) returned unexpected diff: (-want +got):\n%s", message, diff)
 		}
-	}
-	{
-		a := "apis/registry"
+	})
+	a := "apis/registry"
+	t.Run("read "+a, func(t *testing.T) {
 		filename := fmt.Sprintf("%s/%s.yaml", sampleDir, strings.ReplaceAll(a, "/", "-"))
 		expected, err := os.ReadFile(filename)
 		if err != nil {
@@ -439,5 +441,5 @@ func TestUnbundledExport(t *testing.T) {
 		if diff := cmp.Diff(expected, actual); diff != "" {
 			t.Errorf("ExportAPIDeployment(%q) returned unexpected diff: (-want +got):\n%s", message, diff)
 		}
-	}
+	})
 }
