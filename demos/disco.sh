@@ -45,27 +45,27 @@ registry list projects/$PROJECT/locations/global/apis | wc -l
 registry list projects/$PROJECT/locations/global/apis/-/versions
 
 # Similarly, we can use wildcards for the version ids and list all of the specs.
-# Here you'll see that the spec IDs are "discovery.json". This was set in the registry
+# Here you'll see that the spec IDs are "discovery". This was set in the registry
 # tool, which uploaded each API description as gzipped JSON.
 registry list projects/$PROJECT/locations/global/apis/-/versions/-/specs
 
 # To see more about an individual spec, use the `registry get` command:
-registry get projects/$PROJECT/locations/global/apis/translate/versions/v3/specs/discovery.json
+registry get projects/$PROJECT/locations/global/apis/translate/versions/v3/specs/discovery
 
 # You can also get this with direct calls to the registry rpc service:
 registry rpc get-api-spec \
-	--name projects/$PROJECT/locations/global/apis/translate/versions/v3/specs/discovery.json
+	--name projects/$PROJECT/locations/global/apis/translate/versions/v3/specs/discovery
 
 # Add the `--json` flag to get this as JSON:
 registry rpc get-api-spec --json \
-	--name projects/$PROJECT/locations/global/apis/translate/versions/v3/specs/discovery.json
+	--name projects/$PROJECT/locations/global/apis/translate/versions/v3/specs/discovery
 
 # You might notice that didn't return the actual spec. That's because the spec contents
 # are accessed through a separate method that (when transcoded to HTTP) allows direct download
 # of spec contents.
 registry rpc get-api-spec-contents \
-	--name projects/$PROJECT/locations/global/apis/translate/versions/v3/specs/discovery.json
+	--name projects/$PROJECT/locations/global/apis/translate/versions/v3/specs/discovery
 
 # Another way to get the bytes of the spec is to use `registry get` with the `--contents` flag.
-registry get projects/$PROJECT/locations/global/apis/translate/versions/v3/specs/discovery.json \
+registry get projects/$PROJECT/locations/global/apis/translate/versions/v3/specs/discovery \
 	--contents
