@@ -85,3 +85,27 @@ const Location = "global"
 type Name interface {
 	String() string // all names have a string representation.
 }
+
+// ExportableName returns a name suitable for export.
+// Its project and location are removed, making it project-local,
+// and any revision ID is removed since revision ids cannot be imported.
+//
+// Note that currently revision ids are only removed from trailing segments.
+// That's all that we need now, but support for removing internal revision ids
+// could be added if needed.
+//
+// Also note: this would be a nice function to add to the Name interface
+// but that might require improving the regularity of access to ProjectIDs
+// for different types of Names.
+func ExportableName(name string, projectID string) string {
+	// first remove the located project
+	name = strings.TrimPrefix(name, "projects/"+projectID+"/locations/global")
+	// if there's anything left, trim the leading slash
+	name = strings.TrimPrefix(name, "/")
+	// if there's a revision id, remove it (we only export the current revisions)
+	parts := strings.Split(name, "@")
+	if len(parts) > 1 {
+		name = parts[0]
+	}
+	return name
+}

@@ -17,7 +17,6 @@ package patch
 import (
 	"bytes"
 	"context"
-	"strings"
 
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/gapic"
@@ -40,19 +39,6 @@ func ExportAPIVersion(ctx context.Context, client *gapic.RegistryClient, message
 		return nil, nil, err
 	}
 	return b.Bytes(), &api.Header, nil
-}
-
-func metadataParentOfVersion(version names.Version) string {
-	// first remove the located project
-	parent := strings.TrimPrefix(version.Parent(), "projects/"+version.ProjectID+"/locations/global")
-	// if there's anything left, trim the leading slash
-	parent = strings.TrimPrefix(parent, "/")
-	// if there's a revision id, remove it (we only export the current revisions)
-	parts := strings.Split(parent, "@")
-	if len(parts) > 1 {
-		parent = parts[0]
-	}
-	return parent
 }
 
 func newApiVersion(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiVersion, nested bool) (*models.ApiVersion, error) {
@@ -90,7 +76,7 @@ func newApiVersion(ctx context.Context, client *gapic.RegistryClient, message *r
 			Kind:       "Version",
 			Metadata: models.Metadata{
 				Name:        versionName.VersionID,
-				Parent:      metadataParentOfVersion(versionName),
+				Parent:      names.ExportableName(versionName.Parent(), versionName.ProjectID),
 				Labels:      message.Labels,
 				Annotations: message.Annotations,
 			},

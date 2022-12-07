@@ -47,19 +47,6 @@ func ExportAPISpec(ctx context.Context, client *gapic.RegistryClient, message *r
 	return b.Bytes(), &api.Header, nil
 }
 
-func metadataParentOfSpec(spec names.Spec) string {
-	// first remove the located project
-	parent := strings.TrimPrefix(spec.Parent(), "projects/"+spec.ProjectID+"/locations/global")
-	// if there's anything left, trim the leading slash
-	parent = strings.TrimPrefix(parent, "/")
-	// if there's a revision id, remove it (we only export the current revisions)
-	parts := strings.Split(parent, "@")
-	if len(parts) > 1 {
-		parent = parts[0]
-	}
-	return parent
-}
-
 func newApiSpec(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiSpec, nested bool) (*models.ApiSpec, error) {
 	specName, err := names.ParseSpec(message.Name)
 	if err != nil {
@@ -78,7 +65,7 @@ func newApiSpec(ctx context.Context, client *gapic.RegistryClient, message *rpc.
 			Kind:       "Spec",
 			Metadata: models.Metadata{
 				Name:        specName.SpecID,
-				Parent:      metadataParentOfSpec(specName),
+				Parent:      names.ExportableName(specName.Parent(), specName.ProjectID),
 				Labels:      message.Labels,
 				Annotations: message.Annotations,
 			},

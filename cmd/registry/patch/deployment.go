@@ -60,19 +60,6 @@ func optionalSpecRevisionName(deploymentName names.Deployment, subpath string) s
 	return deploymentName.Api().String() + "/versions/" + subpath
 }
 
-func metadataParentOfDeployment(deployment names.Deployment) string {
-	// first remove the located project
-	parent := strings.TrimPrefix(deployment.Parent(), "projects/"+deployment.ProjectID+"/locations/global")
-	// if there's anything left, trim the leading slash
-	parent = strings.TrimPrefix(parent, "/")
-	// if there's a revision id, remove it (we only export the current revisions)
-	parts := strings.Split(parent, "@")
-	if len(parts) > 1 {
-		parent = parts[0]
-	}
-	return parent
-}
-
 func newApiDeployment(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiDeployment, nested bool) (*models.ApiDeployment, error) {
 	deploymentName, err := names.ParseDeployment(message.Name)
 	if err != nil {
@@ -92,7 +79,7 @@ func newApiDeployment(ctx context.Context, client *gapic.RegistryClient, message
 			Kind:       "Deployment",
 			Metadata: models.Metadata{
 				Name:        deploymentName.DeploymentID,
-				Parent:      metadataParentOfDeployment(deploymentName),
+				Parent:      names.ExportableName(deploymentName.Parent(), deploymentName.ProjectID),
 				Labels:      message.Labels,
 				Annotations: message.Annotations,
 			},
