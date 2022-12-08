@@ -72,7 +72,7 @@ func (task *exportAPITask) String() string {
 }
 
 func (task *exportAPITask) Run(ctx context.Context) error {
-	bytes, header, err := ExportAPI(ctx, task.client, task.message)
+	bytes, header, err := ExportAPI(ctx, task.client, task.message, true)
 	if err != nil {
 		return err
 	}

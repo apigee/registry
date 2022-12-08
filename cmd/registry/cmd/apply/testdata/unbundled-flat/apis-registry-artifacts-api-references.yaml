@@ -1,7 +1,7 @@
 apiVersion: apigeeregistry/v1
 kind: ReferenceList
 metadata:
-  name: apihub-related
+  name: api-references
   parent: apis/registry
   labels:
     label1: label
@@ -9,7 +9,7 @@ metadata:
     annotation1: annotation
 data:
   displayName: ""
-  description: Defines a list of related resources
+  description: api-related references
   references:
     - id: github
       displayName: GitHub Repo
