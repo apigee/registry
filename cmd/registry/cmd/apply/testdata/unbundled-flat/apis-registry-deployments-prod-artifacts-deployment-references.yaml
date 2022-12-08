@@ -1,0 +1,14 @@
+apiVersion: apigeeregistry/v1
+kind: ReferenceList
+metadata:
+  name: deployment-references
+  parent: apis/registry/deployments/prod
+data:
+  displayName: ""
+  description: deployment-related references
+  references:
+    - id: github
+      displayName: GitHub Repo
+      category: apihub-source-code
+      resource: ""
+      uri: https://github.com/apigee/registry

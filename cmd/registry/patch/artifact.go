@@ -146,6 +146,7 @@ func newArtifact(message *rpc.Artifact) (*models.Artifact, error) {
 			Kind:       kindForMimeType(message.MimeType),
 			Metadata: models.Metadata{
 				Name:        artifactName.ArtifactID(),
+				Parent:      names.ExportableName(artifactName.Parent(), artifactName.ProjectID()),
 				Labels:      message.Labels,
 				Annotations: message.Annotations,
 			},

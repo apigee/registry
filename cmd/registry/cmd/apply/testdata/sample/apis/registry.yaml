@@ -25,7 +25,7 @@ data:
         state: Staging
         specs:
           - metadata:
-              name: openapi.yaml
+              name: openapi
               labels:
                 openapi-verified: "true"
               annotations:
@@ -35,6 +35,32 @@ data:
               description: OpenAPI description of the Registry API
               mimeType: application/x.openapi+gzip;version=3
               sourceURI: https://raw.githubusercontent.com/apigee/registry/main/openapi.yaml
+              artifacts:
+                - kind: ReferenceList
+                  metadata:
+                    name: spec-references
+                  data:
+                    displayName: ""
+                    description: spec-related references
+                    references:
+                      - id: github
+                        displayName: GitHub Repo
+                        category: apihub-source-code
+                        resource: ""
+                        uri: https://github.com/apigee/registry
+        artifacts:
+          - kind: ReferenceList
+            metadata:
+              name: version-references
+            data:
+              displayName: ""
+              description: version-related references
+              references:
+                - id: github
+                  displayName: GitHub Repo
+                  category: apihub-source-code
+                  resource: ""
+                  uri: https://github.com/apigee/registry
   deployments:
     - metadata:
         name: prod
@@ -45,22 +71,35 @@ data:
       data:
         displayName: Production
         description: The hosted deployment of the Registry API
-        apiSpecRevision: v1/specs/openapi.yaml@latest
+        apiSpecRevision: v1/specs/openapi@latest
         endpointURI: https://apigeeregistry.googleapis.com
         externalChannelURI: https://apigee.github.io/registry/
         intendedAudience: Public
         accessGuidance: See https://github.com/apigee/registry for tools and usage information.
+        artifacts:
+          - kind: ReferenceList
+            metadata:
+              name: deployment-references
+            data:
+              displayName: ""
+              description: deployment-related references
+              references:
+                - id: github
+                  displayName: GitHub Repo
+                  category: apihub-source-code
+                  resource: ""
+                  uri: https://github.com/apigee/registry
   artifacts:
     - kind: ReferenceList
       metadata:
-        name: apihub-related
+        name: api-references
         labels:
           label1: label
         annotations:
           annotation1: annotation
       data:
         displayName: ""
-        description: Defines a list of related resources
+        description: api-related references
         references:
           - id: github
             displayName: GitHub Repo

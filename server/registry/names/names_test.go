@@ -347,3 +347,55 @@ func TestRevisionTags(t *testing.T) {
 		})
 	}
 }
+
+func TestExportableName(t *testing.T) {
+	tests := []struct {
+		name       string
+		projectID  string
+		exportable string
+	}{
+		{
+			name:       "projects/my-project/locations/global/apis/a",
+			projectID:  "my-project",
+			exportable: "apis/a",
+		},
+		{
+			name:       "projects/my-project/locations/global/apis/a/versions/v",
+			projectID:  "my-project",
+			exportable: "apis/a/versions/v",
+		},
+		{
+			name:       "projects/my-project/locations/global/apis/a/versions/v/specs/s",
+			projectID:  "my-project",
+			exportable: "apis/a/versions/v/specs/s",
+		},
+		{
+			name:       "projects/my-project/locations/global/apis/a/versions/v/specs/s@123",
+			projectID:  "my-project",
+			exportable: "apis/a/versions/v/specs/s",
+		},
+		{
+			name:       "projects/my-project/locations/global/apis/a/deployments/d",
+			projectID:  "my-project",
+			exportable: "apis/a/deployments/d",
+		},
+		{
+			name:       "projects/my-project/locations/global/apis/a/deployments/d@123",
+			projectID:  "my-project",
+			exportable: "apis/a/deployments/d",
+		},
+		{
+			name:       "projects/another-project/locations/global/artifacts/x",
+			projectID:  "another-project",
+			exportable: "artifacts/x",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			exportable := ExportableName(test.name, test.projectID)
+			if exportable != test.exportable {
+				t.Errorf("exportable name of %s should be %s but was %s", test.name, test.exportable, exportable)
+			}
+		})
+	}
+}

@@ -15,6 +15,7 @@
 package patch
 
 import (
+	"bytes"
 	"context"
 	"io"
 	"net/http"
@@ -24,6 +25,7 @@ import (
 	"strings"
 
 	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/models"
 	"github.com/apigee/registry/rpc"
@@ -31,17 +33,39 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func newApiSpec(message *rpc.ApiSpec) (*models.ApiSpec, error) {
+// ExportAPISpec allows an API spec to be individually exported as a YAML file.
+func ExportAPISpec(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiSpec, nested bool) ([]byte, *models.Header, error) {
+	api, err := newApiSpec(ctx, client, message, nested)
+	if err != nil {
+		return nil, nil, err
+	}
+	var b bytes.Buffer
+	err = yamlEncoder(&b).Encode(api)
+	if err != nil {
+		return nil, nil, err
+	}
+	return b.Bytes(), &api.Header, nil
+}
+
+func newApiSpec(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiSpec, nested bool) (*models.ApiSpec, error) {
 	specName, err := names.ParseSpec(message.Name)
 	if err != nil {
 		return nil, err
 	}
+	var artifacts []*models.Artifact
+	if nested {
+		artifacts, err = collectChildArtifacts(ctx, client, specName.Artifact("-"))
+		if err != nil {
+			return nil, err
+		}
+	}
 	return &models.ApiSpec{
 		Header: models.Header{
 			ApiVersion: RegistryV1,
-			Kind:       "ApiSpec",
+			Kind:       "Spec",
 			Metadata: models.Metadata{
 				Name:        specName.SpecID,
+				Parent:      names.ExportableName(specName.Parent(), specName.ProjectID),
 				Labels:      message.Labels,
 				Annotations: message.Annotations,
 			},
@@ -51,6 +75,7 @@ func newApiSpec(message *rpc.ApiSpec) (*models.ApiSpec, error) {
 			Description: message.Description,
 			MimeType:    message.MimeType,
 			SourceURI:   message.SourceUri,
+			Artifacts:   artifacts,
 		},
 	}, nil
 }
@@ -159,5 +184,14 @@ func applyApiSpecPatch(
 		}
 	}
 	_, err = client.UpdateApiSpec(ctx, req)
-	return err
+	if err != nil {
+		return err
+	}
+	for _, artifactPatch := range spec.Data.Artifacts {
+		err = applyArtifactPatch(ctx, client, artifactPatch, name.String())
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
