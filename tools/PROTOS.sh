@@ -16,7 +16,6 @@
 #
 
 ALL_PROTOS=(
-	google/cloud/apigeeregistry/applications/v1alpha1/*.proto
 	google/cloud/apigeeregistry/internal/v1/*.proto
 	google/cloud/apigeeregistry/v1/*.proto
 	google/cloud/apigeeregistry/v1/controller/*.proto

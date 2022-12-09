@@ -25,7 +25,6 @@ import (
 	"github.com/apigee/registry/cmd/registry/cmd/diff"
 	"github.com/apigee/registry/cmd/registry/cmd/export"
 	"github.com/apigee/registry/cmd/registry/cmd/get"
-	"github.com/apigee/registry/cmd/registry/cmd/index"
 	"github.com/apigee/registry/cmd/registry/cmd/label"
 	"github.com/apigee/registry/cmd/registry/cmd/list"
 	"github.com/apigee/registry/cmd/registry/cmd/resolve"
@@ -59,7 +58,6 @@ func Command() *cobra.Command {
 	cmd.AddCommand(diff.Command())
 	cmd.AddCommand(export.Command())
 	cmd.AddCommand(get.Command())
-	cmd.AddCommand(index.Command())
 	cmd.AddCommand(label.Command())
 	cmd.AddCommand(list.Command())
 	cmd.AddCommand(upload.Command())

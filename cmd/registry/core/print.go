@@ -120,8 +120,6 @@ func PrintArtifactContents(artifact *rpc.Artifact) error {
 		return unmarshalAndPrint(artifact.GetContents(), &metrics.Vocabulary{})
 	case "gnostic.metrics.VersionHistory":
 		return unmarshalAndPrint(artifact.GetContents(), &metrics.VersionHistory{})
-	case "google.cloud.apigeeregistry.applications.v1alpha1.Index":
-		return unmarshalAndPrint(artifact.GetContents(), &rpc.Index{})
 	case "google.cloud.apigeeregistry.applications.v1alpha1.Lint":
 		return unmarshalAndPrint(artifact.GetContents(), &rpc.Lint{})
 	case "google.cloud.apigeeregistry.applications.v1alpha1.LintStats":
@@ -138,8 +136,6 @@ func PrintArtifactContents(artifact *rpc.Artifact) error {
 		return unmarshalAndPrint(artifact.GetContents(), &rpc.Manifest{})
 	case "google.cloud.apigeeregistry.v1.controller.Receipt":
 		return unmarshalAndPrint(artifact.GetContents(), &rpc.Receipt{})
-	case "google.cloud.apigeeregistry.applications.v1alpha1.References":
-		return unmarshalAndPrint(artifact.GetContents(), &rpc.References{})
 	case "google.cloud.apigeeregistry.v1.scoring.Score":
 		return unmarshalAndPrint(artifact.GetContents(), &rpc.Score{})
 	case "google.cloud.apigeeregistry.v1.scoring.ScoreCard":
