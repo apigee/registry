@@ -101,6 +101,20 @@ func TestSpecArtifactPatches(t *testing.T) {
 					if !cmp.Equal(test.message, contents, opts) {
 						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(test.message, contents, opts))
 					}
+					out, header, err := ExportArtifact(ctx, registryClient, artifact)
+					if err != nil {
+						t.Fatalf("%s", err)
+					}
+					wantedParent := "apis/a/versions/v/specs/s"
+					if header.Metadata.Parent != wantedParent {
+						t.Errorf("Incorrect export parent. Wanted %s, got %s", wantedParent, header.Metadata.Parent)
+					}
+					if header.Metadata.Name != test.artifactName {
+						t.Errorf("Incorrect export name. Wanted %s, got %s", test.artifactName, header.Metadata.Name)
+					}
+					if !cmp.Equal(b, out, opts) {
+						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(b, out, opts))
+					}
 					return nil
 				})
 			if err != nil {

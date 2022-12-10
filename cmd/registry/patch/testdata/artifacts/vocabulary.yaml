@@ -4,7 +4,7 @@ metadata:
   name: vocabulary
   parent: apis/a/versions/v/specs/s
 data:
-  name: "sample-name"
+  name: sample-name
   schemas:
     - word: sample-schema
       count: 1
