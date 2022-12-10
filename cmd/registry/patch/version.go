@@ -104,12 +104,15 @@ func applyApiVersionPatchBytes(
 	return applyApiVersionPatch(ctx, client, &version, parent)
 }
 
-func versionName(parent, versionID string) (names.Version, error) {
+func versionName(parent string, metadata models.Metadata) (names.Version, error) {
+	if metadata.Parent != "" {
+		parent = parent + "/" + metadata.Parent
+	}
 	api, err := names.ParseApi(parent)
 	if err != nil {
 		return names.Version{}, err
 	}
-	return api.Version(versionID), nil
+	return api.Version(metadata.Name), nil
 }
 
 func applyApiVersionPatch(
@@ -117,7 +120,7 @@ func applyApiVersionPatch(
 	client connection.RegistryClient,
 	version *models.ApiVersion,
 	parent string) error {
-	name, err := versionName(parent, version.Metadata.Name)
+	name, err := versionName(parent, version.Metadata)
 	if err != nil {
 		return err
 	}
