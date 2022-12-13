@@ -29,6 +29,7 @@ import (
 	"github.com/apigee/registry/pkg/models"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
+	metrics "github.com/google/gnostic/metrics"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
@@ -164,8 +165,11 @@ func applyArtifactPatchBytes(ctx context.Context, client connection.RegistryClie
 	return applyArtifactPatch(ctx, client, &artifact, parent)
 }
 
-func artifactName(parent, artifactID string) (names.Artifact, error) {
-	return names.ParseArtifact(parent + "/artifacts/" + artifactID)
+func artifactName(parent string, metadata models.Metadata) (names.Artifact, error) {
+	if metadata.Parent != "" {
+		parent = parent + "/" + metadata.Parent
+	}
+	return names.ParseArtifact(parent + "/artifacts/" + metadata.Name)
 }
 
 func applyArtifactPatch(ctx context.Context, client connection.RegistryClient, content *models.Artifact, parent string) error {
@@ -177,7 +181,7 @@ func applyArtifactPatch(ctx context.Context, client connection.RegistryClient, c
 		return err
 	}
 	// Populate Id and Kind fields in the contents of the artifact
-	j, err = populateIdAndKind(j, content.Kind, content.Metadata.Name)
+	jWithIdAndKind, err := populateIdAndKind(j, content.Kind, content.Metadata.Name)
 	if err != nil {
 		return err
 	}
@@ -187,16 +191,22 @@ func applyArtifactPatch(ctx context.Context, client connection.RegistryClient, c
 	if err != nil {
 		return err
 	}
-	err = protojson.Unmarshal(j, m)
+	err = protojson.Unmarshal(jWithIdAndKind, m)
 	if err != nil {
-		return err
+		if strings.Contains(err.Error(), "unknown field") {
+			// Try unmarshaling the original YAML (without the additional Id and Kind fields).
+			err = protojson.Unmarshal(j, m)
+			if err != nil {
+				return err
+			}
+		}
 	}
 	// Marshal the message struct to bytes.
 	bytes, err := proto.Marshal(m)
 	if err != nil {
 		return err
 	}
-	name, err := artifactName(parent, content.Header.Metadata.Name)
+	name, err := artifactName(parent, content.Header.Metadata)
 	if err != nil {
 		return err
 	}
@@ -295,4 +305,6 @@ var artifactMessageTypes map[string]messageFactory = map[string]messageFactory{
 	"google.cloud.apigeeregistry.v1.style.StyleGuide":            func() proto.Message { return new(rpc.StyleGuide) },
 	"google.cloud.apigeeregistry.v1.style.ConformanceReport":     func() proto.Message { return new(rpc.ConformanceReport) },
 	"google.cloud.apigeeregistry.v1.style.Lint":                  func() proto.Message { return new(rpc.Lint) },
+	"gnostic.metrics.Complexity":                                 func() proto.Message { return new(metrics.Complexity) },
+	"gnostic.metrics.Vocabulary":                                 func() proto.Message { return new(metrics.Vocabulary) },
 }

@@ -93,12 +93,15 @@ func applyApiSpecPatchBytes(
 	return applyApiSpecPatch(ctx, client, &spec, parent)
 }
 
-func specName(parent, specID string) (names.Spec, error) {
+func specName(parent string, metadata models.Metadata) (names.Spec, error) {
+	if metadata.Parent != "" {
+		parent = parent + "/" + metadata.Parent
+	}
 	version, err := names.ParseVersion(parent)
 	if err != nil {
 		return names.Spec{}, err
 	}
-	return version.Spec(specID), nil
+	return version.Spec(metadata.Name), nil
 }
 
 func applyApiSpecPatch(
@@ -106,7 +109,7 @@ func applyApiSpecPatch(
 	client connection.RegistryClient,
 	spec *models.ApiSpec,
 	parent string) error {
-	name, err := specName(parent, spec.Metadata.Name)
+	name, err := specName(parent, spec.Metadata)
 	if err != nil {
 		return err
 	}
