@@ -106,12 +106,15 @@ func applyApiDeploymentPatchBytes(ctx context.Context, client connection.Registr
 	return applyApiDeploymentPatch(ctx, client, &deployment, parent)
 }
 
-func deploymentName(parent, deploymentID string) (names.Deployment, error) {
+func deploymentName(parent string, metadata models.Metadata) (names.Deployment, error) {
+	if metadata.Parent != "" {
+		parent = parent + "/" + metadata.Parent
+	}
 	api, err := names.ParseApi(parent)
 	if err != nil {
 		return names.Deployment{}, err
 	}
-	return api.Deployment(deploymentID), nil
+	return api.Deployment(metadata.Name), nil
 }
 
 func applyApiDeploymentPatch(
@@ -119,7 +122,7 @@ func applyApiDeploymentPatch(
 	client connection.RegistryClient,
 	deployment *models.ApiDeployment,
 	parent string) error {
-	name, err := deploymentName(parent, deployment.Metadata.Name)
+	name, err := deploymentName(parent, deployment.Metadata)
 	if err != nil {
 		return err
 	}

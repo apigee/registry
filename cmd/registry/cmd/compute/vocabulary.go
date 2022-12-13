@@ -64,7 +64,7 @@ func vocabularyCommand() *cobra.Command {
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get jobs from flags")
 			}
-			taskQueue, wait := core.WorkerPool(ctx, jobs)
+			taskQueue, wait := core.WorkerPoolWithWarnings(ctx, jobs)
 			defer wait()
 
 			parsed, err := names.ParseSpecRevision(path)

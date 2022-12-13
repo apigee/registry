@@ -69,7 +69,7 @@ func discoveryCommand() *cobra.Command {
 					parent:    parent,
 					apiID:     sanitize(api.Name),
 					versionID: sanitize(api.Version),
-					specID:    "discovery.json",
+					specID:    "discovery",
 				}
 			}
 			return nil

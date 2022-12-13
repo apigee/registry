@@ -1,0 +1,19 @@
+apiVersion: apigeeregistry/v1
+kind: Vocabulary
+metadata:
+  name: vocabulary
+  parent: apis/a/versions/v/specs/s
+data:
+  name: sample-name
+  schemas:
+    - word: sample-schema
+      count: 1
+  properties:
+    - word: sample-property
+      count: 2
+  operations:
+    - word: sample-operation
+      count: 3
+  parameters:
+    - word: sample-parameter
+      count: 4

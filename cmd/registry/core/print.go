@@ -108,65 +108,70 @@ func PrintArtifactContents(artifact *rpc.Artifact) error {
 		return nil
 	}
 
-	messageType, err := MessageTypeForMimeType(artifact.GetMimeType())
+	message, err := GetArtifactMessageContents(artifact)
 	if err != nil {
 		return err
 	}
-
-	switch messageType {
-	case "gnostic.metrics.Complexity":
-		return unmarshalAndPrint(artifact.GetContents(), &metrics.Complexity{})
-	case "gnostic.metrics.Vocabulary":
-		return unmarshalAndPrint(artifact.GetContents(), &metrics.Vocabulary{})
-	case "gnostic.metrics.VersionHistory":
-		return unmarshalAndPrint(artifact.GetContents(), &metrics.VersionHistory{})
-	case "google.cloud.apigeeregistry.applications.v1alpha1.Lint":
-		return unmarshalAndPrint(artifact.GetContents(), &rpc.Lint{})
-	case "google.cloud.apigeeregistry.applications.v1alpha1.LintStats":
-		return unmarshalAndPrint(artifact.GetContents(), &rpc.LintStats{})
-	case "google.cloud.apigeeregistry.v1.apihub.DisplaySettings":
-		return unmarshalAndPrint(artifact.GetContents(), &rpc.DisplaySettings{})
-	case "google.cloud.apigeeregistry.v1.apihub.Lifecycle":
-		return unmarshalAndPrint(artifact.GetContents(), &rpc.Lifecycle{})
-	case "google.cloud.apigeeregistry.v1.apihub.ReferenceList":
-		return unmarshalAndPrint(artifact.GetContents(), &rpc.ReferenceList{})
-	case "google.cloud.apigeeregistry.v1.apihub.TaxonomyList":
-		return unmarshalAndPrint(artifact.GetContents(), &rpc.TaxonomyList{})
-	case "google.cloud.apigeeregistry.v1.controller.Manifest":
-		return unmarshalAndPrint(artifact.GetContents(), &rpc.Manifest{})
-	case "google.cloud.apigeeregistry.v1.controller.Receipt":
-		return unmarshalAndPrint(artifact.GetContents(), &rpc.Receipt{})
-	case "google.cloud.apigeeregistry.v1.scoring.Score":
-		return unmarshalAndPrint(artifact.GetContents(), &rpc.Score{})
-	case "google.cloud.apigeeregistry.v1.scoring.ScoreCard":
-		return unmarshalAndPrint(artifact.GetContents(), &rpc.ScoreCard{})
-	case "google.cloud.apigeeregistry.v1.scoring.ScoreDefinition":
-		return unmarshalAndPrint(artifact.GetContents(), &rpc.ScoreDefinition{})
-	case "google.cloud.apigeeregistry.v1.scoring.ScoreCardDefinition":
-		return unmarshalAndPrint(artifact.GetContents(), &rpc.ScoreCardDefinition{})
-	case "google.cloud.apigeeregistry.v1.style.ConformanceReport":
-		return unmarshalAndPrint(artifact.GetContents(), &rpc.ConformanceReport{})
-	case "google.cloud.apigeeregistry.v1.style.StyleGuide":
-		return unmarshalAndPrint(artifact.GetContents(), &rpc.StyleGuide{})
-	case "gnostic.openapiv2.Document":
-		return unmarshalAndPrint(artifact.GetContents(), &openapiv2.Document{})
-	case "gnostic.openapiv3.Document":
-		return unmarshalAndPrint(artifact.GetContents(), &openapiv3.Document{})
-	default:
-		// To get a parent context here would require changing the ArtifactHandler type in handlers.go
-		return fmt.Errorf("Unsupported message type: %s, please use --raw to get raw contents", messageType)
-	}
+	PrintMessage(message)
+	return nil
 }
 
 func PrintMessage(message proto.Message) {
 	fmt.Println(protojson.Format(message))
 }
 
-func unmarshalAndPrint(value []byte, message proto.Message) error {
-	if err := proto.Unmarshal(value, message); err != nil {
-		return err
+func GetArtifactMessageContents(artifact *rpc.Artifact) (proto.Message, error) {
+	messageType, err := MessageTypeForMimeType(artifact.GetMimeType())
+	if err != nil {
+		return nil, err
 	}
+	switch messageType {
+	case "gnostic.metrics.Complexity":
+		return unmarshal(artifact.GetContents(), &metrics.Complexity{})
+	case "gnostic.metrics.Vocabulary":
+		return unmarshal(artifact.GetContents(), &metrics.Vocabulary{})
+	case "gnostic.metrics.VersionHistory":
+		return unmarshal(artifact.GetContents(), &metrics.VersionHistory{})
+	case "google.cloud.apigeeregistry.v1.apihub.DisplaySettings":
+		return unmarshal(artifact.GetContents(), &rpc.DisplaySettings{})
+	case "google.cloud.apigeeregistry.v1.apihub.Lifecycle":
+		return unmarshal(artifact.GetContents(), &rpc.Lifecycle{})
+	case "google.cloud.apigeeregistry.v1.apihub.ReferenceList":
+		return unmarshal(artifact.GetContents(), &rpc.ReferenceList{})
+	case "google.cloud.apigeeregistry.v1.apihub.TaxonomyList":
+		return unmarshal(artifact.GetContents(), &rpc.TaxonomyList{})
+	case "google.cloud.apigeeregistry.v1.controller.Manifest":
+		return unmarshal(artifact.GetContents(), &rpc.Manifest{})
+	case "google.cloud.apigeeregistry.v1.controller.Receipt":
+		return unmarshal(artifact.GetContents(), &rpc.Receipt{})
+	case "google.cloud.apigeeregistry.v1.scoring.Score":
+		return unmarshal(artifact.GetContents(), &rpc.Score{})
+	case "google.cloud.apigeeregistry.v1.scoring.ScoreCard":
+		return unmarshal(artifact.GetContents(), &rpc.ScoreCard{})
+	case "google.cloud.apigeeregistry.v1.scoring.ScoreDefinition":
+		return unmarshal(artifact.GetContents(), &rpc.ScoreDefinition{})
+	case "google.cloud.apigeeregistry.v1.scoring.ScoreCardDefinition":
+		return unmarshal(artifact.GetContents(), &rpc.ScoreCardDefinition{})
+	case "google.cloud.apigeeregistry.v1.style.ConformanceReport":
+		return unmarshal(artifact.GetContents(), &rpc.ConformanceReport{})
+	case "google.cloud.apigeeregistry.v1.style.Lint":
+		return unmarshal(artifact.GetContents(), &rpc.Lint{})
+	case "google.cloud.apigeeregistry.v1.style.LintStats":
+		return unmarshal(artifact.GetContents(), &rpc.LintStats{})
+	case "google.cloud.apigeeregistry.v1.style.StyleGuide":
+		return unmarshal(artifact.GetContents(), &rpc.StyleGuide{})
+	case "gnostic.openapiv2.Document":
+		return unmarshal(artifact.GetContents(), &openapiv2.Document{})
+	case "gnostic.openapiv3.Document":
+		return unmarshal(artifact.GetContents(), &openapiv3.Document{})
+	default:
+		return nil, fmt.Errorf("unsupported message type: %s", messageType)
+	}
+}
 
-	PrintMessage(message)
-	return nil
+func unmarshal(value []byte, message proto.Message) (proto.Message, error) {
+	if err := proto.Unmarshal(value, message); err != nil {
+		return nil, err
+	}
+	return message, nil
 }
