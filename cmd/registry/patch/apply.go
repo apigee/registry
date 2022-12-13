@@ -69,9 +69,6 @@ func (p *patchGroup) add(task *applyFileTask) error {
 		return err
 	}
 	task.kind = header.Kind
-	if header.Metadata.Parent != "" {
-		task.parent = task.parent + "/" + header.Metadata.Parent
-	}
 	switch task.kind {
 	case "API":
 		p.apiTasks = append(p.apiTasks, task)
