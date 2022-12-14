@@ -66,6 +66,18 @@ func (task *ExecCommandTask) Run(ctx context.Context) error {
 	if strings.HasPrefix(task.Action.Command, "registry") {
 		fullCmd := strings.Fields(task.Action.Command)
 
+		// force the exec-ed registry tool to use the same server configuration as the controller
+		config, err := connection.ActiveConfig()
+		if err != nil {
+			return err
+		}
+		if config.Insecure {
+			fullCmd = append(fullCmd, "--registry.insecure")
+		}
+		if config.Address != "" {
+			fullCmd = append(fullCmd, "--registry.address")
+			fullCmd = append(fullCmd, config.Address)
+		}
 		cmd := exec.Command(fullCmd[0], fullCmd[1:]...)
 		cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
 
