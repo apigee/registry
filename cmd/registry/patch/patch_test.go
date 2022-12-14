@@ -47,6 +47,19 @@ func TestArtifactPatches(t *testing.T) {
 			},
 		},
 		{
+			artifactID: "display-settings",
+			parent:     "",
+			yamlFile:   "testdata/artifacts/displaysettings.yaml",
+			message: &rpc.DisplaySettings{
+				Id:              "display-settings", // deprecated field
+				Kind:            "DisplaySettings",  // deprecated field
+				Description:     "Defines display settings",
+				Organization:    "Sample",
+				ApiGuideEnabled: true,
+				ApiScoreEnabled: true,
+			},
+		},
+		{
 			artifactID: "lifecycle",
 			yamlFile:   "testdata/artifacts/lifecycle.yaml",
 			message: &rpc.Lifecycle{
