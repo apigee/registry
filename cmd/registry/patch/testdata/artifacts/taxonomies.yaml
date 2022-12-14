@@ -1,0 +1,53 @@
+apiVersion: apigeeregistry/v1
+kind: TaxonomyList
+metadata:
+  name: taxonomies
+data:
+  displayName: TaxonomyList
+  description: A list of taxonomies that can be used to classify resources in the registry
+  taxonomies:
+    - id: target-users
+      displayName: Target users
+      description: The intended users (consumers) of an API
+      adminApplied: false
+      singleSelection: false
+      searchExcluded: false
+      systemManaged: true
+      displayOrder: 0
+      elements:
+        - id: team
+          displayName: Team
+          description: Intended for exclusive use by the producing team
+        - id: internal
+          displayName: Internal
+          description: Available to internal teams
+        - id: partner
+          displayName: Partner
+          description: Available to select partners
+        - id: public
+          displayName: Public
+          description: Published for discovery by the general public
+    - id: style
+      displayName: Style (primary)
+      description: The primary architectural style of the API
+      adminApplied: false
+      singleSelection: true
+      searchExcluded: false
+      systemManaged: true
+      displayOrder: 1
+      elements:
+        - id: openapi
+          displayName: OpenAPI
+          description: https://spec.openapis.org/oas/latest.html
+        - id: grpc
+          displayName: gRPC
+          description: https://grpc.io
+        - id: graphql
+          displayName: GraphQL
+          description: https://graphql.org
+        - id: asyncapi
+          displayName: AsyncAPI
+          description: https://www.asyncapi.com
+        - id: soap
+          displayName: SOAP
+          description: https://en.wikipedia.org/wiki/Web_Services_Description_Language
