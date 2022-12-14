@@ -1,0 +1,13 @@
+apiVersion: apigeeregistry/v1
+kind: ApiSpecExtensionList
+metadata:
+  name: extensions
+data:
+  displayName: Sample Extensions
+  description: Extensions connect external tools to registry applications
+  extensions:
+    - id: sample
+      displayName: Sample
+      description: A sample extension
+      filter: mime_type.contains('openapi')
+      uriPattern: https://example.com

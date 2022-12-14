@@ -1,0 +1,23 @@
+apiVersion: apigeeregistry/v1
+kind: ReferenceList
+metadata:
+  name: references
+  parent: apis/a
+  labels:
+    label1: label
+  annotations:
+    annotation1: annotation
+data:
+  displayName: Related References
+  description: References related to this API
+  references:
+    - id: github
+      displayName: GitHub Repo
+      category: apihub-source-code
+      resource: invalid-resource
+      uri: https://github.com/apigee/registry
+    - id: docs
+      displayName: GitHub Documentation
+      category: apihub-other
+      resource: invalid-resource
+      uri: https://apigee.github.io/registry/

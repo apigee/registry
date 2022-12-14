@@ -1,0 +1,16 @@
+apiVersion: apigeeregistry/v1
+kind: Manifest
+metadata:
+  name: manifest
+data:
+  displayName: Sample Manifest
+  description: A sample manifest
+  generatedResources:
+    - pattern: apis/-/versions/-/specs/-/artifacts/lint-spectral
+      filter: invalid-filter
+      receipt: false
+      dependencies:
+        - pattern: $resource.spec
+          filter: mime_type.contains('openapi')
+      action: registry compute lint $resource.spec --linter spectral
+      refresh: null
