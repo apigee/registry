@@ -116,24 +116,6 @@ func sheetCommand() *cobra.Command {
 				}
 				log.Debugf(ctx, "Exported complexity to %s", path)
 				_ = saveSheetPath(ctx, client, path, artifact)
-			} else if messageType == "google.cloud.apigeeregistry.applications.v1alpha1.Index" {
-				if len(inputs) != 1 {
-					log.Fatalf(ctx, "%d artifacts matched. Please specify exactly one for export.", len(inputs))
-				}
-				index, err := getIndex(inputs[0])
-				if err != nil {
-					log.FromContext(ctx).WithError(err).Fatal("Failed to get index")
-				}
-				path, err = core.ExportIndexToSheet(ctx, inputs[0].Name, index)
-				if err != nil {
-					log.FromContext(ctx).WithError(err).Debugf("Failed to export index %+v", inputs[0].Name)
-					return
-				}
-				log.Debugf(ctx, "Exported index %s to %s", inputs[0].Name, path)
-				if artifact == "" {
-					artifact = inputs[0].Name + "-sheet"
-				}
-				_ = saveSheetPath(ctx, client, path, artifact)
 			} else {
 				log.Fatalf(ctx, "Unknown message type: %s", messageType)
 			}
@@ -190,24 +172,6 @@ func getVocabulary(artifact *rpc.Artifact) (*metrics.Vocabulary, error) {
 		return vocab, err
 	}
 	return nil, fmt.Errorf("not a vocabulary: %s", artifact.Name)
-}
-
-func getIndex(artifact *rpc.Artifact) (*rpc.Index, error) {
-	messageType, err := core.MessageTypeForMimeType(artifact.GetMimeType())
-	if err == nil && messageType == "google.cloud.apigeeregistry.applications.v1alpha1.Index" {
-		index := &rpc.Index{}
-		err := proto.Unmarshal(artifact.GetContents(), index)
-		if err != nil {
-			// try unzipping and unmarshalling
-			value, err := core.GUnzippedBytes(artifact.GetContents())
-			if err != nil {
-				return nil, err
-			}
-			_ = proto.Unmarshal(value, index)
-		}
-		return index, err
-	}
-	return nil, fmt.Errorf("not a index: %s", artifact.Name)
 }
 
 func saveSheetPath(ctx context.Context, client connection.RegistryClient, path string, artifactName string) error {

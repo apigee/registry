@@ -69,16 +69,12 @@ func getMap(contents []byte, mimeType string) (map[string]interface{}, error) {
 		return unmarshalAndMap(contents, &metrics.Vocabulary{})
 	case "google.cloud.apigeeregistry.v1.style.ConformanceReport":
 		return unmarshalAndMap(contents, &rpc.ConformanceReport{})
-	case "google.cloud.apigeeregistry.applications.v1alpha1.Index":
-		return unmarshalAndMap(contents, &rpc.Index{})
 	case "google.cloud.apigeeregistry.v1.style.Lint":
 		return unmarshalAndMap(contents, &rpc.Lint{})
 	case "google.cloud.apigeeregistry.v1.apihub.ReferenceList":
 		return unmarshalAndMap(contents, &rpc.ReferenceList{})
 	case "google.cloud.apigeeregistry.v1.controller.Receipt":
 		return unmarshalAndMap(contents, &rpc.Receipt{})
-	case "google.cloud.apigeeregistry.applications.v1alpha1.References":
-		return unmarshalAndMap(contents, &rpc.References{})
 	case "google.cloud.apigeeregistry.v1.scoring.Score":
 		return unmarshalAndMap(contents, &rpc.Score{})
 	case "google.cloud.apigeeregistry.v1.scoring.ScoreCard":
