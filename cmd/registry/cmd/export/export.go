@@ -25,7 +25,6 @@ func Command() *cobra.Command {
 	}
 
 	cmd.AddCommand(csvCommand())
-	cmd.AddCommand(sheetCommand())
 	cmd.AddCommand(yamlCommand())
 
 	return cmd
