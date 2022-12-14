@@ -122,10 +122,15 @@ func NewServer(rc registry.Config) (*Server, error) {
 		return nil, err
 	}
 
-	// set for internal client
+	// set registry configuration to use test server
 	addr := fmt.Sprintf("localhost:%d", s.Port())
-	os.Setenv("APG_REGISTRY_ADDRESS", addr)
-	os.Setenv("APG_REGISTRY_INSECURE", "1")
+	config, err := connection.ActiveConfig()
+	if err != nil {
+		return nil, err
+	}
+	config.Insecure = true
+	config.Address = addr
+	connection.SetConfig(config)
 
 	return s, nil
 }
