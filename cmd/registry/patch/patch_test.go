@@ -60,6 +60,26 @@ func TestArtifactPatches(t *testing.T) {
 			},
 		},
 		{
+			artifactID: "extensions",
+			parent:     "",
+			yamlFile:   "testdata/artifacts/extensions.yaml",
+			message: &rpc.ApiSpecExtensionList{
+				Id:          "extensions",           // deprecated field
+				Kind:        "ApiSpecExtensionList", // deprecated field
+				DisplayName: "Sample Extensions",
+				Description: "Extensions connect external tools to registry applications",
+				Extensions: []*rpc.ApiSpecExtensionList_ApiSpecExtension{
+					{
+						Id:          "sample",
+						DisplayName: "Sample",
+						Description: "A sample extension",
+						Filter:      "mime_type.contains('openapi')",
+						UriPattern:  "https://example.com",
+					},
+				},
+			},
+		},
+		{
 			artifactID: "lifecycle",
 			yamlFile:   "testdata/artifacts/lifecycle.yaml",
 			message: &rpc.Lifecycle{
