@@ -14,10 +14,10 @@ data:
     - id: github
       displayName: GitHub Repo
       category: apihub-source-code
-      resource: ""
+      resource: invalid-resource
       uri: https://github.com/apigee/registry
     - id: docs
       displayName: GitHub Documentation
       category: apihub-other
-      resource: ""
+      resource: invalid-resource
       uri: https://apigee.github.io/registry/

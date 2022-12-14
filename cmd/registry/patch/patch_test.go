@@ -48,7 +48,6 @@ func TestArtifactPatches(t *testing.T) {
 		},
 		{
 			artifactID: "display-settings",
-			parent:     "",
 			yamlFile:   "testdata/artifacts/displaysettings.yaml",
 			message: &rpc.DisplaySettings{
 				Id:              "display-settings", // deprecated field
@@ -61,7 +60,6 @@ func TestArtifactPatches(t *testing.T) {
 		},
 		{
 			artifactID: "extensions",
-			parent:     "",
 			yamlFile:   "testdata/artifacts/extensions.yaml",
 			message: &rpc.ApiSpecExtensionList{
 				Id:          "extensions",           // deprecated field
@@ -123,7 +121,7 @@ func TestArtifactPatches(t *testing.T) {
 				GeneratedResources: []*rpc.GeneratedResource{
 					{
 						Pattern: "apis/-/versions/-/specs/-/artifacts/lint-spectral",
-						Filter:  "",
+						Filter:  "invalid-filter",
 						Receipt: false,
 						Dependencies: []*rpc.Dependency{
 							{
@@ -151,14 +149,14 @@ func TestArtifactPatches(t *testing.T) {
 						Id:          "github",
 						DisplayName: "GitHub Repo",
 						Category:    "apihub-source-code",
-						Resource:    "",
+						Resource:    "invalid-resource",
 						Uri:         "https://github.com/apigee/registry",
 					},
 					{
 						Id:          "docs",
 						DisplayName: "GitHub Documentation",
 						Category:    "apihub-other",
-						Resource:    "",
+						Resource:    "invalid-resource",
 						Uri:         "https://apigee.github.io/registry/",
 					},
 				},

@@ -7,7 +7,7 @@ data:
   description: A sample manifest
   generatedResources:
     - pattern: apis/-/versions/-/specs/-/artifacts/lint-spectral
-      filter: ""
+      filter: invalid-filter
       receipt: false
       dependencies:
         - pattern: $resource.spec
