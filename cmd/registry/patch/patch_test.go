@@ -28,6 +28,7 @@ func TestMain(m *testing.M) {
 func TestApiPatches(t *testing.T) {
 	root := "projects/patch-api-test/locations/global"
 	tests := []struct {
+		desc       string
 		resourceID string
 		parent     string
 		yamlFile   string
@@ -35,6 +36,7 @@ func TestApiPatches(t *testing.T) {
 		message    proto.Message
 	}{
 		{
+			desc:       "registry",
 			resourceID: "registry",
 			parent:     "",
 			yamlFile:   "testdata/resources/apis-registry.yaml",
@@ -51,6 +53,7 @@ func TestApiPatches(t *testing.T) {
 			},
 		},
 		{
+			desc:       "registry-nested",
 			resourceID: "registry",
 			parent:     "",
 			yamlFile:   "testdata/resources/apis-registry-nested.yaml",
@@ -89,7 +92,7 @@ func TestApiPatches(t *testing.T) {
 		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
 	}
 	for _, test := range tests {
-		t.Run(test.resourceID, func(t *testing.T) {
+		t.Run(test.desc, func(t *testing.T) {
 			b, err := os.ReadFile(test.yamlFile)
 			if err != nil {
 				t.Fatalf("%s", err)
