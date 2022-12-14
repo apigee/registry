@@ -83,8 +83,8 @@ func TestMain(m *testing.M, rc registry.Config) {
 // NewServer creates a RegistryServer served by a basic grpc.Server.
 // If rc.Database and rc.DBConfig are blank, a RegistryServer using
 // sqlite3 on a tmpDir is automatically created.
-// APG_REGISTRY_ADDRESS and APG_REGISTRY_INSECURE
-// env vars are set for the client to connect to the created grpc service.
+// registry.address and registry.insecure configuration values are set
+// to cause the in-process client to connect to the created grpc service.
 // Call Close() when done to close server and clean up tmpDir as needed.
 // Example:
 // func TestXXX(t *testing.T) {
