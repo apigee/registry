@@ -1,0 +1,9 @@
+apiVersion: apigeeregistry/v1
+kind: DisplaySettings
+metadata:
+  name: display-settings
+data:
+  description: Defines display settings
+  organization: Sample
+  apiGuideEnabled: true
+  apiScoreEnabled: true

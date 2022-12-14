@@ -132,6 +132,8 @@ func GetArtifactMessageContents(artifact *rpc.Artifact) (proto.Message, error) {
 		return unmarshal(artifact.GetContents(), &metrics.Vocabulary{})
 	case "gnostic.metrics.VersionHistory":
 		return unmarshal(artifact.GetContents(), &metrics.VersionHistory{})
+	case "google.cloud.apigeeregistry.v1.apihub.ApiSpecExtensionList":
+		return unmarshal(artifact.GetContents(), &rpc.ApiSpecExtensionList{})
 	case "google.cloud.apigeeregistry.v1.apihub.DisplaySettings":
 		return unmarshal(artifact.GetContents(), &rpc.DisplaySettings{})
 	case "google.cloud.apigeeregistry.v1.apihub.Lifecycle":

@@ -64,6 +64,9 @@ jobs:
     - name: Install protoc (needed for registry upload tests)
       uses: arduino/setup-protoc@v1
 
+    - name: Create default configuration that uses a local server
+      run: registry config configurations create local --registry.address='127.0.0.1:8080' --registry.insecure
+
     - name: Test everything with SQLite
       run: go test ./...
 
@@ -100,15 +103,10 @@ jobs:
       run: registry-server &
 
     - name: Test a standalone registry server using the remote proxy
-      env:
-        APG_REGISTRY_ADDRESS: localhost:8080
-        APG_REGISTRY_INSECURE: 1
       run: go test ./server/registry -remote
 
     - name: Test a standalone registry server using the remote proxy in hosted mode
       env:
-        APG_REGISTRY_ADDRESS: localhost:8080
-        APG_REGISTRY_INSECURE: 1
         PROJECTID: hosted-ci-test
       run: |
         registry rpc admin create-project --project_id=$PROJECTID --json
@@ -116,8 +114,6 @@ jobs:
 
     - name: Verify that benchmarks run on a standalone registry server
       env:
-        APG_REGISTRY_ADDRESS: localhost:8080
-        APG_REGISTRY_INSECURE: 1
         PROJECTID: bench
         ITERATIONS: 1
       run: |

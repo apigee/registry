@@ -1,0 +1,17 @@
+apiVersion: apigeeregistry/v1
+kind: Deployment
+metadata:
+  name: prod
+  parent: apis/registry
+  labels:
+    platform: google
+  annotations:
+    region: us-central1
+data:
+  displayName: Production
+  description: The hosted deployment of the Registry API
+  apiSpecRevision: v1/specs/openapi@latest
+  endpointURI: https://apigeeregistry.googleapis.com
+  externalChannelURI: https://apigee.github.io/registry/
+  intendedAudience: Public
+  accessGuidance: See https://github.com/apigee/registry for tools and usage information.
