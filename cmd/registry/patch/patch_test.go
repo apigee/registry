@@ -25,7 +25,423 @@ func TestMain(m *testing.M) {
 	grpctest.TestMain(m, registry.Config{})
 }
 
+func TestApiPatches(t *testing.T) {
+	root := "projects/patch-api-test/locations/global"
+	tests := []struct {
+		resourceID string
+		parent     string
+		yamlFile   string
+		nested     bool
+		message    proto.Message
+	}{
+		{
+			resourceID: "registry",
+			parent:     "",
+			yamlFile:   "testdata/resources/apis-registry.yaml",
+			nested:     false,
+			message: &rpc.Api{
+				Name:                  root + "/apis/registry",
+				DisplayName:           "Apigee Registry API",
+				Description:           "The Registry API allows teams to track and manage machine-readable descriptions of APIs.",
+				Labels:                map[string]string{"apihub-owner": "google"},
+				Annotations:           map[string]string{"apihub-score": "99"},
+				Availability:          "Preview",
+				RecommendedDeployment: root + "/apis/registry/deployments/prod",
+				RecommendedVersion:    root + "/apis/registry/versions/v1",
+			},
+		},
+		{
+			resourceID: "registry",
+			parent:     "",
+			yamlFile:   "testdata/resources/apis-registry-nested.yaml",
+			nested:     true,
+			message: &rpc.Api{
+				Name:                  root + "/apis/registry",
+				DisplayName:           "Apigee Registry API",
+				Description:           "The Registry API allows teams to track and manage machine-readable descriptions of APIs.",
+				Labels:                map[string]string{"apihub-owner": "google"},
+				Annotations:           map[string]string{"apihub-score": "99"},
+				Availability:          "Preview",
+				RecommendedDeployment: root + "/apis/registry/deployments/prod",
+				RecommendedVersion:    root + "/apis/registry/versions/v1",
+			},
+		},
+	}
+	ctx := context.Background()
+	adminClient, err := connection.NewAdminClient(ctx)
+	if err != nil {
+		t.Fatalf("Setup: failed to create client: %+v", err)
+	}
+	defer adminClient.Close()
+	registryClient, err := connection.NewRegistryClient(ctx)
+	if err != nil {
+		t.Fatalf("Setup: Failed to create registry client: %s", err)
+	}
+	defer registryClient.Close()
+	client := seeder.Client{
+		RegistryClient: registryClient,
+		AdminClient:    adminClient,
+	}
+	project := &rpc.Project{
+		Name: "projects/patch-api-test",
+	}
+	if err := seeder.SeedProjects(ctx, client, project); err != nil {
+		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+	}
+	for _, test := range tests {
+		t.Run(test.resourceID, func(t *testing.T) {
+			b, err := os.ReadFile(test.yamlFile)
+			if err != nil {
+				t.Fatalf("%s", err)
+			}
+			err = applyApiPatchBytes(ctx, registryClient, b, root)
+			if err != nil {
+				t.Fatalf("%s", err)
+			}
+			collection := root + "/apis/"
+			apiName, err := names.ParseApi(collection + test.resourceID)
+			if err != nil {
+				t.Fatalf("%s", err)
+			}
+			opts := cmp.Options{
+				protocmp.Transform(),
+				protocmp.IgnoreFields(new(rpc.Api), "create_time", "update_time"),
+			}
+			err = core.GetAPI(ctx, registryClient, apiName,
+				func(api *rpc.Api) error {
+					if !cmp.Equal(test.message, api, opts) {
+						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(test.message, api, opts))
+					}
+					out, header, err := ExportAPI(ctx, registryClient, api, test.nested)
+					if err != nil {
+						t.Fatalf("%s", err)
+					}
+					if header.Metadata.Parent != test.parent {
+						t.Errorf("Incorrect export parent. Wanted %s, got %s", test.parent, header.Metadata.Parent)
+					}
+					if header.Metadata.Name != test.resourceID {
+						t.Errorf("Incorrect export name. Wanted %s, got %s", test.resourceID, header.Metadata.Name)
+					}
+					if !cmp.Equal(b, out, opts) {
+						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(b, out, opts))
+					}
+					return nil
+				})
+			if err != nil {
+				t.Fatalf("%s", err)
+			}
+			err = registryClient.DeleteApi(ctx, &rpc.DeleteApiRequest{
+				Name:  root + "/apis/" + test.resourceID,
+				Force: true,
+			})
+			if err != nil {
+				t.Fatalf("%s", err)
+			}
+		})
+	}
+}
+
+func TestVersionPatches(t *testing.T) {
+	root := "projects/patch-version-test/locations/global"
+	tests := []struct {
+		resourceID string
+		parent     string
+		yamlFile   string
+		nested     bool
+		message    proto.Message
+	}{
+		{
+			resourceID: "v1",
+			parent:     "apis/registry",
+			yamlFile:   "testdata/resources/apis-registry-versions-v1.yaml",
+			nested:     false,
+			message: &rpc.ApiVersion{
+				Name:        root + "/apis/registry/versions/v1",
+				DisplayName: "v1",
+				Description: "New in 2022",
+				State:       "Staging",
+				Labels:      map[string]string{"apihub-team": "apigee"},
+				Annotations: map[string]string{"release-date": "2021-12-15"},
+			},
+		},
+	}
+	ctx := context.Background()
+	adminClient, err := connection.NewAdminClient(ctx)
+	if err != nil {
+		t.Fatalf("Setup: failed to create client: %+v", err)
+	}
+	defer adminClient.Close()
+	registryClient, err := connection.NewRegistryClient(ctx)
+	if err != nil {
+		t.Fatalf("Setup: Failed to create registry client: %s", err)
+	}
+	defer registryClient.Close()
+	client := seeder.Client{
+		RegistryClient: registryClient,
+		AdminClient:    adminClient,
+	}
+	api := &rpc.Api{
+		Name: root + "/apis/registry",
+	}
+	if err := seeder.SeedApis(ctx, client, api); err != nil {
+		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+	}
+	for _, test := range tests {
+		t.Run(test.resourceID, func(t *testing.T) {
+			b, err := os.ReadFile(test.yamlFile)
+			if err != nil {
+				t.Fatalf("%s", err)
+			}
+			err = applyApiVersionPatchBytes(ctx, registryClient, b, root)
+			if err != nil {
+				t.Fatalf("%s", err)
+			}
+			collection := root + "/apis/registry/versions/"
+			versionName, err := names.ParseVersion(collection + test.resourceID)
+			if err != nil {
+				t.Fatalf("%s", err)
+			}
+			opts := cmp.Options{
+				protocmp.Transform(),
+				protocmp.IgnoreFields(new(rpc.ApiVersion), "create_time", "update_time"),
+			}
+			err = core.GetVersion(ctx, registryClient, versionName,
+				func(version *rpc.ApiVersion) error {
+					if !cmp.Equal(test.message, version, opts) {
+						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(test.message, version, opts))
+					}
+					out, header, err := ExportAPIVersion(ctx, registryClient, version, test.nested)
+					if err != nil {
+						t.Fatalf("%s", err)
+					}
+					if header.Metadata.Parent != test.parent {
+						t.Errorf("Incorrect export parent. Wanted %s, got %s", test.parent, header.Metadata.Parent)
+					}
+					if header.Metadata.Name != test.resourceID {
+						t.Errorf("Incorrect export name. Wanted %s, got %s", test.resourceID, header.Metadata.Name)
+					}
+					if !cmp.Equal(b, out, opts) {
+						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(b, out, opts))
+					}
+					return nil
+				})
+			if err != nil {
+				t.Fatalf("%s", err)
+			}
+			err = registryClient.DeleteApiVersion(ctx, &rpc.DeleteApiVersionRequest{
+				Name:  root + "/apis/registry/versions/" + test.resourceID,
+				Force: true,
+			})
+			if err != nil {
+				t.Fatalf("%s", err)
+			}
+		})
+	}
+}
+
+func TestSpecPatches(t *testing.T) {
+	root := "projects/patch-spec-test/locations/global"
+	tests := []struct {
+		resourceID string
+		parent     string
+		yamlFile   string
+		nested     bool
+		message    proto.Message
+	}{
+		{
+			resourceID: "openapi",
+			parent:     "apis/registry/versions/v1",
+			yamlFile:   "testdata/resources/apis-registry-versions-v1-specs-openapi.yaml",
+			nested:     false,
+			message: &rpc.ApiSpec{
+				Name:        root + "/apis/registry/versions/v1/specs/openapi",
+				Description: "OpenAPI description of the Registry API",
+				Filename:    "openapi.yaml",
+				MimeType:    "application/x.openapi+gzip;version=3",
+				SourceUri:   "https://raw.githubusercontent.com/apigee/registry/main/openapi.yaml",
+				Labels:      map[string]string{"openapi-verified": "true"},
+				Annotations: map[string]string{"linters": "spectral,gnostic"},
+			},
+		},
+	}
+	ctx := context.Background()
+	adminClient, err := connection.NewAdminClient(ctx)
+	if err != nil {
+		t.Fatalf("Setup: failed to create client: %+v", err)
+	}
+	defer adminClient.Close()
+	registryClient, err := connection.NewRegistryClient(ctx)
+	if err != nil {
+		t.Fatalf("Setup: Failed to create registry client: %s", err)
+	}
+	defer registryClient.Close()
+	client := seeder.Client{
+		RegistryClient: registryClient,
+		AdminClient:    adminClient,
+	}
+	version := &rpc.ApiVersion{
+		Name: root + "/apis/registry/versions/v1",
+	}
+	if err := seeder.SeedVersions(ctx, client, version); err != nil {
+		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+	}
+	for _, test := range tests {
+		t.Run(test.resourceID, func(t *testing.T) {
+			b, err := os.ReadFile(test.yamlFile)
+			if err != nil {
+				t.Fatalf("%s", err)
+			}
+			err = applyApiSpecPatchBytes(ctx, registryClient, b, root)
+			if err != nil {
+				t.Fatalf("%s", err)
+			}
+			collection := root + "/apis/registry/versions/v1/specs/"
+			specName, err := names.ParseSpec(collection + test.resourceID)
+			if err != nil {
+				t.Fatalf("%s", err)
+			}
+			opts := cmp.Options{
+				protocmp.Transform(),
+				protocmp.IgnoreFields(new(rpc.ApiSpec), "hash", "size_bytes", "revision_id", "create_time", "revision_create_time", "revision_update_time"),
+			}
+			err = core.GetSpec(ctx, registryClient, specName, false,
+				func(spec *rpc.ApiSpec) error {
+					if !cmp.Equal(test.message, spec, opts) {
+						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(test.message, spec, opts))
+					}
+					out, header, err := ExportAPISpec(ctx, registryClient, spec, test.nested)
+					if err != nil {
+						t.Fatalf("%s", err)
+					}
+					if header.Metadata.Parent != test.parent {
+						t.Errorf("Incorrect export parent. Wanted %s, got %s", test.parent, header.Metadata.Parent)
+					}
+					if header.Metadata.Name != test.resourceID {
+						t.Errorf("Incorrect export name. Wanted %s, got %s", test.resourceID, header.Metadata.Name)
+					}
+					if !cmp.Equal(b, out, opts) {
+						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(b, out, opts))
+					}
+					return nil
+				})
+			if err != nil {
+				t.Fatalf("%s", err)
+			}
+			err = registryClient.DeleteApiSpec(ctx, &rpc.DeleteApiSpecRequest{
+				Name:  root + "/apis/registry/versions/v1/specs/" + test.resourceID,
+				Force: true,
+			})
+			if err != nil {
+				t.Fatalf("%s", err)
+			}
+		})
+	}
+}
+
+func TestDeploymentPatches(t *testing.T) {
+	root := "projects/patch-deployment-test/locations/global"
+	tests := []struct {
+		resourceID string
+		parent     string
+		yamlFile   string
+		nested     bool
+		message    proto.Message
+	}{
+		{
+			resourceID: "prod",
+			parent:     "apis/registry",
+			yamlFile:   "testdata/resources/apis-registry-deployments-prod.yaml",
+			nested:     false,
+			message: &rpc.ApiDeployment{
+				Name:               root + "/apis/registry/deployments/prod",
+				AccessGuidance:     "See https://github.com/apigee/registry for tools and usage information.",
+				ApiSpecRevision:    "projects/patch-deployment-test/locations/global/apis/registry/versions/v1/specs/openapi@latest",
+				DisplayName:        "Production",
+				Description:        "The hosted deployment of the Registry API",
+				EndpointUri:        "https://apigeeregistry.googleapis.com",
+				ExternalChannelUri: "https://apigee.github.io/registry/",
+				IntendedAudience:   "Public",
+				Labels:             map[string]string{"platform": "google"},
+				Annotations:        map[string]string{"region": "us-central1"},
+			},
+		},
+	}
+	ctx := context.Background()
+	adminClient, err := connection.NewAdminClient(ctx)
+	if err != nil {
+		t.Fatalf("Setup: failed to create client: %+v", err)
+	}
+	defer adminClient.Close()
+	registryClient, err := connection.NewRegistryClient(ctx)
+	if err != nil {
+		t.Fatalf("Setup: Failed to create registry client: %s", err)
+	}
+	defer registryClient.Close()
+	client := seeder.Client{
+		RegistryClient: registryClient,
+		AdminClient:    adminClient,
+	}
+	api := &rpc.Api{
+		Name: root + "/apis/registry",
+	}
+	if err := seeder.SeedApis(ctx, client, api); err != nil {
+		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+	}
+	for _, test := range tests {
+		t.Run(test.resourceID, func(t *testing.T) {
+			b, err := os.ReadFile(test.yamlFile)
+			if err != nil {
+				t.Fatalf("%s", err)
+			}
+			err = applyApiDeploymentPatchBytes(ctx, registryClient, b, root)
+			if err != nil {
+				t.Fatalf("%s", err)
+			}
+			collection := root + "/apis/registry/deployments/"
+			deploymentName, err := names.ParseDeployment(collection + test.resourceID)
+			if err != nil {
+				t.Fatalf("%s", err)
+			}
+			opts := cmp.Options{
+				protocmp.Transform(),
+				protocmp.IgnoreFields(new(rpc.ApiDeployment), "revision_id", "create_time", "revision_create_time", "revision_update_time"),
+			}
+			err = core.GetDeployment(ctx, registryClient, deploymentName,
+				func(deployment *rpc.ApiDeployment) error {
+					if !cmp.Equal(test.message, deployment, opts) {
+						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(test.message, deployment, opts))
+					}
+					out, header, err := ExportAPIDeployment(ctx, registryClient, deployment, test.nested)
+					if err != nil {
+						t.Fatalf("%s", err)
+					}
+					if header.Metadata.Parent != test.parent {
+						t.Errorf("Incorrect export parent. Wanted %s, got %s", test.parent, header.Metadata.Parent)
+					}
+					if header.Metadata.Name != test.resourceID {
+						t.Errorf("Incorrect export name. Wanted %s, got %s", test.resourceID, header.Metadata.Name)
+					}
+					if !cmp.Equal(b, out, opts) {
+						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(b, out, opts))
+					}
+					return nil
+				})
+			if err != nil {
+				t.Fatalf("%s", err)
+			}
+			err = registryClient.DeleteApiDeployment(ctx, &rpc.DeleteApiDeploymentRequest{
+				Name:  root + "/apis/registry/deployments/" + test.resourceID,
+				Force: true,
+			})
+			if err != nil {
+				t.Fatalf("%s", err)
+			}
+		})
+	}
+}
+
 func TestArtifactPatches(t *testing.T) {
+	root := "projects/patch-artifact-test/locations/global"
 	tests := []struct {
 		artifactID string
 		parent     string
@@ -309,7 +725,7 @@ func TestArtifactPatches(t *testing.T) {
 		AdminClient:    adminClient,
 	}
 	spec := &rpc.ApiSpec{
-		Name: "projects/patch-artifact-test/locations/global/apis/a/versions/v/specs/s",
+		Name: root + "/apis/a/versions/v/specs/s",
 	}
 	if err := seeder.SeedSpecs(ctx, client, spec); err != nil {
 		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
@@ -320,15 +736,15 @@ func TestArtifactPatches(t *testing.T) {
 			if err != nil {
 				t.Fatalf("%s", err)
 			}
-			err = applyArtifactPatchBytes(ctx, registryClient, b, "projects/patch-artifact-test/locations/global")
+			err = applyArtifactPatchBytes(ctx, registryClient, b, root)
 			if err != nil {
 				t.Fatalf("%s", err)
 			}
 			var collection string
 			if test.parent != "" {
-				collection = "projects/patch-artifact-test/locations/global/" + test.parent + "/artifacts/"
+				collection = root + "/" + test.parent + "/artifacts/"
 			} else {
-				collection = "projects/patch-artifact-test/locations/global/artifacts/"
+				collection = root + "/artifacts/"
 			}
 			artifactName, err := names.ParseArtifact(collection + test.artifactID)
 			if err != nil {
@@ -359,123 +775,6 @@ func TestArtifactPatches(t *testing.T) {
 					}
 					return nil
 				})
-			if err != nil {
-				t.Fatalf("%s", err)
-			}
-		})
-	}
-}
-
-func TestApiPatches(t *testing.T) {
-	tests := []struct {
-		resourceID string
-		parent     string
-		yamlFile   string
-		nested     bool
-		message    proto.Message
-	}{
-		{
-			resourceID: "registry",
-			parent:     "",
-			yamlFile:   "testdata/resources/apis-registry.yaml",
-			nested:     false,
-			message: &rpc.Api{
-				Name:                  "projects/patch-api-test/locations/global/apis/registry",
-				DisplayName:           "Apigee Registry API",
-				Description:           "The Registry API allows teams to track and manage machine-readable descriptions of APIs.",
-				Labels:                map[string]string{"apihub-owner": "google"},
-				Annotations:           map[string]string{"apihub-score": "99"},
-				Availability:          "Preview",
-				RecommendedDeployment: "projects/patch-api-test/locations/global/apis/registry/deployments/prod",
-				RecommendedVersion:    "projects/patch-api-test/locations/global/apis/registry/versions/v1",
-			},
-		},
-		{
-			resourceID: "registry",
-			parent:     "",
-			yamlFile:   "testdata/resources/apis-registry-nested.yaml",
-			nested:     true,
-			message: &rpc.Api{
-				Name:                  "projects/patch-api-test/locations/global/apis/registry",
-				DisplayName:           "Apigee Registry API",
-				Description:           "The Registry API allows teams to track and manage machine-readable descriptions of APIs.",
-				Labels:                map[string]string{"apihub-owner": "google"},
-				Annotations:           map[string]string{"apihub-score": "99"},
-				Availability:          "Preview",
-				RecommendedDeployment: "projects/patch-api-test/locations/global/apis/registry/deployments/prod",
-				RecommendedVersion:    "projects/patch-api-test/locations/global/apis/registry/versions/v1",
-			},
-		},
-	}
-	ctx := context.Background()
-	adminClient, err := connection.NewAdminClient(ctx)
-	if err != nil {
-		t.Fatalf("Setup: failed to create client: %+v", err)
-	}
-	defer adminClient.Close()
-	registryClient, err := connection.NewRegistryClient(ctx)
-	if err != nil {
-		t.Fatalf("Setup: Failed to create registry client: %s", err)
-	}
-	defer registryClient.Close()
-	client := seeder.Client{
-		RegistryClient: registryClient,
-		AdminClient:    adminClient,
-	}
-	project := &rpc.Project{
-		Name: "projects/patch-api-test",
-	}
-	if err := seeder.SeedProjects(ctx, client, project); err != nil {
-		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
-	}
-	for _, test := range tests {
-		t.Run(test.resourceID, func(t *testing.T) {
-			b, err := os.ReadFile(test.yamlFile)
-			if err != nil {
-				t.Fatalf("%s", err)
-			}
-			err = applyApiPatchBytes(ctx, registryClient, b, "projects/patch-api-test/locations/global")
-			if err != nil {
-				t.Fatalf("%s", err)
-			}
-			collection := "projects/patch-api-test/locations/global/apis/"
-			apiName, err := names.ParseApi(collection + test.resourceID)
-			if err != nil {
-				t.Fatalf("%s", err)
-			}
-			opts := cmp.Options{
-				protocmp.Transform(),
-				protocmp.IgnoreFields(new(rpc.Api), "create_time", "update_time"),
-			}
-			err = core.GetAPI(ctx, registryClient, apiName,
-				func(api *rpc.Api) error {
-
-					if !cmp.Equal(test.message, api, opts) {
-						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(test.message, api, opts))
-					}
-
-					out, header, err := ExportAPI(ctx, registryClient, api, test.nested)
-					if err != nil {
-						t.Fatalf("%s", err)
-					}
-					if header.Metadata.Parent != test.parent {
-						t.Errorf("Incorrect export parent. Wanted %s, got %s", test.parent, header.Metadata.Parent)
-					}
-					if header.Metadata.Name != test.resourceID {
-						t.Errorf("Incorrect export name. Wanted %s, got %s", test.resourceID, header.Metadata.Name)
-					}
-					if !cmp.Equal(b, out, opts) {
-						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(b, out, opts))
-					}
-					return nil
-				})
-			if err != nil {
-				t.Fatalf("%s", err)
-			}
-			err = registryClient.DeleteApi(ctx, &rpc.DeleteApiRequest{
-				Name:  "projects/patch-api-test/locations/global/apis/registry",
-				Force: true,
-			})
 			if err != nil {
 				t.Fatalf("%s", err)
 			}
