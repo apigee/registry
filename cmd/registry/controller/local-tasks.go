@@ -66,7 +66,7 @@ func (task *ExecCommandTask) Run(ctx context.Context) error {
 	if strings.HasPrefix(task.Action.Command, "registry") {
 		fullCmd := strings.Fields(task.Action.Command)
 
-		// force the exec-ed registry instance to use the same server configuration
+		// force the exec-ed registry tool to use the same server configuration as the controller
 		config, err := connection.ActiveConfig()
 		if err != nil {
 			return err
