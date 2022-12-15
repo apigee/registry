@@ -46,15 +46,15 @@ registry get projects/$PROJECT/locations/global/apis/wordnik.com
 registry rpc get-api --name projects/$PROJECT/locations/global/apis/wordnik.com --json
 
 # Get the API spec
-registry rpc get-api-spec --name projects/$PROJECT/locations/global/apis/wordnik.com/versions/4.0/specs/openapi.yaml
+registry rpc get-api-spec --name projects/$PROJECT/locations/global/apis/wordnik.com/versions/4.0/specs/openapi
 
 # You might notice that didn't return the actual spec. That's because the spec contents
 # are accessed through a separate method that (when transcoded to HTTP) allows direct download
 # of spec contents.
-registry rpc get-api-spec-contents --name projects/$PROJECT/locations/global/apis/wordnik.com/versions/4.0/specs/openapi.yaml
+registry rpc get-api-spec-contents --name projects/$PROJECT/locations/global/apis/wordnik.com/versions/4.0/specs/openapi
 
 # If you have jq and the base64 tool installed, you can get the spec contents from the RPC response.
-# registry rpc get-api-spec-contents --name projects/$PROJECT/locations/global/apis/wordnik.com/versions/4.0/specs/openapi.yaml --json | jq .data -r | base64 --decode
+# registry rpc get-api-spec-contents --name projects/$PROJECT/locations/global/apis/wordnik.com/versions/4.0/specs/openapi --json | jq .data -r | base64 --decode
 
 # Another way to get the bytes of the spec is to use `registry get` with the `--contents` flag.
 registry get projects/$PROJECT/locations/global/apis/wordnik.com --contents

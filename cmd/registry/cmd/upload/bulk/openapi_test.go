@@ -74,17 +74,17 @@ func TestOpenAPI(t *testing.T) {
 	}{
 		{
 			desc:     "Apigee Registry",
-			spec:     "apis/apigee-registry/versions/v1/specs/openapi.yaml",
+			spec:     "apis/apigee-registry/versions/v1/specs/openapi",
 			wantType: "application/x.openapi;version=3",
 		},
 		{
 			desc:     "Petstore OpenAPI",
-			spec:     "apis/petstore/versions/3.0/specs/openapi.yaml",
+			spec:     "apis/petstore/versions/3.0/specs/openapi",
 			wantType: "application/x.openapi;version=3",
 		},
 		{
 			desc:     "Petstore Swagger",
-			spec:     "apis/petstore/versions/2.0/specs/swagger.yaml",
+			spec:     "apis/petstore/versions/2.0/specs/openapi",
 			wantType: "application/x.openapi;version=2",
 		},
 	}

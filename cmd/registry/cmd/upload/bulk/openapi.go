@@ -174,8 +174,7 @@ func (task *uploadOpenAPITask) populateFields() error {
 	versionPart := parts[len(parts)-2]
 	task.versionID = sanitize(versionPart)
 
-	specPart := parts[len(parts)-1]
-	task.specID = sanitize(specPart)
+	task.specID = "openapi"
 
 	var err error
 	task.contents, err = os.ReadFile(task.path)
@@ -275,7 +274,7 @@ func (task *uploadOpenAPITask) versionName() string {
 }
 
 func (task *uploadOpenAPITask) specName() string {
-	return fmt.Sprintf("%s/specs/%s", task.versionName(), filepath.Base(task.path))
+	return fmt.Sprintf("%s/specs/%s", task.versionName(), task.specID)
 }
 
 func (task *uploadOpenAPITask) apiPath() string {
