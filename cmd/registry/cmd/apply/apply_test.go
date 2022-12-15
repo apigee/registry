@@ -34,6 +34,8 @@ func TestMain(m *testing.M) {
 	grpctest.TestMain(m, registry.Config{})
 }
 
+const sampleDir = "testdata/sample"
+
 func TestApply(t *testing.T) {
 	project := names.Project{ProjectID: "apply-test"}
 	parent := project.String() + "/locations/global"
@@ -66,7 +68,6 @@ func TestApply(t *testing.T) {
 	defer registryClient.Close()
 
 	// Test various normal invocations of `registry apply`
-	const sampleDir = "testdata/sample"
 	tests := []struct {
 		desc string
 		args []string
@@ -90,6 +91,72 @@ func TestApply(t *testing.T) {
 			cmd.SetArgs(test.args)
 			if err := cmd.Execute(); err != nil {
 				t.Fatalf("Execute() with args %+v returned error: %s", cmd.Args, err)
+			}
+		})
+	}
+}
+
+func TestApplyErrors(t *testing.T) {
+	project := names.Project{ProjectID: "apply-test-errors"}
+	parent := project.String() + "/locations/global"
+
+	ctx := context.Background()
+	adminClient, err := connection.NewAdminClient(ctx)
+	if err != nil {
+		t.Fatalf("Setup: failed to create client: %+v", err)
+	}
+	defer adminClient.Close()
+
+	if err = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{
+		Name:  project.String(),
+		Force: true,
+	}); err != nil && status.Code(err) != codes.NotFound {
+		t.Errorf("Setup: failed to delete test project: %s", err)
+	}
+
+	if _, err := adminClient.CreateProject(ctx, &rpc.CreateProjectRequest{
+		ProjectId: project.ProjectID,
+		Project:   &rpc.Project{},
+	}); err != nil {
+		t.Fatalf("Setup: Failed to create test project: %s", err)
+	}
+
+	registryClient, err := connection.NewRegistryClient(ctx)
+	if err != nil {
+		t.Fatalf("Setup: Failed to create registry client: %s", err)
+	}
+	defer registryClient.Close()
+
+	// Test various erroneous invocations of `registry apply`
+	tests := []struct {
+		desc string
+		args []string
+	}{
+		{
+			desc: "input file not found",
+			args: []string{"-f", sampleDir + "/missing.yaml", "--parent", parent},
+		},
+		{
+			desc: "no arguments specified",
+			args: []string{},
+		},
+		{
+			desc: "no parent specified",
+			args: []string{"-f", sampleDir + "/apis/registry.yaml"},
+		},
+		{
+			desc: "invalid parent specified",
+			args: []string{"-f", sampleDir + "/apis/registry.yaml", "--parent", "invalid"},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			cmd := Command()
+			cmd.SilenceUsage = true
+			cmd.SilenceErrors = true
+			cmd.SetArgs(test.args)
+			if err := cmd.Execute(); err == nil {
+				t.Fatalf("Execute() with args %+v succeeded, expected error", cmd.Args)
 			}
 		})
 	}

@@ -16,10 +16,11 @@ package apply
 
 import (
 	"errors"
+	"fmt"
 	"io/fs"
 
+	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/cmd/registry/patch"
-	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/spf13/cobra"
 )
@@ -33,28 +34,32 @@ func Command() *cobra.Command {
 		Use:   "apply",
 		Short: "Apply patches that add content to the API Registry",
 		Args:  cobra.ExactArgs(0),
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 			if parent == "" {
 				c, err := connection.ActiveConfig()
 				if err != nil {
-					log.FromContext(ctx).WithError(err).Fatal("Unable to identify parent: please use --parent or registry configuration")
+					return errors.New("Unable to identify parent: please use --parent or registry configuration")
 				}
 				parent, err = c.ProjectWithLocation()
 				if err != nil {
-					log.FromContext(ctx).WithError(err).Fatal("Unable to identify parent: please use --parent or set registy.project in configuration")
+					return errors.New("Unable to identify parent: please use --parent or set registy.project in configuration")
 				}
 			}
 			client, err := connection.NewRegistryClient(ctx)
 			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
+				return err
+			}
+			if err := core.VerifyLocation(ctx, client, parent); err != nil {
+				return fmt.Errorf("parent does not exist (%s)", err)
 			}
 			err = patch.Apply(ctx, client, fileName, parent, recursive, jobs)
 			if errors.Is(err, fs.ErrNotExist) {
-				log.FromContext(ctx).WithError(err).Fatalf("File %q doesn't exist", fileName)
+				return err
 			} else if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Unknown error")
+				return err
 			}
+			return nil
 		},
 	}
 	cmd.Flags().StringVarP(&fileName, "file", "f", "", "File or directory containing the patch(es) to apply")
