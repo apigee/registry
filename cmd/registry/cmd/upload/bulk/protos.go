@@ -199,7 +199,7 @@ func (task *uploadProtoTask) populateFields() {
 	versionPart := parts[len(parts)-1]
 	task.versionID = sanitize(versionPart)
 
-	specPart := task.fileName()
+	specPart := strings.TrimSuffix(task.fileName(), ".zip")
 	task.specID = sanitize(specPart)
 }
 

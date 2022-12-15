@@ -51,30 +51,26 @@ registry list projects/$PROJECT/locations/global/apis | wc -l
 registry list projects/$PROJECT/locations/global/apis/-/versions
 
 # Similarly, we can use wildcards for the version ids and list all of the specs.
-# Here you'll see that the spec IDs are "protos.zip". This was set in the registry
-# tool, which uploaded each API description as a zip archive of proto files.
 registry list projects/$PROJECT/locations/global/apis/-/versions/-/specs
 
 # To see more about an individual spec, use the `registry get` command:
-registry get projects/$PROJECT/locations/global/apis/translate/versions/v3/specs/google-cloud-translate-v3.zip
+registry get projects/$PROJECT/locations/global/apis/translate/versions/v3/specs/google-cloud-translate-v3
 
 # You can also get this with direct calls to the registry rpc service:
-registry rpc get-api-spec --name projects/$PROJECT/locations/global/apis/translate/versions/v3/specs/google-cloud-translate-v3.zip
+registry rpc get-api-spec --name projects/$PROJECT/locations/global/apis/translate/versions/v3/specs/google-cloud-translate-v3
 
 # Add the `--json` flag to get this as JSON:
-registry rpc get-api-spec --name projects/$PROJECT/locations/global/apis/translate/versions/v3/specs/google-cloud-translate-v3.zip --json
+registry rpc get-api-spec --name projects/$PROJECT/locations/global/apis/translate/versions/v3/specs/google-cloud-translate-v3 --json
 
 # You might notice that didn't return the actual spec. That's because the spec contents
 # are accessed through a separate method that (when transcoded to HTTP) allows direct download
 # of spec contents.
-registry rpc get-api-spec-contents --name projects/$PROJECT/locations/global/apis/translate/versions/v3/specs/google-cloud-translate-v3.zip > protos-1.zip
+registry rpc get-api-spec-contents --name projects/$PROJECT/locations/global/apis/translate/versions/v3/specs/google-cloud-translate-v3 > protos-1.zip
 
 # An easier way to get the bytes of the spec is to use `registry get` with the `--contents` flag.
 # This writes the bytes to stdout, so you probably want to redirect this to a file, as follows:
-registry get projects/$PROJECT/locations/global/apis/translate/versions/v3/specs/google-cloud-translate-v3.zip \
+registry get projects/$PROJECT/locations/global/apis/translate/versions/v3/specs/google-cloud-translate-v3 \
 	--contents > protos-2.zip
 
 # When you unzip this file, you'll find a directory hierarchy suitable for compiling with `protoc`.
 # protoc google/cloud/translate/v3/translation_service.proto -o.
-# (This requires additional protos that you can find in
-# [github.com/googleapis/api-common-protos](https://github.com/googleapis/api-common-protos).
