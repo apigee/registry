@@ -132,12 +132,6 @@ func GetArtifactMessageContents(artifact *rpc.Artifact) (proto.Message, error) {
 		return unmarshal(artifact.GetContents(), &metrics.Vocabulary{})
 	case "gnostic.metrics.VersionHistory":
 		return unmarshal(artifact.GetContents(), &metrics.VersionHistory{})
-	case "google.cloud.apigeeregistry.applications.v1alpha1.Index":
-		return unmarshal(artifact.GetContents(), &rpc.Index{})
-	case "google.cloud.apigeeregistry.applications.v1alpha1.Lint":
-		return unmarshal(artifact.GetContents(), &rpc.Lint{})
-	case "google.cloud.apigeeregistry.applications.v1alpha1.LintStats":
-		return unmarshal(artifact.GetContents(), &rpc.LintStats{})
 	case "google.cloud.apigeeregistry.v1.apihub.ApiSpecExtensionList":
 		return unmarshal(artifact.GetContents(), &rpc.ApiSpecExtensionList{})
 	case "google.cloud.apigeeregistry.v1.apihub.DisplaySettings":
@@ -152,8 +146,6 @@ func GetArtifactMessageContents(artifact *rpc.Artifact) (proto.Message, error) {
 		return unmarshal(artifact.GetContents(), &rpc.Manifest{})
 	case "google.cloud.apigeeregistry.v1.controller.Receipt":
 		return unmarshal(artifact.GetContents(), &rpc.Receipt{})
-	case "google.cloud.apigeeregistry.applications.v1alpha1.References":
-		return unmarshal(artifact.GetContents(), &rpc.References{})
 	case "google.cloud.apigeeregistry.v1.scoring.Score":
 		return unmarshal(artifact.GetContents(), &rpc.Score{})
 	case "google.cloud.apigeeregistry.v1.scoring.ScoreCard":
@@ -164,6 +156,10 @@ func GetArtifactMessageContents(artifact *rpc.Artifact) (proto.Message, error) {
 		return unmarshal(artifact.GetContents(), &rpc.ScoreCardDefinition{})
 	case "google.cloud.apigeeregistry.v1.style.ConformanceReport":
 		return unmarshal(artifact.GetContents(), &rpc.ConformanceReport{})
+	case "google.cloud.apigeeregistry.v1.style.Lint":
+		return unmarshal(artifact.GetContents(), &rpc.Lint{})
+	case "google.cloud.apigeeregistry.v1.style.LintStats":
+		return unmarshal(artifact.GetContents(), &rpc.LintStats{})
 	case "google.cloud.apigeeregistry.v1.style.StyleGuide":
 		return unmarshal(artifact.GetContents(), &rpc.StyleGuide{})
 	case "gnostic.openapiv2.Document":

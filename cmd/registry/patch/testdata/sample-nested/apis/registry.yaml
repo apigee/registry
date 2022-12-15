@@ -1,0 +1,113 @@
+apiVersion: apigeeregistry/v1
+kind: API
+metadata:
+  name: registry
+  labels:
+    apihub-owner: google
+  annotations:
+    apihub-score: "99"
+data:
+  displayName: Apigee Registry API
+  description: The Registry API allows teams to track and manage machine-readable descriptions of APIs.
+  availability: Preview
+  recommendedVersion: v1
+  recommendedDeployment: prod
+  versions:
+    - metadata:
+        name: v1
+        labels:
+          apihub-team: apigee
+        annotations:
+          release-date: "2021-12-15"
+      data:
+        displayName: v1
+        description: New in 2022
+        state: Staging
+        specs:
+          - metadata:
+              name: openapi
+              labels:
+                openapi-verified: "true"
+              annotations:
+                linters: spectral,gnostic
+            data:
+              filename: openapi.yaml
+              description: OpenAPI description of the Registry API
+              mimeType: application/x.openapi+gzip;version=3
+              sourceURI: https://raw.githubusercontent.com/apigee/registry/main/openapi.yaml
+              artifacts:
+                - kind: ReferenceList
+                  metadata:
+                    name: spec-references
+                  data:
+                    displayName: ""
+                    description: spec-related references
+                    references:
+                      - id: github
+                        displayName: GitHub Repo
+                        category: apihub-source-code
+                        resource: ""
+                        uri: https://github.com/apigee/registry
+        artifacts:
+          - kind: ReferenceList
+            metadata:
+              name: version-references
+            data:
+              displayName: ""
+              description: version-related references
+              references:
+                - id: github
+                  displayName: GitHub Repo
+                  category: apihub-source-code
+                  resource: ""
+                  uri: https://github.com/apigee/registry
+  deployments:
+    - metadata:
+        name: prod
+        labels:
+          platform: google
+        annotations:
+          region: us-central1
+      data:
+        displayName: Production
+        description: The hosted deployment of the Registry API
+        apiSpecRevision: v1/specs/openapi@latest
+        endpointURI: https://apigeeregistry.googleapis.com
+        externalChannelURI: https://apigee.github.io/registry/
+        intendedAudience: Public
+        accessGuidance: See https://github.com/apigee/registry for tools and usage information.
+        artifacts:
+          - kind: ReferenceList
+            metadata:
+              name: deployment-references
+            data:
+              displayName: ""
+              description: deployment-related references
+              references:
+                - id: github
+                  displayName: GitHub Repo
+                  category: apihub-source-code
+                  resource: ""
+                  uri: https://github.com/apigee/registry
+  artifacts:
+    - kind: ReferenceList
+      metadata:
+        name: api-references
+        labels:
+          label1: label
+        annotations:
+          annotation1: annotation
+      data:
+        displayName: ""
+        description: api-related references
+        references:
+          - id: github
+            displayName: GitHub Repo
+            category: apihub-source-code
+            resource: ""
+            uri: https://github.com/apigee/registry
+          - id: docs
+            displayName: GitHub Documentation
+            category: apihub-other
+            resource: ""
+            uri: https://apigee.github.io/registry/
