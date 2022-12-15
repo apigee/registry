@@ -33,6 +33,8 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+const openAPISpecID = "openapi"
+
 func openAPICommand() *cobra.Command {
 	var baseURI string
 	cmd := &cobra.Command{
@@ -129,7 +131,6 @@ type uploadOpenAPITask struct {
 	parent    string
 	apiID     string // computed at runtime
 	versionID string // computed at runtime
-	specID    string // computed at runtime
 	contents  []byte
 	document  PartialOpenAPIDocument
 }
@@ -144,7 +145,7 @@ func (task *uploadOpenAPITask) Run(ctx context.Context) error {
 		log.FromContext(ctx).WithError(err).Debugf("Failed to import API %s", task.apiName())
 		return nil
 	}
-	log.Infof(ctx, "Uploading apis/%s/versions/%s/specs/%s", task.apiID, task.versionID, task.specID)
+	log.Infof(ctx, "Uploading apis/%s/versions/%s/specs/%s", task.apiID, task.versionID, openAPISpecID)
 
 	// If the API does not exist, create it.
 	if err := task.createAPI(ctx); err != nil {
@@ -173,8 +174,6 @@ func (task *uploadOpenAPITask) populateFields() error {
 
 	versionPart := parts[len(parts)-2]
 	task.versionID = sanitize(versionPart)
-
-	task.specID = "openapi"
 
 	var err error
 	task.contents, err = os.ReadFile(task.path)
@@ -274,7 +273,7 @@ func (task *uploadOpenAPITask) versionName() string {
 }
 
 func (task *uploadOpenAPITask) specName() string {
-	return fmt.Sprintf("%s/specs/%s", task.versionName(), task.specID)
+	return fmt.Sprintf("%s/specs/%s", task.versionName(), openAPISpecID)
 }
 
 func (task *uploadOpenAPITask) apiPath() string {
