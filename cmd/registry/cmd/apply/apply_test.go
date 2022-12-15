@@ -127,6 +127,14 @@ func TestApplyErrors(t *testing.T) {
 	}
 	defer registryClient.Close()
 
+	// clear the configured registry.project
+	config, err := connection.ActiveConfig()
+	if err != nil {
+		t.Fatalf("Setup: Failed to get registry configuration: %s", err)
+	}
+	config.Project = ""
+	connection.SetConfig(config)
+
 	// Test various erroneous invocations of `registry apply`
 	tests := []struct {
 		desc string
