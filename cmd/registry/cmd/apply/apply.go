@@ -17,7 +17,6 @@ package apply
 import (
 	"errors"
 	"fmt"
-	"io/fs"
 
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/cmd/registry/patch"
@@ -43,7 +42,7 @@ func Command() *cobra.Command {
 				}
 				parent, err = c.ProjectWithLocation()
 				if err != nil {
-					return errors.New("Unable to identify parent: please use --parent or set registy.project in configuration")
+					return errors.New("Unable to identify parent: please use --parent or set registry.project in configuration")
 				}
 			}
 			client, err := connection.NewRegistryClient(ctx)
@@ -53,13 +52,7 @@ func Command() *cobra.Command {
 			if err := core.VerifyLocation(ctx, client, parent); err != nil {
 				return fmt.Errorf("parent does not exist (%s)", err)
 			}
-			err = patch.Apply(ctx, client, fileName, parent, recursive, jobs)
-			if errors.Is(err, fs.ErrNotExist) {
-				return err
-			} else if err != nil {
-				return err
-			}
-			return nil
+			return patch.Apply(ctx, client, fileName, parent, recursive, jobs)
 		},
 	}
 	cmd.Flags().StringVarP(&fileName, "file", "f", "", "File or directory containing the patch(es) to apply")

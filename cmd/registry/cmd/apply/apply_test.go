@@ -137,8 +137,8 @@ func TestApplyErrors(t *testing.T) {
 			args: []string{"-f", sampleDir + "/missing.yaml", "--parent", parent},
 		},
 		{
-			desc: "no arguments specified",
-			args: []string{},
+			desc: "no input file specified",
+			args: []string{"--parent", parent},
 		},
 		{
 			desc: "no parent specified",
@@ -146,7 +146,7 @@ func TestApplyErrors(t *testing.T) {
 		},
 		{
 			desc: "invalid parent specified",
-			args: []string{"-f", sampleDir + "/apis/registry.yaml", "--parent", "invalid"},
+			args: []string{"-f", sampleDir + "/apis/registry.yaml", "--parent", "projects/invalid/locations/global"},
 		},
 	}
 	for _, test := range tests {
