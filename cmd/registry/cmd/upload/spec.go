@@ -96,7 +96,7 @@ func uploadSpecDirectory(ctx context.Context, dirname string, client *gapic.Regi
 	}
 	request := &rpc.CreateApiSpecRequest{
 		Parent:    version,
-		ApiSpecId: "protos.zip",
+		ApiSpecId: "protos",
 		ApiSpec: &rpc.ApiSpec{
 			MimeType: core.ProtobufMimeType("+zip"),
 			Filename: core.ProtobufMimeType("+zip"),

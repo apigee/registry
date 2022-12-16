@@ -79,13 +79,13 @@ func TestProtos(t *testing.T) {
 	}{
 		{
 			desc:              "Apigee Registry",
-			spec:              "apis/apigeeregistry/versions/v1/specs/google-cloud-apigeeregistry-v1.zip",
+			spec:              "apis/apigeeregistry/versions/v1/specs/google-cloud-apigeeregistry-v1",
 			wantProtoCount:    11,
 			wantMetadataCount: 2,
 		},
 		{
 			desc:              "Example Library",
-			spec:              "apis/library-example/versions/v1/specs/google-example-library-v1.zip",
+			spec:              "apis/library-example/versions/v1/specs/google-example-library-v1",
 			wantProtoCount:    6,
 			wantMetadataCount: 3,
 		},
