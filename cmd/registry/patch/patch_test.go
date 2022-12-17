@@ -799,6 +799,12 @@ func TestYamlArtifactPatches(t *testing.T) {
 			parent:     "",
 			yamlFile:   "testdata/artifacts/struct.yaml",
 		},
+		{
+			artifactID: "untyped",
+			kind:       "",
+			parent:     "apis/a/versions/v/specs/s",
+			yamlFile:   "testdata/artifacts/untyped.yaml",
+		},
 	}
 	ctx := context.Background()
 	adminClient, err := connection.NewAdminClient(ctx)

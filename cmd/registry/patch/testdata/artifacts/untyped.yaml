@@ -1,0 +1,14 @@
+apiVersion: apigeeregistry/v1
+metadata:
+  name: untyped
+  parent: apis/a/versions/v/specs/s
+data:
+  value: 42
+  children:
+    - index: 0
+      name: zero
+    - index: 1
+      name: one
+    - index: 2
+      name: two
+      extra: hello
