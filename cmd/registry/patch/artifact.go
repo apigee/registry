@@ -24,7 +24,7 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/models"
@@ -116,7 +116,7 @@ func newArtifact(message *rpc.Artifact) (*models.Artifact, error) {
 		}
 		node = doc.Content[0]
 	} else {
-		m, err := core.ProtoMessageForMimeType(message.MimeType)
+		m, err := types.ProtoMessageForMimeType(message.MimeType)
 		if err != nil {
 			log.Printf("this must be YAML")
 			return nil, err
@@ -155,7 +155,7 @@ func newArtifact(message *rpc.Artifact) (*models.Artifact, error) {
 	return &models.Artifact{
 		Header: models.Header{
 			ApiVersion: RegistryV1,
-			Kind:       core.KindForMimeType(message.MimeType),
+			Kind:       types.KindForMimeType(message.MimeType),
 			Metadata: models.Metadata{
 				Name:        artifactName.ArtifactID(),
 				Parent:      names.ExportableName(artifactName.Parent(), artifactName.ProjectID()),
@@ -199,7 +199,7 @@ func applyArtifactPatch(ctx context.Context, client connection.RegistryClient, c
 	var bytes []byte
 	// Unmarshal the JSON serialization into the message struct.
 	var m proto.Message
-	m, err = core.ProtoMessageForKind(content.Kind)
+	m, err = types.ProtoMessageForKind(content.Kind)
 	if err == nil {
 		err = protojson.Unmarshal(jWithIdAndKind, m)
 		if err != nil {
@@ -230,7 +230,7 @@ func applyArtifactPatch(ctx context.Context, client connection.RegistryClient, c
 	}
 	artifact := &rpc.Artifact{
 		Name:        name.String(),
-		MimeType:    core.MimeTypeForKind(content.Kind),
+		MimeType:    types.MimeTypeForKind(content.Kind),
 		Contents:    bytes,
 		Labels:      content.Metadata.Labels,
 		Annotations: content.Metadata.Annotations,

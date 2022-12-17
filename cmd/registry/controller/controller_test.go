@@ -21,6 +21,7 @@ import (
 	"testing"
 
 	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/connection/grpctest"
@@ -632,7 +633,7 @@ func TestMultipleEntitiesArtifacts(t *testing.T) {
 			seed: []seeder.RegistryResource{
 				&rpc.Artifact{
 					Name:     "projects/controller-test/locations/global/artifacts/registry-styleguide",
-					MimeType: core.MimeTypeForMessageType("google.cloud.apigeeregistry.v1.style.StyleGuide"),
+					MimeType: types.MimeTypeForMessageType("google.cloud.apigeeregistry.v1.style.StyleGuide"),
 					Contents: protoMarshal(styleguide),
 				},
 				&rpc.ApiSpec{
@@ -678,7 +679,7 @@ func TestMultipleEntitiesArtifacts(t *testing.T) {
 				//Update styleguide definition to make sure conformance artifacts are outdated
 				&rpc.Artifact{
 					Name:     "projects/controller-test/locations/global/artifacts/registry-styleguide",
-					MimeType: core.MimeTypeForMessageType("google.cloud.apigeeregistry.v1.style.StyleGuide"),
+					MimeType: types.MimeTypeForMessageType("google.cloud.apigeeregistry.v1.style.StyleGuide"),
 					Contents: protoMarshal(styleguide),
 				},
 			},
@@ -705,7 +706,7 @@ func TestMultipleEntitiesArtifacts(t *testing.T) {
 			seed: []seeder.RegistryResource{
 				&rpc.Artifact{
 					Name:     "projects/controller-test/locations/global/artifacts/registry-styleguide",
-					MimeType: core.MimeTypeForMessageType("google.cloud.apigeeregistry.v1.style.StyleGuide"),
+					MimeType: types.MimeTypeForMessageType("google.cloud.apigeeregistry.v1.style.StyleGuide"),
 					Contents: protoMarshal(styleguide),
 				},
 				&rpc.ApiSpec{

@@ -19,6 +19,7 @@ import (
 	"os"
 
 	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
@@ -81,7 +82,7 @@ func styleGuideCommand() *cobra.Command {
 					projectID +
 					"/locations/global/artifacts/" +
 					styleGuide.GetId(),
-				MimeType: core.MimeTypeForKind("StyleGuide"),
+				MimeType: types.MimeTypeForKind("StyleGuide"),
 				Contents: styleGuideMarshalled,
 			}
 			log.Debugf(ctx, "Uploading %s", artifact.Name)

@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
@@ -102,7 +103,7 @@ func (task *ComputeConformanceTask) Run(ctx context.Context) error {
 	name := filepath.Base(task.Spec.GetName())
 	defer os.RemoveAll(root)
 
-	if core.IsZipArchive(task.Spec.GetMimeType()) {
+	if types.IsZipArchive(task.Spec.GetMimeType()) {
 		_, err = core.UnzipArchiveToPath(data, root)
 	} else {
 		// Write the file to the temporary directory.
@@ -257,7 +258,7 @@ func (task *ComputeConformanceTask) storeConformanceReport(
 
 	artifact := &rpc.Artifact{
 		Name:     fmt.Sprintf("%s/artifacts/%s", task.Spec.GetName(), conformanceReportId(task.StyleguideId)),
-		MimeType: core.MimeTypeForKind("ConformanceReport"),
+		MimeType: types.MimeTypeForKind("ConformanceReport"),
 		Contents: messageData,
 	}
 	return core.SetArtifact(ctx, task.Client, artifact)

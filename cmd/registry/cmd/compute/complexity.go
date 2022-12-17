@@ -20,6 +20,7 @@ import (
 	"strings"
 
 	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
@@ -131,28 +132,28 @@ func (task *computeComplexityTask) Run(ctx context.Context) error {
 		}
 	}
 	var complexity *metrics.Complexity
-	if core.IsOpenAPIv2(spec.GetMimeType()) {
+	if types.IsOpenAPIv2(spec.GetMimeType()) {
 		document, err := oas2.ParseDocument(contents)
 		if err != nil {
 			log.FromContext(ctx).WithError(err).Errorf("Invalid OpenAPI: %s", task.specName)
 			return nil
 		}
 		complexity = core.SummarizeOpenAPIv2Document(document)
-	} else if core.IsOpenAPIv3(spec.GetMimeType()) {
+	} else if types.IsOpenAPIv3(spec.GetMimeType()) {
 		document, err := oas3.ParseDocument(contents)
 		if err != nil {
 			log.FromContext(ctx).WithError(err).Errorf("Invalid OpenAPI: %s", task.specName)
 			return nil
 		}
 		complexity = core.SummarizeOpenAPIv3Document(document)
-	} else if core.IsDiscovery(spec.GetMimeType()) {
+	} else if types.IsDiscovery(spec.GetMimeType()) {
 		document, err := discovery.ParseDocument(contents)
 		if err != nil {
 			log.FromContext(ctx).WithError(err).Errorf("Invalid Discovery: %s", task.specName)
 			return nil
 		}
 		complexity = core.SummarizeDiscoveryDocument(document)
-	} else if core.IsProto(spec.GetMimeType()) && core.IsZipArchive(spec.GetMimeType()) {
+	} else if types.IsProto(spec.GetMimeType()) && types.IsZipArchive(spec.GetMimeType()) {
 		complexity, err = core.SummarizeZippedProtos(contents)
 		if err != nil {
 			log.FromContext(ctx).WithError(err).Errorf("Error processing protos: %s", task.specName)
@@ -170,7 +171,7 @@ func (task *computeComplexityTask) Run(ctx context.Context) error {
 	messageData, _ := proto.Marshal(complexity)
 	artifact := &rpc.Artifact{
 		Name:     subject + "/artifacts/" + relation,
-		MimeType: core.MimeTypeForMessageType("gnostic.metrics.Complexity"),
+		MimeType: types.MimeTypeForMessageType("gnostic.metrics.Complexity"),
 		Contents: messageData,
 	}
 	return core.SetArtifact(ctx, task.client, artifact)

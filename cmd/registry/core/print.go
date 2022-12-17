@@ -19,6 +19,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/rpc"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
@@ -103,9 +104,12 @@ func isPrintableType(mimeType string) bool {
 		return true
 	} else if strings.HasPrefix(mimeType, "application/yaml") {
 		return true
+	} else if strings.HasPrefix(mimeType, "application/json") {
+		return true
 	} else {
 		return false
 	}
+
 }
 
 func PrintArtifactContents(artifact *rpc.Artifact) error {
@@ -127,11 +131,11 @@ func PrintMessage(message proto.Message) {
 }
 
 func GetArtifactMessageContents(artifact *rpc.Artifact) (proto.Message, error) {
-	messageType, err := MessageTypeForMimeType(artifact.GetMimeType())
+	messageType, err := types.MessageTypeForMimeType(artifact.GetMimeType())
 	if err != nil {
 		return nil, err
 	}
-	message, err := MessageForType(messageType)
+	message, err := types.MessageForType(messageType)
 	if err != nil {
 		return nil, err
 	}

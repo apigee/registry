@@ -20,6 +20,7 @@ import (
 
 	"github.com/apigee/registry/cmd/registry/conformance"
 	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
@@ -28,7 +29,7 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-var styleguideFilter = fmt.Sprintf("mime_type.contains('%s')", core.MimeTypeForKind("StyleGuide"))
+var styleguideFilter = fmt.Sprintf("mime_type.contains('%s')", types.MimeTypeForKind("StyleGuide"))
 
 func conformanceCommand() *cobra.Command {
 	cmd := &cobra.Command{
