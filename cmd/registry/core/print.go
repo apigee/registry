@@ -109,7 +109,6 @@ func isPrintableType(mimeType string) bool {
 	} else {
 		return false
 	}
-
 }
 
 func PrintArtifactContents(artifact *rpc.Artifact) error {
