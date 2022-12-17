@@ -138,7 +138,7 @@ func MimeTypeForKind(kind string) string {
 // messageFactory represents functions that construct message structs.
 type messageFactory func() proto.Message
 
-// artifactMessageTypes is the single source of truth for protobuf types that can be represented in artifact YAML files.
+// artifactMessageTypes is the single source of truth for protobuf types that the registry tool supports in artifact YAML files.
 var artifactMessageTypes map[string]messageFactory = map[string]messageFactory{
 	"google.cloud.apigeeregistry.v1.apihub.ApiSpecExtensionList": func() proto.Message { return new(rpc.ApiSpecExtensionList) },
 	"google.cloud.apigeeregistry.v1.apihub.DisplaySettings":      func() proto.Message { return new(rpc.DisplaySettings) },
