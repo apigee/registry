@@ -1,0 +1,14 @@
+apiVersion: apigeeregistry/v1
+kind: Struct
+metadata:
+  name: struct
+data:
+  value: 42
+  children:
+    - index: 0
+      name: zero
+    - index: 1
+      name: one
+    - index: 2
+      name: two
+      extra: hello

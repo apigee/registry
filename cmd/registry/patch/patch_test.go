@@ -443,8 +443,8 @@ func TestDeploymentPatches(t *testing.T) {
 	}
 }
 
-func TestArtifactPatches(t *testing.T) {
-	root := "projects/patch-artifact-test/locations/global"
+func TestMessageArtifactPatches(t *testing.T) {
+	root := "projects/patch-message-artifact-test/locations/global"
 	tests := []struct {
 		artifactID string
 		parent     string
@@ -775,6 +775,89 @@ func TestArtifactPatches(t *testing.T) {
 					}
 					if !cmp.Equal(b, out, opts) {
 						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(b, out, opts))
+					}
+					return nil
+				})
+			if err != nil {
+				t.Fatalf("%s", err)
+			}
+		})
+	}
+}
+
+func TestYamlArtifactPatches(t *testing.T) {
+	root := "projects/patch-yaml-artifact-test/locations/global"
+	tests := []struct {
+		artifactID string
+		kind       string
+		parent     string
+		yamlFile   string
+	}{
+		{
+			artifactID: "struct",
+			kind:       "Struct",
+			parent:     "",
+			yamlFile:   "testdata/artifacts/struct.yaml",
+		},
+	}
+	ctx := context.Background()
+	adminClient, err := connection.NewAdminClient(ctx)
+	if err != nil {
+		t.Fatalf("Setup: failed to create client: %+v", err)
+	}
+	defer adminClient.Close()
+	registryClient, err := connection.NewRegistryClient(ctx)
+	if err != nil {
+		t.Fatalf("Setup: Failed to create registry client: %s", err)
+	}
+	defer registryClient.Close()
+	client := seeder.Client{
+		RegistryClient: registryClient,
+		AdminClient:    adminClient,
+	}
+	spec := &rpc.ApiSpec{
+		Name: root + "/apis/a/versions/v/specs/s",
+	}
+	if err := seeder.SeedSpecs(ctx, client, spec); err != nil {
+		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+	}
+	for _, test := range tests {
+		t.Run(test.artifactID, func(t *testing.T) {
+			b, err := os.ReadFile(test.yamlFile)
+			if err != nil {
+				t.Fatalf("%s", err)
+			}
+			err = applyArtifactPatchBytes(ctx, registryClient, b, root)
+			if err != nil {
+				t.Fatalf("%s", err)
+			}
+			var collection string
+			if test.parent != "" {
+				collection = root + "/" + test.parent + "/artifacts/"
+			} else {
+				collection = root + "/artifacts/"
+			}
+			artifactName, err := names.ParseArtifact(collection + test.artifactID)
+			if err != nil {
+				t.Fatalf("%s", err)
+			}
+			err = core.GetArtifact(ctx, registryClient, artifactName, true,
+				func(artifact *rpc.Artifact) error {
+					out, header, err := ExportArtifact(ctx, registryClient, artifact)
+					if err != nil {
+						t.Fatalf("%s", err)
+					}
+					if header.Kind != test.kind {
+						t.Errorf("Incorrect export parent. Wanted %s, got %s", test.kind, header.Kind)
+					}
+					if header.Metadata.Parent != test.parent {
+						t.Errorf("Incorrect export parent. Wanted %s, got %s", test.parent, header.Metadata.Parent)
+					}
+					if header.Metadata.Name != test.artifactID {
+						t.Errorf("Incorrect export name. Wanted %s, got %s", test.artifactID, header.Metadata.Name)
+					}
+					if !cmp.Equal(b, out) {
+						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(b, out))
 					}
 					return nil
 				})

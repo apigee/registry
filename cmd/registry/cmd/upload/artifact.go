@@ -21,7 +21,6 @@ import (
 
 	"github.com/apigee/registry/cmd/registry/controller"
 	"github.com/apigee/registry/cmd/registry/core"
-	"github.com/apigee/registry/cmd/registry/patch"
 	"github.com/apigee/registry/cmd/registry/scoring"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
@@ -126,7 +125,7 @@ func buildApiSpecExtensionListArtifact(jsonBytes []byte) (*rpc.Artifact, error) 
 	}
 	return &rpc.Artifact{
 		Contents: artifactBytes,
-		MimeType: patch.MimeTypeForKind("ApiSpecExtensionList"),
+		MimeType: core.MimeTypeForKind("ApiSpecExtensionList"),
 	}, nil
 }
 
@@ -141,7 +140,7 @@ func buildDisplaySettingsArtifact(jsonBytes []byte) (*rpc.Artifact, error) {
 	}
 	return &rpc.Artifact{
 		Contents: artifactBytes,
-		MimeType: patch.MimeTypeForKind("DisplaySettings"),
+		MimeType: core.MimeTypeForKind("DisplaySettings"),
 	}, nil
 }
 
@@ -156,7 +155,7 @@ func buildLifecycleArtifact(jsonBytes []byte) (*rpc.Artifact, error) {
 	}
 	return &rpc.Artifact{
 		Contents: artifactBytes,
-		MimeType: patch.MimeTypeForKind("Lifecycle"),
+		MimeType: core.MimeTypeForKind("Lifecycle"),
 	}, nil
 }
 
@@ -178,7 +177,7 @@ func buildManifestArtifact(ctx context.Context, parent string, jsonBytes []byte)
 	}
 	return &rpc.Artifact{
 		Contents: artifactBytes,
-		MimeType: patch.MimeTypeForKind("Manifest"),
+		MimeType: core.MimeTypeForKind("Manifest"),
 	}, nil
 }
 
@@ -193,7 +192,7 @@ func buildReferenceListArtifact(jsonBytes []byte) (*rpc.Artifact, error) {
 	}
 	return &rpc.Artifact{
 		Contents: artifactBytes,
-		MimeType: patch.MimeTypeForKind("ReferenceList"),
+		MimeType: core.MimeTypeForKind("ReferenceList"),
 	}, nil
 }
 
@@ -208,7 +207,7 @@ func buildTaxonomyListArtifact(jsonBytes []byte) (*rpc.Artifact, error) {
 	}
 	return &rpc.Artifact{
 		Contents: artifactBytes,
-		MimeType: patch.MimeTypeForKind("TaxonomyList"),
+		MimeType: core.MimeTypeForKind("TaxonomyList"),
 	}, nil
 }
 
@@ -231,7 +230,7 @@ func buildScoreDefinitionArtifact(ctx context.Context, parent string, jsonBytes 
 	}
 	return &rpc.Artifact{
 		Contents: artifactBytes,
-		MimeType: patch.MimeTypeForKind("ScoreDefinition"),
+		MimeType: core.MimeTypeForKind("ScoreDefinition"),
 	}, nil
 }
 
@@ -254,7 +253,7 @@ func buildScoreCardDefinitionArtifact(ctx context.Context, parent string, jsonBy
 	}
 	return &rpc.Artifact{
 		Contents: artifactBytes,
-		MimeType: patch.MimeTypeForKind("ScoreCardDefinition"),
+		MimeType: core.MimeTypeForKind("ScoreCardDefinition"),
 	}, nil
 }
 
@@ -269,7 +268,7 @@ func buildScoreArtifact(jsonBytes []byte) (*rpc.Artifact, error) {
 	}
 	return &rpc.Artifact{
 		Contents: artifactBytes,
-		MimeType: patch.MimeTypeForKind("Score"),
+		MimeType: core.MimeTypeForKind("Score"),
 	}, nil
 }
 
@@ -284,6 +283,6 @@ func buildScoreCardArtifact(jsonBytes []byte) (*rpc.Artifact, error) {
 	}
 	return &rpc.Artifact{
 		Contents: artifactBytes,
-		MimeType: patch.MimeTypeForKind("ScoreCard"),
+		MimeType: core.MimeTypeForKind("ScoreCard"),
 	}, nil
 }

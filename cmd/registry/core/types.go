@@ -18,6 +18,10 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+
+	"github.com/apigee/registry/rpc"
+	metrics "github.com/google/gnostic/metrics"
+	"google.golang.org/protobuf/proto"
 )
 
 // OpenAPIMimeType returns a MIME type for an OpenAPI description of an API.
@@ -80,4 +84,81 @@ func MessageTypeForMimeType(protoType string) (string, error) {
 		return "", fmt.Errorf("invalid Protocol Buffer type: %s", protoType)
 	}
 	return strings.TrimSuffix(m[1], "+gzip"), nil
+}
+
+// KindForMimeType returns the message name to be used as the "kind" of the artifact.
+func KindForMimeType(mimeType string) string {
+	if strings.HasPrefix(mimeType, "application/yaml;type=") {
+		return strings.TrimPrefix(mimeType, "application/yaml;type=")
+	} else if strings.HasPrefix(mimeType, "application/octet-stream;type=") {
+		typeParameter := strings.TrimPrefix(mimeType, "application/octet-stream;type=")
+		parts := strings.Split(typeParameter, ".")
+		return parts[len(parts)-1]
+	} else {
+		return ""
+	}
+}
+
+// ProtoMessageForMimeType returns an instance of the message that represents the specified type.
+func ProtoMessageForMimeType(mimeType string) (proto.Message, error) {
+	messageType := strings.TrimPrefix(mimeType, "application/octet-stream;type=")
+	for k, v := range artifactMessageTypes {
+		if k == messageType {
+			return v(), nil
+		}
+	}
+	return nil, fmt.Errorf("unsupported message type %s", messageType)
+}
+
+// ProtoMessageForMimeType returns an instance of the message that represents the specified kind.
+func ProtoMessageForKind(kind string) (proto.Message, error) {
+	for k, v := range artifactMessageTypes {
+		if strings.HasSuffix(k, "."+kind) {
+			return v(), nil
+		}
+	}
+	return nil, fmt.Errorf("unsupported kind %s", kind)
+}
+
+// MimeTypeForKind returns the mime type that corresponds to a kind.
+func MimeTypeForKind(kind string) string {
+	if kind == "" {
+		return "application/yaml"
+	}
+	for k := range artifactMessageTypes {
+		if strings.HasSuffix(k, "."+kind) {
+			return fmt.Sprintf("application/octet-stream;type=%s", k)
+		}
+	}
+	return fmt.Sprintf("application/yaml;type=%s", kind)
+}
+
+// messageFactory represents functions that construct message structs.
+type messageFactory func() proto.Message
+
+// artifactMessageTypes is the single source of truth for artifact types that can be represented in YAML.
+var artifactMessageTypes map[string]messageFactory = map[string]messageFactory{
+	"google.cloud.apigeeregistry.v1.apihub.ApiSpecExtensionList": func() proto.Message { return new(rpc.ApiSpecExtensionList) },
+	"google.cloud.apigeeregistry.v1.apihub.DisplaySettings":      func() proto.Message { return new(rpc.DisplaySettings) },
+	"google.cloud.apigeeregistry.v1.apihub.Lifecycle":            func() proto.Message { return new(rpc.Lifecycle) },
+	"google.cloud.apigeeregistry.v1.apihub.ReferenceList":        func() proto.Message { return new(rpc.ReferenceList) },
+	"google.cloud.apigeeregistry.v1.apihub.TaxonomyList":         func() proto.Message { return new(rpc.TaxonomyList) },
+	"google.cloud.apigeeregistry.v1.controller.Manifest":         func() proto.Message { return new(rpc.Manifest) },
+	"google.cloud.apigeeregistry.v1.scoring.Score":               func() proto.Message { return new(rpc.Score) },
+	"google.cloud.apigeeregistry.v1.scoring.ScoreDefinition":     func() proto.Message { return new(rpc.ScoreDefinition) },
+	"google.cloud.apigeeregistry.v1.scoring.ScoreCard":           func() proto.Message { return new(rpc.ScoreCard) },
+	"google.cloud.apigeeregistry.v1.scoring.ScoreCardDefinition": func() proto.Message { return new(rpc.ScoreCardDefinition) },
+	"google.cloud.apigeeregistry.v1.style.StyleGuide":            func() proto.Message { return new(rpc.StyleGuide) },
+	"google.cloud.apigeeregistry.v1.style.ConformanceReport":     func() proto.Message { return new(rpc.ConformanceReport) },
+	"google.cloud.apigeeregistry.v1.style.Lint":                  func() proto.Message { return new(rpc.Lint) },
+	"gnostic.metrics.Complexity":                                 func() proto.Message { return new(metrics.Complexity) },
+	"gnostic.metrics.Vocabulary":                                 func() proto.Message { return new(metrics.Vocabulary) },
+}
+
+func MessageForType(messageType string) (proto.Message, error) {
+	factory := artifactMessageTypes[messageType]
+	if factory == nil {
+		return nil, fmt.Errorf("unsupported message type %s", messageType)
+	}
+	return factory(), nil
 }

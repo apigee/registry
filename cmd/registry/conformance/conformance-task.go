@@ -24,7 +24,6 @@ import (
 	"time"
 
 	"github.com/apigee/registry/cmd/registry/core"
-	"github.com/apigee/registry/cmd/registry/patch"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
@@ -258,7 +257,7 @@ func (task *ComputeConformanceTask) storeConformanceReport(
 
 	artifact := &rpc.Artifact{
 		Name:     fmt.Sprintf("%s/artifacts/%s", task.Spec.GetName(), conformanceReportId(task.StyleguideId)),
-		MimeType: patch.MimeTypeForKind("ConformanceReport"),
+		MimeType: core.MimeTypeForKind("ConformanceReport"),
 		Contents: messageData,
 	}
 	return core.SetArtifact(ctx, task.Client, artifact)
