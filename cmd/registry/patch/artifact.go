@@ -116,7 +116,7 @@ func newArtifact(message *rpc.Artifact) (*models.Artifact, error) {
 		}
 		node = doc.Content[0]
 	} else {
-		m, err := types.ProtoMessageForMimeType(message.MimeType)
+		m, err := types.MessageForMimeType(message.MimeType)
 		if err != nil {
 			log.Printf("this must be YAML")
 			return nil, err
@@ -199,7 +199,7 @@ func applyArtifactPatch(ctx context.Context, client connection.RegistryClient, c
 	var bytes []byte
 	// Unmarshal the JSON serialization into the message struct.
 	var m proto.Message
-	m, err = types.ProtoMessageForKind(content.Kind)
+	m, err = types.MessageForKind(content.Kind)
 	if err == nil {
 		err = protojson.Unmarshal(jWithIdAndKind, m)
 		if err != nil {

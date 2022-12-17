@@ -130,11 +130,7 @@ func PrintMessage(message proto.Message) {
 }
 
 func GetArtifactMessageContents(artifact *rpc.Artifact) (proto.Message, error) {
-	messageType, err := types.MessageTypeForMimeType(artifact.GetMimeType())
-	if err != nil {
-		return nil, err
-	}
-	message, err := types.MessageForType(messageType)
+	message, err := types.MessageForMimeType(artifact.GetMimeType())
 	if err != nil {
 		return nil, err
 	}

@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2022 Google LLC. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -86,7 +86,7 @@ func MessageTypeForMimeType(protoType string) (string, error) {
 	return strings.TrimSuffix(m[1], "+gzip"), nil
 }
 
-// KindForMimeType returns the message name to be used as the "kind" of the artifact.
+// KindForMimeType returns the name to be used as the "kind" of an exported artifact.
 func KindForMimeType(mimeType string) string {
 	if strings.HasPrefix(mimeType, "application/yaml;type=") {
 		return strings.TrimPrefix(mimeType, "application/yaml;type=")
@@ -99,19 +99,21 @@ func KindForMimeType(mimeType string) string {
 	}
 }
 
-// ProtoMessageForMimeType returns an instance of the message that represents the specified type.
-func ProtoMessageForMimeType(mimeType string) (proto.Message, error) {
-	messageType := strings.TrimPrefix(mimeType, "application/octet-stream;type=")
-	for k, v := range artifactMessageTypes {
-		if k == messageType {
-			return v(), nil
-		}
+// MessageForMimeType returns an instance of the message that represents the specified MIME type.
+func MessageForMimeType(mimeType string) (proto.Message, error) {
+	messageType, err := MessageTypeForMimeType(mimeType)
+	if err != nil {
+		return nil, err
 	}
-	return nil, fmt.Errorf("unsupported message type %s", messageType)
+	f := artifactMessageTypes[messageType]
+	if f == nil {
+		return nil, fmt.Errorf("unsupported message type %s", messageType)
+	}
+	return f(), nil
 }
 
-// ProtoMessageForMimeType returns an instance of the message that represents the specified kind.
-func ProtoMessageForKind(kind string) (proto.Message, error) {
+// MessageForKind returns an instance of the message that represents the specified kind.
+func MessageForKind(kind string) (proto.Message, error) {
 	for k, v := range artifactMessageTypes {
 		if strings.HasSuffix(k, "."+kind) {
 			return v(), nil
@@ -136,7 +138,7 @@ func MimeTypeForKind(kind string) string {
 // messageFactory represents functions that construct message structs.
 type messageFactory func() proto.Message
 
-// artifactMessageTypes is the single source of truth for artifact types that can be represented in YAML.
+// artifactMessageTypes is the single source of truth for protobuf types that can be represented in artifact YAML files.
 var artifactMessageTypes map[string]messageFactory = map[string]messageFactory{
 	"google.cloud.apigeeregistry.v1.apihub.ApiSpecExtensionList": func() proto.Message { return new(rpc.ApiSpecExtensionList) },
 	"google.cloud.apigeeregistry.v1.apihub.DisplaySettings":      func() proto.Message { return new(rpc.DisplaySettings) },
@@ -153,12 +155,4 @@ var artifactMessageTypes map[string]messageFactory = map[string]messageFactory{
 	"google.cloud.apigeeregistry.v1.style.Lint":                  func() proto.Message { return new(rpc.Lint) },
 	"gnostic.metrics.Complexity":                                 func() proto.Message { return new(metrics.Complexity) },
 	"gnostic.metrics.Vocabulary":                                 func() proto.Message { return new(metrics.Vocabulary) },
-}
-
-func MessageForType(messageType string) (proto.Message, error) {
-	factory := artifactMessageTypes[messageType]
-	if factory == nil {
-		return nil, fmt.Errorf("unsupported message type %s", messageType)
-	}
-	return factory(), nil
 }
