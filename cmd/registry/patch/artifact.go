@@ -19,7 +19,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"log"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -118,7 +117,6 @@ func newArtifact(message *rpc.Artifact) (*models.Artifact, error) {
 	} else {
 		m, err := types.MessageForMimeType(message.MimeType)
 		if err != nil {
-			log.Printf("this must be YAML")
 			return nil, err
 		}
 		if err = proto.Unmarshal(message.Contents, m); err != nil {
