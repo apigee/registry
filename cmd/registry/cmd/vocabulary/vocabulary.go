@@ -19,6 +19,7 @@ import (
 	"strings"
 
 	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
@@ -61,7 +62,7 @@ func collectInputVocabularies(ctx context.Context, client connection.RegistryCli
 		}
 
 		err = core.ListArtifacts(ctx, client, artifact, filter, true, func(artifact *rpc.Artifact) error {
-			messageType, err := core.MessageTypeForMimeType(artifact.GetMimeType())
+			messageType, err := types.MessageTypeForMimeType(artifact.GetMimeType())
 			if err != nil || messageType != "gnostic.metrics.Vocabulary" {
 				log.Debugf(ctx, "Skipping, not a vocabulary: %s", artifact.Name)
 				return nil
@@ -98,7 +99,7 @@ func setVocabularyToArtifact(ctx context.Context, client connection.RegistryClie
 	log.Debugf(ctx, "Saving vocabulary data (%d bytes)", len(messageData))
 	artifact := &rpc.Artifact{
 		Name:     subject + "/artifacts/" + relation,
-		MimeType: core.MimeTypeForMessageType("gnostic.metrics.Vocabulary+gzip"),
+		MimeType: types.MimeTypeForMessageType("gnostic.metrics.Vocabulary+gzip"),
 		Contents: messageData,
 	}
 	err = core.SetArtifact(ctx, client, artifact)
@@ -114,7 +115,7 @@ func setVersionHistoryToArtifact(ctx context.Context, client connection.Registry
 	messageData, _ := proto.Marshal(output)
 	artifact := &rpc.Artifact{
 		Name:     subject + "/artifacts/" + relation,
-		MimeType: core.MimeTypeForMessageType("gnostic.metrics.VersionHistory"),
+		MimeType: types.MimeTypeForMessageType("gnostic.metrics.VersionHistory"),
 		Contents: messageData,
 	}
 	err := core.SetArtifact(ctx, client, artifact)

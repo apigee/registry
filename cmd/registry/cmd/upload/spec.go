@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
@@ -98,8 +99,8 @@ func uploadSpecDirectory(ctx context.Context, dirname string, client *gapic.Regi
 		Parent:    version,
 		ApiSpecId: "protos",
 		ApiSpec: &rpc.ApiSpec{
-			MimeType: core.ProtobufMimeType("+zip"),
-			Filename: core.ProtobufMimeType("+zip"),
+			MimeType: types.ProtobufMimeType("+zip"),
+			Filename: types.ProtobufMimeType("+zip"),
 			Contents: buf.Bytes(),
 		},
 	}
@@ -119,12 +120,12 @@ func uploadSpecFile(ctx context.Context, filename string, client *gapic.Registry
 	switch style {
 	case "openapi":
 		if strings.Contains(filename, "swagger") { // TODO: switch on actual spec contents
-			mimeType = core.OpenAPIMimeType("+gzip", "2")
+			mimeType = types.OpenAPIMimeType("+gzip", "2")
 		} else {
-			mimeType = core.OpenAPIMimeType("+gzip", "3")
+			mimeType = types.OpenAPIMimeType("+gzip", "3")
 		}
 	case "discovery":
-		mimeType = core.DiscoveryMimeType("+gzip")
+		mimeType = types.DiscoveryMimeType("+gzip")
 	default:
 		return fmt.Errorf("unsupported file style %s", style)
 	}

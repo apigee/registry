@@ -20,6 +20,7 @@ import (
 
 	"github.com/apigee/registry/cmd/registry/controller"
 	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
@@ -81,7 +82,7 @@ func manifestCommand() *cobra.Command {
 
 			artifact := &rpc.Artifact{
 				Name:     "projects/" + projectID + "/locations/global/artifacts/" + manifest.GetId(),
-				MimeType: core.MimeTypeForMessageType("google.cloud.apigeeregistry.v1.controller.Manifest"),
+				MimeType: types.MimeTypeForMessageType("google.cloud.apigeeregistry.v1.controller.Manifest"),
 				Contents: manifestData,
 			}
 			log.Debugf(ctx, "Uploading %s", artifact.Name)
