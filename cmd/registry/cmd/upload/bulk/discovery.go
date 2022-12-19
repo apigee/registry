@@ -20,6 +20,7 @@ import (
 	"fmt"
 
 	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
@@ -178,7 +179,7 @@ func (task *uploadDiscoveryTask) createOrUpdateSpec(ctx context.Context) error {
 	request := &rpc.UpdateApiSpecRequest{
 		ApiSpec: &rpc.ApiSpec{
 			Name:      task.specName(),
-			MimeType:  core.DiscoveryMimeType("+gzip"),
+			MimeType:  types.DiscoveryMimeType("+gzip"),
 			Filename:  "discovery.json",
 			Contents:  gzippedContents,
 			SourceUri: task.path,

@@ -18,8 +18,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/cmd/registry/scoring/extensions"
+	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/rpc"
 	"github.com/google/cel-go/cel"
 	metrics "github.com/google/gnostic/metrics"
@@ -57,7 +57,7 @@ func evaluateScoreExpression(expression string, artifactMap map[string]interface
 }
 
 func getMap(contents []byte, mimeType string) (map[string]interface{}, error) {
-	messageType, err := core.MessageTypeForMimeType(mimeType)
+	messageType, err := types.MessageTypeForMimeType(mimeType)
 	if err != nil {
 		return nil, fmt.Errorf("failed extracting message type from %q", mimeType)
 	}

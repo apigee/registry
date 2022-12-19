@@ -19,8 +19,8 @@ import (
 	"fmt"
 
 	"github.com/apigee/registry/cmd/registry/core"
-	"github.com/apigee/registry/cmd/registry/patch"
 	"github.com/apigee/registry/cmd/registry/patterns"
+	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
@@ -43,7 +43,7 @@ func FetchScoreCardDefinitions(
 	if err != nil {
 		return nil, err
 	}
-	listFilter := fmt.Sprintf("mime_type == %q", patch.MimeTypeForKind("ScoreCardDefinition"))
+	listFilter := fmt.Sprintf("mime_type == %q", types.MimeTypeForKind("ScoreCardDefinition"))
 	err = client.ListArtifacts(ctx, artifact, listFilter, true,
 		func(artifact *rpc.Artifact) error {
 			definition := &rpc.ScoreCardDefinition{}
@@ -207,7 +207,7 @@ func uploadScoreCard(ctx context.Context, client artifactClient, resource patter
 	artifact := &rpc.Artifact{
 		Name:     fmt.Sprintf("%s/artifacts/%s", resource.ResourceName().String(), scoreCard.GetId()),
 		Contents: artifactBytes,
-		MimeType: patch.MimeTypeForKind("ScoreCard"),
+		MimeType: types.MimeTypeForKind("ScoreCard"),
 	}
 	log.Debugf(ctx, "Uploading %s", artifact.GetName())
 	if err = client.SetArtifact(ctx, artifact); err != nil {

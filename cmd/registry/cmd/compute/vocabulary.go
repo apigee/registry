@@ -19,6 +19,7 @@ import (
 	"fmt"
 
 	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
@@ -120,28 +121,28 @@ func (task *computeVocabularyTask) Run(ctx context.Context) error {
 	log.Debugf(ctx, "Computing %s/artifacts/vocabulary", task.specName)
 	var vocab *metrics.Vocabulary
 
-	if core.IsOpenAPIv2(contents.GetContentType()) {
+	if types.IsOpenAPIv2(contents.GetContentType()) {
 		document, err := oas2.ParseDocument(contents.GetData())
 		if err != nil {
 			log.FromContext(ctx).WithError(err).Errorf("Invalid OpenAPI: %s", task.specName)
 			return nil
 		}
 		vocab = vocabulary.NewVocabularyFromOpenAPIv2(document)
-	} else if core.IsOpenAPIv3(contents.GetContentType()) {
+	} else if types.IsOpenAPIv3(contents.GetContentType()) {
 		document, err := oas3.ParseDocument(contents.GetData())
 		if err != nil {
 			log.FromContext(ctx).WithError(err).Errorf("Invalid OpenAPI: %s", task.specName)
 			return nil
 		}
 		vocab = vocabulary.NewVocabularyFromOpenAPIv3(document)
-	} else if core.IsDiscovery(contents.GetContentType()) {
+	} else if types.IsDiscovery(contents.GetContentType()) {
 		document, err := discovery.ParseDocument(contents.GetData())
 		if err != nil {
 			log.FromContext(ctx).WithError(err).Errorf("Invalid Discovery: %s", task.specName)
 			return nil
 		}
 		vocab = vocabulary.NewVocabularyFromDiscovery(document)
-	} else if core.IsProto(contents.GetContentType()) && core.IsZipArchive(contents.GetContentType()) {
+	} else if types.IsProto(contents.GetContentType()) && types.IsZipArchive(contents.GetContentType()) {
 		vocab, err = core.NewVocabularyFromZippedProtos(contents.GetData())
 		if err != nil {
 			log.FromContext(ctx).WithError(err).Errorf("Error processing protos: %s", task.specName)
@@ -162,7 +163,7 @@ func (task *computeVocabularyTask) Run(ctx context.Context) error {
 	}
 	return core.SetArtifact(ctx, task.client, &rpc.Artifact{
 		Name:     task.specName + "/artifacts/vocabulary",
-		MimeType: core.MimeTypeForMessageType("gnostic.metrics.Vocabulary"),
+		MimeType: types.MimeTypeForMessageType("gnostic.metrics.Vocabulary"),
 		Contents: messageData,
 	})
 }
