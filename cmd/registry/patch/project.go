@@ -20,6 +20,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/gapic"
@@ -27,6 +28,7 @@ import (
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
+	"google.golang.org/grpc/metadata"
 )
 
 // ExportProject writes a project into a directory of YAML files.
@@ -262,7 +264,24 @@ func (task *exportSpecTask) Run(ctx context.Context) error {
 	if err := os.MkdirAll(parentDir, 0777); err != nil {
 		return err
 	}
-	return os.WriteFile(filename, bytes, 0644)
+	if err = os.WriteFile(filename, bytes, 0644); err != nil {
+		return err
+	}
+	if task.nested {
+		return nil
+	}
+	ctx = metadata.AppendToOutgoingContext(ctx, "accept-encoding", "gzip")
+	contents, err := task.client.GetApiSpecContents(ctx, &rpc.GetApiSpecContentsRequest{
+		Name: task.message.GetName(),
+	})
+	if err != nil {
+		return err
+	}
+	data := contents.GetData()
+	if strings.Contains(contents.GetContentType(), "+gzip") {
+		data, _ = core.GUnzippedBytes(data)
+	}
+	return os.WriteFile(filepath.Join(parentDir, task.message.Filename), data, 0644)
 }
 
 type exportDeploymentTask struct {
