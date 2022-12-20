@@ -125,7 +125,7 @@ func (task *applyFileTask) Run(ctx context.Context) error {
 	case "Version":
 		return applyApiVersionPatchBytes(ctx, task.client, bytes, task.parent)
 	case "Spec":
-		return applyApiSpecPatchBytes(ctx, task.client, bytes, task.parent)
+		return applyApiSpecPatchBytes(ctx, task.client, bytes, task.parent, task.path)
 	case "Deployment":
 		return applyApiDeploymentPatchBytes(ctx, task.client, bytes, task.parent)
 	default: // for everything else, try an artifact type

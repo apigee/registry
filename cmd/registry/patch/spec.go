@@ -21,6 +21,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -84,13 +85,14 @@ func applyApiSpecPatchBytes(
 	ctx context.Context,
 	client connection.RegistryClient,
 	bytes []byte,
-	parent string) error {
+	parent string,
+	filename string) error {
 	var spec models.ApiSpec
 	err := yaml.Unmarshal(bytes, &spec)
 	if err != nil {
 		return err
 	}
-	return applyApiSpecPatch(ctx, client, &spec, parent)
+	return applyApiSpecPatch(ctx, client, &spec, parent, filename)
 }
 
 func specName(parent string, metadata models.Metadata) (names.Spec, error) {
@@ -108,7 +110,8 @@ func applyApiSpecPatch(
 	ctx context.Context,
 	client connection.RegistryClient,
 	spec *models.ApiSpec,
-	parent string) error {
+	parent string,
+	filename string) error {
 	name, err := specName(parent, spec.Metadata)
 	if err != nil {
 		return err
@@ -126,7 +129,22 @@ func applyApiSpecPatch(
 		AllowMissing: true,
 	}
 	// TODO: verify mime type
-	if spec.Data.SourceURI != "" {
+
+	// if the spec's filename points to a local file, use that as the spec's contents
+	if filename != "" {
+		body, err := os.ReadFile(filepath.Join(filepath.Dir(filename), spec.Data.FileName))
+		if err == nil {
+			if strings.Contains(spec.Data.MimeType, "+gzip") {
+				body, err = core.GZippedBytes(body)
+				if err != nil {
+					return err
+				}
+			}
+			req.ApiSpec.Contents = body
+		}
+	}
+	// if we didn't find the spec body in a file, try to read it from the SourceURI
+	if req.ApiSpec.Contents == nil && spec.Data.SourceURI != "" {
 		u, err := url.ParseRequestURI(spec.Data.SourceURI)
 		if err != nil {
 			return err
