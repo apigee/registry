@@ -1,0 +1,9 @@
+apiVersion: apigeeregistry/v1
+kind: ReferenceList
+metadata:
+  name: references
+  parent: apis/a
+  labels:
+    label1: label
+  annotations:
+    annotation1: annotation

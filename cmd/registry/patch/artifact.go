@@ -255,6 +255,9 @@ func populateIdAndKind(bytes []byte, kind, id string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	if jsonData == nil {
+		return nil, errors.New("missing data")
+	}
 	jsonData["id"] = id
 	jsonData["kind"] = kind
 

@@ -873,3 +873,59 @@ func TestYamlArtifactPatches(t *testing.T) {
 		})
 	}
 }
+
+func TestInvalidArtifactPatches(t *testing.T) {
+	root := "projects/patch-invalid-artifact-test/locations/global"
+	tests := []struct {
+		artifactID string
+	}{
+		{
+			artifactID: "complexity-invalid-field",
+		},
+		{
+			artifactID: "lifecycle-invalid-parent",
+		}, {
+			artifactID: "references-no-data",
+		},
+		{
+			artifactID: "struct-invalid-structure",
+		},
+		{
+			artifactID: "struct-no-metadata",
+		},
+	}
+	ctx := context.Background()
+	adminClient, err := connection.NewAdminClient(ctx)
+	if err != nil {
+		t.Fatalf("Setup: failed to create client: %+v", err)
+	}
+	defer adminClient.Close()
+	registryClient, err := connection.NewRegistryClient(ctx)
+	if err != nil {
+		t.Fatalf("Setup: Failed to create registry client: %s", err)
+	}
+	defer registryClient.Close()
+	client := seeder.Client{
+		RegistryClient: registryClient,
+		AdminClient:    adminClient,
+	}
+	spec := &rpc.ApiSpec{
+		Name: root + "/apis/a/versions/v/specs/s",
+	}
+	if err := seeder.SeedSpecs(ctx, client, spec); err != nil {
+		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+	}
+	for _, test := range tests {
+		t.Run(test.artifactID, func(t *testing.T) {
+			yamlFile := "testdata/invalid-artifacts/" + test.artifactID + ".yaml"
+			b, err := os.ReadFile(yamlFile)
+			if err != nil {
+				t.Fatalf("%s", err)
+			}
+			err = applyArtifactPatchBytes(ctx, registryClient, b, root)
+			if err == nil {
+				t.Fatalf("expected error, received none")
+			}
+		})
+	}
+}
