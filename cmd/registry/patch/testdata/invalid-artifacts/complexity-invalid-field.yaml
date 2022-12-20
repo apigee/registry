@@ -1,0 +1,14 @@
+apiVersion: apigeeregistry/v1
+kind: Complexity
+metadata:
+  name: complexity
+  parent: apis/a/versions/v/specs/s
+data:
+  INVALID_FIELD: 123
+  pathCount: 76
+  getCount: 25
+  postCount: 27
+  putCount: 11
+  deleteCount: 13
+  schemaCount: 1150
+  schemaPropertyCount: 964
