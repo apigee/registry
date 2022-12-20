@@ -66,7 +66,7 @@ func (p *patchGroup) add(task *applyFileTask) error {
 	}
 	header, err := readHeader(bytes)
 	if err != nil {
-		// Skip YAML files that don't have our expected headers. We assume. they aren't ours.
+		// Skip YAML files that don't have our expected headers. We assume they aren't ours.
 		return nil
 	}
 	task.kind = header.Kind
