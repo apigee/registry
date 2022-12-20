@@ -19,17 +19,16 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"strings"
 
 	"gopkg.in/yaml.v3"
 
+	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/models"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
-	metrics "github.com/google/gnostic/metrics"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
@@ -106,45 +105,53 @@ func newArtifact(message *rpc.Artifact) (*models.Artifact, error) {
 	if err != nil {
 		return nil, err
 	}
-	// Unmarshal the serialized protobuf containing the artifact content.
-	m, err := protoMessageForMimeType(message.MimeType)
-	if err != nil {
-		return nil, err
+	var node *yaml.Node
+	if strings.HasPrefix(message.MimeType, "application/yaml") {
+		var doc yaml.Node
+		err = yaml.Unmarshal(message.Contents, &doc)
+		if err != nil {
+			return nil, err
+		}
+		// The top-level node is a "document" node. We need to marshal the node below it.
+		node = doc.Content[0]
+	} else {
+		m, err := types.MessageForMimeType(message.MimeType)
+		if err != nil {
+			return nil, err
+		}
+		// Unmarshal the serialized protobuf containing the artifact content.
+		if err = proto.Unmarshal(message.Contents, m); err != nil {
+			return nil, err
+		}
+		// Marshal the artifact content as JSON using the protobuf marshaller.
+		var s []byte
+		s, err = protojson.MarshalOptions{
+			UseEnumNumbers:  false,
+			EmitUnpopulated: true,
+			Indent:          "  ",
+			UseProtoNames:   false,
+		}.Marshal(m)
+		if err != nil {
+			return nil, err
+		}
+		// Unmarshal the JSON with yaml.v3 so that we can re-marshal it as YAML.
+		var doc yaml.Node
+		err = yaml.Unmarshal([]byte(s), &doc)
+		if err != nil {
+			return nil, err
+		}
+		// The top-level node is a "document" node. We need to marshal the node below it.
+		node = doc.Content[0]
+		// Restyle the YAML representation so that it will be serialized with YAML defaults.
+		styleForYAML(node)
+		// We exclude the id and kind fields from YAML serializations.
+		node = removeIdAndKind(node)
 	}
-	if err = proto.Unmarshal(message.Contents, m); err != nil {
-		return nil, err
-	}
-	// Marshal the artifact content as JSON using the protobuf marshaller.
-	var s []byte
-	s, err = protojson.MarshalOptions{
-		UseEnumNumbers:  false,
-		EmitUnpopulated: true,
-		Indent:          "  ",
-		UseProtoNames:   false,
-	}.Marshal(m)
-	if err != nil {
-		return nil, err
-	}
-	// Unmarshal the JSON with yaml.v3 so that we can re-marshal it as YAML.
-	var doc yaml.Node
-	err = yaml.Unmarshal([]byte(s), &doc)
-	if err != nil {
-		return nil, err
-	}
-	// The top-level node is a "document" node. We need to remove this before marshalling.
-	if doc.Kind != yaml.DocumentNode || len(doc.Content) != 1 {
-		return nil, errors.New("failed to unmarshal artifact")
-	}
-	node := doc.Content[0]
-	// Restyle the YAML representation so that it will be serialized with YAML defaults.
-	styleForYAML(node)
-	// We exclude the id and kind fields from YAML serializations.
-	node = removeIdAndKind(node)
 	// Wrap the artifact for YAML export.
 	return &models.Artifact{
 		Header: models.Header{
 			ApiVersion: RegistryV1,
-			Kind:       kindForMimeType(message.MimeType),
+			Kind:       types.KindForMimeType(message.MimeType),
 			Metadata: models.Metadata{
 				Name:        artifactName.ArtifactID(),
 				Parent:      names.ExportableName(artifactName.Parent(), artifactName.ProjectID()),
@@ -185,26 +192,33 @@ func applyArtifactPatch(ctx context.Context, client connection.RegistryClient, c
 	if err != nil {
 		return err
 	}
+	var bytes []byte
 	// Unmarshal the JSON serialization into the message struct.
 	var m proto.Message
-	m, err = protoMessageForKind(content.Kind)
-	if err != nil {
-		return err
-	}
-	err = protojson.Unmarshal(jWithIdAndKind, m)
-	if err != nil {
-		if strings.Contains(err.Error(), "unknown field") {
-			// Try unmarshaling the original YAML (without the additional Id and Kind fields).
-			err = protojson.Unmarshal(j, m)
-			if err != nil {
-				return err
+	m, err = types.MessageForKind(content.Kind)
+	if err == nil {
+		err = protojson.Unmarshal(jWithIdAndKind, m)
+		if err != nil {
+			if strings.Contains(err.Error(), "unknown field") {
+				// Try unmarshaling the original YAML (without the additional Id and Kind fields).
+				err = protojson.Unmarshal(j, m)
+				if err != nil {
+					return err
+				}
 			}
 		}
-	}
-	// Marshal the message struct to bytes.
-	bytes, err := proto.Marshal(m)
-	if err != nil {
-		return err
+		// Marshal the message struct to bytes.
+		bytes, err = proto.Marshal(m)
+		if err != nil {
+			return err
+		}
+	} else {
+		// If there was no struct defined for the type, marshal it struct as YAML
+		styleForYAML(&content.Data)
+		bytes, err = yaml.Marshal(content.Data)
+		if err != nil {
+			return err
+		}
 	}
 	name, err := artifactName(parent, content.Header.Metadata)
 	if err != nil {
@@ -212,7 +226,7 @@ func applyArtifactPatch(ctx context.Context, client connection.RegistryClient, c
 	}
 	artifact := &rpc.Artifact{
 		Name:        name.String(),
-		MimeType:    MimeTypeForKind(content.Kind),
+		MimeType:    types.MimeTypeForKind(content.Kind),
 		Contents:    bytes,
 		Labels:      content.Metadata.Labels,
 		Annotations: content.Metadata.Annotations,
@@ -239,6 +253,9 @@ func populateIdAndKind(bytes []byte, kind, id string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	if jsonData == nil {
+		return nil, errors.New("missing data")
+	}
 	jsonData["id"] = id
 	jsonData["kind"] = kind
 
@@ -248,63 +265,4 @@ func populateIdAndKind(bytes []byte, kind, id string) ([]byte, error) {
 	}
 
 	return rBytes, nil
-}
-
-// kindForMimeType returns the message name to be used as the "kind" of the artifact.
-func kindForMimeType(mimeType string) string {
-	parts := strings.Split(mimeType, ".")
-	return parts[len(parts)-1]
-}
-
-// protoMessageForMimeType returns an instance of the message that represents the specified type.
-func protoMessageForMimeType(mimeType string) (proto.Message, error) {
-	messageType := strings.TrimPrefix(mimeType, "application/octet-stream;type=")
-	for k, v := range artifactMessageTypes {
-		if k == messageType {
-			return v(), nil
-		}
-	}
-	return nil, fmt.Errorf("unsupported message type %s", messageType)
-}
-
-// protoMessageForMimeType returns an instance of the message that represents the specified kind.
-func protoMessageForKind(kind string) (proto.Message, error) {
-	for k, v := range artifactMessageTypes {
-		if strings.HasSuffix(k, "."+kind) {
-			return v(), nil
-		}
-	}
-	return nil, fmt.Errorf("unsupported kind %s", kind)
-}
-
-// MimeTypeForKind returns the mime type that corresponds to a kind.
-func MimeTypeForKind(kind string) string {
-	for k := range artifactMessageTypes {
-		if strings.HasSuffix(k, "."+kind) {
-			return fmt.Sprintf("application/octet-stream;type=%s", k)
-		}
-	}
-	return "application/octet-stream"
-}
-
-// messageFactory represents functions that construct message structs.
-type messageFactory func() proto.Message
-
-// artifactMessageTypes is the single source of truth for artifact types that can be represented in YAML.
-var artifactMessageTypes map[string]messageFactory = map[string]messageFactory{
-	"google.cloud.apigeeregistry.v1.apihub.ApiSpecExtensionList": func() proto.Message { return new(rpc.ApiSpecExtensionList) },
-	"google.cloud.apigeeregistry.v1.apihub.DisplaySettings":      func() proto.Message { return new(rpc.DisplaySettings) },
-	"google.cloud.apigeeregistry.v1.apihub.Lifecycle":            func() proto.Message { return new(rpc.Lifecycle) },
-	"google.cloud.apigeeregistry.v1.apihub.ReferenceList":        func() proto.Message { return new(rpc.ReferenceList) },
-	"google.cloud.apigeeregistry.v1.apihub.TaxonomyList":         func() proto.Message { return new(rpc.TaxonomyList) },
-	"google.cloud.apigeeregistry.v1.controller.Manifest":         func() proto.Message { return new(rpc.Manifest) },
-	"google.cloud.apigeeregistry.v1.scoring.Score":               func() proto.Message { return new(rpc.Score) },
-	"google.cloud.apigeeregistry.v1.scoring.ScoreDefinition":     func() proto.Message { return new(rpc.ScoreDefinition) },
-	"google.cloud.apigeeregistry.v1.scoring.ScoreCard":           func() proto.Message { return new(rpc.ScoreCard) },
-	"google.cloud.apigeeregistry.v1.scoring.ScoreCardDefinition": func() proto.Message { return new(rpc.ScoreCardDefinition) },
-	"google.cloud.apigeeregistry.v1.style.StyleGuide":            func() proto.Message { return new(rpc.StyleGuide) },
-	"google.cloud.apigeeregistry.v1.style.ConformanceReport":     func() proto.Message { return new(rpc.ConformanceReport) },
-	"google.cloud.apigeeregistry.v1.style.Lint":                  func() proto.Message { return new(rpc.Lint) },
-	"gnostic.metrics.Complexity":                                 func() proto.Message { return new(metrics.Complexity) },
-	"gnostic.metrics.Vocabulary":                                 func() proto.Message { return new(metrics.Vocabulary) },
 }

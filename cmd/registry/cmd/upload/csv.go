@@ -23,6 +23,7 @@ import (
 	"os"
 
 	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
@@ -237,7 +238,7 @@ func (t uploadSpecTask) Run(ctx context.Context) error {
 		ApiSpecId: t.specID,
 		ApiSpec: &rpc.ApiSpec{
 			// TODO: How do we choose a mime type?
-			MimeType: core.OpenAPIMimeType("+gzip", "3.0.0"),
+			MimeType: types.OpenAPIMimeType("+gzip", "3.0.0"),
 			Contents: compressed,
 		},
 	})

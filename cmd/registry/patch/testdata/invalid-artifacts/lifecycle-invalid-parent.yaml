@@ -1,0 +1,24 @@
+apiVersion: apigeeregistry/v1
+kind: Lifecycle
+metadata:
+  name: lifecycle
+  parent: INVALID
+data:
+  displayName: Lifecycle
+  description: A series of stages that an API typically moves through in its lifetime
+  stages:
+    - id: concept
+      displayName: Concept
+      description: Description of the business case and user needs for why an API should exist
+      url: https://google.com
+      displayOrder: 0
+    - id: design
+      displayName: Design
+      description: Definition of the interface details and proposal of the API contract
+      url: https://google.com
+      displayOrder: 1
+    - id: develop
+      displayName: Develop
+      description: Implementation of the service and its API
+      url: https://google.com
+      displayOrder: 2
