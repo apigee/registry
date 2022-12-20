@@ -113,6 +113,7 @@ func newArtifact(message *rpc.Artifact) (*models.Artifact, error) {
 		if err != nil {
 			return nil, err
 		}
+		// The top-level node is a "document" node. We need to marshal the node below it.
 		node = doc.Content[0]
 	} else {
 		m, err := types.MessageForMimeType(message.MimeType)
@@ -139,10 +140,7 @@ func newArtifact(message *rpc.Artifact) (*models.Artifact, error) {
 		if err != nil {
 			return nil, err
 		}
-		// The top-level node is a "document" node. We need to remove this before marshalling.
-		if doc.Kind != yaml.DocumentNode || len(doc.Content) != 1 {
-			return nil, errors.New("failed to unmarshal artifact")
-		}
+		// The top-level node is a "document" node. We need to marshal the node below it.
 		node = doc.Content[0]
 		// Restyle the YAML representation so that it will be serialized with YAML defaults.
 		styleForYAML(node)
