@@ -49,7 +49,7 @@ func yamlCommand() *cobra.Command {
 			defer wait()
 
 			if project, err := names.ParseProject(args[0]); err == nil {
-				err = patch.ExportProject(ctx, client, project, taskQueue, nested)
+				err = patch.ExportProject(ctx, client, project, "", taskQueue, nested)
 				if err != nil {
 					return err
 				}

@@ -32,12 +32,17 @@ import (
 )
 
 // ExportProject writes a project into a directory of YAML files.
-func ExportProject(ctx context.Context, client *gapic.RegistryClient, projectName names.Project, taskQueue chan<- core.Task, nested bool) error {
+func ExportProject(ctx context.Context, client *gapic.RegistryClient, projectName names.Project, root string, taskQueue chan<- core.Task, nested bool) error {
+	if root != "" {
+		root = root + "/" + projectName.ProjectID
+	} else {
+		root = projectName.ProjectID
+	}
 	err := core.ListAPIs(ctx, client, projectName.Api(""), "", func(message *rpc.Api) error {
 		taskQueue <- &exportAPITask{
 			client:  client,
 			message: message,
-			dir:     projectName.ProjectID,
+			dir:     root,
 			nested:  nested,
 		}
 		return nil
@@ -49,7 +54,7 @@ func ExportProject(ctx context.Context, client *gapic.RegistryClient, projectNam
 		taskQueue <- &exportArtifactTask{
 			client:  client,
 			message: message,
-			dir:     projectName.ProjectID,
+			dir:     root,
 		}
 		return nil
 	})
@@ -63,7 +68,7 @@ func ExportProject(ctx context.Context, client *gapic.RegistryClient, projectNam
 		taskQueue <- &exportVersionTask{
 			client:  client,
 			message: message,
-			dir:     projectName.ProjectID,
+			dir:     root,
 			nested:  nested,
 		}
 		return nil
@@ -75,7 +80,7 @@ func ExportProject(ctx context.Context, client *gapic.RegistryClient, projectNam
 		taskQueue <- &exportSpecTask{
 			client:  client,
 			message: message,
-			dir:     projectName.ProjectID,
+			dir:     root,
 			nested:  nested,
 		}
 		return nil
@@ -87,7 +92,7 @@ func ExportProject(ctx context.Context, client *gapic.RegistryClient, projectNam
 		taskQueue <- &exportDeploymentTask{
 			client:  client,
 			message: message,
-			dir:     projectName.ProjectID,
+			dir:     root,
 			nested:  nested,
 		}
 		return nil
@@ -99,7 +104,7 @@ func ExportProject(ctx context.Context, client *gapic.RegistryClient, projectNam
 		taskQueue <- &exportArtifactTask{
 			client:  client,
 			message: message,
-			dir:     projectName.ProjectID,
+			dir:     root,
 		}
 		return nil
 	})
@@ -110,7 +115,7 @@ func ExportProject(ctx context.Context, client *gapic.RegistryClient, projectNam
 		taskQueue <- &exportArtifactTask{
 			client:  client,
 			message: message,
-			dir:     projectName.ProjectID,
+			dir:     root,
 		}
 		return nil
 	})
@@ -121,7 +126,7 @@ func ExportProject(ctx context.Context, client *gapic.RegistryClient, projectNam
 		taskQueue <- &exportArtifactTask{
 			client:  client,
 			message: message,
-			dir:     projectName.ProjectID,
+			dir:     root,
 		}
 		return nil
 	})
@@ -132,7 +137,7 @@ func ExportProject(ctx context.Context, client *gapic.RegistryClient, projectNam
 		taskQueue <- &exportArtifactTask{
 			client:  client,
 			message: message,
-			dir:     projectName.ProjectID,
+			dir:     root,
 		}
 		return nil
 	})
