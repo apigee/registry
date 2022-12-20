@@ -105,7 +105,6 @@ func newArtifact(message *rpc.Artifact) (*models.Artifact, error) {
 	if err != nil {
 		return nil, err
 	}
-	// Unmarshal the serialized protobuf containing the artifact content.
 	var node *yaml.Node
 	if strings.HasPrefix(message.MimeType, "application/yaml") {
 		var doc yaml.Node
@@ -120,6 +119,7 @@ func newArtifact(message *rpc.Artifact) (*models.Artifact, error) {
 		if err != nil {
 			return nil, err
 		}
+		// Unmarshal the serialized protobuf containing the artifact content.
 		if err = proto.Unmarshal(message.Contents, m); err != nil {
 			return nil, err
 		}
