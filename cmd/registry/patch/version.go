@@ -140,7 +140,7 @@ func applyApiVersionPatch(
 		return err
 	}
 	for _, specPatch := range version.Data.ApiSpecs {
-		err := applyApiSpecPatch(ctx, client, specPatch, name.String())
+		err := applyApiSpecPatch(ctx, client, specPatch, name.String(), "")
 		if err != nil {
 			return err
 		}

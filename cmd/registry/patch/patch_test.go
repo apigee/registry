@@ -294,7 +294,7 @@ func TestSpecPatches(t *testing.T) {
 			if err != nil {
 				t.Fatalf("%s", err)
 			}
-			err = applyApiSpecPatchBytes(ctx, registryClient, b, root)
+			err = applyApiSpecPatchBytes(ctx, registryClient, b, root, "")
 			if err != nil {
 				t.Fatalf("%s", err)
 			}
