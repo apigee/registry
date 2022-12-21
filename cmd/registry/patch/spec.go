@@ -128,8 +128,6 @@ func applyApiSpecPatch(
 		},
 		AllowMissing: true,
 	}
-	// TODO: verify mime type
-
 	// if the spec's filename points to a local file, use that as the spec's contents
 	if filename != "" {
 		body, err := os.ReadFile(filepath.Join(filepath.Dir(filename), spec.Data.FileName))
