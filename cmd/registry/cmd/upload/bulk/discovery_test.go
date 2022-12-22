@@ -28,16 +28,19 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func runTestServer() {
+func startTestServer() *http.Server {
 	http.Handle("/", http.FileServer(http.Dir("testdata/discovery")))
-	err := http.ListenAndServe(":8081", nil)
-	if err != nil {
-		log.Fatalf("Test server failed to start %v", err)
-	}
+	server := &http.Server{Addr: ":8081", Handler: nil}
+	go func() {
+		err := server.ListenAndServe()
+		if err != http.ErrServerClosed {
+			log.Fatalf("Test server failed to start %v", err)
+		}
+	}()
+	return server
 }
 
 func TestDiscoveryUpload(t *testing.T) {
-	go runTestServer()
 	projectID := "disco-test"
 	projectName := "projects/" + projectID
 	args := []string{
@@ -47,8 +50,11 @@ func TestDiscoveryUpload(t *testing.T) {
 		"--parent",
 		"projects/disco-test/locations/global",
 	}
-	// Create a registry client.
 	ctx := context.Background()
+	// Start a test server to mock the Discovery Service.
+	testServer := startTestServer()
+	defer testServer.Shutdown(ctx)
+	// Create a registry client.
 	registryClient, err := connection.NewRegistryClient(ctx)
 	if err != nil {
 		t.Fatalf("Error creating client: %+v", err)
@@ -139,6 +145,7 @@ func TestDiscoveryUpload(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to delete test project: %s", err)
 	}
+	testServer.Close()
 }
 
 func countSpecRevisions(iter *gapic.ApiSpecIterator) int {
