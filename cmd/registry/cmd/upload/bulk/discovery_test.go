@@ -53,7 +53,7 @@ func TestDiscoveryUpload(t *testing.T) {
 	ctx := context.Background()
 	// Start a test server to mock the Discovery Service.
 	testServer := startTestServer()
-	defer testServer.Shutdown(ctx)
+	defer func() { _ = testServer.Shutdown(ctx) }()
 	// Create a registry client.
 	registryClient, err := connection.NewRegistryClient(ctx)
 	if err != nil {
