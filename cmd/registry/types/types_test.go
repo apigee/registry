@@ -285,3 +285,70 @@ func TestProtobufMessageTypes(t *testing.T) {
 		})
 	}
 }
+
+func TestYamlMessageTypes(t *testing.T) {
+	tests := []struct {
+		kind     string
+		mimeType string
+	}{
+		{
+			kind:     "Sample",
+			mimeType: "application/yaml;type=Sample",
+		},
+		{
+			kind:     "",
+			mimeType: "application/yaml",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.mimeType, func(t *testing.T) {
+			value := MimeTypeForKind(test.kind)
+			if value != test.mimeType {
+				t.Errorf("incorrect mime type for kind, expected %s got %s", test.mimeType, value)
+			}
+			value = KindForMimeType(test.mimeType)
+			if value != test.kind {
+				t.Errorf("incorrect kind, expected %s got %s", test.kind, value)
+			}
+		})
+	}
+}
+
+func TestInvalidTypes(t *testing.T) {
+	tests := []struct {
+		kind              string
+		mimeType          string
+		kindIsInvalid     bool
+		mimeTypeIsInvalid bool
+	}{
+		{
+			kind:              "ScoreCard",
+			mimeType:          "application/binary;type=google.cloud.apigeeregistry.v1.scoring.ScoreCard",
+			kindIsInvalid:     false,
+			mimeTypeIsInvalid: true,
+		},
+		{
+			kind:              "Invalid",
+			mimeType:          "application/octet-stream;type=google.cloud.apigeeregistry.v1.invalid.Invalid",
+			kindIsInvalid:     true,
+			mimeTypeIsInvalid: false,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.mimeType, func(t *testing.T) {
+			var err error
+			_, err = MessageTypeForMimeType(test.mimeType)
+			if err == nil && test.mimeTypeIsInvalid {
+				t.Errorf("Did not obtain expected error getting message type for invalid mime type %s", test.mimeType)
+			}
+			_, err = MessageForMimeType(test.mimeType)
+			if err == nil && test.mimeTypeIsInvalid {
+				t.Errorf("Did not obtain expected error getting message for invalid mime type %s", test.mimeType)
+			}
+			_, err = MessageForKind(test.kind)
+			if err == nil && test.kindIsInvalid {
+				t.Errorf("Did not obtain expected error getting message for invalid kind %s", test.kind)
+			}
+		})
+	}
+}
