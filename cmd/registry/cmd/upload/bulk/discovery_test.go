@@ -20,6 +20,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
 	"google.golang.org/api/iterator"
@@ -37,10 +38,15 @@ func runTestServer() {
 
 func TestDiscoveryUpload(t *testing.T) {
 	go runTestServer()
-
-	projectName := "projects/disco-test"
 	projectID := "disco-test"
-
+	projectName := "projects/" + projectID
+	args := []string{
+		"discovery",
+		"--service",
+		"http://localhost:8081/apis.json",
+		"--parent",
+		"projects/disco-test/locations/global",
+	}
 	// Create a registry client.
 	ctx := context.Background()
 	registryClient, err := connection.NewRegistryClient(ctx)
@@ -72,80 +78,58 @@ func TestDiscoveryUpload(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error creating project %s", err)
 	}
-	t.Run("mock service", func(t *testing.T) {
-		cmd := Command()
-		cmd.SetArgs([]string{
-			"discovery",
-			"--service",
-			"http://localhost:8081/apis.json",
-			"--parent",
-			"projects/disco-test/locations/global",
-		})
-		err := cmd.Execute()
-		if err != nil {
-			log.Printf("Error %v", err)
-		}
-		targets := []struct {
-			desc     string
-			spec     string
-			wantType string
-		}{
-			{
-				desc:     "Apigee Registry",
-				spec:     "apis/apigeeregistry/versions/v1/specs/discovery",
-				wantType: "application/x.discovery",
-			},
-			{
-				desc:     "Petstore OpenAPI",
-				spec:     "apis/discovery/versions/v1/specs/discovery",
-				wantType: "application/x.discovery",
-			},
-		}
-		for _, target := range targets {
-			// Get the uploaded spec
-			result, err := registryClient.GetApiSpecContents(ctx, &rpc.GetApiSpecContentsRequest{
-				Name: "projects/" + projectID + "/locations/global/" + target.spec,
-			})
-			if err != nil {
-				t.Fatalf("unable to fetch spec %s", target.spec)
-			}
-			// Verify the content type.
-			if result.ContentType != target.wantType {
-				t.Errorf("Invalid mime type for %s: %s (wanted %s)", target.spec, result.ContentType, target.wantType)
-			}
-		}
-		// run upload a second time to ensure there are no errors or duplicated specs
-		cmd = Command()
-		cmd.SetArgs([]string{
-			"discovery",
-			"--service",
-			"http://localhost:8081/apis.json",
-			"--parent",
-			"projects/disco-test/locations/global",
-		})
-		err = cmd.Execute()
-		if err != nil {
-			log.Printf("Error %v", err)
-		}
+	// Run the upload command.
+	cmd := Command()
+	cmd.SetArgs(args)
+	err = cmd.Execute()
+	if err != nil {
+		t.Errorf("Error running upload %v", err)
+	}
+	targets := []struct {
+		desc     string
+		spec     string
+		wantType string
+	}{
 		{
-			iter := registryClient.ListApiSpecRevisions(ctx, &rpc.ListApiSpecRevisionsRequest{
-				Name: "projects/" + projectID + "/locations/global/apis/-/versions/-/specs/-@-",
-			})
-			count := 0
-			for {
-				_, err = iter.Next()
-				if err == iterator.Done {
-					break
-				} else if err != nil {
-					break
-				}
-				count++
-			}
-			if count != 2 {
-				t.Errorf("expected 2 versions, got %d", count)
-			}
+			desc:     "Apigee Registry",
+			spec:     "apis/apigeeregistry/versions/v1/specs/discovery",
+			wantType: "application/x.discovery",
+		},
+		{
+			desc:     "Petstore OpenAPI",
+			spec:     "apis/discovery/versions/v1/specs/discovery",
+			wantType: "application/x.discovery",
+		},
+	}
+	for _, target := range targets {
+		// Get the uploaded spec
+		result, err := registryClient.GetApiSpecContents(ctx, &rpc.GetApiSpecContentsRequest{
+			Name: "projects/" + projectID + "/locations/global/" + target.spec,
+		})
+		if err != nil {
+			t.Fatalf("unable to fetch spec %s", target.spec)
 		}
-	})
+		// Verify the content type.
+		if result.ContentType != target.wantType {
+			t.Errorf("Invalid mime type for %s: %s (wanted %s)", target.spec, result.ContentType, target.wantType)
+		}
+	}
+	// Run the upload a second time to ensure there are no errors or duplicated specs.
+	cmd = Command()
+	cmd.SetArgs(args)
+	err = cmd.Execute()
+	if err != nil {
+		t.Errorf("Error running second upload %v", err)
+	}
+	{
+		iter := registryClient.ListApiSpecRevisions(ctx, &rpc.ListApiSpecRevisionsRequest{
+			Name: "projects/" + projectID + "/locations/global/apis/-/versions/-/specs/-@-",
+		})
+		count := countSpecRevisions(iter)
+		if count != 2 {
+			t.Errorf("expected 2 versions, got %d", count)
+		}
+	}
 	// Delete the test project.
 	req := &rpc.DeleteProjectRequest{
 		Name:  projectName,
@@ -155,6 +139,20 @@ func TestDiscoveryUpload(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to delete test project: %s", err)
 	}
+}
+
+func countSpecRevisions(iter *gapic.ApiSpecIterator) int {
+	count := 0
+	for {
+		_, err := iter.Next()
+		if err == iterator.Done {
+			break
+		} else if err != nil {
+			break
+		}
+		count++
+	}
+	return count
 }
 
 func TestDiscoveryMissingParent(t *testing.T) {
