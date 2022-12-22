@@ -1,0 +1,36 @@
+{
+  "kind": "discovery#directoryList",
+  "discoveryVersion": "v1",
+  "items": [
+    {
+      "kind": "discovery#directoryItem",
+      "id": "apigeeregistry:v1",
+      "name": "apigeeregistry",
+      "version": "v1",
+      "title": "Apigee Registry API",
+      "description": "",
+      "discoveryRestUrl": "http://localhost:8081/apigeeregistry-v1.json",
+      "icons": {
+        "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
+        "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
+      },
+      "documentationLink": "https://cloud.google.com/apigee/docs/api-hub/what-is-api-hub",
+      "preferred": true
+    },
+    {
+      "kind": "discovery#directoryItem",
+      "id": "discovery:v1",
+      "name": "discovery",
+      "version": "v1",
+      "title": "API Discovery Service",
+      "description": "Google API Discovery Service allows service consumers to list the discovery metadata of all public APIs managed by the API Platform.",
+      "discoveryRestUrl": "http://localhost:8081/discovery-v1.json",
+      "icons": {
+        "x16": "https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png",
+        "x32": "https://www.gstatic.com/images/branding/product/1x/googleg_32dp.png"
+      },
+      "documentationLink": "https://developers.google.com/discovery",
+      "preferred": true
+    }
+  ]
+}

@@ -15,8 +15,147 @@
 package bulk
 
 import (
+	"context"
+	"log"
+	"net/http"
 	"testing"
+
+	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/rpc"
+	"google.golang.org/api/iterator"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
+
+func runTestServer() {
+	http.Handle("/", http.FileServer(http.Dir("testdata/discovery")))
+	err := http.ListenAndServe(":8081", nil)
+	if err != nil {
+		log.Fatalf("Test server failed to start %v", err)
+	}
+}
+
+func TestDiscoveryUpload(t *testing.T) {
+	go runTestServer()
+
+	projectName := "projects/disco-test"
+	projectID := "disco-test"
+
+	// Create a registry client.
+	ctx := context.Background()
+	registryClient, err := connection.NewRegistryClient(ctx)
+	if err != nil {
+		t.Fatalf("Error creating client: %+v", err)
+	}
+	defer registryClient.Close()
+	adminClient, err := connection.NewAdminClient(ctx)
+	if err != nil {
+		t.Fatalf("Error creating client: %+v", err)
+	}
+	defer adminClient.Close()
+	// Clear the test project.
+	err = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{
+		Name:  projectName,
+		Force: true,
+	})
+	if err != nil && status.Code(err) != codes.NotFound {
+		t.Fatalf("Error deleting test project: %+v", err)
+	}
+	// Create the test project.
+	_, err = adminClient.CreateProject(ctx, &rpc.CreateProjectRequest{
+		ProjectId: projectID,
+		Project: &rpc.Project{
+			DisplayName: "Test",
+			Description: "A test catalog",
+		},
+	})
+	if err != nil {
+		t.Fatalf("Error creating project %s", err)
+	}
+	t.Run("mock service", func(t *testing.T) {
+		cmd := Command()
+		cmd.SetArgs([]string{
+			"discovery",
+			"--service",
+			"http://localhost:8081/apis.json",
+			"--parent",
+			"projects/disco-test/locations/global",
+		})
+		err := cmd.Execute()
+		if err != nil {
+			log.Printf("Error %v", err)
+		}
+		targets := []struct {
+			desc     string
+			spec     string
+			wantType string
+		}{
+			{
+				desc:     "Apigee Registry",
+				spec:     "apis/apigeeregistry/versions/v1/specs/discovery",
+				wantType: "application/x.discovery",
+			},
+			{
+				desc:     "Petstore OpenAPI",
+				spec:     "apis/discovery/versions/v1/specs/discovery",
+				wantType: "application/x.discovery",
+			},
+		}
+		for _, target := range targets {
+			// Get the uploaded spec
+			result, err := registryClient.GetApiSpecContents(ctx, &rpc.GetApiSpecContentsRequest{
+				Name: "projects/" + projectID + "/locations/global/" + target.spec,
+			})
+			if err != nil {
+				t.Fatalf("unable to fetch spec %s", target.spec)
+			}
+			// Verify the content type.
+			if result.ContentType != target.wantType {
+				t.Errorf("Invalid mime type for %s: %s (wanted %s)", target.spec, result.ContentType, target.wantType)
+			}
+		}
+		// run upload a second time to ensure there are no errors or duplicated specs
+		cmd = Command()
+		cmd.SetArgs([]string{
+			"discovery",
+			"--service",
+			"http://localhost:8081/apis.json",
+			"--parent",
+			"projects/disco-test/locations/global",
+		})
+		err = cmd.Execute()
+		if err != nil {
+			log.Printf("Error %v", err)
+		}
+		{
+			iter := registryClient.ListApiSpecRevisions(ctx, &rpc.ListApiSpecRevisionsRequest{
+				Name: "projects/" + projectID + "/locations/global/apis/-/versions/-/specs/-@-",
+			})
+			count := 0
+			for {
+				_, err = iter.Next()
+				if err == iterator.Done {
+					break
+				} else if err != nil {
+					break
+				}
+				count++
+			}
+			if count != 2 {
+				t.Errorf("expected 2 versions, got %d", count)
+			}
+		}
+	})
+	// Delete the test project.
+	req := &rpc.DeleteProjectRequest{
+		Name:  projectName,
+		Force: true,
+	}
+	err = adminClient.DeleteProject(ctx, req)
+	if err != nil {
+		t.Fatalf("Failed to delete test project: %s", err)
+	}
+}
 
 func TestDiscoveryMissingParent(t *testing.T) {
 	const (
