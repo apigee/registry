@@ -29,10 +29,24 @@ import (
 	"google.golang.org/grpc/status"
 	"gopkg.in/yaml.v3"
 
+	"github.com/google/gnostic/compiler"
 	discovery "github.com/google/gnostic/discovery"
 )
 
+// Read the list of APIs from the Discovery service.
+func fetchDiscoveryList(service string) (*discovery.List, error) {
+	if service == "" {
+		service = discovery.APIsListServiceURL
+	}
+	bytes, err := compiler.FetchFile(service)
+	if err != nil {
+		return nil, err
+	}
+	return discovery.ParseList(bytes)
+}
+
 func discoveryCommand() *cobra.Command {
+	var service string
 	cmd := &cobra.Command{
 		Use:   "discovery",
 		Short: "Bulk-upload API Discovery documents from the Google API Discovery service",
@@ -57,7 +71,7 @@ func discoveryCommand() *cobra.Command {
 			taskQueue, wait := core.WorkerPool(ctx, jobs)
 			defer wait()
 
-			discoveryResponse, err := discovery.FetchList()
+			discoveryResponse, err := fetchDiscoveryList(service)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to fetch discovery list")
 			}
@@ -76,7 +90,8 @@ func discoveryCommand() *cobra.Command {
 			return nil
 		},
 	}
-
+	cmd.Flags().StringVar(&service, "service", "",
+		fmt.Sprintf("API Discovery Service URL (default %s)", discovery.APIsListServiceURL))
 	return cmd
 }
 
