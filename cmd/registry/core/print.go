@@ -99,7 +99,7 @@ func WriteArtifactContents(artifact *rpc.Artifact) error {
 	return nil
 }
 
-func isPrintableType(mimeType string) bool {
+func IsPrintableType(mimeType string) bool {
 	if mimeType == "text/plain" {
 		return true
 	} else if strings.HasPrefix(mimeType, "application/yaml") {
@@ -112,7 +112,7 @@ func isPrintableType(mimeType string) bool {
 }
 
 func PrintArtifactContents(artifact *rpc.Artifact) error {
-	if isPrintableType(artifact.GetMimeType()) {
+	if IsPrintableType(artifact.GetMimeType()) {
 		fmt.Printf("%s\n", string(artifact.GetContents()))
 		return nil
 	}

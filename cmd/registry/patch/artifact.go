@@ -33,8 +33,8 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-// ExportArtifact allows an artifact to be individually exported as a YAML file.
-func ExportArtifact(ctx context.Context, client *gapic.RegistryClient, message *rpc.Artifact) ([]byte, *models.Header, error) {
+// PatchForArtifact allows an artifact to be individually exported as a YAML file.
+func PatchForArtifact(ctx context.Context, client *gapic.RegistryClient, message *rpc.Artifact) ([]byte, *models.Header, error) {
 	if message.Contents == nil {
 		req := &rpc.GetArtifactContentsRequest{
 			Name: message.Name,

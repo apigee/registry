@@ -15,6 +15,7 @@
 package patch
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io/fs"
@@ -26,10 +27,67 @@ import (
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/models"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"google.golang.org/grpc/metadata"
+	"gopkg.in/yaml.v3"
 )
+
+func newProject(ctx context.Context, client *gapic.RegistryClient, message *rpc.Project) (*models.Project, error) {
+	projectName, err := names.ParseProject(message.Name)
+	if err != nil {
+		return nil, err
+	}
+	return &models.Project{
+		Header: models.Header{
+			ApiVersion: RegistryV1,
+			Kind:       "Project",
+			Metadata: models.Metadata{
+				Name: projectName.ProjectID,
+			},
+		},
+		Data: models.ProjectData{
+			DisplayName: message.DisplayName,
+			Description: message.Description,
+		},
+	}, err
+}
+
+// PatchForProject gets a serialized representation of a project.
+func PatchForProject(ctx context.Context, client *gapic.RegistryClient, message *rpc.Project) ([]byte, *models.Header, error) {
+	project, err := newProject(ctx, client, message)
+	if err != nil {
+		return nil, nil, err
+	}
+	var b bytes.Buffer
+	err = yamlEncoder(&b).Encode(project)
+	if err != nil {
+		return nil, nil, err
+	}
+	return b.Bytes(), &project.Header, nil
+}
+
+func applyProjectPatchBytes(ctx context.Context, client connection.AdminClient, bytes []byte) error {
+	var project models.Project
+	err := yaml.Unmarshal(bytes, &project)
+	if err != nil {
+		return err
+	}
+	req := &rpc.UpdateProjectRequest{
+		Project: &rpc.Project{
+			Name:        "projects/" + project.Metadata.Name,
+			DisplayName: project.Data.DisplayName,
+			Description: project.Data.Description,
+		},
+		AllowMissing: true,
+	}
+	_, err = client.UpdateProject(ctx, req)
+	if err != nil {
+		return err
+	}
+	return nil
+}
 
 // ExportProject writes a project into a directory of YAML files.
 func ExportProject(ctx context.Context, client *gapic.RegistryClient, projectName names.Project, root string, taskQueue chan<- core.Task, nested bool) error {
@@ -160,7 +218,7 @@ func (task *exportAPITask) String() string {
 }
 
 func (task *exportAPITask) Run(ctx context.Context) error {
-	bytes, header, err := ExportAPI(ctx, task.client, task.message, task.nested)
+	bytes, header, err := PatchForApi(ctx, task.client, task.message, task.nested)
 	if err != nil {
 		return err
 	}
@@ -189,7 +247,7 @@ func (task *exportArtifactTask) String() string {
 }
 
 func (task *exportArtifactTask) Run(ctx context.Context) error {
-	bytes, header, err := ExportArtifact(ctx, task.client, task.message)
+	bytes, header, err := PatchForArtifact(ctx, task.client, task.message)
 	if err != nil {
 		log.FromContext(ctx).Warnf("Skipped %s: %s", task.message.Name, err)
 		return nil
@@ -224,7 +282,7 @@ func (task *exportVersionTask) String() string {
 }
 
 func (task *exportVersionTask) Run(ctx context.Context) error {
-	bytes, header, err := ExportAPIVersion(ctx, task.client, task.message, task.nested)
+	bytes, header, err := PatchForApiVersion(ctx, task.client, task.message, task.nested)
 	if err != nil {
 		return err
 	}
@@ -254,7 +312,7 @@ func (task *exportSpecTask) String() string {
 }
 
 func (task *exportSpecTask) Run(ctx context.Context) error {
-	bytes, header, err := ExportAPISpec(ctx, task.client, task.message, task.nested)
+	bytes, header, err := PatchForApiSpec(ctx, task.client, task.message, task.nested)
 	if err != nil {
 		return err
 	}
@@ -301,7 +359,7 @@ func (task *exportDeploymentTask) String() string {
 }
 
 func (task *exportDeploymentTask) Run(ctx context.Context) error {
-	bytes, header, err := ExportAPIDeployment(ctx, task.client, task.message, task.nested)
+	bytes, header, err := PatchForApiDeployment(ctx, task.client, task.message, task.nested)
 	if err != nil {
 		return err
 	}

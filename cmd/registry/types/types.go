@@ -71,6 +71,19 @@ func IsZipArchive(mimeType string) bool {
 	return strings.Contains(mimeType, "+zip")
 }
 
+// IsPrintableType returns true if the corresponding contents can be treated as a string.
+func IsPrintableType(mimeType string) bool {
+	if mimeType == "text/plain" {
+		return true
+	} else if strings.HasPrefix(mimeType, "application/yaml") {
+		return true
+	} else if strings.HasPrefix(mimeType, "application/json") {
+		return true
+	} else {
+		return false
+	}
+}
+
 // MimeTypeForMessageType returns a MIME type that represents a Protocol Buffer message type.
 func MimeTypeForMessageType(protoType string) string {
 	return fmt.Sprintf("application/octet-stream;type=%s", protoType)

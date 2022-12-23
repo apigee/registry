@@ -22,7 +22,7 @@ import (
 var deploymentRevisionRegexp = regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/deployments/%s(?:@%s)?$",
 	identifier, Location, identifier, identifier, revisionTag))
 
-var deploymentRevisionCollectionRegexp = regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/deployments/%s@",
+var deploymentRevisionCollectionRegexp = regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/deployments/%s@$",
 	identifier, Location, identifier, identifier))
 
 // DeploymentRevision represents a resource name for an API deployment revision.

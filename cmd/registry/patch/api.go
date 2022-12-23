@@ -129,8 +129,8 @@ func collectChildArtifacts(ctx context.Context, client *gapic.RegistryClient, ar
 	return artifacts, nil
 }
 
-// ExportAPI allows an API to be individually exported as a YAML file.
-func ExportAPI(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api, nested bool) ([]byte, *models.Header, error) {
+// PatchForApi allows an API to be individually exported as a YAML file.
+func PatchForApi(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api, nested bool) ([]byte, *models.Header, error) {
 	api, err := newApi(ctx, client, message, nested)
 	if err != nil {
 		return nil, nil, err

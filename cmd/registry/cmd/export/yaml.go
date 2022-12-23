@@ -55,7 +55,7 @@ func yamlCommand() *cobra.Command {
 				}
 			} else if api, err := names.ParseApi(c.FQName(args[0])); err == nil {
 				err = core.GetAPI(ctx, client, api, func(message *rpc.Api) error {
-					bytes, _, err := patch.ExportAPI(ctx, client, message, nested)
+					bytes, _, err := patch.PatchForApi(ctx, client, message, nested)
 					if err != nil {
 						return err
 					}
@@ -67,7 +67,7 @@ func yamlCommand() *cobra.Command {
 				}
 			} else if version, err := names.ParseVersion(c.FQName(args[0])); err == nil {
 				err = core.GetVersion(ctx, client, version, func(message *rpc.ApiVersion) error {
-					bytes, _, err := patch.ExportAPIVersion(ctx, client, message, nested)
+					bytes, _, err := patch.PatchForApiVersion(ctx, client, message, nested)
 					if err != nil {
 						return err
 					}
@@ -79,7 +79,7 @@ func yamlCommand() *cobra.Command {
 				}
 			} else if spec, err := names.ParseSpec(c.FQName(args[0])); err == nil {
 				err = core.GetSpec(ctx, client, spec, false, func(message *rpc.ApiSpec) error {
-					bytes, _, err := patch.ExportAPISpec(ctx, client, message, nested)
+					bytes, _, err := patch.PatchForApiSpec(ctx, client, message, nested)
 					if err != nil {
 						return err
 					}
@@ -91,7 +91,7 @@ func yamlCommand() *cobra.Command {
 				}
 			} else if deployment, err := names.ParseDeployment(c.FQName(args[0])); err == nil {
 				err = core.GetDeployment(ctx, client, deployment, func(message *rpc.ApiDeployment) error {
-					bytes, _, err := patch.ExportAPIDeployment(ctx, client, message, nested)
+					bytes, _, err := patch.PatchForApiDeployment(ctx, client, message, nested)
 					if err != nil {
 						return err
 					}
@@ -103,7 +103,7 @@ func yamlCommand() *cobra.Command {
 				}
 			} else if artifact, err := names.ParseArtifact(c.FQName(args[0])); err == nil {
 				err = core.GetArtifact(ctx, client, artifact, false, func(message *rpc.Artifact) error {
-					bytes, _, err := patch.ExportArtifact(ctx, client, message)
+					bytes, _, err := patch.PatchForArtifact(ctx, client, message)
 					if err != nil {
 						return err
 					}

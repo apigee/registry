@@ -17,7 +17,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func TestProjectPatches(t *testing.T) {
+func TestProjectImports(t *testing.T) {
 	// Each of these three imports should import an identical project that can be exported
 	// into the structures in "sampleDir".
 	const sampleDir = "testdata/sample-nested"
@@ -92,9 +92,9 @@ func TestProjectPatches(t *testing.T) {
 				t.Fatalf("Failed to get API: %s", err)
 			}
 
-			actual, _, err := ExportAPI(ctx, registryClient, got, true)
+			actual, _, err := PatchForApi(ctx, registryClient, got, true)
 			if err != nil {
-				t.Fatalf("ExportApi(%+v) returned an error: %s", got, err)
+				t.Fatalf("PatchForApi(%+v) returned an error: %s", got, err)
 			}
 
 			if diff := cmp.Diff(expected, actual); diff != "" {
@@ -118,9 +118,9 @@ func TestProjectPatches(t *testing.T) {
 					t.Fatalf("Failed to verify artifact existence: %s", err)
 				}
 
-				actual, _, err := ExportArtifact(ctx, registryClient, message)
+				actual, _, err := PatchForArtifact(ctx, registryClient, message)
 				if err != nil {
-					t.Fatalf("ExportArtifact(%+v) returned an error: %s", message, err)
+					t.Fatalf("PatchForArtifact(%+v) returned an error: %s", message, err)
 				}
 
 				if diff := cmp.Diff(expected, actual); diff != "" {
