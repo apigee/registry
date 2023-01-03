@@ -24,7 +24,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/apigee/registry/cmd/registry/cmd/upload"
+	"github.com/apigee/registry/cmd/registry/cmd/apply"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/rpc"
@@ -257,12 +257,12 @@ func TestResolve(t *testing.T) {
 			}
 			addRevisionToWants(s)
 
-			// Upload the manifest to registry
-			args := []string{"manifest", test.manifestPath, "--project-id=" + testProject}
-			uploadCmd := upload.Command()
-			uploadCmd.SetArgs(args)
-			if err = uploadCmd.Execute(); err != nil {
-				t.Fatalf("Failed to upload the manifest: %s", err)
+			// Apply the manifest to the registry
+			args := []string{"-f", test.manifestPath, "--parent", "projects/" + testProject + "/locations/global"}
+			applyCmd := apply.Command()
+			applyCmd.SetArgs(args)
+			if err = applyCmd.Execute(); err != nil {
+				t.Fatalf("Failed to apply the manifest: %s", err)
 			}
 
 			resolveCmd := Command()

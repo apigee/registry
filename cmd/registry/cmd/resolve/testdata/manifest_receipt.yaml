@@ -12,10 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-id: "test-manifest"
-generated_resources:
-  - pattern: apis/-/versions/-/specs/-/artifacts/test-receipt-artifact
-    receipt: true
-    dependencies:
-      - pattern: $resource.spec
-    action: "echo test-receipt-artifact"
+apiVersion: apigeeregistry/v1
+kind: Manifest
+metadata:
+  name: test-manifest
+data:
+  generated_resources:
+    - pattern: apis/-/versions/-/specs/-/artifacts/test-receipt-artifact
+      receipt: true
+      dependencies:
+        - pattern: $resource.spec
+      action: "echo test-receipt-artifact"

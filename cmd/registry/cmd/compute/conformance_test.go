@@ -23,7 +23,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/apigee/registry/cmd/registry/cmd/upload"
+	"github.com/apigee/registry/cmd/registry/cmd/apply"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/google/go-cmp/cmp"
@@ -454,12 +454,12 @@ func TestConformance(t *testing.T) {
 				t.Fatalf("Failed CreateApiSpec(%v): %s", req, err.Error())
 			}
 
-			// Upload the styleguide to registry
-			args := []string{"styleguide", test.conformancePath, "--project-id=" + testProject}
-			uploadCmd := upload.Command()
-			uploadCmd.SetArgs(args)
-			if err = uploadCmd.Execute(); err != nil {
-				t.Fatalf("Failed to upload the styleguide: %s", err)
+			// Apply the styleguide to the registry
+			args := []string{"-f", test.conformancePath, "--parent", "projects/" + testProject + "/locations/global"}
+			applyCmd := apply.Command()
+			applyCmd.SetArgs(args)
+			if err = applyCmd.Execute(); err != nil {
+				t.Fatalf("Failed to apply the styleguide: %s", err)
 			}
 
 			// setup the command
