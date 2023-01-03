@@ -12,38 +12,42 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-id: openapitest-multiple-state
-mime_types:
-  - application/x.openapi+gzip;version=3.0.0
-guidelines:
-  - id: refproperties
-    display_name: Govern Ref Properties
-    description: This guideline governs properties for ref fields on specs.
-    rules:
-      - id: norefsiblings
-        display_name: No $ref siblings
-        description: An object exposing a $ref property cannot be further extended with additional properties.
-        linter: sample
-        linter_rulename: no-$ref-siblings
-        severity: ERROR
-    state:  ACTIVE
-  - id: tagproperties
-    display_name: Tag Properties
-    description: This guideline specifies rules for different tags.
-    rules:
-      - id: openapitags
-        display_name: OpenAPI tags
-        description: OpenAPI object should have non-empty tags array.
-        linter: sample
-        linter_rulename: openapi-tags
-        severity: INFO
-      - id: operationtags
-        display_name: Operation tags
-        description: Operation should have non-empty tags array.
-        linter: sample
-        linter_rulename: operation-tags
-        severity: ERROR
-    state: PROPOSED
-linters:
-  - name: sample
-    uri: https://sample/url
+apiVersion: apigeeregistry/v1
+kind: StyleGuide
+metadata:
+  name: openapitest-multiple-state
+data:
+  mime_types:
+    - application/x.openapi+gzip;version=3.0.0
+  guidelines:
+    - id: refproperties
+      display_name: Govern Ref Properties
+      description: This guideline governs properties for ref fields on specs.
+      rules:
+        - id: norefsiblings
+          display_name: No $ref siblings
+          description: An object exposing a $ref property cannot be further extended with additional properties.
+          linter: sample
+          linter_rulename: no-$ref-siblings
+          severity: ERROR
+      state:  ACTIVE
+    - id: tagproperties
+      display_name: Tag Properties
+      description: This guideline specifies rules for different tags.
+      rules:
+        - id: openapitags
+          display_name: OpenAPI tags
+          description: OpenAPI object should have non-empty tags array.
+          linter: sample
+          linter_rulename: openapi-tags
+          severity: INFO
+        - id: operationtags
+          display_name: Operation tags
+          description: Operation should have non-empty tags array.
+          linter: sample
+          linter_rulename: operation-tags
+          severity: ERROR
+      state: PROPOSED
+  linters:
+    - name: sample
+      uri: https://sample/url
