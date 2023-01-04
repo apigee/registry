@@ -141,13 +141,13 @@ func (h *GetHandler) run() error {
 		} else if artifact, err := names.ParseArtifact(name); err == nil {
 			return core.ListArtifacts(ctx, client, artifact, filter, false, h.printArtifactName())
 		}
-		return nil
+		return fmt.Errorf("unsupported entity %+v", name)
 	}
 
 	// If we get here, name designates an individual resource to be displayed.
 	// So if a filter was specified, that's an error.
 	if filter != "" {
-		return errors.New("a --filter was specified for a non-collection resource")
+		return errors.New("--filter must not be specified for a non-collection resource")
 	}
 
 	if project, err := names.ParseProject(name); err == nil {

@@ -41,12 +41,13 @@ func TestGetValidResources(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to prepare test data: %+v", err)
 	}
-	artifacts := []*rpc.Artifact{
-		{Name: "projects/my-project/locations/global/artifacts/x", MimeType: types.MimeTypeForKind("DisplaySettings"), Contents: displaySettingsBytes},
-		{Name: "projects/my-project/locations/global/apis/a/artifacts/x", MimeType: "application/yaml", Contents: []byte("hello: 123")},
-		{Name: "projects/my-project/locations/global/apis/a/versions/v/artifacts/x", MimeType: "application/yaml", Contents: []byte("hello: 123")},
-		{Name: "projects/my-project/locations/global/apis/a/versions/v/specs/s/artifacts/x", MimeType: "application/yaml", Contents: []byte("hello: 123")},
-		{Name: "projects/my-project/locations/global/apis/a/deployments/d/artifacts/x", MimeType: "application/yaml", Contents: []byte("hello: 123")},
+	seed := []seeder.RegistryResource{
+		&rpc.ApiSpec{Name: "projects/my-project/locations/global/apis/a/versions/v/specs/s", MimeType: "text/plain", Contents: []byte("hello")},
+		&rpc.Artifact{Name: "projects/my-project/locations/global/artifacts/x", MimeType: types.MimeTypeForKind("DisplaySettings"), Contents: displaySettingsBytes},
+		&rpc.Artifact{Name: "projects/my-project/locations/global/apis/a/artifacts/x", MimeType: "application/yaml", Contents: []byte("hello: 123")},
+		&rpc.Artifact{Name: "projects/my-project/locations/global/apis/a/versions/v/artifacts/x", MimeType: "application/yaml", Contents: []byte("hello: 123")},
+		&rpc.Artifact{Name: "projects/my-project/locations/global/apis/a/versions/v/specs/s/artifacts/x", MimeType: "application/yaml", Contents: []byte("hello: 123")},
+		&rpc.Artifact{Name: "projects/my-project/locations/global/apis/a/deployments/d/artifacts/x", MimeType: "application/yaml", Contents: []byte("hello: 123")},
 	}
 	ctx := context.Background()
 	registryClient, err := connection.NewRegistryClient(ctx)
@@ -67,9 +68,10 @@ func TestGetValidResources(t *testing.T) {
 		_ = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{Name: "projects/my-project", Force: true})
 	})
 	_ = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{Name: "projects/my-project", Force: true})
-	if err := seeder.SeedArtifacts(ctx, client, artifacts...); err != nil {
+	if err := seeder.SeedRegistry(ctx, client, seed...); err != nil {
 		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
 	}
+
 	spec, err := registryClient.GetApiSpec(ctx, &rpc.GetApiSpecRequest{Name: "projects/my-project/locations/global/apis/a/versions/v/specs/s"})
 	if err != nil {
 		t.Fatalf("Failed to prepare test data: %+v", err)
@@ -120,14 +122,19 @@ func TestGetValidResources(t *testing.T) {
 		"projects/my-project/locations/global/apis/a/deployments/d/artifacts/x",
 	}
 	for _, r := range resources {
-		cmd := Command()
-		args := []string{r}
-		cmd.SetArgs(args)
-		out := bytes.NewBuffer(make([]byte, 0))
-		cmd.SetOutput(out)
-		if err := cmd.Execute(); err != nil {
-			t.Fatalf("Execute() with args %v returned error: %s", args, err)
-		}
+		t.Run(r, func(t *testing.T) {
+			cmd := Command()
+			args := []string{r}
+			cmd.SetArgs(args)
+			out := bytes.NewBuffer(make([]byte, 0))
+			cmd.SetOutput(out)
+			if err := cmd.Execute(); err != nil {
+				t.Errorf("Execute() with args %v returned error: %s", args, err)
+			}
+			if len(out.Bytes()) == 0 {
+				t.Errorf("Execute() with args %v failed to return expected value(s)", args)
+			}
+		})
 	}
 	resourcesWithContents := []string{
 		"projects/my-project/locations/global/apis/a/versions/v/specs/s",
@@ -139,14 +146,19 @@ func TestGetValidResources(t *testing.T) {
 	}
 	// Get the raw contents of these resources.
 	for _, r := range resourcesWithContents {
-		cmd := Command()
-		args := []string{r, "--raw"}
-		cmd.SetArgs(args)
-		out := bytes.NewBuffer(make([]byte, 0))
-		cmd.SetOutput(out)
-		if err := cmd.Execute(); err != nil {
-			t.Fatalf("Execute() with args %v returned error: %s", args, err)
-		}
+		t.Run(r, func(t *testing.T) {
+			cmd := Command()
+			args := []string{r, "--raw"}
+			cmd.SetArgs(args)
+			out := bytes.NewBuffer(make([]byte, 0))
+			cmd.SetOutput(out)
+			if err := cmd.Execute(); err != nil {
+				t.Fatalf("Execute() with args %v returned error: %s", args, err)
+			}
+			if len(out.Bytes()) == 0 {
+				t.Errorf("Execute() with args %v failed to return expected value(s)", args)
+			}
+		})
 	}
 	// Print the contents of these resources.
 	for _, r := range resources {
@@ -156,7 +168,10 @@ func TestGetValidResources(t *testing.T) {
 		out := bytes.NewBuffer(make([]byte, 0))
 		cmd.SetOutput(out)
 		if err := cmd.Execute(); err != nil {
-			t.Fatalf("Execute() with args %v returned error: %s", args, err)
+			t.Errorf("Execute() with args %v returned error: %s", args, err)
+		}
+		if len(out.Bytes()) == 0 {
+			t.Errorf("Execute() with args %v failed to return expected value(s)", args)
 		}
 	}
 }
@@ -215,13 +230,100 @@ func TestGetInvalidResources(t *testing.T) {
 		"projects/my-project/locations/global/apis/a/deployments/d/artifacts/xx",
 	}
 	for _, r := range invalid {
-		cmd := Command()
-		cmd.SilenceUsage = true
-		cmd.SilenceErrors = true
-		args := []string{r}
-		cmd.SetArgs(args)
-		if err := cmd.Execute(); err == nil {
-			t.Fatalf("Execute() with args %v succeeded but should have failed", args)
-		}
+		t.Run(r, func(t *testing.T) {
+			cmd := Command()
+			cmd.SilenceUsage = true
+			cmd.SilenceErrors = true
+			args := []string{r}
+			cmd.SetArgs(args)
+			if err := cmd.Execute(); err == nil {
+				t.Errorf("Execute() with args %v succeeded but should have failed", args)
+			}
+		})
+	}
+}
+
+func TestGetValidResourcesWithFilter(t *testing.T) {
+	// Seed a registry with a list of leaf-level artifacts.
+	const scoreType = "application/octet-stream;type=google.cloud.apigeeregistry.v1.scoring.Score"
+	artifacts := []*rpc.Artifact{
+		{Name: "projects/my-project/locations/global/artifacts/x", MimeType: scoreType},
+		{Name: "projects/my-project/locations/global/apis/a/artifacts/x", MimeType: scoreType},
+		{Name: "projects/my-project/locations/global/apis/a/versions/v/artifacts/x", MimeType: scoreType},
+		{Name: "projects/my-project/locations/global/apis/a/versions/v/specs/s/artifacts/x", MimeType: scoreType},
+		{Name: "projects/my-project/locations/global/apis/a/deployments/d/artifacts/x", MimeType: scoreType},
+	}
+	ctx := context.Background()
+	registryClient, err := connection.NewRegistryClient(ctx)
+	if err != nil {
+		t.Fatalf("Failed to create client: %+v", err)
+	}
+	t.Cleanup(func() { registryClient.Close() })
+	adminClient, err := connection.NewAdminClient(ctx)
+	if err != nil {
+		t.Fatalf("Failed to create client: %+v", err)
+	}
+	t.Cleanup(func() { adminClient.Close() })
+	client := seeder.Client{
+		RegistryClient: registryClient,
+		AdminClient:    adminClient,
+	}
+	t.Cleanup(func() {
+		_ = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{Name: "projects/my-project", Force: true})
+	})
+	_ = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{Name: "projects/my-project", Force: true})
+	if err := seeder.SeedArtifacts(ctx, client, artifacts...); err != nil {
+		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+	}
+
+	// Verify that a filter specified on a get of a collection is ok.
+	valid_collections := []string{
+		"projects/my-project/locations/global/apis",
+		"projects/my-project/locations/global/apis/a/versions",
+		"projects/my-project/locations/global/apis/a/versions/v/specs",
+		"projects/my-project/locations/global/apis/a/deployments",
+		"projects/my-project/locations/global/apis/a/artifacts",
+		"projects/my-project/locations/global/apis/a/versions/v/artifacts",
+		"projects/my-project/locations/global/apis/a/versions/v/specs/s/artifacts",
+		"projects/my-project/locations/global/apis/a/deployments/d/artifacts",
+	}
+	for _, c := range valid_collections {
+		t.Run(c, func(t *testing.T) {
+			cmd := Command()
+			out := bytes.NewBuffer(make([]byte, 0))
+			cmd.SetOut(out)
+			args := []string{c, "--filter", "name.contains('a')"}
+			cmd.SetArgs(args)
+			if err := cmd.Execute(); err != nil {
+				t.Errorf("Execute() with args %v failed but should have succeeded", args)
+			}
+			if len(out.Bytes()) == 0 {
+				t.Errorf("Execute() with args %v failed to return expected value(s)", args)
+			}
+		})
+	}
+
+	// Verify that a filter specified on a get of an individual resource is an error.
+	valid_resources := []string{
+		"projects/my-project/locations/global/apis/a",
+		"projects/my-project/locations/global/apis/a/versions/v",
+		"projects/my-project/locations/global/apis/a/versions/v/specs/s",
+		"projects/my-project/locations/global/apis/a/deployments/d",
+		"projects/my-project/locations/global/apis/a/artifacts/x",
+		"projects/my-project/locations/global/apis/a/versions/v/artifacts/x",
+		"projects/my-project/locations/global/apis/a/versions/v/specs/s/artifacts/x",
+		"projects/my-project/locations/global/apis/a/deployments/d/artifacts/x",
+	}
+	for _, r := range valid_resources {
+		t.Run(r, func(t *testing.T) {
+			cmd := Command()
+			cmd.SilenceUsage = true
+			cmd.SilenceErrors = true
+			args := []string{r, "--filter", "name.contains('a')"}
+			cmd.SetArgs(args)
+			if err := cmd.Execute(); err == nil {
+				t.Errorf("Execute() with args %v succeeded but should have failed", args)
+			}
+		})
 	}
 }
