@@ -62,16 +62,16 @@ func (l *Checker) Check(ctx context.Context, admin connection.AdminClient, clien
 		return nil, err
 	}
 
-	if response.err != nil { // from a panic
-		return nil, response.err
+	if response.Error != nil { // from a panic
+		return nil, response.Error
 	}
 	return response, nil
 }
 
 type checkTask struct {
-	checkerer *Checker
-	response  *Response
-	resource  Resource
+	checker  *Checker
+	response *Response
+	resource Resource
 }
 
 func (t *checkTask) String() string {
@@ -81,8 +81,8 @@ func (t *checkTask) String() string {
 func (t *checkTask) Run(ctx context.Context) error {
 	var problems []Problem
 	var errMessages []string
-	for name, rule := range t.checkerer.rules {
-		if t.checkerer.configs.IsRuleEnabled(string(name), t.resource.GetName()) {
+	for name, rule := range t.checker.rules {
+		if t.checker.configs.IsRuleEnabled(string(name), t.resource.GetName()) {
 			if probs, err := t.runAndRecoverFromPanics(rule, t.resource); err == nil {
 				for _, p := range probs {
 					if p.RuleID == "" {

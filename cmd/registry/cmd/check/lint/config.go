@@ -26,14 +26,13 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// TODO(@theganyo): check this
-var defaultDisabledRules = []string{"cloud"}
+var defaultDisabledRules = []string{}
 
 // Configs determine if a rule is enabled or not.
 type Configs []Config
 
-// Config stores rule configurations for certain paths
-// that the name path must match any of the included paths
+// Config stores rule configurations for certain resource names
+// such that the resource name must match any of the included paths
 // but none of the excluded ones.
 type Config struct {
 	IncludedPaths []string `json:"included_paths" yaml:"included_paths"`
@@ -92,12 +91,12 @@ func ReadConfigsYAML(f io.Reader) (Configs, error) {
 }
 
 // IsRuleEnabled returns true if a rule is enabled by the configs.
-func (configs Configs) IsRuleEnabled(rule string, path string) bool {
+func (configs Configs) IsRuleEnabled(rule string, resourceName string) bool {
 	// Enabled by default if the rule does not belong to one of the default
 	// disabled groups. Otherwise, needs to be explicitly enabled.
 	enabled := !matchRule(rule, defaultDisabledRules...)
 	for _, c := range configs {
-		if c.matchPath(path) {
+		if c.matchPath(resourceName) {
 			if matchRule(rule, c.DisabledRules...) {
 				enabled = false
 			}

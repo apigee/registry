@@ -28,7 +28,7 @@ func NewResponse() *Response {
 		for res := range r.receiver {
 			r.Problems = append(r.Problems, res.problems...)
 			if res.err != nil {
-				r.err = res.err
+				r.Error = res.err
 			}
 		}
 	}()
@@ -46,7 +46,7 @@ type checked struct {
 type Response struct {
 	RunTime  time.Time `json:"time" yaml:"time"`
 	Problems []Problem `json:"problems" yaml:"problems"`
-	err      error     // populated if panic
+	Error    error     `json:"error,omitempty" yaml:"error,omitempty"` // populated if panic
 	receiver chan checked
 }
 
@@ -57,9 +57,3 @@ func (r *Response) checked(res Resource, probs []Problem, err error) {
 		err:      err,
 	}
 }
-
-// func (r *Response) write(w io.Writer) {
-// 	for n := range r.processedNames {
-// 		fmt.Fprintf(w, "%s\n", n)
-// 	}
-// }

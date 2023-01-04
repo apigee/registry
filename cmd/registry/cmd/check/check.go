@@ -15,12 +15,31 @@
 package check
 
 import (
+	"log"
+
 	"github.com/apigee/registry/cmd/registry/cmd/check/lint"
+	"github.com/apigee/registry/cmd/registry/cmd/check/rules"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/server/registry/names"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )
+
+var (
+	globalRules   = lint.NewRuleRegistry()
+	globalConfigs = defaultConfigs()
+)
+
+func init() {
+	if err := rules.Add(globalRules); err != nil {
+		log.Fatalf("error when registering rules: %v", err)
+	}
+}
+
+// Enable all rules by default.
+func defaultConfigs() lint.Configs {
+	return lint.Configs{}
+}
 
 func Command() *cobra.Command {
 	cmd := &cobra.Command{
@@ -58,7 +77,7 @@ func Command() *cobra.Command {
 				return err
 			}
 
-			linter := lint.New(nil, nil)
+			linter := lint.New(globalRules, globalConfigs)
 			response, err := linter.Check(ctx, adminClient, client, root, filter, jobs)
 			if err != nil {
 				return err

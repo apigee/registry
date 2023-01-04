@@ -219,9 +219,9 @@ func (r *FieldRule) Apply(res Resource) (problems []Problem) {
 		if r.OnlyIf == nil || r.OnlyIf(res, name) {
 			value := v.Elem().Field(i)
 			probs := r.ApplyToField(res, name, value)
-			for _, p := range probs {
-				if p.Location == "" {
-					p.Location = res.GetName() + "::" + name
+			for i := range probs {
+				if probs[i].Location == "" {
+					probs[i].Location = res.GetName() + "::" + name
 				}
 			}
 			problems = append(problems, probs...)

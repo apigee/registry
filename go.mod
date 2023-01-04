@@ -7,7 +7,6 @@ require (
 	cloud.google.com/go/pubsub v1.25.1
 	github.com/GoogleCloudPlatform/cloudsql-proxy v1.32.0
 	github.com/apex/log v1.9.0
-	github.com/getkin/kin-openapi v0.103.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/google/cel-go v0.12.5
 	github.com/google/gnostic v0.6.9
@@ -18,7 +17,6 @@ require (
 	github.com/spf13/cobra v1.5.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.8.0
-	github.com/tufin/oasdiff v1.0.9
 	github.com/yoheimuta/go-protoparser/v4 v4.6.0
 	golang.org/x/oauth2 v0.0.0-20220909003341-f21342109be1
 	google.golang.org/api v0.98.0
@@ -35,8 +33,8 @@ require (
 	cloud.google.com/go/compute v1.10.0 // indirect
 	cloud.google.com/go/iam v0.5.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.2.0 // indirect
-	github.com/invopop/yaml v0.2.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.5 // indirect
+	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 )
 
 require (
@@ -44,8 +42,6 @@ require (
 	github.com/bmatcuk/doublestar/v4 v4.4.0
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
-	github.com/go-openapi/jsonpointer v0.19.5 // indirect
-	github.com/go-openapi/swag v0.22.3 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2
 	github.com/hashicorp/hcl v1.0.0 // indirect
@@ -60,10 +56,8 @@ require (
 	github.com/jackc/pgx/v4 v4.17.2 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
-	github.com/josharian/intern v1.0.0 // indirect
 	github.com/lib/pq v1.10.7
 	github.com/magiconair/properties v1.8.6 // indirect
-	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-sqlite3 v1.14.15
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/pelletier/go-toml v1.9.5 // indirect

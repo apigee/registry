@@ -15,15 +15,17 @@
 package rule0001
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/apigee/registry/cmd/registry/cmd/check/lint"
 	"github.com/apigee/registry/rpc"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"google.golang.org/protobuf/proto"
 )
 
-func TestContentsMimeType(t *testing.T) {
+func TestContentsMimeType_general(t *testing.T) {
 	tests := []struct {
 		name     string
 		mimeType string
@@ -31,25 +33,41 @@ func TestContentsMimeType(t *testing.T) {
 		problems []lint.Problem
 	}{
 		{
-			"Partial match",
+			"empty content",
+			"text/plain",
+			nil,
+			nil,
+		},
+		{
+			"type match",
 			"text/plain",
 			[]byte("string"),
 			nil,
 		},
 		{
-			"Complete match",
-			"text/plain; charset=utf-8",
+			"type and parameter match",
+			"text/plain;charset=utf-8",
 			[]byte("string"),
 			nil,
 		},
 		{
-			"Failed match",
+			"wrong type",
 			"text/html",
 			[]byte("string"),
 			[]lint.Problem{{
-				Message:    `Unexpected mime type: "text/html"`,
-				Suggestion: `Expected mime type: "text/plain; charset=utf-8"`,
-				Severity:   1,
+				Message:    `Unexpected mime_type "text/html" for contents.`,
+				Suggestion: `Detected mime_type "text/plain; charset=utf-8" for contents.`,
+				Severity:   lint.WARNING,
+			}},
+		},
+		{
+			"empty type",
+			"",
+			[]byte("string"),
+			[]lint.Problem{{
+				Message:    `Unexpected mime_type "" for contents.`,
+				Suggestion: `Detected mime_type "text/plain; charset=utf-8" for contents.`,
+				Severity:   lint.WARNING,
 			}},
 		},
 	}
@@ -73,11 +91,48 @@ func TestContentsMimeType(t *testing.T) {
 						t.Error("invalid OnlyIf")
 					}
 					got := contentsMimeType.Apply(resource)
+					for i := range test.problems {
+						test.problems[i].Location = resource.GetName() + "::MimeType"
+					}
 					if diff := cmp.Diff(test.problems, got, cmpopts.IgnoreUnexported(lint.Problem{})); diff != "" {
 						t.Errorf("Unexpected diff (-want +got):\n%s", diff)
 					}
 				})
 			}
 		})
+	}
+}
+
+func TestContentsMimeType_score(t *testing.T) {
+	const scoreType = "application/octet-stream;type=google.cloud.apigeeregistry.v1.scoring.Score"
+	var score, _ = proto.Marshal(&rpc.Score{
+		Id:   "score",
+		Kind: "Score",
+		Value: &rpc.Score_IntegerValue{
+			IntegerValue: &rpc.IntegerValue{
+				Value:    1,
+				MinValue: 0,
+				MaxValue: 10,
+			},
+		},
+	})
+
+	resource := &rpc.Artifact{
+		Name:     "Artifact",
+		MimeType: scoreType,
+		Contents: score,
+	}
+
+	want := []lint.Problem{{
+		Message:    fmt.Sprintf(`Unexpected contents %q for mime_type.`, scoreType),
+		Suggestion: `Internal contents may be corrupted.`,
+		Severity:   lint.ERROR,
+		Location:   "Artifact::MimeType",
+	}}
+
+	got := contentsMimeType.Apply(resource)
+
+	if diff := cmp.Diff(want, got, cmpopts.IgnoreUnexported(lint.Problem{})); diff != "" {
+		t.Errorf("Unexpected diff (-want +got):\n%s", diff)
 	}
 }

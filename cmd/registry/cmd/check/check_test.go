@@ -15,24 +15,43 @@
 package check
 
 import (
+	"bytes"
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/server/registry"
 	"github.com/apigee/registry/server/registry/test/seeder"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
+// TestMain will set up a local RegistryServer and grpc.Server for all
+// tests in this package if APG_REGISTRY_ADDRESS env var is not set
+// for the client.
+func TestMain(m *testing.M) {
+	grpctest.TestMain(m, registry.Config{})
+}
+
 func TestCheck(t *testing.T) {
-	// Seed a registry with a list of leaf-level artifacts.
-	const scoreType = "application/octet-stream;type=google.cloud.apigeeregistry.v1.scoring.Score"
-	artifacts := []*rpc.Artifact{
-		{Name: "projects/my-project/locations/global/artifacts/x", MimeType: scoreType},
-		{Name: "projects/my-project/locations/global/apis/a/artifacts/x", MimeType: scoreType},
-		{Name: "projects/my-project/locations/global/apis/a/versions/v/artifacts/x", MimeType: scoreType},
-		{Name: "projects/my-project/locations/global/apis/a/versions/v/specs/s/artifacts/x", MimeType: scoreType},
-		{Name: "projects/my-project/locations/global/apis/a/deployments/d/artifacts/x", MimeType: scoreType},
-	}
+	var score, _ = protojson.Marshal(&rpc.Score{
+		Id:   "score",
+		Kind: "Score",
+		Value: &rpc.Score_IntegerValue{
+			IntegerValue: &rpc.IntegerValue{
+				Value:    1,
+				MinValue: 0,
+				MaxValue: 10,
+			},
+		},
+	})
+	artifacts := []*rpc.Artifact{{
+		Name:     "projects/my-project/locations/global/apis/b/deployments/d/artifacts/bad",
+		MimeType: "application/html",
+		Contents: score,
+	}}
 	ctx := context.Background()
 	registryClient, err := connection.NewRegistryClient(ctx)
 	if err != nil {
@@ -52,63 +71,16 @@ func TestCheck(t *testing.T) {
 		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
 	}
 
-	// Verify that yaml export runs for each resource.
-	resources := []string{
-		"projects/my-project/locations/global/artifacts/x",
-		"projects/my-project/locations/global/apis/a/versions/v",
-		"projects/my-project/locations/global/apis/a/versions/v/specs/s",
-		"projects/my-project/locations/global/apis/a/deployments/d",
-		"projects/my-project/locations/global/apis/a",
-		"projects/my-project/locations/global/apis/a/versions/v",
-		"projects/my-project/locations/global/apis/a/versions/v/specs/s",
-		"projects/my-project/locations/global/apis/a/deployments/d",
-		"projects/my-project/locations/global/apis/a/artifacts/x",
-		"projects/my-project/locations/global/apis/a/versions/v/artifacts/x",
-		"projects/my-project/locations/global/apis/a/versions/v/specs/s/artifacts/x",
-		"projects/my-project/locations/global/apis/a/deployments/d/artifacts/x",
+	buf := &bytes.Buffer{}
+	cmd := Command()
+	args := []string{"projects/my-project"}
+	cmd.SetArgs(args)
+	cmd.SetOut(buf)
+	cmd.SetErr(buf)
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("Execute() with args %v returned error: %s", args, err)
 	}
-	for _, r := range resources {
-		cmd := Command()
-		args := []string{"yaml", r}
-		cmd.SetArgs(args)
-		if err := cmd.Execute(); err != nil {
-			t.Fatalf("Execute() with args %v returned error: %s", args, err)
-		}
-	}
-
-	// Repeat with --nested export enabled.
-	for _, r := range resources {
-		cmd := Command()
-		args := []string{"yaml", r, "--nested"}
-		cmd.SetArgs(args)
-		if err := cmd.Execute(); err != nil {
-			t.Fatalf("Execute() with args %v returned error: %s", args, err)
-		}
-	}
-
-	// Verify that invalid exports fail.
-	invalid := []string{
-		"projects/my-project/locations/global/artifacts/xx",
-		"projects/my-project/locations/global/apis/a/versions/vv",
-		"projects/my-project/locations/global/apis/a/versions/v/specs/ss",
-		"projects/my-project/locations/global/apis/a/deployments/dd",
-		"projects/my-project/locations/global/apis/aa",
-		"projects/my-project/locations/global/apis/a/versions/vv",
-		"projects/my-project/locations/global/apis/a/versions/v/specs/ss",
-		"projects/my-project/locations/global/apis/a/deployments/dd",
-		"projects/my-project/locations/global/apis/a/artifacts/xx",
-		"projects/my-project/locations/global/apis/a/versions/v/artifacts/xx",
-		"projects/my-project/locations/global/apis/a/versions/v/specs/s/artifacts/xx",
-		"projects/my-project/locations/global/apis/a/deployments/d/artifacts/xx",
-	}
-	for _, r := range invalid {
-		cmd := Command()
-		cmd.SilenceUsage = true
-		cmd.SilenceErrors = true
-		args := []string{"yaml", r}
-		cmd.SetArgs(args)
-		if err := cmd.Execute(); err == nil {
-			t.Fatalf("Execute() with args %v succeeded but should have failed", args)
-		}
+	if !strings.Contains(buf.String(), `message: Unexpected mime_type "application/html" for contents`) {
+		t.Errorf("unexpected result: %s", buf)
 	}
 }
