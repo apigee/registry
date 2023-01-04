@@ -25,12 +25,9 @@ func Command() *cobra.Command {
 		Short: "Upload information to the API Registry",
 	}
 
-	cmd.AddCommand(artifactCommand())
 	cmd.AddCommand(bulk.Command())
 	cmd.AddCommand(csvCommand())
-	cmd.AddCommand(manifestCommand())
 	cmd.AddCommand(specCommand())
-	cmd.AddCommand(styleGuideCommand())
 
 	return cmd
 }

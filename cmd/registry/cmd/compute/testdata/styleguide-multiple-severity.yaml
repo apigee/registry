@@ -12,39 +12,43 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-id: openapitest-multiple-severity
-mime_types:
-  - application/x.openapi+gzip;version=3.0.0
-guidelines:
-  - id: tagproperties
-    display_name: Tag Properties
-    description: This guideline specifies rules for different tags.
-    rules:
-      - id: openapitags
-        display_name: OpenAPI tags
-        description: OpenAPI object should have non-empty tags array.
-        linter: sample
-        linter_rulename: openapi-tags
-        severity: INFO
-      - id: openapitagsalphabetical
-        display_name: OpenAPI tags alphabetical
-        description: OpenAPI object should have alphabetical tags. This will be sorted by the name property.
-        linter: sample
-        linter_rulename: openapi-tags-alphabetical
-        severity: INFO
-      - id: operationtags
-        display_name: Operation tags
-        description: Operation should have non-empty tags array.
-        linter: sample
-        linter_rulename: operation-tags
-        severity: ERROR
-      - id: operationtagdefined
-        display_name: Operation tag defined
-        description: Operation tags should be defined in global tags.
-        linter: sample
-        linter_rulename: operation-tag-defined
-        severity: ERROR
-    state: ACTIVE
-linters:
-  - name: sample
-    uri: https://sample/url
+apiVersion: apigeeregistry/v1
+kind: StyleGuide
+metadata:
+  name: openapitest-multiple-severity
+data:
+  mime_types:
+    - application/x.openapi+gzip;version=3.0.0
+  guidelines:
+    - id: tagproperties
+      display_name: Tag Properties
+      description: This guideline specifies rules for different tags.
+      rules:
+        - id: openapitags
+          display_name: OpenAPI tags
+          description: OpenAPI object should have non-empty tags array.
+          linter: sample
+          linter_rulename: openapi-tags
+          severity: INFO
+        - id: openapitagsalphabetical
+          display_name: OpenAPI tags alphabetical
+          description: OpenAPI object should have alphabetical tags. This will be sorted by the name property.
+          linter: sample
+          linter_rulename: openapi-tags-alphabetical
+          severity: INFO
+        - id: operationtags
+          display_name: Operation tags
+          description: Operation should have non-empty tags array.
+          linter: sample
+          linter_rulename: operation-tags
+          severity: ERROR
+        - id: operationtagdefined
+          display_name: Operation tag defined
+          description: Operation tags should be defined in global tags.
+          linter: sample
+          linter_rulename: operation-tag-defined
+          severity: ERROR
+      state: ACTIVE
+  linters:
+    - name: sample
+      uri: https://sample/url

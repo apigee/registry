@@ -1,6 +1,7 @@
 package export
 
 import (
+	"bytes"
 	"context"
 	"testing"
 
@@ -57,6 +58,8 @@ func TestExportYAML(t *testing.T) {
 		cmd := Command()
 		args := []string{"yaml", r}
 		cmd.SetArgs(args)
+		out := bytes.NewBuffer(make([]byte, 0))
+		cmd.SetOutput(out)
 		if err := cmd.Execute(); err != nil {
 			t.Fatalf("Execute() with args %v returned error: %s", args, err)
 		}
@@ -67,6 +70,8 @@ func TestExportYAML(t *testing.T) {
 		cmd := Command()
 		args := []string{"yaml", r, "--nested"}
 		cmd.SetArgs(args)
+		out := bytes.NewBuffer(make([]byte, 0))
+		cmd.SetOutput(out)
 		if err := cmd.Execute(); err != nil {
 			t.Fatalf("Execute() with args %v returned error: %s", args, err)
 		}
