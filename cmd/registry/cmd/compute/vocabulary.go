@@ -84,7 +84,7 @@ func vocabularyCommand() *cobra.Command {
 					return nil
 				})
 			} else {
-				err = core.ListSpecRevisions(ctx, client, parsed, filter, func(spec *rpc.ApiSpec) error {
+				err = core.ListSpecRevisions(ctx, client, parsed, filter, false, func(spec *rpc.ApiSpec) error {
 					taskQueue <- &computeVocabularyTask{
 						client:   client,
 						specName: spec.GetName(),

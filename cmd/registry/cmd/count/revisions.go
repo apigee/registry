@@ -103,7 +103,7 @@ func (task *countSpecRevisionsTask) Run(ctx context.Context) error {
 		return err
 	}
 	count := 0
-	err = core.ListSpecRevisions(ctx, task.client, name, "", func(*rpc.ApiSpec) error {
+	err = core.ListSpecRevisions(ctx, task.client, name, "", false, func(*rpc.ApiSpec) error {
 		count++
 		return nil
 	})

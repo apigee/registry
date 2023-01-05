@@ -74,7 +74,7 @@ func conformanceCommand() *cobra.Command {
 					return nil
 				})
 			} else {
-				err = core.ListSpecRevisions(ctx, client, name, filter, func(spec *rpc.ApiSpec) error {
+				err = core.ListSpecRevisions(ctx, client, name, filter, false, func(spec *rpc.ApiSpec) error {
 					specs = append(specs, spec)
 					return nil
 				})
