@@ -116,7 +116,7 @@ func computeLintStatsSpecs(ctx context.Context,
 	filter string,
 	linter string,
 	dryRun bool) error {
-	return core.ListSpecs(ctx, client, spec, filter, func(spec *rpc.ApiSpec) error {
+	return core.ListSpecs(ctx, client, spec, filter, false, func(spec *rpc.ApiSpec) error {
 		// Iterate through a collection of specs and evaluate each.
 		log.Debug(ctx, spec.GetName())
 		// get the lint results
@@ -237,7 +237,7 @@ func computeLintStatsVersions(ctx context.Context,
 	dryRun bool) error {
 	return core.ListVersions(ctx, client, versionName, filter, func(version *rpc.ApiVersion) error {
 		stats := &rpc.LintStats{}
-		if err := core.ListSpecs(ctx, client, versionName.Spec(""), filter, func(spec *rpc.ApiSpec) error {
+		if err := core.ListSpecs(ctx, client, versionName.Spec(""), filter, false, func(spec *rpc.ApiSpec) error {
 			aggregateLintStats(ctx, client, spec.GetName(), linter, stats)
 			return nil
 		}); err != nil {

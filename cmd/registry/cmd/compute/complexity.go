@@ -74,7 +74,7 @@ func complexityCommand() *cobra.Command {
 			}
 
 			if parsed.RevisionID == "" {
-				err = core.ListSpecs(ctx, client, parsed.Spec(), filter, func(spec *rpc.ApiSpec) error {
+				err = core.ListSpecs(ctx, client, parsed.Spec(), filter, false, func(spec *rpc.ApiSpec) error {
 					taskQueue <- &computeComplexityTask{
 						client:   client,
 						specName: spec.Name,
@@ -83,7 +83,7 @@ func complexityCommand() *cobra.Command {
 					return nil
 				})
 			} else {
-				err = core.ListSpecRevisions(ctx, client, parsed, filter, func(spec *rpc.ApiSpec) error {
+				err = core.ListSpecRevisions(ctx, client, parsed, filter, false, func(spec *rpc.ApiSpec) error {
 					taskQueue <- &computeComplexityTask{
 						client:   client,
 						specName: spec.Name,
