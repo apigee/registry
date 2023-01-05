@@ -26,8 +26,8 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// PatchForApiVersion allows an API version to be individually exported as a YAML file.
-func PatchForApiVersion(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiVersion, nested bool) (*models.ApiVersion, error) {
+// NewApiVersion allows an API version to be individually exported as a YAML file.
+func NewApiVersion(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiVersion, nested bool) (*models.ApiVersion, error) {
 	versionName, err := names.ParseVersion(message.Name)
 	if err != nil {
 		return nil, err
@@ -38,7 +38,7 @@ func PatchForApiVersion(ctx context.Context, client *gapic.RegistryClient, messa
 	if nested {
 		specs = make([]*models.ApiSpec, 0)
 		if err = core.ListSpecs(ctx, client, versionName.Spec("-"), "", false, func(message *rpc.ApiSpec) error {
-			spec, err := PatchForApiSpec(ctx, client, message, true)
+			spec, err := NewApiSpec(ctx, client, message, true)
 			if err != nil {
 				return err
 			}

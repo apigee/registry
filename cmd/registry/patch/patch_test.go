@@ -80,7 +80,7 @@ func TestProjectPatches(t *testing.T) {
 					if !cmp.Equal(test.message, project, opts) {
 						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(test.message, project, opts))
 					}
-					model, err := PatchForProject(ctx, registryClient, project)
+					model, err := NewProject(ctx, registryClient, project)
 					if err != nil {
 						t.Fatalf("%s", err)
 					}
@@ -203,7 +203,7 @@ func TestApiPatches(t *testing.T) {
 					if !cmp.Equal(test.message, api, opts) {
 						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(test.message, api, opts))
 					}
-					model, err := PatchForApi(ctx, registryClient, api, test.nested)
+					model, err := NewApi(ctx, registryClient, api, test.nested)
 					if err != nil {
 						t.Fatalf("%s", err)
 					}
@@ -305,7 +305,7 @@ func TestVersionPatches(t *testing.T) {
 					if !cmp.Equal(test.message, version, opts) {
 						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(test.message, version, opts))
 					}
-					model, err := PatchForApiVersion(ctx, registryClient, version, test.nested)
+					model, err := NewApiVersion(ctx, registryClient, version, test.nested)
 					if err != nil {
 						t.Fatalf("%s", err)
 					}
@@ -408,7 +408,7 @@ func TestSpecPatches(t *testing.T) {
 					if !cmp.Equal(test.message, spec, opts) {
 						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(test.message, spec, opts))
 					}
-					model, err := PatchForApiSpec(ctx, registryClient, spec, test.nested)
+					model, err := NewApiSpec(ctx, registryClient, spec, test.nested)
 					if err != nil {
 						t.Fatalf("%s", err)
 					}
@@ -514,7 +514,7 @@ func TestDeploymentPatches(t *testing.T) {
 					if !cmp.Equal(test.message, deployment, opts) {
 						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(test.message, deployment, opts))
 					}
-					model, err := PatchForApiDeployment(ctx, registryClient, deployment, test.nested)
+					model, err := NewApiDeployment(ctx, registryClient, deployment, test.nested)
 					if err != nil {
 						t.Fatalf("%s", err)
 					}
@@ -867,7 +867,7 @@ func TestMessageArtifactPatches(t *testing.T) {
 					if !cmp.Equal(test.message, contents, opts) {
 						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(test.message, contents, opts))
 					}
-					model, err := PatchForArtifact(ctx, registryClient, artifact)
+					model, err := NewArtifact(ctx, registryClient, artifact)
 					if err != nil {
 						t.Fatalf("%s", err)
 					}
@@ -957,7 +957,7 @@ func TestYamlArtifactPatches(t *testing.T) {
 			}
 			err = core.GetArtifact(ctx, registryClient, artifactName, true,
 				func(artifact *rpc.Artifact) error {
-					model, err := PatchForArtifact(ctx, registryClient, artifact)
+					model, err := NewArtifact(ctx, registryClient, artifact)
 					if err != nil {
 						t.Fatalf("%s", err)
 					}

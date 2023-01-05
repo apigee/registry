@@ -75,8 +75,8 @@ func removeIdAndKind(node *yaml.Node) *yaml.Node {
 	return node
 }
 
-// PatchForArtifact allows an artifact to be individually exported as a YAML file.
-func PatchForArtifact(ctx context.Context, client *gapic.RegistryClient, message *rpc.Artifact) (*models.Artifact, error) {
+// NewArtifact allows an artifact to be individually exported as a YAML file.
+func NewArtifact(ctx context.Context, client *gapic.RegistryClient, message *rpc.Artifact) (*models.Artifact, error) {
 	if message.Contents == nil {
 		req := &rpc.GetArtifactContentsRequest{
 			Name: message.Name,

@@ -33,8 +33,8 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// PatchForApiSpec allows an API spec to be individually exported as a YAML file.
-func PatchForApiSpec(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiSpec, nested bool) (*models.ApiSpec, error) {
+// NewApiSpec allows an API spec to be individually exported as a YAML file.
+func NewApiSpec(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiSpec, nested bool) (*models.ApiSpec, error) {
 	specName, err := names.ParseSpecRevision(message.Name)
 	if err != nil {
 		return nil, err

@@ -26,11 +26,6 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// PatchForApiDeployment allows an API deployment to be individually exported as a YAML file.
-func PatchForApiDeployment(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiDeployment, nested bool) (*models.ApiDeployment, error) {
-	return newApiDeployment(ctx, client, message, nested)
-}
-
 // relativeSpecRevisionName returns the versionid+specid if the spec is within the specified API
 func relativeSpecRevisionName(apiName names.Api, spec string) string {
 	if spec == "" {
@@ -50,7 +45,8 @@ func optionalSpecRevisionName(deploymentName names.Deployment, subpath string) s
 	return deploymentName.Api().String() + "/versions/" + subpath
 }
 
-func newApiDeployment(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiDeployment, nested bool) (*models.ApiDeployment, error) {
+// NewApiDeployment allows an API deployment to be individually exported as a YAML file.
+func NewApiDeployment(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiDeployment, nested bool) (*models.ApiDeployment, error) {
 	deploymentName, err := names.ParseDeploymentRevision(message.Name)
 	if err != nil {
 		return nil, err

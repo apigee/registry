@@ -33,8 +33,8 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// PatchForProject gets a serialized representation of a project.
-func PatchForProject(ctx context.Context, client *gapic.RegistryClient, message *rpc.Project) (*models.Project, error) {
+// NewProject gets a serialized representation of a project.
+func NewProject(ctx context.Context, client *gapic.RegistryClient, message *rpc.Project) (*models.Project, error) {
 	projectName, err := names.ParseProject(message.Name)
 	if err != nil {
 		return nil, err
@@ -204,7 +204,7 @@ func (task *exportAPITask) String() string {
 }
 
 func (task *exportAPITask) Run(ctx context.Context) error {
-	api, err := PatchForApi(ctx, task.client, task.message, task.nested)
+	api, err := NewApi(ctx, task.client, task.message, task.nested)
 	if err != nil {
 		return err
 	}
@@ -237,7 +237,7 @@ func (task *exportArtifactTask) String() string {
 }
 
 func (task *exportArtifactTask) Run(ctx context.Context) error {
-	artifact, err := PatchForArtifact(ctx, task.client, task.message)
+	artifact, err := NewArtifact(ctx, task.client, task.message)
 	if err != nil {
 		log.FromContext(ctx).Warnf("Skipped %s: %s", task.message.Name, err)
 		return nil
@@ -276,7 +276,7 @@ func (task *exportVersionTask) String() string {
 }
 
 func (task *exportVersionTask) Run(ctx context.Context) error {
-	version, err := PatchForApiVersion(ctx, task.client, task.message, task.nested)
+	version, err := NewApiVersion(ctx, task.client, task.message, task.nested)
 	if err != nil {
 		return err
 	}
@@ -310,7 +310,7 @@ func (task *exportSpecTask) String() string {
 }
 
 func (task *exportSpecTask) Run(ctx context.Context) error {
-	spec, err := PatchForApiSpec(ctx, task.client, task.message, task.nested)
+	spec, err := NewApiSpec(ctx, task.client, task.message, task.nested)
 	if err != nil {
 		return err
 	}
@@ -361,7 +361,7 @@ func (task *exportDeploymentTask) String() string {
 }
 
 func (task *exportDeploymentTask) Run(ctx context.Context) error {
-	deployment, err := PatchForApiDeployment(ctx, task.client, task.message, task.nested)
+	deployment, err := NewApiDeployment(ctx, task.client, task.message, task.nested)
 	if err != nil {
 		return err
 	}

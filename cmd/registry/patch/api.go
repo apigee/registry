@@ -27,8 +27,8 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// PatchForApi allows an API to be individually exported as a YAML file.
-func PatchForApi(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api, nested bool) (*models.Api, error) {
+// NewApi allows an API to be individually exported as a YAML file.
+func NewApi(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api, nested bool) (*models.Api, error) {
 	apiName, err := names.ParseApi(message.Name)
 	if err != nil {
 		return nil, err
@@ -48,7 +48,7 @@ func PatchForApi(ctx context.Context, client *gapic.RegistryClient, message *rpc
 		versions = make([]*models.ApiVersion, 0)
 		if err = core.ListVersions(ctx, client, apiName.Version("-"), "", func(message *rpc.ApiVersion) error {
 			var version *models.ApiVersion
-			version, err := PatchForApiVersion(ctx, client, message, true)
+			version, err := NewApiVersion(ctx, client, message, true)
 			if err != nil {
 				return err
 			}
@@ -64,7 +64,7 @@ func PatchForApi(ctx context.Context, client *gapic.RegistryClient, message *rpc
 		deployments = make([]*models.ApiDeployment, 0)
 		if err = core.ListDeployments(ctx, client, apiName.Deployment("-"), "", func(message *rpc.ApiDeployment) error {
 			var deployment *models.ApiDeployment
-			deployment, err = PatchForApiDeployment(ctx, client, message, true)
+			deployment, err = NewApiDeployment(ctx, client, message, true)
 			if err != nil {
 				return err
 			}
@@ -109,7 +109,7 @@ func PatchForApi(ctx context.Context, client *gapic.RegistryClient, message *rpc
 func collectChildArtifacts(ctx context.Context, client *gapic.RegistryClient, artifactPattern names.Artifact) ([]*models.Artifact, error) {
 	artifacts := make([]*models.Artifact, 0)
 	if err := core.ListArtifacts(ctx, client, artifactPattern, "", true, func(message *rpc.Artifact) error {
-		artifact, err := PatchForArtifact(ctx, client, message)
+		artifact, err := NewArtifact(ctx, client, message)
 		if err != nil {
 			log.FromContext(ctx).Warnf("Skipping %s: %s", message.Name, err)
 			return nil
