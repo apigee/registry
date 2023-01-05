@@ -134,7 +134,7 @@ func ExportProject(ctx context.Context, client *gapic.RegistryClient, projectNam
 	if err != nil {
 		return err
 	}
-	err = core.ListSpecs(ctx, client, projectName.Api("-").Version("-").Spec("-"), "", func(message *rpc.ApiSpec) error {
+	err = core.ListSpecs(ctx, client, projectName.Api("-").Version("-").Spec("-"), "", false, func(message *rpc.ApiSpec) error {
 		taskQueue <- &exportSpecTask{
 			client:  client,
 			message: message,

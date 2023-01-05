@@ -51,7 +51,7 @@ func newApiVersion(ctx context.Context, client *gapic.RegistryClient, message *r
 	var artifacts []*models.Artifact
 	if nested {
 		specs = make([]*models.ApiSpec, 0)
-		if err = core.ListSpecs(ctx, client, versionName.Spec("-"), "", func(message *rpc.ApiSpec) error {
+		if err = core.ListSpecs(ctx, client, versionName.Spec("-"), "", false, func(message *rpc.ApiSpec) error {
 			spec, err := newApiSpec(ctx, client, message, true)
 			if err != nil {
 				return err
