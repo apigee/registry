@@ -15,7 +15,6 @@
 package patch
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -34,7 +33,7 @@ import (
 )
 
 // PatchForArtifact allows an artifact to be individually exported as a YAML file.
-func PatchForArtifact(ctx context.Context, client *gapic.RegistryClient, message *rpc.Artifact) ([]byte, *models.Header, error) {
+func PatchForArtifact(ctx context.Context, client *gapic.RegistryClient, message *rpc.Artifact) (*models.Artifact, *models.Header, error) {
 	if message.Contents == nil {
 		req := &rpc.GetArtifactContentsRequest{
 			Name: message.Name,
@@ -49,12 +48,7 @@ func PatchForArtifact(ctx context.Context, client *gapic.RegistryClient, message
 	if err != nil {
 		return nil, nil, err
 	}
-	var b bytes.Buffer
-	err = yamlEncoder(&b).Encode(artifact)
-	if err != nil {
-		return nil, nil, err
-	}
-	return b.Bytes(), &artifact.Header, nil
+	return artifact, &artifact.Header, nil
 }
 
 // styleForYAML sets the style field on a tree of yaml.Nodes for YAML export.

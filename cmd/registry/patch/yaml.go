@@ -15,6 +15,7 @@
 package patch
 
 import (
+	"bytes"
 	"io"
 
 	"gopkg.in/yaml.v3"
@@ -25,4 +26,14 @@ func yamlEncoder(dst io.Writer) *yaml.Encoder {
 	enc := yaml.NewEncoder(dst)
 	enc.SetIndent(2)
 	return enc
+}
+
+// Encode a patch model.
+func Encode(model interface{}) ([]byte, error) {
+	var b bytes.Buffer
+	err := yamlEncoder(&b).Encode(model)
+	if err != nil {
+		return nil, err
+	}
+	return b.Bytes(), nil
 }

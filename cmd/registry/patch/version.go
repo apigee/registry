@@ -15,7 +15,6 @@
 package patch
 
 import (
-	"bytes"
 	"context"
 
 	"github.com/apigee/registry/cmd/registry/core"
@@ -28,17 +27,12 @@ import (
 )
 
 // PatchForApiVersion allows an API version to be individually exported as a YAML file.
-func PatchForApiVersion(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiVersion, nested bool) ([]byte, *models.Header, error) {
-	api, err := newApiVersion(ctx, client, message, nested)
+func PatchForApiVersion(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiVersion, nested bool) (*models.ApiVersion, *models.Header, error) {
+	version, err := newApiVersion(ctx, client, message, nested)
 	if err != nil {
 		return nil, nil, err
 	}
-	var b bytes.Buffer
-	err = yamlEncoder(&b).Encode(api)
-	if err != nil {
-		return nil, nil, err
-	}
-	return b.Bytes(), &api.Header, nil
+	return version, &version.Header, nil
 }
 
 func newApiVersion(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiVersion, nested bool) (*models.ApiVersion, error) {

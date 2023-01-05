@@ -15,7 +15,6 @@
 package patch
 
 import (
-	"bytes"
 	"context"
 	"strings"
 
@@ -28,17 +27,12 @@ import (
 )
 
 // PatchForApiDeployment allows an API deployment to be individually exported as a YAML file.
-func PatchForApiDeployment(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiDeployment, nested bool) ([]byte, *models.Header, error) {
-	api, err := newApiDeployment(ctx, client, message, nested)
+func PatchForApiDeployment(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiDeployment, nested bool) (*models.ApiDeployment, *models.Header, error) {
+	deployment, err := newApiDeployment(ctx, client, message, nested)
 	if err != nil {
 		return nil, nil, err
 	}
-	var b bytes.Buffer
-	err = yamlEncoder(&b).Encode(api)
-	if err != nil {
-		return nil, nil, err
-	}
-	return b.Bytes(), &api.Header, nil
+	return deployment, &deployment.Header, nil
 }
 
 // relativeSpecRevisionName returns the versionid+specid if the spec is within the specified API

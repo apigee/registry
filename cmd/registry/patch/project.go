@@ -15,7 +15,6 @@
 package patch
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"io/fs"
@@ -55,17 +54,12 @@ func newProject(ctx context.Context, client *gapic.RegistryClient, message *rpc.
 }
 
 // PatchForProject gets a serialized representation of a project.
-func PatchForProject(ctx context.Context, client *gapic.RegistryClient, message *rpc.Project) ([]byte, *models.Header, error) {
+func PatchForProject(ctx context.Context, client *gapic.RegistryClient, message *rpc.Project) (*models.Project, *models.Header, error) {
 	project, err := newProject(ctx, client, message)
 	if err != nil {
 		return nil, nil, err
 	}
-	var b bytes.Buffer
-	err = yamlEncoder(&b).Encode(project)
-	if err != nil {
-		return nil, nil, err
-	}
-	return b.Bytes(), &project.Header, nil
+	return project, &project.Header, nil
 }
 
 func applyProjectPatchBytes(ctx context.Context, client connection.AdminClient, bytes []byte) error {
@@ -218,7 +212,11 @@ func (task *exportAPITask) String() string {
 }
 
 func (task *exportAPITask) Run(ctx context.Context) error {
-	bytes, header, err := PatchForApi(ctx, task.client, task.message, task.nested)
+	api, header, err := PatchForApi(ctx, task.client, task.message, task.nested)
+	if err != nil {
+		return err
+	}
+	bytes, err := Encode(api)
 	if err != nil {
 		return err
 	}
@@ -247,7 +245,7 @@ func (task *exportArtifactTask) String() string {
 }
 
 func (task *exportArtifactTask) Run(ctx context.Context) error {
-	bytes, header, err := PatchForArtifact(ctx, task.client, task.message)
+	artifact, header, err := PatchForArtifact(ctx, task.client, task.message)
 	if err != nil {
 		log.FromContext(ctx).Warnf("Skipped %s: %s", task.message.Name, err)
 		return nil
@@ -255,6 +253,10 @@ func (task *exportArtifactTask) Run(ctx context.Context) error {
 	if header.Kind == "Artifact" { // "Artifact" is the generic artifact type
 		log.FromContext(ctx).Warnf("Skipped %s", task.message.Name)
 		return nil
+	}
+	bytes, err := Encode(artifact)
+	if err != nil {
+		return err
 	}
 	log.FromContext(ctx).Infof("Exported %s", task.message.Name)
 	var filename string
@@ -282,7 +284,11 @@ func (task *exportVersionTask) String() string {
 }
 
 func (task *exportVersionTask) Run(ctx context.Context) error {
-	bytes, header, err := PatchForApiVersion(ctx, task.client, task.message, task.nested)
+	version, header, err := PatchForApiVersion(ctx, task.client, task.message, task.nested)
+	if err != nil {
+		return err
+	}
+	bytes, err := Encode(version)
 	if err != nil {
 		return err
 	}
@@ -312,7 +318,11 @@ func (task *exportSpecTask) String() string {
 }
 
 func (task *exportSpecTask) Run(ctx context.Context) error {
-	bytes, header, err := PatchForApiSpec(ctx, task.client, task.message, task.nested)
+	spec, header, err := PatchForApiSpec(ctx, task.client, task.message, task.nested)
+	if err != nil {
+		return err
+	}
+	bytes, err := Encode(spec)
 	if err != nil {
 		return err
 	}
@@ -359,7 +369,11 @@ func (task *exportDeploymentTask) String() string {
 }
 
 func (task *exportDeploymentTask) Run(ctx context.Context) error {
-	bytes, header, err := PatchForApiDeployment(ctx, task.client, task.message, task.nested)
+	deployment, header, err := PatchForApiDeployment(ctx, task.client, task.message, task.nested)
+	if err != nil {
+		return err
+	}
+	bytes, err := Encode(deployment)
 	if err != nil {
 		return err
 	}

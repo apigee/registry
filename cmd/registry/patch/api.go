@@ -15,7 +15,6 @@
 package patch
 
 import (
-	"bytes"
 	"context"
 
 	"github.com/apigee/registry/cmd/registry/core"
@@ -130,17 +129,12 @@ func collectChildArtifacts(ctx context.Context, client *gapic.RegistryClient, ar
 }
 
 // PatchForApi allows an API to be individually exported as a YAML file.
-func PatchForApi(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api, nested bool) ([]byte, *models.Header, error) {
+func PatchForApi(ctx context.Context, client *gapic.RegistryClient, message *rpc.Api, nested bool) (*models.Api, *models.Header, error) {
 	api, err := newApi(ctx, client, message, nested)
 	if err != nil {
 		return nil, nil, err
 	}
-	var b bytes.Buffer
-	err = yamlEncoder(&b).Encode(api)
-	if err != nil {
-		return nil, nil, err
-	}
-	return b.Bytes(), &api.Header, nil
+	return api, &api.Header, nil
 }
 
 // TODO: These functions assume that their arguments are valid names and fail the export if they aren't.

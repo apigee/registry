@@ -92,11 +92,14 @@ func TestProjectImports(t *testing.T) {
 				t.Fatalf("Failed to get API: %s", err)
 			}
 
-			actual, _, err := PatchForApi(ctx, registryClient, got, true)
+			model, _, err := PatchForApi(ctx, registryClient, got, true)
 			if err != nil {
 				t.Fatalf("PatchForApi(%+v) returned an error: %s", got, err)
 			}
-
+			actual, err := Encode(model)
+			if err != nil {
+				t.Fatalf("Encode(%+v) returned an error: %s", model, err)
+			}
 			if diff := cmp.Diff(expected, actual); diff != "" {
 				t.Errorf("GetApi(%q) returned unexpected diff: (-want +got):\n%s", got, diff)
 			}
@@ -118,11 +121,14 @@ func TestProjectImports(t *testing.T) {
 					t.Fatalf("Failed to verify artifact existence: %s", err)
 				}
 
-				actual, _, err := PatchForArtifact(ctx, registryClient, message)
+				model, _, err := PatchForArtifact(ctx, registryClient, message)
 				if err != nil {
 					t.Fatalf("PatchForArtifact(%+v) returned an error: %s", message, err)
 				}
-
+				actual, err := Encode(model)
+				if err != nil {
+					t.Fatalf("Encode(%+v) returned an error: %s", model, err)
+				}
 				if diff := cmp.Diff(expected, actual); diff != "" {
 					t.Errorf("GetArtifact(%q) returned unexpected diff: (-want +got):\n%s", message, diff)
 				}

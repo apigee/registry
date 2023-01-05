@@ -80,7 +80,7 @@ func TestProjectPatches(t *testing.T) {
 					if !cmp.Equal(test.message, project, opts) {
 						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(test.message, project, opts))
 					}
-					out, header, err := PatchForProject(ctx, registryClient, project)
+					model, header, err := PatchForProject(ctx, registryClient, project)
 					if err != nil {
 						t.Fatalf("%s", err)
 					}
@@ -89,6 +89,10 @@ func TestProjectPatches(t *testing.T) {
 					}
 					if header.Metadata.Name != test.resourceID {
 						t.Errorf("Incorrect export name. Wanted %s, got %s", test.resourceID, header.Metadata.Name)
+					}
+					out, err := Encode(model)
+					if err != nil {
+						t.Errorf("Encode(%+v) returned an error: %s", model, err)
 					}
 					if !cmp.Equal(b, out, opts) {
 						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(b, out, opts))
@@ -199,7 +203,7 @@ func TestApiPatches(t *testing.T) {
 					if !cmp.Equal(test.message, api, opts) {
 						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(test.message, api, opts))
 					}
-					out, header, err := PatchForApi(ctx, registryClient, api, test.nested)
+					model, header, err := PatchForApi(ctx, registryClient, api, test.nested)
 					if err != nil {
 						t.Fatalf("%s", err)
 					}
@@ -208,6 +212,10 @@ func TestApiPatches(t *testing.T) {
 					}
 					if header.Metadata.Name != test.resourceID {
 						t.Errorf("Incorrect export name. Wanted %s, got %s", test.resourceID, header.Metadata.Name)
+					}
+					out, err := Encode(model)
+					if err != nil {
+						t.Errorf("Encode(%+v) returned an error: %s", model, err)
 					}
 					if !cmp.Equal(b, out, opts) {
 						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(b, out, opts))
@@ -297,7 +305,7 @@ func TestVersionPatches(t *testing.T) {
 					if !cmp.Equal(test.message, version, opts) {
 						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(test.message, version, opts))
 					}
-					out, header, err := PatchForApiVersion(ctx, registryClient, version, test.nested)
+					model, header, err := PatchForApiVersion(ctx, registryClient, version, test.nested)
 					if err != nil {
 						t.Fatalf("%s", err)
 					}
@@ -306,6 +314,10 @@ func TestVersionPatches(t *testing.T) {
 					}
 					if header.Metadata.Name != test.resourceID {
 						t.Errorf("Incorrect export name. Wanted %s, got %s", test.resourceID, header.Metadata.Name)
+					}
+					out, err := Encode(model)
+					if err != nil {
+						t.Errorf("Encode(%+v) returned an error: %s", model, err)
 					}
 					if !cmp.Equal(b, out, opts) {
 						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(b, out, opts))
@@ -396,7 +408,7 @@ func TestSpecPatches(t *testing.T) {
 					if !cmp.Equal(test.message, spec, opts) {
 						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(test.message, spec, opts))
 					}
-					out, header, err := PatchForApiSpec(ctx, registryClient, spec, test.nested)
+					model, header, err := PatchForApiSpec(ctx, registryClient, spec, test.nested)
 					if err != nil {
 						t.Fatalf("%s", err)
 					}
@@ -405,6 +417,10 @@ func TestSpecPatches(t *testing.T) {
 					}
 					if header.Metadata.Name != test.resourceID {
 						t.Errorf("Incorrect export name. Wanted %s, got %s", test.resourceID, header.Metadata.Name)
+					}
+					out, err := Encode(model)
+					if err != nil {
+						t.Errorf("Encode(%+v) returned an error: %s", model, err)
 					}
 					if !cmp.Equal(b, out, opts) {
 						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(b, out, opts))
@@ -498,7 +514,7 @@ func TestDeploymentPatches(t *testing.T) {
 					if !cmp.Equal(test.message, deployment, opts) {
 						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(test.message, deployment, opts))
 					}
-					out, header, err := PatchForApiDeployment(ctx, registryClient, deployment, test.nested)
+					model, header, err := PatchForApiDeployment(ctx, registryClient, deployment, test.nested)
 					if err != nil {
 						t.Fatalf("%s", err)
 					}
@@ -507,6 +523,10 @@ func TestDeploymentPatches(t *testing.T) {
 					}
 					if header.Metadata.Name != test.resourceID {
 						t.Errorf("Incorrect export name. Wanted %s, got %s", test.resourceID, header.Metadata.Name)
+					}
+					out, err := Encode(model)
+					if err != nil {
+						t.Errorf("Encode(%+v) returned an error: %s", model, err)
 					}
 					if !cmp.Equal(b, out, opts) {
 						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(b, out, opts))
@@ -847,7 +867,7 @@ func TestMessageArtifactPatches(t *testing.T) {
 					if !cmp.Equal(test.message, contents, opts) {
 						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(test.message, contents, opts))
 					}
-					out, header, err := PatchForArtifact(ctx, registryClient, artifact)
+					model, header, err := PatchForArtifact(ctx, registryClient, artifact)
 					if err != nil {
 						t.Fatalf("%s", err)
 					}
@@ -856,6 +876,10 @@ func TestMessageArtifactPatches(t *testing.T) {
 					}
 					if header.Metadata.Name != test.artifactID {
 						t.Errorf("Incorrect export name. Wanted %s, got %s", test.artifactID, header.Metadata.Name)
+					}
+					out, err := Encode(model)
+					if err != nil {
+						t.Errorf("Encode(%+v) returned an error: %s", model, err)
 					}
 					if !cmp.Equal(b, out, opts) {
 						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(b, out, opts))
@@ -933,7 +957,7 @@ func TestYamlArtifactPatches(t *testing.T) {
 			}
 			err = core.GetArtifact(ctx, registryClient, artifactName, true,
 				func(artifact *rpc.Artifact) error {
-					out, header, err := PatchForArtifact(ctx, registryClient, artifact)
+					model, header, err := PatchForArtifact(ctx, registryClient, artifact)
 					if err != nil {
 						t.Fatalf("%s", err)
 					}
@@ -945,6 +969,10 @@ func TestYamlArtifactPatches(t *testing.T) {
 					}
 					if header.Metadata.Name != test.artifactID {
 						t.Errorf("Incorrect export name. Wanted %s, got %s", test.artifactID, header.Metadata.Name)
+					}
+					out, err := Encode(model)
+					if err != nil {
+						t.Errorf("Encode(%+v) returned an error: %s", model, err)
 					}
 					if !cmp.Equal(b, out) {
 						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(b, out))
