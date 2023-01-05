@@ -10,7 +10,7 @@ func TestCoreRuleURL(t *testing.T) {
 		rule string
 		url  string
 	}{
-		{"CoreRule", "core::0122::camel-case-uris", "https://linter.aip.dev/122/camel-case-uris"},
+		{"CoreRule", "core::0122::camel-case-uris", baseURL + "122/camel-case-uris"},
 		{"NotCoreRule", "test::0122::camel-case-uris", ""},
 	}
 
@@ -23,39 +23,20 @@ func TestCoreRuleURL(t *testing.T) {
 	}
 }
 
-func TestClientLibrariesRuleURL(t *testing.T) {
+func TestHubRuleURL(t *testing.T) {
 	tests := []struct {
 		name string
 		rule string
 		url  string
 	}{
-		{"ClientLibrariesRule", "client-libraries::4232::repeated-fields", "https://linter.aip.dev/4232/repeated-fields"},
-		{"NotClientLibrariesRule", "test::0122::camel-case-uris", ""},
+		{"HubRule", "hub::1111::repeated-fields", baseURL + "1111/repeated-fields"},
+		{"NotHubRule", "test::0122::camel-case-uris", ""},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			if got := clientLibrariesRuleUrl(test.rule); got != test.url {
-				t.Errorf("clientLibrariesRuleUrl(%s) got %s, but want %s", test.name, got, test.url)
-			}
-		})
-	}
-}
-
-func TestCloudRuleURL(t *testing.T) {
-	tests := []struct {
-		name string
-		rule string
-		url  string
-	}{
-		{"CloudRule", "cloud::2500::generic-fields", "https://linter.aip.dev/2500/generic-fields"},
-		{"NotCloudRule", "test::0122::camel-case-uris", ""},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			if got := cloudRuleUrl(test.rule); got != test.url {
-				t.Errorf("cloudRuleUrl(%s) got %s, but want %s", test.name, got, test.url)
+			if got := hubRuleUrl(test.rule); got != test.url {
+				t.Errorf("hubRuleUrl(%s) got %s, but want %s", test.name, got, test.url)
 			}
 		})
 	}
