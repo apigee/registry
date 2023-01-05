@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/apigee/registry/cmd/registry/cmd/check/tree"
 	"github.com/apigee/registry/cmd/registry/core"
@@ -50,7 +51,11 @@ func (l *Checker) Check(ctx context.Context, admin connection.AdminClient, clien
 	taskQueue, wait := core.WorkerPool(ctx, jobs)
 	defer wait()
 
-	response := NewResponse()
+	response := &Response{
+		RunTime:  time.Now(),
+		Problems: make([]Problem, 0),
+	}
+
 	handler := &listHandler{
 		taskQueue: taskQueue,
 		newTask: func(r Resource) *checkTask {
@@ -103,7 +108,7 @@ func (t *checkTask) Run(ctx context.Context) error {
 		err = errors.New(strings.Join(errMessages, "; "))
 	}
 
-	t.response.checked(t.resource, problems, err)
+	t.response.append(t.resource, problems, err)
 	return nil
 }
 

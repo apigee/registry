@@ -15,45 +15,23 @@
 package lint
 
 import (
+	"sync"
 	"time"
 )
 
-func NewResponse() *Response {
-	r := &Response{
-		RunTime:  time.Now(),
-		Problems: make([]Problem, 0),
-		receiver: make(chan checked),
-	}
-	go func() {
-		for res := range r.receiver {
-			r.Problems = append(r.Problems, res.problems...)
-			if res.err != nil {
-				r.Error = res.err
-			}
-		}
-	}()
-
-	return r
-}
-
-type checked struct {
-	resource Resource
-	problems []Problem
-	err      error // populated if panic
-}
-
 // Response collects the results of running the Rules.
 type Response struct {
+	sync.Mutex
 	RunTime  time.Time `json:"time" yaml:"time"`
 	Problems []Problem `json:"problems" yaml:"problems"`
 	Error    error     `json:"error,omitempty" yaml:"error,omitempty"` // populated if panic
-	receiver chan checked
 }
 
-func (r *Response) checked(res Resource, probs []Problem, err error) {
-	r.receiver <- checked{
-		resource: res,
-		problems: probs,
-		err:      err,
+func (r *Response) append(res Resource, probs []Problem, err error) {
+	r.Lock()
+	defer r.Unlock()
+	r.Problems = append(r.Problems, probs...)
+	if err != nil {
+		r.Error = err
 	}
 }
