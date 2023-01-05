@@ -21,6 +21,6 @@ import "github.com/apigee/registry/cmd/registry/cmd/check/lint"
 func AddRules(r lint.RuleRegistry) error {
 	return r.Register(
 		0001,
-		contentsMimeType,
+		mimeTypeContents,
 	)
 }

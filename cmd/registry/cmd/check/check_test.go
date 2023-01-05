@@ -25,7 +25,6 @@ import (
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry"
 	"github.com/apigee/registry/server/registry/test/seeder"
-	"google.golang.org/protobuf/encoding/protojson"
 )
 
 // TestMain will set up a local RegistryServer and grpc.Server for all
@@ -36,22 +35,6 @@ func TestMain(m *testing.M) {
 }
 
 func TestCheck(t *testing.T) {
-	var score, _ = protojson.Marshal(&rpc.Score{
-		Id:   "score",
-		Kind: "Score",
-		Value: &rpc.Score_IntegerValue{
-			IntegerValue: &rpc.IntegerValue{
-				Value:    1,
-				MinValue: 0,
-				MaxValue: 10,
-			},
-		},
-	})
-	artifacts := []*rpc.Artifact{{
-		Name:     "projects/my-project/locations/global/apis/b/deployments/d/artifacts/bad",
-		MimeType: "application/html",
-		Contents: score,
-	}}
 	ctx := context.Background()
 	registryClient, err := connection.NewRegistryClient(ctx)
 	if err != nil {
@@ -67,7 +50,12 @@ func TestCheck(t *testing.T) {
 		RegistryClient: registryClient,
 		AdminClient:    adminClient,
 	}
-	if err := seeder.SeedArtifacts(ctx, client, artifacts...); err != nil {
+	spec := &rpc.ApiSpec{
+		Name:     "projects/my-project/locations/global/apis/a/versions/v/specs/bad",
+		MimeType: "application/html",
+		Contents: []byte("some text"),
+	}
+	if err := seeder.SeedSpecs(ctx, client, spec); err != nil {
 		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
 	}
 
@@ -80,7 +68,7 @@ func TestCheck(t *testing.T) {
 	if err := cmd.Execute(); err != nil {
 		t.Fatalf("Execute() with args %v returned error: %s", args, err)
 	}
-	if !strings.Contains(buf.String(), `message: Unexpected mime_type "application/html" for contents`) {
+	if !strings.Contains(buf.String(), `Unexpected mime_type "application/html"`) {
 		t.Errorf("unexpected result: %s", buf)
 	}
 }

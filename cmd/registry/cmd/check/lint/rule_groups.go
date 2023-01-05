@@ -2,8 +2,6 @@ package lint
 
 import "fmt"
 
-// TODO(@theganyo): determine groups
-
 // A list of functions, each of which returns the group name for the given rule
 // number and if no group is found, returns an empty string.
 // List will be evaluated in the FILO order.
