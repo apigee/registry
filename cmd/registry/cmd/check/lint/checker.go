@@ -57,7 +57,7 @@ func (l *Checker) Check(ctx context.Context, admin connection.AdminClient, clien
 			return &checkTask{l, response, r}
 		},
 	}
-	err := tree.ListSubresources(ctx, admin, client, root, filter, handler)
+	err := tree.ListSubresources(ctx, admin, client, root, filter, true, handler)
 	if err != nil {
 		return nil, err
 	}

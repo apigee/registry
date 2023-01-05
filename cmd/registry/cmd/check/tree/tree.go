@@ -34,6 +34,7 @@ type HandlerSet interface {
 }
 
 // ListSubresources calls List* on all subtypes below the supplied root name.
+// Specific revisions are not listed unless they are specified for the root name.
 // The passed filter is given to each List* function, regardless of type.
 // The passed HandlerSet is not checked for validity and must include all types
 // of handlers that may be called beneath the root.
@@ -42,6 +43,7 @@ func ListSubresources(ctx context.Context,
 	client connection.RegistryClient,
 	root names.Name,
 	filter string,
+	getContents bool,
 	handler HandlerSet) (err error) {
 	switch name := root.(type) {
 	case names.Project:
@@ -49,7 +51,7 @@ func ListSubresources(ctx context.Context,
 		if err != nil {
 			return err
 		}
-		err = core.ListArtifacts(ctx, client, name.Artifact("-"), filter, true, handler.ArtifactHandler())
+		err = core.ListArtifacts(ctx, client, name.Artifact("-"), filter, getContents, handler.ArtifactHandler())
 		if err != nil {
 			return err
 		}
@@ -57,7 +59,7 @@ func ListSubresources(ctx context.Context,
 		if err != nil {
 			return err
 		}
-		err = core.ListArtifacts(ctx, client, name.Api("-").Artifact("-"), filter, true, handler.ArtifactHandler())
+		err = core.ListArtifacts(ctx, client, name.Api("-").Artifact("-"), filter, getContents, handler.ArtifactHandler())
 		if err != nil {
 			return err
 		}
@@ -65,7 +67,7 @@ func ListSubresources(ctx context.Context,
 		if err != nil {
 			return err
 		}
-		err = core.ListArtifacts(ctx, client, name.Api("-").Deployment("-").Artifact("-"), filter, true, handler.ArtifactHandler())
+		err = core.ListArtifacts(ctx, client, name.Api("-").Deployment("-").Artifact("-"), filter, getContents, handler.ArtifactHandler())
 		if err != nil {
 			return err
 		}
@@ -73,15 +75,15 @@ func ListSubresources(ctx context.Context,
 		if err != nil {
 			return err
 		}
-		err = core.ListArtifacts(ctx, client, name.Api("-").Version("-").Artifact("-"), filter, true, handler.ArtifactHandler())
+		err = core.ListArtifacts(ctx, client, name.Api("-").Version("-").Artifact("-"), filter, getContents, handler.ArtifactHandler())
 		if err != nil {
 			return err
 		}
-		err = core.ListSpecs(ctx, client, name.Api("-").Version("-").Spec("-"), filter, handler.SpecHandler())
+		err = core.ListSpecs(ctx, client, name.Api("-").Version("-").Spec("-"), filter, getContents, handler.SpecHandler())
 		if err != nil {
 			return err
 		}
-		err = core.ListArtifacts(ctx, client, name.Api("-").Version("-").Spec("-").Artifact("-"), filter, true, handler.ArtifactHandler())
+		err = core.ListArtifacts(ctx, client, name.Api("-").Version("-").Spec("-").Artifact("-"), filter, getContents, handler.ArtifactHandler())
 		if err != nil {
 			return err
 		}
@@ -90,7 +92,7 @@ func ListSubresources(ctx context.Context,
 		if err != nil {
 			return err
 		}
-		err = core.ListArtifacts(ctx, client, name.Artifact("-"), filter, true, handler.ArtifactHandler())
+		err = core.ListArtifacts(ctx, client, name.Artifact("-"), filter, getContents, handler.ArtifactHandler())
 		if err != nil {
 			return err
 		}
@@ -98,7 +100,7 @@ func ListSubresources(ctx context.Context,
 		if err != nil {
 			return err
 		}
-		err = core.ListArtifacts(ctx, client, name.Deployment("-").Artifact("-"), filter, true, handler.ArtifactHandler())
+		err = core.ListArtifacts(ctx, client, name.Deployment("-").Artifact("-"), filter, getContents, handler.ArtifactHandler())
 		if err != nil {
 			return err
 		}
@@ -106,15 +108,15 @@ func ListSubresources(ctx context.Context,
 		if err != nil {
 			return err
 		}
-		err = core.ListArtifacts(ctx, client, name.Version("-").Artifact("-"), filter, true, handler.ArtifactHandler())
+		err = core.ListArtifacts(ctx, client, name.Version("-").Artifact("-"), filter, getContents, handler.ArtifactHandler())
 		if err != nil {
 			return err
 		}
-		err = core.ListSpecs(ctx, client, name.Version("-").Spec("-"), filter, handler.SpecHandler())
+		err = core.ListSpecs(ctx, client, name.Version("-").Spec("-"), filter, getContents, handler.SpecHandler())
 		if err != nil {
 			return err
 		}
-		err = core.ListArtifacts(ctx, client, name.Version("-").Spec("-").Artifact("-"), filter, true, handler.ArtifactHandler())
+		err = core.ListArtifacts(ctx, client, name.Version("-").Spec("-").Artifact("-"), filter, getContents, handler.ArtifactHandler())
 		if err != nil {
 			return err
 		}
@@ -123,7 +125,7 @@ func ListSubresources(ctx context.Context,
 		if err != nil {
 			return err
 		}
-		err = core.ListArtifacts(ctx, client, name.Artifact("-"), filter, true, handler.ArtifactHandler())
+		err = core.ListArtifacts(ctx, client, name.Artifact("-"), filter, getContents, handler.ArtifactHandler())
 		if err != nil {
 			return err
 		}
@@ -132,7 +134,7 @@ func ListSubresources(ctx context.Context,
 		if err != nil {
 			return err
 		}
-		err = core.ListArtifacts(ctx, client, name.Artifact("-"), filter, true, handler.ArtifactHandler())
+		err = core.ListArtifacts(ctx, client, name.Artifact("-"), filter, getContents, handler.ArtifactHandler())
 		if err != nil {
 			return err
 		}
@@ -141,38 +143,38 @@ func ListSubresources(ctx context.Context,
 		if err != nil {
 			return err
 		}
-		err = core.ListArtifacts(ctx, client, name.Artifact("-"), filter, true, handler.ArtifactHandler())
+		err = core.ListArtifacts(ctx, client, name.Artifact("-"), filter, getContents, handler.ArtifactHandler())
 		if err != nil {
 			return err
 		}
-		err = core.ListSpecs(ctx, client, name.Spec("-"), filter, handler.SpecHandler())
+		err = core.ListSpecs(ctx, client, name.Spec("-"), filter, getContents, handler.SpecHandler())
 		if err != nil {
 			return err
 		}
-		err = core.ListArtifacts(ctx, client, name.Spec("-").Artifact("-"), filter, true, handler.ArtifactHandler())
+		err = core.ListArtifacts(ctx, client, name.Spec("-").Artifact("-"), filter, getContents, handler.ArtifactHandler())
 		if err != nil {
 			return err
 		}
 	case names.Spec:
-		err = core.ListSpecs(ctx, client, name, filter, handler.SpecHandler())
+		err = core.ListSpecs(ctx, client, name, filter, getContents, handler.SpecHandler())
 		if err != nil {
 			return err
 		}
-		err = core.ListArtifacts(ctx, client, name.Artifact("-"), filter, true, handler.ArtifactHandler())
+		err = core.ListArtifacts(ctx, client, name.Artifact("-"), filter, getContents, handler.ArtifactHandler())
 		if err != nil {
 			return err
 		}
 	case names.SpecRevision:
-		err = core.ListSpecRevisions(ctx, client, name, filter, handler.SpecHandler())
+		err = core.ListSpecRevisions(ctx, client, name, filter, getContents, handler.SpecHandler())
 		if err != nil {
 			return err
 		}
-		err = core.ListArtifacts(ctx, client, name.Artifact("-"), filter, true, handler.ArtifactHandler())
+		err = core.ListArtifacts(ctx, client, name.Artifact("-"), filter, getContents, handler.ArtifactHandler())
 		if err != nil {
 			return err
 		}
 	case names.Artifact:
-		err = core.ListArtifacts(ctx, client, name, filter, true, handler.ArtifactHandler())
+		err = core.ListArtifacts(ctx, client, name, filter, getContents, handler.ArtifactHandler())
 		if err != nil {
 			return err
 		}
