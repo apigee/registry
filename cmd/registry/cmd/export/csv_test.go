@@ -19,6 +19,7 @@ import (
 	"context"
 	"encoding/csv"
 	"fmt"
+	"io"
 	"testing"
 
 	"github.com/apigee/registry/pkg/connection"
@@ -95,7 +96,8 @@ func TestExportCSV(t *testing.T) {
 	cmd := Command()
 	out := bytes.NewBuffer(make([]byte, 0))
 	args := []string{"csv", version.GetName()}
-	cmd.SetOutput(out)
+	cmd.SetOut(out)
+	cmd.SetErr(io.Discard)
 	cmd.SetArgs(args)
 	if err := cmd.Execute(); err != nil {
 		t.Fatalf("Execute() with args %v returned error: %s", args, err)
