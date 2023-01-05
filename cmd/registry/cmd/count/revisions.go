@@ -55,7 +55,7 @@ func revisionsCommand() *cobra.Command {
 			defer wait()
 			// Generate tasks.
 			if spec, err := names.ParseSpec(args[0]); err == nil {
-				err = core.ListSpecs(ctx, client, spec, filter, func(spec *rpc.ApiSpec) error {
+				err = core.ListSpecs(ctx, client, spec, filter, false, func(spec *rpc.ApiSpec) error {
 					taskQueue <- &countSpecRevisionsTask{
 						client:     client,
 						specName:   spec.Name,

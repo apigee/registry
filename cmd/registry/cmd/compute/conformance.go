@@ -69,7 +69,7 @@ func conformanceCommand() *cobra.Command {
 
 			specs := make([]*rpc.ApiSpec, 0)
 			if name.RevisionID == "" {
-				err = core.ListSpecs(ctx, client, name.Spec(), filter, func(spec *rpc.ApiSpec) error {
+				err = core.ListSpecs(ctx, client, name.Spec(), filter, false, func(spec *rpc.ApiSpec) error {
 					specs = append(specs, spec)
 					return nil
 				})

@@ -437,7 +437,7 @@ func ListResources(ctx context.Context, client connection.RegistryClient, patter
 	} else if version, err := names.ParseVersionCollection(pattern); err == nil {
 		err2 = core.ListVersions(ctx, client, version, filter, generateVersionHandler(&result))
 	} else if spec, err := names.ParseSpecCollection(pattern); err == nil {
-		err2 = core.ListSpecs(ctx, client, spec, filter, generateSpecHandler(&result))
+		err2 = core.ListSpecs(ctx, client, spec, filter, false, generateSpecHandler(&result))
 	} else if rev, err := names.ParseSpecRevisionCollection(pattern); err == nil {
 		err2 = core.ListSpecRevisions(ctx, client, rev, filter, generateSpecHandler(&result))
 	} else if artifact, err := names.ParseArtifactCollection(pattern); err == nil {
@@ -450,7 +450,7 @@ func ListResources(ctx context.Context, client connection.RegistryClient, patter
 	} else if version, err := names.ParseVersion(pattern); err == nil {
 		err2 = core.ListVersions(ctx, client, version, filter, generateVersionHandler(&result))
 	} else if spec, err := names.ParseSpec(pattern); err == nil {
-		err2 = core.ListSpecs(ctx, client, spec, filter, generateSpecHandler(&result))
+		err2 = core.ListSpecs(ctx, client, spec, filter, false, generateSpecHandler(&result))
 	} else if rev, err := names.ParseSpecRevision(pattern); err == nil {
 		err2 = core.ListSpecRevisions(ctx, client, rev, filter, generateSpecHandler(&result))
 	} else if artifact, err := names.ParseArtifact(pattern); err == nil {

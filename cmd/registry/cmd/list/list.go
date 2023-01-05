@@ -77,7 +77,7 @@ func matchAndHandleListCmd(
 	} else if version, err := names.ParseVersionCollection(name); err == nil {
 		return core.ListVersions(ctx, client, version, filter, core.PrintVersion)
 	} else if spec, err := names.ParseSpecCollection(name); err == nil {
-		return core.ListSpecs(ctx, client, spec, filter, core.PrintSpec)
+		return core.ListSpecs(ctx, client, spec, filter, false, core.PrintSpec)
 	} else if rev, err := names.ParseSpecRevisionCollection(name); err == nil {
 		return core.ListSpecRevisions(ctx, client, rev, filter, core.PrintSpec)
 	} else if artifact, err := names.ParseArtifactCollection(name); err == nil {
@@ -96,7 +96,7 @@ func matchAndHandleListCmd(
 	} else if version, err := names.ParseVersion(name); err == nil {
 		return core.ListVersions(ctx, client, version, filter, core.PrintVersion)
 	} else if spec, err := names.ParseSpec(name); err == nil {
-		return core.ListSpecs(ctx, client, spec, filter, core.PrintSpec)
+		return core.ListSpecs(ctx, client, spec, filter, false, core.PrintSpec)
 	} else if rev, err := names.ParseSpecRevision(name); err == nil {
 		return core.ListSpecRevisions(ctx, client, rev, filter, core.PrintSpec)
 	} else if artifact, err := names.ParseArtifact(name); err == nil {

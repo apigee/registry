@@ -147,7 +147,7 @@ func deleteSpecs(
 	spec names.Spec,
 	filterFlag string,
 	taskQueue chan<- core.Task) error {
-	return core.ListSpecs(ctx, client, spec, filterFlag, func(spec *rpc.ApiSpec) error {
+	return core.ListSpecs(ctx, client, spec, filterFlag, false, func(spec *rpc.ApiSpec) error {
 		taskQueue <- &deleteTask{
 			client:       client,
 			resourceName: spec.Name,

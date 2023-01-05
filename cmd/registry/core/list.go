@@ -158,6 +158,7 @@ func ListSpecs(ctx context.Context,
 	client *gapic.RegistryClient,
 	name names.Spec,
 	filter string,
+	getContents bool,
 	handler SpecHandler) error {
 	if id := name.SpecID; id != "" && id != "-" {
 		if len(filter) > 0 {
@@ -173,6 +174,16 @@ func ListSpecs(ctx context.Context,
 	for r, err := it.Next(); err != iterator.Done; r, err = it.Next() {
 		if err != nil {
 			return err
+		}
+
+		if getContents {
+			resp, err := client.GetApiSpecContents(ctx, &rpc.GetApiSpecContentsRequest{
+				Name: r.GetName(),
+			})
+			if err != nil {
+				return err
+			}
+			r.Contents = resp.GetData()
 		}
 
 		if err := handler(r); err != nil {

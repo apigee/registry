@@ -30,7 +30,7 @@ func (r *RegistryLister) ListVersions(ctx context.Context, version names.Version
 }
 
 func (r *RegistryLister) ListSpecs(ctx context.Context, spec names.Spec, filter string, handler core.SpecHandler) error {
-	return core.ListSpecs(ctx, r.RegistryClient, spec, filter, handler)
+	return core.ListSpecs(ctx, r.RegistryClient, spec, filter, false, handler)
 }
 
 func (r *RegistryLister) ListArtifacts(ctx context.Context, artifact names.Artifact, filter string, contents bool, handler core.ArtifactHandler) error {

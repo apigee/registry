@@ -75,7 +75,7 @@ func vocabularyCommand() *cobra.Command {
 
 			// Iterate through a collection of specs and summarize each.
 			if parsed.RevisionID == "" {
-				err = core.ListSpecs(ctx, client, parsed.Spec(), filter, func(spec *rpc.ApiSpec) error {
+				err = core.ListSpecs(ctx, client, parsed.Spec(), filter, false, func(spec *rpc.ApiSpec) error {
 					taskQueue <- &computeVocabularyTask{
 						client:   client,
 						specName: spec.GetName(),
