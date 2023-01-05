@@ -47,14 +47,19 @@ func New(rules RuleRegistry, configs Configs) *Checker {
 	return l
 }
 
-func (l *Checker) Check(ctx context.Context, admin connection.AdminClient, client connection.RegistryClient, root names.Name, filter string, jobs int) (*Response, error) {
-	taskQueue, wait := core.WorkerPool(ctx, jobs)
-	defer wait()
-
-	response := &Response{
+func (l *Checker) Check(ctx context.Context, admin connection.AdminClient, client connection.RegistryClient, root names.Name, filter string, jobs int) (response *Response, err error) {
+	response = &Response{
 		RunTime:  time.Now(),
 		Problems: make([]Problem, 0),
 	}
+
+	taskQueue, wait := core.WorkerPool(ctx, jobs)
+	defer func() {
+		wait()
+		if response.Error != nil { // from a panic
+			err = response.Error
+		}
+	}()
 
 	handler := &listHandler{
 		taskQueue: taskQueue,
@@ -62,15 +67,8 @@ func (l *Checker) Check(ctx context.Context, admin connection.AdminClient, clien
 			return &checkTask{l, response, r}
 		},
 	}
-	err := tree.ListSubresources(ctx, admin, client, root, filter, true, handler)
-	if err != nil {
-		return nil, err
-	}
-
-	if response.Error != nil { // from a panic
-		return nil, response.Error
-	}
-	return response, nil
+	err = tree.ListSubresources(ctx, admin, client, root, filter, true, handler)
+	return response, err
 }
 
 type checkTask struct {
