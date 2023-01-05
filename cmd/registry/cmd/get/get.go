@@ -231,7 +231,7 @@ func (h *GetHandler) printArtifactName() func(message *rpc.Artifact) error {
 
 func (h *GetHandler) printProjectDetail() func(message *rpc.Project) error {
 	return func(message *rpc.Project) error {
-		project, _, err := patch.PatchForProject(h.ctx, h.client, message)
+		project, err := patch.PatchForProject(h.ctx, h.client, message)
 		if err != nil {
 			return err
 		}
@@ -246,7 +246,7 @@ func (h *GetHandler) printProjectDetail() func(message *rpc.Project) error {
 
 func (h *GetHandler) printApiDetail() func(message *rpc.Api) error {
 	return func(message *rpc.Api) error {
-		api, _, err := patch.PatchForApi(h.ctx, h.client, message, false)
+		api, err := patch.PatchForApi(h.ctx, h.client, message, false)
 		if err != nil {
 			return err
 		}
@@ -261,7 +261,7 @@ func (h *GetHandler) printApiDetail() func(message *rpc.Api) error {
 
 func (h *GetHandler) printApiVersionDetail() func(message *rpc.ApiVersion) error {
 	return func(message *rpc.ApiVersion) error {
-		version, _, err := patch.PatchForApiVersion(h.ctx, h.client, message, false)
+		version, err := patch.PatchForApiVersion(h.ctx, h.client, message, false)
 		if err != nil {
 			return err
 		}
@@ -276,7 +276,7 @@ func (h *GetHandler) printApiVersionDetail() func(message *rpc.ApiVersion) error
 
 func (h *GetHandler) printApiDeploymentDetail() func(message *rpc.ApiDeployment) error {
 	return func(message *rpc.ApiDeployment) error {
-		deployment, _, err := patch.PatchForApiDeployment(h.ctx, h.client, message, false)
+		deployment, err := patch.PatchForApiDeployment(h.ctx, h.client, message, false)
 		if err != nil {
 			return err
 		}
@@ -291,7 +291,7 @@ func (h *GetHandler) printApiDeploymentDetail() func(message *rpc.ApiDeployment)
 
 func (h *GetHandler) printApiSpecDetail() func(message *rpc.ApiSpec) error {
 	return func(message *rpc.ApiSpec) error {
-		spec, _, err := patch.PatchForApiSpec(h.ctx, h.client, message, false)
+		spec, err := patch.PatchForApiSpec(h.ctx, h.client, message, false)
 		if err != nil {
 			return err
 		}
@@ -306,7 +306,7 @@ func (h *GetHandler) printApiSpecDetail() func(message *rpc.ApiSpec) error {
 
 func (h *GetHandler) printArtifactDetail() func(message *rpc.Artifact) error {
 	return func(message *rpc.Artifact) error {
-		artifact, _, err := patch.PatchForArtifact(h.ctx, h.client, message)
+		artifact, err := patch.PatchForArtifact(h.ctx, h.client, message)
 		if err != nil {
 			return err
 		}

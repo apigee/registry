@@ -92,7 +92,7 @@ func TestProjectImports(t *testing.T) {
 				t.Fatalf("Failed to get API: %s", err)
 			}
 
-			model, _, err := PatchForApi(ctx, registryClient, got, true)
+			model, err := PatchForApi(ctx, registryClient, got, true)
 			if err != nil {
 				t.Fatalf("PatchForApi(%+v) returned an error: %s", got, err)
 			}
@@ -121,7 +121,7 @@ func TestProjectImports(t *testing.T) {
 					t.Fatalf("Failed to verify artifact existence: %s", err)
 				}
 
-				model, _, err := PatchForArtifact(ctx, registryClient, message)
+				model, err := PatchForArtifact(ctx, registryClient, message)
 				if err != nil {
 					t.Fatalf("PatchForArtifact(%+v) returned an error: %s", message, err)
 				}

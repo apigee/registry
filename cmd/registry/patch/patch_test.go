@@ -80,15 +80,15 @@ func TestProjectPatches(t *testing.T) {
 					if !cmp.Equal(test.message, project, opts) {
 						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(test.message, project, opts))
 					}
-					model, header, err := PatchForProject(ctx, registryClient, project)
+					model, err := PatchForProject(ctx, registryClient, project)
 					if err != nil {
 						t.Fatalf("%s", err)
 					}
-					if header.Metadata.Parent != test.parent {
-						t.Errorf("Incorrect export parent. Wanted %s, got %s", test.parent, header.Metadata.Parent)
+					if model.Header.Metadata.Parent != test.parent {
+						t.Errorf("Incorrect export parent. Wanted %s, got %s", test.parent, model.Header.Metadata.Parent)
 					}
-					if header.Metadata.Name != test.resourceID {
-						t.Errorf("Incorrect export name. Wanted %s, got %s", test.resourceID, header.Metadata.Name)
+					if model.Header.Metadata.Name != test.resourceID {
+						t.Errorf("Incorrect export name. Wanted %s, got %s", test.resourceID, model.Header.Metadata.Name)
 					}
 					out, err := Encode(model)
 					if err != nil {
@@ -203,15 +203,15 @@ func TestApiPatches(t *testing.T) {
 					if !cmp.Equal(test.message, api, opts) {
 						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(test.message, api, opts))
 					}
-					model, header, err := PatchForApi(ctx, registryClient, api, test.nested)
+					model, err := PatchForApi(ctx, registryClient, api, test.nested)
 					if err != nil {
 						t.Fatalf("%s", err)
 					}
-					if header.Metadata.Parent != test.parent {
-						t.Errorf("Incorrect export parent. Wanted %s, got %s", test.parent, header.Metadata.Parent)
+					if model.Header.Metadata.Parent != test.parent {
+						t.Errorf("Incorrect export parent. Wanted %s, got %s", test.parent, model.Header.Metadata.Parent)
 					}
-					if header.Metadata.Name != test.resourceID {
-						t.Errorf("Incorrect export name. Wanted %s, got %s", test.resourceID, header.Metadata.Name)
+					if model.Header.Metadata.Name != test.resourceID {
+						t.Errorf("Incorrect export name. Wanted %s, got %s", test.resourceID, model.Header.Metadata.Name)
 					}
 					out, err := Encode(model)
 					if err != nil {
@@ -305,15 +305,15 @@ func TestVersionPatches(t *testing.T) {
 					if !cmp.Equal(test.message, version, opts) {
 						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(test.message, version, opts))
 					}
-					model, header, err := PatchForApiVersion(ctx, registryClient, version, test.nested)
+					model, err := PatchForApiVersion(ctx, registryClient, version, test.nested)
 					if err != nil {
 						t.Fatalf("%s", err)
 					}
-					if header.Metadata.Parent != test.parent {
-						t.Errorf("Incorrect export parent. Wanted %s, got %s", test.parent, header.Metadata.Parent)
+					if model.Header.Metadata.Parent != test.parent {
+						t.Errorf("Incorrect export parent. Wanted %s, got %s", test.parent, model.Header.Metadata.Parent)
 					}
-					if header.Metadata.Name != test.resourceID {
-						t.Errorf("Incorrect export name. Wanted %s, got %s", test.resourceID, header.Metadata.Name)
+					if model.Header.Metadata.Name != test.resourceID {
+						t.Errorf("Incorrect export name. Wanted %s, got %s", test.resourceID, model.Header.Metadata.Name)
 					}
 					out, err := Encode(model)
 					if err != nil {
@@ -408,15 +408,15 @@ func TestSpecPatches(t *testing.T) {
 					if !cmp.Equal(test.message, spec, opts) {
 						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(test.message, spec, opts))
 					}
-					model, header, err := PatchForApiSpec(ctx, registryClient, spec, test.nested)
+					model, err := PatchForApiSpec(ctx, registryClient, spec, test.nested)
 					if err != nil {
 						t.Fatalf("%s", err)
 					}
-					if header.Metadata.Parent != test.parent {
-						t.Errorf("Incorrect export parent. Wanted %s, got %s", test.parent, header.Metadata.Parent)
+					if model.Header.Metadata.Parent != test.parent {
+						t.Errorf("Incorrect export parent. Wanted %s, got %s", test.parent, model.Header.Metadata.Parent)
 					}
-					if header.Metadata.Name != test.resourceID {
-						t.Errorf("Incorrect export name. Wanted %s, got %s", test.resourceID, header.Metadata.Name)
+					if model.Header.Metadata.Name != test.resourceID {
+						t.Errorf("Incorrect export name. Wanted %s, got %s", test.resourceID, model.Header.Metadata.Name)
 					}
 					out, err := Encode(model)
 					if err != nil {
@@ -514,15 +514,15 @@ func TestDeploymentPatches(t *testing.T) {
 					if !cmp.Equal(test.message, deployment, opts) {
 						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(test.message, deployment, opts))
 					}
-					model, header, err := PatchForApiDeployment(ctx, registryClient, deployment, test.nested)
+					model, err := PatchForApiDeployment(ctx, registryClient, deployment, test.nested)
 					if err != nil {
 						t.Fatalf("%s", err)
 					}
-					if header.Metadata.Parent != test.parent {
-						t.Errorf("Incorrect export parent. Wanted %s, got %s", test.parent, header.Metadata.Parent)
+					if model.Header.Metadata.Parent != test.parent {
+						t.Errorf("Incorrect export parent. Wanted %s, got %s", test.parent, model.Header.Metadata.Parent)
 					}
-					if header.Metadata.Name != test.resourceID {
-						t.Errorf("Incorrect export name. Wanted %s, got %s", test.resourceID, header.Metadata.Name)
+					if model.Header.Metadata.Name != test.resourceID {
+						t.Errorf("Incorrect export name. Wanted %s, got %s", test.resourceID, model.Header.Metadata.Name)
 					}
 					out, err := Encode(model)
 					if err != nil {
@@ -867,15 +867,15 @@ func TestMessageArtifactPatches(t *testing.T) {
 					if !cmp.Equal(test.message, contents, opts) {
 						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(test.message, contents, opts))
 					}
-					model, header, err := PatchForArtifact(ctx, registryClient, artifact)
+					model, err := PatchForArtifact(ctx, registryClient, artifact)
 					if err != nil {
 						t.Fatalf("%s", err)
 					}
-					if header.Metadata.Parent != test.parent {
-						t.Errorf("Incorrect export parent. Wanted %s, got %s", test.parent, header.Metadata.Parent)
+					if model.Header.Metadata.Parent != test.parent {
+						t.Errorf("Incorrect export parent. Wanted %s, got %s", test.parent, model.Header.Metadata.Parent)
 					}
-					if header.Metadata.Name != test.artifactID {
-						t.Errorf("Incorrect export name. Wanted %s, got %s", test.artifactID, header.Metadata.Name)
+					if model.Header.Metadata.Name != test.artifactID {
+						t.Errorf("Incorrect export name. Wanted %s, got %s", test.artifactID, model.Header.Metadata.Name)
 					}
 					out, err := Encode(model)
 					if err != nil {
@@ -957,18 +957,18 @@ func TestYamlArtifactPatches(t *testing.T) {
 			}
 			err = core.GetArtifact(ctx, registryClient, artifactName, true,
 				func(artifact *rpc.Artifact) error {
-					model, header, err := PatchForArtifact(ctx, registryClient, artifact)
+					model, err := PatchForArtifact(ctx, registryClient, artifact)
 					if err != nil {
 						t.Fatalf("%s", err)
 					}
-					if header.Kind != test.kind {
-						t.Errorf("Incorrect export parent. Wanted %s, got %s", test.kind, header.Kind)
+					if model.Header.Kind != test.kind {
+						t.Errorf("Incorrect export parent. Wanted %s, got %s", test.kind, model.Header.Kind)
 					}
-					if header.Metadata.Parent != test.parent {
-						t.Errorf("Incorrect export parent. Wanted %s, got %s", test.parent, header.Metadata.Parent)
+					if model.Header.Metadata.Parent != test.parent {
+						t.Errorf("Incorrect export parent. Wanted %s, got %s", test.parent, model.Header.Metadata.Parent)
 					}
-					if header.Metadata.Name != test.artifactID {
-						t.Errorf("Incorrect export name. Wanted %s, got %s", test.artifactID, header.Metadata.Name)
+					if model.Header.Metadata.Name != test.artifactID {
+						t.Errorf("Incorrect export name. Wanted %s, got %s", test.artifactID, model.Header.Metadata.Name)
 					}
 					out, err := Encode(model)
 					if err != nil {

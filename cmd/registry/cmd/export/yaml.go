@@ -55,7 +55,7 @@ func yamlCommand() *cobra.Command {
 				}
 			} else if api, err := names.ParseApi(c.FQName(args[0])); err == nil {
 				err = core.GetAPI(ctx, client, api, func(message *rpc.Api) error {
-					api, _, err := patch.PatchForApi(ctx, client, message, nested)
+					api, err := patch.PatchForApi(ctx, client, message, nested)
 					if err != nil {
 						return err
 					}
@@ -71,7 +71,7 @@ func yamlCommand() *cobra.Command {
 				}
 			} else if version, err := names.ParseVersion(c.FQName(args[0])); err == nil {
 				err = core.GetVersion(ctx, client, version, func(message *rpc.ApiVersion) error {
-					version, _, err := patch.PatchForApiVersion(ctx, client, message, nested)
+					version, err := patch.PatchForApiVersion(ctx, client, message, nested)
 					if err != nil {
 						return err
 					}
@@ -87,7 +87,7 @@ func yamlCommand() *cobra.Command {
 				}
 			} else if spec, err := names.ParseSpec(c.FQName(args[0])); err == nil {
 				err = core.GetSpec(ctx, client, spec, false, func(message *rpc.ApiSpec) error {
-					spec, _, err := patch.PatchForApiSpec(ctx, client, message, nested)
+					spec, err := patch.PatchForApiSpec(ctx, client, message, nested)
 					if err != nil {
 						return err
 					}
@@ -103,7 +103,7 @@ func yamlCommand() *cobra.Command {
 				}
 			} else if deployment, err := names.ParseDeployment(c.FQName(args[0])); err == nil {
 				err = core.GetDeployment(ctx, client, deployment, func(message *rpc.ApiDeployment) error {
-					deployment, _, err := patch.PatchForApiDeployment(ctx, client, message, nested)
+					deployment, err := patch.PatchForApiDeployment(ctx, client, message, nested)
 					if err != nil {
 						return err
 					}
@@ -119,7 +119,7 @@ func yamlCommand() *cobra.Command {
 				}
 			} else if artifact, err := names.ParseArtifact(c.FQName(args[0])); err == nil {
 				err = core.GetArtifact(ctx, client, artifact, false, func(message *rpc.Artifact) error {
-					artifact, _, err := patch.PatchForArtifact(ctx, client, message)
+					artifact, err := patch.PatchForArtifact(ctx, client, message)
 					if err != nil {
 						return err
 					}

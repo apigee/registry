@@ -32,25 +32,6 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-// PatchForArtifact allows an artifact to be individually exported as a YAML file.
-func PatchForArtifact(ctx context.Context, client *gapic.RegistryClient, message *rpc.Artifact) (*models.Artifact, *models.Header, error) {
-	if message.Contents == nil {
-		req := &rpc.GetArtifactContentsRequest{
-			Name: message.Name,
-		}
-		body, err := client.GetArtifactContents(ctx, req)
-		if err != nil {
-			return nil, nil, err
-		}
-		message.Contents = body.Data
-	}
-	artifact, err := newArtifact(message)
-	if err != nil {
-		return nil, nil, err
-	}
-	return artifact, &artifact.Header, nil
-}
-
 // styleForYAML sets the style field on a tree of yaml.Nodes for YAML export.
 func styleForYAML(node *yaml.Node) {
 	node.Style = 0
@@ -94,7 +75,18 @@ func removeIdAndKind(node *yaml.Node) *yaml.Node {
 	return node
 }
 
-func newArtifact(message *rpc.Artifact) (*models.Artifact, error) {
+// PatchForArtifact allows an artifact to be individually exported as a YAML file.
+func PatchForArtifact(ctx context.Context, client *gapic.RegistryClient, message *rpc.Artifact) (*models.Artifact, error) {
+	if message.Contents == nil {
+		req := &rpc.GetArtifactContentsRequest{
+			Name: message.Name,
+		}
+		body, err := client.GetArtifactContents(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+		message.Contents = body.Data
+	}
 	artifactName, err := names.ParseArtifact(message.Name)
 	if err != nil {
 		return nil, err

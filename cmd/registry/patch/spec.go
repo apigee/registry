@@ -34,15 +34,7 @@ import (
 )
 
 // PatchForApiSpec allows an API spec to be individually exported as a YAML file.
-func PatchForApiSpec(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiSpec, nested bool) (*models.ApiSpec, *models.Header, error) {
-	spec, err := newApiSpec(ctx, client, message, nested)
-	if err != nil {
-		return nil, nil, err
-	}
-	return spec, &spec.Header, nil
-}
-
-func newApiSpec(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiSpec, nested bool) (*models.ApiSpec, error) {
+func PatchForApiSpec(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiSpec, nested bool) (*models.ApiSpec, error) {
 	specName, err := names.ParseSpecRevision(message.Name)
 	if err != nil {
 		return nil, err

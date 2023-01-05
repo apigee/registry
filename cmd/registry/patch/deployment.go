@@ -27,12 +27,8 @@ import (
 )
 
 // PatchForApiDeployment allows an API deployment to be individually exported as a YAML file.
-func PatchForApiDeployment(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiDeployment, nested bool) (*models.ApiDeployment, *models.Header, error) {
-	deployment, err := newApiDeployment(ctx, client, message, nested)
-	if err != nil {
-		return nil, nil, err
-	}
-	return deployment, &deployment.Header, nil
+func PatchForApiDeployment(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiDeployment, nested bool) (*models.ApiDeployment, error) {
+	return newApiDeployment(ctx, client, message, nested)
 }
 
 // relativeSpecRevisionName returns the versionid+specid if the spec is within the specified API
