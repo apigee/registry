@@ -7,7 +7,6 @@ require (
 	cloud.google.com/go/pubsub v1.25.1
 	github.com/GoogleCloudPlatform/cloudsql-proxy v1.32.0
 	github.com/apex/log v1.9.0
-	github.com/ghodss/yaml v1.0.0
 	github.com/google/cel-go v0.12.5
 	github.com/google/gnostic v0.6.9
 	github.com/google/go-cmp v0.5.9
