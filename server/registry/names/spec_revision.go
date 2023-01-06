@@ -22,8 +22,8 @@ import (
 var specRevisionRegexp = regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/versions/%s/specs/%s(?:@%s)?$",
 	identifier, Location, identifier, identifier, identifier, revisionTag))
 
-var specRevisionCollectionRegexp = regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/versions/%s/specs@$",
-	identifier, Location, identifier, identifier))
+var specRevisionCollectionRegexp = regexp.MustCompile(fmt.Sprintf("^projects/%s/locations/%s/apis/%s/versions/%s/specs/%s@$",
+	identifier, Location, identifier, identifier, identifier))
 
 // SpecRevision represents a resource name for an API spec revision.
 type SpecRevision struct {
