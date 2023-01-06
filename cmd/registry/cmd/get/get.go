@@ -54,7 +54,7 @@ func Command() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			h := &GetHandler{
+			h := &getHandler{
 				ctx:         ctx,
 				client:      client,
 				adminClient: adminClient,
@@ -76,7 +76,7 @@ func Command() *cobra.Command {
 	return cmd
 }
 
-type GetHandler struct {
+type getHandler struct {
 	ctx         context.Context
 	client      connection.RegistryClient
 	adminClient connection.AdminClient
@@ -87,7 +87,7 @@ type GetHandler struct {
 	results     []interface{} // result values to be returned in a single message
 }
 
-func (h *GetHandler) traverse() error {
+func (h *getHandler) traverse() error {
 	// Define aliases to simplify the subsequent code.
 	name := h.name
 	ctx := h.ctx
@@ -163,7 +163,7 @@ func (h *GetHandler) traverse() error {
 	}
 }
 
-func (h *GetHandler) projectHandler() func(message *rpc.Project) error {
+func (h *getHandler) projectHandler() func(message *rpc.Project) error {
 	return func(message *rpc.Project) error {
 		switch h.output {
 		case "names":
@@ -183,7 +183,7 @@ func (h *GetHandler) projectHandler() func(message *rpc.Project) error {
 	}
 }
 
-func (h *GetHandler) apiHandler() func(message *rpc.Api) error {
+func (h *getHandler) apiHandler() func(message *rpc.Api) error {
 	return func(message *rpc.Api) error {
 		switch h.output {
 		case "names":
@@ -203,7 +203,7 @@ func (h *GetHandler) apiHandler() func(message *rpc.Api) error {
 	}
 }
 
-func (h *GetHandler) apiVersionHandler() func(message *rpc.ApiVersion) error {
+func (h *getHandler) apiVersionHandler() func(message *rpc.ApiVersion) error {
 	return func(message *rpc.ApiVersion) error {
 		switch h.output {
 		case "names":
@@ -223,7 +223,7 @@ func (h *GetHandler) apiVersionHandler() func(message *rpc.ApiVersion) error {
 	}
 }
 
-func (h *GetHandler) apiDeploymentHandler() func(message *rpc.ApiDeployment) error {
+func (h *getHandler) apiDeploymentHandler() func(message *rpc.ApiDeployment) error {
 	return func(message *rpc.ApiDeployment) error {
 		switch h.output {
 		case "names":
@@ -243,7 +243,7 @@ func (h *GetHandler) apiDeploymentHandler() func(message *rpc.ApiDeployment) err
 	}
 }
 
-func (h *GetHandler) apiSpecHandler() func(message *rpc.ApiSpec) error {
+func (h *getHandler) apiSpecHandler() func(message *rpc.ApiSpec) error {
 	return func(message *rpc.ApiSpec) error {
 		switch h.output {
 		case "names":
@@ -276,7 +276,7 @@ func (h *GetHandler) apiSpecHandler() func(message *rpc.ApiSpec) error {
 	}
 }
 
-func (h *GetHandler) artifactHandler() func(message *rpc.Artifact) error {
+func (h *getHandler) artifactHandler() func(message *rpc.Artifact) error {
 	return func(message *rpc.Artifact) error {
 		switch h.output {
 		case "names":
@@ -312,7 +312,7 @@ func newOutputTypeError(resourceType, outputType string) error {
 	return fmt.Errorf("%s do not support the %q output type", resourceType, outputType)
 }
 
-func (h *GetHandler) write() error {
+func (h *getHandler) write() error {
 	if len(h.results) == 0 {
 		return fmt.Errorf("no matching results found")
 	}
