@@ -25,6 +25,7 @@ import (
 	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/models"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"github.com/spf13/cobra"
@@ -37,6 +38,7 @@ func Command() *cobra.Command {
 	var getRawContents bool
 	var getPrintedContents bool
 	var filter string
+	var output string
 
 	cmd := &cobra.Command{
 		Use:   "get",
@@ -72,8 +74,33 @@ func Command() *cobra.Command {
 				filter:             filter,
 				getPrintedContents: getPrintedContents,
 				getRawContents:     getRawContents,
+				output:             output,
 			}
-			return h.run()
+			err = h.run()
+			if err != nil {
+				return err
+			}
+			if len(h.results) == 1 {
+				bytes, err := patch.Encode(h.results[0])
+				if err != nil {
+					return err
+				}
+				_, err = h.cmd.OutOrStdout().Write(bytes)
+				return err
+			} else if len(h.results) > 1 {
+				list := &models.List{
+					Header: models.Header{ApiVersion: patch.RegistryV1},
+					Items:  h.results,
+				}
+				bytes, err := patch.Encode(list)
+				if err != nil {
+					return err
+				}
+				_, err = h.cmd.OutOrStdout().Write(bytes)
+				return err
+			} else {
+				return nil
+			}
 		},
 	}
 
@@ -81,6 +108,7 @@ func Command() *cobra.Command {
 	cmd.Flags().BoolVar(&getRawContents, "raw", false, "Get raw resource contents if available")
 	cmd.Flags().BoolVar(&getPrintedContents, "print", false, "Print resource contents if available")
 	cmd.Flags().StringVar(&filter, "filter", "", "Filter selected resources")
+	cmd.Flags().StringVarP(&output, "output", "o", "names", "Output type (names, yaml)")
 	return cmd
 }
 
@@ -93,6 +121,8 @@ type GetHandler struct {
 	filter             string
 	getPrintedContents bool
 	getRawContents     bool
+	output             string
+	results            []interface{}
 }
 
 func (h *GetHandler) run() error {
@@ -103,43 +133,46 @@ func (h *GetHandler) run() error {
 	adminClient := h.adminClient
 	filter := h.filter
 
+	// Initialize a slice of results.
+	h.results = make([]interface{}, 0)
+
 	// First try to match collection names.
 	if project, err := names.ParseProjectCollection(name); err == nil {
-		return core.ListProjects(ctx, adminClient, project, filter, h.printProjectName())
+		return core.ListProjects(ctx, adminClient, project, filter, h.projectHandler())
 	} else if api, err := names.ParseApiCollection(name); err == nil {
-		return core.ListAPIs(ctx, client, api, filter, h.printApiName())
+		return core.ListAPIs(ctx, client, api, filter, h.apiHandler())
 	} else if deployment, err := names.ParseDeploymentCollection(name); err == nil {
-		return core.ListDeployments(ctx, client, deployment, filter, h.printApiDeploymentName())
+		return core.ListDeployments(ctx, client, deployment, filter, h.apiDeploymentHandler())
 	} else if rev, err := names.ParseDeploymentRevisionCollection(name); err == nil {
-		return core.ListDeploymentRevisions(ctx, client, rev, filter, h.printApiDeploymentName())
+		return core.ListDeploymentRevisions(ctx, client, rev, filter, h.apiDeploymentHandler())
 	} else if version, err := names.ParseVersionCollection(name); err == nil {
-		return core.ListVersions(ctx, client, version, filter, h.printApiVersionName())
+		return core.ListVersions(ctx, client, version, filter, h.apiVersionHandler())
 	} else if spec, err := names.ParseSpecCollection(name); err == nil {
-		return core.ListSpecs(ctx, client, spec, filter, false, h.printApiSpecName())
+		return core.ListSpecs(ctx, client, spec, filter, false, h.apiSpecHandler())
 	} else if rev, err := names.ParseSpecRevisionCollection(name); err == nil {
-		return core.ListSpecRevisions(ctx, client, rev, filter, false, h.printApiSpecName())
+		return core.ListSpecRevisions(ctx, client, rev, filter, false, h.apiSpecHandler())
 	} else if artifact, err := names.ParseArtifactCollection(name); err == nil {
-		return core.ListArtifacts(ctx, client, artifact, filter, false, h.printArtifactName())
+		return core.ListArtifacts(ctx, client, artifact, filter, false, h.artifactHandler())
 	}
 
 	// Then try to match resource names containing wildcards, these also are treated as collections.
 	if strings.Contains(name, "/-") || strings.Contains(name, "@-") {
 		if project, err := names.ParseProject(name); err == nil {
-			return core.ListProjects(ctx, adminClient, project, filter, h.printProjectName())
+			return core.ListProjects(ctx, adminClient, project, filter, h.projectHandler())
 		} else if api, err := names.ParseApi(name); err == nil {
-			return core.ListAPIs(ctx, client, api, filter, h.printApiName())
+			return core.ListAPIs(ctx, client, api, filter, h.apiHandler())
 		} else if deployment, err := names.ParseDeployment(name); err == nil {
-			return core.ListDeployments(ctx, client, deployment, filter, h.printApiDeploymentName())
+			return core.ListDeployments(ctx, client, deployment, filter, h.apiDeploymentHandler())
 		} else if rev, err := names.ParseDeploymentRevision(name); err == nil {
-			return core.ListDeploymentRevisions(ctx, client, rev, filter, h.printApiDeploymentName())
+			return core.ListDeploymentRevisions(ctx, client, rev, filter, h.apiDeploymentHandler())
 		} else if version, err := names.ParseVersion(name); err == nil {
-			return core.ListVersions(ctx, client, version, filter, h.printApiVersionName())
+			return core.ListVersions(ctx, client, version, filter, h.apiVersionHandler())
 		} else if spec, err := names.ParseSpec(name); err == nil {
-			return core.ListSpecs(ctx, client, spec, filter, false, h.printApiSpecName())
+			return core.ListSpecs(ctx, client, spec, filter, false, h.apiSpecHandler())
 		} else if rev, err := names.ParseSpecRevision(name); err == nil {
-			return core.ListSpecRevisions(ctx, client, rev, filter, false, h.printApiSpecName())
+			return core.ListSpecRevisions(ctx, client, rev, filter, false, h.apiSpecHandler())
 		} else if artifact, err := names.ParseArtifact(name); err == nil {
-			return core.ListArtifacts(ctx, client, artifact, filter, false, h.printArtifactName())
+			return core.ListArtifacts(ctx, client, artifact, filter, false, h.artifactHandler())
 		}
 		return fmt.Errorf("unsupported entity %+v", name)
 	}
@@ -151,204 +184,183 @@ func (h *GetHandler) run() error {
 	}
 
 	if project, err := names.ParseProject(name); err == nil {
-		return core.GetProject(ctx, adminClient, project, h.printProjectDetail())
+		return core.GetProject(ctx, adminClient, project, h.projectHandler())
 	} else if api, err := names.ParseApi(name); err == nil {
-		return core.GetAPI(ctx, client, api, h.printApiDetail())
+		return core.GetAPI(ctx, client, api, h.apiHandler())
 	} else if deployment, err := names.ParseDeployment(name); err == nil {
-		return core.GetDeployment(ctx, client, deployment, h.printApiDeploymentDetail())
+		return core.GetDeployment(ctx, client, deployment, h.apiDeploymentHandler())
 	} else if deployment, err := names.ParseDeploymentRevision(name); err == nil {
-		return core.GetDeploymentRevision(ctx, client, deployment, h.printApiDeploymentDetail())
+		return core.GetDeploymentRevision(ctx, client, deployment, h.apiDeploymentHandler())
 	} else if version, err := names.ParseVersion(name); err == nil {
-		return core.GetVersion(ctx, client, version, h.printApiVersionDetail())
+		return core.GetVersion(ctx, client, version, h.apiVersionHandler())
 	} else if spec, err := names.ParseSpec(name); err == nil {
-		// for specs, these options are synonymous
-		if h.getPrintedContents || h.getRawContents {
-			return core.GetSpec(ctx, client, spec, true, h.writeSpecContents())
-		} else {
-			return core.GetSpec(ctx, client, spec, false, h.printApiSpecDetail())
-		}
+		return core.GetSpec(ctx, client, spec, false, h.apiSpecHandler())
 	} else if spec, err := names.ParseSpecRevision(name); err == nil {
-		// for specs, these options are synonymous
-		if h.getPrintedContents || h.getRawContents {
-			return core.GetSpecRevision(ctx, client, spec, true, h.writeSpecContents())
-		} else {
-			return core.GetSpecRevision(ctx, client, spec, false, h.printApiSpecDetail())
-		}
+		return core.GetSpecRevision(ctx, client, spec, false, h.apiSpecHandler())
 	} else if artifact, err := names.ParseArtifact(name); err == nil {
-		if h.getPrintedContents {
-			return core.GetArtifact(ctx, client, artifact, true, h.printArtifactContents())
-		} else if h.getRawContents {
-			return core.GetArtifact(ctx, client, artifact, true, h.writeArtifactContents())
-		} else {
-			return core.GetArtifact(ctx, client, artifact, false, h.printArtifactDetail())
-		}
+		return core.GetArtifact(ctx, client, artifact, false, h.artifactHandler())
 	} else {
 		return fmt.Errorf("unsupported entity %+v", name)
 	}
 }
 
-func (h *GetHandler) printProjectName() func(message *rpc.Project) error {
+func (h *GetHandler) projectHandler() func(message *rpc.Project) error {
 	return func(message *rpc.Project) error {
-		_, err := h.cmd.OutOrStdout().Write([]byte(message.Name + "\n"))
-		return err
-	}
-}
-
-func (h *GetHandler) printApiName() func(message *rpc.Api) error {
-	return func(message *rpc.Api) error {
-		_, err := h.cmd.OutOrStdout().Write([]byte(message.Name + "\n"))
-		return err
-	}
-}
-
-func (h *GetHandler) printApiVersionName() func(message *rpc.ApiVersion) error {
-	return func(message *rpc.ApiVersion) error {
-		_, err := h.cmd.OutOrStdout().Write([]byte(message.Name + "\n"))
-		return err
-	}
-}
-
-func (h *GetHandler) printApiDeploymentName() func(message *rpc.ApiDeployment) error {
-	return func(message *rpc.ApiDeployment) error {
-		_, err := h.cmd.OutOrStdout().Write([]byte(message.Name + "\n"))
-		return err
-	}
-}
-
-func (h *GetHandler) printApiSpecName() func(message *rpc.ApiSpec) error {
-	return func(message *rpc.ApiSpec) error {
-		_, err := h.cmd.OutOrStdout().Write([]byte(message.Name + "\n"))
-		return err
-	}
-}
-
-func (h *GetHandler) printArtifactName() func(message *rpc.Artifact) error {
-	return func(message *rpc.Artifact) error {
-		_, err := h.cmd.OutOrStdout().Write([]byte(message.Name + "\n"))
-		return err
-	}
-}
-
-func (h *GetHandler) printProjectDetail() func(message *rpc.Project) error {
-	return func(message *rpc.Project) error {
-		project, err := patch.NewProject(h.ctx, h.client, message)
-		if err != nil {
+		switch h.output {
+		case "names":
+			_, err := h.cmd.OutOrStdout().Write([]byte(message.Name + "\n"))
 			return err
-		}
-		bytes, err := patch.Encode(project)
-		if err != nil {
-			return err
-		}
-		_, err = h.cmd.OutOrStdout().Write(bytes)
-		return err
-	}
-}
-
-func (h *GetHandler) printApiDetail() func(message *rpc.Api) error {
-	return func(message *rpc.Api) error {
-		api, err := patch.NewApi(h.ctx, h.client, message, false)
-		if err != nil {
-			return err
-		}
-		bytes, err := patch.Encode(api)
-		if err != nil {
-			return err
-		}
-		_, err = h.cmd.OutOrStdout().Write(bytes)
-		return err
-	}
-}
-
-func (h *GetHandler) printApiVersionDetail() func(message *rpc.ApiVersion) error {
-	return func(message *rpc.ApiVersion) error {
-		version, err := patch.NewApiVersion(h.ctx, h.client, message, false)
-		if err != nil {
-			return err
-		}
-		bytes, err := patch.Encode(version)
-		if err != nil {
-			return err
-		}
-		_, err = h.cmd.OutOrStdout().Write(bytes)
-		return err
-	}
-}
-
-func (h *GetHandler) printApiDeploymentDetail() func(message *rpc.ApiDeployment) error {
-	return func(message *rpc.ApiDeployment) error {
-		deployment, err := patch.NewApiDeployment(h.ctx, h.client, message, false)
-		if err != nil {
-			return err
-		}
-		bytes, err := patch.Encode(deployment)
-		if err != nil {
-			return err
-		}
-		_, err = h.cmd.OutOrStdout().Write(bytes)
-		return err
-	}
-}
-
-func (h *GetHandler) printApiSpecDetail() func(message *rpc.ApiSpec) error {
-	return func(message *rpc.ApiSpec) error {
-		spec, err := patch.NewApiSpec(h.ctx, h.client, message, false)
-		if err != nil {
-			return err
-		}
-		bytes, err := patch.Encode(spec)
-		if err != nil {
-			return err
-		}
-		_, err = h.cmd.OutOrStdout().Write(bytes)
-		return err
-	}
-}
-
-func (h *GetHandler) printArtifactDetail() func(message *rpc.Artifact) error {
-	return func(message *rpc.Artifact) error {
-		artifact, err := patch.NewArtifact(h.ctx, h.client, message)
-		if err != nil {
-			return err
-		}
-		bytes, err := patch.Encode(artifact)
-		if err != nil {
-			return err
-		}
-		_, err = h.cmd.OutOrStdout().Write(bytes)
-		return err
-	}
-}
-
-func (h *GetHandler) writeSpecContents() func(message *rpc.ApiSpec) error {
-	return func(message *rpc.ApiSpec) error {
-		contents := message.GetContents()
-		if strings.Contains(message.GetMimeType(), "+gzip") {
-			contents, _ = core.GUnzippedBytes(contents)
-		}
-		_, err := h.cmd.OutOrStdout().Write(contents)
-		return err
-	}
-}
-
-func (h *GetHandler) printArtifactContents() func(artifact *rpc.Artifact) error {
-	return func(artifact *rpc.Artifact) error {
-		if types.IsPrintableType(artifact.GetMimeType()) {
-			fmt.Fprintf(h.cmd.OutOrStdout(), "%s\n", string(artifact.GetContents()))
+		case "yaml":
+			project, err := patch.NewProject(h.ctx, h.client, message)
+			if err != nil {
+				return err
+			}
+			h.results = append(h.results, project)
 			return nil
+		default:
+			return fmt.Errorf("invalid output type %s", h.output)
 		}
-		message, err := getArtifactMessageContents(artifact)
-		if err != nil {
-			return err
-		}
-		fmt.Fprintf(h.cmd.OutOrStdout(), "%s\n", protojson.Format(message))
-		return nil
 	}
 }
 
-func (h *GetHandler) writeArtifactContents() func(artifact *rpc.Artifact) error {
-	return func(artifact *rpc.Artifact) error {
-		_, err := h.cmd.OutOrStdout().Write(artifact.GetContents())
-		return err
+func (h *GetHandler) apiHandler() func(message *rpc.Api) error {
+	return func(message *rpc.Api) error {
+		switch h.output {
+		case "names":
+			_, err := h.cmd.OutOrStdout().Write([]byte(message.Name + "\n"))
+			return err
+		case "yaml":
+			api, err := patch.NewApi(h.ctx, h.client, message, false)
+			if err != nil {
+				return err
+			}
+			h.results = append(h.results, api)
+			return nil
+		default:
+			return fmt.Errorf("invalid output type %s", h.output)
+		}
+	}
+}
+
+func (h *GetHandler) apiVersionHandler() func(message *rpc.ApiVersion) error {
+	return func(message *rpc.ApiVersion) error {
+		switch h.output {
+		case "names":
+			_, err := h.cmd.OutOrStdout().Write([]byte(message.Name + "\n"))
+			return err
+		case "yaml":
+			version, err := patch.NewApiVersion(h.ctx, h.client, message, false)
+			if err != nil {
+				return err
+			}
+			h.results = append(h.results, version)
+			return nil
+		default:
+			return fmt.Errorf("invalid output type %s", h.output)
+		}
+	}
+}
+
+func (h *GetHandler) apiDeploymentHandler() func(message *rpc.ApiDeployment) error {
+	return func(message *rpc.ApiDeployment) error {
+		switch h.output {
+		case "names":
+			_, err := h.cmd.OutOrStdout().Write([]byte(message.Name + "\n"))
+			return err
+		case "yaml":
+			deployment, err := patch.NewApiDeployment(h.ctx, h.client, message, false)
+			if err != nil {
+				return err
+			}
+			h.results = append(h.results, deployment)
+			return nil
+		default:
+			return fmt.Errorf("invalid output type %s", h.output)
+		}
+	}
+}
+
+func (h *GetHandler) apiSpecHandler() func(message *rpc.ApiSpec) error {
+	return func(message *rpc.ApiSpec) error {
+		// for specs, these options are synonymous
+		if h.getPrintedContents || h.getRawContents {
+			name, err := names.ParseSpecRevision(message.Name)
+			if err != nil {
+				return err
+			}
+			if err = core.GetSpecRevision(h.ctx, h.client, name, true, func(spec *rpc.ApiSpec) error {
+				message = spec
+				return nil
+			}); err != nil {
+				return err
+			}
+			contents := message.GetContents()
+			if strings.Contains(message.GetMimeType(), "+gzip") {
+				contents, _ = core.GUnzippedBytes(contents)
+			}
+			_, err = h.cmd.OutOrStdout().Write(contents)
+			return err
+		}
+		switch h.output {
+		case "names":
+			_, err := h.cmd.OutOrStdout().Write([]byte(message.Name + "\n"))
+			return err
+		case "yaml":
+			spec, err := patch.NewApiSpec(h.ctx, h.client, message, false)
+			if err != nil {
+				return err
+			}
+			h.results = append(h.results, spec)
+			return nil
+		default:
+			return fmt.Errorf("invalid output type %s", h.output)
+		}
+	}
+}
+
+func (h *GetHandler) artifactHandler() func(message *rpc.Artifact) error {
+	return func(message *rpc.Artifact) error {
+		if h.getPrintedContents || h.getRawContents || h.output == "yaml" {
+			name, err := names.ParseArtifact(message.Name)
+			if err != nil {
+				return err
+			}
+			if err = core.GetArtifact(h.ctx, h.client, name, true, func(artifact *rpc.Artifact) error {
+				message = artifact
+				return nil
+			}); err != nil {
+				return err
+			}
+		}
+		if h.getPrintedContents {
+			if types.IsPrintableType(message.GetMimeType()) {
+				fmt.Fprintf(h.cmd.OutOrStdout(), "%s\n", string(message.GetContents()))
+				return nil
+			}
+			message, err := getArtifactMessageContents(message)
+			if err != nil {
+				return err
+			}
+			fmt.Fprintf(h.cmd.OutOrStdout(), "%s\n", protojson.Format(message))
+			return nil
+		} else if h.getRawContents {
+			_, err := h.cmd.OutOrStdout().Write(message.GetContents())
+			return err
+		}
+		switch h.output {
+		case "names":
+			_, err := h.cmd.OutOrStdout().Write([]byte(message.Name + "\n"))
+			return err
+		case "yaml":
+			artifact, err := patch.NewArtifact(h.ctx, h.client, message)
+			if err != nil {
+				return err
+			}
+			h.results = append(h.results, artifact)
+			return nil
+		default:
+			return fmt.Errorf("invalid output type %s", h.output)
+		}
 	}
 }
 
