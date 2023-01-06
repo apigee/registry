@@ -48,6 +48,7 @@ func TestGetValidResources(t *testing.T) {
 		&rpc.Artifact{Name: "projects/my-project/locations/global/apis/a/versions/v/artifacts/x", MimeType: "application/yaml", Contents: []byte("hello: 123")},
 		&rpc.Artifact{Name: "projects/my-project/locations/global/apis/a/versions/v/specs/s/artifacts/x", MimeType: "application/yaml", Contents: []byte("hello: 123")},
 		&rpc.Artifact{Name: "projects/my-project/locations/global/apis/a/deployments/d/artifacts/x", MimeType: "application/yaml", Contents: []byte("hello: 123")},
+		&rpc.Artifact{Name: "projects/my-project/locations/global/apis/b/versions/v/specs/s/artifacts/x", MimeType: "application/yaml", Contents: []byte("hello: 123")},
 	}
 	ctx := context.Background()
 	registryClient, err := connection.NewRegistryClient(ctx)
@@ -215,6 +216,10 @@ func TestGetInvalidResources(t *testing.T) {
 	invalid := []string{
 		"projects/my-project/locations/global/invalid",
 		"projects/my-project/locations/global/apis/-/invalid",
+		"projects/my-project/locations/global/apis/-/artifacts/xx",
+		"projects/my-project/locations/global/apis/-/versions/-/artifacts/xx",
+		"projects/my-project/locations/global/apis/-/versions/-/specs/-/artifacts/xx",
+		"projects/my-project/locations/global/apis/-/deployments/-/artifacts/xx",
 		"projects/my-project/locations/global/apis/a/invalid",
 		"projects/my-project/locations/global/apis/a/versions/v/invalid",
 		"projects/my-project/locations/global/apis/a/versions/v/specs/s/invalid",
@@ -232,12 +237,14 @@ func TestGetInvalidResources(t *testing.T) {
 		"projects/my-project/locations/global/apis/a/versions/v/specs/s/artifacts/xx",
 		"projects/my-project/locations/global/apis/a/deployments/d/artifacts/xx",
 	}
-	for _, r := range invalid {
+	for i, r := range invalid {
 		t.Run(r, func(t *testing.T) {
+			// cycle through output types
+			format := []string{"names", "yaml", "contents"}[i%3]
 			cmd := Command()
 			cmd.SilenceUsage = true
 			cmd.SilenceErrors = true
-			args := []string{r}
+			args := []string{r, "-o", format}
 			cmd.SetArgs(args)
 			if err := cmd.Execute(); err == nil {
 				t.Errorf("Execute() with args %v succeeded but should have failed", args)

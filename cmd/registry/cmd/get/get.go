@@ -167,6 +167,7 @@ func (h *GetHandler) projectHandler() func(message *rpc.Project) error {
 	return func(message *rpc.Project) error {
 		switch h.output {
 		case "names":
+			h.results = append(h.results, message.Name)
 			_, err := h.writer.Write([]byte(message.Name + "\n"))
 			return err
 		case "yaml":
@@ -186,6 +187,7 @@ func (h *GetHandler) apiHandler() func(message *rpc.Api) error {
 	return func(message *rpc.Api) error {
 		switch h.output {
 		case "names":
+			h.results = append(h.results, message.Name)
 			_, err := h.writer.Write([]byte(message.Name + "\n"))
 			return err
 		case "yaml":
@@ -205,6 +207,7 @@ func (h *GetHandler) apiVersionHandler() func(message *rpc.ApiVersion) error {
 	return func(message *rpc.ApiVersion) error {
 		switch h.output {
 		case "names":
+			h.results = append(h.results, message.Name)
 			_, err := h.writer.Write([]byte(message.Name + "\n"))
 			return err
 		case "yaml":
@@ -224,6 +227,7 @@ func (h *GetHandler) apiDeploymentHandler() func(message *rpc.ApiDeployment) err
 	return func(message *rpc.ApiDeployment) error {
 		switch h.output {
 		case "names":
+			h.results = append(h.results, message.Name)
 			_, err := h.writer.Write([]byte(message.Name + "\n"))
 			return err
 		case "yaml":
@@ -243,6 +247,7 @@ func (h *GetHandler) apiSpecHandler() func(message *rpc.ApiSpec) error {
 	return func(message *rpc.ApiSpec) error {
 		switch h.output {
 		case "names":
+			h.results = append(h.results, message.Name)
 			_, err := h.writer.Write([]byte(message.Name + "\n"))
 			return err
 		case "contents":
@@ -275,6 +280,7 @@ func (h *GetHandler) artifactHandler() func(message *rpc.Artifact) error {
 	return func(message *rpc.Artifact) error {
 		switch h.output {
 		case "names":
+			h.results = append(h.results, message.Name)
 			_, err := h.writer.Write([]byte(message.Name + "\n"))
 			return err
 		case "contents":
@@ -307,10 +313,10 @@ func newOutputTypeError(resourceType, outputType string) error {
 }
 
 func (h *GetHandler) write() error {
+	if len(h.results) == 0 {
+		return fmt.Errorf("no matching results found")
+	}
 	if h.output == "yaml" {
-		if len(h.results) == 0 {
-			return fmt.Errorf("no matching results found")
-		}
 		var result interface{}
 		if len(h.results) == 1 {
 			result = h.results[0]
@@ -328,9 +334,6 @@ func (h *GetHandler) write() error {
 		return err
 	}
 	if h.output == "contents" {
-		if len(h.results) == 0 {
-			return fmt.Errorf("no matching results found")
-		}
 		if len(h.results) == 1 {
 			_, err := h.writer.Write(h.results[0].([]byte))
 			return err
