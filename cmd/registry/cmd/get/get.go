@@ -72,7 +72,7 @@ func Command() *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&filter, "filter", "", "Filter selected resources")
-	cmd.Flags().StringVarP(&output, "output", "o", "names", "Output type (names, yaml, contents)")
+	cmd.Flags().StringVarP(&output, "output", "o", "name", "Output type (name, yaml, contents)")
 	return cmd
 }
 
@@ -166,7 +166,7 @@ func (h *getHandler) traverse() error {
 func (h *getHandler) projectHandler() func(message *rpc.Project) error {
 	return func(message *rpc.Project) error {
 		switch h.output {
-		case "names":
+		case "name":
 			h.results = append(h.results, message.Name)
 			_, err := h.writer.Write([]byte(message.Name + "\n"))
 			return err
@@ -186,7 +186,7 @@ func (h *getHandler) projectHandler() func(message *rpc.Project) error {
 func (h *getHandler) apiHandler() func(message *rpc.Api) error {
 	return func(message *rpc.Api) error {
 		switch h.output {
-		case "names":
+		case "name":
 			h.results = append(h.results, message.Name)
 			_, err := h.writer.Write([]byte(message.Name + "\n"))
 			return err
@@ -206,7 +206,7 @@ func (h *getHandler) apiHandler() func(message *rpc.Api) error {
 func (h *getHandler) apiVersionHandler() func(message *rpc.ApiVersion) error {
 	return func(message *rpc.ApiVersion) error {
 		switch h.output {
-		case "names":
+		case "name":
 			h.results = append(h.results, message.Name)
 			_, err := h.writer.Write([]byte(message.Name + "\n"))
 			return err
@@ -226,7 +226,7 @@ func (h *getHandler) apiVersionHandler() func(message *rpc.ApiVersion) error {
 func (h *getHandler) apiDeploymentHandler() func(message *rpc.ApiDeployment) error {
 	return func(message *rpc.ApiDeployment) error {
 		switch h.output {
-		case "names":
+		case "name":
 			h.results = append(h.results, message.Name)
 			_, err := h.writer.Write([]byte(message.Name + "\n"))
 			return err
@@ -246,7 +246,7 @@ func (h *getHandler) apiDeploymentHandler() func(message *rpc.ApiDeployment) err
 func (h *getHandler) apiSpecHandler() func(message *rpc.ApiSpec) error {
 	return func(message *rpc.ApiSpec) error {
 		switch h.output {
-		case "names":
+		case "name":
 			h.results = append(h.results, message.Name)
 			_, err := h.writer.Write([]byte(message.Name + "\n"))
 			return err
@@ -279,7 +279,7 @@ func (h *getHandler) apiSpecHandler() func(message *rpc.ApiSpec) error {
 func (h *getHandler) artifactHandler() func(message *rpc.Artifact) error {
 	return func(message *rpc.Artifact) error {
 		switch h.output {
-		case "names":
+		case "name":
 			h.results = append(h.results, message.Name)
 			_, err := h.writer.Write([]byte(message.Name + "\n"))
 			return err

@@ -127,7 +127,7 @@ func TestGetValidResources(t *testing.T) {
 	for _, r := range resources {
 		t.Run(r, func(t *testing.T) {
 			cmd := Command()
-			args := []string{r, "-o", "names"}
+			args := []string{r, "-o", "name"}
 			cmd.SetArgs(args)
 			out := bytes.NewBuffer(make([]byte, 0))
 			cmd.SetOut(out)
@@ -241,7 +241,7 @@ func TestGetInvalidResources(t *testing.T) {
 	for i, r := range invalid {
 		t.Run(r, func(t *testing.T) {
 			// cycle through output types
-			format := []string{"names", "yaml", "contents"}[i%3]
+			format := []string{"name", "yaml", "contents"}[i%3]
 			cmd := Command()
 			cmd.SilenceUsage = true
 			cmd.SilenceErrors = true
