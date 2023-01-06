@@ -36,7 +36,7 @@ func Command() *cobra.Command {
 	var output string
 
 	cmd := &cobra.Command{
-		Use:   "get",
+		Use:   "get PATTERN",
 		Short: "Get resources from the API Registry",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
