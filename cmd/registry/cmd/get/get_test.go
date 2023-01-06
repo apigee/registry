@@ -19,6 +19,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/connection/grpctest"
@@ -251,6 +252,50 @@ func TestGetInvalidResources(t *testing.T) {
 			}
 		})
 	}
+	// attempts to get contents of resources that don't support it should fail
+	resourcesWithoutContents := []string{
+		"projects/my-project",
+		"projects/my-project/locations/global/apis/a",
+		"projects/my-project/locations/global/apis/a/versions/v",
+		"projects/my-project/locations/global/apis/a/deployments/d",
+	}
+	for _, r := range resourcesWithoutContents {
+		t.Run(r+"--output-contents", func(t *testing.T) {
+			cmd := Command()
+			cmd.SilenceUsage = true
+			cmd.SilenceErrors = true
+			args := []string{r, "-o", "contents"}
+			cmd.SetArgs(args)
+			if err := cmd.Execute(); err == nil {
+				t.Errorf("Execute() with args %v succeeded but should have failed", args)
+			}
+		})
+	}
+	// attempts to get an unsupported output type should fail
+	resources := []string{
+		"projects/my-project",
+		"projects/my-project/locations/global/apis/a",
+		"projects/my-project/locations/global/apis/a/versions/v",
+		"projects/my-project/locations/global/apis/a/versions/v/specs/s",
+		"projects/my-project/locations/global/apis/a/deployments/d",
+		"projects/my-project",
+		"projects/my-project/locations/global/apis/a/artifacts/x",
+		"projects/my-project/locations/global/apis/a/versions/v/artifacts/x",
+		"projects/my-project/locations/global/apis/a/versions/v/specs/s/artifacts/x",
+		"projects/my-project/locations/global/apis/a/deployments/d/artifacts/x",
+	}
+	for _, r := range resources {
+		t.Run(r+"--output-invalid", func(t *testing.T) {
+			cmd := Command()
+			cmd.SilenceUsage = true
+			cmd.SilenceErrors = true
+			args := []string{r, "-o", "invalid"}
+			cmd.SetArgs(args)
+			if err := cmd.Execute(); err == nil {
+				t.Errorf("Execute() with args %v succeeded but should have failed", args)
+			}
+		})
+	}
 }
 
 func TestGetValidResourcesWithFilter(t *testing.T) {
@@ -335,5 +380,53 @@ func TestGetValidResourcesWithFilter(t *testing.T) {
 				t.Errorf("Execute() with args %v succeeded but should have failed", args)
 			}
 		})
+	}
+}
+
+func TestGetGZippedSpec(t *testing.T) {
+	payload := "hello"
+	contents, err := core.GZippedBytes([]byte(payload))
+	if err != nil {
+		t.Fatalf("Failed to create client: %+v", err)
+	}
+	seed := []*rpc.ApiSpec{
+		{Name: "projects/my-project/locations/global/apis/a/versions/v/specs/s", MimeType: "text/plain+gzip", Contents: contents},
+	}
+	ctx := context.Background()
+	registryClient, err := connection.NewRegistryClient(ctx)
+	if err != nil {
+		t.Fatalf("Failed to create client: %+v", err)
+	}
+	t.Cleanup(func() { registryClient.Close() })
+	adminClient, err := connection.NewAdminClient(ctx)
+	if err != nil {
+		t.Fatalf("Failed to create client: %+v", err)
+	}
+	t.Cleanup(func() { adminClient.Close() })
+	client := seeder.Client{
+		RegistryClient: registryClient,
+		AdminClient:    adminClient,
+	}
+	t.Cleanup(func() {
+		_ = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{Name: "projects/my-project", Force: true})
+	})
+	_ = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{Name: "projects/my-project", Force: true})
+	if err := seeder.SeedSpecs(ctx, client, seed...); err != nil {
+		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+	}
+
+	cmd := Command()
+	out := bytes.NewBuffer(make([]byte, 0))
+	cmd.SetOut(out)
+	args := []string{"projects/my-project/locations/global/apis/a/versions/v/specs/s", "-o", "contents"}
+	cmd.SetArgs(args)
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("Execute() with args %v failed but should have succeeded", args)
+	}
+	if len(out.Bytes()) == 0 {
+		t.Errorf("Execute() with args %v failed to return expected value(s)", args)
+	}
+	if out.String() != payload {
+		t.Errorf("Execute() with args %v returned spec %q, expected %q", out.String(), args, payload)
 	}
 }
