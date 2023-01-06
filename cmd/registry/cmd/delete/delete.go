@@ -30,6 +30,7 @@ import (
 func Command() *cobra.Command {
 	var filter string
 	var jobs int
+	var force bool
 	cmd := &cobra.Command{
 		Use:   "delete",
 		Short: "Delete resources from the API Registry",
@@ -51,7 +52,7 @@ func Command() *cobra.Command {
 			taskQueue, wait := core.WorkerPool(ctx, jobs)
 			defer wait()
 
-			err = matchAndHandleDeleteCmd(ctx, client, taskQueue, args[0], filter)
+			err = matchAndHandleDeleteCmd(ctx, client, taskQueue, args[0], filter, force)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to match or handle command")
 			}
@@ -60,6 +61,7 @@ func Command() *cobra.Command {
 
 	cmd.Flags().StringVar(&filter, "filter", "", "Filter selected resources")
 	cmd.Flags().IntVar(&jobs, "jobs", 10, "Number of actions to perform concurrently")
+	cmd.Flags().BoolVarP(&force, "force", "f", false, "Force deletion of child resources")
 	return cmd
 }
 
@@ -67,6 +69,7 @@ type deleteTask struct {
 	client       connection.RegistryClient
 	resourceName string
 	resourceKind string
+	force        bool
 }
 
 func (task *deleteTask) String() string {
@@ -77,11 +80,11 @@ func (task *deleteTask) Run(ctx context.Context) error {
 	log.Debugf(ctx, "Deleting %s %s", task.resourceKind, task.resourceName)
 	switch task.resourceKind {
 	case "api":
-		return task.client.DeleteApi(ctx, &rpc.DeleteApiRequest{Name: task.resourceName})
+		return task.client.DeleteApi(ctx, &rpc.DeleteApiRequest{Name: task.resourceName, Force: task.force})
 	case "version":
-		return task.client.DeleteApiVersion(ctx, &rpc.DeleteApiVersionRequest{Name: task.resourceName})
+		return task.client.DeleteApiVersion(ctx, &rpc.DeleteApiVersionRequest{Name: task.resourceName, Force: task.force})
 	case "spec":
-		return task.client.DeleteApiSpec(ctx, &rpc.DeleteApiSpecRequest{Name: task.resourceName})
+		return task.client.DeleteApiSpec(ctx, &rpc.DeleteApiSpecRequest{Name: task.resourceName, Force: task.force})
 	case "artifact":
 		return task.client.DeleteArtifact(ctx, &rpc.DeleteArtifactRequest{Name: task.resourceName})
 	default:
@@ -95,13 +98,14 @@ func matchAndHandleDeleteCmd(
 	taskQueue chan<- core.Task,
 	name string,
 	filter string,
+	force bool,
 ) error {
 	if api, err := names.ParseApi(name); err == nil {
-		return deleteAPIs(ctx, client, api, filter, taskQueue)
+		return deleteAPIs(ctx, client, api, filter, force, taskQueue)
 	} else if version, err := names.ParseVersion(name); err == nil {
-		return deleteVersions(ctx, client, version, filter, taskQueue)
+		return deleteVersions(ctx, client, version, filter, force, taskQueue)
 	} else if spec, err := names.ParseSpec(name); err == nil {
-		return deleteSpecs(ctx, client, spec, filter, taskQueue)
+		return deleteSpecs(ctx, client, spec, filter, force, taskQueue)
 	} else if artifact, err := names.ParseArtifact(name); err == nil {
 		return deleteArtifacts(ctx, client, artifact, filter, taskQueue)
 	} else {
@@ -114,12 +118,14 @@ func deleteAPIs(
 	client *gapic.RegistryClient,
 	api names.Api,
 	filterFlag string,
+	force bool,
 	taskQueue chan<- core.Task) error {
 	return core.ListAPIs(ctx, client, api, filterFlag, func(api *rpc.Api) error {
 		taskQueue <- &deleteTask{
 			client:       client,
 			resourceName: api.Name,
 			resourceKind: "api",
+			force:        force,
 		}
 		return nil
 	})
@@ -130,12 +136,14 @@ func deleteVersions(
 	client *gapic.RegistryClient,
 	version names.Version,
 	filterFlag string,
+	force bool,
 	taskQueue chan<- core.Task) error {
 	return core.ListVersions(ctx, client, version, filterFlag, func(version *rpc.ApiVersion) error {
 		taskQueue <- &deleteTask{
 			client:       client,
 			resourceName: version.Name,
 			resourceKind: "version",
+			force:        force,
 		}
 		return nil
 	})
@@ -146,12 +154,14 @@ func deleteSpecs(
 	client *gapic.RegistryClient,
 	spec names.Spec,
 	filterFlag string,
+	force bool,
 	taskQueue chan<- core.Task) error {
 	return core.ListSpecs(ctx, client, spec, filterFlag, false, func(spec *rpc.ApiSpec) error {
 		taskQueue <- &deleteTask{
 			client:       client,
 			resourceName: spec.Name,
 			resourceKind: "spec",
+			force:        force,
 		}
 		return nil
 	})
