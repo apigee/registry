@@ -18,25 +18,20 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/cmd/registry/patch"
-	"github.com/apigee/registry/cmd/registry/types"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/models"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"github.com/spf13/cobra"
-	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/proto"
 )
 
 func Command() *cobra.Command {
-	var getContents bool
-	var getRawContents bool
-	var getPrintedContents bool
 	var filter string
 	var output string
 
@@ -51,12 +46,6 @@ func Command() *cobra.Command {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get config")
 			}
 			args[0] = c.FQName(args[0])
-			if getContents && getRawContents || getContents && getPrintedContents || getRawContents && getPrintedContents {
-				log.FromContext(ctx).Fatal("Please use at most one of --print, --raw, and --contents.")
-			}
-			if getContents {
-				getPrintedContents = true
-			}
 			client, err := connection.NewRegistryClientWithSettings(ctx, c)
 			if err != nil {
 				return err
@@ -66,75 +55,45 @@ func Command() *cobra.Command {
 				return err
 			}
 			h := &GetHandler{
-				cmd:                cmd,
-				ctx:                ctx,
-				client:             client,
-				adminClient:        adminClient,
-				name:               args[0],
-				filter:             filter,
-				getPrintedContents: getPrintedContents,
-				getRawContents:     getRawContents,
-				output:             output,
+				ctx:         ctx,
+				client:      client,
+				adminClient: adminClient,
+				writer:      cmd.OutOrStdout(),
+				name:        args[0],
+				filter:      filter,
+				output:      output,
 			}
-			err = h.run()
+			err = h.traverse()
 			if err != nil {
 				return err
 			}
-			if len(h.results) == 1 {
-				bytes, err := patch.Encode(h.results[0])
-				if err != nil {
-					return err
-				}
-				_, err = h.cmd.OutOrStdout().Write(bytes)
-				return err
-			} else if len(h.results) > 1 {
-				list := &models.List{
-					Header: models.Header{ApiVersion: patch.RegistryV1},
-					Items:  h.results,
-				}
-				bytes, err := patch.Encode(list)
-				if err != nil {
-					return err
-				}
-				_, err = h.cmd.OutOrStdout().Write(bytes)
-				return err
-			} else {
-				return nil
-			}
+			return h.write()
 		},
 	}
 
-	cmd.Flags().BoolVar(&getContents, "contents", false, "Get resource contents if available")
-	cmd.Flags().BoolVar(&getRawContents, "raw", false, "Get raw resource contents if available")
-	cmd.Flags().BoolVar(&getPrintedContents, "print", false, "Print resource contents if available")
 	cmd.Flags().StringVar(&filter, "filter", "", "Filter selected resources")
-	cmd.Flags().StringVarP(&output, "output", "o", "names", "Output type (names, yaml)")
+	cmd.Flags().StringVarP(&output, "output", "o", "names", "Output type (names, yaml, contents)")
 	return cmd
 }
 
 type GetHandler struct {
-	cmd                *cobra.Command
-	ctx                context.Context
-	client             connection.RegistryClient
-	adminClient        connection.AdminClient
-	name               string
-	filter             string
-	getPrintedContents bool
-	getRawContents     bool
-	output             string
-	results            []interface{}
+	ctx         context.Context
+	client      connection.RegistryClient
+	adminClient connection.AdminClient
+	writer      io.Writer
+	name        string
+	filter      string
+	output      string
+	results     []interface{} // result values to be returned in a single message
 }
 
-func (h *GetHandler) run() error {
+func (h *GetHandler) traverse() error {
 	// Define aliases to simplify the subsequent code.
 	name := h.name
 	ctx := h.ctx
 	client := h.client
 	adminClient := h.adminClient
 	filter := h.filter
-
-	// Initialize a slice of results.
-	h.results = make([]interface{}, 0)
 
 	// First try to match collection names.
 	if project, err := names.ParseProjectCollection(name); err == nil {
@@ -208,7 +167,7 @@ func (h *GetHandler) projectHandler() func(message *rpc.Project) error {
 	return func(message *rpc.Project) error {
 		switch h.output {
 		case "names":
-			_, err := h.cmd.OutOrStdout().Write([]byte(message.Name + "\n"))
+			_, err := h.writer.Write([]byte(message.Name + "\n"))
 			return err
 		case "yaml":
 			project, err := patch.NewProject(h.ctx, h.client, message)
@@ -218,7 +177,7 @@ func (h *GetHandler) projectHandler() func(message *rpc.Project) error {
 			h.results = append(h.results, project)
 			return nil
 		default:
-			return fmt.Errorf("invalid output type %s", h.output)
+			return newOutputTypeError("projects", h.output)
 		}
 	}
 }
@@ -227,7 +186,7 @@ func (h *GetHandler) apiHandler() func(message *rpc.Api) error {
 	return func(message *rpc.Api) error {
 		switch h.output {
 		case "names":
-			_, err := h.cmd.OutOrStdout().Write([]byte(message.Name + "\n"))
+			_, err := h.writer.Write([]byte(message.Name + "\n"))
 			return err
 		case "yaml":
 			api, err := patch.NewApi(h.ctx, h.client, message, false)
@@ -237,7 +196,7 @@ func (h *GetHandler) apiHandler() func(message *rpc.Api) error {
 			h.results = append(h.results, api)
 			return nil
 		default:
-			return fmt.Errorf("invalid output type %s", h.output)
+			return newOutputTypeError("apis", h.output)
 		}
 	}
 }
@@ -246,7 +205,7 @@ func (h *GetHandler) apiVersionHandler() func(message *rpc.ApiVersion) error {
 	return func(message *rpc.ApiVersion) error {
 		switch h.output {
 		case "names":
-			_, err := h.cmd.OutOrStdout().Write([]byte(message.Name + "\n"))
+			_, err := h.writer.Write([]byte(message.Name + "\n"))
 			return err
 		case "yaml":
 			version, err := patch.NewApiVersion(h.ctx, h.client, message, false)
@@ -256,7 +215,7 @@ func (h *GetHandler) apiVersionHandler() func(message *rpc.ApiVersion) error {
 			h.results = append(h.results, version)
 			return nil
 		default:
-			return fmt.Errorf("invalid output type %s", h.output)
+			return newOutputTypeError("versions", h.output)
 		}
 	}
 }
@@ -265,7 +224,7 @@ func (h *GetHandler) apiDeploymentHandler() func(message *rpc.ApiDeployment) err
 	return func(message *rpc.ApiDeployment) error {
 		switch h.output {
 		case "names":
-			_, err := h.cmd.OutOrStdout().Write([]byte(message.Name + "\n"))
+			_, err := h.writer.Write([]byte(message.Name + "\n"))
 			return err
 		case "yaml":
 			deployment, err := patch.NewApiDeployment(h.ctx, h.client, message, false)
@@ -275,36 +234,30 @@ func (h *GetHandler) apiDeploymentHandler() func(message *rpc.ApiDeployment) err
 			h.results = append(h.results, deployment)
 			return nil
 		default:
-			return fmt.Errorf("invalid output type %s", h.output)
+			return newOutputTypeError("deployments", h.output)
 		}
 	}
 }
 
 func (h *GetHandler) apiSpecHandler() func(message *rpc.ApiSpec) error {
 	return func(message *rpc.ApiSpec) error {
-		// for specs, these options are synonymous
-		if h.getPrintedContents || h.getRawContents {
-			name, err := names.ParseSpecRevision(message.Name)
-			if err != nil {
-				return err
+		switch h.output {
+		case "names":
+			_, err := h.writer.Write([]byte(message.Name + "\n"))
+			return err
+		case "contents":
+			if len(h.results) > 0 {
+				return fmt.Errorf("contents can be gotten for at most one artifact")
 			}
-			if err = core.GetSpecRevision(h.ctx, h.client, name, true, func(spec *rpc.ApiSpec) error {
-				message = spec
-				return nil
-			}); err != nil {
+			if err := core.FetchSpecContents(h.ctx, h.client, message); err != nil {
 				return err
 			}
 			contents := message.GetContents()
 			if strings.Contains(message.GetMimeType(), "+gzip") {
 				contents, _ = core.GUnzippedBytes(contents)
 			}
-			_, err = h.cmd.OutOrStdout().Write(contents)
-			return err
-		}
-		switch h.output {
-		case "names":
-			_, err := h.cmd.OutOrStdout().Write([]byte(message.Name + "\n"))
-			return err
+			h.results = append(h.results, contents)
+			return nil
 		case "yaml":
 			spec, err := patch.NewApiSpec(h.ctx, h.client, message, false)
 			if err != nil {
@@ -313,45 +266,30 @@ func (h *GetHandler) apiSpecHandler() func(message *rpc.ApiSpec) error {
 			h.results = append(h.results, spec)
 			return nil
 		default:
-			return fmt.Errorf("invalid output type %s", h.output)
+			return newOutputTypeError("specs", h.output)
 		}
 	}
 }
 
 func (h *GetHandler) artifactHandler() func(message *rpc.Artifact) error {
 	return func(message *rpc.Artifact) error {
-		if h.getPrintedContents || h.getRawContents || h.output == "yaml" {
-			name, err := names.ParseArtifact(message.Name)
-			if err != nil {
-				return err
-			}
-			if err = core.GetArtifact(h.ctx, h.client, name, true, func(artifact *rpc.Artifact) error {
-				message = artifact
-				return nil
-			}); err != nil {
-				return err
-			}
-		}
-		if h.getPrintedContents {
-			if types.IsPrintableType(message.GetMimeType()) {
-				fmt.Fprintf(h.cmd.OutOrStdout(), "%s\n", string(message.GetContents()))
-				return nil
-			}
-			message, err := getArtifactMessageContents(message)
-			if err != nil {
-				return err
-			}
-			fmt.Fprintf(h.cmd.OutOrStdout(), "%s\n", protojson.Format(message))
-			return nil
-		} else if h.getRawContents {
-			_, err := h.cmd.OutOrStdout().Write(message.GetContents())
-			return err
-		}
 		switch h.output {
 		case "names":
-			_, err := h.cmd.OutOrStdout().Write([]byte(message.Name + "\n"))
+			_, err := h.writer.Write([]byte(message.Name + "\n"))
 			return err
+		case "contents":
+			if len(h.results) > 0 {
+				return fmt.Errorf("contents can be gotten for at most one artifact")
+			}
+			if err := core.FetchArtifactContents(h.ctx, h.client, message); err != nil {
+				return err
+			}
+			h.results = append(h.results, message.GetContents())
+			return nil
 		case "yaml":
+			if err := core.FetchArtifactContents(h.ctx, h.client, message); err != nil {
+				return err
+			}
 			artifact, err := patch.NewArtifact(h.ctx, h.client, message)
 			if err != nil {
 				return err
@@ -359,18 +297,44 @@ func (h *GetHandler) artifactHandler() func(message *rpc.Artifact) error {
 			h.results = append(h.results, artifact)
 			return nil
 		default:
-			return fmt.Errorf("invalid output type %s", h.output)
+			return newOutputTypeError("artifacts", h.output)
 		}
 	}
 }
 
-func getArtifactMessageContents(artifact *rpc.Artifact) (proto.Message, error) {
-	message, err := types.MessageForMimeType(artifact.GetMimeType())
-	if err != nil {
-		return nil, err
+func newOutputTypeError(resourceType, outputType string) error {
+	return fmt.Errorf("%s do not support the %q output type", resourceType, outputType)
+}
+
+func (h *GetHandler) write() error {
+	if h.output == "yaml" {
+		if len(h.results) == 0 {
+			return fmt.Errorf("no matching results found")
+		}
+		var result interface{}
+		if len(h.results) == 1 {
+			result = h.results[0]
+		} else {
+			result = &models.List{
+				Header: models.Header{ApiVersion: patch.RegistryV1},
+				Items:  h.results,
+			}
+		}
+		bytes, err := patch.Encode(result)
+		if err != nil {
+			return err
+		}
+		_, err = h.writer.Write(bytes)
+		return err
 	}
-	if err := proto.Unmarshal(artifact.GetContents(), message); err != nil {
-		return nil, err
+	if h.output == "contents" {
+		if len(h.results) == 0 {
+			return fmt.Errorf("no matching results found")
+		}
+		if len(h.results) == 1 {
+			_, err := h.writer.Write(h.results[0].([]byte))
+			return err
+		}
 	}
-	return message, nil
+	return nil
 }

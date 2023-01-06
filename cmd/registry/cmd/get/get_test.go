@@ -121,13 +121,30 @@ func TestGetValidResources(t *testing.T) {
 		"projects/my-project/locations/global/apis/a/deployments/d/artifacts/-",
 		"projects/my-project/locations/global/apis/a/deployments/d/artifacts/x",
 	}
+	// get names for each resource
 	for _, r := range resources {
 		t.Run(r, func(t *testing.T) {
 			cmd := Command()
-			args := []string{r}
+			args := []string{r, "-o", "names"}
 			cmd.SetArgs(args)
 			out := bytes.NewBuffer(make([]byte, 0))
-			cmd.SetOutput(out)
+			cmd.SetOut(out)
+			if err := cmd.Execute(); err != nil {
+				t.Errorf("Execute() with args %v returned error: %s", args, err)
+			}
+			if len(out.Bytes()) == 0 {
+				t.Errorf("Execute() with args %v failed to return expected value(s)", args)
+			}
+		})
+	}
+	// get yaml for each resource
+	for _, r := range resources {
+		t.Run(r, func(t *testing.T) {
+			cmd := Command()
+			args := []string{r, "-o", "yaml"}
+			cmd.SetArgs(args)
+			out := bytes.NewBuffer(make([]byte, 0))
+			cmd.SetOut(out)
 			if err := cmd.Execute(); err != nil {
 				t.Errorf("Execute() with args %v returned error: %s", args, err)
 			}
@@ -144,14 +161,14 @@ func TestGetValidResources(t *testing.T) {
 		"projects/my-project/locations/global/apis/a/versions/v/specs/s/artifacts/x",
 		"projects/my-project/locations/global/apis/a/deployments/d/artifacts/x",
 	}
-	// Get the raw contents of these resources.
+	// Get the contents of these resources.
 	for _, r := range resourcesWithContents {
 		t.Run(r, func(t *testing.T) {
 			cmd := Command()
-			args := []string{r, "--raw"}
+			args := []string{r, "-o", "contents"}
 			cmd.SetArgs(args)
 			out := bytes.NewBuffer(make([]byte, 0))
-			cmd.SetOutput(out)
+			cmd.SetOut(out)
 			if err := cmd.Execute(); err != nil {
 				t.Fatalf("Execute() with args %v returned error: %s", args, err)
 			}
@@ -159,20 +176,6 @@ func TestGetValidResources(t *testing.T) {
 				t.Errorf("Execute() with args %v failed to return expected value(s)", args)
 			}
 		})
-	}
-	// Print the contents of these resources.
-	for _, r := range resources {
-		cmd := Command()
-		args := []string{r, "--print"}
-		cmd.SetArgs(args)
-		out := bytes.NewBuffer(make([]byte, 0))
-		cmd.SetOutput(out)
-		if err := cmd.Execute(); err != nil {
-			t.Errorf("Execute() with args %v returned error: %s", args, err)
-		}
-		if len(out.Bytes()) == 0 {
-			t.Errorf("Execute() with args %v failed to return expected value(s)", args)
-		}
 	}
 }
 
