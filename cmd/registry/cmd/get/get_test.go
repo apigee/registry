@@ -430,3 +430,49 @@ func TestGetGZippedSpec(t *testing.T) {
 		t.Errorf("Execute() with args %v returned spec %q, expected %q", out.String(), args, payload)
 	}
 }
+
+func TestGetMultipleContentRequestsShouldFail(t *testing.T) {
+	seed := []*rpc.Artifact{
+		{Name: "projects/my-project/locations/global/apis/a/versions/v/specs/s/artifacts/x", MimeType: "application/yaml", Contents: []byte("hello: 123")},
+		{Name: "projects/my-project/locations/global/apis/b/versions/v/specs/s/artifacts/x", MimeType: "application/yaml", Contents: []byte("hello: 123")},
+	}
+	ctx := context.Background()
+	registryClient, err := connection.NewRegistryClient(ctx)
+	if err != nil {
+		t.Fatalf("Failed to create client: %+v", err)
+	}
+	t.Cleanup(func() { registryClient.Close() })
+	adminClient, err := connection.NewAdminClient(ctx)
+	if err != nil {
+		t.Fatalf("Failed to create client: %+v", err)
+	}
+	t.Cleanup(func() { adminClient.Close() })
+	client := seeder.Client{
+		RegistryClient: registryClient,
+		AdminClient:    adminClient,
+	}
+	t.Cleanup(func() {
+		_ = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{Name: "projects/my-project", Force: true})
+	})
+	_ = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{Name: "projects/my-project", Force: true})
+	if err := seeder.SeedArtifacts(ctx, client, seed...); err != nil {
+		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+	}
+	// Verify that a filter specified on a get of an individual resource is an error.
+	multiple_resources := []string{
+		"projects/my-project/locations/global/apis/-/versions/v/specs/s",
+		"projects/my-project/locations/global/apis/-/versions/v/specs/s/artifacts/x",
+	}
+	for _, r := range multiple_resources {
+		t.Run(r, func(t *testing.T) {
+			cmd := Command()
+			cmd.SilenceUsage = true
+			cmd.SilenceErrors = true
+			args := []string{r, "--output", "contents"}
+			cmd.SetArgs(args)
+			if err := cmd.Execute(); err == nil {
+				t.Errorf("Execute() with args %v succeeded but should have failed", args)
+			}
+		})
+	}
+}

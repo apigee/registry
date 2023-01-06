@@ -252,7 +252,7 @@ func (h *GetHandler) apiSpecHandler() func(message *rpc.ApiSpec) error {
 			return err
 		case "contents":
 			if len(h.results) > 0 {
-				return fmt.Errorf("contents can be gotten for at most one artifact")
+				return fmt.Errorf("contents can be gotten for at most one spec")
 			}
 			if err := core.FetchSpecContents(h.ctx, h.client, message); err != nil {
 				return err
