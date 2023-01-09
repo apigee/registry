@@ -34,23 +34,23 @@
 registry upload bulk discovery \
 	--project-id $PROJECT
 
-# We can list the APIs with the following command:
-registry list projects/$PROJECT/locations/global/apis
+# We can get a list of APIs with the following command:
+registry get projects/$PROJECT/locations/global/apis
 
 # We can count the APIs by piping this through `wc -l`.
-registry list projects/$PROJECT/locations/global/apis | wc -l
+registry get projects/$PROJECT/locations/global/apis | wc -l
 
 # Many of these APIs have multiple versions. We can list all of the API versions
 # by using a "-" wildcard for the API id:
-registry list projects/$PROJECT/locations/global/apis/-/versions
+registry get projects/$PROJECT/locations/global/apis/-/versions
 
 # Similarly, we can use wildcards for the version ids and list all of the specs.
 # Here you'll see that the spec IDs are "discovery". This was set in the registry
 # tool, which uploaded each API description as gzipped JSON.
-registry list projects/$PROJECT/locations/global/apis/-/versions/-/specs
+registry get projects/$PROJECT/locations/global/apis/-/versions/-/specs
 
-# To see more about an individual spec, use the `registry get` command:
-registry get projects/$PROJECT/locations/global/apis/translate/versions/v3/specs/discovery
+# To see more about an individual spec, use the `-o yaml` option:
+registry get projects/$PROJECT/locations/global/apis/translate/versions/v3/specs/discovery -o yaml
 
 # You can also get this with direct calls to the registry rpc service:
 registry rpc get-api-spec \
@@ -66,6 +66,6 @@ registry rpc get-api-spec --json \
 registry rpc get-api-spec-contents \
 	--name projects/$PROJECT/locations/global/apis/translate/versions/v3/specs/discovery
 
-# Another way to get the bytes of the spec is to use `registry get` with the `--contents` flag.
+# Another way to get the bytes of the spec is to use `registry get` with the `-o contents` flag.
 registry get projects/$PROJECT/locations/global/apis/translate/versions/v3/specs/discovery \
-	--contents
+	-o contents

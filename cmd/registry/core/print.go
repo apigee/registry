@@ -24,36 +24,6 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func PrintProject(project *rpc.Project) error {
-	fmt.Println(project.Name)
-	return nil
-}
-
-func PrintAPI(api *rpc.Api) error {
-	fmt.Println(api.Name)
-	return nil
-}
-
-func PrintDeployment(deployment *rpc.ApiDeployment) error {
-	fmt.Println(deployment.Name)
-	return nil
-}
-
-func PrintVersion(version *rpc.ApiVersion) error {
-	fmt.Println(version.Name)
-	return nil
-}
-
-func PrintSpec(spec *rpc.ApiSpec) error {
-	fmt.Println(spec.Name)
-	return nil
-}
-
-func PrintArtifact(artifact *rpc.Artifact) error {
-	fmt.Println(artifact.Name)
-	return nil
-}
-
 func IsPrintableType(mimeType string) bool {
 	if mimeType == "text/plain" {
 		return true
