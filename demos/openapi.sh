@@ -60,33 +60,33 @@ registry rpc get-api-spec-contents --name projects/$PROJECT/locations/global/api
 registry get projects/$PROJECT/locations/global/apis/wordnik.com --contents
 
 # List all of the APIs in the project.
-registry list projects/$PROJECT/locations/global/apis
+registry get projects/$PROJECT/locations/global/apis
 
 # List all of the versions of an API.
-registry list projects/$PROJECT/locations/global/apis/wordnik.com/versions
+registry get projects/$PROJECT/locations/global/apis/wordnik.com/versions
 
 # List all of the specs associated with an API version.
-registry list projects/$PROJECT/locations/global/apis/wordnik.com/versions/4.0/specs
+registry get projects/$PROJECT/locations/global/apis/wordnik.com/versions/4.0/specs
 
 # Following [AIP-159](https://google.aip.dev/159), the list operations support the "-" wildcard.
 # This allows us to list objects across multiple collections.
-registry list projects/$PROJECT/locations/global/apis/wordnik.com/versions/-/specs/-
+registry get projects/$PROJECT/locations/global/apis/wordnik.com/versions/-/specs/-
 
 # Now let's list all of the specs in the project.
-registry list projects/$PROJECT/locations/global/apis/-/versions/-/specs/-
+registry get projects/$PROJECT/locations/global/apis/-/versions/-/specs/-
 
 # That's a lot. Let's count them with `wc -l`.
-registry list projects/$PROJECT/locations/global/apis/-/versions/-/specs/- | wc -l
+registry get projects/$PROJECT/locations/global/apis/-/versions/-/specs/- | wc -l
 
 # Using wildcards, we can list all of the specs with a particular version.
-registry list projects/$PROJECT/locations/global/apis/-/versions/1.0.0/specs/-
+registry get projects/$PROJECT/locations/global/apis/-/versions/1.0.0/specs/-
 
 # List operations also support filtering by following [AIP-160](https://google.aip.dev/160).
 # Filter functions are evaluated using [CEL](https://github.com/google/cel-spec).
 # Here's an example:
-registry list projects/$PROJECT/locations/global/apis/-/versions/-/specs/- \
+registry get projects/$PROJECT/locations/global/apis/-/versions/-/specs/- \
   --filter "api_id.startsWith('goog')"
 
 # This is a bit more verbose than glob expressions but much more powerful.
 # You can also refer to other fields in the messages that match the pattern:
-registry list projects/$PROJECT/locations/global/apis/- --filter "description.contains('speech')"
+registry get projects/$PROJECT/locations/global/apis/- --filter "description.contains('speech')"

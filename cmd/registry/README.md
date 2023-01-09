@@ -53,7 +53,7 @@ gcloud config set project $PROJECT_ID
 5. To list all the APIs in your API hub instance run the following:
 
 ```
-registry list projects/$PROJECT_ID/locations/global/apis/-
+registry get projects/$PROJECT_ID/locations/global/apis/-
 ```
 
 6. To see other supported commands, run the following:
