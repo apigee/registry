@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC. All Rights Reserved.
+// Copyright 2022 Google LLC. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,14 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package models
+package rule0001
 
-type Project struct {
-	Header `yaml:",inline"`
-	Data   ProjectData `yaml:"data"`
-}
+import "github.com/apigee/registry/cmd/registry/cmd/check/lint"
 
-type ProjectData struct {
-	DisplayName string `yaml:"displayName,omitempty"`
-	Description string `yaml:"description,omitempty"`
+// AddRules accepts a register function and registers each of
+// this rules' checks to the RuleRegistry.
+func AddRules(r lint.RuleRegistry) error {
+	return r.Register(
+		0001,
+		mimeTypeContents,
+	)
 }
