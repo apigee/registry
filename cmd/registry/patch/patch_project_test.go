@@ -17,7 +17,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func TestProjectPatches(t *testing.T) {
+func TestProjectImports(t *testing.T) {
 	// Each of these three imports should import an identical project that can be exported
 	// into the structures in "sampleDir".
 	const sampleDir = "testdata/sample-nested"
@@ -92,11 +92,14 @@ func TestProjectPatches(t *testing.T) {
 				t.Fatalf("Failed to get API: %s", err)
 			}
 
-			actual, _, err := ExportAPI(ctx, registryClient, got, true)
+			model, err := NewApi(ctx, registryClient, got, true)
 			if err != nil {
-				t.Fatalf("ExportApi(%+v) returned an error: %s", got, err)
+				t.Fatalf("NewApi(%+v) returned an error: %s", got, err)
 			}
-
+			actual, err := Encode(model)
+			if err != nil {
+				t.Fatalf("Encode(%+v) returned an error: %s", model, err)
+			}
 			if diff := cmp.Diff(expected, actual); diff != "" {
 				t.Errorf("GetApi(%q) returned unexpected diff: (-want +got):\n%s", got, diff)
 			}
@@ -118,11 +121,14 @@ func TestProjectPatches(t *testing.T) {
 					t.Fatalf("Failed to verify artifact existence: %s", err)
 				}
 
-				actual, _, err := ExportArtifact(ctx, registryClient, message)
+				model, err := NewArtifact(ctx, registryClient, message)
 				if err != nil {
-					t.Fatalf("ExportArtifact(%+v) returned an error: %s", message, err)
+					t.Fatalf("NewArtifact(%+v) returned an error: %s", message, err)
 				}
-
+				actual, err := Encode(model)
+				if err != nil {
+					t.Fatalf("Encode(%+v) returned an error: %s", model, err)
+				}
 				if diff := cmp.Diff(expected, actual); diff != "" {
 					t.Errorf("GetArtifact(%q) returned unexpected diff: (-want +got):\n%s", message, diff)
 				}

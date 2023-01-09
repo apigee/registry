@@ -106,15 +106,9 @@ func GetSpec(ctx context.Context,
 		return err
 	}
 	if getContents {
-		ctx := metadata.AppendToOutgoingContext(ctx, "accept-encoding", "gzip")
-		contents, err := client.GetApiSpecContents(ctx, &rpc.GetApiSpecContentsRequest{
-			Name: spec.GetName(),
-		})
-		if err != nil {
+		if err := FetchSpecContents(ctx, client, spec); err != nil {
 			return err
 		}
-		spec.Contents = contents.GetData()
-		spec.MimeType = contents.GetContentType()
 	}
 
 	return handler(spec)
@@ -133,17 +127,11 @@ func GetSpecRevision(ctx context.Context,
 		return err
 	}
 	if getContents {
-		request := &rpc.GetApiSpecContentsRequest{
-			Name: spec.GetName(),
-		}
-		ctx := metadata.AppendToOutgoingContext(ctx, "accept-encoding", "gzip")
-		contents, err := client.GetApiSpecContents(ctx, request)
-		if err != nil {
+		if err := FetchSpecContents(ctx, client, spec); err != nil {
 			return err
 		}
-		spec.Contents = contents.GetData()
-		spec.MimeType = contents.GetContentType()
 	}
+
 	return handler(spec)
 }
 
@@ -159,15 +147,42 @@ func GetArtifact(ctx context.Context,
 		return err
 	}
 	if getContents {
-		contents, err := client.GetArtifactContents(ctx, &rpc.GetArtifactContentsRequest{
-			Name: artifact.GetName(),
-		})
-		if err != nil {
+		if err = FetchArtifactContents(ctx, client, artifact); err != nil {
 			return err
 		}
-		artifact.Contents = contents.GetData()
-		artifact.MimeType = contents.GetContentType()
 	}
 
 	return handler(artifact)
+}
+
+func FetchSpecContents(ctx context.Context, client *gapic.RegistryClient, spec *rpc.ApiSpec) error {
+	if spec.Contents != nil {
+		return nil
+	}
+	request := &rpc.GetApiSpecContentsRequest{
+		Name: spec.GetName(),
+	}
+	ctx = metadata.AppendToOutgoingContext(ctx, "accept-encoding", "gzip")
+	contents, err := client.GetApiSpecContents(ctx, request)
+	if err != nil {
+		return err
+	}
+	spec.Contents = contents.GetData()
+	spec.MimeType = contents.GetContentType()
+	return nil
+}
+
+func FetchArtifactContents(ctx context.Context, client *gapic.RegistryClient, artifact *rpc.Artifact) error {
+	if artifact.Contents != nil {
+		return nil
+	}
+	contents, err := client.GetArtifactContents(ctx, &rpc.GetArtifactContentsRequest{
+		Name: artifact.GetName(),
+	})
+	if err != nil {
+		return err
+	}
+	artifact.Contents = contents.GetData()
+	artifact.MimeType = contents.GetContentType()
+	return nil
 }

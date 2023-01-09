@@ -352,3 +352,35 @@ func TestInvalidTypes(t *testing.T) {
 		})
 	}
 }
+
+func TestPrintableTypes(t *testing.T) {
+	tests := []struct {
+		mimeType    string
+		isPrintable bool
+	}{
+		{
+			mimeType:    "application/octet-stream;type=google.cloud.apigeeregistry.v1.style.StyleGuide",
+			isPrintable: false,
+		},
+		{
+			mimeType:    "text/plain",
+			isPrintable: true,
+		},
+		{
+			mimeType:    "application/json;type=google.cloud.apigeeregistry.v1.style.StyleGuide",
+			isPrintable: true,
+		},
+		{
+			mimeType:    "application/yaml;type=Struct",
+			isPrintable: true,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.mimeType, func(t *testing.T) {
+			value := IsPrintableType(test.mimeType)
+			if value != test.isPrintable {
+				t.Errorf("Did not obtain expected value for isPrintable: expected %t got %t", test.isPrintable, value)
+			}
+		})
+	}
+}
