@@ -15,16 +15,45 @@
 package export
 
 import (
+	"fmt"
+
+	"github.com/apigee/registry/cmd/registry/core"
+	"github.com/apigee/registry/cmd/registry/patch"
+	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/server/registry/names"
 	"github.com/spf13/cobra"
 )
 
 func Command() *cobra.Command {
+	var jobs int
+	var root string
 	cmd := &cobra.Command{
-		Use:   "export",
+		Use:   "export PATTERN",
 		Short: "Export resources from the API Registry",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx := cmd.Context()
+			c, err := connection.ActiveConfig()
+			if err != nil {
+				return err
+			}
+			name := c.FQName(args[0])
+			client, err := connection.NewRegistryClientWithSettings(ctx, c)
+			if err != nil {
+				return err
+			}
+			taskQueue, wait := core.WorkerPool(ctx, jobs)
+			defer wait()
+			if project, err := names.ParseProject(name); err == nil {
+				return patch.ExportProject(ctx, client, project, root, taskQueue)
+			} else if api, err := names.ParseApi(name); err == nil {
+				return patch.ExportAPI(ctx, client, api, root, taskQueue)
+			} else {
+				return fmt.Errorf("unsupported pattern %+s", args[0])
+			}
+		},
 	}
-
-	cmd.AddCommand(yamlCommand())
-
+	cmd.Flags().IntVarP(&jobs, "jobs", "j", 10, "Number of file exports to perform simultaneously")
+	cmd.Flags().StringVar(&root, "root", "", "Root directory for export")
 	return cmd
 }

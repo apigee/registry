@@ -76,7 +76,7 @@ func applyProjectPatchBytes(ctx context.Context, client connection.AdminClient, 
 }
 
 // ExportProject writes a project into a directory of YAML files.
-func ExportProject(ctx context.Context, client *gapic.RegistryClient, projectName names.Project, root string, taskQueue chan<- core.Task, nested bool) error {
+func ExportProject(ctx context.Context, client *gapic.RegistryClient, projectName names.Project, root string, taskQueue chan<- core.Task) error {
 	if root != "" {
 		root = root + "/" + projectName.ProjectID
 	} else {
@@ -87,7 +87,6 @@ func ExportProject(ctx context.Context, client *gapic.RegistryClient, projectNam
 			client:  client,
 			message: message,
 			dir:     root,
-			nested:  nested,
 		}
 		return nil
 	})
@@ -105,15 +104,11 @@ func ExportProject(ctx context.Context, client *gapic.RegistryClient, projectNam
 	if err != nil {
 		return err
 	}
-	if nested {
-		return nil
-	}
 	err = core.ListVersions(ctx, client, projectName.Api("-").Version("-"), "", func(message *rpc.ApiVersion) error {
 		taskQueue <- &exportVersionTask{
 			client:  client,
 			message: message,
 			dir:     root,
-			nested:  nested,
 		}
 		return nil
 	})
@@ -125,7 +120,6 @@ func ExportProject(ctx context.Context, client *gapic.RegistryClient, projectNam
 			client:  client,
 			message: message,
 			dir:     root,
-			nested:  nested,
 		}
 		return nil
 	})
@@ -137,7 +131,6 @@ func ExportProject(ctx context.Context, client *gapic.RegistryClient, projectNam
 			client:  client,
 			message: message,
 			dir:     root,
-			nested:  nested,
 		}
 		return nil
 	})
@@ -192,11 +185,109 @@ func ExportProject(ctx context.Context, client *gapic.RegistryClient, projectNam
 	return nil
 }
 
+// ExportAPI writes an API into a directory of YAML files.
+func ExportAPI(ctx context.Context, client *gapic.RegistryClient, apiName names.Api, root string, taskQueue chan<- core.Task) error {
+	if root != "" {
+		root = root + "/" + apiName.ProjectID
+	} else {
+		root = apiName.ProjectID
+	}
+	err := core.ListAPIs(ctx, client, apiName, "", func(message *rpc.Api) error {
+		taskQueue <- &exportAPITask{
+			client:  client,
+			message: message,
+			dir:     root,
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	err = core.ListVersions(ctx, client, apiName.Version("-"), "", func(message *rpc.ApiVersion) error {
+		taskQueue <- &exportVersionTask{
+			client:  client,
+			message: message,
+			dir:     root,
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	err = core.ListSpecs(ctx, client, apiName.Version("-").Spec("-"), "", false, func(message *rpc.ApiSpec) error {
+		taskQueue <- &exportSpecTask{
+			client:  client,
+			message: message,
+			dir:     root,
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	err = core.ListDeployments(ctx, client, apiName.Deployment("-"), "", func(message *rpc.ApiDeployment) error {
+		taskQueue <- &exportDeploymentTask{
+			client:  client,
+			message: message,
+			dir:     root,
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	err = core.ListArtifacts(ctx, client, apiName.Artifact(""), "", false, func(message *rpc.Artifact) error {
+		taskQueue <- &exportArtifactTask{
+			client:  client,
+			message: message,
+			dir:     root,
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	err = core.ListArtifacts(ctx, client, apiName.Version("-").Artifact(""), "", false, func(message *rpc.Artifact) error {
+		taskQueue <- &exportArtifactTask{
+			client:  client,
+			message: message,
+			dir:     root,
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	err = core.ListArtifacts(ctx, client, apiName.Version("-").Spec("-").Artifact(""), "", false, func(message *rpc.Artifact) error {
+		taskQueue <- &exportArtifactTask{
+			client:  client,
+			message: message,
+			dir:     root,
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	err = core.ListArtifacts(ctx, client, apiName.Deployment("-").Artifact(""), "", false, func(message *rpc.Artifact) error {
+		taskQueue <- &exportArtifactTask{
+			client:  client,
+			message: message,
+			dir:     root,
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 type exportAPITask struct {
 	client  connection.RegistryClient
 	message *rpc.Api
 	dir     string
-	nested  bool
 }
 
 func (task *exportAPITask) String() string {
@@ -204,7 +295,7 @@ func (task *exportAPITask) String() string {
 }
 
 func (task *exportAPITask) Run(ctx context.Context) error {
-	api, err := NewApi(ctx, task.client, task.message, task.nested)
+	api, err := NewApi(ctx, task.client, task.message, false)
 	if err != nil {
 		return err
 	}
@@ -213,12 +304,7 @@ func (task *exportAPITask) Run(ctx context.Context) error {
 		return err
 	}
 	log.FromContext(ctx).Infof("Exported %s", task.message.Name)
-	var filename string
-	if task.nested {
-		filename = fmt.Sprintf("%s/apis/%s.yaml", task.dir, api.Header.Metadata.Name)
-	} else {
-		filename = fmt.Sprintf("%s/apis/%s/info.yaml", task.dir, api.Header.Metadata.Name)
-	}
+	filename := fmt.Sprintf("%s/apis/%s/info.yaml", task.dir, api.Header.Metadata.Name)
 	parentDir := filepath.Dir(filename)
 	if err := os.MkdirAll(parentDir, 0777); err != nil {
 		return err
@@ -268,7 +354,6 @@ type exportVersionTask struct {
 	client  connection.RegistryClient
 	message *rpc.ApiVersion
 	dir     string
-	nested  bool
 }
 
 func (task *exportVersionTask) String() string {
@@ -276,7 +361,7 @@ func (task *exportVersionTask) String() string {
 }
 
 func (task *exportVersionTask) Run(ctx context.Context) error {
-	version, err := NewApiVersion(ctx, task.client, task.message, task.nested)
+	version, err := NewApiVersion(ctx, task.client, task.message, false)
 	if err != nil {
 		return err
 	}
@@ -285,12 +370,7 @@ func (task *exportVersionTask) Run(ctx context.Context) error {
 		return err
 	}
 	log.FromContext(ctx).Infof("Exported %s", task.message.Name)
-	var filename string
-	if task.nested {
-		filename = ""
-	} else {
-		filename = fmt.Sprintf("%s/%s/versions/%s/info.yaml", task.dir, version.Header.Metadata.Parent, version.Header.Metadata.Name)
-	}
+	filename := fmt.Sprintf("%s/%s/versions/%s/info.yaml", task.dir, version.Header.Metadata.Parent, version.Header.Metadata.Name)
 	parentDir := filepath.Dir(filename)
 	if err := os.MkdirAll(parentDir, 0777); err != nil {
 		return err
@@ -302,7 +382,6 @@ type exportSpecTask struct {
 	client  connection.RegistryClient
 	message *rpc.ApiSpec
 	dir     string
-	nested  bool
 }
 
 func (task *exportSpecTask) String() string {
@@ -310,7 +389,7 @@ func (task *exportSpecTask) String() string {
 }
 
 func (task *exportSpecTask) Run(ctx context.Context) error {
-	spec, err := NewApiSpec(ctx, task.client, task.message, task.nested)
+	spec, err := NewApiSpec(ctx, task.client, task.message, false)
 	if err != nil {
 		return err
 	}
@@ -319,12 +398,7 @@ func (task *exportSpecTask) Run(ctx context.Context) error {
 		return err
 	}
 	log.FromContext(ctx).Infof("Exported %s", task.message.Name)
-	var filename string
-	if task.nested {
-		filename = ""
-	} else {
-		filename = fmt.Sprintf("%s/%s/specs/%s/info.yaml", task.dir, spec.Header.Metadata.Parent, spec.Header.Metadata.Name)
-	}
+	filename := fmt.Sprintf("%s/%s/specs/%s/info.yaml", task.dir, spec.Header.Metadata.Parent, spec.Header.Metadata.Name)
 	parentDir := filepath.Dir(filename)
 	if err := os.MkdirAll(parentDir, 0777); err != nil {
 		return err
@@ -332,7 +406,7 @@ func (task *exportSpecTask) Run(ctx context.Context) error {
 	if err = os.WriteFile(filename, bytes, 0644); err != nil {
 		return err
 	}
-	if task.nested {
+	if task.message.Filename == "" {
 		return nil
 	}
 	ctx = metadata.AppendToOutgoingContext(ctx, "accept-encoding", "gzip")
@@ -353,7 +427,6 @@ type exportDeploymentTask struct {
 	client  connection.RegistryClient
 	message *rpc.ApiDeployment
 	dir     string
-	nested  bool
 }
 
 func (task *exportDeploymentTask) String() string {
@@ -361,7 +434,7 @@ func (task *exportDeploymentTask) String() string {
 }
 
 func (task *exportDeploymentTask) Run(ctx context.Context) error {
-	deployment, err := NewApiDeployment(ctx, task.client, task.message, task.nested)
+	deployment, err := NewApiDeployment(ctx, task.client, task.message, false)
 	if err != nil {
 		return err
 	}
@@ -370,12 +443,7 @@ func (task *exportDeploymentTask) Run(ctx context.Context) error {
 		return err
 	}
 	log.FromContext(ctx).Infof("Exported %s", task.message.Name)
-	var filename string
-	if task.nested {
-		filename = ""
-	} else {
-		filename = fmt.Sprintf("%s/%s/deployments/%s/info.yaml", task.dir, deployment.Header.Metadata.Parent, deployment.Header.Metadata.Name)
-	}
+	filename := fmt.Sprintf("%s/%s/deployments/%s/info.yaml", task.dir, deployment.Header.Metadata.Parent, deployment.Header.Metadata.Name)
 	parentDir := filepath.Dir(filename)
 	if err := os.MkdirAll(parentDir, 0777); err != nil {
 		return err
