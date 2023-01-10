@@ -175,12 +175,10 @@ func (h *deleteHandler) enqueue(task core.Task) {
 
 func (h *deleteHandler) projectHandler() func(message *rpc.Project) error {
 	return func(message *rpc.Project) error {
-		h.enqueue(&deleteTask{
-			client:       h.client,
-			adminClient:  h.adminClient,
-			resourceName: message.Name,
-			resourceKind: "project",
-			force:        h.force,
+		h.enqueue(&deleteProjectTask{
+			deleteTask: deleteTask{resourceName: message.Name},
+			client:     h.adminClient,
+			force:      h.force,
 		})
 		return nil
 	}
@@ -188,11 +186,10 @@ func (h *deleteHandler) projectHandler() func(message *rpc.Project) error {
 
 func (h *deleteHandler) apiHandler() func(message *rpc.Api) error {
 	return func(message *rpc.Api) error {
-		h.enqueue(&deleteTask{
-			client:       h.client,
-			resourceName: message.Name,
-			resourceKind: "api",
-			force:        h.force,
+		h.enqueue(&deleteApiTask{
+			deleteTask: deleteTask{resourceName: message.Name},
+			client:     h.client,
+			force:      h.force,
 		})
 		return nil
 	}
@@ -200,11 +197,10 @@ func (h *deleteHandler) apiHandler() func(message *rpc.Api) error {
 
 func (h *deleteHandler) apiVersionHandler() func(message *rpc.ApiVersion) error {
 	return func(message *rpc.ApiVersion) error {
-		h.enqueue(&deleteTask{
-			client:       h.client,
-			resourceName: message.Name,
-			resourceKind: "version",
-			force:        h.force,
+		h.enqueue(&deleteApiVersionTask{
+			deleteTask: deleteTask{resourceName: message.Name},
+			client:     h.client,
+			force:      h.force,
 		})
 		return nil
 	}
@@ -212,11 +208,10 @@ func (h *deleteHandler) apiVersionHandler() func(message *rpc.ApiVersion) error 
 
 func (h *deleteHandler) apiDeploymentHandler() func(message *rpc.ApiDeployment) error {
 	return func(message *rpc.ApiDeployment) error {
-		h.enqueue(&deleteTask{
-			client:       h.client,
-			resourceName: message.Name,
-			resourceKind: "deployment",
-			force:        h.force,
+		h.enqueue(&deleteApiDeploymentTask{
+			deleteTask: deleteTask{resourceName: message.Name},
+			client:     h.client,
+			force:      h.force,
 		})
 		return nil
 	}
@@ -224,11 +219,10 @@ func (h *deleteHandler) apiDeploymentHandler() func(message *rpc.ApiDeployment) 
 
 func (h *deleteHandler) apiDeploymentRevisionHandler() func(message *rpc.ApiDeployment) error {
 	return func(message *rpc.ApiDeployment) error {
-		h.enqueue(&deleteTask{
-			client:       h.client,
-			resourceName: message.Name,
-			resourceKind: "deployment-revision",
-			force:        h.force,
+		h.enqueue(&deleteApiDeploymentRevisionTask{
+			deleteTask: deleteTask{resourceName: message.Name},
+			client:     h.client,
+			force:      h.force,
 		})
 		return nil
 	}
@@ -236,11 +230,10 @@ func (h *deleteHandler) apiDeploymentRevisionHandler() func(message *rpc.ApiDepl
 
 func (h *deleteHandler) apiSpecHandler() func(message *rpc.ApiSpec) error {
 	return func(message *rpc.ApiSpec) error {
-		h.enqueue(&deleteTask{
-			client:       h.client,
-			resourceName: message.Name,
-			resourceKind: "spec",
-			force:        h.force,
+		h.enqueue(&deleteApiSpecTask{
+			deleteTask: deleteTask{resourceName: message.Name},
+			client:     h.client,
+			force:      h.force,
 		})
 		return nil
 	}
@@ -248,11 +241,10 @@ func (h *deleteHandler) apiSpecHandler() func(message *rpc.ApiSpec) error {
 
 func (h *deleteHandler) apiSpecRevisionHandler() func(message *rpc.ApiSpec) error {
 	return func(message *rpc.ApiSpec) error {
-		h.enqueue(&deleteTask{
-			client:       h.client,
-			resourceName: message.Name,
-			resourceKind: "spec-revision",
-			force:        h.force,
+		h.enqueue(&deleteApiSpecRevisionTask{
+			deleteTask: deleteTask{resourceName: message.Name},
+			client:     h.client,
+			force:      h.force,
 		})
 		return nil
 	}
@@ -260,50 +252,111 @@ func (h *deleteHandler) apiSpecRevisionHandler() func(message *rpc.ApiSpec) erro
 
 func (h *deleteHandler) artifactHandler() func(message *rpc.Artifact) error {
 	return func(message *rpc.Artifact) error {
-		h.enqueue(&deleteTask{
-			client:       h.client,
-			resourceName: message.Name,
-			resourceKind: "artifact",
-			force:        h.force,
+		h.enqueue(&deleteArtifactTask{
+			deleteTask: deleteTask{resourceName: message.Name},
+			client:     h.client,
 		})
 		return nil
 	}
 }
 
 type deleteTask struct {
-	client       connection.RegistryClient
-	adminClient  connection.AdminClient
 	resourceName string
-	resourceKind string
-	force        bool
 }
 
 func (task *deleteTask) String() string {
 	return "delete " + task.resourceName
 }
 
-func (task *deleteTask) Run(ctx context.Context) error {
-	log.Debugf(ctx, "Deleting %s %s", task.resourceKind, task.resourceName)
-	switch task.resourceKind {
-	case "project":
-		return task.adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{Name: task.resourceName, Force: task.force})
-	case "api":
-		return task.client.DeleteApi(ctx, &rpc.DeleteApiRequest{Name: task.resourceName, Force: task.force})
-	case "version":
-		return task.client.DeleteApiVersion(ctx, &rpc.DeleteApiVersionRequest{Name: task.resourceName, Force: task.force})
-	case "spec":
-		return task.client.DeleteApiSpec(ctx, &rpc.DeleteApiSpecRequest{Name: task.resourceName, Force: task.force})
-	case "spec-revision":
-		_, err := task.client.DeleteApiSpecRevision(ctx, &rpc.DeleteApiSpecRevisionRequest{Name: task.resourceName})
-		return err
-	case "deployment":
-		return task.client.DeleteApiDeployment(ctx, &rpc.DeleteApiDeploymentRequest{Name: task.resourceName, Force: task.force})
-	case "deployment-revision":
-		_, err := task.client.DeleteApiDeploymentRevision(ctx, &rpc.DeleteApiDeploymentRevisionRequest{Name: task.resourceName})
-		return err
-	case "artifact":
-		return task.client.DeleteArtifact(ctx, &rpc.DeleteArtifactRequest{Name: task.resourceName})
-	default:
-		return nil
-	}
+func (task *deleteTask) log(ctx context.Context) {
+	log.Debugf(ctx, "Deleting %s", task.resourceName)
+}
+
+type deleteProjectTask struct {
+	deleteTask
+	client connection.AdminClient
+	force  bool
+}
+
+func (task *deleteProjectTask) Run(ctx context.Context) error {
+	task.log(ctx)
+	return task.client.DeleteProject(ctx, &rpc.DeleteProjectRequest{Name: task.resourceName, Force: task.force})
+}
+
+type deleteApiTask struct {
+	deleteTask
+	client connection.RegistryClient
+	force  bool
+}
+
+func (task *deleteApiTask) Run(ctx context.Context) error {
+	task.log(ctx)
+	return task.client.DeleteApi(ctx, &rpc.DeleteApiRequest{Name: task.resourceName, Force: task.force})
+}
+
+type deleteApiVersionTask struct {
+	deleteTask
+	client connection.RegistryClient
+	force  bool
+}
+
+func (task *deleteApiVersionTask) Run(ctx context.Context) error {
+	task.log(ctx)
+	return task.client.DeleteApiVersion(ctx, &rpc.DeleteApiVersionRequest{Name: task.resourceName, Force: task.force})
+}
+
+type deleteApiSpecTask struct {
+	deleteTask
+	client connection.RegistryClient
+	force  bool
+}
+
+func (task *deleteApiSpecTask) Run(ctx context.Context) error {
+	task.log(ctx)
+	return task.client.DeleteApiSpec(ctx, &rpc.DeleteApiSpecRequest{Name: task.resourceName, Force: task.force})
+}
+
+type deleteApiSpecRevisionTask struct {
+	deleteTask
+	client connection.RegistryClient
+	force  bool
+}
+
+func (task *deleteApiSpecRevisionTask) Run(ctx context.Context) error {
+	task.log(ctx)
+	_, err := task.client.DeleteApiSpecRevision(ctx, &rpc.DeleteApiSpecRevisionRequest{Name: task.resourceName})
+	return err
+}
+
+type deleteApiDeploymentTask struct {
+	deleteTask
+	client connection.RegistryClient
+	force  bool
+}
+
+func (task *deleteApiDeploymentTask) Run(ctx context.Context) error {
+	task.log(ctx)
+	return task.client.DeleteApiDeployment(ctx, &rpc.DeleteApiDeploymentRequest{Name: task.resourceName, Force: task.force})
+}
+
+type deleteApiDeploymentRevisionTask struct {
+	deleteTask
+	client connection.RegistryClient
+	force  bool
+}
+
+func (task *deleteApiDeploymentRevisionTask) Run(ctx context.Context) error {
+	task.log(ctx)
+	_, err := task.client.DeleteApiDeploymentRevision(ctx, &rpc.DeleteApiDeploymentRevisionRequest{Name: task.resourceName})
+	return err
+}
+
+type deleteArtifactTask struct {
+	deleteTask
+	client connection.RegistryClient
+}
+
+func (task *deleteArtifactTask) Run(ctx context.Context) error {
+	task.log(ctx)
+	return task.client.DeleteArtifact(ctx, &rpc.DeleteArtifactRequest{Name: task.resourceName})
 }
