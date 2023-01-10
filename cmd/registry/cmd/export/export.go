@@ -24,7 +24,6 @@ func Command() *cobra.Command {
 		Short: "Export resources from the API Registry",
 	}
 
-	cmd.AddCommand(csvCommand())
 	cmd.AddCommand(yamlCommand())
 
 	return cmd
