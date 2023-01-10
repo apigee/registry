@@ -133,7 +133,7 @@ func (h *getHandler) traverse() error {
 		} else if artifact, err := names.ParseArtifact(name); err == nil {
 			return core.ListArtifacts(ctx, client, artifact, filter, false, h.artifactHandler())
 		}
-		return fmt.Errorf("unsupported entity %+v", name)
+		return fmt.Errorf("unsupported pattern %+v", name)
 	}
 
 	// If we get here, name designates an individual resource to be displayed.
@@ -159,7 +159,7 @@ func (h *getHandler) traverse() error {
 	} else if artifact, err := names.ParseArtifact(name); err == nil {
 		return core.GetArtifact(ctx, client, artifact, false, h.artifactHandler())
 	} else {
-		return fmt.Errorf("unsupported entity %+v", name)
+		return fmt.Errorf("unsupported pattern %+v", name)
 	}
 }
 
