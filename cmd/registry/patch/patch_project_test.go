@@ -190,6 +190,15 @@ func TestProjectExport(t *testing.T) {
 				t.Fatalf("Setup: Failed to create test project: %s", err)
 			}
 
+			t.Cleanup(func() {
+				if err := adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{
+					Name:  project.String(),
+					Force: true,
+				}); err != nil {
+					t.Logf("Cleanup: Failed to delete test project: %s", err)
+				}
+			})
+
 			// set the configured registry.project to the test project
 			config, err := connection.ActiveConfig()
 			if err != nil {
@@ -243,13 +252,6 @@ func TestProjectExport(t *testing.T) {
 			}); err != nil {
 				t.Fatalf("Setup: Failed to export project: %s", err)
 			}
-
-			if err := adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{
-				Name:  project.String(),
-				Force: true,
-			}); err != nil {
-				t.Logf("Cleanup: Failed to delete test project: %s", err)
-			}
 		})
 	}
 }
@@ -286,6 +288,15 @@ func TestApiExport(t *testing.T) {
 			}); err != nil {
 				t.Fatalf("Setup: Failed to create test project: %s", err)
 			}
+
+			t.Cleanup(func() {
+				if err := adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{
+					Name:  project.String(),
+					Force: true,
+				}); err != nil {
+					t.Logf("Cleanup: Failed to delete test project: %s", err)
+				}
+			})
 
 			// set the configured registry.project to the test project
 			config, err := connection.ActiveConfig()
@@ -339,13 +350,6 @@ func TestApiExport(t *testing.T) {
 				return nil
 			}); err != nil {
 				t.Fatalf("Setup: Failed to export api: %s", err)
-			}
-
-			if err := adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{
-				Name:  project.String(),
-				Force: true,
-			}); err != nil {
-				t.Logf("Cleanup: Failed to delete test project: %s", err)
 			}
 		})
 	}
