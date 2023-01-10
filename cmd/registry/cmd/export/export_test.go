@@ -48,13 +48,32 @@ func TestExportYAML(t *testing.T) {
 		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
 	}
 
-	// Verify that yaml export runs for each resource.
+	// Verify that export runs for each supported resource.
 	resources := []string{
-		"projects/my-project/locations/global/artifacts/x",
-		"projects/my-project/locations/global/apis/a/versions/v",
+		"projects/my-project",
+		"projects/my-project/locations/global/apis/a",
+	}
+	for _, r := range resources {
+		t.Run(r, func(t *testing.T) {
+			root := t.TempDir() // Use a new output directory for each export.
+			cmd := Command()
+			args := []string{r, "--root", root}
+			cmd.SetArgs(args)
+			cmd.SetOut(io.Discard)
+			cmd.SetErr(io.Discard)
+			if err := cmd.Execute(); err != nil {
+				t.Fatalf("Execute() with args %v returned error: %s", args, err)
+			}
+		})
+	}
+
+	// Subsequent exports should all fail, so they share a common output directory.
+	root := t.TempDir()
+
+	// Verify that unsupported exports fail.
+	unsupported := []string{
 		"projects/my-project/locations/global/apis/a/versions/v/specs/s",
 		"projects/my-project/locations/global/apis/a/deployments/d",
-		"projects/my-project/locations/global/apis/a",
 		"projects/my-project/locations/global/apis/a/versions/v",
 		"projects/my-project/locations/global/apis/a/versions/v/specs/s",
 		"projects/my-project/locations/global/apis/a/deployments/d",
@@ -63,31 +82,22 @@ func TestExportYAML(t *testing.T) {
 		"projects/my-project/locations/global/apis/a/versions/v/specs/s/artifacts/x",
 		"projects/my-project/locations/global/apis/a/deployments/d/artifacts/x",
 	}
-	for _, r := range resources {
-		cmd := Command()
-		args := []string{r}
-		cmd.SetArgs(args)
-		cmd.SetOut(io.Discard)
-		cmd.SetErr(io.Discard)
-		if err := cmd.Execute(); err != nil {
-			t.Fatalf("Execute() with args %v returned error: %s", args, err)
-		}
-	}
-
-	// Repeat with --nested export enabled.
-	for _, r := range resources {
-		cmd := Command()
-		args := []string{r, "--nested"}
-		cmd.SetArgs(args)
-		cmd.SetOut(io.Discard)
-		cmd.SetErr(io.Discard)
-		if err := cmd.Execute(); err != nil {
-			t.Fatalf("Execute() with args %v returned error: %s", args, err)
-		}
+	for _, r := range unsupported {
+		t.Run("unsupported/"+r, func(t *testing.T) {
+			cmd := Command()
+			cmd.SilenceUsage = true
+			cmd.SilenceErrors = true
+			args := []string{r, "--root", root}
+			cmd.SetArgs(args)
+			if err := cmd.Execute(); err == nil {
+				t.Fatalf("Execute() with args %v succeeded but should have failed", args)
+			}
+		})
 	}
 
 	// Verify that invalid exports fail.
 	invalid := []string{
+		"projects/my-missing-project",
 		"projects/my-project/locations/global/artifacts/xx",
 		"projects/my-project/locations/global/apis/a/versions/vv",
 		"projects/my-project/locations/global/apis/a/versions/v/specs/ss",
@@ -102,13 +112,15 @@ func TestExportYAML(t *testing.T) {
 		"projects/my-project/locations/global/apis/a/deployments/d/artifacts/xx",
 	}
 	for _, r := range invalid {
-		cmd := Command()
-		cmd.SilenceUsage = true
-		cmd.SilenceErrors = true
-		args := []string{r}
-		cmd.SetArgs(args)
-		if err := cmd.Execute(); err == nil {
-			t.Fatalf("Execute() with args %v succeeded but should have failed", args)
-		}
+		t.Run("invalid/"+r, func(t *testing.T) {
+			cmd := Command()
+			cmd.SilenceUsage = true
+			cmd.SilenceErrors = true
+			args := []string{r, "--root", root}
+			cmd.SetArgs(args)
+			if err := cmd.Execute(); err == nil {
+				t.Fatalf("Execute() with args %v succeeded but should have failed", args)
+			}
+		})
 	}
 }

@@ -20,14 +20,13 @@ import (
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/cmd/registry/patch"
 	"github.com/apigee/registry/pkg/connection"
-	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
 	"github.com/spf13/cobra"
 )
 
 func Command() *cobra.Command {
 	var jobs int
-	var nested bool
+	var root string
 	cmd := &cobra.Command{
 		Use:   "export PATTERN",
 		Short: "Export resources from the API Registry",
@@ -38,108 +37,23 @@ func Command() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			args[0] = c.FQName(args[0])
-
+			name := c.FQName(args[0])
 			client, err := connection.NewRegistryClientWithSettings(ctx, c)
 			if err != nil {
 				return err
 			}
-
 			taskQueue, wait := core.WorkerPool(ctx, jobs)
 			defer wait()
-
-			if project, err := names.ParseProject(args[0]); err == nil {
-				err = patch.ExportProject(ctx, client, project, "", taskQueue, nested)
-				if err != nil {
-					return err
-				}
-			} else if api, err := names.ParseApi(c.FQName(args[0])); err == nil {
-				err = core.GetAPI(ctx, client, api, func(message *rpc.Api) error {
-					api, err := patch.NewApi(ctx, client, message, nested)
-					if err != nil {
-						return err
-					}
-					bytes, err := patch.Encode(api)
-					if err != nil {
-						return err
-					}
-					_, err = cmd.OutOrStdout().Write(bytes)
-					return err
-				})
-				if err != nil {
-					return err
-				}
-			} else if version, err := names.ParseVersion(c.FQName(args[0])); err == nil {
-				err = core.GetVersion(ctx, client, version, func(message *rpc.ApiVersion) error {
-					version, err := patch.NewApiVersion(ctx, client, message, nested)
-					if err != nil {
-						return err
-					}
-					bytes, err := patch.Encode(version)
-					if err != nil {
-						return err
-					}
-					_, err = cmd.OutOrStdout().Write(bytes)
-					return err
-				})
-				if err != nil {
-					return err
-				}
-			} else if spec, err := names.ParseSpec(c.FQName(args[0])); err == nil {
-				err = core.GetSpec(ctx, client, spec, false, func(message *rpc.ApiSpec) error {
-					spec, err := patch.NewApiSpec(ctx, client, message, nested)
-					if err != nil {
-						return err
-					}
-					bytes, err := patch.Encode(spec)
-					if err != nil {
-						return err
-					}
-					_, err = cmd.OutOrStdout().Write(bytes)
-					return err
-				})
-				if err != nil {
-					return err
-				}
-			} else if deployment, err := names.ParseDeployment(c.FQName(args[0])); err == nil {
-				err = core.GetDeployment(ctx, client, deployment, func(message *rpc.ApiDeployment) error {
-					deployment, err := patch.NewApiDeployment(ctx, client, message, nested)
-					if err != nil {
-						return err
-					}
-					bytes, err := patch.Encode(deployment)
-					if err != nil {
-						return err
-					}
-					_, err = cmd.OutOrStdout().Write(bytes)
-					return err
-				})
-				if err != nil {
-					return err
-				}
-			} else if artifact, err := names.ParseArtifact(c.FQName(args[0])); err == nil {
-				err = core.GetArtifact(ctx, client, artifact, false, func(message *rpc.Artifact) error {
-					artifact, err := patch.NewArtifact(ctx, client, message)
-					if err != nil {
-						return err
-					}
-					bytes, err := patch.Encode(artifact)
-					if err != nil {
-						return err
-					}
-					_, err = cmd.OutOrStdout().Write(bytes)
-					return err
-				})
-				if err != nil {
-					return err
-				}
+			if project, err := names.ParseProject(name); err == nil {
+				return patch.ExportProject(ctx, client, project, root, taskQueue)
+			} else if api, err := names.ParseApi(name); err == nil {
+				return patch.ExportAPI(ctx, client, api, root, taskQueue)
 			} else {
-				return fmt.Errorf("Unsupported entity %+s", args[0])
+				return fmt.Errorf("unsupported pattern %+s", args[0])
 			}
-			return nil
 		},
 	}
 	cmd.Flags().IntVarP(&jobs, "jobs", "j", 10, "Number of file exports to perform simultaneously")
-	cmd.Flags().BoolVarP(&nested, "nested", "n", false, "Nest child resources in parents")
+	cmd.Flags().StringVar(&root, "root", "", "Root directory for export")
 	return cmd
 }
