@@ -108,7 +108,7 @@ func TestDeleteValidResources(t *testing.T) {
 		"projects/my-project/locations/global/apis/a/deployments/d/artifacts/-",
 		"projects/my-project/locations/global/apis/a/deployments/d/artifacts/x",
 	}
-	// try to delete each resource
+	// Try to delete each resource.
 	for _, r := range resources {
 		t.Run(r, func(t *testing.T) {
 			setup(t)
@@ -119,5 +119,125 @@ func TestDeleteValidResources(t *testing.T) {
 				t.Errorf("Execute() with args %v should have succeeded but failed", args)
 			}
 		})
+	}
+}
+
+func setupWithoutArtifacts(t *testing.T) (context.Context, connection.RegistryClient) {
+	// Seed a registry with a list of leaf-level artifacts.
+	seed := []seeder.RegistryResource{
+		&rpc.ApiSpec{Name: "projects/my-project/locations/global/apis/a/versions/v/specs/s", MimeType: "text/plain", Contents: []byte("hello")},
+		&rpc.ApiDeployment{Name: "projects/my-project/locations/global/apis/a/deployments/d"},
+	}
+	ctx := context.Background()
+	registryClient, err := connection.NewRegistryClient(ctx)
+	if err != nil {
+		t.Fatalf("Failed to create client: %+v", err)
+	}
+	t.Cleanup(func() { registryClient.Close() })
+	adminClient, err := connection.NewAdminClient(ctx)
+	if err != nil {
+		t.Fatalf("Failed to create client: %+v", err)
+	}
+	t.Cleanup(func() { adminClient.Close() })
+	client := seeder.Client{
+		RegistryClient: registryClient,
+		AdminClient:    adminClient,
+	}
+	t.Cleanup(func() {
+		_ = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{Name: "projects/my-project", Force: true})
+	})
+	_ = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{Name: "projects/my-project", Force: true})
+	if err := seeder.SeedRegistry(ctx, client, seed...); err != nil {
+		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+	}
+	return ctx, registryClient
+}
+
+func TestDeleteValidRevisions(t *testing.T) {
+	// Specifically delete a spec revision.
+	t.Run("spec revision", func(t *testing.T) {
+		ctx, registryClient := setupWithoutArtifacts(t)
+		spec, err := registryClient.GetApiSpec(ctx, &rpc.GetApiSpecRequest{Name: "projects/my-project/locations/global/apis/a/versions/v/specs/s"})
+		if err != nil {
+			t.Fatalf("Failed to prepare test data: %+v", err)
+		}
+		// Update spec to create a second revision.
+		spec.Contents = []byte("goodbye")
+		_, err = registryClient.UpdateApiSpec(ctx, &rpc.UpdateApiSpecRequest{ApiSpec: spec})
+		if err != nil {
+			t.Fatalf("Failed to prepare test data: %+v", err)
+		}
+		// Delete the original revision.
+		r := "projects/my-project/locations/global/apis/a/versions/v/specs/s@" + spec.RevisionId
+		cmd := Command()
+		args := []string{r, "--force"}
+		cmd.SetArgs(args)
+		if err := cmd.Execute(); err != nil {
+			t.Errorf("Execute() with args %v should have succeeded but failed", args)
+		}
+	})
+	// Specifically delete a deployment revision.
+	t.Run("deployment revision", func(t *testing.T) {
+		ctx, registryClient := setupWithoutArtifacts(t)
+		deployment, err := registryClient.GetApiDeployment(ctx, &rpc.GetApiDeploymentRequest{Name: "projects/my-project/locations/global/apis/a/deployments/d"})
+		if err != nil {
+			t.Fatalf("Failed to prepare test data: %+v", err)
+		}
+		// Update deployment to create a second revision
+		deployment.EndpointUri = "https://another"
+		_, err = registryClient.UpdateApiDeployment(ctx, &rpc.UpdateApiDeploymentRequest{ApiDeployment: deployment})
+		if err != nil {
+			t.Fatalf("Failed to prepare test data: %+v", err)
+		}
+		// Delete the original revision.
+		r := "projects/my-project/locations/global/apis/a/deployments/d@" + deployment.RevisionId
+		cmd := Command()
+		args := []string{r, "--force"}
+		cmd.SetArgs(args)
+		if err := cmd.Execute(); err != nil {
+			t.Errorf("Execute() with args %v should have succeeded but failed", args)
+		}
+	})
+}
+
+func TestDeleteInvalidResources(t *testing.T) {
+	setup(t)
+	resources := []string{
+		"projects/my-project/locations/global/apis/-/versions/-/specs/missing-spec",
+		"projects/my-project/locations/global/apis/-/invalid-collection",
+		"projects/my-project/locations/global/apis/a/invalid-collection/x",
+	}
+	// Try to delete each resource.
+	for _, r := range resources {
+		t.Run(r, func(t *testing.T) {
+			cmd := Command()
+			cmd.SilenceUsage = true
+			cmd.SilenceErrors = true
+			args := []string{r, "--force"}
+			cmd.SetArgs(args)
+			if err := cmd.Execute(); err == nil {
+				t.Errorf("Execute() with args %v succeeded but should have failed", args)
+			}
+		})
+	}
+	// Verify that we get an error if --filter is used with a specific resource.
+	t.Run("filter-with-specific-resource", func(t *testing.T) {
+		cmd := Command()
+		cmd.SilenceUsage = true
+		cmd.SilenceErrors = true
+		args := []string{"projects/my-project/locations/global/apis/a", "--filter", "true"}
+		cmd.SetArgs(args)
+		if err := cmd.Execute(); err == nil {
+			t.Errorf("Execute() with args %v succeeded but should have failed", args)
+		}
+	})
+}
+
+func TestTaskString(t *testing.T) {
+	task := &deleteApiTask{
+		deleteTask: deleteTask{resourceName: "sample"},
+	}
+	if task.String() != "delete sample" {
+		t.Errorf("deleteTask.String() returned incorrect value %s, expected %s", task.String(), "delete sample")
 	}
 }
