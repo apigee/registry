@@ -13,18 +13,3 @@
 // limitations under the License.
 
 package export
-
-import (
-	"github.com/spf13/cobra"
-)
-
-func Command() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "export",
-		Short: "Export resources from the API Registry",
-	}
-
-	cmd.AddCommand(yamlCommand())
-
-	return cmd
-}

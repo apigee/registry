@@ -6,9 +6,18 @@ import (
 	"testing"
 
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/server/registry"
 	"github.com/apigee/registry/server/registry/test/seeder"
 )
+
+// TestMain will set up a local RegistryServer and grpc.Server for all
+// tests in this package if APG_REGISTRY_ADDRESS env var is not set
+// for the client.
+func TestMain(m *testing.M) {
+	grpctest.TestMain(m, registry.Config{})
+}
 
 func TestExportYAML(t *testing.T) {
 	// Seed a registry with a list of leaf-level artifacts.
@@ -56,7 +65,7 @@ func TestExportYAML(t *testing.T) {
 	}
 	for _, r := range resources {
 		cmd := Command()
-		args := []string{"yaml", r}
+		args := []string{r}
 		cmd.SetArgs(args)
 		cmd.SetOut(io.Discard)
 		cmd.SetErr(io.Discard)
@@ -68,7 +77,7 @@ func TestExportYAML(t *testing.T) {
 	// Repeat with --nested export enabled.
 	for _, r := range resources {
 		cmd := Command()
-		args := []string{"yaml", r, "--nested"}
+		args := []string{r, "--nested"}
 		cmd.SetArgs(args)
 		cmd.SetOut(io.Discard)
 		cmd.SetErr(io.Discard)
@@ -96,7 +105,7 @@ func TestExportYAML(t *testing.T) {
 		cmd := Command()
 		cmd.SilenceUsage = true
 		cmd.SilenceErrors = true
-		args := []string{"yaml", r}
+		args := []string{r}
 		cmd.SetArgs(args)
 		if err := cmd.Execute(); err == nil {
 			t.Fatalf("Execute() with args %v succeeded but should have failed", args)

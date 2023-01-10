@@ -25,12 +25,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func yamlCommand() *cobra.Command {
+func Command() *cobra.Command {
 	var jobs int
 	var nested bool
 	cmd := &cobra.Command{
-		Use:   "yaml RESOURCE",
-		Short: "Export a subtree of the registry as YAML",
+		Use:   "export PATTERN",
+		Short: "Export resources from the API Registry",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
