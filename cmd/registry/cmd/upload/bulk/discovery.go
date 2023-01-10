@@ -49,6 +49,7 @@ func discoveryCommand() *cobra.Command {
 	var service string
 	cmd := &cobra.Command{
 		Use:   "discovery",
+		Args:  cobra.NoArgs,
 		Short: "Bulk-upload API Discovery documents from the Google API Discovery service",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()

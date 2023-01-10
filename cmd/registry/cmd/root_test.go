@@ -50,18 +50,18 @@ func checkCommand(t *testing.T, cmd *cobra.Command, prefix string) {
 		if len(cmd.Commands()) == 0 {
 			args := cmd.Args
 			if args == nil {
-				t.Logf("%q has an empty 'Args' field.", name)
+				t.Errorf("%q has an empty 'Args' field.", name)
 			}
 			use := cmd.Use
 			if use == "" {
-				t.Logf("%q has an empty 'Use' field.", name)
+				t.Errorf("%q has an empty 'Use' field.", name)
 			}
 			if args != nil && use != "" {
 				parts := strings.Split(cmd.Use, " ")
 				err := args(cmd, []string{"one"})
 				if err == nil {
 					if len(parts) == 0 {
-						t.Logf("%q accepts arguments that are not listed in 'Use' field.", name)
+						t.Errorf("%q accepts arguments that are not listed in 'Use' field.", name)
 					}
 				}
 			}
