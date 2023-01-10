@@ -58,7 +58,7 @@ func Command() *cobra.Command {
 	var maxActions int
 	cmd := &cobra.Command{
 		Use:   "resolve MANIFEST_RESOURCE",
-		Short: "resolve the dependencies and update the registry state (experimental)",
+		Short: "Resolve dependencies by performing actions in a specified manifest",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := cmd.Context()

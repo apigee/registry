@@ -24,7 +24,7 @@ import (
 func setCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "set PROPERTY VALUE",
-		Short: "Set a property value in the active configuration.",
+		Short: "Set a property value in the active configuration",
 		Long: "Set a property value in the active configuration. The following are valid properties:\n" +
 			"  - registry.address\n" +
 			"  - registry.insecure\n" +

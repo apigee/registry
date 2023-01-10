@@ -24,7 +24,7 @@ import (
 func getCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "get PROPERTY",
-		Short: "Print a property value in the active configuration.",
+		Short: "Print a property value in the active configuration",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cmd.SilenceUsage = true

@@ -44,7 +44,7 @@ func defaultConfigs() lint.Configs {
 func Command() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "check [pattern]",
-		Short: "Check entities in the registry",
+		Short: "Check entities in the API Registry",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()

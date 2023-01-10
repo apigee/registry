@@ -33,17 +33,17 @@ func checkCommand(t *testing.T, cmd *cobra.Command, prefix string) {
 		// Check short descriptions.
 		short := cmd.Short
 		if short == "" {
-			t.Logf("%q has no short description.", name)
+			t.Errorf("%q has no short description.", name)
 		} else {
 			if strings.HasSuffix(short, ".") {
-				t.Logf("%q short description must not end with a period.", name)
+				t.Errorf("%q short description must not end with a period.", name)
 			}
 			first := []rune(short)[0]
 			if unicode.IsLower(first) {
-				t.Logf("%q short description must not begin with a lower case letter.", name)
+				t.Errorf("%q short description must not begin with a lower case letter.", name)
 			}
 			if strings.Contains(short, "the registry") {
-				t.Logf("%q short description must refer to `the API Registry` instead of `the registry`.", name)
+				t.Errorf("%q short description must refer to `the API Registry` instead of `the registry`.", name)
 			}
 		}
 		// Perform additional checks on leaf-level commands.

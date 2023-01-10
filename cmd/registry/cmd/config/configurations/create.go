@@ -24,7 +24,7 @@ import (
 func createCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create CONFIGURATION_NAME",
-		Short: "Creates and activates a new named configuration.",
+		Short: "Creates and activates a new named configuration",
 		Long: "Creates and activates a new named configuration. Values will be populated from active " +
 			"configuration (if any) and any passed property flags.",
 		Example: "registry config configurations create localhost --registry.address='locahost:8080'",
