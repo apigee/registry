@@ -102,9 +102,8 @@ func protosCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&root, "protoc-root", "", "Root directory to use for proto compilation, defaults to PATH")
-
-	cmd.Flags().StringVar(&baseURI, "base-uri", "", "Prefix to use for the source_uri field of each proto upload")
+	cmd.Flags().StringVar(&root, "protoc-root", "", "root directory to use for proto compilation, defaults to PATH")
+	cmd.Flags().StringVar(&baseURI, "base-uri", "", "prefix to use for the source_uri field of each proto upload")
 	return cmd
 }
 

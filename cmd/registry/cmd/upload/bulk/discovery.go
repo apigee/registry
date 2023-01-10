@@ -92,7 +92,7 @@ func discoveryCommand() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&service, "service", "",
-		fmt.Sprintf("API Discovery Service URL (default %s)", discovery.APIsListServiceURL))
+		fmt.Sprintf("the API Discovery Service URL (default %s)", discovery.APIsListServiceURL))
 	return cmd
 }
 

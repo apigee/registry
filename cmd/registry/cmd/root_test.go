@@ -65,16 +65,18 @@ func checkCommand(t *testing.T, cmd *cobra.Command, prefix string) {
 					}
 				}
 			}
-			// Check field descriptions.
+			// Check field usage messages.
 			flags := cmd.Flags()
 			flags.VisitAll(func(f *pflag.Flag) {
-				description := f.Shorthand
-				if description == "" {
-					t.Logf("%q %q flag description must not be empty.", name, f.Name)
+				if f.Usage == "" {
+					t.Errorf("%q %q flag usage must not be empty.", name, f.Name)
 				} else {
-					first := []rune(description)[0]
+					first := []rune(f.Usage)[0]
 					if unicode.IsUpper(first) {
-						t.Logf("%q %q flag description must not begin with an upper case letter.", name, f.Name)
+						t.Errorf("%q %q flag usage must not begin with an upper case letter.", name, f.Name)
+					}
+					if strings.HasSuffix(f.Usage, ".") {
+						t.Errorf("%q %q flag usage description must not end with a period.", name, f.Name)
 					}
 				}
 			})

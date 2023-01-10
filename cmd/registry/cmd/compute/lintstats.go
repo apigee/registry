@@ -76,7 +76,7 @@ func lintStatsCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&linter, "linter", "", "The name of the linter whose results will be used to compute stats (aip|spectral|gnostic)")
+	cmd.Flags().StringVar(&linter, "linter", "", "the name of the linter whose results will be used to compute stats (aip|spectral|gnostic)")
 	_ = cmd.MarkFlagRequired("linter")
 	return cmd
 }

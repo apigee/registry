@@ -55,10 +55,10 @@ func Command() *cobra.Command {
 			return patch.Apply(ctx, client, fileName, parent, recursive, jobs)
 		},
 	}
-	cmd.Flags().StringVarP(&fileName, "file", "f", "", "File or directory containing the patch(es) to apply")
-	cmd.Flags().StringVar(&parent, "parent", "", "Parent resource for the patch")
+	cmd.Flags().StringVarP(&fileName, "file", "f", "", "file or directory containing the patch(es) to apply")
+	cmd.Flags().StringVar(&parent, "parent", "", "parent resource for the patch")
 	cmd.Flags().BoolVarP(&recursive, "recursive", "R", false,
-		"Process the directory used in -f, --file recursively. Useful when you want to manage related manifests organized within the same directory")
-	cmd.Flags().IntVarP(&jobs, "jobs", "j", 10, "Number of apply operations to perform simultaneously")
+		"process the directory used in -f, --file recursively")
+	cmd.Flags().IntVarP(&jobs, "jobs", "j", 10, "number of apply operations to perform simultaneously")
 	return cmd
 }

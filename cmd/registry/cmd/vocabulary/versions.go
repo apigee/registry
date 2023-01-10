@@ -58,6 +58,6 @@ func versionsCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().String("output", "", "Artifact name to use when saving the vocabulary artifact")
+	cmd.Flags().String("output", "", "artifact name to use when saving the vocabulary artifact")
 	return cmd
 }
