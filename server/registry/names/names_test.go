@@ -162,6 +162,22 @@ func TestResourceNames(t *testing.T) {
 			},
 		},
 		{
+			name: "spec revision collections",
+			check: func(name string) bool {
+				_, err := ParseSpecRevisionCollection(name)
+				return err == nil
+			},
+			pass: []string{
+				"projects/google/locations/global/apis/sample/versions/v1/specs/s@",
+				"projects/-/locations/global/apis/-/versions/-/specs/-@",
+			},
+			fail: []string{
+				"-",
+				"projects/google/locations/global/apis/sample/versions/v1/specs/s@123",
+				"projects/-/locations/global/apis/-/versions/-/specs/-",
+			},
+		},
+		{
 			name: "spec revision",
 			check: func(name string) bool {
 				_, err := ParseSpecRevision(name)
@@ -216,6 +232,22 @@ func TestResourceNames(t *testing.T) {
 				"projects/123/locations/global/invalid/123",
 				"projects/123/locations/global/apis/ 123",
 				"projects/google/locations/global/apis/sample/deployments/v1@1234567890abcdef",
+			},
+		},
+		{
+			name: "deployment revision collections",
+			check: func(name string) bool {
+				_, err := ParseDeploymentRevisionCollection(name)
+				return err == nil
+			},
+			pass: []string{
+				"projects/google/locations/global/apis/sample/deployments/d@",
+				"projects/-/locations/global/apis/-/deployments/d@",
+			},
+			fail: []string{
+				"-",
+				"projects/google/locations/global/apis/sample/deployments/d@123",
+				"projects/-/locations/global/apis/-/deployments/d",
 			},
 		},
 		{

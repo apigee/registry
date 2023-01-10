@@ -16,7 +16,6 @@ package core
 
 import (
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/apigee/registry/cmd/registry/types"
@@ -25,81 +24,7 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func PrintProject(project *rpc.Project) error {
-	fmt.Println(project.Name)
-	return nil
-}
-
-func PrintProjectDetail(message *rpc.Project) error {
-	PrintMessage(message)
-	return nil
-}
-
-func PrintAPI(api *rpc.Api) error {
-	fmt.Println(api.Name)
-	return nil
-}
-
-func PrintAPIDetail(message *rpc.Api) error {
-	PrintMessage(message)
-	return nil
-}
-
-func PrintDeployment(deployment *rpc.ApiDeployment) error {
-	fmt.Println(deployment.Name)
-	return nil
-}
-
-func PrintDeploymentDetail(message *rpc.ApiDeployment) error {
-	PrintMessage(message)
-	return nil
-}
-
-func PrintVersion(version *rpc.ApiVersion) error {
-	fmt.Println(version.Name)
-	return nil
-}
-
-func PrintVersionDetail(message *rpc.ApiVersion) error {
-	PrintMessage(message)
-	return nil
-}
-
-func PrintSpec(spec *rpc.ApiSpec) error {
-	fmt.Println(spec.Name)
-	return nil
-}
-
-func PrintSpecDetail(message *rpc.ApiSpec) error {
-	PrintMessage(message)
-	return nil
-}
-
-func WriteSpecContents(message *rpc.ApiSpec) error {
-	contents := message.GetContents()
-	if strings.Contains(message.GetMimeType(), "+gzip") {
-		contents, _ = GUnzippedBytes(contents)
-	}
-	os.Stdout.Write(contents)
-	return nil
-}
-
-func PrintArtifact(artifact *rpc.Artifact) error {
-	fmt.Println(artifact.Name)
-	return nil
-}
-
-func PrintArtifactDetail(artifact *rpc.Artifact) error {
-	PrintMessage(artifact)
-	return nil
-}
-
-func WriteArtifactContents(artifact *rpc.Artifact) error {
-	os.Stdout.Write(artifact.GetContents())
-	return nil
-}
-
-func isPrintableType(mimeType string) bool {
+func IsPrintableType(mimeType string) bool {
 	if mimeType == "text/plain" {
 		return true
 	} else if strings.HasPrefix(mimeType, "application/yaml") {
@@ -109,20 +34,6 @@ func isPrintableType(mimeType string) bool {
 	} else {
 		return false
 	}
-}
-
-func PrintArtifactContents(artifact *rpc.Artifact) error {
-	if isPrintableType(artifact.GetMimeType()) {
-		fmt.Printf("%s\n", string(artifact.GetContents()))
-		return nil
-	}
-
-	message, err := GetArtifactMessageContents(artifact)
-	if err != nil {
-		return err
-	}
-	PrintMessage(message)
-	return nil
 }
 
 func PrintMessage(message proto.Message) {

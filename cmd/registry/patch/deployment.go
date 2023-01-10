@@ -15,7 +15,6 @@
 package patch
 
 import (
-	"bytes"
 	"context"
 	"strings"
 
@@ -26,20 +25,6 @@ import (
 	"github.com/apigee/registry/server/registry/names"
 	"gopkg.in/yaml.v3"
 )
-
-// ExportAPIDeployment allows an API deployment to be individually exported as a YAML file.
-func ExportAPIDeployment(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiDeployment, nested bool) ([]byte, *models.Header, error) {
-	api, err := newApiDeployment(ctx, client, message, nested)
-	if err != nil {
-		return nil, nil, err
-	}
-	var b bytes.Buffer
-	err = yamlEncoder(&b).Encode(api)
-	if err != nil {
-		return nil, nil, err
-	}
-	return b.Bytes(), &api.Header, nil
-}
 
 // relativeSpecRevisionName returns the versionid+specid if the spec is within the specified API
 func relativeSpecRevisionName(apiName names.Api, spec string) string {
@@ -60,8 +45,9 @@ func optionalSpecRevisionName(deploymentName names.Deployment, subpath string) s
 	return deploymentName.Api().String() + "/versions/" + subpath
 }
 
-func newApiDeployment(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiDeployment, nested bool) (*models.ApiDeployment, error) {
-	deploymentName, err := names.ParseDeployment(message.Name)
+// NewApiDeployment allows an API deployment to be individually exported as a YAML file.
+func NewApiDeployment(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiDeployment, nested bool) (*models.ApiDeployment, error) {
+	deploymentName, err := names.ParseDeploymentRevision(message.Name)
 	if err != nil {
 		return nil, err
 	}

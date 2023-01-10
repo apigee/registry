@@ -1,0 +1,7 @@
+apiVersion: apigeeregistry/v1
+kind: Project
+metadata:
+  name: sample
+data:
+  displayName: Sample
+  description: This sample project is described by a YAML file.

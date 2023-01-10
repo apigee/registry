@@ -15,7 +15,6 @@
 package patch
 
 import (
-	"bytes"
 	"context"
 
 	"github.com/apigee/registry/cmd/registry/core"
@@ -27,21 +26,8 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// ExportAPIVersion allows an API version to be individually exported as a YAML file.
-func ExportAPIVersion(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiVersion, nested bool) ([]byte, *models.Header, error) {
-	api, err := newApiVersion(ctx, client, message, nested)
-	if err != nil {
-		return nil, nil, err
-	}
-	var b bytes.Buffer
-	err = yamlEncoder(&b).Encode(api)
-	if err != nil {
-		return nil, nil, err
-	}
-	return b.Bytes(), &api.Header, nil
-}
-
-func newApiVersion(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiVersion, nested bool) (*models.ApiVersion, error) {
+// NewApiVersion allows an API version to be individually exported as a YAML file.
+func NewApiVersion(ctx context.Context, client *gapic.RegistryClient, message *rpc.ApiVersion, nested bool) (*models.ApiVersion, error) {
 	versionName, err := names.ParseVersion(message.Name)
 	if err != nil {
 		return nil, err
@@ -52,7 +38,7 @@ func newApiVersion(ctx context.Context, client *gapic.RegistryClient, message *r
 	if nested {
 		specs = make([]*models.ApiSpec, 0)
 		if err = core.ListSpecs(ctx, client, versionName.Spec("-"), "", false, func(message *rpc.ApiSpec) error {
-			spec, err := newApiSpec(ctx, client, message, true)
+			spec, err := NewApiSpec(ctx, client, message, true)
 			if err != nil {
 				return err
 			}
