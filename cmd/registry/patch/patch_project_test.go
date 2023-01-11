@@ -232,6 +232,9 @@ func TestProjectExport(t *testing.T) {
 
 			// does the exported directory contain everything?
 			if err := filepath.Walk(test.root, func(path string, info os.FileInfo, err error) error {
+				if err != nil {
+					return err
+				}
 				if info.IsDir() {
 					return nil
 				}
