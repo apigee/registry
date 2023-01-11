@@ -255,6 +255,7 @@ func TestVersionPatches(t *testing.T) {
 				DisplayName: "v1",
 				Description: "New in 2022",
 				State:       "Staging",
+				PrimarySpec: "apis/registry/versions/v1/specs/openapi",
 				Labels:      map[string]string{"apihub-team": "apigee"},
 				Annotations: map[string]string{"release-date": "2021-12-15"},
 			},

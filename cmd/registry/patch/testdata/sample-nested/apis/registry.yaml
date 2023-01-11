@@ -23,6 +23,7 @@ data:
         displayName: v1
         description: New in 2022
         state: Staging
+        primarySpec: apis/registry/versions/v1/specs/openapi
         specs:
           - metadata:
               name: openapi
