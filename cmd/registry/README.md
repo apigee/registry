@@ -68,43 +68,43 @@ The `registry` tool currently includes several demonstration subcommands that
 upload API descriptions into a registry and one subcommmand (`registry apply`)
 that is likely to become a recommended way to populate an API registry.
 
-- `registry upload bulk openapi` reads OpenAPI descriptions from a directory
+- `registry upload openapi` reads OpenAPI descriptions from a directory
   that follows the style of the
   [APIs-guru/openapi-directory](https://github.com/APIs-guru/openapi-directory)
   repository. To try it, clone the `openapi-directory` repo, change your
-  directory to the repo, and run the `registry upload bulk openapi` command as
+  directory to the repo, and run the `registry upload openapi` command as
   follows:
 
   ```
   git clone https://github.com/apis-guru/openapi-directory
   cd openapi-directory
-  registry upload bulk openapi APIs --project-id $PROJECT_ID
+  registry upload openapi APIs --project-id $PROJECT_ID
   ```
 
   Here `APIs` is a directory in the repo and `$PROJECT_ID` should be set to
   your registry project id.
 
-- `registry upload bulk protos` reads Protocol Buffer API descriptions from a
+- `registry upload protos` reads Protocol Buffer API descriptions from a
   directory that follows the style of the
   [googleapis/googleapis](https://github.com/googleapis/googleapis) repository.
   To try it, clone the `googleapis` repo, change your directory to the root of
-  the repo, and run the `registry upload bulk protos` command as follows:
+  the repo, and run the `registry upload protos` command as follows:
 
   ```
   git clone https://github.com/googleapis/googleapis
   cd googleapis
-  registry upload bulk protos . --project-id $PROJECT_ID
+  registry upload protos . --project-id $PROJECT_ID
   ```
 
   As above, `$PROJECT_ID` should be set to your registry project id.
 
-- `registry upload bulk discovery` reads API descriptions from the
+- `registry upload discovery` reads API descriptions from the
   [Google API Discovery Service](https://developers.google.com/discovery). This
   reads from an online service, so you can try it by simply running the
   following:
 
   ```
-  registry upload bulk discovery --project-id $PROJECT_ID
+  registry upload discovery --project-id $PROJECT_ID
   ```
 
   As above, `$PROJECT_ID` should be set to your registry project id.

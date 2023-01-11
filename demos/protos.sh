@@ -35,11 +35,11 @@ export COMMIT=`(cd ~/Desktop/googleapis; git rev-parse HEAD)`
 
 # Upload all of the APIs in the googleapis directory at once.
 # This happens in parallel and usually takes less than 10 seconds.
-registry upload bulk protos \
+registry upload protos \
 	--project-id $PROJECT ~/Desktop/googleapis \
 	--base-uri https://github.com/googleapis/googleapis/blob/$COMMIT 
 
-# The `registry upload bulk protos` subcommand automatically generated API ids
+# The `registry upload protos` subcommand automatically generated API ids
 # from the path to the protos in the repo. List the APIs with the following command:
 registry get projects/$PROJECT/locations/global/apis
 

@@ -42,7 +42,7 @@ func csvCommand() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "csv file --project-id=value [--delimiter=value]",
-		Short: "Upload API specs from a CSV file",
+		Short: "Upload API descriptions from a CSV file",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := cmd.Context()
