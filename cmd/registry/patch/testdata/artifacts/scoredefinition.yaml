@@ -1,0 +1,34 @@
+apiVersion: apigeeregistry/v1
+kind: ScoreDefinition
+metadata:
+  name: scoredefinition
+data:
+  displayName: Sample Score definition
+  description: Represents sample Score definition artifact
+  uri: https://docs.stoplight.io/docs/spectral/4dec24461f3af-open-api-rules
+  uriDisplayName: Spectral rules
+  targetResource:
+    pattern: apis/-/versions/-/specs/-
+    filter: mime_type.contains('openapi')
+  scoreFormula:
+    artifact:
+      pattern: $resource.spec/artifacts/conformance-styleguide
+      filter: ""
+    scoreExpression: sample expression
+    referenceId: ""
+  integer:
+    minValue: 0
+    maxValue: 100
+    thresholds:
+      - severity: ALERT
+        range:
+          min: 0
+          max: 30
+      - severity: WARNING
+        range:
+          min: 31
+          max: 60
+      - severity: OK
+        range:
+          min: 61
+          max: 100

@@ -1,0 +1,33 @@
+apiVersion: apigeeregistry/v1
+kind: ScoreCard
+metadata:
+  name: scorecard
+data:
+  displayName: Sample ScoreCard
+  description: Represents sample ScoreCard artifact
+  definitionName: projects/demo/locations/global/artifacts/sample-scorecard-definition
+  scores:
+    - id: score1
+      kind: Score
+      displayName: Sample Score 1
+      description: Represents sample Score artifact
+      uri: https://docs.stoplight.io/docs/spectral/4dec24461f3af-open-api-rules
+      uriDisplayName: Spectral rules
+      definitionName: projects/demo/locations/global/artifacts/sample-score-definition
+      severity: ALERT
+      integerValue:
+        value: 10
+        minValue: 0
+        maxValue: 100
+    - id: score2
+      kind: Score
+      displayName: Sample Score 2
+      description: Represents sample Score artifact
+      uri: https://docs.stoplight.io/docs/spectral/4dec24461f3af-open-api-rules
+      uriDisplayName: Spectral rules
+      definitionName: projects/demo/locations/global/artifacts/sample-score-definition
+      severity: WARNING
+      integerValue:
+        value: 20
+        minValue: 0
+        maxValue: 100
