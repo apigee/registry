@@ -23,6 +23,7 @@ type ApiVersionData struct {
 	DisplayName string      `yaml:"displayName,omitempty"`
 	Description string      `yaml:"description,omitempty"`
 	State       string      `yaml:"state,omitempty"`
+	PrimarySpec string      `yaml:"primarySpec,omitempty"`
 	ApiSpecs    []*ApiSpec  `yaml:"specs,omitempty"`
 	Artifacts   []*Artifact `yaml:"artifacts,omitempty"`
 }
