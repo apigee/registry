@@ -1,0 +1,15 @@
+apiVersion: apigeeregistry/v1
+kind: Score
+metadata:
+  name: score
+data:
+  displayName: Sample Score
+  description: Represents sample Score artifact
+  uri: https://docs.stoplight.io/docs/spectral/4dec24461f3af-open-api-rules
+  uriDisplayName: Spectral rules
+  definitionName: projects/demo/locations/global/artifacts/sample-score-definition
+  severity: ALERT
+  integerValue:
+    value: 10
+    minValue: 0
+    maxValue: 100

@@ -1,0 +1,27 @@
+apiVersion: apigeeregistry/v1
+kind: ConformanceReport
+metadata:
+  name: conformancereport
+data:
+  styleguide: projects/demo/locations/global/artifacts/styleguide
+  guidelineReportGroups:
+    - state: ACTIVE
+      guidelineReports:
+        - guidelineId: sample-guideline
+          ruleReportGroups:
+            - severity: ERROR
+              ruleReports:
+                - ruleId: no-ref-siblings
+                  spec: projects/demo/locations/global/apis/petstore/versions/v1/specs/openapi.yaml
+                  file: openapi.yaml
+                  suggestion: ""
+                  location:
+                    startPosition:
+                      lineNumber: 10
+                      columnNumber: 5
+                    endPosition:
+                      lineNumber: 10
+                      columnNumber: 25
+                  displayName: No ref siblings
+                  description: Represents a sample rule
+                  docUri: https://meta.stoplight.io/docs/spectral/4dec24461f3af-open-api-rules#no-ref-siblings

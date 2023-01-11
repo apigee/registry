@@ -585,6 +585,51 @@ func TestMessageArtifactPatches(t *testing.T) {
 			},
 		},
 		{
+			artifactID: "conformancereport",
+			yamlFile:   "testdata/artifacts/conformancereport.yaml",
+			message: &rpc.ConformanceReport{
+				Id:         "conformancereport",
+				Kind:       "ConformanceReport",
+				Styleguide: "projects/demo/locations/global/artifacts/styleguide",
+				GuidelineReportGroups: []*rpc.GuidelineReportGroup{
+					{
+						State: rpc.Guideline_ACTIVE,
+						GuidelineReports: []*rpc.GuidelineReport{
+							{
+								GuidelineId: "sample-guideline",
+								RuleReportGroups: []*rpc.RuleReportGroup{
+									{
+										Severity: rpc.Rule_ERROR,
+										RuleReports: []*rpc.RuleReport{
+											{
+												RuleId:     "no-ref-siblings",
+												Spec:       "projects/demo/locations/global/apis/petstore/versions/v1/specs/openapi.yaml",
+												File:       "openapi.yaml",
+												Suggestion: "",
+												Location: &rpc.LintLocation{
+													StartPosition: &rpc.LintPosition{
+														LineNumber:   10,
+														ColumnNumber: 5,
+													},
+													EndPosition: &rpc.LintPosition{
+														LineNumber:   10,
+														ColumnNumber: 25,
+													},
+												},
+												DisplayName: "No ref siblings",
+												Description: "Represents a sample rule",
+												DocUri:      "https://meta.stoplight.io/docs/spectral/4dec24461f3af-open-api-rules#no-ref-siblings",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			artifactID: "display-settings",
 			yamlFile:   "testdata/artifacts/displaysettings.yaml",
 			message: &rpc.DisplaySettings{
@@ -696,6 +741,145 @@ func TestMessageArtifactPatches(t *testing.T) {
 						Category:    "apihub-other",
 						Resource:    "invalid-resource",
 						Uri:         "https://apigee.github.io/registry/",
+					},
+				},
+			},
+		},
+		{
+			artifactID: "score",
+			yamlFile:   "testdata/artifacts/score.yaml",
+			message: &rpc.Score{
+				Id:             "score",
+				Kind:           "Score",
+				DisplayName:    "Sample Score",
+				Description:    "Represents sample Score artifact",
+				Uri:            "https://docs.stoplight.io/docs/spectral/4dec24461f3af-open-api-rules",
+				UriDisplayName: "Spectral rules",
+				DefinitionName: "projects/demo/locations/global/artifacts/sample-score-definition",
+				Severity:       rpc.Severity_ALERT,
+				Value: &rpc.Score_IntegerValue{
+					IntegerValue: &rpc.IntegerValue{
+						Value:    10,
+						MinValue: 0,
+						MaxValue: 100,
+					},
+				},
+			},
+		},
+		{
+			artifactID: "scorecard",
+			yamlFile:   "testdata/artifacts/scorecard.yaml",
+			message: &rpc.ScoreCard{
+				Id:             "scorecard",
+				Kind:           "ScoreCard",
+				DisplayName:    "Sample ScoreCard",
+				Description:    "Represents sample ScoreCard artifact",
+				DefinitionName: "projects/demo/locations/global/artifacts/sample-scorecard-definition",
+				Scores: []*rpc.Score{
+					{
+						Id:             "score1",
+						Kind:           "Score",
+						DisplayName:    "Sample Score 1",
+						Description:    "Represents sample Score artifact",
+						Uri:            "https://docs.stoplight.io/docs/spectral/4dec24461f3af-open-api-rules",
+						UriDisplayName: "Spectral rules",
+						DefinitionName: "projects/demo/locations/global/artifacts/sample-score-definition",
+						Severity:       rpc.Severity_ALERT,
+						Value: &rpc.Score_IntegerValue{
+							IntegerValue: &rpc.IntegerValue{
+								Value:    10,
+								MinValue: 0,
+								MaxValue: 100,
+							},
+						},
+					},
+					{
+						Id:             "score2",
+						Kind:           "Score",
+						DisplayName:    "Sample Score 2",
+						Description:    "Represents sample Score artifact",
+						Uri:            "https://docs.stoplight.io/docs/spectral/4dec24461f3af-open-api-rules",
+						UriDisplayName: "Spectral rules",
+						DefinitionName: "projects/demo/locations/global/artifacts/sample-score-definition",
+						Severity:       rpc.Severity_WARNING,
+						Value: &rpc.Score_IntegerValue{
+							IntegerValue: &rpc.IntegerValue{
+								Value:    20,
+								MinValue: 0,
+								MaxValue: 100,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			artifactID: "scorecarddefinition",
+			yamlFile:   "testdata/artifacts/scorecarddefinition.yaml",
+			message: &rpc.ScoreCardDefinition{
+				Id:          "scorecarddefinition",
+				Kind:        "ScoreCardDefinition",
+				DisplayName: "Sample ScoreCard definition",
+				Description: "Represents sample ScoreCard definition artifact",
+				TargetResource: &rpc.ResourcePattern{
+					Pattern: "apis/-/versions/-/specs/-",
+					Filter:  "mime_type.contains('openapi')",
+				},
+				ScorePatterns: []string{
+					"$resource.spec/artifacts/sample-score-1",
+					"$resource.spec/artifacts/sample-score-2",
+				},
+			},
+		},
+		{
+			artifactID: "scoredefinition",
+			yamlFile:   "testdata/artifacts/scoredefinition.yaml",
+			message: &rpc.ScoreDefinition{
+				Id:             "scoredefinition",
+				Kind:           "ScoreDefinition",
+				DisplayName:    "Sample Score definition",
+				Description:    "Represents sample Score definition artifact",
+				Uri:            "https://docs.stoplight.io/docs/spectral/4dec24461f3af-open-api-rules",
+				UriDisplayName: "Spectral rules",
+				TargetResource: &rpc.ResourcePattern{
+					Pattern: "apis/-/versions/-/specs/-",
+					Filter:  "mime_type.contains('openapi')",
+				},
+				Formula: &rpc.ScoreDefinition_ScoreFormula{
+					ScoreFormula: &rpc.ScoreFormula{
+						Artifact: &rpc.ResourcePattern{
+							Pattern: "$resource.spec/artifacts/conformance-styleguide",
+						},
+						ScoreExpression: "sample expression",
+					},
+				},
+				Type: &rpc.ScoreDefinition_Integer{
+					Integer: &rpc.IntegerType{
+						MinValue: 0,
+						MaxValue: 100,
+						Thresholds: []*rpc.NumberThreshold{
+							{
+								Severity: rpc.Severity_ALERT,
+								Range: &rpc.NumberThreshold_NumberRange{
+									Min: 0,
+									Max: 30,
+								},
+							},
+							{
+								Severity: rpc.Severity_WARNING,
+								Range: &rpc.NumberThreshold_NumberRange{
+									Min: 31,
+									Max: 60,
+								},
+							},
+							{
+								Severity: rpc.Severity_OK,
+								Range: &rpc.NumberThreshold_NumberRange{
+									Min: 61,
+									Max: 100,
+								},
+							},
+						},
 					},
 				},
 			},

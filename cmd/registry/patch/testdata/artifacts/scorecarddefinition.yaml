@@ -1,0 +1,13 @@
+apiVersion: apigeeregistry/v1
+kind: ScoreCardDefinition
+metadata:
+  name: scorecarddefinition
+data:
+  displayName: Sample ScoreCard definition
+  description: Represents sample ScoreCard definition artifact
+  targetResource:
+    pattern: apis/-/versions/-/specs/-
+    filter: mime_type.contains('openapi')
+  scorePatterns:
+    - $resource.spec/artifacts/sample-score-1
+    - $resource.spec/artifacts/sample-score-2
