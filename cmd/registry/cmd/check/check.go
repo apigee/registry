@@ -93,8 +93,8 @@ func Command() *cobra.Command {
 		},
 	}
 
-	cmd.PersistentFlags().String("filter", "", "Filter selected resources")
-	cmd.PersistentFlags().Int("jobs", 10, "Number of actions to perform concurrently")
+	cmd.Flags().String("filter", "", "filter selected resources")
+	cmd.Flags().IntP("jobs", "j", 10, "number of actions to perform concurrently")
 
 	return cmd
 }
