@@ -59,6 +59,6 @@ func Command() *cobra.Command {
 	cmd.Flags().StringVar(&parent, "parent", "", "parent resource for the patch")
 	cmd.Flags().BoolVarP(&recursive, "recursive", "R", false,
 		"process the directory used in -f, --file recursively")
-	cmd.Flags().IntVarP(&jobs, "jobs", "j", 10, "number of apply operations to perform simultaneously")
+	cmd.Flags().IntVarP(&jobs, "jobs", "j", 10, "number of actions to perform concurrently")
 	return cmd
 }

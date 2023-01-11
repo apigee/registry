@@ -76,7 +76,7 @@ func Command() *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&filter, "filter", "", "filter selected resources")
-	cmd.Flags().IntVar(&jobs, "jobs", 10, "number of actions to perform concurrently")
+	cmd.Flags().IntVarP(&jobs, "jobs", "j", 10, "number of actions to perform concurrently")
 	cmd.Flags().BoolVarP(&force, "force", "f", false, "force deletion of child resources")
 	return cmd
 }

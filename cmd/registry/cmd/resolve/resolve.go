@@ -120,7 +120,7 @@ func Command() *cobra.Command {
 	}
 
 	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "if set, actions will only be printed and not executed")
-	cmd.Flags().IntVarP(&jobs, "jobs", "j", 10, "number of actions to execute simultaneously")
+	cmd.Flags().IntVarP(&jobs, "jobs", "j", 10, "number of actions to perform concurrently")
 	cmd.Flags().IntVarP(&maxActions, "max-actions", "a", 100, "maximum number of actions to execute")
 	return cmd
 }

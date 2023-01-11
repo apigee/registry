@@ -84,6 +84,38 @@ func checkCommand(t *testing.T, cmd *cobra.Command, prefix string) {
 					if m != nil {
 						t.Errorf("%q %q flag usage seems to contain an enum %q, which should be of the form (a|b|c).", name, f.Name, m[0])
 					}
+					// flag-specific checks
+					commonFlags := []struct {
+						name      string
+						shorthand string
+						usage     string
+					}{
+						{
+							name:      "jobs",
+							shorthand: "j",
+							usage:     "number of actions to perform concurrently",
+						},
+						{
+							name:      "force",
+							shorthand: "f",
+							usage:     "force deletion of child resources",
+						},
+						{
+							name:      "filter",
+							shorthand: "",
+							usage:     "filter selected resources",
+						},
+					}
+					for _, c := range commonFlags {
+						if f.Name == c.name {
+							if f.Shorthand != c.shorthand {
+								t.Errorf("%q %q flag must have %q shorthand.", name, f.Name, c.shorthand)
+							}
+							if f.Usage != c.usage {
+								t.Errorf("%q %q flag must have the standard usage %q.", name, f.Name, c.usage)
+							}
+						}
+					}
 				}
 			})
 		}
