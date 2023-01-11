@@ -27,7 +27,6 @@ func Command() *cobra.Command {
 
 	cmd.AddCommand(bulk.Command())
 	cmd.AddCommand(csvCommand())
-	cmd.AddCommand(specCommand())
 
 	return cmd
 }
