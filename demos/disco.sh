@@ -31,7 +31,7 @@
 
 # Upload all of the APIs from the Discovery Service at once.
 # This happens in parallel and usually takes a minute or two.
-registry upload bulk discovery \
+registry upload discovery \
 	--project-id $PROJECT
 
 # We can get a list of APIs with the following command:

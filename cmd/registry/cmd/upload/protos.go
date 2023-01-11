@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package bulk
+package upload
 
 import (
 	"context"
@@ -57,7 +57,7 @@ func protosCommand() *cobra.Command {
 	var root string
 	cmd := &cobra.Command{
 		Use:   "protos PATH",
-		Short: "Bulk-upload Protocol Buffer descriptions from a directory of specs",
+		Short: "Upload Protocol Buffer descriptions from a directory of specs",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()

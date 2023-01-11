@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package bulk
+package upload
 
 import (
 	"context"
@@ -50,7 +50,7 @@ func discoveryCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "discovery",
 		Args:  cobra.NoArgs,
-		Short: "Bulk-upload API Discovery documents from the Google API Discovery service",
+		Short: "Upload API Discovery documents from the Google API Discovery service",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 			parent, err := getParent(cmd)
