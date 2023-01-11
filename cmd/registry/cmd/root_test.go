@@ -67,7 +67,7 @@ func checkCommand(t *testing.T, cmd *cobra.Command, prefix string) {
 				}
 			}
 			// Check field usage messages.
-			flags := cmd.Flags()
+			flags := cmd.LocalFlags()
 			flags.VisitAll(func(f *pflag.Flag) {
 				if f.Usage == "" {
 					t.Errorf("%q %q flag usage must not be empty.", name, f.Name)
