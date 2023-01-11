@@ -59,11 +59,11 @@ func init() {
 func CreateFlagSet() *pflag.FlagSet {
 	flags := pflag.NewFlagSet("registry", pflag.ExitOnError)
 	flags.StringP("config", "c", "", "name of a configuration profile or path to config file")
-	flags.String("registry.address", "", "the server and port of the registry api (eg. localhost:8080)")
+	flags.String("registry.address", "", "the server and port of the Registry API (eg. localhost:8080)")
 	flags.Bool("registry.insecure", false, "if specified, client connects via http (not https)")
-	flags.String("registry.location", "", "the registry location")
-	flags.String("registry.project", "", "the registry project")
-	flags.String("registry.token", "", "the token to use for authorization to registry")
+	flags.String("registry.location", "", "the API Registry location")
+	flags.String("registry.project", "", "the API Registry project")
+	flags.String("registry.token", "", "the token to use for authorization to the API Registry")
 	return flags
 }
 
