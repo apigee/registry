@@ -34,7 +34,7 @@ export COMMIT=`(cd ~/Desktop/openapi-directory; git rev-parse HEAD)`
 
 # Upload all of the APIs in the OpenAPI directory at once.
 # This happens in parallel and usually takes around 2 minutes.
-registry upload bulk openapi \
+registry upload openapi \
 	--project-id $PROJECT ~/Desktop/openapi-directory/APIs \
 	--base-uri https://github.com/APIs-guru/openapi-directory/blob/$COMMIT/APIs 
 

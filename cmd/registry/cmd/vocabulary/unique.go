@@ -59,6 +59,6 @@ func uniqueCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&outputID, "output-id", "vocabulary-unique", "Artifact ID to use when saving each result vocabulary")
+	cmd.Flags().StringVar(&outputID, "output-id", "vocabulary-unique", "artifact ID to use when saving each result vocabulary")
 	return cmd
 }

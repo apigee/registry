@@ -12,25 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package bulk
+package upload
 
 import (
 	"context"
-	"log"
-	"sort"
-	"strings"
 	"testing"
 
-	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
-func TestProtos(t *testing.T) {
+func TestOpenAPI(t *testing.T) {
 	const (
-		projectID   = "protos-test"
+		projectID   = "openapi-test"
 		projectName = "projects/" + projectID
 		parent      = projectName + "/locations/global"
 	)
@@ -66,28 +62,30 @@ func TestProtos(t *testing.T) {
 		t.Fatalf("Error creating project %s", err)
 	}
 	cmd := Command()
-	args := []string{"protos", "testdata/protos", "--parent", parent}
+	args := []string{"openapi", "testdata/openapi", "--parent", parent}
 	cmd.SetArgs(args)
 	if err := cmd.Execute(); err != nil {
 		t.Fatalf("Execute() with args %+v returned error: %s", args, err)
 	}
 	tests := []struct {
-		desc              string
-		spec              string
-		wantProtoCount    int
-		wantMetadataCount int
+		desc     string
+		spec     string
+		wantType string
 	}{
 		{
-			desc:              "Apigee Registry",
-			spec:              "apis/apigeeregistry/versions/v1/specs/google-cloud-apigeeregistry-v1",
-			wantProtoCount:    11,
-			wantMetadataCount: 2,
+			desc:     "Apigee Registry",
+			spec:     "apis/apigee-registry/versions/v1/specs/openapi",
+			wantType: "application/x.openapi;version=3",
 		},
 		{
-			desc:              "Example Library",
-			spec:              "apis/library-example/versions/v1/specs/google-example-library-v1",
-			wantProtoCount:    6,
-			wantMetadataCount: 3,
+			desc:     "Petstore OpenAPI",
+			spec:     "apis/petstore/versions/3.0/specs/openapi",
+			wantType: "application/x.openapi;version=3",
+		},
+		{
+			desc:     "Petstore Swagger",
+			spec:     "apis/petstore/versions/2.0/specs/openapi",
+			wantType: "application/x.openapi;version=2",
 		},
 	}
 	for _, test := range tests {
@@ -99,40 +97,8 @@ func TestProtos(t *testing.T) {
 			t.Fatalf("unable to fetch spec %s", test.spec)
 		}
 		// Verify the content type.
-		if result.ContentType != "application/x.protobuf+zip" {
-			t.Errorf("Invalid mime type for %s: %s", test.spec, result.ContentType)
-		}
-		// Verify that the zip contains the expected number of files
-		m, err := core.UnzipArchiveToMap(result.Data)
-		if err != nil {
-			t.Fatalf("unable to unzip spec %s", test.spec)
-		}
-		proto_filenames := make([]string, 0)
-		metadata_filenames := make([]string, 0)
-		for filename := range m {
-			if strings.HasSuffix(filename, ".proto") {
-				proto_filenames = append(proto_filenames, filename)
-			} else {
-				metadata_filenames = append(metadata_filenames, filename)
-			}
-		}
-		if len(proto_filenames) != test.wantProtoCount {
-			t.Errorf("Archive contains incorrect number of proto files (%d, expected %d)",
-				len(proto_filenames),
-				test.wantProtoCount)
-			sort.Strings(proto_filenames)
-			for i, s := range proto_filenames {
-				log.Printf("%d: %s", i, s)
-			}
-		}
-		if len(metadata_filenames) != test.wantMetadataCount {
-			t.Errorf("Archive contains incorrect number of metadata files (%d, expected %d)",
-				len(metadata_filenames),
-				test.wantMetadataCount)
-			sort.Strings(metadata_filenames)
-			for i, s := range metadata_filenames {
-				log.Printf("%d: %s", i, s)
-			}
+		if result.ContentType != test.wantType {
+			t.Errorf("Invalid mime type for %s: %s (wanted %s)", test.spec, result.ContentType, test.wantType)
 		}
 	}
 	// Delete the test project.
@@ -146,7 +112,7 @@ func TestProtos(t *testing.T) {
 	}
 }
 
-func TestProtosMissingParent(t *testing.T) {
+func TestOpenAPIMissingParent(t *testing.T) {
 	const (
 		projectID   = "missing"
 		projectName = "projects/" + projectID
@@ -158,15 +124,15 @@ func TestProtosMissingParent(t *testing.T) {
 	}{
 		{
 			desc: "parent",
-			args: []string{"protos", "nonexistent-specs-dir", "--parent", parent},
+			args: []string{"openapi", "nonexistent-specs-dir", "--parent", parent},
 		},
 		{
 			desc: "project-id",
-			args: []string{"protos", "nonexistent-specs-dir", "--project-id", projectID},
+			args: []string{"openapi", "nonexistent-specs-dir", "--project-id", projectID},
 		},
 		{
 			desc: "unspecified",
-			args: []string{"protos", "nonexistent-specs-dir"},
+			args: []string{"openapi", "nonexistent-specs-dir"},
 		},
 	}
 	for _, test := range tests {

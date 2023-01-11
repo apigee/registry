@@ -36,22 +36,22 @@ const (
 )
 
 func TestUploadCSV(t *testing.T) {
-	cloudtasksGA, err := os.ReadFile(filepath.Join("testdata", "cloudtasks", "v2", "openapi.yaml"))
+	cloudtasksGA, err := os.ReadFile(filepath.Join("testdata", "csv", "cloudtasks", "v2", "openapi.yaml"))
 	if err != nil {
 		t.Fatalf("Setup: Failed to read spec contents: %s", err)
 	}
 
-	cloudtasksBeta, err := os.ReadFile(filepath.Join("testdata", "cloudtasks", "v2beta2", "openapi.yaml"))
+	cloudtasksBeta, err := os.ReadFile(filepath.Join("testdata", "csv", "cloudtasks", "v2beta2", "openapi.yaml"))
 	if err != nil {
 		t.Fatalf("Setup: Failed to read spec contents: %s", err)
 	}
 
-	datastoreGA, err := os.ReadFile(filepath.Join("testdata", "datastore", "v1", "openapi.yaml"))
+	datastoreGA, err := os.ReadFile(filepath.Join("testdata", "csv", "datastore", "v1", "openapi.yaml"))
 	if err != nil {
 		t.Fatalf("Setup: Failed to read spec contents: %s", err)
 	}
 
-	datastoreBeta, err := os.ReadFile(filepath.Join("testdata", "datastore", "v1beta1", "openapi.yaml"))
+	datastoreBeta, err := os.ReadFile(filepath.Join("testdata", "csv", "datastore", "v1beta1", "openapi.yaml"))
 	if err != nil {
 		t.Fatalf("Setup: Failed to read spec contents: %s", err)
 	}
@@ -65,7 +65,7 @@ func TestUploadCSV(t *testing.T) {
 		{
 			desc: "multiple spec upload",
 			args: []string{
-				filepath.Join("testdata", "multiple-specs.csv"),
+				filepath.Join("testdata", "csv", "multiple-specs.csv"),
 				"--project-id", testProject,
 			},
 			want: []*rpc.ApiSpec{
@@ -94,7 +94,7 @@ func TestUploadCSV(t *testing.T) {
 		{
 			desc: "out of order columns",
 			args: []string{
-				filepath.Join("testdata", "out-of-order-columns.csv"),
+				filepath.Join("testdata", "csv", "out-of-order-columns.csv"),
 				"--project-id", testProject,
 			},
 			want: []*rpc.ApiSpec{
@@ -108,7 +108,7 @@ func TestUploadCSV(t *testing.T) {
 		{
 			desc: "empty sheet",
 			args: []string{
-				filepath.Join("testdata", "empty-sheet.csv"),
+				filepath.Join("testdata", "csv", "empty-sheet.csv"),
 				"--project-id", testProject,
 			},
 			want: []*rpc.ApiSpec{},

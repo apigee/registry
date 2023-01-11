@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package bulk
+package upload
 
 import (
 	"context"
@@ -49,7 +49,8 @@ func discoveryCommand() *cobra.Command {
 	var service string
 	cmd := &cobra.Command{
 		Use:   "discovery",
-		Short: "Bulk-upload API Discovery documents from the Google API Discovery service",
+		Args:  cobra.NoArgs,
+		Short: "Upload API Discovery documents from the Google API Discovery service",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 			parent, err := getParent(cmd)
@@ -91,7 +92,7 @@ func discoveryCommand() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&service, "service", "",
-		fmt.Sprintf("API Discovery Service URL (default %s)", discovery.APIsListServiceURL))
+		fmt.Sprintf("the API Discovery Service URL (default %s)", discovery.APIsListServiceURL))
 	return cmd
 }
 

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package bulk
+package upload
 
 import (
 	"context"
@@ -40,7 +40,7 @@ func openAPICommand() *cobra.Command {
 	var baseURI string
 	cmd := &cobra.Command{
 		Use:   "openapi",
-		Short: "Bulk-upload OpenAPI descriptions from a directory of specs",
+		Short: "Upload OpenAPI descriptions from a directory of specs",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
@@ -74,7 +74,7 @@ func openAPICommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&baseURI, "base-uri", "", "Prefix to use for the source_uri field of each spec upload")
+	cmd.Flags().StringVar(&baseURI, "base-uri", "", "prefix to use for the source_uri field of each spec upload")
 	return cmd
 }
 

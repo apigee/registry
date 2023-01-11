@@ -44,7 +44,7 @@ func defaultConfigs() lint.Configs {
 func Command() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "check [pattern]",
-		Short: "Check entities in the registry",
+		Short: "Check entities in the API Registry",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
@@ -93,8 +93,8 @@ func Command() *cobra.Command {
 		},
 	}
 
-	cmd.PersistentFlags().String("filter", "", "Filter selected resources")
-	cmd.PersistentFlags().Int("jobs", 10, "Number of actions to perform concurrently")
+	cmd.Flags().String("filter", "", "filter selected resources")
+	cmd.Flags().IntP("jobs", "j", 10, "number of actions to perform concurrently")
 
 	return cmd
 }

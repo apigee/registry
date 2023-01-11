@@ -1,4 +1,4 @@
-// Copyright 2022 Google LLC. All Rights Reserved.
+// Copyright 2020 Google LLC. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,18 +12,4 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package models
-
-type ApiVersion struct {
-	Header `yaml:",inline"`
-	Data   ApiVersionData `yaml:"data"`
-}
-
-type ApiVersionData struct {
-	DisplayName string      `yaml:"displayName,omitempty"`
-	Description string      `yaml:"description,omitempty"`
-	State       string      `yaml:"state,omitempty"`
-	PrimarySpec string      `yaml:"primarySpec,omitempty"`
-	ApiSpecs    []*ApiSpec  `yaml:"specs,omitempty"`
-	Artifacts   []*Artifact `yaml:"artifacts,omitempty"`
-}
+package upload

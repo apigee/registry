@@ -43,7 +43,7 @@ func Command() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:     "registry",
 		Version: Version,
-		Short:   "A simple and eclectic utility for working with the API Registry",
+		Short:   "A command-line tool for working with the API Registry",
 	}
 	cmd.PersistentFlags().AddFlagSet(pkgconf.Flags)
 
