@@ -72,7 +72,7 @@ func Command() *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&filter, "filter", "", "filter selected resources")
-	cmd.Flags().StringVarP(&output, "output", "o", "name", "output type (name, yaml, contents)")
+	cmd.Flags().StringVarP(&output, "output", "o", "name", "output type (name|yaml|contents)")
 	return cmd
 }
 

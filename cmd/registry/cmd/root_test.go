@@ -15,6 +15,7 @@
 package cmd
 
 import (
+	"regexp"
 	"strings"
 	"testing"
 	"unicode"
@@ -77,6 +78,11 @@ func checkCommand(t *testing.T, cmd *cobra.Command, prefix string) {
 					}
 					if strings.HasSuffix(f.Usage, ".") {
 						t.Errorf("%q %q flag usage description must not end with a period.", name, f.Name)
+					}
+					re := regexp.MustCompile(`\(.*,.*\)`)
+					m := re.FindStringSubmatch(f.Usage)
+					if m != nil {
+						t.Errorf("%q %q flag usage seems to contain an enum %q, which should be of the form (a|b|c).", name, f.Name, m[0])
 					}
 				}
 			})
