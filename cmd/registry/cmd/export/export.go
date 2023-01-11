@@ -53,7 +53,7 @@ func Command() *cobra.Command {
 			}
 		},
 	}
-	cmd.Flags().IntVarP(&jobs, "jobs", "j", 10, "Number of file exports to perform simultaneously")
-	cmd.Flags().StringVar(&root, "root", "", "Root directory for export")
+	cmd.Flags().IntVarP(&jobs, "jobs", "j", 10, "number of actions to perform concurrently")
+	cmd.Flags().StringVar(&root, "root", "", "root directory for export")
 	return cmd
 }

@@ -24,7 +24,7 @@ import (
 func Command() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "config",
-		Short: "Maintain properties in the active configuration.",
+		Short: "Maintain properties in the active configuration",
 		Long: "Configurations manage sets of properties used when connecting to the registry. " +
 			"These commands manipulate the property values in the active configuration. " +
 			"See `config configurations --help` for information on how to manage configurations. " +

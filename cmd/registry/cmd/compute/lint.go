@@ -84,7 +84,7 @@ func lintCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&linter, "linter", "", "The linter to use (aip|spectral|gnostic)")
+	cmd.Flags().StringVar(&linter, "linter", "", "the linter to use (aip|spectral|gnostic)")
 	return cmd
 }
 

@@ -100,10 +100,10 @@ func csvCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&projectID, "project-id", "", "Project ID to use for each upload")
+	cmd.Flags().StringVar(&projectID, "project-id", "", "project ID to use for each upload")
 	_ = cmd.MarkFlagRequired("project-id")
-	cmd.Flags().StringVar(&delimiter, "delimiter", ",", "Field delimiter for the CSV file")
-	cmd.Flags().IntVar(&jobs, "jobs", 10, "Number of actions to perform concurrently")
+	cmd.Flags().StringVar(&delimiter, "delimiter", ",", "field delimiter for the CSV file")
+	cmd.Flags().IntVarP(&jobs, "jobs", "j", 10, "number of actions to perform concurrently")
 	return cmd
 }
 

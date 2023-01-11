@@ -81,9 +81,9 @@ func Command() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&filter, "filter", "", "Filter selected resources")
-	cmd.Flags().BoolVar(&overwrite, "overwrite", false, "Overwrite existing labels")
-	cmd.Flags().IntVar(&jobs, "jobs", 10, "Number of actions to perform concurrently")
+	cmd.Flags().StringVar(&filter, "filter", "", "filter selected resources")
+	cmd.Flags().BoolVar(&overwrite, "overwrite", false, "overwrite existing labels")
+	cmd.Flags().IntVarP(&jobs, "jobs", "j", 10, "number of actions to perform concurrently")
 	return cmd
 }
 

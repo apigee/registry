@@ -74,7 +74,7 @@ func openAPICommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&baseURI, "base-uri", "", "Prefix to use for the source_uri field of each spec upload")
+	cmd.Flags().StringVar(&baseURI, "base-uri", "", "prefix to use for the source_uri field of each spec upload")
 	return cmd
 }
 

@@ -58,7 +58,7 @@ func Command() *cobra.Command {
 	var maxActions int
 	cmd := &cobra.Command{
 		Use:   "resolve MANIFEST_RESOURCE",
-		Short: "resolve the dependencies and update the registry state (experimental)",
+		Short: "Resolve dependencies by performing actions in a specified manifest",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := cmd.Context()
@@ -120,7 +120,7 @@ func Command() *cobra.Command {
 	}
 
 	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "if set, actions will only be printed and not executed")
-	cmd.Flags().IntVarP(&jobs, "jobs", "j", 10, "Number of actions to execute simultaneously")
-	cmd.Flags().IntVarP(&maxActions, "max-actions", "a", 100, "Maximum number of actions to execute")
+	cmd.Flags().IntVarP(&jobs, "jobs", "j", 10, "number of actions to perform concurrently")
+	cmd.Flags().IntVarP(&maxActions, "max-actions", "a", 100, "maximum number of actions to execute")
 	return cmd
 }

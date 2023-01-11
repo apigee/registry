@@ -24,7 +24,7 @@ import (
 func Command() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "auth",
-		Short: "Manage authentication to the registry.",
+		Short: "Manage authentication to the API Registry",
 		Long: "Authentication to the registry is via tokens. These tokens can be provided " +
 			"directly by using '--registry.token' in any command, or can be generated as needed " +
 			"by setting the token-source property in a configuration. The token-source can be set " +

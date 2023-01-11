@@ -83,7 +83,7 @@ func revisionsCommand() *cobra.Command {
 			}
 		},
 	}
-	cmd.Flags().StringVar(&filter, "filter", "", "Filter selected resources")
+	cmd.Flags().StringVar(&filter, "filter", "", "filter selected resources")
 	return cmd
 }
 

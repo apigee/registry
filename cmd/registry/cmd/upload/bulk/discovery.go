@@ -49,6 +49,7 @@ func discoveryCommand() *cobra.Command {
 	var service string
 	cmd := &cobra.Command{
 		Use:   "discovery",
+		Args:  cobra.NoArgs,
 		Short: "Bulk-upload API Discovery documents from the Google API Discovery service",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
@@ -91,7 +92,7 @@ func discoveryCommand() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&service, "service", "",
-		fmt.Sprintf("API Discovery Service URL (default %s)", discovery.APIsListServiceURL))
+		fmt.Sprintf("the API Discovery Service URL (default %s)", discovery.APIsListServiceURL))
 	return cmd
 }
 

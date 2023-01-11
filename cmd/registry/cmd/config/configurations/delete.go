@@ -25,7 +25,7 @@ import (
 func deleteCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "delete CONFIGURATION_NAME [CONFIGURATION_NAME ...]",
-		Short: "Deletes a named configuration.",
+		Short: "Deletes a named configuration",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cmd.SilenceUsage = true
