@@ -21,10 +21,10 @@ import (
 
 // Response collects the results of running the Rules.
 type Response struct {
-	sync.Mutex
-	RunTime  time.Time `json:"time" yaml:"time"`
-	Problems []Problem `json:"problems" yaml:"problems"`
-	Error    error     `json:"error,omitempty" yaml:"error,omitempty"` // populated if panic
+	sync.Mutex `json:"-" yaml:"-"`
+	RunTime    time.Time `json:"time" yaml:"time"`
+	Problems   []Problem `json:"problems" yaml:"problems"`
+	Error      error     `json:"error,omitempty" yaml:"error,omitempty"` // populated if panic
 }
 
 func (r *Response) append(res Resource, probs []Problem, err error) {

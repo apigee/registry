@@ -33,13 +33,17 @@ package rules
 
 import (
 	"github.com/apigee/registry/cmd/registry/cmd/check/lint"
-	"github.com/apigee/registry/cmd/registry/cmd/check/rules/rule0001"
+	"github.com/apigee/registry/cmd/registry/cmd/check/rules/rule100"
+	"github.com/apigee/registry/cmd/registry/cmd/check/rules/rule101"
+	"github.com/apigee/registry/cmd/registry/cmd/check/rules/rule110"
 )
 
 type addRulesFuncType func(lint.RuleRegistry) error
 
 var addRulesFuncs = []addRulesFuncType{
-	rule0001.AddRules,
+	rule100.AddRules,
+	rule101.AddRules,
+	rule110.AddRules,
 }
 
 // Add all rules to the given registry.

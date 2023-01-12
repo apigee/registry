@@ -26,6 +26,18 @@ const (
 	ERROR
 )
 
+func (s Severity) String() string {
+	switch s {
+	case INFO:
+		return "INFO"
+	case WARNING:
+		return "INFO"
+	case ERROR:
+		return "ERROR"
+	}
+	return "UNKNOWN"
+}
+
 // Problem contains information about a result produced by an API Linter.
 //
 // All rules return []Problem. Most lint rules return 0 or 1 problems, but
@@ -71,12 +83,14 @@ func (p Problem) marshal() interface{} {
 		Location   string   `json:"location" yaml:"location"`
 		RuleID     RuleName `json:"rule_id" yaml:"rule_id"`
 		RuleDocURI string   `json:"rule_doc_uri" yaml:"rule_doc_uri"`
+		Severity   string   `json:"severity" yaml:"severity"`
 	}{
 		p.Message,
 		p.Suggestion,
 		p.Location,
 		p.RuleID,
 		p.GetRuleURI(),
+		p.Severity.String(),
 	}
 }
 
