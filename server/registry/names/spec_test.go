@@ -36,7 +36,7 @@ func TestSpecNames(t *testing.T) {
 		t.Errorf("%s Api() returned incorrect value %s", name, name.Api())
 	}
 	if name.Version().String() != "projects/p/locations/global/apis/a/versions/v" {
-		t.Errorf("%s Api() returned incorrect value %s", name, name.Version())
+		t.Errorf("%s Version() returned incorrect value %s", name, name.Version())
 	}
 	if name.Artifact("x").String() != "projects/p/locations/global/apis/a/versions/v/specs/s/artifacts/x" {
 		t.Errorf("%s Artifact() returned incorrect value %s", name, name.Artifact("x"))

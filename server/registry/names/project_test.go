@@ -27,7 +27,7 @@ func TestProjectNames(t *testing.T) {
 		t.Errorf("Validate() failed for name %s: %s", name, err)
 	}
 	if name.Api("a").String() != "projects/p/locations/global/apis/a" {
-		t.Errorf("%s Version() returned incorrect value %s", name, name.Api("a"))
+		t.Errorf("%s Api() returned incorrect value %s", name, name.Api("a"))
 	}
 	if name.Artifact("x").String() != "projects/p/locations/global/artifacts/x" {
 		t.Errorf("%s Artifact() returned incorrect value %s", name, name.Artifact("x"))
