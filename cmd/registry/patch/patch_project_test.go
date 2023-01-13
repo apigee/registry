@@ -174,7 +174,6 @@ func TestProjectExport(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Setup: failed to create client: %+v", err)
 			}
-			defer adminClient.Close()
 			project := names.Project{ProjectID: "patch-export-project-test"}
 			if err = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{
 				Name:  project.String(),
@@ -197,6 +196,7 @@ func TestProjectExport(t *testing.T) {
 				}); err != nil {
 					t.Logf("Cleanup: Failed to delete test project: %s", err)
 				}
+				adminClient.Close()
 			})
 
 			// set the configured registry.project to the test project
@@ -276,7 +276,6 @@ func TestApiExport(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Setup: failed to create client: %+v", err)
 			}
-			defer adminClient.Close()
 			project := names.Project{ProjectID: "patch-export-api-test"}
 			if err = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{
 				Name:  project.String(),
@@ -299,6 +298,7 @@ func TestApiExport(t *testing.T) {
 				}); err != nil {
 					t.Logf("Cleanup: Failed to delete test project: %s", err)
 				}
+				adminClient.Close()
 			})
 
 			// set the configured registry.project to the test project

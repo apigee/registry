@@ -24,6 +24,7 @@ import (
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
+	"gopkg.in/yaml.v3"
 )
 
 func Apply(ctx context.Context, client connection.RegistryClient, path, parent string, recursive bool, jobs int) error {
@@ -39,11 +40,48 @@ func Apply(ctx context.Context, client connection.RegistryClient, path, parent s
 			} else if !strings.HasSuffix(fileName, ".yaml") {
 				return nil // Skip everything that's not a YAML file.
 			}
-			return patches.add(&applyFileTask{
+			bytes, err := os.ReadFile(fileName)
+			if err != nil {
+				return err
+			}
+			header, items, err := readHeaderWithItems(bytes)
+			if err != nil {
+				return err
+			}
+			if header.ApiVersion != RegistryV1 {
+				return nil
+			}
+			if items.Kind == yaml.SequenceNode {
+				for _, n := range items.Content {
+					itemBytes, err := yaml.Marshal(n)
+					if err != nil {
+						return err
+					}
+					itemHeader, err := readHeader(itemBytes)
+					if err != nil {
+						return err
+					}
+					if itemHeader.ApiVersion != RegistryV1 {
+						return nil
+					}
+					patches.add(&applyBytesTask{
+						client: client,
+						path:   fileName,
+						parent: parent,
+						kind:   itemHeader.Kind,
+						bytes:  itemBytes,
+					})
+				}
+				return nil
+			}
+			patches.add(&applyBytesTask{
 				client: client,
 				path:   fileName,
 				parent: parent,
+				kind:   header.Kind,
+				bytes:  bytes,
 			})
+			return nil
 		})
 	if err != nil {
 		return err
@@ -59,17 +97,7 @@ type patchGroup struct {
 	artifactTasks   []core.Task
 }
 
-func (p *patchGroup) add(task *applyFileTask) error {
-	bytes, err := os.ReadFile(task.path)
-	if err != nil {
-		return err
-	}
-	header, err := readHeader(bytes)
-	if err != nil {
-		// Skip YAML files that don't have our expected headers. We assume they aren't ours.
-		return nil
-	}
-	task.kind = header.Kind
+func (p *patchGroup) add(task *applyBytesTask) {
 	switch task.kind {
 	case "API":
 		p.apiTasks = append(p.apiTasks, task)
@@ -82,7 +110,6 @@ func (p *patchGroup) add(task *applyFileTask) error {
 	default: // for everything else, try an artifact type
 		p.artifactTasks = append(p.artifactTasks, task)
 	}
-	return nil
 }
 
 func (p *patchGroup) run(ctx context.Context, jobs int) error {
@@ -103,33 +130,41 @@ func (p *patchGroup) run(ctx context.Context, jobs int) error {
 	return nil
 }
 
-type applyFileTask struct {
+type applyBytesTask struct {
 	client connection.RegistryClient
 	path   string
 	parent string
 	kind   string
+	bytes  []byte
 }
 
-func (task *applyFileTask) String() string {
-	return "apply file " + task.path
+func (task *applyBytesTask) String() string {
+	return "apply " + task.path
 }
 
-func (task *applyFileTask) Run(ctx context.Context) error {
-	log.FromContext(ctx).Infof("Applying %s", task.path)
-	bytes, err := os.ReadFile(task.path)
+func (task *applyBytesTask) Run(ctx context.Context) error {
+	header, err := readHeader(task.bytes)
 	if err != nil {
 		return err
 	}
-	switch task.kind {
+	if header.ApiVersion != RegistryV1 {
+		return nil
+	}
+	name := header.Metadata.Name
+	if header.Metadata.Parent != "" {
+		name = header.Metadata.Parent + "/" + name
+	}
+	log.FromContext(ctx).Infof("Applying %s %s", task.path, name)
+	switch header.Kind {
 	case "API":
-		return applyApiPatchBytes(ctx, task.client, bytes, task.parent)
+		return applyApiPatchBytes(ctx, task.client, task.bytes, task.parent)
 	case "Version":
-		return applyApiVersionPatchBytes(ctx, task.client, bytes, task.parent)
+		return applyApiVersionPatchBytes(ctx, task.client, task.bytes, task.parent)
 	case "Spec":
-		return applyApiSpecPatchBytes(ctx, task.client, bytes, task.parent, task.path)
+		return applyApiSpecPatchBytes(ctx, task.client, task.bytes, task.parent, task.path)
 	case "Deployment":
-		return applyApiDeploymentPatchBytes(ctx, task.client, bytes, task.parent)
+		return applyApiDeploymentPatchBytes(ctx, task.client, task.bytes, task.parent)
 	default: // for everything else, try an artifact type
-		return applyArtifactPatchBytes(ctx, task.client, bytes, task.parent)
+		return applyArtifactPatchBytes(ctx, task.client, task.bytes, task.parent)
 	}
 }
