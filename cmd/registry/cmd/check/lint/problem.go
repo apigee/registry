@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-// 		https://www.apache.org/licenses/LICENSE-2.0
+// 		http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -25,6 +25,18 @@ const (
 	WARNING
 	ERROR
 )
+
+func (s Severity) String() string {
+	switch s {
+	case INFO:
+		return "INFO"
+	case WARNING:
+		return "WARNING"
+	case ERROR:
+		return "ERROR"
+	}
+	return "UNKNOWN"
+}
 
 // Problem contains information about a result produced by an API Linter.
 //
@@ -71,12 +83,14 @@ func (p Problem) marshal() interface{} {
 		Location   string   `json:"location" yaml:"location"`
 		RuleID     RuleName `json:"rule_id" yaml:"rule_id"`
 		RuleDocURI string   `json:"rule_doc_uri" yaml:"rule_doc_uri"`
+		Severity   string   `json:"severity" yaml:"severity"`
 	}{
 		p.Message,
 		p.Suggestion,
 		p.Location,
 		p.RuleID,
 		p.GetRuleURI(),
+		p.Severity.String(),
 	}
 }
 

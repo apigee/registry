@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-// 		https://www.apache.org/licenses/LICENSE-2.0
+// 		http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -33,13 +33,17 @@ package rules
 
 import (
 	"github.com/apigee/registry/cmd/registry/cmd/check/lint"
-	"github.com/apigee/registry/cmd/registry/cmd/check/rules/rule0001"
+	"github.com/apigee/registry/cmd/registry/cmd/check/rules/rule100"
+	"github.com/apigee/registry/cmd/registry/cmd/check/rules/rule101"
+	"github.com/apigee/registry/cmd/registry/cmd/check/rules/rule110"
 )
 
 type addRulesFuncType func(lint.RuleRegistry) error
 
 var addRulesFuncs = []addRulesFuncType{
-	rule0001.AddRules,
+	rule100.AddRules,
+	rule101.AddRules,
+	rule110.AddRules,
 }
 
 // Add all rules to the given registry.

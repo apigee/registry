@@ -1,10 +1,10 @@
-// Copyright 2022 Google LLC
+// Copyright 2023 Google LLC. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     https://www.apache.org/licenses/LICENSE-2.0
+//    http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package rule0001
+package rule110
 
 import (
 	"fmt"
@@ -24,8 +24,27 @@ import (
 	"github.com/apigee/registry/rpc"
 )
 
+var ruleNum = 110
+var ruleName = lint.NewRuleName(ruleNum, "mime-type-detected-contents")
+
+// AddRules accepts a register function and registers each of
+// this rules' checks to the RuleRegistry.
+func AddRules(r lint.RuleRegistry) error {
+	return r.Register(
+		ruleNum,
+		mimeTypeContents,
+	)
+}
+
+var allowPrefixes = []string{
+	"application/octet-stream",
+	"application/x.",
+	"application/x-",
+	"application/vnd",
+}
+
 var mimeTypeContents = &lint.FieldRule{
-	Name: lint.NewRuleName(1, "mime-type-contents"),
+	Name: ruleName,
 	OnlyIf: func(resource lint.Resource, field string) bool {
 		return field == "MimeType"
 	},
@@ -43,6 +62,12 @@ var mimeTypeContents = &lint.FieldRule{
 		if len(contents) == 0 {
 			return nil
 		}
+		for _, p := range allowPrefixes {
+			if strings.HasPrefix(declared, p) {
+				return nil
+			}
+		}
+
 		detected := http.DetectContentType(contents)
 
 		if strings.TrimSpace(declared) == "" {

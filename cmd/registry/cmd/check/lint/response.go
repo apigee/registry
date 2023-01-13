@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-// 		https://www.apache.org/licenses/LICENSE-2.0
+// 		http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,10 +21,10 @@ import (
 
 // Response collects the results of running the Rules.
 type Response struct {
-	sync.Mutex
-	RunTime  time.Time `json:"time" yaml:"time"`
-	Problems []Problem `json:"problems" yaml:"problems"`
-	Error    error     `json:"error,omitempty" yaml:"error,omitempty"` // populated if panic
+	sync.Mutex `json:"-" yaml:"-"`
+	RunTime    time.Time `json:"time" yaml:"time"`
+	Problems   []Problem `json:"problems" yaml:"problems"`
+	Error      error     `json:"error,omitempty" yaml:"error,omitempty"` // populated if panic
 }
 
 func (r *Response) append(res Resource, probs []Problem, err error) {

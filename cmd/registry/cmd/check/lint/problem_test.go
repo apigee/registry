@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-// 		https://www.apache.org/licenses/LICENSE-2.0
+// 		http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -54,6 +54,7 @@ func TestProblemYAML(t *testing.T) {
 		Message:  "foo bar",
 		Location: "test/location",
 		RuleID:   "core::0131",
+		Severity: ERROR,
 	}
 	serialized, err := yaml.Marshal(problem)
 	if err != nil {
@@ -66,6 +67,7 @@ func TestProblemYAML(t *testing.T) {
 		{"Message", `message: foo bar`},
 		{"Location", `location: test/location`},
 		{"RuleID", `rule_id: core::0131`},
+		{"Severity", `ERROR`},
 	}
 	for _, test := range tests {
 		t.Run(test.testName, func(t *testing.T) {
