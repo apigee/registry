@@ -14,12 +14,8 @@ func TestGroups(t *testing.T) {
 		{"registry", 999, "registry"},
 		{"hub", 1000, "hub"},
 		{"hub", 1099, "hub"},
-		{"controller", 1100, "controller"},
-		{"controller", 1199, "controller"},
-		{"score", 1200, "score"},
-		{"score", 1299, "score"},
-		{"style", 1300, "style"},
-		{"style", 1399, "style"},
+		{"score", 1100, "score"},
+		{"score", 1199, "score"},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

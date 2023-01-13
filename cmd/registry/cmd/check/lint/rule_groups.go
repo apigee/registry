@@ -9,9 +9,7 @@ import "fmt"
 var ruleGroup = []func(int) string{
 	registryGroup,
 	hubGroup,
-	controllerGroup,
 	scoreGroup,
-	styleGroup,
 }
 
 func registryGroup(ruleNum int) string {
@@ -28,22 +26,9 @@ func hubGroup(ruleNum int) string {
 	return ""
 }
 
-func controllerGroup(ruleNum int) string {
-	if ruleNum >= 1100 && ruleNum < 1200 {
-		return "controller"
-	}
-	return ""
-}
-
 func scoreGroup(ruleNum int) string {
-	if ruleNum >= 1200 && ruleNum < 1300 {
+	if ruleNum >= 1100 && ruleNum < 1200 {
 		return "score"
-	}
-	return ""
-}
-func styleGroup(ruleNum int) string {
-	if ruleNum >= 1300 && ruleNum < 1400 {
-		return "style"
 	}
 	return ""
 }
