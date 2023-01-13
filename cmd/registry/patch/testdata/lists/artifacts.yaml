@@ -1,5 +1,7 @@
 apiVersion: apigeeregistry/v1
 items:
+  - apiVersion: unknown
+    description: This should be skipped since the apiVersion is not apigeeregistry/v1
   - apiVersion: apigeeregistry/v1
     kind: DisplaySettings
     metadata:

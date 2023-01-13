@@ -62,7 +62,7 @@ func Apply(ctx context.Context, client connection.RegistryClient, path, parent s
 						return err
 					}
 					if itemHeader.ApiVersion != RegistryV1 {
-						return nil
+						continue
 					}
 					patches.add(&applyBytesTask{
 						client: client,
