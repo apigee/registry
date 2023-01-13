@@ -56,6 +56,24 @@ func TestResourceNames(t *testing.T) {
 			},
 		},
 		{
+			name: "project with location",
+			check: func(name string) bool {
+				_, err := ParseProjectWithLocation(name)
+				return err == nil
+			},
+			pass: []string{
+				"projects/google/locations/global",
+				"projects/-/locations/global",
+			},
+			fail: []string{
+				"-",
+				"projects/google",
+				"projects/-",
+				"projects/google/locations/us-central1",
+				"projects/-/locations/us-central1",
+			},
+		},
+		{
 			name: "api collections",
 			check: func(name string) bool {
 				_, err := ParseApiCollection(name)
