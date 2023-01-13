@@ -1,0 +1,509 @@
+apiVersion: apigeeregistry/v1
+items:
+  - apiVersion: unknown
+    description: This should be skipped since the apiVersion is not apigeeregistry/v1
+  - apiVersion: apigeeregistry/v1
+    kind: DisplaySettings
+    metadata:
+      name: apihub-display-settings
+    data:
+      description: Defines display settings for the API hub UI
+      organization: Registry Eval
+      apiGuideEnabled: false
+      apiScoreEnabled: true
+  - apiVersion: apigeeregistry/v1
+    kind: Lifecycle
+    metadata:
+      name: apihub-lifecycle
+    data:
+      displayName: Lifecycle
+      description: A series of stages that an API typically moves through in its lifetime
+      stages:
+        - id: concept
+          displayName: Concept
+          description: Description of the business case and user needs for why an API should exist
+          url: ""
+          displayOrder: 0
+        - id: design
+          displayName: Design
+          description: Definition of the interface details and proposal of the API contract
+          url: ""
+          displayOrder: 1
+        - id: develop
+          displayName: Develop
+          description: Implementation of the service and its API
+          url: ""
+          displayOrder: 2
+        - id: preview
+          displayName: Preview
+          description: Staging of implementations in the pre-production phase
+          url: ""
+          displayOrder: 3
+        - id: production
+          displayName: Production
+          description: API available for production workloads
+          url: ""
+          displayOrder: 4
+        - id: deprecated
+          displayName: Deprecated
+          description: API not recommended for new consumers
+          url: ""
+          displayOrder: 5
+        - id: retired
+          displayName: Retired
+          description: API no longer available for use
+          url: ""
+          displayOrder: 6
+  - apiVersion: apigeeregistry/v1
+    kind: ScoreDefinition
+    metadata:
+      name: apihub-lint-errors
+    data:
+      displayName: Lint Errors
+      description: Number of lint errors found in the API spec
+      uri: https://meta.stoplight.io/docs/spectral/4dec24461f3af-open-api-rules
+      uriDisplayName: Spectral rules
+      targetResource:
+        pattern: apis/-/versions/-/specs/-
+        filter: ""
+      scoreFormula:
+        artifact:
+          pattern: $resource.spec/artifacts/conformance-apihub-styleguide
+          filter: ""
+        scoreExpression: 'has(guidelineReportGroups[2].guidelineReports) ? sum(guidelineReportGroups[2].guidelineReports.map(r, has(r.ruleReportGroups[1].ruleReports) ? size(r.ruleReportGroups[1].ruleReports) : 0)) : 0'
+        referenceId: ""
+      integer:
+        minValue: 0
+        maxValue: 100
+        thresholds: []
+  - apiVersion: apigeeregistry/v1
+    kind: ScoreCardDefinition
+    metadata:
+      name: apihub-lint-summary
+    data:
+      displayName: Lint Summary
+      description: Summary of lint scores
+      targetResource:
+        pattern: apis/-/versions/-/specs/-
+        filter: ""
+      scorePatterns:
+        - $resource.spec/artifacts/score-apihub-lint-errors
+        - $resource.spec/artifacts/score-apihub-lint-warnings
+  - apiVersion: apigeeregistry/v1
+    kind: ScoreDefinition
+    metadata:
+      name: apihub-lint-warnings
+    data:
+      displayName: Lint Warnings
+      description: Number of lint warnings found in the API spec
+      uri: https://meta.stoplight.io/docs/spectral/4dec24461f3af-open-api-rules
+      uriDisplayName: Spectral rules
+      targetResource:
+        pattern: apis/-/versions/-/specs/-
+        filter: ""
+      scoreFormula:
+        artifact:
+          pattern: $resource.spec/artifacts/conformance-apihub-styleguide
+          filter: ""
+        scoreExpression: 'has(guidelineReportGroups[2].guidelineReports) ? sum(guidelineReportGroups[2].guidelineReports.map(r, has(r.ruleReportGroups[2].ruleReports) ? size(r.ruleReportGroups[2].ruleReports) : 0)) : 0'
+        referenceId: ""
+      integer:
+        minValue: 0
+        maxValue: 100
+        thresholds: []
+  - apiVersion: apigeeregistry/v1
+    kind: StyleGuide
+    metadata:
+      name: apihub-styleguide
+    data:
+      displayName: ""
+      mimeTypes:
+        - application/x.openapi+gzip;version=3
+        - application/x.openapi;version=3
+        - application/x.openapi+gzip;version=2
+        - application/x.openapi;version=2
+        - application/x.openapi+gzip
+        - application/x.openapi
+      guidelines:
+        - id: operation
+          displayName: Govern properties of Operations
+          description: ""
+          rules:
+            - id: operation-success-response
+              displayName: ""
+              description: |
+                Operation must have at least one 2xx or 3xx response. Any API operation (endpoint) can fail, but presumably it is also meant to do something constructive at some point.
+              linter: spectral
+              linterRulename: operation-success-response
+              severity: WARNING
+              docUri: https://meta.stoplight.io/docs/spectral/4dec24461f3af-open-api-rules#operation-success-response
+            - id: operation-operationId-unique
+              displayName: ""
+              description: Every operation must have a unique operationId.
+              linter: spectral
+              linterRulename: operation-operationId-unique
+              severity: ERROR
+              docUri: https://meta.stoplight.io/docs/spectral/ZG9jOjExNw-open-api-rules#operation-operationid-unique
+            - id: operation-parameters
+              displayName: ""
+              description: |
+                Operation parameters are unique and non-repeating. 1. Operations must have unique name + in parameters. 2. Operation cannot have both in: body and in: formData parameters. (OpenAPI v2.0) 3. Operation must have only one in: body parameter. (OpenAPI v2.0)
+              linter: spectral
+              linterRulename: operation-parameters
+              severity: WARNING
+              docUri: https://meta.stoplight.io/docs/spectral/ZG9jOjExNw-open-api-rules#operation-parameters
+            - id: operation-description
+              displayName: ""
+              description: Operation "description" must be present and non-empty string.
+              linter: spectral
+              linterRulename: operation-description
+              severity: WARNING
+              docUri: https://meta.stoplight.io/docs/spectral/ZG9jOjExNw-open-api-rules#operation-description
+            - id: operation-operationId
+              displayName: ""
+              description: Operation must have "operationId"."
+              linter: spectral
+              linterRulename: operation-operationId
+              severity: WARNING
+              docUri: https://meta.stoplight.io/docs/spectral/ZG9jOjExNw-open-api-rules#operation-operationid
+            - id: operation-operationId-valid-in-url
+              displayName: ""
+              description: |
+                Seeing as operationId is often used for unique URLs in documentation systems, it's a good idea to avoid non-URL safe characters."
+              linter: spectral
+              linterRulename: operation-operationId-valid-in-url
+              severity: WARNING
+              docUri: https://meta.stoplight.io/docs/spectral/ZG9jOjExNw-open-api-rules#operation-operationid-valid-in-url
+            - id: operation-singular-tag
+              displayName: ""
+              description: |
+                Use just one tag for an operation, which is helpful for some documentation systems which use tags to avoid duplicate content.
+              linter: spectral
+              linterRulename: operation-singular-tag
+              severity: WARNING
+              docUri: https://meta.stoplight.io/docs/spectral/ZG9jOjExNw-open-api-rules#operation-singular-tag
+            - id: operation-tags
+              displayName: ""
+              description: Operation should have non-empty tags array.
+              linter: spectral
+              linterRulename: operation-tags
+              severity: WARNING
+              docUri: https://meta.stoplight.io/docs/spectral/ZG9jOjExNw-open-api-rules#operation-tags
+            - id: operation-tag-defined
+              displayName: ""
+              description: Operation tags should be defined in global tags.
+              linter: spectral
+              linterRulename: operation-tag-defined
+              severity: WARNING
+              docUri: https://meta.stoplight.io/docs/spectral/ZG9jOjExNw-open-api-rules#operation-tag-defined
+          state: ACTIVE
+        - id: info
+          displayName: Govern properties of Info
+          description: ""
+          rules:
+            - id: info-contact
+              displayName: ""
+              description: |
+                Info object must have "contact" object. Hopefully your API description document is so good that nobody ever needs to contact you with questions, but that is rarely the case. The contact object has a few different options for contact details.
+              linter: spectral
+              linterRulename: info-contact
+              severity: WARNING
+              docUri: https://meta.stoplight.io/docs/spectral/ZG9jOjExNw-open-api-rules#info-contact
+            - id: info-description
+              displayName: ""
+              description: |
+                OpenAPI object info description must be present and non-empty string. Examples can contain Markdown so you can really go to town with them, implementing getting started information like where to find authentication keys, and how to use them.
+              linter: spectral
+              linterRulename: info-description
+              severity: WARNING
+              docUri: https://meta.stoplight.io/docs/spectral/ZG9jOjExNw-open-api-rules#info-description
+            - id: info-license
+              displayName: ""
+              description: |
+                The info object should have a license key. It can be hard to pick a license, so if you don't have a lawyer around you can use TLDRLegal and Choose a License to help give you an idea. How useful this is in court is not entirely known, but having a license is better than not having a license.
+              linter: spectral
+              linterRulename: info-license
+              severity: WARNING
+              docUri: https://meta.stoplight.io/docs/spectral/ZG9jOjExNw-open-api-rules#info-license
+            - id: license-url
+              displayName: ""
+              description: |
+                Mentioning a license is only useful if people know what the license means, so add a link to the full text for those who need it.
+              linter: spectral
+              linterRulename: license-url
+              severity: WARNING
+              docUri: https://meta.stoplight.io/docs/spectral/4dec24461f3af-open-api-rules#license-url
+          state: ACTIVE
+        - id: markdown
+          displayName: Govern properties of Markdown
+          description: ""
+          rules:
+            - id: no-eval-in-markdown
+              displayName: ""
+              description: |
+                Markdown descriptions must not have "eval(". This rule protects against an edge case, for anyone bringing in description documents from third parties and using the parsed content rendered in HTML/JS. If one of those third parties does something shady like inject eval() JavaScript statements, it could lead to an XSS attack.
+              linter: spectral
+              linterRulename: no-eval-in-markdown
+              severity: WARNING
+              docUri: https://meta.stoplight.io/docs/spectral/ZG9jOjExNw-open-api-rules#no-eval-in-markdown
+            - id: no-script-tags-in-markdown
+              displayName: ""
+              description: |
+                Markdown descriptions must not have "<script>" tags. This rule protects against a potential hack, for anyone bringing in description documents from third parties then generating HTML documentation. If one of those third parties does something shady like inject <script> tags, they could easily execute arbitrary code on your domain, which if it's the same as your main application could be all sorts of terrible.
+              linter: spectral
+              linterRulename: no-script-tags-in-markdown
+              severity: WARNING
+              docUri: https://meta.stoplight.io/docs/spectral/ZG9jOjExNw-open-api-rules#no-script-tags-in-markdown
+          state: ACTIVE
+        - id: path
+          displayName: Govern properties of Paths
+          description: ""
+          rules:
+            - id: path-params
+              displayName: ""
+              description: |
+                Path parameters are correct and valid. 1. For every parameters referenced in the path string (i.e: /users/{userId}),
+                  the parameter must be defined in either path.parameters, or operation.parameters objects
+                  (Non standard HTTP operations will be silently ignored.)
+                2. every path.parameters and operation.parameters parameter must be used in the path string.
+              linter: spectral
+              linterRulename: path-params
+              severity: ERROR
+              docUri: https://meta.stoplight.io/docs/spectral/ZG9jOjExNw-open-api-rules#path-params
+            - id: path-keys-no-trailing-slash
+              displayName: ""
+              description: |
+                Keep trailing slashes off of paths, as it can cause some confusion. Some web tooling (like mock servers, real servers, code generators, application frameworks, etc.) will treat example.com/foo and example.com/foo/ as the same thing, but other tooling will not. Avoid any confusion by just documenting them without the slash, and maybe some tooling will let people shove a / on there when they're using it or maybe not, but at least the docs are suggesting how it should be done properly.
+              linter: spectral
+              linterRulename: path-keys-no-trailing-slash
+              severity: WARNING
+              docUri: https://meta.stoplight.io/docs/spectral/ZG9jOjExNw-open-api-rules#path-keys-no-trailing-slash
+            - id: path-declarations-must-exist
+              displayName: ""
+              description: Path parameter declarations cannot be empty, ex./given/{} is invalid.
+              linter: spectral
+              linterRulename: path-declarations-must-exist
+              severity: WARNING
+              docUri: https://meta.stoplight.io/docs/spectral/4dec24461f3af-open-api-rules#path-declarations-must-exist
+            - id: path-not-include-query
+              displayName: ""
+              description: |
+                Don't put query string items in the path, they belong in parameters with in: query.
+              linter: spectral
+              linterRulename: path-not-include-query
+              severity: WARNING
+              docUri: https://meta.stoplight.io/docs/spectral/4dec24461f3af-open-api-rules#path-not-include-query
+          state: ACTIVE
+        - id: enum
+          displayName: Govern properties of Enums
+          description: ""
+          rules:
+            - id: typed-enum
+              displayName: ""
+              description: Enum values should respect the type specifier.
+              linter: spectral
+              linterRulename: typed-enum
+              severity: WARNING
+              docUri: https://meta.stoplight.io/docs/spectral/4dec24461f3af-open-api-rules#typed-enum
+            - id: duplicated-entry-in-enum
+              displayName: ""
+              description: Each value of an enum must be different from one another.
+              linter: spectral
+              linterRulename: duplicated-entry-in-enum
+              severity: WARNING
+              docUri: https://meta.stoplight.io/docs/spectral/4dec24461f3af-open-api-rules#duplicated-entry-in-enum
+          state: ACTIVE
+        - id: metadata
+          displayName: Governs properties of additional metadata
+          description: ""
+          rules:
+            - id: contact-properties
+              displayName: ""
+              description: |
+                The info-contact rule will ask you to put in a contact object, and this rule will make sure it's full of the most useful properties: name, url and email.
+              linter: spectral
+              linterRulename: contact-properties
+              severity: WARNING
+              docUri: https://meta.stoplight.io/docs/spectral/4dec24461f3af-open-api-rules#contact-properties
+            - id: tag-description
+              displayName: ""
+              description: |
+                Tags alone are not very descriptive. Give folks a bit more information to work with.
+              linter: spectral
+              linterRulename: tag-description
+              severity: WARNING
+              docUri: https://meta.stoplight.io/docs/spectral/4dec24461f3af-open-api-rules#tag-description
+          state: ACTIVE
+        - id: openapi
+          displayName: Govern properties of OpenAPI objects
+          description: ""
+          rules:
+            - id: openapi-tags-alphabetical
+              displayName: ""
+              description: OpenAPI object should have alphabetical tags. This will be sorted by the name property.
+              linter: spectral
+              linterRulename: openapi-tags-alphabetical
+              severity: WARNING
+              docUri: https://meta.stoplight.io/docs/spectral/4dec24461f3af-open-api-rules#openapi-tags-alphabetical
+            - id: openapi-tags-uniqueness
+              displayName: ""
+              description: OpenAPI object must not have duplicated tag names (identifiers).
+              linter: spectral
+              linterRulename: openapi-tags-uniqueness
+              severity: ERROR
+              docUri: https://meta.stoplight.io/docs/spectral/4dec24461f3af-open-api-rules#openapi-tags-uniqueness
+            - id: openapi-tags
+              displayName: ""
+              description: OpenAPI object should have non-empty tags array.
+              linter: spectral
+              linterRulename: openapi-tags
+              severity: WARNING
+              docUri: https://meta.stoplight.io/docs/spectral/4dec24461f3af-open-api-rules#openapi-tags
+          state: ACTIVE
+        - id: openapiv2
+          displayName: Rules applied to OpenAPI v2.0 documents
+          description: ""
+          rules:
+            - id: oas2-schema
+              displayName: ""
+              description: Validate structure of OpenAPI v2 specification.
+              linter: spectral
+              linterRulename: oas2-schema
+              severity: ERROR
+              docUri: https://meta.stoplight.io/docs/spectral/4dec24461f3af-open-api-rules#oas2-schema
+          state: ACTIVE
+        - id: openapiv3
+          displayName: Rules applied to OpenAPI v3.0 documents
+          description: ""
+          rules:
+            - id: oas3-schema
+              displayName: ""
+              description: Validate structure of OpenAPI v3 specification.
+              linter: spectral
+              linterRulename: oas3-schema
+              severity: ERROR
+              docUri: https://meta.stoplight.io/docs/spectral/4dec24461f3af-open-api-rules#oas3-schema
+          state: ACTIVE
+      linters: []
+  - apiVersion: apigeeregistry/v1
+    kind: TaxonomyList
+    metadata:
+      name: apihub-taxonomies
+    data:
+      displayName: TaxonomyList
+      description: A list of taxonomies that can be used to classify resources in the registry
+      taxonomies:
+        - id: apihub-target-users
+          displayName: Target users
+          description: The intended users (consumers) of an API
+          adminApplied: false
+          singleSelection: false
+          searchExcluded: false
+          systemManaged: true
+          displayOrder: 0
+          elements:
+            - id: team
+              displayName: Team
+              description: Intended for exclusive use by the producing team
+            - id: internal
+              displayName: Internal
+              description: Available to internal teams
+            - id: partner
+              displayName: Partner
+              description: Available to select partners
+            - id: public
+              displayName: Public
+              description: Published for discovery by the general public
+        - id: apihub-style
+          displayName: Style (primary)
+          description: The primary architectural style of the API
+          adminApplied: false
+          singleSelection: true
+          searchExcluded: false
+          systemManaged: true
+          displayOrder: 1
+          elements:
+            - id: apihub-openapi
+              displayName: OpenAPI
+              description: https://spec.openapis.org/oas/latest.html
+            - id: apihub-grpc
+              displayName: gRPC
+              description: https://grpc.io
+            - id: apihub-graphql
+              displayName: GraphQL
+              description: https://graphql.org
+            - id: apihub-asyncapi
+              displayName: AsyncAPI
+              description: https://www.asyncapi.com
+            - id: apihub-soap
+              displayName: SOAP
+              description: https://en.wikipedia.org/wiki/Web_Services_Description_Language
+        - id: apihub-team
+          displayName: Team
+          description: The producing team responsible for an API
+          adminApplied: false
+          singleSelection: true
+          searchExcluded: false
+          systemManaged: true
+          displayOrder: 2
+          elements:
+            - id: example
+              displayName: Example Team Name
+              description: Example description
+        - id: apihub-business-unit
+          displayName: Business unit
+          description: A business unit responsible for an API
+          adminApplied: false
+          singleSelection: true
+          searchExcluded: false
+          systemManaged: true
+          displayOrder: 3
+          elements:
+            - id: wordnik
+              displayName: Wordnik
+              description: https://wordnik.com
+            - id: xkcd
+              displayName: xkcd
+              description: https://xkcd.com
+            - id: adafruit
+              displayName: Adafruit
+              description: https://adafruit.com
+        - id: region
+          displayName: Region
+          description: Region where API is supported
+          adminApplied: false
+          singleSelection: false
+          searchExcluded: false
+          systemManaged: false
+          displayOrder: 4
+          elements:
+            - id: north-america
+              displayName: North America
+              description: north-america
+            - id: europe
+              displayName: Europe
+              description: europe
+            - id: asia
+              displayName: Asia
+              description: asia
+            - id: south-america
+              displayName: South America
+              description: south-america
+        - id: apihub-gateway
+          displayName: Gateway
+          description: The type of API gateway used for a deployment
+          adminApplied: false
+          singleSelection: true
+          searchExcluded: true
+          systemManaged: true
+          displayOrder: 5
+          elements:
+            - id: apihub-google-cloud-apigee
+              displayName: Google Cloud - Apigee
+              description: ""
+            - id: apihub-google-cloud-api-gateway
+              displayName: Google Cloud - API Gateway
+              description: ""
+            - id: apihub-unmanaged
+              displayName: Unmanaged
+              description: ""

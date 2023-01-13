@@ -15,8 +15,6 @@
 package patch
 
 import (
-	"fmt"
-
 	"github.com/apigee/registry/pkg/models"
 	"gopkg.in/yaml.v3"
 )
@@ -26,11 +24,15 @@ const RegistryV1 = "apigeeregistry/v1"
 func readHeader(bytes []byte) (models.Header, error) {
 	var header models.Header
 	err := yaml.Unmarshal(bytes, &header)
-	if err != nil {
-		return header, err
+	return header, err
+}
+
+func readHeaderWithItems(bytes []byte) (models.Header, yaml.Node, error) {
+	type headerWithItems struct {
+		models.Header `yaml:",inline"`
+		Items         yaml.Node `yaml:"items,omitempty"`
 	}
-	if header.ApiVersion != RegistryV1 {
-		return header, fmt.Errorf("unsupported API version: %s", header.ApiVersion)
-	}
-	return header, nil
+	var wrapper headerWithItems
+	err := yaml.Unmarshal(bytes, &wrapper)
+	return wrapper.Header, wrapper.Items, err
 }
