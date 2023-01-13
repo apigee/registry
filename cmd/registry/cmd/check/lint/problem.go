@@ -31,7 +31,7 @@ func (s Severity) String() string {
 	case INFO:
 		return "INFO"
 	case WARNING:
-		return "INFO"
+		return "WARNING"
 	case ERROR:
 		return "ERROR"
 	}
