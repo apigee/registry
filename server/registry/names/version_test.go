@@ -18,10 +18,11 @@ import (
 	"testing"
 )
 
-func TestApiNames(t *testing.T) {
-	name := &Api{
+func TestVersionNames(t *testing.T) {
+	name := &Version{
 		ProjectID: "p",
 		ApiID:     "a",
+		VersionID: "v",
 	}
 	err := name.Validate()
 	if err != nil {
@@ -30,29 +31,36 @@ func TestApiNames(t *testing.T) {
 	if name.Project().String() != "projects/p" {
 		t.Errorf("%s Project() returned incorrect value %s", name, name.Project())
 	}
-	if name.Version("v").String() != "projects/p/locations/global/apis/a/versions/v" {
-		t.Errorf("%s Version() returned incorrect value %s", name, name.Version("v"))
+	if name.Api().String() != "projects/p/locations/global/apis/a" {
+		t.Errorf("%s Api() returned incorrect value %s", name, name.Api())
 	}
-	if name.Deployment("d").String() != "projects/p/locations/global/apis/a/deployments/d" {
-		t.Errorf("%s Deployment() returned incorrect value %s", name, name.Deployment("d"))
+	if name.Spec("s").String() != "projects/p/locations/global/apis/a/versions/v/specs/s" {
+		t.Errorf("%s Spec() returned incorrect value %s", name, name.Spec("v"))
 	}
-	if name.Artifact("x").String() != "projects/p/locations/global/apis/a/artifacts/x" {
+	if name.Artifact("x").String() != "projects/p/locations/global/apis/a/versions/v/artifacts/x" {
 		t.Errorf("%s Artifact() returned incorrect value %s", name, name.Artifact("x"))
 	}
-	if name.Parent() != "projects/p/locations/global" {
+	if name.Parent() != "projects/p/locations/global/apis/a" {
 		t.Errorf("%s Parent() returned incorrect value %s", name, name.Parent())
 	}
 }
 
-func TestInvalidApiNames(t *testing.T) {
-	names := []Api{
+func TestInvalidVersionNames(t *testing.T) {
+	names := []Version{
 		{
 			ProjectID: "!!",
 			ApiID:     "a",
+			VersionID: "v",
 		},
 		{
 			ProjectID: "p",
 			ApiID:     "!!",
+			VersionID: "v",
+		},
+		{
+			ProjectID: "p",
+			ApiID:     "a",
+			VersionID: "!!",
 		},
 	}
 	for _, name := range names {
