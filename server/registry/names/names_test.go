@@ -449,3 +449,21 @@ func TestExportableName(t *testing.T) {
 		})
 	}
 }
+
+func TestInvalidIDs(t *testing.T) {
+	ids := []string{
+		"",
+		"!!",
+		"3d46969a-d232-4fcc-88e3-0aa51c849e4b",
+		"012345678901234567890123456789012345678901234567890123456789012345678901234567890",
+		"-invalid",
+		".invalid",
+		"invalid-",
+		"invalid.",
+	}
+	for _, id := range ids {
+		if validateID(id) == nil {
+			t.Errorf("id %q should be invalid, but validated", id)
+		}
+	}
+}
