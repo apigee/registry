@@ -467,3 +467,50 @@ func TestInvalidIDs(t *testing.T) {
 		}
 	}
 }
+
+func TestParseValidNames(t *testing.T) {
+	names := []string{
+		"projects",
+		"projects/-",
+		"projects/p",
+		"projects/p/locations/global/apis",
+		"projects/p/locations/global/apis/-",
+		"projects/p/locations/global/apis/a",
+		"projects/p/locations/global/apis/a/versions",
+		"projects/p/locations/global/apis/a/versions/-",
+		"projects/p/locations/global/apis/a/versions/v",
+		"projects/p/locations/global/apis/a/versions/v/specs",
+		"projects/p/locations/global/apis/a/versions/v/specs/-",
+		"projects/p/locations/global/apis/a/versions/v/specs/s",
+		"projects/p/locations/global/apis/a/versions/v/specs/s@",
+		"projects/p/locations/global/apis/a/versions/v/specs/s@-",
+		"projects/p/locations/global/apis/a/versions/v/specs/s@123",
+		"projects/p/locations/global/apis/a/deployments",
+		"projects/p/locations/global/apis/a/deployments/-",
+		"projects/p/locations/global/apis/a/deployments/d",
+		"projects/p/locations/global/apis/a/deployments/d@",
+		"projects/p/locations/global/apis/a/deployments/d@-",
+		"projects/p/locations/global/apis/a/deployments/d@123",
+		"projects/p/locations/global/artifacts",
+		"projects/p/locations/global/artifacts/-",
+		"projects/p/locations/global/artifacts/x",
+	}
+	for _, name := range names {
+		_, err := Parse(name)
+		if err != nil {
+			t.Errorf("failed to parse name %s", name)
+		}
+	}
+}
+
+func TestParseInvalidNames(t *testing.T) {
+	names := []string{
+		"invalid",
+	}
+	for _, name := range names {
+		_, err := Parse(name)
+		if err == nil {
+			t.Errorf("incorrectly parsed invalid name %s", name)
+		}
+	}
+}
