@@ -37,6 +37,9 @@ func TestDeploymentNames(t *testing.T) {
 	if name.Artifact("x").String() != "projects/p/locations/global/apis/a/deployments/d/artifacts/x" {
 		t.Errorf("%s Artifact() returned incorrect value %s", name, name.Artifact("x"))
 	}
+	if name.Revision("123").String() != "projects/p/locations/global/apis/a/deployments/d@123" {
+		t.Errorf("%s Revision() returned incorrect value %s", name, name.Revision("123"))
+	}
 	if name.Parent() != "projects/p/locations/global/apis/a" {
 		t.Errorf("%s Parent() returned incorrect value %s", name, name.Parent())
 	}

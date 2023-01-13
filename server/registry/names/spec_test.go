@@ -41,6 +41,9 @@ func TestSpecNames(t *testing.T) {
 	if name.Artifact("x").String() != "projects/p/locations/global/apis/a/versions/v/specs/s/artifacts/x" {
 		t.Errorf("%s Artifact() returned incorrect value %s", name, name.Artifact("x"))
 	}
+	if name.Revision("123").String() != "projects/p/locations/global/apis/a/versions/v/specs/s@123" {
+		t.Errorf("%s Revision() returned incorrect value %s", name, name.Revision("123"))
+	}
 	if name.Parent() != "projects/p/locations/global/apis/a/versions/v" {
 		t.Errorf("%s Parent() returned incorrect value %s", name, name.Parent())
 	}
