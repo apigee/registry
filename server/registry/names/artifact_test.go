@@ -247,3 +247,31 @@ func TestInvalidArtifactNames(t *testing.T) {
 		}
 	}
 }
+
+func TestNullArtifactName(t *testing.T) {
+	name := Artifact{}
+	if name.ProjectID() != "" {
+		t.Errorf("%s has incorrect project id %s", name, name.ProjectID())
+	}
+	if name.ApiID() != "" {
+		t.Errorf("%s has incorrect api id %s", name, name.ApiID())
+	}
+	if name.VersionID() != "" {
+		t.Errorf("%s has incorrect version id %s", name, name.VersionID())
+	}
+	if name.SpecID() != "" {
+		t.Errorf("%s has incorrect spec id %s", name, name.SpecID())
+	}
+	if name.DeploymentID() != "" {
+		t.Errorf("%s has incorrect deployment id %s", name, name.DeploymentID())
+	}
+	if name.RevisionID() != "" {
+		t.Errorf("%s has incorrect revision id %s", name, name.RevisionID())
+	}
+	if name.ArtifactID() != "" {
+		t.Errorf("%s has incorrect artifact id %s", name, name.ArtifactID())
+	}
+	if name.Parent() != "" {
+		t.Errorf("%s has incorrect parent %s", name, name.Parent())
+	}
+}
