@@ -45,3 +45,15 @@ func TestSpecRevisionNames(t *testing.T) {
 		t.Errorf("%s Parent() returned incorrect value %s", name, name.Parent())
 	}
 }
+
+func TestImpliedSpecRevisionName(t *testing.T) {
+	name := &SpecRevision{
+		ProjectID: "p",
+		ApiID:     "a",
+		VersionID: "v",
+		SpecID:    "s",
+	}
+	if name.String() != "projects/p/locations/global/apis/a/versions/v/specs/s" {
+		t.Errorf("%s has incorrect name", name)
+	}
+}

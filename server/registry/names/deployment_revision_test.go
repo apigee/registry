@@ -41,3 +41,14 @@ func TestDeploymentRevisionNames(t *testing.T) {
 		t.Errorf("%s Parent() returned incorrect value %s", name, name.Parent())
 	}
 }
+
+func TestImpliedDeploymentRevisionName(t *testing.T) {
+	name := &DeploymentRevision{
+		ProjectID:    "p",
+		ApiID:        "a",
+		DeploymentID: "d",
+	}
+	if name.String() != "projects/p/locations/global/apis/a/deployments/d" {
+		t.Errorf("%s has incorrect name", name)
+	}
+}
