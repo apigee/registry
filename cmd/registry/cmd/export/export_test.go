@@ -64,6 +64,8 @@ func TestExportYAML(t *testing.T) {
 
 	// Verify that export runs for each supported resource.
 	resources := []string{
+		"projects",
+		"projects/-",
 		"projects/my-project",
 		"projects/my-project/locations/global/apis",
 		"projects/my-project/locations/global/apis/-",
@@ -109,11 +111,21 @@ func TestExportYAML(t *testing.T) {
 	root := t.TempDir()
 
 	// Verify that unsupported exports fail.
+	spec, err := registryClient.GetApiSpec(ctx, &rpc.GetApiSpecRequest{Name: "projects/my-project/locations/global/apis/a/versions/v/specs/s"})
+	if err != nil {
+		t.Fatalf("Failed to prepare test data: %+v", err)
+	}
+	deployment, err := registryClient.GetApiDeployment(ctx, &rpc.GetApiDeploymentRequest{Name: "projects/my-project/locations/global/apis/a/deployments/d"})
+	if err != nil {
+		t.Fatalf("Failed to prepare test data: %+v", err)
+	}
 	unsupported := []string{
 		"projects/my-project/locations/global/apis/a/deployments/d@",
 		"projects/my-project/locations/global/apis/a/deployments/d@-",
+		"projects/my-project/locations/global/apis/a/deployments/d@" + deployment.RevisionId,
 		"projects/my-project/locations/global/apis/a/versions/v/specs/s@",
 		"projects/my-project/locations/global/apis/a/versions/v/specs/s@-",
+		"projects/my-project/locations/global/apis/a/versions/v/specs/s@" + spec.RevisionId,
 	}
 	for _, r := range unsupported {
 		t.Run("unsupported/"+r, func(t *testing.T) {
@@ -131,7 +143,11 @@ func TestExportYAML(t *testing.T) {
 	// Verify that invalid exports fail.
 	invalid := []string{
 		"projects/my-missing-project",
+		"projects/my-project/locations/global/apis/b",
+		"projects/my-project/locations/global/apis/-/invalid",
+		"projects/my-project/locations/global/apis/a/invalid",
 		"projects/my-project/locations/global/artifacts/xx",
+		"projects/my-project/locations/global/apis/-/versions/vv",
 		"projects/my-project/locations/global/apis/a/versions/vv",
 		"projects/my-project/locations/global/apis/a/versions/v/specs/ss",
 		"projects/my-project/locations/global/apis/a/deployments/dd",
@@ -153,6 +169,89 @@ func TestExportYAML(t *testing.T) {
 			cmd.SetArgs(args)
 			if err := cmd.Execute(); err == nil {
 				t.Fatalf("Execute() with args %v succeeded but should have failed", args)
+			}
+		})
+	}
+}
+
+func TestExportValidResourcesWithFilter(t *testing.T) {
+	// Seed a registry with a list of leaf-level artifacts.
+	const scoreType = "application/octet-stream;type=google.cloud.apigeeregistry.v1.scoring.Score"
+	artifacts := []*rpc.Artifact{
+		{Name: "projects/my-project/locations/global/artifacts/x", MimeType: scoreType},
+		{Name: "projects/my-project/locations/global/apis/a/artifacts/x", MimeType: scoreType},
+		{Name: "projects/my-project/locations/global/apis/a/versions/v/artifacts/x", MimeType: scoreType},
+		{Name: "projects/my-project/locations/global/apis/a/versions/v/specs/s/artifacts/x", MimeType: scoreType},
+		{Name: "projects/my-project/locations/global/apis/a/deployments/d/artifacts/x", MimeType: scoreType},
+	}
+	ctx := context.Background()
+	registryClient, err := connection.NewRegistryClient(ctx)
+	if err != nil {
+		t.Fatalf("Failed to create client: %+v", err)
+	}
+	t.Cleanup(func() { registryClient.Close() })
+	adminClient, err := connection.NewAdminClient(ctx)
+	if err != nil {
+		t.Fatalf("Failed to create client: %+v", err)
+	}
+	t.Cleanup(func() { adminClient.Close() })
+	client := seeder.Client{
+		RegistryClient: registryClient,
+		AdminClient:    adminClient,
+	}
+	t.Cleanup(func() {
+		_ = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{Name: "projects/my-project", Force: true})
+	})
+	_ = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{Name: "projects/my-project", Force: true})
+	if err := seeder.SeedArtifacts(ctx, client, artifacts...); err != nil {
+		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+	}
+
+	// Verify that a filter specified on a get of a collection is ok.
+	valid_collections := []string{
+		"projects/my-project/locations/global/apis",
+		"projects/my-project/locations/global/apis/a/versions",
+		"projects/my-project/locations/global/apis/a/versions/v/specs",
+		"projects/my-project/locations/global/apis/a/deployments",
+		"projects/my-project/locations/global/apis/a/artifacts",
+		"projects/my-project/locations/global/apis/a/versions/v/artifacts",
+		"projects/my-project/locations/global/apis/a/versions/v/specs/s/artifacts",
+		"projects/my-project/locations/global/apis/a/deployments/d/artifacts",
+	}
+	for _, c := range valid_collections {
+		t.Run(c, func(t *testing.T) {
+			root := t.TempDir()
+			args := []string{c, "--filter", "name.contains('a')", "--root", root}
+			cmd := Command()
+			cmd.SetArgs(args)
+			if err := cmd.Execute(); err != nil {
+				t.Errorf("Execute() with args %v failed but should have succeeded", args)
+			}
+		})
+	}
+
+	root := t.TempDir()
+
+	// Verify that a filter specified on a get of an individual resource is an error.
+	valid_resources := []string{
+		"projects/my-project/locations/global/apis/a",
+		"projects/my-project/locations/global/apis/a/versions/v",
+		"projects/my-project/locations/global/apis/a/versions/v/specs/s",
+		"projects/my-project/locations/global/apis/a/deployments/d",
+		"projects/my-project/locations/global/apis/a/artifacts/x",
+		"projects/my-project/locations/global/apis/a/versions/v/artifacts/x",
+		"projects/my-project/locations/global/apis/a/versions/v/specs/s/artifacts/x",
+		"projects/my-project/locations/global/apis/a/deployments/d/artifacts/x",
+	}
+	for _, r := range valid_resources {
+		t.Run(r, func(t *testing.T) {
+			cmd := Command()
+			cmd.SilenceUsage = true
+			cmd.SilenceErrors = true
+			args := []string{r, "--filter", "name.contains('a')", "--root", root}
+			cmd.SetArgs(args)
+			if err := cmd.Execute(); err == nil {
+				t.Errorf("Execute() with args %v succeeded but should have failed", args)
 			}
 		})
 	}

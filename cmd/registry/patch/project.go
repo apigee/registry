@@ -297,7 +297,7 @@ func ExportAPIVersion(ctx context.Context, client *gapic.RegistryClient, version
 	})
 }
 
-// ExportAPISpec writes an API Version into a directory of YAML files.
+// ExportAPISpec writes an API spec into a directory of YAML files.
 func ExportAPISpec(ctx context.Context, client *gapic.RegistryClient, specName names.Spec, recursive bool, root string, taskQueue chan<- core.Task) error {
 	root = filepath.Join(root, specName.ProjectID)
 	if err := core.ListSpecs(ctx, client, specName, "", false, func(message *rpc.ApiSpec) error {

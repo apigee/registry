@@ -22,7 +22,6 @@ import (
 
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/cmd/registry/patch"
-	"github.com/apigee/registry/log"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
@@ -42,7 +41,7 @@ func Command() *cobra.Command {
 			ctx := cmd.Context()
 			c, err := connection.ActiveConfig()
 			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to get config")
+				return err
 			}
 			pattern := c.FQName(args[0])
 			client, err := connection.NewRegistryClientWithSettings(ctx, c)
@@ -66,8 +65,7 @@ func Command() *cobra.Command {
 				root:        root,
 				taskQueue:   taskQueue,
 			}
-			err = h.traverse()
-			if err != nil {
+			if err = h.traverse(); err != nil {
 				return err
 			}
 			if h.count == 0 {
