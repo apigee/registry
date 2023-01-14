@@ -719,6 +719,19 @@ func TestMessageArtifactPatches(t *testing.T) {
 			},
 		},
 		{
+			artifactID: "receipt",
+			parent:     "apis/a/versions/v/specs/s",
+			yamlFile:   "testdata/artifacts/receipt.yaml",
+			message: &rpc.Receipt{
+				Id:          "receipt", // deprecated field
+				Kind:        "Receipt", // deprecated field
+				DisplayName: "Sample Receipt",
+				Action:      "registry compute scorecard RESOURCE",
+				Description: "Description",
+				ResultUri:   "https://example.com",
+			},
+		},
+		{
 			artifactID: "references",
 			parent:     "apis/a",
 			yamlFile:   "testdata/artifacts/references.yaml",

@@ -1,0 +1,10 @@
+apiVersion: apigeeregistry/v1
+kind: Receipt
+metadata:
+  name: receipt
+  parent: apis/a/versions/v/specs/s
+data:
+  displayName: Sample Receipt
+  description: Description
+  action: registry compute scorecard RESOURCE
+  resultUri: https://example.com
