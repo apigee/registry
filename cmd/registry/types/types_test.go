@@ -199,6 +199,11 @@ func TestProtobufMessageTypes(t *testing.T) {
 			mimeType:    "application/octet-stream;type=google.cloud.apigeeregistry.v1.controller.Manifest",
 		},
 		{
+			kind:        "Receipt",
+			messageType: "google.cloud.apigeeregistry.v1.controller.Receipt",
+			mimeType:    "application/octet-stream;type=google.cloud.apigeeregistry.v1.controller.Receipt",
+		},
+		{
 			kind:        "Score",
 			messageType: "google.cloud.apigeeregistry.v1.scoring.Score",
 			mimeType:    "application/octet-stream;type=google.cloud.apigeeregistry.v1.scoring.Score",

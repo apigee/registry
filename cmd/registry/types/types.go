@@ -153,6 +153,7 @@ var artifactMessageTypes map[string]messageFactory = map[string]messageFactory{
 	"google.cloud.apigeeregistry.v1.apihub.ReferenceList":        func() proto.Message { return new(rpc.ReferenceList) },
 	"google.cloud.apigeeregistry.v1.apihub.TaxonomyList":         func() proto.Message { return new(rpc.TaxonomyList) },
 	"google.cloud.apigeeregistry.v1.controller.Manifest":         func() proto.Message { return new(rpc.Manifest) },
+	"google.cloud.apigeeregistry.v1.controller.Receipt":          func() proto.Message { return new(rpc.Receipt) },
 	"google.cloud.apigeeregistry.v1.scoring.Score":               func() proto.Message { return new(rpc.Score) },
 	"google.cloud.apigeeregistry.v1.scoring.ScoreDefinition":     func() proto.Message { return new(rpc.ScoreDefinition) },
 	"google.cloud.apigeeregistry.v1.scoring.ScoreCard":           func() proto.Message { return new(rpc.ScoreCard) },
