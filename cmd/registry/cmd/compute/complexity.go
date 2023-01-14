@@ -138,23 +138,23 @@ func (task *computeComplexityTask) Run(ctx context.Context) error {
 			log.FromContext(ctx).WithError(err).Errorf("Invalid OpenAPI: %s", task.specName)
 			return nil
 		}
-		complexity = core.SummarizeOpenAPIv2Document(document)
+		complexity = SummarizeOpenAPIv2Document(document)
 	} else if types.IsOpenAPIv3(spec.GetMimeType()) {
 		document, err := oas3.ParseDocument(contents)
 		if err != nil {
 			log.FromContext(ctx).WithError(err).Errorf("Invalid OpenAPI: %s", task.specName)
 			return nil
 		}
-		complexity = core.SummarizeOpenAPIv3Document(document)
+		complexity = SummarizeOpenAPIv3Document(document)
 	} else if types.IsDiscovery(spec.GetMimeType()) {
 		document, err := discovery.ParseDocument(contents)
 		if err != nil {
 			log.FromContext(ctx).WithError(err).Errorf("Invalid Discovery: %s", task.specName)
 			return nil
 		}
-		complexity = core.SummarizeDiscoveryDocument(document)
+		complexity = SummarizeDiscoveryDocument(document)
 	} else if types.IsProto(spec.GetMimeType()) && types.IsZipArchive(spec.GetMimeType()) {
-		complexity, err = core.SummarizeZippedProtos(contents)
+		complexity, err = SummarizeZippedProtos(contents)
 		if err != nil {
 			log.FromContext(ctx).WithError(err).Errorf("Error processing protos: %s", task.specName)
 			return nil

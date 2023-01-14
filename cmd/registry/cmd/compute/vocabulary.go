@@ -143,7 +143,7 @@ func (task *computeVocabularyTask) Run(ctx context.Context) error {
 		}
 		vocab = vocabulary.NewVocabularyFromDiscovery(document)
 	} else if types.IsProto(contents.GetContentType()) && types.IsZipArchive(contents.GetContentType()) {
-		vocab, err = core.NewVocabularyFromZippedProtos(contents.GetData())
+		vocab, err = NewVocabularyFromZippedProtos(contents.GetData())
 		if err != nil {
 			log.FromContext(ctx).WithError(err).Errorf("Error processing protos: %s", task.specName)
 			return nil
