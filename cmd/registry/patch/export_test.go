@@ -16,6 +16,7 @@ package patch
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -41,12 +42,13 @@ func TestExport(t *testing.T) {
 		},
 	}
 	for _, test := range tests {
+		project := names.Project{ProjectID: "patch-export-test"}
+		// Make an admin client and use it to create the project.
 		ctx := context.Background()
 		adminClient, err := connection.NewAdminClient(ctx)
 		if err != nil {
 			t.Fatalf("Setup: failed to create client: %+v", err)
 		}
-		project := names.Project{ProjectID: "patch-export-test"}
 		if err = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{
 			Name:  project.String(),
 			Force: true,
@@ -59,13 +61,14 @@ func TestExport(t *testing.T) {
 		}); err != nil {
 			t.Fatalf("Setup: Failed to create test project: %s", err)
 		}
-		// set the configured registry.project to the test project
+		// Set the configured registry.project to the test project.
 		config, err := connection.ActiveConfig()
 		if err != nil {
 			t.Fatalf("Setup: Failed to get registry configuration: %s", err)
 		}
 		config.Project = project.ProjectID
 		connection.SetConfig(config)
+		// Make a registry client and use it to apply the test data.
 		registryClient, err := connection.NewRegistryClient(ctx)
 		if err != nil {
 			t.Fatalf("Setup: Failed to create registry client: %s", err)
@@ -73,10 +76,7 @@ func TestExport(t *testing.T) {
 		if err := Apply(ctx, registryClient, test.root, project.String()+"/locations/global", true, 1); err != nil {
 			t.Fatalf("Apply() returned error: %s", err)
 		}
-		tempDir, err := os.MkdirTemp("", "sample-export-")
-		if err != nil {
-			t.Fatalf("Setup: Failed to create export directory: %s", err)
-		}
+
 		t.Cleanup(func() {
 			if err := adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{
 				Name:  project.String(),
@@ -86,94 +86,199 @@ func TestExport(t *testing.T) {
 			}
 			adminClient.Close()
 			registryClient.Close()
-			os.RemoveAll(tempDir)
 		})
 
 		t.Run(test.desc+"-project", func(t *testing.T) {
+			tempDir, err := os.MkdirTemp("", "sample-export-")
+			if err != nil {
+				t.Fatalf("Setup: Failed to create export directory: %s", err)
+			}
+			defer os.RemoveAll(tempDir)
 			taskQueue, wait := core.WorkerPool(ctx, 1)
-			err := ExportProject(ctx, registryClient, project, tempDir, taskQueue)
+			err = ExportProject(ctx, registryClient, project, tempDir, taskQueue)
 			if err != nil {
 				t.Fatalf("Failed to export project: %s", err)
 			}
 			wait()
-			compareExportedFiles(t, test.root, "", tempDir, project.ProjectID)
+			compareExportedDirectories(t, test.root, "", tempDir, project.ProjectID)
 		})
 
 		t.Run(test.desc+"-api", func(t *testing.T) {
+			tempDir, err := os.MkdirTemp("", "sample-export-")
+			if err != nil {
+				t.Fatalf("Setup: Failed to create export directory: %s", err)
+			}
+			defer os.RemoveAll(tempDir)
 			taskQueue, wait := core.WorkerPool(ctx, 1)
-			err := ExportAPI(ctx, registryClient, project.Api("registry"), true, tempDir, taskQueue)
+			err = ExportAPI(ctx, registryClient, project.Api("registry"), false, tempDir, taskQueue)
 			if err != nil {
 				t.Fatalf("Failed to export api: %s", err)
 			}
 			wait()
-			compareExportedFiles(t, test.root, "apis/registry", tempDir, project.ProjectID)
+			compareExportedFiles(t, test.root, "apis/registry/info.yaml", tempDir, project.ProjectID)
+		})
+
+		t.Run(test.desc+"-api-recursive", func(t *testing.T) {
+			tempDir, err := os.MkdirTemp("", "sample-export-")
+			if err != nil {
+				t.Fatalf("Setup: Failed to create export directory: %s", err)
+			}
+			defer os.RemoveAll(tempDir)
+			taskQueue, wait := core.WorkerPool(ctx, 1)
+			err = ExportAPI(ctx, registryClient, project.Api("registry"), true, tempDir, taskQueue)
+			if err != nil {
+				t.Fatalf("Failed to export api: %s", err)
+			}
+			wait()
+			compareExportedDirectories(t, test.root, "apis/registry", tempDir, project.ProjectID)
 		})
 
 		t.Run(test.desc+"-version", func(t *testing.T) {
+			tempDir, err := os.MkdirTemp("", "sample-export-")
+			if err != nil {
+				t.Fatalf("Setup: Failed to create export directory: %s", err)
+			}
+			defer os.RemoveAll(tempDir)
 			taskQueue, wait := core.WorkerPool(ctx, 1)
-			err := ExportAPIVersion(ctx, registryClient, project.Api("registry").Version("v1"), true, tempDir, taskQueue)
+			err = ExportAPIVersion(ctx, registryClient, project.Api("registry").Version("v1"), false, tempDir, taskQueue)
 			if err != nil {
 				t.Fatalf("Failed to export version: %s", err)
 			}
 			wait()
-			compareExportedFiles(t, test.root, "apis/registry/versions/v1", tempDir, project.ProjectID)
+			compareExportedFiles(t, test.root, "apis/registry/versions/v1/info.yaml", tempDir, project.ProjectID)
+		})
+
+		t.Run(test.desc+"-version-recursive", func(t *testing.T) {
+			tempDir, err := os.MkdirTemp("", "sample-export-")
+			if err != nil {
+				t.Fatalf("Setup: Failed to create export directory: %s", err)
+			}
+			defer os.RemoveAll(tempDir)
+			taskQueue, wait := core.WorkerPool(ctx, 1)
+			err = ExportAPIVersion(ctx, registryClient, project.Api("registry").Version("v1"), true, tempDir, taskQueue)
+			if err != nil {
+				t.Fatalf("Failed to export version: %s", err)
+			}
+			wait()
+			compareExportedDirectories(t, test.root, "apis/registry/versions/v1", tempDir, project.ProjectID)
 		})
 
 		t.Run(test.desc+"-spec", func(t *testing.T) {
+			tempDir, err := os.MkdirTemp("", "sample-export-")
+			if err != nil {
+				t.Fatalf("Setup: Failed to create export directory: %s", err)
+			}
+			defer os.RemoveAll(tempDir)
 			taskQueue, wait := core.WorkerPool(ctx, 1)
-			err := ExportAPISpec(ctx, registryClient, project.Api("registry").Version("v1").Spec("openapi"), true, tempDir, taskQueue)
+			err = ExportAPISpec(ctx, registryClient, project.Api("registry").Version("v1").Spec("openapi"), false, tempDir, taskQueue)
 			if err != nil {
 				t.Fatalf("Failed to export spec: %s", err)
 			}
 			wait()
-			compareExportedFiles(t, test.root, "apis/registry/versions/v1/specs/openapi", tempDir, project.ProjectID)
+			compareExportedFiles(t, test.root, "apis/registry/versions/v1/specs/openapi/info.yaml", tempDir, project.ProjectID)
+			compareExportedFiles(t, test.root, "apis/registry/versions/v1/specs/openapi/openapi.yaml", tempDir, project.ProjectID)
+		})
+
+		t.Run(test.desc+"-spec-recursive", func(t *testing.T) {
+			tempDir, err := os.MkdirTemp("", "sample-export-")
+			if err != nil {
+				t.Fatalf("Setup: Failed to create export directory: %s", err)
+			}
+			defer os.RemoveAll(tempDir)
+			taskQueue, wait := core.WorkerPool(ctx, 1)
+			err = ExportAPISpec(ctx, registryClient, project.Api("registry").Version("v1").Spec("openapi"), true, tempDir, taskQueue)
+			if err != nil {
+				t.Fatalf("Failed to export spec: %s", err)
+			}
+			wait()
+			compareExportedDirectories(t, test.root, "apis/registry/versions/v1/specs/openapi", tempDir, project.ProjectID)
 		})
 
 		t.Run(test.desc+"-deployment", func(t *testing.T) {
+			tempDir, err := os.MkdirTemp("", "sample-export-")
+			if err != nil {
+				t.Fatalf("Setup: Failed to create export directory: %s", err)
+			}
+			defer os.RemoveAll(tempDir)
 			taskQueue, wait := core.WorkerPool(ctx, 1)
-			err := ExportAPIDeployment(ctx, registryClient, project.Api("registry").Deployment("prod"), true, tempDir, taskQueue)
+			err = ExportAPIDeployment(ctx, registryClient, project.Api("registry").Deployment("prod"), false, tempDir, taskQueue)
 			if err != nil {
 				t.Fatalf("Failed to export deployment: %s", err)
 			}
 			wait()
-			compareExportedFiles(t, test.root, "apis/registry/deployments/prod", tempDir, project.ProjectID)
+			compareExportedFiles(t, test.root, "apis/registry/deployments/prod/info.yaml", tempDir, project.ProjectID)
+		})
+
+		t.Run(test.desc+"-deployment-recursive", func(t *testing.T) {
+			tempDir, err := os.MkdirTemp("", "sample-export-")
+			if err != nil {
+				t.Fatalf("Setup: Failed to create export directory: %s", err)
+			}
+			defer os.RemoveAll(tempDir)
+			taskQueue, wait := core.WorkerPool(ctx, 1)
+			err = ExportAPIDeployment(ctx, registryClient, project.Api("registry").Deployment("prod"), true, tempDir, taskQueue)
+			if err != nil {
+				t.Fatalf("Failed to export deployment: %s", err)
+			}
+			wait()
+			compareExportedDirectories(t, test.root, "apis/registry/deployments/prod", tempDir, project.ProjectID)
 		})
 
 		t.Run(test.desc+"-artifact", func(t *testing.T) {
+			tempDir, err := os.MkdirTemp("", "sample-export-")
+			if err != nil {
+				t.Fatalf("Setup: Failed to create export directory: %s", err)
+			}
+			defer os.RemoveAll(tempDir)
 			taskQueue, wait := core.WorkerPool(ctx, 1)
-			err := ExportArtifact(ctx, registryClient, project.Api("registry").Artifact("api-references"), tempDir, taskQueue)
+			err = ExportArtifact(ctx, registryClient, project.Api("registry").Artifact("api-references"), tempDir, taskQueue)
 			if err != nil {
 				t.Fatalf("Failed to export artifact: %s", err)
 			}
 			wait()
-			compareExportedFiles(t, test.root, "apis/registry/artifacts", tempDir, project.ProjectID)
+			compareExportedDirectories(t, test.root, "apis/registry/artifacts", tempDir, project.ProjectID)
 		})
 	}
 }
 
-func compareExportedFiles(t *testing.T, root, top, tempDir, projectID string) {
-	if err := filepath.Walk(filepath.Join(root, top), func(path string, info os.FileInfo, err error) error {
+func compareExportedDirectories(t *testing.T, root, top, tempDir, projectID string) {
+	if err := filepath.Walk(filepath.Join(root, top), func(refFilename string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 		if info.IsDir() {
 			return nil
 		}
-		refBytes, err := os.ReadFile(path)
+		refBytes, err := os.ReadFile(refFilename)
 		if err != nil {
 			return err
 		}
-		path = strings.TrimPrefix(path, root)
-		newFilename := filepath.Join(tempDir, projectID, path)
+		newFilename := filepath.Join(tempDir, projectID, strings.TrimPrefix(refFilename, root))
 		newBytes, err := os.ReadFile(newFilename)
 		if err != nil {
 			return err
 		}
 		if diff := cmp.Diff(newBytes, refBytes); diff != "" {
-			t.Errorf("mismatched export %s %+v", newFilename, diff)
+			return fmt.Errorf("mismatched export %s %+v", newFilename, diff)
 		}
 		return nil
 	}); err != nil {
-		t.Fatalf("Setup: Failed to export project: %s", err)
+		t.Fatalf("Failed comparison: %s", err)
+	}
+}
+
+func compareExportedFiles(t *testing.T, root, file, tempDir, projectID string) {
+	refFilename := filepath.Join(root, file)
+	refBytes, err := os.ReadFile(refFilename)
+	if err != nil {
+		t.Errorf("Failed to read file %s", refFilename)
+	}
+	newFilename := filepath.Join(tempDir, projectID, file)
+	newBytes, err := os.ReadFile(newFilename)
+	if err != nil {
+		t.Errorf("Failed to read file %s", newFilename)
+	}
+	if diff := cmp.Diff(newBytes, refBytes); diff != "" {
+		t.Errorf("Mismatched export %s %+v", newFilename, diff)
 	}
 }
