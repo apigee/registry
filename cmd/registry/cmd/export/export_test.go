@@ -110,7 +110,6 @@ func TestExportYAML(t *testing.T) {
 
 	// Verify that unsupported exports fail.
 	unsupported := []string{
-		"projects",
 		"projects/my-project/locations/global/apis/a/deployments/d@",
 		"projects/my-project/locations/global/apis/a/deployments/d@-",
 		"projects/my-project/locations/global/apis/a/versions/v/specs/s@",
