@@ -326,7 +326,7 @@ func TestApiExport(t *testing.T) {
 			defer os.RemoveAll(tempDir)
 
 			taskQueue, wait := core.WorkerPool(ctx, 1)
-			err = ExportAPI(ctx, registryClient, project.Api("registry"), tempDir, taskQueue)
+			err = ExportAPI(ctx, registryClient, project.Api("registry"), true, tempDir, taskQueue)
 			if err != nil {
 				t.Fatalf("Setup: Failed to export api: %s", err)
 			}

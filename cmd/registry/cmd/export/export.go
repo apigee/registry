@@ -31,6 +31,7 @@ import (
 
 func Command() *cobra.Command {
 	var filter string
+	var recursive bool
 	var jobs int
 	var root string
 	cmd := &cobra.Command{
@@ -55,13 +56,13 @@ func Command() *cobra.Command {
 			// Initialize task queue.
 			taskQueue, wait := core.WorkerPool(ctx, jobs)
 			defer wait()
-			fmt.Printf("PATTERN %s\n", pattern)
 			h := &exportHandler{
 				ctx:         ctx,
 				client:      client,
 				adminClient: adminClient,
 				pattern:     pattern,
 				filter:      filter,
+				recursive:   recursive,
 				root:        root,
 				taskQueue:   taskQueue,
 			}
@@ -77,6 +78,7 @@ func Command() *cobra.Command {
 	}
 	cmd.Flags().StringVar(&filter, "filter", "", "filter selected resources")
 	cmd.Flags().IntVarP(&jobs, "jobs", "j", 10, "number of actions to perform concurrently")
+	cmd.Flags().BoolVarP(&recursive, "recursive", "r", false, "include child resources in export")
 	cmd.Flags().StringVar(&root, "root", "", "root directory for export")
 	return cmd
 }
@@ -87,6 +89,7 @@ type exportHandler struct {
 	adminClient connection.AdminClient
 	pattern     string
 	filter      string
+	recursive   bool
 	root        string
 	count       int
 	taskQueue   chan<- core.Task
@@ -186,7 +189,7 @@ func (h *exportHandler) apiHandler() func(message *rpc.Api) error {
 		if err != nil {
 			return err
 		}
-		return patch.ExportAPI(h.ctx, h.client, name, h.root, h.taskQueue)
+		return patch.ExportAPI(h.ctx, h.client, name, h.recursive, h.root, h.taskQueue)
 	}
 }
 
@@ -197,7 +200,7 @@ func (h *exportHandler) apiVersionHandler() func(message *rpc.ApiVersion) error 
 		if err != nil {
 			return err
 		}
-		return patch.ExportAPIVersion(h.ctx, h.client, name, h.root, h.taskQueue)
+		return patch.ExportAPIVersion(h.ctx, h.client, name, h.recursive, h.root, h.taskQueue)
 	}
 }
 
@@ -208,7 +211,7 @@ func (h *exportHandler) apiDeploymentHandler() func(message *rpc.ApiDeployment) 
 		if err != nil {
 			return err
 		}
-		return patch.ExportAPIDeployment(h.ctx, h.client, name, h.root, h.taskQueue)
+		return patch.ExportAPIDeployment(h.ctx, h.client, name, h.recursive, h.root, h.taskQueue)
 	}
 }
 
@@ -219,7 +222,7 @@ func (h *exportHandler) apiSpecHandler() func(message *rpc.ApiSpec) error {
 		if err != nil {
 			return err
 		}
-		return patch.ExportAPISpec(h.ctx, h.client, name, h.root, h.taskQueue)
+		return patch.ExportAPISpec(h.ctx, h.client, name, h.recursive, h.root, h.taskQueue)
 	}
 }
 

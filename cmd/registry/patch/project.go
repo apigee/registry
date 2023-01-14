@@ -185,7 +185,7 @@ func ExportProject(ctx context.Context, client *gapic.RegistryClient, projectNam
 }
 
 // ExportAPI writes an API into a directory of YAML files.
-func ExportAPI(ctx context.Context, client *gapic.RegistryClient, apiName names.Api, root string, taskQueue chan<- core.Task) error {
+func ExportAPI(ctx context.Context, client *gapic.RegistryClient, apiName names.Api, recursive bool, root string, taskQueue chan<- core.Task) error {
 	if root != "" {
 		root = root + "/" + apiName.ProjectID
 	} else {
@@ -201,6 +201,9 @@ func ExportAPI(ctx context.Context, client *gapic.RegistryClient, apiName names.
 	})
 	if err != nil {
 		return err
+	}
+	if !recursive {
+		return nil
 	}
 	err = core.ListVersions(ctx, client, apiName.Version("-"), "", func(message *rpc.ApiVersion) error {
 		taskQueue <- &exportVersionTask{
@@ -283,7 +286,7 @@ func ExportAPI(ctx context.Context, client *gapic.RegistryClient, apiName names.
 }
 
 // ExportAPIVersion writes an API version into a directory of YAML files.
-func ExportAPIVersion(ctx context.Context, client *gapic.RegistryClient, versionName names.Version, root string, taskQueue chan<- core.Task) error {
+func ExportAPIVersion(ctx context.Context, client *gapic.RegistryClient, versionName names.Version, recursive bool, root string, taskQueue chan<- core.Task) error {
 	if root != "" {
 		root = root + "/" + versionName.ProjectID
 	} else {
@@ -299,6 +302,9 @@ func ExportAPIVersion(ctx context.Context, client *gapic.RegistryClient, version
 	})
 	if err != nil {
 		return err
+	}
+	if !recursive {
+		return nil
 	}
 	err = core.ListSpecs(ctx, client, versionName.Spec("-"), "", false, func(message *rpc.ApiSpec) error {
 		taskQueue <- &exportSpecTask{
@@ -337,7 +343,7 @@ func ExportAPIVersion(ctx context.Context, client *gapic.RegistryClient, version
 }
 
 // ExportAPISpec writes an API Version into a directory of YAML files.
-func ExportAPISpec(ctx context.Context, client *gapic.RegistryClient, specName names.Spec, root string, taskQueue chan<- core.Task) error {
+func ExportAPISpec(ctx context.Context, client *gapic.RegistryClient, specName names.Spec, recursive bool, root string, taskQueue chan<- core.Task) error {
 	if root != "" {
 		root = root + "/" + specName.ProjectID
 	} else {
@@ -354,6 +360,9 @@ func ExportAPISpec(ctx context.Context, client *gapic.RegistryClient, specName n
 	if err != nil {
 		return err
 	}
+	if !recursive {
+		return nil
+	}
 	err = core.ListArtifacts(ctx, client, specName.Artifact(""), "", false, func(message *rpc.Artifact) error {
 		taskQueue <- &exportArtifactTask{
 			client:  client,
@@ -369,7 +378,7 @@ func ExportAPISpec(ctx context.Context, client *gapic.RegistryClient, specName n
 }
 
 // ExportAPIDeployment writes an API deployment into a directory of YAML files.
-func ExportAPIDeployment(ctx context.Context, client *gapic.RegistryClient, deploymentName names.Deployment, root string, taskQueue chan<- core.Task) error {
+func ExportAPIDeployment(ctx context.Context, client *gapic.RegistryClient, deploymentName names.Deployment, recursive bool, root string, taskQueue chan<- core.Task) error {
 	if root != "" {
 		root = root + "/" + deploymentName.ProjectID
 	} else {
@@ -385,6 +394,9 @@ func ExportAPIDeployment(ctx context.Context, client *gapic.RegistryClient, depl
 	})
 	if err != nil {
 		return err
+	}
+	if !recursive {
+		return nil
 	}
 	err = core.ListArtifacts(ctx, client, deploymentName.Artifact(""), "", false, func(message *rpc.Artifact) error {
 		taskQueue <- &exportArtifactTask{
