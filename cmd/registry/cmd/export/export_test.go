@@ -65,7 +65,16 @@ func TestExportYAML(t *testing.T) {
 	// Verify that export runs for each supported resource.
 	resources := []string{
 		"projects/my-project",
+		"projects/my-project/locations/global/apis/a/versions/v/specs/s",
+		"projects/my-project/locations/global/apis/a/deployments/d",
+		"projects/my-project/locations/global/apis/a/versions/v",
+		"projects/my-project/locations/global/apis/a/versions/v/specs/s",
+		"projects/my-project/locations/global/apis/a/deployments/d",
 		"projects/my-project/locations/global/apis/a",
+		"projects/my-project/locations/global/apis/a/artifacts/x",
+		"projects/my-project/locations/global/apis/a/versions/v/artifacts/x",
+		"projects/my-project/locations/global/apis/a/versions/v/specs/s/artifacts/x",
+		"projects/my-project/locations/global/apis/a/deployments/d/artifacts/x",
 	}
 	for _, r := range resources {
 		t.Run(r, func(t *testing.T) {
@@ -86,15 +95,10 @@ func TestExportYAML(t *testing.T) {
 
 	// Verify that unsupported exports fail.
 	unsupported := []string{
-		"projects/my-project/locations/global/apis/a/versions/v/specs/s",
-		"projects/my-project/locations/global/apis/a/deployments/d",
-		"projects/my-project/locations/global/apis/a/versions/v",
-		"projects/my-project/locations/global/apis/a/versions/v/specs/s",
-		"projects/my-project/locations/global/apis/a/deployments/d",
-		"projects/my-project/locations/global/apis/a/artifacts/x",
-		"projects/my-project/locations/global/apis/a/versions/v/artifacts/x",
-		"projects/my-project/locations/global/apis/a/versions/v/specs/s/artifacts/x",
-		"projects/my-project/locations/global/apis/a/deployments/d/artifacts/x",
+		"projects/my-project/locations/global/apis/a/deployments/d@",
+		"projects/my-project/locations/global/apis/a/deployments/d@-",
+		"projects/my-project/locations/global/apis/a/versions/v/specs/s@",
+		"projects/my-project/locations/global/apis/a/versions/v/specs/s@-",
 	}
 	for _, r := range unsupported {
 		t.Run("unsupported/"+r, func(t *testing.T) {
