@@ -124,7 +124,7 @@ func (task *computeLintTask) Run(ctx context.Context) error {
 		}
 		relation = lintRelation(task.linter)
 		log.Debugf(ctx, "Computing %s/artifacts/%s", spec.Name, relation)
-		lint, err = core.NewLintFromOpenAPI(spec.Name, data, task.linter)
+		lint, err = NewLintFromOpenAPI(spec.Name, data, task.linter)
 		if err != nil {
 			return fmt.Errorf("error processing OpenAPI: %s (%s)", spec.Name, err.Error())
 		}
@@ -137,7 +137,7 @@ func (task *computeLintTask) Run(ctx context.Context) error {
 		}
 		relation = lintRelation(task.linter)
 		log.Debugf(ctx, "Computing %s/artifacts/%s", spec.Name, relation)
-		lint, err = core.NewLintFromZippedProtos(spec.Name, data)
+		lint, err = NewLintFromZippedProtos(spec.Name, data)
 		if err != nil {
 			return fmt.Errorf("error processing protos: %s (%s)", spec.Name, err.Error())
 		}

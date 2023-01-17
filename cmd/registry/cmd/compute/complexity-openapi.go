@@ -12,10 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package core
+package compute
 
 import (
-	discovery "github.com/google/gnostic/discovery"
 	metrics "github.com/google/gnostic/metrics"
 	openapi_v2 "github.com/google/gnostic/openapiv2"
 	openapi_v3 "github.com/google/gnostic/openapiv3"
@@ -90,71 +89,6 @@ func summarizeOpenAPIv3Schema(summary *metrics.Complexity, schemaOrReference *op
 		for _, pair := range schema.Properties.AdditionalProperties {
 			summary.SchemaPropertyCount++
 			summarizeOpenAPIv3Schema(summary, pair.Value)
-		}
-	}
-}
-
-func SummarizeDiscoveryDocument(document *discovery.Document) *metrics.Complexity {
-	summary := &metrics.Complexity{}
-	if document.Schemas != nil && document.Schemas.AdditionalProperties != nil {
-		for _, pair := range document.Schemas.AdditionalProperties {
-			summarizeDiscoverySchema(summary, pair.Value)
-		}
-	}
-	if document.Resources != nil {
-		for _, pair := range document.Resources.AdditionalProperties {
-			summarizeDiscoveryResource(summary, pair.Value)
-		}
-	}
-	if document.Methods != nil {
-		for _, pair := range document.Methods.AdditionalProperties {
-			summary.PathCount++
-			v := pair.Value
-			switch v.HttpMethod {
-			case "GET":
-				summary.GetCount++
-			case "POST":
-				summary.PostCount++
-			case "PUT":
-				summary.PutCount++
-			case "DELETE":
-				summary.DeleteCount++
-			}
-		}
-	}
-	return summary
-}
-
-func summarizeDiscoverySchema(summary *metrics.Complexity, schema *discovery.Schema) {
-	summary.SchemaCount++
-	if schema != nil && schema.Properties != nil {
-		for _, pair := range schema.Properties.AdditionalProperties {
-			summary.SchemaPropertyCount++
-			summarizeDiscoverySchema(summary, pair.Value)
-		}
-	}
-}
-
-func summarizeDiscoveryResource(summary *metrics.Complexity, resource *discovery.Resource) {
-	if resource.Resources != nil {
-		for _, pair := range resource.Resources.AdditionalProperties {
-			summarizeDiscoveryResource(summary, pair.Value)
-		}
-	}
-	if resource.Methods != nil {
-		for _, pair := range resource.Methods.AdditionalProperties {
-			summary.PathCount++
-			v := pair.Value
-			switch v.HttpMethod {
-			case "GET":
-				summary.GetCount++
-			case "POST":
-				summary.PostCount++
-			case "PUT":
-				summary.PutCount++
-			case "DELETE":
-				summary.DeleteCount++
-			}
 		}
 	}
 }
