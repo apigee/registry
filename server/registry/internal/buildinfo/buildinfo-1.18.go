@@ -19,6 +19,7 @@ package buildinfo
 
 import (
 	"runtime/debug"
+	"strings"
 
 	"github.com/apigee/registry/rpc"
 )
@@ -42,7 +43,7 @@ func BuildInfo() *rpc.BuildInfo {
 	}
 	settings := make(map[string]string, 0)
 	for _, setting := range info.Settings {
-		settings[setting.Key] = setting.Value
+		settings[strings.ReplaceAll(setting.Key, ".", "_")] = setting.Value
 	}
 	dependencies := make([]*rpc.BuildInfo_Module, 0)
 	for _, dep := range info.Deps {

@@ -22,6 +22,7 @@ import (
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/internal/storage"
 	"github.com/apigee/registry/server/registry/internal/storage/models"
+	"github.com/apigee/registry/server/registry/internal/system"
 	"github.com/apigee/registry/server/registry/names"
 	"google.golang.org/genproto/googleapis/api/httpbody"
 	"google.golang.org/grpc/codes"
@@ -58,6 +59,9 @@ func (s *RegistryServer) CreateArtifact(ctx context.Context, req *rpc.CreateArti
 	// Parent name must be valid.
 	parent, err := parseArtifactParent(req.GetParent())
 	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+	if system.Reserved(parent.Artifact(req.ArtifactId)) {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	// Artifact body must be nonempty.
@@ -128,6 +132,9 @@ func (s *RegistryServer) DeleteArtifact(ctx context.Context, req *rpc.DeleteArti
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
+	if system.Reserved(name) {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
 	if err := s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
 		return db.DeleteArtifact(ctx, name)
 	}); err != nil {
@@ -147,6 +154,10 @@ func (s *RegistryServer) GetArtifact(ctx context.Context, req *rpc.GetArtifactRe
 	name, err := names.ParseArtifact(req.GetName())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	if system.Reserved(name) {
+		return system.Artifact(name)
 	}
 
 	artifact, err := db.GetArtifact(ctx, name, false)
@@ -172,6 +183,10 @@ func (s *RegistryServer) GetArtifactContents(ctx context.Context, req *rpc.GetAr
 	name, err := names.ParseArtifact(req.GetName())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	if system.Reserved(name) {
+		return system.ArtifactContents(name)
 	}
 
 	artifact, err := db.GetArtifact(ctx, name, false)
@@ -298,6 +313,10 @@ func (s *RegistryServer) ReplaceArtifact(ctx context.Context, req *rpc.ReplaceAr
 
 	name, err := names.ParseArtifact(req.Artifact.GetName())
 	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	if system.Reserved(name) {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
