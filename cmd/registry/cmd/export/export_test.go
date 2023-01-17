@@ -102,7 +102,7 @@ func TestExportYAML(t *testing.T) {
 			cmd.SetOut(io.Discard)
 			cmd.SetErr(io.Discard)
 			if err := cmd.Execute(); err != nil {
-				t.Fatalf("Execute() with args %v returned error: %s", args, err)
+				t.Errorf("Execute() with args %v returned error: %s", args, err)
 			}
 		})
 	}
@@ -135,7 +135,7 @@ func TestExportYAML(t *testing.T) {
 			args := []string{r, "--root", root}
 			cmd.SetArgs(args)
 			if err := cmd.Execute(); err == nil {
-				t.Fatalf("Execute() with args %v succeeded but should have failed", args)
+				t.Errorf("Execute() with args %v succeeded but should have failed", args)
 			}
 		})
 	}
@@ -168,7 +168,7 @@ func TestExportYAML(t *testing.T) {
 			args := []string{r, "--root", root}
 			cmd.SetArgs(args)
 			if err := cmd.Execute(); err == nil {
-				t.Fatalf("Execute() with args %v succeeded but should have failed", args)
+				t.Errorf("Execute() with args %v succeeded but should have failed", args)
 			}
 		})
 	}

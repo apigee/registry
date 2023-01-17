@@ -53,7 +53,7 @@ func TestExport(t *testing.T) {
 			Name:  project.String(),
 			Force: true,
 		}); err != nil && status.Code(err) != codes.NotFound {
-			t.Errorf("Setup: failed to delete test project: %s", err)
+			t.Fatalf("Setup: failed to delete test project: %s", err)
 		}
 		if _, err := adminClient.CreateProject(ctx, &rpc.CreateProjectRequest{
 			ProjectId: project.ProjectID,
@@ -93,7 +93,7 @@ func TestExport(t *testing.T) {
 			taskQueue, wait := core.WorkerPool(ctx, 1)
 			err = ExportProject(ctx, registryClient, project, tempDir, taskQueue)
 			if err != nil {
-				t.Fatalf("Failed to export project: %s", err)
+				t.Errorf("Failed to export project: %s", err)
 			}
 			wait()
 			compareExportedDirectories(t, test.root, "", tempDir, project.ProjectID)
@@ -104,7 +104,7 @@ func TestExport(t *testing.T) {
 			taskQueue, wait := core.WorkerPool(ctx, 1)
 			err = ExportAPI(ctx, registryClient, project.Api("registry"), false, tempDir, taskQueue)
 			if err != nil {
-				t.Fatalf("Failed to export api: %s", err)
+				t.Errorf("Failed to export api: %s", err)
 			}
 			wait()
 			compareExportedFiles(t, test.root, "apis/registry/info.yaml", tempDir, project.ProjectID)
@@ -115,7 +115,7 @@ func TestExport(t *testing.T) {
 			taskQueue, wait := core.WorkerPool(ctx, 1)
 			err = ExportAPI(ctx, registryClient, project.Api("registry"), true, tempDir, taskQueue)
 			if err != nil {
-				t.Fatalf("Failed to export api: %s", err)
+				t.Errorf("Failed to export api: %s", err)
 			}
 			wait()
 			compareExportedDirectories(t, test.root, "apis/registry", tempDir, project.ProjectID)
@@ -126,7 +126,7 @@ func TestExport(t *testing.T) {
 			taskQueue, wait := core.WorkerPool(ctx, 1)
 			err = ExportAPIVersion(ctx, registryClient, project.Api("registry").Version("v1"), false, tempDir, taskQueue)
 			if err != nil {
-				t.Fatalf("Failed to export version: %s", err)
+				t.Errorf("Failed to export version: %s", err)
 			}
 			wait()
 			compareExportedFiles(t, test.root, "apis/registry/versions/v1/info.yaml", tempDir, project.ProjectID)
@@ -137,7 +137,7 @@ func TestExport(t *testing.T) {
 			taskQueue, wait := core.WorkerPool(ctx, 1)
 			err = ExportAPIVersion(ctx, registryClient, project.Api("registry").Version("v1"), true, tempDir, taskQueue)
 			if err != nil {
-				t.Fatalf("Failed to export version: %s", err)
+				t.Errorf("Failed to export version: %s", err)
 			}
 			wait()
 			compareExportedDirectories(t, test.root, "apis/registry/versions/v1", tempDir, project.ProjectID)
@@ -148,7 +148,7 @@ func TestExport(t *testing.T) {
 			taskQueue, wait := core.WorkerPool(ctx, 1)
 			err = ExportAPISpec(ctx, registryClient, project.Api("registry").Version("v1").Spec("openapi"), false, tempDir, taskQueue)
 			if err != nil {
-				t.Fatalf("Failed to export spec: %s", err)
+				t.Errorf("Failed to export spec: %s", err)
 			}
 			wait()
 			compareExportedFiles(t, test.root, "apis/registry/versions/v1/specs/openapi/info.yaml", tempDir, project.ProjectID)
@@ -160,7 +160,7 @@ func TestExport(t *testing.T) {
 			taskQueue, wait := core.WorkerPool(ctx, 1)
 			err = ExportAPISpec(ctx, registryClient, project.Api("registry").Version("v1").Spec("openapi"), true, tempDir, taskQueue)
 			if err != nil {
-				t.Fatalf("Failed to export spec: %s", err)
+				t.Errorf("Failed to export spec: %s", err)
 			}
 			wait()
 			compareExportedDirectories(t, test.root, "apis/registry/versions/v1/specs/openapi", tempDir, project.ProjectID)
@@ -171,7 +171,7 @@ func TestExport(t *testing.T) {
 			taskQueue, wait := core.WorkerPool(ctx, 1)
 			err = ExportAPIDeployment(ctx, registryClient, project.Api("registry").Deployment("prod"), false, tempDir, taskQueue)
 			if err != nil {
-				t.Fatalf("Failed to export deployment: %s", err)
+				t.Errorf("Failed to export deployment: %s", err)
 			}
 			wait()
 			compareExportedFiles(t, test.root, "apis/registry/deployments/prod/info.yaml", tempDir, project.ProjectID)
@@ -182,7 +182,7 @@ func TestExport(t *testing.T) {
 			taskQueue, wait := core.WorkerPool(ctx, 1)
 			err = ExportAPIDeployment(ctx, registryClient, project.Api("registry").Deployment("prod"), true, tempDir, taskQueue)
 			if err != nil {
-				t.Fatalf("Failed to export deployment: %s", err)
+				t.Errorf("Failed to export deployment: %s", err)
 			}
 			wait()
 			compareExportedDirectories(t, test.root, "apis/registry/deployments/prod", tempDir, project.ProjectID)
@@ -193,7 +193,7 @@ func TestExport(t *testing.T) {
 			taskQueue, wait := core.WorkerPool(ctx, 1)
 			err = ExportArtifact(ctx, registryClient, project.Api("registry").Artifact("api-references"), tempDir, taskQueue)
 			if err != nil {
-				t.Fatalf("Failed to export artifact: %s", err)
+				t.Errorf("Failed to export artifact: %s", err)
 			}
 			wait()
 			compareExportedDirectories(t, test.root, "apis/registry/artifacts", tempDir, project.ProjectID)
@@ -223,7 +223,7 @@ func compareExportedDirectories(t *testing.T, root, top, tempDir, projectID stri
 		}
 		return nil
 	}); err != nil {
-		t.Fatalf("Failed comparison: %s", err)
+		t.Errorf("Failed comparison: %s", err)
 	}
 }
 
