@@ -93,7 +93,7 @@ func TestChecker_run(t *testing.T) {
 			err := rules.Register(111, &ProjectRule{
 				Name: NewRuleName(111, "test-rule"),
 				ApplyToProject: func(ctx context.Context, p *rpc.Project) []Problem {
-					client := ctx.Value(ContextKeyClient)
+					client := ctx.Value(ContextKeyRegistryClient)
 					if _, ok := client.(*gapic.RegistryClient); !ok {
 						t.Errorf("context does not include client: %v", ctx)
 					}

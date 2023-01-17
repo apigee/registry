@@ -31,7 +31,7 @@ import (
 type contextKey int
 
 const (
-	ContextKeyClient contextKey = iota
+	ContextKeyRegistryClient contextKey = iota
 )
 
 type Resource interface {
@@ -60,7 +60,7 @@ func (l *Checker) Check(ctx context.Context, admin connection.AdminClient, clien
 	}
 
 	// enable rules to access client
-	ctx = context.WithValue(ctx, ContextKeyClient, client)
+	ctx = context.WithValue(ctx, ContextKeyRegistryClient, client)
 	taskQueue, wait := core.WorkerPool(ctx, jobs)
 	defer func() {
 		wait()
