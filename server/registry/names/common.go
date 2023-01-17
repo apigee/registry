@@ -36,11 +36,6 @@ const (
 // User provided identifiers should be validated according to this format.
 var customIdentifier = regexp.MustCompile(`^[a-z0-9-.]+$`)
 
-// GenerateID generates a random resource ID.
-func GenerateID() string {
-	return uuid.New().String()[:8]
-}
-
 // validateID returns an error if the provided ID is invalid.
 func validateID(id string) error {
 	if "" == id {
