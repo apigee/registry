@@ -28,6 +28,12 @@ import (
 	"github.com/apigee/registry/server/registry/names"
 )
 
+type contextKey int
+
+const (
+	ContextKeyClient contextKey = iota
+)
+
 type Resource interface {
 	GetName() string
 }
@@ -53,6 +59,8 @@ func (l *Checker) Check(ctx context.Context, admin connection.AdminClient, clien
 		Problems: make([]Problem, 0),
 	}
 
+	// enable rules to access client
+	ctx = context.WithValue(ctx, ContextKeyClient, client)
 	taskQueue, wait := core.WorkerPool(ctx, jobs)
 	defer func() {
 		wait()
@@ -86,7 +94,7 @@ func (t *checkTask) Run(ctx context.Context) error {
 	var errMessages []string
 	for name, rule := range t.checker.rules {
 		if t.checker.configs.IsRuleEnabled(string(name), t.resource.GetName()) {
-			if probs, err := t.runAndRecoverFromPanics(rule, t.resource); err == nil {
+			if probs, err := t.runAndRecoverFromPanics(ctx, rule, t.resource); err == nil {
 				for _, p := range probs {
 					if p.RuleID == "" {
 						p.RuleID = rule.GetName()
@@ -110,7 +118,7 @@ func (t *checkTask) Run(ctx context.Context) error {
 	return nil
 }
 
-func (c *checkTask) runAndRecoverFromPanics(rule Rule, resource Resource) (probs []Problem, err error) {
+func (c *checkTask) runAndRecoverFromPanics(ctx context.Context, rule Rule, resource Resource) (probs []Problem, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			if rerr, ok := r.(error); ok {
@@ -121,7 +129,7 @@ func (c *checkTask) runAndRecoverFromPanics(rule Rule, resource Resource) (probs
 		}
 	}()
 
-	return rule.Apply(resource), nil
+	return rule.Apply(ctx, resource), nil
 }
 
 type listHandler struct {

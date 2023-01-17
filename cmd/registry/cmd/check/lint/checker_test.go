@@ -20,6 +20,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/rpc"
@@ -91,7 +92,11 @@ func TestChecker_run(t *testing.T) {
 			rules := NewRuleRegistry()
 			err := rules.Register(111, &ProjectRule{
 				Name: NewRuleName(111, "test-rule"),
-				ApplyToProject: func(p *rpc.Project) []Problem {
+				ApplyToProject: func(ctx context.Context, p *rpc.Project) []Problem {
+					client := ctx.Value(ContextKeyClient)
+					if _, ok := client.(*gapic.RegistryClient); !ok {
+						t.Errorf("context does not include client: %v", ctx)
+					}
 					return test.problems
 				},
 			})
@@ -157,7 +162,7 @@ func TestChecker_panic(t *testing.T) {
 			testName: "Panic",
 			rule: &ProjectRule{
 				Name: NewRuleName(testRuleNum, "panic"),
-				ApplyToProject: func(p *rpc.Project) []Problem {
+				ApplyToProject: func(ctx context.Context, p *rpc.Project) []Problem {
 					panic("panic")
 				},
 			},
@@ -166,7 +171,7 @@ func TestChecker_panic(t *testing.T) {
 			testName: "PanicError",
 			rule: &ProjectRule{
 				Name: NewRuleName(testRuleNum, "panic"),
-				ApplyToProject: func(p *rpc.Project) []Problem {
+				ApplyToProject: func(ctx context.Context, p *rpc.Project) []Problem {
 					panic(fmt.Errorf("panic"))
 				},
 			},

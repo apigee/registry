@@ -17,6 +17,7 @@
 package rule100
 
 import (
+	"context"
 	"strings"
 
 	"github.com/apigee/registry/cmd/registry/cmd/check/lint"
@@ -40,7 +41,7 @@ var availabilitySingleWord = &lint.ApiRule{
 	OnlyIf: func(a *rpc.Api) bool {
 		return true
 	},
-	ApplyToApi: func(a *rpc.Api) []lint.Problem {
+	ApplyToApi: func(ctx context.Context, a *rpc.Api) []lint.Problem {
 		if arr := strings.SplitN(a.Availability, " ", 2); len(arr) > 1 {
 			return []lint.Problem{{
 				Severity:   lint.INFO,

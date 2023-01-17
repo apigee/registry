@@ -15,6 +15,7 @@
 package rule110
 
 import (
+	"context"
 	"testing"
 
 	"github.com/apigee/registry/cmd/registry/cmd/check/lint"
@@ -110,7 +111,7 @@ func Test_mimeTypeContents(t *testing.T) {
 					if !mimeTypeContents.OnlyIf(resource, "MimeType") {
 						t.Error("invalid OnlyIf")
 					}
-					got := mimeTypeContents.Apply(resource)
+					got := mimeTypeContents.Apply(context.Background(), resource)
 					for i := range test.problems {
 						test.problems[i].Location = resource.GetName() + "::MimeType"
 					}

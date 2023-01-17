@@ -15,6 +15,7 @@
 package rule110
 
 import (
+	"context"
 	"fmt"
 	"mime"
 	"net/http"
@@ -48,7 +49,7 @@ var mimeTypeContents = &lint.FieldRule{
 	OnlyIf: func(resource lint.Resource, field string) bool {
 		return field == "MimeType"
 	},
-	ApplyToField: func(resource lint.Resource, field string, value interface{}) []lint.Problem {
+	ApplyToField: func(ctx context.Context, resource lint.Resource, field string, value interface{}) []lint.Problem {
 		var declared string
 		var contents []byte
 		switch t := resource.(type) {

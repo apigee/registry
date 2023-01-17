@@ -15,6 +15,7 @@
 package lint
 
 import (
+	"context"
 	"reflect"
 	"testing"
 
@@ -32,7 +33,7 @@ func TestProjectRule(t *testing.T) {
 				OnlyIf: func(p *rpc.Project) bool {
 					return p.GetName() == resource.Name
 				},
-				ApplyToProject: func(p *rpc.Project) []Problem {
+				ApplyToProject: func(ctx context.Context, p *rpc.Project) []Problem {
 					return test.problems
 				},
 			}
@@ -53,7 +54,7 @@ func TestArtifactRule(t *testing.T) {
 				OnlyIf: func(p *rpc.Artifact) bool {
 					return p.GetName() == resource.Name
 				},
-				ApplyToArtifact: func(p *rpc.Artifact) []Problem {
+				ApplyToArtifact: func(ctx context.Context, p *rpc.Artifact) []Problem {
 					return test.problems
 				},
 			}
@@ -74,7 +75,7 @@ func TestApiRule(t *testing.T) {
 				OnlyIf: func(p *rpc.Api) bool {
 					return p.GetName() == resource.Name
 				},
-				ApplyToApi: func(p *rpc.Api) []Problem {
+				ApplyToApi: func(ctx context.Context, p *rpc.Api) []Problem {
 					return test.problems
 				},
 			}
@@ -95,7 +96,7 @@ func TestApiDeploymentRule(t *testing.T) {
 				OnlyIf: func(p *rpc.ApiDeployment) bool {
 					return p.GetName() == resource.Name
 				},
-				ApplyToApiDeployment: func(p *rpc.ApiDeployment) []Problem {
+				ApplyToApiDeployment: func(ctx context.Context, p *rpc.ApiDeployment) []Problem {
 					return test.problems
 				},
 			}
@@ -116,7 +117,7 @@ func TestApiVersion(t *testing.T) {
 				OnlyIf: func(p *rpc.ApiVersion) bool {
 					return p.GetName() == resource.Name
 				},
-				ApplyToApiVersion: func(p *rpc.ApiVersion) []Problem {
+				ApplyToApiVersion: func(ctx context.Context, p *rpc.ApiVersion) []Problem {
 					return test.problems
 				},
 			}
@@ -137,7 +138,7 @@ func TestApiSpec(t *testing.T) {
 				OnlyIf: func(p *rpc.ApiSpec) bool {
 					return p.GetName() == resource.Name
 				},
-				ApplyToApiSpec: func(p *rpc.ApiSpec) []Problem {
+				ApplyToApiSpec: func(ctx context.Context, p *rpc.ApiSpec) []Problem {
 					return test.problems
 				},
 			}
@@ -160,7 +161,7 @@ func TestFieldRule(t *testing.T) {
 				OnlyIf: func(resource Resource, name string) bool {
 					return name == "Name"
 				},
-				ApplyToField: func(resource Resource, name string, value interface{}) []Problem {
+				ApplyToField: func(ctx context.Context, resource Resource, name string, value interface{}) []Problem {
 					return test.problems
 				},
 			}
@@ -185,7 +186,7 @@ func (test *ruleTest) runRule(rule Rule, r Resource, t *testing.T) {
 	}
 
 	// Run the rule's lint function on the file descriptor
-	if got, want := rule.Apply(r), test.problems; !reflect.DeepEqual(got, want) {
+	if got, want := rule.Apply(context.Background(), r), test.problems; !reflect.DeepEqual(got, want) {
 		t.Errorf("Got %v problems; expected %v.", got, want)
 	}
 }
