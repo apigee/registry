@@ -15,6 +15,7 @@
 package rule101
 
 import (
+	"context"
 	"testing"
 
 	"github.com/apigee/registry/cmd/registry/cmd/check/lint"
@@ -54,7 +55,7 @@ func Test_recommendedVersionRef(t *testing.T) {
 			}
 
 			if recommendedVersionRef.OnlyIf(a) {
-				got := recommendedVersionRef.ApplyToApi(a)
+				got := recommendedVersionRef.ApplyToApi(context.Background(), a)
 				if diff := cmp.Diff(got, tt.expected); diff != "" {
 					t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 				}

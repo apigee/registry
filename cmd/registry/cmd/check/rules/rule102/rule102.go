@@ -16,6 +16,7 @@
 package rule102
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -41,7 +42,7 @@ var recommendedDeploymentRef = &lint.ApiRule{
 	OnlyIf: func(a *rpc.Api) bool {
 		return strings.TrimSpace(a.RecommendedDeployment) != ""
 	},
-	ApplyToApi: func(a *rpc.Api) []lint.Problem {
+	ApplyToApi: func(ctx context.Context, a *rpc.Api) []lint.Problem {
 		deploymentName, err := names.ParseDeployment(a.RecommendedDeployment)
 		if err != nil {
 			return []lint.Problem{{

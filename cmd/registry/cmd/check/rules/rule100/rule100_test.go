@@ -15,6 +15,7 @@
 package rule100
 
 import (
+	"context"
 	"testing"
 
 	"github.com/apigee/registry/cmd/registry/cmd/check/lint"
@@ -47,7 +48,7 @@ func Test_availabilitySingleWord(t *testing.T) {
 			Availability: tt.in,
 		}
 		if availabilitySingleWord.OnlyIf(api) {
-			got := availabilitySingleWord.ApplyToApi(api)
+			got := availabilitySingleWord.ApplyToApi(context.Background(), api)
 			if diff := cmp.Diff(got, tt.expected); diff != "" {
 				t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 			}

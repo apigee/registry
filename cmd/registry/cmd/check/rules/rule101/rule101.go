@@ -16,6 +16,7 @@
 package rule101
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -41,7 +42,7 @@ var recommendedVersionRef = &lint.ApiRule{
 	OnlyIf: func(a *rpc.Api) bool {
 		return strings.TrimSpace(a.RecommendedVersion) != ""
 	},
-	ApplyToApi: func(a *rpc.Api) []lint.Problem {
+	ApplyToApi: func(ctx context.Context, a *rpc.Api) []lint.Problem {
 		versionName, err := names.ParseVersion(a.RecommendedVersion)
 		if err != nil {
 			return []lint.Problem{{
