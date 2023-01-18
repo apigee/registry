@@ -49,7 +49,7 @@ func (s *RegistryServer) ListApiSpecRevisions(ctx context.Context, req *rpc.List
 		Size:   req.GetPageSize(),
 		Token:  req.GetPageToken(),
 		Filter: req.GetFilter(),
-		Order:  req.GetOrderBy(),
+		// order_by is disallowed by AIP-162: https://google.aip.dev/162
 	})
 	if err != nil {
 		return nil, err

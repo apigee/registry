@@ -497,23 +497,6 @@ func TestListApiDeploymentRevisions(t *testing.T) {
 				},
 			},
 		},
-		{
-			desc: "reverse order",
-			seed: []*rpc.ApiDeployment{
-				{Name: "projects/my-project/locations/global/apis/my-api/deployments/my-dep"},
-				{Name: "projects/my-project/locations/global/apis/my-api/deployments/other-dep"},
-			},
-			req: &rpc.ListApiDeploymentRevisionsRequest{
-				Name:    "projects/my-project/locations/global/apis/my-api/deployments/-@-",
-				OrderBy: "name desc",
-			},
-			want: &rpc.ListApiDeploymentRevisionsResponse{
-				ApiDeployments: []*rpc.ApiDeployment{
-					{Name: "projects/my-project/locations/global/apis/my-api/deployments/other-dep"},
-					{Name: "projects/my-project/locations/global/apis/my-api/deployments/my-dep"},
-				},
-			},
-		},
 	}
 
 	for _, test := range tests {

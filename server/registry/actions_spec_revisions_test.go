@@ -512,23 +512,6 @@ func TestListApiSpecRevisions(t *testing.T) {
 				},
 			},
 		},
-		{
-			desc: "reverse order",
-			seed: []*rpc.ApiSpec{
-				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
-				{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/other-spec"},
-			},
-			req: &rpc.ListApiSpecRevisionsRequest{
-				Name:    "projects/my-project/locations/global/apis/my-api/versions/v1/specs/-@-",
-				OrderBy: "name desc",
-			},
-			want: &rpc.ListApiSpecRevisionsResponse{
-				ApiSpecs: []*rpc.ApiSpec{
-					{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/other-spec"},
-					{Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec"},
-				},
-			},
-		},
 	}
 
 	for _, test := range tests {

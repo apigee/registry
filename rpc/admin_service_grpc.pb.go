@@ -26,35 +26,49 @@ const _ = grpc.SupportPackageIsVersion7
 type AdminClient interface {
 	// GetStatus returns the status of the service.
 	// (-- api-linter: core::0131::request-message-name=disabled
-	//     aip.dev/not-precedent: Not in the official API. --)
+	//
+	//	aip.dev/not-precedent: Not in the official API. --)
+	//
 	// (-- api-linter: core::0131::method-signature=disabled
-	//     aip.dev/not-precedent: Not in the official API. --)
+	//
+	//	aip.dev/not-precedent: Not in the official API. --)
+	//
 	// (-- api-linter: core::0131::http-uri-name=disabled
-	//     aip.dev/not-precedent: Not in the official API. --)
+	//
+	//	aip.dev/not-precedent: Not in the official API. --)
 	GetStatus(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*Status, error)
 	// GetStorage returns information about the storage used by the service.
 	// (-- api-linter: core::0131::request-message-name=disabled
-	//     aip.dev/not-precedent: Not in the official API. --)
+	//
+	//	aip.dev/not-precedent: Not in the official API. --)
+	//
 	// (-- api-linter: core::0131::method-signature=disabled
-	//     aip.dev/not-precedent: Not in the official API. --)
+	//
+	//	aip.dev/not-precedent: Not in the official API. --)
+	//
 	// (-- api-linter: core::0131::http-uri-name=disabled
-	//     aip.dev/not-precedent: Not in the official API. --)
+	//
+	//	aip.dev/not-precedent: Not in the official API. --)
 	GetStorage(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*Storage, error)
 	// MigrateDatabase attempts to migrate the database to the current schema.
 	MigrateDatabase(ctx context.Context, in *MigrateDatabaseRequest, opts ...grpc.CallOption) (*longrunning.Operation, error)
 	// ListProjects returns matching projects.
 	// (-- api-linter: standard-methods=disabled --)
 	// (-- api-linter: core::0132::method-signature=disabled
-	//     aip.dev/not-precedent: projects are top-level resources. --)
+	//
+	//	aip.dev/not-precedent: projects are top-level resources. --)
 	ListProjects(ctx context.Context, in *ListProjectsRequest, opts ...grpc.CallOption) (*ListProjectsResponse, error)
 	// GetProject returns a specified project.
 	GetProject(ctx context.Context, in *GetProjectRequest, opts ...grpc.CallOption) (*Project, error)
 	// CreateProject creates a specified project.
 	// (-- api-linter: standard-methods=disabled --)
 	// (-- api-linter: core::0133::http-uri-parent=disabled
-	//     aip.dev/not-precedent: Project has an implicit parent. --)
+	//
+	//	aip.dev/not-precedent: Project has an implicit parent. --)
+	//
 	// (-- api-linter: core::0133::method-signature=disabled
-	//     aip.dev/not-precedent: Project has an implicit parent. --)
+	//
+	//	aip.dev/not-precedent: Project has an implicit parent. --)
 	CreateProject(ctx context.Context, in *CreateProjectRequest, opts ...grpc.CallOption) (*Project, error)
 	// UpdateProject can be used to modify a specified project.
 	UpdateProject(ctx context.Context, in *UpdateProjectRequest, opts ...grpc.CallOption) (*Project, error)
@@ -149,35 +163,49 @@ func (c *adminClient) DeleteProject(ctx context.Context, in *DeleteProjectReques
 type AdminServer interface {
 	// GetStatus returns the status of the service.
 	// (-- api-linter: core::0131::request-message-name=disabled
-	//     aip.dev/not-precedent: Not in the official API. --)
+	//
+	//	aip.dev/not-precedent: Not in the official API. --)
+	//
 	// (-- api-linter: core::0131::method-signature=disabled
-	//     aip.dev/not-precedent: Not in the official API. --)
+	//
+	//	aip.dev/not-precedent: Not in the official API. --)
+	//
 	// (-- api-linter: core::0131::http-uri-name=disabled
-	//     aip.dev/not-precedent: Not in the official API. --)
+	//
+	//	aip.dev/not-precedent: Not in the official API. --)
 	GetStatus(context.Context, *emptypb.Empty) (*Status, error)
 	// GetStorage returns information about the storage used by the service.
 	// (-- api-linter: core::0131::request-message-name=disabled
-	//     aip.dev/not-precedent: Not in the official API. --)
+	//
+	//	aip.dev/not-precedent: Not in the official API. --)
+	//
 	// (-- api-linter: core::0131::method-signature=disabled
-	//     aip.dev/not-precedent: Not in the official API. --)
+	//
+	//	aip.dev/not-precedent: Not in the official API. --)
+	//
 	// (-- api-linter: core::0131::http-uri-name=disabled
-	//     aip.dev/not-precedent: Not in the official API. --)
+	//
+	//	aip.dev/not-precedent: Not in the official API. --)
 	GetStorage(context.Context, *emptypb.Empty) (*Storage, error)
 	// MigrateDatabase attempts to migrate the database to the current schema.
 	MigrateDatabase(context.Context, *MigrateDatabaseRequest) (*longrunning.Operation, error)
 	// ListProjects returns matching projects.
 	// (-- api-linter: standard-methods=disabled --)
 	// (-- api-linter: core::0132::method-signature=disabled
-	//     aip.dev/not-precedent: projects are top-level resources. --)
+	//
+	//	aip.dev/not-precedent: projects are top-level resources. --)
 	ListProjects(context.Context, *ListProjectsRequest) (*ListProjectsResponse, error)
 	// GetProject returns a specified project.
 	GetProject(context.Context, *GetProjectRequest) (*Project, error)
 	// CreateProject creates a specified project.
 	// (-- api-linter: standard-methods=disabled --)
 	// (-- api-linter: core::0133::http-uri-parent=disabled
-	//     aip.dev/not-precedent: Project has an implicit parent. --)
+	//
+	//	aip.dev/not-precedent: Project has an implicit parent. --)
+	//
 	// (-- api-linter: core::0133::method-signature=disabled
-	//     aip.dev/not-precedent: Project has an implicit parent. --)
+	//
+	//	aip.dev/not-precedent: Project has an implicit parent. --)
 	CreateProject(context.Context, *CreateProjectRequest) (*Project, error)
 	// UpdateProject can be used to modify a specified project.
 	UpdateProject(context.Context, *UpdateProjectRequest) (*Project, error)
