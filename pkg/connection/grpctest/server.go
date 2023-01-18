@@ -15,17 +15,22 @@
 package grpctest
 
 import (
+	"context"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net"
 	"os"
 	"testing"
 
+	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/pkg/config"
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry"
+	"github.com/apigee/registry/server/registry/test/seeder"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // NewIfNoAddress will create a RegistryServer served by a
@@ -33,14 +38,15 @@ import (
 // not set, see NewServer() for details. If APG_REGISTRY_ADDRESS
 // is set, returns nil as client will connect to that remote address.
 // Example:
-// func TestXXX(t *testing.T) {
-// 	 l, err := grpctest.NewIfNoAddress(registry.Config{})
-// 	 if err != nil {
-// 		t.Fatal(err)
-// 	 }
-// 	 defer l.Close()
-//   ... run test here ...
-// }
+//
+//	func TestXXX(t *testing.T) {
+//		 l, err := grpctest.NewIfNoAddress(registry.Config{})
+//		 if err != nil {
+//			t.Fatal(err)
+//		 }
+//		 defer l.Close()
+//	  ... run test here ...
+//	}
 func NewIfNoAddress(rc registry.Config) (*Server, error) {
 	// error doesn't matter here as the point is to allow fallback
 	c, _ := connection.ReadConfig("")
@@ -58,9 +64,10 @@ func NewIfNoAddress(rc registry.Config) (*Server, error) {
 // this will create a new database for the function,
 // not per t.Run() within it. See NewIfNoAddress() for details.
 // Example:
-// func TestMain(m *testing.M) {
-// 	grpctest.TestMain(m, registry.Config{})
-// }
+//
+//	func TestMain(m *testing.M) {
+//		grpctest.TestMain(m, registry.Config{})
+//	}
 func TestMain(m *testing.M, rc registry.Config) {
 	l, err := NewIfNoAddress(rc)
 	if err != nil {
@@ -80,6 +87,45 @@ func TestMain(m *testing.M, rc registry.Config) {
 	os.Exit(m.Run())
 }
 
+// PrepRegistry connects to a registry instance using the default config,
+// deletes the project if it exists, seeds the registry for testing, and
+// returns the connections used. It also registers cleanup handlers on the
+// test to close the connections and delete the project.
+func PrepRegistry(ctx context.Context, t *testing.T, projectID string, seeds []seeder.RegistryResource) (*gapic.RegistryClient, *gapic.AdminClient) {
+	t.Helper()
+	registryClient, err := connection.NewRegistryClient(ctx)
+	if err != nil {
+		t.Fatalf("Failed to create client: %+v", err)
+	}
+	t.Cleanup(func() { registryClient.Close() })
+
+	adminClient, err := connection.NewAdminClient(ctx)
+	if err != nil {
+		t.Fatalf("Failed to create client: %+v", err)
+	}
+	t.Cleanup(func() { adminClient.Close() })
+
+	delProjReq := &rpc.DeleteProjectRequest{
+		Name:  "projects/" + projectID,
+		Force: true,
+	}
+	err = adminClient.DeleteProject(ctx, delProjReq)
+	if err != nil && status.Code(err) != codes.NotFound {
+		t.Fatalf("Failed DeleteProject(%v): %s", delProjReq, err.Error())
+	}
+	t.Cleanup(func() { _ = adminClient.DeleteProject(ctx, delProjReq) })
+
+	seedClient := seeder.Client{
+		RegistryClient: registryClient,
+		AdminClient:    adminClient,
+	}
+	if err := seeder.SeedRegistry(ctx, seedClient, seeds...); err != nil {
+		t.Fatalf("Setup: failed to seed registry: %s", err)
+	}
+
+	return registryClient, adminClient
+}
+
 // NewServer creates a RegistryServer served by a basic grpc.Server.
 // If rc.Database and rc.DBConfig are blank, a RegistryServer using
 // sqlite3 on a tmpDir is automatically created.
@@ -87,14 +133,15 @@ func TestMain(m *testing.M, rc registry.Config) {
 // to cause the in-process client to connect to the created grpc service.
 // Call Close() when done to close server and clean up tmpDir as needed.
 // Example:
-// func TestXXX(t *testing.T) {
-// 	 l, err := grpctest.NewServer(registry.Config{})
-// 	 if err != nil {
-// 		t.Fatal(err)
-// 	 }
-// 	 defer l.Close()
-//   ... run test here ...
-// }
+//
+//	func TestXXX(t *testing.T) {
+//		 l, err := grpctest.NewServer(registry.Config{})
+//		 if err != nil {
+//			t.Fatal(err)
+//		 }
+//		 defer l.Close()
+//	  ... run test here ...
+//	}
 func NewServer(rc registry.Config) (*Server, error) {
 	s := &Server{}
 	var err error
@@ -102,7 +149,7 @@ func NewServer(rc registry.Config) (*Server, error) {
 		rc.Database = "sqlite3"
 	}
 	if rc.Database == "sqlite3" && rc.DBConfig == "" {
-		f, err := ioutil.TempFile("", "registry.db.*")
+		f, err := os.CreateTemp("", "registry.db.*")
 		if err != nil {
 			return nil, err
 		}
