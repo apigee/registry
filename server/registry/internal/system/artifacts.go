@@ -93,7 +93,7 @@ func system_buildinfo() ([]byte, string, error) {
 	node := doc.Content[0]
 	// Restyle the YAML representation so that it will be serialized with YAML defaults.
 	styleForYAML(node)
-	contents, err := Encode(node)
+	contents, err := encode(node)
 	if err != nil {
 		return nil, "", err
 	}
@@ -108,7 +108,7 @@ func yamlEncoder(dst io.Writer) *yaml.Encoder {
 }
 
 // Encode a patch model.
-func Encode(model interface{}) ([]byte, error) {
+func encode(model interface{}) ([]byte, error) {
 	var b bytes.Buffer
 	err := yamlEncoder(&b).Encode(model)
 	if err != nil {

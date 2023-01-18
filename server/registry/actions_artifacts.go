@@ -62,7 +62,7 @@ func (s *RegistryServer) CreateArtifact(ctx context.Context, req *rpc.CreateArti
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	if system.Reserved(parent.Artifact(req.ArtifactId)) {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("%s is reserved for system use and cannot be created", req.ArtifactId))
 	}
 	// Artifact body must be nonempty.
 	if req.GetArtifact() == nil {
@@ -133,7 +133,7 @@ func (s *RegistryServer) DeleteArtifact(ctx context.Context, req *rpc.DeleteArti
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	if system.Reserved(name) {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("%s is reserved for system use and cannot be deleted", name.ArtifactID()))
 	}
 	if err := s.runInTransaction(ctx, func(ctx context.Context, db *storage.Client) error {
 		return db.DeleteArtifact(ctx, name)
@@ -317,7 +317,7 @@ func (s *RegistryServer) ReplaceArtifact(ctx context.Context, req *rpc.ReplaceAr
 	}
 
 	if system.Reserved(name) {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("%s is reserved for system use and cannot be replaced", name.ArtifactID()))
 	}
 
 	var artifact *models.Artifact

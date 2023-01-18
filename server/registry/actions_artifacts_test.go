@@ -2122,3 +2122,67 @@ func TestDeploymentRevisionArtifacts(t *testing.T) {
 		}
 	})
 }
+
+func TestSystemArtifacts(t *testing.T) {
+	ctx := context.Background()
+	server := defaultTestServer(t)
+	if err := seeder.SeedArtifacts(ctx, server,
+		&rpc.Artifact{Name: "projects/my-project/locations/global/artifacts/x"}); err != nil {
+		t.Fatalf("Setup/Seeding: Failed to seed registry: %s", err)
+	}
+
+	t.Run("create", func(t *testing.T) {
+		_, err := server.CreateArtifact(ctx, &rpc.CreateArtifactRequest{
+			Parent:     "projects/my-project/locations/global",
+			ArtifactId: "system-something",
+			Artifact:   &rpc.Artifact{},
+		})
+		if err == nil {
+			t.Errorf("Create system artifact succeeded and should have failed.")
+		} else if status.Code(err) != codes.InvalidArgument {
+			t.Errorf("Create system artifact returned unexpected error code %s (wanted InvalidArgument).", err)
+		}
+	})
+
+	t.Run("delete", func(t *testing.T) {
+		_, err := server.DeleteArtifact(ctx, &rpc.DeleteArtifactRequest{
+			Name: "projects/my-project/locations/global/artifacts/system-something",
+		})
+		if err == nil {
+			t.Errorf("Delete system artifact succeeded and should have failed.")
+		} else if status.Code(err) != codes.InvalidArgument {
+			t.Errorf("Delete system artifact returned unexpected error code %s (wanted InvalidArgument).", err)
+		}
+	})
+
+	t.Run("get", func(t *testing.T) {
+		_, err := server.GetArtifact(ctx, &rpc.GetArtifactRequest{
+			Name: "projects/my-project/locations/global/artifacts/system-buildinfo",
+		})
+		if err != nil {
+			t.Errorf("Get system artifact failed: %s", err)
+		}
+	})
+
+	t.Run("get contents", func(t *testing.T) {
+		_, err := server.GetArtifactContents(ctx, &rpc.GetArtifactContentsRequest{
+			Name: "projects/my-project/locations/global/artifacts/system-buildinfo",
+		})
+		if err != nil {
+			t.Errorf("Get system artifact contents failed: %s", err)
+		}
+	})
+
+	t.Run("replace", func(t *testing.T) {
+		_, err := server.ReplaceArtifact(ctx, &rpc.ReplaceArtifactRequest{
+			Artifact: &rpc.Artifact{
+				Name: "projects/my-project/locations/global/artifacts/system-something",
+			},
+		})
+		if err == nil {
+			t.Errorf("Replace system artifact succeeded and should have failed.")
+		} else if status.Code(err) != codes.InvalidArgument {
+			t.Errorf("Replace system artifact returned unexpected error code %s (wanted InvalidArgument).", err)
+		}
+	})
+}
