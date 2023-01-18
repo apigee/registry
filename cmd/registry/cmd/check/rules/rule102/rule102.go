@@ -61,7 +61,17 @@ var recommendedDeploymentRef = &lint.ApiRule{
 			}}
 		}
 
-		// TODO: check DB for existence
+		registryClient := lint.RegistryClient(ctx)
+		if _, err := registryClient.GetApiDeployment(ctx, &rpc.GetApiDeploymentRequest{
+			Name: a.RecommendedDeployment,
+		}); err != nil {
+			return []lint.Problem{{
+				Severity:   lint.ERROR,
+				Message:    fmt.Sprintf(`recommended_deployment %q not found in registry.`, a.RecommendedDeployment),
+				Suggestion: `Correct the recommended_deployment.`,
+			}}
+		}
+
 		return nil
 	},
 }
