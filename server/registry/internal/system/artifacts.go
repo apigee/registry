@@ -23,7 +23,6 @@ import (
 
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/internal/buildinfo"
-
 	"github.com/apigee/registry/server/registry/names"
 	"google.golang.org/genproto/googleapis/api/httpbody"
 	"google.golang.org/grpc/codes"
@@ -64,13 +63,13 @@ func ArtifactContents(name names.Artifact) (*httpbody.HttpBody, error) {
 func contents(name names.Artifact) ([]byte, string, error) {
 	switch name.ArtifactID() {
 	case "system-buildinfo":
-		return system_buildinfo()
+		return systemBuildinfo()
 	default:
 		return nil, "", status.Errorf(codes.NotFound, "%q not found", name)
 	}
 }
 
-func system_buildinfo() ([]byte, string, error) {
+func systemBuildinfo() ([]byte, string, error) {
 	status := buildinfo.BuildInfo()
 	// Marshal the artifact content as JSON using the protobuf marshaller.
 	var s []byte
