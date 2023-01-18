@@ -20,7 +20,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry"
@@ -91,9 +90,8 @@ func TestChecker_run(t *testing.T) {
 			err := rules.Register(111, &ProjectRule{
 				Name: NewRuleName(111, "test-rule"),
 				ApplyToProject: func(ctx context.Context, p *rpc.Project) []Problem {
-					client := ctx.Value(ContextKeyRegistryClient)
-					if _, ok := client.(*gapic.RegistryClient); !ok {
-						t.Errorf("context does not include client: %v", ctx)
+					if c := RegistryClient(ctx); c == nil {
+						t.Errorf("RegistryClient missing in context: %v", ctx)
 					}
 					return test.problems
 				},
