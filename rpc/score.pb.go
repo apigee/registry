@@ -67,6 +67,7 @@ type Score struct {
 	// Stores the actual score of a particular resource.
 	//
 	// Types that are assignable to Value:
+	//
 	//	*Score_PercentValue
 	//	*Score_IntegerValue
 	//	*Score_BooleanValue

@@ -31,8 +31,6 @@ func init() {
 
 	ListApiDeploymentRevisionsCmd.Flags().StringVar(&ListApiDeploymentRevisionsInput.Filter, "filter", "", "An expression that can be used to filter the...")
 
-	ListApiDeploymentRevisionsCmd.Flags().StringVar(&ListApiDeploymentRevisionsInput.OrderBy, "order_by", "", "A comma-separated list of fields, e.g. 'foo,bar' ...")
-
 	ListApiDeploymentRevisionsCmd.Flags().StringVar(&ListApiDeploymentRevisionsFromFile, "from_file", "", "Absolute path to JSON file containing request payload")
 
 }

@@ -40,7 +40,8 @@ const (
 
 // Lint wraps the result of a linter run for an API.
 // (-- api-linter: core::0123::resource-annotation=disabled
-//     aip.dev/not-precedent: This message is not currently used in an API. --)
+//
+//	aip.dev/not-precedent: This message is not currently used in an API. --)
 type Lint struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -100,7 +101,8 @@ func (x *Lint) GetFiles() []*LintFile {
 
 // LintFile wraps the result of a linter run for a file.
 // (-- api-linter: core::0123::resource-annotation=disabled
-//     aip.dev/not-precedent: This message is not currently used in an API. --)
+//
+//	aip.dev/not-precedent: This message is not currently used in an API. --)
 type LintFile struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -160,7 +162,8 @@ func (x *LintFile) GetProblems() []*LintProblem {
 
 // LintProblem represents a problem found by a linter.
 // (-- api-linter: core::0123::resource-annotation=disabled
-//     aip.dev/not-precedent: This message is not currently used in an API. --)
+//
+//	aip.dev/not-precedent: This message is not currently used in an API. --)
 type LintProblem struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -247,7 +250,8 @@ func (x *LintProblem) GetLocation() *LintLocation {
 
 // LintLocation represents a range of text in a file.
 // (-- api-linter: core::0123::resource-annotation=disabled
-//     aip.dev/not-precedent: This message is not currently used in an API. --)
+//
+//	aip.dev/not-precedent: This message is not currently used in an API. --)
 type LintLocation struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -307,7 +311,8 @@ func (x *LintLocation) GetEndPosition() *LintPosition {
 
 // LintPosition represents a point in a file.
 // (-- api-linter: core::0123::resource-annotation=disabled
-//     aip.dev/not-precedent: This message is not currently used in an API. --)
+//
+//	aip.dev/not-precedent: This message is not currently used in an API. --)
 type LintPosition struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -367,7 +372,8 @@ func (x *LintPosition) GetColumnNumber() int32 {
 
 // LintStats summarizes linter results.
 // (-- api-linter: core::0123::resource-annotation=disabled
-//     aip.dev/not-precedent: This message is not currently used in an API. --)
+//
+//	aip.dev/not-precedent: This message is not currently used in an API. --)
 type LintStats struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -437,7 +443,8 @@ func (x *LintStats) GetProblemCounts() []*LintProblemCount {
 // LintProblemCount represents the number of times a problem was found in
 // linting.
 // (-- api-linter: core::0123::resource-annotation=disabled
-//     aip.dev/not-precedent: This message is not currently used in an API. --)
+//
+//	aip.dev/not-precedent: This message is not currently used in an API. --)
 type LintProblemCount struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -507,7 +514,8 @@ func (x *LintProblemCount) GetRuleDocUri() string {
 // LinterRequest represents a request to a linter plugin. The plugin will lint
 // the provided spec based on rules that have been enabled.
 // (-- api-linter: core::0123::resource-annotation=disabled
-//     aip.dev/not-precedent: This message is not currently used in an API. --)
+//
+//	aip.dev/not-precedent: This message is not currently used in an API. --)
 type LinterRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -570,7 +578,8 @@ func (x *LinterRequest) GetRuleIds() []string {
 // LinterResponse represents a response returned from a linter plugin. It
 // contains a list of problems that were identified by the linter.
 // (-- api-linter: core::0123::resource-annotation=disabled
-//     aip.dev/not-precedent: This message is not currently used in an API. --)
+//
+//	aip.dev/not-precedent: This message is not currently used in an API. --)
 type LinterResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -637,7 +646,8 @@ func (x *LinterResponse) GetLint() *Lint {
 
 // Linter contains the name and source code / documentation of specific linter.
 // (-- api-linter: core::0123::resource-annotation=disabled
-//     aip.dev/not-precedent: This message is not currently used in an API. --)
+//
+//	aip.dev/not-precedent: This message is not currently used in an API. --)
 type Linter struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

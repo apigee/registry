@@ -20,16 +20,13 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/apigee/registry/gapic"
-	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry"
 	"github.com/apigee/registry/server/registry/names"
+	"github.com/apigee/registry/server/registry/test/seeder"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 // TestMain will set up a local RegistryServer and grpc.Server for all
@@ -93,9 +90,8 @@ func TestChecker_run(t *testing.T) {
 			err := rules.Register(111, &ProjectRule{
 				Name: NewRuleName(111, "test-rule"),
 				ApplyToProject: func(ctx context.Context, p *rpc.Project) []Problem {
-					client := ctx.Value(ContextKeyRegistryClient)
-					if _, ok := client.(*gapic.RegistryClient); !ok {
-						t.Errorf("context does not include client: %v", ctx)
+					if c := RegistryClient(ctx); c == nil {
+						t.Errorf("RegistryClient missing in context: %v", ctx)
 					}
 					return test.problems
 				},
@@ -105,41 +101,17 @@ func TestChecker_run(t *testing.T) {
 			}
 
 			ctx := context.Background()
-			client, err := connection.NewRegistryClient(ctx)
-			if err != nil {
-				t.Fatal(err)
-			}
-			t.Cleanup(func() { client.Close() })
-			admin, err := connection.NewAdminClient(ctx)
-			if err != nil {
-				t.Fatal(err)
-			}
-			t.Cleanup(func() { admin.Close() })
-
-			err = admin.DeleteProject(ctx, &rpc.DeleteProjectRequest{
-				Name:  "projects/test",
-				Force: true,
-			})
-			if err != nil && status.Code(err) != codes.NotFound {
-				t.Fatalf("Error deleting test project: %+v", err)
-			}
-			// Create the test project.
-			_, err = admin.CreateProject(ctx, &rpc.CreateProjectRequest{
-				ProjectId: "test",
-				Project: &rpc.Project{
-					DisplayName: "Test",
-					Description: "A test catalog",
+			registryClient, adminClient := grpctest.SetupRegistry(ctx, t, "checker-test", []seeder.RegistryResource{
+				&rpc.Project{
+					Name: "projects/checker-test",
 				},
 			})
-			if err != nil {
-				t.Fatalf("Error creating project %s", err)
-			}
 
 			l := New(rules, test.configs)
 			root := names.Project{
-				ProjectID: "test",
+				ProjectID: "checker-test",
 			}
-			resp, err := l.Check(ctx, admin, client, root, "", 10)
+			resp, err := l.Check(ctx, adminClient, registryClient, root, "", 10)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -187,41 +159,17 @@ func TestChecker_panic(t *testing.T) {
 			}
 
 			ctx := context.Background()
-			client, err := connection.NewRegistryClient(ctx)
-			if err != nil {
-				t.Fatal(err)
-			}
-			t.Cleanup(func() { client.Close() })
-			admin, err := connection.NewAdminClient(ctx)
-			if err != nil {
-				t.Fatal(err)
-			}
-			t.Cleanup(func() { admin.Close() })
-
-			err = admin.DeleteProject(ctx, &rpc.DeleteProjectRequest{
-				Name:  "projects/test",
-				Force: true,
-			})
-			if err != nil && status.Code(err) != codes.NotFound {
-				t.Fatalf("Error deleting test project: %+v", err)
-			}
-			// Create the test project.
-			_, err = admin.CreateProject(ctx, &rpc.CreateProjectRequest{
-				ProjectId: "test",
-				Project: &rpc.Project{
-					DisplayName: "Test",
-					Description: "A test catalog",
+			registryClient, adminClient := grpctest.SetupRegistry(ctx, t, "checker-test", []seeder.RegistryResource{
+				&rpc.Project{
+					Name: "projects/checker-test",
 				},
 			})
-			if err != nil {
-				t.Fatalf("Error creating project %s", err)
-			}
 
 			l := New(rules, nil)
 			root := names.Project{
-				ProjectID: "test",
+				ProjectID: "checker-test",
 			}
-			_, err = l.Check(ctx, admin, client, root, "", 10)
+			_, err = l.Check(ctx, adminClient, registryClient, root, "", 10)
 			if err == nil || !strings.Contains(err.Error(), "panic") {
 				t.Fatalf("Expected error with panic, got: %v", err)
 			}

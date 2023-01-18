@@ -31,8 +31,6 @@ func init() {
 
 	ListApiSpecRevisionsCmd.Flags().StringVar(&ListApiSpecRevisionsInput.Filter, "filter", "", "An expression that can be used to filter the...")
 
-	ListApiSpecRevisionsCmd.Flags().StringVar(&ListApiSpecRevisionsInput.OrderBy, "order_by", "", "A comma-separated list of fields, e.g. 'foo,bar' ...")
-
 	ListApiSpecRevisionsCmd.Flags().StringVar(&ListApiSpecRevisionsFromFile, "from_file", "", "Absolute path to JSON file containing request payload")
 
 }
