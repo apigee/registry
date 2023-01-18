@@ -34,6 +34,13 @@ const (
 	ContextKeyRegistryClient contextKey = iota
 )
 
+func RegistryClient(ctx context.Context) connection.RegistryClient {
+	if c := ctx.Value(ContextKeyRegistryClient); c != nil {
+		return c.(connection.RegistryClient)
+	}
+	return nil
+}
+
 type Resource interface {
 	GetName() string
 }
