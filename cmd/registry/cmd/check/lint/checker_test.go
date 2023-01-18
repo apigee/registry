@@ -101,7 +101,7 @@ func TestChecker_run(t *testing.T) {
 			}
 
 			ctx := context.Background()
-			registryClient, adminClient := grpctest.PrepRegistry(ctx, t, "checker-test", []seeder.RegistryResource{
+			registryClient, adminClient := grpctest.SetupRegistry(ctx, t, "checker-test", []seeder.RegistryResource{
 				&rpc.Project{
 					Name: "projects/checker-test",
 				},
@@ -159,7 +159,7 @@ func TestChecker_panic(t *testing.T) {
 			}
 
 			ctx := context.Background()
-			registryClient, adminClient := grpctest.PrepRegistry(ctx, t, "checker-test", []seeder.RegistryResource{
+			registryClient, adminClient := grpctest.SetupRegistry(ctx, t, "checker-test", []seeder.RegistryResource{
 				&rpc.Project{
 					Name: "projects/checker-test",
 				},

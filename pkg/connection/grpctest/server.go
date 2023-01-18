@@ -87,11 +87,11 @@ func TestMain(m *testing.M, rc registry.Config) {
 	os.Exit(m.Run())
 }
 
-// PrepRegistry connects to a registry instance using the default config,
+// SetupRegistry connects to a registry instance using the default config,
 // deletes the project if it exists, seeds the registry for testing, and
 // returns the connections used. It also registers cleanup handlers on the
 // test to close the connections and delete the project.
-func PrepRegistry(ctx context.Context, t *testing.T, projectID string, seeds []seeder.RegistryResource) (*gapic.RegistryClient, *gapic.AdminClient) {
+func SetupRegistry(ctx context.Context, t *testing.T, projectID string, seeds []seeder.RegistryResource) (*gapic.RegistryClient, *gapic.AdminClient) {
 	t.Helper()
 	registryClient, err := connection.NewRegistryClient(ctx)
 	if err != nil {
