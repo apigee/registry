@@ -19,9 +19,19 @@ import (
 	"testing"
 
 	"github.com/apigee/registry/cmd/registry/cmd/check/lint"
+	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/server/registry"
+	"github.com/apigee/registry/server/registry/test/seeder"
 	"github.com/google/go-cmp/cmp"
 )
+
+// TestMain will set up a local RegistryServer and grpc.Server for all
+// tests in this package if APG_REGISTRY_ADDRESS env var is not set
+// for the client.
+func TestMain(m *testing.M) {
+	grpctest.TestMain(m, registry.Config{})
+}
 
 func TestAddRules(t *testing.T) {
 	if err := AddRules(lint.NewRuleRegistry()); err != nil {
@@ -30,6 +40,14 @@ func TestAddRules(t *testing.T) {
 }
 
 func Test_recommendedDeploymentRef(t *testing.T) {
+	ctx := context.Background()
+	registryClient, _ := grpctest.SetupRegistry(ctx, t, "check-test", []seeder.RegistryResource{
+		&rpc.ApiDeployment{
+			Name: "projects/check-test/locations/global/apis/myapi/deployments/good",
+		},
+	})
+	ctx = context.WithValue(context.Background(), lint.ContextKeyRegistryClient, registryClient)
+
 	for _, tt := range []struct {
 		desc     string
 		in       string
@@ -41,21 +59,26 @@ func Test_recommendedDeploymentRef(t *testing.T) {
 			Message:    `recommended_deployment "bad" is not a valid ApiDeployment name.`,
 			Suggestion: `Parse error: invalid deployment name "bad": must match "^projects/([A-Za-z0-9-.]+)/locations/global/apis/([A-Za-z0-9-.]+)/deployments/([A-Za-z0-9-.]+)$"`,
 		}}},
-		{"not a child", "projects/myproject/locations/global/apis/bad/deployments/bad", []lint.Problem{{
+		{"not a child", "projects/check-test/locations/global/apis/bad/deployments/bad", []lint.Problem{{
 			Severity:   lint.ERROR,
-			Message:    `recommended_deployment "projects/myproject/locations/global/apis/bad/deployments/bad" is not a child of this Api.`,
+			Message:    `recommended_deployment "projects/check-test/locations/global/apis/bad/deployments/bad" is not a child of this Api.`,
 			Suggestion: `Correct the recommended_deployment.`,
 		}}},
-		{"good", "projects/myproject/locations/global/apis/myapi/deployments/good", nil},
+		{"missing", "projects/check-test/locations/global/apis/myapi/deployments/missing", []lint.Problem{{
+			Severity:   lint.ERROR,
+			Message:    `recommended_deployment "projects/check-test/locations/global/apis/myapi/deployments/missing" not found in registry.`,
+			Suggestion: `Correct the recommended_deployment.`,
+		}}},
+		{"good", "projects/check-test/locations/global/apis/myapi/deployments/good", nil},
 	} {
 		t.Run(tt.desc, func(t *testing.T) {
 			a := &rpc.Api{
-				Name:                  "projects/myproject/locations/global/apis/myapi",
+				Name:                  "projects/check-test/locations/global/apis/myapi",
 				RecommendedDeployment: tt.in,
 			}
 
 			if recommendedDeploymentRef.OnlyIf(a) {
-				got := recommendedDeploymentRef.ApplyToApi(context.Background(), a)
+				got := recommendedDeploymentRef.ApplyToApi(ctx, a)
 				if diff := cmp.Diff(got, tt.expected); diff != "" {
 					t.Errorf("unexpected diff: (-want +got):\n%s", diff)
 				}

@@ -61,7 +61,17 @@ var recommendedVersionRef = &lint.ApiRule{
 			}}
 		}
 
-		// TODO: check DB for existence
+		registryClient := lint.RegistryClient(ctx)
+		if _, err := registryClient.GetApiVersion(ctx, &rpc.GetApiVersionRequest{
+			Name: a.RecommendedVersion,
+		}); err != nil {
+			return []lint.Problem{{
+				Severity:   lint.ERROR,
+				Message:    fmt.Sprintf(`recommended_version %q not found in registry.`, a.RecommendedVersion),
+				Suggestion: `Correct the recommended_version.`,
+			}}
+		}
+
 		return nil
 	},
 }
