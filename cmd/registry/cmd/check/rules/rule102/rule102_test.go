@@ -41,7 +41,7 @@ func TestAddRules(t *testing.T) {
 
 func Test_recommendedDeploymentRef(t *testing.T) {
 	ctx := context.Background()
-	registryClient, _ := grpctest.PrepRegistry(ctx, t, "check-test", []seeder.RegistryResource{
+	registryClient, _ := grpctest.SetupRegistry(ctx, t, "check-test", []seeder.RegistryResource{
 		&rpc.ApiDeployment{
 			Name: "projects/check-test/locations/global/apis/myapi/deployments/good",
 		},
