@@ -36,7 +36,8 @@ const (
 
 // Map represents a map that can be serialized using Protocol Buffers.
 // (-- api-linter: core::0123::resource-annotation=disabled
-//     aip.dev/not-precedent: This message is not currently used in an API. --)
+//
+//	aip.dev/not-precedent: This message is not currently used in an API. --)
 type Map struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

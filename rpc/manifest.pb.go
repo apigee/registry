@@ -137,8 +137,9 @@ type GeneratedResource struct {
 	// A pattern that specifies a generated resource.
 	// This can specify one particular resource or a group of resources.
 	// Format:
-	//   apis/{api}/versions/{version}/specs/{spec}/artifacts/{artifact}
-	//   apis/-/versions/-/specs/-/artifacts/-
+	//
+	//	apis/{api}/versions/{version}/specs/{spec}/artifacts/{artifact}
+	//	apis/-/versions/-/specs/-/artifacts/-
 	Pattern string `protobuf:"bytes,1,opt,name=pattern,proto3" json:"pattern,omitempty"`
 	// A filter expression that limits the resources that match the pattern.
 	Filter string `protobuf:"bytes,2,opt,name=filter,proto3" json:"filter,omitempty"`
@@ -256,8 +257,9 @@ type Dependency struct {
 	// This can specify one particular resource or a group of resources.
 	// A pattern in a dependency can contain references to the original resource.
 	// Format:
-	//   $resource.api/versions/-/specs/-
-	//   $resource.version/specs/-/artifacts/-
+	//
+	//	$resource.api/versions/-/specs/-
+	//	$resource.version/specs/-/artifacts/-
 	Pattern string `protobuf:"bytes,1,opt,name=pattern,proto3" json:"pattern,omitempty"`
 	// A filter expression that limits the resources that match the pattern.
 	Filter string `protobuf:"bytes,2,opt,name=filter,proto3" json:"filter,omitempty"`
