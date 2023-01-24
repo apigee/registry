@@ -35,6 +35,9 @@ import (
 	"github.com/apigee/registry/cmd/registry/cmd/check/lint"
 	"github.com/apigee/registry/cmd/registry/cmd/check/rules/rule100"
 	"github.com/apigee/registry/cmd/registry/cmd/check/rules/rule101"
+	"github.com/apigee/registry/cmd/registry/cmd/check/rules/rule102"
+	"github.com/apigee/registry/cmd/registry/cmd/check/rules/rule103"
+	"github.com/apigee/registry/cmd/registry/cmd/check/rules/rule104"
 	"github.com/apigee/registry/cmd/registry/cmd/check/rules/rule110"
 )
 
@@ -43,6 +46,9 @@ type addRulesFuncType func(lint.RuleRegistry) error
 var addRulesFuncs = []addRulesFuncType{
 	rule100.AddRules,
 	rule101.AddRules,
+	rule102.AddRules,
+	rule103.AddRules,
+	rule104.AddRules,
 	rule110.AddRules,
 }
 
