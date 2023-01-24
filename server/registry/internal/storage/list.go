@@ -1074,6 +1074,33 @@ func (c *Client) ListSpecRevisionArtifacts(ctx context.Context, parent names.Spe
 		token.Order = opts.Order
 	}
 
+	// if any explicit parent specified, ensure it exists
+	if parent.ProjectID != "-" && parent.ApiID != "-" && parent.VersionID != "-" && parent.SpecID != "-" {
+		specAndRev := strings.Split(parent.SpecID, "@")
+		if specAndRev[0] != "-" {
+			if _, err := c.GetSpec(ctx, parent.Spec()); err != nil {
+				return ArtifactList{}, err
+			}
+		}
+		if len(specAndRev) > 1 && specAndRev[1] != "-" {
+			if _, err := c.GetSpecRevision(ctx, parent); err != nil {
+				return ArtifactList{}, err
+			}
+		}
+	} else if parent.ProjectID != "-" && parent.ApiID != "-" && parent.VersionID != "-" && parent.SpecID == "-" {
+		if _, err := c.GetVersion(ctx, parent.Version()); err != nil {
+			return ArtifactList{}, err
+		}
+	} else if parent.ProjectID != "-" && parent.ApiID != "-" && parent.VersionID == "-" && parent.SpecID == "-" {
+		if _, err := c.GetApi(ctx, parent.Api()); err != nil {
+			return ArtifactList{}, err
+		}
+	} else if parent.ProjectID != "-" && parent.ApiID == "-" && parent.VersionID == "-" && parent.SpecID == "-" {
+		if _, err := c.GetProject(ctx, parent.Project()); err != nil {
+			return ArtifactList{}, err
+		}
+	}
+
 	op := c.db.WithContext(ctx)
 	if id := parent.ProjectID; id != "-" {
 		op = op.Where("artifacts.project_id = ?", id)
@@ -1207,6 +1234,29 @@ func (c *Client) ListDeploymentRevisionArtifacts(ctx context.Context, parent nam
 		return ArtifactList{}, status.Errorf(codes.InvalidArgument, "invalid order_by %q: %s", opts.Order, err)
 	} else {
 		token.Order = opts.Order
+	}
+
+	// if any explicit parent specified, ensure it exists
+	if parent.ProjectID != "-" && parent.ApiID != "-" && parent.DeploymentID != "-" {
+		deploymentAndRev := strings.Split(parent.DeploymentID, "@")
+		if deploymentAndRev[0] != "-" {
+			if _, err := c.GetDeployment(ctx, parent.Deployment()); err != nil {
+				return ArtifactList{}, err
+			}
+		}
+		if len(deploymentAndRev) > 1 && deploymentAndRev[1] != "-" {
+			if _, err := c.GetDeploymentRevision(ctx, parent); err != nil {
+				return ArtifactList{}, err
+			}
+		}
+	} else if parent.ProjectID != "-" && parent.ApiID != "-" && parent.DeploymentID == "-" {
+		if _, err := c.GetApi(ctx, parent.Api()); err != nil {
+			return ArtifactList{}, err
+		}
+	} else if parent.ProjectID != "-" && parent.ApiID == "-" && parent.DeploymentID == "-" {
+		if _, err := c.GetProject(ctx, parent.Project()); err != nil {
+			return ArtifactList{}, err
+		}
 	}
 
 	op := c.db.WithContext(ctx)
