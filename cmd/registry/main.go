@@ -33,6 +33,9 @@ func main() {
 
 	cmd := cmd.Command()
 	if err := cmd.ExecuteContext(ctx); err != nil {
+		fmt.Println("----")
+		fmt.Println("Need more help?")
+		fmt.Println("https://github.com/apigee/registry/wiki")
 		os.Exit(1)
 	}
 }
