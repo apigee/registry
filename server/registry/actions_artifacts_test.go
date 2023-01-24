@@ -949,7 +949,35 @@ func TestListArtifactsResponseCodes(t *testing.T) {
 		want  codes.Code
 	}{
 		{
-			desc: "parent parent not found",
+			desc: "parent spec not found",
+			req: &rpc.ListArtifactsRequest{
+				Parent: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/s",
+			},
+			want: codes.NotFound,
+		},
+		{
+			desc: "parent spec rev not found",
+			req: &rpc.ListArtifactsRequest{
+				Parent: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/s@123",
+			},
+			want: codes.NotFound,
+		},
+		{
+			desc: "parent deployment not found",
+			req: &rpc.ListArtifactsRequest{
+				Parent: "projects/my-project/locations/global/apis/my-api/deployments/d",
+			},
+			want: codes.NotFound,
+		},
+		{
+			desc: "parent deployment rev not found",
+			req: &rpc.ListArtifactsRequest{
+				Parent: "projects/my-project/locations/global/apis/my-api/deployments/d@123",
+			},
+			want: codes.NotFound,
+		},
+		{
+			desc: "parent version not found",
 			req: &rpc.ListArtifactsRequest{
 				Parent: "projects/my-project/locations/global/apis/my-api/versions/v1",
 			},
