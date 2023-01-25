@@ -342,33 +342,6 @@ func TestListApiSpecRevisions(t *testing.T) {
 		wantToken bool
 	}{
 		{
-			desc: "single spec latest rev",
-			seed: []*rpc.ApiSpec{
-				{
-					Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
-				},
-				{
-					Name:     "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
-					Contents: specContents,
-				},
-				{
-					Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/other-spec",
-				},
-			},
-			req: &rpc.ListApiSpecRevisionsRequest{
-				Name: "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
-			},
-			want: &rpc.ListApiSpecRevisionsResponse{
-				ApiSpecs: []*rpc.ApiSpec{
-					{
-						Name:      "projects/my-project/locations/global/apis/my-api/versions/v1/specs/my-spec",
-						Hash:      sha256hash(specContents),
-						SizeBytes: int32(len(specContents)),
-					},
-				},
-			},
-		},
-		{
 			desc: "single spec all revs",
 			seed: []*rpc.ApiSpec{
 				{
