@@ -20,17 +20,24 @@ import (
 	"github.com/apigee/registry/gapic"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 )
 
 func GetProject(ctx context.Context,
 	client *gapic.AdminClient,
 	name names.Project,
+	allowUnavailable bool,
 	handler ProjectHandler) error {
 	project, err := client.GetProject(ctx, &rpc.GetProjectRequest{
 		Name: name.String(),
 	})
-	if err != nil {
+	if err != nil && status.Code(err) == codes.Unimplemented && allowUnavailable {
+		// If the admin service is unavailable, provide a placeholder project.
+		// If the project is invalid, downstream actions will fail.
+		project = &rpc.Project{Name: name.String()}
+	} else if err != nil {
 		return err
 	}
 
