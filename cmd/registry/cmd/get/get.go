@@ -143,7 +143,7 @@ func (h *getHandler) traverse() error {
 	}
 
 	if project, err := names.ParseProject(name); err == nil {
-		return core.GetProject(ctx, adminClient, project, h.projectHandler())
+		return core.GetProject(ctx, adminClient, project, false, h.projectHandler())
 	} else if api, err := names.ParseApi(name); err == nil {
 		return core.GetAPI(ctx, client, api, h.apiHandler())
 	} else if deployment, err := names.ParseDeployment(name); err == nil {
