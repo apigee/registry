@@ -346,32 +346,6 @@ func TestListApiDeploymentRevisions(t *testing.T) {
 		wantToken bool
 	}{
 		{
-			desc: "single deployment latest rev",
-			seed: []*rpc.ApiDeployment{
-				{
-					Name: "projects/my-project/locations/global/apis/my-api/deployments/my-dep",
-				},
-				{
-					Name:        "projects/my-project/locations/global/apis/my-api/deployments/my-dep",
-					EndpointUri: "updated",
-				},
-				{
-					Name: "projects/my-project/locations/global/apis/my-api/deployments/other-dep",
-				},
-			},
-			req: &rpc.ListApiDeploymentRevisionsRequest{
-				Name: "projects/my-project/locations/global/apis/my-api/deployments/my-dep",
-			},
-			want: &rpc.ListApiDeploymentRevisionsResponse{
-				ApiDeployments: []*rpc.ApiDeployment{
-					{
-						Name:        "projects/my-project/locations/global/apis/my-api/deployments/my-dep",
-						EndpointUri: "updated",
-					},
-				},
-			},
-		},
-		{
 			desc: "single deployment all revs",
 			seed: []*rpc.ApiDeployment{
 				{

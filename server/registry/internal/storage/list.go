@@ -735,15 +735,6 @@ func (c *Client) ListSpecRevisions(ctx context.Context, parent names.SpecRevisio
 	if id := parent.RevisionID; id != "-" && id != "" { // select specific spec revision
 		op = op.Where("specs.revision_id = ?", id)
 	}
-	if id := parent.RevisionID; id == "" { // select latest spec revision
-		op = op.Select("specs.*").Table("specs").
-			Joins(`join (?) latest
-			ON specs.project_id = latest.project_id
-			AND specs.api_id = latest.api_id
-			AND specs.version_id = latest.version_id
-			AND specs.spec_id = latest.spec_id
-			AND specs.revision_id = latest.revision_id`, c.latestSpecRevisionsQuery(ctx))
-	}
 
 	if order, err := gormOrdering(opts.Order, "specs"); err != nil {
 		return SpecList{}, err
@@ -983,14 +974,6 @@ func (c *Client) ListDeploymentRevisions(ctx context.Context, parent names.Deplo
 	}
 	if id := parent.RevisionID; id != "-" && id != "" { // select specific spec revision
 		op = op.Where("deployments.revision_id = ?", id)
-	}
-	if id := parent.RevisionID; id == "" { // select latest spec revision
-		op = op.Select("deployments.*").Table("deployments").
-			Joins(`join (?) latest
-			ON deployments.project_id = latest.project_id
-			AND deployments.api_id = latest.api_id
-			AND deployments.deployment_id = latest.deployment_id
-			AND deployments.revision_id = latest.revision_id`, c.latestDeploymentRevisionsQuery(ctx))
 	}
 
 	if order, err := gormOrdering(opts.Order, "deployments"); err != nil {
