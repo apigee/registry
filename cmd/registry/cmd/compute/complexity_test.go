@@ -15,7 +15,10 @@
 package compute
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -30,6 +33,20 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 )
 
+func readAndGZipFile(t *testing.T, filename string) (*bytes.Buffer, error) {
+	t.Helper()
+	fileBytes, _ := os.ReadFile(filename)
+	var buf bytes.Buffer
+	zw, _ := gzip.NewWriterLevel(&buf, gzip.BestCompression)
+	_, err := zw.Write(fileBytes)
+	if err != nil {
+		return nil, err
+	}
+	if err := zw.Close(); err != nil {
+		return nil, err
+	}
+	return &buf, nil
+}
 func TestComplexity(t *testing.T) {
 	tests := []struct {
 		desc       string

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package compute
+package conformance
 
 import (
 	"bytes"
@@ -25,7 +25,9 @@ import (
 
 	"github.com/apigee/registry/cmd/registry/cmd/apply"
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/server/registry"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"google.golang.org/grpc/codes"
@@ -33,6 +35,13 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
 )
+
+// TestMain will set up a local RegistryServer and grpc.Server for all
+// tests in this package if APG_REGISTRY_ADDRESS env var is not set
+// for the client.
+func TestMain(m *testing.M) {
+	grpctest.TestMain(m, registry.Config{})
+}
 
 func readAndGZipFile(t *testing.T, filename string) (*bytes.Buffer, error) {
 	t.Helper()
@@ -59,7 +68,7 @@ func TestConformance(t *testing.T) {
 		//Tests the normal use case with one guideline defined with state: ACTIVE and one Rule defined with severity:ERROR
 		{
 			desc:            "normal case",
-			conformancePath: filepath.Join("testdata", "styleguide.yaml"),
+			conformancePath: filepath.Join("..", "testdata", "styleguide.yaml"),
 			getPattern:      "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/conformance-openapitest",
 			wantProto: &rpc.ConformanceReport{
 				Id:         "conformance-openapitest",
@@ -102,7 +111,7 @@ func TestConformance(t *testing.T) {
 		//Tests if default state and severity values are assigned properly in the absence of defined values
 		{
 			desc:            "default case",
-			conformancePath: filepath.Join("testdata", "styleguide-default.yaml"),
+			conformancePath: filepath.Join("..", "testdata", "styleguide-default.yaml"),
 			getPattern:      "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/conformance-openapitest-default",
 			wantProto: &rpc.ConformanceReport{
 				Id:         "conformance-openapitest-default",
@@ -144,7 +153,7 @@ func TestConformance(t *testing.T) {
 		//Tests if multiple severity levels are populated correctly in severity report
 		{
 			desc:            "multiple severity",
-			conformancePath: filepath.Join("testdata", "styleguide-multiple-severity.yaml"),
+			conformancePath: filepath.Join("..", "testdata", "styleguide-multiple-severity.yaml"),
 			getPattern:      "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/conformance-openapitest-multiple-severity",
 			wantProto: &rpc.ConformanceReport{
 				Id:         "conformance-openapitest-multiple-severity",
@@ -208,7 +217,7 @@ func TestConformance(t *testing.T) {
 		//Tests if multiple state entries are populated correctly in severity report
 		{
 			desc:            "multiple state",
-			conformancePath: filepath.Join("testdata", "styleguide-multiple-state.yaml"),
+			conformancePath: filepath.Join("..", "testdata", "styleguide-multiple-state.yaml"),
 			getPattern:      "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/conformance-openapitest-multiple-state",
 			wantProto: &rpc.ConformanceReport{
 				Id:         "conformance-openapitest-multiple-state",
@@ -284,7 +293,7 @@ func TestConformance(t *testing.T) {
 		//Tests a guideline which defines rules from multiple linters
 		{
 			desc:            "multiple linter",
-			conformancePath: filepath.Join("testdata", "styleguide-multiple-linter.yaml"),
+			conformancePath: filepath.Join("..", "testdata", "styleguide-multiple-linter.yaml"),
 			getPattern:      "projects/conformance-test/locations/global/apis/petstore/versions/1.0.0/specs/openapi.yaml/artifacts/conformance-openapitest-multiple-linter",
 			wantProto: &rpc.ConformanceReport{
 				Id:         "conformance-openapitest-multiple-linter",
@@ -435,7 +444,7 @@ func TestConformance(t *testing.T) {
 			}
 
 			// Create Spec in each of the versions
-			buf, err := readAndGZipFile(t, filepath.Join("testdata", "openapi.yaml"))
+			buf, err := readAndGZipFile(t, filepath.Join("..", "testdata", "openapi.yaml"))
 			if err != nil {
 				t.Fatalf("Failed reading API contents: %s", err.Error())
 			}
@@ -464,7 +473,7 @@ func TestConformance(t *testing.T) {
 
 			// setup the command
 			conformanceCmd := Command()
-			args = []string{"conformance", spec.Name}
+			args = []string{spec.Name}
 			conformanceCmd.SetArgs(args)
 
 			if err = conformanceCmd.Execute(); err != nil {

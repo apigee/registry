@@ -15,6 +15,7 @@
 package compute
 
 import (
+	"github.com/apigee/registry/cmd/registry/cmd/compute/conformance"
 	"github.com/spf13/cobra"
 )
 
@@ -24,7 +25,7 @@ func Command() *cobra.Command {
 		Short: "Compute properties of resources in the API Registry",
 	}
 
-	cmd.AddCommand(conformanceCommand())
+	cmd.AddCommand(conformance.Command())
 	cmd.AddCommand(complexityCommand())
 	cmd.AddCommand(lintCommand())
 	cmd.AddCommand(lintStatsCommand())
