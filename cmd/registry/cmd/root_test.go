@@ -15,6 +15,8 @@
 package cmd
 
 import (
+	"flag"
+	"net/http"
 	"regexp"
 	"strings"
 	"testing"
@@ -27,6 +29,8 @@ import (
 func TestCommandMetadata(t *testing.T) {
 	checkCommand(t, Command(), "")
 }
+
+var github = flag.Bool("github", false, "perform tests that check resources on GitHub")
 
 func checkCommand(t *testing.T, cmd *cobra.Command, prefix string) {
 	name := prefix + cmd.Name()
@@ -66,6 +70,23 @@ func checkCommand(t *testing.T, cmd *cobra.Command, prefix string) {
 					}
 				}
 			}
+
+			if *github {
+				// Does this command have a page on the wiki?
+				client := &http.Client{
+					CheckRedirect: func(req *http.Request, via []*http.Request) error {
+						return http.ErrUseLastResponse
+					},
+				}
+				wikiUrl := "https://github.com/apigee/registry/wiki/" + strings.ReplaceAll(name, " ", "-")
+				res, err := client.Get(wikiUrl)
+				if err != nil {
+					t.Logf("error making http request: %s", err)
+				} else if res.StatusCode != 200 {
+					t.Logf("%s does not have a wiki page", name)
+				}
+			}
+
 			// Check field usage messages.
 			flags := cmd.LocalFlags()
 			flags.VisitAll(func(f *pflag.Flag) {
