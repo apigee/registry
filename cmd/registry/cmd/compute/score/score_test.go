@@ -1,4 +1,4 @@
-package compute
+package score
 
 import (
 	"context"
@@ -6,7 +6,9 @@ import (
 	"testing"
 
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/server/registry"
 	"github.com/apigee/registry/server/registry/test/seeder"
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/api/iterator"
@@ -14,6 +16,13 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 )
+
+// TestMain will set up a local RegistryServer and grpc.Server for all
+// tests in this package if APG_REGISTRY_ADDRESS env var is not set
+// for the client.
+func TestMain(m *testing.M) {
+	grpctest.TestMain(m, registry.Config{})
+}
 
 const gzipOpenAPIv3 = "application/x.openapi+gzip;version=3.0.0"
 const gzipProtobuf = "application/x.protobuf+gzip"
@@ -303,7 +312,7 @@ func TestScore(t *testing.T) {
 
 			// setup the score command
 			scoreCmd := Command()
-			args := []string{"score", "projects/score-test/locations/global/apis/-/versions/-/specs/-"}
+			args := []string{"projects/score-test/locations/global/apis/-/versions/-/specs/-"}
 			scoreCmd.SetArgs(args)
 
 			if err = scoreCmd.Execute(); err != nil {

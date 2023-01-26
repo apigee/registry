@@ -19,6 +19,8 @@ import (
 	"github.com/apigee/registry/cmd/registry/cmd/compute/conformance"
 	"github.com/apigee/registry/cmd/registry/cmd/compute/lint"
 	"github.com/apigee/registry/cmd/registry/cmd/compute/lintstats"
+	"github.com/apigee/registry/cmd/registry/cmd/compute/score"
+	"github.com/apigee/registry/cmd/registry/cmd/compute/scorecard"
 	"github.com/spf13/cobra"
 )
 
@@ -32,8 +34,8 @@ func Command() *cobra.Command {
 	cmd.AddCommand(complexity.Command())
 	cmd.AddCommand(lint.Command())
 	cmd.AddCommand(lintstats.Command())
-	cmd.AddCommand(scoreCommand())
-	cmd.AddCommand(scoreCardCommand())
+	cmd.AddCommand(score.Command())
+	cmd.AddCommand(scorecard.Command())
 	cmd.AddCommand(vocabularyCommand())
 
 	cmd.PersistentFlags().String("filter", "", "Filter selected resources")

@@ -1,4 +1,4 @@
-package compute
+package scorecard
 
 import (
 	"context"
@@ -6,14 +6,49 @@ import (
 	"testing"
 
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/server/registry"
 	"github.com/apigee/registry/server/registry/test/seeder"
 	"github.com/google/go-cmp/cmp"
 	"google.golang.org/api/iterator"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 )
 
+// TestMain will set up a local RegistryServer and grpc.Server for all
+// tests in this package if APG_REGISTRY_ADDRESS env var is not set
+// for the client.
+func TestMain(m *testing.M) {
+	grpctest.TestMain(m, registry.Config{})
+}
+
+const gzipOpenAPIv3 = "application/x.openapi+gzip;version=3.0.0"
+const gzipProtobuf = "application/x.protobuf+gzip"
 const scoreCardDefinitionType = "application/octet-stream;type=google.cloud.apigeeregistry.v1.scoring.ScoreCardDefinition"
 const scoreType = "application/octet-stream;type=google.cloud.apigeeregistry.v1.scoring.Score"
+
+func protoMarshal(m proto.Message) []byte {
+	b, _ := proto.Marshal(m)
+	return b
+}
+
+func deleteProject(
+	ctx context.Context,
+	client connection.AdminClient,
+	t *testing.T,
+	projectID string) {
+	t.Helper()
+	req := &rpc.DeleteProjectRequest{
+		Name:  "projects/" + projectID,
+		Force: true,
+	}
+	err := client.DeleteProject(ctx, req)
+	if err != nil && status.Code(err) != codes.NotFound {
+		t.Fatalf("Failed DeleteProject(%v): %s", req, err.Error())
+	}
+}
 
 var (
 	scoreCardAll = &rpc.ScoreCardDefinition{
@@ -233,7 +268,7 @@ func TestScoreCard(t *testing.T) {
 
 			// setup the score command
 			scoreCardCmd := Command()
-			args := []string{"scorecard", "projects/scorecard-test/locations/global/apis/-/versions/-/specs/-"}
+			args := []string{"projects/scorecard-test/locations/global/apis/-/versions/-/specs/-"}
 			scoreCardCmd.SetArgs(args)
 
 			if err = scoreCardCmd.Execute(); err != nil {
