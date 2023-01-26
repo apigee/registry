@@ -35,38 +35,33 @@ import (
 
 func csvCommand() *cobra.Command {
 	var (
-		projectID string
 		delimiter string
 		jobs      int
 	)
 
 	cmd := &cobra.Command{
-		Use:   "csv file --project-id=value [--delimiter=value]",
+		Use:   "csv FILE",
 		Short: "Upload API descriptions from a CSV file",
 		Args:  cobra.ExactArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
-			ctx := cmd.Context()
+		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(delimiter) != 1 {
-				log.Fatalf(ctx, "Invalid delimiter %q: must be exactly one character", delimiter)
+				return fmt.Errorf("invalid delimiter %q: must be exactly one character", delimiter)
 			}
-
+			ctx := cmd.Context()
+			parent, err := getParent(cmd)
+			if err != nil {
+				return fmt.Errorf("failed to identify parent project (%s)", err)
+			}
+			parentName, err := names.ParseProjectWithLocation(parent)
+			if err != nil {
+				return fmt.Errorf("error parsing project name (%s)", err)
+			}
 			client, err := connection.NewRegistryClient(ctx)
 			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
+				return fmt.Errorf("error getting client (%s)", err)
 			}
-
-			adminClient, err := connection.NewAdminClient(ctx)
-			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to get client")
-			}
-
-			if _, err := adminClient.UpdateProject(ctx, &rpc.UpdateProjectRequest{
-				Project: &rpc.Project{
-					Name: names.Project{ProjectID: projectID}.String(),
-				},
-				AllowMissing: true,
-			}); err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to ensure project exists")
+			if err := core.VerifyLocation(ctx, client, parent); err != nil {
+				return fmt.Errorf("parent does not exist (%s)", err)
 			}
 
 			taskQueue, wait := core.WorkerPool(ctx, jobs)
@@ -74,7 +69,7 @@ func csvCommand() *cobra.Command {
 
 			file, err := os.Open(args[0])
 			if err != nil {
-				log.FromContext(ctx).WithError(err).Fatal("Failed to open file")
+				return fmt.Errorf("failed to open file (%s)", err)
 			}
 			defer file.Close()
 
@@ -85,23 +80,22 @@ func csvCommand() *cobra.Command {
 
 			for row, err := r.Read(); err != io.EOF; row, err = r.Read() {
 				if err != nil {
-					log.FromContext(ctx).WithError(err).Fatal("Failed to read row from file")
+					return fmt.Errorf("failed to read row from file (%s)", err)
 				}
 
 				taskQueue <- &uploadSpecTask{
-					client:    client,
-					projectID: projectID,
-					apiID:     row.ApiID,
-					versionID: row.VersionID,
-					specID:    row.SpecID,
-					filepath:  row.Filepath,
+					client:     client,
+					parentName: parentName,
+					apiID:      row.ApiID,
+					versionID:  row.VersionID,
+					specID:     row.SpecID,
+					filepath:   row.Filepath,
 				}
 			}
+			return nil
 		},
 	}
 
-	cmd.Flags().StringVar(&projectID, "project-id", "", "project ID to use for each upload")
-	_ = cmd.MarkFlagRequired("project-id")
 	cmd.Flags().StringVar(&delimiter, "delimiter", ",", "field delimiter for the CSV file")
 	cmd.Flags().IntVarP(&jobs, "jobs", "j", 10, "number of actions to perform concurrently")
 	return cmd
@@ -180,18 +174,19 @@ func (r *uploadCSVReader) buildColumnIndex(header []string) error {
 }
 
 type uploadSpecTask struct {
-	client    connection.RegistryClient
-	projectID string
-	apiID     string
-	versionID string
-	specID    string
-	filepath  string
+	client     connection.RegistryClient
+	parentName names.Project
+	apiID      string
+	versionID  string
+	specID     string
+	filepath   string
 }
 
 func (t uploadSpecTask) Run(ctx context.Context) error {
+	apiName := t.parentName.Api(t.apiID)
 	api, err := t.client.CreateApi(ctx, &rpc.CreateApiRequest{
-		Parent: fmt.Sprintf("projects/%s/locations/global", t.projectID),
-		ApiId:  t.apiID,
+		Parent: apiName.Parent(),
+		ApiId:  apiName.ApiID,
 		Api:    &rpc.Api{},
 	})
 
@@ -200,15 +195,16 @@ func (t uploadSpecTask) Run(ctx context.Context) error {
 		log.Debugf(ctx, "Created API: %s", api.GetName())
 	case codes.AlreadyExists:
 		api = &rpc.Api{
-			Name: fmt.Sprintf("projects/%s/locations/global/apis/%s", t.projectID, t.apiID),
+			Name: apiName.String(),
 		}
 	default:
 		return fmt.Errorf("failed to ensure API exists: %s", err)
 	}
 
+	versionName := apiName.Version(t.versionID)
 	version, err := t.client.CreateApiVersion(ctx, &rpc.CreateApiVersionRequest{
-		Parent:       api.GetName(),
-		ApiVersionId: t.versionID,
+		Parent:       versionName.Parent(),
+		ApiVersionId: versionName.VersionID,
 		ApiVersion:   &rpc.ApiVersion{},
 	})
 
@@ -217,7 +213,7 @@ func (t uploadSpecTask) Run(ctx context.Context) error {
 		log.Debugf(ctx, "Created API version: %s", version.GetName())
 	case codes.AlreadyExists:
 		version = &rpc.ApiVersion{
-			Name: fmt.Sprintf("projects/%s/locations/global/apis/%s/versions/%s", t.projectID, t.apiID, t.versionID),
+			Name: versionName.String(),
 		}
 	default:
 		return fmt.Errorf("failed to ensure API version exists: %s", err)
@@ -233,9 +229,10 @@ func (t uploadSpecTask) Run(ctx context.Context) error {
 		return err
 	}
 
+	specName := versionName.Spec(t.specID)
 	spec, err := t.client.CreateApiSpec(ctx, &rpc.CreateApiSpecRequest{
-		Parent:    version.GetName(),
-		ApiSpecId: t.specID,
+		Parent:    specName.Parent(),
+		ApiSpecId: specName.SpecID,
 		ApiSpec: &rpc.ApiSpec{
 			// TODO: How do we choose a mime type?
 			MimeType: types.OpenAPIMimeType("+gzip", "3.0.0"),
