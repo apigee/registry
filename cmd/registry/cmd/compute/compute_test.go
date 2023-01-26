@@ -16,14 +16,10 @@ package compute
 
 import (
 	"testing"
-
-	"github.com/apigee/registry/pkg/connection/grpctest"
-	"github.com/apigee/registry/server/registry"
 )
 
-// TestMain will set up a local RegistryServer and grpc.Server for all
-// tests in this package if APG_REGISTRY_ADDRESS env var is not set
-// for the client.
-func TestMain(m *testing.M) {
-	grpctest.TestMain(m, registry.Config{})
+func TestCommand(t *testing.T) {
+	if Command() == nil {
+		t.Fatalf("Command() failed to return a value")
+	}
 }
