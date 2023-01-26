@@ -12,12 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package compute
+package vocabulary
 
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/apigee/registry/cmd/registry/core"
 	"github.com/apigee/registry/cmd/registry/types"
@@ -25,6 +24,7 @@ import (
 	"github.com/apigee/registry/pkg/connection"
 	"github.com/apigee/registry/rpc"
 	"github.com/apigee/registry/server/registry/names"
+	"github.com/google/gnostic/metrics/vocabulary"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/proto"
 
@@ -34,18 +34,18 @@ import (
 	oas3 "github.com/google/gnostic/openapiv3"
 )
 
-func complexityCommand() *cobra.Command {
+func Command() *cobra.Command {
 	return &cobra.Command{
-		Use:   "complexity",
-		Short: "Compute complexity metrics of API specs",
-		Args:  cobra.ExactArgs(1),
+		Use:   "vocabulary",
+		Short: "Compute vocabularies of API specs",
+		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := cmd.Context()
 			c, err := connection.ActiveConfig()
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get config")
 			}
-			args[0] = c.FQName(args[0])
+			path := c.FQName(args[0])
 
 			filter, err := cmd.Flags().GetString("filter")
 			if err != nil {
@@ -65,34 +65,34 @@ func complexityCommand() *cobra.Command {
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to get jobs from flags")
 			}
-			taskQueue, wait := core.WorkerPool(ctx, jobs)
+			taskQueue, wait := core.WorkerPoolWithWarnings(ctx, jobs)
 			defer wait()
 
-			parsed, err := names.ParseSpecRevision(args[0])
+			parsed, err := names.ParseSpecRevision(path)
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed parse")
 			}
 
+			// Iterate through a collection of specs and summarize each.
 			if parsed.RevisionID == "" {
 				err = core.ListSpecs(ctx, client, parsed.Spec(), filter, false, func(spec *rpc.ApiSpec) error {
-					taskQueue <- &computeComplexityTask{
+					taskQueue <- &computeVocabularyTask{
 						client:   client,
-						specName: spec.Name,
+						specName: spec.GetName(),
 						dryRun:   dryRun,
 					}
 					return nil
 				})
 			} else {
 				err = core.ListSpecRevisions(ctx, client, parsed, filter, false, func(spec *rpc.ApiSpec) error {
-					taskQueue <- &computeComplexityTask{
+					taskQueue <- &computeVocabularyTask{
 						client:   client,
-						specName: spec.Name,
+						specName: spec.GetName(),
 						dryRun:   dryRun,
 					}
 					return nil
 				})
 			}
-
 			if err != nil {
 				log.FromContext(ctx).WithError(err).Fatal("Failed to list specs")
 			}
@@ -100,61 +100,50 @@ func complexityCommand() *cobra.Command {
 	}
 }
 
-type computeComplexityTask struct {
+type computeVocabularyTask struct {
 	client   connection.RegistryClient
 	specName string
 	dryRun   bool
 }
 
-func (task *computeComplexityTask) String() string {
-	return "compute complexity " + task.specName
+func (task *computeVocabularyTask) String() string {
+	return "compute vocabulary " + task.specName
 }
 
-func (task *computeComplexityTask) Run(ctx context.Context) error {
-	specName, err := names.ParseSpecRevision(task.specName)
+func (task *computeVocabularyTask) Run(ctx context.Context) error {
+	contents, err := task.client.GetApiSpecContents(ctx, &rpc.GetApiSpecContentsRequest{
+		Name: task.specName,
+	})
 	if err != nil {
 		return err
 	}
-	var spec *rpc.ApiSpec
-	if err = core.GetSpecRevision(ctx, task.client, specName, true, func(s *rpc.ApiSpec) error {
-		spec = s
-		return nil
-	}); err != nil {
-		return err
-	}
 
-	relation := "complexity"
-	log.Debugf(ctx, "Computing %s/artifacts/%s", task.specName, relation)
-	contents := spec.GetContents()
-	if strings.Contains(spec.GetMimeType(), "+gzip") {
-		if contents, err = core.GUnzippedBytes(contents); err != nil {
-			return err
-		}
-	}
-	var complexity *metrics.Complexity
-	if types.IsOpenAPIv2(spec.GetMimeType()) {
-		document, err := oas2.ParseDocument(contents)
+	log.Debugf(ctx, "Computing %s/artifacts/vocabulary", task.specName)
+	var vocab *metrics.Vocabulary
+
+	if types.IsOpenAPIv2(contents.GetContentType()) {
+		document, err := oas2.ParseDocument(contents.GetData())
 		if err != nil {
 			log.FromContext(ctx).WithError(err).Errorf("Invalid OpenAPI: %s", task.specName)
 			return nil
 		}
-		complexity = SummarizeOpenAPIv2Document(document)
-	} else if types.IsOpenAPIv3(spec.GetMimeType()) {
-		document, err := oas3.ParseDocument(contents)
+		vocab = vocabulary.NewVocabularyFromOpenAPIv2(document)
+	} else if types.IsOpenAPIv3(contents.GetContentType()) {
+		document, err := oas3.ParseDocument(contents.GetData())
 		if err != nil {
 			log.FromContext(ctx).WithError(err).Errorf("Invalid OpenAPI: %s", task.specName)
 			return nil
 		}
-		complexity = SummarizeOpenAPIv3Document(document)
-	} else if types.IsDiscovery(spec.GetMimeType()) {
-		document, err := discovery.ParseDocument(contents)
+		vocab = vocabulary.NewVocabularyFromOpenAPIv3(document)
+	} else if types.IsDiscovery(contents.GetContentType()) {
+		document, err := discovery.ParseDocument(contents.GetData())
 		if err != nil {
 			log.FromContext(ctx).WithError(err).Errorf("Invalid Discovery: %s", task.specName)
 			return nil
 		}
-		complexity = SummarizeDiscoveryDocument(document)
-	} else if types.IsProto(spec.GetMimeType()) && types.IsZipArchive(spec.GetMimeType()) {
-		complexity, err = SummarizeZippedProtos(contents)
+		vocab = vocabulary.NewVocabularyFromDiscovery(document)
+	} else if types.IsProto(contents.GetContentType()) && types.IsZipArchive(contents.GetContentType()) {
+		vocab, err = NewVocabularyFromZippedProtos(contents.GetData())
 		if err != nil {
 			log.FromContext(ctx).WithError(err).Errorf("Error processing protos: %s", task.specName)
 			return nil
@@ -164,15 +153,17 @@ func (task *computeComplexityTask) Run(ctx context.Context) error {
 	}
 
 	if task.dryRun {
-		core.PrintMessage(complexity)
+		core.PrintMessage(vocab)
 		return nil
 	}
-	subject := task.specName
-	messageData, _ := proto.Marshal(complexity)
-	artifact := &rpc.Artifact{
-		Name:     subject + "/artifacts/" + relation,
-		MimeType: types.MimeTypeForMessageType("gnostic.metrics.Complexity"),
-		Contents: messageData,
+
+	messageData, err := proto.Marshal(vocab)
+	if err != nil {
+		return err
 	}
-	return core.SetArtifact(ctx, task.client, artifact)
+	return core.SetArtifact(ctx, task.client, &rpc.Artifact{
+		Name:     task.specName + "/artifacts/vocabulary",
+		MimeType: types.MimeTypeForMessageType("gnostic.metrics.Vocabulary"),
+		Contents: messageData,
+	})
 }

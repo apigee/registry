@@ -15,6 +15,13 @@
 package compute
 
 import (
+	"github.com/apigee/registry/cmd/registry/cmd/compute/complexity"
+	"github.com/apigee/registry/cmd/registry/cmd/compute/conformance"
+	"github.com/apigee/registry/cmd/registry/cmd/compute/lint"
+	"github.com/apigee/registry/cmd/registry/cmd/compute/lintstats"
+	"github.com/apigee/registry/cmd/registry/cmd/compute/score"
+	"github.com/apigee/registry/cmd/registry/cmd/compute/scorecard"
+	"github.com/apigee/registry/cmd/registry/cmd/vocabulary"
 	"github.com/spf13/cobra"
 )
 
@@ -24,13 +31,13 @@ func Command() *cobra.Command {
 		Short: "Compute properties of resources in the API Registry",
 	}
 
-	cmd.AddCommand(conformanceCommand())
-	cmd.AddCommand(complexityCommand())
-	cmd.AddCommand(lintCommand())
-	cmd.AddCommand(lintStatsCommand())
-	cmd.AddCommand(scoreCommand())
-	cmd.AddCommand(scoreCardCommand())
-	cmd.AddCommand(vocabularyCommand())
+	cmd.AddCommand(conformance.Command())
+	cmd.AddCommand(complexity.Command())
+	cmd.AddCommand(lint.Command())
+	cmd.AddCommand(lintstats.Command())
+	cmd.AddCommand(score.Command())
+	cmd.AddCommand(scorecard.Command())
+	cmd.AddCommand(vocabulary.Command())
 
 	cmd.PersistentFlags().String("filter", "", "Filter selected resources")
 	cmd.PersistentFlags().Bool("dry-run", false, "if set, computation results will only be printed and will not stored in the registry")

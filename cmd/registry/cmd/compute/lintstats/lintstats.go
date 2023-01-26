@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package compute
+package lintstats
 
 import (
 	"context"
@@ -32,11 +32,15 @@ import (
 	metrics "github.com/google/gnostic/metrics"
 )
 
+func lintRelation(linter string) string {
+	return "lint-" + linter
+}
+
 func lintStatsRelation(linter string) string {
 	return "lintstats-" + linter
 }
 
-func lintStatsCommand() *cobra.Command {
+func Command() *cobra.Command {
 	var linter string
 	cmd := &cobra.Command{
 		Use:   "lintstats",

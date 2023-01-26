@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package compute
+package conformance
 
 import (
 	"context"
@@ -31,7 +31,7 @@ import (
 
 var styleguideFilter = fmt.Sprintf("mime_type.contains('%s')", types.MimeTypeForKind("StyleGuide"))
 
-func conformanceCommand() *cobra.Command {
+func Command() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "conformance",
 		Short: "Compute lint results for API specs",
@@ -102,7 +102,9 @@ func conformanceCommand() *cobra.Command {
 			}
 		},
 	}
-
+	cmd.Flags().String("filter", "", "Filter selected resources")
+	cmd.Flags().Bool("dry-run", false, "if set, computation results will only be printed and will not stored in the registry")
+	cmd.Flags().Int("jobs", 10, "Number of actions to perform concurrently")
 	return cmd
 }
 

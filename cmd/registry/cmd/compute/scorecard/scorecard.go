@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package compute
+package scorecard
 
 import (
 	"context"
@@ -27,8 +27,8 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func scoreCardCommand() *cobra.Command {
-	return &cobra.Command{
+func Command() *cobra.Command {
+	cmd := &cobra.Command{
 		Use:   "scorecard",
 		Short: "Compute score cards for APIs and API specs",
 		Args:  cobra.ExactArgs(1),
@@ -98,6 +98,10 @@ func scoreCardCommand() *cobra.Command {
 			}
 		},
 	}
+	cmd.Flags().String("filter", "", "Filter selected resources")
+	cmd.Flags().Bool("dry-run", false, "if set, computation results will only be printed and will not stored in the registry")
+	cmd.Flags().Int("jobs", 10, "Number of actions to perform concurrently")
+	return cmd
 }
 
 type computeScoreCardTask struct {
