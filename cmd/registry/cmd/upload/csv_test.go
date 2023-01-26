@@ -57,6 +57,7 @@ func TestUploadCSV(t *testing.T) {
 	}
 
 	const testProject = "csv-demo"
+	const testParent = "projects/" + testProject + "/locations/global"
 	tests := []struct {
 		desc string
 		args []string
@@ -66,7 +67,7 @@ func TestUploadCSV(t *testing.T) {
 			desc: "multiple spec upload",
 			args: []string{
 				filepath.Join("testdata", "csv", "multiple-specs.csv"),
-				"--project-id", testProject,
+				"--parent", testParent,
 			},
 			want: []*rpc.ApiSpec{
 				{
@@ -95,7 +96,7 @@ func TestUploadCSV(t *testing.T) {
 			desc: "out of order columns",
 			args: []string{
 				filepath.Join("testdata", "csv", "out-of-order-columns.csv"),
-				"--project-id", testProject,
+				"--parent", testParent,
 			},
 			want: []*rpc.ApiSpec{
 				{
@@ -109,7 +110,7 @@ func TestUploadCSV(t *testing.T) {
 			desc: "empty sheet",
 			args: []string{
 				filepath.Join("testdata", "csv", "empty-sheet.csv"),
-				"--project-id", testProject,
+				"--parent", testParent,
 			},
 			want: []*rpc.ApiSpec{},
 		},
@@ -133,6 +134,17 @@ func TestUploadCSV(t *testing.T) {
 			})
 			if err != nil && status.Code(err) != codes.NotFound {
 				t.Fatalf("Setup: Failed to delete test project: %s", err)
+			}
+
+			_, err = adminClient.CreateProject(ctx, &rpc.CreateProjectRequest{
+				ProjectId: testProject,
+				Project: &rpc.Project{
+					DisplayName: "Test",
+					Description: "A test catalog",
+				},
+			})
+			if err != nil {
+				t.Fatalf("Error creating project %s", err)
 			}
 
 			args := append([]string{"csv"}, test.args...)
