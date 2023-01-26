@@ -191,3 +191,70 @@ func TestUploadCSV(t *testing.T) {
 		})
 	}
 }
+
+func TestUploadCSVErrors(t *testing.T) {
+	const testProject = "csv-errors"
+	const testParent = "projects/" + testProject + "/locations/global"
+	tests := []struct {
+		desc string
+		args []string
+	}{
+		{
+			desc: "invalid parent",
+			args: []string{
+				filepath.Join("testdata", "csv", "multiple-specs.csv"),
+				"--parent", "invalid",
+			},
+		},
+		{
+			desc: "missing parent",
+			args: []string{
+				filepath.Join("testdata", "csv", "out-of-order-columns.csv"),
+				"--parent", "projects/missing/locations/global",
+			},
+		},
+		{
+			desc: "missing input file",
+			args: []string{
+				filepath.Join("testdata", "csv", "missing.csv"),
+				"--parent", testParent,
+			},
+		},
+	}
+
+	ctx := context.Background()
+	adminClient, err := connection.NewAdminClient(ctx)
+	if err != nil {
+		t.Fatalf("Setup: Failed to create client: %s", err)
+	}
+	err = adminClient.DeleteProject(ctx, &rpc.DeleteProjectRequest{
+		Name:  "projects/" + testProject,
+		Force: true,
+	})
+	if err != nil && status.Code(err) != codes.NotFound {
+		t.Fatalf("Setup: Failed to delete test project: %s", err)
+	}
+	_, err = adminClient.CreateProject(ctx, &rpc.CreateProjectRequest{
+		ProjectId: testProject,
+		Project: &rpc.Project{
+			DisplayName: "Test",
+			Description: "A test catalog",
+		},
+	})
+	if err != nil {
+		t.Fatalf("Error creating project %s", err)
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			args := append([]string{"csv"}, test.args...)
+			cmd := Command()
+			cmd.SilenceUsage = true
+			cmd.SilenceErrors = true
+			cmd.SetArgs(args)
+			if err := cmd.Execute(); err == nil {
+				t.Fatalf("Execute() with args %v succeeded and should have failed", args)
+			}
+		})
+	}
+}
