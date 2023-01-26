@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package compute
+package lint
 
 import (
 	"context"
@@ -28,7 +28,7 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func lintCommand() *cobra.Command {
+func Command() *cobra.Command {
 	var linter string
 	cmd := &cobra.Command{
 		Use:   "lint",
