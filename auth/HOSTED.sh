@@ -36,7 +36,7 @@ APG_REGISTRY_INSECURE="false"
 
 APG_REGISTRY_PROJECT="$(gcloud config get project)"
 APG_REGISTRY_LOCATION="global"
-APG_REGISTRY_CLIENT_EMAIL="$(gcloud config list account --format "value(core.account)")"
+APG_REGISTRY_CLIENT_EMAIL="$(gcloud auth list --filter=status:ACTIVE --format="value(account)")"
 APG_REGISTRY_TOKEN_SOURCE="gcloud auth print-access-token ${APG_REGISTRY_CLIENT_EMAIL}"
 
 registry config configurations create hosted \
