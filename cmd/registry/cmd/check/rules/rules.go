@@ -39,6 +39,9 @@ import (
 	"github.com/apigee/registry/cmd/registry/cmd/check/rules/rule103"
 	"github.com/apigee/registry/cmd/registry/cmd/check/rules/rule104"
 	"github.com/apigee/registry/cmd/registry/cmd/check/rules/rule105"
+	"github.com/apigee/registry/cmd/registry/cmd/check/rules/rule106"
+	"github.com/apigee/registry/cmd/registry/cmd/check/rules/rule107"
+	"github.com/apigee/registry/cmd/registry/cmd/check/rules/rule108"
 	"github.com/apigee/registry/cmd/registry/cmd/check/rules/rule110"
 )
 
@@ -51,6 +54,9 @@ var addRulesFuncs = []addRulesFuncType{
 	rule103.AddRules,
 	rule104.AddRules,
 	rule105.AddRules,
+	rule106.AddRules,
+	rule107.AddRules,
+	rule108.AddRules,
 	rule110.AddRules,
 }
 

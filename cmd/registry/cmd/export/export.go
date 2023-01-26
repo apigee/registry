@@ -149,7 +149,7 @@ func (h *exportHandler) traverse() error {
 	}
 
 	if project, err := names.ParseProject(pattern); err == nil {
-		return core.GetProject(ctx, adminClient, project, h.projectHandler())
+		return core.GetProject(ctx, adminClient, project, true, h.projectHandler())
 	} else if api, err := names.ParseApi(pattern); err == nil {
 		return core.GetAPI(ctx, client, api, h.apiHandler())
 	} else if deployment, err := names.ParseDeployment(pattern); err == nil {

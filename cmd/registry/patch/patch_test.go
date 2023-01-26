@@ -89,7 +89,7 @@ func TestProjectPatches(t *testing.T) {
 				protocmp.Transform(),
 				protocmp.IgnoreFields(new(rpc.Project), "create_time", "update_time"),
 			}
-			err = core.GetProject(ctx, adminClient, projectName,
+			err = core.GetProject(ctx, adminClient, projectName, false,
 				func(project *rpc.Project) error {
 					if !cmp.Equal(test.message, project, opts) {
 						t.Errorf("GetDiff returned unexpected diff (-want +got):\n%s", cmp.Diff(test.message, project, opts))
