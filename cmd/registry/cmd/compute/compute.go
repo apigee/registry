@@ -15,6 +15,7 @@
 package compute
 
 import (
+	"github.com/apigee/registry/cmd/registry/cmd/compute/complexity"
 	"github.com/apigee/registry/cmd/registry/cmd/compute/conformance"
 	"github.com/spf13/cobra"
 )
@@ -26,7 +27,7 @@ func Command() *cobra.Command {
 	}
 
 	cmd.AddCommand(conformance.Command())
-	cmd.AddCommand(complexityCommand())
+	cmd.AddCommand(complexity.Command())
 	cmd.AddCommand(lintCommand())
 	cmd.AddCommand(lintStatsCommand())
 	cmd.AddCommand(scoreCommand())

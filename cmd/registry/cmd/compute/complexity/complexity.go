@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package compute
+package complexity
 
 import (
 	"context"
@@ -34,8 +34,8 @@ import (
 	oas3 "github.com/google/gnostic/openapiv3"
 )
 
-func complexityCommand() *cobra.Command {
-	return &cobra.Command{
+func Command() *cobra.Command {
+	cmd := &cobra.Command{
 		Use:   "complexity",
 		Short: "Compute complexity metrics of API specs",
 		Args:  cobra.ExactArgs(1),
@@ -98,6 +98,10 @@ func complexityCommand() *cobra.Command {
 			}
 		},
 	}
+	cmd.PersistentFlags().String("filter", "", "Filter selected resources")
+	cmd.PersistentFlags().Bool("dry-run", false, "if set, computation results will only be printed and will not stored in the registry")
+	cmd.PersistentFlags().Int("jobs", 10, "Number of actions to perform concurrently")
+	return cmd
 }
 
 type computeComplexityTask struct {

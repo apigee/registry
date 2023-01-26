@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package compute
+package complexity
 
 import (
 	"bytes"
@@ -23,7 +23,9 @@ import (
 	"testing"
 
 	"github.com/apigee/registry/pkg/connection"
+	"github.com/apigee/registry/pkg/connection/grpctest"
 	"github.com/apigee/registry/rpc"
+	"github.com/apigee/registry/server/registry"
 	"github.com/apigee/registry/server/registry/names"
 	metrics "github.com/google/gnostic/metrics"
 	"github.com/google/go-cmp/cmp"
@@ -32,6 +34,13 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
 )
+
+// TestMain will set up a local RegistryServer and grpc.Server for all
+// tests in this package if APG_REGISTRY_ADDRESS env var is not set
+// for the client.
+func TestMain(m *testing.M) {
+	grpctest.TestMain(m, registry.Config{})
+}
 
 func readAndGZipFile(t *testing.T, filename string) (*bytes.Buffer, error) {
 	t.Helper()
@@ -124,7 +133,7 @@ func TestComplexity(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Failed to create version %s: %s", test.versionId, err.Error())
 			}
-			buf, err := readAndGZipFile(t, filepath.Join("testdata", test.specFile))
+			buf, err := readAndGZipFile(t, filepath.Join("..", "testdata", test.specFile))
 			if err != nil {
 				t.Fatalf("Failed reading spec contents: %s", err.Error())
 			}
@@ -141,7 +150,7 @@ func TestComplexity(t *testing.T) {
 				t.Fatalf("Failed CreateApiSpec(%v): %s", req, err.Error())
 			}
 			complexityCommand := Command()
-			args := []string{"complexity", spec.Name}
+			args := []string{spec.Name}
 			complexityCommand.SetArgs(args)
 			if err = complexityCommand.Execute(); err != nil {
 				t.Fatalf("Execute() with args %v returned error: %s", args, err)
