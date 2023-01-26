@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package compute
+package vocabulary
 
 import (
 	"context"
@@ -34,7 +34,7 @@ import (
 	oas3 "github.com/google/gnostic/openapiv3"
 )
 
-func vocabularyCommand() *cobra.Command {
+func Command() *cobra.Command {
 	return &cobra.Command{
 		Use:   "vocabulary",
 		Short: "Compute vocabularies of API specs",

@@ -21,6 +21,7 @@ import (
 	"github.com/apigee/registry/cmd/registry/cmd/compute/lintstats"
 	"github.com/apigee/registry/cmd/registry/cmd/compute/score"
 	"github.com/apigee/registry/cmd/registry/cmd/compute/scorecard"
+	"github.com/apigee/registry/cmd/registry/cmd/vocabulary"
 	"github.com/spf13/cobra"
 )
 
@@ -36,7 +37,7 @@ func Command() *cobra.Command {
 	cmd.AddCommand(lintstats.Command())
 	cmd.AddCommand(score.Command())
 	cmd.AddCommand(scorecard.Command())
-	cmd.AddCommand(vocabularyCommand())
+	cmd.AddCommand(vocabulary.Command())
 
 	cmd.PersistentFlags().String("filter", "", "Filter selected resources")
 	cmd.PersistentFlags().Bool("dry-run", false, "if set, computation results will only be printed and will not stored in the registry")
