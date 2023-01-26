@@ -40,7 +40,7 @@ func csvCommand() *cobra.Command {
 	)
 
 	cmd := &cobra.Command{
-		Use:   "csv file --project-id=value [--delimiter=value]",
+		Use:   "csv FILE",
 		Short: "Upload API descriptions from a CSV file",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
