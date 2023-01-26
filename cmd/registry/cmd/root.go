@@ -21,7 +21,6 @@ import (
 	"github.com/apigee/registry/cmd/registry/cmd/check"
 	"github.com/apigee/registry/cmd/registry/cmd/compute"
 	"github.com/apigee/registry/cmd/registry/cmd/config"
-	"github.com/apigee/registry/cmd/registry/cmd/count"
 	"github.com/apigee/registry/cmd/registry/cmd/delete"
 	"github.com/apigee/registry/cmd/registry/cmd/diff"
 	"github.com/apigee/registry/cmd/registry/cmd/export"
@@ -53,7 +52,6 @@ func Command() *cobra.Command {
 	cmd.AddCommand(check.Command())
 	cmd.AddCommand(compute.Command())
 	cmd.AddCommand(config.Command())
-	cmd.AddCommand(count.Command())
 	cmd.AddCommand(resolve.Command())
 	cmd.AddCommand(delete.Command())
 	cmd.AddCommand(diff.Command())
