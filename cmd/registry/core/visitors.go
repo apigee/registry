@@ -35,11 +35,11 @@ type Visitor interface {
 }
 
 type VisitorOptions struct {
-	RegistryClient   connection.RegistryClient
-	AdminClient      connection.AdminClient
-	Pattern          string
-	Filter           string
-	AllowUnavailable bool
+	RegistryClient          connection.RegistryClient
+	AdminClient             connection.AdminClient
+	Pattern                 string
+	Filter                  string
+	AllowUnavailableProject bool
 }
 
 // Visit traverses a registry, applying the Visitor to each selected resource.
@@ -95,7 +95,7 @@ func Visit(ctx context.Context, v Visitor, options VisitorOptions) error {
 	}
 	// Finally, match individual resources
 	if project, err := names.ParseProject(name); err == nil {
-		return GetProject(ctx, ac, project, options.AllowUnavailable, v.ProjectHandler())
+		return GetProject(ctx, ac, project, options.AllowUnavailableProject, v.ProjectHandler())
 	} else if api, err := names.ParseApi(name); err == nil {
 		return GetAPI(ctx, rc, api, v.ApiHandler())
 	} else if deployment, err := names.ParseDeployment(name); err == nil {
